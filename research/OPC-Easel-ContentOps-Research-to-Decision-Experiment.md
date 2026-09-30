@@ -781,7 +781,140 @@ Docker + API + CLI 也齐。:chatgpt-content-reference{index="29"}
 4. **用一个统一 `POST /v1/content-runs` 包起来**。内部可以调用 `easel skill`，也可以经 OpenClaw Gateway；Easel 安装脚本本身已经启用了本地 OpenAI-compatible `/v1/chat/completions` Gateway。:chatgpt-content-reference{index="33"}
 5. **n8n 只负责触发，不负责经营判断**：定时、Webhook、retry、notification、人工审批通知。你仓库原本对 n8n 的定位其实已经是正确的。
 6. **Baseline 先全部走 Easel 原生简单制作路线**；MoneyPrinterTurbo 只接 Lane B Enhanced，不让 AI Video 再次阻塞每周 4 条基线。
-7. 连续两周拿到 `Founder Minutes / Publish Success / Rework / Qualified Signal / Commercial Progression` 后，再决定是否把 WS-008 Runtime 独立成新的 `X-SuperPlay-ContentOps` 仓库。
+7. 连续两周拿到 `Founder Minutes / Publish Success / Rework / Qualified Signal / Commercial Progression` 后，再通过 Cross-Repository Workstream Gate 决定是否将当前 `X-SuperPlay-ContentOps` 提升为 WS-008 Runtime 的独立实现事实源。
+
+---
+
+# 十二、Easel 上游策略：现在 Clone，验证后再决定 Fork
+
+当前阶段是 Easel 适配与运行验证，还没有证据证明必须长期维护一套 Easel 核心分支。因此默认策略是：
+
+> **先 Clone，不 Fork。只有实验确认需要持续修改 Easel Core 时，才建立 downstream。**
+
+| 阶段 | 仓库策略 |
+|---|---|
+| 运行和评估 Easel | Clone 官方仓库，固定 commit |
+| 添加配置、Profile、Skill、OPC Adapter | 作为 Easel 外部扩展维护，不改上游核心 |
+| 发现可普遍修复的问题 | 优先向 Easel 上游提交 PR |
+| 必须长期修改 Easel Core | 经决策 Gate 后建立 Fork 或 downstream |
+| 二开包含商业逻辑且不能公开 | 使用独立私有 downstream，不创建公开 Fork |
+
+Clone 是本地取用上游代码，不代表维护自己的 Easel 版本。Fork 则建立与上游关联的 GitHub 仓库，需要承担持续同步和冲突处理成本。GitHub 文档说明 Fork 不能独立更改可见性，公开上游转为私有后已有公开 Fork 仍保持公开；若 downstream 含商业 Workflow、客户逻辑、OPC 规则、私有平台 Adapter 或运营策略，应先确认仓库可见性和保密要求。[GitHub Forks 文档](https://docs.github.com/en/pull-requests/reference/forks)
+
+## 12.1 锁定单一、可复现的上游版本
+
+实验不能跟随 `main` 漂移。保存 `repository`、完整 commit SHA、版本、记录日期、运行环境和各平台兼容状态。新增材料推荐的候选 SHA [`4b9c03cf2129b6155595b66fc1e604546a3aa4ad`](https://github.com/ZJU-REAL/Easel/commit/4b9c03cf2129b6155595b66fc1e604546a3aa4ad) 已核实存在，提交时间为 2026-09-30；它与原有 `v0.2.1` tag 指向的 `3fe2d9904c1619281ef57f81d9ee0b7854998399` 是两个不同 commit。因此 `4b9...` 只能标记为该日期的 commit snapshot，不能误标成 `v0.2.1`。开始实验前由 Decision Record 选定其中一个作为**唯一实验 pin**，写入 `integrations/easel/UPSTREAMS.lock`；若来源或目标版本未确定，不运行实验。
+
+Clone 并固定版本的基本操作：
+
+```bash
+git clone https://github.com/ZJU-REAL/Easel.git
+cd Easel
+git checkout --detach 4b9c03cf2129b6155595b66fc1e604546a3aa4ad
+git rev-parse HEAD
+```
+
+最后一条命令必须与锁文件的 40 位 commit 完全相同。不要把 `main` 当作可复现版本。
+
+示例：
+
+```yaml
+easel:
+  repository: ZJU-REAL/Easel
+  candidate:
+    commit: 4b9c03cf2129b6155595b66fc1e604546a3aa4ad
+    recorded_at: 2026-10-01
+    decision: pending
+  previous:
+    commit: null
+  update_policy:
+    cadence: biweekly
+    auto_merge: false
+    human_review: true
+  compatibility:
+    windows: pending
+    openclaw: pending
+    content_generation: pending
+    douyin: pending
+    xiaohongshu: pending
+    bilibili: pending
+```
+
+Compatibility 必须按真实执行记录填写；不能把计划测试或上游宣称改写成 `tested`。
+
+## 12.2 优先做 Overlay，避免 Fork Tax
+
+尽量让 Easel 保持接近官方版本。Profile、Skill、Adapter、Workflow、字段映射和 OPC 规则应放在 Easel 外部，通过受支持接口组合，而不要散落修改 `web/`、`core/`、`skills/`、Gateway 或发布实现。这样上游升级时，自有逻辑不需要逐文件重放，也便于把修改作为独立能力验证。
+
+本报告前文仍将 `X-SuperPlay-Strategy / WS-008` 作为当前实现事实源。因此，在 Cross-Repository Workstream Gate 批准独立 Runtime 前，新增的可执行 Adapter/Skill 应按 Strategy 的治理登记；本仓库先保存决策、锁定规则和评估证据，不因目录建议而提前宣布 Runtime 所有权已经迁移。
+
+适配层的参考目录可为：
+
+```text
+integrations/easel/
+  README.md
+  UPSTREAMS.lock
+  config/
+  mapping.yaml
+skills/
+  opc-source-to-content/
+  xsuperplay-topic-router/
+  evidence-preservation/
+adapters/
+  douyin/
+  xhs/
+  bilibili/
+profiles/
+  X-SuperPlay-1024/
+  X-SuperPlay-Future-Intelligence/
+```
+
+该目录是方案示例，实施位置仍由 WS-008 当前仓库治理决定。
+
+## 12.3 只有 Core 修改不可避免时才维护 downstream
+
+若实验结果证明必须长期修改 Easel Core，再建立标准 upstream/downstream 关系。公开修改可评估 GitHub Fork：`origin` 指向自己的 fork，`upstream` 指向 `ZJU-REAL/Easel`：
+
+```bash
+git remote add upstream https://github.com/ZJU-REAL/Easel.git
+git remote -v
+```
+
+若改动不能公开，则建独立私有仓库，保留 Git 历史并设置 `origin` 为私有 downstream、`upstream` 为官方仓库。不要先创建公开 Fork 再试图转私有：
+
+```bash
+git remote rename origin upstream
+git remote add origin <private-downstream-url>
+git remote -v
+```
+
+Easel 使用 Apache-2.0；对外分发衍生版本时，应保留许可证及适用的版权/归属通知，并对修改文件作显著修改说明。[Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0.html) 内部评估不等于可以忽略分发义务。
+
+## 12.4 用受控升级分支同步上游
+
+不要直接 `git pull upstream main` 后把结果送进生产分支。每两周检查一次，或在确有功能、安全修复、兼容性问题时提前检查：
+
+```bash
+git fetch upstream
+git log HEAD..upstream/main --oneline
+git diff HEAD..upstream/main
+git checkout -b chore/upstream-sync-2026-10
+git merge --no-ff upstream/main
+```
+
+先审查新功能、Bug 修复、Breaking Change 和对自有改动的影响，再创建类似 `chore/upstream-sync-2026-10` 的升级分支。运行兼容性测试，通过后经 PR 合并；失败则 Hold，不绕过 Gate。更新分三级：无关变化 `IGNORE`；有价值但不紧急 `NEXT_UPGRADE_WINDOW`；影响安全、OpenClaw/Windows 兼容或生产关键 Skill 的变化 `UPGRADE_CANDIDATE`。
+
+最低兼容性检查应覆盖安装、`easel doctor`、Gateway、LLM、Profile、Source 到 Master Content、三个 Active 平台适配、Quality Gate 和 outputs 归档。发布仍必须保留 Human Approval、可追溯回执及失败关闭行为。
+
+## 当前仓库策略
+
+```text
+现在：Clone + 固定 SHA + 真实 Source 实验
+扩展：先 Overlay，避免修改 Easel Core
+晋级：实验过 Gate 后才迁移实现所有权
+Core downstream：证明确有长期必要后再建
+更新：定期检查，上游升级分支验证后合并
+```
 
 ---
 
@@ -823,5 +956,7 @@ Easel
 而不是“AI 自媒体工具集合”。
 
 这也是目前 GitHub 调研结果中，和你 Blueprint 的 **Business → Content → Signal → Opportunity → Business** 闭环最吻合的一条路线。:chatgpt-content-reference{index="36"}
+
+上游维护策略也以此为界：**现在 Clone，不 Fork；先证明 OPC Adapter 与真实生产价值，再决定是否长期维护 Easel Core 的 downstream。**
 
 如果按你现在的仓库治理方式继续，下一步已经可以直接进入 **立项设计**：我建议直接把 `WS-008 × Easel` 拆成 Issue/PR 级别的目录设计、API Schema、7 个 OPC Skill、状态机、验收标准和两周实验计划，而不再继续停留在工具调研阶段。
