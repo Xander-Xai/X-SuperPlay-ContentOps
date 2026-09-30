@@ -1,699 +1,827 @@
-你现在最需要的不是“继续研究更多工具”，而是把上一份报告变成一个**持续产生决策和行动的经营资产**。
+你这次纠正是对的。你要的不是“LLM + TTS + FFmpeg + 发布脚本”这种零件清单，而是：
 
-结合我刚刚重新检查的你当前仓库治理结构，以及 GitHub 官方 Projects/Issue Forms、ADR 实践和 Easel 当前状态，我建议采用下面这条链：
+> **一个能够被 API / CLI / Agent 直接调用，拿到 Source Artifact 后自己跑完整链路，并且最终把内容、发布回执、指标、Signal 再写回 OPC 的 Self-Media Runtime。**
 
-```text
-调研报告
-  ↓
-Decision Record
-  ↓
-可证伪实验
-  ↓
-GitHub Issues / Project
-  ↓
-真实运行 Evidence
-  ↓
-Founder Decision
-  ↓
-局部集成 / 全面集成 / 放弃
-  ↓
-持续监控上游变化
-```
+我重新读了你的 `X-SuperPlay-OPC-Blueprint`、`X-SuperPlay-Strategy`，并重新筛了 GitHub。结论已经明显收敛了。
 
-而不是：
+# 一、先给结论
+
+## 你当前最值得采用的主线不是从零开发，而是：
+
+> **以 ZJU-REAL/Easel 作为 WS-008 Self-Media Runtime 的主体原型，给它加一层 X-SuperPlay OPC Adapter。**
+
+不是直接把 Easel 当你的“自媒体战略系统”，而是：
 
 ```text
-调研报告
-→ 看起来不错
-→ Fork Easel
-→ 大改仓库
-→ 又做几周基础设施
-→ 内容还是没稳定生产
+OPC Blueprint
+= Business / Evidence / Permission / Commercial Source of Truth
+
+X-SuperPlay Strategy / WS-008
+= Workflow Policy + Experiment + Runtime Ownership
+
+Easel
+= Executable ContentOps Runtime / Skill Engine
+
+OpenClaw
+= Agent Runtime
+
+n8n
+= Trigger / Schedule / Retry / Notification（可选）
+
+外部媒体工作流
+= Easel Skill 后端，可插拔，不拥有流程控制权
 ```
 
-这一区别非常重要。
+这是我这轮调研后的核心判断。
+
+你 Blueprint 本身就规定，自动化链应当是：
+
+```text
+Sensing
+→ Topic Ranking
+→ Content Adaptation
+→ Publishing Gate
+→ Metrics Ingestion
+→ Weekly Review
+→ OPC Evidence / Opportunity / Experiment Gate
+```
+
+而且明确写着 Blueprint 只是业务契约，真正 Runtime 应放在 `X-SuperPlay-Strategy / WS-008`，而不是在 Blueprint 再造执行系统。
+
+Easel 恰好已经实现了非常接近的：
+
+```text
+Discover
+→ Plan
+→ Produce
+→ Publish
+→ Attribute
+```
+
+不是 PPT 架构，而是 **114 个可执行 Skill + CLI + FastAPI Web Backend + OpenClaw Gateway + 浏览器真实发布 + 数据回收**。:chatgpt-content-reference{index="1"}
+
+[ZJU-REAL/Easel GitHub](https://github.com/ZJU-REAL/Easel?utm_source=chatgpt.com)
 
 ---
 
-# 一、先给这份报告一个正确身份：它现在只是 `screened`
+# 二、为什么我现在把 Easel 放到第一优先级
 
-你自己的生命周期已经定义：
+你当前仓库的目标其实已经非常清楚。
+
+你的 Strategy 不是追求“做一个最强 AI 视频系统”，而是：
 
 ```text
-idea
-→ screened
-→ queued
-→ running
-→ evidence-ready
-→ validated
-→ productized
+在质量底线、现金预算和 Founder 时间预算内
+最大化 Published Videos / Founder Hour
+
+同时获得：
+Market Signal
++ Reusable Asset
++ Commercial Signal
 ```
 
-其中 `running` 要有实验假设、变量、样本、指标和记录位置；`validated` 更需要实际价值证据。
+当前基线是两个账号每周合计 4 条内容，而且强调 1–2 个真实 Source Artifact 派生内容，不允许为了日更制造工作。
+
+你当前的平台优先级也是明确的：
+
+| 状态 | 平台 |
+|---|---|
+| Active | 抖音、小红书、Bilibili |
+| Derived | 视频号、公众号、知乎、CSDN |
+| Experiment | YouTube、X |
+| Infrastructure | GitHub |
+
+因此我用你 OPC 的逻辑反过来筛 GitHub 项目，而不是看 Star。
+
+| 项目 | 是完整工作流吗 | 可程序调用 | 中国平台 | 制作 | 发布 | 数据回流 | 对你当前适配 |
+|---|---:|---:|---:|---:|---:|---:|---|
+| **Easel** | ★★★★★ | CLI / Gateway / FastAPI | ★★★★★ | ★★★★★ | ★★★★★ | ★★★★☆ | **核心 Runtime** |
+| **MoneyPrinterTurbo** | ★★★☆☆ | **REST API / CLI / Skill** | 发布偏海外 | ★★★★★ | ★★★☆☆ | ★☆☆☆☆ | Enhanced 制作 Worker |
+| **Postiz** | ★★★★☆ | **REST API / MCP / CLI / SDK** | ★☆☆☆☆ | ★★☆☆☆ | ★★★★★ | ★★★★★ | 海外 Distribution |
+| **social-auto-upload** | ★★☆☆☆ | CLI / Skill | ★★★★★ | ☆☆☆☆☆ | ★★★★★ | ★☆☆☆☆ | 国内发布备用执行器 |
+| SocialFlow-AI-Agent | ★★★☆☆ | **FastAPI** | ★☆☆☆☆ | ★★☆☆☆ | ★★☆☆☆ | Roadmap | 架构参考 |
+| OpenReels | ★★★☆☆ | API / CLI | ★☆☆☆☆ | ★★★★☆ | 较弱 | 较弱 | 不如 MPT |
+
+这里最关键的一点是：
+
+## Easel 已经不是“独立组件”
+
+它已经包含一条真正连续的自媒体工作流：
+
+```text
+热点 / RSS / 新闻 / UGC
+       ↓
+趋势发现
+       ↓
+账号画像 + Topic Evaluation
+       ↓
+选题 / Hook / Script / Calendar
+       ↓
+图文 / TTS / 视频 / 卡片 / 信息图
+       ↓
+Persona Check
+Risk Scanner
+Quality Gate
+Publish Checklist
+       ↓
+平台 Adaptation
+       ↓
+抖音 / 小红书 / B站 / 知乎 /
+视频号 / 公众号 / 快手
+       ↓
+Account Analytics
+Comments
+Content Postmortem
+ROI
+       ↓
+Profile Memory
+```
+
+它甚至已经有：
+
+`skill-content-repurposing`、`skill-cross-platform-publish`、`skill-quality-gate`、`skill-risk-scanner`、`skill-publish-checklist`、`skill-publish-scheduler`、`skill-douyin-upload`、`skill-xhs-publisher`、`skill-bilibili-upload` 等。:chatgpt-content-reference{index="5"}
+
+归因侧也已有 `skill-comment-insights`、`skill-content-postmortem`、`roi-calculator`、`skill-content-calendar-log` 等。:chatgpt-content-reference{index="6"}
+
+所以这才是你说的：
+
+> **“工作流 / Skill，而不是一大堆独立组件。”**
+
+---
+
+# 三、它和你的 OPC 又不能直接划等号
+
+这是这次分析最重要的边界。
+
+你的 OPC 经营内核明确规定：
+
+```text
+Problem Signal
+→ Problem Evidence
+→ Customer / Job / Context
+→ Value-at-Stake
+→ Buyer / Urgency / Reachability
+→ Opportunity
+→ Solution Hypothesis
+→ Offer
+→ Distribution
+→ Transaction
+→ Delivery
+→ Acceptance
+→ Reusable Asset
+→ Better Problem Discovery
+```
+
+并且：
+
+```text
+Views ≠ Validated Demand
+Comment / DM ≠ Paid Demand
+Technology is not the starting object
+One delivery ≠ Product
+AI Agent ≠ Business Source of Truth
+```
+
+而 Easel 本质还是一个 **Creator Content Operating System**。
+
+例如它的 `topic-evaluator` 会关注：
+
+```text
+流量潜力
+账号匹配
+竞争差异
+时效价值
+变现空间
+制作成本
+合规风险
+```
+
+:chatgpt-content-reference{index="8"}
+
+这套逻辑对普通自媒体很好，但对 X-SuperPlay 还缺：
+
+```text
+Source Artifact 是否真实
+Proof Level
+Permission Status
+Claim Boundary
+
+对应哪个 Problem ID
+对应哪个 Offer ID
+PD Evidence 到哪一级
+
+是否产生 Qualified Signal
+是否 Commercial Progression
+Founder Minutes
+Reusable Asset
+是否值得进入 Experiment / Opportunity Ledger
+```
 
 所以：
 
-> **《OPC × Easel ContentOps Runtime 调研》现在应该标记为 `screened`，而不是 `validated`。**
-
-这是第一件事。
-
-因为我之前得出的：
-
-> Easel 非常适合你。
-
-目前属于**高质量技术假设**。
-
-不是：
-
-> Easel 已经证明能让 X-SuperPlay 每周稳定生产 4 条、降低 Founder 工时、兼容你的三个 Active 平台。
-
-这件事还没被证明。
+> **Easel 可以成为你的“手脚和流水线”，不能成为你的“经营大脑”。**
 
 ---
 
-# 二、而且我现在不建议你立刻重构成“Easel 中央 Runtime”
+# 四、我要你真正重新制作的不是“视频工作流”，而是这个
 
-我重新看了你现在的 `Platform-Repository-Integration.md`。
+建议把你新的 Runtime 定义成：
 
-你已经建立了：
+## `OPC Self-Media ContentOps Runtime`
 
-```text
-X-SuperPlay-Strategy
-        ↓
-┌───────┼──────────────┐
-↓       ↓              ↓
-抖音    小红书          B站
-↓       ↓              ↓
-douyin  xhs-FA       bilibili
-repo    repo          matrix
+统一 API：
+
+```http
+POST /v1/content-runs
 ```
 
-目前明确的 Source of Truth 是：
+输入不再只是：
 
-```text
-Strategy
-= 平台组合 / Routing / Experiment / Metrics / Review
-
-平台 Repo
-= 真正 Workflow / Skill / Production / Receipt
-
-OPC Blueprint
-= Opportunity / Offer / Revenue / Business Truth
+```json
+{
+  "topic": "介绍 RAG"
+}
 ```
 
+而应该是：
 
+```json
+{
+  "source": {
+    "type": "research | repo | experiment | delivery | review",
+    "refs": ["..."]
+  },
 
-注册表里也已经正式登记：
+  "account": "X-SuperPlay-1024",
 
-- `douyin-1024`
-- `xhs-FA`
-- `bilibili-matrix-skills`
-- `shipinhao-matrix-skills`
-- `gzh-Future-Intelligence`
+  "lane": "baseline",
 
-作为执行事实源。
+  "problem_ids": [],
+  "offer_ids": [],
 
-所以如果现在一句：
+  "proof_level": "L0",
+  "permission_status": "public",
+  "claim_boundary": "...",
 
-> “以后 Easel 就是中央 Runtime。”
+  "topic_cluster": "AI_REAL_WORK",
+  "packaging": "RESULT_FIRST",
 
-实际上会**破坏你刚建立好的 Source-of-Truth 边界**。
+  "target_platforms": [
+    "douyin",
+    "xiaohongshu",
+    "bilibili"
+  ],
 
-因此上一份报告最正确的用途不是“宣布迁移”。
+  "human_publish_approval": true
+}
+```
 
-而是：
+内部不再是“调用几个 API”，而是一条**完整状态机**：
 
-> **提出一个架构候选，并设计实验决定它最终处于哪一层。**
+```text
+SOURCE_CAPTURED
+     ↓
+EVIDENCE_EXTRACTED
+     ↓
+OPC_TOPIC_RANKED
+     ↓
+MASTER_CONTENT_CREATED
+     ↓
+PLATFORM_ASSETS_PRODUCED
+     ↓
+CLAIM_CHECKED
+     ↓
+PERMISSION_CHECKED
+     ↓
+QUALITY_GATE
+     ↓
+HUMAN_APPROVAL
+     ↓
+PUBLISHED
+     ↓
+METRICS_INGESTED
+     ↓
+SIGNALS_CLASSIFIED
+     ↓
+OPC_REVIEWED
+     ↓
+REUSE / RETIRE / EXPERIMENT
+```
+
+这基本就是你 Blueprint 已经定义的状态机的可执行版本。
 
 ---
 
-# 三、把上一份报告压缩成一个 ADR
+# 五、Easel Skill 应该怎样映射你的 WS-008
 
-这是我认为你应该做的第一个正式资产。
+这才是我认为你最应该做的“重制”。
 
-ADR（Architecture Decision Record）的核心作用，就是记录：
-
-> 当时面对什么问题、考虑了哪些方案、为什么做这个选择、有什么后果，以及未来怎么验证这个决定。
-
-ADR 社区当前仍推荐这种方式保存重要架构决策，并特别强调不仅要记录结果，还应该留下证据、替代方案以及 realization/review plan。:chatgpt-content-reference{index="3"}
-
-建议建立：
-
-```text
-X-SuperPlay-Strategy/
-└── 00-Governance/
-    └── decisions/
-        └── ADR-WS008-ContentOps-Runtime.md
-```
-
-内容不要复制整份调研。
-
-只回答：
-
-| ADR 字段 | 内容 |
-|---|---|
-| Problem | 当前多平台生产是否存在重复实现、Founder handoff、维护成本 |
-| Current architecture | Strategy + platform execution repos |
-| Candidate | ZJU-REAL/Easel |
-| Option A | 保持现状 |
-| Option B | Easel 仅作为公共 Skill Provider |
-| Option C | Easel 作为 Common Runtime，平台 repo 做 Adapter |
-| Option D | Easel 仅用于借鉴，不成为依赖 |
-| Current decision | **Experiment Required** |
-| Evidence required | 真实内容生产数据 |
-| Review date | 2 周实验结束 |
-| Decision owner | Founder |
-| Rollback | 保持现有平台 repo 完全可运行 |
-
-也就是说：
-
-```text
-调研报告 = Why / Evidence Library
-
-ADR = So What?
-```
-
-不要把两者混为一个文件。
-
----
-
-# 四、然后建立一个真正的 WS-008 实验，而不是开发项目
-
-这是整个方案最关键的一步。
-
-命名：
-
-```text
-EXP-WS008-EASEL-001
-Easel Runtime Fit Evaluation
-```
-
-不要先开发 `opc-source-ingest` 七个 Skill。
-
-也不要先写统一 API。
-
-先验证：
-
-> **Easel 是否真的比你现有 Workflow 更省时间、更可靠、更容易维护。**
-
-## 两周怎么实验
-
-| 阶段 | 做什么 | 主要回答 |
+| 你的 OPC Contract | Easel 可直接复用 | 你必须自己增加 |
 |---|---|---|
-| Day 0 | 冻结 Easel commit + 环境 | 能否稳定复现 |
-| Day 1–2 | 跑 1 个已有 Source Artifact | 能不能完成你的 Source→Asset |
-| Day 3–4 | 抖音适配 | 是否优于/等于现有 workflow |
-| Day 5–6 | 小红书适配 | 卡片/发布/package 是否成立 |
-| Day 7 | 第一轮 Review | 最大 friction 在哪里 |
-| Week 2 | 再跑 2–3 个真实 Source | 是否可重复 |
-| Day 14 | Founder Review | Adopt / Partial / Reject |
+| Sensing | trending-topics / news-intelligence / rss-aggregator / content-gap | OPC Source Registry |
+| Topic Ranking | topic-evaluator | **OPC Topic Ranker** |
+| Source → Content | script / storyboard / repurposing / media Skills | Proof/Source binding |
+| Platform Adaptation | content-repurposing | ContentRecord IDs |
+| Claim Check | quality-gate / risk-scanner | **L0-L3 Claim rules** |
+| Permission Gate | risk scanner | **OPC permission_status** |
+| Human Approval | Publish Center | OPC Approval Receipt |
+| Publishing | cross-platform-publish + platform Skills | Publish Receipt |
+| Metrics | account analytics | T+2H/24H/72H/7D schema |
+| Comment Signal | comment-insights | **PD0–PD7 classifier** |
+| Review | content-postmortem | Commercial Progression |
+| Learning | profile memory | Opportunity Ledger / Experiments |
 
-不要用假 Demo。
+所以你不是 Fork Easel 然后魔改 114 个 Skill。
 
-直接拿你近期真实工作，例如：
+真正应该增加的只是几层 **X-SuperPlay-specific Skills**：
 
 ```text
-GitHub 新项目实测
-AI × 真实工作实验
-OPC 自动化实验
+opc-source-ingest
+opc-evidence-extractor
+opc-topic-ranker
+opc-claim-permission-gate
+opc-content-record-writer
+opc-signal-classifier
+opc-weekly-business-review
 ```
 
-这正好就是你 ContentOps 当前三个 Cluster。
+其他制作、发布、适配、平台操作直接复用 Easel。
+
+这就从：
+
+> “我又自己开发一个自媒体系统”
+
+变成：
+
+> “我建立了一个 OPC Adapter，把成熟 Content Runtime 接入自己的经营内核。”
+
+这个方向工程量小很多，也更符合你仓库的 Capability Emergence Doctrine。
 
 ---
 
-# 五、这次实验不要主要看播放量
+# 六、你当前真正应该有的 3 条生产 Workflow
 
-这是非常容易走偏的一点。
+不是 100 个 Skill 平铺。
 
-**Easel 实验首先是在验证生产系统，而不是内容选题。**
+## Workflow A — Result-derived Baseline
 
-因此第一阶段核心 Scorecard 应该是：
-
-| 指标 | Current Workflow | Easel | 目的 |
-|---|---:|---:|---|
-| Founder Minutes |  |  | 最重要 |
-| Wall-clock Time |  |  | 整体耗时 |
-| Manual Handoffs |  |  | 搬运次数 |
-| Rework Rounds |  |  | 返工 |
-| Failed Steps |  |  | 稳定性 |
-| Platform-native QC |  |  | 是否真的适配平台 |
-| Claim/Source Preservation |  |  | OPC 证据安全 |
-| Human Approval preserved |  |  | 治理 |
-| Publication Receipt |  |  | 可审计 |
-| Metrics ingestion |  |  | 是否形成闭环 |
-| New reusable assets |  |  | 是否复利 |
-
-你的仓库当前已经规定，自媒体目标是提高 `Published Videos / Founder Hour`，并且现阶段 Founder 内容预算要可持续，而不是追求最高视觉上限。上一轮 Strategy 也已经明确要求 Workflow PASS、Published、Content Winner、Validated Demand 必须严格分开。
-
-因此不要出现：
+这是你当前最重要的生产线。
 
 ```text
-Easel 视频播放量更高
-→ Easel 架构更好
+Repo / Research / Experiment / Real Delivery
+                   ↓
+             Source Artifact
+                   ↓
+       OPC Evidence Extraction
+                   ↓
+      Claim + Permission Boundary
+                   ↓
+             Topic Packaging
+          R / C / Q 三选一
+                   ↓
+              Master Script
+                   ↓
+      ┌────────────┼────────────┐
+      ↓            ↓            ↓
+    抖音         小红书          B站
+  Short Video    Cards/Video    Deep Video
+      ↓            ↓            ↓
+        Easel Quality Gate
+                   ↓
+             Human Approval
+                   ↓
+                Publish
+                   ↓
+     T+2 / 24 / 72 / 7D Metrics
+                   ↓
+          Qualified Signal
+                   ↓
+             OPC Review
 ```
 
-这在实验设计上不成立。
+这与 Strategy 当前的 `Baseline 4 条/周 + 1–2 Source Artifact` 完全一致。
+
+这是 **P0**。
 
 ---
 
-# 六、我建议设一个“晋级 Gate”
+## Workflow B — GitHub / AI 实测 → 自媒体
 
-两周以后不要再开会凭感觉讨论。
+这尤其适合你现在两个账号的定位。
 
-直接过 Gate。
-
-### Hard Gate
+你 42 天 Sprint 已经定义了三个 Cluster：
 
 ```text
-Human Approval 没有被绕过
-AND
-Source / Claim 可以追溯
-AND
-Credentials 不进入 Git
-AND
-Publication Receipt 可记录
-AND
-Failure 可以 fail closed
-AND
-现有三个 Active Platform 至少可以接入
+A AI 新能力实测
+B AI × 真实工作
+C AI 生意 / 自动化实验
 ```
 
-任何一项失败：
+所以可以直接执行：
 
 ```text
-不得成为 Common Runtime
+GitHub Repo / New AI Tool
+       ↓
+自动获取 README / Release / Issues
+       ↓
+安装 / 测试 / Benchmark
+       ↓
+产生真实 Result Artifact
+       ↓
+结果：
+PASS / PARTIAL / FAIL
+       ↓
+提炼：
+“它到底解决什么问题？”
+“我真跑了结果怎么样？”
+“适合谁？”
+“哪里翻车？”
+       ↓
+OPC Evidence Gate
+       ↓
+一源多资产
 ```
 
-### Efficiency Gate
-
-你的当前系统已经有每周 Founder 内容时间预算。
-
-因此我建议实验目标先设：
+例如：
 
 ```text
-Published throughput >= 当前 baseline
+GitHub Experiment
+     ↓
+抖音：
+“这个 2.8 万 Star 项目我真跑了一遍”
 
+小红书：
+“部署踩坑 + 配置清单”
+
+B站：
+“完整原理 + 部署 + 实测”
+
+CSDN：
+“环境 / 命令 / Bug 修复”
+
+GitHub：
+Experiment Receipt / Demo / Code
+```
+
+这比“每天 AI 搜热点 → LLM 写文案 → AI 生成视频”适配你得多。
+
+因为你的 **工作本身就是 Source**。
+
+---
+
+## Workflow C — Winner → Enhanced
+
+只有 Baseline 已经证明主题值得投入才进入：
+
+```text
+Winner Source
+     ↓
+Enhanced Script
+     ↓
+AI Video / Digital Human /
+Advanced Motion / Higher-end Visuals
+     ↓
+Multi-platform Adaptation
+     ↓
+Publish
+     ↓
+Compare:
 Founder Minutes
-目标下降 >= 25%
-
-Manual Handoff
-目标下降 >= 30%
-
-Required Record Completeness
-= 100%
-
-严重 Governance Incident
-= 0
+Cash Cost
+Retention
+Qualified Signal
+Commercial Signal
 ```
 
-这里的 25% / 30% 不是“行业标准”，而是我建议的**实验判定阈值**。
+这正是你 Strategy 的 Lane B。
 
-因为如果 Easel 只能：
+这里我才建议接 **MoneyPrinterTurbo**。
+
+它现在已经不是以前简单的脚本项目，而是明确提供：
 
 ```text
-节约 5% 工时
-+
-引入一个高速变化的新 runtime
-+
-增加 OpenClaw / Skill / browser dependency
+AI Agent
+WebUI
+REST API
+CLI
+Skill
+Docker
+
+topic
+→ script
+→ voice
+→ footage
+→ subtitles
+→ music
+→ editing
+→ final MP4
 ```
 
-这种迁移不值得。
+API 文档直接运行在 `/docs`，核心接口包括 `/api/v1/scripts`、`/api/v1/terms`、`/api/v1/videos`、`/api/v1/tasks`。:chatgpt-content-reference{index="12"}
+
+它甚至已经有官方 `SKILL.md`，Agent 可直接从主题完成成片。:chatgpt-content-reference{index="13"}
+
+截至 2026-10-01，GitHub API 显示其约 **12.7 万 Star、MIT、9 月 30 日仍在提交**。
+
+[MoneyPrinterTurbo GitHub](https://github.com/harry0703/MoneyPrinterTurbo?utm_source=chatgpt.com)
+
+但注意：
+
+> **它不应该成为你的主 Runtime。**
+
+因为它解决的是：
+
+```text
+topic → video
+```
+
+而你要解决的是：
+
+```text
+real work
+→ evidence
+→ content
+→ distribution
+→ market signal
+→ business learning
+```
+
+所以 MPT 是 **Enhanced Worker**，不是 ContentOps Brain。
 
 ---
 
-# 七、最后不是只有“用 / 不用 Easel”两个结果
+# 七、Postiz 怎么处理
 
-这是这份报告真正开始为你服务的地方。
+Postiz 这次调研后，我认为也很有价值，但位置非常明确。
 
-两周后应该允许得到四种结果：
+它目前已经提供：
 
-| 实验结果 | 决策 |
-|---|---|
-| 全链路明显优于当前 | `COMMON_RUNTIME_CANDIDATE` |
-| 创作强、发布弱 | `PRODUCTION_ENGINE_ONLY` |
-| 某个平台特别强 | `PLATFORM_SPECIFIC_ADAPTER` |
-| 没明显节约 Founder 时间 | `REFERENCE_ONLY` |
+```text
+Public REST API
+Node SDK
+n8n Node
+CLI
+MCP
+Webhooks
+Temporal workflow
+Analytics API
+28+ social channels
+```
 
-比如非常可能出现：
+而且官方已经提供可以直接给 Agent 使用的 `SKILL.md`。:chatgpt-content-reference{index="16"}
+
+API 甚至直接包含：
+
+```text
+POST /public/v1/posts
+GET  /public/v1/analytics/:integration
+GET  /public/v1/analytics/post/:postId
+POST /public/v1/upload
+POST /public/v1/clipping
+```
+
+:chatgpt-content-reference{index="17"}
+
+它现在有约 3.65 万 Star，2026-09-30 仍有提交，而且 9 月版本还加强了 MCP/Agent surface 和 Temporal publishing workflow。:chatgpt-content-reference{index="19"}
+
+[Postiz GitHub](https://github.com/gitroomhq/postiz-app?utm_source=chatgpt.com)
+
+但是你的 Active 平台恰好是：
+
+```text
+Douyin
+Xiaohongshu
+Bilibili
+```
+
+Postiz 并不是为这三个平台设计的。
+
+所以当前：
 
 ```text
 Easel
-├── Research / Topic / Adaptation    ✅
-├── 小红书 Content Production       ✅
-├── 抖音 Publish                     ⚠️
-├── B站 Deep Video                   ⚠️
-└── OPC Business Signal             ❌
+→ 中国 Active Platform Runtime
+
+Postiz
+→ YouTube / X / Reddit / LinkedIn 等
+   全球 Distribution Plane
 ```
 
-那你的正确架构就不是：
+等你的 `YouTube + X` 从 Experiment 晋级，再正式接入 Postiz。
+
+另外注意它是 **AGPL-3.0**；自己内部部署问题较小，但如果以后把修改版做成对外网络 SaaS，需要认真处理对应开源义务。:chatgpt-content-reference{index="21"}
+
+---
+
+# 八、social-auto-upload 怎么处理
+
+这项目反而非常契合你当前三个 Active 平台。
+
+原仓库 `dreammis/social-auto-upload` 截至现在约 **1.5 万 Star**，支持：
 
 ```text
-删掉原有仓库
-→ 全部换 Easel
+抖音
+小红书
+Bilibili
+快手
+视频号
+百家号
+TikTok
+YouTube
 ```
 
-而可能是：
+其中抖音、小红书、Bilibili 已有统一 CLI / Skill，支持定时发布。:chatgpt-content-reference{index="22"}
+
+[social-auto-upload GitHub](https://github.com/dreammis/social-auto-upload?utm_source=chatgpt.com)
+
+但是：
+
+它核心依赖 Playwright / Patchright / Cookie / Web Creator UI，而不是稳定官方 publishing API。:chatgpt-content-reference{index="24"}
+
+这恰好违反你 Strategy 已经写好的默认原则：
+
+> 官方 API / OAuth 优先，浏览器自动化只作受控助手，并且首次接入和高风险渠道保留 Human Approval。
+
+所以我的位置定义是：
 
 ```text
-Strategy
-       ↓
-Common Content Capability
-       ↓
+NOT:
+social-auto-upload = ContentOps Runtime
+
+YES:
+social-auto-upload
+= China Publishing Adapter / fallback
+```
+
+而且 Easel 自己也已经明确警告，小红书自动发布可能触发验证、限流或风控，应预览、preflight 并由用户确认。:chatgpt-content-reference{index="26"}
+
+---
+
+# 九、为什么我不建议你直接基于 SocialFlow / OpenReels 重做
+
+### SocialFlow-AI-Agent
+
+它的状态机非常值得借：
+
+```text
+Draft
+→ Review
+→ Revise
+→ Human Approval
+→ Schedule
+→ Publish
+→ Audit
+```
+
+而且是 LangGraph + FastAPI，API 设计也干净。:chatgpt-content-reference{index="27"}
+
+但 GitHub 当前 metadata 显示：
+
+```text
+0 stars
+0 forks
+repo size 13 KB
+2026-09-01 创建
+主要真实 connector 只有 LinkedIn
+Analytics 还在 roadmap
+```
+
+所以：
+
+> **读它的架构，不要把你的生产系统压在它上面。**
+
+### OpenReels
+
+它确实符合：
+
+```text
+topic
+→ research
+→ script
+→ voice
+→ visuals
+→ music
+→ captions
+→ assembly
+```
+
+Docker + API + CLI 也齐。:chatgpt-content-reference{index="29"}
+
+但 GitHub metadata 显示目前约 204 Star，而且最近代码 push 仍停留在 2026-04-10。
+
+与仍高速维护的 MoneyPrinterTurbo 相比，我不会把它作为你的主视频 Runtime。
+
+---
+
+# 十、最后真正建议你搭成这个形态
+
+```text
+                     X-SuperPlay OPC Blueprint
+                  Business Source of Truth
+                           │
+                           │
+          Source / Proof / Permission / PD State
+                           │
+                           ▼
+             ┌─────────────────────────┐
+             │   OPC ContentOps API    │
+             │      WS-008 Adapter     │
+             │                         │
+             │ State / Gate / Receipt  │
+             └────────────┬────────────┘
+                          │
+                          ▼
+                   Easel / OpenClaw
+         ┌───────────────┼────────────────┐
+         │               │                │
+      Discover          Produce          Publish
+         │               │                │
+    Topic/News       Native Skills     China Platforms
+    GitHub/Source       │            Human Approval Gate
+         │              │                 │
+         │        Enhanced only           │
+         │              ↓                 │
+         │     MoneyPrinterTurbo          │
+         │                                │
+         └───────────────┬────────────────┘
+                         │
+                         ▼
+                      Attribute
+                Metrics / Comments
+                         │
+                         ▼
+               OPC Signal Classifier
+                         │
+             ┌───────────┴───────────┐
+             ▼                       ▼
+         Research                   PD0+
+         Backlog              Opportunity Ledger
+                         │
+                         ▼
+                   Weekly Review
+```
+
+这才是一个 **完整、自洽、API 可驱动、不会把 Business Source of Truth 交给 Agent 的工作流**。
+
+---
+
+# 十一、仓库应该怎么处理
+
+这里我反而不建议你马上再开 `X-SuperPlay-Self-Media-AI-v3-final-final` 这种新仓库。
+
+因为 Blueprint 已经明确规定：
+
+> WS-008 的实现事实源当前是 `X-SuperPlay-Strategy`；只有以后 Runtime 足够独立，才经过 Cross-Repository Workstream Gate 拆独立 Runtime Repo。
+
+因此现在正确的实施顺序是：
+
+1. **在 `X-SuperPlay-Strategy / WS-008` 立一个 `Easel Runtime Evaluation` 实验**，固定 Easel commit，不直接追 `main`。它 2026-08-28 才创建、9 月 30 日仍高速变化，目前约 2.5k Star，因此值得用，但不适合无版本锁定地当生产依赖。
+2. **不要一开始修改 Easel 114 个 Skill**。先跑你真实的两个账号和 1–2 个 Source Artifact，验证 `Source → Platform Asset → Human Gate → Publish → Metrics`。
+3. **新写 7 个 OPC Skill/Adapter**：Source Ingest、Evidence、OPC Topic Rank、Claim/Permission Gate、ContentRecord、Signal Classifier、Weekly Review。
+4. **用一个统一 `POST /v1/content-runs` 包起来**。内部可以调用 `easel skill`，也可以经 OpenClaw Gateway；Easel 安装脚本本身已经启用了本地 OpenAI-compatible `/v1/chat/completions` Gateway。:chatgpt-content-reference{index="33"}
+5. **n8n 只负责触发，不负责经营判断**：定时、Webhook、retry、notification、人工审批通知。你仓库原本对 n8n 的定位其实已经是正确的。
+6. **Baseline 先全部走 Easel 原生简单制作路线**；MoneyPrinterTurbo 只接 Lane B Enhanced，不让 AI Video 再次阻塞每周 4 条基线。
+7. 连续两周拿到 `Founder Minutes / Publish Success / Rework / Qualified Signal / Commercial Progression` 后，再决定是否把 WS-008 Runtime 独立成新的 `X-SuperPlay-ContentOps` 仓库。
+
+---
+
+# 最终判断
+
+你之前的思路容易走成：
+
+```text
+找 AI 视频项目
++ 找 TTS
++ 找剪辑
++ 找发布
++ 找热点
++ 用 n8n 串起来
+```
+
+现在应该改成：
+
+```text
+先确定唯一 Runtime：
+
 Easel
-       ↓
-──────────────
-↓      ↓      ↓
-douyin xhs  bilibili
-repo   repo   repo
+   ↓
+加入 OPC Governance Adapter
+   ↓
+统一 API
+   ↓
+需要时给 Easel 增加专门 Worker
+   ↓
+所有结果重新回 OPC
 ```
 
-这是一种**渐进式收敛**。
+**所以目前我不会建议你重新从零写一套自媒体工作流。**
 
----
+最值得立项的是：
 
-# 八、GitHub Project 要真正成为你的“执行仪表盘”
+> **WS-008 — OPC × Easel ContentOps Runtime Integration**
 
-我建议不要再让这份报告躺在 Markdown 目录里。
+而不是“AI 自媒体工具集合”。
 
-GitHub 官方现在推荐 Projects 维护单一 Source of Truth，并通过 custom fields、workflow automation、auto-add 来减少人工更新。:chatgpt-content-reference{index="5"}
+这也是目前 GitHub 调研结果中，和你 Blueprint 的 **Business → Content → Signal → Opportunity → Business** 闭环最吻合的一条路线。:chatgpt-content-reference{index="36"}
 
-建立：
-
-```text
-Project:
-X-SuperPlay WS-008 ContentOps
-```
-
-字段：
-
-```text
-Status
-Idea / Screened / Queued / Running / Evidence Ready / Validated / Killed
-
-Work Type
-Research / Decision / Experiment / Implementation / Bug
-
-Runtime
-Current / Easel / MPT / Postiz / Other
-
-Platform
-Common / Douyin / XHS / Bilibili / ...
-
-Gate
-Research / Technical / Production / Founder
-
-Evidence
-Missing / Partial / Ready
-
-Decision
-Pending / Adopt / Partial / Reject
-```
-
-然后 Issue 自动进入 Project。
-
-GitHub 自带 Auto-add workflow，可以根据 repository + label 自动将 Issue 加进项目。:chatgpt-content-reference{index="6"}
-
-例如所有：
-
-```text
-label:ws-008
-```
-
-自动进入 ContentOps Project。
-
-这样以后不会出现：
-
-> “我们之前研究 Easel 研究到哪里了？”
-
-看 Project 就知道。
-
----
-
-# 九、再建立一个 Experiment Issue Form
-
-这个投入非常值。
-
-GitHub Issue Forms 可以定义必填字段、下拉选择、默认标签等，非常适合把你的“实验规范”机械化。:chatgpt-content-reference{index="7"}
-
-以后任何“这个 AI 项目好像不错，我想接进 OPC”，都不能直接 Coding。
-
-必须填：
-
-```yaml
-problem:
-current_workflow:
-candidate:
-hypothesis:
-
-baseline:
-
-expected_gain:
-
-sample:
-acceptance:
-
-founder_time_cap:
-cash_budget_cap:
-
-failure_mode:
-rollback:
-
-evidence_path:
-
-promotion_gate:
-stop_condition:
-```
-
-这样以后：
-
-```text
-Easel
-Agent Motion
-Pixelle
-aifusionvideo
-Modly
-新数字人
-新 TTS
-新发布工具
-```
-
-全部进入**同一个实验制度**。
-
-这件事比再找到 100 个 AI 项目更有长期价值。
-
----
-
-# 十、这份报告还必须设置“失效条件”
-
-这一点非常重要。
-
-Easel 是一个非常新的高速迭代项目。
-
-截至目前，它官方 README 仍把：
-
-> Windows 全链路适配、安装简易化、支持更多 Agent Harness
-
-列在 Roadmap 中；与此同时，近期 changelog 又持续在修 Windows/OpenClaw、抖音指标、小红书登录等问题。:chatgpt-content-reference{index="8"}
-
-也就是说：
-
-> 今天正确的调研，三个月以后可能已经部分失效。
-
-所以研究文件顶部必须增加：
-
-```yaml
-researched_at: 2026-10-01
-
-upstream:
-  repo: ZJU-REAL/Easel
-  commit: <SHA>
-
-valid_for_decision:
-  - EXP-WS008-EASEL-001
-
-assumptions:
-  - active platforms remain douyin/xhs/bilibili
-  - current platform repos remain source of truth
-  - human publish approval required
-
-invalidators:
-  - major Easel architecture change
-  - publishing mechanism change
-  - platform policy/API change
-  - active platform portfolio change
-  - experiment evidence contradicts report
-
-review_after:
-  2026-10-15
-```
-
-这样它才是一个**活的 Research Asset**。
-
-而不是历史文章。
-
----
-
-# 十一、外部依赖一定要 Pin
-
-如果进入实验，不要：
-
-```bash
-git clone ...
-git pull main
-```
-
-然后每天的环境都不一样。
-
-先记录：
-
-```text
-repo
-commit SHA
-Easel version
-OpenClaw version
-Python version
-Node version
-OS/runtime
-```
-
-GitHub 在它自己的供应链安全指南里也强调了“不可变引用”的重要性，例如 Actions 推荐使用完整 commit SHA 固定依赖，避免上游引用漂移。:chatgpt-content-reference{index="9"}
-
-对你的实验同样适用：
-
-```text
-EXP-001
-必须对应
-Easel@abcdef123...
-```
-
-否则两周以后：
-
-> 为什么 Week 1 可以、Week 2 不行？
-
-你都不知道是不是 Easel main 变了。
-
----
-
-# 十二、你的“调研 → 行动”以后统一变成这个制度
-
-这是我认为这次最值得沉淀的东西。
-
-```text
-Internet / GitHub / X / ChatGPT
-             ↓
-          Research
-             ↓
-        Research Note
-             ↓
-       Architecture /
-        Decision Record
-             ↓
-      Hypothesis / Gate
-             ↓
-           Issue
-             ↓
-         Experiment
-             ↓
-      Evidence Receipt
-             ↓
-          Review
-       ↙     ↓      ↘
-    Reject Partial  Adopt
-             ↓
-      Implementation
-             ↓
-       Runtime Metrics
-             ↓
-        Periodic Review
-```
-
-**这才是“让 ChatGPT 的调研真正为你服务”。**
-
-否则你现在最大的问题很容易变成：
-
-```text
-今天发现 Easel
-明天发现 Pixelle
-后天发现 Agent Motion
-大后天发现另一个 5 万 Star 项目
-
-↓
-一直感觉在进步
-
-实际：
-没有形成 Decision
-没有形成 Experiment
-没有形成 Production
-没有形成 Evidence
-```
-
-你的 OPC 已经足够成熟，现在应该明确堵住这个漏洞。
-
----
-
-# 十三、所以你现在不要继续“调研 Easel”
-
-## 现在应该进入这个状态
-
-```text
-Research: DONE
-
-Architecture hypothesis: READY
-
-Decision:
-EXPERIMENT_REQUIRED
-
-Next:
-EXP-WS008-EASEL-001
-```
-
-然后只允许两周实验回答三个问题：
-
-```text
-1. Easel 能否真的减少 Founder Minutes？
-
-2. Easel 能否保持你已有
-   Evidence / Claim / Human Approval / Receipt
-   治理？
-
-3. 它应该替代什么，而不是“它还能做什么”？
-```
-
-第三个问题尤其重要。
-
-不要再问：
-
-> Easel 有 114 个 Skill，我能不能全部用？
-
-要问：
-
-> **我现在已有的 5 套重复能力中，哪 2 套可以安全地被 Easel 消掉？**
-
-这才是你的 OPC 思维。
-
----
-
-## 我给你的最终行动排序
-
-| 优先级 | 现在做什么 | 不做什么 |
-|---|---|---|
-| **P0** | 把上一份报告落成 Research Asset | 不再扩展工具清单 |
-| **P0** | 建 `ADR-WS008-ContentOps-Runtime` | 不宣布 Easel 为正式架构 |
-| **P0** | 建 `EXP-WS008-EASEL-001` | 不直接重构 5 个执行仓库 |
-| **P0** | 锁 Easel commit | 不跟着 `main` 跑 |
-| **P1** | 跑 2 周真实 Source | 不做假 Demo |
-| **P1** | 记录 Founder Minutes / Handoff / Rework | 不以播放量判断 Runtime |
-| **P1** | Founder Review | 不让 Agent 自动晋级 |
-| **P2** | 根据证据 Partial / Adopt / Reject | 不预设必须迁移 |
-| **P2** | 只实现被证明需要的 OPC Adapter | 不预写七八十个 Skill |
-| **P3** | 若确实形成 Common Runtime，再讨论独立 Repo | 现在不新建 Runtime 仓库 |
-
-如果这套机制跑通，上一份报告最大的价值甚至不是“找到了 Easel”，而是帮你建立了一个以后处理**所有 AI 工具、开源项目、自动化机会的统一 Research → Decision → Experiment → Evidence → Adoption 机制**。
-
-这才是最值得进入 `X-SuperPlay` 的可复利资产。
-
-
-
-::chatgpt-content-reference{index="11"}
+如果按你现在的仓库治理方式继续，下一步已经可以直接进入 **立项设计**：我建议直接把 `WS-008 × Easel` 拆成 Issue/PR 级别的目录设计、API Schema、7 个 OPC Skill、状态机、验收标准和两周实验计划，而不再继续停留在工具调研阶段。
