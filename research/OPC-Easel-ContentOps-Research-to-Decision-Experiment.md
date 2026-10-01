@@ -562,7 +562,7 @@ real work
 #### 候选 Provider 与接口边界
 
 - **腾讯云照片免训练**：官方接口明确支持照片免训练，照片配文本或音频生成口型匹配视频；接口接收音频并异步返回任务，可作为国内 API 候选。[腾讯云照片免训练接口](https://cloud.tencent.com/document/product/1240/118475)
-- **HeyGen Photo Avatar**：官方 Video API 支持 photo avatar，并允许用 `audio_url` 或 `audio_asset_id` 提供预录音频，异步取得生成结果；当前创建视频接口使用既有 `avatar_id`（Photo Avatar look ID），因此实施时需要把照片注册/创建 Avatar 的前置步骤一并核实，不能把整条流程简化成未经验证的单次 `image_url + audio_url` 请求。[HeyGen Create Video API](https://developers.heygen.com/reference/create-video)
+- **HeyGen 照片驱动**：官方 V3 Create Video 文档说明可从 HeyGen avatar **或任意图片**创建视频，并支持预录音频口型同步；请求体区分 `CreateVideoFromImage` 与 `CreateVideoFromAvatar` 两种模式。已有 Photo Avatar 模式使用 `avatar_id`（Photo Avatar look ID），而任意图片模式可作为免训练候选。接入 PoC 应分别确认图片模式的准确字段、素材上传/URL 要求、当前 API Key 的可用权限和实际费用，不能未经验证就假定字段一定叫 `image_url`。[HeyGen Create Video API](https://developers.heygen.com/reference/create-video)
 - **本地 H3**：保留为本地质量与成本基准，不预先判定它已经足够或必然优于云端方案。将它和 API Provider 放在相同素材、相同后期条件下比较。
 
 声音与人物生成应保持解耦：`IndexTTS / 其他 TTS → audio.wav` 是独立产物，数字人 Provider 只消费该音频并返回口播视频。这样切换腾讯云、HeyGen 或本地 H3 时，不必同步更换声音链路。生成视频再交给 OpenChatCut / Remotion 等后续制作步骤；数字人 Provider 不取得选题、证据、发布审批或 OPC 经营判断的所有权。
@@ -580,7 +580,7 @@ real work
 
 价格与套餐会变化，方案表只用于形成候选，不把未经当前账号核验的每分钟报价写成固定预算。先用真实账单核价。通过画面质量、运行稳定性、成本和自动化门槛后，Provider 才能进入受控生产；对外发布仍遵循本工作流的人审门禁。
 
-**当前建议**：先验证免训练照片驱动，HeyGen Photo Avatar 与腾讯云作为云端候选、本地 H3 作为对照；暂不投入训练型数字分身。现有材料中的“HeyGen `image_url + audio_url` 可直接生成”应视为待核验的具体接入假设：官方 v3 文档已确认 Photo Avatar 与预录音频支持，但所查创建视频接口使用 Photo Avatar 的 `avatar_id`，需要在 PoC 中确认照片导入/建模步骤及账号实际可用能力。
+**当前建议**：先验证免训练照片驱动，HeyGen 任意图片模式与腾讯云作为云端候选、本地 H3 作为对照；暂不投入训练型数字分身。HeyGen 官方 V3 文档已确认“任意图片”与“已有 Avatar”是不同创建模式，并支持预录音频口型同步；PoC 需要确认任意图片模式的准确载荷、照片要求、账号实际可用能力及是否需要额外的资产上传步骤。若该模式在当前账号不可用，再评估先创建 Photo Avatar 的备用流程。
 
 ---
 
