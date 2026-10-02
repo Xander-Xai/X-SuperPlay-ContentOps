@@ -103,10 +103,14 @@ python scripts/qc_video.py projects/<slug>
 - `00-Governance/PROJECT-STATES.md` — 项目四态制度（RUN/HOLD/LIBRARY/KILL）
 - `00-Governance/MEASUREMENT.md` — 新的 5 大衡量标准
 - `00-Governance/douyin-1024-STRATEGY.md` — douyin-1024 战略定位
+- `00-Governance/decisions/ADR-WS008-Presenter-Layer.md` — 数字人 Presenter 层定位决策
 - `docs/V1-RUNBOOK.md` — 操作手册
 - `docs/EASEL-DEPLOYMENT-DECISION.md` — Easel v0.2.1 部署决策（克隆 + Web 工作台）
 - `docs/V1-EXECUTION-METHODOLOGY.md` — 先跑通原版再改造的执行方法论
 - `docs/OPEN-SOURCE-VERSION-HEURISTICS.md` — 开源项目版本选择决策树
+- `docs/PRESENTER-LAYER-SPEC.md` — 数字人画面规范（小窗主持人层）
+- `docs/PRESENTER-PROVIDER-ROUTING.md` — 数字人 Provider 路由与成本模型
+- `docs/DIGITAL-HUMAN-PROVIDER-ANALYSIS.md` — 数字人三条技术路线分析
 - `templates/short-video-v1.md` — 视频结构模板
 - `templates/project.yaml` — 项目元数据模板
 - `templates/qc-checklist.md` — QC 清单
