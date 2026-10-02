@@ -1,0 +1,45 @@
+id: easel-review
+title: "Easel：AI 自媒体工作流到底能不能直接干活？"
+created_at: "2026-10-01T23:05:08Z"
+
+source_refs:
+  - id: easel-readme
+    type: official_doc
+    title: "ZJU-REAL/Easel README"
+    url: "https://github.com/ZJU-REAL/Easel"
+    note: "工作流阶段: Discover / Plan / Produce / Publish / Attribute"
+  - id: easel-skill-mapping
+    type: official_doc
+    title: "Easel skill-function-mapping.md"
+    path: ".runtime/easel/docs/skill-function-mapping.md"
+    note: "Skill 覆盖视频 / 字幕 / 配音 / 发布 / 归因"
+  - id: easel-source-notes
+    type: local_doc
+    title: "Easel 真实 Source 调研笔记"
+    path: "projects/easel-review/sources/documents/easel-source-notes.md"
+  - id: easel-screenshots
+    type: real_screenshot
+    title: "Easel 工作台 / Skill 目录截图"
+    path: "projects/easel-review/sources/screenshots/"
+
+content_type: tech_review
+topic_cluster: ""
+
+target:
+  platform_primary: douyin
+  aspect_ratio: "9:16"
+  resolution: "1080x1920"
+  duration_target_sec: 60
+
+evidence_policy:
+  real_assets_first: true
+  ai_visuals_allowed: auxiliary_only
+  fabricated_claims: forbidden
+
+status: rendered
+
+outputs:
+  final_video: \"D:/Projects/X-SuperPlay-ContentOps/projects/easel-review/final/final.mp4\"
+  qc_report: \"D:/Projects/X-SuperPlay-ContentOps/projects/easel-review/receipts/qc-report.md\"
+
+voice_quality: windows_sapi

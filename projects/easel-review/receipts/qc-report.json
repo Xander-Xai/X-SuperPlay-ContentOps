@@ -1,0 +1,89 @@
+{
+  "project": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-review",
+  "checked_at": "2026-10-02T01:36:28Z",
+  "overall": "PASS",
+  "checks": [
+    {
+      "id": "file_size",
+      "ok": true,
+      "severity": "PASS",
+      "value_bytes": 552315,
+      "min_bytes": 102400
+    },
+    {
+      "id": "ffprobe_parse",
+      "ok": true,
+      "severity": "PASS"
+    },
+    {
+      "id": "resolution",
+      "ok": true,
+      "severity": "PASS",
+      "value": "1080x1920",
+      "expected": "1080x1920"
+    },
+    {
+      "id": "aspect_ratio_9_16",
+      "ok": true,
+      "severity": "PASS",
+      "value": "1080:1920"
+    },
+    {
+      "id": "duration_range",
+      "ok": true,
+      "severity": "PASS",
+      "value_sec": 40.03,
+      "expected_range_sec": [
+        30.0,
+        120.0
+      ]
+    },
+    {
+      "id": "video_codec_h264",
+      "ok": true,
+      "severity": "PASS",
+      "value": "h264"
+    },
+    {
+      "id": "audio_present",
+      "ok": true,
+      "severity": "PASS"
+    },
+    {
+      "id": "audio_codec_aac",
+      "ok": true,
+      "severity": "PASS",
+      "value": "aac"
+    },
+    {
+      "id": "project_yaml",
+      "ok": true,
+      "severity": "PASS"
+    },
+    {
+      "id": "source_refs_recorded",
+      "ok": true,
+      "severity": "PASS",
+      "value_count": 4
+    },
+    {
+      "id": "caption_srt_present",
+      "ok": true,
+      "severity": "PASS",
+      "path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-review\\assets\\captions\\default.srt"
+    },
+    {
+      "id": "real_evidence_present",
+      "ok": true,
+      "severity": "PASS",
+      "value_count": 4
+    },
+    {
+      "id": "voice_quality_declared",
+      "ok": true,
+      "severity": "INFO",
+      "value": "windows_sapi",
+      "note": "fallback is acceptable for smoke test; not for production publish"
+    }
+  ]
+}

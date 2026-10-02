@@ -1,0 +1,27 @@
+id: easel-review
+title: "Easel：AI 自媒体工作流到底能不能直接干活？"
+created_at: ""
+
+source_refs: []
+
+content_type: tech_review
+topic_cluster: AI × 真实工作
+
+target:
+  platform_primary: douyin
+  aspect_ratio: "9:16"
+  resolution: "1080x1920"
+  duration_target_sec: 60
+
+evidence_policy:
+  real_assets_first: true
+  ai_visuals_allowed: auxiliary_only
+  fabricated_claims: forbidden
+
+status: initialized
+
+voice_quality: ""
+
+outputs:
+  final_video: ""
+  qc_report: ""
