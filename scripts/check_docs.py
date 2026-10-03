@@ -30,6 +30,7 @@ CANONICAL_DOCS = [
     "docs/DEVELOPMENT-PLAN.md",
     "docs/TEST-PLAN.md",
     "docs/UPSTREAM-EASEL.md",
+    "docs/GLOSSARY.md",
     "docs/SOURCE-ARTIFACT-CONTRACT.md",
     "docs/MEDIA-PROVIDER-CONTRACT.md",
     "docs/CROSS-REPO-INTEGRATION.md",

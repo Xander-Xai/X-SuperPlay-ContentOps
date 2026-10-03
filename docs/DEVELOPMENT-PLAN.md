@@ -1,5 +1,7 @@
 # Development Plan
 
+[English](DEVELOPMENT-PLAN.md) | [简体中文](DEVELOPMENT-PLAN.zh-CN.md)
+
 > Milestone-based execution. Each milestone has clear exit criteria.
 
 ## M0 — Repository Canonicalization (Issue #2)

@@ -1,5 +1,7 @@
 # PRD — X-SuperPlay ContentOps Runtime
 
+[English](PRD.md) | [简体中文](PRD.zh-CN.md)
+
 ## 1. Background
 
 X-SuperPlay operates self-media accounts (douyin/xhs/bilibili) producing evidence-first technical video content from real business work. Previous 5 separate platform repos failed to produce stable output. ContentOps consolidates production into one runtime.

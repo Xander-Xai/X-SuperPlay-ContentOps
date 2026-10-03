@@ -6,8 +6,9 @@ Runs before every commit / PR.
 Order:
   1. repo_policy_check
   2. check_docs
-  3. test_basic
-  4. git diff --check (whitespace)
+  3. check_i18n
+  4. test_basic
+  5. git diff --check (whitespace)
 
 All must pass. All checks are read-only and deterministic.
 
@@ -44,6 +45,7 @@ def main():
     checks = [
         ("repo_policy", ["python", "scripts/check_repo_policy.py"]) if not args.quick else None,
         ("docs_check",  ["python", "scripts/check_docs.py"]),
+        ("i18n_check",  ["python", "scripts/check_i18n.py"]),
         ("basic_tests", ["python", "scripts/test_basic.py"]),
         ("whitespace",  ["git", "diff", "--check"]),
     ]

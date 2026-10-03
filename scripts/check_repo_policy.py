@@ -109,6 +109,56 @@ def check_research_metadata():
     return failures
 
 
+def check_no_c0_control_chars():
+    """Check tracked text files contain no C0 control chars (except LF/CR/TAB).
+
+    Forbidden: U+0000-U+0008, U+000B, U+000C, U+000E-U+001F, U+007F
+    Allowed:    U+0009 (TAB), U+000A (LF), U+000D (CR)
+
+    C0 chars in tracked source/docs indicate corrupted file generation
+    (e.g. PowerShell here-string escape misinterpretation).
+    """
+    failures = []
+    FORBIDDEN = (
+        set(range(0x00, 0x09))
+        | {0x0B}
+        | {0x0C}
+        | set(range(0x0E, 0x20))
+        | {0x7F}
+    )
+    TEXT_EXTS = {
+        ".md", ".py", ".yaml", ".yml", ".json", ".txt",
+        ".sh", ".ps1", ".example", ".gitignore",
+        ".gitattributes", ".editorconfig",
+    }
+
+    for rel in _git_files():
+        path = ROOT / rel
+        if not path.is_file():
+            continue
+        if path.suffix not in TEXT_EXTS:
+            continue
+        parts = rel.split("/")
+        if any(ex in parts for ex in {
+            ".runtime", "Easel", "node_modules", ".venv",
+            "__pycache__", ".git", ".workbuddy", "diagnostics",
+            "runtime-config-backups", "runtime-diagnostics",
+        }):
+            continue
+        try:
+            data = path.read_bytes()
+        except Exception:
+            continue
+        for i, b in enumerate(data):
+            if b in FORBIDDEN:
+                line_num = data[:i].count(b"\n") + 1
+                failures.append(
+                    f"C0 CONTROL CHAR (0x{b:02x}): {rel} line {line_num}"
+                )
+                break
+    return failures
+
+
 def check_index_tracking():
     failures = []
     index = ROOT / "docs" / "INDEX.md"
@@ -124,6 +174,8 @@ def check_index_tracking():
         "PRD.md",
         "RUNBOOK.md",
         "QUALITY-STANDARD.md",
+        "UPSTREAM-EASEL.md",
+        "GLOSSARY.md",
         "adr/ADR-001",
         "adr/ADR-002",
         "adr/ADR-003",
@@ -145,6 +197,7 @@ def main():
         ("large_files", check_large_files),
         ("archive_metadata", check_archive_metadata),
         ("research_metadata", check_research_metadata),
+        ("no_c0_chars", check_no_c0_control_chars),
         ("index_tracking", check_index_tracking),
     ]
     for name, fn in checks:

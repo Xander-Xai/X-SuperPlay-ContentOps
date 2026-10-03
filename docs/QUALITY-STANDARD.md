@@ -1,5 +1,7 @@
 # Quality Standard
 
+[English](QUALITY-STANDARD.md) | [简体中文](QUALITY-STANDARD.zh-CN.md)
+
 > Video, content, fact, visual, and audio quality gates.
 
 ## Technical (automated)

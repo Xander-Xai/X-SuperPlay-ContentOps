@@ -1,5 +1,7 @@
 # Test Plan
 
+[English](TEST-PLAN.md) | [简体中文](TEST-PLAN.zh-CN.md)
+
 ## Current Suite
 
 `scripts/test_basic.py` — 9 tests, all PASS:
