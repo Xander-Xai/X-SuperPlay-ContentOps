@@ -1,0 +1,66 @@
+name: Bug Report
+description: Report something that is broken or not working as expected
+title: "[BUG] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Environment
+  - type: dropdown
+    id: os
+    attributes:
+      label: OS
+      options:
+        - Windows
+        - WSL2 Ubuntu
+        - macOS
+        - Linux
+    validations:
+      required: true
+  - type: input
+    id: python-version
+    attributes:
+      label: Python version
+      placeholder: "e.g. 3.11, 3.13"
+    validations:
+      required: true
+  - type: input
+    id: git-commit
+    attributes:
+      label: Git commit (run `git rev-parse HEAD`)
+      placeholder: "e.g. 85c5083"
+    validations:
+      required: false
+  - type: markdown
+    attributes:
+      value: |
+        ## Expected behavior
+        <!-- What should happen? -->
+  - type: markdown
+    attributes:
+      value: |
+        ## Actual behavior
+        <!-- What actually happens? -->
+  - type: markdown
+    attributes:
+      value: |
+        ## Reproduction steps
+        <!-- Exact steps to reproduce -->
+        1.
+        2.
+        3.
+  - type: markdown
+    attributes:
+      value: |
+        ## Logs / receipts
+        <!-- Paste sanitized logs. Remove any API keys, tokens, or secrets. -->
+  - type: markdown
+    attributes:
+      value: |
+        ## Receipt
+        <!-- Link to receipts/ directory if applicable -->
+  - type: markdown
+    attributes:
+      value: |
+        ## Security note
+        <!-- Does this involve credentials, secrets, or tokens? -->

@@ -1,0 +1,35 @@
+name: Task
+description: A well-scoped improvement or maintenance task
+title: "[TASK] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Goal
+        <!-- What is the single, specific goal? -->
+  - type: markdown
+    attributes:
+      value: |
+        ## Scope
+        <!-- What is included? -->
+  - type: markdown
+    attributes:
+      value: |
+        ## Non-goals
+        <!-- What is explicitly excluded? -->
+  - type: markdown
+    attributes:
+      value: |
+        ## Acceptance criteria
+        <!-- How do we know when this is done? -->
+        - [ ]
+  - type: markdown
+    attributes:
+      value: |
+        ## Affected canonical docs
+        <!-- Will any docs/ contracts/ schemas need updating? -->
+  - type: markdown
+    attributes:
+      value: |
+        ## Validation
+        <!-- What tests or checks verify success? -->

@@ -1,0 +1,19 @@
+# ContentOps Repository Owner
+# Current GitHub login: Xander-Xai
+
+# Default owner for all files
+*       @Xander-Xai
+
+# Core runtime and scripts
+/runtime/     @Xander-Xai
+/scripts/      @Xander-Xai
+
+# Architecture decisions
+/docs/adr/      @Xander-Xai
+
+# Governance
+/.github/      @Xander-Xai
+
+# Project entry points
+/AGENTS.md     @Xander-Xai
+/CLAUDE.md     @Xander-Xai
