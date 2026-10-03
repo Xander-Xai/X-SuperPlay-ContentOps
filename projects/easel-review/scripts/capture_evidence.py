@@ -11,12 +11,15 @@ white-on-dark, sized for phone legibility.
 
 import os
 import re
-import subprocess
 import sys
 from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(ROOT / "scripts"))
+
+from process_utils import hidden_run  # noqa: E402
+
 RUNTIME = ROOT / ".runtime" / "easel"
 OUT = ROOT / "projects" / "easel-review" / "sources" / "screenshots"
 OUT.mkdir(parents=True, exist_ok=True)
@@ -83,10 +86,10 @@ def render(path: Path, title: str, body_lines: list[str], cjk: bool = False) -> 
             f"fontcolor={colour}:fontsize={size}:x={PAD}:y={top + i * line_h}"
         )
 
-    r = subprocess.run(
+    r = hidden_run(
         ["ffmpeg", "-y", "-f", "lavfi", "-i", f"color=c=0x0d1117:s={W}x{H}:d=1",
          "-vf", chain, "-frames:v", "1", str(path)],
-        capture_output=True, text=True, timeout=90,
+        timeout=90,
     )
     ok = r.returncode == 0 and path.exists() and path.stat().st_size > 0
     if not ok:
@@ -105,8 +108,7 @@ def sh(cmd: list[str], cwd: Path | None = None, limit: int = 14) -> list[str]:
     # Inherit the real environment; a stripped env breaks the CLI's own
     # subprocesses (SystemRoot/PATH), which produced a traceback instead of output.
     env = dict(os.environ, PYTHONIOENCODING="utf-8")
-    r = subprocess.run(cmd, capture_output=True, encoding="utf-8",
-                       errors="replace", cwd=cwd, env=env, timeout=180)
+    r = hidden_run(cmd, cwd=cwd, env=env, timeout=180)
     out = (r.stdout or "") + (r.stderr or "")
     lines = [strip_ansi(l).rstrip() for l in out.splitlines() if l.strip()]
     return [l for l in lines if "Traceback" not in l][:limit]

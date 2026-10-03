@@ -19,9 +19,10 @@ import argparse
 import hashlib
 import json
 import shutil
-import subprocess
 import sys
 from pathlib import Path
+
+from process_utils import hidden_run
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNTIME = ROOT / ".runtime" / "easel"
@@ -67,9 +68,9 @@ def fetch_upstream_tree(repo: str, commit: str) -> dict[str, str]:
     """
     if not shutil.which("gh"):
         raise RuntimeError("gh CLI not found on PATH")
-    proc = subprocess.run(
+    proc = hidden_run(
         ["gh", "api", f"repos/{repo}/git/trees/{commit}?recursive=1"],
-        capture_output=True, encoding="utf-8", errors="replace", timeout=120,
+        timeout=120,
     )
     if proc.returncode != 0:
         raise RuntimeError(f"gh api failed: {(proc.stderr or '').strip()[:300]}")
@@ -99,9 +100,9 @@ def _is_generated(rel: str) -> bool:
 
 def resolve_tag_commit(repo: str, tag: str) -> str:
     """Peel an annotated tag to its commit via the GitHub API."""
-    proc = subprocess.run(
+    proc = hidden_run(
         ["gh", "api", f"repos/{repo}/git/ref/tags/{tag}", "--jq", ".object.sha,.object.type"],
-        capture_output=True, encoding="utf-8", errors="replace", timeout=60,
+        timeout=60,
     )
     if proc.returncode != 0:
         raise RuntimeError(f"cannot resolve tag {tag}: {(proc.stderr or '').strip()[:200]}")
@@ -110,9 +111,9 @@ def resolve_tag_commit(repo: str, tag: str) -> str:
         raise RuntimeError(f"unexpected tag response: {proc.stdout!r}")
     sha, kind = lines
     if kind == "tag":  # annotated: one more hop to the commit
-        proc = subprocess.run(
+        proc = hidden_run(
             ["gh", "api", f"repos/{repo}/git/tags/{sha}", "--jq", ".object.sha"],
-            capture_output=True, encoding="utf-8", errors="replace", timeout=60,
+            timeout=60,
         )
         if proc.returncode != 0:
             raise RuntimeError(f"cannot peel tag object {sha}")

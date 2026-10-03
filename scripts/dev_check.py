@@ -5,10 +5,11 @@ Runs before every commit / PR.
 
 Order:
   1. repo_policy_check
-  2. check_docs
-  3. check_i18n
-  4. test_basic
-  5. git diff --check (whitespace)
+  2. subprocess_policy_check
+  3. check_docs
+  4. check_i18n
+  5. test_basic
+  6. git diff --check (whitespace)
 
 All must pass. All checks are read-only and deterministic.
 
@@ -18,16 +19,17 @@ Usage:
 """
 
 import argparse
-import subprocess
 import sys
 from pathlib import Path
+
+from process_utils import hidden_run, python_executable
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def run_check(name: str, cmd: list[str]) -> bool:
     print(f"\n=== {name} ===")
-    r = subprocess.run(cmd, cwd=str(ROOT), capture_output=True, text=True, timeout=120)
+    r = hidden_run(cmd, cwd=str(ROOT), timeout=300)
     if r.stdout:
         print(r.stdout[:2000])
     if r.returncode != 0 and r.stderr:
@@ -42,11 +44,13 @@ def main():
     p.add_argument("--quick", action="store_true", help="Skip repo policy check")
     args = p.parse_args()
 
+    py = python_executable()
     checks = [
-        ("repo_policy", ["python", "scripts/check_repo_policy.py"]) if not args.quick else None,
-        ("docs_check",  ["python", "scripts/check_docs.py"]),
-        ("i18n_check",  ["python", "scripts/check_i18n.py"]),
-        ("basic_tests", ["python", "scripts/test_basic.py"]),
+        ("repo_policy", [py, "scripts/check_repo_policy.py"]) if not args.quick else None,
+        ("subprocess_policy", [py, "scripts/check_subprocess_policy.py"]),
+        ("docs_check",  [py, "scripts/check_docs.py"]),
+        ("i18n_check",  [py, "scripts/check_i18n.py"]),
+        ("basic_tests", [py, "scripts/test_basic.py"]),
         ("whitespace",  ["git", "diff", "--check"]),
     ]
 

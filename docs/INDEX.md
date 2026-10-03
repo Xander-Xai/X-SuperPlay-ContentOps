@@ -55,6 +55,7 @@ Tier-1 docs have zh-CN mirrors with `.zh-CN.md` suffix. Run `python scripts/chec
 ## Audit
 
 - [AUDIT-REPORT.md](AUDIT-REPORT.md) — Repository audit (2026-10-03)
+- [audits/windows-subprocess-audit.md](audits/windows-subprocess-audit.md) — Windows console popup audit, classification of every subprocess callsite, and the unified process layer (Issue #16)
 
 ## Fact Priority
 

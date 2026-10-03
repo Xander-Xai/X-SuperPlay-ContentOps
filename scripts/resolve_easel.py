@@ -29,12 +29,13 @@ deleted) before re-acquisition, so the bad state stays auditable (§3).
 
 import json
 import shutil
-import subprocess
 import sys
 import tarfile
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
+
+from process_utils import PIPE, hidden_run
 
 ROOT = Path(__file__).resolve().parents[1]
 LOCK_FILE = ROOT / "runtime" / "easel.lock.json"
@@ -63,9 +64,9 @@ def load_pin(root: Path = ROOT) -> dict:
 
 
 def _git(path: Path, *args: str) -> str:
-    r = subprocess.run(
+    r = hidden_run(
         ["git", "-C", str(path), *args],
-        capture_output=True, text=True, timeout=30,
+        timeout=30,
     )
     return r.stdout.strip() if r.returncode == 0 else ""
 
@@ -212,10 +213,10 @@ def _move_aside(path: Path, tag: str) -> Path:
 
 def _strategy_git_clone(root: Path, pin: dict, target: Path) -> dict:
     """Strategy A: clone the tag, then prove HEAD == pinned commit (tags can move)."""
-    r = subprocess.run(
+    r = hidden_run(
         ["git", "clone", "--depth", "1", "--branch", pin["tag"],
          pin["repo"], str(target)],
-        capture_output=True, text=True, timeout=600,
+        timeout=600,
     )
     if r.returncode != 0 or not target.exists():
         return {"ok": False, "reason": (r.stderr or r.stdout or "git clone failed")[-400:]}
@@ -235,9 +236,9 @@ def _strategy_release_archive(root: Path, pin: dict, target: Path) -> dict:
     with tempfile.TemporaryDirectory() as td:
         tgz = Path(td) / "easel.tar.gz"
         with tgz.open("wb") as fh:
-            r = subprocess.run(
+            r = hidden_run(
                 ["gh", "api", f"repos/{repo}/tarball/{pin['tag']}"],
-                stdout=fh, stderr=subprocess.PIPE, timeout=600,
+                stdout=fh, stderr=PIPE, timeout=600, text=False,
             )
         if r.returncode != 0 or tgz.stat().st_size < 1024:
             err = (r.stderr or b"").decode(errors="replace")

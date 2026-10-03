@@ -16,6 +16,8 @@ import re
 import sys
 from pathlib import Path
 
+from process_utils import hidden_run
+
 ROOT = Path(__file__).resolve().parents[1]
 
 # Files that must NEVER appear in the repo root
@@ -36,11 +38,7 @@ LARGE_FILE_THRESHOLD = 5 * 1024 * 1024
 
 
 def _git_files():
-    import subprocess
-    r = subprocess.run(
-        ["git", "-C", str(ROOT), "ls-files"],
-        capture_output=True, text=True, timeout=30
-    )
+    r = hidden_run(["git", "-C", str(ROOT), "ls-files"], timeout=30)
     if r.returncode != 0:
         return []
     return [line.strip() for line in r.stdout.splitlines() if line.strip()]

@@ -10,20 +10,22 @@ Run: python tests/test_windows_paths.py
 import json
 import os
 import shutil
-import subprocess
 import sys
 import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-PYTHON = sys.executable
+sys.path.insert(0, str(ROOT / "scripts"))
+
+from process_utils import hidden_run, python_executable  # noqa: E402
+
+PYTHON = python_executable()
 
 
 def _run(args, cwd=ROOT, env_extra=None):
     env = {**os.environ, **(env_extra or {})}
-    return subprocess.run(
-        args, cwd=str(cwd), capture_output=True, text=True,
-        encoding="utf-8", errors="replace", timeout=60, env=env,
+    return hidden_run(
+        args, cwd=str(cwd), timeout=60, env=env,
     )
 
 

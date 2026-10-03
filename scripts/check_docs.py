@@ -17,6 +17,8 @@ import re
 import sys
 from pathlib import Path
 
+from process_utils import hidden_run
+
 ROOT = Path(__file__).resolve().parents[1]
 
 # --- Canonical files that must exist ---
@@ -210,11 +212,7 @@ def check_sensitive_strings():
     """Check for sensitive patterns in files that would be committed."""
     failures = []
     # Get tracked files
-    import subprocess
-    r = subprocess.run(
-        ["git", "-C", str(ROOT), "ls-files"],
-        capture_output=True, text=True, timeout=30,
-    )
+    r = hidden_run(["git", "-C", str(ROOT), "ls-files"], timeout=30)
     if r.returncode != 0:
         return ["ERROR: could not list git-tracked files"]
 
