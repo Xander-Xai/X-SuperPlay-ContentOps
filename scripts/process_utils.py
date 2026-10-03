@@ -50,6 +50,7 @@ __all__ = [
     "hidden_run",
     "hidden_popen",
     "interactive_run",
+    "interactive_run_captured",
     "is_interactive_command",
     "is_background_command",
     "python_executable",
@@ -67,18 +68,6 @@ DEVNULL = subprocess.DEVNULL
 DEBUG_ENV_VAR = "CONTENTOPS_SHOW_SUBPROCESS_WINDOWS"
 
 _TRUTHY = {"1", "true", "yes", "on"}
-
-# "<exe> <subcommand>" pairs that require a human at the keyboard.
-_INTERACTIVE_PAIRS = {
-    ("gh", "auth"),
-    ("mmx", "auth"),
-}
-
-# "<exe>" invocations that are always interactive, with or without a subcommand.
-_INTERACTIVE_BARE = {"claude", "code"}
-
-# Bare executables that always require a visible console for the user.
-_INTERACTIVE_EXES = {"pwsh.exe", "powershell.exe", "cmd.exe", "bash.exe", "sh.exe"}
 
 
 def python_executable() -> str:
@@ -138,21 +127,110 @@ def _exe_name(cmd: Sequence[str]) -> str:
     return str(cmd[0]).replace("\\", "/").rstrip("/").split("/")[-1].lower()
 
 
-def is_interactive_command(cmd: Sequence[str]) -> bool:
-    """True when the command needs a visible console to be usable.
+def _base_exe(exe: str) -> str:
+    """Strip a trailing .exe so classification is extension-independent."""
+    return exe[:-4] if exe.endswith(".exe") else exe
 
-    Interactive means a human must type into it: ``gh auth login``,
-    ``mmx auth login``, launching ``claude``, or opening a shell. Everything
-    else — including ``gh api``, every ``mmx`` subcommand other than ``auth``,
-    ffmpeg, ffprobe, git, node — is background work and must be hidden.
+
+# "<exe> <subcommand>" pairs that require a human at the keyboard.
+_INTERACTIVE_PAIRS = {
+    ("gh", "auth"),
+    ("mmx", "auth"),
+}
+
+# "<exe>" invocations that are always interactive, with or without a subcommand.
+_INTERACTIVE_BARE = {"claude", "code"}
+
+# Shells. Interactive only when launched bare; a script or an inline command is
+# background work.
+_SHELL_EXES = {"powershell", "pwsh", "cmd", "bash", "sh", "zsh", "fish", "dash", "ksh"}
+
+# Shell flags that mean "run this and exit", so the shell is a tool, not a
+# session the user types into. Compared against the lowercase first argument.
+_SHELL_RUN_FLAGS = {
+    # PowerShell
+    "-command", "-encodedcommand", "-c", "-ec",
+    # POSIX shells
+    "-c", "-lc", "-ic", "-cl", "-lic", "-xc", "-e", "-eu",
+}
+
+# cmd.exe switches. /c executes and exits; /k executes and *keeps* the prompt.
+_CMD_BACKGROUND_SWITCHES = {"/c"}
+_CMD_INTERACTIVE_SWITCHES = {"/k", "/?"}
+
+
+def _shell_is_interactive(exe: str, args: Sequence[str]) -> bool:
+    """Decide whether a shell invocation is a session or a background command.
+
+    ``powershell -NoProfile -Command ...`` and ``bash -c '...'`` run a payload
+    and exit: they are BACKGROUND_HIDDEN and must not flash a window. A bare
+    ``powershell`` or ``cmd`` opens a prompt the user drives: INTERACTIVE_VISIBLE.
+    """
+    base = _base_exe(exe)
+    rest = [str(a).lower() for a in args[1:]]
+    if not rest:
+        return True  # bare shell: the user gets a prompt
+
+    first = rest[0]
+
+    if base == "cmd":
+        if first in _CMD_BACKGROUND_SWITCHES:
+            return False
+        if first in _CMD_INTERACTIVE_SWITCHES:
+            return True
+        # `cmd some.exe ...` runs that program.
+        return False
+
+    if base == "powershell" or base == "pwsh":
+        if first in _SHELL_RUN_FLAGS:
+            return False
+        if first in {"-nologo", "-noprofile", "-noninteractive", "-nologo",
+                     "-mta", "-sta", "-windowstyle", "-executionpolicy",
+                     "-outputformat", "-inputformat", "-workingdirectory", "-w"}:
+            # A modifier flag on its own does not make it a session.
+            return len(rest) > 1 and not any(
+                a in _SHELL_RUN_FLAGS for a in rest[1:]
+            )
+        if first.startswith("-"):
+            # Any remaining PowerShell parameter still runs a payload; treat
+            # unknown flags as background rather than risking a hidden prompt.
+            return False
+        # A script path: `powershell script.ps1` executes it.
+        return False
+
+    # POSIX-like shells.
+    if first in _SHELL_RUN_FLAGS:
+        return False
+    if first.startswith("-"):
+        # Combined short flags such as -lc or -ic contain 'c' when they run a
+        # command; otherwise a bare flag keeps an interactive session.
+        return "c" not in first.lstrip("-")
+    # A script path: `bash script.sh` executes it.
+    return False
+
+
+def is_interactive_command(cmd: Sequence[str]) -> bool:
+    """True when the command needs a visible console for a human to use.
+
+    Interactive means a person must drive it: ``gh auth login``,
+    ``mmx auth login``, launching ``claude``, or opening a shell with no payload.
+
+    Everything else is background work and must be hidden, including the shells
+    used *as tools*: ``powershell -Command``, ``cmd /c``, ``bash -c`` and any
+    script invocation. So is ``gh api``, every ``mmx`` subcommand other than
+    ``auth``, ffmpeg, ffprobe, git and node.
     """
     if not cmd:
         return False
     exe = _exe_name(cmd)
+    base = _base_exe(exe)
     sub = str(cmd[1]).lower() if len(cmd) > 1 else ""
-    if (exe, sub) in _INTERACTIVE_PAIRS or exe in _INTERACTIVE_BARE:
+
+    if (exe, sub) in _INTERACTIVE_PAIRS or base in _INTERACTIVE_BARE:
         return True
-    return exe in _INTERACTIVE_EXES
+    if base in _SHELL_EXES:
+        return _shell_is_interactive(exe, cmd)
+    return False
 
 
 def _reject_shell(shell: bool) -> None:
@@ -282,17 +360,63 @@ def interactive_run(
     input_text: Optional[str] = None,
     check: bool = False,
 ) -> subprocess.CompletedProcess:
-    """Run a command with its console left **visible**.
+    """Run a command the user must interact with, inheriting this terminal.
 
-    Reserved for flows a human must complete, such as ``gh auth login`` and
-    ``mmx auth login``. Suppressing the window here would make the prompt
-    unreachable.
+    Reserved for flows a human has to complete: ``gh auth login``,
+    ``mmx auth login``, a bare shell, manual debug.
 
-    Output is still captured so callers can log the result; use
-    :func:`is_interactive_command` to decide which entry point to use.
+    Default behaviour, and it is deliberate:
+
+    - the console stays **visible** (no ``CREATE_NO_WINDOW``, no ``SW_HIDE``)
+    - **stdin, stdout and stderr are inherited** from the parent process, not
+      piped, so the prompt is reachable and the user's terminal shows the
+      session live
+
+    Capturing the streams here would break the one thing this function exists
+    for: a device-code or browser login prompt that the user has to see and
+    answer. If you need a visible window *and* captured output, call
+    :func:`interactive_run_captured` explicitly instead of changing this
+    default.
+
+    ``input_text`` feeds stdin while still leaving stdout/stderr inherited,
+    which suits a token pasted into a prompt.
     """
     if not cmd:
         raise ValueError("interactive_run() requires a non-empty command")
+
+    return subprocess.run(
+        list(cmd),
+        cwd=cwd,
+        timeout=timeout,
+        env=env,
+        input=input_text,
+        check=check,
+        # No capture_output, no text/encoding, no hidden kwargs: the child owns
+        # the inherited console and the parent stays out of the data path.
+    )
+
+
+def interactive_run_captured(
+    cmd: Sequence[str],
+    *,
+    cwd: Optional[str] = None,
+    timeout: Optional[float] = None,
+    env: Optional[Dict[str, str]] = None,
+    input_text: Optional[str] = None,
+    check: bool = False,
+) -> subprocess.CompletedProcess:
+    """Run a command with a **visible console** but **captured** output.
+
+    The explicit opt-in for the rare case that genuinely needs both: the user
+    watches the session in its own window while the parent also records the
+    transcript for a receipt or a log.
+
+    Output is decoded as UTF-8 with replacement, matching :func:`hidden_run`.
+    Prefer :func:`interactive_run` for anything a human must type into, because
+    a captured stream is not interactive.
+    """
+    if not cmd:
+        raise ValueError("interactive_run_captured() requires a non-empty command")
 
     return subprocess.run(
         list(cmd),
@@ -305,6 +429,7 @@ def interactive_run(
         encoding="utf-8",
         errors="replace",
         check=check,
+        # Window stays visible: no hidden kwargs by design.
     )
 
 

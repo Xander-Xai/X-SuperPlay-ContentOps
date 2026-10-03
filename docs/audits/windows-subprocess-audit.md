@@ -162,11 +162,14 @@ target, not a violation.
 |---|---|---|
 | `hidden_run` → `subprocess.run` | EXEMPT_WITH_REASON | Implementation of the hidden-window wrapper; adding hidden kwargs to itself is circular |
 | `hidden_popen` → `subprocess.Popen` | EXEMPT_WITH_REASON | Same |
-| `interactive_run` → `subprocess.run` | EXEMPT_WITH_REASON | Deliberately **visible**; suppressing the window would break `gh auth login` / `mmx auth login` |
+| `interactive_run` → `subprocess.run` | EXEMPT_WITH_REASON | Deliberately **visible with inherited stdio**; suppressing the window or piping the streams would break `gh auth login` / `mmx auth login` |
+| `interactive_run_captured` → `subprocess.run` | EXEMPT_WITH_REASON | Explicit opt-in for visible **and** captured, kept separate so the auth default is never weakened |
 
 ### scripts/check_subprocess_policy.py
 
-Added by this issue. Uses `ast` only — no `subprocess` calls of its own.
+Added by this issue. Uses `ast` only — no `subprocess` calls of its own. Detection is
+semantic, not textual: imports are resolved into a symbol table before any call is
+judged, so no alias can hide a violation (see "Policy gate coverage" below).
 
 ## `INTERACTIVE_VISIBLE`
 
@@ -182,6 +185,72 @@ Reserved for the MiniMax provider work (Issue #4, M2.0):
 
 Policy for all future provider code: no bare `subprocess.run(["mmx", ...])` anywhere
 outside `process_utils.py`. Auth is the single permitted interactive exception.
+
+## Interactive semantics
+
+`interactive_run()` exists so a human can complete a flow, so it inherits the parent
+terminal rather than capturing it:
+
+| Property | Value | Why |
+|---|---|---|
+| Console | visible | The user has to see the prompt |
+| `CREATE_NO_WINDOW` | never passed | Would allocate nothing to interact with |
+| `SW_HIDE` | never passed | Would hide the session |
+| `stdin` | inherited | The user has to type into it |
+| `stdout` | inherited | Output appears in the user's terminal live |
+| `stderr` | inherited | Prompts and errors stay visible |
+| `capture_output` | never passed by default | Piping would make the prompt unreachable |
+
+`interactive_run_captured()` is the separate, explicitly named variant for the rare
+case that needs a visible window *and* a recorded transcript. The interactive auth
+default is never changed to serve it.
+
+Tests assert this semantically: the `subprocess.run` call inside `interactive_run` is
+parsed with `ast` and must carry none of `capture_output`, `stdout`, `stderr`,
+`stdin`, `startupinfo`, `creationflags`, nor a `**kwargs` splat that could smuggle
+any of them in. No `PIPE`/`DEVNULL` reference is permitted in the function body.
+
+## Shell classification
+
+A shell is only interactive when launched **bare**. Used as a tool it is background
+work, so it must be hidden like any other child process.
+
+| Invocation | Class | Reason |
+|---|---|---|
+| `powershell` / `pwsh` / `cmd` / `bash` / `sh` (no args) | INTERACTIVE_VISIBLE | Opens a prompt the user drives |
+| `powershell -Command ...` / `-EncodedCommand` / `-NonInteractive -Command` | BACKGROUND_HIDDEN | Runs a payload and exits |
+| `pwsh -NoProfile -Command ...` | BACKGROUND_HIDDEN | Same, with modifiers first |
+| `cmd /c ...` | BACKGROUND_HIDDEN | Executes and exits |
+| `cmd /k ...` | INTERACTIVE_VISIBLE | Keeps the prompt open |
+| `bash -c ...` / `sh -c ...` / `bash -lc ...` | BACKGROUND_HIDDEN | Combined short flags count as run-and-exit |
+| `bash script.sh` / `powershell script.ps1` / `cmd some.exe` | BACKGROUND_HIDDEN | Runs a script or program |
+
+`.exe` suffixes and full paths are normalised, so `pwsh.exe` and
+`C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe` classify identically.
+Classification looks at the executable **and** its arguments; the alias `sp` proves
+nothing because no name is trusted.
+
+## Policy gate coverage
+
+Resolution is per-file and import-aware, so these all fail CI:
+
+| Source | Resolved |
+|---|---|
+| `import subprocess` / `as proc` / `as anything` | `subprocess` / `proc` / `anything` |
+| `from subprocess import run` / `run as execute` / `Popen` | `run` / `execute` / `Popen` |
+| `import os as operating_system` | `operating_system` |
+| `from os import system` / `popen as pipe` | `system` / `pipe` |
+| `import os.path as osp` | `osp` |
+| `from subprocess import *` | flagged: bindings become unprovable |
+| `asyncio.create_subprocess_exec` / `create_subprocess_shell` | flagged, so an async provider cannot bypass the gate later |
+| nested-scope and multi-name imports | flagged |
+
+Inert references are deliberately **not** flagged: `subprocess.PIPE`,
+`subprocess.DEVNULL`, `subprocess.STARTUPINFO`, `subprocess.CREATE_NO_WINDOW`,
+`subprocess.SW_HIDE`, `subprocess.CompletedProcess`, `subprocess.TimeoutExpired`,
+`from subprocess import PIPE, DEVNULL`, and annotations such as
+`-> subprocess.CompletedProcess`. String literals, comments and docstrings cannot
+trigger it.
 
 ## Non-findings
 

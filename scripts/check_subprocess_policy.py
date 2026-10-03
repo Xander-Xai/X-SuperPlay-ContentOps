@@ -7,12 +7,35 @@ Windows console suppression (``CREATE_NO_WINDOW`` + ``STARTF_USESHOWWINDOW`` /
 spawning API bypasses that and will flash a CMD/conhost window on Windows.
 
 This check fails CI, which means the rule holds for human contributors and for
-Claude Code equally. Uses :mod:`ast` rather than grep so that string literals,
-comments and unrelated identifiers containing the same words cannot cause false
-positives or hide a real violation.
+Claude Code equally.
+
+Detection is semantic, not textual
+----------------------------------
+The scanner resolves imports before deciding what a call is, so an alias
+cannot hide a violation:
+
+===========================================  ==========================
+source                                      resolved as
+===========================================  ==========================
+``import subprocess``                        ``subprocess``
+``import subprocess as proc``                ``proc``
+``import subprocess as anything``            ``anything``
+``from subprocess import run``               ``run``
+``from subprocess import run as execute``    ``execute``
+``from subprocess import Popen``             ``Popen``
+``import os as operating_system``            ``operating_system``
+``from os import popen as pipe``             ``pipe``
+===========================================  ==========================
+
+Alias choice is never trusted: only the import binding matters, so naming an
+alias ``sp`` grants nothing.
+
+:mod:`ast` is used rather than grep, so string literals and comments cannot
+produce false positives, and no comment or unusual formatting can hide a real
+call.
 
 Usage:
-  python scripts/check_subprocess_policy.py           # report and exit 1 on violation
+  python scripts/check_subprocess_policy.py           # report, exit 1 on violation
   python scripts/check_subprocess_policy.py --quiet   # summary only
 
 Run: part of scripts/dev_check.py and of the CI policy job.
@@ -28,15 +51,16 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from process_utils import hidden_run  # noqa: E402
 
-# Process-spawning APIs that must not be called directly outside process_utils.
-FORBIDDEN_SUBPROCESS_CALLS = frozenset({
-    "run", "Popen", "call", "check_call", "check_output",
-})
-
-# os APIs that spawn a shell; equally forbidden.
-FORBIDDEN_OS_CALLS = frozenset({
-    "system", "popen",
-})
+# Modules that can spawn a process, mapped to the attributes that actually do.
+# Attribute lookups are constant-time dict access; an attribute not listed here
+# (PIPE, DEVNULL, STARTUPINFO, TimeoutExpired, CompletedProcess, ...) is inert.
+FORBIDDEN_ATTRIBUTES: dict[str, frozenset[str]] = {
+    "subprocess": frozenset({"run", "Popen", "call", "check_call", "check_output"}),
+    "os": frozenset({"system", "popen"}),
+    # Covered so an async provider cannot bypass the gate later. Both spawn a
+    # child process with the same console-visibility consequence.
+    "asyncio": frozenset({"create_subprocess_exec", "create_subprocess_shell"}),
+}
 
 # The abstraction itself. Everything else is business code.
 ALLOWED_FILES = {
@@ -58,30 +82,64 @@ EXCLUDED_PREFIXES = (
 SKIPPED_DIRS = {".git", ".runtime", "__pycache__", "Easel", "node_modules", ".venv"}
 
 
-def _tracked_python_files() -> list[Path]:
-    """Return tracked *.py files, asking git rather than walking the tree.
+class SymbolTable:
+    """Import bindings that can reach a process-spawning call.
 
-    Using ``git ls-files`` means untracked scratch files and gitignored runtime
-    checkouts are never scanned, so the policy result matches what CI will see.
+    ``module_aliases`` maps a local name bound by ``import`` to the real root
+    module (``proc`` -> ``subprocess``). ``from_aliases`` maps a local name
+    bound by ``from x import y`` to ``(module, symbol)``. Star imports are
+    recorded because they make the bindings unprovable.
     """
-    r = hidden_run(["git", "-C", str(ROOT), "ls-files", "--", "*.py"], timeout=60)
-    if r.returncode != 0:
-        return sorted(p for p in ROOT.rglob("*.py") if _include(p))
-    return sorted(
-        (ROOT / line.strip())
-        for line in (r.stdout or "").splitlines()
-        if line.strip() and _include(ROOT / line.strip())
-    )
+
+    def __init__(self) -> None:
+        self.module_aliases: dict[str, str] = {}
+        self.from_aliases: dict[str, tuple[str, str]] = {}
+        self.star_modules: set[str] = set()
+
+    def add_import(self, node: ast.Import) -> None:
+        for alias in node.names:
+            root = alias.name.split(".")[0]
+            if alias.asname:
+                self.module_aliases[alias.asname] = root
+            else:
+                # `import a.b.c` binds the name `a`.
+                self.module_aliases[root] = root
+
+    def add_from_import(self, node: ast.ImportFrom) -> None:
+        if node.level:  # relative import, never stdlib subprocess/os/asyncio
+            return
+        module = (node.module or "").split(".")[0]
+        for alias in node.names:
+            if alias.name == "*":
+                self.star_modules.add(module)
+                continue
+            local = alias.asname or alias.name
+            self.from_aliases[local] = (module, alias.name)
+
+    def resolve_attribute(self, dotted: str) -> tuple[str, str] | None:
+        """Return ``(module, symbol)`` for ``alias.symbol``, else None."""
+        base, _, attr = dotted.rpartition(".")
+        if not base:
+            return None
+        module = self.module_aliases.get(base)
+        if module is None:
+            # A bare `subprocess.run(...)` with no import in scope: still a hit.
+            module = base
+        return (module, attr)
+
+    def resolve_bare(self, name: str) -> tuple[str, str] | None:
+        """Return ``(module, symbol)`` for a bare ``name(...)``, else None."""
+        return self.from_aliases.get(name)
 
 
-def _include(path: Path) -> bool:
-    try:
-        rel = path.relative_to(ROOT).as_posix()
-    except ValueError:
-        return False
-    if rel.startswith(EXCLUDED_PREFIXES):
-        return False
-    return not any(part in SKIPPED_DIRS for part in path.parts)
+def _build_symbol_table(tree: ast.AST) -> SymbolTable:
+    table = SymbolTable()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            table.add_import(node)
+        elif isinstance(node, ast.ImportFrom):
+            table.add_from_import(node)
+    return table
 
 
 def _dotted_name(node: ast.AST) -> str:
@@ -120,8 +178,22 @@ def _rel(path: Path) -> str:
         return path.as_posix()
 
 
+def _describe(module: str, symbol: str) -> str:
+    if module == "asyncio":
+        return (
+            f"{module}.{symbol}() spawns a child process without window "
+            f"control. Await it under process_utils, or record a reason in "
+            f"INTERACTIVE_ALLOWLIST if a visible console is genuinely required."
+        )
+    return (
+        f"{module}.{symbol}() bypasses process_utils and will flash a console "
+        f"window on Windows. Use hidden_run()/hidden_popen() for background "
+        f"work, interactive_run() for user-facing auth."
+    )
+
+
 def scan_file(path: Path) -> list[tuple[int, str, str]]:
-    """Return (line, code, message) violations in one file."""
+    """Return ``(line, code, message)`` violations in one file."""
     try:
         source = path.read_text(encoding="utf-8")
         tree = ast.parse(source, filename=str(path))
@@ -132,52 +204,83 @@ def scan_file(path: Path) -> list[tuple[int, str, str]]:
     if rel in ALLOWED_FILES:
         return []
 
+    table = _build_symbol_table(tree)
     violations: list[tuple[int, str, str]] = []
 
     for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and node.level == 0:
+            module = (node.module or "").split(".")[0]
+            for alias in node.names:
+                if alias.name == "*" and module in FORBIDDEN_ATTRIBUTES:
+                    violations.append((
+                        node.lineno,
+                        "STAR_IMPORT",
+                        f"from {module} import * makes the bindings "
+                        f"unprovable, so a process-spawning call could hide in "
+                        f"it. Import the specific symbols you need.",
+                    ))
+
         if not isinstance(node, ast.Call):
             continue
-        dotted = _dotted_name(node.func)
-        if not dotted:
-            continue
 
-        root, _, attr = dotted.rpartition(".")
+        resolved: tuple[str, str] | None = None
+        code = ""
 
-        if root == "subprocess" and attr in FORBIDDEN_SUBPROCESS_CALLS:
-            violations.append((
-                node.lineno,
-                "DIRECT_SUBPROCESS",
-                f"subprocess.{attr}() bypasses process_utils and will flash a "
-                f"console window on Windows. Use hidden_run()/hidden_popen() "
-                f"for background work, interactive_run() for user-facing auth.",
-            ))
+        # A bare Name means `from subprocess import run`; anything else is an
+        # attribute access such as `proc.run`. Distinguishing on node type
+        # matters: _dotted_name() returns "run" for a bare Name, which would
+        # otherwise be misread as an attribute chain with an empty base.
+        if isinstance(node.func, ast.Name):
+            resolved = table.resolve_bare(node.func.id)
+            code = "FROM_IMPORT_SUBPROCESS"
+        else:
+            dotted = _dotted_name(node.func)
+            if dotted:
+                resolved = table.resolve_attribute(dotted)
+                code = "ALIASED_SUBPROCESS"
 
-        elif root == "os" and attr in FORBIDDEN_OS_CALLS:
-            violations.append((
-                node.lineno,
-                "SHELL_SPAWN",
-                f"os.{attr}() spawns a shell with no window control. Use "
-                f"process_utils.hidden_run() with an argument list.",
-            ))
+        if resolved:
+            module, symbol = resolved
+            if symbol in FORBIDDEN_ATTRIBUTES.get(module, frozenset()):
+                violations.append((node.lineno, code, _describe(module, symbol)))
 
-        elif attr in FORBIDDEN_SUBPROCESS_CALLS and dotted.startswith("sp."):
-            violations.append((
-                node.lineno,
-                "ALIASED_SUBPROCESS",
-                f"{dotted}() bypasses process_utils. Import the helper instead.",
-            ))
-
-        if _shell_true_keyword(node) and (
-            root in {"subprocess", "os", "sp"} or attr in FORBIDDEN_SUBPROCESS_CALLS
-        ):
-            violations.append((
-                node.lineno,
-                "SHELL_TRUE",
-                "shell=True is forbidden. Pass an argument list, or invoke the "
-                "shell as an explicit executable argument.",
-            ))
+        if _shell_true_keyword(node) and resolved:
+            module, symbol = resolved
+            if symbol in FORBIDDEN_ATTRIBUTES.get(module, frozenset()):
+                violations.append((
+                    node.lineno,
+                    "SHELL_TRUE",
+                    "shell=True is forbidden. Pass an argument list, or invoke "
+                    "the shell as an explicit executable argument.",
+                ))
 
     return violations
+
+
+def _tracked_python_files() -> list[Path]:
+    """Return tracked *.py files, asking git rather than walking the tree.
+
+    Using ``git ls-files`` means untracked scratch files and gitignored runtime
+    checkouts are never scanned, so the policy result matches what CI will see.
+    """
+    r = hidden_run(["git", "-C", str(ROOT), "ls-files", "--", "*.py"], timeout=60)
+    if r.returncode != 0:
+        return sorted(p for p in ROOT.rglob("*.py") if _include(p))
+    return sorted(
+        (ROOT / line.strip())
+        for line in (r.stdout or "").splitlines()
+        if line.strip() and _include(ROOT / line.strip())
+    )
+
+
+def _include(path: Path) -> bool:
+    try:
+        rel = path.relative_to(ROOT).as_posix()
+    except ValueError:
+        return False
+    if rel.startswith(EXCLUDED_PREFIXES):
+        return False
+    return not any(part in SKIPPED_DIRS for part in path.parts)
 
 
 def main() -> int:
@@ -187,7 +290,6 @@ def main() -> int:
 
     files = _tracked_python_files()
     total = 0
-    reported = 0
 
     for path in files:
         violations = scan_file(path)
@@ -196,7 +298,6 @@ def main() -> int:
         rel = _rel(path)
         for lineno, code, message in violations:
             total += 1
-            reported += 1
             if not args.quiet:
                 where = f"{rel}:{lineno}" if lineno else rel
                 print(f"[FAIL] {where}  {code}")

@@ -21,6 +21,7 @@ Run: python tests/test_windows_subprocess.py
 """
 
 import ast
+import inspect
 import os
 import shutil
 import subprocess
@@ -263,18 +264,77 @@ VIOLATION_SNIPPETS = {
     "aliased": "import subprocess as sp\nsp.run(['x'])\n",
 }
 
+# Alias and from-import forms that must also be caught. Resolution is semantic,
+# so the alias name is irrelevant; only the import binding decides.
+ALIAS_VIOLATION_SNIPPETS = {
+    "arbitrary alias .run": "import subprocess as proc\nproc.run(['git','status'])\n",
+    "arbitrary alias .Popen": "import subprocess as anything\nanything.Popen(['x'])\n",
+    "arbitrary alias .check_output":
+        "import subprocess as p\np.check_output(['x'])\n",
+    "arbitrary alias nested scope":
+        "def f():\n    import subprocess as z\n    z.run(['x'])\n",
+    "alias in multi-import": "import os, subprocess as q\nq.run(['x'])\n",
+    "from-import bare run": "from subprocess import run\nrun(['x'])\n",
+    "from-import renamed run":
+        "from subprocess import run as execute\nexecute(['x'])\n",
+    "from-import bare Popen": "from subprocess import Popen\nPopen(['x'])\n",
+    "from-import renamed check_call":
+        "from subprocess import check_call as cc\ncc(['x'])\n",
+    "os arbitrary alias": "import os as operating_system\noperating_system.system('x')\n",
+    "os from-import bare": "from os import system\nsystem('x')\n",
+    "os from-import renamed": "from os import popen as pipe\npipe('x')\n",
+    "dotted module alias": "import os.path as osp\nosp.popen('x')\n",
+    "star import subprocess": "from subprocess import *\nrun(['x'])\n",
+    "alias with shell=True": "import subprocess as s\ns.run(['x'], shell=True)\n",
+    "asyncio create_subprocess_exec":
+        "import asyncio\nasyncio.create_subprocess_exec('ls')\n",
+    "asyncio create_subprocess_shell":
+        "from asyncio import create_subprocess_shell\ncreate_subprocess_shell('ls')\n",
+}
 
-def test_policy_catches_forbidden_calls():
+# Must NOT be flagged: inert constants, annotations, unrelated names.
+FALSE_POSITIVE_SNIPPETS = {
+    "string literal": "x = 'subprocess.run()'\n",
+    "comment": "# subprocess.run(...)\n",
+    "docstring": '"""Use subprocess.run() carefully."""\n',
+    "inert PIPE constant": "import subprocess\nP = subprocess.PIPE\n",
+    "inert from-import":
+        "from subprocess import PIPE, DEVNULL, TimeoutExpired, CompletedProcess\n",
+    "inert type annotation":
+        "import subprocess\ndef f() -> subprocess.CompletedProcess: ...\n",
+    "catching TimeoutExpired":
+        "import subprocess\ntry:\n    pass\nexcept subprocess.TimeoutExpired:\n    pass\n",
+    "unrelated local run()": "def run(x):\n    return x\nrun(1)\n",
+    "unrelated module": "import requests\nrequests.get('x')\n",
+    "window constants are inert":
+        "import subprocess\n"
+        "si = subprocess.STARTUPINFO()\n"
+        "f = subprocess.CREATE_NO_WINDOW\n"
+        "h = subprocess.SW_HIDE\n",
+}
+
+
+def _scan_snippet(snippet):
     sys.path.insert(0, str(ROOT / "scripts"))
     import check_subprocess_policy as policy
 
+    with tempfile.TemporaryDirectory() as td:
+        probe = Path(td) / "probe.py"
+        probe.write_text(snippet, encoding="utf-8")
+        return policy.scan_file(probe)
+
+
+def test_policy_catches_forbidden_calls():
     for name, snippet in VIOLATION_SNIPPETS.items():
-        with tempfile.TemporaryDirectory() as td:
-            probe = Path(td) / "probe.py"
-            probe.write_text(snippet, encoding="utf-8")
-            found = policy.scan_file(probe)
-            assert found, f"policy failed to flag {name}"
+        assert _scan_snippet(snippet), f"policy failed to flag {name}"
     print(f"[ok] 8. policy flags all {len(VIOLATION_SNIPPETS)} forbidden patterns")
+
+
+def test_policy_catches_arbitrary_aliases():
+    """Alias naming must not matter; only the import binding is used."""
+    for name, snippet in ALIAS_VIOLATION_SNIPPETS.items():
+        assert _scan_snippet(snippet), f"policy failed to flag alias case: {name}"
+    print(f"[ok] 8f. policy resolves {len(ALIAS_VIOLATION_SNIPPETS)} alias/from-import forms")
 
 
 def test_policy_allows_process_utils():
@@ -358,21 +418,158 @@ def test_background_classification():
     print("[ok] 9b. provider + tool commands classified background")
 
 
-def test_interactive_run_executes():
+def test_interactive_run_inherits_stdio():
+    """interactive_run must not pipe stdin/stdout/stderr.
+
+    Piping them would make an auth prompt unreachable, which defeats the only
+    reason this function exists.
+    """
     r = process_utils.interactive_run([PYTHON, "-c", "print('interactive-ok')"])
-    assert r.returncode == 0, r.stderr
-    assert "interactive-ok" in r.stdout
-    print("[ok] 9c. interactive_run executes and captures")
+    assert r.returncode == 0, r.returncode
+    assert r.stdout is None, f"stdout must be inherited, not captured: {r.stdout!r}"
+    assert r.stderr is None, f"stderr must be inherited, not captured: {r.stderr!r}"
+    print("[ok] 9c. interactive_run inherits stdout/stderr (not captured)")
 
 
-def test_interactive_run_does_not_suppress():
-    """interactive_run must not add window-suppression kwargs."""
-    import inspect
-    src = inspect.getsource(process_utils.interactive_run)
-    assert "_get_hidden_kwargs" not in src, (
-        "interactive_run must leave the console visible"
-    )
-    print("[ok] 9d. interactive_run leaves the console visible")
+def test_interactive_run_does_not_pipe_or_hide():
+    """Semantic check on the actual subprocess.run call inside interactive_run.
+
+    Inspected via ast rather than by text search, so prose in the docstring
+    cannot produce a false failure and a real kwarg cannot hide behind a
+    reformat.
+    """
+    tree = ast.parse(inspect.getsource(process_utils.interactive_run))
+    run_calls = [
+        n for n in ast.walk(tree)
+        if isinstance(n, ast.Call)
+        and isinstance(n.func, ast.Attribute)
+        and n.func.attr == "run"
+    ]
+    assert run_calls, "interactive_run must call subprocess.run"
+
+    forbidden_kwargs = {
+        "capture_output", "stdout", "stderr", "stdin",
+        "startupinfo", "creationflags",
+    }
+    for call in run_calls:
+        for kw in call.keywords:
+            assert kw.arg not in forbidden_kwargs, (
+                f"interactive_run must not pass {kw.arg}=; the child has to "
+                f"inherit the terminal so an auth prompt stays reachable"
+            )
+        # A **splat could smuggle any kwarg past the check above.
+        assert not any(kw.arg is None for kw in call.keywords), (
+            "interactive_run must not use **kwargs; hidden flags could leak in"
+        )
+        assert "hidden_run" not in ast.dump(call), (
+            "interactive_run must not delegate to the hidden path"
+        )
+    print("[ok] 9d. interactive_run passes no stdout/stderr/stdin/hidden kwargs")
+
+
+def test_interactive_run_source_has_no_pipe_reference():
+    """No PIPE constant may be referenced anywhere in interactive_run."""
+    tree = ast.parse(inspect.getsource(process_utils.interactive_run))
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Attribute) and node.attr in {"PIPE", "DEVNULL"}:
+            raise AssertionError(f"interactive_run references {node.attr}")
+        if isinstance(node, ast.Name) and node.id in {"PIPE", "DEVNULL"}:
+            raise AssertionError(f"interactive_run references {node.id}")
+    print("[ok] 9l. interactive_run references no PIPE or DEVNULL")
+
+
+def test_interactive_run_inherits_stdin():
+    """A child must see the parent's stdin when nothing is piped."""
+    import tempfile
+
+    marker = "stdin-was-inherited"
+    with tempfile.TemporaryDirectory() as td:
+        path = Path(td) / "in.txt"
+        path.write_text(marker, encoding="utf-8")
+        # Redirect this process's stdin from the file, then let the child read it.
+        saved = os.dup(0)
+        try:
+            fd = os.open(str(path), os.O_RDONLY)
+            os.dup2(fd, 0)
+            os.close(fd)
+            r = hidden_run([PYTHON, "-c",
+                            "import sys; sys.stdout.write(sys.stdin.read())"],
+                           stdin=None)
+        finally:
+            os.dup2(saved, 0)
+            os.close(saved)
+    assert marker in r.stdout, f"child did not inherit stdin: {r.stdout!r}"
+    print("[ok] 9g. an inheriting child reads the parent's stdin")
+
+
+def test_interactive_run_captured_is_explicit():
+    """The visible+captured variant exists as a separate, clearly named helper."""
+    assert hasattr(process_utils, "interactive_run_captured")
+    r = process_utils.interactive_run_captured(
+        [PYTHON, "-c", "import sys; sys.stdout.write('cap')"])
+    assert r.returncode == 0, r.returncode
+    assert r.stdout == "cap", r.stdout
+    tree = ast.parse(inspect.getsource(process_utils.interactive_run_captured))
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Attribute) and node.attr in {
+                "_get_hidden_kwargs", "CREATE_NO_WINDOW", "SW_HIDE"}:
+            raise AssertionError(
+                f"interactive_run_captured must keep the window visible ({node.attr})"
+            )
+    print("[ok] 9h. interactive_run_captured captures without hiding")
+
+
+def test_shell_tools_are_background():
+    """A shell used as a tool is background work, not an interactive session."""
+    background = [
+        ["powershell", "-Command", "Get-Date"],
+        ["powershell", "-NoLogo", "-NoProfile", "-NonInteractive", "-Command", "x"],
+        ["pwsh", "-Command", "Get-Date"],
+        ["pwsh", "-NoProfile", "-Command", "x"],
+        ["powershell", "-NonInteractive", "-Command", "x"],
+        ["powershell", "-EncodedCommand", "SQBFAA=="],
+        ["powershell.exe", "-Command", "x"],
+        ["cmd", "/c", "echo hi"],
+        ["cmd.exe", "/c", "dir"],
+        ["bash", "-c", "echo hi"],
+        ["sh", "-c", "echo hi"],
+        ["bash", "-lc", "echo hi"],
+        ["powershell", "script.ps1"],
+        ["bash", "script.sh"],
+        ["cmd", "some.exe"],
+    ]
+    for cmd in background:
+        assert not process_utils.is_interactive_command(cmd), (
+            f"{cmd} runs a payload and must be BACKGROUND_HIDDEN"
+        )
+    print(f"[ok] 9i. {len(background)} shell-as-tool invocations classified background")
+
+
+def test_bare_shells_are_interactive():
+    """A bare shell opens a prompt the user drives."""
+    for cmd in (["powershell"], ["pwsh"], ["cmd"], ["bash"], ["sh"],
+                ["powershell.exe"], ["pwsh.exe"], ["cmd.exe"],
+                [r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"]):
+        assert process_utils.is_interactive_command(cmd), (
+            f"{cmd} is a bare shell and must be INTERACTIVE_VISIBLE"
+        )
+    print("[ok] 9j. bare shells classified interactive")
+
+
+def test_interactive_run_does_not_suppress_window():
+    """No CREATE_NO_WINDOW / SW_HIDE may reach an interactive child."""
+    if not IS_WINDOWS:
+        print("[skip] window-visibility assertion is Windows-only")
+        return
+    before = process_utils.window_suppression_enabled()
+    tree = ast.parse(inspect.getsource(process_utils.interactive_run))
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Attribute) and node.attr in {
+                "_get_hidden_kwargs", "CREATE_NO_WINDOW", "SW_HIDE",
+                "STARTF_USESHOWWINDOW"}:
+            raise AssertionError(f"interactive_run touches {node.attr}")
+    assert before is True, "suppression should be active outside the debug override"
+    print("[ok] 9k. interactive_run leaves the console visible on Windows")
 
 
 def test_shell_true_rejected():
@@ -473,14 +670,21 @@ TESTS = [
     test_stderr_captured_on_failure,
     test_stderr_to_file_handle,
     test_policy_catches_forbidden_calls,
+    test_policy_catches_arbitrary_aliases,
     test_policy_allows_process_utils,
     test_policy_ignores_strings_and_comments,
     test_policy_passes_on_repository,
     test_policy_allowlist_entries_have_reasons,
     test_interactive_classification,
     test_background_classification,
-    test_interactive_run_executes,
-    test_interactive_run_does_not_suppress,
+    test_interactive_run_inherits_stdio,
+    test_interactive_run_does_not_pipe_or_hide,
+    test_interactive_run_source_has_no_pipe_reference,
+    test_interactive_run_inherits_stdin,
+    test_interactive_run_captured_is_explicit,
+    test_shell_tools_are_background,
+    test_bare_shells_are_interactive,
+    test_interactive_run_does_not_suppress_window,
     test_shell_true_rejected,
     test_debug_override_disables_suppression,
     test_suppression_reenabled_after_override,

@@ -169,11 +169,14 @@ translation_status: synced
 |---|---|---|
 | `hidden_run` → `subprocess.run` | EXEMPT_WITH_REASON | 隐藏窗口 wrapper 的实现；给自己再加隐藏参数是循环定义 |
 | `hidden_popen` → `subprocess.Popen` | EXEMPT_WITH_REASON | 同上 |
-| `interactive_run` → `subprocess.run` | EXEMPT_WITH_REASON | 有意**保持可见**；抑制窗口会让 `gh auth login` / `mmx auth login` 无法使用 |
+| `interactive_run` → `subprocess.run` | EXEMPT_WITH_REASON | 有意**保持可见并继承 stdio**；抑制窗口或管道化流都会让 `gh auth login` / `mmx auth login` 无法使用 |
+| `interactive_run_captured` → `subprocess.run` | EXEMPT_WITH_REASON | 显式选择"可见 + 捕获"，独立成函数，绝不为它削弱认证默认语义 |
 
 ### scripts/check_subprocess_policy.py
 
 由本 Issue 新增。只使用 `ast`，自身没有任何 `subprocess` 调用。
+检测是**语义化**的而非文本匹配：在判定任何调用之前，先把 import 解析成符号表，
+因此没有任何别名能藏住违规（见下方"策略门禁覆盖范围"）。
 
 ## `INTERACTIVE_VISIBLE`
 
@@ -189,6 +192,68 @@ translation_status: synced
 
 对所有未来 provider 代码的规则：不允许在 `process_utils.py` 之外出现裸的
 `subprocess.run(["mmx", ...])`。认证是唯一允许的交互例外。
+
+## 交互语义
+
+`interactive_run()` 存在的意义是让人类完成一个流程，因此它**继承父终端**而不是捕获它：
+
+| 属性 | 取值 | 原因 |
+|---|---|---|
+| 控制台 | 可见 | 用户必须看到提示 |
+| `CREATE_NO_WINDOW` | 永不传入 | 否则根本没有可交互的窗口 |
+| `SW_HIDE` | 永不传入 | 否则会把会话藏起来 |
+| `stdin` | 继承 | 用户必须往里输入 |
+| `stdout` | 继承 | 输出实时出现在用户终端 |
+| `stderr` | 继承 | 提示和错误保持可见 |
+| `capture_output` | 默认永不传入 | 管道化会让提示无法触达 |
+
+`interactive_run_captured()` 是独立的、显式命名的变体，用于极少数
+既需要可见窗口、又需要留存记录的场景。交互认证的默认语义绝不为此让步。
+
+测试以语义方式断言这一点：`interactive_run` 内部的 `subprocess.run` 调用
+用 `ast` 解析，必须不携带 `capture_output`、`stdout`、`stderr`、`stdin`、
+`startupinfo`、`creationflags` 中的任何一个，也不允许用 `**kwargs`
+把其中任何一个夹带进来。函数体内不允许出现任何 `PIPE`/`DEVNULL` 引用。
+
+## Shell 分类
+
+只有**裸启动**的 shell 才是交互式的。作为工具使用时属于后台工作，
+必须和其他子进程一样被隐藏。
+
+| 调用形式 | 类别 | 理由 |
+|---|---|---|
+| `powershell` / `pwsh` / `cmd` / `bash` / `sh`（无参数） | INTERACTIVE_VISIBLE | 打开一个由用户操作的提示符 |
+| `powershell -Command ...` / `-EncodedCommand` / `-NonInteractive -Command` | BACKGROUND_HIDDEN | 执行完载荷就退出 |
+| `pwsh -NoProfile -Command ...` | BACKGROUND_HIDDEN | 同上，只是前面带修饰参数 |
+| `cmd /c ...` | BACKGROUND_HIDDEN | 执行后退出 |
+| `cmd /k ...` | INTERACTIVE_VISIBLE | 保持提示符打开 |
+| `bash -c ...` / `sh -c ...` / `bash -lc ...` | BACKGROUND_HIDDEN | 组合短选项同样属于"执行后退出" |
+| `bash script.sh` / `powershell script.ps1` / `cmd some.exe` | BACKGROUND_HIDDEN | 运行脚本或程序 |
+
+`.exe` 后缀和完整路径会被归一化，因此 `pwsh.exe` 与
+`C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe` 分类结果一致。
+分类同时看可执行文件**及其参数**；别名 `sp` 不说明任何问题，因为没有任何名字被信任。
+
+## 策略门禁覆盖范围
+
+解析按文件进行且感知 import，因此以下写法都会让 CI 失败：
+
+| 源码 | 解析结果 |
+|---|---|
+| `import subprocess` / `as proc` / `as anything` | `subprocess` / `proc` / `anything` |
+| `from subprocess import run` / `run as execute` / `Popen` | `run` / `execute` / `Popen` |
+| `import os as operating_system` | `operating_system` |
+| `from os import system` / `popen as pipe` | `system` / `pipe` |
+| `import os.path as osp` | `osp` |
+| `from subprocess import *` | 标记：绑定关系无法证明 |
+| `asyncio.create_subprocess_exec` / `create_subprocess_shell` | 标记，避免未来的 async provider 绕过门禁 |
+| 嵌套作用域与多名称 import | 标记 |
+
+以下惰性引用**刻意不标记**：`subprocess.PIPE`、`subprocess.DEVNULL`、
+`subprocess.STARTUPINFO`、`subprocess.CREATE_NO_WINDOW`、`subprocess.SW_HIDE`、
+`subprocess.CompletedProcess`、`subprocess.TimeoutExpired`、
+`from subprocess import PIPE, DEVNULL`，以及 `-> subprocess.CompletedProcess`
+这类注解。字符串字面量、注释和文档字符串也不会触发。
 
 ## 未发现的问题
 
