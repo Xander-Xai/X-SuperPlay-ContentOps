@@ -134,10 +134,54 @@ def test_both_windows_flags_present():
 # --- 5. UTF-8 ----------------------------------------------------------------
 
 def test_utf8_stdout():
-    r = hidden_run([PYTHON, "-c", "print('中文 \\u00e9\\u00e8')"])
-    assert r.returncode == 0, r.stderr
+    """Child emits UTF-8 bytes; hidden_run decodes them as UTF-8.
+
+    The child writes through `stdout.buffer`, so the bytes on the wire are UTF-8
+    regardless of the locale codepage. Driving it through the text layer instead
+    would test the child's console encoding rather than the parent's decoding:
+    on a default Windows host the child encodes with cp1252 and dies with
+    UnicodeEncodeError before hidden_run sees anything. `-X utf8` is not enough
+    either, because PYTHONIOENCODING takes precedence over it.
+    """
+    r = hidden_run([PYTHON, "-c",
+                    "import sys; sys.stdout.buffer.write('\\u4e2d\\u6587 \\u00e9'.encode('utf-8'))"])
+    assert r.returncode == 0, f"rc={r.returncode} stderr={r.stderr}"
     assert "中文" in r.stdout, f"UTF-8 mangled: {r.stdout!r}"
+    assert "\u00e9" in r.stdout, f"latin-1 supplement lost: {r.stdout!r}"
     print("[ok] 5. UTF-8 stdout decoded")
+
+
+def test_utf8_via_pythonioencoding():
+    """The realistic path: child text stream pinned to UTF-8 via the env."""
+    env = dict(os.environ, PYTHONIOENCODING="utf-8", PYTHONUTF8="1")
+    r = hidden_run([PYTHON, "-c", "print('中文')"], env=env)
+    assert r.returncode == 0, f"rc={r.returncode} stderr={r.stderr}"
+    assert "中文" in r.stdout, r.stdout
+    print("[ok] 5d. UTF-8 via PYTHONIOENCODING")
+
+
+def test_utf8_stderr_decoded():
+    """stderr must be decoded as UTF-8 too, not left as raw bytes."""
+    r = hidden_run([PYTHON, "-c",
+                    "import sys; sys.stderr.buffer.write('\\u4e2d\\u6587'.encode('utf-8'))"])
+    assert r.returncode == 0, r.stderr
+    assert isinstance(r.stderr, str), type(r.stderr)
+    assert "中文" in r.stderr, r.stderr
+    print("[ok] 5e. UTF-8 stderr decoded")
+
+
+def test_child_encoding_is_decoupled_from_parent_decode():
+    """A cp1252-locale child must not break UTF-8 decoding of its output.
+
+    ContentOps must not depend on the child's console codepage. This is the
+    condition that failed on CI.
+    """
+    env = dict(os.environ, PYTHONIOENCODING="cp1252", PYTHONUTF8="0")
+    r = hidden_run([PYTHON, "-c",
+                    "import sys; sys.stdout.buffer.write('ok'.encode('ascii'))"], env=env)
+    assert r.returncode == 0, f"rc={r.returncode} stderr={r.stderr}"
+    assert "ok" in r.stdout, r.stdout
+    print("[ok] 5f. child locale codepage does not affect parent decoding")
 
 
 def test_utf8_replacement_on_invalid_bytes():
@@ -418,6 +462,9 @@ TESTS = [
     test_startupinfo_sw_hide_flag,
     test_both_windows_flags_present,
     test_utf8_stdout,
+    test_utf8_via_pythonioencoding,
+    test_utf8_stderr_decoded,
+    test_child_encoding_is_decoupled_from_parent_decode,
     test_utf8_replacement_on_invalid_bytes,
     test_binary_mode_returns_bytes,
     test_timeout_raises,
