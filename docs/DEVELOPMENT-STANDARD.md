@@ -1,5 +1,7 @@
 # Development Standard
 
+[English](DEVELOPMENT-STANDARD.md) | [简体中文](DEVELOPMENT-STANDARD.zh-CN.md)
+
 > How to work in this repository. Binding for humans and Claude Code.
 
 ## Sources of Truth (Priority Order)

@@ -124,6 +124,8 @@ def check_index_tracking():
         "PRD.md",
         "RUNBOOK.md",
         "QUALITY-STANDARD.md",
+        "UPSTREAM-EASEL.md",
+        "GLOSSARY.md",
         "adr/ADR-001",
         "adr/ADR-002",
         "adr/ADR-003",

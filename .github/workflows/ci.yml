@@ -31,8 +31,17 @@ jobs:
       - name: Run basic tests
         run: python scripts/test_basic.py
 
+      - name: Run Windows subprocess tests
+        run: python tests/test_windows_subprocess.py
+
+      - name: Run Windows path tests
+        run: python tests/test_windows_paths.py
+
       - name: Run docs consistency checks
         run: python scripts/check_docs.py
+
+      - name: Run i18n consistency checks
+        run: python scripts/check_i18n.py
 
       - name: Check whitespace
         run: git diff --check --exit-code || exit 1

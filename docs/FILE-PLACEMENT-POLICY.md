@@ -1,5 +1,7 @@
 # File Placement Policy
 
+[English](FILE-PLACEMENT-POLICY.md) | [简体中文](FILE-PLACEMENT-POLICY.zh-CN.md)
+
 > Where each type of file belongs. Binding for humans and Claude Code.
 
 ## ROOT Directory
@@ -85,6 +87,9 @@ scripts/
 ├── resolve_easel.py    # runtime resolver
 ├── verify_easel_runtime.py
 ├── assemble_easel.py   # upstream orchestration
+├── process_utils.py    # Windows no-popup subprocess helper
+├── check_easel_upstream.py # Easel upstream watch
+├── check_i18n.py       # bilingual consistency checker
 ├── check_docs.py       # doc consistency
 ├── check_repo_policy.py # file placement + security
 ├── dev_check.py        # unified developer gate

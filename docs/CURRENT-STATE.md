@@ -1,18 +1,19 @@
 # Current State
 
+[English](CURRENT-STATE.md) | [简体中文](CURRENT-STATE.zh-CN.md)
+
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
-> Last verified: 2026-10-03
+> Last verified: 2026-10-04
 
 ## Git
 
 | Property | Value |
 |---|---|
-| Active branch | `refactor/contentops-easel-minimax-plan` |
-| Baseline commit | `8b5fce7` (from `feat/v1-video-pipeline`) |
-| Frozen baseline | `feat/v1-video-pipeline` |
-| Superseded | `codex/photo-avatar-api-clarification` |
-| Main protection | **Unprotected** — NO DIRECT PUSH TO MAIN |
+| Default branch | `main` (only persistent branch) |
+| Main protection | **PROTECTED** — required status checks + PR + no force push + no deletion + linear history |
+| Required checks | `Tests (ubuntu-latest)`, `Tests (windows-latest)`, `Repo policy checks` |
+| Branch strategy | Issue-scoped short-lived branches, squash merge, auto-delete on merge |
 
 ## Easel Runtime
 
@@ -73,4 +74,4 @@
 2. Web workbench — 6 doctor FAILs. Does not block video pipeline.
 3. Gateway healthz — upstream hardcodes port 18789; easel profile uses 37289. Does not block video pipeline.
 4. Human Review — no `human-review.json` receipt for easel-review project.
-5. Main branch unprotected — governance policy enforced by convention, not by GitHub settings.
+5. ~~Main branch unprotected~~ — **RESOLVED** (G0.6): main is now protected via GitHub branch protection.

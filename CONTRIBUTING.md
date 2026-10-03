@@ -1,5 +1,7 @@
 # Contributing to X-SuperPlay-ContentOps
 
+[English](CONTRIBUTING.md) | [简体中文](CONTRIBUTING.zh-CN.md)
+
 ## Development Workflow
 
 ```

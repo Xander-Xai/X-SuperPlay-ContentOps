@@ -74,6 +74,24 @@ Fork is last resort. No upstream modification without patch + tests + ADR.
 - Capability spike required before any implementation
 - `MANUAL_ONLY` is a valid, honest status
 
+## Bilingual Documentation Policy
+
+Tier-1 docs require both English and Chinese versions:
+
+- Modifying a Tier-1 English doc requires updating the zh-CN mirror in the same PR.
+- Modifying a zh-CN mirror to change facts (not pure translation) requires updating the English canonical too.
+- zh-CN mirrors must include YAML front matter: `translation_of`, `language: zh-CN`, `translation_status: synced`.
+- Run `python scripts/check_i18n.py` before every commit.
+- Machine checks structural synchronization, not translation quality.
+
+## Windows Subprocess Policy
+
+- Background subprocesses (ffmpeg, ffprobe, helper Python) MUST use `scripts/process_utils.py` with hidden window.
+- Interactive subprocesses (gh auth login, OAuth, manual debug) MUST stay visible.
+- Never use `shell=True` for background subprocesses.
+- Debug override: set `CONTENTOPS_SHOW_SUBPROCESS_WINDOWS=1` to force visible windows.
+- Hidden windows do NOT hide errors: stdout/stderr/returncode must always be captured.
+
 ## Receipt Culture
 
 Every run produces receipts. No receipt = task not done.

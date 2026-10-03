@@ -1,5 +1,7 @@
 # Architecture
 
+[English](ARCHITECTURE.md) | [简体中文](ARCHITECTURE.zh-CN.md)
+
 > What the system is. Where the boundaries are. How components call each other.
 
 ## System Boundaries

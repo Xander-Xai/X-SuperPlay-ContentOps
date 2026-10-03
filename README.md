@@ -2,6 +2,8 @@
 
 > Evidence-first video ContentOps runtime for Xander-Xai multi-repo content production.
 
+[English](README.md) | [简体中文](README.zh-CN.md)
+
 ## What
 
 A unified runtime that converts real business work (GitHub repos, experiments, research) into high-quality, traceable, publishable video content.
@@ -83,9 +85,8 @@ See [docs/UPSTREAM-EASEL.md](docs/UPSTREAM-EASEL.md) for full policy.
 ## Governance
 
 - **NO DIRECT PUSH TO MAIN** — all changes via PR
-- `main` currently unprotected (governance by convention)
-- Active branch: `refactor/contentops-easel-minimax-plan`
-- Frozen baseline: `feat/v1-video-pipeline`
+- `main` is **PROTECTED**: required status checks + PR + no force push + no deletion + linear history
+- Active branch: `chore/g06-compatibility-operations`
 - See [GitHub Issues](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/issues) for milestone tracking
 
 ## Extension Policy

@@ -1,5 +1,7 @@
 # Documentation Index
 
+[English](INDEX.md) | [简体中文](INDEX.zh-CN.md)
+
 > Single navigation hub. One fact, one owner. Other docs link, never duplicate.
 
 ## Quick Start
@@ -21,7 +23,17 @@
 
 ## Upstream
 
-- [UPSTREAM-EASEL.md](UPSTREAM-EASEL.md) — Easel pin policy, upgrade process
+- [UPSTREAM-EASEL.md](UPSTREAM-EASEL.md) — Easel pin policy, upgrade process, compatibility matrix
+
+## Governance
+
+- [DEVELOPMENT-STANDARD.md](DEVELOPMENT-STANDARD.md) — Development rules
+- [FILE-PLACEMENT-POLICY.md](FILE-PLACEMENT-POLICY.md) — Where files belong
+- [GLOSSARY.md](GLOSSARY.md) — High-frequency terminology
+
+## Bilingual Policy
+
+Tier-1 docs have zh-CN mirrors with `.zh-CN.md` suffix. Run `python scripts/check_i18n.py` to verify structural consistency.
 
 ## Decisions
 
