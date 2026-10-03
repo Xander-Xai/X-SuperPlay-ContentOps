@@ -183,7 +183,7 @@ Two upstream issues had to be worked around to make routing live. Both are
 environment/config fixes — **no Easel source was modified**:
 
 1. **Provider URL scheme.** The profile's `models.providers.anthropic.baseUrl`
-   was `http://api.minimaxi.com/anthropic` (plain HTTP, port 80). In this
+   was using a plain-HTTP base URL (port 80) for the LLM provider. In this
    network port 80 is blackholed (connect timeout); HTTPS is fine. The gateway
    log showed the failure as `LLM request failed: network connection error |
    fetch failed | failoverReason=timeout`. Changed the scheme to `https://`.

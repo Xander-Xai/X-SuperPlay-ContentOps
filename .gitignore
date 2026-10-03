@@ -89,3 +89,9 @@ logs/
 .workbuddy/
 diagnostics/.verify-tmp/
 diagnostics/
+
+# Temp / verification artifacts
+.verify-tmp/
+
+# Provider selection analysis (contains pricing / business strategy — keep local)
+docs/ai-provider-selection.md
