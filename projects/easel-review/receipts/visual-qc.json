@@ -1,0 +1,86 @@
+{
+  "project": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-review",
+  "video": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-review\\final\\easel.mp4",
+  "checked_at": "2026-10-03T17:01:20Z",
+  "frames": [
+    {
+      "index": 0,
+      "timestamp_sec": 3.1,
+      "fraction": 0.05,
+      "black_frame": false,
+      "dark_ratio": 0.8932
+    },
+    {
+      "index": 1,
+      "timestamp_sec": 9.3,
+      "fraction": 0.15,
+      "black_frame": false,
+      "dark_ratio": 0.8936
+    },
+    {
+      "index": 2,
+      "timestamp_sec": 15.5,
+      "fraction": 0.25,
+      "black_frame": false,
+      "dark_ratio": 0.8813
+    },
+    {
+      "index": 3,
+      "timestamp_sec": 21.7,
+      "fraction": 0.35,
+      "black_frame": false,
+      "dark_ratio": 0.9119
+    },
+    {
+      "index": 4,
+      "timestamp_sec": 27.9,
+      "fraction": 0.45,
+      "black_frame": false,
+      "dark_ratio": 0.9087
+    },
+    {
+      "index": 5,
+      "timestamp_sec": 34.1,
+      "fraction": 0.55,
+      "black_frame": false,
+      "dark_ratio": 0.9006
+    },
+    {
+      "index": 6,
+      "timestamp_sec": 40.3,
+      "fraction": 0.65,
+      "black_frame": false,
+      "dark_ratio": 0.8996
+    },
+    {
+      "index": 7,
+      "timestamp_sec": 46.5,
+      "fraction": 0.75,
+      "black_frame": false,
+      "dark_ratio": 0.8907
+    },
+    {
+      "index": 8,
+      "timestamp_sec": 52.7,
+      "fraction": 0.85,
+      "black_frame": false,
+      "dark_ratio": 0.8906
+    },
+    {
+      "index": 9,
+      "timestamp_sec": 58.9,
+      "fraction": 0.95,
+      "black_frame": false,
+      "dark_ratio": 0.8887
+    }
+  ],
+  "duration_sec": 62.0,
+  "contact_sheet": null,
+  "summary": {
+    "total_samples": 10,
+    "extracted": 10,
+    "black_frames": 0,
+    "extraction_failures": 0
+  },
+  "status": "PASS"
+}

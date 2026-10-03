@@ -1,6 +1,6 @@
 {
   "project": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-review",
-  "checked_at": "2026-10-03T12:26:07Z",
+  "checked_at": "2026-10-03T17:08:28Z",
   "video": "",
   "overall": "PASS",
   "checks": [
@@ -14,7 +14,7 @@
       "id": "file_size",
       "ok": true,
       "severity": "PASS",
-      "value_bytes": 1867090,
+      "value_bytes": 1868184,
       "min_bytes": 102400
     },
     {

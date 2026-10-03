@@ -4,12 +4,12 @@
 
 **Overall**: `PASS`
 
-**Checked at**: 2026-10-03T12:26:07Z
+**Checked at**: 2026-10-03T17:08:28Z
 
 | Check | Status | Severity | Detail |
 |---|---|---|---|
 | _video | OK | INFO | path=D:\Projects\X-SuperPlay-ContentOps\projects\easel-review\final\easel.mp4 |
-| file_size | OK | PASS | value_bytes=1867090, min_bytes=102400 |
+| file_size | OK | PASS | value_bytes=1868184, min_bytes=102400 |
 | ffprobe_parse | OK | PASS |  |
 | resolution | OK | PASS | value=1080x1920, expected=1080x1920 |
 | aspect_ratio_9_16 | OK | PASS | value=1080:1920 |
