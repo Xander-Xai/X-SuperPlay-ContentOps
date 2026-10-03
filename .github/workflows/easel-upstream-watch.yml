@@ -37,10 +37,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # First: write report to file
+          # Write report
           python scripts/check_easel_upstream.py > /tmp/watch_report.json
-          # Second: run quietly to get exit code for action_needed
-          #   exit 0 = NO_ACTION, exit 1 = WATCH/EVALUATE
+          # Check exit code (0=NO_ACTION, 1=WATCH/EVALUATE)
           if python scripts/check_easel_upstream.py --quiet; then
             echo "action_needed=false" >> $GITHUB_OUTPUT
             echo "recommendation=NO_ACTION" >> $GITHUB_OUTPUT
@@ -48,7 +47,6 @@ jobs:
             echo "action_needed=true" >> $GITHUB_OUTPUT
             echo "recommendation=WATCH_OR_UPDATE" >> $GITHUB_OUTPUT
           fi
-          # Show report
           cat /tmp/watch_report.json
 
       - name: Find or create rolling upstream issue
@@ -65,13 +63,13 @@ jobs:
           echo "Found/created issue #$ISSUE_NUMBER"
 
       - name: Update rolling issue on change
-        if: ${{ steps.watch.outputs.action_needed == 'true' || inputs.force_notify == 'true' }}
+        if: ${{ steps.watch.outputs.action_needed == 'true' || inputs.force_notify }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REC: ${{ steps.watch.outputs.recommendation }}
+          RUN_ID: ${{ github.run_id }}
         run: |
           ISSUE_NUMBER="${{ steps.find_issue.outputs.issue_number }}"
-          REC="${{ steps.watch.outputs.recommendation }}"
-          RUN_ID="${{ github.run_id }}"
           python - << 'PYEOF_INNER'
           import os
           report = open("/tmp/watch_report.json").read()
@@ -108,6 +106,6 @@ jobs:
           echo "Updated issue #$ISSUE_NUMBER"
 
       - name: No action needed
-        if: ${{ steps.watch.outputs.action_needed != 'true' && inputs.force_notify != 'true' }}
+        if: ${{ steps.watch.outputs.action_needed != 'true' && !inputs.force_notify }}
         run: |
           echo "No upstream change detected. Rolling issue not updated."
