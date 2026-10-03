@@ -1,0 +1,42 @@
+name: Experiment
+description: Research or capability verification (no production code)
+title: "[EXP] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Hypothesis
+        <!-- What are we trying to verify? -->
+  - type: markdown
+    attributes:
+      value: |
+        ## Evidence / reference
+        <!-- What research, docs, or facts support this? -->
+  - type: markdown
+    attributes:
+      value: |
+        ## Cost / quota boundary
+        <!-- What resources will this consume? -->
+  - type: markdown
+    attributes:
+      value: |
+        ## Success criteria
+        <!-- What does VERIFIED look like? -->
+  - type: markdown
+    attributes:
+      value: |
+        ## Failure criteria
+        <!-- What does NOT_SUPPORTED or MANUAL_ONLY look like? -->
+  - type: markdown
+    attributes:
+      value: |
+        ## Receipt path
+        <!-- Where will evidence be saved? -->
+  - type: markdown
+    attributes:
+      value: |
+        ## Decision
+        <!-- What happens after the experiment? -->
+        - VERIFIED ->
+        - NOT_SUPPORTED ->
+        - MANUAL_ONLY ->
