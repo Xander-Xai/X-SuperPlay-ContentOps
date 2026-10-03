@@ -187,15 +187,25 @@ translation_status: synced
 
 | 命令 | 类别 | 理由 |
 |---|---|---|
-| `mmx auth login` | INTERACTIVE_VISIBLE | 用户必须输入凭据 / 完成 OAuth |
+| `gh auth login` / `mmx auth login` | INTERACTIVE_VISIBLE | 用户必须输入凭据 / 完成 OAuth |
+| `gh auth status` / `mmx auth status` | BACKGROUND_HIDDEN | 只打印报告然后退出，没有任何需要输入的东西 |
 | `mmx quota` / `image` / `speech` / `video` / `video task get` | BACKGROUND_HIDDEN | 非交互的 provider 调用 |
 
+分类依据是 `<exe> <group> <action>` 三段，而不是只看 `auth` 这一段，否则
+`auth status` 会被误判成交互流程。可执行文件名先做归一化，因此 `gh`、
+`gh.exe`、`full/path/to/gh.exe` 的分类结果完全一致。只比较第 1、2 个参数，
+所以尾部选项不影响结论（`gh auth login --web` 仍是交互）。表格没有描述的形态 ——
+裸的 `gh auth`，或出现在 group 之前的全局 flag —— 一律判为 BACKGROUND_HIDDEN：
+把"未知"猜成"可见"就会重新引入本模块要消除的弹窗。需要新增时，带着该流程的
+证据去扩展表格。
+
 对所有未来 provider 代码的规则：不允许在 `process_utils.py` 之外出现裸的
-`subprocess.run(["mmx", ...])`。认证是唯一允许的交互例外。
+`subprocess.run(["mmx", ...])`。认证登录是唯一允许的交互例外。
 
 ## 交互语义
 
-`interactive_run()` 存在的意义是让人类完成一个流程，因此它**继承父终端**而不是捕获它：
+`interactive_run()` 存在的意义是让人类完成一个流程，因此它**继承父终端**而不是捕获它。
+这份契约只有六条属性，且没有任何可以放宽它们的开关：
 
 | 属性 | 取值 | 原因 |
 |---|---|---|
@@ -205,15 +215,24 @@ translation_status: synced
 | `stdin` | 继承 | 用户必须往里输入 |
 | `stdout` | 继承 | 输出实时出现在用户终端 |
 | `stderr` | 继承 | 提示和错误保持可见 |
-| `capture_output` | 默认永不传入 | 管道化会让提示无法触达 |
+| `capture_output` | 永不传入 | 管道化会让提示无法触达 |
+| `input_text` | 不作为参数存在 | 脚本化输入会悄悄把提示预填掉 |
 
-`interactive_run_captured()` 是独立的、显式命名的变体，用于极少数
-既需要可见窗口、又需要留存记录的场景。交互认证的默认语义绝不为此让步。
+也没有 `**kwargs`，所以上面任何一条都无法在调用点被覆盖。参数只有 `cwd`、
+`timeout`、`env` 和 `check`。脚本化输入不属于这份签名：如果将来真的需要，
+它应该放进另一个独立命名的函数，这样"交互"永远不会悄悄变成"预填"。
+
+`interactive_run_captured()` 是独立的、显式命名的变体，用于既要留存记录、
+又是脚本化流程的场景。它的文档对"可见"给出了精确含义：子进程启动时不做窗口
+抑制，但它的 stdout / stderr 被管道接回父进程，因此**不会**在终端实时回显 ——
+需要从返回的 `CompletedProcess` 里读取。展示与捕获不会同时发生，文档也没有这样
+声称。交互认证的默认语义绝不为此让步。
 
 测试以语义方式断言这一点：`interactive_run` 内部的 `subprocess.run` 调用
 用 `ast` 解析，必须不携带 `capture_output`、`stdout`、`stderr`、`stdin`、
-`startupinfo`、`creationflags` 中的任何一个，也不允许用 `**kwargs`
-把其中任何一个夹带进来。函数体内不允许出现任何 `PIPE`/`DEVNULL` 引用。
+`input`、`startupinfo`、`creationflags` 中的任何一个，也不允许用 `**kwargs`
+把其中任何一个夹带进来。函数体内不允许出现任何 `PIPE`/`DEVNULL` 引用，
+并且签名本身也会被检查，确保不存在任何脚本化输入或流参数。
 
 ## Shell 分类
 
@@ -422,7 +441,8 @@ provider 集成会自动继承本策略，因为
 
 | 命令 | 类别 | 入口 |
 |---|---|---|
-| `mmx auth login` | INTERACTIVE_VISIBLE | `interactive_run()` |
+| `gh auth login` / `mmx auth login` | INTERACTIVE_VISIBLE | `interactive_run()` |
+| `gh auth status` / `mmx auth status` | BACKGROUND_HIDDEN | `hidden_run()` |
 | `mmx quota` | BACKGROUND_HIDDEN | `hidden_run()` |
 | `mmx image` | BACKGROUND_HIDDEN | `hidden_run()` |
 | `mmx speech` | BACKGROUND_HIDDEN | `hidden_run()` |

@@ -399,9 +399,62 @@ def test_interactive_classification():
     print("[ok] 9. auth commands classified interactive")
 
 
+AUTH_LOGIN_INTERACTIVE = [
+    ["gh", "auth", "login"],
+    ["gh.exe", "auth", "login"],
+    ["mmx", "auth", "login"],
+    ["mmx.exe", "auth", "login"],
+    # Executable name normalisation: a full path must classify identically.
+    ["/usr/local/bin/gh.exe", "auth", "login"],
+    ["mmx.exe", "auth", "login", "--profile", "default"],
+]
+
+
+def test_auth_login_is_interactive():
+    """``<tool> auth login`` needs a human at the keyboard."""
+    for cmd in AUTH_LOGIN_INTERACTIVE:
+        assert process_utils.is_interactive_command(cmd), (
+            f"{cmd} must be INTERACTIVE_VISIBLE"
+        )
+    print(f"[ok] 9n. {len(AUTH_LOGIN_INTERACTIVE)} auth-login forms classified interactive")
+
+
+AUTH_STATUS_BACKGROUND = [
+    ["gh", "auth", "status"],
+    ["gh.exe", "auth", "status"],
+    ["mmx", "auth", "status"],
+    ["mmx.exe", "auth", "status"],
+    ["/usr/local/bin/gh.exe", "auth", "status"],
+]
+
+
+def test_auth_status_is_background():
+    """``auth`` alone is not enough: status only reports, so it must be hidden."""
+    for cmd in AUTH_STATUS_BACKGROUND:
+        assert not process_utils.is_interactive_command(cmd), (
+            f"{cmd} only prints a report and must be BACKGROUND_HIDDEN"
+        )
+    print(f"[ok] 9o. {len(AUTH_STATUS_BACKGROUND)} auth-status forms classified background")
+
+
+def test_other_auth_actions_are_background():
+    """An action not on the allowlist is background, never a guessed window."""
+    for cmd in (
+        ["gh", "auth"],
+        ["gh", "auth", "token"],
+        ["mmx", "auth", "token"],
+        ["gh", "api", "repos/o/r"],
+    ):
+        assert not process_utils.is_interactive_command(cmd), (
+            f"{cmd} is not an allowlisted interactive flow and must be hidden"
+        )
+    print("[ok] 9p. unlisted auth shapes stay background (no guessed window)")
+
+
 def test_background_classification():
     for cmd in (
         ["gh", "api", "repos/o/r"],
+        ["gh", "auth", "status"],
         ["mmx", "quota"],
         ["mmx", "image"],
         ["mmx", "speech"],
@@ -448,7 +501,7 @@ def test_interactive_run_does_not_pipe_or_hide():
     assert run_calls, "interactive_run must call subprocess.run"
 
     forbidden_kwargs = {
-        "capture_output", "stdout", "stderr", "stdin",
+        "capture_output", "stdout", "stderr", "stdin", "input",
         "startupinfo", "creationflags",
     }
     for call in run_calls:
@@ -464,7 +517,31 @@ def test_interactive_run_does_not_pipe_or_hide():
         assert "hidden_run" not in ast.dump(call), (
             "interactive_run must not delegate to the hidden path"
         )
-    print("[ok] 9d. interactive_run passes no stdout/stderr/stdin/hidden kwargs")
+    print("[ok] 9d. interactive_run passes no input/stdin/stdout/stderr/hidden kwargs")
+
+
+def test_interactive_run_has_no_scripted_input_parameter():
+    """The signature itself must not offer a way to pre-fill stdin.
+
+    Checking the source call alone is not enough: `input_text` could be
+    accepted and then dropped, which would be a lie in the signature.
+    """
+    params = inspect.signature(process_utils.interactive_run).parameters
+    assert "input_text" not in params, (
+        "interactive_run must not take input_text; scripted input belongs in "
+        "a separately named helper"
+    )
+    assert "input" not in params, "interactive_run must not take an input parameter"
+    for forbidden in ("stdin", "stdout", "stderr", "capture_output",
+                      "startupinfo", "creationflags", "kwargs"):
+        assert forbidden not in params, (
+            f"interactive_run must not expose {forbidden}; its contract is "
+            f"inherited stdio and a visible console, nothing else"
+        )
+    assert not any(
+        p.kind is inspect.Parameter.VAR_KEYWORD for p in params.values()
+    ), "interactive_run must not accept **kwargs"
+    print("[ok] 9q. interactive_run signature exposes no scripted-input knob")
 
 
 def test_interactive_run_source_has_no_pipe_reference():
@@ -517,6 +594,34 @@ def test_interactive_run_captured_is_explicit():
                 f"interactive_run_captured must keep the window visible ({node.attr})"
             )
     print("[ok] 9h. interactive_run_captured captures without hiding")
+
+
+def test_interactive_run_captured_does_not_echo_to_terminal():
+    """Captured output must not *also* be written to the parent's terminal.
+
+    This is exactly what the helper's docstring has to promise: the child is
+    visible (no window suppression) but its streams are piped into the parent,
+    so nothing can be shown live and captured at the same time.
+    """
+    marker = "not-echoed-marker"
+    with tempfile.TemporaryDirectory() as td:
+        sink = Path(td) / "terminal.txt"
+        saved = os.dup(1)
+        try:
+            fd = os.open(str(sink), os.O_WRONLY | os.O_CREAT | os.O_TRUNC)
+            os.dup2(fd, 1)
+            os.close(fd)
+            r = process_utils.interactive_run_captured(
+                [PYTHON, "-c", f"print('{marker}')"])
+        finally:
+            os.dup2(saved, 1)
+            os.close(saved)
+        assert r.stdout.strip() == marker, r.stdout
+        echoed = sink.read_text(encoding="utf-8", errors="replace")
+        assert marker not in echoed, (
+            f"captured output was also echoed to the terminal: {echoed!r}"
+        )
+    print("[ok] 9r. interactive_run_captured captures without echoing to the terminal")
 
 
 def test_shell_tools_are_background():
@@ -676,12 +781,17 @@ TESTS = [
     test_policy_passes_on_repository,
     test_policy_allowlist_entries_have_reasons,
     test_interactive_classification,
+    test_auth_login_is_interactive,
+    test_auth_status_is_background,
+    test_other_auth_actions_are_background,
     test_background_classification,
     test_interactive_run_inherits_stdio,
     test_interactive_run_does_not_pipe_or_hide,
+    test_interactive_run_has_no_scripted_input_parameter,
     test_interactive_run_source_has_no_pipe_reference,
     test_interactive_run_inherits_stdin,
     test_interactive_run_captured_is_explicit,
+    test_interactive_run_captured_does_not_echo_to_terminal,
     test_shell_tools_are_background,
     test_bare_shells_are_interactive,
     test_interactive_run_does_not_suppress_window,

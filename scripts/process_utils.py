@@ -132,10 +132,22 @@ def _base_exe(exe: str) -> str:
     return exe[:-4] if exe.endswith(".exe") else exe
 
 
-# "<exe> <subcommand>" pairs that require a human at the keyboard.
-_INTERACTIVE_PAIRS = {
-    ("gh", "auth"),
-    ("mmx", "auth"),
+# "<exe> <group> <action>" triples that require a human at the keyboard.
+#
+# Matching is on the full action, never on the group alone. `gh auth login` and
+# `mmx auth login` need a person at the keyboard, while `gh auth status` and
+# `mmx auth status` only print a report and must not flash a window.
+#
+# Position is fixed: token 1 is the group and token 2 is the action, so
+# `gh auth login --web` matches and `gh auth status` does not. Anything the table
+# does not describe — `gh auth` on its own, or a global flag ahead of the group
+# such as `gh --hostname x auth login` — is BACKGROUND_HIDDEN on purpose.
+# Guessing "visible" for an unrecognised shape would reintroduce exactly the
+# popup this module exists to prevent. Extend this table with the evidence for
+# the specific flow when one needs to be interactive.
+_INTERACTIVE_ACTIONS = {
+    ("gh", "auth", "login"),
+    ("mmx", "auth", "login"),
 }
 
 # "<exe>" invocations that are always interactive, with or without a subcommand.
@@ -209,6 +221,21 @@ def _shell_is_interactive(exe: str, args: Sequence[str]) -> bool:
     return False
 
 
+def _is_interactive_action(cmd: Sequence[str], base: str) -> bool:
+    """True when ``<base> <group> <action>`` is an allowlisted interactive flow.
+
+    Compares against the extension- and path-normalised ``base``, so ``gh``,
+    ``gh.exe`` and ``full/path/to/gh.exe`` resolve identically. Only the first
+    two arguments are examined: flags belong after the action
+    (``gh auth login --web``), so trailing options never change the verdict.
+    """
+    if len(cmd) < 3:
+        return False
+    group = str(cmd[1]).lower()
+    action = str(cmd[2]).lower()
+    return (base, group, action) in _INTERACTIVE_ACTIONS
+
+
 def is_interactive_command(cmd: Sequence[str]) -> bool:
     """True when the command needs a visible console for a human to use.
 
@@ -217,16 +244,21 @@ def is_interactive_command(cmd: Sequence[str]) -> bool:
 
     Everything else is background work and must be hidden, including the shells
     used *as tools*: ``powershell -Command``, ``cmd /c``, ``bash -c`` and any
-    script invocation. So is ``gh api``, every ``mmx`` subcommand other than
-    ``auth``, ffmpeg, ffprobe, git and node.
+    script invocation. So is ``gh api``, ``gh auth status`` and every ``mmx``
+    subcommand other than ``auth login``, ffmpeg, ffprobe, git and node.
+
+    Classification is per executable **and** action, and the executable name is
+    normalised, so ``gh.exe auth login`` and ``full/path/to/gh.exe auth login``
+    classify the same as ``gh auth login``.
     """
     if not cmd:
         return False
     exe = _exe_name(cmd)
     base = _base_exe(exe)
-    sub = str(cmd[1]).lower() if len(cmd) > 1 else ""
 
-    if (exe, sub) in _INTERACTIVE_PAIRS or base in _INTERACTIVE_BARE:
+    if base in _INTERACTIVE_BARE:
+        return True
+    if _is_interactive_action(cmd, base):
         return True
     if base in _SHELL_EXES:
         return _shell_is_interactive(exe, cmd)
@@ -357,7 +389,6 @@ def interactive_run(
     cwd: Optional[str] = None,
     timeout: Optional[float] = None,
     env: Optional[Dict[str, str]] = None,
-    input_text: Optional[str] = None,
     check: bool = False,
 ) -> subprocess.CompletedProcess:
     """Run a command the user must interact with, inheriting this terminal.
@@ -365,21 +396,25 @@ def interactive_run(
     Reserved for flows a human has to complete: ``gh auth login``,
     ``mmx auth login``, a bare shell, manual debug.
 
-    Default behaviour, and it is deliberate:
+    The contract has exactly six properties and no knobs to relax them:
 
     - the console stays **visible** (no ``CREATE_NO_WINDOW``, no ``SW_HIDE``)
     - **stdin, stdout and stderr are inherited** from the parent process, not
       piped, so the prompt is reachable and the user's terminal shows the
       session live
+    - **no hidden flags** and **no pipes**, which is why no stream, no
+      ``capture_output`` and no ``startupinfo``/``creationflags`` parameter
+      exists here: there is no ``**kwargs`` to smuggle them through either
 
-    Capturing the streams here would break the one thing this function exists
-    for: a device-code or browser login prompt that the user has to see and
-    answer. If you need a visible window *and* captured output, call
+    Piping the streams or feeding stdin from a string would break the one thing
+    this function exists for: a device-code or browser login prompt the user has
+    to see and answer. Scripted input has no place in this signature — if it is
+    ever genuinely needed, it belongs in a separately named helper, so that
+    "interactive" can never quietly become "pre-filled".
+
+    If you need a visible window *and* a captured transcript, call
     :func:`interactive_run_captured` explicitly instead of changing this
     default.
-
-    ``input_text`` feeds stdin while still leaving stdout/stderr inherited,
-    which suits a token pasted into a prompt.
     """
     if not cmd:
         raise ValueError("interactive_run() requires a non-empty command")
@@ -389,10 +424,10 @@ def interactive_run(
         cwd=cwd,
         timeout=timeout,
         env=env,
-        input=input_text,
         check=check,
-        # No capture_output, no text/encoding, no hidden kwargs: the child owns
-        # the inherited console and the parent stays out of the data path.
+        # No input=, no capture_output, no stdin/stdout/stderr, no text/encoding,
+        # no hidden kwargs: the child owns the inherited console and the parent
+        # stays out of the data path.
     )
 
 
@@ -407,10 +442,17 @@ def interactive_run_captured(
 ) -> subprocess.CompletedProcess:
     """Run a command with a **visible console** but **captured** output.
 
-    The explicit opt-in for the rare case that genuinely needs both: the user
-    watches the session in its own window while the parent also records the
-    transcript for a receipt or a log.
+    The explicit opt-in for a scripted flow that must also be recorded, for
+    example to write a transcript into a receipt.
 
+    What "visible" means here is narrow and stated exactly: the child is **not**
+    launched with window suppression, so a window it opens stays on screen.
+    Its **stdout and stderr are piped into the parent** and are therefore *not*
+    echoed live in your terminal — you read them from the returned
+    ``CompletedProcess``. Nothing is displayed and captured at the same time;
+    claiming otherwise would be a lie about what the terminal shows.
+
+    ``input_text`` feeds the piped stdin, which is what makes the flow scripted.
     Output is decoded as UTF-8 with replacement, matching :func:`hidden_run`.
     Prefer :func:`interactive_run` for anything a human must type into, because
     a captured stream is not interactive.

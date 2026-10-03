@@ -180,16 +180,28 @@ Reserved for the MiniMax provider work (Issue #4, M2.0):
 
 | Command | Class | Reason |
 |---|---|---|
-| `mmx auth login` | INTERACTIVE_VISIBLE | User must type credentials / complete OAuth |
+| `gh auth login` / `mmx auth login` | INTERACTIVE_VISIBLE | User must type credentials / complete OAuth |
+| `gh auth status` / `mmx auth status` | BACKGROUND_HIDDEN | Prints a report and exits; nothing to type |
 | `mmx quota` / `image` / `speech` / `video` / `video task get` | BACKGROUND_HIDDEN | Non-interactive provider calls |
 
+Classification is keyed on `<exe> <group> <action>`, never on the group alone, so
+`auth status` cannot be mistaken for an interactive flow. The executable name is
+normalised first, which makes `gh`, `gh.exe` and `full/path/to/gh.exe` classify
+identically. Only tokens 1 and 2 are compared, so trailing options do not change
+the verdict (`gh auth login --web` is interactive). A shape the table does not
+describe — bare `gh auth`, or a global flag ahead of the group — is
+BACKGROUND_HIDDEN on purpose: guessing "visible" would reintroduce the popup this
+module exists to prevent. Extend the table with evidence for the specific flow
+instead.
+
 Policy for all future provider code: no bare `subprocess.run(["mmx", ...])` anywhere
-outside `process_utils.py`. Auth is the single permitted interactive exception.
+outside `process_utils.py`. Auth login is the single permitted interactive exception.
 
 ## Interactive semantics
 
 `interactive_run()` exists so a human can complete a flow, so it inherits the parent
-terminal rather than capturing it:
+terminal rather than capturing it. The contract has six properties and no knobs that
+relax them:
 
 | Property | Value | Why |
 |---|---|---|
@@ -199,16 +211,28 @@ terminal rather than capturing it:
 | `stdin` | inherited | The user has to type into it |
 | `stdout` | inherited | Output appears in the user's terminal live |
 | `stderr` | inherited | Prompts and errors stay visible |
-| `capture_output` | never passed by default | Piping would make the prompt unreachable |
+| `capture_output` | never passed | Piping would make the prompt unreachable |
+| `input_text` | not a parameter | Scripted input would silently pre-fill a prompt |
 
-`interactive_run_captured()` is the separate, explicitly named variant for the rare
-case that needs a visible window *and* a recorded transcript. The interactive auth
-default is never changed to serve it.
+There is no `**kwargs` either, so none of the above can be overridden at a callsite.
+The only parameters are `cwd`, `timeout`, `env` and `check`. Scripted input has no
+place in this signature: if it is ever genuinely needed it belongs in a separately
+named helper, so that "interactive" can never quietly become "pre-filled".
+
+`interactive_run_captured()` is the separate, explicitly named variant for a
+scripted flow that must also be recorded. Its docstring is precise about what
+"visible" means: the child is launched without window suppression, but its stdout
+and stderr are piped into the parent, so they are **not** echoed live in the
+terminal — you read them from the returned `CompletedProcess`. Display and capture
+are not simultaneous, and the documentation does not claim they are. The
+interactive auth default is never changed to serve it.
 
 Tests assert this semantically: the `subprocess.run` call inside `interactive_run` is
 parsed with `ast` and must carry none of `capture_output`, `stdout`, `stderr`,
-`stdin`, `startupinfo`, `creationflags`, nor a `**kwargs` splat that could smuggle
-any of them in. No `PIPE`/`DEVNULL` reference is permitted in the function body.
+`stdin`, `input`, `startupinfo`, `creationflags`, nor a `**kwargs` splat that could
+smuggle any of them in. No `PIPE`/`DEVNULL` reference is permitted in the function
+body, and the signature itself is checked for the absence of any scripted-input or
+stream parameter.
 
 ## Shell classification
 
@@ -432,7 +456,8 @@ Classification is already encoded in `is_interactive_command()`:
 
 | Command | Class | Entry point |
 |---|---|---|
-| `mmx auth login` | INTERACTIVE_VISIBLE | `interactive_run()` |
+| `gh auth login` / `mmx auth login` | INTERACTIVE_VISIBLE | `interactive_run()` |
+| `gh auth status` / `mmx auth status` | BACKGROUND_HIDDEN | `hidden_run()` |
 | `mmx quota` | BACKGROUND_HIDDEN | `hidden_run()` |
 | `mmx image` | BACKGROUND_HIDDEN | `hidden_run()` |
 | `mmx speech` | BACKGROUND_HIDDEN | `hidden_run()` |
