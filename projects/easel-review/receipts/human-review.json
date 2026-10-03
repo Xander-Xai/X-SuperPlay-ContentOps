@@ -1,0 +1,48 @@
+{
+  "project": "projects/easel-review",
+  "video": "projects/easel-review/final/easel.mp4",
+  "engine": "easel",
+  "voice_quality": "edge_tts_fallback",
+  "production_ready": false,
+  "state": "PENDING_FOUNDER_REVIEW",
+  "auto_qc_result": "PASS",
+  "auto_qc_checks": 21,
+  "auto_qc_fails": 0,
+  "auto_qc_warns": 0,
+  "visual_qc_status": "PASS",
+  "visual_qc_frames_extracted": 10,
+  "visual_qc_black_frames": 0,
+  "golden_regression": {
+    "runs": 3,
+    "all_ok": true,
+    "all_qc_pass": true,
+    "note": "3 consecutive builds all OK, all QC PASS. Occasional edge-tts network timeout is a known external dependency issue."
+  },
+  "reviewer": null,
+  "reviewed_at": null,
+  "scores": null,
+  "hard_fail": null,
+  "decision": "PENDING_FOUNDER_REVIEW",
+  "scorecard": {
+    "hook": 15,
+    "information_density": 15,
+    "evidence_quality": 15,
+    "voice_naturalness": 15,
+    "visual_quality": 15,
+    "pacing": 10,
+    "platform_fit": 10,
+    "trustworthiness": 5,
+    "total_possible": 100,
+    "passing_threshold": 80
+  },
+  "hard_fail_criteria": [
+    "obvious factual error",
+    "voice severely mechanical/unintelligible",
+    "AI video severely deformed",
+    "screenshots completely unreadable",
+    "subtitles misaligned",
+    "sensitive data leaked",
+    "unauthorized material",
+    "key claim without evidence"
+  ]
+}
