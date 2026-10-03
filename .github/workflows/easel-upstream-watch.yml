@@ -56,8 +56,13 @@ jobs:
         run: |
           ISSUE_NUMBER=$(gh issue list --label "upstream:easel" --state open --limit 1 --json number --jq "[.[]] | .[0].number" 2>/dev/null || echo "")
           if [ -z "$ISSUE_NUMBER" ]; then
-            RESP=$(gh api repos/${{ github.repository }}/issues --method POST -f title="[UPSTREAM] Easel compatibility watch" -f body="Rolling issue tracking Easel upstream compatibility." -f labels='["upstream:easel","area:easel"]' --silent)
-            ISSUE_NUMBER=$(echo "$RESP" | python -c "import sys,json; print(json.load(sys.stdin)["number"])")
+            ISSUE_NUMBER=$(gh api "repos/${{ github.repository }}/issues" \
+              --method POST \
+              -f title="[UPSTREAM] Easel compatibility watch" \
+              -f body="Rolling issue tracking Easel upstream compatibility." \
+              -f 'labels[]=upstream:easel' \
+              -f 'labels[]=area:easel' \
+              --jq '.number')
           fi
           echo "issue_number=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
           echo "Found/created issue #$ISSUE_NUMBER"
