@@ -1,0 +1,7 @@
+{
+  "repo": "https://github.com/ZJU-REAL/Easel.git",
+  "tag": "v0.2.1",
+  "commit": "3fe2d9904c1619281ef57f81d9ee0b7854998399",
+  "checked_in_at": "2026-10-02",
+  "notes": "Do NOT auto-upgrade. Re-verify HEAD after every bootstrap."
+}

@@ -1,0 +1,20 @@
+{
+  "project": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-review",
+  "checked_at": "2026-10-03T11:55:03Z",
+  "video": "",
+  "overall": "FAIL",
+  "checks": [
+    {
+      "id": "_video",
+      "ok": true,
+      "severity": "INFO",
+      "path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-review\\final\\fallback"
+    },
+    {
+      "id": "final_exists",
+      "ok": false,
+      "severity": "FAIL",
+      "msg": "final.mp4 not found at D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-review\\final\\fallback"
+    }
+  ]
+}

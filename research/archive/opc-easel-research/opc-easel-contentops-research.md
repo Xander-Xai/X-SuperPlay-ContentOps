@@ -1,3 +1,9 @@
+```yaml
+status: superseded
+superseded_by: docs/AUDIT-REPORT.md, docs/ARCHITECTURE.md, docs/PRD.md
+historical_context: Historical research that led to the Easel decision. Contains valuable context on why Easel was chosen and how it fits with OPC. Long-term reference document.
+notes: Contains research detail. Active rules and architecture now in canonical docs.
+```
 你这次纠正是对的。你要的不是“LLM + TTS + FFmpeg + 发布脚本”这种零件清单，而是：
 
 > **一个能够被 API / CLI / Agent 直接调用，拿到 Source Artifact 后自己跑完整链路，并且最终把内容、发布回执、指标、Signal 再写回 OPC 的 Self-Media Runtime。**
@@ -562,25 +568,75 @@ real work
 #### 候选 Provider 与接口边界
 
 - **腾讯云照片免训练**：官方接口明确支持照片免训练，照片配文本或音频生成口型匹配视频；接口接收音频并异步返回任务，可作为国内 API 候选。[腾讯云照片免训练接口](https://cloud.tencent.com/document/product/1240/118475)
-- **HeyGen Photo Avatar**：官方 Video API 支持 photo avatar，并允许用 `audio_url` 或 `audio_asset_id` 提供预录音频，异步取得生成结果；当前创建视频接口使用既有 `avatar_id`（Photo Avatar look ID），因此实施时需要把照片注册/创建 Avatar 的前置步骤一并核实，不能把整条流程简化成未经验证的单次 `image_url + audio_url` 请求。[HeyGen Create Video API](https://developers.heygen.com/reference/create-video)
+- **HeyGen 照片驱动**：官方 V3 Create Video 文档说明可从 HeyGen avatar **或任意图片**创建视频，并支持预录音频口型同步；请求体区分 `CreateVideoFromImage` 与 `CreateVideoFromAvatar` 两种模式。已有 Photo Avatar 模式使用 `avatar_id`（Photo Avatar look ID），而任意图片模式可作为免训练候选。接入 PoC 应分别确认图片模式的准确字段、素材上传/URL 要求、当前 API Key 的可用权限和实际费用，不能未经验证就假定字段一定叫 `image_url`。[HeyGen Create Video API](https://developers.heygen.com/reference/create-video)
+- **分清“图片直接驱动”和“Photo Avatar 资源”**：输入任意图片直接生成，与先创建可复用的 Photo Avatar 再通过 `avatar_id` 调用，是两种 API 入口/资产生命周期；两者都不等同于采集本人视频训练 Digital Twin。实现时按官方 `CreateVideoFromImage` schema 组装请求，不把示意 JSON 当成已验证字段，也不要因为出现 `avatar_id` 就误判必须先训练。
 - **本地 H3**：保留为本地质量与成本基准，不预先判定它已经足够或必然优于云端方案。将它和 API Provider 放在相同素材、相同后期条件下比较。
 
-声音与人物生成应保持解耦：`IndexTTS / 其他 TTS → audio.wav` 是独立产物，数字人 Provider 只消费该音频并返回口播视频。这样切换腾讯云、HeyGen 或本地 H3 时，不必同步更换声音链路。生成视频再交给 OpenChatCut / Remotion 等后续制作步骤；数字人 Provider 不取得选题、证据、发布审批或 OPC 经营判断的所有权。
+声音与人物生成应保持解耦：`IndexTTS / 其他 TTS → audio.wav` 是独立产物，数字人 Provider 只消费该音频并返回口播视频。HeyGen 官方 API 接受公开可访问的 `audio_url` 或已上传的 `audio_asset_id`（二选一），可用预录音频驱动；请求应使用音频输入模式而不是同时传脚本。标准化链路为：
+
+```text
+固定人物图片 + 自有 audio.wav
+        ↓ 上传/可访问 URL
+HeyGen CreateVideoFromImage（或已创建 Photo Avatar 的 Avatar 模式）
+        ↓ 返回 video_id
+查询任务状态 / 接收回调 → 下载 MP4
+        ↓
+OpenChatCut → Remotion → 成片
+```
+
+这使声音和人物可以分别替换，不必同步更换 TTS。HeyGen、腾讯云或本地 H3 只负责生成口播视频，不取得选题、证据、发布审批或 OPC 经营判断的所有权。素材应有明确使用权和授权记录。
+
+#### HeyGen API 计费基线（核价日期：2026-10-01）
+
+HeyGen API 是独立的 Pay-As-You-Go 计费面，不要求先购买普通网页端 Creator/Business 套餐。官方 API 价格按实际生成秒数计费；截至本次核对，公开页面列出的费率如下：
+
+| 模式 | Avatar III | Avatar IV | 备注 |
+|---|---:|---:|---|
+| Photo Avatar | $0.99/分钟 | $2.31/分钟 | 照片驱动档位；资源创建 API 另列 $1.32/次 |
+| Digital Twin | $0.60/分钟 | $4.83/分钟 | Twin 创建 API 另列 $2.13/次，且自助 API 创建 Digital Twin 仅向 Enterprise API 用户开放 |
+
+因此旧估算中的 Photo Avatar `$1/$3`、Digital Twin `$1/$4` 只能视为粗略量级，不能当当前报价；尤其 Avatar III 的 Twin 单分钟费率较低，不代表当前账号一定能自行创建 Twin。任意图片直驱、创建 Photo Avatar 资源和 Twin 创建可能涉及不同调用/权限/费用，正式预算前应以当前 API 账号的报价与账单复核。以上价格引用 HeyGen 官方说明，价格可能变更：[HeyGen API 定价说明](https://help.heygen.com/en/articles/10060327-heygen-api-pricing-explained)。
 
 #### 首轮小样 A/B
 
-用同一张 1080×1920 人物图、同一段约 30 秒 WAV、同一构图与后期设置，对比 **HeyGen Photo Avatar、腾讯云照片免训练、本地 H3**。先做一轮小样确认链路和授权/输入约束，再按需要复跑，不以单个样片宣称生产就绪。记录：
+先围绕当前目标做短 Hook 测试：同一张有使用权的竖屏人物图、同一段 5–8 秒自有 WAV、同一输出比例与后期设置，对比 **HeyGen 任意图片/Photo Avatar、腾讯云照片免训练、本地 H3**。若短样通过，再用同一素材扩展到约 30 秒，检查长段口型和表情稳定性。先确认服务条款、人物授权、素材留存、账号 API 权限和输入限制；不以单个样片宣称生产就绪。记录：
 
 1. 人脸/人物一致性与照片身份保真；
 2. 嘴型同步、停顿和音素错位；
 3. 表情、头部运动与整体自然度；
 4. 从提交到可下载 MP4 的真实耗时及失败/重试情况；
 5. 以账单或实际扣费记录核算的单条成本，并注明分辨率、时长、引擎与账号方案；
-6. 自动化接入复杂度，包括素材上传、Avatar 初始化、任务轮询/回调、错误处理和结果下载。
+6. 自动化接入复杂度，包括素材上传、是否需要创建可复用 Photo Avatar、任务轮询/回调、错误处理和结果下载；
+7. **每条可接受 Hook 的真实成本**：包含生成失败重试和必要的资源创建费用，而不只比较标价/分钟。
 
 价格与套餐会变化，方案表只用于形成候选，不把未经当前账号核验的每分钟报价写成固定预算。先用真实账单核价。通过画面质量、运行稳定性、成本和自动化门槛后，Provider 才能进入受控生产；对外发布仍遵循本工作流的人审门禁。
 
-**当前建议**：先验证免训练照片驱动，HeyGen Photo Avatar 与腾讯云作为云端候选、本地 H3 作为对照；暂不投入训练型数字分身。现有材料中的“HeyGen `image_url + audio_url` 可直接生成”应视为待核验的具体接入假设：官方 v3 文档已确认 Photo Avatar 与预录音频支持，但所查创建视频接口使用 Photo Avatar 的 `avatar_id`，需要在 PoC 中确认照片导入/建模步骤及账号实际可用能力。
+**当前建议**：先验证“人物图片 + 自有配音 → API → MP4”的免训练路线，HeyGen 任意图片模式和腾讯云作为云端候选，本地 H3 为质量/成本对照；暂不投入训练型 Digital Twin。照片驱动适合自动化 Hook 流程，但是否能无人值守仍取决于账号权限、输入资产要求、异步任务可靠性、授权与实际成本。若任意图片模式在当前账号不可用，再评估创建 Photo Avatar 资源的备用流程；只有短样和较长样都证明照片路线不满足长期 IP 的表现需求，才进入 Twin 训练评估。
+
+#### 数字人分辨率与画面占比
+
+分辨率描述输出像素尺寸，不直接代表数字人更自然。分辨率提高会让脸、牙齿、嘴唇、头发和衣物边缘更清楚，也可能让生成瑕疵更显眼；动作、口型、身份稳定性和素材质量仍比单纯增加像素更影响观感。常见 9:16 竖屏规格及像素量如下（供应商实际支持的档位可能不同）：
+
+| 档位 | 横屏常见尺寸 | 9:16 竖屏对应尺寸 | 竖屏像素量 | 适用判断 |
+|---|---:|---:|---:|---|
+| 480P | 854×480 | 480×854 | 约 41 万 | 工作流测试、超小窗或后续明显缩小 |
+| 540P | 960×540 | 540×960 | 约 52 万 | 小窗、低成本试跑；脸部细节仍有限 |
+| 720P | 1280×720 | 720×1280 | 约 92 万 | 手机小窗、约 20%–40% 画面占比的实用档 |
+| 1080P | 1920×1080 | 1080×1920 | 约 207 万 | 竖屏成片常用规格，也适合半屏或全屏数字人 |
+| 2K / 1440P | 2560×1440 | 1440×2560 | 约 369 万 | 细节增加，但多数口播小窗收益有限；“2K”在消费级产品中常被用来指 1440P |
+| 4K | 3840×2160 | 2160×3840 | 约 829 万 | 普通社媒口播通常不必原生生成；用于明确要求高分辨率的交付场景 |
+
+数字人源素材分辨率不必与最终视频相同：可以把 720P 数字人放进 1080×1920、30fps 的成片，再与 1080P B-roll、PPT 或截图合成。小窗缩放可能减弱部分细节瑕疵，但不会修复嘴型、眼神、动作或身份不稳定。高分辨率也不必然增加费用或耗时，具体取决于 Provider 的档位、计费规则和是否为原生生成/升频；测试时记录实际输出尺寸、生成模式和账单，不据此假定更低分辨率一定更便宜。
+
+| 使用场景 | 建议先测的数字人源素材 | 最终成片基准 |
+|---|---:|---:|
+| 流程冒烟测试、超小窗 | 480P / 540P | 720P 或 1080P |
+| 右下角/左下角小窗，约 20%–35% 画面 | 540P / 720P | 1080×1920 |
+| 约 1/3 屏讲解员 | 720P | 1080×1920 |
+| 半屏数字人 | 720P / 1080P | 1080×1920 |
+| 全屏数字人或近景 | 1080P 起 | 1080×1920；确有交付要求再评估更高分辨率 |
+
+**本项目默认候选**：数字人先以 720P、约 20%–35% 画面占比测试，主体由 B-roll、PPT、截图或演示画面承担，最终统一输出 1080×1920 / 30fps。测试排序优先看动作自然度、唇形、人物稳定性，再看清晰度；若 720P 缩小后仍不自然，升到 1080P、2K 或 4K 不能替代模型与驱动质量改进。该默认值是实验起点，需以同内容、同画面占比的实看片和实际成本确认。
 
 ---
 
