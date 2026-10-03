@@ -42,7 +42,8 @@ REAL EXECUTION RECEIPT
 
 | Area | Status | Location |
 |---|---|---|
-| MiniMax capability audit | NOT_YET_VERIFIED | (stub to be created in M2.0, Issue #4) |
+| MiniMax capability audit | VERIFIED (speech + image), H3 BLOCKED | `providers/minimax-mplan-explore-capability.md` |
+| MiniMax sanitized receipt | CURRENT | `providers/receipts/minimax-mplan-explore-capability-2026-10-04.sanitized.json` |
 
 ## Archived
 

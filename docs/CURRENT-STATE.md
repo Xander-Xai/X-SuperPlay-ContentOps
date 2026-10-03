@@ -52,9 +52,15 @@
 | Property | Value |
 |---|---|
 | Integration | **NOT_IMPLEMENTED** |
-| Capability spike | **PENDING** (Issue #4) |
+| Capability spike | **COMPLETE** (Issue #4, 2026-10-04) |
 | PAYG allowed | **false** |
-| Billing mode | subscription (planned, not yet verified) |
+| Billing mode | subscription, **verified** |
+| Transport | official MiniMax CLI `mmx` (`mmx-cli` v1.0.27) |
+| Speech | **VERIFIED** — `speech-2.8-hd`, 32 kHz mono WAV |
+| Image | **VERIFIED** — `image-01`, 9:16 portrait, seed supported |
+| H3 video | **NOT_ENTITLED / BLOCKED** — H3 requires a pay-as-you-go or credit key |
+| Credit Pack balance | `0.00` observed, re-checked before every generation |
+| Evidence | `research/providers/minimax-mplan-explore-capability.md` |
 
 ## Golden Samples
 

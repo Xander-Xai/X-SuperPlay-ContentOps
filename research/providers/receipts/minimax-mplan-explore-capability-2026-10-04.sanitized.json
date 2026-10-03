@@ -1,0 +1,300 @@
+{
+  "schema": "contentops.provider-capability-receipt/v1",
+  "receipt_kind": "sanitized_capability_evidence",
+  "generated_by": "scripts/minimax_capability_probe.py",
+  "note": "RESEARCH PROBE ONLY -- NOT A PRODUCTION PROVIDER. No credential value, key fragment, task id, account id or private URL is recorded in this file.",
+
+  "checked_at_utc": "2026-10-03T23:35:40+00:00",
+  "checked_at_local_date": "2026-10-04",
+  "issue": "#4",
+  "milestone": "M2.0",
+
+  "provider": "minimax",
+  "product": "m_plan",
+  "tier": "explore",
+  "tier_multiplier_vs_go": 3,
+  "billing_cycle": "monthly",
+  "billing_mode": "subscription",
+  "payg_allowed": false,
+  "credit_pack_allowed": false,
+
+  "transport": {
+    "kind": "official_cli",
+    "name": "MiniMax CLI",
+    "executable": "mmx",
+    "package": "mmx-cli",
+    "version": "1.0.27",
+    "release_tag": "v1.0.27",
+    "release_published_utc": "2026-09-29T12:54:15Z",
+    "repo_main_sha_at_check": "06e47c70b76f419196678367dae62acca4c94076",
+    "repo_main_date_at_check": "2026-09-29T12:36:31Z",
+    "region": "cn",
+    "node_major_required": "18+",
+    "windows_support": "VERIFIED",
+    "install_method": "npm install -g mmx-cli",
+    "structured_output": "json via --output json",
+    "async_video_support": "documented (--async / --no-wait), blocked by entitlement"
+  },
+
+  "auth": {
+    "credential_class": "SUBSCRIPTION",
+    "subscription_credential_present": true,
+    "payg_credential_present": false,
+    "auth_method": "api_key_in_cli_config",
+    "auth_status": "VERIFIED",
+    "interactive_login_classification": {
+      "mmx auth login": "INTERACTIVE_VISIBLE",
+      "mmx auth status": "BACKGROUND_HIDDEN"
+    }
+  },
+
+  "quota": {
+    "status": "VERIFIED",
+    "exposed_by": ["mmx quota", "mmx auth status", "first_party_remains_endpoint"],
+    "bucket_reported": "general",
+    "bucket_count": 1,
+    "modality_breakdown_exposed": false,
+    "interval_5h_remaining_percent": 99,
+    "weekly_remaining_percent": 65,
+    "absolute_counts_exposed": false,
+    "video_has_separate_window": "documented (weekly only), not separately observable"
+  },
+
+  "billing_preflight": {
+    "verdict": "VERIFIED_INCLUDED_PLAN_QUOTA",
+    "payg_balance": "0.00",
+    "credit_pack_balance": "0.00",
+    "voucher_balance": "0.00",
+    "owed_amount": "0.00",
+    "credit_pack_fallback_possible": false,
+    "payg_charge_possible": false,
+    "basis": "Subscription Key draws on included plan usage and Credit Packs; Credit Pack overspend is documented as automatic with no documented disable switch. A zero Credit Pack balance is therefore the only provable exclusion, and it is observed.",
+    "must_reevaluate_before_every_generation": true
+  },
+
+  "capabilities": {
+    "text": {
+      "status": "VERIFIED",
+      "transport": "official_cli + anthropic/openai compatible endpoints",
+      "models_observed_via_key": [
+        "MiniMax-M3",
+        "MiniMax-M2.7",
+        "MiniMax-M2.7-highspeed",
+        "MiniMax-M2.5",
+        "MiniMax-M2.5-highspeed",
+        "MiniMax-M2.1",
+        "MiniMax-M2.1-highspeed",
+        "MiniMax-M2"
+      ],
+      "note": "model listing endpoint returns text models only; it is not a modality entitlement list"
+    },
+    "image": {
+      "status": "VERIFIED",
+      "model": "image-01",
+      "models_documented": ["image-01", "image-01-live"],
+      "sync": true,
+      "aspect_ratio_supported": true,
+      "portrait_9_16_verified": true,
+      "seed_supported": true,
+      "custom_dimensions": "512-2048, multiple of 8",
+      "nrmax_dimension_observed": "768x1360 requested and delivered",
+      "output_container_observed": "jpeg",
+      "output_container_matches_requested_extension": false
+    },
+    "speech": {
+      "status": "VERIFIED",
+      "model": "speech-2.8-hd",
+      "models_documented": [
+        "speech-2.8-hd", "speech-2.8-turbo",
+        "speech-2.6-hd", "speech-2.6-turbo",
+        "speech-02-hd", "speech-02-turbo",
+        "speech-01-hd", "speech-01-turbo"
+      ],
+      "sync": true,
+      "async_long_form_documented": true,
+      "sync_char_limit": 10000,
+      "formats_verified": ["wav"],
+      "formats_documented": ["mp3", "pcm", "flac", "wav", "pcmu_raw", "pcmu_wav", "opus"],
+      "sample_rate_hz_verified": 32000,
+      "sample_rates_documented": [8000, 16000, 22050, 24000, 32000, 44100],
+      "channels_verified": 1,
+      "voice_count_listed": 303,
+      "pronunciation_mechanism": "pronunciation_dict.tone[] as source/replacement; plain text, parenthesised pinyin with tone digits, parenthesised IPA, or Japanese kana",
+      "ssml_supported": false,
+      "inline_pronunciation_override_supported": true,
+      "pause_marker_supported": "<#seconds#>",
+      "emotion_tags_supported": true,
+      "language_boost_supported": true,
+      "subtitle_timing_supported": true,
+      "voice_design_endpoint_documented": true,
+      "voice_clone_endpoint_documented": true,
+      "asr_backcheck_available": true
+    },
+    "voice_design": {
+      "status": "DOCUMENTED_BUT_NOT_TESTED",
+      "reason": "no production requirement during M2.0; endpoint documented in the current official API reference"
+    },
+    "voice_clone": {
+      "status": "DOCUMENTED_BUT_NOT_TESTED",
+      "reason": "no production requirement during M2.0; endpoint documented in the current official API reference"
+    },
+    "video_h3": {
+      "status": "NOT_ENTITLED",
+      "blocked_verdict": "BLOCKED",
+      "model": "MiniMax-H3",
+      "generation_attempted": false,
+      "quota_spent": "none",
+      "reason": "current official CLI guidance and the current official Video Generation guide both require a pay-as-you-go or credit API key for H3, and state that a Token Plan Subscription Key is not supported. The plan overview page claims Explore includes H3, which is consistent with in-app MiniMax Code entitlement rather than the programmatic CLI path.",
+      "conflicting_claim_present": true,
+      "resolution": "resolved in favour of the more restrictive reading; no generation sent",
+      "expected_rejection_if_attempted": "error 2013 mentioning TokenPlan/Credit and H3",
+      "documented_modes": [
+        "text-to-video",
+        "image-to-video first and/or last frame",
+        "multimodal reference generation (reference images, videos, audio)"
+      ],
+      "documented_specs": {
+        "resolution": ["768P", "2K"],
+        "duration_s": "4-15 integer",
+        "ratios": ["adaptive", "21:9", "16:9", "4:3", "1:1", "3:4", "9:16"],
+        "prompt_char_limit": 7000,
+        "reference_images_max": 9,
+        "reference_videos_max": 3,
+        "reference_audio_max": 3,
+        "mixed_reference_files_max": 12,
+        "request_body_max_mb": 64
+      },
+      "h3_context_ir_documented": true,
+      "h3_regeneration_documented": true
+    },
+    "video_legacy_hailuo": {
+      "status": "UNKNOWN",
+      "reason": "not required by the North Star and not covered by an M Plan entitlement claim; deliberately not tested"
+    },
+    "vision": {
+      "status": "DOCUMENTED_BUT_NOT_TESTED",
+      "reason": "documented CLI command; not required by M2.0 acceptance"
+    },
+    "search": {
+      "status": "DOCUMENTED_BUT_NOT_TESTED",
+      "reason": "documented CLI command; not required by M2.0 acceptance"
+    }
+  },
+
+  "tested_generations": [
+    {
+      "id": "speech-smoke-zh",
+      "modality": "speech",
+      "model": "speech-2.8-hd",
+      "voice_id": "Chinese (Mandarin)_Reliable_Executive",
+      "language": "zh",
+      "codec": "pcm_s16le",
+      "sample_rate_hz": 32000,
+      "channels": 1,
+      "duration_s": 5.503,
+      "bytes": 353366,
+      "sha256": "942d128e940b3b7178851064b0e8e3f4b8eec91c2126452d27ebdf94b6282dfa",
+      "max_volume_db": "-1.5 dB",
+      "mean_volume_db": "-20.0 dB",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "speech-smoke-en",
+      "modality": "speech",
+      "model": "speech-2.8-hd",
+      "voice_id": "English_expressive_narrator",
+      "language": "en",
+      "codec": "pcm_s16le",
+      "sample_rate_hz": 32000,
+      "channels": 1,
+      "duration_s": 6.223,
+      "bytes": 399434,
+      "sha256": "b2f32325c38abdfe95e2fc4c6a7a0e2f593f89ecda9aabc5f97eb44d339be6d8",
+      "max_volume_db": "-0.5 dB",
+      "mean_volume_db": "-15.1 dB",
+      "status": "VERIFIED",
+      "quality_note": "peak at -0.5 dB leaves almost no headroom; a downstream loudness gate is required"
+    },
+    {
+      "id": "lexicon-ab-plain",
+      "modality": "speech",
+      "language": "zh",
+      "variant": "no pronunciation rules",
+      "duration_s": 17.411,
+      "asr_backcheck": "RAG ok; Claude read as Cloud; Easel truncated; Qwen as Quen; H3 as H-three; v0.2.1 collapsed to V0.21",
+      "verdict": "FAIL for brand-name and version tokens"
+    },
+    {
+      "id": "lexicon-ab-ipa",
+      "modality": "speech",
+      "language": "zh",
+      "variant": "pronunciation_dict with IPA replacements",
+      "duration_s": 24.582,
+      "duration_delta_vs_plain_percent": 41.2,
+      "asr_backcheck": "compound brand names split apart: Claude Code lost, GitHub became two tokens, LangGraph became two tokens, H3 read as A Three; v0.2.1 fixed",
+      "verdict": "FAIL, worse than plain for compound brand names"
+    },
+    {
+      "id": "lexicon-ab-plaintext",
+      "modality": "speech",
+      "language": "zh",
+      "variant": "pronunciation_dict with plain-text expansion plus text normalisation",
+      "duration_s": 18.386,
+      "duration_delta_vs_plain_percent": 5.6,
+      "asr_backcheck": "all sampled tokens correct: Claude Code, Easel, LangGraph, Qwen, v0.2.1 and the date all read correctly",
+      "verdict": "PASS, recommended mechanism"
+    },
+    {
+      "id": "image-smoke-portrait",
+      "modality": "image",
+      "model": "image-01",
+      "seed": 42,
+      "requested": "768x1360, 9:16, png path",
+      "delivered_container": "jpeg",
+      "delivered_dimensions": "768x1360",
+      "delivered_aspect_ratio": 0.5647,
+      "bytes": 82015,
+      "sha256": "27f8f3d90ee019c59d854ae06f107b53881748ccc29e96c31cb0b18a8f062bf1",
+      "visual_qc": "valid, non-blank, no text, no logo, no UI, no visible artifacts, clean caption-safe space top and bottom, slight softness",
+      "status": "VERIFIED",
+      "quality_note": "container does not follow the requested file extension; consumers must sniff the container"
+    }
+  ],
+
+  "quality_observations": {
+    "asr_backcheck_is_necessary_not_sufficient": "ASR agreed with perceived correctness on clear wins and losses, but cannot arbitrate prosody or naturalness. Human listening review remains mandatory.",
+    "asr_console_artifact": "the transcription JSON renders a trailing replacement character for the full stop; this is a console encoding artefact of the tool output, not an audio defect",
+    "loudness": "provider output peaked at -0.5 dB and -1.5 dB. No clipping was observed, but headroom is minimal and a loudness normalisation gate is needed before compose.",
+    "image_container": "output container is chosen by the provider and does not follow the requested extension",
+    "generated_media_never_evidence": "generated assets in this receipt are capability evidence only and are not admissible as business evidence"
+  },
+
+  "h3_prompt_guidance_source": {
+    "repo": "MiniMax-AI/cli",
+    "path": "skill/h3-video/SKILL.md",
+    "reference": "skill/h3-video/references/h3-video.md",
+    "tag": "v1.0.27",
+    "tag_date": "2026-09-29",
+    "main_sha": "06e47c70b76f419196678367dae62acca4c94076",
+    "checked_at": "2026-10-04",
+    "secondary_source": "official H3 feature highlights gallery page in the platform documentation",
+    "vendored": false,
+    "note": "read at execution time and summarised, not copied into this repository"
+  },
+
+  "blockers": [
+    {
+      "id": "H3_ENTITLEMENT",
+      "verdict": "BLOCKED",
+      "needs": "Founder decision",
+      "question": "Either accept that H3 stays MANUAL_ONLY/blocked under a subscription-only policy, or explicitly approve a pay-as-you-go or credit-pack path, which this repository currently forbids.",
+      "generation_sent": false
+    }
+  ],
+
+  "human_review": {
+    "status": "PENDING_FOUNDER_REVIEW",
+    "scope": "speech naturalness, pronunciation of brand tokens, loudness preference, image aesthetic suitability",
+    "fabricated": false
+  }
+}
