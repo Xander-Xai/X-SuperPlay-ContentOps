@@ -30,10 +30,11 @@ The recipe mirrors upstream's own subtitle styling knobs (--sub-font / --sub-siz
 import argparse
 import json
 import os
-import subprocess
 import sys
 import tempfile
 from pathlib import Path
+
+from process_utils import hidden_run, python_executable
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -202,11 +203,10 @@ def run(project: Path, out_name: str = "easel") -> dict:
         tmp_sb.write_text(json.dumps(no_sub, ensure_ascii=False), encoding="utf-8")
 
         env = dict(os.environ, PYTHONUTF8="1", PYTHONIOENCODING="utf-8")
-        proc = subprocess.run(
-            [sys.executable, str(upstream_assemble), "assemble",
+        proc = hidden_run(
+            [python_executable(), str(upstream_assemble), "assemble",
              "--storyboard", str(tmp_sb), "-o", str(upstream_out)],
-            cwd=str(ROOT), capture_output=True, encoding="utf-8",
-            errors="replace", env=env, timeout=1800,
+            cwd=str(ROOT), env=env, timeout=1800,
         )
         if proc.returncode != 0 or not upstream_out.exists():
             return {"status": "BLOCKED", "stage": "upstream_assemble",
@@ -232,10 +232,10 @@ def run(project: Path, out_name: str = "easel") -> dict:
         _srt_to_ass(sub_path, ass_path, w, h, DEFAULT_SUB_FONT,
                     int(w * 0.05), int(h * 0.07))
 
-        burn = subprocess.run(
+        burn = hidden_run(
             ["ffmpeg", "-y", "-i", str(upstream_out),
              "-vf", _subtitle_vf(ass_path), "-c:a", "copy", str(out_mp4)],
-            capture_output=True, encoding="utf-8", errors="replace", timeout=900,
+            timeout=900,
         )
         if burn.returncode != 0 or not out_mp4.exists():
             return {"status": "BLOCKED", "stage": "subtitle_burn",

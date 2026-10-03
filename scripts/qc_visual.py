@@ -16,11 +16,12 @@ Usage:
 
 import argparse
 import json
-import subprocess
 import sys
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
+
+from process_utils import hidden_run
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -30,9 +31,9 @@ THUMB_H = 569  # 9:16
 
 
 def ffprobe_duration(path: Path) -> float:
-    r = subprocess.run(
+    r = hidden_run(
         ["ffprobe", "-v", "error", "-show_format", "-print_format", "json", str(path)],
-        capture_output=True, text=True, timeout=30,
+        timeout=30,
     )
     try:
         return float(json.loads(r.stdout).get("format", {}).get("duration", 0))
@@ -41,20 +42,20 @@ def ffprobe_duration(path: Path) -> float:
 
 
 def extract_frame(video: Path, timestamp: float, out_png: Path) -> bool:
-    r = subprocess.run(
+    r = hidden_run(
         ["ffmpeg", "-y", "-ss", f"{timestamp:.2f}", "-i", str(video),
          "-frames:v", "1", "-vf", f"scale={THUMB_W}:{THUMB_H}",
          str(out_png)],
-        capture_output=True, text=True, timeout=60,
+        timeout=60,
     )
     return r.returncode == 0 and out_png.exists() and out_png.stat().st_size > 0
 
 
 def check_black_frame(png_path: Path) -> dict:
     """Check if a frame is mostly black (all pixels very dark)."""
-    r = subprocess.run(
+    r = hidden_run(
         ["ffmpeg", "-i", str(png_path), "-f", "rawvideo", "-pix_fmt", "gray", "-"],
-        capture_output=True, timeout=30,
+        timeout=30, text=False,
     )
     data = r.stdout
     if not data:
@@ -88,10 +89,10 @@ def build_contact_sheet(frames: list[Path], out_png: Path) -> bool:
         labels.append(f"[{i}:v]scale={THUMB_W}:{THUMB_H}[v{i}]")
         layout_parts.append(f"v{i}={x}_{y}")
     filter_chain = ";".join(labels) + f";xstack=inputs={'|'.join(f'v{i}' for i in range(n))}:layout={':'.join(layout_parts)}[v]"
-    r = subprocess.run(
+    r = hidden_run(
         ["ffmpeg", "-y"] + inputs + ["-filter_complex", filter_chain, "-map", "[v]",
          str(out_png)],
-        capture_output=True, text=True, timeout=120,
+        timeout=120,
     )
     return r.returncode == 0 and out_png.exists()
 

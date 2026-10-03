@@ -27,11 +27,12 @@ import json
 import os
 import re
 import shutil
-import subprocess
 import sys
 import wave
 from pathlib import Path
 from datetime import datetime, timezone
+
+from process_utils import hidden_run, python_executable
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -47,10 +48,10 @@ DEFAULT_SCRIPT_LINES = [
 
 
 def ffprobe_meta(path: Path) -> dict:
-    out = subprocess.run(
+    out = hidden_run(
         ["ffprobe", "-v", "error", "-print_format", "json",
          "-show_format", "-show_streams", str(path)],
-        capture_output=True, text=True, timeout=30,
+        timeout=30,
     )
     if out.returncode != 0:
         return {}
@@ -128,7 +129,7 @@ def synth_voice_wav(text: str, out_wav: Path, rate: int = 180, target_secs: floa
         f"$s.Dispose();"
     ]
     try:
-        res = subprocess.run(ps_cmd, capture_output=True, text=True, timeout=60)
+        res = hidden_run(ps_cmd, timeout=60)
         if res.returncode == 0 and out_wav.exists() and out_wav.stat().st_size > 1024:
             return True
     except Exception:
@@ -137,9 +138,9 @@ def synth_voice_wav(text: str, out_wav: Path, rate: int = 180, target_secs: floa
     # 2) espeak
     if shutil.which("espeak"):
         try:
-            res = subprocess.run(
+            res = hidden_run(
                 ["espeak", "-v", "zh+f3", "-s", str(rate), "-w", str(out_wav), text],
-                capture_output=True, timeout=60,
+                timeout=60, text=False,
             )
             if res.returncode == 0 and out_wav.exists() and out_wav.stat().st_size > 1024:
                 return True
@@ -167,10 +168,10 @@ def fit_image_to_video(image: Path, out_png: Path, w: int = 1080, h: int = 1920)
         f"scale={w}:{h}:force_original_aspect_ratio=decrease,"
         f"pad={w}:{h}:(ow-iw)/2:(oh-ih)/2:color=black"
     )
-    res = subprocess.run(
+    res = hidden_run(
         ["ffmpeg", "-y", "-i", str(image), "-vf", vf,
          "-frames:v", "1", str(out_png)],
-        capture_output=True, text=True, timeout=60,
+        timeout=60,
     )
     return res.returncode == 0 and out_png.exists() and out_png.stat().st_size > 0
 
@@ -183,10 +184,10 @@ def make_title_card(text: str, out_png: Path, w: int = 1080, h: int = 1920) -> b
         f"fontcolor=white:fontsize=64:x=(w-text_w)/2:y=(h-text_h)/2:"
         f"box=1:boxcolor=black@0.55:boxborderw=24"
     )
-    res = subprocess.run(
+    res = hidden_run(
         ["ffmpeg", "-y", "-f", "lavfi", "-i", f"color=c=black:s={w}x{h}:d=1",
          "-vf", vf, "-frames:v", "1", str(out_png)],
-        capture_output=True, text=True, timeout=60,
+        timeout=60,
     )
     return res.returncode == 0 and out_png.exists() and out_png.stat().st_size > 0
 
@@ -196,14 +197,14 @@ def concat_segments(segments: list[Path], out_mp4: Path, w: int, h: int) -> bool
     with list_file.open("w", encoding="utf-8") as f:
         for seg in segments:
             f.write(f"file '{str(seg).replace(chr(39), chr(39) + chr(39))}'\n")
-    res = subprocess.run(
+    res = hidden_run(
         ["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(list_file),
          "-c:v", "libx264", "-pix_fmt", "yuv420p",
          "-vf", f"scale={w}:{h}:force_original_aspect_ratio=decrease,pad={w}:{h}:(ow-iw)/2:(oh-ih)/2:color=black,format=yuv420p",
          "-r", "30",
          "-c:a", "aac", "-ar", "48000", "-ac", "2",
          str(out_mp4)],
-        capture_output=True, text=True, timeout=600,
+        timeout=600,
     )
     list_file.unlink(missing_ok=True)
     return res.returncode == 0 and out_mp4.exists() and out_mp4.stat().st_size > 0
@@ -290,11 +291,10 @@ def run_easel(project: Path) -> dict:
     narration_srt.parent.mkdir(parents=True, exist_ok=True)
     tts_script = easel_dir / "skills" / "shared" / "scripts" / "tts.py"
     env = dict(os.environ, PYTHONUTF8="1", PYTHONIOENCODING="utf-8")
-    r = subprocess.run(
-        [sys.executable, str(tts_script), "speak", "-f", str(narration_txt),
+    r = hidden_run(
+        [python_executable(), str(tts_script), "speak", "-f", str(narration_txt),
          "-o", str(narration_mp3), "-v", "zh-CN-YunxiNeural",
          "--engine", "edge", "--subtitle", str(narration_srt)],
-        capture_output=True, encoding="utf-8", errors="replace",
         env=env, timeout=600, cwd=str(easel_dir),
     )
     if r.returncode != 0 or not narration_mp3.exists():
@@ -411,7 +411,7 @@ def run(project: Path, voice_provider: str = "", engine: str = "easel") -> dict:
 
         # ffmpeg: image + wav -> mp4 segment
         seg_path = work / f"shot_{idx:02d}.mp4"
-        res = subprocess.run(
+        res = hidden_run(
             ["ffmpeg", "-y",
              "-loop", "1", "-i", str(shot_img),
              "-i", str(wav),
@@ -420,7 +420,7 @@ def run(project: Path, voice_provider: str = "", engine: str = "easel") -> dict:
              "-pix_fmt", "yuv420p",
              "-t", str(secs),
              str(seg_path)],
-            capture_output=True, text=True, timeout=180,
+            timeout=180,
         )
         if res.returncode != 0 or not seg_path.exists():
             return {

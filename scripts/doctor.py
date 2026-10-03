@@ -11,10 +11,11 @@ import argparse
 import json
 import os
 import shutil
-import subprocess
 import sys
 from pathlib import Path
 from datetime import datetime, timezone
+
+from process_utils import hidden_run
 
 ROOT = Path(__file__).resolve().parents[1]
 GIT_MIN_VERSION = (2, 30)
@@ -41,10 +42,8 @@ def _check_tool(name: str, version_args: list[str], min_version: tuple = None) -
     if not path:
         return {"name": name, "ok": False, "reason": "not found in PATH"}
     try:
-        out = subprocess.run(
+        out = hidden_run(
             [name, *version_args],
-            capture_output=True,
-            text=True,
             timeout=15,
         )
         version_str = (out.stdout or out.stderr).strip().splitlines()[0] if (out.stdout or out.stderr) else "?"
@@ -85,7 +84,14 @@ def _check_python() -> dict:
 
 
 def _check_node() -> dict:
-    out = subprocess.run(["node", "--version"], capture_output=True, text=True, timeout=10)
+    path = shutil.which("node")
+    if not path:
+        return {"name": "node", "ok": False, "path": None,
+                "reason": "not found in PATH"}
+    try:
+        out = hidden_run(["node", "--version"], timeout=10)
+    except Exception as e:
+        return {"name": "node", "ok": False, "path": path, "reason": str(e)}
     ver_str = (out.stdout or out.stderr).strip().lstrip("v")
     try:
         major = int(ver_str.split(".")[0])
@@ -95,7 +101,7 @@ def _check_node() -> dict:
     return {
         "name": "node",
         "ok": ok,
-        "path": shutil.which("node"),
+        "path": path,
         "version": ver_str,
         "required": ">=22.19",
     }

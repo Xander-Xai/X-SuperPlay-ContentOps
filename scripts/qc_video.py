@@ -18,10 +18,11 @@ Status: PASS / WARN / FAIL. FAIL -> final is not production-ready.
 
 import argparse
 import json
-import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+
+from process_utils import hidden_run
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -39,10 +40,10 @@ GENERATED_SOURCE_TYPES = {"generated", "ai_generated", "stock", "title_card"}
 
 def audio_is_not_silence(path: Path) -> dict:
     """Measure loudness so a silent track can't pass as 'has voice'."""
-    r = subprocess.run(
+    r = hidden_run(
         ["ffmpeg", "-i", str(path), "-af", "volumedetect",
          "-f", "null", "-"],
-        capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120,
+        timeout=120,
     )
     text = r.stderr or ""
     mean = None
@@ -64,10 +65,10 @@ def audio_is_not_silence(path: Path) -> dict:
 
 
 def ffprobe_meta(path: Path) -> dict:
-    out = subprocess.run(
+    out = hidden_run(
         ["ffprobe", "-v", "error", "-print_format", "json",
          "-show_format", "-show_streams", str(path)],
-        capture_output=True, text=True, timeout=30,
+        timeout=30,
     )
     if out.returncode != 0:
         return {}
@@ -159,11 +160,10 @@ def _subtitles_burned(video: Path, sb: dict) -> dict:
     with tempfile.TemporaryDirectory() as td:
         for frac in (0.15, 0.3, 0.45, 0.6, 0.75, 0.9):
             out = Path(td) / f"f{frac}.png"
-            r = subprocess.run(
+            r = hidden_run(
                 ["ffmpeg", "-y", "-ss", f"{dur * frac:.2f}", "-i", str(video),
                  "-frames:v", "1", "-f", "rawvideo", "-pix_fmt", "gray", str(out)],
-                capture_output=True, text=True, encoding="utf-8",
-                errors="replace", timeout=120,
+                timeout=120,
             )
             if r.returncode != 0 or not out.exists():
                 continue

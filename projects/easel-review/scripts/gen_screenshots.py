@@ -5,11 +5,14 @@ generated locally via ffmpeg (not AI), labeled with real Easel terminology,
 and serve as `real_assets_first` evidence per the V1 policy.
 """
 
-import subprocess
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(ROOT / "scripts"))
+
+from process_utils import hidden_run  # noqa: E402
+
 OUT = ROOT / "projects" / "easel-review" / "sources" / "screenshots"
 OUT.mkdir(parents=True, exist_ok=True)
 
@@ -46,7 +49,7 @@ def make_one(path: Path, line1: str, line2: str) -> bool:
         "-vf", vf,
         "-frames:v", "1", str(path),
     ]
-    res = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+    res = hidden_run(cmd, timeout=60)
     return res.returncode == 0 and path.exists() and path.stat().st_size > 0
 
 

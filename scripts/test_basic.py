@@ -1,26 +1,29 @@
 """Basic tests for scripts. Uses stdlib only (no pytest required).
 
 Each test calls the script as a subprocess and checks exit code + key output.
+All child processes go through process_utils so the suite does not flash
+console windows on Windows.
 """
 
 import json
-import subprocess
+import os
+import subprocess  # noqa: F401  (type hints only; no process spawning here)
 import sys
 import tempfile
 from pathlib import Path
 
+from process_utils import hidden_run, python_executable
+
 ROOT = Path(__file__).resolve().parents[1]
-PYTHON = sys.executable
+PYTHON = python_executable()
 
 
 def run(args: list[str], cwd: Path = ROOT, env_extra: dict = None) -> subprocess.CompletedProcess:
-    return subprocess.run(
+    return hidden_run(
         [PYTHON, *args],
         cwd=str(cwd),
-        capture_output=True,
-        text=True,
         timeout=300,
-        env={**__import__("os").environ, **(env_extra or {})},
+        env={**os.environ, **(env_extra or {})},
     )
 
 
@@ -125,8 +128,7 @@ def test_resolver_rejects_foreign_remote():
     with tempfile.TemporaryDirectory() as td:
         fake_root = Path(td)
         easel = _fake_easel_tree(fake_root)
-        run_git = lambda *a: subprocess.run(["git", "-C", str(easel), *a],
-                                            capture_output=True, text=True, timeout=30)
+        run_git = lambda *a: hidden_run(["git", "-C", str(easel), *a], timeout=30)
         assert run_git("init").returncode == 0
         assert run_git("remote", "add", "origin", "https://example.com/not-easel.git").returncode == 0
         res = rez.resolve_easel(root=fake_root, live=False)
