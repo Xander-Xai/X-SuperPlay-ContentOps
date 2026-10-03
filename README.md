@@ -1,129 +1,115 @@
 # X-SuperPlay-ContentOps
 
-> **V1 evidence-first video ContentOps runtime for X-SuperPlay accounts.**
+> Evidence-first video ContentOps runtime for Xander-Xai multi-repo content production.
 
-## 这是什么
+## What
 
-`X-SuperPlay-ContentOps` 是 X-SuperPlay 自媒体内容运营的 V1 Runtime。目标只有一个：
+A unified runtime that converts real business work (GitHub repos, experiments, research) into high-quality, traceable, publishable video content.
 
-> **稳定生成可发布的 final.mp4。**
+## Why
 
-V1 不追求大一统架构、不做自动发布、不接数据库、不下搭歌 — 只打通：
+Previous approach used 5 separate platform-specific repos that never produced stable output. ContentOps consolidates production into one runtime with honest quality gates.
 
-```
-Source  → Script → Storyboard → Voice → Subtitle → Compose → QC → final.mp4
-```
+## Current Status
 
-## 当前 V1 状态
-
-| 项 | 状态 |
+| Item | Status |
 |---|---|
-| Easel runtime | 锁定 v0.2.1 / commit `3fe2d9904c1619281ef57f81d9ee0b7854998399` |
-| 旧 5 个自媒体仓库 | 停止开发，本仓库不依赖、不迁移它们 |
-| 自动发布 | **不做**（V1 阶段） |
-| AI 文生视频 | **默认关闭**（V1 不依赖） |
-| 数字人 / 短剧 | **不做** |
+| Easel runtime | Pinned v0.2.1 (commit `3fe2d99`, 982 blobs verified) |
+| Production engine | Easel `assemble.py` (upstream, unmodified) |
+| Production voice | edge-tts via Easel `tts.py` (zh-CN-YunxiNeural) |
+| Voice quality | `edge_tts_fallback` — awaiting MiniMax upgrade (M2) |
+| Diagnostic engine | ffmpeg-only fallback (never production) |
+| MiniMax integration | NOT_IMPLEMENTED (capability spike pending, Issue #4) |
+| Auto-publishing | NOT in scope |
+| Golden samples | 1 (`projects/easel-review/`) |
+| Tests | 9 passing |
+| Production ready | **false** — READY_FOR_HUMAN_REVIEW |
 
 ## Quick Start
 
 ### Windows PowerShell
 
 ```powershell
-python scripts\bootstrap.ps1
 python scripts\doctor.py
-python scripts\new_project.py --slug easel-review --title "Easel 实测"
-python scripts\run_v1.py   projects\easel-review
-python scripts\qc_video.py  projects\easel-review
+python scripts\new_project.py --slug my-video --title "My Video"
+python scripts\run_v1.py   projects\my-video
+python scripts\qc_video.py projects\my-video
 ```
 
 ### WSL2 Ubuntu / Linux
 
 ```bash
-bash scripts/bootstrap.sh
 python3 scripts/doctor.py
-python3 scripts/new_project.py --slug easel-review --title "Easel 实测"
-python3 scripts/run_v1.py   projects/easel-review
-python3 scripts/qc_video.py  projects/easel-review
+python3 scripts/new_project.py --slug my-video --title "My Video"
+python3 scripts/run_v1.py   projects/my-video
+python3 scripts/qc_video.py projects/my-video
 ```
 
-## 创建项目
+## Architecture Summary
 
-```bash
-python scripts/new_project.py --slug <kebab-case> --title "<title>"
+```
+Source → Script → Storyboard → Voice → Compose → QC → Human Review → final.mp4
 ```
 
-生成标准目录与 `project.yaml`。**拒绝覆盖**已有项目。
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for full system boundaries.
 
-## 跑 V1
+## Canonical Documentation
 
-```bash
-python scripts/run_v1.py projects/<slug>
-```
+| Doc | Purpose |
+|---|---|
+| [docs/INDEX.md](docs/INDEX.md) | Navigation hub |
+| [docs/CURRENT-STATE.md](docs/CURRENT-STATE.md) | What runs today |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System boundaries |
+| [docs/PRD.md](docs/PRD.md) | Product requirements |
+| [docs/RUNBOOK.md](docs/RUNBOOK.md) | Real executable commands |
+| [docs/DEVELOPMENT-PLAN.md](docs/DEVELOPMENT-PLAN.md) | M0–M6 milestones |
+| [docs/QUALITY-STANDARD.md](docs/QUALITY-STANDARD.md) | Quality gates |
+| [docs/UPSTREAM-EASEL.md](docs/UPSTREAM-EASEL.md) | Easel pin policy |
+| [AGENTS.md](AGENTS.md) | AI agent execution discipline |
 
-V1 渲染：
+## Easel Pin
 
-1. 真实证据 PNG/JPG（按 `sources/screenshots|digrams|recordings` 顺序）
-2. Windows SAPI 配音（fallback 时 QC 标注 `voice_quality: fallback`）
-3. 6 段分镜 (HOOK / 问题 / 证据 / 发现 / 限制 / 结论)
-4. ffmpeg 合成 → `final/final.mp4`
-
-## QC
-
-```bash
-python scripts/qc_video.py projects/<slug>
-```
-
-输出 `receipts/qc-report.{json,md}`。状态：`PASS` / `WARN` / `FAIL`。
-
-## Easel
-
-| 项 | 值 |
+| Property | Value |
 |---|---|
 | Repo | https://github.com/ZJU-REAL/Easel |
 | Tag | v0.2.1 |
 | Commit | `3fe2d9904c1619281ef57f81d9ee0b7854998399` |
-| 本地路径 | `.runtime/easel/` |
-| Lock | `runtime/easel.lock.json` |
-| 升级 | 禁止自动升级，需 Founder 明确同意 |
+| Local path | `.runtime/easel/` |
+| Lock file | `runtime/easel.lock.json` |
+| Upgrade | Requires Founder approval + regression suite |
 
-## 当前明确不做什么
+See [docs/UPSTREAM-EASEL.md](docs/UPSTREAM-EASEL.md) for full policy.
 
-- ❌ 自动发布抖音 / 小红书 / B站 / 视频号
-- ❌ 评论抓取 / 数据归因 / ROI Agent
-- ❌ n8n / OpenClaw 总调度中心
-- ❌ 数字人 / AI 短剧 / 复杂 AI 视频
-- ❌ Fork / 改造 Easel
-- ❌ 迁移 / 修复 5 个旧仓库
+## Governance
 
-## 核心资产
+- **NO DIRECT PUSH TO MAIN** — all changes via PR
+- `main` currently unprotected (governance by convention)
+- Active branch: `refactor/contentops-easel-minimax-plan`
+- Frozen baseline: `feat/v1-video-pipeline`
+- See [GitHub Issues](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/issues) for milestone tracking
 
-- `AGENTS.md` — AI 代理规则（North Star + 能力证明原则 + Pre-Code Gate + 项目四态）
-- `00-Governance/PRINCIPLES.md` — X-SuperPlay 能力证明原则
-- `00-Governance/PRE-CODE-GATE.md` — coding 前 7 问 Gate
-- `00-Governance/PROJECT-STATES.md` — 项目四态制度（RUN/HOLD/LIBRARY/KILL）
-- `00-Governance/MEASUREMENT.md` — 新的 5 大衡量标准
-- `00-Governance/douyin-1024-STRATEGY.md` — douyin-1024 战略定位
-- `00-Governance/decisions/ADR-WS008-Presenter-Layer.md` — 数字人 Presenter 层定位决策
-- `docs/V1-RUNBOOK.md` — 操作手册
-- `docs/EASEL-DEPLOYMENT-DECISION.md` — Easel v0.2.1 部署决策（克隆 + Web 工作台）
-- `docs/V1-EXECUTION-METHODOLOGY.md` — 先跑通原版再改造的执行方法论
-- `docs/OPEN-SOURCE-VERSION-HEURISTICS.md` — 开源项目版本选择决策树
-- `docs/PRESENTER-LAYER-SPEC.md` — 数字人画面规范（小窗主持人层）
-- `docs/PRESENTER-PROVIDER-ROUTING.md` — 数字人 Provider 路由与成本模型
-- `docs/DIGITAL-HUMAN-PROVIDER-ANALYSIS.md` — 数字人三条技术路线分析
-- `templates/short-video-v1.md` — 视频结构模板
-- `templates/project.yaml` — 项目元数据模板
-- `templates/qc-checklist.md` — QC 清单
+## Extension Policy
 
-## 能力证明原则（最高优先级）
+```
+ADAPTER > EXTENSION > CUSTOM SKILL > UPSTREAM PATCH > FORK
+```
 
-> **X-SuperPlay 不以"自己开发了多少系统"为能力证明，而以"借助现有能力，多快完成真实业务闭环"为能力证明。**
+Fork is last resort. Current state: no fork, no upstream modification.
 
-四条铁律：
+## Non-goals (current phase)
+
+- Auto-publishing to any platform
+- Comment scraping / ROI agent
+- Digital human / AI short drama
+- Metrics scraping / winner learning
+- n8n / OpenClaw total orchestration
+
+## Core Principles
 
 ```
 Adopt before Build.       Ship before Automate.
 Measure before Optimize.  Delete before Expand.
+Evidence before Claim.    Contract before Integration.
+Quota before Generation.  Quality before Scale.
+Runtime Reality before Documentation.
 ```
-
-详见 [00-Governance/PRINCIPLES.md](00-Governance/PRINCIPLES.md)。
