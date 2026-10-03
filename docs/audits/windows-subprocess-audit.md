@@ -6,6 +6,8 @@
 > Method: `git grep -nE "subprocess\.(run|Popen|call|check_call|check_output)|os\.system|os\.popen"` over all tracked `*.py`, then manual inspection of every hit.
 > Every line number below was read from the file, not estimated.
 
+[English](windows-subprocess-audit.md) | [简体中文](windows-subprocess-audit.zh-CN.md)
+
 ## Scope
 
 Tracked Python sources only. `Easel/`, `.runtime/` and `.env` are gitignored and out of scope.
@@ -208,3 +210,176 @@ residual popup must be attributed by PPID before further ContentOps changes are 
 
 - parent in `{python.exe, git.exe, ffmpeg.exe, ffprobe.exe, node.exe}` → **ContentOps-owned**, keep fixing.
 - parent in `{claude.exe, bash.exe, cmd.exe, powershell.exe, WindowsTerminal.exe}` → label **UPSTREAM_CLAUDE_WINDOWS_POPUP** and stop.
+
+---
+
+# Phase 6/7 — measurement on real Windows hardware
+
+Host: Windows, CPython 3.13.15, `D:\Projects\X-SuperPlay-ContentOps`.
+Method: poll `EnumWindows` every 5 ms for newly visible windows whose class is
+`ConsoleWindowClass`, `PseudoConsoleWindow` or `CASCADIA_HOSTING_WINDOW_CLASS`,
+record the owning PID, then resolve the full PPID chain via `Win32_Process`.
+
+## Why a plain terminal cannot prove anything
+
+The first attempt produced `ContentOps-owned popup count = 0` for everything —
+including a deliberately unhidden control. That zero was **worthless**, because
+the measurement ran from an interactive shell whose parent process already owned
+a console, so every console child silently inherited it and no window was ever
+allocated.
+
+A zero count is only evidence if a control proves the detector fires.
+
+## Which parent configurations actually produce a popup
+
+Measured, with an unhidden child:
+
+| Parent configuration | Visible console windows |
+|---|---|
+| console `python.exe` | 0 — child inherits the existing console |
+| `CREATE_NO_WINDOW` parent | 0 — child runs without a console |
+| **`DETACHED_PROCESS` parent** | **2 — popup** |
+| **`pythonw.exe` (GUI) parent** | **2 — popup** |
+
+The last row is the real-world case: an IDE or Claude Code has no console, so any
+console child it starts allocates a fresh visible window.
+
+## Harness artifact, and how it was removed
+
+Under `DETACHED_PROCESS` the harness itself produced 2 windows, because
+`python.exe` + `DETACHED_PROCESS` allocates its own detached console. A `NOOP`
+arm (detached worker that spawns nothing) measured that artifact at exactly 2
+windows, so every treatment arm was corrected by subtracting it:
+
+```
+NOOP baseline (detached, spawns nothing)   : 2
+unhidden control                           : 2   -> 0 attributable to the child
+hidden cmd / ffmpeg / ffprobe / git / python: 2 each -> 0 attributable to the child
+```
+
+The `pythonw.exe` arm needs no correction: its `NOOP` baseline is 0.
+
+## Result — `pythonw.exe` GUI parent, real ContentOps commands
+
+Control first, to prove the detector:
+
+| Command | rc | Visible console windows |
+|---|---|---|
+| **CONTROL** raw `subprocess.run` (no suppression) | 0 | **2** |
+| `scripts/doctor.py` | 0 | 0 |
+| `scripts/check_docs.py` | 0 | 0 |
+| `scripts/check_repo_policy.py` | 0 | 0 |
+| `scripts/check_subprocess_policy.py` | 0 | 0 |
+| `git -C … ls-files` | 0 | 0 |
+| `ffprobe -version` | 0 | 0 |
+| `ffmpeg -version` | 0 | 0 |
+| `tests/test_windows_subprocess.py` | 0 | 0 |
+| `tests/test_windows_paths.py` | 0 | 0 |
+| `scripts/test_basic.py` | 0 | 0 |
+| `scripts/dev_check.py` | 0 | 0 |
+
+**ContentOps-owned popup count = 0.**
+
+The control reproducing 2 windows while all eleven real commands produce 0 is the
+proof: the condition is real, and suppression removes it.
+
+## Phase 7 — residual popup attribution
+
+No ContentOps popup remained, so nothing needed attributing. For the record, the
+attribution rule that would have been applied is implemented as ancestor-chain
+classification: walk PPID to the root, then label `CONTENTOPS_OWNED` if any
+ancestor is `python.exe`/`git.exe`/`ffmpeg.exe`/`ffprobe.exe`/`node.exe`/`gh.exe`,
+or `UPSTREAM_CLAUDE_WINDOWS_POPUP` if any ancestor is `claude.exe`/`bash.exe`/
+`cmd.exe`/`powershell.exe`/`WindowsTerminal.exe`.
+
+One caveat found while measuring: the two control windows both resolved to an
+owner that had already exited by the time WMI was queried, so live attribution of
+a short-lived popup needs the observer to sample faster than the child lives.
+That does not affect the zero result, which relies on absence rather than
+attribution.
+
+---
+
+# Phase 9 — WSL2 validation
+
+Host: Ubuntu-22.04 on WSL2, kernel 6.6.87.2-microsoft-standard-WSL2,
+CPython 3.10.12, git 2.34.1.
+
+## Correctness on Linux
+
+The window-suppression path must be a strict no-op off Windows, so POSIX
+behaviour is unchanged:
+
+- `os.name == "posix"` → `_get_hidden_kwargs()` returns `{}`, no `startupinfo`,
+  no `creationflags`.
+- `hidden_run` / `hidden_popen` execute normally.
+- Interactive/background classification is identical to Windows.
+- Full suite passes: policy gate, 32 subprocess regression tests, Windows path
+  tests, `test_basic.py`, `check_docs.py`, `check_i18n.py`,
+  `check_repo_policy.py`, and `dev_check.py`.
+
+### One real bug found here
+
+`scripts/doctor.py --json` crashed with
+`FileNotFoundError: [Errno 2] No such file or directory: 'node'` on any host
+without `node`. `_check_node()` lacked both the `shutil.which()` guard and the
+`try/except` that `_check_tool()` already had. Verified pre-existing by
+reproducing it on `main` @ `51d875d` with these changes stashed. Fixed in this
+branch, because it blocked the WSL2 validation path.
+
+## /mnt/d performance — measured, and not acceptable
+
+| Metric | `/mnt/d` (DrvFs) | `~/projects` (ext4) | Ratio |
+|---|---|---|---|
+| file create+read+delete | 61.7 ops/sec | 16401.9 ops/sec | **266x** |
+| `dev_check.py` full gate | 124.18 s | 1.66 s | **75x** |
+
+On `/mnt/d`, `tests/test_windows_paths.py` fails: `dev_check --quick` exceeds the
+60 s cap that the path test imposes, purely on I/O latency.
+
+### Recommendation
+
+Use an **ext4 working tree** for WSL development:
+
+```
+~/projects/X-SuperPlay-ContentOps
+```
+
+Verified: the full suite passes there and `dev_check` completes in 1.66 s. Keep
+`/mnt/d` for the Windows-side checkout and for large video assets and outputs,
+syncing between them as needed. Working directly on `/mnt/d` from WSL costs
+75x on the developer gate and makes a legitimate test fail on timing alone.
+
+---
+
+# Phase 10 — binding rule for the MiniMax provider (Issue #4, M2.0)
+
+Provider integration inherits this policy automatically, because
+`scripts/check_subprocess_policy.py` runs in CI. A bare
+`subprocess.run(["mmx", ...])` anywhere outside `scripts/process_utils.py` fails
+the build; the gate does not need to know what `mmx` is.
+
+Classification is already encoded in `is_interactive_command()`:
+
+| Command | Class | Entry point |
+|---|---|---|
+| `mmx auth login` | INTERACTIVE_VISIBLE | `interactive_run()` |
+| `mmx quota` | BACKGROUND_HIDDEN | `hidden_run()` |
+| `mmx image` | BACKGROUND_HIDDEN | `hidden_run()` |
+| `mmx speech` | BACKGROUND_HIDDEN | `hidden_run()` |
+| `mmx video` | BACKGROUND_HIDDEN | `hidden_run()` |
+| `mmx video task get` | BACKGROUND_HIDDEN | `hidden_run()` |
+
+Child interpreters must use `python_executable()`; the bare string `"python"` is
+not permitted, and `process_utils.py` itself is asserted to contain none.
+
+## Verification commands
+
+```
+python scripts/test_basic.py
+python tests/test_windows_subprocess.py
+python tests/test_windows_paths.py
+python scripts/check_subprocess_policy.py
+python scripts/dev_check.py
+git diff --check
+```

@@ -54,3 +54,4 @@ translation_status: synced
 ## 审计
 
 - [AUDIT-REPORT.md](AUDIT-REPORT.md) — 仓库审计（2026-10-03）
+- [audits/windows-subprocess-audit.zh-CN.md](audits/windows-subprocess-audit.zh-CN.md) — Windows 控制台弹窗审计、每个子进程调用点的分类，以及统一进程层（Issue #16）
