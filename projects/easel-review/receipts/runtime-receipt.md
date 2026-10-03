@@ -74,7 +74,7 @@ Three independent signals:
    is not ZJU-REAL/Easel and refuses unpinned trees (the legacy `Easel/` clone
    at `4b9c03c` is never silently selected).
 
-Machine-readable provenance: [`runtime/easel-runtime.json`](../../runtime/easel-runtime.json).
+Machine-readable provenance: [`runtime/easel-runtime.json`](../../../runtime/easel-runtime.json).
 
 ## Broken runtime disposed
 
