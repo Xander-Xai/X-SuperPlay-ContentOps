@@ -1,0 +1,61 @@
+[easel] SKILL: video-script
+──────────────────────────────────────────────────
+好，我已确认源码目录结构、版本号和各层 Skill 数量。现在直接出脚本。
+---
+# Easel 实测短视频脚本（9:16 · 1080×1920 · 约 60 秒）
+## 一、分镜脚本表
+| # | 时间轴 | 口播文案 | 字幕文案 | 画面 | 真实素材 |
+|---|---|---|---|---|---|
+| 1 | **0–4s** | "装了 Easel，doctor 和 ping 一跑，我直接看到了结果。" | doctor ✅ ping ✅ | 全屏大字叠加命令输出快闪 → 定格在绿色 ✅ 界面 | `10-easel-doctor.png` + `11-easel-ping.png` |
+| 2 | **4–10s** | "它是 ZJU-REAL 出品的开源社媒内容工作流整合层，版本 0.2.1，114 个 Skill，开箱即调。" | ZJU-REAL · Easel v0.2.1 · 114 Skills | 版本信息截图 + 114 Skills 证据截图并排 | `12-easel-version-evidence.png` |
+| 3 | **10–28s** | "114 个 Skill 按五层分布：发现 9 个、策划 16 个、创作 51 个、发布 20 个、归因 11 个。创作层最大，视频生产只是其中一条线。" | 发现 9 · 策划 16 · 创作 51 · 发布 20 · 归因 11 | 分层饼图/柱状图动画入场 → 高亮「创作 51」→ 技能目录树滚动 | `13-easel-skill-layers.png` + `14-easel-skills-dir.png` |
+| 4 | **28–44s** | "本地实测：doctor 报环境全绿，ping 确认网关连通，Gateway 跑在 18789 端口。这次我只验证了 CLI 加 Skill 调用这条路径。" | doctor ✅ · ping ✅ · port 18789 | 三段输出依次弹出：doctor 结果 → ping 结果 → 端口确认 | `10-easel-doctor.png` + `11-easel-ping.png` |
+| 5 | **44–54s** | "但 Web 工作台这条路现在没通——fastapi、uvicorn、sse-starlette、multipart 这几个 Python 依赖没装，Web UI 没跑起来。本次只验证了 CLI 加 Skill 的生产路径。" | ⚠ Web 依赖缺失：fastapi / uvicorn / sse-starlette / multipart | 报错截图或 pip install 失败提示，叠加一行说明文字 | `10-easel-doctor.png` 提示区或独立说明页 |
+| 6 | **54–62s** | "结论：它不是一个开箱即用的 SaaS，但它的 Skill 层和 CLI 是真的能调起来的生产引擎。" | 不是 SaaS，是一个能调用的生产引擎 | 终屏：命令行 + Skill 目录并排，大字结论 | `14-easel-skills-dir.png` + 结论页 |
+---
+## 二、每镜画面说明（真实素材调用）
+**镜 1（0–4s）：结果冲击**
+- 主图：`10-easel-doctor.png`（doctor 输出，截取 ✅ 绿色通过区域）
+- 辅图：`11-easel-ping.png`（ping 连通确认）
+- 处理：两图并排快闪 1.5s，定格 1.5s，上方叠加"结果"二字黑底白字
+**镜 2（4–10s）：身份亮相**
+- 主图：`12-easel-version-evidence.png`（含 v0.2.1 版本号、commit hash、114 skills 证据）
+- 处理：截图作为背景，右侧叠加"ZJU-REAL / Easel v0.2.1 / 114 Skills"三行动态文字
+**镜 3（10–28s）：能力地图**
+- 主图 1：`13-easel-skill-layers.png`（按 discover/plan/produce/publish/attribute 分层的统计图）
+- 主图 2：`14-easel-skills-dir.png`（skills/openclaw 目录树截图，证明 114 个真实存在）
+- 处理：分层图动画入场 → 高亮"创作 51"→ 目录树快速滚动展示
+**镜 4（28–44s）：本机实测证据**
+- 主图 1：`10-easel-doctor.png`（全量输出，标注关键项）
+- 主图 2：`11-easel-ping.png`（ping 返回结果）
+- 处理：三段输出依次弹出（各 4s），底部标注端口号 18789
+**镜 5（44–54s）：已知限制**
+- 主图：`10-easel-doctor.png` 截取依赖缺失相关行，或用文字说明页
+- 列出：fastapi / uvicorn / sse-starlette / multipart 未装
+- 处理：红/橙色警示框 + "Web UI 未验证"说明文字
+**镜 6（54–62s）：结论终屏**
+- 主图：`14-easel-skills-dir.png`（Skill 目录真实存在）
+- 结论文字叠加：**"不是 SaaS，是一个能调用的生产引擎"**
+- 处理：深色背景 + 白色大字，克制不炫技
+---
+## 三、事实边界（必须严格遵守）
+| 结论 | 性质 | 依据 |
+|---|---|---|
+| easel doctor 报环境全绿 | ✅ **本机实测** | 用户提供的 `10-easel-doctor.png` |
+| easel ping 确认网关连通 | ✅ **本机实测** | 用户提供的 `11-easel-ping.png` |
+| Gateway 跑在 18789 端口 | ✅ **本机实测** | 来自 ping 输出截图 |
+| 版本 v0.2.1，commit 日期 2026-09-24 | ✅ **源码实测** | `CHANGELOG.md` 文件内容 |
+| 114 个 Skill 真实存在 | ✅ **源码统计** | `skills/openclaw/` 目录计数（114 个子目录） |
+| 各层 Skill 数量（发现9/策划16/创作51/发布20/归因11） | ✅ **文档陈述** | `docs/skill-function-mapping.md`（总和 113，文档标题写 114，以文档为准） |
+| CLI + Skill + 合成路径可调 | ✅ **本机实测** | 本次 `easel skill video-script` 真实调用 |
+| assemble.py 自检通过 | ✅ **本机实测** | 用户说明 |
+| Web 工作台依赖缺失（fastapi 等） | ✅ **本机实测** | `10-easel-doctor.png` 或 pip 报错 |
+| Web UI 可用 / 自动发布 / 跨平台分发 / 数字人 / 归因分析 等功能 | ❌ **官方声明，非实测** | `README.md` / `skill-function-mapping.md` 宣称 |
+| 开箱即用的 SaaS | ❌ **未实测，官方无此宣称** | 基于实测结论的反向描述 |
+---
+## 四、制作备注
+- **总时长**：约 62 秒，在 60±3s 范围内
+- **画幅**：9:16（1080×1920），竖版
+- **节奏**：镜 1 快闪冲击（4s）→ 镜 2 身份确认（6s）→ 镜 3 数据密集（18s）→ 镜 4 证据展示（16s）→ 镜 5 主动揭短（10s）→ 镜 6 克制收尾（8s）
+- **调性**：Result-first，证据驱动，不吹嘘，不营销；镜 5 主动暴露缺陷反而增强可信度
+- **禁止**：任何 AI 生图；所有画面必须来自真实素材截图

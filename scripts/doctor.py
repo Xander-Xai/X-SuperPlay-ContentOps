@@ -16,9 +16,7 @@ import sys
 from pathlib import Path
 from datetime import datetime, timezone
 
-ROOT = Path(__file__).resolve().parent.parent
-LOCK_FILE = ROOT / "runtime" / "easel.lock.json"
-EASEL_DIR = ROOT / ".runtime" / "easel"
+ROOT = Path(__file__).resolve().parents[1]
 GIT_MIN_VERSION = (2, 30)
 
 
@@ -112,57 +110,34 @@ def _check_ffprobe() -> dict:
 
 
 def _check_easel_checkout() -> dict:
-    """Check pinned commit at .runtime/easel/ or fallback to existing Easel/."""
-    PINNED = {
-        "repo": "https://github.com/ZJU-REAL/Easel.git",
-        "tag": "v0.2.1",
-        "commit": "3fe2d9904c1619281ef57f81d9ee0b7854998399",
-    }
-    for easel_path, label in [
-        (EASEL_DIR, "runtime"),
-        (ROOT / "Easel", "legacy"),
-    ]:
-        if not easel_path.exists() or not (easel_path / ".git").exists():
-            continue
-        r = subprocess.run(
-            ["git", "-C", str(easel_path), "rev-parse", "HEAD"],
-            capture_output=True, text=True, timeout=15,
-        )
-        head = r.stdout.strip() if r.returncode == 0 else ""
-        if not head:
-            continue
-        # check if pinned commit is reachable
-        ck = subprocess.run(
-            ["git", "-C", str(easel_path), "cat-file", "-t", PINNED["commit"]],
-            capture_output=True, text=True, timeout=15,
-        )
-        if ck.returncode == 0:
-            ok = head == PINNED["commit"]
-            return {
-                "name": "easel_checkout",
-                "ok": ok,
-                "path": str(easel_path),
-                "head": head,
-                "expected": PINNED["commit"],
-                "tag": PINNED["tag"],
-                "note": ("OK" if ok else f"WRONG_COMMIT") + f" ({label} location)",
-            }
-        else:
-            return {
-                "name": "easel_checkout",
-                "ok": False,
-                "path": str(easel_path),
-                "head": head,
-                "expected": PINNED["commit"],
-                "tag": PINNED["tag"],
-                "reason": "pinned commit not reachable",
-                "note": f"HEAD={head} at {label}. Network may block git fetch. "
-                         "Manual: cd .runtime/easel && git fetch origin 3fe2d9904... && git checkout 3fe2d9904...",
-            }
+    """Verify the pinned Easel runtime via the shared resolver.
+
+    Accepts either a git checkout whose HEAD is the pinned commit, or a
+    release archive whose content matches the upstream tree (verified live
+    here; run with --offline elsewhere to use recorded provenance). A
+    directory whose remote is not ZJU-REAL/Easel is rejected, never treated
+    as Easel (AGENTS.md §1.6 / V1 spec §3).
+    """
+    import resolve_easel as rez
+    pin = rez.load_pin()
+    res = rez.resolve_easel(live=True)
+    if res["status"] == "OK":
+        out = {
+            "name": "easel_checkout", "ok": True,
+            "path": res["easel_dir"], "release": pin["tag"],
+            "expected_commit": pin["commit"],
+            "acquisition": res["acquisition"],
+            "verification": res["verification"],
+        }
+        for k in ("verified_blobs", "verified_at", "note"):
+            if k in res:
+                out[k] = res[k]
+        return out
     return {
-        "name": "easel_checkout",
-        "ok": False,
-        "reason": f"Easel not found at {EASEL_DIR} or {ROOT / 'Easel'}",
+        "name": "easel_checkout", "ok": False,
+        "release": pin["tag"], "expected_commit": pin["commit"],
+        "reason": "; ".join(res.get("reasons", ["unresolved"])),
+        "remedy": res.get("remedy"),
     }
 
 

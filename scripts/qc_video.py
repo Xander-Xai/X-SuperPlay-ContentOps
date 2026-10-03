@@ -23,12 +23,44 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[1]
 
 MIN_FILE_BYTES = 100 * 1024  # 100 KB
 MIN_DURATION = 30.0
 MAX_DURATION = 120.0
 EXPECTED_W, EXPECTED_H = 1080, 1920
+# Evidence-first policy: the majority of shots must come from real captured
+# assets, not generated visuals.
+MIN_REAL_SOURCE_RATIO = 0.70
+
+REAL_SOURCE_TYPES = {"real_screenshot", "real_recording", "diagram", "real_document"}
+GENERATED_SOURCE_TYPES = {"generated", "ai_generated", "stock", "title_card"}
+
+
+def audio_is_not_silence(path: Path) -> dict:
+    """Measure loudness so a silent track can't pass as 'has voice'."""
+    r = subprocess.run(
+        ["ffmpeg", "-i", str(path), "-af", "volumedetect",
+         "-f", "null", "-"],
+        capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120,
+    )
+    text = r.stderr or ""
+    mean = None
+    peak = None
+    for line in text.splitlines():
+        if "mean_volume:" in line:
+            mean = line.split("mean_volume:")[1].strip()
+        if "max_volume:" in line:
+            peak = line.split("max_volume:")[1].strip()
+    def _db(v):
+        try:
+            return float(v.replace("dB", "").strip())
+        except Exception:
+            return None
+    mean_db, peak_db = _db(mean or ""), _db(peak or "")
+    ok = peak_db is not None and peak_db > -50.0
+    return {"ok": ok, "mean_volume_db": mean, "max_volume_db": peak,
+            "threshold_db": -50.0}
 
 
 def ffprobe_meta(path: Path) -> dict:
@@ -95,13 +127,73 @@ def parse_yaml(path: Path) -> dict:
     return data
 
 
-def qc(project: Path) -> dict:
+def _subtitles_burned(video: Path, sb: dict) -> dict:
+    """Decide whether subtitles are visible: a real subtitle stream, or burned in.
+
+    A subtitle file existing next to the video is NOT evidence that anything is
+    visible. When the storyboard declares a subtitle, sample a frame from the
+    middle of the video and check whether bright pixels appeared in the lower
+    band (the subtitle zone) compared with the source frames' own brightness.
+    """
+    meta = ffprobe_meta(video)
+    for s in meta.get("streams", []):
+        if s.get("codec_type") == "subtitle":
+            return {"ok": True, "method": "subtitle_stream"}
+
+    declared = sb.get("subtitle")
+    if not declared:
+        return {"ok": False, "method": "none",
+                "note": "no subtitle declared and none present"}
+
+    import tempfile
+    dur = float(meta.get("format", {}).get("duration", "0") or 0)
+    if dur <= 2:
+        return {"ok": False, "method": "unknown",
+                "note": "video too short to sample"}
+
+    # Sample several points, not just the midpoint: a single frame can land in a
+    # gap between cues and wrongly report "no subtitles".
+    band_start = int(EXPECTED_H * 0.82) * EXPECTED_W
+    expected = EXPECTED_W * EXPECTED_H
+    best, samples = 0.0, 0
+    with tempfile.TemporaryDirectory() as td:
+        for frac in (0.15, 0.3, 0.45, 0.6, 0.75, 0.9):
+            out = Path(td) / f"f{frac}.png"
+            r = subprocess.run(
+                ["ffmpeg", "-y", "-ss", f"{dur * frac:.2f}", "-i", str(video),
+                 "-frames:v", "1", "-f", "rawvideo", "-pix_fmt", "gray", str(out)],
+                capture_output=True, text=True, encoding="utf-8",
+                errors="replace", timeout=120,
+            )
+            if r.returncode != 0 or not out.exists():
+                continue
+            data = out.read_bytes()
+            if len(data) < expected:
+                continue
+            samples += 1
+            band = data[band_start:expected]
+            bright = sum(1 for b in band if b > 200)
+            best = max(best, bright / max(len(band), 1))
+    ok = best > 0.002
+    return {"ok": ok, "method": "burned_in_scan",
+            "note": f"max bright-pixel ratio across {samples} samples = {best:.5f}"}
+
+
+def qc(project: Path, target: str = "") -> dict:
     project = project.resolve()
-    final = project / "final" / "final.mp4"
+    # --video selects which render to grade: "easel", "fallback" or an explicit
+    # filename. Defaults to easel.mp4 when it exists (the production render),
+    # otherwise falls back to the legacy final.mp4.
+    if target:
+        final = project / "final" / target
+    else:
+        easel_vid = project / "final" / "easel.mp4"
+        final = easel_vid if easel_vid.exists() else project / "final" / "final.mp4"
+    target_name = Path(target).stem if target else final.stem
     receipts = project / "receipts"
     receipts.mkdir(parents=True, exist_ok=True)
 
-    checks = []
+    checks = [{"id": "_video", "ok": True, "severity": "INFO", "path": str(final)}]
 
     # 1) final.mp4 exists
     if not final.exists():
@@ -110,7 +202,7 @@ def qc(project: Path) -> dict:
             "severity": "FAIL",
             "msg": f"final.mp4 not found at {final}",
         })
-        return _emit(project, checks)
+        return _emit(project, checks, target_name)
 
     # 2) file size
     size = final.stat().st_size
@@ -129,7 +221,7 @@ def qc(project: Path) -> dict:
         "severity": "FAIL" if not parse_ok else "PASS",
     })
     if not parse_ok:
-        return _emit(project, checks)
+        return _emit(project, checks, target_name)
 
     streams = meta.get("streams", [])
     fmt = meta.get("format", {})
@@ -209,6 +301,79 @@ def qc(project: Path) -> dict:
         "path": str(srt),
     })
 
+    # --- evidence-first checks -------------------------------------------------
+    script_md = project / "script" / "master.md"
+    checks.append({
+        "id": "script_exists", "ok": script_md.exists() and script_md.stat().st_size > 0,
+        "severity": "FAIL" if not script_md.exists() else "PASS",
+        "path": str(script_md),
+    })
+
+    storyboard = project / "script" / "storyboard.json"
+    sb = {}
+    if storyboard.exists():
+        try:
+            sb = json.loads(storyboard.read_text(encoding="utf-8"))
+        except Exception as e:
+            sb = {}
+            checks.append({
+                "id": "storyboard_parses", "ok": False, "severity": "FAIL",
+                "msg": f"invalid JSON: {e}",
+            })
+    checks.append({
+        "id": "storyboard_exists", "ok": bool(sb.get("shots")),
+        "severity": "FAIL" if not sb.get("shots") else "PASS",
+        "shot_count": len(sb.get("shots", []) or []),
+    })
+
+    shots = sb.get("shots", []) or []
+    real_n = sum(1 for s in shots if s.get("source_type") in REAL_SOURCE_TYPES)
+    gen_n = sum(1 for s in shots if s.get("source_type") in GENERATED_SOURCE_TYPES)
+    declared_n = real_n + gen_n
+    ratio = (real_n / declared_n) if declared_n else 0.0
+    checks.append({
+        "id": "real_source_ratio", "ok": ratio >= MIN_REAL_SOURCE_RATIO,
+        "severity": "WARN" if ratio < MIN_REAL_SOURCE_RATIO else "PASS",
+        "value": round(ratio, 3),
+        "min": MIN_REAL_SOURCE_RATIO,
+        "real_shots": real_n, "generated_shots": gen_n,
+        "note": "AI-generated key visuals must not be the majority",
+    })
+
+    missing_prov = [i for i, s in enumerate(shots)
+                    if not s.get("source") or not s.get("source_type")]
+    checks.append({
+        "id": "source_provenance_complete", "ok": not missing_prov,
+        "severity": "WARN" if missing_prov else "PASS",
+        "missing_shot_indices": missing_prov,
+    })
+
+    engine = (sb.get("engine") or cfg.get("engine") or "").strip()
+    checks.append({
+        "id": "engine_recorded", "ok": bool(engine),
+        "severity": "WARN" if not engine else "PASS",
+        "value": engine or "unrecorded",
+    })
+
+    # --- voice is actually audible --------------------------------------------
+    if final.exists():
+        vol = audio_is_not_silence(final)
+        checks.append({
+            "id": "voice_not_silence", "ok": vol["ok"],
+            "severity": "WARN" if not vol["ok"] else "PASS",
+            "max_volume_db": vol["max_volume_db"],
+            "mean_volume_db": vol["mean_volume_db"],
+        })
+
+    # --- subtitles are burned in ---------------------------------------------
+    burned = _subtitles_burned(final, sb)
+    checks.append({
+        "id": "subtitle_burned_or_track", "ok": burned["ok"],
+        "severity": "WARN" if not burned["ok"] else "PASS",
+        "method": burned["method"],
+        "note": burned.get("note", ""),
+    })
+
     # 11) no unreferenced AI-generated assets: count real vs generated
     real = []
     for sub in ("sources/screenshots", "sources/diagrams", "sources/recordings"):
@@ -222,21 +387,36 @@ def qc(project: Path) -> dict:
         "value_count": len(real),
     })
 
-    # 12) voice quality declared
-    voice_quality = (cfg.get("voice_quality") or "").strip()
-    if not voice_quality:
-        voice_quality = "unknown"
+    # 12) voice provenance. Prefer the storyboard's recorded provider — it is
+    # what actually produced THIS render. project.yaml's voice_quality reflects
+    # whichever engine ran last (usually the fallback) and must not be
+    # attributed to an Easel render.
+    sb_provider = (sb.get("voice_provider") or "").strip()
+    yaml_voice = (cfg.get("voice_quality") or "").strip()
+    provider = sb_provider or yaml_voice or "unknown"
+    low = provider.lower()
+    if "edge" in low:
+        vq, warn = "edge_tts_fallback", True
+    elif "sapi" in low or "silence" in low or low == "fallback":
+        vq, warn = "fallback", True
+    elif provider == "unknown":
+        vq, warn = "unknown", True
+    else:
+        vq, warn = "configured_provider", False
     checks.append({
         "id": "voice_quality_declared", "ok": True,
         "severity": "INFO",
-        "value": voice_quality,
-        "note": "fallback is acceptable for smoke test; not for production publish",
+        "voice_provider": provider,
+        "voice_quality": vq,
+        "production_quality_warning": warn,
+        "note": "mechanical/fallback voice keeps the render at READY_FOR_HUMAN_REVIEW; "
+                "only a human can accept it as production (V1 spec §11)",
     })
 
-    return _emit(project, checks)
+    return _emit(project, checks, target_name)
 
 
-def _emit(project: Path, checks: list[dict]) -> dict:
+def _emit(project: Path, checks: list[dict], target_name: str = "") -> dict:
     severity_rank = {"FAIL": 3, "WARN": 2, "INFO": 1, "PASS": 0}
     overall = "PASS"
     for c in checks:
@@ -255,14 +435,16 @@ def _emit(project: Path, checks: list[dict]) -> dict:
     out = {
         "project": str(project),
         "checked_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "video": checks[0].get("_video", "") if checks else "",
         "overall": overall,
-        "checks": checks,
+        "checks": [{k: v for k, v in c.items() if not k.startswith("_")} for c in checks],
     }
-    json_path = project / "receipts" / "qc-report.json"
-    md_path = project / "receipts" / "qc-report.md"
+    suffix = f"-{target_name}" if target_name else ""
+    json_path = project / "receipts" / f"qc-report{suffix}.json"
+    md_path = project / "receipts" / f"qc-report{suffix}.md"
     json_path.write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
 
-    lines = [f"# QC Report — {project.name}", "", f"**Overall**: `{overall}`", ""]
+    lines = [f"# QC Report — {project.name}", "", f"**Video**: `{target_name}`", "", f"**Overall**: `{overall}`", ""]
     lines.append(f"**Checked at**: {out['checked_at']}")
     lines.append("")
     lines.append("| Check | Status | Severity | Detail |")
@@ -281,11 +463,13 @@ def _emit(project: Path, checks: list[dict]) -> dict:
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("project", help="project dir, e.g. projects/easel-review")
+    p.add_argument("--video", default="",
+                   help="which render to grade: easel | fallback | <file>.mp4")
     args = p.parse_args()
     project = Path(args.project)
     if not project.is_absolute():
         project = (ROOT / args.project).resolve()
-    result = qc(project)
+    result = qc(project, target=args.video)
     return 1 if result.get("overall") == "FAIL" else 0
 
 

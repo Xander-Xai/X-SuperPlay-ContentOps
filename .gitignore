@@ -32,6 +32,10 @@ yarn-error.log*
 runtime-config-backups/
 runtime-diagnostics/
 
+# Upstream Easel working clones. The pinned runtime lives in .runtime/easel only;
+# AGENTS.md forbids copying/forking upstream source into this repo.
+/Easel/
+
 # Easel runtime caches (the existing untracked subfolder)
 /Easel/.venv/
 /Easel/node_modules/
@@ -83,4 +87,5 @@ logs/
 
 # Tests
 .workbuddy/
+diagnostics/.verify-tmp/
 diagnostics/

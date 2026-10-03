@@ -39,7 +39,7 @@ evidence_policy:
 status: rendered
 
 outputs:
-  final_video: \"D:/Projects/X-SuperPlay-ContentOps/projects/easel-review/final/final.mp4\"
-  qc_report: \"D:/Projects/X-SuperPlay-ContentOps/projects/easel-review/receipts/qc-report.md\"
+  final_video: "D:/Projects/X-SuperPlay-ContentOps/projects/easel-review/final/fallback.mp4"
+  qc_report: "D:/Projects/X-SuperPlay-ContentOps/projects/easel-review/receipts/qc-report.md"
 
 voice_quality: windows_sapi

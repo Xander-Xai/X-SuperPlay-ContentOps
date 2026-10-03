@@ -9,7 +9,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[1]
 PYTHON = sys.executable
 
 
@@ -82,9 +82,101 @@ def test_qc_on_missing_final_returns_fail():
         shutil.rmtree(proj, ignore_errors=True)
 
 
+def _scripts_imports():
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import resolve_easel, verify_easel_runtime  # noqa: F401
+    return resolve_easel, verify_easel_runtime
+
+
+def _fake_easel_tree(base: Path) -> Path:
+    easel = base / ".runtime" / "easel"
+    (easel / "skills" / "openclaw" / "auto-short-video" / "scripts").mkdir(parents=True)
+    (easel / "skills" / "shared" / "scripts").mkdir(parents=True)
+    (easel / "pyproject.toml").write_text('[project]\nversion = "0.2.1"\n', encoding="utf-8")
+    (easel / "skills" / "openclaw" / "auto-short-video" / "scripts" / "assemble.py").write_text("# stub\n", encoding="utf-8")
+    (easel / "skills" / "shared" / "scripts" / "tts.py").write_text("# stub\n", encoding="utf-8")
+    return easel
+
+
+def test_verify_blob_sha1_matches_git():
+    rez, ver = _scripts_imports()
+    with tempfile.TemporaryDirectory() as td:
+        f = Path(td) / "empty.bin"
+        f.write_bytes(b"")
+        # git's well-known empty-blob id
+        assert ver.blob_sha1(f) == "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        f.write_bytes(b"hello\n")
+        assert ver.blob_sha1(f) == "ce013625030ba8dba906f756967f9e9ca394464a"
+    print("[ok] verify_easel_runtime.blob_sha1 matches git object ids")
+
+
+def test_verify_generated_exclusion():
+    rez, ver = _scripts_imports()
+    assert ver._is_generated("outputs/foo/final.mp4")
+    assert ver._is_generated(".git/config")
+    assert not ver._is_generated("easel/__init__.py")
+    assert not ver._is_generated("pyproject.toml")
+    print("[ok] generated-path exclusions are symmetric")
+
+
+def test_resolver_rejects_foreign_remote():
+    """§3: a .runtime/easel whose origin is not ZJU-REAL/Easel is refused."""
+    rez, ver = _scripts_imports()
+    with tempfile.TemporaryDirectory() as td:
+        fake_root = Path(td)
+        easel = _fake_easel_tree(fake_root)
+        run_git = lambda *a: subprocess.run(["git", "-C", str(easel), *a],
+                                            capture_output=True, text=True, timeout=30)
+        assert run_git("init").returncode == 0
+        assert run_git("remote", "add", "origin", "https://example.com/not-easel.git").returncode == 0
+        res = rez.resolve_easel(root=fake_root, live=False)
+        assert res["status"] == "BLOCKED", res
+        assert res.get("rejected_foreign_checkout") is True, res
+        assert any("not ZJU-REAL/Easel" in r for r in res["reasons"]), res["reasons"]
+    print("[ok] resolver rejects a foreign remote at .runtime/easel")
+
+
+def test_resolver_accepts_archive_with_recorded_provenance():
+    """§2: a .git-less archive is accepted via recorded verification, not .git HEAD."""
+    rez, ver = _scripts_imports()
+    with tempfile.TemporaryDirectory() as td:
+        fake_root = Path(td)
+        _fake_easel_tree(fake_root)
+        (fake_root / "runtime").mkdir(parents=True)
+        pin = rez.load_pin(ROOT)
+        (fake_root / "runtime" / "easel-runtime.json").write_text(json.dumps({
+            "repo": "ZJU-REAL/Easel", "release": pin["tag"],
+            "expected_commit": pin["commit"], "acquisition": "release_archive",
+            "verified": True, "verified_at": "2026-10-02",
+        }), encoding="utf-8")
+        res = rez.resolve_easel(root=fake_root, live=False)
+        assert res["status"] == "OK", res
+        assert res["acquisition"] == "release_archive"
+        assert res["verification"] == "recorded"
+    print("[ok] resolver accepts archive layout via recorded provenance")
+
+
+def test_resolver_blocks_archive_without_provenance():
+    """An unverifiable archive must BLOCK, never silently render."""
+    rez, ver = _scripts_imports()
+    with tempfile.TemporaryDirectory() as td:
+        fake_root = Path(td)
+        _fake_easel_tree(fake_root)
+        res = rez.resolve_easel(root=fake_root, live=False)
+        assert res["status"] == "BLOCKED", res
+    print("[ok] resolver blocks an archive with no verification record")
+
+
 if __name__ == "__main__":
     failures = []
-    for fn in (test_doctor_runs, test_doctor_json, test_new_project_creates_and_refuses_overwrite, test_qc_on_missing_final_returns_fail):
+    for fn in (test_doctor_runs, test_doctor_json,
+               test_new_project_creates_and_refuses_overwrite,
+               test_qc_on_missing_final_returns_fail,
+               test_verify_blob_sha1_matches_git,
+               test_verify_generated_exclusion,
+               test_resolver_rejects_foreign_remote,
+               test_resolver_accepts_archive_with_recorded_provenance,
+               test_resolver_blocks_archive_without_provenance):
         try:
             fn()
         except AssertionError as e:

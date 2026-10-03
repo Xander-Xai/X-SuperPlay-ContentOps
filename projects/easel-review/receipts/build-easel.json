@@ -1,0 +1,26 @@
+{
+  "recorded_at": "2026-10-03T12:25:55Z",
+  "status": "OK",
+  "video": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-review\\final\\easel.mp4",
+  "subtitles_burned": true,
+  "upstream": "D:\\Projects\\X-SuperPlay-ContentOps\\.runtime\\easel\\skills\\openclaw\\auto-short-video\\scripts\\assemble.py",
+  "upstream_intermediate": "D:\\Projects\\X-SuperPlay-ContentOps\\.runtime\\easel\\outputs\\easel-review\\final.mp4",
+  "engine": "easel",
+  "voice_provider": "easel/tts-voiceover (edge-tts, zh-CN-YunxiNeural)",
+  "voice_quality": "edge_tts_fallback",
+  "production_quality_warning": true,
+  "production_ready": false,
+  "state": "READY_FOR_HUMAN_REVIEW",
+  "runtime": {
+    "repo": "ZJU-REAL/Easel",
+    "release": "v0.2.1",
+    "commit": "3fe2d9904c1619281ef57f81d9ee0b7854998399",
+    "acquisition": "release_archive",
+    "verification": "recorded"
+  },
+  "generated_visuals": {
+    "count": 0,
+    "total_shots": 6,
+    "policy": "real_assets_first"
+  }
+}

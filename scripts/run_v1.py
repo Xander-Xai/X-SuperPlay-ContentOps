@@ -1,28 +1,30 @@
 #!/usr/bin/env python3
 """Compose a V1 evidence-first short video from real source assets.
 
-Pipeline (deterministic, no upstream easel dependency required for the smoke test):
+Two engines, selected with --engine:
 
-    1. Load project.yaml
-    2. Sanity-check real source assets exist (no fabrication)
-    3. Render segments using ffmpeg: each shot = static/fit image + audio segment
-    4. Concatenate into a single 9:16 1080x1920 MP4
-    5. Write SRT subtitle (project asset; placeholder if no real script yet)
-    6. Run qc_video.py inline
-    7. Emit qc-report.json/md and copy final to projects/<slug>/final/
+    easel     (default) Production path. Reads script/master.md + storyboard.json
+              from the project, synthesises narration through upstream Easel
+              (tts-voiceover) and composites through upstream Easel
+              (auto-short-video/assemble.py).
+
+    fallback  Diagnostic renderer. Deterministic, ffmpeg-only, no upstream
+              dependency. Kept so the pipeline can be exercised when Easel is
+              unavailable — NOT a production path, and its output is always
+              labelled fallback in the receipt.
+
+Production never reads DEFAULT_SCRIPT_LINES; that list only feeds the fallback
+demo path and tests. A real project must carry script/master.md.
 
 NEEDS_HUMAN_REVIEW
     The pipeline is designed so that if any gate fails, it exits non-zero and writes
     the partial artifacts plus an explicit reason. It will not silently degrade.
-
-NOTES
-- For V1 smoke test, voice is synthesized via Windows built-in TTS (espeak) if available;
-  otherwise falls back to silence and marks voice_quality: fallback in QC.
-- AI visuals (image-gen / video-gen) are OFF by default. Real screenshots / diagrams only.
+    A fallback render never reports PRODUCTION_READY.
 """
 
 import argparse
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -31,8 +33,9 @@ import wave
 from pathlib import Path
 from datetime import datetime, timezone
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[1]
 
+# Fallback / test fixture only. The production path reads script/master.md.
 DEFAULT_SCRIPT_LINES = [
     ("0-3",   "今天实测一个号称能跑通 AI 自媒体流水线的开源项目。", 5),
     ("3-10",  "它叫 ZJU-REAL/Easel，已经发布 v0.2.1。", 7),
@@ -222,11 +225,125 @@ def write_srt(lines: list[tuple[str, str, int]], out_srt: Path) -> None:
             cursor = end
 
 
-def run(project: Path, voice_provider: str = "") -> dict:
+def parse_script_shots(project: Path) -> list[dict]:
+    """Read script/storyboard.json — the single source of truth for shots.
+
+    Every shot must carry narration, a visual source and its provenance so the
+    evidence-first policy can be enforced downstream.
+    """
+    sb_path = project / "script" / "storyboard.json"
+    if not sb_path.exists():
+        return []
+    try:
+        sb = json.loads(sb_path.read_text(encoding="utf-8"))
+    except Exception:
+        return []
+    return sb.get("shots", []) or []
+
+
+def script_exists(project: Path) -> bool:
+    md = project / "script" / "master.md"
+    return md.exists() and md.stat().st_size > 0
+
+
+def resolve_production_runtime() -> dict:
+    """Gate for the production engine: the pinned Easel runtime only.
+
+    Offline mode (live=False): identity comes from the recorded provenance,
+    which itself was produced by a live content-hash verification
+    (scripts/verify_easel_runtime.py). doctor.py re-verifies live. Either way,
+    an unpinned or tampered tree BLOCKS instead of silently rendering.
+    """
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from resolve_easel import resolve_easel
+    return resolve_easel(live=False)
+
+
+def run_easel(project: Path) -> dict:
+    """Production path: Easel TTS + upstream assemble.py."""
+    shots = parse_script_shots(project)
+    if not shots:
+        return {"status": "BLOCKED", "engine": "easel",
+                "reason": "script/storyboard.json missing or empty — production "
+                          "requires a project-authored storyboard, not built-in lines"}
+    if not script_exists(project):
+        return {"status": "BLOCKED", "engine": "easel",
+                "reason": "script/master.md missing — production requires a project-authored script"}
+    runtime = resolve_production_runtime()
+    if runtime["status"] != "OK":
+        return {"status": "BLOCKED", "engine": "easel",
+                "reason": "Easel runtime not usable: "
+                          + "; ".join(runtime.get("reasons", ["unknown"])),
+                "remedy": runtime.get("remedy")}
+    easel_dir = Path(runtime["easel_dir"])
+
+    script_dir = project / "script"
+    narration_txt = script_dir / "narration.txt"
+    narration_txt.write_text(
+        "\n".join(s.get("narration", "") for s in shots) + "\n", encoding="utf-8")
+
+    # Per-shot narration timing comes from one continuous read, so cue times
+    # land on the voice track instead of drifting per shot.
+    narration_mp3 = project / "assets" / "voice_easel" / "narration.mp3"
+    narration_srt = project / "assets" / "captions" / "easel.srt"
+    narration_mp3.parent.mkdir(parents=True, exist_ok=True)
+    narration_srt.parent.mkdir(parents=True, exist_ok=True)
+    tts_script = easel_dir / "skills" / "shared" / "scripts" / "tts.py"
+    env = dict(os.environ, PYTHONUTF8="1", PYTHONIOENCODING="utf-8")
+    r = subprocess.run(
+        [sys.executable, str(tts_script), "speak", "-f", str(narration_txt),
+         "-o", str(narration_mp3), "-v", "zh-CN-YunxiNeural",
+         "--engine", "edge", "--subtitle", str(narration_srt)],
+        capture_output=True, encoding="utf-8", errors="replace",
+        env=env, timeout=600, cwd=str(easel_dir),
+    )
+    if r.returncode != 0 or not narration_mp3.exists():
+        return {"status": "BLOCKED", "engine": "easel", "stage": "tts",
+                "reason": ((r.stdout or "") + (r.stderr or ""))[-600:]}
+
+    sb = json.loads((script_dir / "storyboard.json").read_text(encoding="utf-8"))
+    # Store project-relative paths so the committed storyboard stays portable.
+    sb["narration"] = narration_mp3.relative_to(ROOT).as_posix()
+    sb["subtitle"] = narration_srt.relative_to(ROOT).as_posix()
+    sb.setdefault("engine", "easel")
+    sb["runtime"] = {
+        "repo": "ZJU-REAL/Easel",
+        "release": runtime.get("tag"),
+        "commit": runtime.get("commit"),
+        "acquisition": runtime.get("acquisition"),
+        "verification": runtime.get("verification"),
+    }
+    (script_dir / "storyboard.json").write_text(
+        json.dumps(sb, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from assemble_easel import run as assemble_run  # noqa: E402
+    res = assemble_run(project, out_name="easel")
+    res["engine"] = "easel"
+    res["voice_provider"] = "easel/tts-voiceover (edge-tts, zh-CN-YunxiNeural)"
+    res["voice_quality"] = "edge_tts_fallback"  # upstream's no-key engine; human review decides
+    res["production_quality_warning"] = True
+    res["production_ready"] = False             # §11: never auto-claim PRODUCTION_READY
+    res["state"] = "READY_FOR_HUMAN_REVIEW"
+    res["runtime"] = sb["runtime"]
+    generated = sum(1 for s in shots
+                    if s.get("source_type") in ("generated", "ai_generated", "stock", "title_card"))
+    res["generated_visuals"] = {
+        "count": generated,
+        "total_shots": len(shots),
+        "policy": "real_assets_first",
+    }
+    return res
+
+
+def run(project: Path, voice_provider: str = "", engine: str = "easel") -> dict:
     project = project.resolve()
     project_yaml = project / "project.yaml"
     if not project_yaml.exists():
         return {"status": "BLOCKED", "reason": f"project.yaml missing at {project_yaml}"}
+
+    if engine == "easel":
+        return run_easel(project)
 
     cfg = parse_yaml(project_yaml)
     work = project / "work"
@@ -246,6 +363,7 @@ def run(project: Path, voice_provider: str = "") -> dict:
     segments = []
     voice_files = []
     voice_quality = "unknown"
+    generated_count = 0
     srt_path = assets_captions / "default.srt"
     write_srt(DEFAULT_SCRIPT_LINES, srt_path)
 
@@ -279,6 +397,9 @@ def run(project: Path, voice_provider: str = "") -> dict:
         if not ok:
             ok = make_title_card(text, shot_img, W, H)
             image_source = "title_card"
+
+        if image_source.startswith("title_card"):
+            generated_count += 1
 
         if not ok:
             return {
@@ -314,19 +435,27 @@ def run(project: Path, voice_provider: str = "") -> dict:
     if not concat_segments(segments, rough, W, H):
         return {"status": "BLOCKED", "reason": "ffmpeg concat failed"}
 
-    # --- 4) Final output ---
-    final_mp4 = final_dir / "final.mp4"
+    # --- 4) Output. The fallback engine never claims final.mp4: it writes
+    # final/fallback.mp4 so a human can compare it against the Easel render.
+    final_mp4 = final_dir / "fallback.mp4"
     shutil.copy2(rough, final_mp4)
 
     # update project.yaml with voice quality + outputs
+    def _set_yaml(text: str, key: str, value: str) -> str:
+        # lambda replacement: a plain f-string replacement would pass \\ and \"
+        # through re.sub's escape processing and corrupt the YAML.
+        return re.sub(rf"^(\s*{key}:\s*).*$",
+                      lambda m: f'{m.group(1)}"{value}"',
+                      text, flags=re.MULTILINE)
+
     try:
         text = project_yaml.read_text(encoding="utf-8")
         if "voice_quality:" in text:
             text = re.sub(r"^voice_quality:\s*.*$", f"voice_quality: {voice_quality}", text, flags=re.MULTILINE)
         else:
             text += f"\nvoice_quality: {voice_quality}\n"
-        text = re.sub(r"^(\s*final_video:\s*).*$", rf"\1\"{str(final_mp4).replace(chr(92), '/')}\"", text, flags=re.MULTILINE)
-        text = re.sub(r"^(\s*qc_report:\s*).*$", rf"\1\"{str((project / 'receipts' / 'qc-report.md')).replace(chr(92), '/')}\"", text, flags=re.MULTILINE)
+        text = _set_yaml(text, "final_video", str(final_mp4).replace("\\", "/"))
+        text = _set_yaml(text, "qc_report", str(project / "receipts" / "qc-report.md").replace("\\", "/"))
         text = re.sub(r"^status:\s*.*$", "status: rendered", text, flags=re.MULTILINE)
         project_yaml.write_text(text, encoding="utf-8")
     except Exception:
@@ -345,6 +474,10 @@ def run(project: Path, voice_provider: str = "") -> dict:
 
     return {
         "status": "OK",
+        "engine": "fallback",
+        "production_ready": False,
+        "state": "READY_FOR_HUMAN_REVIEW",
+        "note": "fallback render — diagnostic only, not a production pass",
         "final_video": str(final_mp4),
         "duration_sec": duration,
         "width": width,
@@ -353,17 +486,37 @@ def run(project: Path, voice_provider: str = "") -> dict:
         "video_codec": video_stream.get("codec_name"),
         "audio_codec": audio_stream.get("codec_name"),
         "voice_quality": voice_quality,
-        "voice_provider": voice_provider or "auto",
+        "voice_provider": voice_provider or "windows_sapi",
+        "production_quality_warning": voice_quality != "configured_provider",
         "evidence_count": evidence_count,
+        "generated_visuals": {
+            "count": generated_count,
+            "total_shots": len(segments),
+            "policy": "real_assets_first",
+        },
         "shots": len(segments),
         "script_lines": len(DEFAULT_SCRIPT_LINES),
         "srt": str(srt_path),
     }
 
 
+def write_build_receipt(project: Path, result: dict) -> Path:
+    """Every run — success or BLOCKED — leaves a durable receipt (§receipts)."""
+    receipts = project / "receipts"
+    receipts.mkdir(parents=True, exist_ok=True)
+    engine = result.get("engine", "unknown")
+    out = {"recorded_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+           **result}
+    path = receipts / f"build-{engine}.json"
+    path.write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
+    return path
+
+
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("project", help="path to project dir, e.g. projects/easel-review")
+    p.add_argument("--engine", choices=("easel", "fallback"), default="easel",
+                   help="easel = production (default); fallback = diagnostic ffmpeg-only render")
     p.add_argument("--voice-provider", default="")
     args = p.parse_args()
 
@@ -371,7 +524,12 @@ def main() -> int:
     if not project.is_absolute():
         project = (ROOT / args.project).resolve()
 
-    result = run(project, voice_provider=args.voice_provider)
+    result = run(project, voice_provider=args.voice_provider, engine=args.engine)
+    try:
+        receipt = write_build_receipt(project, result)
+        result = {"build_receipt": str(receipt), **result}
+    except Exception as e:
+        result["build_receipt_error"] = str(e)
     print(json.dumps(result, indent=2, ensure_ascii=False))
     return 0 if result.get("status") == "OK" else 4
 

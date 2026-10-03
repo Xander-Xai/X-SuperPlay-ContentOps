@@ -1,0 +1,33 @@
+{
+  "repo": "ZJU-REAL/Easel",
+  "repo_url": "https://github.com/ZJU-REAL/Easel",
+  "release": "v0.2.1",
+  "tag_ref": "refs/tags/v0.2.1",
+  "tag_object": "b101c4f1e2204ceaf808f13ed0201e0fe78021d9",
+  "expected_commit": "3fe2d9904c1619281ef57f81d9ee0b7854998399",
+  "acquisition": "release_archive",
+  "acquisition_detail": "gh api repos/ZJU-REAL/Easel/tarball/v0.2.1 (peeled tag v0.2.1 -> commit 3fe2d99)",
+  "installed_at": ".runtime/easel",
+  "has_git_metadata": false,
+  "verified": true,
+  "verification_method": "blob_sha1_tree_compare",
+  "verification_detail": "all 982 upstream blobs at commit 3fe2d99 matched local git hash-object; 0 mismatch / 0 missing / 0 extra",
+  "verified_at": "2026-10-02",
+  "version_file": "pyproject.toml version = 0.2.1",
+  "changelog_head": "[0.2.1] - 2026-09-24",
+  "note": "Archive has no .git; identity is proven by tag ref + per-file content hash against the upstream tree API, not by .git HEAD.",
+  "reverified": [
+    {
+      "at": "2026-10-03",
+      "tool": "scripts/verify_easel_runtime.py --resolve-tag",
+      "status": "VERIFIED",
+      "upstream_blobs": 982,
+      "matched": 982,
+      "mismatch": 0,
+      "missing": 0,
+      "extra": 0,
+      "tag_resolved_commit": "3fe2d9904c1619281ef57f81d9ee0b7854998399",
+      "tag_matches_commit": true
+    }
+  ]
+}
