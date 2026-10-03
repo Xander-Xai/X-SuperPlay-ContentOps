@@ -45,7 +45,7 @@ def main():
         ("repo_policy", ["python", "scripts/check_repo_policy.py"]) if not args.quick else None,
         ("docs_check",  ["python", "scripts/check_docs.py"]),
         ("basic_tests", ["python", "scripts/test_basic.py"]),
-        ("whitespace",  ["git", "diff", "--check", "--exit-code"]),
+        ("whitespace",  ["git", "diff", "--check"]),
     ]
 
     results = []

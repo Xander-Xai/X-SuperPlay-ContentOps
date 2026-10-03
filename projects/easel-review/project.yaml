@@ -39,7 +39,8 @@ evidence_policy:
 status: rendered
 
 outputs:
-  final_video: "D:/Projects/X-SuperPlay-ContentOps/projects/easel-review/final/fallback.mp4"
-  qc_report: "D:/Projects/X-SuperPlay-ContentOps/projects/easel-review/receipts/qc-report.md"
+  final_video: "projects/easel-review/final/easel.mp4"
+  qc_report: "projects/easel-review/receipts/qc-report-easel.md"
 
-voice_quality: windows_sapi
+voice_quality: edge_tts_fallback
+engine: easel
