@@ -1,3 +1,9 @@
+```yaml
+status: superseded
+superseded_by: runtime/easel-runtime.json (canonical provenance), docs/UPSTREAM-EASEL.md
+historical_context: Described git clone acquisition. Actual acquisition used GitHub release tarball (gh api).
+notes: "http://localhost:7860" as daily entry was never verified. Web workbench has 6 doctor FAILs.
+```
 # Easel 部署决策 — 克隆源码 + 本地 Web 工作台 v0.2.1
 
 > 2026-10-02 决策记录。

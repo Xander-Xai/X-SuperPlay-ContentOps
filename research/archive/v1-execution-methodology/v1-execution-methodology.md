@@ -1,3 +1,9 @@
+```yaml
+status: superseded
+superseded_by: docs/PRD.md, docs/ARCHITECTURE.md, AGENTS.md
+historical_context: Philosophy absorbed into PRD + AGENTS.md. Content remains valid principles.
+notes: "先跑通，再改造" (adopt before build) is absorbed into AGENTS.md and core principles.
+```
 # V1 执行方法论 — 先跑通，再改造
 
 > 来自 Founder 反复踩坑后的执行规则。

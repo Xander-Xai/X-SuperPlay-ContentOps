@@ -1,3 +1,9 @@
+```yaml
+status: superseded
+superseded_by: docs/CURRENT-STATE.md, docs/ARCHITECTURE.md, docs/PRD.md
+historical_context: Assumed Easel 0.1.1 and runtime/Easel/ path. Actual: v0.2.1 at .runtime/easel/.
+notes: Directory structure described here (runtime/Easel/) does not match reality (.runtime/easel/).
+```
 # X-SuperPlay-ContentOps — V1 Runtime
 
 > **当前唯一可生产的自媒体 V1 Runtime。**

@@ -1,3 +1,8 @@
+```yaml
+status: superseded
+superseded_by: docs/AUDIT-REPORT.md
+historical_context: Blank scorecard for superseded experiment. Actual experiment completed 2026-10-03 with v0.2.1.
+```
 # EXP-WS008-EASEL-001 — Scorecard
 
 > ⚠️ 此文件由 Day 14 Founder Review 时填写。实验期间持续累积到下方"原始数据"区。

@@ -1,3 +1,9 @@
+```yaml
+status: superseded
+superseded_by: docs/AUDIT-REPORT.md
+historical_context: Initial experiment proposal assumed Easel 0.1.1. Actual runtime acquired at v0.2.1.
+notes: Contains 0.1.1 version claim and "Status: Queued" — superseded by actual execution.
+```
 # EXP-WS008-EASEL-001
 
 ## Title

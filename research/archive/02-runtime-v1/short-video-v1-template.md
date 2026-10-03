@@ -1,3 +1,8 @@
+```yaml
+status: superseded
+superseded_by: templates/short-video-v1.md (identical content, canonical location)
+historical_context: Duplicate of templates/short-video-v1.md. Kept for historical reference.
+```
 # Short Video V1 — Master Workflow Prompt
 
 > V1 阶段唯一标准化的视频制作 Prompt。所有视频都用这个 prompt 模板启动。

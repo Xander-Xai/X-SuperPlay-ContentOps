@@ -1,3 +1,9 @@
+```yaml
+status: superseded
+superseded_by: docs/RUNBOOK.md
+historical_context: Described "Windows SAPI" as production voice. Actual: edge-tts via Easel tts.py.
+notes: Scripts in docs/RUNBOOK.md are derived from actual code behavior, not this document.
+```
 # V1 Runbook — X-SuperPlay-ContentOps
 
 This is the operational manual for the V1 evidence-first video pipeline.

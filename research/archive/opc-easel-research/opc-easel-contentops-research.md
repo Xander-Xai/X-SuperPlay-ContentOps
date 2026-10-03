@@ -1,3 +1,9 @@
+```yaml
+status: superseded
+superseded_by: docs/AUDIT-REPORT.md, docs/ARCHITECTURE.md, docs/PRD.md
+historical_context: Historical research that led to the Easel decision. Contains valuable context on why Easel was chosen and how it fits with OPC. Long-term reference document.
+notes: Contains research detail. Active rules and architecture now in canonical docs.
+```
 你这次纠正是对的。你要的不是“LLM + TTS + FFmpeg + 发布脚本”这种零件清单，而是：
 
 > **一个能够被 API / CLI / Agent 直接调用，拿到 Source Artifact 后自己跑完整链路，并且最终把内容、发布回执、指标、Signal 再写回 OPC 的 Self-Media Runtime。**

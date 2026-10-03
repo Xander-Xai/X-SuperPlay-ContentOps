@@ -46,11 +46,15 @@ REAL EXECUTION RECEIPT
 
 ## Archived
 
-| Doc | Archived From | Reason |
+| Doc | Archived Location | Reason |
 |---|---|---|
-| Easel experiment proposal | `01-Experiments/EXP-WS008-EASEL-001/` | Contains 0.1.1, "Queued" — superseded by actual runtime |
-| V1 runtime README | `02-Runtime/v1/README.md` | Contains 0.1.1, wrong path — superseded by canonical docs |
-| Easel deployment decision | `docs/EASEL-DEPLOYMENT-DECISION.md` | Says "git clone" — actual was release archive |
-| V1 execution methodology | `docs/V1-EXECUTION-METHODOLOGY.md` | Absorbed into PRD + AGENTS.md |
-| V1 runbook | `docs/V1-RUNBOOK.md` | Replaced by `docs/RUNBOOK.md` |
-| OPC-Easel research | `research/OPC-Easel-ContentOps-...md` | Historical research, not current architecture |
+| EXP-WS008-EASEL-001 README | `archive/01-experiments-canonicalization/exp-ws008-easel-001-readme.md` | Contains 0.1.1, "Queued" — superseded by actual runtime (v0.2.1) |
+| EXP-WS008-EASEL-001 scorecard | `archive/01-experiments-canonicalization/exp-ws008-easel-001-scorecard.md` | Blank scorecard for superseded experiment |
+| V1 runtime README | `archive/02-runtime-v1/v1-runtime-readme.md` | Contains 0.1.1, wrong path (runtime/Easel/) — superseded by canonical docs |
+| V1 short-video template | `archive/02-runtime-v1/short-video-v1-template.md` | Duplicate of `templates/short-video-v1.md` |
+| Easel deployment decision | `archive/easel-deployment-decision/easel-deployment-decision-20261002.md` | Says "git clone" — actual was release archive; web workbench unverified |
+| V1 execution methodology | `archive/v1-execution-methodology/v1-execution-methodology.md` | Philosophy absorbed into PRD + AGENTS.md |
+| V1 runbook | `archive/v1-execution-methodology/v1-runbook-replaced.md` | Replaced by `docs/RUNBOOK.md` (derived from actual code) |
+| OPC-Easel research | `archive/opc-easel-research/opc-easel-contentops-research.md` | Historical research, not current architecture |
+
+All archived files carry a `status: superseded` YAML header.
