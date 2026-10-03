@@ -7,6 +7,7 @@ Checks:
   3. Every zh-CN mirror has language: zh-CN marker
   4. Language switch links are bidirectional and not broken
   5. No stale translation_status: missing
+  6. No C0 control characters (except LF/CR/TAB) in zh-CN mirrors
 
 Exit 0 = pass, exit 1 = fail.
 Machine checks structural synchronization only, not translation quality.
@@ -129,12 +130,78 @@ def check_language_switch_links():
     return failures
 
 
+def check_translation_status():
+    """Check zh-CN mirrors have translation_status: synced in front matter."""
+    failures = []
+    header_re = re.compile(r"^---\s*\n(.*?)\n---", re.DOTALL | re.MULTILINE)
+    for en_rel in TIER1_DOCS:
+        zh_path = _zh_path(en_rel)
+        if not zh_path.exists():
+            continue
+        text = zh_path.read_text(encoding="utf-8", errors="ignore")
+        m = header_re.match(text)
+        if not m:
+            continue
+        front = m.group(1)
+        if "translation_status:" not in front:
+            failures.append(f"MISSING translation_status: {zh_path.relative_to(ROOT)}")
+        else:
+            ts_match = re.search(r"translation_status:\s*(\S+)", front)
+            if ts_match:
+                val = ts_match.group(1).strip('"')
+                if val != "synced":
+                    failures.append(
+                        f"STALE translation_status: {zh_path.relative_to(ROOT)} "
+                        f"is '{val}', expected 'synced'"
+                    )
+    return failures
+
+
+def check_no_c0_control_chars():
+    """Check zh-CN mirrors contain no C0 control characters (except LF/CR/TAB).
+
+    Forbidden: U+0000-U+0008, U+000B, U+000C, U+000E-U+001F, U+007F
+    Allowed:    U+0009 (TAB), U+000A (LF), U+000D (CR)
+    """
+    failures = []
+    # C0 chars minus allowed LF/CR/TAB
+    FORBIDDEN = (
+        set(range(0x00, 0x09))   # NUL-ACK
+        | {0x0B}                  # VT (vertical tab)
+        | {0x0C}                  # FF (form feed)
+        | set(range(0x0E, 0x20))  # SO-US
+        | {0x7F}                  # DEL
+    )
+    TEXT_EXTS = {".md", ".py", ".yaml", ".yml", ".json", ".txt", ".sh", ".ps1"}
+
+    for en_rel in TIER1_DOCS:
+        zh_path = _zh_path(en_rel)
+        if not zh_path.exists():
+            continue
+        try:
+            data = zh_path.read_bytes()
+        except Exception:
+            continue
+        for i, b in enumerate(data):
+            if b in FORBIDDEN:
+                line_num = data[:i].count(b"\n") + 1
+                col = i - max(0, data.rfind(b"\n", 0, i))
+                failures.append(
+                    f"C0 CONTROL CHAR (0x{b:02x}): {zh_path.relative_to(ROOT)} "
+                    f"line {line_num}, col {col}"
+                )
+                break  # one report per file
+    return failures
+
+
 def main():
     all_failures = []
     checks = [
         ("pairs_exist", check_pairs_exist),
         ("translation_headers", check_translation_headers),
         ("language_switch_links", check_language_switch_links),
+        ("translation_status", check_translation_status),
+        ("no_c0_chars", check_no_c0_control_chars),
     ]
     for name, fn in checks:
         failures = fn()

@@ -23,9 +23,9 @@ translation_status: synced
 | 项目 | 状态 |
 |---|---|
 | Easel 运行时 | 固定 v0.2.1（commit 3fe2d99，982 blobs 验证通过） |
-| 生产引擎 | Easel ssemble.py（上游，未修改） |
-| 生产语音 | edge-tts via Easel 	ts.py（zh-CN-YunxiNeural） |
-| 语音质量 | dge_tts_fallback — 等待 MiniMax 升级（M2） |
+| 生产引擎 | Easel assemble.py（上游，未修改） |
+| 生产语音 | edge-tts via Easel tts.py（zh-CN-YunxiNeural） |
+| 语音质量 | edge_tts_fallback — 等待 MiniMax 升级（M2） |
 | 诊断引擎 | 仅 ffmpeg 回退路径（非生产） |
 | MiniMax 集成 | 未实现（能力验证待定，Issue #4） |
 | 自动发布 | 不在范围内 |
@@ -39,8 +39,9 @@ translation_status: synced
 
 ```powershell
 python scripts\doctor.py
-python scripts\new_project.py --slug my-video --title "My Video"
-python scripts\run_v1.py   projects\my-video
+python scripts
+ew_project.py --slug my-video --title "My Video"
+python scriptsun_v1.py   projects\my-video
 python scripts\qc_video.py projects\my-video
 ```
 
@@ -56,7 +57,7 @@ python3 scripts/qc_video.py projects/my-video
 ## 架构概要
 
 ```text
-Source → Script → Storyboard → Voice → Compose → QC → Human Review → final.mp4
+Source -> Script -> Storyboard -> Voice -> Compose -> QC -> Human Review -> final.mp4
 ```
 
 详见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)。
@@ -94,7 +95,7 @@ Fork 是最后手段。当前状态：无 fork，无上游修改。
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 系统边界 |
 | [docs/PRD.md](docs/PRD.md) | 产品需求 |
 | [docs/RUNBOOK.md](docs/RUNBOOK.md) | 真实可执行命令 |
-| [docs/DEVELOPMENT-PLAN.md](docs/DEVELOPMENT-PLAN.md) | M0–M6 里程碑 |
+| [docs/DEVELOPMENT-PLAN.md](docs/DEVELOPMENT-PLAN.md) | M0-M6 里程碑 |
 | [docs/QUALITY-STANDARD.md](docs/QUALITY-STANDARD.md) | 质量门控 |
 | [docs/UPSTREAM-EASEL.md](docs/UPSTREAM-EASEL.md) | Easel 固定版本策略 |
 | [AGENTS.md](AGENTS.md) | AI Agent 执行纪律 |

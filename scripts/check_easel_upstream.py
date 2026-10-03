@@ -106,13 +106,27 @@ def get_commit_list(since, until, per_page=100):
     return data.get("commits", [])
 
 
+def get_commit_files(sha):
+    """Get changed file paths for a specific commit."""
+    data = _api_get(f"{EASEL_REPO}/commits/{sha}")
+    if "_error" in data:
+        return []
+    return [f.get("filename", "") for f in data.get("files", [])]
+
+
 def classify_commit(message, files=None):
+    """Classify a commit impact based on message AND changed file paths.
+
+    Even if the message is generic (e.g. 'fix #123'), changed files
+    in watched paths still trigger the correct impact classification.
+    """
     msg_lower = message.lower()
     files_lower = [str(f).lower() for f in (files or [])]
     impacts = []
     for area, keywords in WATCHED_PATHS.items():
         for kw in keywords:
             kw_lower = kw.lower()
+            # Match keyword in commit message OR in changed file path
             if kw_lower in msg_lower or any(kw_lower in f for f in files_lower):
                 if area not in impacts:
                     impacts.append(area)
@@ -122,7 +136,9 @@ def classify_commit(message, files=None):
     return impacts
 
 
-def determine_impact_level(areas, is_new_release):
+def determine_impact_level(areas, is_new_release, has_api_error=False):
+    if has_api_error:
+        return "UNKNOWN"
     if is_new_release:
         return "HIGH"
     high_areas = {"security"}
@@ -146,6 +162,13 @@ def main():
     latest_release = get_latest_release()
     upstream_main = get_main_commit()
 
+    # Detect API errors and propagate as warning in report
+    has_api_error = False
+    if "_error" in latest_release:
+        has_api_error = True
+    if "_error" in upstream_main:
+        has_api_error = True
+
     pinned_tag = pin.get("tag", "unknown")
     pinned_commit = pin.get("commit", "")
     release_tag = latest_release.get("tag", "unknown")
@@ -156,12 +179,15 @@ def main():
 
     ahead = 0
     impact_areas = []
-    if pinned_commit and main_commit and pinned_commit != main_commit:
+    if pinned_commit and main_commit and pinned_commit != main_commit and not has_api_error:
         commits = get_commit_list(pinned_commit, main_commit)
         ahead = len(commits)
         for c in commits:
+            sha = c.get("sha", "")
             msg = c.get("commit", {}).get("message", "")
-            areas = classify_commit(msg)
+            # Fetch changed files for accurate classification (B2 fix)
+            files = get_commit_files(sha) if sha else []
+            areas = classify_commit(msg, files)
             for a in areas:
                 if a not in impact_areas:
                     impact_areas.append(a)
@@ -169,9 +195,11 @@ def main():
     if not impact_areas:
         impact_areas = ["docs_only"]
 
-    impact_level = determine_impact_level(impact_areas, release_update)
+    impact_level = determine_impact_level(impact_areas, release_update, has_api_error)
 
-    if release_update:
+    if has_api_error:
+        recommendation = "API_ERROR"
+    elif release_update:
         recommendation = "EVALUATE_NEW_RELEASE"
     elif impact_level in ("MEDIUM", "HIGH"):
         recommendation = "WATCH"
@@ -185,20 +213,23 @@ def main():
             "tag": release_tag,
             "commit": release_commit,
             "published": latest_release.get("published", ""),
+            "_error": latest_release.get("_error"),
         },
         "upstream_main": {
             "commit": main_commit,
             "date": upstream_main.get("date", ""),
             "message": upstream_main.get("message", ""),
+            "_error": upstream_main.get("_error"),
         },
         "ahead_from_pinned": ahead,
         "release_update_available": release_update,
+        "api_error": has_api_error,
         "impact": {"areas": impact_areas, "level": impact_level},
         "recommendation": recommendation,
     }
 
     if args.quiet:
-        sys.exit(0 if recommendation == "NO_ACTION" else 1)
+        sys.exit(0 if recommendation in ("NO_ACTION", "API_ERROR") else 1)
 
     print(json.dumps(report, indent=2, ensure_ascii=False))
     return 0

@@ -95,3 +95,6 @@ diagnostics/
 
 # Provider selection analysis (contains pricing / business strategy — keep local)
 docs/ai-provider-selection.md
+
+# Temporary scan results
+.c0_*.txt
