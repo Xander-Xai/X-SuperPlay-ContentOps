@@ -4,6 +4,37 @@
 
 ## Interface
 
+## The provider family
+
+Speech and image are **separate provider ABCs over one set of shared
+infrastructure**, not one monolithic class with optional-everywhere signatures.
+Forcing three modalities through one signature produces optional arguments rather
+than types, and blurs the receipts.
+
+| ABC | Modality | Declared in |
+|---|---|---|
+| `SpeechProvider` | narration | `contract.py` |
+| `ImageProvider` | stills | `image_contract.py` |
+| `VideoProvider` | generated shots | Issue #22, not yet declared |
+
+Shared by all of them — one implementation each, never one per modality:
+
+| Shared concern | Canonical owner |
+|---|---|
+| credential resolution and binding | `credentials.py` (`ResolvedCredential`, `CredentialBinding`) |
+| billing gate | `billing_guard.py` (`BillingGuard`) |
+| durable retry evidence | `attempts.py` (`GenerationAttemptRecord`) |
+| transport helpers, sidecar conventions | `transport.py` |
+| provider identity and billing constants | `mplan_identity.py` |
+| fingerprint conventions | `fingerprint.py`, `image_fingerprint.py` |
+| immutable receipts, reuse events | per-modality provider, shared conventions |
+
+`MediaProvider` remains the common ancestor so existing speech code keeps
+working. Its `generate_image` / `generate_video` hooks are **deprecated
+cross-modality shortcuts** that raise `CapabilityNotSupported` and say why. A
+future `MediaProviderRegistry` may aggregate the family; it is deliberately not
+built yet, because with two members a registry is indirection without benefit.
+
 Generic on purpose: no vendor vocabulary, no vendor types. Only what is
 implemented appears; an unimplemented modality raises `CapabilityNotSupported`
 rather than falling back silently.

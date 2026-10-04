@@ -1,328 +1,447 @@
-# M4 — MiniMax H3 generated shots: executable plan (Issue #22)
+# M4 — MiniMax H3 subscription video: executable plan (Issue #22)
 
-> Planning document. **Nothing here is implemented.** Prepared 2026-10-04, while
-> PR #25 (M3 image) was open. H3 work starts only after #20 merges.
+> Planning document. **Nothing here is implemented.** Prepared 2026-10-04 on
+> branch `feat/20-minimax-mplan-image`, corrected before PR #25 merged.
+> H3 work starts only after #20 merges.
 >
-> Sources are cited with an access date. Where a fact could not be verified from
-> an official source, it is marked `UNVERIFIED` and must not be used as evidence.
+> Superseded claims in the previous revision of this file were wrong and have
+> been removed: the PAYG blocker, the claim that no official prompt skill
+> exists, and the claim that the `mmx` CLI is the video transport. Corrections
+> are recorded below rather than quietly edited away.
 
 ---
 
-## 0. BLOCKER FOUND DURING PLANNING — read before writing any code
+## 1. Billing: PAYG is FORBIDDEN, and H3 is already proven to work on M Plan
 
-The official documentation states, verbatim:
-
-> Note: To use MiniMax H3 or MiniMax H3 Max, please select the
-> [Pay-as-you-go API](https://platform.minimax.io/docs/pricing/overview).
-
-Source: <https://www.minimax.io/platform/document/guides_video_generation>,
-accessed 2026-10-04.
-
-H3 is documented as a **pay-as-you-go** API. This repository's standing policy,
-set in M2 and reaffirmed in M3, is:
+### Corrected policy
 
 ```
-billing_mode: subscription
-allow_payg: false
-credit_pack_allowed: false
+billing_mode      = subscription
+allow_payg        = false
+allow_credit_pack = false
+credential_class  = SUBSCRIPTION
 ```
 
-Those cannot both hold. H3 therefore **cannot** run through the existing
-`BillingGuard` without a policy change, and a policy change is a Founder decision,
-not an implementation detail.
+**No Founder PAYG approval is required.** The earlier revision of this document
+concluded that H3 was unusable because a doc line said "Pay-as-you-go". That
+conclusion was wrong, and the error was mine: I read one line of CLI-oriented
+documentation as an entitlement ruling for this account.
 
-Three options, none of which this plan may choose on its own:
+### Real account evidence (M2.0, `sk-cp` Subscription Key, MiniMax-H3)
 
-| Option | What it means | Cost |
-|---|---|---|
-| A. Keep PAYG forbidden | H3 is not usable. #22 becomes a capability spike, not an integration. | no spend |
-| B. Allow PAYG for `modality="video"` only | Subscription stays mandatory for speech and image; H3 draws on paid credit. | real money per second |
-| C. H3 Max or another tier | May or may not be inside the subscription. **Untested.** | unknown |
-
-**Required before implementation:** a Founder decision recorded as an ADR, with
-the pricing page read and the cost per clip computed from the *current* page. No
-code should be written against H3 before this is settled, because option B changes
-the billing contract that M2's 85 tests and M3's 63 tests exist to protect.
-
-Third-party sites advertise "9 credits per second at 768P / 14 at 2K" credit
-packs. That is **UNVERIFIED** and comes from sites that are not MiniMax; it must
-not be used for budgeting until read off the official pricing page.
-
----
-
-## 1. Official prompt-writing guidance — VERIFIED
-
-There is no official H3 "prompt-writing skill" repository. The authoritative
-prompt guidance is the official documentation page above, and it contains exactly
-three actionable rules:
-
-1. **Camera motion tokens**: "add camera motion instructions (e.g. `[pan]`,
-   `[zoom]`, `[static]`) directly after key descriptions to guide the camera work."
-   The placement matters — immediately after the description they modify.
-2. **Prompt length**: ≤ 7000 characters.
-3. **H3-Context-IR**: the official prompt-enhancement path. It "deeply interprets
-   multimodal context ... and produces a structured representation with richer
-   semantic detail while preserving the user's original intent". It is
-   asynchronous, **returns only an enhanced prompt and does not create a video**,
-   and is identified by `task_type=h3_context_ir`, with the result in
-   `content.prompt`.
-
-Everything else offered as an "H3 prompt guide" on the web (minimaxh3.org,
-minimax-h3.app, minimax-h3.com, minimax3.org, voor.ai, minimaxm.com) is a
-third-party site. Their prompt formulas and credit prices are `UNVERIFIED` and
-must not enter the repo as evidence.
-
-**Source path / check date:** <https://www.minimax.io/platform/document/guides_video_generation>,
-checked 2026-10-04. No upstream commit exists; this is a hosted doc.
-
-## 2. Model specifications — VERIFIED
-
-| Item | `MiniMax-H3` | `MiniMax-H3-Max` |
-|---|---|---|
-| Resolution | 768P / 2K | 480P / 768P |
-| Duration | **4–15 s, integer only** | **5–15 s, integer only** |
-| Aspect ratio | common ratios, or adaptive | common ratios, or adaptive |
-| Modes | T2V, I2V, Reference | T2V, I2V, Reference |
-
-This matches the duration policy already committed in M2
-(`src/contentops/media/test_duration_policy.py`): H3 tests use 4 s, H3 Max tests
-use 5 s. Production duration is **not** constrained by that testing policy.
-
-## 3. Input limits — VERIFIED
-
-| Input | Limit |
+| Observation | Value |
 |---|---|
-| Reference images | ≤ 9, each 256–5760 px, aspect 0.4–2.5 |
-| Reference videos | ≤ 3, each 2–15 s, ≤ 15 s total, H.264/H.265 |
-| Reference audio | ≤ 3, each 2–15 s, ≤ 15 s total, WAV/MP3 |
-| Files per request | ≤ 12 total |
-| Sizes | image ≤ 30 MB, video ≤ 50 MB, audio ≤ 15 MB, request ≤ 64 MB |
+| Credential | `sk-cp` Subscription Key |
+| Model | `MiniMax-H3` |
+| Duration | 4 s |
+| Resolution | 768P |
+| Ratio | 9:16 |
+| Task created | yes |
+| Task succeeded | yes |
+| weekly quota | 65% → 58% |
+| cash balance | 0 → 0 |
+| Credit Pack | 0 → 0 |
+| voucher | 0 → 0 |
+| owed | 0 → 0 |
 
-## 4. Modes, mapped to ContentOps names
+M Plan usage absorbed the generation. No paid balance moved.
 
-The official API expresses every mode as one `content[]` array whose elements
-carry a `type` and a `role`. The plan's five names map onto it exactly:
+### Product facts
 
-| Plan name | Official expression | Notes |
-|---|---|---|
-| T2VA | `text` only | **`ratio` is required and may not be `adaptive`** |
-| I2VA | `text` + `image_url` `role=first_frame` | `ratio` always `adaptive`, set by the image |
-| FL2VA | `text` + `first_frame` + `last_frame` | still Image-to-Video |
-| L2VA | `text` + `last_frame` only | `mmx` documents a last frame alone as supported |
-| Ref2VA | `text` + `reference_image` / `reference_video` / `reference_audio` | any combination, ≤ 12 files |
+- **M Plan Explore includes H3 video.**
+- M Plan supports model selection via API request / tool configuration.
+- A Subscription Key spends **M Plan usage first, then Credit Packs**.
+- **Account cash balance is charged only by a Pay-as-you-go API Key.**
 
-## 5. `H3PromptCompiler` (new module)
+That last point is the whole reason `allow_payg = false` is sufficient: as long
+as the request carries the `sk-cp` key and never a PAYG key, cash is not touched.
 
-`src/contentops/media/h3_prompt.py`. Provider-generic, no vendor types in its
-output.
+### Video billing rule
 
-Input: a `ShotPlan` entry — beat id, role, narration text, intended shot
-description, aspect ratio, duration, and whether it is a support or evidence beat.
+`BillingGuard.authorize(modality="video")` requires:
 
-Output: a compiled prompt plus a `dict` of the parts, so the fingerprint can
-cover the compiled form and not just the raw intent. Rules:
+- `credential_class == SUBSCRIPTION`
+- `weekly_remaining_percent > 0`
+- `cash_balance == 0`
+- `credit_balance == 0` (Credit Pack)
+- `voucher_balance == 0`
+- `owed_amount == 0`
 
-- emit camera motion tokens from a closed vocabulary (`[pan]`, `[zoom]`,
-  `[static]`, `[tracking]`, `[orbit]`, `[push-in]`) immediately after the
-  description they modify;
-- describe **change over time**, since a 4 s clip is a transition, not a scene;
-- state what must stay fixed as firmly as what changes, since the model
-  invents detail otherwise;
-- **never** request on-screen text, numbers, logos or UI. Critical text is a
-  deterministic overlay, exactly as in M3;
-- enforce the 7000-character limit locally, before billing;
-- record `compiled_sha256` so the cache key covers what was actually sent.
+and does **not** require the 5-hour window.
 
-## 6. ShotPlan → H3 prompt mapping
+### Why Credit Pack must stay at zero
 
-`AssetPlanner` already emits `MINIMAX_IMAGE` for support beats. For video:
+M Plan **falls through to Credit Packs once included quota is exhausted**. So a
+non-zero Credit Pack balance does not mean "the user bought credits"; it means
+included entitlement has already run out and the next generation would silently
+be billed. ContentOps policy forbids that, so a non-zero Credit Pack balance is
+`BLOCKED_BILLING_SOURCE_UNCERTAIN` for **every** modality — not only video.
 
-- support beats → H3 is allowed;
-- beats requiring evidence → H3 refused, same as generated images, raising
-  `GeneratedAssetEvidenceError`;
-- narration timing drives duration: the compiled duration is the shot's slot
-  rounded into the model's legal integer range, **not** a fixed 4 s.
+The same four zero-balance checks already apply to speech and image and are
+unchanged. Only the video **quota-window** rule is new.
 
-## 7. `ResolvedCredential` binding — invariant unchanged
+## 2. OFFICIAL_DOC_CONFLICT — recorded, not deleted, and not called "stale"
 
-The M3 rule applies verbatim:
+The official `mmx` H3 guide currently says to use a Pay-as-you-go / Credit API
+key and not to use a Token Plan Subscription Key.
+
+That statement is **kept on the record** because deleting it would hide a real
+hazard: an operator who follows it would swap in a PAYG key and start paying
+cash.
+
+Why it is not the entitlement authority for this account:
+
+1. the CLI guide explicitly discusses **Token Plan**, a different product family;
+2. **M Plan is a newer product family** whose Explore tier explicitly includes H3;
+3. this actual M Plan Explore `sk-cp` account has **already succeeded with H3**,
+   with every paid balance unchanged.
+
+So the CLI guide is **not the entitlement authority** for an M Plan subscription
+account. It is **not** labelled stale, because no source here establishes its
+publication date or current status — calling it stale would be a claim I
+cannot support.
+
+Practical consequence: `mmx` remains useful for auth, status, quota, research and
+diagnostics, but its H3 key guidance must never be followed for this account.
+
+## 3. H3 prompt source — verified upstream, not assumed
+
+The earlier revision claimed no official prompt skill existed. That was wrong.
+
+**Canonical source, fetched and read at plan time:**
+
+| Field | Value |
+|---|---|
+| repository | `MiniMax-AI/MiniMax-H3` (public) |
+| default branch | `main` |
+| exact `main` commit | `d21241f0a4b3acbb34c97dae47fa417b7065e438` |
+| skill | `skills/h3-prompt-writing/SKILL.md` |
+| skill blob sha | `b6d9b2839384a588763a9c24315225dd8ce19d56` |
+| last commit touching the skill | `a107547fa669c509b8e6363fe18378d46ab3066c` (2026-08-11, "docs(h3-prompt-writing): add tips for better results") |
+| authoritative references | `skills/h3-prompt-writing/references/base-en.txt`, `references/ref-en.txt` |
+| repo `pushed_at` | 2026-08-15T08:31:17Z |
+| `checked_at` | 2026-10-04 |
+
+Re-fetch before implementing. **The repo is not vendored**; ContentOps references
+the skill and implements a compiler that follows it.
+
+### The skill's own rules
+
+Workflow, per `SKILL.md`: identify the input mode; for base text/keyframe modes
+follow `references/base-en.txt`; for full-reference mode follow
+`references/ref-en.txt`; **preserve the exact field names, section order, labels
+and timing notation**.
+
+### Base modes: T2VA / I2VA / FL2VA / L2VA
+
+Three core fields, in this order:
+
+```
+integrated_multimodal_description
+overall_soundscape
+non_diegetic_music
+```
+
+An alignment instruction precedes them as the **first line**, followed by one
+blank line. `T2VA` has none and starts directly with the three fields.
+
+| Mode | Alignment instruction |
+|---|---|
+| T2VA | none |
+| I2VA | `For the target video, at 0.00 seconds into the target video, <Picture 1> (from [Shot 1]) is fully referenced.` |
+| FL2VA | `How the reference pictures align with the target video — Picture 1 (from Shot 1) aligns with the 0.00-second mark of the target video; Picture 2 (from Shot N) aligns with the S.SS-second mark of the target video.` |
+| L2VA | `How the reference pictures align with the target video — <Picture 1> (from [Shot N]) aligns with the S.SS-second mark of the target video.` |
+
+`S.SS` is the effective duration to **exactly two decimals**; `N` is the index of
+the actual final shot.
+
+Recommended body structures:
+
+- I2VA: first-frame anchor → action onset → continuous development → result
+- FL2VA: first-frame state → observable intermediate changes → progressively
+  narrowing differences → last-frame state
+- L2VA: plausible preceding state → explicit action and transition path →
+  gradual convergence in the final shot → last-frame landing
+
+### Full-reference mode: Ref2VA
+
+Six sections, in this exact order:
+
+```
+subject_definitions
+summary
+retention_analysis
+detailed_description
+overall_soundscape
+non_diegetic_music
+```
+
+Reference labels: `<Subject N>`, `<Picture N>`, `<Video N>`, `<Audio N>`, kept
+consistent across every section.
+
+### Notation the compiler must preserve
+
+- **Shots**: `[Shot 1]` carries no timestamp; later shots use a strictly
+  increasing cut time inside the duration, e.g. `[Shot 2] At 00:03.500, ...`
+- **Camera motion** is motion type + amplitude + speed, written as a natural
+  English action inside the shot, never as stacked labels. Closed vocabulary:
+  `Zoom In/Out`, `Push In/Pull Out`, `Pan Left/Right`, `Truck Left/Right`,
+  `Tilt Up/Down`, `Pedestal Up/Down`, `Arc Shot`, `Tracking Shot`,
+  `Static Shot`, `Shake Slightly/Strongly`, `POV`, `Roll Clockwise/Counterclockwise`;
+  amplitude `with small amplitude` / `with large amplitude`;
+  speed `at slow speed` / `at fast speed`
+- **Speakers**: `(S1)`, `(S2)`, compound `(S1,S2)`; dialogue as
+  `<d>[English] ...</d>` verbatim, never translated; voiceover uses the exact
+  phrase `says in an off-screen voiceover` followed by a statement that the lips
+  remain closed; `<scenetrans>` at cut crossings; `<cutoff>` when speech is
+  truncated by the end
+- **On-screen text** in English double quotation marks, verbatim
+- **`overall_soundscape`**: 1–4 English sentences, one paragraph; `N/A` only when
+  the user explicitly requests complete silence
+- **`non_diegetic_music`**: 1–3 English sentences; `N/A` when there is none
+- Rewrite sections in English; dialogue, lyrics and visible scene text keep
+  their original language
+- Prefer concrete visual and audio detail over abstract words such as
+  "cinematic" or "beautiful"; always match the described total duration to the
+  requested length (4–15 s)
+
+## 4. `H3PromptCompiler`
+
+`src/contentops/media/h3_prompt.py`. Provider-generic types in, provider-generic
+types out; no vendor vocabulary in its interface.
+
+Input: a `ShotPlan` entry. Output: the compiled prompt plus its parts, so the
+fingerprint covers **what was actually sent**.
+
+- emit the alignment instruction first, blank line, then the three core fields in
+  official order (or the six Ref2VA sections in official order)
+- enforce the 7000-character prompt limit locally, before billing
+- `compiled_prompt_sha256` feeds the fingerprint, not the raw intent
+
+### ShotPlan
+
+Provider-shaped business logic must not leak in. Fields:
+
+```
+shot_id, purpose, duration, aspect_ratio,
+subject, environment, action, camera, dialogue, sound, visual_style,
+reference_assets, claim_refs
+```
+
+Generated video is allowed **only** when `purpose == "support visual"`. It is
+forbidden for evidence, benchmark, UI proof, demo proof, analytics proof,
+customer proof and test result, reusing the M3 `AssetRegistry` hard gate. **No
+second registry.**
+
+## 5. Transport: the documented public H3 API
+
+**The `mmx` CLI is not the H3 generation transport.** The earlier revision said it
+was; that was wrong, and it conflicts with M2.0 evidence.
+
+Reason: the official CLI does **not** reliably expose the required 768P
+resolution control. M2.0 measured CLI resolution handling as
+insufficient/ignored, while the documented public API with the same `sk-cp`
+Subscription Key successfully produced 4 s / 768P / 9:16 H3.
+
+So:
+
+```
+ContentOps VideoProvider
+    → documented public MiniMax H3 API
+```
+
+and **not** ContentOps → `mmx video` CLI for actual generation.
+
+The CLI remains useful for `auth` / `status`, `quota`, research and diagnostics
+where appropriate.
+
+Underlying documented endpoints, for reference only — ContentOps owns an HTTP
+client for these and does **not** shell out to generate:
+
+```
+POST /v2/video_generation
+GET  /v2/query/video_generation/{task_id}
+```
+
+### One task, one poll, one download
+
+1. create **exactly one** task, persist its reference immediately, before polling
+2. poll **that same** task to a terminal state: `succeeded` / `failed` / `cancelled`
+3. download **that same** result from the URL that task returned
+4. **never create a replacement because polling or downloading failed**
+
+Point 4 is the rule that protects the bill and the explanation. A failed poll is a
+transport failure, not a generation failure; answering it with a new task doubles
+the spend and destroys the ability to say what was paid for. A task still running
+is not a failure and is never retried.
+
+## 6. Credential invariant
+
+Unchanged from M2/M3, restated for HTTP:
 
 ```
 THE CREDENTIAL AUTHORISED BY BILLINGGUARD
 MUST BE
-THE CREDENTIAL THE mmx CHILD ACTUALLY USES
+THE CREDENTIAL USED BY THE H3 API REQUEST
 ```
 
-One `resolve_credential()`, one `CredentialBinding`, `MINIMAX_API_KEY` in the
-child environment, never `--api-key` on argv, unbound means refuse.
+- `resolve_credential()` once → one `ResolvedCredential`
+- the same `sk-cp` value feeds `BillingGuard` **and** the H3 `Authorization` header
+- never resolve twice, never fall back to an ambient PAYG key, never switch
+  credential after the preflight
+- never record the literal value anywhere
 
-## 8. `BillingGuard` modality="video"
+## 7. Cost policy
 
-**Weekly quota only.** Video does not draw the 5-hour bucket the way speech and
-image do, so `modality="video"` must require `weekly_remaining_percent > 0` and
-must not require the interval window. Credential class check unchanged.
+The M2.0 observation: one H3 4 s / 768P test moved weekly quota **65% → 58%**,
+an observed delta of **7 percentage points**.
 
-This is a change to `billing_guard.py`'s modality table and will need its own
-tests; the existing speech and image cases must keep passing unchanged.
+This is **not** a cost formula. The provider exposes only coarse percentage
+usage, so no per-second price is derived and none may be persisted as one. Use it
+only for conservative test budgeting.
 
-Plus an explicit weekly budget for the whole milestone, agreed before the first
-generation, because each clip is billed per second and a retry is another clip.
+| Model | Supported | Test duration |
+|---|---|---|
+| `MiniMax-H3` | 4–15 s | **4 s** |
+| `MiniMax-H3-Max` | 5–15 s | **5 s** |
 
-## 9. Transport — the public documented API via the official CLI
+No 8 s / 10 s / 15 s test when the minimum proves the behaviour. **Production
+duration is not constrained by this testing policy.**
 
-Verified present on this host, `mmx 1.0.27`:
+## 8. Attempt records and task privacy
 
-```
-mmx video generate --model MiniMax-H3 --prompt <text>
-                   [--image <path>] [--last-frame <path>]
-                   [--reference-image <path>]... [--reference-video <path>]...
-                   [--reference-audio <path>]...
-                   --duration <4-15> --ratio <adaptive|21:9|16:9|4:3|1:1|3:4|9:16>
-                   [--async|--no-wait] [--poll-interval <s>] [--download <path>]
+Extend `GenerationAttemptRecord`; do not replace it.
 
-mmx video task get --task-id <id> [--model MiniMax-H3] --output json
-mmx video download --file-id <id> --out <path>
-```
+Private runtime-only fields: `task_id`, `task_type`, `state`. The raw task id may
+exist only in runtime/private attempt state and must never be committed. Public
+and persisted-sanitised fields: `task_created`, salted `task_hash`, `status`.
 
-Underlying public API, for reference only — never called directly:
-`POST /v2/video_generation`, `GET /v2/query/video_generation/{task_id}`.
-The CLI is the transport; ContentOps does not hand-roll HTTP for video.
+Once `task_created` is true, a poll or download failure must **not** become
+"attempt 2". Attempt 2 means a *new generation* with a changed fingerprint, and
+requires a terminal FAILED previous task, a named reason, changed input and an
+explicit budget.
 
-## 10. One task, one poll, one download
+## 9. Video receipt
 
-The rule that makes retries expensive if broken:
+Immutable generation receipt `<asset>.mp4.receipt.json`, same rules as M3: written
+once, never rewritten on reuse, reuse appended to `reuse-events.jsonl`.
 
-1. **create exactly one task**; record its `task_id` in the attempt record
-   immediately, before polling;
-2. **poll that same `task_id`** until a terminal state. Recommended interval 10 s.
-   Terminal: `succeeded`, `failed`, `cancelled`;
-3. **download that same result** from the URL the same task returned;
-4. **never create a replacement because polling or downloading failed.**
-
-Point 4 is the whole point. A failed poll is a transport problem, not a generation
-problem; answering it by creating another task silently doubles the bill and
-destroys the ability to explain what was paid for. A retry requires a named
-reason and a changed fingerprint, exactly like M2 and M3.
-
-## 11. `GenerationAttemptRecord` — extended, not replaced
-
-Add `task_id` and `task_type` fields. Same rules: at most 2 attempts, attempt 2
-needs a durable FAILED record from attempt 1, a named reason, and a changed
-fingerprint (prompt, duration, ratio, model, first frame).
-
-A task that is still running is **not** a failure and must never be retried.
-
-## 12. Immutable video receipt
-
-`<asset>.mp4.receipt.json`, same rules as M3: written once on success, never
-rewritten on reuse, reuse appended to `reuse-events.jsonl`.
-
-Fields: provider, product, plan, billing mode, credential class, transport and
-version, model, `task_id`, `task_type`, compiled prompt hash, duration requested
-and actual, ratio requested and actual, resolution, fingerprint, quota before and
-after, technical QC, output SHA-256, attempt, retry reason, `generated=true`,
+Fields: provider, product, plan, `billing_mode=subscription`,
+`payg_allowed=false`, `credit_pack_allowed=false`, `credential_class`, model,
+mode, `compiled_prompt_sha256`, reference asset hashes, requested/actual
+duration, requested/actual resolution, requested/actual ratio, `task_created`,
+salted task hash, preflight verdict, weekly quota before/after, technical QC,
+output SHA-256, attempt, retry reason, `generated=true`,
 `evidence_capable=false`, `production_ready=false`,
 `human_review=PENDING_FOUNDER_REVIEW`.
 
-`generated=true` / `evidence_capable=false` are non-negotiable, same as M3.
+## 10. Video technical QC
 
-## 13. Test durations — do not waste quota
+Measured facts only, in the M3 spirit — never "cinematic", "beautiful" or
+"publishable":
 
-- `MiniMax-H3` tests: **4 s**
-- `MiniMax-H3-Max` tests: **5 s**
-- No unnecessary long test clips. One 4 s clip proves the transport; a 15 s clip
-  proves nothing extra and costs roughly four times as much.
+container, codec, decodability; duration tolerance; width, height; aspect
+tolerance; fps; **audio stream presence**; **black-frame detection**;
+**freeze/stall detection**; frame-difference distribution.
 
-## 14. Video technical QC
+### Delivered output differs from requested — the numbers
 
-Measured facts only, in the M3 spirit — never "watchable", never "cinematic":
+M2.0 requested 4 s / `768P` / `9:16`. Delivered:
 
-- container and codec (`ffprobe`), decodable end to end;
-- actual duration within tolerance of the requested integer;
-- actual width and height, and **aspect ratio within tolerance** — never exact
-  equality, exactly as M3 learned;
-- **unexpected audio-track detection**: H3 emits native stereo audio, so the
-  pipeline must decide explicitly whether a silent clip or a narrated one is
-  wanted, and must not silently mux narration over generated audio;
-- **black-frame detection**: any frame that is essentially black;
-- **freeze detection**: runs of near-identical frames, which indicate a stalled
-  or failed render;
-- **temporal consistency**: frame-to-frame difference distribution, so a clip that
-  is one still image with a frozen time is caught.
+| Property | Requested | Delivered |
+|---|---|---|
+| duration | 4 s | **4.458 s** |
+| resolution | 768P, 9:16 | **768x1344** (0.5714, not 0.5625) |
+| codec | — | h264 |
+| fps | — | 24 |
+| audio | not requested | **AAC present** |
 
-## 15. Human review — visual *and* temporal
+Every one of those is a reason the gates use **tolerance** and not equality:
+duration, aspect ratio, and audio-track presence all need an explicit policy
+rather than an assumption that the provider returns what was asked.
 
-Fields, all null until a human fills them in:
+### Unexpected audio is expected
 
-- subject fidelity to the shot intent
-- motion plausibility over time (not just frame quality)
-- temporal artefacts: warping, melting faces, object drift
-- reference fidelity, when Ref2VA was used
-- audio: acceptable, or must be replaced
-- caption-safe area across the whole clip
-- consistency with the other shots in the video
-- overall quality
-- willingness to publish
+M2.0 real H3 output contained **AAC audio even though audio was not requested**.
+Audio behaviour must therefore be explicit, never incidental.
 
-An AI or automated observation may be recorded separately and clearly labelled as
-not a review verdict, as in M3.
+Composition policy, deterministic and recorded in the receipt and shot decision:
 
-## 16. GENERATED_VIDEO cannot become evidence
+- generated audio `KEEP`
+- generated audio `MUTE`
+- generated audio `REPLACE`
 
-`AssetKind.GENERATED_VIDEO` already exists and is already refused for every
-claim-bearing role by `AssetRegistry`. #22 adds tests proving it for video, and
-must not weaken the registry.
+Default must be fixed and recorded. Silent mixing of generated H3 audio with
+MiniMax narration is forbidden.
 
-## 17. Zero Windows background popups
+### Reference fidelity is human work
 
-Every child process, including polling loops and downloads, goes through
-`process_utils`. The policy gate scans tracked files; M3 was caught by its own
-suite and fixed, so expect the same for a polling loop and fix it the same way.
+For I2VA / FL2VA / L2VA / Ref2VA, human review covers reference identity, subject
+consistency, motion fidelity, first-frame fidelity, last-frame fidelity and
+temporal deformation. Automated checks never approve this.
 
-## 18. Test plan for #22
+## 11. Provider family
 
-`tests/test_minimax_h3.py`, no provider request in CI, fake CLI extended with
-`video generate` / `video task get` / `video download`, including deliberate
-failure modes:
+One provider-generic family over shared infrastructure:
 
-- prompt compilation, camera tokens placed after the description they modify
-- 7000-character limit enforced locally, before billing
-- mode mapping: T2VA / I2VA / FL2VA / L2VA / Ref2VA, and `ratio` required and
-  non-adaptive for T2VA
-- input limits: ≤ 9 images, ≤ 3 videos, ≤ 3 audio, ≤ 12 files, per-clip and total
-  durations, 256–5760 px, aspect 0.4–2.5
-- duration validation: H3 4–15, H3 Max 5–15, integers only
-- weekly-only quota rule; weekly = 0 blocks before any provider call
-- credential binding with a conflicting ambient key
-- one task created; polling reuses the same `task_id`
-- a poll timeout does **not** create a second task
-- a download failure does **not** create a second task
-- `failed` / `cancelled` are terminal and recorded
-- durable retry across a process boundary; identical fingerprint refused
-- immutable receipt; reuse restores it
-- cache validation, and a hit costs no billing and no provider call
-- black frame, freeze, unexpected audio track, aspect tolerance
-- secret sentinel absent from every receipt, sidecar, attempt and event
-- GENERATED_VIDEO refused as evidence
-- popup-free process layer
+```
+SpeechProvider   ImageProvider   VideoProvider
+```
 
-## 19. Real smoke — one clip, after everything above passes
+Shared: `ResolvedCredential`, `CredentialBinding`, `BillingGuard`,
+`GenerationAttemptRecord`, transport helpers, fingerprint conventions, immutable
+receipts, reuse-event conventions, provider identity.
 
-- `MiniMax-H3`, 4 s, `9:16`, T2VA, one shot
-- record 5-hour and weekly remaining and all four paid balances before and after
-- report only the observed percentage delta, never a per-second price
-- `production_ready=false`, `human_review=PENDING_FOUNDER_REVIEW`
+`ImageProvider` already exists (`image_contract.py`). `VideoProvider` lands in
+#22. Future orchestration may aggregate them through a `MediaProviderRegistry`.
 
-## 20. Definition of done
+`contract.py` previously claimed that image and video were unimplemented
+"on purpose" for #19. That is now wrong and has been corrected: speech and image
+are separate provider ABCs sharing infrastructure, not one monolithic class.
 
-- [ ] Founder decision on the PAYG question, recorded as an ADR
-- [ ] pricing read from the official page, cost per clip computed
-- [ ] `H3PromptCompiler` with tests
+## 12. Test plan
+
+`tests/test_minimax_h3.py`. No real H3 request in CI; mocked HTTP / fixture API.
+
+Five prompt modes; field ordering; alignment-instruction placement; `S.SS` two-decimal
+format; duration validation (H3 4–15, H3 Max 5–15, integers); input and reference
+limits; subscription credential binding; PAYG blocked; weekly-only quota rule;
+paid-balance rule including non-zero Credit Pack; **one** task creation; poll same
+task; download same task; poll timeout does not recreate; download failure does not
+recreate; terminal failure recorded; durable retry; immutable receipt; cache before
+billing; secret sanitation; black frame; freeze; audio detection; aspect tolerance;
+GENERATED_VIDEO evidence rejection; zero Windows popups.
+
+## 13. Real generation budget
+
+The M2.0 T2VA 4 s smoke **already proves** basic H3 T2VA transport. Do not
+regenerate it merely to prove the same thing again.
+
+New real generations exist only for capabilities not yet proven. Reference modes
+are expensive: implement I2VA / FL2VA / L2VA / Ref2VA first against fixture and
+schema tests, then spend the **minimum** necessary — preferred budget is one
+reference-image test, and at most one reference-video test if #22 acceptance
+actually requires it, each at provider minimum duration.
+
+Before any task creation, record:
+
+```
+TEST_OBJECTIVE, MODEL, DURATION, RESOLUTION, EXPECTED_QUOTA_BUDGET
+```
+
+## 14. Definition of done
+
+- [ ] M Plan Subscription preflight proven `SAFE_INCLUDED_PLAN`
+- [ ] all paid balances zero, including Credit Pack
+- [ ] weekly quota budget approved for the test run
+- [ ] exact `sk-cp` credential binding preserved into the H3 request
+- [ ] `H3PromptCompiler` covering all five modes, field order verified against the skill
 - [ ] `modality="video"` weekly-only rule with tests
-- [ ] one-task-one-poll-one-download, proven by test
+- [ ] one-task / poll-same / download-same, proven by test
+- [ ] task privacy: raw id never committed, salted hash in the receipt
 - [ ] video receipt immutable, reuse-safe
-- [ ] video technical QC: black, freeze, audio track, aspect tolerance
+- [ ] video QC: black frame, freeze, audio detection, aspect tolerance
 - [ ] GENERATED_VIDEO cannot be evidence
-- [ ] one real 4 s clip, receipt written, human review pending
+- [ ] smallest new real smoke approved by the test plan, receipt written
 - [ ] M2 (85) and M3 (63) suites still green
 - [ ] all local gates and exact-head CI green
