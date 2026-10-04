@@ -45,6 +45,7 @@ __all__ = [
     "CREDENTIAL_PAYG",
     "CREDENTIAL_SUBSCRIPTION",
     "CREDENTIAL_UNKNOWN",
+    "CredentialBinding",
     "CredentialBindingError",
     "ResolvedCredential",
     "SOURCE_MMX_CONFIG",
@@ -196,3 +197,57 @@ def child_env_for(
     # a future reader into thinking it was the one in force.
     child.pop("MINIMAX_SUBSCRIPTION_KEY", None)
     return child
+
+
+class CredentialBinding:
+    """One resolved credential, bound once, for one provider.
+
+    Both the speech and the image provider hold one of these. It exists so that
+    the binding rule is enforced in exactly one place: a provider asks for
+    :meth:`require_env` and either gets the child environment containing the
+    authorised key, or gets a :class:`CredentialBindingError`. Neither provider
+    can re-resolve a credential of its own, because neither has a resolver.
+    """
+
+    def __init__(self, resolved: Optional["ResolvedCredential"] = None) -> None:
+        self._resolved = resolved
+        self._child_env: Optional[Dict[str, str]] = None
+        if resolved is not None:
+            # Construction itself refuses when there is nothing to bind, so an
+            # unbound provider cannot even be built.
+            self._child_env = child_env_for(resolved)
+
+    @property
+    def resolved(self) -> Optional["ResolvedCredential"]:
+        return self._resolved
+
+    @property
+    def is_bound(self) -> bool:
+        return self._child_env is not None
+
+    def safe_metadata(self) -> Dict[str, str]:
+        """Metadata that is safe to log, print or persist."""
+        if self._resolved is None:
+            return {
+                "credential_class": CREDENTIAL_ABSENT,
+                "credential_source": "UNBOUND",
+            }
+        return self._resolved.safe_metadata()
+
+    def require_env(self) -> Dict[str, str]:
+        """The child environment, or a refusal.
+
+        Raises:
+            CredentialBindingError: no credential was bound. The caller must not
+                generate; letting the child discover its own credential is
+                precisely the failure this prevents.
+        """
+        if self._child_env is None:
+            raise CredentialBindingError(
+                "no credential is bound to the provider transport. Resolve it "
+                "once and pass it as transport_credential= so the billing gate "
+                "and the child use the same key. Refusing to generate rather "
+                "than let the child pick one itself."
+            )
+        return self._child_env
+

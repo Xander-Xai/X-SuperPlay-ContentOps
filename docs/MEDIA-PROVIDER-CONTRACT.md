@@ -18,10 +18,15 @@ class MediaProvider:
 
     def receipt(self, asset) -> SpeechReceipt: ...   # full provenance
 
-    def generate_image(self, req) -> Asset:
-        raise CapabilityNotSupported(...)     # Issue #20
+    def generate_image(self, ImageRequest) -> ImageAsset: ...   # M3, Issue #20
     def generate_video(self, req) -> Asset:
         raise CapabilityNotSupported(...)     # Issue #22
+
+class ImageProvider:
+    def capabilities(self) -> dict
+    def health(self) -> dict
+    def generate_image(self, ImageRequest) -> ImageAsset
+    def receipt(self, asset) -> ImageReceipt
 ```
 
 Implementation: `src/contentops/media/contract.py`.
@@ -250,4 +255,171 @@ that demonstrably had one.
 `_receipt()` is deliberately not used there: it is the generation path and would
 rewrite the immutable sidecar. A cache hit still costs zero billing reads and zero
 network calls.
+
+---
+
+# M3 — Image (Issue #20)
+
+Canonical owner: `src/contentops/media/` (`image_contract.py`,
+`image_container.py`, `image_fingerprint.py`, `image_qc.py`,
+`minimax_image.py`, `asset_planner.py`, `text_contamination.py`).
+Tests: `tests/test_minimax_image.py` (63 tests).
+
+## The container is sniffed, never assumed
+
+M2.0 measured the real provider returning **JPEG bytes from a `.png` request**.
+A pipeline that selects a decoder by suffix would hand a JPEG to every tool that
+trusted the name, and the failure would surface far from its cause.
+
+So `detect_image_container(data)` is the only thing allowed to decide a format,
+and it decides from magic bytes:
+
+| Container | Signature | Canonical extension |
+|---|---|---|
+| PNG | `89 50 4E 47 0D 0A 1A 0A` | `.png` |
+| JPEG | `FF D8 FF` | `.jpg` |
+| WEBP | `RIFF....WEBP` (form type at offset 8) | `.webp` |
+
+`RIFF` alone is not enough — AVI and WAV begin the same way, so the form type is
+checked. Unknown, truncated or malformed bytes raise `ImageContainerError`: a
+wrong container silently yields a broken asset, whereas an exception stops the run
+while the cause is still visible.
+
+## Canonical file policy
+
+Provider bytes are **preserved**. A JPEG returned for a `.png` request is renamed
+to `.jpg`; it is never transcoded, because re-encoding would alter the pixels and
+destroy the output-hash relationship the receipt depends on.
+
+The receipt records both truths, so a mismatch stays visible instead of being
+normalised away:
+
+```
+requested_extension = ".png"      what was asked for
+detected_container  = "JPEG"      what actually arrived
+canonical_extension = ".jpg"      what the file is therefore named
+output_sha256       = ...        hash of the preserved bytes
+```
+
+## Order of operations
+
+```
+validate dimensions   free; a typo must not cost a billing read
+build fingerprint
+validate retry evidence
+resolve the cache     -> a hit needs neither billing nor provider
+authorize(modality="image")
+write STARTED record  -> survives a crash
+mmx image generate
+verify the output     -> exit 0 is not semantic success
+sniff container, technical QC, write the receipt
+```
+
+Dimensions are validated locally against `[512, 2048]` and multiples of 8. The
+official CLI validates them too, but only in second position.
+
+## Billing
+
+Identical to M2, with `modality="image"`: subscription credential class only,
+`cash_balance`, `credit_balance`, `voucher_balance` and `owed_amount` all exactly
+zero, and both the 5-hour and weekly plan windows above zero. Any missing or
+unreadable state is `BLOCKED_BILLING_SOURCE_UNCERTAIN` and makes no provider call.
+
+## Credential binding
+
+One invariant, shared with speech, implemented once in
+`contentops.media.credentials.CredentialBinding`:
+
+```
+THE CREDENTIAL AUTHORISED BY BILLINGGUARD
+MUST BE
+THE CREDENTIAL THE mmx CHILD ACTUALLY USES
+```
+
+`resolve_credential()` runs once; the same value feeds `BillingGuard` and the
+child environment as `MINIMAX_API_KEY`. `--api-key` is never used, because argv
+is visible to anything on the host. `MINIMAX_SUBSCRIPTION_KEY` is stripped from
+the child environment so a stored `~/.mmx/config.json` cannot silently win. An
+unbound provider raises rather than falling back.
+
+## Cache validation
+
+A cache hit requires **all** of: receipt exists, schema valid, fingerprint
+matches, SHA-256 matches, sniffed container matches, decoded width and height
+match, model matches, seed matches, `generated` is `True` and `evidence_capable`
+is `False`. Any mismatch is a **cache miss**. Nothing is filled in with a
+default — a missing field means the receipt cannot vouch for the asset.
+
+The generation receipt is immutable. Reuse restores the original receipt,
+including its `quota_before`, `quota_after` and attempt number, and appends a
+reuse event instead of rewriting provenance.
+
+## Image technical QC
+
+Measured facts only: file exists, non-empty, known container, decodable, actual
+width and height, aspect ratio **within tolerance**, not corrupt, not blank, not
+near-uniform, and reasonable luminance variance.
+
+A small file is not a QC failure — PNG compresses hard. Truncation is caught by
+`verify_output()` (response too small) and by the decode step.
+
+`approved` means *technically sound*. It never means beautiful, on-brand or
+publishable; those are human judgements. Automated QC that reports "publishable"
+teaches the pipeline to trust itself.
+
+Aspect ratio is compared with tolerance (default 0.02), never exactly: 768x1360
+is 0.5647 against 9:16 = 0.5625, which is close enough for a video frame.
+
+## Text contamination
+
+Critical text must not live inside generated imagery — a model asked for "a
+benchmark chart" will invent one, and invented glyphs read as data. Critical text
+is a deterministic overlay applied later.
+
+`text_contamination_suspected` is an honest *suspicion* signal from edge-density
+and band-concentration measurements, never a verdict: it cannot read the text,
+and it fires on dense text-free detail. It is recorded and surfaced in review. OCR
+is deliberately not introduced for this milestone.
+
+## Evidence integrity hard gate
+
+`AssetRegistry.register()` refuses, in code, to register a generated asset as:
+
+```
+EVIDENCE  CLAIM_SOURCE  BENCHMARK_PROOF  TEST_RESULT
+ANALYTICS_PROOF  UI_SCREENSHOT  CUSTOMER_PROOF  SOURCE_CODE_PROOF
+```
+
+It also refuses a generated asset that declares itself `evidence_capable`, and a
+generated asset with no `receipt_ref`. The failure is a domain error
+(`GeneratedAssetEvidenceError`), not a warning, and it lives at the only place an
+asset enters the system.
+
+## AssetPlanner
+
+```
+real factual evidence
+    > screenshot / screen recording
+    > deterministic diagram
+    > generated support visual
+```
+
+`MINIMAX_IMAGE` is for hooks, covers, concepts, metaphors, backgrounds,
+transitions and decorative scenes. A beat that requires evidence never resolves to
+a generated image; when only `MINIMAX_IMAGE` is available, the planner refuses
+rather than degrading.
+
+## Transport
+
+Verified present on the host: official CLI `mmx 1.0.27`.
+
+```
+mmx image generate --prompt <text> --model image-01
+                   --width <px> --height <px> --seed <n>
+                   --n 1 --out <path> --quiet --non-interactive
+```
+
+`--width`/`--height` are in `[512, 2048]`, multiples of 8, and effective only for
+`image-01`. `--out` takes an exact path for a single image. Custom dimensions are
+verified locally rather than discovered at request time.
 

@@ -66,7 +66,19 @@ from contentops.media.audio import (  # noqa: E402
     technical_qc,
 )
 from contentops.media.billing_guard import BillingGuard  # noqa: E402
+from contentops.media.transport import (  # noqa: E402
+    CLI_ENV_VAR,
+    REQUIRED_SIDECAR_FIELDS,
+    SIDECAR_SUFFIX,
+    load_sidecar,
+    resolve_cli,
+    sidecar_for,
+    sidecar_is_complete,
+    verify_output,
+    write_sidecar,
+)
 from contentops.media.credentials import (  # noqa: E402
+    CredentialBinding,
     CREDENTIAL_ABSENT,
     CREDENTIAL_PAYG,
     CREDENTIAL_SUBSCRIPTION,
@@ -105,15 +117,15 @@ __all__ = [
 #: receipt and the docs cannot drift apart from the measured outcome.
 EASEL_COMPATIBILITY = "EASEL_MPLAN_AUTH_INCOMPATIBLE"
 
-PROVIDER_NAME = "minimax_m_plan"
-PRODUCT = "m_plan"
-PLAN = "explore"
-BILLING_MODE = "subscription"
-ALLOW_PAYG = False
-ALLOW_CREDIT_PACK = False
-
-#: Maximum provider generation attempts per asset.
-MAX_ATTEMPTS = 2
+from contentops.media.mplan_identity import (  # noqa: E402,F401
+    ALLOW_CREDIT_PACK,
+    ALLOW_PAYG,
+    BILLING_MODE,
+    MAX_ATTEMPTS,
+    PLAN,
+    PRODUCT,
+    PROVIDER_NAME,
+)
 
 #: Measured provider-behaviour trap, found 2026-10-04 on the golden narration.
 #:
@@ -176,92 +188,6 @@ def verify_output(path: Path, *, not_before: float, min_bytes: int = 1024) -> No
         )
 
 
-SIDECAR_SUFFIX = ".receipt.json"
-
-#: Fields a cached generation receipt must carry before it may be reused.
-#:
-#: Every one of these was previously allowed to be blank on a cache hit, which
-#: produced a receipt with an empty voice, empty text hashes and
-#: ``lexicon_version="unknown"``. Fabricated provenance is worse than no cache:
-#: a missing field is a cache miss, never something to fill in.
-REQUIRED_SIDECAR_FIELDS: Tuple[str, ...] = (
-    "provider",
-    "product",
-    "plan",
-    "model",
-    "voice",
-    "display_text_sha256",
-    "spoken_text_sha256",
-    "lexicon_version",
-    "fingerprint",
-    "raw_sha256",
-    "normalized_sha256",
-    "technical_qc",
-    "semantic_qc",
-    "billing_guard_verdict",
-    "attempt",
-    "human_review",
-)
-
-#: Fields whose value must not be an empty string.
-NON_BLANK_SIDECAR_FIELDS: Tuple[str, ...] = (
-    "provider", "product", "plan", "model", "voice",
-    "display_text_sha256", "spoken_text_sha256", "lexicon_version",
-    "fingerprint", "raw_sha256", "normalized_sha256",
-    "billing_guard_verdict", "human_review",
-)
-
-
-def sidecar_for(asset_path: Path) -> Path:
-    """Path of the sanitised receipt that sits next to a generated asset."""
-    return asset_path.with_name(asset_path.name + SIDECAR_SUFFIX)
-
-
-def write_sidecar(path: Path, payload: Dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
-    )
-
-
-def sidecar_is_complete(payload: Optional[Dict[str, Any]]) -> bool:
-    """True when a cached receipt carries every required provenance field.
-
-    Rejects a missing key, a blank string where blank is meaningless, and a field
-    of the wrong type for ``attempt``. Anything short of complete is a cache miss.
-    """
-    if not isinstance(payload, dict):
-        return False
-    for name in REQUIRED_SIDECAR_FIELDS:
-        if name not in payload:
-            return False
-    for name in NON_BLANK_SIDECAR_FIELDS:
-        value = payload.get(name)
-        if not isinstance(value, str) or not value.strip():
-            return False
-    for name in ("technical_qc", "semantic_qc"):
-        if not isinstance(payload.get(name), dict):
-            return False
-    attempt = payload.get("attempt")
-    if not isinstance(attempt, int) or isinstance(attempt, bool):
-        return False
-    return True
-
-
-def load_sidecar(path: Path) -> Optional[Dict[str, Any]]:
-    """Load a sidecar, returning ``None`` when it is absent or unusable.
-
-    A corrupt or unreadable sidecar is treated as no cache at all rather than as
-    a licence to invent provenance.
-    """
-    if not path.is_file():
-        return None
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError, UnicodeDecodeError):
-        return None
-    return payload if isinstance(payload, dict) else None
-
 DEFAULT_MODEL = "speech-2.8-hd"
 DEFAULT_VOICES = {
     "zh": "Chinese (Mandarin)_Reliable_Executive",
@@ -273,32 +199,6 @@ DEFAULT_VOICES = {
 #: prefix (a path, or a JSON-ish argv list separated by spaces is not supported --
 #: use a path) to point at a stand-in during tests. Unset in production, where the
 #: official CLI on PATH is used.
-CLI_ENV_VAR = "CONTENTOPS_MINIMAX_CLI"
-
-
-def resolve_cli() -> Any:
-    """Absolute path to the official CLI launcher.
-
-    On Windows the npm install produces ``mmx.cmd`` shims that CreateProcess
-    cannot resolve from a bare ``mmx``, so resolution happens once here.
-    """
-    override = os.environ.get(CLI_ENV_VAR, "").strip()
-    if override:
-        # A JSON array is an argv prefix, which is what a stand-in launcher
-        # needs (an interpreter plus a script). A bare value is a path.
-        if override.startswith("["):
-            try:
-                parsed = json.loads(override)
-            except json.JSONDecodeError:
-                parsed = None
-            if isinstance(parsed, list) and parsed and all(
-                isinstance(part, str) for part in parsed
-            ):
-                return parsed
-        return override
-    return shutil.which("mmx")
-
-
 @dataclass
 class SpeechOutcome:
     """Result of one ``synthesize_speech`` call."""
@@ -330,10 +230,7 @@ class MiniMaxMPlanProvider(MediaProvider):
         # The credential the billing gate authorised, bound once into the child
         # environment. The provider never re-resolves it, so the gate and the
         # transport cannot drift apart.
-        self._credential = transport_credential
-        self._child_env: Optional[Dict[str, str]] = None
-        if transport_credential is not None:
-            self._child_env = child_env_for(transport_credential)
+        self._binding = CredentialBinding(transport_credential)
         self._lexicons = {
             "zh": default_zh_lexicon(),
             "en": default_en_lexicon(),
@@ -371,7 +268,7 @@ class MiniMaxMPlanProvider(MediaProvider):
                 "install": "npm install -g mmx-cli",
             }
         prefix = list(cli) if isinstance(cli, (list, tuple)) else [cli]
-        env = self._child_env if self._child_env is not None else None
+        env = self._binding.require_env() if self._binding.is_bound else None
         result = hidden_run(prefix + ["--version"], env=env, timeout=60)
         guard = self._guard.evaluate()
         return {
@@ -594,9 +491,7 @@ class MiniMaxMPlanProvider(MediaProvider):
 
     def credential_metadata(self) -> Dict[str, str]:
         """Safe credential metadata for receipts. Never the value."""
-        if self._credential is None:
-            return {"credential_class": CREDENTIAL_ABSENT, "credential_source": "UNBOUND"}
-        return self._credential.safe_metadata()
+        return self._binding.safe_metadata()
 
     def _require_child_env(self) -> Dict[str, str]:
         """Return the bound child environment, or refuse to generate.
@@ -605,14 +500,7 @@ class MiniMaxMPlanProvider(MediaProvider):
         unbound child would quietly discover its own credential, and the gate
         would be authorising a key the provider never uses.
         """
-        if self._child_env is None:
-            raise CredentialBindingError(
-                "no credential is bound to the provider transport. Build the "
-                "provider with transport_credential=resolve_credential() so the "
-                "billing gate and the child use the same key. Refusing to "
-                "generate rather than let the child pick one itself."
-            )
-        return self._child_env
+        return self._binding.require_env()
 
     # -- internals ---------------------------------------------------------
 
@@ -1000,7 +888,7 @@ class MiniMaxMPlanProvider(MediaProvider):
         prefix = (
             list(self._cli) if isinstance(self._cli, (list, tuple)) else [self._cli]
         )
-        env = self._child_env if self._child_env is not None else None
+        env = self._binding.require_env() if self._binding.is_bound else None
         result = hidden_run(prefix + ["--version"], env=env, timeout=60)
         return (result.stdout or "").strip() or "UNKNOWN"
 

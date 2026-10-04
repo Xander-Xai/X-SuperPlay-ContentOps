@@ -28,8 +28,20 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Install test dependencies
+        run: python -m pip install --quiet --upgrade pip Pillow
+
       - name: Run basic tests
         run: python scripts/test_basic.py
+
+      # The media suites never make a provider request: they drive
+      # tests/fixtures/fake_mmx_cli.py and inject a fake billing transport, so CI
+      # needs no MiniMax account and spends no quota.
+      - name: Run M2 speech regression tests
+        run: python tests/test_minimax_speech.py
+
+      - name: Run M3 image regression tests
+        run: python tests/test_minimax_image.py
 
       - name: Run Windows subprocess tests
         run: python tests/test_windows_subprocess.py

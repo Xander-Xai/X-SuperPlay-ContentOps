@@ -4,6 +4,14 @@
 
 ## Current Suite
 
+| Suite | File | Tests | Platform |
+|---|---|---|---|
+| Basic | `scripts/test_basic.py` | 9 | Windows + Ubuntu |
+| Windows path regression | `tests/test_windows_paths.py` | — | Windows + Ubuntu |
+| Windows subprocess regression | `tests/test_windows_subprocess.py` | 47 | Windows + Ubuntu |
+| M2 speech regression | `tests/test_minimax_speech.py` | 85 | Windows + Ubuntu |
+| M3 image regression | `tests/test_minimax_image.py` | 63 | Windows + Ubuntu |
+
 `scripts/test_basic.py` — 9 tests, all PASS:
 - doctor.py execution + JSON output
 - new_project.py idempotency + structure creation
@@ -13,6 +21,14 @@
 - resolver rejects foreign remote
 - resolver accepts archive via recorded provenance
 - resolver blocks archive without provenance
+
+### The media suites never contact a provider
+
+`test_minimax_speech.py` and `test_minimax_image.py` drive
+`tests/fixtures/fake_mmx_cli.py` and inject a fake billing transport, so CI needs
+no MiniMax account and spends no quota. Tests that need `ffmpeg` or `Pillow`
+report `[skip]` rather than failing when the tool is absent, which is why the
+counts above are upper bounds.
 
 ## Planned
 

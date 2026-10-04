@@ -13,6 +13,8 @@ translation_status: synced
 | 套件 | 文件 | 平台 |
 |---|---|---|
 | 基础测试 | ```scripts/test_basic.py``` | Windows + Ubuntu |
+| M2 语音回归（85 项） | ```tests/test_minimax_speech.py``` | Windows + Ubuntu |
+| M3 图片回归（63 项） | ```tests/test_minimax_image.py``` | Windows + Ubuntu |
 | Windows 路径回归 | ```tests/test_windows_paths.py``` | Windows + Ubuntu |
 | Windows 子进程回归 | ```tests/test_windows_subprocess.py``` | Windows + Ubuntu |
 
@@ -34,3 +36,9 @@ translation_status: synced
 5. 空格检查
 
 全部必须通过。
+
+### 媒体套件不会访问 provider
+
+`test_minimax_speech.py` 与 `test_minimax_image.py` 驱动
+`tests/fixtures/fake_mmx_cli.py`，并注入假计费传输，因此 CI 无需 MiniMax 账号，也不会消耗配额。
+需要 `ffmpeg` 或 `Pillow` 的测试在工具缺失时输出 `[skip]` 而不是失败，因此上表测试数为上限。

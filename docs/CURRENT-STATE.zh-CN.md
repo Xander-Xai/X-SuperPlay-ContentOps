@@ -72,3 +72,48 @@ translation_status: synced
 3. Gateway healthz — 上游硬编码端口 18789；easel profile 使用 37289。不阻塞视频流水线。
 4. 人工审查 — easel-review 项目无 ```human-review.json``` 凭证。
 5. ~~Main 分支未保护~~ — **已解决**（G0.6）：main 现已通过 GitHub 分支保护机制保护。
+
+## M3 图片生成（Issue #20）—— 已验证 2026-10-04
+
+分支 `feat/20-minimax-mplan-image`。已执行一次真实 provider 生成。
+
+| 属性 | 值 |
+|---|---|
+| 传输 | 官方 CLI `mmx 1.0.27`，`mmx image generate` |
+| 模型 | `image-01` |
+| 请求 | 768x1360，seed 42 |
+| **请求扩展名** | `.png` |
+| **实际检测容器** | **`JPEG`** |
+| **规范扩展名** | `.jpg`（保留原始字节，未转码） |
+| 实际尺寸 | 768x1360（已用 `ffprobe` 独立确认：`mjpeg`） |
+| 宽高比 | 0.564706，9:16 = 0.5625，在 0.02 容差内 |
+| 输出 SHA-256 | `fb0ee9489df856bc2cd554ab98d34fd73e0737ca733cdd0af6022342512f8e21` |
+| 技术 QC | 通过 — 亮度标准差 29.97（下限 6）、极差 146（下限 24）、可解码 |
+| `text_contamination_suspected` | `false`（边缘密度 0.0668，阈值 0.18） |
+| 计费预检 | `SAFE_INCLUDED_PLAN`，凭据类别 `SUBSCRIPTION` |
+| 生成前配额 | 5 小时 99%，周度 58% |
+| 生成后配额 | 5 小时 99%，周度 58% |
+| 观测差值 | 两个窗口均为 **0 个百分点** |
+| `production_ready` | `false` |
+| `human_review` | `PENDING_FOUNDER_REVIEW` |
+
+### 容器缺陷第二次复现
+
+provider 从 `.png` 请求返回了 **JPEG 字节**，内独重现了 M2.0 测到的现象。
+若流程相信扩展名，一个 JPEG 会被存为 `.png`，并交给每个按后缀选择解码器的工具。
+最终规范文件为 `.jpg`，凭据分别记录了请求与现实。
+
+### 配额只报告差值，不报告价格
+
+套餐仅暴露百分比。一张图片未造成任何窗口的变化，故观测差值为 0 个百分点。
+这并不等于“生成一张图不花钱”，也未据此推导单张成本：MiniMax 在此处未暴露精确单位。
+
+### 证据边界
+
+生成资产已登记为 `GENERATED_IMAGE` / `VISUAL_SUPPORT`，`generated=true`、`evidence_capable=false`。
+尝试任何事实引用角色都会在代码中抛出 `GeneratedAssetEvidenceError`。
+
+### 人工评审
+
+`.verify-tmp/m3/human-review.json` 已生成评审字段，但 **所有评分均为 null**。
+技术 QC 通过不等于可作为发布。

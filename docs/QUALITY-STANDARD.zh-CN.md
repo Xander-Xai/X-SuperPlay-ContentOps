@@ -67,3 +67,37 @@ TEST_VIDEO_DURATION_POLICY:
 ## 人工审查门控
 
 发布前必须有人工审查。自动化检查通过 ≠ 可发布。
+
+## 生成图片质量（M3，Issue #20）
+
+生成图片可以支持视频，但绝不能作为证据。
+
+| 要求 | 规则 | 实现位置 |
+|---|---|---|
+| 容器已知 | PNG、JPEG 或 WEBP，仅根据魔数字判定 | `image_container.py` |
+| 请求与实际均记录 | `requested_extension` 与 `detected_container` | `minimax_image.py` |
+| 保留 provider 原始字节 | 只改名，绝不转码 | `minimax_image.py` |
+| 尺寸合法 | `[512, 2048]`、8 的倍数，本地校验 | `image_fingerprint.py` |
+| 计费可证 | 订阅、四项付费余额均为零、5 小时与周度均大于零 | `billing_guard.py` |
+| 凭据绑定 | 门禁与子进程使用同一密钥 | `credentials.py` |
+| 可解码且非均匀 | 亮度标准差与极差下限 | `image_qc.py` |
+| 容异比 | 允许误差，不要求完全相等 | `image_qc.py` |
+| 不得作为证据 | 生成资产拒绝所有事实引用角色 | `image_contract.py` |
+
+**技术 QC 绝不对美术做肯定。** `approved` 只表示“技术上可用”，不表示美观、符合品牌或可发布。那些是人类判断；
+一个能报出“可发布”的自动门禁，会训练流程去相信自己。
+
+**空白或近乎均匀的图片不通过。** 纯色填充能正常解码，在所有天真检查眼前跟真图一样，
+因此改用像素统计捕获，而不是依赖文件读不出来。
+
+**不向模型索取关键文字。** 若询问“一张基准比较图”，模型会凭空绘制，
+而假造的字形会被当成数据阅读。关键文字由后续的确定性叠加层生成。
+`text_contamination_suspected` 是基于边缘密度的“可能含文字”信号，而非定论。
+
+### 硬性失败：生成图片被当作证据
+
+将 `GENERATED_IMAGE` 登记为 `EVIDENCE`、`CLAIM_SOURCE`、`BENCHMARK_PROOF`、`TEST_RESULT`、
+`ANALYTICS_PROOF`、`UI_SCREENSHOT`、`CUSTOMER_PROOF` 或 `SOURCE_CODE_PROOF`，会抛出
+`GeneratedAssetEvidenceError`。声明生成资产为 `evidence_capable`，或缺少 `receipt_ref`，同样被拒绝。
+
+这是在资产进入系统的唯一入口处抛出的领域错误，而不是一条可被提示词忽略的文档说明。

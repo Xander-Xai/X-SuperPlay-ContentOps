@@ -129,3 +129,43 @@ by `tests/test_minimax_speech.py`. No provider request is made in CI.
 - Sensitive data leaked
 - Unauthorized material
 - Key claim without evidence
+
+
+## Generated Image Quality (M3, Issue #20)
+
+A generated image may support a video. It may never evidence one.
+
+| Requirement | Rule | Enforced in |
+|---|---|---|
+| Container known | PNG, JPEG or WEBP, decided from magic bytes | `image_container.py` |
+| Requested vs actual both recorded | `requested_extension` and `detected_container` | `minimax_image.py` |
+| Provider bytes preserved | rename only, never transcode | `minimax_image.py` |
+| Dimensions valid | `[512, 2048]`, multiples of 8, checked locally | `image_fingerprint.py` |
+| Billing proven | subscription, all four paid balances zero, 5h and weekly above zero | `billing_guard.py` |
+| Credential bound | gate and child use one key | `credentials.py` |
+| Decodable and non-uniform | luminance stddev and span floors | `image_qc.py` |
+| Aspect ratio | within tolerance, not exact equality | `image_qc.py` |
+| Not evidence | generated assets refused every claim-bearing role | `image_contract.py` |
+
+**Technical QC never approves on taste.** `approved` means technically sound. It
+does not mean beautiful, on-brand or publishable. Those are human judgements, and
+an automated gate that reports "publishable" teaches the pipeline to trust itself.
+
+**A blank or near-uniform image fails.** A solid fill decodes cleanly and looks
+real to every naive check, so it is caught by pixel statistics rather than by the
+file being unreadable.
+
+**Critical text is not asked of the model.** A model asked for "a benchmark
+chart" invents one, and invented glyphs read as data. Critical text is a
+deterministic overlay applied later. `text_contamination_suspected` is an honest
+suspicion signal from edge-density measurements, never a verdict.
+
+### Hard Fail: generated image used as evidence
+
+Registering a `GENERATED_IMAGE` as `EVIDENCE`, `CLAIM_SOURCE`, `BENCHMARK_PROOF`,
+`TEST_RESULT`, `ANALYTICS_PROOF`, `UI_SCREENSHOT`, `CUSTOMER_PROOF` or
+`SOURCE_CODE_PROOF` raises `GeneratedAssetEvidenceError`. So does declaring a
+generated asset `evidence_capable`, and so does omitting its `receipt_ref`.
+
+This is a domain error at the single point an asset enters the system, not a note
+in a document that a prompt can ignore.
