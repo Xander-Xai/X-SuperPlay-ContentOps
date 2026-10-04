@@ -1854,19 +1854,29 @@ def test_absent_credential_fails_closed_even_with_a_permissive_gate():
     with tempfile.TemporaryDirectory() as td:
         work = Path(td)
         cli, marker = _recording_cli(work)
-        # Construction itself refuses: there is nothing to bind.
+        provider = _fixture_provider(
+            work, credential=_resolved("", source="NONE"), cli=cli
+        )
+        # Construction succeeds on purpose, so that --health still runs on an
+        # unauthenticated host. The refusal happens when a child environment is
+        # actually requested, which is the moment it would matter.
+        assert provider._binding.is_bound is False
         try:
-            provider = _fixture_provider(
-                work, credential=_resolved("", source="NONE"), cli=cli
-            )
+            provider._binding.require_env()
+        except CredentialBindingError as exc:
+            assert "Refusing to" in str(exc)
+        else:
+            raise AssertionError("an absent credential produced a usable child env")
+
+        # And end to end: whatever the reason, no child is ever launched.
+        try:
             provider.synthesize_speech(
                 SpeechRequest(display_text="你好。", language="zh")
             )
-        except CredentialBindingError as exc:
-            assert "Refusing to" in str(exc)
-            assert "ABSENT" in str(exc)
+        except Exception:
+            pass
         assert not marker.exists(), "an unbound child was launched"
-    print("[ok] 80b. an absent credential cannot construct a working transport")
+    print("[ok] 80b. an absent credential cannot produce a working transport")
 
 
 def test_payg_credential_is_blocked_by_the_gate():

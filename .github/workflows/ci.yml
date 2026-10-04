@@ -28,8 +28,26 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Install test dependencies
+        run: python -m pip install --quiet --upgrade pip Pillow
+
+      # Report what is actually available. A suite that silently skips most of
+      # itself looks green while testing nothing, which is how the M3 suite lost
+      # half its coverage on a runner without ffmpeg before this step existed.
+      - name: Report test dependency availability
+        run: python -c "import shutil,sys; print('ffmpeg:', bool(shutil.which('ffmpeg'))); print('ffprobe:', bool(shutil.which('ffprobe'))); import PIL; print('Pillow:', PIL.__version__)"
+
       - name: Run basic tests
         run: python scripts/test_basic.py
+
+      # The media suites never make a provider request: they drive
+      # tests/fixtures/fake_mmx_cli.py and inject a fake billing transport, so CI
+      # needs no MiniMax account and spends no quota.
+      - name: Run M2 speech regression tests
+        run: python tests/test_minimax_speech.py
+
+      - name: Run M3 image regression tests
+        run: python tests/test_minimax_image.py
 
       - name: Run Windows subprocess tests
         run: python tests/test_windows_subprocess.py

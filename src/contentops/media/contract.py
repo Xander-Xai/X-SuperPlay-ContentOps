@@ -1,14 +1,40 @@
-"""Provider-generic media contract.
+"""Provider-generic speech contract, and the shape of the provider family.
 
-Deliberately **not** provider-shaped. The North Star needs speech first, image
-next and generated video last, and none of those may leak MiniMax vocabulary
-into the architecture. A future provider with a different billing model must be
-addable without editing the interface.
+Deliberately **not** provider-shaped. The North Star needs speech, image and
+generated video, and none of those may leak MiniMax vocabulary into the
+architecture. A future provider with a different billing model must be addable
+without editing the interface.
 
-Only what #19 needs exists. ``generate_image`` and ``generate_video`` are
-declared as unimplemented on purpose: a method that raises
-:class:`CapabilityNotSupported` is honest, a method that silently falls back to
-edge-tts or to a manual import is not.
+The provider family
+-------------------
+Speech and image are **separate provider ABCs** over one set of shared
+infrastructure, not one monolithic class with optional-everywhere signatures:
+
+===========================  ==========================================
+ABC                          Modality
+===========================  ==========================================
+:class:`SpeechProvider`      narration  (``contract.py``)
+:class:`ImageProvider`       stills    (``image_contract.py``)
+:class:`VideoProvider`       shots     (Issue #22, not yet declared)
+===========================  ==========================================
+
+Shared by all of them: :class:`~contentops.media.credentials.ResolvedCredential`,
+``CredentialBinding``, ``BillingGuard``, ``GenerationAttemptRecord``, the
+transport helpers, the fingerprint conventions, immutable receipts and the
+reuse-event conventions. Provider identity lives in ``mplan_identity``.
+
+Splitting them is what keeps a receipt honest. Speech and image have genuinely
+different inputs, outputs and failure modes, and forcing them through one
+signature produces optional arguments rather than types. Future orchestration
+may aggregate the family through a ``MediaProviderRegistry``; that is deliberately
+not built yet, because with two members a registry is indirection without benefit.
+
+:class:`MediaProvider` remains the common ancestor so that existing speech code
+and its tests keep working. Its ``generate_image`` / ``generate_video`` hooks are
+**deprecated cross-modality shortcuts**: :class:`~contentops.media.contract.MediaProvider.generate_image`
+raises :class:`CapabilityNotSupported` and says so, rather than pretending. An
+unimplemented capability that raises is honest; one that silently falls back to
+edge-tts or a manual import is not.
 """
 
 from __future__ import annotations
@@ -177,11 +203,25 @@ class MediaProvider(abc.ABC):
         """Full provenance for a produced asset."""
 
     def generate_image(self, request: Any) -> Any:
+        """Deprecated shortcut. Use an ``ImageProvider``.
+
+        Speech and image are separate provider ABCs sharing infrastructure; a
+        speech provider does not implement image generation.
+        """
         raise CapabilityNotSupported(
-            f"{self.name} does not implement image generation in this milestone"
+            f"{self.name} is a speech provider and does not implement image "
+            f"generation. Build an ImageProvider (see image_contract.py); this "
+            f"cross-modality shortcut is deprecated."
         )
 
     def generate_video(self, request: Any) -> Any:
+        """Deprecated shortcut. Use a ``VideoProvider`` (Issue #22).
+
+        Raises rather than falling back: a video request that silently became
+        a still image, or a manual import, would be a fabricated capability.
+        """
         raise CapabilityNotSupported(
-            f"{self.name} does not implement video generation in this milestone"
+            f"{self.name} is a speech provider and does not implement video "
+            f"generation. Build a VideoProvider when Issue #22 introduces it; "
+            f"this cross-modality shortcut is deprecated."
         )

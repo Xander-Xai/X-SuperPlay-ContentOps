@@ -129,3 +129,87 @@ by `tests/test_minimax_speech.py`. No provider request is made in CI.
 - Sensitive data leaked
 - Unauthorized material
 - Key claim without evidence
+
+
+## Generated Image Quality (M3, Issue #20)
+
+A generated image may support a video. It may never evidence one.
+
+| Requirement | Rule | Enforced in |
+|---|---|---|
+| Container known | PNG, JPEG or WEBP, decided from magic bytes | `image_container.py` |
+| Requested vs actual both recorded | `requested_extension` and `detected_container` | `minimax_image.py` |
+| Provider bytes preserved | rename only, never transcode | `minimax_image.py` |
+| Dimensions valid | `[512, 2048]`, multiples of 8, checked locally | `image_fingerprint.py` |
+| Billing proven | subscription, all four paid balances zero, 5h and weekly above zero | `billing_guard.py` |
+| Credential bound | gate and child use one key | `credentials.py` |
+| Decodable and non-uniform | luminance stddev and span floors | `image_qc.py` |
+| Aspect ratio | within tolerance, not exact equality | `image_qc.py` |
+| Not evidence | generated assets refused every claim-bearing role | `image_contract.py` |
+
+**Technical QC never approves on taste.** `approved` means technically sound. It
+does not mean beautiful, on-brand or publishable. Those are human judgements, and
+an automated gate that reports "publishable" teaches the pipeline to trust itself.
+
+**A blank or near-uniform image fails.** A solid fill decodes cleanly and looks
+real to every naive check, so it is caught by pixel statistics rather than by the
+file being unreadable.
+
+**Critical text is not asked of the model.** A model asked for "a benchmark
+chart" invents one, and invented glyphs read as data. Critical text is a
+deterministic overlay applied later. `text_contamination_suspected` is an honest
+suspicion signal from edge-density measurements, never a verdict.
+
+### Hard Fail: support-only asset used as evidence
+
+Evidence-capable kinds, and only these:
+
+| Kind | |
+|---|---|
+| `REAL` | a real recording, photograph or capture |
+| `SCREENSHOT` | a real screen capture |
+| `SCREEN_RECORDING` | a real screen recording |
+
+Support-only kinds:
+
+| Kind | May | May never |
+|---|---|---|
+| `DIAGRAM` | explain architecture, flow, relationship, concept, sequence | witness a benchmark, test result, analytics metric, customer outcome, UI state, source-code fact or production behaviour |
+| `GENERATED_IMAGE` | hook, cover, concept, metaphor, background, transition | carry any claim |
+| `GENERATED_VIDEO` | hook, hero, concept, transition, impossible-to-record shot | carry any claim |
+
+A diagram is a legitimate asset. It **explains**; it does not **prove**. When one
+illustrates a claim, the real source behind it stays traceable separately through
+`claim_refs`.
+
+Registering any of them as `EVIDENCE`, `CLAIM_SOURCE`, `BENCHMARK_PROOF`,
+`TEST_RESULT`, `ANALYTICS_PROOF`, `UI_SCREENSHOT`, `CUSTOMER_PROOF` or
+`SOURCE_CODE_PROOF` raises `GeneratedAssetEvidenceError`, **even when the caller
+passes `evidence_capable=True`**. Generated assets also require
+`evidence_capable=False` and a `receipt_ref`.
+
+Generated-ness is **intrinsic provenance**, derived from kind and never
+overridable:
+
+| Intrinsic (from `kind`) | | Usage (caller, within limits) | |
+|---|---|---|---|
+| `generated` | **never overridable** | `evidence_use` | overridable |
+| | | `evidence_capable` | **down only** |
+
+```
+GENERATEDNESS IS DERIVED FROM KIND AND CANNOT BE OVERRIDDEN
+CALLER MAY REDUCE CAPABILITY
+CALLER MAY NEVER ESCALATE CAPABILITY
+```
+
+`GENERATED_IMAGE` and `GENERATED_VIDEO` are always generated. `REAL`,
+`SCREENSHOT`, `SCREEN_RECORDING` and `DIAGRAM` never are. A conflicting
+caller-supplied value is **refused, not normalised**, because the conflict means
+bad caller logic, a bad migration, or an attempt to bypass provenance.
+
+Capability and provenance are independent. A real capture used decoratively is
+legal. Promoting a diagram into proof is not. Labelling a real capture as
+model-generated is not either.
+
+This is a domain error at the single point an asset enters the system, not a note
+in a document that a prompt can ignore.

@@ -87,3 +87,54 @@
 3. Gateway healthz — upstream hardcodes port 18789; easel profile uses 37289. Does not block video pipeline.
 4. Human Review — no `human-review.json` receipt for easel-review project.
 5. ~~Main branch unprotected~~ — **RESOLVED** (G0.6): main is now protected via GitHub branch protection.
+
+
+## M3 Image Generation (Issue #20) — VERIFIED 2026-10-04
+
+Branch `feat/20-minimax-mplan-image`. One real provider generation was performed.
+
+| Property | Value |
+|---|---|
+| Transport | official CLI `mmx 1.0.27`, `mmx image generate` |
+| Model | `image-01` |
+| Requested | 768x1360, seed 42 |
+| **Requested extension** | `.png` |
+| **Detected container** | **`JPEG`** |
+| **Canonical extension** | `.jpg` (bytes preserved, no transcode) |
+| Actual dimensions | 768x1360 (confirmed independently by `ffprobe`: `mjpeg`) |
+| Aspect ratio | 0.564706 against 9:16 = 0.5625, within the 0.02 tolerance |
+| Output SHA-256 | `fb0ee9489df856bc2cd554ab98d34fd73e0737ca733cdd0af6022342512f8e21` |
+| Technical QC | PASS — luma stddev 29.97 (floor 6), span 146 (floor 24), decodable |
+| `text_contamination_suspected` | `false` (edge density 0.0668, floor 0.18) |
+| Billing preflight | `SAFE_INCLUDED_PLAN`, credential class `SUBSCRIPTION` |
+| Quota before | 5h 99%, weekly 58% |
+| Quota after | 5h 99%, weekly 58% |
+| Observed delta | **0 percentage points** on both windows |
+| `production_ready` | `false` |
+| `human_review` | `PENDING_FOUNDER_REVIEW` |
+
+### The container defect reproduced a second time
+
+The provider returned **JPEG bytes from a `.png` request**, independently
+reproducing what M2.0 measured. Had the pipeline trusted the extension, a JPEG
+would have been stored as `.png` and handed to every downstream tool that selects
+a decoder by suffix. The canonical file is `.jpg`; the receipt records the request
+and the reality separately.
+
+### Quota is reported as a delta, never as a price
+
+The plan exposes percentages only. One image moved neither window, so the
+observed delta is 0 percentage points. That is **not** a claim that an image
+costs nothing, and no per-image cost is derived: MiniMax does not expose exact
+units here.
+
+### Evidence boundary
+
+The generated asset was registered as `GENERATED_IMAGE` /
+`VISUAL_SUPPORT` with `generated=true`, `evidence_capable=false`. Attempting any
+claim-bearing role raises `GeneratedAssetEvidenceError` in code.
+
+### Human review
+
+`.verify-tmp/m3/human-review.json` carries the review fields with **every score
+null**. Technical QC passing does not mean production ready.
