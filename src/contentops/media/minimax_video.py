@@ -171,6 +171,24 @@ def hash_task_id(task_id: str, salt: Optional[str] = None) -> str:
     return f"sha256:{digest[:32]}"
 
 
+def _reference_key_entries(reference_hashes: Optional[List[Any]]) -> List[Dict[str, str]]:
+    """Normalise reference hashes into ordered ``{role, sha256}`` entries.
+
+    Accepts bare hash strings as positional ``reference_image`` entries, so an
+    older caller passing a flat list still gets a stable key rather than a crash.
+    """
+    entries: List[Dict[str, str]] = []
+    for value in reference_hashes or []:
+        if isinstance(value, str):
+            entries.append({"role": "reference_image", "sha256": value})
+        else:
+            entries.append({
+                "role": str(value.get("role")),
+                "sha256": str(value.get("sha256")),
+            })
+    return entries
+
+
 def video_fingerprint(
     *,
     provider: str,
@@ -182,7 +200,7 @@ def video_fingerprint(
     duration_s: int,
     resolution: str,
     ratio: str,
-    reference_hashes: Optional[List[str]] = None,
+    reference_hashes: Optional[List[Any]] = None,
     extra: Optional[Dict[str, Any]] = None,
 ) -> str:
     """Stable digest of every input that can change the produced footage.
@@ -190,6 +208,15 @@ def video_fingerprint(
     The **compiled** prompt is hashed, not the operator's raw intent: two intents
     can compile to the same prompt, and the same intent can compile to different
     prompts. Hashing the intent would make the cache key lie in both directions.
+
+    References are keyed by **role and position**, never as a sorted bag of
+    hashes. For ``FL2VA`` swapping the first and last frame requests the opposite
+    transition, and a sorted bag would give both the same key — so a caller could
+    be handed the previous shot's video and receipt for a reversed request. Order
+    and role are part of the request, so they are part of the key.
+
+    ``reference_hashes`` accepts either bare hash strings (treated as positional
+    reference images, in order) or ``{"role": ..., "sha256": ...}`` mappings.
     """
     payload: Dict[str, Any] = {
         "provider": provider,
@@ -201,12 +228,36 @@ def video_fingerprint(
         "duration_s": int(duration_s),
         "resolution": resolution,
         "ratio": ratio,
-        "reference_sha256": sorted(reference_hashes or []),
+        # Ordered, not sorted: role and position change what gets generated.
+        "references": _reference_key_entries(reference_hashes),
     }
     if extra:
         payload["extra"] = {str(k): str(v) for k, v in sorted(extra.items())}
     canonical = json.dumps(payload, sort_keys=True, ensure_ascii=False)
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def reference_fingerprint_entries(
+    validated: "ValidatedH3Request",
+) -> List[Dict[str, str]]:
+    """Hash every reference with its role and position preserved.
+
+    One list, one order, matching how the request is built. Keeping this beside the
+    fingerprint is what stops the cache key from silently forgetting that
+    ``first_frame`` and ``last_frame`` are different jobs.
+    """
+    entries: List[Dict[str, str]] = []
+    if validated.first_frame is not None:
+        entries.append({"role": "first_frame", "sha256": sha256_file(validated.first_frame)})
+    if validated.last_frame is not None:
+        entries.append({"role": "last_frame", "sha256": sha256_file(validated.last_frame)})
+    for path in validated.reference_images:
+        entries.append({"role": "reference_image", "sha256": sha256_file(path)})
+    for path in validated.reference_videos:
+        entries.append({"role": "reference_video", "sha256": sha256_file(path)})
+    for path in validated.reference_audio:
+        entries.append({"role": "reference_audio", "sha256": sha256_file(path)})
+    return entries
 
 
 @dataclass
@@ -230,6 +281,15 @@ class VideoAttemptState:
     #: the budget the task was actually authorised against rather than nothing.
     quota_budget: Optional[str] = None
     test_objective: Optional[str] = None
+    #: Quota as it stood **before** the task was created, read from the same
+    #: pre-flight that authorised it.
+    #:
+    #: This must be carried, not re-read on resume. By the time a restart happens
+    #: the task has already consumed its weekly entitlement, so re-reading would
+    #: produce a "before" value that is really an "after" value — and the receipt
+    #: would report a delta of zero, erasing the exact cost the receipt exists to
+    #: record.
+    quota_before: Optional[Dict[str, Any]] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -242,6 +302,7 @@ class VideoAttemptState:
             "attempt": self.attempt,
             "quota_budget": self.quota_budget,
             "test_objective": self.test_objective,
+            "quota_before": self.quota_before,
             "warning": "private runtime state; never commit. The public receipt "
             "stores only a salted hash.",
         }
@@ -258,6 +319,7 @@ class VideoAttemptState:
             attempt=int(payload.get("attempt") or 1),
             quota_budget=payload.get("quota_budget"),
             test_objective=payload.get("test_objective"),
+            quota_before=payload.get("quota_before"),
         )
 
 
@@ -409,17 +471,10 @@ class MiniMaxMPlanVideoProvider(VideoProvider):
         # 1. Local validation. Free, and it catches every documented rule.
         validated = self._validate(request)
 
-        # 2. Fingerprint over the compiled prompt, not the raw intent.
-        reference_hashes = [
-            sha256_file(path)
-            for path in (
-                list(validated.reference_images)
-                + list(validated.reference_videos)
-                + list(validated.reference_audio)
-                + ([validated.first_frame] if validated.first_frame else [])
-                + ([validated.last_frame] if validated.last_frame else [])
-            )
-        ]
+        # 2. Fingerprint over the compiled prompt, not the raw intent. References keep
+        #    their role and order, so a reversed first/last frame is a different key.
+        reference_entries = reference_fingerprint_entries(validated)
+        reference_hashes = [entry["sha256"] for entry in reference_entries]
         fingerprint = video_fingerprint(
             provider=PROVIDER_NAME,
             product=PRODUCT,
@@ -430,7 +485,7 @@ class MiniMaxMPlanVideoProvider(VideoProvider):
             duration_s=validated.duration_s,
             resolution=validated.resolution,
             ratio=validated.ratio,
-            reference_hashes=reference_hashes,
+            reference_hashes=reference_entries,
             extra=validated.extra,
         )
 
@@ -448,6 +503,10 @@ class MiniMaxMPlanVideoProvider(VideoProvider):
                 sidecar_path=sidecar_path,
                 fingerprint=fingerprint,
                 validated=validated,
+                # The caller's current choice wins. The audio policy is not part of
+                # the fingerprint, so restoring the original one here would silently
+                # hand back a KEEP asset to someone who just asked for MUTE.
+                audio_policy=request.audio_policy,
             )
             if cached is not None:
                 return cached
@@ -525,6 +584,7 @@ class MiniMaxMPlanVideoProvider(VideoProvider):
             attempt=attempt,
             quota_budget=quota_budget,
             test_objective=test_objective,
+            quota_before=_snapshot_to_dict(quota_before),
         )
         self._write_private_state(state)
 
@@ -624,6 +684,7 @@ class MiniMaxMPlanVideoProvider(VideoProvider):
                 reference_videos=tuple(request.reference_videos),
                 reference_audio=tuple(request.reference_audio),
                 extra=dict(request.extra) if request.extra else None,
+                audio_policy=request.audio_policy,
             )
         except RequestRejected:
             raise
@@ -726,6 +787,25 @@ class MiniMaxMPlanVideoProvider(VideoProvider):
                 f"{record.provider_state!r}; only a TERMINAL FAILED first attempt "
                 f"may be retried. A running task is resumed, not regenerated."
             )
+        # Status alone is NOT evidence of a terminal failure. A poll timeout, a
+        # transient poll 5xx and a download failure are all recorded as FAILED too,
+        # because from this record's point of view the call did not succeed. But in
+        # each of those cases the provider task may still exist and still be
+        # resumable from private state, so a changed fingerprint would bypass that
+        # state and create a **second billable task** for one logical generation.
+        #
+        # Only a provider-reported terminal failure means the generation is gone for
+        # good. Everything else is recovery, handled by resuming the same task.
+        if not VideoTaskState.is_failure(record.provider_state):
+            raise RuntimeError(
+                f"retry record failed locally with failure_class "
+                f"{record.failure_class!r} and provider state "
+                f"{record.provider_state!r}, which is not a terminal provider "
+                f"failure. The original task may still be running and resumable, so "
+                f"creating another one would pay twice for one generation. Resume "
+                f"the existing task instead, or retry only after the provider has "
+                f"reported a terminal state."
+            )
         if record.fingerprint == fingerprint:
             raise RuntimeError(
                 "attempt 2 must change a generation input (compiled prompt, "
@@ -810,7 +890,11 @@ class MiniMaxMPlanVideoProvider(VideoProvider):
         verify_output(canonical_path, not_before=state.created_at - 1,
                       min_bytes=self._download_min_bytes)
 
-        preflight_quota = self._guard.read_quota()
+        # The "before" value must come from the pre-flight that authorised the original
+        # create, not from a fresh read. The task has already been paid for by now,
+        # so reading again would label the post-cost value as pre-cost and make the
+        # receipt report a delta of zero.
+        preflight_quota = _snapshot_from_dict(state.quota_before)
         outcome = self._finish(
             validated=validated,
             request=None,  # type: ignore[arg-type]
@@ -861,6 +945,7 @@ class MiniMaxMPlanVideoProvider(VideoProvider):
         sidecar_path: Path,
         fingerprint: str,
         validated: ValidatedH3Request,
+        audio_policy: str,
     ) -> Optional[VideoOutcome]:
         """Reuse a cached shot only when its provenance is verifiable."""
         if not canonical_path.is_file():
@@ -905,11 +990,13 @@ class MiniMaxMPlanVideoProvider(VideoProvider):
             has_audio=bool(payload.get("audio_stream_present", False)),
             sha256=actual_sha,
             technical_qc=qc.as_dict(),
-            audio_policy=str(payload.get("audio_policy") or AudioPolicy.REPLACE),
+            audio_policy=audio_policy,
             evidence_capable=False,
             generated=True,
         )
-        receipt = _receipt_from_payload(asset=asset, payload=payload)
+        receipt = _receipt_from_payload(
+            asset=asset, payload=payload, audio_policy=audio_policy
+        )
         self._remember_receipt(receipt)
         append_reuse_event(
             self._work_dir,
@@ -920,6 +1007,12 @@ class MiniMaxMPlanVideoProvider(VideoProvider):
                 "asset_sha256": actual_sha,
                 "provider_call": False,
                 "billing_call": False,
+                # Recorded because the reuse may have changed the handling decision
+                # without changing the bytes. The immutable receipt on disk keeps its
+                # original generation-time value; this says what the caller actually
+                # got, so a later reader is not misled by either value alone.
+                "audio_policy": audio_policy,
+                "receipt_audio_policy_at_generation": payload.get("audio_policy"),
             },
         )
         return VideoOutcome(asset=asset, receipt=receipt, reused=True)
@@ -1088,12 +1181,23 @@ fallback={},
         self._receipts.append(receipt)
 
 
-def _receipt_from_payload(*, asset: VideoAsset, payload: Dict[str, Any]) -> VideoReceipt:
+def _receipt_from_payload(
+    *,
+    asset: VideoAsset,
+    payload: Dict[str, Any],
+    audio_policy: Optional[str] = None,
+) -> VideoReceipt:
     """Rebuild the ORIGINAL generation receipt from the immutable sidecar.
 
     ``quota_before``, ``quota_after`` and the original attempt number must survive,
     or the evidence that the shot came out of plan entitlement is lost on the
     first reuse.
+
+    ``audio_policy`` is the one field a reuse may legitimately update. It is a
+    downstream handling decision rather than a generation input — it is not in the
+    fingerprint and it does not change the bytes — so the caller may legitimately
+    change their mind. The on-disk receipt keeps its original value; this restores
+    what the current caller actually asked for.
     """
     from contentops.media.contract import QuotaSnapshot
 
@@ -1142,7 +1246,7 @@ def _receipt_from_payload(*, asset: VideoAsset, payload: Dict[str, Any]) -> Vide
         quota_before=snapshot(payload.get("quota_before")),
         quota_after=snapshot(payload.get("quota_after")),
         technical_qc=dict(payload.get("technical_qc") or {}),
-        audio_policy=str(payload.get("audio_policy") or AudioPolicy.REPLACE),
+        audio_policy=audio_policy or str(payload.get("audio_policy") or AudioPolicy.REPLACE),
         audio_stream_present=bool(payload.get("audio_stream_present", False)),
 attempt=int(payload.get("attempt") or 1),
             retry_reason=payload.get("retry_reason"),
@@ -1166,6 +1270,20 @@ def _snapshot_to_dict(snapshot: Any) -> Optional[Dict[str, Any]]:
         "weekly_remaining_percent": snapshot.weekly_remaining_percent,
         "modality_breakdown": snapshot.modality_breakdown,
     }
+
+
+def _snapshot_from_dict(value: Any) -> Any:
+    """Rebuild a :class:`QuotaSnapshot` from its serialised form."""
+    from contentops.media.contract import QuotaSnapshot
+
+    if not isinstance(value, dict):
+        return None
+    return QuotaSnapshot(
+        bucket=value.get("bucket"),
+        interval_remaining_percent=value.get("interval_remaining_percent"),
+        weekly_remaining_percent=value.get("weekly_remaining_percent"),
+        modality_breakdown=value.get("modality_breakdown") or {},
+    )
 
 
 def receipt_to_dict(receipt: VideoReceipt) -> Dict[str, Any]:

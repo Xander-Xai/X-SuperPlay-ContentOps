@@ -50,6 +50,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
+from contentops.media.video_contract import AUDIO_POLICIES, AUDIO_POLICY_REPLACE
+
 __all__ = [
     "ALLOWED_EXTRA_KEYS",
     "EXTRA_SUPPORTED_MODELS",
@@ -182,6 +184,9 @@ class ValidatedH3Request:
     reference_audio: List[Path] = field(default_factory=list)
     #: Generation-affecting options, validated against the documented closed set.
     extra: Dict[str, Any] = field(default_factory=dict)
+    #: What will happen to the audio track the provider returns anyway. Validated
+    #: locally, because a typo here must not cost a paid generation.
+    audio_policy: str = AUDIO_POLICY_REPLACE
     #: True when the caller's ratio was replaced because the mode fixes it.
     ratio_was_coerced: bool = False
 
@@ -416,6 +421,7 @@ def validate_h3_request(
     reference_videos: Sequence[str] = (),
     reference_audio: Sequence[str] = (),
     extra: Optional[Dict[str, Any]] = None,
+    audio_policy: str = AUDIO_POLICY_REPLACE,
 ) -> ValidatedH3Request:
     """Validate everything locally. Raises :class:`RequestRejected` on any breach.
 
@@ -464,6 +470,17 @@ def validate_h3_request(
         )
 
     checked_extra = _check_extra(model, extra)
+
+    # The audio policy is a caller-chosen field, not something the provider sends,
+    # so a typo here would otherwise survive until post-generation QC — after the
+    # weekly quota has already been spent. It is a non-generation option, so it
+    # must fail for free like any other invalid request field.
+    if audio_policy not in AUDIO_POLICIES:
+        raise RequestRejected(
+            f"unknown audio_policy {audio_policy!r}; expected one of "
+            f"{', '.join(AUDIO_POLICIES)}. Audio is a non-generation option, so it "
+            f"is validated here rather than after the task has been paid for."
+        )
 
     # -- reference counts -------------------------------------------------
     images = [Path(p) for p in reference_images]
@@ -654,5 +671,6 @@ def validate_h3_request(
         reference_videos=videos,
         reference_audio=audio,
         extra=checked_extra,
+        audio_policy=audio_policy,
         ratio_was_coerced=coerced,
     )

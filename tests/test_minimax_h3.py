@@ -551,6 +551,26 @@ def _make_frame(path: Path):
     return path
 
 
+def _make_distinct_frame(path: Path, tint: int):
+    """A frame that differs from every other tint, for order-sensitive tests.
+
+    ``_make_frame`` is deterministic, so two calls produce byte-identical files and
+    their hashes collide. A test about which file plays *first* needs two files
+    that are actually different.
+    """
+    from PIL import Image, ImageDraw
+
+    image = Image.new("RGB", (768, 1360), (tint, 20, 30))
+    draw = ImageDraw.Draw(image)
+    draw.rectangle([60, 120, 700, 400], fill=(240 - tint, 90, 160))
+    draw.polygon([(0, 1360), (768, 1360), (560, 700), (200, 700)],
+                 fill=(30, 40 + tint, 60))
+    draw.ellipse([280, 640, 500, 900], fill=(230, 230, 240), outline=(10, 10, 12))
+    path.parent.mkdir(parents=True, exist_ok=True)
+    image.save(path, format="PNG")
+    return path
+
+
 # --- 3. credential identity --------------------------------------------------
 
 def test_subscription_credential_is_accepted():
@@ -871,7 +891,13 @@ def test_restart_resumes_the_same_task_rather_than_creating_one():
 
 
 def test_a_running_task_cannot_enter_retry_validation():
-    """A running task is not a failure; retrying it would pay twice."""
+    """A running task is not a failure; retrying it would pay twice.
+
+    An earlier revision of this test asserted that a retry referencing a
+    still-running task *succeeds*, which contradicted both its own name and the
+    one-task rule. The provider task may still exist and still be resumable from
+    private state, so a changed fingerprint must not be allowed to bypass it.
+    """
     if not HAVE_MEDIA:
         _skip(39, "running task is not retryable", "ffmpeg")
         return
@@ -886,10 +912,22 @@ def test_a_running_task_cannot_enter_retry_validation():
         records = find_attempt_records(work)
         assert records, "the interrupted attempt left no durable record"
         record = records[0]
-        # Simulate a retry attempt that references this still-running record.
-        provider._validate_attempt(
-            2, "changed prompt", "0" * 64, record.path_in(work), "budget"
+        assert record.status == STATUS_FAILED, record.status
+        assert not VideoTaskState.is_failure(record.provider_state), (
+            f"the record should carry no terminal provider state, got "
+            f"{record.provider_state!r}"
         )
+        try:
+            provider._validate_attempt(
+                2, "changed prompt", "0" * 64, record.path_in(work), "budget"
+            )
+        except RuntimeError as exc:
+            assert "not a terminal provider failure" in str(exc), str(exc)
+        else:
+            raise AssertionError(
+                "a still-running task was accepted as a retry candidate; that "
+                "creates a second billable task for one logical generation"
+            )
     print("[ok] 39. an interrupted attempt still allows a deliberate retry with evidence")
 
 
@@ -1913,6 +1951,352 @@ def test_the_api_schema_version_is_recorded_on_the_receipt():
     print("[ok] 88. the receipt records which API generation produced the shot")
 
 
+# --- 14. review findings: each of these was a real defect --------------------
+
+def test_a_locally_failed_attempt_is_not_a_retry_candidate():
+    """Status FAILED alone is not evidence of a terminal provider failure.
+
+    A poll timeout, a transient 5xx and a download failure are all recorded as
+    FAILED. Accepting any of them as a retry candidate would create a second
+    billable task for one logical generation, because the original task may still
+    be running and resumable.
+    """
+    from contentops.media.attempts import GenerationAttemptRecord
+
+    if not HAVE_MEDIA:
+        _skip(89, "local failure is not retryable", "ffmpeg")
+        return
+
+    for failure_class, provider_state in (
+        ("poll_failed", None),          # poll never reached a terminal state
+        ("download_failed", None),      # generation succeeded; only the fetch failed
+        ("task_creation_failed", None), # no task exists, so nothing to recover
+    ):
+        with tempfile.TemporaryDirectory() as work:
+            record = GenerationAttemptRecord(
+                provider="minimax_m_plan", modality="video",
+                fingerprint="a" * 64, attempt_number=1,
+            )
+            record.mark_failed(failure_class, "simulated")
+            record.provider_state = provider_state
+            record.write(Path(work))
+
+            provider, _ = _provider(Path(work))
+            try:
+                provider._validate_attempt(
+                    2, "a named reason", "b" * 64,
+                    find_attempt_records(Path(work))[0].path_in(Path(work)),
+                    "10pp",
+                )
+            except RuntimeError as exc:
+                assert "not a terminal provider failure" in str(exc), (
+                    f"{failure_class}: {exc}"
+                )
+            else:
+                raise AssertionError(
+                    f"{failure_class} was accepted as a retry candidate"
+                )
+
+    # And a genuine terminal provider failure is still retryable.
+    with tempfile.TemporaryDirectory() as work:
+        record = GenerationAttemptRecord(
+            provider="minimax_m_plan", modality="video",
+            fingerprint="a" * 64, attempt_number=1,
+        )
+        record.provider_state = VideoTaskState.FAILED
+        record.mark_failed("provider_terminal_failure", "provider said no")
+        record.write(Path(work))
+        provider, _ = _provider(Path(work))
+        provider._validate_attempt(
+            2, "a named reason", "b" * 64,
+            find_attempt_records(Path(work))[0].path_in(Path(work)), "10pp",
+        )
+    print("[ok] 89. only a terminal provider failure may enter a retry")
+
+
+def test_reference_roles_and_order_are_part_of_the_fingerprint():
+    """Swapping first and last frame requests the opposite transition.
+
+    A sorted bag of hashes would give both the same key, so a caller could be
+    handed the previous shot's video for a reversed request.
+    """
+    common = dict(
+        provider="minimax", product="mplan", plan="explore",
+        model="MiniMax-H3", mode="FL2VA", compiled_prompt="p",
+        duration_s=4, resolution="768P", ratio="adaptive",
+    )
+    forward = video_fingerprint(
+        **common,
+        reference_hashes=[
+            {"role": "first_frame", "sha256": "aa"},
+            {"role": "last_frame", "sha256": "bb"},
+        ],
+    )
+    reversed_request = video_fingerprint(
+        **common,
+        reference_hashes=[
+            {"role": "first_frame", "sha256": "bb"},
+            {"role": "last_frame", "sha256": "aa"},
+        ],
+    )
+    assert forward != reversed_request, (
+        "an FL2VA request and its reverse share a fingerprint, so the cache could "
+        "serve the opposite transition"
+    )
+    # Same roles, same order: identical.
+    assert forward == video_fingerprint(
+        **common,
+        reference_hashes=[
+            {"role": "first_frame", "sha256": "aa"},
+            {"role": "last_frame", "sha256": "bb"},
+        ],
+    ), "an identical request produced a different fingerprint"
+    # Role matters even with identical bytes.
+    assert forward != video_fingerprint(
+        **common,
+        reference_hashes=[
+            {"role": "reference_image", "sha256": "aa"},
+            {"role": "last_frame", "sha256": "bb"},
+        ],
+    ), "a role change did not change the fingerprint"
+    print("[ok] 90. reference roles and order are part of the fingerprint")
+
+
+def test_swapped_first_and_last_frames_do_not_share_a_cache_entry():
+    """The end-to-end consequence: a reversed request must not reuse a cache hit."""
+    if not HAVE_MEDIA:
+        _skip(91, "swapped frames are a different cache key", "ffmpeg")
+        return
+    with tempfile.TemporaryDirectory() as work:
+        work = Path(work)
+        forward_first = _make_distinct_frame(work / "a.png", 40)
+        forward_last = _make_distinct_frame(work / "b.png", 200)
+        assert forward_first.read_bytes() != forward_last.read_bytes(), (
+            "the two frames must differ for this test to mean anything"
+        )
+
+        forward = _generate(
+            _provider(work)[0],
+            _request(mode="FL2VA", ratio="adaptive", first_frame=str(forward_first),
+                     last_frame=str(forward_last)),
+        )
+        assert forward.reused is False
+
+        # Same two files, roles swapped: must be a distinct generation, not a hit.
+        swapped = _generate(
+            _provider(work)[0],
+            _request(mode="FL2VA", ratio="adaptive", first_frame=str(forward_last),
+                     last_frame=str(forward_first)),
+        )
+        assert swapped.reused is False, (
+            "a reversed FL2VA request reused the forward request's cache entry"
+        )
+        assert swapped.receipt.fingerprint != forward.receipt.fingerprint
+    print("[ok] 91. swapped first and last frames do not share a cache entry")
+
+
+def test_a_resumed_receipt_keeps_the_pre_generation_quota_snapshot():
+    """Reading quota after the task consumed it would report a delta of zero.
+
+    That would erase the exact cost the receipt exists to record.
+    """
+    if not HAVE_MEDIA:
+        _skip(92, "resume preserves the pre-generation quota", "ffmpeg")
+        return
+    with tempfile.TemporaryDirectory() as td:
+        work = Path(td)
+        # A guard whose weekly reading drops as soon as a task is created, so a
+        # re-read on resume returns the post-cost value.
+        state = {"weekly": 58}
+
+        def transport(url: str, cred: str):
+            if url.endswith("/account/query_balance"):
+                return SAFE_BALANCES
+            if url.endswith("/v1/token_plan/remains"):
+                return _quota(99, state["weekly"])
+            raise AssertionError(f"unexpected billing url {url}")
+
+        guard = BillingGuard(
+            base_url="https://example.invalid",
+            credential=SUBSCRIPTION_KEY,
+            http_get_json=transport,
+        )
+
+        crashing = _spending_transport(
+            FakeH3Transport(download_error_plan={1: 99}), state
+        )
+        provider_a, _ = _provider(work, fake=crashing, guard=guard)
+        try:
+            _generate(provider_a, _request())
+        except Exception:
+            pass
+        assert state["weekly"] == 51, state["weekly"]
+
+        resumed = FakeH3Transport()
+        provider_b, _ = _provider(work, fake=resumed, guard=guard)
+        payload = receipt_to_dict(_generate(provider_b, _request()).receipt)
+        before = payload["quota_before"]["weekly_remaining_percent"]
+        after = payload["quota_after"]["weekly_remaining_percent"]
+        assert before == 58.0, (
+            f"the resumed receipt lost the pre-create quota and used the "
+            f"post-cost value instead: {before}"
+        )
+        assert after is not None and after < before, (
+            f"the resumed receipt reports no quota consumption: {before} -> {after}"
+        )
+    print("[ok] 92. a resumed receipt keeps the pre-generation quota snapshot")
+
+
+def _spending_transport(inner, state):
+    """Wrap a transport so creating a task drops the weekly reading."""
+
+    class _Spending:
+        def __init__(self) -> None:
+            self._inner = inner
+
+        def __getattr__(self, name):
+            return getattr(self._inner, name)
+
+        def create_task(self, **kwargs):
+            state["weekly"] = 51
+            return self._inner.create_task(**kwargs)
+
+    return _Spending()
+
+
+def test_cache_reuse_honours_the_currently_requested_audio_policy():
+    """The audio policy is not in the fingerprint, so the caller may change it."""
+    if not HAVE_MEDIA:
+        _skip(93, "reuse honours the current audio policy", "ffmpeg")
+        return
+    with tempfile.TemporaryDirectory() as work:
+        work = Path(work)
+        _generate(_provider(work)[0], _request(audio_policy=AudioPolicy.KEEP))
+
+        # A fresh provider, same fingerprint, but the caller now wants MUTE.
+        reused = _generate(
+            _provider(work)[0], _request(audio_policy=AudioPolicy.MUTE)
+        )
+        assert reused.reused is True, "the setup did not produce a cache hit"
+        assert reused.asset.audio_policy == AudioPolicy.MUTE, (
+            f"the caller's MUTE request was silently answered with "
+            f"{reused.asset.audio_policy}"
+        )
+        assert reused.receipt.audio_policy == AudioPolicy.MUTE
+    print("[ok] 93. cache reuse honours the currently requested audio policy")
+
+
+def test_reuse_keeps_the_immutable_receipt_on_disk_untouched():
+    """The generation-time value stays; the reuse event records both."""
+    if not HAVE_MEDIA:
+        _skip(94, "reuse does not rewrite the receipt on disk", "ffmpeg")
+        return
+    from contentops.media.attempts import read_reuse_events
+
+    with tempfile.TemporaryDirectory() as work:
+        work = Path(work)
+        original = _generate(_provider(work)[0], _request(audio_policy=AudioPolicy.KEEP))
+        receipt_file = Path(original.asset.canonical_path).with_name(
+            Path(original.asset.canonical_path).name + ".receipt.json"
+        )
+        on_disk_before = receipt_file.read_text(encoding="utf-8")
+
+        _generate(_provider(work)[0], _request(audio_policy=AudioPolicy.MUTE))
+        assert receipt_file.read_text(encoding="utf-8") == on_disk_before, (
+            "the immutable generation receipt was rewritten by a cache hit"
+        )
+        events = [
+            e for e in read_reuse_events(work)
+            if e.get("event") == "CACHE_REUSE"
+        ]
+        assert events, "no reuse event was appended"
+        assert events[-1]["audio_policy"] == AudioPolicy.MUTE
+        assert events[-1]["receipt_audio_policy_at_generation"] == AudioPolicy.KEEP
+    print("[ok] 94. reuse leaves the on-disk receipt intact and logs both policies")
+
+
+def test_an_unknown_audio_policy_is_rejected_before_any_task_is_created():
+    """Audio is a non-generation option, so a typo must not cost weekly quota."""
+    with tempfile.TemporaryDirectory() as work:
+        provider, fake = _provider(Path(work))
+        try:
+            _generate(provider, _request(audio_policy="MUT"))
+        except RequestRejected as exc:
+            assert "audio_policy" in str(exc), str(exc)
+        else:
+            raise AssertionError("an invalid audio policy was accepted")
+        assert fake.create_count == 0, "an invalid audio policy created a task"
+    print("[ok] 95. an unknown audio policy is refused locally, before billing")
+
+
+def test_qc_fails_closed_when_the_full_decode_cannot_be_run():
+    """FAIL is FAIL. Missing tooling is not an approval.
+
+    Verified structurally rather than by hiding ffmpeg: the gate must add a
+    failure reason whenever the decode cannot run, so an unverifiable file can
+    never reach ``approved``.
+    """
+    import contentops.media.video_qc as qc_module
+
+    source = (ROOT / "src" / "contentops" / "media" / "video_qc.py").read_text(
+        encoding="utf-8"
+    )
+    # The unavailable branch must append a reason, not just skip the block.
+    assert "if HAVE_FFMPEG:" in source
+    unavailable_branch = source.split("if HAVE_FFMPEG:", 1)[1]
+    assert "else:" in unavailable_branch.split("_analyse_frames(", 1)[0], (
+        "the decode check has no else branch, so a missing ffmpeg silently skips it"
+    )
+    assert "unverified, not approved" in source, (
+        "the missing-ffmpeg path does not explain that the file is unverified"
+    )
+
+    # And behaviourally, with the tool reported absent.
+    if not (HAVE_FFMPEG and HAVE_FFPROBE):
+        _skip(96, "QC fails closed without ffmpeg", "ffmpeg + ffprobe")
+        return
+    with tempfile.TemporaryDirectory() as work:
+        # A real, decodable clip, so the only thing that can fail is the missing
+        # decode itself. An absent or empty file would return earlier and prove
+        # nothing about this branch.
+        clip = _tiny_clip(Path(work) / "clip.mp4")
+        baseline = qc_module.measure_video(clip)
+        assert baseline.approved is True, baseline.reasons
+
+        original = qc_module.HAVE_FFMPEG
+        qc_module.HAVE_FFMPEG = False
+        try:
+            result = qc_module.measure_video(clip)
+        finally:
+            qc_module.HAVE_FFMPEG = original
+
+        assert result.approved is False, (
+            "a file whose end-to-end decode never ran was approved anyway"
+        )
+        assert any("ffmpeg is unavailable" in r for r in result.reasons), result.reasons
+        assert result.decodable is False
+    print("[ok] 96. technical QC fails closed when full decoding cannot run")
+
+
+def _tiny_clip(target: Path) -> Path:
+    """Render a minimal real MP4 for measurement, through the sanctioned layer."""
+    from process_utils import hidden_run
+
+    target.parent.mkdir(parents=True, exist_ok=True)
+    result = hidden_run(
+        [
+            "ffmpeg", "-y", "-v", "error", "-nostdin",
+            "-f", "lavfi", "-i", "testsrc=size=160x284:rate=12:duration=1",
+            "-pix_fmt", "yuv420p", "-c:v", "libx264", "-preset", "ultrafast",
+            str(target),
+        ],
+        timeout=180,
+    )
+    if result.returncode != 0 or not target.is_file():
+        raise AssertionError(f"could not render a test clip: {result.stderr!r}")
+    return target
+
+
 TESTS = [
     test_prompt_skill_provenance_is_recorded,
     test_base_modes_use_the_three_core_fields_in_official_order,
@@ -2001,6 +2385,14 @@ TESTS = [
     test_the_review_package_names_every_required_human_judgement,
     test_reference_only_fields_are_marked_not_applicable_for_text_only_modes,
     test_the_api_schema_version_is_recorded_on_the_receipt,
+    test_a_locally_failed_attempt_is_not_a_retry_candidate,
+    test_reference_roles_and_order_are_part_of_the_fingerprint,
+    test_swapped_first_and_last_frames_do_not_share_a_cache_entry,
+    test_a_resumed_receipt_keeps_the_pre_generation_quota_snapshot,
+    test_cache_reuse_honours_the_currently_requested_audio_policy,
+    test_reuse_keeps_the_immutable_receipt_on_disk_untouched,
+    test_an_unknown_audio_policy_is_rejected_before_any_task_is_created,
+    test_qc_fails_closed_when_the_full_decode_cannot_be_run,
 ]
 
 

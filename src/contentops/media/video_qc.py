@@ -309,6 +309,15 @@ def measure_video(path) -> VideoTechnicalQC:
             result.reasons.append(
                 f"video does not decode end to end: {detail or 'ffmpeg reported errors'}"
             )
+    else:
+        # Not a soft degradation. Without ffmpeg there is no end-to-end decode and
+        # no black/freeze analysis, and a truncated clip with readable headers would
+        # otherwise pass a gate that claims to have measured both. FAIL is FAIL: an
+        # unverifiable file is not an approved file.
+        result.reasons.append(
+            "ffmpeg is unavailable, so end-to-end decodability and black/freeze "
+            "analysis could not be measured; this file is unverified, not approved"
+        )
 
     _analyse_frames(target, result)
     result.approved = not result.reasons
