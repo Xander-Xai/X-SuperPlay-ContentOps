@@ -17,8 +17,17 @@ SKIPPED rather than invent a pass.
 """
 
 import json
-import subprocess
 import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "scripts"))
+
+# The repository's own subprocess policy applies to test fixtures too: every
+# child process goes through process_utils, so no fixture can pop a console
+# window on Windows. The policy gate scans tracked files and caught the direct
+# subprocess.run this fixture originally used.
+from process_utils import hidden_run  # noqa: E402
 
 
 def _flag(argv, name, default=None):
@@ -58,14 +67,14 @@ def main() -> int:
         # ~6 characters per second keeps the duration plausible for the QC's
         # duration-plausibility window without pretending to be speech.
         seconds = max(1.0, min(20.0, len(text) / 6.0))
-        result = subprocess.run(
+        result = hidden_run(
             ["ffmpeg", "-y", "-hide_banner", "-nostdin",
              "-f", "lavfi", "-i", f"sine=frequency=300:duration={seconds:.2f}",
              "-ar", "32000", "-ac", "1", "-c:a", "pcm_s16le", out],
-            capture_output=True,
+            timeout=120,
         )
         if result.returncode != 0:
-            sys.stderr.write(result.stderr.decode("utf-8", "replace"))
+            sys.stderr.write(result.stderr or "")
             return result.returncode
         print(out)
         return 0
