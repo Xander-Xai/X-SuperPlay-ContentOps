@@ -28,13 +28,23 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import sys
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+# Media probing goes through the one sanctioned process layer, so nothing here can
+# flash a console window on Windows.
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from process_utils import hidden_run  # noqa: E402
+
 __all__ = [
     "CLI_ENV_VAR",
+    "HAVE_FFPROBE",
     "REQUIRED_SIDECAR_FIELDS",
     "SIDECAR_SUFFIX",
+    "ffprobe_json",
     "load_sidecar",
     "resolve_cli",
     "sidecar_for",
@@ -69,6 +79,56 @@ def resolve_cli() -> Any:
                 return parsed
         return override
     return shutil.which("mmx")
+
+
+def have_ffprobe() -> bool:
+    """True when ffprobe is on PATH. Probing media needs it; nothing else does."""
+    return bool(shutil.which("ffprobe"))
+
+
+#: Evaluated once at import so callers can skip probe-dependent paths cheaply.
+HAVE_FFPROBE = have_ffprobe()
+
+
+def ffprobe_json(path: Path) -> Dict[str, Any]:
+    """Return ffprobe's JSON description of a media file.
+
+    The single place ContentOps asks what a media file actually contains. Callers
+    that need codec, dimensions, duration, frame rate or stream presence go
+    through here rather than each parsing ffprobe output themselves.
+
+    Raises:
+        RuntimeError: ffprobe is unavailable, or the file cannot be read. Callers
+            decide whether that blocks or degrades.
+    """
+    if not HAVE_FFPROBE:
+        raise RuntimeError(
+            "ffprobe is not on PATH, so media cannot be measured; install "
+            "ffmpeg or skip the probe"
+        )
+    result = hidden_run(
+        [
+            "ffprobe",
+            "-v", "error",
+            "-print_format", "json",
+            "-show_format",
+            "-show_streams",
+            str(path),
+        ],
+        timeout=120,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"ffprobe could not read {path}: "
+            f"{(result.stderr or '').strip()[-200:] or 'no detail'}"
+        )
+    try:
+        payload = json.loads(result.stdout or "{}")
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"ffprobe returned unparsable JSON for {path}") from exc
+    if not isinstance(payload, dict):
+        raise RuntimeError(f"ffprobe returned an unexpected shape for {path}")
+    return payload
 
 
 def verify_output(path: Path, *, not_before: float, min_bytes: int = 1024) -> None:

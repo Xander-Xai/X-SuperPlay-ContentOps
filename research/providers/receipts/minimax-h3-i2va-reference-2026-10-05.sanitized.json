@@ -1,0 +1,188 @@
+{
+  "schema": "contentops.provider-capability-receipt/v1",
+  "receipt_kind": "sanitized_capability_evidence",
+  "revision": 1,
+  "revision_reason": "First M4 real reference-mode generation. M2.0 proved T2VA only; its request contained no image content at all, so the reference path was unevidenced.",
+  "generated_by": "scripts/generate_h3_shot.py",
+  "note": "No credential value, key fragment, raw task id, account id or private endpoint is recorded here. The provider task id appears only as a per-receipt salted hash.",
+  "checked_at_utc": "2026-10-04T19:21:12+00:00",
+  "checked_at_local_date": "2026-10-05",
+  "issue": "#22",
+  "milestone": "M4",
+  "provider": "minimax",
+  "product": "m_plan",
+  "tier": "explore",
+  "billing_mode": "subscription",
+  "payg_allowed": false,
+  "credit_pack_allowed": false,
+  "test_objective": "Prove the real MiniMax H3 API accepts the reference-image request shape ContentOps emits: a content[] item of type image_url carrying a data:image/jpeg;base64 URL with role first_frame, together with the upstream h3-prompt-writing alignment instruction. M2.0 proved T2VA with zero image content, so nothing about this path was evidenced.",
+  "why_prior_evidence_insufficient": "The M2.0 request contained one text item and no image content. It is therefore silent on whether image_url content items, the first_frame role, the data: URI form, the alignment instruction, or I2VA rendering are accepted by the live service. The account also resolves to the regional CN endpoint, which is not the host the public documentation is written against, so reference handling could plausibly differ.",
+  "auth": {
+    "credential_class": "SUBSCRIPTION",
+    "key_prefix_class": "sk-cp",
+    "region": "cn",
+    "credential_value_recorded": false,
+    "credential_source_class": "official_cli_config",
+    "same_credential_authorized_gate_and_transport": true
+  },
+  "transport": {
+    "kind": "documented_public_api",
+    "api_schema_version": "v2",
+    "create_endpoint": "POST /v2/video_generation",
+    "poll_endpoint": "GET /v2/query/video_generation/{task_id}",
+    "download_semantics": "video URL returned directly in content.url; no file_id exchange on this path",
+    "official_cli_used_for_generation": false,
+    "official_cli_used_for_diagnostics": true
+  },
+  "request": {
+    "model": "MiniMax-H3",
+    "mode": "I2VA",
+    "requested_duration_s": 4,
+    "requested_resolution": "768P",
+    "requested_ratio": "adaptive",
+    "ratio_rule": "documented: for i2va the aspect comes from the input image and ratio is always adaptive",
+    "prompt_skill_repo": "MiniMax-AI/MiniMax-H3",
+    "prompt_skill_commit": "d21241f0a4b3acbb34c97dae47fa417b7065e438",
+    "prompt_skill_path": "skills/h3-prompt-writing/SKILL.md",
+    "prompt_skill_blob": "b6d9b2839384a588763a9c24315225dd8ce19d56",
+    "prompt_skill_checked_at": "2026-10-05",
+    "prompt_sections": [
+      "integrated_multimodal_description",
+      "overall_soundscape",
+      "non_diegetic_music"
+    ],
+    "alignment_instruction": "For the target video, at 0.00 seconds into the target video, <Picture 1> (from [Shot 1]) is fully referenced.",
+    "reference_image": {
+      "encoding": "data:image/jpeg;base64",
+      "role": "first_frame",
+      "width": 768,
+      "height": 1360,
+      "aspect_ratio": 0.5647,
+      "file_bytes": 45800,
+      "sha256": "d3649470fefce4c49872bcb8b05db4f736d06b2981c618af0c053af9c66e9fce"
+    }
+  },
+  "async_lifecycle": {
+    "task_created_count": 1,
+    "billable_creates": 1,
+    "task_created": true,
+    "task_ref_hash": "sha256:a52f6a8296b3fcb640a33a24385c2e1e",
+    "raw_task_id_recorded": false,
+    "provider_state": "succeeded",
+    "attempt_number": 1,
+    "outcome": "created once, polled to succeeded, downloaded once"
+  },
+  "result": {
+    "status": "SUCCEEDED",
+    "output_sha256": "b761ea2a69b3ad6181b8a48b93dddefb56edd897867f42a8b160610e74ac249a",
+    "container": "mp4",
+    "codec": "h264",
+    "width": 768,
+    "height": 1344,
+    "actual_aspect_ratio": 0.571429,
+    "actual_duration_s": 4.458333,
+    "fps": 24.0,
+    "file_bytes": 424543,
+    "decodable": true,
+    "audio_codec": "aac",
+    "audio_requested": false,
+    "audio_policy": "REPLACE",
+    "longest_black_run_s": 0.0,
+    "black_frame_count": 0,
+    "longest_freeze_run_s": 0.0,
+    "mean_frame_diff": 0.013115,
+    "max_frame_diff": 0.030539,
+    "analysed_frames": 22,
+    "technical_qc": "PASS"
+  },
+  "duration_tolerance_evidence": {
+    "requested_s": 4.0,
+    "actual_s": 4.458333,
+    "delta_s": 0.458333,
+    "threshold_s": 1.0,
+    "verdict": "PASS_WITHIN_TOLERANCE",
+    "note": "Identical to the M2.0 deviation of 4.000 -> 4.458 s. Equality would reject correct provider output, so the gate compares with a tolerance and records both values."
+  },
+  "aspect_tolerance_evidence": {
+    "requested": "adaptive",
+    "reference_image_ratio": 0.5647,
+    "delivered_ratio": 0.571429,
+    "verdict": "PASS",
+    "note": "For i2va the provider derives the frame from the input image, so the delivered ratio tracks the reference rather than a requested literal."
+  },
+  "audio_finding": {
+    "observation": "The result carried an unrequested AAC track, exactly as in M2.0.",
+    "consequence": "Audio presence is a measured fact recorded on every receipt; the handling decision is explicit per shot via audio_policy, whose ContentOps default is REPLACE so narration stays deterministic.",
+    "note": "The track is preserved in the file. Downstream REPLACE/MUTE handling is M4.5 work; nothing here mixes generated audio with narration."
+  },
+  "billing": {
+    "billing_guard_verdict": "SAFE_INCLUDED_PLAN",
+    "credential_class_required": "SUBSCRIPTION",
+    "credit_class_required": "SUBSCRIPTION",
+    "modality": "video",
+    "windows_required": ["weekly"],
+    "five_hour_window_required": false,
+    "cash_balance_before": "0.00",
+    "credit_balance_before": "0.00",
+    "voucher_balance_before": "0.00",
+    "owed_amount_before": "0.00",
+    "cash_balance_after": "0.00",
+    "credit_balance_after": "0.00",
+    "voucher_balance_after": "0.00",
+    "owed_amount_after": "0.00",
+    "weekly_remaining_percent_before": 58.0,
+    "weekly_remaining_percent_after": 51.0,
+    "observed_weekly_delta_pp": 7.0,
+    "declared_budget": "7pp",
+    "delta_matches_declared_budget": true,
+    "cost_formula_derived": false,
+    "delta_note": "An observed percentage delta used only for conservative test budgeting. No per-second, per-clip or credit rate is derived from a percentage."
+  },
+  "quota_cost_observation": {
+    "jobs_in_this_milestone": 1,
+    "jobs_avoided": {
+      "t2va_repeat": "M2.0 already proved T2VA 4s/768P/9:16 on this account. Repeating it would spend quota only to reproduce a known success.",
+      "reference_video": "Not yet required. A reference-image failure would invalidate the reference-video path too, since both use the same content[] machinery.",
+      "h3_max": "Different duration floor and resolution ceiling. The entitlement question is not what this call tested.",
+      "longer_durations": "8s/10s/15s add nothing: the provider minimum already proves the behaviour."
+    },
+    "current_weekly_remaining_percent": 51.0
+  },
+  "registry": {
+    "asset_id": "f74366c9b0aaf925",
+    "kind": "GENERATED_VIDEO",
+    "generated": true,
+    "evidence_capable": false,
+    "evidence_use": "VISUAL_SUPPORT",
+    "registered_only_after_receipt_existed": true
+  },
+  "human_review": {
+    "state": "PENDING_FOUNDER_REVIEW",
+    "production_ready": false,
+    "automated_observations": {
+      "note": "These are measurements, not judgements. They do not approve the shot.",
+      "first_frame_fidelity_observation": "Frame at t=0.0 reproduces the supplied reference: same night road in perspective, same pink and cyan rectangular signs, same centred white circular headlamp form.",
+      "motion_observation": "Motion is present and consistent with the requested slow forward push: the road widens toward camera across the clip, and mean per-frame difference is 0.0131 with a maximum of 0.0305, well above the 0.002 freeze threshold.",
+      "temporal_drift_observation": "Observed drift between the first and last frames: the circular headlamp reads as a filled disc rather than a ring at t=4.3, and the cyan sign has shifted position and scale. Geometry stays coherent with no melting or warping.",
+      "interpretation": "Whether that drift is acceptable for a support visual is a human judgement. It is recorded as an observation and deliberately not scored."
+    },
+    "scores_recorded": false
+  },
+  "verification_of_cache_reuse": {
+    "method": "A second run was served from the cache with the transport pointed at an unroutable host, so any network attempt would have failed loudly.",
+    "reused": true,
+    "provider_creates": 0,
+    "provider_polls": 0,
+    "billing_calls": 0,
+    "original_receipt_overwritten": false,
+    "original_quota_before_preserved": 58.0,
+    "verdict": "PASS"
+  },
+  "still_unverified": [
+    "Ref2VA reference_video and reference_audio paths against the live service; implemented and fixture-tested only",
+    "FL2VA and L2VA against the live service",
+    "MiniMax-H3-Max against the live service, including its 5 s floor and its 480P option",
+    "Whether the audio track the provider returns is suitable to keep rather than replace",
+    "Human judgement of reference fidelity, motion plausibility and publishability, which no automated gate may supply"
+  ]
+}

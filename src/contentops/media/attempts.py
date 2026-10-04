@@ -36,7 +36,7 @@ import os
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
 
 __all__ = [
     "ATTEMPT_SCHEMA_VERSION",
@@ -49,7 +49,7 @@ __all__ = [
     "sanitise_failure",
 ]
 
-ATTEMPT_SCHEMA_VERSION = "contentops.generation-attempt/v1"
+ATTEMPT_SCHEMA_VERSION = "contentops.generation-attempt/v2"
 
 STATUS_STARTED = "STARTED"
 STATUS_FAILED = "FAILED"
@@ -100,6 +100,14 @@ class GenerationAttemptRecord:
     failure_reason: Optional[str] = None
     asset_sha256: Optional[str] = None
     receipt_ref: Optional[str] = None
+    #: True once a provider task exists. After this point a failure is a
+    #: *recovery* problem, never a reason to create another task.
+    task_created: bool = False
+    #: Salted hash of the provider task id. The raw id is operational state and is
+    #: never persisted into a record that can leave the runtime directory.
+    task_ref_hash: Optional[str] = None
+    #: Sanitised provider state classification, e.g. ``succeeded``.
+    provider_state: Optional[str] = None
 
     def __post_init__(self) -> None:
         if self.status not in VALID_STATUSES:
@@ -139,7 +147,11 @@ class GenerationAttemptRecord:
             "failure_reason": self.failure_reason,
             "asset_sha256": self.asset_sha256,
             "receipt_ref": self.receipt_ref,
+            "task_created": self.task_created,
+            "task_ref_hash": self.task_ref_hash,
+            "provider_state": self.provider_state,
             "contains_secrets": False,
+            "contains_raw_task_id": False,
         }
 
     @classmethod
@@ -178,14 +190,35 @@ class GenerationAttemptRecord:
             failure_reason=payload.get("failure_reason"),
             asset_sha256=payload.get("asset_sha256"),
             receipt_ref=payload.get("receipt_ref"),
+            task_created=bool(payload.get("task_created", False)),
+            task_ref_hash=payload.get("task_ref_hash"),
+            provider_state=payload.get("provider_state"),
         )
+
+    def assert_no_raw_task_id(self, forbidden: Sequence[str]) -> None:
+        """Refuse to persist a record that carries a raw provider task id.
+
+        The raw id is operationally necessary for resuming a poll after a restart,
+        so it lives in private runtime state instead. This runs before every write
+        rather than relying on reviewers to notice a leak.
+        """
+        serialised = json.dumps(self.to_dict(), ensure_ascii=False)
+        for value in forbidden:
+            if value and value in serialised:
+                raise AttemptRecordError(
+                    "refusing to write an attempt record containing a raw "
+                    "provider task id; store a salted hash in task_ref_hash and "
+                    "keep the raw value in private runtime state"
+                )
 
     # -- persistence ------------------------------------------------------
 
     def path_in(self, work_dir: Path) -> Path:
         return attempts_dir(work_dir) / f"{self.attempt_id}.json"
 
-    def write(self, work_dir: Path) -> Path:
+    def write(self, work_dir: Path, *, forbid_values: Sequence[str] = ()) -> Path:
+        if forbid_values:
+            self.assert_no_raw_task_id(forbid_values)
         target = self.path_in(work_dir)
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(

@@ -15,7 +15,7 @@ ABC                          Modality
 ===========================  ==========================================
 :class:`SpeechProvider`      narration  (``contract.py``)
 :class:`ImageProvider`       stills    (``image_contract.py``)
-:class:`VideoProvider`       shots     (Issue #22, not yet declared)
+:class:`VideoProvider`       shots     (``video_contract.py``, Issue #22)
 ===========================  ==========================================
 
 Shared by all of them: :class:`~contentops.media.credentials.ResolvedCredential`,

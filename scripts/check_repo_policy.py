@@ -8,6 +8,7 @@ Checks:
   4. Archive files have status: superseded header
   5. New research files have canonical: false header
   6. New canonical docs appear in docs/INDEX.md
+  7. No private provider task state tracked
 
 Exit 0 = pass, exit 1 = fail.
 """
@@ -42,6 +43,35 @@ def _git_files():
     if r.returncode != 0:
         return []
     return [line.strip() for line in r.stdout.splitlines() if line.strip()]
+
+
+def check_no_tracked_task_state():
+    """No private provider task state may ever be tracked.
+
+    ``task-state/`` holds **raw** provider task ids. They exist for one legitimate
+    reason: an interrupted generation must be able to resume the *same* task
+    instead of paying for a second one. That makes them runtime state by
+    definition, and the correct handling is to ignore them rather than sanitise
+    them into a tracked artifact -- a sanitised copy would invite somebody to
+    treat it as the recovery handle when it is not one.
+
+    ``.gitignore`` already excludes them. This check is the second line, because a
+    force-add, a copied work directory or a loosened ignore rule would otherwise
+    leak a provider identifier into permanent history.
+    """
+    failures = []
+    offenders = [
+        path for path in _git_files()
+        if "task-state/" in path.replace("\\", "/")
+        or Path(path).name == "task-state"
+    ]
+    for path in offenders:
+        failures.append(
+            f"tracked private task state: {path} -- raw provider task ids must "
+            f"never be committed; untrack it and keep it under an ignored "
+            f"work directory"
+        )
+    return failures
 
 
 def check_root_files():
@@ -197,6 +227,7 @@ def main():
         ("research_metadata", check_research_metadata),
         ("no_c0_chars", check_no_c0_control_chars),
         ("index_tracking", check_index_tracking),
+        ("no_tracked_task_state", check_no_tracked_task_state),
     ]
     for name, fn in checks:
         failures = fn()
