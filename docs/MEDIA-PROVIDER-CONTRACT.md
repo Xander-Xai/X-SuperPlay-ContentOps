@@ -652,6 +652,7 @@ check the cache           a hit needs no billing and no network
 resume private state      an existing task is finished, never replaced
 require quota_budget      video is the most expensive call ContentOps makes
 require test_objective    a task must have a recorded reason to exist
+build the content array   last free step; an encoding failure costs nothing
 authorize("video")        subscription-only pre-flight
 write a STARTED attempt   durable evidence
 CREATE exactly one task   <- the only billable step
@@ -666,6 +667,60 @@ AssetRegistry.register()  only once the receipt exists
 point and **before** the billing gate, so a cache hit or a restart-resume is never
 forced to declare a budget it will not spend.
 
+The content array is built **before** the gate, not after. It is the last step
+that can fail for a non-billing reason — an unreadable reference, a media type
+that cannot be determined, an undocumented role — and consulting the billing
+source for a request that will never be sent is pointless. It stays *after* the
+cache and the resume point because those are strictly cheaper and send nothing.
+
+## Reference media is detected, never guessed
+
+A reference's declared media type comes from its **content**, never from its file
+name. M3 established why, having reproduced it twice against the real provider: a
+`.png` request came back as **JPEG bytes**. For an H3 reference the cost of
+guessing is higher, because the declared subtype is matched against the bytes, so
+`data:image/png` carrying JPEG is a rejection that reads like a generation
+problem rather than an encoding one.
+
+- **images** reuse M3's byte sniffer (`image_container.detect_image_container`)
+  rather than duplicating its magic-byte logic, so the two cannot drift
+- **video and audio** are determined by `ffprobe`, already the sanctioned probe
+
+A mismatch is **recorded, not normalised**: each receipt carries
+`reference_media[]` with the role, the detected container, the declared extension
+and whether they agreed.
+
+HEIC/HEIF are **not** accepted, even though the documented input set lists them.
+No reliable way exists in this environment to verify what a `.heic` file contains
+— the local ffmpeg exposes no HEIF demuxer and M3's sniffer deliberately supports
+only PNG/JPEG/WEBP — so declaring `image/heic` on the strength of a suffix would be
+exactly the behaviour this rule exists to remove. A HEIC reference is refused
+locally instead; converting to PNG, JPEG or WEBP resolves it.
+
+Detection happens **once**. The transport consumes the validated descriptor rather
+than re-deriving a type, so there is one media truth per reference.
+
+## Task id privacy
+
+The raw provider task id is operationally necessary for resuming a poll, so it
+exists — but only in private, gitignored runtime state, written **before** the
+first poll. The public receipt stores `task_created: true` plus a per-receipt
+salted `task_ref_hash`.
+
+That token is **not recomputable**. Its salt is not persisted, so it cannot be
+verified against the raw id afterwards either. It is therefore generated once,
+persisted, and reused verbatim. Minting a second token for the same task would
+make the attempt record and the receipt look like two different tasks and destroy
+the correlation the receipt exists to provide.
+
+`task-state/` is ignored repository-wide (`**/task-state/`) because the provider
+accepts any work directory, and `check_repo_policy` **fails CI** if such a file is
+ever tracked. Sanitising the directory into a tracked artifact was rejected: a
+sanitised copy invites being treated as the recovery handle when it is not one.
+
+`GenerationAttemptRecord.write()` also refuses to persist a record containing a
+raw task id, running before every write rather than relying on review.
+
 ## Attempt 2 is a second bill
 
 A retry is only permitted when **all** of these hold:
@@ -678,17 +733,6 @@ A retry is only permitted when **all** of these hold:
 A running task is not retryable — it is resumed. Poll failures, download failures
 and local disk failures are not retryable either, for the same reason. Operational
 recovery must not become another bill.
-
-## Task id privacy
-
-The raw provider task id is operationally necessary for resuming a poll, so it
-exists — but only in private, gitignored runtime state, written **before** the
-first poll. The public receipt stores `task_created: true` plus a per-receipt
-salted `task_ref_hash`; a plain hash of a numeric id would be reversible by
-enumeration, which is why the salt exists and is discarded.
-
-`GenerationAttemptRecord.write()` refuses to persist a record containing a raw
-task id. The refusal runs before every write rather than relying on review.
 
 ## Receipt convention
 

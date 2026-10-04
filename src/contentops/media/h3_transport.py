@@ -52,8 +52,9 @@ import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
 
+from contentops.media.reference_media import ValidatedReference
 from contentops.media.video_contract import VideoTaskState
 
 __all__ = [
@@ -62,7 +63,7 @@ __all__ = [
     "H3Transport",
     "HttpH3Transport",
     "POLL_TASK_PATH_TEMPLATE",
-    "REFERENCE_MIME_TYPES",
+    "RECOMMENDED_POLL_INTERVAL_SECONDS",
     "TaskPollResult",
     "TransportError",
     "UnknownTaskState",
@@ -76,7 +77,6 @@ POLL_TASK_PATH_TEMPLATE = "/v2/query/video_generation/{task_id}"
 
 #: Documented recommended poll interval.
 RECOMMENDED_POLL_INTERVAL_SECONDS = 10
-
 
 class TransportError(RuntimeError):
     """The transport could not complete a call.
@@ -151,95 +151,66 @@ class H3Transport:
         raise NotImplementedError
 
 
-#: Documented data-URI subtypes, keyed by the file extension the operator supplied.
-#: The API matches the declared subtype against the bytes, so declaring ``image/png``
-#: for a JPEG is a request that can be refused for a reason the caller never saw.
-REFERENCE_MIME_TYPES: Dict[str, str] = {
-    ".jpg": "image/jpeg",
-    ".jpeg": "image/jpeg",
-    ".png": "image/png",
-    ".webp": "image/webp",
-    ".heic": "image/heic",
-    ".heif": "image/heif",
-    ".mp4": "video/mp4",
-    ".mov": "video/quicktime",
-    ".wav": "audio/wav",
-    ".mp3": "audio/mpeg",
-}
-
-
-def _encode_reference(path: Path) -> Dict[str, Any]:
-    """Represent a local reference file for the API.
+def _encode_reference(reference: "ValidatedReference") -> Dict[str, Any]:
+    """Represent a validated reference for the API.
 
     The documented forms are a public URL, ``mm_file://{file_id}`` or a ``data:``
     URI. ContentOps holds local files, and the request body cap is 64 MB while
     Base64 inflates by roughly a third, so a data URI is only used when the caller
     has provided no URL and the encoded body still fits.
 
-    The subtype is derived from the file extension rather than assumed, because the
-    documented form is ``data:<type>/<format>`` and a mismatched format is a
-    rejection the operator would read as a generation problem rather than an
-    encoding problem.
+    The declared subtype is the one **detected from the file's content** during
+    validation, never one derived from the file name. Passing it through from the
+    validated descriptor also means the file is not probed a second time: there is
+    exactly one media truth per reference, established once.
     """
-    mime = REFERENCE_MIME_TYPES.get(path.suffix.lower())
-    if mime is None:
-        raise TransportError(
-            f"reference {path.name} has no documented media subtype, so no "
-            f"valid data URI can be built for it; supported: "
-            f"{', '.join(sorted(REFERENCE_MIME_TYPES))}"
-        )
     override = os.environ.get("CONTENTOPS_H3_REFERENCE_BASE_URL", "").strip()
+    path = Path(reference.path)
     if override:
         return {"url": f"{override.rstrip('/')}/{path.name}"}
     encoded = base64.b64encode(path.read_bytes()).decode("ascii")
-    return {"url": f"data:{mime};base64,{encoded}"}
+    return {"url": f"data:{reference.mime_type};base64,{encoded}"}
+
+
+#: Which ``content[]`` type carries each documented role.
+_ROLE_CONTENT_TYPE = {
+    "first_frame": "image_url",
+    "last_frame": "image_url",
+    "reference_image": "image_url",
+    "reference_video": "video_url",
+    "reference_audio": "audio_url",
+}
 
 
 def build_content_array(
     *,
     prompt: str,
-    first_frame: Optional[Path] = None,
-    last_frame: Optional[Path] = None,
-    reference_images: Optional[List[Path]] = None,
-    reference_videos: Optional[List[Path]] = None,
-    reference_audio: Optional[List[Path]] = None,
+    references: Sequence["ValidatedReference"] = (),
 ) -> List[Dict[str, Any]]:
-    """Map a validated request into the documented ``content[]`` structure.
+    """Map validated references into the documented ``content[]`` structure.
 
     This is the only place provider vocabulary appears. Business logic upstream
     deals in :class:`~contentops.media.video_contract.VideoRequest` and never sees
     ``content[]`` or ``role=``.
+
+    Args:
+        prompt: the compiled prompt; always the single non-empty ``text`` item.
+        references: descriptors produced by validation, each already carrying the
+            media type detected from its content. Order is preserved, because
+            order and role are both part of what gets generated.
     """
     content: List[Dict[str, Any]] = [{"type": "text", "text": prompt}]
-    if first_frame is not None:
+    for reference in references:
+        content_type = _ROLE_CONTENT_TYPE.get(reference.role)
+        if content_type is None:
+            raise TransportError(
+                f"reference role {reference.role!r} is not one of the documented "
+                f"roles: {', '.join(sorted(_ROLE_CONTENT_TYPE))}"
+            )
         content.append({
-            "type": "image_url",
-            "image_url": _encode_reference(first_frame),
-            "role": "first_frame",
-        })
-    if last_frame is not None:
-        content.append({
-            "type": "image_url",
-            "image_url": _encode_reference(last_frame),
-            "role": "last_frame",
-        })
-    for candidate in reference_images or []:
-        content.append({
-            "type": "image_url",
-            "image_url": _encode_reference(candidate),
-            "role": "reference_image",
-        })
-    for candidate in reference_videos or []:
-        content.append({
-            "type": "video_url",
-            "video_url": _encode_reference(candidate),
-            "role": "reference_video",
-        })
-    for candidate in reference_audio or []:
-        content.append({
-            "type": "audio_url",
-            "audio_url": _encode_reference(candidate),
-            "role": "reference_audio",
+            "type": content_type,
+            content_type: _encode_reference(reference),
+            "role": reference.role,
         })
     return content
 

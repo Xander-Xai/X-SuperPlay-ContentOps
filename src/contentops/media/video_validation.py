@@ -50,6 +50,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
+from contentops.media.reference_media import (
+    ReferenceMediaError,
+    ValidatedReference,
+    detect_reference_mime,
+)
 from contentops.media.video_contract import AUDIO_POLICIES, AUDIO_POLICY_REPLACE
 
 __all__ = [
@@ -143,12 +148,21 @@ MAX_REFERENCE_TOTAL_SECONDS = 15
 MIN_REFERENCE_FPS = 23.976
 MAX_REFERENCE_FPS = 60
 
-#: Accepted image containers for references.
+#: Accepted image containers for references. Detection is by content, not by
+#: suffix; this tuple only bounds what the operator is expected to supply and
+#: produces a clearer message than a container error would.
 REFERENCE_IMAGE_SUFFIXES: Tuple[str, ...] = (
-    ".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif",
+    ".jpg", ".jpeg", ".png", ".webp",
 )
 REFERENCE_VIDEO_SUFFIXES: Tuple[str, ...] = (".mp4", ".mov")
 REFERENCE_AUDIO_SUFFIXES: Tuple[str, ...] = (".wav", ".mp3")
+
+#: The documented input set also lists HEIC/HEIF. They are **not** accepted here:
+#: no reliable way exists in this environment to verify what a ``.heic`` file
+#: actually contains, and declaring a subtype from the suffix is precisely the
+#: behaviour this repository forbids. See ``reference_media`` for the full
+#: reasoning. Callers should convert to PNG, JPEG or WEBP.
+REFERENCE_IMAGE_SUFFIXES_UNSUPPORTED: Tuple[str, ...] = (".heic", ".heif")
 
 #: The only documented generation option, and only on ``MiniMax-H3-Max``. The API
 #: sets ``additionalProperties: false`` on ``extra``, so an invented key is a 400
@@ -182,6 +196,10 @@ class ValidatedH3Request:
     reference_images: List[Path] = field(default_factory=list)
     reference_videos: List[Path] = field(default_factory=list)
     reference_audio: List[Path] = field(default_factory=list)
+    #: Each input with the media type actually detected from its content, in the
+    #: order it will be sent. The transport consumes these rather than re-deriving
+    #: a type from the file name, so there is exactly one media truth per reference.
+    references: List[ValidatedReference] = field(default_factory=list)
     #: Generation-affecting options, validated against the documented closed set.
     extra: Dict[str, Any] = field(default_factory=dict)
     #: What will happen to the audio track the provider returns anyway. Validated
@@ -236,7 +254,39 @@ def _check_suffix(path: Path, allowed: Sequence[str], label: str) -> None:
         )
 
 
-def _check_image_file(path: Path, label: str) -> None:
+def _detect_reference(
+    path: Path, *, label: str, role_hint: str, role: str = ""
+) -> ValidatedReference:
+    """Detect the real media type of a reference, rewrapping refusals as rejections.
+
+    Every failure becomes :class:`RequestRejected` so that a caller sees one
+    exception type for "this request is invalid", raised in the free local phase
+    before any billing read.
+    """
+    try:
+        detected = detect_reference_mime(path, media_kind=role_hint)
+    except ReferenceMediaError as exc:
+        raise RequestRejected(f"{label} {path.name}: {exc}") from exc
+    if not role:
+        return detected
+    return ValidatedReference(
+        path=detected.path,
+        role=role,
+        media_kind=detected.media_kind,
+        mime_type=detected.mime_type,
+        detected_container=detected.detected_container,
+        declared_extension=detected.declared_extension,
+        extension_matches=detected.extension_matches,
+    )
+
+
+def _check_image_properties(path: Path, label: str) -> None:
+    """Verify an image input's existence, size, dimensions and aspect.
+
+    Separate from container detection on purpose. These are the documented
+    *numeric* limits; the container is a separate question answered from the
+    bytes. Keeping them apart means neither check can mask the other.
+    """
     _check_existing(path, label)
     _check_suffix(path, REFERENCE_IMAGE_SUFFIXES, label)
     size = path.stat().st_size
@@ -576,11 +626,28 @@ def validate_h3_request(
         )
 
     # -- reference files ---------------------------------------------------
+    # Detected once, here, and reused by the transport. One media truth per
+    # reference: the type that was verified is the type that is declared.
+    references: List[ValidatedReference] = []
+
     for candidate in images:
-        _check_image_file(candidate, "reference image")
-    for candidate in (first, last):
-        if candidate is not None:
-            _check_image_file(candidate, "frame image")
+        _check_image_properties(candidate, "reference image")
+        references.append(
+            _detect_reference(candidate, label="reference image", role_hint="image",
+                              role="reference_image")
+        )
+    if first is not None:
+        _check_image_properties(first, "frame image")
+        references.append(
+            _detect_reference(first, label="frame image", role_hint="image",
+                              role="first_frame")
+        )
+    if last is not None:
+        _check_image_properties(last, "frame image")
+        references.append(
+            _detect_reference(last, label="frame image", role_hint="image",
+                              role="last_frame")
+        )
 
     total_reference_seconds = 0.0
     for candidate in videos:
@@ -593,6 +660,10 @@ def validate_h3_request(
                 f"{MAX_VIDEO_BYTES} byte limit"
             )
         probed = _probe_media(candidate, "reference video")
+        references.append(
+            _detect_reference(candidate, label="reference video",
+                              role_hint="video", role="reference_video")
+        )
         stream = probed["video"] or {}
         width = int(stream.get("width") or 0)
         height = int(stream.get("height") or 0)
@@ -632,6 +703,10 @@ def validate_h3_request(
                 f"{MAX_AUDIO_BYTES} byte limit"
             )
         probed = _probe_media(candidate, "reference audio")
+        references.append(
+            _detect_reference(candidate, label="reference audio",
+                              role_hint="audio", role="reference_audio")
+        )
         seconds = probed["duration_s"]
         if seconds is None:
             raise RequestRejected(
@@ -670,6 +745,7 @@ def validate_h3_request(
         reference_images=images,
         reference_videos=videos,
         reference_audio=audio,
+        references=references,
         extra=checked_extra,
         audio_policy=audio_policy,
         ratio_was_coerced=coerced,

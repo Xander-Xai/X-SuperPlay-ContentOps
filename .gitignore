@@ -98,3 +98,16 @@ docs/ai-provider-selection.md
 
 # Temporary scan results
 .c0_*.txt
+
+# Private provider task state.
+#
+# Contains raw provider task ids, which exist only so an interrupted generation
+# can resume the SAME task instead of paying for a second one. They are runtime
+# state by definition and must never be committed. Matched repository-wide and
+# anchored on the directory name, because the provider accepts any work_dir: a
+# rule tied to the default output path would not cover a custom one.
+**/task-state/
+
+# Belt and braces: the files themselves, in case the directory is ever renamed.
+task-state/
+*.task-state.json

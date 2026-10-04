@@ -216,6 +216,11 @@ class VideoReceipt:
     prompt_skill_repo: str
     prompt_skill_commit: str
     reference_asset_sha256: List[str]
+    #: Each reference with the media type **detected from its content**, plus
+    #: whether its file name agreed. Recorded so a mismatch stays visible rather
+    #: than being normalised away: a caller who sent ``.png`` and got
+    #: ``image/jpeg`` can see exactly that.
+    reference_media: List[Dict[str, Any]]
     requested_duration_s: int
     actual_duration_s: float
     requested_resolution: str

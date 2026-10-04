@@ -16,8 +16,12 @@ The lifecycle
 ::
 
     validate locally        zero cost, catches every documented rule
+                            and detects each reference's real media type
     build the fingerprint
     check the cache          a hit needs no billing and no network
+    resume an interrupted attempt, never paying again
+    require budget + objective
+    build the content array  last free step; an encoding failure costs nothing
     authorize(modality="video")
     write a STARTED attempt record
     CREATE exactly one task  <- the only billable step
@@ -26,6 +30,14 @@ The lifecycle
     download THAT result, retrying the same URL on failure
     QC, canonical output, immutable receipt
     register the asset, only once the receipt exists
+
+The order is cheapest-first, and every step before the gate is free. The cache and
+the resume check precede the content array on purpose: both can satisfy a request
+without sending anything, so encoding a request first would spend effort on
+something already answered. The content array comes **before** the gate because it
+is the last step that can fail for a non-billing reason — an unreadable reference,
+an undetectable container, an undocumented role — and consulting the billing source
+for a request that will never be sent is pointless.
 
 Restart recovery
 ----------------
@@ -158,11 +170,23 @@ PRIVATE_STATE_FILENAME = "task.json"
 
 
 def hash_task_id(task_id: str, salt: Optional[str] = None) -> str:
-    """Salted hash of a provider task id, safe for a public receipt.
+    """Create a non-reversible opaque correlation token for a provider task id.
 
-    A plain hash of a numeric id would be trivially reversible by enumeration, so
-    a per-receipt random salt is used. The salt is discarded, which makes the hash
-    verifiable for equality but not reversible to the id.
+    The salt is per-token and is **not** persisted separately. That has a
+    consequence which is easy to get wrong, so it is stated plainly:
+
+    - the token is **not** verifiable against the raw id afterwards, because
+      verifying would need the same salt;
+    - the token therefore **cannot be recomputed** from the raw id later.
+
+    So the token itself is the only handle. It is generated once, persisted, and
+    reused verbatim. Anything that hashes the same task id twice produces two
+    unrelated tokens, which breaks the correlation the receipt exists to provide:
+    an attempt record and the receipt for one task would disagree, and a reader
+    could no longer tell that they describe the same provider task.
+
+    A plain hash of a numeric id would additionally be reversible by enumeration,
+    which is what the salt prevents.
     """
     if not task_id:
         raise ValueError("cannot hash an empty task id")
@@ -277,6 +301,12 @@ class VideoAttemptState:
     #: Which generation attempt paid for this task. Carried so a receipt written
     #: after a restart still says ``attempt=2`` when attempt 2 is what was billed.
     attempt: int = 1
+    #: The opaque correlation token for ``task_id``, created once at create time.
+    #: Persisted so a restart reuses the **same** value instead of minting a new
+    #: one. The token is not derivable from the task id (see :func:`hash_task_id`),
+    #: so regenerating it would silently break the link between the attempt record
+    #: and the receipt for one provider task.
+    task_ref_hash: str = ""
     #: Declared before the original create. Carried so the resumed receipt records
     #: the budget the task was actually authorised against rather than nothing.
     quota_budget: Optional[str] = None
@@ -300,6 +330,7 @@ class VideoAttemptState:
             "download_url": self.download_url,
             "state": self.state,
             "attempt": self.attempt,
+            "task_ref_hash": self.task_ref_hash,
             "quota_budget": self.quota_budget,
             "test_objective": self.test_objective,
             "quota_before": self.quota_before,
@@ -317,6 +348,7 @@ class VideoAttemptState:
             download_url=payload.get("download_url"),
             state=payload.get("state"),
             attempt=int(payload.get("attempt") or 1),
+            task_ref_hash=str(payload.get("task_ref_hash") or ""),
             quota_budget=payload.get("quota_budget"),
             test_objective=payload.get("test_objective"),
             quota_before=payload.get("quota_before"),
@@ -525,10 +557,14 @@ class MiniMaxMPlanVideoProvider(VideoProvider):
 
         # 6. Only now does billing matter.
         #
-        # The budget check sits immediately before the gate, not at the top of the
-        # function: a cache hit and a resume both cost nothing, so a run that
-        # spends no quota must not be forced to declare a budget for it.
+        # The content array is built BEFORE the gate, not after. It is the last
+        # step that can fail for reasons unrelated to billing — an unreadable
+        # reference, an encoding problem, an undocumented role — and discovering
+        # those after the gate would consult the billing source for a request that
+        # was never going to be sent. It stays after the cache and the resume point
+        # because those are strictly cheaper and spend nothing.
         self._require_budget(quota_budget, test_objective)
+        content = self._build_content(validated)
         preflight = self._guard.authorize(modality="video")
         quota_before = preflight.quota
 
@@ -547,14 +583,6 @@ class MiniMaxMPlanVideoProvider(VideoProvider):
 
         # 8. Exactly one billable call.
         transport = self._require_transport()
-        content = build_content_array(
-            prompt=validated.prompt,
-            first_frame=validated.first_frame,
-            last_frame=validated.last_frame,
-            reference_images=validated.reference_images,
-            reference_videos=validated.reference_videos,
-            reference_audio=validated.reference_audio,
-        )
         started = time.time()
         try:
             task_id = transport.create_task(
@@ -582,6 +610,10 @@ class MiniMaxMPlanVideoProvider(VideoProvider):
             task_id=task_id,
             attempt_id=attempt_record.attempt_id,
             attempt=attempt,
+            # The SAME token the attempt record carries. Minting a second one here
+            # would make the receipt and the attempt record describe what look like
+            # two different tasks.
+            task_ref_hash=task_hash,
             quota_budget=quota_budget,
             test_objective=test_objective,
             quota_before=_snapshot_to_dict(quota_before),
@@ -690,6 +722,28 @@ class MiniMaxMPlanVideoProvider(VideoProvider):
             raise
         except Exception as exc:  # noqa: BLE001
             raise RequestRejected(f"request could not be validated: {exc}") from exc
+
+    def _build_content(self, validated: ValidatedH3Request) -> List[Dict[str, Any]]:
+        """Build the ``content[]`` array from validated references.
+
+        Called before the billing gate so that any failure here — an unreadable
+        file, a media type that could not be determined, an undocumented role —
+        costs no billing read and creates no task.
+
+        Reuses the media types detected during validation rather than re-deriving
+        them from file names, so the declared type is always the verified one.
+        """
+        try:
+            return build_content_array(
+                prompt=validated.prompt, references=validated.references
+            )
+        except TransportError as exc:
+            # An encoding failure is a local problem, so it is reported as a
+            # request rejection rather than as a transport error. The caller can
+            # then tell "this request is wrong" from "the provider is unreachable".
+            raise RequestRejected(
+                f"the request could not be encoded for the provider: {exc}"
+            ) from exc
 
     def _require_transport(self) -> H3Transport:
         transport = self._transport
@@ -872,6 +926,25 @@ class MiniMaxMPlanVideoProvider(VideoProvider):
         if transport is None:
             return None
 
+        # Compatibility policy for state written before ``task_ref_hash`` was
+        # persisted: refuse, and require operator recovery. The alternative --
+        # minting a fresh token -- would fabricate a task identity that never
+        # existed in any attempt record, and the resulting receipt would carry a
+        # token correlating with nothing. A loud refusal costs one operator
+        # decision; a silent new token costs the provenance the receipt exists to
+        # provide, and nothing would reveal the substitution later.
+        if not state.task_ref_hash:
+            raise RuntimeError(
+                "private task state for this attempt predates task_ref_hash "
+                "persistence and carries no correlation token. The task itself is "
+                "still resumable, but minting a new token now would fabricate a "
+                "public task identity that matches no attempt record. Operator "
+                "recovery required: re-derive the token from the attempt record for "
+                f"this fingerprint and write it into {self._private_state_path(fingerprint).name}, "
+                "or discard the private state and accept that attempt 2 is "
+                "required. No new task was created."
+            )
+
         poll = self._poll_to_terminal(transport, state)
         if not poll.is_success or not poll.download_url:
             # Terminal failure of an existing task: clear the private state and
@@ -905,7 +978,7 @@ class MiniMaxMPlanVideoProvider(VideoProvider):
             canonical_path=canonical_path,
             sidecar_path=sidecar_path,
             reference_hashes=reference_hashes,
-            task_hash=hash_task_id(state.task_id),
+            task_hash=state.task_ref_hash,
             poll=poll,
             attempt=state.attempt,
             retry_reason=None,
@@ -1109,6 +1182,9 @@ class MiniMaxMPlanVideoProvider(VideoProvider):
             prompt_skill_repo=PROMPT_SKILL_REPO,
             prompt_skill_commit=PROMPT_SKILL_COMMIT,
             reference_asset_sha256=list(reference_hashes),
+        reference_media=[
+            reference.as_dict() for reference in validated.references
+        ],
             requested_duration_s=validated.duration_s,
             actual_duration_s=asset.duration_s,
             requested_resolution=validated.resolution,
@@ -1228,6 +1304,7 @@ def _receipt_from_payload(
         prompt_skill_repo=str(payload.get("prompt_skill_repo") or ""),
         prompt_skill_commit=str(payload.get("prompt_skill_commit") or ""),
         reference_asset_sha256=list(payload.get("reference_asset_sha256") or []),
+        reference_media=list(payload.get("reference_media") or []),
         requested_duration_s=int(payload.get("requested_duration_s") or 0),
         actual_duration_s=float(payload.get("actual_duration_s") or 0.0),
         requested_resolution=str(payload.get("requested_resolution") or ""),
@@ -1310,6 +1387,7 @@ def receipt_to_dict(receipt: VideoReceipt) -> Dict[str, Any]:
         "prompt_skill_repo": receipt.prompt_skill_repo,
         "prompt_skill_commit": receipt.prompt_skill_commit,
         "reference_asset_sha256": list(receipt.reference_asset_sha256),
+        "reference_media": [dict(item) for item in receipt.reference_media],
         "requested_duration_s": receipt.requested_duration_s,
         "actual_duration_s": receipt.actual_duration_s,
         "requested_resolution": receipt.requested_resolution,

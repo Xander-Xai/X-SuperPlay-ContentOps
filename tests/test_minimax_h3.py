@@ -33,6 +33,8 @@ import sys
 import tempfile
 from pathlib import Path
 
+from PIL import Image
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 sys.path.insert(0, str(ROOT / "src"))
@@ -569,6 +571,45 @@ def _make_distinct_frame(path: Path, tint: int):
     path.parent.mkdir(parents=True, exist_ok=True)
     image.save(path, format="PNG")
     return path
+
+
+def _write_jpeg(path: Path) -> Path:
+    """A real JPEG, saved under whatever name the caller chooses."""
+    _make_frame(path)
+    from PIL import Image
+
+    with Image.open(path) as image:
+        image.convert("RGB").save(path, format="JPEG", quality=90)
+    return path
+
+
+def _write_png(path: Path) -> Path:
+    return _make_frame(path)
+
+
+def _write_webp(path: Path) -> Path:
+    from PIL import Image
+
+    _make_frame(path)
+    with Image.open(path) as image:
+        image.convert("RGB").save(path, format="WEBP", quality=88)
+    return path
+
+
+def _content_for(reference: Path, *, role: str, media_kind: str = "image"):
+    """Build a ``content[]`` array from a reference through validation.
+
+    Mirrors what the provider does, so a test sees exactly what would be sent.
+    """
+    from contentops.media.h3_transport import build_content_array
+    from contentops.media.reference_media import resolve_reference
+
+    resolved = resolve_reference(reference, role=role, media_kind=media_kind)
+    return build_content_array(prompt="p", references=[resolved])
+
+
+def _count_billing_calls(guard) -> int:
+    return guard.call_count
 
 
 # --- 3. credential identity --------------------------------------------------
@@ -1723,37 +1764,38 @@ def test_private_task_state_records_the_attempt_and_budget():
 
 def test_reference_data_uris_declare_their_real_media_subtype():
     """A declared format the bytes do not match is a rejection nobody can explain."""
-    from contentops.media.h3_transport import REFERENCE_MIME_TYPES, build_content_array
+    from contentops.media.reference_media import IMAGE_MIME_BY_CONTAINER
 
-    assert REFERENCE_MIME_TYPES[".jpg"] == "image/jpeg"
-    assert REFERENCE_MIME_TYPES[".png"] == "image/png"
-    assert REFERENCE_MIME_TYPES[".webp"] == "image/webp"
-    assert REFERENCE_MIME_TYPES[".mp4"] == "video/mp4"
-    assert REFERENCE_MIME_TYPES[".mp3"] == "audio/mpeg"
-    assert REFERENCE_MIME_TYPES[".wav"] == "audio/wav"
-
+    assert IMAGE_MIME_BY_CONTAINER == {
+        "PNG": "image/png",
+        "JPEG": "image/jpeg",
+        "WEBP": "image/webp",
+    }
     with tempfile.TemporaryDirectory() as work:
         jpeg = Path(work) / "frame.jpg"
-        jpeg.write_bytes(b"\xff\xd8\xff" + b"\x00" * 64)
-        content = build_content_array(prompt="p", first_frame=jpeg)
+        _write_jpeg(jpeg)
+        content = _content_for(jpeg, role="first_frame")
         url = content[1]["image_url"]["url"]
         assert url.startswith("data:image/jpeg;base64,"), url[:40]
     print("[ok] 80. reference data URIs declare the subtype the file actually has")
 
 
 def test_an_unknown_reference_format_is_refused_rather_than_guessed():
-    """There is no valid data URI for an undocumented extension."""
-    from contentops.media.h3_transport import TransportError, build_content_array
+    """There is no valid data URI for a file whose container cannot be detected."""
+    from contentops.media.reference_media import (
+        ReferenceMediaError,
+        detect_reference_mime,
+    )
 
     with tempfile.TemporaryDirectory() as work:
         odd = Path(work) / "frame.tiff"
         odd.write_bytes(b"II*\x00" + b"\x00" * 32)
         try:
-            build_content_array(prompt="p", first_frame=odd)
-        except TransportError as exc:
-            assert "media subtype" in str(exc), str(exc)
+            detect_reference_mime(odd, media_kind="image")
+        except ReferenceMediaError as exc:
+            assert "PNG, JPEG or WEBP" in str(exc), str(exc)
         else:
-            raise AssertionError("an undocumented reference format was encoded anyway")
+            raise AssertionError("an undetectable container was assigned a media type")
     print("[ok] 81. an undocumented reference format is refused, not guessed")
 
 
@@ -2297,6 +2339,395 @@ def _tiny_clip(target: Path) -> Path:
     return target
 
 
+# --- 15. the extension is not the media type (case A-F) ----------------------
+
+def test_a_png_named_file_holding_jpeg_bytes_is_sent_as_jpeg():
+    """Case A. M3 saw this for real: a .png request came back as JPEG bytes.
+
+    Declaring ``image/png`` for JPEG is a request the provider can refuse, and the
+    refusal reads like a generation problem rather than an encoding one.
+    """
+    with tempfile.TemporaryDirectory() as work:
+        frame = _write_jpeg(Path(work) / "frame.png")
+        with Image.open(frame) as image:
+            assert image.format == "JPEG", image.format
+
+        content = _content_for(frame, role="first_frame")
+        url = content[1]["image_url"]["url"]
+        assert url.startswith("data:image/jpeg;base64,"), (
+            f"declared {url[:30]} for a JPEG named .png"
+        )
+        assert "data:image/png" not in url
+    print("[ok] 97. a .png holding JPEG bytes is declared image/jpeg, never image/png")
+
+
+def test_a_jpg_named_file_holding_png_bytes_is_sent_as_png():
+    """Case B. The reverse mismatch, so neither direction can be trusted."""
+    with tempfile.TemporaryDirectory() as work:
+        frame = _write_png(Path(work) / "frame.jpg")
+        with Image.open(frame) as image:
+            assert image.format == "PNG", image.format
+
+        content = _content_for(frame, role="reference_image")
+        url = content[1]["image_url"]["url"]
+        assert url.startswith("data:image/png;base64,"), url[:30]
+        assert "data:image/jpeg" not in url
+    print("[ok] 98. a .jpg holding PNG bytes is declared image/png, never image/jpeg")
+
+
+def test_a_corrupt_image_with_a_valid_looking_extension_is_refused_locally():
+    """Case C. A good extension proves nothing about the bytes.
+
+    Two different refusals are acceptable here — a valid PNG *header* with no
+    decodable image behind it, and bytes matching no signature at all. What
+    matters is that neither reaches the billing gate or creates a task.
+    """
+    with tempfile.TemporaryDirectory() as work:
+        guard = _guard()
+        before = guard.call_count
+        for name, payload in (
+            ("frame.png", b"\x89PNG\r\n\x1a\n" + b"\x00" * 8),   # header, no image
+            ("frame.jpg", b"\xff\xd8\xff" + b"\x11" * 40),        # not a decodable JPEG
+        ):
+            broken = Path(work) / name
+            broken.write_bytes(payload)
+            provider, fake = _provider(Path(work), guard=guard)
+            try:
+                _generate(provider, _request(mode="I2VA", ratio="adaptive",
+                                             first_frame=str(broken)))
+            except RequestRejected as exc:
+                assert name in str(exc), f"{name}: {exc}"
+            else:
+                raise AssertionError(f"{name} was accepted as a reference")
+            assert fake.create_count == 0, f"{name} created a task"
+            assert guard.call_count == before, (
+                f"{name} reached the billing gate ({guard.call_count - before} reads)"
+            )
+    print("[ok] 99. a corrupt image with a valid extension is refused before billing")
+
+
+def test_an_unsupported_actual_container_is_refused_before_billing():
+    """Case D, and the same guarantee for an extension we never accept."""
+    with tempfile.TemporaryDirectory() as work:
+        tiff = Path(work) / "frame.tiff"
+        tiff.write_bytes(b"II*\x00" + b"\x00" * 64)
+        provider, fake = _provider(Path(work))
+        guard = _guard()
+        before = guard.call_count
+        try:
+            _generate(provider, _request(mode="I2VA", ratio="adaptive",
+                                         first_frame=str(tiff)))
+        except RequestRejected as exc:
+            assert ".tiff" in str(exc) or "unrecognised" in str(exc), str(exc)
+        else:
+            raise AssertionError("an unsupported container was accepted")
+        assert fake.create_count == 0
+        assert guard.call_count == before, "an invalid container reached the billing gate"
+    print("[ok] 100. an unsupported actual container is refused before billing")
+
+
+def test_heic_is_not_accepted_because_the_suffix_proves_nothing():
+    """The documented set lists HEIC; claiming it from a name would be a guess.
+
+    No reliable way exists here to verify what a ``.heic`` file contains: the local
+    ffmpeg exposes no HEIF demuxer and M3's sniffer supports only PNG/JPEG/WEBP. So
+    it is refused locally rather than declared as ``image/heic``.
+    """
+    from contentops.media.video_validation import (
+        REFERENCE_IMAGE_SUFFIXES,
+        REFERENCE_IMAGE_SUFFIXES_UNSUPPORTED,
+    )
+
+    assert ".heic" in REFERENCE_IMAGE_SUFFIXES_UNSUPPORTED
+    assert ".heif" in REFERENCE_IMAGE_SUFFIXES_UNSUPPORTED
+    assert ".heic" not in REFERENCE_IMAGE_SUFFIXES
+
+    with tempfile.TemporaryDirectory() as work:
+        # A plausible ISO-BMFF ftyp header, i.e. real HEIC-looking bytes.
+        heic = Path(work) / "frame.heic"
+        heic.write_bytes(b"\x00\x00\x00\x18ftypheic" + b"\x00" * 512)
+        provider, fake = _provider(Path(work))
+        guard = _guard()
+        before = guard.call_count
+        try:
+            _generate(provider, _request(mode="I2VA", ratio="adaptive",
+                                         first_frame=str(heic)))
+        except RequestRejected as exc:
+            assert ".heic" in str(exc) or "accepted" in str(exc), str(exc)
+        else:
+            raise AssertionError("HEIC was accepted on the strength of its suffix")
+        assert fake.create_count == 0
+        assert guard.call_count == before
+    print("[ok] 101. HEIC is refused rather than claimed from its extension")
+
+
+def test_correctly_named_images_stay_valid_and_declare_the_right_subtype():
+    """Case F. The fix must not break the ordinary path."""
+    cases = (
+        ("frame.jpg", _write_jpeg, "image/jpeg"),
+        ("frame.png", _write_png, "image/png"),
+        ("frame.webp", _write_webp, "image/webp"),
+    )
+    with tempfile.TemporaryDirectory() as work:
+        for name, writer, expected in cases:
+            reference = writer(Path(work) / name)
+            content = _content_for(reference, role="reference_image")
+            url = content[1]["image_url"]["url"]
+            assert url.startswith(f"data:{expected};base64,"), (
+                f"{name}: expected {expected}, got {url[:30]}"
+            )
+    print("[ok] 102. correctly named PNG, JPEG and WEBP references remain valid")
+
+
+def test_a_mime_failure_costs_no_billing_read_and_creates_no_task():
+    """Case E, asserted for every invalid reference rather than only one."""
+    with tempfile.TemporaryDirectory() as work:
+        work = Path(work)
+        broken = work / "broken.png"
+        broken.write_bytes(b"not an image at all" * 8)
+
+        guard = _guard()
+        before = guard.call_count
+        provider, fake = _provider(work, guard=guard)
+        try:
+            _generate(provider, _request(mode="I2VA", ratio="adaptive",
+                                         first_frame=str(broken)))
+        except RequestRejected:
+            pass
+        else:
+            raise AssertionError("the invalid reference was accepted")
+
+        assert guard.call_count == before, (
+            f"billing was consulted {guard.call_count - before} time(s) for a "
+            f"request that could never be sent"
+        )
+        assert provider.create_count == 0
+        assert fake.create_count == 0
+        assert not find_attempt_records(work), (
+            "an attempt record was written for a request that never created a task"
+        )
+    print("[ok] 103. a MIME failure costs zero billing reads and creates zero tasks")
+
+
+def test_reference_media_never_consults_the_file_extension():
+    """Structural guarantee: no media type may be *derived* from a file name.
+
+    The extension is still read, but only to record whether the declared name
+    agreed with the detected container. The assertion targets that distinction, so
+    a future change that starts looking a type up *by* suffix is caught.
+    """
+    transport = (ROOT / "src" / "contentops" / "media" / "h3_transport.py").read_text(
+        encoding="utf-8"
+    )
+    assert ".suffix" not in transport, (
+        "h3_transport.py reads a file extension; the media type must arrive on the "
+        "validated descriptor"
+    )
+
+    source = (ROOT / "src" / "contentops" / "media" / "reference_media.py").read_text(
+        encoding="utf-8"
+    )
+    # No mapping from extension to media type may survive anywhere in the module.
+    for pattern in ("MIME_BY_EXTENSION", "MIME_BY_SUFFIX", ".jpg\":", ".png\":",
+                    "path.suffix.lower() in", "REFERENCE_MIME_TYPES"):
+        assert pattern not in source, (
+            f"reference_media.py still keys a media type off an extension ({pattern})"
+        )
+    # The one legitimate use: recording the mismatch.
+    assert 'suffix = path.suffix.lower()' in source
+    assert 'declared_extension=suffix' in source
+    assert "extension_matches=suffix in expected" in source
+    print("[ok] 104. no reference media type is derived from a file extension")
+
+
+def test_the_receipt_records_the_detected_reference_media_and_any_mismatch():
+    """A name/content disagreement must be visible on the receipt, not normalised."""
+    if not HAVE_MEDIA:
+        _skip(109, "receipt records detected reference media", "ffmpeg")
+        return
+    with tempfile.TemporaryDirectory() as work:
+        work = Path(work)
+        # Deliberately misnamed: JPEG bytes behind a .png name.
+        frame = _write_jpeg(work / "frame.png")
+        payload = receipt_to_dict(
+            _generate(
+                _provider(work)[0],
+                _request(mode="I2VA", ratio="adaptive", first_frame=str(frame)),
+            ).receipt
+        )
+        recorded = payload["reference_media"]
+        assert len(recorded) == 1, recorded
+        entry = recorded[0]
+        assert entry["role"] == "first_frame", entry
+        assert entry["media_kind"] == "image", entry
+        assert entry["mime_type"] == "image/jpeg", entry
+        assert entry["detected_container"] == "JPEG", entry
+        assert entry["declared_extension"] == ".png", entry
+        assert entry["extension_matches"] is False, (
+            "a JPEG behind a .png name must be recorded as a mismatch"
+        )
+    print("[ok] 109. the receipt records detected reference media and any mismatch")
+
+
+# --- 16. the task correlation token must survive a restart -------------------
+
+def test_a_restarted_receipt_reuses_the_same_task_correlation_token():
+    """One task must carry one token, across a restart.
+
+    The token is not derivable from the task id, because its salt is not persisted.
+    Minting a second one on resume would make the attempt record and the receipt
+    look like they describe two different provider tasks.
+    """
+    if not HAVE_MEDIA:
+        _skip(105, "task token survives a restart", "ffmpeg")
+        return
+    with tempfile.TemporaryDirectory() as td:
+        work = Path(td)
+        crashing = FakeH3Transport(download_error_plan={1: 99})
+        provider_a, crashing_fake = _provider(work, fake=crashing)
+        try:
+            _generate(provider_a, _request())
+        except Exception:
+            pass
+
+        records = find_attempt_records(work)
+        assert records, "the interrupted attempt left no durable record"
+        record_hash = records[0].task_ref_hash
+        assert record_hash, "the attempt record carried no task_ref_hash"
+
+        resumed = FakeH3Transport()
+        provider_b, _ = _provider(work, fake=resumed)
+        outcome = _generate(provider_b, _request())
+        payload = receipt_to_dict(outcome.receipt)
+
+        assert payload["task_ref_hash"] == record_hash, (
+            f"the resumed receipt minted a new token: {payload['task_ref_hash']} "
+            f"!= {record_hash}"
+        )
+        assert resumed.create_count == 0, "the restart created a second task"
+        assert crashed_task_id_is_resumed(crashing_fake, resumed)
+    print("[ok] 105. a restarted receipt reuses the same task correlation token")
+
+
+def test_the_raw_task_id_stays_out_of_every_public_artifact_across_a_restart():
+    """The recovery handle is private; the correlation token is public."""
+    if not HAVE_MEDIA:
+        _skip(106, "raw task id stays private across a restart", "ffmpeg")
+        return
+    from contentops.media.attempts import read_reuse_events
+
+    with tempfile.TemporaryDirectory() as td:
+        work = Path(td)
+        raw_id = "424010985738629"
+        crashing = FakeH3Transport(task_id=raw_id, download_error_plan={1: 99})
+        try:
+            _generate(_provider(work, fake=crashing)[0], _request())
+        except Exception:
+            pass
+
+        provider_b, _ = _provider(
+            work, fake=FakeH3Transport(task_id=raw_id)
+        )
+        _generate(provider_b, _request())
+        # A second call so a reuse event is written too.
+        _generate(_provider(work, fake=FakeH3Transport(task_id=raw_id))[0], _request())
+
+        public = []
+        for path in work.rglob("*"):
+            if path.is_file() and "task-state" not in path.parts:
+                if path.suffix == ".mp4":
+                    continue
+                public.append(path)
+        assert public, "the run produced no public artifacts to inspect"
+        for path in public:
+            text = path.read_text(encoding="utf-8", errors="ignore")
+            assert raw_id not in text, f"raw task id leaked into {path.name}"
+
+        # And it must still be recoverable from private state, or nothing works.
+        private_files = list((work / "task-state").glob("*.json"))
+        print(f"[ok] 106. the raw task id is absent from {len(public)} public "
+              f"artifact(s); private state files were {len(private_files)}")
+
+
+def test_private_state_without_a_token_is_refused_rather_than_replaced():
+    """Compatibility policy for state written before the token was persisted.
+
+    Minting a token at that point would fabricate a public task identity matching
+    no attempt record, so the run stops and asks for operator recovery instead.
+    """
+    if not HAVE_MEDIA:
+        _skip(107, "tokenless private state is refused", "ffmpeg")
+        return
+    with tempfile.TemporaryDirectory() as td:
+        work = Path(td)
+        crashing = FakeH3Transport(download_error_plan={1: 99})
+        try:
+            _generate(_provider(work, fake=crashing)[0], _request())
+        except Exception:
+            pass
+
+        state_files = list((work / "task-state").glob("*.json"))
+        assert state_files, "no private state survived to migrate"
+        payload = json.loads(state_files[0].read_text(encoding="utf-8"))
+        payload.pop("task_ref_hash", None)
+        state_files[0].write_text(json.dumps(payload), encoding="utf-8")
+
+        fake = FakeH3Transport()
+        provider, _ = _provider(work, fake=fake)
+        try:
+            _generate(provider, _request())
+        except RuntimeError as exc:
+            assert "predates task_ref_hash" in str(exc), str(exc)
+        else:
+            raise AssertionError(
+                "tokenless private state was accepted and a task identity invented"
+            )
+        assert fake.create_count == 0, "the refusal path created a task"
+    print("[ok] 107. private state with no correlation token is refused, not replaced")
+
+
+def test_private_task_state_is_never_tracked_and_policy_rejects_it():
+    """Raw provider task ids are runtime state; the repository must refuse to track them."""
+    from process_utils import hidden_run
+
+    probe = Path(".verify-tmp") / "policy-probe"
+    probe.mkdir(parents=True, exist_ok=True)
+    state_file = probe / "task-state" / "abc123.json"
+    state_file.parent.mkdir(parents=True, exist_ok=True)
+    state_file.write_text('{"task_id": "424010985738629"}', encoding="utf-8")
+
+    result = hidden_run(
+        ["git", "check-ignore", "-q", str(state_file).replace("\\", "/")],
+        timeout=30,
+    )
+    assert result.returncode == 0, (
+        "git does not ignore a file under a task-state directory"
+    )
+
+    # And the policy gate must flag it if it were ever tracked.
+    from check_repo_policy import check_no_tracked_task_state
+
+    offenders = check_no_tracked_task_state()
+    assert offenders == [], f"the repo currently tracks task state: {offenders}"
+
+    # Prove the detector actually detects, rather than passing vacuously.
+    import check_repo_policy
+
+    original = check_repo_policy._git_files
+    check_repo_policy._git_files = lambda: [
+        "src/contentops/media/x.py",
+        ".verify-tmp/m4/run/task-state/fp.json",
+        "task-state",
+    ]
+    try:
+        found = check_repo_policy.check_no_tracked_task_state()
+    finally:
+        check_repo_policy._git_files = original
+    assert len(found) == 2, found
+    assert "raw provider task ids" in found[0]
+    print("[ok] 108. task-state is gitignored and repo policy rejects it if tracked")
+
+
 TESTS = [
     test_prompt_skill_provenance_is_recorded,
     test_base_modes_use_the_three_core_fields_in_official_order,
@@ -2393,6 +2824,19 @@ TESTS = [
     test_reuse_keeps_the_immutable_receipt_on_disk_untouched,
     test_an_unknown_audio_policy_is_rejected_before_any_task_is_created,
     test_qc_fails_closed_when_the_full_decode_cannot_be_run,
+    test_a_png_named_file_holding_jpeg_bytes_is_sent_as_jpeg,
+    test_a_jpg_named_file_holding_png_bytes_is_sent_as_png,
+    test_a_corrupt_image_with_a_valid_looking_extension_is_refused_locally,
+    test_an_unsupported_actual_container_is_refused_before_billing,
+    test_heic_is_not_accepted_because_the_suffix_proves_nothing,
+    test_correctly_named_images_stay_valid_and_declare_the_right_subtype,
+    test_a_mime_failure_costs_no_billing_read_and_creates_no_task,
+    test_reference_media_never_consults_the_file_extension,
+    test_the_receipt_records_the_detected_reference_media_and_any_mismatch,
+    test_a_restarted_receipt_reuses_the_same_task_correlation_token,
+    test_the_raw_task_id_stays_out_of_every_public_artifact_across_a_restart,
+    test_private_state_without_a_token_is_refused_rather_than_replaced,
+    test_private_task_state_is_never_tracked_and_policy_rejects_it,
 ]
 
 
