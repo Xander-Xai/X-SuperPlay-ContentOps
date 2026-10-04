@@ -30,6 +30,7 @@ import re
 import shutil
 import sys
 import unicodedata
+from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -124,17 +125,43 @@ def _tokens(text: str) -> List[str]:
 
 
 def token_overlap(expected: str, actual: str) -> float:
-    """Fraction of expected units present in the transcript, order-insensitive.
+    """Multiset recall of expected units in the transcript.
 
-    A duplicated transcript does not inflate this: extra units are ignored, and
-    duplication is caught separately by :func:`backcheck_speech`.
+    Set-based overlap was wrong: it hid multiplicity loss. Expected "version
+    version" against an actual "version" scored 1.0, which would have reported
+    a clean bill of health for audio that dropped half the content. Counting
+    multiplicity fixes that.
+
+    Order is deliberately not checked. ASR reorders and re-punctuates freely, so
+    an order check would produce noise, not signal.
     """
-    want = _tokens(expected)
-    if not want:
+    want = Counter(_tokens(expected))
+    have = Counter(_tokens(actual))
+    total = sum(want.values())
+    if total == 0:
         return 1.0
-    have = set(_tokens(actual))
-    hits = sum(1 for token in want if token in have)
-    return round(hits / len(want), 4)
+    matched = sum(min(count, have[token]) for token, count in want.items())
+    return round(matched / total, 4)
+
+
+def _multiplicity(expected: str, actual: str) -> Dict[str, List[str]]:
+    """Split the difference into what is missing and what is in excess.
+
+    A word or character that legitimately repeats is not an error: expected
+    "哈哈" against actual "哈哈" has no missing and no excess, whereas expected
+    "哈" against actual "哈哈" has one excess.
+    """
+    want = Counter(_tokens(expected))
+    have = Counter(_tokens(actual))
+    missing: List[str] = []
+    excess: List[str] = []
+    for token in sorted(set(want) | set(have)):
+        delta = want[token] - have[token]
+        if delta > 0:
+            missing.extend([token] * delta)
+        elif delta < 0:
+            excess.extend([token] * (-delta))
+    return {"missing": missing, "excess": excess}
 
 
 @dataclass
@@ -144,7 +171,7 @@ class AsrResult:
     coverage: Optional[float] = None
     issues: List[str] = field(default_factory=list)
     missing: List[str] = field(default_factory=list)
-    duplicated: List[str] = field(default_factory=list)
+    duplicated: List[str] = field(default_factory=list)  # units in excess
     detail: Optional[str] = None
 
     @property
@@ -160,7 +187,7 @@ class AsrResult:
             "coverage": self.coverage,
             "issues": self.issues,
             "missing": self.missing,
-            "duplicated": self.duplicated,
+            "excess": self.duplicated,
             "detail": self.detail,
         }
 
@@ -197,28 +224,22 @@ def backcheck_speech(
     if not transcript:
         return AsrResult(status="SKIPPED", detail="empty transcript")
 
-    expected_tokens = _tokens(expected_spoken_text)
-    actual_tokens = _tokens(transcript)
     coverage = token_overlap(expected_spoken_text, transcript)
-
-    missing = [t for t in expected_tokens if t not in set(actual_tokens)]
-
-    seen: Dict[str, int] = {}
-    duplicated: List[str] = []
-    for token in actual_tokens:
-        seen[token] = seen.get(token, 0) + 1
-        if seen[token] == 2 and token not in duplicated:
-            duplicated.append(token)
+    diff = _multiplicity(expected_spoken_text, transcript)
+    missing = diff["missing"]
+    excess = diff["excess"]
 
     issues: List[str] = []
     if coverage < coverage_floor:
         issues.append(
-            f"token coverage {coverage} below floor {coverage_floor}"
+            f"multiset coverage {coverage} below floor {coverage_floor}"
         )
     if missing:
-        issues.append(f"{len(missing)} expected token(s) absent from the transcript")
-    if duplicated:
-        issues.append(f"duplicated token(s): {', '.join(duplicated[:5])}")
+        issues.append(f"{len(missing)} expected unit(s) absent from the transcript")
+    if excess:
+        issues.append(
+            f"{len(excess)} unexpected repeated unit(s): {', '.join(excess[:5])}"
+        )
 
     return AsrResult(
         status="DETECTED_PROBLEM" if issues else "NO_PROBLEM_DETECTED",
@@ -226,5 +247,5 @@ def backcheck_speech(
         coverage=coverage,
         issues=issues,
         missing=missing[:20],
-        duplicated=duplicated[:20],
+        duplicated=excess[:20],
     )

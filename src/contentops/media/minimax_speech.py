@@ -157,6 +157,36 @@ def verify_output(path: Path, *, not_before: float, min_bytes: int = 1024) -> No
             f"failed generation rather than usable narration"
         )
 
+
+SIDECAR_SUFFIX = ".receipt.json"
+
+
+def sidecar_for(asset_path: Path) -> Path:
+    """Path of the sanitised receipt that sits next to a generated asset."""
+    return asset_path.with_name(asset_path.name + SIDECAR_SUFFIX)
+
+
+def write_sidecar(path: Path, payload: Dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
+
+
+def load_sidecar(path: Path) -> Optional[Dict[str, Any]]:
+    """Load a sidecar, returning ``None`` when it is absent or unusable.
+
+    A corrupt or unreadable sidecar is treated as no cache at all rather than as
+    a licence to invent provenance.
+    """
+    if not path.is_file():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError, UnicodeDecodeError):
+        return None
+    return payload if isinstance(payload, dict) else None
+
 DEFAULT_MODEL = "speech-2.8-hd"
 DEFAULT_VOICES = {
     "zh": "Chinese (Mandarin)_Reliable_Executive",
@@ -193,7 +223,7 @@ class MiniMaxMPlanProvider(MediaProvider):
         *,
         guard: BillingGuard,
         work_dir: Path,
-        cli: Optional[str] = None,
+        cli: Any = None,
         model: str = DEFAULT_MODEL,
     ) -> None:
         self._guard = guard
@@ -205,6 +235,7 @@ class MiniMaxMPlanProvider(MediaProvider):
             "en": default_en_lexicon(),
         }
         self._receipts: List[SpeechReceipt] = []
+        self._last_attempt_fingerprint: Optional[str] = None
 
     # -- provider contract -------------------------------------------------
 
@@ -235,7 +266,8 @@ class MiniMaxMPlanProvider(MediaProvider):
                 "reason": "official MiniMax CLI not on PATH",
                 "install": "npm install -g mmx-cli",
             }
-        result = hidden_run([cli, "--version"], timeout=60)
+        prefix = list(cli) if isinstance(cli, (list, tuple)) else [cli]
+        result = hidden_run(prefix + ["--version"], timeout=60)
         guard = self._guard.evaluate()
         return {
             "reachable": result.returncode == 0,
@@ -283,12 +315,22 @@ class MiniMaxMPlanProvider(MediaProvider):
         retry_reason: Optional[str] = None,
         attempt: int = 1,
     ) -> SpeechOutcome:
-        """Produce narration, or raise.
+        """Produce narration, reuse a valid cached asset, or raise.
+
+        Order matters and is part of the contract:
+
+        1. build the spoken text and the fingerprint
+        2. resolve and verify the cache
+        3. **only if a provider call is genuinely needed**, run the billing gate
+
+        The cache is checked before the billing gate on purpose. A valid cached
+        asset needs no provider request, so it must not consume quota, must not
+        need network access, and must work offline.
 
         Raises:
             BillingBlocked: the pre-flight could not prove included-plan billing.
             CapabilityNotSupported: no official CLI on this host.
-            RuntimeError: both permitted attempts failed.
+            RuntimeError: a retry without a changed input, or a failed generation.
         """
         if not self._cli:
             from contentops.media.contract import CapabilityNotSupported
@@ -301,9 +343,6 @@ class MiniMaxMPlanProvider(MediaProvider):
         spoken_text = request.spoken_text or lexicon.spoken_text(request.display_text)
         voice = request.voice or DEFAULT_VOICES.get(request.language, DEFAULT_VOICES["en"])
         model = request.model or self._model
-
-        # Fail-closed gate immediately before generation, not once per process.
-        quota_before = self._guard.require_safe()
 
         # The fingerprint must describe what the voice actually says, which is
         # the flattened single-line form the CLI will receive.
@@ -323,27 +362,48 @@ class MiniMaxMPlanProvider(MediaProvider):
             normalisation_true_peak_db=NORMALISATION_TRUE_PEAK_DB,
         )
 
+        # A retry must change a generation input, not merely carry a note.
+        self._validate_attempt(attempt, retry_reason, fingerprint)
+
         self._work_dir.mkdir(parents=True, exist_ok=True)
         raw_path = (self._work_dir / f"narration-{fingerprint[:16]}-raw.wav").resolve()
         normalized_path = (self._work_dir / f"narration-{fingerprint[:16]}.wav").resolve()
+        sidecar_path = sidecar_for(normalized_path)
 
-        cached = self._reuse(normalized_path, raw_path, fingerprint)
-        if cached is not None and not request.force:
-            return cached
+        if not request.force:
+            cached = self._reuse(
+                normalized_path=normalized_path,
+                raw_path=raw_path,
+                sidecar_path=sidecar_path,
+                fingerprint=fingerprint,
+            )
+            if cached is not None:
+                return cached
+
+        # Only now, with a provider call actually pending, does billing matter.
+        quota_before = self._guard.require_safe(modality="speech")
 
         import time
 
         last_error = ""
         for current in range(attempt, MAX_ATTEMPTS + 1):
+            if current > attempt:
+                # Only reachable if the caller drove multiple attempts in one
+                # call; each still has to have changed something real.
+                self._validate_attempt(current, retry_reason, fingerprint)
             # Remove any previous file so a fresh mtime is meaningful and a
             # stale asset can never be mistaken for this run's output.
-            for stale in (raw_path, normalized_path):
+            for stale in (raw_path, normalized_path, sidecar_path):
                 if stale.exists():
                     stale.unlink()
 
+            self._last_attempt_fingerprint = fingerprint
             started = time.time()
-            command: List[str] = [
-                self._cli, "speech", "synthesize",
+            prefix = (
+                list(self._cli) if isinstance(self._cli, (list, tuple)) else [self._cli]
+            )
+            command: List[str] = prefix + [
+                "speech", "synthesize",
                 "--model", model,
                 "--text", cli_text,
                 "--voice", voice,
@@ -381,6 +441,7 @@ class MiniMaxMPlanProvider(MediaProvider):
                     quota_before=quota_before,
                     raw_path=raw_path,
                     normalized_path=normalized_path,
+                    sidecar_path=sidecar_path,
                     attempt=current,
                     retry_reason=retry_reason,
                 )
@@ -401,50 +462,133 @@ class MiniMaxMPlanProvider(MediaProvider):
 
     # -- internals ---------------------------------------------------------
 
+    def _validate_attempt(
+        self, attempt: int, retry_reason: Optional[str], fingerprint: str
+    ) -> None:
+        """Refuse a retry that is only a note, before any provider call.
+
+        Attempt 2 requires **both** a named failure reason and a generation
+        fingerprint that differs from attempt 1. The reason text is not itself a
+        changed input: writing a longer note must not unlock a paid retry of the
+        identical request.
+        """
+        if attempt <= 1:
+            return
+        if attempt > MAX_ATTEMPTS:
+            raise RuntimeError(
+                f"attempt {attempt} exceeds the maximum of {MAX_ATTEMPTS}"
+            )
+        if not (retry_reason or "").strip():
+            raise RuntimeError(
+                f"attempt {attempt} requires a named failure reason "
+                f"(retry_reason); refusing to retry blindly"
+            )
+        previous = self._last_attempt_fingerprint
+        if previous is not None and fingerprint == previous:
+            raise RuntimeError(
+                "attempt 2 must change a generation input (spoken text, "
+                "lexicon, voice, model or speed). The fingerprint is unchanged "
+                f"({fingerprint[:16]}), so this would be an identical retry."
+            )
+
     def _reuse(
-        self, normalized_path: Path, raw_path: Path, fingerprint: str
+        self,
+        *,
+        normalized_path: Path,
+        raw_path: Path,
+        sidecar_path: Path,
+        fingerprint: str,
     ) -> Optional[SpeechOutcome]:
-        """Reuse a valid approved asset for an unchanged fingerprint."""
+        """Reuse a cached asset, but only with truthful provenance.
+
+        The previous implementation returned an asset with a blank voice, blank
+        text hashes and the English lexicon version regardless of what was
+        actually requested. That is fabricated provenance, so a sidecar receipt
+        written next to the asset is now the only source of reuse metadata.
+
+        The cache is rejected unless **all** of these hold:
+
+        - the normalised asset exists and passes technical QC
+        - the sidecar exists and parses
+        - the sidecar fingerprint matches the current fingerprint
+        - the normalised file hash still matches the sidecar
+        - the raw file, if present, still matches its recorded hash
+
+        Anything else is a cache miss. A missing, corrupt or mismatched sidecar
+        must never be papered over with invented values.
+        """
         if not normalized_path.is_file():
             return None
+        payload = load_sidecar(sidecar_path)
+        if payload is None:
+            return None
+        if payload.get("fingerprint") != fingerprint:
+            return None
+        expected_norm = payload.get("normalized_sha256")
+        if not expected_norm:
+            return None
+        try:
+            actual_norm = sha256_file(normalized_path)
+        except OSError:
+            return None
+        if actual_norm != expected_norm:
+            return None
+        recorded_raw = payload.get("raw_sha256") or ""
+        if raw_path.is_file() and recorded_raw:
+            try:
+                if sha256_file(raw_path) != recorded_raw:
+                    return None
+            except OSError:
+                return None
+
+        from contentops.media.audio import measure_audio
+
         qc = technical_qc(normalized_path, expected_sample_rate_hz=32000)
         if not qc.get("approved"):
             return None
-        from contentops.media.audio import measure_audio
-
         measured = measure_audio(normalized_path)
+
+        stored_qc = payload.get("technical_qc") or {}
+        stored_sem = payload.get("semantic_qc") or {
+            "status": "SKIPPED",
+            "reason": "carried from the generating run",
+        }
+
         asset = SpeechAsset(
             raw_path=str(raw_path) if raw_path.is_file() else str(normalized_path),
             normalized_path=str(normalized_path),
-            model=self._model,
-            voice="",
-            display_text_sha256="",
-            spoken_text_sha256="",
-            raw_sha256=sha256_file(raw_path) if raw_path.is_file() else "",
-            normalized_sha256=sha256_file(normalized_path),
+            model=payload.get("model") or self._model,
+            voice=payload.get("voice") or "",
+            display_text_sha256=payload.get("display_text_sha256") or "",
+            spoken_text_sha256=payload.get("spoken_text_sha256") or "",
+            raw_sha256=recorded_raw,
+            normalized_sha256=actual_norm,
             duration_s=measured.duration_s,
             sample_rate_hz=measured.sample_rate_hz,
             channels=measured.channels,
             codec=measured.codec,
-            peak_before_db=None,
+            peak_before_db=(payload.get("peak_before_db")),
             peak_after_db=measured.peak_db,
-            loudness_before=None,
+            loudness_before=payload.get("loudness_before"),
             loudness_after=measured.integrated_lufs,
-            technical_qc=qc,
-            semantic_qc={"status": "SKIPPED", "reason": "reused asset"},
+            technical_qc=stored_qc or qc,
+            semantic_qc=stored_sem,
             approved=True,
         )
         receipt = self._receipt(
             asset=asset,
             fingerprint=fingerprint,
             spoken_text="",
-            voice="",
-            model=self._model,
-            lexicon_version=self.lexicon_for("en").version,
+            voice=asset.voice,
+            model=asset.model,
+            lexicon_version=payload.get("lexicon_version") or "unknown",
             quota_before=None,
             quota_after=None,
-            verdict="SAFE_INCLUDED_PLAN",
-            reasons=["reused cached asset; no provider call was made"],
+            verdict=payload.get("billing_guard_verdict") or "SAFE_INCLUDED_PLAN",
+            reasons=[
+                "reused from a verified cache: no provider request, no quota "
+                "call and no billing call were made"
+            ],
             attempt=0,
             retry_reason=None,
             reused=True,
@@ -464,6 +608,7 @@ class MiniMaxMPlanProvider(MediaProvider):
         quota_before: QuotaSnapshot,
         raw_path: Path,
         normalized_path: Path,
+        sidecar_path: Path,
         attempt: int,
         retry_reason: Optional[str],
     ) -> SpeechOutcome:
@@ -558,7 +703,10 @@ class MiniMaxMPlanProvider(MediaProvider):
             "degraded": False,
             "policy": "explicit only; a silent swap to edge-tts is forbidden",
         }
-        return SpeechReceipt(
+        # Build the receipt, then record and persist it. Returning directly from
+        # the constructor call here is what made receipt() raise "no receipt
+        # available" after a successful synthesis.
+        receipt = SpeechReceipt(
             provider=PROVIDER_NAME,
             product=PRODUCT,
             plan=PLAN,
@@ -588,12 +736,36 @@ class MiniMaxMPlanProvider(MediaProvider):
             human_review=human_review,
         )
         self._receipts.append(receipt)
+
+        # Persist sanitised provenance next to the asset. Without this a later
+        # cache hit would have to invent the voice, text hashes and lexicon
+        # version, which is exactly the fabricated-provenance bug this replaces.
+        asset_path = Path(asset.normalized_path or "")
+        if asset_path.name:
+            payload = receipt_to_dict(receipt)
+            payload.update({
+                "fingerprint": fingerprint,
+                "normalized_sha256": asset.normalized_sha256,
+                "raw_sha256": asset.raw_sha256,
+                "display_text_sha256": asset.display_text_sha256,
+                "spoken_text_sha256": asset.spoken_text_sha256,
+                "lexicon_version": lexicon_version,
+                "voice": voice,
+                "model": model,
+                "peak_before_db": asset.peak_before_db,
+                "loudness_before": asset.loudness_before,
+                "provider_call": not reused,
+            })
+            write_sidecar(sidecar_for(asset_path), payload)
         return receipt
 
     def _transport_version(self) -> str:
         if not self._cli:
             return "UNKNOWN"
-        result = hidden_run([self._cli, "--version"], timeout=60)
+        prefix = (
+            list(self._cli) if isinstance(self._cli, (list, tuple)) else [self._cli]
+        )
+        result = hidden_run(prefix + ["--version"], timeout=60)
         return (result.stdout or "").strip() or "UNKNOWN"
 
 

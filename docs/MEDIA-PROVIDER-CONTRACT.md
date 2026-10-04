@@ -49,6 +49,38 @@ the legacy host and the `speech-01` model. Full evidence in
 
 Easel is not patched, not forked and not modified.
 
+### Billing gate contract
+
+`BillingGuard` is the single implementation of the subscription-only pre-flight, and
+it is **modality-aware**. Verified M Plan behaviour is not uniform:
+
+| Modality | 5-hour window | Weekly window |
+|---|---|---|
+| speech | required | required |
+| image | required | required |
+| video | not applicable | required |
+
+So every provider call must pass its modality:
+
+```python
+self._guard.require_safe(modality="speech")   # M2
+self._guard.require_safe(modality="image")    # M3, Issue #20
+self._guard.require_safe(modality="video")    # M4, Issue #22
+```
+
+An **unknown modality is blocked**, never defaulted. Both defaults are wrong for
+somebody: applying the speech rule to video wastes quota, and applying the video
+rule to speech under-protects it.
+
+Two further rules:
+
+- Every generation is preceded by a guard call. A **cache hit is not a
+  generation**, so the cache is resolved *before* the guard: reuse must need no
+  quota, no network and no balance read.
+- `cash_balance`, `credit_balance`, `voucher_balance` and `owed_amount` must each
+  be present, numeric and exactly zero. A missing field is a schema change and
+  blocks; an unreadable balance is never treated as zero.
+
 ### Capability status
 
 | Modality | Status | Owner |

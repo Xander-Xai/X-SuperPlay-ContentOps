@@ -27,21 +27,41 @@ UNDOCUMENTED_FIRST_PARTY_IMPLEMENTATION_DEPENDENCY
 - migration required: when MiniMax publishes an official credit-balance
   equivalent, move to it and delete :data:`BALANCE_PATH`
 
+Modality awareness is billing-critical
+--------------------------------------
+Verified M Plan behaviour is not uniform across modalities:
+
+| Modality | 5-hour window | Weekly window |
+|---|---|---|
+| speech | required | required |
+| image | required | required |
+| video | **not applicable** | required |
+
+Video counts only against the weekly window, so authorising a video request on a
+weekly-only check would be correct for video and **wrong** for speech and image.
+Conversely, checking only the weekly window for speech would let a request
+through during a window the provider will actually reject.
+
+Therefore :meth:`BillingGuard.evaluate` requires an explicit modality. An
+unrecognised modality is **blocked**, never silently defaulted, because the safe
+default direction is not obvious: defaulting video rules to the speech policy
+wastes quota, and defaulting speech rules to the video policy under-protects.
+
 Fail-closed rules
 -----------------
 The guard returns :data:`SAFE_INCLUDED_PLAN` only when **all** of these hold:
 
 - the credential class is exactly ``SUBSCRIPTION``
-- pay-as-you-go cash balance reads as exactly zero
-- Credit Pack balance reads as exactly zero
-- voucher balance reads as exactly zero
-- outstanding owed reads as exactly zero
-- included plan usage is readable and the weekly window has remaining
+- ``cash_balance``, ``credit_balance``, ``voucher_balance`` and ``owed_amount``
+  are each **present**, **numeric** and **exactly zero**
+- included plan usage is readable
+- every window required by the modality is greater than zero
 
 Anything else — a non-zero value, an unreadable response, a missing field, a
-changed schema — yields :data:`BLOCKED_BILLING_SOURCE_UNCERTAIN`. An unreadable
-balance is never treated as zero, because "I could not check" and "it is zero"
-are different claims and only one of them is safe to bill against.
+changed schema, an unknown modality — yields
+:data:`BLOCKED_BILLING_SOURCE_UNCERTAIN`. An unreadable balance is never treated
+as zero, because "I could not check" and "it is zero" are different claims and
+only one of them is safe to bill against.
 """
 
 from __future__ import annotations
@@ -51,7 +71,7 @@ import os
 import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from .contract import QuotaSnapshot
 
@@ -59,10 +79,12 @@ __all__ = [
     "BALANCE_DEPENDENCY_CLASS",
     "BALANCE_PATH",
     "BillingGuard",
-    "BillingVerdict",
     "GuardResult",
+    "MODALITY_WINDOWS",
     "SAFE_INCLUDED_PLAN",
+    "SUPPORTED_MODALITIES",
     "BLOCKED_BILLING_SOURCE_UNCERTAIN",
+    "ZERO_REQUIRED_BALANCE_FIELDS",
 ]
 
 BALANCE_DEPENDENCY_CLASS = "UNDOCUMENTED_FIRST_PARTY_IMPLEMENTATION_DEPENDENCY"
@@ -72,9 +94,31 @@ REMAINS_PATH = "/v1/token_plan/remains"
 SAFE_INCLUDED_PLAN = "SAFE_INCLUDED_PLAN"
 BLOCKED_BILLING_SOURCE_UNCERTAIN = "BLOCKED_BILLING_SOURCE_UNCERTAIN"
 
-#: Fields that must be present and exactly zero. A missing field is a block, not
-#: a pass, because the schema may have changed.
-ZERO_REQUIRED_BALANCE_FIELDS = ("cash_balance", "credit_balance", "voucher_balance")
+#: Every one of these must be present, numeric and exactly zero. ``owed_amount``
+#: is included deliberately: an outstanding amount means money is already owed,
+#: which is not a state in which ContentOps should start new billable work.
+ZERO_REQUIRED_BALANCE_FIELDS: Tuple[str, ...] = (
+    "cash_balance",
+    "credit_balance",
+    "voucher_balance",
+    "owed_amount",
+)
+
+SUPPORTED_MODALITIES: Tuple[str, ...] = ("speech", "image", "video")
+
+#: Which usage windows each modality actually consumes.
+MODALITY_WINDOWS: Dict[str, Tuple[str, ...]] = {
+    # text, image and audio are subject to the 5-hour window and the weekly one
+    "speech": ("interval", "weekly"),
+    "image": ("interval", "weekly"),
+    # video models are subject only to the weekly window
+    "video": ("weekly",),
+}
+
+WINDOW_FIELD = {
+    "interval": "interval_remaining_percent",
+    "weekly": "weekly_remaining_percent",
+}
 
 CREDENTIAL_SUBSCRIPTION = "SUBSCRIPTION"
 CREDITION_PAYG = "PAYG"
@@ -82,15 +126,12 @@ CREDENTIAL_ABSENT = "ABSENT"
 CREDENTIAL_UNKNOWN = "UNKNOWN"
 
 
-class BillingVerdict(str):
-    """String constants only; kept as a class for readable type hints."""
-
-
 @dataclass
 class GuardResult:
     verdict: str
     reasons: List[str] = field(default_factory=list)
     credential_class: str = CREDENTIAL_UNKNOWN
+    modality: str = ""
     balances: Dict[str, Any] = field(default_factory=dict)
     quota: Optional[QuotaSnapshot] = None
     dependency_class: str = BALANCE_DEPENDENCY_CLASS
@@ -156,6 +197,7 @@ class BillingGuard:
         self._base_url = (base_url or "").rstrip("/")
         self._credential = credential or ""
         self._get_json = http_get_json or self._http_get_json
+        self.call_count = 0
 
     @classmethod
     def from_env(cls, env: Optional[Dict[str, str]] = None) -> "BillingGuard":
@@ -173,6 +215,7 @@ class BillingGuard:
         )
 
     def _http_get_json(self, url: str, credential: str) -> Dict[str, Any]:
+        self.call_count += 1
         request = urllib.request.Request(
             url, headers={"Authorization": "Bearer " + credential}
         )
@@ -192,10 +235,21 @@ class BillingGuard:
             return None
         return summarise_quota(payload if isinstance(payload, dict) else {})
 
-    def evaluate(self) -> GuardResult:
-        """Return the verdict. Never raises for a billing reason."""
+    def evaluate(self, modality: str = "speech") -> GuardResult:
+        """Return the verdict for one modality. Never raises for a billing reason."""
         reasons: List[str] = []
         credential_class = classify_credential(self._credential)
+
+        # An unknown modality is blocked rather than defaulted. The two defaults
+        # are both wrong for somebody: the speech rule wastes video quota, the
+        # video rule under-protects speech and image.
+        windows: Optional[Tuple[str, ...]] = MODALITY_WINDOWS.get(modality)
+        if windows is None:
+            reasons.append(
+                f"unknown modality {modality!r}; supported: "
+                f"{', '.join(SUPPORTED_MODALITIES)}. Refusing to guess a policy."
+            )
+            windows = ()
 
         if credential_class != CREDENTIAL_SUBSCRIPTION:
             reasons.append(
@@ -223,38 +277,52 @@ class BillingGuard:
                     reasons.append(
                         f"balance field {name} is {value}, so paid funds could be consumed"
                     )
-            owed = _num(balances.get("owed_amount"))
-            if owed:
-                reasons.append(f"outstanding owed amount is {owed}")
 
         quota = self.read_quota()
         if quota is None:
             reasons.append("included plan usage could not be read")
-        elif quota.weekly_remaining_percent is None:
-            reasons.append("weekly remaining plan usage is unknown")
-        elif quota.weekly_remaining_percent <= 0:
-            reasons.append(
-                f"weekly plan window exhausted ({quota.weekly_remaining_percent})"
-            )
+        else:
+            values = {
+                "interval": quota.interval_remaining_percent,
+                "weekly": quota.weekly_remaining_percent,
+            }
+            for window in windows:
+                field_name = WINDOW_FIELD[window]
+                value = values[window]
+                if value is None:
+                    reasons.append(
+                        f"{modality} requires the {field_name} window and it is unknown"
+                    )
+                elif value <= 0:
+                    reasons.append(
+                        f"{modality} requires the {field_name} window and it is "
+                        f"exhausted ({value})"
+                    )
 
         verdict = SAFE_INCLUDED_PLAN if not reasons else BLOCKED_BILLING_SOURCE_UNCERTAIN
         return GuardResult(
             verdict=verdict,
             reasons=reasons,
             credential_class=credential_class,
+            modality=modality,
             balances={k: v for k, v in balances.items() if k != "error"},
             quota=quota,
         )
 
-    def require_safe(self) -> QuotaSnapshot:
+    def require_safe(self, modality: str = "speech") -> QuotaSnapshot:
         """Evaluate and raise :class:`~contentops.media.contract.BillingBlocked`.
 
-        Use immediately before every provider call. Returning the quota snapshot
-        saves a second round trip for the receipt's "before" value.
+        Call this immediately before every provider generation, passing the
+        modality being authorised. It is deliberately **not** called on the cache
+        path: a valid cached asset needs no provider request and therefore no
+        billing call.
+
+        Returns the quota snapshot so the receipt's "before" value does not need
+        a second round trip.
         """
         from .contract import BillingBlocked
 
-        result = self.evaluate()
+        result = self.evaluate(modality=modality)
         if not result.safe:
             raise BillingBlocked(result.verdict, result.reasons)
         assert result.quota is not None

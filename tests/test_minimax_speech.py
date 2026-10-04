@@ -31,7 +31,9 @@ from contentops.media.audio import (  # noqa: E402
     normalise_speech,
     technical_qc,
 )
+from contentops.media.asr_backcheck import _multiplicity  # noqa: E402
 from contentops.media.billing_guard import (  # noqa: E402
+    ZERO_REQUIRED_BALANCE_FIELDS,
     BALANCE_DEPENDENCY_CLASS,
     BLOCKED_BILLING_SOURCE_UNCERTAIN,
     SAFE_INCLUDED_PLAN,
@@ -51,10 +53,14 @@ from contentops.media.minimax_speech import (  # noqa: E402
     EASEL_COMPATIBILITY,
     MAX_ATTEMPTS,
     flatten_for_cli,
+    load_sidecar,
     receipt_to_dict,
     resolve_cli,
+    sidecar_for,
     verify_output,
+    write_sidecar,
 )
+from contentops.media.contract import SpeechRequest  # noqa: E402
 from contentops.media.test_duration_policy import (  # noqa: E402
     H3_DURATION_SPEC,
     H3_MAX_DURATION_SPEC,
@@ -187,7 +193,8 @@ def test_guard_blocks_on_exhausted_or_unreadable_plan_quota():
     }
     result = guard_with(quota=exhausted).evaluate()
     assert result.verdict == BLOCKED_BILLING_SOURCE_UNCERTAIN
-    assert any("weekly plan window exhausted" in r for r in result.reasons)
+    assert any("weekly_remaining_percent" in r and "exhausted" in r
+               for r in result.reasons), result.reasons
 
     result = guard_with(quota=TimeoutError("down")).evaluate()
     assert result.verdict == BLOCKED_BILLING_SOURCE_UNCERTAIN
@@ -774,6 +781,361 @@ def test_loudness_is_measured_not_predicted():
     print("[ok] 47. integrated loudness is metered by ebur128, not predicted by loudnorm")
 
 
+
+# --- 12. BLOCKER 1: modality-aware billing ---------------------------------
+
+def _quota(interval, weekly):
+    row = {"model_name": "general"}
+    if interval is not None:
+        row["current_interval_remaining_percent"] = interval
+    if weekly is not None:
+        row["current_weekly_remaining_percent"] = weekly
+    return {"model_remains": [row]}
+
+
+def test_modality_windows_follow_verified_mplan_behaviour():
+    """speech/image need both windows; video is weekly-only. Proved by behaviour."""
+    guard = guard_with(quota=_quota(98, 58))
+    assert guard.evaluate(modality="speech").verdict == SAFE_INCLUDED_PLAN
+
+    exhausted_5h = guard_with(quota=_quota(0, 58))
+    assert exhausted_5h.evaluate(modality="speech").verdict == BLOCKED_BILLING_SOURCE_UNCERTAIN
+    assert any("interval_remaining_percent" in r for r in exhausted_5h.evaluate("speech").reasons)
+
+    unknown_5h = guard_with(quota=_quota(None, 58))
+    assert unknown_5h.evaluate(modality="speech").verdict == BLOCKED_BILLING_SOURCE_UNCERTAIN
+
+    assert exhausted_5h.evaluate(modality="image").verdict == BLOCKED_BILLING_SOURCE_UNCERTAIN
+
+    # video does not consume the 5-hour window, so an empty one must not block it
+    assert exhausted_5h.evaluate(modality="video").verdict == SAFE_INCLUDED_PLAN
+
+    no_weekly = guard_with(quota=_quota(98, 0))
+    assert no_weekly.evaluate(modality="video").verdict == BLOCKED_BILLING_SOURCE_UNCERTAIN
+    print("[ok] 48. modality windows enforced: speech/image need 5h+weekly, video weekly only")
+
+
+def test_unknown_modality_is_blocked_not_defaulted():
+    for modality in ("audio", "", "SPEECH", "tts", None):
+        result = guard_with(quota=_quota(98, 58)).evaluate(modality=modality)
+        assert result.verdict == BLOCKED_BILLING_SOURCE_UNCERTAIN, modality
+        assert any("unknown modality" in r for r in result.reasons), (modality, result.reasons)
+    print("[ok] 49. an unknown modality blocks instead of silently defaulting")
+
+
+def test_weekly_only_never_implies_all_modalities_safe():
+    """The bug this fixes: weekly>0 used to be treated as safe for everything."""
+    guard = guard_with(quota=_quota(0, 58))
+    assert guard.evaluate("video").safe is True
+    assert guard.evaluate("speech").safe is False
+    assert guard.evaluate("image").safe is False
+    print("[ok] 50. weekly-only quota never implies speech or image are safe")
+
+
+# --- 13. BLOCKER 2: owed_amount fails closed --------------------------------
+
+def test_owed_amount_is_required_and_must_be_zero():
+    assert "owed_amount" in ZERO_REQUIRED_BALANCE_FIELDS
+
+    missing = {k: v for k, v in SAFE_BALANCES.items() if k != "owed_amount"}
+    r = guard_with(balances=missing).evaluate()
+    assert r.verdict == BLOCKED_BILLING_SOURCE_UNCERTAIN
+    assert any("owed_amount" in x and "missing" in x for x in r.reasons)
+
+    for bad in (None, "", "not-a-number", "abc"):
+        r = guard_with(balances=dict(SAFE_BALANCES, owed_amount=bad)).evaluate()
+        assert r.verdict == BLOCKED_BILLING_SOURCE_UNCERTAIN, bad
+
+    r = guard_with(balances=dict(SAFE_BALANCES, owed_amount="0.01")).evaluate()
+    assert r.verdict == BLOCKED_BILLING_SOURCE_UNCERTAIN
+    assert any("owed_amount" in x for x in r.reasons)
+
+    r = guard_with(balances=dict(SAFE_BALANCES, owed_amount="0.00")).evaluate()
+    assert r.verdict == SAFE_INCLUDED_PLAN, r.reasons
+    print("[ok] 51. owed_amount must be present, numeric and exactly zero")
+
+
+def test_every_required_balance_field_fails_closed_on_schema_change():
+    for field in ZERO_REQUIRED_BALANCE_FIELDS:
+        partial = {k: v for k, v in SAFE_BALANCES.items() if k != field}
+        r = guard_with(balances=partial).evaluate()
+        assert r.verdict == BLOCKED_BILLING_SOURCE_UNCERTAIN, field
+    print("[ok] 52. a schema change on any required balance field blocks")
+
+
+# --- 14. BLOCKER 3: receipt state and cache provenance ----------------------
+
+FIXTURE_CLI = [sys.executable, str(ROOT / "tests" / "fixtures" / "fake_mmx_cli.py")]
+
+
+def _fixture_provider(work_dir, guard=None, cli=None):
+    from contentops.media.minimax_speech import MiniMaxMPlanProvider
+
+    return MiniMaxMPlanProvider(
+        guard=guard if guard is not None else guard_with(),
+        work_dir=work_dir,
+        cli=cli if cli is not None else FIXTURE_CLI,
+    )
+
+
+def test_receipt_before_any_synthesis_raises():
+    if not HAVE_FFMPEG:
+        print("[skip] 53. ffmpeg not installed")
+        return
+    with tempfile.TemporaryDirectory() as td:
+        provider = _fixture_provider(Path(td))
+        try:
+            provider.receipt()
+        except RuntimeError as exc:
+            assert "no receipt available" in str(exc)
+            print("[ok] 53. receipt() before any synthesis raises instead of faking one")
+            return
+        raise AssertionError("receipt() returned placeholder provenance")
+
+
+def test_receipt_is_persisted_and_retrievable_after_synthesis():
+    if not HAVE_FFMPEG:
+        print("[skip] 54. ffmpeg not installed")
+        return
+    with tempfile.TemporaryDirectory() as td:
+        provider = _fixture_provider(Path(td))
+        outcome = provider.synthesize_speech(
+            SpeechRequest(display_text="你好，这是测试。", language="zh")
+        )
+        latest = provider.receipt()
+        assert latest.fingerprint == outcome.receipt.fingerprint
+        assert latest.model == outcome.receipt.model
+        assert latest.voice, "a generated receipt must record the real voice"
+        assert latest.display_text_sha256, "a generated receipt must record the text hash"
+        assert latest.spoken_text_sha256
+        assert latest.lexicon_version, "must record the lexicon version actually used"
+        assert latest.raw_sha256 and latest.normalized_sha256
+
+        by_asset = provider.receipt(outcome.asset)
+        assert by_asset.fingerprint == outcome.receipt.fingerprint
+        assert by_asset.raw_sha256 == outcome.receipt.raw_sha256
+
+        sidecar = sidecar_for(Path(outcome.asset.normalized_path))
+        assert sidecar.is_file(), "a sidecar receipt must be written next to the asset"
+        stored = load_sidecar(sidecar)
+        assert stored["fingerprint"] == outcome.receipt.fingerprint
+        assert stored["normalized_sha256"] == outcome.asset.normalized_sha256
+        assert stored["provider_call"] is True
+    print("[ok] 54. receipt() works after synthesis, by asset, and is persisted as a sidecar")
+
+
+def test_reused_asset_carries_truthful_provenance():
+    if not HAVE_FFMPEG:
+        print("[skip] 55. ffmpeg not installed")
+        return
+    with tempfile.TemporaryDirectory() as td:
+        provider = _fixture_provider(Path(td))
+        request = SpeechRequest(display_text="你好，这是测试。", language="zh")
+        first = provider.synthesize_speech(request)
+        second = provider.synthesize_speech(request)
+        assert second.reused is True
+        # The old implementation returned blank voice and blank text hashes here.
+        assert second.asset.voice == first.asset.voice and second.asset.voice
+        assert second.asset.display_text_sha256 == first.asset.display_text_sha256
+        assert second.receipt.lexicon_version == first.receipt.lexicon_version
+        assert second.receipt.model == first.receipt.model
+        assert second.receipt.normalized_sha256 == first.receipt.normalized_sha256
+    print("[ok] 55. a reused asset preserves the original voice, hashes and lexicon version")
+
+
+def test_cache_is_rejected_when_the_sidecar_disagrees():
+    if not HAVE_FFMPEG:
+        print("[skip] 56. ffmpeg not installed")
+        return
+    with tempfile.TemporaryDirectory() as td:
+        provider = _fixture_provider(Path(td))
+        request = SpeechRequest(display_text="你好，这是测试。", language="zh")
+        outcome = provider.synthesize_speech(request)
+        sidecar = sidecar_for(Path(outcome.asset.normalized_path))
+
+        # fingerprint mismatch
+        payload = load_sidecar(sidecar)
+        payload["fingerprint"] = "0" * 64
+        write_sidecar(sidecar, payload)
+        assert provider._reuse(
+            normalized_path=Path(outcome.asset.normalized_path),
+            raw_path=Path(outcome.asset.raw_path),
+            sidecar_path=sidecar,
+            fingerprint=outcome.receipt.fingerprint,
+        ) is None
+
+        # hash mismatch
+        original = json.loads(sidecar.read_text(encoding="utf-8"))
+        original["normalized_sha256"] = "1" * 64
+        write_sidecar(sidecar, original)
+        assert provider._reuse(
+            normalized_path=Path(outcome.asset.normalized_path),
+            raw_path=Path(outcome.asset.raw_path),
+            sidecar_path=sidecar,
+            fingerprint=outcome.receipt.fingerprint,
+        ) is None
+
+        # corrupt sidecar
+        sidecar.write_text("{not json", encoding="utf-8")
+        assert load_sidecar(sidecar) is None
+        assert provider._reuse(
+            normalized_path=Path(outcome.asset.normalized_path),
+            raw_path=Path(outcome.asset.raw_path),
+            sidecar_path=sidecar,
+            fingerprint=outcome.receipt.fingerprint,
+        ) is None
+
+        # missing sidecar
+        sidecar.unlink()
+        assert provider._reuse(
+            normalized_path=Path(outcome.asset.normalized_path),
+            raw_path=Path(outcome.asset.raw_path),
+            sidecar_path=sidecar,
+            fingerprint=outcome.receipt.fingerprint,
+        ) is None
+    print("[ok] 56. cache reuse is refused on sidecar mismatch, hash mismatch, corruption or absence")
+
+
+def test_cache_reuse_makes_no_billing_or_network_call():
+    """A valid cache must work with the billing transport broken.
+
+    The previous order called require_safe() before checking the cache, so reuse
+    needed quota and network. Reuse must need neither.
+    """
+    if not HAVE_FFMPEG:
+        print("[skip] 57. ffmpeg not installed")
+        return
+
+    def exploding(url, credential):
+        raise AssertionError(f"billing transport was called: {url}")
+
+    with tempfile.TemporaryDirectory() as td:
+        warm = _fixture_provider(Path(td))
+        request = SpeechRequest(display_text="你好，这是测试。", language="zh")
+        warm.synthesize_speech(request)
+
+        offline_guard = BillingGuard(
+            base_url="https://example.invalid", credential="sk-cp-EXAMPLE",
+            http_get_json=exploding,
+        )
+        offline = _fixture_provider(Path(td), guard=offline_guard)
+        outcome = offline.synthesize_speech(request)
+        assert outcome.reused is True, "a valid cache must be reused"
+        assert offline_guard.call_count == 0, "reuse must not touch the billing transport"
+        assert outcome.asset.normalized_path
+        assert Path(outcome.asset.normalized_path).is_file()
+        assert outcome.asset.voice, "reused provenance must still be truthful"
+        assert outcome.receipt.human_review == "PENDING_FOUNDER_REVIEW"
+    print("[ok] 57. cache reuse needs no billing call, no network and no quota")
+
+
+def test_force_bypasses_the_cache():
+    if not HAVE_FFMPEG:
+        print("[skip] 58. ffmpeg not installed")
+        return
+    with tempfile.TemporaryDirectory() as td:
+        provider = _fixture_provider(Path(td))
+        request = SpeechRequest(display_text="你好，这是测试。", language="zh")
+        provider.synthesize_speech(request)
+        forced = provider.synthesize_speech(
+            SpeechRequest(display_text="你好，这是测试。", language="zh", force=True)
+        )
+        assert forced.reused is False
+        assert forced.receipt.attempt == 1
+    print("[ok] 58. force=true bypasses the cache and regenerates")
+
+
+# --- 15. BLOCKER 5: retry must change a generation input -------------------
+
+def test_retry_requires_a_named_reason():
+    if not HAVE_FFMPEG:
+        print("[skip] 59. ffmpeg not installed")
+        return
+    with tempfile.TemporaryDirectory() as td:
+        provider = _fixture_provider(Path(td))
+        request = SpeechRequest(display_text="你好，这是测试。", language="zh")
+        try:
+            provider.synthesize_speech(request, attempt=2, retry_reason=None)
+        except RuntimeError as exc:
+            assert "named failure reason" in str(exc)
+        else:
+            raise AssertionError("attempt 2 without a reason was allowed")
+    print("[ok] 59. attempt 2 without a named failure reason is refused")
+
+
+def test_retry_with_identical_fingerprint_is_refused():
+    if not HAVE_FFMPEG:
+        print("[skip] 60. ffmpeg not installed")
+        return
+    with tempfile.TemporaryDirectory() as td:
+        provider = _fixture_provider(Path(td))
+        request = SpeechRequest(display_text="你好，这是测试。", language="zh")
+        provider.synthesize_speech(request)  # records the attempt-1 fingerprint
+        try:
+            provider.synthesize_speech(
+                request, attempt=2, retry_reason="clipping suspected"
+            )
+        except RuntimeError as exc:
+            assert "must change a generation input" in str(exc)
+        else:
+            raise AssertionError("an identical retry was allowed")
+    print("[ok] 60. attempt 2 with an unchanged fingerprint is refused")
+
+
+def test_retry_with_changed_input_is_accepted():
+    if not HAVE_FFMPEG:
+        print("[skip] 61. ffmpeg not installed")
+        return
+    with tempfile.TemporaryDirectory() as td:
+        provider = _fixture_provider(Path(td))
+        provider.synthesize_speech(
+            SpeechRequest(display_text="你好，这是测试。", language="zh")
+        )
+        # A different voice changes the fingerprint, which is a real input change.
+        outcome = provider.synthesize_speech(
+            SpeechRequest(
+                display_text="你好，这是测试。",
+                language="zh",
+                voice="Chinese (Mandarin)_Warm_Bestie",
+            ),
+            attempt=2,
+            retry_reason="first voice read the brand token unclearly",
+        )
+        assert outcome.reused is False
+        assert outcome.receipt.attempt == 2
+        assert outcome.receipt.retry_reason == "first voice read the brand token unclearly"
+    print("[ok] 61. attempt 2 is accepted when a real generation input changed")
+
+
+# --- 16. BLOCKER 4: ASR multiplicity --------------------------------------
+
+def test_asr_multiplicity_behaviour():
+    cases = [
+        ("哈哈", "哈哈", [], []),
+        ("哈哈", "哈", ["哈"], []),
+        ("哈", "哈哈", [], ["哈"]),
+        ("version version", "version", ["version"], []),
+        (
+            "the system is ready and the user is ready",
+            "the system is ready and the user is ready",
+            [], [],
+        ),
+    ]
+    for expected, actual, want_missing, want_excess in cases:
+        diff = _multiplicity(expected, actual)
+        assert diff["missing"] == want_missing, (expected, actual, diff)
+        assert diff["excess"] == want_excess, (expected, actual, diff)
+    print("[ok] 62. ASR multiplicity separates missing from excess, repeated units included")
+
+
+def test_asr_coverage_is_multiset_recall():
+    assert token_overlap("version version", "version") == 0.5
+    assert token_overlap("哈哈", "哈哈") == 1.0
+    assert token_overlap("the ready system", "the ready system") == 1.0
+    print("[ok] 63. coverage is multiset recall, so repeated content cannot be hidden")
+
+
+
 TESTS = [
     test_credential_classification,
     test_non_subscription_credential_is_refused,
@@ -822,6 +1184,22 @@ TESTS = [
     test_asr_coverage_is_meaningful_for_chinese,
     test_asr_reconciles_chinese_numerals_with_digits,
     test_loudness_is_measured_not_predicted,
+    test_modality_windows_follow_verified_mplan_behaviour,
+    test_unknown_modality_is_blocked_not_defaulted,
+    test_weekly_only_never_implies_all_modalities_safe,
+    test_owed_amount_is_required_and_must_be_zero,
+    test_every_required_balance_field_fails_closed_on_schema_change,
+    test_receipt_before_any_synthesis_raises,
+    test_receipt_is_persisted_and_retrievable_after_synthesis,
+    test_reused_asset_carries_truthful_provenance,
+    test_cache_is_rejected_when_the_sidecar_disagrees,
+    test_cache_reuse_makes_no_billing_or_network_call,
+    test_force_bypasses_the_cache,
+    test_retry_requires_a_named_reason,
+    test_retry_with_identical_fingerprint_is_refused,
+    test_retry_with_changed_input_is_accepted,
+    test_asr_multiplicity_behaviour,
+    test_asr_coverage_is_multiset_recall,
 ]
 
 
