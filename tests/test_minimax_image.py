@@ -1555,7 +1555,137 @@ def test_registry_boundary_survives_a_direct_state_rewrite():
     print("[ok] 76. the registry boundary check catches a corrupted record")
 
 
-# --- 13. planner -------------------------------------------------------------
+# --- 13. generated-ness is intrinsic provenance ----------------------------
+
+def test_a_generated_kind_cannot_deny_that_it_is_generated():
+    """The bypass this closes: generated=False skipped the receipt rule."""
+    registry = AssetRegistry()
+    for kind in AssetKind.GENERATED:
+        try:
+            registry.register(
+                asset_id=f"deny-{kind}", kind=kind, path="generated.bin",
+                generated=False, evidence_use=EvidenceUse.VISUAL_SUPPORT,
+            )
+        except GeneratedAssetEvidenceError as exc:
+            assert "intrinsic provenance" in str(exc), str(exc)
+            continue
+        raise AssertionError(f"{kind} was allowed to claim it is not generated")
+    print("[ok] 93. a generated kind cannot deny that it is generated")
+
+
+def test_a_generated_kind_still_needs_a_receipt():
+    """Omitting generated is fine; omitting the receipt is not."""
+    registry = AssetRegistry()
+    for kind in AssetKind.GENERATED:
+        try:
+            registry.register(
+                asset_id=f"no-receipt-{kind}", kind=kind, path="generated.bin",
+                evidence_use=EvidenceUse.VISUAL_SUPPORT,
+            )
+        except GeneratedAssetEvidenceError as exc:
+            assert "receipt_ref" in str(exc), str(exc)
+            continue
+        raise AssertionError(f"{kind} registered with no receipt")
+    print("[ok] 86. a generated kind without a receipt is refused")
+
+
+def test_a_non_generated_kind_cannot_claim_to_be_generated():
+    """Mislabelling deterministic output as model output is provenance loss."""
+    registry = AssetRegistry()
+    for kind in (AssetKind.REAL, AssetKind.SCREENSHOT,
+                 AssetKind.SCREEN_RECORDING, AssetKind.DIAGRAM):
+        try:
+            registry.register(
+                asset_id=f"claim-gen-{kind}", kind=kind, path="captured.bin",
+                generated=True, evidence_use=EvidenceUse.VISUAL_SUPPORT,
+                receipt_ref="captured.bin.receipt.json",
+            )
+        except GeneratedAssetEvidenceError:
+            continue
+        raise AssertionError(f"{kind} was allowed to claim it is generated")
+    print("[ok] 87. a real, captured or drawn kind cannot claim to be generated")
+
+
+def test_generatedness_is_derived_not_stored_by_the_caller():
+    registry = AssetRegistry()
+    for kind in AssetKind.ALL:
+        receipt = f"{kind.lower()}.receipt.json"
+        record = registry.register(
+            asset_id=f"derived-{kind}", kind=kind, path="asset.bin",
+            evidence_use=EvidenceUse.VISUAL_SUPPORT, receipt_ref=receipt,
+        )
+        assert record.generated == (kind in AssetKind.GENERATED), kind
+    print("[ok] 88. generated-ness is derived from kind for every kind")
+
+
+def test_capability_downgrade_stays_legal_for_real_material():
+    """Distinct from provenance: a real asset may be used decoratively."""
+    registry = AssetRegistry()
+    record = registry.register(
+        asset_id="decorative-real", kind=AssetKind.REAL, path="pretty.png",
+        evidence_capable=False, evidence_use=EvidenceUse.VISUAL_SUPPORT,
+    )
+    assert record.generated is False, "a real asset is never generated"
+    assert record.evidence_capable is False, "downgrade is legal"
+    assert record.evidence_use == EvidenceUse.VISUAL_SUPPORT
+    print("[ok] 89. a real asset may still be downgraded to support-only")
+
+
+def test_boundary_catches_a_generated_record_mutated_to_not_generated():
+    registry = AssetRegistry()
+    registry.register(
+        asset_id="gen", kind=AssetKind.GENERATED_IMAGE, path="g.png",
+        evidence_use=EvidenceUse.VISUAL_SUPPORT, receipt_ref="g.png.receipt.json",
+    )
+    registry.assert_evidence_boundary()  # clean
+    record = registry.get("gen")
+    record.generated = False
+    try:
+        registry.assert_evidence_boundary()
+    except GeneratedAssetEvidenceError as exc:
+        assert "cannot be edited" in str(exc), str(exc)
+    else:
+        raise AssertionError("a mutated provenance flag passed the boundary check")
+    print("[ok] 90. the boundary catches generated mutated to not-generated")
+
+
+def test_boundary_catches_a_real_record_mutated_to_generated():
+    registry = AssetRegistry()
+    registry.register(
+        asset_id="real", kind=AssetKind.REAL, path="capture.png",
+        evidence_capable=False, evidence_use=EvidenceUse.VISUAL_SUPPORT,
+    )
+    registry.assert_evidence_boundary()  # clean
+    record = registry.get("real")
+    record.generated = True
+    try:
+        registry.assert_evidence_boundary()
+    except GeneratedAssetEvidenceError as exc:
+        assert "cannot be edited" in str(exc), str(exc)
+    else:
+        raise AssertionError("a real asset mutated to generated passed the check")
+    print("[ok] 91. the boundary catches a real asset mutated to generated")
+
+
+def test_boundary_catches_a_generated_record_stripped_of_its_receipt():
+    registry = AssetRegistry()
+    registry.register(
+        asset_id="gen2", kind=AssetKind.GENERATED_VIDEO, path="clip.mp4",
+        evidence_use=EvidenceUse.VISUAL_SUPPORT, receipt_ref="clip.mp4.receipt.json",
+    )
+    registry.assert_evidence_boundary()  # clean
+    registry.get("gen2").receipt_ref = None
+    try:
+        registry.assert_evidence_boundary()
+    except GeneratedAssetEvidenceError as exc:
+        assert "no receipt reference" in str(exc), str(exc)
+    else:
+        raise AssertionError("a generated record without provenance passed the check")
+    print("[ok] 92. the boundary catches a generated record stripped of its receipt")
+
+
+# --- 14. planner -------------------------------------------------------------
+
 
 
 def test_planner_prefers_real_evidence_for_a_claim():
@@ -1567,7 +1697,7 @@ def test_planner_prefers_real_evidence_for_a_claim():
     assert planned.kind == AssetKind.REAL
     assert planned.evidence_capable is True
     assert planned.kind != MINIMAX_IMAGE
-    print("[ok] 77. a beat that asserts a fact never resolves to a generated image")
+    print("[ok] 93. a beat that asserts a fact never resolves to a generated image")
 
 
 def test_planner_uses_a_generated_image_for_support_beats():
@@ -1576,7 +1706,7 @@ def test_planner_uses_a_generated_image_for_support_beats():
     assert planned.kind == MINIMAX_IMAGE
     assert planned.evidence_capable is False
     assert planned.evidence_use == EvidenceUse.VISUAL_SUPPORT
-    print("[ok] 78. a support beat resolves to a generated image, marked non-evidence")
+    print("[ok] 86. a support beat resolves to a generated image, marked non-evidence")
 
 
 def test_planner_refuses_evidence_when_only_generation_is_available():
@@ -1587,7 +1717,7 @@ def test_planner_refuses_evidence_when_only_generation_is_available():
         assert "evidence" in str(exc).lower()
     else:
         raise AssertionError("a generated-only planner satisfied an evidence beat")
-    print("[ok] 79. an image-only planner refuses a beat that requires evidence")
+    print("[ok] 87. an image-only planner refuses a beat that requires evidence")
 
 
 def test_planner_priority_order_is_evidence_first():
@@ -1596,7 +1726,7 @@ def test_planner_priority_order_is_evidence_first():
         AssetKind.REAL, AssetKind.SCREENSHOT, AssetKind.SCREEN_RECORDING,
         AssetKind.DIAGRAM, MINIMAX_IMAGE,
     ]
-    print("[ok] 80. planner priority runs from real evidence down to generated visuals")
+    print("[ok] 88. planner priority runs from real evidence down to generated visuals")
 
 
 # --- 13. text contamination --------------------------------------------------
@@ -1615,7 +1745,7 @@ def test_text_contamination_is_a_signal_not_a_verdict():
         assert set(payload) >= {"text_contamination_suspected", "edge_density"}
         # It is a hint, and the API says so by not being a boolean failure.
         assert not hasattr(signal, "approved")
-    print("[ok] 81. text contamination is exposed as a suspicion signal, not a verdict")
+    print("[ok] 89. text contamination is exposed as a suspicion signal, not a verdict")
 
 
 def test_text_contamination_survives_into_the_receipt():
@@ -1627,7 +1757,7 @@ def test_text_contamination_survives_into_the_receipt():
         payload = receipt_to_dict(outcome.receipt)
         assert "text_contamination_suspected" in payload
         assert payload["text_contamination_suspected"] in (True, False)
-    print("[ok] 82. the text contamination signal is recorded in the receipt")
+    print("[ok] 90. the text contamination signal is recorded in the receipt")
 
 
 # --- 14. Windows behaviour ---------------------------------------------------
@@ -1642,7 +1772,7 @@ def test_image_generation_uses_the_shared_process_layer():
     for forbidden in ("subprocess.run", "subprocess.Popen", "os.system", "os.popen"):
         assert forbidden not in source, f"{forbidden} bypasses the shared process layer"
     assert minimax_image.hidden_run is not None
-    print("[ok] 83. image generation goes through the shared, popup-free process layer")
+    print("[ok] 91. image generation goes through the shared, popup-free process layer")
 
 
 def test_image_cli_reports_health_without_generating():
@@ -1663,7 +1793,7 @@ def test_image_cli_reports_health_without_generating():
         assert payload["capabilities"]["evidence_capable"] is False
     else:
         assert "Traceback" not in result.stderr, result.stderr[-400:]
-    print("[ok] 84. the image CLI reports health without generating anything")
+    print("[ok] 92. the image CLI reports health without generating anything")
 
 
 def test_image_cli_refuses_invalid_dimensions_without_generating():
@@ -1678,7 +1808,7 @@ def test_image_cli_refuses_invalid_dimensions_without_generating():
         assert payload["verdict"] == "DIMENSIONS_REJECTED_LOCALLY"
         assert payload["generated"] is False
         assert payload["provider_call"] is False
-    print("[ok] 85. the CLI rejects bad dimensions locally, before any provider call")
+    print("[ok] 93. the CLI rejects bad dimensions locally, before any provider call")
 
 
 TESTS = [
@@ -1730,6 +1860,14 @@ TESTS = [
     test_binding_is_one_shared_implementation,
     test_secret_sentinel_never_reaches_any_persisted_output,
     test_receipt_records_credential_class_never_the_value,
+    test_a_generated_kind_cannot_deny_that_it_is_generated,
+    test_a_generated_kind_still_needs_a_receipt,
+    test_a_non_generated_kind_cannot_claim_to_be_generated,
+    test_generatedness_is_derived_not_stored_by_the_caller,
+    test_capability_downgrade_stays_legal_for_real_material,
+    test_boundary_catches_a_generated_record_mutated_to_not_generated,
+    test_boundary_catches_a_real_record_mutated_to_generated,
+    test_boundary_catches_a_generated_record_stripped_of_its_receipt,
     test_canonical_evidence_boundary_is_defined_in_exactly_one_place,
     test_planner_derives_capability_instead_of_duplicating_it,
     test_diagram_only_planner_refuses_an_evidence_beat,

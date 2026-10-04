@@ -188,14 +188,28 @@ Registering any of them as `EVIDENCE`, `CLAIM_SOURCE`, `BENCHMARK_PROOF`,
 passes `evidence_capable=True`**. Generated assets also require
 `evidence_capable=False` and a `receipt_ref`.
 
-Capability may be lowered, never raised:
+Generated-ness is **intrinsic provenance**, derived from kind and never
+overridable:
+
+| Intrinsic (from `kind`) | | Usage (caller, within limits) | |
+|---|---|---|---|
+| `generated` | **never overridable** | `evidence_use` | overridable |
+| | | `evidence_capable` | **down only** |
 
 ```
+GENERATEDNESS IS DERIVED FROM KIND AND CANNOT BE OVERRIDDEN
 CALLER MAY REDUCE CAPABILITY
 CALLER MAY NEVER ESCALATE CAPABILITY
 ```
 
-A real capture used decoratively is legal. Promoting a diagram into proof is not.
+`GENERATED_IMAGE` and `GENERATED_VIDEO` are always generated. `REAL`,
+`SCREENSHOT`, `SCREEN_RECORDING` and `DIAGRAM` never are. A conflicting
+caller-supplied value is **refused, not normalised**, because the conflict means
+bad caller logic, a bad migration, or an attempt to bypass provenance.
+
+Capability and provenance are independent. A real capture used decoratively is
+legal. Promoting a diagram into proof is not. Labelling a real capture as
+model-generated is not either.
 
 This is a domain error at the single point an asset enters the system, not a note
 in a document that a prompt can ignore.

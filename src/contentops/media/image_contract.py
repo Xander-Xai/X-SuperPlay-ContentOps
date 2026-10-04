@@ -296,7 +296,30 @@ class AssetRegistry:
         if evidence_use not in EvidenceUse.CLAIM_BEARING + (EvidenceUse.VISUAL_SUPPORT,):
             raise ValueError(f"unknown evidence use {evidence_use!r}")
 
-        is_generated = kind in AssetKind.GENERATED if generated is None else bool(generated)
+        # Generated-ness is intrinsic provenance, not caller policy.
+        #
+        #     GENERATEDNESS IS DERIVED FROM KIND AND CANNOT BE OVERRIDDEN
+        #
+        # The previous version let a caller pass ``generated=False`` for a
+        # GENERATED_IMAGE, which skipped the receipt requirement entirely: a
+        # synthetic asset could then register with no provenance at all. Passing
+        # ``generated=True`` for a DIAGRAM was equally wrong, mislabelling
+        # deterministic output as model output.
+        #
+        # A conflict is raised rather than silently normalised, because it means
+        # bad caller logic, a bad migration, or an attempt to bypass provenance.
+        canonical_generated = kind in AssetKind.GENERATED
+        if generated is not None and bool(generated) != canonical_generated:
+            raise GeneratedAssetEvidenceError(
+                f"asset {asset_id!r} of kind {kind} is "
+                f"{'generated' if canonical_generated else 'not generated'}, but "
+                f"generated={generated!r} was supplied. Generated-ness is "
+                f"intrinsic provenance derived from the asset kind and cannot be "
+                f"overridden: {', '.join(AssetKind.GENERATED)} are always "
+                f"generated and {', '.join(k for k in AssetKind.ALL if k not in AssetKind.GENERATED)} "
+                f"never are."
+            )
+        is_generated = canonical_generated
 
         # Capability is canonical, and a caller may only ever lower it.
         #
@@ -388,14 +411,44 @@ class AssetRegistry:
         record carrying BENCHMARK_PROOF passed unnoticed.
         """
         for record in self._records.values():
-            if record.evidence_use not in EvidenceUse.CLAIM_BEARING:
-                continue
-            if record.generated:
+            # Provenance first: a record whose generated flag disagrees with its
+            # kind is corrupt regardless of the role it claims.
+            canonical_generated = record.kind in AssetKind.GENERATED
+            if record.generated != canonical_generated:
                 raise GeneratedAssetEvidenceError(
-                    f"registry contains generated asset {record.asset_id!r} "
-                    f"registered as {record.evidence_use}"
+                    f"registry contains asset {record.asset_id!r} of kind "
+                    f"{record.kind} with generated={record.generated}, but "
+                    f"{record.kind} is intrinsically "
+                    f"{'generated' if canonical_generated else 'not generated'}. "
+                    f"Generated-ness is provenance and cannot be edited."
                 )
-            if record.kind not in AssetKind.EVIDENCE_CAPABLE or not record.evidence_capable:
+
+            if canonical_generated:
+                if record.evidence_capable:
+                    raise GeneratedAssetEvidenceError(
+                        f"registry contains generated asset {record.asset_id!r} "
+                        f"marked evidence capable"
+                    )
+                if not record.receipt_ref:
+                    raise GeneratedAssetEvidenceError(
+                        f"registry contains generated asset {record.asset_id!r} "
+                        f"with no receipt reference"
+                    )
+                if record.evidence_use in EvidenceUse.CLAIM_BEARING:
+                    raise GeneratedAssetEvidenceError(
+                        f"registry contains generated asset {record.asset_id!r} "
+                        f"registered as {record.evidence_use}"
+                    )
+                continue
+
+            if record.evidence_capable and record.kind not in AssetKind.EVIDENCE_CAPABLE:
+                raise GeneratedAssetEvidenceError(
+                    f"registry contains asset {record.asset_id!r} of kind "
+                    f"{record.kind} marked evidence capable"
+                )
+            if record.evidence_use in EvidenceUse.CLAIM_BEARING and not (
+                record.kind in AssetKind.EVIDENCE_CAPABLE and record.evidence_capable
+            ):
                 raise GeneratedAssetEvidenceError(
                     f"registry contains asset {record.asset_id!r} of kind "
                     f"{record.kind} registered as {record.evidence_use}, but "

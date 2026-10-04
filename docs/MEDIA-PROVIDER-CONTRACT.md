@@ -477,6 +477,50 @@ A diagram is a legitimate and useful asset. It simply explains; it does not
 prove. When a diagram illustrates a claim, the underlying real source stays
 traceable separately through `claim_refs`.
 
+### Intrinsic properties versus usage properties
+
+These are different kinds of fact and are governed differently.
+
+| Intrinsic asset property | Derived from | Overridable |
+|---|---|---|
+| `kind` | the caller | no |
+| `generated` | `kind in AssetKind.GENERATED` | **never** |
+
+| Usage property | Meaning | Overridable |
+|---|---|---|
+| `evidence_use` | how this asset is used right now | yes, within the boundary |
+| `evidence_capable` | whether it is permitted to carry claims | **down only** |
+
+```
+GENERATEDNESS IS DERIVED FROM KIND AND CANNOT BE OVERRIDDEN
+CALLER MAY REDUCE CAPABILITY
+CALLER MAY NEVER ESCALATE CAPABILITY
+```
+
+Generated-ness is **provenance**, not policy:
+
+```
+GENERATED_IMAGE  -> generated = True
+GENERATED_VIDEO  -> generated = True
+REAL             -> generated = False
+SCREENSHOT       -> generated = False
+SCREEN_RECORDING -> generated = False
+DIAGRAM          -> generated = False
+```
+
+A caller that supplies a conflicting value is **refused, not normalised**. The
+conflict means bad caller logic, a bad migration, or an attempt to bypass
+provenance, and silently correcting it would hide all three.
+
+This closed a real bypass: `GENERATED_IMAGE + generated=False` skipped the
+receipt requirement entirely, so a synthetic asset could register with no
+provenance at all. `DIAGRAM + generated=True` was equally wrong, mislabelling
+deterministic output as model output.
+
+Note that capability and provenance are independent. `REAL` with
+`evidence_capable=False` is legal, because a real asset may be used decoratively.
+`REAL` with `generated=True` is not.
+
 ### Capability may be lowered, never raised
 
 ```
@@ -513,8 +557,11 @@ even when the caller passes `evidence_capable=True`.
 Generated kinds additionally require `generated=True`, `evidence_capable=False` and
 a `receipt_ref`. Failure is a domain error (`GeneratedAssetEvidenceError`), not a
 warning, raised at the only place an asset enters the system.
-`AssetRegistry.assert_evidence_boundary()` re-checks the same rule, so a bad
-direct write or a migrated file is still caught.
+`AssetRegistry.assert_evidence_boundary()` re-checks the whole rule set —
+provenance, capability, receipt presence and claim-bearing roles — so a bad
+direct write, a hand-edited registry file or a migration is still caught. A
+record whose `generated` flag disagrees with its `kind` is corrupt regardless of
+the role it claims.
 
 ## AssetPlanner
 
