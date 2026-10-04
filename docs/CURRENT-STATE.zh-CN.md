@@ -48,7 +48,10 @@ translation_status: synced
 
 | 属性 | 值 |
 |---|---|
-| 集成 | **未实现** |
+| 集成 | 语音**已实现**（Issue #19），`PENDING_FOUNDER_REVIEW` |
+| 图像 / 视频集成 | **未实现**（Issue #20、#22） |
+| 语音传输通道 | 官方 MiniMax CLI `mmx`；锁定的 Easel 路径为 `EASEL_MPLAN_AUTH_INCOMPATIBLE` |
+| 声音克隆 | **DOCUMENTED_BUT_NOT_TESTED**（Issue #23），需要权利清晰的样本 |
 | 能力验证 | **已完成**（Issue #4，2026-10-04） |
 | PAYG 允许 | **否** |
 | 计费模式 | subscription，**已验证** |
@@ -59,7 +62,8 @@ translation_status: synced
 | H3 参考 / 关键帧模式 | **DOCUMENTED_BUT_NOT_TESTED** —— 同一凭证可达，未实测 |
 | 积分包余额 | 实测 `0.00`，每次生成前重新检查 |
 | 余额读取依赖 | `UNDOCUMENTED_FIRST_PARTY_IMPLEMENTATION_DEPENDENCY`，fail closed |
-| 证据 | `research/providers/minimax-mplan-explore-capability.md` |
+| H3 时长 | 整数枚举 4-15（H3）、5-15（H3 Max）；测试最短 4 秒 / 5 秒 |
+| 证据 | `research/providers/minimax-mplan-explore-capability.md`、`research/providers/minimax-voice-clone-entitlement.md` |
 
 ## 已知阻碍
 

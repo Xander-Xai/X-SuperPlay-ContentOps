@@ -51,7 +51,10 @@
 
 | Property | Value |
 |---|---|
-| Integration | **NOT_IMPLEMENTED** |
+| Integration | speech **IMPLEMENTED** (Issue #19), `PENDING_FOUNDER_REVIEW` |
+| Image / video integration | **NOT_IMPLEMENTED** (Issues #20, #22) |
+| Speech transport | official MiniMax CLI `mmx`; pinned Easel path is `EASEL_MPLAN_AUTH_INCOMPATIBLE` |
+| Voice cloning | **DOCUMENTED_BUT_NOT_TESTED** (Issue #23), needs a rights-cleared sample |
 | Capability spike | **COMPLETE** (Issue #4, 2026-10-04) |
 | PAYG allowed | **false** |
 | Billing mode | subscription, **verified** |
@@ -62,7 +65,8 @@
 | H3 reference / keyframe modes | **DOCUMENTED_BUT_NOT_TESTED** — same credential, not exercised |
 | Credit Pack balance | `0.00` observed, re-checked before every generation |
 | Balance read dependency | `UNDOCUMENTED_FIRST_PARTY_IMPLEMENTATION_DEPENDENCY`, fail closed |
-| Evidence | `research/providers/minimax-mplan-explore-capability.md` |
+| H3 duration | integer enum 4-15 (H3), 5-15 (H3 Max); test minimum 4 s / 5 s |
+| Evidence | `research/providers/minimax-mplan-explore-capability.md`, `research/providers/minimax-voice-clone-entitlement.md` |
 
 ## Golden Samples
 
