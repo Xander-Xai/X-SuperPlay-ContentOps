@@ -89,11 +89,21 @@ EVIDENCE_REQUIRED_ROLES = (
 
 @dataclass(frozen=True)
 class AssetOption:
-    """One way a beat could be satisfied, and what it would cost in integrity."""
+    """One way a beat could be satisfied, and what it would cost in integrity.
+
+    ``evidence_capable`` is **derived**, never stored. It used to be a second
+    boolean literal per option, and that duplication is how DIAGRAM came to be
+    marked evidence-capable: a deterministically drawn diagram can illustrate an
+    architecture, but it cannot witness one. :attr:`AssetKind.EVIDENCE_CAPABLE` is
+    the single truth table, so a new kind cannot drift here.
+    """
 
     kind: str
-    evidence_capable: bool
     description: str
+
+    @property
+    def evidence_capable(self) -> bool:
+        return self.kind in AssetKind.EVIDENCE_CAPABLE
 
     @property
     def priority(self) -> int:
@@ -102,19 +112,20 @@ class AssetOption:
 
 OPTIONS: Dict[str, AssetOption] = {
     AssetKind.REAL: AssetOption(
-        AssetKind.REAL, True, "a real recording, photograph or capture"
+        AssetKind.REAL, "a real recording, photograph or capture"
     ),
     AssetKind.SCREENSHOT: AssetOption(
-        AssetKind.SCREENSHOT, True, "a real screen capture"
+        AssetKind.SCREENSHOT, "a real screen capture"
     ),
     AssetKind.SCREEN_RECORDING: AssetOption(
-        AssetKind.SCREEN_RECORDING, True, "a real screen recording"
+        AssetKind.SCREEN_RECORDING, "a real screen recording"
     ),
     AssetKind.DIAGRAM: AssetOption(
-        AssetKind.DIAGRAM, True, "a deterministically drawn diagram"
+        AssetKind.DIAGRAM,
+        "a deterministically drawn diagram; explains, never proves",
     ),
     MINIMAX_IMAGE: AssetOption(
-        MINIMAX_IMAGE, False, "a generated support visual; never evidence"
+        MINIMAX_IMAGE, "a generated support visual; never evidence"
     ),
 }
 
@@ -188,9 +199,14 @@ class AssetPlanner:
             capable = [name for name in self._options if OPTIONS[name].evidence_capable]
             if not capable:
                 raise GeneratedAssetEvidenceError(
-                    f"beat {request.beat_id!r} requires evidence, but the only "
-                    f"available option is {', '.join(self._options)}, which cannot "
-                    f"evidence a claim. Capture the real thing, or drop the claim."
+                    f"beat {request.beat_id!r} requires evidence, and none of the "
+                    f"available options ({', '.join(self._options)}) can carry a "
+                    f"factual claim. Only real or captured material "
+                    f"({', '.join(AssetKind.EVIDENCE_CAPABLE)}) can: a diagram can "
+                    f"explain an architecture, a flow or a concept, but it cannot "
+                    f"witness a benchmark, a test result, an analytics metric, a "
+                    f"UI state, a customer outcome or production behaviour. "
+                    f"Capture the real thing, or drop the claim from the script."
                 )
             # The best available evidence: earliest in the priority order.
             chosen = capable[0]
@@ -220,15 +236,21 @@ class AssetPlanner:
             beat_id=request.beat_id,
             role=request.role,
             kind=chosen,
+            # The canonical capability of the kind, which for DIAGRAM and the
+            # generated kinds is False.
             evidence_capable=OPTIONS[chosen].evidence_capable,
-            evidence_use=(
-                SUPPORT_ROLES[0] if is_generated else EvidenceUse.EVIDENCE
-            ),
+            # A support beat is a support beat regardless of what it resolves to.
+            # Labelling it EVIDENCE because the kind *could* carry a claim would
+            # assert a role the beat never needed, and would contradict a
+            # deliberate downgrade at registration time.
+            evidence_use=SUPPORT_ROLES[0],
             rationale=(
                 f"beat {request.beat_id!r} is a support beat, so {chosen} is "
-                f"sufficient and cheaper than capturing something real."
+                f"sufficient and cheaper than capturing something real. It is "
+                f"registered as VISUAL_SUPPORT, not as a claim."
                 if is_generated
-                else f"beat {request.beat_id!r} takes {chosen}."
+                else f"beat {request.beat_id!r} is a support beat and takes "
+                f"{chosen} as VISUAL_SUPPORT."
             ),
             requires_evidence=False,
             prompt=request.prompt,

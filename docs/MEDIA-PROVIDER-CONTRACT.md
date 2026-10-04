@@ -11,11 +11,21 @@ infrastructure**, not one monolithic class with optional-everywhere signatures.
 Forcing three modalities through one signature produces optional arguments rather
 than types, and blurs the receipts.
 
-| ABC | Modality | Declared in |
-|---|---|---|
-| `SpeechProvider` | narration | `contract.py` |
-| `ImageProvider` | stills | `image_contract.py` |
-| `VideoProvider` | generated shots | Issue #22, not yet declared |
+Current implementation:
+
+| ABC | Modality | Declared in | State |
+|---|---|---|---|
+| `MediaProvider` | narration | `contract.py` | implemented (M2) |
+| `ImageProvider` | stills | `image_contract.py` | implemented (M3) |
+| `VideoProvider` | generated shots | — | planned, Issue #22 |
+
+There is **no `SpeechProvider` class**. `MediaProvider` is the current,
+speech-shaped ABC. Renaming it to an explicit `SpeechProvider` is a clean
+improvement but is **deferred**: it would churn the M2 speech module and its 85
+tests for naming alone, and nothing about M3 or M4 depends on it. M4 introduces
+`VideoProvider` beside the existing two without destabilising speech.
+
+Shared provider-family infrastructure:
 
 Shared by all of them — one implementation each, never one per modality:
 
@@ -29,7 +39,7 @@ Shared by all of them — one implementation each, never one per modality:
 | fingerprint conventions | `fingerprint.py`, `image_fingerprint.py` |
 | immutable receipts, reuse events | per-modality provider, shared conventions |
 
-`MediaProvider` remains the common ancestor so existing speech code keeps
+`MediaProvider` also remains the common ancestor so existing speech code keeps
 working. Its `generate_image` / `generate_video` hooks are **deprecated
 cross-modality shortcuts** that raise `CapabilityNotSupported` and say why. A
 future `MediaProviderRegistry` may aggregate the family; it is deliberately not
@@ -179,8 +189,9 @@ authorisation.
 | Pronunciation lexicon (`pronunciation_dict`, plain-text expansion) | `VERIFIED` | #19 |
 | Loudness normalisation | `VERIFIED` | #19 |
 | Voice cloning | `DOCUMENTED_BUT_NOT_TESTED` | #23 |
-| Image | not implemented here | #20 |
-| Video | not implemented here | #22 |
+| Image (`ImageProvider`, `MiniMaxMPlanImageProvider`, `image-01`) | `IMPLEMENTED` / M3 | #20 |
+| Image human review (composition, artifacts, publish intent) | `PENDING_FOUNDER_REVIEW` | #20 |
+| Video | planned | #22 |
 
 ## Capability Matrix
 
@@ -209,27 +220,53 @@ video_test_duration:
 
 ## Receipt Schema
 
+Generic across providers. No vendor vocabulary, and no `entitlement` /
+`token_plan` field: entitlement is expressed as `billing_mode` plus the balance
+and quota facts the gate actually checked.
+
 ```json
 {
-  "provider": "minimax",
-  "entitlement": "token_plan",
-  "billing_mode": "subscription",
+  "provider": "...",
+  "product": "...",
   "plan": "...",
+  "billing_mode": "subscription",
+  "payg_allowed": false,
+  "credit_pack_allowed": false,
+  "credential_class": "SUBSCRIPTION",
+  "credential_source": "...",
+  "transport": "...",
+  "transport_version": "...",
   "model": "...",
-  "request_id": "...",
-  "started_at": "...",
-  "finished_at": "...",
+  "fingerprint": "hash(provider + product + plan + model + mode + prompt + params)",
+  "attempt": 1,
+  "retry_reason": null,
+  "billing_guard_verdict": "SAFE_INCLUDED_PLAN",
+  "billing_guard_reasons": [],
   "quota_before": {},
   "quota_after": {},
-  "output": "path/to/asset",
-  "sha256": "...",
-  "status": "OK",
-  "prompt": "...",
-  "input_asset_hash": "...",
-  "retries": 0,
-  "generation_fingerprint": "hash(prompt + model + input_hash + params)"
+  "post_generation_billing_state": {},
+  "output_sha256": "...",
+  "technical_qc": {},
+  "generated": true,
+  "evidence_capable": false,
+  "production_ready": false,
+  "human_review": "PENDING_FOUNDER_REVIEW"
 }
 ```
+
+Worked example for the current provider, using only generic field names:
+
+```json
+{
+  "provider": "minimax_m_plan",
+  "product": "m_plan",
+  "plan": "explore",
+  "billing_mode": "subscription"
+}
+```
+
+The credential **class** and **source** are recorded; the credential value is
+never written to any receipt, sidecar, attempt record, event log or exception.
 
 ## Rules
 
@@ -414,31 +451,92 @@ is deliberately not introduced for this milestone.
 
 ## Evidence integrity hard gate
 
-`AssetRegistry.register()` refuses, in code, to register a generated asset as:
+### The canonical boundary
+
+Exactly three kinds may carry a factual claim:
+
+| Evidence-capable | Why |
+|---|---|
+| `REAL` | a real recording, photograph or capture |
+| `SCREENSHOT` | a real screen capture |
+| `SCREEN_RECORDING` | a real screen recording |
+
+Everything else is **support-only**:
+
+| Support-only | What it may do | What it may never do |
+|---|---|---|
+| `DIAGRAM` | explain architecture, flow, relationship, concept, sequence | witness a benchmark, test result, analytics metric, customer outcome, UI state, source-code fact or production behaviour |
+| `GENERATED_IMAGE` | act as hook, cover, concept, metaphor, background, transition | carry any claim |
+| `GENERATED_VIDEO` | act as hook, hero, concept, transition, impossible-to-record shot | carry any claim |
+
+`AssetKind.EVIDENCE_CAPABLE` is the **single truth table**. The planner derives
+capability from it rather than keeping a second boolean per option, which is
+exactly how `DIAGRAM` came to be wrongly marked evidence-capable.
+
+A diagram is a legitimate and useful asset. It simply explains; it does not
+prove. When a diagram illustrates a claim, the underlying real source stays
+traceable separately through `claim_refs`.
+
+### Capability may be lowered, never raised
+
+```
+CALLER MAY REDUCE CAPABILITY
+CALLER MAY NEVER ESCALATE CAPABILITY
+```
+
+```
+canonical_capable = kind in AssetKind.EVIDENCE_CAPABLE
+
+evidence_capable is None   -> capable = canonical_capable
+evidence_capable is False  -> capable = False
+evidence_capable is True   -> raise, unless canonical_capable
+```
+
+The previous version trusted the caller's boolean, so
+`DIAGRAM + evidence_capable=True + EVIDENCE` registered happily. Any caller could
+have promoted a diagram into proof of a benchmark.
+
+A claim-bearing role requires **both** the kind's canonical capability and a
+resolved capability of `True`. Checking the caller's flag alone trusts the caller;
+checking the kind alone ignores a deliberate downgrade.
+
+### Claim-bearing roles
 
 ```
 EVIDENCE  CLAIM_SOURCE  BENCHMARK_PROOF  TEST_RESULT
 ANALYTICS_PROOF  UI_SCREENSHOT  CUSTOMER_PROOF  SOURCE_CODE_PROOF
 ```
 
-It also refuses a generated asset that declares itself `evidence_capable`, and a
-generated asset with no `receipt_ref`. The failure is a domain error
-(`GeneratedAssetEvidenceError`), not a warning, and it lives at the only place an
-asset enters the system.
+Every one requires an evidence-capable kind. `DIAGRAM + BENCHMARK_PROOF` fails
+even when the caller passes `evidence_capable=True`.
+
+Generated kinds additionally require `generated=True`, `evidence_capable=False` and
+a `receipt_ref`. Failure is a domain error (`GeneratedAssetEvidenceError`), not a
+warning, raised at the only place an asset enters the system.
+`AssetRegistry.assert_evidence_boundary()` re-checks the same rule, so a bad
+direct write or a migrated file is still caught.
 
 ## AssetPlanner
 
 ```
 real factual evidence
     > screenshot / screen recording
-    > deterministic diagram
+    > deterministic diagram (support-only)
     > generated support visual
 ```
 
+Capability is derived from `AssetKind.EVIDENCE_CAPABLE`, so the planner cannot
+drift from the registry.
+
 `MINIMAX_IMAGE` is for hooks, covers, concepts, metaphors, backgrounds,
-transitions and decorative scenes. A beat that requires evidence never resolves to
-a generated image; when only `MINIMAX_IMAGE` is available, the planner refuses
-rather than degrading.
+transitions and decorative scenes. `DIAGRAM` is for architecture explanations,
+flowcharts, concept maps, timelines and deterministic process illustrations; both
+register as `VISUAL_SUPPORT`.
+
+A beat that requires evidence resolves only to `REAL`, `SCREENSHOT` or
+`SCREEN_RECORDING`. When only support-only options are available the planner
+refuses and says that **real or captured material is required**, rather than
+reporting merely that a generated image is unavailable. It never degrades.
 
 ## Transport
 

@@ -297,9 +297,30 @@ class AssetRegistry:
             raise ValueError(f"unknown evidence use {evidence_use!r}")
 
         is_generated = kind in AssetKind.GENERATED if generated is None else bool(generated)
-        capable = (
-            kind in AssetKind.EVIDENCE_CAPABLE if evidence_capable is None else bool(evidence_capable)
-        )
+
+        # Capability is canonical, and a caller may only ever lower it.
+        #
+        #     CALLER MAY REDUCE CAPABILITY
+        #     CALLER MAY NEVER ESCALATE CAPABILITY
+        #
+        # The previous version trusted the caller's boolean, so
+        # ``DIAGRAM + evidence_capable=True + EVIDENCE`` registered happily. Any
+        # caller could have promoted a diagram into proof of a benchmark.
+        canonical_capable = kind in AssetKind.EVIDENCE_CAPABLE
+        if evidence_capable is None:
+            capable = canonical_capable
+        elif not evidence_capable:
+            capable = False
+        elif evidence_capable and not canonical_capable:
+            raise GeneratedAssetEvidenceError(
+                f"asset {asset_id!r} of kind {kind} is not evidence capable and "
+                f"cannot be declared so. {kind} may be used as "
+                f"VISUAL_SUPPORT only: it can explain, illustrate or map, but it "
+                f"cannot witness a claim. The underlying real source must stay "
+                f"traceable on its own."
+            )
+        else:
+            capable = True
 
         if is_generated and capable:
             raise GeneratedAssetEvidenceError(
@@ -322,10 +343,17 @@ class AssetRegistry:
                 f"is what distinguishes a generated visual from an invented one."
             )
 
-        if not is_generated and evidence_use in EvidenceUse.CLAIM_BEARING and not capable:
+        # A claim-bearing role needs BOTH the kind's canonical capability and a
+        # resolved capability of True. Checking the resolved flag alone would
+        # trust the caller; checking the kind alone would ignore a deliberate
+        # downgrade.
+        if evidence_use in EvidenceUse.CLAIM_BEARING and not (
+            canonical_capable and capable
+        ):
             raise GeneratedAssetEvidenceError(
-                f"asset {asset_id!r} of kind {kind} is not evidence capable and "
-                f"cannot be registered as {evidence_use}."
+                f"asset {asset_id!r} of kind {kind} cannot be registered as "
+                f"{evidence_use}. Only {', '.join(AssetKind.EVIDENCE_CAPABLE)} "
+                f"material may carry a factual claim."
             )
 
         record = AssetRecord(
@@ -349,12 +377,31 @@ class AssetRegistry:
         return list(self._records.values())
 
     def assert_evidence_boundary(self) -> None:
-        """Re-check every record. Cheap insurance against a bad direct write."""
+        """Re-check every record against the canonical boundary.
+
+        Cheap insurance against a bad direct write, a migrated file or a future
+        code path that skips :meth:`register`. It enforces the same rule that
+        registration does: a claim-bearing role requires an evidence-capable
+        kind, and a generated asset is never one.
+
+        The earlier version only looked at ``generated``, so a corrupted DIAGRAM
+        record carrying BENCHMARK_PROOF passed unnoticed.
+        """
         for record in self._records.values():
-            if record.generated and record.evidence_use in EvidenceUse.CLAIM_BEARING:
+            if record.evidence_use not in EvidenceUse.CLAIM_BEARING:
+                continue
+            if record.generated:
                 raise GeneratedAssetEvidenceError(
                     f"registry contains generated asset {record.asset_id!r} "
                     f"registered as {record.evidence_use}"
+                )
+            if record.kind not in AssetKind.EVIDENCE_CAPABLE or not record.evidence_capable:
+                raise GeneratedAssetEvidenceError(
+                    f"registry contains asset {record.asset_id!r} of kind "
+                    f"{record.kind} registered as {record.evidence_use}, but "
+                    f"{record.kind} is not evidence capable. Only "
+                    f"{', '.join(AssetKind.EVIDENCE_CAPABLE)} material may carry "
+                    f"a factual claim."
                 )
 
 

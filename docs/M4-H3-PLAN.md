@@ -228,10 +228,36 @@ subject, environment, action, camera, dialogue, sound, visual_style,
 reference_assets, claim_refs
 ```
 
-Generated video is allowed **only** when `purpose == "support visual"`. It is
-forbidden for evidence, benchmark, UI proof, demo proof, analytics proof,
-customer proof and test result, reusing the M3 `AssetRegistry` hard gate. **No
-second registry.**
+### The canonical evidence boundary, inherited unchanged
+
+| Evidence-capable | Support-only |
+|---|---|
+| `REAL`, `SCREENSHOT`, `SCREEN_RECORDING` | `DIAGRAM`, `GENERATED_IMAGE`, `GENERATED_VIDEO` |
+
+`GENERATED_VIDEO` is **support-only**, and so is `DIAGRAM`. Only `REAL`,
+`SCREENSHOT` and `SCREEN_RECORDING` may directly occupy factual evidence roles.
+
+A diagram may *reference* evidence through `claim_refs`, but it is **not itself
+claim evidence**. It explains an architecture, a flow, a relationship, a concept
+or a sequence; it cannot witness a benchmark, a test result, an analytics metric,
+a UI state, a customer outcome, a source-code fact or production behaviour. The
+underlying real source stays traceable separately.
+
+Generated video is allowed **only** when `purpose == "support visual"`: hooks, hero
+shots, concepts, metaphors, transitions and impossible-to-record shots. It is
+forbidden for evidence, benchmark, UI proof, demo proof, analytics proof, customer
+proof, code proof and test result.
+
+M4 reuses the existing `AssetRegistry` and adds **no second registry**. It must not
+weaken the two invariants M3 established:
+
+```
+CALLER MAY REDUCE CAPABILITY
+CALLER MAY NEVER ESCALATE CAPABILITY
+```
+
+and a claim-bearing role requires **both** an evidence-capable kind and a resolved
+capability of `True`.
 
 ## 5. Transport: the documented public H3 API
 
@@ -441,7 +467,7 @@ TEST_OBJECTIVE, MODEL, DURATION, RESOLUTION, EXPECTED_QUOTA_BUDGET
 - [ ] task privacy: raw id never committed, salted hash in the receipt
 - [ ] video receipt immutable, reuse-safe
 - [ ] video QC: black frame, freeze, audio detection, aspect tolerance
-- [ ] GENERATED_VIDEO cannot be evidence
+- [ ] GENERATED_VIDEO refused every claim-bearing role; DIAGRAM still support-only
 - [ ] smallest new real smoke approved by the test plan, receipt written
 - [ ] M2 (85) and M3 (63) suites still green
 - [ ] all local gates and exact-head CI green

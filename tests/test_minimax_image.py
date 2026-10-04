@@ -1342,7 +1342,221 @@ def test_asset_from_a_real_generation_is_registerable_only_as_support():
     print("[ok] 54. a real generated image registers as a support visual only")
 
 
-# --- 12. planner -------------------------------------------------------------
+# --- 12. the canonical evidence boundary -----------------------------------
+
+def test_canonical_evidence_boundary_is_defined_in_exactly_one_place():
+    """One truth table. DIAGRAM is support-only, and says why."""
+    assert AssetKind.EVIDENCE_CAPABLE == (
+        AssetKind.REAL, AssetKind.SCREENSHOT, AssetKind.SCREEN_RECORDING,
+    )
+    assert AssetKind.GENERATED == (AssetKind.GENERATED_IMAGE, AssetKind.GENERATED_VIDEO)
+    # A diagram can explain architecture, flow, relationship, concept or
+    # sequence. It cannot witness a benchmark, a test result, an analytics
+    # metric, a UI state, a customer outcome or production behaviour.
+    for support_only in (AssetKind.DIAGRAM, AssetKind.GENERATED_IMAGE,
+                         AssetKind.GENERATED_VIDEO):
+        assert support_only not in AssetKind.EVIDENCE_CAPABLE, support_only
+    print("[ok] 64. the evidence boundary names exactly three evidence-capable kinds")
+
+
+def test_planner_derives_capability_instead_of_duplicating_it():
+    """A second boolean literal per option is how DIAGRAM became 'capable'."""
+    from contentops.media.asset_planner import OPTIONS
+
+    for kind, option in OPTIONS.items():
+        assert option.evidence_capable == (kind in AssetKind.EVIDENCE_CAPABLE), kind
+        assert not hasattr(option, "__dict__") or "evidence_capable" not in (
+            option.__dict__
+        ), f"{kind} stores a duplicated capability literal"
+    assert OPTIONS[AssetKind.DIAGRAM].evidence_capable is False
+    print("[ok] 65. planner capability is derived from AssetKind, never stored")
+
+
+def test_diagram_only_planner_refuses_an_evidence_beat():
+    try:
+        AssetPlanner(options=[AssetKind.DIAGRAM]).plan(
+            PlanRequest(beat_id="b1", role="benchmark", requires_evidence=True)
+        )
+    except GeneratedAssetEvidenceError as exc:
+        message = str(exc)
+        # The message must name what is required, not just what is unavailable.
+        assert "real or captured material" in message, message
+        assert "diagram can explain" in message, message
+    else:
+        raise AssertionError("a DIAGRAM-only planner satisfied an evidence beat")
+    print("[ok] 66. a DIAGRAM-only planner refuses an evidence beat and says why")
+
+
+def test_diagram_and_generated_planner_refuses_an_evidence_beat():
+    try:
+        AssetPlanner(options=[AssetKind.DIAGRAM, MINIMAX_IMAGE]).plan(
+            PlanRequest(beat_id="b2", role="benchmark", requires_evidence=True)
+        )
+    except GeneratedAssetEvidenceError:
+        pass
+    else:
+        raise AssertionError("diagram plus generated satisfied an evidence beat")
+    print("[ok] 67. DIAGRAM plus MINIMAX_IMAGE still refuses an evidence beat")
+
+
+def test_evidence_beat_prefers_captured_over_drawn():
+    for options, expected in (
+        ([AssetKind.SCREENSHOT, AssetKind.DIAGRAM], AssetKind.SCREENSHOT),
+        ([AssetKind.REAL, AssetKind.SCREENSHOT, AssetKind.DIAGRAM], AssetKind.REAL),
+        ([AssetKind.SCREEN_RECORDING, AssetKind.DIAGRAM], AssetKind.SCREEN_RECORDING),
+    ):
+        planned = AssetPlanner(options=options).plan(
+            PlanRequest(beat_id="b3", role="proof", requires_evidence=True)
+        )
+        assert planned.kind == expected, (options, planned.kind)
+        assert planned.evidence_capable is True
+        assert planned.evidence_use == EvidenceUse.EVIDENCE
+    print("[ok] 68. an evidence beat resolves to real or captured material only")
+
+
+def test_diagram_is_valid_for_a_support_beat():
+    planned = AssetPlanner(options=[AssetKind.DIAGRAM]).plan(
+        PlanRequest(beat_id="b4", role="architecture", requires_evidence=False)
+    )
+    assert planned.kind == AssetKind.DIAGRAM
+    assert planned.evidence_capable is False
+    assert planned.evidence_use == EvidenceUse.VISUAL_SUPPORT
+    # And it registers cleanly in that role.
+    record = AssetRegistry().register(
+        asset_id="diagram-support", kind=AssetKind.DIAGRAM, path="arch.png",
+        evidence_use=EvidenceUse.VISUAL_SUPPORT,
+    )
+    assert record.generated is False
+    assert record.evidence_capable is False
+    assert record.evidence_use == EvidenceUse.VISUAL_SUPPORT
+    print("[ok] 69. a diagram is valid support material, and is labelled as such")
+
+
+def test_registry_refuses_to_escalate_a_diagram():
+    registry = AssetRegistry()
+    try:
+        registry.register(
+            asset_id="escalate", kind=AssetKind.DIAGRAM, path="d.png",
+            evidence_capable=True,
+        )
+    except GeneratedAssetEvidenceError as exc:
+        assert "not evidence capable" in str(exc), str(exc)
+    else:
+        raise AssertionError("a diagram was promoted to evidence capable")
+    print("[ok] 70. the registry refuses to escalate a diagram's capability")
+
+
+def test_registry_refuses_a_diagram_for_every_claim_bearing_role():
+    registry = AssetRegistry()
+    for role in EvidenceUse.CLAIM_BEARING:
+        for capable in (None, True, False):
+            try:
+                registry.register(
+                    asset_id=f"claim-{role}-{capable}", kind=AssetKind.DIAGRAM,
+                    path="d.png", evidence_use=role, evidence_capable=capable,
+                )
+            except GeneratedAssetEvidenceError:
+                continue
+            raise AssertionError(f"a diagram was accepted as {role} (capable={capable})")
+    print("[ok] 71. a diagram is refused every claim-bearing role, whatever the caller says")
+
+
+def test_registry_refuses_a_generated_video_for_every_claim_bearing_role():
+    registry = AssetRegistry()
+    for role in EvidenceUse.CLAIM_BEARING:
+        for capable in (None, True, False):
+            try:
+                registry.register(
+                    asset_id=f"video-{role}-{capable}", kind=AssetKind.GENERATED_VIDEO,
+                    path="clip.mp4", evidence_use=role, evidence_capable=capable,
+                    receipt_ref="clip.mp4.receipt.json",
+                )
+            except GeneratedAssetEvidenceError:
+                continue
+            raise AssertionError(f"a generated video was accepted as {role}")
+    print("[ok] 72. a generated video is refused every claim-bearing role")
+
+
+def test_real_and_captured_may_still_carry_claims():
+    registry = AssetRegistry()
+    for kind in AssetKind.EVIDENCE_CAPABLE:
+        for role in EvidenceUse.CLAIM_BEARING:
+            record = registry.register(
+                asset_id=f"{kind}-{role}", kind=kind, path="capture.bin",
+                evidence_use=role, evidence_capable=True,
+            )
+            assert record.evidence_capable is True, (kind, role)
+            assert record.evidence_use == role
+            assert record.generated is False
+    print("[ok] 73. real, screenshot and screen recording may still carry any claim")
+
+
+def test_real_assets_may_be_downgraded_to_support():
+    """Downgrade is legal. Upgrade is not."""
+    registry = AssetRegistry()
+    for kind in (AssetKind.REAL, AssetKind.SCREENSHOT, AssetKind.SCREEN_RECORDING):
+        record = registry.register(
+            asset_id=f"downgrade-{kind}", kind=kind, path="pretty.png",
+            evidence_capable=False,
+        )
+        assert record.evidence_capable is False, kind
+        assert record.evidence_use == EvidenceUse.VISUAL_SUPPORT, kind
+    # ...and a downgraded asset still may not carry a claim.
+    try:
+        registry.register(
+            asset_id="downgraded-claim", kind=AssetKind.REAL, path="pretty.png",
+            evidence_capable=False, evidence_use=EvidenceUse.EVIDENCE,
+        )
+    except GeneratedAssetEvidenceError:
+        pass
+    else:
+        raise AssertionError("a downgraded asset still carried a claim")
+    print("[ok] 74. real assets may be downgraded, and a downgrade blocks claims")
+
+
+def test_generated_protections_are_unchanged():
+    registry = AssetRegistry()
+    for kind in AssetKind.GENERATED:
+        record = registry.register(
+            asset_id=f"ok-{kind}", kind=kind, path="generated.bin",
+            evidence_use=EvidenceUse.VISUAL_SUPPORT,
+            receipt_ref="generated.bin.receipt.json",
+        )
+        assert record.generated is True, kind
+        assert record.evidence_capable is False, kind
+        # No receipt means no provenance, so no registration.
+        try:
+            registry.register(
+                asset_id=f"no-receipt-{kind}", kind=kind, path="generated.bin",
+                evidence_use=EvidenceUse.VISUAL_SUPPORT,
+            )
+        except GeneratedAssetEvidenceError:
+            continue
+        raise AssertionError(f"{kind} registered without a receipt reference")
+    print("[ok] 75. generated kinds still require generated=true, not capable, and a receipt")
+
+
+def test_registry_boundary_survives_a_direct_state_rewrite():
+    """The cheap insurance check must actually notice a corrupted record."""
+    registry = AssetRegistry()
+    registry.register(
+        asset_id="diagram", kind=AssetKind.DIAGRAM, path="d.png",
+        evidence_use=EvidenceUse.VISUAL_SUPPORT,
+    )
+    registry.assert_evidence_boundary()  # clean
+    record = registry.get("diagram")
+    record.evidence_use = EvidenceUse.BENCHMARK_PROOF
+    try:
+        registry.assert_evidence_boundary()
+    except GeneratedAssetEvidenceError as exc:
+        assert "diagram" in str(exc)
+    else:
+        raise AssertionError("a corrupted registry passed the boundary check")
+    print("[ok] 76. the registry boundary check catches a corrupted record")
+
+
+# --- 13. planner -------------------------------------------------------------
+
 
 def test_planner_prefers_real_evidence_for_a_claim():
     planner = AssetPlanner()
@@ -1353,7 +1567,7 @@ def test_planner_prefers_real_evidence_for_a_claim():
     assert planned.kind == AssetKind.REAL
     assert planned.evidence_capable is True
     assert planned.kind != MINIMAX_IMAGE
-    print("[ok] 55. a beat that asserts a fact never resolves to a generated image")
+    print("[ok] 77. a beat that asserts a fact never resolves to a generated image")
 
 
 def test_planner_uses_a_generated_image_for_support_beats():
@@ -1362,7 +1576,7 @@ def test_planner_uses_a_generated_image_for_support_beats():
     assert planned.kind == MINIMAX_IMAGE
     assert planned.evidence_capable is False
     assert planned.evidence_use == EvidenceUse.VISUAL_SUPPORT
-    print("[ok] 56. a support beat resolves to a generated image, marked non-evidence")
+    print("[ok] 78. a support beat resolves to a generated image, marked non-evidence")
 
 
 def test_planner_refuses_evidence_when_only_generation_is_available():
@@ -1373,7 +1587,7 @@ def test_planner_refuses_evidence_when_only_generation_is_available():
         assert "evidence" in str(exc).lower()
     else:
         raise AssertionError("a generated-only planner satisfied an evidence beat")
-    print("[ok] 57. an image-only planner refuses a beat that requires evidence")
+    print("[ok] 79. an image-only planner refuses a beat that requires evidence")
 
 
 def test_planner_priority_order_is_evidence_first():
@@ -1382,7 +1596,7 @@ def test_planner_priority_order_is_evidence_first():
         AssetKind.REAL, AssetKind.SCREENSHOT, AssetKind.SCREEN_RECORDING,
         AssetKind.DIAGRAM, MINIMAX_IMAGE,
     ]
-    print("[ok] 58. planner priority runs from real evidence down to generated visuals")
+    print("[ok] 80. planner priority runs from real evidence down to generated visuals")
 
 
 # --- 13. text contamination --------------------------------------------------
@@ -1401,7 +1615,7 @@ def test_text_contamination_is_a_signal_not_a_verdict():
         assert set(payload) >= {"text_contamination_suspected", "edge_density"}
         # It is a hint, and the API says so by not being a boolean failure.
         assert not hasattr(signal, "approved")
-    print("[ok] 59. text contamination is exposed as a suspicion signal, not a verdict")
+    print("[ok] 81. text contamination is exposed as a suspicion signal, not a verdict")
 
 
 def test_text_contamination_survives_into_the_receipt():
@@ -1413,7 +1627,7 @@ def test_text_contamination_survives_into_the_receipt():
         payload = receipt_to_dict(outcome.receipt)
         assert "text_contamination_suspected" in payload
         assert payload["text_contamination_suspected"] in (True, False)
-    print("[ok] 60. the text contamination signal is recorded in the receipt")
+    print("[ok] 82. the text contamination signal is recorded in the receipt")
 
 
 # --- 14. Windows behaviour ---------------------------------------------------
@@ -1428,7 +1642,7 @@ def test_image_generation_uses_the_shared_process_layer():
     for forbidden in ("subprocess.run", "subprocess.Popen", "os.system", "os.popen"):
         assert forbidden not in source, f"{forbidden} bypasses the shared process layer"
     assert minimax_image.hidden_run is not None
-    print("[ok] 61. image generation goes through the shared, popup-free process layer")
+    print("[ok] 83. image generation goes through the shared, popup-free process layer")
 
 
 def test_image_cli_reports_health_without_generating():
@@ -1449,7 +1663,7 @@ def test_image_cli_reports_health_without_generating():
         assert payload["capabilities"]["evidence_capable"] is False
     else:
         assert "Traceback" not in result.stderr, result.stderr[-400:]
-    print("[ok] 62. the image CLI reports health without generating anything")
+    print("[ok] 84. the image CLI reports health without generating anything")
 
 
 def test_image_cli_refuses_invalid_dimensions_without_generating():
@@ -1464,7 +1678,7 @@ def test_image_cli_refuses_invalid_dimensions_without_generating():
         assert payload["verdict"] == "DIMENSIONS_REJECTED_LOCALLY"
         assert payload["generated"] is False
         assert payload["provider_call"] is False
-    print("[ok] 63. the CLI rejects bad dimensions locally, before any provider call")
+    print("[ok] 85. the CLI rejects bad dimensions locally, before any provider call")
 
 
 TESTS = [
@@ -1516,6 +1730,19 @@ TESTS = [
     test_binding_is_one_shared_implementation,
     test_secret_sentinel_never_reaches_any_persisted_output,
     test_receipt_records_credential_class_never_the_value,
+    test_canonical_evidence_boundary_is_defined_in_exactly_one_place,
+    test_planner_derives_capability_instead_of_duplicating_it,
+    test_diagram_only_planner_refuses_an_evidence_beat,
+    test_diagram_and_generated_planner_refuses_an_evidence_beat,
+    test_evidence_beat_prefers_captured_over_drawn,
+    test_diagram_is_valid_for_a_support_beat,
+    test_registry_refuses_to_escalate_a_diagram,
+    test_registry_refuses_a_diagram_for_every_claim_bearing_role,
+    test_registry_refuses_a_generated_video_for_every_claim_bearing_role,
+    test_real_and_captured_may_still_carry_claims,
+    test_real_assets_may_be_downgraded_to_support,
+    test_generated_protections_are_unchanged,
+    test_registry_boundary_survives_a_direct_state_rewrite,
     test_generated_image_cannot_be_registered_as_evidence,
     test_generated_image_cannot_declare_itself_evidence_capable,
     test_generated_image_requires_a_receipt_reference,

@@ -160,12 +160,42 @@ chart" invents one, and invented glyphs read as data. Critical text is a
 deterministic overlay applied later. `text_contamination_suspected` is an honest
 suspicion signal from edge-density measurements, never a verdict.
 
-### Hard Fail: generated image used as evidence
+### Hard Fail: support-only asset used as evidence
 
-Registering a `GENERATED_IMAGE` as `EVIDENCE`, `CLAIM_SOURCE`, `BENCHMARK_PROOF`,
+Evidence-capable kinds, and only these:
+
+| Kind | |
+|---|---|
+| `REAL` | a real recording, photograph or capture |
+| `SCREENSHOT` | a real screen capture |
+| `SCREEN_RECORDING` | a real screen recording |
+
+Support-only kinds:
+
+| Kind | May | May never |
+|---|---|---|
+| `DIAGRAM` | explain architecture, flow, relationship, concept, sequence | witness a benchmark, test result, analytics metric, customer outcome, UI state, source-code fact or production behaviour |
+| `GENERATED_IMAGE` | hook, cover, concept, metaphor, background, transition | carry any claim |
+| `GENERATED_VIDEO` | hook, hero, concept, transition, impossible-to-record shot | carry any claim |
+
+A diagram is a legitimate asset. It **explains**; it does not **prove**. When one
+illustrates a claim, the real source behind it stays traceable separately through
+`claim_refs`.
+
+Registering any of them as `EVIDENCE`, `CLAIM_SOURCE`, `BENCHMARK_PROOF`,
 `TEST_RESULT`, `ANALYTICS_PROOF`, `UI_SCREENSHOT`, `CUSTOMER_PROOF` or
-`SOURCE_CODE_PROOF` raises `GeneratedAssetEvidenceError`. So does declaring a
-generated asset `evidence_capable`, and so does omitting its `receipt_ref`.
+`SOURCE_CODE_PROOF` raises `GeneratedAssetEvidenceError`, **even when the caller
+passes `evidence_capable=True`**. Generated assets also require
+`evidence_capable=False` and a `receipt_ref`.
+
+Capability may be lowered, never raised:
+
+```
+CALLER MAY REDUCE CAPABILITY
+CALLER MAY NEVER ESCALATE CAPABILITY
+```
+
+A real capture used decoratively is legal. Promoting a diagram into proof is not.
 
 This is a domain error at the single point an asset enters the system, not a note
 in a document that a prompt can ignore.

@@ -94,10 +94,39 @@ TEST_VIDEO_DURATION_POLICY:
 而假造的字形会被当成数据阅读。关键文字由后续的确定性叠加层生成。
 `text_contamination_suspected` 是基于边缘密度的“可能含文字”信号，而非定论。
 
-### 硬性失败：生成图片被当作证据
+### 硬性失败：仅装饰用资产被当作证据
 
-将 `GENERATED_IMAGE` 登记为 `EVIDENCE`、`CLAIM_SOURCE`、`BENCHMARK_PROOF`、`TEST_RESULT`、
+可承载事实的类型，且仅限于这三种：
+
+| 类型 | |
+|---|---|
+| `REAL` | 真实录制、照片或采集 |
+| `SCREENSHOT` | 真实屏幕截图 |
+| `SCREEN_RECORDING` | 真实屏幕录制 |
+
+仅装饰用的类型：
+
+| 类型 | 可以 | 绝不可以 |
+|---|---|---|
+| `DIAGRAM` | 解释架构、流程、关系、概念、序列 | 作为基准、测试结果、分析指标、客户结果、UI 状态、源码事实或生产行为的证人 |
+| `GENERATED_IMAGE` | 引子、封面、概念、软试、背景、过渡 | 承载任何事实声称 |
+| `GENERATED_VIDEO` | 引子、主视觉、概念、过渡、难以实拍的镜头 | 承载任何事实声称 |
+
+图表是合法且有用的资产。它负责**解释**，而不负责**证明**。
+当图表用于说明某个声称时，其后的真实来源必须通过 `claim_refs` 单独可追溯。
+
+将上述任一类登记为 `EVIDENCE`、`CLAIM_SOURCE`、`BENCHMARK_PROOF`、`TEST_RESULT`、
 `ANALYTICS_PROOF`、`UI_SCREENSHOT`、`CUSTOMER_PROOF` 或 `SOURCE_CODE_PROOF`，会抛出
-`GeneratedAssetEvidenceError`。声明生成资产为 `evidence_capable`，或缺少 `receipt_ref`，同样被拒绝。
+`GeneratedAssetEvidenceError`，**即使调用方传入 `evidence_capable=True` 也一样**。
+生成资产还要求 `evidence_capable=False` 与 `receipt_ref`。
+
+能力只能下调，不能上调：
+
+```
+调用方可以降低能力
+调用方绝不能提升能力
+```
+
+（真实材料仅作装饰使用，是合法的；把图表提升为证明，则不是。）
 
 这是在资产进入系统的唯一入口处抛出的领域错误，而不是一条可被提示词忽略的文档说明。
