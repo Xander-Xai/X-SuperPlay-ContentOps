@@ -58,8 +58,10 @@
 | Transport | official MiniMax CLI `mmx` (`mmx-cli` v1.0.27) |
 | Speech | **VERIFIED** — `speech-2.8-hd`, 32 kHz mono WAV |
 | Image | **VERIFIED** — `image-01`, 9:16 portrait, seed supported |
-| H3 video | **NOT_ENTITLED / BLOCKED** — H3 requires a pay-as-you-go or credit key |
+| H3 video | **VERIFIED** — real `MiniMax-H3` 768P 4 s task succeeded on the Subscription Key |
+| H3 reference / keyframe modes | **DOCUMENTED_BUT_NOT_TESTED** — same credential, not exercised |
 | Credit Pack balance | `0.00` observed, re-checked before every generation |
+| Balance read dependency | `UNDOCUMENTED_FIRST_PARTY_IMPLEMENTATION_DEPENDENCY`, fail closed |
 | Evidence | `research/providers/minimax-mplan-explore-capability.md` |
 
 ## Golden Samples

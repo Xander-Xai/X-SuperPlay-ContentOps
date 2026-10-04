@@ -91,7 +91,14 @@ from process_utils import (  # noqa: E402
 PROBE_STATUS_VERIFIED = "VERIFIED"
 PROBE_STATUS_BLOCKED = "BLOCKED"
 BLOCKED_BILLING = "BLOCKED_BILLING_SOURCE_UNCERTAIN"
-BLOCKED_H3 = "BLOCKED_H3_ENTITLEMENT_UNVERIFIED"
+BLOCKED_H3 = "H3_REQUIRES_EXPLICIT_CONSENT"
+BLOCKED_H3_PROGRAMMATIC = "PROGRAMMATIC_SUBSCRIPTION_PATH_REJECTED"
+TRANSIENT_H3 = "TRANSIENT_OR_AMBIGUOUS_PROVIDER_STATE"
+
+# Classification of the balance read used by the billing pre-flight. It is
+# deliberately NOT described as documented, because it is not.
+BALANCE_ENDPOINT_CLASS = "UNDOCUMENTED_FIRST_PARTY_IMPLEMENTATION_DEPENDENCY"
+BALANCE_ENDPOINT_PATH = "/account/query_balance"
 
 CLI = "mmx"
 HTTP_TIMEOUT = 60
@@ -218,13 +225,20 @@ def plan_quota(base_url: str, key: str) -> Dict[str, Any]:
 def balances(base_url: str, key: str) -> Dict[str, Any]:
     """PAYG cash / Credit Pack / voucher / owed amounts. Read-only.
 
-    This is a first-party endpoint that the official CLI (mmx-cli) itself calls
-    for the same purpose; it is not part of the public documentation index, so
-    the pre-flight treats any failure to read it as a hard block rather than
-    assuming a zero balance.
+    Classification: ``UNDOCUMENTED_FIRST_PARTY_IMPLEMENTATION_DEPENDENCY``.
+
+    It is a first-party endpoint that the official CLI (mmx-cli) itself calls
+    for this exact purpose, and it is the only way found to observe the Credit
+    Pack balance, which is what makes subscription-only billing provable. But it
+    is **not listed in the public API documentation**, so it may change without
+    notice. Research use only unless it is separately accepted as a production
+    dependency; when MiniMax exposes an official equivalent, migrate to it.
+
+    Consequence for behaviour: any transport failure, schema change or missing
+    field is a hard block. An unreadable balance is never treated as zero.
     """
     try:
-        return _get_json(base_url.rstrip("/") + "/account/query_balance", key)
+        return _get_json(base_url.rstrip("/") + BALANCE_ENDPOINT_PATH, key)
     except (urllib.error.URLError, urllib.error.HTTPError, json.JSONDecodeError, TimeoutError) as e:
         return {"error": type(e).__name__, "detail": scrub(str(e))}
 
@@ -305,7 +319,7 @@ def preflight(cfg: Dict[str, Any], cred: Dict[str, Any]) -> Dict[str, Any]:
         "voucher_balance": bal.get("voucher_balance"),
         "owed_amount": bal.get("owed_amount"),
         "plan_usage": q,
-        "balance_endpoint_first_party": True,
+        "balance_endpoint_class": BALANCE_ENDPOINT_CLASS,
     }
 
 
@@ -356,16 +370,14 @@ def probe_media(
         if not ack_h3:
             return {
                 "mode": "video",
-                "status": PROBE_STATUS_BLOCKED,
+                "status": "BLOCKED",
                 "verdict": BLOCKED_H3,
                 "reasons": [
-                    "current official M Plan pages state Explore includes H3, "
-                    "while the current official Video Generation pages state H3 "
-                    "requires the pay-as-you-go API",
-                    "H3 is the most expensive modality in the plan and the "
-                    "contradiction is unresolved, so no generation is justified",
-                    "re-run with --confirm-h3-unverified only if a human accepts "
-                    "that cost and the entitlement risk",
+                    "H3 is VERIFIED for a Subscription Key, but video is the most "
+                    "expensive modality in the plan and consumes weekly quota, so "
+                    "it never runs by default",
+                    "re-run with --confirm-h3-unverified to authorise exactly one "
+                    "minimal included-plan smoke",
                 ],
                 "generation_attempted": False,
             }
@@ -566,40 +578,222 @@ def _probe_image_dims(path: Path) -> Dict[str, Any]:
 
 
 def _probe_video(gate: Dict[str, Any], out_dir: Path) -> Dict[str, Any]:
-    """One minimal H3 text-to-video job. Only reachable with explicit consent."""
+    """Exactly one minimal H3 text-to-video job.
+
+    Measured facts that shaped this function:
+
+    - A Subscription Key **is** accepted for ``MiniMax-H3``. The official CLI
+      skill still says a Token Plan Subscription Key is unsupported for H3, but
+      that guidance was written in the Token Plan era and the real M Plan
+      account contradicts it. The account settled it, so this is no longer a
+      documentation conflict.
+    - The official CLI exposes **no** resolution flag and silently drops
+      ``--resolution``, always sending ``2K``. Requesting 768P therefore needs
+      the documented public API, which is the sanctioned transport for a
+      capability gap. The balance endpoint is *not* in that category.
+    - Exactly one create request is ever sent. If it returns a task id, only
+      that task is polled. A download failure retries the download, never the
+      generation.
+    """
     path = out_dir / "m2-video-h3.mp4"
-    r = hidden_run(
-        [
-            _exe(), "video", "generate",
-            "--model", "MiniMax-H3",
-            "--prompt", "Static close-up of a single candle flame on a dark table.",
-            "--duration", "4",
-            "--ratio", "9:16",
-            "--download", str(path),
-            "--quiet", "--non-interactive",
-        ],
-        timeout=1800,
-    )
+    base_url = _base_url()
+    key = read_credential().get("_secret") or ""
+
+    payload = {
+        "model": "MiniMax-H3",
+        "content": [{
+            "type": "text",
+            "text": (
+                "A static close-up of a single candle flame on a dark table, "
+                "subtle natural motion, no text, no logo."
+            ),
+        }],
+        "duration": 4,
+        "resolution": "768P",
+        "ratio": "9:16",
+    }
+
+    created, create_meta = _create_h3_task(base_url, key, payload)
     entry: Dict[str, Any] = {
         "model": "MiniMax-H3",
         "mode": "text-to-video",
-        "duration_s": 4,
-        "ratio": "9:16",
-        "returncode": r.returncode,
-        "generated": path.is_file(),
+        "transport": "documented_public_api",
+        "transport_reason": "official CLI drops --resolution and always sends 2K",
+        "duration_requested_s": 4,
+        "resolution_requested": "768P",
+        "ratio_requested": "9:16",
+        "task_created": bool(created),
+        "task_ref_hash_prefix": create_meta.get("task_ref_hash_prefix"),
+        "create_http_status": create_meta.get("http_status"),
+        "create_base_resp": create_meta.get("base_resp"),
+        "generation_attempted": True,
     }
-    if path.is_file():
-        entry["sha256"] = sha256_of(path)
-        entry["bytes"] = path.stat().st_size
+
+    if not created:
+        entry["result_status"] = "TASK_NOT_CREATED"
+        return {
+            "mode": "video",
+            "status": "GENERATION_FAILED",
+            "verdict": create_meta.get("verdict", "UNKNOWN"),
+            "generation_attempted": True,
+            "preflight": _gate_brief(gate),
+            "results": [entry],
+        }
+
+    status, download_url = _poll_h3_task(base_url, key, created)
+    entry["result_status"] = status
+
+    if status == "succeeded" and download_url:
+        got = _download(download_url, path)
+        entry["downloaded"] = bool(got)
+        if got:
+            entry["sha256"] = sha256_of(path)
+            entry["bytes"] = path.stat().st_size
+            entry.update(_probe_video_props(path))
     else:
-        entry["error"] = scrub((r.stderr or "")[:600])
+        entry["downloaded"] = False
+
     return {
         "mode": "video",
-        "status": PROBE_STATUS_VERIFIED if entry["generated"] else "GENERATION_FAILED",
+        "status": PROBE_STATUS_VERIFIED if entry.get("downloaded") else "GENERATION_FAILED",
         "generation_attempted": True,
-        "entitlement_acknowledged_unverified": True,
         "preflight": _gate_brief(gate),
         "results": [entry],
+    }
+
+
+def _base_url() -> str:
+    return str(cli_config().get("base_url") or "")
+
+
+def task_ref_hash(task_id: str) -> str:
+    """Salted hash prefix, so a receipt cannot be linked back to a raw task id."""
+    return hashlib.sha256(("h3smoke2026:" + task_id).encode("utf-8")).hexdigest()[:12]
+
+
+def _create_h3_task(
+    base_url: str, key: str, payload: Dict[str, Any]
+) -> tuple:
+    """One create request. Never retried automatically."""
+    import urllib.request
+
+    meta: Dict[str, Any] = {}
+    req = urllib.request.Request(
+        base_url.rstrip("/") + "/v2/video_generation",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Authorization": "Bearer " + key,
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            meta["http_status"] = resp.status
+            data = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        meta["http_status"] = e.code
+        meta["base_resp"] = scrub(_safe_json(e))
+        # A stable entitlement or model rejection is a definitive answer and
+        # must never be retried with a different credential.
+        meta["verdict"] = (
+            BLOCKED_H3_PROGRAMMATIC if e.code in (400, 401, 403) else "UNKNOWN"
+        )
+        return None, meta
+    except (urllib.error.URLError, TimeoutError) as e:
+        meta["http_status"] = None
+        meta["base_resp"] = scrub(f"{type(e).__name__}: {e}")
+        meta["verdict"] = TRANSIENT_H3
+        return None, meta
+
+    meta["base_resp"] = data.get("base_resp")
+    task_id = data.get("task_id")
+    if task_id:
+        meta["task_ref_hash_prefix"] = task_ref_hash(str(task_id))
+    return (str(task_id) if task_id else None), meta
+
+
+def _poll_h3_task(base_url: str, key: str, task_id: str, timeout_s: int = 900) -> tuple:
+    """Poll one task. Status queries may be retried; the task is never replaced."""
+    import time
+    import urllib.request
+
+    deadline = time.monotonic() + timeout_s
+    status = ""
+    url = None
+    while time.monotonic() < deadline:
+        time.sleep(10)
+        req = urllib.request.Request(
+            base_url.rstrip("/") + "/v2/query/video_generation/" + task_id,
+            headers={"Authorization": "Bearer " + key},
+            method="GET",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+        except (urllib.error.URLError, TimeoutError):
+            continue  # status query only; the task itself is untouched
+        task = data.get("task") or {}
+        status = str(task.get("status") or "")
+        if status == "succeeded":
+            url = (task.get("content") or {}).get("url")
+        if status in ("succeeded", "failed", "cancelled", "expired"):
+            break
+    return status, url
+
+
+def _download(url: str, path: Path) -> bool:
+    """Download retries are allowed. Regeneration is not."""
+    import urllib.request
+
+    for _ in range(3):
+        try:
+            req = urllib.request.Request(url, method="GET")
+            with urllib.request.urlopen(req, timeout=300) as resp:
+                path.write_bytes(resp.read())
+            return True
+        except (urllib.error.URLError, TimeoutError):
+            continue
+    return False
+
+
+def _safe_json(err: Exception) -> str:
+    try:
+        return json.dumps(json.loads(err.read().decode("utf-8")))
+    except Exception:
+        return ""
+
+
+def _probe_video_props(path: Path) -> Dict[str, Any]:
+    if not shutil.which("ffprobe"):
+        return {"ffprobe": "not installed"}
+    r = hidden_run(
+        ["ffprobe", "-v", "error",
+         "-show_entries", "stream=codec_name,codec_type,width,height,r_frame_rate",
+         "-show_entries", "format=duration,size",
+         "-of", "json", str(path)],
+        timeout=120,
+    )
+    if r.returncode != 0:
+        return {"ffprobe_ok": False}
+    info = json.loads(r.stdout or "{}")
+    video = next(
+        (s for s in info.get("streams", []) if s.get("codec_type") == "video"), {}
+    )
+    audio = next(
+        (s for s in info.get("streams", []) if s.get("codec_type") == "audio"), {}
+    )
+    w, h = video.get("width"), video.get("height")
+    return {
+        "ffprobe_ok": True,
+        "video_codec": video.get("codec_name"),
+        "audio_codec": audio.get("codec_name"),
+        "audio_present_unrequested": bool(audio),
+        "width": w,
+        "height": h,
+        "fps": video.get("r_frame_rate"),
+        "duration_s": round(float((info.get("format") or {}).get("duration", 0)), 3),
+        "aspect_ratio": round(w / h, 4) if w and h else None,
     }
 
 

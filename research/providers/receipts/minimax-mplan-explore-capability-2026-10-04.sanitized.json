@@ -1,14 +1,15 @@
 {
   "schema": "contentops.provider-capability-receipt/v1",
   "receipt_kind": "sanitized_capability_evidence",
+  "revision": 2,
+  "revision_reason": "H3 subscription smoke added after an account test resolved the OFFICIAL_DOC_CONFLICT. The earlier NOT_ENTITLED claim was an inference from Token Plan-era guidance and was too strong.",
   "generated_by": "scripts/minimax_capability_probe.py",
-  "note": "RESEARCH PROBE ONLY -- NOT A PRODUCTION PROVIDER. No credential value, key fragment, task id, account id or private URL is recorded in this file.",
-
+  "note": "RESEARCH PROBE ONLY -- NOT A PRODUCTION PROVIDER. No credential value, key fragment, task id, account id or private endpoint is recorded here.",
   "checked_at_utc": "2026-10-03T23:35:40+00:00",
+  "h3_checked_at_utc": "2026-10-03T23:57:00+00:00",
   "checked_at_local_date": "2026-10-04",
   "issue": "#4",
   "milestone": "M2.0",
-
   "provider": "minimax",
   "product": "m_plan",
   "tier": "explore",
@@ -17,9 +18,8 @@
   "billing_mode": "subscription",
   "payg_allowed": false,
   "credit_pack_allowed": false,
-
   "transport": {
-    "kind": "official_cli",
+    "kind": "official_cli_plus_documented_public_api",
     "name": "MiniMax CLI",
     "executable": "mmx",
     "package": "mmx-cli",
@@ -33,11 +33,28 @@
     "windows_support": "VERIFIED",
     "install_method": "npm install -g mmx-cli",
     "structured_output": "json via --output json",
-    "async_video_support": "documented (--async / --no-wait), blocked by entitlement"
+    "async_video_support": "VERIFIED, create then poll then download",
+    "documented_api_used_for": "video only, because the official CLI cannot set resolution",
+    "cli_capability_gap": {
+      "flag": "--resolution",
+      "behaviour": "silently dropped; a --dry-run payload still carried resolution 2K",
+      "consequence": "768P is unreachable through the CLI, so video uses the documented public API"
+    }
   },
-
+  "balance_read_dependency": {
+    "classification": "UNDOCUMENTED_FIRST_PARTY_IMPLEMENTATION_DEPENDENCY",
+    "first_party": true,
+    "used_by_official_cli": true,
+    "listed_in_public_api_docs": false,
+    "may_change_without_notice": true,
+    "scope": "research only unless separately accepted for production",
+    "failure_behaviour": "fail closed on transport error, schema change or missing field",
+    "justification": "sole method found to observe the Credit Pack balance, which is what makes subscription-only billing provable",
+    "migration_path": "encapsulate behind a single BillingGuard with sanitized contract tests; migrate when MiniMax publishes an official equivalent"
+  },
   "auth": {
     "credential_class": "SUBSCRIPTION",
+    "key_prefix_class": "sk-cp",
     "subscription_credential_present": true,
     "payg_credential_present": false,
     "auth_method": "api_key_in_cli_config",
@@ -47,19 +64,22 @@
       "mmx auth status": "BACKGROUND_HIDDEN"
     }
   },
-
   "quota": {
     "status": "VERIFIED",
-    "exposed_by": ["mmx quota", "mmx auth status", "first_party_remains_endpoint"],
+    "exposed_by": [
+      "mmx quota",
+      "mmx auth status",
+      "first_party_remains_endpoint"
+    ],
     "bucket_reported": "general",
     "bucket_count": 1,
     "modality_breakdown_exposed": false,
     "interval_5h_remaining_percent": 99,
-    "weekly_remaining_percent": 65,
+    "weekly_remaining_percent": 58,
+    "weekly_remaining_percent_before_h3": 65,
     "absolute_counts_exposed": false,
-    "video_has_separate_window": "documented (weekly only), not separately observable"
+    "video_has_separate_window": "documented (weekly only), confirmed by the H3 run"
   },
-
   "billing_preflight": {
     "verdict": "VERIFIED_INCLUDED_PLAN_QUOTA",
     "payg_balance": "0.00",
@@ -69,13 +89,24 @@
     "credit_pack_fallback_possible": false,
     "payg_charge_possible": false,
     "basis": "Subscription Key draws on included plan usage and Credit Packs; Credit Pack overspend is documented as automatic with no documented disable switch. A zero Credit Pack balance is therefore the only provable exclusion, and it is observed.",
-    "must_reevaluate_before_every_generation": true
+    "must_reevaluate_before_every_generation": true,
+    "confirmed_by_video_generation": {
+      "note": "the strongest billing evidence in this audit, because the generation actually succeeded",
+      "weekly_remaining_percent_before": 65,
+      "weekly_remaining_percent_after": 58,
+      "interval_5h_remaining_percent_before": 99,
+      "interval_5h_remaining_percent_after": 99,
+      "payg_balance_after": "0.00",
+      "credit_pack_balance_after": "0.00",
+      "voucher_balance_after": "0.00",
+      "owed_amount_after": "0.00",
+      "conclusion": "plan quota fell while every paid balance stayed at zero, so video consumes included plan entitlement only"
+    }
   },
-
   "capabilities": {
     "text": {
       "status": "VERIFIED",
-      "transport": "official_cli + anthropic/openai compatible endpoints",
+      "transport": "official_cli plus anthropic/openai compatible endpoints",
       "models_observed_via_key": [
         "MiniMax-M3",
         "MiniMax-M2.7",
@@ -86,18 +117,20 @@
         "MiniMax-M2.1-highspeed",
         "MiniMax-M2"
       ],
-      "note": "model listing endpoint returns text models only; it is not a modality entitlement list"
+      "note": "the model listing endpoint returns text models only; it is not a modality entitlement list"
     },
     "image": {
       "status": "VERIFIED",
       "model": "image-01",
-      "models_documented": ["image-01", "image-01-live"],
+      "models_documented": [
+        "image-01",
+        "image-01-live"
+      ],
       "sync": true,
       "aspect_ratio_supported": true,
       "portrait_9_16_verified": true,
       "seed_supported": true,
       "custom_dimensions": "512-2048, multiple of 8",
-      "nrmax_dimension_observed": "768x1360 requested and delivered",
       "output_container_observed": "jpeg",
       "output_container_matches_requested_extension": false
     },
@@ -105,21 +138,44 @@
       "status": "VERIFIED",
       "model": "speech-2.8-hd",
       "models_documented": [
-        "speech-2.8-hd", "speech-2.8-turbo",
-        "speech-2.6-hd", "speech-2.6-turbo",
-        "speech-02-hd", "speech-02-turbo",
-        "speech-01-hd", "speech-01-turbo"
+        "speech-2.8-hd",
+        "speech-2.8-turbo",
+        "speech-2.6-hd",
+        "speech-2.6-turbo",
+        "speech-02-hd",
+        "speech-02-turbo",
+        "speech-01-hd",
+        "speech-01-turbo"
       ],
       "sync": true,
       "async_long_form_documented": true,
       "sync_char_limit": 10000,
-      "formats_verified": ["wav"],
-      "formats_documented": ["mp3", "pcm", "flac", "wav", "pcmu_raw", "pcmu_wav", "opus"],
+      "formats_verified": [
+        "wav"
+      ],
+      "formats_documented": [
+        "mp3",
+        "pcm",
+        "flac",
+        "wav",
+        "pcmu_raw",
+        "pcmu_wav",
+        "opus"
+      ],
       "sample_rate_hz_verified": 32000,
-      "sample_rates_documented": [8000, 16000, 22050, 24000, 32000, 44100],
+      "sample_rates_documented": [
+        8000,
+        16000,
+        22050,
+        24000,
+        32000,
+        44100
+      ],
       "channels_verified": 1,
       "voice_count_listed": 303,
       "pronunciation_mechanism": "pronunciation_dict.tone[] as source/replacement; plain text, parenthesised pinyin with tone digits, parenthesised IPA, or Japanese kana",
+      "pronunciation_mechanism_verified_best": "plain-text expansion",
+      "pronunciation_mechanism_rejected": "IPA, measured worse than no rules for compound brand names",
       "ssml_supported": false,
       "inline_pronunciation_override_supported": true,
       "pause_marker_supported": "<#seconds#>",
@@ -132,31 +188,99 @@
     },
     "voice_design": {
       "status": "DOCUMENTED_BUT_NOT_TESTED",
-      "reason": "no production requirement during M2.0; endpoint documented in the current official API reference"
+      "reason": "endpoint documented in the current official API reference; not needed in M2.0"
     },
     "voice_clone": {
       "status": "DOCUMENTED_BUT_NOT_TESTED",
-      "reason": "no production requirement during M2.0; endpoint documented in the current official API reference"
+      "reason": "endpoint documented in the current official API reference; not needed in M2.0"
     },
     "video_h3": {
-      "status": "NOT_ENTITLED",
-      "blocked_verdict": "BLOCKED",
+      "status": "VERIFIED",
+      "previous_status": "NOT_ENTITLED",
+      "previous_status_correction": "NOT_ENTITLED asserted an unverified fact. The correct pre-test status was BLOCKED with reason OFFICIAL_DOC_CONFLICT. The account has now proven entitlement.",
       "model": "MiniMax-H3",
-      "generation_attempted": false,
-      "quota_spent": "none",
-      "reason": "current official CLI guidance and the current official Video Generation guide both require a pay-as-you-go or credit API key for H3, and state that a Token Plan Subscription Key is not supported. The plan overview page claims Explore includes H3, which is consistent with in-app MiniMax Code entitlement rather than the programmatic CLI path.",
-      "conflicting_claim_present": true,
-      "resolution": "resolved in favour of the more restrictive reading; no generation sent",
-      "expected_rejection_if_attempted": "error 2013 mentioning TokenPlan/Credit and H3",
-      "documented_modes": [
-        "text-to-video",
-        "image-to-video first and/or last frame",
-        "multimodal reference generation (reference images, videos, audio)"
+      "transport": "documented_public_api",
+      "transport_reason": "official CLI drops --resolution and always sends 2K, so 768P is unreachable through it",
+      "mode_exercised": "text-to-video (T2VA)",
+      "generation_attempted": true,
+      "create_requests_sent": 1,
+      "automatic_retries": 0,
+      "task_created": true,
+      "create_http_status": 200,
+      "create_error_body": null,
+      "task_ref_hash_prefix": "082bb142725f",
+      "task_id_recorded": false,
+      "poll_status_sequence": [
+        "running",
+        "running",
+        "running",
+        "running",
+        "running",
+        "running",
+        "succeeded"
       ],
+      "final_status": "succeeded",
+      "requested": {
+        "duration_s": 4,
+        "resolution": "768P",
+        "ratio": "9:16"
+      },
+      "delivered": {
+        "video_codec": "h264",
+        "audio_codec": "aac",
+        "audio_present_unrequested": true,
+        "width": 768,
+        "height": 1344,
+        "fps": "24/1",
+        "frames": 107,
+        "duration_s": 4.458,
+        "aspect_ratio": 0.5714,
+        "aspect_ratio_requested": 0.5625,
+        "bytes": 231770,
+        "sha256": "37749196a11a5e5d9e0e52ad5e95abdc93ea91cd691db8fa43f213839404d7ea"
+      },
+      "technical_qc": {
+        "decodable": true,
+        "black_frames": false,
+        "freeze": false,
+        "silence_detected": false,
+        "audio_mean_db": -47.2,
+        "audio_peak_db": -32.9
+      },
+      "visual_qc": "candle flame close-up as prompted, no text, no logo, no visible artifacts, portrait with clean upper-half caption space",
+      "weekly_quota_cost_percentage_points": 7,
+      "documented_modes_not_exercised": [
+        "image-to-video first frame",
+        "image-to-video last frame",
+        "multimodal reference image",
+        "multimodal reference video",
+        "multimodal reference audio",
+        "H3-Context-IR",
+        "768P to 2K regeneration"
+      ],
+      "not_exercised_reason": "each mode consumes weekly quota; deferred to M4 with an explicit budget",
+      "official_doc_conflict": {
+        "source_a": "current M Plan overview, global and CN, names M Plan, states Explore and Build include H3",
+        "source_b": "official CLI H3 skill at tag v1.0.27, names Token Plan, states a Token Plan Subscription Key is unsupported for H3 and that error 2013 indicates this",
+        "resolved_in_favour_of": "source_a",
+        "resolution_basis": "the prohibition in source b names Token Plan, which M Plan replaced; source a is the newer authority for current subscription contents, and the account test is decisive",
+        "actionable_warning": "following the CLI H3 skill literally would have produced a wrong conclusion about current M Plan entitlement"
+      },
       "documented_specs": {
-        "resolution": ["768P", "2K"],
+        "resolution": [
+          "768P",
+          "2K"
+        ],
         "duration_s": "4-15 integer",
-        "ratios": ["adaptive", "21:9", "16:9", "4:3", "1:1", "3:4", "9:16"],
+        "ratios": [
+          "adaptive",
+          "21:9",
+          "16:9",
+          "4:3",
+          "1:1",
+          "3:4",
+          "9:16"
+        ],
         "prompt_char_limit": 7000,
         "reference_images_max": 9,
         "reference_videos_max": 3,
@@ -169,7 +293,7 @@
     },
     "video_legacy_hailuo": {
       "status": "UNKNOWN",
-      "reason": "not required by the North Star and not covered by an M Plan entitlement claim; deliberately not tested"
+      "reason": "not required by the North Star and not covered by an M Plan entitlement claim"
     },
     "vision": {
       "status": "DOCUMENTED_BUT_NOT_TESTED",
@@ -180,7 +304,6 @@
       "reason": "documented CLI command; not required by M2.0 acceptance"
     }
   },
-
   "tested_generations": [
     {
       "id": "speech-smoke-zh",
@@ -231,7 +354,7 @@
       "variant": "pronunciation_dict with IPA replacements",
       "duration_s": 24.582,
       "duration_delta_vs_plain_percent": 41.2,
-      "asr_backcheck": "compound brand names split apart: Claude Code lost, GitHub became two tokens, LangGraph became two tokens, H3 read as A Three; v0.2.1 fixed",
+      "asr_backcheck": "compound brand names split apart: Claude Code lost a word, GitHub became two tokens, LangGraph became two tokens, H3 read as A Three; v0.2.1 fixed",
       "verdict": "FAIL, worse than plain for compound brand names"
     },
     {
@@ -241,7 +364,7 @@
       "variant": "pronunciation_dict with plain-text expansion plus text normalisation",
       "duration_s": 18.386,
       "duration_delta_vs_plain_percent": 5.6,
-      "asr_backcheck": "all sampled tokens correct: Claude Code, Easel, LangGraph, Qwen, v0.2.1 and the date all read correctly",
+      "asr_backcheck": "all sampled tokens correct: Claude Code, Easel, LangGraph, Qwen, v0.2.1 and the date",
       "verdict": "PASS, recommended mechanism"
     },
     {
@@ -258,40 +381,103 @@
       "visual_qc": "valid, non-blank, no text, no logo, no UI, no visible artifacts, clean caption-safe space top and bottom, slight softness",
       "status": "VERIFIED",
       "quality_note": "container does not follow the requested file extension; consumers must sniff the container"
+    },
+    {
+      "id": "video-smoke-h3-t2va",
+      "modality": "video",
+      "model": "MiniMax-H3",
+      "transport": "documented_public_api",
+      "requested": "4s 768P 9:16",
+      "delivered": "h264 768x1344 24fps 4.458s + aac",
+      "bytes": 231770,
+      "sha256": "37749196a11a5e5d9e0e52ad5e95abdc93ea91cd691db8fa43f213839404d7ea",
+      "task_created": true,
+      "task_ref_hash_prefix": "082bb142725f",
+      "status": "VERIFIED",
+      "quality_note": "no black frames, no freeze, no silence; audio present but near-ambient; delivered aspect ratio is approximate"
     }
   ],
-
   "quality_observations": {
     "asr_backcheck_is_necessary_not_sufficient": "ASR agreed with perceived correctness on clear wins and losses, but cannot arbitrate prosody or naturalness. Human listening review remains mandatory.",
-    "asr_console_artifact": "the transcription JSON renders a trailing replacement character for the full stop; this is a console encoding artefact of the tool output, not an audio defect",
+    "asr_console_artifact": "the transcription JSON renders a trailing replacement character for the full stop; a console encoding artefact of the tool output, not an audio defect",
     "loudness": "provider output peaked at -0.5 dB and -1.5 dB. No clipping was observed, but headroom is minimal and a loudness normalisation gate is needed before compose.",
     "image_container": "output container is chosen by the provider and does not follow the requested extension",
+    "video_dimensions_are_approximate": "9:16 requested, 768x1344 delivered, so composition gates must assert tolerance rather than exact ratio",
+    "video_audio_is_unrequested": "H3 returned an AAC track although no audio was requested, at near-ambient level",
+    "cli_silently_drops_unknown_flags": "passing --resolution to the official CLI was ignored rather than rejected, which is a hazard for a paid API",
     "generated_media_never_evidence": "generated assets in this receipt are capability evidence only and are not admissible as business evidence"
   },
-
   "h3_prompt_guidance_source": {
-    "repo": "MiniMax-AI/cli",
-    "path": "skill/h3-video/SKILL.md",
-    "reference": "skill/h3-video/references/h3-video.md",
-    "tag": "v1.0.27",
-    "tag_date": "2026-09-29",
-    "main_sha": "06e47c70b76f419196678367dae62acca4c94076",
+    "primary_repo": "MiniMax-AI/MiniMax-H3",
+    "primary_path": "skills/h3-prompt-writing/SKILL.md",
+    "primary_repo_main_sha": "d21241f0a4b3acbb34c97dae47fa417b7065e438",
+    "primary_repo_main_date": "2026-08-15",
+    "last_commit_touching_skill": "a107547fa669c509b8e6363fe18378d46ab3066c",
+    "last_commit_touching_skill_date": "2026-08-11",
+    "modes": [
+      "T2VA",
+      "I2VA",
+      "FL2VA",
+      "L2VA",
+      "Ref2VA"
+    ],
+    "base_mode_fields": [
+      "integrated_multimodal_description",
+      "overall_soundscape",
+      "non_diegetic_music"
+    ],
+    "ref2va_fields": [
+      "subject_definitions",
+      "summary",
+      "retention_analysis",
+      "detailed_description",
+      "overall_soundscape",
+      "non_diegetic_music"
+    ],
+    "secondary_repo": "MiniMax-AI/cli",
+    "secondary_tag": "v1.0.27",
+    "secondary_path": "skill/h3-video/",
     "checked_at": "2026-10-04",
-    "secondary_source": "official H3 feature highlights gallery page in the platform documentation",
     "vendored": false,
-    "note": "read at execution time and summarised, not copied into this repository"
+    "note": "read at execution time and summarised, not copied into this repository",
+    "h3_prompt_compiler_implemented": false
   },
-
-  "blockers": [
+  "h3_role_in_final_video": {
+    "role": "high-value short generated insert",
+    "is_backbone": false,
+    "is_evidence": false,
+    "good_uses": [
+      "hook visual",
+      "hero shot",
+      "concept visualisation",
+      "visual metaphor",
+      "transition",
+      "a scene that cannot be recorded"
+    ],
+    "forbidden_uses": [
+      "any imitation of a real interface or dashboard",
+      "fake screenshot or screen recording",
+      "fake test result or analytics view",
+      "fake product demo",
+      "fake customer evidence",
+      "fake source code output"
+    ]
+  },
+  "blockers": [],
+  "residual_risks": [
     {
-      "id": "H3_ENTITLEMENT",
-      "verdict": "BLOCKED",
-      "needs": "Founder decision",
-      "question": "Either accept that H3 stays MANUAL_ONLY/blocked under a subscription-only policy, or explicitly approve a pay-as-you-go or credit-pack path, which this repository currently forbids.",
-      "generation_sent": false
+      "id": "BALANCE_ENDPOINT_UNDOCUMENTED",
+      "risk": "the balance read may change without notice, which would break the fail-closed pre-flight",
+      "impact": "generation blocked, not silently mis-billed",
+      "response": "fail closed and surface the failure; encapsulate behind BillingGuard if production use is accepted"
+    },
+    {
+      "id": "CLI_FLAG_SILENT_DROP",
+      "risk": "the official CLI silently ignores unknown flags instead of rejecting them",
+      "impact": "a request could be sent with unintended parameters",
+      "response": "use the documented public API wherever a needed parameter is not exposed, and verify payloads"
     }
   ],
-
   "human_review": {
     "status": "PENDING_FOUNDER_REVIEW",
     "scope": "speech naturalness, pronunciation of brand tokens, loudness preference, image aesthetic suitability",

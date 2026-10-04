@@ -29,12 +29,14 @@ translation_of: research/providers/minimax-mplan-explore-capability.md
 | Speech | `VERIFIED` | `speech-2.8-hd` delivered 32 kHz mono WAV, content ASR-checked |
 | Voice design | `DOCUMENTED_BUT_NOT_TESTED` | Endpoint documented; not needed in M2.0 |
 | Voice clone | `DOCUMENTED_BUT_NOT_TESTED` | Endpoint documented; not needed in M2.0 |
-| H3 video | `NOT_ENTITLED` → `BLOCKED` | Official guidance requires a pay-as-you-go or credit key for H3 |
-| H3 reference modes | `NOT_ENTITLED` → `BLOCKED` | Same credential rule as H3 |
-| H3-Context-IR | `DOCUMENTED_BUT_NOT_TESTED` | Documented; gated behind the H3 credential block |
+| H3 video | `VERIFIED` | Real `MiniMax-H3` task created and succeeded on a Subscription Key |
+| H3 reference modes | `DOCUMENTED_BUT_NOT_TESTED` | Documented and reachable by the same credential; not exercised |
+| H3-Context-IR | `DOCUMENTED_BUT_NOT_TESTED` | Documented; not exercised |
 
-Two modalities are safe to build on. One is blocked by the provider's own
-credential rules, not by anything we failed to try.
+All three generation modalities are now `VERIFIED` under the subscription. That
+includes video, which an earlier revision of this document had recorded as
+`NOT_ENTITLED` — see the H3 section for why that claim was too strong and how it
+was corrected.
 
 ## What was actually verified, and how
 
@@ -61,7 +63,8 @@ Go, Explore, Build.
 | Region in use | `cn` (mainland China platform) |
 | Windows | supported, verified on this host |
 | Structured output | `--output json` |
-| Async video | documented (`--async`), blocked by entitlement |
+| Async video | verified in practice: create → poll → download |
+| Documented public API | used for video, because the CLI cannot set resolution |
 
 A stale `mmx` launcher shim existed on this host with the package directory
 missing; `npm ls -g` did not list the package. The CLI was reinstalled before
@@ -116,18 +119,45 @@ The only provable exclusion is a zero Credit Pack balance. Measured:
 
 Verdict: `VERIFIED_INCLUDED_PLAN_QUOTA`. Pay-as-you-go cannot be charged, and
 Credit Pack cannot be drawn on, so a generation at this moment provably consumes
-included plan usage.
+included plan usage. Video later confirmed this end to end: plan quota fell and
+all four paid balances stayed at zero.
 
-Two caveats that are load-bearing:
+### The balance read is an undocumented dependency
 
-- The balance read uses a first-party endpoint that the official CLI itself
-  calls, but which is not listed in the public documentation index. It is not a
-  reverse-engineered web endpoint. Treat it as an implementation detail that
-  could change.
-- Therefore the pre-flight must run **before every single generation**, and it
-  fails closed. If the balance cannot be read, or any of the four fields is
-  non-zero, the verdict is `BLOCKED_BILLING_SOURCE_UNCERTAIN` and no request is
-  sent. A one-time check is not sufficient evidence.
+The four balance fields come from a path this repository does carry as a literal:
+the account balance endpoint under the API base. Classifying it honestly:
+
+```
+UNDOCUMENTED_FIRST_PARTY_IMPLEMENTATION_DEPENDENCY
+```
+
+| Property | Value |
+|---|---|
+| First-party | yes, MiniMax's own API surface |
+| Used by the official CLI | yes, `mmx-cli` calls it for the same purpose |
+| Listed in public API documentation | **no** |
+| May change without notice | yes |
+| Scope | research use only unless separately accepted for production |
+| Behaviour on failure | fail closed |
+
+It is a dependency and it is in the repository, so describing it as "no endpoint
+literal exists" would be false. It is justified only by being the sole way found
+to observe the Credit Pack balance, which is what makes subscription-only billing
+provable at all. Every failure mode is a hard block: transport error, schema
+change or missing field. An unreadable balance is never treated as zero.
+
+Production use, if it is ever accepted, must be encapsulated behind a single
+`BillingGuard` with contract tests on sanitized fixtures and a documented
+migration path for the day MiniMax publishes an official equivalent. It must not
+be scattered through provider code, and it must not quietly become the permanent
+production contract.
+
+Two further caveats that are load-bearing:
+
+- The pre-flight must run **before every single generation**, and it fails
+  closed. If the balance cannot be read, or any of the four fields is non-zero,
+  the verdict is `BLOCKED_BILLING_SOURCE_UNCERTAIN` and no request is sent. A
+  one-time check is not sufficient evidence.
 
 ## Tested results
 
@@ -197,36 +227,102 @@ quality gate must assert the container rather than trust the extension.
 
 `--seed` is supported, which gives idempotency a real anchor.
 
-## H3 video — blocked by the provider's own credential rule
+## H3 video — VERIFIED on the real account
 
-Two current official sources state that H3 requires a pay-as-you-go or credit key:
+This section replaces an earlier claim that H3 was `NOT_ENTITLED`. That claim was
+too strong, and the correction is worth recording rather than quietly editing
+away.
 
-- the Video Generation guide, on both regions: "To use MiniMax H3 or MiniMax H3
-  Max, please select the Pay-as-you-go API"
-- the official CLI's own H3 skill at tag `v1.0.27`: "Use a standard
-  Pay-as-you-go/Credit API Key for H3. Do not use an OAuth credential or Token
-  Plan Subscription Key for H3", with the failure handling rule: "If error `2013`
-  says TokenPlan or Credit does not support H3, stop"
+### The documentation conflict was real
 
-One current official page disagrees: the M Plan FAQ states that Explore and Build
-include the H3 video model.
+Two current official sources contradicted each other:
 
-The coherent reading is that plan entitlement to H3 is delivered through
-in-app MiniMax Code sign-in, while the **programmatic CLI and API path for H3
-requires a pay-as-you-go or credit key**. Under `allow_payg: false` and
-`allow_credit_pack_fallback: false`, H3 is therefore not available to this
-repository.
+| Source | Region | Product named | Statement |
+|---|---|---|---|
+| M Plan overview | global and CN | **M Plan** | Explore and Build include H3; the model is selected in the API request or tool configuration |
+| Video Generation guide | global and CN | not specified | "To use MiniMax H3 or MiniMax H3 Max, please select the Pay-as-you-go API" |
+| Official CLI H3 skill, tag `v1.0.27` | n/a | **Token Plan** | "Do not use an OAuth credential or Token Plan Subscription Key for H3"; failure rule: "If error `2013` says TokenPlan or Credit does not support H3, stop" |
 
-Status: `NOT_ENTITLED`, verdict `BLOCKED`, **no generation was sent and no quota
-was spent**.
+Re-verified 2026-10-04. The CN M Plan overview still reads
+`视频模型 | 不可用 | 可用 H3 | 可用 H3`.
 
-This was resolved by reading current official sources, not by spending quota to
-find out. The remaining risk is asymmetric and was accepted deliberately: if the
-restrictive reading were wrong, a single 4-second 768P job would have been spent
-to learn it. That is not worth it next to a documented rule that says stop.
+The decisive detail is the product name. The CLI skill's prohibition is written
+against **Token Plan**, and it names the `2013` error class explicitly. M Plan
+replaced Token Plan, and the M Plan pages are the newer authority for what a
+current subscription includes. Treating a Token Plan-era restriction as proof
+that an M Plan subscription lacks the model was an inference, not evidence.
 
-Documented H3 capability, recorded so that M4 is ready the moment entitlement is
-resolved by a human:
+Before the account test the honest status was therefore `BLOCKED` with reason
+`OFFICIAL_DOC_CONFLICT` — not `NOT_ENTITLED`, which would have asserted a fact
+nobody had checked.
+
+### What the account actually did
+
+One authorised create request, no automatic retry:
+
+| Field | Value |
+|---|---|
+| Model | `MiniMax-H3` |
+| Mode | text-to-video (T2VA) |
+| Requested | 4 s, `768P`, `9:16` |
+| Task created | **yes**, HTTP 200, no error body |
+| Task reference | salted hash prefix `082bb142725f` (raw id not recorded) |
+| Poll outcome | `running` ×6 → `succeeded` |
+| Downloaded | yes, 231,770 bytes |
+| SHA-256 | `37749196a11a5e5d9e0e52ad5e95abdc93ea91cd691db8fa43f213839404d7ea` |
+
+Delivered properties from `ffprobe`:
+
+| Property | Value |
+|---|---|
+| Video codec | `h264`, 768x1344, 24 fps, 107 frames |
+| Duration | 4.458 s for a 4 s request |
+| Audio codec | `aac`, present although no audio was requested |
+| Aspect ratio | 0.5714 delivered versus 0.5625 requested for 9:16 |
+
+Three operational findings:
+
+1. **The Subscription Key is accepted for H3.** The official CLI skill's
+   prohibition does not apply to M Plan. Anyone following that skill literally
+   would have wrongly concluded video was unavailable.
+2. **The official CLI cannot request 768P.** `mmx video generate` exposes no
+   resolution flag, and passing `--resolution 768P` is silently dropped: a
+   `--dry-run` showed the outgoing payload still carrying `"resolution": "2K"`.
+   Silent flag-dropping is itself a hazard for a paid API. The 768P smoke
+   therefore used the **documented public API** `POST /v2/video_generation`, which
+   is the sanctioned transport for a capability gap.
+3. **Delivered dimensions are approximate.** 9:16 was requested and 768x1344 was
+   delivered. Any composition gate must assert tolerance, not exact ratio.
+
+### Billing proof for video
+
+This is the strongest billing evidence in the whole audit, because the generation
+actually succeeded:
+
+| Field | Before | After |
+|---|---|---|
+| 5-hour window remaining | 99% | 99% |
+| Weekly window remaining | **65%** | **58%** |
+| PAYG cash balance | `0.00` | `0.00` |
+| Credit Pack balance | `0.00` | `0.00` |
+| Voucher balance | `0.00` | `0.00` |
+| Outstanding owed | `0.00` | `0.00` |
+
+Plan quota fell by 7 weekly percentage points and every paid balance stayed at
+zero. Video generation under M Plan Explore consumes **included plan entitlement
+only**. `allow_payg: false` and `allow_credit_pack_fallback: false` both held.
+
+Video is subject only to the weekly window, which matches the observed movement:
+the 5-hour window did not move at all.
+
+### Video technical QC
+
+- valid decodable file, no black frames, no freeze, no silence detected
+- audio present but effectively ambient: mean −47.2 dB, peak −32.9 dB
+- visual frame review: candle flame close-up exactly as prompted, no text, no
+  logo, no visible artifacts, portrait with clean upper-half caption space
+
+Documented H3 capability, retained for M4 design:
 
 | Property | Value |
 |---|---|
@@ -241,44 +337,68 @@ resolved by a human:
 | Workflow | create task → poll → download, fully asynchronous |
 | Also documented | H3-Context-IR prompt enhancement, 768P → 2K regeneration |
 
+Only text-to-video was exercised. Reference-image, reference-video,
+reference-audio, first/last-frame and H3-Context-IR remain
+`DOCUMENTED_BUT_NOT_TESTED`; they are reachable by the same credential but each
+costs weekly quota, so they wait for M4 with an explicit budget.
+
 ## Current official H3 prompt guidance
 
-Read at execution time from the official CLI repository, summarised here, **not
-vendored**.
+Read at execution time from the official MiniMax repositories, summarised here,
+**not vendored**.
 
 | Field | Value |
 |---|---|
-| Repository | `MiniMax-AI/cli` |
-| Skill path | `skill/h3-video/SKILL.md` |
-| Reference | `skill/h3-video/references/h3-video.md` |
-| Tag / date | `v1.0.27`, 2026-09-29 |
-| `main` sha | `06e47c70b76f419196678367dae62acca4c94076` |
-| Secondary source | official H3 feature-highlights gallery page in the platform docs |
+| Repository | `MiniMax-AI/MiniMax-H3` |
+| Skill path | `skills/h3-prompt-writing/SKILL.md` |
+| Repo `main` sha | `d21241f0a4b3acbb34c97dae47fa417b7065e438`, 2026-08-15 |
+| Last commit touching the skill | `a107547fa669c509b8e6363fe18378d46ab3066c`, 2026-08-11 |
+| Checked at | 2026-10-04 |
+| Secondary source | `MiniMax-AI/cli` tag `v1.0.27`, `skill/h3-video/` |
+| Tertiary source | official H3 feature-highlights gallery page in the platform docs |
 
-Substantive guidance that a prompt compiler must honour:
+This is the current official H3 **prompt-writing** skill, and it defines five
+input modes with distinct contracts:
 
-1. Expand an underspecified request in a fixed order: output goal, subjects and
-   assets, timeline, scene, camera, look, sound, constraints.
-2. Use a **two-level timeline**: a master range per reference, then micro-ranges
-   inside each shot — establish, preparation, core action, settle, hold.
-3. Ranges must be contiguous, never overlapping, and the final end time must
-   equal the requested duration.
-4. Maintain a **state ledger** at every boundary and make shot N's locked end
-   state exactly equal shot N+1's initial state.
-5. Keep actions physically achievable inside 4-15 s; one clear action beat per
-   shot; reallocate time by action complexity rather than splitting evenly.
-6. Use explicit camera language, and explicit "preserve / may change" statements.
-7. State hard continuity constraints separately from aesthetic preferences, and
-   repeat a critical invariant inside the timeline block where it matters.
-8. Never silently add brands, dialogue, text overlays or unsafe content.
-9. Default 0.5 s precision; use finer timing only for a short precise transition.
-10. A complete structured storyboard supplied by the user must be kept intact,
-    not condensed or replaced by a generic prompt.
+| Mode | Contract |
+|---|---|
+| `T2VA` | build the full audiovisual timeline from text |
+| `I2VA` | start from the first frame and develop forward from it |
+| `FL2VA` | describe the continuous path between first and last frames |
+| `L2VA` | infer a plausible opening and converge to the supplied last frame |
+| `Ref2VA` | full-reference rewrite in six labelled sections |
 
-Failure-handling rules worth adopting now, because they are about money: once a
-task id exists, all recovery must act on that task id; a replacement paid task is
-never created because polling, terminal handling or download failed; download
-failure retries the same URL rather than regenerating.
+Base modes (`T2VA`, `I2VA`, `FL2VA`, `L2VA`) use the ordered fields
+`integrated_multimodal_description`, `overall_soundscape`, `non_diegetic_music`.
+`Ref2VA` uses `subject_definitions`, `summary`, `retention_analysis`,
+`detailed_description`, `overall_soundscape`, `non_diegetic_music`.
+
+Output rules that a future `H3PromptCompiler` must honour:
+
+1. Rewrite sections are written in English; dialogue, lyrics and visible scene
+   text keep their original language.
+2. Each shot is described by composition, subjects, environment, actions, camera,
+   sound, and the exact point where referenced content appears.
+3. No plot summaries, no unresolved reference labels, and no timing that does not
+   match the requested duration.
+4. Reference labels stay consistent across every section, for example
+   `<Picture 1>`, `<Video 1>`, `<Audio 1>`.
+5. Concrete visual and audio detail beats abstract words such as "cinematic".
+6. Keyframe modes must state how the first or last frame connects to the timeline.
+7. Total described duration always matches the requested length, 4-15 s.
+
+The CLI's own H3 skill adds timeline mechanics that the prompt-writing skill does
+not cover: a two-level timeline, contiguous non-overlapping ranges whose final end
+equals the requested duration, a state ledger at every boundary where shot N's
+locked end state equals shot N+1's initial state, and hard continuity constraints
+kept separate from aesthetic preferences.
+
+Failure-handling rules from the CLI skill, adopted because they are about money:
+once a task id exists, all recovery must act on that task id; a replacement paid
+task is never created because polling, terminal handling or download failed;
+download failure retries the same URL rather than regenerating.
+
+No `H3PromptCompiler` is implemented in M2.0.
 
 ## Easel reuse assessment
 
@@ -323,7 +443,7 @@ adapter over the official `mmx` CLI, not a fork.
 |---|---|
 | M2 speech | Proceed. Adapt pinned Easel MiniMax TTS; add pre-flight, lexicon, QC, receipt, idempotency |
 | M3 image | Proceed. ContentOps provider adapter over the official CLI; Easel has no MiniMax image provider |
-| M4 H3 video | Do not start. `BLOCKED` on entitlement; prepare the design, write no code |
+| M4 H3 video | Proceed, scheduled **after** M2 and M3. Video is verified, but it is the most expensive modality in the plan and consumes weekly quota |
 | Legacy Hailuo video | Not investigated, not required |
 
 Quality gates that follow directly from the findings above:
@@ -335,7 +455,11 @@ Quality gates that follow directly from the findings above:
 - speech human: naturalness, pace, emotion, pronunciation — mandatory, not optional
 - image technical: **sniffed** container, decoded dimensions, aspect ratio
 - image semantic: requested subject present, no fabricated facts, no stray text
-- video: not applicable while blocked
+- video technical: decodability, duration, codec, resolution, fps, black and
+  freeze detection, and **aspect ratio within tolerance** because 9:16 was
+  requested and 768x1344 delivered
+- video content: no fabricated evidence, and never used to imitate a real UI,
+  screenshot, test result or customer proof
 
 Idempotency anchors that are real rather than aspirational: speech from
 model + voice + text + lexicon version; image from model + prompt + seed +
@@ -350,15 +474,32 @@ named failure reason and a changed input.
 |---|---|---|
 | Does Easel's MiniMax TTS accept an `sk-cp-` Subscription Key? | Decides adapt-vs-adapter for M2 | One test in M2 against pinned Easel |
 | Exact per-modality quota cost of speech and image | Retry budget needs a real number | Observe quota delta across controlled generations |
-| Is H3 reachable from a Subscription Key at all? | Only route to M4 | Founder decision, or MiniMax confirmation |
+| Per-call weekly cost of H3 | Video retry budget | One 4 s 768P job cost 7 weekly percentage points |
+| Reference-image / reference-video / reference-audio H3 modes | M4 mode coverage | Each costs weekly quota; test inside M4 with a budget |
 | Naturalness / pace / emotion of the voice | Cannot be automated | Founder listening review |
 | Whether image output is byte-stable for a fixed seed | Affects idempotency strength | Regenerate once and compare hashes |
 
+## H3 role in the final video
+
+H3 is a **high-value short generated insert**, never the backbone of the video
+and never a source of evidence.
+
+Good uses: hook visual, hero shot, concept visualisation, visual metaphor,
+transition, a scene that cannot be recorded.
+
+Forbidden uses: any imitation of a real interface, dashboard, screenshot, test
+result, analytics view, product demo, customer proof or source code output. Real
+evidence stays real, and a generated asset must never be registered as evidence.
+
 ## What was deliberately not done
 
-- No H3 generation was sent, so no quota was spent on an unresolved question.
-- No pay-as-you-go key was requested, created or used.
-- No key value, fragment, account id, task id or private endpoint was written to
-  this repository.
+- Exactly **one** H3 task was created. No second task, no blind retry, no
+  alternate-credential attempt, no alternate-region retry.
+- No pay-as-you-go key was requested, created or used, and no Credit Pack was
+  bought.
+- Only text-to-video was exercised. Reference and keyframe modes wait for M4 with
+  an explicit weekly-quota budget.
+- No key value, fragment, account id or raw task id was written to this
+  repository; the task reference is a salted hash prefix.
 - No provider integration code was written. M2.0 produced evidence and a
   decision, not a provider.
