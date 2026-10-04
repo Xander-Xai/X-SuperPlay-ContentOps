@@ -522,7 +522,7 @@ def test_fingerprint_never_embeds_the_prompt_verbatim():
 # --- 6. end-to-end generation ------------------------------------------------
 
 def test_generation_writes_canonical_file_and_immutable_receipt():
-    if not (HAVE_PILLOW_IMAGE and HAVE_FFMPEG):
+    if not HAVE_PILLOW_IMAGE:
         _skip(21, "generation end to end", "Pillow")
         return
     with tempfile.TemporaryDirectory() as td:
@@ -556,7 +556,7 @@ def test_generation_writes_canonical_file_and_immutable_receipt():
 
 def test_requested_png_that_returns_jpeg_becomes_a_jpg():
     """End-to-end reproduction of the measured provider behaviour."""
-    if not (HAVE_PILLOW_IMAGE and HAVE_FFMPEG):
+    if not HAVE_PILLOW_IMAGE:
         _skip(22, "container correction end to end", "Pillow")
         return
     import os
@@ -586,8 +586,8 @@ def test_requested_png_that_returns_jpeg_becomes_a_jpg():
 
 
 def test_container_the_provider_cannot_produce_is_refused():
-    if not HAVE_FFMPEG:
-        _skip(23, "unknown container refusal", "ffmpeg")
+    if not HAVE_PILLOW_IMAGE:
+        _skip(23, "unknown container refusal", "Pillow")
         return
     import os
 
@@ -615,8 +615,8 @@ def test_container_the_provider_cannot_produce_is_refused():
 
 def test_output_that_never_appeared_is_refused():
     """Exit code 0 with no file is not success. M2 measured this on speech."""
-    if not HAVE_FFMPEG:
-        _skip(24, "silent success refusal", "ffmpeg")
+    if not HAVE_PILLOW_IMAGE:
+        _skip(24, "silent success refusal", "Pillow")
         return
     import os
 
@@ -641,7 +641,7 @@ def test_output_that_never_appeared_is_refused():
 
 
 def test_stale_output_from_a_previous_run_is_refused():
-    if not (HAVE_PILLOW_IMAGE and HAVE_FFMPEG):
+    if not HAVE_PILLOW_IMAGE:
         _skip(25, "stale output refusal", "Pillow")
         return
     with tempfile.TemporaryDirectory() as td:
@@ -661,7 +661,7 @@ def test_stale_output_from_a_previous_run_is_refused():
 # --- 7. cache ----------------------------------------------------------------
 
 def test_cache_reuse_happens_before_the_billing_gate():
-    if not (HAVE_PILLOW_IMAGE and HAVE_FFMPEG):
+    if not HAVE_PILLOW_IMAGE:
         _skip(26, "cache before billing", "Pillow")
         return
     with tempfile.TemporaryDirectory() as td:
@@ -688,7 +688,7 @@ def test_cache_reuse_happens_before_the_billing_gate():
 
 
 def test_fresh_provider_can_answer_receipt_after_a_cache_hit():
-    if not (HAVE_PILLOW_IMAGE and HAVE_FFMPEG):
+    if not HAVE_PILLOW_IMAGE:
         _skip(27, "fresh-provider receipt after cache hit", "Pillow")
         return
     with tempfile.TemporaryDirectory() as td:
@@ -711,7 +711,7 @@ def test_fresh_provider_can_answer_receipt_after_a_cache_hit():
 
 
 def test_reuse_does_not_rewrite_the_generation_receipt():
-    if not (HAVE_PILLOW_IMAGE and HAVE_FFMPEG):
+    if not HAVE_PILLOW_IMAGE:
         _skip(28, "immutable receipt on reuse", "Pillow")
         return
     with tempfile.TemporaryDirectory() as td:
@@ -730,7 +730,7 @@ def test_reuse_does_not_rewrite_the_generation_receipt():
 
 
 def test_repeated_reuse_does_not_grow_duplicate_receipts():
-    if not (HAVE_PILLOW_IMAGE and HAVE_FFMPEG):
+    if not HAVE_PILLOW_IMAGE:
         _skip(29, "no duplicate receipts", "Pillow")
         return
     with tempfile.TemporaryDirectory() as td:
@@ -748,7 +748,7 @@ def test_repeated_reuse_does_not_grow_duplicate_receipts():
 
 
 def test_any_cache_mismatch_is_a_cache_miss():
-    if not (HAVE_PILLOW_IMAGE and HAVE_FFMPEG):
+    if not HAVE_PILLOW_IMAGE:
         _skip(30, "cache validation", "Pillow")
         return
     import os
@@ -799,7 +799,7 @@ def test_any_cache_mismatch_is_a_cache_miss():
 
 
 def test_missing_sidecar_is_a_cache_miss_and_provenance_is_never_invented():
-    if not (HAVE_PILLOW_IMAGE and HAVE_FFMPEG):
+    if not HAVE_PILLOW_IMAGE:
         _skip(31, "missing sidecar is a miss", "Pillow")
         return
     import os
@@ -826,7 +826,7 @@ def test_missing_sidecar_is_a_cache_miss_and_provenance_is_never_invented():
 
 
 def test_incomplete_sidecar_is_a_cache_miss():
-    if not (HAVE_PILLOW_IMAGE and HAVE_FFMPEG):
+    if not HAVE_PILLOW_IMAGE:
         _skip(32, "incomplete sidecar is a miss", "Pillow")
         return
     with tempfile.TemporaryDirectory() as td:
@@ -850,7 +850,7 @@ def test_incomplete_sidecar_is_a_cache_miss():
 
 
 def test_force_regenerates_instead_of_reusing():
-    if not (HAVE_PILLOW_IMAGE and HAVE_FFMPEG):
+    if not HAVE_PILLOW_IMAGE:
         _skip(33, "force regenerate", "Pillow")
         return
     with tempfile.TemporaryDirectory() as td:
@@ -866,7 +866,7 @@ def test_force_regenerates_instead_of_reusing():
 
 
 def test_a_changed_seed_is_a_cache_miss():
-    if not (HAVE_PILLOW_IMAGE and HAVE_FFMPEG):
+    if not HAVE_PILLOW_IMAGE:
         _skip(34, "seed changes the cache key", "Pillow")
         return
     with tempfile.TemporaryDirectory() as td:
@@ -881,7 +881,7 @@ def test_a_changed_seed_is_a_cache_miss():
 # --- 8. durable retry --------------------------------------------------------
 
 def test_retry_requires_a_durable_record_and_a_changed_fingerprint():
-    if not (HAVE_PILLOW_IMAGE and HAVE_FFMPEG):
+    if not HAVE_PILLOW_IMAGE:
         _skip(35, "durable retry", "Pillow")
         return
     with tempfile.TemporaryDirectory() as td:
@@ -960,7 +960,7 @@ def _failed_attempt_record(work, *, request, credential=None, guard_credential=N
 
 
 def test_retry_with_an_identical_fingerprint_is_refused():
-    if not (HAVE_PILLOW_IMAGE and HAVE_FFMPEG):
+    if not HAVE_PILLOW_IMAGE:
         _skip(36, "identical retry refused", "Pillow")
         return
     with tempfile.TemporaryDirectory() as td:
@@ -980,7 +980,7 @@ def test_retry_with_an_identical_fingerprint_is_refused():
 
 
 def test_retry_above_the_cap_is_refused():
-    if not (HAVE_PILLOW_IMAGE and HAVE_FFMPEG):
+    if not HAVE_PILLOW_IMAGE:
         _skip(37, "retry cap", "Pillow")
         return
     with tempfile.TemporaryDirectory() as td:
@@ -996,7 +996,7 @@ def test_retry_above_the_cap_is_refused():
 
 def test_retry_survives_a_process_boundary():
     """The record is on disk, so a second *process* can honour it."""
-    if not (HAVE_PILLOW_IMAGE and HAVE_FFMPEG):
+    if not HAVE_PILLOW_IMAGE:
         _skip(38, "cross-process retry", "Pillow")
         return
     with tempfile.TemporaryDirectory() as td:
@@ -1066,8 +1066,8 @@ def test_non_zero_paid_balances_are_refused():
 
 
 def test_image_billing_failure_makes_no_provider_call():
-    if not HAVE_FFMPEG:
-        _skip(42, "blocked image makes no provider call", "ffmpeg")
+    if not HAVE_PILLOW_IMAGE:
+        _skip(42, "blocked image makes no provider call", "Pillow")
         return
     with tempfile.TemporaryDirectory() as td:
         work = Path(td)
@@ -1097,7 +1097,7 @@ def test_image_billing_failure_makes_no_provider_call():
 
 def test_gate_and_child_share_one_credential():
     """The key the gate authorises must be the key the child receives."""
-    if not (HAVE_PILLOW_IMAGE and HAVE_FFMPEG):
+    if not HAVE_PILLOW_IMAGE:
         _skip(43, "credential binding", "Pillow")
         return
     import os
@@ -1137,7 +1137,7 @@ def test_gate_and_child_share_one_credential():
 
 
 def test_unbound_provider_refuses_to_generate():
-    if not (HAVE_PILLOW_IMAGE and HAVE_FFMPEG):
+    if not HAVE_PILLOW_IMAGE:
         _skip(44, "unbound provider refuses", "Pillow")
         return
     with tempfile.TemporaryDirectory() as td:
@@ -1153,14 +1153,24 @@ def test_unbound_provider_refuses_to_generate():
     print("[ok] 44. an unbound provider refuses to generate")
 
 
-def test_absent_credential_cannot_build_a_transport():
+def test_absent_credential_cannot_produce_a_working_transport():
+    """Binding is lazy so --health works, but generation still fails closed."""
+    provider = _image_provider(
+        Path(tempfile.gettempdir()), credential=_resolved("", source="NONE")
+    )
+    # Construction succeeds, so diagnostics still run...
+    assert provider.credential_metadata() == {
+        "credential_class": "ABSENT", "credential_source": "NONE"
+    }
+    # ...but there is no child environment to hand out.
+    assert provider._binding.is_bound is False
     try:
-        _image_provider(Path(tempfile.gettempdir()), credential=_resolved("", source="NONE"))
+        provider._binding.require_env()
     except CredentialBindingError as exc:
-        assert "ABSENT" in str(exc)
+        assert "ABSENT" in str(exc) or "Refusing to" in str(exc), str(exc)
     else:
-        raise AssertionError("an absent credential produced a working transport")
-    print("[ok] 45. an absent credential cannot construct a transport at all")
+        raise AssertionError("an absent credential produced a usable child env")
+    print("[ok] 45. an absent credential cannot produce a working transport")
 
 
 def test_binding_is_one_shared_implementation():
@@ -1182,7 +1192,7 @@ def test_binding_is_one_shared_implementation():
 
 
 def test_secret_sentinel_never_reaches_any_persisted_output():
-    if not (HAVE_PILLOW_IMAGE and HAVE_FFMPEG):
+    if not HAVE_PILLOW_IMAGE:
         _skip(47, "secret sentinel", "Pillow")
         return
     import os
@@ -1219,7 +1229,7 @@ def test_secret_sentinel_never_reaches_any_persisted_output():
 
 
 def test_receipt_records_credential_class_never_the_value():
-    if not (HAVE_PILLOW_IMAGE and HAVE_FFMPEG):
+    if not HAVE_PILLOW_IMAGE:
         _skip(48, "credential class in receipt", "Pillow")
         return
     with tempfile.TemporaryDirectory() as td:
@@ -1311,7 +1321,7 @@ def test_registry_rejects_an_unknown_kind_or_role():
 
 
 def test_asset_from_a_real_generation_is_registerable_only_as_support():
-    if not (HAVE_PILLOW_IMAGE and HAVE_FFMPEG):
+    if not HAVE_PILLOW_IMAGE:
         _skip(54, "generated asset registration", "Pillow")
         return
     with tempfile.TemporaryDirectory() as td:
@@ -1395,7 +1405,7 @@ def test_text_contamination_is_a_signal_not_a_verdict():
 
 
 def test_text_contamination_survives_into_the_receipt():
-    if not (HAVE_PILLOW_IMAGE and HAVE_FFMPEG):
+    if not HAVE_PILLOW_IMAGE:
         _skip(60, "text contamination in receipt", "Pillow")
         return
     with tempfile.TemporaryDirectory() as td:
@@ -1502,7 +1512,7 @@ TESTS = [
     test_image_billing_failure_makes_no_provider_call,
     test_gate_and_child_share_one_credential,
     test_unbound_provider_refuses_to_generate,
-    test_absent_credential_cannot_build_a_transport,
+    test_absent_credential_cannot_produce_a_working_transport,
     test_binding_is_one_shared_implementation,
     test_secret_sentinel_never_reaches_any_persisted_output,
     test_receipt_records_credential_class_never_the_value,

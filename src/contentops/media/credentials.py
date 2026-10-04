@@ -207,14 +207,19 @@ class CredentialBinding:
     :meth:`require_env` and either gets the child environment containing the
     authorised key, or gets a :class:`CredentialBindingError`. Neither provider
     can re-resolve a credential of its own, because neither has a resolver.
+
+    Binding is **lazy**, and that is deliberate. Construction always succeeds so
+    that ``--health`` still runs on an unauthenticated host: the first thing an
+    operator does when generation fails is ask why, and a diagnostic command that
+    itself crashes with a credential error is worse than useless. The refusal
+    still happens before any child process is launched, which is the point at
+    which it actually matters.
     """
 
     def __init__(self, resolved: Optional["ResolvedCredential"] = None) -> None:
         self._resolved = resolved
         self._child_env: Optional[Dict[str, str]] = None
-        if resolved is not None:
-            # Construction itself refuses when there is nothing to bind, so an
-            # unbound provider cannot even be built.
+        if resolved is not None and resolved.usable:
             self._child_env = child_env_for(resolved)
 
     @property

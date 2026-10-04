@@ -323,22 +323,25 @@ class MiniMaxMPlanImageProvider(ImageProvider):
             BillingBlocked: the pre-flight could not prove included-plan billing.
             RuntimeError: a retry without changed inputs, or a failed generation.
         """
+        model = request.model or self._model
+
+        # Free, local validation FIRST, and before the transport check. Both are
+        # local, but validating the request first means the error names the field
+        # the operator can actually fix. Checking for the CLI first would report
+        # "not on PATH" to someone whose real mistake was a width of 700.
+        # The official CLI would also reject these, but only after a billing read.
+        validate_dimensions(request.width, request.height, model=model)
+
+        prompt = (request.prompt or "").strip()
+        if not prompt:
+            raise ValueError("prompt must not be empty")
+
         if not self._cli:
             from contentops.media.contract import CapabilityNotSupported
 
             raise CapabilityNotSupported(
                 "official MiniMax CLI not on PATH; run: npm install -g mmx-cli"
             )
-
-        model = request.model or self._model
-
-        # Free validation first. The CLI would also reject these, but only after
-        # a billing read, and the error could not name the ContentOps field.
-        validate_dimensions(request.width, request.height, model=model)
-
-        prompt = (request.prompt or "").strip()
-        if not prompt:
-            raise ValueError("prompt must not be empty")
 
         fingerprint = image_fingerprint(
             provider=PROVIDER_NAME,
