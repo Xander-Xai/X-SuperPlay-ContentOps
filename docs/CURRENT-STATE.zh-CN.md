@@ -49,9 +49,17 @@ translation_status: synced
 | 属性 | 值 |
 |---|---|
 | 集成 | **未实现** |
-| 能力验证 | **待定**（Issue #4） |
+| 能力验证 | **已完成**（Issue #4，2026-10-04） |
 | PAYG 允许 | **否** |
-| 计费模式 | subscription（计划中，未验证） |
+| 计费模式 | subscription，**已验证** |
+| 传输通道 | 官方 MiniMax CLI `mmx`（`mmx-cli` v1.0.27） |
+| 语音 | **VERIFIED** —— `speech-2.8-hd`，32 kHz 单声道 WAV |
+| 图像 | **VERIFIED** —— `image-01`，9:16 竖版，支持 seed |
+| H3 视频 | **VERIFIED** —— 用订阅 Key 真实创建 `MiniMax-H3` 768P 4 秒任务并成功 |
+| H3 参考 / 关键帧模式 | **DOCUMENTED_BUT_NOT_TESTED** —— 同一凭证可达，未实测 |
+| 积分包余额 | 实测 `0.00`，每次生成前重新检查 |
+| 余额读取依赖 | `UNDOCUMENTED_FIRST_PARTY_IMPLEMENTATION_DEPENDENCY`，fail closed |
+| 证据 | `research/providers/minimax-mplan-explore-capability.md` |
 
 ## 已知阻碍
 
