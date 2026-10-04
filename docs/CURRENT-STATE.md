@@ -52,21 +52,24 @@
 | Property | Value |
 |---|---|
 | Integration | speech **IMPLEMENTED** (Issue #19), `PENDING_FOUNDER_REVIEW` |
-| Image / video integration | **NOT_IMPLEMENTED** (Issues #20, #22) |
+| Image integration | **IMPLEMENTED** (Issue #20, PR #25), `PENDING_FOUNDER_REVIEW` |
+| Video integration | **IMPLEMENTED** (Issue #22, PR open), `PENDING_FOUNDER_REVIEW` |
 | Speech transport | official MiniMax CLI `mmx`; pinned Easel path is `EASEL_MPLAN_AUTH_INCOMPATIBLE` |
+| Image transport | official MiniMax CLI `mmx` |
+| Video transport | **documented public API** `POST /v2/video_generation` — the CLI cannot set resolution |
 | Voice cloning | **DOCUMENTED_BUT_NOT_TESTED** (Issue #23), needs a rights-cleared sample |
 | Capability spike | **COMPLETE** (Issue #4, 2026-10-04) |
 | PAYG allowed | **false** |
 | Billing mode | subscription, **verified** |
-| Transport | official MiniMax CLI `mmx` (`mmx-cli` v1.0.27) |
 | Speech | **VERIFIED** — `speech-2.8-hd`, 32 kHz mono WAV |
 | Image | **VERIFIED** — `image-01`, 9:16 portrait, seed supported |
-| H3 video | **VERIFIED** — real `MiniMax-H3` 768P 4 s task succeeded on the Subscription Key |
-| H3 reference / keyframe modes | **DOCUMENTED_BUT_NOT_TESTED** — same credential, not exercised |
+| H3 video T2VA | **VERIFIED** — real `MiniMax-H3` 768P 4 s task succeeded on the Subscription Key (M2.0) |
+| H3 video I2VA | **VERIFIED** — real reference-image task succeeded 2026-10-05 (M4) |
+| H3 Ref2VA / FL2VA / L2VA, H3-Max | **DOCUMENTED_BUT_NOT_TESTED** — implemented and fixture-tested, not exercised live |
 | Credit Pack balance | `0.00` observed, re-checked before every generation |
 | Balance read dependency | `UNDOCUMENTED_FIRST_PARTY_IMPLEMENTATION_DEPENDENCY`, fail closed |
 | H3 duration | integer enum 4-15 (H3), 5-15 (H3 Max); test minimum 4 s / 5 s |
-| Evidence | `research/providers/minimax-mplan-explore-capability.md`, `research/providers/minimax-voice-clone-entitlement.md` |
+| Evidence | `research/providers/minimax-mplan-explore-capability.md`, `research/providers/minimax-h3-official-reality.md`, `research/providers/minimax-voice-clone-entitlement.md`, `research/providers/receipts/minimax-h3-i2va-reference-2026-10-05.sanitized.json` |
 
 ## Golden Samples
 
@@ -138,3 +141,84 @@ claim-bearing role raises `GeneratedAssetEvidenceError` in code.
 
 `.verify-tmp/m3/human-review.json` carries the review fields with **every score
 null**. Technical QC passing does not mean production ready.
+
+## M4 H3 Video Generation (Issue #22) — VERIFIED 2026-10-05
+
+Branch `feat/22-minimax-h3-video`. One real provider generation was performed, a
+**reference-image** test, because M2.0 proved T2VA with no image content at all.
+
+| Property | Value |
+|---|---|
+| Transport | documented public API `POST /v2/video_generation`, api schema `v2` |
+| Model / mode | `MiniMax-H3`, **I2VA** (first-frame reference) |
+| Requested | 4 s, `768P`, ratio `adaptive` (i2va derives the ratio from the input image) |
+| Reference | `data:image/jpeg;base64`, 768x1360, 45 800 B, `role: first_frame` |
+| Alignment instruction | emitted as the first line, upstream wording verbatim |
+| Task created | **exactly 1**, polled to `succeeded`, downloaded once |
+| Actual output | h264 / mp4, 768x1344, 24 fps, **4.458 s**, 424 543 B, decodable |
+| Aspect | 0.571429 against reference 0.5647 — tolerance, not equality |
+| Duration delta | 4.000 requested → 4.458 actual (0.458 s, threshold 1.0 s) |
+| Audio | unrequested **AAC** present, exactly as M2.0 measured; `audio_policy=REPLACE` |
+| Black / freeze | longest black run 0.0 s, longest freeze run 0.0 s, mean frame diff 0.0131 |
+| Output SHA-256 | `b761ea2a69b3ad6181b8a48b93dddefb56edd897867f42a8b160610e74ac249a` |
+| Billing preflight | `SAFE_INCLUDED_PLAN`, credential class `SUBSCRIPTION` |
+| Quota before | weekly 58% |
+| Quota after | weekly **51%** |
+| Observed delta | **7 percentage points** weekly, matching the declared `7pp` budget |
+| cash / Credit Pack / voucher / owed | `0.00` before **and** after |
+| `production_ready` | `false` |
+| `human_review` | `PENDING_FOUNDER_REVIEW` |
+
+### The reference path was genuinely unproven
+
+M2.0's receipt contains a single `text` item and **no image content**. So it was
+silent on every part of the reference path: whether an `image_url` item is
+accepted, whether `role: first_frame` is honoured, whether a `data:` URI is an
+accepted URL form, whether the alignment instruction travels with a frame, and
+whether I2VA renders at all on this account. The account also resolves to the
+regional CN mirror rather than the host the public documentation targets, so
+reference handling could plausibly differ. One 4 s call was the cheapest way to
+close that gap.
+
+### Quota is reported as a delta, never as a price
+
+7 percentage points is an **observed** delta for one 4 s / 768P job. It is not a
+price formula: no per-second, per-clip or credit rate is derived from a percentage.
+It is used only to budget tests conservatively. Weekly now stands at **51%**.
+
+### Cache reuse verified against the real artifact
+
+A second run was served from the cache with the transport pointed at an
+**unroutable host**, so any network attempt would have failed loudly:
+
+| Property | Value |
+|---|---|
+| Reused | `true` |
+| Provider creates | **0** |
+| Provider polls | **0** |
+| Billing calls | **0** |
+| Original receipt overwritten | `false` |
+
+### Evidence boundary
+
+The shot was registered as `GENERATED_VIDEO` / `VISUAL_SUPPORT` with
+`generated=true`, `evidence_capable=false`, and only **after** the immutable
+receipt existed. Any claim-bearing role raises `GeneratedAssetEvidenceError`.
+
+### Human review
+
+`<shot>.mp4.human-review.json` carries eleven named review fields with **every
+score null**. Automated measurements ride alongside, labelled as measurements.
+Observed on the real clip, and recorded as observation rather than scored: the
+first frame reproduces the reference faithfully; motion is present and consistent
+with the requested slow push; but between the first and last frames the circular
+headlamp reads as a filled disc rather than a ring, and one neon sign drifts in
+position. Geometry stays coherent with no melting or warping. Whether that drift
+is acceptable for a support visual is a human judgement, and it is not this
+pipeline's to make.
+
+### Still unverified
+
+Ref2VA reference-video and reference-audio paths, FL2VA, L2VA, and MiniMax-H3-Max
+(including its 5 s floor and 480P option) are implemented and fixture-tested but
+have not been exercised against the live service.

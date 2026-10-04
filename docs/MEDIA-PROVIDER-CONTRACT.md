@@ -17,7 +17,7 @@ Current implementation:
 |---|---|---|---|
 | `MediaProvider` | narration | `contract.py` | implemented (M2) |
 | `ImageProvider` | stills | `image_contract.py` | implemented (M3) |
-| `VideoProvider` | generated shots | — | planned, Issue #22 |
+| `VideoProvider` | generated shots | `video_contract.py` | implemented (M4) |
 
 There is **no `SpeechProvider` class**. `MediaProvider` is the current,
 speech-shaped ABC. Renaming it to an explicit `SpeechProvider` is a clean
@@ -61,17 +61,30 @@ class MediaProvider:
 
     def generate_image(self, ImageRequest) -> ImageAsset: ...   # M3, Issue #20
     def generate_video(self, req) -> Asset:
-        raise CapabilityNotSupported(...)     # Issue #22
+        raise CapabilityNotSupported(...)     # video lives on VideoProvider, not here
 
 class ImageProvider:
     def capabilities(self) -> dict
     def health(self) -> dict
     def generate_image(self, ImageRequest) -> ImageAsset
     def receipt(self, asset) -> ImageReceipt
+
+class VideoProvider:                          # M4, Issue #22
+    def capabilities(self) -> dict
+    def health(self) -> dict
+    def generate_video(self, VideoRequest) -> VideoOutcome
+    def receipt(self, asset) -> VideoReceipt
 ```
 
-Implementation: `src/contentops/media/contract.py`.
-Tests: `tests/test_minimax_speech.py`.
+`VideoProvider` is deliberately a separate ABC rather than extra methods on
+`MediaProvider`. Video's inputs are genuinely different — it is asynchronous, it
+carries references as well as text, it returns an audio track nobody asked for, and
+its defining invariant is **how many paid tasks may be created**. That last one
+would otherwise live in a boolean argument, where it is easy to set wrong.
+
+Implementation: `src/contentops/media/contract.py`, `image_contract.py`,
+`video_contract.py`.
+Tests: `tests/test_minimax_speech.py`, `test_minimax_image.py`, `test_minimax_h3.py`.
 
 ## Provider Implementations
 
@@ -599,3 +612,196 @@ mmx image generate --prompt <text> --model image-01
 `image-01`. `--out` takes an exact path for a single image. Custom dimensions are
 verified locally rather than discovered at request time.
 
+# M4 — Video (Issue #22)
+
+## One task per attempt
+
+Video is billed at **task creation**, so the defining invariant is a count, not a
+result:
+
+```
+ONE GENERATION ATTEMPT = AT MOST ONE PROVIDER TASK
+```
+
+The provider reaches that by making `create_task`, `poll_task` and
+`download_result` three separate methods on `H3Transport`. A combined
+`generate()` would hide the expensive call inside a retry loop, which is exactly
+how a poll timeout turns into a second bill.
+
+Recovery therefore always acts on an **existing** task. A new task is created
+**never** because of:
+
+| Situation | Correct action |
+|---|---|
+| poll timed out | resume polling the same task |
+| temporary 5xx while polling | resume polling the same task |
+| process restarted | read private state, resume the same task |
+| download failed | retry the **same** URL |
+| download timed out | retry the same URL |
+| disk write failed after generation | re-fetch the same result |
+| QC rejected the download | re-fetch the same result first |
+
+Each of those is a **recovery** problem, not a generation reason.
+
+## Lifecycle order
+
+```
+validate locally          free; catches every documented rule
+build the fingerprint     over the COMPILED prompt, not the raw intent
+check the cache           a hit needs no billing and no network
+resume private state      an existing task is finished, never replaced
+require quota_budget      video is the most expensive call ContentOps makes
+require test_objective    a task must have a recorded reason to exist
+authorize("video")        subscription-only pre-flight
+write a STARTED attempt   durable evidence
+CREATE exactly one task   <- the only billable step
+persist raw task id       private state, BEFORE the first poll
+poll THAT task            to a terminal state
+download THAT result      retrying the same URL on failure
+QC -> canonical output -> immutable receipt -> review sheet
+AssetRegistry.register()  only once the receipt exists
+```
+
+`quota_budget` and `test_objective` are checked **after** the cache and the resume
+point and **before** the billing gate, so a cache hit or a restart-resume is never
+forced to declare a budget it will not spend.
+
+## Attempt 2 is a second bill
+
+A retry is only permitted when **all** of these hold:
+
+1. attempt 1 is a durable record in state `FAILED` with a terminal provider state
+2. a named failure reason is given
+3. the generation fingerprint **changed**
+4. an explicit new quota budget is given
+
+A running task is not retryable — it is resumed. Poll failures, download failures
+and local disk failures are not retryable either, for the same reason. Operational
+recovery must not become another bill.
+
+## Task id privacy
+
+The raw provider task id is operationally necessary for resuming a poll, so it
+exists — but only in private, gitignored runtime state, written **before** the
+first poll. The public receipt stores `task_created: true` plus a per-receipt
+salted `task_ref_hash`; a plain hash of a numeric id would be reversible by
+enumeration, which is why the salt exists and is discarded.
+
+`GenerationAttemptRecord.write()` refuses to persist a record containing a raw
+task id. The refusal runs before every write rather than relying on review.
+
+## Receipt convention
+
+| Artifact | Name |
+|---|---|
+| canonical asset | `<name>.mp4` |
+| immutable generation receipt | `<name>.mp4.receipt.json` |
+| Founder review sheet | `<name>.mp4.human-review.json` |
+| private task state | `<work-dir>/task-state/<fingerprint>.json` |
+| durable attempt records | `<work-dir>/attempts/<attempt-id>.json` |
+| reuse audit | `<work-dir>/reuse-events.jsonl` |
+
+The receipt is written and verified **before** `AssetRegistry.register()`. A video
+whose receipt failed to write is not registered: an asset without provenance is
+what the evidence boundary exists to prevent.
+
+A cache hit loads and validates the original receipt and restores provider receipt
+state. It never rewrites the original generation receipt.
+
+## Audio policy
+
+H3 returned an unrequested AAC track in both M2.0 and M4, so the track's existence
+is normal provider behaviour and must be a decision rather than a surprise:
+
+| Policy | Meaning |
+|---|---|
+| `KEEP` | use the generated track |
+| `MUTE` | keep the file, drop the track |
+| `REPLACE` | drop the generated track, substitute deterministic narration |
+
+`REPLACE` is the ContentOps default: narration must stay deterministic, and H3's
+native sound must never quietly compete with it. The chosen policy travels on both
+the asset and the receipt. Applying it downstream is M4.5 work.
+
+## Technical QC
+
+Measured facts only: container, codec, full decodability, duration, dimensions,
+aspect, fps, audio presence, black-frame runs, freeze runs, frame-difference
+distribution. It never concludes "cinematic", "beautiful" or "publishable" —
+those are human judgements, and a gate that reports them teaches the pipeline to
+trust itself.
+
+Duration and aspect use **tolerance**, never equality. Both M2.0 and M4 requested
+4.000 s and received **4.458 s**; an equality check would reject correct output.
+Requested and actual values are both recorded so the deviation stays visible
+instead of being absorbed into a pass.
+
+## Human review
+
+Reference fidelity cannot be automated. Automated QC can prove a file decodes and
+does not freeze; it cannot tell whether the subject stayed the same person or
+whether the Founder would publish it.
+
+So each generation writes a review sheet with eleven **named** fields —
+`subject_fidelity`, `motion_plausibility`, `temporal_artifacts`,
+`reference_fidelity`, `first_frame_fidelity`, `last_frame_fidelity`,
+`audio_suitability`, `caption_safe_area`, `cross_shot_consistency`,
+`overall_quality`, `willingness_to_publish` — every one of them `null`, with
+`state` and `decision` both `PENDING_FOUNDER_REVIEW`. Automated measurements ride
+alongside, labelled as measurements.
+
+Reference-only fields are marked not-applicable for modes that do not use them, so
+a reviewer can tell "not assessed" from "not relevant to this mode".
+
+## Prompt structure
+
+`H3PromptCompiler` implements the current official
+`MiniMax-AI/MiniMax-H3` `skills/h3-prompt-writing` skill. The upstream repository is
+**not vendored**; the compiler implements the structure it specifies, and the repo,
+commit, skill path and `checked_at` travel on every receipt.
+
+Base modes emit an optional alignment instruction as the first line, then one blank
+line, then `integrated_multimodal_description`, `overall_soundscape`,
+`non_diegetic_music`. Ref2VA emits six sections: `subject_definitions`, `summary`,
+`retention_analysis`, `detailed_description`, `overall_soundscape`,
+`non_diegetic_music`.
+
+`S.SS` is the effective duration to exactly two decimals. `[Shot 1]` carries no
+timestamp; later shots carry a strictly increasing cut time inside the duration.
+Field names, section order, reference labels and timing notation are reproduced
+exactly, because the model is trained against them: a prompt that renames
+`overall_soundscape` is not a stylistic difference, it is a different request.
+
+## Transport
+
+The **documented public API** over HTTPS, not the official CLI:
+
+| Call | Endpoint | Cost |
+|---|---|---|
+| create | `POST /v2/video_generation` | **the only billable call** |
+| poll | `GET /v2/query/video_generation/{task_id}` | free |
+| download | the URL returned in `content.url` | free |
+
+The CLI remains useful for `auth`, `status`, `quota` and diagnostics, but it cannot
+express the required resolution: it silently drops `--resolution` and always sends
+`2K`, so 768P is unreachable through it.
+
+The resolved base URL is passed to **both** the billing gate and the transport. An
+account can resolve to the regional CN mirror, and a key authorised against one
+host is not evidence about the other.
+
+## Evidence boundary
+
+Unchanged from M3. A generated shot is support-only:
+
+```
+kind             GENERATED_VIDEO
+generated        true
+evidence_capable false
+evidence_use     VISUAL_SUPPORT
+```
+
+`AssetKind.EVIDENCE_CAPABLE` remains `REAL`, `SCREENSHOT`, `SCREEN_RECORDING`
+only. H3 may support a hook, a hero visual, a concept, a metaphor, a transition or
+an unrecordable scene. It may never prove a benchmark, a test result, an analytics
+metric, a UI state, a customer outcome, source code or a real product demo.
