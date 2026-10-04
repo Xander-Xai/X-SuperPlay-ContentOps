@@ -1,8 +1,15 @@
 # M4 — MiniMax H3 subscription video: executable plan (Issue #22)
 
-> Planning document. **Nothing here is implemented.** Prepared 2026-10-04 on
+> **IMPLEMENTED 2026-10-05** on `feat/22-minimax-h3-video`, PR #26, commit
+> `c226837`. Kept as the record of what was planned and why, including the
+> corrections below. Current reality lives in
+> `research/providers/minimax-h3-official-reality.md` and
+> `docs/MEDIA-PROVIDER-CONTRACT.md` (M4 section).
+> The next executable phase is `docs/M4.5-MEDIA-CONVERGENCE-PLAN.md`.
+>
+> This document was prepared 2026-10-04 on
 > branch `feat/20-minimax-mplan-image`, corrected before PR #25 merged.
-> H3 work starts only after #20 merges.
+> H3 work started only after #20 merged.
 >
 > Superseded claims in the previous revision of this file were wrong and have
 > been removed: the PAYG blocker, the claim that no official prompt skill

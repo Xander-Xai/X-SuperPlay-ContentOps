@@ -25,6 +25,11 @@
 
 - [UPSTREAM-EASEL.md](UPSTREAM-EASEL.md) — Easel pin policy, upgrade process, compatibility matrix
 
+## Milestone plans
+
+- [M4-H3-PLAN.md](M4-H3-PLAN.md) — M4 MiniMax H3 video (Issue #22) — **implemented**
+- [M4.5-MEDIA-CONVERGENCE-PLAN.md](M4.5-MEDIA-CONVERGENCE-PLAN.md) — M4.5 media convergence — **next executable phase**
+
 ## Governance
 
 - [DEVELOPMENT-STANDARD.md](DEVELOPMENT-STANDARD.md) — Development rules

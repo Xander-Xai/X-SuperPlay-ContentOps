@@ -31,6 +31,11 @@ translation_status: synced
 
 - [UPSTREAM-EASEL.md](UPSTREAM-EASEL.md) — Easel 固定版本策略
 
+## 里程碑计划
+
+- [M4-H3-PLAN.md](M4-H3-PLAN.md) — M4 MiniMax H3 视频（Issue #22）—— **已实现**
+- [M4.5-MEDIA-CONVERGENCE-PLAN.md](M4.5-MEDIA-CONVERGENCE-PLAN.md) — M4.5 媒体收敛 —— **下一个可执行阶段**
+
 ## 治理
 
 - [DEVELOPMENT-STANDARD.md](DEVELOPMENT-STANDARD.md) — 开发规则
