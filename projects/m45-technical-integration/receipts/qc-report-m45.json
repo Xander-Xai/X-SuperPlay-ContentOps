@@ -1,0 +1,146 @@
+{
+  "project": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\m45-technical-integration",
+  "checked_at": "2026-10-04T21:55:11Z",
+  "video": "",
+  "overall": "WARN",
+  "checks": [
+    {
+      "id": "_video",
+      "ok": true,
+      "severity": "INFO",
+      "path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\m45-technical-integration\\final\\m45.mp4"
+    },
+    {
+      "id": "file_size",
+      "ok": true,
+      "severity": "PASS",
+      "value_bytes": 1949089,
+      "min_bytes": 102400
+    },
+    {
+      "id": "ffprobe_parse",
+      "ok": true,
+      "severity": "PASS"
+    },
+    {
+      "id": "resolution",
+      "ok": true,
+      "severity": "PASS",
+      "value": "1080x1920",
+      "expected": "1080x1920"
+    },
+    {
+      "id": "aspect_ratio_9_16",
+      "ok": true,
+      "severity": "PASS",
+      "value": "1080:1920"
+    },
+    {
+      "id": "duration_range",
+      "ok": false,
+      "severity": "WARN",
+      "value_sec": 24.0,
+      "expected_range_sec": [
+        30.0,
+        120.0
+      ]
+    },
+    {
+      "id": "video_codec_h264",
+      "ok": true,
+      "severity": "PASS",
+      "value": "h264"
+    },
+    {
+      "id": "audio_present",
+      "ok": true,
+      "severity": "PASS"
+    },
+    {
+      "id": "audio_codec_aac",
+      "ok": true,
+      "severity": "PASS",
+      "value": "aac"
+    },
+    {
+      "id": "project_yaml",
+      "ok": false,
+      "severity": "WARN"
+    },
+    {
+      "id": "source_refs_recorded",
+      "ok": true,
+      "severity": "PASS",
+      "value_count": 0
+    },
+    {
+      "id": "caption_srt_present",
+      "ok": false,
+      "severity": "WARN",
+      "path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\m45-technical-integration\\assets\\captions\\default.srt"
+    },
+    {
+      "id": "script_exists",
+      "ok": true,
+      "severity": "PASS",
+      "path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\m45-technical-integration\\script\\master.md"
+    },
+    {
+      "id": "storyboard_exists",
+      "ok": true,
+      "severity": "PASS",
+      "shot_count": 6
+    },
+    {
+      "id": "real_source_ratio",
+      "ok": true,
+      "severity": "PASS",
+      "value": 0.833,
+      "min": 0.7,
+      "real_shots": 5,
+      "generated_shots": 1,
+      "note": "AI-generated key visuals must not be the majority"
+    },
+    {
+      "id": "source_provenance_complete",
+      "ok": true,
+      "severity": "PASS",
+      "missing_shot_indices": []
+    },
+    {
+      "id": "engine_recorded",
+      "ok": true,
+      "severity": "PASS",
+      "value": "easel"
+    },
+    {
+      "id": "voice_not_silence",
+      "ok": true,
+      "severity": "PASS",
+      "max_volume_db": "-20.7 dB",
+      "mean_volume_db": "-30.1 dB"
+    },
+    {
+      "id": "subtitle_burned_or_track",
+      "ok": false,
+      "severity": "WARN",
+      "method": "none",
+      "note": "no subtitle declared and none present"
+    },
+    {
+      "id": "real_evidence_present",
+      "ok": true,
+      "severity": "PASS",
+      "value_count": 1
+    },
+    {
+      "id": "voice_quality_declared",
+      "ok": true,
+      "severity": "INFO",
+      "voice_provider": "unknown",
+      "voice_quality": "unknown",
+      "production_quality_warning": true,
+      "note": "mechanical/fallback voice keeps the render at READY_FOR_HUMAN_REVIEW; only a human can accept it as production (V1 spec §11)"
+    }
+  ]
+}

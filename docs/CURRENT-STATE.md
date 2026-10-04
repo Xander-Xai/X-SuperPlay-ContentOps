@@ -52,8 +52,8 @@
 | Property | Value |
 |---|---|
 | Integration | speech **IMPLEMENTED** (Issue #19), `PENDING_FOUNDER_REVIEW` |
-| Image integration | **IMPLEMENTED** (Issue #20, PR #25), `PENDING_FOUNDER_REVIEW` |
-| Video integration | **IMPLEMENTED** (Issue #22, PR open), `PENDING_FOUNDER_REVIEW` |
+| Image integration | **IMPLEMENTED** (Issue #20, PR #25 merged), `PENDING_FOUNDER_REVIEW` |
+| Video integration | **IMPLEMENTED** (Issue #22, PR #26 merged), `PENDING_FOUNDER_REVIEW` |
 | Speech transport | official MiniMax CLI `mmx`; pinned Easel path is `EASEL_MPLAN_AUTH_INCOMPATIBLE` |
 | Image transport | official MiniMax CLI `mmx` |
 | Video transport | **documented public API** `POST /v2/video_generation` — the CLI cannot set resolution |
@@ -222,3 +222,61 @@ pipeline's to make.
 Ref2VA reference-video and reference-audio paths, FL2VA, L2VA, and MiniMax-H3-Max
 (including its 5 s floor and 480P option) are implemented and fixture-tested but
 have not been exercised against the live service.
+## M4.5 Media convergence (Issue #27) — IMPLEMENTED 2026-10-05
+
+Branch `feat/27-media-convergence`. **Zero provider calls.** Weekly quota untouched at 51%.
+
+| Property | Value |
+|---|---|
+| Shared validator | `validate_media_asset(envelope, adapter)` — one common path, three adapters |
+| Modality model | `MediaModality` (SPEECH/IMAGE/VIDEO) is **separate** from `AssetKind`; speech carries no `asset_kind` |
+| Speech receipt facts | no `schema`, no `generated`/`evidence_capable`, digest in `normalized_sha256`/`raw_sha256` |
+| Transform receipt | `contentops.media-transform/v1` — derived assets, source digest, original untouched |
+| `AudioPolicy` | `KEEP` reuses the original (no transform); `MUTE`/`REPLACE` produce an audio-free derived asset |
+| Capability registry | 10 capabilities resolved by name, no vendor word; only live-proven ones `VERIFIED` |
+| Quota policy | explicit operator floors; weekly floor is a **chosen value**, not the observed 7pp delta |
+| Scheduler | `ALLOW`/`REUSE_REQUIRED`/`DEFER`/`MANUAL_REQUIRED`/`BLOCKED`, priority evidence → narration → image → video |
+| AssetPlanner execution | claim beats resolve only to real material, else `EVIDENCE_ASSET_REQUIRED` |
+| Quality gate | `BLOCKED`/`DEGRADED_FALLBACK`/`PENDING_HUMAN_REVIEW`/`PRODUCTION_READY`/`REJECTED` |
+| Manifest | `contentops.media-manifest/v1`, deterministic, no timestamp, sole asset list |
+| Composition | reuses pinned Easel v0.2.1 via `assemble_easel.run`; no second compositor |
+| Tests | 70 M4.5 + 85 speech + 84 image + 108 H3, all PASS |
+
+### Two rules the implementation added beyond the plan
+
+- a **provider generation** must declare its modality's schema; a **non-generated**
+  asset must not, because nothing's API produced it
+- a missing `technical_qc` **fails** a generation but is **not applicable** to an
+  import or a transform — no provider ran, so there is nothing to report
+
+### The technical integration is not a production golden
+
+`scripts/m45_media_integration.py` produced one local `final.mp4`
+(h264 / 1080x1920 / 18.0 s, `qc_video` WARN) proving
+`registry → manifest → compose → final QC` with **0** speech, image and video
+provider calls.
+
+Every asset is a deterministic fixture, labelled in its receipt, in the manifest
+header and in the integration report. Media binaries are gitignored; the manifest,
+receipts and storyboard are committed.
+
+It does **not** prove real `SourceArtifact` ingestion, `Claim Ledger`
+completeness, Founder approval, a production golden, or three consecutive
+production builds. `production_ready=false` / `PENDING_FOUNDER_REVIEW`, and no code
+path can report otherwise.
+
+### Defects the test suite caught during this milestone
+
+Three real bugs in the new code, all found by tests rather than review:
+
+1. `require_evidence_capable` was called unconditionally for generated image, which
+   made a support visual **impossible to produce at all** — the capability is
+   correctly flagged evidence-incapable, but the check belongs to the claim path
+2. The asset-existence check was lost while restructuring the receipt loader, so a
+   **missing asset file passed validation**
+3. Duplicate `asset_id`s **silently collapsed** in the manifest, because
+   `gate_states` is keyed by identifier; now refused
+
+Plus one validation gap: a key-shaped value was only refused in a known field
+list, so it could be smuggled through a new field. Now no string value anywhere in
+a public receipt may match the provider-key shape.

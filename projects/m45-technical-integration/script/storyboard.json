@@ -1,0 +1,61 @@
+{
+  "size": "1080x1920",
+  "image_motion": "ken-burns",
+  "shots": [
+    {
+      "shot_id": "beat-01",
+      "image": "projects/m45-technical-integration/sources/screenshots/fixture-01.png",
+      "motion": "static",
+      "duration": 3.0,
+      "source": "projects/m45-technical-integration/sources/screenshots/fixture-01.png",
+      "source_type": "real_screenshot"
+    },
+    {
+      "shot_id": "beat-02",
+      "image": "projects/m45-technical-integration/assets/generated/beat-02-diagram.png",
+      "motion": "static",
+      "duration": 3.0,
+      "source": "projects/m45-technical-integration/assets/generated/beat-02-diagram.png",
+      "source_type": "real_screenshot"
+    },
+    {
+      "shot_id": "beat-03",
+      "image": "projects/m45-technical-integration/assets/generated/beat-03-diagram.png",
+      "motion": "static",
+      "duration": 3.0,
+      "source": "projects/m45-technical-integration/assets/generated/beat-03-diagram.png",
+      "source_type": "real_screenshot"
+    },
+    {
+      "shot_id": "beat-04",
+      "image": "projects/m45-technical-integration/assets/generated/beat-04-diagram.png",
+      "motion": "static",
+      "duration": 3.0,
+      "source": "projects/m45-technical-integration/assets/generated/beat-04-diagram.png",
+      "source_type": "real_screenshot"
+    },
+    {
+      "shot_id": "beat-05",
+      "image": ".verify-tmp/m4/run/shot-f74366c9b0aaf925.mp4",
+      "motion": "static",
+      "duration": 6,
+      "source": ".verify-tmp/m4/run/shot-f74366c9b0aaf925.mp4",
+      "source_type": "ai_generated",
+      "video": ".verify-tmp/m4/run/shot-f74366c9b0aaf925.mp4",
+      "audio_policy": "REPLACE"
+    },
+    {
+      "shot_id": "beat-05",
+      "image": "projects/m45-technical-integration/assets/processed/shot-f74366c9b0aaf925-replace.mp4",
+      "motion": "static",
+      "duration": 6,
+      "source": "projects/m45-technical-integration/assets/processed/shot-f74366c9b0aaf925-replace.mp4",
+      "source_type": "real_screenshot",
+      "video": "projects/m45-technical-integration/assets/processed/shot-f74366c9b0aaf925-replace.mp4",
+      "audio_policy": "REPLACE"
+    }
+  ],
+  "engine": "easel",
+  "media_manifest_fingerprint": "7416eb11b5182f2a9f6fbb3c1af0c505034dbe298bbce6115596ee81d0adbef6",
+  "narration": "projects/m45-technical-integration/assets/voice/narration.wav"
+}

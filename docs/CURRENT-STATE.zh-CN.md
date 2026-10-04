@@ -192,3 +192,181 @@ M2.0 的回执里只有一个 `text` 项，**没有任何图像内容**。因此
 
 Ref2VA 的参考视频与参考音频路径、FL2VA、L2VA，以及 MiniMax-H3-Max（包括其 5 秒
 下限和 480P 选项）均已实现并有 fixture 测试，但尚未对线上服务实测。
+# M4.5 — 收敛的媒体层（Issue #27）
+
+## 模态不是资产种类
+
+M2–M4 产出了三个 provider，它们的回执 schema 几乎没有共同点：
+
+|                          | speech                        | image                 | video                 |
+|--------------------------|-------------------------------|-----------------------|-----------------------|
+| `schema` 字段            | **不存在**                    | `...image-receipt/v1` | `...video-receipt/v1` |
+| 资产摘要字段              | `normalized_sha256` / `raw_sha256` | `output_sha256`       | `output_sha256`       |
+| `generated`              | **不存在**                    | `true`                | `true`                |
+| `evidence_capable`       | **不存在**                    | `false`               | `false`               |
+| `AssetKind`              | **无**                        | `GENERATED_IMAGE`     | `GENERATED_VIDEO`     |
+| 是否注册进 registry       | **从不**                      | 由 CLI 脚本注册       | 由 provider 注册      |
+
+因此 `MediaModality`（SPEECH / IMAGE / VIDEO）是一个与 `AssetKind` **相互独立**的
+维度，而 `MediaAssetEnvelope` 总是携带 `modality`，`asset_kind` 可选——语音为 `None`。
+
+我们刻意**没有**发明 `GENERATED_SPEECH`。那会把非视觉内容塞进视觉证据枚举，并且
+暗示旁白拥有它并不拥有的证据边界。旁白是确定性的，不是证明。
+
+`AssetKind` 仍是证据真值表的唯一所有者。收敛层向它**询问**，从不复述。
+
+## 一个校验器，三个适配器
+
+```
+validate_media_asset(envelope, adapter)
+        |
+        +-- SpeechValidationAdapter
+        +-- ImageValidationAdapter
+        +-- VideoValidationAdapter
+```
+
+校验器只负责真正共通的部分：文件存在、回执存在且可解析、摘要一致、指纹、
+仅订阅计费、有针对性的凭证与任务隐私不变量、审阅状态、回退必须显式，以及血缘。
+
+适配器负责差异部分。协议边界上有一张分派表；公共路径**没有**任何模态分支，
+并有一条测试强制保证这一点。
+
+实现中新增、原始设计未提及的两条规则：
+
+- **provider 生成**必须声明其模态的 schema
+- **非生成**资产**不得**声明，因为没有 provider 的 API 生产过它
+- `technical_qc` 缺失会让**生成**失败，但对**导入**或**变换**属于**不适用**——
+  没有 provider 运行过，也就没有可报告的内容；强制要求它只会要么拦截诚实的
+  记录，要么诱使有人编造一份
+
+凭证检查是有针对性的，而不是无边界的正则扫描：公开回执中任何字符串值都不得
+匹配封闭的 provider key 形状，且不得出现 `Authorization` 头值。provider 层的
+哨兵测试仍是权威依据，因为它们知道真实的 key。
+
+## 不可变性与派生资产
+
+provider 生成的规范资产不可变。`AudioPolicy` 的应用方式是产出一个**派生资产**，
+并附上一份 `contentops.media-transform/v1` 回执，其中记录来源摘要：
+
+```
+shot.mp4（provider，不可变）
+  └─ shot-mute.mp4 / shot-replace.mp4（派生）
+       └─ <name>.transform.json → source_asset_sha256、output_sha256、tool、command
+            └─ shot.mp4.receipt.json（未被触碰）
+```
+
+| 策略 | 派生资产 | 输出中的音频 | 是否需要旁白 |
+|------|----------|--------------|--------------|
+| `KEEP` | **无** —— 复用原件 | 有（已记录） | 否 |
+| `MUTE` | 有 | 无 | 否 |
+| `REPLACE` | 有 | 无 | **是** |
+
+`KEEP` 不写任何东西：没有移动过的字节，不应获得暗示它们移动过的来源证明。
+`REPLACE` 不混流旁白——那由合成阶段从确定性音轨完成，因此这一步不可能产出
+无声混音。移除音频时视频流是**复制**而非重新编码，静音因此不会劣化画面。
+
+## 能力注册表
+
+| 能力 | 状态 | 证据 |
+|------|------|------|
+| `SPEECH/NARRATION` | `VERIFIED` | PR #24 |
+| `IMAGE/GENERATED_SUPPORT_VISUAL` | `VERIFIED` | PR #25 |
+| `VIDEO/H3_T2VA` | `VERIFIED` | M2.0 真实任务 |
+| `VIDEO/H3_I2VA` | `VERIFIED` | M4 真实任务 |
+| `VIDEO/H3_FL2VA` / `H3_L2VA` / `H3_REF2VA` / `H3_MAX` | `DOCUMENTED_BUT_NOT_TESTED` | 仅 fixture |
+| `VISUAL/REAL_EVIDENCE` / `VISUAL/DIAGRAM` | `MANUAL_ONLY` | 人工 / 本地渲染 |
+
+能力标识符中不含任何厂商名。注册接受一个**可调用对象**，而不是 provider 对象，
+因此注册表无法持有凭证或计费状态。`VERIFIED` 能力若不引用证据就无法构造，
+这防止该表退化成一张愿望清单。不支持的能力抛出 `CapabilityNotSupported`，
+绝不替换。
+
+Fixture 证据证明代码的行为，但绝不能证明账号被授予了什么权限，二者未被混同。
+
+## 配额策略不是成本模型
+
+`MediaQuotaPolicy` 保存显式的操作者取值。周配额下限是**选定的**，并非由实测的
+约 7pp H3 增量推导而来——那只是保守规划的输入，不是价格，因为 provider 只暴露
+百分比，且单一时长、单一分辨率的一次观测并不构成费率。
+
+`QuotaScheduler` 对所有动作只取**一次**快照，因为三个模态共享同一份账号套餐状态。
+优先级由策略固定：
+
+1. 可复用资产
+2. 必需的实或已采集证据
+3. 旁白
+4. 确定性本地资产
+5. 生成的图像辅助视觉
+6. 生成的视频辅助视觉
+
+视频排在最后，因为它是 ContentOps 最昂贵的调用，也是对视频真实性最不具
+负载意义的一项。它绝不能挤占旁白或某个论断所依赖的证据。
+
+决策：`ALLOW` / `REUSE_REQUIRED` / `DEFER` / `MANUAL_REQUIRED` / `BLOCKED`，
+每一条都记录了当时生效的策略与所做的观测。
+
+**调度决策不授权任何事情。** 每个 provider 在调用前仍会运行自己的 `BillingGuard`，
+因为在此期间配额可能被别的东西消耗。
+
+## 证据优先的执行
+
+承载论断的 beat 只能解析为 `REAL` / `SCREENSHOT` / `SCREEN_RECORDING`。
+若所需素材缺失，beat 返回 `EVIDENCE_ASSET_REQUIRED`——一个结构化的拒绝，
+而不是异常，也不是替代品。定位器报告 `MISSING_REAL_ASSET` 或 `NEEDS_CAPTURE`。
+
+采纳真实素材会写下一份 `contentops.media-import/v1` 回执，记录其来源、摘要，
+以及没有 provider 参与。只有摘要的导入会成为整条链上最薄弱的一环。
+
+回退是一个被记录下来的字段，而不是一种行为。替代品必须说明请求了什么、
+实际用了什么、以及原因；未命名的替换会被拒绝。
+
+## 收敛的门禁词汇
+
+| 状态 | 含义 |
+|------|------|
+| `BLOCKED` | 校验或技术 QC 失败 |
+| `DEGRADED_FALLBACK` | 技术上正常，但使用了已声明的替代品 |
+| `PENDING_HUMAN_REVIEW` | 技术上正常，等待人来判断 |
+| `PRODUCTION_READY` | 技术上正常**且**有人已批准 |
+| `REJECTED` | 人已查看并拒绝 |
+
+技术 PASS 不等于批准。没有记录在案的人工决定，门禁无法到达 `PRODUCTION_READY`；
+**校验器**也会拒绝那些一边声明 `production_ready: true`、一边仍是
+`PENDING_FOUNDER_REVIEW` 的回执——这种矛盾正是流水线相信自己已过关的途径。
+
+## Manifest 是唯一的资产清单
+
+`contentops.media-manifest/v1` 是合成与最终 QC 读取的唯一清单。它是一个
+**索引**而非回执：模态专属细节仍留在各自回执中，因为一份复制了每个字段的
+manifest 只会成为可能与前者矛盾的第二个事实来源。
+
+按构造即确定：资产按 `asset_id` 排序、键序固定、正文**不含时间戳**。
+时间戳属于回执，那里已经记录了某件事何时发生；放在 manifest 里只会让每次构建
+都无信息增益地产生差异。没有门禁决定的资产，或重复的 `asset_id`，会被拒绝
+而不是被接纳。
+
+## 合成复用锁定的 Easel 路径
+
+```
+manifest → 轻量的 manifest-to-storyboard 转换
+         → 锁定的 Easel v0.2.1（assemble_easel.run）
+         → final.mp4
+         → qc_video.qc，读取同一份由 manifest 生成的 storyboard
+```
+
+没有构建第二个合成器。上游保持未修改。`qc_video` 读取 manifest 产出的那份
+storyboard，因此最终 QC 是对 manifest 的检查，而不是另一份独立意见——
+并且回退引擎保持其仅诊断的语义，绝不声称 `production_ready`。
+
+## 技术集成证明了什么、没有证明什么
+
+`scripts/m45_media_integration.py` 用本地、fixture 驱动的方式产出一个 `final.mp4`，
+证明 `registry → manifest → compose → 最终 QC`，且 **provider 调用为零**。
+周配额未被触碰。
+
+每一个资产都是确定性 fixture，并在其回执、manifest 头部以及集成报告中
+被如此标注。媒体二进制文件被 gitignore；manifest、回执与 storyboard 会被提交。
+
+它**不**证明真实的 `SourceArtifact` 摄取、`Claim Ledger` 完整性、创始人批准、
+生产黄金样本，或三次连续生产构建。产出为 `production_ready=false` /
+`PENDING_FOUNDER_REVIEW`，且代码路径中没有任何分支能给出相反结论。

@@ -1,0 +1,22 @@
+{
+  "schema": "contentops.media-import/v1",
+  "record_type": "media_import",
+  "provider": "contentops_local_import",
+  "product": "contentops",
+  "plan": "real_material",
+  "transport": "local_import",
+  "transport_version": "1",
+  "imported_kind": "REAL",
+  "fingerprint": "1691e12a0ac2d06ce139c607ac873603e5eec9a6fe8fc6f4789f43e754f910b7",
+  "canonical_path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\m45-technical-integration\\sources\\screenshots\\fixture-01.png",
+  "output_sha256": "cd6c2c6a35a03b27a0774d1e5b73b623e6443b092ff91aa8bbe3a73e87aa7ae7",
+  "bytes": 17643,
+  "beat_id": "beat-01",
+  "role": "evidence",
+  "provider_call": false,
+  "generated": false,
+  "evidence_capable": true,
+  "production_ready": false,
+  "human_review": "PENDING_FOUNDER_REVIEW",
+  "note": "ContentOps located and adopted existing material. No provider was involved and no quota was consumed."
+}
