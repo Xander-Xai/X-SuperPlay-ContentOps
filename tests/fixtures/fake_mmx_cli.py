@@ -18,6 +18,11 @@ SKIPPED rather than invent a pass.
 Setting ``FAKE_MMX_FAIL=1`` makes ``speech synthesize`` exit non-zero without
 writing anything. That is how tests produce a genuine FAILED attempt record, which
 is the evidence a retry has to reference.
+
+Credential discovery mirrors the official CLI's priority so that binding tests are
+meaningful: ``MINIMAX_API_KEY`` in the environment first, then ``~/.mmx/config.json``.
+Setting ``FAKE_MMX_CREDENTIAL_REPORT`` writes the *class* and *source* it resolved
+to a file. The credential value is never written, printed or logged.
 """
 
 import json
@@ -43,8 +48,48 @@ def _flag(argv, name, default=None):
     return default
 
 
+def _resolve_credential():
+    """Model the official CLI's credential priority. Returns (key, source)."""
+    key = os.environ.get("MINIMAX_API_KEY", "").strip()
+    if key:
+        return key, "MINIMAX_API_KEY_ENV"
+    config = Path.home() / ".mmx" / "config.json"
+    if config.is_file():
+        try:
+            payload = json.loads(config.read_text(encoding="utf-8"))
+            stored = str(payload.get("api_key") or "")
+        except (json.JSONDecodeError, OSError):
+            stored = ""
+        if stored:
+            return stored, "MMX_CONFIG"
+    return "", "NONE"
+
+
+def _credential_class(key):
+    if not key:
+        return "ABSENT"
+    if key.startswith("sk-cp-"):
+        return "SUBSCRIPTION"
+    if key.startswith("sk-api-"):
+        return "PAYG"
+    return "UNKNOWN"
+
+
+def _report_credential():
+    path = os.environ.get("FAKE_MMX_CREDENTIAL_REPORT")
+    if not path:
+        return
+    key, source = _resolve_credential()
+    # class and source only: the value must never be persisted
+    Path(path).write_text(
+        json.dumps({"credential_class": _credential_class(key), "credential_source": source}),
+        encoding="utf-8",
+    )
+
+
 def main() -> int:
     argv = sys.argv[1:]
+    _report_credential()
 
     if "--version" in argv:
         print("mmx 0.0.0-fixture")

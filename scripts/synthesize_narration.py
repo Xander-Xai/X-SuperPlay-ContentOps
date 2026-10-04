@@ -44,7 +44,11 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from process_utils import hidden_run  # noqa: E402
 
-from contentops.media.billing_guard import BillingGuard, classify_credential  # noqa: E402
+from contentops.media.billing_guard import BillingGuard  # noqa: E402
+from contentops.media.credentials import (  # noqa: E402
+    CredentialBindingError,
+    resolve_credential,
+)
 from contentops.media.contract import BillingBlocked, SpeechRequest  # noqa: E402
 from contentops.media.minimax_speech import (  # noqa: E402
     MiniMaxMPlanProvider,
@@ -53,20 +57,7 @@ from contentops.media.minimax_speech import (  # noqa: E402
 )
 
 
-def resolve_credential() -> str:
-    import os
 
-    for name in ("MINIMAX_SUBSCRIPTION_KEY", "MINIMAX_API_KEY"):
-        value = os.environ.get(name, "").strip()
-        if value:
-            return value
-    config = Path.home() / ".mmx" / "config.json"
-    if config.is_file():
-        try:
-            return str(json.loads(config.read_text(encoding="utf-8")).get("api_key") or "")
-        except (json.JSONDecodeError, OSError):
-            return ""
-    return ""
 
 
 #: Optional override for the billing API base. Normally resolved by asking the
@@ -91,8 +82,9 @@ def resolve_base_url() -> str:
         return ""
 
 
-def build_guard() -> BillingGuard:
-    return BillingGuard(base_url=resolve_base_url(), credential=resolve_credential())
+def build_guard(resolved) -> BillingGuard:
+    """The gate authorises exactly the credential the transport will use."""
+    return BillingGuard(base_url=resolve_base_url(), credential=resolved.key)
 
 
 def recheck(asset: Path, *, language: str) -> int:
@@ -174,16 +166,23 @@ def main() -> int:
     if args.recheck:
         return recheck(Path(args.recheck), language=args.language)
 
-    guard = build_guard()
+    # Resolved once. The gate and the child transport share this one value, so
+    # an ambient ~/.mmx credential can never silently become the key in force.
+    resolved = resolve_credential()
+    guard = build_guard(resolved)
     provider = MiniMaxMPlanProvider(
-        guard=guard, work_dir=Path(args.out_dir), cli=resolve_cli()
+        guard=guard,
+        work_dir=Path(args.out_dir),
+        cli=resolve_cli(),
+        transport_credential=resolved,
     )
 
     if args.health:
         health = provider.health()
         health["guard"] = {
             "verdict": guard.evaluate().verdict,
-            "credential_class": classify_credential(resolve_credential()),
+            "credential_class": resolved.credential_class,
+            "credential_source": resolved.source,
         }
         print(json.dumps(health, indent=2, ensure_ascii=False))
         return 0 if health.get("reachable") else 2
@@ -220,6 +219,19 @@ def main() -> int:
             attempt=attempt,
             retry_from=retry_from,
         )
+    except CredentialBindingError as unbound:
+        print(
+            json.dumps(
+                {
+                    "status": "BLOCKED",
+                    "verdict": "CREDENTIAL_NOT_BOUND_TO_TRANSPORT",
+                    "reasons": [str(unbound)],
+                    "generated": False,
+                },
+                indent=2, ensure_ascii=False,
+            )
+        )
+        return 7
     except BillingBlocked as blocked:
         print(
             json.dumps(
@@ -268,6 +280,7 @@ def main() -> int:
     }
     payload["reused_cached_asset"] = outcome.reused
     payload["provider_request_made"] = not outcome.reused
+    payload["credential_binding"] = provider.credential_metadata()
     print(json.dumps(payload, indent=2, ensure_ascii=False))
 
     if args.receipt:

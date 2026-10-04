@@ -66,6 +66,14 @@ from contentops.media.audio import (  # noqa: E402
     technical_qc,
 )
 from contentops.media.billing_guard import BillingGuard  # noqa: E402
+from contentops.media.credentials import (  # noqa: E402
+    CREDENTIAL_ABSENT,
+    CREDENTIAL_PAYG,
+    CREDENTIAL_SUBSCRIPTION,
+    CredentialBindingError,
+    ResolvedCredential,
+    child_env_for,
+)
 from contentops.media.contract import (  # noqa: E402
     BillingBlocked,
     MediaProvider,
@@ -313,11 +321,19 @@ class MiniMaxMPlanProvider(MediaProvider):
         work_dir: Path,
         cli: Any = None,
         model: str = DEFAULT_MODEL,
+        transport_credential: Optional[ResolvedCredential] = None,
     ) -> None:
         self._guard = guard
         self._work_dir = Path(work_dir)
         self._cli = cli or resolve_cli()
         self._model = model
+        # The credential the billing gate authorised, bound once into the child
+        # environment. The provider never re-resolves it, so the gate and the
+        # transport cannot drift apart.
+        self._credential = transport_credential
+        self._child_env: Optional[Dict[str, str]] = None
+        if transport_credential is not None:
+            self._child_env = child_env_for(transport_credential)
         self._lexicons = {
             "zh": default_zh_lexicon(),
             "en": default_en_lexicon(),
@@ -355,7 +371,8 @@ class MiniMaxMPlanProvider(MediaProvider):
                 "install": "npm install -g mmx-cli",
             }
         prefix = list(cli) if isinstance(cli, (list, tuple)) else [cli]
-        result = hidden_run(prefix + ["--version"], timeout=60)
+        env = self._child_env if self._child_env is not None else None
+        result = hidden_run(prefix + ["--version"], env=env, timeout=60)
         guard = self._guard.evaluate()
         return {
             "reachable": result.returncode == 0,
@@ -521,7 +538,7 @@ class MiniMaxMPlanProvider(MediaProvider):
                 command += ["--text-normalization"]
             command += lexicon.provider_arguments()
 
-            result = hidden_run(command, timeout=600)
+            result = hidden_run(command, env=self._require_child_env(), timeout=600)
             if result.returncode == 0:
                 try:
                     verify_output(raw_path, not_before=started)
@@ -574,6 +591,28 @@ class MiniMaxMPlanProvider(MediaProvider):
         raise RuntimeError(
             f"speech generation failed after {MAX_ATTEMPTS} attempts: {last_error}"
         )
+
+    def credential_metadata(self) -> Dict[str, str]:
+        """Safe credential metadata for receipts. Never the value."""
+        if self._credential is None:
+            return {"credential_class": CREDENTIAL_ABSENT, "credential_source": "UNBOUND"}
+        return self._credential.safe_metadata()
+
+    def _require_child_env(self) -> Dict[str, str]:
+        """Return the bound child environment, or refuse to generate.
+
+        Failing closed matters here more than anywhere else in this module: an
+        unbound child would quietly discover its own credential, and the gate
+        would be authorising a key the provider never uses.
+        """
+        if self._child_env is None:
+            raise CredentialBindingError(
+                "no credential is bound to the provider transport. Build the "
+                "provider with transport_credential=resolve_credential() so the "
+                "billing gate and the child use the same key. Refusing to "
+                "generate rather than let the child pick one itself."
+            )
+        return self._child_env
 
     # -- internals ---------------------------------------------------------
 
@@ -739,6 +778,12 @@ class MiniMaxMPlanProvider(MediaProvider):
         receipt = _receipt_from_payload(
             asset=asset, payload=payload, fingerprint=fingerprint
         )
+        # Restore provider state as well as the receipt. Without this a *fresh*
+        # provider that happened to hit the cache would still raise
+        # "no receipt available" from receipt(), which breaks the contract every
+        # caller relies on. _receipt() is deliberately NOT used here: it is the
+        # generation path and would rewrite the immutable sidecar.
+        self._remember_receipt(receipt)
         # Reuse is audited by an append-only event, never by mutating provenance.
         append_reuse_event(
             self._work_dir,
@@ -932,13 +977,31 @@ class MiniMaxMPlanProvider(MediaProvider):
             write_sidecar(sidecar_for(asset_path), payload)
         return receipt
 
+    def _remember_receipt(self, receipt: SpeechReceipt) -> None:
+        """Track a receipt in memory, without duplicating it.
+
+        A provider instance that reuses the same asset many times must not grow an
+        unbounded list of identical receipts. Persistence is untouched either way:
+        this only affects in-memory lookup.
+        """
+        for existing in self._receipts:
+            if existing.fingerprint == receipt.fingerprint:
+                return
+            if (
+                receipt.normalized_sha256
+                and existing.normalized_sha256 == receipt.normalized_sha256
+            ):
+                return
+        self._receipts.append(receipt)
+
     def _transport_version(self) -> str:
         if not self._cli:
             return "UNKNOWN"
         prefix = (
             list(self._cli) if isinstance(self._cli, (list, tuple)) else [self._cli]
         )
-        result = hidden_run(prefix + ["--version"], timeout=60)
+        env = self._child_env if self._child_env is not None else None
+        result = hidden_run(prefix + ["--version"], env=env, timeout=60)
         return (result.stdout or "").strip() or "UNKNOWN"
 
 

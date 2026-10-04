@@ -201,3 +201,53 @@ video_test_duration:
 - Idempotent: same generation fingerprint → reuse, don't re-charge
 - Fallback recorded with `quality_impact` and `requires_human_review: true`
 - Quota exhaustion → route to real assets, NOT PAYG
+
+## Credential binding (B-FINAL-2)
+
+The rule:
+
+```
+THE CREDENTIAL AUTHORISED BY BILLINGGUARD
+MUST BE
+THE CREDENTIAL THE PROVIDER TRANSPORT ACTUALLY USES
+```
+
+ContentOps and the official `mmx` CLI each have their own credential discovery.
+If the gate resolves `MINIMAX_SUBSCRIPTION_KEY` while `mmx` silently falls back to
+`~/.mmx/config.json`, the gate authorises key A while key B does the work. Every
+balance check would pass and nothing would reveal it. The reasoning
+"the gate said SAFE, so whatever mmx uses is fine" is exactly what is forbidden.
+
+Required behaviour, enforced in `contentops.media.credentials`:
+
+| Requirement | Where |
+|---|---|
+| Resolve exactly once per invocation | `resolve_credential()` |
+| Same value feeds gate and transport | `build_guard(resolved)` + `transport_credential=resolved` |
+| Child-only environment, never argv | `child_env_for()` sets `MINIMAX_API_KEY` |
+| Ambient/stored credential cannot win | `MINIMAX_SUBSCRIPTION_KEY` is stripped from the child env |
+| PAYG / UNKNOWN / ABSENT stop before launch | `CredentialBindingError`, or `BillingBlocked` from the gate |
+| Never fall back when unbound | provider raises instead of generating |
+| Value never logged or persisted | `key` excluded from `repr`, `str` and `safe_metadata()` |
+
+Resolution order is fixed and recorded in the receipt metadata:
+`MINIMAX_SUBSCRIPTION_KEY_ENV` → `MINIMAX_API_KEY_ENV` → `MMX_CONFIG` → `NONE`.
+A credential sourced from `MMX_CONFIG` is the last resort and is labelled as such,
+because a stored key is the one most likely to drift from what the operator intended.
+
+Only `credential_class` and `credential_source` are ever written to a receipt. The
+value is not.
+
+## Cache hit restores provider state (B-FINAL-2)
+
+A provider that starts fresh and finds a valid cache entry must still answer
+`receipt()` and `receipt(asset)`. Reconstructing the original receipt without
+registering it left a new provider reporting "no receipt available" for an asset
+that demonstrably had one.
+
+`_reuse()` therefore registers the reconstructed receipt in memory via
+`_remember_receipt()`, which de-duplicates by fingerprint and normalised SHA-256.
+`_receipt()` is deliberately not used there: it is the generation path and would
+rewrite the immutable sidecar. A cache hit still costs zero billing reads and zero
+network calls.
+

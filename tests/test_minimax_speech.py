@@ -106,7 +106,8 @@ def fake_transport(balances, quota):
     return _get
 
 
-def guard_with(balances=SAFE_BALANCES, quota=SAFE_QUOTA, credential="sk-cp-EXAMPLE"):
+def guard_with(balances=SAFE_BALANCES, quota=SAFE_QUOTA,
+               credential="sk-cp-TESTONLY0000000000"):
     return BillingGuard(
         base_url="https://example.invalid",
         credential=credential,
@@ -797,10 +798,12 @@ def _failed_attempt_record(work_dir, *, request=None, provider=None):
 
     from contentops.media.attempts import find_attempt_records
 
-    provider = provider or _fixture_provider(work_dir)
     previous = os.environ.get("FAKE_MMX_FAIL")
     os.environ["FAKE_MMX_FAIL"] = "1"
     try:
+        # Build the provider *after* the flag is set: the child environment is
+        # captured at construction, so ordering matters.
+        provider = provider or _fixture_provider(work_dir)
         provider.synthesize_speech(
             request or SpeechRequest(display_text="你好，这是测试。", language="zh")
         )
@@ -903,13 +906,35 @@ def test_every_required_balance_field_fails_closed_on_schema_change():
 FIXTURE_CLI = [sys.executable, str(ROOT / "tests" / "fixtures" / "fake_mmx_cli.py")]
 
 
-def _fixture_provider(work_dir, guard=None, cli=None):
+#: A synthetic subscription credential. It never reaches a real provider: the
+#: fixture CLI ignores the value, and every test that matters uses a local stub.
+TEST_SUBSCRIPTION_KEY = "sk-cp-TESTONLY0000000000"
+
+
+def _resolved(key=TEST_SUBSCRIPTION_KEY, source="MINIMAX_SUBSCRIPTION_KEY_ENV"):
+    from contentops.media.credentials import ResolvedCredential, classify_credential
+
+    return ResolvedCredential(
+        key=key,
+        credential_class=classify_credential(key),
+        source=source,
+    )
+
+
+def _fixture_provider(work_dir, guard=None, cli=None, credential=None):
+    """Build a provider with the authorised credential bound to the transport.
+
+    Binding is mandatory: an unbound provider refuses to generate rather than
+    letting the child discover its own credential.
+    """
     from contentops.media.minimax_speech import MiniMaxMPlanProvider
 
+    resolved = credential if credential is not None else _resolved()
     return MiniMaxMPlanProvider(
-        guard=guard if guard is not None else guard_with(),
+        guard=guard if guard is not None else guard_with(credential=resolved.key),
         work_dir=work_dir,
         cli=cli if cli is not None else FIXTURE_CLI,
+        transport_credential=resolved,
     )
 
 
@@ -1710,8 +1735,313 @@ def test_retry_reference_is_validated_inside_a_separate_process():
             combined = (result.stdout or "") + (result.stderr or "")
             assert "retry record not found" in combined, combined[-300:]
     print("[ok] 76. a retry reference to a missing record fails in a separate process too")
+def test_binding_gate_and_child_share_one_credential():
+    """The key the gate authorises must be the key the child receives."""
+    import os as _os
+
+    if not HAVE_FFMPEG:
+        print("[skip] 77. ffmpeg not installed")
+        return
+
+    with tempfile.TemporaryDirectory() as td:
+        work = Path(td)
+        report = work / "credential-report.json"
+        authorised = "sk-cp-AUTHORISED-KEY"
+        ambient = "sk-api-AMBIENT-DIFFERENT"
+
+        previous_env = _os.environ.get("MINIMAX_API_KEY")
+        previous_report = _os.environ.get("FAKE_MMX_CREDENTIAL_REPORT")
+        _os.environ["MINIMAX_API_KEY"] = ambient
+        _os.environ["FAKE_MMX_CREDENTIAL_REPORT"] = str(report)
+        try:
+            resolved = _resolved(authorised, source="MINIMAX_SUBSCRIPTION_KEY_ENV")
+            guard = guard_with(credential=authorised)
+            provider = _fixture_provider(work, guard=guard, credential=resolved)
+            provider.synthesize_speech(
+                SpeechRequest(display_text="你好，这是测试。", language="zh")
+            )
+        finally:
+            for name, value in (
+                ("MINIMAX_API_KEY", previous_env),
+                ("FAKE_MMX_CREDENTIAL_REPORT", previous_report),
+            ):
+                if value is None:
+                    _os.environ.pop(name, None)
+                else:
+                    _os.environ[name] = value
+
+        assert report.is_file(), "the fixture must report which credential it resolved"
+        observed = json.loads(report.read_text(encoding="utf-8"))
+        # The child saw MINIMAX_API_KEY_ENV, never MMX_CONFIG: the authorised
+        # key replaced the ambient one instead of being overridden by it.
+        assert observed["credential_source"] == "MINIMAX_API_KEY_ENV", observed
+        assert observed["credential_class"] == "SUBSCRIPTION", observed
+        # The value itself is never written anywhere.
+        assert authorised not in report.read_text(encoding="utf-8")
+        assert ambient not in report.read_text(encoding="utf-8")
+    print("[ok] 77. gate and child transport share one authorised credential")
+
+
+def test_unbound_provider_refuses_to_generate():
+    """No bound credential means no generation, not an ambient fallback."""
+    if not HAVE_FFMPEG:
+        print("[skip] 78. ffmpeg not installed")
+        return
+    from contentops.media.credentials import CredentialBindingError
+    from contentops.media.minimax_speech import MiniMaxMPlanProvider
+
+    with tempfile.TemporaryDirectory() as td:
+        provider = MiniMaxMPlanProvider(
+            guard=guard_with(), work_dir=Path(td), cli=FIXTURE_CLI
+        )
+        try:
+            provider.synthesize_speech(
+                SpeechRequest(display_text="你好，这是测试。", language="zh")
+            )
+        except CredentialBindingError as exc:
+            assert "Refusing to" in str(exc)
+            assert "credential" in str(exc)
+            print("[ok] 78. an unbound provider refuses to generate")
+            return
+        raise AssertionError("an unbound provider generated anyway")
+
+
+def _recording_cli(work: Path):
+    """A CLI that records the fact it was launched, then succeeds."""
+    marker = work / "child-was-launched"
+    recorder = work / "recorder.py"
+    recorder.write_text(
+        "import pathlib, sys\n"
+        "pathlib.Path(r" + str(marker) + ").write_text('launched')\n"
+        "sys.exit(0)\n",
+        encoding="utf-8",
+    )
+    return [sys.executable, str(recorder)], marker
+
+
+def test_non_subscription_credentials_block_before_child_launch():
+    """PAYG, UNKNOWN and ABSENT must stop the run before any child starts."""
+    if not HAVE_FFMPEG:
+        print("[skip] 79. ffmpeg not installed")
+        return
+    for key in ("sk-api-PAYG-KEY", "sk-UNKNOWN-KEY", "", "   "):
+        with tempfile.TemporaryDirectory() as td:
+            work = Path(td)
+            cli, marker = _recording_cli(work)
+            resolved = _resolved(key, source="MINIMAX_SUBSCRIPTION_KEY_ENV")
+            try:
+                provider = _fixture_provider(work, credential=resolved, cli=cli)
+                provider.synthesize_speech(
+                    SpeechRequest(display_text="你好。", language="zh")
+                )
+            except Exception:
+                # BillingBlocked for PAYG/UNKNOWN, CredentialBindingError for
+                # ABSENT. Either way the run stops. What matters is below.
+                pass
+            assert not marker.exists(), (
+                f"credential class {resolved.credential_class!r} launched the child"
+            )
+    print("[ok] 79. PAYG, UNKNOWN and ABSENT never reach the provider child")
+
+
+def test_absent_credential_fails_closed_even_with_a_permissive_gate():
+    """If the gate were bypassed, the binding itself must still stop the child."""
+    if not HAVE_FFMPEG:
+        print("[skip] 80b. ffmpeg not installed")
+        return
+    from contentops.media.credentials import CredentialBindingError
+
+    with tempfile.TemporaryDirectory() as td:
+        work = Path(td)
+        cli, marker = _recording_cli(work)
+        # Construction itself refuses: there is nothing to bind.
+        try:
+            provider = _fixture_provider(
+                work, credential=_resolved("", source="NONE"), cli=cli
+            )
+            provider.synthesize_speech(
+                SpeechRequest(display_text="你好。", language="zh")
+            )
+        except CredentialBindingError as exc:
+            assert "Refusing to" in str(exc)
+            assert "ABSENT" in str(exc)
+        assert not marker.exists(), "an unbound child was launched"
+    print("[ok] 80b. an absent credential cannot construct a working transport")
+
+
+def test_payg_credential_is_blocked_by_the_gate():
+    """A PAYG key is refused by BillingGuard, independently of binding."""
+    from contentops.media.billing_guard import BillingGuard as _BG
+
+    guard = _BG(base_url="https://x.invalid", credential="sk-api-PAYG")
+    result = guard.evaluate(modality="speech")
+    assert result.verdict == BLOCKED_BILLING_SOURCE_UNCERTAIN
+    assert any("credential class" in r for r in result.reasons)
+    print("[ok] 80. a PAYG credential is refused by the billing gate")
+
+
+def test_credential_value_never_leaves_the_resolver():
+    """repr, str and safe metadata must all omit the secret."""
+    sentinel = "sk-cp-SUPERSECRET_TEST_VALUE"
+    resolved = _resolved(sentinel, source="MINIMAX_SUBSCRIPTION_KEY_ENV")
+    assert sentinel not in repr(resolved)
+    assert sentinel not in str(resolved)
+    assert sentinel not in json.dumps(resolved.safe_metadata())
+    assert resolved.safe_metadata() == {
+        "credential_class": "SUBSCRIPTION",
+        "credential_source": "MINIMAX_SUBSCRIPTION_KEY_ENV",
+    }
+    print("[ok] 81. the credential value never appears in repr, str or metadata")
+
+
+def test_secret_sentinel_absent_from_every_persisted_output():
+    """Success, failure, retry, receipt, sidecar, attempts and reuse log."""
+    if not HAVE_FFMPEG:
+        print("[skip] 82. ffmpeg not installed")
+        return
+    import os as _os
+
+    from contentops.media.attempts import read_reuse_events
+
+    sentinel = "sk-cp-SUPERSECRET_TEST_VALUE"
+    with tempfile.TemporaryDirectory() as td:
+        work = Path(td)
+        resolved = _resolved(sentinel, source="MINIMAX_SUBSCRIPTION_KEY_ENV")
+        guard = guard_with(credential=sentinel)
+        provider = _fixture_provider(work, guard=guard, credential=resolved)
+        request = SpeechRequest(display_text="你好，这是测试。", language="zh")
+
+        first = provider.synthesize_speech(request)          # success path
+        second = provider.synthesize_speech(request)         # cache reuse path
+        serialised = receipt_to_dict(first.receipt)
+        rendered = json.dumps(serialised, ensure_ascii=False)
+
+        # failure + retry evidence
+        previous = _os.environ.get("FAKE_MMX_FAIL")
+        _os.environ["FAKE_MMX_FAIL"] = "1"
+        try:
+            failing = _fixture_provider(
+                work,
+                guard=guard_with(credential=sentinel),
+                credential=resolved,
+            )
+            try:
+                failing.synthesize_speech(
+                    SpeechRequest(display_text="另一句。", language="zh")
+                )
+            except RuntimeError as exc:
+                assert sentinel not in str(exc)
+        finally:
+            if previous is None:
+                _os.environ.pop("FAKE_MMX_FAIL", None)
+            else:
+                _os.environ["FAKE_MMX_FAIL"] = previous
+
+        surfaces = {
+            "receipt": rendered,
+            "reuse_events": json.dumps(read_reuse_events(work), ensure_ascii=False),
+        }
+        for path in work.rglob("*"):
+            if path.is_file() and path.suffix in {".json", ".jsonl"}:
+                surfaces[path.name] = path.read_text(encoding="utf-8", errors="replace")
+
+        for name, text in surfaces.items():
+            assert sentinel not in text, f"the secret leaked into {name}"
+
+        assert first.reused is False and second.reused is True
+    print("[ok] 82. the secret sentinel appears in no persisted or serialised output")
+
+
+def test_fresh_provider_restores_receipt_state_on_cache_hit():
+    """A brand new provider that hits the cache must still answer receipt()."""
+    if not HAVE_FFMPEG:
+        print("[skip] 83. ffmpeg not installed")
+        return
+    from contentops.media.attempts import find_attempt_records  # noqa: F401
+
+    with tempfile.TemporaryDirectory() as td:
+        work = Path(td)
+        request = SpeechRequest(display_text="你好，这是测试。", language="zh")
+
+        provider_a = _fixture_provider(work)
+        first = provider_a.synthesize_speech(request)
+        sidecar = sidecar_for(Path(first.asset.normalized_path))
+        before = sidecar.read_bytes()
+
+        # A completely new provider whose billing transport explodes on contact.
+        def exploding(url, credential):
+            raise AssertionError(f"billing transport was called: {url}")
+
+        provider_b = _fixture_provider(
+            work,
+            guard=BillingGuard(
+                base_url="https://example.invalid",
+                credential="sk-cp-TESTONLY0000000000",
+                http_get_json=exploding,
+            ),
+        )
+        assert provider_b._receipts == []
+
+        second = provider_b.synthesize_speech(request)
+        assert second.reused is True
+
+        # receipt() must work on the fresh provider, both forms.
+        latest = provider_b.receipt()
+        by_asset = provider_b.receipt(second.asset)
+        assert latest.fingerprint == first.receipt.fingerprint
+        assert by_asset.fingerprint == first.receipt.fingerprint
+        assert latest.raw_sha256 == first.receipt.raw_sha256
+        assert latest.attempt == 1
+
+        # The immutable generation receipt is untouched.
+        assert sidecar.read_bytes() == before
+
+        # Repeated reuse must not grow the in-memory list without bound.
+        for _ in range(3):
+            provider_b.synthesize_speech(request)
+        matching = [
+            r for r in provider_b._receipts
+            if r.fingerprint == first.receipt.fingerprint
+        ]
+        assert len(matching) == 1, f"duplicate receipts: {len(matching)}"
+    print("[ok] 83. a fresh provider restores receipt state from the cache, sidecar unchanged")
+
+
+def test_fresh_provider_cache_hit_makes_no_billing_or_network_call():
+    if not HAVE_FFMPEG:
+        print("[skip] 84. ffmpeg not installed")
+        return
+
+    def exploding(url, credential):
+        raise AssertionError(f"billing transport was called: {url}")
+
+    with tempfile.TemporaryDirectory() as td:
+        work = Path(td)
+        request = SpeechRequest(display_text="你好，这是测试。", language="zh")
+        _fixture_provider(work).synthesize_speech(request)
+
+        guard = BillingGuard(
+            base_url="https://example.invalid",
+            credential="sk-cp-TESTONLY0000000000",
+            http_get_json=exploding,
+        )
+        fresh = _fixture_provider(work, guard=guard)
+        outcome = fresh.synthesize_speech(request)
+        assert outcome.reused is True
+        assert guard.call_count == 0
+    print("[ok] 84. a fresh-provider cache hit costs zero billing and zero network")
+
 
 TESTS = [
+    test_binding_gate_and_child_share_one_credential,
+    test_unbound_provider_refuses_to_generate,
+    test_non_subscription_credentials_block_before_child_launch,
+    test_absent_credential_fails_closed_even_with_a_permissive_gate,
+    test_payg_credential_is_blocked_by_the_gate,
+    test_credential_value_never_leaves_the_resolver,
+    test_secret_sentinel_absent_from_every_persisted_output,
+    test_fresh_provider_restores_receipt_state_on_cache_hit,
+    test_fresh_provider_cache_hit_makes_no_billing_or_network_call,
     test_credential_classification,
     test_non_subscription_credential_is_refused,
     test_guard_never_exposes_the_credential,
