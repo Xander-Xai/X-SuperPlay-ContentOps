@@ -98,7 +98,24 @@ scripts/
 └── test_basic.py       # current test suite
 ```
 
-Core business logic should migrate to `src/` over time. Keep `scripts/` for ops.
+## `src/`
+
+Core business logic. This is where provider code, billing gates and
+quality gates live, as opposed to `scripts/` which stays ops-only.
+
+```
+src/
+└── contentops/
+    └── media/
+        ├── contract.py         # provider-generic MediaProvider contract
+        ├── billing_guard.py    # fail-closed billing gate
+        ├── lexicon.py          # PronunciationLexicon
+        ├── audio.py            # loudness normalisation + technical QC
+        ├── asr_backcheck.py    # ASR as a detector, never an approver
+        ├── fingerprint.py      # idempotency fingerprint
+        ├── minimax_speech.py   # MiniMax M Plan speech provider
+        └── test_duration_policy.py  # test-only video duration rule
+```
 
 ## runtime/
 

@@ -81,6 +81,13 @@ from typing import Any, Dict, List, Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+
+from contentops.media.billing_guard import (  # noqa: E402
+    BALANCE_DEPENDENCY_CLASS,
+    BillingGuard,
+    classify_credential,
+)
 from process_utils import (  # noqa: E402
     hidden_run,
     interactive_run,
@@ -97,9 +104,6 @@ TRANSIENT_H3 = "TRANSIENT_OR_AMBIGUOUS_PROVIDER_STATE"
 
 # Classification of the balance read used by the billing pre-flight. It is
 # deliberately NOT described as documented, because it is not.
-BALANCE_ENDPOINT_CLASS = "UNDOCUMENTED_FIRST_PARTY_IMPLEMENTATION_DEPENDENCY"
-BALANCE_ENDPOINT_PATH = "/account/query_balance"
-
 CLI = "mmx"
 HTTP_TIMEOUT = 60
 DEFAULT_SPEECH_MODEL = "speech-2.8-hd"
@@ -185,16 +189,7 @@ def read_credential() -> Dict[str, Any]:
             except (json.JSONDecodeError, OSError):
                 key = ""
 
-    if not key:
-        klass = "ABSENT"
-    elif key.startswith("sk-cp-"):
-        klass = "SUBSCRIPTION"
-    elif key.startswith("sk-api-"):
-        klass = "PAYG"
-    elif key.startswith("sk-"):
-        klass = "UNKNOWN"
-    else:
-        klass = "UNKNOWN"
+    klass = classify_credential(key)
 
     return {
         "credential_class": klass,
@@ -215,32 +210,20 @@ def _get_json(url: str, key: str) -> Dict[str, Any]:
 
 
 def plan_quota(base_url: str, key: str) -> Dict[str, Any]:
-    """Included-plan usage windows. Read-only."""
-    try:
-        return _get_json(base_url.rstrip("/") + "/v1/token_plan/remains", key)
-    except (urllib.error.URLError, urllib.error.HTTPError, json.JSONDecodeError, TimeoutError) as e:
-        return {"error": type(e).__name__, "detail": scrub(str(e))}
-
-
-def balances(base_url: str, key: str) -> Dict[str, Any]:
-    """PAYG cash / Credit Pack / voucher / owed amounts. Read-only.
-
-    Classification: ``UNDOCUMENTED_FIRST_PARTY_IMPLEMENTATION_DEPENDENCY``.
-
-    It is a first-party endpoint that the official CLI (mmx-cli) itself calls
-    for this exact purpose, and it is the only way found to observe the Credit
-    Pack balance, which is what makes subscription-only billing provable. But it
-    is **not listed in the public API documentation**, so it may change without
-    notice. Research use only unless it is separately accepted as a production
-    dependency; when MiniMax exposes an official equivalent, migrate to it.
-
-    Consequence for behaviour: any transport failure, schema change or missing
-    field is a hard block. An unreadable balance is never treated as zero.
-    """
-    try:
-        return _get_json(base_url.rstrip("/") + BALANCE_ENDPOINT_PATH, key)
-    except (urllib.error.URLError, urllib.error.HTTPError, json.JSONDecodeError, TimeoutError) as e:
-        return {"error": type(e).__name__, "detail": scrub(str(e))}
+    """Included-plan usage windows. Read-only, via the shared BillingGuard."""
+    guard = BillingGuard(base_url=base_url, credential=key)
+    snapshot = guard.read_quota()
+    if snapshot is None:
+        return {"error": "unreadable"}
+    return {
+        "model_remains": [
+            {
+                "model_name": snapshot.bucket,
+                "current_interval_remaining_percent": snapshot.interval_remaining_percent,
+                "current_weekly_remaining_percent": snapshot.weekly_remaining_percent,
+            }
+        ]
+    }
 
 
 def _num(value: Any) -> Optional[float]:
@@ -280,7 +263,9 @@ def preflight(cfg: Dict[str, Any], cred: Dict[str, Any]) -> Dict[str, Any]:
             f"credential class is {cred['credential_class']}, not a Subscription Key"
         )
 
-    bal = balances(base_url, key) if base_url and key else {"error": "no_request"}
+    guard = BillingGuard(base_url=base_url, credential=key)
+    guard_result = guard.evaluate()
+    bal = guard_result.balances or {"error": "no_request"}
     cash = _num(bal.get("cash_balance"))
     credit = _num(bal.get("credit_balance"))
     voucher = _num(bal.get("voucher_balance"))
@@ -299,8 +284,16 @@ def preflight(cfg: Dict[str, Any], cred: Dict[str, Any]) -> Dict[str, Any]:
     if owed not in (None, 0):
         reasons.append(f"outstanding amount owed is {owed}")
 
-    quota = plan_quota(base_url, key) if base_url and key else {}
-    q = summarise_quota(quota)
+    q = summarise_quota(plan_quota(base_url, key)) if base_url and key else {}
+    if guard_result.quota is not None:
+        q = {
+            "available": True,
+            "bucket": guard_result.quota.bucket,
+            "interval_5h_remaining_percent": guard_result.quota.interval_remaining_percent,
+            "weekly_remaining_percent": guard_result.quota.weekly_remaining_percent,
+            "buckets_reported": 1,
+            "modality_breakdown_exposed": False,
+        }
     if not q.get("available"):
         reasons.append("included-plan usage unreadable")
     else:
@@ -319,7 +312,7 @@ def preflight(cfg: Dict[str, Any], cred: Dict[str, Any]) -> Dict[str, Any]:
         "voucher_balance": bal.get("voucher_balance"),
         "owed_amount": bal.get("owed_amount"),
         "plan_usage": q,
-        "balance_endpoint_class": BALANCE_ENDPOINT_CLASS,
+        "balance_endpoint_class": BALANCE_DEPENDENCY_CLASS,
     }
 
 
