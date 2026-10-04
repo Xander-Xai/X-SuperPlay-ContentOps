@@ -309,21 +309,31 @@ class BillingGuard:
             quota=quota,
         )
 
-    def require_safe(self, modality: str = "speech") -> QuotaSnapshot:
-        """Evaluate and raise :class:`~contentops.media.contract.BillingBlocked`.
+    def authorize(self, modality: str = "speech") -> GuardResult:
+        """Return the complete authorisation decision, raising when unsafe.
 
-        Call this immediately before every provider generation, passing the
-        modality being authorised. It is deliberately **not** called on the cache
-        path: a valid cached asset needs no provider request and therefore no
-        billing call.
+        This is the **pre-generation** verdict and it is the one that must be
+        recorded on a receipt. The distinction matters: a request can consume the
+        last of the 5-hour window, so a re-evaluation *after* generation may
+        legitimately report exhaustion. Recording that later state as the
+        authorisation would rewrite history and claim a correctly authorised
+        generation was unauthorised.
 
-        Returns the quota snapshot so the receipt's "before" value does not need
-        a second round trip.
+        Raises:
+            BillingBlocked: the billing source could not be proven.
         """
         from .contract import BillingBlocked
 
         result = self.evaluate(modality=modality)
         if not result.safe:
             raise BillingBlocked(result.verdict, result.reasons)
-        assert result.quota is not None
-        return result.quota
+        return result
+
+    def require_safe(self, modality: str = "speech") -> QuotaSnapshot:
+        """Authorise and return only the quota snapshot.
+
+        Kept for callers that just need the "before" value. Prefer
+        :meth:`authorize` when the verdict itself must be recorded, because the
+        verdict is the evidence.
+        """
+        return self.authorize(modality=modality).quota  # type: ignore[return-value]

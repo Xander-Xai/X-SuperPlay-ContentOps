@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import sys
 from pathlib import Path
@@ -68,7 +69,16 @@ def resolve_credential() -> str:
     return ""
 
 
+#: Optional override for the billing API base. Normally resolved by asking the
+#: official CLI. It exists so a test can point the gate at a local stub instead of
+#: contacting the provider; production leaves it unset.
+BASE_URL_ENV_VAR = "CONTENTOPS_MINIMAX_BASE_URL"
+
+
 def resolve_base_url() -> str:
+    override = os.environ.get(BASE_URL_ENV_VAR, "").strip()
+    if override:
+        return override
     cli = resolve_cli()
     if not cli:
         return ""
@@ -151,6 +161,9 @@ def main() -> int:
                         help="regenerate even if a valid asset exists")
     parser.add_argument("--retry-reason", default=None,
                         help="named failure reason; required for attempt 2")
+    parser.add_argument("--retry-from", default=None,
+                        help="path to the durable attempt record of a FAILED "
+                             "first attempt; required for attempt 2")
     parser.add_argument("--recheck", default="",
                         help="re-run technical and semantic QC on an existing "
                              "normalised asset; makes no provider request")
@@ -195,10 +208,17 @@ def main() -> int:
         force=args.force,
     )
 
-    attempt = 2 if args.retry_reason else 1
+    # Attempt 2 needs both a reason and durable evidence of the failed attempt 1.
+    # A reason on its own is refused: the previous fingerprint has to survive the
+    # process boundary, and this is a fresh process.
+    attempt = 2 if (args.retry_reason or args.retry_from) else 1
+    retry_from = Path(args.retry_from) if args.retry_from else None
     try:
         outcome = provider.synthesize_speech(
-            request, retry_reason=args.retry_reason, attempt=attempt
+            request,
+            retry_reason=args.retry_reason,
+            attempt=attempt,
+            retry_from=retry_from,
         )
     except BillingBlocked as blocked:
         print(
@@ -247,6 +267,7 @@ def main() -> int:
         "approved": outcome.asset.approved,
     }
     payload["reused_cached_asset"] = outcome.reused
+    payload["provider_request_made"] = not outcome.reused
     print(json.dumps(payload, indent=2, ensure_ascii=False))
 
     if args.receipt:

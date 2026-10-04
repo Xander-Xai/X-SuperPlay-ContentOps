@@ -14,9 +14,14 @@ Supported argv shapes:
 
 An empty transcript is returned on purpose: the semantic gate must degrade to
 SKIPPED rather than invent a pass.
+
+Setting ``FAKE_MMX_FAIL=1`` makes ``speech synthesize`` exit non-zero without
+writing anything. That is how tests produce a genuine FAILED attempt record, which
+is the evidence a retry has to reference.
 """
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -63,6 +68,10 @@ def main() -> int:
         if not out:
             print("fixture: --out is required", file=sys.stderr)
             return 2
+        if os.environ.get("FAKE_MMX_FAIL") == "1":
+            # Deliberate provider failure: non-zero exit, nothing written.
+            sys.stderr.write("fixture: simulated provider failure\n")
+            return 7
         text = _flag(argv, "--text", "") or ""
         # ~6 characters per second keeps the duration plausible for the QC's
         # duration-plausibility window without pretending to be speech.

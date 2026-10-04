@@ -143,6 +143,9 @@ class SpeechReceipt:
     fallback: Dict[str, Any]
     production_ready: bool
     human_review: str
+    #: Observed state *after* generation. Recorded separately so a later
+    #: exhaustion can never overwrite the authorisation that permitted the call.
+    post_generation_billing_state: Dict[str, Any] = field(default_factory=dict)
 
 
 class MediaProvider(abc.ABC):

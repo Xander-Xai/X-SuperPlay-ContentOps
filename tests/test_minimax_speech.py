@@ -32,6 +32,7 @@ from contentops.media.audio import (  # noqa: E402
     technical_qc,
 )
 from contentops.media.asr_backcheck import _multiplicity  # noqa: E402
+from contentops.media.attempts import read_reuse_events  # noqa: E402
 from contentops.media.billing_guard import (  # noqa: E402
     ZERO_REQUIRED_BALANCE_FIELDS,
     BALANCE_DEPENDENCY_CLASS,
@@ -54,6 +55,8 @@ from contentops.media.minimax_speech import (  # noqa: E402
     MAX_ATTEMPTS,
     flatten_for_cli,
     load_sidecar,
+    REQUIRED_SIDECAR_FIELDS,
+    sidecar_is_complete,
     receipt_to_dict,
     resolve_cli,
     sidecar_for,
@@ -381,6 +384,7 @@ def test_receipt_records_credential_class_not_value():
         "raw_sha256": "d", "normalized_sha256": "e", "attempt": 1,
         "retry_reason": None, "fallback": {"used": False},
         "production_ready": False, "human_review": "PENDING_FOUNDER_REVIEW",
+        "post_generation_billing_state": {},
     }
     rendered = json.dumps(receipt_to_dict(type("R", (), receipt)()))
     assert "sk-" not in rendered, rendered
@@ -782,6 +786,37 @@ def test_loudness_is_measured_not_predicted():
 
 
 
+
+def _failed_attempt_record(work_dir, *, request=None, provider=None):
+    """Drive one real failing attempt and return its durable record path.
+
+    The fixture CLI exits non-zero under FAKE_MMX_FAIL, so this produces genuine
+    retry evidence rather than a hand-written fixture file.
+    """
+    import os
+
+    from contentops.media.attempts import find_attempt_records
+
+    provider = provider or _fixture_provider(work_dir)
+    previous = os.environ.get("FAKE_MMX_FAIL")
+    os.environ["FAKE_MMX_FAIL"] = "1"
+    try:
+        provider.synthesize_speech(
+            request or SpeechRequest(display_text="你好，这是测试。", language="zh")
+        )
+    except RuntimeError:
+        pass
+    finally:
+        if previous is None:
+            os.environ.pop("FAKE_MMX_FAIL", None)
+        else:
+            os.environ["FAKE_MMX_FAIL"] = previous
+
+    failed = find_attempt_records(work_dir, status="FAILED")
+    assert failed, "the failed attempt must leave a durable record"
+    return failed[-1].path_in(work_dir)
+
+
 # --- 12. BLOCKER 1: modality-aware billing ---------------------------------
 
 def _quota(interval, weekly):
@@ -1052,10 +1087,14 @@ def test_retry_requires_a_named_reason():
         print("[skip] 59. ffmpeg not installed")
         return
     with tempfile.TemporaryDirectory() as td:
-        provider = _fixture_provider(Path(td))
-        request = SpeechRequest(display_text="你好，这是测试。", language="zh")
+        work = Path(td)
+        record_path = _failed_attempt_record(work)
+        provider = _fixture_provider(work)
         try:
-            provider.synthesize_speech(request, attempt=2, retry_reason=None)
+            provider.synthesize_speech(
+                SpeechRequest(display_text="你好，这是测试。", language="zh"),
+                attempt=2, retry_reason=None, retry_from=record_path,
+            )
         except RuntimeError as exc:
             assert "named failure reason" in str(exc)
         else:
@@ -1063,23 +1102,125 @@ def test_retry_requires_a_named_reason():
     print("[ok] 59. attempt 2 without a named failure reason is refused")
 
 
+def test_retry_without_a_durable_record_is_refused():
+    """A reason alone is not evidence: the previous fingerprint must persist."""
+    if not HAVE_FFMPEG:
+        print("[skip] 64. ffmpeg not installed")
+        return
+    with tempfile.TemporaryDirectory() as td:
+        provider = _fixture_provider(Path(td))
+        try:
+            provider.synthesize_speech(
+                SpeechRequest(display_text="你好，这是测试。", language="zh"),
+                attempt=2, retry_reason="first attempt looked clipped",
+            )
+        except RuntimeError as exc:
+            assert "--retry-from" in str(exc)
+        else:
+            raise AssertionError("attempt 2 with no record was allowed")
+    print("[ok] 64. attempt 2 without --retry-from is refused")
+
+
+def test_invalid_retry_records_are_refused():
+    if not HAVE_FFMPEG:
+        print("[skip] 65. ffmpeg not installed")
+        return
+    import json as _json
+
+    from contentops.media.attempts import GenerationAttemptRecord
+
+    with tempfile.TemporaryDirectory() as td:
+        work = Path(td)
+        good = _failed_attempt_record(work)
+
+        # missing file
+        provider = _fixture_provider(work)
+        try:
+            provider.synthesize_speech(
+                SpeechRequest(display_text="你好，这是测试。", language="zh"),
+                attempt=2, retry_reason="r", retry_from=work / "nope.json",
+            )
+        except RuntimeError as exc:
+            assert "retry record not found" in str(exc)
+        else:
+            raise AssertionError("a missing retry record was accepted")
+
+        # wrong schema
+        bad = work / "bad-schema.json"
+        bad.write_text(_json.dumps({"schema_version": "wrong/v9"}), encoding="utf-8")
+        try:
+            provider.synthesize_speech(
+                SpeechRequest(display_text="你好，这是测试。", language="zh"),
+                attempt=2, retry_reason="r", retry_from=bad,
+            )
+        except RuntimeError as exc:
+            assert "not usable" in str(exc)
+        else:
+            raise AssertionError("a wrong-schema retry record was accepted")
+
+        # wrong modality
+        wrong = work / "wrong-modality.json"
+        GenerationAttemptRecord(
+            provider="minimax_m_plan", modality="video",
+            fingerprint="a" * 64, attempt_number=1, status="FAILED",
+        ).write(work)
+        source = GenerationAttemptRecord(
+            provider="minimax_m_plan", modality="video",
+            fingerprint="a" * 64, attempt_number=1, status="FAILED",
+        )
+        wrong.write_text(_json.dumps(source.to_dict()), encoding="utf-8")
+        try:
+            provider.synthesize_speech(
+                SpeechRequest(display_text="你好，这是测试。", language="zh"),
+                attempt=2, retry_reason="r", retry_from=wrong,
+            )
+        except RuntimeError as exc:
+            assert "modality" in str(exc)
+        else:
+            raise AssertionError("a wrong-modality retry record was accepted")
+
+        # previous attempt did not fail
+        succeeded = work / "succeeded.json"
+        record = GenerationAttemptRecord(
+            provider="minimax_m_plan", modality="speech",
+            fingerprint="b" * 64, attempt_number=1, status="SUCCEEDED",
+        )
+        succeeded.write_text(_json.dumps(record.to_dict()), encoding="utf-8")
+        try:
+            provider.synthesize_speech(
+                SpeechRequest(display_text="你好，这是测试。", language="zh"),
+                attempt=2, retry_reason="r", retry_from=succeeded,
+            )
+        except RuntimeError as exc:
+            assert "only a FAILED first attempt" in str(exc)
+        else:
+            raise AssertionError("a SUCCEEDED record was accepted for retry")
+
+        assert good.is_file()
+    print("[ok] 65. invalid, wrong-modality and non-FAILED retry records are refused")
+
+
 def test_retry_with_identical_fingerprint_is_refused():
     if not HAVE_FFMPEG:
         print("[skip] 60. ffmpeg not installed")
         return
     with tempfile.TemporaryDirectory() as td:
-        provider = _fixture_provider(Path(td))
-        request = SpeechRequest(display_text="你好，这是测试。", language="zh")
-        provider.synthesize_speech(request)  # records the attempt-1 fingerprint
+        work = Path(td)
+        record_path = _failed_attempt_record(work)
+        # a brand new provider instance: the old in-memory fingerprint is gone
+        provider = _fixture_provider(work)
+        assert provider._last_attempt_fingerprint is None
         try:
             provider.synthesize_speech(
-                request, attempt=2, retry_reason="clipping suspected"
+                SpeechRequest(display_text="你好，这是测试。", language="zh"),
+                attempt=2, retry_reason="clipping suspected",
+                retry_from=record_path,
             )
         except RuntimeError as exc:
             assert "must change a generation input" in str(exc)
         else:
             raise AssertionError("an identical retry was allowed")
-    print("[ok] 60. attempt 2 with an unchanged fingerprint is refused")
+    print("[ok] 60. attempt 2 with an unchanged fingerprint is refused across instances")
 
 
 def test_retry_with_changed_input_is_accepted():
@@ -1087,11 +1228,9 @@ def test_retry_with_changed_input_is_accepted():
         print("[skip] 61. ffmpeg not installed")
         return
     with tempfile.TemporaryDirectory() as td:
-        provider = _fixture_provider(Path(td))
-        provider.synthesize_speech(
-            SpeechRequest(display_text="你好，这是测试。", language="zh")
-        )
-        # A different voice changes the fingerprint, which is a real input change.
+        work = Path(td)
+        record_path = _failed_attempt_record(work)
+        provider = _fixture_provider(work)
         outcome = provider.synthesize_speech(
             SpeechRequest(
                 display_text="你好，这是测试。",
@@ -1100,11 +1239,43 @@ def test_retry_with_changed_input_is_accepted():
             ),
             attempt=2,
             retry_reason="first voice read the brand token unclearly",
+            retry_from=record_path,
         )
         assert outcome.reused is False
         assert outcome.receipt.attempt == 2
         assert outcome.receipt.retry_reason == "first voice read the brand token unclearly"
     print("[ok] 61. attempt 2 is accepted when a real generation input changed")
+
+
+def test_retry_refused_before_any_billing_or_provider_call():
+    """The refusal has to be cheap: no balance read, no quota read, no provider."""
+    if not HAVE_FFMPEG:
+        print("[skip] 66. ffmpeg not installed")
+        return
+
+    def exploding(url, credential):
+        raise AssertionError(f"billing transport was called: {url}")
+
+    with tempfile.TemporaryDirectory() as td:
+        work = Path(td)
+        record_path = _failed_attempt_record(work)
+
+        guard = BillingGuard(
+            base_url="https://example.invalid", credential="sk-cp-EXAMPLE",
+            http_get_json=exploding,
+        )
+        provider = _fixture_provider(work, guard=guard)
+        try:
+            provider.synthesize_speech(
+                SpeechRequest(display_text="你好，这是测试。", language="zh"),
+                attempt=2, retry_reason="r", retry_from=record_path,
+            )
+        except RuntimeError:
+            pass
+        else:
+            raise AssertionError("identical retry was not refused")
+        assert guard.call_count == 0, "refusal must precede the billing call"
+    print("[ok] 66. an invalid retry is refused before any billing or provider call")
 
 
 # --- 16. BLOCKER 4: ASR multiplicity --------------------------------------
@@ -1135,6 +1306,410 @@ def test_asr_coverage_is_multiset_recall():
     print("[ok] 63. coverage is multiset recall, so repeated content cannot be hidden")
 
 
+
+
+# --- 17. BLOCKER 2: the generation receipt is immutable ----------------------
+
+def test_generation_sidecar_is_immutable_on_cache_hit():
+    """Reuse must not rewrite the receipt of the paid generation."""
+    if not HAVE_FFMPEG:
+        print("[skip] 67. ffmpeg not installed")
+        return
+    with tempfile.TemporaryDirectory() as td:
+        work = Path(td)
+        provider = _fixture_provider(work)
+        request = SpeechRequest(display_text="你好，这是测试。", language="zh")
+        first = provider.synthesize_speech(request)
+        sidecar = sidecar_for(Path(first.asset.normalized_path))
+        before_bytes = sidecar.read_bytes()
+        before = json.loads(before_bytes.decode("utf-8"))
+
+        second = provider.synthesize_speech(request)
+        after_bytes = sidecar.read_bytes()
+
+        assert second.reused is True
+        assert before_bytes == after_bytes, "cache reuse overwrote the generation receipt"
+        after = json.loads(after_bytes.decode("utf-8"))
+        for key in ("quota_before", "quota_after", "attempt", "provider_call"):
+            assert after.get(key) == before.get(key), key
+        assert after["provider_call"] is True, "the generation evidence must survive"
+    print("[ok] 67. the generation sidecar is byte-identical after a cache hit")
+
+
+def test_reused_receipt_carries_the_original_generation_evidence():
+    if not HAVE_FFMPEG:
+        print("[skip] 68. ffmpeg not installed")
+        return
+    with tempfile.TemporaryDirectory() as td:
+        work = Path(td)
+        provider = _fixture_provider(work)
+        request = SpeechRequest(display_text="你好，这是测试。", language="zh")
+        first = provider.synthesize_speech(request)
+        second = provider.synthesize_speech(request)
+
+        assert second.reused is True
+        assert second.receipt.attempt == 1, "reuse must not restate the attempt number"
+        assert second.receipt.billing_guard_verdict == first.receipt.billing_guard_verdict
+        assert second.receipt.quota_after is not None, (
+            "the original post-generation observation must survive reuse"
+        )
+        assert second.receipt.raw_sha256 == first.receipt.raw_sha256
+        assert second.receipt.human_review == "PENDING_FOUNDER_REVIEW"
+
+        events = read_reuse_events(work)
+        assert events and events[-1]["event"] == "CACHE_REUSE"
+        assert events[-1]["provider_call"] is False
+    print("[ok] 68. a reused receipt is the original generation receipt, reuse is audited separately")
+
+
+def test_incomplete_sidecar_is_a_cache_miss():
+    """Never fill a blank field in to make a cache hit succeed."""
+    if not HAVE_FFMPEG:
+        print("[skip] 69. ffmpeg not installed")
+        return
+    with tempfile.TemporaryDirectory() as td:
+        work = Path(td)
+        provider = _fixture_provider(work)
+        request = SpeechRequest(display_text="你好，这是测试。", language="zh")
+        outcome = provider.synthesize_speech(request)
+        sidecar = sidecar_for(Path(outcome.asset.normalized_path))
+        original = json.loads(sidecar.read_text(encoding="utf-8"))
+
+        def miss_with(mutate):
+            payload = dict(original)
+            mutate(payload)
+            write_sidecar(sidecar, payload)
+            return provider._reuse(
+                normalized_path=Path(outcome.asset.normalized_path),
+                raw_path=Path(outcome.asset.raw_path),
+                sidecar_path=sidecar,
+                fingerprint=outcome.receipt.fingerprint,
+            )
+
+        assert miss_with(lambda p: p.pop("voice")) is None
+        assert miss_with(lambda p: p.update({"voice": ""})) is None
+        assert miss_with(lambda p: p.update({"voice": "   "})) is None
+        assert miss_with(lambda p: p.update({"display_text_sha256": ""})) is None
+        assert miss_with(lambda p: p.update({"spoken_text_sha256": ""})) is None
+        assert miss_with(lambda p: p.update({"lexicon_version": ""})) is None
+        assert miss_with(lambda p: p.update({"normalized_sha256": ""})) is None
+        assert miss_with(lambda p: p.update({"billing_guard_verdict": ""})) is None
+        assert miss_with(lambda p: p.update({"human_review": ""})) is None
+        assert miss_with(lambda p: p.update({"technical_qc": "not-a-dict"})) is None
+        assert miss_with(lambda p: p.update({"semantic_qc": None})) is None
+        assert miss_with(lambda p: p.update({"attempt": "one"})) is None
+        assert miss_with(lambda p: p.update({"attempt": True})) is None
+        assert miss_with(lambda p: p.pop("provider")) is None
+    print("[ok] 69. a missing, blank or wrongly typed sidecar field is a cache miss")
+
+
+def test_sidecar_completeness_helper_is_strict():
+    assert sidecar_is_complete(None) is False
+    assert sidecar_is_complete({}) is False
+    good = {
+        "provider": "minimax_m_plan", "product": "m_plan", "plan": "explore",
+        "model": "speech-2.8-hd", "voice": "v",
+        "display_text_sha256": "a", "spoken_text_sha256": "b",
+        "lexicon_version": "zh-1", "fingerprint": "c",
+        "raw_sha256": "d", "normalized_sha256": "e",
+        "technical_qc": {}, "semantic_qc": {},
+        "billing_guard_verdict": "SAFE_INCLUDED_PLAN",
+        "attempt": 1, "human_review": "PENDING_FOUNDER_REVIEW",
+    }
+    assert sidecar_is_complete(good) is True
+    for field in REQUIRED_SIDECAR_FIELDS:
+        broken = dict(good)
+        broken.pop(field)
+        assert sidecar_is_complete(broken) is False, field
+    print("[ok] 70. sidecar completeness requires every provenance field")
+
+
+# --- 18. BLOCKER 3: the receipt records the authorisation, not the aftermath
+
+def test_receipt_records_preflight_verdict_not_post_state():
+    """A generation may exhaust the window it was authorised against.
+
+    That must not turn the receipt into a claim that the call was unauthorised.
+    """
+    if not HAVE_FFMPEG:
+        print("[skip] 71. ffmpeg not installed")
+        return
+
+    state = {"interval": 1, "weekly": 58}
+
+    def shifting(url, credential):
+        if url.endswith("query_balance"):
+            return dict(SAFE_BALANCES)
+        if url.endswith("token_plan/remains"):
+            return _quota(state["interval"], state["weekly"])
+        raise AssertionError(url)
+
+    with tempfile.TemporaryDirectory() as td:
+        work = Path(td)
+        guard = BillingGuard(
+            base_url="https://example.invalid", credential="sk-cp-EXAMPLE",
+            http_get_json=shifting,
+        )
+        provider = _fixture_provider(work, guard=guard)
+
+        # The generation itself consumes the last of the 5-hour window.
+        original_synthesize = provider._finish
+        def consume_then_finish(**kwargs):
+            state["interval"] = 0
+            return original_synthesize(**kwargs)
+        provider._finish = consume_then_finish
+
+        outcome = provider.synthesize_speech(
+            SpeechRequest(display_text="你好，这是测试。", language="zh")
+        )
+
+        assert outcome.receipt.billing_guard_verdict == SAFE_INCLUDED_PLAN, (
+            "the receipt must record the verdict that authorised the request"
+        )
+        assert outcome.receipt.quota_before is not None
+        assert outcome.receipt.quota_before.interval_remaining_percent == 1
+        post = outcome.receipt.post_generation_billing_state
+        assert post.get("quota_after", {}).get("interval_remaining_percent") == 0, (
+            "the exhausted window must still be observable"
+        )
+        assert outcome.receipt.quota_after is not None
+        assert outcome.receipt.quota_after.interval_remaining_percent == 0
+    print("[ok] 71. the receipt records the authorisation, and post state separately")
+
+
+def test_authorize_returns_the_full_verdict():
+    guard = guard_with(quota=_quota(98, 58))
+    preflight = guard.authorize(modality="speech")
+    assert preflight.verdict == SAFE_INCLUDED_PLAN
+    assert preflight.modality == "speech"
+    assert preflight.credential_class == "SUBSCRIPTION"
+    assert preflight.quota is not None and preflight.quota.weekly_remaining_percent == 58
+
+    from contentops.media.contract import BillingBlocked
+
+    unsafe = guard_with(balances=dict(SAFE_BALANCES, credit_balance="2.00"))
+    try:
+        unsafe.authorize(modality="video")
+    except BillingBlocked as blocked:
+        assert blocked.verdict == BLOCKED_BILLING_SOURCE_UNCERTAIN
+    else:
+        raise AssertionError("authorize did not raise")
+    print("[ok] 72. authorize() returns the complete verdict and raises when unsafe")
+
+
+def test_generation_makes_one_balance_read_not_a_second_authorisation():
+    """B12: avoid re-running the undocumented balance read after generation."""
+    if not HAVE_FFMPEG:
+        print("[skip] 73. ffmpeg not installed")
+        return
+
+    counts = {"balance": 0}
+
+    def counting(url, credential):
+        if url.endswith("query_balance"):
+            counts["balance"] += 1
+            return dict(SAFE_BALANCES)
+        return _quota(98, 58)
+
+    with tempfile.TemporaryDirectory() as td:
+        counts["balance"] = 0
+        guard = BillingGuard(
+            base_url="https://example.invalid", credential="sk-cp-EXAMPLE",
+            http_get_json=counting,
+        )
+        provider = _fixture_provider(Path(td), guard=guard)
+        provider.synthesize_speech(
+            SpeechRequest(display_text="你好，这是测试。", language="zh")
+        )
+        # pre-flight balances + post quota read = one balance call, one quota call
+        assert counts["balance"] == 1, (
+            f"the undocumented balance endpoint was read {counts['balance']} times"
+        )
+    print("[ok] 73. one pre-flight balance read, no redundant post-generation authorisation")
+
+
+# --- 19. previous five fixes must not have regressed ----------------------
+
+def test_previous_fixes_still_hold():
+    # 1 modality-aware
+    assert guard_with(quota=_quota(0, 58)).evaluate("video").verdict == SAFE_INCLUDED_PLAN
+    assert guard_with(quota=_quota(0, 58)).evaluate("speech").verdict == BLOCKED_BILLING_SOURCE_UNCERTAIN
+    assert guard_with(quota=_quota(98, 0)).evaluate("image").verdict == BLOCKED_BILLING_SOURCE_UNCERTAIN
+    # 2 owed_amount
+    assert "owed_amount" in ZERO_REQUIRED_BALANCE_FIELDS
+    assert guard_with(balances=dict(SAFE_BALANCES, owed_amount="1")).evaluate().verdict == BLOCKED_BILLING_SOURCE_UNCERTAIN
+    assert guard_with(balances=dict(SAFE_BALANCES, owed_amount="not-a-number")).evaluate().verdict == BLOCKED_BILLING_SOURCE_UNCERTAIN
+    # 3 receipt() state
+    if HAVE_FFMPEG:
+        with tempfile.TemporaryDirectory() as td:
+            try:
+                _fixture_provider(Path(td)).receipt()
+            except RuntimeError:
+                pass
+            else:
+                raise AssertionError("receipt() before synthesis must raise")
+    # 4 ASR multiplicity
+    assert _multiplicity("哈哈", "哈哈") == {"missing": [], "excess": []}
+    assert token_overlap("version version", "version") == 0.5
+    # 5 retry cap
+    assert MAX_ATTEMPTS == 2
+    print("[ok] 74. modality awareness, owed_amount, ASR multiplicity and retry cap all hold")
+
+
+
+
+# --- 20. B5: the retry rule must survive a real process boundary ------------
+
+class _StubBillingServer:
+    """Local stand-in for the two billing reads, so CI never contacts a provider.
+
+    It only ever reports zero paid balances, and the base URL points at
+    127.0.0.1, so no MiniMax host is contacted and no real quota can move.
+    """
+
+    def __init__(self, quota):
+        self.quota = quota
+        self.calls = []
+
+    def __enter__(self):
+        import threading
+        from http.server import BaseHTTPRequestHandler, HTTPServer
+
+        quota = self.quota
+        calls = self.calls
+
+        class Handler(BaseHTTPRequestHandler):
+            def do_GET(self):  # noqa: N802 - name fixed by the base class
+                calls.append(self.path)
+                if "query_balance" in self.path:
+                    body = dict(SAFE_BALANCES)
+                elif "token_plan/remains" in self.path:
+                    body = quota
+                else:
+                    self.send_error(404)
+                    return
+                raw = json.dumps(body).encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(raw)))
+                self.end_headers()
+                self.wfile.write(raw)
+
+            def log_message(self, *args):
+                return
+
+        self._server = HTTPServer(("127.0.0.1", 0), Handler)
+        self._thread = threading.Thread(target=self._server.serve_forever, daemon=True)
+        self._thread.start()
+        self.base_url = f"http://127.0.0.1:{self._server.server_port}"
+        return self
+
+    def __exit__(self, *exc):
+        self._server.shutdown()
+        self._server.server_close()
+        return False
+
+
+def _run_cli(args, env_extra, base_url):
+    """Run the narration CLI in a genuinely separate process."""
+    import os as _os
+
+    env = dict(_os.environ)
+    env.update(env_extra)
+    # The fixture is a Python script, so the transport is an argv list.
+    env["CONTENTOPS_MINIMAX_CLI"] = json.dumps(
+        [sys.executable, str(ROOT / "tests" / "fixtures" / "fake_mmx_cli.py")]
+    )
+    env["CONTENTOPS_MINIMAX_BASE_URL"] = base_url
+    env["MINIMAX_SUBSCRIPTION_KEY"] = "sk-cp-TESTONLY0000"
+    env["PYTHONPATH"] = os.pathsep.join(
+        [str(ROOT / "scripts"), str(ROOT / "src"), env.get("PYTHONPATH", "")]
+    )
+    return hidden_run(
+        [python_executable(), "scripts/synthesize_narration.py", *args],
+        cwd=str(ROOT), env=env, timeout=900,
+    )
+
+
+def test_retry_rule_survives_a_process_boundary():
+    """Three separate processes: identical inputs must still be refused.
+
+    This is the bug an in-memory fingerprint could not catch. Each CLI run is a
+    fresh interpreter with a fresh provider, so only the durable attempt record
+    carries the previous fingerprint across.
+    """
+    if not HAVE_FFMPEG:
+        print("[skip] 75. ffmpeg not installed")
+        return
+
+    from contentops.media.attempts import find_attempt_records
+
+    with tempfile.TemporaryDirectory() as td:
+        work = Path(td).resolve()
+        base = ["--text", "你好，这是测试。", "--language", "zh",
+                "--out-dir", str(work)]
+
+        with _StubBillingServer(_quota(98, 58)) as stub:
+            # process 1: the fixture fails, so a FAILED attempt record is written
+            first = _run_cli(base, {"FAKE_MMX_FAIL": "1"}, stub.base_url)
+            assert first.returncode != 0, (
+                "a failing generation must not report success: "
+                + ((first.stdout or "") + (first.stderr or ""))[-300:]
+            )
+            failed = find_attempt_records(work, status="FAILED")
+            assert failed, (
+                "process 1 must leave a durable FAILED attempt record; stderr="
+                + ((first.stdout or "") + (first.stderr or ""))[-300:]
+            )
+            record_path = str(failed[-1].path_in(work))
+
+            # process 2: new interpreter, same inputs, retry from process 1
+            second = _run_cli(
+                base + ["--retry-from", record_path,
+                        "--retry-reason", "transient failure"],
+                {},
+                stub.base_url,
+            )
+            assert second.returncode != 0, "an identical retry must be refused"
+            combined = (second.stdout or "") + (second.stderr or "")
+            assert "must change a generation input" in combined, combined[-400:]
+
+            # process 3: same record, but a material input changed
+            third = _run_cli(
+                base + ["--retry-from", record_path,
+                        "--retry-reason", "transient failure",
+                        "--voice", "Chinese (Mandarin)_Warm_Bestie"],
+                {},
+                stub.base_url,
+            )
+            assert third.returncode == 0, (
+                "a retry with a changed voice must be accepted: "
+                + ((third.stdout or "") + (third.stderr or ""))[-400:]
+            )
+            payload = json.loads(third.stdout)
+            assert payload["attempt"] == 2, payload.get("attempt")
+            assert payload["provider_request_made"] is True
+    print("[ok] 75. the retry rule is enforced across three separate processes")
+
+
+def test_retry_reference_is_validated_inside_a_separate_process():
+    """A bad retry reference fails in a fresh interpreter too."""
+    if not HAVE_FFMPEG:
+        print("[skip] 76. ffmpeg not installed")
+        return
+    with tempfile.TemporaryDirectory() as td:
+        work = Path(td).resolve()
+        with _StubBillingServer(_quota(98, 58)) as stub:
+            result = _run_cli(
+                ["--text", "你好。", "--language", "zh", "--out-dir", str(work),
+                 "--retry-from", str(work / "missing.json"),
+                 "--retry-reason", "r"],
+                {}, stub.base_url,
+            )
+            assert result.returncode != 0
+            combined = (result.stdout or "") + (result.stderr or "")
+            assert "retry record not found" in combined, combined[-300:]
+    print("[ok] 76. a retry reference to a missing record fails in a separate process too")
 
 TESTS = [
     test_credential_classification,
@@ -1200,6 +1775,19 @@ TESTS = [
     test_retry_with_changed_input_is_accepted,
     test_asr_multiplicity_behaviour,
     test_asr_coverage_is_multiset_recall,
+    test_retry_without_a_durable_record_is_refused,
+    test_invalid_retry_records_are_refused,
+    test_retry_refused_before_any_billing_or_provider_call,
+    test_generation_sidecar_is_immutable_on_cache_hit,
+    test_reused_receipt_carries_the_original_generation_evidence,
+    test_incomplete_sidecar_is_a_cache_miss,
+    test_sidecar_completeness_helper_is_strict,
+    test_receipt_records_preflight_verdict_not_post_state,
+    test_authorize_returns_the_full_verdict,
+    test_generation_makes_one_balance_read_not_a_second_authorisation,
+    test_previous_fixes_still_hold,
+    test_retry_rule_survives_a_process_boundary,
+    test_retry_reference_is_validated_inside_a_separate_process,
 ]
 
 

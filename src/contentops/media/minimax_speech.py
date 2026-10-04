@@ -36,12 +36,13 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts"))
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
@@ -49,6 +50,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from process_utils import hidden_run  # noqa: E402
 
 from contentops.media.asr_backcheck import backcheck_speech  # noqa: E402
+from contentops.media.attempts import (  # noqa: E402
+    STATUS_FAILED,
+    STATUS_SUCCEEDED,
+    AttemptRecordError,
+    GenerationAttemptRecord,
+    append_reuse_event,
+    load_attempt_record,
+    sanitise_failure,
+)
 from contentops.media.audio import (  # noqa: E402
     NORMALISATION_TARGET_LUFS,
     NORMALISATION_TRUE_PEAK_DB,
@@ -160,6 +170,39 @@ def verify_output(path: Path, *, not_before: float, min_bytes: int = 1024) -> No
 
 SIDECAR_SUFFIX = ".receipt.json"
 
+#: Fields a cached generation receipt must carry before it may be reused.
+#:
+#: Every one of these was previously allowed to be blank on a cache hit, which
+#: produced a receipt with an empty voice, empty text hashes and
+#: ``lexicon_version="unknown"``. Fabricated provenance is worse than no cache:
+#: a missing field is a cache miss, never something to fill in.
+REQUIRED_SIDECAR_FIELDS: Tuple[str, ...] = (
+    "provider",
+    "product",
+    "plan",
+    "model",
+    "voice",
+    "display_text_sha256",
+    "spoken_text_sha256",
+    "lexicon_version",
+    "fingerprint",
+    "raw_sha256",
+    "normalized_sha256",
+    "technical_qc",
+    "semantic_qc",
+    "billing_guard_verdict",
+    "attempt",
+    "human_review",
+)
+
+#: Fields whose value must not be an empty string.
+NON_BLANK_SIDECAR_FIELDS: Tuple[str, ...] = (
+    "provider", "product", "plan", "model", "voice",
+    "display_text_sha256", "spoken_text_sha256", "lexicon_version",
+    "fingerprint", "raw_sha256", "normalized_sha256",
+    "billing_guard_verdict", "human_review",
+)
+
 
 def sidecar_for(asset_path: Path) -> Path:
     """Path of the sanitised receipt that sits next to a generated asset."""
@@ -171,6 +214,30 @@ def write_sidecar(path: Path, payload: Dict[str, Any]) -> None:
     path.write_text(
         json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
+
+
+def sidecar_is_complete(payload: Optional[Dict[str, Any]]) -> bool:
+    """True when a cached receipt carries every required provenance field.
+
+    Rejects a missing key, a blank string where blank is meaningless, and a field
+    of the wrong type for ``attempt``. Anything short of complete is a cache miss.
+    """
+    if not isinstance(payload, dict):
+        return False
+    for name in REQUIRED_SIDECAR_FIELDS:
+        if name not in payload:
+            return False
+    for name in NON_BLANK_SIDECAR_FIELDS:
+        value = payload.get(name)
+        if not isinstance(value, str) or not value.strip():
+            return False
+    for name in ("technical_qc", "semantic_qc"):
+        if not isinstance(payload.get(name), dict):
+            return False
+    attempt = payload.get("attempt")
+    if not isinstance(attempt, int) or isinstance(attempt, bool):
+        return False
+    return True
 
 
 def load_sidecar(path: Path) -> Optional[Dict[str, Any]]:
@@ -194,12 +261,33 @@ DEFAULT_VOICES = {
 }
 
 
-def resolve_cli() -> Optional[str]:
+#: Environment override for the transport executable. Set to a full command
+#: prefix (a path, or a JSON-ish argv list separated by spaces is not supported --
+#: use a path) to point at a stand-in during tests. Unset in production, where the
+#: official CLI on PATH is used.
+CLI_ENV_VAR = "CONTENTOPS_MINIMAX_CLI"
+
+
+def resolve_cli() -> Any:
     """Absolute path to the official CLI launcher.
 
     On Windows the npm install produces ``mmx.cmd`` shims that CreateProcess
     cannot resolve from a bare ``mmx``, so resolution happens once here.
     """
+    override = os.environ.get(CLI_ENV_VAR, "").strip()
+    if override:
+        # A JSON array is an argv prefix, which is what a stand-in launcher
+        # needs (an interpreter plus a script). A bare value is a path.
+        if override.startswith("["):
+            try:
+                parsed = json.loads(override)
+            except json.JSONDecodeError:
+                parsed = None
+            if isinstance(parsed, list) and parsed and all(
+                isinstance(part, str) for part in parsed
+            ):
+                return parsed
+        return override
     return shutil.which("mmx")
 
 
@@ -314,6 +402,7 @@ class MiniMaxMPlanProvider(MediaProvider):
         *,
         retry_reason: Optional[str] = None,
         attempt: int = 1,
+        retry_from: Optional[Path] = None,
     ) -> SpeechOutcome:
         """Produce narration, reuse a valid cached asset, or raise.
 
@@ -363,7 +452,10 @@ class MiniMaxMPlanProvider(MediaProvider):
         )
 
         # A retry must change a generation input, not merely carry a note.
-        self._validate_attempt(attempt, retry_reason, fingerprint)
+        # Checked before any billing or provider call.
+        previous_record = self._validate_attempt(
+            attempt, retry_reason, fingerprint, retry_from
+        )
 
         self._work_dir.mkdir(parents=True, exist_ok=True)
         raw_path = (self._work_dir / f"narration-{fingerprint[:16]}-raw.wav").resolve()
@@ -381,7 +473,10 @@ class MiniMaxMPlanProvider(MediaProvider):
                 return cached
 
         # Only now, with a provider call actually pending, does billing matter.
-        quota_before = self._guard.require_safe(modality="speech")
+        # authorize() keeps the whole verdict: this is the decision that permitted
+        # the call, and it is what the receipt must record.
+        preflight = self._guard.authorize(modality="speech")
+        quota_before = preflight.quota
 
         import time
 
@@ -390,14 +485,23 @@ class MiniMaxMPlanProvider(MediaProvider):
             if current > attempt:
                 # Only reachable if the caller drove multiple attempts in one
                 # call; each still has to have changed something real.
-                self._validate_attempt(current, retry_reason, fingerprint)
+                self._validate_attempt(current, retry_reason, fingerprint, retry_from)
             # Remove any previous file so a fresh mtime is meaningful and a
             # stale asset can never be mistaken for this run's output.
             for stale in (raw_path, normalized_path, sidecar_path):
                 if stale.exists():
                     stale.unlink()
 
-            self._last_attempt_fingerprint = fingerprint
+            # Durable retry evidence, written before the call so a crash still
+            # leaves a record. An in-memory attribute cannot do this job: the
+            # operator runs attempt 2 as a separate process.
+            attempt_record = GenerationAttemptRecord(
+                provider=PROVIDER_NAME,
+                modality="speech",
+                fingerprint=fingerprint,
+                attempt_number=current,
+            )
+            attempt_path = attempt_record.write(self._work_dir)
             started = time.time()
             prefix = (
                 list(self._cli) if isinstance(self._cli, (list, tuple)) else [self._cli]
@@ -426,11 +530,14 @@ class MiniMaxMPlanProvider(MediaProvider):
                         f"{exc} | cli_stdout={(result.stdout or '').strip()[:200]} "
                         f"| cli_stderr={(result.stderr or '').strip()[:200]}"
                     )
+                    attempt_record.mark_failed(
+                        "unverifiable_output", last_error
+                    ).write(self._work_dir)
                     raise RuntimeError(
                         f"speech generation could not be trusted on attempt "
                         f"{current}/{MAX_ATTEMPTS}: {last_error}"
                     ) from exc
-                return self._finish(
+                outcome = self._finish(
                     request=request,
                     lexicon=lexicon,
                     spoken_text=spoken_text,
@@ -438,14 +545,22 @@ class MiniMaxMPlanProvider(MediaProvider):
                     voice=voice,
                     model=model,
                     fingerprint=fingerprint,
-                    quota_before=quota_before,
+                    preflight=preflight,
                     raw_path=raw_path,
                     normalized_path=normalized_path,
                     sidecar_path=sidecar_path,
                     attempt=current,
                     retry_reason=retry_reason,
                 )
+                attempt_record.mark_succeeded(
+                    outcome.receipt.normalized_sha256 or "",
+                    str(sidecar_path),
+                ).write(self._work_dir)
+                return outcome
             last_error = (result.stderr or "")[-400:]
+            attempt_record.mark_failed(
+                "provider_cli_nonzero_exit", last_error
+            ).write(self._work_dir)
             if current == MAX_ATTEMPTS:
                 break
             # A second attempt is only ever made by the caller, with a named
@@ -463,17 +578,29 @@ class MiniMaxMPlanProvider(MediaProvider):
     # -- internals ---------------------------------------------------------
 
     def _validate_attempt(
-        self, attempt: int, retry_reason: Optional[str], fingerprint: str
-    ) -> None:
-        """Refuse a retry that is only a note, before any provider call.
+        self,
+        attempt: int,
+        retry_reason: Optional[str],
+        fingerprint: str,
+        retry_from: Optional[Path],
+    ) -> Optional[GenerationAttemptRecord]:
+        """Refuse a retry that is only a note, before any billing or provider call.
 
-        Attempt 2 requires **both** a named failure reason and a generation
-        fingerprint that differs from attempt 1. The reason text is not itself a
-        changed input: writing a longer note must not unlock a paid retry of the
-        identical request.
+        Attempt 2 requires **all three**:
+
+        - a named failure reason
+        - a durable attempt record proving attempt 1 actually failed
+        - a generation fingerprint that differs from that record's
+
+        The record is mandatory rather than optional. Comparing against an
+        in-memory attribute only worked when both attempts ran inside one Python
+        process, and the real workflow is two commands, so an identical attempt 2
+        used to pass straight through.
+
+        Returns the loaded previous record so the caller can chain from it.
         """
         if attempt <= 1:
-            return
+            return None
         if attempt > MAX_ATTEMPTS:
             raise RuntimeError(
                 f"attempt {attempt} exceeds the maximum of {MAX_ATTEMPTS}"
@@ -483,13 +610,44 @@ class MiniMaxMPlanProvider(MediaProvider):
                 f"attempt {attempt} requires a named failure reason "
                 f"(retry_reason); refusing to retry blindly"
             )
-        previous = self._last_attempt_fingerprint
-        if previous is not None and fingerprint == previous:
+        if retry_from is None:
+            raise RuntimeError(
+                "attempt 2 requires --retry-from pointing at the attempt record "
+                "of a failed first attempt. A reason alone is not evidence: the "
+                "previous fingerprint has to survive the process boundary."
+            )
+
+        try:
+            record = load_attempt_record(Path(retry_from))
+        except AttemptRecordError as exc:
+            raise RuntimeError(f"retry record is not usable: {exc}") from exc
+
+        if record.provider != PROVIDER_NAME:
+            raise RuntimeError(
+                f"retry record provider {record.provider!r} does not match "
+                f"{PROVIDER_NAME!r}"
+            )
+        if record.modality != "speech":
+            raise RuntimeError(
+                f"retry record modality {record.modality!r} is not 'speech'"
+            )
+        if record.attempt_number != 1:
+            raise RuntimeError(
+                f"retry record must describe attempt 1, got "
+                f"attempt_number={record.attempt_number}"
+            )
+        if record.status != STATUS_FAILED:
+            raise RuntimeError(
+                f"retry record status is {record.status!r}; only a FAILED first "
+                f"attempt may be retried"
+            )
+        if record.fingerprint == fingerprint:
             raise RuntimeError(
                 "attempt 2 must change a generation input (spoken text, "
                 "lexicon, voice, model or speed). The fingerprint is unchanged "
                 f"({fingerprint[:16]}), so this would be an identical retry."
             )
+        return record
 
     def _reuse(
         self,
@@ -520,13 +678,12 @@ class MiniMaxMPlanProvider(MediaProvider):
         if not normalized_path.is_file():
             return None
         payload = load_sidecar(sidecar_path)
-        if payload is None:
+        if not sidecar_is_complete(payload):
             return None
+        assert payload is not None
         if payload.get("fingerprint") != fingerprint:
             return None
         expected_norm = payload.get("normalized_sha256")
-        if not expected_norm:
-            return None
         try:
             actual_norm = sha256_file(normalized_path)
         except OSError:
@@ -575,23 +732,23 @@ class MiniMaxMPlanProvider(MediaProvider):
             semantic_qc=stored_sem,
             approved=True,
         )
-        receipt = self._receipt(
-            asset=asset,
-            fingerprint=fingerprint,
-            spoken_text="",
-            voice=asset.voice,
-            model=asset.model,
-            lexicon_version=payload.get("lexicon_version") or "unknown",
-            quota_before=None,
-            quota_after=None,
-            verdict=payload.get("billing_guard_verdict") or "SAFE_INCLUDED_PLAN",
-            reasons=[
-                "reused from a verified cache: no provider request, no quota "
-                "call and no billing call were made"
-            ],
-            attempt=0,
-            retry_reason=None,
-            reused=True,
+        # The returned receipt is the ORIGINAL generation receipt, restored from
+        # the immutable sidecar. Rebuilding it here would overwrite quota_before,
+        # quota_after and the original attempt number, destroying the evidence
+        # that this asset was actually paid for out of plan entitlement.
+        receipt = _receipt_from_payload(
+            asset=asset, payload=payload, fingerprint=fingerprint
+        )
+        # Reuse is audited by an append-only event, never by mutating provenance.
+        append_reuse_event(
+            self._work_dir,
+            {
+                "event": "CACHE_REUSE",
+                "fingerprint": fingerprint,
+                "asset_sha256": actual_norm,
+                "provider_call": False,
+                "billing_call": False,
+            },
         )
         return SpeechOutcome(asset=asset, receipt=receipt, reused=True)
 
@@ -605,7 +762,7 @@ class MiniMaxMPlanProvider(MediaProvider):
         voice: str,
         model: str,
         fingerprint: str,
-        quota_before: QuotaSnapshot,
+        preflight: Any,
         raw_path: Path,
         normalized_path: Path,
         sidecar_path: Path,
@@ -653,13 +810,25 @@ class MiniMaxMPlanProvider(MediaProvider):
             approved=bool(technical.get("approved")),
         )
 
+        # Post-generation observation, deliberately separate from the
+        # authorisation. A generation may consume the last of a window, and a
+        # later balance-read failure must not rewrite that history.
+        post_state: Dict[str, Any] = {}
         quota_after: Optional[QuotaSnapshot] = None
         try:
             quota_after = self._guard.read_quota()
-        except Exception:  # noqa: BLE001
-            quota_after = None
+            post_state["quota_after"] = {
+                "bucket": quota_after.bucket if quota_after else None,
+                "interval_remaining_percent": (
+                    quota_after.interval_remaining_percent if quota_after else None
+                ),
+                "weekly_remaining_percent": (
+                    quota_after.weekly_remaining_percent if quota_after else None
+                ),
+            }
+        except Exception as exc:  # noqa: BLE001
+            post_state["quota_after"] = {"error": type(exc).__name__}
 
-        guard_result = self._guard.evaluate()
         receipt = self._receipt(
             asset=asset,
             fingerprint=fingerprint,
@@ -667,13 +836,14 @@ class MiniMaxMPlanProvider(MediaProvider):
             voice=voice,
             model=model,
             lexicon_version=lexicon.version,
-            quota_before=quota_before,
+            quota_before=preflight.quota,
             quota_after=quota_after,
-            verdict=guard_result.verdict,
-            reasons=guard_result.reasons,
+            verdict=preflight.verdict,
+            reasons=preflight.reasons,
             attempt=attempt,
             retry_reason=retry_reason,
             reused=False,
+            post_generation_billing_state=post_state,
         )
         return SpeechOutcome(asset=asset, receipt=receipt)
 
@@ -693,6 +863,8 @@ class MiniMaxMPlanProvider(MediaProvider):
         attempt: int,
         retry_reason: Optional[str],
         reused: bool,
+        post_generation_billing_state: Optional[Dict[str, Any]] = None,
+        persist_sidecar: bool = True,
     ) -> SpeechReceipt:
         # A narration is never production-ready on its own: a human must hear it.
         human_review = "PENDING_FOUNDER_REVIEW"
@@ -725,6 +897,7 @@ class MiniMaxMPlanProvider(MediaProvider):
             quota_after=quota_after,
             billing_guard_verdict=verdict,
             billing_guard_reasons=list(reasons),
+            post_generation_billing_state=post_generation_billing_state or {},
             technical_qc=asset.technical_qc,
             semantic_qc=asset.semantic_qc,
             raw_sha256=asset.raw_sha256,
@@ -741,7 +914,7 @@ class MiniMaxMPlanProvider(MediaProvider):
         # cache hit would have to invent the voice, text hashes and lexicon
         # version, which is exactly the fabricated-provenance bug this replaces.
         asset_path = Path(asset.normalized_path or "")
-        if asset_path.name:
+        if persist_sidecar and asset_path.name:
             payload = receipt_to_dict(receipt)
             payload.update({
                 "fingerprint": fingerprint,
@@ -767,6 +940,54 @@ class MiniMaxMPlanProvider(MediaProvider):
         )
         result = hidden_run(prefix + ["--version"], timeout=60)
         return (result.stdout or "").strip() or "UNKNOWN"
+
+
+def _receipt_from_payload(
+    *, asset: SpeechAsset, payload: Dict[str, Any], fingerprint: str
+) -> SpeechReceipt:
+    """Rebuild the original generation receipt from an immutable sidecar."""
+
+    def snapshot(value: Any) -> Optional[QuotaSnapshot]:
+        if not isinstance(value, dict):
+            return None
+        return QuotaSnapshot(
+            bucket=value.get("bucket"),
+            interval_remaining_percent=value.get("interval_remaining_percent"),
+            weekly_remaining_percent=value.get("weekly_remaining_percent"),
+            modality_breakdown=value.get("modality_breakdown") or {},
+        )
+
+    post_state = payload.get("post_generation_billing_state") or {}
+    return SpeechReceipt(
+        provider=payload["provider"],
+        product=payload["product"],
+        plan=payload["plan"],
+        billing_mode=payload.get("billing_mode", BILLING_MODE),
+        payg_allowed=bool(payload.get("payg_allowed", ALLOW_PAYG)),
+        credit_pack_allowed=bool(payload.get("credit_pack_allowed", ALLOW_CREDIT_PACK)),
+        transport=payload.get("transport", "official_cli"),
+        transport_version=payload.get("transport_version", "UNKNOWN"),
+        model=payload["model"],
+        voice=payload["voice"],
+        display_text_sha256=payload["display_text_sha256"],
+        spoken_text_sha256=payload["spoken_text_sha256"],
+        lexicon_version=payload["lexicon_version"],
+        fingerprint=fingerprint,
+        quota_before=snapshot(payload.get("quota_before")),
+        quota_after=snapshot(payload.get("quota_after")),
+        billing_guard_verdict=payload["billing_guard_verdict"],
+        billing_guard_reasons=list(payload.get("billing_guard_reasons") or []),
+        post_generation_billing_state=post_state,
+        technical_qc=payload.get("technical_qc") or {},
+        semantic_qc=payload.get("semantic_qc") or {},
+        raw_sha256=payload["raw_sha256"],
+        normalized_sha256=payload["normalized_sha256"],
+        attempt=int(payload.get("attempt") or 1),
+        retry_reason=payload.get("retry_reason"),
+        fallback=payload.get("fallback") or {},
+        production_ready=bool(payload.get("production_ready", False)),
+        human_review=payload.get("human_review", "PENDING_FOUNDER_REVIEW"),
+    )
 
 
 def receipt_to_dict(receipt: SpeechReceipt) -> Dict[str, Any]:
@@ -802,6 +1023,7 @@ def receipt_to_dict(receipt: SpeechReceipt) -> Dict[str, Any]:
         "quota_after": snapshot(receipt.quota_after),
         "billing_guard_verdict": receipt.billing_guard_verdict,
         "billing_guard_reasons": receipt.billing_guard_reasons,
+        "post_generation_billing_state": receipt.post_generation_billing_state,
         "technical_qc": receipt.technical_qc,
         "semantic_qc": receipt.semantic_qc,
         "raw_sha256": receipt.raw_sha256,

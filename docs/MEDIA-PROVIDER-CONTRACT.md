@@ -81,6 +81,60 @@ Two further rules:
   be present, numeric and exactly zero. A missing field is a schema change and
   blocks; an unreadable balance is never treated as zero.
 
+### Retry contract
+
+Retry evidence is **durable**, because the real workflow is two processes:
+
+```
+python scripts/synthesize_narration.py ...                        # attempt 1
+python scripts/synthesize_narration.py --retry-from <record> ...   # attempt 2
+```
+
+An in-memory fingerprint cannot survive that boundary, so an identical attempt 2
+used to pass straight through. Instead:
+
+- every attempt writes a sanitised record under `<work-dir>/attempts/`:
+  `STARTED` before the provider call, then `SUCCEEDED` or `FAILED`
+- attempt 2 requires **all three**: `--retry-reason`, `--retry-from` pointing at
+  a record whose provider, modality, `attempt_number` and `FAILED` status all
+  validate, and a **changed generation fingerprint**
+- the refusal happens **before** the billing gate, so an invalid retry costs no
+  quota read and no provider call
+- maximum two attempts
+
+A record never contains a credential, a credential fragment, an `Authorization`
+header, an account id or a raw provider response.
+
+### Receipt immutability
+
+The generation receipt is written once and never rewritten:
+
+- a cache hit **loads and validates** it, checks the asset hash, and returns the
+  **original** generation receipt
+- reuse never overwrites `quota_before`, `quota_after`, `attempt` or
+  `provider_call`
+- reuse is audited separately in an append-only `reuse-events.jsonl`
+- a sidecar missing any required provenance field — or carrying a blank voice,
+  blank text hash or non-integer attempt — is a **cache miss**. Blanks are never
+  filled in to make a cache hit succeed
+
+### Authorisation is pre-generation evidence
+
+`BillingGuard.authorize(modality)` returns the complete verdict and raises when
+unsafe. A receipt records **that** verdict, not a later re-evaluation:
+
+| Field | Meaning |
+|---|---|
+| `billing_guard_verdict` | the decision that authorised the request |
+| `quota_before` | observed at authorisation |
+| `post_generation_billing_state` | observed afterwards, recorded separately |
+
+A generation may legitimately consume the last of a window, so a post-generation
+re-evaluation can report exhaustion. Recording that as the authorisation would
+rewrite history and claim a correctly authorised generation was unauthorised.
+For the same reason the generation path makes **one** balance read, not a second
+authorisation.
+
 ### Capability status
 
 | Modality | Status | Owner |
