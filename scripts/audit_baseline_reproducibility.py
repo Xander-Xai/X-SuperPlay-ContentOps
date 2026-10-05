@@ -70,6 +70,21 @@ SHOTS_DIR = BASELINE_DIR / "sources" / "screenshots"
 
 AUDIT_SCHEMA = "contentops.baseline-reproducibility/v1"
 
+#: Historical identity. Committing the bytes makes them tracked and reproducible; it
+#: does not prove they are the files that were used in October 2023, because no
+#: receipt in the repository records a digest for them. Those are two separate facts
+#: and the audit refuses to let one imply the other.
+HISTORICAL_IDENTITY_UNVERIFIED = "UNVERIFIED_ORIGINAL"
+
+#: Forward role, granted by the Founder policy decision of 2026-10-05.
+EXPERIMENT_BASELINE_CANONICAL = "CANONICAL_RECOVERED_BASELINE"
+
+#: Probe size for the coarse image comparison. Small on purpose: this measures
+#: gross layout, not text, and a large probe would only make the check slower
+#: without making it more convincing.
+PROBE_W, PROBE_H = 64, 114
+FRAME_SAMPLES = 36
+
 #: The six factual sources the tracked storyboard references.
 EXPECTED_SHOTS: Tuple[str, ...] = (
     "10-easel-doctor.png",
@@ -89,11 +104,72 @@ NOT_SUBSTITUTES: Tuple[str, ...] = (
     "04-easel-skills.png",
 )
 
-#: Probe size for the coarse image comparison. Small on purpose: this measures
-#: gross layout, not text, and a large probe would only make the check slower
-#: without making it more convincing.
-PROBE_W, PROBE_H = 64, 114
-FRAME_SAMPLES = 36
+#: Per-asset sensitive-data review, recorded before ``git add``.
+#:
+#: A screenshot that shows a token is effectively un-committable: a secret that reaches
+#: Git history has to be treated as compromised, and the remedy is a rewrite plus a
+#: rotation rather than a revert. So the review happens first, and the verdict is
+#: per asset.
+#:
+#: Each verdict below combines two things. The *visible content* was reviewed by
+#: looking at each image — OCR was deliberately not used, because a detector that
+#: cannot read a terminal screenshot would report "safe" for the one place a token is
+#: most likely to appear. The *metadata* was checked mechanically: chunk inventory,
+#: text chunks, and bytes appended after IEND.
+SENSITIVE_REVIEW: Dict[str, Dict[str, Any]] = {
+    "10-easel-doctor.png": {
+        "verdict": "PUBLIC_SAFE",
+        "visible_content": (
+            "easel doctor dependency check: seven OK rows and a FAIL count. No "
+            "credential, identifier or path."
+        ),
+        "metadata": "IHDR/IDAT/IEND/pHYs only; no text chunks; nothing after IEND",
+    },
+    "11-easel-ping.png": {
+        "verdict": "PUBLIC_SAFE",
+        "visible_content": (
+            "easel ping connectivity result, Step 1 FAIL and Step 2 OK. Mentions "
+            "localhost:18789, which is loopback plus a port already stated in the "
+            "video's own narration, not an address or host."
+        ),
+        "metadata": "IHDR/IDAT/IEND/pHYs only; no text chunks; nothing after IEND",
+    },
+    "12-easel-version-evidence.png": {
+        "verdict": "PUBLIC_SAFE",
+        "visible_content": (
+            "Public release verification: pinned v0.2.1, upstream commit "
+            "3fe2d9904c1619281ef57f81d9ee0b7854998399, 982/982 blobs matched, skill "
+            "count. Project-relative paths only."
+        ),
+        "metadata": "IHDR/IDAT/IEND/pHYs only; no text chunks; nothing after IEND",
+    },
+    "13-easel-skill-layers.png": {
+        "verdict": "PUBLIC_SAFE",
+        "visible_content": (
+            "Skill counts by workflow layer from a grep|sort|uniq -c run. Public "
+            "counts and a project-relative glob."
+        ),
+        "metadata": "IHDR/IDAT/IEND/pHYs only; no text chunks; nothing after IEND",
+    },
+    "14-easel-skills-dir.png": {
+        "verdict": "PUBLIC_SAFE",
+        "visible_content": (
+            "Directory listing of skill names from ls skills/openclaw/. Public "
+            "capability names; project-relative path."
+        ),
+        "metadata": "IHDR/IDAT/IEND/pHYs only; no text chunks; nothing after IEND",
+    },
+    "15-easel-doctor-fails.png": {
+        "verdict": "PUBLIC_SAFE",
+        "visible_content": (
+            "easel doctor FAIL rows. Highest-risk of the six and clean: '.env (API "
+            "Key)' appears as a check label beside a FAIL status, with no key value, "
+            "no token and no header content. The check reports that the key is "
+            "absent, which is the opposite of leaking one."
+        ),
+        "metadata": "IHDR/IDAT/IEND/pHYs only; no text chunks; nothing after IEND",
+    },
+}
 
 
 # --- small helpers -----------------------------------------------------------
@@ -205,15 +281,14 @@ def classify_expected() -> List[Dict[str, Any]]:
         exists = path.is_file()
         tracked = is_tracked(rel) if exists else False
         ignored = is_ignored(rel) if exists else False
-        if not exists:
-            recovery = "MISSING"
-        elif tracked:
-            recovery = "TRACKED_ORIGINAL"
-        elif ignored:
-            recovery = "LOCAL_IGNORED_CANDIDATE"
-        else:
-            recovery = "LOCAL_UNTRACKED_CANDIDATE"
+        # Deliberately NOT recomputed into TRACKED_ORIGINAL now that the files are
+        # tracked. That class asserts *identity* — that these are the bytes used in
+        # the original render — and being in the index says nothing of the kind. The
+        # recovery class records how the file was found, which does not change just
+        # because the file was later committed.
+        recovery = "MISSING" if not exists else "LOCAL_IGNORED_CANDIDATE"
         width, height = png_dimensions(path) if exists else (None, None)
+        review = dict(SENSITIVE_REVIEW.get(name, {}))
         records.append({
             "expected_path": rel,
             "found": exists,
@@ -222,9 +297,23 @@ def classify_expected() -> List[Dict[str, Any]]:
             "width": width,
             "height": height,
             "container": "PNG" if exists else None,
+            # Current git state, recorded apart from identity.
             "tracked": tracked,
             "ignored": ignored,
             "recovery_class": recovery,
+            "historical_identity": (
+                HISTORICAL_IDENTITY_UNVERIFIED if exists else "UNKNOWN"
+            ),
+            "experiment_baseline": (
+                EXPERIMENT_BASELINE_CANONICAL
+                if exists and tracked and review.get("verdict") == "PUBLIC_SAFE"
+                else "NOT_CANONICAL"
+            ),
+            "sensitive_data_review": {
+                "verdict": review.get("verdict", "NOT_REVIEWED"),
+                "visible_content": review.get("visible_content"),
+                "metadata": review.get("metadata"),
+            },
         })
     return records
 
@@ -410,8 +499,15 @@ def build_audit() -> Dict[str, Any]:
     records = classify_expected()
     found = [r for r in records if r["found"]]
     missing = [r["expected_path"] for r in records if not r["found"]]
-    classes = {r["recovery_class"] for r in records}
+    blocked = [
+        r["expected_path"] for r in records
+        if r["sensitive_data_review"]["verdict"] == "BLOCKED_SENSITIVE_CONTENT"
+    ]
     on_host_complete = not missing
+    tracked_count = sum(1 for r in records if r["tracked"])
+    all_public_safe = all(
+        r["sensitive_data_review"]["verdict"] == "PUBLIC_SAFE" for r in found
+    )
 
     intermediates = work_intermediates_check()
     consistency = video_consistency_check()
@@ -437,9 +533,42 @@ def build_audit() -> Dict[str, Any]:
         "expected_screenshots": records,
         "expected_count": len(records),
         "recovered_count": len(found),
+        "missing_count": len(missing),
+        "tracked_count": tracked_count,
         "source_completeness": "COMPLETE" if on_host_complete else "INCOMPLETE",
-        "git_reproducible": bool(found) and all(r["tracked"] for r in records),
-        "recovery_classes_present": sorted(classes),
+        # True only when every factual source is actually in Git. This is what makes
+        # an experiment reproducible elsewhere, and it is a different question from
+        # whether the set is whole on this host.
+        "git_reproducible": bool(found) and tracked_count == len(records),
+        "historical_identity": (
+            HISTORICAL_IDENTITY_UNVERIFIED if found else "UNKNOWN"
+        ),
+        "experiment_baseline": (
+            EXPERIMENT_BASELINE_CANONICAL
+            if on_host_complete and all_public_safe and tracked_count == len(records)
+            else "NOT_CANONICAL"
+        ),
+        "identity_semantics_note": (
+            "historical_identity and experiment_baseline are separate facts. "
+            "Committing the bytes makes them tracked, portable and verifiable by "
+            "anyone; it does not prove they are the bytes used in the original "
+            "render, because no historical receipt records a digest for them. No "
+            "asset is VERIFIED_ORIGINAL and none ever becomes so from a commit."
+        ),
+        "sensitive_data_review": {
+            "performed": True,
+            "order": "before git add",
+            "method": (
+                "Visible content reviewed by inspecting each image; metadata checked "
+                "mechanically (PNG chunk inventory, text chunks, bytes after IEND). "
+                "OCR was deliberately not used: a detector that cannot read a "
+                "terminal screenshot would report 'safe' for the one place a token "
+                "is most likely to be."
+            ),
+            "all_public_safe": all_public_safe,
+            "blocked_assets": blocked,
+        },
+        "recovery_classes_present": sorted({r["recovery_class"] for r in records}),
         "provenance_verification": {
             "independent_historical_digest_found": False,
             "highest_available_class": "LOCAL_IGNORED_CANDIDATE",
@@ -447,38 +576,41 @@ def build_audit() -> Dict[str, Any]:
                 "No receipt in the repository records a sha256 for any of the six "
                 "screenshots. build-easel.json and visual-qc.json record run facts but "
                 "no source digests. A matching filename is not cryptographic proof, so "
-                "no file is classified VERIFIED_ORIGINAL."
+                "no file is classified VERIFIED_ORIGINAL -- including now that the "
+                "files are tracked."
             ),
         },
         "git_reproducibility_gap": {
-            "problem": (
-                "The six factual sources are absent from Git. They exist only on this "
-                "build host, so a Golden experiment built on them cannot be re-run by "
-                "another machine or in CI."
+            "resolved": bool(found) and tracked_count == len(records),
+            "resolved_by": "Founder policy decision, 2026-10-05",
+            "resolution": (
+                "The six factual sources are exempt from the blanket media ignore and "
+                "are tracked. A video that cites a screenshot can now be re-verified "
+                "from the repository by anyone."
             ),
             "affected_paths": [r["expected_path"] for r in records],
             "root_cause": (
-                "A repository-wide '*.png' rule in .gitignore makes image evidence "
-                "untrackable. The four screenshots that ARE tracked got in before the "
-                "rule applied, so the current state is inconsistent: some image "
-                "evidence is in Git and the six files a published video actually "
-                "cites are not."
+                "A repository-wide '*.png' rule in .gitignore made image evidence "
+                "untrackable. The blanket rule is correct for build artefacts and "
+                "wrong for factual evidence, so six exact paths are now exempted "
+                "while the rule and every other image keep their existing behaviour."
             ),
-            "ignore_rule": ignore_rule,
+            "allowlist_ignore_rule": ignore_rule,
             "policy_note": (
-                "The blanket rule is defensible for build artefacts and indefensible "
-                "for factual evidence. A video that cites a screenshot cannot be "
-                "re-verified if the screenshot is not in the repository, so evidence "
-                "and artefacts need different rules."
+                "Narrow on purpose: no extension negation, no directory negation and "
+                "no project-level exemption. tests/test_gitignore_evidence_policy.py "
+                "asserts both the allowlist and the continued absence of any broad "
+                "negation rule, so widening this later fails CI rather than quietly "
+                "unignoring every image in the repository."
             ),
             "options_not_taken": [
                 "renaming 01-04 into the 10-15 slots (they depict different material)",
                 "extracting frames from the render and promoting them to sources",
                 "generating replacement screenshots",
-                "committing binaries into projects/easel-review, which this stage "
-                "does not modify",
-                "weakening the .gitignore image rule unilaterally, which is a "
-                "repository-wide policy change and the Founder's call",
+                "resizing, recompressing, re-encoding or cropping the recovered bytes",
+                "removing the global media ignore or adding '!*.png'",
+                "rewriting the historical storyboard, project.yaml or old receipts to "
+                "make the past look tidier",
             ],
             "decision_owner": "FOUNDER",
         },
@@ -521,18 +653,24 @@ def main() -> int:
     print(f"baseline source project : {audit['source_project']}")
     print(f"git head                : {audit['git_head'][:12]}")
     print()
-    print(f"{'expected path':58s} {'found':5s} {'class':26s} {'tracked':7s} ignored")
+    print(f"{'expected path':40s} {'found':5s} {'tracked':7s} {'sensitive':16s}")
     for record in audit["expected_screenshots"]:
         print(
-            f"{Path(record['expected_path']).name:58s} "
-            f"{str(record['found']):5s} {record['recovery_class']:26s} "
-            f"{str(record['tracked']):7s} {record['ignored']}"
+            f"{Path(record['expected_path']).name:40s} "
+            f"{str(record['found']):5s} {str(record['tracked']):7s} "
+            f"{record['sensitive_data_review']['verdict']:16s}"
         )
     print()
-    print(f"recovered               : {audit['recovered_count']}/{audit['expected_count']}")
+    print(f"recovered               : {audit['recovered_count']}/{audit['expected_count']}"
+          f"   missing {audit['missing_count']}")
     print(f"source_completeness     : {audit['source_completeness']}  (on this build host)")
     print(f"git_reproducible        : {audit['git_reproducible']}")
-    print(f"provenance ceiling      : {audit['provenance_verification']['highest_available_class']}")
+    print(f"historical_identity     : {audit['historical_identity']}")
+    print(f"experiment_baseline     : {audit['experiment_baseline']}")
+    print(f"sensitive review        : all_public_safe="
+          f"{audit['sensitive_data_review']['all_public_safe']}")
+    print(f"recovery class (as found): "
+          f"{', '.join(audit['recovery_classes_present'])}")
     print()
     intermediates = audit["consistency_evidence"]["work_intermediates"]
     print("work/ intermediates valid witness :", intermediates["intermediates_match_this_storyboard"])

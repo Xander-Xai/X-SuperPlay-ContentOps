@@ -1,7 +1,7 @@
 {
   "schema": "contentops.baseline-reproducibility/v1",
-  "checked_at": "2026-10-05T14:22:58Z",
-  "git_head": "882aa13b2f6562d7db5e1ceca581b47e234bc7a9",
+  "checked_at": "2026-10-05T18:01:42Z",
+  "git_head": "813d4b25af2b8a51f8642796963ed9c0744b9046",
   "source_project": "project://easel-review",
   "script_sha256": "7df3adbd34f3e2fc5157a2c858de737beca12a13fb58ea64fd570e982820d69d",
   "narration_text_sha256": "2f7122228c53de128d04541ec1c4086dedd22ddc51bb0347d605e1c789a02348",
@@ -16,9 +16,16 @@
       "width": 1080,
       "height": 1920,
       "container": "PNG",
-      "tracked": false,
-      "ignored": true,
-      "recovery_class": "LOCAL_IGNORED_CANDIDATE"
+      "tracked": true,
+      "ignored": false,
+      "recovery_class": "LOCAL_IGNORED_CANDIDATE",
+      "historical_identity": "UNVERIFIED_ORIGINAL",
+      "experiment_baseline": "CANONICAL_RECOVERED_BASELINE",
+      "sensitive_data_review": {
+        "verdict": "PUBLIC_SAFE",
+        "visible_content": "easel doctor dependency check: seven OK rows and a FAIL count. No credential, identifier or path.",
+        "metadata": "IHDR/IDAT/IEND/pHYs only; no text chunks; nothing after IEND"
+      }
     },
     {
       "expected_path": "projects/easel-review/sources/screenshots/11-easel-ping.png",
@@ -28,9 +35,16 @@
       "width": 1080,
       "height": 1920,
       "container": "PNG",
-      "tracked": false,
-      "ignored": true,
-      "recovery_class": "LOCAL_IGNORED_CANDIDATE"
+      "tracked": true,
+      "ignored": false,
+      "recovery_class": "LOCAL_IGNORED_CANDIDATE",
+      "historical_identity": "UNVERIFIED_ORIGINAL",
+      "experiment_baseline": "CANONICAL_RECOVERED_BASELINE",
+      "sensitive_data_review": {
+        "verdict": "PUBLIC_SAFE",
+        "visible_content": "easel ping connectivity result, Step 1 FAIL and Step 2 OK. Mentions localhost:18789, which is loopback plus a port already stated in the video's own narration, not an address or host.",
+        "metadata": "IHDR/IDAT/IEND/pHYs only; no text chunks; nothing after IEND"
+      }
     },
     {
       "expected_path": "projects/easel-review/sources/screenshots/12-easel-version-evidence.png",
@@ -40,9 +54,16 @@
       "width": 1080,
       "height": 1920,
       "container": "PNG",
-      "tracked": false,
-      "ignored": true,
-      "recovery_class": "LOCAL_IGNORED_CANDIDATE"
+      "tracked": true,
+      "ignored": false,
+      "recovery_class": "LOCAL_IGNORED_CANDIDATE",
+      "historical_identity": "UNVERIFIED_ORIGINAL",
+      "experiment_baseline": "CANONICAL_RECOVERED_BASELINE",
+      "sensitive_data_review": {
+        "verdict": "PUBLIC_SAFE",
+        "visible_content": "Public release verification: pinned v0.2.1, upstream commit 3fe2d9904c1619281ef57f81d9ee0b7854998399, 982/982 blobs matched, skill count. Project-relative paths only.",
+        "metadata": "IHDR/IDAT/IEND/pHYs only; no text chunks; nothing after IEND"
+      }
     },
     {
       "expected_path": "projects/easel-review/sources/screenshots/13-easel-skill-layers.png",
@@ -52,9 +73,16 @@
       "width": 1080,
       "height": 1920,
       "container": "PNG",
-      "tracked": false,
-      "ignored": true,
-      "recovery_class": "LOCAL_IGNORED_CANDIDATE"
+      "tracked": true,
+      "ignored": false,
+      "recovery_class": "LOCAL_IGNORED_CANDIDATE",
+      "historical_identity": "UNVERIFIED_ORIGINAL",
+      "experiment_baseline": "CANONICAL_RECOVERED_BASELINE",
+      "sensitive_data_review": {
+        "verdict": "PUBLIC_SAFE",
+        "visible_content": "Skill counts by workflow layer from a grep|sort|uniq -c run. Public counts and a project-relative glob.",
+        "metadata": "IHDR/IDAT/IEND/pHYs only; no text chunks; nothing after IEND"
+      }
     },
     {
       "expected_path": "projects/easel-review/sources/screenshots/14-easel-skills-dir.png",
@@ -64,9 +92,16 @@
       "width": 1080,
       "height": 1920,
       "container": "PNG",
-      "tracked": false,
-      "ignored": true,
-      "recovery_class": "LOCAL_IGNORED_CANDIDATE"
+      "tracked": true,
+      "ignored": false,
+      "recovery_class": "LOCAL_IGNORED_CANDIDATE",
+      "historical_identity": "UNVERIFIED_ORIGINAL",
+      "experiment_baseline": "CANONICAL_RECOVERED_BASELINE",
+      "sensitive_data_review": {
+        "verdict": "PUBLIC_SAFE",
+        "visible_content": "Directory listing of skill names from ls skills/openclaw/. Public capability names; project-relative path.",
+        "metadata": "IHDR/IDAT/IEND/pHYs only; no text chunks; nothing after IEND"
+      }
     },
     {
       "expected_path": "projects/easel-review/sources/screenshots/15-easel-doctor-fails.png",
@@ -76,25 +111,46 @@
       "width": 1080,
       "height": 1920,
       "container": "PNG",
-      "tracked": false,
-      "ignored": true,
-      "recovery_class": "LOCAL_IGNORED_CANDIDATE"
+      "tracked": true,
+      "ignored": false,
+      "recovery_class": "LOCAL_IGNORED_CANDIDATE",
+      "historical_identity": "UNVERIFIED_ORIGINAL",
+      "experiment_baseline": "CANONICAL_RECOVERED_BASELINE",
+      "sensitive_data_review": {
+        "verdict": "PUBLIC_SAFE",
+        "visible_content": "easel doctor FAIL rows. Highest-risk of the six and clean: '.env (API Key)' appears as a check label beside a FAIL status, with no key value, no token and no header content. The check reports that the key is absent, which is the opposite of leaking one.",
+        "metadata": "IHDR/IDAT/IEND/pHYs only; no text chunks; nothing after IEND"
+      }
     }
   ],
   "expected_count": 6,
   "recovered_count": 6,
+  "missing_count": 0,
+  "tracked_count": 6,
   "source_completeness": "COMPLETE",
-  "git_reproducible": false,
+  "git_reproducible": true,
+  "historical_identity": "UNVERIFIED_ORIGINAL",
+  "experiment_baseline": "CANONICAL_RECOVERED_BASELINE",
+  "identity_semantics_note": "historical_identity and experiment_baseline are separate facts. Committing the bytes makes them tracked, portable and verifiable by anyone; it does not prove they are the bytes used in the original render, because no historical receipt records a digest for them. No asset is VERIFIED_ORIGINAL and none ever becomes so from a commit.",
+  "sensitive_data_review": {
+    "performed": true,
+    "order": "before git add",
+    "method": "Visible content reviewed by inspecting each image; metadata checked mechanically (PNG chunk inventory, text chunks, bytes after IEND). OCR was deliberately not used: a detector that cannot read a terminal screenshot would report 'safe' for the one place a token is most likely to be.",
+    "all_public_safe": true,
+    "blocked_assets": []
+  },
   "recovery_classes_present": [
     "LOCAL_IGNORED_CANDIDATE"
   ],
   "provenance_verification": {
     "independent_historical_digest_found": false,
     "highest_available_class": "LOCAL_IGNORED_CANDIDATE",
-    "basis": "No receipt in the repository records a sha256 for any of the six screenshots. build-easel.json and visual-qc.json record run facts but no source digests. A matching filename is not cryptographic proof, so no file is classified VERIFIED_ORIGINAL."
+    "basis": "No receipt in the repository records a sha256 for any of the six screenshots. build-easel.json and visual-qc.json record run facts but no source digests. A matching filename is not cryptographic proof, so no file is classified VERIFIED_ORIGINAL -- including now that the files are tracked."
   },
   "git_reproducibility_gap": {
-    "problem": "The six factual sources are absent from Git. They exist only on this build host, so a Golden experiment built on them cannot be re-run by another machine or in CI.",
+    "resolved": true,
+    "resolved_by": "Founder policy decision, 2026-10-05",
+    "resolution": "The six factual sources are exempt from the blanket media ignore and are tracked. A video that cites a screenshot can now be re-verified from the repository by anyone.",
     "affected_paths": [
       "projects/easel-review/sources/screenshots/10-easel-doctor.png",
       "projects/easel-review/sources/screenshots/11-easel-ping.png",
@@ -103,15 +159,16 @@
       "projects/easel-review/sources/screenshots/14-easel-skills-dir.png",
       "projects/easel-review/sources/screenshots/15-easel-doctor-fails.png"
     ],
-    "root_cause": "A repository-wide '*.png' rule in .gitignore makes image evidence untrackable. The four screenshots that ARE tracked got in before the rule applied, so the current state is inconsistent: some image evidence is in Git and the six files a published video actually cites are not.",
-    "ignore_rule": ".gitignore:68:*.png",
-    "policy_note": "The blanket rule is defensible for build artefacts and indefensible for factual evidence. A video that cites a screenshot cannot be re-verified if the screenshot is not in the repository, so evidence and artefacts need different rules.",
+    "root_cause": "A repository-wide '*.png' rule in .gitignore made image evidence untrackable. The blanket rule is correct for build artefacts and wrong for factual evidence, so six exact paths are now exempted while the rule and every other image keep their existing behaviour.",
+    "allowlist_ignore_rule": null,
+    "policy_note": "Narrow on purpose: no extension negation, no directory negation and no project-level exemption. tests/test_gitignore_evidence_policy.py asserts both the allowlist and the continued absence of any broad negation rule, so widening this later fails CI rather than quietly unignoring every image in the repository.",
     "options_not_taken": [
       "renaming 01-04 into the 10-15 slots (they depict different material)",
       "extracting frames from the render and promoting them to sources",
       "generating replacement screenshots",
-      "committing binaries into projects/easel-review, which this stage does not modify",
-      "weakening the .gitignore image rule unilaterally, which is a repository-wide policy change and the Founder's call"
+      "resizing, recompressing, re-encoding or cropping the recovered bytes",
+      "removing the global media ignore or adding '!*.png'",
+      "rewriting the historical storyboard, project.yaml or old receipts to make the past look tidier"
     ],
     "decision_owner": "FOUNDER"
   },
