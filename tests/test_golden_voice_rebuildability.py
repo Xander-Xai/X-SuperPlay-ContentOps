@@ -74,27 +74,44 @@ def _sha(path: Path) -> str:
 
 
 def _git(*args: str, cwd: Path) -> subprocess.CompletedProcess:
-    return hidden_run(["git", *args], cwd=str(cwd), timeout=900)
+    """Run git and **raise** on failure.
+
+    ``hidden_run`` defaults to ``check=False``. Without this wrapper a failed clone
+    did not raise, and the suite reported four confident "file is not tracked"
+    assertions instead of the one fact that mattered: the clone never happened. A
+    silent dependency failure that masquerades as four unrelated data failures is the
+    worst possible shape for this test.
+    """
+    proc = hidden_run(["git", *args], cwd=str(cwd), timeout=900)
+    if proc.returncode != 0:
+        raise RuntimeError(
+            f"git {' '.join(args)} failed ({proc.returncode}): "
+            f"{((proc.stderr or '') + (proc.stdout or '')).strip()[:600]}"
+        )
+    return proc
 
 
 def _make_clean_clone(dest: Path) -> None:
     """Clone the current repository and strip every host-local input from it.
 
-    ``--no-hardlinks`` matters: without it the clone can share object files with the
-    working repository, and a test that then "proves" the objects are in Git is really
-    just reading the source repository's disk.
+    Two details that are load-bearing:
+
+    ``--no-hardlinks`` -- without it the clone shares object files with the working
+    repository, and a test that then "proves" those objects are in Git is really just
+    reading this disk.
+
+    No ``--branch``. CI checks out a *detached* HEAD at the PR merge commit, so there
+    is no branch name to pass, and ``git clone --branch <head-sha>`` is not valid
+    syntax for a commit. The clone is therefore followed by an explicit detach onto the
+    exact commit under test, which is correct from a detached or a named HEAD alike.
     """
-    _git("clone", "--quiet", "--no-hardlinks", "--depth", "1",
-         "--branch", _current_branch(), str(ROOT), str(dest), cwd=ROOT)
+    head = _git("rev-parse", "HEAD", cwd=ROOT).stdout.strip()
+    _git("clone", "--quiet", "--no-hardlinks", str(ROOT), str(dest), cwd=ROOT)
+    _git("-C", str(dest), "checkout", "--quiet", "--detach", head, cwd=ROOT)
     for rel in HOST_LOCAL:
         target = dest / rel
         if target.exists():
             shutil.rmtree(target, ignore_errors=True)
-
-
-def _current_branch() -> str:
-    out = _git("rev-parse", "--abbrev-ref", "HEAD", cwd=ROOT)
-    return (out.stdout or "").strip() or "HEAD"
 
 
 _CLONE: Optional[Path] = None
@@ -110,8 +127,12 @@ def clean_clone() -> Optional[Path]:
             _make_clean_clone(dest)
         except Exception as exc:  # noqa: BLE001
             shutil.rmtree(tmp, ignore_errors=True)
-            print(f"[skip] clean-checkout rebuildability (clone failed: {exc})")
-            return None
+            # Raised, not skipped. A clone that cannot be made means this suite cannot
+            # make its claim, and quietly skipping would report "no problems found"
+            # for a check that never ran.
+            raise RuntimeError(
+                f"could not build a clean clone at {dest}: {exc}"
+            ) from exc
         _CLONE = dest
     return _CLONE
 
