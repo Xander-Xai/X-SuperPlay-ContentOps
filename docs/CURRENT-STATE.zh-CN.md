@@ -399,12 +399,33 @@ storyboard，因此最终 QC 是对 manifest 的检查，而不是另一份独�
 
 ## 技术集成证明了什么、没有证明什么
 
-`scripts/m45_media_integration.py` 用本地、fixture 驱动的方式产出一个 `final.mp4`，
-证明 `registry → manifest → compose → 最终 QC`，且 **provider 调用为零**。
-周配额未被触碰。
+`scripts/m45_media_integration.py` 用本地、fixture 驱动的方式产出一个
+`project://final/m45.mp4`，证明 `registry → manifest → compose → 最终 QC`，
+且 **provider 调用为零**。周配额未被触碰。
+
+| 规范事实 | 值 |
+|---|---|
+| 产出 | `project://final/m45.mp4` |
+| QC 报告 | `receipts/qc-report-m45.json` — `overall: WARN`，`currency: CURRENT` |
+| `production_ready` | `false` |
+| `human_review` | `PENDING_FOUNDER_REVIEW` |
+| provider 调用 | speech 0 / image 0 / video 0 |
+| 时间线 | 5 个 placement，每个恰好一个在用资产 |
+| 库存 | 7 个资产（5 个在用 + 1 个被取代 + 1 个旁白） |
 
 每一个资产都是确定性 fixture，并在其回执、manifest 头部以及集成报告中
 被如此标注。媒体二进制文件被 gitignore；manifest、回执与 storyboard 会被提交。
+
+**只有一份 QC 报告、一个结论。** `qc-report-m45.json` 是 M4.5 的规范 QC 报告，
+也是唯一一份。另一份已跟踪的 `qc-report-final.json` 记录 `FAIL`，因为它评分的是
+`final/final.mp4`——本阶段从不产出该文件——并与真实的 `WARN` 并列，看起来像一个
+同样当前、却互相矛盾的结果。它是早期某次调用的过期产物，已删除。
+
+QC 回执在被提交前会经过一道净化边界（`contentops.qc_canonical`）。`qc_video`
+是运行时工具，运行时保留本地路径是正确的；而已跟踪的回执会被就地改写为
+`contentops.qc-canonical/v1`，使用逻辑引用，并显式声明 `currency` 与
+`graded_target`。于是读者无需从文件名猜测**结论针对什么**以及**它是否当前**。
+另有一条回归测试扫描规范产物中的宿主相关路径。
 
 **H3 复用是显式的，绝不靠发现。** `--reuse-h3-shot PATH` 表示复用真实镜头而不
 生成 fixture；不传该参数就**始终**使用 fixture。不做任何文件系统扫描。此前版本会
@@ -418,9 +439,9 @@ storyboard，因此最终 QC 是对 manifest 的检查，而不是另一份独�
 报告中的 `h3_shot_source` 会说明用的是 `fixture_generated` 还是
 `explicit_reuse`，无需从「本地恰好存在哪些产物」去推断。
 
-## 最终评审在已提交产物中发现并修复的四个缺陷
+## 最终评审在已提交产物中发现并修复的五个缺陷
 
-这四个阻塞项是通过阅读已提交的回执（而不是读代码）发现的，现均已修复并附
+这些阻塞项是通过阅读已提交的回执（而不是读代码）发现的，现均已修复并附
 回归测试：
 
 1. **一个 placement，两个镜头。** `manifest_to_storyboard` 遍历的是
@@ -433,6 +454,10 @@ storyboard，因此最终 QC 是对 manifest 的检查，而不是另一份独�
    只在一个检出根下成立，因而无法作为缓存键或评审对比依据。路径现为逻辑引用。
 4. **`--reuse-h3-shot` 毫无作用。** `main()` 解析了它却没有传参，而 provider
    另行 glob `.verify-tmp/m4`。复用现改为按路径显式指定并校验。
+5. **两个看起来都当前的 QC 结论。** `qc-report-m45.json`（WARN，评分
+   `final/m45.mp4`）与 `qc-report-final.json`（FAIL，评分 `final/final.mp4`——
+   本阶段从不产出该文件）被同时跟踪，且两者都带有绝对 `D:\Projects\...` 路径。
+   过期的那份已删除，规范的那份现在显式声明 `currency` 与 `graded_target`。
 
 它**不**证明真实的 `SourceArtifact` 摄取、`Claim Ledger` 完整性、创始人批准、
 生产黄金样本，或三次连续生产构建。产出为 `production_ready=false` /

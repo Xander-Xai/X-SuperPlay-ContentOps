@@ -96,9 +96,14 @@ from contentops.media.media_envelope import (  # noqa: E402
     MediaModality,
 )
 from contentops.media.media_transform import apply_audio_policy  # noqa: E402
+from contentops.media.qc_canonical import (  # noqa: E402
+    CURRENCY_CURRENT,
+    CURRENCY_NON_CURRENT_DIAGNOSTIC,
+)
 from contentops.media.media_paths import (  # noqa: E402
     is_logical_path,
     resolve_media_path,
+    sanitize_embedded_paths,
     serialize_media_path,
 )
 from contentops.media.media_validation import (  # noqa: E402
@@ -852,8 +857,32 @@ def run_integration(
     report["composition"] = _relativize(compose, project)
 
     # 9. final QC reads the same manifest-derived storyboard ----------------
-    qc = _final_qc(project, compose.get("video"))
-    report["final_qc"] = _relativize(qc, project)
+    #
+    # ``_final_qc`` grades the artifact this run actually produced
+    # (``final/m45.mp4``), and the result crosses a sanitization boundary before
+    # anything is committed. A second run that graded the default
+    # ``final/final.mp4`` — a file this stage never creates — had left a tracked
+    # ``FAIL`` next to the real ``WARN``, which read as two current verdicts.
+    qc_runtime = _final_qc(project, compose.get("video"))
+    graded = _logical(Path(compose["video"]), project) if compose.get("video") else None
+    report["final_qc"] = _relativize(
+        {
+            key: value
+            for key, value in qc_runtime.items()
+            # ``checks`` is re-read from the canonical receipt, so the summary and
+            # the tracked artifact cannot describe different verdicts.
+            if key != "checks"
+        },
+        project,
+    )
+    report["final_qc"].update(
+        _write_canonical_qc(
+            project,
+            qc_runtime,
+            name="qc-report-m45",
+            graded_target=graded,
+        )
+    )
 
     # 10. the integration receipt -------------------------------------------
     receipt_path = project / "receipts" / INTEGRATION_RECEIPT
@@ -940,20 +969,61 @@ def _compose(project: Path) -> Dict[str, Any]:
 
 
 def _final_qc(project: Path, video: Optional[str]) -> Dict[str, Any]:
-    """Run the existing final QC against the composed output."""
+    """Run ``qc_video`` and return its result **verbatim**.
+
+    The runtime result is not reshaped here. It keeps the machine-local paths that
+    make it useful while running, and the canonical boundary converts it to a
+    portable tracked receipt. Summarising it at this point would mean the summary
+    and the committed report were built from two different shapes and could disagree.
+    """
     try:
         from qc_video import qc as qc_run
     except Exception as exc:  # noqa: BLE001
-        return {"overall": "FAIL", "reason": f"qc_video unavailable: {exc}"}
+        return {
+            "overall": "FAIL",
+            "checks": [],
+            "error": f"qc_video unavailable: {exc}",
+        }
     target = Path(video).name if video else ""
     try:
-        report = qc_run(project, target=target)
+        return dict(qc_run(project, target=target))
     except Exception as exc:  # noqa: BLE001
-        return {"overall": "FAIL", "reason": f"{type(exc).__name__}: {exc}"}
+        return {"overall": "FAIL", "checks": [], "error": f"{type(exc).__name__}: {exc}"}
+
+
+def _write_canonical_qc(
+    project: Path,
+    runtime: Dict[str, Any],
+    *,
+    name: str,
+    graded_target: Optional[str] = None,
+    currency: str = CURRENCY_CURRENT,
+    non_current_reason: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Sanitize a ``qc_video`` runtime result into the tracked receipt.
+
+    The boundary, not a rewrite. ``qc_video`` writes its raw machine-local report
+    into ``receipts/``; this overwrites that file with the portable version, so a
+    tracked artifact can never carry ``D:\\Projects\\...`` and there is still only
+    one file per report rather than two that can disagree.
+    """
+    from contentops.media.qc_canonical import write_canonical_qc_receipt
+
+    written = write_canonical_qc_receipt(
+        project,
+        runtime,
+        repo_root=ROOT,
+        name=name,
+        graded_target=graded_target,
+        currency=currency,
+        non_current_reason=non_current_reason,
+    )
     return {
-        "overall": report.get("overall"),
-        "video": report.get("video"),
-        "checks": report.get("checks"),
+        "receipt": _logical(written[0], project),
+        "markdown": _logical(written[1], project),
+        "overall": runtime.get("overall"),
+        "currency": currency,
+        "graded_target": graded_target,
         "read_manifest": True,
     }
 

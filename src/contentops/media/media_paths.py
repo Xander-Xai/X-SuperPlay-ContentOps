@@ -40,13 +40,15 @@ from __future__ import annotations
 
 import os
 from pathlib import Path, PurePosixPath
-from typing import Optional, Union
+from typing import List, Optional, Tuple, Union
 
 __all__ = [
     "PROJECT_SCHEME",
     "REPO_SCHEME",
     "is_logical_path",
+    "logical_prefix_map",
     "resolve_media_path",
+    "sanitize_embedded_paths",
     "serialize_media_path",
 ]
 
@@ -80,6 +82,18 @@ def _relative_to(path: Path, root: Path) -> Optional[str]:
     except ValueError:
         return None
     return PurePosixPath(relative.as_posix()).as_posix()
+
+
+def _join(scheme: str, relative: str) -> str:
+    """``scheme://rel``, collapsing the project/repo root itself to ``scheme://``.
+
+    ``project://.`` would be technically resolvable but reads as a typo, and a
+    reader skimming a receipt should not have to decide which it means.
+    """
+    normalised = PurePosixPath(relative.replace("\\", "/")).as_posix()
+    if normalised in (".", ""):
+        return scheme
+    return f"{scheme}{normalised}"
 
 
 def serialize_media_path(
@@ -117,12 +131,12 @@ def serialize_media_path(
     if project_root is not None:
         relative = _relative_to(absolute, Path(project_root).resolve())
         if relative is not None:
-            return f"{PROJECT_SCHEME}{relative}"
+            return _join(PROJECT_SCHEME, relative)
 
     repo = Path(repo_root).resolve()
     relative = _relative_to(absolute, repo)
     if relative is not None:
-        return f"{REPO_SCHEME}{relative}"
+        return _join(REPO_SCHEME, relative)
 
     return None
 
@@ -155,3 +169,81 @@ def resolve_media_path(
         f"{value!r} is not a logical media reference. A committed manifest must not "
         f"carry an absolute path; use {REPO_SCHEME}<path> or {PROJECT_SCHEME}<path>."
     )
+
+
+def logical_prefix_map(
+    *, repo_root: PathLike, project_root: Optional[PathLike] = None
+) -> List[Tuple[str, str]]:
+    """``(absolute prefix, logical scheme)`` pairs, **longest prefix first**.
+
+    Longest-first is load-bearing, not cosmetic. A project path also sits under the
+    repo root, so converting repo-relative first would turn
+    ``<repo>/projects/demo/x.mp4`` into ``repo://projects/demo/x.mp4`` and hide the
+    project-relative form that actually applies. Both native (``D:\\a\\b``) and
+    POSIX spellings are listed, because a message that came from a tool may use
+    either.
+    """
+    pairs: List[Tuple[str, str]] = []
+    if project_root is not None:
+        resolved = Path(project_root).resolve()
+        pairs.append((str(resolved), PROJECT_SCHEME))
+        pairs.append((PurePosixPath(resolved.as_posix()).as_posix(), PROJECT_SCHEME))
+    resolved_repo = Path(repo_root).resolve()
+    pairs.append((str(resolved_repo), REPO_SCHEME))
+    pairs.append((PurePosixPath(resolved_repo.as_posix()).as_posix(), REPO_SCHEME))
+
+    # De-duplicate while keeping the longest-first ordering.
+    seen = set()
+    unique: List[Tuple[str, str]] = []
+    for prefix, scheme in pairs:
+        if prefix and (prefix, scheme) not in seen:
+            seen.add((prefix, scheme))
+            unique.append((prefix, scheme))
+    unique.sort(key=lambda item: len(item[0]), reverse=True)
+    return unique
+
+
+def sanitize_embedded_paths(
+    text: str,
+    *,
+    repo_root: PathLike,
+    project_root: Optional[PathLike] = None,
+) -> str:
+    """Rewrite absolute paths **inside** a longer string as logical references.
+
+    :func:`serialize_media_path` only handles a string that is *entirely* a path. A
+    QC message like ``final.mp4 not found at D:\\...\\final.mp4`` embeds one in prose,
+    and those strings are exactly what ended up committed. So this scans for known
+    root prefixes and rewrites the paths it finds around them.
+
+    Only known roots are matched, never a bare ``/`` or drive letter. A generic
+    "does this look like a path" regex would rewrite legitimate prose — a URL, a
+    date, a POSIX-looking fragment — and a sanitizer that damages valid text is worse
+    than the leak it removes. What it does not recognise, it leaves alone.
+    """
+    if not text or not isinstance(text, str):
+        return text
+    if is_logical_path(text):
+        return text
+
+    rewritten = text
+    for prefix, scheme in logical_prefix_map(
+        repo_root=repo_root, project_root=project_root
+    ):
+        search_from = 0
+        while True:
+            index = rewritten.find(prefix, search_from)
+            if index < 0:
+                break
+            end = index + len(prefix)
+            tail = rewritten[end:]
+            # Require a separator or end-of-string, so ``D:\\a\\repoOld`` is not
+            # read as living inside ``D:\\a\\repo``.
+            if tail and tail[0] not in ("/", "\\"):
+                search_from = end
+                continue
+            relative = PurePosixPath(tail.replace("\\", "/").lstrip("/")).as_posix()
+            replacement = _join(scheme, relative)
+            rewritten = rewritten[:index] + replacement
+            search_from = index + len(replacement)
+    return rewritten

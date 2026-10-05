@@ -1,14 +1,16 @@
 {
-  "project": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\m45-technical-integration",
-  "checked_at": "2026-10-05T12:08:11Z",
-  "video": "",
+  "schema": "contentops.qc-canonical/v1",
+  "currency": "CURRENT",
+  "project": "project://",
+  "graded_target": "project://final/m45.mp4",
   "overall": "WARN",
+  "checked_at": "2026-10-05T12:57:52Z",
   "checks": [
     {
       "id": "_video",
       "ok": true,
       "severity": "INFO",
-      "path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\m45-technical-integration\\final\\m45.mp4"
+      "path": "project://final/m45.mp4"
     },
     {
       "id": "file_size",
@@ -77,13 +79,13 @@
       "id": "caption_srt_present",
       "ok": false,
       "severity": "WARN",
-      "path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\m45-technical-integration\\assets\\captions\\default.srt"
+      "path": "project://assets/captions/default.srt"
     },
     {
       "id": "script_exists",
       "ok": true,
       "severity": "PASS",
-      "path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\m45-technical-integration\\script\\master.md"
+      "path": "project://script/master.md"
     },
     {
       "id": "storyboard_exists",
@@ -142,5 +144,6 @@
       "production_quality_warning": true,
       "note": "mechanical/fallback voice keeps the render at READY_FOR_HUMAN_REVIEW; only a human can accept it as production (V1 spec §11)"
     }
-  ]
+  ],
+  "path_policy": "logical references (project://, repo://); no absolute paths"
 }

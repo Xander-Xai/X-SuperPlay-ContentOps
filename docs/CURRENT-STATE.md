@@ -243,8 +243,9 @@ Branch `feat/27-media-convergence`. **Zero provider calls.** Weekly quota untouc
 | Timeline | `assets` is the inventory, `timeline` is one active asset per placement; composition reads the timeline |
 | Derived provenance | `generated` is inherited, never downgraded; `provider_generated_bytes` vs `source_generated` are separate fields |
 | H3 reuse | explicit by path and validated; no filesystem discovery |
+| QC receipt | `contentops.qc-canonical/v1` — sanitized at a boundary, declares `currency` and `graded_target` |
 | Composition | reuses pinned Easel v0.2.1 via `assemble_easel.run`; no second compositor |
-| Tests | 92 M4.5 + 85 speech + 84 image + 108 H3, all PASS |
+| Tests | 97 M4.5 + 85 speech + 84 image + 108 H3, all PASS |
 
 ### Two rules the implementation added beyond the plan
 
@@ -255,14 +256,38 @@ Branch `feat/27-media-convergence`. **Zero provider calls.** Weekly quota untouc
 
 ### The technical integration is not a production golden
 
-`scripts/m45_media_integration.py` produced one local `final.mp4`
-(h264 / 1080x1920 / 18.0 s, `qc_video` WARN) proving
+`scripts/m45_media_integration.py` produced one local artifact
+(`project://final/m45.mp4`, h264 / 1080x1920 / 18.0 s, `qc_video` **WARN**) proving
 `registry → manifest → compose → final QC` with **0** speech, image and video
 provider calls.
+
+| Canonical fact | Value |
+|---|---|
+| Output | `project://final/m45.mp4` |
+| QC report | `receipts/qc-report-m45.json` — `overall: WARN`, `currency: CURRENT` |
+| `production_ready` | `false` |
+| `human_review` | `PENDING_FOUNDER_REVIEW` |
+| Provider calls | speech 0 / image 0 / video 0 |
+| Timeline | 5 placements, one active asset each |
+| Inventory | 7 assets (5 active + 1 superseded + 1 narration) |
 
 Every asset is a deterministic fixture, labelled in its receipt, in the manifest
 header and in the integration report. Media binaries are gitignored; the manifest,
 receipts and storyboard are committed.
+
+**One QC report, one verdict.** `qc-report-m45.json` is the canonical M4.5 QC report
+and is the only one. A second tracked report, `qc-report-final.json`, recorded
+`FAIL` because it graded `final/final.mp4` — a file this stage never produces — and
+sat beside the real `WARN` reading as an equally current, contradicting result. It
+was stale output from an earlier invocation and has been removed.
+
+QC receipts cross a sanitization boundary before being committed
+(`contentops.qc_canonical`). `qc_video` is a runtime tool and keeps reporting local
+paths, which is correct while it runs; the tracked receipt is rewritten in place as
+`contentops.qc-canonical/v1` with logical references and an explicit `currency` plus
+`graded_target`. So a reader can tell *what* a verdict is about and *whether it is
+current* without inferring either from a filename. A regression test scans the
+canonical committed artifacts for host-specific paths.
 
 It does **not** prove real `SourceArtifact` ingestion, `Claim Ledger`
 completeness, Founder approval, a production golden, or three consecutive
@@ -293,6 +318,15 @@ fixed with regression tests:
    fixtures and a workstation with M4 leftovers silently produced real provider
    media — both committed as "the integration". Reuse is now explicit by path and
    validated against the shot's own receipt.
+
+And one found in the **QC receipts**, which the previous pass had not looked at
+because the manifest was already clean:
+
+5. **Two current-looking QC verdicts.** `qc-report-m45.json` (WARN, graded
+   `final/m45.mp4`) and `qc-report-final.json` (FAIL, graded `final/final.mp4`, which
+   nothing here creates) were tracked side by side, both carrying absolute
+   `D:\Projects\...` paths. The stale report was removed and the canonical one now
+   declares `currency` and `graded_target`.
 
 ### Defects the test suite caught during this milestone
 

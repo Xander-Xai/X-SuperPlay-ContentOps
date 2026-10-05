@@ -1090,11 +1090,49 @@ storyboard the manifest produced, so the final QC is a check of the manifest rat
 than a separate opinion — and the fallback engine keeps its diagnostic-only
 semantics and never claims `production_ready`.
 
+### QC receipts cross a sanitization boundary
+
+`qc_video` is a runtime tool. It reads real files, and its report legitimately names
+them — `final.mp4 not found at D:\...\final.mp4` is an accurate diagnostic while it
+runs. **The runtime result and the committed provenance are different concerns**, so
+`contentops.media.qc_canonical` is the boundary between them:
+
+```
+qc_video runtime result  (may contain absolute local paths)
+        ↓
+contentops.qc_canonical  →  tracked qc-report-<target>.json / .md
+```
+
+Upstream `qc_video` internals are untouched. The boundary rewrites the file it wrote,
+in place, so there is exactly one report per target rather than a raw copy and a
+sanitized copy that can disagree. Sanitizing rewrites **paths only** — never a
+verdict, never a check result.
+
+Every canonical report declares its own currency, so a stale result can never read as
+current:
+
+| Field | Meaning |
+|---|---|
+| `currency` | `CURRENT`, or `NON_CURRENT_DIAGNOSTIC` |
+| `graded_target` | the logical reference actually graded, e.g. `project://final/m45.mp4` |
+| `non_current_reason` | **required** when currency is not `CURRENT` |
+
+A non-current report with no stated reason is refused, because an unexplained stale
+verdict is indistinguishable from a real one. Two tracked reports once sat side by
+side — one `WARN` on `final/m45.mp4`, one `FAIL` on `final/final.mp4`, a file this
+stage never produces. The stale one was removed; `qc-report-m45.json` is the single
+canonical M4.5 QC report.
+
+A regression test scans the canonical committed artifacts
+(`media-manifest.json`, `m45-integration.json`, `qc-report-m45.{json,md}`,
+`storyboard.json`) for host-specific paths — Windows drive and UNC paths, POSIX and
+macOS home directories, mounted volumes — and fails on any hit.
+
 ## The technical integration, and what it is not
 
-`scripts/m45_media_integration.py` produces one local, fixture-driven `final.mp4`
-proving `registry → manifest → compose → final QC` with **zero provider calls**.
-Weekly quota is untouched.
+`scripts/m45_media_integration.py` produces one local, fixture-driven artifact
+(`project://final/m45.mp4`) proving `registry → manifest → compose → final QC`
+with **zero provider calls**. Weekly quota is untouched.
 
 Every asset is a deterministic fixture, labelled as such in its receipt, in the
 manifest header and in the integration report. Media binaries are gitignored; the

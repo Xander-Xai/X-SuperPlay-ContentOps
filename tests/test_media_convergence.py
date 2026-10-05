@@ -26,11 +26,12 @@ Three things, in order of importance:
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import sys
 import tempfile
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -91,6 +92,7 @@ from contentops.media.media_envelope import (  # noqa: E402
 from contentops.media.media_paths import (  # noqa: E402
     is_logical_path,
     resolve_media_path,
+    sanitize_embedded_paths,
     serialize_media_path,
 )
 from contentops.media.media_transform import (  # noqa: E402
@@ -1797,16 +1799,267 @@ def test_the_committed_integration_receipts_show_convergence_with_no_provider_ca
     print("[ok] 71. the committed integration receipts show convergence, unapproved")
 
 
-
-
-# --- 12. the four final blockers ---------------------------------------------
+# --- 12. the canonical committed artifacts are portable ----------------------
 #
-# Each block below corresponds to a defect found in the committed M4.5 artifacts,
-# not to a hypothetical. The comments say what was wrong, because a test that
-# outlives the reason for it tends to be "fixed" in the wrong direction later.
+# The last portability leak was in the QC receipts, not the manifest: qc_video is a
+# runtime tool whose report legitimately names local files, and two of its reports
+# were tracked side by side. One graded the artifact this stage actually produces
+# (final/m45.mp4 → WARN); the other graded final/final.mp4, which nothing here
+# creates, and sat next to it reading FAIL.
 
 
-# --- 12a. generated provenance cannot be downgraded --------------------------
+#: The committed artifacts that must never carry a host path.
+CANONICAL_COMMITTED_ARTIFACTS = (
+    "receipts/media-manifest.json",
+    "receipts/m45-integration.json",
+    "receipts/qc-report-m45.json",
+    "receipts/qc-report-m45.md",
+    "script/storyboard.json",
+)
+
+#: Host-specific path shapes. Deliberately a short list of *known* patterns rather
+#: than a general "is this an absolute path" detector: a test that flags every slash
+#: would fire on URLs and prose, and a check that cries wolf gets disabled. The
+#: point is to protect the artifacts above, not to solve path detection.
+#:
+#: The negative lookbehind on the drive pattern is essential, not decorative. Without
+#: it, ``project://final/m45.mp4`` matches as drive letter ``t`` plus ``://f`` — the
+#: scanner would report every correct logical reference as a leak.
+HOST_PATH_PATTERNS = (
+    (re.compile(r"(?<![A-Za-z])[A-Za-z]:[\\/]{1,2}[A-Za-z0-9_.\-]"), "Windows drive path"),
+    (re.compile(r"\\\\[A-Za-z0-9_.\-]+\\"), "Windows UNC path"),
+    (re.compile(r"/home/[A-Za-z0-9_.\-]+/"), "POSIX home path"),
+    (re.compile(r"/Users/[A-Za-z0-9_.\-]+/"), "macOS home path"),
+    (re.compile(r"/mnt/[a-z]/"), "mounted volume path"),
+)
+
+
+def _committed_artifact_findings(relative: str) -> List[str]:
+    """Every host-specific path found in one canonical committed artifact."""
+    target = ROOT / "projects" / "m45-technical-integration" / relative
+    if not target.is_file():
+        return []
+    text = target.read_text(encoding="utf-8", errors="replace")
+    findings: List[str] = []
+    for line_number, line in enumerate(text.splitlines(), start=1):
+        # JSON escapes separators, so normalise before matching: `D:\\Projects` and
+        # `D:/Projects` are the same leak with different escaping.
+        probe = line.replace("\\\\", "\\").replace('\\"', '"')
+        for pattern, label in HOST_PATH_PATTERNS:
+            match = pattern.search(probe)
+            if match:
+                findings.append(
+                    f"{relative}:{line_number} {label}: {match.group(0)!r}"
+                )
+    return findings
+
+
+def test_no_canonical_committed_artifact_carries_a_host_path():
+    """The tracked artifact contract: logical references only.
+
+    Scans the committed M4.5 artifacts for the host path shapes actually observed —
+    Windows drive paths (the committed QC receipts carried
+    ``D:\\Projects\\...``), Windows UNC, POSIX/macOS home directories, and mounted
+    volumes — so a leak on another contributor's platform is caught too.
+    """
+    missing = [
+        relative for relative in CANONICAL_COMMITTED_ARTIFACTS
+        if not (ROOT / "projects" / "m45-technical-integration" / relative).is_file()
+    ]
+    if len(missing) == len(CANONICAL_COMMITTED_ARTIFACTS):
+        _skip(92, "canonical artifacts carry no host path", "a local integration run")
+        return
+
+    findings: List[str] = []
+    for relative in CANONICAL_COMMITTED_ARTIFACTS:
+        findings.extend(_committed_artifact_findings(relative))
+    assert not findings, (
+        "a committed artifact carries a host-specific path, so it only resolves on "
+        "the machine that produced it:\n  " + "\n  ".join(findings)
+    )
+    print(
+        "[ok] 92. no canonical committed artifact carries a host-specific path"
+    )
+
+
+def test_the_stale_qc_report_is_not_retained_as_current_truth():
+    """Two QC reports must not look equally current and contradict each other.
+
+    ``qc-report-final.json`` recorded ``FAIL`` because it graded
+    ``final/final.mp4`` — a file this stage never produces. Kept alongside the real
+    ``WARN``, it read as a second verdict. It was stale output from an earlier
+    invocation, so it was removed rather than relabelled.
+    """
+    receipts = ROOT / "projects" / "m45-technical-integration" / "receipts"
+    for stale_name in ("qc-report-final.json", "qc-report-final.md"):
+        assert not (receipts / stale_name).exists(), (
+            f"{stale_name} is tracked again. If it is intentionally retained for "
+            f"diagnosis it must be renamed and classified NON_CURRENT_DIAGNOSTIC, "
+            f"with canonical docs not citing it as current."
+        )
+
+    canonical = receipts / "qc-report-m45.json"
+    if not canonical.is_file():
+        _skip(93, "no stale QC report is retained", "a local integration run")
+        return
+    report = json.loads(canonical.read_text(encoding="utf-8"))
+    assert report["currency"] == "CURRENT", report.get("currency")
+    assert report["graded_target"] == "project://final/m45.mp4", report["graded_target"]
+    assert report["overall"] in ("PASS", "WARN"), (
+        f"the canonical QC report is {report['overall']}; a FAIL here would mean "
+        f"the committed report no longer grades the artifact this stage produces"
+    )
+    print("[ok] 93. the stale QC report is gone and the canonical one is current")
+
+
+def test_the_canonical_qc_boundary_preserves_the_verdict_and_drops_the_paths():
+    """Sanitizing must never change a verdict.
+
+    The boundary rewrites a ``qc_video`` runtime result for committing. It is allowed
+    to change every path in it and nothing else — a sanitizer that quietly upgraded a
+    WARN would be worse than the leak it removes.
+    """
+    from contentops.media.qc_canonical import (
+        CURRENCY_NON_CURRENT_DIAGNOSTIC,
+        QC_CANONICAL_SCHEMA,
+        canonical_qc_report,
+    )
+
+    runtime = {
+        "project": r"D:\repo\projects\demo",
+        "checked_at": "2026-10-05T00:00:00Z",
+        "overall": "WARN",
+        "checks": [
+            {"id": "_video", "ok": True, "severity": "INFO",
+             "path": r"D:\repo\projects\demo\final\m45.mp4"},
+            {"id": "final_exists", "ok": False, "severity": "FAIL",
+             "msg": r"final.mp4 not found at D:\repo\projects\demo\final\final.mp4"},
+            {"id": "duration_range", "ok": False, "severity": "WARN", "value": 18.0},
+        ],
+    }
+    report = canonical_qc_report(
+        runtime,
+        repo_root=r"D:\repo",
+        project_root=r"D:\repo\projects\demo",
+        graded_target="project://final/m45.mp4",
+    )
+    assert report["schema"] == QC_CANONICAL_SCHEMA
+    assert report["overall"] == runtime["overall"], "sanitizing changed the verdict"
+    assert report["checked_at"] == runtime["checked_at"]
+    assert report["project"] == "project://", report["project"]
+    assert len(report["checks"]) == len(runtime["checks"])
+
+    blob = json.dumps(report, ensure_ascii=False)
+    assert r"D:\repo" not in blob, blob
+    assert "project://final/m45.mp4" in blob, blob
+    # A path embedded in prose is sanitized too, not only whole-string paths.
+    missing = next(c for c in report["checks"] if c["id"] == "final_exists")
+    assert "project://final/final.mp4" in missing["msg"], missing
+
+    # And a non-current report must explain itself.
+    try:
+        canonical_qc_report(
+            runtime,
+            repo_root=r"D:\repo",
+            project_root=r"D:\repo\projects\demo",
+            currency=CURRENCY_NON_CURRENT_DIAGNOSTIC,
+        )
+    except ValueError as exc:
+        assert "must state why" in str(exc), str(exc)
+    else:
+        raise AssertionError("a non-current QC report was declared with no reason")
+
+    declared = canonical_qc_report(
+        runtime,
+        repo_root=r"D:\repo",
+        project_root=r"D:\repo\projects\demo",
+        currency=CURRENCY_NON_CURRENT_DIAGNOSTIC,
+        non_current_reason="graded a target this stage does not produce",
+    )
+    assert "non_current_reason" in declared
+    print("[ok] 94. the canonical QC boundary preserves verdicts and removes paths")
+
+
+def test_embedded_path_sanitizing_leaves_non_paths_alone():
+    """A sanitizer that damages valid text is worse than the leak.
+
+    Only known root prefixes are matched. Prose, URLs and lookalike sibling
+    directories must survive untouched, or people will stop reading the output.
+    """
+    repo = Path(r"D:\repo")
+    project = Path(r"D:\repo\projects\demo")
+    assert sanitize_embedded_paths(
+        "see https://example.com/a/b for details", repo_root=repo, project_root=project
+    ) == "see https://example.com/a/b for details"
+    # A sibling whose name merely starts with the repo name is outside it.
+    assert r"D:\repoOld\x.mp4" in sanitize_embedded_paths(
+        r"built in D:\repoOld\x.mp4", repo_root=repo, project_root=project
+    )
+    # Already-logical text is idempotent.
+    once = sanitize_embedded_paths(
+        r"D:\repo\projects\demo\final\m45.mp4", repo_root=repo, project_root=project
+    )
+    assert once == "project://final/m45.mp4", once
+    assert sanitize_embedded_paths(once, repo_root=repo, project_root=project) == once
+    # Prose embedding works, and the surrounding words are preserved.
+    assert sanitize_embedded_paths(
+        r"missing at D:\repo\projects\demo\final\final.mp4",
+        repo_root=repo, project_root=project,
+    ) == "missing at project://final/final.mp4"
+    print("[ok] 95. embedded path sanitizing leaves non-paths alone")
+
+
+def test_the_committed_qc_report_agrees_with_the_committed_current_state():
+    """One set of numbers, stated once.
+
+    The canonical facts a reader takes away: the artifact, its QC verdict, the
+    readiness flags, provider calls, and the two asset counts. If a regeneration
+    changed one of them, this is where the disagreement surfaces.
+    """
+    base = ROOT / "projects" / "m45-technical-integration"
+    integration = base / "receipts" / "m45-integration.json"
+    qc_path = base / "receipts" / "qc-report-m45.json"
+    manifest_path = base / "receipts" / "media-manifest.json"
+    if not (integration.is_file() and qc_path.is_file() and manifest_path.is_file()):
+        _skip(96, "canonical current state agrees", "a local integration run")
+        return
+
+    payload = json.loads(integration.read_text(encoding="utf-8"))
+    qc = json.loads(qc_path.read_text(encoding="utf-8"))
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+    assert payload["production_ready"] is False
+    assert payload["human_review"] == HUMAN_REVIEW_PENDING
+    assert payload["provider_calls"] == {"speech": 0, "image": 0, "video": 0}
+    assert payload["manifest"]["assets"] == 7, payload["manifest"]
+    assert payload["manifest"]["placements"] == 5, payload["manifest"]
+    assert payload["manifest"]["active_visual_assets"] == 5, payload["manifest"]
+    assert manifest["counts"]["assets"] == 7, manifest["counts"]
+    assert manifest["counts"]["placements"] == 5, manifest["counts"]
+
+    # The artifact and its verdict agree across both receipts.
+    assert payload["composition"]["video"] == "project://final/m45.mp4", (
+        payload["composition"]["video"]
+    )
+    assert qc["graded_target"] == payload["composition"]["video"]
+    assert qc["overall"] == payload["final_qc"]["overall"], (
+        qc["overall"], payload["final_qc"]["overall"]
+    )
+    # And the storyboard's shot count equals the number of timeline placements,
+    # which is the invariant the timeline exists to enforce.
+    storyboard = json.loads(
+        (base / "script" / "storyboard.json").read_text(encoding="utf-8")
+    )
+    assert len(storyboard["shots"]) == manifest["counts"]["placements"], (
+        f"{len(storyboard['shots'])} shots for "
+        f"{manifest['counts']['placements']} placements"
+    )
+    shot_ids = [shot["shot_id"] for shot in storyboard["shots"]]
+    assert len(shot_ids) == len(set(shot_ids)), shot_ids
+    print("[ok] 96. the committed current state agrees across receipts")
+
+
+# --- 12b. generated provenance cannot be downgraded --------------------------
 
 
 def test_a_generated_kind_cannot_be_built_with_generated_false():
@@ -2752,6 +3005,12 @@ TESTS = [
     test_an_explicit_h3_reuse_path_is_validated_against_its_receipt,
     test_h3_reuse_without_a_receipt_is_refused,
     test_the_reuse_flag_is_threaded_through_to_the_provider_not_dropped,
+    # The last reuse test closes the M4.5 work. These guard the committed artifacts.
+    test_no_canonical_committed_artifact_carries_a_host_path,
+    test_the_stale_qc_report_is_not_retained_as_current_truth,
+    test_the_canonical_qc_boundary_preserves_the_verdict_and_drops_the_paths,
+    test_embedded_path_sanitizing_leaves_non_paths_alone,
+    test_the_committed_qc_report_agrees_with_the_committed_current_state,
 ]
 
 def main() -> int:
