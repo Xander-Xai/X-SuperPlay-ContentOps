@@ -1,0 +1,330 @@
+{
+  "provider": "minimax_m_plan",
+  "product": "m_plan",
+  "plan": "explore",
+  "billing_mode": "subscription",
+  "payg_allowed": false,
+  "credit_pack_allowed": false,
+  "credential_recorded": "credential_class only; never a value",
+  "transport": "official_cli",
+  "transport_version": "mmx 1.0.27",
+  "model": "speech-2.8-hd",
+  "voice": "Chinese (Mandarin)_Reliable_Executive",
+  "display_text_sha256": "187c2714d34f1aedd62e1511734253e6503add6b6d10b36a39a4a7dbbdef076a",
+  "spoken_text_sha256": "cd731e9e9267e0182e981f6dc3c8b99dc1dcdc7f89ec22f118cb5db93ac2ffae",
+  "lexicon_version": "zh-2026.10.04.1",
+  "fingerprint": "441c2b8634a43a33c654fa8ac96fc31ba7172e7bb4f517b27781ce8d81986ea6",
+  "quota_before": {
+    "bucket": "general",
+    "interval_remaining_percent": 98.0,
+    "weekly_remaining_percent": 58.0,
+    "modality_breakdown": {}
+  },
+  "quota_after": {
+    "bucket": "general",
+    "interval_remaining_percent": 98.0,
+    "weekly_remaining_percent": 58.0,
+    "modality_breakdown": {}
+  },
+  "billing_guard_verdict": "SAFE_INCLUDED_PLAN",
+  "billing_guard_reasons": [],
+  "technical_qc": {
+    "approved": true,
+    "checks": [
+      {
+        "check": "file_exists",
+        "passed": true,
+        "detail": "repo://.verify-tmp/m2/narration/narration-441c2b8634a43a33.wav"
+      },
+      {
+        "check": "not_empty",
+        "passed": true,
+        "detail": "3953214 bytes"
+      },
+      {
+        "check": "has_audio_codec",
+        "passed": true,
+        "detail": "pcm_s16le"
+      },
+      {
+        "check": "has_duration",
+        "passed": true,
+        "detail": 61.768
+      },
+      {
+        "check": "sample_rate",
+        "passed": true,
+        "detail": {
+          "expected": 32000,
+          "actual": 32000
+        }
+      },
+      {
+        "check": "mono_or_stereo",
+        "passed": true,
+        "detail": 1
+      },
+      {
+        "check": "duration_plausible",
+        "passed": true,
+        "detail": {
+          "expected_s": 62.666666666666664,
+          "actual_s": 61.768
+        }
+      },
+      {
+        "check": "leading_silence",
+        "passed": true,
+        "detail": 0.0
+      },
+      {
+        "check": "trailing_silence",
+        "passed": true,
+        "detail": 0.0
+      },
+      {
+        "check": "not_mostly_silent",
+        "passed": true,
+        "detail": -1.5
+      },
+      {
+        "check": "no_clipping",
+        "passed": true,
+        "detail": -1.5
+      },
+      {
+        "check": "loudness_floor",
+        "passed": true,
+        "detail": -23.99
+      },
+      {
+        "check": "true_peak_headroom",
+        "passed": true,
+        "detail": -8.01
+      }
+    ],
+    "measurements": {
+      "codec": "pcm_s16le",
+      "sample_rate_hz": 32000,
+      "channels": 1,
+      "duration_s": 61.768,
+      "bytes": 3953214,
+      "integrated_lufs": -23.99,
+      "true_peak_db": -8.01,
+      "input_i": -17.14,
+      "peak_db": -1.5,
+      "mean_db": -17.3
+    },
+    "silence": {
+      "available": true,
+      "silences": [
+        {
+          "start_s": 2.583906,
+          "end_s": 3.065781
+        },
+        {
+          "start_s": 4.186312,
+          "end_s": 4.693219
+        },
+        {
+          "start_s": 6.083312,
+          "end_s": 6.646125
+        },
+        {
+          "start_s": 8.6615,
+          "end_s": 9.121219
+        },
+        {
+          "start_s": 10.27525,
+          "end_s": 10.7415
+        },
+        {
+          "start_s": 11.56625,
+          "end_s": 12.124969
+        },
+        {
+          "start_s": 13.046344,
+          "end_s": 14.001906
+        },
+        {
+          "start_s": 15.087469,
+          "end_s": 15.52375
+        },
+        {
+          "start_s": 16.20575,
+          "end_s": 16.617219
+        },
+        {
+          "start_s": 17.007125,
+          "end_s": 17.469969
+        },
+        {
+          "start_s": 17.872813,
+          "end_s": 18.260406
+        },
+        {
+          "start_s": 18.631156,
+          "end_s": 19.057156
+        },
+        {
+          "start_s": 20.007469,
+          "end_s": 20.549406
+        },
+        {
+          "start_s": 21.275938,
+          "end_s": 21.652687
+        },
+        {
+          "start_s": 22.119875,
+          "end_s": 22.756469
+        },
+        {
+          "start_s": 23.699875,
+          "end_s": 24.112844
+        },
+        {
+          "start_s": 25.112938,
+          "end_s": 25.594687
+        },
+        {
+          "start_s": 26.106562,
+          "end_s": 26.571594
+        },
+        {
+          "start_s": 27.710281,
+          "end_s": 28.786344
+        },
+        {
+          "start_s": 30.805375,
+          "end_s": 31.2765
+        },
+        {
+          "start_s": 31.954187,
+          "end_s": 32.59075
+        },
+        {
+          "start_s": 34.3245,
+          "end_s": 34.757969
+        },
+        {
+          "start_s": 35.947156,
+          "end_s": 36.478219
+        },
+        {
+          "start_s": 38.371719,
+          "end_s": 38.938969
+        },
+        {
+          "start_s": 39.803812,
+          "end_s": 40.439937
+        },
+        {
+          "start_s": 42.375719,
+          "end_s": 43.086937
+        },
+        {
+          "start_s": 43.70125,
+          "end_s": 44.068375
+        },
+        {
+          "start_s": 44.500094,
+          "end_s": 45.220844
+        },
+        {
+          "start_s": 46.019656,
+          "end_s": 46.4475
+        },
+        {
+          "start_s": 47.330594,
+          "end_s": 47.9845
+        },
+        {
+          "start_s": 49.229438,
+          "end_s": 49.656406
+        },
+        {
+          "start_s": 51.329906,
+          "end_s": 52.208469
+        },
+        {
+          "start_s": 52.540969,
+          "end_s": 52.979062
+        },
+        {
+          "start_s": 54.281281,
+          "end_s": 55.294562
+        },
+        {
+          "start_s": 57.376,
+          "end_s": 58.27425
+        },
+        {
+          "start_s": 59.590156,
+          "end_s": 60.041812
+        }
+      ],
+      "leading_silence_s": 0.0,
+      "trailing_silence_s": 0.0
+    }
+  },
+  "semantic_qc": {
+    "status": "DETECTED_PROBLEM",
+    "role": "DETECTOR_ONLY",
+    "can_approve_quality": false,
+    "transcript": "装了Ezio之后，最先要回答的是，它到底跑不跑得起来。我把它锁在v0.2.1，九百八十二个文件逐个比对过哈希，和上游tag完全一致。它不是一个SaaS，是一层skill库，一百一十四个skill，分成发现、策划、创作、发布、归因五层，创作层最大，五十二个。doctor跑起来了，Python、Node、Fontpack这些核心项是绿的。Pinyi Agent真实往返也通了，但有个坑，网关健康检查探的是写死的默认端口，和Ezio实际网关端口对不上，那一行是红的。网页工作台这条路有六项没过，fastapi、uvicorn这些依赖没装，前端也没构建，ENV也没有API Key，所以web界面现在还没验证。结论，它不是开箱即用的产品，但是一个真能被调起来的生产引擎。CLI和skill这条线今天是通的。",
+    "coverage": 0.3125,
+    "issues": [
+      "token coverage 0.3125 below floor 0.85",
+      "44 expected token(s) absent from the transcript"
+    ],
+    "missing": [
+      "装了",
+      "伊泽尔",
+      "之后",
+      "我把它锁在",
+      "v零点二点一",
+      "982",
+      "个文件逐个比对过哈希",
+      "和上游",
+      "tag",
+      "完全一致",
+      "它不是一个",
+      "saas",
+      "是一层",
+      "skill",
+      "库",
+      "114",
+      "个",
+      "skill",
+      "52",
+      "个"
+    ],
+    "duplicated": [],
+    "detail": null
+  },
+  "raw_sha256": "ca1e3a63ab554a3bd4dececd14ec8db60748bbb542606ecabeadb1b86b178aaf",
+  "normalized_sha256": "e2e014a916eb7a637b68d80ace27551c557d3797541b61f41c195f8256b86593",
+  "attempt": 1,
+  "retry_reason": null,
+  "fallback": {
+    "edge_tts_available": true,
+    "used": false,
+    "degraded": false,
+    "policy": "explicit only; a silent swap to edge-tts is forbidden"
+  },
+  "production_ready": false,
+  "human_review": "PENDING_FOUNDER_REVIEW",
+  "asset": {
+    "normalized_path": "repo://.verify-tmp/m2/narration/narration-441c2b8634a43a33.wav",
+    "duration_s": 61.768,
+    "sample_rate_hz": 32000,
+    "channels": 1,
+    "codec": "pcm_s16le",
+    "peak_before_db": -0.2,
+    "peak_after_db": -1.5,
+    "loudness_before": -24.03,
+    "loudness_after": -23.99,
+    "approved": true
+  },
+  "reused_cached_asset": false
+}

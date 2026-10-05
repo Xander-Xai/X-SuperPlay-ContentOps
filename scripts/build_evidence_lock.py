@@ -30,6 +30,7 @@ locks in the suite, so it is asserted here rather than assumed.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 from datetime import datetime, timezone
@@ -84,6 +85,60 @@ def _is_tracked(rel: str) -> bool:
     ).returncode == 0
 
 
+def canonical_bytes(path: Path) -> bytes:
+    """The repository-canonical content of a tracked file: its Git blob.
+
+    Why the blob and not the working tree
+    -------------------------------------
+    ``.gitattributes`` declares ``*.md``, ``*.txt`` and ``*.json`` as
+    ``text eol=lf``, so every platform reproduces the *same* LF bytes. A Windows
+    working tree can still hold CRLF — these three files were authored on Windows
+    before that rule applied, and Git only applies ``.gitattributes`` on checkout, so
+    the local copies were never rewritten.
+
+    Digesting the working tree therefore produced a lock that verified on one machine
+    and failed on every other: the Linux CI runner measured ``master.md`` at
+    ``99767915`` against the ``7df3adbd`` this host had pinned. The repository was
+    right and the lock was wrong. Pinning the blob is what makes the digest mean the
+    same thing to everyone.
+
+    Untracked files have no blob, so their bytes are read directly.
+    """
+    from process_utils import hidden_run
+
+    rel = _repo_relative(path)
+    if not _is_tracked(rel):
+        return path.read_bytes()
+    # text=False: the blob is bytes, and decoding it as UTF-8 with replacement would
+    # corrupt any byte sequence that is not valid UTF-8 -- which is exactly the case
+    # for a binary file such as the caption.
+    for spec in (f":{rel}", f"HEAD:{rel}"):
+        out = hidden_run(
+            ["git", "cat-file", "blob", spec], cwd=str(ROOT), timeout=60, text=False
+        )
+        if out.returncode == 0 and out.stdout is not None:
+            return out.stdout
+    return path.read_bytes()
+
+
+def eol_normalized(raw: bytes) -> bytes:
+    """CRLF and bare CR collapsed to LF, for comparing against a blob."""
+    return raw.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+
+
+def worktree_matches_canonical(path: Path) -> bool:
+    """Does the working tree agree with the blob once EOLs are normalised?
+
+    Separates line-ending noise from a real edit. Without this, a platform
+    difference looks like content drift; with it, changing a word in the script still
+    fails loudly, because the digests differ beyond the line endings.
+    """
+    try:
+        return eol_normalized(path.read_bytes()) == eol_normalized(canonical_bytes(path))
+    except OSError:
+        return False
+
+
 def _repo_relative(path: Path) -> str:
     return path.relative_to(ROOT).as_posix()
 
@@ -112,12 +167,16 @@ def locked_inputs_reproducibility(lock: "EvidenceLock") -> Dict[str, Any]:
         rel = _repo_relative(path)
         present = path.is_file()
         tracked = present and _is_tracked(rel)
-        digest = _sha256(path) if present else None
+        digest = _canonical_sha(path) if present else None
         entry: Dict[str, Any] = {
             "path": rel,
             "exists": present,
             "tracked": tracked,
             "sha256": digest,
+            "sha256_source": "git_blob",
+            # A working tree that differs only by line endings is normal on Windows
+            # and must not read as drift. One that differs beyond EOL is a real edit.
+            "worktree_matches_canonical": worktree_matches_canonical(path) if present else None,
         }
         if expected_digest is not None:
             entry["sha256_matches_lock"] = digest == expected_digest
@@ -125,10 +184,13 @@ def locked_inputs_reproducibility(lock: "EvidenceLock") -> Dict[str, Any]:
             # The storyboard is pinned by structural fingerprint, not raw digest, so
             # key reordering and timestamps do not cause a false failure.
             entry["sha256_matches_lock"] = (
-                _structural(json.loads(path.read_text(encoding="utf-8")))
+                _structural(json.loads(canonical_bytes(path).decode("utf-8")))
                 == lock.storyboard_fingerprint
             ) if present else False
-        entry["ok"] = bool(present and tracked and entry["sha256_matches_lock"])
+        entry["ok"] = bool(
+            present and tracked and entry["sha256_matches_lock"]
+            and entry["worktree_matches_canonical"] is not False
+        )
         checks[label] = entry
 
     tracked_shots = 0
@@ -215,7 +277,7 @@ def build() -> EvidenceLock:
         if not local.is_file():
             fail("EVIDENCE_ASSET_REMOVED", f"{record['expected_path']} does not exist")
 
-        digest = _sha256(local)
+        digest = _canonical_sha(local)
         if digest != record["sha256"]:
             fail(
                 "EVIDENCE_SHA_CHANGED",
@@ -258,8 +320,8 @@ def build() -> EvidenceLock:
 
     lock = EvidenceLock(
         source_project="project://easel-review",
-        master_script_sha256=_sha256(BASELINE / "script" / "master.md"),
-        narration_text_sha256=_sha256(BASELINE / "script" / "narration.txt"),
+        master_script_sha256=_canonical_sha(BASELINE / "script" / "master.md"),
+        narration_text_sha256=_canonical_sha(BASELINE / "script" / "narration.txt"),
         storyboard_fingerprint=_structural(storyboard),
         caption_sha256=_sha256(caption) if caption else None,
         evidence=assets,
@@ -335,7 +397,7 @@ def resolve_caption():
             ),
         }
 
-    canonical_digest = _sha256(CANONICAL_CAPTION)
+    canonical_digest = _canonical_sha(CANONICAL_CAPTION)
     source_digest = _sha256(CAPTION_SOURCE_CANDIDATE)
     if canonical_digest != source_digest:
         fail(
@@ -479,9 +541,10 @@ def verify_locked_inputs(lock: "EvidenceLock") -> Dict[str, Any]:
                 f"{label}: {rel} exists but is not tracked, so the locked input cannot "
                 f"be obtained by another machine or in CI",
             )
-        digest = _sha256(path)
+        raw = canonical_bytes(path)
+        digest = hashlib.sha256(raw).hexdigest()
         if mode == "structural":
-            actual = _structural(json.loads(path.read_text(encoding="utf-8")))
+            actual = _structural(json.loads(raw.decode("utf-8")))
         else:
             actual = digest
         if actual != expected:
@@ -494,9 +557,22 @@ def verify_locked_inputs(lock: "EvidenceLock") -> Dict[str, Any]:
                 f"{label}: {rel} hashes {actual[:12]}; the lock pinned "
                 f"{str(expected)[:12]}",
             )
+        if not worktree_matches_canonical(path):
+            # The blob matches, so the *committed* baseline is intact — but the local
+            # file has been edited past its line endings. Reported rather than
+            # ignored, because the next commit would change the evidence underneath a
+            # lock that currently verifies.
+            fail(
+                "EVIDENCE_WORKTREE_DIVERGED",
+                f"{label}: {rel} matches its blob but the working copy has been "
+                f"edited beyond line endings. The lock pins the committed baseline; "
+                f"commit or revert the change before trusting a rebuild from this tree.",
+            )
         checks[label] = {
             "path": rel, "exists": True, "tracked": True,
             "sha256": digest, "matches_lock": True,
+            "sha256_source": "git_blob",
+            "worktree_matches_canonical": True,
         }
 
     check_input("script", BASELINE / "script" / "master.md",
@@ -557,6 +633,20 @@ def _is_tracked(rel: str) -> bool:
 
 
 def _sha256(path: Path) -> str:
+    import hashlib
+
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _canonical_sha(path: Path) -> str:
+    """sha256 of the repository-canonical bytes. See :func:`canonical_bytes`.
+
+    Reading the working tree here is what made the lock machine-specific: the Windows
+    copies of these files still carry CRLF, and only this host has them that way.
+    """
+    import hashlib
+
+    return hashlib.sha256(canonical_bytes(path)).hexdigest()
     import hashlib
 
     digest = hashlib.sha256()

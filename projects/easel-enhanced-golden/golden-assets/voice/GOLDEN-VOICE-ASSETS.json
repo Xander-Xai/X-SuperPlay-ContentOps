@@ -1,0 +1,55 @@
+{
+  "record_type": "golden_asset_provenance_index",
+  "is_provider_receipt": false,
+  "warning": "This file is NOT a historical provider generation receipt. It indexes the two approved Golden A/B experiment inputs and states what is and is not known about each. No original generation receipt exists for arm A, and none has been fabricated. See voice-asset-audit.json for the measured evidence behind every claim here.",
+  "canonical_assets": [
+    {
+      "arm": "A",
+      "canonical_asset": "projects/easel-enhanced-golden/golden-assets/voice/A-baseline-edge-tts.mp3",
+      "sha256": "bc6b721656a5aab3491d45b15a649ec6161eae04652a5e6d627f722ffbe8b625",
+      "bytes": 371520,
+      "provenance_class": "CONSISTENT_HISTORICAL_BASELINE",
+      "provider_receipt": null,
+      "provider_receipt_reason": "None exists. No surviving machine generation receipt binds this audio to the locked narration, so none is asserted. An earlier draft of this index proposed emitting A-baseline-edge-tts.receipt.json; that was rejected, because a file shaped like a receipt is read as a receipt and would silently upgrade a weaker provenance class to a stronger one.",
+      "historical_candidates": [
+        {
+          "path": ".verify-tmp/m2/ab/A-edge-tts.mp3",
+          "relation": "selected byte source for this canonical copy",
+          "ignored": true
+        },
+        {
+          "path": "projects/easel-review/assets/voice_easel/narration.mp3",
+          "relation": "byte-identical to the selected source; the file the pinned Easel render consumed",
+          "ignored": true
+        }
+      ],
+      "known_limitation": "Provenance is observational only. That the bytes are identical to the file the pinned render consumed is established, and their duration, sample rate and loudness match issue #19. What is NOT established is that they were generated from the locked narration text, because no machine receipt says so. Treating a matching filename or a matching duration as a generation record would be exactly the Evidence before Claim violation this repository forbids."
+    },
+    {
+      "arm": "B",
+      "canonical_asset": "projects/easel-enhanced-golden/golden-assets/voice/B-minimax-speech-2.8-hd.wav",
+      "sha256": "e2e014a916eb7a637b68d80ace27551c557d3797541b61f41c195f8256b86593",
+      "bytes": 3953214,
+      "provenance_class": "VERIFIED_CURRENT_BASELINE",
+      "provider_receipt": "projects/easel-enhanced-golden/golden-assets/voice/B-minimax-speech-2.8-hd.receipt.json",
+      "receipt_binding": "receipt.normalized_sha256 equals the canonical asset SHA256, so the receipt binds to these exact bytes",
+      "historical_candidates": [
+        {
+          "path": ".verify-tmp/m2/ab/B-minimax-mplan.wav",
+          "relation": "selected byte source for this canonical copy",
+          "ignored": true
+        },
+        {
+          "path": ".verify-tmp/m2/narration/narration-441c2b8634a43a33.wav",
+          "relation": "the provider output at generation time",
+          "ignored": true
+        }
+      ],
+      "known_limitation": "The receipt's loudness bookkeeping is known to be wrong and is preserved uncorrected as the historical record: it states integrated_lufs -23.99, loudness_before -24.03, loudness_after -23.99 and true_peak_db -8.01, while the asset measures approximately -17.0 LUFS and -1.5 dBTP. The correction lives in voice-asset-audit.json as measured current evidence. The historical receipt and the later measurement are deliberately kept as distinct records rather than merged."
+    }
+  ],
+  "tracking_rationale": "These two files were approved as a narrow experiment-fixture exception so that A/B voice provenance survives on a clean checkout. This does not make provider output generally trackable. The global *.mp3, *.wav and projects/*/assets/voice/ ignores remain in force, and exactly two golden audio files are negated. final.mp4 remains ignored and rebuildable: fixed experiment inputs are tracked, rendered outputs are not.",
+  "human_review": "PENDING_FOUNDER_REVIEW",
+  "winner_declared": false,
+  "mini_max_improvement_claimed": false
+}

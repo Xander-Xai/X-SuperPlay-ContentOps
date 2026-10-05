@@ -1,0 +1,151 @@
+{
+  "schema": "contentops.golden-variant-receipt/v1",
+  "variant_id": "A",
+  "base_experiment_fingerprint": "119b3825eb6334d8d354131c0f28e8839751b519e77ac244f59ec4ebea7475f3",
+  "evidence_lock_fingerprint": "119b3825eb6334d8d354131c0f28e8839751b519e77ac244f59ec4ebea7475f3",
+  "evidence_asset_digest": "a50ea21300d689eb996b9aab6f15c7bcd965e83dd560a373791ac9e1757c437a",
+  "master_script_sha256": "997679154e64a0b6b8df0885388636157668f94944032009c437b97289ca7348",
+  "narration_text_sha256": "f2de808c9e723f8430acdc44dc374c5791b249250d8bc585a172360a88b9542a",
+  "storyboard_fingerprint": "b77b4295a49c9c2ec6c2ac68fcd38dac315196331ba5865ce3501f907ee673d4",
+  "caption_sha256": "ea3a8a52439af1d3b75bddbe00c202f77c3dfebad702ba5b56a127d83d141b8d",
+  "factual_assets": [
+    {
+      "placement_id": "shot_00",
+      "asset_path": "project://sources/screenshots/10-easel-doctor.png",
+      "asset_sha256": "69f173cfd03efc13cc3030c627b1d2f031213ad14c02f0358320a7378f642d17",
+      "asset_kind": "SCREENSHOT",
+      "evidence_use": "EVIDENCE",
+      "claim_refs": [],
+      "source_ref": "repo://projects/easel-review/script/master.md#实测证据"
+    },
+    {
+      "placement_id": "shot_01",
+      "asset_path": "project://sources/screenshots/12-easel-version-evidence.png",
+      "asset_sha256": "6f8603af5e83e48202d263c67da5fbd248d25cadf004365cdb67f8ed220c6d20",
+      "asset_kind": "SCREENSHOT",
+      "evidence_use": "EVIDENCE",
+      "claim_refs": [],
+      "source_ref": "repo://projects/easel-review/receipts/runtime-receipt.md"
+    },
+    {
+      "placement_id": "shot_02",
+      "asset_path": "project://sources/screenshots/13-easel-skill-layers.png",
+      "asset_sha256": "d7b01af2b2d3e2841f0948a284265496bd1b6fc4fe287dec81403c61145431f0",
+      "asset_kind": "SCREENSHOT",
+      "evidence_use": "EVIDENCE",
+      "claim_refs": [],
+      "source_ref": "repo://projects/easel-review/receipts/runtime-receipt.md"
+    },
+    {
+      "placement_id": "shot_03",
+      "asset_path": "project://sources/screenshots/11-easel-ping.png",
+      "asset_sha256": "cc566fbe0bcb9a81406d02ce0641aa110f9738730dff1d19dc278d48146cb34e",
+      "asset_kind": "SCREENSHOT",
+      "evidence_use": "EVIDENCE",
+      "claim_refs": [],
+      "source_ref": "repo://projects/easel-review/script/master.md#实测证据"
+    },
+    {
+      "placement_id": "shot_04",
+      "asset_path": "project://sources/screenshots/15-easel-doctor-fails.png",
+      "asset_sha256": "69dbfd125f2d27cbf0e626b04238069b55b77f01b04dc659fda65855a9744b2e",
+      "asset_kind": "SCREENSHOT",
+      "evidence_use": "EVIDENCE",
+      "claim_refs": [],
+      "source_ref": "repo://projects/easel-review/receipts/runtime-receipt.md"
+    },
+    {
+      "placement_id": "shot_05",
+      "asset_path": "project://sources/screenshots/14-easel-skills-dir.png",
+      "asset_sha256": "2d6fdabadff9dfc0e14c54b16e7583e3a00a9f94d777750cd1fd3654b7b6bbe0",
+      "asset_kind": "SCREENSHOT",
+      "evidence_use": "EVIDENCE",
+      "claim_refs": [],
+      "source_ref": "repo://projects/easel-review/script/master.md#实测证据"
+    }
+  ],
+  "narration_sha256": "bc6b721656a5aab3491d45b15a649ec6161eae04652a5e6d627f722ffbe8b625",
+  "voice_provenance_class": "CONSISTENT_HISTORICAL_BASELINE",
+  "voice": {
+    "variant_id": "A",
+    "role": "baseline narration stack",
+    "narration_asset_ref": "repo://projects/easel-enhanced-golden/golden-assets/voice/A-baseline-edge-tts.mp3",
+    "sha256": "bc6b721656a5aab3491d45b15a649ec6161eae04652a5e6d627f722ffbe8b625",
+    "provenance_class": "CONSISTENT_HISTORICAL_BASELINE",
+    "provider_calls": 0,
+    "justification": {
+      "byte_identical_to_render_input": true,
+      "render_input_path": "projects/easel-review/assets/voice_easel/narration.mp3",
+      "render_input_check": "re-verified against the gitignored render input, which is present",
+      "approved_digest_matches": true,
+      "approved_digest": "bc6b721656a5aab3491d45b15a649ec6161eae04652a5e6d627f722ffbe8b625",
+      "measurements_agree_with_issue_19": true,
+      "issue_19_reference": {
+        "source": "Issue #19 speech A/B review",
+        "duration_s": 61.92,
+        "integrated_lufs": -24.2,
+        "true_peak_dbtp": -3.3
+      },
+      "historical_candidates": [
+        ".verify-tmp/m2/ab/A-edge-tts.mp3",
+        "projects/easel-review/assets/voice_easel/narration.mp3"
+      ],
+      "limitation": "No surviving machine receipt binds this audio to the locked narration text, unlike the B asset. Identity is inferred from the pinned approved digest, byte-identity with the file the pinned render consumed, and measurements matching #19."
+    },
+    "measurements": {
+      "container": "mp3",
+      "codec": "mp3",
+      "sample_rate_hz": "24000",
+      "channels": 1,
+      "duration_s": 61.92,
+      "bytes": 371520,
+      "integrated_lufs": -24.2,
+      "true_peak_dbtp": -3.3
+    }
+  },
+  "declared_changes": {
+    "narration_sha256": false
+  },
+  "actual_changes": {},
+  "support_assets": [],
+  "generated_image_shas": [],
+  "h3_shas": [],
+  "manifest_fingerprint": "119b3825eb6334d8d354131c0f28e8839751b519e77ac244f59ec4ebea7475f3",
+  "compose": {
+    "status": "OK",
+    "subtitles_burned": true,
+    "video": "projects/easel-enhanced-golden/variants/A/final/final.mp4",
+    "media": {
+      "container": "mov,mp4,m4a,3gp,3g2,mj2",
+      "duration_s": 61.86,
+      "width": 1080,
+      "height": 1920,
+      "video_codec": "h264",
+      "audio_streams": 1,
+      "audio_codecs": [
+        "aac"
+      ],
+      "bytes": 1913653
+    }
+  },
+  "qc": {
+    "overall": "WARN",
+    "receipt": "repo://projects/easel-enhanced-golden/variants/A/receipts/qc-report-final.json"
+  },
+  "provider_call_count": {
+    "speech": 0,
+    "image": 0,
+    "video": 0
+  },
+  "quota": {
+    "current_stage_quota_delta": 0,
+    "generation_quota": "no surviving generation receipt for the baseline voice",
+    "note": "Both voices were reused, so this stage spent nothing. The historical generation's own quota snapshot is referenced rather than restated; no fresh before/after is fabricated for a generation that did not happen here, and no cost per call is inferred."
+  },
+  "production_ready": false,
+  "human_review": "PENDING_FOUNDER_REVIEW",
+  "evidence_identity_verdict": "EXPERIMENT_VALID",
+  "notes": {
+    "scope": "A/B only. No generated support image, no H3 insert, and no winner is implied or selected."
+  }
+}

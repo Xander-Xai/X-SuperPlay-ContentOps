@@ -1,0 +1,181 @@
+{
+  "schema": "contentops.golden-ab-preflight/v1",
+  "stage": "M4.6 A/B voice variants",
+  "production_ready": false,
+  "human_review": "PENDING_FOUNDER_REVIEW",
+  "evidence_lock_fingerprint": "119b3825eb6334d8d354131c0f28e8839751b519e77ac244f59ec4ebea7475f3",
+  "evidence_identity": {
+    "verdict": "EXPERIMENT_VALID",
+    "arms_compared": [
+      "A",
+      "B"
+    ],
+    "reference_arm": "A",
+    "placements_compared": 6,
+    "fields_compared": [
+      "asset_path",
+      "asset_sha256",
+      "asset_kind",
+      "evidence_use",
+      "claim_refs",
+      "source_ref"
+    ],
+    "all_identical": true,
+    "mismatch_count": 0,
+    "mismatches": []
+  },
+  "difference": {
+    "declared_changes": {
+      "narration_sha256": true,
+      "voice_provider": true,
+      "audio_duration_from_narration_length": "permitted",
+      "everything_else": "forbidden"
+    },
+    "actual_changes": {
+      "narration_sha256": {
+        "changed": true,
+        "A": "bc6b721656a5aab3491d45b15a649ec6161eae04652a5e6d627f722ffbe8b625",
+        "B": "e2e014a916eb7a637b68d80ace27551c557d3797541b61f41c195f8256b86593"
+      },
+      "voice_provider": {
+        "changed": true,
+        "A": "easel/tts-voiceover (edge-tts, zh-CN-YunxiNeural)",
+        "B": "minimax_m_plan/minimax speech-2.8-hd"
+      },
+      "caption_sha256": {
+        "changed": false,
+        "sha256": "ea3a8a52439af1d3b75bddbe00c202f77c3dfebad702ba5b56a127d83d141b8d"
+      },
+      "storyboard_factual_fields": {
+        "changed": false,
+        "differences": []
+      },
+      "script_sha256": {
+        "changed": false,
+        "sha256": "997679154e64a0b6b8df0885388636157668f94944032009c437b97289ca7348"
+      },
+      "narration_text_sha256": {
+        "changed": false,
+        "sha256": "f2de808c9e723f8430acdc44dc374c5791b249250d8bc585a172360a88b9542a"
+      },
+      "storyboard_structural_fingerprint": {
+        "changed": false,
+        "A": "b77b4295a49c9c2ec6c2ac68fcd38dac315196331ba5865ce3501f907ee673d4",
+        "B": "b77b4295a49c9c2ec6c2ac68fcd38dac315196331ba5865ce3501f907ee673d4",
+        "stripped_keys": [
+          "narration",
+          "subtitle",
+          "voice_provider"
+        ],
+        "note": "narration, subtitle and voice_provider are arm-local expressions of the declared variable, so they are stripped; everything else is the visual structure and must match exactly"
+      },
+      "evidence_asset_digest": {
+        "changed": false,
+        "digest": "a50ea21300d689eb996b9aab6f15c7bcd965e83dd560a373791ac9e1757c437a"
+      },
+      "support_assets": {
+        "changed": false,
+        "count_A": 0,
+        "count_B": 0
+      },
+      "rendered_duration_s": {
+        "changed": false,
+        "A": 61.86,
+        "B": 61.86
+      }
+    },
+    "forbidden_changes": [
+      "caption_sha256",
+      "script_sha256",
+      "narration_text_sha256",
+      "storyboard_factual_fields",
+      "storyboard_structural_fingerprint",
+      "evidence_asset_digest",
+      "support_assets"
+    ],
+    "experiment_semantics": "A and B are publishable narration stacks, not isolated TTS outputs. B includes its production loudness normalisation, which is the policy under test. A level-matched derivative may be prepared separately as a review aid for voice quality, but it is NOT the Golden B asset and must never replace it."
+  },
+  "variants": {
+    "A": {
+      "role": "baseline narration stack",
+      "provenance_class": "CONSISTENT_HISTORICAL_BASELINE",
+      "narration_sha256": "bc6b721656a5aab3491d45b15a649ec6161eae04652a5e6d627f722ffbe8b625",
+      "measurements": {
+        "container": "mp3",
+        "codec": "mp3",
+        "sample_rate_hz": "24000",
+        "channels": 1,
+        "duration_s": 61.92,
+        "bytes": 371520,
+        "integrated_lufs": -24.2,
+        "true_peak_dbtp": -3.3
+      },
+      "compose": {
+        "status": "OK",
+        "subtitles_burned": true,
+        "video": "projects/easel-enhanced-golden/variants/A/final/final.mp4",
+        "media": {
+          "container": "mov,mp4,m4a,3gp,3g2,mj2",
+          "duration_s": 61.86,
+          "width": 1080,
+          "height": 1920,
+          "video_codec": "h264",
+          "audio_streams": 1,
+          "audio_codecs": [
+            "aac"
+          ],
+          "bytes": 1913653
+        }
+      },
+      "qc_overall": "WARN",
+      "artifact": "projects/easel-enhanced-golden/variants/A/final/final.mp4"
+    },
+    "B": {
+      "role": "MiniMax production narration stack",
+      "provenance_class": "VERIFIED_CURRENT_BASELINE",
+      "narration_sha256": "e2e014a916eb7a637b68d80ace27551c557d3797541b61f41c195f8256b86593",
+      "measurements": {
+        "container": "wav",
+        "codec": "pcm_s16le",
+        "sample_rate_hz": "32000",
+        "channels": 1,
+        "duration_s": 61.768,
+        "bytes": 3953214,
+        "integrated_lufs": -17.0,
+        "true_peak_dbtp": -1.5
+      },
+      "compose": {
+        "status": "OK",
+        "subtitles_burned": true,
+        "video": "projects/easel-enhanced-golden/variants/B/final/final.mp4",
+        "media": {
+          "container": "mov,mp4,m4a,3gp,3g2,mj2",
+          "duration_s": 61.86,
+          "width": 1080,
+          "height": 1920,
+          "video_codec": "h264",
+          "audio_streams": 1,
+          "audio_codecs": [
+            "aac"
+          ],
+          "bytes": 1954200
+        }
+      },
+      "qc_overall": "WARN",
+      "artifact": "projects/easel-enhanced-golden/variants/B/final/final.mp4"
+    }
+  },
+  "provider_calls": {
+    "speech": 0,
+    "image": 0,
+    "video": 0
+  },
+  "quota_delta": 0,
+  "neutrality_note": "Engineering preflight only. The arms are labelled A and B with no ranking language, and no selection is requested or implied. A is a legitimate outcome, as is NONE.",
+  "not_yet_done": [
+    "no generated support image",
+    "no H3 insert",
+    "no Founder review",
+    "no production golden policy"
+  ]
+}
