@@ -113,6 +113,36 @@ projects/*/assets/captions/
 !projects/easel-review/sources/screenshots/14-easel-skills-dir.png
 !projects/easel-review/sources/screenshots/15-easel-doctor-fails.png
 
+# --- Golden A/B voice fixture exception (Founder decision, 2026-10-05) ----------
+#
+# Same reasoning as the screenshots above, applied to the one input that cannot be
+# re-derived: the two narration files the M4.6 A/B voice experiment compares.
+#
+# B is the stronger case. Its provenance depends on a provider receipt that said
+# "PASS" about bytes living in a gitignored .verify-tmp directory, so a fresh checkout
+# held a *claim* with nothing to check it against -- arm B could not be validated at all
+# without the machine that generated it. The receipt and its asset are now both tracked,
+# and the receipt's normalized_sha256 equals the asset's SHA256, so the binding is
+# checkable rather than asserted.
+#
+# A is the weaker case and is tracked for a different reason: it is byte-identical to
+# the file the pinned Easel render consumed, so without it the experiment's control arm
+# simply does not exist on any other machine. Tracking it makes it reproducible. It does
+# NOT make it verified: no generation receipt for A exists, so its provenance class
+# stays CONSISTENT_HISTORICAL_BASELINE. See golden-assets/voice/GOLDEN-VOICE-ASSETS.json.
+#
+# This is a fixture exception, not a licence. `*.wav`, `*.mp3` and
+# `projects/*/assets/voice/` all stay in force, no directory is negated, and only these
+# two exact files are. Provider output in general remains untracked.
+#
+# Rendered output is deliberately NOT covered: variants/*/final/final.mp4 stays ignored.
+# Fixed experiment inputs are tracked; renders are reproducible from them.
+#
+# tests/test_golden_voice_assets.py asserts both the two exact exceptions and the
+# continued presence of every global ignore and every broad negation's absence.
+!projects/easel-enhanced-golden/golden-assets/voice/A-baseline-edge-tts.mp3
+!projects/easel-enhanced-golden/golden-assets/voice/B-minimax-speech-2.8-hd.wav
+
 # Editor / OS
 .vscode/
 .idea/
