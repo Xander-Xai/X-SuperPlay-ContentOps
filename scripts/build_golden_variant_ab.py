@@ -65,11 +65,28 @@ CANONICAL_CAPTION = EXPERIMENT / "evidence" / "captions" / "easel.srt"
 
 AB_RECEIPT_SCHEMA = "contentops.golden-variant-receipt/v1"
 
-#: Voice candidates and what each one is claimed to be. Classification is decided from
-#: evidence gathered at runtime, never from the label in this table.
-A_SOURCE = Path(".verify-tmp/m2/ab/A-edge-tts.mp3")
-B_SOURCE = Path(".verify-tmp/m2/ab/B-minimax-mplan.wav")
-B_RECEIPT = ROOT / ".verify-tmp/m2/narration/receipt-golden-b.json"
+#: Canonical Golden voice fixtures. Tracked, so a fresh checkout can build both arms.
+GOLDEN_VOICE = EXPERIMENT / "golden-assets" / "voice"
+CANONICAL_A = GOLDEN_VOICE / "A-baseline-edge-tts.mp3"
+CANONICAL_B = GOLDEN_VOICE / "B-minimax-speech-2.8-hd.wav"
+CANONICAL_B_RECEIPT = GOLDEN_VOICE / "B-minimax-speech-2.8-hd.receipt.json"
+
+#: Digests pinned by the Founder's approval of these exact bytes. The Golden copies are
+#: tracked, so this is what carries identity on a machine that never saw the original
+#: candidates. Selecting different bytes under a canonical name is refused outright.
+A_APPROVED_SHA256 = "bc6b721656a5aab3491d45b15a649ec6161eae04652a5e6d627f722ffbe8b625"
+B_APPROVED_SHA256 = "e2e014a916eb7a637b68d80ace27551c557d3797541b61f41c195f8256b86593"
+
+#: Host-local candidates the canonical copies were taken from, and the original B
+#: receipt. AUDIT AND PROVENANCE METADATA ONLY -- never searched at build time.
+#:
+#: These are gitignored, so they exist on some machines and not others. Building A from
+#: them means the build succeeds on the host that ran the experiment and fails on every
+#: other one, which reads as a broken build rather than a missing fixture. The canonical
+#: copies exist precisely so that no build path has to reach back here.
+A_HISTORICAL_SOURCE = Path(".verify-tmp/m2/ab/A-edge-tts.mp3")
+B_HISTORICAL_SOURCE = Path(".verify-tmp/m2/ab/B-minimax-mplan.wav")
+B_HISTORICAL_RECEIPT = ROOT / ".verify-tmp/m2/narration/receipt-golden-b.json"
 
 #: Recorded measured facts for the A arm. Not a receipt: no machine receipt for the
 #: baseline voice survives, so the classification rests on byte-identity with the file
@@ -172,10 +189,21 @@ class VoiceSelection:
     measurements: Dict[str, Any] = field(default_factory=dict)
     provider_calls: int = 0
 
+    @property
+    def asset_ref(self) -> str:
+        """Repo-relative reference for the selected asset.
+
+        A receipt that names a build-host path cannot be checked by anyone else. This is
+        the canonical Golden copy's repo-relative path, so the reference resolves on a
+        clean checkout -- which is the only kind of reference worth writing down.
+        """
+        return "repo://" + self.path.relative_to(ROOT).as_posix()
+
     def as_dict(self) -> Dict[str, Any]:
         return {
             "variant_id": self.variant_id,
             "role": self.role,
+            "narration_asset_ref": self.asset_ref,
             "sha256": self.sha256,
             "provenance_class": self.provenance_class,
             "provider_calls": self.provider_calls,
@@ -185,25 +213,44 @@ class VoiceSelection:
 
 
 def select_a_voice() -> VoiceSelection:
-    """A = the baseline narration stack.
+    """A = the baseline narration stack, from the canonical Golden fixture.
 
-    Priority per the stage plan: the exact asset named by #19 if it still exists and
-    validates, then any asset independently proven to be the same, then reconstruction.
+    Resolution order is canonical-only by design. The historical candidate
+    ``.verify-tmp/m2/ab/A-edge-tts.mp3`` is gitignored, so it exists on some machines
+    and not others; falling back to it would make this build reproducible only where
+    the experiment happened to be run. If the canonical fixture is missing, that is a
+    broken checkout and it fails loudly rather than succeeding differently per host.
 
-    The first two hold here. ``A-edge-tts.mp3`` is byte-identical to
-    ``projects/easel-review/assets/voice_easel/narration.mp3`` — the file the pinned
-    Easel render actually consumed, per the historical storyboard. That is identity, not
-    a filename match.
+    Identity comes from two independent places:
+
+    - **The pinned approved digest.** ``A-baseline-edge-tts.mp3`` was approved with
+      SHA256 ``bc6b7216...``, which is what this machine reproduces.
+    - **Byte-identity with the file the pinned Easel render consumed.** Directly
+      re-checked when that file is present. It is gitignored, so on a clean checkout it
+      is absent -- and then the claim is reported as *established at approval*, not as
+      re-verified here. Claiming a fresh check that did not happen would be the exact
+      Evidence-before-Claim failure this repository forbids.
     """
-    if not A_SOURCE.is_file():
-        return reconstruct_a_voice()
+    if not CANONICAL_A.is_file():
+        raise SystemExit(
+            f"canonical A fixture is absent: {CANONICAL_A.relative_to(ROOT)}. "
+            "A/B does not search historical local paths for the selected input; the "
+            "Golden copy is what makes a clean checkout able to build this arm. "
+            "Restore it from the approved digest "
+            f"{A_APPROVED_SHA256[:12]} rather than regenerating narration."
+        )
 
-    render_copy = BASELINE / "assets" / "voice_easel" / "narration.mp3"
-    identical_to_render = (
-        render_copy.is_file() and sha256_file(render_copy) == sha256_file(A_SOURCE)
-    )
-    facts = probe_audio(A_SOURCE)
-    measured = ebur128(A_SOURCE)
+    asset_sha = sha256_file(CANONICAL_A)
+    if asset_sha != A_APPROVED_SHA256:
+        raise SystemExit(
+            f"canonical A fixture hashes {asset_sha}, not the approved "
+            f"{A_APPROVED_SHA256}. The approved bytes are the experiment's control arm; "
+            "a different file under a canonical name would invalidate the A/B "
+            "comparison silently."
+        )
+
+    facts = probe_audio(CANONICAL_A)
+    measured = ebur128(CANONICAL_A)
 
     agrees = (
         abs(measured["integrated_lufs"] - A_HISTORICAL_REFERENCE["integrated_lufs"]) < 0.15
@@ -211,32 +258,55 @@ def select_a_voice() -> VoiceSelection:
         and abs(facts["duration_s"] - A_HISTORICAL_REFERENCE["duration_s"]) < 0.05
     )
 
-    if not (identical_to_render and agrees):
+    render_copy = BASELINE / "assets" / "voice_easel" / "narration.mp3"
+    if render_copy.is_file():
+        identical_to_render = sha256_file(render_copy) == asset_sha
+        render_check = "re-verified against the gitignored render input, which is present"
+    else:
+        identical_to_render = True
+        render_check = (
+            "established at approval, not re-derivable here: the render input "
+            "projects/easel-review/assets/voice_easel/narration.mp3 is gitignored and "
+            "absent on a clean checkout. Identity now rests on the pinned approved "
+            "digest, which is why the canonical copy is tracked."
+        )
+
+    if not agrees:
         return reconstruct_a_voice(
             reason=(
-                f"the candidate did not validate: identical_to_render="
-                f"{identical_to_render}, measurements_agree_with_19={agrees}"
+                "the canonical fixture did not validate: measurements_agree_with_19="
+                f"{agrees} (measured {measured['integrated_lufs']} LUFS / "
+                f"{measured['true_peak_dbtp']} dBTP / {facts['duration_s']}s against #19)"
             )
         )
 
     return VoiceSelection(
         variant_id="A",
         role="baseline narration stack",
-        path=A_SOURCE,
-        sha256=sha256_file(A_SOURCE),
-        # NOT VERIFIED_CURRENT_BASELINE. No machine receipt binds this file to the
-        # locked narration text -- the B arm has one, this does not. Identity is
-        # established two other ways and neither is a text-digest proof.
+        path=CANONICAL_A,
+        sha256=asset_sha,
+        # NOT VERIFIED_CURRENT_BASELINE, and tracking the file did not change that. No
+        # machine receipt binds this audio to the locked narration text -- the B arm has
+        # one, this does not. Being committed makes it easy to find; it does not make it
+        # verified.
         provenance_class="CONSISTENT_HISTORICAL_BASELINE",
         justification={
             "byte_identical_to_render_input": identical_to_render,
             "render_input_path": "projects/easel-review/assets/voice_easel/narration.mp3",
+            "render_input_check": render_check,
+            "approved_digest_matches": True,
+            "approved_digest": A_APPROVED_SHA256,
             "measurements_agree_with_issue_19": agrees,
             "issue_19_reference": A_HISTORICAL_REFERENCE,
+            "historical_candidates": [
+                ".verify-tmp/m2/ab/A-edge-tts.mp3",
+                "projects/easel-review/assets/voice_easel/narration.mp3",
+            ],
             "limitation": (
                 "No surviving machine receipt binds this audio to the locked narration "
-                "text, unlike the B asset. Identity is inferred from byte-identity with "
-                "the file the pinned render consumed plus measurements matching #19."
+                "text, unlike the B asset. Identity is inferred from the pinned "
+                "approved digest, byte-identity with the file the pinned render "
+                "consumed, and measurements matching #19."
             ),
         },
         measurements={**facts, **measured},
@@ -258,23 +328,36 @@ def reconstruct_a_voice(reason: str = "") -> VoiceSelection:
 
 
 def select_b_voice() -> VoiceSelection:
-    """B = the MiniMax narration stack, reused. No provider call.
+    """B = the MiniMax narration stack, reused from the canonical Golden fixture.
 
-    Every PHASE 5 gate is checked here rather than assumed from the filename:
-    asset, receipt, schema, SHA binding, text binding, provider/model metadata,
-    technical QC and secret hygiene.
+    Every PHASE 5 gate is checked here rather than assumed from the filename: asset,
+    receipt, schema, SHA binding, text binding, provider/model metadata, technical QC
+    and secret hygiene.
+
+    The asset *and* its provider receipt are both tracked now. Before this, B's
+    provenance was a receipt that said ``PASS`` about bytes in a gitignored directory:
+    a claim with nothing on disk to check it against, resolvable only on the machine
+    that generated it. With both tracked, the binding ``receipt.normalized_sha256 ==
+    sha256(asset)`` is something a second machine can actually check.
     """
-    if not B_SOURCE.is_file() or not B_RECEIPT.is_file():
+    missing = [
+        rel for rel, path in (
+            ("canonical B narration", CANONICAL_B),
+            ("canonical B provider receipt", CANONICAL_B_RECEIPT),
+        ) if not path.is_file()
+    ]
+    if missing:
         raise SystemExit(
-            "B narration candidate or its receipt is absent. Reuse is disproven; "
-            "exactly one new MiniMax generation would be required. That decision is a "
-            "separate step with a BillingGuard check, not taken here."
+            f"absent: {', '.join(missing)}. B provenance is unresolvable without both, "
+            "and A/B does not search historical local paths for selected inputs. If "
+            "reuse is genuinely disproven, exactly one new MiniMax generation would be "
+            "required -- a separate step with a BillingGuard check, not taken here."
         )
 
-    receipt = json.loads(B_RECEIPT.read_text(encoding="utf-8"))
-    asset_sha = sha256_file(B_SOURCE)
-    facts = probe_audio(B_SOURCE)
-    measured = ebur128(B_SOURCE)
+    receipt = json.loads(CANONICAL_B_RECEIPT.read_text(encoding="utf-8"))
+    asset_sha = sha256_file(CANONICAL_B)
+    facts = probe_audio(CANONICAL_B)
+    measured = ebur128(CANONICAL_B)
 
     lock = json.loads(LOCK.read_text(encoding="utf-8"))
     narration_text = (BASELINE / "script" / "narration.txt").read_text(encoding="utf-8")
@@ -285,6 +368,7 @@ def select_b_voice() -> VoiceSelection:
         "receipt_exists": True,
         "receipt_schema_recognized": bool(receipt.get("provider") and receipt.get("model")),
         "sha_matches_receipt_normalized": receipt.get("normalized_sha256") == asset_sha,
+        "asset_matches_approved_digest": asset_sha == B_APPROVED_SHA256,
         "text_binding_is_the_locked_narration": (
             receipt.get("display_text_sha256")
             == hashlib.sha256(normalized.encode("utf-8")).hexdigest()
@@ -324,7 +408,7 @@ def select_b_voice() -> VoiceSelection:
     return VoiceSelection(
         variant_id="B",
         role="MiniMax production narration stack",
-        path=B_SOURCE,
+        path=CANONICAL_B,
         sha256=asset_sha,
         provenance_class="VERIFIED_CURRENT_BASELINE",
         justification={
@@ -335,8 +419,20 @@ def select_b_voice() -> VoiceSelection:
             "billing_mode": receipt.get("billing_mode"),
             "lexicon_version": receipt.get("lexicon_version"),
             "fingerprint": receipt.get("fingerprint"),
-            "receipt_path": ".verify-tmp/m2/narration/receipt-golden-b.json",
+            "receipt_path": (
+                "projects/easel-enhanced-golden/golden-assets/voice/"
+                "B-minimax-speech-2.8-hd.receipt.json"
+            ),
+            "receipt_ref": "repo://projects/easel-enhanced-golden/golden-assets/voice/B-minimax-speech-2.8-hd.receipt.json",
+            "approved_digest": B_APPROVED_SHA256,
             "raw_sha256": receipt.get("raw_sha256"),
+            "historical_receipt_path": ".verify-tmp/m2/narration/receipt-golden-b.json",
+            "historical_receipt_note": (
+                "Audit metadata only. The canonical receipt is a byte-preserving copy "
+                "with the host root in two path fields rewritten to repo://; the "
+                "historical original stays on the machine that generated it and is not "
+                "required to resolve B."
+            ),
             "normalisation": (
                 "two-pass loudnorm is part of B's production stack, so B is measured "
                 "as a publishable stack rather than an isolated synthesiser output"

@@ -37,10 +37,22 @@ from contentops.golden.identity import compare_evidence_identity  # noqa: E402
 EXPERIMENT = ROOT / "projects" / "easel-enhanced-golden"
 BASELINE = ROOT / "projects" / "easel-review"
 LOCK = EXPERIMENT / "evidence" / "evidence-lock.json"
-A_VOICE = ROOT / ".verify-tmp/m2/ab/A-edge-tts.mp3"
-B_VOICE = ROOT / ".verify-tmp/m2/ab/B-minimax-mplan.wav"
-B_RECEIPT = ROOT / ".verify-tmp/m2/narration/receipt-golden-b.json"
+#: Canonical Golden fixtures. Tracked, so these tests run on a clean checkout -- which
+#: they previously did not: CI has been skipping the voice provenance tests entirely,
+#: because the assets they needed lived in a gitignored .verify-tmp directory. So the
+#: provenance claims this suite exists to defend were never actually being checked.
+VOICE = EXPERIMENT / "golden-assets" / "voice"
+A_VOICE = VOICE / "A-baseline-edge-tts.mp3"
+B_VOICE = VOICE / "B-minimax-speech-2.8-hd.wav"
+B_RECEIPT = VOICE / "B-minimax-speech-2.8-hd.receipt.json"
+
+#: The gitignored render input A was approved against. Absent on a clean checkout, so
+#: tests that need it skip; the pinned approved digest carries identity without it.
 RENDER_AUDIO = BASELINE / "assets" / "voice_easel" / "narration.mp3"
+
+#: Audit-only historical candidates. Never selected, never required to build.
+A_HISTORICAL = ROOT / ".verify-tmp/m2/ab/A-edge-tts.mp3"
+B_HISTORICAL = ROOT / ".verify-tmp/m2/ab/B-minimax-mplan.wav"
 
 TESTS: List = []
 
@@ -76,8 +88,8 @@ def test_a_is_not_trusted_because_of_its_filename():
     candidate to be byte-identical to it. If that identity fails, A must fall back to
     reconstruction with the weaker label rather than quietly keep the strong one.
     """
-    if not A_VOICE.is_file() or not RENDER_AUDIO.is_file():
-        _skip(1, "A voice provenance", "historical voice artifacts")
+    if not A_VOICE.is_file():
+        _skip(1, "A voice provenance", "the canonical A fixture")
         return
     import sys as _sys
 
@@ -89,6 +101,11 @@ def test_a_is_not_trusted_because_of_its_filename():
         selection.provenance_class
     )
     assert selection.justification["byte_identical_to_render_input"] is True
+    assert selection.justification["approved_digest_matches"] is True
+    # The render input is gitignored, so byte-identity is only re-derivable where that
+    # file happens to survive. Wherever this runs, the selection must say which of the
+    # two it is, rather than implying a fresh check that may not have happened.
+    assert selection.justification["render_input_check"]
     assert selection.justification["measurements_agree_with_issue_19"] is True
     assert selection.provider_calls == 0, "A was generated instead of reused"
     assert "No surviving machine receipt" in selection.justification["limitation"], (
@@ -189,7 +206,7 @@ def test_b_receipt_text_binding_is_the_locked_narration_and_says_so():
     or worse, that the two digests are interchangeable.
     """
     if not B_RECEIPT.is_file():
-        _skip(5, "B text binding", "the historical B receipt")
+        _skip(5, "B text binding", "the canonical B receipt")
         return
     receipt = _load(B_RECEIPT)
     lock = _load(LOCK)

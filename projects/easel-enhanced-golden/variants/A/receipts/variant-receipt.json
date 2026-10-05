@@ -69,12 +69,16 @@
   "voice": {
     "variant_id": "A",
     "role": "baseline narration stack",
+    "narration_asset_ref": "repo://projects/easel-enhanced-golden/golden-assets/voice/A-baseline-edge-tts.mp3",
     "sha256": "bc6b721656a5aab3491d45b15a649ec6161eae04652a5e6d627f722ffbe8b625",
     "provenance_class": "CONSISTENT_HISTORICAL_BASELINE",
     "provider_calls": 0,
     "justification": {
       "byte_identical_to_render_input": true,
       "render_input_path": "projects/easel-review/assets/voice_easel/narration.mp3",
+      "render_input_check": "re-verified against the gitignored render input, which is present",
+      "approved_digest_matches": true,
+      "approved_digest": "bc6b721656a5aab3491d45b15a649ec6161eae04652a5e6d627f722ffbe8b625",
       "measurements_agree_with_issue_19": true,
       "issue_19_reference": {
         "source": "Issue #19 speech A/B review",
@@ -82,7 +86,11 @@
         "integrated_lufs": -24.2,
         "true_peak_dbtp": -3.3
       },
-      "limitation": "No surviving machine receipt binds this audio to the locked narration text, unlike the B asset. Identity is inferred from byte-identity with the file the pinned render consumed plus measurements matching #19."
+      "historical_candidates": [
+        ".verify-tmp/m2/ab/A-edge-tts.mp3",
+        "projects/easel-review/assets/voice_easel/narration.mp3"
+      ],
+      "limitation": "No surviving machine receipt binds this audio to the locked narration text, unlike the B asset. Identity is inferred from the pinned approved digest, byte-identity with the file the pinned render consumed, and measurements matching #19."
     },
     "measurements": {
       "container": "mp3",
