@@ -88,6 +88,20 @@ jobs:
       - name: Run M4.6 enhanced golden infrastructure tests
         run: python tests/test_enhanced_golden.py
 
+      # Source-evidence gitignore policy and the production lock's input
+      # reproducibility. Both are pure repository state, so they never skip.
+      - name: Run source-evidence gitignore policy tests
+        run: python tests/test_gitignore_evidence_policy.py
+
+      - name: Run locked-input reproducibility tests
+        run: python tests/test_locked_input_reproducibility.py
+
+      # A/B voice variants. The committed receipts are asserted on a clean checkout;
+      # the voice-provenance and shared-timeline checks skip without the gitignored
+      # historical audio, which is correct rather than a silent pass.
+      - name: Run M4.6 A/B voice variant tests
+        run: python tests/test_golden_variant_ab.py
+
       - name: Run Windows subprocess tests
         run: python tests/test_windows_subprocess.py
 

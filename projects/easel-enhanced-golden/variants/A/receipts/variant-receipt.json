@@ -1,0 +1,143 @@
+{
+  "schema": "contentops.golden-variant-receipt/v1",
+  "variant_id": "A",
+  "base_experiment_fingerprint": "af8128b958906e8ebb1f6b4c21038f4fe9d2446bbba45823c90dae53fd4a4511",
+  "evidence_lock_fingerprint": "af8128b958906e8ebb1f6b4c21038f4fe9d2446bbba45823c90dae53fd4a4511",
+  "evidence_asset_digest": "a50ea21300d689eb996b9aab6f15c7bcd965e83dd560a373791ac9e1757c437a",
+  "master_script_sha256": "7df3adbd34f3e2fc5157a2c858de737beca12a13fb58ea64fd570e982820d69d",
+  "narration_text_sha256": "2f7122228c53de128d04541ec1c4086dedd22ddc51bb0347d605e1c789a02348",
+  "storyboard_fingerprint": "edf33923b17c4dc3565af6ef829d3ebe2b7bafd5ea44243619e857aab3461bbc",
+  "caption_sha256": "ea3a8a52439af1d3b75bddbe00c202f77c3dfebad702ba5b56a127d83d141b8d",
+  "factual_assets": [
+    {
+      "placement_id": "shot_00",
+      "asset_path": "project://sources/screenshots/10-easel-doctor.png",
+      "asset_sha256": "69f173cfd03efc13cc3030c627b1d2f031213ad14c02f0358320a7378f642d17",
+      "asset_kind": "SCREENSHOT",
+      "evidence_use": "EVIDENCE",
+      "claim_refs": [],
+      "source_ref": "repo://projects/easel-review/script/master.md#实测证据"
+    },
+    {
+      "placement_id": "shot_01",
+      "asset_path": "project://sources/screenshots/12-easel-version-evidence.png",
+      "asset_sha256": "6f8603af5e83e48202d263c67da5fbd248d25cadf004365cdb67f8ed220c6d20",
+      "asset_kind": "SCREENSHOT",
+      "evidence_use": "EVIDENCE",
+      "claim_refs": [],
+      "source_ref": "repo://projects/easel-review/receipts/runtime-receipt.md"
+    },
+    {
+      "placement_id": "shot_02",
+      "asset_path": "project://sources/screenshots/13-easel-skill-layers.png",
+      "asset_sha256": "d7b01af2b2d3e2841f0948a284265496bd1b6fc4fe287dec81403c61145431f0",
+      "asset_kind": "SCREENSHOT",
+      "evidence_use": "EVIDENCE",
+      "claim_refs": [],
+      "source_ref": "repo://projects/easel-review/receipts/runtime-receipt.md"
+    },
+    {
+      "placement_id": "shot_03",
+      "asset_path": "project://sources/screenshots/11-easel-ping.png",
+      "asset_sha256": "cc566fbe0bcb9a81406d02ce0641aa110f9738730dff1d19dc278d48146cb34e",
+      "asset_kind": "SCREENSHOT",
+      "evidence_use": "EVIDENCE",
+      "claim_refs": [],
+      "source_ref": "repo://projects/easel-review/script/master.md#实测证据"
+    },
+    {
+      "placement_id": "shot_04",
+      "asset_path": "project://sources/screenshots/15-easel-doctor-fails.png",
+      "asset_sha256": "69dbfd125f2d27cbf0e626b04238069b55b77f01b04dc659fda65855a9744b2e",
+      "asset_kind": "SCREENSHOT",
+      "evidence_use": "EVIDENCE",
+      "claim_refs": [],
+      "source_ref": "repo://projects/easel-review/receipts/runtime-receipt.md"
+    },
+    {
+      "placement_id": "shot_05",
+      "asset_path": "project://sources/screenshots/14-easel-skills-dir.png",
+      "asset_sha256": "2d6fdabadff9dfc0e14c54b16e7583e3a00a9f94d777750cd1fd3654b7b6bbe0",
+      "asset_kind": "SCREENSHOT",
+      "evidence_use": "EVIDENCE",
+      "claim_refs": [],
+      "source_ref": "repo://projects/easel-review/script/master.md#实测证据"
+    }
+  ],
+  "narration_sha256": "bc6b721656a5aab3491d45b15a649ec6161eae04652a5e6d627f722ffbe8b625",
+  "voice_provenance_class": "CONSISTENT_HISTORICAL_BASELINE",
+  "voice": {
+    "variant_id": "A",
+    "role": "baseline narration stack",
+    "sha256": "bc6b721656a5aab3491d45b15a649ec6161eae04652a5e6d627f722ffbe8b625",
+    "provenance_class": "CONSISTENT_HISTORICAL_BASELINE",
+    "provider_calls": 0,
+    "justification": {
+      "byte_identical_to_render_input": true,
+      "render_input_path": "projects/easel-review/assets/voice_easel/narration.mp3",
+      "measurements_agree_with_issue_19": true,
+      "issue_19_reference": {
+        "source": "Issue #19 speech A/B review",
+        "duration_s": 61.92,
+        "integrated_lufs": -24.2,
+        "true_peak_dbtp": -3.3
+      },
+      "limitation": "No surviving machine receipt binds this audio to the locked narration text, unlike the B asset. Identity is inferred from byte-identity with the file the pinned render consumed plus measurements matching #19."
+    },
+    "measurements": {
+      "container": "mp3",
+      "codec": "mp3",
+      "sample_rate_hz": "24000",
+      "channels": 1,
+      "duration_s": 61.92,
+      "bytes": 371520,
+      "integrated_lufs": -24.2,
+      "true_peak_dbtp": -3.3
+    }
+  },
+  "declared_changes": {
+    "narration_sha256": false
+  },
+  "actual_changes": {},
+  "support_assets": [],
+  "generated_image_shas": [],
+  "h3_shas": [],
+  "manifest_fingerprint": "af8128b958906e8ebb1f6b4c21038f4fe9d2446bbba45823c90dae53fd4a4511",
+  "compose": {
+    "status": "OK",
+    "subtitles_burned": true,
+    "video": "projects/easel-enhanced-golden/variants/A/final/final.mp4",
+    "media": {
+      "container": "mov,mp4,m4a,3gp,3g2,mj2",
+      "duration_s": 61.86,
+      "width": 1080,
+      "height": 1920,
+      "video_codec": "h264",
+      "audio_streams": 1,
+      "audio_codecs": [
+        "aac"
+      ],
+      "bytes": 1913653
+    }
+  },
+  "qc": {
+    "overall": "WARN",
+    "receipt": "repo://projects/easel-enhanced-golden/variants/A/receipts/qc-report-final.json"
+  },
+  "provider_call_count": {
+    "speech": 0,
+    "image": 0,
+    "video": 0
+  },
+  "quota": {
+    "current_stage_quota_delta": 0,
+    "generation_quota": "no surviving generation receipt for the baseline voice",
+    "note": "Both voices were reused, so this stage spent nothing. The historical generation's own quota snapshot is referenced rather than restated; no fresh before/after is fabricated for a generation that did not happen here, and no cost per call is inferred."
+  },
+  "production_ready": false,
+  "human_review": "PENDING_FOUNDER_REVIEW",
+  "evidence_identity_verdict": "EXPERIMENT_VALID",
+  "notes": {
+    "scope": "A/B only. No generated support image, no H3 insert, and no winner is implied or selected."
+  }
+}

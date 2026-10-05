@@ -1,0 +1,187 @@
+{
+  "schema": "contentops.qc-canonical/v1",
+  "currency": "CURRENT",
+  "project": "project://",
+  "graded_target": "project://final/final.mp4",
+  "overall": "WARN",
+  "checked_at": "2026-10-05T19:58:30Z",
+  "checks": [
+    {
+      "id": "_video",
+      "ok": true,
+      "severity": "INFO",
+      "path": "project://final/final.mp4"
+    },
+    {
+      "id": "file_size",
+      "ok": true,
+      "severity": "PASS",
+      "value_bytes": 1913653,
+      "min_bytes": 102400
+    },
+    {
+      "id": "ffprobe_parse",
+      "ok": true,
+      "severity": "PASS"
+    },
+    {
+      "id": "resolution",
+      "ok": true,
+      "severity": "PASS",
+      "value": "1080x1920",
+      "expected": "1080x1920"
+    },
+    {
+      "id": "aspect_ratio_9_16",
+      "ok": true,
+      "severity": "PASS",
+      "value": "1080:1920"
+    },
+    {
+      "id": "duration_range",
+      "ok": true,
+      "severity": "PASS",
+      "value_sec": 61.86,
+      "expected_range_sec": [
+        30.0,
+        120.0
+      ]
+    },
+    {
+      "id": "video_codec_h264",
+      "ok": true,
+      "severity": "PASS",
+      "value": "h264"
+    },
+    {
+      "id": "audio_present",
+      "ok": true,
+      "severity": "PASS"
+    },
+    {
+      "id": "audio_codec_aac",
+      "ok": true,
+      "severity": "PASS",
+      "value": "aac"
+    },
+    {
+      "id": "project_yaml",
+      "ok": false,
+      "severity": "WARN"
+    },
+    {
+      "id": "source_refs_recorded",
+      "ok": true,
+      "severity": "PASS",
+      "value_count": 0
+    },
+    {
+      "id": "caption_srt_present",
+      "ok": false,
+      "severity": "WARN",
+      "path": "project://assets/captions/default.srt"
+    },
+    {
+      "id": "script_exists",
+      "ok": true,
+      "severity": "PASS",
+      "path": "project://script/master.md"
+    },
+    {
+      "id": "storyboard_exists",
+      "ok": true,
+      "severity": "PASS",
+      "shot_count": 6
+    },
+    {
+      "id": "real_source_ratio",
+      "ok": true,
+      "severity": "PASS",
+      "value": 1.0,
+      "min": 0.7,
+      "real_shots": 6,
+      "generated_shots": 0,
+      "note": "AI-generated key visuals must not be the majority"
+    },
+    {
+      "id": "source_provenance_complete",
+      "ok": true,
+      "severity": "PASS",
+      "missing_shot_indices": []
+    },
+    {
+      "id": "engine_recorded",
+      "ok": true,
+      "severity": "PASS",
+      "value": "easel"
+    },
+    {
+      "id": "voice_not_silence",
+      "ok": true,
+      "severity": "PASS",
+      "max_volume_db": "-6.3 dB",
+      "mean_volume_db": "-27.7 dB"
+    },
+    {
+      "id": "subtitle_burned_or_track",
+      "ok": true,
+      "severity": "PASS",
+      "method": "burned_in_scan",
+      "note": "max bright-pixel ratio across 6 samples = 0.03174"
+    },
+    {
+      "id": "real_evidence_present",
+      "ok": false,
+      "severity": "WARN",
+      "value_count": 0
+    },
+    {
+      "id": "voice_quality_declared",
+      "ok": true,
+      "severity": "INFO",
+      "voice_provider": "easel/tts-voiceover (edge-tts, zh-CN-YunxiNeural)",
+      "voice_quality": "edge_tts_fallback",
+      "production_quality_warning": true,
+      "note": "mechanical/fallback voice keeps the render at READY_FOR_HUMAN_REVIEW; only a human can accept it as production (V1 spec §11)"
+    }
+  ],
+  "path_policy": "logical references (project://, repo://); no absolute paths",
+  "evidence_provenance": {
+    "mode": "canonical_reference_by_path",
+    "copies_in_project": 0,
+    "reason": "factual assets are referenced by canonical repository path rather than copied, so both arms read identical bytes and cannot drift apart from the Evidence Lock",
+    "locked_assets": [
+      {
+        "placement_id": "shot_00",
+        "asset_path": "project://sources/screenshots/10-easel-doctor.png",
+        "sha256": "69f173cfd03efc13cc3030c627b1d2f031213ad14c02f0358320a7378f642d17"
+      },
+      {
+        "placement_id": "shot_01",
+        "asset_path": "project://sources/screenshots/12-easel-version-evidence.png",
+        "sha256": "6f8603af5e83e48202d263c67da5fbd248d25cadf004365cdb67f8ed220c6d20"
+      },
+      {
+        "placement_id": "shot_02",
+        "asset_path": "project://sources/screenshots/13-easel-skill-layers.png",
+        "sha256": "d7b01af2b2d3e2841f0948a284265496bd1b6fc4fe287dec81403c61145431f0"
+      },
+      {
+        "placement_id": "shot_03",
+        "asset_path": "project://sources/screenshots/11-easel-ping.png",
+        "sha256": "cc566fbe0bcb9a81406d02ce0641aa110f9738730dff1d19dc278d48146cb34e"
+      },
+      {
+        "placement_id": "shot_04",
+        "asset_path": "project://sources/screenshots/15-easel-doctor-fails.png",
+        "sha256": "69dbfd125f2d27cbf0e626b04238069b55b77f01b04dc659fda65855a9744b2e"
+      },
+      {
+        "placement_id": "shot_05",
+        "asset_path": "project://sources/screenshots/14-easel-skills-dir.png",
+        "sha256": "2d6fdabadff9dfc0e14c54b16e7583e3a00a9f94d777750cd1fd3654b7b6bbe0"
+      }
+    ],
+    "qc_check_interpretation": "`real_evidence_present` is directory-local and therefore reports 0 for this layout. The evidence is present, locked and rendered; the count reflects where it lives, not whether it exists."
+  }
+}

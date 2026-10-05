@@ -1,0 +1,72 @@
+{
+  "size": "1080x1920",
+  "image_motion": "static",
+  "pad_mode": "trim",
+  "shots": [
+    {
+      "image": "projects/easel-review/sources/screenshots/10-easel-doctor.png",
+      "motion": "static",
+      "source": "sources/screenshots/10-easel-doctor.png",
+      "source_type": "real_screenshot",
+      "narration": "装了 Easel 之后，最先要回答的是：它到底跑不跑得起来。",
+      "duration": 10.31
+    },
+    {
+      "image": "projects/easel-review/sources/screenshots/12-easel-version-evidence.png",
+      "motion": "static",
+      "source": "sources/screenshots/12-easel-version-evidence.png",
+      "source_type": "real_screenshot",
+      "narration": "我把它锁在 v0.2.1，982 个文件逐个比对过哈希，和上游 tag 完全一致。",
+      "duration": 10.31
+    },
+    {
+      "image": "projects/easel-review/sources/screenshots/13-easel-skill-layers.png",
+      "motion": "static",
+      "source": "sources/screenshots/13-easel-skill-layers.png",
+      "source_type": "real_screenshot",
+      "narration": "它不是一个 SaaS，是一层 Skill 库：114 个 Skill，分成发现、策划、创作、发布、归因五层，创作层最大，52 个。",
+      "duration": 10.31
+    },
+    {
+      "image": "projects/easel-review/sources/screenshots/11-easel-ping.png",
+      "motion": "static",
+      "source": "sources/screenshots/11-easel-ping.png",
+      "source_type": "real_screenshot",
+      "narration": "doctor 跑起来了，Python、Node、FFmpeg 这些核心项是绿的；ping 里 Agent 真实往返也通了。但有个坑：网关健康检查探的是写死的默认端口，和 easel 实际网关端口对不上，那一行是红的。",
+      "duration": 10.31
+    },
+    {
+      "image": "projects/easel-review/sources/screenshots/15-easel-doctor-fails.png",
+      "motion": "static",
+      "source": "sources/screenshots/15-easel-doctor-fails.png",
+      "source_type": "real_screenshot",
+      "narration": "Web 工作台这条路有六项没过：fastapi、uvicorn 这些依赖没装，前端也没构建，.env 也没有 API Key。所以 Web 界面现在还没验证。",
+      "duration": 10.31
+    },
+    {
+      "image": "projects/easel-review/sources/screenshots/14-easel-skills-dir.png",
+      "motion": "static",
+      "source": "sources/screenshots/14-easel-skills-dir.png",
+      "source_type": "real_screenshot",
+      "narration": "结论：它不是开箱即用的产品，但是一个真能被调起来的生产引擎。CLI 和 Skill 这条线，今天是通的。",
+      "duration": 10.31
+    }
+  ],
+  "narration": "projects/easel-enhanced-golden/variants/A/assets/voice/narration.mp3",
+  "subtitle": "projects/easel-enhanced-golden/variants/A/assets/captions/easel.srt",
+  "engine": "easel",
+  "runtime": {
+    "repo": "ZJU-REAL/Easel",
+    "release": "v0.2.1",
+    "commit": "3fe2d9904c1619281ef57f81d9ee0b7854998399",
+    "acquisition": "release_archive",
+    "verification": "recorded"
+  },
+  "voice_provider": "easel/tts-voiceover (edge-tts, zh-CN-YunxiNeural)",
+  "generated_visuals": {
+    "count": 0,
+    "policy": "real_assets_only"
+  },
+  "derived_from_lock": "af8128b958906e8ebb1f6b4c21038f4fe9d2446bbba45823c90dae53fd4a4511",
+  "timeline_policy": "Explicit per-shot durations derived from the canonical caption span, so both arms share a byte-identical visual timeline. Upstream would otherwise divide each arm's narration length across the shots."
+}

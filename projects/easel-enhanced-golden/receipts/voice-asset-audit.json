@@ -1,0 +1,221 @@
+{
+  "schema": "contentops.voice-asset-audit/v1",
+  "locked_narration_text_sha256": "2f7122228c53de128d04541ec1c4086dedd22ddc51bb0347d605e1c789a02348",
+  "normalized_narration_text_sha256": "187c2714d34f1aedd62e1511734253e6503add6b6d10b36a39a4a7dbbdef076a",
+  "canonical_caption_end_srt": 61.862,
+  "classification": {
+    "A": {
+      "selected": ".verify-tmp/m2/ab/A-edge-tts.mp3",
+      "provenance_class": "CONSISTENT_HISTORICAL_BASELINE",
+      "sha256": "bc6b721656a5aab3491d45b15a649ec6161eae04652a5e6d627f722ffbe8b625",
+      "basis": "byte-identical to projects/easel-review/assets/voice_easel/narration.mp3, the file the pinned render consumed, and its measurements match #19",
+      "limitation": "no surviving machine receipt binds this audio to the locked narration text, unlike the B asset"
+    },
+    "B": {
+      "selected": ".verify-tmp/m2/ab/B-minimax-mplan.wav",
+      "provenance_class": "VERIFIED_CURRENT_BASELINE",
+      "sha256": "e2e014a916eb7a637b68d80ace27551c557d3797541b61f41c195f8256b86593",
+      "basis": "receipt normalized_sha256 matches the asset bytes; display_text_sha256 matches the locked narration in normalised form; subscription generation with PAYG and Credit Pack disabled; technical QC approved",
+      "receipt": ".verify-tmp/m2/narration/receipt-golden-b.json"
+    },
+    "tracked_shot_wavs": {
+      "provenance_class": "UNRELATED",
+      "reason": "six per-shot fragments totalling 26.9 s at 22050 Hz, against a 61.9 s narration at 24000 Hz. Being tracked in Git is not evidence that they are the narration."
+    }
+  },
+  "candidates": [
+    {
+      "path": ".verify-tmp/m2/ab/A-edge-tts.mp3",
+      "sha256": "bc6b721656a5aab3491d45b15a649ec6161eae04652a5e6d627f722ffbe8b625",
+      "bytes": 371520,
+      "git": "IGNORED",
+      "container": "mp3",
+      "codec": "mp3",
+      "sample_rate_hz": "24000",
+      "channels": 1,
+      "duration_s": 61.92,
+      "bit_rate": "48000",
+      "tags": {},
+      "loudness": {
+        "integrated_lufs": -24.2,
+        "true_peak_dbtp": -3.3,
+        "note": "measured locally for consistency checking; not a selection criterion"
+      }
+    },
+    {
+      "path": ".verify-tmp/m2/ab/B-minimax-mplan.wav",
+      "sha256": "e2e014a916eb7a637b68d80ace27551c557d3797541b61f41c195f8256b86593",
+      "bytes": 3953214,
+      "git": "IGNORED",
+      "container": "wav",
+      "codec": "pcm_s16le",
+      "sample_rate_hz": "32000",
+      "channels": 1,
+      "duration_s": 61.768,
+      "bit_rate": "512010",
+      "tags": {
+        "encoder": "Lavf62.12.101"
+      },
+      "loudness": {
+        "integrated_lufs": -17.0,
+        "true_peak_dbtp": -1.5,
+        "note": "measured locally for consistency checking; not a selection criterion"
+      }
+    },
+    {
+      "path": ".verify-tmp/m2/narration/narration-441c2b8634a43a33.wav",
+      "sha256": "e2e014a916eb7a637b68d80ace27551c557d3797541b61f41c195f8256b86593",
+      "bytes": 3953214,
+      "git": "IGNORED",
+      "container": "wav",
+      "codec": "pcm_s16le",
+      "sample_rate_hz": "32000",
+      "channels": 1,
+      "duration_s": 61.768,
+      "bit_rate": "512010",
+      "tags": {
+        "encoder": "Lavf62.12.101"
+      }
+    },
+    {
+      "path": ".verify-tmp/m2/narration/narration-441c2b8634a43a33-raw.wav",
+      "sha256": "ca1e3a63ab554a3bd4dececd14ec8db60748bbb542606ecabeadb1b86b178aaf",
+      "bytes": 3954300,
+      "git": "IGNORED",
+      "container": "wav",
+      "codec": "pcm_s16le",
+      "sample_rate_hz": "32000",
+      "channels": 1,
+      "duration_s": 61.768,
+      "bit_rate": "512150",
+      "tags": {
+        "encoder": "Lavf59.27.100"
+      },
+      "loudness": {
+        "integrated_lufs": -19.9,
+        "true_peak_dbtp": -0.2,
+        "note": "measured locally for consistency checking; not a selection criterion"
+      }
+    },
+    {
+      "path": "projects/easel-review/assets/voice_easel/narration.mp3",
+      "sha256": "bc6b721656a5aab3491d45b15a649ec6161eae04652a5e6d627f722ffbe8b625",
+      "bytes": 371520,
+      "git": "IGNORED",
+      "container": "mp3",
+      "codec": "mp3",
+      "sample_rate_hz": "24000",
+      "channels": 1,
+      "duration_s": 61.92,
+      "bit_rate": "48000",
+      "tags": {},
+      "loudness": {
+        "integrated_lufs": -24.2,
+        "true_peak_dbtp": -3.3,
+        "note": "measured locally for consistency checking; not a selection criterion"
+      }
+    },
+    {
+      "path": "projects/easel-review/assets/voice/shot_00.wav",
+      "sha256": "80da2e62d59fdb266e6ea099a970bdf046b258b36aef5002aa4892e8ac3e852e",
+      "bytes": 199260,
+      "git": "TRACKED",
+      "container": "wav",
+      "codec": "pcm_s16le",
+      "sample_rate_hz": "22050",
+      "channels": 1,
+      "duration_s": 4.517,
+      "bit_rate": "352881",
+      "tags": {}
+    },
+    {
+      "path": "projects/easel-review/assets/voice/shot_01.wav",
+      "sha256": "dd11e35a50e6b722cd5d5afdfedcd7c8316c0a810e04858bf837c8fa3a98c9d6",
+      "bytes": 203766,
+      "git": "TRACKED",
+      "container": "wav",
+      "codec": "pcm_s16le",
+      "sample_rate_hz": "22050",
+      "channels": 1,
+      "duration_s": 4.62,
+      "bit_rate": "352879",
+      "tags": {}
+    },
+    {
+      "path": "projects/easel-review/assets/voice/shot_02.wav",
+      "sha256": "ef386f72e58363216480474b0372deec85237542bc9b49a4ce4b8d83b2707c20",
+      "bytes": 236520,
+      "git": "TRACKED",
+      "container": "wav",
+      "codec": "pcm_s16le",
+      "sample_rate_hz": "22050",
+      "channels": 1,
+      "duration_s": 5.362,
+      "bit_rate": "352868",
+      "tags": {}
+    },
+    {
+      "path": "projects/easel-review/assets/voice/shot_03.wav",
+      "sha256": "d4fc71c6193b79f6c2401988145aefa80addecb85173b7732a22cd5078be8280",
+      "bytes": 210474,
+      "git": "TRACKED",
+      "container": "wav",
+      "codec": "pcm_s16le",
+      "sample_rate_hz": "22050",
+      "channels": 1,
+      "duration_s": 4.772,
+      "bit_rate": "352877",
+      "tags": {}
+    },
+    {
+      "path": "projects/easel-review/assets/voice/shot_04.wav",
+      "sha256": "d4af89ce74b8b15c252b620ceed5718199d44b8243f765c488c3d1232af86b54",
+      "bytes": 180956,
+      "git": "TRACKED",
+      "container": "wav",
+      "codec": "pcm_s16le",
+      "sample_rate_hz": "22050",
+      "channels": 1,
+      "duration_s": 4.102,
+      "bit_rate": "352889",
+      "tags": {}
+    },
+    {
+      "path": "projects/easel-review/assets/voice/shot_05.wav",
+      "sha256": "0e1c3a89471a513ea9cafd850c4725c4896a327da4297c4fc0298e92a2a460f9",
+      "bytes": 154836,
+      "git": "TRACKED",
+      "container": "wav",
+      "codec": "pcm_s16le",
+      "sample_rate_hz": "22050",
+      "channels": 1,
+      "duration_s": 3.51,
+      "bit_rate": "352904",
+      "tags": {}
+    }
+  ],
+  "identical_groups": {
+    "bc6b721656a5aab3491d45b15a649ec6161eae04652a5e6d627f722ffbe8b625": [
+      ".verify-tmp/m2/ab/A-edge-tts.mp3",
+      "projects/easel-review/assets/voice_easel/narration.mp3"
+    ],
+    "e2e014a916eb7a637b68d80ace27551c557d3797541b61f41c195f8256b86593": [
+      ".verify-tmp/m2/ab/B-minimax-mplan.wav",
+      ".verify-tmp/m2/narration/narration-441c2b8634a43a33.wav"
+    ]
+  },
+  "provider_calls": {
+    "speech": 0,
+    "image": 0,
+    "video": 0
+  },
+  "quota_delta": 0,
+  "billing_guard_consulted": false,
+  "billing_guard_reason": "Both voices were reused from historical artifacts, so no spend was authorised or attempted. Reading billing state to satisfy a ceremony would itself be a provider-adjacent action with no purpose.",
+  "notes": [
+    "The B receipt records integrated_lufs=-23.99 and loudness_before/after around -24, but the file measures -17.0 LUFS and #19 agrees with the measurement. Recorded rather than corrected: the asset is correct and the receipt's loudness bookkeeping is not.",
+    "B's semantic_qc reports coverage 0.3125 with status DETECTED_PROBLEM, but the detector is advisory (role DETECTOR_ONLY, can_approve_quality False). The transcript is correct; the low coverage is ASR mis-recognition of Chinese technical proper nouns (Ezio/Easel, Fontpack/FFmpeg, Pinyi/ping, ENV/.env).",
+    "B's display_text_sha256 covers the locked narration with blank lines removed and no trailing newline. It is NOT the raw file digest and the two are not interchangeable.",
+    "The A and B narration assets are not tracked: committing provider output is a repository-policy decision the Founder has not made. Their SHA256 values are recorded in each variant receipt so any rebuild can be verified."
+  ]
+}
