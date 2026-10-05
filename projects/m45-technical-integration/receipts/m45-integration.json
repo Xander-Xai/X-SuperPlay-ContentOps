@@ -1,0 +1,523 @@
+{
+  "stage": "m45_media_integration",
+  "project": "project://",
+  "purpose": "prove MEDIA RUNTIME CONVERGENCE, not production E2E",
+  "production_ready": false,
+  "human_review": "PENDING_FOUNDER_REVIEW",
+  "provider_calls": {
+    "speech": 0,
+    "image": 0,
+    "video": 0
+  },
+  "fixture_notice": "Deterministic local placeholder produced by src/contentops/media/fixtures_local.py. NOT a real business capture, NOT Founder approved, and NOT evidence of anything. It exists to prove the registry -> manifest -> compose -> QC path executes end to end without spending provider quota.",
+  "h3_shot_source": "fixture_generated",
+  "h3_reuse_requested": {
+    "shot": null,
+    "receipt": null
+  },
+  "media": {
+    "screenshot": {
+      "container": "png_pipe",
+      "video_codec": "png",
+      "width": 1080,
+      "height": 1920,
+      "duration_s": null,
+      "has_audio": false,
+      "audio_codec": null
+    },
+    "narration": {
+      "path": "project://assets/voice/narration.wav",
+      "bytes": 384078
+    }
+  },
+  "execution": [
+    {
+      "beat_id": "beat-01",
+      "outcome": "OK",
+      "capability": "VISUAL/REAL_EVIDENCE",
+      "reasons": [
+        "real REAL material located at fixture-01.png and registered with its digest as provenance"
+      ],
+      "fallback": {},
+      "envelope": {
+        "asset_id": "beat-01-cd6c2c6a35a0",
+        "modality": "IMAGE",
+        "placement_id": "beat-01",
+        "path": "project://sources/screenshots/fixture-01.png",
+        "sha256": "cd6c2c6a35a03b27a0774d1e5b73b623e6443b092ff91aa8bbe3a73e87aa7ae7",
+        "receipt_ref": "fixture-01.png.receipt.json",
+        "fingerprint": "1691e12a0ac2d06ce139c607ac873603e5eec9a6fe8fc6f4789f43e754f910b7",
+        "asset_kind": "REAL",
+        "generated": false,
+        "evidence_capable": true,
+        "evidence_use": "EVIDENCE",
+        "claim_refs": [],
+        "technical_status": "NOT_RUN",
+        "human_review": "PENDING_FOUNDER_REVIEW",
+        "production_ready": false,
+        "audio_policy": null,
+        "fallback": {},
+        "derived_from": null,
+        "transform_receipt_ref": null
+      }
+    },
+    {
+      "beat_id": "beat-02",
+      "outcome": "OK",
+      "capability": "VISUAL/DIAGRAM",
+      "reasons": [
+        "diagram rendered deterministically. It explains and never proves, so it is registered as VISUAL_SUPPORT with evidence_capable=false."
+      ],
+      "fallback": {},
+      "envelope": {
+        "asset_id": "beat-02-diagram",
+        "modality": "IMAGE",
+        "placement_id": "beat-02",
+        "path": "project://assets/generated/beat-02-diagram.png",
+        "sha256": "279ee88a61521788598f45889c67ed366d9e4cd60193f04ce2c65a77ce351219",
+        "receipt_ref": "beat-02-diagram.png.receipt.json",
+        "fingerprint": "1840ce7f2d16aaaba233e13c524250c656161540814c91eb8e3c42b3ec51f567",
+        "asset_kind": "DIAGRAM",
+        "generated": false,
+        "evidence_capable": false,
+        "evidence_use": "VISUAL_SUPPORT",
+        "claim_refs": [],
+        "technical_status": "NOT_RUN",
+        "human_review": "PENDING_FOUNDER_REVIEW",
+        "production_ready": false,
+        "audio_policy": null,
+        "fallback": {},
+        "derived_from": null,
+        "transform_receipt_ref": null
+      }
+    },
+    {
+      "beat_id": "beat-03",
+      "outcome": "OK",
+      "capability": "VISUAL/DIAGRAM",
+      "reasons": [
+        "diagram rendered deterministically. It explains and never proves, so it is registered as VISUAL_SUPPORT with evidence_capable=false."
+      ],
+      "fallback": {},
+      "envelope": {
+        "asset_id": "beat-03-diagram",
+        "modality": "IMAGE",
+        "placement_id": "beat-03",
+        "path": "project://assets/generated/beat-03-diagram.png",
+        "sha256": "876abc41abe8b50bfc2ec3185f7f4258bd9ba99869af361dc00f3402da7b8e78",
+        "receipt_ref": "beat-03-diagram.png.receipt.json",
+        "fingerprint": "7f7b68427d58ba90eeb72a8de262e2c1e2133fd1668a7849a753050d73c71ebe",
+        "asset_kind": "DIAGRAM",
+        "generated": false,
+        "evidence_capable": false,
+        "evidence_use": "VISUAL_SUPPORT",
+        "claim_refs": [],
+        "technical_status": "NOT_RUN",
+        "human_review": "PENDING_FOUNDER_REVIEW",
+        "production_ready": false,
+        "audio_policy": null,
+        "fallback": {},
+        "derived_from": null,
+        "transform_receipt_ref": null
+      }
+    },
+    {
+      "beat_id": "beat-04",
+      "outcome": "OK",
+      "capability": "VISUAL/DIAGRAM",
+      "reasons": [
+        "diagram rendered deterministically. It explains and never proves, so it is registered as VISUAL_SUPPORT with evidence_capable=false."
+      ],
+      "fallback": {},
+      "envelope": {
+        "asset_id": "beat-04-diagram",
+        "modality": "IMAGE",
+        "placement_id": "beat-04",
+        "path": "project://assets/generated/beat-04-diagram.png",
+        "sha256": "158ef56099017fe3a9e7e94ce9b6bd318f65d819350fd7d31d9d75800c6826be",
+        "receipt_ref": "beat-04-diagram.png.receipt.json",
+        "fingerprint": "61558cf93935cef6ffade4fed522ccb9263f095484f238143598ff52883d15df",
+        "asset_kind": "DIAGRAM",
+        "generated": false,
+        "evidence_capable": false,
+        "evidence_use": "VISUAL_SUPPORT",
+        "claim_refs": [],
+        "technical_status": "NOT_RUN",
+        "human_review": "PENDING_FOUNDER_REVIEW",
+        "production_ready": false,
+        "audio_policy": null,
+        "fallback": {},
+        "derived_from": null,
+        "transform_receipt_ref": null
+      }
+    },
+    {
+      "beat_id": "beat-05",
+      "outcome": "OK",
+      "capability": "VIDEO/H3_T2VA",
+      "reasons": [
+        "produced by VIDEO/H3_T2VA; registered support-only with the provider's own receipt"
+      ],
+      "fallback": {},
+      "envelope": {
+        "asset_id": "beat-05-h3",
+        "modality": "VIDEO",
+        "placement_id": "beat-05",
+        "path": "project://assets/generated/beat-05-shot.mp4",
+        "sha256": "71fff295bb0e5a472f0f0d6081f927d4f3c14d442530f4530a46d75e6ad6376f",
+        "receipt_ref": "beat-05-shot.mp4.receipt.json",
+        "fingerprint": "1e07af7843ba19c83a9de9624e3fc5ac849cc7af7986427e195dd96a38a0c9da",
+        "asset_kind": "GENERATED_VIDEO",
+        "generated": true,
+        "evidence_capable": false,
+        "evidence_use": "VISUAL_SUPPORT",
+        "claim_refs": [],
+        "technical_status": "PASS_TECHNICAL",
+        "human_review": "PENDING_FOUNDER_REVIEW",
+        "production_ready": false,
+        "audio_policy": "REPLACE",
+        "fallback": {},
+        "derived_from": null,
+        "transform_receipt_ref": null
+      }
+    }
+  ],
+  "audio_policy": {
+    "policy": "REPLACE",
+    "output_path": "project://assets/processed/beat-05-shot-replace.mp4",
+    "derived": true,
+    "replacement_narration_required": true,
+    "narration_source": "project://assets/voice/narration.wav",
+    "observed_audio_stream": false,
+    "receipt_path": "project://assets/processed/beat-05-shot-replace.mp4.transform.json",
+    "notes": [],
+    "source_sha256": "71fff295bb0e5a472f0f0d6081f927d4f3c14d442530f4530a46d75e6ad6376f",
+    "source_unchanged_after_transform": true
+  },
+  "gate": [
+    {
+      "asset_id": "beat-01-cd6c2c6a35a0",
+      "modality": "IMAGE",
+      "state": "PENDING_HUMAN_REVIEW",
+      "reasons": [
+        "technically valid; awaiting Founder review"
+      ],
+      "validation": {
+        "asset_id": "beat-01-cd6c2c6a35a0",
+        "modality": "IMAGE",
+        "approved": true,
+        "failures": [],
+        "notes": [],
+        "observed_sha256": "cd6c2c6a35a03b27a0774d1e5b73b623e6443b092ff91aa8bbe3a73e87aa7ae7",
+        "technical_qc": {}
+      }
+    },
+    {
+      "asset_id": "beat-02-diagram",
+      "modality": "IMAGE",
+      "state": "PENDING_HUMAN_REVIEW",
+      "reasons": [
+        "technically valid; awaiting Founder review"
+      ],
+      "validation": {
+        "asset_id": "beat-02-diagram",
+        "modality": "IMAGE",
+        "approved": true,
+        "failures": [],
+        "notes": [],
+        "observed_sha256": "279ee88a61521788598f45889c67ed366d9e4cd60193f04ce2c65a77ce351219",
+        "technical_qc": {}
+      }
+    },
+    {
+      "asset_id": "beat-03-diagram",
+      "modality": "IMAGE",
+      "state": "PENDING_HUMAN_REVIEW",
+      "reasons": [
+        "technically valid; awaiting Founder review"
+      ],
+      "validation": {
+        "asset_id": "beat-03-diagram",
+        "modality": "IMAGE",
+        "approved": true,
+        "failures": [],
+        "notes": [],
+        "observed_sha256": "876abc41abe8b50bfc2ec3185f7f4258bd9ba99869af361dc00f3402da7b8e78",
+        "technical_qc": {}
+      }
+    },
+    {
+      "asset_id": "beat-04-diagram",
+      "modality": "IMAGE",
+      "state": "PENDING_HUMAN_REVIEW",
+      "reasons": [
+        "technically valid; awaiting Founder review"
+      ],
+      "validation": {
+        "asset_id": "beat-04-diagram",
+        "modality": "IMAGE",
+        "approved": true,
+        "failures": [],
+        "notes": [],
+        "observed_sha256": "158ef56099017fe3a9e7e94ce9b6bd318f65d819350fd7d31d9d75800c6826be",
+        "technical_qc": {}
+      }
+    },
+    {
+      "asset_id": "beat-05-h3",
+      "modality": "VIDEO",
+      "state": "PENDING_HUMAN_REVIEW",
+      "reasons": [
+        "technically valid; awaiting Founder review"
+      ],
+      "validation": {
+        "asset_id": "beat-05-h3",
+        "modality": "VIDEO",
+        "approved": true,
+        "failures": [],
+        "notes": [],
+        "observed_sha256": "71fff295bb0e5a472f0f0d6081f927d4f3c14d442530f4530a46d75e6ad6376f",
+        "technical_qc": {
+          "approved": true,
+          "reasons": [],
+          "container": "mp4",
+          "codec": "h264",
+          "width": 1080,
+          "height": 1920,
+          "duration_s": 6.0,
+          "fps": 24.0,
+          "has_audio": true,
+          "audio_codec": "aac",
+          "decodable": true
+        }
+      }
+    },
+    {
+      "asset_id": "narration-01",
+      "modality": "SPEECH",
+      "state": "PENDING_HUMAN_REVIEW",
+      "reasons": [
+        "technically valid; awaiting Founder review",
+        "SPEECH receipts carry no schema field, which is the documented current shape for this modality"
+      ],
+      "validation": {
+        "asset_id": "narration-01",
+        "modality": "SPEECH",
+        "approved": true,
+        "failures": [],
+        "notes": [
+          "SPEECH receipts carry no schema field, which is the documented current shape for this modality"
+        ],
+        "observed_sha256": "7c58184f14209156f46a5b17065264c2e66d5a496184fc0e3093853e57bc9add",
+        "technical_qc": {
+          "approved": true,
+          "reasons": [],
+          "duration_s": 6.0,
+          "sample_rate_hz": 32000,
+          "channels": 1,
+          "codec": "pcm_s16le"
+        }
+      }
+    },
+    {
+      "asset_id": "beat-05-h3-replaced",
+      "modality": "VIDEO",
+      "state": "PENDING_HUMAN_REVIEW",
+      "reasons": [
+        "derived asset: validated against its transform receipt, and awaiting review like any other unapproved asset",
+        "validated against its transform receipt; the provider generation it derives from is named in that receipt"
+      ],
+      "validation": {
+        "asset_id": "beat-05-h3-replaced",
+        "modality": "VIDEO",
+        "approved": true,
+        "failures": [],
+        "notes": [
+          "validated against its transform receipt; the provider generation it derives from is named in that receipt"
+        ],
+        "observed_sha256": "7c0798eb3177f7599235d43e28b2f80ce875a57b37a499f066de766d5c47561c",
+        "technical_qc": {}
+      }
+    }
+  ],
+  "scheduling": {
+    "decisions": [
+      {
+        "action_id": "beat-01",
+        "modality": "IMAGE",
+        "decision": "REUSE_REQUIRED",
+        "reasons": [
+          "a valid asset already satisfies this action, so it consumes no quota and no provider call"
+        ],
+        "policy": {
+          "weekly_floor_percent": 20.0,
+          "require_interval_for_speech": true,
+          "require_interval_for_image": true,
+          "require_interval_for_video": false,
+          "allow_payg": false,
+          "allow_credit_pack": false,
+          "video_requires_declared_budget": true,
+          "minimum_weekly_percent_to_schedule_video": 15.0,
+          "basis": "explicit operator policy. The weekly floors are chosen values, not derived from any observed quota delta, and the provider exposes percentages only."
+        },
+        "observed": {
+          "interval_remaining_percent": null,
+          "weekly_remaining_percent": null,
+          "windows_consulted": [
+            "interval",
+            "weekly"
+          ]
+        }
+      },
+      {
+        "action_id": "narration-01",
+        "modality": "SPEECH",
+        "decision": "REUSE_REQUIRED",
+        "reasons": [
+          "a valid asset already satisfies this action, so it consumes no quota and no provider call"
+        ],
+        "policy": {
+          "weekly_floor_percent": 20.0,
+          "require_interval_for_speech": true,
+          "require_interval_for_image": true,
+          "require_interval_for_video": false,
+          "allow_payg": false,
+          "allow_credit_pack": false,
+          "video_requires_declared_budget": true,
+          "minimum_weekly_percent_to_schedule_video": 15.0,
+          "basis": "explicit operator policy. The weekly floors are chosen values, not derived from any observed quota delta, and the provider exposes percentages only."
+        },
+        "observed": {
+          "interval_remaining_percent": null,
+          "weekly_remaining_percent": null,
+          "windows_consulted": [
+            "interval",
+            "weekly"
+          ]
+        }
+      },
+      {
+        "action_id": "beat-04",
+        "modality": "VIDEO",
+        "decision": "REUSE_REQUIRED",
+        "reasons": [
+          "a valid asset already satisfies this action, so it consumes no quota and no provider call"
+        ],
+        "policy": {
+          "weekly_floor_percent": 20.0,
+          "require_interval_for_speech": true,
+          "require_interval_for_image": true,
+          "require_interval_for_video": false,
+          "allow_payg": false,
+          "allow_credit_pack": false,
+          "video_requires_declared_budget": true,
+          "minimum_weekly_percent_to_schedule_video": 15.0,
+          "basis": "explicit operator policy. The weekly floors are chosen values, not derived from any observed quota delta, and the provider exposes percentages only."
+        },
+        "observed": {
+          "interval_remaining_percent": null,
+          "weekly_remaining_percent": null,
+          "windows_consulted": [
+            "weekly"
+          ]
+        }
+      }
+    ],
+    "execution_order": [],
+    "deferred": [],
+    "blocked": [],
+    "manual_required": []
+  },
+  "quota_policy": {
+    "weekly_floor_percent": 20.0,
+    "require_interval_for_speech": true,
+    "require_interval_for_image": true,
+    "require_interval_for_video": false,
+    "allow_payg": false,
+    "allow_credit_pack": false,
+    "video_requires_declared_budget": true,
+    "minimum_weekly_percent_to_schedule_video": 15.0,
+    "basis": "explicit operator policy. The weekly floors are chosen values, not derived from any observed quota delta, and the provider exposes percentages only."
+  },
+  "manifest": {
+    "path": "project://receipts/media-manifest.json",
+    "fingerprint": "8361c956bf8d39993c9b49952d0b73b77e9e146e9a87a140034cbb1cfaff5596",
+    "assets": 7,
+    "usable_inventory": 7,
+    "placements": 5,
+    "active_visual_assets": 5,
+    "blocked": 0,
+    "requires_narration": true
+  },
+  "timeline": {
+    "placements": [
+      {
+        "placement_id": "beat-01",
+        "active_asset_id": "beat-01-cd6c2c6a35a0",
+        "selection_reason": "only gate-admissible asset claiming this placement",
+        "superseded_asset_ids": []
+      },
+      {
+        "placement_id": "beat-02",
+        "active_asset_id": "beat-02-diagram",
+        "selection_reason": "only gate-admissible asset claiming this placement",
+        "superseded_asset_ids": []
+      },
+      {
+        "placement_id": "beat-03",
+        "active_asset_id": "beat-03-diagram",
+        "selection_reason": "only gate-admissible asset claiming this placement",
+        "superseded_asset_ids": []
+      },
+      {
+        "placement_id": "beat-04",
+        "active_asset_id": "beat-04-diagram",
+        "selection_reason": "only gate-admissible asset claiming this placement",
+        "superseded_asset_ids": []
+      },
+      {
+        "placement_id": "beat-05",
+        "active_asset_id": "beat-05-h3-replaced",
+        "selection_reason": "derived asset supersedes beat-05-h3: AudioPolicy REPLACE required new bytes, and the source retains the pre-transform audio that must not reach the timeline",
+        "superseded_asset_ids": [
+          "beat-05-h3"
+        ]
+      }
+    ],
+    "audio_postconditions": [
+      "beat-05-h3-replaced: AudioPolicy REPLACE, derived asset, so its native audio stream was stripped and narration is required"
+    ]
+  },
+  "composition_input": {
+    "storyboard": "project://script/storyboard.json",
+    "shots": 5,
+    "derived_from_manifest": "8361c956bf8d39993c9b49952d0b73b77e9e146e9a87a140034cbb1cfaff5596"
+  },
+  "composition": {
+    "status": "OK",
+    "video": "project://final/m45.mp4",
+    "subtitles_burned": false,
+    "upstream": "repo://.runtime/easel/skills/openclaw/auto-short-video/scripts/assemble.py",
+    "media": {
+      "container": "mov,mp4,m4a,3gp,3g2,mj2",
+      "video_codec": "h264",
+      "width": 1080,
+      "height": 1920,
+      "duration_s": 18.0,
+      "has_audio": true,
+      "audio_codec": "aac"
+    },
+    "bytes": 311323
+  },
+  "final_qc": {
+    "project": "project://",
+    "checked_at": "2026-10-05T12:57:52Z",
+    "video": "",
+    "overall": "WARN",
+    "receipt": "project://receipts/qc-report-m45.json",
+    "markdown": "project://receipts/qc-report-m45.md",
+    "currency": "CURRENT",
+    "graded_target": "project://final/m45.mp4",
+    "read_manifest": true
+  }
+}

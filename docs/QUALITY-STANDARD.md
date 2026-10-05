@@ -213,3 +213,77 @@ model-generated is not either.
 
 This is a domain error at the single point an asset enters the system, not a note
 in a document that a prompt can ignore.
+## Converged Asset Gate (M4.5, Issue #27)
+
+One vocabulary for every modality, so composition and final QC can ask one
+question and get one answer.
+
+| State | Meaning |
+|---|---|
+| `BLOCKED` | validation or technical QC failed |
+| `DEGRADED_FALLBACK` | technically fine; a declared substitute was used |
+| `PENDING_HUMAN_REVIEW` | technically fine; awaiting a person |
+| `PRODUCTION_READY` | technically fine **and** a person approved it |
+| `REJECTED` | a person looked at it and refused it |
+
+### Technical PASS is not approval
+
+These are claims about different things. A file can decode perfectly and still be
+a shot nobody would publish; it can also be beautiful and be wrong about its own
+dimensions. Collapsing them is how a pipeline comes to believe it cleared its own
+work.
+
+Two rules enforce the separation, and both are tested:
+
+- the gate cannot reach `PRODUCTION_READY` without a **recorded** human decision
+- the **validator** refuses a receipt claiming `production_ready: true` while
+  `human_review` is still `PENDING_FOUNDER_REVIEW`
+
+No automated check synthesises a Founder score, and none infers approval from
+quality. Generated image, generated video and diagrams are additionally
+`never_evidence_capable`, so they cannot carry a claim even if a reviewer were
+asked to.
+
+### Usable is not the same as placed
+
+`usable_assets()` is an **inventory**: it answers "may this asset appear". It may hold
+several assets for one placement, because an AudioPolicy transform keeps its source
+alongside the derived asset — that is correct, and both stay in the manifest as
+provenance.
+
+`active_visual_assets()` is the **timeline**: exactly one asset per placement, each
+with a recorded `selection_reason` and the `superseded_asset_ids` it displaced.
+
+Composition reads the timeline. Iterating the inventory is how a single placement
+ended up on the timeline twice, playing the pre-transform native audio underneath the
+narration REPLACE was meant to guarantee would be the only track. Each active shot's
+audio outcome is stated as an `audio_postcondition`, so it is checkable rather than
+inferred.
+
+### Generated provenance is not downgradable
+
+A transform changes bytes; it does not change what the content is. A `GENERATED_*`
+asset stays `generated: true` whether or not it was derived, and
+`MediaAssetEnvelope` refuses to be **constructed** with a generated kind and
+`generated=False` — in both directions. `derived_from` is how derivation is recorded.
+
+### A committed artifact contains no machine path
+
+Manifest and receipt paths are logical (`project://`, `repo://`) and resolved at the
+point of use. An absolute path is refused, not written: one committed manifest
+carried eight `D:\Projects\...` paths, which made its fingerprint specific to one
+checkout root.
+
+### Fallback is visible and never self-approving
+
+A declared fallback names what was **requested**, what was **used** and **why**, and
+sets `degraded: true`. An unnamed substitute is refused at validation. A fallback
+reaches `DEGRADED_FALLBACK`, which is usable in composition but never becomes
+production-ready on its own.
+
+### Gate state does not equal registry state
+
+The gate admits or excludes an asset from **composition**. The registry records
+**what the asset is**. They must agree — `BUILDING` and `PENDING_HUMAN_REVIEW` in
+the registry, but `BLOCKED` at the gate, would mean composition and provenance
+disagree about the same file.

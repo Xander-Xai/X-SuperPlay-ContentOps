@@ -849,3 +849,310 @@ evidence_use     VISUAL_SUPPORT
 only. H3 may support a hook, a hero visual, a concept, a metaphor, a transition or
 an unrecordable scene. It may never prove a benchmark, a test result, an analytics
 metric, a UI state, a customer outcome, source code or a real product demo.
+# M4.5 — converged media layer (Issue #27)
+
+## Modality is not asset kind
+
+M2–M4 produced three providers whose receipt schemas agree on almost nothing:
+
+|                          | speech                              | image                  | video                  |
+|--------------------------|-------------------------------------|------------------------|------------------------|
+| `schema` field           | **absent**                          | `...image-receipt/v1`  | `...video-receipt/v1`  |
+| asset digest field       | `normalized_sha256` / `raw_sha256`  | `output_sha256`        | `output_sha256`        |
+| `generated`              | **absent**                          | `true`                 | `true`                 |
+| `evidence_capable`       | **absent**                          | `false`                | `false`                |
+| `AssetKind`              | **none**                            | `GENERATED_IMAGE`      | `GENERATED_VIDEO`      |
+| registered in registry   | **never**                           | by the CLI script      | by the provider        |
+
+`MediaModality` (SPEECH / IMAGE / VIDEO) is therefore a dimension **separate** from
+`AssetKind`, and a `MediaAssetEnvelope` carries `modality` always and `asset_kind`
+optionally — `None` for speech.
+
+`GENERATED_SPEECH` was deliberately **not** invented. It would put a non-visual
+into a visual evidence enum, and it would imply narration has an evidence boundary
+it does not have. Narration is deterministic and is not proof.
+
+`AssetKind` remains the single owner of the evidence truth table. The converged
+layer asks it; it never restates it.
+
+## One validator, three adapters
+
+```
+validate_media_asset(envelope, adapter)
+        |
+        +-- SpeechValidationAdapter
+        +-- ImageValidationAdapter
+        +-- VideoValidationAdapter
+```
+
+The validator owns only what is common: file existence, receipt existence and
+parse, digest agreement, fingerprint, subscription-only billing, targeted
+credential and task-privacy invariants, review state, fallback explicitness, and
+lineage. Adapters own the differences. One dispatch table sits at a protocol
+boundary; the common path has **no** modality branch, and a test enforces that.
+
+Rules the implementation added beyond the original design:
+
+- a **provider generation** must declare its modality's schema
+- a **non-generated** asset must **not**, because nothing's API produced it
+- a missing `technical_qc` **fails** a generation but is **not applicable** to an
+  import or a transform — no provider ran, so there is nothing to report, and
+  demanding it would either block honest records or invite a fabricated one
+
+Credential checking is targeted, not an unbounded regex sweep: no string value
+anywhere in a public receipt may match the closed provider-key shape, and no
+`Authorization` header value may appear. Provider-level sentinel tests remain
+authoritative, because they know the actual key.
+
+## Immutability and derived assets
+
+Provider-generated canonical assets are immutable. `AudioPolicy` is applied by
+producing a **derived asset** with a `contentops.media-transform/v1` receipt that
+names the source digest:
+
+```
+shot.mp4 (provider, immutable)
+  └─ shot-mute.mp4 / shot-replace.mp4  (derived)
+       └─ <name>.transform.json  →  source_asset_sha256, output_sha256, tool, command
+            └─ shot.mp4.receipt.json  (untouched)
+```
+
+| Policy | Derived asset | Audio in output | Narration required |
+|--------|---------------|-----------------|--------------------|
+| `KEEP` | **none** — the original is reused | present (recorded) | no |
+| `MUTE` | yes | absent | no |
+| `REPLACE` | yes | absent | **yes** |
+
+`KEEP` writes nothing: bytes that did not move must not acquire provenance
+implying they did. `REPLACE` does not mux narration — composition does, from a
+deterministic track, so this step cannot produce a silent mix. Video streams are
+**copied** when audio is dropped, never re-encoded, so a mute cannot degrade the
+picture.
+
+### A transform changes bytes, not provenance
+
+The transform receipt records three separate facts, not one overloaded boolean:
+
+| Field | Question it answers | `MUTE` on a generated shot |
+|---|---|---|
+| `provider_generated_bytes` | did *this transform* emit these bytes via an API? | `false` |
+| `derived` | did a transform run? | `true` |
+| `source_generated` | was the **lineage** generated media? | `true` |
+
+The derived envelope therefore keeps `generated: true`. Generated provenance
+survives a local edit: a generated shot with its audio removed is still generated
+content, and `MediaAssetEnvelope` refuses to be constructed with a
+`GENERATED_*` kind and `generated=False` — in **both** directions, derived or not.
+Derivation is recorded by `derived_from`; downgrading `generated` is not a way to
+express it.
+
+The original design had a single `generated` field doing all three jobs. It made a
+transform receipt say `generated=false` about generated content — the contradiction
+this split removes.
+
+## Capability registry
+
+| Capability | Status | Evidence |
+|---|---|---|
+| `SPEECH/NARRATION` | `VERIFIED` | PR #24 |
+| `IMAGE/GENERATED_SUPPORT_VISUAL` | `VERIFIED` | PR #25 |
+| `VIDEO/H3_T2VA` | `VERIFIED` | M2.0 real task |
+| `VIDEO/H3_I2VA` | `VERIFIED` | M4 real task |
+| `VIDEO/H3_FL2VA` / `H3_L2VA` / `H3_REF2VA` / `H3_MAX` | `DOCUMENTED_BUT_NOT_TESTED` | fixtures only |
+| `VISUAL/REAL_EVIDENCE` / `VISUAL/DIAGRAM` | `MANUAL_ONLY` | operator / local render |
+
+No vendor word appears in a capability identifier. Registration takes a
+**callable**, never a provider object, so the registry cannot retain a credential
+or billing state. A `VERIFIED` capability cannot be constructed without citing
+evidence, so the table cannot decay into a wish list. An unsupported capability
+raises `CapabilityNotSupported` and is never substituted.
+
+Fixture evidence proves how code behaves. It never proves what an account is
+entitled to, and the two are not conflated.
+
+## Quota policy is not a cost model
+
+`MediaQuotaPolicy` holds explicit operator values. The weekly floors are **chosen**.
+They are not derived from the observed ~7pp H3 delta — that is an input to
+conservative budgeting, not a price, because the provider exposes percentages only
+and one observation at one clip length and resolution is not a rate.
+
+`QuotaScheduler` takes **one** snapshot for all actions, because all three
+modalities share one account plan. Priority is fixed by policy:
+
+1. reusable assets
+2. mandatory real or captured evidence
+3. narration
+4. deterministic local assets
+5. generated image support
+6. generated video support
+
+Video goes last because it is the most expensive call ContentOps makes and the
+least load-bearing for a truthful video. It must never starve narration or the
+evidence a claim depends on.
+
+Decisions: `ALLOW` / `REUSE_REQUIRED` / `DEFER` / `MANUAL_REQUIRED` / `BLOCKED`,
+each recorded with the policy in force and the observation made.
+
+**A scheduling decision authorises nothing.** Every provider still runs its own
+`BillingGuard` immediately before its call, because quota can be spent by something
+else in between.
+
+## Evidence-first execution
+
+A claim-bearing beat resolves only to `REAL` / `SCREENSHOT` / `SCREEN_RECORDING`.
+If the required material is absent the beat returns `EVIDENCE_ASSET_REQUIRED` — a
+structured refusal, not an exception and not a substitute. The locator reports
+`MISSING_REAL_ASSET` or `NEEDS_CAPTURE`.
+
+Adopting real material writes a `contentops.media-import/v1` receipt recording
+where it came from, its digest, and that no provider was involved. An import with
+only a digest would be the weakest link in the chain.
+
+Fallback is a recorded field, never a behaviour. A substitute names what was
+requested, what was used, and why; an unnamed swap is refused.
+
+## Converged gate vocabulary
+
+| State | Meaning |
+|---|---|
+| `BLOCKED` | validation or technical QC failed |
+| `DEGRADED_FALLBACK` | technically fine, a declared substitute was used |
+| `PENDING_HUMAN_REVIEW` | technically fine, awaiting a person |
+| `PRODUCTION_READY` | technically fine **and** a person approved it |
+| `REJECTED` | a person looked at it and refused it |
+
+Technical PASS is not approval. The gate cannot reach `PRODUCTION_READY` without a
+recorded human decision, and the **validator** refuses a receipt claiming
+`production_ready: true` while still `PENDING_FOUNDER_REVIEW` — that
+contradiction is how a pipeline comes to believe it cleared its own work.
+
+## Manifest is the single asset list
+
+`contentops.media-manifest/v1` is the only list composition and final QC read.
+It is an **index**, not a receipt: modality-specific detail stays in the receipts,
+because a manifest that copied every field would be a second source of truth that
+could disagree with the first.
+
+Deterministic by construction: assets sorted by `asset_id`, fixed key order, and
+**no timestamp in the body**. Timestamps belong in receipts, which already record
+when something happened; one in the manifest would make every build differ for no
+informational gain. An asset with no gate decision, or a duplicate `asset_id`, is
+refused rather than admitted.
+
+### Paths are logical, never local
+
+An asset path in a committed manifest is a **logical reference**:
+`project://assets/shot.mp4` (relative to the project) or `repo://docs/x.png`
+(relative to the repository). It is resolved to a local path at the point of use.
+
+An absolute path is never written. The first committed manifest carried eight
+`D:\Projects\...` paths, which made "deterministic manifest" true on exactly one
+machine: the fingerprint changed with the checkout root, so it was not a cache key
+and not comparable in review. A path outside both roots cannot be expressed
+logically, so it is refused rather than written as a machine path.
+
+### The timeline is explicit, and separate from the inventory
+
+`assets` is an **inventory** and `timeline` is the **timeline**. Both are required.
+
+`usable_assets()` answers "may this asset appear"; it does not answer "does this
+asset appear here". An AudioPolicy transform keeps its source *and* adds the derived
+asset, both claiming placement `beat-05` — and iterating the inventory put
+`beat-05` and `beat-05-replaced` on the timeline, so the pre-transform native audio
+played over the narration REPLACE was meant to guarantee would be the only track.
+
+So composition reads `active_visual_assets()`, one asset per placement, each with a
+recorded `selection_reason` and the `superseded_asset_ids` it displaced. A derived
+asset supersedes its source for MUTE/REPLACE; KEEP has no derived asset. Two derived
+assets claiming one placement are refused as `AMBIGUOUS_DERIVED_ASSETS` rather than
+resolved by a tie-break, because the choice is not derivable from the data.
+
+Refused with a named code, never silently corrected: `DUPLICATE_PLACEMENT`,
+`UNKNOWN_ACTIVE_ASSET`, `INADMISSIBLE_ACTIVE_ASSET`, `MISSING_PLACEMENT_ID`,
+`ASSET_ACTIVE_IN_TWO_PLACEMENTS`, `AMBIGUOUS_DERIVED_ASSETS`.
+
+`audio_postconditions` states each active shot's audio outcome — so REPLACE's "no
+native track, narration required" is a checkable claim in the receipt rather than an
+inference a reviewer has to make.
+
+## Composition reuses the pinned Easel path
+
+```
+manifest → thin manifest-to-storyboard translation
+         → pinned Easel v0.2.1 (assemble_easel.run)
+         → final.mp4
+         → qc_video.qc, reading the same manifest-derived storyboard
+```
+
+No second compositor was built. Upstream remains unmodified. `qc_video` reads the
+storyboard the manifest produced, so the final QC is a check of the manifest rather
+than a separate opinion — and the fallback engine keeps its diagnostic-only
+semantics and never claims `production_ready`.
+
+### QC receipts cross a sanitization boundary
+
+`qc_video` is a runtime tool. It reads real files, and its report legitimately names
+them — `final.mp4 not found at D:\...\final.mp4` is an accurate diagnostic while it
+runs. **The runtime result and the committed provenance are different concerns**, so
+`contentops.media.qc_canonical` is the boundary between them:
+
+```
+qc_video runtime result  (may contain absolute local paths)
+        ↓
+contentops.qc_canonical  →  tracked qc-report-<target>.json / .md
+```
+
+Upstream `qc_video` internals are untouched. The boundary rewrites the file it wrote,
+in place, so there is exactly one report per target rather than a raw copy and a
+sanitized copy that can disagree. Sanitizing rewrites **paths only** — never a
+verdict, never a check result.
+
+Every canonical report declares its own currency, so a stale result can never read as
+current:
+
+| Field | Meaning |
+|---|---|
+| `currency` | `CURRENT`, or `NON_CURRENT_DIAGNOSTIC` |
+| `graded_target` | the logical reference actually graded, e.g. `project://final/m45.mp4` |
+| `non_current_reason` | **required** when currency is not `CURRENT` |
+
+A non-current report with no stated reason is refused, because an unexplained stale
+verdict is indistinguishable from a real one. Two tracked reports once sat side by
+side — one `WARN` on `final/m45.mp4`, one `FAIL` on `final/final.mp4`, a file this
+stage never produces. The stale one was removed; `qc-report-m45.json` is the single
+canonical M4.5 QC report.
+
+A regression test scans the canonical committed artifacts
+(`media-manifest.json`, `m45-integration.json`, `qc-report-m45.{json,md}`,
+`storyboard.json`) for host-specific paths — Windows drive and UNC paths, POSIX and
+macOS home directories, mounted volumes — and fails on any hit.
+
+## The technical integration, and what it is not
+
+`scripts/m45_media_integration.py` produces one local, fixture-driven artifact
+(`project://final/m45.mp4`) proving `registry → manifest → compose → final QC`
+with **zero provider calls**. Weekly quota is untouched.
+
+Every asset is a deterministic fixture, labelled as such in its receipt, in the
+manifest header and in the integration report. Media binaries are gitignored; the
+manifest, receipts and storyboard are committed.
+
+**H3 reuse is explicit, and never discovered.** `--reuse-h3-shot PATH` reuses a real
+shot instead of generating a fixture; omitting it means fixtures, always. There is no
+filesystem scan. The previous version globbed `.verify-tmp/m4` for any
+`*.mp4.receipt.json`, so a clean clone produced fixtures while a workstation with M4
+leftovers silently produced real provider media — and both runs were committed as
+"the integration". A run's meaning must be a function of its arguments.
+
+Reuse is validated, not trusted: both the shot and its receipt must exist, the
+receipt must be a real `contentops.video-receipt/v1` generation receipt, and its
+`output_sha256` must match the file. A shot with no receipt is refused — otherwise
+an unexplained file enters a committed run. `h3_shot_source` in the report states
+which of `fixture_generated` / `explicit_reuse` was used, so it never has to be
+inferred from which artifacts happen to be present.
+
+It does **not** prove real `SourceArtifact` ingestion, `Claim Ledger`
+completeness, Founder approval, a production golden, or three consecutive
+production builds. The output is `production_ready=false` /
+`PENDING_FOUNDER_REVIEW`, and nothing in the code path can report otherwise.
