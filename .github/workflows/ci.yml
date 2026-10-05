@@ -46,10 +46,14 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          choco install --yes --no-progress ffmpeg --params '"/NoPath /Quiet"'
-          Update-SessionEnvironment
-          $env:Path = [System.Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path', 'User')
+          choco install ffmpeg --yes --no-progress --limit-output --allow-downgrade
+          # The chocolatey shim directory is where ffmpeg.exe lands; adding it
+          # explicitly keeps this working whether or not the runner image already
+          # has it on PATH.
+          echo "C:\ProgramData\chocolatey\bin" >> $env:GITHUB_PATH
+          echo "C:\ProgramData\chocolatey\lib\ffmpeg\tools\bin" >> $env:GITHUB_PATH
           ffmpeg -version | Select-Object -First 1
+          ffprobe -version | Select-Object -First 1
 
       # Report what is actually available. A suite that silently skips most of
       # itself looks green while testing nothing, which is how the M3 suite lost

@@ -1918,6 +1918,11 @@ def test_the_canonical_qc_boundary_preserves_the_verdict_and_drops_the_paths():
     The boundary rewrites a ``qc_video`` runtime result for committing. It is allowed
     to change every path in it and nothing else — a sanitizer that quietly upgraded a
     WARN would be worse than the leak it removes.
+
+    Paths are built from the real filesystem root rather than a hardcoded drive
+    letter: the sanitizer only rewrites paths that are genuinely under the root it
+    was given, so a ``D:\\`` literal would simply not match on a Linux runner and the
+    test would fail there while proving nothing on Windows.
     """
     from contentops.media.qc_canonical import (
         CURRENCY_NON_CURRENT_DIAGNOSTIC,
@@ -1925,58 +1930,66 @@ def test_the_canonical_qc_boundary_preserves_the_verdict_and_drops_the_paths():
         canonical_qc_report,
     )
 
-    runtime = {
-        "project": r"D:\repo\projects\demo",
-        "checked_at": "2026-10-05T00:00:00Z",
-        "overall": "WARN",
-        "checks": [
-            {"id": "_video", "ok": True, "severity": "INFO",
-             "path": r"D:\repo\projects\demo\final\m45.mp4"},
-            {"id": "final_exists", "ok": False, "severity": "FAIL",
-             "msg": r"final.mp4 not found at D:\repo\projects\demo\final\final.mp4"},
-            {"id": "duration_range", "ok": False, "severity": "WARN", "value": 18.0},
-        ],
-    }
-    report = canonical_qc_report(
-        runtime,
-        repo_root=r"D:\repo",
-        project_root=r"D:\repo\projects\demo",
-        graded_target="project://final/m45.mp4",
-    )
-    assert report["schema"] == QC_CANONICAL_SCHEMA
-    assert report["overall"] == runtime["overall"], "sanitizing changed the verdict"
-    assert report["checked_at"] == runtime["checked_at"]
-    assert report["project"] == "project://", report["project"]
-    assert len(report["checks"]) == len(runtime["checks"])
+    with tempfile.TemporaryDirectory() as td:
+        base = Path(td)
+        repo = base / "repo"
+        project = repo / "projects" / "demo"
+        project.mkdir(parents=True, exist_ok=True)
+        shot = str(project / "final" / "m45.mp4")
+        ghost = str(project / "final" / "final.mp4")
+        project_ref = str(project)
 
-    blob = json.dumps(report, ensure_ascii=False)
-    assert r"D:\repo" not in blob, blob
-    assert "project://final/m45.mp4" in blob, blob
-    # A path embedded in prose is sanitized too, not only whole-string paths.
-    missing = next(c for c in report["checks"] if c["id"] == "final_exists")
-    assert "project://final/final.mp4" in missing["msg"], missing
-
-    # And a non-current report must explain itself.
-    try:
-        canonical_qc_report(
+        runtime = {
+            "project": project_ref,
+            "checked_at": "2026-10-05T00:00:00Z",
+            "overall": "WARN",
+            "checks": [
+                {"id": "_video", "ok": True, "severity": "INFO", "path": shot},
+                {"id": "final_exists", "ok": False, "severity": "FAIL",
+                 "msg": f"final.mp4 not found at {ghost}"},
+                {"id": "duration_range", "ok": False, "severity": "WARN", "value": 18.0},
+            ],
+        }
+        report = canonical_qc_report(
             runtime,
-            repo_root=r"D:\repo",
-            project_root=r"D:\repo\projects\demo",
-            currency=CURRENCY_NON_CURRENT_DIAGNOSTIC,
+            repo_root=repo,
+            project_root=project,
+            graded_target="project://final/m45.mp4",
         )
-    except ValueError as exc:
-        assert "must state why" in str(exc), str(exc)
-    else:
-        raise AssertionError("a non-current QC report was declared with no reason")
+        assert report["schema"] == QC_CANONICAL_SCHEMA
+        assert report["overall"] == runtime["overall"], "sanitizing changed the verdict"
+        assert report["checked_at"] == runtime["checked_at"]
+        assert report["project"] == "project://", report["project"]
+        assert len(report["checks"]) == len(runtime["checks"])
 
-    declared = canonical_qc_report(
-        runtime,
-        repo_root=r"D:\repo",
-        project_root=r"D:\repo\projects\demo",
-        currency=CURRENCY_NON_CURRENT_DIAGNOSTIC,
-        non_current_reason="graded a target this stage does not produce",
-    )
-    assert "non_current_reason" in declared
+        blob = json.dumps(report, ensure_ascii=False)
+        assert str(base) not in blob, blob
+        assert "project://final/m45.mp4" in blob, blob
+        # A path embedded in prose is sanitized too, not only whole-string paths.
+        missing = next(c for c in report["checks"] if c["id"] == "final_exists")
+        assert "project://final/final.mp4" in missing["msg"], missing
+
+        # And a non-current report must explain itself.
+        try:
+            canonical_qc_report(
+                runtime,
+                repo_root=repo,
+                project_root=project,
+                currency=CURRENCY_NON_CURRENT_DIAGNOSTIC,
+            )
+        except ValueError as exc:
+            assert "must state why" in str(exc), str(exc)
+        else:
+            raise AssertionError("a non-current QC report was declared with no reason")
+
+        declared = canonical_qc_report(
+            runtime,
+            repo_root=repo,
+            project_root=project,
+            currency=CURRENCY_NON_CURRENT_DIAGNOSTIC,
+            non_current_reason="graded a target this stage does not produce",
+        )
+        assert "non_current_reason" in declared
     print("[ok] 94. the canonical QC boundary preserves verdicts and removes paths")
 
 
@@ -1986,26 +1999,32 @@ def test_embedded_path_sanitizing_leaves_non_paths_alone():
     Only known root prefixes are matched. Prose, URLs and lookalike sibling
     directories must survive untouched, or people will stop reading the output.
     """
-    repo = Path(r"D:\repo")
-    project = Path(r"D:\repo\projects\demo")
-    assert sanitize_embedded_paths(
-        "see https://example.com/a/b for details", repo_root=repo, project_root=project
-    ) == "see https://example.com/a/b for details"
-    # A sibling whose name merely starts with the repo name is outside it.
-    assert r"D:\repoOld\x.mp4" in sanitize_embedded_paths(
-        r"built in D:\repoOld\x.mp4", repo_root=repo, project_root=project
-    )
-    # Already-logical text is idempotent.
-    once = sanitize_embedded_paths(
-        r"D:\repo\projects\demo\final\m45.mp4", repo_root=repo, project_root=project
-    )
-    assert once == "project://final/m45.mp4", once
-    assert sanitize_embedded_paths(once, repo_root=repo, project_root=project) == once
-    # Prose embedding works, and the surrounding words are preserved.
-    assert sanitize_embedded_paths(
-        r"missing at D:\repo\projects\demo\final\final.mp4",
-        repo_root=repo, project_root=project,
-    ) == "missing at project://final/final.mp4"
+    with tempfile.TemporaryDirectory() as td:
+        base = Path(td)
+        repo = base / "repo"
+        project = repo / "projects" / "demo"
+        project.mkdir(parents=True, exist_ok=True)
+        # A sibling whose name merely starts with the repo name is outside it.
+        sibling = base / "repoOld"
+        sibling.mkdir(parents=True, exist_ok=True)
+
+        assert sanitize_embedded_paths(
+            "see https://example.com/a/b for details", repo_root=repo, project_root=project
+        ) == "see https://example.com/a/b for details"
+        assert str(sibling / "x.mp4") in sanitize_embedded_paths(
+            f"built in {sibling / 'x.mp4'}", repo_root=repo, project_root=project
+        )
+        # Already-logical text is idempotent.
+        once = sanitize_embedded_paths(
+            str(project / "final" / "m45.mp4"), repo_root=repo, project_root=project
+        )
+        assert once == "project://final/m45.mp4", once
+        assert sanitize_embedded_paths(once, repo_root=repo, project_root=project) == once
+        # Prose embedding works, and the surrounding words are preserved.
+        assert sanitize_embedded_paths(
+            f"missing at {project / 'final' / 'final.mp4'}",
+            repo_root=repo, project_root=project,
+        ) == "missing at project://final/final.mp4"
     print("[ok] 95. embedded path sanitizing leaves non-paths alone")
 
 
