@@ -2,12 +2,12 @@
   "schema": "contentops.evidence-lock/v1",
   "fixture": false,
   "source_project": "project://easel-review",
-  "master_script_sha256": "7df3adbd34f3e2fc5157a2c858de737beca12a13fb58ea64fd570e982820d69d",
-  "narration_text_sha256": "2f7122228c53de128d04541ec1c4086dedd22ddc51bb0347d605e1c789a02348",
+  "master_script_sha256": "997679154e64a0b6b8df0885388636157668f94944032009c437b97289ca7348",
+  "narration_text_sha256": "f2de808c9e723f8430acdc44dc374c5791b249250d8bc585a172360a88b9542a",
   "storyboard_fingerprint": "2220a58e6dcc4ea0c5c2a64afca44916bf4b6be605231dee69e47512198332ab",
   "caption_sha256": "ea3a8a52439af1d3b75bddbe00c202f77c3dfebad702ba5b56a127d83d141b8d",
   "asset_digest": "a50ea21300d689eb996b9aab6f15c7bcd965e83dd560a373791ac9e1757c437a",
-  "fingerprint": "af8128b958906e8ebb1f6b4c21038f4fe9d2446bbba45823c90dae53fd4a4511",
+  "fingerprint": "119b3825eb6334d8d354131c0f28e8839751b519e77ac244f59ec4ebea7475f3",
   "evidence": [
     {
       "placement_id": "shot_00",

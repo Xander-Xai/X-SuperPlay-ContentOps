@@ -67,6 +67,6 @@
     "count": 0,
     "policy": "real_assets_only"
   },
-  "derived_from_lock": "af8128b958906e8ebb1f6b4c21038f4fe9d2446bbba45823c90dae53fd4a4511",
+  "derived_from_lock": "119b3825eb6334d8d354131c0f28e8839751b519e77ac244f59ec4ebea7475f3",
   "timeline_policy": "Explicit per-shot durations derived from the canonical caption span, so both arms share a byte-identical visual timeline. Upstream would otherwise divide each arm's narration length across the shots."
 }

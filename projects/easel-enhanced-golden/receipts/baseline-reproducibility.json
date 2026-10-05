@@ -1,11 +1,12 @@
 {
   "schema": "contentops.baseline-reproducibility/v1",
-  "checked_at": "2026-10-05T19:06:13Z",
-  "git_head": "9e382f16f33235ff2d819ead070d196966a86ca2",
+  "checked_at": "2026-10-05T20:29:08Z",
+  "git_head": "ef8bfe6b7e8c9a650ebfd892f25c88bd48c5e487",
   "source_project": "project://easel-review",
-  "script_sha256": "7df3adbd34f3e2fc5157a2c858de737beca12a13fb58ea64fd570e982820d69d",
-  "narration_text_sha256": "2f7122228c53de128d04541ec1c4086dedd22ddc51bb0347d605e1c789a02348",
-  "storyboard_sha256": "31d9d51dc3caee0f9c1812aea6ceac5e41f815ea2079279da85cfacb98488053",
+  "script_sha256": "997679154e64a0b6b8df0885388636157668f94944032009c437b97289ca7348",
+  "narration_text_sha256": "f2de808c9e723f8430acdc44dc374c5791b249250d8bc585a172360a88b9542a",
+  "storyboard_sha256": "95510830b4661735bd1bbff0a05eefdf3e01c7040834fb987d0cc6af25e360e2",
+  "digest_source": "git_blob for tracked text files; the working tree on this host still holds CRLF copies of files authored before .gitattributes normalised them, and a working-tree digest would only ever verify here",
   "storyboard_shot_count": 6,
   "expected_screenshots": [
     {
@@ -134,25 +135,29 @@
       "path": "projects/easel-review/script/master.md",
       "exists": true,
       "tracked": true,
-      "sha256": "7df3adbd34f3e2fc5157a2c858de737beca12a13fb58ea64fd570e982820d69d"
+      "sha256": "997679154e64a0b6b8df0885388636157668f94944032009c437b97289ca7348",
+      "sha256_source": "git_blob"
     },
     "narration_text": {
       "path": "projects/easel-review/script/narration.txt",
       "exists": true,
       "tracked": true,
-      "sha256": "2f7122228c53de128d04541ec1c4086dedd22ddc51bb0347d605e1c789a02348"
+      "sha256": "f2de808c9e723f8430acdc44dc374c5791b249250d8bc585a172360a88b9542a",
+      "sha256_source": "git_blob"
     },
     "storyboard": {
       "path": "projects/easel-review/script/storyboard.json",
       "exists": true,
       "tracked": true,
-      "sha256": "31d9d51dc3caee0f9c1812aea6ceac5e41f815ea2079279da85cfacb98488053"
+      "sha256": "95510830b4661735bd1bbff0a05eefdf3e01c7040834fb987d0cc6af25e360e2",
+      "sha256_source": "git_blob"
     },
     "caption": {
       "path": "projects/easel-enhanced-golden/evidence/captions/easel.srt",
       "exists": true,
       "tracked": true,
-      "sha256": "ea3a8a52439af1d3b75bddbe00c202f77c3dfebad702ba5b56a127d83d141b8d"
+      "sha256": "ea3a8a52439af1d3b75bddbe00c202f77c3dfebad702ba5b56a127d83d141b8d",
+      "sha256_source": "git_blob"
     },
     "screenshots": {
       "path": "projects/easel-review/sources/screenshots/",

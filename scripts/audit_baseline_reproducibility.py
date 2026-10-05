@@ -184,6 +184,28 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def canonical_sha256(path: Path) -> str:
+    """sha256 of the repository-canonical bytes, i.e. the Git blob.
+
+    ``.gitattributes`` normalises ``*.md``/``*.txt``/``*.json`` to LF, so the blob is
+    what every platform reproduces. Reading the working tree instead makes the digest
+    host-specific: this Windows checkout still holds CRLF copies of files that were
+    authored before that rule applied, and the Linux CI runner measured different
+    digests for the very same committed files.
+    """
+    rel = path.relative_to(ROOT).as_posix()
+    if is_tracked(rel):
+        from process_utils import hidden_run
+
+        for spec in (f":{rel}", f"HEAD:{rel}"):
+            out = hidden_run(
+                ["git", "cat-file", "blob", spec], cwd=str(ROOT), timeout=60, text=False
+            )
+            if out.returncode == 0 and out.stdout is not None:
+                return hashlib.sha256(out.stdout).hexdigest()
+    return sha256_file(path)
+
+
 def png_dimensions(path: Path) -> Tuple[Optional[int], Optional[int]]:
     """Width/height straight from the PNG IHDR.
 
@@ -303,7 +325,8 @@ def locked_inputs_reproducibility() -> Dict[str, Any]:
             "path": rel,
             "exists": present,
             "tracked": bool(present and is_tracked(rel)),
-            "sha256": sha256_file(path) if present else None,
+            "sha256": canonical_sha256(path) if present else None,
+            "sha256_source": "git_blob",
         }
 
     tracked_shots = 0
@@ -607,9 +630,14 @@ def build_audit() -> Dict[str, Any]:
         "checked_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "git_head": git("rev-parse", "HEAD").stdout.strip(),
         "source_project": f"project://{BASELINE_PROJECT}",
-        "script_sha256": sha256_file(BASELINE_DIR / "script" / "master.md"),
-        "narration_text_sha256": sha256_file(BASELINE_DIR / "script" / "narration.txt"),
-        "storyboard_sha256": sha256_file(BASELINE_DIR / "script" / "storyboard.json"),
+        "script_sha256": canonical_sha256(BASELINE_DIR / "script" / "master.md"),
+        "narration_text_sha256": canonical_sha256(BASELINE_DIR / "script" / "narration.txt"),
+        "storyboard_sha256": canonical_sha256(BASELINE_DIR / "script" / "storyboard.json"),
+        "digest_source": (
+            "git_blob for tracked text files; the working tree on this host still "
+            "holds CRLF copies of files authored before .gitattributes normalised "
+            "them, and a working-tree digest would only ever verify here"
+        ),
         "storyboard_shot_count": len(storyboard.get("shots") or []),
         "expected_screenshots": records,
         "expected_count": len(records),

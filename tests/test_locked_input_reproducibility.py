@@ -23,6 +23,7 @@ afterwards, because a mutation that also repointed the path would trip
 
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 import subprocess
@@ -67,13 +68,26 @@ def verify() -> subprocess.CompletedProcess:
 
 
 def _refuses(expected_code: str, label: str) -> None:
+    _refuses_any({expected_code}, label)
+
+
+def _refuses_any(codes: set, label: str) -> None:
+    """Refuse with one of ``codes``.
+
+    Which code fires depends on whether the edit was staged. An unstaged edit leaves
+    the blob intact, so the precise finding is ``EVIDENCE_WORKTREE_DIVERGED`` — "the
+    committed baseline is fine, your working copy is not". Staged, the blob moves too
+    and it becomes a digest mismatch. Both are correct refusals; asserting one exact
+    code would pin the test to an accident of how the mutation was made.
+    """
     result = verify()
     combined = (result.stdout or "") + (result.stderr or "")
     assert result.returncode != 0, f"{label}: verify PASSED but must refuse"
-    assert expected_code in combined, (
-        f"{label}: refused, but not with {expected_code!r}\n{combined.strip()[:400]}"
+    hit = [code for code in codes if code in combined]
+    assert hit, (
+        f"{label}: refused, but not with any of {sorted(codes)}\n{combined.strip()[:400]}"
     )
-    print(f"[ok] {label}: refused with {expected_code}")
+    print(f"[ok] {label}: refused with {hit[0]}")
 
 
 # --- the healthy case ------------------------------------------------------
@@ -150,7 +164,7 @@ def test_substituting_default_srt_refuses():
     backup = CANONICAL_CAPTION.read_bytes()
     try:
         shutil.copyfile(OTHER_CAPTION, CANONICAL_CAPTION)
-        _refuses("EVIDENCE_SHA_CHANGED", "caption replaced with default.srt")
+        _refuses_any({"EVIDENCE_SHA_CHANGED", "EVIDENCE_WORKTREE_DIVERGED"}, "caption replaced with default.srt")
     finally:
         CANONICAL_CAPTION.write_bytes(backup)
 
@@ -165,7 +179,7 @@ def test_a_changed_caption_refuses():
         CANONICAL_CAPTION.write_bytes(
             backup + b"\r\n10\r\n00:01:01,900 --> 00:01:03,000\r\nappended\r\n"
         )
-        _refuses("EVIDENCE_SHA_CHANGED", "caption bytes changed")
+        _refuses_any({"EVIDENCE_SHA_CHANGED", "EVIDENCE_WORKTREE_DIVERGED"}, "caption bytes changed")
     finally:
         CANONICAL_CAPTION.write_bytes(backup)
 
@@ -229,7 +243,7 @@ def test_a_changed_script_or_storyboard_refuses():
         backup = path.read_bytes()
         try:
             path.write_bytes(backup + b"\n")
-            _refuses(code, label)
+            _refuses_any({"EVIDENCE_SHA_CHANGED", "EVIDENCE_WORKTREE_DIVERGED"}, label)
         finally:
             path.write_bytes(backup)
 
@@ -279,6 +293,10 @@ def test_the_repository_is_left_exactly_as_found():
     print("[ok] every file touched by the mutation tests is back to its starting bytes")
 
 
+def _load(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 def _sha(path: Path) -> str:
     import hashlib
 
@@ -292,6 +310,55 @@ _SUITE_START = {
     for path in (LOCK, CANONICAL_CAPTION, SCRIPT, NARRATION, STORYBOARD)
     if path.is_file()
 }
+
+
+@test
+def test_locked_digests_come_from_git_blobs_not_the_working_tree():
+    """A working-tree digest is a host-specific digest.
+
+    ``.gitattributes`` normalises ``*.md``/``*.txt``/``*.json`` to LF, so the blob is
+    what every platform reproduces. But this Windows checkout still holds CRLF copies
+    of files that were authored before that rule applied -- Git only applies
+    ``.gitattributes`` on checkout, so those files were never rewritten -- and an
+    earlier lock read exactly those bytes.
+
+    The Linux CI runner then measured ``master.md`` at ``99767915`` against the
+    ``7df3adbd`` this host had pinned, and the lock failed on every platform but this
+    one. That is a reproducibility bug in the lock, not in the repository, and it is
+    invisible from a single machine by construction.
+
+    So the assertion is about provenance of the digest, not about a value: the lock
+    must agree with the blob, and the blob must be what a fresh checkout produces.
+    """
+    if not LOCK.is_file():
+        print("[skip] lock digests come from git blobs (no lock written)")
+        return
+    from build_evidence_lock import canonical_bytes, worktree_matches_canonical
+
+    lock = _load(LOCK)
+    checks = (
+        ("script", SCRIPT, lock["master_script_sha256"]),
+        ("narration_text", NARRATION, lock["narration_text_sha256"]),
+    )
+    for label, path, pinned in checks:
+        raw = canonical_bytes(path)
+        actual = hashlib.sha256(raw).hexdigest()
+        assert actual == pinned, (
+            f"{label}: the lock pins {pinned[:12]} but its Git blob hashes "
+            f"{actual[:12]}. The lock must digest the blob, not the working tree."
+        )
+        # And a CRLF-only difference must not be mistaken for content drift.
+        assert worktree_matches_canonical(path), (
+            f"{label}: the working tree differs from its blob beyond line endings"
+        )
+
+    # Binary assets are marked `binary` in .gitattributes, so their bytes are
+    # preserved exactly and blob == working tree. This is the control case proving
+    # the blob rule does not silently alter binary content.
+    assert _sha(CANONICAL_CAPTION) == lock["caption_sha256"], (
+        "the caption is declared binary, so its digest must be the raw bytes"
+    )
+    print("[ok] locked digests come from Git blobs, and binary assets are unaffected")
 
 
 def main() -> int:
