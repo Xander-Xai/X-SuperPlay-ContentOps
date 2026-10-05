@@ -56,8 +56,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT / "src") not in sys.path:
-    sys.path.insert(0, str(ROOT / "src"))
+for candidate in (ROOT / "src", ROOT / "scripts"):
+    if str(candidate) not in sys.path:
+        sys.path.insert(0, str(candidate))
+
+from process_utils import hidden_run  # noqa: E402
 
 from contentops.media.media_paths import serialize_media_path  # noqa: E402
 
@@ -122,8 +125,20 @@ def png_dimensions(path: Path) -> Tuple[Optional[int], Optional[int]]:
     return (int(width), int(height))
 
 
+def _run(cmd: List[str], *, timeout: float = 300.0) -> subprocess.CompletedProcess:
+    """Every child process goes through ``process_utils``.
+
+    Not a style preference. This audit shells out to ``git``, ``ffprobe`` and
+    ``ffmpeg``, and a bare ``subprocess.run`` on Windows is exactly what produces
+    the console popups the repository policy exists to eliminate. The repo policy
+    check caught four direct spawns here on the first CI run, which is the check
+    working as intended.
+    """
+    return hidden_run(cmd, cwd=str(ROOT), timeout=timeout)
+
+
 def git(*args: str) -> subprocess.CompletedProcess:
-    return subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True)
+    return _run(["git", *args], timeout=120)
 
 
 def is_tracked(rel: str) -> bool:
@@ -154,11 +169,10 @@ def logical(path: Path) -> str:
 def probe_video(path: Path) -> Dict[str, Any]:
     if not path.is_file():
         return {"present": False, "path": logical(BASELINE_DIR / "final" / path.name)}
-    out = subprocess.run(
-        ["ffprobe", "-v", "error", "-print_format", "json",
-         "-show_format", "-show_streams", str(path)],
-        capture_output=True, text=True, cwd=ROOT,
-    )
+    out = _run([
+        "ffprobe", "-v", "error", "-print_format", "json",
+        "-show_format", "-show_streams", str(path),
+    ])
     if out.returncode != 0:
         return {"present": True, "probe_failed": True}
     payload = json.loads(out.stdout)
@@ -318,10 +332,9 @@ def video_consistency_check() -> Dict[str, Any]:
             "render_facts": facts,
         }
 
-    probe = subprocess.run(
-        ["ffprobe", "-v", "error", "-print_format", "json", "-show_format", str(render)],
-        capture_output=True, text=True, cwd=ROOT,
-    )
+    probe = _run([
+        "ffprobe", "-v", "error", "-print_format", "json", "-show_format", str(render),
+    ])
     duration = float(json.loads(probe.stdout)["format"]["duration"])
     storyboard = read_storyboard()
     shots = storyboard.get("shots") or []
@@ -333,11 +346,10 @@ def video_consistency_check() -> Dict[str, Any]:
         for index in range(FRAME_SAMPLES):
             when = duration * (index + 0.5) / FRAME_SAMPLES
             target = Path(td) / f"frame_{index:03d}.png"
-            out = subprocess.run(
-                ["ffmpeg", "-v", "error", "-y", "-ss", f"{when:.3f}", "-i", str(render),
-                 "-frames:v", "1", "-vf", f"scale={PROBE_W}:{PROBE_H}", str(target)],
-                capture_output=True, text=True, cwd=ROOT,
-            )
+            out = _run([
+                "ffmpeg", "-v", "error", "-y", "-ss", f"{when:.3f}", "-i", str(render),
+                "-frames:v", "1", "-vf", f"scale={PROBE_W}:{PROBE_H}", str(target),
+            ])
             if out.returncode == 0 and target.is_file():
                 loaded.append((when, _load_gray(target)))
 

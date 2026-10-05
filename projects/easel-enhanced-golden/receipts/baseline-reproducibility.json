@@ -1,7 +1,7 @@
 {
   "schema": "contentops.baseline-reproducibility/v1",
-  "checked_at": "2026-10-05T14:08:22Z",
-  "git_head": "bd4db9aa1367c1f4f4d23679561c36732ea2afea",
+  "checked_at": "2026-10-05T14:22:58Z",
+  "git_head": "882aa13b2f6562d7db5e1ceca581b47e234bc7a9",
   "source_project": "project://easel-review",
   "script_sha256": "7df3adbd34f3e2fc5157a2c858de737beca12a13fb58ea64fd570e982820d69d",
   "narration_text_sha256": "2f7122228c53de128d04541ec1c4086dedd22ddc51bb0347d605e1c789a02348",
