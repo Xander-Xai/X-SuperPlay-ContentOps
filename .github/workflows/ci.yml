@@ -96,11 +96,25 @@ jobs:
       - name: Run locked-input reproducibility tests
         run: python tests/test_locked_input_reproducibility.py
 
-      # A/B voice variants. The committed receipts are asserted on a clean checkout;
-      # the voice-provenance and shared-timeline checks skip without the gitignored
-      # historical audio, which is correct rather than a silent pass.
+      # A/B voice variants. Runs on a clean checkout with no gitignored audio present,
+      # which is the point: the voice-provenance gates resolve from the tracked Golden
+      # fixtures. They used to skip here, so the provenance claims they defend were
+      # only ever checked on one machine.
       - name: Run M4.6 A/B voice variant tests
         run: python tests/test_golden_variant_ab.py
+
+      # The Golden voice fixture exception. Asserts the two approved files are tracked
+      # and everything else -- other provider output, .verify-tmp, another project's
+      # voice assets, and both rendered finals -- stays ignored.
+      - name: Run Golden voice media policy tests
+        run: python tests/test_golden_voice_assets.py
+
+      # Clones the repository, deletes every host-local input, and resolves the lock,
+      # both narrations and B's provider receipt from Git alone. This is the suite that
+      # would have caught the host-local provenance before it shipped, and it is the
+      # only one that reproduces a second engineer's checkout.
+      - name: Run Golden voice clean-checkout rebuildability tests
+        run: python tests/test_golden_voice_rebuildability.py
 
       - name: Run Windows subprocess tests
         run: python tests/test_windows_subprocess.py
