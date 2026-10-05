@@ -1651,6 +1651,9 @@ def test_a_billable_run_requires_a_test_objective():
 
 def test_a_cache_hit_needs_no_budget_because_it_spends_nothing():
     """The budget gate sits after the cache, so free runs are never forced to lie."""
+    if not HAVE_MEDIA:
+        _skip(75, "a cache hit needs no budget", "ffmpeg")
+        return
     with tempfile.TemporaryDirectory() as work:
         _generate(_provider(Path(work))[0], _request())
         # A fresh provider, same work dir: the cache must serve it with no budget
@@ -1665,6 +1668,9 @@ def test_a_cache_hit_needs_no_budget_because_it_spends_nothing():
 
 def test_the_declared_budget_and_objective_reach_the_receipt():
     """A receipt that cannot say what it was allowed to spend cannot show restraint."""
+    if not HAVE_MEDIA:
+        _skip(76, "budget and objective reach the receipt", "ffmpeg")
+        return
     with tempfile.TemporaryDirectory() as work:
         provider, _ = _provider(Path(work))
         outcome = _generate(provider, _request())
@@ -1840,6 +1846,9 @@ def test_prompt_expansion_mode_is_wired_end_to_end_and_fingerprinted():
     from contentops.media.video_validation import PROMPT_EXPANSION_MODES
 
     assert PROMPT_EXPANSION_MODES == ("disabled", "balanced", "quality")
+    if not HAVE_MEDIA:
+        _skip(83, "prompt_expansion_mode is wired end to end", "ffmpeg")
+        return
     with tempfile.TemporaryDirectory() as work:
         request = _request(
             model="MiniMax-H3-Max",
@@ -1901,6 +1910,9 @@ def test_every_generation_writes_a_human_review_package_with_null_scores():
     """Reference fidelity cannot be automated. The fields exist and stay null."""
     from contentops.media.video_contract import HUMAN_REVIEW_FIELDS
 
+    if not HAVE_MEDIA:
+        _skip(85, "every generation writes a review package", "ffmpeg")
+        return
     with tempfile.TemporaryDirectory() as work:
         provider, _ = _provider(Path(work))
         outcome = _generate(provider, _request())
@@ -1953,6 +1965,9 @@ def test_reference_only_fields_are_marked_not_applicable_for_text_only_modes():
         build_human_review_package,
     )
 
+    if not HAVE_MEDIA:
+        _skip(87, "reference-only fields are marked not-applicable", "ffmpeg")
+        return
     with tempfile.TemporaryDirectory() as work:
         provider, _ = _provider(Path(work))
         text_only = _generate(provider, _request())
@@ -1985,6 +2000,9 @@ def test_the_api_schema_version_is_recorded_on_the_receipt():
     from contentops.media.minimax_video import H3_API_SCHEMA_VERSION
 
     assert H3_API_SCHEMA_VERSION == "v2"
+    if not HAVE_MEDIA:
+        _skip(88, "the receipt records the API schema version", "ffmpeg")
+        return
     with tempfile.TemporaryDirectory() as work:
         provider, _ = _provider(Path(work))
         payload = receipt_to_dict(_generate(provider, _request()).receipt)
