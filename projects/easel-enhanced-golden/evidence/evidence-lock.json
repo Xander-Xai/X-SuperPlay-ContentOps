@@ -69,7 +69,19 @@
     "historical_identity": "UNVERIFIED_ORIGINAL",
     "experiment_baseline": "CANONICAL_RECOVERED_BASELINE",
     "audit_receipt": "repo://projects/easel-enhanced-golden/receipts/baseline-reproducibility.json",
-    "caption_source": "project://assets/captions/easel.srt",
+    "caption_source": "repo://projects/easel-enhanced-golden/evidence/captions/easel.srt",
+    "caption_provenance": {
+      "source_candidate": "projects/easel-review/assets/captions/easel.srt",
+      "source_candidate_sha256": "ea3a8a52439af1d3b75bddbe00c202f77c3dfebad702ba5b56a127d83d141b8d",
+      "canonical_path": "repo://projects/easel-enhanced-golden/evidence/captions/easel.srt",
+      "sha256": "ea3a8a52439af1d3b75bddbe00c202f77c3dfebad702ba5b56a127d83d141b8d",
+      "byte_identical_to_source": true,
+      "line_endings_preserved": "copied as bytes; no text round-trip",
+      "historical_identity": "UNVERIFIED_ORIGINAL",
+      "experiment_baseline": "CANONICAL_RECOVERED_BASELINE",
+      "sensitive_data_review": "PUBLIC_SAFE",
+      "note": "Captions are the on-screen narration text. No API key, token, account identifier or other sensitive value appears; the '.env also has no API Key' line states an absence and carries no value."
+    },
     "claim_ledger_status": "Claim Ledger does not exist until #6. claim_refs are intentionally empty; no claim was fabricated to populate the field."
   }
 }

@@ -63,13 +63,33 @@ MUST_STAY_IGNORED: List[str] = [
     "random.png",
 ]
 
-#: Negation patterns that would widen the exception beyond the six files.
+#: The single caption the experiment owns and tracks. Its bytes are copied from the
+#: historical caption, which stays ignored on purpose.
+SRT_ALLOWLIST: List[str] = [
+    "projects/easel-enhanced-golden/evidence/captions/easel.srt",
+]
+
+#: Must stay ignored. The historical caption in particular: rewriting the past is not
+#: how a baseline becomes reproducible, so the experiment copied the bytes instead.
+MUST_STAY_IGNORED_SRT: List[str] = [
+    "projects/easel-review/assets/captions/easel.srt",
+    "projects/easel-review/assets/captions/default.srt",
+    "projects/demo/assets/captions/foo.srt",
+    "projects/demo/evidence/captions/bar.srt",
+    "random.srt",
+    "docs/subtitles.srt",
+]
+
+#: Negation patterns that would widen the exception beyond the intended files.
 BROAD_NEGATIONS = (
-    "!*.png", "!*.jpg", "!*.jpeg", "!*.gif", "!*.webp",
+    "!*.png", "!*.jpg", "!*.jpeg", "!*.gif", "!*.webp", "!*.srt",
     "!projects/*/sources/",
     "!projects/*/sources/**",
     "!projects/easel-review/sources/screenshots/",
     "!projects/*/sources/screenshots/",
+    "!projects/*/assets/captions/",
+    "!projects/*/evidence/",
+    "!projects/*/evidence/**",
 )
 
 TESTS: List = []
@@ -190,6 +210,101 @@ def test_the_allowlist_has_no_duplicates_or_stray_entries():
         f"entry needs the same sensitive-data review and Founder decision."
     )
     print("[ok] 7. the png allowlist is exactly six entries, no duplicates")
+
+
+@test
+def test_the_canonical_caption_is_trackable():
+    """The experiment owns a tracked copy of the caption the lock pins.
+
+    Without it the lock pinned ``easel-review/assets/captions/easel.srt``, which Git
+    ignores — so the baseline reported itself reproducible while referencing bytes no
+    other machine could obtain.
+    """
+    for rel in SRT_ALLOWLIST:
+        assert not ignored(rel), f"{rel} is still ignored by the rules"
+        assert tracked(rel), f"{rel} is not tracked"
+        path = ROOT / rel
+        assert path.is_file(), f"{rel} does not exist on disk"
+    print(f"[ok] 8. the canonical experiment caption is tracked")
+
+
+@test
+def test_every_other_srt_stays_ignored():
+    """Including the historical captions.
+
+    The historical ``easel.srt`` is byte-identical to the tracked copy and could
+    trivially have been allowlisted instead. It was not, because the point is that the
+    experiment holds its own copy and the past stays untouched.
+    """
+    wrong = [rel for rel in MUST_STAY_IGNORED_SRT if not ignored(rel)]
+    assert not wrong, (
+        f"these .srt files are no longer ignored, so the caption exception has widened "
+        f"beyond the single intended path: {wrong}"
+    )
+    print(f"[ok] 9. all {len(MUST_STAY_IGNORED_SRT)} non-approved .srt files stay ignored")
+
+
+@test
+def test_the_global_srt_ignore_is_still_present():
+    text = GITIGNORE.read_text(encoding="utf-8")
+    assert re.search(r"^\s*\*\.srt\s*$", text, re.MULTILINE), (
+        "the global *.srt ignore is gone. Removing it would make the caption exception "
+        "unnecessary and would let every subtitle file be committed."
+    )
+    print("[ok] 10. the global *.srt ignore rule is still present")
+
+
+@test
+def test_the_srt_allowlist_is_exactly_one_intended_path():
+    lines = [
+        line.strip() for line in GITIGNORE.read_text(encoding="utf-8").splitlines()
+        if line.strip().startswith("!") and line.strip().endswith(".srt")
+    ]
+    assert len(lines) == len(set(lines)), f"duplicate srt negations: {lines}"
+    stray = sorted(set(lines) - {f"!{rel}" for rel in SRT_ALLOWLIST})
+    assert not stray, (
+        f"unexpected .srt negation(s) beyond the single intended file: {stray}. Any new "
+        f"entry needs the same sensitive-data review and Founder decision."
+    )
+    print("[ok] 11. the srt allowlist is exactly one intended path")
+
+
+@test
+def test_the_srt_negation_comes_after_the_rule_it_negates():
+    text = GITIGNORE.read_text(encoding="utf-8")
+    srt_rule = text.index("*.srt")
+    for rel in SRT_ALLOWLIST:
+        position = text.index(f"!{rel}")
+        assert position > srt_rule, (
+            f"!{rel} appears before the *.srt rule, so gitignore last-match-wins "
+            f"leaves the file ignored."
+        )
+    print("[ok] 12. the srt negation is positioned after the rule it negates")
+
+
+@test
+def test_the_locked_caption_is_byte_identical_to_the_historical_one():
+    """The copy must be the same bytes, not merely a similar caption.
+
+    A retyped or re-timed caption would produce a plausible-looking lock describing
+    subtitles nobody rendered, which is the failure this whole stage exists to close.
+    """
+    import hashlib
+
+    historical = ROOT / "projects/easel-review/assets/captions/easel.srt"
+    canonical = ROOT / SRT_ALLOWLIST[0]
+    if not historical.is_file():
+        # A clean checkout does not carry the ignored historical file. The tracked
+        # copy is authoritative there, so there is nothing to compare against and
+        # nothing to fail.
+        print("[skip] 13. caption byte-identity (historical source absent on this host)")
+        return
+    assert canonical.read_bytes() == historical.read_bytes(), (
+        "the tracked canonical caption is not byte-identical to the historical one"
+    )
+    assert hashlib.sha256(canonical.read_bytes()).hexdigest() == \
+        hashlib.sha256(historical.read_bytes()).hexdigest()
+    print("[ok] 13. the canonical caption is byte-identical to the historical caption")
 
 
 def main() -> int:

@@ -67,6 +67,7 @@ from contentops.media.media_paths import serialize_media_path  # noqa: E402
 BASELINE_PROJECT = "easel-review"
 BASELINE_DIR = ROOT / "projects" / BASELINE_PROJECT
 SHOTS_DIR = BASELINE_DIR / "sources" / "screenshots"
+EXPERIMENT = ROOT / "projects" / "easel-enhanced-golden"
 
 AUDIT_SCHEMA = "contentops.baseline-reproducibility/v1"
 
@@ -271,6 +272,84 @@ def probe_video(path: Path) -> Dict[str, Any]:
 
 
 # --- classification ----------------------------------------------------------
+
+
+#: The canonical caption the experiment owns and tracks. Its bytes are copied from the
+#: historical caption, which Git ignores.
+CANONICAL_CAPTION = EXPERIMENT / "evidence" / "captions" / "easel.srt"
+CAPTION_SOURCE_CANDIDATE = SHOTS_DIR.parent.parent / "assets" / "captions" / "easel.srt"
+
+#: Every file-backed input a reproducible baseline needs. ``git_reproducible`` used to
+#: be computed from the six screenshots alone, so a lock pinning an untracked caption
+#: still reported true: the screenshots were in Git, the caption was not, and the
+#: summary said the baseline was reproducible. Each input is now counted separately and
+#: screenshots report n/6 rather than a boolean, because "tracked" was the word that hid
+#: a partial answer.
+LOCKED_INPUTS: Dict[str, str] = {
+    "script": "projects/easel-review/script/master.md",
+    "narration_text": "projects/easel-review/script/narration.txt",
+    "storyboard": "projects/easel-review/script/storyboard.json",
+    "caption": "projects/easel-enhanced-golden/evidence/captions/easel.srt",
+}
+
+
+def locked_inputs_reproducibility() -> Dict[str, Any]:
+    """Presence and Git tracking for every file-backed input of the baseline."""
+    checks: Dict[str, Any] = {}
+    for label, rel in LOCKED_INPUTS.items():
+        path = ROOT / rel
+        present = path.is_file()
+        checks[label] = {
+            "path": rel,
+            "exists": present,
+            "tracked": bool(present and is_tracked(rel)),
+            "sha256": sha256_file(path) if present else None,
+        }
+
+    tracked_shots = 0
+    for name in EXPECTED_SHOTS:
+        rel = f"projects/{BASELINE_PROJECT}/sources/screenshots/{name}"
+        if (ROOT / rel).is_file() and is_tracked(rel):
+            tracked_shots += 1
+    checks["screenshots"] = {
+        "path": f"projects/{BASELINE_PROJECT}/sources/screenshots/",
+        "tracked": f"{tracked_shots}/{len(EXPECTED_SHOTS)}",
+        "expected": len(EXPECTED_SHOTS),
+        "all_tracked": tracked_shots == len(EXPECTED_SHOTS),
+    }
+    checks["all_tracked"] = all(
+        entry.get("tracked") in (True, f"{len(EXPECTED_SHOTS)}/{len(EXPECTED_SHOTS)}")
+        for key, entry in checks.items() if key != "all_tracked"
+    )
+    return checks
+
+
+def caption_provenance() -> Dict[str, Any]:
+    """Where the locked caption came from, and why it is not a historical proof."""
+    source_rel = f"projects/{BASELINE_PROJECT}/assets/captions/easel.srt"
+    canonical_rel = f"projects/easel-enhanced-golden/evidence/captions/easel.srt"
+    source = ROOT / source_rel
+    canonical = ROOT / canonical_rel
+    record: Dict[str, Any] = {
+        "source_candidate": source_rel,
+        "canonical_path": f"repo://{canonical_rel}",
+        "sha256": sha256_file(canonical) if canonical.is_file() else None,
+        "byte_identical_to_source": None,
+        "sensitive_data_review": "PUBLIC_SAFE",
+        "historical_identity": HISTORICAL_IDENTITY_UNVERIFIED,
+        "experiment_baseline": EXPERIMENT_BASELINE_CANONICAL,
+        "note": (
+            "The experiment owns its own copy because the historical caption is ignored "
+            "by Git. Copying the exact bytes satisfies both roles at once: identical "
+            "evidence, and a path another machine can actually obtain."
+        ),
+    }
+    if source.is_file() and canonical.is_file():
+        record["byte_identical_to_source"] = (
+            sha256_file(source) == sha256_file(canonical)
+        )
+        record["source_sha256"] = sha256_file(source)
+    return record
 
 
 def classify_expected() -> List[Dict[str, Any]]:
@@ -508,6 +587,8 @@ def build_audit() -> Dict[str, Any]:
     all_public_safe = all(
         r["sensitive_data_review"]["verdict"] == "PUBLIC_SAFE" for r in found
     )
+    locked_inputs = locked_inputs_reproducibility()
+    every_input_tracked = bool(locked_inputs.get("all_tracked"))
 
     intermediates = work_intermediates_check()
     consistency = video_consistency_check()
@@ -536,16 +617,25 @@ def build_audit() -> Dict[str, Any]:
         "missing_count": len(missing),
         "tracked_count": tracked_count,
         "source_completeness": "COMPLETE" if on_host_complete else "INCOMPLETE",
-        # True only when every factual source is actually in Git. This is what makes
-        # an experiment reproducible elsewhere, and it is a different question from
-        # whether the set is whole on this host.
-        "git_reproducible": bool(found) and tracked_count == len(records),
+        # Means EVERY file-backed input of the production evidence lock is present and
+        # tracked: script, narration text, storyboard, canonical caption and all six
+        # screenshots. Computing it from the screenshot count alone is what let an
+        # untracked caption pass as a reproducible baseline.
+        "git_reproducible": every_input_tracked,
+        "locked_inputs_reproducibility": locked_inputs,
+        "locked_inputs_definition": (
+            "git_reproducible is true only when every entry under "
+            "locked_inputs_reproducibility is tracked. Screenshots report n/6 rather "
+            "than a boolean, because a partial count hidden behind the word 'tracked' "
+            "is what caused the caption gap."
+        ),
+        "caption_provenance": caption_provenance(),
         "historical_identity": (
             HISTORICAL_IDENTITY_UNVERIFIED if found else "UNKNOWN"
         ),
         "experiment_baseline": (
             EXPERIMENT_BASELINE_CANONICAL
-            if on_host_complete and all_public_safe and tracked_count == len(records)
+            if on_host_complete and all_public_safe and every_input_tracked
             else "NOT_CANONICAL"
         ),
         "identity_semantics_note": (
@@ -581,19 +671,20 @@ def build_audit() -> Dict[str, Any]:
             ),
         },
         "git_reproducibility_gap": {
-            "resolved": bool(found) and tracked_count == len(records),
+            "resolved": every_input_tracked,
             "resolved_by": "Founder policy decision, 2026-10-05",
             "resolution": (
-                "The six factual sources are exempt from the blanket media ignore and "
-                "are tracked. A video that cites a screenshot can now be re-verified "
-                "from the repository by anyone."
+                "The six factual sources and the experiment's own canonical caption are "
+                "exempt from the blanket media ignore and are tracked. A video that "
+                "cites a screenshot or burns a caption can now be re-verified from the "
+                "repository by anyone."
             ),
             "affected_paths": [r["expected_path"] for r in records],
             "root_cause": (
-                "A repository-wide '*.png' rule in .gitignore made image evidence "
-                "untrackable. The blanket rule is correct for build artefacts and "
-                "wrong for factual evidence, so six exact paths are now exempted "
-                "while the rule and every other image keep their existing behaviour."
+                "A repository-wide media ignore rule made image and caption evidence "
+                "untrackable. The blanket rule is correct for build artefacts and wrong "
+                "for evidence, so exact paths are now exempted while every other file "
+                "keeps its existing behaviour."
             ),
             "allowlist_ignore_rule": ignore_rule,
             "policy_note": (
@@ -601,14 +692,21 @@ def build_audit() -> Dict[str, Any]:
                 "no project-level exemption. tests/test_gitignore_evidence_policy.py "
                 "asserts both the allowlist and the continued absence of any broad "
                 "negation rule, so widening this later fails CI rather than quietly "
-                "unignoring every image in the repository."
+                "unignoring every asset in the repository."
+            ),
+            "caption": (
+                "The historical caption stays ignored and unmodified. The experiment "
+                "copied its exact bytes into its own tracked evidence directory, which "
+                "is how a baseline becomes reproducible without rewriting the past."
             ),
             "options_not_taken": [
                 "renaming 01-04 into the 10-15 slots (they depict different material)",
                 "extracting frames from the render and promoting them to sources",
-                "generating replacement screenshots",
+                "generating replacement screenshots or captions",
                 "resizing, recompressing, re-encoding or cropping the recovered bytes",
-                "removing the global media ignore or adding '!*.png'",
+                "normalizing line endings or rewriting caption text",
+                "substituting default.srt, which is a different and shorter asset",
+                "removing the global media ignore or adding '!*.png' / '!*.srt'",
                 "rewriting the historical storyboard, project.yaml or old receipts to "
                 "make the past look tidier",
             ],
@@ -664,7 +762,12 @@ def main() -> int:
     print(f"recovered               : {audit['recovered_count']}/{audit['expected_count']}"
           f"   missing {audit['missing_count']}")
     print(f"source_completeness     : {audit['source_completeness']}  (on this build host)")
-    print(f"git_reproducible        : {audit['git_reproducible']}")
+    print(f"git_reproducible        : {audit['git_reproducible']}  (every locked input tracked)")
+    for label, entry in audit["locked_inputs_reproducibility"].items():
+        if label == "all_tracked":
+            continue
+        print(f"    {label:16s} tracked={entry['tracked']}")
+    print(f"    {'all_tracked':16s} {audit['locked_inputs_reproducibility']['all_tracked']}")
     print(f"historical_identity     : {audit['historical_identity']}")
     print(f"experiment_baseline     : {audit['experiment_baseline']}")
     print(f"sensitive review        : all_public_safe="

@@ -1,7 +1,7 @@
 {
   "schema": "contentops.baseline-reproducibility/v1",
-  "checked_at": "2026-10-05T18:01:42Z",
-  "git_head": "813d4b25af2b8a51f8642796963ed9c0744b9046",
+  "checked_at": "2026-10-05T19:06:13Z",
+  "git_head": "9e382f16f33235ff2d819ead070d196966a86ca2",
   "source_project": "project://easel-review",
   "script_sha256": "7df3adbd34f3e2fc5157a2c858de737beca12a13fb58ea64fd570e982820d69d",
   "narration_text_sha256": "2f7122228c53de128d04541ec1c4086dedd22ddc51bb0347d605e1c789a02348",
@@ -129,6 +129,51 @@
   "tracked_count": 6,
   "source_completeness": "COMPLETE",
   "git_reproducible": true,
+  "locked_inputs_reproducibility": {
+    "script": {
+      "path": "projects/easel-review/script/master.md",
+      "exists": true,
+      "tracked": true,
+      "sha256": "7df3adbd34f3e2fc5157a2c858de737beca12a13fb58ea64fd570e982820d69d"
+    },
+    "narration_text": {
+      "path": "projects/easel-review/script/narration.txt",
+      "exists": true,
+      "tracked": true,
+      "sha256": "2f7122228c53de128d04541ec1c4086dedd22ddc51bb0347d605e1c789a02348"
+    },
+    "storyboard": {
+      "path": "projects/easel-review/script/storyboard.json",
+      "exists": true,
+      "tracked": true,
+      "sha256": "31d9d51dc3caee0f9c1812aea6ceac5e41f815ea2079279da85cfacb98488053"
+    },
+    "caption": {
+      "path": "projects/easel-enhanced-golden/evidence/captions/easel.srt",
+      "exists": true,
+      "tracked": true,
+      "sha256": "ea3a8a52439af1d3b75bddbe00c202f77c3dfebad702ba5b56a127d83d141b8d"
+    },
+    "screenshots": {
+      "path": "projects/easel-review/sources/screenshots/",
+      "tracked": "6/6",
+      "expected": 6,
+      "all_tracked": true
+    },
+    "all_tracked": true
+  },
+  "locked_inputs_definition": "git_reproducible is true only when every entry under locked_inputs_reproducibility is tracked. Screenshots report n/6 rather than a boolean, because a partial count hidden behind the word 'tracked' is what caused the caption gap.",
+  "caption_provenance": {
+    "source_candidate": "projects/easel-review/assets/captions/easel.srt",
+    "canonical_path": "repo://projects/easel-enhanced-golden/evidence/captions/easel.srt",
+    "sha256": "ea3a8a52439af1d3b75bddbe00c202f77c3dfebad702ba5b56a127d83d141b8d",
+    "byte_identical_to_source": true,
+    "sensitive_data_review": "PUBLIC_SAFE",
+    "historical_identity": "UNVERIFIED_ORIGINAL",
+    "experiment_baseline": "CANONICAL_RECOVERED_BASELINE",
+    "note": "The experiment owns its own copy because the historical caption is ignored by Git. Copying the exact bytes satisfies both roles at once: identical evidence, and a path another machine can actually obtain.",
+    "source_sha256": "ea3a8a52439af1d3b75bddbe00c202f77c3dfebad702ba5b56a127d83d141b8d"
+  },
   "historical_identity": "UNVERIFIED_ORIGINAL",
   "experiment_baseline": "CANONICAL_RECOVERED_BASELINE",
   "identity_semantics_note": "historical_identity and experiment_baseline are separate facts. Committing the bytes makes them tracked, portable and verifiable by anyone; it does not prove they are the bytes used in the original render, because no historical receipt records a digest for them. No asset is VERIFIED_ORIGINAL and none ever becomes so from a commit.",
@@ -150,7 +195,7 @@
   "git_reproducibility_gap": {
     "resolved": true,
     "resolved_by": "Founder policy decision, 2026-10-05",
-    "resolution": "The six factual sources are exempt from the blanket media ignore and are tracked. A video that cites a screenshot can now be re-verified from the repository by anyone.",
+    "resolution": "The six factual sources and the experiment's own canonical caption are exempt from the blanket media ignore and are tracked. A video that cites a screenshot or burns a caption can now be re-verified from the repository by anyone.",
     "affected_paths": [
       "projects/easel-review/sources/screenshots/10-easel-doctor.png",
       "projects/easel-review/sources/screenshots/11-easel-ping.png",
@@ -159,15 +204,18 @@
       "projects/easel-review/sources/screenshots/14-easel-skills-dir.png",
       "projects/easel-review/sources/screenshots/15-easel-doctor-fails.png"
     ],
-    "root_cause": "A repository-wide '*.png' rule in .gitignore made image evidence untrackable. The blanket rule is correct for build artefacts and wrong for factual evidence, so six exact paths are now exempted while the rule and every other image keep their existing behaviour.",
+    "root_cause": "A repository-wide media ignore rule made image and caption evidence untrackable. The blanket rule is correct for build artefacts and wrong for evidence, so exact paths are now exempted while every other file keeps its existing behaviour.",
     "allowlist_ignore_rule": null,
-    "policy_note": "Narrow on purpose: no extension negation, no directory negation and no project-level exemption. tests/test_gitignore_evidence_policy.py asserts both the allowlist and the continued absence of any broad negation rule, so widening this later fails CI rather than quietly unignoring every image in the repository.",
+    "policy_note": "Narrow on purpose: no extension negation, no directory negation and no project-level exemption. tests/test_gitignore_evidence_policy.py asserts both the allowlist and the continued absence of any broad negation rule, so widening this later fails CI rather than quietly unignoring every asset in the repository.",
+    "caption": "The historical caption stays ignored and unmodified. The experiment copied its exact bytes into its own tracked evidence directory, which is how a baseline becomes reproducible without rewriting the past.",
     "options_not_taken": [
       "renaming 01-04 into the 10-15 slots (they depict different material)",
       "extracting frames from the render and promoting them to sources",
-      "generating replacement screenshots",
+      "generating replacement screenshots or captions",
       "resizing, recompressing, re-encoding or cropping the recovered bytes",
-      "removing the global media ignore or adding '!*.png'",
+      "normalizing line endings or rewriting caption text",
+      "substituting default.srt, which is a different and shorter asset",
+      "removing the global media ignore or adding '!*.png' / '!*.srt'",
       "rewriting the historical storyboard, project.yaml or old receipts to make the past look tidier"
     ],
     "decision_owner": "FOUNDER"

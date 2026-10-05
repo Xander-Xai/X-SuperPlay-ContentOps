@@ -73,6 +73,14 @@ projects/*/assets/captions/
 *.srt
 *.ass
 
+# same reason as the screenshot exception below: the evidence lock pins a caption
+# digest, and a locked input that is not in the repository is not reproducible. This
+# is the experiment's own copy, not the historical one -- the historical
+# projects/easel-review/assets/captions/ stays ignored, because rewriting the past is
+# not how you make a baseline verifiable. Exactly one path; see
+# tests/test_gitignore_evidence_policy.py.
+!projects/easel-enhanced-golden/evidence/captions/easel.srt
+
 # --- source-evidence exception (Founder decision, 2026-10-05) ---------------
 #
 # The rules above stay exactly as they are. The blanket media ignore is correct for

@@ -34,7 +34,7 @@ import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Tuple
 
 ROOT = Path(__file__).resolve().parents[1]
 for candidate in (ROOT / "src", ROOT / "scripts"):
@@ -45,6 +45,7 @@ from contentops.golden.evidence_lock import (  # noqa: E402
     EvidenceAsset,
     EvidenceLock,
     assert_production_lock,
+    structural_fingerprint,
 )
 from contentops.golden.identity import compare_evidence_identity  # noqa: E402
 from contentops.media.image_contract import AssetKind, EvidenceUse  # noqa: E402
@@ -52,13 +53,106 @@ from contentops.media.media_paths import (  # noqa: E402
     serialize_media_path,
 )
 
+#: Same two identity facts the audit records, kept identical so the audit and the lock
+#: cannot drift into telling different stories about the same files.
+HISTORICAL_IDENTITY_UNVERIFIED = "UNVERIFIED_ORIGINAL"
+EXPERIMENT_BASELINE_CANONICAL = "CANONICAL_RECOVERED_BASELINE"
+
 BASELINE = ROOT / "projects" / "easel-review"
 EXPERIMENT = ROOT / "projects" / "easel-enhanced-golden"
 AUDIT_PATH = EXPERIMENT / "receipts" / "baseline-reproducibility.json"
 
-#: Caption files present in the baseline. Several exist; the lock records the ones the
-#: storyboard actually names rather than guessing which was burned in.
+#: Caption candidates in the historical baseline, in preference order. Only the first
+#: that exists is considered, and it is verified against the locked digest before use.
 CAPTION_CANDIDATES = ("assets/captions/easel.srt", "assets/captions/default.srt")
+
+#: The canonical caption the experiment owns and tracks. Copied byte-for-byte from the
+#: historical file, so it satisfies both roles at once: identical evidence bytes, and a
+#: path that is actually in the repository.
+CANONICAL_CAPTION = EXPERIMENT / "evidence" / "captions" / "easel.srt"
+
+#: Where that caption came from, recorded for provenance. The source stays ignored and
+#: is never rewritten -- the experiment consumes the past through its own copy.
+CAPTION_SOURCE_CANDIDATE = BASELINE / "assets" / "captions" / "easel.srt"
+
+
+def _is_tracked(rel: str) -> bool:
+    from process_utils import hidden_run
+
+    return hidden_run(
+        ["git", "ls-files", "--error-unmatch", rel], cwd=str(ROOT), timeout=60
+    ).returncode == 0
+
+
+def _repo_relative(path: Path) -> str:
+    return path.relative_to(ROOT).as_posix()
+
+
+def locked_inputs_reproducibility(lock: "EvidenceLock") -> Dict[str, Any]:
+    """Is every file-backed input of the lock present in Git?
+
+    This exists because the previous definition was wrong in a way that read as a
+    pass. ``git_reproducible`` was computed from the six screenshots alone, so a lock
+    pinning an untracked caption still reported ``true`` — the screenshots were in Git,
+    the caption was not, and the summary said everything was reproducible. A lock whose
+    script, narration, storyboard, caption or screenshots are missing from Git cannot be
+    reproduced by anyone, so every one of them is counted here.
+
+    Screenshot tracking is reported as ``n/6`` rather than a boolean, because "tracked"
+    was exactly the word that hid a partial answer before.
+    """
+    checks: Dict[str, Any] = {}
+
+    for label, path, expected_digest in (
+        ("script", BASELINE / "script" / "master.md", lock.master_script_sha256),
+        ("narration_text", BASELINE / "script" / "narration.txt", lock.narration_text_sha256),
+        ("storyboard", BASELINE / "script" / "storyboard.json", None),
+        ("caption", CANONICAL_CAPTION, lock.caption_sha256),
+    ):
+        rel = _repo_relative(path)
+        present = path.is_file()
+        tracked = present and _is_tracked(rel)
+        digest = _sha256(path) if present else None
+        entry: Dict[str, Any] = {
+            "path": rel,
+            "exists": present,
+            "tracked": tracked,
+            "sha256": digest,
+        }
+        if expected_digest is not None:
+            entry["sha256_matches_lock"] = digest == expected_digest
+        else:
+            # The storyboard is pinned by structural fingerprint, not raw digest, so
+            # key reordering and timestamps do not cause a false failure.
+            entry["sha256_matches_lock"] = (
+                _structural(json.loads(path.read_text(encoding="utf-8")))
+                == lock.storyboard_fingerprint
+            ) if present else False
+        entry["ok"] = bool(present and tracked and entry["sha256_matches_lock"])
+        checks[label] = entry
+
+    tracked_shots = 0
+    for asset in lock.evidence:
+        # Resolved through the path contract, never by string surgery on the logical
+        # reference -- the same reason the verifier resolves rather than rewrites.
+        from contentops.media.media_paths import resolve_media_path
+
+        local = resolve_media_path(
+            asset.asset_path, repo_root=ROOT, project_root=BASELINE
+        )
+        if local.is_file() and _is_tracked(_repo_relative(local)):
+            tracked_shots += 1
+    checks["screenshots"] = {
+        "path": f"projects/{BASELINE.name}/sources/screenshots/",
+        "tracked": f"{tracked_shots}/{len(lock.evidence)}",
+        "expected": len(lock.evidence),
+        "ok": tracked_shots == len(lock.evidence) and bool(lock.evidence),
+    }
+
+    checks["all_tracked"] = all(
+        entry["ok"] for key, entry in checks.items() if key != "all_tracked"
+    )
+    return checks
 
 #: The Factual bindings come from the storyboard, not from a hand-written list. A
 #: hand-written list would be a second source of truth that could disagree with the
@@ -148,16 +242,19 @@ def build() -> EvidenceLock:
 
     # An evidence lock admits nothing generated and nothing evidence-incapable.
     for asset in assets:
-        if asset.asset_kind not in AssetKind.EVIDENCE_CAPABLE:
-            fail("KIND_NOT_EVIDENCE_CAPABLE", f"{asset.placement_id}: {asset.asset_kind}")
         if asset.asset_kind in AssetKind.GENERATED:
-            fail("GENERATED_REPLACED_EVIDENCE", f"{asset.placement_id} is generated")
+            fail(
+                "GENERATED_REPLACED_EVIDENCE",
+                f"{asset.placement_id} holds {asset.asset_kind}. Generated media can "
+                f"never occupy a factual placement, derived or not.",
+            )
+        if asset.asset_kind not in AssetKind.EVIDENCE_CAPABLE:
+            fail(
+                "KIND_NOT_EVIDENCE_CAPABLE",
+                f"{asset.placement_id}: {asset.asset_kind} cannot support a factual claim",
+            )
 
-    caption = None
-    for candidate in CAPTION_CANDIDATES:
-        if (BASELINE / candidate).is_file():
-            caption = BASELINE / candidate
-            break
+    caption, caption_note = resolve_caption()
 
     lock = EvidenceLock(
         source_project="project://easel-review",
@@ -172,9 +269,8 @@ def build() -> EvidenceLock:
             "historical_identity": audit["historical_identity"],
             "experiment_baseline": audit["experiment_baseline"],
             "audit_receipt": "repo://projects/easel-enhanced-golden/receipts/baseline-reproducibility.json",
-            "caption_source": (
-                resolve_logical(caption) if caption else None
-            ),
+            "caption_source": resolve_logical(caption) if caption else None,
+            "caption_provenance": caption_note,
             "claim_ledger_status": (
                 "Claim Ledger does not exist until #6. claim_refs are intentionally "
                 "empty; no claim was fabricated to populate the field."
@@ -186,7 +282,86 @@ def build() -> EvidenceLock:
     reloaded = EvidenceLock.from_dict(lock.as_dict())
     assert reloaded.fingerprint() == lock.fingerprint(), "lock does not round trip"
     assert_production_lock(lock)
+
+    # Refuse to WRITE a lock whose inputs are not all in Git. Writing it and reporting
+    # `git_reproducible: false` afterwards is precisely what let the caption gap
+    # through: the lock was written, the six screenshots were tracked, and the
+    # summary said the baseline was reproducible while pinning an untracked file.
+    reproducibility = locked_inputs_reproducibility(lock)
+    if not reproducibility["all_tracked"]:
+        broken = [
+            key for key, entry in reproducibility.items()
+            if key != "all_tracked" and not entry["ok"]
+        ]
+        fail(
+            "EVIDENCE_INPUT_NOT_TRACKED",
+            f"locked input(s) not present and tracked in Git: {broken}. The lock would "
+            f"pin bytes nobody else can obtain, so it is not written.",
+        )
     return lock
+
+
+def resolve_caption():
+    """Pick the caption the experiment tracks, and prove it is the historical bytes.
+
+    The lock used to pin ``easel-review/assets/captions/easel.srt``, which Git
+    ignores. That made the lock reference a file nobody else could obtain while the
+    summary still reported reproducibility — the failure this stage exists to close.
+
+    So the caption must resolve to the experiment's own tracked copy, and that copy
+    must be byte-identical to the historical file. ``default.srt`` is a different asset
+    and is never a substitute: it is 582 bytes against 1189 and its digest does not
+    match, so quietly swapping it would have produced a plausible-looking lock
+    describing captions nobody rendered.
+    """
+    if not CANONICAL_CAPTION.is_file():
+        fail(
+            "CAPTION_NOT_PRESENT",
+            f"{_repo_relative(CANONICAL_CAPTION)} does not exist. Copy the historical "
+            f"caption byte-for-byte; do not author a replacement.",
+        )
+    if not _is_tracked(_repo_relative(CANONICAL_CAPTION)):
+        fail(
+            "EVIDENCE_INPUT_NOT_TRACKED",
+            f"{_repo_relative(CANONICAL_CAPTION)} is not tracked. A locked input absent "
+            f"from Git cannot be reproduced by another machine.",
+        )
+    if not CAPTION_SOURCE_CANDIDATE.is_file():
+        return CANONICAL_CAPTION, {
+            "source_candidate": None,
+            "note": (
+                "the historical caption is absent from this host; the tracked "
+                "experiment copy is authoritative for the experiment"
+            ),
+        }
+
+    canonical_digest = _sha256(CANONICAL_CAPTION)
+    source_digest = _sha256(CAPTION_SOURCE_CANDIDATE)
+    if canonical_digest != source_digest:
+        fail(
+            "CAPTION_BASELINE_MISMATCH",
+            f"the tracked canonical caption hashes {canonical_digest[:12]} but "
+            f"{_repo_relative(CAPTION_SOURCE_CANDIDATE)} hashes {source_digest[:12]}. "
+            f"Refusing to proceed: substituting different caption bytes would make the "
+            f"lock describe material that was never rendered. default.srt is a "
+            f"different asset and is not a substitute.",
+        )
+    return CANONICAL_CAPTION, {
+        "source_candidate": _repo_relative(CAPTION_SOURCE_CANDIDATE),
+        "source_candidate_sha256": source_digest,
+        "canonical_path": f"repo://{_repo_relative(CANONICAL_CAPTION)}",
+        "sha256": canonical_digest,
+        "byte_identical_to_source": True,
+        "line_endings_preserved": "copied as bytes; no text round-trip",
+        "historical_identity": HISTORICAL_IDENTITY_UNVERIFIED,
+        "experiment_baseline": EXPERIMENT_BASELINE_CANONICAL,
+        "sensitive_data_review": "PUBLIC_SAFE",
+        "note": (
+            "Captions are the on-screen narration text. No API key, token, account "
+            "identifier or other sensitive value appears; the '.env also has no API "
+            "Key' line states an absence and carries no value."
+        ),
+    }
 
 
 def verify() -> EvidenceLock:
@@ -282,7 +457,95 @@ def verify() -> EvidenceLock:
             "EVIDENCE_ASSET_REMOVED",
             f"the lock has {len(lock.evidence)} assets for {len(shots)} storyboard shots",
         )
+
+    # Every file-backed input, not just the screenshots. The screenshots-only check is
+    # what let a lock pin an untracked caption and still pass, so the caption, script,
+    # narration text and storyboard are each verified for presence, tracking and digest.
+    verify_locked_inputs(lock)
     return lock
+
+
+def verify_locked_inputs(lock: "EvidenceLock") -> Dict[str, Any]:
+    """Presence, Git tracking and digest for every file-backed lock input."""
+    checks: Dict[str, Any] = {}
+
+    def check_input(label: str, path: Path, expected: Optional[str], mode: str) -> None:
+        rel = _repo_relative(path)
+        if not path.is_file():
+            fail("EVIDENCE_INPUT_MISSING", f"{label}: {rel} does not exist")
+        if not _is_tracked(rel):
+            fail(
+                "EVIDENCE_INPUT_NOT_TRACKED",
+                f"{label}: {rel} exists but is not tracked, so the locked input cannot "
+                f"be obtained by another machine or in CI",
+            )
+        digest = _sha256(path)
+        if mode == "structural":
+            actual = _structural(json.loads(path.read_text(encoding="utf-8")))
+        else:
+            actual = digest
+        if actual != expected:
+            code = (
+                "EVIDENCE_STORYBOARD_CHANGED" if mode == "structural"
+                else "EVIDENCE_SHA_CHANGED"
+            )
+            fail(
+                code,
+                f"{label}: {rel} hashes {actual[:12]}; the lock pinned "
+                f"{str(expected)[:12]}",
+            )
+        checks[label] = {
+            "path": rel, "exists": True, "tracked": True,
+            "sha256": digest, "matches_lock": True,
+        }
+
+    check_input("script", BASELINE / "script" / "master.md",
+                lock.master_script_sha256, "digest")
+    check_input("narration_text", BASELINE / "script" / "narration.txt",
+                lock.narration_text_sha256, "digest")
+    check_input("storyboard", BASELINE / "script" / "storyboard.json",
+                lock.storyboard_fingerprint, "structural")
+
+    if lock.caption_sha256 is None:
+        fail(
+            "EVIDENCE_INPUT_MISSING",
+            "the lock pins no caption. A lock without a caption leaves the "
+            "subtitle state of every build unverifiable.",
+        )
+    # The caption must be the tracked experiment copy, not the ignored historical one.
+    # `default.srt` is a different asset and must never be accepted here.
+    if CANONICAL_CAPTION.is_file():
+        check_input("caption", CANONICAL_CAPTION, lock.caption_sha256, "digest")
+        # The digest alone cannot prove *which* file was meant: the historical caption
+        # and the tracked copy are byte-identical, so a lock pinned to the ignored
+        # original verified clean. The declared provenance is what distinguishes them,
+        # so it is checked rather than trusted.
+        declared = (lock.notes or {}).get("caption_provenance", {}) or {}
+        declared_path = declared.get("canonical_path")
+        expected_path = f"repo://{_repo_relative(CANONICAL_CAPTION)}"
+        if declared_path is not None and declared_path != expected_path:
+            fail(
+                "CAPTION_PROVENANCE_MISMATCH",
+                f"the lock declares its canonical caption as {declared_path!r}, but the "
+                f"only tracked copy is {expected_path!r}. The historical caption is "
+                f"ignored by Git, so a lock pointing at it pins bytes another machine "
+                f"cannot obtain.",
+            )
+    else:
+        historical = BASELINE / "assets" / "captions" / "easel.srt"
+        if historical.is_file() and _sha256(historical) == lock.caption_sha256:
+            fail(
+                "EVIDENCE_INPUT_NOT_TRACKED",
+                "the locked caption resolves only to the ignored historical file "
+                f"{_repo_relative(historical)}. Copy the exact bytes into "
+                f"{_repo_relative(CANONICAL_CAPTION)} and track that instead.",
+            )
+        fail(
+            "CAPTION_BASELINE_MISMATCH",
+            f"neither {_repo_relative(CANONICAL_CAPTION)} nor the historical caption "
+            f"reproduces the locked caption digest {lock.caption_sha256[:12]}",
+        )
+    return checks
 
 
 def _is_tracked(rel: str) -> bool:
