@@ -91,6 +91,7 @@ from contentops.media.media_envelope import (  # noqa: E402
 )
 from contentops.media.media_paths import (  # noqa: E402
     is_logical_path,
+    logical_prefix_map,
     resolve_media_path,
     sanitize_embedded_paths,
     serialize_media_path,
@@ -2025,6 +2026,29 @@ def test_embedded_path_sanitizing_leaves_non_paths_alone():
             f"missing at {project / 'final' / 'final.mp4'}",
             repo_root=repo, project_root=project,
         ) == "missing at project://final/final.mp4"
+
+        # Every spelling of a root must be recognised, not only the resolved one.
+        #
+        # On Windows these differ whenever a path contains an 8.3 short component: a
+        # temp directory arrives as C:\Users\RUNNER~1\... while Path.resolve()
+        # expands it to C:\Users\runneradmin\... . Matching only the resolved form
+        # meant text written with the short spelling was never sanitized, so a
+        # machine path survived into a committed receipt. The Windows CI runner
+        # caught that; Linux could not, because the two spellings are identical
+        # there. Asserting the invariant rather than the symptom keeps it caught on
+        # whichever platform notices.
+        listed = {prefix for prefix, _ in logical_prefix_map(
+            repo_root=repo, project_root=project
+        )}
+        for root in (repo, project):
+            for spelling in (
+                str(root), str(root.resolve()),
+                root.as_posix(), Path(root.resolve()).as_posix(),
+            ):
+                assert spelling in listed, (
+                    f"a root spelling is missing from the prefix map: {spelling!r}. "
+                    f"Text written with that spelling would not be sanitized."
+                )
     print("[ok] 95. embedded path sanitizing leaves non-paths alone")
 
 

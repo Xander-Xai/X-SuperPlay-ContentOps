@@ -179,24 +179,39 @@ def logical_prefix_map(
     Longest-first is load-bearing, not cosmetic. A project path also sits under the
     repo root, so converting repo-relative first would turn
     ``<repo>/projects/demo/x.mp4`` into ``repo://projects/demo/x.mp4`` and hide the
-    project-relative form that actually applies. Both native (``D:\\a\\b``) and
-    POSIX spellings are listed, because a message that came from a tool may use
-    either.
+    project-relative form that actually applies.
+
+    Every root contributes **two** spellings: as given, and fully resolved. On Windows
+    those differ whenever the path contains an 8.3 short component — a temp directory
+    arrives as ``C:\\Users\\RUNNER~1\\AppData\\...`` while ``Path.resolve()`` expands it
+    to ``C:\\Users\\runneradmin\\...``. Matching only the resolved form meant text
+    written with the short spelling was never sanitized, so a machine path survived
+    into a committed receipt. CI caught this on a Windows runner; it could not have
+    been caught on Linux, where the two spellings are identical.
+
+    Both POSIX and native separators are listed, because a message that came from a
+    tool may use either.
     """
     pairs: List[Tuple[str, str]] = []
+
+    def add(root: PathLike, scheme: str) -> None:
+        spellings = []
+        for candidate in (Path(root), Path(root).resolve()):
+            for text in (str(candidate), PurePosixPath(candidate.as_posix()).as_posix()):
+                if text and text not in spellings:
+                    spellings.append(text)
+        for text in spellings:
+            pairs.append((text, scheme))
+
     if project_root is not None:
-        resolved = Path(project_root).resolve()
-        pairs.append((str(resolved), PROJECT_SCHEME))
-        pairs.append((PurePosixPath(resolved.as_posix()).as_posix(), PROJECT_SCHEME))
-    resolved_repo = Path(repo_root).resolve()
-    pairs.append((str(resolved_repo), REPO_SCHEME))
-    pairs.append((PurePosixPath(resolved_repo.as_posix()).as_posix(), REPO_SCHEME))
+        add(project_root, PROJECT_SCHEME)
+    add(repo_root, REPO_SCHEME)
 
     # De-duplicate while keeping the longest-first ordering.
     seen = set()
     unique: List[Tuple[str, str]] = []
     for prefix, scheme in pairs:
-        if prefix and (prefix, scheme) not in seen:
+        if (prefix, scheme) not in seen:
             seen.add((prefix, scheme))
             unique.append((prefix, scheme))
     unique.sort(key=lambda item: len(item[0]), reverse=True)
