@@ -192,11 +192,17 @@ def test_a_removed_caption_refuses():
     backup = CANONICAL_CAPTION.read_bytes()
     try:
         CANONICAL_CAPTION.unlink()
-        # The refusal names the ignored historical file and says to copy the bytes
-        # across, which is more actionable than a bare "missing", so the specific
-        # untracked code is the expected one here.
-        _refuses(
-            "EVIDENCE_INPUT_NOT_TRACKED",
+        # Which code fires depends on whether the *historical* caption is present on
+        # this host. With it, the refusal names the ignored file and tells you to copy
+        # the bytes across. Without it — a clean checkout — there is nothing to point
+        # at, so the finding is that neither candidate reproduces the locked digest.
+        # Both are correct; neither is a pass.
+        _refuses_any(
+            {
+                "EVIDENCE_INPUT_NOT_TRACKED",
+                "EVIDENCE_INPUT_MISSING",
+                "CAPTION_BASELINE_MISMATCH",
+            },
             "canonical caption removed",
         )
     finally:
