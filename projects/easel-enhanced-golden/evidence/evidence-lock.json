@@ -1,0 +1,87 @@
+{
+  "schema": "contentops.evidence-lock/v1",
+  "fixture": false,
+  "source_project": "project://easel-review",
+  "master_script_sha256": "7df3adbd34f3e2fc5157a2c858de737beca12a13fb58ea64fd570e982820d69d",
+  "narration_text_sha256": "2f7122228c53de128d04541ec1c4086dedd22ddc51bb0347d605e1c789a02348",
+  "storyboard_fingerprint": "2220a58e6dcc4ea0c5c2a64afca44916bf4b6be605231dee69e47512198332ab",
+  "caption_sha256": "ea3a8a52439af1d3b75bddbe00c202f77c3dfebad702ba5b56a127d83d141b8d",
+  "asset_digest": "a50ea21300d689eb996b9aab6f15c7bcd965e83dd560a373791ac9e1757c437a",
+  "fingerprint": "af8128b958906e8ebb1f6b4c21038f4fe9d2446bbba45823c90dae53fd4a4511",
+  "evidence": [
+    {
+      "placement_id": "shot_00",
+      "asset_path": "project://sources/screenshots/10-easel-doctor.png",
+      "asset_sha256": "69f173cfd03efc13cc3030c627b1d2f031213ad14c02f0358320a7378f642d17",
+      "asset_kind": "SCREENSHOT",
+      "evidence_use": "EVIDENCE",
+      "claim_refs": [],
+      "source_ref": "repo://projects/easel-review/script/master.md#实测证据"
+    },
+    {
+      "placement_id": "shot_01",
+      "asset_path": "project://sources/screenshots/12-easel-version-evidence.png",
+      "asset_sha256": "6f8603af5e83e48202d263c67da5fbd248d25cadf004365cdb67f8ed220c6d20",
+      "asset_kind": "SCREENSHOT",
+      "evidence_use": "EVIDENCE",
+      "claim_refs": [],
+      "source_ref": "repo://projects/easel-review/receipts/runtime-receipt.md"
+    },
+    {
+      "placement_id": "shot_02",
+      "asset_path": "project://sources/screenshots/13-easel-skill-layers.png",
+      "asset_sha256": "d7b01af2b2d3e2841f0948a284265496bd1b6fc4fe287dec81403c61145431f0",
+      "asset_kind": "SCREENSHOT",
+      "evidence_use": "EVIDENCE",
+      "claim_refs": [],
+      "source_ref": "repo://projects/easel-review/receipts/runtime-receipt.md"
+    },
+    {
+      "placement_id": "shot_03",
+      "asset_path": "project://sources/screenshots/11-easel-ping.png",
+      "asset_sha256": "cc566fbe0bcb9a81406d02ce0641aa110f9738730dff1d19dc278d48146cb34e",
+      "asset_kind": "SCREENSHOT",
+      "evidence_use": "EVIDENCE",
+      "claim_refs": [],
+      "source_ref": "repo://projects/easel-review/script/master.md#实测证据"
+    },
+    {
+      "placement_id": "shot_04",
+      "asset_path": "project://sources/screenshots/15-easel-doctor-fails.png",
+      "asset_sha256": "69dbfd125f2d27cbf0e626b04238069b55b77f01b04dc659fda65855a9744b2e",
+      "asset_kind": "SCREENSHOT",
+      "evidence_use": "EVIDENCE",
+      "claim_refs": [],
+      "source_ref": "repo://projects/easel-review/receipts/runtime-receipt.md"
+    },
+    {
+      "placement_id": "shot_05",
+      "asset_path": "project://sources/screenshots/14-easel-skills-dir.png",
+      "asset_sha256": "2d6fdabadff9dfc0e14c54b16e7583e3a00a9f94d777750cd1fd3654b7b6bbe0",
+      "asset_kind": "SCREENSHOT",
+      "evidence_use": "EVIDENCE",
+      "claim_refs": [],
+      "source_ref": "repo://projects/easel-review/script/master.md#实测证据"
+    }
+  ],
+  "claim_ledger_status": "NOT_AVAILABLE — #6 Claim Ledger does not exist yet. claim_refs are recorded as empty rather than populated speculatively.",
+  "notes": {
+    "historical_identity": "UNVERIFIED_ORIGINAL",
+    "experiment_baseline": "CANONICAL_RECOVERED_BASELINE",
+    "audit_receipt": "repo://projects/easel-enhanced-golden/receipts/baseline-reproducibility.json",
+    "caption_source": "repo://projects/easel-enhanced-golden/evidence/captions/easel.srt",
+    "caption_provenance": {
+      "source_candidate": "projects/easel-review/assets/captions/easel.srt",
+      "source_candidate_sha256": "ea3a8a52439af1d3b75bddbe00c202f77c3dfebad702ba5b56a127d83d141b8d",
+      "canonical_path": "repo://projects/easel-enhanced-golden/evidence/captions/easel.srt",
+      "sha256": "ea3a8a52439af1d3b75bddbe00c202f77c3dfebad702ba5b56a127d83d141b8d",
+      "byte_identical_to_source": true,
+      "line_endings_preserved": "copied as bytes; no text round-trip",
+      "historical_identity": "UNVERIFIED_ORIGINAL",
+      "experiment_baseline": "CANONICAL_RECOVERED_BASELINE",
+      "sensitive_data_review": "PUBLIC_SAFE",
+      "note": "Captions are the on-screen narration text. No API key, token, account identifier or other sensitive value appears; the '.env also has no API Key' line states an absence and carries no value."
+    },
+    "claim_ledger_status": "Claim Ledger does not exist until #6. claim_refs are intentionally empty; no claim was fabricated to populate the field."
+  }
+}

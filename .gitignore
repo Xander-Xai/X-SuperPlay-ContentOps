@@ -73,6 +73,46 @@ projects/*/assets/captions/
 *.srt
 *.ass
 
+# same reason as the screenshot exception below: the evidence lock pins a caption
+# digest, and a locked input that is not in the repository is not reproducible. This
+# is the experiment's own copy, not the historical one -- the historical
+# projects/easel-review/assets/captions/ stays ignored, because rewriting the past is
+# not how you make a baseline verifiable. Exactly one path; see
+# tests/test_gitignore_evidence_policy.py.
+!projects/easel-enhanced-golden/evidence/captions/easel.srt
+
+# --- source-evidence exception (Founder decision, 2026-10-05) ---------------
+#
+# The rules above stay exactly as they are. The blanket media ignore is correct for
+# build artefacts: a render, a generated frame or a derived thumbnail is reproducible
+# output, and committing it bloats the repository with binaries nobody can verify.
+#
+# It is wrong for *factual evidence*. `projects/easel-review`'s tracked storyboard
+# cites six screenshots as the pictures behind its claims -- doctor output, the pinned
+# version, the skill counts, the ping result, the failing web path. Those files were
+# absent from Git, so a published video pointed at evidence the repository did not
+# contain and that no second machine could re-verify. That was the gap the M4.6
+# baseline audit found.
+#
+# So: six exact paths are exempted. Not the directories, not the extensions, not the
+# projects. Everything else keeps its existing behaviour, including any other PNG a
+# contributor might drop beside these.
+#
+# Ordering matters -- gitignore is last-match-wins, so these negations must stay after
+# the `*.png` rule above. `tests/test_gitignore_evidence_policy.py` asserts both the
+# allowlist and the continued absence of any broad negation, so moving them upward
+# would fail CI rather than silently unignore every image in the repository.
+#
+# Historical identity is unchanged by this: no receipt in the repository records a
+# sha256 for these six, so committing them makes them tracked and reproducible without
+# making them VERIFIED_ORIGINAL. `historical_identity` stays UNVERIFIED_ORIGINAL.
+!projects/easel-review/sources/screenshots/10-easel-doctor.png
+!projects/easel-review/sources/screenshots/11-easel-ping.png
+!projects/easel-review/sources/screenshots/12-easel-version-evidence.png
+!projects/easel-review/sources/screenshots/13-easel-skill-layers.png
+!projects/easel-review/sources/screenshots/14-easel-skills-dir.png
+!projects/easel-review/sources/screenshots/15-easel-doctor-fails.png
+
 # Editor / OS
 .vscode/
 .idea/

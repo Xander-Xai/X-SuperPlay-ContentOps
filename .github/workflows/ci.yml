@@ -31,6 +31,30 @@ jobs:
       - name: Install test dependencies
         run: python -m pip install --quiet --upgrade pip Pillow
 
+      # ffmpeg was absent on both runners, and the M4 H3 suite plus the M4.5
+      # transform tests need it. Installing it here is what turns those skips into
+      # real coverage; without it a green run silently meant far less than it
+      # appeared to. The step below reports availability precisely so that gap
+      # cannot reopen unnoticed.
+      - name: Install ffmpeg (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends ffmpeg
+
+      - name: Install ffmpeg (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          choco install ffmpeg --yes --no-progress --limit-output --allow-downgrade
+          # The chocolatey shim directory is where ffmpeg.exe lands; adding it
+          # explicitly keeps this working whether or not the runner image already
+          # has it on PATH.
+          echo "C:\ProgramData\chocolatey\bin" >> $env:GITHUB_PATH
+          echo "C:\ProgramData\chocolatey\lib\ffmpeg\tools\bin" >> $env:GITHUB_PATH
+          ffmpeg -version | Select-Object -First 1
+          ffprobe -version | Select-Object -First 1
+
       # Report what is actually available. A suite that silently skips most of
       # itself looks green while testing nothing, which is how the M3 suite lost
       # half its coverage on a runner without ffmpeg before this step existed.
@@ -48,6 +72,21 @@ jobs:
 
       - name: Run M3 image regression tests
         run: python tests/test_minimax_image.py
+
+      # M4 and M4.5 were merged without these two being wired in, so a green CI run
+      # was not evidence that 205 tests passed. A suite that is not executed cannot
+      # report a pass, and the gap was invisible precisely because CI looked healthy.
+      - name: Run M4 H3 video regression tests
+        run: python tests/test_minimax_h3.py
+
+      - name: Run M4.5 media convergence regression tests
+        run: python tests/test_media_convergence.py
+
+      # M4.6 provider-free: fixtures only, no MiniMax request, no quota. Skips
+      # itself when the M4.5 artifacts are absent, which they are on a clean
+      # checkout because media binaries are gitignored.
+      - name: Run M4.6 enhanced golden infrastructure tests
+        run: python tests/test_enhanced_golden.py
 
       - name: Run Windows subprocess tests
         run: python tests/test_windows_subprocess.py
