@@ -36,26 +36,16 @@
     },
     {
       "shot_id": "beat-05",
-      "image": ".verify-tmp/m4/run/shot-f74366c9b0aaf925.mp4",
+      "image": "projects/m45-technical-integration/assets/processed/beat-05-shot-replace.mp4",
       "motion": "static",
       "duration": 6,
-      "source": ".verify-tmp/m4/run/shot-f74366c9b0aaf925.mp4",
+      "source": "projects/m45-technical-integration/assets/processed/beat-05-shot-replace.mp4",
       "source_type": "ai_generated",
-      "video": ".verify-tmp/m4/run/shot-f74366c9b0aaf925.mp4",
-      "audio_policy": "REPLACE"
-    },
-    {
-      "shot_id": "beat-05",
-      "image": "projects/m45-technical-integration/assets/processed/shot-f74366c9b0aaf925-replace.mp4",
-      "motion": "static",
-      "duration": 6,
-      "source": "projects/m45-technical-integration/assets/processed/shot-f74366c9b0aaf925-replace.mp4",
-      "source_type": "real_screenshot",
-      "video": "projects/m45-technical-integration/assets/processed/shot-f74366c9b0aaf925-replace.mp4",
+      "video": "projects/m45-technical-integration/assets/processed/beat-05-shot-replace.mp4",
       "audio_policy": "REPLACE"
     }
   ],
   "engine": "easel",
-  "media_manifest_fingerprint": "7416eb11b5182f2a9f6fbb3c1af0c505034dbe298bbce6115596ee81d0adbef6",
+  "media_manifest_fingerprint": "8361c956bf8d39993c9b49952d0b73b77e9e146e9a87a140034cbb1cfaff5596",
   "narration": "projects/m45-technical-integration/assets/voice/narration.wav"
 }

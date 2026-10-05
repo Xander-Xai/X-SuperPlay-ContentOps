@@ -212,6 +212,13 @@ class ExecutionContext:
     #: Declared budget a video action may schedule against. Required for video.
     video_quota_budget: Optional[str] = None
     video_test_objective: Optional[str] = None
+    #: Extra keyword arguments forwarded to ``video_provider``.
+    #:
+    #: Exists so a caller can pass run-specific inputs — notably an explicit H3
+    #: reuse path — without this module inventing a default. A provider that wants
+    #: to reuse an artifact must be told which one; discovering it by scanning the
+    #: filesystem made a run's meaning depend on the machine it ran on.
+    video_provider_options: Dict[str, Any] = field(default_factory=dict)
     repo_root: Optional[Path] = None
 
     def __post_init__(self) -> None:
@@ -611,6 +618,7 @@ class AssetExecutionRouter:
             output_dir=context.generated_dir(),
             quota_budget=context.video_quota_budget,
             test_objective=context.video_test_objective,
+            **dict(context.video_provider_options),
         )
         return _envelope_from_provider_output(
             planned=None,

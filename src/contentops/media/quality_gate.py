@@ -59,8 +59,10 @@ from contentops.media.media_validation import (
     MediaValidationResult,
     validate_media_asset,
 )
+from contentops.media.video_qc import AudioPolicy
 
 __all__ = [
+    "ADMISSIBLE_GATE_STATES",
     "GATE_BLOCKED",
     "GATE_DEGRADED_FALLBACK",
     "GATE_PENDING_HUMAN_REVIEW",
@@ -71,7 +73,10 @@ __all__ = [
     "GateDecision",
     "MANIFEST_SCHEMA",
     "MediaManifest",
+    "TimelineError",
+    "TimelinePlacement",
     "build_manifest",
+    "build_timeline",
 ]
 
 GATE_BLOCKED = "BLOCKED"
@@ -145,6 +150,9 @@ class AssetQualityGate:
         self,
         envelope: MediaAssetEnvelope,
         adapter: Optional[MediaValidationAdapter] = None,
+        *,
+        repo_root: Optional[Path] = None,
+        project_root: Optional[Path] = None,
     ) -> GateDecision:
         """Decide one asset's gate state.
 
@@ -156,9 +164,14 @@ class AssetQualityGate:
         4. a substitute downgrades, and says so
         5. technical success with no review stays pending
         6. only a recorded approval becomes production-ready
+
+        ``repo_root``/``project_root`` resolve the envelope's logical path
+        references. Left unset, the validator derives the repository root itself.
         """
         resolved = adapter if adapter is not None else self._adapter_for(envelope.modality)
-        result = validate_media_asset(envelope, resolved)
+        result = validate_media_asset(
+            envelope, resolved, repo_root=repo_root, project_root=project_root
+        )
 
         if not result.approved:
             return GateDecision(
@@ -227,14 +240,102 @@ class AssetQualityGate:
         )
 
     def evaluate_all(
-        self, envelopes: Sequence[MediaAssetEnvelope]
+        self,
+        envelopes: Sequence[MediaAssetEnvelope],
+        *,
+        repo_root: Optional[Path] = None,
+        project_root: Optional[Path] = None,
     ) -> List[GateDecision]:
-        return [self.evaluate(envelope) for envelope in envelopes]
+        return [
+            self.evaluate(
+                envelope, repo_root=repo_root, project_root=project_root
+            )
+            for envelope in envelopes
+        ]
 
 
 #: The manifest schema. Versioned, so a later shape change is detectable rather
 #: than silently mis-parsed.
 MANIFEST_SCHEMA = "contentops.media-manifest/v1"
+
+#: Gate states that admit an asset to a timeline slot. Anything else blocks.
+ADMISSIBLE_GATE_STATES = (
+    GATE_PENDING_HUMAN_REVIEW,
+    GATE_PRODUCTION_READY,
+    GATE_DEGRADED_FALLBACK,
+)
+
+
+@dataclass
+class TimelinePlacement:
+    """One timeline slot, with exactly one asset chosen to fill it.
+
+    Why a placement exists at all
+    ----------------------------
+    A manifest holding an asset *inventory* cannot answer "what plays at 0:04",
+    and that question has to be answerable. An AudioPolicy transform keeps the
+    original shot **and** adds the derived one, both claiming placement ``beat-05``.
+    Feeding that inventory to a composer produced two shots for one placement:
+    ``beat-05`` and ``beat-05-replaced`` both landed on the timeline, so the
+    pre-transform audio played over the narration that REPLACE was supposed to
+    guarantee would be the only track.
+
+    So selection is explicit and stated, rather than inferred by whatever order the
+    inventory happens to be in. The derived asset wins for MUTE/REPLACE — that is
+    the entire point of producing it — and the original stays in the manifest as
+    provenance.
+
+    Superseding is a *chain*, not a flat preference: ``beat-05-replaced`` supersedes
+    ``beat-05``. Selection walks that chain, so an asset superseded by an asset that
+    is itself unusable does not silently come back.
+    """
+
+    #: The timeline slot, e.g. ``beat-05``.
+    placement_id: str
+    #: The asset that plays. Exactly one, never a list.
+    active_asset_id: str
+    #: Why this asset was chosen over the others claiming the slot.
+    selection_reason: str
+    #: asset_ids that claimed this placement but lost. Recorded so a reviewer can see
+    #: what was dropped, not just what survived.
+    superseded_asset_ids: List[str] = field(default_factory=list)
+
+    def as_dict(self) -> Dict[str, Any]:
+        return {
+            "placement_id": self.placement_id,
+            "active_asset_id": self.active_asset_id,
+            "selection_reason": self.selection_reason,
+            "superseded_asset_ids": list(self.superseded_asset_ids),
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Dict[str, Any]) -> "TimelinePlacement":
+        return cls(
+            placement_id=payload["placement_id"],
+            active_asset_id=payload["active_asset_id"],
+            selection_reason=payload.get("selection_reason", ""),
+            superseded_asset_ids=list(payload.get("superseded_asset_ids") or []),
+        )
+
+
+@dataclass
+class TimelineError(Exception):
+    """A timeline that cannot be composed as stated.
+
+    Carries the machine-readable ``code`` so a caller can distinguish "a duplicate
+    asset id" from "a slot with no admissible asset" without string matching, and a
+    message written for a human reading a receipt.
+    """
+
+    code: str
+    detail: str
+
+    def __str__(self) -> str:  # pragma: no cover - trivial
+        return f"[{self.code}] {self.detail}"
+
+
+#: The policy: for a placement claiming several assets, prefer the derived one.
+_TRANSFORM_SUPERSEDING_POLICIES = (AudioPolicy.MUTE, AudioPolicy.REPLACE)
 
 
 @dataclass
@@ -251,6 +352,10 @@ class MediaManifest:
     #: Gate decisions keyed by asset_id, so a consumer sees why an asset was
     #: admitted without re-running validation.
     gate_states: Dict[str, str] = field(default_factory=dict)
+    #: One entry per timeline slot, each naming exactly one active asset. Required,
+    #: not optional: an inventory with no selection cannot be composed, and leaving
+    #: it optional would let the composer fall back to guessing.
+    timeline: List[TimelinePlacement] = field(default_factory=list)
     #: Scheduling decisions, recorded so the plan that produced this manifest is
     #: inspectable afterwards.
     scheduling: Dict[str, Any] = field(default_factory=dict)
@@ -270,14 +375,105 @@ class MediaManifest:
         return None
 
     def usable_assets(self) -> List[MediaAssetEnvelope]:
-        """Assets the gate admitted, in manifest order."""
+        """Assets the gate admitted, in manifest order.
+
+        **This is an inventory, not a timeline.** It may contain several assets for
+        one placement — a transform keeps its source. Composition must read
+        :meth:`active_visual_assets` instead; iterating this list is how a single
+        placement ended up on the timeline twice.
+        """
         return [
             envelope for envelope in self.assets
-            if self.gate_states.get(envelope.asset_id) in (
-                GATE_PENDING_HUMAN_REVIEW,
-                GATE_PRODUCTION_READY,
-                GATE_DEGRADED_FALLBACK,
+            if self.gate_states.get(envelope.asset_id) in ADMISSIBLE_GATE_STATES
+        ]
+
+    def active_visual_assets(self) -> List[MediaAssetEnvelope]:
+        """The assets composition must place, in timeline order.
+
+        Exactly one per placement. Raises if the timeline does not resolve, because
+        a silently truncated or duplicated timeline is the failure this whole
+        structure exists to make impossible.
+        """
+        self.timeline_assets()
+        return [
+            envelope for envelope in (self.envelope_for(p.active_asset_id) for p in self.timeline)
+            if envelope is not None
+        ]
+
+    def timeline_assets(self) -> List[MediaAssetEnvelope]:
+        """Validate the timeline and return its envelopes.
+
+        Checks, each of which has been a real defect rather than a hypothetical:
+
+        - no duplicate placement_id in the timeline itself;
+        - every ``active_asset_id`` resolves to a manifest asset;
+        - no asset is active in two placements;
+        - every active asset passed the gate;
+        - every active visual asset declares a ``placement_id``, so the placement a
+          shot plays in is stated rather than inferred from the filename.
+
+        Raises:
+            TimelineError: on any of the above.
+        """
+        placements = self.timeline
+
+        seen: Dict[str, int] = {}
+        for placement in placements:
+            seen[placement.placement_id] = seen.get(placement.placement_id, 0) + 1
+        duplicates = sorted(pid for pid, count in seen.items() if count > 1)
+        if duplicates:
+            raise TimelineError(
+                code="DUPLICATE_PLACEMENT",
+                detail=(
+                    f"placement(s) {', '.join(duplicates)} appear more than once in the "
+                    f"timeline. One slot must have exactly one entry; two entries "
+                    f"would place two shots at the same moment."
+                ),
             )
+
+        for placement in placements:
+            envelope = self.envelope_for(placement.active_asset_id)
+            if envelope is None:
+                raise TimelineError(
+                    code="UNKNOWN_ACTIVE_ASSET",
+                    detail=(
+                        f"placement {placement.placement_id!r} activates asset "
+                        f"{placement.active_asset_id!r}, which is not in this manifest."
+                    ),
+                )
+            state = self.gate_states.get(placement.active_asset_id)
+            if state not in ADMISSIBLE_GATE_STATES:
+                raise TimelineError(
+                    code="INADMISSIBLE_ACTIVE_ASSET",
+                    detail=(
+                        f"placement {placement.placement_id!r} activates asset "
+                        f"{placement.active_asset_id!r}, whose gate state is "
+                        f"{state!r}. The gate did not admit it to a timeline slot."
+                    ),
+                )
+            if envelope.modality in MediaModality.VISUAL and not envelope.placement_id:
+                raise TimelineError(
+                    code="MISSING_PLACEMENT_ID",
+                    detail=(
+                        f"asset {envelope.asset_id!r} is {envelope.modality} but "
+                        f"declares no placement_id, so it cannot be timed on a timeline."
+                    ),
+                )
+
+        active_ids = [placement.active_asset_id for placement in placements]
+        repeated = sorted({aid for aid in active_ids if active_ids.count(aid) > 1})
+        if repeated:
+            raise TimelineError(
+                code="ASSET_ACTIVE_IN_TWO_PLACEMENTS",
+                detail=(
+                    f"asset(s) {', '.join(repeated)} are active in more than one "
+                    f"placement. A single asset cannot fill two slots without being "
+                    f"played twice."
+                ),
+            )
+        return [
+            envelope for envelope in (self.envelope_for(p.active_asset_id) for p in placements)
+            if envelope is not None
         ]
 
     def blocked_assets(self) -> List[MediaAssetEnvelope]:
@@ -296,15 +492,53 @@ class MediaManifest:
         if self.narration.get("required"):
             return True
         return any(
-            envelope.audio_policy == "REPLACE" and envelope.is_derived
+            envelope.audio_policy == AudioPolicy.REPLACE
+            and envelope.is_derived
+            and any(
+                placement.active_asset_id == envelope.asset_id
+                for placement in self.timeline
+            )
             for envelope in self.assets
         )
+
+    def audio_postconditions(self) -> List[str]:
+        """State each active shot's audio outcome as a checkable claim.
+
+        Returned as strings rather than booleans so a receipt records what *was*
+        decided. The REPLACE case is the one that matters: the active shot must have
+        no audio stream, and narration must therefore be required, or the old native
+        track can survive underneath the narration it was supposed to be replaced by.
+        """
+        claims: List[str] = []
+        for placement in self.timeline:
+            envelope = self.envelope_for(placement.active_asset_id)
+            if envelope is None or envelope.modality != MediaModality.VIDEO:
+                continue
+            if envelope.audio_policy == AudioPolicy.REPLACE and envelope.is_derived:
+                claims.append(
+                    f"{envelope.asset_id}: AudioPolicy REPLACE, derived asset, so its "
+                    f"native audio stream was stripped and narration is required"
+                )
+            elif envelope.audio_policy == AudioPolicy.MUTE and envelope.is_derived:
+                claims.append(
+                    f"{envelope.asset_id}: AudioPolicy MUTE, derived asset, so it "
+                    f"carries no audio stream"
+                )
+            elif envelope.audio_policy == AudioPolicy.KEEP:
+                claims.append(
+                    f"{envelope.asset_id}: AudioPolicy KEEP, so the source is used "
+                    f"unchanged and its native audio is retained"
+                )
+        return claims
 
     def as_dict(self) -> Dict[str, Any]:
         """Deterministic serialisation.
 
-        Assets sorted by ``asset_id``; no timestamp in the body. Byte-stability
-        is what makes this usable as a cache key and diffable in review.
+        Assets sorted by ``asset_id``, timeline in declared order; no timestamp in
+        the body. Byte-stability is what makes this usable as a cache key and
+        diffable in review, and it is why asset paths are logical references rather
+        than local paths — a drive letter in the body would make the fingerprint
+        machine-specific.
         """
         ordered = sorted(self.assets, key=lambda e: e.asset_id)
         return {
@@ -312,8 +546,11 @@ class MediaManifest:
             "notes": dict(self.notes),
             "narration": dict(self.narration),
             "scheduling": self.scheduling,
+            "audio_postconditions": self.audio_postconditions(),
+            "timeline": [placement.as_dict() for placement in self.timeline],
             "counts": {
                 "assets": len(ordered),
+                "placements": len(self.timeline),
                 "by_modality": _count_by(ordered, lambda e: e.modality),
                 "by_gate_state": dict(sorted(self.gate_states.items())),
             },
@@ -385,6 +622,10 @@ class MediaManifest:
         return cls(
             assets=assets,
             gate_states=gate_states,
+            timeline=[
+                TimelinePlacement.from_dict(item)
+                for item in (payload.get("timeline") or [])
+            ],
             scheduling=dict(payload.get("scheduling") or {}),
             narration=dict(payload.get("narration") or {}),
             notes=dict(payload.get("notes") or {}),
@@ -440,13 +681,84 @@ def build_manifest(
             f"entries sharing an identifier cannot be distinguished by a consumer."
         )
 
+    gate_states = {
+        envelope.asset_id: by_id[envelope.asset_id].state for envelope in envelopes
+    }
+
     return MediaManifest(
         assets=list(envelopes),
-        gate_states={
-            envelope.asset_id: by_id[envelope.asset_id].state
-            for envelope in envelopes
-        },
+        gate_states=gate_states,
+        timeline=build_timeline(list(envelopes), gate_states),
         scheduling=dict(scheduling or {}),
         narration=dict(narration or {}),
         notes=dict(notes or {}),
     )
+
+
+def build_timeline(
+    envelopes: Sequence[MediaAssetEnvelope],
+    gate_states: Dict[str, str],
+) -> List[TimelinePlacement]:
+    """Choose exactly one asset per placement, and say why.
+
+    Selection order is a policy, stated here rather than left to inventory order:
+
+    1. only gate-admissible assets are eligible;
+    2. a derived asset supersedes its source when the policy was ``MUTE`` or
+       ``REPLACE`` — producing that derived asset was the point;
+    3. otherwise the earliest-declared asset wins, which keeps the timeline stable
+       across runs rather than dependent on dict ordering.
+
+    Assets with no ``placement_id`` (speech, unplaced support) are inventory only and
+    never get a slot.
+    """
+    candidates: Dict[str, List[MediaAssetEnvelope]] = {}
+    for envelope in envelopes:
+        if not envelope.placement_id:
+            continue
+        if gate_states.get(envelope.asset_id) not in ADMISSIBLE_GATE_STATES:
+            continue
+        candidates.setdefault(envelope.placement_id, []).append(envelope)
+
+    timeline: List[TimelinePlacement] = []
+    for placement_id, group in candidates.items():
+        derived = [
+            envelope
+            for envelope in group
+            if envelope.is_derived and envelope.audio_policy in _TRANSFORM_SUPERSEDING_POLICIES
+        ]
+        if derived:
+            # Ambiguity would mean two transforms claiming one slot. Refuse rather
+            # than pick one: the choice is not derivable from the data.
+            if len(derived) > 1:
+                raise TimelineError(
+                    code="AMBIGUOUS_DERIVED_ASSETS",
+                    detail=(
+                        f"placement {placement_id!r} has {len(derived)} derived assets "
+                        f"({', '.join(sorted(e.asset_id for e in derived))}). Which one "
+                        f"is active is not derivable from the manifest, so it must be "
+                        f"stated rather than guessed."
+                    ),
+                )
+            winner = derived[0]
+            reason = (
+                f"derived asset supersedes {winner.derived_from}: AudioPolicy "
+                f"{winner.audio_policy} required new bytes, and the source retains the "
+                f"pre-transform audio that must not reach the timeline"
+            )
+        else:
+            winner = group[0]
+            reason = "only gate-admissible asset claiming this placement"
+        timeline.append(
+            TimelinePlacement(
+                placement_id=placement_id,
+                active_asset_id=winner.asset_id,
+                selection_reason=reason,
+                superseded_asset_ids=sorted(
+                    envelope.asset_id
+                    for envelope in group
+                    if envelope.asset_id != winner.asset_id
+                ),
+            )
+        )
+    return timeline

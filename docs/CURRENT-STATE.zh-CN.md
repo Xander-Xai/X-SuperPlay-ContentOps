@@ -345,6 +345,45 @@ manifest 只会成为可能与前者矛盾的第二个事实来源。
 都无信息增益地产生差异。没有门禁决定的资产，或重复的 `asset_id`，会被拒绝
 而不是被接纳。
 
+### 路径是逻辑引用，不是本机路径
+
+已提交 manifest 中的资产路径是**逻辑引用**：`project://assets/shot.mp4`
+（相对项目）或 `repo://docs/x.png`（相对仓库），在使用时才解析为本地路径。
+
+绝对路径**永不写入**。第一份已提交的 manifest 带有 8 处
+`D:\Projects\...`，这让「确定性 manifest」只在一个检出根目录下成立——因此既不能
+当缓存键，也无法在评审中比较。位于两个根之外的路径无法用逻辑形式表达，
+于是被拒绝，而不是被写成某个机器的路径。
+
+### 资产清单与时间线是两件事
+
+`assets` 是**库存**，`timeline` 才是**时间线**，两者都必需。
+
+`usable_assets()` 回答的是「这个资产**可以**出现吗」，而不是「这个资产**在这里**
+出现吗」。一次 AudioPolicy 变换会保留原片**并**新增派生资产，两者都声称占用
+`beat-05`——而遍历库存会把 `beat-05` 与 `beat-05-h3-replaced` 一起放上时间线，
+于是变换前的原生音轨叠在 REPLACE 本应保证是唯一音轨的旁白之上。
+
+因此合成读取 `active_visual_assets()`：每个 placement 恰好一个资产，并记录
+`selection_reason` 与被取代的 `superseded_asset_ids`。MUTE/REPLACE 时派生资产
+取代原片；KEEP 不产生派生资产。两个派生资产争夺同一 placement 会被以
+`AMBIGUOUS_DERIVED_ASSETS` 拒绝，而不是用某种平局规则解决——因为这个选择无法从
+数据推导出来。
+
+每个在用镜头的音频结果都写为 `audio_postcondition`，因此「REPLACE：无原生音轨、
+必须旁白」是可核对的声明，而不是需要评审者自行推断的结论。
+
+### 变换改变字节，不改变来源
+
+变换回执记录三件独立的事，而不是一个被重载的布尔值：
+`provider_generated_bytes`（本次变换的字节是否由 API 产生）、`derived`
+（是否运行了变换）、`source_generated`（**来源链**是否为生成内容）。
+
+因此派生 envelope 保持 `generated: true`。本地编辑不会抹掉来源：对生成的镜头
+去掉音轨，它仍然是生成内容。`MediaAssetEnvelope` 拒绝构造出
+`GENERATED_*` 类型配 `generated=False` 的 envelope——**两个方向都拒绝**，派生与否
+都一样。派生的记录方式是 `derived_from`，而不是把 `generated` 降级。
+
 ## 合成复用锁定的 Easel 路径
 
 ```
@@ -366,6 +405,34 @@ storyboard，因此最终 QC 是对 manifest 的检查，而不是另一份独�
 
 每一个资产都是确定性 fixture，并在其回执、manifest 头部以及集成报告中
 被如此标注。媒体二进制文件被 gitignore；manifest、回执与 storyboard 会被提交。
+
+**H3 复用是显式的，绝不靠发现。** `--reuse-h3-shot PATH` 表示复用真实镜头而不
+生成 fixture；不传该参数就**始终**使用 fixture。不做任何文件系统扫描。此前版本会
+在 `.verify-tmp/m4` 中 glob 任意 `*.mp4.receipt.json`，于是干净克隆产出 fixture，
+而残留 M4 产物的机器会静默产出真实 provider 媒体——两次运行都被当作
+「本次集成」提交。一次运行的含义必须是其参数的函数。
+
+复用是被校验的，而不是被信任的：镜头及其回执都必须存在，回执必须是真实的
+`contentops.video-receipt/v1` 生成回执，且其 `output_sha256` 必须与文件匹配。
+没有回执的镜头会被拒绝——否则一个来历不明的文件就进入了已提交的运行。
+报告中的 `h3_shot_source` 会说明用的是 `fixture_generated` 还是
+`explicit_reuse`，无需从「本地恰好存在哪些产物」去推断。
+
+## 最终评审在已提交产物中发现并修复的四个缺陷
+
+这四个阻塞项是通过阅读已提交的回执（而不是读代码）发现的，现均已修复并附
+回归测试：
+
+1. **一个 placement，两个镜头。** `manifest_to_storyboard` 遍历的是
+   `usable_assets()`——那是**库存**，不是时间线。`beat-05` 与 `beat-05-h3-replaced`
+   都是门禁可接纳的，于是两者都落在 placement `beat-05` 上。
+2. **生成来源被降级。** 派生 H3 envelope 写着 `asset_kind=GENERATED_VIDEO` 却
+   `generated=False`，因为变换回执用一个布尔值同时表达「这些字节是否由 provider
+   产生」与「内容是否生成」。现在构造时即拒绝，双向拒绝。
+3. **已提交 manifest 中含本机路径。** 8 处 `D:\Projects\...` 使「确定性 manifest」
+   只在一个检出根下成立，因而无法作为缓存键或评审对比依据。路径现为逻辑引用。
+4. **`--reuse-h3-shot` 毫无作用。** `main()` 解析了它却没有传参，而 provider
+   另行 glob `.verify-tmp/m4`。复用现改为按路径显式指定并校验。
 
 它**不**证明真实的 `SourceArtifact` 摄取、`Claim Ledger` 完整性、创始人批准、
 生产黄金样本，或三次连续生产构建。产出为 `production_ready=false` /

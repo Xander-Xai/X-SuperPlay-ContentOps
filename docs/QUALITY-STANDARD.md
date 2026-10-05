@@ -244,6 +244,36 @@ quality. Generated image, generated video and diagrams are additionally
 `never_evidence_capable`, so they cannot carry a claim even if a reviewer were
 asked to.
 
+### Usable is not the same as placed
+
+`usable_assets()` is an **inventory**: it answers "may this asset appear". It may hold
+several assets for one placement, because an AudioPolicy transform keeps its source
+alongside the derived asset — that is correct, and both stay in the manifest as
+provenance.
+
+`active_visual_assets()` is the **timeline**: exactly one asset per placement, each
+with a recorded `selection_reason` and the `superseded_asset_ids` it displaced.
+
+Composition reads the timeline. Iterating the inventory is how a single placement
+ended up on the timeline twice, playing the pre-transform native audio underneath the
+narration REPLACE was meant to guarantee would be the only track. Each active shot's
+audio outcome is stated as an `audio_postcondition`, so it is checkable rather than
+inferred.
+
+### Generated provenance is not downgradable
+
+A transform changes bytes; it does not change what the content is. A `GENERATED_*`
+asset stays `generated: true` whether or not it was derived, and
+`MediaAssetEnvelope` refuses to be **constructed** with a generated kind and
+`generated=False` — in both directions. `derived_from` is how derivation is recorded.
+
+### A committed artifact contains no machine path
+
+Manifest and receipt paths are logical (`project://`, `repo://`) and resolved at the
+point of use. An absolute path is refused, not written: one committed manifest
+carried eight `D:\Projects\...` paths, which made its fingerprint specific to one
+checkout root.
+
 ### Fallback is visible and never self-approving
 
 A declared fallback names what was **requested**, what was **used** and **why**, and

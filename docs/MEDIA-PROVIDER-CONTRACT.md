@@ -929,6 +929,27 @@ deterministic track, so this step cannot produce a silent mix. Video streams are
 **copied** when audio is dropped, never re-encoded, so a mute cannot degrade the
 picture.
 
+### A transform changes bytes, not provenance
+
+The transform receipt records three separate facts, not one overloaded boolean:
+
+| Field | Question it answers | `MUTE` on a generated shot |
+|---|---|---|
+| `provider_generated_bytes` | did *this transform* emit these bytes via an API? | `false` |
+| `derived` | did a transform run? | `true` |
+| `source_generated` | was the **lineage** generated media? | `true` |
+
+The derived envelope therefore keeps `generated: true`. Generated provenance
+survives a local edit: a generated shot with its audio removed is still generated
+content, and `MediaAssetEnvelope` refuses to be constructed with a
+`GENERATED_*` kind and `generated=False` — in **both** directions, derived or not.
+Derivation is recorded by `derived_from`; downgrading `generated` is not a way to
+express it.
+
+The original design had a single `generated` field doing all three jobs. It made a
+transform receipt say `generated=false` about generated content — the contradiction
+this split removes.
+
 ## Capability registry
 
 | Capability | Status | Evidence |
@@ -1019,6 +1040,42 @@ when something happened; one in the manifest would make every build differ for n
 informational gain. An asset with no gate decision, or a duplicate `asset_id`, is
 refused rather than admitted.
 
+### Paths are logical, never local
+
+An asset path in a committed manifest is a **logical reference**:
+`project://assets/shot.mp4` (relative to the project) or `repo://docs/x.png`
+(relative to the repository). It is resolved to a local path at the point of use.
+
+An absolute path is never written. The first committed manifest carried eight
+`D:\Projects\...` paths, which made "deterministic manifest" true on exactly one
+machine: the fingerprint changed with the checkout root, so it was not a cache key
+and not comparable in review. A path outside both roots cannot be expressed
+logically, so it is refused rather than written as a machine path.
+
+### The timeline is explicit, and separate from the inventory
+
+`assets` is an **inventory** and `timeline` is the **timeline**. Both are required.
+
+`usable_assets()` answers "may this asset appear"; it does not answer "does this
+asset appear here". An AudioPolicy transform keeps its source *and* adds the derived
+asset, both claiming placement `beat-05` — and iterating the inventory put
+`beat-05` and `beat-05-replaced` on the timeline, so the pre-transform native audio
+played over the narration REPLACE was meant to guarantee would be the only track.
+
+So composition reads `active_visual_assets()`, one asset per placement, each with a
+recorded `selection_reason` and the `superseded_asset_ids` it displaced. A derived
+asset supersedes its source for MUTE/REPLACE; KEEP has no derived asset. Two derived
+assets claiming one placement are refused as `AMBIGUOUS_DERIVED_ASSETS` rather than
+resolved by a tie-break, because the choice is not derivable from the data.
+
+Refused with a named code, never silently corrected: `DUPLICATE_PLACEMENT`,
+`UNKNOWN_ACTIVE_ASSET`, `INADMISSIBLE_ACTIVE_ASSET`, `MISSING_PLACEMENT_ID`,
+`ASSET_ACTIVE_IN_TWO_PLACEMENTS`, `AMBIGUOUS_DERIVED_ASSETS`.
+
+`audio_postconditions` states each active shot's audio outcome — so REPLACE's "no
+native track, narration required" is a checkable claim in the receipt rather than an
+inference a reviewer has to make.
+
 ## Composition reuses the pinned Easel path
 
 ```
@@ -1042,6 +1099,20 @@ Weekly quota is untouched.
 Every asset is a deterministic fixture, labelled as such in its receipt, in the
 manifest header and in the integration report. Media binaries are gitignored; the
 manifest, receipts and storyboard are committed.
+
+**H3 reuse is explicit, and never discovered.** `--reuse-h3-shot PATH` reuses a real
+shot instead of generating a fixture; omitting it means fixtures, always. There is no
+filesystem scan. The previous version globbed `.verify-tmp/m4` for any
+`*.mp4.receipt.json`, so a clean clone produced fixtures while a workstation with M4
+leftovers silently produced real provider media — and both runs were committed as
+"the integration". A run's meaning must be a function of its arguments.
+
+Reuse is validated, not trusted: both the shot and its receipt must exist, the
+receipt must be a real `contentops.video-receipt/v1` generation receipt, and its
+`output_sha256` must match the file. A shot with no receipt is refused — otherwise
+an unexplained file enters a committed run. `h3_shot_source` in the report states
+which of `fixture_generated` / `explicit_reuse` was used, so it never has to be
+inferred from which artifacts happen to be present.
 
 It does **not** prove real `SourceArtifact` ingestion, `Claim Ledger`
 completeness, Founder approval, a production golden, or three consecutive

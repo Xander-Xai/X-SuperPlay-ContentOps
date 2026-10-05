@@ -1,6 +1,6 @@
 {
   "stage": "m45_media_integration",
-  "project": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\m45-technical-integration",
+  "project": "project://.",
   "purpose": "prove MEDIA RUNTIME CONVERGENCE, not production E2E",
   "production_ready": false,
   "human_review": "PENDING_FOUNDER_REVIEW",
@@ -10,6 +10,11 @@
     "video": 0
   },
   "fixture_notice": "Deterministic local placeholder produced by src/contentops/media/fixtures_local.py. NOT a real business capture, NOT Founder approved, and NOT evidence of anything. It exists to prove the registry -> manifest -> compose -> QC path executes end to end without spending provider quota.",
+  "h3_shot_source": "fixture_generated",
+  "h3_reuse_requested": {
+    "shot": null,
+    "receipt": null
+  },
   "media": {
     "screenshot": {
       "container": "png_pipe",
@@ -21,7 +26,7 @@
       "audio_codec": null
     },
     "narration": {
-      "path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\m45-technical-integration\\assets\\voice\\narration.wav",
+      "path": "project://assets/voice/narration.wav",
       "bytes": 384078
     }
   },
@@ -38,7 +43,7 @@
         "asset_id": "beat-01-cd6c2c6a35a0",
         "modality": "IMAGE",
         "placement_id": "beat-01",
-        "path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\m45-technical-integration\\sources\\screenshots\\fixture-01.png",
+        "path": "project://sources/screenshots/fixture-01.png",
         "sha256": "cd6c2c6a35a03b27a0774d1e5b73b623e6443b092ff91aa8bbe3a73e87aa7ae7",
         "receipt_ref": "fixture-01.png.receipt.json",
         "fingerprint": "1691e12a0ac2d06ce139c607ac873603e5eec9a6fe8fc6f4789f43e754f910b7",
@@ -68,7 +73,7 @@
         "asset_id": "beat-02-diagram",
         "modality": "IMAGE",
         "placement_id": "beat-02",
-        "path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\m45-technical-integration\\assets\\generated\\beat-02-diagram.png",
+        "path": "project://assets/generated/beat-02-diagram.png",
         "sha256": "279ee88a61521788598f45889c67ed366d9e4cd60193f04ce2c65a77ce351219",
         "receipt_ref": "beat-02-diagram.png.receipt.json",
         "fingerprint": "1840ce7f2d16aaaba233e13c524250c656161540814c91eb8e3c42b3ec51f567",
@@ -98,7 +103,7 @@
         "asset_id": "beat-03-diagram",
         "modality": "IMAGE",
         "placement_id": "beat-03",
-        "path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\m45-technical-integration\\assets\\generated\\beat-03-diagram.png",
+        "path": "project://assets/generated/beat-03-diagram.png",
         "sha256": "876abc41abe8b50bfc2ec3185f7f4258bd9ba99869af361dc00f3402da7b8e78",
         "receipt_ref": "beat-03-diagram.png.receipt.json",
         "fingerprint": "7f7b68427d58ba90eeb72a8de262e2c1e2133fd1668a7849a753050d73c71ebe",
@@ -128,7 +133,7 @@
         "asset_id": "beat-04-diagram",
         "modality": "IMAGE",
         "placement_id": "beat-04",
-        "path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\m45-technical-integration\\assets\\generated\\beat-04-diagram.png",
+        "path": "project://assets/generated/beat-04-diagram.png",
         "sha256": "158ef56099017fe3a9e7e94ce9b6bd318f65d819350fd7d31d9d75800c6826be",
         "receipt_ref": "beat-04-diagram.png.receipt.json",
         "fingerprint": "61558cf93935cef6ffade4fed522ccb9263f095484f238143598ff52883d15df",
@@ -158,10 +163,10 @@
         "asset_id": "beat-05-h3",
         "modality": "VIDEO",
         "placement_id": "beat-05",
-        "path": "D:\\Projects\\X-SuperPlay-ContentOps\\.verify-tmp\\m4\\run\\shot-f74366c9b0aaf925.mp4",
-        "sha256": "b761ea2a69b3ad6181b8a48b93dddefb56edd897867f42a8b160610e74ac249a",
-        "receipt_ref": "shot-f74366c9b0aaf925.mp4.receipt.json",
-        "fingerprint": "f74366c9b0aaf92588b8a00c51cc1f51a5620bba3063315066d9d57acadd1bc3",
+        "path": "project://assets/generated/beat-05-shot.mp4",
+        "sha256": "71fff295bb0e5a472f0f0d6081f927d4f3c14d442530f4530a46d75e6ad6376f",
+        "receipt_ref": "beat-05-shot.mp4.receipt.json",
+        "fingerprint": "1e07af7843ba19c83a9de9624e3fc5ac849cc7af7986427e195dd96a38a0c9da",
         "asset_kind": "GENERATED_VIDEO",
         "generated": true,
         "evidence_capable": false,
@@ -179,14 +184,14 @@
   ],
   "audio_policy": {
     "policy": "REPLACE",
-    "output_path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\m45-technical-integration\\assets\\processed\\shot-f74366c9b0aaf925-replace.mp4",
+    "output_path": "project://assets/processed/beat-05-shot-replace.mp4",
     "derived": true,
     "replacement_narration_required": true,
-    "narration_source": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\m45-technical-integration\\assets\\voice\\narration.wav",
+    "narration_source": "project://assets/voice/narration.wav",
     "observed_audio_stream": false,
-    "receipt_path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\m45-technical-integration\\assets\\processed\\shot-f74366c9b0aaf925-replace.mp4.transform.json",
+    "receipt_path": "project://assets/processed/beat-05-shot-replace.mp4.transform.json",
     "notes": [],
-    "source_sha256": "b761ea2a69b3ad6181b8a48b93dddefb56edd897867f42a8b160610e74ac249a",
+    "source_sha256": "71fff295bb0e5a472f0f0d6081f927d4f3c14d442530f4530a46d75e6ad6376f",
     "source_unchanged_after_transform": true
   },
   "gate": [
@@ -271,28 +276,19 @@
         "approved": true,
         "failures": [],
         "notes": [],
-        "observed_sha256": "b761ea2a69b3ad6181b8a48b93dddefb56edd897867f42a8b160610e74ac249a",
+        "observed_sha256": "71fff295bb0e5a472f0f0d6081f927d4f3c14d442530f4530a46d75e6ad6376f",
         "technical_qc": {
           "approved": true,
           "reasons": [],
           "container": "mp4",
           "codec": "h264",
-          "width": 768,
-          "height": 1344,
-          "duration_s": 4.458333,
+          "width": 1080,
+          "height": 1920,
+          "duration_s": 6.0,
           "fps": 24.0,
           "has_audio": true,
           "audio_codec": "aac",
-          "file_bytes": 424543,
-          "aspect_ratio": 0.571429,
-          "notes": [],
-          "decodable": true,
-          "longest_black_run_s": 0.0,
-          "black_frame_count": 0,
-          "longest_freeze_run_s": 0.0,
-          "max_frame_diff": 0.030539,
-          "mean_frame_diff": 0.013115,
-          "analysed_frames": 22
+          "decodable": true
         }
       }
     },
@@ -339,7 +335,7 @@
         "notes": [
           "validated against its transform receipt; the provider generation it derives from is named in that receipt"
         ],
-        "observed_sha256": "38077ba57f6d01cdfd37c374c21f254eed4f617e285d40933ad5fa1ac0dfb621",
+        "observed_sha256": "7c0798eb3177f7599235d43e28b2f80ce875a57b37a499f066de766d5c47561c",
         "technical_qc": {}
       }
     }
@@ -444,33 +440,74 @@
     "basis": "explicit operator policy. The weekly floors are chosen values, not derived from any observed quota delta, and the provider exposes percentages only."
   },
   "manifest": {
-    "path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\m45-technical-integration\\receipts\\media-manifest.json",
-    "fingerprint": "7416eb11b5182f2a9f6fbb3c1af0c505034dbe298bbce6115596ee81d0adbef6",
+    "path": "project://receipts/media-manifest.json",
+    "fingerprint": "8361c956bf8d39993c9b49952d0b73b77e9e146e9a87a140034cbb1cfaff5596",
     "assets": 7,
-    "usable": 7,
+    "usable_inventory": 7,
+    "placements": 5,
+    "active_visual_assets": 5,
     "blocked": 0,
     "requires_narration": true
   },
+  "timeline": {
+    "placements": [
+      {
+        "placement_id": "beat-01",
+        "active_asset_id": "beat-01-cd6c2c6a35a0",
+        "selection_reason": "only gate-admissible asset claiming this placement",
+        "superseded_asset_ids": []
+      },
+      {
+        "placement_id": "beat-02",
+        "active_asset_id": "beat-02-diagram",
+        "selection_reason": "only gate-admissible asset claiming this placement",
+        "superseded_asset_ids": []
+      },
+      {
+        "placement_id": "beat-03",
+        "active_asset_id": "beat-03-diagram",
+        "selection_reason": "only gate-admissible asset claiming this placement",
+        "superseded_asset_ids": []
+      },
+      {
+        "placement_id": "beat-04",
+        "active_asset_id": "beat-04-diagram",
+        "selection_reason": "only gate-admissible asset claiming this placement",
+        "superseded_asset_ids": []
+      },
+      {
+        "placement_id": "beat-05",
+        "active_asset_id": "beat-05-h3-replaced",
+        "selection_reason": "derived asset supersedes beat-05-h3: AudioPolicy REPLACE required new bytes, and the source retains the pre-transform audio that must not reach the timeline",
+        "superseded_asset_ids": [
+          "beat-05-h3"
+        ]
+      }
+    ],
+    "audio_postconditions": [
+      "beat-05-h3-replaced: AudioPolicy REPLACE, derived asset, so its native audio stream was stripped and narration is required"
+    ]
+  },
   "composition_input": {
-    "storyboard": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\m45-technical-integration\\script\\storyboard.json",
-    "shots": 6,
-    "derived_from_manifest": "7416eb11b5182f2a9f6fbb3c1af0c505034dbe298bbce6115596ee81d0adbef6"
+    "storyboard": "project://script/storyboard.json",
+    "shots": 5,
+    "derived_from_manifest": "8361c956bf8d39993c9b49952d0b73b77e9e146e9a87a140034cbb1cfaff5596"
   },
   "composition": {
     "status": "OK",
-    "video": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\m45-technical-integration\\final\\m45.mp4",
+    "video": "project://final/m45.mp4",
     "subtitles_burned": false,
-    "upstream": "D:\\Projects\\X-SuperPlay-ContentOps\\.runtime\\easel\\skills\\openclaw\\auto-short-video\\scripts\\assemble.py",
+    "upstream": "repo://.runtime/easel/skills/openclaw/auto-short-video/scripts/assemble.py",
     "media": {
       "container": "mov,mp4,m4a,3gp,3g2,mj2",
       "video_codec": "h264",
       "width": 1080,
       "height": 1920,
-      "duration_s": 24.0,
+      "duration_s": 18.0,
       "has_audio": true,
       "audio_codec": "aac"
     },
-    "bytes": 1949089
+    "bytes": 311323
   },
   "final_qc": {
     "overall": "WARN",
@@ -480,13 +517,13 @@
         "id": "_video",
         "ok": true,
         "severity": "INFO",
-        "path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\m45-technical-integration\\final\\m45.mp4"
+        "path": "project://final/m45.mp4"
       },
       {
         "id": "file_size",
         "ok": true,
         "severity": "PASS",
-        "value_bytes": 1949089,
+        "value_bytes": 311323,
         "min_bytes": 102400
       },
       {
@@ -511,7 +548,7 @@
         "id": "duration_range",
         "ok": false,
         "severity": "WARN",
-        "value_sec": 24.0,
+        "value_sec": 18.0,
         "expected_range_sec": [
           30.0,
           120.0
@@ -549,27 +586,27 @@
         "id": "caption_srt_present",
         "ok": false,
         "severity": "WARN",
-        "path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\m45-technical-integration\\assets\\captions\\default.srt"
+        "path": "project://assets/captions/default.srt"
       },
       {
         "id": "script_exists",
         "ok": true,
         "severity": "PASS",
-        "path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\m45-technical-integration\\script\\master.md"
+        "path": "project://script/master.md"
       },
       {
         "id": "storyboard_exists",
         "ok": true,
         "severity": "PASS",
-        "shot_count": 6
+        "shot_count": 5
       },
       {
         "id": "real_source_ratio",
         "ok": true,
         "severity": "PASS",
-        "value": 0.833,
+        "value": 0.8,
         "min": 0.7,
-        "real_shots": 5,
+        "real_shots": 4,
         "generated_shots": 1,
         "note": "AI-generated key visuals must not be the majority"
       },
@@ -590,7 +627,7 @@
         "ok": true,
         "severity": "PASS",
         "max_volume_db": "-20.7 dB",
-        "mean_volume_db": "-30.1 dB"
+        "mean_volume_db": "-28.9 dB"
       },
       {
         "id": "subtitle_burned_or_track",

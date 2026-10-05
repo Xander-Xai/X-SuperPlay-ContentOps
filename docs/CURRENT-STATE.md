@@ -239,8 +239,12 @@ Branch `feat/27-media-convergence`. **Zero provider calls.** Weekly quota untouc
 | AssetPlanner execution | claim beats resolve only to real material, else `EVIDENCE_ASSET_REQUIRED` |
 | Quality gate | `BLOCKED`/`DEGRADED_FALLBACK`/`PENDING_HUMAN_REVIEW`/`PRODUCTION_READY`/`REJECTED` |
 | Manifest | `contentops.media-manifest/v1`, deterministic, no timestamp, sole asset list |
+| Manifest paths | logical `project://` / `repo://`, resolved at use; absolute paths refused |
+| Timeline | `assets` is the inventory, `timeline` is one active asset per placement; composition reads the timeline |
+| Derived provenance | `generated` is inherited, never downgraded; `provider_generated_bytes` vs `source_generated` are separate fields |
+| H3 reuse | explicit by path and validated; no filesystem discovery |
 | Composition | reuses pinned Easel v0.2.1 via `assemble_easel.run`; no second compositor |
-| Tests | 70 M4.5 + 85 speech + 84 image + 108 H3, all PASS |
+| Tests | 92 M4.5 + 85 speech + 84 image + 108 H3, all PASS |
 
 ### Two rules the implementation added beyond the plan
 
@@ -264,6 +268,31 @@ It does **not** prove real `SourceArtifact` ingestion, `Claim Ledger`
 completeness, Founder approval, a production golden, or three consecutive
 production builds. `production_ready=false` / `PENDING_FOUNDER_REVIEW`, and no code
 path can report otherwise.
+
+### Defects the final review caught in the committed artifacts
+
+Four blockers found by reading the committed receipts rather than the code, all now
+fixed with regression tests:
+
+1. **One placement, two shots.** `manifest_to_storyboard` iterated
+   `usable_assets()` — an *inventory*, not a timeline. `beat-05` and
+   `beat-05-h3-replaced` are both gate-admissible, so both landed on placement
+   `beat-05`: the pre-transform native audio played over the narration `REPLACE` was
+   meant to guarantee would be the only track. The manifest now carries an explicit
+   `timeline` with one `active_asset_id` per placement, and composition reads that.
+2. **Generated provenance downgraded.** The derived H3 envelope said
+   `asset_kind=GENERATED_VIDEO` with `generated=False`, because the transform receipt
+   had overloaded one boolean for "did a provider emit these bytes" and "is this
+   content generated". Now refused at construction, in both directions, derived or
+   not.
+3. **Machine paths in a committed manifest.** Eight `D:\Projects\...` references made
+   "deterministic manifest" true on exactly one checkout root — and therefore useless
+   as a cache key or review comparison. Paths are now logical.
+4. **`--reuse-h3-shot` did nothing.** `main()` parsed it and passed no argument,
+   while the provider separately globbed `.verify-tmp/m4`. So a clean clone produced
+   fixtures and a workstation with M4 leftovers silently produced real provider
+   media — both committed as "the integration". Reuse is now explicit by path and
+   validated against the shot's own receipt.
 
 ### Defects the test suite caught during this milestone
 

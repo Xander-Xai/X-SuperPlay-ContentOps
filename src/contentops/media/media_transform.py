@@ -91,9 +91,22 @@ class AudioPolicyError(RuntimeError):
 class TransformReceipt:
     """Provenance for bytes produced by a deterministic local transform.
 
-    Distinct from a generation receipt in the only way that matters: nothing here
-    was produced by a provider. ``generated`` is therefore ``false`` and
-    ``derived`` is ``true``.
+    Two different facts are recorded, because conflating them is what produced the
+    contradiction this class was corrected for:
+
+    ``provider_generated_bytes``
+        did *this transform* emit these exact bytes through a provider API? Always
+        ``false`` — that is what a transform is. Named explicitly rather than as a
+        bare ``generated`` flag, which read as a claim about the **content**.
+    ``source_generated``
+        was the **lineage** generated media? ``true`` when a generated shot had its
+        audio stripped; ``false`` when real material was transformed.
+
+    The distinction matters because the content's provenance survives a local edit.
+    A generated shot with its audio removed is still generated content, so the
+    envelope it produces must keep ``generated=true`` while this receipt records
+    that these particular bytes came from a transform. Overloading one boolean for
+    both made the receipt contradict the envelope.
     """
 
     transform_type: str
@@ -102,6 +115,9 @@ class TransformReceipt:
     source_fingerprint: Optional[str]
     output_path: str
     output_sha256: str
+    #: Whether the source lineage was generated media. Carried so a derived asset
+    #: inherits the provenance of what it came from.
+    source_generated: bool = False
     parameters: Dict[str, Any] = field(default_factory=dict)
     tool: str = "ffmpeg"
     tool_version: Optional[str] = None
@@ -109,7 +125,8 @@ class TransformReceipt:
     #: recognisably the same operation without re-running it.
     command_fingerprint: str = ""
     created_at: Optional[str] = None
-    generated: bool = False
+    #: These exact bytes came from a local transform, not a provider API.
+    provider_generated_bytes: bool = False
     derived: bool = True
     production_ready: bool = False
     human_review: str = "PENDING_FOUNDER_REVIEW"
@@ -123,15 +140,16 @@ class TransformReceipt:
             "source_fingerprint": self.source_fingerprint,
             "output_path": self.output_path,
             "output_sha256": self.output_sha256,
+            "provider_generated_bytes": self.provider_generated_bytes,
+            "derived": self.derived,
+            "source_generated": self.source_generated,
+            "production_ready": self.production_ready,
+            "human_review": self.human_review,
             "parameters": dict(self.parameters),
             "tool": self.tool,
             "tool_version": self.tool_version,
             "command_fingerprint": self.command_fingerprint,
             "created_at": self.created_at,
-            "generated": self.generated,
-            "derived": self.derived,
-            "production_ready": self.production_ready,
-            "human_review": self.human_review,
         }
 
 
@@ -232,6 +250,7 @@ def apply_audio_policy(
     source_receipt_ref: Optional[str] = None,
     source_fingerprint: Optional[str] = None,
     narration_source: Optional[str] = None,
+    source_generated: bool = False,
     created_at: Optional[str] = None,
 ) -> AudioPolicyApplication:
     """Apply one audio policy, producing a derived asset when bytes must change.
@@ -247,6 +266,9 @@ def apply_audio_policy(
         narration_source: the deterministic narration track composition will mux.
             Recorded on the application when ``REPLACE`` asks for it; never muxed
             here, so this step cannot produce a silent mix.
+        source_generated: whether the source lineage was generated media. Inherited
+            into the receipt so the derived asset's ``generated`` flag can be set
+            from the source rather than hardcoded.
         created_at: caller-supplied timestamp, so a test can produce a
             byte-stable receipt.
 
@@ -308,6 +330,7 @@ def apply_audio_policy(
         source_fingerprint=source_fingerprint,
         output_path=str(destination),
         output_sha256=sha256_file(destination),
+        source_generated=source_generated,
         parameters={
             "policy": policy,
             "drop_all_audio": True,

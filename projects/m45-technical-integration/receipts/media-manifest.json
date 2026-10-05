@@ -9,7 +9,7 @@
   },
   "narration": {
     "required": true,
-    "source": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\m45-technical-integration\\assets\\voice\\narration.wav",
+    "source": "project://assets/voice/narration.wav",
     "reason": "AudioPolicy REPLACE stripped the fixture shot's native audio, so composition must mux this deterministic narration track."
   },
   "scheduling": {
@@ -100,8 +100,46 @@
     "blocked": [],
     "manual_required": []
   },
+  "audio_postconditions": [
+    "beat-05-h3-replaced: AudioPolicy REPLACE, derived asset, so its native audio stream was stripped and narration is required"
+  ],
+  "timeline": [
+    {
+      "placement_id": "beat-01",
+      "active_asset_id": "beat-01-cd6c2c6a35a0",
+      "selection_reason": "only gate-admissible asset claiming this placement",
+      "superseded_asset_ids": []
+    },
+    {
+      "placement_id": "beat-02",
+      "active_asset_id": "beat-02-diagram",
+      "selection_reason": "only gate-admissible asset claiming this placement",
+      "superseded_asset_ids": []
+    },
+    {
+      "placement_id": "beat-03",
+      "active_asset_id": "beat-03-diagram",
+      "selection_reason": "only gate-admissible asset claiming this placement",
+      "superseded_asset_ids": []
+    },
+    {
+      "placement_id": "beat-04",
+      "active_asset_id": "beat-04-diagram",
+      "selection_reason": "only gate-admissible asset claiming this placement",
+      "superseded_asset_ids": []
+    },
+    {
+      "placement_id": "beat-05",
+      "active_asset_id": "beat-05-h3-replaced",
+      "selection_reason": "derived asset supersedes beat-05-h3: AudioPolicy REPLACE required new bytes, and the source retains the pre-transform audio that must not reach the timeline",
+      "superseded_asset_ids": [
+        "beat-05-h3"
+      ]
+    }
+  ],
   "counts": {
     "assets": 7,
+    "placements": 5,
     "by_modality": {
       "IMAGE": 4,
       "SPEECH": 1,
@@ -122,7 +160,7 @@
       "asset_id": "beat-01-cd6c2c6a35a0",
       "modality": "IMAGE",
       "placement_id": "beat-01",
-      "path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\m45-technical-integration\\sources\\screenshots\\fixture-01.png",
+      "path": "project://sources/screenshots/fixture-01.png",
       "sha256": "cd6c2c6a35a03b27a0774d1e5b73b623e6443b092ff91aa8bbe3a73e87aa7ae7",
       "receipt_ref": "fixture-01.png.receipt.json",
       "fingerprint": "1691e12a0ac2d06ce139c607ac873603e5eec9a6fe8fc6f4789f43e754f910b7",
@@ -143,7 +181,7 @@
       "asset_id": "beat-02-diagram",
       "modality": "IMAGE",
       "placement_id": "beat-02",
-      "path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\m45-technical-integration\\assets\\generated\\beat-02-diagram.png",
+      "path": "project://assets/generated/beat-02-diagram.png",
       "sha256": "279ee88a61521788598f45889c67ed366d9e4cd60193f04ce2c65a77ce351219",
       "receipt_ref": "beat-02-diagram.png.receipt.json",
       "fingerprint": "1840ce7f2d16aaaba233e13c524250c656161540814c91eb8e3c42b3ec51f567",
@@ -164,7 +202,7 @@
       "asset_id": "beat-03-diagram",
       "modality": "IMAGE",
       "placement_id": "beat-03",
-      "path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\m45-technical-integration\\assets\\generated\\beat-03-diagram.png",
+      "path": "project://assets/generated/beat-03-diagram.png",
       "sha256": "876abc41abe8b50bfc2ec3185f7f4258bd9ba99869af361dc00f3402da7b8e78",
       "receipt_ref": "beat-03-diagram.png.receipt.json",
       "fingerprint": "7f7b68427d58ba90eeb72a8de262e2c1e2133fd1668a7849a753050d73c71ebe",
@@ -185,7 +223,7 @@
       "asset_id": "beat-04-diagram",
       "modality": "IMAGE",
       "placement_id": "beat-04",
-      "path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\m45-technical-integration\\assets\\generated\\beat-04-diagram.png",
+      "path": "project://assets/generated/beat-04-diagram.png",
       "sha256": "158ef56099017fe3a9e7e94ce9b6bd318f65d819350fd7d31d9d75800c6826be",
       "receipt_ref": "beat-04-diagram.png.receipt.json",
       "fingerprint": "61558cf93935cef6ffade4fed522ccb9263f095484f238143598ff52883d15df",
@@ -206,10 +244,10 @@
       "asset_id": "beat-05-h3",
       "modality": "VIDEO",
       "placement_id": "beat-05",
-      "path": "D:\\Projects\\X-SuperPlay-ContentOps\\.verify-tmp\\m4\\run\\shot-f74366c9b0aaf925.mp4",
-      "sha256": "b761ea2a69b3ad6181b8a48b93dddefb56edd897867f42a8b160610e74ac249a",
-      "receipt_ref": "shot-f74366c9b0aaf925.mp4.receipt.json",
-      "fingerprint": "f74366c9b0aaf92588b8a00c51cc1f51a5620bba3063315066d9d57acadd1bc3",
+      "path": "project://assets/generated/beat-05-shot.mp4",
+      "sha256": "71fff295bb0e5a472f0f0d6081f927d4f3c14d442530f4530a46d75e6ad6376f",
+      "receipt_ref": "beat-05-shot.mp4.receipt.json",
+      "fingerprint": "1e07af7843ba19c83a9de9624e3fc5ac849cc7af7986427e195dd96a38a0c9da",
       "asset_kind": "GENERATED_VIDEO",
       "generated": true,
       "evidence_capable": false,
@@ -227,12 +265,12 @@
       "asset_id": "beat-05-h3-replaced",
       "modality": "VIDEO",
       "placement_id": "beat-05",
-      "path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\m45-technical-integration\\assets\\processed\\shot-f74366c9b0aaf925-replace.mp4",
-      "sha256": "38077ba57f6d01cdfd37c374c21f254eed4f617e285d40933ad5fa1ac0dfb621",
+      "path": "project://assets/processed/beat-05-shot-replace.mp4",
+      "sha256": "7c0798eb3177f7599235d43e28b2f80ce875a57b37a499f066de766d5c47561c",
       "receipt_ref": null,
-      "fingerprint": "f74366c9b0aaf92588b8a00c51cc1f51a5620bba3063315066d9d57acadd1bc3",
+      "fingerprint": "1e07af7843ba19c83a9de9624e3fc5ac849cc7af7986427e195dd96a38a0c9da",
       "asset_kind": "GENERATED_VIDEO",
-      "generated": false,
+      "generated": true,
       "evidence_capable": false,
       "evidence_use": "VISUAL_SUPPORT",
       "claim_refs": [],
@@ -242,13 +280,13 @@
       "audio_policy": "REPLACE",
       "fallback": {},
       "derived_from": "beat-05-h3",
-      "transform_receipt_ref": "shot-f74366c9b0aaf925-replace.mp4.transform.json"
+      "transform_receipt_ref": "beat-05-shot-replace.mp4.transform.json"
     },
     {
       "asset_id": "narration-01",
       "modality": "SPEECH",
       "placement_id": null,
-      "path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\m45-technical-integration\\assets\\voice\\narration.wav",
+      "path": "project://assets/voice/narration.wav",
       "sha256": "7c58184f14209156f46a5b17065264c2e66d5a496184fc0e3093853e57bc9add",
       "receipt_ref": "narration.wav.receipt.json",
       "fingerprint": null,

@@ -1,6 +1,6 @@
 {
   "project": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\m45-technical-integration",
-  "checked_at": "2026-10-04T21:55:11Z",
+  "checked_at": "2026-10-05T12:08:11Z",
   "video": "",
   "overall": "WARN",
   "checks": [
@@ -14,7 +14,7 @@
       "id": "file_size",
       "ok": true,
       "severity": "PASS",
-      "value_bytes": 1949089,
+      "value_bytes": 311323,
       "min_bytes": 102400
     },
     {
@@ -39,7 +39,7 @@
       "id": "duration_range",
       "ok": false,
       "severity": "WARN",
-      "value_sec": 24.0,
+      "value_sec": 18.0,
       "expected_range_sec": [
         30.0,
         120.0
@@ -89,15 +89,15 @@
       "id": "storyboard_exists",
       "ok": true,
       "severity": "PASS",
-      "shot_count": 6
+      "shot_count": 5
     },
     {
       "id": "real_source_ratio",
       "ok": true,
       "severity": "PASS",
-      "value": 0.833,
+      "value": 0.8,
       "min": 0.7,
-      "real_shots": 5,
+      "real_shots": 4,
       "generated_shots": 1,
       "note": "AI-generated key visuals must not be the majority"
     },
@@ -118,7 +118,7 @@
       "ok": true,
       "severity": "PASS",
       "max_volume_db": "-20.7 dB",
-      "mean_volume_db": "-30.1 dB"
+      "mean_volume_db": "-28.9 dB"
     },
     {
       "id": "subtitle_burned_or_track",
