@@ -49,6 +49,21 @@ jobs:
       - name: Run M3 image regression tests
         run: python tests/test_minimax_image.py
 
+      # M4 and M4.5 were merged without these two being wired in, so a green CI run
+      # was not evidence that 205 tests passed. A suite that is not executed cannot
+      # report a pass, and the gap was invisible precisely because CI looked healthy.
+      - name: Run M4 H3 video regression tests
+        run: python tests/test_minimax_h3.py
+
+      - name: Run M4.5 media convergence regression tests
+        run: python tests/test_media_convergence.py
+
+      # M4.6 provider-free: fixtures only, no MiniMax request, no quota. Skips
+      # itself when the M4.5 artifacts are absent, which they are on a clean
+      # checkout because media binaries are gitignored.
+      - name: Run M4.6 enhanced golden infrastructure tests
+        run: python tests/test_enhanced_golden.py
+
       - name: Run Windows subprocess tests
         run: python tests/test_windows_subprocess.py
 

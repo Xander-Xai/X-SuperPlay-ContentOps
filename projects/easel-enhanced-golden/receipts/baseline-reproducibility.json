@@ -1,0 +1,297 @@
+{
+  "schema": "contentops.baseline-reproducibility/v1",
+  "checked_at": "2026-10-05T14:08:22Z",
+  "git_head": "bd4db9aa1367c1f4f4d23679561c36732ea2afea",
+  "source_project": "project://easel-review",
+  "script_sha256": "7df3adbd34f3e2fc5157a2c858de737beca12a13fb58ea64fd570e982820d69d",
+  "narration_text_sha256": "2f7122228c53de128d04541ec1c4086dedd22ddc51bb0347d605e1c789a02348",
+  "storyboard_sha256": "31d9d51dc3caee0f9c1812aea6ceac5e41f815ea2079279da85cfacb98488053",
+  "storyboard_shot_count": 6,
+  "expected_screenshots": [
+    {
+      "expected_path": "projects/easel-review/sources/screenshots/10-easel-doctor.png",
+      "found": true,
+      "actual_location": "projects/easel-review/sources/screenshots/10-easel-doctor.png",
+      "sha256": "69f173cfd03efc13cc3030c627b1d2f031213ad14c02f0358320a7378f642d17",
+      "width": 1080,
+      "height": 1920,
+      "container": "PNG",
+      "tracked": false,
+      "ignored": true,
+      "recovery_class": "LOCAL_IGNORED_CANDIDATE"
+    },
+    {
+      "expected_path": "projects/easel-review/sources/screenshots/11-easel-ping.png",
+      "found": true,
+      "actual_location": "projects/easel-review/sources/screenshots/11-easel-ping.png",
+      "sha256": "cc566fbe0bcb9a81406d02ce0641aa110f9738730dff1d19dc278d48146cb34e",
+      "width": 1080,
+      "height": 1920,
+      "container": "PNG",
+      "tracked": false,
+      "ignored": true,
+      "recovery_class": "LOCAL_IGNORED_CANDIDATE"
+    },
+    {
+      "expected_path": "projects/easel-review/sources/screenshots/12-easel-version-evidence.png",
+      "found": true,
+      "actual_location": "projects/easel-review/sources/screenshots/12-easel-version-evidence.png",
+      "sha256": "6f8603af5e83e48202d263c67da5fbd248d25cadf004365cdb67f8ed220c6d20",
+      "width": 1080,
+      "height": 1920,
+      "container": "PNG",
+      "tracked": false,
+      "ignored": true,
+      "recovery_class": "LOCAL_IGNORED_CANDIDATE"
+    },
+    {
+      "expected_path": "projects/easel-review/sources/screenshots/13-easel-skill-layers.png",
+      "found": true,
+      "actual_location": "projects/easel-review/sources/screenshots/13-easel-skill-layers.png",
+      "sha256": "d7b01af2b2d3e2841f0948a284265496bd1b6fc4fe287dec81403c61145431f0",
+      "width": 1080,
+      "height": 1920,
+      "container": "PNG",
+      "tracked": false,
+      "ignored": true,
+      "recovery_class": "LOCAL_IGNORED_CANDIDATE"
+    },
+    {
+      "expected_path": "projects/easel-review/sources/screenshots/14-easel-skills-dir.png",
+      "found": true,
+      "actual_location": "projects/easel-review/sources/screenshots/14-easel-skills-dir.png",
+      "sha256": "2d6fdabadff9dfc0e14c54b16e7583e3a00a9f94d777750cd1fd3654b7b6bbe0",
+      "width": 1080,
+      "height": 1920,
+      "container": "PNG",
+      "tracked": false,
+      "ignored": true,
+      "recovery_class": "LOCAL_IGNORED_CANDIDATE"
+    },
+    {
+      "expected_path": "projects/easel-review/sources/screenshots/15-easel-doctor-fails.png",
+      "found": true,
+      "actual_location": "projects/easel-review/sources/screenshots/15-easel-doctor-fails.png",
+      "sha256": "69dbfd125f2d27cbf0e626b04238069b55b77f01b04dc659fda65855a9744b2e",
+      "width": 1080,
+      "height": 1920,
+      "container": "PNG",
+      "tracked": false,
+      "ignored": true,
+      "recovery_class": "LOCAL_IGNORED_CANDIDATE"
+    }
+  ],
+  "expected_count": 6,
+  "recovered_count": 6,
+  "source_completeness": "COMPLETE",
+  "git_reproducible": false,
+  "recovery_classes_present": [
+    "LOCAL_IGNORED_CANDIDATE"
+  ],
+  "provenance_verification": {
+    "independent_historical_digest_found": false,
+    "highest_available_class": "LOCAL_IGNORED_CANDIDATE",
+    "basis": "No receipt in the repository records a sha256 for any of the six screenshots. build-easel.json and visual-qc.json record run facts but no source digests. A matching filename is not cryptographic proof, so no file is classified VERIFIED_ORIGINAL."
+  },
+  "git_reproducibility_gap": {
+    "problem": "The six factual sources are absent from Git. They exist only on this build host, so a Golden experiment built on them cannot be re-run by another machine or in CI.",
+    "affected_paths": [
+      "projects/easel-review/sources/screenshots/10-easel-doctor.png",
+      "projects/easel-review/sources/screenshots/11-easel-ping.png",
+      "projects/easel-review/sources/screenshots/12-easel-version-evidence.png",
+      "projects/easel-review/sources/screenshots/13-easel-skill-layers.png",
+      "projects/easel-review/sources/screenshots/14-easel-skills-dir.png",
+      "projects/easel-review/sources/screenshots/15-easel-doctor-fails.png"
+    ],
+    "root_cause": "A repository-wide '*.png' rule in .gitignore makes image evidence untrackable. The four screenshots that ARE tracked got in before the rule applied, so the current state is inconsistent: some image evidence is in Git and the six files a published video actually cites are not.",
+    "ignore_rule": ".gitignore:68:*.png",
+    "policy_note": "The blanket rule is defensible for build artefacts and indefensible for factual evidence. A video that cites a screenshot cannot be re-verified if the screenshot is not in the repository, so evidence and artefacts need different rules.",
+    "options_not_taken": [
+      "renaming 01-04 into the 10-15 slots (they depict different material)",
+      "extracting frames from the render and promoting them to sources",
+      "generating replacement screenshots",
+      "committing binaries into projects/easel-review, which this stage does not modify",
+      "weakening the .gitignore image rule unilaterally, which is a repository-wide policy change and the Founder's call"
+    ],
+    "decision_owner": "FOUNDER"
+  },
+  "not_substitutes": {
+    "paths": [
+      "projects/easel-review/sources/screenshots/01-easel-hero.png",
+      "projects/easel-review/sources/screenshots/02-easel-features.png",
+      "projects/easel-review/sources/screenshots/03-easel-architecture.png",
+      "projects/easel-review/sources/screenshots/04-easel-skills.png"
+    ],
+    "note": "Tracked in Git, but they depict different material. Recorded so they are not silently reused as the six."
+  },
+  "consistency_evidence": {
+    "work_intermediates": {
+      "performed": true,
+      "witness_count": 6,
+      "matching_count": 0,
+      "intermediates_match_this_storyboard": false,
+      "findings": [
+        {
+          "shot_index": 0,
+          "storyboard_source": "10-easel-doctor.png",
+          "witness_present": true,
+          "witness_sha256": "85c4ab5c5368b1ab60a98854ee292529d6b7908be58acfccc1d5f4ed06cddb53",
+          "identical_to_storyboard_source": false,
+          "witness_actually_equals": "01-easel-hero.png"
+        },
+        {
+          "shot_index": 1,
+          "storyboard_source": "12-easel-version-evidence.png",
+          "witness_present": true,
+          "witness_sha256": "8372b63cb3b276e4fab9b3eb0181a02322b896a51cbd91a6a572de2fa4dc1487",
+          "identical_to_storyboard_source": false,
+          "witness_actually_equals": "02-easel-features.png"
+        },
+        {
+          "shot_index": 2,
+          "storyboard_source": "13-easel-skill-layers.png",
+          "witness_present": true,
+          "witness_sha256": "588119321781fe91609e2997a3a46e3bff08e2153a1bfc8259e6539ba2d0fa7a",
+          "identical_to_storyboard_source": false,
+          "witness_actually_equals": "03-easel-architecture.png"
+        },
+        {
+          "shot_index": 3,
+          "storyboard_source": "11-easel-ping.png",
+          "witness_present": true,
+          "witness_sha256": "1652130150eda930893f431b015707455bd0db16acb8c4c572ce82596c5202a0",
+          "identical_to_storyboard_source": false,
+          "witness_actually_equals": "04-easel-skills.png"
+        },
+        {
+          "shot_index": 4,
+          "storyboard_source": "15-easel-doctor-fails.png",
+          "witness_present": true,
+          "witness_sha256": "69f173cfd03efc13cc3030c627b1d2f031213ad14c02f0358320a7378f642d17",
+          "identical_to_storyboard_source": false,
+          "witness_actually_equals": "10-easel-doctor.png"
+        },
+        {
+          "shot_index": 5,
+          "storyboard_source": "14-easel-skills-dir.png",
+          "witness_present": true,
+          "witness_sha256": "cc566fbe0bcb9a81406d02ce0641aa110f9738730dff1d19dc278d48146cb34e",
+          "identical_to_storyboard_source": false,
+          "witness_actually_equals": "11-easel-ping.png"
+        }
+      ],
+      "conclusion": "The work/ intermediates are byte-identical copies of a DIFFERENT screenshot set, so they witness an earlier render and are not a valid consistency witness for this storyboard. Consistency is therefore tested against the historical render instead."
+    },
+    "historical_render": {
+      "performed": true,
+      "class": "CONSISTENCY_EVIDENCE",
+      "is_source_identity_proof": false,
+      "render_facts": {
+        "tracked_final": {
+          "present": true,
+          "path": "project://final/final.mp4",
+          "container": "mov,mp4,m4a,3gp,3g2,mj2",
+          "duration_sec": 40.03,
+          "width": 1080,
+          "height": 1920,
+          "video_codec": "h264",
+          "audio_streams": 1,
+          "bytes": 552315
+        },
+        "easel_render": {
+          "present": true,
+          "path": "project://final/easel.mp4",
+          "container": "mov,mp4,m4a,3gp,3g2,mj2",
+          "duration_sec": 62.0,
+          "width": 1080,
+          "height": 1920,
+          "video_codec": "h264",
+          "audio_streams": 1,
+          "bytes": 1868184
+        }
+      },
+      "render_duration_sec": 62.0,
+      "shot_count": 6,
+      "frames_sampled": 36,
+      "in_own_shot_count": 6,
+      "compared_count": 6,
+      "mean_best_match_diff": 1.94,
+      "results": [
+        {
+          "shot_index": 0,
+          "candidate": "projects/easel-review/sources/screenshots/10-easel-doctor.png",
+          "compared": true,
+          "best_match_time_sec": 0.86,
+          "best_match_mean_abs_diff": 1.07,
+          "own_shot_window_sec": [
+            0.0,
+            10.33
+          ],
+          "best_match_inside_own_shot": true
+        },
+        {
+          "shot_index": 1,
+          "candidate": "projects/easel-review/sources/screenshots/12-easel-version-evidence.png",
+          "compared": true,
+          "best_match_time_sec": 11.19,
+          "best_match_mean_abs_diff": 2.53,
+          "own_shot_window_sec": [
+            10.33,
+            20.67
+          ],
+          "best_match_inside_own_shot": true
+        },
+        {
+          "shot_index": 2,
+          "candidate": "projects/easel-review/sources/screenshots/13-easel-skill-layers.png",
+          "compared": true,
+          "best_match_time_sec": 21.53,
+          "best_match_mean_abs_diff": 1.83,
+          "own_shot_window_sec": [
+            20.67,
+            31.0
+          ],
+          "best_match_inside_own_shot": true
+        },
+        {
+          "shot_index": 3,
+          "candidate": "projects/easel-review/sources/screenshots/11-easel-ping.png",
+          "compared": true,
+          "best_match_time_sec": 31.86,
+          "best_match_mean_abs_diff": 2.28,
+          "own_shot_window_sec": [
+            31.0,
+            41.33
+          ],
+          "best_match_inside_own_shot": true
+        },
+        {
+          "shot_index": 4,
+          "candidate": "projects/easel-review/sources/screenshots/15-easel-doctor-fails.png",
+          "compared": true,
+          "best_match_time_sec": 42.19,
+          "best_match_mean_abs_diff": 2.11,
+          "own_shot_window_sec": [
+            41.33,
+            51.67
+          ],
+          "best_match_inside_own_shot": true
+        },
+        {
+          "shot_index": 5,
+          "candidate": "projects/easel-review/sources/screenshots/14-easel-skills-dir.png",
+          "compared": true,
+          "best_match_time_sec": 55.97,
+          "best_match_mean_abs_diff": 1.81,
+          "own_shot_window_sec": [
+            51.67,
+            62.0
+          ],
+          "best_match_inside_own_shot": true
+        }
+      ],
+      "conclusion": "6 of 6 candidates matched most closely inside their own shot's window, in storyboard order. This supports that the local files are the material the render was built from. It is not proof of identity, and it is not a substitute for a recorded digest."
+    }
+  },
+  "missing_assets": []
+}

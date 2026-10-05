@@ -1,0 +1,85 @@
+{
+  "schema": "contentops.founder-review/v1",
+  "variant_ids": [
+    "A",
+    "B",
+    "C",
+    "D"
+  ],
+  "rubric": [
+    {
+      "key": "voice_naturalness",
+      "question": "Does the voice sound like a person speaking, and is it easy to follow?"
+    },
+    {
+      "key": "visual_consistency",
+      "question": "Does the video look like one piece, or do the visual sources clash?"
+    },
+    {
+      "key": "pacing",
+      "question": "Do the cuts and durations hold attention without dragging or rushing?"
+    },
+    {
+      "key": "generated_image_usefulness",
+      "question": "Where present, does the generated image add understanding, or is it decoration?"
+    },
+    {
+      "key": "h3_usefulness",
+      "question": "Where present, does the H3 insert earn its place, or would the video be tighter without it?"
+    },
+    {
+      "key": "artifact_severity",
+      "question": "Any deformation, garbled text, bad frame or unwanted audio?"
+    },
+    {
+      "key": "overall_publishability",
+      "question": "Would you publish this as-is?"
+    }
+  ],
+  "allowed_selections": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "NONE"
+  ],
+  "neutrality_note": "The arms are labelled only. This package attaches no ranking language to any arm, and the order is not an ordering of merit.",
+  "artifacts": {
+    "A": "project://variants/A/final.mp4",
+    "B": "project://variants/B/final.mp4",
+    "C": "project://variants/C/final.mp4",
+    "D": "project://variants/D/final.mp4"
+  },
+  "variant_receipts": {
+    "A": {
+      "variant_id": "A"
+    },
+    "B": {
+      "variant_id": "B"
+    },
+    "C": {
+      "variant_id": "C"
+    },
+    "D": {
+      "variant_id": "D"
+    }
+  },
+  "evidence_identity": {
+    "verdict": "NOT_RUN",
+    "all_identical": null,
+    "placements_compared": 0,
+    "mismatches": [],
+    "note": "No A/B/C/D builds exist yet, so cross-arm evidence identity has not been compared. It must read EXPERIMENT_VALID before a Founder review package is worth preparing."
+  },
+  "review": {
+    "selection": "PENDING_FOUNDER_REVIEW",
+    "reviewer": null,
+    "reviewed_at": null,
+    "per_variant": {},
+    "comments": {}
+  },
+  "notes": {
+    "status": "PENDING_FOUNDER_REVIEW",
+    "blocked_by": "Baseline sources are not in Git; see receipts/baseline-reproducibility.json"
+  }
+}
