@@ -1,0 +1,521 @@
+{
+  "schema": "contentops.payg-first-activation/v1",
+  "round": "PAYG_FIRST_ACTIVATION_NATIVE",
+  "attempt_id": "paygact-a113459b63dc",
+  "issue": "#34",
+  "started_at": "2026-10-12T15:28:21.148276+00:00",
+  "executed": true,
+  "route": "PAYG_ACTIVATION_ROUTE",
+  "authorisation": {
+    "name": "FOUNDER_AUTHORISED_NATIVE_FIRST_ACTIVATION_2026_10_12",
+    "granted_on": "2026-10-12",
+    "granted_by": "FOUNDER",
+    "scope": {
+      "voice_id_hash": "7271d9c80c88821a6a09ed43328619d0ee08c3f2b2449237fe2c31f6899abeef",
+      "model": "speech-2.8-hd",
+      "credential": "the configured MINIMAX_CLONE_KEY (exposed; risk accepted)",
+      "billable_characters": 44,
+      "max_cash_debit_cny": "10.00",
+      "provider_requests": 1,
+      "upload": 0,
+      "clone": 0,
+      "automatic_retry": false
+    },
+    "note": "new independent authorisation; it does not restore, replace or clear any earlier attempt or consumed authorisation"
+  },
+  "voice_id": "founder_primary_v1",
+  "voice_id_hash": "7271d9c80c88821a6a09ed43328619d0ee08c3f2b2449237fe2c31f6899abeef",
+  "voice_sample_sha256": "bb56d052cd637bd8a369f6e37a745c7609de9988ada0fa0827d4d5c59035df8d",
+  "clone_reused": true,
+  "reupload_count": 0,
+  "reclone_count": 0,
+  "model": "speech-2.8-hd",
+  "text": "这是一段用于首次激活的最短自然中文语音样本。",
+  "billable_characters": 44,
+  "rate_cny_per_10k_chars": "3.50",
+  "character_cost_cny": "0.015400",
+  "one_time_activation_cny": "9.90",
+  "max_cash_debit_cny": "10.00",
+  "payg_key_fingerprint": "2ac10c6e9029",
+  "payg_key_exposed": true,
+  "exposed_key_exception": "FOUNDER_AUTHORISED_EXPOSED_KEY_REUSE",
+  "exposed_key_exception_granted": true,
+  "exposed_key_exception_applied": true,
+  "key_rotation_note": "The key is NOT rotated. exposed_key stays true. This exception is the Founder's acceptance of the risk for THIS one request only; rotation remains the standing recommendation.",
+  "subscription_key_class": "SUBSCRIPTION",
+  "keys_distinct": true,
+  "hosts": {
+    "activation_host": "https://api.minimax.cn",
+    "balance_query_host": "https://api.minimax.cn",
+    "configured_env_host": "https://api.minimax.cn",
+    "configured_env_matches": true,
+    "why": "the activation request and its balance evidence address the same documented CN host; the native adapter refuses any other origin before the transport is touched"
+  },
+  "prior_records": {
+    "prior_records_note": "historical facts, recorded and preserved; none of them is cleared",
+    "first_activation_refusal": {
+      "at": "2026-10-12T12:06:00+00:00",
+      "provider_message": "API error: insufficient balance (HTTP 200)"
+    },
+    "subscription_probe_count": 1,
+    "cash_recovery_used": true,
+    "exposed_key_exception_consumed": true
+  },
+  "money_before": {
+    "verdict": "BLOCKED_BILLING_SOURCE_UNCERTAIN",
+    "reasons": [
+      "credential class is PAYG, not a Subscription Key; PAYG and unknown credentials are refused before generation",
+      "balance field cash_balance is 10.0, so paid funds could be consumed by a PAYG request",
+      "balance field voucher_balance is 15.0, so paid funds could be consumed by a PAYG request"
+    ],
+    "balances": {
+      "available_amount": "25.00",
+      "cash_balance": "10.00",
+      "voucher_balance": "15.00",
+      "credit_balance": "0.00",
+      "owed_amount": "0.00"
+    },
+    "quota": {
+      "interval_remaining_percent": 99.0,
+      "weekly_remaining_percent": 51.0,
+      "bucket": "general"
+    }
+  },
+  "window_remaining_h": 164.52,
+  "provider_call_budget": {
+    "activation_tts": 1,
+    "upload": 0,
+    "clone": 0,
+    "automatic_retry": 0
+  },
+  "activation_attempts": 1,
+  "upload_count": 0,
+  "clone_count": 0,
+  "retries_performed": 0,
+  "decision": {
+    "route": "PAYG_ACTIVATION_ROUTE",
+    "authorisation": "FOUNDER_AUTHORISED_NATIVE_FIRST_ACTIVATION_2026_10_12",
+    "exposed_key_exception_name": "FOUNDER_AUTHORISED_EXPOSED_KEY_REUSE",
+    "authorised": true,
+    "status": "AUTHORISED",
+    "refusals": [],
+    "reasons": [
+      "[FOUNDER_AUTHORISED_EXPOSED_KEY_REUSE] the pay-as-you-go key is exposed (fingerprint 2ac10c6e9029) and this run proceeds under a Founder-granted, single-use, scope-limited exception. The key should still be rotated; this does not make it safe."
+    ],
+    "projected_total_cny": "9.9154",
+    "ceiling_cny": "10.00",
+    "prior_recovery_used": true,
+    "prior_attempts_note": "the three earlier attempts and their consumed authorisations are historical facts; prior_recovery_used is recorded and does NOT block this independent authorisation",
+    "verdict": {
+      "schema": "contentops.cash-activation-recovery/v1",
+      "recovery": "CASH_ACTIVATION_RECOVERY",
+      "status": "AUTHORISED",
+      "authorised": true,
+      "refusals": [],
+      "reasons": [
+        "[FOUNDER_AUTHORISED_EXPOSED_KEY_REUSE] the pay-as-you-go key is exposed (fingerprint 2ac10c6e9029) and this run proceeds under a Founder-granted, single-use, scope-limited exception. The key should still be rotated; this does not make it safe."
+      ],
+      "evidence": {
+        "payg_key_fingerprint": "2ac10c6e9029",
+        "payg_key_is_payg_class": true,
+        "exposed_key": true,
+        "exposed_key_exception_applied": true,
+        "exposed_key_exception": {
+          "name": "FOUNDER_AUTHORISED_EXPOSED_KEY_REUSE",
+          "applied": true,
+          "granted_on": "2026-10-12",
+          "authorised_by": "FOUNDER",
+          "key_fingerprint": "2ac10c6e9029",
+          "voice_id_hash": "7271d9c80c88821a6a09ed43328619d0ee08c3f2b2449237fe2c31f6899abeef",
+          "model": "speech-2.8-hd",
+          "billable_characters": 44,
+          "max_cash_debit_cny": "10.00",
+          "reason": "The Founder granted a NEW independent authorisation on 2026-10-12 for one native-Host first-activation request through the known exposed pay-as-you-go key, accepting the exposure risk for this round, with a CNY 10.00 total cash ceiling. This is not the earlier consumed exception and does not restore it.",
+          "note": "The exposure is REAL and still true: exposed_key remains true in this receipt and the global payg_key_is_exposed() check is unchanged. This is a Founder decision to spend through it once, not a rotation and not a fix."
+        },
+        "voice_id_hash": "7271d9c80c88821a6a09ed43328619d0ee08c3f2b2449237fe2c31f6899abeef",
+        "voice_window_remaining_h": 164.52,
+        "cash_balance": 10.0,
+        "credit_balance": 0.0,
+        "voucher_balance": 15.0,
+        "owed_amount": 0.0,
+        "billable_characters": 44,
+        "character_cost_cny": "0.015400",
+        "one_time_activation_cny": "9.90",
+        "clone_creation_cny": "0.00",
+        "projected_total_cny": "9.9154",
+        "previous_payg_refusal": true,
+        "previous_subscription_refusal": true,
+        "note_on_history": "the two earlier refusals are preserved and are NOT cleared by this authorisation. They are recorded because they are why the payment source changed from voucher to cash, not because they may be undone."
+      },
+      "projected_total_cny": "9.9154",
+      "ceiling_cny": "10.00",
+      "limits": {
+        "max_cash_debit_cny": "10.00",
+        "allow_voucher_deduction": false,
+        "allow_credit_pack_deduction": false,
+        "allow_auto_recharge": false,
+        "allow_reupload": false,
+        "allow_reclone": false,
+        "allow_automatic_retry": false,
+        "max_activation_tts_count": 1,
+        "max_upload_count": 0,
+        "max_clone_count": 0,
+        "scope": "one voice_id_hash, one cash activation"
+      },
+      "bounderiness_note": "The REQUEST is bounded by construction: one call, a fixed 44-billable-character text, a published per-character rate and a published one-time fee. No source states that the PROVIDER enforces a ceiling, and none is claimed here. The actual debit is measured against the ceiling after the call, and an overrun is a stop condition.",
+      "production_ready": false,
+      "human_review": "PENDING_FOUNDER_REVIEW"
+    }
+  },
+  "notes": [
+    "Audio returned but no cash movement proves the one-time fee was charged. Activation is NOT claimed: audio output is not proof of payment. No further provider request may be sent until this is checked against the provider's billing record."
+  ],
+  "request_started_at": "2026-10-12T15:28:21.148480+00:00",
+  "request_transmitted": true,
+  "request_target": {
+    "host": "https://api.minimax.cn",
+    "path": "/v1/t2a_v2",
+    "transport": "native_http_cn",
+    "route": "PAYG_ACTIVATION_ROUTE",
+    "credential_class": "PAYG",
+    "credential_source": "MINIMAX_CLONE_KEY_ENV"
+  },
+  "request_payload": {
+    "fields": [
+      "audio_setting",
+      "model",
+      "output_format",
+      "pronunciation_dict",
+      "stream",
+      "text",
+      "voice_setting"
+    ],
+    "model": "speech-2.8-hd",
+    "text_sha256": "f9e732a89501c137642e7b765df4e5e5cd0182683f9ae923b6f2051dab191678",
+    "text_billable_characters": 44,
+    "voice_setting": {
+      "voice_id": "founder_primary_v1",
+      "speed": 1,
+      "vol": 1,
+      "pitch": 0
+    },
+    "voice_setting_voice_id_hash": "7271d9c80c88821a6a09ed43328619d0ee08c3f2b2449237fe2c31f6899abeef",
+    "audio_setting": {
+      "sample_rate": 32000,
+      "format": "wav",
+      "channel": 1
+    },
+    "output_format": "hex",
+    "stream": false,
+    "pronunciation_rule_count": 6
+  },
+  "audio": {
+    "path": "D:\\Projects\\X-SuperPlay-ContentOps\\.verify-tmp\\m34-payg-native-activation\\paygact-a113459b63dc-normalised.wav",
+    "sha256": "ca946983a6a4c4d0119e324783f6b8726889f15fd76d26b1ff320304a7f06b4f",
+    "duration_s": 4.644,
+    "sample_rate_hz": 44100,
+    "channels": 1,
+    "codec": "pcm_s16le",
+    "loudness_lufs": -16.6,
+    "technical_qc_approved": true,
+    "technical_qc": {
+      "approved": true,
+      "checks": [
+        {
+          "check": "file_exists",
+          "passed": true,
+          "detail": "D:\\Projects\\X-SuperPlay-ContentOps\\.verify-tmp\\m34-payg-native-activation\\paygact-a113459b63dc-normalised.wav"
+        },
+        {
+          "check": "not_empty",
+          "passed": true,
+          "detail": "409680 bytes"
+        },
+        {
+          "check": "has_audio_codec",
+          "passed": true,
+          "detail": "pcm_s16le"
+        },
+        {
+          "check": "has_duration",
+          "passed": true,
+          "detail": 4.644
+        },
+        {
+          "check": "sample_rate",
+          "passed": true,
+          "detail": {
+            "expected": 44100,
+            "actual": 44100
+          }
+        },
+        {
+          "check": "mono_or_stereo",
+          "passed": true,
+          "detail": 1
+        },
+        {
+          "check": "leading_silence",
+          "passed": true,
+          "detail": 0.0
+        },
+        {
+          "check": "trailing_silence",
+          "passed": true,
+          "detail": 0.0
+        },
+        {
+          "check": "not_mostly_silent",
+          "passed": true,
+          "detail": -1.5
+        },
+        {
+          "check": "no_clipping",
+          "passed": true,
+          "detail": -1.5
+        },
+        {
+          "check": "loudness_floor",
+          "passed": true,
+          "detail": -16.6
+        },
+        {
+          "check": "true_peak_headroom",
+          "passed": true,
+          "detail": -1.5
+        }
+      ],
+      "measurements": {
+        "codec": "pcm_s16le",
+        "sample_rate_hz": 44100,
+        "channels": 1,
+        "duration_s": 4.644,
+        "bytes": 409680,
+        "integrated_lufs": -16.6,
+        "true_peak_db": -1.5,
+        "peak_db": -1.5,
+        "mean_db": -16.4,
+        "loudness_range_lu": 1.5
+      },
+      "silence": {
+        "available": true,
+        "silences": [],
+        "leading_silence_s": 0.0,
+        "trailing_silence_s": 0.0
+      }
+    },
+    "lexicon_applied": true,
+    "spoken_text_sha256": "f9e732a89501c137642e7b765df4e5e5cd0182683f9ae923b6f2051dab191678"
+  },
+  "provider_response": {
+    "http_status": 200,
+    "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+    },
+    "trace_id": "071c2f987a3d496f54083002944d5506",
+    "audio_hex_chars": 596760,
+    "extra_info": {
+      "audio_length": 4643,
+      "audio_sample_rate": 32000,
+      "audio_size": 298380,
+      "bitrate": 128000,
+      "word_count": 22,
+      "invisible_character_ratio": 0,
+      "usage_characters": 43,
+      "audio_format": "wav",
+      "audio_channel": 1,
+      "usage_voice_count": 1,
+      "_elapsed_ms": 5369
+    },
+    "usage_characters": 43,
+    "usage_voice_count": 1,
+    "raw_response_stored_privately": true
+  },
+  "request_finished_at": "2026-10-12T15:28:27.787403+00:00",
+  "provider_status": {
+    "status_code": 0,
+    "status_meaning": "success",
+    "http_status": 200,
+    "trace_id": "071c2f987a3d496f54083002944d5506",
+    "usage_characters": 43,
+    "usage_voice_count": 1
+  },
+  "error_taxonomy": {
+    "http_status": 200,
+    "provider_status_code": null,
+    "provider_status_msg": null,
+    "trace_id": "071c2f987a3d496f54083002944d5506",
+    "cli_exit_code": null,
+    "cli_exit_code_note": "not applicable: this round uses the native HTTP transport; the CLI is not in the request path",
+    "local_precheck": "decide_payg_native_activation",
+    "transport": "native_http_cn"
+  },
+  "money_after": {
+    "verdict": "BLOCKED_BILLING_SOURCE_UNCERTAIN",
+    "reasons": [
+      "credential class is PAYG, not a Subscription Key; PAYG and unknown credentials are refused before generation",
+      "balance field cash_balance is 10.0, so paid funds could be consumed by a PAYG request",
+      "balance field voucher_balance is 15.0, so paid funds could be consumed by a PAYG request"
+    ],
+    "balances": {
+      "available_amount": "25.00",
+      "cash_balance": "10.00",
+      "voucher_balance": "15.00",
+      "credit_balance": "0.00",
+      "owed_amount": "0.00"
+    },
+    "quota": {
+      "interval_remaining_percent": 99.0,
+      "weekly_remaining_percent": 51.0,
+      "bucket": "general"
+    }
+  },
+  "deltas": {
+    "cash_balance": {
+      "before": "10.00",
+      "after": "10.00",
+      "delta": "0.00",
+      "decreased": false,
+      "increased": false
+    },
+    "voucher_balance": {
+      "before": "15.00",
+      "after": "15.00",
+      "delta": "0.00",
+      "decreased": false,
+      "increased": false
+    },
+    "credit_balance": {
+      "before": "0.00",
+      "after": "0.00",
+      "delta": "0.00",
+      "decreased": false,
+      "increased": false
+    },
+    "owed_amount": {
+      "before": "0.00",
+      "after": "0.00",
+      "delta": "0.00",
+      "decreased": false,
+      "increased": false
+    },
+    "available_amount": {
+      "before": "25.00",
+      "after": "25.00",
+      "delta": "0.00",
+      "decreased": false,
+      "increased": false
+    }
+  },
+  "actual_cash_debit_cny": null,
+  "unexpected_balance_movements": [],
+  "outcome": "TTS_SUCCESS_BILLING_UNVERIFIED",
+  "voice_activated": false,
+  "provider_receipt": {
+    "provider": "minimax",
+    "transport": "native_http_cn",
+    "request_host": "https://api.minimax.cn",
+    "route": "PAYG_ACTIVATION_ROUTE",
+    "credential_class": "PAYG",
+    "credential_source": "MINIMAX_CLONE_KEY_ENV",
+    "model": "speech-2.8-hd",
+    "voice_id_hash": "7271d9c80c88821a6a09ed43328619d0ee08c3f2b2449237fe2c31f6899abeef",
+    "trace_id": "071c2f987a3d496f54083002944d5506",
+    "http_status": 200,
+    "provider_status_code": 0,
+    "usage_characters": 43,
+    "usage_voice_count": 1,
+    "loudnorm_target": "I=-16:TP=-1.5:LRA=11",
+    "technical_qc": {
+      "approved": true,
+      "checks": [
+        {
+          "check": "file_exists",
+          "passed": true,
+          "detail": "D:\\Projects\\X-SuperPlay-ContentOps\\.verify-tmp\\m34-payg-native-activation\\paygact-a113459b63dc-normalised.wav"
+        },
+        {
+          "check": "not_empty",
+          "passed": true,
+          "detail": "409680 bytes"
+        },
+        {
+          "check": "has_audio_codec",
+          "passed": true,
+          "detail": "pcm_s16le"
+        },
+        {
+          "check": "has_duration",
+          "passed": true,
+          "detail": 4.644
+        },
+        {
+          "check": "sample_rate",
+          "passed": true,
+          "detail": {
+            "expected": 44100,
+            "actual": 44100
+          }
+        },
+        {
+          "check": "mono_or_stereo",
+          "passed": true,
+          "detail": 1
+        },
+        {
+          "check": "leading_silence",
+          "passed": true,
+          "detail": 0.0
+        },
+        {
+          "check": "trailing_silence",
+          "passed": true,
+          "detail": 0.0
+        },
+        {
+          "check": "not_mostly_silent",
+          "passed": true,
+          "detail": -1.5
+        },
+        {
+          "check": "no_clipping",
+          "passed": true,
+          "detail": -1.5
+        },
+        {
+          "check": "loudness_floor",
+          "passed": true,
+          "detail": -16.6
+        },
+        {
+          "check": "true_peak_headroom",
+          "passed": true,
+          "detail": -1.5
+        }
+      ],
+      "measurements": {
+        "codec": "pcm_s16le",
+        "sample_rate_hz": 44100,
+        "channels": 1,
+        "duration_s": 4.644,
+        "bytes": 409680,
+        "integrated_lufs": -16.6,
+        "true_peak_db": -1.5,
+        "peak_db": -1.5,
+        "mean_db": -16.4,
+        "loudness_range_lu": 1.5
+      },
+      "silence": {
+        "available": true,
+        "silences": [],
+        "leading_silence_s": 0.0,
+        "trailing_silence_s": 0.0
+      }
+    },
+    "human_review": "PENDING_FOUNDER_REVIEW",
+    "production_ready": false
+  },
+  "finished_at": "2026-10-12T15:28:31.991054+00:00"
+}
