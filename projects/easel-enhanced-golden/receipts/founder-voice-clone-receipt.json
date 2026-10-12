@@ -1,0 +1,50 @@
+{
+  "schema": "contentops.voice-clone-receipt/v1",
+  "producer": "scripts/prepare_founder_voice_clone.py",
+  "provider": "minimax",
+  "clone_transport": "documented_public_api",
+  "voice_alias": "founder_primary_v1",
+  "voice_id_hash": "98fcbad890c52c7cc274e8cc59e47d358ccc309eaf1b9cb7dfe5bfcb093dc197",
+  "sample_sha256": "bb56d052cd637bd8a369f6e37a745c7609de9988ada0fa0827d4d5c59035df8d",
+  "sample_bytes": 480078,
+  "sample_duration_s": 15.0,
+  "sample_audit_receipt": "projects/easel-enhanced-golden/receipts/founder-voice-sample-audit.json",
+  "sample_audit_all_requirements_met": true,
+  "rights_basis": "FOUNDER_OWN_VOICE",
+  "clone_fee_policy": "FOUNDER_CONFIRMED_ONE_TIME_CNY_9_9",
+  "tts_billing_policy": "M_PLAN_SUBSCRIPTION",
+  "allow_payg_tts": false,
+  "allow_credit_pack_tts": false,
+  "expected_max_fee_cny": "9.9",
+  "clone_status": "NOT_ATTEMPTED",
+  "provider_status_code": null,
+  "provider_status_meaning": "",
+  "base_url_host": "https://api.minimaxi.com",
+  "credential_class": "SUBSCRIPTION",
+  "credential_source": "MMX_CONFIG",
+  "model_for_tts": "speech-2.8-hd narration for the Enhanced Golden pipeline",
+  "request_fingerprint": "1fd8c6c4bc80fb5acf9e6d9bd44b1e246df9f0fd35022e6f6b5c925d5ddf65b6",
+  "created_at": "",
+  "provider_calls": {
+    "upload": 0,
+    "clone": 0,
+    "list": 1
+  },
+  "refusal_code": "READY_FOR_ONE_TIME_CLONE_FEE",
+  "refusal_reason": "the clone request is billable (one-time, Founder-confirmed CNY 9.9 per cloned voice) and no Founder confirmation to spend has been given. Nothing was uploaded and nothing was cloned.",
+  "existing_cloned_voices_on_account": [
+    {
+      "voice_id_hash": "9dbdd6e0663bd013dca1059bd790d408190a5c9a353a4351c210020f1c59fc23",
+      "created_time": "2026-10-12",
+      "voice_name": ""
+    }
+  ],
+  "existing_clone_note": "A cloned voice already exists on this account and appears in the voice_cloning list, which the current documentation says only happens after a successful synthesis. Its provenance is unverified: no receipt binds it to the approved sample, and it was not created by ContentOps. Whether to REUSE it instead of paying for a second clone is a Founder decision, not an engineering one.",
+  "production_ready": false,
+  "human_review": "PENDING_FOUNDER_REVIEW",
+  "notes": [
+    "no provider upload, no clone request, no synthesis was performed",
+    "the sample is a LOCAL PRIVATE INPUT: gitignored, untracked, not copied",
+    "the raw provider voice_id is not recorded here, only its SHA256"
+  ]
+}

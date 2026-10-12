@@ -4,10 +4,10 @@ canonical: false
 type: research
 status: current
 issue: "#23"
-checked_at: "2026-10-04"
+checked_at: "2026-10-12"
 language: zh-CN
 translation_of: research/providers/minimax-voice-clone-entitlement.md
-translation_status: synced
+translation_status: superseded
 ---
 
 # MiniMax M Plan 声音克隆权益核验（Issue #23）
@@ -20,15 +20,34 @@ translation_status: synced
 ## 结论
 
 ```
+ENTITLEMENT_PRESENT_BUT_API_CLONE_NOT_TESTED
+```
+
+2026-10-12 更新：权益问题已经不再是未决问题。账号**已有**声音克隆能力，并且已经使用过——
+只读 `POST /v1/get_voice` 返回了 1 条 `voice_cloning` 记录，而按当前官方文档，该列表只在
+声音**成功用于语音合成之后**才会出现条目。
+
+仍然未验证的是更窄、更具体的一环：**用该 Subscription Key 通过公开 API 创建克隆**。
+那一次计费请求尚未发出。
+
+翻译状态已标记为 `superseded`：本文件保留 2026-10-04 的记录作为审计线索，
+权威结论以英文版为准。
+
+## 已被取代的 2026-10-04 结论
+
+```
 DOCUMENTED_BUT_NOT_TESTED
 ```
 
 没有尝试任何克隆。有两个阻碍，都不是 agent 能自行清除的：账号实名认证状态未知，
 并且本仓库中不存在权利清晰的真人语音样本。
 
+两者均已于 2026-10-12 解决：Founder 提供了权利清晰、符合全部文档要求的 15 秒样本；
+而账号上已存在的克隆记录说明认证要求此前已满足。
+
 ## 当前官方来源怎么说
 
-2026-10-04 在账号所属 region 复核。
+2026-10-04 在账号所属 region 复核（下方记录保留原样）。
 
 | 问题 | 答案 | 来源 |
 |---|---|---|

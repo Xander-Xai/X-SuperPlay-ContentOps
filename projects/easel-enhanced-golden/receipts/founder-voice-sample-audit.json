@@ -1,0 +1,85 @@
+{
+  "schema": "contentops.founder-voice-sample-audit/v1",
+  "producer": "scripts/audit_founder_voice_sample.py",
+  "sample_sha256": "bb56d052cd637bd8a369f6e37a745c7609de9988ada0fa0827d4d5c59035df8d",
+  "size_bytes": 480078,
+  "container": "wav",
+  "codec": "pcm_s16le",
+  "sample_rate": 16000,
+  "channels": 1,
+  "duration": 15.0,
+  "bits_per_sample": 16,
+  "bit_rate": 256041,
+  "source_class": "LOCAL_PRIVATE_INPUT",
+  "rights_basis": "FOUNDER_OWN_VOICE",
+  "public_safe_metadata": true,
+  "registered_as": {
+    "asset_id": "voice-reference",
+    "declared_relative_path": "R1D-15s.wav",
+    "declared_sha256": "bb56d052cd637bd8a369f6e37a745c7609de9988ada0fa0827d4d5c59035df8d",
+    "matches_declared_digest": true,
+    "note": "same bytes under a working filename. The registry declares this digest as its primary voice reference; the working copy is named voice-reference-clean.wav. Identity is the digest, not the name."
+  },
+  "technical": {
+    "decode_success": true,
+    "integrated_lufs": -20.6,
+    "loudness_range_lu": 1.4,
+    "true_peak_dbfs": -0.8,
+    "peak_level_db": -0.886421,
+    "rms_level_db": -20.663573,
+    "flat_factor": 0.0,
+    "peak_count": 2.0,
+    "clipping_detected": false,
+    "leading_silence_s": 0.0,
+    "trailing_silence_s": 0.0,
+    "silence_gaps": [
+      {
+        "start_s": 4.701,
+        "end_s": 5.363,
+        "duration_s": 0.662
+      },
+      {
+        "start_s": 6.301,
+        "end_s": 6.846,
+        "duration_s": 0.545
+      }
+    ],
+    "total_silence_s": 1.207,
+    "silence_ratio": 0.0805,
+    "first_window_rms_db": -21.033473,
+    "last_window_rms_db": -17.790887
+  },
+  "documented_requirements_at_check_time": {
+    "checked_at": "2026-10-12",
+    "formats": [
+      "mp3",
+      "m4a",
+      "wav"
+    ],
+    "min_duration_s": 10,
+    "max_duration_s": 300,
+    "max_size_bytes": 20971520,
+    "source": "current official voice-clone API reference"
+  },
+  "requirement_compliance": {
+    "format_ok": true,
+    "duration_ok": true,
+    "size_ok": true,
+    "mono_single_channel": true,
+    "decode_ok": true,
+    "no_clipping": true,
+    "headroom_ok": true,
+    "silence_ratio_reasonable": true
+  },
+  "all_requirements_met": true,
+  "privacy": {
+    "git_tracked": false,
+    "git_ignored": true,
+    "ignore_rule": "assert/ (directory rule) and *.wav",
+    "raw_audio_committed": false,
+    "absolute_path_recorded": false,
+    "note": "the raw sample stays a local private input. This receipt carries hashes and measurements only: no audio, no transcript, no identity data, no host path."
+  },
+  "derivations_created": [],
+  "human_review": "PENDING_FOUNDER_REVIEW"
+}
