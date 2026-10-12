@@ -137,6 +137,7 @@ __all__ = [
     "PHASE_ALL",
     "PHASE_CLONE_ACTIVATION",
     "PHASE_REGULAR_NARRATION",
+    "SUBSCRIPTION_FIRST_ACTIVATION_PROBE",
     "VOUCHER_ELIGIBILITY_ACCEPTS",
     "ROUTE_ACTIVATION_CHARACTER_FEE_UNAUTHORISED",
     "ROUTE_ACTIVATION_CASH_INSUFFICIENT",
@@ -199,12 +200,25 @@ EVIDENCE_LIVE_MEASURED = "VERIFIED_LOCAL"
 #: ``cash_balance = 0.00``. The voucher was therefore not accepted as the payment
 #: instrument for a pay-as-you-go API call, and no balance moved.
 #:
+#: It was then sent a **second** time, on the Subscription Key, under a separate
+#: authorisation (:data:`SUBSCRIPTION_FIRST_ACTIVATION_PROBE`), to test whether the plan
+#: could pay the fee instead. The provider returned the **identical** refusal. That second
+#: measurement is what upgrades the finding from "the voucher does not work" to "neither
+#: instrument on this account can pay this fee": the blocker is the payment instrument,
+#: not the key routing. Nothing was charged on either attempt.
+#:
 #: Recorded as a distinct grade rather than as a reverted constant because the
-#: distinction is the actual finding: the commercial assurance was specific, it was
-#: plausible, it was confirmed with a screenshot, and it was still wrong. A refutation
-#: has to outrank the thing that refuted it, or the next reader re-opens the gate on the
-#: same assurance and spends the same effort proving it wrong again.
+#: distinction is the actual finding: the commercial assurances were specific, they were
+#: plausible, they were confirmed with a screenshot, and they were still wrong. A
+#: refutation has to outrank the thing that refuted it, or the next reader re-opens the
+#: gate on the same assurance and spends the same effort proving it wrong again.
 EVIDENCE_LIVE_REFUTED = "VERIFIED_LOCAL_REFUTED"
+
+#: Name of the second, independently authorised experiment, kept here because the route
+#: receipt cites it as the evidence for the second half of the finding above. It is a
+#: *different* request against a *different* credential, not a retry, and its budget is
+#: its own: one synthesis, zero uploads, zero clones.
+SUBSCRIPTION_FIRST_ACTIVATION_PROBE = "SUBSCRIPTION_FIRST_ACTIVATION_PROBE"
 
 #: The two evidence grades that are strong enough to answer a question about *this
 #: account's* commercial terms. Both name a source outside this repository: published
@@ -795,14 +809,19 @@ def decide_route(
         decision.activation_payment_evidence = EVIDENCE_LIVE_REFUTED
         decision.add(
             ROUTE_ACTIVATION_CASH_INSUFFICIENT,
-            "voucher eligibility was already REFUTED by a live call on this account. "
-            "The activation was attempted with the pay-as-you-go key and the platform "
-            "answered 'insufficient balance' while voucher_balance was 15.00, "
-            "available_amount was 15.00 and cash_balance was 0.00; after the refusal "
-            "every balance was unchanged, so nothing was charged and no 欠费 was "
-            "created. The voucher is real and it does not fund a pay-as-you-go API "
-            "call. This grade outranks every assurance and is not cleared by one: "
-            "see the activation receipt for the measured evidence.",
+            "voucher eligibility was already REFUTED by live calls on this account, "
+            "and refuted twice under two different credential classes. The activation "
+            "was sent first on the pay-as-you-go key and then, under a separate "
+            "authorisation, on the Subscription Key. Both returned the identical "
+            "'API error: insufficient balance' while voucher_balance was 15.00, "
+            "available_amount was 15.00 and cash_balance was 0.00; after each refusal "
+            "every balance was unchanged and M Plan quota did not move, so nothing was "
+            "charged and no 欠费 was created. The blocker is the PAYMENT INSTRUMENT, "
+            "not the key routing: the plan's published deduction chain "
+            "(套餐内额度 -> 积分包) does not reach the 快速复刻 activation fee, and the "
+            "voucher is not accepted as payable balance for it either. This grade "
+            "outranks every assurance and is not cleared by one. The next step is a "
+            "payment-instrument decision by the Founder, not another trial.",
         )
     elif (
         PHASE_CLONE_ACTIVATION in active

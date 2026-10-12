@@ -77,11 +77,32 @@
       "resolves_blocker": "none; it is a constraint, recorded so it is not mistaken for a permission"
     }
   ],
+  "second_live_measurement": {
+    "measured_on": "2026-10-12",
+    "probe": "SUBSCRIPTION_FIRST_ACTIVATION_PROBE",
+    "claim_ids_also_refuted": ["mplan-usable-after-activation"],
+    "authorisation": "Founder, separately and explicitly authorised. This is NOT a retry of the pay-as-you-go request: same voice, same model, same text, different credential class, its own one-request budget (1 synthesis, 0 uploads, 0 clones).",
+    "what_was_done": "One speech-2.8-hd synthesis with founder_primary_v1, sent through the project's official MiniMaxMPlanProvider with the M Plan Subscription Key bound into the transport. No upload, no /v1/voice_clone, no pay-as-you-go key reachable from the path, no retry.",
+    "provider_response": "API error: insufficient balance (HTTP 200)",
+    "identical_to_the_payg_refusal": true,
+    "balances_before_and_after": {
+      "voucher_balance": "15.00 / 15.00",
+      "available_amount": "15.00 / 15.00",
+      "cash_balance": "0.00 / 0.00",
+      "credit_balance": "0.00 / 0.00",
+      "owed_amount": "0.00 / 0.00",
+      "m_plan_interval_pct": "41.0 / 41.0",
+      "m_plan_weekly_pct": "54.0 / 54.0"
+    },
+    "conclusion": "The refusal does not depend on the credential. Two credential classes, one identical answer, zero charge. The blocker is the PAYMENT INSTRUMENT, not key routing: the Subscription Key's published deduction chain (套餐内额度 -> 积分包) does not reach the 快速复刻 activation fee, and the voucher is not accepted as payable balance for it either.",
+    "why_this_is_recorded_rather_than_reported_as_a_one_off": "A single refusal is ambiguous -- it could be the key, the plan, the model, or the fee. Two refusals under two different credentials with an identical message remove every one of those readings except the fee. That is the whole value of the second experiment, and it is why no further trial on this account is worth running."
+  },
   "still_unverified": [
-    "that the rotated PAYG API Key is accepted by the host for a clone -- now answered by a read-only get_voice probe, recorded in founder-voice-route-receipt.json",
-    "the actual amounts charged -- must come from measured balance deltas and the official billing record, never from this document",
-    "whether deduction priority between voucher and cash within 账户余额 is voucher-first; the service agreement defers this to 产品界面公示, which no API endpoint exposes",
-    "that no recharge, no Credit Pack use and no 欠费 can occur; these are enforced structurally by owed_amount = 0.00 and credit_balance = 0.00 being read immediately before the charge"
+    "that the rotated PAYG API Key is accepted by the host for a clone -- ANSWERED: a read-only get_voice probe accepted it and returned this account's own cloned voice",
+    "the actual amounts charged -- ANSWERED: none. Both attempts charged CNY 0.00 and every balance was unchanged",
+    "whether a Subscription Key can pay the clone activation fee -- ANSWERED: no, measured, identical refusal to the pay-as-you-go attempt",
+    "whether deduction priority between voucher and cash within 账户余额 is voucher-first -- still unknown and now MOOT for this fee, since the voucher was never taken up for it at all",
+    "that no recharge, no Credit Pack use and no 欠费 can occur -- CONFIRMED by measurement across both attempts: cash 0.00, credit 0.00, owed 0.00 before and after both"
   ],
   "founder_authorisation": {
     "id": "FOUNDER_VOUCHER_ACTIVATION",
