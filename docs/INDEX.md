@@ -51,6 +51,7 @@ Tier-1 docs have zh-CN mirrors with `.zh-CN.md` suffix. Run `python scripts/chec
 - [adr/ADR-006-upstream-upgrade-policy.md](adr/ADR-006-upstream-upgrade-policy.md)
 - [adr/ADR-007-minimax-speech-transport.md](adr/ADR-007-minimax-speech-transport.md)
 - [adr/ADR-008-native-narration-v2.md](adr/ADR-008-native-narration-v2.md)
+- [adr/ADR-009-narration-v3-creator-director.md](adr/ADR-009-narration-v3-creator-director.md)
 
 ## Agent Rules
 

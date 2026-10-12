@@ -52,6 +52,7 @@ translation_status: synced
 - [adr/ADR-006-upstream-upgrade-policy.md](adr/ADR-006-upstream-upgrade-policy.md)
 - [adr/ADR-007-minimax-speech-transport.md](adr/ADR-007-minimax-speech-transport.md)
 - [adr/ADR-008-native-narration-v2.md](adr/ADR-008-native-narration-v2.md)
+- [adr/ADR-009-narration-v3-creator-director.md](adr/ADR-009-narration-v3-creator-director.md)
 
 ## 事实优先级
 

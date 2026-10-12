@@ -4,7 +4,7 @@
 
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
-> Last verified: 2026-10-13
+> Last verified: 2026-10-14
 
 ## Git
 
@@ -363,3 +363,20 @@ decision: `adr/ADR-008-native-narration-v2.md`. Receipts:
 | C join exactness | 5.478 + 8.833 + 13.436 + 0.95 s gaps = 28.697 s vs 28.698 s joined |
 | ASR findings | "doctor" reads correctly (term check S04); "伊泽尔" consistent; version strings read correctly — the detector's `v0.21`/`v0.2.1` mismatch remains a normalisation false positive |
 | Review state | `production_ready: false`, `human_review: PENDING_FOUNDER_REVIEW`; no publish, no digital-human video |
+
+## MiniMax Narration v3 (Issue #34) — D/E/F SAMPLE READY FOR BLIND LISTENING
+
+Branch `feat/34-narration-v3-creator-director` (stacked on PRs #44/#45). The v2
+round **failed Founder listening** (mechanical emotion/rhythm). The read-only
+diagnosis is `projects/easel-enhanced-golden/review/narration-v3-diagnosis.md`;
+the design decision is `adr/ADR-009-narration-v3-creator-director.md`.
+
+| Property | Value |
+|---|---|
+| Creator script | `script/creator-script.json` — hook-first re-order, one declared omission, value unit, natural ending; refusals for invented numbers/facts, template language and undeclared first person |
+| Director plan | `script/narration-plan.json` — per-unit intent metadata (never sent); auto emotion default; `calm` at most once; bounded homogeneous speeds; intent-paced pauses; 8 units → 4 synthesis groups |
+| Version map | `script/creator-version-map.json` — fact script / creator / plan / synthesis texts |
+| Candidates (blind) | `candidate-1/2/3.wav`: D clone+auto, E director controls, F preset voice; key in the receipt |
+| Provider usage | 4 calls, 676 billable of the 1200 cap; all `M_PLAN_ONLY_VERIFIED`; no paid-fund movement; no re-clone/top-up/upload |
+| Machine facts | same text: clone 28.74 s vs preset 22.56 s; E six intentional pauses vs D nine; technical QC approved for all three |
+| Review state | `production_ready: false`, `human_review: PENDING_FOUNDER_REVIEW`; blind listening with `listening-review-v3.md` is the gate |

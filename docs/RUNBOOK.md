@@ -196,3 +196,40 @@ python scripts\run_ab_sample.py --recheck                    # recompute measure
   auxiliary run never overwrites the sample receipt.
 - Real audio lands under `outputs/` (gitignored). The run stops at Founder
   listening: `production_ready` stays `false` and nothing is published.
+
+## 11. Narration v3 (creator script, director, D/E/F sample)
+
+Design: `adr/ADR-009-narration-v3-creator-director.md`. Validate the creator
+script and the director plan and refresh the version map:
+
+```powershell
+python scripts\verify_creator_script.py --write
+```
+
+Dry run (offline; nothing transmits and no balance is read):
+
+```powershell
+python scripts\run_creator_sample.py
+```
+
+Real run. `--execute` is the explicit switch; the same Subscription-key-only
+resolver, M Plan gate and before/after plan-quota and balance reads as v2
+apply, and `--budget-chars` / `--budget-asr-calls` are hard caps:
+
+```powershell
+python scripts\run_creator_sample.py --execute
+python scripts\run_creator_sample.py --execute --budget-chars 1200 --budget-asr-calls 5
+python scripts\run_creator_sample.py --summary-only   # re-render the md receipt; no provider, no ASR
+```
+
+Listen blind, then read the key:
+
+- files: `outputs/founder-v3-sample/candidate-1.wav` … `candidate-3.wav`
+  (filenames carry no version information);
+- key: `listening_key` in
+  `projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json`;
+- score the six criteria **before** revealing it, in
+  `projects/easel-enhanced-golden/review/listening-review-v3.md`.
+
+ASR and CI passing are not naturalness verdicts; `production_ready` stays
+`false` until the Founder approves.
