@@ -43,7 +43,8 @@
   "production_ready": false,
   "human_review": "PENDING_FOUNDER_REVIEW",
   "notes": [
-    "no provider upload, no clone request, no synthesis was performed",
+    "1 upload(s) and 1 clone request(s) were sent to the provider and the clone step answered status_code=2061; no synthesis and no retry followed",
+    "counters: upload=1, clone=1, list=0, tts=0, retry=0, observed_charge_cny=0.00",
     "the sample is a LOCAL PRIVATE INPUT: gitignored, untracked, not copied",
     "the raw provider voice_id is not recorded here, only its SHA256"
   ],

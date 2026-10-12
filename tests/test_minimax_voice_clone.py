@@ -951,6 +951,66 @@ def test_a_status_message_is_carried_but_bounded():
         print("[ok] 40. a provider status message is carried through, truncated at 200")
 
 
+@test
+def test_the_receipt_prose_can_never_contradict_its_own_counters():
+    """The measured run was recorded twice, and the two records disagreed.
+
+    After the live clone was refused with 2061, the receipt carried
+    ``provider_calls: {upload: 1, clone: 1}`` directly above a note reading "no provider
+    upload, no clone request, no synthesis was performed". Both halves were true at
+    different times: the note was written for the preflight, the counters for the
+    attempt, and nothing rewrote the note when the attempt landed.
+
+    A sentence that denies the counters beside it is worse than no sentence. The
+    counters are the part a reader trusts, so the denial teaches the reader to skip the
+    prose -- and then a receipt whose counters are genuinely wrong looks fine. So the
+    prose is now generated from the counters, and both halves are asserted here: the
+    derivation cannot emit a denial for a run that made calls, and the tracked receipt
+    does not contain one.
+    """
+    import prepare_founder_voice_clone as producer
+
+    def denial(notes: List[str]) -> str:
+        joined = " ".join(notes).lower()
+        return (
+            "no provider upload" in joined or "no clone request" in joined
+        )
+
+    preflight = {"provider_calls": {"upload": 0, "clone": 0, "list": 0}}
+    assert denial(producer.derive_notes(preflight)), (
+        "with no calls made, the receipt must still say so plainly"
+    )
+
+    attempted = {
+        "provider_calls": {"upload": 1, "clone": 1, "list": 0},
+        "provider_status_code": 2061,
+        "tts_performed": False,
+        "retry_performed": False,
+        "observed_charge_cny": "0.00",
+    }
+    notes = producer.derive_notes(attempted)
+    assert not denial(notes), notes
+    assert "upload=1" in notes[1] and "clone=1" in notes[1], notes
+    assert "2061" in notes[0], notes
+
+    # And the artifact that ships says the same thing.
+    receipt_path = (
+        ROOT / "projects" / "easel-enhanced-golden" / "receipts"
+        / "founder-voice-clone-receipt.json"
+    )
+    if not receipt_path.is_file():
+        _skip(41, "the committed clone receipt", "the receipt is committed")
+        return
+    payload = json.loads(receipt_path.read_text(encoding="utf-8"))
+    calls = payload.get("provider_calls") or {}
+    made_calls = int(calls.get("upload") or 0) + int(calls.get("clone") or 0)
+    assert not (made_calls > 0 and denial(payload.get("notes") or [])), (
+        "the committed receipt denies calls it also records: "
+        f"{calls} vs {payload.get('notes')}"
+    )
+    print("[ok] 41. the receipt's prose is derived from its counters, not asserted beside them")
+
+
 def main() -> int:
     failures = 0
     for fn in TESTS:

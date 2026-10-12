@@ -56,6 +56,51 @@ OBJECTIVE = "speech-2.8-hd narration for the Enhanced Golden pipeline"
 SAMPLE_DURATION_S = 15.0
 
 
+def derive_notes(receipt: Dict[str, Any]) -> List[str]:
+    """Describe the run from the receipt's own counters, never from a fixed string.
+
+    The notes used to be one hand-written list written for the pre-attempt state, so
+    after a refused attempt the receipt read "no provider upload, no clone request, no
+    synthesis was performed" directly above ``provider_calls: {upload: 1, clone: 1}``.
+    That is the worst shape a record can take: the counters are the part a reader
+    trusts, and a sentence beside them that denies them teaches the reader to distrust
+    the sentence *and* stops them noticing when the counters are wrong.
+
+    Generating the prose from the counters makes the contradiction unrepresentable --
+    there is no separate claim left to fall out of date.
+    """
+    calls = receipt.get("provider_calls") or {}
+    upload = int(calls.get("upload") or 0)
+    clone = int(calls.get("clone") or 0)
+    listed = int(calls.get("list") or 0)
+    tts = bool(receipt.get("tts_performed", False))
+    retried = bool(receipt.get("retry_performed", False))
+    status = receipt.get("provider_status_code")
+    charge = receipt.get("observed_charge_cny")
+
+    if upload == 0 and clone == 0:
+        headline = (
+            "no provider upload, no clone request, no synthesis was performed"
+        )
+    else:
+        headline = (
+            f"{upload} upload(s) and {clone} clone request(s) were sent to the provider "
+            f"and the clone step answered status_code={status}; "
+            f"{'a' if tts else 'no'} synthesis and "
+            f"{'a' if retried else 'no'} retry followed"
+        )
+    return [
+        headline,
+        (
+            f"counters: upload={upload}, clone={clone}, list={listed}, "
+            f"tts={int(tts)}, retry={int(retried)}"
+        )
+        + (f", observed_charge_cny={charge}" if charge is not None else ""),
+        "the sample is a LOCAL PRIVATE INPUT: gitignored, untracked, not copied",
+        "the raw provider voice_id is not recorded here, only its SHA256",
+    ]
+
+
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -192,11 +237,7 @@ def main() -> int:
         ),
         "production_ready": False,
         "human_review": "PENDING_FOUNDER_REVIEW",
-        "notes": [
-            "no provider upload, no clone request, no synthesis was performed",
-            "the sample is a LOCAL PRIVATE INPUT: gitignored, untracked, not copied",
-            "the raw provider voice_id is not recorded here, only its SHA256",
-        ],
+        "notes": [],
     }
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
@@ -229,6 +270,10 @@ def main() -> int:
             "retry was attempted."
         )
         receipt["attempted_at"] = attempt.get("finished_at") or attempt.get("started_at")
+
+    # Written last, from the receipt as it now stands, so the prose cannot describe a
+    # different run than the counters describe.
+    receipt["notes"] = derive_notes(receipt)
 
     OUT.write_text(
         json.dumps(receipt, indent=2, ensure_ascii=False) + "\n",
