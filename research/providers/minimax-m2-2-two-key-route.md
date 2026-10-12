@@ -24,20 +24,17 @@ checked_at: "2026-10-12"
 ```
 VENDOR_CONFIRMED  +  LIVE_VERIFICATION_PENDING
 
-CLONE_KEY_REQUIRED
-SUBSCRIPTION_ONLY_BILLING_UNPROVEN
-ACTIVATION_CASH_INSUFFICIENT
-ACTIVATION_CHARACTER_FEE_UNAUTHORISED
-CROSS_KEY_CLONED_VOICE_TTS_UNKNOWN
+STOP: VOUCHER_CLONE_FEE_ELIGIBILITY_UNKNOWN    <- decisive, needs an account-specific answer
+     ACTIVATION_CHARACTER_FEE_UNAUTHORISED
+     CROSS_KEY_CLONED_VOICE_TTS_UNKNOWN          <- resolved by running, not by deciding
 ```
 
-**No upload, no clone, no synthesis.** `upload=0, clone=0, tts=0`.
+**No upload, no clone, no synthesis.** `upload=0, clone=0, tts=0`. No charge.
 
-The commercial route is now vendor-confirmed rather than ruled out. Five independent
-gates stand between here and a live run, and fixing any one of them does not fix the
-others -- which is why they are listed rather than reduced to a single verdict: a run
-that provisions a key and sees the same route code again would reasonably conclude the
-key was wrong.
+Two earlier gates are **closed**: `CLONE_KEY_REQUIRED` (the pay-as-you-go key is
+provisioned and verified live) and `SUBSCRIPTION_ONLY_BILLING_UNPROVEN` (the official
+deduction-chain rule, below). What remains is one fact nobody can look up from here, one
+approval, and one verification that only a real run produces.
 
 ## Vendor confirmation, and what it is allowed to change
 
@@ -309,7 +306,87 @@ which is the correct home for it — but a secret pasted into a chat is a secret
 been disclosed. **Rotate it after this round** and set the replacement in `.env` the
 same way. No repository commit ever contained it.
 
-## `READY_TO_EXECUTE` — 15 of 18, three failing
+## `VOUCHER_CLONE_FEE_ELIGIBILITY_UNKNOWN` — the stop, and why it is not closable here
+
+The Founder authorised paying from the existing ¥15.00 voucher, up to ¥10. That is an
+instruction about **which instrument to use**. It is not proof that the instrument covers
+音色管理, and treating the two as the same claim is how a ¥9.90 charge gets attempted
+against something that cannot carry it.
+
+### What the official sources establish
+
+`VERIFIED_OFFICIAL`
+
+- 代金券 is an **order payment method**: 使用代金券 | 扣除代金券后实际支付的金额,
+  代金券抵扣部分不可开票 — M Plan FAQ, 开票金额怎么计算.
+- 账户余额只有在使用按量计费 API Key 时才会扣除. So a pay-as-you-go request draws on the
+  account balance, which is the only place a voucher could apply.
+- 扣费顺序为 **M Plan 额度优先、积分包其次**; 积分包支持…图像与音频生成 — **快速复刻 is not
+  named**, so a Credit Pack cannot pay this fee either.
+
+### What they do not
+
+`UNKNOWN`
+
+1. **Whether a voucher offsets API 调用费用 as opposed to orders.** There is exactly one
+   official statement that says 使用范围:仅可用于抵扣 MiniMax 开放平台内的 API 调用费用,
+   and it sits inside the **Token Plan 好友邀请活动** (referral reward) section — so it
+   governs *that programme's* voucher. This account's ¥15.00 voucher has unknown
+   provenance, so that scope cannot be transferred to it. A search-index snippet showed
+   the sentence; fetching the live CN FAQ page shows it is **not** in the current
+   rendered page at all, which is exactly why a cached snippet is not evidence.
+2. **The definitive scope.** 付费服务协议 4.4: 代金券只可用于消费,不可用于抵扣欠费金额。
+   **具体权益应以产品界面公示及服务权益实际展示为准** — the answer lives in the product
+   console, which no API endpoint exposes.
+3. **Deduction priority between voucher and cash** within 账户余额.
+4. **This voucher's issuance date and remaining validity.** No reachable endpoint returns
+   them. Balance reads 15.00, and expired vouchers auto-invalidate, so that is *consistent*
+   with valid — it is not proof.
+
+This is not a documentation gap that more searching closes. The answer is on a page an API
+client cannot read, and the one favourable statement belongs to a different programme.
+
+### One thing that *is* structurally safe
+
+`cash_balance = 0.00` and `credit_balance = 0.00`. There is no cash and no Credit Pack on
+the account to be debited, so an ineligible voucher would most plausibly produce a refusal
+(`1008 余额不足`) rather than an unauthorised charge. That is reassuring, and it is still
+not a substitute for the eligibility proof — "the failure mode is probably clean" is not
+"the payment path is proven", and the Founder's instruction was to prove the path. It is
+also not the Founder's authorisation to upload their voice on the expectation that it will
+probably work.
+
+**Therefore: no upload, no clone, no synthesis.** The sample was not transmitted.
+
+## `FOUNDER_VOUCHER_ACTIVATION` — the authorisation, encoded
+
+Implemented and refusing. The ceiling is on the **combined** charge, because per-component
+ceilings let two sub-ceiling charges add past what was agreed:
+
+```python
+allowed_voucher_spend_cny      = Decimal("10.00")   # total, inclusive
+allowed_cash_spend_cny         = Decimal("0.00")
+allowed_credit_pack_spend_cny  = Decimal("0.00")
+allow_auto_recharge            = False
+max_clone_count                = 1
+max_activation_tts_count       = 1
+allow_unbounded_payg_tts       = False
+```
+
+Scoped to one `voice_alias` and one `voice_id_hash`, so a permission granted for one clone
+cannot be spent on another. Refuses on: eligibility `UNKNOWN`, unreadable or empty voucher
+balance, projected total above ¥10, a non-zero or unreadable cash or Credit Pack balance,
+a reused count, a retry, an unbounded PAYG path, or an enabled auto-recharge.
+
+Nine tests, pure policy, no credential and no network. The decisive one asserts that an
+`UNKNOWN` grade refuses **even with a ¥15.00 balance showing** — a balance proves an
+instrument exists, not that it covers this charge.
+
+---
+
+## `READY_TO_EXECUTE` — 15 of 18
+
+Plus the voucher gate above, which is the decisive one.
 
 | # | Check | State |
 |---|---|---|
