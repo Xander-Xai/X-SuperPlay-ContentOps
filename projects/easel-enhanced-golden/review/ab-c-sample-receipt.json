@@ -1,0 +1,2083 @@
+{
+  "schema": "contentops.ab-sample/v1",
+  "stage": "AB_C_NARRATION_SAMPLE",
+  "issue": "#34",
+  "attempt_id": "absample-425cc266cbd7",
+  "started_at": "2026-10-12T19:53:32.480100+00:00",
+  "executed": true,
+  "variants_requested": [
+    "A",
+    "B",
+    "C"
+  ],
+  "voice_id": "founder_primary_v1",
+  "voice_id_hash": "7271d9c80c88821a6a09ed43328619d0ee08c3f2b2449237fe2c31f6899abeef",
+  "model": "speech-2.8-hd",
+  "host": "https://api.minimax.cn",
+  "transport": "native_http_cn",
+  "route": "MPLAN_NARRATION_ROUTE",
+  "credential_class": "SUBSCRIPTION",
+  "credential_source": "MMX_CONFIG",
+  "payg_key_used_for_this_request": false,
+  "provider_call_budget": {
+    "subscription_tts_planned": 4,
+    "asr_transcribe_planned": 3,
+    "upload": 0,
+    "voice_creation": 0,
+    "automatic_retry": 0,
+    "automatic_top_up": 0
+  },
+  "notes": [],
+  "spoken_script": {
+    "path": "projects/easel-enhanced-golden/script/narration-spoken.json",
+    "original_canonical_blob_sha256": "f2de808c9e723f8430acdc44dc374c5791b249250d8bc585a172360a88b9542a",
+    "evidence_lock_sha256": "f2de808c9e723f8430acdc44dc374c5791b249250d8bc585a172360a88b9542a",
+    "sample_segments": [
+      "S01",
+      "S02",
+      "S03"
+    ],
+    "sample_original_paragraphs": [
+      1,
+      2,
+      3
+    ],
+    "verification": {
+      "verified": true,
+      "mechanically_checked": [
+        "source digest equals the evidence lock",
+        "digit tokens preserved (full script and sample)",
+        "protected phrases preserved (full script and sample scope)",
+        "pause markers valid per documented <#x#> rules",
+        "segment roles valid and all five roles covered",
+        "segment texts carry no newlines"
+      ],
+      "not_proven_by_this_check": [
+        "semantic equivalence of paraphrased sentences",
+        "tone and naturalness",
+        "that a reworded conclusion keeps its meaning"
+      ]
+    }
+  },
+  "sample": {
+    "original_text_sha256": "073d800038b70a8efc3cf6853654d3a7f07965a3bed7fde38bf8feb7f6beae20",
+    "display_sha256": "0eb9b6867375f94b7d6bdf0126ce9de285653b9978cdf7ecf17563b1925bc644",
+    "synthesis_sha256": "177e1a46e6916624f56d4be6093d859c0b5139bdce316d51d22fb41c2d967349",
+    "synthesis_characters": 166,
+    "segments": [
+      {
+        "id": "S01",
+        "role": "INTRO",
+        "display_sha256": "7d6cd42b816c8ab500716b82e83d6b8d3ede18d3a3f21a1b267a91483cd10605",
+        "synthesis_sha256": "d90f67596305221273b6af1832b4758de05fef6e37c61cc0c0f1038933cd6048",
+        "parameters": {
+          "c_emotion": "calm",
+          "c_speed": 0.98,
+          "pause_after_s": 0.5
+        }
+      },
+      {
+        "id": "S02",
+        "role": "EVIDENCE",
+        "display_sha256": "50cd258745aec633ae3adecd5d23080bbb42ea0f4a7836bb227897cee6d21403",
+        "synthesis_sha256": "99b9e7948ab2c570a58c94089441cd1a0a7e378844729bdbd8ec03b7b5fb20a4",
+        "parameters": {
+          "c_emotion": "auto (absent)",
+          "c_speed": 1.05,
+          "pause_after_s": 0.45
+        }
+      },
+      {
+        "id": "S03",
+        "role": "EVIDENCE",
+        "display_sha256": "d2f00b3c0ac5c539b4c75571df138d783a2423668f358bd92ec0ea94865ddadd",
+        "synthesis_sha256": "d2f00b3c0ac5c539b4c75571df138d783a2423668f358bd92ec0ea94865ddadd",
+        "parameters": {
+          "c_emotion": "calm",
+          "c_speed": 1.0,
+          "pause_after_s": 0.5
+        }
+      }
+    ]
+  },
+  "budget": {
+    "estimated_billable_characters": 526,
+    "budget_chars": 1500,
+    "asr_calls_planned": 3,
+    "asr_calls_budget": 6,
+    "a_mode": "reuse",
+    "usage_characters_used": 492,
+    "asr_calls_used": 3
+  },
+  "preflight": {
+    "money": {
+      "verdict": "SAFE_INCLUDED_PLAN",
+      "reasons": [],
+      "balances": {
+        "available_amount": "15.08",
+        "cash_balance": "10.00",
+        "voucher_balance": "5.08",
+        "credit_balance": "0.00",
+        "owed_amount": "0.00"
+      },
+      "quota": {
+        "interval_remaining_percent": 99.0,
+        "weekly_remaining_percent": 51.0,
+        "bucket": "general"
+      }
+    },
+    "decision": {
+      "route": "MPLAN_NARRATION_ROUTE",
+      "authorised": true,
+      "refusals": [],
+      "reasons": [],
+      "credential_class": "SUBSCRIPTION",
+      "credential_source": "MMX_CONFIG",
+      "billing_verdict": "SAFE_INCLUDED_PLAN"
+    }
+  },
+  "postflight": {
+    "quota_after": {
+      "interval_remaining_percent": 98.0,
+      "weekly_remaining_percent": 51.0,
+      "bucket": "general"
+    },
+    "balances_after": {
+      "available_amount": "15.08",
+      "cash_balance": "10.00",
+      "voucher_balance": "5.08",
+      "credit_balance": "0.00",
+      "owed_amount": "0.00"
+    },
+    "deltas": {
+      "cash_balance": {
+        "before": "10.00",
+        "after": "10.00",
+        "delta": "0.00",
+        "decreased": false,
+        "increased": false
+      },
+      "voucher_balance": {
+        "before": "5.08",
+        "after": "5.08",
+        "delta": "0.00",
+        "decreased": false,
+        "increased": false
+      },
+      "credit_balance": {
+        "before": "0.00",
+        "after": "0.00",
+        "delta": "0.00",
+        "decreased": false,
+        "increased": false
+      },
+      "owed_amount": {
+        "before": "0.00",
+        "after": "0.00",
+        "delta": "0.00",
+        "decreased": false,
+        "increased": false
+      },
+      "available_amount": {
+        "before": "15.08",
+        "after": "15.08",
+        "delta": "0.00",
+        "decreased": false,
+        "increased": false
+      }
+    },
+    "plan_only_classification": {
+      "verified": true,
+      "status": "M_PLAN_ONLY_VERIFIED",
+      "basis": "QUOTA_DELTA",
+      "quota_before": {
+        "interval_remaining_percent": 99.0,
+        "weekly_remaining_percent": 51.0,
+        "bucket": "general"
+      },
+      "quota_after": {
+        "interval_remaining_percent": 98.0,
+        "weekly_remaining_percent": 51.0,
+        "bucket": "general"
+      }
+    }
+  },
+  "variants": {
+    "A": {
+      "mode": "reuse_local_excerpt",
+      "source": "D:\\Projects\\X-SuperPlay-ContentOps\\outputs\\founder-golden\\golden-narration-founder_primary_v1.wav",
+      "source_sha256": "4714fd36fbda3edbc6777041f7c4ef0772aa46b2a4256970eb861956a920cbe8",
+      "source_duration_s": 79.949,
+      "cut_end_s": 27.554531,
+      "cut_boundary_silence": {
+        "start_s": 26.985688,
+        "end_s": 27.554531
+      },
+      "detected_silences": [
+        {
+          "start_s": 3.066031,
+          "end_s": 3.370125
+        },
+        {
+          "start_s": 5.185938,
+          "end_s": 5.787094
+        },
+        {
+          "start_s": 11.776188,
+          "end_s": 12.150531
+        },
+        {
+          "start_s": 14.152313,
+          "end_s": 14.458219
+        },
+        {
+          "start_s": 17.319094,
+          "end_s": 17.918594
+        },
+        {
+          "start_s": 19.2665,
+          "end_s": 19.791406
+        },
+        {
+          "start_s": 22.572312,
+          "end_s": 22.919625
+        },
+        {
+          "start_s": 24.231344,
+          "end_s": 24.866937
+        },
+        {
+          "start_s": 26.985688,
+          "end_s": 27.554531
+        },
+        {
+          "start_s": 28.248094,
+          "end_s": 28.781437
+        },
+        {
+          "start_s": 30.199562,
+          "end_s": 30.506625
+        },
+        {
+          "start_s": 31.389375,
+          "end_s": 31.692969
+        },
+        {
+          "start_s": 32.270563,
+          "end_s": 32.596719
+        },
+        {
+          "start_s": 34.108812,
+          "end_s": 34.615406
+        },
+        {
+          "start_s": 36.410156,
+          "end_s": 37.055531
+        },
+        {
+          "start_s": 37.620438,
+          "end_s": 37.922844
+        },
+        {
+          "start_s": 40.414531,
+          "end_s": 40.749812
+        },
+        {
+          "start_s": 41.499594,
+          "end_s": 41.967719
+        },
+        {
+          "start_s": 43.387844,
+          "end_s": 43.707906
+        },
+        {
+          "start_s": 46.109125,
+          "end_s": 46.609813
+        },
+        {
+          "start_s": 49.591188,
+          "end_s": 50.299906
+        },
+        {
+          "start_s": 51.930625,
+          "end_s": 52.389781
+        },
+        {
+          "start_s": 55.686656,
+          "end_s": 56.284188
+        },
+        {
+          "start_s": 57.106563,
+          "end_s": 57.412063
+        },
+        {
+          "start_s": 58.165406,
+          "end_s": 58.658719
+        },
+        {
+          "start_s": 60.027125,
+          "end_s": 60.545625
+        },
+        {
+          "start_s": 62.138625,
+          "end_s": 62.650438
+        },
+        {
+          "start_s": 64.888875,
+          "end_s": 65.205625
+        },
+        {
+          "start_s": 67.622875,
+          "end_s": 68.388813
+        },
+        {
+          "start_s": 68.879969,
+          "end_s": 69.196313
+        },
+        {
+          "start_s": 71.429187,
+          "end_s": 72.022
+        },
+        {
+          "start_s": 75.323781,
+          "end_s": 75.888281
+        }
+      ],
+      "alignment_note": "The cut ends at a detected silence so it cannot clip mid-word. The source was generated from single-line text, so paragraph boundaries are not distinguishable from sentence pauses in it; text alignment with the sample is approximate and the ASR backcheck below is the evidence for how close it is.",
+      "audio": {
+        "path": "D:\\Projects\\X-SuperPlay-ContentOps\\outputs\\founder-ab-sample\\A-original-excerpt.wav",
+        "sha256": "0546580a663fcd63ccd13d5a2aca915d7155ded5eaba169b33d3169fa81e2f78",
+        "duration_s": 27.555,
+        "sample_rate_hz": 32000,
+        "channels": 1,
+        "codec": "pcm_s16le",
+        "integrated_lufs": -16.4,
+        "true_peak_db": -1.5,
+        "technical_qc": {
+          "approved": true,
+          "checks": [
+            {
+              "check": "file_exists",
+              "passed": true,
+              "detail": "D:\\Projects\\X-SuperPlay-ContentOps\\outputs\\founder-ab-sample\\A-original-excerpt.wav"
+            },
+            {
+              "check": "not_empty",
+              "passed": true,
+              "detail": "1763598 bytes"
+            },
+            {
+              "check": "has_audio_codec",
+              "passed": true,
+              "detail": "pcm_s16le"
+            },
+            {
+              "check": "has_duration",
+              "passed": true,
+              "detail": 27.555
+            },
+            {
+              "check": "sample_rate",
+              "passed": true,
+              "detail": {
+                "expected": 32000,
+                "actual": 32000
+              }
+            },
+            {
+              "check": "mono_or_stereo",
+              "passed": true,
+              "detail": 1
+            },
+            {
+              "check": "leading_silence",
+              "passed": true,
+              "detail": 0.0
+            },
+            {
+              "check": "trailing_silence",
+              "passed": true,
+              "detail": 0.555
+            },
+            {
+              "check": "not_mostly_silent",
+              "passed": true,
+              "detail": -1.5
+            },
+            {
+              "check": "no_clipping",
+              "passed": true,
+              "detail": -1.5
+            },
+            {
+              "check": "loudness_floor",
+              "passed": true,
+              "detail": -16.4
+            },
+            {
+              "check": "true_peak_headroom",
+              "passed": true,
+              "detail": -1.5
+            }
+          ],
+          "measurements": {
+            "codec": "pcm_s16le",
+            "sample_rate_hz": 32000,
+            "channels": 1,
+            "duration_s": 27.555,
+            "bytes": 1763598,
+            "integrated_lufs": -16.4,
+            "true_peak_db": -1.5,
+            "peak_db": -1.5,
+            "mean_db": -16.6,
+            "loudness_range_lu": 2.0
+          },
+          "silence": {
+            "available": true,
+            "silences": [
+              {
+                "start_s": 5.192156,
+                "end_s": 5.783719
+              },
+              {
+                "start_s": 11.792469,
+                "end_s": 12.149688
+              },
+              {
+                "start_s": 17.351813,
+                "end_s": 17.918188
+              },
+              {
+                "start_s": 19.269594,
+                "end_s": 19.779937
+              },
+              {
+                "start_s": 24.252063,
+                "end_s": 24.86475
+              },
+              {
+                "start_s": 26.999813,
+                "end_s": 27.551719
+              }
+            ],
+            "leading_silence_s": 0.0,
+            "trailing_silence_s": 0.555
+          }
+        }
+      },
+      "asr": {
+        "label": "A",
+        "audio": "D:\\Projects\\X-SuperPlay-ContentOps\\outputs\\founder-ab-sample\\A-original-excerpt.wav",
+        "expected_spoken_text_sha256": "eadc71f0c5665a2584bb94ccf710e7592eaa54e6137ac4711de91484ccfb95d2",
+        "budget": {
+          "used": 1,
+          "budget": 6
+        },
+        "status": "DETECTED_PROBLEM",
+        "role": "DETECTOR_ONLY",
+        "can_approve_quality": false,
+        "transcript": "装了伊泽尔之后，最先要回答的是，它到底跑不跑得起来。我把它锁在v0.2.1，982个文件，逐个比对过哈希，和上游tag完全一致。它不是一个SaaS，是一层skill库，114个skill，分成发现、策划、创作、发布、归因五层，创作层最大。",
+        "coverage": 0.9639,
+        "issues": [
+          "3 expected unit(s) absent from the transcript",
+          "1 unexpected repeated unit(s): v0.2.1"
+        ],
+        "missing": [
+          "52",
+          "v0.21",
+          "个"
+        ],
+        "excess": [
+          "v0.2.1"
+        ],
+        "detail": null
+      }
+    },
+    "B": {
+      "fingerprint": "55426271dff44c13936d9aa4a10f287db3e564289c86ea8b303b30579984b710",
+      "synthesis_sha256": "177e1a46e6916624f56d4be6093d859c0b5139bdce316d51d22fb41c2d967349",
+      "synthesis_characters": 166,
+      "parameters": {
+        "emotion": "auto (absent)",
+        "speed": 1.0
+      },
+      "provider_call": true,
+      "cache": "miss",
+      "request": {
+        "label": "B",
+        "attempt_id": "absample-425cc266cbd7-B",
+        "request_transmitted": true,
+        "billing": {
+          "before_verdict": "SAFE_INCLUDED_PLAN",
+          "gate_decision": {
+            "route": "MPLAN_NARRATION_ROUTE",
+            "authorised": true,
+            "refusals": [],
+            "reasons": [],
+            "credential_class": "SUBSCRIPTION",
+            "credential_source": "MMX_CONFIG",
+            "billing_verdict": "SAFE_INCLUDED_PLAN"
+          },
+          "quota_before": {
+            "interval_remaining_percent": 99.0,
+            "weekly_remaining_percent": 51.0,
+            "bucket": "general"
+          },
+          "quota_after": {
+            "interval_remaining_percent": 99.0,
+            "weekly_remaining_percent": 51.0,
+            "bucket": "general"
+          },
+          "balances_before": {
+            "available_amount": "15.08",
+            "cash_balance": "10.00",
+            "voucher_balance": "5.08",
+            "credit_balance": "0.00",
+            "owed_amount": "0.00"
+          },
+          "balances_after": {
+            "available_amount": "15.08",
+            "cash_balance": "10.00",
+            "voucher_balance": "5.08",
+            "credit_balance": "0.00",
+            "owed_amount": "0.00"
+          },
+          "deltas": {
+            "cash_balance": {
+              "before": "10.00",
+              "after": "10.00",
+              "delta": "0.00",
+              "decreased": false,
+              "increased": false
+            },
+            "voucher_balance": {
+              "before": "5.08",
+              "after": "5.08",
+              "delta": "0.00",
+              "decreased": false,
+              "increased": false
+            },
+            "credit_balance": {
+              "before": "0.00",
+              "after": "0.00",
+              "delta": "0.00",
+              "decreased": false,
+              "increased": false
+            },
+            "owed_amount": {
+              "before": "0.00",
+              "after": "0.00",
+              "delta": "0.00",
+              "decreased": false,
+              "increased": false
+            },
+            "available_amount": {
+              "before": "15.08",
+              "after": "15.08",
+              "delta": "0.00",
+              "decreased": false,
+              "increased": false
+            }
+          },
+          "plan_only_classification": {
+            "verified": true,
+            "status": "M_PLAN_ONLY_VERIFIED",
+            "basis": "EXCLUSION_CHAIN",
+            "note": "no paid fund moved; Credit Pack was zero before and after; the request succeeded on a Subscription Key, whose documented deduction chain is plan quota -> credit packs only, so plan quota is the only chain left. Quota percentages are integers and a short utterance can round below one point, which is why a flat percentage is not treated as failure.",
+            "quota_before": {
+              "interval_remaining_percent": 99.0,
+              "weekly_remaining_percent": 51.0,
+              "bucket": "general"
+            },
+            "quota_after": {
+              "interval_remaining_percent": 99.0,
+              "weekly_remaining_percent": 51.0,
+              "bucket": "general"
+            }
+          }
+        },
+        "provider": {
+          "http_status": 200,
+          "status_code": 0,
+          "status_msg": "success",
+          "trace_id": "071c6dc720b475bc40b79f35be1b8089",
+          "usage_characters": 247,
+          "usage_voice_count": null
+        },
+        "usage_running_total": 247,
+        "budget_chars": 1500
+      },
+      "audio": {
+        "path": "D:\\Projects\\X-SuperPlay-ContentOps\\outputs\\founder-ab-sample\\B-spoken-auto.wav",
+        "sha256": "a23abb9e4df936a8deb6c753b8b6d7a35bb36ff034ef3eb74839c73576d64635",
+        "duration_s": 30.244,
+        "sample_rate_hz": 32000,
+        "channels": 1,
+        "codec": "pcm_s16le",
+        "integrated_lufs": -16.0,
+        "true_peak_db": -1.5,
+        "technical_qc": {
+          "approved": true,
+          "checks": [
+            {
+              "check": "file_exists",
+              "passed": true,
+              "detail": "D:\\Projects\\X-SuperPlay-ContentOps\\outputs\\founder-ab-sample\\B-spoken-auto.wav"
+            },
+            {
+              "check": "not_empty",
+              "passed": true,
+              "detail": "1935682 bytes"
+            },
+            {
+              "check": "has_audio_codec",
+              "passed": true,
+              "detail": "pcm_s16le"
+            },
+            {
+              "check": "has_duration",
+              "passed": true,
+              "detail": 30.244
+            },
+            {
+              "check": "sample_rate",
+              "passed": true,
+              "detail": {
+                "expected": 32000,
+                "actual": 32000
+              }
+            },
+            {
+              "check": "mono_or_stereo",
+              "passed": true,
+              "detail": 1
+            },
+            {
+              "check": "leading_silence",
+              "passed": true,
+              "detail": 0.0
+            },
+            {
+              "check": "trailing_silence",
+              "passed": true,
+              "detail": 0.0
+            },
+            {
+              "check": "not_mostly_silent",
+              "passed": true,
+              "detail": -1.5
+            },
+            {
+              "check": "no_clipping",
+              "passed": true,
+              "detail": -1.5
+            },
+            {
+              "check": "loudness_floor",
+              "passed": true,
+              "detail": -16.0
+            },
+            {
+              "check": "true_peak_headroom",
+              "passed": true,
+              "detail": -1.5
+            }
+          ],
+          "measurements": {
+            "codec": "pcm_s16le",
+            "sample_rate_hz": 32000,
+            "channels": 1,
+            "duration_s": 30.244,
+            "bytes": 1935682,
+            "integrated_lufs": -16.0,
+            "true_peak_db": -1.5,
+            "peak_db": -1.5,
+            "mean_db": -16.3,
+            "loudness_range_lu": 1.5
+          },
+          "silence": {
+            "available": true,
+            "silences": [
+              {
+                "start_s": 3.363094,
+                "end_s": 3.991188
+              },
+              {
+                "start_s": 8.436344,
+                "end_s": 9.052531
+              },
+              {
+                "start_s": 16.462187,
+                "end_s": 16.868781
+              },
+              {
+                "start_s": 18.606687,
+                "end_s": 19.25925
+              },
+              {
+                "start_s": 20.837875,
+                "end_s": 21.353094
+              },
+              {
+                "start_s": 27.189063,
+                "end_s": 27.722219
+              }
+            ],
+            "leading_silence_s": 0.0,
+            "trailing_silence_s": 0.0
+          }
+        }
+      },
+      "asr": {
+        "label": "B",
+        "audio": "D:\\Projects\\X-SuperPlay-ContentOps\\outputs\\founder-ab-sample\\B-spoken-auto.wav",
+        "expected_spoken_text_sha256": "706d9a5f59c5259f250e41b62d1dee14785aa7c214f7411a8fd09fe4d2da6ad9",
+        "budget": {
+          "used": 2,
+          "budget": 6
+        },
+        "status": "DETECTED_PROBLEM",
+        "role": "DETECTOR_ONLY",
+        "can_approve_quality": false,
+        "transcript": "装了伊泽尔之后，最先要回答的是，它到底跑不跑得起来？我把它锁在v0.2.1，982个文件逐个比对过哈希，和上游tag完全一致。它不是一个SaaS，而是一层skill库，114个skill，分成发现、策划、创作、发布、归因五层，创作层最大，52个。",
+        "coverage": 0.9881,
+        "issues": [
+          "1 expected unit(s) absent from the transcript",
+          "1 unexpected repeated unit(s): v0.2.1"
+        ],
+        "missing": [
+          "v0.21"
+        ],
+        "excess": [
+          "v0.2.1"
+        ],
+        "detail": null
+      }
+    },
+    "C": {
+      "segments": [
+        {
+          "id": "S01",
+          "role": "INTRO",
+          "fingerprint": "8ff7fa61f3811e6158f58ad38f78a7d4972efd610a43fc01e7815cb26fcd19fd",
+          "synthesis_sha256": "d90f67596305221273b6af1832b4758de05fef6e37c61cc0c0f1038933cd6048",
+          "synthesis_characters": 35,
+          "parameters": {
+            "emotion": "calm",
+            "speed": 0.98,
+            "pause_after_s": 0.5
+          },
+          "provider_call": true,
+          "cache": "miss",
+          "request": {
+            "label": "C:S01",
+            "attempt_id": "absample-425cc266cbd7-C-S01",
+            "request_transmitted": true,
+            "billing": {
+              "before_verdict": "SAFE_INCLUDED_PLAN",
+              "gate_decision": {
+                "route": "MPLAN_NARRATION_ROUTE",
+                "authorised": true,
+                "refusals": [],
+                "reasons": [],
+                "credential_class": "SUBSCRIPTION",
+                "credential_source": "MMX_CONFIG",
+                "billing_verdict": "SAFE_INCLUDED_PLAN"
+              },
+              "quota_before": {
+                "interval_remaining_percent": 99.0,
+                "weekly_remaining_percent": 51.0,
+                "bucket": "general"
+              },
+              "quota_after": {
+                "interval_remaining_percent": 98.0,
+                "weekly_remaining_percent": 51.0,
+                "bucket": "general"
+              },
+              "balances_before": {
+                "available_amount": "15.08",
+                "cash_balance": "10.00",
+                "voucher_balance": "5.08",
+                "credit_balance": "0.00",
+                "owed_amount": "0.00"
+              },
+              "balances_after": {
+                "available_amount": "15.08",
+                "cash_balance": "10.00",
+                "voucher_balance": "5.08",
+                "credit_balance": "0.00",
+                "owed_amount": "0.00"
+              },
+              "deltas": {
+                "cash_balance": {
+                  "before": "10.00",
+                  "after": "10.00",
+                  "delta": "0.00",
+                  "decreased": false,
+                  "increased": false
+                },
+                "voucher_balance": {
+                  "before": "5.08",
+                  "after": "5.08",
+                  "delta": "0.00",
+                  "decreased": false,
+                  "increased": false
+                },
+                "credit_balance": {
+                  "before": "0.00",
+                  "after": "0.00",
+                  "delta": "0.00",
+                  "decreased": false,
+                  "increased": false
+                },
+                "owed_amount": {
+                  "before": "0.00",
+                  "after": "0.00",
+                  "delta": "0.00",
+                  "decreased": false,
+                  "increased": false
+                },
+                "available_amount": {
+                  "before": "15.08",
+                  "after": "15.08",
+                  "delta": "0.00",
+                  "decreased": false,
+                  "increased": false
+                }
+              },
+              "plan_only_classification": {
+                "verified": true,
+                "status": "M_PLAN_ONLY_VERIFIED",
+                "basis": "QUOTA_DELTA",
+                "quota_before": {
+                  "interval_remaining_percent": 99.0,
+                  "weekly_remaining_percent": 51.0,
+                  "bucket": "general"
+                },
+                "quota_after": {
+                  "interval_remaining_percent": 98.0,
+                  "weekly_remaining_percent": 51.0,
+                  "bucket": "general"
+                }
+              }
+            },
+            "provider": {
+              "http_status": 200,
+              "status_code": 0,
+              "status_msg": "success",
+              "trace_id": "071c6dd97c1bcc7fc6dcd098de8f78c0",
+              "usage_characters": 58,
+              "usage_voice_count": null
+            },
+            "usage_running_total": 305,
+            "budget_chars": 1500
+          },
+          "audio": {
+            "path": "D:\\Projects\\X-SuperPlay-ContentOps\\outputs\\founder-ab-sample\\C-S01.wav",
+            "sha256": "34b227cb7bb8a65a7476d025942ae8fa3b8b93858ee6431b5becf81442833a3d",
+            "duration_s": 5.478,
+            "sample_rate_hz": 32000,
+            "channels": 1,
+            "codec": "pcm_s16le",
+            "integrated_lufs": -16.0,
+            "true_peak_db": -1.5,
+            "technical_qc": {
+              "approved": true,
+              "checks": [
+                {
+                  "check": "file_exists",
+                  "passed": true,
+                  "detail": "D:\\Projects\\X-SuperPlay-ContentOps\\outputs\\founder-ab-sample\\C-S01.wav"
+                },
+                {
+                  "check": "not_empty",
+                  "passed": true,
+                  "detail": "350674 bytes"
+                },
+                {
+                  "check": "has_audio_codec",
+                  "passed": true,
+                  "detail": "pcm_s16le"
+                },
+                {
+                  "check": "has_duration",
+                  "passed": true,
+                  "detail": 5.478
+                },
+                {
+                  "check": "sample_rate",
+                  "passed": true,
+                  "detail": {
+                    "expected": 32000,
+                    "actual": 32000
+                  }
+                },
+                {
+                  "check": "mono_or_stereo",
+                  "passed": true,
+                  "detail": 1
+                },
+                {
+                  "check": "leading_silence",
+                  "passed": true,
+                  "detail": 0.0
+                },
+                {
+                  "check": "trailing_silence",
+                  "passed": true,
+                  "detail": 0.0
+                },
+                {
+                  "check": "not_mostly_silent",
+                  "passed": true,
+                  "detail": -1.5
+                },
+                {
+                  "check": "no_clipping",
+                  "passed": true,
+                  "detail": -1.5
+                },
+                {
+                  "check": "loudness_floor",
+                  "passed": true,
+                  "detail": -16.0
+                },
+                {
+                  "check": "true_peak_headroom",
+                  "passed": true,
+                  "detail": -1.5
+                }
+              ],
+              "measurements": {
+                "codec": "pcm_s16le",
+                "sample_rate_hz": 32000,
+                "channels": 1,
+                "duration_s": 5.478,
+                "bytes": 350674,
+                "integrated_lufs": -16.0,
+                "true_peak_db": -1.5,
+                "peak_db": -1.5,
+                "mean_db": -16.5,
+                "loudness_range_lu": 2.1
+              },
+              "silence": {
+                "available": true,
+                "silences": [
+                  {
+                    "start_s": 2.996125,
+                    "end_s": 3.748344
+                  }
+                ],
+                "leading_silence_s": 0.0,
+                "trailing_silence_s": 0.0
+              }
+            }
+          }
+        },
+        {
+          "id": "S02",
+          "role": "EVIDENCE",
+          "fingerprint": "7b606f4b1ecba82b84c33e85251adfc68c76de1fe10977da549342a40c95ec02",
+          "synthesis_sha256": "99b9e7948ab2c570a58c94089441cd1a0a7e378844729bdbd8ec03b7b5fb20a4",
+          "synthesis_characters": 49,
+          "parameters": {
+            "emotion": "auto (absent)",
+            "speed": 1.05,
+            "pause_after_s": 0.45
+          },
+          "provider_call": true,
+          "cache": "miss",
+          "request": {
+            "label": "C:S02",
+            "attempt_id": "absample-425cc266cbd7-C-S02",
+            "request_transmitted": true,
+            "billing": {
+              "before_verdict": "SAFE_INCLUDED_PLAN",
+              "gate_decision": {
+                "route": "MPLAN_NARRATION_ROUTE",
+                "authorised": true,
+                "refusals": [],
+                "reasons": [],
+                "credential_class": "SUBSCRIPTION",
+                "credential_source": "MMX_CONFIG",
+                "billing_verdict": "SAFE_INCLUDED_PLAN"
+              },
+              "quota_before": {
+                "interval_remaining_percent": 98.0,
+                "weekly_remaining_percent": 51.0,
+                "bucket": "general"
+              },
+              "quota_after": {
+                "interval_remaining_percent": 98.0,
+                "weekly_remaining_percent": 51.0,
+                "bucket": "general"
+              },
+              "balances_before": {
+                "available_amount": "15.08",
+                "cash_balance": "10.00",
+                "voucher_balance": "5.08",
+                "credit_balance": "0.00",
+                "owed_amount": "0.00"
+              },
+              "balances_after": {
+                "available_amount": "15.08",
+                "cash_balance": "10.00",
+                "voucher_balance": "5.08",
+                "credit_balance": "0.00",
+                "owed_amount": "0.00"
+              },
+              "deltas": {
+                "cash_balance": {
+                  "before": "10.00",
+                  "after": "10.00",
+                  "delta": "0.00",
+                  "decreased": false,
+                  "increased": false
+                },
+                "voucher_balance": {
+                  "before": "5.08",
+                  "after": "5.08",
+                  "delta": "0.00",
+                  "decreased": false,
+                  "increased": false
+                },
+                "credit_balance": {
+                  "before": "0.00",
+                  "after": "0.00",
+                  "delta": "0.00",
+                  "decreased": false,
+                  "increased": false
+                },
+                "owed_amount": {
+                  "before": "0.00",
+                  "after": "0.00",
+                  "delta": "0.00",
+                  "decreased": false,
+                  "increased": false
+                },
+                "available_amount": {
+                  "before": "15.08",
+                  "after": "15.08",
+                  "delta": "0.00",
+                  "decreased": false,
+                  "increased": false
+                }
+              },
+              "plan_only_classification": {
+                "verified": true,
+                "status": "M_PLAN_ONLY_VERIFIED",
+                "basis": "EXCLUSION_CHAIN",
+                "note": "no paid fund moved; Credit Pack was zero before and after; the request succeeded on a Subscription Key, whose documented deduction chain is plan quota -> credit packs only, so plan quota is the only chain left. Quota percentages are integers and a short utterance can round below one point, which is why a flat percentage is not treated as failure.",
+                "quota_before": {
+                  "interval_remaining_percent": 98.0,
+                  "weekly_remaining_percent": 51.0,
+                  "bucket": "general"
+                },
+                "quota_after": {
+                  "interval_remaining_percent": 98.0,
+                  "weekly_remaining_percent": 51.0,
+                  "bucket": "general"
+                }
+              }
+            },
+            "provider": {
+              "http_status": 200,
+              "status_code": 0,
+              "status_msg": "success",
+              "trace_id": "071c6de265189c6e51905018c634d3de",
+              "usage_characters": 76,
+              "usage_voice_count": null
+            },
+            "usage_running_total": 381,
+            "budget_chars": 1500
+          },
+          "audio": {
+            "path": "D:\\Projects\\X-SuperPlay-ContentOps\\outputs\\founder-ab-sample\\C-S02.wav",
+            "sha256": "8dd265b3313e94fb6fe636b844647818ea8cee7e5af5f3da76fafc5757edeb68",
+            "duration_s": 8.833,
+            "sample_rate_hz": 32000,
+            "channels": 1,
+            "codec": "pcm_s16le",
+            "integrated_lufs": -16.1,
+            "true_peak_db": -1.5,
+            "technical_qc": {
+              "approved": true,
+              "checks": [
+                {
+                  "check": "file_exists",
+                  "passed": true,
+                  "detail": "D:\\Projects\\X-SuperPlay-ContentOps\\outputs\\founder-ab-sample\\C-S02.wav"
+                },
+                {
+                  "check": "not_empty",
+                  "passed": true,
+                  "detail": "565414 bytes"
+                },
+                {
+                  "check": "has_audio_codec",
+                  "passed": true,
+                  "detail": "pcm_s16le"
+                },
+                {
+                  "check": "has_duration",
+                  "passed": true,
+                  "detail": 8.833
+                },
+                {
+                  "check": "sample_rate",
+                  "passed": true,
+                  "detail": {
+                    "expected": 32000,
+                    "actual": 32000
+                  }
+                },
+                {
+                  "check": "mono_or_stereo",
+                  "passed": true,
+                  "detail": 1
+                },
+                {
+                  "check": "leading_silence",
+                  "passed": true,
+                  "detail": 0.0
+                },
+                {
+                  "check": "trailing_silence",
+                  "passed": true,
+                  "detail": 0.0
+                },
+                {
+                  "check": "not_mostly_silent",
+                  "passed": true,
+                  "detail": -1.5
+                },
+                {
+                  "check": "no_clipping",
+                  "passed": true,
+                  "detail": -1.5
+                },
+                {
+                  "check": "loudness_floor",
+                  "passed": true,
+                  "detail": -16.1
+                },
+                {
+                  "check": "true_peak_headroom",
+                  "passed": true,
+                  "detail": -1.5
+                }
+              ],
+              "measurements": {
+                "codec": "pcm_s16le",
+                "sample_rate_hz": 32000,
+                "channels": 1,
+                "duration_s": 8.833,
+                "bytes": 565414,
+                "integrated_lufs": -16.1,
+                "true_peak_db": -1.5,
+                "peak_db": -1.5,
+                "mean_db": -16.2,
+                "loudness_range_lu": 1.2
+              },
+              "silence": {
+                "available": true,
+                "silences": [
+                  {
+                    "start_s": 2.224906,
+                    "end_s": 2.875375
+                  }
+                ],
+                "leading_silence_s": 0.0,
+                "trailing_silence_s": 0.0
+              }
+            }
+          }
+        },
+        {
+          "id": "S03",
+          "role": "EVIDENCE",
+          "fingerprint": "d217230167f282aabd56a40a2bde526e0b2bbb4c79b6490aa3bb3409ddad237e",
+          "synthesis_sha256": "d2f00b3c0ac5c539b4c75571df138d783a2423668f358bd92ec0ea94865ddadd",
+          "synthesis_characters": 80,
+          "parameters": {
+            "emotion": "calm",
+            "speed": 1.0,
+            "pause_after_s": 0.5
+          },
+          "provider_call": true,
+          "cache": "miss",
+          "request": {
+            "label": "C:S03",
+            "attempt_id": "absample-425cc266cbd7-C-S03",
+            "request_transmitted": true,
+            "billing": {
+              "before_verdict": "SAFE_INCLUDED_PLAN",
+              "gate_decision": {
+                "route": "MPLAN_NARRATION_ROUTE",
+                "authorised": true,
+                "refusals": [],
+                "reasons": [],
+                "credential_class": "SUBSCRIPTION",
+                "credential_source": "MMX_CONFIG",
+                "billing_verdict": "SAFE_INCLUDED_PLAN"
+              },
+              "quota_before": {
+                "interval_remaining_percent": 98.0,
+                "weekly_remaining_percent": 51.0,
+                "bucket": "general"
+              },
+              "quota_after": {
+                "interval_remaining_percent": 98.0,
+                "weekly_remaining_percent": 51.0,
+                "bucket": "general"
+              },
+              "balances_before": {
+                "available_amount": "15.08",
+                "cash_balance": "10.00",
+                "voucher_balance": "5.08",
+                "credit_balance": "0.00",
+                "owed_amount": "0.00"
+              },
+              "balances_after": {
+                "available_amount": "15.08",
+                "cash_balance": "10.00",
+                "voucher_balance": "5.08",
+                "credit_balance": "0.00",
+                "owed_amount": "0.00"
+              },
+              "deltas": {
+                "cash_balance": {
+                  "before": "10.00",
+                  "after": "10.00",
+                  "delta": "0.00",
+                  "decreased": false,
+                  "increased": false
+                },
+                "voucher_balance": {
+                  "before": "5.08",
+                  "after": "5.08",
+                  "delta": "0.00",
+                  "decreased": false,
+                  "increased": false
+                },
+                "credit_balance": {
+                  "before": "0.00",
+                  "after": "0.00",
+                  "delta": "0.00",
+                  "decreased": false,
+                  "increased": false
+                },
+                "owed_amount": {
+                  "before": "0.00",
+                  "after": "0.00",
+                  "delta": "0.00",
+                  "decreased": false,
+                  "increased": false
+                },
+                "available_amount": {
+                  "before": "15.08",
+                  "after": "15.08",
+                  "delta": "0.00",
+                  "decreased": false,
+                  "increased": false
+                }
+              },
+              "plan_only_classification": {
+                "verified": true,
+                "status": "M_PLAN_ONLY_VERIFIED",
+                "basis": "EXCLUSION_CHAIN",
+                "note": "no paid fund moved; Credit Pack was zero before and after; the request succeeded on a Subscription Key, whose documented deduction chain is plan quota -> credit packs only, so plan quota is the only chain left. Quota percentages are integers and a short utterance can round below one point, which is why a flat percentage is not treated as failure.",
+                "quota_before": {
+                  "interval_remaining_percent": 98.0,
+                  "weekly_remaining_percent": 51.0,
+                  "bucket": "general"
+                },
+                "quota_after": {
+                  "interval_remaining_percent": 98.0,
+                  "weekly_remaining_percent": 51.0,
+                  "bucket": "general"
+                }
+              }
+            },
+            "provider": {
+              "http_status": 200,
+              "status_code": 0,
+              "status_msg": "success",
+              "trace_id": "071c6deb6e8e93dce0f741c0e809e1c1",
+              "usage_characters": 111,
+              "usage_voice_count": null
+            },
+            "usage_running_total": 492,
+            "budget_chars": 1500
+          },
+          "audio": {
+            "path": "D:\\Projects\\X-SuperPlay-ContentOps\\outputs\\founder-ab-sample\\C-S03.wav",
+            "sha256": "ad8cdce3e33806a0977f63df3fa0e29ba6146e536e18a1a9d17ccb709a1bc5c7",
+            "duration_s": 13.436,
+            "sample_rate_hz": 32000,
+            "channels": 1,
+            "codec": "pcm_s16le",
+            "integrated_lufs": -16.1,
+            "true_peak_db": -1.5,
+            "technical_qc": {
+              "approved": true,
+              "checks": [
+                {
+                  "check": "file_exists",
+                  "passed": true,
+                  "detail": "D:\\Projects\\X-SuperPlay-ContentOps\\outputs\\founder-ab-sample\\C-S03.wav"
+                },
+                {
+                  "check": "not_empty",
+                  "passed": true,
+                  "detail": "859994 bytes"
+                },
+                {
+                  "check": "has_audio_codec",
+                  "passed": true,
+                  "detail": "pcm_s16le"
+                },
+                {
+                  "check": "has_duration",
+                  "passed": true,
+                  "detail": 13.436
+                },
+                {
+                  "check": "sample_rate",
+                  "passed": true,
+                  "detail": {
+                    "expected": 32000,
+                    "actual": 32000
+                  }
+                },
+                {
+                  "check": "mono_or_stereo",
+                  "passed": true,
+                  "detail": 1
+                },
+                {
+                  "check": "leading_silence",
+                  "passed": true,
+                  "detail": 0.0
+                },
+                {
+                  "check": "trailing_silence",
+                  "passed": true,
+                  "detail": 0.0
+                },
+                {
+                  "check": "not_mostly_silent",
+                  "passed": true,
+                  "detail": -1.5
+                },
+                {
+                  "check": "no_clipping",
+                  "passed": true,
+                  "detail": -1.5
+                },
+                {
+                  "check": "loudness_floor",
+                  "passed": true,
+                  "detail": -16.1
+                },
+                {
+                  "check": "true_peak_headroom",
+                  "passed": true,
+                  "detail": -1.5
+                }
+              ],
+              "measurements": {
+                "codec": "pcm_s16le",
+                "sample_rate_hz": 32000,
+                "channels": 1,
+                "duration_s": 13.436,
+                "bytes": 859994,
+                "integrated_lufs": -16.1,
+                "true_peak_db": -1.5,
+                "peak_db": -1.5,
+                "mean_db": -16.4,
+                "loudness_range_lu": 1.6
+              },
+              "silence": {
+                "available": true,
+                "silences": [
+                  {
+                    "start_s": 2.933844,
+                    "end_s": 3.764813
+                  },
+                  {
+                    "start_s": 10.397719,
+                    "end_s": 11.1225
+                  }
+                ],
+                "leading_silence_s": 0.0,
+                "trailing_silence_s": 0.0
+              }
+            }
+          }
+        }
+      ],
+      "joined": {
+        "path": "D:\\Projects\\X-SuperPlay-ContentOps\\outputs\\founder-ab-sample\\C-segmented-joined.wav",
+        "sha256": "9c7544d1355b60638627d7134ea4a490885d811b55699ecb5ff9ab6fabf17dae",
+        "duration_s": 28.698,
+        "sample_rate_hz": 32000,
+        "channels": 1,
+        "codec": "pcm_s16le",
+        "integrated_lufs": -16.1,
+        "true_peak_db": -1.5,
+        "technical_qc": {
+          "approved": true,
+          "checks": [
+            {
+              "check": "file_exists",
+              "passed": true,
+              "detail": "D:\\Projects\\X-SuperPlay-ContentOps\\outputs\\founder-ab-sample\\C-segmented-joined.wav"
+            },
+            {
+              "check": "not_empty",
+              "passed": true,
+              "detail": "1836726 bytes"
+            },
+            {
+              "check": "has_audio_codec",
+              "passed": true,
+              "detail": "pcm_s16le"
+            },
+            {
+              "check": "has_duration",
+              "passed": true,
+              "detail": 28.698
+            },
+            {
+              "check": "sample_rate",
+              "passed": true,
+              "detail": {
+                "expected": 32000,
+                "actual": 32000
+              }
+            },
+            {
+              "check": "mono_or_stereo",
+              "passed": true,
+              "detail": 1
+            },
+            {
+              "check": "leading_silence",
+              "passed": true,
+              "detail": 0.0
+            },
+            {
+              "check": "trailing_silence",
+              "passed": true,
+              "detail": 0.0
+            },
+            {
+              "check": "not_mostly_silent",
+              "passed": true,
+              "detail": -1.5
+            },
+            {
+              "check": "no_clipping",
+              "passed": true,
+              "detail": -1.5
+            },
+            {
+              "check": "loudness_floor",
+              "passed": true,
+              "detail": -16.1
+            },
+            {
+              "check": "true_peak_headroom",
+              "passed": true,
+              "detail": -1.5
+            }
+          ],
+          "measurements": {
+            "codec": "pcm_s16le",
+            "sample_rate_hz": 32000,
+            "channels": 1,
+            "duration_s": 28.698,
+            "bytes": 1836726,
+            "integrated_lufs": -16.1,
+            "true_peak_db": -1.5,
+            "peak_db": -1.5,
+            "mean_db": -16.5,
+            "loudness_range_lu": 1.6
+          },
+          "silence": {
+            "available": true,
+            "silences": [
+              {
+                "start_s": 2.996125,
+                "end_s": 3.748344
+              },
+              {
+                "start_s": 5.312656,
+                "end_s": 6.153938
+              },
+              {
+                "start_s": 8.202969,
+                "end_s": 8.853438
+              },
+              {
+                "start_s": 14.654781,
+                "end_s": 15.39575
+              },
+              {
+                "start_s": 18.195281,
+                "end_s": 19.02625
+              },
+              {
+                "start_s": 25.659156,
+                "end_s": 26.383938
+              }
+            ],
+            "leading_silence_s": 0.0,
+            "trailing_silence_s": 0.0
+          }
+        }
+      },
+      "join_note": "Segment boundaries are joined with the declared silence gaps (pause_after_s); the provider's own paragraph pause for B is not observable in the API response, so B and C are compared as heard, not as a controlled join-duration experiment.",
+      "asr": {
+        "label": "C",
+        "audio": "D:\\Projects\\X-SuperPlay-ContentOps\\outputs\\founder-ab-sample\\C-segmented-joined.wav",
+        "expected_spoken_text_sha256": "706d9a5f59c5259f250e41b62d1dee14785aa7c214f7411a8fd09fe4d2da6ad9",
+        "budget": {
+          "used": 3,
+          "budget": 6
+        },
+        "status": "DETECTED_PROBLEM",
+        "role": "DETECTOR_ONLY",
+        "can_approve_quality": false,
+        "transcript": "装了伊泽尔之后，最先要回答的是，它到底跑不跑得起来？我把它锁在v0.2.1，982个文件逐个比对过哈希，和上游tag完全一致。它不是一个SaaS，而是一层skill库，114个skill分成发现、策划、创作、发布、归因五层，创作层最大，52个。",
+        "coverage": 0.9881,
+        "issues": [
+          "1 expected unit(s) absent from the transcript",
+          "1 unexpected repeated unit(s): v0.2.1"
+        ],
+        "missing": [
+          "v0.21"
+        ],
+        "excess": [
+          "v0.2.1"
+        ],
+        "detail": null
+      }
+    }
+  },
+  "requests": [
+    {
+      "label": "B",
+      "attempt_id": "absample-425cc266cbd7-B",
+      "request_transmitted": true,
+      "billing": {
+        "before_verdict": "SAFE_INCLUDED_PLAN",
+        "gate_decision": {
+          "route": "MPLAN_NARRATION_ROUTE",
+          "authorised": true,
+          "refusals": [],
+          "reasons": [],
+          "credential_class": "SUBSCRIPTION",
+          "credential_source": "MMX_CONFIG",
+          "billing_verdict": "SAFE_INCLUDED_PLAN"
+        },
+        "quota_before": {
+          "interval_remaining_percent": 99.0,
+          "weekly_remaining_percent": 51.0,
+          "bucket": "general"
+        },
+        "quota_after": {
+          "interval_remaining_percent": 99.0,
+          "weekly_remaining_percent": 51.0,
+          "bucket": "general"
+        },
+        "balances_before": {
+          "available_amount": "15.08",
+          "cash_balance": "10.00",
+          "voucher_balance": "5.08",
+          "credit_balance": "0.00",
+          "owed_amount": "0.00"
+        },
+        "balances_after": {
+          "available_amount": "15.08",
+          "cash_balance": "10.00",
+          "voucher_balance": "5.08",
+          "credit_balance": "0.00",
+          "owed_amount": "0.00"
+        },
+        "deltas": {
+          "cash_balance": {
+            "before": "10.00",
+            "after": "10.00",
+            "delta": "0.00",
+            "decreased": false,
+            "increased": false
+          },
+          "voucher_balance": {
+            "before": "5.08",
+            "after": "5.08",
+            "delta": "0.00",
+            "decreased": false,
+            "increased": false
+          },
+          "credit_balance": {
+            "before": "0.00",
+            "after": "0.00",
+            "delta": "0.00",
+            "decreased": false,
+            "increased": false
+          },
+          "owed_amount": {
+            "before": "0.00",
+            "after": "0.00",
+            "delta": "0.00",
+            "decreased": false,
+            "increased": false
+          },
+          "available_amount": {
+            "before": "15.08",
+            "after": "15.08",
+            "delta": "0.00",
+            "decreased": false,
+            "increased": false
+          }
+        },
+        "plan_only_classification": {
+          "verified": true,
+          "status": "M_PLAN_ONLY_VERIFIED",
+          "basis": "EXCLUSION_CHAIN",
+          "note": "no paid fund moved; Credit Pack was zero before and after; the request succeeded on a Subscription Key, whose documented deduction chain is plan quota -> credit packs only, so plan quota is the only chain left. Quota percentages are integers and a short utterance can round below one point, which is why a flat percentage is not treated as failure.",
+          "quota_before": {
+            "interval_remaining_percent": 99.0,
+            "weekly_remaining_percent": 51.0,
+            "bucket": "general"
+          },
+          "quota_after": {
+            "interval_remaining_percent": 99.0,
+            "weekly_remaining_percent": 51.0,
+            "bucket": "general"
+          }
+        }
+      },
+      "provider": {
+        "http_status": 200,
+        "status_code": 0,
+        "status_msg": "success",
+        "trace_id": "071c6dc720b475bc40b79f35be1b8089",
+        "usage_characters": 247,
+        "usage_voice_count": null
+      },
+      "usage_running_total": 247,
+      "budget_chars": 1500
+    },
+    {
+      "label": "C:S01",
+      "attempt_id": "absample-425cc266cbd7-C-S01",
+      "request_transmitted": true,
+      "billing": {
+        "before_verdict": "SAFE_INCLUDED_PLAN",
+        "gate_decision": {
+          "route": "MPLAN_NARRATION_ROUTE",
+          "authorised": true,
+          "refusals": [],
+          "reasons": [],
+          "credential_class": "SUBSCRIPTION",
+          "credential_source": "MMX_CONFIG",
+          "billing_verdict": "SAFE_INCLUDED_PLAN"
+        },
+        "quota_before": {
+          "interval_remaining_percent": 99.0,
+          "weekly_remaining_percent": 51.0,
+          "bucket": "general"
+        },
+        "quota_after": {
+          "interval_remaining_percent": 98.0,
+          "weekly_remaining_percent": 51.0,
+          "bucket": "general"
+        },
+        "balances_before": {
+          "available_amount": "15.08",
+          "cash_balance": "10.00",
+          "voucher_balance": "5.08",
+          "credit_balance": "0.00",
+          "owed_amount": "0.00"
+        },
+        "balances_after": {
+          "available_amount": "15.08",
+          "cash_balance": "10.00",
+          "voucher_balance": "5.08",
+          "credit_balance": "0.00",
+          "owed_amount": "0.00"
+        },
+        "deltas": {
+          "cash_balance": {
+            "before": "10.00",
+            "after": "10.00",
+            "delta": "0.00",
+            "decreased": false,
+            "increased": false
+          },
+          "voucher_balance": {
+            "before": "5.08",
+            "after": "5.08",
+            "delta": "0.00",
+            "decreased": false,
+            "increased": false
+          },
+          "credit_balance": {
+            "before": "0.00",
+            "after": "0.00",
+            "delta": "0.00",
+            "decreased": false,
+            "increased": false
+          },
+          "owed_amount": {
+            "before": "0.00",
+            "after": "0.00",
+            "delta": "0.00",
+            "decreased": false,
+            "increased": false
+          },
+          "available_amount": {
+            "before": "15.08",
+            "after": "15.08",
+            "delta": "0.00",
+            "decreased": false,
+            "increased": false
+          }
+        },
+        "plan_only_classification": {
+          "verified": true,
+          "status": "M_PLAN_ONLY_VERIFIED",
+          "basis": "QUOTA_DELTA",
+          "quota_before": {
+            "interval_remaining_percent": 99.0,
+            "weekly_remaining_percent": 51.0,
+            "bucket": "general"
+          },
+          "quota_after": {
+            "interval_remaining_percent": 98.0,
+            "weekly_remaining_percent": 51.0,
+            "bucket": "general"
+          }
+        }
+      },
+      "provider": {
+        "http_status": 200,
+        "status_code": 0,
+        "status_msg": "success",
+        "trace_id": "071c6dd97c1bcc7fc6dcd098de8f78c0",
+        "usage_characters": 58,
+        "usage_voice_count": null
+      },
+      "usage_running_total": 305,
+      "budget_chars": 1500
+    },
+    {
+      "label": "C:S02",
+      "attempt_id": "absample-425cc266cbd7-C-S02",
+      "request_transmitted": true,
+      "billing": {
+        "before_verdict": "SAFE_INCLUDED_PLAN",
+        "gate_decision": {
+          "route": "MPLAN_NARRATION_ROUTE",
+          "authorised": true,
+          "refusals": [],
+          "reasons": [],
+          "credential_class": "SUBSCRIPTION",
+          "credential_source": "MMX_CONFIG",
+          "billing_verdict": "SAFE_INCLUDED_PLAN"
+        },
+        "quota_before": {
+          "interval_remaining_percent": 98.0,
+          "weekly_remaining_percent": 51.0,
+          "bucket": "general"
+        },
+        "quota_after": {
+          "interval_remaining_percent": 98.0,
+          "weekly_remaining_percent": 51.0,
+          "bucket": "general"
+        },
+        "balances_before": {
+          "available_amount": "15.08",
+          "cash_balance": "10.00",
+          "voucher_balance": "5.08",
+          "credit_balance": "0.00",
+          "owed_amount": "0.00"
+        },
+        "balances_after": {
+          "available_amount": "15.08",
+          "cash_balance": "10.00",
+          "voucher_balance": "5.08",
+          "credit_balance": "0.00",
+          "owed_amount": "0.00"
+        },
+        "deltas": {
+          "cash_balance": {
+            "before": "10.00",
+            "after": "10.00",
+            "delta": "0.00",
+            "decreased": false,
+            "increased": false
+          },
+          "voucher_balance": {
+            "before": "5.08",
+            "after": "5.08",
+            "delta": "0.00",
+            "decreased": false,
+            "increased": false
+          },
+          "credit_balance": {
+            "before": "0.00",
+            "after": "0.00",
+            "delta": "0.00",
+            "decreased": false,
+            "increased": false
+          },
+          "owed_amount": {
+            "before": "0.00",
+            "after": "0.00",
+            "delta": "0.00",
+            "decreased": false,
+            "increased": false
+          },
+          "available_amount": {
+            "before": "15.08",
+            "after": "15.08",
+            "delta": "0.00",
+            "decreased": false,
+            "increased": false
+          }
+        },
+        "plan_only_classification": {
+          "verified": true,
+          "status": "M_PLAN_ONLY_VERIFIED",
+          "basis": "EXCLUSION_CHAIN",
+          "note": "no paid fund moved; Credit Pack was zero before and after; the request succeeded on a Subscription Key, whose documented deduction chain is plan quota -> credit packs only, so plan quota is the only chain left. Quota percentages are integers and a short utterance can round below one point, which is why a flat percentage is not treated as failure.",
+          "quota_before": {
+            "interval_remaining_percent": 98.0,
+            "weekly_remaining_percent": 51.0,
+            "bucket": "general"
+          },
+          "quota_after": {
+            "interval_remaining_percent": 98.0,
+            "weekly_remaining_percent": 51.0,
+            "bucket": "general"
+          }
+        }
+      },
+      "provider": {
+        "http_status": 200,
+        "status_code": 0,
+        "status_msg": "success",
+        "trace_id": "071c6de265189c6e51905018c634d3de",
+        "usage_characters": 76,
+        "usage_voice_count": null
+      },
+      "usage_running_total": 381,
+      "budget_chars": 1500
+    },
+    {
+      "label": "C:S03",
+      "attempt_id": "absample-425cc266cbd7-C-S03",
+      "request_transmitted": true,
+      "billing": {
+        "before_verdict": "SAFE_INCLUDED_PLAN",
+        "gate_decision": {
+          "route": "MPLAN_NARRATION_ROUTE",
+          "authorised": true,
+          "refusals": [],
+          "reasons": [],
+          "credential_class": "SUBSCRIPTION",
+          "credential_source": "MMX_CONFIG",
+          "billing_verdict": "SAFE_INCLUDED_PLAN"
+        },
+        "quota_before": {
+          "interval_remaining_percent": 98.0,
+          "weekly_remaining_percent": 51.0,
+          "bucket": "general"
+        },
+        "quota_after": {
+          "interval_remaining_percent": 98.0,
+          "weekly_remaining_percent": 51.0,
+          "bucket": "general"
+        },
+        "balances_before": {
+          "available_amount": "15.08",
+          "cash_balance": "10.00",
+          "voucher_balance": "5.08",
+          "credit_balance": "0.00",
+          "owed_amount": "0.00"
+        },
+        "balances_after": {
+          "available_amount": "15.08",
+          "cash_balance": "10.00",
+          "voucher_balance": "5.08",
+          "credit_balance": "0.00",
+          "owed_amount": "0.00"
+        },
+        "deltas": {
+          "cash_balance": {
+            "before": "10.00",
+            "after": "10.00",
+            "delta": "0.00",
+            "decreased": false,
+            "increased": false
+          },
+          "voucher_balance": {
+            "before": "5.08",
+            "after": "5.08",
+            "delta": "0.00",
+            "decreased": false,
+            "increased": false
+          },
+          "credit_balance": {
+            "before": "0.00",
+            "after": "0.00",
+            "delta": "0.00",
+            "decreased": false,
+            "increased": false
+          },
+          "owed_amount": {
+            "before": "0.00",
+            "after": "0.00",
+            "delta": "0.00",
+            "decreased": false,
+            "increased": false
+          },
+          "available_amount": {
+            "before": "15.08",
+            "after": "15.08",
+            "delta": "0.00",
+            "decreased": false,
+            "increased": false
+          }
+        },
+        "plan_only_classification": {
+          "verified": true,
+          "status": "M_PLAN_ONLY_VERIFIED",
+          "basis": "EXCLUSION_CHAIN",
+          "note": "no paid fund moved; Credit Pack was zero before and after; the request succeeded on a Subscription Key, whose documented deduction chain is plan quota -> credit packs only, so plan quota is the only chain left. Quota percentages are integers and a short utterance can round below one point, which is why a flat percentage is not treated as failure.",
+          "quota_before": {
+            "interval_remaining_percent": 98.0,
+            "weekly_remaining_percent": 51.0,
+            "bucket": "general"
+          },
+          "quota_after": {
+            "interval_remaining_percent": 98.0,
+            "weekly_remaining_percent": 51.0,
+            "bucket": "general"
+          }
+        }
+      },
+      "provider": {
+        "http_status": 200,
+        "status_code": 0,
+        "status_msg": "success",
+        "trace_id": "071c6deb6e8e93dce0f741c0e809e1c1",
+        "usage_characters": 111,
+        "usage_voice_count": null
+      },
+      "usage_running_total": 492,
+      "budget_chars": 1500
+    }
+  ],
+  "asr_backchecks": [
+    {
+      "label": "A",
+      "audio": "D:\\Projects\\X-SuperPlay-ContentOps\\outputs\\founder-ab-sample\\A-original-excerpt.wav",
+      "expected_spoken_text_sha256": "eadc71f0c5665a2584bb94ccf710e7592eaa54e6137ac4711de91484ccfb95d2",
+      "budget": {
+        "used": 1,
+        "budget": 6
+      },
+      "status": "DETECTED_PROBLEM",
+      "role": "DETECTOR_ONLY",
+      "can_approve_quality": false,
+      "transcript": "装了伊泽尔之后，最先要回答的是，它到底跑不跑得起来。我把它锁在v0.2.1，982个文件，逐个比对过哈希，和上游tag完全一致。它不是一个SaaS，是一层skill库，114个skill，分成发现、策划、创作、发布、归因五层，创作层最大。",
+      "coverage": 0.9639,
+      "issues": [
+        "3 expected unit(s) absent from the transcript",
+        "1 unexpected repeated unit(s): v0.2.1"
+      ],
+      "missing": [
+        "52",
+        "v0.21",
+        "个"
+      ],
+      "excess": [
+        "v0.2.1"
+      ],
+      "detail": null
+    },
+    {
+      "label": "B",
+      "audio": "D:\\Projects\\X-SuperPlay-ContentOps\\outputs\\founder-ab-sample\\B-spoken-auto.wav",
+      "expected_spoken_text_sha256": "706d9a5f59c5259f250e41b62d1dee14785aa7c214f7411a8fd09fe4d2da6ad9",
+      "budget": {
+        "used": 2,
+        "budget": 6
+      },
+      "status": "DETECTED_PROBLEM",
+      "role": "DETECTOR_ONLY",
+      "can_approve_quality": false,
+      "transcript": "装了伊泽尔之后，最先要回答的是，它到底跑不跑得起来？我把它锁在v0.2.1，982个文件逐个比对过哈希，和上游tag完全一致。它不是一个SaaS，而是一层skill库，114个skill，分成发现、策划、创作、发布、归因五层，创作层最大，52个。",
+      "coverage": 0.9881,
+      "issues": [
+        "1 expected unit(s) absent from the transcript",
+        "1 unexpected repeated unit(s): v0.2.1"
+      ],
+      "missing": [
+        "v0.21"
+      ],
+      "excess": [
+        "v0.2.1"
+      ],
+      "detail": null
+    },
+    {
+      "label": "C",
+      "audio": "D:\\Projects\\X-SuperPlay-ContentOps\\outputs\\founder-ab-sample\\C-segmented-joined.wav",
+      "expected_spoken_text_sha256": "706d9a5f59c5259f250e41b62d1dee14785aa7c214f7411a8fd09fe4d2da6ad9",
+      "budget": {
+        "used": 3,
+        "budget": 6
+      },
+      "status": "DETECTED_PROBLEM",
+      "role": "DETECTOR_ONLY",
+      "can_approve_quality": false,
+      "transcript": "装了伊泽尔之后，最先要回答的是，它到底跑不跑得起来？我把它锁在v0.2.1，982个文件逐个比对过哈希，和上游tag完全一致。它不是一个SaaS，而是一层skill库，114个skill分成发现、策划、创作、发布、归因五层，创作层最大，52个。",
+      "coverage": 0.9881,
+      "issues": [
+        "1 expected unit(s) absent from the transcript",
+        "1 unexpected repeated unit(s): v0.2.1"
+      ],
+      "missing": [
+        "v0.21"
+      ],
+      "excess": [
+        "v0.2.1"
+      ],
+      "detail": null
+    }
+  ],
+  "listening_comparison": {
+    "status": "PENDING_FOUNDER_LISTENING",
+    "human_metrics": [
+      "emotion naturalness",
+      "speech pace",
+      "pause naturalness",
+      "voice similarity to founder_primary_v1",
+      "term pronunciation accuracy",
+      "audio join artifacts"
+    ],
+    "machine_metrics_note": "Durations, loudness, ASR coverage and trace ids are recorded; none of them can approve quality or replace listening."
+  },
+  "human_review": "PENDING_FOUNDER_REVIEW",
+  "production_ready": false,
+  "outcome": "AB_C_READY_FOR_FOUNDER_LISTENING",
+  "finished_at": "2026-10-12T19:58:14.795128+00:00",
+  "rechecked_at": "2026-10-12T19:58:14.795083+00:00",
+  "recheck_note": "audio measurements (technical QC and silence maps) recomputed from the files on disk; no provider call and no ASR call was made"
+}
