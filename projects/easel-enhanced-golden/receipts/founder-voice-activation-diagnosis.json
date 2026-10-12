@@ -1,0 +1,196 @@
+{
+  "schema": "contentops.activation-diagnosis/v1",
+  "issue": "#34",
+  "generated_at": "2026-10-12T14:11:16Z",
+  "baseline_commit": "45c9e9cc02e29b2a7d2afc396cc543593620350e",
+  "producer": "scripts/audit_minimax_host_binding.py + scripts/recover_cash_voice_activation.py (updated)",
+  "zero_cost": true,
+  "money_spent_by_this_diagnosis_cny": "0.00",
+  "provider_generation_requests_sent": 0,
+
+  "DOCS_COMPLIANCE": {
+    "sources_checked": [
+      "https://platform.minimax.cn/docs/api-reference/voice-cloning-uploadcloneaudio",
+      "https://platform.minimax.cn/docs/api-reference/voice-cloning-uploadprompt",
+      "https://platform.minimax.cn/docs/api-reference/voice-cloning-clone",
+      "https://platform.minimax.cn/docs/api-reference/speech-t2a-http",
+      "https://platform.minimax.cn/docs/m-plan/faq"
+    ],
+    "findings": {
+      "documented_server": "https://api.minimax.cn",
+      "t2a": "POST /v1/t2a_v2; model/text required; data.audio is hex; extra_info.usage_characters is the billed char count; extra_info.usage_voice_count is returned exactly when the one-time voice fee is charged; trace_id is top-level",
+      "clone_upload": "POST /v1/files/upload, multipart/form-data, purpose=voice_clone for the main clone audio (10s-5min, <=20MB); purpose=prompt_audio is a DIFFERENT upload for the optional <8s example audio",
+      "clone": "POST /v1/voice_clone with file_id + voice_id; the clone call itself is not the billed event; a rapid clone voice is deleted if not used within 168 hours",
+      "m_plan_faq": "Subscription Key draws plan quota then credit packs ONLY; account balance (including cash) is charged only with a pay-as-you-go API Key",
+      "sample_classification": "the 15s WAV assert/voice-reference-clean.wav is the MAIN clone audio (purpose=voice_clone), not the <8s prompt_audio"
+    }
+  },
+
+  "EXISTING_VOICE_STATUS": {
+    "voice_id": "founder_primary_v1",
+    "voice_id_hash": "7271d9c80c88821a6a09ed43328619d0ee08c3f2b2449237fe2c31f6899abeef",
+    "sample_sha256": "bb56d052cd637bd8a369f6e37a745c7609de9988ada0fa0827d4d5c59035df8d",
+    "created_at": "2026-10-12T11:59:16.441404+00:00",
+    "ttl_seconds": 604800,
+    "first_use_deadline_utc": "2026-10-19T11:59:16Z",
+    "clone_verification": {
+      "upload_call": "POST /v1/files/upload",
+      "upload_purpose": "voice_clone",
+      "upload_file_id_present_in_private_registry": true,
+      "clone_call": "POST /v1/voice_clone",
+      "clone_base_resp_status_code": 0,
+      "clone_base_resp_status_code_evidence": "provider create_clone(_check_base_resp) records CLONED only on status_code==0; .private/founder-voice.json only receives provider_voice_id after that check; founder-voice-activation-receipt.json (commit 21afc42) records clone_status=CLONED with the matching created_at",
+      "conclusion": "CLONE_CREATION_STAGE_SOUND_DO_NOT_RECLONE",
+      "note": "no verifiable error found in the clone creation records; no re-upload and no second /v1/voice_clone"
+    },
+    "activation_state": "NOT_ACTIVATED -- no successful first synthesis, no fee paid"
+  },
+
+  "HOST_AND_REGION_AUDIT": {
+    "CLI_REGION": "cn",
+    "CLI_ACTUAL_HOST": "https://api.minimax.cn",
+    "CLI_HOST_RESOLVED_FROM": "~/.mmx/config.json region=cn -> region table",
+    "BALANCE_QUERY_HOST_DURING_ATTEMPTS": "https://api.minimaxi.com",
+    "BALANCE_QUERY_HOST_SOURCE": "CONTENTOPS_MINIMAX_BASE_URL in local .env",
+    "HOSTS_MATCH": false,
+    "ACTIVATION_ADAPTER_HOST": "https://api.minimax.cn",
+    "readonly_probe_2026_10_12": {
+      "note": "both endpoints are documented free reads; no generation, no charge",
+      "results": [
+        {
+          "host": "https://api.minimaxi.com",
+          "payg_balance_read": "200 / status_code 0 / cash 10.00 voucher 15.00 credit 0.00 owed 0.00",
+          "subscription_quota_read": "200 / status_code 0 / interval 15% weekly 51%"
+        },
+        {
+          "host": "https://api.minimax.cn",
+          "payg_balance_read": "200 / status_code 0 / cash 10.00 voucher 15.00 credit 0.00 owed 0.00",
+          "subscription_quota_read": "200 / status_code 0 / interval 15% weekly 51%"
+        }
+      ],
+      "conclusion": "the two hosts currently serve identical account data for both keys, so the split is a proof-chain and configuration defect rather than a measured difference in what was billed; HOSTS_MATCH=false stands as the structural fact. The activation call is now pinned to the documented CN host so the question cannot recur."
+    }
+  },
+
+  "CREDENTIAL_BINDING_AUDIT": {
+    "CREDENTIAL_BINDING_VERIFIED": false,
+    "cli": "mmx-cli 1.0.27 (installed on this host, bundled dist analysed)",
+    "cli_request_auth_resolver": [
+      "--api-key flag",
+      "OAuth token from ~/.mmx/config.json",
+      "api_key from ~/.mmx/config.json"
+    ],
+    "env_var_read_for_request_auth": false,
+    "env_var_minimax_api_key_usage_in_cli": "interactive onboarding only (offers to save it to the config file); never used as a request credential",
+    "contentops_injection": "contentops.media.credentials.child_env_for sets MINIMAX_API_KEY in the CLI child environment and removes MINIMAX_SUBSCRIPTION_KEY",
+    "actual_credential_used_by_all_three_attempts": "the ~/.mmx/config.json api_key (Subscription Key, fingerprint 7ddaf08a51f6; prefix sk-cp-)",
+    "conclusion": "the three 'different' attempts all authenticated with the SAME credential; the pay-as-you-go + cash route was never actually exercised"
+  },
+
+  "HISTORICAL_ATTEMPTS": [
+    {
+      "attempt_id": "attempt-1-founder-voice-activation",
+      "at": "2026-10-12T12:06:00Z",
+      "intended_credential": "PAYG (MINIMAX_CLONE_KEY injected as MINIMAX_API_KEY)",
+      "actual_credential": "SUBSCRIPTION from ~/.mmx/config.json (CLI ignored the injected env var)",
+      "balance_read_host": "https://api.minimaxi.com",
+      "tts_host": "https://api.minimax.cn (CLI config region=cn)",
+      "provider_error_preserved": "CLI envelope only: {\"error\": {\"code\": 1, \"message\": \"API error: insufficient balance (HTTP 200)\"}}; code 1 is the CLI general-error class",
+      "trace_id": null,
+      "provider_status_code": null,
+      "cash_before_after": "0.00 -> 0.00 (nothing charged)"
+    },
+    {
+      "attempt_id": "subact-44ecd1fcc39a",
+      "at": "2026-10-12T12:29:19Z",
+      "intended_credential": "SUBSCRIPTION",
+      "actual_credential": "SUBSCRIPTION from ~/.mmx/config.json (same as attempt 1)",
+      "provider_error_preserved": "CLI envelope only; parse_provider_error mislabels code 1 as an unrecognised platform code",
+      "trace_id": null,
+      "provider_status_code": null,
+      "cash_before_after": "0.00 -> 0.00 (nothing charged)"
+    },
+    {
+      "attempt_id": "cashact-d6546f464ce9",
+      "at": "2026-10-12T13:15:54Z",
+      "intended_credential": "PAYG (with Founder-authorised exposed-key exception)",
+      "actual_credential": "SUBSCRIPTION from ~/.mmx/config.json (same as attempts 1 and 2)",
+      "provider_error_preserved": "history record only: { \"error\": { \"code\": 1, \"message\": \"API error: insufficient balance (HTTP 200)\" } }",
+      "trace_id": null,
+      "provider_status_code": null,
+      "cash_before_after": "10.00 -> 10.00 (nothing charged)"
+    }
+  ],
+
+  "RAW_ERROR_PRESERVATION": {
+    "status": "HISTORICAL_RAW_RESPONSE_UNAVAILABLE",
+    "what_is_missing": [
+      "trace_id for all three attempts",
+      "base_resp.status_code for all three attempts",
+      "base_resp.status_msg distinct from the CLI's rewritten message for all three attempts",
+      "the actual request host per attempt (derivable now, not recorded then)"
+    ],
+    "what_was_preserved": [
+      "request timestamps",
+      "the CLAIMED credential class (PAYG/SUBSCRIPTION as intended, not as used)",
+      "the model (speech-2.8-hd) and text constant",
+      "balance reads before/after (unchanged)",
+      "the CLI error envelope text"
+    ],
+    "do_not": "do not reconstruct a trace_id or a provider status code for the historical attempts; the CLI destroyed them before any receipt saw them",
+    "fix": "native adapter parses and stores full raw JSON privately under .private/diagnostics/, with HTTP status / provider status code / provider message / trace id recorded separately; public receipts carry only the scrubable summary"
+  },
+
+  "TTS_REQUEST_SCHEMA_VERIFIED": true,
+  "TTS_REQUEST_SCHEMA_EVIDENCE": "contentops/media/minimax_native_tts.build_t2a_payload emits exactly the documented T2aV2 fields (model, text, stream=false, voice_setting{voice_id,speed,vol,pitch}, audio_setting{sample_rate,format,channel}, output_format); tested against the documentation in tests/test_minimax_native_tts.py; the recovery script asserts voice_id/model/text/stream on the payload object that is serialised",
+
+  "ROOT_CAUSE": "CLI_REGION_MISMATCH_VERIFIED + CLI_CREDENTIAL_BINDING_VOID (composite)",
+  "ROOT_CAUSE_STATEMENT": "The activation requests were not sent by the process that claimed them. Every attempt went through the official CLI (mmx-cli 1.0.27), whose request-auth resolver never reads the MINIMAX_API_KEY environment variable that ContentOps used to bind the authorised key; all three attempts authenticated with the Subscription Key stored in ~/.mmx/config.json, including the two labelled PAYG. The CLI also chose its request host from that same config (~/.mmx/config.json region=cn -> https://api.minimax.cn) while the balance evidence was read from CONTENTOPS_MINIMAX_BASE_URL (https://api.minimaxi.com), so the billing evidence and the billed request addressed two different configuration sources.",
+  "ROOT_CAUSE_EVIDENCE": [
+    "mmx-cli 1.0.27 bundled dist: request-auth resolver order is --api-key flag -> OAuth -> config file api_key; process.env.MINIMAX_API_KEY appears only in the interactive onboarding path",
+    "mmx auth status reports source=config.json (key prefix sk-cp-...)",
+    "mmx config show reports region=cn, base_url=https://api.minimax.cn",
+    "all three attempts' receipts/history record the identical CLI error envelope with CLI class code 1, consistent with one credential producing one refusal three times",
+    "read-only audit (scripts/audit_minimax_host_binding.py) reports HOSTS_MATCH=false and CREDENTIAL_BINDING_VERIFIED=false"
+  ],
+  "STILL_UNVERIFIED": [
+    "whether the pay-as-you-go + cash route activates founder_primary_v1 (it has never actually been transmitted)",
+    "whether CNY 10.00 cash covers the fee plus characters at the time of a real attempt",
+    "whether the voucher applies to a pay-as-you-go charge",
+    "whether region or account resource permissions introduce any further blocker on the truly PAYG route"
+  ],
+
+  "FIX_APPLIED": {
+    "branch": "feat/34-native-cn-tts-host-binding",
+    "code": [
+      "src/contentops/media/minimax_native_tts.py: native CN HTTP adapter; host pinned to the documented CN server; documented-fields-only payload builder; full raw JSON parsing; single request, no retry; credential never logged",
+      "scripts/recover_cash_voice_activation.py: activation call moved from the CLI to the native adapter; balance reads use the same CN host; private raw diagnostics under .private/diagnostics/; receipt keeps a four-way error taxonomy (HTTP status / provider status code / CLI exit code (null, not in path) / local BillingGuard verdict)",
+      "scripts/audit_minimax_host_binding.py: zero-fee host/region/credential-binding audit with an optional read-only probe"
+    ],
+    "tests": [
+      "tests/test_minimax_native_tts.py (13 tests, fake transport, offline)",
+      "tests/test_host_binding_audit.py (9 tests, pure functions, offline)",
+      "CI: both suites wired in, plus the previously unwired tests/test_cash_activation_recovery.py"
+    ]
+  },
+
+  "READY_FOR_CONTROLLED_ACTIVATION": {
+    "value": false,
+    "reasons": [
+      "the existing single-use cash authorisation and the exposed-key exception are consumed; this diagnosis does not restore them",
+      "the configured PAYG key is still the exposed key (fingerprint 2ac10c6e9029); rotation remains a Founder action",
+      "a fourth paid request requires a new explicit Founder authorisation with its own attempt_id, before which nothing will be transmitted"
+    ],
+    "what_would_make_it_true": [
+      "Founder rotates MINIMAX_CLONE_KEY to a new unexposed PAYG key (or explicitly grants a new scoped exception)",
+      "Founder grants a new single-use cash authorisation (<= CNY 10.00) for one native-adapter TTS call",
+      "preflight passes: voice in window, cash >= projected 9.9154, credit 0, owed 0"
+    ]
+  },
+
+  "NEXT_HUMAN_ACTIONS": [
+    "rotate the exposed pay-as-you-go key in 账户管理 > 接口密钥 and update MINIMAX_CLONE_KEY in the local .env",
+    "decide whether to authorise one fourth activation attempt via the native adapter (expected total CNY 9.9154, ceiling CNY 10.00)",
+    "keep 2026-10-19T11:59:16Z in view: if no T2A call uses founder_primary_v1 by then, the provider deletes it and a re-clone (with a fresh authorisation) becomes the only route"
+  ]
+}

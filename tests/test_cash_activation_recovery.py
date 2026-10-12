@@ -421,6 +421,11 @@ def test_an_exception_never_overrides_the_other_gates():
 
 
 def main() -> int:
+    # Windows consoles default to a codepage that cannot encode CJK, and this
+    # suite's output legitimately contains it (欠费). Without this, the suite
+    # dies with UnicodeEncodeError on a Windows runner instead of reporting
+    # its verdict -- which is how it failed the first time CI ran it.
+    sys.stdout.reconfigure(encoding="utf-8")
     failures = 0
     for fn in TESTS:
         try:
