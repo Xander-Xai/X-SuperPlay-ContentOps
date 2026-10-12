@@ -18,19 +18,41 @@ translation_of: research/providers/minimax-voice-clone-entitlement.md
 ## Result
 
 ```
-ENTITLEMENT_PRESENT_BUT_API_CLONE_NOT_TESTED
+UPLOAD_SUCCESS_CLONE_REFUSED_2061 / MODEL_NOT_ON_PLAN
 ```
 
-Entitlement is no longer an open question. The account **has** voice cloning, and has
-already used it: a read-only `POST /v1/get_voice` on 2026-10-12 returned one entry under
-`voice_cloning`, and the current documentation states that entries appear there *only
-after the voice has been successfully used for speech synthesis*.
+The API clone route is **closed on this account's current plan**. A real attempt was made
+on 2026-10-12 with the Founder's authorisation:
 
-What remains untested is narrower and specific: **creating a clone through the public
-API with this Subscription Key**. That single billable request has not been sent.
+| Step | Result |
+|---|---|
+| sample upload | **1, succeeded** |
+| `POST /v1/voice_clone` | **1, refused** — `base_resp.status_code = 2061` |
+| retries | 0 |
+| charge | CNY 0.00 |
+| quota delta | 0 |
+| TTS | not performed |
 
-Superseded: the 2026-10-04 result of `DOCUMENTED_BUT_NOT_TESTED`, which was correct at
-the time and is kept below for the audit trail.
+2061 is documented in the official MiniMax CLI `ERRORS.md` as *"This model is not
+available on your current Token Plan."* The official M Plan model list corroborates it:
+the plan covers text, image and audio models, video and multimodal understanding, and
+**voice management is not among them**.
+
+The account does hold clone entitlement — a pre-existing `moss_audio_*` voice is listed
+under `voice_cloning`, which per the documentation only happens after a successful
+synthesis. So 2061 is a **plan-coverage** refusal, not a verification or permission one.
+
+Supersedes: `ENTITLEMENT_PRESENT_BUT_API_CLONE_NOT_TESTED` (same day, before the attempt)
+and `DOCUMENTED_BUT_NOT_TESTED` (2026-10-04). Both were correct when written and are kept
+below for the audit trail.
+
+**Also superseded:** this document previously said *"that single billable request has not
+been sent"*. It has now been sent, exactly once, and refused. The receipt and the PR body
+carried the same stale claim and have been corrected.
+
+See [minimax-two-key-clone-route.md](minimax-two-key-clone-route.md) for the official
+verification of the proposed pay-as-you-go-clone / subscription-TTS route, and for the
+two gates that stop it.
 
 ## What the subscription key can and cannot reach (measured 2026-10-12)
 
