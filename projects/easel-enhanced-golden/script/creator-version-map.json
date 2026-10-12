@@ -1,0 +1,162 @@
+{
+  "schema": "contentops.creator-version-map/v1",
+  "issue": "#34",
+  "fact_script": {
+    "path": "projects/easel-review/script/narration.txt",
+    "canonical_blob_sha256": "f2de808c9e723f8430acdc44dc374c5791b249250d8bc585a172360a88b9542a"
+  },
+  "creator_script": {
+    "path": "projects/easel-enhanced-golden/script/creator-script.json",
+    "working_tree_sha256": "1517c2d7c8e6ebe535cc23162e6b002ea5958bec6c18e0d867f6fb193d8db027",
+    "canonical_blob_sha256": null,
+    "unit_display_sha256": {
+      "U01": "8fa1823ed58124a540fe973d7fff5f3c76aba3377a87bb227bbd8b0656400940",
+      "U02": "72b9d86fc84877dc5ab38409a0dce0e0e140954f68ba8ff4e77cf3a0ce45d113",
+      "U03": "ff9090d60f23ee197650f6a2a1096dd4b0c637dc6c7774e2f9673bccfc238433",
+      "U04": "31f65946e1d9cd349005823846e054a825f71a849d58fc38d2569b114af1cf64",
+      "U05": "287745e423b29c871359ae1551591f2d4c6d871c5ee2b48b817fa947b1950cc2",
+      "U06": "159aa638e4982fcf8041dfcf3d78490a3d26306e1fc5db5a1be6339dffb5c9e4",
+      "U07": "1f02d26cc8d44d453c0e1d720ab419d69570b95167bddb97f1310517705a0468",
+      "U08": "94c4642cdddba9d7c415584c76887b84a64fb725088692b54250cff846745f58"
+    }
+  },
+  "director_plan": {
+    "path": "projects/easel-enhanced-golden/script/narration-plan.json",
+    "working_tree_sha256": "8c7e3f9e86f327407d935d116574caf0c31d2ab3f95c7e2be27e458a6472f262",
+    "model": "speech-2.8-hd",
+    "groups": [
+      "G1",
+      "G2",
+      "G3",
+      "G4"
+    ],
+    "sample_groups": [
+      "S-G1",
+      "S-G2"
+    ]
+  },
+  "lexicon": {
+    "language": "zh",
+    "version": "zh-2026.10.04.1",
+    "fingerprint_component": "24c3dcf12d0a7a8b"
+  },
+  "synthesis": {
+    "candidate_D_single_request": {
+      "display_sha256": "a061caff367fb5feff7c175a5c09269c669f6af0df4d8e076e6e96d88d2a111e",
+      "synthesis_sha256": "54a953fb13f0913e204bb27ab154e9a727b113430e7c81d8b80086949f6e6e11",
+      "synthesis_characters": 124,
+      "units": [
+        "U01",
+        "U03",
+        "U05"
+      ]
+    },
+    "candidate_E_director_groups": {
+      "S-G1": {
+        "display_sha256": "e90a012bef297c6555ba15e41d83621aa3c05300449328052d3555aba55e8e9f",
+        "synthesis_sha256": "84596e5dd31cce9719d5153a9dd50984a679dece1e73c564fdeb64c8ca1b215b",
+        "synthesis_characters": 91,
+        "units": [
+          "U01",
+          "U03"
+        ]
+      },
+      "S-G2": {
+        "display_sha256": "e690b759de562f2e6ba915e1afc84d623e0f64dd4395bea70cc02a5e91d7c171",
+        "synthesis_sha256": "f32f024035d602d76802905f076a5f848416d70f255e279f725aa0ea1c0edc92",
+        "synthesis_characters": 55,
+        "units": [
+          "U05"
+        ]
+      }
+    },
+    "planned_full_groups_not_executed": {
+      "G1": {
+        "display_sha256": "8eada52245b76df20c2d619ee1102742c240663ea9cbfcd79d122980a6111833",
+        "synthesis_sha256": "3848b278cc392ccd31b664acb4e6b975f0f97e8bfb9f62f9a13338910fca0dc6",
+        "synthesis_characters": 127,
+        "units": [
+          "U01",
+          "U02"
+        ]
+      },
+      "G2": {
+        "display_sha256": "6b8a433dc11d7a2b9f8bee26fdde6d3f3b8a151b58fbf8000ed58ddb3ca6852b",
+        "synthesis_sha256": "4c04fbe7f5a012b2e948310a0e7726bc55ff68d2dbafc2a384659c50a190294f",
+        "synthesis_characters": 112,
+        "units": [
+          "U03",
+          "U04"
+        ]
+      },
+      "G3": {
+        "display_sha256": "16d0b538e79286a164c47d39d17797cb349276d7556cb6e0d647345f1f8dd628",
+        "synthesis_sha256": "1274d708523ce3c790c5392b92c73cb7b53d2956410a6164b6cc6bffaaf89f92",
+        "synthesis_characters": 125,
+        "units": [
+          "U05",
+          "U06"
+        ]
+      },
+      "G4": {
+        "display_sha256": "b37c64377c7d4164e1c4892dc3274cdabad1ce8a84a673321af9f3f46e1232f7",
+        "synthesis_sha256": "c3420581bf1d0e0112e3872efe620f4984df1e479e94c254da99403be7b6c275",
+        "synthesis_characters": 137,
+        "units": [
+          "U07",
+          "U08"
+        ]
+      }
+    }
+  },
+  "mechanical_checks": {
+    "creator_script": {
+      "verified": true,
+      "mechanically_checked": [
+        "source digest equals the evidence lock",
+        "no digit token invented; dropped digits declared as omissions",
+        "preserved facts exist in the fact script and the creator script",
+        "declared omissions are absent from the creator text",
+        "template marketing phrases absent",
+        "first-person markers carry a declared basis",
+        "all beats covered; HOOK first; ENDING last",
+        "question density bounded",
+        "units carry no newlines or pause markers",
+        "sample keeps script order"
+      ],
+      "not_proven_by_this_check": [
+        "whether the copy is engaging or over-written",
+        "whether tone matches the Founder's voice",
+        "whether the result sounds like natural speech"
+      ]
+    },
+    "director_plan": {
+      "verified": true,
+      "model": "speech-2.8-hd",
+      "units": 8,
+      "groups": 4,
+      "sample_groups": [
+        "S-G1",
+        "S-G2"
+      ],
+      "sample_estimated_seconds": 22.62,
+      "explicit_emotions": {
+        "U05": "surprised"
+      },
+      "mechanically_checked": [
+        "units match the creator script exactly (ids, order, count)",
+        "auto emotion is the default and explicit emotions are justified, documented and never a majority",
+        "calm appears at most once and never as a default",
+        "non-steady speeds are homogeneous per group, justified and bounded 0.95-1.08",
+        "pause durations within 0.2-0.5 s, <=2 per unit, anchors unique and mapped text passes provider marker validation",
+        "groups cover units exactly once, follow narrative order and contain at least one multi-unit group",
+        "single-unit groups declare a reason and carry a differing control"
+      ],
+      "not_proven_by_this_check": [
+        "whether the mapped delivery sounds natural",
+        "whether the chosen emotion reads as intended rather than as overacting",
+        "whether the group boundaries are perceptible as resets"
+      ]
+    }
+  }
+}
