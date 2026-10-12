@@ -48,6 +48,7 @@ from contentops.media.credentials import (  # noqa: E402
     DuplicateCredentialError,
     ResolvedCredential,
     TwoKeyPair,
+    load_local_env_file,
     resolve_clone_credential,
     resolve_two_key_pair,
 )
@@ -596,6 +597,60 @@ def test_the_route_receipt_refuses_the_excluded_moss_voice_family():
 
 
 @test
+def test_the_local_env_loader_returns_names_and_never_values():
+    """The loader is the one place a secret passes through, so it is the one to pin.
+
+    Three properties, each closing a way this file could become a leak: it reports
+    variable *names* so a caller cannot print a secret while saying "loaded 2
+    credentials"; it never overrides a variable already in the environment, so a
+    stale file cannot displace a deliberately set key; and it refuses to read a file
+    Git tracks, because a tracked secret is already in the repository's history.
+    """
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmp:
+        outside = Path(tmp) / ".env"
+        outside.write_text(
+            "MINIMAX_CLONE_KEY=sk-api-EXAMPLE\n"
+            "# a comment\n"
+            "CONTENTOPS_MINIMAX_BASE_URL=https://example.invalid\n",
+            encoding="utf-8",
+        )
+        target = dict()
+        loaded = load_local_env_file(outside, env=target)
+        assert sorted(loaded) == ["CONTENTOPS_MINIMAX_BASE_URL", "MINIMAX_CLONE_KEY"]
+        assert "sk-api-EXAMPLE" not in " ".join(loaded), (
+            "the loader must report names, not values"
+        )
+        assert target["MINIMAX_CLONE_KEY"] == "sk-api-EXAMPLE"
+
+        # An existing value wins over the file.
+        preset = dict(target, MINIMAX_CLONE_KEY="sk-api-ALREADY-SET")
+        again = load_local_env_file(outside, env=preset)
+        assert "MINIMAX_CLONE_KEY" not in again, again
+        assert preset["MINIMAX_CLONE_KEY"] == "sk-api-ALREADY-SET"
+
+        # A missing file is not an error and loads nothing.
+        assert load_local_env_file(Path(tmp) / "absent", env={}) == []
+
+    # And the repository's own .env must never be a tracked file. If it were, the
+    # repository would already hold a live credential. Routed through hidden_run
+    # because a bare subprocess spawns a visible console window on Windows.
+    from process_utils import hidden_run
+
+    tracked = hidden_run(
+        ["git", "ls-files", "--error-unmatch", "--", ".env"],
+        cwd=str(ROOT), timeout=60,
+    )
+    assert tracked.returncode != 0, (
+        ".env is tracked by Git; it holds a live credential and must be removed from "
+        "the index and rotated"
+    )
+    print("[ok] 19. the local .env loader reports names, defers to the env, and "
+          "refuses a tracked file")
+
+
+@test
 def test_every_official_citation_is_attributable():
     """A stop code that cannot be traced to a page is an assertion, not evidence."""
     seen = set()
@@ -622,7 +677,7 @@ def test_every_official_citation_is_attributable():
                for entry in route.OFFICIAL_BASIS), (
         "a computed charge with no cited rate is a guess with a decimal point"
     )
-    print("[ok] 18. every stop code and every computed charge traces to a named page")
+    print("[ok] 20. every stop code and every computed charge traces to a named page")
 
 
 def main() -> int:

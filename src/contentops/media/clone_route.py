@@ -126,6 +126,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from .credentials import CREDENTIAL_PAYG, CREDENTIAL_SUBSCRIPTION, TwoKeyPair
 
 __all__ = [
+    "ACTIVATION_TEXT",
     "CLONE_FEE_CNY",
     "CLONE_TTL_HOURS",
     "CLONE_TTL_SECONDS",
@@ -158,6 +159,17 @@ CLONE_CREATION_CNY = "0.00"
 
 #: ``speech-2.8-hd`` under 按量计费, per the published 定价概览.
 SPEECH_2_8_HD_CNY_PER_10K = "3.50"
+
+#: The utterance used for the single activation synthesis.
+#:
+#: Two constraints pull against each other and both matter. It has to be **short**,
+#: because this synthesis is billed per character. It also has to be a **real
+#: sentence**, because it is the first audio produced from the Founder's voice and is
+#: what Founder listening later judges -- a one-character activation would be a
+#: billable artefact with nothing to evaluate.
+#:
+#: 22 characters, all CJK, so 44 billable characters at the published counting rule.
+ACTIVATION_TEXT = "这是一段用于首次激活的最短自然中文语音样本。"
 
 #: The character cost of the *activation* synthesis is not covered by the CNY 9.90
 #: authorisation and has never been observed on a live receipt. It is carried as an
@@ -363,6 +375,19 @@ OFFICIAL_BASIS: Tuple[Dict[str, str], ...] = (
             "字符(输入)为单位,1 个汉字算 2 个字符,英文字母、希腊字母、标点符号、特殊"
             "符号、空格、回车等算 1 个字符. Used to compute the activation synthesis's "
             "character cost, which is a separate billable item from the CNY 9.90 voice fee."
+        ),
+    },
+    {
+        "id": "subscription-key-deduction-chain",
+        "page": "platform.minimax.cn/docs/guides/pricing-token-plan, M Plan FAQ",
+        "fact": (
+            "A Subscription Key only uses your M Plan usage and credit packs. When you "
+            "reach your usage limit, any remaining credit pack balance is used next. "
+            "Your account balance is charged only when you use a pay-as-you-go API Key. "
+            "排他性表述: 套餐内额度 -> 积分包, 不含代金券, 不含账户余额. This is the basis on "
+            "which a non-zero voucher_balance no longer blocks a Subscription-Key "
+            "in-plan speech request, and equally the basis on which it STILL blocks "
+            "the pay-as-you-go-key activation charge."
         ),
     },
     {
@@ -628,19 +653,29 @@ def decide_route(
             + "; ".join(decision.billing_reasons),
         )
 
-    # 4. The activation charge has to be payable. Only a pay-as-you-go key deducts
-    #    account balance, so the fee can only be collected from cash -- and cash on
-    #    this account is measured at 0.00. Voucher and Credit Pack are explicitly not
-    #    touched: the Founder forbade automatic use of either, and #23 recorded
-    #    voucher_balance's *kind* as unclassified.
+    # 4. The activation charge has to be payable. It runs on the pay-as-you-go key, and
+    #    the official rule is that the account balance -- 账户余额 -- is charged exactly
+    #    when a pay-as-you-go key calls. `cash_balance` is that balance and it is 0.00.
+    #
+    #    The precision that matters: the same rule that let the *Subscription* key's
+    #    in-plan TTS through despite voucher_balance = 15.00 does NOT apply here,
+    #    because this request is made by the pay-as-you-go key. Whether a voucher can
+    #    fund a pay-as-you-go charge is UNKNOWN -- no official page reached says either
+    #    way, and `available_amount` equalling `voucher_balance` is suggestive rather
+    #    than conclusive. Inference from another vendor's equivalent field would be
+    #    exactly the wrong move here.
     if cash_balance is not None and cash_balance <= 0:
         decision.add(
             ROUTE_ACTIVATION_CASH_INSUFFICIENT,
-            f"cash_balance is {cash_balance:.2f} and only a pay-as-you-go key deducts "
-            "account balance (付费服务协议 4.3(1)), so the CNY 9.90 activation charge "
-            "cannot be paid from cash. Automatic recharge, automatic voucher "
-            "consumption and automatic Credit Pack use are all forbidden, so this "
-            "stops here. Founder must recharge or resolve the balance deliberately.",
+            f"cash_balance is {cash_balance:.2f} and the activation synthesis runs on the "
+            "pay-as-you-go key, which is the only key type the platform charges 账户余额 "
+            "for (M Plan FAQ: 'Your account balance is charged only when you use a "
+            "pay-as-you-go API Key'). An approved charge is not a payable charge. "
+            "Whether voucher_balance can fund a pay-as-you-go charge is UNKNOWN -- no "
+            "official page reached states it -- and automatic voucher consumption, "
+            "automatic recharge and automatic Credit Pack use are all forbidden. This "
+            "gate therefore does NOT move on the same evidence that cleared the "
+            "Subscription-Key TTS gate.",
         )
 
     # 5. The CNY 9.90 itself. Recorded as its own authorisation rather than assumed

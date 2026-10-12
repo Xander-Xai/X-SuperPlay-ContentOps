@@ -94,15 +94,50 @@ REMAINS_PATH = "/v1/token_plan/remains"
 SAFE_INCLUDED_PLAN = "SAFE_INCLUDED_PLAN"
 BLOCKED_BILLING_SOURCE_UNCERTAIN = "BLOCKED_BILLING_SOURCE_UNCERTAIN"
 
-#: Every one of these must be present, numeric and exactly zero. ``owed_amount``
-#: is included deliberately: an outstanding amount means money is already owed,
-#: which is not a state in which ContentOps should start new billable work.
+#: Every one of these must be present, numeric and exactly zero under the deduction
+#: chain of the credential in use. ``owed_amount`` is included deliberately: an
+#: outstanding amount means money is already owed, which is not a state in which
+#: ContentOps should start new billable work.
 ZERO_REQUIRED_BALANCE_FIELDS: Tuple[str, ...] = (
     "cash_balance",
     "credit_balance",
     "voucher_balance",
     "owed_amount",
 )
+
+#: Which funds each credential type can actually deduct.
+#:
+#: This split exists because "the balance exists" and "this request will be deducted
+#: from it" are different claims, and the original rule collapsed them. The official
+#: M Plan FAQ states the Subscription Key's chain exhaustively:
+#:
+#: > A Subscription Key only uses your M Plan usage and credit packs. When you reach
+#: > your usage limit, any remaining credit pack balance is used next. Your account
+#: > balance is charged only when you use a pay-as-you-go API Key.
+#:
+#: Two things follow, and only two:
+#:
+#: 1. For a **Subscription Key**, the paid fund reachable by a request is
+#:    ``credit_balance``. ``voucher_balance`` is not in that chain, so a non-zero
+#:    voucher cannot be consumed by an in-plan speech request.
+#: 2. For a **pay-as-you-go key**, ``账户余额`` is charged -- which is the pay-as-you-go
+#:    wallet -- so the whole set must be zero there.
+#:
+#: ``owed_amount`` is outside both chains and is required to be zero always.
+#:
+#: What is deliberately *not* concluded: whether ``voucher_balance`` can pay a
+#: pay-as-you-go charge. No official page reached states that either way, so the
+#: activation charge keeps requiring cash. See
+#: :mod:`contentops.media.clone_route`.
+SUBSCRIPTION_KEY_DEDUCTION_CHAIN: Tuple[str, ...] = ("credit_balance",)
+PAYG_DEDUCTION_CHAIN: Tuple[str, ...] = (
+    "cash_balance",
+    "credit_balance",
+    "voucher_balance",
+)
+#: Outside both chains. An account already in arrears is not a place to start new
+#: billable work, whichever key is used.
+ALWAYS_ZERO_BALANCE_FIELDS: Tuple[str, ...] = ("owed_amount",)
 
 SUPPORTED_MODALITIES: Tuple[str, ...] = ("speech", "image", "video")
 
@@ -130,6 +165,10 @@ CREDENTIAL_UNKNOWN = "UNKNOWN"
 class GuardResult:
     verdict: str
     reasons: List[str] = field(default_factory=list)
+    #: Balance fields that were read successfully but are outside this credential's
+    #: deduction chain, so a non-zero value in them cannot be spent by this request.
+    #: Reported rather than dropped: invisible is not the same as absent.
+    observed_out_of_chain: List[str] = field(default_factory=list)
     credential_class: str = CREDENTIAL_UNKNOWN
     modality: str = ""
     balances: Dict[str, Any] = field(default_factory=dict)
@@ -238,6 +277,7 @@ class BillingGuard:
     def evaluate(self, modality: str = "speech") -> GuardResult:
         """Return the verdict for one modality. Never raises for a billing reason."""
         reasons: List[str] = []
+        observed: List[str] = []
         credential_class = classify_credential(self._credential)
 
         # An unknown modality is blocked rather than defaulted. The two defaults
@@ -264,6 +304,20 @@ class BillingGuard:
                 f"({balances['error']}); an unreadable balance is never treated as zero"
             )
         else:
+            # Every field must be present and numeric regardless of chain. What
+            # differs is whether it must be *zero*: a field outside the credential's
+            # deduction chain is recorded and carried, but a non-zero value in it
+            # cannot be spent by this request.
+            chain = (
+                SUBSCRIPTION_KEY_DEDUCTION_CHAIN
+                if credential_class == CREDENTIAL_SUBSCRIPTION
+                else PAYG_DEDUCTION_CHAIN
+            )
+            zero_required = tuple(ALWAYS_ZERO_BALANCE_FIELDS) + tuple(
+                name
+                for name in ZERO_REQUIRED_BALANCE_FIELDS
+                if name in chain
+            )
             for name in ZERO_REQUIRED_BALANCE_FIELDS:
                 if name not in balances:
                     reasons.append(
@@ -273,9 +327,14 @@ class BillingGuard:
                 value = _num(balances.get(name))
                 if value is None:
                     reasons.append(f"balance field {name} is unreadable")
+                elif name not in zero_required:
+                    # Out of chain, so a non-zero value is not a risk for this
+                    # request -- but it is still reported, so a reader can see it.
+                    observed.append(f"{name}={value} (not in this credential's chain)")
                 elif value != 0:
                     reasons.append(
-                        f"balance field {name} is {value}, so paid funds could be consumed"
+                        f"balance field {name} is {value}, so paid funds could be "
+                        f"consumed by a {credential_class} request"
                     )
 
         quota = self.read_quota()
@@ -303,6 +362,7 @@ class BillingGuard:
         return GuardResult(
             verdict=verdict,
             reasons=reasons,
+            observed_out_of_chain=observed,
             credential_class=credential_class,
             modality=modality,
             balances={k: v for k, v in balances.items() if k != "error"},

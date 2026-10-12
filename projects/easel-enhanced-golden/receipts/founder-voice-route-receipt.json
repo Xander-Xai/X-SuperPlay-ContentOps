@@ -1,30 +1,26 @@
 {
   "schema": "contentops.voice-clone-route/v2",
-  "route": "CLONE_KEY_REQUIRED",
+  "route": "ACTIVATION_CASH_INSUFFICIENT",
   "commercial_status": "VENDOR_CONFIRMED",
   "verification_status": "LIVE_VERIFICATION_PENDING",
   "authorised": false,
   "blocked_by": [
-    "CLONE_KEY_REQUIRED",
-    "SUBSCRIPTION_ONLY_BILLING_UNPROVEN",
     "ACTIVATION_CASH_INSUFFICIENT",
     "ACTIVATION_CHARACTER_FEE_UNAUTHORISED",
     "CROSS_KEY_CLONED_VOICE_TTS_UNKNOWN"
   ],
   "reasons": [
-    "MINIMAX_CLONE_KEY is not set. A pay-as-you-go API Key is required to create the clone and to perform the one activation synthesis that pays the CNY 9.90, because the Subscription Key was refused once with 2061 and must not be retried. Create one at 账户管理 > 接口密钥 in the official console for THIS SAME account, then set it locally; do not paste it into chat, a PR or a log.",
-    "BillingGuard verdict is BLOCKED_BILLING_SOURCE_UNCERTAIN, not SAFE_INCLUDED_PLAN. TTS cannot be proved to draw only on included plan usage, so no synthesis -- and therefore no activation, and therefore no clone -- may proceed. This guard is not relaxed because the CNY 9.90 fee is authorised: the fee answers a different question from 'can this key spend non-plan funds'. balance field voucher_balance is 15.0, so paid funds could be consumed",
-    "cash_balance is 0.00 and only a pay-as-you-go key deducts account balance (付费服务协议 4.3(1)), so the CNY 9.90 activation charge cannot be paid from cash. Automatic recharge, automatic voucher consumption and automatic Credit Pack use are all forbidden, so this stops here. Founder must recharge or resolve the balance deliberately.",
+    "cash_balance is 0.00 and the activation synthesis runs on the pay-as-you-go key, which is the only key type the platform charges 账户余额 for (M Plan FAQ: 'Your account balance is charged only when you use a pay-as-you-go API Key'). An approved charge is not a payable charge. Whether voucher_balance can fund a pay-as-you-go charge is UNKNOWN -- no official page reached states it -- and automatic voucher consumption, automatic recharge and automatic Credit Pack use are all forbidden. This gate therefore does NOT move on the same evidence that cleared the Subscription-Key TTS gate.",
     "the CNY 9.90 first-activation fee has not been recorded as authorised in this run. The Founder's standing authorisation covers the clone fee only; it does not extend to additional character spend.",
     "the activation synthesis itself is a billable TTS request: 44 billable characters at 3.50 CNY/10k, estimated CNY 0.015400. This is recorded as FIRST_ACTIVATION_TTS_FEE_UNKNOWN and must not be assumed zero. It is separate from the CNY 9.90 voice fee and needs its own authorisation.",
     "the vendor confirmation states an activated voice may be synthesised with the M Plan key, but that is an account-level commercial statement and not an API-level permission grant. No official source confirms a voice_id created under a pay-as-you-go key can synthesise under the Subscription Key; get_voice listing is account-scoped and proves visibility, not usability, and error 2042 (无权访问该 voice_id) is the documented symptom if visibility does not imply usability. Must not be claimed as supported before one real synthesis answers it."
   ],
   "clone_key": {
-    "credential_class": "ABSENT",
-    "credential_source": "NONE",
+    "credential_class": "PAYG",
+    "credential_source": "MINIMAX_CLONE_KEY_ENV",
     "required_class": "PAYG",
     "env_var": "MINIMAX_CLONE_KEY",
-    "configured": false
+    "configured": true
   },
   "tts_key": {
     "credential_class": "SUBSCRIPTION",
@@ -32,11 +28,9 @@
     "required_class": "SUBSCRIPTION",
     "configured": true
   },
-  "keys_distinct": null,
-  "billing_verdict": "BLOCKED_BILLING_SOURCE_UNCERTAIN",
-  "billing_reasons": [
-    "balance field voucher_balance is 15.0, so paid funds could be consumed"
-  ],
+  "keys_distinct": true,
+  "billing_verdict": "SAFE_INCLUDED_PLAN",
+  "billing_reasons": [],
   "cash_balance": 0.0,
   "clone_fee_cny": "9.90",
   "clone_fee_charged_at": "FIRST_SYNTHESIS_WITH_THIS_VOICE",
@@ -105,6 +99,11 @@
       "fact": "同步语音合成 T2A speech-2.8-hd = 3.50 元/万字符. 计费项是字符数,以 10000 个字符(输入)为单位,1 个汉字算 2 个字符,英文字母、希腊字母、标点符号、特殊符号、空格、回车等算 1 个字符. Used to compute the activation synthesis's character cost, which is a separate billable item from the CNY 9.90 voice fee."
     },
     {
+      "id": "subscription-key-deduction-chain",
+      "page": "platform.minimax.cn/docs/guides/pricing-token-plan, M Plan FAQ",
+      "fact": "A Subscription Key only uses your M Plan usage and credit packs. When you reach your usage limit, any remaining credit pack balance is used next. Your account balance is charged only when you use a pay-as-you-go API Key. 排他性表述: 套餐内额度 -> 积分包, 不含代金券, 不含账户余额. This is the basis on which a non-zero voucher_balance no longer blocks a Subscription-Key in-plan speech request, and equally the basis on which it STILL blocks the pay-as-you-go-key activation charge."
+    },
+    {
       "id": "temporary-voice-ttl",
       "page": "platform.minimax.cn/docs/api-reference/api-overview (音色快速复刻 / 注意事项)",
       "fact": "本接口产出的快速复刻音色为临时音色, 若希望永久保留某复刻音色, 请于 168 小时(7 天)内在任意 T2A 语音合成接口中调用该音色(不包含本接口内的试听行为). 若超过时限, 该音色将被删除."
@@ -137,11 +136,127 @@
   "voice_alias": "founder_primary_v1",
   "provider_voice_id_hash": "98fcbad890c52c7cc274e8cc59e47d358ccc309eaf1b9cb7dfe5bfcb093dc197",
   "sample_sha256": "bb56d052cd637bd8a369f6e37a745c7609de9988ada0fa0827d4d5c59035df8d",
+  "sample_sha256_matches_registry": true,
   "activation_text": "这是一段用于首次激活的最短自然中文语音样本。",
+  "ready_to_execute_checklist": [
+    {
+      "check": "CLONE_KEY is a pay-as-you-go key",
+      "pass": true,
+      "detail": "class=PAYG, source=MINIMAX_CLONE_KEY_ENV",
+      "evidence": "resolve_clone_credential(); MINIMAX_CLONE_KEY only, no fallback chain"
+    },
+    {
+      "check": "TTS_KEY is the existing Subscription Key",
+      "pass": true,
+      "detail": "class=SUBSCRIPTION, source=MMX_CONFIG",
+      "evidence": "resolve_credential(); unchanged since M2"
+    },
+    {
+      "check": "the two keys are different secrets",
+      "pass": true,
+      "detail": "distinct=True",
+      "evidence": "TwoKeyPair.require_distinct(); DuplicateCredentialError otherwise"
+    },
+    {
+      "check": "CLONE_KEY reaches the host (read-only get_voice)",
+      "pass": true,
+      "detail": "OK",
+      "evidence": "MiniMaxVoiceCloneProvider.list_cloned_voices(); metadata, not billable"
+    },
+    {
+      "check": "个人认证 / 企业认证 complete",
+      "pass": true,
+      "detail": "assumed from the account holding a cloned voice; 2038 would refuse at clone time",
+      "evidence": "官方: 调用本接口需要完成个人认证及企业认证; the pre-existing cloned voice implies a prior successful clone, which requires verification"
+    },
+    {
+      "check": "cash balance can pay the activation",
+      "pass": false,
+      "detail": "cash_balance=0.0",
+      "evidence": "M Plan FAQ: 账户余额 charged only via a pay-as-you-go key; the activation runs on that key"
+    },
+    {
+      "check": "Subscription-Key in-plan TTS is provable",
+      "pass": true,
+      "detail": "BillingGuard=SAFE_INCLUDED_PLAN; out-of-chain=[\"cash_balance=0.0 (not in this credential's chain)\", \"voucher_balance=15.0 (not in this credential's chain)\"]",
+      "evidence": "Subscription-Key deduction chain is plan quota -> credit packs only; credit_balance=0.00"
+    },
+    {
+      "check": "one-time voice fee within the authorised ceiling",
+      "pass": true,
+      "detail": "first_activation=CNY 9.90, ceiling CNY 9.90",
+      "evidence": "FOUNDER_SUPPLIED_VENDOR_CONFIRMATION claim 1; published price 9.90 元/音色"
+    },
+    {
+      "check": "CNY 9.90 activation fee authorised",
+      "pass": false,
+      "detail": "authorised=False",
+      "evidence": "CONTENTOPS_FIRST_ACTIVATION_AUTHORISED"
+    },
+    {
+      "check": "activation character fee authorised (never assumed zero)",
+      "pass": false,
+      "detail": "44 billable chars at 3.50/10k, estimate CNY 0.015400; recorded as FIRST_ACTIVATION_TTS_FEE_UNKNOWN",
+      "evidence": "CONTENTOPS_ACTIVATION_CHARACTER_FEE_AUTHORISED"
+    },
+    {
+      "check": "M Plan quota remaining in both required windows",
+      "pass": true,
+      "detail": "interval=91.0%, weekly=59.0%",
+      "evidence": "/v1/token_plan/remains; speech requires both windows"
+    },
+    {
+      "check": "voice_id satisfies the documented rules",
+      "pass": true,
+      "detail": "XSuperPlayFounderV1 -> sha256 98fcbad890c52c7c",
+      "evidence": "length [8,256], leading English letter, [A-Za-z0-9-_], no trailing - or _"
+    },
+    {
+      "check": "voice_id is free (no 2039 duplicate)",
+      "pass": true,
+      "detail": "must be confirmed by the clone response; 2039 would mean a prior attempt created it",
+      "evidence": "官方: 2039 语音克隆 voice_id 重复"
+    },
+    {
+      "check": "Founder sample present and digest unchanged",
+      "pass": true,
+      "detail": "sha256=bb56d052cd637bd8a369f6e3... matches_registry=True",
+      "evidence": "declared by the digital-asset registry as the primary voice reference"
+    },
+    {
+      "check": "raw sample and raw voice_id stay out of Git",
+      "pass": true,
+      "detail": "assert/ and .private/ are ignored; receipts carry SHA256 only",
+      "evidence": ".gitignore; VoiceCloneReceipt.as_dict refuses known credential prefixes"
+    },
+    {
+      "check": "the excluded moss_audio_* family is not used",
+      "pass": true,
+      "detail": "not the target, not a substitute test sample",
+      "evidence": "recorded in this receipt as excluded_voices"
+    },
+    {
+      "check": "no automatic retry",
+      "pass": true,
+      "detail": "upload_count and clone_count are hard-capped at one",
+      "evidence": "MiniMaxVoiceCloneProvider max_clone_attempts=1, enforced by counter"
+    },
+    {
+      "check": "clone and activation run inside one continuous session",
+      "pass": true,
+      "detail": "cloned voices are deleted after 168h unused",
+      "evidence": "官方: 168 小时(7 天)内未调用则删除"
+    }
+  ],
+  "ready_to_execute_passed": 15,
+  "ready_to_execute_total": 18,
+  "max_actual_charge_cny": "9.9154",
   "measured": {
-    "billing_verdict": "BLOCKED_BILLING_SOURCE_UNCERTAIN",
-    "billing_reasons": [
-      "balance field voucher_balance is 15.0, so paid funds could be consumed"
+    "billing_verdict": "SAFE_INCLUDED_PLAN",
+    "billing_reasons": [],
+    "observed_out_of_chain": [
+      "cash_balance=0.0 (not in this credential's chain)",
+      "voucher_balance=15.0 (not in this credential's chain)"
     ],
     "balances": {
       "available_amount": "15.00",
@@ -151,17 +266,19 @@
       "owed_amount": "0.00"
     },
     "quota": {
-      "interval_remaining_percent": 56.0,
-      "weekly_remaining_percent": 62.0,
+      "interval_remaining_percent": 91.0,
+      "weekly_remaining_percent": 59.0,
       "bucket": "general"
     },
-    "cash_balance": 0.0
+    "cash_balance": 0.0,
+    "clone_key_reachable": true
   },
   "calls_performed": {
     "upload": 0,
     "clone": 0,
     "tts": 0,
-    "billing_reads": 1
+    "billing_reads": 1,
+    "metadata_listings": 1
   },
   "excluded_voices": {
     "moss_audio_prefix": "FORBIDDEN",

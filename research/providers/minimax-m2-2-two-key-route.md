@@ -157,92 +157,194 @@ Key**. Neither is a generation endpoint; no quota was consumed.
 | plan quota, 5-hour window | 59 % |
 | plan quota, weekly window | 62 % |
 
-### `ACTIVATION_CASH_INSUFFICIENT`
+### `ACTIVATION_CASH_INSUFFICIENT` — still standing
 
-Claim 1 says the ¥9.90 is charged. Only a pay-as-you-go key deducts account balance
-(付费服务协议 4.3(1)), and the activation synthesis runs on the pay-as-you-go key — so
-the fee draws on cash, and **cash is 0.00**.
+Claim 1 says the ¥9.90 is charged, and the M Plan FAQ names exactly one key that gets
+charged: the pay-as-you-go key. The activation synthesis runs on that key, so the fee
+draws on the account balance — and **cash is 0.00**.
 
-An approved charge with no balance behind it is not payable. The options are all
-Founder decisions and none are automatic here:
+An approved charge with no balance behind it is not payable. The options are all Founder
+decisions and none are automatic here:
 
 - recharge (explicitly **not** automatic),
-- consume `voucher_balance = 15.00` (explicitly **not** automatic, and #23 recorded its
-  *kind* as unclassified — it appears in the invoice table only as an order payment
-  method),
-- a Credit Pack (cannot reach this resource at all — credits cover the same resource
-  set as the plan, and the plan excludes 快速复刻).
+- use `voucher_balance = 15.00` (explicitly **not** automatic, and see below — its ability
+  to fund a pay-as-you-go charge is `UNKNOWN`),
+- a Credit Pack (cannot reach this resource at all — credits cover the same resource set
+  as the plan, and the plan excludes 快速复刻).
 
-### `SUBSCRIPTION_ONLY_BILLING_UNPROVEN` — and it is **not** relaxed
+Note the deliberate asymmetry. The same official rule that let the Subscription-Key
+in-plan TTS through **does not** clear this gate, because this request is made by the
+pay-as-you-go key and that is the one key the account balance is charged for. Same
+evidence, opposite verdict, because the key differs.
 
-`BillingGuard.evaluate("speech")` returns `BLOCKED_BILLING_SOURCE_UNCERTAIN`:
+### Superseded: the old "do not relax the guard" note
+
+> **Earlier text, now superseded.** This section previously read *"SUBSCRIPTION_ONLY_
+> BILLING_UNPROVEN — and it is not relaxed"*, with `BillingGuard.evaluate("speech")`
+> returning `BLOCKED_BILLING_SOURCE_UNCERTAIN` on `voucher_balance is 15.0`.
+>
+> That block was **correct under the rule as written and wrong under the official
+> facts**: the flat "every balance must be exactly zero" rule could not distinguish
+> "the balance exists" from "this request will be deducted from it", and for a
+> Subscription-Key in-plan speech request those are different claims.
+>
+> The principle it protected was right, though, and the reasoning behind it still
+> matters for a different reason — see **What was *not* concluded** below. Removing a
+> gate because it is inconvenient is not the same as correcting a gate because it was
+> measuring the wrong thing. This was the second.
+
+## `voucher_balance = 15.00` — classified
+
+**`VOUCHER_CLASSIFICATION`: NOT_IN_SUBSCRIPTION_KEY_DEDUCTION_CHAIN. Not a Credit Pack.
+Not required to be cleared.**
+
+This was `UNKNOWN` in every earlier round. It is now resolved, and it resolves in the
+direction that matters: the voucher is **not** something a Subscription-Key in-plan
+speech request can spend, so it never had to block this stage at all.
+
+The official M Plan FAQ states the Subscription Key's deduction chain exhaustively:
+
+> A Subscription Key only uses your M Plan usage and credit packs. When you reach your
+> usage limit, any remaining credit pack balance is used next. **Your account balance is
+> charged only when you use a pay-as-you-go API Key.**
+> — `platform.minimax.cn/docs/guides/pricing-token-plan`, M Plan FAQ
+
+Three funds, three chains:
+
+| Fund | Chain | Reachable by a Subscription-Key in-plan TTS? |
+|---|---|---|
+| M Plan 套餐内额度 | Subscription Key | **yes** — this is the point |
+| `credit_balance` 积分包 | Subscription Key, after plan quota | yes (measured **0.00**) |
+| `voucher_balance` 代金券 | **neither** | **no** |
+| `cash_balance` 账户余额 | pay-as-you-go key only | **no** |
+
+> 代金券只可用于消费,不可用于抵扣欠费金额。 — 付费服务协议 4.4. In the invoice table a
+> voucher appears as an **order payment method** (使用代金券), i.e. it pays for
+> purchases, not for metered API calls.
+
+### The distinction this fixes
+
+The guard previously required **every** balance to be exactly zero. That treats
+"the balance exists" and "this request will be deducted from it" as the same claim.
+For `voucher_balance = 15.00` they are not: the balance exists, and a Subscription-Key
+speech request cannot reach it.
+
+Blocking a provably unreachable balance is not caution. It is a gate that has taught
+its readers to bypass it — and this repository nearly did exactly that, by contemplating
+removing the `BillingGuard` to get past a voucher.
+
+### What was **not** concluded
+
+**Whether a voucher can fund a pay-as-you-go charge is still `UNKNOWN`.** No official
+page reached states it either way. `available_amount` happens to equal
+`voucher_balance` (15.00) while `cash_balance` is 0.00, which is suggestive — and
+suggestive is not evidence. A comparable field on a *different* vendor's platform
+includes vouchers in its spendable balance, but importing another vendor's semantics is
+exactly the wrong move, so it was not used.
+
+That is why `ACTIVATION_CASH_INSUFFICIENT` **did not move**. The activation runs on the
+pay-as-you-go key, which is the one key the FAQ says *does* charge the account balance.
+Same evidence, opposite verdict, because the key is different.
+
+And per the Founder's instruction, the voucher **is not required to be cleared, spent,
+or expiring.** It is recorded, classified, and left alone.
+
+## `BillingGuard` — scoped change, and what it deliberately leaves shut
 
 ```
-balance field voucher_balance is 15.0, so paid funds could be consumed
+SUBSCRIPTION_KEY_DEDUCTION_CHAIN = ("credit_balance",)
+PAYG_DEDUCTION_CHAIN             = ("cash_balance", "credit_balance", "voucher_balance")
+ALWAYS_ZERO_BALANCE_FIELDS       = ("owed_amount",)
 ```
 
-The obvious shortcut here would be to relax the guard because "the ¥9.90 is authorised,
-so the guard no longer needs to apply". That would be wrong, and the reason is worth
-stating precisely: **the guard and the fee answer different questions.**
+Three properties, each asserted by a test:
 
-> The guard asks: *can this Subscription Key spend anything outside included plan usage?*
-> The fee authorisation answers: *is this one CNY 9.90 charge approved?*
+1. **Presence is never relaxed.** Every one of the four fields must still be present and
+   numeric, whichever chain applies. A field the platform stopped sending blocks, or a
+   schema change would read as "that fund is fine".
+2. **Zero-ness is chain-scoped.** A Subscription-Key request needs `credit_balance` at
+   zero (measured 0.00) and `owed_amount` at zero. `cash_balance` and `voucher_balance`
+   are reported in `observed_out_of_chain` — visible, not dropped.
+3. **A pay-as-you-go credential still needs everything at zero.** Same fixture, opposite
+   verdict. If the two ever agree, the split is broken.
 
-Weakening the guard to get past a ¥15 voucher balance would make **every later
-narration** unverifiable — which is the whole safety property the speech provider has —
-in exchange for one voice. The guard is untouched. Test 12 asserts it.
-
-**Do not remove the `BillingGuard` protection to work around `voucher = 15`.**
-
-## Current stop: `CLONE_KEY_REQUIRED`
-
-`MINIMAX_CLONE_KEY` is unset, and there is no fallback chain — deliberately. The
-resolver reads that one variable and nothing else, because `resolve_credential()`'s
-chain (Subscription Key → API Key → `~/.mmx/config.json`) is right for TTS and fatal
-here: inheriting it would let a machine with only a Subscription Key "resolve" a clone
-credential and repeat the refused 2061 request.
-
-Searched and confirmed absent: `~/.mmx/config.json` (holds only the `sk-cp-`
-Subscription Key, `region: cn`), the repository `.env` (absent), `.private/`,
-`runtime/`, `runtime-config-backups/`, `runtime-diagnostics/`, `diagnostics/`. No
-`sk-api-` value exists anywhere on this host outside test fixtures.
-
-**To provision it**, in the official CN console for **this same account**:
-
-> 账户管理 → 接口密钥 → 创建新的 API Key
-
-Recharge is **not** required to create the key. Store it locally, like every other
-credential here, and **never paste it into chat, a PR or a log.**
-
-The key is needed for **two** calls, and no others: the single upload, and the single
-activation synthesis that pays the ¥9.90. Regular narration stays on the Subscription
-Key.
-
-Two further non-credential prerequisites:
-
-- **个人认证 / 企业认证** must be complete. Missing verification returns `2038`, a
-  refusal *after* the upload has already disclosed the sample.
-- **`voice_id` uniqueness.** `2039 语音克隆 voice_id 重复`. `XSuperPlayFounderV1` was
-  never created — the single attempt was refused before completion — so it should be
-  free. If it answers 2039, a prior attempt *did* create it and the existing voice
-  must be inspected rather than re-cloned.
-
-## The five gates, and which of them an operator can close
+Measured on this account, both keys, after the change:
 
 ```
-CLONE_KEY_REQUIRED                  provisioning              Founder creates a key
-SUBSCRIPTION_ONLY_BILLING_UNPROVEN   account state            Founder resolves voucher
-ACTIVATION_CASH_INSUFFICIENT         account state            Founder recharges
-ACTIVATION_CHARACTER_FEE_UNAUTHORISED  approval               Founder approves ¥0.0154
-CROSS_KEY_CLONED_VOICE_TTS_UNKNOWN  live verification        only a real synthesis
+SUBSCRIPTION  SAFE_INCLUDED_PLAN     out-of-chain: cash_balance=0.0, voucher_balance=15.0
+PAYG          BLOCKED                credential class is PAYG, not a Subscription Key
 ```
 
-The first four are Founder actions. The fifth is not an action at all — it is answered
-by running the route, which the first four gate. That is why the receipt reports all
-five together: an operator who clears four of them and still sees a stop is being told
-the truth, not left guessing which one they missed.
+`SUBSCRIPTION_ONLY_BILLING_UNPROVEN` has cleared, on official evidence rather than on a
+Founder request.
 
-## What was deliberately not done
+## Keys: verified live, read-only
+
+`MINIMAX_CLONE_KEY` is configured locally in `.env` (gitignored, untracked, never
+printed, never committed). It classifies `PAYG`, and it is a **different secret** from
+the Subscription Key.
+
+| Probe | PAYG clone key | Subscription key |
+|---|---|---|
+| `POST /v1/get_voice` | `status_code=0` | `status_code=0` |
+| `GET` balance endpoint | `status_code=0` | `status_code=0` |
+| `cash_balance` | 0.00 | 0.00 |
+| `credit_balance` | 0.00 | 0.00 |
+| `voucher_balance` | 15.00 | 15.00 |
+| `owed_amount` | 0.00 | 0.00 |
+
+**Identical balances from two different keys is account-level evidence that they are
+one account** — which is the requirement the route has, and it is now measured rather
+than assumed. It is also evidence about account *scope*, not about resource *scope*:
+both keys can list `voice_cloning`, and both list the same one. Listing is visibility.
+Only a synthesis is usability, and that remains `CROSS_KEY_CLONED_VOICE_TTS_UNKNOWN`.
+
+Cost of this verification: `upload=0, clone=0, tts=0`. Both probes are metadata reads
+that previous measurement showed consume no quota and cost nothing.
+
+### The key is in the chat transcript
+
+The Founder supplied the key in conversation. It is now also on local disk in `.env`,
+which is the correct home for it — but a secret pasted into a chat is a secret that has
+been disclosed. **Rotate it after this round** and set the replacement in `.env` the
+same way. No repository commit ever contained it.
+
+## `READY_TO_EXECUTE` — 15 of 18, three failing
+
+| # | Check | State |
+|---|---|---|
+| 1 | CLONE_KEY is a pay-as-you-go key | **PASS** |
+| 2 | TTS_KEY is the existing Subscription Key | **PASS** |
+| 3 | the two keys are different secrets | **PASS** |
+| 4 | CLONE_KEY reaches the host (read-only) | **PASS** |
+| 5 | 个人认证 / 企业认证 complete | PASS (assumed; `2038` would refuse at clone time) |
+| 6 | **cash balance can pay the activation** | **FAIL** — 0.00 |
+| 7 | Subscription-Key in-plan TTS is provable | **PASS** — `SAFE_INCLUDED_PLAN` |
+| 8 | one-time fee within the ¥9.90 ceiling | **PASS** |
+| 9 | **¥9.90 activation fee authorised** | **FAIL** — not set for this run |
+| 10 | **activation character fee authorised** | **FAIL** — not set, never assumed zero |
+| 11 | M Plan quota in both required windows | **PASS** — interval / weekly remaining |
+| 12 | `voice_id` satisfies the documented rules | **PASS** |
+| 13 | `voice_id` is free (no `2039`) | PASS (confirmed by the clone response) |
+| 14 | Founder sample present, digest unchanged | **PASS** — matches the registry |
+| 15 | raw sample and raw voice_id stay out of Git | **PASS** |
+| 16 | the excluded `moss_audio_*` family is not used | **PASS** |
+| 17 | no automatic retry | **PASS** |
+| 18 | clone and activation run in one continuous session | **PASS** |
+
+### `MAX_ACTUAL_CHARGE` = **¥9.9154**
+
+| Component | Amount |
+|---|---|
+| `clone_creation` | ¥0.00 — never charged (官方: 复刻音色时不立即收费) |
+| `first_activation` | ¥9.90 |
+| activation characters (44 billable @ 3.50/10k) | **¥0.0154** — `FIRST_ACTIVATION_TTS_FEE_UNKNOWN` |
+| **`MAX_ACTUAL_CHARGE`** | **¥9.9154** |
+
+Ceiling ¥9.90 for the voice fee; the ¥0.0154 is a separate approval and is **not**
+folded into it. Neither is assumed zero.
+
+---
 
 - No upload, no clone, no activation synthesis, no retry of the refused 2061 request.
 - No PAYG key created, no recharge, no Credit Pack, no voucher consumption.
@@ -320,54 +422,122 @@ Founder 已从 MiniMax 客服获得**本账号专属**确认：
 **也是激活扣费的截止时间**。窗口内未激活的音色会被删除，¥9.9 也就无从扣起。
 克隆与激活仍然是同一次连续操作。
 
-## 五个阻塞点
+## 当前状态：三个阻塞点
 
 ```
-CLONE_KEY_REQUIRED                    配置      Founder 创建按量 API Key
-SUBSCRIPTION_ONLY_BILLING_UNPROVEN    账号状态  Founder 处理 voucher 余额
-ACTIVATION_CASH_INSUFFICIENT          账号状态  Founder 充值（现金余额为 0.00）
-ACTIVATION_CHARACTER_FEE_UNAUTHORISED 审批      Founder 批准 ¥0.0154
-CROSS_KEY_CLONED_VOICE_TTS_UNKNOWN    实测验证  只能由一次真实合成回答
+ACTIVATION_CASH_INSUFFICIENT            账号状态  Founder 充值（现金余额 0.00）
+ACTIVATION_CHARACTER_FEE_UNAUTHORISED   审批      Founder 批准 ¥0.0154
+CROSS_KEY_CLONED_VOICE_TTS_UNKNOWN      实测验证  只能由一次真实合成回答
 ```
 
-前四项是 Founder 操作，第五项不是操作——它由执行路由来回答，而执行路由正是被前四项
-挡住的。所以 receipt 会把五项一起报出来：清掉四项后仍然停住，是在说实话，而不是让人
-猜自己漏了哪一步。
+**已解除的三项**（本轮取得证据）：
 
-## `ACTIVATION_CASH_INSUFFICIENT` 的含义
+| 原阻塞 | 现状态 | 依据 |
+|---|---|---|
+| `CLONE_KEY_REQUIRED` | **已解除** | Founder 已提供按量 Key，本地 `.env` 配置，实测 `status_code=0` |
+| `SUBSCRIPTION_ONLY_BILLING_UNPROVEN` | **已解除** | 官方 M Plan FAQ：Subscription Key 只用套餐额度与积分包；`voucher_balance` 不在该扣费链中 |
+| `ACTIVATION_CHARACTER_FEE_UNAUTHORISED` 之外的计费链路 | 已厘清 | 见下方"代金券分类" |
 
-`cash_balance = 0.00`，而只有按量计费 API Key 会扣账户余额（付费服务协议 4.3(1)）。
-**已批准的收费，不等于可支付的收费。** 三条路都由 Founder 决定，且都不是自动的：
-充值（**不自动**）、使用 `voucher_balance = 15.00`（**不自动**，且 #23 已记录其
-*种类* 未分类——在官方资料中仅作为订单支付方式出现）、积分包（**无法覆盖该资源**：
-积分与 Token Plan 覆盖相同资源，而套餐排除快速复刻）。
+前两项是 Founder 操作，第三项不是操作——它由执行路由来回答，而执行路由正是被前两项
+挡住的。receipt 会把三项一起报出来：清掉两项后仍然停住，是在说实话。
 
-## 不要为了绕过 voucher = 15 而移除 BillingGuard
+## 代金券的真实计费类别（本轮解决）
 
-`BillingGuard` 回答的问题和 ¥9.9 授权回答的问题**不是同一个**：
+**`VOUCHER_CLASSIFICATION`：不在 Subscription Key 扣费链中。不是 Credit Pack。
+不需要清空。**
 
-> 守卫问的是：*这个 Subscription Key 会不会消耗套餐额度之外的资金？*
-> 费用授权答的是：*这一笔 ¥9.9 扣费是否被批准？*
+官方 M Plan FAQ：
 
-为了让 ¥15 的代金券余额通过而放宽守卫，会让**之后的每一次旁白**都失去可验证性——
-那正是 speech provider 全部安全性的来源——代价却只是换一条音色。守卫保持不变，
-测试 12 对此有断言。
+> A Subscription Key only uses your M Plan usage and credit packs. When you reach your
+> usage limit, any remaining credit pack balance is used next. **Your account balance is
+> charged only when you use a pay-as-you-go API Key.**
+
+四种资金，三条链：
+
+| 资金 | 扣费链 | Subscription Key 套餐内 TTS 能扣到吗 |
+|---|---|---|
+| M Plan 套餐内额度 | Subscription Key | **能**——这正是目的 |
+| `credit_balance` 积分包 | Subscription Key，套餐额度之后 | 能（实测 **0.00**） |
+| `voucher_balance` 代金券 | **两者都不在** | **不能** |
+| `cash_balance` 账户余额 | 仅按量计费 Key | **不能** |
+
+> 代金券只可用于消费，不可用于抵扣欠费金额。——付费服务协议 4.4。在发票表中，代金券是
+> **订单支付方式**（使用代金券），支付的是购买行为，不是有量化的 API 调用。
+
+**因此不需要清空、不需要消耗、不需要等待失效。** 它只需被记录和分类。此前把它当作阻塞点，
+是因为守卫规则是"所有余额必须为零"，无法区分"余额存在"与"本次请求会不会扣它"。
+
+### 没有得出的结论
+
+**代金券能否支付按量计费扣费：仍然 `UNKNOWN`。** 没有任何官方页面说明。`available_amount`
+恰好等于 `voucher_balance`（均为 15.00）而 `cash_balance` 为 0.00，这只是暗示，不是证据。
+某**其他**厂商平台的同类字段确实把代金券计入可用余额，但把别家语义搬过来是错误的做法，
+因此没有采用。
+
+这也正是 `ACTIVATION_CASH_INSUFFICIENT` **没有**解除的原因：激活走的是按量计费 Key，
+而官方明确只有该 Key 会扣账户余额。**同一条依据，两个相反结论，因为 Key 不同。**
+
+## BillingGuard 的改动范围
+
+```
+SUBSCRIPTION_KEY_DEDUCTION_CHAIN = ("credit_balance",)
+PAYG_DEDUCTION_CHAIN             = ("cash_balance", "credit_balance", "voucher_balance")
+ALWAYS_ZERO_BALANCE_FIELDS       = ("owed_amount",)
+```
+
+- **字段存在性从不放宽**：四项仍必须存在且可读，否则按 schema 变更阻断。
+- **"必须为零"按扣费链划分**：链外余额进入 `observed_out_of_chain`，可见但不丢弃。
+- **PAYG 凭证仍要求全部为零**：同一份 fixture，相反结论。
+
+## 本轮实测（两把 Key，只读）
+
+| 探测 | 按量 Key | 订阅 Key |
+|---|---|---|
+| `POST /v1/get_voice` | `status_code=0` | `status_code=0` |
+| 余额接口 | `status_code=0` | `status_code=0` |
+| `cash_balance` | 0.00 | 0.00 |
+| `credit_balance` | 0.00 | 0.00 |
+| `voucher_balance` | 15.00 | 15.00 |
+| `owed_amount` | 0.00 | 0.00 |
+
+**两把不同的 Key 返回完全相同的余额，这是账号级证据，证明它们属于同一个账号。**
+这也证明了账号 *scope*，但不是资源 *scope*：两把 Key 都能列出 `voice_cloning`，且列出
+的是同一条。列出是可见性，只有合成才是可用性。
+
+`upload=0, clone=0, tts=0`。两个探测都是元数据读取，不消耗额度、不产生费用。
+
+### 关于 Key 出现在聊天记录中
+
+Founder 在对话中提供了该 Key。它现在也存在于本地 `.env`（正确的存放位置），但**粘贴进
+聊天的密钥就是已经泄露的密钥**。**本轮结束后请轮换**，并在 `.env` 中以同样方式设置新值。
+仓库的任何一次提交都没有包含过它。
+
+## `MAX_ACTUAL_CHARGE` = **¥9.9154**
+
+| 项目 | 金额 |
+|---|---|
+| `clone_creation` | ¥0.00 —— 创建时不收取（官方：复刻音色时不立即收费） |
+| `first_activation` | ¥9.90 |
+| 激活字符费（44 计费字符 @ 3.50/万字符） | **¥0.0154** —— `FIRST_ACTIVATION_TTS_FEE_UNKNOWN` |
+| **`MAX_ACTUAL_CHARGE`** | **¥9.9154** |
+
+音色费上限 ¥9.90；¥0.0154 是**单独授权**，不并入其中。两者都没有被假设为零。
 
 ## 需要 Founder 处理的事项
 
-1. **创建 `MINIMAX_CLONE_KEY`**：官方控制台 `账户管理 → 接口密钥 → 创建新的 API Key`，
-   必须是**同一国内开放平台账号**。创建 Key 本身不需要充值（本次也未执行任何充值）。
-2. **处理充值**：现金余额需 ≥ ¥9.9 才能支付激活费。**不自动充值、不自动使用 voucher、
+1. **充值**：现金余额需 ≥ ¥9.9 才能支付激活费。**不自动充值、不自动使用 voucher、
    不自动使用积分包。**
-3. **批准首次激活的字符费用 ¥0.0154**（与 ¥9.9 分开授权）。
-4. **`voucher_balance = 15.00`**：处理或等待失效，否则 M Plan 纯额度无法被证明。
+2. **批准首次激活的字符费用 ¥0.0154**（与 ¥9.9 分开授权）。
+3. **轮换 `MINIMAX_CLONE_KEY`**：它已出现在聊天记录中。
 
-密钥只在本地配置，**不要粘贴到聊天、PR 或日志中**。
+`voucher_balance = 15.00` **不需要处理**。
+
+密钥只在本地配置，**不要粘贴到 PR 或日志中**。
 
 ## 本次未做
 
-未上传、未克隆、未激活合成、未重试此前返回 2061 的请求；未创建按量 Key、未充值、
-未消耗 voucher 或积分包；未使用 `moss_audio_*` 作为目标或替代测试样本（该排除项已
-写入 receipt）；未转向其他供应商、未使用未文档化端点。
+未上传、未克隆、未激活合成、未重试此前返回 2061 的请求；未充值、未消耗 voucher 或
+积分包；未使用 `moss_audio_*` 作为目标或替代测试样本（该排除项已写入 receipt）；
+未转向其他供应商、未使用未文档化端点。
 
 此前那次 `/v1/files/upload` 在 2061 之前成功过，但其 `file_id` 从未保存，**不可复用**。

@@ -1056,13 +1056,49 @@ def test_image_requires_both_interval_and_weekly_quota():
 
 
 def test_non_zero_paid_balances_are_refused():
-    for field_name in ("cash_balance", "credit_balance", "voucher_balance", "owed_amount"):
+    """Zero-ness is scoped to the credential's deduction chain; presence never is.
+
+    The official M Plan FAQ states the Subscription Key's chain exhaustively: plan
+    usage, then credit packs -- and "your account balance is charged only when you use
+    a pay-as-you-go API Key". So for a Subscription Key the only paid fund a request
+    can reach is ``credit_balance``, and a non-zero ``cash_balance`` or
+    ``voucher_balance`` cannot be spent by an image request.
+
+    What must not soften: every field is still required to be present and numeric,
+    ``credit_balance`` and ``owed_amount`` still block, and a pay-as-you-go credential
+    still needs the full set at zero.
+    """
+    for field_name in ("credit_balance", "owed_amount"):
         balances = dict(SAFE_BALANCES)
         balances[field_name] = "1.00"
         guard = guard_with(balances=balances)
         result = guard.evaluate(modality="image")
         assert result.verdict == BLOCKED_BILLING_SOURCE_UNCERTAIN, field_name
-    print("[ok] 41. any non-zero paid balance, including Credit Pack, blocks image")
+
+    for field_name in ("cash_balance", "voucher_balance"):
+        balances = dict(SAFE_BALANCES)
+        balances[field_name] = "1.00"
+        result = guard_with(balances=balances).evaluate(modality="image")
+        assert result.verdict == SAFE_INCLUDED_PLAN, (field_name, result.reasons)
+        assert any(field_name in entry for entry in result.observed_out_of_chain), (
+            "out-of-chain balances must stay visible in the verdict",
+            result.observed_out_of_chain,
+        )
+    print("[ok] 41. Credit Pack and owed block image; out-of-chain balances are "
+          "reported, not charged")
+
+
+def test_a_missing_balance_field_still_blocks_every_modality():
+    """Presence is required in every chain -- the split is about zero, not about reads.
+
+    A field the platform stopped sending must block whichever credential is in use,
+    otherwise a schema change would silently read as "that fund is fine".
+    """
+    for field_name in ("cash_balance", "credit_balance", "voucher_balance", "owed_amount"):
+        balances = {k: v for k, v in SAFE_BALANCES.items() if k != field_name}
+        result = guard_with(balances=balances).evaluate(modality="image")
+        assert result.verdict == BLOCKED_BILLING_SOURCE_UNCERTAIN, field_name
+    print("[ok] 41b. a missing balance field blocks regardless of the deduction chain")
 
 
 def test_image_billing_failure_makes_no_provider_call():
@@ -1853,6 +1889,7 @@ TESTS = [
     test_image_modality_requires_a_subscription_credential,
     test_image_requires_both_interval_and_weekly_quota,
     test_non_zero_paid_balances_are_refused,
+    test_a_missing_balance_field_still_blocks_every_modality,
     test_image_billing_failure_makes_no_provider_call,
     test_gate_and_child_share_one_credential,
     test_unbound_provider_refuses_to_generate,

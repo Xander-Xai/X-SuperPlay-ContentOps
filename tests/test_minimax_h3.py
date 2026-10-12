@@ -749,12 +749,33 @@ def test_video_requires_weekly_quota():
 
 
 def test_every_paid_balance_blocks_video_independently():
-    for field in ("cash_balance", "credit_balance", "voucher_balance", "owed_amount"):
+    """Credit Pack and arrears block video; out-of-chain balances are reported.
+
+    Video shares the Subscription-Key deduction chain with speech and image -- the
+    official M Plan FAQ names plan usage and credit packs, and says the account
+    balance is charged only through a pay-as-you-go key. So a non-zero
+    ``cash_balance`` or ``voucher_balance`` cannot be spent by a video request either,
+    and is surfaced in the verdict rather than dropped.
+
+    The modality-specific rule is untouched: video needs only the weekly window, and
+    that is checked elsewhere.
+    """
+    for field in ("credit_balance", "owed_amount"):
         balances = dict(SAFE_BALANCES)
         balances[field] = "1.00"
         verdict = _guard(balances=balances).evaluate(modality="video")
         assert verdict.verdict == "BLOCKED_BILLING_SOURCE_UNCERTAIN", field
-    print("[ok] 29. cash, Credit Pack, voucher and owed each block video on their own")
+
+    for field in ("cash_balance", "voucher_balance"):
+        balances = dict(SAFE_BALANCES)
+        balances[field] = "1.00"
+        verdict = _guard(balances=balances).evaluate(modality="video")
+        assert verdict.verdict == "SAFE_INCLUDED_PLAN", (field, verdict.reasons)
+        assert any(field in entry for entry in verdict.observed_out_of_chain), (
+            verdict.observed_out_of_chain
+        )
+    print("[ok] 29. Credit Pack and owed each block video; cash and voucher are "
+          "reported as outside the Subscription-Key chain")
 
 
 def test_non_zero_credit_pack_blocks_before_task_creation():

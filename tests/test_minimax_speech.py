@@ -156,15 +156,63 @@ def test_guard_allows_only_safe_state():
 
 
 def test_guard_blocks_each_nonzero_paid_field():
-    for field in ("cash_balance", "credit_balance", "voucher_balance"):
+    """Zero-ness is scoped to the credential's deduction chain; presence never is.
+
+    The official M Plan FAQ states the Subscription Key's chain exhaustively --
+    "a Subscription Key only uses your M Plan usage and credit packs ... your account
+    balance is charged only when you use a pay-as-you-go API Key" -- so for a
+    Subscription Key the only *paid* fund a request can reach is ``credit_balance``.
+
+    This is the fix for a false block that had been failing closed for no reason:
+    this account carries ``voucher_balance = 15.00``, which cannot be spent by a
+    Subscription-Key in-plan speech request, and the old flat rule blocked on it
+    anyway. Blocking a provably-unreachable balance is not caution; it is a gate that
+    teaches its readers to bypass it.
+
+    What must NOT soften: every field still has to be present and numeric, a non-zero
+    ``credit_balance`` still blocks, ``owed_amount`` still blocks always, and a
+    pay-as-you-go credential still needs the full set at zero.
+    """
+    # In the Subscription-Key chain: credit_balance, plus owed_amount always.
+    for field in ("credit_balance", "owed_amount"):
         balances = dict(SAFE_BALANCES, **{field: "5.00"})
         result = guard_with(balances=balances).evaluate()
         assert result.verdict == BLOCKED_BILLING_SOURCE_UNCERTAIN, field
         assert any(field in r for r in result.reasons), (field, result.reasons)
-    owed = dict(SAFE_BALANCES, owed_amount="1.00")
-    result = guard_with(balances=owed).evaluate()
-    assert result.verdict == BLOCKED_BILLING_SOURCE_UNCERTAIN
-    print("[ok] 5. any non-zero paid balance or outstanding amount blocks")
+
+    # Out of the Subscription-Key chain: reported, never silently dropped, and never
+    # treated as a risk for this request.
+    for field in ("cash_balance", "voucher_balance"):
+        balances = dict(SAFE_BALANCES, **{field: "15.00"})
+        result = guard_with(balances=balances).evaluate()
+        assert result.verdict == SAFE_INCLUDED_PLAN, (field, result.reasons)
+        assert result.reasons == [], (field, result.reasons)
+        assert any(field in entry for entry in result.observed_out_of_chain), (
+            "an out-of-chain balance must still be visible; invisible is not absent",
+            result.observed_out_of_chain,
+        )
+    print("[ok] 5. only funds in the credential's chain must be zero; out-of-chain is reported")
+
+
+def test_a_payg_credential_still_needs_every_balance_at_zero():
+    """The chain split is scoped to Subscription Keys and must not leak.
+
+    A pay-as-you-go request *is* charged against 账户余额, so widening the rule for
+    one credential class would have quietly narrowed it for the other. Same fixture,
+    opposite verdict -- if these two ever agree, the split is broken.
+    """
+    for field in ("cash_balance", "credit_balance", "voucher_balance", "owed_amount"):
+        balances = dict(SAFE_BALANCES, **{field: "5.00"})
+        subscription = guard_with(balances=balances).evaluate()
+        payg = guard_with(balances=balances, credential="sk-api-TESTONLY000000").evaluate()
+        assert payg.verdict == BLOCKED_BILLING_SOURCE_UNCERTAIN, field
+        assert any(field in r for r in payg.reasons), (field, payg.reasons)
+        if field in ("cash_balance", "voucher_balance"):
+            assert subscription.verdict == SAFE_INCLUDED_PLAN, (
+                f"{field} is outside the Subscription-Key chain and must not block",
+                subscription.reasons,
+            )
+    print("[ok] 5b. a PAYG credential still requires every balance at zero")
 
 
 def test_guard_fails_closed_on_unreadable_balance():
@@ -2057,6 +2105,7 @@ TESTS = [
     test_guard_never_exposes_the_credential,
     test_guard_allows_only_safe_state,
     test_guard_blocks_each_nonzero_paid_field,
+    test_a_payg_credential_still_needs_every_balance_at_zero,
     test_guard_fails_closed_on_unreadable_balance,
     test_guard_fails_closed_on_schema_change,
     test_guard_blocks_on_exhausted_or_unreadable_plan_quota,
