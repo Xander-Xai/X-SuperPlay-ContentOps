@@ -78,11 +78,13 @@ __all__ = [
     "ACTIVATION_COST_ABOVE_AUTHORISED_TOTAL",
     "ACTIVATION_VOICE_ID_MISMATCH",
     "EVIDENCE_UNKNOWN",
+    "EVIDENCE_LIVE_REFUTED",
     "EVIDENCE_VERIFIED_ACCOUNT_TERMS",
     "EVIDENCE_VERIFIED_OFFICIAL",
     "FOUNDER_VOUCHER_ACTIVATION",
     "REFUSAL_PAYG_TTS_UNBOUNDED",
     "REFUSAL_RETRY",
+    "REFUSAL_VOUCHER_ELIGIBILITY_REFUTED",
     "VOUCHER_CLONE_FEE_ELIGIBILITY_UNKNOWN",
     "VOUCHER_BALANCE_INSUFFICIENT",
     "VOUCHER_CASH_FALLBACK_RISK",
@@ -98,7 +100,21 @@ EVIDENCE_VERIFIED_OFFICIAL = "VERIFIED_OFFICIAL"
 EVIDENCE_VERIFIED_ACCOUNT_TERMS = "VERIFIED_ACCOUNT_VOUCHER_TERMS"
 EVIDENCE_UNKNOWN = "UNKNOWN"
 
+#: A live call on this account that **refuted** the eligibility claim. Ranked above both
+#: grades above rather than folded into :data:`EVIDENCE_UNKNOWN`, because "we do not
+#: know" and "we tested it and it does not work" call for different next actions, and a
+#: receipt that conflates them sends the next reader back out to re-run the experiment
+#: that has already been paid for.
+#:
+#: On 2026-10-12 the activation was attempted with the pay-as-you-go key that customer
+#: service had said the voucher would cover. The platform answered ``insufficient
+#: balance`` with ``voucher_balance`` 15.00, ``available_amount`` 15.00 and
+#: ``cash_balance`` 0.00, and every balance was unchanged afterwards. Nothing was
+#: charged. See :data:`contentops.media.clone_route.EVIDENCE_LIVE_REFUTED`.
+EVIDENCE_LIVE_REFUTED = "VERIFIED_LOCAL_REFUTED"
+
 REFUSAL_VOUCHER_ELIGIBILITY = "VOUCHER_CLONE_FEE_ELIGIBILITY_UNKNOWN"
+REFUSAL_VOUCHER_ELIGIBILITY_REFUTED = "VOUCHER_CLONE_FEE_ELIGIBILITY_REFUTED"
 VOUCHER_CLONE_FEE_ELIGIBILITY_UNKNOWN = REFUSAL_VOUCHER_ELIGIBILITY
 VOUCHER_BALANCE_INSUFFICIENT = "VOUCHER_BALANCE_INSUFFICIENT"
 VOUCHER_CASH_FALLBACK_RISK = "VOUCHER_CASH_FALLBACK_RISK"
@@ -237,7 +253,24 @@ def decide_voucher_activation(
 
     # 1. Eligibility. First, because everything after it is arithmetic on an
     #    instrument that may not exist. This is the gate this round stops at.
-    if voucher_eligibility not in (
+    if voucher_eligibility == EVIDENCE_LIVE_REFUTED:
+        # Checked before the UNKNOWN branch so a measurement is never reported as
+        # ignorance. The two refuse identically; only the reason and the next action
+        # differ, and collapsing them would discard the most expensive fact this
+        # module has ever been given.
+        verdict.add(
+            REFUSAL_VOUCHER_ELIGIBILITY_REFUTED,
+            "voucher eligibility was refuted by a live call on this account, not left "
+            "unknown. The activation was sent with the pay-as-you-go API Key that "
+            "customer service had said the voucher would cover, and the platform "
+            "answered 'insufficient balance' while voucher_balance was 15.00, "
+            "available_amount was 15.00 and cash_balance was 0.00. Every balance was "
+            "unchanged afterwards, so nothing was charged and no 欠费 was created. The "
+            "voucher is real, it is on the account, and it does not fund a pay-as-you-go "
+            "API call. Do not re-attempt on the same assurance; the next step is a "
+            "payment-instrument decision by the Founder, not another trial.",
+        )
+    elif voucher_eligibility not in (
         EVIDENCE_VERIFIED_OFFICIAL,
         EVIDENCE_VERIFIED_ACCOUNT_TERMS,
     ):

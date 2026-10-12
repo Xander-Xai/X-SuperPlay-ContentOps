@@ -1,19 +1,22 @@
 {
   "schema": "contentops.voice-clone-route/v2",
   "route": "ACTIVATION_CASH_INSUFFICIENT",
+  "phase": "CLONE_ACTIVATION",
+  "deferred_gates": [
+    "CROSS_KEY_CLONED_VOICE_TTS_UNKNOWN"
+  ],
+  "activation_payment_source": "REFUTED_BY_MEASUREMENT",
+  "activation_payment_evidence": "VERIFIED_LOCAL_REFUTED",
   "commercial_status": "VENDOR_CONFIRMED",
   "verification_status": "LIVE_VERIFICATION_PENDING",
   "authorised": false,
   "blocked_by": [
-    "ACTIVATION_CASH_INSUFFICIENT",
-    "ACTIVATION_CHARACTER_FEE_UNAUTHORISED",
-    "CROSS_KEY_CLONED_VOICE_TTS_UNKNOWN"
+    "ACTIVATION_CASH_INSUFFICIENT"
   ],
   "reasons": [
-    "cash_balance is 0.00 and the activation synthesis runs on the pay-as-you-go key, which is the only key type the platform charges 账户余额 for (M Plan FAQ: 'Your account balance is charged only when you use a pay-as-you-go API Key'). An approved charge is not a payable charge. Whether voucher_balance can fund a pay-as-you-go charge is UNKNOWN -- no official page reached states it -- and automatic voucher consumption, automatic recharge and automatic Credit Pack use are all forbidden. This gate therefore does NOT move on the same evidence that cleared the Subscription-Key TTS gate.",
-    "the CNY 9.90 first-activation fee has not been recorded as authorised in this run. The Founder's standing authorisation covers the clone fee only; it does not extend to additional character spend.",
-    "the activation synthesis itself is a billable TTS request: 44 billable characters at 3.50 CNY/10k, estimated CNY 0.015400. This is recorded as FIRST_ACTIVATION_TTS_FEE_UNKNOWN and must not be assumed zero. It is separate from the CNY 9.90 voice fee and needs its own authorisation.",
-    "the vendor confirmation states an activated voice may be synthesised with the M Plan key, but that is an account-level commercial statement and not an API-level permission grant. No official source confirms a voice_id created under a pay-as-you-go key can synthesise under the Subscription Key; get_voice listing is account-scoped and proves visibility, not usability, and error 2042 (无权访问该 voice_id) is the documented symptom if visibility does not imply usability. Must not be claimed as supported before one real synthesis answers it."
+    "voucher eligibility was already REFUTED by a live call on this account. The activation was attempted with the pay-as-you-go key and the platform answered 'insufficient balance' while voucher_balance was 15.00, available_amount was 15.00 and cash_balance was 0.00; after the refusal every balance was unchanged, so nothing was charged and no 欠费 was created. The voucher is real and it does not fund a pay-as-you-go API call. This grade outranks every assurance and is not cleared by one: see the activation receipt for the measured evidence.",
+    "cash_balance is 0.00 and the activation synthesis runs on the pay-as-you-go key, which is the only key type the platform charges 账户余额 for (M Plan FAQ: 'Your account balance is charged only when you use a pay-as-you-go API Key'). An approved charge is not a payable charge. Whether voucher_balance can fund a pay-as-you-go charge is UNKNOWN -- no official page reached states it -- and automatic voucher consumption, automatic recharge and automatic Credit Pack use are all forbidden. This gate therefore does NOT move on the same evidence that cleared the Subscription-Key TTS gate. It moves only on account-level confirmation: voucher_eligibility=VERIFIED_LOCAL_REFUTED, voucher_balance=15.0, ceiling CNY 10.00.",
+    "DEFERRED to the narration phase, not waived: the vendor confirmation states an activated voice may be synthesised with the M Plan key, but that is an account-level commercial statement and not an API-level permission grant. No official source confirms a voice_id created under a pay-as-you-go key can synthesise under the Subscription Key; get_voice listing is account-scoped and proves visibility, not usability, and error 2042 (无权访问该 voice_id) is the documented symptom if visibility does not imply usability. Must not be claimed as supported before one real synthesis answers it. This gate cannot be answered before the voice exists, so it blocks every narration call and is evaluated again with phase=REGULAR_NARRATION once the activation has run."
   ],
   "clone_key": {
     "credential_class": "PAYG",
@@ -40,7 +43,7 @@
   "clone_ttl_deadline": null,
   "remaining_ttl_s": null,
   "vendor_confirmation": {
-    "evidence_class": "FOUNDER_SUPPLIED_VENDOR_CONFIRMATION",
+    "evidence_class": "FOUNDER_SUPPLIED_VENDOR_ACCOUNT_CONFIRMATION",
     "obtained_by": "Founder, from MiniMax customer service",
     "obtained_on": "2026-10-12",
     "scope": "ACCOUNT_LEVEL_COMMERCIAL",
@@ -62,15 +65,15 @@
     "clone_creation_charged_at": "NEVER_AT_CLONE_TIME",
     "first_activation_cny": "9.90",
     "first_activation_charged_at": "FIRST_SYNTHESIS_WITH_THIS_VOICE",
-    "first_activation_authorised": false,
+    "first_activation_authorised": true,
     "activation_characters": 44,
     "rate_cny_per_10k_chars": "3.50",
     "activation_character_cny": "FIRST_ACTIVATION_TTS_FEE_UNKNOWN",
     "activation_character_cny_estimated": "0.015400",
-    "activation_character_authorised": false,
+    "activation_character_authorised": true,
     "regular_tts": "per-character at speech-2.8-hd rate, M Plan-eligible after activation",
-    "total_authorised_cny": "0.00",
-    "total_unauthorised_cny": "first_activation=9.90, activation_characters=0.015400"
+    "total_authorised_cny": "9.90",
+    "total_unauthorised_cny": "0.00"
   },
   "official_basis": [
     {
@@ -136,17 +139,17 @@
   "voucher_activation": {
     "schema": "contentops.voucher-activation/v1",
     "authorisation": "FOUNDER_VOUCHER_ACTIVATION",
-    "status": "VOUCHER_CLONE_FEE_ELIGIBILITY_UNKNOWN",
+    "status": "VOUCHER_CLONE_FEE_ELIGIBILITY_REFUTED",
     "authorised": false,
     "refusals": [
-      "VOUCHER_CLONE_FEE_ELIGIBILITY_UNKNOWN"
+      "VOUCHER_CLONE_FEE_ELIGIBILITY_REFUTED"
     ],
     "reasons": [
-      "voucher eligibility is not established. The Founder authorised payment FROM the voucher; that is an instruction about which instrument to use, not proof that this instrument covers 音色管理. The one official statement that a voucher offsets API 调用费用 is scoped to the 好友邀请活动 referral programme and cannot be transferred to a voucher of unknown provenance, and 付费服务协议 4.4 defers the definitive scope to 产品界面公示, which no API endpoint exposes. See evidence.voucher_eligibility_basis."
+      "voucher eligibility was refuted by a live call on this account, not left unknown. The activation was sent with the pay-as-you-go API Key that customer service had said the voucher would cover, and the platform answered 'insufficient balance' while voucher_balance was 15.00, available_amount was 15.00 and cash_balance was 0.00. Every balance was unchanged afterwards, so nothing was charged and no 欠费 was created. The voucher is real, it is on the account, and it does not fund a pay-as-you-go API call. Do not re-attempt on the same assurance; the next step is a payment-instrument decision by the Founder, not another trial."
     ],
     "evidence": {
-      "voucher_eligibility": "UNKNOWN",
-      "voucher_eligibility_basis": "VERIFIED_OFFICIAL: 代金券 is an order payment method (使用代金券 | 扣除代金券后实际支付的金额, 代金券抵扣部分不可开票, M Plan FAQ 开票金额怎么计算); 账户余额只有在使用按量计费 API Key 时才会扣除; 扣费顺序为 M Plan 额度优先、积分包其次; 积分包支持...图像与音频生成, 快速复刻未列名, 因此积分包不能支付该费用. UNKNOWN: the single official statement that a voucher offsets API 调用费用 is scoped to the 好友邀请活动 referral programme and this account's voucher provenance is unknown; 付费服务协议 4.4 defers the definitive scope to 产品界面公示; deduction priority between voucher and cash within 账户余额 is undocumented; this voucher's issuance date and remaining validity are not exposed by any reachable endpoint.",
+      "voucher_eligibility": "VERIFIED_LOCAL_REFUTED",
+      "voucher_eligibility_basis": "VERIFIED_OFFICIAL: 代金券 is an order payment method (使用代金券 | 扣除代金券后实际支付的金额, 代金券抵扣部分不可开票, M Plan FAQ 开票金额怎么计算); 账户余额只有在使用按量计费 API Key 时才会扣除; 扣费顺序为 M Plan 额度优先、积分包其次; 积分包支持...图像与音频生成, 快速复刻未列名, 因此积分包不能支付该费用. VERIFIED_ACCOUNT_VOUCHER_TERMS: MiniMax customer service confirmed for THIS account that 使用普通按量 API Key 创建克隆音色, 账户现有 ¥15 代金券可以优先用于本次消费, 首次正式语音合成才触发 ¥9.9 克隆费, 支付后音色永久保留, 后续使用不重复收取克隆费, 且已激活音色可用于现有 M Plan 套餐; 付费服务协议 4.4 另载 代金券只可用于消费, 不可用于抵扣欠费金额. Transcribed in projects/easel-enhanced-golden/receipts/founder-voucher-account-terms.json. STILL UNKNOWN even after that confirmation: deduction priority between voucher and cash within 账户余额; this voucher's issuance date and remaining validity; and whether the cross-key synthesis is permitted at the API level (a 2042 is the documented symptom if it is not, and the confirmation does not address it).",
       "voucher_balance": 15.0,
       "cash_balance": 0.0,
       "credit_balance": 0.0,
@@ -154,8 +157,8 @@
       "allowed_voucher_spend_cny": "10.00",
       "allowed_cash_spend_cny": "0.00",
       "allowed_credit_pack_spend_cny": "0.00",
-      "authorised_for_voice_id_hash": "98fcbad890c52c7cc274e8cc59e47d358ccc309eaf1b9cb7dfe5bfcb093dc197",
-      "presented_voice_id_hash": "98fcbad890c52c7cc274e8cc59e47d358ccc309eaf1b9cb7dfe5bfcb093dc197"
+      "authorised_for_voice_id_hash": "7271d9c80c88821a6a09ed43328619d0ee08c3f2b2449237fe2c31f6899abeef",
+      "presented_voice_id_hash": "7271d9c80c88821a6a09ed43328619d0ee08c3f2b2449237fe2c31f6899abeef"
     },
     "limits": {
       "allowed_voucher_spend_cny": "10.00",
@@ -173,7 +176,7 @@
     "human_review": "PENDING_FOUNDER_REVIEW"
   },
   "voice_alias": "founder_primary_v1",
-  "provider_voice_id_hash": "98fcbad890c52c7cc274e8cc59e47d358ccc309eaf1b9cb7dfe5bfcb093dc197",
+  "provider_voice_id_hash": "7271d9c80c88821a6a09ed43328619d0ee08c3f2b2449237fe2c31f6899abeef",
   "sample_sha256": "bb56d052cd637bd8a369f6e37a745c7609de9988ada0fa0827d4d5c59035df8d",
   "sample_sha256_matches_registry": true,
   "activation_text": "这是一段用于首次激活的最短自然中文语音样本。",
@@ -209,10 +212,34 @@
       "evidence": "官方: 调用本接口需要完成个人认证及企业认证; the pre-existing cloned voice implies a prior successful clone, which requires verification"
     },
     {
-      "check": "cash balance can pay the activation",
-      "pass": false,
+      "check": "no cash can be spent, structurally",
+      "pass": true,
       "detail": "cash_balance=0.0",
-      "evidence": "M Plan FAQ: 账户余额 charged only via a pay-as-you-go key; the activation runs on that key"
+      "evidence": "M Plan FAQ: 账户余额 is charged only via a pay-as-you-go key, and this activation runs on that key. A ZERO cash balance is the safety property, not a blocker: there is nothing for a wrong deduction priority to take, so a mis-deduction fails closed at the platform instead of quietly spending money. This line previously demanded cash >= 9.90, which was correct only while the voucher's eligibility was unproven -- it is now the instrument customer service confirmed for this account."
+    },
+    {
+      "check": "no Cash-Pack or Credit Pack can be drawn on",
+      "pass": true,
+      "detail": "credit_balance=0.0",
+      "evidence": "结构上为零,所以扣错资金来源不是概率问题而是接口不会受理"
+    },
+    {
+      "check": "no outstanding debt can absorb or be increased by this charge",
+      "pass": true,
+      "detail": "owed_amount=0.0",
+      "evidence": "付费服务协议 4.4: 代金券只可用于消费, 不可用于抵扣欠费金额; a zero reading before and after is what shows the charge created no 欠费"
+    },
+    {
+      "check": "voucher covers the combined authorised ceiling",
+      "pass": true,
+      "detail": "voucher_balance=15.0, ceiling CNY 10.00",
+      "evidence": "Founder authorisation FOUNDER_VOUCHER_ACTIVATION; customer service confirmed the voucher is prioritised for this consumption"
+    },
+    {
+      "check": "voucher eligibility is established, not assumed",
+      "pass": false,
+      "detail": "CONTENTOPS_VOUCHER_ELIGIBILITY=VERIFIED_LOCAL_REFUTED",
+      "evidence": "VOUCHER_ELIGIBILITY_ACCEPTS; UNKNOWN refuses"
     },
     {
       "check": "Subscription-Key in-plan TTS is provable",
@@ -228,26 +255,26 @@
     },
     {
       "check": "CNY 9.90 activation fee authorised",
-      "pass": false,
-      "detail": "authorised=False",
+      "pass": true,
+      "detail": "authorised=True",
       "evidence": "CONTENTOPS_FIRST_ACTIVATION_AUTHORISED"
     },
     {
       "check": "activation character fee authorised (never assumed zero)",
-      "pass": false,
+      "pass": true,
       "detail": "44 billable chars at 3.50/10k, estimate CNY 0.015400; recorded as FIRST_ACTIVATION_TTS_FEE_UNKNOWN",
       "evidence": "CONTENTOPS_ACTIVATION_CHARACTER_FEE_AUTHORISED"
     },
     {
       "check": "M Plan quota remaining in both required windows",
       "pass": true,
-      "detail": "interval=69.0%, weekly=56.0%",
+      "detail": "interval=49.0%, weekly=54.0%",
       "evidence": "/v1/token_plan/remains; speech requires both windows"
     },
     {
       "check": "voice_id satisfies the documented rules",
       "pass": true,
-      "detail": "XSuperPlayFounderV1 -> sha256 98fcbad890c52c7c",
+      "detail": "founder_primary_v1 -> sha256 7271d9c80c88821a",
       "evidence": "length [8,256], leading English letter, [A-Za-z0-9-_], no trailing - or _"
     },
     {
@@ -287,8 +314,8 @@
       "evidence": "官方: 168 小时(7 天)内未调用则删除"
     }
   ],
-  "ready_to_execute_passed": 15,
-  "ready_to_execute_total": 18,
+  "ready_to_execute_passed": 21,
+  "ready_to_execute_total": 22,
   "max_actual_charge_cny": "9.9154",
   "measured": {
     "billing_verdict": "SAFE_INCLUDED_PLAN",
@@ -305,13 +332,19 @@
       "owed_amount": "0.00"
     },
     "quota": {
-      "interval_remaining_percent": 69.0,
-      "weekly_remaining_percent": 56.0,
+      "interval_remaining_percent": 49.0,
+      "weekly_remaining_percent": 54.0,
       "bucket": "general"
     },
     "cash_balance": 0.0,
+    "voucher_balance": 15.0,
+    "credit_balance": 0.0,
+    "owed_amount": 0.0,
     "clone_key_reachable": true
   },
+  "voucher_eligibility_grade": "VERIFIED_LOCAL_REFUTED",
+  "voucher_spend_ceiling_cny": "10.00",
+  "account_terms_confirmation": "projects/easel-enhanced-golden/receipts/founder-voucher-account-terms.json",
   "calls_performed": {
     "upload": 0,
     "clone": 0,

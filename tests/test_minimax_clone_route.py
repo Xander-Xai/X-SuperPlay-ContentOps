@@ -680,6 +680,154 @@ def test_every_official_citation_is_attributable():
     print("[ok] 20. every stop code and every computed charge traces to a named page")
 
 
+# --- H. a live measurement outranks the assurance it contradicts ----------------
+
+
+@test
+def test_an_unknown_phase_is_refused_rather_than_silently_treated_as_all():
+    """A typo in ``phase`` must not quietly evaluate fewer gates.
+
+    Defaulting an unrecognised phase to ``PHASE_ALL`` would be fail-closed for the
+    clone gates but would still be wrong in the other direction for a caller who meant
+    ``CLONE_ACTIVATION``: the receipt would claim to have checked narration gates it
+    never looked at. Rejecting the value makes the mistake visible at the call site.
+    """
+    for bad in ("clone", "CLONE", "", "narration"):
+        try:
+            route.decide_route(
+                _pair(clone_key="sk-api-clone"),
+                billing_verdict=PAY_GATE,
+                phase=bad,
+            )
+            raise AssertionError(f"phase={bad!r} must be refused")
+        except ValueError:
+            pass
+    print("[ok] 21. an unknown phase raises instead of defaulting to a weaker check")
+
+
+@test
+def test_the_cross_key_gate_is_deferred_in_the_clone_phase_and_still_blocks_narration():
+    """The deadlock this fixes, and the deadlock it must not become.
+
+    ``cross_key_verified`` asks whether the Subscription Key can synthesise with a
+    voice that the pay-as-you-go key created. Before Issue #34 that gate was evaluated
+    unconditionally, so it blocked the very clone whose activation would produce the
+    answer -- the only way to satisfy it was to perform the action it forbids.
+
+    Deferring it is only safe if it is genuinely still there. So: the clone phase must
+    not list it as a blocker, and must list it as deferred; and the narration phase,
+    given the same unverified answer, must block on it exactly as before.
+    """
+    ready = _decide(
+        _pair(clone_key="sk-api-clone"),
+        cash_balance=20.0,
+        voucher_eligibility="VERIFIED_ACCOUNT_VOUCHER_TERMS",
+        voucher_balance=15.0,
+        first_activation_authorised=True,
+        activation_cost=_cost(
+            first_activation_authorised=True,
+            activation_character_authorised=True,
+        ),
+        cross_key_verified=None,
+        phase=route.PHASE_CLONE_ACTIVATION,
+    )
+    assert route.ROUTE_CROSS_KEY_UNKNOWN not in ready.blocked_by, ready.blocked_by
+    assert route.ROUTE_CROSS_KEY_UNKNOWN in ready.deferred_gates, ready.deferred_gates
+    assert ready.authorised, ready.blocked_by
+    joined = " ".join(ready.reasons)
+    assert "DEFERRED" in joined and "not waived" in joined, joined
+
+    # And it is still a hard blocker the moment narration is the question.
+    narration = _decide(
+        _pair(clone_key="sk-api-clone"),
+        cash_balance=20.0,
+        first_activation_authorised=True,
+        cross_key_verified=None,
+        phase=route.PHASE_REGULAR_NARRATION,
+    )
+    assert route.ROUTE_CROSS_KEY_UNKNOWN in narration.blocked_by, narration.blocked_by
+    assert not narration.authorised
+
+    # PHASE_ALL, the default, keeps its old behaviour exactly.
+    both = _decide(_pair(clone_key="sk-api-clone"), cross_key_verified=None)
+    assert route.ROUTE_CROSS_KEY_UNKNOWN in both.blocked_by, both.blocked_by
+    print("[ok] 22. cross-key defers for the clone and still blocks narration")
+
+
+@test
+def test_a_refuted_voucher_outranks_every_assurance_and_clears_nothing():
+    """The measurement from Issue #34, encoded so it cannot be argued away.
+
+    Customer service confirmed the voucher would pay; the live call answered
+    ``insufficient balance`` with the voucher still on the account. The refutation is
+    ranked above ``VERIFIED_OFFICIAL`` and above
+    ``VERIFIED_ACCOUNT_VOUCHER_TERMS`` so that re-presenting the same screenshot does
+    not re-open the gate, and the receipt names the grade rather than reporting the
+    weaker, misleading "unknown".
+    """
+    params = dict(
+        cash_balance=0.0,
+        first_activation_authorised=True,
+        activation_cost=_cost(
+            first_activation_authorised=True,
+            activation_character_authorised=True,
+        ),
+    )
+    refuted = _decide(
+        _pair(clone_key="sk-api-clone"),
+        voucher_eligibility=route.EVIDENCE_LIVE_REFUTED,
+        voucher_balance=15.0,
+        phase=route.PHASE_CLONE_ACTIVATION,
+        **params,
+    )
+    assert route.ROUTE_ACTIVATION_CASH_INSUFFICIENT in refuted.blocked_by
+    assert not refuted.authorised, "a refuted instrument must never authorise a charge"
+    assert refuted.activation_payment_source == "REFUTED_BY_MEASUREMENT"
+    joined = " ".join(refuted.reasons)
+    assert "insufficient balance" in joined, joined
+    assert "unchanged" in joined, joined
+
+    # Even with an account-terms assurance AND a covering balance, the refutation wins.
+    # That is the whole point: the refutation is not a weaker kind of unknown.
+    assert route.EVIDENCE_LIVE_REFUTED != route.EVIDENCE_OFFICIAL_DOC
+    assert route.EVIDENCE_LIVE_REFUTED not in route.VOUCHER_ELIGIBILITY_ACCEPTS
+    print("[ok] 23. a live refutation outranks every assurance and authorises nothing")
+
+
+@test
+def test_voucher_backed_activation_still_needs_covering_balance_and_declared_evidence():
+    """The escape hatch stays narrow, so it cannot become a habit.
+
+    Three ways to fail with an assurance in hand: no evidence at all, an unreadable
+    balance, and a balance that does not cover the ceiling. Each must refuse.
+    """
+    base = dict(
+        cash_balance=0.0,
+        first_activation_authorised=True,
+        activation_cost=_cost(
+            first_activation_authorised=True,
+            activation_character_authorised=True,
+        ),
+        phase=route.PHASE_CLONE_ACTIVATION,
+    )
+    for label, kwargs in (
+        ("no evidence", {}),
+        ("unreadable balance", {"voucher_balance": None}),
+        ("balance below ceiling", {"voucher_balance": 3.0}),
+    ):
+        decision = _decide(
+            _pair(clone_key="sk-api-clone"),
+            voucher_eligibility="VERIFIED_ACCOUNT_VOUCHER_TERMS",
+            **base,
+            **kwargs,
+        )
+        assert not decision.authorised, f"{label} must not authorise a charge"
+        assert (
+            route.ROUTE_ACTIVATION_CASH_INSUFFICIENT in decision.blocked_by
+        ), (label, decision.blocked_by)
+    print("[ok] 24. a voucher-backed activation needs declared evidence and real cover")
+
+
 def main() -> int:
     failures = 0
     for fn in TESTS:

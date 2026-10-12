@@ -1,0 +1,151 @@
+{
+  "schema": "contentops.voice-activation-receipt/v1",
+  "producer": "scripts/execute_founder_voice_activation.py",
+  "provider": "minimax",
+  "voice_alias": "founder_primary_v1",
+  "provider_voice_id_hash": "7271d9c80c88821a6a09ed43328619d0ee08c3f2b2449237fe2c31f6899abeef",
+  "sample_sha256": "bb56d052cd637bd8a369f6e37a745c7609de9988ada0fa0827d4d5c59035df8d",
+  "model": "speech-2.8-hd",
+  "base_url_host": "https://api.minimaxi.com",
+  "started_at": "2026-10-12T12:00:40.045748+00:00",
+  "executed": true,
+  "credentials": {
+    "clone": {
+      "credential_class": "PAYG",
+      "credential_source": "MINIMAX_CLONE_KEY_ENV"
+    },
+    "tts": {
+      "credential_class": "SUBSCRIPTION",
+      "credential_source": "MMX_CONFIG"
+    },
+    "keys_distinct": true
+  },
+  "activation_text": "这是一段用于首次激活的最短自然中文语音样本。",
+  "provider_call_budget": {
+    "upload": 1,
+    "clone": 1,
+    "activation_tts": 1,
+    "crosskey_tts": 1
+  },
+  "provider_call_counts": {
+    "upload": 1,
+    "clone": 1,
+    "activation_tts": 1,
+    "crosskey_tts": 0
+  },
+  "retries_performed": 0,
+  "notes": [],
+  "money_before_this_invocation": {
+    "verdict": "BLOCKED_BILLING_SOURCE_UNCERTAIN",
+    "credential_class": "PAYG",
+    "balances": {
+      "available_amount": "15.00",
+      "cash_balance": "0.00",
+      "voucher_balance": "15.00",
+      "credit_balance": "0.00",
+      "owed_amount": "0.00"
+    },
+    "observed_out_of_chain": [],
+    "quota": {
+      "interval_remaining_percent": 52.0,
+      "weekly_remaining_percent": 55.0,
+      "bucket": "general"
+    }
+  },
+  "money_baseline": {
+    "available_amount": "15.00",
+    "cash_balance": "0.00",
+    "voucher_balance": "15.00",
+    "credit_balance": "0.00",
+    "owed_amount": "0.00"
+  },
+  "request_fingerprint": "adf8a833a0408c300d85e15c85333a73bd7931dbc162b2426c68e41b90837066",
+  "resumed_from_registry": true,
+  "upload_file_id_hash": "31189aab9defbae2a508b000c0d27311def9b89aa2d3cb3dba8b5552abfa7101",
+  "clone_status": "CLONED",
+  "clone_created_at": "2026-10-12T11:59:16.441404+00:00",
+  "clone_created_at_unix": 1791806356.4414043,
+  "money_pre_activation": {
+    "verdict": "BLOCKED_BILLING_SOURCE_UNCERTAIN",
+    "credential_class": "PAYG",
+    "balances": {
+      "available_amount": "15.00",
+      "cash_balance": "0.00",
+      "voucher_balance": "15.00",
+      "credit_balance": "0.00",
+      "owed_amount": "0.00"
+    },
+    "observed_out_of_chain": [],
+    "quota": {
+      "interval_remaining_percent": 52.0,
+      "weekly_remaining_percent": 55.0,
+      "bucket": "general"
+    }
+  },
+  "money_post_activation": {
+    "verdict": "BLOCKED_BILLING_SOURCE_UNCERTAIN",
+    "credential_class": "PAYG",
+    "balances": {
+      "available_amount": "15.00",
+      "cash_balance": "0.00",
+      "voucher_balance": "15.00",
+      "credit_balance": "0.00",
+      "owed_amount": "0.00"
+    },
+    "observed_out_of_chain": [],
+    "quota": {
+      "interval_remaining_percent": 52.0,
+      "weekly_remaining_percent": 55.0,
+      "bucket": "general"
+    }
+  },
+  "activation_delta": {
+    "cash_balance": {
+      "before": "0.00",
+      "after": "0.00",
+      "delta": "0.00",
+      "decreased": false,
+      "increased": false
+    },
+    "credit_balance": {
+      "before": "0.00",
+      "after": "0.00",
+      "delta": "0.00",
+      "decreased": false,
+      "increased": false
+    },
+    "voucher_balance": {
+      "before": "15.00",
+      "after": "15.00",
+      "delta": "0.00",
+      "decreased": false,
+      "increased": false
+    },
+    "owed_amount": {
+      "before": "0.00",
+      "after": "0.00",
+      "delta": "0.00",
+      "decreased": false,
+      "increased": false
+    },
+    "available_amount": {
+      "before": "15.00",
+      "after": "15.00",
+      "delta": "0.00",
+      "decreased": false,
+      "increased": false
+    }
+  },
+  "activation_tts": {
+    "ok": false,
+    "returncode": 1,
+    "bytes": 0,
+    "stderr_tail": "{\n  \"error\": {\n    \"code\": 1,\n    \"message\": \"API error: insufficient balance (HTTP 200)\"\n  }\n}\n",
+    "stdout_tail": ""
+  },
+  "activation_audio": "D:\\Projects\\X-SuperPlay-ContentOps\\.verify-tmp\\m23-founder-clone\\activation-founder_primary_v1.wav",
+  "voice_activated": false,
+  "stopped_at": "activation",
+  "finished_at": "2026-10-12T12:00:44.228929+00:00",
+  "cross_key_tts_verified": false
+}

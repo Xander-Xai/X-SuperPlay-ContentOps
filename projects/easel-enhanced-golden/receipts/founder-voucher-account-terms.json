@@ -1,0 +1,102 @@
+{
+  "schema": "contentops.vendor-account-terms/v1",
+  "producer": "Founder, transcribed by the agent from MiniMax customer service",
+  "evidence_class": "FOUNDER_SUPPLIED_VENDOR_ACCOUNT_CONFIRMATION",
+  "subject": "MiniMax 开放平台 CN account",
+  "obtained_on": "2026-10-12",
+  "obtained_by": "Founder, from MiniMax customer service, with screenshot confirmation",
+  "scope": "ACCOUNT_LEVEL_COMMERCIAL",
+  "is_proof_of_api_success": false,
+  "is_proof_of_a_completed_charge": false,
+  "read_this_first": "This records what customer service TOLD the Founder about THIS account. Nothing here has been charged. No API call has yet been made under it. An account-level commercial assurance is not an API permission grant and is not a receipt.",
+  "live_measurement_supersedes_one_claim": {
+    "measured_on": "2026-10-12",
+    "claim_id": "voucher-funds-this-consumption",
+    "verdict": "REFUTED",
+    "evidence_class": "VERIFIED_LOCAL_REFUTED",
+    "what_was_done": "The clone was created successfully with the pay-as-you-go API Key, exactly as this confirmation says it should be. The first synthesis with that voice -- the call that triggers the CNY 9.90 -- was then sent with the same pay-as-you-go key.",
+    "provider_response": "API error: insufficient balance (HTTP 200)",
+    "balances_at_the_moment_of_refusal": {
+      "voucher_balance": "15.00",
+      "available_amount": "15.00",
+      "cash_balance": "0.00",
+      "credit_balance": "0.00",
+      "owed_amount": "0.00"
+    },
+    "balances_after_the_refusal": {
+      "voucher_balance": "15.00",
+      "available_amount": "15.00",
+      "cash_balance": "0.00",
+      "credit_balance": "0.00",
+      "owed_amount": "0.00"
+    },
+    "conclusion": "The CNY 15.00 voucher was NOT taken up as the payment instrument for a pay-as-you-go API call. The platform required something this account does not have. Nothing was charged and no 欠费 was created.",
+    "why_this_is_recorded_rather_than_deleted": "The confirmation was specific, plausible, screenshot-backed and still wrong about this one point. That is the generalisable finding: customer-service assurance settles commercial terms, not API behaviour. The other six claims above are untouched by this measurement and remain unproven as well as unrefuted."
+  },
+  "claims": [
+    {
+      "id": "payg-key-creates-clone",
+      "claim": "使用普通按量 API Key 可以创建克隆音色。",
+      "meaning": "The clone is created with an ordinary pay-as-you-go API Key, not with the Token Plan / M Plan Subscription Key.",
+      "resolves_blocker": "ROUTE_CLONE_KEY_REQUIRED / the 2061 refusal on the Subscription Key"
+    },
+    {
+      "id": "voucher-funds-this-consumption",
+      "claim": "账户现有 ¥15 代金券可以优先用于本次消费。",
+      "meaning": "The existing CNY 15.00 voucher is the intended and prioritised payment instrument for this one-time consumption.",
+      "resolves_blocker": "ROUTE_ACTIVATION_CASH_INSUFFICIENT / VOUCHER_CLONE_FEE_ELIGIBILITY_UNKNOWN"
+    },
+    {
+      "id": "fee-triggers-at-first-synthesis",
+      "claim": "克隆音色创建后，首次正式语音合成才触发 ¥9.9 克隆费。",
+      "meaning": "Creating the clone costs nothing. The one-time CNY 9.90 voice fee is charged at the FIRST real synthesis with that voice. Clone creation and first synthesis are therefore one billable session and must run back to back.",
+      "resolves_blocker": "none; it is the timing model the route already encoded"
+    },
+    {
+      "id": "permanent-after-payment",
+      "claim": "支付首次费用后，音色可永久保留。",
+      "meaning": "After the first charge the voice becomes permanently valid rather than temporary, which is the exception to the documented 168-hour temporary-voice TTL.",
+      "resolves_blocker": "the CLONE_TTL_SECONDS expiry, for a voice that HAS been activated"
+    },
+    {
+      "id": "no-repeat-fee",
+      "claim": "后续使用不会重复收取克隆费。",
+      "meaning": "The one-time fee is charged once. Later uses of the same voice pay only the normal per-character amount.",
+      "resolves_blocker": "none; it bounds the maximum total spend"
+    },
+    {
+      "id": "mplan-usable-after-activation",
+      "claim": "已激活音色可以用于现有 M Plan 套餐的语音合成。",
+      "meaning": "A voice that has already paid the CNY 9.90 may be used for speech synthesis under the existing M Plan Subscription Key.",
+      "resolves_blocker": "nothing on its own. This is a COMMERCIAL statement. Whether the API permits it is an API-level permission question answered only by one real synthesis; error 2042 (无权访问该 voice_id) is the documented symptom if it does not."
+    },
+    {
+      "id": "voucher-cannot-settle-debt",
+      "claim": "代金券只可用于消费，不可用于抵扣欠费金额。",
+      "meaning": "A voucher may only pay for consumption; it cannot offset an owed amount. Confirms the ceiling is a consumption ceiling and says nothing about priority against cash.",
+      "resolves_blocker": "none; it is a constraint, recorded so it is not mistaken for a permission"
+    }
+  ],
+  "still_unverified": [
+    "that the rotated PAYG API Key is accepted by the host for a clone -- now answered by a read-only get_voice probe, recorded in founder-voice-route-receipt.json",
+    "the actual amounts charged -- must come from measured balance deltas and the official billing record, never from this document",
+    "whether deduction priority between voucher and cash within 账户余额 is voucher-first; the service agreement defers this to 产品界面公示, which no API endpoint exposes",
+    "that no recharge, no Credit Pack use and no 欠费 can occur; these are enforced structurally by owed_amount = 0.00 and credit_balance = 0.00 being read immediately before the charge"
+  ],
+  "founder_authorisation": {
+    "id": "FOUNDER_VOUCHER_ACTIVATION",
+    "granted_on": "2026-10-12",
+    "voucher_max_spend_cny": "10.00",
+    "one_time_voice_activation_cny": "9.90",
+    "first_character_fee_included": true,
+    "first_character_fee_expected_cny": "0.0154",
+    "cash_spend_cny": "0.00",
+    "credit_pack_spend_cny": "0.00",
+    "automatic_recharge": "FORBIDDEN",
+    "duplicate_clone": "FORBIDDEN",
+    "automatic_retry": "FORBIDDEN",
+    "stop_condition": "如果无法限制支付来源为代金券、存在自动扣现金或形成欠费的风险,在发送真人录音之前停止。",
+    "hard_ceiling_rule": "如实际计费金额高于 ¥10,禁止继续生成。"
+  },
+  "human_review": "PENDING_FOUNDER_REVIEW"
+}
