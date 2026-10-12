@@ -61,6 +61,7 @@ __all__ = [
     "classify_credential",
     "resolve_clone_credential",
     "resolve_credential",
+    "resolve_subscription_credential",
     "resolve_two_key_pair",
 ]
 
@@ -170,6 +171,12 @@ def resolve_credential(env: Optional[Dict[str, str]] = None) -> ResolvedCredenti
     authority; the config file is the last resort and is recorded as such,
     because a stored credential is the one most likely to drift from what the
     operator intended.
+
+    Note the third step of that order is a *general* resolver used by paths that
+    legitimately accept a pay-as-you-go key. Narration must not inherit it: the
+    implicit fallback to ``MINIMAX_API_KEY`` (and, worse, a config file that
+    could hold anything) is exactly the route the narration-v2 round closes.
+    Narration callers use :func:`resolve_subscription_credential` instead.
     """
     environ = dict(os.environ if env is None else env)
 
@@ -187,6 +194,49 @@ def resolve_credential(env: Optional[Dict[str, str]] = None) -> ResolvedCredenti
             key=api_key,
             credential_class=classify_credential(api_key),
             source=SOURCE_API_KEY_ENV,
+        )
+
+    stored, source = _from_mmx_config()
+    if stored:
+        return ResolvedCredential(
+            key=stored,
+            credential_class=classify_credential(stored),
+            source=source,
+        )
+
+    return ResolvedCredential(
+        key="", credential_class=CREDENTIAL_ABSENT, source=SOURCE_NONE
+    )
+
+
+def resolve_subscription_credential(
+    env: Optional[Dict[str, str]] = None,
+) -> ResolvedCredential:
+    """Resolve the credential narration may use, with no pay-as-you-go fallback.
+
+    The narration route's default is ``MINIMAX_SUBSCRIPTION_KEY`` (Issue #34,
+    narration v2). Two steps, and only these two:
+
+    1. ``MINIMAX_SUBSCRIPTION_KEY``;
+    2. the official CLI's stored config (``~/.mmx/config.json``), which on this
+       account holds the same subscription credential the CLI itself uses.
+
+    ``MINIMAX_API_KEY`` is deliberately absent from the chain. It is the
+    pay-as-you-go fallback general resolution uses, and a narration request that
+    silently borrows it would bill cash instead of plan quota -- the exact
+    failure the fixed-billing requirement forbids. A machine without either
+    subscription source therefore gets ``ABSENT`` and a refusal, not a key.
+    The credential *class* is not rewritten here: a subscription-class check is
+    the M Plan gate's job, and it must stay the single place that refuses.
+    """
+    environ = dict(os.environ if env is None else env)
+
+    subscription = environ.get("MINIMAX_SUBSCRIPTION_KEY", "").strip()
+    if subscription:
+        return ResolvedCredential(
+            key=subscription,
+            credential_class=classify_credential(subscription),
+            source=SOURCE_SUBSCRIPTION_ENV,
         )
 
     stored, source = _from_mmx_config()

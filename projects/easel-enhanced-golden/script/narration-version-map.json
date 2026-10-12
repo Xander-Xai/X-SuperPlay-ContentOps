@@ -1,0 +1,96 @@
+{
+  "schema": "contentops.narration-version-map/v1",
+  "issue": "#34",
+  "original": {
+    "path": "projects/easel-review/script/narration.txt",
+    "canonical_blob_sha256": "f2de808c9e723f8430acdc44dc374c5791b249250d8bc585a172360a88b9542a"
+  },
+  "evidence_lock": {
+    "path": "projects/easel-enhanced-golden/evidence/evidence-lock.json",
+    "narration_text_sha256": "f2de808c9e723f8430acdc44dc374c5791b249250d8bc585a172360a88b9542a"
+  },
+  "spoken_script": {
+    "path": "projects/easel-enhanced-golden/script/narration-spoken.json",
+    "working_tree_sha256": "3d2e0a91a114d5a51ab619415b8a480c0e659c4ec9f1ad7179c72cc4e79b6ed8",
+    "canonical_blob_sha256": "3d2e0a91a114d5a51ab619415b8a480c0e659c4ec9f1ad7179c72cc4e79b6ed8",
+    "display_text_sha256": "c06c5b839eb15e41895085ae65d8275d11dd46460b5b1daa525e55167288fc02",
+    "segment_display_sha256": {
+      "S01": "7d6cd42b816c8ab500716b82e83d6b8d3ede18d3a3f21a1b267a91483cd10605",
+      "S02": "50cd258745aec633ae3adecd5d23080bbb42ea0f4a7836bb227897cee6d21403",
+      "S03": "d2f00b3c0ac5c539b4c75571df138d783a2423668f358bd92ec0ea94865ddadd",
+      "S04": "11f2d073fcb16c0576f89765f8f08b3f87ade1aaa5d3c26a07bae23bf09d5aed",
+      "S05": "0da06517e269229269c22f3fb7aecb5578bbeb1b762d45575c287daaf250f227",
+      "S06": "da4f78cbce52d1c3262f5f47bc6ad9af74abb8aa2879428e78298809cd22c6d9",
+      "S07": "5f32f3832d719f8bf6c9bd264f363dbd44c0ecd717b3b7b5c415eda5f6fb3616"
+    }
+  },
+  "sample": {
+    "segments": [
+      "S01",
+      "S02",
+      "S03"
+    ],
+    "original_paragraphs": [
+      1,
+      2,
+      3
+    ],
+    "target_duration_s": [
+      20.0,
+      30.0
+    ]
+  },
+  "lexicon": {
+    "language": "zh",
+    "version": "zh-2026.10.04.1",
+    "fingerprint_component": "24c3dcf12d0a7a8b"
+  },
+  "synthesis": {
+    "full": {
+      "display_characters": 472,
+      "display_sha256": "c06c5b839eb15e41895085ae65d8275d11dd46460b5b1daa525e55167288fc02",
+      "synthesis_characters": 466,
+      "synthesis_sha256": "37d772bbab0b823cfd51c63b1dd4fae5d1ef58af0a43682c1cb6c807f7202d64"
+    },
+    "sample": {
+      "display_characters": 168,
+      "display_sha256": "0eb9b6867375f94b7d6bdf0126ce9de285653b9978cdf7ecf17563b1925bc644",
+      "synthesis_characters": 166,
+      "synthesis_sha256": "177e1a46e6916624f56d4be6093d859c0b5139bdce316d51d22fb41c2d967349"
+    },
+    "segment:S01": {
+      "display_characters": 37,
+      "display_sha256": "7d6cd42b816c8ab500716b82e83d6b8d3ede18d3a3f21a1b267a91483cd10605",
+      "synthesis_characters": 35,
+      "synthesis_sha256": "d90f67596305221273b6af1832b4758de05fef6e37c61cc0c0f1038933cd6048"
+    },
+    "segment:S02": {
+      "display_characters": 49,
+      "display_sha256": "50cd258745aec633ae3adecd5d23080bbb42ea0f4a7836bb227897cee6d21403",
+      "synthesis_characters": 49,
+      "synthesis_sha256": "99b9e7948ab2c570a58c94089441cd1a0a7e378844729bdbd8ec03b7b5fb20a4"
+    },
+    "segment:S03": {
+      "display_characters": 80,
+      "display_sha256": "d2f00b3c0ac5c539b4c75571df138d783a2423668f358bd92ec0ea94865ddadd",
+      "synthesis_characters": 80,
+      "synthesis_sha256": "d2f00b3c0ac5c539b4c75571df138d783a2423668f358bd92ec0ea94865ddadd"
+    }
+  },
+  "mechanical_checks": {
+    "verified": true,
+    "mechanically_checked": [
+      "source digest equals the evidence lock",
+      "digit tokens preserved (full script and sample)",
+      "protected phrases preserved (full script and sample scope)",
+      "pause markers valid per documented <#x#> rules",
+      "segment roles valid and all five roles covered",
+      "segment texts carry no newlines"
+    ],
+    "not_proven_by_this_check": [
+      "semantic equivalence of paraphrased sentences",
+      "tone and naturalness",
+      "that a reworded conclusion keeps its meaning"
+    ]
+  }
+}

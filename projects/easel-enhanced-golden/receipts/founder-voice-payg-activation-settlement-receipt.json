@@ -1,0 +1,90 @@
+{
+  "schema": "contentops.payg-activation-settlement/v1",
+  "issue": "#34",
+  "attempt_id": "paygact-a113459b63dc",
+  "checked_at": "2026-10-12T15:30:52.805265+00:00",
+  "transport": "read_only",
+  "generation_requests_sent": 0,
+  "activation_receipt": "projects/easel-enhanced-golden/receipts/founder-voice-payg-first-activation-receipt.json",
+  "provider_status": {
+    "status_code": 0,
+    "status_meaning": "success",
+    "http_status": 200,
+    "trace_id": "071c2f987a3d496f54083002944d5506",
+    "usage_characters": 43,
+    "usage_voice_count": 1
+  },
+  "usage_voice_count": 1,
+  "money_before": {
+    "available_amount": "25.00",
+    "cash_balance": "10.00",
+    "voucher_balance": "15.00",
+    "credit_balance": "0.00",
+    "owed_amount": "0.00"
+  },
+  "money_now": {
+    "available_amount": "15.08",
+    "cash_balance": "10.00",
+    "voucher_balance": "5.08",
+    "credit_balance": "0.00",
+    "owed_amount": "0.00"
+  },
+  "deltas": {
+    "cash_balance": {
+      "before": "10.00",
+      "after": "10.00",
+      "delta": "0.00",
+      "decreased": false,
+      "increased": false
+    },
+    "voucher_balance": {
+      "before": "15.00",
+      "after": "5.08",
+      "delta": "-9.92",
+      "decreased": true,
+      "increased": false
+    },
+    "credit_balance": {
+      "before": "0.00",
+      "after": "0.00",
+      "delta": "0.00",
+      "decreased": false,
+      "increased": false
+    },
+    "owed_amount": {
+      "before": "0.00",
+      "after": "0.00",
+      "delta": "0.00",
+      "decreased": false,
+      "increased": false
+    },
+    "available_amount": {
+      "before": "25.00",
+      "after": "15.08",
+      "delta": "-9.92",
+      "decreased": true,
+      "increased": false
+    }
+  },
+  "settled_total_debit_cny": "9.92",
+  "expected_components": {
+    "one_time_voice_fee_cny": "9.90",
+    "character_fee_estimated_cny": "0.015400",
+    "projected_total_cny": "9.9154",
+    "note": "balances are displayed to 0.01, so the settled figure is compared against the projected total as a bounded band, not an equality"
+  },
+  "within_cny_10_authorization": true,
+  "paid_by": [
+    "voucher"
+  ],
+  "payment_source_note": "the platform's own deduction order chose the voucher; the request contains no field that selects a fund. No recharge was performed, no Credit Pack was drawn on and no debt was created.",
+  "fee_consistent_with_documented_components": true,
+  "outcome": "ACTIVATION_FEE_SETTLED_VOUCHER",
+  "human_review": "PENDING_FOUNDER_REVIEW",
+  "voice_listing": {
+    "read": true,
+    "count": 2,
+    "lists_founder_voice": true,
+    "matched_by": "sha256 voice_id comparison; raw ids never recorded"
+  }
+}

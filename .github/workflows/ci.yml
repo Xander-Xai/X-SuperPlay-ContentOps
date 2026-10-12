@@ -113,6 +113,53 @@ jobs:
       - name: Run host-binding audit regression tests
         run: python tests/test_host_binding_audit.py
 
+      # The native-credential rounds: the PAYG activation gate, the M Plan
+      # narration gate, plan-only classification and the append-only history.
+      # Fully offline; the decisive assertions are that each route's header
+      # carries exactly its own credential, that neither gate can be satisfied
+      # by the other route's key, and that the historical attempts survive.
+      - name: Run native-rounds regression tests
+        run: python tests/test_native_rounds.py
+
+      # Narration v2. Segment delivery: content-addressed cache, partial
+      # regeneration, deterministic joins (wave fixtures + ffmpeg), and the
+      # documented pause/emotion payload rules. Fully offline.
+      - name: Run segment-delivery regression tests
+        run: python tests/test_t2a_segments.py
+
+      # The spoken-script stage: evidence-lock binding, digit-token
+      # preservation, protected phrases, pause syntax, role coverage and the
+      # three-way version map. Fully offline; no provider surface exists.
+      - name: Run spoken-script regression tests
+        run: python tests/test_spoken_script.py
+
+      # The A/B sample experiment policy: narration credential binding must
+      # never borrow the pay-as-you-go variable, the budget arithmetic is the
+      # published counting rule, the dry run completes offline and transmits
+      # nothing, and the new scripts have no PAYG/clone/transfer surface.
+      - name: Run A/B sample policy tests
+        run: python tests/test_ab_sample_policy.py
+
+      # Narration v3. The creator-script stage: fact-script and evidence-lock
+      # binding, digit preservation with declared omissions, preserved facts,
+      # template-marketing refusal, first-person bases, beat structure and the
+      # version map. Fully offline.
+      - name: Run creator-script regression tests
+        run: python tests/test_creator_script.py
+
+      # The narration director: per-unit intent metadata, auto-emotion default,
+      # calm-at-most-once and no-majority rules, bounded homogeneous speeds,
+      # intent-paced pauses with unique anchors, intent-grouped synthesis and
+      # single-unit-group discipline. Fully offline.
+      - name: Run narration-director regression tests
+        run: python tests/test_narration_director.py
+
+      # The v3 D/E/F sample policy: offline dry run, label-blind candidate
+      # files, budget estimate, preset-voice evidence binding, no PAYG/clone
+      # surface in the new scripts.
+      - name: Run narration-v3 policy tests
+        run: python tests/test_narration_v3_policy.py
+
       - name: Run M3 image regression tests
         run: python tests/test_minimax_image.py
 

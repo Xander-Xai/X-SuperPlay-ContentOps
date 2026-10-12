@@ -31,12 +31,25 @@ def run_check(name: str, cmd: list[str]) -> bool:
     print(f"\n=== {name} ===")
     r = hidden_run(cmd, cwd=str(ROOT), timeout=300)
     if r.stdout:
-        print(r.stdout[:2000])
+        print(_console_safe(r.stdout[:2000]))
     if r.returncode != 0 and r.stderr:
-        print(r.stderr[:1000])
+        print(_console_safe(r.stderr[:1000]))
     ok = r.returncode == 0
     print(f"[{'PASS' if ok else 'FAIL'}] {name}")
     return ok
+
+
+def _console_safe(text: str) -> str:
+    """Make captured output printable whatever the console encoding is.
+
+    A check that fails while printing non-ASCII (an em dash in a docs-check
+    failure line was the measured case) used to crash this gate with
+    UnicodeEncodeError *instead of reporting the failing check* -- a gate that
+    dies while reporting is worse than the failure it was reporting. Encoding
+    errors are replaced here, never raised.
+    """
+    encoding = sys.stdout.encoding or "utf-8"
+    return text.encode(encoding, errors="replace").decode(encoding, errors="replace")
 
 
 def main():

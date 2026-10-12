@@ -121,6 +121,16 @@ class PronunciationLexicon:
             entries += ["--pronunciation", f"{source}/{self.rules[source]}"]
         return entries
 
+    def tone_entries(self) -> List[str]:
+        """``pronunciation_dict.tone[]`` entries for the native HTTP payload.
+
+        The same ``source/replacement`` strings the CLI receives on argv, in a
+        deterministic order. Shared so the CLI transport and the native adapter
+        cannot drift into applying different pronunciation rules to the same
+        script.
+        """
+        return [f"{source}/{self.rules[source]}" for source in sorted(self.rules)]
+
     def fingerprint_component(self) -> str:
         """Stable digest of the rule set, for the idempotency fingerprint."""
         payload = "|".join(

@@ -1,0 +1,216 @@
+{
+  "schema": "contentops.narration-plan/v1",
+  "issue": "#34",
+  "creator_script": {
+    "path": "projects/easel-enhanced-golden/script/creator-script.json",
+    "working_tree_sha256": "1517c2d7c8e6ebe535cc23162e6b002ea5958bec6c18e0d867f6fb193d8db027"
+  },
+  "model": "speech-2.8-hd",
+  "strategy": {
+    "emotion_policy": "AUTO_DEFAULT. The model auto-detects emotion; an explicit voice_setting.emotion requires a per-unit justification, must be documented for speech-2.8-hd, and calm may appear at most once and never as a majority. The v2 round set calm on 5 of 7 segments; this plan sets it on none.",
+    "pause_policy": "Punctuation first. <#x#> markers only where a pause_intent declares a role; durations 0.2-0.5 s, at most two per unit, anchors must be unique; mapped text must pass the provider's documented marker validation before use.",
+    "speed_policy": "STEADY is the default and emits no speed field. A group may run at 0.95-1.08 only when every member unit intends the same direction and a justification is declared.",
+    "grouping_policy": "Synthesis boundaries follow complete narrative intent, not sentences: 8 units become 4 groups, every group is multi-unit, and a single-unit group is legal only with a declared reason and a differing control."
+  },
+  "units": [
+    {
+      "id": "U01",
+      "communicative_intent": "Open with the question the video answers; hold the listener for three seconds",
+      "delivery_style": "Restrained curiosity, like a person actually asking",
+      "emphasis_terms": ["跑不跑得起来"],
+      "pause_intent": [
+        {"after": "跑不跑得起来？", "duration_s": 0.35, "role": "give the question a beat before the answer begins"}
+      ],
+      "pace_intent": "STEADY",
+      "emotional_transition": "neutral open -> light curiosity",
+      "context_before": "OPENING (nothing before it)",
+      "context_after": "defines what Easel is before any evidence",
+      "explicit_emotion": null,
+      "emotion_justification": null,
+      "explicit_speed": null,
+      "speed_justification": null
+    },
+    {
+      "id": "U02",
+      "communicative_intent": "Answer the hook's question at the category level: what this thing actually is",
+      "delivery_style": "explaining to a friend, enumerating without rushing",
+      "emphasis_terms": ["Skill 库", "114 个 Skill", "52 个"],
+      "pause_intent": [],
+      "pace_intent": "STEADY",
+      "emotional_transition": "curiosity -> grounded explanation",
+      "context_before": "the hook question must be answered, not left hanging",
+      "context_after": "version evidence follows",
+      "explicit_emotion": null,
+      "emotion_justification": null,
+      "explicit_speed": null,
+      "speed_justification": null
+    },
+    {
+      "id": "U03",
+      "communicative_intent": "Prove the claim with the locked version and the file-by-file hash check",
+      "delivery_style": "matter-of-fact, evidence delivered slowly enough to land",
+      "emphasis_terms": ["v0.2.1", "982 个文件"],
+      "pause_intent": [
+        {"after": "v0.2.1。", "duration_s": 0.3, "role": "let the version number land before the count"}
+      ],
+      "pace_intent": "STEADY",
+      "emotional_transition": "explanation -> quiet confidence",
+      "context_before": "the definition unit just finished",
+      "context_after": "runtime evidence follows",
+      "explicit_emotion": null,
+      "emotion_justification": null,
+      "explicit_speed": null,
+      "speed_justification": null
+    },
+    {
+      "id": "U04",
+      "communicative_intent": "Show that it actually runs: core checks green, live round-trip works",
+      "delivery_style": "satisfied but not celebratory; short clauses",
+      "emphasis_terms": ["doctor", "ping"],
+      "pause_intent": [],
+      "pace_intent": "STEADY",
+      "emotional_transition": "confidence -> small relief",
+      "context_before": "version evidence just landed",
+      "context_after": "the turn arrives",
+      "explicit_emotion": null,
+      "emotion_justification": null,
+      "explicit_speed": null,
+      "speed_justification": null
+    },
+    {
+      "id": "U05",
+      "communicative_intent": "Turn: reveal the catch without overacting it",
+      "delivery_style": "conspiratorial reveal, one beat of surprise, then matter-of-fact",
+      "emphasis_terms": ["坑", "红的"],
+      "pause_intent": [
+        {"after": "但有个坑：", "duration_s": 0.35, "role": "beat before the reveal"}
+      ],
+      "pace_intent": "SLIGHTLY_SLOWER",
+      "emotional_transition": "relief -> reveal surprise",
+      "context_before": "everything so far has been green",
+      "context_after": "the web-path problems follow",
+      "explicit_emotion": "surprised",
+      "emotion_justification": "the turn reveals a flaw after a sequence of successes; surprise is a documented value for speech-2.8-hd, used exactly once in the plan and never as a default",
+      "explicit_speed": null,
+      "speed_justification": null
+    },
+    {
+      "id": "U06",
+      "communicative_intent": "State the second problem plainly: the web path is worse and unverified",
+      "delivery_style": "steady, non-dramatic, facts in a row",
+      "emphasis_terms": ["六项", "还没验证"],
+      "pause_intent": [],
+      "pace_intent": "SLIGHTLY_SLOWER",
+      "emotional_transition": "surprise -> sober assessment",
+      "context_before": "the gateway catch just landed",
+      "context_after": "value judgement follows",
+      "explicit_emotion": null,
+      "emotion_justification": null,
+      "explicit_speed": null,
+      "speed_justification": null
+    },
+    {
+      "id": "U07",
+      "communicative_intent": "Give the listener the decision: depends on which path you take",
+      "delivery_style": "direct address, a beat before the judgement",
+      "emphasis_terms": ["看路线"],
+      "pause_intent": [
+        {"after": "我的判断是：", "duration_s": 0.35, "role": "beat before the judgement"}
+      ],
+      "pace_intent": "SLIGHTLY_SLOWER",
+      "emotional_transition": "sober -> helpful clarity",
+      "context_before": "both problems have been stated",
+      "context_after": "the one-line conclusion follows",
+      "explicit_emotion": null,
+      "emotion_justification": null,
+      "explicit_speed": null,
+      "speed_justification": null
+    },
+    {
+      "id": "U08",
+      "communicative_intent": "Close on the original conclusion, as the payoff the hook promised",
+      "delivery_style": "calm finality, slightly slower, no extra flourish",
+      "emphasis_terms": ["生产引擎", "今天是通的"],
+      "pause_intent": [
+        {"after": "一句话收尾：", "duration_s": 0.35, "role": "let the closing land"}
+      ],
+      "pace_intent": "SLIGHTLY_SLOWER",
+      "emotional_transition": "clarity -> settled conclusion",
+      "context_before": "the value judgement just finished",
+      "context_after": "END (nothing follows)",
+      "explicit_emotion": null,
+      "emotion_justification": null,
+      "explicit_speed": null,
+      "speed_justification": null
+    }
+  ],
+  "groups": [
+    {
+      "id": "G1",
+      "units": ["U01", "U02"],
+      "emotion": null,
+      "speed": 1.0,
+      "justification": null,
+      "single_unit_reason": null,
+      "pause_after_s": 0.0,
+      "note": "hook and definition share one delivery so the voice does not reset between question and answer"
+    },
+    {
+      "id": "G2",
+      "units": ["U03", "U04"],
+      "emotion": null,
+      "speed": 1.0,
+      "justification": null,
+      "single_unit_reason": null,
+      "pause_after_s": 0.0,
+      "note": "both evidence units in one take"
+    },
+    {
+      "id": "G3",
+      "units": ["U05", "U06"],
+      "emotion": null,
+      "speed": 0.98,
+      "justification": "the turn and the problem section slow down together so the listener can follow the reversal; the surrounding steady groups make the change audible as intent, not as inconsistency",
+      "single_unit_reason": null,
+      "pause_after_s": 0.0,
+      "note": "turn and problem in one take; the reveal keeps its single-surprise justification at unit level"
+    },
+    {
+      "id": "G4",
+      "units": ["U07", "U08"],
+      "emotion": null,
+      "speed": 0.98,
+      "justification": "value and conclusion slow down together for the closing payoff",
+      "single_unit_reason": null,
+      "pause_after_s": 0.0,
+      "note": "closing pair"
+    }
+  ],
+  "sample": {
+    "units": ["U01", "U03", "U05"],
+    "groups": [
+      {
+        "id": "S-G1",
+        "units": ["U01", "U03"],
+        "emotion": null,
+        "speed": 1.0,
+        "justification": null,
+        "single_unit_reason": null,
+        "pause_after_s": 0.45,
+        "note": "hook question and version evidence share one take: the question is answered by evidence, so the voice must not reset between them"
+      },
+      {
+        "id": "S-G2",
+        "units": ["U05"],
+        "emotion": "surprised",
+        "speed": 0.98,
+        "justification": "the turn reveals a flaw after two green beats; surprise is the documented beat and is used exactly once",
+        "single_unit_reason": "the turn needs a different emotion from everything before it; merging it into S-G1 would spread 'surprised' over calm evidence",
+        "pause_after_s": 0.0,
+        "note": "the one deliberate single-unit group, declared and controlled"
+      }
+    ],
+    "target_duration_s": [18, 26],
+    "note": "Sample grouping is re-derived for the excerpt (hook -> evidence -> turn); the full plan's grouping stays G1-G4. The excerpt is a diagnostic fixture, not the production grouping."
+  }
+}

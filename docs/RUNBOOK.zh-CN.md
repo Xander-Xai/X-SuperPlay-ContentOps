@@ -71,3 +71,70 @@ python scripts/check_easel_upstream.py
 ```bash
 python scripts/check_i18n.py
 ```
+
+## 9. 原生旁白 v2（A/B/C 样本）
+
+设计决策：`adr/ADR-008-native-narration-v2.md`。口播稿对照锁定原文与
+evidence lock 校验，三方版本映射（原文 / 口播 / 合成文本）用 `--write` 重新生成：
+
+```powershell
+python scripts\verify_spoken_script.py --write
+```
+
+干跑（完全离线；不发送任何请求，也不读取余额）：
+
+```powershell
+python scripts\run_ab_sample.py
+```
+
+真实执行。`--execute` 是显式开关；每次请求前后都会读取套餐额度与余额，
+订阅类凭据未通过 `SAFE_INCLUDED_PLAN` 时直接拒绝。`--budget-chars` 与
+`--budget-asr-calls` 是硬上限：
+
+```powershell
+python scripts\run_ab_sample.py --execute
+python scripts\run_ab_sample.py --execute --a-mode fresh     # 精确文本对照（付费）
+python scripts\run_ab_sample.py --execute --regenerate S02   # C 组局部重生成
+python scripts\run_ab_sample.py --execute --variants N --extra-segment S04 --receipt-suffix term-check
+python scripts\run_ab_sample.py --recheck                    # 仅重算测量；无 provider、无 ASR
+```
+
+- A 默认复用已有 Golden 旁白的本地节选（0 provider 成本）；`--a-mode fresh`
+  则重新合成对照。
+- 样本凭证与术语检查凭证是两个独立文件；辅助运行不会覆盖样本凭证。
+- 真实音频写入 `outputs/`（gitignored）。运行停止于 Founder 试听：
+  `production_ready` 保持 `false`，不发布任何内容。
+
+## 10. 旁白 v3（口播稿、导演、D/E/F 样本）
+
+设计决策：`adr/ADR-009-narration-v3-creator-director.md`。校验口播稿与导演计划，
+并刷新版本映射：
+
+```powershell
+python scripts\verify_creator_script.py --write
+```
+
+干跑（离线；不发送请求，也不读取余额）：
+
+```powershell
+python scripts\run_creator_sample.py
+```
+
+真实执行。`--execute` 是显式开关；沿用 v2 的仅订阅凭据解析、M Plan 门控与逐请求
+前后额度/余额读取；`--budget-chars` / `--budget-asr-calls` 是硬上限：
+
+```powershell
+python scripts\run_creator_sample.py --execute
+python scripts\run_creator_sample.py --execute --budget-chars 1200 --budget-asr-calls 5
+python scripts\run_creator_sample.py --summary-only   # 仅重新渲染 md 凭证；无 provider、无 ASR
+```
+
+先盲听，再对答案：
+
+- 文件：`outputs/founder-v3-sample/candidate-1.wav` … `candidate-3.wav`
+  （文件名不含任何版本信息）；
+- 对应关系：`projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json`
+  的 `listening_key`；
+- 先按六项标准打分再揭晓：`projects/easel-enhanced-golden/review/listening-review-v3.md`。
+
+ASR 与 CI 通过不是自然度结论；在 Founder 批准前 `production_ready` 保持 `false`。

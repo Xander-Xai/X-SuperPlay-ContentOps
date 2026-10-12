@@ -160,3 +160,76 @@ python scripts\test_basic.py
 9 tests covering: doctor execution, project creation idempotency, QC FAIL on
 missing video, blob SHA-1 verification, path exclusion symmetry, foreign
 remote rejection, archive provenance acceptance/rejection.
+
+## 10. Native narration v2 (A/B/C sample)
+
+Design: `adr/ADR-008-native-narration-v2.md`. The spoken script is checked
+against the locked original and the evidence lock, and the three-way version
+map (original / spoken / synthesis) is regenerated with `--write`:
+
+```powershell
+python scripts\verify_spoken_script.py --write
+```
+
+Dry run (fully offline; nothing is transmitted and no balance is read):
+
+```powershell
+python scripts\run_ab_sample.py
+```
+
+Real run. `--execute` is the explicit switch; every request is wrapped in
+before/after plan-quota and balance reads and the run refuses without
+`SAFE_INCLUDED_PLAN` on a Subscription-class credential. `--budget-chars` and
+`--budget-asr-calls` are hard caps:
+
+```powershell
+python scripts\run_ab_sample.py --execute
+python scripts\run_ab_sample.py --execute --a-mode fresh     # exact-text control (paid)
+python scripts\run_ab_sample.py --execute --regenerate S02   # partial regeneration of the C arm
+python scripts\run_ab_sample.py --execute --variants N --extra-segment S04 --receipt-suffix term-check
+python scripts\run_ab_sample.py --recheck                    # recompute measurements only; no provider, no ASR
+```
+
+- A reuses a local excerpt of the existing Golden narration by default (zero
+  provider cost); `--a-mode fresh` re-synthesises the control instead.
+- The sample receipt and the term-check receipt are separate tracked files; an
+  auxiliary run never overwrites the sample receipt.
+- Real audio lands under `outputs/` (gitignored). The run stops at Founder
+  listening: `production_ready` stays `false` and nothing is published.
+
+## 11. Narration v3 (creator script, director, D/E/F sample)
+
+Design: `adr/ADR-009-narration-v3-creator-director.md`. Validate the creator
+script and the director plan and refresh the version map:
+
+```powershell
+python scripts\verify_creator_script.py --write
+```
+
+Dry run (offline; nothing transmits and no balance is read):
+
+```powershell
+python scripts\run_creator_sample.py
+```
+
+Real run. `--execute` is the explicit switch; the same Subscription-key-only
+resolver, M Plan gate and before/after plan-quota and balance reads as v2
+apply, and `--budget-chars` / `--budget-asr-calls` are hard caps:
+
+```powershell
+python scripts\run_creator_sample.py --execute
+python scripts\run_creator_sample.py --execute --budget-chars 1200 --budget-asr-calls 5
+python scripts\run_creator_sample.py --summary-only   # re-render the md receipt; no provider, no ASR
+```
+
+Listen blind, then read the key:
+
+- files: `outputs/founder-v3-sample/candidate-1.wav` … `candidate-3.wav`
+  (filenames carry no version information);
+- key: `listening_key` in
+  `projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json`;
+- score the six criteria **before** revealing it, in
+  `projects/easel-enhanced-golden/review/listening-review-v3.md`.
+
+ASR and CI passing are not naturalness verdicts; `production_ready` stays
+`false` until the Founder approves.
