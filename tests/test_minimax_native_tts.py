@@ -387,6 +387,7 @@ def test_missing_credential_or_malformed_payload_never_reaches_the_transport():
 
 
 def main() -> int:
+    sys.stdout.reconfigure(encoding="utf-8")
     failures = 0
     for fn in TESTS:
         try:

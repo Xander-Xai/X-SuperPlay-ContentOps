@@ -202,6 +202,7 @@ def test_a_corrupt_config_is_reported_as_unreadable_not_invented():
 
 
 def main() -> int:
+    sys.stdout.reconfigure(encoding="utf-8")
     failures = 0
     for fn in TESTS:
         try:
