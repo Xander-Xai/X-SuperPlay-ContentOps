@@ -33,7 +33,10 @@ from contentops.media.billing_guard import BillingGuard  # noqa: E402
 from contentops.media.clone_route import (  # noqa: E402
     ACTIVATION_TEXT,
     CLONE_TTL_HOURS,
+    EVIDENCE_LIVE_REFUTED,
+    PHASE_CLONE_ACTIVATION,
     SPEECH_2_8_HD_CNY_PER_10K,
+    VOUCHER_ELIGIBILITY_ACCEPTS,
     ActivationCost,
     decide_route,
 )
@@ -58,7 +61,14 @@ from contentops.media.voucher_activation import (  # noqa: E402
 OUT = ROOT / "projects/easel-enhanced-golden/receipts/founder-voice-route-receipt.json"
 
 VOICE_ALIAS = "founder_primary_v1"
-PROVIDER_VOICE_ID = "XSuperPlayFounderV1"
+#: The Founder's instruction for Issue #34 is that the provider voice_id itself is
+#: ``founder_primary_v1``. It previously differed from the alias (``XSuperPlayFounderV1``)
+#: purely so the two could be told apart in a receipt. That distinction is no longer
+#: worth a different handle on the account: the name is permanent, has to satisfy the
+#: documented rules (leading English letter, [A-Za-z0-9-_], length [8,256], no trailing
+#: - or _) and can never be renamed, so the clearer name wins. The alias and the id now
+#: coincide, which is why this is a constant and not a parameter.
+PROVIDER_VOICE_ID = "founder_primary_v1"
 SAMPLE = ROOT / "assert" / "voice-reference-clean.wav"
 #: The Founder's fixed input. Compared against the digest the digital-asset registry
 #: declares, so a replaced or re-recorded sample is caught rather than accepted
@@ -74,33 +84,59 @@ ACTIVATION_CHARACTER_FEE_AUTHORISED = os.environ.get(
 
 #: Evidence grade for "this CNY 15.00 voucher can pay 音色管理".
 #:
-#: Set from official sources on 2026-12, and deliberately left at UNKNOWN. Raising it
-#: requires a statement that the voucher offsets **API 调用费用** for a voucher of this
-#: account's provenance. The one official statement of that scope sits inside the
-#: **好友邀请活动** referral section and governs that programme's voucher; this account's
-#: voucher provenance is unknown, so it cannot be transferred. 付费服务协议 4.4 defers the
-#: definitive scope to 产品界面公示, which no API endpoint exposes.
+#: Three grades are recognised by :data:`contentops.media.clone_route.VOUCHER_ELIGIBILITY_ACCEPTS`
+#: and by :mod:`contentops.media.voucher_activation`:
 #:
-#: Setting it requires a founder-supplied account-level confirmation from MiniMax, the
-#: same evidence class the activation-fee confirmation came in as.
+#: ``VERIFIED_OFFICIAL``
+#:     published MiniMax documentation says so.
+#: ``VERIFIED_ACCOUNT_VOUCHER_TERMS``
+#:     MiniMax customer service confirmed this account's terms directly. Recorded in
+#:     projects/easel-enhanced-golden/receipts/founder-voucher-account-terms.json, from
+#:     the Founder's screenshot: 「账户现有 ¥15 代金券可以优先用于本次消费」and
+#:     「代金券只可用于消费,不可用于抵扣欠费金额」.
+#: ``UNKNOWN``
+#:     nothing. Refuses, which is the default.
+#:
+#: The grade is an **operator assertion at run time**, not a constant. It is set only
+#: when the operator is acting under the recorded confirmation, and the receipt carries
+#: the string so a later reader can see which claim authorised the money.
 VOUCHER_ELIGIBILITY = os.environ.get(
     "CONTENTOPS_VOUCHER_ELIGIBILITY", "UNKNOWN"
 ).strip() or "UNKNOWN"
+#: ``VERIFIED_LOCAL_REFUTED`` is accepted here even though it does NOT clear
+#: eligibility. It is a valid, load-bearing answer -- "we tried it and it does not
+#: work" -- and collapsing it into ``UNKNOWN`` would throw away the only grade that
+#: actually explains the observed refusal, leaving the receipt claiming ignorance on a
+#: question that has been settled by measurement.
+_VOUCHER_GRADES = set(VOUCHER_ELIGIBILITY_ACCEPTS) | {EVIDENCE_LIVE_REFUTED}
+if VOUCHER_ELIGIBILITY not in _VOUCHER_GRADES:
+    VOUCHER_ELIGIBILITY = "UNKNOWN"
 
 VOUCHER_ELIGIBILITY_BASIS = (
     "VERIFIED_OFFICIAL: 代金券 is an order payment method (使用代金券 | 扣除代金券后实际"
     "支付的金额, 代金券抵扣部分不可开票, M Plan FAQ 开票金额怎么计算); 账户余额只有在使用按量计费 "
     "API Key 时才会扣除; 扣费顺序为 M Plan 额度优先、积分包其次; 积分包支持...图像与音频生成, "
     "快速复刻未列名, 因此积分包不能支付该费用. "
-    "UNKNOWN: the single official statement that a voucher offsets API 调用费用 is scoped "
-    "to the 好友邀请活动 referral programme and this account's voucher provenance is "
-    "unknown; 付费服务协议 4.4 defers the definitive scope to 产品界面公示; deduction priority "
-    "between voucher and cash within 账户余额 is undocumented; this voucher's issuance date "
-    "and remaining validity are not exposed by any reachable endpoint."
+    "VERIFIED_ACCOUNT_VOUCHER_TERMS: MiniMax customer service confirmed for THIS account "
+    "that 使用普通按量 API Key 创建克隆音色, 账户现有 ¥15 代金券可以优先用于本次消费, "
+    "首次正式语音合成才触发 ¥9.9 克隆费, 支付后音色永久保留, 后续使用不重复收取克隆费, "
+    "且已激活音色可用于现有 M Plan 套餐; 付费服务协议 4.4 另载 代金券只可用于消费, 不可用于抵扣"
+    "欠费金额. Transcribed in "
+    "projects/easel-enhanced-golden/receipts/founder-voucher-account-terms.json. "
+    "STILL UNKNOWN even after that confirmation: deduction priority between voucher and "
+    "cash within 账户余额; this voucher's issuance date and remaining validity; and "
+    "whether the cross-key synthesis is permitted at the API level (a 2042 is the "
+    "documented symptom if it is not, and the confirmation does not address it)."
 )
 
 #: Hard ceiling on the one-time voice fee. The Founder's standing authorisation.
 CLONE_FEE_CEILING_CNY = "9.90"
+
+#: Ceiling on the COMBINED charge, which is what the voucher must be able to cover.
+#: This is the Founder's number, not a derived one: 9.90 + 0.0154 = 9.9154, and the
+#: authorisation says 10.00. Comparing components separately would let two
+#: sub-ceiling charges add past what was actually agreed.
+VOUCHER_SPEND_CEILING_CNY = "10.00"
 
 
 def _resolve_base_url() -> str:
@@ -237,12 +273,46 @@ def main() -> int:
     billing = _measure_billing(pair.tts.key)
     balances = billing.get("balances") or {}
     cash = _num(balances.get("cash_balance"))
+    voucher_bal = _num(balances.get("voucher_balance"))
+    credit = _num(balances.get("credit_balance"))
+    owed = _num(balances.get("owed_amount"))
     checks.append(_check(
-        "cash balance can pay the activation",
-        cash is not None and cash >= float(CLONE_FEE_CEILING_CNY),
+        "no cash can be spent, structurally",
+        cash is not None and cash == 0.0,
         f"cash_balance={cash}",
-        "M Plan FAQ: 账户余额 charged only via a pay-as-you-go key; the activation "
-        "runs on that key",
+        "M Plan FAQ: 账户余额 is charged only via a pay-as-you-go key, and this "
+        "activation runs on that key. A ZERO cash balance is the safety property, not "
+        "a blocker: there is nothing for a wrong deduction priority to take, so a "
+        "mis-deduction fails closed at the platform instead of quietly spending money. "
+        "This line previously demanded cash >= 9.90, which was correct only while the "
+        "voucher's eligibility was unproven -- it is now the instrument customer "
+        "service confirmed for this account.",
+    ))
+    checks.append(_check(
+        "no Cash-Pack or Credit Pack can be drawn on",
+        credit is not None and credit == 0.0,
+        f"credit_balance={credit}",
+        "结构上为零,所以扣错资金来源不是概率问题而是接口不会受理",
+    ))
+    checks.append(_check(
+        "no outstanding debt can absorb or be increased by this charge",
+        owed is not None and owed == 0.0,
+        f"owed_amount={owed}",
+        "付费服务协议 4.4: 代金券只可用于消费, 不可用于抵扣欠费金额; a zero reading "
+        "before and after is what shows the charge created no 欠费",
+    ))
+    checks.append(_check(
+        "voucher covers the combined authorised ceiling",
+        voucher_bal is not None and voucher_bal >= float(VOUCHER_SPEND_CEILING_CNY),
+        f"voucher_balance={voucher_bal}, ceiling CNY {VOUCHER_SPEND_CEILING_CNY}",
+        "Founder authorisation FOUNDER_VOUCHER_ACTIVATION; customer service confirmed "
+        "the voucher is prioritised for this consumption",
+    ))
+    checks.append(_check(
+        "voucher eligibility is established, not assumed",
+        VOUCHER_ELIGIBILITY in VOUCHER_ELIGIBILITY_ACCEPTS,
+        f"CONTENTOPS_VOUCHER_ELIGIBILITY={VOUCHER_ELIGIBILITY}",
+        "VOUCHER_ELIGIBILITY_ACCEPTS; UNKNOWN refuses",
     ))
     checks.append(_check(
         "Subscription-Key in-plan TTS is provable",
@@ -361,6 +431,14 @@ def main() -> int:
         cash_balance=cash,
         activation_cost=cost,
         first_activation_authorised=FIRST_ACTIVATION_AUTHORISED,
+        # The clone and its activation are one continuous session that has to pay the
+        # CNY 9.90 through the pay-as-you-go key. The cross-key question is asked in
+        # PHASE_REGULAR_NARRATION, because it cannot be answered until this session has
+        # produced an activated voice.
+        phase=PHASE_CLONE_ACTIVATION,
+        voucher_eligibility=VOUCHER_ELIGIBILITY,
+        voucher_balance=voucher_bal,
+        voucher_ceiling_cny=VOUCHER_SPEND_CEILING_CNY,
     )
 
     max_charge = (
@@ -378,9 +456,9 @@ def main() -> int:
         authorisation,
         voucher_eligibility=VOUCHER_ELIGIBILITY,
         voucher_eligibility_basis=VOUCHER_ELIGIBILITY_BASIS,
-        voucher_balance=_num((billing.get("balances") or {}).get("voucher_balance")),
+        voucher_balance=voucher_bal,
         cash_balance=cash,
-        credit_balance=_num((billing.get("balances") or {}).get("credit_balance")),
+        credit_balance=credit,
         projected_total_cny=max_charge,
         voice_id_hash=voice_id_hash(PROVIDER_VOICE_ID),
         payg_tts_bounded=True,
@@ -412,7 +490,11 @@ def main() -> int:
     print(f"  verification      : {decision.verification_status}")
     print(f"  route             : {decision.route}")
     print(f"  authorised        : {decision.authorised and voucher.authorised}")
+    print(f"  phase             : {decision.phase}")
     print(f"  blocked_by        : {', '.join(decision.blocked_by) or '(none)'}")
+    print(f"  deferred_gates    : {', '.join(decision.deferred_gates) or '(none)'}")
+    print(f"  activation payment: {decision.activation_payment_source or '(undecided)'} "
+          f"via {decision.activation_payment_evidence or '(no evidence)'}")
     print(f"  voucher gate      : {voucher.status}")
     print(f"  voucher refusals  : {', '.join(voucher.refusals) or '(none)'}")
     for reason in voucher.reasons:
@@ -442,8 +524,16 @@ def main() -> int:
         "balances": balances,
         "quota": billing.get("quota"),
         "cash_balance": cash,
+        "voucher_balance": voucher_bal,
+        "credit_balance": credit,
+        "owed_amount": owed,
         "clone_key_reachable": reachable,
     }
+    receipt["voucher_eligibility_grade"] = VOUCHER_ELIGIBILITY
+    receipt["voucher_spend_ceiling_cny"] = VOUCHER_SPEND_CEILING_CNY
+    receipt["account_terms_confirmation"] = (
+        "projects/easel-enhanced-golden/receipts/founder-voucher-account-terms.json"
+    )
     receipt["calls_performed"] = {
         "upload": 0, "clone": 0, "tts": 0,
         "billing_reads": 1 if billing["verdict"] != "HOST_NOT_CONFIGURED" else 0,

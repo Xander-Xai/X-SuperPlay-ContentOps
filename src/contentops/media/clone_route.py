@@ -131,8 +131,14 @@ __all__ = [
     "CLONE_TTL_HOURS",
     "CLONE_TTL_SECONDS",
     "EVIDENCE_VENDOR_CONFIRMATION",
+    "EVIDENCE_LIVE_REFUTED",
     "FIRST_ACTIVATION_TTS_FEE_UNKNOWN",
     "LIVE_VERIFICATION_PENDING",
+    "PHASE_ALL",
+    "PHASE_CLONE_ACTIVATION",
+    "PHASE_REGULAR_NARRATION",
+    "SUBSCRIPTION_FIRST_ACTIVATION_PROBE",
+    "VOUCHER_ELIGIBILITY_ACCEPTS",
     "ROUTE_ACTIVATION_CHARACTER_FEE_UNAUTHORISED",
     "ROUTE_ACTIVATION_CASH_INSUFFICIENT",
     "ROUTE_AUTHORISED",
@@ -180,9 +186,81 @@ FIRST_ACTIVATION_TTS_FEE_UNKNOWN = "FIRST_ACTIVATION_TTS_FEE_UNKNOWN"
 #: Evidence classes. The distinction is the whole reason the route is not called
 #: VERIFIED: one of these is a commercial statement about this account, the others are
 #: things a machine actually observed.
-EVIDENCE_VENDOR_CONFIRMATION = "FOUNDER_SUPPLIED_VENDOR_CONFIRMATION"
+EVIDENCE_VENDOR_CONFIRMATION = "FOUNDER_SUPPLIED_VENDOR_ACCOUNT_CONFIRMATION"
 EVIDENCE_OFFICIAL_DOC = "VERIFIED_OFFICIAL"
 EVIDENCE_LIVE_MEASURED = "VERIFIED_LOCAL"
+#: A measurement that **contradicts** an assurance. Ranked above both grades above,
+#: because the whole point of running the activation was to find out whether the
+#: assurance held, and on 2026-10-12 it did not.
+#:
+#: MiniMax customer service told the Founder that this account's CNY 15.00 voucher
+#: would be used preferentially for the one-time voice fee. The activation request was
+#: then actually sent, and the platform answered ``insufficient balance`` -- with
+#: ``voucher_balance = 15.00`` and ``available_amount = 15.00`` still on the account and
+#: ``cash_balance = 0.00``. The voucher was therefore not accepted as the payment
+#: instrument for a pay-as-you-go API call, and no balance moved.
+#:
+#: It was then sent a **second** time, on the Subscription Key, under a separate
+#: authorisation (:data:`SUBSCRIPTION_FIRST_ACTIVATION_PROBE`), to test whether the plan
+#: could pay the fee instead. The provider returned the **identical** refusal. That second
+#: measurement is what upgrades the finding from "the voucher does not work" to "neither
+#: instrument on this account can pay this fee": the blocker is the payment instrument,
+#: not the key routing. Nothing was charged on either attempt.
+#:
+#: Recorded as a distinct grade rather than as a reverted constant because the
+#: distinction is the actual finding: the commercial assurances were specific, they were
+#: plausible, they were confirmed with a screenshot, and they were still wrong. A
+#: refutation has to outrank the thing that refuted it, or the next reader re-opens the
+#: gate on the same assurance and spends the same effort proving it wrong again.
+EVIDENCE_LIVE_REFUTED = "VERIFIED_LOCAL_REFUTED"
+
+#: Name of the second, independently authorised experiment, kept here because the route
+#: receipt cites it as the evidence for the second half of the finding above. It is a
+#: *different* request against a *different* credential, not a retry, and its budget is
+#: its own: one synthesis, zero uploads, zero clones.
+SUBSCRIPTION_FIRST_ACTIVATION_PROBE = "SUBSCRIPTION_FIRST_ACTIVATION_PROBE"
+
+#: The two evidence grades that are strong enough to answer a question about *this
+#: account's* commercial terms. Both name a source outside this repository: published
+#: MiniMax documentation, or a confirmation the Founder obtained from MiniMax customer
+#: service for this account. Anything else -- in particular ``UNKNOWN`` -- refuses.
+#:
+#: Shared with :mod:`contentops.media.voucher_activation` rather than re-declared, so
+#: the route and the payment gate cannot drift into disagreeing about what counts as
+#: evidence. That they agree matters: the route decides whether the clone may be made,
+#: the voucher gate decides whether it may be *charged*, and a run where one believes
+#: the voucher and the other does not would report a contradiction instead of a reason.
+VOUCHER_ELIGIBILITY_ACCEPTS = (
+    EVIDENCE_OFFICIAL_DOC,
+    "VERIFIED_ACCOUNT_VOUCHER_TERMS",
+)
+
+#: Route phases. The gates that apply differ by phase, and collapsing them is what
+#: made this route unexecutable.
+#:
+#: ``CLONE_ACTIVATION`` is the one continuous session that creates the voice and pays
+#: the CNY 9.90 at the first synthesis. ``REGULAR_NARRATION`` is every TTS call after
+#: that. ``ALL`` is the default and applies both sets, which is what every existing
+#: caller means.
+#:
+#: The cross-key gate belongs to the second phase and not the first, because it asks
+#: whether the Subscription Key can synthesise with this voice -- a question that is
+#: **unanswerable** until the voice exists and has been activated. Requiring its
+#: answer before authorising the clone makes authorisation impossible: the only way to
+#: obtain the answer is to perform the thing the gate is blocking. That is not caution,
+#: it is a deadlock, and a deadlock that reads as a safety check is the most expensive
+#: kind of bug in a payment gate, because the correct-looking response is to stop
+#: forever.
+PHASE_CLONE_ACTIVATION = "CLONE_ACTIVATION"
+PHASE_REGULAR_NARRATION = "REGULAR_NARRATION"
+PHASE_ALL = "ALL"
+
+#: Phases whose gates are evaluated for a given decision.
+_PHASE_GATES: Dict[str, frozenset] = {
+    PHASE_ALL: frozenset({PHASE_CLONE_ACTIVATION, PHASE_REGULAR_NARRATION}),
+    PHASE_CLONE_ACTIVATION: frozenset({PHASE_CLONE_ACTIVATION}),
+    PHASE_REGULAR_NARRATION: frozenset({PHASE_REGULAR_NARRATION}),
+}
 
 #: Route status. Not ``VERIFIED``: the vendor confirmation is account-level commercial
 #: evidence, and no API call has been made under it.
@@ -431,6 +509,18 @@ class RouteDecision:
     """
 
     route: str = ROUTE_VENDOR_CONFIRMED
+    #: Which phase this decision governs. ``ALL`` is the default and means both.
+    phase: str = PHASE_ALL
+    #: Gates that were **not** applied because they belong to a later phase. Recorded
+    #: rather than dropped for the same reason ``blocked_by`` is a list: a gate that is
+    #: merely absent from a receipt is indistinguishable from a gate that does not
+    #: exist, and this one still exists.
+    deferred_gates: List[str] = field(default_factory=list)
+    #: How the activation charge is expected to be paid, and on what evidence. Empty
+    #: means undecided. ``VOUCHER`` means the account-confirmed voucher; ``CASH`` would
+    #: mean the balance, which this account does not have.
+    activation_payment_source: str = ""
+    activation_payment_evidence: str = ""
     #: Commercial status of the route. ``VENDOR_CONFIRMED`` +
     #: ``LIVE_VERIFICATION_PENDING`` means an account-level confirmation exists and
     #: nothing under it has been executed. It is never ``VERIFIED``.
@@ -484,10 +574,20 @@ class RouteDecision:
             self.blocked_by.append(code)
         self.reasons.append(reason)
 
+    def defer(self, code: str, reason: str) -> None:
+        """Record a gate that belongs to a later phase. Never a blocker here."""
+        if code not in self.deferred_gates:
+            self.deferred_gates.append(code)
+        self.reasons.append(reason)
+
     def as_dict(self) -> Dict[str, Any]:
         payload = {
             "schema": "contentops.voice-clone-route/v2",
             "route": self.route,
+            "phase": self.phase,
+            "deferred_gates": list(self.deferred_gates),
+            "activation_payment_source": self.activation_payment_source,
+            "activation_payment_evidence": self.activation_payment_evidence,
             "commercial_status": self.commercial_status,
             "verification_status": self.verification_status,
             "authorised": self.authorised,
@@ -552,6 +652,10 @@ def decide_route(
     cash_balance: Optional[float] = None,
     activation_cost: Optional[ActivationCost] = None,
     first_activation_authorised: bool = False,
+    phase: str = PHASE_ALL,
+    voucher_eligibility: Optional[str] = None,
+    voucher_balance: Optional[float] = None,
+    voucher_ceiling_cny: str = "10.00",
 ) -> RouteDecision:
     """Decide whether the Founder clone may proceed. No I/O, no generation.
 
@@ -574,11 +678,28 @@ def decide_route(
             be paid at all, since only a pay-as-you-go key deducts balance.
         activation_cost: the split fee model for the first activation.
         first_activation_authorised: whether the Founder approved the CNY 9.90.
+        phase: which gates apply. :data:`PHASE_ALL` (the default) applies every gate,
+            which is what a caller that has not thought about phases wants.
+            :data:`PHASE_CLONE_ACTIVATION` omits the cross-key gate, which cannot be
+            answered before the voice it asks about exists.
+            :data:`PHASE_REGULAR_NARRATION` omits the clone-only gates.
+        voucher_eligibility: the evidence grade for "this account's voucher can pay
+            音色管理", from :data:`VOUCHER_ELIGIBILITY_ACCEPTS`. ``None`` means no
+            evidence was supplied, which is treated as unknown and refuses.
+        voucher_balance: the measured voucher balance, compared against
+            ``voucher_ceiling_cny`` as one number.
+        voucher_ceiling_cny: the total the voucher must cover.
 
     Returns:
         A :class:`RouteDecision`. ``authorised`` is True only when nothing blocked.
     """
-    decision = RouteDecision(now=now, clone_created_at=clone_created_at)
+    if phase not in _PHASE_GATES:
+        raise ValueError(
+            f"unknown phase {phase!r}; expected one of {sorted(_PHASE_GATES)}"
+        )
+    active = _PHASE_GATES[phase]
+
+    decision = RouteDecision(now=now, clone_created_at=clone_created_at, phase=phase)
     decision.clone_credential_class = pair.clone.credential_class
     decision.clone_credential_source = pair.clone.source
     decision.tts_credential_class = pair.tts.credential_class
@@ -664,7 +785,59 @@ def decide_route(
     #    way, and `available_amount` equalling `voucher_balance` is suggestive rather
     #    than conclusive. Inference from another vendor's equivalent field would be
     #    exactly the wrong move here.
-    if cash_balance is not None and cash_balance <= 0:
+    #
+#    What happened when it was tried, on 2026-10-12: the assurance was acted on, the
+#    clone was created successfully with the pay-as-you-go key, and the first synthesis
+#    -- the call that triggers the CNY 9.90 -- was refused with ``insufficient
+#:    balance``. At that moment ``voucher_balance`` was 15.00,
+#:    ``available_amount`` was 15.00 and ``cash_balance`` was 0.00, and after the
+#:    refusal every one of those was unchanged. So the voucher was not taken up as the
+#:    payment instrument for a pay-as-you-go call: the platform wanted something this
+#:    account does not have.
+#:
+#: Two consequences, and the second is the one that matters. First, no money was spent
+#: and no 欠费 was created, so the refusal cost nothing beyond the run. Second, an
+#: assurance from customer service is not evidence about the API's behaviour, however
+#: specific the assurance is and whatever screenshot accompanies it -- which is exactly
+#: what :data:`EVIDENCE_LIVE_REFUTED` exists to record. This gate is therefore closed
+#: again, and it is closed by a measurement rather than by returning to ignorance:
+#: :data:`EVIDENCE_LIVE_REFUTED` refuses outright and cannot be cleared by any
+#: assurance, however good.
+    voucher_backed = False
+    if voucher_eligibility == EVIDENCE_LIVE_REFUTED:
+        decision.activation_payment_source = "REFUTED_BY_MEASUREMENT"
+        decision.activation_payment_evidence = EVIDENCE_LIVE_REFUTED
+        decision.add(
+            ROUTE_ACTIVATION_CASH_INSUFFICIENT,
+            "voucher eligibility was already REFUTED by live calls on this account, "
+            "and refuted twice under two different credential classes. The activation "
+            "was sent first on the pay-as-you-go key and then, under a separate "
+            "authorisation, on the Subscription Key. Both returned the identical "
+            "'API error: insufficient balance' while voucher_balance was 15.00, "
+            "available_amount was 15.00 and cash_balance was 0.00; after each refusal "
+            "every balance was unchanged and M Plan quota did not move, so nothing was "
+            "charged and no 欠费 was created. The blocker is the PAYMENT INSTRUMENT, "
+            "not the key routing: the plan's published deduction chain "
+            "(套餐内额度 -> 积分包) does not reach the 快速复刻 activation fee, and the "
+            "voucher is not accepted as payable balance for it either. This grade "
+            "outranks every assurance and is not cleared by one. The next step is a "
+            "payment-instrument decision by the Founder, not another trial.",
+        )
+    elif (
+        PHASE_CLONE_ACTIVATION in active
+        and voucher_eligibility in VOUCHER_ELIGIBILITY_ACCEPTS
+        and voucher_balance is not None
+        and Decimal(str(voucher_balance)) >= Decimal(str(voucher_ceiling_cny))
+    ):
+        voucher_backed = True
+        decision.activation_payment_source = "VOUCHER"
+        decision.activation_payment_evidence = voucher_eligibility or ""
+    if (
+        PHASE_CLONE_ACTIVATION in active
+        and cash_balance is not None
+        and cash_balance <= 0
+        and not voucher_backed
+    ):
         decision.add(
             ROUTE_ACTIVATION_CASH_INSUFFICIENT,
             f"cash_balance is {cash_balance:.2f} and the activation synthesis runs on the "
@@ -675,12 +848,17 @@ def decide_route(
             "official page reached states it -- and automatic voucher consumption, "
             "automatic recharge and automatic Credit Pack use are all forbidden. This "
             "gate therefore does NOT move on the same evidence that cleared the "
-            "Subscription-Key TTS gate.",
+            "Subscription-Key TTS gate. It moves only on account-level confirmation: "
+            f"voucher_eligibility={voucher_eligibility or 'NONE'}, "
+            f"voucher_balance={voucher_balance}, ceiling CNY {voucher_ceiling_cny}.",
         )
 
     # 5. The CNY 9.90 itself. Recorded as its own authorisation rather than assumed
     #    from "the route is approved".
-    if not first_activation_authorised:
+    if (
+        PHASE_CLONE_ACTIVATION in active
+        and not first_activation_authorised
+    ):
         decision.add(
             ROUTE_ACTIVATION_CHARACTER_FEE_UNAUTHORISED,
             "the CNY 9.90 first-activation fee has not been recorded as authorised in "
@@ -691,7 +869,11 @@ def decide_route(
     # 6. The activation synthesis is a real TTS request with billable characters. Its
     #    cost is deliberately NOT recorded as zero -- it was never authorised and never
     #    observed. Small numbers are exactly the ones that get waved through.
-    if activation_cost is not None and not activation_cost.activation_character_authorised:
+    if (
+        PHASE_CLONE_ACTIVATION in active
+        and activation_cost is not None
+        and not activation_cost.activation_character_authorised
+    ):
         decision.add(
             ROUTE_ACTIVATION_CHARACTER_FEE_UNAUTHORISED,
             "the activation synthesis itself is a billable TTS request: "
@@ -707,9 +889,14 @@ def decide_route(
     #    vendor confirmation states that an activated voice *may* be used with the M
     #    Plan; it does not say the API permits it, and 2042 is documented for exactly
     #    this. A commercial assurance is not a permission grant.
+    #
+    #    It is a REGULAR_NARRATION gate, not a clone gate. The answer does not exist
+    #    until the voice exists and has been activated, so requiring it to authorise
+    #    the clone is a deadlock: the only way to obtain the answer is to do the thing
+    #    the gate forbids. In the clone phase this is *deferred* -- recorded, still
+    #    present, still unproven, and still a hard blocker for every later narration.
     if cross_key_verified is None:
-        decision.add(
-            ROUTE_CROSS_KEY_UNKNOWN,
+        message = (
             "the vendor confirmation states an activated voice may be synthesised with "
             "the M Plan key, but that is an account-level commercial statement and not "
             "an API-level permission grant. No official source confirms a voice_id "
@@ -717,8 +904,19 @@ def decide_route(
             "Key; get_voice listing is account-scoped and proves visibility, not "
             "usability, and error 2042 (无权访问该 voice_id) is the documented symptom "
             "if visibility does not imply usability. Must not be claimed as supported "
-            "before one real synthesis answers it.",
+            "before one real synthesis answers it."
         )
+        if PHASE_REGULAR_NARRATION in active:
+            decision.add(ROUTE_CROSS_KEY_UNKNOWN, message)
+        else:
+            decision.defer(
+                ROUTE_CROSS_KEY_UNKNOWN,
+                "DEFERRED to the narration phase, not waived: " + message
+                + " This gate cannot be answered before the voice exists, so it blocks "
+                "every narration call and is evaluated again with phase="
+                + PHASE_REGULAR_NARRATION
+                + " once the activation has run.",
+            )
     elif cross_key_verified is False:
         decision.add(
             ROUTE_CROSS_KEY_UNKNOWN,
@@ -729,7 +927,7 @@ def decide_route(
         )
 
     # 8. Verification prerequisite for the clone call itself.
-    if account_verified is False:
+    if PHASE_CLONE_ACTIVATION in active and account_verified is False:
         decision.add(
             ROUTE_CLONE_KEY_REQUIRED,
             "voice cloning requires 个人认证 or 企业认证, and the account is not "
@@ -740,7 +938,7 @@ def decide_route(
     # 9. A created clone has a 168-hour life. Checking it last means a run that is
     #    otherwise ready still fails closed once the voice has been deleted.
     remaining = decision.remaining_ttl
-    if remaining is not None and remaining <= 0:
+    if PHASE_CLONE_ACTIVATION in active and remaining is not None and remaining <= 0:
         decision.add(
             ROUTE_ACTIVATION_CASH_INSUFFICIENT,
             f"the cloned voice was created {CLONE_TTL_HOURS}h ago and provider storage "

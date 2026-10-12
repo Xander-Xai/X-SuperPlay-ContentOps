@@ -1,0 +1,139 @@
+{
+  "schema": "contentops.subscription-activation-probe/v1",
+  "probe": "SUBSCRIPTION_FIRST_ACTIVATION_PROBE",
+  "attempt_id": "subact-44ecd1fcc39a",
+  "issue": "#34",
+  "started_at": "2026-10-12T12:29:04.805990+00:00",
+  "executed": true,
+  "voice_id": "founder_primary_v1",
+  "voice_id_hash": "7271d9c80c88821a6a09ed43328619d0ee08c3f2b2449237fe2c31f6899abeef",
+  "voice_already_created": true,
+  "voice_source_sample_sha256": "bb56d052cd637bd8a369f6e37a745c7609de9988ada0fa0827d4d5c59035df8d",
+  "clone_created_at": "2026-10-12T11:59:16.441404+00:00",
+  "temporary_window_remaining_h": 167.5,
+  "model": "speech-2.8-hd",
+  "text": "这是一段用于首次激活的最短自然中文语音样本。",
+  "billable_characters": 44,
+  "rate_cny_per_10k_chars": "3.50",
+  "one_time_fee_expected_cny": "9.90",
+  "voucher_spend_ceiling_cny": "10.00",
+  "credential_class": "SUBSCRIPTION",
+  "credential_source": "MMX_CONFIG",
+  "payg_key_used": false,
+  "provider_call_budget": {
+    "subscription_tts": 1,
+    "upload": 0,
+    "clone": 0
+  },
+  "new_upload_count": 0,
+  "new_clone_count": 0,
+  "subscription_tts_attempts": 1,
+  "retries_performed": 0,
+  "prior_payg_refusal": {
+    "preserved": true,
+    "refused_at": "2026-10-12T12:06:00+00:00",
+    "provider_message": "API error: insufficient balance (HTTP 200)",
+    "note": "historical fact from the pay-as-you-go first-synthesis attempt. It is not cleared, not overwritten and not counted against this probe's budget: this is a separate authorised experiment against a different credential, not a retry of that one."
+  },
+  "notes": [
+    "The Subscription Key was refused. The existing clone is preserved, no pay-as-you-go fallback is attempted, and no further attempt follows."
+  ],
+  "before": {
+    "verdict": "SAFE_INCLUDED_PLAN",
+    "credential_class": "SUBSCRIPTION",
+    "balances": {
+      "available_amount": "15.00",
+      "cash_balance": "0.00",
+      "voucher_balance": "15.00",
+      "credit_balance": "0.00",
+      "owed_amount": "0.00"
+    },
+    "observed_out_of_chain": [
+      "cash_balance=0.0 (not in this credential's chain)",
+      "voucher_balance=15.0 (not in this credential's chain)"
+    ],
+    "quota": {
+      "interval_remaining_percent": 41.0,
+      "weekly_remaining_percent": 54.0,
+      "bucket": "general"
+    }
+  },
+  "request_started_at": "2026-10-12T12:29:10.426789+00:00",
+  "provider_status": {
+    "status_code": 1,
+    "status_meaning": "unrecognised status code",
+    "message": "API error: insufficient balance (HTTP 200)"
+  },
+  "failure_raw_tail": "speech generation failed on attempt 1/2: {\n  \"error\": {\n    \"code\": 1,\n    \"message\": \"API error: insufficient balance (HTTP 200)\"\n  }\n}\n. A second attempt requires a named failure reason and a changed text, lexicon, voice or parameter.",
+  "request_finished_at": "2026-10-12T12:29:16.471218+00:00",
+  "after": {
+    "verdict": "SAFE_INCLUDED_PLAN",
+    "credential_class": "SUBSCRIPTION",
+    "balances": {
+      "available_amount": "15.00",
+      "cash_balance": "0.00",
+      "voucher_balance": "15.00",
+      "credit_balance": "0.00",
+      "owed_amount": "0.00"
+    },
+    "observed_out_of_chain": [
+      "cash_balance=0.0 (not in this credential's chain)",
+      "voucher_balance=15.0 (not in this credential's chain)"
+    ],
+    "quota": {
+      "interval_remaining_percent": 41.0,
+      "weekly_remaining_percent": 54.0,
+      "bucket": "general"
+    }
+  },
+  "deltas": {
+    "voucher_balance": {
+      "before": "15.00",
+      "after": "15.00",
+      "delta": "0.00",
+      "decreased": false,
+      "increased": false
+    },
+    "cash_balance": {
+      "before": "0.00",
+      "after": "0.00",
+      "delta": "0.00",
+      "decreased": false,
+      "increased": false
+    },
+    "credit_balance": {
+      "before": "0.00",
+      "after": "0.00",
+      "delta": "0.00",
+      "decreased": false,
+      "increased": false
+    },
+    "owed_amount": {
+      "before": "0.00",
+      "after": "0.00",
+      "delta": "0.00",
+      "decreased": false,
+      "increased": false
+    },
+    "available_amount": {
+      "before": "15.00",
+      "after": "15.00",
+      "delta": "0.00",
+      "decreased": false,
+      "increased": false
+    },
+    "m_plan_quota": {
+      "interval_before_pct": 41.0,
+      "interval_after_pct": 41.0,
+      "weekly_before_pct": 54.0,
+      "weekly_after_pct": 54.0,
+      "consumed": false
+    }
+  },
+  "outcome": "SUBSCRIPTION_ACTIVATION_REFUSED",
+  "one_time_fee_observed_cny": null,
+  "voice_activated": false,
+  "m_plan_only_verified": false,
+  "provider_receipt": {},
+  "finished_at": "2026-10-12T12:29:19.687064+00:00"
+}
