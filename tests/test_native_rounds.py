@@ -514,6 +514,43 @@ def test_the_locked_narration_digest_matches_the_evidence_lock():
     print("[ok] 19. the Golden narration text still matches the evidence lock")
 
 
+@test
+def test_the_native_spoken_request_preserves_paragraph_newlines():
+    """Narration v2: the native path must not flatten paragraphs for the CLI.
+
+    The CLI-compat flattening in :mod:`contentops.media.minimax_speech` stays for
+    the CLI transport (and keeps its own test); the native HTTP path documents
+    the newline as the paragraph separator and must carry it unchanged. CRLF is
+    normalised to LF and nothing else changes.
+    """
+    text = "第一段，先讲结论。\n第二段，再讲证据。\n第三段，<#0.3#>带停顿收尾。"
+    spec = build_spoken_request(
+        display_text=text, voice_id="founder_primary_v1", model="speech-2.8-hd"
+    )
+    assert spec.payload["text"] == text
+    assert spec.spoken_text == text
+    assert "\n" in spec.payload["text"]
+
+    crlf = build_spoken_request(
+        display_text="第一段。\r\n第二段。",
+        voice_id="founder_primary_v1",
+        model="speech-2.8-hd",
+    )
+    assert crlf.payload["text"] == "第一段。\n第二段。"
+
+    from contentops.media.lexicon import default_zh_lexicon
+
+    expanded = build_spoken_request(
+        display_text="Easel 装好了。\n第二段。",
+        voice_id="founder_primary_v1",
+        model="speech-2.8-hd",
+        lexicon=default_zh_lexicon(),
+    )
+    assert "伊泽尔" in expanded.payload["text"], "the lexicon still applies"
+    assert "\n" in expanded.payload["text"], "and it does not touch the newlines"
+    print("[ok] 20. the native spoken request keeps paragraphs; the lexicon still applies")
+
+
 def main() -> int:
     sys.stdout.reconfigure(encoding="utf-8")
     failures = 0

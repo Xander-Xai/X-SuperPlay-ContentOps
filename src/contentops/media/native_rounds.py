@@ -56,6 +56,7 @@ from .minimax_native_tts import (
     build_t2a_payload,
     host_is_documented_cn,
     normalize_host,
+    normalize_paragraph_newlines,
     send_t2a_once,
 )
 
@@ -204,13 +205,19 @@ def canonical_blob_sha256(path: Path) -> Optional[str]:
 
 @dataclass(frozen=True)
 class SpokenRequest:
-    """Everything the one request needs, decided before anything is sent."""
+    """Everything the one request needs, decided before anything is sent.
+
+    ``spoken_text`` is the final synthesis text: lexicon applied, line endings
+    normalised, paragraph newlines and ``<#x#>`` pause markers preserved. Since
+    the narration-v2 round there is no second, flattened form: the native HTTP
+    API documents the newline as the paragraph separator, so flattening was a
+    CLI-era workaround that this path must not carry.
+    """
 
     display_text: str
     voice_id: str
     model: str
     spoken_text: str
-    cli_text: str
     payload: Dict[str, Any]
     pronunciation_rule_count: int
 
@@ -225,23 +232,23 @@ def build_spoken_request(
     fmt: str = "wav",
     channel: int = 1,
 ) -> SpokenRequest:
-    """Lexicon -> flatten -> documented payload, with the single-line invariant.
+    """Lexicon -> documented payload, preserving paragraph structure.
 
     The four substitutions a transport could previously make invisibly -- a
     different voice, model, text or stream mode -- are checked here against the
     payload object that will actually be serialised.
-    """
-    from .minimax_speech import flatten_for_cli
 
+    Paragraph newlines survive. The official OpenAPI definition of
+    ``POST /v1/t2a_v2`` documents the newline as the paragraph separator and
+    ``<#x#>`` as the pause control, and both are validated before the payload is
+    built; collapsing a narration into one line is exactly what made the earlier
+    CLI-era narration sound mechanical, and it is not allowed here.
+    """
     spoken = lexicon.spoken_text(display_text) if lexicon is not None else display_text
-    flattened = flatten_for_cli(spoken)
-    pronunciation = (
-        [f"{source}/{lexicon.rules[source]}" for source in sorted(lexicon.rules)]
-        if lexicon is not None
-        else []
-    )
+    synthesis_text = normalize_paragraph_newlines(spoken)
+    pronunciation = lexicon.tone_entries() if lexicon is not None else []
     payload = build_t2a_payload(
-        text=flattened,
+        text=synthesis_text,
         voice_id=voice_id,
         model=model,
         sample_rate=sample_rate,
@@ -253,7 +260,7 @@ def build_spoken_request(
         raise RuntimeError("payload voice_id disagrees with the authorised voice")
     if payload["model"] != model:
         raise RuntimeError("payload model disagrees with the authorised model")
-    if payload["text"] != flattened:
+    if payload["text"] != synthesis_text:
         raise RuntimeError("payload text disagrees with the spoken text")
     if payload["stream"] is not False:
         raise RuntimeError("payload must be non-streaming")
@@ -261,8 +268,7 @@ def build_spoken_request(
         display_text=display_text,
         voice_id=voice_id,
         model=model,
-        spoken_text=spoken,
-        cli_text=flattened,
+        spoken_text=synthesis_text,
         payload=payload,
         pronunciation_rule_count=len(pronunciation),
     )
@@ -512,7 +518,7 @@ def run_native_activation_once(
         "technical_qc_approved": technical.get("approved"),
         "technical_qc": technical,
         "lexicon_applied": True,
-        "spoken_text_sha256": hashlib.sha256(spec.cli_text.encode()).hexdigest(),
+        "spoken_text_sha256": hashlib.sha256(spec.spoken_text.encode()).hexdigest(),
     }
     receipt["provider_response"] = result.public_summary()
     return {

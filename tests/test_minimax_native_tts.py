@@ -29,6 +29,7 @@ from contentops.media.minimax_native_tts import (  # noqa: E402
     DOCUMENTED_CN_HOSTS,
     MINIMAX_CN_HOST,
     REFUSAL_HOST_NOT_DOCUMENTED_CN,
+    REFUSAL_INVALID_PAUSE_MARKER,
     REFUSAL_INVALID_PAYLOAD,
     REFUSAL_NETWORK,
     REFUSAL_NON_JSON,
@@ -38,8 +39,12 @@ from contentops.media.minimax_native_tts import (  # noqa: E402
     NativeTtsRefusal,
     build_t2a_payload,
     decode_hex_audio,
+    emotion_allowed_for_model,
     host_is_documented_cn,
+    normalize_paragraph_newlines,
     send_t2a_once,
+    strip_pause_markers,
+    validate_pause_markers,
 )
 
 TESTS = []
@@ -384,6 +389,110 @@ def test_missing_credential_or_malformed_payload_never_reaches_the_transport():
             raise AssertionError("invalid input must be refused")
     assert transport.calls == []
     print("[ok] 13. invalid inputs are refused before the transport")
+
+
+# --- E. narration v2: newlines, pause markers, emotion -------------------------
+
+
+@test
+def test_newlines_are_paragraph_markers_and_survive_the_payload():
+    """The documented paragraph separator must not be flattened away.
+
+    The pre-narration-v2 pipeline collapsed text to one line for CLI
+    compatibility; the native API documents the newline as the paragraph
+    separator, so the builder must carry it byte-for-byte.
+    """
+    text = "第一段。\n\n第二段，<#0.2#>这里有停顿。"
+    payload = _payload(text=text)
+    assert payload["text"] == text
+    assert normalize_paragraph_newlines("a\r\nb\rc") == "a\nb\nc"
+    assert normalize_paragraph_newlines("a\nb") == "a\nb", "LF must be untouched"
+    print("[ok] 14. newlines survive as paragraph markers; only line endings normalise")
+
+
+@test
+def test_same_payload_text_still_works_without_markers():
+    plain = "没有任何控制标记的一句话。"
+    assert validate_pause_markers(plain) == []
+    assert _payload(text=plain)["text"] == plain
+    print("[ok] 15. text without markers is untouched")
+
+
+@test
+def test_pause_markers_are_validated_against_the_documented_rules():
+    good = "装上之后，<#0.3#>先回答问题。<#1.25#>然后是证据。"
+    assert validate_pause_markers(good) == [0.3, 1.25]
+    assert _payload(text=good)["text"] == good
+    bad_cases = (
+        "<#0.3#>开头就是标记。",
+        "结尾就是标记<#0.3#>",
+        "连续<#0.2#><#0.3#>标记。",
+        "逗号不算说话<#0.2#>，<#0.3#>标记。",
+        "三位小数<#0.333#>。",
+        "整数位过多<#100#>。",
+        "零秒<#0#>。",
+        "缺小数点<#.3#>。",
+        "没闭合<#0.3>。",
+    )
+    for bad in bad_cases:
+        try:
+            validate_pause_markers(bad)
+        except NativeTtsRefusal as exc:
+            assert exc.code == REFUSAL_INVALID_PAUSE_MARKER, (bad, exc.code)
+        else:
+            raise AssertionError(f"{bad!r} must be refused")
+        try:
+            _payload(text=bad)
+        except NativeTtsRefusal as exc:
+            assert exc.code == REFUSAL_INVALID_PAUSE_MARKER, (bad, exc.code)
+        else:
+            raise AssertionError(f"payload text {bad!r} must be refused")
+    print("[ok] 16. every malformed or misplaced pause marker is refused locally")
+
+
+@test
+def test_strip_pause_markers_is_for_comparison_only():
+    assert strip_pause_markers("看<#0.5#>这里。") == "看这里。"
+    assert strip_pause_markers("没有标记") == "没有标记"
+    assert strip_pause_markers("坏<#x#>标记") == "坏<#x#>标记", (
+        "a malformed marker survives stripping; it is refused on the send path, "
+        "not silently deleted here"
+    )
+    print("[ok] 17. stripping removes well-formed markers only")
+
+
+@test
+def test_emotion_is_absent_by_default_and_carried_when_documented():
+    bare = _payload()
+    assert "emotion" not in bare["voice_setting"], (
+        "an absent emotion is the documented way to let the model auto-detect"
+    )
+    explicit = _payload(emotion="calm")
+    assert explicit["voice_setting"]["emotion"] == "calm"
+    for value in ("happy", "sad", "angry", "fearful", "disgusted", "surprised", "calm"):
+        assert _payload(emotion=value)["voice_setting"]["emotion"] == value
+    print("[ok] 18. emotion is omitted by default and carried when documented")
+
+
+@test
+def test_undocumented_or_model_inapplicable_emotion_is_refused_locally():
+    for value in ("excited", "neutral", "whisper", "fluent", ""):
+        try:
+            _payload(emotion=value)
+        except NativeTtsRefusal as exc:
+            assert exc.code == REFUSAL_INVALID_PAYLOAD, (value, exc.code)
+        else:
+            raise AssertionError(f"emotion {value!r} must be refused for speech-2.8-hd")
+    six = build_t2a_payload(
+        text=ACTIVATION_TEXT, voice_id="v", model="speech-2.6-hd", emotion="whisper"
+    )
+    assert six["voice_setting"]["emotion"] == "whisper", (
+        "whisper/fluent are documented for speech-2.6 and must remain usable there"
+    )
+    assert emotion_allowed_for_model("speech-2.8-hd", "calm") is True
+    assert emotion_allowed_for_model("speech-2.8-hd", "whisper") is False
+    assert emotion_allowed_for_model("speech-2.8-hd", "neutral") is False
+    print("[ok] 19. only documented, model-applicable emotions are accepted")
 
 
 def main() -> int:

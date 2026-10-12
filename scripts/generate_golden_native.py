@@ -239,7 +239,7 @@ def main() -> int:
     receipt["narration"] = {
         "display_chars": len(locked["display_text"]),
         "billable_characters": billable_characters(locked["display_text"]),
-        "spoken_text_sha256": hashlib.sha256(spec.cli_text.encode()).hexdigest(),
+        "spoken_text_sha256": hashlib.sha256(spec.spoken_text.encode()).hexdigest(),
         "lexicon_version": lexicon.version,
         "pronunciation_rule_count": spec.pronunciation_rule_count,
     }
@@ -353,13 +353,13 @@ def main() -> int:
         return 1
 
     measured = measure_audio(normalized_path)
-    expected_duration = max(1.0, len(spec.cli_text) / 6.0)
+    expected_duration = max(1.0, len(spec.spoken_text) / 6.0)
     technical = technical_qc(
         normalized_path,
         expected_duration_s=expected_duration,
         expected_sample_rate_hz=32000,
     )
-    semantic = backcheck_speech(normalized_path, spec.cli_text).as_dict()
+    semantic = backcheck_speech(normalized_path, spec.spoken_text).as_dict()
     raw_sha = sha256_file(raw_path)
     normalized_sha = sha256_file(normalized_path)
     fingerprint = speech_fingerprint(
@@ -368,7 +368,7 @@ def main() -> int:
         plan=PLAN,
         model=MODEL,
         voice=VOICE_ID,
-        spoken_text=spec.cli_text,
+        spoken_text=spec.spoken_text,
         lexicon_component=lexicon.fingerprint_component(),
         speed=None,
         text_normalization=False,
@@ -387,7 +387,7 @@ def main() -> int:
         "display_text_sha256": hashlib.sha256(
             locked["display_text"].encode()
         ).hexdigest(),
-        "spoken_text_sha256": hashlib.sha256(spec.cli_text.encode()).hexdigest(),
+        "spoken_text_sha256": hashlib.sha256(spec.spoken_text.encode()).hexdigest(),
         "lexicon_version": lexicon.version,
         "fingerprint": fingerprint,
         "raw_sha256": raw_sha,
