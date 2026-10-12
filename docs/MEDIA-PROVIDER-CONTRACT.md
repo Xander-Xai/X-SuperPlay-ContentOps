@@ -203,7 +203,7 @@ authorisation.
 | Loudness normalisation | `VERIFIED` | #19 |
 | Voice cloning — entitlement | `VERIFIED` (account has an active clone) | #23 |
 | Voice cloning — public-API clone creation | `TESTED_REFUSED_2061` / `MODEL_NOT_ON_PLAN` | #23 |
-| Voice cloning — two-key route decision | `BLOCKED` (4 independent gates) | #34 |
+| Voice cloning — two-key route | `VENDOR_CONFIRMED` / `LIVE_VERIFICATION_PENDING` | #34 |
 | Cloned-voice synthesis (`speech-2.8-hd`) | `DOCUMENTED_BUT_NOT_TESTED` | #23 |
 | Image (`ImageProvider`, `MiniMaxMPlanImageProvider`, `image-01`) | `IMPLEMENTED` / M3 | #20 |
 | Image human review (composition, artifacts, publish intent) | `PENDING_FOUNDER_REVIEW` | #20 |
@@ -231,33 +231,60 @@ balances must be exactly zero is correct for synthesis and is deliberately **not
 applied to the authorised one-time clone fee, which carries its own ceiling. See
 `research/providers/minimax-voice-clone-entitlement.md`.
 
-### The two-key clone route is gated, and blocked (#34)
+### The two-key clone route: vendor-confirmed, live verification pending (#34)
 
 The plan excludes 快速复刻 by name and Credits cover the same resources as the plan, so
 a clone can only be created through a **pay-as-you-go key**, while narration must stay
 on the Subscription Key. That route is decided by
-`src/contentops/media/clone_route.py`, which performs no I/O and returns every blocker
-rather than the first one. As measured on 2026-10-12:
+`src/contentops/media/clone_route.py`, which performs no I/O and returns every gate
+rather than the first one.
+
+An earlier revision concluded from the published rules that the payment route was
+**impossible**. That was over-strong and is corrected: published rules do not describe
+a commercial arrangement made on a specific account. The Founder has since obtained
+MiniMax customer-service confirmation for this account (`FOUNDER_SUPPLIED_VENDOR_
+CONFIRMATION`) that the CNY 9.90 is charged at first synthesis, that the voice becomes
+permanently valid after that charge, and that an activated voice may then be used with
+M Plan. So the status is:
 
 ```
-CLONE_KEY_REQUIRED                   <- no pay-as-you-go key is provisioned
-SUBSCRIPTION_ONLY_BILLING_UNPROVEN    <- voucher_balance = 15.00, so plan-only TTS is unprovable
-PAYMENT_ROUTE_BLOCKED                <- the CNY 9.90 can only be charged via a PAYG synthesis
-CROSS_KEY_CLONED_VOICE_TTS_UNKNOWN   <- no official confirmation that a cross-key voice_id works
+commercial_status    VENDOR_CONFIRMED
+verification_status  LIVE_VERIFICATION_PENDING
 ```
 
-Two consequences worth stating here, because both change how this must be operated:
+**Account-level commercial evidence, not proof that any API call succeeds.** Nothing has
+been executed under it and nothing has been charged. The live gates as measured:
+
+```
+CLONE_KEY_REQUIRED                   no pay-as-you-go key is provisioned
+SUBSCRIPTION_ONLY_BILLING_UNPROVEN   voucher_balance = 15.00, so plan-only TTS is unprovable
+ACTIVATION_CASH_INSUFFICIENT         cash_balance = 0.00, so the CNY 9.90 has nothing to draw on
+ACTIVATION_CHARACTER_FEE_UNAUTHORISED the activation synthesis is itself billable (est. CNY 0.0154)
+CROSS_KEY_CLONED_VOICE_TTS_UNKNOWN   a commercial assurance is not an API permission grant
+```
+
+Four consequences worth stating here, because each changes how this must be operated:
 
 - **Cloned voices are temporary.** The clone is deleted if no T2A call uses it within
-  **168 hours**. Clone creation and first synthesis are therefore one continuous
+  **168 hours**. Clone creation and the first synthesis are therefore one continuous
   session, not two stages separated by review. Attempting the clone early is not a
   slower path; it ends with a fee and a voice that no longer exists.
-- **A provisioned key must not read as a working route.** The first two gates close
-  without any code change once the environment is right; the third and fourth do not
-  close at all from the operator side. `tests/test_minimax_clone_route.py` asserts that
-  giving the route a key still leaves `PAYMENT_ROUTE_BLOCKED` standing.
+- **"The CNY 9.90" was never the whole cost.** Three components, three owners:
+  `clone_creation` ¥0.00 (officially never charged), `first_activation` ¥9.90, and
+  `regular_tts` per character. Plus a fourth that is easy to lose —
+  `FIRST_ACTIVATION_TTS_FEE_UNKNOWN`, the character cost of the activation synthesis
+  itself. It is recorded as unknown rather than zero because the Founder's
+  authorisation covers the voice fee and does not extend to character spend.
+- **An approved charge is not a payable charge.** `cash_balance = 0.00` and only a
+  pay-as-you-go key deducts account balance. Recharge, voucher use and Credit Pack use
+  are all forbidden to do automatically, so this stops for a human.
+- **The `BillingGuard` is not relaxed to get past the voucher balance.** The guard asks
+  *can this Subscription Key spend outside included plan usage*; the fee authorisation
+  answers *is this one charge approved*. Different questions. Weakening the guard would
+  make every later narration unverifiable in exchange for one voice.
+  `tests/test_minimax_clone_route.py` asserts it.
 
-Full verification, measurements and the three Founder actions are in
+Full verification, measurements and the Founder actions are in
 `research/providers/minimax-m2-2-two-key-route.md`. The gate receipt is
 `projects/easel-enhanced-golden/receipts/founder-voice-route-receipt.json`.
 
@@ -282,7 +309,7 @@ capabilities:
   image: VERIFIED           # M2.0, Issue #4
   speech: VERIFIED          # M2.0 verified, M2 integrated
   voice_clone: UPLOAD_SUCCESS_CLONE_REFUSED_2061   # Issue #23, MODEL_NOT_ON_PLAN
-  voice_clone_route: BLOCKED # Issue #34, CLONE_KEY_REQUIRED + 3 more independent gates
+  voice_clone_route: VENDOR_CONFIRMED / LIVE_VERIFICATION_PENDING  # Issue #34, 5 live gates
   video_t2va: VERIFIED      # M2.0, Issue #4
   video_reference_modes: DOCUMENTED_BUT_NOT_TESTED
 quotas:
