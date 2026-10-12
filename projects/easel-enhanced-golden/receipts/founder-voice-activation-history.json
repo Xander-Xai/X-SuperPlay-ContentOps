@@ -1,0 +1,22 @@
+{
+  "schema": "contentops.voice-activation-history/v1",
+  "note": "Append-only. Every first-activation attempt on founder_primary_v1 is listed, including the ones that failed and charged nothing. Removing a failed entry would make the record of what was tried look different from what was tried.",
+  "attempts": [
+    {
+      "attempt_id": "cashact-c1a3a6506bd8",
+      "at": "2026-10-12T12:49:49.202209+00:00",
+      "outcome": "REFUSED_PRECHECK",
+      "refusals": [
+        "EXPOSED_PAYG_KEY_NOT_ROTATED"
+      ],
+      "charged_cny": "0.00",
+      "money_before": {
+        "available_amount": "25.00",
+        "cash_balance": "10.00",
+        "voucher_balance": "15.00",
+        "credit_balance": "0.00",
+        "owed_amount": "0.00"
+      }
+    }
+  ]
+}
