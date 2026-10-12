@@ -20,18 +20,35 @@ translation_status: superseded
 ## 结论
 
 ```
-ENTITLEMENT_PRESENT_BUT_API_CLONE_NOT_TESTED
+UPLOAD_SUCCESS_CLONE_REFUSED_2061 / MODEL_NOT_ON_PLAN
 ```
 
-2026-10-12 更新：权益问题已经不再是未决问题。账号**已有**声音克隆能力，并且已经使用过——
-只读 `POST /v1/get_voice` 返回了 1 条 `voice_cloning` 记录，而按当前官方文档，该列表只在
-声音**成功用于语音合成之后**才会出现条目。
+**本节此前是错的，现已更正。** 它此前写作
+`ENTITLEMENT_PRESENT_BUT_API_CLONE_NOT_TESTED`，并称"那一次计费请求尚未发出"。
+截至 2026-10-12，该请求已经**发出过一次**并被拒绝：
 
-仍然未验证的是更窄、更具体的一环：**用该 Subscription Key 通过公开 API 创建克隆**。
-那一次计费请求尚未发出。
+| 步骤 | 结果 |
+|---|---|
+| 样本上传 | **1 次，成功** |
+| `POST /v1/voice_clone` | **1 次，被拒** —— `base_resp.status_code = 2061` |
+| 重试 | 0 |
+| 实际扣费 | CNY 0.00 |
+| 额度变化 | 0 |
+| TTS | 未执行 |
 
-翻译状态已标记为 `superseded`：本文件保留 2026-10-04 的记录作为审计线索，
-权威结论以英文版为准。
+2061 在官方 MiniMax CLI `ERRORS.md` 中的含义是"该模型在您当前的 Token Plan 下不可用"。
+所以这是**套餐覆盖**问题，不是实名认证问题，也不是重试能解决的问题。
+
+本节下面的正文仍是 2026-10-04 的记录（"为什么没有尝试克隆"、"如果将来授权测试"），
+保留作为审计线索；权威结论以英文版为准。被取代的
+`ENTITLEMENT_PRESENT_BUT_API_CLONE_NOT_TESTED` 与 `DOCUMENTED_BUT_NOT_TESTED`
+都保留在下方。
+
+2026-10-12 更早的一次更新记录：权益问题已经不再是未决问题。账号**已有**声音克隆能力，
+并且已经使用过——只读 `POST /v1/get_voice` 返回了 1 条 `voice_cloning` 记录，而按当前
+官方文档，该列表只在声音**成功用于语音合成之后**才会出现条目。
+
+翻译状态保持 `superseded`：正文尚未与英文版逐段同步，本节只对齐结论。
 
 ## 已被取代的 2026-10-04 结论
 
