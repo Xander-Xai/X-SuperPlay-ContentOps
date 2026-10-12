@@ -484,7 +484,7 @@ def test_a_payg_credential_cannot_even_upload():
 def test_an_absent_credential_is_refused_rather_than_discovered():
     provider = make_provider(FakeTransport(), binding=CredentialBinding(None))
     try:
-        provider._require_subscription_credential()
+        provider._require_clone_credential()
         raise AssertionError("an unbound credential must be refused")
     except vc.CloneRefusal as refusal:
         assert refusal.code == vc.REFUSAL_CREDENTIAL_CLASS

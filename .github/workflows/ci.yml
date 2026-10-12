@@ -78,6 +78,15 @@ jobs:
       - name: Run M2.1 voice-clone regression tests
         run: python tests/test_minimax_voice_clone.py
 
+      # M2.2 two-key clone route. Pure policy: the route decision reads credentials,
+      # a billing verdict and a clock, and performs no I/O. So the PAYG key, the
+      # cross-key claim and the 168-hour clone lifetime are all testable in CI with
+      # no provider account and nothing spent -- which is the only place the
+      # "provisioning a key must not look like a working route" invariant can be
+      # checked at all, since the real route is blocked on a human action.
+      - name: Run M2.2 clone-route regression tests
+        run: python tests/test_minimax_clone_route.py
+
       - name: Run M3 image regression tests
         run: python tests/test_minimax_image.py
 

@@ -41,19 +41,25 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 __all__ = [
+    "CLONE_CREDENTIAL_ENV",
     "CREDENTIAL_ABSENT",
     "CREDENTIAL_PAYG",
     "CREDENTIAL_SUBSCRIPTION",
     "CREDENTIAL_UNKNOWN",
     "CredentialBinding",
     "CredentialBindingError",
+    "DuplicateCredentialError",
     "ResolvedCredential",
+    "SOURCE_CLONE_ENV",
     "SOURCE_MMX_CONFIG",
     "SOURCE_NONE",
     "SOURCE_SUBSCRIPTION_ENV",
+    "TwoKeyPair",
     "child_env_for",
     "classify_credential",
+    "resolve_clone_credential",
     "resolve_credential",
+    "resolve_two_key_pair",
 ]
 
 CREDENTIAL_SUBSCRIPTION = "SUBSCRIPTION"
@@ -66,8 +72,26 @@ SOURCE_API_KEY_ENV = "MINIMAX_API_KEY_ENV"
 SOURCE_MMX_CONFIG = "MMX_CONFIG"
 SOURCE_NONE = "NONE"
 
-#: The variable the official CLI reads. The authorised key is injected here.
+#: The official CLI reads this one. The authorised key is injected here.
 CHILD_CREDENTIAL_ENV = "MINIMAX_API_KEY"
+
+#: The pay-as-you-go key that is allowed to create a clone. Deliberately a **separate**
+#: variable with **no fallback chain**, which is the whole point of it.
+CLONE_CREDENTIAL_ENV = "MINIMAX_CLONE_KEY"
+SOURCE_CLONE_ENV = "MINIMAX_CLONE_KEY_ENV"
+
+
+class DuplicateCredentialError(RuntimeError):
+    """The two route keys resolved to the same value.
+
+    The two-key route exists so the one billable step (clone) and the free step (TTS)
+    are performed by different credentials with different billing sources. If both
+    resolvers return the same secret then only one key is configured, and the route
+    silently degrades into the single-key route that was already refused with 2061.
+
+    Failing loudly is the only safe response: a degenerate configuration that looks
+    like a working one is how a PAYG charge gets attributed to a Subscription Key.
+    """
 
 
 class CredentialBindingError(RuntimeError):
@@ -174,6 +198,93 @@ def resolve_credential(env: Optional[Dict[str, str]] = None) -> ResolvedCredenti
     return ResolvedCredential(
         key="", credential_class=CREDENTIAL_ABSENT, source=SOURCE_NONE
     )
+
+
+def resolve_clone_credential(env: Optional[Dict[str, str]] = None) -> ResolvedCredential:
+    """Resolve the pay-as-you-go clone key, and *only* that key.
+
+    No fallback chain, on purpose, and this is the single most important line in the
+    two-key route. :func:`resolve_credential` walks Subscription Key -> API Key ->
+    ``~/.mmx/config.json``, which is right for TTS and exactly wrong here: if this
+    function inherited that chain, a machine with only a Subscription Key would
+    "resolve" a clone credential from it and the clone would be sent on the plan
+    that has already refused it once with ``2061``.
+
+    Absence is therefore a first-class answer, not an error and not a fallback. An
+    absent key means :data:`CREDENTIAL_ABSENT`, which callers surface as
+    ``CLONE_KEY_REQUIRED`` so a human can provision one in the official console.
+    """
+    environ = dict(os.environ if env is None else env)
+    clone_key = environ.get(CLONE_CREDENTIAL_ENV, "").strip()
+    if not clone_key:
+        return ResolvedCredential(
+            key="", credential_class=CREDENTIAL_ABSENT, source=SOURCE_NONE
+        )
+    return ResolvedCredential(
+        key=clone_key,
+        credential_class=classify_credential(clone_key),
+        source=SOURCE_CLONE_ENV,
+    )
+
+
+@dataclass(frozen=True)
+class TwoKeyPair:
+    """The clone credential and the TTS credential, proven distinct.
+
+    Both private values are held here and never serialised; only the paired
+    :meth:`safe_metadata` leaves. They are kept in one object precisely so the
+    distinctness check happens once, at construction, rather than being remembered
+    at each of the call sites that need it.
+    """
+
+    clone: ResolvedCredential
+    tts: ResolvedCredential
+
+    @property
+    def clone_configured(self) -> bool:
+        return self.clone.usable
+
+    @property
+    def tts_configured(self) -> bool:
+        return self.tts.usable
+
+    def require_distinct(self) -> None:
+        """Raise unless both keys exist and differ.
+
+        Raises:
+            DuplicateCredentialError: both resolvers returned the same secret, so the
+                route would collapse to a single key.
+        """
+        if not self.clone.usable or not self.tts.usable:
+            return
+        if self.clone.key == self.tts.key:
+            raise DuplicateCredentialError(
+                f"{CLONE_CREDENTIAL_ENV} and the TTS credential resolved to the same "
+                f"secret (source {self.clone.source} vs {self.tts.source}). The "
+                "two-key route needs two different keys: the clone is a pay-as-you-go "
+                "step and the narration is a subscription step. Refusing rather than "
+                "running a one-key route under a two-key name."
+            )
+
+    def safe_metadata(self) -> Dict[str, Dict[str, str]]:
+        return {
+            "clone": self.clone.safe_metadata(),
+            "tts": self.tts.safe_metadata(),
+            "keys_distinct": (
+                self.clone.key != self.tts.key if self.clone.usable and self.tts.usable
+                else None
+            ),
+        }
+
+
+def resolve_two_key_pair(env: Optional[Dict[str, str]] = None) -> TwoKeyPair:
+    """Resolve both route credentials and prove they are different secrets.
+
+    :raises DuplicateCredentialError: both resolvers returned the same value.
+    """
+    pair = TwoKeyPair(clone=resolve_clone_credential(env), tts=resolve_credential(env))
+    pair.require_distinct()
+    return pair
 
 
 def child_env_for(
