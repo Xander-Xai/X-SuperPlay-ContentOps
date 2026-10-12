@@ -23,6 +23,8 @@ from contentops.media.cash_activation_recovery import (  # noqa: E402
     REFUSAL_VOICE_EXPIRED,
     REFUSAL_VOICE_MISSING,
     CashActivationAuthorisation,
+    ExposedKeyException,
+    FOUNDER_AUTHORISED_EXPOSED_KEY_REUSE,
     character_cost,
     decide_cash_activation,
     key_fingerprint,
@@ -315,6 +317,107 @@ def test_the_receipt_carries_no_secret_and_no_host_literal():
     assert verdict["limits"]["max_clone_count"] == 0
     assert verdict["limits"]["allow_automatic_retry"] is False
     print("[ok] 15. the receipt is public-safe and records a single-use, no-retry budget")
+
+
+# --- F. the Founder's scoped exception to the exposed-key gate -----------------
+
+
+def _exception(**overrides) -> ExposedKeyException:
+    base = {
+        "granted": True,
+        "key_fingerprint": EXPOSED_PAYG_KEY_FINGERPRINTS[0],
+        "voice_id_hash": VOICE_HASH,
+        "model": "speech-2.8-hd",
+        "billable_characters": 44,
+        "max_cash_debit_cny": Decimal("10.00"),
+        "granted_on": "2026-10-12",
+    }
+    base.update(overrides)
+    return ExposedKeyException(**base)
+
+
+@test
+def test_the_default_is_still_refusal_so_the_exception_can_only_be_granted():
+    """Adding an escape hatch must not quietly turn it into the default."""
+    verdict = _decide(payg_key_fingerprint=EXPOSED_PAYG_KEY_FINGERPRINTS[0])
+    assert not verdict.authorised
+    assert EXPOSED_PAYG_KEY_NOT_ROTATED in verdict.refusals
+    assert _decide(payg_key_fingerprint="deadbeef0000").authorised, (
+        "the exception must not affect a key that is not exposed"
+    )
+    print("[ok] 16. without a granted exception an exposed key is still refused")
+
+
+@test
+def test_a_matching_exception_permits_the_spend_but_never_hides_the_exposure():
+    """The exception permits one spend. It cannot rewrite the security record."""
+    verdict = _decide(
+        payg_key_fingerprint=EXPOSED_PAYG_KEY_FINGERPRINTS[0],
+        exception=_exception(),
+    )
+    assert verdict.authorised, verdict.refusals
+    # The exposure is still recorded as true. This is the whole contract.
+    assert verdict.evidence["exposed_key"] is True
+    assert verdict.evidence["exposed_key_exception_applied"] is True
+    applied = verdict.evidence["exposed_key_exception"]
+    assert applied["name"] == FOUNDER_AUTHORISED_EXPOSED_KEY_REUSE
+    assert "not a rotation and not a fix" in applied["note"]
+    assert FOUNDER_AUTHORISED_EXPOSED_KEY_REUSE in " ".join(verdict.reasons)
+    assert "should still be rotated" in " ".join(verdict.reasons)
+    print("[ok] 17. a matching exception permits the spend and keeps exposed_key=true")
+
+
+@test
+def test_the_exception_is_scoped_to_one_key_one_voice_one_model_one_length():
+    """Every way a stale exception becomes a wrong one is a mismatch to check."""
+    fp = EXPOSED_PAYG_KEY_FINGERPRINTS[0]
+    cases = {
+        "different key": dict(key_fingerprint="ffffffffffff"),
+        "different voice": dict(voice_id_hash="1" * 64),
+        "different model": dict(model="speech-2.6"),
+        "different length": dict(billable_characters=88),
+        "lower ceiling": dict(max_cash_debit_cny=Decimal("5.00")),
+    }
+    for label, over in cases.items():
+        verdict = _decide(
+            payg_key_fingerprint=fp, exception=_exception(**over)
+        )
+        assert not verdict.authorised, f"{label} must not be covered by the exception"
+        assert EXPOSED_PAYG_KEY_NOT_ROTATED in verdict.refusals, label
+        assert verdict.evidence["exposed_key"] is True, label
+    print("[ok] 18. the exception covers one key, one voice, one model and one length")
+
+
+@test
+def test_the_exception_is_single_use_across_processes():
+    """``consumed`` is the flag; without it a one-time grant becomes a standing hole."""
+    verdict = _decide(
+        payg_key_fingerprint=EXPOSED_PAYG_KEY_FINGERPRINTS[0],
+        exception=_exception(consumed=True),
+    )
+    assert not verdict.authorised
+    assert "already been consumed" in " ".join(verdict.reasons)
+    print("[ok] 19. a consumed exception is refused; single use survives a restart")
+
+
+@test
+def test_an_exception_never_overrides_the_other_gates():
+    """It narrows one gate only. Cash, ceiling, voice window and single-use still bind."""
+    fp = EXPOSED_PAYG_KEY_FINGERPRINTS[0]
+    for label, over in (
+        ("cash too low", dict(cash_balance=1.00)),
+        ("voice expired", dict(voice_window_remaining_s=-1.0)),
+        ("voice missing", dict(voice_exists=False)),
+        ("already recovered", dict(cash_recovery_used=True)),
+        ("credit pack present", dict(credit_balance=5.0)),
+        ("outstanding debt", dict(owed_amount=1.0)),
+        ("text over ceiling", dict(billable_characters=100000)),
+    ):
+        verdict = _decide(
+            payg_key_fingerprint=fp, exception=_exception(), **over
+        )
+        assert not verdict.authorised, f"{label} must still block under the exception"
+    print("[ok] 20. the exception relaxes the key gate and nothing else")
 
 
 def main() -> int:

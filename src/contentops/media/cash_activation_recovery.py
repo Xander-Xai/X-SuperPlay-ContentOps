@@ -68,7 +68,9 @@ __all__ = [
     "CashActivationVerdict",
     "EXPOSED_PAYG_KEY_NOT_ROTATED",
     "EXPOSED_PAYG_KEY_FINGERPRINTS",
+    "ExposedKeyException",
     "FINGERPRINT_PREFIX_LEN",
+    "FOUNDER_AUTHORISED_EXPOSED_KEY_REUSE",
     "REFUSAL_VOICE_EXPIRED",
     "REFUSAL_VOICE_MISSING",
     "RECOVERY_ALREADY_USED",
@@ -78,6 +80,11 @@ __all__ = [
 ]
 
 RECOVERY_NAME = CASH_ACTIVATION_RECOVERY = "CASH_ACTIVATION_RECOVERY"
+
+#: The Founder's name for the risk exception below. Kept as a literal because it is
+#: quoted into the receipt verbatim: a reader has to be able to match the record in the
+#: repository against the decision the Founder actually made.
+FOUNDER_AUTHORISED_EXPOSED_KEY_REUSE = "FOUNDER_AUTHORISED_EXPOSED_KEY_REUSE"
 
 #: How much of the SHA256 digest is kept. Twelve hex characters is 48 bits, which is far
 #: more than enough to distinguish two 126-character random keys and far too little to be
@@ -115,6 +122,88 @@ def key_fingerprint(key: str) -> str:
 def payg_key_is_exposed(key: str) -> bool:
     """Is this exact credential one that was exposed in chat?"""
     return bool(key) and key_fingerprint(key) in EXPOSED_PAYG_KEY_FINGERPRINTS
+
+
+@dataclass(frozen=True)
+class ExposedKeyException:
+    """A Founder-authorised, single-use exception to the exposed-key gate.
+
+    Deliberately a *narrowing* of the gate and never a disabling of it. The global
+    :func:`payg_key_is_exposed` check is untouched, still runs on every call, and its
+    answer is still recorded as ``True`` in every receipt. What this adds is a scoped,
+    dated, single-use authorisation that may satisfy the gate for **one** key, **one**
+    voice and **one** activation.
+
+    Four independent keys are all required to match, and every one of them is a place
+    where a stale exception silently becomes a wrong one:
+
+    ``key_fingerprint``
+        the exact compromised credential. A *new* key is safe and needs no exception; an
+        exception must never carry over to it.
+    ``voice_id_hash``
+        the exact voice. Reuse must not become a standing licence for the next clone.
+    ``model``
+        a different model is a different price and is not covered.
+    ``billable_characters``
+        the ceiling is on the charge, so the exception covers a specific text length
+        rather than "the activation". A longer utterance falls outside it.
+
+    ``consumed`` is the mechanism that makes it single-use across processes. An
+    in-memory flag would reset on every invocation, which is exactly how a one-time
+    exception becomes a permanent hole.
+    """
+
+    granted: bool = False
+    key_fingerprint: str = ""
+    voice_id_hash: str = ""
+    model: str = "speech-2.8-hd"
+    billable_characters: int = 44
+    max_cash_debit_cny: Decimal = Decimal("10.00")
+    granted_on: str = ""
+    authorised_by: str = "FOUNDER"
+    consumed: bool = False
+    reason: str = (
+        "Founder was shown the exposure risk in full and chose to accept it for this one "
+        "paid activation rather than rotate the credential first."
+    )
+
+    def matches(
+        self,
+        *,
+        fingerprint: str,
+        voice_hash: str,
+        model: str,
+        chars: int,
+        projected_cny: Decimal,
+    ) -> Optional[str]:
+        """Return None when the exception applies, or the reason it does not."""
+        if not self.granted:
+            return "no exposed-key exception has been granted"
+        if self.consumed:
+            return "the exception has already been consumed; it is single-use"
+        if self.key_fingerprint != fingerprint:
+            return (
+                f"the exception covers key {self.key_fingerprint or '(unset)'}, not "
+                f"{fingerprint or '(none)'}",
+            )
+        if self.voice_id_hash != voice_hash:
+            return (
+                "the exception covers a different voice; reuse must not become a "
+                "standing licence"
+            )
+        if self.model != model:
+            return f"the exception covers model {self.model}, not {model}"
+        if int(self.billable_characters) != int(chars):
+            return (
+                f"the exception covers {self.billable_characters} billable characters, "
+                f"not {chars}"
+            )
+        if projected_cny > self.max_cash_debit_cny:
+            return (
+                f"projected CNY {projected_cny:.4f} exceeds the exception ceiling CNY "
+                f"{self.max_cash_debit_cny}"
+            )
+        return None
 
 
 @dataclass(frozen=True)
@@ -242,8 +331,10 @@ def decide_cash_activation(
     owed_amount: Optional[float],
     billable_characters: int,
     previous_payg_refusal: bool,
-    previous_subscription_refusal: bool,
+    previous_subscription_refusal: bool = False,
     cash_recovery_used: bool = False,
+    exception: Optional[ExposedKeyException] = None,
+    model: str = "speech-2.8-hd",
     upload_count: int = 0,
     clone_count: int = 0,
 ) -> CashActivationVerdict:
@@ -255,6 +346,27 @@ def decide_cash_activation(
     """
     verdict = CashActivationVerdict()
     verdict.ceiling_cny = str(authorisation.max_cash_debit_cny)
+    exception = exception or ExposedKeyException()
+
+    # 0. The charge is computed FIRST, because the exception's scope is expressed in
+    #    terms of it. Gate 1 needs to know the projected total to decide whether the
+    #    exception covers this request, and gate 3 needs the same number to check the
+    #    ceiling. Computing it once, up front, is what keeps those two from disagreeing
+    #    about the same charge.
+    try:
+        projected_chars = int(billable_characters)
+    except (TypeError, ValueError):
+        projected_chars = -1
+    if projected_chars <= 0:
+        verdict.add(
+            ACTIVATION_CHARGE_NOT_BOUNDED,
+            f"billable_characters is {billable_characters!r}; the character cost cannot "
+            "be computed, so the charge is not bounded.",
+        )
+        projected_chars = 0
+    character_cny = character_cost(projected_chars) if projected_chars else Decimal("0")
+    projected = CLONE_CREATION_CNY + authorisation.one_time_activation_cny + character_cny
+    verdict.projected_total_cny = f"{projected:.4f}"
 
     # 1. Credential. A compromised key is not an acceptable way to spend money, and the
     #    check is a digest comparison so it survives process restarts.
@@ -262,14 +374,53 @@ def decide_cash_activation(
     #    Membership is tested directly. Calling :func:`payg_key_is_exposed` here would
     #    hash the fingerprint a second time and never match anything -- a security gate
     #    that always passes is worse than no gate, because it is reported as passing.
-    if payg_key_fingerprint in EXPOSED_PAYG_KEY_FINGERPRINTS:
-        verdict.add(
-            EXPOSED_PAYG_KEY_NOT_ROTATED,
-            f"the configured pay-as-you-go key matches a credential that was exposed in "
-            f"chat (fingerprint {payg_key_fingerprint}). It must be revoked at "
-            "账户管理 > 接口密钥 and replaced in the local .env before any charged call. "
-            "Paying through a compromised credential is not acceptable at any price.",
+    exposed_key = payg_key_fingerprint in EXPOSED_PAYG_KEY_FINGERPRINTS
+    exception_applied: Dict[str, Any] = {}
+    if exposed_key:
+        # Recorded on every receipt regardless of what the exception decides. The
+        # exception permits a spend; it does not and cannot change the fact.
+        exception_refusal = exception.matches(
+            fingerprint=payg_key_fingerprint,
+            voice_hash=voice_id_hash,
+            model=model,
+            chars=projected_chars,
+            projected_cny=projected,
         )
+        if exception_refusal is None:
+            exception_applied = {
+                "name": FOUNDER_AUTHORISED_EXPOSED_KEY_REUSE,
+                "applied": True,
+                "granted_on": exception.granted_on,
+                "authorised_by": exception.authorised_by,
+                "key_fingerprint": payg_key_fingerprint,
+                "voice_id_hash": voice_id_hash,
+                "model": model,
+                "billable_characters": projected_chars,
+                "max_cash_debit_cny": str(exception.max_cash_debit_cny),
+                "reason": exception.reason,
+                "note": (
+                    "The exposure is REAL and still true: exposed_key remains true in "
+                    "this receipt and the global payg_key_is_exposed() check is "
+                    "unchanged. This is a Founder decision to spend through it once, "
+                    "not a rotation and not a fix."
+                ),
+            }
+            verdict.reasons.append(
+                f"[{FOUNDER_AUTHORISED_EXPOSED_KEY_REUSE}] the pay-as-you-go key is "
+                f"exposed (fingerprint {payg_key_fingerprint}) and this run proceeds "
+                "under a Founder-granted, single-use, scope-limited exception. The key "
+                "should still be rotated; this does not make it safe."
+            )
+        else:
+            verdict.add(
+                EXPOSED_PAYG_KEY_NOT_ROTATED,
+                f"the configured pay-as-you-go key matches a credential that was exposed "
+                f"in chat (fingerprint {payg_key_fingerprint}), and "
+                f"{FOUNDER_AUTHORISED_EXPOSED_KEY_REUSE} does not apply: "
+                f"{exception_refusal}. It must be revoked at 账户管理 > 接口密钥 and "
+                "replaced in the local .env before any charged call. Paying through a "
+                "compromised credential is not acceptable at any price.",
+            )
     if not payg_key_is_payg_class:
         verdict.add(
             ACTIVATION_ATTEMPT_REFUSED,
@@ -296,21 +447,10 @@ def decide_cash_activation(
             "requires a separate authorisation.",
         )
 
-    # 3. The charge must be bounded by construction before it is attempted.
-    try:
-        chars = int(billable_characters)
-    except (TypeError, ValueError):
-        chars = -1
-    if chars <= 0:
-        verdict.add(
-            ACTIVATION_CHARGE_NOT_BOUNDED,
-            f"billable_characters is {billable_characters!r}; the character cost cannot "
-            "be computed, so the charge is not bounded.",
-        )
-        chars = 0
-    character_cny = character_cost(chars) if chars else Decimal("0")
-    projected = CLONE_CREATION_CNY + authorisation.one_time_activation_cny + character_cny
-    verdict.projected_total_cny = f"{projected:.4f}"
+    # 3. The charge must be bounded by construction before it is attempted. The
+    #    projection itself was computed in gate 0; this only holds it against the
+    #    ceiling. Recomputing it here would be a second place for the two to disagree.
+    chars = projected_chars
     if projected > authorisation.max_cash_debit_cny:
         verdict.add(
             ACTIVATION_CHARGE_NOT_BOUNDED,
@@ -405,6 +545,9 @@ def decide_cash_activation(
     verdict.evidence = {
         "payg_key_fingerprint": payg_key_fingerprint,
         "payg_key_is_payg_class": payg_key_is_payg_class,
+        "exposed_key": exposed_key,
+        "exposed_key_exception_applied": bool(exception_applied),
+        "exposed_key_exception": exception_applied or None,
         "voice_id_hash": voice_id_hash,
         "voice_window_remaining_h": (
             None if voice_window_remaining_s is None
