@@ -70,6 +70,14 @@ jobs:
       - name: Run M2 speech regression tests
         run: python tests/test_minimax_speech.py
 
+      # M2.1 voice cloning. Every test drives a fake transport or a refusal path, so no
+      # clone, upload or synthesis can happen here. The one billable clone is a manual,
+      # explicitly-confirmed action; this suite exists to prove it cannot happen by
+      # accident, which is why the fee-confirmation and one-attempt checks matter more
+      # than the happy path.
+      - name: Run M2.1 voice-clone regression tests
+        run: python tests/test_minimax_voice_clone.py
+
       - name: Run M3 image regression tests
         run: python tests/test_minimax_image.py
 

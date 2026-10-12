@@ -4,10 +4,10 @@ canonical: false
 type: research
 status: current
 issue: "#23"
-checked_at: "2026-10-04"
+checked_at: "2026-10-12"
 language: zh-CN
 translation_of: research/providers/minimax-voice-clone-entitlement.md
-translation_status: synced
+translation_status: superseded
 ---
 
 # MiniMax M Plan 声音克隆权益核验（Issue #23）
@@ -20,15 +20,51 @@ translation_status: synced
 ## 结论
 
 ```
+UPLOAD_SUCCESS_CLONE_REFUSED_2061 / MODEL_NOT_ON_PLAN
+```
+
+**本节此前是错的，现已更正。** 它此前写作
+`ENTITLEMENT_PRESENT_BUT_API_CLONE_NOT_TESTED`，并称"那一次计费请求尚未发出"。
+截至 2026-10-12，该请求已经**发出过一次**并被拒绝：
+
+| 步骤 | 结果 |
+|---|---|
+| 样本上传 | **1 次，成功** |
+| `POST /v1/voice_clone` | **1 次，被拒** —— `base_resp.status_code = 2061` |
+| 重试 | 0 |
+| 实际扣费 | CNY 0.00 |
+| 额度变化 | 0 |
+| TTS | 未执行 |
+
+2061 在官方 MiniMax CLI `ERRORS.md` 中的含义是"该模型在您当前的 Token Plan 下不可用"。
+所以这是**套餐覆盖**问题，不是实名认证问题，也不是重试能解决的问题。
+
+本节下面的正文仍是 2026-10-04 的记录（"为什么没有尝试克隆"、"如果将来授权测试"），
+保留作为审计线索；权威结论以英文版为准。被取代的
+`ENTITLEMENT_PRESENT_BUT_API_CLONE_NOT_TESTED` 与 `DOCUMENTED_BUT_NOT_TESTED`
+都保留在下方。
+
+2026-10-12 更早的一次更新记录：权益问题已经不再是未决问题。账号**已有**声音克隆能力，
+并且已经使用过——只读 `POST /v1/get_voice` 返回了 1 条 `voice_cloning` 记录，而按当前
+官方文档，该列表只在声音**成功用于语音合成之后**才会出现条目。
+
+翻译状态保持 `superseded`：正文尚未与英文版逐段同步，本节只对齐结论。
+
+## 已被取代的 2026-10-04 结论
+
+```
 DOCUMENTED_BUT_NOT_TESTED
 ```
 
 没有尝试任何克隆。有两个阻碍，都不是 agent 能自行清除的：账号实名认证状态未知，
 并且本仓库中不存在权利清晰的真人语音样本。
 
+两者均已于 2026-10-12 解决：Founder 提供了权利清晰、符合全部文档要求的 15 秒样本；
+而账号上已存在的克隆记录说明认证要求此前已满足。
+
 ## 当前官方来源怎么说
 
-2026-10-04 在账号所属 region 复核。
+2026-10-04 在账号所属 region 复核（下方记录保留原样）。
 
 | 问题 | 答案 | 来源 |
 |---|---|---|

@@ -201,10 +201,34 @@ authorisation.
 | Speech (`speech-2.8-hd`, system voices) | `VERIFIED` | #19 |
 | Pronunciation lexicon (`pronunciation_dict`, plain-text expansion) | `VERIFIED` | #19 |
 | Loudness normalisation | `VERIFIED` | #19 |
-| Voice cloning | `DOCUMENTED_BUT_NOT_TESTED` | #23 |
+| Voice cloning — entitlement | `VERIFIED` (account has an active clone) | #23 |
+| Voice cloning — public-API clone creation | `TESTED_REFUSED_2061` / `MODEL_NOT_ON_PLAN` | #23 |
+| Cloned-voice synthesis (`speech-2.8-hd`) | `DOCUMENTED_BUT_NOT_TESTED` | #23 |
 | Image (`ImageProvider`, `MiniMaxMPlanImageProvider`, `image-01`) | `IMPLEMENTED` / M3 | #20 |
 | Image human review (composition, artifacts, publish intent) | `PENDING_FOUNDER_REVIEW` | #20 |
 | Video | planned | #22 |
+
+Voice cloning is split into three rows on purpose. The entitlement, the API clone call
+and the synthesis that uses the clone fail independently, and the 2026-10-04 record
+collapsed them into one `DOCUMENTED_BUT_NOT_TESTED` — which read as "nothing is known"
+when in fact the entitlement is now directly observed. Clone lifecycle lives in
+`src/contentops/media/minimax_voice_clone.py` and owns no synthesis; cloned-voice
+narration goes through the existing speech provider so that lexicon, QC, loudness and
+receipt machinery stay in one place.
+
+`TESTED_REFUSED_2061` is a measured negative, not a gap: the sample upload succeeded and
+`POST /v1/voice_clone` was sent exactly once and answered `status_code=2061`
+(*"This model is not available on your current Token Plan"*), with zero retries, zero
+charge and zero quota delta. It is deliberately **not** written as
+`DOCUMENTED_BUT_NOT_TESTED`, which would claim the request was never sent. Cloned-voice
+synthesis stays `DOCUMENTED_BUT_NOT_TESTED` because it genuinely has never run: there is
+no successfully created clone to synthesise with. See
+`research/providers/minimax-voice-clone-entitlement.md`.
+
+The clone fee is a separate billing dimension from TTS. The `BillingGuard` rule that all
+balances must be exactly zero is correct for synthesis and is deliberately **not**
+applied to the authorised one-time clone fee, which carries its own ceiling. See
+`research/providers/minimax-voice-clone-entitlement.md`.
 
 ## Capability Matrix
 
@@ -214,11 +238,15 @@ plan: explore
 billing_mode: subscription
 payg_allowed: false
 credit_pack_allowed: false
+extra_one_time_fees:
+  voice_clone: CNY 9.9 max, per cloned voice, requires explicit Founder confirmation
+  payg_tts_allowed: false
+  credit_pack_tts_allowed: false
 capabilities:
   text: VERIFIED            # M2.0, Issue #4
   image: VERIFIED           # M2.0, Issue #4
   speech: VERIFIED          # M2.0 verified, M2 integrated
-  voice_clone: DOCUMENTED_BUT_NOT_TESTED   # Issue #23, needs rights-cleared sample
+  voice_clone: UPLOAD_SUCCESS_CLONE_REFUSED_2061   # Issue #23, MODEL_NOT_ON_PLAN
   video_t2va: VERIFIED      # M2.0, Issue #4
   video_reference_modes: DOCUMENTED_BUT_NOT_TESTED
 quotas:

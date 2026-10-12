@@ -181,3 +181,29 @@ docs/ai-provider-selection.md
 # Belt and braces: the files themselves, in case the directory is ever renamed.
 task-state/
 *.task-state.json
+
+# Private voice-clone registry.
+#
+# The provider's raw cloned voice_id is an account-scoped handle to the Founder's own
+# voice. It is not a credential, but it is personal, and the repository is public, so
+# the id lives here locally and only a salted-free SHA256 of it is ever committed.
+#
+# Prefers the MINIMAX_FOUNDER_VOICE_ID environment variable; this file exists so an
+# operator without it can still run the pipeline without pasting the id anywhere that
+# gets committed. Missing or unreadable is a refusal, never a fallback to a system voice.
+.private/
+.private/founder-voice.json
+
+# Local digital-asset root (`assert/`) -- raw Founder voice and presenter media.
+#
+# `local_only: true` and `do_not_commit_media: true` are declared by the directory's
+# own manifest, and the raw voice sample is the Founder's own biometric reference. It
+# is currently protected only by the global `*.wav` rule above -- and that rule was
+# narrowed once already, for two approved narration fixtures. A future exception of the
+# same kind would silently make a raw human voice committable.
+#
+# So the directory is ignored as a whole. Unlike the two narration fixtures, there is
+# no rights-cleared, public-safe reason for any of this content to be in Git: the
+# sample is a private input, and the receipts that DO get committed carry only hashes
+# and measurements.
+assert/
