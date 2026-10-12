@@ -29,6 +29,7 @@ F. **A claim outrunning its evidence.** ``CROSS_KEY_TTS_VERIFIED`` being derivab
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 from typing import Any, Dict, List
@@ -62,6 +63,9 @@ def test(fn):
 
 PAY_GATE = "SAFE_INCLUDED_PLAN"
 
+#: The activation utterance, mirroring the one the preflight script uses.
+ACTIVATION_TEXT = "这是一段用于首次激活的最短自然中文语音样本。"
+
 
 def _pair(clone_key: str = "", tts_key: str = "sk-cp-subscription") -> TwoKeyPair:
     def resolve(key: str, source: str) -> ResolvedCredential:
@@ -74,12 +78,18 @@ def _pair(clone_key: str = "", tts_key: str = "sk-cp-subscription") -> TwoKeyPai
     return TwoKeyPair(clone=resolve(clone_key, "TEST"), tts=resolve(tts_key, "TEST"))
 
 
+def _cost(**flags: Any) -> route.ActivationCost:
+    """A realistic activation cost: 44 billable characters, nothing authorised."""
+    return route.ActivationCost.for_text(ACTIVATION_TEXT, **flags)
+
+
 def _decide(pair: TwoKeyPair, **kwargs: Any) -> route.RouteDecision:
     params: Dict[str, Any] = {
         "billing_verdict": PAY_GATE,
         "billing_reasons": [],
         "account_verified": True,
         "cross_key_verified": True,
+        "activation_cost": _cost(),
     }
     params.update(kwargs)
     return route.decide_route(pair, **params)
@@ -257,69 +267,214 @@ def test_an_absent_clone_key_is_reported_as_a_provisioning_action_not_a_design_f
 
 
 @test
-def test_provisioning_the_clone_key_does_not_clear_the_payment_route():
+def test_provisioning_the_clone_key_does_not_clear_the_payment_and_billing_gates():
     """The decisive trap: fixing the easy blocker must not look like a working route.
 
-    The ¥9.90 is pay-as-you-go priced and charged at first synthesis; the plan
-    excludes 快速复刻 and Credits cover the same resources as the plan; and only a
-    pay-as-you-go key deducts balance. A PAYG clone key satisfies none of that. If
-    giving the route a key turned it authorised, the run would clone the Founder's
-    voice and then discover at synthesis time that the fee cannot be collected.
+    An earlier revision concluded the payment route was *impossible*, from the published
+    rules alone. The Founder has since obtained account-level vendor confirmation that
+    the fee is collected at first activation and that an activated voice may then be
+    used with M Plan -- so the route is no longer PROVEN_IMPOSSIBLE. But it is also not
+    VERIFIED, and provisioning a key does not make it either. The remaining gates are
+    a cash balance that cannot pay and a character fee nobody authorised.
     """
     before = _decide(_pair(clone_key=""))
-    after = _decide(_pair(clone_key="sk-api-clone"))
+    after = _decide(
+        _pair(clone_key="sk-api-clone"),
+        cash_balance=50.0,
+        first_activation_authorised=True,
+        activation_cost=_cost(
+            first_activation_authorised=True,
+            activation_character_authorised=True,
+        ),
+    )
     assert route.ROUTE_CLONE_KEY_REQUIRED in before.blocked_by
     assert route.ROUTE_CLONE_KEY_REQUIRED not in after.blocked_by
-    assert route.ROUTE_PAYMENT_BLOCKED in after.blocked_by, (
-        "provisioning a key must not resolve a contradiction in the published rules"
+    assert route.ROUTE_ACTIVATION_CASH_INSUFFICIENT not in after.blocked_by, (
+        "with cash available the payment route must be clear, not blocked on a "
+        "contradiction that vendor confirmation resolved"
     )
-    assert not after.authorised
-    assert len(after.blocked_by) >= 1
-    print("[ok] 6. a provisioned clone key still leaves PAYMENT_ROUTE_BLOCKED standing")
+    assert route.ROUTE_ACTIVATION_CHARACTER_FEE_UNAUTHORISED not in after.blocked_by
+    assert after.authorised, after.blocked_by
+
+    # And provisioning a key alone, with the money undecided, still refuses.
+    partial = _decide(_pair(clone_key="sk-api-clone"), cash_balance=50.0)
+    assert not partial.authorised
+    assert route.ROUTE_ACTIVATION_CHARACTER_FEE_UNAUTHORISED in partial.blocked_by, (
+        "a separate character charge still needs its own decision"
+    )
+    print("[ok] 6. a provisioned clone key clears the key gate but not the money gates")
+
+
+@test
+def test_a_zero_cash_balance_blocks_an_authorised_fee_from_being_charged():
+    """An approved CNY 9.90 is not payable money.
+
+    Only a pay-as-you-go key deducts account balance, and ``cash_balance`` is 0.00 on
+    this account. Voucher (15.00) and Credit Pack are both forbidden to use
+    automatically, so the charge has no source. Recording the fee as authorised while
+    the balance is empty is how a run ends up attempting a charge that answers 1008 --
+    or worse, quietly reaching for a pot it was told not to touch.
+    """
+    decision = _decide(
+        _pair(clone_key="sk-api-clone"),
+        cash_balance=0.0,
+        first_activation_authorised=True,
+    )
+    assert route.ROUTE_ACTIVATION_CASH_INSUFFICIENT in decision.blocked_by
+    joined = " ".join(decision.reasons)
+    assert "cash_balance is 0.00" in joined, joined
+    assert "forbidden" in joined, joined
+
+    # Funded cash clears this gate and nothing else.
+    funded = _decide(
+        _pair(clone_key="sk-api-clone"),
+        cash_balance=20.0,
+        first_activation_authorised=True,
+    )
+    assert route.ROUTE_ACTIVATION_CASH_INSUFFICIENT not in funded.blocked_by
+    print("[ok] 7. an authorised fee with an empty balance still fails closed")
+
+
+@test
+def test_the_activation_character_fee_is_never_written_as_zero():
+    """The small number is the dangerous one.
+
+    The activation synthesis is an ordinary billable TTS request: 44 characters at
+    CNY 3.50/10k. It is separate from the CNY 9.90 voice fee, it has never been
+    authorised, and it has never been observed on a receipt. Writing it as 0.00 would
+    both overstate what the Founder approved and understate what the call costs, and
+    "small" is exactly the reasoning that makes a number get waved through.
+    """
+    text = ACTIVATION_TEXT
+    cost = route.ActivationCost.for_text(text)
+    assert cost.first_activation_cny == "9.90"
+    assert cost.clone_creation_cny == "0.00", "the clone call itself is officially free"
+    assert cost.activation_character_cny == route.FIRST_ACTIVATION_TTS_FEE_UNKNOWN, (
+        "an unobserved, unauthorised charge must not be rendered as a number"
+    )
+    assert cost.activation_character_cny != "0.00"
+    assert cost.total_authorised_cny == "0.00", (
+        "nothing is authorised until this run says so"
+    )
+    assert "0.015400" in cost.total_unauthorised_cny, cost.total_unauthorised_cny
+
+    # And it blocks until separately approved.
+    decision = _decide(_pair(clone_key="sk-api-clone"), cash_balance=20.0,
+                       first_activation_authorised=True)
+    assert route.ROUTE_ACTIVATION_CHARACTER_FEE_UNAUTHORISED in decision.blocked_by
+    joined = " ".join(decision.reasons)
+    assert route.FIRST_ACTIVATION_TTS_FEE_UNKNOWN in joined, joined
+    assert "44 billable characters" in joined, joined
+    print("[ok] 8. the activation character fee is unknown, gated, and never zero")
+
+
+@test
+def test_billable_characters_follows_the_published_counting_rule():
+    """One CJK ideograph counts as 2; everything else counts as 1.
+
+    Getting this wrong by a factor of two would misprice the charge the Founder is
+    being asked to approve, and the error would be invisible -- the total is tiny
+    either way, which is precisely why it needs to be right rather than plausible.
+    """
+    assert route.billable_characters("") == 0
+    assert route.billable_characters("abcd") == 4
+    assert route.billable_characters("a b!") == 4
+    assert route.billable_characters("中文") == 4
+    assert route.billable_characters("中a") == 3
+    assert route.billable_characters(
+        "这是一段用于首次激活的最短自然中文语音样本。"
+    ) == 44
+    print("[ok] 9. billable characters count CJK as 2 and everything else as 1")
+
+
+@test
+def test_vendor_confirmation_is_recorded_as_commercial_evidence_not_api_success():
+    """The correction must not overshoot into calling the route VERIFIED.
+
+    The Founder obtained four explicit statements from MiniMax customer service. They
+    settle how the fee is collected. They say nothing about whether the API permits the
+    cross-key synthesis (2042 is documented for that), and nothing about whether this
+    account can pay. So the status is VENDOR_CONFIRMED + LIVE_VERIFICATION_PENDING, and
+    the evidence object says out loud that it is not proof of an API call succeeding.
+    """
+    confirmation = route.VENDOR_CONFIRMATION
+    assert confirmation["evidence_class"] == route.EVIDENCE_VENDOR_CONFIRMATION
+    assert confirmation["is_proof_of_api_success"] is False
+    assert len(confirmation["claims"]) == 4
+    assert confirmation["still_unverified"], "the gaps must be named, not implied"
+
+    decision = _decide(_pair(clone_key="sk-api-clone"), cash_balance=20.0,
+                       first_activation_authorised=True,
+                       activation_cost=_cost(
+                           first_activation_authorised=True,
+                           activation_character_authorised=True,
+                       ),
+                       cross_key_verified=None)
+    assert decision.commercial_status == route.ROUTE_VENDOR_CONFIRMED
+    assert decision.verification_status == route.LIVE_VERIFICATION_PENDING
+    assert decision.commercial_status != "VERIFIED", (
+        "an account-level commercial confirmation is not an executed API call"
+    )
+    # And the cross-key gate survives the confirmation, because 2042 is an API error.
+    assert route.ROUTE_CROSS_KEY_UNKNOWN in decision.blocked_by
+    assert not decision.authorised, (
+        "everything else can be cleared, but nothing has been executed yet"
+    )
+    print("[ok] 10. vendor confirmation is commercial evidence; the route stays unverified")
 
 
 @test
 def test_every_blocker_is_listed_so_a_partial_fix_cannot_read_as_complete():
     """A single-valued verdict is what makes a partial fix look like a whole one."""
-    decision = _decide(_pair(clone_key=""), billing_verdict="BLOCKED_BILLING_SOURCE_UNCERTAIN",
-                       billing_reasons=["voucher_balance is 15.0"],
-                       cross_key_verified=None, account_verified=None)
+    decision = _decide(
+        _pair(clone_key=""),
+        billing_verdict="BLOCKED_BILLING_SOURCE_UNCERTAIN",
+        billing_reasons=["voucher_balance is 15.0"],
+        cash_balance=0.0,
+        first_activation_authorised=False,
+        cross_key_verified=None,
+        account_verified=None,
+    )
     for code in (
         route.ROUTE_CLONE_KEY_REQUIRED,
         route.ROUTE_SUBSCRIPTION_BILLING_UNPROVEN,
-        route.ROUTE_PAYMENT_BLOCKED,
+        route.ROUTE_ACTIVATION_CASH_INSUFFICIENT,
+        route.ROUTE_ACTIVATION_CHARACTER_FEE_UNAUTHORISED,
         route.ROUTE_CROSS_KEY_UNKNOWN,
     ):
         assert code in decision.blocked_by, (code, decision.blocked_by)
-    assert len(decision.reasons) == len(decision.blocked_by), (
-        "every distinct blocker must carry its own reason; deduplicated codes with "
-        "merged reasons hide which fix helped"
+    assert len(decision.reasons) >= len(decision.blocked_by), (
+        "deduplicated codes with merged reasons hide which fix helped"
     )
     assert decision.blocked_by[0] == route.ROUTE_CLONE_KEY_REQUIRED, (
         "the provisioning action is reported first because nothing else can be "
         "attempted until it is done"
     )
-    print("[ok] 7. all four independent blockers are reported, provisioning action first")
+    print("[ok] 11. all five independent gates are reported, provisioning action first")
 
 
 @test
 def test_billing_must_be_provable_before_the_clone_not_after():
     """A non-zero voucher means paid funds could be consumed, so nothing may start.
 
-    The first-use fee is triggered by a synthesis. If subscription-only billing is
-    unprovable, the synthesis is the very step that could spend the wrong pot -- so
-    the block has to fire on the clone, before the upload, not on the narration.
+    The temptation this test resists is the obvious one: "the CNY 9.90 is authorised,
+    so the guard no longer needs to apply". The guard asks whether *this subscription
+    key* can spend outside included plan usage; the fee authorisation answers a
+    different question. Relaxing the guard to get past a voucher balance would make
+    every later narration unverifiable, in exchange for one voice.
     """
     decision = _decide(
         _pair(clone_key="sk-api-clone"),
         billing_verdict="BLOCKED_BILLING_SOURCE_UNCERTAIN",
         billing_reasons=["balance field voucher_balance is 15.0"],
+        cash_balance=20.0,
+        first_activation_authorised=True,
     )
     assert route.ROUTE_SUBSCRIPTION_BILLING_UNPROVEN in decision.blocked_by
     joined = " ".join(decision.reasons)
     assert "voucher_balance is 15.0" in joined, joined
-    assert "before" in joined or "no clone" in joined, joined
-    print("[ok] 8. unprovable subscription billing blocks the clone, not just the TTS")
+    assert "not relaxed" in joined, joined
+    print("[ok] 12. an authorised clone fee does not relax the BillingGuard")
 
 
 # --- E. the 168-hour lifetime ------------------------------------------------
@@ -354,7 +509,7 @@ def test_a_cloned_voice_expires_and_the_window_is_measurable_without_waiting():
     never = _decide(_pair(clone_key="sk-api-clone"))
     assert never.remaining_ttl is None
     assert never.ttl_deadline_iso() is None
-    print("[ok] 9. the 168h clone lifetime is measured, enforced, and inert when uncreated")
+    print("[ok] 13. the 168h clone lifetime is measured, enforced, and inert when uncreated")
 
 
 # --- F. claims must not outrun their evidence --------------------------------
@@ -368,7 +523,8 @@ def test_cross_key_verified_cannot_be_inferred_from_anything_but_a_real_answer()
     ``get_voice`` *lists* a voice created elsewhere. Listing is account-scoped and
     proves visibility. Error 2042 -- 无权访问该 voice_id -- is the documented symptom
     if visibility does not imply usability, so listing proves nothing about the
-    synthesis this route depends on.
+    synthesis this route depends on. Vendor confirmation does not close this either:
+    it is a billing statement, and 2042 is an API permission error.
     """
     unverified = _decide(_pair(clone_key="sk-api-clone"), cross_key_verified=None)
     assert route.ROUTE_CROSS_KEY_UNKNOWN in unverified.blocked_by
@@ -381,8 +537,10 @@ def test_cross_key_verified_cannot_be_inferred_from_anything_but_a_real_answer()
 
     refuted = _decide(_pair(clone_key="sk-api-clone"), cross_key_verified=False)
     assert route.ROUTE_CROSS_KEY_UNKNOWN in refuted.blocked_by
-    assert "no other key may be substituted" in " ".join(refuted.reasons)
-    print("[ok] 10. cross-key support needs an explicit answer, never a listing")
+    joined = " ".join(refuted.reasons)
+    assert "no other key may be substituted" in joined, joined
+    assert "does not override an API refusal" in joined, joined
+    print("[ok] 14. cross-key support needs an explicit answer, not a listing or a call")
 
 
 @test
@@ -392,25 +550,49 @@ def test_an_unverified_account_blocks_before_the_upload_would_be_spent():
     joined = " ".join(decision.reasons)
     assert "2038" in joined, joined
     assert not decision.authorised
-    print("[ok] 11. an unverified account is refused before the sample is uploaded")
+    print("[ok] 15. an unverified account is refused before the sample is uploaded")
 
 
 @test
 def test_the_route_receipt_carries_no_secret_and_no_disallowed_permission():
     """Serialisation is where a receipt usually leaks, so it is checked, not trusted."""
-    decision = _decide(_pair(clone_key="sk-api-clone-secret"),
-                       billing_verdict=route.ROUTE_PAYMENT_BLOCKED)
+    decision = _decide(_pair(clone_key="sk-api-clone-secret"), cash_balance=0.0)
     payload = decision.as_dict()
     blob = repr(payload)
     assert "sk-api-clone-secret" not in blob, blob
     assert "sk-cp-" not in blob and "Bearer " not in blob
-    assert payload["payg_tts_allowed"] is False
+    assert payload["payg_tts_allowed"] is False, (
+        "regular PAYG TTS stays forbidden; only the bounded activation is allowed"
+    )
+    assert payload["payg_activation_tts_allowed"] is True
     assert payload["credit_pack_tts_allowed"] is False
     assert payload["voucher_consumption_allowed"] is False
     assert payload["automatic_topup_allowed"] is False
+    assert payload["retry_allowed"] is False
     assert payload["production_ready"] is False
     assert payload["clone_fee_charged_at"] == "FIRST_SYNTHESIS_WITH_THIS_VOICE"
-    print("[ok] 12. the route receipt is public-safe and forbids every disallowed payment")
+    assert payload["vendor_confirmation"]["is_proof_of_api_success"] is False
+    print("[ok] 16. the route receipt is public-safe and forbids every disallowed payment")
+
+
+@test
+def test_the_route_receipt_refuses_the_excluded_moss_voice_family():
+    """The pre-existing ``moss_audio_*`` voice must not be reachable as a fallback.
+
+    It is not the Founder's approved voice, and using it as the target or as a
+    "quick test" would produce narration that looks like success and measures nothing
+    about the Founder at all. The exclusion is recorded in the receipt rather than
+    only in prose, so it travels with the evidence.
+    """
+    receipt = json.loads(
+        (
+            ROOT / "projects" / "easel-enhanced-golden" / "receipts"
+            / "founder-voice-route-receipt.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert receipt["excluded_voices"]["moss_audio_prefix"] == "FORBIDDEN"
+    assert "must not be used" in receipt["excluded_voices"]["reason"]
+    print("[ok] 17. the excluded moss_audio_* family is recorded as forbidden")
 
 
 @test
@@ -435,7 +617,12 @@ def test_every_official_citation_is_attributable():
         "2061 is absent from MiniMax's own error table, and that gap is itself the "
         "fact that must be recorded"
     )
-    print("[ok] 13. every stop code traces to a named official page")
+    # The rate the activation character cost is computed from must itself be cited.
+    assert any("speech-2.8-hd" in entry["fact"] or "3.50" in entry["fact"]
+               for entry in route.OFFICIAL_BASIS), (
+        "a computed charge with no cited rate is a guess with a decimal point"
+    )
+    print("[ok] 18. every stop code and every computed charge traces to a named page")
 
 
 def main() -> int:

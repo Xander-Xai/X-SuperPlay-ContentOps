@@ -1,18 +1,23 @@
 {
-  "schema": "contentops.voice-clone-route/v1",
+  "schema": "contentops.voice-clone-route/v2",
   "route": "CLONE_KEY_REQUIRED",
+  "commercial_status": "VENDOR_CONFIRMED",
+  "verification_status": "LIVE_VERIFICATION_PENDING",
   "authorised": false,
   "blocked_by": [
     "CLONE_KEY_REQUIRED",
     "SUBSCRIPTION_ONLY_BILLING_UNPROVEN",
-    "PAYMENT_ROUTE_BLOCKED",
+    "ACTIVATION_CASH_INSUFFICIENT",
+    "ACTIVATION_CHARACTER_FEE_UNAUTHORISED",
     "CROSS_KEY_CLONED_VOICE_TTS_UNKNOWN"
   ],
   "reasons": [
-    "MINIMAX_CLONE_KEY is not set. A pay-as-you-go API Key is required to create the clone, because the Subscription Key was refused once with 2061 and must not be retried. Create one at 账户管理 > 接口密钥 in the official console and set it locally; do not paste it into chat, a PR or a log.",
-    "BillingGuard verdict is BLOCKED_BILLING_SOURCE_UNCERTAIN, not SAFE_INCLUDED_PLAN. TTS cannot be proved to draw only on included plan usage, so no synthesis -- and therefore no first-use fee, and therefore no clone -- may proceed. balance field voucher_balance is 15.0, so paid funds could be consumed",
-    "official rules do not connect: the CNY 9.90 is a pay-as-you-go priced item (定价概览: 9.90 元/音色, 按量计费) charged at the FIRST SYNTHESIS with the voice; the plan explicitly excludes 快速复刻 and Credits cover the same resource set as the plan (定价概览 / pricing-token-plan); and account balance is only deducted when a pay-as-you-go API Key is called (付费服务协议 4.3(1)). So the fee can only be collected by a pay-as-you-go synthesis, which this issue forbids. Needs account-specific confirmation from MiniMax.",
-    "no official source confirms a voice_id created under a pay-as-you-go key can synthesise under the Subscription Key. get_voice listing is account-scoped and proves visibility, not usability; error 2042 (无权访问该 voice_id) is the documented symptom if visibility does not imply usability. Must not be claimed as supported before one real synthesis answers it."
+    "MINIMAX_CLONE_KEY is not set. A pay-as-you-go API Key is required to create the clone and to perform the one activation synthesis that pays the CNY 9.90, because the Subscription Key was refused once with 2061 and must not be retried. Create one at 账户管理 > 接口密钥 in the official console for THIS SAME account, then set it locally; do not paste it into chat, a PR or a log.",
+    "BillingGuard verdict is BLOCKED_BILLING_SOURCE_UNCERTAIN, not SAFE_INCLUDED_PLAN. TTS cannot be proved to draw only on included plan usage, so no synthesis -- and therefore no activation, and therefore no clone -- may proceed. This guard is not relaxed because the CNY 9.90 fee is authorised: the fee answers a different question from 'can this key spend non-plan funds'. balance field voucher_balance is 15.0, so paid funds could be consumed",
+    "cash_balance is 0.00 and only a pay-as-you-go key deducts account balance (付费服务协议 4.3(1)), so the CNY 9.90 activation charge cannot be paid from cash. Automatic recharge, automatic voucher consumption and automatic Credit Pack use are all forbidden, so this stops here. Founder must recharge or resolve the balance deliberately.",
+    "the CNY 9.90 first-activation fee has not been recorded as authorised in this run. The Founder's standing authorisation covers the clone fee only; it does not extend to additional character spend.",
+    "the activation synthesis itself is a billable TTS request: 44 billable characters at 3.50 CNY/10k, estimated CNY 0.015400. This is recorded as FIRST_ACTIVATION_TTS_FEE_UNKNOWN and must not be assumed zero. It is separate from the CNY 9.90 voice fee and needs its own authorisation.",
+    "the vendor confirmation states an activated voice may be synthesised with the M Plan key, but that is an account-level commercial statement and not an API-level permission grant. No official source confirms a voice_id created under a pay-as-you-go key can synthesise under the Subscription Key; get_voice listing is account-scoped and proves visibility, not usability, and error 2042 (无权访问该 voice_id) is the documented symptom if visibility does not imply usability. Must not be claimed as supported before one real synthesis answers it."
   ],
   "clone_key": {
     "credential_class": "ABSENT",
@@ -32,6 +37,7 @@
   "billing_reasons": [
     "balance field voucher_balance is 15.0, so paid funds could be consumed"
   ],
+  "cash_balance": 0.0,
   "clone_fee_cny": "9.90",
   "clone_fee_charged_at": "FIRST_SYNTHESIS_WITH_THIS_VOICE",
   "clone_ttl_hours": 168,
@@ -39,6 +45,39 @@
   "clone_created_at": null,
   "clone_ttl_deadline": null,
   "remaining_ttl_s": null,
+  "vendor_confirmation": {
+    "evidence_class": "FOUNDER_SUPPLIED_VENDOR_CONFIRMATION",
+    "obtained_by": "Founder, from MiniMax customer service",
+    "obtained_on": "2026-10-12",
+    "scope": "ACCOUNT_LEVEL_COMMERCIAL",
+    "is_proof_of_api_success": false,
+    "claims": [
+      "使用克隆音色首次合成时, 收取一次性 ¥9.9 音色克隆费。",
+      "首次收费完成后, 音色从临时有效转为永久有效。",
+      "后续语音合成仅收取对应字符的正常费用。",
+      "已经支付 ¥9.9 激活的音色, 可以继续使用 M Plan 套餐进行语音合成。"
+    ],
+    "still_unverified": [
+      "whether the cross-key synthesis is actually permitted (a 2042 is the documented symptom if it is not, and the vendor confirmation does not address the API-level permission)",
+      "whether this account's cash balance can pay the activation charge",
+      "the character cost of the activation synthesis itself, FIRST_ACTIVATION_TTS_FEE_UNKNOWN"
+    ]
+  },
+  "activation_cost": {
+    "clone_creation_cny": "0.00",
+    "clone_creation_charged_at": "NEVER_AT_CLONE_TIME",
+    "first_activation_cny": "9.90",
+    "first_activation_charged_at": "FIRST_SYNTHESIS_WITH_THIS_VOICE",
+    "first_activation_authorised": false,
+    "activation_characters": 44,
+    "rate_cny_per_10k_chars": "3.50",
+    "activation_character_cny": "FIRST_ACTIVATION_TTS_FEE_UNKNOWN",
+    "activation_character_cny_estimated": "0.015400",
+    "activation_character_authorised": false,
+    "regular_tts": "per-character at speech-2.8-hd rate, M Plan-eligible after activation",
+    "total_authorised_cny": "0.00",
+    "total_unauthorised_cny": "first_activation=9.90, activation_characters=0.015400"
+  },
   "official_basis": [
     {
       "id": "clone-fee-timing",
@@ -59,6 +98,11 @@
       "id": "balance-only-via-payg-key",
       "page": "platform.minimaxi.cn/protocol/paid-agreement 4.1 / 4.3(1)",
       "fact": "通过充值获得的 API Key 与 Token Plan API Key 相互独立, 且不可互换. 使用开放平台 API Key 调用, 按实际用量消耗账户余额."
+    },
+    {
+      "id": "speech-rate",
+      "page": "platform.minimax.cn/docs/pricing/overview (按量计费说明)",
+      "fact": "同步语音合成 T2A speech-2.8-hd = 3.50 元/万字符. 计费项是字符数,以 10000 个字符(输入)为单位,1 个汉字算 2 个字符,英文字母、希腊字母、标点符号、特殊符号、空格、回车等算 1 个字符. Used to compute the activation synthesis's character cost, which is a separate billable item from the CNY 9.90 voice fee."
     },
     {
       "id": "temporary-voice-ttl",
@@ -82,15 +126,18 @@
     }
   ],
   "payg_tts_allowed": false,
+  "payg_activation_tts_allowed": true,
   "credit_pack_tts_allowed": false,
   "voucher_consumption_allowed": false,
   "automatic_topup_allowed": false,
+  "retry_allowed": false,
   "production_ready": false,
   "human_review": "PENDING_FOUNDER_REVIEW",
   "producer": "scripts/prepare_founder_voice_clone_route.py",
   "voice_alias": "founder_primary_v1",
   "provider_voice_id_hash": "98fcbad890c52c7cc274e8cc59e47d358ccc309eaf1b9cb7dfe5bfcb093dc197",
   "sample_sha256": "bb56d052cd637bd8a369f6e37a745c7609de9988ada0fa0827d4d5c59035df8d",
+  "activation_text": "这是一段用于首次激活的最短自然中文语音样本。",
   "measured": {
     "billing_verdict": "BLOCKED_BILLING_SOURCE_UNCERTAIN",
     "billing_reasons": [
@@ -104,15 +151,20 @@
       "owed_amount": "0.00"
     },
     "quota": {
-      "interval_remaining_percent": 78.0,
-      "weekly_remaining_percent": 64.0,
+      "interval_remaining_percent": 56.0,
+      "weekly_remaining_percent": 62.0,
       "bucket": "general"
-    }
+    },
+    "cash_balance": 0.0
   },
   "calls_performed": {
     "upload": 0,
     "clone": 0,
     "tts": 0,
     "billing_reads": 1
+  },
+  "excluded_voices": {
+    "moss_audio_prefix": "FORBIDDEN",
+    "reason": "the pre-existing moss_audio_* voice is not the Founder's approved voice and must not be used as the target or as a substitute test sample"
   }
 }

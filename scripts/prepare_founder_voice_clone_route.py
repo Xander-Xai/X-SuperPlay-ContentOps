@@ -44,7 +44,7 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 ROOT = Path(__file__).resolve().parents[1]
 for candidate in (ROOT / "src", ROOT / "scripts"):
@@ -55,6 +55,7 @@ from contentops.media.billing_guard import BillingGuard  # noqa: E402
 from contentops.media.clone_route import (  # noqa: E402
     CLONE_TTL_HOURS,
     ROUTE_AUTHORISED,
+    ActivationCost,
     decide_route,
 )
 from contentops.media.credentials import (  # noqa: E402
@@ -67,6 +68,39 @@ OUT = ROOT / "projects/easel-enhanced-golden/receipts/founder-voice-route-receip
 VOICE_ALIAS = "founder_primary_v1"
 PROVIDER_VOICE_ID = "XSuperPlayFounderV1"
 SAMPLE_SHA256 = "bb56d052cd637bd8a369f6e37a745c7609de9988ada0fa0827d4d5c59035df8d"
+
+#: The shortest natural Chinese utterance that is still a real sentence, used to
+#: activate the voice. Not a single character and not a meaningless syllable: the
+#: activation synthesis is billed at the speech-2.8-hd per-character rate *and* pays
+#: the CNY 9.90, so it should be short, but a one-character "activation" would be a
+#: poor-quality artefact to hand to Founder listening later.
+ACTIVATION_TEXT = "这是一段用于首次激活的最短自然中文语音样本。"
+
+#: The CNY 9.90 voice fee is the Founder's standing authorisation for the clone.
+#: The *character* cost of the same synthesis is not covered by it and has never been
+#: observed, so it is a separate flag with a separate decision. Set
+#: CONTENTOPS_ACTIVATION_CHARACTER_FEE_AUTHORISED=1 only after a Founder decision
+#: naming the amount.
+FIRST_ACTIVATION_AUTHORISED = os.environ.get(
+    "CONTENTOPS_FIRST_ACTIVATION_AUTHORISED", ""
+).strip().lower() in ("1", "true", "yes")
+ACTIVATION_CHARACTER_FEE_AUTHORISED = os.environ.get(
+    "CONTENTOPS_ACTIVATION_CHARACTER_FEE_AUTHORISED", ""
+).strip().lower() in ("1", "true", "yes")
+
+
+def _num(value: Any) -> Optional[float]:
+    """Parse a balance string, or ``None`` if it cannot be read.
+
+    ``None`` and ``0.0`` are different facts and the route treats them differently:
+    "the balance could not be read" is a block, and "the balance is zero" is a
+    different block. Collapsing the first into the second would hide a broken read
+    behind a confidently wrong number.
+    """
+    try:
+        return float(str(value))
+    except (TypeError, ValueError):
+        return None
 
 
 def _measure_billing(tts_key: str) -> Dict[str, Any]:
@@ -149,18 +183,45 @@ def main() -> int:
         print(f"  ! {reason}")
     print()
 
+    cash = _num((billing.get("balances") or {}).get("cash_balance"))
+
+    print("=== ACTIVATION COST (nothing authorised beyond what is stated) ===")
+    cost = ActivationCost.for_text(
+        ACTIVATION_TEXT,
+        first_activation_authorised=FIRST_ACTIVATION_AUTHORISED,
+        activation_character_authorised=ACTIVATION_CHARACTER_FEE_AUTHORISED,
+    )
+    print(f"  text                     : {ACTIVATION_TEXT}")
+    print(f"  billable characters      : {cost.activation_characters}")
+    print(f"  clone_creation           : CNY {cost.clone_creation_cny} (NEVER_AT_CLONE_TIME)")
+    print(f"  first_activation         : CNY {cost.first_activation_cny} "
+          f"(authorised={cost.first_activation_authorised})")
+    print(f"  activation characters    : CNY {cost.activation_character_cny} "
+          f"(authorised={cost.activation_character_authorised})")
+    print(f"  activation chars estimate: CNY {cost.activation_character_cny_estimated} "
+          f"at {cost.rate_cny_per_10k}/10k")
+    print(f"  authorised now           : CNY {cost.total_authorised_cny}")
+    print(f"  NOT yet authorised       : {cost.total_unauthorised_cny}")
+    print(f"  regular_tts              : {cost.regular_tts}")
+    print()
+
     decision = decide_route(
         pair,
         billing_verdict=billing["verdict"],
         billing_reasons=billing["reasons"],
         account_verified=None,
         cross_key_verified=None,
+        cash_balance=cash,
+        activation_cost=cost,
+        first_activation_authorised=FIRST_ACTIVATION_AUTHORISED,
     )
 
     print("=== VERDICT ===")
-    print(f"  route       : {decision.route}")
-    print(f"  authorised  : {decision.authorised}")
-    print(f"  blocked_by  : {', '.join(decision.blocked_by) or '(none)'}")
+    print(f"  commercial status : {decision.commercial_status}")
+    print(f"  verification      : {decision.verification_status}")
+    print(f"  route             : {decision.route}")
+    print(f"  authorised        : {decision.authorised}")
+    print(f"  blocked_by        : {', '.join(decision.blocked_by) or '(none)'}")
     for reason in decision.reasons:
         print(f"  - {reason}")
     print()
@@ -174,17 +235,26 @@ def main() -> int:
         PROVIDER_VOICE_ID.encode("utf-8")
     ).hexdigest()
     receipt["sample_sha256"] = SAMPLE_SHA256
+    receipt["activation_text"] = ACTIVATION_TEXT
     receipt["measured"] = {
         "billing_verdict": billing["verdict"],
         "billing_reasons": billing["reasons"],
         "balances": billing.get("balances"),
         "quota": billing.get("quota"),
+        "cash_balance": cash,
     }
     receipt["calls_performed"] = {
         "upload": 0,
         "clone": 0,
         "tts": 0,
         "billing_reads": 1 if billing["verdict"] != "HOST_NOT_CONFIGURED" else 0,
+    }
+    receipt["excluded_voices"] = {
+        "moss_audio_prefix": "FORBIDDEN",
+        "reason": (
+            "the pre-existing moss_audio_* voice is not the Founder's approved voice "
+            "and must not be used as the target or as a substitute test sample"
+        ),
     }
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
