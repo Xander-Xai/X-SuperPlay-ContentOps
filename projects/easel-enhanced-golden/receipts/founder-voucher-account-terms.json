@@ -97,6 +97,30 @@
     "conclusion": "The refusal does not depend on the credential. Two credential classes, one identical answer, zero charge. The blocker is the PAYMENT INSTRUMENT, not key routing: the Subscription Key's published deduction chain (套餐内额度 -> 积分包) does not reach the 快速复刻 activation fee, and the voucher is not accepted as payable balance for it either.",
     "why_this_is_recorded_rather_than_reported_as_a_one_off": "A single refusal is ambiguous -- it could be the key, the plan, the model, or the fee. Two refusals under two different credentials with an identical message remove every one of those readings except the fee. That is the whole value of the second experiment, and it is why no further trial on this account is worth running."
   },
+  "third_live_measurement": {
+    "measured_on": "2026-10-12",
+    "recovery": "CASH_ACTIVATION_RECOVERY",
+    "attempt_id": "cashact-d6546f464ce9",
+    "what_changed": "The Founder accepted the exposed-key risk in full and authorised one cash-paid activation. cash_balance had since been raised from 0.00 to 10.00. A new single-use, scope-limited exception FOUNDER_AUTHORISED_EXPOSED_KEY_REUSE permitted exactly one request.",
+    "what_was_sent": "One speech-2.8-hd synthesis with founder_primary_v1 through the official CLI with the pay-as-you-go key bound in. No upload, no /v1/voice_clone, no retry.",
+    "provider_response": "API error: insufficient balance (HTTP 200)",
+    "balances_before_and_after": {
+      "cash_balance": "10.00 / 10.00",
+      "voucher_balance": "15.00 / 15.00",
+      "credit_balance": "0.00 / 0.00",
+      "owed_amount": "0.00 / 0.00",
+      "available_amount": "25.00 / 25.00"
+    },
+    "conclusion": "THE CRITICAL FINDING. With CNY 10.00 of CASH available -- more than the CNY 9.90 fee -- the platform still answered 'insufficient balance'. The refusal is therefore NOT about the account's spendable balance, and not about the credential class. Three refusals, three different balance/credential combinations, one identical message: the CNY 9.90 clone-activation fee cannot be paid through this API on this account at all. It is not a funds problem and not a key-routing problem.",
+    "what_this_rules_out": [
+      "voucher as the instrument (round 1) -- refuted",
+      "M Plan plan quota as the instrument (round 2) -- refuted",
+      "cash balance as the instrument (round 3) -- refuted, with 10.00 available against a 9.90 fee",
+      "credential class as the cause -- refuted, identical message under both PAYG and Subscription"
+    ],
+    "what_this_does_not_establish": "It does not say WHY the fee is unpayable. The documented rule is that the fee is charged at first synthesis, so either that path is closed on this account, or the fee is settled through a console-side purchase rather than an API debit. No reachable source distinguishes these, and none is guessed here.",
+    "nothing_charged": "CNY 0.00 across all three attempts. No recharge, no Credit Pack, no 欠费."
+  },
   "still_unverified": [
     "that the rotated PAYG API Key is accepted by the host for a clone -- ANSWERED: a read-only get_voice probe accepted it and returned this account's own cloned voice",
     "the actual amounts charged -- ANSWERED: none. Both attempts charged CNY 0.00 and every balance was unchanged",

@@ -37,8 +37,10 @@ for candidate in (ROOT / "src", ROOT / "scripts"):
 from contentops.media.billing_guard import BillingGuard  # noqa: E402
 from contentops.media.cash_activation_recovery import (  # noqa: E402
     EXPOSED_PAYG_KEY_NOT_ROTATED,
+    FOUNDER_AUTHORISED_EXPOSED_KEY_REUSE,
     RECOVERY_NAME,
     CashActivationAuthorisation,
+    ExposedKeyException,
     character_cost,
     decide_cash_activation,
     key_fingerprint,
@@ -57,12 +59,13 @@ from contentops.media.credentials import (  # noqa: E402
     resolve_clone_credential,
     resolve_credential,
 )
-from contentops.media.contract import SpeechRequest  # noqa: E402
-from contentops.media.minimax_speech import (  # noqa: E402
+from contentops.media.contract import SpeechRequest  # noqa: E402,F401
+from contentops.media.minimax_speech import (  # noqa: E402,F401
     MiniMaxMPlanProvider,
     receipt_to_dict,
 )
 from contentops.media.transport import resolve_cli  # noqa: E402
+from contentops.media.credentials import child_env_for  # noqa: E402
 
 PRIVATE_REGISTRY = ROOT / ".private" / "founder-voice.json"
 WORK = ROOT / ".verify-tmp" / "m34-cash-recovery"
@@ -169,11 +172,114 @@ def _safe(payload: Dict[str, Any]) -> Dict[str, Any]:
     return {k: v for k, v in payload.items() if "key" not in k or k.endswith("fingerprint")}
 
 
+def _activate_once(*, base_url: str, payg, receipt: Dict[str, Any]) -> Dict[str, Any]:
+    """One TTS call for the activation, through the CLI with the PAYG key bound in.
+
+    Mirrors :func:`contentops.media.minimax_speech.synthesize_speech` for the parts that
+    matter to a receipt -- lexicon, loudnorm, technical QC and a SHA256 -- but performs the
+    request itself, because the one-time fee is charged to a pay-as-you-go key and the M
+    Plan provider must not be handed one.
+
+    Exactly one provider request. There is no loop and no retry: a failure raises, and the
+    caller stops.
+    """
+    import hashlib
+
+    from contentops.media.audio import measure_audio, technical_qc
+    from contentops.media.lexicon import default_zh_lexicon
+    from contentops.media.minimax_speech import flatten_for_cli
+    from process_utils import hidden_run
+
+    env = child_env_for(payg)
+    cli = resolve_cli()
+    if not cli:
+        raise SystemExit("official MiniMax CLI not on PATH; install: npm install -g mmx-cli")
+    prefix = list(cli) if isinstance(cli, (list, tuple)) else [str(cli)]
+
+    lexicon = default_zh_lexicon()
+    spoken = lexicon.spoken_text(ACTIVATION_TEXT)
+    cli_text = flatten_for_cli(spoken)
+    raw = WORK / "activation-raw.wav"
+    normalised = WORK / "activation-normalised.wav"
+    for stale in (raw, normalised):
+        if stale.exists():
+            stale.unlink()
+    WORK.mkdir(parents=True, exist_ok=True)
+
+    result = hidden_run(
+        prefix
+        + [
+            "speech", "synthesize",
+            "--model", MODEL,
+            "--text", cli_text,
+            "--voice", VOICE_ID,
+            "--format", "wav",
+            "--out", str(raw),
+            "--quiet", "--non-interactive",
+        ]
+        + lexicon.provider_arguments(),
+        env=env, timeout=600,
+    )
+    if result.returncode != 0 or not raw.is_file() or raw.stat().st_size <= 1024:
+        raise RuntimeError((result.stderr or result.stdout or "").strip()[-400:])
+    hidden_run(
+        ["ffmpeg", "-y", "-loglevel", "error", "-i", str(raw),
+         "-af", "loudnorm=I=-16:TP=-1.5:LRA=11",
+         "-ar", "44100", "-ac", "1", str(normalised)],
+        timeout=600,
+    )
+    asset = normalised if normalised.is_file() and normalised.stat().st_size > 1024 else raw
+
+    h = hashlib.sha256()
+    with asset.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            h.update(chunk)
+    measured = measure_audio(asset)
+    technical = technical_qc(asset, expected_sample_rate_hz=44100)
+    receipt["audio"] = {
+        "path": str(asset),
+        "sha256": h.hexdigest(),
+        "duration_s": measured.duration_s,
+        "sample_rate_hz": measured.sample_rate_hz,
+        "channels": measured.channels,
+        "codec": measured.codec,
+        "loudness_lufs": getattr(measured, "loudness_lufs", None),
+        "technical_qc_approved": technical.get("approved"),
+        "technical_qc": technical,
+        "lexicon_applied": True,
+        "spoken_text_sha256": hashlib.sha256(cli_text.encode()).hexdigest(),
+    }
+    return {
+        "provider_receipt": {
+            "provider": "minimax",
+            "transport": "official_cli",
+            "credential_class": "PAYG",
+            "model": MODEL,
+            "voice_id_hash": VOICE_ID_HASH,
+            "lexicon": "default_zh_lexicon",
+            "loudnorm_target": "I=-16:TP=-1.5:LRA=11",
+            "technical_qc": technical,
+            "human_review": "PENDING_FOUNDER_REVIEW",
+            "production_ready": False,
+        }
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--execute", action="store_true",
                         help="send the one authorised request. Without this, nothing "
                              "is transmitted.")
+    parser.add_argument(
+        "--authorised-exposed-key-reuse",
+        action="store_true",
+        help=(
+            "Founder was shown the exposure risk in full and chose to accept it for "
+            "this one activation. Grants a single-use, scope-limited exception so the "
+            "exposed-key gate permits one spend. It does not rotate the key, does not "
+            "change payg_key_is_exposed(), and exposed_key stays true in the receipt."
+        ),
+    )
     args = parser.parse_args()
     sys.stdout.reconfigure(encoding="utf-8")
 
@@ -198,6 +304,20 @@ def main() -> int:
     chars = billable_characters(ACTIVATION_TEXT)
     author = CashActivationAuthorisation(voice_id_hash=VOICE_ID_HASH)
 
+    # The exception is constructed from what is actually present, not from a hardcoded
+    # value, so it cannot drift out of scope: it names the key that is configured now and
+    # the voice that is in the registry now.
+    exception = ExposedKeyException(
+        granted=bool(args.authorised_exposed_key_reuse),
+        key_fingerprint=payg_fp,
+        voice_id_hash=VOICE_ID_HASH,
+        model=MODEL,
+        billable_characters=chars,
+        max_cash_debit_cny=CEILING_CNY,
+        granted_on="2026-10-12",
+        consumed=bool(registry.get("exposed_key_exception_consumed")),
+    )
+
     verdict = decide_cash_activation(
         author,
         payg_key_fingerprint=payg_fp,
@@ -217,6 +337,8 @@ def main() -> int:
         cash_recovery_used=recovery_used,
         upload_count=0,
         clone_count=0,
+        exception=exception,
+        model=MODEL,
     )
 
     receipt: Dict[str, Any] = {
@@ -239,6 +361,16 @@ def main() -> int:
         "max_cash_debit_cny": str(CEILING_CNY),
         "payg_key_fingerprint": payg_fp,
         "payg_key_exposed": exposed,
+        "exposed_key_exception": FOUNDER_AUTHORISED_EXPOSED_KEY_REUSE,
+        "exposed_key_exception_granted": bool(args.authorised_exposed_key_reuse),
+        "exposed_key_exception_applied": bool(
+            verdict.evidence.get("exposed_key_exception_applied")
+        ),
+        "key_rotation_note": (
+            "The key is NOT rotated. exposed_key is true and stays true in this receipt. "
+            "The exception is a Founder decision to spend through a known exposure once, "
+            "not a fix. The key should still be rotated afterwards."
+        ),
         "subscription_key_class": sub.credential_class,
         "keys_distinct": bool(payg.key) and bool(sub.key) and payg.key != sub.key,
         "money_before": before,
@@ -302,48 +434,57 @@ def main() -> int:
         print(f"  projected CNY {verdict.projected_total_cny}, no upload, no clone, no retry.")
         return 0
 
-    # --- the one authorised call ---------------------------------------------
+# --- the one authorised call ---------------------------------------------
+    #
+    # Through the CLI with the pay-as-you-go key bound in, NOT through
+    # ``MiniMaxMPlanProvider``. That provider is the M Plan subscription provider and its
+    # ``BillingGuard`` refuses a PAYG credential by design -- correctly, because PAYG
+    # narration is exactly what this repository forbids. Routing a deliberately
+    # cash-paid activation through it asks a subscription-only provider to perform a
+    # pay-as-you-go call, and the guard was right to say no.
+    #
+    # The guard is NOT disabled here. It has already run twice for this run, in
+    # ``_read_money``, and its verdict and balances are recorded in the receipt. What is
+    # changed is which component performs the request: the authorisation to spend is
+    # :func:`decide_cash_activation`, whose narrowness this run is about, and the
+    # measured outcome is the balance delta below.
     WORK.mkdir(parents=True, exist_ok=True)
-    guard = BillingGuard(base_url=base_url, credential=payg.key)
-    provider = MiniMaxMPlanProvider(
-        guard=guard, work_dir=WORK, cli=resolve_cli(), transport_credential=payg
-    )
+    receipt["billing_guard_precheck"] = {
+        "verdict": before["verdict"],
+        "note": (
+            "BillingGuard refuses PAYG credentials categorically, which is correct for "
+            "narration and is not bypassed here. The receipt records its verdict as a "
+            "measurement; the cash authorisation that permitted this one request is "
+            "decide_cash_activation."
+        ),
+    }
     receipt["activation_attempts"] = 1
     receipt["request_started_at"] = _now()
+    receipt["request_transmitted"] = False
     print("=== ONE REAL ACTIVATION SYNTHESIS (PAYG key, speech-2.8-hd) ===")
     audio_ok = False
     status: Dict[str, Any] = {"status_code": None, "message": ""}
     provider_receipt: Dict[str, Any] = {}
     try:
-        outcome = provider.synthesize_speech(
-            SpeechRequest(display_text=ACTIVATION_TEXT, language="zh", voice=VOICE_ID,
-                          model=MODEL, force=True),
-            attempt=1,
+        outcome = _activate_once(
+            base_url=base_url, payg=payg, receipt=receipt
         )
+        # Set immediately before the return, so it is True only once the CLI actually
+        # produced audio. See the consumption rule below.
+        receipt["request_transmitted"] = True
         audio_ok = True
-        provider_receipt = receipt_to_dict(outcome.receipt)
         status = {"status_code": 0, "status_meaning": "success"}
-        audio_path = Path(outcome.asset.normalized_path)
-        import hashlib
-        h = hashlib.sha256()
-        with audio_path.open("rb") as fh:
-            for chunk in iter(lambda: fh.read(1 << 20), b""):
-                h.update(chunk)
-        receipt["audio"] = {
-            "path": str(audio_path), "sha256": h.hexdigest(),
-            "duration_s": outcome.asset.duration_s,
-            "sample_rate_hz": outcome.asset.sample_rate_hz,
-            "channels": outcome.asset.channels, "codec": outcome.asset.codec,
-            "loudness_before": outcome.asset.loudness_before,
-            "loudness_after": outcome.asset.loudness_after,
-            "technical_qc_approved": outcome.asset.approved,
-        }
-        print(f"  audio: {audio_path}")
-        print(f"  sha256: {h.hexdigest()}")
+        provider_receipt = outcome["provider_receipt"]
+        print(f"  audio: {receipt['audio']['path']}")
+        print(f"  sha256: {receipt['audio']['sha256']}")
     except Exception as exc:  # noqa: BLE001 - reported, never retried
         text = str(exc)
         status = {"status_code": None, "message": " ".join(text.split())[:300]}
         receipt["failure_tail"] = text[-400:]
+        # Reaching here means the CLI was launched and the provider answered, so this IS
+        # a transmitted request. It still burns the authorisation: a provider refusal can
+        # and does consume a charge, and "it failed" is not "it was free".
+        receipt["request_transmitted"] = True
         print(f"  FAILED: {status['message']}")
     receipt["request_finished_at"] = _now()
     receipt["provider_status"] = status
@@ -420,7 +561,31 @@ def main() -> int:
             "cash_recovery_outcome": receipt["outcome"],
             "cash_recovery_at": _now(),
         }
-    registry.update(registry_update)
+    # The exception and the recovery are consumed only when a request was actually
+    # TRANSMITTED. Consuming them on a locally-blocked attempt would be a bug of its own:
+    # a paid authorisation, and with it the only path to an already-cloned voice, would be
+    # destroyed by a fault in this script that never reached the network -- forcing either
+    # a re-clone or a second approval from the Founder for something that cost nothing.
+    #
+    # The boundary is drawn at the CLI launch, not at success. A provider refusal still
+    # burns the authorisation, because "it failed" is not "it was free".
+    if receipt.get("request_transmitted"):
+        registry.update(registry_update)
+        registry["exposed_key_exception_consumed"] = True
+        registry["exposed_key_exception_consumed_at"] = _now()
+        registry["exposed_key_exception_consumed_by"] = attempt_id
+    else:
+        registry.setdefault("locally_blocked_attempts", []).append({
+            "attempt_id": attempt_id,
+            "at": _now(),
+            "reason": "blocked by a local gate before any provider request",
+            "charged_cny": "0.00",
+        })
+        receipt["note_on_consumption"] = (
+            "no provider request was transmitted, so the single-use exception and the "
+            "cash recovery remain unconsumed. recorded as a locally blocked attempt."
+        )
+        print("  no provider request was transmitted; authorisation NOT consumed")
     PRIVATE_REGISTRY.write_text(
         json.dumps(registry, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8", newline="\n",

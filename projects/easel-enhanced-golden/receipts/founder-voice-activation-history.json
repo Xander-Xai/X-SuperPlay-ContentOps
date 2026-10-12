@@ -17,6 +17,92 @@
         "credit_balance": "0.00",
         "owed_amount": "0.00"
       }
+    },
+    {
+      "attempt_id": "cashact-d0a52a674c78",
+      "at": "2026-10-12T13:12:58.118038+00:00",
+      "outcome": "ACTIVATION_FAILED",
+      "credential_class": "PAYG",
+      "provider_status": {
+        "status_code": null,
+        "message": "BLOCKED_BILLING_SOURCE_UNCERTAIN: credential class is PAYG, not a Subscription Key; PAYG and unknown credentials are refused before generation; balance field cash_balance is 10.0, so paid funds could be consumed by a PAYG request; balance field voucher_balance is 15.0, so paid funds could be consume"
+      },
+      "cash_debit_cny": null,
+      "money_before": {
+        "available_amount": "25.00",
+        "cash_balance": "10.00",
+        "voucher_balance": "15.00",
+        "credit_balance": "0.00",
+        "owed_amount": "0.00"
+      },
+      "money_after": {
+        "available_amount": "25.00",
+        "cash_balance": "10.00",
+        "voucher_balance": "15.00",
+        "credit_balance": "0.00",
+        "owed_amount": "0.00"
+      },
+      "anomalies": []
+    },
+    {
+      "attempt_id": "cashact-d1684414c30b",
+      "at": "2026-10-12T13:13:50.518499+00:00",
+      "outcome": "REFUSED_PRECHECK",
+      "refusals": [
+        "EXPOSED_PAYG_KEY_NOT_ROTATED",
+        "RECOVERY_ALREADY_USED"
+      ],
+      "charged_cny": "0.00",
+      "money_before": {
+        "available_amount": "25.00",
+        "cash_balance": "10.00",
+        "voucher_balance": "15.00",
+        "credit_balance": "0.00",
+        "owed_amount": "0.00"
+      }
+    },
+    {
+      "attempt_id": "cashact-d6546f464ce9",
+      "at": "2026-10-12T13:15:54.777879+00:00",
+      "outcome": "ACTIVATION_FAILED",
+      "credential_class": "PAYG",
+      "provider_status": {
+        "status_code": null,
+        "message": "{ \"error\": { \"code\": 1, \"message\": \"API error: insufficient balance (HTTP 200)\" } }"
+      },
+      "cash_debit_cny": null,
+      "money_before": {
+        "available_amount": "25.00",
+        "cash_balance": "10.00",
+        "voucher_balance": "15.00",
+        "credit_balance": "0.00",
+        "owed_amount": "0.00"
+      },
+      "money_after": {
+        "available_amount": "25.00",
+        "cash_balance": "10.00",
+        "voucher_balance": "15.00",
+        "credit_balance": "0.00",
+        "owed_amount": "0.00"
+      },
+      "anomalies": []
+    },
+    {
+      "attempt_id": "cashact-842acaa45a5c",
+      "at": "2026-10-12T13:17:55.914748+00:00",
+      "outcome": "REFUSED_PRECHECK",
+      "refusals": [
+        "EXPOSED_PAYG_KEY_NOT_ROTATED",
+        "RECOVERY_ALREADY_USED"
+      ],
+      "charged_cny": "0.00",
+      "money_before": {
+        "available_amount": "25.00",
+        "cash_balance": "10.00",
+        "voucher_balance": "15.00",
+        "credit_balance": "0.00",
+        "owed_amount": "0.00"
+      }
     }
   ]
 }

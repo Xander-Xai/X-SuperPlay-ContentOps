@@ -1,9 +1,9 @@
 {
   "schema": "contentops.cash-activation-recovery/v1",
   "recovery": "CASH_ACTIVATION_RECOVERY",
-  "attempt_id": "cashact-c1a3a6506bd8",
+  "attempt_id": "cashact-842acaa45a5c",
   "issue": "#34",
-  "started_at": "2026-10-12T12:49:49.202046+00:00",
+  "started_at": "2026-10-12T13:17:55.914547+00:00",
   "executed": false,
   "voice_id": "founder_primary_v1",
   "voice_id_hash": "7271d9c80c88821a6a09ed43328619d0ee08c3f2b2449237fe2c31f6899abeef",
@@ -18,6 +18,10 @@
   "max_cash_debit_cny": "10.00",
   "payg_key_fingerprint": "2ac10c6e9029",
   "payg_key_exposed": true,
+  "exposed_key_exception": "FOUNDER_AUTHORISED_EXPOSED_KEY_REUSE",
+  "exposed_key_exception_granted": true,
+  "exposed_key_exception_applied": false,
+  "key_rotation_note": "The key is NOT rotated. exposed_key is true and stays true in this receipt. The exception is a Founder decision to spend through a known exposure once, not a fix. The key should still be rotated afterwards.",
   "subscription_key_class": "SUBSCRIPTION",
   "keys_distinct": true,
   "money_before": {
@@ -30,11 +34,11 @@
       "owed_amount": "0.00"
     },
     "quota": {
-      "interval_remaining_percent": 34.0,
-      "weekly_remaining_percent": 53.0
+      "interval_remaining_percent": 17.0,
+      "weekly_remaining_percent": 51.0
     }
   },
-  "window_remaining_h": 167.16,
+  "window_remaining_h": 166.69,
   "provider_call_budget": {
     "activation_tts": 1,
     "upload": 0,
@@ -51,16 +55,21 @@
     "status": "EXPOSED_PAYG_KEY_NOT_ROTATED",
     "authorised": false,
     "refusals": [
-      "EXPOSED_PAYG_KEY_NOT_ROTATED"
+      "EXPOSED_PAYG_KEY_NOT_ROTATED",
+      "RECOVERY_ALREADY_USED"
     ],
     "reasons": [
-      "the configured pay-as-you-go key matches a credential that was exposed in chat (fingerprint 2ac10c6e9029). It must be revoked at 账户管理 > 接口密钥 and replaced in the local .env before any charged call. Paying through a compromised credential is not acceptable at any price."
+      "the configured pay-as-you-go key matches a credential that was exposed in chat (fingerprint 2ac10c6e9029), and FOUNDER_AUTHORISED_EXPOSED_KEY_REUSE does not apply: the exception has already been consumed; it is single-use. It must be revoked at 账户管理 > 接口密钥 and replaced in the local .env before any charged call. Paying through a compromised credential is not acceptable at any price.",
+      "this cash recovery has already been used. The authorisation is for one activation; a second would be a second charge."
     ],
     "evidence": {
       "payg_key_fingerprint": "2ac10c6e9029",
       "payg_key_is_payg_class": true,
+      "exposed_key": true,
+      "exposed_key_exception_applied": false,
+      "exposed_key_exception": null,
       "voice_id_hash": "7271d9c80c88821a6a09ed43328619d0ee08c3f2b2449237fe2c31f6899abeef",
-      "voice_window_remaining_h": 167.16,
+      "voice_window_remaining_h": 166.69,
       "cash_balance": 10.0,
       "credit_balance": 0.0,
       "voucher_balance": 15.0,
@@ -94,5 +103,5 @@
     "human_review": "PENDING_FOUNDER_REVIEW"
   },
   "notes": [],
-  "finished_at": "2026-10-12T12:49:49.202761+00:00"
+  "finished_at": "2026-10-12T13:17:55.915654+00:00"
 }

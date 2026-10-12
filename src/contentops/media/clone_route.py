@@ -132,6 +132,7 @@ __all__ = [
     "CLONE_TTL_SECONDS",
     "EVIDENCE_VENDOR_CONFIRMATION",
     "EVIDENCE_LIVE_REFUTED",
+    "FOUNDER_AUTHORISED_EXPOSED_KEY_REUSE",
     "FIRST_ACTIVATION_TTS_FEE_UNKNOWN",
     "LIVE_VERIFICATION_PENDING",
     "PHASE_ALL",
@@ -202,10 +203,18 @@ EVIDENCE_LIVE_MEASURED = "VERIFIED_LOCAL"
 #:
 #: It was then sent a **second** time, on the Subscription Key, under a separate
 #: authorisation (:data:`SUBSCRIPTION_FIRST_ACTIVATION_PROBE`), to test whether the plan
-#: could pay the fee instead. The provider returned the **identical** refusal. That second
-#: measurement is what upgrades the finding from "the voucher does not work" to "neither
-#: instrument on this account can pay this fee": the blocker is the payment instrument,
-#: not the key routing. Nothing was charged on either attempt.
+#: could pay the fee instead. The provider returned the **identical** refusal.
+#:
+#: And a **third** time, with cash actually available: the Founder accepted the
+#: exposed-key risk in full, the account held CNY 10.00 against a CNY 9.90 fee, and a
+#: single-use scope-limited exception (:data:`FOUNDER_AUTHORISED_EXPOSED_KEY_REUSE`)
+#: permitted exactly one request. The provider returned the **identical** refusal, and
+#: every balance was unchanged.
+#:
+#: Three refusals across three different balance and credential combinations, with one
+#: message, is the actual finding: **the fee is not unpayable because of funds, and not
+#: because of the key.** No combination available to this account can pay it. Nothing was
+#: charged on any of the three attempts.
 #:
 #: Recorded as a distinct grade rather than as a reverted constant because the
 #: distinction is the actual finding: the commercial assurances were specific, they were
@@ -219,6 +228,12 @@ EVIDENCE_LIVE_REFUTED = "VERIFIED_LOCAL_REFUTED"
 #: *different* request against a *different* credential, not a retry, and its budget is
 #: its own: one synthesis, zero uploads, zero clones.
 SUBSCRIPTION_FIRST_ACTIVATION_PROBE = "SUBSCRIPTION_FIRST_ACTIVATION_PROBE"
+
+#: Name of the Founder's scoped exception for the third experiment, and a statement of what
+#: it is not. It permitted one paid call through a known-compromised credential; it did
+#: not rotate the key, did not change :func:`contentops.media.cash_activation_recovery.payg_key_is_exposed`,
+#: and did not make the charge succeed. ``exposed_key`` remains ``true`` in every receipt.
+FOUNDER_AUTHORISED_EXPOSED_KEY_REUSE = "FOUNDER_AUTHORISED_EXPOSED_KEY_REUSE"
 
 #: The two evidence grades that are strong enough to answer a question about *this
 #: account's* commercial terms. Both name a source outside this repository: published
@@ -810,18 +825,18 @@ def decide_route(
         decision.add(
             ROUTE_ACTIVATION_CASH_INSUFFICIENT,
             "voucher eligibility was already REFUTED by live calls on this account, "
-            "and refuted twice under two different credential classes. The activation "
-            "was sent first on the pay-as-you-go key and then, under a separate "
-            "authorisation, on the Subscription Key. Both returned the identical "
-            "'API error: insufficient balance' while voucher_balance was 15.00, "
-            "available_amount was 15.00 and cash_balance was 0.00; after each refusal "
-            "every balance was unchanged and M Plan quota did not move, so nothing was "
-            "charged and no 欠费 was created. The blocker is the PAYMENT INSTRUMENT, "
-            "not the key routing: the plan's published deduction chain "
-            "(套餐内额度 -> 积分包) does not reach the 快速复刻 activation fee, and the "
-            "voucher is not accepted as payable balance for it either. This grade "
-            "outranks every assurance and is not cleared by one. The next step is a "
-            "payment-instrument decision by the Founder, not another trial.",
+            "and refuted three times under three different balance and credential "
+            "combinations. The activation was sent first on the pay-as-you-go key with "
+            "only a voucher on the account, then on the Subscription Key under a separate "
+            "authorisation, and finally on the pay-as-you-go key with CNY 10.00 of CASH "
+            "available against a CNY 9.90 fee. All three returned the identical "
+            "'API error: insufficient balance'. After each refusal every balance was "
+            "unchanged and no 欠费 was created, so nothing was charged. "
+            "The refusal is therefore NOT a funds problem and NOT a key-routing "
+            "problem: no combination available to this account can pay this fee through "
+            "this API. No further payment-instrument experiment on this account is "
+            "worth running. This grade outranks every assurance and is not cleared by "
+            "one. The next step is a vendor question, not another trial.",
         )
     elif (
         PHASE_CLONE_ACTIVATION in active
