@@ -1,0 +1,98 @@
+{
+  "schema": "contentops.cash-activation-recovery/v1",
+  "recovery": "CASH_ACTIVATION_RECOVERY",
+  "attempt_id": "cashact-c1a3a6506bd8",
+  "issue": "#34",
+  "started_at": "2026-10-12T12:49:49.202046+00:00",
+  "executed": false,
+  "voice_id": "founder_primary_v1",
+  "voice_id_hash": "7271d9c80c88821a6a09ed43328619d0ee08c3f2b2449237fe2c31f6899abeef",
+  "voice_sample_sha256": "bb56d052cd637bd8a369f6e37a745c7609de9988ada0fa0827d4d5c59035df8d",
+  "clone_reused": true,
+  "model": "speech-2.8-hd",
+  "text": "这是一段用于首次激活的最短自然中文语音样本。",
+  "billable_characters": 44,
+  "rate_cny_per_10k_chars": "3.50",
+  "character_cost_cny": "0.015400",
+  "one_time_activation_cny": "9.90",
+  "max_cash_debit_cny": "10.00",
+  "payg_key_fingerprint": "2ac10c6e9029",
+  "payg_key_exposed": true,
+  "subscription_key_class": "SUBSCRIPTION",
+  "keys_distinct": true,
+  "money_before": {
+    "verdict": "BLOCKED_BILLING_SOURCE_UNCERTAIN",
+    "balances": {
+      "available_amount": "25.00",
+      "cash_balance": "10.00",
+      "voucher_balance": "15.00",
+      "credit_balance": "0.00",
+      "owed_amount": "0.00"
+    },
+    "quota": {
+      "interval_remaining_percent": 34.0,
+      "weekly_remaining_percent": 53.0
+    }
+  },
+  "window_remaining_h": 167.16,
+  "provider_call_budget": {
+    "activation_tts": 1,
+    "upload": 0,
+    "clone": 0,
+    "automatic_retry": 0
+  },
+  "activation_attempts": 0,
+  "upload_count": 0,
+  "clone_count": 0,
+  "retries_performed": 0,
+  "verdict": {
+    "schema": "contentops.cash-activation-recovery/v1",
+    "recovery": "CASH_ACTIVATION_RECOVERY",
+    "status": "EXPOSED_PAYG_KEY_NOT_ROTATED",
+    "authorised": false,
+    "refusals": [
+      "EXPOSED_PAYG_KEY_NOT_ROTATED"
+    ],
+    "reasons": [
+      "the configured pay-as-you-go key matches a credential that was exposed in chat (fingerprint 2ac10c6e9029). It must be revoked at 账户管理 > 接口密钥 and replaced in the local .env before any charged call. Paying through a compromised credential is not acceptable at any price."
+    ],
+    "evidence": {
+      "payg_key_fingerprint": "2ac10c6e9029",
+      "payg_key_is_payg_class": true,
+      "voice_id_hash": "7271d9c80c88821a6a09ed43328619d0ee08c3f2b2449237fe2c31f6899abeef",
+      "voice_window_remaining_h": 167.16,
+      "cash_balance": 10.0,
+      "credit_balance": 0.0,
+      "voucher_balance": 15.0,
+      "owed_amount": 0.0,
+      "billable_characters": 44,
+      "character_cost_cny": "0.015400",
+      "one_time_activation_cny": "9.90",
+      "clone_creation_cny": "0.00",
+      "projected_total_cny": "9.9154",
+      "previous_payg_refusal": true,
+      "previous_subscription_refusal": true,
+      "note_on_history": "the two earlier refusals are preserved and are NOT cleared by this authorisation. They are recorded because they are why the payment source changed from voucher to cash, not because they may be undone."
+    },
+    "projected_total_cny": "9.9154",
+    "ceiling_cny": "10.00",
+    "limits": {
+      "max_cash_debit_cny": "10.00",
+      "allow_voucher_deduction": false,
+      "allow_credit_pack_deduction": false,
+      "allow_auto_recharge": false,
+      "allow_reupload": false,
+      "allow_reclone": false,
+      "allow_automatic_retry": false,
+      "max_activation_tts_count": 1,
+      "max_upload_count": 0,
+      "max_clone_count": 0,
+      "scope": "one voice_id_hash, one cash activation"
+    },
+    "bounderiness_note": "The REQUEST is bounded by construction: one call, a fixed 44-billable-character text, a published per-character rate and a published one-time fee. No source states that the PROVIDER enforces a ceiling, and none is claimed here. The actual debit is measured against the ceiling after the call, and an overrun is a stop condition.",
+    "production_ready": false,
+    "human_review": "PENDING_FOUNDER_REVIEW"
+  },
+  "notes": [],
+  "finished_at": "2026-10-12T12:49:49.202761+00:00"
+}
