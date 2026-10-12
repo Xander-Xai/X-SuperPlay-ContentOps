@@ -4,7 +4,7 @@
 
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
-> Last verified: 2026-10-04
+> Last verified: 2026-10-13
 
 ## Git
 
@@ -343,3 +343,23 @@ Three real bugs in the new code, all found by tests rather than review:
 Plus one validation gap: a key-shaped value was only refused in a known field
 list, so it could be smuggled through a new field. Now no string value anywhere in
 a public receipt may match the provider-key shape.
+
+## MiniMax Narration v2 (Issue #34) — A/B/C SAMPLE READY FOR FOUNDER LISTENING
+
+Branch `feat/34-narration-v2-spoken-script-ab` (stacked on PR #44). Design
+decision: `adr/ADR-008-native-narration-v2.md`. Receipts:
+`projects/easel-enhanced-golden/review/ab-c-sample-receipt.json` and
+`ab-c-sample-receipt-term-check.json`.
+
+| Property | Value |
+|---|---|
+| Native text controls | paragraph newlines preserved; `<#x#>` pauses validated locally; `emotion` optional (auto-detect when absent) |
+| Spoken script | `projects/easel-enhanced-golden/script/narration-spoken.json` — derivative of the locked original; original and evidence lock untouched |
+| Version map | `narration-version-map.json` — SHA256 of original / spoken / synthesis (full, sample and per segment) |
+| Delivery | segment-level emotion/speed, content-addressed segment cache, partial regeneration, deterministic joins |
+| Billing | subscription-only resolver; M Plan gate plus before/after plan-quota and balance reads on every request; `--execute` switch; hard caps 1500 chars / 6 ASR calls |
+| Sample A / B / C | 27.55 s reused excerpt (0 cost) / 30.24 s single request (newlines + pauses, auto emotion) / 28.70 s three segments (calm 0.98, auto 1.05, calm 1.00) joined with declared gaps |
+| Provider usage | 5 calls, 584 billable characters; every request `M_PLAN_ONLY_VERIFIED`; 5h window 99% → 98%, all paid balances flat |
+| C join exactness | 5.478 + 8.833 + 13.436 + 0.95 s gaps = 28.697 s vs 28.698 s joined |
+| ASR findings | "doctor" reads correctly (term check S04); "伊泽尔" consistent; version strings read correctly — the detector's `v0.21`/`v0.2.1` mismatch remains a normalisation false positive |
+| Review state | `production_ready: false`, `human_review: PENDING_FOUNDER_REVIEW`; no publish, no digital-human video |

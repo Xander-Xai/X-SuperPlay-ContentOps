@@ -37,7 +37,6 @@ rather than a claim about a child.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import os
 import sys
@@ -53,7 +52,6 @@ for candidate in (ROOT / "src", ROOT / "scripts"):
     if str(candidate) not in sys.path:
         sys.path.insert(0, str(candidate))
 
-from contentops.media.billing_guard import BillingGuard  # noqa: E402
 from contentops.media.cash_activation_recovery import (  # noqa: E402
     EXPOSED_PAYG_KEY_NOT_ROTATED,
     FOUNDER_AUTHORISED_EXPOSED_KEY_REUSE,
@@ -81,10 +79,15 @@ from contentops.media.contract import SpeechRequest  # noqa: E402,F401
 from contentops.media.minimax_native_tts import (  # noqa: E402
     MINIMAX_CN_HOST,
     NativeTtsRefusal,
-    build_t2a_payload,
     host_is_documented_cn,
     normalize_host,
-    send_t2a_once,
+)
+from contentops.media.native_rounds import (  # noqa: E402
+    append_activation_history,
+    build_spoken_request,
+    delta_money,
+    read_money,
+    run_native_activation_once,
 )
 from contentops.media.minimax_speech import (  # noqa: E402,F401
     MiniMaxMPlanProvider,
@@ -157,310 +160,53 @@ def _resolve_hosts() -> Dict[str, Any]:
     }
 
 
-def _write_private_provider_response(
-    attempt_id: str,
-    *,
-    host: str,
-    result: Any = None,
-    refusal: Optional[NativeTtsRefusal] = None,
-) -> Optional[Path]:
-    """Persist the full provider envelope under ``.private/``. Public data is a summary.
-
-    The CLI collapsed every provider failure into ``API error: <msg> (HTTP 200)``
-    plus ``{"error": {"code": 1}}`` -- a CLI-internal general-error class -- so
-    the provider's own ``base_resp.status_code`` and ``trace_id`` were destroyed
-    before any receipt saw them. Nothing about the next attempt may repeat that:
-    the raw JSON is written here, in full, and the receipt carries only the
-    scrubable summary.
-    """
-    PRIVATE_DIAGNOSTICS.mkdir(parents=True, exist_ok=True)
-    payload: Dict[str, Any] = {
-        "schema": "contentops.provider-raw-response/v1",
-        "attempt_id": attempt_id,
-        "at": _now(),
-        "host": normalize_host(host),
-        "path": "/v1/t2a_v2",
-        "transport": "native_http_cn",
-    }
-    if result is not None:
-        raw = dict(result.raw)
-        data = dict(raw.get("data") or {})
-        audio_hex = data.pop("audio", None)
-        if audio_hex is not None:
-            data["_audio_hex_omitted"] = True
-            data["_audio_hex_chars"] = len(audio_hex)
-            data["_audio_sha256"] = hashlib.sha256(result.audio_bytes).hexdigest()
-        raw["data"] = data
-        payload.update(
-            {
-                "outcome": "provider_success",
-                "http_status": result.http_status,
-                "trace_id": result.trace_id,
-                "base_resp": {
-                    "status_code": result.status_code,
-                    "status_msg": result.status_msg,
-                },
-                "extra_info": result.extra_info,
-                "raw_response": raw,
-            }
-        )
-    if refusal is not None:
-        payload.update(
-            {
-                "outcome": "provider_refusal",
-                **refusal.structured(),
-                "raw_response": refusal.raw,
-                "response_text_preview": refusal.response_text or None,
-            }
-        )
-    blob = json.dumps(payload, indent=2, ensure_ascii=False)
-    for banned in ("Authorization", "Bearer ", "sk-cp-", "sk-api-"):
-        if banned in blob:
-            raise SystemExit(
-                f"refusing to write a provider diagnostic containing {banned!r}"
-            )
-    path = PRIVATE_DIAGNOSTICS / f"tts-{attempt_id}.json"
-    path.write_text(blob + "\n", encoding="utf-8", newline="\n")
-    return path
-
-
-def _read_money(base_url: str, key: str) -> Dict[str, Any]:
-    guard = BillingGuard(base_url=base_url, credential=key)
-    result = guard.evaluate("speech")
-    return {
-        "verdict": result.verdict,
-        "balances": {
-            k: v
-            for k, v in (result.balances or {}).items()
-            if k not in ("base_resp", "balance_alert_switch", "balance_alert_threshold")
-        },
-        "quota": None
-        if result.quota is None
-        else {
-            "interval_remaining_percent": result.quota.interval_remaining_percent,
-            "weekly_remaining_percent": result.quota.weekly_remaining_percent,
-        },
-    }
-
-
-def _delta(before: Dict[str, Any], after: Dict[str, Any]) -> Dict[str, Any]:
-    out: Dict[str, Any] = {}
-    for name in ("cash_balance", "voucher_balance", "credit_balance",
-                 "owed_amount", "available_amount"):
-        try:
-            b = Decimal(str(before["balances"][name]))
-            a = Decimal(str(after["balances"][name]))
-        except Exception:  # noqa: BLE001
-            out[name] = {"delta": None, "error": "field unreadable; not inferred"}
-            continue
-        out[name] = {
-            "before": str(b), "after": str(a), "delta": str(a - b),
-            "decreased": a < b, "increased": a > b,
-        }
-    return out
+# ``_read_money``, ``_delta`` and ``_write_private_provider_response`` moved to
+# :mod:`contentops.media.native_rounds` so the recovery round and the native
+# first-activation round share one implementation. Two copies would drift in
+# exactly the places the first three attempts failed.
 
 
 def _write_history_append(attempt_id: str, payload: Dict[str, Any]) -> None:
     """Append-only history. Existing entries are never rewritten or removed."""
-    entries: list = []
-    if HISTORY_RECEIPT.is_file():
-        try:
-            entries = json.loads(HISTORY_RECEIPT.read_text(encoding="utf-8")).get(
-                "attempts", []
-            )
-        except (OSError, json.JSONDecodeError):
-            entries = []
-    entries.append({"attempt_id": attempt_id, **_safe(payload)})
-    blob = json.dumps(
-        {
-            "schema": "contentops.voice-activation-history/v1",
-            "note": (
-                "Append-only. Every first-activation attempt on founder_primary_v1 is "
-                "listed, including the ones that failed and charged nothing. Removing a "
-                "failed entry would make the record of what was tried look different "
-                "from what was tried."
-            ),
-            "attempts": entries,
-        },
-        indent=2,
-        ensure_ascii=False,
-    )
-    for banned in ("Authorization", "Bearer ", "sk-cp-", "sk-api-"):
-        if banned in blob:
-            raise SystemExit(f"refusing to write history containing {banned!r}")
-    HISTORY_RECEIPT.write_text(blob + "\n", encoding="utf-8", newline="\n")
-
-
-def _safe(payload: Dict[str, Any]) -> Dict[str, Any]:
-    return {k: v for k, v in payload.items() if "key" not in k or k.endswith("fingerprint")}
+    append_activation_history(HISTORY_RECEIPT, attempt_id, payload)
 
 
 def _activate_once(*, base_url: str, payg, receipt: Dict[str, Any]) -> Dict[str, Any]:
-    """One native HTTP T2A call for the activation. One request; no retry.
+    """One native HTTP T2A call for the activation, via the shared runner.
 
-    Sends the already-audited :data:`ACTIVATION_TEXT` through
-    :func:`contentops.media.minimax_native_tts.send_t2a_once` -- a transport
-    this process fully controls -- instead of the official CLI. The payload is
-    built from the documented request schema, the voice id, model, text and
-    settings are asserted against the payload this function actually sends, and
-    the provider's full JSON envelope is preserved privately.
-
-    Mirrors :func:`contentops.media.minimax_speech.synthesize_speech` for the
-    parts that matter to a receipt -- lexicon, loudnorm, technical QC, a
-    SHA256 -- because the activation audio is the Founder's first listen and
-    should be as trustworthy as any later narration.
-
-    Exactly one provider request. A refusal raises, the caller stops, and the
-    single-use authorisation is consumed at the moment the request is
-    transmitted, not at the moment it succeeds.
-
-    Raises:
-        NativeTtsRefusal: a provider refusal or transport failure, with HTTP
-            status, provider status code, provider message and trace id as
-            separate fields. ``receipt["request_transmitted"]`` is set before
-            it is raised.
+    The request sequence itself lives in
+    :func:`contentops.media.native_rounds.run_native_activation_once` so this
+    round and the native first-activation round cannot drift apart in the
+    places the first three attempts failed: the credential actually used, the
+    host actually addressed, the single-request rule, and the preservation of
+    the provider's raw envelope.
     """
-    from contentops.media.audio import measure_audio, technical_qc
     from contentops.media.lexicon import default_zh_lexicon
-    from contentops.media.minimax_speech import flatten_for_cli
-    from process_utils import hidden_run
 
     if not host_is_documented_cn(base_url):
         raise SystemExit(
             f"refusing to send: {base_url!r} is not the documented CN host "
             f"({MINIMAX_CN_HOST}). This run does not guess an endpoint."
         )
-
     lexicon = default_zh_lexicon()
-    spoken = lexicon.spoken_text(ACTIVATION_TEXT)
-    cli_text = flatten_for_cli(spoken)
-    pronunciation = [
-        f"{source}/{lexicon.rules[source]}" for source in sorted(lexicon.rules)
-    ]
-    payload = build_t2a_payload(
-        text=cli_text,
+    spec = build_spoken_request(
+        display_text=ACTIVATION_TEXT,
         voice_id=VOICE_ID,
         model=MODEL,
-        sample_rate=32000,
-        fmt="wav",
-        channel=1,
-        pronunciation_entries=pronunciation,
+        lexicon=lexicon,
     )
 
-    # The four substitutions the CLI could previously make invisibly -- a
-    # different credential, voice, model or text -- are asserted against the
-    # payload object this exact request will serialise. If any of them ever
-    # drifts, this is a local stop before the request, not a paid surprise.
-    assert payload["voice_setting"]["voice_id"] == VOICE_ID
-    assert payload["model"] == MODEL
-    assert payload["text"] == cli_text
-    assert payload["stream"] is False
-
-    receipt["request_target"] = {
-        "host": normalize_host(base_url),
-        "path": "/v1/t2a_v2",
-        "transport": "native_http_cn",
-        "credential_class": payg.credential_class,
-        "credential_source": payg.source,
-    }
-    receipt["request_payload"] = {
-        "fields": sorted(payload.keys()),
-        "model": payload["model"],
-        "text_sha256": hashlib.sha256(payload["text"].encode()).hexdigest(),
-        "text_billable_characters": billable_characters(ACTIVATION_TEXT),
-        "voice_setting": dict(payload["voice_setting"]),
-        "voice_setting_voice_id_hash": VOICE_ID_HASH,
-        "audio_setting": dict(payload["audio_setting"]),
-        "output_format": payload["output_format"],
-        "stream": payload["stream"],
-        "pronunciation_rule_count": len(pronunciation),
-    }
-
-    WORK.mkdir(parents=True, exist_ok=True)
-    raw = WORK / "activation-raw.wav"
-    normalised = WORK / "activation-normalised.wav"
-    for stale in (raw, normalised):
-        if stale.exists():
-            stale.unlink()
-
-    try:
-        result = send_t2a_once(
-            payload=payload,
-            credential=payg.key,
-            base_url=base_url,
-            timeout_s=600,
-        )
-    except NativeTtsRefusal as refusal:
-        # A request WAS transmitted -- the transport was entered and answered,
-        # or failed after the request left this process. Either way this is not
-        # "free": the single-use authorisation is consumed here, before the
-        # refusal is re-raised, so no code path can treat a failed attempt as
-        # an unspent one.
-        receipt["request_transmitted"] = True
-        _write_private_provider_response(
-            str(receipt.get("attempt_id", "")), host=base_url, refusal=refusal
-        )
-        raise
-
-    receipt["request_transmitted"] = True
-    _write_private_provider_response(
-        str(receipt.get("attempt_id", "")), host=base_url, result=result
+    return run_native_activation_once(
+        spec=spec,
+        credential=payg.key,
+        credential_class=payg.credential_class,
+        credential_source=payg.source,
+        base_url=base_url,
+        attempt_id=str(receipt.get("attempt_id", "")),
+        work_dir=WORK,
+        diagnostics_dir=PRIVATE_DIAGNOSTICS,
+        receipt=receipt,
     )
-
-    raw.write_bytes(result.audio_bytes)
-    hidden_run(
-        ["ffmpeg", "-y", "-loglevel", "error", "-i", str(raw),
-         "-af", "loudnorm=I=-16:TP=-1.5:LRA=11",
-         "-ar", "44100", "-ac", "1", str(normalised)],
-        timeout=600,
-    )
-    asset = normalised if normalised.is_file() and normalised.stat().st_size > 1024 else raw
-
-    h = hashlib.sha256()
-    with asset.open("rb") as fh:
-        for chunk in iter(lambda: fh.read(1 << 20), b""):
-            h.update(chunk)
-    measured = measure_audio(asset)
-    technical = technical_qc(asset, expected_sample_rate_hz=44100)
-    receipt["audio"] = {
-        "path": str(asset),
-        "sha256": h.hexdigest(),
-        "duration_s": measured.duration_s,
-        "sample_rate_hz": measured.sample_rate_hz,
-        "channels": measured.channels,
-        "codec": measured.codec,
-        "loudness_lufs": getattr(measured, "loudness_lufs", None),
-        "technical_qc_approved": technical.get("approved"),
-        "technical_qc": technical,
-        "lexicon_applied": True,
-        "spoken_text_sha256": hashlib.sha256(cli_text.encode()).hexdigest(),
-    }
-    receipt["provider_response"] = result.public_summary()
-    return {
-        "provider_receipt": {
-            "provider": "minimax",
-            "transport": "native_http_cn",
-            "transport_note": (
-                "documented CN HTTP API, /v1/t2a_v2, one request, no retry, no CLI "
-                "in the path"
-            ),
-            "request_host": normalize_host(base_url),
-            "credential_class": payg.credential_class,
-            "credential_source": payg.source,
-            "model": MODEL,
-            "voice_id_hash": VOICE_ID_HASH,
-            "trace_id": result.trace_id,
-            "http_status": result.http_status,
-            "provider_status_code": result.status_code,
-            "usage_characters": result.usage_characters,
-            "usage_voice_count": result.usage_voice_count,
-            "lexicon": "default_zh_lexicon",
-            "loudnorm_target": "I=-16:TP=-1.5:LRA=11",
-            "technical_qc": technical,
-            "human_review": "PENDING_FOUNDER_REVIEW",
-            "production_ready": False,
-        }
-    }
 
 
 def main() -> int:
@@ -499,7 +245,7 @@ def main() -> int:
     remaining_s = (CLONE_TTL_SECONDS - (time.time() - created_unix)) if created_unix else None
     recovery_used = bool(registry.get("cash_recovery_used"))
 
-    before = _read_money(base_url, payg.key)
+    before = read_money(base_url, payg.key)
     chars = billable_characters(ACTIVATION_TEXT)
     author = CashActivationAuthorisation(voice_id_hash=VOICE_ID_HASH)
 
@@ -652,7 +398,7 @@ def main() -> int:
     # because PAYG narration is exactly what this repository forbids.
     #
     # The guard is NOT disabled here. It has already run for this run, in
-    # ``_read_money``, and its verdict and balances are recorded in the receipt. What is
+    # ``read_money``, and its verdict and balances are recorded in the receipt. What is
     # changed is which component performs the request: the authorisation to spend is
     # :func:`decide_cash_activation`, whose narrowness this run is about, and the
     # measured outcome is the balance delta below.
@@ -752,8 +498,8 @@ def main() -> int:
         ),
     }
 
-    after = _read_money(base_url, payg.key)
-    deltas = _delta(before, after)
+    after = read_money(base_url, payg.key)
+    deltas = delta_money(before, after)
     receipt["money_after"] = after
     receipt["deltas"] = deltas
 

@@ -1,0 +1,110 @@
+{
+  "schema": "contentops.spoken-script/v1",
+  "source": {
+    "path": "projects/easel-review/script/narration.txt",
+    "canonical_blob_sha256": "f2de808c9e723f8430acdc44dc374c5791b249250d8bc585a172360a88b9542a",
+    "note": "The original narration is locked by projects/easel-enhanced-golden/evidence/evidence-lock.json and is not modified by this document. This document is a spoken derivative for the voice track only; captions and the original script keep their own text."
+  },
+  "authoring": {
+    "mode": "MANUAL_EDITORIAL",
+    "date": "2026-10-13",
+    "issue": "#34",
+    "rules": [
+      "Long sentences are split so a single sentence carries less information.",
+      "Facts, numbers, product names and conclusions are preserved; nothing is added.",
+      "Segments are labelled by semantic role: INTRO, PROBLEM, EVIDENCE, TURN, CONCLUSION.",
+      "Pauses are placed at sentence and clause boundaries, using the provider-documented <#x#> marker (x in seconds, 0.01-99.99).",
+      "A pause is never placed at the edge of a segment text and never two in a row.",
+      "No rhetorical question or transition was added that the original did not already contain; the opening question in paragraph 1 is already a question, and it receives its pause at the colon."
+    ],
+    "cannot_be_proved_mechanically": "Tone, naturalness and sentence-level semantic equivalence. The mechanical checks cover the evidence lock, digit tokens, protected phrases, pause syntax and role coverage; a Founder listening/reading pass remains the acceptance gate.",
+    "operator_note": "Paragraphs 1-3 in the original are written close to spoken register already; paragraphs 4-6 are where written-style clauses are longest and were split the most. Editorial normalisation applied: lowercase 'easel' in paragraph 4 -> 'Easel' so the pronunciation lexicon rule applies; 'Web 工作台' kept verbatim."
+  },
+  "protected_phrases": [
+    "v0.2.1",
+    "982 个文件",
+    "114 个 Skill",
+    "52 个",
+    "五层",
+    "六项",
+    "Easel",
+    "doctor",
+    "SaaS",
+    "Skill",
+    "Python、Node、FFmpeg",
+    "ping",
+    "Agent",
+    "Web 工作台",
+    "fastapi、uvicorn",
+    ".env",
+    "API Key",
+    "CLI",
+    "不是开箱即用的产品",
+    "真能被调起来的生产引擎",
+    "今天是通的"
+  ],
+  "sample": {
+    "segments": ["S01", "S02", "S03"],
+    "original_paragraphs": [1, 2, 3],
+    "target_duration_s": [20, 30],
+    "note": "The A/B/C experiment sample: the opening three paragraphs, approximately 20-30 seconds at the measured pace of the existing Golden narration. A reuses a local excerpt of the existing Golden audio; B and C are new subscription-plan synthesis."
+  },
+  "segments": [
+    {
+      "id": "S01",
+      "role": "INTRO",
+      "text": "装了 Easel 之后，最先要回答的是：<#0.3#>它到底跑不跑得起来。",
+      "c_emotion": "calm",
+      "c_speed": 0.98,
+      "pause_after_s": 0.5
+    },
+    {
+      "id": "S02",
+      "role": "EVIDENCE",
+      "text": "我把它锁在 v0.2.1。<#0.3#>982 个文件，逐个比对过哈希，和上游 tag 完全一致。",
+      "c_emotion": null,
+      "c_speed": 1.05,
+      "pause_after_s": 0.45
+    },
+    {
+      "id": "S03",
+      "role": "EVIDENCE",
+      "text": "它不是一个 SaaS，而是一层 Skill 库。<#0.4#>114 个 Skill，分成发现、策划、创作、发布、归因五层，<#0.3#>创作层最大，52 个。",
+      "c_emotion": "calm",
+      "c_speed": 1.0,
+      "pause_after_s": 0.5
+    },
+    {
+      "id": "S04",
+      "role": "EVIDENCE",
+      "text": "doctor 跑起来了，Python、Node、FFmpeg，这些核心项都是绿的。<#0.3#>ping 里，Agent 的真实往返也通了。",
+      "c_emotion": null,
+      "c_speed": 1.0,
+      "pause_after_s": 0.4
+    },
+    {
+      "id": "S05",
+      "role": "TURN",
+      "text": "但有个坑：<#0.3#>网关健康检查，探的是写死的默认端口，和 Easel 实际网关端口对不上，<#0.3#>那一行是红的。",
+      "c_emotion": "calm",
+      "c_speed": 0.98,
+      "pause_after_s": 0.5
+    },
+    {
+      "id": "S06",
+      "role": "PROBLEM",
+      "text": "Web 工作台这条路，有六项没过。<#0.4#>fastapi、uvicorn 这些依赖没装，前端也没构建，.env 里也没有 API Key。<#0.3#>所以，Web 界面现在还没验证。",
+      "c_emotion": "calm",
+      "c_speed": 1.0,
+      "pause_after_s": 0.5
+    },
+    {
+      "id": "S07",
+      "role": "CONCLUSION",
+      "text": "结论：<#0.4#>它不是开箱即用的产品，<#0.3#>但是一个真能被调起来的生产引擎。<#0.4#>CLI 和 Skill 这条线，今天是通的。",
+      "c_emotion": "calm",
+      "c_speed": 0.98,
+      "pause_after_s": 0.0
+    }
+  ]
+}

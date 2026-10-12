@@ -42,6 +42,17 @@ translation_status: synced
 - [FILE-PLACEMENT-POLICY.md](FILE-PLACEMENT-POLICY.md) — 文件归属规则
 - [GLOSSARY.md](GLOSSARY.md) — 高频术语表
 
+## 决策记录
+
+- [adr/ADR-001-easel-runtime.md](adr/ADR-001-easel-runtime.md)
+- [adr/ADR-002-contentops-boundaries.md](adr/ADR-002-contentops-boundaries.md)
+- [adr/ADR-003-minimax-plan-provider.md](adr/ADR-003-minimax-plan-provider.md)
+- [adr/ADR-004-cross-repo-source-contract.md](adr/ADR-004-cross-repo-source-contract.md)
+- [adr/ADR-005-human-approval.md](adr/ADR-005-human-approval.md)
+- [adr/ADR-006-upstream-upgrade-policy.md](adr/ADR-006-upstream-upgrade-policy.md)
+- [adr/ADR-007-minimax-speech-transport.md](adr/ADR-007-minimax-speech-transport.md)
+- [adr/ADR-008-native-narration-v2.md](adr/ADR-008-native-narration-v2.md)
+
 ## 事实优先级
 
 ```text

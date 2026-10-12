@@ -58,15 +58,39 @@ documented HTTP surface in X-SuperPlay-owned space and touches no upstream code.
 
 Scope
 -----
-Only the one-time activation synthesis of an already-existing cloned voice. No
-upload, no clone, no regular narration. Regular narration stays on the M Plan
-provider over the CLI; this module exists for the call whose billing chain was
-provably broken by the CLI transport.
+The one-time activation synthesis of an already-existing cloned voice, and --
+since the narration-v2 round of Issue #34 -- regular narration as well. Regular
+narration may still run on the M Plan provider over the CLI, but the native
+adapter is the path that can carry the documented paragraph newlines, the
+``<#x#>`` pause markers and the documented ``emotion`` field, none of which the
+pinned CLI can deliver intact. The adapter itself never decides which text to
+send; it owns the payload schema, the host pin, the single-request rule and the
+full response parse.
+
+Text controls, and where they are validated
+-------------------------------------------
+The official OpenAPI definition for ``POST /v1/t2a_v2`` states exactly three
+text-shaping controls, and this module accepts exactly those:
+
+1. **Paragraph breaks are newline characters.** A newline inside ``text`` is a
+   paragraph switch, so the adapter must never flatten one away.
+2. **Pause control** is the inline marker ``<#x#>``, where ``x`` is the pause in
+   seconds, range ``[0.01, 99.99]``, at most two decimals, placed *between two
+   speakable texts* and never used consecutively. Malformed markers are refused
+   locally rather than forwarded as a provider 2013.
+3. **Emotion** is the ``voice_setting.emotion`` field. Its documented range is
+   ``happy, sad, angry, fearful, disgusted, surprised, calm, fluent, whisper``;
+   the base model auto-detects an appropriate emotion when the field is absent,
+   ``fluent`` and ``whisper`` only take effect on the ``speech-2.6`` models, and
+   ``whisper`` is explicitly unsupported on ``speech-2.8``. The builder therefore
+   takes ``emotion=None`` by default and emits the key only when a caller names a
+   value the documentation permits for the requested model.
 """
 
 from __future__ import annotations
 
 import json
+import re
 import time
 import urllib.error
 import urllib.request
@@ -79,10 +103,13 @@ __all__ = [
     "DOCUMENTED_MODELS",
     "DOCUMENTED_AUDIO_FORMATS",
     "DOCUMENTED_SAMPLE_RATES",
+    "DOCUMENTED_EMOTIONS",
+    "EMOTIONS_2_6_ONLY",
     "NativeTtsRefusal",
     "NativeTtsResult",
     "REFUSAL_HOST_NOT_DOCUMENTED_CN",
     "REFUSAL_HTTP_ERROR",
+    "REFUSAL_INVALID_PAUSE_MARKER",
     "REFUSAL_INVALID_PAYLOAD",
     "REFUSAL_NETWORK",
     "REFUSAL_NON_JSON",
@@ -91,9 +118,13 @@ __all__ = [
     "T2A_PATH",
     "build_t2a_payload",
     "decode_hex_audio",
+    "emotion_allowed_for_model",
     "host_is_documented_cn",
     "normalize_host",
+    "normalize_paragraph_newlines",
     "send_t2a_once",
+    "strip_pause_markers",
+    "validate_pause_markers",
 ]
 
 #: The documented server for the T2A API, taken from the official OpenAPI
@@ -135,13 +166,149 @@ DOCUMENTED_AUDIO_FORMATS: Tuple[str, ...] = (
 
 DOCUMENTED_SAMPLE_RATES: Tuple[int, ...] = (8000, 16000, 22050, 24000, 32000, 44100)
 
+#: The documented ``voice_setting.emotion`` domain, verbatim from the OpenAPI
+#: definition of ``T2AVoiceSetting``. The description also states that the model
+#: auto-detects a suitable emotion from the text and that manual specification is
+#: normally unnecessary, which is why :func:`build_t2a_payload` omits the key
+#: unless a caller names a value.
+DOCUMENTED_EMOTIONS: Tuple[str, ...] = (
+    "happy",
+    "sad",
+    "angry",
+    "fearful",
+    "disgusted",
+    "surprised",
+    "calm",
+    "fluent",
+    "whisper",
+)
+
+#: The two documented values that only take effect on the ``speech-2.6`` models.
+#: The same description notes that ``speech-2.8-hd`` and ``speech-2.8-turbo`` do
+#: not support ``whisper`` at all. Forwarding them to a model they are not
+#: documented for would be a request no page describes, so the builder refuses it
+#: locally rather than guessing at provider behaviour.
+EMOTIONS_2_6_ONLY: Tuple[str, ...] = ("fluent", "whisper")
+
 REFUSAL_HOST_NOT_DOCUMENTED_CN = "HOST_NOT_DOCUMENTED_CN"
 REFUSAL_INVALID_PAYLOAD = "INVALID_PAYLOAD"
+REFUSAL_INVALID_PAUSE_MARKER = "INVALID_PAUSE_MARKER"
 REFUSAL_NETWORK = "NETWORK_ERROR"
 REFUSAL_HTTP_ERROR = "HTTP_ERROR"
 REFUSAL_NON_JSON = "NON_JSON_RESPONSE"
 REFUSAL_PROVIDER_STATUS = "PROVIDER_STATUS"
 REFUSAL_SCHEMA_CHANGED = "SCHEMA_CHANGED"
+
+#: ``<#x#>`` with x in [0.01, 99.99] and at most two decimals, per the OpenAPI
+#: description of ``text``. The pattern is applied with ``match`` at each ``<#``
+#: occurrence, so a malformed marker is a local refusal instead of a substring
+#: that silently survives into the request.
+_PAUSE_MARKER_RE = re.compile(r"<#(\d{1,2}(?:\.\d{1,2})?)#>")
+_PAUSE_OPEN_RE = re.compile(r"<#")
+#: What counts as a speakable text between two pause markers: a CJK ideograph or
+#: a Latin/digit character. Punctuation and whitespace are deliberately not
+#: speakable, which is what makes consecutive markers ``<#1#>，<#2#>`` invalid.
+_SPEAKABLE_RE = re.compile(r"[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaffA-Za-z0-9]")
+
+PAUSE_MARKER_MIN_S = 0.01
+PAUSE_MARKER_MAX_S = 99.99
+
+
+def normalize_paragraph_newlines(text: str) -> str:
+    """Normalise line endings only. Paragraph structure is never collapsed.
+
+    The provider documents the newline as the paragraph separator. A Windows
+    checkout can hand the pipeline ``\\r\\n`` while the same text in Git is
+    ``\\n``; normalising the line ending keeps the sent text byte-stable across
+    platforms without changing a single paragraph break. Anything beyond line
+    endings (flattening, stripping, joining) is deliberately absent: that was the
+    pre-narration-v2 behaviour this round removes.
+    """
+    return text.replace("\r\n", "\n").replace("\r", "\n")
+
+
+def validate_pause_markers(text: str) -> List[float]:
+    """Validate every ``<#x#>`` marker in ``text``; return the durations in order.
+
+    The four documented constraints are enforced, and each failure raises
+    :class:`NativeTtsRefusal` with :data:`REFUSAL_INVALID_PAUSE_MARKER` rather
+    than letting the provider answer with a generic 2013:
+
+    1. syntax: exactly ``<#x#>``, ``x`` with at most two decimals;
+    2. range: ``0.01 <= x <= 99.99``;
+    3. position: never at the start or the end of the text (a marker must sit
+       between texts, not outside them);
+    4. adjacency: two markers must not be consecutive -- at least one speakable
+       character must separate them.
+    """
+    if "<#" not in text:
+        return []
+
+    durations: List[float] = []
+    previous_end: Optional[int] = None
+    for opener in _PAUSE_OPEN_RE.finditer(text):
+        match = _PAUSE_MARKER_RE.match(text, opener.start())
+        if match is None:
+            preview = text[opener.start(): opener.start() + 24]
+            raise NativeTtsRefusal(
+                REFUSAL_INVALID_PAUSE_MARKER,
+                f"malformed pause marker at position {opener.start()}: "
+                f"{preview!r}. The documented form is <#x#> with x in "
+                f"[{PAUSE_MARKER_MIN_S}, {PAUSE_MARKER_MAX_S}] and at most two "
+                "decimals.",
+            )
+        value = float(match.group(1))
+        if not (PAUSE_MARKER_MIN_S <= value <= PAUSE_MARKER_MAX_S):
+            raise NativeTtsRefusal(
+                REFUSAL_INVALID_PAUSE_MARKER,
+                f"pause duration {value} outside the documented range "
+                f"[{PAUSE_MARKER_MIN_S}, {PAUSE_MARKER_MAX_S}].",
+            )
+        if not text[: match.start()].strip():
+            raise NativeTtsRefusal(
+                REFUSAL_INVALID_PAUSE_MARKER,
+                "a pause marker cannot open the text; it must be placed between "
+                "two speakable texts.",
+            )
+        if not text[match.end():].strip():
+            raise NativeTtsRefusal(
+                REFUSAL_INVALID_PAUSE_MARKER,
+                "a pause marker cannot close the text; it must be placed between "
+                "two speakable texts.",
+            )
+        if previous_end is not None and not _SPEAKABLE_RE.search(
+            text[previous_end: match.start()]
+        ):
+            raise NativeTtsRefusal(
+                REFUSAL_INVALID_PAUSE_MARKER,
+                "two pause markers are consecutive (nothing speakable separates "
+                "them); the documentation forbids consecutive markers.",
+            )
+        durations.append(value)
+        previous_end = match.end()
+    return durations
+
+
+def emotion_allowed_for_model(model: str, emotion: str) -> bool:
+    """True only for a documented emotion that applies to this model."""
+    if emotion not in DOCUMENTED_EMOTIONS:
+        return False
+    if emotion in EMOTIONS_2_6_ONLY and not model.startswith("speech-2.6"):
+        return False
+    return True
+
+
+def strip_pause_markers(text: str) -> str:
+    """Remove well-formed ``<#x#>`` markers. For comparisons, never for sending.
+
+    A pause marker is an instruction to the synthesiser, not a spoken word, so
+    anything that compares the written text to *what is heard* (ASR backchecks,
+    digit-token preservation checks) must strip it first. Malformed markers are
+    left in place here because they are refused by :func:`validate_pause_markers`
+    on the send path; silently deleting something that fails validation would
+    hide exactly the input a caller needs to see.
+    """
+    return _PAUSE_MARKER_RE.sub("", text)
 
 
 def normalize_host(url: str) -> str:
@@ -290,6 +457,7 @@ def build_t2a_payload(
     speed: float = 1,
     vol: float = 1,
     pitch: int = 0,
+    emotion: Optional[str] = None,
     sample_rate: int = 32000,
     fmt: str = "wav",
     channel: int = 1,
@@ -303,6 +471,17 @@ def build_t2a_payload(
     is built. A builder that forwards out-of-domain values would let a typo
     become a provider 2013 -- or, worse, silently disagree with the JSON this
     repository believed it had sent.
+
+    ``text`` may carry the two documented text controls: newline as the
+    paragraph separator and ``<#x#>`` as the pause marker. Newlines are sent
+    exactly as received (only line endings are expected to have been normalised
+    by the caller); pause markers are validated here, so a malformed one stops
+    locally.
+
+    ``emotion`` is omitted unless supplied. The documentation states the model
+    auto-detects an appropriate emotion from the text, so ``None`` is the
+    correct default; when supplied, the value must be documented and applicable
+    to the requested model (:func:`emotion_allowed_for_model`).
     """
     _require(isinstance(text, str) and text.strip() != "", "text must be non-empty")
     _require(isinstance(voice_id, str) and voice_id.strip() != "", "voice_id required")
@@ -310,6 +489,13 @@ def build_t2a_payload(
     _require(0.5 <= float(speed) <= 2, f"speed {speed!r} outside documented [0.5, 2]")
     _require(0 < float(vol) <= 10, f"vol {vol!r} outside documented (0, 10]")
     _require(-12 <= int(pitch) <= 12, f"pitch {pitch!r} outside documented [-12, 12]")
+    if emotion is not None:
+        _require(
+            emotion_allowed_for_model(model, emotion),
+            f"emotion {emotion!r} is not a documented value for model {model!r}; "
+            f"documented: {', '.join(DOCUMENTED_EMOTIONS)} (and "
+            f"{', '.join(EMOTIONS_2_6_ONLY)} only on speech-2.6 models)",
+        )
     _require(
         int(sample_rate) in DOCUMENTED_SAMPLE_RATES,
         f"sample_rate {sample_rate!r} outside documented {DOCUMENTED_SAMPLE_RATES}",
@@ -318,17 +504,21 @@ def build_t2a_payload(
     _require(int(channel) in (1, 2), f"channel {channel!r} outside documented [1, 2]")
     _require(output_format in ("hex", "url"), "output_format must be 'hex' or 'url'")
     _require(stream is False, "stream must be False; this adapter is non-streaming only")
+    validate_pause_markers(text)
 
+    voice_setting: Dict[str, Any] = {
+        "voice_id": voice_id,
+        "speed": speed,
+        "vol": vol,
+        "pitch": pitch,
+    }
+    if emotion is not None:
+        voice_setting["emotion"] = emotion
     payload: Dict[str, Any] = {
         "model": model,
         "text": text,
         "stream": False,
-        "voice_setting": {
-            "voice_id": voice_id,
-            "speed": speed,
-            "vol": vol,
-            "pitch": pitch,
-        },
+        "voice_setting": voice_setting,
         "audio_setting": {
             "sample_rate": int(sample_rate),
             "format": fmt,
