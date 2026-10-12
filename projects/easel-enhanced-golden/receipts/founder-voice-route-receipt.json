@@ -202,7 +202,7 @@
     {
       "check": "M Plan quota remaining in both required windows",
       "pass": true,
-      "detail": "interval=91.0%, weekly=59.0%",
+      "detail": "interval=78.0%, weekly=57.0%",
       "evidence": "/v1/token_plan/remains; speech requires both windows"
     },
     {
@@ -266,8 +266,8 @@
       "owed_amount": "0.00"
     },
     "quota": {
-      "interval_remaining_percent": 91.0,
-      "weekly_remaining_percent": 59.0,
+      "interval_remaining_percent": 78.0,
+      "weekly_remaining_percent": 57.0,
       "bucket": "general"
     },
     "cash_balance": 0.0,
