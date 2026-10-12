@@ -1,0 +1,118 @@
+{
+  "schema": "contentops.voice-clone-route/v1",
+  "route": "CLONE_KEY_REQUIRED",
+  "authorised": false,
+  "blocked_by": [
+    "CLONE_KEY_REQUIRED",
+    "SUBSCRIPTION_ONLY_BILLING_UNPROVEN",
+    "PAYMENT_ROUTE_BLOCKED",
+    "CROSS_KEY_CLONED_VOICE_TTS_UNKNOWN"
+  ],
+  "reasons": [
+    "MINIMAX_CLONE_KEY is not set. A pay-as-you-go API Key is required to create the clone, because the Subscription Key was refused once with 2061 and must not be retried. Create one at 账户管理 > 接口密钥 in the official console and set it locally; do not paste it into chat, a PR or a log.",
+    "BillingGuard verdict is BLOCKED_BILLING_SOURCE_UNCERTAIN, not SAFE_INCLUDED_PLAN. TTS cannot be proved to draw only on included plan usage, so no synthesis -- and therefore no first-use fee, and therefore no clone -- may proceed. balance field voucher_balance is 15.0, so paid funds could be consumed",
+    "official rules do not connect: the CNY 9.90 is a pay-as-you-go priced item (定价概览: 9.90 元/音色, 按量计费) charged at the FIRST SYNTHESIS with the voice; the plan explicitly excludes 快速复刻 and Credits cover the same resource set as the plan (定价概览 / pricing-token-plan); and account balance is only deducted when a pay-as-you-go API Key is called (付费服务协议 4.3(1)). So the fee can only be collected by a pay-as-you-go synthesis, which this issue forbids. Needs account-specific confirmation from MiniMax.",
+    "no official source confirms a voice_id created under a pay-as-you-go key can synthesise under the Subscription Key. get_voice listing is account-scoped and proves visibility, not usability; error 2042 (无权访问该 voice_id) is the documented symptom if visibility does not imply usability. Must not be claimed as supported before one real synthesis answers it."
+  ],
+  "clone_key": {
+    "credential_class": "ABSENT",
+    "credential_source": "NONE",
+    "required_class": "PAYG",
+    "env_var": "MINIMAX_CLONE_KEY",
+    "configured": false
+  },
+  "tts_key": {
+    "credential_class": "SUBSCRIPTION",
+    "credential_source": "MMX_CONFIG",
+    "required_class": "SUBSCRIPTION",
+    "configured": true
+  },
+  "keys_distinct": null,
+  "billing_verdict": "BLOCKED_BILLING_SOURCE_UNCERTAIN",
+  "billing_reasons": [
+    "balance field voucher_balance is 15.0, so paid funds could be consumed"
+  ],
+  "clone_fee_cny": "9.90",
+  "clone_fee_charged_at": "FIRST_SYNTHESIS_WITH_THIS_VOICE",
+  "clone_ttl_hours": 168,
+  "clone_ttl_seconds": 604800,
+  "clone_created_at": null,
+  "clone_ttl_deadline": null,
+  "remaining_ttl_s": null,
+  "official_basis": [
+    {
+      "id": "clone-fee-timing",
+      "page": "platform.minimax.cn/docs/pricing/overview (音色管理 / 快速复刻)",
+      "fact": "9.90 元/音色, 按量计费. 复刻音色时不立即收费, 首次使用该音色进行合成时才计入. 试听字符按所选试听模型的单价计费."
+    },
+    {
+      "id": "plan-excludes-cloning",
+      "page": "platform.minimax.cn/docs/guides/pricing-token-plan",
+      "fact": "可用模型覆盖 MiniMax 全系模型(M3 / M2.7 / 图像 / 语音), 少量特殊模型(MiniMax H3、音色设计、快速复刻等)暂不支持."
+    },
+    {
+      "id": "credits-same-coverage",
+      "page": "platform.minimax.cn/docs/guides/pricing-token-plan",
+      "fact": "积分与 Token Plan 覆盖相同资源; 若同一用量可由套餐内额度和积分覆盖, 优先使用套餐内额度."
+    },
+    {
+      "id": "balance-only-via-payg-key",
+      "page": "platform.minimaxi.cn/protocol/paid-agreement 4.1 / 4.3(1)",
+      "fact": "通过充值获得的 API Key 与 Token Plan API Key 相互独立, 且不可互换. 使用开放平台 API Key 调用, 按实际用量消耗账户余额."
+    },
+    {
+      "id": "temporary-voice-ttl",
+      "page": "platform.minimax.cn/docs/api-reference/api-overview (音色快速复刻 / 注意事项)",
+      "fact": "本接口产出的快速复刻音色为临时音色, 若希望永久保留某复刻音色, 请于 168 小时(7 天)内在任意 T2A 语音合成接口中调用该音色(不包含本接口内的试听行为). 若超过时限, 该音色将被删除."
+    },
+    {
+      "id": "clone-requires-verification",
+      "page": "platform.minimax.cn/docs/api-reference/api-overview, /docs/faq/about-apis",
+      "fact": "使用本接口需要完成个人认证及企业认证用户后, 方可调用."
+    },
+    {
+      "id": "error-2042",
+      "page": "platform.minimax.cn/docs/api-reference/errorcode",
+      "fact": "2042 无权访问该 voice_id | 请确认是否为该 voice_id 创建者."
+    },
+    {
+      "id": "error-2061-not-in-table",
+      "page": "official MiniMax CLI ERRORS.md (absent from the platform error table)",
+      "fact": "2061 This model is not available on your current Token Plan. Measured once against /v1/voice_clone on this account."
+    }
+  ],
+  "payg_tts_allowed": false,
+  "credit_pack_tts_allowed": false,
+  "voucher_consumption_allowed": false,
+  "automatic_topup_allowed": false,
+  "production_ready": false,
+  "human_review": "PENDING_FOUNDER_REVIEW",
+  "producer": "scripts/prepare_founder_voice_clone_route.py",
+  "voice_alias": "founder_primary_v1",
+  "provider_voice_id_hash": "98fcbad890c52c7cc274e8cc59e47d358ccc309eaf1b9cb7dfe5bfcb093dc197",
+  "sample_sha256": "bb56d052cd637bd8a369f6e37a745c7609de9988ada0fa0827d4d5c59035df8d",
+  "measured": {
+    "billing_verdict": "BLOCKED_BILLING_SOURCE_UNCERTAIN",
+    "billing_reasons": [
+      "balance field voucher_balance is 15.0, so paid funds could be consumed"
+    ],
+    "balances": {
+      "available_amount": "15.00",
+      "cash_balance": "0.00",
+      "voucher_balance": "15.00",
+      "credit_balance": "0.00",
+      "owed_amount": "0.00"
+    },
+    "quota": {
+      "interval_remaining_percent": 78.0,
+      "weekly_remaining_percent": 64.0,
+      "bucket": "general"
+    }
+  },
+  "calls_performed": {
+    "upload": 0,
+    "clone": 0,
+    "tts": 0,
+    "billing_reads": 1
+  }
+}

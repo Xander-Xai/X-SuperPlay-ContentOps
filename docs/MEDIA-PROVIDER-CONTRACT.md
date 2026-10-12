@@ -203,6 +203,7 @@ authorisation.
 | Loudness normalisation | `VERIFIED` | #19 |
 | Voice cloning — entitlement | `VERIFIED` (account has an active clone) | #23 |
 | Voice cloning — public-API clone creation | `TESTED_REFUSED_2061` / `MODEL_NOT_ON_PLAN` | #23 |
+| Voice cloning — two-key route decision | `BLOCKED` (4 independent gates) | #34 |
 | Cloned-voice synthesis (`speech-2.8-hd`) | `DOCUMENTED_BUT_NOT_TESTED` | #23 |
 | Image (`ImageProvider`, `MiniMaxMPlanImageProvider`, `image-01`) | `IMPLEMENTED` / M3 | #20 |
 | Image human review (composition, artifacts, publish intent) | `PENDING_FOUNDER_REVIEW` | #20 |
@@ -230,6 +231,36 @@ balances must be exactly zero is correct for synthesis and is deliberately **not
 applied to the authorised one-time clone fee, which carries its own ceiling. See
 `research/providers/minimax-voice-clone-entitlement.md`.
 
+### The two-key clone route is gated, and blocked (#34)
+
+The plan excludes 快速复刻 by name and Credits cover the same resources as the plan, so
+a clone can only be created through a **pay-as-you-go key**, while narration must stay
+on the Subscription Key. That route is decided by
+`src/contentops/media/clone_route.py`, which performs no I/O and returns every blocker
+rather than the first one. As measured on 2026-10-12:
+
+```
+CLONE_KEY_REQUIRED                   <- no pay-as-you-go key is provisioned
+SUBSCRIPTION_ONLY_BILLING_UNPROVEN    <- voucher_balance = 15.00, so plan-only TTS is unprovable
+PAYMENT_ROUTE_BLOCKED                <- the CNY 9.90 can only be charged via a PAYG synthesis
+CROSS_KEY_CLONED_VOICE_TTS_UNKNOWN   <- no official confirmation that a cross-key voice_id works
+```
+
+Two consequences worth stating here, because both change how this must be operated:
+
+- **Cloned voices are temporary.** The clone is deleted if no T2A call uses it within
+  **168 hours**. Clone creation and first synthesis are therefore one continuous
+  session, not two stages separated by review. Attempting the clone early is not a
+  slower path; it ends with a fee and a voice that no longer exists.
+- **A provisioned key must not read as a working route.** The first two gates close
+  without any code change once the environment is right; the third and fourth do not
+  close at all from the operator side. `tests/test_minimax_clone_route.py` asserts that
+  giving the route a key still leaves `PAYMENT_ROUTE_BLOCKED` standing.
+
+Full verification, measurements and the three Founder actions are in
+`research/providers/minimax-m2-2-two-key-route.md`. The gate receipt is
+`projects/easel-enhanced-golden/receipts/founder-voice-route-receipt.json`.
+
 ## Capability Matrix
 
 ```yaml
@@ -240,13 +271,18 @@ payg_allowed: false
 credit_pack_allowed: false
 extra_one_time_fees:
   voice_clone: CNY 9.9 max, per cloned voice, requires explicit Founder confirmation
+  voice_clone_charged_at: FIRST_SYNTHESIS_WITH_THIS_VOICE   # not at clone time
+  voice_clone_ttl_hours: 168                                 # temporary voice; deleted if unused
   payg_tts_allowed: false
   credit_pack_tts_allowed: false
+  clone_credential_scope: MINIMAX_CLONE_KEY (PAYG, upload+clone only, no fallback chain)
+  tts_credential_scope: Subscription Key (speech-2.8-hd only, never PAYG)
 capabilities:
   text: VERIFIED            # M2.0, Issue #4
   image: VERIFIED           # M2.0, Issue #4
   speech: VERIFIED          # M2.0 verified, M2 integrated
   voice_clone: UPLOAD_SUCCESS_CLONE_REFUSED_2061   # Issue #23, MODEL_NOT_ON_PLAN
+  voice_clone_route: BLOCKED # Issue #34, CLONE_KEY_REQUIRED + 3 more independent gates
   video_t2va: VERIFIED      # M2.0, Issue #4
   video_reference_modes: DOCUMENTED_BUT_NOT_TESTED
 quotas:
