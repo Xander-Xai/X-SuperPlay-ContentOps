@@ -49,6 +49,11 @@ from contentops.media.minimax_voice_clone import (  # noqa: E402
     validate_voice_id,
     voice_id_hash,
 )
+from contentops.media.voucher_activation import (  # noqa: E402
+    VOUCHER_ACTIVATION_AUTHORISED,
+    FounderVoucherActivation,
+    decide_voucher_activation,
+)
 
 OUT = ROOT / "projects/easel-enhanced-golden/receipts/founder-voice-route-receipt.json"
 
@@ -66,6 +71,33 @@ FIRST_ACTIVATION_AUTHORISED = os.environ.get(
 ACTIVATION_CHARACTER_FEE_AUTHORISED = os.environ.get(
     "CONTENTOPS_ACTIVATION_CHARACTER_FEE_AUTHORISED", ""
 ).strip().lower() in ("1", "true", "yes")
+
+#: Evidence grade for "this CNY 15.00 voucher can pay 音色管理".
+#:
+#: Set from official sources on 2026-12, and deliberately left at UNKNOWN. Raising it
+#: requires a statement that the voucher offsets **API 调用费用** for a voucher of this
+#: account's provenance. The one official statement of that scope sits inside the
+#: **好友邀请活动** referral section and governs that programme's voucher; this account's
+#: voucher provenance is unknown, so it cannot be transferred. 付费服务协议 4.4 defers the
+#: definitive scope to 产品界面公示, which no API endpoint exposes.
+#:
+#: Setting it requires a founder-supplied account-level confirmation from MiniMax, the
+#: same evidence class the activation-fee confirmation came in as.
+VOUCHER_ELIGIBILITY = os.environ.get(
+    "CONTENTOPS_VOUCHER_ELIGIBILITY", "UNKNOWN"
+).strip() or "UNKNOWN"
+
+VOUCHER_ELIGIBILITY_BASIS = (
+    "VERIFIED_OFFICIAL: 代金券 is an order payment method (使用代金券 | 扣除代金券后实际"
+    "支付的金额, 代金券抵扣部分不可开票, M Plan FAQ 开票金额怎么计算); 账户余额只有在使用按量计费 "
+    "API Key 时才会扣除; 扣费顺序为 M Plan 额度优先、积分包其次; 积分包支持...图像与音频生成, "
+    "快速复刻未列名, 因此积分包不能支付该费用. "
+    "UNKNOWN: the single official statement that a voucher offsets API 调用费用 is scoped "
+    "to the 好友邀请活动 referral programme and this account's voucher provenance is "
+    "unknown; 付费服务协议 4.4 defers the definitive scope to 产品界面公示; deduction priority "
+    "between voucher and cash within 账户余额 is undocumented; this voucher's issuance date "
+    "and remaining validity are not exposed by any reachable endpoint."
+)
 
 #: Hard ceiling on the one-time voice fee. The Founder's standing authorisation.
 CLONE_FEE_CEILING_CNY = "9.90"
@@ -331,6 +363,29 @@ def main() -> int:
         first_activation_authorised=FIRST_ACTIVATION_AUTHORISED,
     )
 
+    max_charge = (
+        f"{float(cost.first_activation_cny) + float(cost.activation_character_cny_estimated):.4f}"
+    )
+
+    # The Founder's one-time voucher authorisation, as its own gate. Either gate alone
+    # can refuse the activation; asking the voucher question here rather than folding it
+    # into the route keeps "is the commercial route open" and "may this be charged" as
+    # separate claims with separate evidence.
+    authorisation = FounderVoucherActivation(
+        voice_id_hash=voice_id_hash(PROVIDER_VOICE_ID),
+    )
+    voucher = decide_voucher_activation(
+        authorisation,
+        voucher_eligibility=VOUCHER_ELIGIBILITY,
+        voucher_eligibility_basis=VOUCHER_ELIGIBILITY_BASIS,
+        voucher_balance=_num((billing.get("balances") or {}).get("voucher_balance")),
+        cash_balance=cash,
+        credit_balance=_num((billing.get("balances") or {}).get("credit_balance")),
+        projected_total_cny=max_charge,
+        voice_id_hash=voice_id_hash(PROVIDER_VOICE_ID),
+        payg_tts_bounded=True,
+    )
+
     print("=== READY_TO_EXECUTE CHECKLIST ===")
     for item in checks:
         print(f"  [{'PASS' if item['pass'] else 'FAIL'}] {item['check']}")
@@ -356,14 +411,19 @@ def main() -> int:
     print(f"  commercial status : {decision.commercial_status}")
     print(f"  verification      : {decision.verification_status}")
     print(f"  route             : {decision.route}")
-    print(f"  authorised        : {decision.authorised}")
+    print(f"  authorised        : {decision.authorised and voucher.authorised}")
     print(f"  blocked_by        : {', '.join(decision.blocked_by) or '(none)'}")
+    print(f"  voucher gate      : {voucher.status}")
+    print(f"  voucher refusals  : {', '.join(voucher.refusals) or '(none)'}")
+    for reason in voucher.reasons:
+        print(f"  ! {reason}")
     for reason in decision.reasons:
         print(f"  - {reason}")
     print()
 
     receipt = decision.as_dict()
     receipt["producer"] = "scripts/prepare_founder_voice_clone_route.py"
+    receipt["voucher_activation"] = voucher.as_dict()
     receipt["voice_alias"] = VOICE_ALIAS
     receipt["provider_voice_id_hash"] = voice_id_hash(PROVIDER_VOICE_ID)
     receipt["sample_sha256"] = digest
@@ -406,11 +466,12 @@ def main() -> int:
     print("wrote", OUT.relative_to(ROOT).as_posix())
     print()
 
-    if decision.authorised and not failed:
+    if decision.authorised and voucher.authorised and not failed:
         print("READY_TO_EXECUTE. One real clone and one activation may run.")
         return 0
     print("NOT READY. No sample was transmitted. No upload, no clone, no synthesis.")
-    print(f"NEXT ACTION REQUIRED FROM THE FOUNDER: {decision.route}")
+    print("NEXT ACTION REQUIRED FROM THE FOUNDER: "
+          + (voucher.refusals[0] if voucher.refusals else decision.route))
     return 1
 
 

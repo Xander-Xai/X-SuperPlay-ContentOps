@@ -87,6 +87,14 @@ jobs:
       - name: Run M2.2 clone-route regression tests
         run: python tests/test_minimax_clone_route.py
 
+      # The one-time voucher activation authorisation. Pure policy, like the route
+      # gate above: it decides whether a CNY 9.9154 charge may be attempted, and the
+      # decisive rule is that an UNPROVEN voucher scope refuses no matter how much
+      # balance shows. That invariant can only be tested here, because the live path
+      # is blocked on a fact no API client can read.
+      - name: Run M2.2 voucher-activation regression tests
+        run: python tests/test_voucher_activation.py
+
       - name: Run M3 image regression tests
         run: python tests/test_minimax_image.py
 

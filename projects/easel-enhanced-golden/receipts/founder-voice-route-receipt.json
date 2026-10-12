@@ -133,6 +133,45 @@
   "production_ready": false,
   "human_review": "PENDING_FOUNDER_REVIEW",
   "producer": "scripts/prepare_founder_voice_clone_route.py",
+  "voucher_activation": {
+    "schema": "contentops.voucher-activation/v1",
+    "authorisation": "FOUNDER_VOUCHER_ACTIVATION",
+    "status": "VOUCHER_CLONE_FEE_ELIGIBILITY_UNKNOWN",
+    "authorised": false,
+    "refusals": [
+      "VOUCHER_CLONE_FEE_ELIGIBILITY_UNKNOWN"
+    ],
+    "reasons": [
+      "voucher eligibility is not established. The Founder authorised payment FROM the voucher; that is an instruction about which instrument to use, not proof that this instrument covers 音色管理. The one official statement that a voucher offsets API 调用费用 is scoped to the 好友邀请活动 referral programme and cannot be transferred to a voucher of unknown provenance, and 付费服务协议 4.4 defers the definitive scope to 产品界面公示, which no API endpoint exposes. See evidence.voucher_eligibility_basis."
+    ],
+    "evidence": {
+      "voucher_eligibility": "UNKNOWN",
+      "voucher_eligibility_basis": "VERIFIED_OFFICIAL: 代金券 is an order payment method (使用代金券 | 扣除代金券后实际支付的金额, 代金券抵扣部分不可开票, M Plan FAQ 开票金额怎么计算); 账户余额只有在使用按量计费 API Key 时才会扣除; 扣费顺序为 M Plan 额度优先、积分包其次; 积分包支持...图像与音频生成, 快速复刻未列名, 因此积分包不能支付该费用. UNKNOWN: the single official statement that a voucher offsets API 调用费用 is scoped to the 好友邀请活动 referral programme and this account's voucher provenance is unknown; 付费服务协议 4.4 defers the definitive scope to 产品界面公示; deduction priority between voucher and cash within 账户余额 is undocumented; this voucher's issuance date and remaining validity are not exposed by any reachable endpoint.",
+      "voucher_balance": 15.0,
+      "cash_balance": 0.0,
+      "credit_balance": 0.0,
+      "projected_total_cny": "9.9154",
+      "allowed_voucher_spend_cny": "10.00",
+      "allowed_cash_spend_cny": "0.00",
+      "allowed_credit_pack_spend_cny": "0.00",
+      "authorised_for_voice_id_hash": "98fcbad890c52c7cc274e8cc59e47d358ccc309eaf1b9cb7dfe5bfcb093dc197",
+      "presented_voice_id_hash": "98fcbad890c52c7cc274e8cc59e47d358ccc309eaf1b9cb7dfe5bfcb093dc197"
+    },
+    "limits": {
+      "allowed_voucher_spend_cny": "10.00",
+      "allowed_cash_spend_cny": "0.00",
+      "allowed_credit_pack_spend_cny": "0.00",
+      "allow_auto_recharge": false,
+      "max_clone_count": 1,
+      "max_activation_tts_count": 1,
+      "allow_unbounded_payg_tts": false,
+      "scope": "one voice_alias, one voice_id_hash"
+    },
+    "payg_tts_allowed": false,
+    "automatic_recharge_allowed": false,
+    "production_ready": false,
+    "human_review": "PENDING_FOUNDER_REVIEW"
+  },
   "voice_alias": "founder_primary_v1",
   "provider_voice_id_hash": "98fcbad890c52c7cc274e8cc59e47d358ccc309eaf1b9cb7dfe5bfcb093dc197",
   "sample_sha256": "bb56d052cd637bd8a369f6e37a745c7609de9988ada0fa0827d4d5c59035df8d",
@@ -202,7 +241,7 @@
     {
       "check": "M Plan quota remaining in both required windows",
       "pass": true,
-      "detail": "interval=78.0%, weekly=57.0%",
+      "detail": "interval=69.0%, weekly=56.0%",
       "evidence": "/v1/token_plan/remains; speech requires both windows"
     },
     {
@@ -266,8 +305,8 @@
       "owed_amount": "0.00"
     },
     "quota": {
-      "interval_remaining_percent": 78.0,
-      "weekly_remaining_percent": 57.0,
+      "interval_remaining_percent": 69.0,
+      "weekly_remaining_percent": 56.0,
       "bucket": "general"
     },
     "cash_balance": 0.0,
