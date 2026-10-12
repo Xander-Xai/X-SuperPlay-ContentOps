@@ -38,7 +38,7 @@ import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 __all__ = [
     "CLONE_CREDENTIAL_ENV",
@@ -49,6 +49,8 @@ __all__ = [
     "CredentialBinding",
     "CredentialBindingError",
     "DuplicateCredentialError",
+    "LOCAL_ENV_FILENAME",
+    "load_local_env_file",
     "ResolvedCredential",
     "SOURCE_CLONE_ENV",
     "SOURCE_MMX_CONFIG",
@@ -285,6 +287,83 @@ def resolve_two_key_pair(env: Optional[Dict[str, str]] = None) -> TwoKeyPair:
     pair = TwoKeyPair(clone=resolve_clone_credential(env), tts=resolve_credential(env))
     pair.require_distinct()
     return pair
+
+
+#: The conventional local credential file. Gitignored (``.gitignore``) and listed in
+#: ``scripts/check_repo_policy.py``'s local-only set, which is why it exists at all.
+LOCAL_ENV_FILENAME = ".env"
+
+
+def load_local_env_file(
+    path: Optional[Path] = None,
+    *,
+    env: Optional[Dict[str, str]] = None,
+) -> List[str]:
+    """Populate ``os.environ`` from the local ``.env`` file. Returns *names* only.
+
+    This exists because credential resolution reads ``os.environ`` and nothing else,
+    and because there is deliberately no dotenv dependency in this repository. A
+    pay-as-you-go clone key has no config-file fallback the way the Subscription Key
+    has ``~/.mmx/config.json``, so without this the route is unusable in practice.
+
+    Three properties are load-bearing, and each closes a way this file could quietly
+    become a leak:
+
+    1. **It returns variable *names*, never values.** A caller that logs the result to
+       report "loaded 3 credentials" cannot accidentally report a secret.
+    2. **It never overrides an existing environment variable.** A value already in the
+       process wins, so a stale file cannot silently displace a deliberately set key.
+    3. **It refuses to read a file Git tracks.** An untracked, ignored file is local
+       state; a tracked one is a secret already in the repository's history, and
+       reading it would normalise treating that as a supported configuration.
+
+    Not called automatically anywhere. Loading a file that holds secrets is an action,
+    and the caller decides when it happens.
+    """
+    from process_utils import hidden_run
+
+    target = Path(path) if path is not None else Path.cwd() / LOCAL_ENV_FILENAME
+    if not target.is_file():
+        return []
+    try:
+        root = hidden_run(
+            ["git", "rev-parse", "--show-toplevel"], cwd=str(target.parent), timeout=60
+        )
+        if root.returncode == 0:
+            cwd = Path((root.stdout or "").strip())
+            rel = target.resolve().relative_to(cwd.resolve()).as_posix()
+            tracked = hidden_run(
+                ["git", "ls-files", "--error-unmatch", "--", rel],
+                cwd=str(cwd),
+                timeout=60,
+            )
+            if tracked.returncode == 0:
+                raise CredentialBindingError(
+                    f"{rel} is tracked by Git. Reading it would treat a committed "
+                    "secret as a supported configuration. Remove it from the index and "
+                    "rotate the credential before continuing."
+                )
+    except CredentialBindingError:
+        raise
+    except Exception:  # noqa: BLE001 - not in a repository at all
+        pass
+
+    environ = os.environ if env is None else env
+    loaded: List[str] = []
+    for raw in target.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        name, _, value = line.partition("=")
+        name = name.strip()
+        value = value.strip().strip('"').strip("'")
+        if not name or not value:
+            continue
+        if environ.get(name):
+            continue
+        environ[name] = value
+        loaded.append(name)
+    return loaded
 
 
 def child_env_for(

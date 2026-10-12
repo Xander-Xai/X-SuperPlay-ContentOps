@@ -203,7 +203,7 @@ authorisation.
 | Loudness normalisation | `VERIFIED` | #19 |
 | Voice cloning — entitlement | `VERIFIED` (account has an active clone) | #23 |
 | Voice cloning — public-API clone creation | `TESTED_REFUSED_2061` / `MODEL_NOT_ON_PLAN` | #23 |
-| Voice cloning — two-key route | `VENDOR_CONFIRMED` / `LIVE_VERIFICATION_PENDING` | #34 |
+| Voice cloning — two-key route | `VENDOR_CONFIRMED` / `LIVE_VERIFICATION_PENDING`, 2 gates | #34 |
 | Cloned-voice synthesis (`speech-2.8-hd`) | `DOCUMENTED_BUT_NOT_TESTED` | #23 |
 | Image (`ImageProvider`, `MiniMaxMPlanImageProvider`, `image-01`) | `IMPLEMENTED` / M3 | #20 |
 | Image human review (composition, artifacts, publish intent) | `PENDING_FOUNDER_REVIEW` | #20 |
@@ -250,39 +250,45 @@ M Plan. So the status is:
 ```
 commercial_status    VENDOR_CONFIRMED
 verification_status  LIVE_VERIFICATION_PENDING
+
+CLONE_KEY_READY                        PAYG key provisioned, verified, distinct from the TTS key
+SUBSCRIPTION_ONLY_BILLING_UNPROVEN     CLEARED -- see the deduction-chain rule below
+ACTIVATION_CASH_INSUFFICIENT            cash_balance = 0.00, so the CNY 9.90 has nothing to draw on
+ACTIVATION_CHARACTER_FEE_UNAUTHORISED   the activation synthesis is itself billable (est. CNY 0.0154)
+CROSS_KEY_CLONED_VOICE_TTS_UNKNOWN      a commercial assurance is not an API permission grant
 ```
 
-**Account-level commercial evidence, not proof that any API call succeeds.** Nothing has
-been executed under it and nothing has been charged. The live gates as measured:
-
-```
-CLONE_KEY_REQUIRED                   no pay-as-you-go key is provisioned
-SUBSCRIPTION_ONLY_BILLING_UNPROVEN   voucher_balance = 15.00, so plan-only TTS is unprovable
-ACTIVATION_CASH_INSUFFICIENT         cash_balance = 0.00, so the CNY 9.90 has nothing to draw on
-ACTIVATION_CHARACTER_FEE_UNAUTHORISED the activation synthesis is itself billable (est. CNY 0.0154)
-CROSS_KEY_CLONED_VOICE_TTS_UNKNOWN   a commercial assurance is not an API permission grant
-```
+**`MAX_ACTUAL_CHARGE` = CNY 9.9154** — 9.90 voice fee + 0.0154 activation characters.
 
 Four consequences worth stating here, because each changes how this must be operated:
 
-- **Cloned voices are temporary.** The clone is deleted if no T2A call uses it within
-  **168 hours**. Clone creation and the first synthesis are therefore one continuous
-  session, not two stages separated by review. Attempting the clone early is not a
-  slower path; it ends with a fee and a voice that no longer exists.
 - **"The CNY 9.90" was never the whole cost.** Three components, three owners:
   `clone_creation` ¥0.00 (officially never charged), `first_activation` ¥9.90, and
   `regular_tts` per character. Plus a fourth that is easy to lose —
   `FIRST_ACTIVATION_TTS_FEE_UNKNOWN`, the character cost of the activation synthesis
   itself. It is recorded as unknown rather than zero because the Founder's
   authorisation covers the voice fee and does not extend to character spend.
-- **An approved charge is not a payable charge.** `cash_balance = 0.00` and only a
-  pay-as-you-go key deducts account balance. Recharge, voucher use and Credit Pack use
-  are all forbidden to do automatically, so this stops for a human.
-- **The `BillingGuard` is not relaxed to get past the voucher balance.** The guard asks
-  *can this Subscription Key spend outside included plan usage*; the fee authorisation
-  answers *is this one charge approved*. Different questions. Weakening the guard would
-  make every later narration unverifiable in exchange for one voice.
-  `tests/test_minimax_clone_route.py` asserts it.
+- **Cloned voices are temporary.** The clone is deleted if no T2A call uses it within
+  **168 hours**, so clone creation and the first synthesis are one continuous session.
+  Attempting the clone early is not a slower path; it ends with a fee and a voice that
+  no longer exists.
+- **"A balance exists" and "this request deducts it" are different claims.** The official
+  M Plan FAQ states the Subscription Key's chain exhaustively — plan usage, then credit
+  packs, and *"your account balance is charged only when you use a pay-as-you-go API
+  Key"*. So `voucher_balance` and `cash_balance` are **not reachable by an in-plan
+  Subscription-Key speech request** and are reported as `observed_out_of_chain` rather
+  than treated as a risk. `credit_balance` and `owed_amount` must still be zero, every
+  field must still be present and numeric, and a pay-as-you-go credential must still
+  need the full set at zero. This cleared a block that had been failing closed on a
+  provably unreachable balance.
+- **The activation gate did *not* move on the same evidence.** It runs on the
+  pay-as-you-go key, which is the one key the account balance *is* charged for. Whether
+  a voucher can fund a pay-as-you-go charge is `UNKNOWN` — no official page states it —
+  so `ACTIVATION_CASH_INSUFFICIENT` stands.
+
+`tests/test_minimax_speech.py`, `test_minimax_image.py` and `test_minimax_h3.py` assert
+the chain rule per modality; `tests/test_minimax_clone_route.py` asserts the route,
+the cost split and the local `.env` loader.
 
 Full verification, measurements and the Founder actions are in
 `research/providers/minimax-m2-2-two-key-route.md`. The gate receipt is
