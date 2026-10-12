@@ -10,7 +10,7 @@ translation_status: synced
 
 > 当前运行状态。仅经验证的事实。无展望，无过时声明。
 >
-> 最后验证：2026-10-04
+> 最后验证：2026-10-13
 
 ## Git
 
@@ -462,3 +462,23 @@ QC 回执在被提交前会经过一道净化边界（`contentops.qc_canonical`�
 它**不**证明真实的 `SourceArtifact` 摄取、`Claim Ledger` 完整性、创始人批准、
 生产黄金样本，或三次连续生产构建。产出为 `production_ready=false` /
 `PENDING_FOUNDER_REVIEW`，且代码路径中没有任何分支能给出相反结论。
+
+## MiniMax 旁白 v2（Issue #34）—— A/B/C 样本等待 Founder 试听
+
+分支 `feat/34-narration-v2-spoken-script-ab`（堆叠在 PR #44 之上）。设计决策见
+`adr/ADR-008-native-narration-v2.md`。凭证：
+`projects/easel-enhanced-golden/review/ab-c-sample-receipt.json` 与
+`ab-c-sample-receipt-term-check.json`。
+
+| 属性 | 值 |
+|---|---|
+| 原生文本控制 | 保留段落换行；`<#x#>` 停顿在本地校验；`emotion` 可选（缺省时由模型自动判断） |
+| 口播稿 | `projects/easel-enhanced-golden/script/narration-spoken.json` —— 锁定原文的衍生版本；原文与 evidence lock 未改动 |
+| 版本映射 | `narration-version-map.json` —— 原文/口播/合成文本（整体、样本与逐片段）的 SHA256 |
+| 交付方式 | 片段级 emotion/speed、内容寻址片段缓存、局部重生成、确定性拼接 |
+| 计费 | 仅订阅凭据解析；每次请求前后读取套餐额度与余额并通过 M Plan 门控；`--execute` 显式开关；硬上限 1500 字符 / 6 次 ASR |
+| 样本 A / B / C | 27.55 秒复用节选（0 成本）/ 30.24 秒单请求（换行+停顿，自动情绪）/ 28.70 秒三段（calm 0.98、auto 1.05、calm 1.00）按声明间隔拼接 |
+| 用量 | 5 次调用、584 计费字符；全部 `M_PLAN_ONLY_VERIFIED`；5 小时窗口 99% → 98%，所有付费余额不变 |
+| C 拼接精度 | 5.478 + 8.833 + 13.436 + 0.95 秒间隔 = 28.697 秒，实际拼接 28.698 秒 |
+| ASR 结论 | “doctor” 本次读音正确（S04 术语检查）；“伊泽尔” 一致；版本号实际读对——检测器 v0.21/v0.2.1 差异仍是归一化误报 |
+| 评审状态 | `production_ready: false`，`human_review: PENDING_FOUNDER_REVIEW`；未发布，未生成数字人视频 |
