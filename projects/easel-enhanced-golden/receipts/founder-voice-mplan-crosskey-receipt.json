@@ -1,0 +1,408 @@
+{
+  "schema": "contentops.mplan-crosskey-verification/v1",
+  "stage": "CROSS_KEY_VERIFICATION",
+  "route": "MPLAN_NARRATION_ROUTE",
+  "attempt_id": "mplanverify-61e11cd1608b",
+  "issue": "#34",
+  "started_at": "2026-10-12T15:31:21.526512+00:00",
+  "executed": true,
+  "voice_id": "founder_primary_v1",
+  "voice_id_hash": "7271d9c80c88821a6a09ed43328619d0ee08c3f2b2449237fe2c31f6899abeef",
+  "model": "speech-2.8-hd",
+  "text": "这是一段用于首次激活的最短自然中文语音样本。",
+  "billable_characters": 44,
+  "credential_class": "SUBSCRIPTION",
+  "credential_source": "MMX_CONFIG",
+  "payg_key_used_for_this_request": false,
+  "host": "https://api.minimax.cn",
+  "transport": "native_http_cn",
+  "provider_call_budget": {
+    "subscription_tts": 1,
+    "upload": 0,
+    "clone": 0,
+    "automatic_retry": 0
+  },
+  "activation_precondition": {
+    "source": "settlement_receipt",
+    "outcome": "ACTIVATION_FEE_SETTLED_VOUCHER",
+    "attempt_id": "paygact-a113459b63dc",
+    "settled_total_debit_cny": "9.92",
+    "paid_by": [
+      "voucher"
+    ],
+    "trace_id": "071c2f987a3d496f54083002944d5506"
+  },
+  "notes": [],
+  "preflight": {
+    "billing_verdict": "SAFE_INCLUDED_PLAN",
+    "quota": {
+      "interval_remaining_percent": 99.0,
+      "weekly_remaining_percent": 51.0,
+      "bucket": "general"
+    },
+    "balances": {
+      "available_amount": "15.08",
+      "cash_balance": "10.00",
+      "voucher_balance": "5.08",
+      "credit_balance": "0.00",
+      "owed_amount": "0.00"
+    },
+    "decision": {
+      "route": "MPLAN_NARRATION_ROUTE",
+      "authorised": true,
+      "refusals": [],
+      "reasons": [],
+      "credential_class": "SUBSCRIPTION",
+      "credential_source": "MMX_CONFIG",
+      "billing_verdict": "SAFE_INCLUDED_PLAN"
+    }
+  },
+  "request_started_at": "2026-10-12T15:31:31.995236+00:00",
+  "request_transmitted": true,
+  "request_target": {
+    "host": "https://api.minimax.cn",
+    "path": "/v1/t2a_v2",
+    "transport": "native_http_cn",
+    "route": "MPLAN_NARRATION_ROUTE",
+    "credential_class": "SUBSCRIPTION",
+    "credential_source": "MMX_CONFIG"
+  },
+  "request_payload": {
+    "fields": [
+      "audio_setting",
+      "model",
+      "output_format",
+      "pronunciation_dict",
+      "stream",
+      "text",
+      "voice_setting"
+    ],
+    "model": "speech-2.8-hd",
+    "text_sha256": "f9e732a89501c137642e7b765df4e5e5cd0182683f9ae923b6f2051dab191678",
+    "text_billable_characters": 44,
+    "voice_setting": {
+      "voice_id": "founder_primary_v1",
+      "speed": 1,
+      "vol": 1,
+      "pitch": 0
+    },
+    "voice_setting_voice_id_hash": "7271d9c80c88821a6a09ed43328619d0ee08c3f2b2449237fe2c31f6899abeef",
+    "audio_setting": {
+      "sample_rate": 32000,
+      "format": "wav",
+      "channel": 1
+    },
+    "output_format": "hex",
+    "stream": false,
+    "pronunciation_rule_count": 6
+  },
+  "audio": {
+    "path": "D:\\Projects\\X-SuperPlay-ContentOps\\.verify-tmp\\m34-mplan-crosskey\\mplanverify-61e11cd1608b-normalised.wav",
+    "sha256": "edf85e03533fd35af83054f27b6963d9bd3550d6bba9231a3c2e65b5e39d5e46",
+    "duration_s": 4.772,
+    "sample_rate_hz": 44100,
+    "channels": 1,
+    "codec": "pcm_s16le",
+    "loudness_lufs": -16.5,
+    "technical_qc_approved": true,
+    "technical_qc": {
+      "approved": true,
+      "checks": [
+        {
+          "check": "file_exists",
+          "passed": true,
+          "detail": "D:\\Projects\\X-SuperPlay-ContentOps\\.verify-tmp\\m34-mplan-crosskey\\mplanverify-61e11cd1608b-normalised.wav"
+        },
+        {
+          "check": "not_empty",
+          "passed": true,
+          "detail": "420944 bytes"
+        },
+        {
+          "check": "has_audio_codec",
+          "passed": true,
+          "detail": "pcm_s16le"
+        },
+        {
+          "check": "has_duration",
+          "passed": true,
+          "detail": 4.772
+        },
+        {
+          "check": "sample_rate",
+          "passed": true,
+          "detail": {
+            "expected": 44100,
+            "actual": 44100
+          }
+        },
+        {
+          "check": "mono_or_stereo",
+          "passed": true,
+          "detail": 1
+        },
+        {
+          "check": "leading_silence",
+          "passed": true,
+          "detail": 0.0
+        },
+        {
+          "check": "trailing_silence",
+          "passed": true,
+          "detail": 0.0
+        },
+        {
+          "check": "not_mostly_silent",
+          "passed": true,
+          "detail": -1.5
+        },
+        {
+          "check": "no_clipping",
+          "passed": true,
+          "detail": -1.5
+        },
+        {
+          "check": "loudness_floor",
+          "passed": true,
+          "detail": -16.5
+        },
+        {
+          "check": "true_peak_headroom",
+          "passed": true,
+          "detail": -1.5
+        }
+      ],
+      "measurements": {
+        "codec": "pcm_s16le",
+        "sample_rate_hz": 44100,
+        "channels": 1,
+        "duration_s": 4.772,
+        "bytes": 420944,
+        "integrated_lufs": -16.5,
+        "true_peak_db": -1.5,
+        "peak_db": -1.5,
+        "mean_db": -16.4,
+        "loudness_range_lu": 1.6
+      },
+      "silence": {
+        "available": true,
+        "silences": [],
+        "leading_silence_s": 0.0,
+        "trailing_silence_s": 0.0
+      }
+    },
+    "lexicon_applied": true,
+    "spoken_text_sha256": "f9e732a89501c137642e7b765df4e5e5cd0182683f9ae923b6f2051dab191678"
+  },
+  "provider_response": {
+    "http_status": 200,
+    "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+    },
+    "trace_id": "071c30589ac04154605dc560ef5d0085",
+    "audio_hex_chars": 613108,
+    "extra_info": {
+      "audio_length": 4771,
+      "audio_sample_rate": 32000,
+      "audio_size": 306554,
+      "bitrate": 128000,
+      "word_count": 22,
+      "invisible_character_ratio": 0,
+      "usage_characters": 43,
+      "audio_format": "wav",
+      "audio_channel": 1,
+      "_elapsed_ms": 6268
+    },
+    "usage_characters": 43,
+    "usage_voice_count": null,
+    "raw_response_stored_privately": true
+  },
+  "provider_receipt": {
+    "provider": "minimax",
+    "transport": "native_http_cn",
+    "request_host": "https://api.minimax.cn",
+    "route": "MPLAN_NARRATION_ROUTE",
+    "credential_class": "SUBSCRIPTION",
+    "credential_source": "MMX_CONFIG",
+    "model": "speech-2.8-hd",
+    "voice_id_hash": "7271d9c80c88821a6a09ed43328619d0ee08c3f2b2449237fe2c31f6899abeef",
+    "trace_id": "071c30589ac04154605dc560ef5d0085",
+    "http_status": 200,
+    "provider_status_code": 0,
+    "usage_characters": 43,
+    "usage_voice_count": null,
+    "loudnorm_target": "I=-16:TP=-1.5:LRA=11",
+    "technical_qc": {
+      "approved": true,
+      "checks": [
+        {
+          "check": "file_exists",
+          "passed": true,
+          "detail": "D:\\Projects\\X-SuperPlay-ContentOps\\.verify-tmp\\m34-mplan-crosskey\\mplanverify-61e11cd1608b-normalised.wav"
+        },
+        {
+          "check": "not_empty",
+          "passed": true,
+          "detail": "420944 bytes"
+        },
+        {
+          "check": "has_audio_codec",
+          "passed": true,
+          "detail": "pcm_s16le"
+        },
+        {
+          "check": "has_duration",
+          "passed": true,
+          "detail": 4.772
+        },
+        {
+          "check": "sample_rate",
+          "passed": true,
+          "detail": {
+            "expected": 44100,
+            "actual": 44100
+          }
+        },
+        {
+          "check": "mono_or_stereo",
+          "passed": true,
+          "detail": 1
+        },
+        {
+          "check": "leading_silence",
+          "passed": true,
+          "detail": 0.0
+        },
+        {
+          "check": "trailing_silence",
+          "passed": true,
+          "detail": 0.0
+        },
+        {
+          "check": "not_mostly_silent",
+          "passed": true,
+          "detail": -1.5
+        },
+        {
+          "check": "no_clipping",
+          "passed": true,
+          "detail": -1.5
+        },
+        {
+          "check": "loudness_floor",
+          "passed": true,
+          "detail": -16.5
+        },
+        {
+          "check": "true_peak_headroom",
+          "passed": true,
+          "detail": -1.5
+        }
+      ],
+      "measurements": {
+        "codec": "pcm_s16le",
+        "sample_rate_hz": 44100,
+        "channels": 1,
+        "duration_s": 4.772,
+        "bytes": 420944,
+        "integrated_lufs": -16.5,
+        "true_peak_db": -1.5,
+        "peak_db": -1.5,
+        "mean_db": -16.4,
+        "loudness_range_lu": 1.6
+      },
+      "silence": {
+        "available": true,
+        "silences": [],
+        "leading_silence_s": 0.0,
+        "trailing_silence_s": 0.0
+      }
+    },
+    "human_review": "PENDING_FOUNDER_REVIEW",
+    "production_ready": false
+  },
+  "request_finished_at": "2026-10-12T15:31:39.591010+00:00",
+  "provider_status": {
+    "status_code": 0,
+    "status_meaning": "success",
+    "http_status": 200,
+    "trace_id": "071c30589ac04154605dc560ef5d0085",
+    "usage_characters": 43,
+    "usage_voice_count": null
+  },
+  "quota_after": {
+    "interval_remaining_percent": 99.0,
+    "weekly_remaining_percent": 51.0,
+    "bucket": "general"
+  },
+  "balances_after": {
+    "available_amount": "15.08",
+    "cash_balance": "10.00",
+    "voucher_balance": "5.08",
+    "credit_balance": "0.00",
+    "owed_amount": "0.00"
+  },
+  "deltas": {
+    "cash_balance": {
+      "before": "10.00",
+      "after": "10.00",
+      "delta": "0.00",
+      "decreased": false,
+      "increased": false
+    },
+    "voucher_balance": {
+      "before": "5.08",
+      "after": "5.08",
+      "delta": "0.00",
+      "decreased": false,
+      "increased": false
+    },
+    "credit_balance": {
+      "before": "0.00",
+      "after": "0.00",
+      "delta": "0.00",
+      "decreased": false,
+      "increased": false
+    },
+    "owed_amount": {
+      "before": "0.00",
+      "after": "0.00",
+      "delta": "0.00",
+      "decreased": false,
+      "increased": false
+    },
+    "available_amount": {
+      "before": "15.08",
+      "after": "15.08",
+      "delta": "0.00",
+      "decreased": false,
+      "increased": false
+    }
+  },
+  "verification": {
+    "verified": true,
+    "status": "M_PLAN_ONLY_VERIFIED",
+    "basis": "EXCLUSION_CHAIN",
+    "note": "no paid fund moved; Credit Pack was zero before and after; the request succeeded on a Subscription Key, whose documented deduction chain is plan quota -> credit packs only, so plan quota is the only chain left. Quota percentages are integers and a short utterance can round below one point, which is why a flat percentage is not treated as failure.",
+    "quota_before": {
+      "interval_remaining_percent": 99.0,
+      "weekly_remaining_percent": 51.0,
+      "bucket": "general"
+    },
+    "quota_after": {
+      "interval_remaining_percent": 99.0,
+      "weekly_remaining_percent": 51.0,
+      "bucket": "general"
+    }
+  },
+  "second_clone_fee_check": {
+    "usage_voice_count": null,
+    "meaning": "documented: returned only when a voice fee is charged on this request",
+    "second_clone_fee_charged": false
+  },
+  "cross_key_voice_access": "GRANTED",
+  "outcome": "CROSS_KEY_VERIFIED",
+  "m_plan_only_verified": true,
+  "finished_at": "2026-10-12T15:31:53.850292+00:00"
+}

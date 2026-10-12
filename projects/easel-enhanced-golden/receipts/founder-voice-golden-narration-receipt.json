@@ -1,0 +1,373 @@
+{
+  "schema": "contentops.golden-narration/v1",
+  "stage": "GOLDEN_NARRATION",
+  "route": "MPLAN_NARRATION_ROUTE",
+  "attempt_id": "golden-a9801d7b7ff1",
+  "issue": "#34",
+  "started_at": "2026-10-12T15:32:32.621985+00:00",
+  "executed": true,
+  "voice_id": "founder_primary_v1",
+  "voice_id_hash": "7271d9c80c88821a6a09ed43328619d0ee08c3f2b2449237fe2c31f6899abeef",
+  "model": "speech-2.8-hd",
+  "locked_source": {
+    "path": "projects/easel-review/script/narration.txt",
+    "canonical_blob_sha256": "f2de808c9e723f8430acdc44dc374c5791b249250d8bc585a172360a88b9542a",
+    "evidence_lock_sha256": "f2de808c9e723f8430acdc44dc374c5791b249250d8bc585a172360a88b9542a"
+  },
+  "credential_class": "SUBSCRIPTION",
+  "credential_source": "MMX_CONFIG",
+  "payg_key_used_for_this_request": false,
+  "host": "https://api.minimax.cn",
+  "transport": "native_http_cn",
+  "cross_key_verification": {
+    "attempt_id": "mplanverify-61e11cd1608b",
+    "outcome": "CROSS_KEY_VERIFIED",
+    "basis": "EXCLUSION_CHAIN"
+  },
+  "provider_call_budget": {
+    "subscription_tts": 1,
+    "asr_transcribe": 1,
+    "upload": 0,
+    "clone": 0,
+    "automatic_retry": 0
+  },
+  "notes": [
+    "ASR backcheck detected a problem; the detector never blocks by itself, but the Founder should read it before publishing"
+  ],
+  "preflight": {
+    "billing_verdict": "SAFE_INCLUDED_PLAN",
+    "quota": {
+      "interval_remaining_percent": 99.0,
+      "weekly_remaining_percent": 51.0,
+      "bucket": "general"
+    },
+    "balances": {
+      "available_amount": "15.08",
+      "cash_balance": "10.00",
+      "voucher_balance": "5.08",
+      "credit_balance": "0.00",
+      "owed_amount": "0.00"
+    },
+    "decision": {
+      "route": "MPLAN_NARRATION_ROUTE",
+      "authorised": true,
+      "refusals": [],
+      "reasons": [],
+      "credential_class": "SUBSCRIPTION",
+      "credential_source": "MMX_CONFIG",
+      "billing_verdict": "SAFE_INCLUDED_PLAN"
+    }
+  },
+  "narration": {
+    "display_chars": 380,
+    "billable_characters": 616,
+    "spoken_text_sha256": "8d5df229439427972544c1e55254820d1d58ac1deb0697dbf4c79d56a9756191",
+    "lexicon_version": "zh-2026.10.04.1",
+    "pronunciation_rule_count": 6
+  },
+  "request_started_at": "2026-10-12T15:32:35.492720+00:00",
+  "request_transmitted": true,
+  "request_finished_at": "2026-10-12T15:33:29.634408+00:00",
+  "provider_status": {
+    "status_code": 0,
+    "status_meaning": "success",
+    "http_status": 200,
+    "trace_id": "071c30971d12d1b1dc720da6e64ac4dd",
+    "usage_characters": 586,
+    "usage_voice_count": null
+  },
+  "error_taxonomy": {
+    "http_status": 200,
+    "provider_status_code": 0,
+    "provider_status_msg": "success",
+    "trace_id": "071c30971d12d1b1dc720da6e64ac4dd",
+    "cli_exit_code": null,
+    "transport": "native_http_cn"
+  },
+  "audio": {
+    "raw_path": "D:\\Projects\\X-SuperPlay-ContentOps\\outputs\\founder-golden\\golden-raw-golden-a9801d7b7ff1.wav",
+    "normalized_path": "D:\\Projects\\X-SuperPlay-ContentOps\\outputs\\founder-golden\\golden-narration-founder_primary_v1.wav",
+    "raw_sha256": "f0d0e6e985f6f2355090b117ea4c6dce710a110bd164e85d02debb5dcc9b4328",
+    "normalized_sha256": "4714fd36fbda3edbc6777041f7c4ef0772aa46b2a4256970eb861956a920cbe8",
+    "duration_s": 79.949,
+    "sample_rate_hz": 32000,
+    "channels": 1,
+    "codec": "pcm_s16le",
+    "integrated_lufs": -16.0,
+    "true_peak_db": -1.5
+  },
+  "fingerprint": "19f2c53d389bbe34a0b21ff62a5b3629fd5faaebd76d94c55b41cb9aac21e7a3",
+  "normalisation": {
+    "ok": true,
+    "loudness_target_met": true,
+    "loudness_delta_lu": 0.0,
+    "peak_ceiling_met": true
+  },
+  "technical_qc": {
+    "approved": true,
+    "checks": [
+      {
+        "check": "file_exists",
+        "passed": true,
+        "detail": "D:\\Projects\\X-SuperPlay-ContentOps\\outputs\\founder-golden\\golden-narration-founder_primary_v1.wav"
+      },
+      {
+        "check": "not_empty",
+        "passed": true,
+        "detail": "5116812 bytes"
+      },
+      {
+        "check": "has_audio_codec",
+        "passed": true,
+        "detail": "pcm_s16le"
+      },
+      {
+        "check": "has_duration",
+        "passed": true,
+        "detail": 79.949
+      },
+      {
+        "check": "sample_rate",
+        "passed": true,
+        "detail": {
+          "expected": 32000,
+          "actual": 32000
+        }
+      },
+      {
+        "check": "mono_or_stereo",
+        "passed": true,
+        "detail": 1
+      },
+      {
+        "check": "duration_plausible",
+        "passed": true,
+        "detail": {
+          "expected_s": 62.666666666666664,
+          "actual_s": 79.949
+        }
+      },
+      {
+        "check": "leading_silence",
+        "passed": true,
+        "detail": 0.0
+      },
+      {
+        "check": "trailing_silence",
+        "passed": true,
+        "detail": 0.0
+      },
+      {
+        "check": "not_mostly_silent",
+        "passed": true,
+        "detail": -1.5
+      },
+      {
+        "check": "no_clipping",
+        "passed": true,
+        "detail": -1.5
+      },
+      {
+        "check": "loudness_floor",
+        "passed": true,
+        "detail": -16.0
+      },
+      {
+        "check": "true_peak_headroom",
+        "passed": true,
+        "detail": -1.5
+      }
+    ],
+    "measurements": {
+      "codec": "pcm_s16le",
+      "sample_rate_hz": 32000,
+      "channels": 1,
+      "duration_s": 79.949,
+      "bytes": 5116812,
+      "integrated_lufs": -16.0,
+      "true_peak_db": -1.5,
+      "peak_db": -1.5,
+      "mean_db": -16.2,
+      "loudness_range_lu": 2.6
+    },
+    "silence": {
+      "available": true,
+      "silences": [
+        {
+          "start_s": 5.192156,
+          "end_s": 5.783719
+        },
+        {
+          "start_s": 11.792469,
+          "end_s": 12.149688
+        },
+        {
+          "start_s": 17.351813,
+          "end_s": 17.918188
+        },
+        {
+          "start_s": 19.269594,
+          "end_s": 19.779937
+        },
+        {
+          "start_s": 24.252063,
+          "end_s": 24.86475
+        },
+        {
+          "start_s": 26.999813,
+          "end_s": 27.551719
+        },
+        {
+          "start_s": 28.2605,
+          "end_s": 28.779813
+        },
+        {
+          "start_s": 36.421219,
+          "end_s": 37.055031
+        },
+        {
+          "start_s": 41.515375,
+          "end_s": 41.965406
+        },
+        {
+          "start_s": 46.120125,
+          "end_s": 46.60175
+        },
+        {
+          "start_s": 49.591656,
+          "end_s": 50.298219
+        },
+        {
+          "start_s": 51.940406,
+          "end_s": 52.389406
+        },
+        {
+          "start_s": 55.69625,
+          "end_s": 56.282875
+        },
+        {
+          "start_s": 58.166063,
+          "end_s": 58.658156
+        },
+        {
+          "start_s": 60.037125,
+          "end_s": 60.536313
+        },
+        {
+          "start_s": 62.141188,
+          "end_s": 62.649125
+        },
+        {
+          "start_s": 67.636594,
+          "end_s": 68.386406
+        },
+        {
+          "start_s": 71.430281,
+          "end_s": 72.021812
+        },
+        {
+          "start_s": 75.3245,
+          "end_s": 75.884281
+        }
+      ],
+      "leading_silence_s": 0.0,
+      "trailing_silence_s": 0.0
+    }
+  },
+  "asr_backcheck": {
+    "status": "DETECTED_PROBLEM",
+    "role": "DETECTOR_ONLY",
+    "can_approve_quality": false,
+    "transcript": "装了伊泽尔之后，最先要回答的是它到底跑不跑得起来。我把它锁在v0.2.1，九百八十二个文件逐个比对过哈希，和上游tag完全一致。它不是一个SaaS，是一层skill库，一百一十四个skill，分成发现、策划、创作、发布、归因五层，创作层最大，五十二个。Docker跑起来了，Python、Node、FFmpeg这些核心项是绿的，Ping里agent真实往返也通了。但有个坑，网关健康检查探的是写死的默认端口，和伊泽尔实际网关端口对不上，那一行是红的。网页工作台这条路有六项没过，FastAPI、Uvicorn这些依赖没装，前端也没构建，ENV也没有API Key，所以Web界面现在还没验证。结论：它不是开箱即用的产品，但是一个真能被调起来的生产引擎，CLI和skill这条线今天是通的。",
+    "coverage": 0.9868,
+    "issues": [
+      "3 expected unit(s) absent from the transcript",
+      "5 unexpected repeated unit(s): docker, v0.2.1, 伊, 尔, 泽"
+    ],
+    "missing": [
+      "doctor",
+      "easel",
+      "v0.21"
+    ],
+    "excess": [
+      "docker",
+      "v0.2.1",
+      "伊",
+      "尔",
+      "泽"
+    ],
+    "detail": null
+  },
+  "second_clone_fee_check": {
+    "usage_voice_count": null,
+    "second_clone_fee_charged": false
+  },
+  "quota_after": {
+    "interval_remaining_percent": 99.0,
+    "weekly_remaining_percent": 51.0,
+    "bucket": "general"
+  },
+  "balances_after": {
+    "available_amount": "15.08",
+    "cash_balance": "10.00",
+    "voucher_balance": "5.08",
+    "credit_balance": "0.00",
+    "owed_amount": "0.00"
+  },
+  "deltas": {
+    "cash_balance": {
+      "before": "10.00",
+      "after": "10.00",
+      "delta": "0.00",
+      "decreased": false,
+      "increased": false
+    },
+    "voucher_balance": {
+      "before": "5.08",
+      "after": "5.08",
+      "delta": "0.00",
+      "decreased": false,
+      "increased": false
+    },
+    "credit_balance": {
+      "before": "0.00",
+      "after": "0.00",
+      "delta": "0.00",
+      "decreased": false,
+      "increased": false
+    },
+    "owed_amount": {
+      "before": "0.00",
+      "after": "0.00",
+      "delta": "0.00",
+      "decreased": false,
+      "increased": false
+    },
+    "available_amount": {
+      "before": "15.08",
+      "after": "15.08",
+      "delta": "0.00",
+      "decreased": false,
+      "increased": false
+    }
+  },
+  "verification": {
+    "verified": true,
+    "status": "M_PLAN_ONLY_VERIFIED",
+    "basis": "EXCLUSION_CHAIN",
+    "note": "no paid fund moved; Credit Pack was zero before and after; the request succeeded on a Subscription Key, whose documented deduction chain is plan quota -> credit packs only, so plan quota is the only chain left. Quota percentages are integers and a short utterance can round below one point, which is why a flat percentage is not treated as failure.",
+    "quota_before": {
+      "interval_remaining_percent": 99.0,
+      "weekly_remaining_percent": 51.0,
+      "bucket": "general"
+    },
+    "quota_after": {
+      "interval_remaining_percent": 99.0,
+      "weekly_remaining_percent": 51.0,
+      "bucket": "general"
+    }
+  },
+  "sidecar_path": "D:\\Projects\\X-SuperPlay-ContentOps\\outputs\\founder-golden\\golden-narration-founder_primary_v1.wav.receipt.json",
+  "outcome": "GOLDEN_NARRATION_READY_FOR_FOUNDER_REVIEW",
+  "finished_at": "2026-10-12T15:33:29.634685+00:00"
+}
