@@ -140,6 +140,26 @@ jobs:
       - name: Run A/B sample policy tests
         run: python tests/test_ab_sample_policy.py
 
+      # Narration v3. The creator-script stage: fact-script and evidence-lock
+      # binding, digit preservation with declared omissions, preserved facts,
+      # template-marketing refusal, first-person bases, beat structure and the
+      # version map. Fully offline.
+      - name: Run creator-script regression tests
+        run: python tests/test_creator_script.py
+
+      # The narration director: per-unit intent metadata, auto-emotion default,
+      # calm-at-most-once and no-majority rules, bounded homogeneous speeds,
+      # intent-paced pauses with unique anchors, intent-grouped synthesis and
+      # single-unit-group discipline. Fully offline.
+      - name: Run narration-director regression tests
+        run: python tests/test_narration_director.py
+
+      # The v3 D/E/F sample policy: offline dry run, label-blind candidate
+      # files, budget estimate, preset-voice evidence binding, no PAYG/clone
+      # surface in the new scripts.
+      - name: Run narration-v3 policy tests
+        run: python tests/test_narration_v3_policy.py
+
       - name: Run M3 image regression tests
         run: python tests/test_minimax_image.py
 
