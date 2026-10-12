@@ -221,6 +221,26 @@ EVIDENCE_LIVE_MEASURED = "VERIFIED_LOCAL"
 #: plausible, they were confirmed with a screenshot, and they were still wrong. A
 #: refutation has to outrank the thing that refuted it, or the next reader re-opens the
 #: gate on the same assurance and spends the same effort proving it wrong again.
+#:
+#: Correction, appended 2026-10-12 (Issue #34, native-adapter round). The narrative
+#: above says "three different balance and credential combinations". A later audit of
+#: the pinned CLI (``mmx-cli`` 1.0.27) falsified that part, and the correction is
+#: recorded here rather than edited into the text above, because the text above is what
+#: was believed at the time and the audit is what changed it:
+#:
+#: the CLI's request-auth resolver never reads the ``MINIMAX_API_KEY`` environment
+#: variable that :func:`contentops.media.credentials.child_env_for` binds the
+#: authorised key into. It uses the ``--api-key`` flag, an OAuth token, or the
+#: ``api_key`` in ``~/.mmx/config.json`` -- and no flag was ever passed. So all three
+#: "attempts" authenticated with the **same** config-file Subscription Key, including
+#: the two labelled pay-as-you-go. The measured fact is therefore narrower and
+#: different: the Subscription chain refused this fee three times, and the
+#: pay-as-you-go + cash route was never actually exercised. This constant still
+#: refuses the voucher-backed path, which is what it was created to refuse; what it
+#: must not be read as is proof that "no combination available to this account can
+#: pay it". That part is again UNVERIFIED. The evidence and the fix live in
+#: ``projects/easel-enhanced-golden/receipts/founder-voice-activation-diagnosis.json``
+#: and :mod:`contentops.media.minimax_native_tts`.
 EVIDENCE_LIVE_REFUTED = "VERIFIED_LOCAL_REFUTED"
 
 #: Name of the second, independently authorised experiment, kept here because the route
