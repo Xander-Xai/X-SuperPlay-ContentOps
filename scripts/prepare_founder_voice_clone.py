@@ -44,6 +44,12 @@ SAMPLE = ROOT / "assert" / "voice-reference-clean.wav"
 SAMPLE_AUDIT = ROOT / "projects/easel-enhanced-golden/receipts/founder-voice-sample-audit.json"
 OUT = ROOT / "projects/easel-enhanced-golden/receipts/founder-voice-clone-receipt.json"
 
+#: Local record of a real attempt, written by the run that performed it. If present it
+#: is merged into the receipt, so the committed receipt describes what actually
+#: happened rather than only what was prepared. Absent on a clean checkout, where the
+#: receipt legitimately describes a preflight that was never sent.
+ATTEMPT_RECORD = ROOT / ".verify-tmp" / "m23-founder-clone" / "clone-execution.json"
+
 VOICE_ALIAS = "founder_primary_v1"
 PROVIDER_VOICE_ID = "XSuperPlayFounderV1"
 OBJECTIVE = "speech-2.8-hd narration for the Enhanced Golden pipeline"
@@ -194,6 +200,36 @@ def main() -> int:
     }
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
+
+    # Merge a real attempt if one was made locally. The receipt must describe what
+    # happened, not what was planned: a preflight receipt left saying NOT_ATTEMPTED
+    # after a clone was actually refused would be the stale-receipt failure this
+    # repository has already been bitten by once.
+    if ATTEMPT_RECORD.is_file():
+        attempt = json.loads(ATTEMPT_RECORD.read_text(encoding="utf-8"))
+        receipt["clone_status"] = attempt.get("clone_status", receipt["clone_status"])
+        receipt["refusal_code"] = attempt.get("refusal_code") or receipt["refusal_code"]
+        receipt["provider_status_code"] = attempt.get("provider_status_code")
+        receipt["provider_status_meaning"] = attempt.get(
+            "provider_status_meaning_documented", ""
+        )
+        receipt["provider_calls"] = attempt.get("provider_calls", receipt["provider_calls"])
+        receipt["quota_before"] = attempt.get("quota_before")
+        receipt["quota_after"] = attempt.get("quota_after")
+        receipt["observed_charge_cny"] = attempt.get("charge_observed_cny")
+        receipt["attempt_notes"] = attempt.get("notes", [])
+        receipt["retry_performed"] = attempt.get("retry_performed", False)
+        receipt["tts_performed"] = attempt.get("tts_performed", False)
+        receipt["tts_skipped_reason"] = attempt.get("tts_skipped_reason", "")
+        receipt["orphaned_upload_note"] = attempt.get("orphaned_upload_note", "")
+        receipt["refusal_reason"] = (
+            "the clone request was sent once, authorised by the Founder, and the "
+            "provider refused it with status_code "
+            f"{attempt.get('provider_status_code')}. No charge was incurred and no "
+            "retry was attempted."
+        )
+        receipt["attempted_at"] = attempt.get("finished_at") or attempt.get("started_at")
+
     OUT.write_text(
         json.dumps(receipt, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",

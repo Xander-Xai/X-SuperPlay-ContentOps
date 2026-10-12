@@ -896,6 +896,61 @@ def test_the_host_can_come_from_the_environment():
     print(f"[ok] 38. all {len(vc.BASE_URL_ENV_VARS)} host variables resolve, clone-specific first")
 
 
+@test
+def test_model_not_on_plan_2061_is_classified_distinctly_from_verification():
+    """2061 is about plan coverage; 2038 is about the account.
+
+    Measured against the live API on 2026-10-12: /v1/voice_clone answered 2061 on this
+    account. Conflating the two would send an operator to fix verification when the real
+    problem is that the plan does not include the model -- and no amount of verification
+    changes plan coverage. It is also not retryable: the same request fails identically.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        sample = synthetic_wav(Path(tmp) / "sample.wav")
+        transport = FakeTransport(
+            clone_payload={
+                "base_resp": {
+                    "status_code": vc.STATUS_MODEL_NOT_ON_PLAN,
+                    "status_msg": "This model is not available on your current Token Plan.",
+                }
+            }
+        )
+        provider = make_provider(transport)
+        outcome = provider.clone(
+            make_request(sample), confirm_fee=True, duration_s=15.0
+        )
+        assert outcome.refusal_code == vc.REFUSAL_MODEL_NOT_ON_PLAN, outcome.refusal_code
+        assert outcome.refusal_code != vc.REFUSAL_ACCOUNT_VERIFICATION
+        joined = " ".join(outcome.receipt.notes)
+        assert "2061" in joined
+        assert "Token Plan" in joined, (
+            "the provider's own message must survive into the refusal; a bare code is "
+            "not actionable"
+        )
+        assert provider.clone_count == 1, "2061 must not be retried"
+        assert transport.calls.count("clone") == 1
+        print("[ok] 39. status 2061 is MODEL_NOT_ON_PLAN, kept distinct from 2038, no retry")
+
+
+@test
+def test_a_status_message_is_carried_but_bounded():
+    """The message is diagnosis; it must not become an unbounded passthrough."""
+    with tempfile.TemporaryDirectory() as tmp:
+        sample = synthetic_wav(Path(tmp) / "sample.wav")
+        transport = FakeTransport(
+            clone_payload={"base_resp": {"status_code": 9999, "status_msg": "x" * 5000}}
+        )
+        provider = make_provider(transport)
+        outcome = provider.clone(
+            make_request(sample), confirm_fee=True, duration_s=15.0
+        )
+        note = " ".join(outcome.receipt.notes)
+        assert "x" * 5000 not in note
+        assert "x" * 201 not in note, "status_msg must be truncated"
+        assert "x" * 100 in note
+        print("[ok] 40. a provider status message is carried through, truncated at 200")
+
+
 def main() -> int:
     failures = 0
     for fn in TESTS:

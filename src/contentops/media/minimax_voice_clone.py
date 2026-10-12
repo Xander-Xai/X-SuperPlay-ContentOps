@@ -78,6 +78,7 @@ __all__ = [
     "REFUSAL_CREDENTIAL_CLASS",
     "REFUSAL_FEE_ABOVE_MAX",
     "REFUSAL_FEE_NOT_CONFIRMED",
+    "REFUSAL_MODEL_NOT_ON_PLAN",
     "REFUSAL_NOT_ENTITLED",
     "REFUSAL_SCHEMA_CHANGED",
     "REFUSAL_SAMPLE_INVALID",
@@ -173,6 +174,10 @@ REFUSAL_TRANSPORT = "TRANSPORT_ERROR"
 REFUSAL_CLONE_ALREADY_ATTEMPTED = "DUPLICATE_CLONE_ATTEMPT_REFUSED"
 REFUSAL_ACCOUNT_VERIFICATION = "NEEDS_ACCOUNT_VERIFICATION"
 REFUSAL_DUPLICATE_VOICE_ID = "DUPLICATE_VOICE_ID"
+#: The provider answered 2061: this model is not available on the current Token
+#: Plan. Distinct from 2038, which is about the account's verification state -- 2061
+#: is about what the plan covers, and no amount of verification changes it.
+REFUSAL_MODEL_NOT_ON_PLAN = "MODEL_NOT_ON_PLAN"
 
 #: Provider status codes, as documented. Named rather than inlined so the mapping from
 #: code to meaning is one visible table instead of scattered magic numbers.
@@ -185,6 +190,9 @@ STATUS_INVALID_API_KEY = 2049
 #: 2038: no cloning permission -- check the account verification state. The current
 #: documentation names real-name verification as the usual cause.
 STATUS_NO_CLONE_PERMISSION = 2038
+#: Documented in the official MiniMax CLI ERRORS.md: "This model is not available
+#: on your current Token Plan." Measured on this account against /v1/voice_clone.
+STATUS_MODEL_NOT_ON_PLAN = 2061
 
 _STATUS_MEANING = {
     STATUS_OK: "success",
@@ -194,6 +202,7 @@ _STATUS_MEANING = {
     STATUS_PARAM_INVALID: "invalid parameter",
     STATUS_INVALID_API_KEY: "invalid api key",
     STATUS_NO_CLONE_PERMISSION: "no voice-cloning permission; account verification state",
+    STATUS_MODEL_NOT_ON_PLAN: "this model is not available on the current Token Plan",
 }
 
 
@@ -717,7 +726,20 @@ class MiniMaxVoiceCloneProvider:
         if code_int == STATUS_OK:
             return code_int
         meaning = _STATUS_MEANING.get(code_int, "unrecognised status code")
+        # The provider's own message is carried through, bounded, because "2061" alone
+        # is not actionable and the message is what tells an operator which plan or
+        # model is at issue. It is a status string, never a credential or an id.
+        message = str(base.get("status_msg") or "").strip()[:200]
         detail = f"{stage}: provider status_code={code_int} ({meaning})"
+        if message:
+            detail += f": {message}"
+        if code_int == STATUS_MODEL_NOT_ON_PLAN:
+            raise CloneRefusal(
+                REFUSAL_MODEL_NOT_ON_PLAN,
+                detail + ". The plan does not include this model, so this is not a "
+                "verification problem and not a retry problem: the same request will be "
+                "refused again until the plan or the route changes.",
+            )
         if code_int == STATUS_NO_CLONE_PERMISSION:
             raise CloneRefusal(REFUSAL_ACCOUNT_VERIFICATION, detail)
         if code_int in (STATUS_AUTH_FAILED, STATUS_INVALID_API_KEY):

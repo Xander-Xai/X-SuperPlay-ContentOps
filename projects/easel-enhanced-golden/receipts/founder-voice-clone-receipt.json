@@ -16,9 +16,9 @@
   "allow_payg_tts": false,
   "allow_credit_pack_tts": false,
   "expected_max_fee_cny": "9.9",
-  "clone_status": "NOT_ATTEMPTED",
-  "provider_status_code": null,
-  "provider_status_meaning": "",
+  "clone_status": "REFUSED",
+  "provider_status_code": 2061,
+  "provider_status_meaning": "This model is not available on your current Token Plan. (documented in the official MiniMax CLI ERRORS.md, status_code 2061)",
   "base_url_host": "https://api.minimaxi.com",
   "credential_class": "SUBSCRIPTION",
   "credential_source": "MMX_CONFIG",
@@ -26,12 +26,12 @@
   "request_fingerprint": "1fd8c6c4bc80fb5acf9e6d9bd44b1e246df9f0fd35022e6f6b5c925d5ddf65b6",
   "created_at": "",
   "provider_calls": {
-    "upload": 0,
-    "clone": 0,
-    "list": 1
+    "upload": 1,
+    "clone": 1,
+    "list": 0
   },
-  "refusal_code": "READY_FOR_ONE_TIME_CLONE_FEE",
-  "refusal_reason": "the clone request is billable (one-time, Founder-confirmed CNY 9.9 per cloned voice) and no Founder confirmation to spend has been given. Nothing was uploaded and nothing was cloned.",
+  "refusal_code": "MODEL_NOT_ON_PLAN",
+  "refusal_reason": "the clone request was sent once, authorised by the Founder, and the provider refused it with status_code 2061. No charge was incurred and no retry was attempted.",
   "existing_cloned_voices_on_account": [
     {
       "voice_id_hash": "9dbdd6e0663bd013dca1059bd790d408190a5c9a353a4351c210020f1c59fc23",
@@ -46,5 +46,24 @@
     "no provider upload, no clone request, no synthesis was performed",
     "the sample is a LOCAL PRIVATE INPUT: gitignored, untracked, not copied",
     "the raw provider voice_id is not recorded here, only its SHA256"
-  ]
+  ],
+  "quota_before": {
+    "interval_remaining_percent": 99.0,
+    "weekly_remaining_percent": 66.0,
+    "bucket": "general"
+  },
+  "quota_after": {
+    "interval_remaining_percent": 99.0,
+    "weekly_remaining_percent": 66.0,
+    "bucket": "general"
+  },
+  "observed_charge_cny": "0.00",
+  "attempt_notes": [
+    "[VOICE_CLONE_NOT_ENTITLED] clone: clone: provider status_code=2061 (unrecognised status code)"
+  ],
+  "retry_performed": false,
+  "tts_performed": false,
+  "tts_skipped_reason": "requirement 10 applies only after a successful clone. No new cloned voice exists, so there is nothing to synthesise with, and reusing the pre-existing unverified voice was explicitly forbidden by requirement 3.",
+  "orphaned_upload_note": "the sample upload succeeded and returned a file_id before the clone was refused. That uploaded copy of the Founder's voice is now orphaned on provider storage with no clone to serve. Deleting it is recommended but was NOT done, because the authorised call list enumerated exactly one upload, one clone, one get_voice and one narration, and a delete is not on it.",
+  "attempted_at": "2026-10-12T14:20:50+0800"
 }
