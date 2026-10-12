@@ -14,11 +14,30 @@ Blocking preconditions, in order
 5. this recovery has not already been used
 
 Any of them failing is a stop, not a warning.
+
+Transport correction (Issue #34, 2026-10-12)
+--------------------------------------------
+The first three activation attempts went through the official CLI with the
+authorised key injected as ``MINIMAX_API_KEY``. Auditing the pinned CLI
+(``mmx-cli`` 1.0.27) found that its request-auth resolver never consults that
+variable: it uses the ``--api-key`` flag, an OAuth token, or the ``api_key`` in
+``~/.mmx/config.json`` -- so all three "pay-as-you-go" attempts actually
+authenticated with the config-file Subscription Key, and the CLI also chose its
+own host from that config. This script now sends its one request through
+:mod:`contentops.media.minimax_native_tts`, which pins the documented CN host,
+uses the authorised credential verbatim in the header, and parses the full
+provider envelope (HTTP status, ``base_resp``, ``trace_id`` separately) instead
+of accepting the CLI's lossy ``API error: ... (HTTP 200)`` collapse.
+
+The gates are unchanged. What changed is which component performs the request,
+and that the credential claim in the receipt is now a fact of this process
+rather than a claim about a child.
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -54,20 +73,31 @@ from contentops.media.clone_route import (  # noqa: E402
 )
 from contentops.media.credentials import (  # noqa: E402
     CREDENTIAL_PAYG,
-    CREDENTIAL_SUBSCRIPTION,
     load_local_env_file,
     resolve_clone_credential,
     resolve_credential,
 )
 from contentops.media.contract import SpeechRequest  # noqa: E402,F401
+from contentops.media.minimax_native_tts import (  # noqa: E402
+    MINIMAX_CN_HOST,
+    NativeTtsRefusal,
+    build_t2a_payload,
+    host_is_documented_cn,
+    normalize_host,
+    send_t2a_once,
+)
 from contentops.media.minimax_speech import (  # noqa: E402,F401
     MiniMaxMPlanProvider,
     receipt_to_dict,
 )
-from contentops.media.transport import resolve_cli  # noqa: E402
-from contentops.media.credentials import child_env_for  # noqa: E402
+# NOTE: the CLI transport imports (resolve_cli, child_env_for) were removed with
+# the transport itself. The activation call no longer goes through the CLI: the
+# CLI's auth resolver never read the environment variable these helpers wrote,
+# which is the root cause this script now fixes. Keep them out so no future
+# edit re-introduces a transport that cannot bind the authorised credential.
 
 PRIVATE_REGISTRY = ROOT / ".private" / "founder-voice.json"
+PRIVATE_DIAGNOSTICS = ROOT / ".private" / "diagnostics"
 WORK = ROOT / ".verify-tmp" / "m34-cash-recovery"
 RECEIPT = (
     ROOT
@@ -93,12 +123,105 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def _base_url() -> str:
+def _resolve_hosts() -> Dict[str, Any]:
+    """Where the balances are read and where the one request is sent.
+
+    Both are the documented CN host. The environment variables are still read so
+    the receipt can record what an operator had configured, but the activation
+    call never follows them: the transport that sent the first three refusals
+    chose its own host from a config file this repository does not control, and
+    that is precisely the split this function closes.
+    """
+    configured = ""
     for name in ("CONTENTOPS_MINIMAX_BASE_URL", "MINIMAX_VOICE_CLONE_BASE_URL"):
         value = os.environ.get(name, "").strip()
         if value:
-            return value.rstrip("/")
-    raise SystemExit("no provider host configured; set CONTENTOPS_MINIMAX_BASE_URL")
+            configured = value
+            break
+    configured_norm = normalize_host(configured) if configured else ""
+    return {
+        "activation_host": MINIMAX_CN_HOST,
+        "balance_query_host": MINIMAX_CN_HOST,
+        "configured_env_host": configured_norm or None,
+        "configured_env_matches": (
+            None
+            if not configured_norm
+            else host_is_documented_cn(configured_norm)
+        ),
+        "why": (
+            "The activation call is sent by the native CN adapter, which refuses "
+            "any host other than the documented CN service, and the balance reads "
+            "now use the same host so the billing evidence and the billed request "
+            "cannot address different services."
+        ),
+    }
+
+
+def _write_private_provider_response(
+    attempt_id: str,
+    *,
+    host: str,
+    result: Any = None,
+    refusal: Optional[NativeTtsRefusal] = None,
+) -> Optional[Path]:
+    """Persist the full provider envelope under ``.private/``. Public data is a summary.
+
+    The CLI collapsed every provider failure into ``API error: <msg> (HTTP 200)``
+    plus ``{"error": {"code": 1}}`` -- a CLI-internal general-error class -- so
+    the provider's own ``base_resp.status_code`` and ``trace_id`` were destroyed
+    before any receipt saw them. Nothing about the next attempt may repeat that:
+    the raw JSON is written here, in full, and the receipt carries only the
+    scrubable summary.
+    """
+    PRIVATE_DIAGNOSTICS.mkdir(parents=True, exist_ok=True)
+    payload: Dict[str, Any] = {
+        "schema": "contentops.provider-raw-response/v1",
+        "attempt_id": attempt_id,
+        "at": _now(),
+        "host": normalize_host(host),
+        "path": "/v1/t2a_v2",
+        "transport": "native_http_cn",
+    }
+    if result is not None:
+        raw = dict(result.raw)
+        data = dict(raw.get("data") or {})
+        audio_hex = data.pop("audio", None)
+        if audio_hex is not None:
+            data["_audio_hex_omitted"] = True
+            data["_audio_hex_chars"] = len(audio_hex)
+            data["_audio_sha256"] = hashlib.sha256(result.audio_bytes).hexdigest()
+        raw["data"] = data
+        payload.update(
+            {
+                "outcome": "provider_success",
+                "http_status": result.http_status,
+                "trace_id": result.trace_id,
+                "base_resp": {
+                    "status_code": result.status_code,
+                    "status_msg": result.status_msg,
+                },
+                "extra_info": result.extra_info,
+                "raw_response": raw,
+            }
+        )
+    if refusal is not None:
+        payload.update(
+            {
+                "outcome": "provider_refusal",
+                **refusal.structured(),
+                "raw_response": refusal.raw,
+                "response_text_preview": refusal.response_text or None,
+            }
+        )
+    blob = json.dumps(payload, indent=2, ensure_ascii=False)
+    for banned in ("Authorization", "Bearer ", "sk-cp-", "sk-api-"):
+        if banned in blob:
+            raise SystemExit(
+                f"refusing to write a provider diagnostic containing {banned!r}"
+            )
+    path = PRIVATE_DIAGNOSTICS / f"tts-{attempt_id}.json"
+    path.write_text(blob + "\n", encoding="utf-8", newline="\n")
+    return path
 
 
 def _read_money(base_url: str, key: str) -> Dict[str, Any]:
@@ -173,55 +296,118 @@ def _safe(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _activate_once(*, base_url: str, payg, receipt: Dict[str, Any]) -> Dict[str, Any]:
-    """One TTS call for the activation, through the CLI with the PAYG key bound in.
+    """One native HTTP T2A call for the activation. One request; no retry.
 
-    Mirrors :func:`contentops.media.minimax_speech.synthesize_speech` for the parts that
-    matter to a receipt -- lexicon, loudnorm, technical QC and a SHA256 -- but performs the
-    request itself, because the one-time fee is charged to a pay-as-you-go key and the M
-    Plan provider must not be handed one.
+    Sends the already-audited :data:`ACTIVATION_TEXT` through
+    :func:`contentops.media.minimax_native_tts.send_t2a_once` -- a transport
+    this process fully controls -- instead of the official CLI. The payload is
+    built from the documented request schema, the voice id, model, text and
+    settings are asserted against the payload this function actually sends, and
+    the provider's full JSON envelope is preserved privately.
 
-    Exactly one provider request. There is no loop and no retry: a failure raises, and the
-    caller stops.
+    Mirrors :func:`contentops.media.minimax_speech.synthesize_speech` for the
+    parts that matter to a receipt -- lexicon, loudnorm, technical QC, a
+    SHA256 -- because the activation audio is the Founder's first listen and
+    should be as trustworthy as any later narration.
+
+    Exactly one provider request. A refusal raises, the caller stops, and the
+    single-use authorisation is consumed at the moment the request is
+    transmitted, not at the moment it succeeds.
+
+    Raises:
+        NativeTtsRefusal: a provider refusal or transport failure, with HTTP
+            status, provider status code, provider message and trace id as
+            separate fields. ``receipt["request_transmitted"]`` is set before
+            it is raised.
     """
-    import hashlib
-
     from contentops.media.audio import measure_audio, technical_qc
     from contentops.media.lexicon import default_zh_lexicon
     from contentops.media.minimax_speech import flatten_for_cli
     from process_utils import hidden_run
 
-    env = child_env_for(payg)
-    cli = resolve_cli()
-    if not cli:
-        raise SystemExit("official MiniMax CLI not on PATH; install: npm install -g mmx-cli")
-    prefix = list(cli) if isinstance(cli, (list, tuple)) else [str(cli)]
+    if not host_is_documented_cn(base_url):
+        raise SystemExit(
+            f"refusing to send: {base_url!r} is not the documented CN host "
+            f"({MINIMAX_CN_HOST}). This run does not guess an endpoint."
+        )
 
     lexicon = default_zh_lexicon()
     spoken = lexicon.spoken_text(ACTIVATION_TEXT)
     cli_text = flatten_for_cli(spoken)
+    pronunciation = [
+        f"{source}/{lexicon.rules[source]}" for source in sorted(lexicon.rules)
+    ]
+    payload = build_t2a_payload(
+        text=cli_text,
+        voice_id=VOICE_ID,
+        model=MODEL,
+        sample_rate=32000,
+        fmt="wav",
+        channel=1,
+        pronunciation_entries=pronunciation,
+    )
+
+    # The four substitutions the CLI could previously make invisibly -- a
+    # different credential, voice, model or text -- are asserted against the
+    # payload object this exact request will serialise. If any of them ever
+    # drifts, this is a local stop before the request, not a paid surprise.
+    assert payload["voice_setting"]["voice_id"] == VOICE_ID
+    assert payload["model"] == MODEL
+    assert payload["text"] == cli_text
+    assert payload["stream"] is False
+
+    receipt["request_target"] = {
+        "host": normalize_host(base_url),
+        "path": "/v1/t2a_v2",
+        "transport": "native_http_cn",
+        "credential_class": payg.credential_class,
+        "credential_source": payg.source,
+    }
+    receipt["request_payload"] = {
+        "fields": sorted(payload.keys()),
+        "model": payload["model"],
+        "text_sha256": hashlib.sha256(payload["text"].encode()).hexdigest(),
+        "text_billable_characters": billable_characters(ACTIVATION_TEXT),
+        "voice_setting": dict(payload["voice_setting"]),
+        "voice_setting_voice_id_hash": VOICE_ID_HASH,
+        "audio_setting": dict(payload["audio_setting"]),
+        "output_format": payload["output_format"],
+        "stream": payload["stream"],
+        "pronunciation_rule_count": len(pronunciation),
+    }
+
+    WORK.mkdir(parents=True, exist_ok=True)
     raw = WORK / "activation-raw.wav"
     normalised = WORK / "activation-normalised.wav"
     for stale in (raw, normalised):
         if stale.exists():
             stale.unlink()
-    WORK.mkdir(parents=True, exist_ok=True)
 
-    result = hidden_run(
-        prefix
-        + [
-            "speech", "synthesize",
-            "--model", MODEL,
-            "--text", cli_text,
-            "--voice", VOICE_ID,
-            "--format", "wav",
-            "--out", str(raw),
-            "--quiet", "--non-interactive",
-        ]
-        + lexicon.provider_arguments(),
-        env=env, timeout=600,
+    try:
+        result = send_t2a_once(
+            payload=payload,
+            credential=payg.key,
+            base_url=base_url,
+            timeout_s=600,
+        )
+    except NativeTtsRefusal as refusal:
+        # A request WAS transmitted -- the transport was entered and answered,
+        # or failed after the request left this process. Either way this is not
+        # "free": the single-use authorisation is consumed here, before the
+        # refusal is re-raised, so no code path can treat a failed attempt as
+        # an unspent one.
+        receipt["request_transmitted"] = True
+        _write_private_provider_response(
+            str(receipt.get("attempt_id", "")), host=base_url, refusal=refusal
+        )
+        raise
+
+    receipt["request_transmitted"] = True
+    _write_private_provider_response(
+        str(receipt.get("attempt_id", "")), host=base_url, result=result
     )
-    if result.returncode != 0 or not raw.is_file() or raw.stat().st_size <= 1024:
-        raise RuntimeError((result.stderr or result.stdout or "").strip()[-400:])
+
+    raw.write_bytes(result.audio_bytes)
     hidden_run(
         ["ffmpeg", "-y", "-loglevel", "error", "-i", str(raw),
          "-af", "loudnorm=I=-16:TP=-1.5:LRA=11",
@@ -249,13 +435,25 @@ def _activate_once(*, base_url: str, payg, receipt: Dict[str, Any]) -> Dict[str,
         "lexicon_applied": True,
         "spoken_text_sha256": hashlib.sha256(cli_text.encode()).hexdigest(),
     }
+    receipt["provider_response"] = result.public_summary()
     return {
         "provider_receipt": {
             "provider": "minimax",
-            "transport": "official_cli",
-            "credential_class": "PAYG",
+            "transport": "native_http_cn",
+            "transport_note": (
+                "documented CN HTTP API, /v1/t2a_v2, one request, no retry, no CLI "
+                "in the path"
+            ),
+            "request_host": normalize_host(base_url),
+            "credential_class": payg.credential_class,
+            "credential_source": payg.source,
             "model": MODEL,
             "voice_id_hash": VOICE_ID_HASH,
+            "trace_id": result.trace_id,
+            "http_status": result.http_status,
+            "provider_status_code": result.status_code,
+            "usage_characters": result.usage_characters,
+            "usage_voice_count": result.usage_voice_count,
             "lexicon": "default_zh_lexicon",
             "loudnorm_target": "I=-16:TP=-1.5:LRA=11",
             "technical_qc": technical,
@@ -284,7 +482,8 @@ def main() -> int:
     sys.stdout.reconfigure(encoding="utf-8")
 
     load_local_env_file(ROOT / ".env")
-    base_url = _base_url()
+    hosts = _resolve_hosts()
+    base_url = hosts["balance_query_host"]
     attempt_id = f"cashact-{uuid.uuid4().hex[:12]}"
 
     payg = resolve_clone_credential()
@@ -373,6 +572,8 @@ def main() -> int:
         ),
         "subscription_key_class": sub.credential_class,
         "keys_distinct": bool(payg.key) and bool(sub.key) and payg.key != sub.key,
+        "transport": "native_http_cn",
+        "hosts": hosts,
         "money_before": before,
         "window_remaining_h": None if remaining_s is None else round(remaining_s / 3600, 2),
         "provider_call_budget": {"activation_tts": 1, "upload": 0, "clone": 0,
@@ -391,7 +592,11 @@ def main() -> int:
     print(f"  clone reused      : TRUE -- no upload, no /v1/voice_clone")
     print(f"  window remaining  : {receipt['window_remaining_h']} h of 168 h")
     print(f"  payg fingerprint  : {payg_fp}  exposed={exposed}")
-    print(f"  tts credential    : {sub.credential_class} (never used for this call)")
+    print(f"  payload           : native_http_cn /v1/t2a_v2 @ "
+          f"{normalize_host(hosts['activation_host'])}")
+    print(f"  activation key    : {payg.credential_class} ({payg.source})")
+    print(f"  configured env host: {hosts['configured_env_host'] or '(unset)'} "
+          f"(matches adapter host: {hosts['configured_env_matches']})")
     print(f"  model / text      : {MODEL} / {ACTIVATION_TEXT}")
     print(f"  billable chars    : {chars} -> CNY {receipt['character_cost_cny']}")
     print(f"  projected total   : CNY {verdict.projected_total_cny} "
@@ -436,14 +641,17 @@ def main() -> int:
 
 # --- the one authorised call ---------------------------------------------
     #
-    # Through the CLI with the pay-as-you-go key bound in, NOT through
-    # ``MiniMaxMPlanProvider``. That provider is the M Plan subscription provider and its
-    # ``BillingGuard`` refuses a PAYG credential by design -- correctly, because PAYG
-    # narration is exactly what this repository forbids. Routing a deliberately
-    # cash-paid activation through it asks a subscription-only provider to perform a
-    # pay-as-you-go call, and the guard was right to say no.
+    # Sent by the native CN HTTP adapter, NOT through the official CLI and NOT through
+    # ``MiniMaxMPlanProvider``.
     #
-    # The guard is NOT disabled here. It has already run twice for this run, in
+    # The CLI is out because its request-auth resolver ignores the environment variable
+    # this repository used to bind the authorised key into (see the module docstring):
+    # all three refused attempts authenticated with the config-file Subscription Key,
+    # and the CLI chose the request host from its own config. The plan provider is out
+    # because its ``BillingGuard`` refuses a PAYG credential by design -- correctly,
+    # because PAYG narration is exactly what this repository forbids.
+    #
+    # The guard is NOT disabled here. It has already run for this run, in
     # ``_read_money``, and its verdict and balances are recorded in the receipt. What is
     # changed is which component performs the request: the authorisation to spend is
     # :func:`decide_cash_activation`, whose narrowness this run is about, and the
@@ -462,6 +670,8 @@ def main() -> int:
     receipt["request_started_at"] = _now()
     receipt["request_transmitted"] = False
     print("=== ONE REAL ACTIVATION SYNTHESIS (PAYG key, speech-2.8-hd) ===")
+    print(f"  transport         : native_http_cn -> {normalize_host(base_url)}/v1/t2a_v2")
+    print(f"  credential class  : {payg.credential_class} ({payg.source})")
     audio_ok = False
     status: Dict[str, Any] = {"status_code": None, "message": ""}
     provider_receipt: Dict[str, Any] = {}
@@ -469,25 +679,78 @@ def main() -> int:
         outcome = _activate_once(
             base_url=base_url, payg=payg, receipt=receipt
         )
-        # Set immediately before the return, so it is True only once the CLI actually
-        # produced audio. See the consumption rule below.
-        receipt["request_transmitted"] = True
         audio_ok = True
-        status = {"status_code": 0, "status_meaning": "success"}
+        summary = receipt.get("provider_response") or {}
+        status = {
+            "status_code": summary.get("base_resp", {}).get("status_code", 0),
+            "status_meaning": "success",
+            "http_status": summary.get("http_status"),
+            "trace_id": summary.get("trace_id"),
+            "usage_characters": summary.get("usage_characters"),
+            "usage_voice_count": summary.get("usage_voice_count"),
+        }
         provider_receipt = outcome["provider_receipt"]
         print(f"  audio: {receipt['audio']['path']}")
         print(f"  sha256: {receipt['audio']['sha256']}")
+    except NativeTtsRefusal as refusal:
+        # The four codes stay separate, exactly as measured. ``request_transmitted``
+        # was already set by ``_activate_once`` at the moment the request was
+        # transmitted; a provider refusal still burns the single-use authorisation,
+        # because "it failed" is not "it was free".
+        status = {
+            **refusal.structured(),
+            "status_meaning": (
+                "provider refused" if refusal.provider_status_code is not None
+                else refusal.code
+            ),
+        }
+        receipt["failure_tail"] = " ".join(str(refusal).split())[:400]
+        print(f"  REFUSED ({status['refusal_code']}): "
+              f"HTTP {status['http_status']} / provider status "
+              f"{status['provider_status_code']}: {status['provider_status_msg']}")
+        if status.get("trace_id"):
+            print(f"  trace_id: {status['trace_id']}")
     except Exception as exc:  # noqa: BLE001 - reported, never retried
         text = str(exc)
-        status = {"status_code": None, "message": " ".join(text.split())[:300]}
+        transmitted = bool(receipt.get("request_transmitted"))
+        status = {
+            "status_code": None,
+            "message": " ".join(text.split())[:300],
+            "transmitted": transmitted,
+        }
         receipt["failure_tail"] = text[-400:]
-        # Reaching here means the CLI was launched and the provider answered, so this IS
-        # a transmitted request. It still burns the authorisation: a provider refusal can
-        # and does consume a charge, and "it failed" is not "it was free".
-        receipt["request_transmitted"] = True
-        print(f"  FAILED: {status['message']}")
+        where = "after transmission" if transmitted else "local, before transmission"
+        print(f"  FAILED ({where}): {status['message']}")
     receipt["request_finished_at"] = _now()
     receipt["provider_status"] = status
+    # The error taxonomy, kept in one block so no future edit can collapse the four
+    # different "codes" into one string again. ``cli_exit_code`` is explicitly null
+    # because this run has no CLI in the path at all: a null says "not applicable",
+    # an absent field would say "not checked".
+    receipt["error_taxonomy"] = {
+        "http_status": status.get("http_status"),
+        "provider_status_code": status.get("provider_status_code"),
+        "provider_status_msg": status.get("provider_status_msg"),
+        "trace_id": status.get("trace_id"),
+        "cli_exit_code": None,
+        "cli_exit_code_note": (
+            "not applicable: this run uses the native HTTP transport; the CLI is not "
+            "in the request path"
+        ),
+        "local_billing_guard_verdict": before.get("verdict"),
+        "local_billing_guard_note": (
+            "BillingGuard's PAYG refusal is a local pre-check outcome and is never "
+            "confused with a provider status"
+        ),
+        "transport": "native_http_cn",
+        "historical_note": (
+            "the three earlier attempts preserved no trace_id and no "
+            "base_resp.status_code: the CLI emitted "
+            '{"error": {"code": 1, ...}} where 1 is the CLI general-error class. '
+            "Those fields are HISTORICAL_RAW_RESPONSE_UNAVAILABLE and are not "
+            "reconstructed."
+        ),
+    }
 
     after = _read_money(base_url, payg.key)
     deltas = _delta(before, after)
@@ -541,7 +804,13 @@ def main() -> int:
 
     _write_history_append(attempt_id, {
         "at": _now(), "outcome": receipt["outcome"],
-        "credential_class": "PAYG", "provider_status": status,
+        "transport": "native_http_cn",
+        "credential_class": payg.credential_class,
+        "credential_source": payg.source,
+        "request_host": normalize_host(base_url),
+        "request_transmitted": bool(receipt.get("request_transmitted")),
+        "provider_status": status,
+        "error_taxonomy": receipt.get("error_taxonomy"),
         "cash_debit_cny": actual, "money_before": before["balances"],
         "money_after": after["balances"], "anomalies": anomalies,
     })
@@ -567,8 +836,11 @@ def main() -> int:
     # destroyed by a fault in this script that never reached the network -- forcing either
     # a re-clone or a second approval from the Founder for something that cost nothing.
     #
-    # The boundary is drawn at the CLI launch, not at success. A provider refusal still
-    # burns the authorisation, because "it failed" is not "it was free".
+    # The boundary is drawn at the transmitted request, not at success: the native
+    # adapter sets ``request_transmitted`` the moment the request leaves this process. A
+    # provider refusal still burns the authorisation, because "it failed" is not "it was
+    # free". A payload that failed local schema validation never reaches that boundary
+    # and does not consume the authorisation.
     if receipt.get("request_transmitted"):
         registry.update(registry_update)
         registry["exposed_key_exception_consumed"] = True

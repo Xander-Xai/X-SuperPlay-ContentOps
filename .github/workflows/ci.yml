@@ -95,6 +95,24 @@ jobs:
       - name: Run M2.2 voucher-activation regression tests
         run: python tests/test_voucher_activation.py
 
+      # The cash-activation recovery policy. It was added in the #34 rounds without
+      # being wired in here, so its 20+ gate assertions only ever ran on one machine.
+      - name: Run cash-activation recovery regression tests
+        run: python tests/test_cash_activation_recovery.py
+
+      # The native CN T2A adapter and the host-binding audit. Both suites are fully
+      # offline: every provider interaction is a fake transport. The decisive
+      # assertions are that a non-CN host is refused before the transport is
+      # touched, that exactly one request is possible with no retry, that a provider
+      # refusal keeps its status code and trace id instead of collapsing into a
+      # string, and that neither a refusal nor a public summary can carry the
+      # credential.
+      - name: Run native T2A adapter regression tests
+        run: python tests/test_minimax_native_tts.py
+
+      - name: Run host-binding audit regression tests
+        run: python tests/test_host_binding_audit.py
+
       - name: Run M3 image regression tests
         run: python tests/test_minimax_image.py
 
