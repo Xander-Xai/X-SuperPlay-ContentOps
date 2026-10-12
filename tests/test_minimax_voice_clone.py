@@ -2,7 +2,7 @@
 
 Every test here runs against a fake transport or a refusal path. The real clone is one
 billable call that must happen exactly once, by hand, with explicit Founder
-confirmation -- so nothing in CI may reach api.minimaxi.com or api.minimax.io.
+confirmation -- so nothing in CI may reach any provider host.
 
 The tests are grouped by the failure each one exists to prevent:
 
@@ -34,8 +34,8 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import struct
-import subprocess
 import sys
 import tempfile
 import wave
@@ -55,6 +55,7 @@ from contentops.media.credentials import (  # noqa: E402
     CredentialBinding,
 )
 from contentops.media import minimax_voice_clone as vc  # noqa: E402
+from process_utils import hidden_run  # noqa: E402
 
 TESTS: List = []
 
@@ -167,8 +168,15 @@ class FakeTransport:
         }
 
 
+#: A host that can never resolve. Tests must not name a real provider endpoint: the
+#: literal is policy-excluded from tracked source, and a test that addressed a real host
+#: would be one env change away from touching the network.
+TEST_BASE_URL = "https://example.invalid/v1"
+
+
 def make_provider(transport: Optional[FakeTransport] = None,
                   binding: Optional[CredentialBinding] = None, **kwargs):
+    kwargs.setdefault("base_url", TEST_BASE_URL)
     return vc.MiniMaxVoiceCloneProvider(
         binding or subscription_binding(), transport=transport, **kwargs
     )
@@ -290,7 +298,7 @@ def test_the_receipt_refuses_to_serialise_a_credential_or_bare_alias():
         assert refusal.code == vc.REFUSAL_TRANSPORT
 
     leaky = vc.VoiceCloneReceipt(voice_alias="a", voice_id_hash="b")
-    leaky.notes.append("Authorization: Bearer sk-cp-abcdef")
+    leaky.notes.append("Authorization: Bearer <redacted>")
     try:
         leaky.as_dict()
         raise AssertionError("a receipt containing a credential-shaped string must not serialise")
@@ -312,9 +320,8 @@ def test_a_tracked_sample_is_refused_as_a_privacy_violation():
     provider = make_provider(transport)
     try:
         synthetic_wav(tracked, seconds=11.0)
-        add = subprocess.run(
-            ["git", "add", "-f", "--", rel], cwd=str(ROOT),
-            capture_output=True, timeout=120,
+        add = hidden_run(
+            ["git", "add", "-f", "--", rel], cwd=str(ROOT), timeout=120
         )
         if add.returncode != 0:
             _skip(6, "tracked sample refused",
@@ -329,8 +336,8 @@ def test_a_tracked_sample_is_refused_as_a_privacy_violation():
         assert provider.upload_count == 0
         print("[ok] 6. a Git-tracked sample is refused with no upload attempted")
     finally:
-        subprocess.run(["git", "rm", "--cached", "-q", "--force", "--", rel],
-                       cwd=str(ROOT), capture_output=True, timeout=120)
+        hidden_run(["git", "rm", "--cached", "-q", "--force", "--", rel],
+                   cwd=str(ROOT), timeout=120)
         if tracked.exists():
             tracked.unlink()
 
@@ -343,9 +350,9 @@ def test_the_private_voice_registry_is_gitignored():
         ".private/anything.json",
     ]
     for rel in checks:
-        proc = subprocess.run(
+        proc = hidden_run(
             ["git", "check-ignore", "-q", "--no-index", "--", rel],
-            cwd=str(ROOT), capture_output=True, timeout=60,
+            cwd=str(ROOT), timeout=60,
         )
         assert proc.returncode == 0, f"{rel} is not ignored; the raw voice id could be committed"
     print(f"[ok] 7. all {len(checks)} private registry paths are gitignored")
@@ -356,16 +363,16 @@ def test_the_founder_sample_is_not_tracked_and_any_tracking_is_a_violation():
     """The real sample may be absent (CI); if present it must not be tracked."""
     sample = ROOT / "assert" / "voice-reference-clean.wav"
     rel = "assert/voice-reference-clean.wav"
-    tracked = subprocess.run(
+    tracked = hidden_run(
         ["git", "ls-files", "--error-unmatch", "--", rel],
-        cwd=str(ROOT), capture_output=True, timeout=60,
+        cwd=str(ROOT), timeout=60,
     )
     assert tracked.returncode != 0, (
         "FOUNDER_VOICE_PRIVACY_VIOLATION: the raw sample is tracked by Git"
     )
-    ignored = subprocess.run(
+    ignored = hidden_run(
         ["git", "check-ignore", "-q", "--no-index", "--", rel],
-        cwd=str(ROOT), capture_output=True, timeout=60,
+        cwd=str(ROOT), timeout=60,
     )
     assert ignored.returncode == 0, "the raw sample is not ignored"
     present = sample.is_file()
@@ -718,9 +725,9 @@ def test_the_receipt_records_the_host_that_was_actually_used():
     """A credential authorised against one regional host is not evidence about the other."""
     with tempfile.TemporaryDirectory() as tmp:
         sample = synthetic_wav(Path(tmp) / "sample.wav")
-        provider = make_provider(FakeTransport(), base_url="https://api.minimax.io")
+        provider = make_provider(FakeTransport(), base_url="https://example.invalid/v1")
         outcome = provider.clone(make_request(sample), confirm_fee=True, duration_s=15.0)
-        assert outcome.receipt.base_url_host == "https://api.minimax.io"
+        assert outcome.receipt.base_url_host == "https://example.invalid/v1"
         assert outcome.receipt.credential_class == CREDENTIAL_SUBSCRIPTION
         print("[ok] 30. the receipt records the exact host addressed")
 
@@ -828,10 +835,65 @@ def test_no_test_here_made_a_real_network_call():
     If a test ever accidentally constructs a provider without a fake transport and then
     reaches the clone step, this proves the seam exists rather than being theoretical.
     """
-    provider = vc.MiniMaxVoiceCloneProvider(subscription_binding())
+    provider = vc.MiniMaxVoiceCloneProvider(
+        subscription_binding(), base_url=TEST_BASE_URL
+    )
     assert provider._transport is None
     assert provider.upload_count == 0 and provider.clone_count == 0 and provider.list_count == 0
     print("[ok] 36. the network seam is explicit and no counter moved without it")
+
+
+@test
+def test_no_configured_host_is_refused_rather_than_guessed():
+    """Fail closed on a missing endpoint.
+
+    A guessed default is worse than no default. The wrong regional host answers with an
+    invalid-api-key status, which reads as a broken credential and sends the operator
+    looking in the wrong place. Endpoints are also policy-excluded from tracked source,
+    so the host has to be supplied at runtime.
+    """
+    saved = {name: os.environ.pop(name, None) for name in vc.BASE_URL_ENV_VARS}
+    try:
+        try:
+            vc.MiniMaxVoiceCloneProvider(subscription_binding())
+            raise AssertionError("a provider with no host must refuse to construct")
+        except vc.CloneRefusal as refusal:
+            assert refusal.code == vc.REFUSAL_TRANSPORT, refusal.code
+            assert "no provider host is configured" in refusal.detail
+    finally:
+        for name, value in saved.items():
+            if value is not None:
+                os.environ[name] = value
+    print("[ok] 37. an unconfigured host refuses instead of guessing a default")
+
+
+@test
+def test_the_host_can_come_from_the_environment():
+    """The documented resolution order, and the same variable BillingGuard reads."""
+    for name in vc.BASE_URL_ENV_VARS:
+        saved = os.environ.pop(name, None)
+        os.environ[name] = TEST_BASE_URL
+        try:
+            provider = vc.MiniMaxVoiceCloneProvider(subscription_binding())
+            assert provider._base_url == TEST_BASE_URL, name
+        finally:
+            os.environ.pop(name, None)
+            if saved is not None:
+                os.environ[name] = saved
+
+    # The clone-specific variable wins over the shared one when both are set.
+    saved = {n: os.environ.get(n) for n in vc.BASE_URL_ENV_VARS}
+    try:
+        os.environ[vc.BASE_URL_ENV_VARS[1]] = "https://shared.invalid/v1"
+        os.environ[vc.BASE_URL_ENV_VARS[0]] = TEST_BASE_URL
+        provider = vc.MiniMaxVoiceCloneProvider(subscription_binding())
+        assert provider._base_url == TEST_BASE_URL
+    finally:
+        for name, value in saved.items():
+            os.environ.pop(name, None)
+            if value is not None:
+                os.environ[name] = value
+    print(f"[ok] 38. all {len(vc.BASE_URL_ENV_VARS)} host variables resolve, clone-specific first")
 
 
 def main() -> int:

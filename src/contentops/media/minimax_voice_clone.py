@@ -68,8 +68,7 @@ __all__ = [
     "CLONE_FEE_MAX_CNY",
     "CLONE_FEE_POLICY",
     "CLONE_TRANSPORT",
-    "DEFAULT_BASE_URL",
-    "DOCUMENTED_BASE_URLS",
+    "BASE_URL_ENV_VARS",
     "GET_VOICE_PATH",
     "CLONE_PATH",
     "UPLOAD_PATH",
@@ -108,14 +107,28 @@ PROVIDER_NAME = "minimax"
 RESOURCE_TYPE = "voice_cloning"
 CLONE_TRANSPORT = "documented_public_api"
 
-#: Documented public hosts. The account's own region decides which one is addressed;
-#: a credential authorised against one host is not evidence about the other, so the
-#: host actually used is recorded in every receipt.
-DOCUMENTED_BASE_URLS = {
-    "cn": "https://api.minimaxi.com",
-    "intl": "https://api.minimax.io",
-}
-DEFAULT_BASE_URL = DOCUMENTED_BASE_URLS["cn"]
+#: The account's region decides which documented host is addressed, and a credential
+#: authorised against one host is not evidence about the other -- measured on this
+#: account, where the regional host accepts the Subscription Key and the international
+#: host rejects it with 2049.
+#:
+#: The literal host is deliberately **not** written here. Repository policy keeps
+#: provider endpoint URLs out of tracked source (AGENTS.md section 8), and
+#: ``scripts/check_docs.py`` enforces it. So the host is runtime configuration,
+#: resolved in a fixed order and then recorded in every receipt as ``base_url_host``:
+#:
+#: 1. an explicit ``base_url`` argument
+#: 2. ``MINIMAX_VOICE_CLONE_BASE_URL``
+#: 3. ``CONTENTOPS_MINIMAX_BASE_URL`` -- the same variable BillingGuard already reads,
+#:    so the billing proof and the billable call cannot address different services
+#:
+#: If none is set the provider refuses. A guessed default is worse than no default: the
+#: wrong host returns ``2049 invalid api key``, which reads as a broken credential
+#: rather than a misconfigured endpoint.
+BASE_URL_ENV_VARS = (
+    "MINIMAX_VOICE_CLONE_BASE_URL",
+    "CONTENTOPS_MINIMAX_BASE_URL",
+)
 
 UPLOAD_PATH = "/v1/files/upload"
 CLONE_PATH = "/v1/voice_clone"
@@ -368,19 +381,21 @@ def _is_tracked(path: Path) -> bool:
     A raw human voice must never be committed. Uploading a *tracked* sample would mean
     the privacy breach already happened, so this is checked as a precondition rather
     than assumed from the fact that the path is currently ignored.
-    """
-    import subprocess
 
+    Every git invocation goes through ``process_utils.hidden_run``. Calling
+    ``subprocess.run`` directly here would spawn a visible console window on Windows,
+    which is the specific regression ``scripts/check_subprocess_policy.py`` exists to
+    catch -- and it did catch it, in CI, after this file became tracked.
+    """
     from process_utils import hidden_run
 
     try:
-        root = subprocess.run(
-            ["git", "rev-parse", "--show-toplevel"],
-            cwd=str(path.parent), capture_output=True, timeout=60,
+        root = hidden_run(
+            ["git", "rev-parse", "--show-toplevel"], cwd=str(path.parent), timeout=60
         )
         if root.returncode != 0:
             return False
-        cwd = root.stdout.decode("utf-8", "replace").strip()
+        cwd = (root.stdout or "").strip()
         rel = path.resolve().relative_to(Path(cwd).resolve()).as_posix()
     except Exception:  # noqa: BLE001 - not in a repository at all
         return False
@@ -408,10 +423,23 @@ class MiniMaxVoiceCloneProvider:
         if binding is None:
             binding = CredentialBinding(credential)
         self._binding = binding
-        self._base_url = (
-            base_url or os.environ.get("MINIMAX_VOICE_CLONE_BASE_URL", "").strip()
-            or DEFAULT_BASE_URL
-        ).rstrip("/")
+        resolved_host = (base_url or "").strip()
+        if not resolved_host:
+            for name in BASE_URL_ENV_VARS:
+                candidate = os.environ.get(name, "").strip()
+                if candidate:
+                    resolved_host = candidate
+                    break
+        if not resolved_host:
+            raise CloneRefusal(
+                REFUSAL_TRANSPORT,
+                "no provider host is configured. Set "
+                + " or ".join(BASE_URL_ENV_VARS)
+                + ". There is deliberately no built-in default: the wrong regional host "
+                "answers with an invalid-api-key status, which looks like a broken "
+                "credential instead of a misconfigured endpoint.",
+            )
+        self._base_url = resolved_host.rstrip("/")
         #: Injectable so tests never touch the network.
         self._transport = transport
         self._clock = clock or (lambda: __import__("datetime").datetime.now(
