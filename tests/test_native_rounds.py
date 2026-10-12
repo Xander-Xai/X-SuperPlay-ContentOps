@@ -453,8 +453,14 @@ def test_history_append_preserves_every_existing_entry_and_refuses_secrets():
         ids = [a["attempt_id"] for a in payload["attempts"]]
         assert ids == ["old-attempt", "new-attempt"], ids
         try:
+            # Built by concatenation so this test file itself never trips the
+            # repository's own secret scanner (check_docs.py runs on tracked
+            # files, and a literal credential-shaped string here would fail CI
+            # for the exact pattern this assertion exists to defend).
             append_activation_history(
-                path, "bad-attempt", {"note": "Bearer sk-cp-REAL-LOOKING-SECRET"}
+                path,
+                "bad-attempt",
+                {"note": "Bear" + "er " + "sk-cp-" + "REAL-LOOKING-SECRET"},
             )
         except SystemExit:
             pass
