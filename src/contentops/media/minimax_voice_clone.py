@@ -57,6 +57,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from .credentials import (
+    CREDENTIAL_PAYG,
     CREDENTIAL_SUBSCRIPTION,
     CredentialBinding,
     CredentialBindingError,
@@ -428,10 +429,26 @@ class MiniMaxVoiceCloneProvider:
         transport: Optional[Any] = None,
         clock: Optional[Callable[[], str]] = None,
         max_clone_attempts: int = 1,
+        allow_payg_clone: bool = False,
     ) -> None:
         if binding is None:
             binding = CredentialBinding(credential)
         self._binding = binding
+        #: Which credential class this run is allowed to clone with.
+        #:
+        #: ``False`` -- the default, and the behaviour every existing test covers --
+        #: requires ``SUBSCRIPTION``. ``True`` requires ``PAYG`` instead, which is the
+        #: two-key route: the plan refuses 快速复刻 with 2061, so the clone must go
+        #: through the pay-as-you-go key while the narration stays on the plan.
+        #:
+        #: It is an argument and not an inference from the key's prefix because the
+        #: *intent* is what should be declared. A provider handed a PAYG key and not
+        #: told to use it for cloning refuses, rather than quietly reinterpreting the
+        #: commercial intent of a secret it was merely given.
+        self._required_credential_class = (
+            CREDENTIAL_PAYG if allow_payg_clone else CREDENTIAL_SUBSCRIPTION
+        )
+        self._allow_payg_clone = allow_payg_clone
         resolved_host = (base_url or "").strip()
         if not resolved_host:
             for name in BASE_URL_ENV_VARS:
@@ -504,11 +521,21 @@ class MiniMaxVoiceCloneProvider:
 
     # -- preconditions -------------------------------------------------------
 
-    def _require_subscription_credential(self) -> None:
-        """Only a subscription credential is authorised, and only for its own host.
+    def _require_clone_credential(self) -> None:
+        """Only the declared credential class is authorised for cloning.
 
-        A pay-as-you-go key would pay real money for both the clone and every later
-        TTS. The whole point of this stage is that neither happens.
+        One attempt used a Subscription Key and was refused with ``2061``, because
+        the plan does not cover 快速复刻. The pay-as-you-go key is therefore the only
+        credential that can create this voice -- but it is also the credential that
+        can spend cash, so it is admitted **only** when the caller declared
+        ``allow_payg_clone=True``. Nothing about the key's own prefix can grant that,
+        or every machine that happened to have a PAYG key would have a billable clone
+        path available by accident.
+
+        Note what is *not* permitted here: the pay-as-you-go key may create the
+        voice and may do nothing else. Synthesis stays on the subscription key and is
+        gated separately, because a PAYG synthesis is a different charge with no
+        ceiling in this module at all.
         """
         resolved = self._binding.resolved
         if resolved is None or not resolved.usable:
@@ -517,12 +544,18 @@ class MiniMaxVoiceCloneProvider:
                 "no credential is bound. Resolve it once and pass it, so the "
                 "authorised credential and the transmitted credential are the same one.",
             )
-        if resolved.credential_class != CREDENTIAL_SUBSCRIPTION:
+        if resolved.credential_class != self._required_credential_class:
+            wanted = (
+                "PAYG (the pay-as-you-go key, which the plan does not cover) -- pass "
+                "allow_payg_clone=True to declare that intent"
+                if self._required_credential_class == CREDENTIAL_PAYG
+                else "SUBSCRIPTION only. A PAYG key would bill cash for the clone and "
+                "for every later TTS, and neither is permitted on this route."
+            )
             raise CloneRefusal(
                 REFUSAL_CREDENTIAL_CLASS,
                 f"credential_class={resolved.credential_class} is not authorised for "
-                "cloning. Only SUBSCRIPTION is: a PAYG key would bill cash and a "
-                "Credit Pack key would bill credits, and neither is permitted.",
+                f"cloning. This run requires {wanted}",
             )
 
     def _require_fee_authorisation(self, request: VoiceCloneRequest) -> None:
@@ -595,7 +628,7 @@ class MiniMaxVoiceCloneProvider:
         verifiable rather than asserted.
         """
         validate_voice_id(request.provider_voice_id)
-        self._require_subscription_credential()
+        self._require_clone_credential()
         self._require_fee_authorisation(request)
 
         sample: Dict[str, Any] = {}
@@ -762,7 +795,7 @@ class MiniMaxVoiceCloneProvider:
         The file id is returned to the caller and never persisted by this method: it is
         a handle to the Founder's voice on someone else's storage.
         """
-        self._require_subscription_credential()
+        self._require_clone_credential()
         facts = self.validate_sample(path)
         if self._transport is not None:
             payload = self._transport.upload(path, facts)
@@ -815,7 +848,7 @@ class MiniMaxVoiceCloneProvider:
         argument.
         """
         validate_voice_id(voice_id)
-        self._require_subscription_credential()
+        self._require_clone_credential()
 
         if not confirm_fee:
             raise CloneRefusal(
