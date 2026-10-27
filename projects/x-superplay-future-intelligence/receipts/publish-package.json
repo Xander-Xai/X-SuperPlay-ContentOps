@@ -11,11 +11,14 @@
     "#Easel",
     "#工程实践"
   ],
+  "audience_cta": "需要复现或交付，评论区说你的技术栈。",
   "platforms": [
     "bilibili",
     "zhihu",
     "csdn"
   ],
+  "account_dna": "config/accounts/x-superplay-future-intelligence.json",
+  "gpu_required": false,
   "video": "project://final/future-intelligence.mp4",
   "cover": "project://final/cover.png",
   "derived_assets": [

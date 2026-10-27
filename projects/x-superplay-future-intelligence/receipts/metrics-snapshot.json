@@ -1,0 +1,13 @@
+{
+  "schema": "contentops.metrics-snapshot/v1",
+  "account": "X超玩·未来智能",
+  "platforms": [
+    "bilibili",
+    "zhihu",
+    "csdn"
+  ],
+  "status": "BLOCKED",
+  "reason": "requires a real published URL; fill after manual publishing",
+  "source": "MANUAL",
+  "metrics": null
+}

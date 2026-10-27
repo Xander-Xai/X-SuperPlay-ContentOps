@@ -1,0 +1,15 @@
+{
+  "schema": "contentops.human-review/v1",
+  "account": "X超玩·未来智能",
+  "status": "PENDING_FOUNDER_REVIEW",
+  "scores": {
+    "voice": null,
+    "image_usefulness": null,
+    "visual_consistency": null,
+    "artifact_severity": null,
+    "pace": null,
+    "publishability": null
+  },
+  "decision": null,
+  "failure_positions": []
+}

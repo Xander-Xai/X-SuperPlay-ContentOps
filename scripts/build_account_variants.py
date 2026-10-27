@@ -41,37 +41,35 @@ INTRO = ROOT / "outputs" / "editorial" / "intro-editorial.mp4"
 OUTRO = ROOT / "outputs" / "editorial" / "outro-editorial.mp4"
 SHARED = ROOT / ".runtime" / "easel" / "skills" / "shared" / "scripts"
 
-VARIANTS = {
-    "x-superplay-1024": {
-        "account": "X超玩·1024",
-        "role": "Explore",
-        "units": ["U05", "U06", "U01", "U07", "U08"],
-        "out_name": "1024",
-        "title": "Easel 实测：能跑，但 Web 工作台六项没过",
-        "description": (
-            "我把它锁在 v0.2.1，982 个文件逐个核对哈希；doctor 是绿的，但网关健康检查"
-            "那一行是红的，Web 工作台六项没过。结论：不是开箱即用，但 CLI 和 Skill 线"
-            "今天能用。"
-        ),
-        "hashtags": ["#AI实测", "#开源项目", "#Easel", "#AIAgent", "#独立开发"],
-        "platforms": ["douyin", "xiaohongshu"],
-        "card_dir": "outputs/editorial-1024/by-placement",
-    },
-    "x-superplay-future-intelligence": {
-        "account": "X超玩·未来智能",
-        "role": "Build",
-        "units": ["U01", "U02", "U03", "U04", "U05", "U06", "U07", "U08"],
-        "out_name": "future-intelligence",
-        "title": "Easel 工程拆解：982 文件哈希、网关端口错配、Web 工作台六项",
-        "description": (
-            "从版本锁定、982 个文件哈希核对，到网关健康检查 18789/37289 端口错配，"
-            "再到 Web 工作台六项失败。工程视角记录一个开源 Agent 工作台到底能不能跑起来。"
-        ),
-        "hashtags": ["#AI工程", "#Agent", "#MCP", "#Easel", "#工程实践"],
-        "platforms": ["bilibili", "zhihu", "csdn"],
-        "horizontal": True,
-    },
-}
+def load_specs() -> Dict[str, Dict[str, Any]]:
+    """Account DNA is the gene: the workflow reads it, it is not hardcoded here."""
+    specs: Dict[str, Dict[str, Any]] = {}
+    for path in sorted((ROOT / "config" / "accounts").glob("*.json")):
+        dna = json.loads(path.read_text(encoding="utf-8"))
+        slug = dna["slug"]
+        specs[slug] = {
+            "account": dna["account"],
+            "role": dna["role"],
+            "units": dna["narrative"]["beats"],
+            "target_duration": dna["narrative"]["target_duration_s"],
+            "out_name": slug.replace("x-superplay-", ""),
+            "title": dna["title"],
+            "description": dna["description"],
+            "hashtags": dna["hashtags"],
+            "platforms": dna["platforms"],
+            "card_dir": dna["visual"]["card_set"],
+            "cover_time": dna["visual"]["cover_time_s"],
+            "cta": dna["narrative"]["cta"],
+            "horizontal": dna.get("horizontal", False),
+            "gpu_required": dna["gpu_required"],
+            "dna": path.relative_to(ROOT).as_posix(),
+        }
+    if not specs:
+        raise SystemExit("no account DNA found under config/accounts/")
+    return specs
+
+
+VARIANTS = load_specs()
 
 
 def _run(cmd: List[Any], timeout: int = 900) -> Dict[str, Any]:
@@ -115,6 +113,107 @@ def cut_audio(units: Dict[str, Dict[str, Any]], order: List[str], work: Path) ->
     if result["rc"] != 0 or not joined.is_file():
         raise SystemExit(f"concat failed: {result['stderr']}")
     return joined
+
+
+def write_loop_artifacts(project: Path, spec: Dict[str, Any], *,
+                         qc_overall: str, duration_s: float,
+                         cover_exists: bool) -> Dict[str, Any]:
+    """Write the states the pipeline actually reached and the ones it cannot.
+
+    A closed loop is not a claim that publishing happened. The state file names
+    every stage up to the human gate, and marks publish/metrics/review blocked
+    with the exact reason. A later human run fills them; no automation can.
+    """
+    receipts = project / "receipts"
+    stages = [
+        {"name": "SOURCE_LOCKED", "status": "PASS",
+         "evidence": FULL_RECEIPT.relative_to(ROOT).as_posix()},
+        {"name": "ACCOUNT_ROUTED", "status": "PASS", "evidence": spec["dna"]},
+        {"name": "NARRATIVE_ADAPTED", "status": "PASS", "evidence": spec["units"]},
+        {"name": "AUDIO_READY", "status": "PASS",
+         "evidence": "project://work/audio/narration-cut.wav"},
+        {"name": "VISUALS_READY", "status": "PASS", "evidence": spec["card_dir"]},
+        {"name": "COMPOSED", "status": "PASS",
+         "evidence": f"project://final/{spec['out_name']}.mp4"},
+        {"name": "QC", "status": qc_overall,
+         "evidence": f"project://receipts/qc-report-{spec['out_name']}.json"},
+        {"name": "HUMAN_REVIEW", "status": "PENDING",
+         "reason": "Founder must watch the cut and fill human-review.json"},
+        {"name": "PUBLISHED", "status": "BLOCKED",
+         "reason": "manual publish only; the repository forbids auto-publish"},
+        {"name": "METRICS_SNAPSHOT", "status": "BLOCKED",
+         "reason": "requires a real published URL"},
+        {"name": "REVIEWED", "status": "BLOCKED",
+         "reason": "requires the metrics snapshot"},
+    ]
+    run_state = {
+        "schema": "contentops.account-run/v1",
+        "account": spec["account"],
+        "role": spec["role"],
+        "account_dna": spec["dna"],
+        "gpu_required": spec["gpu_required"],
+        "stage": "PENDING_HUMAN_REVIEW",
+        "stages": stages,
+    }
+    (receipts / "run-state.json").write_text(
+        json.dumps(run_state, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+    low, high = spec["target_duration"]
+    checks = [
+        {"id": "title_present", "ok": bool(spec["title"])},
+        {"id": "title_length", "ok": len(spec["title"]) <= 60,
+         "value": len(spec["title"])},
+        {"id": "description_present", "ok": bool(spec["description"])},
+        {"id": "hashtags", "ok": len(spec["hashtags"]) >= 3,
+         "value": len(spec["hashtags"])},
+        {"id": "cover_exists", "ok": cover_exists},
+        {"id": "duration_in_account_range", "ok": low <= duration_s <= high,
+         "value_s": round(duration_s, 3), "range_s": [low, high]},
+        {"id": "platforms_declared", "ok": bool(spec["platforms"]),
+         "value": spec["platforms"]},
+        {"id": "human_review", "ok": False, "status": "PENDING"},
+        {"id": "real_url", "ok": False, "status": "NOT_PUBLISHED"},
+    ]
+    checklist = {
+        "schema": "contentops.publish-checklist/v1",
+        "account": spec["account"],
+        "platforms": spec["platforms"],
+        "checks": checks,
+        "publish_status": "NOT_PUBLISHED",
+    }
+    (receipts / "publish-checklist.json").write_text(
+        json.dumps(checklist, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+    review = {
+        "schema": "contentops.human-review/v1",
+        "account": spec["account"],
+        "status": "PENDING_FOUNDER_REVIEW",
+        "scores": {
+            "voice": None,
+            "image_usefulness": None,
+            "visual_consistency": None,
+            "artifact_severity": None,
+            "pace": None,
+            "publishability": None,
+        },
+        "decision": None,
+        "failure_positions": [],
+    }
+    (receipts / "human-review.json").write_text(
+        json.dumps(review, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+    metrics = {
+        "schema": "contentops.metrics-snapshot/v1",
+        "account": spec["account"],
+        "platforms": spec["platforms"],
+        "status": "BLOCKED",
+        "reason": "requires a real published URL; fill after manual publishing",
+        "source": "MANUAL",
+        "metrics": None,
+    }
+    (receipts / "metrics-snapshot.json").write_text(
+        json.dumps(metrics, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    return run_state
 
 
 def build_variant(slug: str, spec: Dict[str, Any], units: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
@@ -200,7 +299,8 @@ def build_variant(slug: str, spec: Dict[str, Any], units: Dict[str, Dict[str, An
     cover = project / "final" / "cover.png"
     cover_result = _run([
         sys.executable, str(SHARED / "video_ops.py"), "frame",
-        "-i", str(account_out), "-o", str(cover), "--time", "00:00:01",
+        "-i", str(account_out), "-o", str(cover),
+        "--time", f"{spec['cover_time']:.2f}",
     ])
     if cover_result["rc"] != 0:
         cover = None
@@ -244,7 +344,10 @@ def build_variant(slug: str, spec: Dict[str, Any], units: Dict[str, Dict[str, An
         "title": spec["title"],
         "description": spec["description"],
         "hashtags": spec["hashtags"],
+        "audience_cta": spec["cta"],
         "platforms": spec["platforms"],
+        "account_dna": spec["dna"],
+        "gpu_required": spec["gpu_required"],
         "video": f"project://final/{account_out.name}",
         "cover": f"project://final/cover.png" if cover else None,
         "derived_assets": derived,
@@ -260,6 +363,9 @@ def build_variant(slug: str, spec: Dict[str, Any], units: Dict[str, Dict[str, An
         "schema": "contentops.account-variant/v1",
         "account": spec["account"],
         "role": spec["role"],
+        "account_dna": spec["dna"],
+        "audience_cta": spec["cta"],
+        "gpu_required": spec["gpu_required"],
         "source": {
             "narration": NARRATION.relative_to(ROOT).as_posix(),
             "units": spec["units"],
@@ -281,11 +387,18 @@ def build_variant(slug: str, spec: Dict[str, Any], units: Dict[str, Dict[str, An
             "qc": "qc_video.py",
         },
         "provider_calls": {"speech": 0, "image": 0, "video": 0},
+        "loop": "project://receipts/run-state.json",
         "production_ready": False,
         "human_review": "PENDING_FOUNDER_REVIEW",
     }
     (project / "receipts" / "variant-receipt.json").write_text(
         json.dumps(receipt, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    write_loop_artifacts(
+        project, spec,
+        qc_overall=qc_report.get("overall", "UNKNOWN"),
+        duration_s=probe_duration(account_out),
+        cover_exists=cover is not None,
+    )
     return {
         "slug": slug,
         "video": account_out.relative_to(ROOT).as_posix(),

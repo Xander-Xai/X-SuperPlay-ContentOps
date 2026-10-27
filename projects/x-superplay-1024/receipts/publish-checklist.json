@@ -1,0 +1,60 @@
+{
+  "schema": "contentops.publish-checklist/v1",
+  "account": "X超玩·1024",
+  "platforms": [
+    "douyin",
+    "xiaohongshu"
+  ],
+  "checks": [
+    {
+      "id": "title_present",
+      "ok": true
+    },
+    {
+      "id": "title_length",
+      "ok": true,
+      "value": 25
+    },
+    {
+      "id": "description_present",
+      "ok": true
+    },
+    {
+      "id": "hashtags",
+      "ok": true,
+      "value": 5
+    },
+    {
+      "id": "cover_exists",
+      "ok": true
+    },
+    {
+      "id": "duration_in_account_range",
+      "ok": true,
+      "value_s": 53.767,
+      "range_s": [
+        45,
+        60
+      ]
+    },
+    {
+      "id": "platforms_declared",
+      "ok": true,
+      "value": [
+        "douyin",
+        "xiaohongshu"
+      ]
+    },
+    {
+      "id": "human_review",
+      "ok": false,
+      "status": "PENDING"
+    },
+    {
+      "id": "real_url",
+      "ok": false,
+      "status": "NOT_PUBLISHED"
+    }
+  ],
+  "publish_status": "NOT_PUBLISHED"
+}

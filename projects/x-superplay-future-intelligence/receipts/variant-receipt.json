@@ -2,6 +2,9 @@
   "schema": "contentops.account-variant/v1",
   "account": "X超玩·未来智能",
   "role": "Build",
+  "account_dna": "config/accounts/x-superplay-future-intelligence.json",
+  "audience_cta": "需要复现或交付，评论区说你的技术栈。",
+  "gpu_required": false,
   "source": {
     "narration": "outputs/founder-v3-full/narration.wav",
     "units": [
@@ -54,6 +57,7 @@
     "image": 0,
     "video": 0
   },
+  "loop": "project://receipts/run-state.json",
   "production_ready": false,
   "human_review": "PENDING_FOUNDER_REVIEW"
 }

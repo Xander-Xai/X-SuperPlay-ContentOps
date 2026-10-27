@@ -1,0 +1,62 @@
+{
+  "schema": "contentops.publish-checklist/v1",
+  "account": "X超玩·未来智能",
+  "platforms": [
+    "bilibili",
+    "zhihu",
+    "csdn"
+  ],
+  "checks": [
+    {
+      "id": "title_present",
+      "ok": true
+    },
+    {
+      "id": "title_length",
+      "ok": true,
+      "value": 36
+    },
+    {
+      "id": "description_present",
+      "ok": true
+    },
+    {
+      "id": "hashtags",
+      "ok": true,
+      "value": 5
+    },
+    {
+      "id": "cover_exists",
+      "ok": true
+    },
+    {
+      "id": "duration_in_account_range",
+      "ok": true,
+      "value_s": 106.4,
+      "range_s": [
+        90,
+        120
+      ]
+    },
+    {
+      "id": "platforms_declared",
+      "ok": true,
+      "value": [
+        "bilibili",
+        "zhihu",
+        "csdn"
+      ]
+    },
+    {
+      "id": "human_review",
+      "ok": false,
+      "status": "PENDING"
+    },
+    {
+      "id": "real_url",
+      "ok": false,
+      "status": "NOT_PUBLISHED"
+    }
+  ],
+  "publish_status": "NOT_PUBLISHED"
+}

@@ -1,0 +1,74 @@
+{
+  "schema": "contentops.account-run/v1",
+  "account": "X超玩·未来智能",
+  "role": "Build",
+  "account_dna": "config/accounts/x-superplay-future-intelligence.json",
+  "gpu_required": false,
+  "stage": "PENDING_HUMAN_REVIEW",
+  "stages": [
+    {
+      "name": "SOURCE_LOCKED",
+      "status": "PASS",
+      "evidence": "projects/easel-enhanced-golden/v3-full-editorial/receipts/v3-sample-video.json"
+    },
+    {
+      "name": "ACCOUNT_ROUTED",
+      "status": "PASS",
+      "evidence": "config/accounts/x-superplay-future-intelligence.json"
+    },
+    {
+      "name": "NARRATIVE_ADAPTED",
+      "status": "PASS",
+      "evidence": [
+        "U01",
+        "U02",
+        "U03",
+        "U04",
+        "U05",
+        "U06",
+        "U07",
+        "U08"
+      ]
+    },
+    {
+      "name": "AUDIO_READY",
+      "status": "PASS",
+      "evidence": "project://work/audio/narration-cut.wav"
+    },
+    {
+      "name": "VISUALS_READY",
+      "status": "PASS",
+      "evidence": "outputs/editorial/by-placement"
+    },
+    {
+      "name": "COMPOSED",
+      "status": "PASS",
+      "evidence": "project://final/future-intelligence.mp4"
+    },
+    {
+      "name": "QC",
+      "status": "WARN",
+      "evidence": "project://receipts/qc-report-future-intelligence.json"
+    },
+    {
+      "name": "HUMAN_REVIEW",
+      "status": "PENDING",
+      "reason": "Founder must watch the cut and fill human-review.json"
+    },
+    {
+      "name": "PUBLISHED",
+      "status": "BLOCKED",
+      "reason": "manual publish only; the repository forbids auto-publish"
+    },
+    {
+      "name": "METRICS_SNAPSHOT",
+      "status": "BLOCKED",
+      "reason": "requires a real published URL"
+    },
+    {
+      "name": "REVIEWED",
+      "status": "BLOCKED",
+      "reason": "requires the metrics snapshot"
+    }
+  ]
+}

@@ -2,13 +2,15 @@
   "schema": "contentops.account-variant/v1",
   "account": "X超玩·1024",
   "role": "Explore",
+  "account_dna": "config/accounts/x-superplay-1024.json",
+  "audience_cta": "先把 CLI 线跑一遍，再决定要不要用。",
+  "gpu_required": false,
   "source": {
     "narration": "outputs/founder-v3-full/narration.wav",
     "units": [
       "U05",
       "U06",
       "U01",
-      "U07",
       "U08"
     ],
     "cards": [
@@ -41,6 +43,7 @@
     "image": 0,
     "video": 0
   },
+  "loop": "project://receipts/run-state.json",
   "production_ready": false,
   "human_review": "PENDING_FOUNDER_REVIEW"
 }

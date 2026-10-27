@@ -1,0 +1,12 @@
+{
+  "schema": "contentops.metrics-snapshot/v1",
+  "account": "X超玩·1024",
+  "platforms": [
+    "douyin",
+    "xiaohongshu"
+  ],
+  "status": "BLOCKED",
+  "reason": "requires a real published URL; fill after manual publishing",
+  "source": "MANUAL",
+  "metrics": null
+}

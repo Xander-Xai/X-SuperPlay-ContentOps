@@ -48,7 +48,7 @@ def test_one_source_feeds_both_accounts():
 
 def test_1024_is_a_complete_unit_reorder_not_a_mid_sentence_cut():
     units = _receipt(EXPLORE)["source"]["units"]
-    assert units == ["U05", "U06", "U01", "U07", "U08"]
+    assert units == ["U05", "U06", "U01", "U08"]
     assert len(units) == len(set(units)), "a unit was used twice"
     assert units[0].startswith("U"), "must open on a complete unit"
     assert set(units) <= {f"U{i:02d}" for i in range(1, 9)}
@@ -91,6 +91,43 @@ def test_build_has_the_horizontal_derivative_and_explore_does_not():
     assert explore.get("derived_assets") == []
 
 
+def test_account_dna_drives_each_workflow():
+    for slug, project in (("x-superplay-1024", EXPLORE),
+                          ("x-superplay-future-intelligence", BUILD)):
+        dna = json.loads((ROOT / "config" / "accounts" / f"{slug}.json")
+                         .read_text(encoding="utf-8"))
+        receipt = _receipt(project)
+        storyboard = _storyboard(project)
+        assert receipt["source"]["units"] == dna["narrative"]["beats"]
+        assert receipt["account_dna"].endswith(f"{slug}.json")
+        assert dna["visual"]["card_set"] in storyboard["shots"][0]["image"]
+
+
+def test_loop_stops_at_human_review():
+    for project in (EXPLORE, BUILD):
+        state = json.loads((project / "receipts" / "run-state.json")
+                           .read_text(encoding="utf-8"))
+        assert state["stage"] == "PENDING_HUMAN_REVIEW"
+        assert state["gpu_required"] is False
+        stages = {stage["name"]: stage for stage in state["stages"]}
+        for name in ("PUBLISHED", "METRICS_SNAPSHOT", "REVIEWED"):
+            assert stages[name]["status"] == "BLOCKED", name
+        review = json.loads((project / "receipts" / "human-review.json")
+                            .read_text(encoding="utf-8"))
+        assert review["status"] == "PENDING_FOUNDER_REVIEW"
+        assert all(value is None for value in review["scores"].values())
+        metrics = json.loads((project / "receipts" / "metrics-snapshot.json")
+                             .read_text(encoding="utf-8"))
+        assert metrics["status"] == "BLOCKED"
+
+
+def test_durations_match_account_targets():
+    explore = _publish(EXPLORE)
+    build = _publish(BUILD)
+    assert 45 <= explore["duration_s"] <= 60, explore["duration_s"]
+    assert 90 <= build["duration_s"] <= 120, build["duration_s"]
+
+
 def main() -> int:
     failures = []
     tests = (
@@ -102,6 +139,9 @@ def main() -> int:
         test_build_uses_the_full_editorial_card_set,
         test_neither_account_claims_publication,
         test_build_has_the_horizontal_derivative_and_explore_does_not,
+        test_account_dna_drives_each_workflow,
+        test_loop_stops_at_human_review,
+        test_durations_match_account_targets,
     )
     for fn in tests:
         try:

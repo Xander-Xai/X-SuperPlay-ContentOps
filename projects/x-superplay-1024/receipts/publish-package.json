@@ -11,14 +11,17 @@
     "#AIAgent",
     "#独立开发"
   ],
+  "audience_cta": "先把 CLI 线跑一遍，再决定要不要用。",
   "platforms": [
     "douyin",
     "xiaohongshu"
   ],
+  "account_dna": "config/accounts/x-superplay-1024.json",
+  "gpu_required": false,
   "video": "project://final/1024.mp4",
   "cover": "project://final/cover.png",
   "derived_assets": [],
-  "duration_s": 67.767,
+  "duration_s": 53.767,
   "human_review": "PENDING_FOUNDER_REVIEW",
   "publish_status": "NOT_PUBLISHED",
   "note": "No URL is claimed until a human publishes and records it."
