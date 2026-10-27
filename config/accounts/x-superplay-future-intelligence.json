@@ -43,6 +43,44 @@
         "path": "outputs/account-variants/982-countup.mp4",
         "duration_s": 4.0
       }
+    },
+    "splits": {
+      "U02": [
+        {
+          "asset": "projects/easel-review/sources/screenshots/13-easel-skill-layers.png",
+          "duration_s": 8.211
+        }
+      ],
+      "U04": [
+        {
+          "asset": "projects/easel-review/sources/screenshots/11-easel-ping.png",
+          "duration_s": 6.262
+        }
+      ],
+      "U05": [
+        {
+          "asset": "projects/easel-review/sources/screenshots/11-easel-ping.png",
+          "duration_s": 5.833
+        }
+      ],
+      "U06": [
+        {
+          "asset": "projects/easel-review/sources/screenshots/15-easel-doctor-fails.png",
+          "duration_s": 8.985
+        }
+      ],
+      "U07": [
+        {
+          "asset": "projects/easel-review/sources/screenshots/14-easel-skills-dir.png",
+          "duration_s": 7.012
+        }
+      ],
+      "U08": [
+        {
+          "asset": "projects/easel-review/sources/screenshots/14-easel-skills-dir.png",
+          "duration_s": 6.845
+        }
+      ]
     }
   },
   "platforms": [

@@ -216,7 +216,8 @@
       "signal_ids": [
         "SIG-2026-10-27-010",
         "SIG-2026-10-27-011",
-        "SIG-2026-10-27-013"
+        "SIG-2026-10-27-013",
+        "SIG-2026-10-27-014"
       ],
       "repo": null,
       "capability": "Visual beat re-plan: split units over 12 s into 2-3 beats (evidence crop, quote, card)",
@@ -228,14 +229,15 @@
       "gpu_required": false,
       "decision": "BUILD",
       "reason": "Contact sheets show 25-27 s identical frames on the turn and ending",
-      "next_action": "Retention gate fails at 13.985 s / 26.857 s; split the web and ending cards into 2-3 visual beats"
+      "next_action": "Shipped: full-bleed evidence beats; longest visual 8.072 s / 10.0 s; retention gate PASS"
     },
     {
       "id": "CAND-014",
       "signal_ids": [
         "SIG-2026-10-27-011",
         "SIG-2026-10-27-012",
-        "SIG-2026-10-27-013"
+        "SIG-2026-10-27-013",
+        "SIG-2026-10-27-014"
       ],
       "repo": null,
       "capability": "Retention checklist gate before publish",
@@ -247,7 +249,7 @@
       "gpu_required": false,
       "decision": "BUILD",
       "reason": "Hook, visual-change interval, caption coverage, cover and CTA are not gated yet",
-      "next_action": "Shipped: check_retention.py writes a WARN gate and updates run-state and publish-checklist"
+      "next_action": "Shipped: gate PASS on both cuts with measured longest runs and caption cues"
     },
     {
       "id": "CAND-015",

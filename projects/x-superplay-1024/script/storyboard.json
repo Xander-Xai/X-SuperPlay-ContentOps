@@ -4,8 +4,18 @@
   "pad_mode": "trim",
   "shots": [
     {
+      "image": "projects/easel-review/sources/screenshots/11-easel-ping.png",
+      "duration": 5.833,
+      "source": "project://sources/screenshots/11-easel-ping.png",
+      "source_type": "real_screenshot",
+      "narration": "但有个坑：网关健康检查探的是写死的默认端口，和 Easel 实际网关端口对不上——那一行，是红的。",
+      "unit": "U05",
+      "placement": "shot_03",
+      "full_bleed": true
+    },
+    {
       "image": "outputs/editorial-1024/by-placement/shot_03.png",
-      "duration": 11.833,
+      "duration": 6.0,
       "source": "project://sources/screenshots/11-easel-ping.png",
       "source_type": "real_screenshot",
       "narration": "但有个坑：网关健康检查探的是写死的默认端口，和 Easel 实际网关端口对不上——那一行，是红的。",
@@ -34,8 +44,18 @@
       "motion_segment": true
     },
     {
+      "image": "projects/easel-review/sources/screenshots/15-easel-doctor-fails.png",
+      "duration": 6.985,
+      "source": "project://sources/screenshots/15-easel-doctor-fails.png",
+      "source_type": "real_screenshot",
+      "narration": "更直接的是 Web 工作台这条路：六项没过。依赖没装，前端也没构建，.env 里也没有 API Key——所以 Web 界面，到现在还没验证。",
+      "unit": "U06",
+      "placement": "shot_04",
+      "full_bleed": true
+    },
+    {
       "image": "outputs/editorial-1024/by-placement/shot_04.png",
-      "duration": 13.985,
+      "duration": 7.0,
       "source": "project://sources/screenshots/15-easel-doctor-fails.png",
       "source_type": "real_screenshot",
       "narration": "更直接的是 Web 工作台这条路：六项没过。依赖没装，前端也没构建，.env 里也没有 API Key——所以 Web 界面，到现在还没验证。",
@@ -44,8 +64,18 @@
       "designed_card": "outputs/editorial-1024/by-placement/shot_04.png"
     },
     {
+      "image": "projects/easel-review/sources/screenshots/14-easel-skills-dir.png",
+      "duration": 6.845,
+      "source": "project://sources/screenshots/14-easel-skills-dir.png",
+      "source_type": "real_screenshot",
+      "narration": "一句话收尾：Easel 不是开箱即用的产品，但它是一个真能被调起来的生产引擎——CLI 和 Skill 这条线，今天是通的。",
+      "unit": "U08",
+      "placement": "shot_05",
+      "full_bleed": true
+    },
+    {
       "image": "outputs/editorial-1024/by-placement/shot_05.png",
-      "duration": 12.845,
+      "duration": 6.0,
       "source": "project://sources/screenshots/14-easel-skills-dir.png",
       "source_type": "real_screenshot",
       "narration": "一句话收尾：Easel 不是开箱即用的产品，但它是一个真能被调起来的生产引擎——CLI 和 Skill 这条线，今天是通的。",

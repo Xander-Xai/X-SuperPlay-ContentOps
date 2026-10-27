@@ -34,7 +34,7 @@
     },
     {
       "stage": "EXPERIMENT",
-      "summary": "Cold opens, body count-ups, phrase captions, a 1024 re-order and a retention gate were added; the next split targets the web and ending cards.",
+      "summary": "Cold opens, body count-ups, phrase captions, a 1024 re-order, a retention gate and full-bleed evidence beats were added.",
       "evidence": [
         "projects/x-superplay-1024/motion/index.html",
         "projects/x-superplay-future-intelligence/motion/index.html"
@@ -42,7 +42,7 @@
     },
     {
       "stage": "RESULT",
-      "summary": "Captions burned (15 and 38 cues); 1024 order now conflict -> what -> web -> verdict; retention gate measures 13.985 s and 26.857 s longest visual runs and fails static_hold.",
+      "summary": "Retention gate PASS: longest visual 8.072 s (1024) and 10.0 s (engineering); captions 15 and 38 cues; durations unchanged.",
       "evidence": [
         "projects/x-superplay-1024/receipts/variant-receipt.json",
         "projects/x-superplay-future-intelligence/receipts/variant-receipt.json"
@@ -50,7 +50,7 @@
     },
     {
       "stage": "SHIP",
-      "summary": "Cold opens and body count-ups shipped; captions, 1024 order and the retention gate ship in this pass.",
+      "summary": "Cold opens, body count-ups, captions, 1024 order, visual beats and the retention gate ship in this pass.",
       "evidence": [
         "git 1437b2a"
       ]

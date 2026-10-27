@@ -71,11 +71,9 @@
     },
     {
       "id": "retention",
-      "ok": false,
-      "status": "WARN",
-      "failures": [
-        "static_hold"
-      ]
+      "ok": true,
+      "status": "PASS",
+      "failures": []
     }
   ],
   "publish_status": "NOT_PUBLISHED"

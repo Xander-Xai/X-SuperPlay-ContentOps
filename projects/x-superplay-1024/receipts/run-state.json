@@ -61,11 +61,9 @@
     },
     {
       "name": "RETENTION",
-      "status": "WARN",
+      "status": "PASS",
       "evidence": "project://receipts/retention-check.json",
-      "failures": [
-        "static_hold"
-      ]
+      "failures": []
     },
     {
       "name": "TECHNICAL_QC",

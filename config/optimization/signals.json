@@ -204,6 +204,25 @@
         "projects/x-superplay-1024/receipts/retention-check.json",
         "projects/x-superplay-future-intelligence/receipts/retention-check.json"
       ]
+    },
+    {
+      "id": "SIG-2026-10-27-014",
+      "source": "PRODUCTION",
+      "captured_at": "2026-10-27",
+      "title": "Retention gate PASS after visual splits",
+      "url": "",
+      "metrics": {
+        "1024_longest_s": 8.072,
+        "engineering_longest_s": 10.0,
+        "1024_cues": 15,
+        "engineering_cues": 38
+      },
+      "observation": "Full-bleed evidence beats broke the long card holds; both account cuts now pass static_hold.",
+      "affected_stage": "body",
+      "evidence": [
+        "projects/x-superplay-1024/receipts/retention-check.json",
+        "projects/x-superplay-future-intelligence/receipts/retention-check.json"
+      ]
     }
   ]
 }

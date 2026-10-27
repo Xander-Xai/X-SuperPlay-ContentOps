@@ -63,7 +63,8 @@ def test_explore_opens_on_the_conflict_card():
     shots = _storyboard(EXPLORE)["shots"]
     assert shots[0]["placement"] == "shot_03", shots[0]
     assert shots[0]["unit"] == "U05"
-    assert "editorial-1024" in shots[0]["image"]
+    # The first beat is a full-bleed evidence capture; the card follows it.
+    assert shots[0].get("full_bleed") or "editorial-1024" in shots[0]["image"]
 
 
 def test_build_uses_the_full_editorial_card_set():
@@ -100,7 +101,9 @@ def test_account_dna_drives_each_workflow():
         storyboard = _storyboard(project)
         assert receipt["source"]["units"] == dna["narrative"]["beats"]
         assert receipt["account_dna"].endswith(f"{slug}.json")
-        assert dna["visual"]["card_set"] in storyboard["shots"][0]["image"]
+        cards = [shot["designed_card"] for shot in storyboard["shots"]
+                 if shot.get("designed_card")]
+        assert cards and all(card.startswith(dna["visual"]["card_set"]) for card in cards)
 
 
 def test_loop_stops_at_human_review():
@@ -173,7 +176,24 @@ def test_motion_segments_are_recorded_and_split():
         assert receipt["motion_fallbacks"] == {}
         shots = _storyboard(project)["shots"]
         assert sum(1 for shot in shots if shot.get("motion_segment")) == 1
-        assert sum(1 for shot in shots if shot.get("unit") == unit) == 2
+        assert sum(1 for shot in shots if shot.get("unit") == unit) >= 2
+
+
+def test_visual_splits_are_recorded_and_used():
+    for project in (EXPLORE, BUILD):
+        receipt = _receipt(project)
+        assert receipt["visual_splits"], receipt.get("visual_splits")
+        assert receipt["visual_split_fallbacks"] == {}
+        shots = _storyboard(project)["shots"]
+        assert any(shot.get("full_bleed") for shot in shots)
+
+
+def test_current_retention_receipts_pass():
+    for project in (EXPLORE, BUILD):
+        result = json.loads((project / "receipts" / "retention-check.json")
+                            .read_text(encoding="utf-8"))
+        assert result["overall"] == "PASS", result["failures"]
+        assert "static_hold" not in result["failures"]
 
 
 def main() -> int:
@@ -194,6 +214,8 @@ def main() -> int:
         test_publish_receipt_claims_no_url,
         test_accounts_have_distinct_motion_intros,
         test_motion_segments_are_recorded_and_split,
+        test_visual_splits_are_recorded_and_used,
+        test_current_retention_receipts_pass,
     )
     for fn in tests:
         try:

@@ -41,6 +41,26 @@
         "path": "outputs/account-variants/6fail-countup.mp4",
         "duration_s": 3.0
       }
+    },
+    "splits": {
+      "U05": [
+        {
+          "asset": "projects/easel-review/sources/screenshots/11-easel-ping.png",
+          "duration_s": 5.833
+        }
+      ],
+      "U06": [
+        {
+          "asset": "projects/easel-review/sources/screenshots/15-easel-doctor-fails.png",
+          "duration_s": 6.985
+        }
+      ],
+      "U08": [
+        {
+          "asset": "projects/easel-review/sources/screenshots/14-easel-skills-dir.png",
+          "duration_s": 6.845
+        }
+      ]
     }
   },
   "platforms": [

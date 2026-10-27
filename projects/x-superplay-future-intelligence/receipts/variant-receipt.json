@@ -17,6 +17,45 @@
     }
   },
   "motion_fallbacks": {},
+  "visual_splits": {
+    "U02": [
+      {
+        "path": "projects/easel-review/sources/screenshots/13-easel-skill-layers.png",
+        "duration_s": 8.211
+      }
+    ],
+    "U04": [
+      {
+        "path": "projects/easel-review/sources/screenshots/11-easel-ping.png",
+        "duration_s": 6.262
+      }
+    ],
+    "U05": [
+      {
+        "path": "projects/easel-review/sources/screenshots/11-easel-ping.png",
+        "duration_s": 5.833
+      }
+    ],
+    "U06": [
+      {
+        "path": "projects/easel-review/sources/screenshots/15-easel-doctor-fails.png",
+        "duration_s": 8.985
+      }
+    ],
+    "U07": [
+      {
+        "path": "projects/easel-review/sources/screenshots/14-easel-skills-dir.png",
+        "duration_s": 7.012
+      }
+    ],
+    "U08": [
+      {
+        "path": "projects/easel-review/sources/screenshots/14-easel-skills-dir.png",
+        "duration_s": 6.845
+      }
+    ]
+  },
+  "visual_split_fallbacks": {},
   "captions": {
     "path": "project://script/future-intelligence.srt",
     "cues": 38,

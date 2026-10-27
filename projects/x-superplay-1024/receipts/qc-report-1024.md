@@ -3,14 +3,14 @@
 **Currency**: `CURRENT`
 **Graded target**: `project://final/1024.mp4`
 **Overall**: `WARN`
-**Checked at**: 2026-10-27T09:09:40Z
+**Checked at**: 2026-10-27T09:17:34Z
 
 **Paths**: logical references (project://, repo://); no absolute paths
 
 | Check | Status | Severity | Detail |
 |---|---|---|---|
 | _video | OK | INFO | path=project://final/1024.mp4 |
-| file_size | OK | PASS | value_bytes=2190114, min_bytes=102400 |
+| file_size | OK | PASS | value_bytes=1961139, min_bytes=102400 |
 | ffprobe_parse | OK | PASS |  |
 | resolution | OK | PASS | value=1080x1920, expected=1080x1920 |
 | aspect_ratio_9_16 | OK | PASS | value=1080:1920 |
@@ -22,8 +22,8 @@
 | source_refs_recorded | OK | PASS | value_count=0 |
 | caption_srt_present | FAIL | WARN | path=project://assets/captions/default.srt |
 | script_exists | OK | PASS | path=project://script/master.md |
-| storyboard_exists | OK | PASS | shot_count=5 |
-| real_source_ratio | OK | PASS | value=1.0, min=0.7, real_shots=5, generated_shots=0, note=AI-generated key visuals must not be the majority |
+| storyboard_exists | OK | PASS | shot_count=8 |
+| real_source_ratio | OK | PASS | value=1.0, min=0.7, real_shots=8, generated_shots=0, note=AI-generated key visuals must not be the majority |
 | source_provenance_complete | OK | PASS |  |
 | engine_recorded | OK | PASS | value=easel |
 | voice_not_silence | OK | PASS | max_volume_db=-4.4 dB, mean_volume_db=-19.8 dB |

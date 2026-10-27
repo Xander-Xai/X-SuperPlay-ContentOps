@@ -72,6 +72,7 @@ def load_specs() -> Dict[str, Dict[str, Any]]:
             "intro": dna["visual"].get("motion_intro",
                                       "outputs/editorial/intro-editorial.mp4"),
             "motion_segments": dna["visual"].get("motion_segments", {}),
+            "visual_splits": dna["visual"].get("splits", {}),
             "cover_time": dna["visual"]["cover_time_s"],
             "cta": dna["narrative"]["cta"],
             "horizontal": dna.get("horizontal", False),
@@ -195,6 +196,7 @@ def write_loop_artifacts(project: Path, spec: Dict[str, Any], *,
     shots = storyboard["shots"]
     units = list(dict.fromkeys(shot["unit"] for shot in shots))
     images = [shot["image"] for shot in shots if shot.get("image")]
+    cards = [shot["designed_card"] for shot in shots if shot.get("designed_card")]
     low, high = spec["target_duration"]
     editorial_checks = [
         {"id": "opening_matches_dna",
@@ -212,7 +214,7 @@ def write_loop_artifacts(project: Path, spec: Dict[str, Any], *,
          "value": spec["title"]},
         {"id": "cta_present", "ok": bool(spec["cta"]), "value": spec["cta"]},
         {"id": "card_set_matches_dna",
-         "ok": bool(images) and all(image.startswith(spec["card_dir"]) for image in images)},
+         "ok": bool(cards) and all(card.startswith(spec["card_dir"]) for card in cards)},
         {"id": "caption_coverage",
          "ok": caption_cues > 0 and captions_burned,
          "cues": caption_cues, "burned": captions_burned},
@@ -347,6 +349,8 @@ def build_variant(slug: str, spec: Dict[str, Any], units: Dict[str, Dict[str, An
     shots = []
     motion_used: Dict[str, Dict[str, Any]] = {}
     motion_fallbacks: Dict[str, str] = {}
+    visual_used: Dict[str, List[Dict[str, Any]]] = {}
+    visual_fallbacks: Dict[str, List[str]] = {}
     for unit_id in spec["units"]:
         unit = units[unit_id]
         card = cards_root / f"{unit['placement_id']}.png"
@@ -377,6 +381,30 @@ def build_variant(slug: str, spec: Dict[str, Any], units: Dict[str, Dict[str, An
                 motion_fallbacks[unit_id] = (
                     "segment file missing" if not seg_path.is_file()
                     else f"segment {seg_duration}s does not fit unit {unit['duration_s']}s"
+                )
+        for split in (spec.get("visual_splits") or {}).get(unit_id, []):
+            asset = ROOT / split["asset"]
+            split_duration = float(split.get("duration_s", 0))
+            if asset.is_file() and 0.2 <= split_duration < remaining:
+                shots.append({
+                    "image": asset.relative_to(ROOT).as_posix(),
+                    "duration": round(split_duration, 3),
+                    "source": unit["image_logical"],
+                    "source_type": "real_screenshot",
+                    "narration": unit.get("text", ""),
+                    "unit": unit_id,
+                    "placement": unit["placement_id"],
+                    "full_bleed": True,
+                })
+                visual_used.setdefault(unit_id, []).append({
+                    "path": split["asset"],
+                    "duration_s": split_duration,
+                })
+                remaining = round(remaining - split_duration, 3)
+            else:
+                visual_fallbacks.setdefault(unit_id, []).append(
+                    "asset missing" if not asset.is_file()
+                    else f"split {split_duration}s does not fit remaining {remaining}s"
                 )
         if remaining > 0.05:
             shots.append({
@@ -555,6 +583,8 @@ def build_variant(slug: str, spec: Dict[str, Any], units: Dict[str, Dict[str, An
         },
         "motion_segments": motion_used,
         "motion_fallbacks": motion_fallbacks,
+        "visual_splits": visual_used,
+        "visual_split_fallbacks": visual_fallbacks,
         "captions": {
             "path": f"project://script/{spec['out_name']}.srt",
             "cues": caption_cues,
