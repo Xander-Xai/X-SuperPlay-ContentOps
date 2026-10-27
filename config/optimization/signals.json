@@ -1,0 +1,138 @@
+{
+  "schema": "contentops.optimization-signals/v1",
+  "signals": [
+    {
+      "id": "SIG-2026-10-27-001",
+      "source": "X",
+      "captured_at": "2026-10-27",
+      "title": "High-engagement list: HyperFrames + MoneyPrinterTurbo + more",
+      "url": "https://x.com/shanyanggm/status/2098941338297458746",
+      "metrics": {
+        "likes": 13153,
+        "bookmarks": 28368,
+        "views": 1113896
+      },
+      "observation": "HyperFrames is presented as the open-source video engine; a full production list follows it.",
+      "affected_stage": "body",
+      "evidence": [
+        "research/x-media-workflow-skills-2026-10-27.md"
+      ]
+    },
+    {
+      "id": "SIG-2026-10-27-002",
+      "source": "X",
+      "captured_at": "2026-10-27",
+      "title": "HyperFrames video tutorial with high saves",
+      "url": "https://x.com/Saccc_c/status/2051959327557034478",
+      "metrics": {
+        "likes": 2757,
+        "bookmarks": 3433,
+        "views": 424493
+      },
+      "observation": "The audience saves a HyperFrames workflow, not another full pipeline.",
+      "affected_stage": "body",
+      "evidence": [
+        "research/x-media-workflow-skills-2026-10-27.md"
+      ]
+    },
+    {
+      "id": "SIG-2026-10-27-003",
+      "source": "GITHUB",
+      "captured_at": "2026-10-27",
+      "title": "heygen-com/hyperframes",
+      "url": "https://github.com/heygen-com/hyperframes",
+      "metrics": {
+        "stars": 73396
+      },
+      "observation": "HTML-to-video engine built for agents; already installed as a project skill.",
+      "affected_stage": "body",
+      "evidence": [
+        "research/x-media-workflow-skills-2026-10-27.md"
+      ]
+    },
+    {
+      "id": "SIG-2026-10-27-004",
+      "source": "GITHUB",
+      "captured_at": "2026-10-27",
+      "title": "calesthio/OpenMontage",
+      "url": "https://github.com/calesthio/OpenMontage",
+      "metrics": {
+        "stars": 72277
+      },
+      "observation": "Full agentic production system with its own pipelines; adopting it would duplicate ContentOps.",
+      "affected_stage": "architecture",
+      "evidence": [
+        "research/x-media-workflow-skills-2026-10-27.md"
+      ]
+    },
+    {
+      "id": "SIG-2026-10-27-005",
+      "source": "FOUNDER",
+      "captured_at": "2026-10-27",
+      "title": "The two cuts still look average and stiff",
+      "url": "",
+      "metrics": {},
+      "observation": "Cold opens are not enough; the body is still static cards. Motion must reach the body.",
+      "affected_stage": "body",
+      "evidence": [
+        "conversation 2026-10-27",
+        "projects/x-superplay-1024/receipts/human-review.json"
+      ]
+    },
+    {
+      "id": "SIG-2026-10-27-006",
+      "source": "FOUNDER",
+      "captured_at": "2026-10-27",
+      "title": "Mechanical AI smell",
+      "url": "",
+      "metrics": {},
+      "observation": "Visual style, pacing and voice all contribute; the body motion and captions are the free levers.",
+      "affected_stage": "body",
+      "evidence": [
+        "conversation 2026-10-27"
+      ]
+    },
+    {
+      "id": "SIG-2026-10-27-007",
+      "source": "PRODUCTION",
+      "captured_at": "2026-10-27",
+      "title": "video_ops bgm drops integrated loudness by 6.0 LU",
+      "url": "",
+      "metrics": {
+        "before_lufs": -16.2,
+        "after_lufs": -22.2
+      },
+      "observation": "Use audio-mix for BGM; do not use video_ops bgm for the account cuts.",
+      "affected_stage": "audio",
+      "evidence": [
+        "production probe 2026-10-27: -16.2 -> -22.2 LUFS"
+      ]
+    },
+    {
+      "id": "SIG-2026-10-27-008",
+      "source": "PRODUCTION",
+      "captured_at": "2026-10-27",
+      "title": "Claim Ledger (#6) is not implemented",
+      "url": "projects/easel-enhanced-golden/evidence/evidence-lock.json",
+      "metrics": {},
+      "observation": "The evidence lock says claim_ledger_status NOT_AVAILABLE; the loop marks CLAIMS_BOUND PARTIAL.",
+      "affected_stage": "claims",
+      "evidence": [
+        "projects/easel-enhanced-golden/evidence/evidence-lock.json"
+      ]
+    },
+    {
+      "id": "SIG-2026-10-27-009",
+      "source": "PLATFORM_METRIC",
+      "captured_at": "2026-10-27",
+      "title": "No published URL or platform metrics yet",
+      "url": "",
+      "metrics": {},
+      "observation": "Metrics and weekly review are blocked until a human publishes and fills publish-receipt.json.",
+      "affected_stage": "measurement",
+      "evidence": [
+        "projects/x-superplay-1024/receipts/metrics-snapshot.json"
+      ]
+    }
+  ]
+}

@@ -68,7 +68,7 @@ def test_explore_opens_on_the_conflict_card():
 
 def test_build_uses_the_full_editorial_card_set():
     shots = _storyboard(BUILD)["shots"]
-    assert len(shots) == 8
+    assert len(shots) >= 8
     assert {shot["unit"] for shot in shots} == {f"U{i:02d}" for i in range(1, 9)}
 
 
@@ -163,6 +163,19 @@ def test_accounts_have_distinct_motion_intros():
     assert _receipt(BUILD)["intro"]["used"] == build["visual"]["motion_intro"]
 
 
+def test_motion_segments_are_recorded_and_split():
+    for slug, project, unit in (
+        ("x-superplay-1024", EXPLORE, "U06"),
+        ("x-superplay-future-intelligence", BUILD, "U03"),
+    ):
+        receipt = _receipt(project)
+        assert unit in receipt["motion_segments"], receipt.get("motion_segments")
+        assert receipt["motion_fallbacks"] == {}
+        shots = _storyboard(project)["shots"]
+        assert sum(1 for shot in shots if shot.get("motion_segment")) == 1
+        assert sum(1 for shot in shots if shot.get("unit") == unit) == 2
+
+
 def main() -> int:
     failures = []
     tests = (
@@ -180,6 +193,7 @@ def main() -> int:
         test_platform_asset_map_matches_platforms,
         test_publish_receipt_claims_no_url,
         test_accounts_have_distinct_motion_intros,
+        test_motion_segments_are_recorded_and_split,
     )
     for fn in tests:
         try:

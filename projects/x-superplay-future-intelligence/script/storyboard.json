@@ -24,8 +24,18 @@
       "designed_card": "outputs/editorial/by-placement/shot_02.png"
     },
     {
+      "video": "outputs/account-variants/982-countup.mp4",
+      "duration": 4.0,
+      "source": "project://sources/screenshots/12-easel-version-evidence.png",
+      "source_type": "real_screenshot",
+      "narration": "版本我锁在 v0.2.1。982 个文件，逐个比对过哈希，和上游 tag 完全一致。",
+      "unit": "U03",
+      "placement": "shot_01",
+      "motion_segment": true
+    },
+    {
       "image": "outputs/editorial/by-placement/shot_01.png",
-      "duration": 7.159,
+      "duration": 3.159,
       "source": "project://sources/screenshots/12-easel-version-evidence.png",
       "source_type": "real_screenshot",
       "narration": "版本我锁在 v0.2.1。982 个文件，逐个比对过哈希，和上游 tag 完全一致。",

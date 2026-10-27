@@ -40,6 +40,7 @@ translation_status: synced
 
 - [DEVELOPMENT-STANDARD.md](DEVELOPMENT-STANDARD.md) — 开发规则
 - [FILE-PLACEMENT-POLICY.md](FILE-PLACEMENT-POLICY.md) — 文件归属规则
+- [OPTIMIZATION-LAYER.md](OPTIMIZATION-LAYER.md) — 信号、决策与数据飞轮
 - [GLOSSARY.md](GLOSSARY.md) — 高频术语表
 
 ## 决策记录

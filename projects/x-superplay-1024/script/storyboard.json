@@ -14,8 +14,18 @@
       "designed_card": "outputs/editorial-1024/by-placement/shot_03.png"
     },
     {
+      "video": "outputs/account-variants/6fail-countup.mp4",
+      "duration": 3.0,
+      "source": "project://sources/screenshots/15-easel-doctor-fails.png",
+      "source_type": "real_screenshot",
+      "narration": "更直接的是 Web 工作台这条路：六项没过。依赖没装，前端也没构建，.env 里也没有 API Key——所以 Web 界面，到现在还没验证。",
+      "unit": "U06",
+      "placement": "shot_04",
+      "motion_segment": true
+    },
+    {
       "image": "outputs/editorial-1024/by-placement/shot_04.png",
-      "duration": 16.985,
+      "duration": 13.985,
       "source": "project://sources/screenshots/15-easel-doctor-fails.png",
       "source_type": "real_screenshot",
       "narration": "更直接的是 Web 工作台这条路：六项没过。依赖没装，前端也没构建，.env 里也没有 API Key——所以 Web 界面，到现在还没验证。",

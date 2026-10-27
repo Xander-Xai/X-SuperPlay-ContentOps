@@ -1,0 +1,75 @@
+{
+  "schema": "contentops.optimization-flywheel/v1",
+  "cycle": "2026-10-27",
+  "stage": "SHIP",
+  "entries": [
+    {
+      "stage": "SIGNAL",
+      "summary": "X scan returned 71 posts and 9 GitHub repos; the Founder reported the cuts are still stiff; production probes measured the body, BGM and Claim Ledger gaps.",
+      "evidence": [
+        "research/x-media-workflow-skills-2026-10-27.md",
+        "config/optimization/signals.json"
+      ]
+    },
+    {
+      "stage": "NORMALIZE",
+      "summary": "Signals grouped by affected stage: body, claims, captions, audio, architecture, measurement, feedback.",
+      "evidence": [
+        "config/optimization/signals.json"
+      ]
+    },
+    {
+      "stage": "SCORE",
+      "summary": "HyperFrames body motion 12; Claim Ledger 8; captions 7; BGM 7; platform metrics 7; viewer feedback 7.",
+      "evidence": [
+        "config/optimization/backlog.json"
+      ]
+    },
+    {
+      "stage": "DECIDE",
+      "summary": "ADOPT HyperFrames body motion; BUILD the minimal Claim Ledger; EXTEND captions and lemo style references; DEFER BGM, presenter, long-to-shorts, metrics and viewer intake; REJECT OpenMontage and MoneyPrinterTurbo.",
+      "evidence": [
+        "config/optimization/backlog.json"
+      ]
+    },
+    {
+      "stage": "EXPERIMENT",
+      "summary": "Two 2.5 s cold opens plus two body count-ups (982 and 6 FAIL); the affected units split into a motion segment and a static remainder.",
+      "evidence": [
+        "projects/x-superplay-1024/motion/index.html",
+        "projects/x-superplay-future-intelligence/motion/index.html"
+      ]
+    },
+    {
+      "stage": "RESULT",
+      "summary": "Both count-up clips rendered; 1024 has 5 shots and the engineering cut 9; EDITORIAL_QC PASS; durations unchanged; TECHNICAL_QC WARN as expected.",
+      "evidence": [
+        "projects/x-superplay-1024/receipts/variant-receipt.json",
+        "projects/x-superplay-future-intelligence/receipts/variant-receipt.json"
+      ]
+    },
+    {
+      "stage": "SHIP",
+      "summary": "Cold opens shipped in 1437b2a; body motion and the optimization layer ship in this pass.",
+      "evidence": [
+        "git 1437b2a"
+      ]
+    },
+    {
+      "stage": "MEASURE",
+      "status": "BLOCKED",
+      "reason": "requires a real published URL; publish-receipt.json is NOT_PUBLISHED",
+      "evidence": [
+        "projects/x-superplay-1024/receipts/publish-receipt.json"
+      ]
+    },
+    {
+      "stage": "LEARN",
+      "status": "BLOCKED",
+      "reason": "requires platform metrics and viewer feedback",
+      "evidence": [
+        "projects/x-superplay-1024/receipts/metrics-snapshot.json"
+      ]
+    }
+  ]
+}

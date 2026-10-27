@@ -63,6 +63,7 @@ def load_specs() -> Dict[str, Dict[str, Any]]:
             "card_dir": dna["visual"]["card_set"],
             "intro": dna["visual"].get("motion_intro",
                                       "outputs/editorial/intro-editorial.mp4"),
+            "motion_segments": dna["visual"].get("motion_segments", {}),
             "cover_time": dna["visual"]["cover_time_s"],
             "cta": dna["narrative"]["cta"],
             "horizontal": dna.get("horizontal", False),
@@ -140,7 +141,8 @@ def write_loop_artifacts(project: Path, spec: Dict[str, Any], *,
     claims_status = "PARTIAL" if "NOT_AVAILABLE" in claim_status else "PASS"
 
     shots = storyboard["shots"]
-    units = [shot["unit"] for shot in shots]
+    units = list(dict.fromkeys(shot["unit"] for shot in shots))
+    images = [shot["image"] for shot in shots if shot.get("image")]
     low, high = spec["target_duration"]
     editorial_checks = [
         {"id": "opening_matches_dna",
@@ -158,7 +160,7 @@ def write_loop_artifacts(project: Path, spec: Dict[str, Any], *,
          "value": spec["title"]},
         {"id": "cta_present", "ok": bool(spec["cta"]), "value": spec["cta"]},
         {"id": "card_set_matches_dna",
-         "ok": all(shot["image"].startswith(spec["card_dir"]) for shot in shots)},
+         "ok": bool(images) and all(image.startswith(spec["card_dir"]) for image in images)},
     ]
     editorial_overall = "PASS" if all(check["ok"] for check in editorial_checks) else "WARN"
     _write_json(receipts / "editorial-qc.json", {
@@ -282,21 +284,50 @@ def build_variant(slug: str, spec: Dict[str, Any], units: Dict[str, Dict[str, An
     cards_root = ROOT / spec.get("card_dir", "outputs/editorial/by-placement")
 
     shots = []
+    motion_used: Dict[str, Dict[str, Any]] = {}
+    motion_fallbacks: Dict[str, str] = {}
     for unit_id in spec["units"]:
         unit = units[unit_id]
         card = cards_root / f"{unit['placement_id']}.png"
         if not card.is_file():
             raise SystemExit(f"card missing: {card}")
-        shots.append({
-            "image": card.relative_to(ROOT).as_posix(),
-            "duration": round(unit["duration_s"], 3),
-            "source": unit["image_logical"],
-            "source_type": "real_screenshot",
-            "narration": unit.get("text", ""),
-            "unit": unit_id,
-            "placement": unit["placement_id"],
-            "designed_card": card.relative_to(ROOT).as_posix(),
-        })
+        remaining = float(unit["duration_s"])
+        segment = (spec.get("motion_segments") or {}).get(unit_id)
+        if segment:
+            seg_path = ROOT / segment["path"]
+            seg_duration = float(segment.get("duration_s", 0))
+            if seg_path.is_file() and 0.5 <= seg_duration < remaining:
+                shots.append({
+                    "video": seg_path.relative_to(ROOT).as_posix(),
+                    "duration": round(seg_duration, 3),
+                    "source": unit["image_logical"],
+                    "source_type": "real_screenshot",
+                    "narration": unit.get("text", ""),
+                    "unit": unit_id,
+                    "placement": unit["placement_id"],
+                    "motion_segment": True,
+                })
+                motion_used[unit_id] = {
+                    "path": segment["path"],
+                    "duration_s": seg_duration,
+                }
+                remaining = round(remaining - seg_duration, 3)
+            else:
+                motion_fallbacks[unit_id] = (
+                    "segment file missing" if not seg_path.is_file()
+                    else f"segment {seg_duration}s does not fit unit {unit['duration_s']}s"
+                )
+        if remaining > 0.05:
+            shots.append({
+                "image": card.relative_to(ROOT).as_posix(),
+                "duration": round(remaining, 3),
+                "source": unit["image_logical"],
+                "source_type": "real_screenshot",
+                "narration": unit.get("text", ""),
+                "unit": unit_id,
+                "placement": unit["placement_id"],
+                "designed_card": card.relative_to(ROOT).as_posix(),
+            })
 
     narration_s = probe_duration(narration)
     planned = sum(shot["duration"] for shot in shots)
@@ -437,6 +468,8 @@ def build_variant(slug: str, spec: Dict[str, Any], units: Dict[str, Dict[str, An
             "used": intro_path.relative_to(ROOT).as_posix(),
             "fallback": intro_fallback,
         },
+        "motion_segments": motion_used,
+        "motion_fallbacks": motion_fallbacks,
         "source": {
             "narration": NARRATION.relative_to(ROOT).as_posix(),
             "units": spec["units"],

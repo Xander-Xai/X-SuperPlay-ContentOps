@@ -5,6 +5,18 @@
   "account_dna": "config/accounts/x-superplay-1024.json",
   "audience_cta": "先把 CLI 线跑一遍，再决定要不要用。",
   "gpu_required": false,
+  "intro": {
+    "requested": "outputs/account-variants/1024-stamp.mp4",
+    "used": "outputs/account-variants/1024-stamp.mp4",
+    "fallback": false
+  },
+  "motion_segments": {
+    "U06": {
+      "path": "outputs/account-variants/6fail-countup.mp4",
+      "duration_s": 3.0
+    }
+  },
+  "motion_fallbacks": {},
   "source": {
     "narration": "outputs/founder-v3-full/narration.wav",
     "units": [
@@ -50,10 +62,5 @@
   },
   "loop": "project://receipts/run-state.json",
   "production_ready": false,
-  "human_review": "PENDING_FOUNDER_REVIEW",
-  "intro": {
-    "requested": "outputs/account-variants/1024-stamp.mp4",
-    "used": "outputs/account-variants/1024-stamp.mp4",
-    "fallback": false
-  }
+  "human_review": "PENDING_FOUNDER_REVIEW"
 }

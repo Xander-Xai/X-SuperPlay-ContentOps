@@ -229,6 +229,12 @@ jobs:
       - name: Run two-account variant tests
         run: python tests/test_account_variants.py
 
+      # The optimization layer: signal validation, ADOPT policy (GitHub + evidence
+      # + no GPU), action-before-deferral ranking and the blocked MEASURE/LEARN
+      # flywheel stages.
+      - name: Run optimization-layer tests
+        run: python tests/test_optimization_layer.py
+
       - name: Run Windows subprocess tests
         run: python tests/test_windows_subprocess.py
 

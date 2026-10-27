@@ -4,7 +4,7 @@
   "project": "project://",
   "graded_target": "project://final/1024.mp4",
   "overall": "WARN",
-  "checked_at": "2026-10-27T08:21:06Z",
+  "checked_at": "2026-10-27T08:45:35Z",
   "checks": [
     {
       "id": "_video",
@@ -16,7 +16,7 @@
       "id": "file_size",
       "ok": true,
       "severity": "PASS",
-      "value_bytes": 1830439,
+      "value_bytes": 1799525,
       "min_bytes": 102400
     },
     {
@@ -91,7 +91,7 @@
       "id": "storyboard_exists",
       "ok": true,
       "severity": "PASS",
-      "shot_count": 4
+      "shot_count": 5
     },
     {
       "id": "real_source_ratio",
@@ -99,7 +99,7 @@
       "severity": "PASS",
       "value": 1.0,
       "min": 0.7,
-      "real_shots": 4,
+      "real_shots": 5,
       "generated_shots": 0,
       "note": "AI-generated key visuals must not be the majority"
     },

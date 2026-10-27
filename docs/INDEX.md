@@ -35,6 +35,7 @@
 
 - [DEVELOPMENT-STANDARD.md](DEVELOPMENT-STANDARD.md) — Development rules
 - [FILE-PLACEMENT-POLICY.md](FILE-PLACEMENT-POLICY.md) — Where files belong
+- [OPTIMIZATION-LAYER.md](OPTIMIZATION-LAYER.md) — Signals, decisions and the data flywheel
 - [GLOSSARY.md](GLOSSARY.md) — High-frequency terminology
 
 ## Bilingual Policy

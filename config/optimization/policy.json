@@ -1,0 +1,30 @@
+{
+  "schema": "contentops.optimization-policy/v1",
+  "weights": {
+    "impact": 2,
+    "evidence": 1,
+    "effort": -1,
+    "risk": -1
+  },
+  "min_evidence_score": 2,
+  "require_github_for_adopt": true,
+  "forbid_gpu_adopt": true,
+  "decisions": ["ADOPT", "EXTEND", "BUILD", "DEFER", "REJECT"],
+  "flywheel_stages": [
+    "SIGNAL",
+    "NORMALIZE",
+    "SCORE",
+    "DECIDE",
+    "EXPERIMENT",
+    "RESULT",
+    "SHIP",
+    "MEASURE",
+    "LEARN"
+  ],
+  "non_negotiable": [
+    "no adoption without a linkable source and evidence",
+    "no GPU-dependent capability in the main workflow",
+    "no second production system",
+    "no auto-publish; measurement starts after a real URL exists"
+  ]
+}

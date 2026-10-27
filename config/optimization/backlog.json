@@ -1,0 +1,215 @@
+{
+  "schema": "contentops.optimization-backlog/v1",
+  "cycle": "2026-10-27",
+  "candidates": [
+    {
+      "id": "CAND-001",
+      "signal_ids": [
+        "SIG-2026-10-27-001",
+        "SIG-2026-10-27-002",
+        "SIG-2026-10-27-003",
+        "SIG-2026-10-27-005",
+        "SIG-2026-10-27-006"
+      ],
+      "repo": "heygen-com/hyperframes",
+      "capability": "Animate the body: stat count-ups and chapter transitions rendered from HTML",
+      "affected_stage": "body",
+      "impact": 5,
+      "evidence": 5,
+      "effort": 2,
+      "risk": 1,
+      "gpu_required": false,
+      "decision": "ADOPT",
+      "reason": "73,396-star engine already installed; measured cold opens render in 37.5 s; no local model",
+      "next_action": "Shipped: 2.5 s cold opens plus 982 and 6-FAIL count-up segments; measure after publish"
+    },
+    {
+      "id": "CAND-002",
+      "signal_ids": [
+        "SIG-2026-10-27-008"
+      ],
+      "repo": null,
+      "capability": "Minimal evidence-bound claim ledger for narration facts",
+      "affected_stage": "claims",
+      "impact": 5,
+      "evidence": 4,
+      "effort": 4,
+      "risk": 2,
+      "gpu_required": false,
+      "decision": "BUILD",
+      "reason": "Claim Ledger #6 is explicitly NOT_AVAILABLE; the loop cannot pass CLAIMS_BOUND without it",
+      "next_action": "Derive claims from creator-script facts and bind each to a locked placement SHA"
+    },
+    {
+      "id": "CAND-003",
+      "signal_ids": [
+        "SIG-2026-10-27-005",
+        "SIG-2026-10-27-006"
+      ],
+      "repo": null,
+      "capability": "Burned phrase captions on the 1024 short",
+      "affected_stage": "captions",
+      "impact": 3,
+      "evidence": 3,
+      "effort": 1,
+      "risk": 1,
+      "gpu_required": false,
+      "decision": "EXTEND",
+      "reason": "subtitle_ops burn already produced a 20 s 1080x1920 clip in the skill probe",
+      "next_action": "Reserve a caption-safe strip or burn only on the 1024 cut"
+    },
+    {
+      "id": "CAND-004",
+      "signal_ids": [
+        "SIG-2026-10-27-007"
+      ],
+      "repo": null,
+      "capability": "API-generated BGM mixed with audio-mix",
+      "affected_stage": "audio",
+      "impact": 3,
+      "evidence": 3,
+      "effort": 1,
+      "risk": 1,
+      "gpu_required": false,
+      "decision": "DEFER",
+      "reason": "ai-music requires DASHSCOPE_API_KEY; no key configured, and video_ops bgm measured -6.0 LU",
+      "next_action": "Configure the key, then mix with audio-mix at voice 1.0 / music 0.12"
+    },
+    {
+      "id": "CAND-005",
+      "signal_ids": [
+        "SIG-2026-10-27-004"
+      ],
+      "repo": "calesthio/OpenMontage",
+      "capability": "Full agentic video production system",
+      "affected_stage": "architecture",
+      "impact": 2,
+      "evidence": 5,
+      "effort": 5,
+      "risk": 5,
+      "gpu_required": false,
+      "decision": "REJECT",
+      "reason": "Duplicate production system; ContentOps owns the pipeline",
+      "next_action": "Reference only; do not install"
+    },
+    {
+      "id": "CAND-006",
+      "signal_ids": [
+        "SIG-2026-10-27-001"
+      ],
+      "repo": "harry0703/MoneyPrinterTurbo",
+      "capability": "One-click topic-to-short-video pipeline",
+      "affected_stage": "architecture",
+      "impact": 2,
+      "evidence": 5,
+      "effort": 5,
+      "risk": 5,
+      "gpu_required": false,
+      "decision": "REJECT",
+      "reason": "Duplicate production system; borrow only the multi-platform packaging idea",
+      "next_action": "Reference only; do not install"
+    },
+    {
+      "id": "CAND-007",
+      "signal_ids": [
+        "SIG-2026-10-27-001"
+      ],
+      "repo": "cclank/lanshu-create-ai-presenter-video",
+      "capability": "Presenter / lip-sync layer from a script and an authorized photo",
+      "affected_stage": "presenter",
+      "impact": 3,
+      "evidence": 3,
+      "effort": 4,
+      "risk": 3,
+      "gpu_required": false,
+      "decision": "DEFER",
+      "reason": "Presenter layer is a separate product decision; current explainer needs no face",
+      "next_action": "Revisit after the first published feedback"
+    },
+    {
+      "id": "CAND-008",
+      "signal_ids": [
+        "SIG-2026-10-27-001"
+      ],
+      "repo": "Anil-matcha/AI-Youtube-Shorts-Generator",
+      "capability": "Long video to vertical shorts",
+      "affected_stage": "repurpose",
+      "impact": 3,
+      "evidence": 3,
+      "effort": 3,
+      "risk": 2,
+      "gpu_required": false,
+      "decision": "DEFER",
+      "reason": "Needs ASR/LLM and only matters after real published content exists",
+      "next_action": "Revisit after two published videos"
+    },
+    {
+      "id": "CAND-009",
+      "signal_ids": [
+        "SIG-2026-10-27-001"
+      ],
+      "repo": "lemomo-ai/lemo-opuscar",
+      "capability": "59 code-made title and transition styles",
+      "affected_stage": "body",
+      "impact": 3,
+      "evidence": 3,
+      "effort": 2,
+      "risk": 1,
+      "gpu_required": false,
+      "decision": "EXTEND",
+      "reason": "Borrow style names and rhythm into HyperFrames; do not install a second stack",
+      "next_action": "Use 2-3 styles as references for the next motion pass"
+    },
+    {
+      "id": "CAND-010",
+      "signal_ids": [
+        "SIG-2026-10-27-001"
+      ],
+      "repo": "hexgrad/kokoro",
+      "capability": "Local TTS",
+      "affected_stage": "voice",
+      "impact": 2,
+      "evidence": 3,
+      "effort": 2,
+      "risk": 2,
+      "gpu_required": false,
+      "decision": "DEFER",
+      "reason": "MiniMax cloned voice API is already the production path",
+      "next_action": "No action"
+    },
+    {
+      "id": "CAND-011",
+      "signal_ids": [
+        "SIG-2026-10-27-009"
+      ],
+      "repo": null,
+      "capability": "Platform metrics ingestion and weekly review",
+      "affected_stage": "measurement",
+      "impact": 4,
+      "evidence": 2,
+      "effort": 2,
+      "risk": 1,
+      "gpu_required": false,
+      "decision": "DEFER",
+      "reason": "Blocked until a human publishes and records a real URL",
+      "next_action": "Fill publish-receipt.json after manual publishing; then ingest metrics"
+    },
+    {
+      "id": "CAND-012",
+      "signal_ids": [
+        "SIG-2026-10-27-009"
+      ],
+      "repo": null,
+      "capability": "Viewer feedback intake into the optimization layer",
+      "affected_stage": "feedback",
+      "impact": 4,
+      "evidence": 1,
+      "effort": 1,
+      "risk": 1,
+      "gpu_required": false,
+      "decision": "DEFER",
+      "reason": "No viewers or published links yet; evidence score below the adoption floor",
+      "next_action": "Add viewer signals after the first published video"
+    }
+  ]
+}

@@ -37,7 +37,13 @@
     "density": "dense",
     "captions": "none",
     "cover_time_s": 5.0,
-    "motion_intro": "outputs/account-variants/fi-slate.mp4"
+    "motion_intro": "outputs/account-variants/fi-slate.mp4",
+    "motion_segments": {
+      "U03": {
+        "path": "outputs/account-variants/982-countup.mp4",
+        "duration_s": 4.0
+      }
+    }
   },
   "platforms": [
     "bilibili",

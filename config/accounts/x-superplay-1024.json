@@ -35,7 +35,13 @@
     "density": "bold",
     "captions": "none",
     "cover_time_s": 1.0,
-    "motion_intro": "outputs/account-variants/1024-stamp.mp4"
+    "motion_intro": "outputs/account-variants/1024-stamp.mp4",
+    "motion_segments": {
+      "U06": {
+        "path": "outputs/account-variants/6fail-countup.mp4",
+        "duration_s": 3.0
+      }
+    }
   },
   "platforms": [
     "douyin",
