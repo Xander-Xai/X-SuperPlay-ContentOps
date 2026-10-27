@@ -46,6 +46,8 @@ REAL EXECUTION RECEIPT
 | MiniMax sanitized receipt | CURRENT | `providers/receipts/minimax-mplan-explore-capability-2026-10-04.sanitized.json` |
 | X media-workflow skill scan | 71 posts / 9 repos; HyperFrames cold opens adopted | `x-media-workflow-skills-2026-10-27.md` |
 | Video replication (benchmark → pipeline) | EXPERIMENT — Claude Code master prompt for replicating benchmark video production capabilities into the existing runtime | `video-replication/claude-code-video-replication-prompt.md` |
+| Video replication capability reconciliation | EXPERIMENT — M1–M9 against the current runtime, four-way split, external-asset record, open conflicts | `video-replication/capability-reconciliation-2026-10-27.md` |
+| Benchmark verification (round 2) | VERIFIED via ASR transcripts — tools/flow/redaction confirmed; frame-level details still pending MP4 access | `video-replication/verification-round-2026-10-28.md` |
 
 ## Archived
 
