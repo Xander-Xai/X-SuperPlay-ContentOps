@@ -206,6 +206,12 @@ jobs:
       - name: Run Golden voice clean-checkout rebuildability tests
         run: python tests/test_golden_voice_rebuildability.py
 
+      # ASS timestamps are centiseconds. Emitting milliseconds stretched every cue
+      # by 10x and QC only checked that a subtitle existed, so the desync survived a
+      # green run until a real render was inspected frame by frame.
+      - name: Run subtitle burn timing tests
+        run: python tests/test_subtitle_timing.py
+
       - name: Run Windows subprocess tests
         run: python tests/test_windows_subprocess.py
 

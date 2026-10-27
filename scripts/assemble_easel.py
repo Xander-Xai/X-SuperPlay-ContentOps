@@ -114,7 +114,10 @@ def _srt_to_ass(srt_path: Path, ass_path: Path, w: int, h: int,
         h_, rem = divmod(ms, 3600000)
         m_, rem = divmod(rem, 60000)
         s_, ms_ = divmod(rem, 1000)
-        return f"{h_}:{m_:02d}:{s_:02d}.{ms_:02d}"
+        # ASS timestamps are H:MM:SS.cc -- centiseconds, not milliseconds.
+        # Emitting ".584" here made libass read 584 centiseconds and shifted
+        # every cue by a factor of ten (measured: a 6.584 s cue ended at 11.84 s).
+        return f"{h_}:{m_:02d}:{s_:02d}.{ms_ // 10:02d}"
 
     cues = []
     blocks = srt_path.read_text(encoding="utf-8-sig").strip().split("\n\n")
