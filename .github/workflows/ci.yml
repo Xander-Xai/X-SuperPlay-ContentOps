@@ -246,6 +246,21 @@ jobs:
       - name: Run Windows path tests
         run: python tests/test_windows_paths.py
 
+      # The four evidence contracts that gate V2: what a capture proves, how a
+      # derivative links to its raw source, which exact text is claim-bound, and
+      # which placements/crops/timings the finished cut may contain.
+      - name: Run capture-proof tests
+        run: python tests/test_capture_proof.py
+
+      - name: Run redaction-lineage tests
+        run: python tests/test_evidence_redaction.py
+
+      - name: Run claim-map tests
+        run: python tests/test_claim_map.py
+
+      - name: Run cut-plan tests
+        run: python tests/test_cut_plan.py
+
       - name: Enforce subprocess policy
         run: python scripts/check_subprocess_policy.py
 
