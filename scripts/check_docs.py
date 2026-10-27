@@ -80,12 +80,34 @@ EXCLUDE_DIRS = {
 }
 
 
+def _in_nested_checkout(path: Path) -> bool:
+    """True when ``path`` lives inside another git checkout under ROOT.
+
+    A git worktree records ``.git`` as a *file*, so a directory between ROOT and
+    the path that contains one is a separate checkout with its own history. Its
+    docs are not this repository's docs: scanning them made a tool-created
+    worktree fail ``dev_check`` for stale version strings in a copy nobody
+    tracks.
+    """
+    try:
+        relative = path.resolve().relative_to(ROOT.resolve())
+    except ValueError:
+        return False
+    current = ROOT.resolve()
+    for part in relative.parts[:-1]:
+        current = current / part
+        if (current / ".git").exists():
+            return True
+    return False
+
+
 def _is_active_doc(path: Path) -> bool:
     """A doc is 'active' if it's not in research/archive/ or an excluded dir."""
     parts = path.relative_to(ROOT).parts if path.is_absolute() else path.parts
     return (
         "archive" not in parts
         and not any(ex in parts for ex in EXCLUDE_DIRS)
+        and not _in_nested_checkout(path)
     )
 
 
@@ -101,6 +123,8 @@ def _scan_markdown_files(extra_dirs: list[Path] = None) -> list[Path]:
             if "archive" in parts:
                 continue
             if any(ex in parts for ex in EXCLUDE_DIRS):
+                continue
+            if _in_nested_checkout(f):
                 continue
             md_files.append(f)
     return md_files
