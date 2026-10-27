@@ -272,6 +272,11 @@ jobs:
       - name: Run redaction and context tests
         run: python tests/test_context_preservation.py
 
+      # The two editorial packages: exact claim binding, no generated evidence,
+      # different opening/order/target/CTA, and citation cards kept a minority.
+      - name: Run editorial-package tests
+        run: python tests/test_evidence_cut_editorial.py
+
       - name: Enforce subprocess policy
         run: python scripts/check_subprocess_policy.py
 

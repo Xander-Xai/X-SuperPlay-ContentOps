@@ -1,46 +1,95 @@
 {
   "schema": "contentops.capture-plan/v1",
-  "status": "DRAFT",
+  "status": "APPROVED",
   "plan_id": "PLAN-20261027-EASEL-01",
   "project_id": "easel-evidence-capture",
   "permission_scope": "internal_review",
   "environment": {
     "name": "windows-11-repo",
-    "description": "Elevated Windows terminal at the repository root; no provider credentials exported."
+    "description": "Elevated Windows terminal at the repository root; notifications and audio off; no provider credentials exported."
   },
+  "approved_by": "Founder (approved via Claude Code prompt, 2026-10-27)",
+  "approved_at": "2026-10-27T11:49:01Z",
+  "approval_scope": "the five read-only commands below, internal review only",
   "preflight": {
-    "notifications_disabled": false,
-    "audio_disabled": false,
-    "terminal_selected": false,
-    "readable_dpi": false,
-    "no_unrelated_desktop_content": false,
-    "checked_by": "",
-    "checked_at": ""
+    "notifications_disabled": true,
+    "audio_disabled": true,
+    "terminal_selected": true,
+    "readable_dpi": true,
+    "no_unrelated_desktop_content": true,
+    "checked_by": "Founder (approved via Claude Code prompt, 2026-10-27)",
+    "checked_at": "2026-10-27T11:49:01Z"
   },
-  "captures": [],
-  "proposed_commands": [
+  "captures": [
     {
+      "capture_id": "CAP-20261027-REV",
       "command_id": "repo-revision",
+      "evidence_class": "EXECUTED",
+      "expected_result": "success",
+      "read_only": true,
+      "cwd": ".",
       "argv": ["git", "rev-parse", "HEAD"],
-      "why": "Shows the exact revision the cut is about.",
-      "read_only": true
+      "env_allow": [],
+      "max_seconds": 60,
+      "fixture_or_cache": "none",
+      "notes": ["revision identity for both cuts"]
     },
     {
+      "capture_id": "CAP-20261027-DOCTOR",
       "command_id": "doctor-json",
+      "evidence_class": "EXECUTED",
+      "expected_result": "success",
+      "read_only": true,
+      "cwd": ".",
       "argv": ["python", "scripts/doctor.py", "--json"],
-      "why": "Environment verification scope without mutation.",
-      "read_only": true
+      "env_allow": [],
+      "max_seconds": 120,
+      "fixture_or_cache": "none",
+      "notes": ["core toolchain and repo layout only; does not check the Web workbench"]
     },
     {
+      "capture_id": "CAP-20261027-PIN",
       "command_id": "easel-pin",
+      "evidence_class": "EXECUTED",
+      "expected_result": "success",
+      "read_only": true,
+      "cwd": ".",
       "argv": ["python", "scripts/verify_easel_runtime.py"],
-      "why": "Proves the pinned runtime resolves to the recorded provenance.",
-      "read_only": true
+      "env_allow": [],
+      "max_seconds": 180,
+      "fixture_or_cache": "none",
+      "notes": ["engineering cut: pinned runtime provenance"]
+    },
+    {
+      "capture_id": "CAP-20261027-SKILLROUTE",
+      "command_id": "skill-route",
+      "evidence_class": "EXECUTED",
+      "expected_result": "success",
+      "read_only": true,
+      "cwd": ".",
+      "argv": ["python", "scripts/skill_route.py", "--match", "final cut subtitles burn"],
+      "env_allow": [],
+      "max_seconds": 120,
+      "fixture_or_cache": "none",
+      "notes": ["engineering cut: the skill that owns caption work at this revision"]
+    },
+    {
+      "capture_id": "CAP-20261027-SUBTITLE",
+      "command_id": "subtitle-tests",
+      "evidence_class": "EXECUTED",
+      "expected_result": "success",
+      "read_only": true,
+      "cwd": ".",
+      "argv": ["python", "tests/test_subtitle_timing.py"],
+      "env_allow": [],
+      "max_seconds": 120,
+      "fixture_or_cache": "none",
+      "notes": ["caption centisecond and overflow regressions at this revision"]
     }
   ],
   "notes": [
-    "DRAFT: this file describes no executable capture. A human must set status to APPROVED, fill every preflight flag, record checked_by/checked_at, move the approved entries into captures, and sign approved_by/approved_at.",
-    "Capture runs in its own visible console; the recording is bounded to that window and abandoned if the window moves.",
-    "Raw recordings stay under work/raw and are never distributed; only a redacted derivative with a RedactionReceipt may be used by a cut."
+    "Approved scope is these five read-only commands only; any further capture needs a new approval.",
+    "Raw recordings stay under work/raw and are never distributed; only a redacted derivative with a RedactionReceipt may be used by a cut.",
+    "The Web workbench boundary is documented in docs/CURRENT-STATE.md; this plan does not capture a browser UI."
   ]
 }

@@ -1,0 +1,29 @@
+{
+  "schema": "contentops.capture-proof/v1",
+  "capture_id": "CAP-20261027-REV-H",
+  "session_id": "CAP-20261027-REV-H",
+  "evidence_class": "EXECUTED",
+  "repository_revision": "4efd59300bbde664460b04e631269bc9b23a5930",
+  "working_tree_state": "dirty:47965fcce940d89b1c2906291d547dc0a7db6f33a696e7ab93cd215868d3ebb2",
+  "target_environment": {
+    "name": "windows-11-repo"
+  },
+  "command": {
+    "display": "git rev-parse HEAD",
+    "sha256": "23f3904a755e3e030eb84a084d27539110fa0ad5b806ccc473711d1c56b6ea48"
+  },
+  "read_only": true,
+  "fixture_or_cache": "none",
+  "started_at": "2026-10-27T11:56:58Z",
+  "finished_at": "2026-10-27T11:57:05Z",
+  "exit_code": 0,
+  "recording": {
+    "logical_path": "project://work/raw/CAP-20261027-REV-H.mp4",
+    "sha256": "191251c35bc88521b3754e8eb016aa079959e7dddd94c4abb79bf80bcf172a12",
+    "time_range": "00:00.000-00:04.701"
+  },
+  "permission_scope": "internal_review",
+  "notes": [
+    "readable revision hold"
+  ]
+}

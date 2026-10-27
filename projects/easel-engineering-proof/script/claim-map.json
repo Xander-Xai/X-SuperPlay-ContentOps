@@ -1,0 +1,367 @@
+{
+  "schema": "contentops.claim-map/v1",
+  "map_id": "MAP-ENGINEERING-001",
+  "package_id": "easel-engineering-proof",
+  "claims": [
+    {
+      "claim_id": "E-OPEN",
+      "revision": 1,
+      "text": "已验证的是命令行；没验证的是 Web。",
+      "kind": "source",
+      "assertion_about": "source",
+      "support_status": "SUPPORTED",
+      "permission_scope": "internal",
+      "limitation": "",
+      "evidence": [
+        {
+          "evidence_id": "E-DOC-CURRENT-STATE",
+          "kind": "document",
+          "sha256": "cb428fa6cf5c0a9198f73a15de225b385e8d32ffba6493ec4a02cac8a2779a3e",
+          "logical_path": "repo://docs/CURRENT-STATE.md",
+          "time_range": null,
+          "permission_scope": "publishable"
+        },
+        {
+          "evidence_id": "E-DOCTOR-H",
+          "kind": "terminal_recording",
+          "sha256": "22160a6ba36250081d9424a826ce3bcb049342b1ca2505523f9d2fcae387e2b8",
+          "logical_path": "repo://projects/easel-evidence-capture/work/raw/CAP-20261027-DOCTOR-H.mp4",
+          "time_range": "00:00.000-00:06.104",
+          "permission_scope": "internal"
+        }
+      ],
+      "appearances": [
+        {
+          "surface": "narration",
+          "text": "已验证的是命令行；没验证的是 Web。",
+          "time_range": "00:00.000-00:04.000"
+        },
+        {
+          "surface": "caption",
+          "text": "已验证的是命令行；没验证的是 Web。",
+          "time_range": "00:00.000-00:04.000"
+        }
+      ]
+    },
+    {
+      "claim_id": "E-REV",
+      "revision": 1,
+      "text": "验证修订：4efd5930。",
+      "kind": "runtime",
+      "assertion_about": "cli",
+      "support_status": "SUPPORTED",
+      "permission_scope": "internal",
+      "limitation": "",
+      "evidence": [
+        {
+          "evidence_id": "E-REV-H",
+          "kind": "terminal_recording",
+          "sha256": "191251c35bc88521b3754e8eb016aa079959e7dddd94c4abb79bf80bcf172a12",
+          "logical_path": "repo://projects/easel-evidence-capture/work/raw/CAP-20261027-REV-H.mp4",
+          "time_range": "00:00.000-00:04.701",
+          "permission_scope": "internal"
+        }
+      ],
+      "appearances": [
+        {
+          "surface": "narration",
+          "text": "验证修订：4efd5930。",
+          "time_range": "00:04.000-00:07.000"
+        },
+        {
+          "surface": "caption",
+          "text": "验证修订：4efd5930。",
+          "time_range": "00:04.000-00:07.000"
+        },
+        {
+          "surface": "onscreen",
+          "text": "验证修订：4efd5930。",
+          "time_range": "00:04.000-00:07.000"
+        }
+      ]
+    },
+    {
+      "claim_id": "E-PIN",
+      "revision": 1,
+      "text": "运行时固定在 v0.2.1，提交 3fe2d99。",
+      "kind": "source",
+      "assertion_about": "source",
+      "support_status": "SUPPORTED",
+      "permission_scope": "publishable",
+      "limitation": "",
+      "evidence": [
+        {
+          "evidence_id": "E-LOCK",
+          "kind": "document",
+          "sha256": "3504565e510b5d057756af2e5932d6c216d224ff7bf4fa5330478d6f561abd4f",
+          "logical_path": "repo://runtime/easel.lock.json",
+          "time_range": null,
+          "permission_scope": "publishable"
+        }
+      ],
+      "appearances": [
+        {
+          "surface": "narration",
+          "text": "运行时固定在 v0.2.1，提交 3fe2d99。",
+          "time_range": "00:07.000-00:10.000"
+        },
+        {
+          "surface": "caption",
+          "text": "运行时固定在 v0.2.1，提交 3fe2d99。",
+          "time_range": "00:07.000-00:10.000"
+        }
+      ]
+    },
+    {
+      "claim_id": "E-DOCTOR",
+      "revision": 1,
+      "text": "doctor 七项，全部返回 OK。",
+      "kind": "runtime",
+      "assertion_about": "cli",
+      "support_status": "SUPPORTED",
+      "permission_scope": "internal",
+      "limitation": "",
+      "evidence": [
+        {
+          "evidence_id": "E-DOCTOR-H",
+          "kind": "terminal_recording",
+          "sha256": "22160a6ba36250081d9424a826ce3bcb049342b1ca2505523f9d2fcae387e2b8",
+          "logical_path": "repo://projects/easel-evidence-capture/work/raw/CAP-20261027-DOCTOR-H.mp4",
+          "time_range": "00:00.000-00:06.104",
+          "permission_scope": "internal"
+        }
+      ],
+      "appearances": [
+        {
+          "surface": "narration",
+          "text": "doctor 七项，全部返回 OK。",
+          "time_range": "00:10.000-00:17.000"
+        },
+        {
+          "surface": "caption",
+          "text": "doctor 七项，全部返回 OK。",
+          "time_range": "00:10.000-00:17.000"
+        },
+        {
+          "surface": "onscreen",
+          "text": "doctor 七项，全部返回 OK。",
+          "time_range": "00:10.000-00:17.000"
+        }
+      ]
+    },
+    {
+      "claim_id": "E-SKILL",
+      "revision": 1,
+      "text": "字幕这一步，路由到 auto-subtitle 和 auto-short-video。",
+      "kind": "runtime",
+      "assertion_about": "cli",
+      "support_status": "SUPPORTED",
+      "permission_scope": "internal",
+      "limitation": "",
+      "evidence": [
+        {
+          "evidence_id": "E-SKILLROUTE-H",
+          "kind": "terminal_recording",
+          "sha256": "03170db8948795fbe13dc7b2046e7a032ab34f829a0ff2fce22c4f5471cc1918",
+          "logical_path": "repo://projects/easel-evidence-capture/work/raw/CAP-20261027-SKILLROUTE-H.mp4",
+          "time_range": "00:00.000-00:06.705",
+          "permission_scope": "internal"
+        }
+      ],
+      "appearances": [
+        {
+          "surface": "narration",
+          "text": "字幕这一步，路由到 auto-subtitle 和 auto-short-video。",
+          "time_range": "00:17.000-00:24.000"
+        },
+        {
+          "surface": "caption",
+          "text": "字幕这一步，路由到 auto-subtitle 和 auto-short-video。",
+          "time_range": "00:17.000-00:24.000"
+        }
+      ]
+    },
+    {
+      "claim_id": "E-SUB",
+      "revision": 1,
+      "text": "字幕回归覆盖厘秒时间戳、截断阻断和超长 cue。",
+      "kind": "runtime",
+      "assertion_about": "cli",
+      "support_status": "SUPPORTED",
+      "permission_scope": "internal",
+      "limitation": "",
+      "evidence": [
+        {
+          "evidence_id": "E-SUBTITLE-H",
+          "kind": "terminal_recording",
+          "sha256": "60cef5bd3e8b07bbefcd33ae404f23840d293fe096ea5b397b1a680da108f7eb",
+          "logical_path": "repo://projects/easel-evidence-capture/work/raw/CAP-20261027-SUBTITLE-H.mp4",
+          "time_range": "00:00.000-00:04.903",
+          "permission_scope": "internal"
+        }
+      ],
+      "appearances": [
+        {
+          "surface": "narration",
+          "text": "字幕回归覆盖厘秒时间戳、截断阻断和超长 cue。",
+          "time_range": "00:24.000-00:32.000"
+        },
+        {
+          "surface": "caption",
+          "text": "字幕回归覆盖厘秒时间戳、截断阻断和超长 cue。",
+          "time_range": "00:24.000-00:32.000"
+        }
+      ]
+    },
+    {
+      "claim_id": "E-TRANS-PROOF",
+      "revision": 1,
+      "text": "已经看到的每一项，都能回溯到回执。",
+      "kind": "editorial_transition",
+      "assertion_about": "none",
+      "support_status": "SUPPORTED",
+      "permission_scope": "internal",
+      "limitation": "",
+      "evidence": [],
+      "appearances": [
+        {
+          "surface": "narration",
+          "text": "已经看到的每一项，都能回溯到回执。",
+          "time_range": "00:32.000-00:40.000"
+        }
+      ]
+    },
+    {
+      "claim_id": "E-TRANS-SCOPE",
+      "revision": 1,
+      "text": "这就是我们说的“验证过”。",
+      "kind": "editorial_transition",
+      "assertion_about": "none",
+      "support_status": "SUPPORTED",
+      "permission_scope": "internal",
+      "limitation": "",
+      "evidence": [],
+      "appearances": [
+        {
+          "surface": "narration",
+          "text": "这就是我们说的“验证过”。",
+          "time_range": "00:40.000-00:47.000"
+        }
+      ]
+    },
+    {
+      "claim_id": "E-MATRIX",
+      "revision": 1,
+      "text": "已验证：依赖、运行时、技能路由、字幕回归。未验证：Web。",
+      "kind": "source",
+      "assertion_about": "source",
+      "support_status": "SUPPORTED",
+      "permission_scope": "internal",
+      "limitation": "",
+      "evidence": [
+        {
+          "evidence_id": "E-DOC-CURRENT-STATE",
+          "kind": "document",
+          "sha256": "cb428fa6cf5c0a9198f73a15de225b385e8d32ffba6493ec4a02cac8a2779a3e",
+          "logical_path": "repo://docs/CURRENT-STATE.md",
+          "time_range": null,
+          "permission_scope": "publishable"
+        },
+        {
+          "evidence_id": "E-DOCTOR-H",
+          "kind": "terminal_recording",
+          "sha256": "22160a6ba36250081d9424a826ce3bcb049342b1ca2505523f9d2fcae387e2b8",
+          "logical_path": "repo://projects/easel-evidence-capture/work/raw/CAP-20261027-DOCTOR-H.mp4",
+          "time_range": "00:00.000-00:06.104",
+          "permission_scope": "internal"
+        }
+      ],
+      "appearances": [
+        {
+          "surface": "narration",
+          "text": "已验证：依赖、运行时、技能路由、字幕回归。未验证：Web。",
+          "time_range": "00:47.000-00:50.000"
+        },
+        {
+          "surface": "caption",
+          "text": "已验证：依赖、运行时、技能路由、字幕回归。未验证：Web。",
+          "time_range": "00:47.000-00:50.000"
+        }
+      ]
+    },
+    {
+      "claim_id": "E-CTA",
+      "revision": 1,
+      "text": "要复核，就从这些回执开始。",
+      "kind": "cta",
+      "assertion_about": "none",
+      "support_status": "SUPPORTED",
+      "permission_scope": "internal",
+      "limitation": "",
+      "evidence": [],
+      "appearances": [
+        {
+          "surface": "cta",
+          "text": "要复核，就从这些回执开始。",
+          "time_range": "00:50.000-00:52.000"
+        },
+        {
+          "surface": "narration",
+          "text": "要复核，就从这些回执开始。",
+          "time_range": "00:50.000-00:52.000"
+        }
+      ]
+    },
+    {
+      "claim_id": "E-COVER",
+      "revision": 1,
+      "text": "验证到哪一步",
+      "kind": "editorial_transition",
+      "assertion_about": "none",
+      "support_status": "SUPPORTED",
+      "permission_scope": "internal",
+      "limitation": "",
+      "evidence": [],
+      "appearances": [
+        {
+          "surface": "cover_title",
+          "text": "验证到哪一步"
+        }
+      ]
+    },
+    {
+      "claim_id": "E-TITLE",
+      "revision": 1,
+      "text": "Easel 验证边界：CLI 通过，Web 未验证",
+      "kind": "source",
+      "assertion_about": "source",
+      "support_status": "SUPPORTED",
+      "permission_scope": "internal",
+      "limitation": "",
+      "evidence": [
+        {
+          "evidence_id": "E-DOC-CURRENT-STATE",
+          "kind": "document",
+          "sha256": "cb428fa6cf5c0a9198f73a15de225b385e8d32ffba6493ec4a02cac8a2779a3e",
+          "logical_path": "repo://docs/CURRENT-STATE.md",
+          "time_range": null,
+          "permission_scope": "publishable"
+        },
+        {
+          "evidence_id": "E-DOCTOR-H",
+          "kind": "terminal_recording",
+          "sha256": "22160a6ba36250081d9424a826ce3bcb049342b1ca2505523f9d2fcae387e2b8",
+          "logical_path": "repo://projects/easel-evidence-capture/work/raw/CAP-20261027-DOCTOR-H.mp4",
+          "time_range": "00:00.000-00:06.104",
+          "permission_scope": "internal"
+        }
+      ],
+      "appearances": [
+        {
+          "surface": "title",
+          "text": "Easel 验证边界：CLI 通过，Web 未验证"
+        }
+      ]
+    }
+  ]
+}

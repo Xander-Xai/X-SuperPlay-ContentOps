@@ -1,0 +1,10 @@
+slug: easel-engineering-proof
+title: "Easel 验证边界：CLI 通过，Web 未验证"
+account: "X超玩·Future Intelligence"
+role: Evidence
+platforms: [bilibili]
+format: 1920x1080
+duration_sec: 52
+status: EVIDENCE_DRAFT
+evidence_project: easel-evidence-capture
+design_deviation: "design proposed 78-90s; 52s is the honest maximum for 23s of real footage without repetition"

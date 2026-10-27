@@ -1,0 +1,45 @@
+{
+  "schema": "contentops.capture-plan/v1",
+  "status": "APPROVED",
+  "plan_id": "PLAN-20261027-EASEL-01-DOCTOR2",
+  "project_id": "easel-evidence-capture",
+  "permission_scope": "internal_review",
+  "environment": {
+    "name": "windows-11-repo",
+    "description": "Same approved environment; the tools doctor itself checks are declared as helper tools so the capture environment does not manufacture failures."
+  },
+  "approved_by": "Founder (approved via Claude Code prompt, 2026-10-27)",
+  "approved_at": "2026-10-27T11:49:01Z",
+  "approval_scope": "re-capture of the already-approved doctor command, with its checked tools declared",
+  "preflight": {
+    "notifications_disabled": true,
+    "audio_disabled": true,
+    "terminal_selected": true,
+    "readable_dpi": true,
+    "no_unrelated_desktop_content": true,
+    "checked_by": "Founder (approved via Claude Code prompt, 2026-10-27)",
+    "checked_at": "2026-10-27T11:49:01Z"
+  },
+  "captures": [
+    {
+      "capture_id": "CAP-20261027-DOCTOR2",
+      "command_id": "doctor-json",
+      "evidence_class": "EXECUTED",
+      "expected_result": "success",
+      "read_only": true,
+      "cwd": ".",
+      "argv": ["python", "scripts/doctor.py", "--json"],
+      "env_allow": [],
+      "path_tools": ["git", "node", "ffmpeg", "ffprobe", "gh"],
+      "max_seconds": 120,
+      "fixture_or_cache": "none",
+      "notes": [
+        "supersedes CAP-20261027-DOCTOR, which failed only because node/ffmpeg/ffprobe/git were absent from the first sanitized PATH",
+        "CAP-20261027-DOCTOR remains a truthful record of that environment and must not be used as claim evidence"
+      ]
+    }
+  ],
+  "notes": [
+    "Environment correction only; the approved argv is unchanged."
+  ]
+}

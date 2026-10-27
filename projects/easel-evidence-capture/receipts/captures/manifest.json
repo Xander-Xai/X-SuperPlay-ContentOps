@@ -1,0 +1,113 @@
+{
+  "schema": "contentops.capture-manifest/v1",
+  "plan_id": "PLAN-20261027-EASEL-01",
+  "project_id": "easel-evidence-capture",
+  "usable_capture_ids": [
+    "CAP-20261027-DOCTOR-H",
+    "CAP-20261027-REV-H",
+    "CAP-20261027-SKILLROUTE-H",
+    "CAP-20261027-SUBTITLE-H"
+  ],
+  "captures": [
+    {
+      "capture_id": "CAP-20261027-DOCTOR-H",
+      "exit_code": 0,
+      "duration_s": 6.267,
+      "recording_sha256": "22160a6ba36250081d9424a826ce3bcb049342b1ca2505523f9d2fcae387e2b8",
+      "usable": true,
+      "superseded_by": null,
+      "reason": ""
+    },
+    {
+      "capture_id": "CAP-20261027-DOCTOR",
+      "exit_code": 1,
+      "duration_s": 1.133,
+      "recording_sha256": "585d35c126411d98213a9b56428152f9147ad0e1667eb5c67b97b1b09a0ab136",
+      "usable": false,
+      "superseded_by": null,
+      "reason": "capture-environment artifact (missing helper tool or auth); not claim evidence"
+    },
+    {
+      "capture_id": "CAP-20261027-DOCTOR2",
+      "exit_code": 0,
+      "duration_s": 1.6,
+      "recording_sha256": "c424b41d7208f6e3286eb9afc752564e48926315db734c42ca0ba89308c9072d",
+      "usable": false,
+      "superseded_by": "CAP-20261027-DOCTOR-H",
+      "reason": "readable-hold re-recording supersedes it"
+    },
+    {
+      "capture_id": "CAP-20261027-PIN",
+      "exit_code": 3,
+      "duration_s": 1.133,
+      "recording_sha256": "6bbf574668b788108d0f6f3bc0cb605f834c15c0b585a3a0e3917da08d5d4c03",
+      "usable": false,
+      "superseded_by": null,
+      "reason": "capture-environment artifact (missing helper tool or auth); not claim evidence"
+    },
+    {
+      "capture_id": "CAP-20261027-PIN2",
+      "exit_code": 3,
+      "duration_s": 1.6,
+      "recording_sha256": "c4b310ef91f500ca618c89372230159363d6d96f6d9b14a7b5ef1f916fe3e567",
+      "usable": false,
+      "superseded_by": null,
+      "reason": "capture-environment artifact (missing helper tool or auth); not claim evidence"
+    },
+    {
+      "capture_id": "CAP-20261027-REV-H",
+      "exit_code": 0,
+      "duration_s": 4.733,
+      "recording_sha256": "191251c35bc88521b3754e8eb016aa079959e7dddd94c4abb79bf80bcf172a12",
+      "usable": true,
+      "superseded_by": null,
+      "reason": ""
+    },
+    {
+      "capture_id": "CAP-20261027-REV",
+      "exit_code": 0,
+      "duration_s": 1.667,
+      "recording_sha256": "a8c1604d4afb769643f6675b4887c69a23b5c5cefc12e9348d701e72aaf57f3c",
+      "usable": false,
+      "superseded_by": "CAP-20261027-REV-H",
+      "reason": "readable-hold re-recording supersedes it"
+    },
+    {
+      "capture_id": "CAP-20261027-SKILLROUTE-H",
+      "exit_code": 0,
+      "duration_s": 6.8,
+      "recording_sha256": "03170db8948795fbe13dc7b2046e7a032ab34f829a0ff2fce22c4f5471cc1918",
+      "usable": true,
+      "superseded_by": null,
+      "reason": ""
+    },
+    {
+      "capture_id": "CAP-20261027-SKILLROUTE",
+      "exit_code": 0,
+      "duration_s": 1.133,
+      "recording_sha256": "1ec3b2bcd6e0cf62b5bb969ff04720415eab0a79aec64c05f01765bbdb0e497e",
+      "usable": false,
+      "superseded_by": "CAP-20261027-SKILLROUTE-H",
+      "reason": "readable-hold re-recording supersedes it"
+    },
+    {
+      "capture_id": "CAP-20261027-SUBTITLE-H",
+      "exit_code": 0,
+      "duration_s": 5.267,
+      "recording_sha256": "60cef5bd3e8b07bbefcd33ae404f23840d293fe096ea5b397b1a680da108f7eb",
+      "usable": true,
+      "superseded_by": null,
+      "reason": ""
+    },
+    {
+      "capture_id": "CAP-20261027-SUBTITLE",
+      "exit_code": 0,
+      "duration_s": 0.6,
+      "recording_sha256": "37a54f4f225d7d1e49aa72067cfb02768ca167b992eecc088b8d631e234fdf5e",
+      "usable": false,
+      "superseded_by": "CAP-20261027-SUBTITLE-H",
+      "reason": "readable-hold re-recording supersedes it"
+    }
+  ],
+  "note": "Only the four usable captures support a claim. PIN/PIN2 failed on gh authentication and DOCTOR lacked its checked tools; those describe the capture environment, not the repository."
+}

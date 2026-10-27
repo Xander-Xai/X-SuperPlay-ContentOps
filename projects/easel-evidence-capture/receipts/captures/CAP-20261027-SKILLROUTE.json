@@ -1,0 +1,29 @@
+{
+  "schema": "contentops.capture-proof/v1",
+  "capture_id": "CAP-20261027-SKILLROUTE",
+  "session_id": "CAP-20261027-SKILLROUTE",
+  "evidence_class": "EXECUTED",
+  "repository_revision": "4efd59300bbde664460b04e631269bc9b23a5930",
+  "working_tree_state": "dirty:2fbd61f83c2e4006eff3b7fcfc033e80b851c3e5803977667cfe4751ea838510",
+  "target_environment": {
+    "name": "windows-11-repo"
+  },
+  "command": {
+    "display": "python scripts/skill_route.py --match \"final cut subtitles burn\"",
+    "sha256": "4f4cc5c189ebf1fe0c14a790147fbf4afe68b7a10ecf29d814875e9a988d436f"
+  },
+  "read_only": true,
+  "fixture_or_cache": "none",
+  "started_at": "2026-10-27T11:49:41Z",
+  "finished_at": "2026-10-27T11:49:44Z",
+  "exit_code": 0,
+  "recording": {
+    "logical_path": "project://work/raw/CAP-20261027-SKILLROUTE.mp4",
+    "sha256": "1ec3b2bcd6e0cf62b5bb969ff04720415eab0a79aec64c05f01765bbdb0e497e",
+    "time_range": "00:00.000-00:00.903"
+  },
+  "permission_scope": "internal_review",
+  "notes": [
+    "engineering cut: the skill that owns caption work at this revision"
+  ]
+}

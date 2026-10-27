@@ -1,0 +1,30 @@
+{
+  "schema": "contentops.capture-proof/v1",
+  "capture_id": "CAP-20261027-DOCTOR2",
+  "session_id": "CAP-20261027-DOCTOR2",
+  "evidence_class": "EXECUTED",
+  "repository_revision": "4efd59300bbde664460b04e631269bc9b23a5930",
+  "working_tree_state": "dirty:076923e890138ccf64af5340e2772fe60b7059d504b8cf629b35c05aaff871a0",
+  "target_environment": {
+    "name": "windows-11-repo"
+  },
+  "command": {
+    "display": "python scripts/doctor.py --json",
+    "sha256": "0f47dbec3ad955f8f540f260089a7d47c2086583a9ffc123cec3e75d1abbfeb6"
+  },
+  "read_only": true,
+  "fixture_or_cache": "none",
+  "started_at": "2026-10-27T11:53:16Z",
+  "finished_at": "2026-10-27T11:53:20Z",
+  "exit_code": 0,
+  "recording": {
+    "logical_path": "project://work/raw/CAP-20261027-DOCTOR2.mp4",
+    "sha256": "c424b41d7208f6e3286eb9afc752564e48926315db734c42ca0ba89308c9072d",
+    "time_range": "00:00.000-00:01.304"
+  },
+  "permission_scope": "internal_review",
+  "notes": [
+    "supersedes CAP-20261027-DOCTOR, which failed only because node/ffmpeg/ffprobe/git were absent from the first sanitized PATH",
+    "CAP-20261027-DOCTOR remains a truthful record of that environment and must not be used as claim evidence"
+  ]
+}

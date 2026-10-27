@@ -165,8 +165,11 @@ class Claim:
         if self.support_status == SUPPORTED:
             require(self.kind != "judgement", "JUDGEMENT_MARKED_SUPPORTED",
                     f"{self.claim_id} is a judgement and cannot be SUPPORTED as a fact")
-            require(bool(self.evidence), "SUPPORTED_WITHOUT_EVIDENCE",
-                    f"{self.claim_id} claims SUPPORTED but binds no evidence")
+            if self.kind not in ("editorial_transition", "cta"):
+                # Transitions and CTAs assert no fact, so they need no evidence.
+                # Every other SUPPORTED claim must name its support.
+                require(bool(self.evidence), "SUPPORTED_WITHOUT_EVIDENCE",
+                        f"{self.claim_id} claims SUPPORTED but binds no evidence")
             require(not self.limitation.strip(), "SUPPORTED_WITH_LIMITATION",
                     f"{self.claim_id} is SUPPORTED but states a limitation; use PARTIAL")
         if self.support_status == PARTIAL:

@@ -1,0 +1,29 @@
+{
+  "schema": "contentops.capture-proof/v1",
+  "capture_id": "CAP-20261027-SUBTITLE-H",
+  "session_id": "CAP-20261027-SUBTITLE-H",
+  "evidence_class": "EXECUTED",
+  "repository_revision": "4efd59300bbde664460b04e631269bc9b23a5930",
+  "working_tree_state": "dirty:47965fcce940d89b1c2906291d547dc0a7db6f33a696e7ab93cd215868d3ebb2",
+  "target_environment": {
+    "name": "windows-11-repo"
+  },
+  "command": {
+    "display": "python tests/test_subtitle_timing.py",
+    "sha256": "aa757972028a281b64de321a5d2f5583ece3f867f5655cedc7344db9ff909cb2"
+  },
+  "read_only": true,
+  "fixture_or_cache": "none",
+  "started_at": "2026-10-27T11:57:22Z",
+  "finished_at": "2026-10-27T11:57:29Z",
+  "exit_code": 0,
+  "recording": {
+    "logical_path": "project://work/raw/CAP-20261027-SUBTITLE-H.mp4",
+    "sha256": "60cef5bd3e8b07bbefcd33ae404f23840d293fe096ea5b397b1a680da108f7eb",
+    "time_range": "00:00.000-00:04.903"
+  },
+  "permission_scope": "internal_review",
+  "notes": [
+    "readable caption-regression hold"
+  ]
+}

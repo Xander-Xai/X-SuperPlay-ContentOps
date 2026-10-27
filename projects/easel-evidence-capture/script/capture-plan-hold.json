@@ -1,0 +1,85 @@
+{
+  "schema": "contentops.capture-plan/v1",
+  "status": "APPROVED",
+  "plan_id": "PLAN-20261027-EASEL-01-HOLD",
+  "project_id": "easel-evidence-capture",
+  "permission_scope": "internal_review",
+  "environment": {
+    "name": "windows-11-repo",
+    "description": "Same approved environment; the result is held on screen long enough to be read in a cut."
+  },
+  "approved_by": "Founder (approved via Claude Code prompt, 2026-10-27)",
+  "approved_at": "2026-10-27T11:49:01Z",
+  "approval_scope": "re-recording of the already-approved commands with a readable result hold; no new command",
+  "preflight": {
+    "notifications_disabled": true,
+    "audio_disabled": true,
+    "terminal_selected": true,
+    "readable_dpi": true,
+    "no_unrelated_desktop_content": true,
+    "checked_by": "Founder (approved via Claude Code prompt, 2026-10-27)",
+    "checked_at": "2026-10-27T11:49:01Z"
+  },
+  "captures": [
+    {
+      "capture_id": "CAP-20261027-REV-H",
+      "command_id": "repo-revision",
+      "evidence_class": "EXECUTED",
+      "expected_result": "success",
+      "read_only": true,
+      "cwd": ".",
+      "argv": ["git", "rev-parse", "HEAD"],
+      "env_allow": [],
+      "max_seconds": 60,
+      "hold_after_exit_s": 4,
+      "fixture_or_cache": "none",
+      "notes": ["readable revision hold"]
+    },
+    {
+      "capture_id": "CAP-20261027-DOCTOR-H",
+      "command_id": "doctor-json",
+      "evidence_class": "EXECUTED",
+      "expected_result": "success",
+      "read_only": true,
+      "cwd": ".",
+      "argv": ["python", "scripts/doctor.py", "--json"],
+      "env_allow": [],
+      "path_tools": ["git", "node", "ffmpeg", "ffprobe", "gh"],
+      "max_seconds": 120,
+      "hold_after_exit_s": 5,
+      "fixture_or_cache": "none",
+      "notes": ["readable doctor hold; same argv as DOCTOR2"]
+    },
+    {
+      "capture_id": "CAP-20261027-SKILLROUTE-H",
+      "command_id": "skill-route",
+      "evidence_class": "EXECUTED",
+      "expected_result": "success",
+      "read_only": true,
+      "cwd": ".",
+      "argv": ["python", "scripts/skill_route.py", "--match", "final cut subtitles burn"],
+      "env_allow": [],
+      "max_seconds": 120,
+      "hold_after_exit_s": 5,
+      "fixture_or_cache": "none",
+      "notes": ["readable skill-route hold"]
+    },
+    {
+      "capture_id": "CAP-20261027-SUBTITLE-H",
+      "command_id": "subtitle-tests",
+      "evidence_class": "EXECUTED",
+      "expected_result": "success",
+      "read_only": true,
+      "cwd": ".",
+      "argv": ["python", "tests/test_subtitle_timing.py"],
+      "env_allow": [],
+      "max_seconds": 120,
+      "hold_after_exit_s": 4,
+      "fixture_or_cache": "none",
+      "notes": ["readable caption-regression hold"]
+    }
+  ],
+  "notes": [
+    "The hold changes recording duration only; argv and environment are identical to the approved captures."
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "schema": "contentops.capture-plan/v1",
+  "status": "APPROVED",
+  "plan_id": "PLAN-20261027-EASEL-01-PIN2",
+  "project_id": "easel-evidence-capture",
+  "permission_scope": "internal_review",
+  "environment": {
+    "name": "windows-11-repo",
+    "description": "Same approved environment; gh added explicitly to the sanitized PATH so the verifier can read the pinned remote identity."
+  },
+  "approved_by": "Founder (approved via Claude Code prompt, 2026-10-27)",
+  "approved_at": "2026-10-27T11:49:01Z",
+  "approval_scope": "re-capture of the already-approved pin verification command, with gh declared as a helper tool",
+  "preflight": {
+    "notifications_disabled": true,
+    "audio_disabled": true,
+    "terminal_selected": true,
+    "readable_dpi": true,
+    "no_unrelated_desktop_content": true,
+    "checked_by": "Founder (approved via Claude Code prompt, 2026-10-27)",
+    "checked_at": "2026-10-27T11:49:01Z"
+  },
+  "captures": [
+    {
+      "capture_id": "CAP-20261027-PIN2",
+      "command_id": "easel-pin",
+      "evidence_class": "EXECUTED",
+      "expected_result": "success",
+      "read_only": true,
+      "cwd": ".",
+      "argv": ["python", "scripts/verify_easel_runtime.py"],
+      "env_allow": [],
+      "path_tools": ["gh"],
+      "max_seconds": 180,
+      "fixture_or_cache": "none",
+      "notes": [
+        "supersedes CAP-20261027-PIN, which returned UNVERIFIED only because gh was absent from the first sanitized PATH",
+        "CAP-20261027-PIN remains a truthful record of that environment and must not be used as claim evidence"
+      ]
+    }
+  ],
+  "notes": [
+    "This is a correction to the capture environment, not a new command: the approved argv is unchanged."
+  ]
+}

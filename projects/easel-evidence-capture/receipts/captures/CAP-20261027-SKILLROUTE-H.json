@@ -1,0 +1,29 @@
+{
+  "schema": "contentops.capture-proof/v1",
+  "capture_id": "CAP-20261027-SKILLROUTE-H",
+  "session_id": "CAP-20261027-SKILLROUTE-H",
+  "evidence_class": "EXECUTED",
+  "repository_revision": "4efd59300bbde664460b04e631269bc9b23a5930",
+  "working_tree_state": "dirty:47965fcce940d89b1c2906291d547dc0a7db6f33a696e7ab93cd215868d3ebb2",
+  "target_environment": {
+    "name": "windows-11-repo"
+  },
+  "command": {
+    "display": "python scripts/skill_route.py --match \"final cut subtitles burn\"",
+    "sha256": "4f4cc5c189ebf1fe0c14a790147fbf4afe68b7a10ecf29d814875e9a988d436f"
+  },
+  "read_only": true,
+  "fixture_or_cache": "none",
+  "started_at": "2026-10-27T11:57:13Z",
+  "finished_at": "2026-10-27T11:57:22Z",
+  "exit_code": 0,
+  "recording": {
+    "logical_path": "project://work/raw/CAP-20261027-SKILLROUTE-H.mp4",
+    "sha256": "03170db8948795fbe13dc7b2046e7a032ab34f829a0ff2fce22c4f5471cc1918",
+    "time_range": "00:00.000-00:06.705"
+  },
+  "permission_scope": "internal_review",
+  "notes": [
+    "readable skill-route hold"
+  ]
+}

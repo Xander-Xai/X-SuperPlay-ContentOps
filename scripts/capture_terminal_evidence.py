@@ -94,6 +94,13 @@ DENIED_TOKENS = (
     "rm -rf", "rmdir", "del /", "format ", "shutdown", "reg add",
 )
 
+#: Tools a capture command may need on PATH even though it does not name them in
+#: argv. Each entry contributes only that executable's own directory; the
+#: parent's PATH is never inherited. A command run without a tool it needs
+#: records a truthful failure about the capture environment, which is not
+#: evidence about the repository.
+ALLOWED_PATH_TOOLS = {"gh", "git", "node", "npm", "ffmpeg", "ffprobe"}
+
 FORBIDDEN_SHELL_CHARS = ("&", "|", ">", "<", "%", "^", "\n", "\r", "`")
 
 PREFLIGHT_FLAGS = (
@@ -106,6 +113,9 @@ PREFLIGHT_FLAGS = (
 
 MIN_SECONDS = 5
 MAX_SECONDS = 600
+#: A readable result needs to stay on screen. The hold changes only how long the
+#: already-approved command's result is recorded, never the command itself.
+MAX_HOLD_AFTER_EXIT = 10
 WINDOW_TITLE_PREFIX = "CONTENTOPS_CAP_"
 
 
@@ -212,6 +222,11 @@ def _validate_capture(capture: Any, index: int, seen: set) -> None:
             and MIN_SECONDS <= seconds <= MAX_SECONDS, "INVALID_TIMEOUT",
             f"{where}.max_seconds must be {MIN_SECONDS}..{MAX_SECONDS}")
 
+    hold = capture.get("hold_after_exit_s", 0)
+    _refuse(isinstance(hold, (int, float)) and not isinstance(hold, bool)
+            and 0 <= hold <= MAX_HOLD_AFTER_EXIT, "INVALID_HOLD",
+            f"{where}.hold_after_exit_s must be 0..{MAX_HOLD_AFTER_EXIT}")
+
     cwd = capture.get("cwd", ".")
     _require_text(cwd, f"{where}.cwd")
     cwd_path = (ROOT / cwd).resolve()
@@ -257,6 +272,15 @@ def _validate_capture(capture: Any, index: int, seen: set) -> None:
             _refuse(marker not in name.upper(), "SECRET_ENV_ALLOWED",
                     f"{where}.env_allow must not inherit {name!r}")
 
+    path_tools = capture.get("path_tools") or []
+    _refuse(isinstance(path_tools, list)
+            and all(isinstance(x, str) for x in path_tools),
+            "INVALID_PATH_TOOLS", f"{where}.path_tools must be a list of strings")
+    for tool in path_tools:
+        _refuse(tool in ALLOWED_PATH_TOOLS, "PATH_TOOL_NOT_ALLOWED",
+                f"{where}.path_tools names {tool!r}; allowed: "
+                f"{', '.join(sorted(ALLOWED_PATH_TOOLS))}")
+
 
 def sanitized_env(capture: Dict[str, Any], work_dir: Path) -> Dict[str, str]:
     """A minimal environment plus only the variables the plan declares.
@@ -291,7 +315,16 @@ def sanitized_env(capture: Dict[str, Any], work_dir: Path) -> Dict[str, str]:
         directory = str(Path(resolved).parent)
         if directory not in search:
             search.insert(0, directory)
+    for tool in capture.get("path_tools") or []:
+        found = shutil.which(tool)
+        if found:
+            directory = str(Path(found).parent)
+            if directory not in search:
+                search.append(directory)
     base["PATH"] = os.pathsep.join(search)
+    # Recorded so a receipt can explain which tools were reachable.
+    base["CONTENTOPS_CAPTURE_PATH_TOOLS"] = os.pathsep.join(
+        sorted(capture.get("path_tools") or []))
     for name in capture.get("env_allow") or []:
         if name in os.environ:
             base[name] = os.environ[name]
@@ -554,7 +587,7 @@ def capture_one(project: Path, plan: Dict[str, Any], capture: Dict[str, Any],
                 break
             time.sleep(0.2)
 
-        time.sleep(0.5)  # let the final line render before the recorder stops
+        time.sleep(0.5 + float(capture.get("hold_after_exit_s", 0)))
         final_rect = window_rect(handle)
         record_end = time.monotonic()
         stop_recorder(recorder)

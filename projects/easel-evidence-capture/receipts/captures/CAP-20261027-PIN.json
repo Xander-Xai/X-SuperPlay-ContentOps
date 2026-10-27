@@ -1,0 +1,29 @@
+{
+  "schema": "contentops.capture-proof/v1",
+  "capture_id": "CAP-20261027-PIN",
+  "session_id": "CAP-20261027-PIN",
+  "evidence_class": "EXECUTED",
+  "repository_revision": "4efd59300bbde664460b04e631269bc9b23a5930",
+  "working_tree_state": "dirty:2fbd61f83c2e4006eff3b7fcfc033e80b851c3e5803977667cfe4751ea838510",
+  "target_environment": {
+    "name": "windows-11-repo"
+  },
+  "command": {
+    "display": "python scripts/verify_easel_runtime.py",
+    "sha256": "c76ef741b051ad182f012786d6551dbf4e23c2e6c059b09d97b64faff8b99340"
+  },
+  "read_only": true,
+  "fixture_or_cache": "none",
+  "started_at": "2026-10-27T11:49:38Z",
+  "finished_at": "2026-10-27T11:49:41Z",
+  "exit_code": 3,
+  "recording": {
+    "logical_path": "project://work/raw/CAP-20261027-PIN.mp4",
+    "sha256": "6bbf574668b788108d0f6f3bc0cb605f834c15c0b585a3a0e3917da08d5d4c03",
+    "time_range": "00:00.000-00:00.903"
+  },
+  "permission_scope": "internal_review",
+  "notes": [
+    "engineering cut: pinned runtime provenance"
+  ]
+}

@@ -124,6 +124,20 @@ def test_a_secret_environment_variable_cannot_be_inherited():
     print("[ok] 4. a key/token/secret variable cannot be allowlisted")
 
 
+def test_path_tools_are_a_small_allowlist():
+    refuses("PATH_TOOL_NOT_ALLOWED",
+            captures=[{**CAPTURE, "path_tools": ["curl"]}])
+    capture_mod.validate_plan(plan(captures=[{**CAPTURE, "path_tools": ["gh"]}]))
+    print("[ok] 4b. only declared helper tools may be added to PATH")
+
+
+def test_the_hold_after_exit_is_bounded():
+    refuses("INVALID_HOLD", captures=[{**CAPTURE, "hold_after_exit_s": 11}])
+    refuses("INVALID_HOLD", captures=[{**CAPTURE, "hold_after_exit_s": -1}])
+    capture_mod.validate_plan(plan(captures=[{**CAPTURE, "hold_after_exit_s": 5}]))
+    print("[ok] 4c. the result hold is bounded and does not change the command")
+
+
 def test_cwd_and_timeout_are_bounded():
     refuses("CWD_ESCAPE", captures=[{**CAPTURE, "cwd": "../elsewhere"}])
     refuses("INVALID_TIMEOUT", captures=[{**CAPTURE, "max_seconds": 2}])
@@ -207,6 +221,8 @@ def main() -> int:
         test_preflight_must_be_confirmed_before_capture,
         test_dangerous_commands_are_refused,
         test_a_secret_environment_variable_cannot_be_inherited,
+        test_path_tools_are_a_small_allowlist,
+        test_the_hold_after_exit_is_bounded,
         test_cwd_and_timeout_are_bounded,
         test_the_environment_is_sanitized_to_the_allowlist,
         test_the_recording_range_starts_at_its_own_zero,
