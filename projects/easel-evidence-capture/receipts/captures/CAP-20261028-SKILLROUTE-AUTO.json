@@ -1,0 +1,31 @@
+{
+  "schema": "contentops.capture-proof/v1",
+  "capture_id": "CAP-20261028-SKILLROUTE-AUTO",
+  "session_id": "CAP-20261028-SKILLROUTE-AUTO",
+  "evidence_class": "EXECUTED",
+  "repository_revision": "83b44d161f2f3b747ce51640ad47a69b20f151c2",
+  "working_tree_state": "dirty:d2e2681bc3a1ce3517dc7281f26671e9c2bd3e1b4e93faee4c67f0295f3fb40a",
+  "target_environment": {
+    "name": "windows-11-repo"
+  },
+  "command": {
+    "display": "python scripts/skill_route.py --match auto-subtitle",
+    "sha256": "f3263a29a38b75e86b5415938df2f2c3c5298b3e64c9668fda85a95d9a733390"
+  },
+  "read_only": true,
+  "fixture_or_cache": "none",
+  "started_at": "2026-10-27T16:45:47Z",
+  "finished_at": "2026-10-27T16:45:59Z",
+  "exit_code": 0,
+  "recording": {
+    "logical_path": "project://work/raw/CAP-20261028-SKILLROUTE-AUTO.mp4",
+    "sha256": "86d2cf34135006c9bc6509fdad3160375951f82d0c804eaf40b72ef431858046",
+    "time_range": "00:00.000-00:09.102"
+  },
+  "permission_scope": "internal_review",
+  "notes": [
+    "1024 cut: the skill that owns subtitle work, asked by its own name",
+    "amendment: CAP-20261027-SKILLROUTE asked 'final cut subtitles burn' and did not return auto-subtitle",
+    "the query is ASCII because a non-ASCII argv is mangled by the cmd.exe wrapper"
+  ]
+}

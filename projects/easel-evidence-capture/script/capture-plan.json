@@ -8,9 +8,9 @@
     "name": "windows-11-repo",
     "description": "Elevated Windows terminal at the repository root; notifications and audio off; no provider credentials exported."
   },
-  "approved_by": "Founder (approved via Claude Code prompt, 2026-10-27)",
-  "approved_at": "2026-10-27T11:49:01Z",
-  "approval_scope": "the five read-only commands below, internal review only",
+  "approved_by": "Founder (approved via Claude Code prompt, 2026-10-27; amendment approved 2026-10-28)",
+  "approved_at": "2026-10-28T00:00:00Z",
+  "approval_scope": "the six read-only commands below, internal review only",
   "preflight": {
     "notifications_disabled": true,
     "audio_disabled": true,
@@ -74,6 +74,24 @@
       "notes": ["engineering cut: the skill that owns caption work at this revision"]
     },
     {
+      "capture_id": "CAP-20261028-SKILLROUTE-AUTO",
+      "command_id": "skill-route-subtitles",
+      "evidence_class": "EXECUTED",
+      "expected_result": "success",
+      "read_only": true,
+      "cwd": ".",
+      "argv": ["python", "scripts/skill_route.py", "--match", "auto-subtitle"],
+      "env_allow": [],
+      "max_seconds": 120,
+      "hold_after_exit_s": 8,
+      "fixture_or_cache": "none",
+      "notes": [
+        "1024 cut: the skill that owns subtitle work, asked by its own name",
+        "amendment: CAP-20261027-SKILLROUTE asked 'final cut subtitles burn' and did not return auto-subtitle",
+        "the query is ASCII because a non-ASCII argv is mangled by the cmd.exe wrapper"
+      ]
+    },
+    {
       "capture_id": "CAP-20261027-SUBTITLE",
       "command_id": "subtitle-tests",
       "evidence_class": "EXECUTED",
@@ -88,7 +106,7 @@
     }
   ],
   "notes": [
-    "Approved scope is these five read-only commands only; any further capture needs a new approval.",
+    "Approved scope is these six read-only commands only; any further capture needs a new approval.",
     "Raw recordings stay under work/raw and are never distributed; only a redacted derivative with a RedactionReceipt may be used by a cut.",
     "The Web workbench boundary is documented in docs/CURRENT-STATE.md; this plan does not capture a browser UI."
   ]
