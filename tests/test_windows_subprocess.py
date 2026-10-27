@@ -544,6 +544,66 @@ def test_interactive_run_has_no_scripted_input_parameter():
     print("[ok] 9q. interactive_run signature exposes no scripted-input knob")
 
 
+def test_visible_console_popen_allocates_its_own_console():
+    """Filmed evidence needs a separate window, not this process's console."""
+    import process_utils
+
+    source = inspect.getsource(process_utils.visible_console_popen)
+    assert "CREATE_NEW_CONSOLE" in source, (
+        "visible_console_popen does not allocate a new console")
+    assert "CREATE_NO_WINDOW" not in source, (
+        "visible_console_popen suppresses the very window it must expose")
+    assert "SW_HIDE" not in source, "visible_console_popen hides the window"
+    assert "PIPE" not in source, (
+        "visible_console_popen pipes a stream, which empties the filmed window")
+
+    captured = {}
+
+    class FakeProcess:
+        pass
+
+    original = process_utils.subprocess.Popen
+
+    def fake_popen(cmd, **kwargs):
+        captured["cmd"] = cmd
+        captured["kwargs"] = kwargs
+        return FakeProcess()
+
+    process_utils.subprocess.Popen = fake_popen
+    try:
+        process_utils.visible_console_popen(["cmd.exe", "/c", "echo hi"],
+                                            cwd=str(ROOT))
+    finally:
+        process_utils.subprocess.Popen = original
+
+    assert captured["cmd"] == ["cmd.exe", "/c", "echo hi"]
+    kwargs = captured["kwargs"]
+    assert "stdout" not in kwargs and "stderr" not in kwargs, (
+        "streams were redirected, so the console window would show nothing")
+    if os.name == "nt":
+        expected = subprocess.CREATE_NEW_CONSOLE
+        assert kwargs.get("creationflags", 0) & expected, (
+            "CREATE_NEW_CONSOLE was not requested on Windows")
+    else:
+        assert "creationflags" not in kwargs
+    print("[ok] 11. visible_console_popen allocates a separate visible console")
+
+
+def test_visible_console_popen_rejects_an_empty_command():
+    import process_utils
+
+    for call in (
+        lambda: process_utils.visible_console_popen([]),
+    ):
+        try:
+            call()
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("an empty command was accepted")
+    print("[ok] 12. visible_console_popen rejects an empty command")
+
+
 def test_interactive_run_source_has_no_pipe_reference():
     """No PIPE constant may be referenced anywhere in interactive_run."""
     tree = ast.parse(inspect.getsource(process_utils.interactive_run))
@@ -788,6 +848,8 @@ TESTS = [
     test_interactive_run_inherits_stdio,
     test_interactive_run_does_not_pipe_or_hide,
     test_interactive_run_has_no_scripted_input_parameter,
+    test_visible_console_popen_allocates_its_own_console,
+    test_visible_console_popen_rejects_an_empty_command,
     test_interactive_run_source_has_no_pipe_reference,
     test_interactive_run_inherits_stdin,
     test_interactive_run_captured_is_explicit,

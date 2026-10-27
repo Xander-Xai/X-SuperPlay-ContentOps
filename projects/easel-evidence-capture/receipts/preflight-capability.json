@@ -51,7 +51,29 @@
       "elevated terminal titles carry an '管理员: ' prefix; matching must use a suffix, not equality",
       "audio must be disabled explicitly (gdigrab captures video only, but the driver must not add dshow audio)"
     ],
-    "desktop_wide_capture": "PROHIBITED"
+    "desktop_wide_capture": "PROHIBITED",
+    "driver_capability": {
+      "status": "PROVEN_END_TO_END",
+      "driver": "scripts/capture_terminal_evidence.py",
+      "probe_command": "git rev-parse HEAD",
+      "probe_result": {
+        "exit_code": 0,
+        "expected_result": "success",
+        "observed_result": "success",
+        "window_rect": "47,40,1086x693",
+        "recording_sha256": "4ab7ee11eb503377d3dc2d43a3ab6e363234fb750ec8219c8cd11ffcea677c94",
+        "frame_inspection": "only the target terminal is visible; no desktop or neighbouring-window content"
+      },
+      "defects_found_and_fixed_by_the_probe": [
+        "recording.time_range was emitted with equal start and end; now relative to the recording's own zero",
+        "the sanitized PATH omitted git, so the probe returned cmd 9009; the declared executable's resolved directory is now added, without inheriting the parent PATH",
+        "GetWindowRect includes the invisible Windows resize border and filmed slivers of the window behind it; capture now uses DwmGetWindowAttribute(DWMWA_EXTENDED_FRAME_BOUNDS)"
+      ],
+      "notes": [
+        "the probe ran in an elevated console, which the plan's environment description records",
+        "capability probe receipts stay in the agent temp root and are never used as claim evidence"
+      ]
+    }
   },
   "skill_routes": [
     {

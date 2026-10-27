@@ -24,6 +24,8 @@ Public API
 ``hidden_run(cmd, ...)``          run to completion, no visible window
 ``hidden_popen(cmd, ...)``        start and stream, no visible window
 ``interactive_run(cmd, ...)``     run with the console left visible
+``interactive_run_captured(...)`` visible but captured, not live
+``visible_console_popen(...)``    start in its own visible console window
 ``is_interactive_command(cmd)``   classify a command
 ``python_executable()``           ``sys.executable`` for child interpreters
 
@@ -51,6 +53,7 @@ __all__ = [
     "hidden_popen",
     "interactive_run",
     "interactive_run_captured",
+    "visible_console_popen",
     "is_interactive_command",
     "is_background_command",
     "python_executable",
@@ -473,6 +476,45 @@ def interactive_run_captured(
         check=check,
         # Window stays visible: no hidden kwargs by design.
     )
+
+
+def visible_console_popen(
+    cmd: Sequence[str],
+    *,
+    cwd: Optional[str] = None,
+    env: Optional[Dict[str, str]] = None,
+) -> subprocess.Popen:
+    """Start a command in **its own visible console window** and return it.
+
+    This is the one helper that intentionally allocates a console. It exists for
+    filmed evidence capture: the recording must show a real terminal, and a
+    terminal that shares this process's console cannot be captured as a separate
+    window.
+
+    It is deliberately narrow:
+
+    - ``CREATE_NEW_CONSOLE`` on Windows; on POSIX the child inherits the
+      terminal and the call is a plain :class:`subprocess.Popen`;
+    - stdin/stdout/stderr are **not** redirected, because redirecting them
+      empties the window the recording is supposed to show;
+    - no timeout, no ``text`` mode, no pipes: the caller owns the process
+      lifetime and must terminate it explicitly.
+
+    Cancellation, exit-code capture and window placement belong to the capture
+    driver, not here. This helper only guarantees the window exists.
+    """
+    if not cmd:
+        raise ValueError("visible_console_popen() requires a non-empty command")
+
+    kwargs: Dict[str, Any] = {
+        "cwd": cwd,
+        "env": env,
+        "shell": False,
+    }
+    if os.name == "nt" and hasattr(subprocess, "CREATE_NEW_CONSOLE"):
+        kwargs["creationflags"] = subprocess.CREATE_NEW_CONSOLE
+
+    return subprocess.Popen(list(cmd), **kwargs)
 
 
 def is_background_command(cmd: Sequence[str]) -> bool:

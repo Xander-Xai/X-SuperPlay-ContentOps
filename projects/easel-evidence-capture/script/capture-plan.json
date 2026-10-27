@@ -1,0 +1,46 @@
+{
+  "schema": "contentops.capture-plan/v1",
+  "status": "DRAFT",
+  "plan_id": "PLAN-20261027-EASEL-01",
+  "project_id": "easel-evidence-capture",
+  "permission_scope": "internal_review",
+  "environment": {
+    "name": "windows-11-repo",
+    "description": "Elevated Windows terminal at the repository root; no provider credentials exported."
+  },
+  "preflight": {
+    "notifications_disabled": false,
+    "audio_disabled": false,
+    "terminal_selected": false,
+    "readable_dpi": false,
+    "no_unrelated_desktop_content": false,
+    "checked_by": "",
+    "checked_at": ""
+  },
+  "captures": [],
+  "proposed_commands": [
+    {
+      "command_id": "repo-revision",
+      "argv": ["git", "rev-parse", "HEAD"],
+      "why": "Shows the exact revision the cut is about.",
+      "read_only": true
+    },
+    {
+      "command_id": "doctor-json",
+      "argv": ["python", "scripts/doctor.py", "--json"],
+      "why": "Environment verification scope without mutation.",
+      "read_only": true
+    },
+    {
+      "command_id": "easel-pin",
+      "argv": ["python", "scripts/verify_easel_runtime.py"],
+      "why": "Proves the pinned runtime resolves to the recorded provenance.",
+      "read_only": true
+    }
+  ],
+  "notes": [
+    "DRAFT: this file describes no executable capture. A human must set status to APPROVED, fill every preflight flag, record checked_by/checked_at, move the approved entries into captures, and sign approved_by/approved_at.",
+    "Capture runs in its own visible console; the recording is bounded to that window and abandoned if the window moves.",
+    "Raw recordings stay under work/raw and are never distributed; only a redacted derivative with a RedactionReceipt may be used by a cut."
+  ]
+}

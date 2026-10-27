@@ -261,6 +261,11 @@ jobs:
       - name: Run cut-plan tests
         run: python tests/test_cut_plan.py
 
+      # Capture is allowlist-driven and never opens a window in CI: these cover
+      # plan refusal, environment sanitizing, wrapper generation and dry run.
+      - name: Run terminal-capture tests
+        run: python tests/test_terminal_capture.py
+
       - name: Enforce subprocess policy
         run: python scripts/check_subprocess_policy.py
 
