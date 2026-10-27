@@ -1,7 +1,7 @@
 {
   "schema": "contentops.review-bundle/v1",
   "package_id": "easel-1024-proof",
-  "built_at": "2026-10-27T17:08:52Z",
+  "built_at": "2026-10-27T17:11:29Z",
   "inputs": {
     "video": {
       "path": "project://final/easel.mp4",
@@ -33,7 +33,7 @@
     },
     "build_receipt": {
       "path": "project://receipts/build-easel.json",
-      "sha256": "1ead8e08e39a0b997257977859c9f7674df93e4e49297051cb0e6574558be355"
+      "sha256": "e36d9d7ca9b134e2e58453b93efdf6f90abe325b3b0a61ca909637ed47c852dd"
     },
     "target": {
       "width": 1080,
@@ -70,7 +70,7 @@
     },
     "cover_receipt": {
       "path": "project://receipts/cover.json",
-      "sha256": "b2ee655c2bb55b8e65c67df1642623d84cd816b0c5eda67b17bedc04ce2da0c4"
+      "sha256": "1b491947ead0c5e622cc5439e7133b8737b007516ae4fc0a5bd37dbd5047e7a0"
     },
     "captures": [
       {
@@ -118,5 +118,5 @@
   "hard_fail": null,
   "status": "PENDING_HUMAN_REVIEW",
   "production_ready": false,
-  "review_bundle_fingerprint": "165a9fd91ef26643fed445b6db1336e3d0a1230a1b07d22844b06f41cf6da59f"
+  "review_bundle_fingerprint": "f42f40784e4c7981ff866f46f64159593eea77ac1bfb6c303b15fed812deaf17"
 }

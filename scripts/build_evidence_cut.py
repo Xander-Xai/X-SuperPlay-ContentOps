@@ -320,8 +320,12 @@ def _caption_style(config: Dict[str, str], target: Tuple[int, int]) -> Tuple[Dic
     style: Dict[str, str] = {}
     for part in caption["burn_style"].split(","):
         key, _, value = part.partition("=")
-        if key.strip():
-            style[key.strip()] = value.strip()
+        key = key.strip()
+        # Fontsize/MarginV/Alignment in burn_style are libass 384x288 script
+        # space. Recording them beside the pixel values would read as a
+        # contradiction, so only the drawing attributes are carried.
+        if key and key not in ("Fontsize", "MarginV", "Alignment"):
+            style[key] = value.strip()
     width, height = target
     font_size = int(round(int(caption["size_px"]) * min(width, height) / 1080))
     margin_v = int(round(int(caption["safe_zone"]["margin_v_px"]) * height / 1920))
