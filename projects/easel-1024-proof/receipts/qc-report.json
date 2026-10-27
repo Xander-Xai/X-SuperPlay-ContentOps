@@ -24,7 +24,7 @@
       "id": "video_exists",
       "ok": true,
       "severity": "PASS",
-      "detail": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-1024-proof\\final\\easel.mp4"
+      "detail": "project://final/easel.mp4"
     },
     {
       "id": "resolution",

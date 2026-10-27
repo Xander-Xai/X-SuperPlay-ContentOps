@@ -90,7 +90,11 @@ def qc_cut(project: Path, video: Optional[Path] = None) -> Dict[str, Any]:
     target = cut_plan.target
 
     video = video or project / "final" / "easel.mp4"
-    checks.append(_check("video_exists", video.is_file(), "FAIL", str(video)))
+    # The committed receipt carries a logical reference, so it stays valid on a
+    # second checkout and does not publish a machine path.
+    logical = (f"project://{video.relative_to(project).as_posix()}"
+               if video.is_relative_to(project) else str(video))
+    checks.append(_check("video_exists", video.is_file(), "FAIL", logical))
     if not video.is_file():
         return _emit(project, checks, target)
 
