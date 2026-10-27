@@ -421,3 +421,76 @@ Fixed to centiseconds, with `tests/test_subtitle_timing.py` as the regression.
 **Renders produced before this commit still carry the old desync**, including the
 A/B variants; they need a re-burn before any subtitle-sync claim is made about
 them.
+
+## Account DNA v2 — 2026-10-27
+
+`config/accounts/*.json` now carries the brand base, the composition ratios, the
+caption style, the cover rules and the narrative template, next to the one-click
+account prompt.
+
+| Property | Value |
+|---|---|
+| Schema | `contentops.account-dna/v2` — both accounts |
+| Brand base | `#0F1117` charcoal, `#38BDF8` accent; `visual.accent` mirrors `brand.palette.accent`, so the accent has one owner |
+| 1024 composition | 65% cropped screen-recording evidence / 30% vector animation / 5% comparison card |
+| Future Intelligence composition | 70% vector animation / 25% code snapshot / 5% metric chart |
+| Recording policy | 1024 `ALLOWED_CROPPED` (a recorded segment and a still crop of a real capture are the same evidence); Future Intelligence `FORBIDDEN` |
+| Caption style | borderless, shadowless, `#F5F7FA` base with `#38BDF8` highlight; `burn_style` is read from the DNA by `build_account_variants.py` instead of a hardcoded constant |
+| Cover | one title line, whitespace ≥ 30% |
+| One-click prompts | `config/accounts/prompts/*.prompt.md` — global base merged with the account prompt, pure text, no commentary |
+| Render parameters | `render` — `easel` engine on the pinned v0.2.1 runtime, 1080×1920 vertical canvas (16:9 blur derivative for Future Intelligence), Noto Sans/Serif CJK and Cascadia Mono, `speech-2.8-hd` voice, nine QC checks |
+| Validator | `scripts/check_account_dna.py` — schema, palette, ratio sum, motion allow/deny lists, caption style, cover floor, recording policy, and prompt/DNA agreement |
+| Tests | `tests/test_account_dna.py` |
+
+Two things are deliberately not claimed:
+
+- **Per-cue caption highlight is declared, not rendered.** The DNA declares
+  `#38BDF8` for key terms and a `<hl>…</hl>` markup, and records
+  `highlight_rendering: DECLARED_NOT_RENDERED`. The burn path applies one
+  uniform style per cue, so a marked cue still renders in the base colour.
+- **The rendered cards, motion segments and covers still carry the previous
+  palette.** They were rendered before the dark brand base was adopted — paper
+  surface `#f2f4f5`, ink `#0a1f3d`, accent `#b03a2e` (1024) and `#315d93`
+  (Future Intelligence). The DNA records that as
+  `brand.refresh.rendered_artifacts: PREVIOUS_PALETTE` and names the stale
+  locations. The next render has to regenerate them under `brand.palette`
+  before a new cut is published.
+
+The account videos themselves were not rebuilt for this change; they keep the
+captions burned from the previous style until the next build.
+
+## Account positioning layer — 2026-10-27
+
+The DNA now carries the strategy that `X-SuperPlay-Strategy` owns, so the
+pipeline and the prompt read one set of positioning facts instead of two.
+
+| Field | Meaning |
+|---|---|
+| `mission` | Brand mission shared by both accounts |
+| `promise` | The internal positioning statement, verbatim from `X-SuperPlay-Strategy/02-Accounts` |
+| `tagline` | The public hook; a separate field, because a positioning statement is not a slogan |
+| `decision_question` | The one question a cut answers: 1024 "值不值得用", Future Intelligence "怎么才能跑起来" |
+| `audience` vs `core_audience` | Reach list (who may watch) is wider than the core list (who the script is written for) |
+| `audience_layers` | Names which layer the writing targets |
+| `content_pillars` | Three pillars; 1024 is weighted 40 / 35 / 25, Future Intelligence is unweighted |
+| `platform_roles` | Per-platform role, observed signals and CTA, taken from `Platform-Operating-Matrix` |
+| `non_negotiable` | Nine rules; `forbidden` keeps the three machine-checked baselines |
+| `evidence_ladder` | view < like < question < consult < paid, with a rule that a lower rung never proves a higher one |
+| `business` | Source of truth is `X-SuperPlay-OPC-Blueprint`, Stage 0; content may not move the stage |
+| `cadence` | 4 baseline videos/week from 1–2 source artifacts, 6–10 founder hours |
+| `acceptance_metrics` | Ten measures; publish rate, founder minutes, rework and qualified signal come first |
+
+Two reconciliations are deliberate:
+
+- **Promise and tagline are different objects.** A positioning statement is an
+  internal strategic claim; a tagline is the external hook. The Strategy text
+  is the `promise`; the narrower line ("一个人，一个真实业务，一次跑给你看的实测")
+  is the `tagline`, used in copy, not as the positioning.
+- **Reach audience is not target audience.** The five-ish reach groups stay in
+  `audience` so the topic space is honest; the three (1024) or four (Future
+  Intelligence) decision groups move to `core_audience`, and only those decide
+  wording and conclusions.
+
+Content pillars, platform roles, cadence and the evidence ladder are
+configuration only. They do not change the render path, and no video was
+rebuilt for them.

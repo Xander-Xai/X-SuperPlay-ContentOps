@@ -534,3 +534,66 @@ provider 调用仍为 0。推近是 1.0→1.08 的缓慢过程；在 1080x1920 �
 
 现已改为厘秒，并以 `tests/test_subtitle_timing.py` 作为回归。**此提交之前的渲染
 仍带旧的不同步**，包括 A/B 变体；在对其做任何字幕同步声明之前需要重新烧录。
+
+## 账号 DNA v2 —— 2026-10-27
+
+`config/accounts/*.json` 现在除账号设定外，还承载品牌基座、画面配比、字幕样式、
+封面规则和叙事模板，并指向对应的“一键粘贴”账号提示词。
+
+| 属性 | 值 |
+|---|---|
+| Schema | `contentops.account-dna/v2` —— 两个账号 |
+| 品牌基座 | `#0F1117` 炭黑，`#38BDF8` 强调色；`visual.accent` 镜像 `brand.palette.accent`，强调色只有一个归属 |
+| 1024 画面配比 | 65% 裁剪录屏证据 / 30% 矢量动画 / 5% 对比卡片 |
+| 未来智能画面配比 | 70% 矢量动画 / 25% 代码截图 / 5% 指标图表 |
+| 录屏政策 | 1024 为 `ALLOWED_CROPPED`（录屏片段与真实捕获的静态裁切是同等证据）；未来智能为 `FORBIDDEN` |
+| 字幕样式 | 无描边、无阴影，底色 `#F5F7FA`、高亮 `#38BDF8`；`burn_style` 由 `build_account_variants.py` 从 DNA 读取，不再写死在代码里 |
+| 封面 | 单行主标题，留白 ≥ 30% |
+| 一键提示词 | `config/accounts/prompts/*.prompt.md` —— 全局基座与账号提示词合并，纯文本，无说明性注释 |
+| 渲染参数 | `render` —— pinned v0.2.1 运行时上的 `easel` 引擎、1080×1920 竖版画布（未来智能另有 16:9 模糊衍生版）、Noto Sans/Serif CJK 与 Cascadia Mono、`speech-2.8-hd` 音色、九项 QC 检查 |
+| 校验器 | `scripts/check_account_dna.py` —— schema、配色、配比求和、动效允许/禁止列表、字幕样式、封面留白下限、录屏政策，以及提示词与 DNA 的一致性 |
+| 测试 | `tests/test_account_dna.py` |
+
+有两件事是刻意不声称的：
+
+- **逐条字幕高亮只是声明，没有实现。** DNA 为关键术语声明了 `#38BDF8` 和
+  `<hl>…</hl>` 标记，并记录 `highlight_rendering: DECLARED_NOT_RENDERED`。
+  烧录路径对每条字幕只施加一种统一样式，因此带标记的字幕仍以底色渲染。
+- **已渲染的卡片、动效片段与封面仍是旧配色。** 它们是在采用深色品牌基座之前渲染
+  的：纸面底色 `#f2f4f5`、墨色 `#0a1f3d`，强调色分别是 `#b03a2e`（1024）和
+  `#315d93`（未来智能）。DNA 用 `brand.refresh.rendered_artifacts:
+  PREVIOUS_PALETTE` 记录了这一点，并列出了过期位置。下一次渲染必须按
+  `brand.palette` 重新生成，才能发布新的剪辑。
+
+账号视频本身没有为本次改动重新构建；在下一次构建之前，它们仍是按旧样式烧录的字幕。
+
+## 账号定位层 —— 2026-10-27
+
+DNA 现在承载 `X-SuperPlay-Strategy` 拥有的战略事实，让流水线和提示词读同一套定位，
+而不是两份。
+
+| 字段 | 含义 |
+|---|---|
+| `mission` | 两个账号共用的品牌使命 |
+| `promise` | 内部定位陈述，逐字取自 `X-SuperPlay-Strategy/02-Accounts` |
+| `tagline` | 对外一句话；单独成字段，因为定位陈述不等于口号 |
+| `decision_question` | 一条片子只回答一个问题：1024「值不值得用」，未来智能「怎么才能跑起来」 |
+| `audience` 与 `core_audience` | 触达名单（谁可能看）宽于核心名单（口播对谁写） |
+| `audience_layers` | 指明写作对象是哪一层 |
+| `content_pillars` | 三大栏目；1024 有权重 40 / 35 / 25，未来智能不加权 |
+| `platform_roles` | 每个平台的角色、观察信号与 CTA，取自 `Platform-Operating-Matrix` |
+| `non_negotiable` | 九条铁律；`forbidden` 保留三条机器可检的基线 |
+| `evidence_ladder` | 浏览 < 点赞 < 提问 < 咨询 < 付费，并写明低阶信号不能证明高阶 |
+| `business` | 事实源为 `X-SuperPlay-OPC-Blueprint`，Stage 0；内容不得改变阶段 |
+| `cadence` | 每周 4 条基线视频，来自 1–2 份真实母素材，Founder 6–10 小时 |
+| `acceptance_metrics` | 十项验收；发布率、Founder 分钟数、返工次数、有效信号排在最前 |
+
+有两处和解是刻意做的：
+
+- **定位陈述与口号是两种东西。** 定位陈述是对内的战略断言，口号是对外的钩子。
+  Strategy 的原文进 `promise`；更窄的那句「一个人，一个真实业务，一次跑给你看的实测」
+  进 `tagline`，用于文案，不冒充定位。
+- **触达受众不等于目标受众。** 五类触达人群留在 `audience`，保证选题空间诚实；
+  三类（1024）或四类（未来智能）决策人群进 `core_audience`，只有它们决定措辞与结论。
+
+栏目、平台角色、排期与证据阶梯都是配置层，不改变渲染路径，也没有为此重出任何视频。

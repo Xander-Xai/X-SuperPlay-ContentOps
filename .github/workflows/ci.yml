@@ -229,6 +229,12 @@ jobs:
       - name: Run two-account variant tests
         run: python tests/test_account_variants.py
 
+      # The account DNA is the gene: brand base, composition ratios, caption
+      # style, cover floor and the one-click prompt have to agree, or the
+      # pipeline renders a different look from the one the account asked for.
+      - name: Run account DNA tests
+        run: python tests/test_account_dna.py
+
       # The optimization layer: signal validation, ADOPT policy (GitHub + evidence
       # + no GPU), action-before-deferral ranking and the blocked MEASURE/LEARN
       # flywheel stages.
@@ -295,6 +301,9 @@ jobs:
 
       - name: Run i18n consistency checks
         run: python scripts/check_i18n.py
+
+      - name: Check account DNA
+        run: python scripts/check_account_dna.py
 
       - name: Check whitespace
         run: git diff --check --exit-code || exit 1

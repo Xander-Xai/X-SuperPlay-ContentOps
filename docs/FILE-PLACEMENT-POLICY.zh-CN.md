@@ -36,6 +36,28 @@ CLI 工具、运维脚本、验证、构建编排。
 
 仅机器可读的固定版本和来源记录。
 
+## config/
+
+流水线读取的机器可读配置。只放声明式内容——不放可执行代码，不放生成物。
+
+```
+config/
+├── accounts/
+│   ├── x-superplay-1024.json                 # 账号 DNA
+│   ├── x-superplay-future-intelligence.json  # 账号 DNA
+│   └── prompts/
+│       └── *.prompt.md                       # 一键粘贴的账号提示词
+└── optimization/
+    ├── policy.json
+    ├── signals.json
+    └── *.json
+```
+
+- 一个账号在 `config/accounts/` 下只有一个文件。DNA 是配色、画面配比、字幕样式、
+  封面规则、叙事模板和提示词路径的唯一来源。
+- 提示词文件是纯文本：它会被粘贴进对话，因此不带 front matter，也不带说明性注释。
+- `scripts/check_account_dna.py` 会在 DNA 偏离品牌基座、或偏离它自己的提示词时报错。
+
 ## tests/
 
 正式测试布局。

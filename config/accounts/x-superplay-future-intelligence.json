@@ -1,15 +1,53 @@
 {
-  "schema": "contentops.account-dna/v1",
+  "schema": "contentops.account-dna/v2",
   "slug": "x-superplay-future-intelligence",
   "account": "X超玩·未来智能",
   "role": "Build",
   "promise": "把 AI 做成真正能运行、上线和解决问题的项目",
   "audience": [
     "AI 应用开发者",
-    "软件工程师",
-    "AI 转型人员",
-    "独立开发者"
+    "软件工程师 / 算法工程师",
+    "AI 转型程序员",
+    "AI 产品经理",
+    "独立开发者 / Freelancer",
+    "愿意亲自动手、希望把 AI 做成真实项目的人"
   ],
+  "prompt": "config/accounts/prompts/x-superplay-future-intelligence.prompt.md",
+  "brand": {
+    "slogan": "把未知，玩成结果。",
+    "production_paradigm": "One Source, Multiple Native Assets",
+    "palette": {
+      "base": "#0F1117",
+      "accent": "#38BDF8",
+      "ink": "#F5F7FA",
+      "muted": "#8B95A5",
+      "surface": "#161A22",
+      "code_theme": "monokai-dark",
+      "problem": "#F07167"
+    },
+    "forbidden_effects": [
+      "bounce",
+      "flash",
+      "shake",
+      "sticker",
+      "flashy_transition",
+      "blue_purple_gradient",
+      "glass_morphism",
+      "gradient_text",
+      "emoji_as_icon",
+      "oversized_bold_black_banner"
+    ],
+    "refresh": {
+      "target_palette": "brand.palette",
+      "rendered_artifacts": "PREVIOUS_PALETTE",
+      "stale_locations": [
+        "outputs/editorial/",
+        "projects/x-superplay-future-intelligence/motion/"
+      ],
+      "note": "The cards, the motion segments and the covers were rendered before the dark brand base was adopted: the paper surface #f2f4f5, the ink #0a1f3d and the accent #315d93. The DNA declares the target; the next render must regenerate them under brand.palette before any new cut is published."
+    },
+    "palette_note": "accent is the one brand colour; problem is a literal failure marker that may only appear while the failure exists and must not survive into the resolution frame"
+  },
   "narrative": {
     "mode": "ENGINEERING_WALKTHROUGH",
     "opening": "EVIDENCE",
@@ -23,6 +61,16 @@
       "U07",
       "U08"
     ],
+    "template": [
+      "HOOK_3S_PAIN",
+      "REQUIREMENT_AND_TRADEOFF",
+      "ARCHITECTURE_CHAIN",
+      "KEY_CODE_EXPLAINED",
+      "ROOT_CAUSE",
+      "ACCEPTANCE_METRICS_AND_RISK",
+      "REPRO_AND_REPO"
+    ],
+    "speech_rate_cpm": 220,
     "target_duration_s": [
       90,
       120
@@ -33,11 +81,70 @@
   },
   "visual": {
     "card_set": "outputs/editorial/by-placement",
-    "accent": "#315d93",
+    "accent": "#38BDF8",
     "density": "dense",
-    "captions": "none",
     "cover_time_s": 5.0,
     "motion_intro": "outputs/account-variants/fi-slate.mp4",
+    "composition": {
+      "basis": "duration_weighted",
+      "segments": [
+        {
+          "role": "vector_animation",
+          "pct": 70
+        },
+        {
+          "role": "code_snapshot",
+          "pct": 25
+        },
+        {
+          "role": "metric_chart",
+          "pct": 5
+        }
+      ]
+    },
+    "motion": {
+      "allowed": [
+        "module_fade_in",
+        "single_direction_arrow_flow",
+        "node_highlight_switch",
+        "crossfade"
+      ],
+      "forbidden": [
+        "bounce",
+        "flash",
+        "shake",
+        "sticker",
+        "comic_effect"
+      ]
+    },
+    "caption_style": {
+      "font": "Noto Sans CJK SC",
+      "size_px": 47,
+      "primary": "#F5F7FA",
+      "highlight": "#38BDF8",
+      "outline": "none",
+      "shadow": "none",
+      "max_chars_per_line": 18,
+      "highlight_markup": "<hl>术语</hl>",
+      "highlight_rendering": "DECLARED_NOT_RENDERED",
+      "highlight_note": "The burn path applies one uniform style per cue. Per-cue highlight needs an ASS cue writer, which no shipped step owns yet; until one does, a marked cue renders in the base colour.",
+      "burn_style": "Fontsize=7,MarginV=18,Outline=0,Shadow=0,BorderStyle=1,PrimaryColour=&H00FFFFFF,Alignment=2",
+      "safe_zone": {
+        "margin_v_px": 120,
+        "side_margin_ratio": 0.07
+      },
+      "density": "sparse"
+    },
+    "cover": {
+      "composition": "极简架构线稿为主，标题克制，留白充足，技术感优先",
+      "whitespace_min_ratio": 0.3,
+      "title_lines": 1,
+      "reject": [
+        "viral oversized type",
+        "gradient background",
+        "generic AI-tech imagery"
+      ]
+    },
     "motion_segments": {
       "U03": {
         "path": "outputs/account-variants/982-countup.mp4",
@@ -83,10 +190,129 @@
       ]
     }
   },
+  "evidence": {
+    "manual_recording": "FORBIDDEN",
+    "crop_rule": "不适用：本账号不出现任何手动操作画面",
+    "required_evidence_class": "DOCUMENTED",
+    "rules": [
+      "所有架构图逻辑必须可复现，并与 X-SuperPlay 系列仓库的工程设计对齐",
+      "代码截图只截取关键行的局部，不截整屏 IDE",
+      "真实捕获的静态证据裁切可以作为证据画面，但不得出现鼠标指针、点击或输入过程",
+      "评估指标必须来自真实运行结果，不得用示意数字",
+      "矢量动画与图表只作解释工具，不冒充运行日志或客户案例"
+    ],
+    "forbidden": [
+      "手动桌面录屏",
+      "鼠标操作画面",
+      "鼠标指针、点击或输入过程",
+      "桌面窗口",
+      "整屏 IDE 截图",
+      "伪造指标数字"
+    ]
+  },
+  "audio": {
+    "voice": {
+      "persona": "28-35 岁中低音，冷静理性，偏严谨工程师口吻",
+      "provider_hint": "minimax_m_plan/speech-2.8-hd"
+    },
+    "bgm": {
+      "style": "极低音量氛围电子，不能抢人声",
+      "max_db_below_voice": 18,
+      "status": "OMITTED_BY_POLICY",
+      "reason": "DASHSCOPE_API_KEY unavailable; the video_ops loudness-regression fallback is prohibited"
+    }
+  },
+  "render": {
+    "engine": "easel",
+    "runtime_pin": "Easel v0.2.1 / 3fe2d99",
+    "canvas": {
+      "width": 1080,
+      "height": 1920,
+      "orientation": "vertical",
+      "derivative": {
+        "width": 1920,
+        "height": 1080,
+        "orientation": "horizontal",
+        "mode": "blur",
+        "platform": "bilibili"
+      }
+    },
+    "fps": 30,
+    "fonts": {
+      "primary": "Noto Sans CJK SC",
+      "display": "Noto Serif SC",
+      "mono": "Cascadia Mono"
+    },
+    "audio": {
+      "voice_provider": "minimax_m_plan/speech-2.8-hd",
+      "sample_rate": 32000,
+      "channels": 1,
+      "bgm": "OMITTED_BY_POLICY"
+    },
+    "qc_checks": [
+      "target_dimensions",
+      "codec_h264",
+      "audio_present",
+      "caption_safe_zone",
+      "cover_present",
+      "cta_present",
+      "real_source_ratio_min_70",
+      "no_generated_asset_in_claim_interval",
+      "no_manual_recording_in_frame"
+    ],
+    "easel_yaml": "project://easel.yaml"
+  },
+  "qc_rules": [
+    "全片零手动录屏、零鼠标操作、零桌面窗口",
+    "每一张架构图都能在仓库里找到对应实现或真实回执",
+    "代码截图只高亮关键行，不出现整屏 IDE",
+    "重点落在为什么这么设计、失败边界、怎么验证，而不是 API 罗列",
+    "术语与关键参数在字幕里用强调色标出",
+    "封面留白 ≥30%，标题克制，拒绝网红大字封面",
+    "人工审核通过前不发布，也不生成任何发布链接"
+  ],
+  "platform_note": "抖音 9:16 版本走同源架构动画，1080×1920，前 3 秒直接抛工程故障；B 站加长版 1920×1080 走 card-quote 封面，章节按架构链路拆解，仓库链接与复现步骤收尾；知乎/CSDN 用同一叙事骨架改写成图文。",
+  "skill_route": [
+    {
+      "step": "script",
+      "skill": "video-script",
+      "script": "skills/openclaw/video-script",
+      "why": "owns the hook variants, the second-by-second script and the cover wording"
+    },
+    {
+      "step": "architecture_animation",
+      "skill": "infographic",
+      "script": "skills/openclaw/infographic/scripts/gif_chart.py",
+      "why": "owns the vector chain and metric visuals; hand-rolled ffmpeg chains are not allowed"
+    },
+    {
+      "step": "card_design",
+      "skill": "card-design",
+      "script": "skills/openclaw/card-design/scripts/card_audit.py",
+      "why": "owns the palette, the type hierarchy and the density gate for every card and cover"
+    },
+    {
+      "step": "captions",
+      "skill": "auto-subtitle",
+      "script": "skills/shared/scripts/subtitle_ops.py",
+      "why": "owns caption generation and the burn step"
+    },
+    {
+      "step": "compose",
+      "skill": "auto-short-video",
+      "script": "skills/openclaw/auto-short-video/scripts/assemble.py",
+      "why": "the pinned composition path; called through assemble_easel.py, never modified"
+    },
+    {
+      "step": "qc",
+      "skill": "qc_video",
+      "script": "scripts/qc_video.py",
+      "why": "owns the technical verdict; it never grants production readiness"
+    }
+  ],
   "platforms": [
     "bilibili",
-    "zhihu",
-    "csdn"
+    "douyin"
   ],
   "horizontal": true,
   "title": "Easel 工程拆解：982 文件哈希、网关端口错配、Web 工作台六项",
@@ -107,5 +333,296 @@
   "retention": {
     "max_static_hold_s": 14,
     "max_hook_s": 4
+  },
+  "benchmarks": {
+    "primary": "Ai林爻",
+    "priority": [
+      {
+        "rank": 1,
+        "account": "Ai林爻",
+        "adopt": "RAG/Agent 全链路流动画、费曼式工程拆解、高收藏叙事"
+      },
+      {
+        "rank": 2,
+        "account": "陈与小金",
+        "adopt": "高阶论文工程范式、论点卡片、工程取舍与风险论述"
+      },
+      {
+        "rank": 3,
+        "account": "李白｜AI创造力实验室",
+        "adopt": "Linear 极简线稿 SVG 矢量架构，线条干净、大留白"
+      }
+    ],
+    "dropped": [
+      "小哲讲agent面试",
+      "硬核Ai鹏哥"
+    ],
+    "rule": "Only these three are priority references; any other account is not a reference."
+  },
+  "decision_question": "怎么才能跑起来，为什么这么设计。",
+  "text_platforms": {
+    "platforms": [
+      "zhihu",
+      "csdn"
+    ],
+    "format": "TEXT_REWRITE",
+    "reason": "Zhihu and CSDN do not distribute vertical video. The same narrative is rewritten as an article; no video asset is mapped to them."
+  },
+  "mission": "用真实的 AI 实验与工程项目，发现值得解决的问题，输出可验证的知识与解决方案，为长期服务和产品化积累资产。",
+  "tagline": "从需求到上线，每一步都能复现。",
+  "core_audience": [
+    "AI 应用开发者",
+    "软件工程师",
+    "AI 转型程序员",
+    "独立开发者"
+  ],
+  "excluded": [
+    "只追新闻、不愿实践的人",
+    "只复制 Prompt 的用户",
+    "希望代写、代做、伪造经历的人"
+  ],
+  "content_pillars": [
+    {
+      "name": "AI 工程拆解",
+      "weight_pct": null,
+      "structure": [
+        "问题",
+        "工程架构",
+        "关键实现",
+        "实际验证",
+        "失败与限制",
+        "复现和下一步"
+      ],
+      "scope": "LLM / RAG / Agent / LangGraph / MCP / Context / Evaluation / Guardrails / Memory / Tool Calling，问题驱动"
+    },
+    {
+      "name": "从需求到上线",
+      "weight_pct": null,
+      "structure": [
+        "需求",
+        "PRD",
+        "架构",
+        "选型",
+        "Coding",
+        "Evaluation",
+        "Testing",
+        "Deployment",
+        "Monitoring",
+        "Cost",
+        "Iteration"
+      ],
+      "scope": "长期 AI Project Library，按 Level 1-4 分层"
+    },
+    {
+      "name": "AI 能力变现",
+      "weight_pct": null,
+      "structure": [
+        "作品",
+        "岗位竞争力",
+        "服务",
+        "产品化"
+      ],
+      "scope": "AI 求职、Freelance、Workflow、项目库"
+    }
+  ],
+  "platform_roles": {
+    "douyin": {
+      "role": "Discovery / Hook Lab",
+      "signals": [
+        "停留",
+        "观看",
+        "分享",
+        "主页访问",
+        "具体评论"
+      ],
+      "cta": "提交问题 / 职业 / 场景",
+      "status": "ACTIVE"
+    },
+    "xiaohongshu": {
+      "role": "Search / Save",
+      "signals": [
+        "搜索",
+        "收藏",
+        "主页访问",
+        "私信",
+        "资料请求"
+      ],
+      "cta": "求配置 / 代码 / 问题",
+      "status": "ACTIVE"
+    },
+    "bilibili": {
+      "role": "Trust / Deep Proof",
+      "signals": [
+        "点击",
+        "留存",
+        "回访",
+        "收藏",
+        "技术提问"
+      ],
+      "cta": "GitHub / 复现 / 问题",
+      "status": "ACTIVE"
+    },
+    "shipinhao": {
+      "role": "WeChat Relationship",
+      "signals": [
+        "分享",
+        "关系链反馈"
+      ],
+      "status": "DERIVED"
+    },
+    "gzh": {
+      "role": "Owned Depth Hub",
+      "signals": [
+        "阅读深度",
+        "搜索",
+        "收藏",
+        "转发"
+      ],
+      "status": "DERIVED"
+    },
+    "zhihu": {
+      "role": "Question Intent",
+      "signals": [
+        "搜索",
+        "赞同",
+        "收藏",
+        "追问"
+      ],
+      "status": "DERIVED"
+    },
+    "csdn": {
+      "role": "Developer Search",
+      "signals": [
+        "搜索",
+        "收藏",
+        "代码动作"
+      ],
+      "status": "DERIVED"
+    },
+    "x": {
+      "role": "Public Lab",
+      "signals": [
+        "Reply",
+        "Repost",
+        "Profile action"
+      ],
+      "status": "EXPERIMENT"
+    },
+    "youtube": {
+      "role": "Global Deep / Search",
+      "signals": [
+        "Impression",
+        "CTR",
+        "Retention"
+      ],
+      "status": "EXPERIMENT"
+    },
+    "github": {
+      "role": "Proof Infrastructure",
+      "signals": [
+        "clone",
+        "Issue",
+        "引用"
+      ],
+      "status": "INFRASTRUCTURE"
+    }
+  },
+  "derived_platforms": [
+    "gzh",
+    "shipinhao"
+  ],
+  "non_negotiable": [
+    "不伪造实验与客户案例",
+    "不把 AI 生成画面当成真实证据",
+    "不把代码完成当成生产验证",
+    "不因高级视觉能力阻塞 Baseline",
+    "没有人工批准不得自动发布",
+    "没有真实 URL 不得声明发布成功",
+    "流量和评论不等于付费需求",
+    "未经授权不公开私有仓库内容"
+  ],
+  "evidence_ladder": {
+    "order": [
+      "view",
+      "like_or_collect",
+      "comment_or_question",
+      "dm_or_consult",
+      "paid"
+    ],
+    "rule": "A lower rung never proves a higher one. A view is not a like, a like is not a question, a question is not a customer.",
+    "note": "Only a real URL and a real metrics snapshot move a rung. No number here may be inferred from another platform."
+  },
+  "business": {
+    "source_of_truth": "Xander-Xai/X-SuperPlay-OPC-Blueprint",
+    "stage": "Stage 0 / Employment & Survival",
+    "proposition": "把跑不起来、效果不好、只能 Demo 的 AI 项目，修到可验证、可交付、可交接的状态。",
+    "rule": "Content may feed the business; it may not move the OPC stage. Stage changes are a business decision, not a content outcome."
+  },
+  "cadence": {
+    "accounts": 2,
+    "baseline_videos_per_week": 4,
+    "source_artifacts_per_week": [
+      1,
+      2
+    ],
+    "enhanced_videos_per_week": [
+      0,
+      2
+    ],
+    "founder_hours_per_week": [
+      6,
+      10
+    ],
+    "rule": "Four videos come from one or two real sources. Never four sources, and never a made-up source to hit the quota."
+  },
+  "acceptance_metrics": {
+    "first_stage_priority": [
+      "real_publish_rate",
+      "founder_minutes_per_video",
+      "rework_count",
+      "qualified_user_signal"
+    ],
+    "metrics": [
+      {
+        "id": "stable_output",
+        "how": "two consecutive weeks deliver the planned count"
+      },
+      {
+        "id": "real_publish",
+        "how": "every published video has a real platform URL"
+      },
+      {
+        "id": "founder_efficiency",
+        "how": "record founder minutes and handoff count per video"
+      },
+      {
+        "id": "cash_cost",
+        "how": "record the real extra cash spend per video"
+      },
+      {
+        "id": "first_pass_rate",
+        "how": "share of videos a human approves on the first review"
+      },
+      {
+        "id": "evidence_integrity",
+        "how": "every key fact binds to a verifiable source"
+      },
+      {
+        "id": "content_reuse",
+        "how": "qualified platform assets produced per source"
+      },
+      {
+        "id": "user_value",
+        "how": "explicit questions, technical discussion or reproduction requests"
+      },
+      {
+        "id": "commercial_signal",
+        "how": "qualified consult, pilot or paid request"
+      },
+      {
+        "id": "review_loop",
+        "how": "topic and process adjusted from real results"
+      }
+    ]
   }
 }

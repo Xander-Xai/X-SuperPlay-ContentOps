@@ -273,3 +273,34 @@ python scripts\build_v3_sample_video.py --arm E `
   the unit's duration split by character count; fragments under six characters
   merge with a neighbour).
 - Build a comparison into its own `--project` so the two receipts do not collide.
+
+## 13. Account DNA
+
+The two account identities live in `config/accounts/*.json`. The DNA owns the
+brand base, the composition ratios, the caption style, the cover rules and the
+narrative template; the one-click prompt for each account sits next to it in
+`config/accounts/prompts/`.
+
+Validate the DNA against the brand base and against its own prompt:
+
+```powershell
+python scripts\check_account_dna.py
+python scripts\check_account_dna.py --json
+```
+
+It fails when the schema, the palette, the ratio sum, the motion allow/deny
+lists, the caption style, the cover whitespace floor, the recording policy, or
+the agreement between a DNA file and its prompt breaks. The check is read-only
+and part of `scripts/dev_check.py` and CI.
+
+Rebuild one account variant from the DNA (no provider call; the narration and
+cards come from the local `outputs/` tree):
+
+```powershell
+python scripts\build_account_variants.py
+python scripts\build_account_variants.py --only x-superplay-1024
+```
+
+The caption `burn_style` is read from the DNA, not hardcoded in the script, so
+changing the caption style is a config change. The variant videos stop at
+`PENDING_FOUNDER_REVIEW` and claim no publication URL.

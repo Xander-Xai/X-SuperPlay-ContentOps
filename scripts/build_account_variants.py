@@ -44,13 +44,6 @@ INTRO = ROOT / "outputs" / "editorial" / "intro-editorial.mp4"
 OUTRO = ROOT / "outputs" / "editorial" / "outro-editorial.mp4"
 SHARED = ROOT / ".runtime" / "easel" / "skills" / "shared" / "scripts"
 
-#: libass resolves Fontsize/MarginV in a 384x288 script space, not pixels.
-#: Fontsize 7 and MarginV 18 render ~47 px and ~120 px on a 1080x1920 frame.
-CAPTION_STYLE = (
-    "Fontsize=7,MarginV=18,Outline=1,Shadow=0,"
-    "BorderStyle=3,BackColour=&H99000000,Alignment=2"
-)
-
 def load_specs() -> Dict[str, Dict[str, Any]]:
     """Account DNA is the gene: the workflow reads it, it is not hardcoded here."""
     specs: Dict[str, Dict[str, Any]] = {}
@@ -74,6 +67,7 @@ def load_specs() -> Dict[str, Dict[str, Any]]:
             "motion_segments": dna["visual"].get("motion_segments", {}),
             "visual_splits": dna["visual"].get("splits", {}),
             "cover_time": dna["visual"]["cover_time_s"],
+            "caption_style": dna["visual"]["caption_style"],
             "cta": dna["narrative"]["cta"],
             "horizontal": dna.get("horizontal", False),
             "gpu_required": dna["gpu_required"],
@@ -484,7 +478,7 @@ def build_variant(slug: str, spec: Dict[str, Any], units: Dict[str, Dict[str, An
         burn = _run([
             sys.executable, str(SHARED / "subtitle_ops.py"), "burn",
             "-i", str(account_out), "--sub", str(caption_path),
-            "-o", str(captioned), "--force-style", CAPTION_STYLE,
+            "-o", str(captioned), "--force-style", spec["caption_style"]["burn_style"],
         ])
         if burn["rc"] == 0 and captioned.is_file():
             shutil.move(str(captioned), str(account_out))
@@ -590,6 +584,7 @@ def build_variant(slug: str, spec: Dict[str, Any], units: Dict[str, Dict[str, An
             "cues": caption_cues,
             "burned": captions_burned,
             "error": caption_error,
+            "style": spec["caption_style"],
         },
         "source": {
             "narration": NARRATION.relative_to(ROOT).as_posix(),

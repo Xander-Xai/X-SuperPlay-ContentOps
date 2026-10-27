@@ -8,8 +8,9 @@ Order:
   2. subprocess_policy_check
   3. check_docs
   4. check_i18n
-  5. test_basic
-  6. git diff --check (whitespace)
+  5. check_account_dna
+  6. test_basic
+  7. git diff --check (whitespace)
 
 All must pass. All checks are read-only and deterministic.
 
@@ -63,6 +64,7 @@ def main():
         ("subprocess_policy", [py, "scripts/check_subprocess_policy.py"]),
         ("docs_check",  [py, "scripts/check_docs.py"]),
         ("i18n_check",  [py, "scripts/check_i18n.py"]),
+        ("account_dna", [py, "scripts/check_account_dna.py"]),
         ("basic_tests", [py, "scripts/test_basic.py"]),
         ("whitespace",  ["git", "diff", "--check"]),
     ]

@@ -175,3 +175,30 @@ python scripts\build_v3_sample_video.py --arm E `
 - `--caption-mode sentence`（每单元一条）或 `phrase`（每分句一条；单元时长按
   字符数分配，少于六字的碎片并入相邻分句）。
 - 对比版请用独立的 `--project`，避免两份凭证互相覆盖。
+
+## 13. 账号 DNA
+
+两个账号的定位写在 `config/accounts/*.json`。DNA 承载品牌基座、画面配比、字幕
+样式、封面规则和叙事模板；每个账号的一键提示词放在同目录的
+`config/accounts/prompts/`。
+
+按品牌基座和它自己的提示词校验 DNA：
+
+```powershell
+python scripts\check_account_dna.py
+python scripts\check_account_dna.py --json
+```
+
+schema、配色、配比求和、动效允许/禁止列表、字幕样式、封面留白下限、录屏政策，
+以及 DNA 与提示词之间的一致性，任一不成立即报错。该检查是只读的，并已并入
+`scripts/dev_check.py` 与 CI。
+
+按 DNA 重建某个账号变体（无 provider 调用；旁白与卡片来自本地 `outputs/`）：
+
+```powershell
+python scripts\build_account_variants.py
+python scripts\build_account_variants.py --only x-superplay-1024
+```
+
+字幕的 `burn_style` 从 DNA 读取，而不是写死在脚本里，所以改字幕样式属于配置改动。
+变体视频止步于 `PENDING_FOUNDER_REVIEW`，不声称任何发布链接。

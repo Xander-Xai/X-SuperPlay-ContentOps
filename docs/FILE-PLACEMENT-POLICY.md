@@ -132,6 +132,32 @@ Forbidden in `runtime/`:
 - local config backups
 - generated logs
 
+## config/
+
+Machine-readable configuration the pipeline reads. Declarative only — no
+executable code, no generated output.
+
+```
+config/
+├── accounts/
+│   ├── x-superplay-1024.json                 # account DNA
+│   ├── x-superplay-future-intelligence.json  # account DNA
+│   └── prompts/
+│       └── *.prompt.md                       # one-click account prompt
+└── optimization/
+    ├── policy.json
+    ├── signals.json
+    └── *.json
+```
+
+- One account owns one file under `config/accounts/`. The DNA is the single
+  source for palette, composition, caption style, cover rules, narrative
+  template and the one-click prompt path.
+- A prompt file is pure text: it is pasted into a chat, so it carries no
+  front matter and no commentary.
+- `scripts/check_account_dna.py` fails the DNA when it drifts from the brand
+  base or from its own prompt.
+
 ## projects/
 
 Content run projects and golden samples:
