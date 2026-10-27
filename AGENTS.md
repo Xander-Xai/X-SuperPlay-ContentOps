@@ -38,6 +38,25 @@ FORK        → last resort only
 
 Current state: no fork. `assemble_easel.py` is an ADAPTER (orchestration workaround).
 
+### Skill-First Routing (mandatory before any deliverable)
+
+The Easel checkout is a skill library, not just `assemble.py`. Before writing
+code, a storyboard, or any ffmpeg/HTML composition for a video, image, card,
+audio or copy deliverable:
+
+1. Run `python scripts/skill_route.py --match "<the deliverable>"` and read the
+   `SKILL.md` of every matching candidate.
+2. State the chosen skill, its input/output contract, and why it owns the task.
+3. Use that skill's scripts; do not hand-roll `zoompan`/`xfade`, card HTML or a
+   subtitle burn when a skill owns the step.
+4. If no skill matches, say so before coding.
+5. If the result looks poor, fix the skill's input or design layer first, not
+   the compositor.
+6. Build receipts carry `skill_route: {name, script, why}`.
+
+A bare `assemble.py` call with raw screenshots is a compositor step, not a
+production decision, and is the failure this rule prevents.
+
 ## 3. Content Truth Boundary
 
 ### Allowed

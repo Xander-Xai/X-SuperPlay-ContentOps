@@ -21,6 +21,37 @@ Then read, in order:
 
 Then read the relevant GitHub Issue and PR.
 
+## Skill-First Routing (mandatory before any deliverable)
+
+The Easel checkout is a **skill library**, not just `assemble.py`. A compositor
+call is the last step of a production decision, not the decision itself.
+
+Before writing code, a storyboard, or any ffmpeg/HTML composition for a
+deliverable (video, image, card, audio, copy):
+
+1. Enumerate the project's own skills:
+   ```bash
+   python scripts/skill_route.py --match "<what the deliverable is>"
+   ```
+   It reads `.runtime/easel/skills/openclaw/*/SKILL.md`, then falls back to
+   `Easel/skills/openclaw/`.
+2. Read the `SKILL.md` of every candidate whose description matches the
+   deliverable. State the chosen skill, its input/output contract, and why it
+   owns the task.
+3. Drive the work through that skill's scripts. Do **not** hand-roll ffmpeg
+   filter chains, `zoompan`/`xfade`, card HTML, or subtitle burns when a skill
+   owns the step.
+4. If no skill matches, say so explicitly **before** writing code.
+5. If the output looks poor, fix the skill's input or design layer first
+   (`card-design`, `slideshow-video`, `video-production`, `ai-music`,
+   `auto-subtitle`), not the low-level compositor.
+6. Every build receipt carries `skill_route: {name, script, why}`. A receipt
+   without it is incomplete.
+
+Worked example: a vertical evidence explainer routes to `card-design` (design
+system) + `render_card.py` (render) + a compositor. Calling `assemble.py` alone
+with raw screenshots is exactly the failure this rule exists to prevent.
+
 ## Never
 
 - Do not work directly on `main`

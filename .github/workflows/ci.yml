@@ -217,6 +217,12 @@ jobs:
       - name: Run v3 sample-video bridge tests
         run: python tests/test_v3_sample_video.py
 
+      # Skill-first routing: the rule is stated in CLAUDE.md and AGENTS.md and is
+      # executable through scripts/skill_route.py. The catalog half skips itself
+      # when the gitignored Easel runtime is absent.
+      - name: Run skill-route policy tests
+        run: python tests/test_skill_route_policy.py
+
       - name: Run Windows subprocess tests
         run: python tests/test_windows_subprocess.py
 

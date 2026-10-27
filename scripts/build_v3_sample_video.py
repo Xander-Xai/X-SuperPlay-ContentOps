@@ -534,6 +534,7 @@ def build(
     out_name: str,
     motion: str = "static",
     caption_mode: str = "sentence",
+    card_dir: Optional[str] = None,
 ) -> Dict[str, Any]:
     verified = load_verified_plan()
     creator = verified["creator"]
@@ -564,6 +565,15 @@ def build(
     lock = json.loads(EVIDENCE_LOCK.read_text(encoding="utf-8"))
     if lock.get("fixture"):
         raise BuildRefused("refusing to build from a fixture evidence lock")
+    card_root: Optional[Path] = None
+    if card_dir:
+        card_root = Path(card_dir)
+        if not card_root.is_absolute():
+            card_root = ROOT / card_root
+        if not card_root.is_dir():
+            raise BuildRefused(f"card directory is absent: {card_root}")
+
+    designed_cards: Dict[str, str] = {}
     for item in timings:
         placement = placement_for_paragraph(lock, item.paragraph)
         item.placement_id = placement["placement_id"]
@@ -574,6 +584,20 @@ def build(
         # The storyboard carries a real path for ffmpeg; the receipt keeps the
         # logical reference. They are the same bytes, checked above.
         item.image = local.resolve().relative_to(ROOT).as_posix()
+        if card_root is not None:
+            card = card_root / f"{item.placement_id}.png"
+            if not card.is_file():
+                raise BuildRefused(
+                    f"designed card is absent for {item.placement_id}: {card}. "
+                    "A card override must cover every placement; a partial set "
+                    "would silently mix designed and raw frames."
+                )
+            resolved = card.resolve()
+            item.image = (
+                resolved.relative_to(ROOT).as_posix()
+                if resolved.is_relative_to(ROOT) else str(resolved)
+            )
+            designed_cards[item.placement_id] = item.image
 
     # -- materialise the project --------------------------------------------
     for directory in (
@@ -586,9 +610,13 @@ def build(
     local_audio = project / "assets" / "voice" / f"narration{audio.suffix}"
     shutil.copyfile(audio, local_audio)
 
-    caption = project / "assets" / "captions" / f"{out_name}.srt"
-    cues = build_caption_cues(timings, caption_mode)
-    caption.write_text(render_srt(cues), encoding="utf-8")
+    if caption_mode == "none":
+        caption = None
+        cues: List[CaptionCue] = []
+    else:
+        caption = project / "assets" / "captions" / f"{out_name}.srt"
+        cues = build_caption_cues(timings, caption_mode)
+        caption.write_text(render_srt(cues), encoding="utf-8")
 
     baseline = json.loads(BASELINE_STORYBOARD.read_text(encoding="utf-8"))
     storyboard: Dict[str, Any] = {
@@ -599,16 +627,20 @@ def build(
             {
                 "image": item.image,
                 "duration": round(item.duration_s, 3),
-                "source": item.image,
+                "source": item.logical_path,
                 "source_type": "real_screenshot",
                 "narration": item.text,
                 "unit": item.unit_id,
                 "placement": item.placement_id,
+                **(
+                    {"designed_card": designed_cards[item.placement_id]}
+                    if item.placement_id in designed_cards else {}
+                ),
             }
             for item in timings
         ],
         "narration": local_audio.relative_to(ROOT).as_posix(),
-        "subtitle": caption.relative_to(ROOT).as_posix(),
+        "subtitle": caption.relative_to(ROOT).as_posix() if caption else None,
         "engine": "easel",
         "runtime": baseline.get("runtime"),
         "voice_provider": (
@@ -682,6 +714,29 @@ def build(
         "schema": SCHEMA,
         "stage": "NARRATION_V3_SAMPLE_VIDEO",
         "issue": "#34",
+        "skill_route": (
+            {
+                "name": "card-design",
+                "design_system": "Easel/skills/openclaw/card-design/SKILL.md",
+                "renderer": "Easel/skills/shared/scripts/render_card.py",
+                "audit": "Easel/skills/openclaw/card-design/scripts/card_audit.py",
+                "compositor": "scripts/assemble_easel.py (pinned Easel assemble)",
+                "why": (
+                    "text-heavy evidence beats need designed frames with "
+                    "hierarchy, not raw terminal captures; card-design owns that "
+                    "layer and the compositor only places the rendered cards"
+                ),
+            }
+            if designed_cards else
+            {
+                "name": "auto-short-video",
+                "compositor": "scripts/assemble_easel.py (pinned Easel assemble)",
+                "why": (
+                    "raw evidence screenshots on a measured narration timeline; "
+                    "no design layer was requested for this build"
+                ),
+            }
+        ),
         "arm": arm,
         "narration": {
             "path": audio.relative_to(ROOT).as_posix() if audio.is_relative_to(ROOT) else str(audio),
@@ -714,6 +769,7 @@ def build(
             "image_motion": motion,
             "caption_mode": caption_mode,
             "caption_cues": len(cues),
+            "designed_cards": sorted(designed_cards),
         },
         "evidence": {
             "source": "contentops.evidence-lock/v1",
@@ -752,6 +808,12 @@ def build(
                  "of a second"]
                 if caption_mode == "phrase" else []
             ),
+            *(
+                ["designed cards are a presentation layer over the locked "
+                 "screenshots; the receipt keeps each placement's logical evidence "
+                 "path and no generated asset replaces evidence"]
+                if designed_cards else []
+            ),
         ],
     }
     (project / "receipts" / "v3-sample-video.json").write_text(
@@ -772,8 +834,13 @@ def main() -> int:
         help="shot motion; ken-burns delegates to the pinned upstream filter",
     )
     parser.add_argument(
-        "--caption-mode", choices=("sentence", "phrase"), default="sentence",
-        help="one cue per unit, or one cue per clause",
+        "--caption-mode", choices=("sentence", "phrase", "none"), default="sentence",
+        help="one cue per unit, one cue per clause, or no burned captions",
+    )
+    parser.add_argument(
+        "--card-dir", default="",
+        help="directory of designed cards named <placement_id>.png; the evidence "
+             "mapping is unchanged and still recorded",
     )
     args = parser.parse_args()
 
@@ -788,6 +855,7 @@ def main() -> int:
         out_name=args.out_name,
         motion=args.motion,
         caption_mode=args.caption_mode,
+        card_dir=args.card_dir or None,
     )
     print(json.dumps({k: report[k] for k in ("arm", "compose", "qc", "production_ready")},
                      indent=2, ensure_ascii=False))
