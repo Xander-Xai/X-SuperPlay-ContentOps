@@ -39,6 +39,12 @@
     {
       "id": "card_set_matches_dna",
       "ok": true
+    },
+    {
+      "id": "caption_coverage",
+      "ok": true,
+      "cues": 38,
+      "burned": true
     }
   ]
 }

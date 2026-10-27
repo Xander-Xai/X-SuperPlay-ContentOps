@@ -1,12 +1,12 @@
 {
   "schema": "contentops.optimization-report/v1",
   "cycle": "2026-10-27",
-  "signal_count": 9,
-  "candidate_count": 12,
+  "signal_count": 13,
+  "candidate_count": 16,
   "decision_counts": {
     "ADOPT": 1,
-    "BUILD": 1,
-    "EXTEND": 2,
+    "EXTEND": 4,
+    "BUILD": 3,
     "DEFER": 6,
     "REJECT": 2
   },
@@ -48,6 +48,73 @@
       "downgrade_reasons": []
     },
     {
+      "id": "CAND-015",
+      "signal_ids": [
+        "SIG-2026-10-27-010"
+      ],
+      "repo": null,
+      "capability": "1024 narrative order: conflict -> what it is -> web -> verdict",
+      "affected_stage": "body",
+      "impact": 4,
+      "evidence": 4,
+      "effort": 1,
+      "risk": 1,
+      "gpu_required": false,
+      "decision": "EXTEND",
+      "reason": "The what-is-it beat arrived around 30 s; the viewer learned the subject too late",
+      "next_action": "Shipped: beats U05,U01,U06,U08; cards renumbered 01-04",
+      "priority": 10,
+      "effective_decision": "EXTEND",
+      "downgraded": false,
+      "downgrade_reasons": []
+    },
+    {
+      "id": "CAND-013",
+      "signal_ids": [
+        "SIG-2026-10-27-010",
+        "SIG-2026-10-27-011",
+        "SIG-2026-10-27-013"
+      ],
+      "repo": null,
+      "capability": "Visual beat re-plan: split units over 12 s into 2-3 beats (evidence crop, quote, card)",
+      "affected_stage": "body",
+      "impact": 5,
+      "evidence": 5,
+      "effort": 3,
+      "risk": 2,
+      "gpu_required": false,
+      "decision": "BUILD",
+      "reason": "Contact sheets show 25-27 s identical frames on the turn and ending",
+      "next_action": "Retention gate fails at 13.985 s / 26.857 s; split the web and ending cards into 2-3 visual beats",
+      "priority": 10,
+      "effective_decision": "BUILD",
+      "downgraded": false,
+      "downgrade_reasons": []
+    },
+    {
+      "id": "CAND-014",
+      "signal_ids": [
+        "SIG-2026-10-27-011",
+        "SIG-2026-10-27-012",
+        "SIG-2026-10-27-013"
+      ],
+      "repo": null,
+      "capability": "Retention checklist gate before publish",
+      "affected_stage": "review",
+      "impact": 4,
+      "evidence": 4,
+      "effort": 1,
+      "risk": 1,
+      "gpu_required": false,
+      "decision": "BUILD",
+      "reason": "Hook, visual-change interval, caption coverage, cover and CTA are not gated yet",
+      "next_action": "Shipped: check_retention.py writes a WARN gate and updates run-state and publish-checklist",
+      "priority": 10,
+      "effective_decision": "BUILD",
+      "downgraded": false,
+      "downgrade_reasons": []
+    },
+    {
       "id": "CAND-002",
       "signal_ids": [
         "SIG-2026-10-27-008"
@@ -84,7 +151,28 @@
       "gpu_required": false,
       "decision": "EXTEND",
       "reason": "subtitle_ops burn already produced a 20 s 1080x1920 clip in the skill probe",
-      "next_action": "Reserve a caption-safe strip or burn only on the 1024 cut",
+      "next_action": "Shipped: 15 cues (1024) and 38 cues (engineering), burned above the footer",
+      "priority": 7,
+      "effective_decision": "EXTEND",
+      "downgraded": false,
+      "downgrade_reasons": []
+    },
+    {
+      "id": "CAND-016",
+      "signal_ids": [
+        "SIG-2026-10-27-012"
+      ],
+      "repo": null,
+      "capability": "Platform cover and title variants",
+      "affected_stage": "packaging",
+      "impact": 3,
+      "evidence": 3,
+      "effort": 1,
+      "risk": 1,
+      "gpu_required": false,
+      "decision": "EXTEND",
+      "reason": "One 9:16 cover is reused across platforms with different feed ratios",
+      "next_action": "Render a 3:4 Xiaohongshu cover and a 16:9 Bilibili cover",
       "priority": 7,
       "effective_decision": "EXTEND",
       "downgraded": false,

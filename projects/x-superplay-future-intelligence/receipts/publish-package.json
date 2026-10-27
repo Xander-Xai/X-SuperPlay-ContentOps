@@ -35,6 +35,12 @@
     "zhihu": "project://final/future-intelligence.mp4",
     "csdn": "project://final/future-intelligence.mp4"
   },
+  "captions": {
+    "path": "project://script/future-intelligence.srt",
+    "cues": 38,
+    "burned": true,
+    "error": null
+  },
   "duration_s": 106.4,
   "human_review": "PENDING_FOUNDER_REVIEW",
   "publish_status": "NOT_PUBLISHED",

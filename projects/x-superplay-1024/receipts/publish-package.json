@@ -25,6 +25,12 @@
     "douyin": "project://final/1024.mp4",
     "xiaohongshu": "project://final/1024.mp4"
   },
+  "captions": {
+    "path": "project://script/1024.srt",
+    "cues": 15,
+    "burned": true,
+    "error": null
+  },
   "duration_s": 53.767,
   "human_review": "PENDING_FOUNDER_REVIEW",
   "publish_status": "NOT_PUBLISHED",

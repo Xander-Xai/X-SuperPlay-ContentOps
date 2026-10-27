@@ -65,5 +65,9 @@
     "invented numbers",
     "generated evidence substituted for real screenshots",
     "auto-publish without human approval"
-  ]
+  ],
+  "retention": {
+    "max_static_hold_s": 14,
+    "max_hook_s": 4
+  }
 }

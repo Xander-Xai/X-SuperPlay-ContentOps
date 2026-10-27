@@ -1,0 +1,40 @@
+{
+  "schema": "contentops.retention-check/v1",
+  "account": "X超玩·1024",
+  "overall": "WARN",
+  "longest_visual_run_s": 13.985,
+  "caption_cues": 15,
+  "captions_burned": true,
+  "checks": [
+    {
+      "id": "hook_short_enough",
+      "ok": true,
+      "intro_s": 2.5,
+      "max_s": 3.0
+    },
+    {
+      "id": "static_hold",
+      "ok": false,
+      "longest_s": 13.985,
+      "max_s": 10.0,
+      "asset": "outputs/editorial-1024/by-placement/shot_04.png"
+    },
+    {
+      "id": "captions",
+      "ok": true,
+      "burned": true,
+      "cues": 15
+    },
+    {
+      "id": "cover",
+      "ok": true
+    },
+    {
+      "id": "cta",
+      "ok": true
+    }
+  ],
+  "failures": [
+    "static_hold"
+  ]
+}

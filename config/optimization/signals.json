@@ -133,6 +133,77 @@
       "evidence": [
         "projects/x-superplay-1024/receipts/metrics-snapshot.json"
       ]
+    },
+    {
+      "id": "SIG-2026-10-27-010",
+      "source": "PRODUCTION",
+      "captured_at": "2026-10-27",
+      "title": "Visual audit: identical frames hold for 16-30 seconds",
+      "url": "",
+      "metrics": {
+        "1024_web_repeats": 4,
+        "1024_ending_repeats": 3,
+        "engineering_turn_repeats": 5,
+        "engineering_ending_repeats": 4
+      },
+      "observation": "Contact sheets show one card per unit. The turn and ending hold one frame for 25-27 s; captions were absent.",
+      "affected_stage": "body",
+      "evidence": [
+        "visual audit contact sheets 2026-10-27"
+      ]
+    },
+    {
+      "id": "SIG-2026-10-27-011",
+      "source": "X",
+      "captured_at": "2026-10-27",
+      "title": "High-engagement HyperFrames post: motion, transitions, captions, voice",
+      "url": "https://x.com/BTCqzy1/status/2051866228646691321",
+      "metrics": {
+        "likes": 3303,
+        "bookmarks": 3530,
+        "views": 643199
+      },
+      "observation": "The saved workflow is a loop of motion, transitions, captions and voice, not a static card deck.",
+      "affected_stage": "body",
+      "evidence": [
+        "X post 2051866228646691321"
+      ]
+    },
+    {
+      "id": "SIG-2026-10-27-012",
+      "source": "X",
+      "captured_at": "2026-10-27",
+      "title": "Xiaohongshu operator: 10 skills across positioning, topic, writing, visual, review",
+      "url": "https://x.com/kongge_space/status/2090640100828880920",
+      "metrics": {
+        "likes": 1022,
+        "bookmarks": 1375,
+        "views": 298275
+      },
+      "observation": "An operator with three 10k-follower accounts treats visual and review as explicit stages, not afterthoughts.",
+      "affected_stage": "feedback",
+      "evidence": [
+        "X post 2090640100828880920"
+      ]
+    },
+    {
+      "id": "SIG-2026-10-27-013",
+      "source": "PRODUCTION",
+      "captured_at": "2026-10-27",
+      "title": "Retention gate: longest visual run 13.985 s and 26.857 s",
+      "url": "",
+      "metrics": {
+        "1024_longest_s": 13.985,
+        "engineering_longest_s": 26.857,
+        "1024_limit_s": 10,
+        "engineering_limit_s": 14
+      },
+      "observation": "Both account cuts fail static_hold. The web card and the ending card dominate the timeline.",
+      "affected_stage": "body",
+      "evidence": [
+        "projects/x-superplay-1024/receipts/retention-check.json",
+        "projects/x-superplay-future-intelligence/receipts/retention-check.json"
+      ]
     }
   ]
 }

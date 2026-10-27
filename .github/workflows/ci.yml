@@ -235,6 +235,11 @@ jobs:
       - name: Run optimization-layer tests
         run: python tests/test_optimization_layer.py
 
+      # The retention gate: longest identical visual run, hook length, captions,
+      # cover and CTA. It is a warning gate, not a taste score.
+      - name: Run retention-gate tests
+        run: python tests/test_retention.py
+
       - name: Run Windows subprocess tests
         run: python tests/test_windows_subprocess.py
 

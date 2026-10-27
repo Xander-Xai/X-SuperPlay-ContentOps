@@ -48,7 +48,7 @@ def test_one_source_feeds_both_accounts():
 
 def test_1024_is_a_complete_unit_reorder_not_a_mid_sentence_cut():
     units = _receipt(EXPLORE)["source"]["units"]
-    assert units == ["U05", "U06", "U01", "U08"]
+    assert units == ["U05", "U01", "U06", "U08"]
     assert len(units) == len(set(units)), "a unit was used twice"
     assert units[0].startswith("U"), "must open on a complete unit"
     assert set(units) <= {f"U{i:02d}" for i in range(1, 9)}

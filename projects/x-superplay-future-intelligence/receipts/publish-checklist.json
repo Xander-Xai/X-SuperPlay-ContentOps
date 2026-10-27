@@ -30,6 +30,15 @@
       "ok": true
     },
     {
+      "id": "caption_cues",
+      "ok": true,
+      "value": 38
+    },
+    {
+      "id": "captions_burned",
+      "ok": true
+    },
+    {
       "id": "duration_in_account_range",
       "ok": true,
       "value_s": 106.4,
@@ -61,6 +70,14 @@
       "id": "real_url",
       "ok": false,
       "status": "NOT_PUBLISHED"
+    },
+    {
+      "id": "retention",
+      "ok": false,
+      "status": "WARN",
+      "failures": [
+        "static_hold"
+      ]
     }
   ],
   "publish_status": "NOT_PUBLISHED"

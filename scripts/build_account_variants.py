@@ -33,6 +33,7 @@ from contentops.media.qc_canonical import (  # noqa: E402
     canonical_qc_report,
     render_canonical_qc_markdown,
 )
+from build_v3_sample_video import split_phrases, srt_timestamp  # noqa: E402
 
 FULL_RECEIPT = (ROOT / "projects" / "easel-enhanced-golden" / "v3-full-editorial"
                 / "receipts" / "v3-sample-video.json")
@@ -42,6 +43,13 @@ NARRATION = ROOT / "outputs" / "founder-v3-full" / "narration.wav"
 INTRO = ROOT / "outputs" / "editorial" / "intro-editorial.mp4"
 OUTRO = ROOT / "outputs" / "editorial" / "outro-editorial.mp4"
 SHARED = ROOT / ".runtime" / "easel" / "skills" / "shared" / "scripts"
+
+#: libass resolves Fontsize/MarginV in a 384x288 script space, not pixels.
+#: Fontsize 7 and MarginV 18 render ~47 px and ~120 px on a 1080x1920 frame.
+CAPTION_STYLE = (
+    "Fontsize=7,MarginV=18,Outline=1,Shadow=0,"
+    "BorderStyle=3,BackColour=&H99000000,Alignment=2"
+)
 
 def load_specs() -> Dict[str, Dict[str, Any]]:
     """Account DNA is the gene: the workflow reads it, it is not hardcoded here."""
@@ -126,10 +134,54 @@ def _write_json(path: Path, payload: Dict[str, Any]) -> None:
                     encoding="utf-8")
 
 
+def build_captions(storyboard: Dict[str, Any], out_path: Path, offset_s: float = 0.0) -> int:
+    """Write a phrase-level SRT that follows the storyboard's unit clock.
+
+    A unit may be split into a motion segment plus a static card; both shots
+    share the unit, so the caption spans their sum. Durations are allocated by
+    character count so the text does not lag the narration.
+    """
+    shots = storyboard["shots"]
+    order = list(dict.fromkeys(shot["unit"] for shot in shots))
+    # The account cut begins with a 2.5 s intro; with a 0.5 s crossfade the main
+    # narration starts at intro_duration - 0.5. Captions must share that clock.
+    cursor = offset_s
+    cues: List[tuple[float, float, str]] = []
+    for unit_id in order:
+        unit_shots = [shot for shot in shots if shot["unit"] == unit_id]
+        duration = sum(float(shot["duration"]) for shot in unit_shots)
+        text = str(unit_shots[0].get("narration") or "").strip()
+        if not text:
+            cursor += duration
+            continue
+        phrases = split_phrases(text)
+        weights = [max(1, len(phrase)) for phrase in phrases]
+        total_weight = sum(weights)
+        unit_start = cursor
+        for index, phrase in enumerate(phrases):
+            if index == len(phrases) - 1:
+                cue_duration = unit_start + duration - cursor
+            else:
+                cue_duration = duration * weights[index] / total_weight
+            cues.append((cursor, max(0.2, cue_duration), phrase))
+            cursor += cue_duration
+    lines: List[str] = []
+    for index, (start, duration, text) in enumerate(cues, 1):
+        lines.append(
+            f"{index}" + chr(10) + srt_timestamp(start) + " --> "
+            + srt_timestamp(start + duration) + chr(10) + text + chr(10)
+        )
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(chr(10).join(lines), encoding="utf-8")
+    return len(cues)
+
+
 def write_loop_artifacts(project: Path, spec: Dict[str, Any], *,
                          qc_overall: str, duration_s: float, cover_exists: bool,
                          storyboard: Dict[str, Any],
-                         publish: Dict[str, Any]) -> Dict[str, Any]:
+                         publish: Dict[str, Any],
+                         caption_cues: int = 0,
+                         captions_burned: bool = False) -> Dict[str, Any]:
     """Record the stages reached and the ones that are honestly blocked.
 
     A closed loop is not a claim that publishing happened. Claim-ledger absence,
@@ -161,6 +213,9 @@ def write_loop_artifacts(project: Path, spec: Dict[str, Any], *,
         {"id": "cta_present", "ok": bool(spec["cta"]), "value": spec["cta"]},
         {"id": "card_set_matches_dna",
          "ok": bool(images) and all(image.startswith(spec["card_dir"]) for image in images)},
+        {"id": "caption_coverage",
+         "ok": caption_cues > 0 and captions_burned,
+         "cues": caption_cues, "burned": captions_burned},
     ]
     editorial_overall = "PASS" if all(check["ok"] for check in editorial_checks) else "WARN"
     _write_json(receipts / "editorial-qc.json", {
@@ -180,6 +235,10 @@ def write_loop_artifacts(project: Path, spec: Dict[str, Any], *,
         {"name": "AUDIO_READY", "status": "PASS",
          "evidence": "project://work/audio/narration-cut.wav"},
         {"name": "VISUALS_READY", "status": "PASS", "evidence": spec["card_dir"]},
+        {"name": "CAPTIONS_READY",
+         "status": "PASS" if caption_cues > 0 and captions_burned else "WARN",
+         "evidence": f"project://script/{spec['out_name']}.srt",
+         "cues": caption_cues, "burned": captions_burned},
         {"name": "COMPOSED", "status": "PASS",
          "evidence": f"project://final/{spec['out_name']}.mp4"},
         {"name": "EDITORIAL_QC", "status": editorial_overall,
@@ -219,6 +278,8 @@ def write_loop_artifacts(project: Path, spec: Dict[str, Any], *,
             {"id": "hashtags", "ok": len(spec["hashtags"]) >= 3,
              "value": len(spec["hashtags"])},
             {"id": "cover_exists", "ok": cover_exists},
+            {"id": "caption_cues", "ok": caption_cues > 0, "value": caption_cues},
+            {"id": "captions_burned", "ok": captions_burned},
             {"id": "duration_in_account_range", "ok": low <= duration_s <= high,
              "value_s": round(duration_s, 3), "range_s": [low, high]},
             {"id": "platform_asset_map", "ok": set(asset_map) == set(spec["platforms"]),
@@ -385,6 +446,24 @@ def build_variant(slug: str, spec: Dict[str, Any], units: Dict[str, Dict[str, An
     if attached["rc"] != 0 or not account_out.is_file():
         raise SystemExit(f"{slug}: intro/outro attach failed: {attached['stderr']}")
 
+    caption_path = project / "script" / f"{spec['out_name']}.srt"
+    intro_offset = max(0.0, probe_duration(intro_path) - 0.5)
+    caption_cues = build_captions(storyboard, caption_path, offset_s=intro_offset)
+    captions_burned = False
+    caption_error: Optional[str] = None
+    if caption_cues:
+        captioned = project / "final" / f"{spec['out_name']}-captioned.mp4"
+        burn = _run([
+            sys.executable, str(SHARED / "subtitle_ops.py"), "burn",
+            "-i", str(account_out), "--sub", str(caption_path),
+            "-o", str(captioned), "--force-style", CAPTION_STYLE,
+        ])
+        if burn["rc"] == 0 and captioned.is_file():
+            shutil.move(str(captioned), str(account_out))
+            captions_burned = True
+        else:
+            caption_error = burn["stderr"][-300:]
+
     cover = project / "final" / "cover.png"
     cover_result = _run([
         sys.executable, str(SHARED / "video_ops.py"), "frame",
@@ -448,6 +527,12 @@ def build_variant(slug: str, spec: Dict[str, Any], units: Dict[str, Dict[str, An
         "cover": f"project://final/cover.png" if cover else None,
         "derived_assets": derived,
         "platform_asset_map": asset_map,
+        "captions": {
+            "path": f"project://script/{spec['out_name']}.srt",
+            "cues": caption_cues,
+            "burned": captions_burned,
+            "error": caption_error,
+        },
         "duration_s": round(probe_duration(account_out), 3),
         "human_review": "PENDING_FOUNDER_REVIEW",
         "publish_status": "NOT_PUBLISHED",
@@ -470,6 +555,12 @@ def build_variant(slug: str, spec: Dict[str, Any], units: Dict[str, Dict[str, An
         },
         "motion_segments": motion_used,
         "motion_fallbacks": motion_fallbacks,
+        "captions": {
+            "path": f"project://script/{spec['out_name']}.srt",
+            "cues": caption_cues,
+            "burned": captions_burned,
+            "error": caption_error,
+        },
         "source": {
             "narration": NARRATION.relative_to(ROOT).as_posix(),
             "units": spec["units"],
@@ -483,6 +574,12 @@ def build_variant(slug: str, spec: Dict[str, Any], units: Dict[str, Dict[str, An
         "editorial_qc": "project://receipts/editorial-qc.json",
         "derived_assets": derived,
         "platform_asset_map": asset_map,
+        "captions": {
+            "path": f"project://script/{spec['out_name']}.srt",
+            "cues": caption_cues,
+            "burned": captions_burned,
+            "error": caption_error,
+        },
         "publish_package": f"project://receipts/publish-package.json",
         "skill_route": {
             "audio_edit": "audio-editing (audio_ops.py trim/concat)",
@@ -506,6 +603,8 @@ def build_variant(slug: str, spec: Dict[str, Any], units: Dict[str, Dict[str, An
         cover_exists=cover is not None,
         storyboard=storyboard,
         publish=publish,
+        caption_cues=caption_cues,
+        captions_burned=captions_burned,
     )
     return {
         "slug": slug,

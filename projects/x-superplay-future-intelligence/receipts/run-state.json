@@ -47,6 +47,13 @@
       "evidence": "outputs/editorial/by-placement"
     },
     {
+      "name": "CAPTIONS_READY",
+      "status": "PASS",
+      "evidence": "project://script/future-intelligence.srt",
+      "cues": 38,
+      "burned": true
+    },
+    {
       "name": "COMPOSED",
       "status": "PASS",
       "evidence": "project://final/future-intelligence.mp4"
@@ -55,6 +62,14 @@
       "name": "EDITORIAL_QC",
       "status": "PASS",
       "evidence": "project://receipts/editorial-qc.json"
+    },
+    {
+      "name": "RETENTION",
+      "status": "WARN",
+      "evidence": "project://receipts/retention-check.json",
+      "failures": [
+        "static_hold"
+      ]
     },
     {
       "name": "TECHNICAL_QC",

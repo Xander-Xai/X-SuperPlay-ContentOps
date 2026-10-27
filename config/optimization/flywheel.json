@@ -34,7 +34,7 @@
     },
     {
       "stage": "EXPERIMENT",
-      "summary": "Two 2.5 s cold opens plus two body count-ups (982 and 6 FAIL); the affected units split into a motion segment and a static remainder.",
+      "summary": "Cold opens, body count-ups, phrase captions, a 1024 re-order and a retention gate were added; the next split targets the web and ending cards.",
       "evidence": [
         "projects/x-superplay-1024/motion/index.html",
         "projects/x-superplay-future-intelligence/motion/index.html"
@@ -42,7 +42,7 @@
     },
     {
       "stage": "RESULT",
-      "summary": "Both count-up clips rendered; 1024 has 5 shots and the engineering cut 9; EDITORIAL_QC PASS; durations unchanged; TECHNICAL_QC WARN as expected.",
+      "summary": "Captions burned (15 and 38 cues); 1024 order now conflict -> what -> web -> verdict; retention gate measures 13.985 s and 26.857 s longest visual runs and fails static_hold.",
       "evidence": [
         "projects/x-superplay-1024/receipts/variant-receipt.json",
         "projects/x-superplay-future-intelligence/receipts/variant-receipt.json"
@@ -50,7 +50,7 @@
     },
     {
       "stage": "SHIP",
-      "summary": "Cold opens shipped in 1437b2a; body motion and the optimization layer ship in this pass.",
+      "summary": "Cold opens and body count-ups shipped; captions, 1024 order and the retention gate ship in this pass.",
       "evidence": [
         "git 1437b2a"
       ]

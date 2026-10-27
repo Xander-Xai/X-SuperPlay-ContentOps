@@ -27,8 +27,8 @@
       "status": "PASS",
       "evidence": [
         "U05",
-        "U06",
         "U01",
+        "U06",
         "U08"
       ]
     },
@@ -43,6 +43,13 @@
       "evidence": "outputs/editorial-1024/by-placement"
     },
     {
+      "name": "CAPTIONS_READY",
+      "status": "PASS",
+      "evidence": "project://script/1024.srt",
+      "cues": 15,
+      "burned": true
+    },
+    {
       "name": "COMPOSED",
       "status": "PASS",
       "evidence": "project://final/1024.mp4"
@@ -51,6 +58,14 @@
       "name": "EDITORIAL_QC",
       "status": "PASS",
       "evidence": "project://receipts/editorial-qc.json"
+    },
+    {
+      "name": "RETENTION",
+      "status": "WARN",
+      "evidence": "project://receipts/retention-check.json",
+      "failures": [
+        "static_hold"
+      ]
     },
     {
       "name": "TECHNICAL_QC",

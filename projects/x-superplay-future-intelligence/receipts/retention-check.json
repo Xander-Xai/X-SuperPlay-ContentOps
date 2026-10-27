@@ -1,0 +1,40 @@
+{
+  "schema": "contentops.retention-check/v1",
+  "account": "X超玩·未来智能",
+  "overall": "WARN",
+  "longest_visual_run_s": 26.857,
+  "caption_cues": 38,
+  "captions_burned": true,
+  "checks": [
+    {
+      "id": "hook_short_enough",
+      "ok": true,
+      "intro_s": 2.5,
+      "max_s": 4.0
+    },
+    {
+      "id": "static_hold",
+      "ok": false,
+      "longest_s": 26.857,
+      "max_s": 14.0,
+      "asset": "outputs/editorial/by-placement/shot_05.png"
+    },
+    {
+      "id": "captions",
+      "ok": true,
+      "burned": true,
+      "cues": 38
+    },
+    {
+      "id": "cover",
+      "ok": true
+    },
+    {
+      "id": "cta",
+      "ok": true
+    }
+  ],
+  "failures": [
+    "static_hold"
+  ]
+}

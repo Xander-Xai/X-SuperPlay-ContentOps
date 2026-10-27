@@ -17,12 +17,18 @@
     }
   },
   "motion_fallbacks": {},
+  "captions": {
+    "path": "project://script/1024.srt",
+    "cues": 15,
+    "burned": true,
+    "error": null
+  },
   "source": {
     "narration": "outputs/founder-v3-full/narration.wav",
     "units": [
       "U05",
-      "U06",
       "U01",
+      "U06",
       "U08"
     ],
     "cards": [

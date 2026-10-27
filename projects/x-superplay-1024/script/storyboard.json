@@ -14,6 +14,16 @@
       "designed_card": "outputs/editorial-1024/by-placement/shot_03.png"
     },
     {
+      "image": "outputs/editorial-1024/by-placement/shot_00.png",
+      "duration": 8.072,
+      "source": "project://sources/screenshots/10-easel-doctor.png",
+      "source_type": "real_screenshot",
+      "narration": "装了 Easel 之后，最先要回答的只有一个问题：它到底跑不跑得起来？",
+      "unit": "U01",
+      "placement": "shot_00",
+      "designed_card": "outputs/editorial-1024/by-placement/shot_00.png"
+    },
+    {
       "video": "outputs/account-variants/6fail-countup.mp4",
       "duration": 3.0,
       "source": "project://sources/screenshots/15-easel-doctor-fails.png",
@@ -32,16 +42,6 @@
       "unit": "U06",
       "placement": "shot_04",
       "designed_card": "outputs/editorial-1024/by-placement/shot_04.png"
-    },
-    {
-      "image": "outputs/editorial-1024/by-placement/shot_00.png",
-      "duration": 8.072,
-      "source": "project://sources/screenshots/10-easel-doctor.png",
-      "source_type": "real_screenshot",
-      "narration": "装了 Easel 之后，最先要回答的只有一个问题：它到底跑不跑得起来？",
-      "unit": "U01",
-      "placement": "shot_00",
-      "designed_card": "outputs/editorial-1024/by-placement/shot_00.png"
     },
     {
       "image": "outputs/editorial-1024/by-placement/shot_05.png",
