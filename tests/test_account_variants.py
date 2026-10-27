@@ -159,6 +159,8 @@ def test_accounts_have_distinct_motion_intros():
     assert explore["visual"]["motion_intro"] != build["visual"]["motion_intro"]
     assert (EXPLORE / "motion" / "index.html").is_file()
     assert (BUILD / "motion" / "index.html").is_file()
+    assert _receipt(EXPLORE)["intro"]["used"] == explore["visual"]["motion_intro"]
+    assert _receipt(BUILD)["intro"]["used"] == build["visual"]["motion_intro"]
 
 
 def main() -> int:

@@ -340,10 +340,14 @@ def build_variant(slug: str, spec: Dict[str, Any], units: Dict[str, Dict[str, An
         raise SystemExit(f"{slug}: compose blocked: {composed}")
 
     account_out = project / "final" / f"{spec['out_name']}.mp4"
+    intro_path = ROOT / spec["intro"]
+    intro_fallback = not intro_path.is_file()
+    if intro_fallback:
+        intro_path = INTRO
     attached = _run([
         sys.executable, str(SHARED / "intro_outro.py"), "attach",
         "--main", str(project / "final" / "main.mp4"),
-        "--intro", str(ROOT / spec["intro"]), "--outro", str(OUTRO),
+        "--intro", str(intro_path), "--outro", str(OUTRO),
         "--transition", "fade", "--trans-duration", "0.5",
         "-o", str(account_out),
     ])
@@ -428,6 +432,11 @@ def build_variant(slug: str, spec: Dict[str, Any], units: Dict[str, Dict[str, An
         "account_dna": spec["dna"],
         "audience_cta": spec["cta"],
         "gpu_required": spec["gpu_required"],
+        "intro": {
+            "requested": spec["intro"],
+            "used": intro_path.relative_to(ROOT).as_posix(),
+            "fallback": intro_fallback,
+        },
         "source": {
             "narration": NARRATION.relative_to(ROOT).as_posix(),
             "units": spec["units"],
