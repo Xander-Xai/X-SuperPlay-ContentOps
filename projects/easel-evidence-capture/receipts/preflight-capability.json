@@ -1,0 +1,118 @@
+{
+  "schema": "contentops.preflight-capability/v1",
+  "recorded_at": "2026-10-27T10:51:38Z",
+  "branch": "feat/34-narration-v3-creator-director",
+  "base_revision": "8ce5e198a11f637b2673b00594ec6c3c589db317",
+  "design_spec": {
+    "path": "docs/superpowers/specs/2026-10-27-evidence-led-video-v2-design.md",
+    "git_blob_sha": "0401b2d178b2c98941096cab2e0cd5eee5060e0a",
+    "status": "Founder-approved design baseline"
+  },
+  "easel_pin": {
+    "repo": "https://github.com/ZJU-REAL/Easel.git",
+    "tag": "v0.2.1",
+    "commit": "3fe2d9904c1619281ef57f81d9ee0b7854998399"
+  },
+  "output_path_capability": {
+    "status": "PROVEN",
+    "question": "Can the pinned upstream assembler write to a ContentOps-owned path outside <easel>/outputs?",
+    "evidence": [
+      "upstream auto-short-video/scripts/assemble.py:361 does `out = Path(args.output); out.parent.mkdir(parents=True, exist_ok=True)` with no directory validation",
+      "the argparse help at line 627 describes outputs/<topic>/ as a convention, not an enforced check",
+      "scripts/assemble_easel.py now passes -o <project>/work/<tmp>/upstream.mp4 and sets TEMP/TMP/TMPDIR to <project>/work",
+      "tests/test_windows_paths.py::test_easel_adapter_keeps_upstream_outputs_and_temp_files_in_project_work passes"
+    ],
+    "conclusion": "Adapter-only change is sufficient; no upstream runtime write is required and .runtime/easel stays untouched."
+  },
+  "capture_backend_capability": {
+    "status": "PROVEN_WITH_CONSTRAINTS",
+    "backend": "ffmpeg gdigrab, bounded to a Win32 window rectangle",
+    "ffmpeg_version": "8.1.1-essentials_build-www.gyan.dev",
+    "unavailable": [
+      "gdigrab -title is not compiled into this build; exact window-title capture is impossible"
+    ],
+    "method": [
+      "enumerate visible top-level windows and match the capture window title suffix",
+      "GetWindowRect for the target window",
+      "ShowWindow(SW_RESTORE) + SetWindowPos(HWND_TOPMOST) + SetForegroundWindow",
+      "gdigrab -offset_x/-offset_y/-video_size limited to that rectangle, -draw_mouse 0"
+    ],
+    "proof_artifact": "agent temp root: 2026-10-27-terminal-capture-proof/window-rect.mp4 (local only, not committed)",
+    "proof_result": {
+      "rect": "40,40,1100x700",
+      "video_bytes": 15388,
+      "frame_bytes": 41488,
+      "frame_verified": true,
+      "frame_contents": "target terminal only; 'CONTENTOPS CAPTURE PROOF / read-only capability test / revision 8ce5e19'; no desktop content"
+    },
+    "constraints": [
+      "capture is a desktop rectangle, not an occluded-window compositor; the window must stay topmost and unmoved",
+      "the recorder must re-read GetWindowRect after stopping and fail the capture if the rectangle changed",
+      "elevated terminal titles carry an '管理员: ' prefix; matching must use a suffix, not equality",
+      "audio must be disabled explicitly (gdigrab captures video only, but the driver must not add dshow audio)"
+    ],
+    "desktop_wide_capture": "PROHIBITED"
+  },
+  "skill_routes": [
+    {
+      "deliverable": "real terminal evidence capture",
+      "name": null,
+      "why": "python scripts/skill_route.py --match returns no skill; ContentOps must own the capture + proof contract"
+    },
+    {
+      "deliverable": "final-cut captions",
+      "name": "auto-subtitle",
+      "script": ".runtime/easel/skills/openclaw/auto-subtitle/SKILL.md",
+      "why": "owns ASR and burn workflow; ASR is a detector only, never approval. ASS timing remains ContentOps-owned because the adapter must emit centiseconds and refuse silent truncation."
+    },
+    {
+      "deliverable": "video composition",
+      "name": "auto-short-video",
+      "script": ".runtime/easel/skills/openclaw/auto-short-video/scripts/assemble.py",
+      "why": "owns the upstream storyboard composition path; ContentOps only orchestrates via scripts/assemble_easel.py"
+    },
+    {
+      "deliverable": "xiaohongshu 1080x1440 cover",
+      "name": "card-xiaohongshu",
+      "script": ".runtime/easel/skills/openclaw/card-xiaohongshu/SKILL.md",
+      "why": "renders 1080x1440 cards; cover is the first card of the set"
+    },
+    {
+      "deliverable": "bilibili 1600x900 cover",
+      "name": "card-quote",
+      "script": ".runtime/easel/skills/openclaw/card-quote/SKILL.md",
+      "why": "renders 1600x900 hero/data cards for 16:9 platforms"
+    },
+    {
+      "deliverable": "card visual system",
+      "name": "card-design",
+      "script": ".runtime/easel/skills/openclaw/card-design/SKILL.md",
+      "why": "design system and density gate; both covers must pass card_audit.py"
+    },
+    {
+      "deliverable": "aspect conversion",
+      "name": "video-reframe",
+      "script": ".runtime/easel/skills/openclaw/video-reframe/SKILL.md",
+      "why": "approved fallback transform only; never the mechanism that makes the two cuts distinct"
+    }
+  ],
+  "declared_policy": {
+    "caption_timing_tolerance_ms": 200,
+    "caption_extra_tolerance": "at most one final render frame",
+    "max_h3_jobs_this_rebuild": 1,
+    "h3_minimum_clip_seconds": 4,
+    "generated_visible_duration_ceiling_ratio": 0.10,
+    "real_source_duration_floor_ratio": 0.70,
+    "bgm": {
+      "role": "optional_bgm",
+      "status": "OMITTED_BY_POLICY",
+      "reason": "DASHSCOPE_API_KEY unavailable; video_ops loudness regression prohibited"
+    }
+  },
+  "existing_asset_audit": {
+    "projects/easel-enhanced-golden/v3-editorial/": "UNTRACKED, user-owned; not read, not reused, not modified",
+    "projects/easel-enhanced-golden/v3-sample-cards/": "UNTRACKED, user-owned; not read, not reused, not modified",
+    "conclusion": "V2 packages must not import branch-local v3 sample assets as evidence."
+  },
+  "blockers": []
+}

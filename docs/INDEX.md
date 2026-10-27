@@ -31,6 +31,10 @@
 - [M4.5-MEDIA-CONVERGENCE-PLAN.md](M4.5-MEDIA-CONVERGENCE-PLAN.md) — M4.5 media convergence (Issue #27) — **implemented**
 - [ENHANCED-GOLDEN-PLAN.md](ENHANCED-GOLDEN-PLAN.md) — Enhanced Golden A/B/C/D — **next executable phase**
 
+## Active Design Specs
+
+- [superpowers/specs/2026-10-27-evidence-led-video-v2-design.md](superpowers/specs/2026-10-27-evidence-led-video-v2-design.md) — Evidence-led two-cut rebuild and quality gates
+
 ## Governance
 
 - [DEVELOPMENT-STANDARD.md](DEVELOPMENT-STANDARD.md) — Development rules

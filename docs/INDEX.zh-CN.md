@@ -36,6 +36,10 @@ translation_status: synced
 - [M4-H3-PLAN.md](M4-H3-PLAN.md) — M4 MiniMax H3 视频（Issue #22）—— **已实现**
 - [M4.5-MEDIA-CONVERGENCE-PLAN.md](M4.5-MEDIA-CONVERGENCE-PLAN.md) — M4.5 媒体收敛（Issue #27）—— **已实现**
 
+## 当前设计规格
+
+- [superpowers/specs/2026-10-27-evidence-led-video-v2-design.md](superpowers/specs/2026-10-27-evidence-led-video-v2-design.md) — 证据优先双版本重制与质量门
+
 ## 治理
 
 - [DEVELOPMENT-STANDARD.md](DEVELOPMENT-STANDARD.md) — 开发规则
