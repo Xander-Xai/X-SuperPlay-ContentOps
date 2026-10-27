@@ -233,3 +233,27 @@ Listen blind, then read the key:
 
 ASR and CI passing are not naturalness verdicts; `production_ready` stays
 `false` until the Founder approves.
+
+## 12. Narration v3 sample video (the narration -> video bridge)
+
+`scripts/build_v3_sample_video.py` turns one already-generated v3 candidate into
+a watchable video against the locked evidence. **It makes no provider call.**
+
+```powershell
+python scripts\build_v3_sample_video.py --arm E
+python scripts\build_v3_sample_video.py --arm D --out-name v3-sample-D
+python scripts\build_v3_sample_video.py --arm E --audio outputs\founder-v3-sample\candidate-3.wav
+```
+
+- `--arm` resolves the candidate through the sample receipt's `listening_key`;
+  the file must hash to that arm's `audio.sha256`, or the build refuses.
+- unit -> evidence placement comes from the creator script's
+  `source_paragraphs` and the evidence lock. No generated asset is used.
+- per-unit durations are measured from the audio. An internal boundary is the
+  detected silence whose midpoint is nearest the character-proportional
+  expectation; the method is recorded per boundary in the receipt.
+- it is a three-unit excerpt (U01, U03, U05) and the candidate audio lives under
+  gitignored `outputs/`, so the build is host-local by design.
+- output: `projects/easel-enhanced-golden/v3-sample-video/final/v3-sample.mp4`,
+  `receipts/v3-sample-video.json`, `receipts/qc-report-v3-sample.{json,md}`.
+  `production_ready` stays `false`.

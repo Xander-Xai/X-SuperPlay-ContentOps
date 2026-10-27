@@ -1,0 +1,60 @@
+{
+  "size": "1080x1920",
+  "image_motion": "static",
+  "pad_mode": "trim",
+  "shots": [
+    {
+      "image": "projects/easel-review/sources/screenshots/10-easel-doctor.png",
+      "duration": 6.584,
+      "source": "projects/easel-review/sources/screenshots/10-easel-doctor.png",
+      "source_type": "real_screenshot",
+      "narration": "装了 Easel 之后，最先要回答的只有一个问题：它到底跑不跑得起来？",
+      "unit": "U01",
+      "placement": "shot_00"
+    },
+    {
+      "image": "projects/easel-review/sources/screenshots/12-easel-version-evidence.png",
+      "duration": 9.679,
+      "source": "projects/easel-review/sources/screenshots/12-easel-version-evidence.png",
+      "source_type": "real_screenshot",
+      "narration": "版本我锁在 v0.2.1。982 个文件，逐个比对过哈希，和上游 tag 完全一致。",
+      "unit": "U03",
+      "placement": "shot_01"
+    },
+    {
+      "image": "projects/easel-review/sources/screenshots/11-easel-ping.png",
+      "duration": 10.323,
+      "source": "projects/easel-review/sources/screenshots/11-easel-ping.png",
+      "source_type": "real_screenshot",
+      "narration": "但有个坑：网关健康检查探的是写死的默认端口，和 Easel 实际网关端口对不上——那一行，是红的。",
+      "unit": "U05",
+      "placement": "shot_03"
+    }
+  ],
+  "narration": "projects/easel-enhanced-golden/v3-sample-video/assets/voice/narration.wav",
+  "subtitle": "projects/easel-enhanced-golden/v3-sample-video/assets/captions/v3-sample.srt",
+  "engine": "easel",
+  "runtime": {
+    "repo": "ZJU-REAL/Easel",
+    "release": "v0.2.1",
+    "commit": "3fe2d9904c1619281ef57f81d9ee0b7854998399",
+    "acquisition": "release_archive",
+    "verification": "recorded"
+  },
+  "voice_provider": "minimax_m_plan/speech-2.8-hd (v3 arm E)",
+  "generated_visuals": {
+    "count": 0,
+    "policy": "real_assets_only"
+  },
+  "derived_from": {
+    "creator_script": "1517c2d7c8e6ebe535cc23162e6b002ea5958bec6c18e0d867f6fb193d8db027",
+    "director_plan": "8c7e3f9e86f327407d935d116574caf0c31d2ab3f95c7e2be27e458a6472f262",
+    "narration_sha256": "7001c90ba2f4213f283b8d1345a154e9cf37fc339e42d793aa2b42fe7167c982",
+    "sample_units": [
+      "U01",
+      "U03",
+      "U05"
+    ]
+  },
+  "timing_policy": "per-unit durations measured from the candidate audio; internal boundaries are silence midpoints nearest the character-proportional expectation, with the method recorded per boundary in the receipt"
+}

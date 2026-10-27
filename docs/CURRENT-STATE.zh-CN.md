@@ -499,3 +499,33 @@ v2 轮**未通过 Founder 听感验收**（情绪与节奏机械）。只读诊�
 | 用量 | 4 次调用、676 计费字符 / 上限 1200；全部 `M_PLAN_ONLY_VERIFIED`；付费余额零变动；无重新克隆/充值/上传 |
 | 机器事实 | 同一文本：克隆音色 28.74 秒 vs 预置音色 22.56 秒；E 六处有意停顿 vs D 九处；三者技术 QC 全部通过 |
 | 评审状态 | `production_ready: false`，`human_review: PENDING_FOUNDER_REVIEW`；盲听 + `listening-review-v3.md` 是唯一验收门 |
+
+## 旁白 v3 样片视频（Issue #34）—— 2026-10-27 已构建，等待 Founder 评审
+
+D/E/F 阶段此前止步于音频。`scripts/build_v3_sample_video.py` 现在把已有候选接到
+视频，**零 provider 调用**。
+
+| 属性 | 值 |
+|---|---|
+| 渲染臂 | E（`candidate-3.wav`，26.585 秒） |
+| 单元 → 证据 | U01 → `shot_00`（doctor）· U03 → `shot_01`（版本证据）· U05 → `shot_03`（ping/网关） |
+| 时长 | 6.584 + 9.679 + 10.323 = 26.585 秒；U01/U03 边界取自检测到的静音 |
+| 产物 | `project://final/v3-sample.mp4` —— h264 / 1080x1920 / aac，26.6 秒 |
+| 凭证 | `receipts/v3-sample-video.json`、`receipts/qc-report-v3-sample.{json,md}` |
+| QC | **WARN** —— 时长低于 30 秒；`real_evidence_present` 只扫项目目录，读数为 0 |
+| Provider 调用 | 语音 0 / 图像 0 / 视频 0；额度未动 |
+| 评审状态 | `production_ready: false`，`human_review: PENDING_FOUNDER_REVIEW` |
+
+这是三单元节选，不是完整八单元脚本；候选音频在 gitignored 的 `outputs/` 下，
+因此按设计只能在生成过它的机器上构建。完整 v3 旁白（4 个合成组、约 466 字符）
+仍未生成。
+
+## 字幕烧录时间轴缺陷 —— 2026-10-27 已修复
+
+`assemble_easel._srt_to_ass` 把 ASS 时间戳写成 `H:MM:SS.mmm`，而 ASS 规范是
+`H:MM:SS.cc`（厘秒）。libass 把 `.584` 读成 584 厘秒，导致每条字幕被拉长约十倍：
+本应在 6.584 秒结束的字幕一直显示到 11.84 秒。`qc_video` 只检查字幕“是否存在”，
+所以这个不同步在多次全绿运行中一直存在，最终通过对真实渲染逐帧抽图才发现。
+
+现已改为厘秒，并以 `tests/test_subtitle_timing.py` 作为回归。**此提交之前的渲染
+仍带旧的不同步**，包括 A/B 变体；在对其做任何字幕同步声明之前需要重新烧录。

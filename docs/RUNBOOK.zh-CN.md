@@ -138,3 +138,26 @@ python scripts\run_creator_sample.py --summary-only   # 仅重新渲染 md 凭�
 - 先按六项标准打分再揭晓：`projects/easel-enhanced-golden/review/listening-review-v3.md`。
 
 ASR 与 CI 通过不是自然度结论；在 Founder 批准前 `production_ready` 保持 `false`。
+
+## 11. 旁白 v3 样片视频（旁白 → 视频桥接）
+
+`scripts/build_v3_sample_video.py` 把一个已生成的 v3 候选渲染成可观看的视频，
+证据仍是锁定素材。**不产生任何 provider 调用。**
+
+```powershell
+python scripts\build_v3_sample_video.py --arm E
+python scripts\build_v3_sample_video.py --arm D --out-name v3-sample-D
+python scripts\build_v3_sample_video.py --arm E --audio outputs\founder-v3-sample\candidate-3.wav
+```
+
+- `--arm` 通过样本凭证的 `listening_key` 解析候选；文件必须与该臂的
+  `audio.sha256` 一致，否则拒绝构建。
+- 单元 → 证据位置来自口播稿的 `source_paragraphs` 与 evidence lock；不使用任何
+  生成素材。
+- 逐单元时长从音频实测。内部边界取距离“按字符数比例预期”最近的静音中点；
+  每个边界的方法写入凭证。
+- 这是三单元节选（U01、U03、U05），候选音频位于 gitignored 的 `outputs/`，
+  因此按设计只能在生成过它的机器上构建。
+- 产物：`projects/easel-enhanced-golden/v3-sample-video/final/v3-sample.mp4`、
+  `receipts/v3-sample-video.json`、`receipts/qc-report-v3-sample.{json,md}`。
+  `production_ready` 保持 `false`。

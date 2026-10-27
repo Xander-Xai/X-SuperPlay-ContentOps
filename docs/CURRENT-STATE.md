@@ -380,3 +380,38 @@ the design decision is `adr/ADR-009-narration-v3-creator-director.md`.
 | Provider usage | 4 calls, 676 billable of the 1200 cap; all `M_PLAN_ONLY_VERIFIED`; no paid-fund movement; no re-clone/top-up/upload |
 | Machine facts | same text: clone 28.74 s vs preset 22.56 s; E six intentional pauses vs D nine; technical QC approved for all three |
 | Review state | `production_ready: false`, `human_review: PENDING_FOUNDER_REVIEW`; blind listening with `listening-review-v3.md` is the gate |
+
+## Narration v3 sample video (Issue #34) — BUILT 2026-10-27, PENDING FOUNDER REVIEW
+
+The D/E/F stage previously stopped at audio. `scripts/build_v3_sample_video.py`
+now closes the narration → video gap for the existing candidates, with **zero
+provider calls**.
+
+| Property | Value |
+|---|---|
+| Arm rendered | E (`candidate-3.wav`, 26.585 s) |
+| Unit → evidence | U01 → `shot_00` (doctor) · U03 → `shot_01` (version) · U05 → `shot_03` (ping/gateway) |
+| Durations | 6.584 + 9.679 + 10.323 = 26.585 s; U01/U03 boundary from the detected silence |
+| Output | `project://final/v3-sample.mp4` — h264 / 1080x1920 / aac, 26.6 s |
+| Receipts | `receipts/v3-sample-video.json`, `receipts/qc-report-v3-sample.{json,md}` |
+| QC | **WARN** — duration below 30 s; `real_evidence_present` is directory-local and reads 0 |
+| Provider calls | speech 0 / image 0 / video 0; quota untouched |
+| Review state | `production_ready: false`, `human_review: PENDING_FOUNDER_REVIEW` |
+
+It is a three-unit excerpt, not the full eight-unit script, and the candidate
+audio is gitignored, so the build is host-local by design. The full v3 narration
+(4 synthesis groups, ~466 characters) is still not generated.
+
+## Subtitle burn timing defect — FIXED 2026-10-27
+
+`assemble_easel._srt_to_ass` emitted ASS timestamps as `H:MM:SS.mmm`, but ASS is
+`H:MM:SS.cc` (centiseconds). libass read `.584` as 584 centiseconds, so every cue
+was stretched by roughly ten times: a cue ending at 6.584 s stayed on screen
+until 11.84 s. `qc_video` only checks that a subtitle is *present*, so the
+desynchronisation survived green runs and was found by extracting frames from a
+real render.
+
+Fixed to centiseconds, with `tests/test_subtitle_timing.py` as the regression.
+**Renders produced before this commit still carry the old desync**, including the
+A/B variants; they need a re-burn before any subtitle-sync claim is made about
+them.

@@ -212,6 +212,11 @@ jobs:
       - name: Run subtitle burn timing tests
         run: python tests/test_subtitle_timing.py
 
+      # The provider-free half of narration -> video: unit to evidence mapping,
+      # duration splitting and the SRT the burn consumes.
+      - name: Run v3 sample-video bridge tests
+        run: python tests/test_v3_sample_video.py
+
       - name: Run Windows subprocess tests
         run: python tests/test_windows_subprocess.py
 
