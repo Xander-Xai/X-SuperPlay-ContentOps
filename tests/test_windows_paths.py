@@ -99,6 +99,58 @@ def test_ffmpeg_subtitle_path_escaping():
     print("[ok] FFmpeg subtitle path escaping")
 
 
+def test_easel_adapter_keeps_upstream_outputs_and_temp_files_in_project_work():
+    """assemble_easel must not write under the pinned Easel runtime."""
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import assemble_easel
+    from types import SimpleNamespace
+
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        project = root / "project"
+        storyboard = project / "script" / "storyboard.json"
+        storyboard.parent.mkdir(parents=True)
+        storyboard.write_text('{"size": "1080x1920", "shots": []}', encoding="utf-8")
+
+        fake_runtime = root / "runtime" / "easel"
+        upstream = (fake_runtime / "skills" / "openclaw" / "auto-short-video"
+                    / "scripts" / "assemble.py")
+        upstream.parent.mkdir(parents=True)
+        upstream.write_text("# fake upstream", encoding="utf-8")
+        calls = []
+
+        original_upstream = assemble_easel._upstream_assemble
+        original_hidden_run = assemble_easel.hidden_run
+
+        def fake_hidden_run(args, **kwargs):
+            output = Path(args[args.index("-o") + 1])
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_bytes(b"fake video")
+            calls.append((args, kwargs))
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+        assemble_easel._upstream_assemble = lambda: upstream
+        assemble_easel.hidden_run = fake_hidden_run
+        try:
+            result = assemble_easel.run(project, out_name="easel")
+        finally:
+            assemble_easel._upstream_assemble = original_upstream
+            assemble_easel.hidden_run = original_hidden_run
+
+        assert len(calls) == 1
+        requested_output = Path(calls[0][0][calls[0][0].index("-o") + 1])
+        work_dir = project / "work"
+        assert requested_output.is_relative_to(work_dir), requested_output
+        assert not requested_output.is_relative_to(fake_runtime), requested_output
+        child_env = calls[0][1]["env"]
+        assert child_env["TEMP"] == str(work_dir)
+        assert child_env["TMP"] == str(work_dir)
+        assert child_env["TMPDIR"] == str(work_dir)
+        assert result["video"] == str(project / "final" / "easel.mp4")
+        assert not (fake_runtime / "outputs").exists()
+    print("[ok] Easel adapter project-owned work paths")
+
+
 def test_parse_yaml_chinese_title():
     """parse_yaml should handle Chinese characters in title field."""
     sys.path.insert(0, str(ROOT / "scripts"))
@@ -130,6 +182,7 @@ if __name__ == "__main__":
         test_space_in_path,
         test_utf8_stdout,
         test_ffmpeg_subtitle_path_escaping,
+        test_easel_adapter_keeps_upstream_outputs_and_temp_files_in_project_work,
         test_parse_yaml_chinese_title,
         test_dev_check_no_traceback,
     ):

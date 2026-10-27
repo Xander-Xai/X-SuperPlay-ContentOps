@@ -324,9 +324,31 @@ def measure_video(path) -> VideoTechnicalQC:
     return result
 
 
+def _analysis_detail(output) -> str:
+    """Last useful line of an ffmpeg stderr, which may be bytes or text."""
+    if output is None:
+        return ""
+    if isinstance(output, bytes):
+        output = output.decode("utf-8", "replace")
+    return str(output).strip()[-200:]
+
+
 def _analyse_frames(path: Path, result: VideoTechnicalQC) -> None:
-    """Sample frames and measure blackness and frame-to-frame difference."""
-    if not HAVE_FFMPEG or not result.fps:
+    """Sample frames and measure blackness and frame-to-frame difference.
+
+    Every branch that cannot measure appends a reason. A silent return here
+    would leave ``longest_black_run_s`` and ``longest_freeze_run_s`` as ``None``
+    while the file still reached ``approved``, which is the same false green the
+    retention gate produced: the check claimed to have run and had not.
+    """
+    if not HAVE_FFMPEG:
+        # measure_video already recorded that ffmpeg is unavailable.
+        return
+    if not result.fps:
+        result.reasons.append(
+            "frame rate could not be read, so black/freeze analysis could not run; "
+            "the file is unverified"
+        )
         return
     # Sample a few times per second, not a few times per clip. The earlier code
     # derived the stride from the frame count, which for a short clip collapsed to
@@ -343,6 +365,13 @@ def _analyse_frames(path: Path, result: VideoTechnicalQC) -> None:
         "-f", "rawvideo", "-",
     ], timeout=600, binary=True)
     if raw.returncode != 0 or not raw.stdout:
+        detail = _analysis_detail(getattr(raw, "stderr", None))
+        result.reasons.append(
+            "frame analysis failed"
+            f" (returncode={raw.returncode}, bytes={len(raw.stdout or b'')})"
+            f"{': ' + detail if detail else ''}; black/freeze coverage is zero, "
+            "so the file is unverified"
+        )
         return
 
     # scale=-2 keeps the height even; derive it so the buffer can be framed.
@@ -353,6 +382,11 @@ def _analyse_frames(path: Path, result: VideoTechnicalQC) -> None:
         for offset in range(0, len(raw.stdout) - frame_bytes + 1, frame_bytes)
     ]
     if not frames:
+        result.reasons.append(
+            f"frame analysis produced no complete frame at {ANALYSIS_WIDTH}x{height} "
+            f"from {len(raw.stdout)} bytes; black/freeze coverage is zero, so the "
+            "file is unverified"
+        )
         return
     result.analysed_frames = len(frames)
 

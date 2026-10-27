@@ -2359,6 +2359,46 @@ def test_qc_fails_closed_when_the_full_decode_cannot_be_run():
     print("[ok] 96. technical QC fails closed when full decoding cannot run")
 
 
+def test_qc_fails_closed_when_frame_analysis_returns_nothing():
+    """A decode that succeeds but an analysis that fails is still unverified.
+
+    Previously ``_analyse_frames`` returned silently, leaving the black/freeze
+    fields ``None`` while ``approved`` stayed true. Zero coverage is not a pass.
+    """
+    from types import SimpleNamespace
+
+    import contentops.media.video_qc as qc_module
+
+    if not (HAVE_FFMPEG and HAVE_FFPROBE):
+        _skip(96.1, "QC fails closed without frame analysis", "ffmpeg + ffprobe")
+        return
+    with tempfile.TemporaryDirectory() as work:
+        clip = _tiny_clip(Path(work) / "clip.mp4")
+        assert qc_module.measure_video(clip).approved is True
+
+        original = qc_module._run
+
+        def failing(command, timeout=300, binary=False):
+            if "rawvideo" in command:
+                return SimpleNamespace(returncode=1, stdout=b"", stderr=b"boom")
+            return original(command, timeout=timeout, binary=binary)
+
+        qc_module._run = failing
+        try:
+            result = qc_module.measure_video(clip)
+        finally:
+            qc_module._run = original
+
+        assert result.approved is False, (
+            "a file with zero frame-analysis coverage was approved")
+        assert any("frame analysis failed" in r for r in result.reasons), result.reasons
+        assert result.analysed_frames == 0
+        assert result.longest_black_run_s is None, (
+            "an unmeasured black run must stay None, not become a fake 0")
+
+    print("[ok] 96.1. technical QC fails closed when frame analysis produces nothing")
+
+
 def _tiny_clip(target: Path) -> Path:
     """Render a minimal real MP4 for measurement, through the sanctioned layer."""
     from process_utils import hidden_run
@@ -2863,6 +2903,7 @@ TESTS = [
     test_reuse_keeps_the_immutable_receipt_on_disk_untouched,
     test_an_unknown_audio_policy_is_rejected_before_any_task_is_created,
     test_qc_fails_closed_when_the_full_decode_cannot_be_run,
+    test_qc_fails_closed_when_frame_analysis_returns_nothing,
     test_a_png_named_file_holding_jpeg_bytes_is_sent_as_jpeg,
     test_a_jpg_named_file_holding_png_bytes_is_sent_as_png,
     test_a_corrupt_image_with_a_valid_looking_extension_is_refused_locally,

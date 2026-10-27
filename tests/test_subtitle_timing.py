@@ -19,7 +19,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from assemble_easel import _ms, _srt_to_ass  # noqa: E402
+from assemble_easel import CaptionOverflowError, _ms, _srt_to_ass  # noqa: E402
+
+LONG_CUE = "这是一段非常长的中文字幕用来验证系统不会安静地截断文本" * 3
 
 
 def _convert(srt_text: str) -> str:
@@ -81,6 +83,52 @@ def test_late_cue_is_not_shifted_into_the_next_one():
     assert rows[0][1] == "0:00:26.58", rows[0][1]
 
 
+def test_strict_mode_blocks_oversized_cue():
+    """An unfittable cue must stop the build, not lose words silently."""
+    with tempfile.TemporaryDirectory() as td:
+        srt = Path(td) / "in.srt"
+        ass = Path(td) / "out.ass"
+        srt.write_text(
+            f"1\n00:00:00,000 --> 00:00:05,000\n{LONG_CUE}\n", encoding="utf-8")
+        raised = None
+        try:
+            _srt_to_ass(srt, ass, 1080, 1920, "Noto Sans CJK SC", 54, 134,
+                        strict=True)
+        except CaptionOverflowError as exc:
+            raised = exc
+        assert raised is not None, "strict mode silently truncated a long cue"
+        assert raised.needed_lines > raised.max_lines, raised.needed_lines
+        assert LONG_CUE in raised.text
+        assert not ass.exists(), "a partial ASS was written before the failure"
+
+
+def test_legacy_mode_reports_truncation_instead_of_hiding_it():
+    """Legacy behavior still truncates, but the overflow is returned."""
+    with tempfile.TemporaryDirectory() as td:
+        srt = Path(td) / "in.srt"
+        ass = Path(td) / "out.ass"
+        srt.write_text(
+            f"1\n00:00:00,000 --> 00:00:05,000\n{LONG_CUE}\n", encoding="utf-8")
+        overflows = _srt_to_ass(srt, ass, 1080, 1920, "Noto Sans CJK SC", 54, 134)
+        assert len(overflows) == 1, overflows
+        assert overflows[0]["truncated"] is True
+        body = [l for l in ass.read_text(encoding="utf-8").splitlines()
+                if l.startswith("Dialogue:")]
+        assert len(body) == 1
+        assert body[0].count("\\N") <= 1, "truncated cue emitted more than two lines"
+
+
+def test_short_cue_is_not_reported_as_overflow():
+    with tempfile.TemporaryDirectory() as td:
+        srt = Path(td) / "in.srt"
+        ass = Path(td) / "out.ass"
+        srt.write_text("1\n00:00:00,000 --> 00:00:02,000\n能跑，但没跑通\n",
+                       encoding="utf-8")
+        overflows = _srt_to_ass(srt, ass, 1080, 1920, "Noto Sans CJK SC", 54, 134,
+                                strict=True)
+        assert overflows == [], overflows
+
+
 def main() -> int:
     failures = []
     tests = (
@@ -88,6 +136,9 @@ def main() -> int:
         test_second_cue_starts_at_the_first_cue_end,
         test_srt_parser_reads_milliseconds,
         test_late_cue_is_not_shifted_into_the_next_one,
+        test_strict_mode_blocks_oversized_cue,
+        test_legacy_mode_reports_truncation_instead_of_hiding_it,
+        test_short_cue_is_not_reported_as_overflow,
     )
     for fn in tests:
         try:

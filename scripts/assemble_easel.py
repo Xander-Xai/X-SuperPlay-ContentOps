@@ -41,6 +41,27 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SUB_FONT = "Noto Sans CJK SC"
 
 
+class CaptionOverflowError(ValueError):
+    """A cue cannot fit the safe area even at the minimum font size.
+
+    Truncating here loses narrated words while leaving the render green, so a
+    strict build must stop and let the cue be resegmented upstream instead.
+    """
+
+    def __init__(self, text: str, needed_lines: int, max_lines: int,
+                 start: str = "", end: str = ""):
+        self.text = text
+        self.needed_lines = needed_lines
+        self.max_lines = max_lines
+        self.start = start
+        self.end = end
+        where = f" [{start} -> {end}]" if start or end else ""
+        super().__init__(
+            f"caption needs {needed_lines} lines but only {max_lines} allowed{where}: {text!r}"
+        )
+
+
+
 def _upstream_assemble() -> Path:
     """The pinned runtime's assemble.py, via the shared resolver (offline mode:
     recorded provenance; doctor.py re-verifies live). Never an unpinned tree."""
@@ -90,11 +111,17 @@ def _wrap(text: str, width_px: int, font_size: int) -> str:
     return lines
 
 
-def _fit(text: str, width_px: int, font_size: int, max_lines: int = 2) -> tuple[int, str]:
+def _fit(text: str, width_px: int, font_size: int, max_lines: int = 2,
+         strict: bool = False) -> tuple[int, str]:
     """Shrink the font until the cue fits in max_lines. Returns (size, body).
 
     Uses an inline ASS override so each cue can carry its own size; the style's
     default stays at font_size.
+
+    If the cue still does not fit at the floor size it is either resegmented by
+    the caller (strict=True raises CaptionOverflowError) or, for legacy
+    projects, truncated exactly as before. Legacy truncation is reported by
+    _srt_to_ass so it is never silent.
     """
     size = font_size
     floor = max(22, int(font_size * 0.6))
@@ -104,12 +131,21 @@ def _fit(text: str, width_px: int, font_size: int, max_lines: int = 2) -> tuple[
             return size, "\\N".join(lines)
         size -= 2
     lines = _wrap(text, width_px, floor)
-    return floor, "\\N".join(lines[:max_lines])
+    if len(lines) > max_lines:
+        if strict:
+            raise CaptionOverflowError(text, len(lines), max_lines)
+        return floor, "\\N".join(lines[:max_lines])
+    return floor, "\\N".join(lines)
 
 
 def _srt_to_ass(srt_path: Path, ass_path: Path, w: int, h: int,
-                font: str, font_size: int, margin_v: int) -> None:
-    """Mirror upstream _srt_to_ass styling (bottom-centre, wrapped at 2 lines)."""
+                font: str, font_size: int, margin_v: int,
+                strict: bool = False) -> list[dict]:
+    """Mirror upstream _srt_to_ass styling (bottom-centre, wrapped at 2 lines).
+
+    Returns one record per cue that could not fit. In strict mode the first
+    such cue raises CaptionOverflowError instead of being truncated.
+    """
     def ts(ms: int) -> str:
         h_, rem = divmod(ms, 3600000)
         m_, rem = divmod(rem, 60000)
@@ -144,8 +180,18 @@ def _srt_to_ass(srt_path: Path, ass_path: Path, w: int, h: int,
     # determined here: 86% of frame width leaves a clear side margin.
     width_px = int(w * 0.86)
     body = ""
+    overflows: list[dict] = []
     for s, e, t in fixed:
-        size, text = _fit(t, width_px, font_size)
+        try:
+            size, text = _fit(t, width_px, font_size, strict=strict)
+        except CaptionOverflowError as err:
+            raise CaptionOverflowError(t, err.needed_lines, err.max_lines, s, e) from None
+        wrapped = _wrap(t, width_px, size)
+        if len(wrapped) > 2:
+            overflows.append({
+                "start": s, "end": e, "text": t,
+                "lines_needed": len(wrapped), "truncated": True,
+            })
         override = "" if size == font_size else f"{{\\fs{size}}}"
         body += f"Dialogue: 0,{s},{e},D,,0,0,0,,{override}{text}\n"
 
@@ -166,13 +212,24 @@ def _srt_to_ass(srt_path: Path, ass_path: Path, w: int, h: int,
         "Effect, Text\n"
     )
     ass_path.write_text(head + body, encoding="utf-8")
+    return overflows
 
 
-def run(project: Path, out_name: str = "easel") -> dict:
+def run(project: Path, out_name: str = "easel", strict_captions: bool = False) -> dict:
+    """Assemble one project.
+
+    strict_captions=True is the V2 build path: a cue that cannot fit the safe
+    area blocks the build instead of silently losing narrated words.
+    """
     project = project.resolve()
     storyboard = project / "script" / "storyboard.json"
     if not storyboard.exists():
         return {"status": "BLOCKED", "reason": f"storyboard missing: {storyboard}"}
+    work_dir = project / "work"
+    final_dir = project / "final"
+    work_dir.mkdir(parents=True, exist_ok=True)
+    final_dir.mkdir(parents=True, exist_ok=True)
+
     try:
         upstream_assemble = _upstream_assemble()
     except RuntimeError as e:
@@ -183,15 +240,8 @@ def run(project: Path, out_name: str = "easel") -> dict:
     size = sb.get("size", "1080x1920")
     w, h = (int(x) for x in size.split("x"))
 
-    # Upstream requires the output to live under outputs/<topic>/; keep it there,
-    # then copy into the project so the project owns its deliverable.
-    # assemble.py is <easel>/skills/openclaw/auto-short-video/scripts/assemble.py
-    easel_dir = upstream_assemble.parents[4]
-    topic_out = easel_dir / "outputs" / project.name
-    topic_out.mkdir(parents=True, exist_ok=True)
-    upstream_out = topic_out / "final.mp4"
-
-    with tempfile.TemporaryDirectory() as td:
+    with tempfile.TemporaryDirectory(dir=work_dir) as td:
+        upstream_out = Path(td) / "upstream.mp4"
         tmp_sb = Path(td) / "storyboard.json"
         # Strip BOTH the explicit subtitle and the per-shot captions: upstream
         # falls back to auto-generating a subtitle from `caption`
@@ -205,7 +255,8 @@ def run(project: Path, out_name: str = "easel") -> dict:
         ]
         tmp_sb.write_text(json.dumps(no_sub, ensure_ascii=False), encoding="utf-8")
 
-        env = dict(os.environ, PYTHONUTF8="1", PYTHONIOENCODING="utf-8")
+        env = dict(os.environ, PYTHONUTF8="1", PYTHONIOENCODING="utf-8",
+                   TEMP=str(work_dir), TMP=str(work_dir), TMPDIR=str(work_dir))
         proc = hidden_run(
             [python_executable(), str(upstream_assemble), "assemble",
              "--storyboard", str(tmp_sb), "-o", str(upstream_out)],
@@ -215,8 +266,6 @@ def run(project: Path, out_name: str = "easel") -> dict:
             return {"status": "BLOCKED", "stage": "upstream_assemble",
                     "reason": (proc.stderr or proc.stdout or "")[-800:]}
 
-        final_dir = project / "final"
-        final_dir.mkdir(parents=True, exist_ok=True)
         out_mp4 = final_dir / f"{out_name}.mp4"
 
         if not sub_rel:
@@ -232,13 +281,21 @@ def run(project: Path, out_name: str = "easel") -> dict:
             return {"status": "BLOCKED", "reason": f"subtitle not found: {sub_rel}"}
 
         ass_path = Path(td) / "sub.ass"
-        _srt_to_ass(sub_path, ass_path, w, h, DEFAULT_SUB_FONT,
-                    int(w * 0.05), int(h * 0.07))
+        try:
+            caption_overflows = _srt_to_ass(
+                sub_path, ass_path, w, h, DEFAULT_SUB_FONT,
+                int(w * 0.05), int(h * 0.07), strict=strict_captions)
+        except CaptionOverflowError as err:
+            return {"status": "BLOCKED", "stage": "captions",
+                    "reason": str(err),
+                    "needed_lines": err.needed_lines,
+                    "max_lines": err.max_lines,
+                    "cue": {"start": err.start, "end": err.end, "text": err.text}}
 
         burn = hidden_run(
             ["ffmpeg", "-y", "-i", str(upstream_out),
              "-vf", _subtitle_vf(ass_path), "-c:a", "copy", str(out_mp4)],
-            timeout=900,
+            timeout=900, env=env,
         )
         if burn.returncode != 0 or not out_mp4.exists():
             return {"status": "BLOCKED", "stage": "subtitle_burn",
@@ -248,8 +305,8 @@ def run(project: Path, out_name: str = "easel") -> dict:
         "status": "OK",
         "video": str(out_mp4),
         "subtitles_burned": True,
+        "caption_overflows": caption_overflows,
         "upstream": str(upstream_assemble),
-        "upstream_intermediate": str(upstream_out),
     }
 
 

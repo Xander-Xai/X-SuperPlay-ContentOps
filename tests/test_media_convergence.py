@@ -2727,6 +2727,70 @@ def test_a_manifest_containing_an_absolute_path_is_refused():
     print("[ok] 86. an absolute path is refused as a media reference")
 
 
+def test_a_logical_path_cannot_traverse_outside_its_root():
+    """``project://..`` is attacker-controlled text, not a trusted relative path."""
+    with tempfile.TemporaryDirectory() as td:
+        repo = Path(td) / "repo"
+        project = repo / "proj"
+        project.mkdir(parents=True, exist_ok=True)
+        for bad in (
+            "project://../secret.mp4",
+            "project://a/../../secret.mp4",
+            "repo://a/../../secret.mp4",
+            "project://C:/Windows/win.ini",
+            "repo:////server/share/secret.mp4",
+            "project://\\\\server\\share\\secret.mp4",
+        ):
+            try:
+                resolve_media_path(bad, repo_root=repo, project_root=project)
+            except ValueError as exc:
+                assert "escape" in str(exc).lower(), str(exc)
+            else:
+                raise AssertionError(f"{bad} escaped its root")
+
+    print("[ok] 86b. logical paths cannot traverse, mount a drive or use UNC")
+
+
+def test_a_symlink_out_of_the_project_is_refused():
+    with tempfile.TemporaryDirectory() as td:
+        repo = Path(td) / "repo"
+        project = repo / "proj"
+        project.mkdir(parents=True, exist_ok=True)
+        outside = Path(td) / "outside.mp4"
+        outside.write_bytes(b"not media")
+        link = project / "linked.mp4"
+        try:
+            link.symlink_to(outside)
+        except (OSError, NotImplementedError) as exc:
+            print(f"[skip] symlink unavailable: {exc}")
+            return
+        try:
+            resolve_media_path("project://linked.mp4", repo_root=repo,
+                               project_root=project)
+        except ValueError as exc:
+            assert "outside" in str(exc), str(exc)
+        else:
+            raise AssertionError("a symlink escaping the project was accepted")
+
+    print("[ok] 86c. a symlink pointing outside the project is refused")
+
+
+def test_a_nested_logical_path_still_resolves_inside_the_project():
+    with tempfile.TemporaryDirectory() as td:
+        repo = Path(td) / "repo"
+        project = repo / "proj"
+        nested = project / "sources" / "recordings"
+        nested.mkdir(parents=True, exist_ok=True)
+        target = nested / "cap.mp4"
+        target.write_bytes(b"x")
+        resolved = resolve_media_path(
+            "project://sources/recordings/cap.mp4",
+            repo_root=repo, project_root=project)
+        assert resolved == target.resolve(), resolved
+
+    print("[ok] 86d. a legitimate nested logical path still resolves")
+
+
 def test_an_out_of_tree_asset_is_refused_rather_than_written_as_a_machine_path():
     """No fallback to an absolute path.
 
@@ -3043,6 +3107,9 @@ TESTS = [
     test_a_replacement_shot_states_its_audio_postcondition,
     test_manifest_paths_are_portable_logical_references_and_fingerprint_alike,
     test_a_manifest_containing_an_absolute_path_is_refused,
+    test_a_logical_path_cannot_traverse_outside_its_root,
+    test_a_symlink_out_of_the_project_is_refused,
+    test_a_nested_logical_path_still_resolves_inside_the_project,
     test_an_out_of_tree_asset_is_refused_rather_than_written_as_a_machine_path,
     test_h3_reuse_is_explicit_and_never_discovered_from_the_filesystem,
     test_an_explicit_h3_reuse_path_is_validated_against_its_receipt,

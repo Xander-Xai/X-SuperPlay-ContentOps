@@ -39,7 +39,7 @@ an asset that cannot be referenced portably does not belong in a shared manifest
 from __future__ import annotations
 
 import os
-from pathlib import Path, PurePosixPath
+from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import List, Optional, Tuple, Union
 
 __all__ = [
@@ -141,6 +141,37 @@ def serialize_media_path(
     return None
 
 
+def _contained(base: PathLike, relative: str, scheme: str) -> Path:
+    """Resolve ``relative`` under ``base`` and prove the result stays there.
+
+    Logical references are still attacker-controlled text once a manifest can be
+    edited: ``project://../../secrets``, ``project://C:/Windows`` or
+    ``repo:////server/share`` would otherwise resolve outside the root. Symlinks
+    are followed by :meth:`Path.resolve`, so a link pointing out of the tree is
+    rejected by the same check rather than escaping silently.
+    """
+    raw = relative.replace("\\", "/")
+    windows = PureWindowsPath(relative)
+    if raw.startswith("/") or windows.drive or windows.is_absolute():
+        raise ValueError(
+            f"{scheme}{relative!r} escapes its root: absolute, drive and UNC "
+            f"components are not allowed in a logical media reference"
+        )
+    if any(part == ".." for part in PurePosixPath(raw).parts):
+        raise ValueError(
+            f"{scheme}{relative!r} escapes its root: '..' is not allowed in a "
+            f"logical media reference"
+        )
+
+    base_resolved = Path(base).resolve()
+    target = (base_resolved / raw).resolve()
+    if target != base_resolved and base_resolved not in target.parents:
+        raise ValueError(
+            f"{scheme}{relative!r} resolves outside {base_resolved}"
+        )
+    return target
+
+
 def resolve_media_path(
     logical_ref: str,
     *,
@@ -150,10 +181,11 @@ def resolve_media_path(
     """Turn a logical reference back into a local path.
 
     Raises:
-        ValueError: the reference is absolute or malformed. Accepting one would
-            silently reintroduce machine-dependent behaviour, so a manifest
-            containing ``D:\\...`` fails loudly here rather than quietly working on
-            one machine.
+        ValueError: the reference is absolute, malformed, traverses upwards, or
+            resolves outside its root. Accepting any of those would silently
+            reintroduce machine-dependent behaviour or read outside the project,
+            so a manifest containing ``D:\\...`` or ``../..`` fails loudly here
+            rather than quietly working on one machine.
     """
     value = str(logical_ref)
     if value.startswith(PROJECT_SCHEME):
@@ -161,9 +193,9 @@ def resolve_media_path(
             raise ValueError(
                 f"{value!r} is project-relative but no project_root was supplied"
             )
-        return (Path(project_root) / value[len(PROJECT_SCHEME):]).resolve()
+        return _contained(project_root, value[len(PROJECT_SCHEME):], PROJECT_SCHEME)
     if value.startswith(REPO_SCHEME):
-        return (Path(repo_root) / value[len(REPO_SCHEME):]).resolve()
+        return _contained(repo_root, value[len(REPO_SCHEME):], REPO_SCHEME)
 
     raise ValueError(
         f"{value!r} is not a logical media reference. A committed manifest must not "
