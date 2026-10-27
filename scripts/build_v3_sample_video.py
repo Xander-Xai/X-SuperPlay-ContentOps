@@ -535,23 +535,67 @@ def build(
     motion: str = "static",
     caption_mode: str = "sentence",
     card_dir: Optional[str] = None,
+    full: bool = False,
 ) -> Dict[str, Any]:
     verified = load_verified_plan()
     creator = verified["creator"]
     plan = verified["plan"]
 
-    audio, receipt = _load_arm_audio(arm, audio_override)
+    if full:
+        full_dir = ROOT / "outputs" / "founder-v3-full"
+        full_receipt_path = full_dir / "narration-v3-full-receipt.json"
+        if not full_receipt_path.is_file():
+            raise BuildRefused(
+                f"full narration receipt is absent: {full_receipt_path}. Run "
+                "`python scripts/run_creator_sample.py --full --execute` first."
+            )
+        full_receipt = json.loads(full_receipt_path.read_text(encoding="utf-8"))
+        audio = full_dir / "narration.wav"
+        candidate = full_receipt["candidate"]
+        receipt = {
+            "model": full_receipt["model"],
+            "candidates": {
+                "E": {
+                    "voice_id": candidate["voice_id"],
+                    "audio": {"sha256": candidate["audio"]["sha256"]},
+                }
+            },
+        }
+        sample_ids = [unit.id for unit in plan.units]
+        from contentops.media.narration_director import mapped_groups  # noqa: PLC0415
+
+        mapped = mapped_groups(plan, creator, section="groups")
+        groups = [
+            {
+                "id": group.id,
+                "units": list(group.units),
+                "synthesis_characters": group.characters,
+                "pause_after_s": group.pause_after_s,
+            }
+            for group in mapped
+        ]
+        measured = []
+        for group in mapped:
+            path = full_dir / f"E-{group.id}.wav"
+            measured.append(probe_duration(path) if path.is_file() else None)
+        measured_group_durations = (
+            [float(value) for value in measured]
+            if measured and all(value is not None for value in measured)
+            else None
+        )
+    else:
+        audio, receipt = _load_arm_audio(arm, audio_override)
+        sample_ids = list(plan.sample_unit_ids)
+        groups, measured_group_durations = _groups_for_arm(arm, receipt, sample_ids)
+
     total_s = probe_duration(audio)
     silences = detect_silences(audio)
 
-    sample_ids = list(plan.sample_unit_ids)
     units = [creator.unit(unit_id) for unit_id in sample_ids]
-    groups, measured_group_durations = _groups_for_arm(arm, receipt, sample_ids)
     recorded = [unit_id for group in groups for unit_id in group["units"]]
     if recorded != sample_ids:
         raise BuildRefused(
-            f"receipt groups cover {recorded} but the plan's sample units are "
-            f"{sample_ids}"
+            f"groups cover {recorded} but the plan's units are {sample_ids}"
         )
 
     timings, group_size_method = allocate_unit_timings(
@@ -712,8 +756,9 @@ def build(
 
     report: Dict[str, Any] = {
         "schema": SCHEMA,
-        "stage": "NARRATION_V3_SAMPLE_VIDEO",
+        "stage": "NARRATION_V3_FULL_VIDEO" if full else "NARRATION_V3_SAMPLE_VIDEO",
         "issue": "#34",
+        "mode": "full" if full else "sample",
         "skill_route": (
             {
                 "name": "card-design",
@@ -793,8 +838,12 @@ def build(
         "production_ready": False,
         "human_review": "PENDING_FOUNDER_REVIEW",
         "limitations": [
-            "three-unit excerpt (U01, U03, U05), not the full eight-unit script",
-            "the candidate audio is gitignored, so this build is host-local",
+            (
+                "the complete eight-unit script mapped onto six evidence placements"
+                if full else
+                "three-unit excerpt (U01, U03, U05), not the full eight-unit script"
+            ),
+            "the narration is gitignored, so this build is host-local",
             "an internal shot boundary may be off by up to one clause when no "
             "usable silence was detected (see per-unit boundary_method)",
             *(
@@ -842,6 +891,10 @@ def main() -> int:
         help="directory of designed cards named <placement_id>.png; the evidence "
              "mapping is unchanged and still recorded",
     )
+    parser.add_argument(
+        "--full", action="store_true",
+        help="use the complete eight-unit narration at outputs/founder-v3-full",
+    )
     args = parser.parse_args()
 
     project = Path(args.project)
@@ -856,6 +909,7 @@ def main() -> int:
         motion=args.motion,
         caption_mode=args.caption_mode,
         card_dir=args.card_dir or None,
+        full=args.full,
     )
     print(json.dumps({k: report[k] for k in ("arm", "compose", "qc", "production_ready")},
                      indent=2, ensure_ascii=False))

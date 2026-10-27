@@ -106,6 +106,7 @@ RECEIPT_JSON = ROOT / "projects/easel-enhanced-golden/review/narration-v3-sample
 RECEIPT_MD = ROOT / "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.md"
 REVIEW_MD = ROOT / "projects/easel-enhanced-golden/review/listening-review-v3.md"
 DEFAULT_OUT_DIR = "outputs/founder-v3-sample"
+FULL_OUT_DIR = "outputs/founder-v3-full"
 V2_DIR = ROOT / "outputs" / "founder-ab-sample"
 
 
@@ -512,6 +513,204 @@ def _run_candidate_groups(
     }
 
 
+def _run_full(args) -> int:
+    """Synthesize the complete eight-unit narration with the director plan.
+
+    Only the E strategy (clone voice + director controls) runs. D and F existed
+    to isolate variables in a 20 s listening test; re-running them over the full
+    script would spend quota to answer a question already answered by the sample.
+    """
+    load_local_env_file(ROOT / ".env")
+    credential = resolve_subscription_credential()
+    lexicon = default_zh_lexicon()
+    result = load_verified_plan()
+    creator = result["creator"]
+    plan = result["plan"]
+    groups = mapped_groups(plan, creator, section="groups")
+    candidate = Candidate(
+        cid="E",
+        label="full narration + clone voice + selective director controls",
+        voice_id=CLONE_VOICE,
+        text="",
+        emotion=None,
+        speed=1.0,
+        groups=groups,
+        group_params=[(group.emotion, group.speed, group.pause_after_s) for group in groups],
+    )
+
+    texts = [synthesis_text(group.text, lexicon) for group in groups]
+    estimated = estimated_billable_characters(texts)
+    planned_tts = len(groups)
+
+    out_dir = Path(args.out_dir)
+    if not out_dir.is_absolute():
+        out_dir = ROOT / out_dir
+    if out_dir == ROOT / DEFAULT_OUT_DIR:
+        out_dir = ROOT / FULL_OUT_DIR
+    out_dir = out_dir.resolve()
+    cache_dir = out_dir / "segments"
+    diagnostics_dir = ROOT / ".private" / "diagnostics"
+
+    receipt: Dict[str, Any] = {
+        "schema": "contentops.narration-v3-full/v1",
+        "stage": "NARRATION_V3_FULL_E",
+        "issue": "#34",
+        "attempt_id": f"v3full-{uuid.uuid4().hex[:12]}",
+        "started_at": _now(),
+        "executed": bool(args.execute),
+        "model": MODEL,
+        "host": MINIMAX_CN_HOST,
+        "transport": "native_http_cn",
+        "route": MPLAN_NARRATION_ROUTE,
+        "credential_class": credential.credential_class,
+        "credential_source": credential.source,
+        "payg_key_used_for_this_request": False,
+        "creator_script": result["digests"]["creator_script_working_tree_sha256"],
+        "director_plan": result["digests"]["director_plan_working_tree_sha256"],
+        "units": [unit.id for unit in plan.units],
+        "groups": [
+            {
+                "id": group.id,
+                "units": list(group.units),
+                "emotion": group.emotion,
+                "speed": group.speed,
+                "pause_after_s": group.pause_after_s,
+                "characters": len(text),
+            }
+            for group, text in zip(groups, texts)
+        ],
+        "provider_call_budget": {
+            "subscription_tts_planned": planned_tts,
+            "asr_transcribe_planned": 0,
+            "upload": 0,
+            "voice_creation": 0,
+            "automatic_retry": 0,
+            "automatic_top_up": 0,
+        },
+        "budget": {
+            "estimated_billable_characters": estimated,
+            "budget_chars": args.budget_chars,
+            "asr_calls_planned": 0,
+            "asr_calls_budget": args.budget_asr_calls,
+        },
+        "notes": [],
+    }
+
+    print("=== NARRATION V3: FULL EIGHT-UNIT RUN ===")
+    print(f"  attempt_id     : {receipt['attempt_id']}")
+    print(f"  units / groups : {len(plan.units)} / {len(groups)}")
+    print(f"  estimated chars: {estimated} billable (budget {args.budget_chars})")
+    print(f"  credential     : {credential.credential_class} ({credential.source})")
+    print(f"  output         : {out_dir.relative_to(ROOT).as_posix()}")
+
+    if estimated > args.budget_chars:
+        print(
+            f"REFUSED: estimated {estimated} billable characters exceed the budget "
+            f"of {args.budget_chars}. Nothing was sent.",
+            file=sys.stderr,
+        )
+        receipt["outcome"] = "REFUSED_BUDGET"
+        out_dir.mkdir(parents=True, exist_ok=True)
+        (out_dir / "narration-v3-full-receipt.json").write_text(
+            json.dumps(receipt, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8", newline="\n",
+        )
+        return 1
+
+    if not args.execute:
+        print("=== DRY RUN. NOTHING WAS SENT. ===")
+        receipt["outcome"] = "DRY_RUN"
+        out_dir.mkdir(parents=True, exist_ok=True)
+        (out_dir / "narration-v3-full-plan.json").write_text(
+            json.dumps(receipt, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8", newline="\n",
+        )
+        return 0
+
+    if credential.credential_class != CREDENTIAL_SUBSCRIPTION or not credential.usable:
+        print(
+            f"REFUSED: narration requires a Subscription-class credential; the "
+            f"resolved class is {credential.credential_class} "
+            f"(source {credential.source}). Nothing was sent.",
+            file=sys.stderr,
+        )
+        receipt["outcome"] = "REFUSED_CREDENTIAL_CLASS"
+        out_dir.mkdir(parents=True, exist_ok=True)
+        (out_dir / "narration-v3-full-receipt.json").write_text(
+            json.dumps(receipt, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8", newline="\n",
+        )
+        return 1
+
+    runner = ExperimentRunner(
+        credential=credential,
+        out_dir=out_dir,
+        diagnostics_dir=diagnostics_dir,
+        asr_budget=args.budget_asr_calls,
+    )
+    out_dir.mkdir(parents=True, exist_ok=True)
+    usage = [0]
+    receipt_path = out_dir / "narration-v3-full-receipt.json"
+    try:
+        receipt["preflight"] = runner.preflight()
+        record = _run_candidate_groups(
+            runner=runner, candidate=candidate, creator=creator,
+            out_dir=out_dir, cache_dir=cache_dir, lexicon=lexicon,
+            receipt=receipt, usage=usage, budget=args.budget_chars,
+        )
+        joined = Path(record["audio"]["path"])
+        narration = out_dir / "narration.wav"
+        shutil.copyfile(joined, narration)
+        record["audio"]["path"] = str(narration)
+        record["audio"] = _audio_record(narration)
+
+        post = read_money(MINIMAX_CN_HOST, credential.key)
+        pre = receipt["preflight"]["money"]
+        deltas = delta_money(pre, post)
+        classification = classify_mplan_only(
+            quota_before=pre["quota"], quota_after=post["quota"], deltas=deltas
+        )
+        receipt["postflight"] = {
+            "quota_after": post["quota"],
+            "balances_after": post["balances"],
+            "deltas": deltas,
+            "plan_only_classification": classification,
+        }
+        receipt["candidate"] = record
+        receipt["requests"] = runner.requests
+        receipt["budget"]["usage_characters_used"] = usage[0]
+        receipt["budget"]["asr_calls_used"] = runner.asr_state["used"]
+        receipt["human_review"] = "PENDING_FOUNDER_REVIEW"
+        receipt["production_ready"] = False
+        receipt["outcome"] = "FULL_NARRATION_READY_FOR_REVIEW"
+        if not classification["verified"]:
+            receipt["notes"].append(
+                f"plan-only verification: {classification['status']} "
+                f"(basis {classification['basis']})"
+            )
+        receipt["finished_at"] = _now()
+        receipt_path.write_text(
+            json.dumps(receipt, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8", newline="\n",
+        )
+        print(f"  narration      : {narration.relative_to(ROOT).as_posix()}")
+        print(f"  duration       : {record['audio'].get('duration_s')} s")
+        print(f"  billable chars : {usage[0]}")
+        print("=== STOP: full narration is technically complete; listening is pending. ===")
+        return 0
+    except Exception as exc:  # noqa: BLE001 - recorded, never silently swallowed
+        receipt["outcome"] = "PROVIDER_FAILED"
+        receipt["error"] = {"type": type(exc).__name__, "message": str(exc)[:500]}
+        receipt["requests"] = runner.requests
+        receipt["budget"]["usage_characters_used"] = usage[0]
+        receipt_path.write_text(
+            json.dumps(receipt, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8", newline="\n",
+        )
+        print(f"[FAIL] {type(exc).__name__}: {exc}", file=sys.stderr)
+        return 3
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--execute", action="store_true",
@@ -526,8 +725,14 @@ def main() -> int:
     parser.add_argument("--summary-only", action="store_true",
                         help="render the existing JSON receipt to markdown; no "
                              "provider call, no ASR call")
+    parser.add_argument("--full", action="store_true",
+                        help="synthesize the complete eight-unit narration with the "
+                             "E strategy; ignores the D/F sample candidates")
     args = parser.parse_args()
     sys.stdout.reconfigure(encoding="utf-8")
+
+    if args.full:
+        return _run_full(args)
 
     if args.summary_only:
         return _summary_only(args)

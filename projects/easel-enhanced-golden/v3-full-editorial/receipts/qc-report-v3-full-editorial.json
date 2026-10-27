@@ -1,0 +1,154 @@
+{
+  "schema": "contentops.qc-canonical/v1",
+  "currency": "CURRENT",
+  "project": "project://",
+  "graded_target": "project://final/v3-full-editorial.mp4",
+  "overall": "WARN",
+  "checked_at": "2026-10-27T05:51:38Z",
+  "checks": [
+    {
+      "id": "_video",
+      "ok": true,
+      "severity": "INFO",
+      "path": "project://final/v3-full-editorial.mp4"
+    },
+    {
+      "id": "file_size",
+      "ok": true,
+      "severity": "PASS",
+      "value_bytes": 2944470,
+      "min_bytes": 102400
+    },
+    {
+      "id": "ffprobe_parse",
+      "ok": true,
+      "severity": "PASS"
+    },
+    {
+      "id": "resolution",
+      "ok": true,
+      "severity": "PASS",
+      "value": "1080x1920",
+      "expected": "1080x1920"
+    },
+    {
+      "id": "aspect_ratio_9_16",
+      "ok": true,
+      "severity": "PASS",
+      "value": "1080:1920"
+    },
+    {
+      "id": "duration_range",
+      "ok": true,
+      "severity": "PASS",
+      "value_sec": 102.38,
+      "expected_range_sec": [
+        30.0,
+        120.0
+      ]
+    },
+    {
+      "id": "video_codec_h264",
+      "ok": true,
+      "severity": "PASS",
+      "value": "h264"
+    },
+    {
+      "id": "audio_present",
+      "ok": true,
+      "severity": "PASS"
+    },
+    {
+      "id": "audio_codec_aac",
+      "ok": true,
+      "severity": "PASS",
+      "value": "aac"
+    },
+    {
+      "id": "project_yaml",
+      "ok": false,
+      "severity": "WARN"
+    },
+    {
+      "id": "source_refs_recorded",
+      "ok": true,
+      "severity": "PASS",
+      "value_count": 0
+    },
+    {
+      "id": "caption_srt_present",
+      "ok": false,
+      "severity": "WARN",
+      "path": "project://assets/captions/default.srt"
+    },
+    {
+      "id": "script_exists",
+      "ok": true,
+      "severity": "PASS",
+      "path": "project://script/master.md"
+    },
+    {
+      "id": "storyboard_exists",
+      "ok": true,
+      "severity": "PASS",
+      "shot_count": 8
+    },
+    {
+      "id": "real_source_ratio",
+      "ok": true,
+      "severity": "PASS",
+      "value": 1.0,
+      "min": 0.7,
+      "real_shots": 8,
+      "generated_shots": 0,
+      "note": "AI-generated key visuals must not be the majority"
+    },
+    {
+      "id": "source_provenance_complete",
+      "ok": true,
+      "severity": "PASS",
+      "missing_shot_indices": []
+    },
+    {
+      "id": "engine_recorded",
+      "ok": true,
+      "severity": "PASS",
+      "value": "easel"
+    },
+    {
+      "id": "voice_not_silence",
+      "ok": true,
+      "severity": "PASS",
+      "max_volume_db": "-4.2 dB",
+      "mean_volume_db": "-19.3 dB"
+    },
+    {
+      "id": "subtitle_burned_or_track",
+      "ok": false,
+      "severity": "WARN",
+      "method": "none",
+      "note": "no subtitle declared and none present"
+    },
+    {
+      "id": "real_evidence_present",
+      "ok": false,
+      "severity": "WARN",
+      "value_count": 0
+    },
+    {
+      "id": "voice_quality_declared",
+      "ok": true,
+      "severity": "INFO",
+      "voice_provider": "minimax_m_plan/speech-2.8-hd (v3 arm E)",
+      "voice_quality": "configured_provider",
+      "production_quality_warning": false,
+      "note": "mechanical/fallback voice keeps the render at READY_FOR_HUMAN_REVIEW; only a human can accept it as production (V1 spec §11)"
+    }
+  ],
+  "path_policy": "logical references (project://, repo://); no absolute paths",
+  "evidence_provenance": {
+    "mode": "canonical_reference_by_path",
+    "copies_in_project": 0,
+    "reason": "the excerpt reuses the locked evidence by canonical repository path, so it cannot drift from the lock; qc_video's real_evidence_present is directory-local and therefore reports 0"
+  }
+}
