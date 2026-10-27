@@ -597,3 +597,31 @@ DNA 现在承载 `X-SuperPlay-Strategy` 拥有的战略事实，让流水线和�
   三类（1024）或四类（未来智能）决策人群进 `core_audience`，只有它们决定措辞与结论。
 
 栏目、平台角色、排期与证据阶梯都是配置层，不改变渲染路径，也没有为此重出任何视频。
+
+## 证据型成片：视图、停留上限与 DNA 字幕 — 2026-10-27
+
+一个 placement 可以跟口播一样长，但它的画面不行。`CutPlan` 的 placement 现在可以带
+`shots`，`target.max_visual_hold_ms`（1024 切为 2000 ms）限制每一个视图；放大视图必须
+被同一 placement 更早的上下文视图包含，所以“先给上下文，再放大”是被校验的，不只是写在文档里。
+
+| 属性 | 值 |
+|---|---|
+| 新增计划字段 | `shots[]`（每个视图：裁切、源时间段、语义进展、`context_shot_id`）、`max_visual_hold_ms`、`min_visual_hold_ms` |
+| QC 门禁 | `views_declared`（超过停留上限的静态 placement 必须声明视图）与 `static_hold_within_limit`（实测冻结 run ≤ 上限 + 0.2 s）；旧的 `freeze_is_declared` 放行已删除 |
+| 字幕样式 | `build_evidence_cut` 从账号 DNA 读 `visual.caption_style` 并传给 `assemble_easel`；`_wrap` 增加中文禁则，句读不落行首 |
+| 面板版面 | 录屏按自身比例放在 `brand.palette.surface` 面板上；卡片 1:1 映射到画布 |
+| 技能路由修复 | `CAP-20261028-SKILLROUTE-AUTO` 重新采集字幕路由；2026-10-27 那次问的是 `final cut subtitles burn`，输出里没有 `auto-subtitle` |
+
+重建后的 `projects/easel-1024-proof`：44.0 s、1080×1920、h264/aac、`qc_cut`
+**PASS**、最长冻结 **1.80 s**、真实素材 **72.7 %**、生成 **0 %**、8 个 placement 共
+22 个视图。`production_ready: false`、`PENDING_HUMAN_REVIEW`；四条捕获都是
+`internal_review` 且尚无 redaction receipt，因此分发仍被阻断。
+
+有两点刻意不声称：
+
+- **工程 cut 早于新门禁。** `projects/easel-engineering-proof` 为 62.0 s，placement 是
+  7–8 s 单视图，收紧后的 QC 重跑会 FAIL；它已提交的 PASS receipt 在重建前是过期的。
+- **账号 DNA 配比与 V2 门禁冲突。** 1024 DNA 要求 65 % 录屏 / 30 % 矢量 / 5 % 卡片，
+  V2 要求真实素材 ≥ 70 %。重建后的片满足 V2（72.7 % 真实、0 % 矢量），因此没有满足
+  DNA 的 30 % 矢量。这是创始人的决定，记录在
+  `research/video-replication/capability-reconciliation-2026-10-27.md`。

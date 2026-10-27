@@ -202,3 +202,35 @@ python scripts\build_account_variants.py --only x-superplay-1024
 
 字幕的 `burn_style` 从 DNA 读取，而不是写死在脚本里，所以改字幕样式属于配置改动。
 变体视频止步于 `PENDING_FOUNDER_REVIEW`，不声称任何发布链接。
+## 14. 证据捕获与证据型成片包
+
+只通过已批准的 plan 捕获；plan 是 allowlist，它给的是 argv，不是 shell 字符串：
+
+```powershell
+python scripts\capture_terminal_evidence.py projects\easel-evidence-capture\script\capture-plan.json --dry-run
+python scripts\capture_terminal_evidence.py projects\easel-evidence-capture\script\capture-plan.json --only CAP-20261028-SKILLROUTE-AUTO
+```
+
+- `hold_after_exit_s` 让结果在屏幕上停留到能读完；两秒内结束的捕获不是可读证据。
+- 非 ASCII 的 argv 会被 `cmd.exe` 包装层损坏，所以 plan 用 ASCII 查询
+  （`--match auto-subtitle`，而不是中文词表）。
+- 往 APPROVED plan 里加捕获是一次新的批准，不是一次编辑。
+
+构建、评级并打包一条证据型成片：
+
+```powershell
+python scripts\build_evidence_package.py projects\easel-1024-proof
+python scripts\build_evidence_package.py projects\easel-1024-proof --skip-build
+```
+
+依次执行：`build_evidence_cut` → `build_evidence_cover` → `cut_qc` →
+`write_review_bundle`，QC 为 FAIL 时以非零码退出。它从不记录人工决定。
+
+- placement 带 `shots`；每个视图受 `target.max_visual_hold_ms` 限制，放大视图必须被
+  它的上下文视图包含；
+- `cut_qc` 现在会让“超上限却没有声明视图”的静态 placement FAIL，也会让实测冻结 run
+  超过声明停留的片子 FAIL；
+- 字幕从账号 DNA 的 `visual.caption_style` 读取，`_wrap` 应用中文禁则。
+
+QC PASS 只是技术结论。在记录创始人 ≥80 分之前，成片保持 `production_ready: false`；
+只要还有 `internal_review` 且没有 redaction receipt 的捕获，分发就保持阻断。

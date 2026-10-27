@@ -494,3 +494,36 @@ Two reconciliations are deliberate:
 Content pillars, platform roles, cadence and the evidence ladder are
 configuration only. They do not change the render path, and no video was
 rebuilt for them.
+
+## Evidence cut: views, hold limit and DNA captions — 2026-10-27
+
+A placement may run as long as its narration; its picture may not. `CutPlan`
+placements can now carry `shots`, and `target.max_visual_hold_ms` (2000 ms for
+the 1024 cut) caps every view. An enlarged view must be contained by an earlier
+context view of the same placement, so "context first, then detail" is checked
+rather than described.
+
+| Property | Value |
+|---|---|
+| New plan fields | `shots[]` (per view: crop, source range, semantic progress, `context_shot_id`), `max_visual_hold_ms`, `min_visual_hold_ms` |
+| QC gate | `views_declared` (a static placement over the limit must declare views) and `static_hold_within_limit` (measured frozen run ≤ limit + 0.2 s); the old `freeze_is_declared` pass is removed |
+| Caption style | `build_evidence_cut` reads `visual.caption_style` from the account DNA and passes it to `assemble_easel`; `_wrap` applies Chinese kinsoku so a closing mark never opens a line |
+| Panel layout | recordings sit on a `brand.palette.surface` panel at their own aspect; cards map 1:1 to the frame |
+| Skill-route repair | `CAP-20261028-SKILLROUTE-AUTO` re-captures the subtitle route; the 2026-10-27 capture asked `final cut subtitles burn` and did not return `auto-subtitle` |
+
+Rebuilt `projects/easel-1024-proof`: 44.0 s, 1080×1920, h264/aac, `qc_cut`
+**PASS**, longest frozen run **1.80 s**, real source **72.7 %**, generated
+**0 %**, 22 views across 8 placements. `production_ready: false` and
+`PENDING_HUMAN_REVIEW`; distribution stays blocked because all four captures are
+`internal_review` and no redaction receipt exists yet.
+
+Two facts are deliberately not claimed:
+
+- **The engineering cut predates the gate.** `projects/easel-engineering-proof`
+  is 62.0 s with 7–8 s single-view placements, so the tightened QC will FAIL it
+  on re-run; its committed PASS receipt is stale until it is rebuilt.
+- **The account DNA ratio and the V2 gate conflict.** The 1024 DNA asks for
+  65 % recording / 30 % vector / 5 % card, while V2 requires real source ≥ 70 %.
+  The rebuilt cut satisfies V2 (72.7 % real, 0 % vector) and therefore does not
+  meet the DNA's 30 % vector share. That is a Founder decision, recorded in
+  `research/video-replication/capability-reconciliation-2026-10-27.md`.

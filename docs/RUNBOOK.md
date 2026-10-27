@@ -304,3 +304,41 @@ python scripts\build_account_variants.py --only x-superplay-1024
 The caption `burn_style` is read from the DNA, not hardcoded in the script, so
 changing the caption style is a config change. The variant videos stop at
 `PENDING_FOUNDER_REVIEW` and claim no publication URL.
+
+## 14. Evidence capture and the evidence-cut package
+
+Capture only through an approved plan; the plan is the allowlist and it names an
+argv, never a shell string:
+
+```powershell
+python scripts\capture_terminal_evidence.py projects\easel-evidence-capture\script\capture-plan.json --dry-run
+python scripts\capture_terminal_evidence.py projects\easel-evidence-capture\script\capture-plan.json --only CAP-20261028-SKILLROUTE-AUTO
+```
+
+- `hold_after_exit_s` keeps the result on screen long enough to read; a capture
+  that finishes in under two seconds is not readable evidence.
+- A non-ASCII argv is mangled by the `cmd.exe` wrapper, so the plan uses ASCII
+  queries (`--match auto-subtitle`, not the Chinese vocabulary).
+- Adding a capture to an APPROVED plan is a new approval, not an edit.
+
+Build, grade and bundle one evidence cut:
+
+```powershell
+python scripts\build_evidence_package.py projects\easel-1024-proof
+python scripts\build_evidence_package.py projects\easel-1024-proof --skip-build
+```
+
+It runs, in order: `build_evidence_cut` → `build_evidence_cover` → `cut_qc` →
+`write_review_bundle`, and exits non-zero when QC reports FAIL. It never records
+a human decision.
+
+- a placement carries `shots`; each view is capped by `target.max_visual_hold_ms`
+  and an enlargement must be contained by its context view;
+- `cut_qc` now fails a static placement that declares no views, and fails a
+  measured frozen run longer than the declared hold;
+- captions read `visual.caption_style` from the account DNA, and `_wrap` applies
+  Chinese kinsoku.
+
+QC PASS is technical. The cut stays `production_ready: false` until a Founder
+score of at least 80 is recorded, and it stays distribution-blocked while any
+capture is `internal_review` without a redaction receipt.
