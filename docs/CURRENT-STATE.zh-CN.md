@@ -520,6 +520,11 @@ D/E/F 阶段此前止步于音频。`scripts/build_v3_sample_video.py` 现在把
 因此按设计只能在生成过它的机器上构建。完整 v3 旁白（4 个合成组、约 466 字符）
 仍未生成。
 
+第二个构建 `projects/easel-enhanced-golden/v3-sample-motion/` 使用同一段 E 音频，
+启用 pinned 上游的 `ken-burns` 推近与分句级字幕（9 条而非 3 条）。QC 同为 WARN，
+provider 调用仍为 0。推近是 1.0→1.08 的缓慢过程；在 1080x1920 下不裁掉内容，因为
+证据截图本身已填满画幅。两个构建都保持 `production_ready=false`。
+
 ## 字幕烧录时间轴缺陷 —— 2026-10-27 已修复
 
 `assemble_easel._srt_to_ass` 把 ASS 时间戳写成 `H:MM:SS.mmm`，而 ASS 规范是

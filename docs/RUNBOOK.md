@@ -257,3 +257,19 @@ python scripts\build_v3_sample_video.py --arm E --audio outputs\founder-v3-sampl
 - output: `projects/easel-enhanced-golden/v3-sample-video/final/v3-sample.mp4`,
   `receipts/v3-sample-video.json`, `receipts/qc-report-v3-sample.{json,md}`.
   `production_ready` stays `false`.
+
+Look options, still with the same audio and no provider call:
+
+```powershell
+python scripts\build_v3_sample_video.py --arm E `
+  --project projects\easel-enhanced-golden\v3-sample-motion `
+  --out-name v3-sample-motion --motion ken-burns --caption-mode phrase
+```
+
+- `--motion static` (default) or `ken-burns`. Ken Burns comes from the pinned
+  upstream filter and zooms toward the top-left, because that filter sets no
+  `x`/`y` expression.
+- `--caption-mode sentence` (one cue per unit) or `phrase` (one cue per clause,
+  the unit's duration split by character count; fragments under six characters
+  merge with a neighbour).
+- Build a comparison into its own `--project` so the two receipts do not collide.

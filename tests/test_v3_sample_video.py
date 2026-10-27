@@ -19,12 +19,15 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from build_v3_sample_video import (  # noqa: E402
     EVIDENCE_LOCK,
+    MIN_CUE_SECONDS,
     UnitTiming,
     _first_paragraph,
     _logical_to_local,
+    build_caption_cues,
     placement_for_paragraph,
     render_srt,
     split_group,
+    split_phrases,
     srt_timestamp,
 )
 
@@ -118,6 +121,52 @@ def test_rendered_srt_has_one_cue_per_unit():
     assert text.count("-->") == 2
 
 
+def test_split_phrases_keeps_a_version_string_intact():
+    text = "版本我锁在 v0.2.1。982 个文件，逐个比对过哈希，和上游 tag 完全一致。"
+    phrases = split_phrases(text)
+    assert len(phrases) > 1
+    assert "".join(phrases) == text, phrases
+    assert all(phrase != "v0." for phrase in phrases), phrases
+    assert any("v0.2.1" in phrase for phrase in phrases), phrases
+
+
+def test_split_phrases_merges_a_short_opening():
+    phrases = split_phrases("但有个坑：网关健康检查探的是写死的默认端口，和实际端口对不上。")
+    assert all(len(phrase) >= 6 for phrase in phrases), phrases
+    assert "".join(phrases).startswith("但有个坑："), phrases
+
+
+def test_sentence_cues_are_one_per_unit():
+    timings = [
+        UnitTiming("U01", "第一句，带逗号。", 1, "shot_00", "a.png", 0.0, 6.0),
+        UnitTiming("U03", "第二句。", 2, "shot_01", "b.png", 6.0, 4.0),
+    ]
+    cues = build_caption_cues(timings, "sentence")
+    assert [(c.start_s, c.duration_s, c.text) for c in cues] == [
+        (0.0, 6.0, "第一句，带逗号。"),
+        (6.0, 4.0, "第二句。"),
+    ]
+
+
+def test_phrase_cues_tile_the_unit_without_drift():
+    timings = [
+        UnitTiming(
+            "U01",
+            "装了 Easel 之后，最先要回答的只有一个问题：它到底跑不跑得起来？",
+            1, "shot_00", "a.png", 0.0, 6.584,
+        ),
+        UnitTiming("U05", "但有个坑：网关健康和实际端口对不上。", 4, "shot_03", "b.png", 6.584, 10.0),
+    ]
+    cues = build_caption_cues(timings, "phrase")
+    assert len(cues) > len(timings)
+    assert cues[0].start_s == 0.0
+    assert abs((cues[-1].start_s + cues[-1].duration_s) - 16.584) < 1e-6
+    assert abs(sum(cue.duration_s for cue in cues) - 16.584) < 1e-6
+    assert all(cue.duration_s >= MIN_CUE_SECONDS for cue in cues), cues
+    for previous, current in zip(cues, cues[1:]):
+        assert abs((previous.start_s + previous.duration_s) - current.start_s) < 1e-6
+
+
 def main() -> int:
     failures = []
     tests = (
@@ -130,6 +179,10 @@ def main() -> int:
         test_logical_asset_resolves_against_the_lock_scope,
         test_first_paragraph_accepts_lists_and_ints,
         test_rendered_srt_has_one_cue_per_unit,
+        test_split_phrases_keeps_a_version_string_intact,
+        test_split_phrases_merges_a_short_opening,
+        test_sentence_cues_are_one_per_unit,
+        test_phrase_cues_tile_the_unit_without_drift,
     )
     for fn in tests:
         try:

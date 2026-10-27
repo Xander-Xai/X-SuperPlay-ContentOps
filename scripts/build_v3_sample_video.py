@@ -85,6 +85,11 @@ SILENCE_NOISE_DB = -35
 SILENCE_MIN_SECONDS = 0.15
 BOUNDARY_MIN_SECONDS = 0.12
 
+#: Caption segmentation. A phrase cue is a clause, not a whole sentence.
+PHRASE_BREAK_CHARS = "，。：；！？、—"
+MIN_PHRASE_CHARS = 6
+MIN_CUE_SECONDS = 0.45
+
 
 class BuildRefused(RuntimeError):
     """The build cannot proceed, and the reason is not a bug."""
@@ -101,6 +106,13 @@ class UnitTiming:
     duration_s: float
     boundary_method: str = ""
     logical_path: str = ""
+
+
+@dataclass
+class CaptionCue:
+    start_s: float
+    duration_s: float
+    text: str
 
 
 # --- media probes ------------------------------------------------------------
@@ -358,9 +370,77 @@ def srt_timestamp(seconds: float) -> str:
     return f"{hours:02d}:{minutes:02d}:{secs:02d},{millis:03d}"
 
 
-def render_srt(timings: Sequence[UnitTiming]) -> str:
+def split_phrases(text: str) -> List[str]:
+    """Break a unit into clause-sized cues, keeping the punctuation attached.
+
+    Only Chinese punctuation is a break. Latin full stops are not, because
+    ``v0.2.1`` and ``.env`` must survive intact. A fragment shorter than
+    :data:`MIN_PHRASE_CHARS` is merged with its neighbour so the caption does not
+    flicker on a two-character particle.
+    """
+    parts: List[str] = []
+    current = ""
+    for char in text:
+        current += char
+        if char in PHRASE_BREAK_CHARS:
+            if current.strip():
+                parts.append(current.strip())
+            current = ""
+    if current.strip():
+        parts.append(current.strip())
+
+    merged: List[str] = []
+    for part in parts:
+        if merged and (len(part) < MIN_PHRASE_CHARS or len(merged[-1]) < MIN_PHRASE_CHARS):
+            merged[-1] += part
+        else:
+            merged.append(part)
+    return merged or [text]
+
+
+def build_caption_cues(
+    timings: Sequence[UnitTiming], caption_mode: str
+) -> List[CaptionCue]:
+    """One cue per unit (``sentence``) or per clause (``phrase``).
+
+    A unit's audio duration is split across its clauses by character count. The
+    last clause takes the remainder, so the cues of a unit sum to that unit's
+    measured duration exactly and the caption clock never drifts from the voice.
+    """
+    if caption_mode == "sentence":
+        return [
+            CaptionCue(item.start_s, item.duration_s, item.text) for item in timings
+        ]
+    if caption_mode != "phrase":
+        raise BuildRefused(f"unknown caption mode: {caption_mode}")
+
+    cues: List[CaptionCue] = []
+    for item in timings:
+        phrases = split_phrases(item.text)
+        weights = [max(1, len(phrase)) for phrase in phrases]
+        total_weight = sum(weights)
+        cursor = item.start_s
+        for index, (phrase, weight) in enumerate(zip(phrases, weights)):
+            if index == len(phrases) - 1:
+                duration = item.start_s + item.duration_s - cursor
+            else:
+                duration = item.duration_s * weight / total_weight
+            cues.append(CaptionCue(cursor, duration, phrase))
+            cursor += duration
+
+    merged: List[CaptionCue] = []
+    for cue in cues:
+        if merged and cue.duration_s < MIN_CUE_SECONDS:
+            merged[-1].duration_s += cue.duration_s
+            merged[-1].text += cue.text
+        else:
+            merged.append(cue)
+    return merged
+
+
+def render_srt(cues: Sequence[Any]) -> str:
     blocks: List[str] = []
-    for index, item in enumerate(timings, 1):
+    for index, item in enumerate(cues, 1):
         end = item.start_s + item.duration_s
         blocks.append(
             f"{index}\n{srt_timestamp(item.start_s)} --> {srt_timestamp(end)}\n"
@@ -452,6 +532,8 @@ def build(
     audio_override: Optional[str],
     project: Path,
     out_name: str,
+    motion: str = "static",
+    caption_mode: str = "sentence",
 ) -> Dict[str, Any]:
     verified = load_verified_plan()
     creator = verified["creator"]
@@ -505,12 +587,13 @@ def build(
     shutil.copyfile(audio, local_audio)
 
     caption = project / "assets" / "captions" / f"{out_name}.srt"
-    caption.write_text(render_srt(timings), encoding="utf-8")
+    cues = build_caption_cues(timings, caption_mode)
+    caption.write_text(render_srt(cues), encoding="utf-8")
 
     baseline = json.loads(BASELINE_STORYBOARD.read_text(encoding="utf-8"))
     storyboard: Dict[str, Any] = {
         "size": baseline.get("size", "1080x1920"),
-        "image_motion": baseline.get("image_motion", "static"),
+        "image_motion": motion,
         "pad_mode": baseline.get("pad_mode", "trim"),
         "shots": [
             {
@@ -627,6 +710,11 @@ def build(
             "silence_min_seconds": SILENCE_MIN_SECONDS,
             "audio_duration_s": round(total_s, 3),
         },
+        "look": {
+            "image_motion": motion,
+            "caption_mode": caption_mode,
+            "caption_cues": len(cues),
+        },
         "evidence": {
             "source": "contentops.evidence-lock/v1",
             "placements_used": sorted({item.placement_id for item in timings}),
@@ -653,6 +741,17 @@ def build(
             "the candidate audio is gitignored, so this build is host-local",
             "an internal shot boundary may be off by up to one clause when no "
             "usable silence was detected (see per-unit boundary_method)",
+            *(
+                ["ken-burns comes from the pinned upstream filter, which zooms "
+                 "toward the top-left because it sets no x/y expression"]
+                if motion == "ken-burns" else []
+            ),
+            *(
+                ["phrase cues are allocated by character count within a unit, "
+                 "so a fast clause can lead or lag its spoken words by a fraction "
+                 "of a second"]
+                if caption_mode == "phrase" else []
+            ),
         ],
     }
     (project / "receipts" / "v3-sample-video.json").write_text(
@@ -668,6 +767,14 @@ def main() -> int:
     parser.add_argument("--audio", default="", help="explicit candidate WAV (must match the arm's sha)")
     parser.add_argument("--project", default=str(DEFAULT_PROJECT))
     parser.add_argument("--out-name", default="v3-sample")
+    parser.add_argument(
+        "--motion", choices=("static", "ken-burns"), default="static",
+        help="shot motion; ken-burns delegates to the pinned upstream filter",
+    )
+    parser.add_argument(
+        "--caption-mode", choices=("sentence", "phrase"), default="sentence",
+        help="one cue per unit, or one cue per clause",
+    )
     args = parser.parse_args()
 
     project = Path(args.project)
@@ -679,6 +786,8 @@ def main() -> int:
         audio_override=args.audio or None,
         project=project,
         out_name=args.out_name,
+        motion=args.motion,
+        caption_mode=args.caption_mode,
     )
     print(json.dumps({k: report[k] for k in ("arm", "compose", "qc", "production_ready")},
                      indent=2, ensure_ascii=False))

@@ -402,6 +402,12 @@ It is a three-unit excerpt, not the full eight-unit script, and the candidate
 audio is gitignored, so the build is host-local by design. The full v3 narration
 (4 synthesis groups, ~466 characters) is still not generated.
 
+A second build, `projects/easel-enhanced-golden/v3-sample-motion/`, uses the same
+E audio with the pinned upstream `ken-burns` zoom and clause-level captions
+(9 cues instead of 3). Same QC WARN and zero provider calls. The zoom is a slow
+1.0→1.08 push; at 1080x1920 nothing is cropped because the evidence screenshots
+already fill the frame. Both builds remain `production_ready=false`.
+
 ## Subtitle burn timing defect — FIXED 2026-10-27
 
 `assemble_easel._srt_to_ass` emitted ASS timestamps as `H:MM:SS.mmm`, but ASS is

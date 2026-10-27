@@ -161,3 +161,17 @@ python scripts\build_v3_sample_video.py --arm E --audio outputs\founder-v3-sampl
 - 产物：`projects/easel-enhanced-golden/v3-sample-video/final/v3-sample.mp4`、
   `receipts/v3-sample-video.json`、`receipts/qc-report-v3-sample.{json,md}`。
   `production_ready` 保持 `false`。
+
+观感选项，同样使用既有音频、无 provider 调用：
+
+```powershell
+python scripts\build_v3_sample_video.py --arm E `
+  --project projects\easel-enhanced-golden\v3-sample-motion `
+  --out-name v3-sample-motion --motion ken-burns --caption-mode phrase
+```
+
+- `--motion static`（默认）或 `ken-burns`。Ken Burns 来自 pinned 上游滤镜，
+  由于该滤镜未设置 `x`/`y` 表达式，会朝左上角推近。
+- `--caption-mode sentence`（每单元一条）或 `phrase`（每分句一条；单元时长按
+  字符数分配，少于六字的碎片并入相邻分句）。
+- 对比版请用独立的 `--project`，避免两份凭证互相覆盖。
