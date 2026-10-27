@@ -1,0 +1,116 @@
+{
+  "schema": "contentops.review-bundle/v1",
+  "package_id": "easel-engineering-proof",
+  "built_at": "2026-10-27T13:09:20Z",
+  "inputs": {
+    "video": {
+      "path": "project://final/easel.mp4",
+      "sha256": "d002a8b40975bc9d084a69578515d872b5fac5239ca7236b4e531657037463dd"
+    },
+    "narration": {
+      "path": "project://work/narration.wav",
+      "sha256": "5354d3f5f0838fab58e372ed98d10318e171b8f3140d86e177be3726abe9b1a4"
+    },
+    "captions": {
+      "path": "project://assets/captions/cut.srt",
+      "sha256": "93db83fa7c69eacfadebc16c8785f437e5849a09c76d303cce95c857ca052abb"
+    },
+    "claim_map": {
+      "path": "project://script/claim-map.json",
+      "sha256": "70ceef0b850f8a8a9a34604e093a905ec72bf1e3f6a886b3a32eaa916a2eca0f"
+    },
+    "cut_plan": {
+      "path": "project://script/cut-plan.json",
+      "sha256": "c7b44203e81aff694e5475d30832c5273dece236c174c65e6fee38109c92dd21"
+    },
+    "asset_map": {
+      "path": "project://script/assets.json",
+      "sha256": "0a8fa22d18ebe9d5cb06c6c45d5ef2d674499d97432713f63732bcac5844b23d"
+    },
+    "qc_report": {
+      "path": "project://receipts/qc-report.json",
+      "sha256": "00f87dfc02f0ed85ba89a14090c1974baacbca2c437b1efb38b98def0ee0afa1"
+    },
+    "build_receipt": {
+      "path": "project://receipts/build-easel.json",
+      "sha256": "6c3ad96d13eb41436c0b922b4cae04a219d25dc66ddbd5a134a8556122ac6b89"
+    },
+    "target": {
+      "width": 1920,
+      "height": 1080,
+      "duration_ms_range": [
+        58000,
+        64000
+      ],
+      "caption_safe_area": {
+        "x": 120,
+        "y": 880,
+        "width": 1680,
+        "height": 160
+      },
+      "min_reading_hold_ms": 2500
+    },
+    "claim_map_fingerprint": "d4ac3bdcae57fb821644b98244d1522fec861bc9977608000ca8a44104a11567",
+    "cut_plan_fingerprint": "00c85dfe548a7d7e3953dbfaedece8d55b98aedf43e3138d23710b4da4c84319",
+    "cards": {
+      "A-MATRIX": {
+        "path": "project://assets/cards/matrix.png",
+        "sha256": "0bdef507c110d7f523c881fa77360aa387046e2c36c6babcb61f151ef5ae7e18"
+      }
+    },
+    "cover": {
+      "path": "project://assets/covers/bili.png",
+      "sha256": "fb4a0aa95a792ed7605415d96c323f504a8a6d6f140cb60e98d116c4200d8498"
+    },
+    "cover_receipt": {
+      "path": "project://receipts/cover.json",
+      "sha256": "04b1e1088d02cc06024971922ab2cdd6b3af1981ce106bec54f3254bfee11f77"
+    },
+    "captures": [
+      {
+        "asset_id": "A-REV",
+        "capture_id": "CAP-20261027-REV-H",
+        "evidence_class": "EXECUTED",
+        "permission_scope": "internal_review",
+        "recording_sha256": "191251c35bc88521b3754e8eb016aa079959e7dddd94c4abb79bf80bcf172a12"
+      },
+      {
+        "asset_id": "A-DOCTOR",
+        "capture_id": "CAP-20261027-DOCTOR-H",
+        "evidence_class": "EXECUTED",
+        "permission_scope": "internal_review",
+        "recording_sha256": "22160a6ba36250081d9424a826ce3bcb049342b1ca2505523f9d2fcae387e2b8"
+      },
+      {
+        "asset_id": "A-SUB",
+        "capture_id": "CAP-20261027-SUBTITLE-H",
+        "evidence_class": "EXECUTED",
+        "permission_scope": "internal_review",
+        "recording_sha256": "60cef5bd3e8b07bbefcd33ae404f23840d293fe096ea5b397b1a680da108f7eb"
+      },
+      {
+        "asset_id": "A-SKILL",
+        "capture_id": "CAP-20261027-SKILLROUTE-H",
+        "evidence_class": "EXECUTED",
+        "permission_scope": "internal_review",
+        "recording_sha256": "03170db8948795fbe13dc7b2046e7a032ab34f829a0ff2fce22c4f5471cc1918"
+      }
+    ],
+    "capture_proofs_present": true,
+    "redactions": [],
+    "distribution_blocked": true,
+    "distribution_block_reasons": [
+      "CAP-20261027-REV-H is internal_review; a redaction receipt is required before distribution",
+      "CAP-20261027-DOCTOR-H is internal_review; a redaction receipt is required before distribution",
+      "CAP-20261027-SUBTITLE-H is internal_review; a redaction receipt is required before distribution",
+      "CAP-20261027-SKILLROUTE-H is internal_review; a redaction receipt is required before distribution"
+    ]
+  },
+  "score": null,
+  "reviewer": null,
+  "reviewed_at": null,
+  "hard_fail": null,
+  "status": "PENDING_HUMAN_REVIEW",
+  "production_ready": false,
+  "review_bundle_fingerprint": "52ae4beec71f05406924b8027ba27739e44a379c3aeff180d7c79449c92ab67c"
+}

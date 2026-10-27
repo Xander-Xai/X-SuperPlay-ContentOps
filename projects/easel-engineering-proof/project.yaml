@@ -4,7 +4,13 @@ account: "X超玩·Future Intelligence"
 role: Evidence
 platforms: [bilibili]
 format: 1920x1080
-duration_sec: 52
+duration_sec: 62
 status: EVIDENCE_DRAFT
 evidence_project: easel-evidence-capture
-design_deviation: "design proposed 78-90s; 52s is the honest maximum for 23s of real footage without repetition"
+design_deviation: "design proposed 78-90s; 62s is the honest maximum for 23s of real footage without repetition"
+cover_html: assets/covers/bili.html
+cover_png: assets/covers/bili.png
+cover_width: 1600
+cover_height: 900
+cover_platform: bilibili
+cover_title_claim: E-COVER

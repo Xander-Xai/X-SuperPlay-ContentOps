@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:1920px; height:1080px; }
+  body { background:#F2EDE4; color:#1A1714;
+         font-family:"Noto Sans CJK SC","Source Han Sans SC","Microsoft YaHei",sans-serif; }
+  .card { width:1920px; height:1080px; padding:72px 96px 190px;
+          display:flex; flex-direction:column; }
+  .kicker { font-size:26px; letter-spacing:.16em; color:#6B6560; font-weight:500; }
+  .rule { width:100%; height:2px; background:#1A1714; margin-top:32px; }
+  .matrix { margin-top:84px; font-size:80px; line-height:1.34; font-weight:400;
+            letter-spacing:-.015em; }
+  .matrix span { display:block; }
+  .ok { color:#1A1714; }
+  .bad { color:#C0392B; margin-top:22px; }
+  .bar { display:flex; gap:0; margin-top:auto; height:12px; }
+  .bar i { display:block; height:12px; }
+  .bar .a { background:#1A1714; width:66%; }
+  .bar .b { background:#C0392B; width:34%; }
+  .footer { display:flex; justify-content:space-between; align-items:flex-end;
+            margin-top:28px; font-size:24px; color:#6B6560; line-height:1.6; }
+  .mark { letter-spacing:.18em; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="kicker">ENGINEERING · VERIFIED / UNVERIFIED</div>
+    <div class="rule"></div>
+    <p class="matrix"><span class="ok">已验证：依赖、运行时、技能路由、字幕回归。</span><span class="bad">未验证：Web。</span></p>
+    <div class="bar"><i class="a"></i><i class="b"></i></div>
+    <div class="footer">
+      <div>docs/CURRENT-STATE.md · runtime/easel.lock.json<br>sha256 cb428fa6… / 3504565e…</div>
+      <div class="mark">EASEL · VERIFICATION BOUNDARY</div>
+    </div>
+  </div>
+</body>
+</html>

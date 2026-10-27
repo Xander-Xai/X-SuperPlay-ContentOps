@@ -1,7 +1,7 @@
 # Engineering evidence cut — master
 
 **Audience question:** 到底验证了什么，什么还没验证？
-**Format:** 1920×1080, 52 s
+**Format:** 1920×1080, 62 s
 **Status:** EVIDENCE-DRAFT — waiting for assembly and human playback
 
 ## Evidence inventory
@@ -23,15 +23,16 @@ No generated image or video appears.
 | Time | Claim | Line |
 |---|---|---|
 | 0–4 | E-OPEN | 已验证的是命令行；没验证的是 Web。 |
-| 4–7 | E-REV | 验证修订：4efd5930。 |
-| 7–10 | E-PIN | 运行时固定在 v0.2.1，提交 3fe2d99。 |
-| 10–17 | E-DOCTOR | doctor 七项，全部返回 OK。 |
-| 17–24 | E-SKILL | 字幕这一步，路由到 auto-subtitle 和 auto-short-video。 |
-| 24–32 | E-SUB | 字幕回归覆盖厘秒时间戳、截断阻断和超长 cue。 |
-| 32–40 | E-TRANS-PROOF | 已经看到的每一项，都能回溯到回执。 |
-| 40–47 | E-TRANS-SCOPE | 这就是我们说的“验证过”。 |
-| 47–50 | E-MATRIX | 已验证：依赖、运行时、技能路由、字幕回归。未验证：Web。 |
-| 50–52 | E-CTA | 要复核，就从这些回执开始。 |
+| 4–8 | E-REV | 验证修订：4efd5930。 |
+| 8–13 | E-PIN | 运行时固定在 v0.2.1，提交 3fe2d99。 |
+| 13–20 | E-DOCTOR | doctor 七项，全部返回 OK。 |
+| 20–27 | E-SKILL | 字幕这一步，路由到 auto-subtitle 和 auto-short-video。 |
+| 27–35 | E-SUB | 字幕回归覆盖厘秒时间戳、截断阻断和超长 cue。 |
+| 35–43 | E-DOCTOR-DETAIL | 放大这行：CONTENTOPS_EXIT_CODE=0。 |
+| 43–50 | E-SUB-DETAIL | 放大这行：All subtitle timing tests passed. |
+| 50–55 | E-MATRIX-OK | 已验证：依赖、运行时、技能路由、字幕回归。 |
+| 55–59 | E-MATRIX-NOT | 未验证：Web。 |
+| 59–62 | E-CTA | 要复核，就从这些回执开始。 |
 
 ## Deliberate omissions
 
@@ -43,7 +44,7 @@ No generated image or video appears.
 
 The design proposed 78–90 s. Approved evidence currently totals 23 s of real
 terminal footage, and repeating it to reach 90 s would be the static padding
-this rebuild exists to remove. The engineering cut is therefore 52 s, and the
+this rebuild exists to remove. The engineering cut is therefore 62 s, and the
 deviation is recorded in the package receipt for Founder review.
 
 ## Packaging

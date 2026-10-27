@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:1600px; height:900px; }
+  body { background:#1A1714; color:#F2EDE4;
+         font-family:"Noto Sans CJK SC","Source Han Sans SC","Microsoft YaHei",sans-serif; }
+  .card { width:1600px; height:900px; padding:72px 80px 60px; display:flex; flex-direction:column; }
+  .kicker { font-size:24px; letter-spacing:.16em; color:#A79E92; font-weight:500; }
+  .rule { width:100%; height:2px; background:#F2EDE4; margin-top:28px; }
+  h1 { font-size:132px; line-height:1.12; font-weight:300; letter-spacing:-.03em; margin-top:50px; }
+  .signal { width:240px; height:12px; background:#C0392B; margin-top:48px; }
+  .sub { font-size:40px; line-height:1.4; color:#D9D2C7; margin-top:32px; }
+  .quote { border-left:10px solid #C0392B; padding-left:32px; font-size:36px;
+            line-height:1.4; margin-top:36px; color:#E8E1D6; }
+  .ledger { margin-top:36px; margin-bottom:26px; border-top:1px solid #3A332D; }
+  .ledger div { font-size:30px; line-height:1.55; padding:16px 0; border-bottom:1px solid #3A332D; color:#D9D2C7; }
+  .spacer { flex:1; }
+  .footer { display:flex; justify-content:space-between; align-items:flex-end;
+            font-size:22px; color:#A79E92; letter-spacing:.06em; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="kicker">ENGINEERING · EVIDENCE CUT</div>
+    <div class="rule"></div>
+    <h1>验证到哪一步</h1>
+    <div class="signal"></div>
+    <p class="sub">Easel 验证边界：CLI 通过，Web 未验证</p>
+    <div class="quote">已验证的是命令行；没验证的是 Web。</div>
+    <div class="ledger">
+      <div>doctor 七项，全部返回 OK。</div>
+      <div>字幕回归覆盖厘秒时间戳、截断阻断和超长 cue。</div>
+      <div>运行时固定在 v0.2.1，提交 3fe2d99。</div>
+    </div>
+    <div class="spacer"></div>
+    <div class="footer">
+      <div>docs/CURRENT-STATE.md · runtime/easel.lock.json</div>
+      <div>2026-10-27</div>
+    </div>
+  </div>
+</body>
+</html>

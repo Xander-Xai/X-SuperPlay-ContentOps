@@ -93,14 +93,22 @@ def iso_utc(value: Any, field: str) -> datetime:
     return parsed.astimezone(timezone.utc)
 
 
-def _group_ms(hours: Optional[str], minutes: str, seconds: Optional[str],
+def _group_ms(first: str, second: str, third: Optional[str],
               millis: str) -> int:
-    h = int(hours or 0)
-    m = int(minutes)
-    s = int(seconds or 0)
-    require(m < 60 and s < 60, "INVALID_TIME_RANGE",
-            f"minutes/seconds out of range: {hours}:{minutes}:{seconds}.{millis}")
-    return ((h * 60 + m) * 60 + s) * 1000 + int(millis)
+    """Resolve either ``MM:SS.mmm`` (two fields) or ``HH:MM:SS.mmm`` (three).
+
+    The two forms are indistinguishable without counting fields, and treating
+    ``00:03.000`` as hours:minutes made it 180 seconds instead of 3. That bug
+    silently sought three minutes into a six-second capture, produced an empty
+    clip, and only surfaced when the assembler rejected it.
+    """
+    if third is None:
+        hours, minutes, seconds = 0, int(first), int(second)
+    else:
+        hours, minutes, seconds = int(first), int(second), int(third)
+    require(minutes < 60 and seconds < 60, "INVALID_TIME_RANGE",
+            f"minutes/seconds out of range: {first}:{second}:{third}.{millis}")
+    return ((hours * 60 + minutes) * 60 + seconds) * 1000 + int(millis)
 
 
 def parse_time_range(value: Any, field: str) -> Tuple[int, int]:

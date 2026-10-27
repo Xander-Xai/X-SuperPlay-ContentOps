@@ -110,6 +110,16 @@ def test_a_command_cannot_carry_a_secret():
     print("[ok] a command display containing a secret marker is refused")
 
 
+def test_time_ranges_accept_mm_ss_and_hh_mm_ss():
+    """MM:SS.mmm must not be read as HH:MM. 00:03.000 is 3 s, not 180 s."""
+    from contentops.evidence._common import parse_time_range
+
+    assert parse_time_range("00:03.000-00:06.104", "x") == (3000, 6104)
+    assert parse_time_range("03:10.000-03:11.000", "x") == (190000, 191000)
+    assert parse_time_range("01:02:03.004-01:02:04.005", "x") == (3723004, 3724005)
+    print("[ok] MM:SS.mmm and HH:MM:SS.mmm resolve to the same millisecond scale")
+
+
 def test_the_recording_hash_is_checked_against_the_file():
     with tempfile.TemporaryDirectory() as td:
         recording = Path(td) / "cap.mp4"
@@ -141,6 +151,7 @@ def main() -> int:
         test_a_publishable_capture_requires_approval_and_read_only,
         test_structural_failures_are_named,
         test_a_command_cannot_carry_a_secret,
+        test_time_ranges_accept_mm_ss_and_hh_mm_ss,
         test_the_recording_hash_is_checked_against_the_file,
     )
     for fn in tests:

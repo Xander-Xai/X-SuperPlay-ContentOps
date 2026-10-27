@@ -1,0 +1,211 @@
+{
+  "schema": "contentops.evidence-build/v1",
+  "built_at": "2026-10-27T13:06:54Z",
+  "package_id": "easel-1024-proof",
+  "target": {
+    "width": 1080,
+    "height": 1920,
+    "duration_ms_range": [
+      41000,
+      47000
+    ],
+    "caption_safe_area": {
+      "x": 54,
+      "y": 1480,
+      "width": 972,
+      "height": 360
+    },
+    "min_reading_hold_ms": 2000
+  },
+  "skill_route": {
+    "name": "auto-short-video",
+    "script": ".runtime/easel/skills/openclaw/auto-short-video/scripts/assemble.py",
+    "why": "owns storyboard composition; ContentOps only prepares evidence-bounded clips, narration and captions"
+  },
+  "claim_map_fingerprint": "a016fbc973313f22632e259fd13fcd0dc325bd5f21f08730c4ac05248a9d607b",
+  "cut_plan_fingerprint": "ae2cd304a3f10b05d32ca593f5a7c0f52533db7afc53ced086382fb5fa4bacde",
+  "assets": {
+    "A-REV": {
+      "kind": "recording",
+      "sha256": "191251c35bc88521b3754e8eb016aa079959e7dddd94c4abb79bf80bcf172a12"
+    },
+    "A-DOCTOR": {
+      "kind": "recording",
+      "sha256": "22160a6ba36250081d9424a826ce3bcb049342b1ca2505523f9d2fcae387e2b8"
+    },
+    "A-SUB": {
+      "kind": "recording",
+      "sha256": "60cef5bd3e8b07bbefcd33ae404f23840d293fe096ea5b397b1a680da108f7eb"
+    },
+    "A-SKILL": {
+      "kind": "recording",
+      "sha256": "03170db8948795fbe13dc7b2046e7a032ab34f829a0ff2fce22c4f5471cc1918"
+    },
+    "A-DOC-WEB": {
+      "kind": "card",
+      "png_sha256": "a52049701672a398d8595abdf01cb40c14cfedb006e945629ce332fc1aaf8286"
+    }
+  },
+  "narration": {
+    "path": "project://work/narration.wav",
+    "sha256": "0b5c4e7873fd5466afd58e8d1e0d98bbc744871539e177336a9a7ce445b78908",
+    "duration_s": 45.000906
+  },
+  "captions": {
+    "path": "project://assets/captions/cut.srt",
+    "sha256": "48f8dd9254553a3a120ee67f74ca99a480430c61987afe7031b830dd5745b64d",
+    "cues": [
+      {
+        "start_ms": 3000,
+        "end_ms": 6878,
+        "text": "这次验证的修订是 4efd5930。",
+        "claim_id": "C-1024-REV"
+      },
+      {
+        "start_ms": 10000,
+        "end_ms": 13065,
+        "text": "doctor 的七项核心检查，返回 0。",
+        "claim_id": "C-1024-DOCTOR"
+      },
+      {
+        "start_ms": 18000,
+        "end_ms": 20682,
+        "text": "字幕计时的回归，全部通过。",
+        "claim_id": "C-1024-CAPTIONS"
+      },
+      {
+        "start_ms": 26000,
+        "end_ms": 28635,
+        "text": "字幕工作由 auto-subtitle 接管。",
+        "claim_id": "C-1024-SKILL"
+      },
+      {
+        "start_ms": 38000,
+        "end_ms": 41750,
+        "text": "边界：工具链可用，Web 还不能算交付。",
+        "claim_id": "C-1024-BOUNDARY"
+      },
+      {
+        "start_ms": 41900,
+        "end_ms": 44373,
+        "text": "先看证据，再决定接不接。",
+        "claim_id": "C-1024-CTA"
+      }
+    ]
+  },
+  "placements": [
+    {
+      "placement_id": "P-01-OPEN",
+      "window_s": 3.0,
+      "speech_s": 1.834,
+      "lines": [
+        {
+          "claim_id": "C-1024-OPEN",
+          "text": "Web 工作台仍未验证。",
+          "duration_s": 1.834,
+          "cached": true
+        }
+      ]
+    },
+    {
+      "placement_id": "P-02-REV",
+      "window_s": 7.0,
+      "speech_s": 3.878,
+      "lines": [
+        {
+          "claim_id": "C-1024-REV",
+          "text": "这次验证的修订是 4efd5930。",
+          "duration_s": 3.878,
+          "cached": true
+        }
+      ]
+    },
+    {
+      "placement_id": "P-03-DOCTOR",
+      "window_s": 8.0,
+      "speech_s": 3.065,
+      "lines": [
+        {
+          "claim_id": "C-1024-DOCTOR",
+          "text": "doctor 的七项核心检查，返回 0。",
+          "duration_s": 3.065,
+          "cached": true
+        }
+      ]
+    },
+    {
+      "placement_id": "P-04-SUBTITLE",
+      "window_s": 8.0,
+      "speech_s": 2.682,
+      "lines": [
+        {
+          "claim_id": "C-1024-CAPTIONS",
+          "text": "字幕计时的回归，全部通过。",
+          "duration_s": 2.682,
+          "cached": true
+        }
+      ]
+    },
+    {
+      "placement_id": "P-05-SKILL",
+      "window_s": 8.0,
+      "speech_s": 2.635,
+      "lines": [
+        {
+          "claim_id": "C-1024-SKILL",
+          "text": "字幕工作由 auto-subtitle 接管。",
+          "duration_s": 2.635,
+          "cached": true
+        }
+      ]
+    },
+    {
+      "placement_id": "P-06-WEB",
+      "window_s": 4.0,
+      "speech_s": 3.413,
+      "lines": [
+        {
+          "claim_id": "C-1024-WEB",
+          "text": "项目文档记录：Web 工作台 6 项失败。",
+          "duration_s": 3.413,
+          "cached": true
+        }
+      ]
+    },
+    {
+      "placement_id": "P-07-DOCTOR-DETAIL",
+      "window_s": 7.0,
+      "speech_s": 6.223,
+      "lines": [
+        {
+          "claim_id": "C-1024-BOUNDARY",
+          "text": "边界：工具链可用，Web 还不能算交付。",
+          "duration_s": 3.75,
+          "cached": true
+        },
+        {
+          "claim_id": "C-1024-CTA",
+          "text": "先看证据，再决定接不接。",
+          "duration_s": 2.473,
+          "cached": true
+        }
+      ]
+    }
+  ],
+  "output": {
+    "path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-1024-proof\\final\\easel.mp4",
+    "sha256": "7e4dd9c2fe03e89acbbb59ea7c3fa1a7839a3f32b42323eaf2fe08ff946dc4be",
+    "duration_s": 45.0
+  },
+  "voice_quality": "minimax_mplan_subscription",
+  "bgm": {
+    "role": "optional_bgm",
+    "status": "OMITTED_BY_POLICY",
+    "reason": "DASHSCOPE_API_KEY unavailable; video_ops loudness regression prohibited"
+  },
+  "generated_media_used": false,
+  "h3_experiment": "NOT_RUN",
+  "h3_reason": "zero-generated core; the decision belongs to human playback review",
+  "production_ready": false,
+  "human_review": "PENDING_FOUNDER_REVIEW"
+}

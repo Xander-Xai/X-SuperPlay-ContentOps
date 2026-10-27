@@ -1,0 +1,53 @@
+{
+  "schema": "contentops.asset-map/v1",
+  "assets": {
+    "A-REV": {
+      "kind": "recording",
+      "path": "repo://projects/easel-evidence-capture/work/raw/CAP-20261027-REV-H.mp4",
+      "sha256": "191251c35bc88521b3754e8eb016aa079959e7dddd94c4abb79bf80bcf172a12",
+      "capture_id": "CAP-20261027-REV-H",
+      "source_dimensions": {
+        "width": 1086,
+        "height": 693
+      }
+    },
+    "A-DOCTOR": {
+      "kind": "recording",
+      "path": "repo://projects/easel-evidence-capture/work/raw/CAP-20261027-DOCTOR-H.mp4",
+      "sha256": "22160a6ba36250081d9424a826ce3bcb049342b1ca2505523f9d2fcae387e2b8",
+      "capture_id": "CAP-20261027-DOCTOR-H",
+      "source_dimensions": {
+        "width": 1086,
+        "height": 693
+      }
+    },
+    "A-SUB": {
+      "kind": "recording",
+      "path": "repo://projects/easel-evidence-capture/work/raw/CAP-20261027-SUBTITLE-H.mp4",
+      "sha256": "60cef5bd3e8b07bbefcd33ae404f23840d293fe096ea5b397b1a680da108f7eb",
+      "capture_id": "CAP-20261027-SUBTITLE-H",
+      "source_dimensions": {
+        "width": 1086,
+        "height": 693
+      }
+    },
+    "A-SKILL": {
+      "kind": "recording",
+      "path": "repo://projects/easel-evidence-capture/work/raw/CAP-20261027-SKILLROUTE-H.mp4",
+      "sha256": "03170db8948795fbe13dc7b2046e7a032ab34f829a0ff2fce22c4f5471cc1918",
+      "capture_id": "CAP-20261027-SKILLROUTE-H",
+      "source_dimensions": {
+        "width": 1086,
+        "height": 693
+      }
+    },
+    "A-DOC-WEB": {
+      "kind": "card",
+      "html": "project://assets/cards/web-boundary.html",
+      "png": "project://assets/cards/web-boundary.png",
+      "width": 1080,
+      "height": 1920,
+      "source_document": "repo://docs/CURRENT-STATE.md"
+    }
+  }
+}

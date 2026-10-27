@@ -277,6 +277,16 @@ jobs:
       - name: Run editorial-package tests
         run: python tests/test_evidence_cut_editorial.py
 
+      # Target-aware QC: duration-weighted real-source share, generated cap,
+      # exact target dimensions, captions and cover presence.
+      - name: Run evidence cut QC tests
+        run: python tests/test_evidence_cut_qc.py
+
+      # Review bundles: input-only fingerprints, stale-review invalidation and
+      # the score-80 threshold with no hard fail.
+      - name: Run review-bundle tests
+        run: python tests/test_review_bundle.py
+
       - name: Enforce subprocess policy
         run: python scripts/check_subprocess_policy.py
 

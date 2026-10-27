@@ -40,6 +40,10 @@
           "surface": "caption",
           "text": "已验证的是命令行；没验证的是 Web。",
           "time_range": "00:00.000-00:04.000"
+        },
+        {
+          "surface": "onscreen",
+          "text": "已验证的是命令行；没验证的是 Web。"
         }
       ]
     },
@@ -66,12 +70,12 @@
         {
           "surface": "narration",
           "text": "验证修订：4efd5930。",
-          "time_range": "00:04.000-00:07.000"
+          "time_range": "00:04.000-00:08.000"
         },
         {
           "surface": "caption",
           "text": "验证修订：4efd5930。",
-          "time_range": "00:04.000-00:07.000"
+          "time_range": "00:04.000-00:08.000"
         },
         {
           "surface": "onscreen",
@@ -103,12 +107,16 @@
         {
           "surface": "narration",
           "text": "运行时固定在 v0.2.1，提交 3fe2d99。",
-          "time_range": "00:07.000-00:10.000"
+          "time_range": "00:08.000-00:13.000"
         },
         {
           "surface": "caption",
           "text": "运行时固定在 v0.2.1，提交 3fe2d99。",
-          "time_range": "00:07.000-00:10.000"
+          "time_range": "00:08.000-00:13.000"
+        },
+        {
+          "surface": "onscreen",
+          "text": "运行时固定在 v0.2.1，提交 3fe2d99。"
         }
       ]
     },
@@ -135,12 +143,12 @@
         {
           "surface": "narration",
           "text": "doctor 七项，全部返回 OK。",
-          "time_range": "00:10.000-00:17.000"
+          "time_range": "00:13.000-00:20.000"
         },
         {
           "surface": "caption",
           "text": "doctor 七项，全部返回 OK。",
-          "time_range": "00:10.000-00:17.000"
+          "time_range": "00:13.000-00:20.000"
         },
         {
           "surface": "onscreen",
@@ -172,12 +180,12 @@
         {
           "surface": "narration",
           "text": "字幕这一步，路由到 auto-subtitle 和 auto-short-video。",
-          "time_range": "00:17.000-00:24.000"
+          "time_range": "00:20.000-00:27.000"
         },
         {
           "surface": "caption",
           "text": "字幕这一步，路由到 auto-subtitle 和 auto-short-video。",
-          "time_range": "00:17.000-00:24.000"
+          "time_range": "00:20.000-00:27.000"
         }
       ]
     },
@@ -204,88 +212,12 @@
         {
           "surface": "narration",
           "text": "字幕回归覆盖厘秒时间戳、截断阻断和超长 cue。",
-          "time_range": "00:24.000-00:32.000"
+          "time_range": "00:27.000-00:35.000"
         },
         {
           "surface": "caption",
           "text": "字幕回归覆盖厘秒时间戳、截断阻断和超长 cue。",
-          "time_range": "00:24.000-00:32.000"
-        }
-      ]
-    },
-    {
-      "claim_id": "E-TRANS-PROOF",
-      "revision": 1,
-      "text": "已经看到的每一项，都能回溯到回执。",
-      "kind": "editorial_transition",
-      "assertion_about": "none",
-      "support_status": "SUPPORTED",
-      "permission_scope": "internal",
-      "limitation": "",
-      "evidence": [],
-      "appearances": [
-        {
-          "surface": "narration",
-          "text": "已经看到的每一项，都能回溯到回执。",
-          "time_range": "00:32.000-00:40.000"
-        }
-      ]
-    },
-    {
-      "claim_id": "E-TRANS-SCOPE",
-      "revision": 1,
-      "text": "这就是我们说的“验证过”。",
-      "kind": "editorial_transition",
-      "assertion_about": "none",
-      "support_status": "SUPPORTED",
-      "permission_scope": "internal",
-      "limitation": "",
-      "evidence": [],
-      "appearances": [
-        {
-          "surface": "narration",
-          "text": "这就是我们说的“验证过”。",
-          "time_range": "00:40.000-00:47.000"
-        }
-      ]
-    },
-    {
-      "claim_id": "E-MATRIX",
-      "revision": 1,
-      "text": "已验证：依赖、运行时、技能路由、字幕回归。未验证：Web。",
-      "kind": "source",
-      "assertion_about": "source",
-      "support_status": "SUPPORTED",
-      "permission_scope": "internal",
-      "limitation": "",
-      "evidence": [
-        {
-          "evidence_id": "E-DOC-CURRENT-STATE",
-          "kind": "document",
-          "sha256": "cb428fa6cf5c0a9198f73a15de225b385e8d32ffba6493ec4a02cac8a2779a3e",
-          "logical_path": "repo://docs/CURRENT-STATE.md",
-          "time_range": null,
-          "permission_scope": "publishable"
-        },
-        {
-          "evidence_id": "E-DOCTOR-H",
-          "kind": "terminal_recording",
-          "sha256": "22160a6ba36250081d9424a826ce3bcb049342b1ca2505523f9d2fcae387e2b8",
-          "logical_path": "repo://projects/easel-evidence-capture/work/raw/CAP-20261027-DOCTOR-H.mp4",
-          "time_range": "00:00.000-00:06.104",
-          "permission_scope": "internal"
-        }
-      ],
-      "appearances": [
-        {
-          "surface": "narration",
-          "text": "已验证：依赖、运行时、技能路由、字幕回归。未验证：Web。",
-          "time_range": "00:47.000-00:50.000"
-        },
-        {
-          "surface": "caption",
-          "text": "已验证：依赖、运行时、技能路由、字幕回归。未验证：Web。",
-          "time_range": "00:47.000-00:50.000"
+          "time_range": "00:27.000-00:35.000"
         }
       ]
     },
@@ -303,12 +235,12 @@
         {
           "surface": "cta",
           "text": "要复核，就从这些回执开始。",
-          "time_range": "00:50.000-00:52.000"
+          "time_range": "00:59.000-01:02.000"
         },
         {
           "surface": "narration",
           "text": "要复核，就从这些回执开始。",
-          "time_range": "00:50.000-00:52.000"
+          "time_range": "00:59.000-01:02.000"
         }
       ]
     },
@@ -360,6 +292,166 @@
         {
           "surface": "title",
           "text": "Easel 验证边界：CLI 通过，Web 未验证"
+        },
+        {
+          "surface": "onscreen",
+          "text": "Easel 验证边界：CLI 通过，Web 未验证"
+        }
+      ]
+    },
+    {
+      "claim_id": "E-DOCTOR-DETAIL",
+      "revision": 1,
+      "text": "放大这行：CONTENTOPS_EXIT_CODE=0。",
+      "kind": "runtime",
+      "assertion_about": "cli",
+      "support_status": "SUPPORTED",
+      "permission_scope": "internal",
+      "limitation": "",
+      "evidence": [
+        {
+          "evidence_id": "E-DOCTOR-H",
+          "kind": "terminal_recording",
+          "sha256": "22160a6ba36250081d9424a826ce3bcb049342b1ca2505523f9d2fcae387e2b8",
+          "logical_path": "repo://projects/easel-evidence-capture/work/raw/CAP-20261027-DOCTOR-H.mp4",
+          "time_range": "00:00.000-00:06.104",
+          "permission_scope": "internal"
+        }
+      ],
+      "appearances": [
+        {
+          "surface": "narration",
+          "text": "放大这行：CONTENTOPS_EXIT_CODE=0。",
+          "time_range": "00:35.000-00:43.000"
+        },
+        {
+          "surface": "caption",
+          "text": "放大这行：CONTENTOPS_EXIT_CODE=0。",
+          "time_range": "00:35.000-00:43.000"
+        },
+        {
+          "surface": "onscreen",
+          "text": "放大这行：CONTENTOPS_EXIT_CODE=0。",
+          "time_range": "00:35.000-00:43.000"
+        }
+      ]
+    },
+    {
+      "claim_id": "E-SUB-DETAIL",
+      "revision": 1,
+      "text": "放大这行：All subtitle timing tests passed.",
+      "kind": "runtime",
+      "assertion_about": "cli",
+      "support_status": "SUPPORTED",
+      "permission_scope": "internal",
+      "limitation": "",
+      "evidence": [
+        {
+          "evidence_id": "E-SUBTITLE-H",
+          "kind": "terminal_recording",
+          "sha256": "60cef5bd3e8b07bbefcd33ae404f23840d293fe096ea5b397b1a680da108f7eb",
+          "logical_path": "repo://projects/easel-evidence-capture/work/raw/CAP-20261027-SUBTITLE-H.mp4",
+          "time_range": "00:00.000-00:04.903",
+          "permission_scope": "internal"
+        }
+      ],
+      "appearances": [
+        {
+          "surface": "narration",
+          "text": "放大这行：All subtitle timing tests passed.",
+          "time_range": "00:43.000-00:50.000"
+        },
+        {
+          "surface": "caption",
+          "text": "放大这行：All subtitle timing tests passed.",
+          "time_range": "00:43.000-00:50.000"
+        },
+        {
+          "surface": "onscreen",
+          "text": "放大这行：All subtitle timing tests passed.",
+          "time_range": "00:43.000-00:50.000"
+        }
+      ]
+    },
+    {
+      "claim_id": "E-MATRIX-OK",
+      "revision": 1,
+      "text": "已验证：依赖、运行时、技能路由、字幕回归。",
+      "kind": "source",
+      "assertion_about": "source",
+      "support_status": "SUPPORTED",
+      "permission_scope": "internal",
+      "limitation": "",
+      "evidence": [
+        {
+          "evidence_id": "E-DOC-CURRENT-STATE",
+          "kind": "document",
+          "sha256": "cb428fa6cf5c0a9198f73a15de225b385e8d32ffba6493ec4a02cac8a2779a3e",
+          "logical_path": "repo://docs/CURRENT-STATE.md",
+          "time_range": null,
+          "permission_scope": "publishable"
+        },
+        {
+          "evidence_id": "E-DOCTOR-H",
+          "kind": "terminal_recording",
+          "sha256": "22160a6ba36250081d9424a826ce3bcb049342b1ca2505523f9d2fcae387e2b8",
+          "logical_path": "repo://projects/easel-evidence-capture/work/raw/CAP-20261027-DOCTOR-H.mp4",
+          "time_range": "00:00.000-00:06.104",
+          "permission_scope": "internal"
+        }
+      ],
+      "appearances": [
+        {
+          "surface": "narration",
+          "text": "已验证：依赖、运行时、技能路由、字幕回归。",
+          "time_range": "00:50.000-00:55.000"
+        },
+        {
+          "surface": "caption",
+          "text": "已验证：依赖、运行时、技能路由、字幕回归。",
+          "time_range": "00:50.000-00:55.000"
+        },
+        {
+          "surface": "onscreen",
+          "text": "已验证：依赖、运行时、技能路由、字幕回归。",
+          "time_range": "00:50.000-00:55.000"
+        }
+      ]
+    },
+    {
+      "claim_id": "E-MATRIX-NOT",
+      "revision": 1,
+      "text": "未验证：Web。",
+      "kind": "source",
+      "assertion_about": "source",
+      "support_status": "SUPPORTED",
+      "permission_scope": "publishable",
+      "limitation": "",
+      "evidence": [
+        {
+          "evidence_id": "E-DOC-CURRENT-STATE",
+          "kind": "document",
+          "sha256": "cb428fa6cf5c0a9198f73a15de225b385e8d32ffba6493ec4a02cac8a2779a3e",
+          "logical_path": "repo://docs/CURRENT-STATE.md",
+          "time_range": null,
+          "permission_scope": "publishable"
+        }
+      ],
+      "appearances": [
+        {
+          "surface": "narration",
+          "text": "未验证：Web。",
+          "time_range": "00:55.000-00:59.000"
+        },
+        {
+          "surface": "caption",
+          "text": "未验证：Web。",
+          "time_range": "00:55.000-00:59.000"
+        },
+        {
+          "surface": "onscreen",
+          "text": "未验证：Web。",
+          "time_range": "00:55.000-00:59.000"
         }
       ]
     }

@@ -1,0 +1,121 @@
+{
+  "schema": "contentops.cut-qc/v1",
+  "project": "easel-engineering-proof",
+  "target": {
+    "width": 1920,
+    "height": 1080,
+    "duration_ms_range": [
+      58000,
+      64000
+    ],
+    "caption_safe_area": {
+      "x": 120,
+      "y": 880,
+      "width": 1680,
+      "height": 160
+    },
+    "min_reading_hold_ms": 2500
+  },
+  "overall": "PASS",
+  "checks": [
+    {
+      "id": "video_exists",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-engineering-proof\\final\\easel.mp4"
+    },
+    {
+      "id": "resolution",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "1920x1080 expected 1920x1080"
+    },
+    {
+      "id": "duration",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "62.00s expected 58-64s"
+    },
+    {
+      "id": "video_codec",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "h264"
+    },
+    {
+      "id": "audio_present",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "aac"
+    },
+    {
+      "id": "decodes_and_analyses",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "OK"
+    },
+    {
+      "id": "freeze_is_declared",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "frozen run of 11.88s exceeds 1.5s; the render appears stalled (declared reading hold)"
+    },
+    {
+      "id": "black_and_freeze_measured",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "analysed_frames=240"
+    },
+    {
+      "id": "real_source_ratio",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "74.2% of 62.0s (min 70%)"
+    },
+    {
+      "id": "generated_ratio",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "0.0% (max 10%)"
+    },
+    {
+      "id": "claim_bindings",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "11 claim ids"
+    },
+    {
+      "id": "cover_present",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "receipts/cover.json"
+    },
+    {
+      "id": "captions_present",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "7 cues"
+    },
+    {
+      "id": "captions_inside_duration",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "62.00s"
+    },
+    {
+      "id": "narration_has_cues",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "OK"
+    }
+  ],
+  "shares": {
+    "total_s": 62.0,
+    "real_s": 46.0,
+    "generated_s": 0.0,
+    "citation_or_support_s": 16.0,
+    "real_ratio": 0.7419354838709677,
+    "generated_ratio": 0.0
+  },
+  "duration": 62.0
+}

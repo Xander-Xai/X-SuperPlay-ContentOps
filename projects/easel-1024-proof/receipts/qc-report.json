@@ -1,0 +1,121 @@
+{
+  "schema": "contentops.cut-qc/v1",
+  "project": "easel-1024-proof",
+  "target": {
+    "width": 1080,
+    "height": 1920,
+    "duration_ms_range": [
+      41000,
+      47000
+    ],
+    "caption_safe_area": {
+      "x": 54,
+      "y": 1480,
+      "width": 972,
+      "height": 360
+    },
+    "min_reading_hold_ms": 2000
+  },
+  "overall": "PASS",
+  "checks": [
+    {
+      "id": "video_exists",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-1024-proof\\final\\easel.mp4"
+    },
+    {
+      "id": "resolution",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "1080x1920 expected 1080x1920"
+    },
+    {
+      "id": "duration",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "45.00s expected 41-47s"
+    },
+    {
+      "id": "video_codec",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "h264"
+    },
+    {
+      "id": "audio_present",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "aac"
+    },
+    {
+      "id": "decodes_and_analyses",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "OK"
+    },
+    {
+      "id": "freeze_is_declared",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "frozen run of 5.20s exceeds 1.5s; the render appears stalled (declared reading hold)"
+    },
+    {
+      "id": "black_and_freeze_measured",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "analysed_frames=225"
+    },
+    {
+      "id": "real_source_ratio",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "84.4% of 45.0s (min 70%)"
+    },
+    {
+      "id": "generated_ratio",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "0.0% (max 10%)"
+    },
+    {
+      "id": "claim_bindings",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "8 claim ids"
+    },
+    {
+      "id": "cover_present",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "receipts/cover.json"
+    },
+    {
+      "id": "captions_present",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "6 cues"
+    },
+    {
+      "id": "captions_inside_duration",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "45.00s"
+    },
+    {
+      "id": "narration_has_cues",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "OK"
+    }
+  ],
+  "shares": {
+    "total_s": 45.0,
+    "real_s": 38.0,
+    "generated_s": 0.0,
+    "citation_or_support_s": 7.0,
+    "real_ratio": 0.8444444444444444,
+    "generated_ratio": 0.0
+  },
+  "duration": 45.0
+}

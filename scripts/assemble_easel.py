@@ -86,11 +86,15 @@ def _ms(stamp: str) -> int:
     return int(h) * 3600000 + int(m) * 60000 + int(float(s) * 1000)
 
 
-def _wrap(text: str, width_px: int, font_size: int) -> str:
-    """Break a cue into lines of at most width_px, joined with ASS \\N.
+def _wrap(text: str, width_px: int, font_size: int) -> list[str]:
+    """Break a cue into lines of at most width_px, favouring word boundaries.
 
     Measured advance widths (libass, CJK face): a full-width glyph advances
     ~font_size px, a latin glyph ~font_size/2 px (ratio 2.02:1 measured at 54).
+
+    CJK breaks between characters; a Latin run is kept whole. The earlier
+    character-by-character wrap split ``tests`` into ``test`` and ``s``, which is
+    a semantic break no reader should have to repair.
     """
     cjk_px = font_size
     lat_px = font_size / 2.0
@@ -98,16 +102,48 @@ def _wrap(text: str, width_px: int, font_size: int) -> str:
     def px(s: str) -> float:
         return sum(cjk_px if ord(c) > 0x2E80 else lat_px for c in s)
 
-    lines, cur, cur_px = [], "", 0.0
+    tokens: list[str] = []
+    current = ""
     for ch in text:
-        wpx = cjk_px if ord(ch) > 0x2E80 else lat_px
-        if cur and cur_px + wpx > width_px:
-            lines.append(cur)
+        if ord(ch) > 0x2E80:
+            if current:
+                tokens.append(current)
+                current = ""
+            tokens.append(ch)
+        elif ch.isspace():
+            if current:
+                tokens.append(current)
+                current = ""
+            tokens.append(" ")
+        else:
+            current += ch
+    if current:
+        tokens.append(current)
+
+    lines, cur, cur_px = [], "", 0.0
+    for token in tokens:
+        if token == " " and not cur:
+            continue
+        token_px = px(token)
+        if cur and cur_px + token_px > width_px:
+            lines.append(cur.rstrip())
             cur, cur_px = "", 0.0
-        cur += ch
-        cur_px += wpx
-    if cur:
-        lines.append(cur)
+            if token == " ":
+                continue
+        if token_px > width_px:
+            # A single token wider than the line: fall back to characters.
+            for ch in token:
+                wpx = cjk_px if ord(ch) > 0x2E80 else lat_px
+                if cur and cur_px + wpx > width_px:
+                    lines.append(cur.rstrip())
+                    cur, cur_px = "", 0.0
+                cur += ch
+                cur_px += wpx
+            continue
+        cur += token
+        cur_px += token_px
+    if cur.strip():
+        lines.append(cur.rstrip())
     return lines
 
 
@@ -204,8 +240,10 @@ def _srt_to_ass(srt_path: Path, ass_path: Path, w: int, h: int,
         "OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, "
         "ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, "
         "MarginL, MarginR, MarginV, Encoding\n"
+        # BorderStyle 3 draws an opaque box: white text alone disappeared on
+        # the light citation cards, while an outline is not enough on paper.
         f"Style: D,{font},{font_size},&H00FFFFFF,&H00FFFFFF,&H00000000,"
-        f"&H80000000,0,0,0,0,100,100,0,0,1,{max(2, font_size // 12)},0,2,"
+        f"&H80000000,0,0,0,0,100,100,0,0,3,{max(2, font_size // 12)},0,2,"
         f"0,0,{margin_v},1\n\n"
         "[Events]\n"
         "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, "
@@ -215,14 +253,19 @@ def _srt_to_ass(srt_path: Path, ass_path: Path, w: int, h: int,
     return overflows
 
 
-def run(project: Path, out_name: str = "easel", strict_captions: bool = False) -> dict:
+def run(project: Path, out_name: str = "easel", strict_captions: bool = False,
+        storyboard_path: Path = None) -> dict:
     """Assemble one project.
 
     strict_captions=True is the V2 build path: a cue that cannot fit the safe
     area blocks the build instead of silently losing narrated words.
+
+    storyboard_path lets a V2 build keep an absolute-path storyboard under
+    ``work/`` instead of committing a machine-specific ``script/storyboard.json``.
     """
     project = project.resolve()
-    storyboard = project / "script" / "storyboard.json"
+    storyboard = Path(storyboard_path) if storyboard_path else (
+        project / "script" / "storyboard.json")
     if not storyboard.exists():
         return {"status": "BLOCKED", "reason": f"storyboard missing: {storyboard}"}
     work_dir = project / "work"
@@ -284,7 +327,11 @@ def run(project: Path, out_name: str = "easel", strict_captions: bool = False) -
         try:
             caption_overflows = _srt_to_ass(
                 sub_path, ass_path, w, h, DEFAULT_SUB_FONT,
-                int(w * 0.05), int(h * 0.07), strict=strict_captions)
+                # Short edge, not width: a 1920-wide landscape frame with a
+                # width-based 96 px caption fills the screen and clips at the
+                # bottom. 0.10 of the height clears the caption box from the
+                # frame edge.
+                int(min(w, h) * 0.05), int(h * 0.10), strict=strict_captions)
         except CaptionOverflowError as err:
             return {"status": "BLOCKED", "stage": "captions",
                     "reason": str(err),

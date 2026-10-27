@@ -1,0 +1,20 @@
+{
+  "schema": "contentops.cover-receipt/v1",
+  "platform": "bilibili",
+  "width": 1600,
+  "height": 900,
+  "claim_id": "E-COVER",
+  "claim_text": "验证到哪一步",
+  "source": "citation_cover",
+  "source_note": "built from the tracked document; no raw capture frame was used because no capture is publishable yet",
+  "html": {
+    "path": "project://assets/covers/bili.html",
+    "sha256": "b2baedaaf1441994b294cca94f808f8fde2bbc5b7c9afb11b611ebe203d72df1"
+  },
+  "png": {
+    "path": "project://assets/covers/bili.png",
+    "sha256": "fb4a0aa95a792ed7605415d96c323f504a8a6d6f140cb60e98d116c4200d8498"
+  },
+  "audit": "✅ PASS  bili.png  (1600x900)\n  纵向跨度 89% | 底部死空白 2% | 最大空白带 11% | 4带密度 [0.22, 0.56, 0.32, 0.35]",
+  "built_at": "2026-10-27T12:56:31Z"
+}

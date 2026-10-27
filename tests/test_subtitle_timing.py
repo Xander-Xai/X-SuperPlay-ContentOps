@@ -83,6 +83,15 @@ def test_late_cue_is_not_shifted_into_the_next_one():
     assert rows[0][1] == "0:00:26.58", rows[0][1]
 
 
+def test_latin_words_are_not_split_mid_word():
+    """A wrap may break between words, never inside ``tests``."""
+    from assemble_easel import _wrap
+
+    lines = _wrap("放大这行：All subtitle timing tests passed.", 600, 54)
+    assert any("tests" in line for line in lines), lines
+    print("[ok] latin words survive a wrap intact")
+
+
 def test_strict_mode_blocks_oversized_cue():
     """An unfittable cue must stop the build, not lose words silently."""
     with tempfile.TemporaryDirectory() as td:
@@ -136,6 +145,7 @@ def main() -> int:
         test_second_cue_starts_at_the_first_cue_end,
         test_srt_parser_reads_milliseconds,
         test_late_cue_is_not_shifted_into_the_next_one,
+        test_latin_words_are_not_split_mid_word,
         test_strict_mode_blocks_oversized_cue,
         test_legacy_mode_reports_truncation_instead_of_hiding_it,
         test_short_cue_is_not_reported_as_overflow,

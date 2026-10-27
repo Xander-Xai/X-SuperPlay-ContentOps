@@ -7,3 +7,9 @@ format: 1080x1920
 duration_sec: 45
 status: EVIDENCE_DRAFT
 evidence_project: easel-evidence-capture
+cover_html: assets/covers/xhs.html
+cover_png: assets/covers/xhs.png
+cover_width: 1080
+cover_height: 1440
+cover_platform: xiaohongshu
+cover_title_claim: C-1024-COVER

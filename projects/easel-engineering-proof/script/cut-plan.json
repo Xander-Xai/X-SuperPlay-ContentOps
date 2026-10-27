@@ -4,8 +4,16 @@
   "target": {
     "width": 1920,
     "height": 1080,
-    "duration_ms_range": [46000, 52000],
-    "caption_safe_area": {"x": 120, "y": 880, "width": 1680, "height": 160},
+    "duration_ms_range": [
+      58000,
+      64000
+    ],
+    "caption_safe_area": {
+      "x": 120,
+      "y": 880,
+      "width": 1680,
+      "height": 160
+    },
     "min_reading_hold_ms": 2500
   },
   "placements": [
@@ -15,10 +23,19 @@
       "end_ms": 4000,
       "asset_id": "A-MATRIX",
       "source_time_range": "00:00.000-00:04.000",
-      "crop": {"x": 0, "y": 0, "width": 1920, "height": 1080, "source_width": 1920, "source_height": 1080},
+      "crop": {
+        "x": 0,
+        "y": 0,
+        "width": 1920,
+        "height": 1080,
+        "source_width": 1920,
+        "source_height": 1080
+      },
       "reading_class": "reading",
       "semantic_progress": "states the verified/unverified split before evidence",
-      "claim_ids": ["E-OPEN"],
+      "claim_ids": [
+        "E-OPEN"
+      ],
       "caption_cue_ids": [],
       "claim_bearing": true,
       "context_first": false,
@@ -28,13 +45,23 @@
     {
       "placement_id": "P-02-REV",
       "start_ms": 4000,
-      "end_ms": 10000,
+      "end_ms": 13000,
       "asset_id": "A-REV",
       "source_time_range": "00:00.000-00:04.701",
-      "crop": {"x": 0, "y": 0, "width": 1086, "height": 693, "source_width": 1086, "source_height": 693},
+      "crop": {
+        "x": 0,
+        "y": 0,
+        "width": 1086,
+        "height": 693,
+        "source_width": 1086,
+        "source_height": 693
+      },
       "reading_class": "reading",
       "semantic_progress": "revision is readable; the lock line is narrated over the same evidence",
-      "claim_ids": ["E-REV", "E-PIN"],
+      "claim_ids": [
+        "E-REV",
+        "E-PIN"
+      ],
       "caption_cue_ids": [],
       "claim_bearing": true,
       "context_first": false,
@@ -43,14 +70,23 @@
     },
     {
       "placement_id": "P-03-DOCTOR",
-      "start_ms": 10000,
-      "end_ms": 17000,
+      "start_ms": 13000,
+      "end_ms": 20000,
       "asset_id": "A-DOCTOR",
-      "source_time_range": "00:00.000-00:06.104",
-      "crop": {"x": 0, "y": 0, "width": 1086, "height": 693, "source_width": 1086, "source_height": 693},
+      "source_time_range": "00:00.500-00:06.104",
+      "crop": {
+        "x": 0,
+        "y": 0,
+        "width": 1086,
+        "height": 693,
+        "source_width": 1086,
+        "source_height": 693
+      },
       "reading_class": "reading",
       "semantic_progress": "seven checks and exit 0 are visible",
-      "claim_ids": ["E-DOCTOR"],
+      "claim_ids": [
+        "E-DOCTOR"
+      ],
       "caption_cue_ids": [],
       "claim_bearing": true,
       "context_first": false,
@@ -59,14 +95,23 @@
     },
     {
       "placement_id": "P-04-SKILL",
-      "start_ms": 17000,
-      "end_ms": 24000,
+      "start_ms": 20000,
+      "end_ms": 27000,
       "asset_id": "A-SKILL",
       "source_time_range": "00:00.000-00:06.705",
-      "crop": {"x": 0, "y": 0, "width": 1086, "height": 693, "source_width": 1086, "source_height": 693},
+      "crop": {
+        "x": 0,
+        "y": 0,
+        "width": 1086,
+        "height": 693,
+        "source_width": 1086,
+        "source_height": 693
+      },
       "reading_class": "reading",
       "semantic_progress": "the route names the owning skills",
-      "claim_ids": ["E-SKILL"],
+      "claim_ids": [
+        "E-SKILL"
+      ],
       "caption_cue_ids": [],
       "claim_bearing": true,
       "context_first": false,
@@ -75,14 +120,23 @@
     },
     {
       "placement_id": "P-05-SUB",
-      "start_ms": 24000,
-      "end_ms": 32000,
+      "start_ms": 27000,
+      "end_ms": 35000,
       "asset_id": "A-SUB",
       "source_time_range": "00:00.000-00:04.903",
-      "crop": {"x": 0, "y": 0, "width": 1086, "height": 693, "source_width": 1086, "source_height": 693},
+      "crop": {
+        "x": 0,
+        "y": 0,
+        "width": 1086,
+        "height": 693,
+        "source_width": 1086,
+        "source_height": 693
+      },
       "reading_class": "reading",
       "semantic_progress": "caption regressions print [ok] and exit 0",
-      "claim_ids": ["E-SUB"],
+      "claim_ids": [
+        "E-SUB"
+      ],
       "caption_cue_ids": [],
       "claim_bearing": true,
       "context_first": false,
@@ -91,14 +145,23 @@
     },
     {
       "placement_id": "P-06-DOCTOR-DETAIL",
-      "start_ms": 32000,
-      "end_ms": 40000,
+      "start_ms": 35000,
+      "end_ms": 43000,
       "asset_id": "A-DOCTOR",
       "source_time_range": "00:03.000-00:06.104",
-      "crop": {"x": 0, "y": 250, "width": 900, "height": 400, "source_width": 1086, "source_height": 693},
+      "crop": {
+        "x": 0,
+        "y": 250,
+        "width": 900,
+        "height": 400,
+        "source_width": 1086,
+        "source_height": 693
+      },
       "reading_class": "reading",
       "semantic_progress": "enlarges the passing result already shown in context at P-03",
-      "claim_ids": ["E-DOCTOR"],
+      "claim_ids": [
+        "E-DOCTOR-DETAIL"
+      ],
       "caption_cue_ids": [],
       "claim_bearing": true,
       "context_first": true,
@@ -107,14 +170,23 @@
     },
     {
       "placement_id": "P-07-SUB-DETAIL",
-      "start_ms": 40000,
-      "end_ms": 47000,
+      "start_ms": 43000,
+      "end_ms": 50000,
       "asset_id": "A-SUB",
       "source_time_range": "00:02.000-00:04.903",
-      "crop": {"x": 0, "y": 380, "width": 1086, "height": 300, "source_width": 1086, "source_height": 693},
+      "crop": {
+        "x": 0,
+        "y": 380,
+        "width": 1086,
+        "height": 300,
+        "source_width": 1086,
+        "source_height": 693
+      },
       "reading_class": "reading",
       "semantic_progress": "enlarges the passing caption lines already shown at P-05",
-      "claim_ids": ["E-SUB"],
+      "claim_ids": [
+        "E-SUB-DETAIL"
+      ],
       "caption_cue_ids": [],
       "claim_bearing": true,
       "context_first": true,
@@ -123,30 +195,25 @@
     },
     {
       "placement_id": "P-08-MATRIX",
-      "start_ms": 47000,
-      "end_ms": 50000,
+      "start_ms": 50000,
+      "end_ms": 62000,
       "asset_id": "A-MATRIX",
       "source_time_range": "00:00.000-00:03.000",
-      "crop": {"x": 0, "y": 0, "width": 1920, "height": 1080, "source_width": 1920, "source_height": 1080},
+      "crop": {
+        "x": 0,
+        "y": 0,
+        "width": 1920,
+        "height": 1080,
+        "source_width": 1920,
+        "source_height": 1080
+      },
       "reading_class": "reading",
       "semantic_progress": "restates the matrix as the conclusion, not a new fact",
-      "claim_ids": ["E-MATRIX"],
-      "caption_cue_ids": [],
-      "claim_bearing": true,
-      "context_first": false,
-      "context_placement_id": null,
-      "transition": "cut"
-    },
-    {
-      "placement_id": "P-09-CTA",
-      "start_ms": 50000,
-      "end_ms": 52000,
-      "asset_id": "A-CTA",
-      "source_time_range": "00:00.000-00:02.000",
-      "crop": {"x": 0, "y": 0, "width": 1920, "height": 1080, "source_width": 1920, "source_height": 1080},
-      "reading_class": "non_reading",
-      "semantic_progress": "points to the receipts",
-      "claim_ids": ["E-CTA"],
+      "claim_ids": [
+        "E-MATRIX-OK",
+        "E-MATRIX-NOT",
+        "E-CTA"
+      ],
       "caption_cue_ids": [],
       "claim_bearing": true,
       "context_first": false,

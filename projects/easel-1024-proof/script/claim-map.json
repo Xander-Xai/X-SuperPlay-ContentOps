@@ -6,7 +6,7 @@
     {
       "claim_id": "C-1024-OPEN",
       "revision": 1,
-      "text": "Easel 的 Web 工作台，仍未验证。",
+      "text": "Web 工作台仍未验证。",
       "kind": "source",
       "assertion_about": "source",
       "support_status": "SUPPORTED",
@@ -25,12 +25,17 @@
       "appearances": [
         {
           "surface": "narration",
-          "text": "Easel 的 Web 工作台，仍未验证。",
+          "text": "Web 工作台仍未验证。",
           "time_range": "00:00.000-00:03.000"
         },
         {
           "surface": "caption",
-          "text": "Easel 的 Web 工作台，仍未验证。",
+          "text": "Web 工作台仍未验证。",
+          "time_range": "00:00.000-00:03.000"
+        },
+        {
+          "surface": "onscreen",
+          "text": "Web 工作台仍未验证。",
           "time_range": "00:00.000-00:03.000"
         }
       ]
@@ -48,11 +53,6 @@
       "appearances": [
         {
           "surface": "transition",
-          "text": "先看它实际跑出来的东西。",
-          "time_range": "00:03.000-00:06.000"
-        },
-        {
-          "surface": "narration",
           "text": "先看它实际跑出来的东西。",
           "time_range": "00:03.000-00:06.000"
         }
@@ -81,12 +81,12 @@
         {
           "surface": "narration",
           "text": "这次验证的修订是 4efd5930。",
-          "time_range": "00:06.000-00:11.000"
+          "time_range": "00:03.000-00:10.000"
         },
         {
           "surface": "caption",
           "text": "这次验证的修订是 4efd5930。",
-          "time_range": "00:06.000-00:11.000"
+          "time_range": "00:03.000-00:10.000"
         },
         {
           "surface": "onscreen",
@@ -118,12 +118,12 @@
         {
           "surface": "narration",
           "text": "doctor 的七项核心检查，返回 0。",
-          "time_range": "00:11.000-00:18.000"
+          "time_range": "00:10.000-00:18.000"
         },
         {
           "surface": "caption",
           "text": "doctor 的七项核心检查，返回 0。",
-          "time_range": "00:11.000-00:18.000"
+          "time_range": "00:10.000-00:18.000"
         },
         {
           "surface": "onscreen",
@@ -155,12 +155,12 @@
         {
           "surface": "narration",
           "text": "字幕计时的回归，全部通过。",
-          "time_range": "00:18.000-00:25.000"
+          "time_range": "00:18.000-00:26.000"
         },
         {
           "surface": "caption",
           "text": "字幕计时的回归，全部通过。",
-          "time_range": "00:18.000-00:25.000"
+          "time_range": "00:18.000-00:26.000"
         },
         {
           "surface": "onscreen",
@@ -192,12 +192,12 @@
         {
           "surface": "narration",
           "text": "字幕工作由 auto-subtitle 接管。",
-          "time_range": "00:25.000-00:31.000"
+          "time_range": "00:26.000-00:34.000"
         },
         {
           "surface": "caption",
           "text": "字幕工作由 auto-subtitle 接管。",
-          "time_range": "00:25.000-00:31.000"
+          "time_range": "00:26.000-00:34.000"
         },
         {
           "surface": "onscreen",
@@ -229,12 +229,12 @@
         {
           "surface": "narration",
           "text": "项目文档记录：Web 工作台 6 项失败。",
-          "time_range": "00:31.000-00:38.000"
+          "time_range": "00:34.000-00:38.000"
         },
         {
           "surface": "caption",
           "text": "项目文档记录：Web 工作台 6 项失败。",
-          "time_range": "00:31.000-00:38.000"
+          "time_range": "00:34.000-00:38.000"
         },
         {
           "surface": "onscreen",
@@ -274,12 +274,16 @@
         {
           "surface": "narration",
           "text": "边界：工具链可用，Web 还不能算交付。",
-          "time_range": "00:38.000-00:42.000"
+          "time_range": "00:38.000-00:43.000"
         },
         {
           "surface": "caption",
           "text": "边界：工具链可用，Web 还不能算交付。",
-          "time_range": "00:38.000-00:42.000"
+          "time_range": "00:38.000-00:43.000"
+        },
+        {
+          "surface": "onscreen",
+          "text": "边界：工具链可用，Web 还不能算交付。"
         }
       ]
     },
@@ -297,12 +301,17 @@
         {
           "surface": "cta",
           "text": "先看证据，再决定接不接。",
-          "time_range": "00:42.000-00:45.000"
+          "time_range": "00:43.000-00:45.000"
         },
         {
           "surface": "narration",
           "text": "先看证据，再决定接不接。",
-          "time_range": "00:42.000-00:45.000"
+          "time_range": "00:43.000-00:45.000"
+        },
+        {
+          "surface": "caption",
+          "text": "先看证据，再决定接不接。",
+          "time_range": "00:43.000-00:45.000"
         }
       ]
     },
@@ -363,6 +372,37 @@
         {
           "surface": "title",
           "text": "Easel 实测：工具链通了，Web 还没"
+        },
+        {
+          "surface": "onscreen",
+          "text": "Easel 实测：工具链通了，Web 还没"
+        }
+      ]
+    },
+    {
+      "claim_id": "C-1024-OPEN-EN",
+      "revision": 1,
+      "text": "NOT VERIFIED",
+      "kind": "source",
+      "assertion_about": "source",
+      "support_status": "SUPPORTED",
+      "permission_scope": "publishable",
+      "limitation": "",
+      "evidence": [
+        {
+          "evidence_id": "E-DOC-CURRENT-STATE",
+          "kind": "document",
+          "sha256": "cb428fa6cf5c0a9198f73a15de225b385e8d32ffba6493ec4a02cac8a2779a3e",
+          "logical_path": "repo://docs/CURRENT-STATE.md",
+          "time_range": null,
+          "permission_scope": "publishable"
+        }
+      ],
+      "appearances": [
+        {
+          "surface": "onscreen",
+          "text": "NOT VERIFIED",
+          "time_range": "00:00.000-00:03.000"
         }
       ]
     }

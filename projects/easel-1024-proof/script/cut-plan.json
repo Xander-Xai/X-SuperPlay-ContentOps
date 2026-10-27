@@ -4,8 +4,16 @@
   "target": {
     "width": 1080,
     "height": 1920,
-    "duration_ms_range": [40000, 46000],
-    "caption_safe_area": {"x": 54, "y": 1480, "width": 972, "height": 360},
+    "duration_ms_range": [
+      41000,
+      47000
+    ],
+    "caption_safe_area": {
+      "x": 54,
+      "y": 1480,
+      "width": 972,
+      "height": 360
+    },
     "min_reading_hold_ms": 2000
   },
   "placements": [
@@ -15,10 +23,19 @@
       "end_ms": 3000,
       "asset_id": "A-DOC-WEB",
       "source_time_range": "00:00.000-00:03.000",
-      "crop": {"x": 0, "y": 0, "width": 1080, "height": 1350, "source_width": 1080, "source_height": 1350},
+      "crop": {
+        "x": 0,
+        "y": 0,
+        "width": 1080,
+        "height": 1920,
+        "source_width": 1080,
+        "source_height": 1920
+      },
       "reading_class": "reading",
       "semantic_progress": "states the documented boundary before any proof is shown",
-      "claim_ids": ["C-1024-OPEN"],
+      "claim_ids": [
+        "C-1024-OPEN"
+      ],
       "caption_cue_ids": [],
       "claim_bearing": true,
       "context_first": false,
@@ -31,10 +48,19 @@
       "end_ms": 10000,
       "asset_id": "A-REV",
       "source_time_range": "00:00.000-00:04.701",
-      "crop": {"x": 0, "y": 0, "width": 1086, "height": 693, "source_width": 1086, "source_height": 693},
+      "crop": {
+        "x": 0,
+        "y": 0,
+        "width": 1086,
+        "height": 693,
+        "source_width": 1086,
+        "source_height": 693
+      },
       "reading_class": "reading",
       "semantic_progress": "shows the exact revision; last frame is held so the hash is readable",
-      "claim_ids": ["C-1024-REV"],
+      "claim_ids": [
+        "C-1024-REV"
+      ],
       "caption_cue_ids": [],
       "claim_bearing": true,
       "context_first": false,
@@ -46,11 +72,20 @@
       "start_ms": 10000,
       "end_ms": 18000,
       "asset_id": "A-DOCTOR",
-      "source_time_range": "00:00.000-00:06.104",
-      "crop": {"x": 0, "y": 0, "width": 1086, "height": 693, "source_width": 1086, "source_height": 693},
+      "source_time_range": "00:00.500-00:06.104",
+      "crop": {
+        "x": 0,
+        "y": 0,
+        "width": 1086,
+        "height": 693,
+        "source_width": 1086,
+        "source_height": 693
+      },
       "reading_class": "reading",
       "semantic_progress": "seven core checks pass and exit 0 appears",
-      "claim_ids": ["C-1024-DOCTOR"],
+      "claim_ids": [
+        "C-1024-DOCTOR"
+      ],
       "caption_cue_ids": [],
       "claim_bearing": true,
       "context_first": false,
@@ -63,10 +98,19 @@
       "end_ms": 26000,
       "asset_id": "A-SUB",
       "source_time_range": "00:00.000-00:04.903",
-      "crop": {"x": 0, "y": 0, "width": 1086, "height": 693, "source_width": 1086, "source_height": 693},
+      "crop": {
+        "x": 0,
+        "y": 0,
+        "width": 1086,
+        "height": 693,
+        "source_width": 1086,
+        "source_height": 693
+      },
       "reading_class": "reading",
       "semantic_progress": "caption regressions print [ok] and exit 0",
-      "claim_ids": ["C-1024-CAPTIONS"],
+      "claim_ids": [
+        "C-1024-CAPTIONS"
+      ],
       "caption_cue_ids": [],
       "claim_bearing": true,
       "context_first": false,
@@ -79,10 +123,19 @@
       "end_ms": 34000,
       "asset_id": "A-SKILL",
       "source_time_range": "00:00.000-00:06.705",
-      "crop": {"x": 0, "y": 0, "width": 1086, "height": 693, "source_width": 1086, "source_height": 693},
+      "crop": {
+        "x": 0,
+        "y": 0,
+        "width": 1086,
+        "height": 693,
+        "source_width": 1086,
+        "source_height": 693
+      },
       "reading_class": "reading",
       "semantic_progress": "the route prints the owning skills",
-      "claim_ids": ["C-1024-SKILL"],
+      "claim_ids": [
+        "C-1024-SKILL"
+      ],
       "caption_cue_ids": [],
       "claim_bearing": true,
       "context_first": false,
@@ -92,13 +145,22 @@
     {
       "placement_id": "P-06-WEB",
       "start_ms": 34000,
-      "end_ms": 37000,
+      "end_ms": 38000,
       "asset_id": "A-DOC-WEB",
       "source_time_range": "00:00.000-00:03.000",
-      "crop": {"x": 0, "y": 0, "width": 1080, "height": 1350, "source_width": 1080, "source_height": 1350},
+      "crop": {
+        "x": 0,
+        "y": 0,
+        "width": 1080,
+        "height": 1920,
+        "source_width": 1080,
+        "source_height": 1920
+      },
       "reading_class": "reading",
       "semantic_progress": "quotes the six documented Web failures with the file cited",
-      "claim_ids": ["C-1024-WEB"],
+      "claim_ids": [
+        "C-1024-WEB"
+      ],
       "caption_cue_ids": [],
       "claim_bearing": true,
       "context_first": false,
@@ -107,34 +169,28 @@
     },
     {
       "placement_id": "P-07-DOCTOR-DETAIL",
-      "start_ms": 37000,
-      "end_ms": 42000,
+      "start_ms": 38000,
+      "end_ms": 45000,
       "asset_id": "A-DOCTOR",
       "source_time_range": "00:03.000-00:06.104",
-      "crop": {"x": 0, "y": 250, "width": 900, "height": 400, "source_width": 1086, "source_height": 693},
+      "crop": {
+        "x": 0,
+        "y": 250,
+        "width": 900,
+        "height": 400,
+        "source_width": 1086,
+        "source_height": 693
+      },
       "reading_class": "reading",
       "semantic_progress": "enlarges the passing checks already seen in context at P-03",
-      "claim_ids": ["C-1024-BOUNDARY"],
+      "claim_ids": [
+        "C-1024-BOUNDARY",
+        "C-1024-CTA"
+      ],
       "caption_cue_ids": [],
       "claim_bearing": true,
       "context_first": true,
       "context_placement_id": "P-03-DOCTOR",
-      "transition": "cut"
-    },
-    {
-      "placement_id": "P-08-CTA",
-      "start_ms": 42000,
-      "end_ms": 45000,
-      "asset_id": "A-CTA",
-      "source_time_range": "00:00.000-00:03.000",
-      "crop": {"x": 0, "y": 0, "width": 1080, "height": 1920, "source_width": 1080, "source_height": 1920},
-      "reading_class": "reading",
-      "semantic_progress": "closes with the evidence-first invitation",
-      "claim_ids": ["C-1024-CTA"],
-      "caption_cue_ids": [],
-      "claim_bearing": true,
-      "context_first": false,
-      "context_placement_id": null,
       "transition": "cut"
     }
   ]

@@ -1,0 +1,242 @@
+{
+  "schema": "contentops.evidence-build/v1",
+  "built_at": "2026-10-27T13:07:41Z",
+  "package_id": "easel-engineering-proof",
+  "target": {
+    "width": 1920,
+    "height": 1080,
+    "duration_ms_range": [
+      58000,
+      64000
+    ],
+    "caption_safe_area": {
+      "x": 120,
+      "y": 880,
+      "width": 1680,
+      "height": 160
+    },
+    "min_reading_hold_ms": 2500
+  },
+  "skill_route": {
+    "name": "auto-short-video",
+    "script": ".runtime/easel/skills/openclaw/auto-short-video/scripts/assemble.py",
+    "why": "owns storyboard composition; ContentOps only prepares evidence-bounded clips, narration and captions"
+  },
+  "claim_map_fingerprint": "d4ac3bdcae57fb821644b98244d1522fec861bc9977608000ca8a44104a11567",
+  "cut_plan_fingerprint": "00c85dfe548a7d7e3953dbfaedece8d55b98aedf43e3138d23710b4da4c84319",
+  "assets": {
+    "A-REV": {
+      "kind": "recording",
+      "sha256": "191251c35bc88521b3754e8eb016aa079959e7dddd94c4abb79bf80bcf172a12"
+    },
+    "A-DOCTOR": {
+      "kind": "recording",
+      "sha256": "22160a6ba36250081d9424a826ce3bcb049342b1ca2505523f9d2fcae387e2b8"
+    },
+    "A-SUB": {
+      "kind": "recording",
+      "sha256": "60cef5bd3e8b07bbefcd33ae404f23840d293fe096ea5b397b1a680da108f7eb"
+    },
+    "A-SKILL": {
+      "kind": "recording",
+      "sha256": "03170db8948795fbe13dc7b2046e7a032ab34f829a0ff2fce22c4f5471cc1918"
+    },
+    "A-MATRIX": {
+      "kind": "card",
+      "png_sha256": "0bdef507c110d7f523c881fa77360aa387046e2c36c6babcb61f151ef5ae7e18"
+    }
+  },
+  "narration": {
+    "path": "project://work/narration.wav",
+    "sha256": "5354d3f5f0838fab58e372ed98d10318e171b8f3140d86e177be3726abe9b1a4",
+    "duration_s": 61.999313
+  },
+  "captions": {
+    "path": "project://assets/captions/cut.srt",
+    "sha256": "93db83fa7c69eacfadebc16c8785f437e5849a09c76d303cce95c857ca052abb",
+    "cues": [
+      {
+        "start_ms": 4000,
+        "end_ms": 8005,
+        "text": "验证修订：4efd5930。",
+        "claim_id": "E-REV"
+      },
+      {
+        "start_ms": 8155,
+        "end_ms": 12799,
+        "text": "运行时固定在 v0.2.1，提交 3fe2d99。",
+        "claim_id": "E-PIN"
+      },
+      {
+        "start_ms": 13000,
+        "end_ms": 16019,
+        "text": "doctor 七项，全部返回 OK。",
+        "claim_id": "E-DOCTOR"
+      },
+      {
+        "start_ms": 20000,
+        "end_ms": 24598,
+        "text": "字幕这一步，路由到 auto-subtitle 和 auto-short-video。",
+        "claim_id": "E-SKILL"
+      },
+      {
+        "start_ms": 27000,
+        "end_ms": 32500,
+        "text": "字幕回归覆盖厘秒时间戳、截断阻断和超长 cue。",
+        "claim_id": "E-SUB"
+      },
+      {
+        "start_ms": 35000,
+        "end_ms": 40027,
+        "text": "放大这行：CONTENTOPS_EXIT_CODE=0。",
+        "claim_id": "E-DOCTOR-DETAIL"
+      },
+      {
+        "start_ms": 43000,
+        "end_ms": 46541,
+        "text": "放大这行：All subtitle timing tests passed.",
+        "claim_id": "E-SUB-DETAIL"
+      }
+    ]
+  },
+  "placements": [
+    {
+      "placement_id": "P-01-MATRIX",
+      "window_s": 4.0,
+      "speech_s": 2.891,
+      "lines": [
+        {
+          "claim_id": "E-OPEN",
+          "text": "已验证的是命令行；没验证的是 Web。",
+          "duration_s": 2.891,
+          "cached": true
+        }
+      ]
+    },
+    {
+      "placement_id": "P-02-REV",
+      "window_s": 9.0,
+      "speech_s": 8.649,
+      "lines": [
+        {
+          "claim_id": "E-REV",
+          "text": "验证修订：4efd5930。",
+          "duration_s": 4.005,
+          "cached": true
+        },
+        {
+          "claim_id": "E-PIN",
+          "text": "运行时固定在 v0.2.1，提交 3fe2d99。",
+          "duration_s": 4.644,
+          "cached": true
+        }
+      ]
+    },
+    {
+      "placement_id": "P-03-DOCTOR",
+      "window_s": 7.0,
+      "speech_s": 3.019,
+      "lines": [
+        {
+          "claim_id": "E-DOCTOR",
+          "text": "doctor 七项，全部返回 OK。",
+          "duration_s": 3.019,
+          "cached": true
+        }
+      ]
+    },
+    {
+      "placement_id": "P-04-SKILL",
+      "window_s": 7.0,
+      "speech_s": 4.598,
+      "lines": [
+        {
+          "claim_id": "E-SKILL",
+          "text": "字幕这一步，路由到 auto-subtitle 和 auto-short-video。",
+          "duration_s": 4.598,
+          "cached": true
+        }
+      ]
+    },
+    {
+      "placement_id": "P-05-SUB",
+      "window_s": 8.0,
+      "speech_s": 5.5,
+      "lines": [
+        {
+          "claim_id": "E-SUB",
+          "text": "字幕回归覆盖厘秒时间戳、截断阻断和超长 cue。",
+          "duration_s": 5.5,
+          "cached": true
+        }
+      ]
+    },
+    {
+      "placement_id": "P-06-DOCTOR-DETAIL",
+      "window_s": 8.0,
+      "speech_s": 5.027,
+      "lines": [
+        {
+          "claim_id": "E-DOCTOR-DETAIL",
+          "text": "放大这行：CONTENTOPS_EXIT_CODE=0。",
+          "duration_s": 5.027,
+          "cached": true
+        }
+      ]
+    },
+    {
+      "placement_id": "P-07-SUB-DETAIL",
+      "window_s": 7.0,
+      "speech_s": 3.541,
+      "lines": [
+        {
+          "claim_id": "E-SUB-DETAIL",
+          "text": "放大这行：All subtitle timing tests passed.",
+          "duration_s": 3.541,
+          "cached": true
+        }
+      ]
+    },
+    {
+      "placement_id": "P-08-MATRIX",
+      "window_s": 12.0,
+      "speech_s": 9.451,
+      "lines": [
+        {
+          "claim_id": "E-MATRIX-OK",
+          "text": "已验证：依赖、运行时、技能路由、字幕回归。",
+          "duration_s": 5.074,
+          "cached": true
+        },
+        {
+          "claim_id": "E-MATRIX-NOT",
+          "text": "未验证：Web。",
+          "duration_s": 1.486,
+          "cached": true
+        },
+        {
+          "claim_id": "E-CTA",
+          "text": "要复核，就从这些回执开始。",
+          "duration_s": 2.891,
+          "cached": true
+        }
+      ]
+    }
+  ],
+  "output": {
+    "path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-engineering-proof\\final\\easel.mp4",
+    "sha256": "d002a8b40975bc9d084a69578515d872b5fac5239ca7236b4e531657037463dd",
+    "duration_s": 62.0
+  },
+  "voice_quality": "minimax_mplan_subscription",
+  "bgm": {
+    "role": "optional_bgm",
+    "status": "OMITTED_BY_POLICY",
+    "reason": "DASHSCOPE_API_KEY unavailable; video_ops loudness regression prohibited"
+  },
+  "generated_media_used": false,
+  "h3_experiment": "NOT_RUN",
+  "h3_reason": "zero-generated core; the decision belongs to human playback review",
+  "production_ready": false,
+  "human_review": "PENDING_FOUNDER_REVIEW"
+}
