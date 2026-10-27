@@ -266,6 +266,12 @@ jobs:
       - name: Run terminal-capture tests
         run: python tests/test_terminal_capture.py
 
+      # Redaction lineage and context-preserving crops. Uses a synthetic clip:
+      # masks are proven by pixel, audio removal by stream absence, and an
+      # enlarged crop must be contained by its earlier context crop.
+      - name: Run redaction and context tests
+        run: python tests/test_context_preservation.py
+
       - name: Enforce subprocess policy
         run: python scripts/check_subprocess_policy.py
 
