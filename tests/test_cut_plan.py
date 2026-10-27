@@ -211,6 +211,72 @@ def test_the_fingerprint_changes_when_a_placement_moves():
     print("[ok] the cut-plan fingerprint changes when timing changes")
 
 
+def shot(shot_id, start, end, crop=None, context_shot_id=None):
+    return {
+        "shot_id": shot_id,
+        "start_ms": start,
+        "end_ms": end,
+        "source_time_range": "00:00.000-00:02.000",
+        "crop": crop or {"x": 0, "y": 0, "width": 1000, "height": 800,
+                         "source_width": 1100, "source_height": 2000},
+        "semantic_progress": "shows the result",
+        "context_shot_id": context_shot_id,
+    }
+
+
+def test_a_placement_may_show_several_views__each_capped_by_the_hold_limit():
+    plan = CutPlan.from_dict(fixed(placements=[
+        placement("P-001", 0, 2000, reading_class="reading",
+                  shots=[shot("S-1", 0, 2000)]),
+        placement("P-002", 2000, 8000,
+                  shots=[shot("S-2", 2000, 4000),
+                         shot("S-3", 4000, 6000,
+                              crop={"x": 100, "y": 100, "width": 400, "height": 300,
+                                    "source_width": 1100, "source_height": 2000},
+                              context_shot_id="S-2"),
+                         shot("S-4", 6000, 8000)]),
+    ]))
+    assert len(plan.placements[1].shots) == 3
+    assert plan.placements[1].shots[1].context_shot_id == "S-2"
+    print("[ok] a placement may carry several views, each bounded by the hold limit")
+
+
+def test_a_view_longer_than_the_hold_limit_is_refused():
+    rejects("VISUAL_HOLD_TOO_LONG", placements=[
+        placement("P-001", 0, 4000, claim_ids=["C-001"],
+                  shots=[shot("S-1", 0, 4000)]),
+        placement("P-002", 4000, 8000),
+    ])
+    print("[ok] one view held past max_visual_hold_ms is refused")
+
+
+def test_views_must_cover_the_placement_without_gaps():
+    rejects("SHOT_COVERAGE", placements=[
+        placement("P-001", 0, 4000, claim_ids=["C-001"],
+                  shots=[shot("S-1", 0, 2000)]),
+        placement("P-002", 4000, 8000),
+    ])
+    rejects("SHOT_GAP_OR_OVERLAP", placements=[
+        placement("P-001", 0, 4000, claim_ids=["C-001"],
+                  shots=[shot("S-1", 0, 1500), shot("S-2", 2000, 4000)]),
+        placement("P-002", 4000, 8000),
+    ])
+    print("[ok] views must tile the placement exactly")
+
+
+def test_an_enlarged_view_must_be_contained_by_its_context():
+    rejects("CROP_NOT_CONTAINED_BY_CONTEXT", placements=[
+        placement("P-001", 0, 4000, claim_ids=["C-001"],
+                  shots=[shot("S-1", 0, 2000),
+                         shot("S-2", 2000, 4000,
+                              crop={"x": 900, "y": 0, "width": 200, "height": 200,
+                                    "source_width": 1100, "source_height": 2000},
+                              context_shot_id="S-1")]),
+        placement("P-002", 4000, 8000),
+    ])
+    print("[ok] an enlarged view outside its context crop is refused")
+
+
 def main() -> int:
     failures = []
     tests = (
@@ -223,6 +289,10 @@ def main() -> int:
         test_a_reading_hold_shorter_than_the_policy_is_refused,
         test_the_safe_area_must_fit_the_frame,
         test_the_fingerprint_changes_when_a_placement_moves,
+        test_a_placement_may_show_several_views__each_capped_by_the_hold_limit,
+        test_a_view_longer_than_the_hold_limit_is_refused,
+        test_views_must_cover_the_placement_without_gaps,
+        test_an_enlarged_view_must_be_contained_by_its_context,
     )
     for fn in tests:
         try:

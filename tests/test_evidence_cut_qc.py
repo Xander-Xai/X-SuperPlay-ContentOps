@@ -52,7 +52,8 @@ def _placement(pid, start, end, asset, claims=None, bearing=True):
     }
 
 
-def make_project(td: Path, *, generated: bool = False, width=320, height=180) -> Path:
+def make_project(td: Path, *, generated: bool = False, width=320, height=180,
+                 max_hold=5000) -> Path:
     project = td / "project"
     clip = project / "work" / "raw" / "cap.mp4"
     _clip(clip, width=width, height=height)
@@ -78,6 +79,7 @@ def make_project(td: Path, *, generated: bool = False, width=320, height=180) ->
         "schema": "contentops.cut-plan/v1", "package_id": "qc-fixture",
         "target": {"width": width, "height": height,
                    "duration_ms_range": [4000, 5000],
+                   **({"max_visual_hold_ms": max_hold} if max_hold else {}),
                    "caption_safe_area": {"x": 10, "y": 120, "width": 300, "height": 50}},
         "placements": placements,
     }), encoding="utf-8")
@@ -174,6 +176,44 @@ def test_missing_captions_fail_closed():
     print("[ok] 5. missing captions fail the gate")
 
 
+def test_a_long_undeclared_static_view_fails():
+    with tempfile.TemporaryDirectory() as td:
+        project = make_project(Path(td), max_hold=None)  # default 2000ms
+        report = qc_cut(project)
+        views = [c for c in report["checks"] if c["id"] == "views_declared"][0]
+        assert not views["ok"], views
+        assert report["overall"] == "FAIL"
+    print("[ok] 6. a placement over the hold limit must declare its views")
+
+
+def test_a_frozen_render_fails_the_static_hold_gate():
+    with tempfile.TemporaryDirectory() as td:
+        project = make_project(Path(td), max_hold=2000)
+        plan_path = project / "script" / "cut-plan.json"
+        plan = json.loads(plan_path.read_text(encoding="utf-8"))
+        plan["placements"] = [
+            _placement("P-1", 0, 2000, "A-REAL", ["C-1"]),
+            _placement("P-1b", 2000, 4000, "A-REAL", ["C-1"]),
+        ]
+        plan_path.write_text(json.dumps(plan), encoding="utf-8")
+        # Two 2 s placements satisfy the structure, but the render itself is one
+        # frozen image for four seconds: the measured gate must still catch it.
+        frozen = project / "final" / "easel.mp4"
+        result = hidden_run([
+            "ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+            "-f", "lavfi", "-i", "color=c=0x101010:s=320x180:r=15:d=4",
+            "-f", "lavfi", "-i", "sine=frequency=440:duration=4",
+            "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p",
+            "-c:a", "aac", "-shortest", str(frozen),
+        ], timeout=120)
+        assert result.returncode == 0, result.stderr
+        report = qc_cut(project)
+        hold = [c for c in report["checks"] if c["id"] == "static_hold_within_limit"][0]
+        assert not hold["ok"], hold
+        assert report["overall"] == "FAIL"
+    print("[ok] 7. a frozen render fails even when the plan declares its views")
+
+
 def main() -> int:
     tests = (
         test_overlapping_intervals_count_once,
@@ -181,6 +221,8 @@ def main() -> int:
         test_a_valid_target_passes_and_a_wrong_size_fails,
         test_a_long_generated_interval_fails_the_cut,
         test_missing_captions_fail_closed,
+        test_a_long_undeclared_static_view_fails,
+        test_a_frozen_render_fails_the_static_hold_gate,
     )
     failures = []
     for fn in tests:

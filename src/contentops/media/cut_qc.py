@@ -21,7 +21,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from contentops.evidence._common import ContractError
 from contentops.evidence.claim_map import ClaimMap
-from contentops.media.cut_plan import CutPlan
+from contentops.media.cut_plan import DEFAULT_MAX_VISUAL_HOLD_MS, CutPlan
 from contentops.media.media_paths import resolve_media_path
 from contentops.media.transport import ffprobe_json
 from contentops.media.video_qc import HAVE_FFMPEG, HAVE_FFPROBE, measure_video
@@ -114,23 +114,31 @@ def qc_cut(project: Path, video: Optional[Path] = None) -> Dict[str, Any]:
     checks.append(_check("audio_present", bool(audio), "FAIL",
                          audio.get("codec_name") or "none"))
 
+    max_hold_ms = target.get("max_visual_hold_ms", DEFAULT_MAX_VISUAL_HOLD_MS)
+    # Structural: a placement may run as long as its narration, but if it shows
+    # one unchanging view for longer than the hold limit it must declare the
+    # views that replace it. This is the check the old gate lacked -- it passed
+    # a wholly static cut because *any* reading beat was declared.
+    undeclared = [p.placement_id for p in cut_plan.placements
+                  if p.end_ms - p.start_ms > max_hold_ms and not p.shots]
+    checks.append(_check("views_declared", not undeclared, "FAIL",
+                         f"static placements over {max_hold_ms}ms: {undeclared}"
+                         if undeclared else f"every static view is <= {max_hold_ms}ms"))
+
     if HAVE_FFMPEG and HAVE_FFPROBE:
         measured = measure_video(video)
-        # A citation card or a reading hold is static by design. The freeze
-        # measurement stays in the report, but it only blocks when the plan did
-        # not declare a reading beat long enough to explain it.
-        freeze_reasons = [r for r in measured.reasons if "frozen run" in r]
+        # Measured: the render may still freeze even when the plan declares
+        # views (a held last frame, a repeated still). The limit is the same
+        # declared hold, plus a frame of encoder tolerance.
+        freeze_limit = max_hold_ms / 1000.0 + 0.2
+        longest = measured.longest_freeze_run_s
         blocking = [r for r in measured.reasons if "frozen run" not in r]
-        declared_holds = any(
-            p.reading_class == "reading" and p.end_ms - p.start_ms >= 1500
-            for p in cut_plan.placements)
         checks.append(_check("decodes_and_analyses", not blocking, "FAIL",
                              "; ".join(blocking) or "OK"))
-        checks.append(_check("freeze_is_declared", not freeze_reasons or declared_holds,
-                             "FAIL",
-                             "; ".join(freeze_reasons) if freeze_reasons and not declared_holds
-                             else (freeze_reasons[0] + " (declared reading hold)"
-                                   if freeze_reasons else "no freeze")))
+        checks.append(_check("static_hold_within_limit",
+                             longest is None or longest <= freeze_limit, "FAIL",
+                             f"longest frozen run {longest if longest is not None else 0:.2f}s "
+                             f"(limit {freeze_limit:.2f}s)"))
         checks.append(_check("black_and_freeze_measured",
                              measured.analysed_frames > 0, "FAIL",
                              f"analysed_frames={measured.analysed_frames}"))

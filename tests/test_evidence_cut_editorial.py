@@ -129,7 +129,10 @@ def test_the_two_cuts_argue_differently():
     b_cta = b_map.claim_for("cta", "要复核，就从这些回执开始。")
     assert a_cta.text != b_cta.text
 
-    assert a_plan.placements[-1].end_ms == 45000
+    # The 1024 cut's length is the plan's own target; the engineering cut's
+    # deviation is asserted separately.
+    a_low, a_high = a_plan.target["duration_ms_range"]
+    assert a_low <= a_plan.placements[-1].end_ms <= a_high
     assert b_plan.placements[-1].end_ms == 62000
     print("[ok] 5. the cuts differ in opening, order, target, CTA and length")
 

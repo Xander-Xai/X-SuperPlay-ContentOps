@@ -138,6 +138,32 @@ def test_short_cue_is_not_reported_as_overflow():
         assert overflows == [], overflows
 
 
+def test_a_closing_mark_never_opens_a_line():
+    """Chinese kinsoku: ``。`` must stay with the sentence it closes."""
+    from assemble_easel import _wrap
+
+    text = "边界：工具链可用，Web 还不能算交付。"
+    # 840 px leaves room for every glyph except the final full stop, which is
+    # exactly the break that produced a line containing only "。" before.
+    lines = _wrap(text, 840, 54)
+    assert "".join(lines) == text, lines
+    for line in lines:
+        assert line[0] not in "，。、；：！？）》」』】〕…", lines
+    print("[ok] a closing mark never opens a line")
+
+
+def test_an_opening_mark_never_ends_a_line():
+    from assemble_easel import _wrap
+
+    text = "这里写一段话（括号里的内容）。"
+    # 324 px ends exactly on the opening bracket.
+    lines = _wrap(text, 324, 54)
+    assert "".join(lines) == text, lines
+    for line in lines:
+        assert line[-1] not in "（《「『【〔", lines
+    print("[ok] an opening mark never ends a line")
+
+
 def main() -> int:
     failures = []
     tests = (
@@ -146,6 +172,8 @@ def main() -> int:
         test_srt_parser_reads_milliseconds,
         test_late_cue_is_not_shifted_into_the_next_one,
         test_latin_words_are_not_split_mid_word,
+        test_a_closing_mark_never_opens_a_line,
+        test_an_opening_mark_never_ends_a_line,
         test_strict_mode_blocks_oversized_cue,
         test_legacy_mode_reports_truncation_instead_of_hiding_it,
         test_short_cue_is_not_reported_as_overflow,

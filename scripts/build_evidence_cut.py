@@ -195,38 +195,58 @@ def render_card(project: Path, asset_id: str, asset: Dict[str, Any]) -> Path:
     return png
 
 
-def _segment(asset: Dict[str, Any], placement, target: Tuple[int, int],
-             out: Path, project: Path) -> None:
+def _views(placement) -> List[Dict[str, Any]]:
+    """The views a placement shows, in order.
+
+    A placement with no declared shots is one view for its whole window. A
+    placement with shots shows each crop for its own span, so a result can be
+    established in context and then enlarged without a frozen frame.
+    """
+    if placement.shots:
+        return [{"crop": shot.crop,
+                 "source_time_range": shot.source_time_range,
+                 "duration_s": (shot.end_ms - shot.start_ms) / 1000.0,
+                 "shot_id": shot.shot_id}
+                for shot in placement.shots]
+    return [{"crop": placement.crop,
+             "source_time_range": placement.source_time_range,
+             "duration_s": (placement.end_ms - placement.start_ms) / 1000.0,
+             "shot_id": placement.placement_id}]
+
+
+def _segment(asset: Dict[str, Any], asset_id: str, view: Dict[str, Any],
+             target: Tuple[int, int], out: Path, project: Path) -> None:
     width, height = target
-    duration = (placement.end_ms - placement.start_ms) / 1000.0
-    crop = placement.crop
+    duration = view["duration_s"]
+    crop = view["crop"]
+    panel_h = int(height * 0.62)
+    # A wide terminal crop in a portrait frame is a thin band. Padding it with
+    # the brand surface (DNA ``brand.palette.surface``) gives the evidence a
+    # deliberate panel instead of a strip floating in black, and keeps every
+    # pixel of the crop. No new image is introduced.
     cover = (
         f"crop={crop['width']}:{crop['height']}:{crop['x']}:{crop['y']},"
-        f"scale={width}:{height}:force_original_aspect_ratio=decrease,"
-        f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:black,setsar=1,fps=30"
+        f"scale={width}:{panel_h}:force_original_aspect_ratio=decrease,"
+        f"pad={width}:{height}:0:(oh-ih)/2:color=0x161A22,setsar=1,fps=30"
     )
     if asset["kind"] == "card":
-        png = render_card(project, placement.asset_id, asset)
+        png = render_card(project, asset_id, asset)
+        # A card is authored at the target canvas, so it maps 1:1 to the frame.
+        # Capping it at the evidence-panel height would shrink a full card to
+        # ~62% and leave side margins that the design never had.
+        card_cover = (
+            f"crop={crop['width']}:{crop['height']}:{crop['x']}:{crop['y']},"
+            f"scale={width}:{height}:force_original_aspect_ratio=decrease,"
+            f"pad={width}:{height}:0:(oh-ih)/2:color=0x0F1117,setsar=1,fps=30"
+        )
         command = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
                    "-loop", "1", "-i", str(png), "-t", f"{duration:.3f}",
-                   "-vf", cover, "-an", "-c:v", "libx264", "-pix_fmt", "yuv420p",
-                   str(out)]
+                   "-vf", card_cover, "-an", "-c:v", "libx264",
+                   "-pix_fmt", "yuv420p", str(out)]
     else:
         source = _local(project, asset["path"])
-        start_ms, _ = parse_time_range(placement.source_time_range, "source")
-        # A terminal is wide; a portrait frame would otherwise show a thin band
-        # in a field of black. The background is the *same frame*, scaled and
-        # blurred, so the frame is filled without introducing a new image. The
-        # sharp foreground keeps every pixel of the evidence.
-        graph = (
-            f"[0:v]crop={crop['width']}:{crop['height']}:{crop['x']}:{crop['y']},"
-            f"split=2[bg][fg];"
-            f"[bg]scale={width}:{height}:force_original_aspect_ratio=increase,"
-            f"crop={width}:{height},boxblur=24:1,eq=brightness=-0.14[bgv];"
-            f"[fg]scale={width}:{height}:force_original_aspect_ratio=decrease[fgv];"
-            f"[bgv][fgv]overlay=(W-w)/2:(H-h)/3,fps=30,"
-            f"tpad=stop_mode=clone:stop_duration={duration:.3f}[v]"
-        )
+        start_ms, _ = parse_time_range(view["source_time_range"], "source")
+        graph = f"[0:v]{cover},tpad=stop_mode=clone:stop_duration={duration:.3f}[v]"
         command = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
                    "-ss", f"{start_ms / 1000.0:.3f}", "-i", str(source),
                    "-t", f"{duration:.3f}",
@@ -236,7 +256,20 @@ def _segment(asset: Dict[str, Any], placement, target: Tuple[int, int],
     result = hidden_run(command, timeout=600)
     _fail(result.returncode == 0 and out.is_file() and out.stat().st_size > 4096,
           "SEGMENT_FAILED",
-          f"{placement.placement_id}: {(result.stderr or '')[-500:]}")
+          f"{view['shot_id']}: {(result.stderr or '')[-500:]}")
+
+
+def _concat_video(parts: List[Path], out: Path) -> None:
+    listing = out.with_suffix(".txt")
+    listing.write_text("".join(f"file '{part.as_posix()}'\n" for part in parts),
+                       encoding="utf-8")
+    result = hidden_run([
+        "ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+        "-f", "concat", "-safe", "0", "-i", str(listing),
+        "-c", "copy", str(out),
+    ], timeout=300)
+    _fail(result.returncode == 0 and out.is_file(), "VIDEO_CONCAT_FAILED",
+          result.stderr or "")
 
 
 def _silence(path: Path, seconds: float) -> None:
@@ -269,6 +302,32 @@ def _srt_timestamp(ms: int) -> str:
     return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
 
 
+def _caption_style(config: Dict[str, str], target: Tuple[int, int]) -> Tuple[Dict[str, str], Optional[int], Optional[int]]:
+    """Read the caption style from the account DNA.
+
+    The DNA owns the style; a hardcoded constant here is how the burn drifted
+    from the account's borderless, shadowless captions in the first place.
+    ``Fontsize`` in ``burn_style`` is libass 384x288 script space and is not the
+    pixel size, so the pixel value comes from ``caption_style.size_px``.
+    """
+    slug = config.get("account_slug")
+    if not slug:
+        return {}, None, None
+    dna_path = ROOT / "config" / "accounts" / f"{slug}.json"
+    _fail(dna_path.is_file(), "ACCOUNT_DNA_MISSING", str(dna_path))
+    dna = json.loads(dna_path.read_text(encoding="utf-8"))
+    caption = dna["visual"]["caption_style"]
+    style: Dict[str, str] = {}
+    for part in caption["burn_style"].split(","):
+        key, _, value = part.partition("=")
+        if key.strip():
+            style[key.strip()] = value.strip()
+    width, height = target
+    font_size = int(round(int(caption["size_px"]) * min(width, height) / 1080))
+    margin_v = int(round(int(caption["safe_zone"]["margin_v_px"]) * height / 1920))
+    return style, font_size, margin_v
+
+
 def build(project: Path, tts_only: bool = False) -> Dict[str, Any]:
     project = project.resolve()
     config = parse_project_yaml(project / "project.yaml")
@@ -299,7 +358,10 @@ def build(project: Path, tts_only: bool = False) -> Dict[str, Any]:
               f"{placement.placement_id}: {spoken + gaps:.2f}s of speech in a "
               f"{window:.2f}s placement; extend the placement or shorten the line")
         totals.append({"placement_id": placement.placement_id, "window_s": window,
-                       "speech_s": round(spoken, 3), "lines": detail})
+                       "speech_s": round(spoken, 3), "lines": detail,
+                       "views": [{"shot_id": view["shot_id"],
+                                  "duration_s": round(view["duration_s"], 3)}
+                                 for view in _views(placement)]})
 
     if tts_only:
         return {"status": "TTS_ONLY", "placements": totals}
@@ -319,7 +381,16 @@ def build(project: Path, tts_only: bool = False) -> Dict[str, Any]:
     for index, placement in enumerate(cut_plan.placements):
         asset = assets[placement.asset_id]
         clip = work / f"seg-{index:02d}.mp4"
-        _segment(asset, placement, target, clip, project)
+        views = _views(placement)
+        if len(views) == 1:
+            _segment(asset, placement.asset_id, views[0], target, clip, project)
+        else:
+            parts = []
+            for view_index, view in enumerate(views):
+                part = work / f"seg-{index:02d}-v{view_index:02d}.mp4"
+                _segment(asset, placement.asset_id, view, target, part, project)
+                parts.append(part)
+            _concat_video(parts, clip)
         clips.append(clip)
 
         window = (placement.end_ms - placement.start_ms) / 1000.0
@@ -379,8 +450,11 @@ def build(project: Path, tts_only: bool = False) -> Dict[str, Any]:
                                 encoding="utf-8")
 
     from assemble_easel import run as assemble
+    style, font_size, margin_v = _caption_style(config, target)
     result = assemble(project, out_name="easel", strict_captions=True,
-                      storyboard_path=storyboard_path)
+                      storyboard_path=storyboard_path,
+                      caption_style=style, caption_font_size=font_size,
+                      caption_margin_v=margin_v)
     _fail(result.get("status") == "OK", "ASSEMBLY_FAILED",
           json.dumps(result, ensure_ascii=False)[-800:])
 
@@ -402,9 +476,14 @@ def build(project: Path, tts_only: bool = False) -> Dict[str, Any]:
                       "sha256": sha256_file(narration),
                       "duration_s": float(ffprobe_json(narration)["format"]["duration"])},
         "captions": {"path": "project://assets/captions/cut.srt",
-                     "sha256": sha256_file(srt), "cues": cues},
+                     "sha256": sha256_file(srt), "cues": cues,
+                     "style_source": f"config/accounts/{config.get('account_slug')}.json",
+                     "style": style,
+                     "font_size_px": font_size,
+                     "margin_v_px": margin_v},
         "placements": totals,
-        "output": {"path": result["video"], "sha256": sha256_file(output),
+        "output": {"path": f"project://{output.relative_to(project).as_posix()}",
+                   "sha256": sha256_file(output),
                    "duration_s": float(ffprobe_json(output)["format"]["duration"])},
         "voice_quality": "minimax_mplan_subscription",
         "bgm": {"role": "optional_bgm", "status": "OMITTED_BY_POLICY",

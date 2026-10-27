@@ -34,6 +34,12 @@ CUT_PLAN_SCHEMA = "contentops.cut-plan/v1"
 READING_CLASSES = ("reading", "non_reading")
 TRANSITIONS = ("cut", "none", "fade", "dissolve")
 
+#: A static view held longer than this is the "static screenshot-card treatment"
+#: the V2 design rejects. A placement may stay on screen for the length of its
+#: narration; its *views* may not.
+DEFAULT_MAX_VISUAL_HOLD_MS = 2000
+DEFAULT_MIN_VISUAL_HOLD_MS = 1200
+
 
 def _validate_target(value: Any) -> Dict[str, Any]:
     require(isinstance(value, dict), "MISSING_FIELD", "target must be an object")
@@ -68,6 +74,16 @@ def _validate_target(value: Any) -> Dict[str, Any]:
     if min_hold is not None:
         require(isinstance(min_hold, int) and not isinstance(min_hold, bool) and min_hold > 0,
                 "INVALID_TARGET", "target.min_reading_hold_ms must be > 0")
+    for key in ("max_visual_hold_ms", "min_visual_hold_ms"):
+        item = value.get(key)
+        if item is None:
+            continue
+        require(isinstance(item, int) and not isinstance(item, bool) and item > 0,
+                "INVALID_TARGET", f"target.{key} must be > 0")
+    if value.get("max_visual_hold_ms") is not None and value.get("min_visual_hold_ms") is not None:
+        require(value["min_visual_hold_ms"] <= value["max_visual_hold_ms"],
+                "INVALID_TARGET",
+                "target.min_visual_hold_ms must not exceed max_visual_hold_ms")
     return dict(value)
 
 
@@ -94,6 +110,67 @@ def _validate_crop(value: Any, placement_id: str) -> Dict[str, Any]:
     return numbers
 
 
+def _contains(outer: Dict[str, int], inner: Dict[str, int]) -> bool:
+    return (inner["x"] >= outer["x"] and inner["y"] >= outer["y"]
+            and inner["x"] + inner["width"] <= outer["x"] + outer["width"]
+            and inner["y"] + inner["height"] <= outer["y"] + outer["height"])
+
+
+@dataclass
+class Shot:
+    """One view inside a placement.
+
+    A placement may run for as long as its narration; the picture inside it may
+    not stand still for longer than ``max_visual_hold_ms``. Splitting the
+    placement into shots is how a result is first shown in context and then
+    enlarged, without either a long frozen frame or a decorative pan.
+    """
+
+    shot_id: str
+    start_ms: int
+    end_ms: int
+    source_time_range: str
+    crop: Dict[str, int]
+    semantic_progress: str
+    context_shot_id: Optional[str] = None
+
+    def validate(self, placement_id: str, reading_class: str,
+                 target: Dict[str, Any], previous_end: Optional[int]) -> "Shot":
+        require_text(self.shot_id, "shot_id")
+        parse_ms_range(self.start_ms, self.end_ms, self.shot_id)
+        parse_time_range(self.source_time_range, f"{self.shot_id}.source_time_range")
+        self.crop = _validate_crop(self.crop, self.shot_id)
+        require_text(self.semantic_progress, f"{self.shot_id}.semantic_progress")
+        if previous_end is not None:
+            require(self.start_ms == previous_end, "SHOT_GAP_OR_OVERLAP",
+                    f"{self.shot_id} starts at {self.start_ms}ms but the previous "
+                    f"shot ends at {previous_end}ms")
+        duration = self.end_ms - self.start_ms
+        maximum = target.get("max_visual_hold_ms", DEFAULT_MAX_VISUAL_HOLD_MS)
+        require(duration <= maximum, "VISUAL_HOLD_TOO_LONG",
+                f"{self.shot_id} holds one view for {duration}ms, above the "
+                f"{maximum}ms maximum; split it into another view")
+        if reading_class == "reading":
+            minimum = target.get("min_reading_hold_ms", DEFAULT_MIN_VISUAL_HOLD_MS)
+        else:
+            minimum = target.get("min_visual_hold_ms", DEFAULT_MIN_VISUAL_HOLD_MS)
+        require(duration >= minimum, "VISUAL_HOLD_TOO_SHORT",
+                f"{self.shot_id} shows its view for {duration}ms, below the "
+                f"{minimum}ms minimum")
+        return self
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "shot_id": self.shot_id,
+            "start_ms": self.start_ms,
+            "end_ms": self.end_ms,
+            "source_time_range": self.source_time_range,
+            "crop": dict(self.crop),
+            "semantic_progress": self.semantic_progress,
+            "context_shot_id": self.context_shot_id,
+        }
+
+
 @dataclass
 class Placement:
     placement_id: str
@@ -110,8 +187,9 @@ class Placement:
     context_first: bool = False
     context_placement_id: Optional[str] = None
     transition: str = "cut"
+    shots: List[Shot] = field(default_factory=list)
 
-    def validate(self) -> "Placement":
+    def validate(self, target: Optional[Dict[str, Any]] = None) -> "Placement":
         require_text(self.placement_id, "placement_id")
         parse_ms_range(self.start_ms, self.end_ms, self.placement_id)
         require_text(self.asset_id, f"{self.placement_id}.asset_id")
@@ -139,7 +217,37 @@ class Placement:
         if self.context_first:
             require_text(self.context_placement_id,
                          f"{self.placement_id}.context_placement_id")
+        self._validate_shots(target or {})
         return self
+
+    def _validate_shots(self, target: Dict[str, Any]) -> None:
+        if not self.shots:
+            return
+        require(self.shots[0].start_ms == self.start_ms, "SHOT_COVERAGE",
+                f"{self.placement_id} starts at {self.start_ms}ms but its first "
+                f"shot starts at {self.shots[0].start_ms}ms")
+        require(self.shots[-1].end_ms == self.end_ms, "SHOT_COVERAGE",
+                f"{self.placement_id} ends at {self.end_ms}ms but its last shot "
+                f"ends at {self.shots[-1].end_ms}ms")
+        by_id: Dict[str, Shot] = {}
+        previous_end: Optional[int] = None
+        for shot in self.shots:
+            require(isinstance(shot, Shot), "INVALID_SHOT",
+                    f"{self.placement_id} holds a non-Shot view")
+            require(shot.shot_id not in by_id, "DUPLICATE_SHOT_ID",
+                    f"duplicate shot_id {shot.shot_id!r}")
+            shot.validate(self.placement_id, self.reading_class, target, previous_end)
+            if shot.context_shot_id:
+                context = by_id.get(shot.context_shot_id)
+                require(context is not None, "UNKNOWN_CONTEXT_SHOT",
+                        f"{shot.shot_id} cites unknown context shot "
+                        f"{shot.context_shot_id!r}; context must appear first")
+                require(_contains(context.crop, shot.crop),
+                        "CROP_NOT_CONTAINED_BY_CONTEXT",
+                        f"{shot.shot_id} enlarges outside its context shot "
+                        f"{context.shot_id}, so it is a different subject")
+            by_id[shot.shot_id] = shot
+            previous_end = shot.end_ms
 
 
 @dataclass
@@ -161,7 +269,7 @@ class CutPlan:
         for index, placement in enumerate(self.placements):
             require(isinstance(placement, Placement), "INVALID_PLACEMENT",
                     f"placements[{index}] is not a Placement")
-            placement.validate()
+            placement.validate(self.target)
             require(placement.placement_id not in seen_ids, "DUPLICATE_PLACEMENT_ID",
                     f"duplicate placement_id {placement.placement_id!r}")
             seen_ids.add(placement.placement_id)
@@ -235,29 +343,34 @@ class CutPlan:
         return self
 
     def to_dict(self) -> Dict[str, Any]:
+        items = []
+        for p in self.placements:
+            entry = {
+                "placement_id": p.placement_id,
+                "start_ms": p.start_ms,
+                "end_ms": p.end_ms,
+                "asset_id": p.asset_id,
+                "source_time_range": p.source_time_range,
+                "crop": dict(p.crop),
+                "reading_class": p.reading_class,
+                "semantic_progress": p.semantic_progress,
+                "claim_ids": list(p.claim_ids),
+                "caption_cue_ids": list(p.caption_cue_ids),
+                "claim_bearing": p.claim_bearing,
+                "context_first": p.context_first,
+                "context_placement_id": p.context_placement_id,
+                "transition": p.transition,
+            }
+            # Omitted when empty so a plan written before shots existed keeps
+            # its fingerprint, and with it every review bundle bound to it.
+            if p.shots:
+                entry["shots"] = [shot.to_dict() for shot in p.shots]
+            items.append(entry)
         return {
             "schema": CUT_PLAN_SCHEMA,
             "package_id": self.package_id,
             "target": self.target,
-            "placements": [
-                {
-                    "placement_id": p.placement_id,
-                    "start_ms": p.start_ms,
-                    "end_ms": p.end_ms,
-                    "asset_id": p.asset_id,
-                    "source_time_range": p.source_time_range,
-                    "crop": dict(p.crop),
-                    "reading_class": p.reading_class,
-                    "semantic_progress": p.semantic_progress,
-                    "claim_ids": list(p.claim_ids),
-                    "caption_cue_ids": list(p.caption_cue_ids),
-                    "claim_bearing": p.claim_bearing,
-                    "context_first": p.context_first,
-                    "context_placement_id": p.context_placement_id,
-                    "transition": p.transition,
-                }
-                for p in self.placements
-            ],
+            "placements": items,
         }
 
     def fingerprint(self) -> str:
@@ -275,7 +388,11 @@ class CutPlan:
             "placement_id", "start_ms", "end_ms", "asset_id", "source_time_range",
             "crop", "reading_class", "semantic_progress", "claim_ids",
             "caption_cue_ids", "claim_bearing", "context_first",
-            "context_placement_id", "transition",
+            "context_placement_id", "transition", "shots",
+        }
+        shot_fields = {
+            "shot_id", "start_ms", "end_ms", "source_time_range", "crop",
+            "semantic_progress", "context_shot_id",
         }
         for index, raw in enumerate(document.get("placements") or []):
             require(isinstance(raw, dict), "INVALID_PLACEMENT",
@@ -283,6 +400,29 @@ class CutPlan:
             extra = sorted(set(raw) - allowed)
             require(not extra, "UNKNOWN_FIELD",
                     f"placements[{index}] has unknown fields: {', '.join(extra)}")
+            shots = []
+            for shot_index, shot in enumerate(raw.get("shots") or []):
+                require(isinstance(shot, dict), "INVALID_SHOT",
+                        f"placements[{index}].shots[{shot_index}] must be an object")
+                shot_extra = sorted(set(shot) - shot_fields)
+                require(not shot_extra, "UNKNOWN_FIELD",
+                        f"placements[{index}].shots[{shot_index}] has unknown "
+                        f"fields: {', '.join(shot_extra)}")
+                try:
+                    shots.append(Shot(
+                        shot_id=shot["shot_id"],
+                        start_ms=shot["start_ms"],
+                        end_ms=shot["end_ms"],
+                        source_time_range=shot["source_time_range"],
+                        crop=shot["crop"],
+                        semantic_progress=shot.get("semantic_progress", ""),
+                        context_shot_id=shot.get("context_shot_id"),
+                    ))
+                except KeyError as exc:
+                    raise ContractError(
+                        "MISSING_FIELD",
+                        f"placements[{index}].shots[{shot_index}] is missing "
+                        f"{exc.args[0]!r}") from None
             try:
                 placements.append(Placement(
                     placement_id=raw["placement_id"],
@@ -299,6 +439,7 @@ class CutPlan:
                     context_first=raw.get("context_first", False),
                     context_placement_id=raw.get("context_placement_id"),
                     transition=raw.get("transition", "cut"),
+                    shots=shots,
                 ))
             except KeyError as exc:
                 raise ContractError("MISSING_FIELD",

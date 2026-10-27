@@ -99,6 +99,10 @@ def _wrap(text: str, width_px: int, font_size: int) -> list[str]:
     cjk_px = font_size
     lat_px = font_size / 2.0
 
+    # Kinsoku: a closing mark never opens a line, an opening mark never ends one.
+    no_start = set("，。、；：！？）》」』】〕…％‰")
+    no_end = set("（《「『【〔")
+
     def px(s: str) -> float:
         return sum(cjk_px if ord(c) > 0x2E80 else lat_px for c in s)
 
@@ -126,8 +130,20 @@ def _wrap(text: str, width_px: int, font_size: int) -> list[str]:
             continue
         token_px = px(token)
         if cur and cur_px + token_px > width_px:
+            if token in no_start:
+                # Keep closing punctuation on the line it closes. Breaking here
+                # produced a cue whose last line was a lone "。", which reads as
+                # a typo rather than as punctuation.
+                cur += token
+                cur_px += token_px
+                continue
+            carry = ""
+            if len(cur) > 1 and cur[-1] in no_end:
+                carry = cur[-1]
+                cur = cur[:-1]
+                cur_px -= cjk_px
             lines.append(cur.rstrip())
-            cur, cur_px = "", 0.0
+            cur, cur_px = carry, (cjk_px if carry else 0.0)
             if token == " ":
                 continue
         if token_px > width_px:
@@ -176,7 +192,7 @@ def _fit(text: str, width_px: int, font_size: int, max_lines: int = 2,
 
 def _srt_to_ass(srt_path: Path, ass_path: Path, w: int, h: int,
                 font: str, font_size: int, margin_v: int,
-                strict: bool = False) -> list[dict]:
+                strict: bool = False, style: dict | None = None) -> list[dict]:
     """Mirror upstream _srt_to_ass styling (bottom-centre, wrapped at 2 lines).
 
     Returns one record per cue that could not fit. In strict mode the first
@@ -231,6 +247,17 @@ def _srt_to_ass(srt_path: Path, ass_path: Path, w: int, h: int,
         override = "" if size == font_size else f"{{\\fs{size}}}"
         body += f"Dialogue: 0,{s},{e},D,,0,0,0,,{override}{text}\n"
 
+    # The account DNA owns the caption style. When it is supplied, its
+    # border/outline/shadow/colour values win; otherwise the historical
+    # opaque box stays the default for projects written before the DNA.
+    style = style or {}
+    border_style = int(style.get("BorderStyle", 3))
+    outline_px = float(style.get("Outline", max(2, font_size // 12)))
+    shadow = float(style.get("Shadow", 0))
+    primary = style.get("PrimaryColour", "&H00FFFFFF")
+    outline_colour = style.get("OutlineColour", "&H00000000")
+    back_colour = style.get("BackColour", "&H80000000")
+
     head = (
         "[Script Info]\nScriptType: v4.00+\n"
         f"PlayResX: {w}\nPlayResY: {h}\n"
@@ -240,10 +267,8 @@ def _srt_to_ass(srt_path: Path, ass_path: Path, w: int, h: int,
         "OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, "
         "ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, "
         "MarginL, MarginR, MarginV, Encoding\n"
-        # BorderStyle 3 draws an opaque box: white text alone disappeared on
-        # the light citation cards, while an outline is not enough on paper.
-        f"Style: D,{font},{font_size},&H00FFFFFF,&H00FFFFFF,&H00000000,"
-        f"&H80000000,0,0,0,0,100,100,0,0,3,{max(2, font_size // 12)},0,2,"
+        f"Style: D,{font},{font_size},{primary},&H00FFFFFF,{outline_colour},"
+        f"{back_colour},0,0,0,0,100,100,0,0,{border_style},{outline_px},{shadow},2,"
         f"0,0,{margin_v},1\n\n"
         "[Events]\n"
         "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, "
@@ -254,7 +279,9 @@ def _srt_to_ass(srt_path: Path, ass_path: Path, w: int, h: int,
 
 
 def run(project: Path, out_name: str = "easel", strict_captions: bool = False,
-        storyboard_path: Path = None) -> dict:
+        storyboard_path: Path = None, caption_style: dict | None = None,
+        caption_font_size: int | None = None,
+        caption_margin_v: int | None = None) -> dict:
     """Assemble one project.
 
     strict_captions=True is the V2 build path: a cue that cannot fit the safe
@@ -331,7 +358,9 @@ def run(project: Path, out_name: str = "easel", strict_captions: bool = False,
                 # width-based 96 px caption fills the screen and clips at the
                 # bottom. 0.10 of the height clears the caption box from the
                 # frame edge.
-                int(min(w, h) * 0.05), int(h * 0.10), strict=strict_captions)
+                caption_font_size or int(min(w, h) * 0.05),
+                caption_margin_v if caption_margin_v is not None else int(h * 0.10),
+                strict=strict_captions, style=caption_style)
         except CaptionOverflowError as err:
             return {"status": "BLOCKED", "stage": "captions",
                     "reason": str(err),
