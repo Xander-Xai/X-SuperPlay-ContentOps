@@ -1,0 +1,96 @@
+{
+  "size": "1080x1920",
+  "image_motion": "static",
+  "pad_mode": "trim",
+  "shots": [
+    {
+      "image": "outputs/editorial/by-placement/shot_00.png",
+      "duration": 8.072,
+      "source": "project://sources/screenshots/10-easel-doctor.png",
+      "source_type": "real_screenshot",
+      "narration": "装了 Easel 之后，最先要回答的只有一个问题：它到底跑不跑得起来？",
+      "unit": "U01",
+      "placement": "shot_00",
+      "designed_card": "outputs/editorial/by-placement/shot_00.png"
+    },
+    {
+      "image": "outputs/editorial/by-placement/shot_02.png",
+      "duration": 18.211,
+      "source": "project://sources/screenshots/13-easel-skill-layers.png",
+      "source_type": "real_screenshot",
+      "narration": "在回答之前，先把它是什么讲清楚：它不是一个 SaaS，而是一层 Skill 库。114 个 Skill，分成发现、策划、创作、发布、归因五层——创作层最大，有 52 个。",
+      "unit": "U02",
+      "placement": "shot_02",
+      "designed_card": "outputs/editorial/by-placement/shot_02.png"
+    },
+    {
+      "image": "outputs/editorial/by-placement/shot_01.png",
+      "duration": 7.159,
+      "source": "project://sources/screenshots/12-easel-version-evidence.png",
+      "source_type": "real_screenshot",
+      "narration": "版本我锁在 v0.2.1。982 个文件，逐个比对过哈希，和上游 tag 完全一致。",
+      "unit": "U03",
+      "placement": "shot_01",
+      "designed_card": "outputs/editorial/by-placement/shot_01.png"
+    },
+    {
+      "image": "outputs/editorial/by-placement/shot_03.png",
+      "duration": 13.262,
+      "source": "project://sources/screenshots/11-easel-ping.png",
+      "source_type": "real_screenshot",
+      "narration": "跑起来之后，doctor 是绿的：Python、Node、FFmpeg 都过了；ping 里，Agent 的真实往返也通了。",
+      "unit": "U04",
+      "placement": "shot_03",
+      "designed_card": "outputs/editorial/by-placement/shot_03.png"
+    },
+    {
+      "image": "outputs/editorial/by-placement/shot_03.png",
+      "duration": 11.833,
+      "source": "project://sources/screenshots/11-easel-ping.png",
+      "source_type": "real_screenshot",
+      "narration": "但有个坑：网关健康检查探的是写死的默认端口，和 Easel 实际网关端口对不上——那一行，是红的。",
+      "unit": "U05",
+      "placement": "shot_03",
+      "designed_card": "outputs/editorial/by-placement/shot_03.png"
+    },
+    {
+      "image": "outputs/editorial/by-placement/shot_04.png",
+      "duration": 16.985,
+      "source": "project://sources/screenshots/15-easel-doctor-fails.png",
+      "source_type": "real_screenshot",
+      "narration": "更直接的是 Web 工作台这条路：六项没过。依赖没装，前端也没构建，.env 里也没有 API Key——所以 Web 界面，到现在还没验证。",
+      "unit": "U06",
+      "placement": "shot_04",
+      "designed_card": "outputs/editorial/by-placement/shot_04.png"
+    },
+    {
+      "image": "outputs/editorial/by-placement/shot_05.png",
+      "duration": 14.012,
+      "source": "project://sources/screenshots/14-easel-skills-dir.png",
+      "source_type": "real_screenshot",
+      "narration": "所以它值不值得用？我的判断是：看路线——走 CLI 和 Skill 这条线，它真能被调起来；想要开箱即用，它现在还不是。",
+      "unit": "U07",
+      "placement": "shot_05",
+      "designed_card": "outputs/editorial/by-placement/shot_05.png"
+    },
+    {
+      "image": "outputs/editorial/by-placement/shot_05.png",
+      "duration": 12.845,
+      "source": "project://sources/screenshots/14-easel-skills-dir.png",
+      "source_type": "real_screenshot",
+      "narration": "一句话收尾：Easel 不是开箱即用的产品，但它是一个真能被调起来的生产引擎——CLI 和 Skill 这条线，今天是通的。",
+      "unit": "U08",
+      "placement": "shot_05",
+      "designed_card": "outputs/editorial/by-placement/shot_05.png"
+    }
+  ],
+  "narration": "projects/x-superplay-future-intelligence/assets/voice/narration.wav",
+  "subtitle": null,
+  "engine": "easel",
+  "voice_provider": "minimax_m_plan/speech-2.8-hd (v3 full, founder clone)",
+  "generated_visuals": {
+    "count": 0,
+    "policy": "real_assets_only"
+  },
+  "timeline_policy": "unit durations are the measured v3 full-narration timings; the 1024 variant re-orders complete units rather than cutting mid-sentence"
+}

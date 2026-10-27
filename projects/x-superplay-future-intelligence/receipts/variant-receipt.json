@@ -1,0 +1,59 @@
+{
+  "schema": "contentops.account-variant/v1",
+  "account": "X超玩·未来智能",
+  "role": "Build",
+  "source": {
+    "narration": "outputs/founder-v3-full/narration.wav",
+    "units": [
+      "U01",
+      "U02",
+      "U03",
+      "U04",
+      "U05",
+      "U06",
+      "U07",
+      "U08"
+    ],
+    "cards": [
+      "shot_00",
+      "shot_01",
+      "shot_02",
+      "shot_03",
+      "shot_04",
+      "shot_05"
+    ]
+  },
+  "storyboard": "project://script/storyboard.json",
+  "compose": {
+    "status": "OK",
+    "video": "project://final/future-intelligence.mp4"
+  },
+  "qc": {
+    "overall": "WARN"
+  },
+  "derived_assets": [
+    {
+      "platform": "bilibili",
+      "path": "project://final/future-intelligence-16x9.mp4",
+      "width": 1920,
+      "height": 1080,
+      "mode": "blur"
+    }
+  ],
+  "publish_package": "project://receipts/publish-package.json",
+  "skill_route": {
+    "audio_edit": "audio-editing (audio_ops.py trim/concat)",
+    "design": "card-design + render_card.py",
+    "compose": "auto-short-video/assemble.py via assemble_easel",
+    "intro_outro": "video-intro-outro (intro_outro.py attach)",
+    "cover": "video-editing (video_ops.py frame)",
+    "qc": "qc_video.py"
+  },
+  "provider_calls": {
+    "speech": 0,
+    "image": 0,
+    "video": 0
+  },
+  "production_ready": false,
+  "human_review": "PENDING_FOUNDER_REVIEW"
+}

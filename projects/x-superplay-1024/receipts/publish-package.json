@@ -1,0 +1,25 @@
+{
+  "schema": "contentops.publish-package/v1",
+  "account": "X超玩·1024",
+  "role": "Explore",
+  "title": "Easel 实测：能跑，但 Web 工作台六项没过",
+  "description": "我把它锁在 v0.2.1，982 个文件逐个核对哈希；doctor 是绿的，但网关健康检查那一行是红的，Web 工作台六项没过。结论：不是开箱即用，但 CLI 和 Skill 线今天能用。",
+  "hashtags": [
+    "#AI实测",
+    "#开源项目",
+    "#Easel",
+    "#AIAgent",
+    "#独立开发"
+  ],
+  "platforms": [
+    "douyin",
+    "xiaohongshu"
+  ],
+  "video": "project://final/1024.mp4",
+  "cover": "project://final/cover.png",
+  "derived_assets": [],
+  "duration_s": 67.767,
+  "human_review": "PENDING_FOUNDER_REVIEW",
+  "publish_status": "NOT_PUBLISHED",
+  "note": "No URL is claimed until a human publishes and records it."
+}

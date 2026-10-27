@@ -1,0 +1,46 @@
+{
+  "schema": "contentops.account-variant/v1",
+  "account": "X超玩·1024",
+  "role": "Explore",
+  "source": {
+    "narration": "outputs/founder-v3-full/narration.wav",
+    "units": [
+      "U05",
+      "U06",
+      "U01",
+      "U07",
+      "U08"
+    ],
+    "cards": [
+      "shot_00",
+      "shot_03",
+      "shot_04",
+      "shot_05"
+    ]
+  },
+  "storyboard": "project://script/storyboard.json",
+  "compose": {
+    "status": "OK",
+    "video": "project://final/1024.mp4"
+  },
+  "qc": {
+    "overall": "WARN"
+  },
+  "derived_assets": [],
+  "publish_package": "project://receipts/publish-package.json",
+  "skill_route": {
+    "audio_edit": "audio-editing (audio_ops.py trim/concat)",
+    "design": "card-design + render_card.py",
+    "compose": "auto-short-video/assemble.py via assemble_easel",
+    "intro_outro": "video-intro-outro (intro_outro.py attach)",
+    "cover": "video-editing (video_ops.py frame)",
+    "qc": "qc_video.py"
+  },
+  "provider_calls": {
+    "speech": 0,
+    "image": 0,
+    "video": 0
+  },
+  "production_ready": false,
+  "human_review": "PENDING_FOUNDER_REVIEW"
+}

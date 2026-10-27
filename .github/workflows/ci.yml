@@ -223,6 +223,12 @@ jobs:
       - name: Run skill-route policy tests
         run: python tests/test_skill_route_policy.py
 
+      # One source, two native assets: 1024 opens on the conflict and re-orders
+      # complete units; Future Intelligence keeps the eight-unit walkthrough.
+      # Both stop at PENDING_FOUNDER_REVIEW and claim no publication URL.
+      - name: Run two-account variant tests
+        run: python tests/test_account_variants.py
+
       - name: Run Windows subprocess tests
         run: python tests/test_windows_subprocess.py
 

@@ -1,0 +1,34 @@
+{
+  "schema": "contentops.publish-package/v1",
+  "account": "X超玩·未来智能",
+  "role": "Build",
+  "title": "Easel 工程拆解：982 文件哈希、网关端口错配、Web 工作台六项",
+  "description": "从版本锁定、982 个文件哈希核对，到网关健康检查 18789/37289 端口错配，再到 Web 工作台六项失败。工程视角记录一个开源 Agent 工作台到底能不能跑起来。",
+  "hashtags": [
+    "#AI工程",
+    "#Agent",
+    "#MCP",
+    "#Easel",
+    "#工程实践"
+  ],
+  "platforms": [
+    "bilibili",
+    "zhihu",
+    "csdn"
+  ],
+  "video": "project://final/future-intelligence.mp4",
+  "cover": "project://final/cover.png",
+  "derived_assets": [
+    {
+      "platform": "bilibili",
+      "path": "project://final/future-intelligence-16x9.mp4",
+      "width": 1920,
+      "height": 1080,
+      "mode": "blur"
+    }
+  ],
+  "duration_s": 106.4,
+  "human_review": "PENDING_FOUNDER_REVIEW",
+  "publish_status": "NOT_PUBLISHED",
+  "note": "No URL is claimed until a human publishes and records it."
+}
