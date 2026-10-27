@@ -15,10 +15,19 @@
   "narrative": {
     "mode": "RESULT_FIRST",
     "opening": "CONFLICT",
-    "beats": ["U05", "U06", "U01", "U08"],
-    "target_duration_s": [45, 60],
+    "beats": [
+      "U05",
+      "U06",
+      "U01",
+      "U08"
+    ],
+    "target_duration_s": [
+      45,
+      60
+    ],
     "pace": "fast",
-    "cta": "先把 CLI 线跑一遍，再决定要不要用。"
+    "cta": "先把 CLI 线跑一遍，再决定要不要用。",
+    "opening_unit": "U05"
   },
   "visual": {
     "card_set": "outputs/editorial-1024/by-placement",
@@ -27,10 +36,19 @@
     "captions": "none",
     "cover_time_s": 1.0
   },
-  "platforms": ["douyin", "xiaohongshu"],
+  "platforms": [
+    "douyin",
+    "xiaohongshu"
+  ],
   "title": "Easel 实测：能跑，但 Web 工作台六项没过",
   "description": "我把它锁在 v0.2.1，982 个文件逐个核对哈希；doctor 是绿的，但网关健康检查那一行是红的，Web 工作台六项没过。结论：不是开箱即用，但 CLI 和 Skill 线今天能用。",
-  "hashtags": ["#AI实测", "#开源项目", "#Easel", "#AIAgent", "#独立开发"],
+  "hashtags": [
+    "#AI实测",
+    "#开源项目",
+    "#Easel",
+    "#AIAgent",
+    "#独立开发"
+  ],
   "gpu_required": false,
   "forbidden": [
     "invented numbers",

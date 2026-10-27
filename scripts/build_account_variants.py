@@ -36,6 +36,8 @@ from contentops.media.qc_canonical import (  # noqa: E402
 
 FULL_RECEIPT = (ROOT / "projects" / "easel-enhanced-golden" / "v3-full-editorial"
                 / "receipts" / "v3-sample-video.json")
+EVIDENCE_LOCK = (ROOT / "projects" / "easel-enhanced-golden" / "evidence"
+                 / "evidence-lock.json")
 NARRATION = ROOT / "outputs" / "founder-v3-full" / "narration.wav"
 INTRO = ROOT / "outputs" / "editorial" / "intro-editorial.mp4"
 OUTRO = ROOT / "outputs" / "editorial" / "outro-editorial.mp4"
@@ -51,6 +53,7 @@ def load_specs() -> Dict[str, Dict[str, Any]]:
             "account": dna["account"],
             "role": dna["role"],
             "units": dna["narrative"]["beats"],
+            "opening_unit": dna["narrative"]["opening_unit"],
             "target_duration": dna["narrative"]["target_duration_s"],
             "out_name": slug.replace("x-superplay-", ""),
             "title": dna["title"],
@@ -115,19 +118,59 @@ def cut_audio(units: Dict[str, Dict[str, Any]], order: List[str], work: Path) ->
     return joined
 
 
-def write_loop_artifacts(project: Path, spec: Dict[str, Any], *,
-                         qc_overall: str, duration_s: float,
-                         cover_exists: bool) -> Dict[str, Any]:
-    """Write the states the pipeline actually reached and the ones it cannot.
+def _write_json(path: Path, payload: Dict[str, Any]) -> None:
+    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + chr(10),
+                    encoding="utf-8")
 
-    A closed loop is not a claim that publishing happened. The state file names
-    every stage up to the human gate, and marks publish/metrics/review blocked
-    with the exact reason. A later human run fills them; no automation can.
+
+def write_loop_artifacts(project: Path, spec: Dict[str, Any], *,
+                         qc_overall: str, duration_s: float, cover_exists: bool,
+                         storyboard: Dict[str, Any],
+                         publish: Dict[str, Any]) -> Dict[str, Any]:
+    """Record the stages reached and the ones that are honestly blocked.
+
+    A closed loop is not a claim that publishing happened. Claim-ledger absence,
+    the human gate, manual publish, metrics and weekly review are all named.
     """
     receipts = project / "receipts"
+    lock = json.loads(EVIDENCE_LOCK.read_text(encoding="utf-8"))
+    claim_status = str(lock.get("claim_ledger_status") or "UNKNOWN")
+    claims_status = "PARTIAL" if "NOT_AVAILABLE" in claim_status else "PASS"
+
+    shots = storyboard["shots"]
+    units = [shot["unit"] for shot in shots]
+    low, high = spec["target_duration"]
+    editorial_checks = [
+        {"id": "opening_matches_dna",
+         "ok": bool(units) and units[0] == spec["opening_unit"],
+         "value": units[:1], "expected": spec["opening_unit"]},
+        {"id": "unit_count_matches_dna",
+         "ok": len(units) == len(spec["units"]),
+         "value": len(units), "expected": len(spec["units"])},
+        {"id": "duration_in_account_range",
+         "ok": low <= duration_s <= high,
+         "value_s": round(duration_s, 3), "range_s": [low, high]},
+        {"id": "title_has_hook",
+         "ok": any(marker in spec["title"] for marker in
+                   ("实测", "拆解", "能跑", "没过", "错配", "跑得起来")),
+         "value": spec["title"]},
+        {"id": "cta_present", "ok": bool(spec["cta"]), "value": spec["cta"]},
+        {"id": "card_set_matches_dna",
+         "ok": all(shot["image"].startswith(spec["card_dir"]) for shot in shots)},
+    ]
+    editorial_overall = "PASS" if all(check["ok"] for check in editorial_checks) else "WARN"
+    _write_json(receipts / "editorial-qc.json", {
+        "schema": "contentops.editorial-qc/v1",
+        "account": spec["account"],
+        "overall": editorial_overall,
+        "checks": editorial_checks,
+    })
+
     stages = [
         {"name": "SOURCE_LOCKED", "status": "PASS",
-         "evidence": FULL_RECEIPT.relative_to(ROOT).as_posix()},
+         "evidence": FULL_RECEIPT.relative_to(ROOT).as_posix(),
+         "evidence_lock_fingerprint": lock.get("fingerprint")},
+        {"name": "CLAIMS_BOUND", "status": claims_status, "reason": claim_status},
         {"name": "ACCOUNT_ROUTED", "status": "PASS", "evidence": spec["dna"]},
         {"name": "NARRATIVE_ADAPTED", "status": "PASS", "evidence": spec["units"]},
         {"name": "AUDIO_READY", "status": "PASS",
@@ -135,7 +178,9 @@ def write_loop_artifacts(project: Path, spec: Dict[str, Any], *,
         {"name": "VISUALS_READY", "status": "PASS", "evidence": spec["card_dir"]},
         {"name": "COMPOSED", "status": "PASS",
          "evidence": f"project://final/{spec['out_name']}.mp4"},
-        {"name": "QC", "status": qc_overall,
+        {"name": "EDITORIAL_QC", "status": editorial_overall,
+         "evidence": "project://receipts/editorial-qc.json"},
+        {"name": "TECHNICAL_QC", "status": qc_overall,
          "evidence": f"project://receipts/qc-report-{spec['out_name']}.json"},
         {"name": "HUMAN_REVIEW", "status": "PENDING",
          "reason": "Founder must watch the cut and fill human-review.json"},
@@ -143,8 +188,8 @@ def write_loop_artifacts(project: Path, spec: Dict[str, Any], *,
          "reason": "manual publish only; the repository forbids auto-publish"},
         {"name": "METRICS_SNAPSHOT", "status": "BLOCKED",
          "reason": "requires a real published URL"},
-        {"name": "REVIEWED", "status": "BLOCKED",
-         "reason": "requires the metrics snapshot"},
+        {"name": "WEEKLY_REVIEW", "status": "BLOCKED",
+         "reason": "requires publication receipts and metrics"},
     ]
     run_state = {
         "schema": "contentops.account-run/v1",
@@ -155,54 +200,45 @@ def write_loop_artifacts(project: Path, spec: Dict[str, Any], *,
         "stage": "PENDING_HUMAN_REVIEW",
         "stages": stages,
     }
-    (receipts / "run-state.json").write_text(
-        json.dumps(run_state, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    _write_json(receipts / "run-state.json", run_state)
 
-    low, high = spec["target_duration"]
-    checks = [
-        {"id": "title_present", "ok": bool(spec["title"])},
-        {"id": "title_length", "ok": len(spec["title"]) <= 60,
-         "value": len(spec["title"])},
-        {"id": "description_present", "ok": bool(spec["description"])},
-        {"id": "hashtags", "ok": len(spec["hashtags"]) >= 3,
-         "value": len(spec["hashtags"])},
-        {"id": "cover_exists", "ok": cover_exists},
-        {"id": "duration_in_account_range", "ok": low <= duration_s <= high,
-         "value_s": round(duration_s, 3), "range_s": [low, high]},
-        {"id": "platforms_declared", "ok": bool(spec["platforms"]),
-         "value": spec["platforms"]},
-        {"id": "human_review", "ok": False, "status": "PENDING"},
-        {"id": "real_url", "ok": False, "status": "NOT_PUBLISHED"},
-    ]
+    asset_map = publish.get("platform_asset_map", {})
     checklist = {
         "schema": "contentops.publish-checklist/v1",
         "account": spec["account"],
         "platforms": spec["platforms"],
-        "checks": checks,
+        "checks": [
+            {"id": "title_present", "ok": bool(spec["title"])},
+            {"id": "title_length", "ok": len(spec["title"]) <= 60,
+             "value": len(spec["title"])},
+            {"id": "description_present", "ok": bool(spec["description"])},
+            {"id": "hashtags", "ok": len(spec["hashtags"]) >= 3,
+             "value": len(spec["hashtags"])},
+            {"id": "cover_exists", "ok": cover_exists},
+            {"id": "duration_in_account_range", "ok": low <= duration_s <= high,
+             "value_s": round(duration_s, 3), "range_s": [low, high]},
+            {"id": "platform_asset_map", "ok": set(asset_map) == set(spec["platforms"]),
+             "value": asset_map},
+            {"id": "editorial_qc", "ok": editorial_overall == "PASS",
+             "status": editorial_overall},
+            {"id": "human_review", "ok": False, "status": "PENDING"},
+            {"id": "real_url", "ok": False, "status": "NOT_PUBLISHED"},
+        ],
         "publish_status": "NOT_PUBLISHED",
     }
-    (receipts / "publish-checklist.json").write_text(
-        json.dumps(checklist, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    _write_json(receipts / "publish-checklist.json", checklist)
 
-    review = {
+    _write_json(receipts / "human-review.json", {
         "schema": "contentops.human-review/v1",
         "account": spec["account"],
         "status": "PENDING_FOUNDER_REVIEW",
-        "scores": {
-            "voice": None,
-            "image_usefulness": None,
-            "visual_consistency": None,
-            "artifact_severity": None,
-            "pace": None,
-            "publishability": None,
-        },
+        "scores": {"voice": None, "image_usefulness": None,
+                   "visual_consistency": None, "artifact_severity": None,
+                   "pace": None, "publishability": None},
         "decision": None,
         "failure_positions": [],
-    }
-    (receipts / "human-review.json").write_text(
-        json.dumps(review, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-
-    metrics = {
+    })
+    _write_json(receipts / "metrics-snapshot.json", {
         "schema": "contentops.metrics-snapshot/v1",
         "account": spec["account"],
         "platforms": spec["platforms"],
@@ -210,9 +246,25 @@ def write_loop_artifacts(project: Path, spec: Dict[str, Any], *,
         "reason": "requires a real published URL; fill after manual publishing",
         "source": "MANUAL",
         "metrics": None,
-    }
-    (receipts / "metrics-snapshot.json").write_text(
-        json.dumps(metrics, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    })
+    _write_json(receipts / "publish-receipt.json", {
+        "schema": "contentops.publish-receipt/v1",
+        "account": spec["account"],
+        "platforms": spec["platforms"],
+        "status": "NOT_PUBLISHED",
+        "published_at": None,
+        "urls": {},
+        "note": "fill after manual publishing; automation never claims a URL",
+    })
+    _write_json(receipts / "weekly-review.json", {
+        "schema": "contentops.weekly-review/v1",
+        "account": spec["account"],
+        "status": "BLOCKED",
+        "reason": "requires publication receipts and metrics",
+        "week": None,
+        "metrics": None,
+        "decisions": [],
+    })
     return run_state
 
 
@@ -337,6 +389,13 @@ def build_variant(slug: str, spec: Dict[str, Any], units: Dict[str, Dict[str, An
     (project / "receipts" / f"qc-report-{spec['out_name']}.md").write_text(
         render_canonical_qc_markdown(qc_report, project_name=slug), encoding="utf-8")
 
+    asset_map = {
+        platform: f"project://final/{account_out.name}"
+        for platform in spec["platforms"]
+    }
+    for asset in derived:
+        asset_map[asset["platform"]] = asset["path"]
+
     publish = {
         "schema": "contentops.publish-package/v1",
         "account": spec["account"],
@@ -351,6 +410,7 @@ def build_variant(slug: str, spec: Dict[str, Any], units: Dict[str, Dict[str, An
         "video": f"project://final/{account_out.name}",
         "cover": f"project://final/cover.png" if cover else None,
         "derived_assets": derived,
+        "platform_asset_map": asset_map,
         "duration_s": round(probe_duration(account_out), 3),
         "human_review": "PENDING_FOUNDER_REVIEW",
         "publish_status": "NOT_PUBLISHED",
@@ -376,7 +436,9 @@ def build_variant(slug: str, spec: Dict[str, Any], units: Dict[str, Dict[str, An
         "compose": {"status": composed.get("status"),
                     "video": f"project://final/{account_out.name}"},
         "qc": {"overall": qc_report.get("overall")},
+        "editorial_qc": "project://receipts/editorial-qc.json",
         "derived_assets": derived,
+        "platform_asset_map": asset_map,
         "publish_package": f"project://receipts/publish-package.json",
         "skill_route": {
             "audio_edit": "audio-editing (audio_ops.py trim/concat)",
@@ -398,6 +460,8 @@ def build_variant(slug: str, spec: Dict[str, Any], units: Dict[str, Dict[str, An
         qc_overall=qc_report.get("overall", "UNKNOWN"),
         duration_s=probe_duration(account_out),
         cover_exists=cover is not None,
+        storyboard=storyboard,
+        publish=publish,
     )
     return {
         "slug": slug,

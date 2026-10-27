@@ -9,7 +9,13 @@
     {
       "name": "SOURCE_LOCKED",
       "status": "PASS",
-      "evidence": "projects/easel-enhanced-golden/v3-full-editorial/receipts/v3-sample-video.json"
+      "evidence": "projects/easel-enhanced-golden/v3-full-editorial/receipts/v3-sample-video.json",
+      "evidence_lock_fingerprint": "119b3825eb6334d8d354131c0f28e8839751b519e77ac244f59ec4ebea7475f3"
+    },
+    {
+      "name": "CLAIMS_BOUND",
+      "status": "PARTIAL",
+      "reason": "NOT_AVAILABLE — #6 Claim Ledger does not exist yet. claim_refs are recorded as empty rather than populated speculatively."
     },
     {
       "name": "ACCOUNT_ROUTED",
@@ -42,7 +48,12 @@
       "evidence": "project://final/1024.mp4"
     },
     {
-      "name": "QC",
+      "name": "EDITORIAL_QC",
+      "status": "PASS",
+      "evidence": "project://receipts/editorial-qc.json"
+    },
+    {
+      "name": "TECHNICAL_QC",
       "status": "WARN",
       "evidence": "project://receipts/qc-report-1024.json"
     },
@@ -62,9 +73,9 @@
       "reason": "requires a real published URL"
     },
     {
-      "name": "REVIEWED",
+      "name": "WEEKLY_REVIEW",
       "status": "BLOCKED",
-      "reason": "requires the metrics snapshot"
+      "reason": "requires publication receipts and metrics"
     }
   ]
 }

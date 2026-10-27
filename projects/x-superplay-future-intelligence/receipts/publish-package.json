@@ -30,6 +30,11 @@
       "mode": "blur"
     }
   ],
+  "platform_asset_map": {
+    "bilibili": "project://final/future-intelligence-16x9.mp4",
+    "zhihu": "project://final/future-intelligence.mp4",
+    "csdn": "project://final/future-intelligence.mp4"
+  },
   "duration_s": 106.4,
   "human_review": "PENDING_FOUNDER_REVIEW",
   "publish_status": "NOT_PUBLISHED",

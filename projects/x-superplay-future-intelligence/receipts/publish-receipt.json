@@ -1,0 +1,13 @@
+{
+  "schema": "contentops.publish-receipt/v1",
+  "account": "X超玩·未来智能",
+  "platforms": [
+    "bilibili",
+    "zhihu",
+    "csdn"
+  ],
+  "status": "NOT_PUBLISHED",
+  "published_at": null,
+  "urls": {},
+  "note": "fill after manual publishing; automation never claims a URL"
+}

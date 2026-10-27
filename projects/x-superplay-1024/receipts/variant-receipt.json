@@ -28,7 +28,12 @@
   "qc": {
     "overall": "WARN"
   },
+  "editorial_qc": "project://receipts/editorial-qc.json",
   "derived_assets": [],
+  "platform_asset_map": {
+    "douyin": "project://final/1024.mp4",
+    "xiaohongshu": "project://final/1024.mp4"
+  },
   "publish_package": "project://receipts/publish-package.json",
   "skill_route": {
     "audio_edit": "audio-editing (audio_ops.py trim/concat)",

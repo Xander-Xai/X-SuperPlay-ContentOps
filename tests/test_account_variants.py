@@ -110,8 +110,11 @@ def test_loop_stops_at_human_review():
         assert state["stage"] == "PENDING_HUMAN_REVIEW"
         assert state["gpu_required"] is False
         stages = {stage["name"]: stage for stage in state["stages"]}
-        for name in ("PUBLISHED", "METRICS_SNAPSHOT", "REVIEWED"):
+        for name in ("PUBLISHED", "METRICS_SNAPSHOT", "WEEKLY_REVIEW"):
             assert stages[name]["status"] == "BLOCKED", name
+        assert stages["CLAIMS_BOUND"]["status"] == "PARTIAL"
+        assert "Claim Ledger" in stages["CLAIMS_BOUND"]["reason"]
+        assert stages["EDITORIAL_QC"]["status"] == "PASS"
         review = json.loads((project / "receipts" / "human-review.json")
                             .read_text(encoding="utf-8"))
         assert review["status"] == "PENDING_FOUNDER_REVIEW"
@@ -128,6 +131,25 @@ def test_durations_match_account_targets():
     assert 90 <= build["duration_s"] <= 120, build["duration_s"]
 
 
+def test_platform_asset_map_matches_platforms():
+    for project in (EXPLORE, BUILD):
+        package = _publish(project)
+        assert set(package["platform_asset_map"]) == set(package["platforms"])
+        for path in package["platform_asset_map"].values():
+            assert path.startswith("project://final/")
+
+
+def test_publish_receipt_claims_no_url():
+    for project in (EXPLORE, BUILD):
+        receipt = json.loads((project / "receipts" / "publish-receipt.json")
+                             .read_text(encoding="utf-8"))
+        assert receipt["status"] == "NOT_PUBLISHED"
+        assert receipt["urls"] == {}
+        weekly = json.loads((project / "receipts" / "weekly-review.json")
+                            .read_text(encoding="utf-8"))
+        assert weekly["status"] == "BLOCKED"
+
+
 def main() -> int:
     failures = []
     tests = (
@@ -142,6 +164,8 @@ def main() -> int:
         test_account_dna_drives_each_workflow,
         test_loop_stops_at_human_review,
         test_durations_match_account_targets,
+        test_platform_asset_map_matches_platforms,
+        test_publish_receipt_claims_no_url,
     )
     for fn in tests:
         try:

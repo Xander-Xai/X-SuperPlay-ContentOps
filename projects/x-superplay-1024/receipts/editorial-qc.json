@@ -1,0 +1,44 @@
+{
+  "schema": "contentops.editorial-qc/v1",
+  "account": "X超玩·1024",
+  "overall": "PASS",
+  "checks": [
+    {
+      "id": "opening_matches_dna",
+      "ok": true,
+      "value": [
+        "U05"
+      ],
+      "expected": "U05"
+    },
+    {
+      "id": "unit_count_matches_dna",
+      "ok": true,
+      "value": 4,
+      "expected": 4
+    },
+    {
+      "id": "duration_in_account_range",
+      "ok": true,
+      "value_s": 53.767,
+      "range_s": [
+        45,
+        60
+      ]
+    },
+    {
+      "id": "title_has_hook",
+      "ok": true,
+      "value": "Easel 实测：能跑，但 Web 工作台六项没过"
+    },
+    {
+      "id": "cta_present",
+      "ok": true,
+      "value": "先把 CLI 线跑一遍，再决定要不要用。"
+    },
+    {
+      "id": "card_set_matches_dna",
+      "ok": true
+    }
+  ]
+}

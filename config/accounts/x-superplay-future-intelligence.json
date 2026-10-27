@@ -13,10 +13,23 @@
   "narrative": {
     "mode": "ENGINEERING_WALKTHROUGH",
     "opening": "EVIDENCE",
-    "beats": ["U01", "U02", "U03", "U04", "U05", "U06", "U07", "U08"],
-    "target_duration_s": [90, 120],
+    "beats": [
+      "U01",
+      "U02",
+      "U03",
+      "U04",
+      "U05",
+      "U06",
+      "U07",
+      "U08"
+    ],
+    "target_duration_s": [
+      90,
+      120
+    ],
     "pace": "measured",
-    "cta": "需要复现或交付，评论区说你的技术栈。"
+    "cta": "需要复现或交付，评论区说你的技术栈。",
+    "opening_unit": "U01"
   },
   "visual": {
     "card_set": "outputs/editorial/by-placement",
@@ -25,11 +38,21 @@
     "captions": "none",
     "cover_time_s": 5.0
   },
-  "platforms": ["bilibili", "zhihu", "csdn"],
+  "platforms": [
+    "bilibili",
+    "zhihu",
+    "csdn"
+  ],
   "horizontal": true,
   "title": "Easel 工程拆解：982 文件哈希、网关端口错配、Web 工作台六项",
   "description": "从版本锁定、982 个文件哈希核对，到网关健康检查 18789/37289 端口错配，再到 Web 工作台六项失败。工程视角记录一个开源 Agent 工作台到底能不能跑起来。",
-  "hashtags": ["#AI工程", "#Agent", "#MCP", "#Easel", "#工程实践"],
+  "hashtags": [
+    "#AI工程",
+    "#Agent",
+    "#MCP",
+    "#Easel",
+    "#工程实践"
+  ],
   "gpu_required": false,
   "forbidden": [
     "invented numbers",

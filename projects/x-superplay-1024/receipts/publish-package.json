@@ -21,6 +21,10 @@
   "video": "project://final/1024.mp4",
   "cover": "project://final/cover.png",
   "derived_assets": [],
+  "platform_asset_map": {
+    "douyin": "project://final/1024.mp4",
+    "xiaohongshu": "project://final/1024.mp4"
+  },
   "duration_s": 53.767,
   "human_review": "PENDING_FOUNDER_REVIEW",
   "publish_status": "NOT_PUBLISHED",

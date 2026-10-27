@@ -38,12 +38,17 @@
       ]
     },
     {
-      "id": "platforms_declared",
+      "id": "platform_asset_map",
       "ok": true,
-      "value": [
-        "douyin",
-        "xiaohongshu"
-      ]
+      "value": {
+        "douyin": "project://final/1024.mp4",
+        "xiaohongshu": "project://final/1024.mp4"
+      }
+    },
+    {
+      "id": "editorial_qc",
+      "ok": true,
+      "status": "PASS"
     },
     {
       "id": "human_review",

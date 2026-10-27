@@ -1,0 +1,9 @@
+{
+  "schema": "contentops.weekly-review/v1",
+  "account": "X超玩·未来智能",
+  "status": "BLOCKED",
+  "reason": "requires publication receipts and metrics",
+  "week": null,
+  "metrics": null,
+  "decisions": []
+}

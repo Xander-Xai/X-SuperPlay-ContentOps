@@ -1,0 +1,12 @@
+{
+  "schema": "contentops.publish-receipt/v1",
+  "account": "X超玩·1024",
+  "platforms": [
+    "douyin",
+    "xiaohongshu"
+  ],
+  "status": "NOT_PUBLISHED",
+  "published_at": null,
+  "urls": {},
+  "note": "fill after manual publishing; automation never claims a URL"
+}

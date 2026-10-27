@@ -39,13 +39,18 @@
       ]
     },
     {
-      "id": "platforms_declared",
+      "id": "platform_asset_map",
       "ok": true,
-      "value": [
-        "bilibili",
-        "zhihu",
-        "csdn"
-      ]
+      "value": {
+        "bilibili": "project://final/future-intelligence-16x9.mp4",
+        "zhihu": "project://final/future-intelligence.mp4",
+        "csdn": "project://final/future-intelligence.mp4"
+      }
+    },
+    {
+      "id": "editorial_qc",
+      "ok": true,
+      "status": "PASS"
     },
     {
       "id": "human_review",

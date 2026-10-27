@@ -1,0 +1,9 @@
+{
+  "schema": "contentops.weekly-review/v1",
+  "account": "X超玩·1024",
+  "status": "BLOCKED",
+  "reason": "requires publication receipts and metrics",
+  "week": null,
+  "metrics": null,
+  "decisions": []
+}

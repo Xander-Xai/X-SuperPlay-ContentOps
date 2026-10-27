@@ -1,0 +1,44 @@
+{
+  "schema": "contentops.editorial-qc/v1",
+  "account": "X超玩·未来智能",
+  "overall": "PASS",
+  "checks": [
+    {
+      "id": "opening_matches_dna",
+      "ok": true,
+      "value": [
+        "U01"
+      ],
+      "expected": "U01"
+    },
+    {
+      "id": "unit_count_matches_dna",
+      "ok": true,
+      "value": 8,
+      "expected": 8
+    },
+    {
+      "id": "duration_in_account_range",
+      "ok": true,
+      "value_s": 106.4,
+      "range_s": [
+        90,
+        120
+      ]
+    },
+    {
+      "id": "title_has_hook",
+      "ok": true,
+      "value": "Easel 工程拆解：982 文件哈希、网关端口错配、Web 工作台六项"
+    },
+    {
+      "id": "cta_present",
+      "ok": true,
+      "value": "需要复现或交付，评论区说你的技术栈。"
+    },
+    {
+      "id": "card_set_matches_dna",
+      "ok": true
+    }
+  ]
+}
