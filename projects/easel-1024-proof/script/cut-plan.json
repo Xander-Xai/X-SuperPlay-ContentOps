@@ -5,8 +5,8 @@
     "width": 1080,
     "height": 1920,
     "duration_ms_range": [
-      41000,
-      47000
+      42000,
+      50000
     ],
     "caption_safe_area": {
       "x": 54,
@@ -14,15 +14,17 @@
       "width": 972,
       "height": 360
     },
-    "min_reading_hold_ms": 2000
+    "min_reading_hold_ms": 2000,
+    "max_visual_hold_ms": 2000,
+    "min_visual_hold_ms": 1200
   },
   "placements": [
     {
       "placement_id": "P-01-OPEN",
       "start_ms": 0,
-      "end_ms": 3000,
+      "end_ms": 2000,
       "asset_id": "A-DOC-WEB",
-      "source_time_range": "00:00.000-00:03.000",
+      "source_time_range": "00:00.000-00:02.000",
       "crop": {
         "x": 0,
         "y": 0,
@@ -40,14 +42,32 @@
       "claim_bearing": true,
       "context_first": false,
       "context_placement_id": null,
-      "transition": "cut"
+      "transition": "cut",
+      "shots": [
+        {
+          "shot_id": "S-01a",
+          "start_ms": 0,
+          "end_ms": 2000,
+          "source_time_range": "00:00.000-00:02.000",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920,
+            "source_width": 1080,
+            "source_height": 1920
+          },
+          "semantic_progress": "the citation card states the boundary in one frame",
+          "context_shot_id": null
+        }
+      ]
     },
     {
       "placement_id": "P-02-REV",
-      "start_ms": 3000,
-      "end_ms": 10000,
+      "start_ms": 2000,
+      "end_ms": 8000,
       "asset_id": "A-REV",
-      "source_time_range": "00:00.000-00:04.701",
+      "source_time_range": "00:00.000-00:04.700",
       "crop": {
         "x": 0,
         "y": 0,
@@ -57,7 +77,7 @@
         "source_height": 693
       },
       "reading_class": "reading",
-      "semantic_progress": "shows the exact revision; last frame is held so the hash is readable",
+      "semantic_progress": "shows the exact revision, then the exit code",
       "claim_ids": [
         "C-1024-REV"
       ],
@@ -65,14 +85,64 @@
       "claim_bearing": true,
       "context_first": false,
       "context_placement_id": null,
-      "transition": "cut"
+      "transition": "cut",
+      "shots": [
+        {
+          "shot_id": "S-02a",
+          "start_ms": 2000,
+          "end_ms": 4000,
+          "source_time_range": "00:00.000-00:02.000",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1086,
+            "height": 693,
+            "source_width": 1086,
+            "source_height": 693
+          },
+          "semantic_progress": "the whole captured window, so the result is seen in context first",
+          "context_shot_id": null
+        },
+        {
+          "shot_id": "S-02b",
+          "start_ms": 4000,
+          "end_ms": 6000,
+          "source_time_range": "00:02.000-00:04.000",
+          "crop": {
+            "x": 0,
+            "y": 38,
+            "width": 600,
+            "height": 300,
+            "source_width": 1086,
+            "source_height": 693
+          },
+          "semantic_progress": "enlarges the revision hash the narration names",
+          "context_shot_id": "S-02a"
+        },
+        {
+          "shot_id": "S-02c",
+          "start_ms": 6000,
+          "end_ms": 8000,
+          "source_time_range": "00:04.000-00:04.700",
+          "crop": {
+            "x": 0,
+            "y": 60,
+            "width": 480,
+            "height": 240,
+            "source_width": 1086,
+            "source_height": 693
+          },
+          "semantic_progress": "enlarges the exit code that closes the capture",
+          "context_shot_id": "S-02b"
+        }
+      ]
     },
     {
       "placement_id": "P-03-DOCTOR",
-      "start_ms": 10000,
-      "end_ms": 18000,
+      "start_ms": 8000,
+      "end_ms": 16000,
       "asset_id": "A-DOCTOR",
-      "source_time_range": "00:00.500-00:06.104",
+      "source_time_range": "00:00.000-00:06.104",
       "crop": {
         "x": 0,
         "y": 0,
@@ -82,7 +152,7 @@
         "source_height": 693
       },
       "reading_class": "reading",
-      "semantic_progress": "seven core checks pass and exit 0 appears",
+      "semantic_progress": "the doctor report passes and its exit code is visible",
       "claim_ids": [
         "C-1024-DOCTOR"
       ],
@@ -90,12 +160,78 @@
       "claim_bearing": true,
       "context_first": false,
       "context_placement_id": null,
-      "transition": "cut"
+      "transition": "cut",
+      "shots": [
+        {
+          "shot_id": "S-03a",
+          "start_ms": 8000,
+          "end_ms": 10000,
+          "source_time_range": "00:00.000-00:02.000",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1086,
+            "height": 693,
+            "source_width": 1086,
+            "source_height": 693
+          },
+          "semantic_progress": "the whole doctor report in context",
+          "context_shot_id": null
+        },
+        {
+          "shot_id": "S-03b",
+          "start_ms": 10000,
+          "end_ms": 12000,
+          "source_time_range": "00:02.000-00:04.000",
+          "crop": {
+            "x": 0,
+            "y": 300,
+            "width": 1086,
+            "height": 210,
+            "source_width": 1086,
+            "source_height": 693
+          },
+          "semantic_progress": "enlarges the first ok:true checks",
+          "context_shot_id": "S-03a"
+        },
+        {
+          "shot_id": "S-03c",
+          "start_ms": 12000,
+          "end_ms": 14000,
+          "source_time_range": "00:04.000-00:06.000",
+          "crop": {
+            "x": 0,
+            "y": 505,
+            "width": 1086,
+            "height": 140,
+            "source_width": 1086,
+            "source_height": 693
+          },
+          "semantic_progress": "enlarges the easel_checkout block",
+          "context_shot_id": "S-03a"
+        },
+        {
+          "shot_id": "S-03d",
+          "start_ms": 14000,
+          "end_ms": 16000,
+          "source_time_range": "00:06.000-00:06.104",
+          "crop": {
+            "x": 0,
+            "y": 620,
+            "width": 420,
+            "height": 60,
+            "source_width": 1086,
+            "source_height": 693
+          },
+          "semantic_progress": "enlarges the exit code the narration cites",
+          "context_shot_id": "S-03a"
+        }
+      ]
     },
     {
       "placement_id": "P-04-SUBTITLE",
-      "start_ms": 18000,
-      "end_ms": 26000,
+      "start_ms": 16000,
+      "end_ms": 22000,
       "asset_id": "A-SUB",
       "source_time_range": "00:00.000-00:04.903",
       "crop": {
@@ -107,7 +243,7 @@
         "source_height": 693
       },
       "reading_class": "reading",
-      "semantic_progress": "caption regressions print [ok] and exit 0",
+      "semantic_progress": "the caption regressions print [ok] and exit 0",
       "claim_ids": [
         "C-1024-CAPTIONS"
       ],
@@ -115,14 +251,64 @@
       "claim_bearing": true,
       "context_first": false,
       "context_placement_id": null,
-      "transition": "cut"
+      "transition": "cut",
+      "shots": [
+        {
+          "shot_id": "S-04a",
+          "start_ms": 16000,
+          "end_ms": 18000,
+          "source_time_range": "00:00.000-00:02.000",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1086,
+            "height": 693,
+            "source_width": 1086,
+            "source_height": 693
+          },
+          "semantic_progress": "the whole regression run in context",
+          "context_shot_id": null
+        },
+        {
+          "shot_id": "S-04b",
+          "start_ms": 18000,
+          "end_ms": 20000,
+          "source_time_range": "00:02.000-00:04.000",
+          "crop": {
+            "x": 0,
+            "y": 38,
+            "width": 640,
+            "height": 130,
+            "source_width": 1086,
+            "source_height": 693
+          },
+          "semantic_progress": "enlarges the [ok] test lines",
+          "context_shot_id": "S-04a"
+        },
+        {
+          "shot_id": "S-04c",
+          "start_ms": 20000,
+          "end_ms": 22000,
+          "source_time_range": "00:04.000-00:04.903",
+          "crop": {
+            "x": 0,
+            "y": 180,
+            "width": 560,
+            "height": 80,
+            "source_width": 1086,
+            "source_height": 693
+          },
+          "semantic_progress": "enlarges the pass line and the exit code",
+          "context_shot_id": "S-04a"
+        }
+      ]
     },
     {
       "placement_id": "P-05-SKILL",
-      "start_ms": 26000,
-      "end_ms": 34000,
+      "start_ms": 22000,
+      "end_ms": 28000,
       "asset_id": "A-SKILL",
-      "source_time_range": "00:00.000-00:06.705",
+      "source_time_range": "00:00.000-00:06.000",
       "crop": {
         "x": 0,
         "y": 0,
@@ -132,7 +318,7 @@
         "source_height": 693
       },
       "reading_class": "reading",
-      "semantic_progress": "the route prints the owning skills",
+      "semantic_progress": "the skill route prints the owning skills",
       "claim_ids": [
         "C-1024-SKILL"
       ],
@@ -140,12 +326,62 @@
       "claim_bearing": true,
       "context_first": false,
       "context_placement_id": null,
-      "transition": "cut"
+      "transition": "cut",
+      "shots": [
+        {
+          "shot_id": "S-05a",
+          "start_ms": 22000,
+          "end_ms": 24000,
+          "source_time_range": "00:00.000-00:06.000",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1086,
+            "height": 693,
+            "source_width": 1086,
+            "source_height": 693
+          },
+          "semantic_progress": "the whole routing output in context",
+          "context_shot_id": null
+        },
+        {
+          "shot_id": "S-05b",
+          "start_ms": 24000,
+          "end_ms": 26000,
+          "source_time_range": "00:02.000-00:04.000",
+          "crop": {
+            "x": 0,
+            "y": 45,
+            "width": 1086,
+            "height": 130,
+            "source_width": 1086,
+            "source_height": 693
+          },
+          "semantic_progress": "enlarges the auto-short-video entry",
+          "context_shot_id": "S-05a"
+        },
+        {
+          "shot_id": "S-05c",
+          "start_ms": 26000,
+          "end_ms": 28000,
+          "source_time_range": "00:04.000-00:06.000",
+          "crop": {
+            "x": 0,
+            "y": 150,
+            "width": 1086,
+            "height": 130,
+            "source_width": 1086,
+            "source_height": 693
+          },
+          "semantic_progress": "enlarges the slideshow and highlight entries",
+          "context_shot_id": "S-05a"
+        }
+      ]
     },
     {
       "placement_id": "P-06-WEB",
-      "start_ms": 34000,
-      "end_ms": 38000,
+      "start_ms": 28000,
+      "end_ms": 34000,
       "asset_id": "A-DOC-WEB",
       "source_time_range": "00:00.000-00:03.000",
       "crop": {
@@ -157,7 +393,7 @@
         "source_height": 1920
       },
       "reading_class": "reading",
-      "semantic_progress": "quotes the six documented Web failures with the file cited",
+      "semantic_progress": "quotes the documented Web boundary with the file cited",
       "claim_ids": [
         "C-1024-WEB"
       ],
@@ -165,33 +401,191 @@
       "claim_bearing": true,
       "context_first": false,
       "context_placement_id": null,
-      "transition": "cut"
+      "transition": "cut",
+      "shots": [
+        {
+          "shot_id": "S-06a",
+          "start_ms": 28000,
+          "end_ms": 30000,
+          "source_time_range": "00:00.000-00:01.000",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920,
+            "source_width": 1080,
+            "source_height": 1920
+          },
+          "semantic_progress": "the citation card in full",
+          "context_shot_id": null
+        },
+        {
+          "shot_id": "S-06b",
+          "start_ms": 30000,
+          "end_ms": 32000,
+          "source_time_range": "00:01.000-00:02.000",
+          "crop": {
+            "x": 0,
+            "y": 360,
+            "width": 1080,
+            "height": 420,
+            "source_width": 1080,
+            "source_height": 1920
+          },
+          "semantic_progress": "enlarges the claim line the narration quotes",
+          "context_shot_id": "S-06a"
+        },
+        {
+          "shot_id": "S-06c",
+          "start_ms": 32000,
+          "end_ms": 34000,
+          "source_time_range": "00:02.000-00:03.000",
+          "crop": {
+            "x": 0,
+            "y": 640,
+            "width": 1080,
+            "height": 640,
+            "source_width": 1080,
+            "source_height": 1920
+          },
+          "semantic_progress": "enlarges the NOT VERIFIED stamp and the cited source line",
+          "context_shot_id": "S-06a"
+        }
+      ]
     },
     {
-      "placement_id": "P-07-DOCTOR-DETAIL",
-      "start_ms": 38000,
-      "end_ms": 45000,
+      "placement_id": "P-07-BOUNDARY",
+      "start_ms": 34000,
+      "end_ms": 40000,
       "asset_id": "A-DOCTOR",
-      "source_time_range": "00:03.000-00:06.104",
+      "source_time_range": "00:00.000-00:06.104",
       "crop": {
         "x": 0,
-        "y": 250,
-        "width": 900,
-        "height": 400,
+        "y": 0,
+        "width": 1086,
+        "height": 693,
         "source_width": 1086,
         "source_height": 693
       },
       "reading_class": "reading",
-      "semantic_progress": "enlarges the passing checks already seen in context at P-03",
+      "semantic_progress": "restates the boundary against the passing checks",
       "claim_ids": [
-        "C-1024-BOUNDARY",
+        "C-1024-BOUNDARY"
+      ],
+      "caption_cue_ids": [],
+      "claim_bearing": true,
+      "context_first": false,
+      "context_placement_id": null,
+      "transition": "cut",
+      "shots": [
+        {
+          "shot_id": "S-07a",
+          "start_ms": 34000,
+          "end_ms": 36000,
+          "source_time_range": "00:00.000-00:02.000",
+          "crop": {
+            "x": 0,
+            "y": 120,
+            "width": 1086,
+            "height": 573,
+            "source_width": 1086,
+            "source_height": 693
+          },
+          "semantic_progress": "the report body in context, without the tab bar",
+          "context_shot_id": null
+        },
+        {
+          "shot_id": "S-07b",
+          "start_ms": 36000,
+          "end_ms": 38000,
+          "source_time_range": "00:02.000-00:04.000",
+          "crop": {
+            "x": 0,
+            "y": 505,
+            "width": 1086,
+            "height": 140,
+            "source_width": 1086,
+            "source_height": 693
+          },
+          "semantic_progress": "enlarges the easel_checkout block",
+          "context_shot_id": "S-07a"
+        },
+        {
+          "shot_id": "S-07c",
+          "start_ms": 38000,
+          "end_ms": 40000,
+          "source_time_range": "00:04.000-00:06.000",
+          "crop": {
+            "x": 0,
+            "y": 620,
+            "width": 420,
+            "height": 60,
+            "source_width": 1086,
+            "source_height": 693
+          },
+          "semantic_progress": "enlarges the exit code that supports the boundary",
+          "context_shot_id": "S-07a"
+        }
+      ]
+    },
+    {
+      "placement_id": "P-08-CTA",
+      "start_ms": 40000,
+      "end_ms": 44000,
+      "asset_id": "A-DOC-CTA",
+      "source_time_range": "00:00.000-00:02.000",
+      "crop": {
+        "x": 0,
+        "y": 0,
+        "width": 1080,
+        "height": 1920,
+        "source_width": 1080,
+        "source_height": 1920
+      },
+      "reading_class": "reading",
+      "semantic_progress": "closes on the evidence invitation",
+      "claim_ids": [
         "C-1024-CTA"
       ],
       "caption_cue_ids": [],
       "claim_bearing": true,
-      "context_first": true,
-      "context_placement_id": "P-03-DOCTOR",
-      "transition": "cut"
+      "context_first": false,
+      "context_placement_id": null,
+      "transition": "cut",
+      "shots": [
+        {
+          "shot_id": "S-08a",
+          "start_ms": 40000,
+          "end_ms": 42000,
+          "source_time_range": "00:00.000-00:01.000",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920,
+            "source_width": 1080,
+            "source_height": 1920
+          },
+          "semantic_progress": "the closing card in full",
+          "context_shot_id": null
+        },
+        {
+          "shot_id": "S-08b",
+          "start_ms": 42000,
+          "end_ms": 44000,
+          "source_time_range": "00:01.000-00:02.000",
+          "crop": {
+            "x": 0,
+            "y": 900,
+            "width": 1080,
+            "height": 560,
+            "source_width": 1080,
+            "source_height": 1920
+          },
+          "semantic_progress": "enlarges the invitation line",
+          "context_shot_id": "S-08a"
+        }
+      ]
     }
   ]
 }

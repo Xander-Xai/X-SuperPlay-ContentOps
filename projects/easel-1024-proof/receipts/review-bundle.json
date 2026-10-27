@@ -1,46 +1,46 @@
 {
   "schema": "contentops.review-bundle/v1",
   "package_id": "easel-1024-proof",
-  "built_at": "2026-10-27T13:09:18Z",
+  "built_at": "2026-10-27T17:08:52Z",
   "inputs": {
     "video": {
       "path": "project://final/easel.mp4",
-      "sha256": "7e4dd9c2fe03e89acbbb59ea7c3fa1a7839a3f32b42323eaf2fe08ff946dc4be"
+      "sha256": "bb2cdf337470228cb51bf75b98afa6b01ac3259a474ba39bc24bcac11f933852"
     },
     "narration": {
       "path": "project://work/narration.wav",
-      "sha256": "0b5c4e7873fd5466afd58e8d1e0d98bbc744871539e177336a9a7ce445b78908"
+      "sha256": "e62e971350ffdfca363ebee22b18dacdb1dd2eb3da53b905f2bbd8bd0ec21625"
     },
     "captions": {
       "path": "project://assets/captions/cut.srt",
-      "sha256": "48f8dd9254553a3a120ee67f74ca99a480430c61987afe7031b830dd5745b64d"
+      "sha256": "c4d65af3bf8e7750ef354ba0d2561ea82e6eef3d23f291cfe76f1b8216e9475c"
     },
     "claim_map": {
       "path": "project://script/claim-map.json",
-      "sha256": "1779189ce883f2724abcd3a59b07755e1d911057424a08609f44fb2be4be5e50"
+      "sha256": "2dceb808488ee603b4a43302ba70aa0f0fbdc92314d98b5bcbab61dbb66b01c7"
     },
     "cut_plan": {
       "path": "project://script/cut-plan.json",
-      "sha256": "5fbf199229d958a4957b206705ebafc97f571119fb4d4cb3751a6f349d06f4b0"
+      "sha256": "e9e4908372bc68cac9d7f0e88d282dc237c7df993167b0f468cc879dd9f332b5"
     },
     "asset_map": {
       "path": "project://script/assets.json",
-      "sha256": "4c4f6248885264d74db5bbac53e6dd59c6c104326c1cff9233ad063776e2cdc5"
+      "sha256": "57a92901a8301c2db2d5459f4e92d18737bc6b8e8611ebdfc3e4e534a41d86c6"
     },
     "qc_report": {
       "path": "project://receipts/qc-report.json",
-      "sha256": "966c681ecf6c15a6fc1aee486a9b06fb70c0f545a7f65caf90ab369813bbd627"
+      "sha256": "1808c119758a9caa02ce30c8a4ca18b61d1237edcccd92b447e2291102bcc600"
     },
     "build_receipt": {
       "path": "project://receipts/build-easel.json",
-      "sha256": "39f4c370d4d56f1bab11cfe54f0cb1a93bb3dc2ce153c49987e48cbd96479420"
+      "sha256": "1ead8e08e39a0b997257977859c9f7674df93e4e49297051cb0e6574558be355"
     },
     "target": {
       "width": 1080,
       "height": 1920,
       "duration_ms_range": [
-        41000,
-        47000
+        42000,
+        50000
       ],
       "caption_safe_area": {
         "x": 54,
@@ -48,23 +48,29 @@
         "width": 972,
         "height": 360
       },
-      "min_reading_hold_ms": 2000
+      "min_reading_hold_ms": 2000,
+      "max_visual_hold_ms": 2000,
+      "min_visual_hold_ms": 1200
     },
-    "claim_map_fingerprint": "a016fbc973313f22632e259fd13fcd0dc325bd5f21f08730c4ac05248a9d607b",
-    "cut_plan_fingerprint": "ae2cd304a3f10b05d32ca593f5a7c0f52533db7afc53ced086382fb5fa4bacde",
+    "claim_map_fingerprint": "220ef79a6b54c1610bd9283fb278d65aa4ded4dcf97f2e2baf0626079ea50823",
+    "cut_plan_fingerprint": "622484332b69e1234a2268c5e000aca3682810e0ce8737fee9357b82c0e038c0",
     "cards": {
       "A-DOC-WEB": {
         "path": "project://assets/cards/web-boundary.png",
-        "sha256": "a52049701672a398d8595abdf01cb40c14cfedb006e945629ce332fc1aaf8286"
+        "sha256": "2db60a9cae48c97b1f8af208023abdc40d4469576f82a2dc2595e129ab317729"
+      },
+      "A-DOC-CTA": {
+        "path": "project://assets/cards/cta.png",
+        "sha256": "ebdc534905019986b3dec714a121c7af9573a8d1fe86b3987d9ede4078b3ec04"
       }
     },
     "cover": {
       "path": "project://assets/covers/xhs.png",
-      "sha256": "ece6ecd0653fa7eed3a29d56be40d1fe8794bcbacbb524b1466d97ab14f4ff21"
+      "sha256": "1a2b2b9b6b028246265b9376c036e1c2011a9c7b30dad88400482a7fea64b4de"
     },
     "cover_receipt": {
       "path": "project://receipts/cover.json",
-      "sha256": "5186a33120abe64f064cced00a6d1a86909edeb56e66d46db72c00942b9a6f72"
+      "sha256": "b2ee655c2bb55b8e65c67df1642623d84cd816b0c5eda67b17bedc04ce2da0c4"
     },
     "captures": [
       {
@@ -90,10 +96,10 @@
       },
       {
         "asset_id": "A-SKILL",
-        "capture_id": "CAP-20261027-SKILLROUTE-H",
+        "capture_id": "CAP-20261028-SKILLROUTE-AUTO",
         "evidence_class": "EXECUTED",
         "permission_scope": "internal_review",
-        "recording_sha256": "03170db8948795fbe13dc7b2046e7a032ab34f829a0ff2fce22c4f5471cc1918"
+        "recording_sha256": "86d2cf34135006c9bc6509fdad3160375951f82d0c804eaf40b72ef431858046"
       }
     ],
     "capture_proofs_present": true,
@@ -103,7 +109,7 @@
       "CAP-20261027-REV-H is internal_review; a redaction receipt is required before distribution",
       "CAP-20261027-DOCTOR-H is internal_review; a redaction receipt is required before distribution",
       "CAP-20261027-SUBTITLE-H is internal_review; a redaction receipt is required before distribution",
-      "CAP-20261027-SKILLROUTE-H is internal_review; a redaction receipt is required before distribution"
+      "CAP-20261028-SKILLROUTE-AUTO is internal_review; a redaction receipt is required before distribution"
     ]
   },
   "score": null,
@@ -112,5 +118,5 @@
   "hard_fail": null,
   "status": "PENDING_HUMAN_REVIEW",
   "production_ready": false,
-  "review_bundle_fingerprint": "e4a5a44598fb69ca25df35039b8a97abc2fdd2b818645ddc7008e9a053a69648"
+  "review_bundle_fingerprint": "165a9fd91ef26643fed445b6db1336e3d0a1230a1b07d22844b06f41cf6da59f"
 }

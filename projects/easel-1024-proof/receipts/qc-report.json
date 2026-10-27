@@ -5,8 +5,8 @@
     "width": 1080,
     "height": 1920,
     "duration_ms_range": [
-      41000,
-      47000
+      42000,
+      50000
     ],
     "caption_safe_area": {
       "x": 54,
@@ -14,7 +14,9 @@
       "width": 972,
       "height": 360
     },
-    "min_reading_hold_ms": 2000
+    "min_reading_hold_ms": 2000,
+    "max_visual_hold_ms": 2000,
+    "min_visual_hold_ms": 1200
   },
   "overall": "PASS",
   "checks": [
@@ -34,7 +36,7 @@
       "id": "duration",
       "ok": true,
       "severity": "PASS",
-      "detail": "45.00s expected 41-47s"
+      "detail": "44.00s expected 42-50s"
     },
     {
       "id": "video_codec",
@@ -49,28 +51,34 @@
       "detail": "aac"
     },
     {
+      "id": "views_declared",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "every static view is <= 2000ms"
+    },
+    {
       "id": "decodes_and_analyses",
       "ok": true,
       "severity": "PASS",
       "detail": "OK"
     },
     {
-      "id": "freeze_is_declared",
+      "id": "static_hold_within_limit",
       "ok": true,
       "severity": "PASS",
-      "detail": "frozen run of 5.20s exceeds 1.5s; the render appears stalled (declared reading hold)"
+      "detail": "longest frozen run 1.80s (limit 2.20s)"
     },
     {
       "id": "black_and_freeze_measured",
       "ok": true,
       "severity": "PASS",
-      "detail": "analysed_frames=225"
+      "detail": "analysed_frames=220"
     },
     {
       "id": "real_source_ratio",
       "ok": true,
       "severity": "PASS",
-      "detail": "84.4% of 45.0s (min 70%)"
+      "detail": "72.7% of 44.0s (min 70%)"
     },
     {
       "id": "generated_ratio",
@@ -94,13 +102,13 @@
       "id": "captions_present",
       "ok": true,
       "severity": "PASS",
-      "detail": "6 cues"
+      "detail": "5 cues"
     },
     {
       "id": "captions_inside_duration",
       "ok": true,
       "severity": "PASS",
-      "detail": "45.00s"
+      "detail": "44.00s"
     },
     {
       "id": "narration_has_cues",
@@ -110,12 +118,12 @@
     }
   ],
   "shares": {
-    "total_s": 45.0,
-    "real_s": 38.0,
+    "total_s": 44.0,
+    "real_s": 32.0,
     "generated_s": 0.0,
-    "citation_or_support_s": 7.0,
-    "real_ratio": 0.8444444444444444,
+    "citation_or_support_s": 12.0,
+    "real_ratio": 0.7272727272727273,
     "generated_ratio": 0.0
   },
-  "duration": 45.0
+  "duration": 44.0
 }

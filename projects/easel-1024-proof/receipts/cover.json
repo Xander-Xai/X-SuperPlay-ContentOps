@@ -9,12 +9,12 @@
   "source_note": "built from the tracked document; no raw capture frame was used because no capture is publishable yet",
   "html": {
     "path": "project://assets/covers/xhs.html",
-    "sha256": "a5ee2aca4a3b42c631c11b4f5602e6172f1c688b9fd99312b62e53de2a62dcb2"
+    "sha256": "dcdbd2b969b030dc64be99162f8fc8608ebf0d8c87dea29e549038a839f65c41"
   },
   "png": {
     "path": "project://assets/covers/xhs.png",
-    "sha256": "ece6ecd0653fa7eed3a29d56be40d1fe8794bcbacbb524b1466d97ab14f4ff21"
+    "sha256": "1a2b2b9b6b028246265b9376c036e1c2011a9c7b30dad88400482a7fea64b4de"
   },
-  "audit": "✅ PASS  xhs.png  (1080x1440)\n  纵向跨度 88% | 底部死空白 6% | 最大空白带 13% | 4带密度 [0.22, 0.55, 0.34, 0.21]",
-  "built_at": "2026-10-27T12:57:03Z"
+  "audit": "✅ PASS  xhs.png  (1080x1440)\n  纵向跨度 88% | 底部死空白 6% | 最大空白带 14% | 4带密度 [0.17, 0.35, 0.36, 0.21]",
+  "built_at": "2026-10-27T17:08:50Z"
 }

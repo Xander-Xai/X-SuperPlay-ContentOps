@@ -33,9 +33,9 @@
     },
     "A-SKILL": {
       "kind": "recording",
-      "path": "repo://projects/easel-evidence-capture/work/raw/CAP-20261027-SKILLROUTE-H.mp4",
-      "sha256": "03170db8948795fbe13dc7b2046e7a032ab34f829a0ff2fce22c4f5471cc1918",
-      "capture_id": "CAP-20261027-SKILLROUTE-H",
+      "path": "repo://projects/easel-evidence-capture/work/raw/CAP-20261028-SKILLROUTE-AUTO.mp4",
+      "sha256": "86d2cf34135006c9bc6509fdad3160375951f82d0c804eaf40b72ef431858046",
+      "capture_id": "CAP-20261028-SKILLROUTE-AUTO",
       "source_dimensions": {
         "width": 1086,
         "height": 693
@@ -48,6 +48,13 @@
       "width": 1080,
       "height": 1920,
       "source_document": "repo://docs/CURRENT-STATE.md"
+    },
+    "A-DOC-CTA": {
+      "kind": "card",
+      "html": "project://assets/cards/cta.html",
+      "png": "project://assets/cards/cta.png",
+      "width": 1080,
+      "height": 1920
     }
   }
 }
