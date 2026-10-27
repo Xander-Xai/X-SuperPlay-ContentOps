@@ -4,7 +4,7 @@
   "project": "project://",
   "graded_target": "project://final/1024.mp4",
   "overall": "WARN",
-  "checked_at": "2026-10-27T07:52:56Z",
+  "checked_at": "2026-10-27T08:21:06Z",
   "checks": [
     {
       "id": "_video",
@@ -16,7 +16,7 @@
       "id": "file_size",
       "ok": true,
       "severity": "PASS",
-      "value_bytes": 1744999,
+      "value_bytes": 1830439,
       "min_bytes": 102400
     },
     {

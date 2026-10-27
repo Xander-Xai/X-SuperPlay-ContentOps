@@ -4,7 +4,7 @@
   "project": "project://",
   "graded_target": "project://final/future-intelligence.mp4",
   "overall": "WARN",
-  "checked_at": "2026-10-27T07:54:44Z",
+  "checked_at": "2026-10-27T08:24:40Z",
   "checks": [
     {
       "id": "_video",
@@ -16,7 +16,7 @@
       "id": "file_size",
       "ok": true,
       "severity": "PASS",
-      "value_bytes": 3194683,
+      "value_bytes": 3405538,
       "min_bytes": 102400
     },
     {

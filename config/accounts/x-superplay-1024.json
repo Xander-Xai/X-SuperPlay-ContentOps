@@ -34,7 +34,8 @@
     "accent": "#b03a2e",
     "density": "bold",
     "captions": "none",
-    "cover_time_s": 1.0
+    "cover_time_s": 1.0,
+    "motion_intro": "outputs/account-variants/1024-stamp.mp4"
   },
   "platforms": [
     "douyin",

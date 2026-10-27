@@ -150,6 +150,17 @@ def test_publish_receipt_claims_no_url():
         assert weekly["status"] == "BLOCKED"
 
 
+def test_accounts_have_distinct_motion_intros():
+    explore = json.loads((ROOT / "config" / "accounts" / "x-superplay-1024.json")
+                         .read_text(encoding="utf-8"))
+    build = json.loads((ROOT / "config" / "accounts"
+                        / "x-superplay-future-intelligence.json")
+                       .read_text(encoding="utf-8"))
+    assert explore["visual"]["motion_intro"] != build["visual"]["motion_intro"]
+    assert (EXPLORE / "motion" / "index.html").is_file()
+    assert (BUILD / "motion" / "index.html").is_file()
+
+
 def main() -> int:
     failures = []
     tests = (
@@ -166,6 +177,7 @@ def main() -> int:
         test_durations_match_account_targets,
         test_platform_asset_map_matches_platforms,
         test_publish_receipt_claims_no_url,
+        test_accounts_have_distinct_motion_intros,
     )
     for fn in tests:
         try:

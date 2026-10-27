@@ -61,6 +61,8 @@ def load_specs() -> Dict[str, Dict[str, Any]]:
             "hashtags": dna["hashtags"],
             "platforms": dna["platforms"],
             "card_dir": dna["visual"]["card_set"],
+            "intro": dna["visual"].get("motion_intro",
+                                      "outputs/editorial/intro-editorial.mp4"),
             "cover_time": dna["visual"]["cover_time_s"],
             "cta": dna["narrative"]["cta"],
             "horizontal": dna.get("horizontal", False),
@@ -341,7 +343,7 @@ def build_variant(slug: str, spec: Dict[str, Any], units: Dict[str, Dict[str, An
     attached = _run([
         sys.executable, str(SHARED / "intro_outro.py"), "attach",
         "--main", str(project / "final" / "main.mp4"),
-        "--intro", str(INTRO), "--outro", str(OUTRO),
+        "--intro", str(ROOT / spec["intro"]), "--outro", str(OUTRO),
         "--transition", "fade", "--trans-duration", "0.5",
         "-o", str(account_out),
     ])

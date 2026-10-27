@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-CN" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --paper: #f2f4f5;
+        --ink: #0a1f3d;
+        --red: #315d93;
+        --muted: #6f655c;
+        --mono: "Cascadia Mono", "Noto Sans Mono CJK SC", monospace;
+        --serif: "Noto Serif SC", "Songti SC", Georgia, serif;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        width: 1080px; height: 1920px; overflow: hidden;
+        background: var(--paper);
+      }
+      #root {
+        position: relative; width: 1080px; height: 1920px;
+        padding: 96px 86px 84px; background: var(--paper);
+        color: var(--ink); overflow: hidden;
+      }
+      #root::before {
+        content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .06;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='160' height='160' filter='url(%23n)' opacity='0.55'/></svg>");
+        mix-blend-mode: multiply;
+      }
+      .topline {
+        display: flex; justify-content: space-between; align-items: baseline;
+        border-bottom: 1.5px solid var(--ink); padding-bottom: 16px;
+        font-family: var(--mono); font-size: 23px; letter-spacing: .18em;
+        color: var(--muted);
+      }
+      .topline .tag { color: var(--red); }
+      #rule {
+        position: absolute; left: 86px; top: 380px; width: 908px; height: 6px;
+        background: var(--red); transform-origin: left center;
+      }
+      #kicker {
+        position: absolute; left: 86px; top: 430px;
+        font-family: var(--mono); font-size: 28px; letter-spacing: .24em;
+        color: var(--red); opacity: 0;
+      }
+      #headline {
+        position: absolute; left: 86px; top: 520px; width: 908px;
+        font-family: var(--serif); font-size: 124px; line-height: 1.14;
+        font-weight: 400; letter-spacing: -.045em; opacity: 0;
+      }
+      #headline .red { color: var(--red); }
+      #meta {
+        position: absolute; left: 86px; top: 940px;
+        font-family: var(--mono); font-size: 27px; line-height: 1.8;
+        letter-spacing: .06em; color: var(--muted); opacity: 0;
+      }
+      #stamp {
+        position: absolute; right: 86px; bottom: 210px;
+        border: 5px double var(--red); color: var(--red);
+        padding: 26px 34px; transform: rotate(-6deg); opacity: 0;
+        font-family: var(--mono); font-size: 26px; line-height: 1.5;
+        letter-spacing: .18em; text-align: center;
+      }
+      #stamp strong { display: block; font-size: 34px; letter-spacing: .12em; }
+      #foot {
+        position: absolute; left: 86px; right: 86px; bottom: 84px;
+        display: flex; justify-content: space-between;
+        border-top: 1.5px solid var(--ink); padding-top: 16px;
+        font-family: var(--mono); font-size: 22px; letter-spacing: .1em;
+        color: var(--muted); opacity: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="2.5"
+      data-width="1080"
+      data-height="1920"
+    >
+      <div class="topline">
+        <span class="tag">[ 未来智能 · 工程 ]</span>
+        <span>REAL RUN · 2026-10-03</span>
+      </div>
+
+      <div id="rule" class="clip" data-start="0" data-duration="2.5" data-track-index="0"></div>
+      <div id="kicker" class="clip" data-start="0" data-duration="2.5" data-track-index="1">工程拆解</div>
+      <h1 id="headline" class="clip" data-start="0" data-duration="2.5" data-track-index="2">
+        先证明，<br /><span class="red">再谈能不能用。</span>
+      </h1>
+      <div id="meta" class="clip" data-start="0" data-duration="2.5" data-track-index="3">
+        982 FILES · HASH MATCH<br />
+        GATEWAY 18789 → 37289 · WEB 6 FAIL
+      </div>
+      <div id="stamp" class="clip" data-start="0" data-duration="2.5" data-track-index="4">
+        <strong>BUILD</strong>2026-10-03
+      </div>
+      <div id="foot" class="clip" data-start="0" data-duration="2.5" data-track-index="5">
+        <span>未来智能 / 工程</span><span>01 / 06</span>
+      </div>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#rule", { scaleX: 0 }, { scaleX: 1, duration: 0.45, ease: "power3.out" }, 0.10);
+      tl.fromTo("#kicker", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, 0.22);
+      tl.fromTo("#headline", { opacity: 0, y: 26, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "power4.out" }, 0.38);
+      tl.fromTo("#meta", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.40, ease: "power2.out" }, 0.86);
+      tl.fromTo("#stamp", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.38, ease: "power2.out" }, 1.18);
+      tl.fromTo("#foot", { opacity: 0 }, { opacity: 1, duration: 0.30, ease: "power2.out" }, 1.35);
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

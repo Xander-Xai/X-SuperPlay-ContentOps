@@ -3,14 +3,14 @@
 **Currency**: `CURRENT`
 **Graded target**: `project://final/future-intelligence.mp4`
 **Overall**: `WARN`
-**Checked at**: 2026-10-27T07:54:44Z
+**Checked at**: 2026-10-27T08:24:40Z
 
 **Paths**: logical references (project://, repo://); no absolute paths
 
 | Check | Status | Severity | Detail |
 |---|---|---|---|
 | _video | OK | INFO | path=project://final/future-intelligence.mp4 |
-| file_size | OK | PASS | value_bytes=3194683, min_bytes=102400 |
+| file_size | OK | PASS | value_bytes=3405538, min_bytes=102400 |
 | ffprobe_parse | OK | PASS |  |
 | resolution | OK | PASS | value=1080x1920, expected=1080x1920 |
 | aspect_ratio_9_16 | OK | PASS | value=1080:1920 |

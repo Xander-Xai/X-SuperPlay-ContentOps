@@ -36,7 +36,8 @@
     "accent": "#315d93",
     "density": "dense",
     "captions": "none",
-    "cover_time_s": 5.0
+    "cover_time_s": 5.0,
+    "motion_intro": "outputs/account-variants/fi-slate.mp4"
   },
   "platforms": [
     "bilibili",

@@ -44,6 +44,7 @@ REAL EXECUTION RECEIPT
 |---|---|---|
 | MiniMax capability audit | VERIFIED (speech + image), H3 BLOCKED | `providers/minimax-mplan-explore-capability.md` |
 | MiniMax sanitized receipt | CURRENT | `providers/receipts/minimax-mplan-explore-capability-2026-10-04.sanitized.json` |
+| X media-workflow skill scan | 71 posts / 9 repos; HyperFrames cold opens adopted | `x-media-workflow-skills-2026-10-27.md` |
 
 ## Archived
 
