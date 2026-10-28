@@ -610,17 +610,38 @@ artifacts were re-hashed after the variant build and were byte-identical.
 | Property | Value |
 |---|---|
 | Project | `projects/easel-fi-what-is-agent` — Build account, 1080×1920 |
-| Visual track | one ERAS render, `project://work/huashu-eras.mp4` — 36.300 s, 30 fps, 1089 frames, h264 |
-| Timing | 29.593 s voice + 12 × 0.35 s tails + 2.5 s silent bridge = **36.293 s** |
+| Visual track | one ERAS render, `project://work/huashu-eras.mp4` — 38.900 s, 30 fps, 1167 frames, h264 |
+| Timing | 31.503 s voice (29.593 s narration + 1.910 s opening) + 4.890 s tails + 2.5 s silent bridge = **38.893 s** |
 | Transitions | `push` / `matchCut` / `blurPush` / `fadeShift` on the incoming era only, no `xfade`, no clip concat |
 | Adapter | `motion/film/render.py` — read-only mount of the external engine at `/engine/` and the project at `/project/`; no upstream modification |
 | Film config | `motion/film/eras.js` (clip-frame eras with explicit no-op drawers), `motion/film/index.html` |
-| Voice | cloned `founder_primary_v1`, 1.20×, 12 lines, all `SAFE_INCLUDED_PLAN`, technical QC approved |
+| Voice | cloned `founder_primary_v1`, 1.20×, 12 lines, all `SAFE_INCLUDED_PLAN`, technical QC approved; the opening is a MiniMax H3 Ref2VA shot, not this voice |
 | Diagram | p02 uses the redrawn `motion/specs/diagram-workflow-vs-agent.png` (Anthropic one-source), card audit PASS |
-| Output | `project://final/eras.mp4` — 36.3 s, 1080×1920, h264/aac |
+| Output | `project://final/eras.mp4` — 38.9 s, 1080×1920, h264/aac |
 | Receipts | `receipts/eras/{sample.json,timing-reconciliation.json,review-bundle.json,human-review.json,cover.json,runtime-receipt.md}` and `receipts/qc-report-eras.{json,md}` |
-| Generated share | 2.5 / 36.293 = **6.89 %**, below the 10 % cap; the bridge is silent and claim-free |
+| Generated share | insert 2.5 / 38.893 = **6.43 %**; AI presenter 2.6 s = **6.69 %**, declared separately in `generated_media.ai_presenter`; 13.11 % combined against a 10 % cap that governs inserts |
 | QC | `qc_video` **WARN** — same class as the baseline (pure animation, no real source); resolution, aspect, duration, codecs, audio, subtitle burn and loudness pass |
+| Status | `production_ready: false`, `PENDING_FOUNDER_REVIEW` |
+
+### Presenter opening (eras only) — 2026-10-28
+
+The eras film opens on a face. One MiniMax H3 `Ref2VA` shot (4 s requested;
+reference image of the presenter, reference audio = the film's own cloned line 1)
+speaks the hook `这条视频，只讲一个问题。` and settles. Nothing else in the film
+changed: the twelve-line narration manifest, `final/easel.mp4`, `receipts/sample.json`
+and `assets/captions/default.srt` are untouched, and the baseline timeline is
+filtered so it never sees the opening.
+
+| Property | Value |
+|---|---|
+| Shot | `project://work/generated/shot-b666f8c64dc7a901.mp4` — 768×1344, 24 fps, 4.458 s, `KEEP` audio, `sha256 9cb09c9e…` |
+| Placed | `work/eras/clips/p00.mp4` — cropped 756×1344 → 1080×1920, 30 fps, 2.6 s, silent; the era is first and `p01` gains an incoming `fadeShift` |
+| Voice | re-cut from the shot itself: 1.910 s, 32 kHz mono, −3 dB so it matches `speech-2.8-hd` at −18.2 dB mean |
+| Timeline | `motion/timeline.json` carries the segment with `"variant": "eras"`; the builder and the adapter both filter by variant |
+| Ledger | `receipts/generated-media.json` → `presenter` plus `eras.{insert_ratio,presenter_ratio,ai_generated_total_ratio}` |
+| BGM | the bed now starts at 2.6 s, so the opening is dry and the bed still ends flush at 38.893 s |
+| Cost | 7 pp of the weekly H3 quota (81 % → 74 %); one create |
+| Disclosure | `labelled_ai_synthesised: true`, `speech_text_verified: false` — no local ASR exists, so the founder must confirm the sentence on playback |
 | Status | `production_ready: false`, `PENDING_FOUNDER_REVIEW` |
 
 Three defects surfaced during this build and are recorded rather than smoothed
@@ -638,3 +659,19 @@ over:
 `freeze_s` for the variant is 2.4 s against 0.6 s for the baseline. A PSNR
 check across the bridge (t=23.0 vs t=24.2, y = 21.8 dB) shows the bridge is not
 a static frame, so the number is reported as measured rather than explained away.
+After the presenter was added, the freeze was localised by a 5 fps frame diff to
+**5.2–7.8 s** — the p02 diagram card — and the same 2.4 s freeze exists in the
+pre-presenter build at HEAD with the identical reason string, so it predates the
+opening and is not caused by it. It stays unfixed and visible.
+
+Two defects from the presenter build:
+
+- a presenter segment has to declare `"variant": "eras"`; untagged, it would
+  enter the baseline timeline and speak a line nobody wrote, so
+  `_validate_segments` refuses it;
+- the eras builder looked for every clip in `work/clips/`, which would have
+  required overwriting a baseline artefact; `_clip_path` now reads
+  `work/eras/clips/` for the eras variant only.
+
+Both are covered by tests, as is the `amix` bed offset that keeps the BGM from
+starting under an unaccompanied voice.

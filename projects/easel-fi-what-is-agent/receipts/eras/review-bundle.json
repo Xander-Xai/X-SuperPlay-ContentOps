@@ -1,11 +1,11 @@
 {
   "schema": "contentops.review-bundle/v1",
   "package_id": "easel-fi-what-is-agent",
-  "built_at": "2026-10-28T07:54:58Z",
+  "built_at": "2026-10-28T08:34:41Z",
   "inputs": {
     "captions": {
       "path": "project://assets/captions/eras.srt",
-      "sha256": "75189f3e2892b668dec8a3f0c04ed5df537a330810de3eff52c8803409fb0800"
+      "sha256": "33f127a4b3f4358868a2ec9a14b79815e1b854914bea1ce1bced5e438075b40f"
     },
     "cover": {
       "path": "project://assets/covers/cover-eras.png",
@@ -13,11 +13,11 @@
     },
     "eras_film": {
       "path": "project://work/huashu-eras.mp4",
-      "sha256": "40c35e3cc5a06b182f0fdabb057f005f8ac6e3eb62934ad5b31cfb1d7006f0a9"
+      "sha256": "ba4dd73735ef2b8ba0ef6ffc4203e4013f32923b6e27d84d1e64dfeb17cd381d"
     },
     "eras_source:eras.js": {
       "path": "project://motion/film/eras.js",
-      "sha256": "84196dcba35c7a16a02d107716e07037f372024dc744f000574e6385a89b880b"
+      "sha256": "61bf63c77924eab2e3325063b56b7f0907f3738e6c029bd408bd3acaa79135fe"
     },
     "eras_source:index.html": {
       "path": "project://motion/film/index.html",
@@ -25,15 +25,15 @@
     },
     "eras_source:render.py": {
       "path": "project://motion/film/render.py",
-      "sha256": "03cbe80f1c046ba28821d7756c93bfa10cdbd56e5fb530d8042ed68c32f300f8"
+      "sha256": "7fb4360d97a0e1bb18162ddb7376e22878262746ee5bb685b0e6fe7d3142abaf"
     },
     "qc": {
       "path": "project://receipts/qc-report-eras.json",
-      "sha256": "ecdda87f338eded79f77aa0877613960a8f57258318ffe28dd03be02a621e552"
+      "sha256": "dd1cbbb1f43c06af345b1bdac174287ff32c776092af016023c3e183ece5a448"
     },
     "sample": {
       "path": "project://receipts/eras/sample.json",
-      "sha256": "035e23160293277b3b25145cd6d9090d6cbe7cb6bdc440a426a67ff8fc32b910"
+      "sha256": "bd50e098c9cd977bb799b41bc168b0a7ca558cafa7bed138588c6c92c8b03f4e"
     },
     "spec:p01": {
       "path": "project://motion/specs/p01.json",
@@ -85,14 +85,14 @@
     },
     "video": {
       "path": "project://final/eras.mp4",
-      "sha256": "ba89ad78915e8ffcdcd461a4f5a243313124360a70bc8c5d311d1f9c8ac59913"
+      "sha256": "366ab1efa863798cb469ba715531c9dcfea724d5db1e7516b24d1205e7d358ab"
     },
     "voice": {
       "path": "project://receipts/voice-lines.json",
-      "sha256": "4fd790480dc9964a8d4dabae62ed62131373acdd3173bff64a73d47323cfbd4e"
+      "sha256": "90f507c3c2018b326ed6934b473582e333b5bccadc01c743c87d7ae56c2c6469"
     }
   },
-  "review_bundle_fingerprint": "035bc6f8d9b903bd98c322aa1b69dae284d9d0c85bf412f3287d55ea2d265641",
+  "review_bundle_fingerprint": "8ad55b4fb63c11ca0e66d56724506a61407edcffe5f6eac4c9f993ced3a75165",
   "score": null,
   "reviewer": null,
   "hard_fail": null,

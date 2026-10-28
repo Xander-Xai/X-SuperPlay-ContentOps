@@ -46,7 +46,10 @@ class RouteHandler(SimpleHTTPRequestHandler):
 
 
 def _timeline(project: Path) -> list[dict[str, object]]:
-    return json.loads((project / "motion" / "timeline.json").read_text(encoding="utf-8"))["segments"]
+    segments = json.loads((project / "motion" / "timeline.json").read_text(encoding="utf-8"))["segments"]
+    # This is the eras renderer, so a segment declared for another variant
+    # (the baseline) is not part of this film.
+    return [segment for segment in segments if segment.get("variant", "eras") == "eras"]
 
 
 def _source(project: Path, clip: str) -> Path:

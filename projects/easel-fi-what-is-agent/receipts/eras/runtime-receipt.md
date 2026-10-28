@@ -8,6 +8,6 @@
 - compose: `python scripts/build_code_animation_sample.py easel-fi-what-is-agent`
 - grade: `python scripts/qc_video.py easel-fi-what-is-agent --video easel.mp4`
 
-Measured duration: `36.3 s`.
+Measured duration: `38.9 s`.
 Verdict: technical QC is recorded separately; it never creates production approval.
 `production_ready: false`, `PENDING_FOUNDER_REVIEW`.

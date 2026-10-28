@@ -1,0 +1,19 @@
+{
+  "shot_id": "presenter-opening",
+  "purpose": "opening presenter shot: puts a face and a hook in front of the film before the first card",
+  "duration": 4,
+  "aspect_ratio": "9:16",
+  "subject": "the man shown in Picture 1, a technology explainer in a light blue open shirt over a white tee",
+  "environment": "a warm home-studio desk, bookshelf behind him, a condenser microphone at the right edge of frame",
+  "action": "looks into the lens and speaks one short sentence, then settles with a small natural nod",
+  "camera": "Static Shot",
+  "dialogue": "这条视频，只讲一个问题。",
+  "dialogue_language": "Chinese",
+  "sound": "quiet room tone, no music, no other voices",
+  "visual_style": "Live-action, natural window light, shallow depth of field",
+  "reference_assets": [
+    "Picture 1, the presenter's face and upper body",
+    "Audio 1, the narrator's voice timbre"
+  ],
+  "mode": "Ref2VA"
+}

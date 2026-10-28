@@ -2,91 +2,97 @@
   "schema": "contentops.timing-reconciliation/v1",
   "segments": [
     {
+      "id": "p00",
+      "type": "presenter",
+      "start_s": 0.0,
+      "end_s": 2.6
+    },
+    {
       "id": "p01",
       "type": "beat",
-      "start_s": 0.0,
-      "end_s": 2.37
+      "start_s": 2.6,
+      "end_s": 4.97
     },
     {
       "id": "p02",
       "type": "beat",
-      "start_s": 2.37,
-      "end_s": 5.274
+      "start_s": 4.97,
+      "end_s": 7.874
     },
     {
       "id": "p03",
       "type": "beat",
-      "start_s": 5.274,
-      "end_s": 8.283
+      "start_s": 7.874,
+      "end_s": 10.883
     },
     {
       "id": "p04",
       "type": "beat",
-      "start_s": 8.283,
-      "end_s": 10.34
+      "start_s": 10.883,
+      "end_s": 12.94
     },
     {
       "id": "p05",
       "type": "beat",
-      "start_s": 10.34,
-      "end_s": 12.884
+      "start_s": 12.94,
+      "end_s": 15.484
     },
     {
       "id": "p06",
       "type": "beat",
-      "start_s": 12.884,
-      "end_s": 15.962
+      "start_s": 15.484,
+      "end_s": 18.562
     },
     {
       "id": "p07",
       "type": "beat",
-      "start_s": 15.962,
-      "end_s": 19.156
+      "start_s": 18.562,
+      "end_s": 21.756
     },
     {
       "id": "p08",
       "type": "beat",
-      "start_s": 19.156,
-      "end_s": 22.385
+      "start_s": 21.756,
+      "end_s": 24.985
     },
     {
       "id": "insert-video",
       "type": "insert",
-      "start_s": 22.385,
-      "end_s": 24.885
+      "start_s": 24.985,
+      "end_s": 27.485
     },
     {
       "id": "p09",
       "type": "beat",
-      "start_s": 24.885,
-      "end_s": 27.824
+      "start_s": 27.485,
+      "end_s": 30.424
     },
     {
       "id": "p10",
       "type": "beat",
-      "start_s": 27.824,
-      "end_s": 30.02
+      "start_s": 30.424,
+      "end_s": 32.62
     },
     {
       "id": "p11",
       "type": "beat",
-      "start_s": 30.02,
-      "end_s": 33.284
+      "start_s": 32.62,
+      "end_s": 35.884
     },
     {
       "id": "p12",
       "type": "beat",
-      "start_s": 33.284,
-      "end_s": 36.293
+      "start_s": 35.884,
+      "end_s": 38.893
     }
   ],
-  "film_seconds": 36.293,
-  "voice_seconds": 29.593,
-  "tail_seconds": 4.2,
+  "film_seconds": 38.893,
+  "voice_seconds": 31.503,
+  "tail_seconds": 4.89,
   "silent_bridge_seconds": 2.5,
-  "arithmetic": "29.593 + 4.200 + 2.500",
-  "srt_last_cue_end_s": 35.943,
-  "output_duration_s": 36.3,
+  "arithmetic": "31.503 + 4.890 + 2.500",
+  "srt_last_cue_end_s": 38.543,
+  "output_duration_s": 38.9,
   "checks": {
     "voice_plus_tails_plus_bridge_equals_film": true,
     "output_matches_film": true,

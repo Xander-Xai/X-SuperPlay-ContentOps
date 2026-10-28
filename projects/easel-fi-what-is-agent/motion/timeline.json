@@ -1,6 +1,7 @@
 {
   "schema": "contentops.timeline/v1",
   "segments": [
+    {"type": "presenter", "clip": "p00", "line": 0, "duration": 2.6, "variant": "eras", "note": "AI digital-human opening; eras-only, so the baseline film never speaks it"},
     {"type": "beat", "clip": "p01", "line": 1, "duration": 2.37},
     {"type": "beat", "clip": "p02", "line": 2, "duration": 2.904},
     {"type": "beat", "clip": "p03", "line": 3, "duration": 3.009},

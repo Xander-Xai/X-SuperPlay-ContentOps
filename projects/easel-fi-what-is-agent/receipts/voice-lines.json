@@ -17,5 +17,19 @@
     {"line": 11, "text": "不是所有任务都值得做成 Agent。", "path": "project://assets/voice/narration-7c618ec3cf840fb6.wav", "duration_s": 2.914},
     {"line": 12, "text": "先把边界写清楚，再谈自动化。", "path": "project://assets/voice/narration-6aaa7097ffad2e43.wav", "duration_s": 2.659}
   ],
+  "presenter": {
+    "text": "这条视频，只讲一个问题。",
+    "path": "project://assets/voice/presenter-opening-9cb09c9e.wav",
+    "wav_sha256": "bfa25b9aead87e8b9387d186b03e766877c47eb2a7a911f4c645e9b4e9fecef6",
+    "duration_s": 1.91,
+    "clip": "p00",
+    "voice": "minimax_h3_ref2va",
+    "dialogue_language": "Chinese",
+    "shot": "project://work/generated/shot-b666f8c64dc7a901.mp4",
+    "shot_sha256": "9cb09c9e9e2eb470fe5e794841acd5248052f6e9d8d9873fb0c54a10b0c7f9ed",
+    "shot_receipt": "project://work/generated/shot-b666f8c64dc7a901.mp4.receipt.json",
+    "speech_text_verified": false,
+    "note": "spoken by the H3 model from a 4 s Ref2VA shot, not by speech-2.8-hd; the exact words need founder confirmation on playback"
+  },
   "total_s": 29.593
 }

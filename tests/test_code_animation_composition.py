@@ -42,6 +42,59 @@ def test_runtime_receipt_uses_the_measured_film_duration():
     assert "20 s below" not in receipt, receipt
 
 
+def _builder():
+    import importlib.util
+
+    path = ROOT / "scripts" / "build_code_animation_sample.py"
+    spec = importlib.util.spec_from_file_location("build_code_animation_presenter", path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+PRESENTER = {"text": "这条视频，只讲一个问题。",
+             "path": "project://assets/voice/presenter-opening.wav",
+             "duration_s": 1.91, "voice": "minimax_h3_ref2va"}
+VOICE_DOC = {"lines": [{"line": 1, "text": "一", "path": "project://a.wav",
+                        "duration_s": 2.0}]}
+
+
+def test_presenter_belongs_only_to_the_eras_variant():
+    """The baseline keeps its twelve-line manifest; the opening is eras-only."""
+    builder = _builder()
+    assert sorted(builder._voice_lines(VOICE_DOC, "easel")) == [1]
+    eras = builder._voice_lines({**VOICE_DOC, "presenter": PRESENTER}, "eras")
+    assert sorted(eras) == [0, 1]
+    assert eras[0]["line"] == 0, eras[0]
+    assert eras[0]["duration_s"] == 1.91, eras[0]
+
+
+def test_a_presenter_segment_must_declare_its_variant():
+    """Untagged, it would enter the baseline timeline and speak a line nobody wrote."""
+    builder = _builder()
+    segments = [{"type": "presenter", "clip": "p00", "line": 0, "duration": 2.6}]
+    try:
+        builder._validate_segments(segments, 1)
+    except SystemExit as exc:
+        assert "variant" in str(exc), str(exc)
+    else:
+        raise AssertionError("an untagged presenter segment must be refused")
+
+
+def test_the_baseline_timeline_does_not_carry_the_presenter():
+    builder = _builder()
+    project = ROOT / "projects" / "easel-fi-what-is-agent"
+    eras = builder._timeline(project, 12, "eras")
+    baseline = builder._timeline(project, 12, "easel")
+    assert (eras[0]["type"], eras[0]["clip"]) == ("presenter", "p00"), eras[0]
+    assert all(segment["type"] != "presenter" for segment in baseline), baseline
+    assert [segment["clip"] for segment in baseline] == (
+        [f"p{index:02d}" for index in range(1, 9)] + ["insert-video"]
+        + [f"p{index:02d}" for index in range(9, 13)]
+    ), baseline
+
+
 def test_eras_durations_match_the_canonical_voice_timeline():
     import json
     import re
@@ -52,7 +105,10 @@ def test_eras_durations_match_the_canonical_voice_timeline():
     actual = [(clip, float(duration)) for clip, duration in re.findall(
         r'id: "([^"]+)", dur: ([0-9.]+)', eras
     )]
-    expected = [(segment["clip"], float(segment["duration"])) for segment in timeline]
+    # eras.js is the eras film: a shared segment belongs to it, an eras-only one
+    # is laid in front of the shared timeline.
+    expected = [(segment["clip"], float(segment["duration"])) for segment in timeline
+                if segment.get("variant", "eras") == "eras"]
     assert actual == expected, (actual, expected)
 
 
@@ -214,11 +270,52 @@ def test_timing_reconciliation_proves_the_film_arithmetic():
     assert all(result["checks"].values()), result["checks"]
 
 
+def test_reconciliation_counts_the_presenter_as_voice_not_as_a_tail():
+    """The opening speaks; its silence-free 2.6 s window is voice plus tail."""
+    builder = _builder()
+    segments = [
+        {"type": "presenter", "clip": "p00", "line": 0, "duration": 2.6},
+        {"type": "beat", "clip": "p01", "line": 1, "duration": 2.37},
+        {"type": "insert", "clip": "insert-video", "duration": 2.5},
+    ]
+    lines = {0: {"duration_s": 1.91}, 1: {"duration_s": 2.02}}
+    placed = [{"line": 0, "start_s": 0.0, "duration_s": 1.91},
+              {"line": 1, "start_s": 2.6, "duration_s": 2.02}]
+    result = builder._reconciliation(segments, placed, lines, 4.62, 7.47)
+    assert result["voice_seconds"] == 3.93, result["voice_seconds"]
+    assert result["tail_seconds"] == 1.04, result["tail_seconds"]
+    assert result["silent_bridge_seconds"] == 2.5, result["silent_bridge_seconds"]
+    assert all(result["checks"].values()), result["checks"]
+
+
+def test_the_build_reads_an_eras_only_clip_from_its_own_directory():
+    """The presenter lives in work/eras/clips; the baseline clip is never replaced."""
+    import tempfile
+
+    builder = _builder()
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        baseline = project / "work" / "clips" / "p01.mp4"
+        override = project / "work" / "eras" / "clips" / "p00.mp4"
+        baseline.parent.mkdir(parents=True)
+        baseline.write_bytes(b"baseline")
+        assert builder._clip_path(project, "p01", "eras") == baseline
+        assert builder._clip_path(project, "p00", "eras").is_file() is False
+        override.parent.mkdir(parents=True)
+        override.write_bytes(b"presenter")
+        assert builder._clip_path(project, "p00", "eras") == override
+        # The baseline variant never reaches into the eras directory.
+        assert builder._clip_path(project, "p00", "easel") == project / "work" / "clips" / "p00.mp4"
+
+
 def main() -> int:
     tests = (
         test_full_film_is_the_only_visual_shot,
         test_beat_clips_remain_the_explicit_fallback,
         test_runtime_receipt_uses_the_measured_film_duration,
+        test_presenter_belongs_only_to_the_eras_variant,
+        test_a_presenter_segment_must_declare_its_variant,
+        test_the_baseline_timeline_does_not_carry_the_presenter,
         test_eras_durations_match_the_canonical_voice_timeline,
         test_eras_adapter_pads_a_short_source_with_its_final_frame,
         test_every_clip_era_declares_its_drawer,
@@ -229,6 +326,8 @@ def main() -> int:
         test_variant_qc_grades_its_own_captions_and_storyboard,
         test_packaging_keeps_variant_receipts_out_of_the_baseline,
         test_timing_reconciliation_proves_the_film_arithmetic,
+        test_reconciliation_counts_the_presenter_as_voice_not_as_a_tail,
+        test_the_build_reads_an_eras_only_clip_from_its_own_directory,
     )
     failures = []
     for test in tests:

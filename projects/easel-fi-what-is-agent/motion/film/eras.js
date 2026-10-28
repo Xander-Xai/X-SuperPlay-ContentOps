@@ -6,7 +6,8 @@ const CLIP_ONLY = () => {};
 window.FILM_SIZE = [1080, 1920];
 window.PUNCH = 0;
 window.ERAS = [
-  { id: "p01", dur: 2.37, draw: CLIP_ONLY, clip: { dir: "/project/work/film-frames/p01", fps: 30, n: 71 } },
+  { id: "p00", dur: 2.6, draw: CLIP_ONLY, clip: { dir: "/project/work/film-frames/p00", fps: 30, n: 78 } },
+  { id: "p01", dur: 2.37, draw: CLIP_ONLY, transition: { type: "fadeShift", dur: 0.26 }, clip: { dir: "/project/work/film-frames/p01", fps: 30, n: 71 } },
   { id: "p02", dur: 2.904, draw: CLIP_ONLY, transition: { type: "push", dur: 0.30 }, clip: { dir: "/project/work/film-frames/p02", fps: 30, n: 87 } },
   { id: "p03", dur: 3.009, draw: CLIP_ONLY, transition: { type: "matchCut", dur: 0.24 }, clip: { dir: "/project/work/film-frames/p03", fps: 30, n: 90 } },
   { id: "p04", dur: 2.057, draw: CLIP_ONLY, transition: { type: "blurPush", dur: 0.24 }, clip: { dir: "/project/work/film-frames/p04", fps: 30, n: 62 } },

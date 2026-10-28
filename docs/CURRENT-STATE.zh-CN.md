@@ -696,17 +696,36 @@ Build 组的动画层是一个外部 skill，不是自研引擎。`huashu-art-mo
 | 属性 | 值 |
 |---|---|
 | 项目 | `projects/easel-fi-what-is-agent` — Build 账号，1080×1920 |
-| 视觉轨 | 一次 ERAS 渲染 `project://work/huashu-eras.mp4` — 36.300 s、30 fps、1089 帧、h264 |
-| 时长构成 | 29.593 s 语音 + 12 × 0.35 s 尾音 + 2.5 s 静音桥段 = **36.293 s** |
+| 视觉轨 | 一次 ERAS 渲染 `project://work/huashu-eras.mp4` — 38.900 s、30 fps、1167 帧、h264 |
+| 时长构成 | 31.503 s 语音（29.593 s 讲解 + 1.910 s 开场）+ 4.890 s 尾音 + 2.5 s 静音桥段 = **38.893 s** |
 | 转场 | `push` / `matchCut` / `blurPush` / `fadeShift` 只挂在进入段；无 `xfade`、无 clip 拼接 |
 | 适配器 | `motion/film/render.py` — 只读挂载外部引擎 `/engine/` 与项目 `/project/`；未修改上游 |
 | 片子配置 | `motion/film/eras.js`（clip 帧 ERAS + 显式空 drawer）、`motion/film/index.html` |
-| 配音 | 克隆音 `founder_primary_v1`，1.20×，12 句，全部 `SAFE_INCLUDED_PLAN`，技术 QC 通过 |
+| 配音 | 克隆音 `founder_primary_v1`，1.20×，12 句，全部 `SAFE_INCLUDED_PLAN`，技术 QC 通过；开场来自 MiniMax H3 Ref2VA，不属这支克隆音 |
 | 架构图 | p02 使用重绘后的 `motion/specs/diagram-workflow-vs-agent.png`（Anthropic 一手定义），卡片审计 PASS |
-| 输出 | `project://final/eras.mp4` — 36.3 s、1080×1920、h264/aac |
+| 输出 | `project://final/eras.mp4` — 38.9 s、1080×1920、h264/aac |
 | 收据 | `receipts/eras/` 下的 sample、timing-reconciliation、review-bundle、human-review、cover、runtime-receipt，以及 `receipts/qc-report-eras.{json,md}` |
-| 生成物占比 | 2.5 / 36.293 = **6.89 %**，低于 10 % 上限；桥段静音且无断言 |
+| 生成物占比 | 桥段 2.5 / 38.893 = **6.43 %**；AI 数字人 2.6 s = **6.69 %**，在 `generated_media.ai_presenter` 中单独声明；合计 13.11 %，10 % 上限只约束无断言桥段 |
 | QC | `qc_video` **WARN** — 与基线同类（纯动画、无真实素材）；分辨率、比例、时长、编码、音频、字幕烧录与响度通过 |
+| 状态 | `production_ready: false`、`PENDING_FOUNDER_REVIEW` |
+
+### 数字人开场（仅 eras 变体）— 2026-10-28
+
+eras 成片以一张脸开场。一条 MiniMax H3 `Ref2VA` 镜头（请求 4 s；参考图 = 数字人本人，
+参考音 = 本片克隆的第一句）说出钩子 `这条视频，只讲一个问题。` 并收住。片中其它一切未动：
+十二句配音清单、`final/easel.mp4`、`receipts/sample.json`、`assets/captions/default.srt`
+均未重建，基线时间线会被过滤，因此永远看不到这段开场。
+
+| 属性 | 值 |
+|---|---|
+| 镜头 | `project://work/generated/shot-b666f8c64dc7a901.mp4` — 768×1344、24 fps、4.458 s、`KEEP` 音频、`sha256 9cb09c9e…` |
+| 落位 | `work/eras/clips/p00.mp4` — 裁切 756×1344 → 1080×1920、30 fps、2.6 s、静音；该段位于最前，`p01` 获得进入式 `fadeShift` |
+| 人声 | 从镜头本身重切：1.910 s、32 kHz 单声道、−3 dB，使其与 `speech-2.8-hd` 的 −18.2 dB 均值对齐 |
+| 时间线 | `motion/timeline.json` 中的该段带 `"variant": "eras"`；构建器与适配器都按变体过滤 |
+| 台账 | `receipts/generated-media.json` 的 `presenter`，以及 `eras.{insert_ratio,presenter_ratio,ai_generated_total_ratio}` |
+| BGM | 铺底整体后移 2.6 s，开场保持干声，铺底仍在 38.893 s 收尾 |
+| 成本 | 每周 H3 配额 7 pp（81 % → 74 %），一次 create |
+| 披露 | `labelled_ai_synthesised: true`、`speech_text_verified: false` —— 本机无 ASR，必须由创始人听一遍确认台词 |
 | 状态 | `production_ready: false`、`PENDING_FOUNDER_REVIEW` |
 
 本次构建暴露的三个缺陷被记录而非抹平：
@@ -715,4 +734,11 @@ Build 组的动画层是一个外部 skill，不是自研引擎。`huashu-art-mo
 - p03 源片长 2.900 s，而窗口 3.009 s，适配器只允许用末帧补齐**连续尾部**，中间缺帧仍然失败；
 - 引擎在加载时绑定 `#scrub`/`#tt`/`#play`，并按相对路径声明 `lib/fonts/*.woff`，因此项目页面需要这些控件和 `<base href="/engine/">`，两者都有测试覆盖。
 
-变体的 `freeze_s` 为 2.4 s，基线为 0.6 s。对桥段做 PSNR 比对（t=23.0 与 t=24.2，y = 21.8 dB）说明桥段并非静止帧，因此该数字按实测报告，不做解释性掩盖。
+变体的 `freeze_s` 为 2.4 s，基线为 0.6 s。对桥段做 PSNR 比对（t=23.0 与 t=24.2，y = 21.8 dB）说明桥段并非静止帧，因此该数字按实测报告，不做解释性掩盖。加入数字人开场后，又用 5 fps 帧差把冻结定位到 **5.2–7.8 s**，即 p02 架构图卡片；HEAD 上未含开场的旧构建存在同样的 2.4 s 冻结与同样的 reason 字符串，因此它早于本次开场存在，不是开场造成的。该缺陷保持未修、可见。
+
+数字人构建中的两个缺陷：
+
+- presenter 段必须声明 `"variant": "eras"`；不声明就会进入基线时间线、说出没人写过的台词，因此 `_validate_segments` 直接拒绝；
+- eras 构建器最初到 `work/clips/` 找所有片段，这会要求覆盖基线产物；现在 `_clip_path` 只在 eras 变体下读取 `work/eras/clips/`。
+
+两者都有测试覆盖，BGM 铺底的 `amix` 延迟同样有测试——它保证铺底不会压在清唱人声下面开始。
