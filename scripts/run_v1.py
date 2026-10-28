@@ -260,7 +260,25 @@ def resolve_production_runtime() -> dict:
     return resolve_easel(live=False)
 
 
-def run_easel(project: Path) -> dict:
+def pre_render_gate(project: Path) -> list:
+    """Refuse a gated project whose script artefacts already fail.
+
+    The gate lives in check_script_quality.py and is also wired into
+    dev_check/CI, but a commit-time check can be skipped by rendering straight
+    from a working tree. Running it here means a project that declares
+    ``quality_gate: enforced`` cannot be composed at all until its script,
+    storyboard, caption file and table agree.
+
+    Legacy projects declare no gate and keep rendering exactly as before.
+    """
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from check_script_quality import check_project, is_gated
+    if not is_gated(project):
+        return []
+    return check_project(project)["failures"]
+
+
+def run_easel(project: Path, reuse_voice: bool = False) -> dict:
     """Production path: Easel TTS + upstream assemble.py."""
     shots = parse_script_shots(project)
     if not shots:
@@ -270,6 +288,13 @@ def run_easel(project: Path) -> dict:
     if not script_exists(project):
         return {"status": "BLOCKED", "engine": "easel",
                 "reason": "script/master.md missing — production requires a project-authored script"}
+    findings = pre_render_gate(project)
+    if findings:
+        return {"status": "BLOCKED", "engine": "easel",
+                "reason": "pre-render script gate failed: " + "; ".join(
+                    f"{item['rule']}: {item['detail']}" for item in findings),
+                "remedy": "python scripts/check_script_quality.py --project "
+                          + project.name}
     runtime = resolve_production_runtime()
     if runtime["status"] != "OK":
         return {"status": "BLOCKED", "engine": "easel",
@@ -279,32 +304,55 @@ def run_easel(project: Path) -> dict:
     easel_dir = Path(runtime["easel_dir"])
 
     script_dir = project / "script"
-    narration_txt = script_dir / "narration.txt"
-    narration_txt.write_text(
-        "\n".join(s.get("narration", "") for s in shots) + "\n", encoding="utf-8")
-
-    # Per-shot narration timing comes from one continuous read, so cue times
-    # land on the voice track instead of drifting per shot.
-    narration_mp3 = project / "assets" / "voice_easel" / "narration.mp3"
-    narration_srt = project / "assets" / "captions" / "easel.srt"
-    narration_mp3.parent.mkdir(parents=True, exist_ok=True)
-    narration_srt.parent.mkdir(parents=True, exist_ok=True)
-    tts_script = easel_dir / "skills" / "shared" / "scripts" / "tts.py"
-    env = dict(os.environ, PYTHONUTF8="1", PYTHONIOENCODING="utf-8")
-    r = hidden_run(
-        [python_executable(), str(tts_script), "speak", "-f", str(narration_txt),
-         "-o", str(narration_mp3), "-v", "zh-CN-YunxiNeural",
-         "--engine", "edge", "--subtitle", str(narration_srt)],
-        env=env, timeout=600, cwd=str(easel_dir),
-    )
-    if r.returncode != 0 or not narration_mp3.exists():
-        return {"status": "BLOCKED", "engine": "easel", "stage": "tts",
-                "reason": ((r.stdout or "") + (r.stderr or ""))[-600:]}
-
     sb = json.loads((script_dir / "storyboard.json").read_text(encoding="utf-8"))
+
+    if reuse_voice:
+        # A project-authored narration and caption are inputs, not something to
+        # re-synthesise. edge-tts needs Microsoft's online service and fails with
+        # 403 on a host without a proxy, while the recorded narration and the
+        # script's caption file already describe the same read.
+        captions = sorted(script_dir.glob("*.srt"))
+        if len(captions) != 1:
+            return {"status": "BLOCKED", "engine": "easel", "stage": "reuse_voice",
+                    "reason": f"reuse-voice needs exactly one caption in script/, found {len(captions)}"}
+        caption_path = captions[0]
+        narration_rel = str(sb.get("narration") or "")
+        narration_path = ROOT / narration_rel if narration_rel else None
+        if narration_path is None or not narration_path.is_file():
+            return {"status": "BLOCKED", "engine": "easel", "stage": "reuse_voice",
+                    "reason": "reuse-voice needs storyboard.narration to name an existing file",
+                    "value": narration_rel or None}
+        voice_provider = f"reused {narration_path.relative_to(ROOT).as_posix()}"
+        voice_quality = "project_authored"
+    else:
+        narration_txt = script_dir / "narration.txt"
+        narration_txt.write_text(
+            "\n".join(s.get("narration", "") for s in shots) + "\n", encoding="utf-8")
+
+        # Per-shot narration timing comes from one continuous read, so cue times
+        # land on the voice track instead of drifting per shot.
+        narration_mp3 = project / "assets" / "voice_easel" / "narration.mp3"
+        narration_srt = project / "assets" / "captions" / "easel.srt"
+        narration_mp3.parent.mkdir(parents=True, exist_ok=True)
+        narration_srt.parent.mkdir(parents=True, exist_ok=True)
+        tts_script = easel_dir / "skills" / "shared" / "scripts" / "tts.py"
+        env = dict(os.environ, PYTHONUTF8="1", PYTHONIOENCODING="utf-8")
+        r = hidden_run(
+            [python_executable(), str(tts_script), "speak", "-f", str(narration_txt),
+             "-o", str(narration_mp3), "-v", "zh-CN-YunxiNeural",
+             "--engine", "edge", "--subtitle", str(narration_srt)],
+            env=env, timeout=600, cwd=str(easel_dir),
+        )
+        if r.returncode != 0 or not narration_mp3.exists():
+            return {"status": "BLOCKED", "engine": "easel", "stage": "tts",
+                    "reason": ((r.stdout or "") + (r.stderr or ""))[-600:]}
+        narration_path, caption_path = narration_mp3, narration_srt
+        voice_provider = "easel/tts-voiceover (edge-tts, zh-CN-YunxiNeural)"
+        voice_quality = "edge_tts_fallback"
+
     # Store project-relative paths so the committed storyboard stays portable.
-    sb["narration"] = narration_mp3.relative_to(ROOT).as_posix()
-    sb["subtitle"] = narration_srt.relative_to(ROOT).as_posix()
+    sb["narration"] = narration_path.relative_to(ROOT).as_posix()
+    sb["subtitle"] = caption_path.relative_to(ROOT).as_posix()
     sb.setdefault("engine", "easel")
     sb["runtime"] = {
         "repo": "ZJU-REAL/Easel",
@@ -314,14 +362,14 @@ def run_easel(project: Path) -> dict:
         "verification": runtime.get("verification"),
     }
     (script_dir / "storyboard.json").write_text(
-        json.dumps(sb, ensure_ascii=False, indent=2), encoding="utf-8")
+        json.dumps(sb, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from assemble_easel import run as assemble_run  # noqa: E402
     res = assemble_run(project, out_name="easel")
     res["engine"] = "easel"
-    res["voice_provider"] = "easel/tts-voiceover (edge-tts, zh-CN-YunxiNeural)"
-    res["voice_quality"] = "edge_tts_fallback"  # upstream's no-key engine; human review decides
+    res["voice_provider"] = voice_provider
+    res["voice_quality"] = voice_quality
     res["production_quality_warning"] = True
     res["production_ready"] = False             # §11: never auto-claim PRODUCTION_READY
     res["state"] = "READY_FOR_HUMAN_REVIEW"
@@ -336,7 +384,8 @@ def run_easel(project: Path) -> dict:
     return res
 
 
-def run(project: Path, voice_provider: str = "", engine: str = "easel") -> dict:
+def run(project: Path, voice_provider: str = "", engine: str = "easel",
+        reuse_voice: bool = False) -> dict:
     project = project.resolve()
     project_yaml = project / "project.yaml"
     if not project_yaml.exists():
@@ -356,7 +405,7 @@ def run(project: Path, voice_provider: str = "", engine: str = "easel") -> dict:
                            + str(contract.get("variant", "eras")))}
 
     if engine == "easel":
-        return run_easel(project)
+        return run_easel(project, reuse_voice=reuse_voice)
 
     cfg = parse_yaml(project_yaml)
     work = project / "work"
@@ -531,13 +580,17 @@ def main() -> int:
     p.add_argument("--engine", choices=("easel", "fallback"), default="easel",
                    help="easel = production (default); fallback = diagnostic ffmpeg-only render")
     p.add_argument("--voice-provider", default="")
+    p.add_argument("--reuse-voice", action="store_true",
+                   help="build from the storyboard's recorded narration and the "
+                        "project's script/*.srt instead of re-synthesising with edge-tts")
     args = p.parse_args()
 
     project = Path(args.project)
     if not project.is_absolute():
         project = (ROOT / args.project).resolve()
 
-    result = run(project, voice_provider=args.voice_provider, engine=args.engine)
+    result = run(project, voice_provider=args.voice_provider, engine=args.engine,
+                 reuse_voice=args.reuse_voice)
     try:
         receipt = write_build_receipt(project, result)
         result = {"build_receipt": str(receipt), **result}

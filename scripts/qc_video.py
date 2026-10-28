@@ -180,9 +180,15 @@ def _subtitles_burned(video: Path, sb: dict) -> dict:
 
 
 def _graded_inputs(project: Path, target_name: str) -> tuple:
-    """A variant render is graded against its own captions and storyboard."""
+    """A variant render is graded against its own captions and storyboard.
+
+    The easel engine writes and burns ``assets/captions/easel.srt``. Grading it
+    against ``default.srt`` — a legacy demo asset the production path never
+    writes — reported "no captions" for a film that had them burned in, so the
+    target's own captions win and ``default.srt`` is only a fallback.
+    """
     srt = project / "assets" / "captions" / f"{target_name}.srt"
-    if target_name == "easel" or not srt.is_file():
+    if not srt.is_file():
         srt = project / "assets" / "captions" / "default.srt"
     storyboard = project / "work" / target_name / "storyboard.json"
     if target_name == "easel" or not storyboard.is_file():
