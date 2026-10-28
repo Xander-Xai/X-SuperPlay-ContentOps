@@ -688,3 +688,31 @@ Build 组的动画层是一个外部 skill，不是自研引擎。`huashu-art-mo
 另生成的一张静帧因为读起来像黑帧，已从时间线移除。两个决定与配额变化记录在
 `receipts/generated-media.json`。收据绑定 spec、片段与输出 SHA；
 `receipts/qc-summary.json` 也把 QC 结论绑定到输出 SHA。
+
+## ERAS 整片变体（Issue #34）— 2026-10-28
+
+讲解片新增一支平行成片：**由一条 Huashu ERAS 时间线负责所有转场**，不再把十二段单独渲染的 clip 硬拼。基线 `final/easel.mp4` 与其收据未被改动；变体构建后重新计算四个基线文件的哈希，全部字节一致。
+
+| 属性 | 值 |
+|---|---|
+| 项目 | `projects/easel-fi-what-is-agent` — Build 账号，1080×1920 |
+| 视觉轨 | 一次 ERAS 渲染 `project://work/huashu-eras.mp4` — 36.300 s、30 fps、1089 帧、h264 |
+| 时长构成 | 29.593 s 语音 + 12 × 0.35 s 尾音 + 2.5 s 静音桥段 = **36.293 s** |
+| 转场 | `push` / `matchCut` / `blurPush` / `fadeShift` 只挂在进入段；无 `xfade`、无 clip 拼接 |
+| 适配器 | `motion/film/render.py` — 只读挂载外部引擎 `/engine/` 与项目 `/project/`；未修改上游 |
+| 片子配置 | `motion/film/eras.js`（clip 帧 ERAS + 显式空 drawer）、`motion/film/index.html` |
+| 配音 | 克隆音 `founder_primary_v1`，1.20×，12 句，全部 `SAFE_INCLUDED_PLAN`，技术 QC 通过 |
+| 架构图 | p02 使用重绘后的 `motion/specs/diagram-workflow-vs-agent.png`（Anthropic 一手定义），卡片审计 PASS |
+| 输出 | `project://final/eras.mp4` — 36.3 s、1080×1920、h264/aac |
+| 收据 | `receipts/eras/` 下的 sample、timing-reconciliation、review-bundle、human-review、cover、runtime-receipt，以及 `receipts/qc-report-eras.{json,md}` |
+| 生成物占比 | 2.5 / 36.293 = **6.89 %**，低于 10 % 上限；桥段静音且无断言 |
+| QC | `qc_video` **WARN** — 与基线同类（纯动画、无真实素材）；分辨率、比例、时长、编码、音频、字幕烧录与响度通过 |
+| 状态 | `production_ready: false`、`PENDING_FOUNDER_REVIEW` |
+
+本次构建暴露的三个缺陷被记录而非抹平：
+
+- ERAS 表最初沿用旧的 43.5 s 节奏；新增回归测试把每一段时长绑定到 `motion/timeline.json`；
+- p03 源片长 2.900 s，而窗口 3.009 s，适配器只允许用末帧补齐**连续尾部**，中间缺帧仍然失败；
+- 引擎在加载时绑定 `#scrub`/`#tt`/`#play`，并按相对路径声明 `lib/fonts/*.woff`，因此项目页面需要这些控件和 `<base href="/engine/">`，两者都有测试覆盖。
+
+变体的 `freeze_s` 为 2.4 s，基线为 0.6 s。对桥段做 PSNR 比对（t=23.0 与 t=24.2，y = 21.8 dB）说明桥段并非静止帧，因此该数字按实测报告，不做解释性掩盖。

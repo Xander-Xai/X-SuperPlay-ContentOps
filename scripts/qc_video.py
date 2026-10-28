@@ -179,6 +179,17 @@ def _subtitles_burned(video: Path, sb: dict) -> dict:
             "note": f"max bright-pixel ratio across {samples} samples = {best:.5f}"}
 
 
+def _graded_inputs(project: Path, target_name: str) -> tuple:
+    """A variant render is graded against its own captions and storyboard."""
+    srt = project / "assets" / "captions" / f"{target_name}.srt"
+    if target_name == "easel" or not srt.is_file():
+        srt = project / "assets" / "captions" / "default.srt"
+    storyboard = project / "work" / target_name / "storyboard.json"
+    if target_name == "easel" or not storyboard.is_file():
+        storyboard = project / "script" / "storyboard.json"
+    return srt, storyboard
+
+
 def qc(project: Path, target: str = "") -> dict:
     project = project.resolve()
     # --video selects which render to grade: "easel", "fallback" or an explicit
@@ -294,7 +305,7 @@ def qc(project: Path, target: str = "") -> dict:
         "value_count": len(source_refs) if isinstance(source_refs, list) else 0,
     })
 
-    srt = project / "assets" / "captions" / "default.srt"
+    srt, storyboard = _graded_inputs(project, target_name)
     checks.append({
         "id": "caption_srt_present", "ok": srt.exists(),
         "severity": "WARN" if not srt.exists() else "PASS",
@@ -309,7 +320,6 @@ def qc(project: Path, target: str = "") -> dict:
         "path": str(script_md),
     })
 
-    storyboard = project / "script" / "storyboard.json"
     sb = {}
     if storyboard.exists():
         try:

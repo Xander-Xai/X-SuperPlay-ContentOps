@@ -44,6 +44,16 @@ def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _card_python() -> str:
+    """Interpreter for the shared card renderer.
+
+    The renderer needs a Playwright build whose Chromium revision is present on
+    this machine; the project venv's Playwright may expect one that is not.
+    ``CONTENTOPS_CARD_PYTHON`` points the renderer at a matching interpreter.
+    """
+    return os.environ.get("CONTENTOPS_CARD_PYTHON") or python_executable()
+
+
 def _run(command: List[str], cwd: Path) -> str:
     env = dict(os.environ, PYTHONUTF8="1", PYTHONIOENCODING="utf-8")
     result = hidden_run(command, cwd=str(cwd), timeout=300, env=env)
@@ -53,15 +63,25 @@ def _run(command: List[str], cwd: Path) -> str:
     return text
 
 
-def render_cover(project: Path) -> Dict[str, Any]:
+def _variant_io(variant: str) -> Dict[str, Path]:
+    """Variant outputs stay in their own namespace; the baseline keeps its files."""
+    if variant == "eras":
+        return {"sample": Path("receipts/eras/sample.json"), "receipts": Path("receipts/eras"),
+                "cover_png": Path("assets/covers/cover-eras.png")}
+    return {"sample": Path("receipts/sample.json"), "receipts": Path("receipts"),
+            "cover_png": Path("assets/covers/cover.png")}
+
+
+def render_cover(project: Path, png_rel: Path = Path("assets/covers/cover.png"),
+                 receipts: Path = Path("receipts")) -> Dict[str, Any]:
     html = project / "assets" / "covers" / "cover.html"
-    png = project / "assets" / "covers" / "cover.png"
+    png = project / png_rel
     if not html.is_file():
         return {}
-    _run([python_executable(), str(RENDER_CARD), "--html", str(html),
+    _run([_card_python(), str(RENDER_CARD), "--html", str(html),
           "--out", str(png), "--full-page", "--scale", "1",
           "--width", "1080", "--height", "1440"], ROOT / ".runtime" / "easel")
-    audit = _run([python_executable(), str(CARD_AUDIT), "audit", "-f", str(png)],
+    audit = _run([_card_python(), str(CARD_AUDIT), "audit", "-f", str(png)],
                  ROOT / ".runtime" / "easel")
     passed = "✅" in audit or "PASS" in audit
     receipt = {
@@ -70,16 +90,41 @@ def render_cover(project: Path) -> Dict[str, Any]:
         "width": 1080,
         "height": 1440,
         "html": {"path": "project://assets/covers/cover.html", "sha256": _sha(html)},
-        "png": {"path": "project://assets/covers/cover.png", "sha256": _sha(png)},
+        "png": {"path": f"project://{png_rel.as_posix()}", "sha256": _sha(png)},
         "audit": audit.strip(),
         "audit_passed": passed,
         "built_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
-    (project / "receipts" / "cover.json").write_text(
+    (project / receipts / "cover.json").write_text(
         json.dumps(receipt, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     if not passed:
         raise SystemExit(f"cover audit failed:\n{audit.strip()}")
     return receipt
+
+
+def _runtime_receipt(package_id: str, sample: Dict[str, Any]) -> str:
+    duration = float(sample["timeline"]["total_s"])
+    visual = sample.get("visual_track", {})
+    visual_line = (
+        "- visual track: huashu eras full-film render, " + visual["path"]
+        if visual.get("mode") == "full_film_eras"
+        else "- visual track: measured beat clips assembled by ContentOps"
+    )
+    return "\n".join([
+        "# Runtime receipt — " + package_id,
+        "",
+        "- engine: huashu-art-motion (MIT), `scripts/engine/render.py`, upstream `8a0d7d7`",
+        "- interpreter: host Python; Playwright Chromium `D:\\DevCaches\\ms-playwright\\chromium-1223`",
+        "- env: `PYTHONUTF8=1`; browser launch falls back bundled → Chrome → Edge",
+        "- render: `render.py --spec motion/specs/p0N.json --out work/clips/p0N.mp4`",
+        visual_line,
+        "- compose: `python scripts/build_code_animation_sample.py " + package_id + "`",
+        "- grade: `python scripts/qc_video.py " + package_id + " --video easel.mp4`",
+        "",
+        f"Measured duration: `{duration:.1f} s`.",
+        "Verdict: technical QC is recorded separately; it never creates production approval.",
+        "`production_ready: false`, `PENDING_FOUNDER_REVIEW`.",
+    ]) + "\n"
 
 
 def main() -> int:
@@ -87,27 +132,39 @@ def main() -> int:
         sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser()
     parser.add_argument("project")
+    parser.add_argument("--variant", choices=("easel", "eras"), default="easel")
     args = parser.parse_args()
     project = Path(args.project)
     if not project.is_absolute():
         project = ROOT / project
     project = project.resolve()
+    io = _variant_io(args.variant)
 
-    sample = json.loads((project / "receipts" / "sample.json").read_text(encoding="utf-8"))
+    sample_path = project / io["sample"]
+    sample = json.loads(sample_path.read_text(encoding="utf-8"))
     video = project / sample["output"]["path"].replace("project://", "")
     if _sha(video) != sample["output"]["sha256"]:
         raise SystemExit("final video changed after its sample receipt; re-run the composer")
 
-    cover = render_cover(project)
+    cover = render_cover(project, io["cover_png"], io["receipts"])
 
+    qc_report = (project / "receipts" / "qc-report-eras.json" if args.variant == "eras"
+                 else project / "receipts" / "qc-summary.json")
     inputs = {
         "video": ("project://" + video.relative_to(project).as_posix(), _sha(video)),
-        "sample": ("project://receipts/sample.json", _sha(project / "receipts" / "sample.json")),
-        "qc_summary": ("project://receipts/qc-summary.json", _sha(project / "receipts" / "qc-summary.json")),
+        "sample": (f"project://{io['sample'].as_posix()}", _sha(sample_path)),
+        "qc": (f"project://{qc_report.relative_to(project).as_posix()}", _sha(qc_report)),
         "voice": ("project://receipts/voice-lines.json", _sha(project / "receipts" / "voice-lines.json")),
+        "captions": (sample["captions"]["path"], sample["captions"]["sha256"]),
     }
+    if sample.get("visual_track", {}).get("mode") == "full_film_eras":
+        film = project / sample["visual_track"]["path"].replace("project://", "")
+        inputs["eras_film"] = (sample["visual_track"]["path"], _sha(film))
+        for name in ("eras.js", "index.html", "render.py"):
+            source = project / "motion" / "film" / name
+            inputs[f"eras_source:{name}"] = (f"project://motion/film/{name}", _sha(source))
     if cover:
-        inputs["cover"] = ("project://assets/covers/cover.png", cover["png"]["sha256"])
+        inputs["cover"] = (f"project://{io['cover_png'].as_posix()}", cover["png"]["sha256"])
     for spec in sorted((project / "motion" / "specs").glob("p*.json")):
         inputs[f"spec:{spec.stem}"] = (f"project://motion/specs/{spec.name}", _sha(spec))
 
@@ -126,7 +183,9 @@ def main() -> int:
         "status": "PENDING_HUMAN_REVIEW",
         "production_ready": False,
     }
-    (project / "receipts" / "review-bundle.json").write_text(
+    receipts_dir = project / io["receipts"]
+    receipts_dir.mkdir(parents=True, exist_ok=True)
+    (receipts_dir / "review-bundle.json").write_text(
         json.dumps(bundle, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
     human = {
@@ -143,27 +202,11 @@ def main() -> int:
         "status": "PENDING_FOUNDER_REVIEW",
         "production_ready": False,
     }
-    (project / "receipts" / "human-review.json").write_text(
+    (receipts_dir / "human-review.json").write_text(
         json.dumps(human, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
-    runtime = project / "receipts" / "runtime-receipt.md"
-    runtime.write_text(
-        "\n".join([
-            "# Runtime receipt — " + project.name,
-            "",
-            "- engine: huashu-art-motion (MIT), `scripts/engine/render.py`, upstream `8a0d7d7`",
-            "- interpreter: host Python; Playwright Chromium `D:\\DevCaches\\ms-playwright\\chromium-1223`",
-            "- env: `PYTHONUTF8=1`; browser launch falls back bundled → Chrome → Edge",
-            "- render: `render.py --spec motion/specs/p0N.json --out work/clips/p0N.mp4`",
-            "- compose: `python scripts/build_code_animation_sample.py " + project.name + "`",
-            "- grade: `python scripts/qc_video.py " + project.name + " --video easel.mp4`",
-            "",
-            "Verdict: `qc_video` WARN (20 s below the 30 s floor; pure animation has no",
-            "real-source ratio). Technical decode, audio, subtitle burn and loudness pass.",
-            "`production_ready: false`, `PENDING_FOUNDER_REVIEW`.",
-        ]) + "\n",
-        encoding="utf-8",
-    )
+    runtime = receipts_dir / "runtime-receipt.md"
+    runtime.write_text(_runtime_receipt(project.name, sample), encoding="utf-8")
 
     print(json.dumps({
         "status": "OK",

@@ -1,0 +1,17 @@
+{
+  "schema": "contentops.cover-receipt/v1",
+  "platform": "douyin",
+  "width": 1080,
+  "height": 1440,
+  "html": {
+    "path": "project://assets/covers/cover.html",
+    "sha256": "595c607c844dbde0419b63bb86de23e1359c43aa6d567b425654a3dfcdcab817"
+  },
+  "png": {
+    "path": "project://assets/covers/cover-eras.png",
+    "sha256": "437a04aa56bdcc253df7b49ecb9e7c374ee9f1edd4f7617d3c67623ac059c976"
+  },
+  "audit": "✅ PASS  cover-eras.png  (1080x1440)\n  纵向跨度 88% | 底部死空白 5% | 最大空白带 10% | 4带密度 [0.32, 0.58, 0.61, 0.17]",
+  "audit_passed": true,
+  "built_at": "2026-10-28T07:54:58Z"
+}

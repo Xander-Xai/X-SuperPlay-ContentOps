@@ -599,3 +599,42 @@ still was produced, judged to read as a near-black frame, and removed from the
 cut. Both decisions and the quota delta are in `receipts/generated-media.json`.
 Receipts bind the spec, clip and output SHAs; `receipts/qc-summary.json` also
 binds the QC verdict to the output SHA.
+
+## ERAS whole-film variant (Issue #34) — 2026-10-28
+
+The explainer has a sibling cut in which **one Huashu ERAS timeline owns every
+transition**, instead of concatenating twelve separately rendered clips. The
+baseline `final/easel.mp4` and its receipts were not touched; the four baseline
+artifacts were re-hashed after the variant build and were byte-identical.
+
+| Property | Value |
+|---|---|
+| Project | `projects/easel-fi-what-is-agent` — Build account, 1080×1920 |
+| Visual track | one ERAS render, `project://work/huashu-eras.mp4` — 36.300 s, 30 fps, 1089 frames, h264 |
+| Timing | 29.593 s voice + 12 × 0.35 s tails + 2.5 s silent bridge = **36.293 s** |
+| Transitions | `push` / `matchCut` / `blurPush` / `fadeShift` on the incoming era only, no `xfade`, no clip concat |
+| Adapter | `motion/film/render.py` — read-only mount of the external engine at `/engine/` and the project at `/project/`; no upstream modification |
+| Film config | `motion/film/eras.js` (clip-frame eras with explicit no-op drawers), `motion/film/index.html` |
+| Voice | cloned `founder_primary_v1`, 1.20×, 12 lines, all `SAFE_INCLUDED_PLAN`, technical QC approved |
+| Diagram | p02 uses the redrawn `motion/specs/diagram-workflow-vs-agent.png` (Anthropic one-source), card audit PASS |
+| Output | `project://final/eras.mp4` — 36.3 s, 1080×1920, h264/aac |
+| Receipts | `receipts/eras/{sample.json,timing-reconciliation.json,review-bundle.json,human-review.json,cover.json,runtime-receipt.md}` and `receipts/qc-report-eras.{json,md}` |
+| Generated share | 2.5 / 36.293 = **6.89 %**, below the 10 % cap; the bridge is silent and claim-free |
+| QC | `qc_video` **WARN** — same class as the baseline (pure animation, no real source); resolution, aspect, duration, codecs, audio, subtitle burn and loudness pass |
+| Status | `production_ready: false`, `PENDING_FOUNDER_REVIEW` |
+
+Three defects surfaced during this build and are recorded rather than smoothed
+over:
+
+- the ERAS table first carried the previous 43.5 s pacing; a regression test now
+  binds every era duration to `motion/timeline.json`;
+- the p03 source clip is 2.900 s while its window is 3.009 s, so the adapter
+  pads a **contiguous tail** with the final frame and still fails on any interior
+  gap;
+- the engine binds `#scrub`/`#tt`/`#play` and declares fonts as relative
+  `lib/fonts/*.woff`, so the project page needs those controls plus
+  `<base href="/engine/">`; both are covered by tests.
+
+`freeze_s` for the variant is 2.4 s against 0.6 s for the baseline. A PSNR
+check across the bridge (t=23.0 vs t=24.2, y = 21.8 dB) shows the bridge is not
+a static frame, so the number is reported as measured rather than explained away.

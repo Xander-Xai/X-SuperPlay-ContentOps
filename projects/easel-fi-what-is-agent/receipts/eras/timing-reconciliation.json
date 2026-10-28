@@ -1,0 +1,97 @@
+{
+  "schema": "contentops.timing-reconciliation/v1",
+  "segments": [
+    {
+      "id": "p01",
+      "type": "beat",
+      "start_s": 0.0,
+      "end_s": 2.37
+    },
+    {
+      "id": "p02",
+      "type": "beat",
+      "start_s": 2.37,
+      "end_s": 5.274
+    },
+    {
+      "id": "p03",
+      "type": "beat",
+      "start_s": 5.274,
+      "end_s": 8.283
+    },
+    {
+      "id": "p04",
+      "type": "beat",
+      "start_s": 8.283,
+      "end_s": 10.34
+    },
+    {
+      "id": "p05",
+      "type": "beat",
+      "start_s": 10.34,
+      "end_s": 12.884
+    },
+    {
+      "id": "p06",
+      "type": "beat",
+      "start_s": 12.884,
+      "end_s": 15.962
+    },
+    {
+      "id": "p07",
+      "type": "beat",
+      "start_s": 15.962,
+      "end_s": 19.156
+    },
+    {
+      "id": "p08",
+      "type": "beat",
+      "start_s": 19.156,
+      "end_s": 22.385
+    },
+    {
+      "id": "insert-video",
+      "type": "insert",
+      "start_s": 22.385,
+      "end_s": 24.885
+    },
+    {
+      "id": "p09",
+      "type": "beat",
+      "start_s": 24.885,
+      "end_s": 27.824
+    },
+    {
+      "id": "p10",
+      "type": "beat",
+      "start_s": 27.824,
+      "end_s": 30.02
+    },
+    {
+      "id": "p11",
+      "type": "beat",
+      "start_s": 30.02,
+      "end_s": 33.284
+    },
+    {
+      "id": "p12",
+      "type": "beat",
+      "start_s": 33.284,
+      "end_s": 36.293
+    }
+  ],
+  "film_seconds": 36.293,
+  "voice_seconds": 29.593,
+  "tail_seconds": 4.2,
+  "silent_bridge_seconds": 2.5,
+  "arithmetic": "29.593 + 4.200 + 2.500",
+  "srt_last_cue_end_s": 35.943,
+  "output_duration_s": 36.3,
+  "checks": {
+    "voice_plus_tails_plus_bridge_equals_film": true,
+    "output_matches_film": true,
+    "no_caption_in_the_silent_bridge": true
+  },
+  "production_ready": false,
+  "human_review": "PENDING_FOUNDER_REVIEW"
+}

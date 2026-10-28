@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <base href="/engine/">
+  <title>What is an Agent — huashu film</title>
+  <style>
+    html, body { margin: 0; background: #0F1117; overflow: hidden; }
+    canvas { display: block; width: 100vw; height: auto; }
+    /* engine.js binds these preview controls; keep them out of the rendered frame. */
+    body.render #ui { display: none; }
+    #ui { position: fixed; left: 8px; bottom: 8px; color: #ddd; font: 12px monospace; }
+  </style>
+</head>
+<body>
+  <canvas id="c" width="1080" height="1920"></canvas>
+  <div id="ui"><input id="scrub" type="range" min="0" max="0" step="0.0166667" value="0"><span id="tt"></span><button id="play">play</button></div>
+  <script src="/engine/lib/fonts.js"></script>
+  <script src="/engine/lib/util.js"></script>
+  <script src="/engine/lib/paint.js"></script>
+  <script src="/engine/lib/brush.js"></script>
+  <script src="/engine/lib/render.js"></script>
+  <script src="/engine/lib/post.js"></script>
+  <script src="/engine/lib/rig.js"></script>
+  <script src="/engine/lib/rig_huashu.js"></script>
+  <script src="/engine/lib/kit.js"></script>
+  <script src="/engine/lib/medium.js"></script>
+  <script src="/engine/lib/motion.js"></script>
+  <script src="/engine/lib/camera.js"></script>
+  <script src="/engine/lib/diagram.js"></script>
+  <script src="/engine/lib/typo.js"></script>
+  <script src="/engine/lib/chart.js"></script>
+  <script src="/engine/lib/ui.js"></script>
+  <script src="/engine/lib/collage.js"></script>
+  <script src="/engine/lib/media.js"></script>
+  <script src="/engine/lib/toon.js"></script>
+  <script src="/project/motion/film/eras.js"></script>
+  <script src="/engine/transitions.js"></script>
+  <script src="/engine/scenes/index.js"></script>
+  <script src="/engine/engine.js"></script>
+</body>
+</html>
