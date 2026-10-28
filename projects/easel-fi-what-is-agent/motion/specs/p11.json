@@ -3,7 +3,7 @@
   "width": 1080,
   "height": 1920,
   "theme": "ink",
-  "duration": 3.2,
+  "duration": 3.4,
   "grammar": "t2_keynote_ui",
   "data": {
     "eyebrow": "WHAT IS AN AGENT",
@@ -25,7 +25,7 @@
       }
     },
     {
-      "at": 1.27,
+      "at": 1.33,
       "kind": "step",
       "text": "有状态循环",
       "data": {
@@ -34,7 +34,7 @@
       }
     },
     {
-      "at": 2.03,
+      "at": 2.17,
       "kind": "step",
       "text": "不该用",
       "data": {

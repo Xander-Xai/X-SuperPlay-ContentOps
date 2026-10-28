@@ -3,7 +3,11 @@ account_slug: x-superplay-future-intelligence
 title: "什么是 Agent"
 created_at: "2026-10-28T01:48:44Z"
 
-source_refs: []
+source_refs:
+  - url: "https://www.anthropic.com/research/building-effective-agents"
+    title: "Building effective agents"
+    accessed_at: "2026-10-28"
+    use: "P02 workflow-versus-agent concept redraw"
 
 content_type: tech_review
 topic_cluster: ""

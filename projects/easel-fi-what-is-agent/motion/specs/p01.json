@@ -4,7 +4,7 @@
   "height": 1920,
   "theme": "ink",
   "grammar": "y1_kurzgesagt",
-  "duration": 3.1,
+  "duration": 2.5,
   "data": {
     "center": "Agent",
     "flow": true,
@@ -22,12 +22,12 @@
       "text": "定目标"
     },
     {
-      "at": 0.95,
+      "at": 0.92,
       "kind": "point",
       "text": "调工具"
     },
     {
-      "at": 1.65,
+      "at": 1.58,
       "kind": "point",
       "text": "看结果"
     }
