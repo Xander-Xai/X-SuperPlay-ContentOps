@@ -1,0 +1,65 @@
+{
+  "schema": "contentops.asset-map/v1",
+  "assets": {
+    "A-ARCH-1": {
+      "kind": "card",
+      "role": "vector_animation",
+      "html": "project://assets/cards/arch-window.html",
+      "png": "project://assets/cards/arch-window.png",
+      "width": 1080,
+      "height": 1920,
+      "source_document": "repo://docs/CURRENT-STATE.md",
+      "burns_caption": true
+    },
+    "A-ARCH-2": {
+      "kind": "card",
+      "role": "vector_animation",
+      "html": "project://assets/cards/arch-views.html",
+      "png": "project://assets/cards/arch-views.png",
+      "width": 1080,
+      "height": 1920,
+      "source_document": "repo://src/contentops/media/cut_plan.py",
+      "burns_caption": true
+    },
+    "A-ARCH-3": {
+      "kind": "card",
+      "role": "vector_animation",
+      "html": "project://assets/cards/arch-gate.html",
+      "png": "project://assets/cards/arch-gate.png",
+      "width": 1080,
+      "height": 1920,
+      "source_document": "repo://src/contentops/media/cut_qc.py",
+      "burns_caption": true
+    },
+    "A-ARCH-4": {
+      "kind": "card",
+      "role": "vector_animation",
+      "html": "project://assets/cards/arch-result.html",
+      "png": "project://assets/cards/arch-result.png",
+      "width": 1080,
+      "height": 1920,
+      "source_document": "repo://projects/easel-1024-proof/receipts/qc-report.json",
+      "burns_caption": true
+    },
+    "A-CODE": {
+      "kind": "card",
+      "role": "code_snapshot",
+      "html": "project://assets/cards/code-gate.html",
+      "png": "project://assets/cards/code-gate.png",
+      "width": 1080,
+      "height": 1920,
+      "source_document": "repo://src/contentops/media/cut_qc.py",
+      "burns_caption": true
+    },
+    "A-METRIC": {
+      "kind": "card",
+      "role": "metric_chart",
+      "html": "project://assets/cards/metric-freeze.html",
+      "png": "project://assets/cards/metric-freeze.png",
+      "width": 1080,
+      "height": 1920,
+      "source_document": "repo://projects/easel-1024-proof/receipts/qc-report.json",
+      "burns_caption": true
+    }
+  }
+}

@@ -1,0 +1,219 @@
+{
+  "schema": "contentops.claim-map/v1",
+  "map_id": "MAP-FI-AUDIO-FIRST-001",
+  "package_id": "easel-fi-audio-first",
+  "claims": [
+    {
+      "claim_id": "C-FI-01",
+      "revision": 1,
+      "text": "口播四十四秒，画面不能停四十四秒。",
+      "kind": "source",
+      "assertion_about": "source",
+      "support_status": "SUPPORTED",
+      "permission_scope": "publishable",
+      "limitation": "",
+      "evidence": [
+        {
+          "evidence_id": "E-FI-CURRENT-STATE",
+          "kind": "document",
+          "sha256": "e28c8f2424f224de94b87edabc9d79db83ecce43d3b607c80c89819a5e4e1ded",
+          "logical_path": "repo://docs/CURRENT-STATE.md",
+          "time_range": null,
+          "permission_scope": "publishable"
+        }
+      ],
+      "appearances": [
+        {
+          "surface": "narration",
+          "text": "口播四十四秒，画面不能停四十四秒。"
+        },
+        {
+          "surface": "caption",
+          "text": "口播四十四秒，画面不能停四十四秒。"
+        },
+        {
+          "surface": "onscreen",
+          "text": "口播四十四秒，画面不能停四十四秒。"
+        }
+      ]
+    },
+    {
+      "claim_id": "C-FI-02",
+      "revision": 1,
+      "text": "画面按语义换，不按口播时长。",
+      "kind": "source",
+      "assertion_about": "source",
+      "support_status": "SUPPORTED",
+      "permission_scope": "publishable",
+      "limitation": "",
+      "evidence": [
+        {
+          "evidence_id": "E-FI-CURRENT-STATE",
+          "kind": "document",
+          "sha256": "e28c8f2424f224de94b87edabc9d79db83ecce43d3b607c80c89819a5e4e1ded",
+          "logical_path": "repo://docs/CURRENT-STATE.md",
+          "time_range": null,
+          "permission_scope": "publishable"
+        }
+      ],
+      "appearances": [
+        {
+          "surface": "narration",
+          "text": "画面按语义换，不按口播时长。"
+        },
+        {
+          "surface": "caption",
+          "text": "画面按语义换，不按口播时长。"
+        },
+        {
+          "surface": "onscreen",
+          "text": "画面按语义换，不按口播时长。"
+        }
+      ]
+    },
+    {
+      "claim_id": "C-FI-03",
+      "revision": 1,
+      "text": "一个口播窗口，拆成多个取证视图。",
+      "kind": "source",
+      "assertion_about": "source",
+      "support_status": "SUPPORTED",
+      "permission_scope": "publishable",
+      "limitation": "",
+      "evidence": [
+        {
+          "evidence_id": "E-FI-CURRENT-STATE",
+          "kind": "document",
+          "sha256": "e28c8f2424f224de94b87edabc9d79db83ecce43d3b607c80c89819a5e4e1ded",
+          "logical_path": "repo://docs/CURRENT-STATE.md",
+          "time_range": null,
+          "permission_scope": "publishable"
+        },
+        {
+          "evidence_id": "E-FI-CUTPLAN",
+          "kind": "document",
+          "sha256": "ec2a733fd75c67e6b09e8effb412f51c70aa72c83b371e99e584a865634d8cc5",
+          "logical_path": "repo://src/contentops/media/cut_plan.py",
+          "time_range": null,
+          "permission_scope": "publishable"
+        }
+      ],
+      "appearances": [
+        {
+          "surface": "narration",
+          "text": "一个口播窗口，拆成多个取证视图。"
+        },
+        {
+          "surface": "caption",
+          "text": "一个口播窗口，拆成多个取证视图。"
+        },
+        {
+          "surface": "onscreen",
+          "text": "一个口播窗口，拆成多个取证视图。"
+        }
+      ]
+    },
+    {
+      "claim_id": "C-FI-04",
+      "revision": 1,
+      "text": "旧门禁放过了静态停留，现在换成实测。",
+      "kind": "source",
+      "assertion_about": "source",
+      "support_status": "SUPPORTED",
+      "permission_scope": "publishable",
+      "limitation": "",
+      "evidence": [
+        {
+          "evidence_id": "E-FI-CURRENT-STATE",
+          "kind": "document",
+          "sha256": "e28c8f2424f224de94b87edabc9d79db83ecce43d3b607c80c89819a5e4e1ded",
+          "logical_path": "repo://docs/CURRENT-STATE.md",
+          "time_range": null,
+          "permission_scope": "publishable"
+        },
+        {
+          "evidence_id": "E-FI-CUTC",
+          "kind": "document",
+          "sha256": "a62c3d7a91cf0ceb91dae6e72498bb673dc64f67e8a48305b166e826ef028dbf",
+          "logical_path": "repo://src/contentops/media/cut_qc.py",
+          "time_range": null,
+          "permission_scope": "publishable"
+        }
+      ],
+      "appearances": [
+        {
+          "surface": "narration",
+          "text": "旧门禁放过了静态停留，现在换成实测。"
+        },
+        {
+          "surface": "caption",
+          "text": "旧门禁放过了静态停留，现在换成实测。"
+        },
+        {
+          "surface": "onscreen",
+          "text": "旧门禁放过了静态停留，现在换成实测。"
+        }
+      ]
+    },
+    {
+      "claim_id": "C-FI-05",
+      "revision": 1,
+      "text": "重建后最长冻结一点八秒，质检通过。",
+      "kind": "historical",
+      "assertion_about": "data",
+      "support_status": "SUPPORTED",
+      "permission_scope": "publishable",
+      "limitation": "",
+      "evidence": [
+        {
+          "evidence_id": "E-FI-QC",
+          "kind": "data",
+          "sha256": "0190c3ca52945257e7c09d7aa33bb8a8d34a1996f4476a0cd72541181fb21199",
+          "logical_path": "repo://projects/easel-1024-proof/receipts/qc-report.json",
+          "time_range": null,
+          "permission_scope": "publishable"
+        }
+      ],
+      "appearances": [
+        {
+          "surface": "narration",
+          "text": "重建后最长冻结一点八秒，质检通过。"
+        },
+        {
+          "surface": "caption",
+          "text": "重建后最长冻结一点八秒，质检通过。"
+        },
+        {
+          "surface": "onscreen",
+          "text": "重建后最长冻结一点八秒，质检通过。"
+        }
+      ]
+    },
+    {
+      "claim_id": "C-FI-COVER",
+      "revision": 1,
+      "text": "口播四十四秒",
+      "kind": "source",
+      "assertion_about": "source",
+      "support_status": "SUPPORTED",
+      "permission_scope": "publishable",
+      "limitation": "",
+      "evidence": [
+        {
+          "evidence_id": "E-FI-CURRENT-STATE",
+          "kind": "document",
+          "sha256": "e28c8f2424f224de94b87edabc9d79db83ecce43d3b607c80c89819a5e4e1ded",
+          "logical_path": "repo://docs/CURRENT-STATE.md",
+          "time_range": null,
+          "permission_scope": "publishable"
+        }
+      ],
+      "appearances": [
+        {
+          "surface": "cover_title",
+          "text": "口播四十四秒"
+        }
+      ]
+    }
+  ]
+}

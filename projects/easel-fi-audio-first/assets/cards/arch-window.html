@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<style>
+ *{margin:0;padding:0;box-sizing:border-box}
+ html,body{width:1080px;height:1920px}
+ body{background:#0F1117;color:#F5F7FA;font-family:"Noto Sans CJK SC","Microsoft YaHei",sans-serif}
+ .card{width:1080px;height:1920px;padding:96px 80px 400px;display:flex;flex-direction:column}
+ .kicker{font-size:26px;letter-spacing:.16em;color:#8B95A5}
+ .rule{height:2px;background:#38BDF8;margin-top:32px}
+ h1{font-size:84px;line-height:1.22;font-weight:300;margin-top:120px;letter-spacing:-.02em}
+ .sub{font-size:40px;color:#8B95A5;line-height:1.5;margin-top:40px}
+ .diagram{margin-top:120px}
+ .bar{height:64px;background:#161A22;border-radius:8px;display:flex;align-items:center;padding:0 28px;justify-content:space-between;font-size:28px;color:#8B95A5}
+ .ticks{display:flex;gap:8px;margin-top:28px}
+ .tick{flex:1;height:56px;background:#1C2230;border-radius:4px}
+ .tick.on{background:#38BDF8}
+ .label{display:flex;justify-content:space-between;font-size:26px;color:#8B95A5;margin-top:18px}
+ .spacer{flex:1}
+ .footer{font-size:24px;color:#8B95A5;letter-spacing:.08em}
+</style></head><body><div class="card">
+ <div class="kicker">EASEL · 工程拆解</div><div class="rule"></div>
+ <h1>口播四十四秒，<br>画面不能停四十四秒。</h1>
+ <p class="sub">口播决定窗口长度，画面决定证据是否读得懂。</p>
+ <div class="diagram">
+   <div class="bar"><span>口播窗口</span><span>一段话</span></div>
+   <div class="ticks">
+     <div class="tick on"></div><div class="tick on"></div><div class="tick on"></div><div class="tick on"></div><div class="tick on"></div>
+     <div class="tick on"></div><div class="tick on"></div><div class="tick on"></div><div class="tick on"></div><div class="tick on"></div>
+     <div class="tick on"></div><div class="tick on"></div><div class="tick on"></div><div class="tick on"></div><div class="tick on"></div>
+     <div class="tick on"></div><div class="tick on"></div><div class="tick on"></div><div class="tick on"></div><div class="tick on"></div>
+     <div class="tick on"></div><div class="tick on"></div>
+   </div>
+   <div class="label"><span>每个视图 2.0 s</span><span>共 22 个</span></div>
+ </div>
+ <div class="spacer"></div>
+ <div class="footer">docs/CURRENT-STATE.md</div>
+</div></body></html>

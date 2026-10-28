@@ -1,0 +1,120 @@
+{
+  "schema": "contentops.review-bundle/v1",
+  "package_id": "easel-fi-audio-first",
+  "built_at": "2026-10-28T00:29:45Z",
+  "inputs": {
+    "video": {
+      "path": "project://final/easel.mp4",
+      "sha256": "9229a2372468cbe685052ab755893415193952d4d79e85c0d21a9a114c2cf301"
+    },
+    "narration": {
+      "path": "project://work/narration.wav",
+      "sha256": "531e2c081dc0342524fd705e456ae521e66071296272003600808e89a5bcdfd1"
+    },
+    "captions": {
+      "path": "project://assets/captions/cut.srt",
+      "sha256": "62f0617f02f615adadb4912e0150c76d2c8243efe776a755b8657eff33d31eae"
+    },
+    "claim_map": {
+      "path": "project://script/claim-map.json",
+      "sha256": "fa897224afb9ddcd7283fee39ec70b07a1979dcd2b5b13ea04e9c36fb31d4745"
+    },
+    "cut_plan": {
+      "path": "project://script/cut-plan.json",
+      "sha256": "852ff2d608a7e518b3f445d730af937b83c1efb4c86c564e38ee72952e3c744d"
+    },
+    "asset_map": {
+      "path": "project://script/assets.json",
+      "sha256": "5b024dd36a67a3a54f15fc8dc061840b6ff49a40a2892224d289689536ff8db5"
+    },
+    "qc_report": {
+      "path": "project://receipts/qc-report.json",
+      "sha256": "1aba7577b07eb07cc1627f4b581573fcf42d14d1a5679e9eddef59dc4d586fdb"
+    },
+    "build_receipt": {
+      "path": "project://receipts/build-easel.json",
+      "sha256": "9fcac89e3441f6c8ab6b05afcd93da835e4eee5d6fb590c14f46eaa85000efbc"
+    },
+    "target": {
+      "width": 1080,
+      "height": 1920,
+      "duration_ms_range": [
+        24500,
+        25500
+      ],
+      "caption_safe_area": {
+        "x": 54,
+        "y": 1480,
+        "width": 972,
+        "height": 360
+      },
+      "min_reading_hold_ms": 2500,
+      "max_visual_hold_ms": 3000,
+      "min_visual_hold_ms": 2000,
+      "evidence_mode": "EXPLANATORY",
+      "manual_recording": "FORBIDDEN",
+      "composition": [
+        {
+          "role": "vector_animation",
+          "pct": 70
+        },
+        {
+          "role": "code_snapshot",
+          "pct": 25
+        },
+        {
+          "role": "metric_chart",
+          "pct": 5
+        }
+      ]
+    },
+    "claim_map_fingerprint": "14622041e875c9f813aa746e1fe59a1ccde301c1bb7bf36bc55a4ecebda78e32",
+    "cut_plan_fingerprint": "358f3ad14841a240da90800995c6e300d98b2a1a345dec1423966299856c41c8",
+    "cards": {
+      "A-ARCH-1": {
+        "path": "project://assets/cards/arch-window.png",
+        "sha256": "72dce1f0bc7682c63d8c5f31317b38fb63cb4fc9b3f93eae8451eb095ec7c783"
+      },
+      "A-ARCH-2": {
+        "path": "project://assets/cards/arch-views.png",
+        "sha256": "1e62cbc0371a10a0a24695a8304b92affb3a6268cab0fd40e3048b4e71989aec"
+      },
+      "A-ARCH-3": {
+        "path": "project://assets/cards/arch-gate.png",
+        "sha256": "c164e729cdf19eb8be7d21f25ea92fd7837af80ffcf96c8634cd8ffdd107e492"
+      },
+      "A-ARCH-4": {
+        "path": "project://assets/cards/arch-result.png",
+        "sha256": "0d115df9e74f4bdf3fda7da360ec93e260577be4971dd5b92ac3466042fa1808"
+      },
+      "A-CODE": {
+        "path": "project://assets/cards/code-gate.png",
+        "sha256": "a64d1abe8d072a2d3b4f450fc560ad111db7e4333d8cdf07204260690a79b7f0"
+      },
+      "A-METRIC": {
+        "path": "project://assets/cards/metric-freeze.png",
+        "sha256": "25a13aee406c83fd1e5706658a0c77a31b77177106eff52955b91f7ee8c2ca11"
+      }
+    },
+    "cover": {
+      "path": "project://assets/covers/cover.png",
+      "sha256": "272557811292e9852db447982ead2f438db888baea23ccf51d05e0e9350866b7"
+    },
+    "cover_receipt": {
+      "path": "project://receipts/cover.json",
+      "sha256": "0f91a8b1c06bfb2b5f30471fde10bba8fee5e98c51f8d4472bcef7e0b558a8f1"
+    },
+    "captures": [],
+    "capture_proofs_present": false,
+    "redactions": [],
+    "distribution_blocked": false,
+    "distribution_block_reasons": []
+  },
+  "score": null,
+  "reviewer": null,
+  "reviewed_at": null,
+  "hard_fail": null,
+  "status": "PENDING_HUMAN_REVIEW",
+  "production_ready": false,
+  "review_bundle_fingerprint": "7c24ebab52312bdc4ecfcd67c14510eebd8a944c8f899782dddf1021a490d8c7"
+}

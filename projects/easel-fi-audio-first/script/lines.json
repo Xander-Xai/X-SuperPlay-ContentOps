@@ -1,0 +1,166 @@
+{
+  "schema": "contentops.audio-first-lines/v1",
+  "package_id": "easel-fi-audio-first",
+  "evidence_mode": "EXPLANATORY",
+  "manual_recording": "FORBIDDEN",
+  "composition": [
+    {
+      "role": "vector_animation",
+      "pct": 70
+    },
+    {
+      "role": "code_snapshot",
+      "pct": 25
+    },
+    {
+      "role": "metric_chart",
+      "pct": 5
+    }
+  ],
+  "beats": [
+    {
+      "placement_id": "P-01-HOOK",
+      "claim_id": "C-FI-01",
+      "text": "口播四十四秒，画面不能停四十四秒。",
+      "semantic_progress": "the window and the picture are two different lengths",
+      "views": [
+        {
+          "asset_id": "A-ARCH-1",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920
+          },
+          "semantic_progress": "the claim in one frame"
+        },
+        {
+          "asset_id": "A-ARCH-1",
+          "context": true,
+          "crop": {
+            "x": 0,
+            "y": 740,
+            "width": 1080,
+            "height": 300
+          },
+          "semantic_progress": "the 2 s view strip that outlasts the statement"
+        }
+      ]
+    },
+    {
+      "placement_id": "P-02-TRADEOFF",
+      "claim_id": "C-FI-02",
+      "text": "画面按语义换，不按口播时长。",
+      "semantic_progress": "the tradeoff moves from duration to view changes",
+      "views": [
+        {
+          "asset_id": "A-ARCH-2",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920
+          },
+          "semantic_progress": "one placement, three views"
+        },
+        {
+          "asset_id": "A-ARCH-2",
+          "context": true,
+          "crop": {
+            "x": 0,
+            "y": 540,
+            "width": 1080,
+            "height": 760
+          },
+          "semantic_progress": "the view chain itself"
+        }
+      ]
+    },
+    {
+      "placement_id": "P-03-ARCH",
+      "claim_id": "C-FI-03",
+      "text": "一个口播窗口，拆成多个取证视图。",
+      "semantic_progress": "the placement and its views",
+      "views": [
+        {
+          "asset_id": "A-ARCH-3",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920
+          },
+          "semantic_progress": "two gates, one verdict"
+        },
+        {
+          "asset_id": "A-ARCH-3",
+          "context": true,
+          "crop": {
+            "x": 0,
+            "y": 560,
+            "width": 1080,
+            "height": 700
+          },
+          "semantic_progress": "the two checks that must both pass"
+        }
+      ]
+    },
+    {
+      "placement_id": "P-04-ROOTCAUSE",
+      "claim_id": "C-FI-04",
+      "text": "旧门禁放过了静态停留，现在换成实测。",
+      "semantic_progress": "the old gate trusted a declaration",
+      "views": [
+        {
+          "asset_id": "A-CODE",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920
+          },
+          "semantic_progress": "the replacement checks, as code"
+        },
+        {
+          "asset_id": "A-CODE",
+          "context": true,
+          "crop": {
+            "x": 0,
+            "y": 500,
+            "width": 1080,
+            "height": 700
+          },
+          "semantic_progress": "the structural and the measured check, enlarged"
+        }
+      ]
+    },
+    {
+      "placement_id": "P-05-VERIFY",
+      "claim_id": "C-FI-05",
+      "text": "重建后最长冻结一点八秒，质检通过。",
+      "semantic_progress": "the measured result and the verdict",
+      "views": [
+        {
+          "asset_id": "A-METRIC",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920
+          },
+          "semantic_progress": "the measured freeze against its limit"
+        },
+        {
+          "asset_id": "A-ARCH-4",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920
+          },
+          "semantic_progress": "the same result as a chain a reader can re-count"
+        }
+      ]
+    }
+  ]
+}
