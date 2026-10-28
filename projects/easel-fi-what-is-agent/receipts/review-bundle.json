@@ -1,0 +1,53 @@
+{
+  "schema": "contentops.review-bundle/v1",
+  "package_id": "easel-fi-what-is-agent",
+  "built_at": "2026-10-28T03:03:37Z",
+  "inputs": {
+    "cover": {
+      "path": "project://assets/covers/cover.png",
+      "sha256": "437a04aa56bdcc253df7b49ecb9e7c374ee9f1edd4f7617d3c67623ac059c976"
+    },
+    "qc_summary": {
+      "path": "project://receipts/qc-summary.json",
+      "sha256": "f91d3f5e0df6f2c411291c8bd6f5090257c899b3e6b7c75caa1570dec3b5e8c9"
+    },
+    "sample": {
+      "path": "project://receipts/sample.json",
+      "sha256": "a0fda45484e91085655afb71d7987daca533fdadc46cb7dbeb87864aa99151dd"
+    },
+    "spec:p01": {
+      "path": "project://motion/specs/p01.json",
+      "sha256": "a544dc66598b98bab4254f7b6c5738558a71af6cb03ab4046a675399feb38152"
+    },
+    "spec:p02": {
+      "path": "project://motion/specs/p02.json",
+      "sha256": "adf6728b3802016d0f4e5ccabe0ec81b6bff951487b0b4262e3d3e72eafb795b"
+    },
+    "spec:p03": {
+      "path": "project://motion/specs/p03.json",
+      "sha256": "50f0ce9cc2fa695b18ab85c4f173c7ab3312de878b23315235976d64a2307aec"
+    },
+    "spec:p04": {
+      "path": "project://motion/specs/p04.json",
+      "sha256": "54e8d86e4fa5068c4099c909d78e0f9ee80dc4c8827fff2f6cdec64b196ce8e1"
+    },
+    "spec:p05": {
+      "path": "project://motion/specs/p05.json",
+      "sha256": "f3a9505686d5b3289bc3c5075b6005cc2c2dc4678a9ed7fbb1884026ea74b476"
+    },
+    "video": {
+      "path": "project://final/easel.mp4",
+      "sha256": "531c93578862cb1b6d3620943e8391161ee8ad9505af27fe4d0ec33734f16835"
+    },
+    "voice": {
+      "path": "project://receipts/voice-lines.json",
+      "sha256": "c00ddd68fad1602c8ea0a558105e0386e2611843a637649b923ef8186d52ef8d"
+    }
+  },
+  "review_bundle_fingerprint": "9761c00a3b72eb89d5202fd47f0c84a72a47be0cb3fcb8e51d45a8b2d854d013",
+  "score": null,
+  "reviewer": null,
+  "hard_fail": null,
+  "status": "PENDING_HUMAN_REVIEW",
+  "production_ready": false
+}

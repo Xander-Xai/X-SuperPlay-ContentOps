@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<style>
+ *{margin:0;padding:0;box-sizing:border-box}
+ html,body{width:1080px;height:1440px}
+ body{background:#0F1117;color:#F5F7FA;font-family:"Noto Sans CJK SC","Microsoft YaHei",sans-serif}
+ .card{width:1080px;height:1440px;padding:88px 80px 72px;display:flex;flex-direction:column}
+ .kicker{font-size:26px;letter-spacing:.18em;color:#8B95A5}
+ .rule{height:2px;background:#38BDF8;margin-top:32px}
+ h1{font-size:96px;line-height:1.16;font-weight:300;letter-spacing:-.02em;margin-top:96px;white-space:nowrap}
+ .sub{font-size:40px;line-height:1.5;color:#8B95A5;margin-top:40px}
+ .loop{margin-top:56px;position:relative;height:330px}
+ .node{position:absolute;width:150px;height:150px;border-radius:50%;background:#161A22;border:1px solid #2A3240;
+       display:flex;align-items:center;justify-content:center;font-size:30px;color:#F5F7FA}
+ .node.c{left:390px;top:105px;width:180px;height:180px;background:#38BDF8;color:#0F1117;font-weight:500}
+ .n1{left:60px;top:20px}.n2{left:760px;top:20px}.n3{left:410px;top:250px}
+ .ring{position:absolute;left:75px;top:35px;width:810px;height:290px;border:1px dashed rgba(56,189,248,.45);border-radius:50%}
+ .ledger{margin-top:32px;border-top:1px solid rgba(139,149,165,.25)}
+ .ledger div{font-size:28px;line-height:1.45;padding:16px 0;border-bottom:1px solid rgba(139,149,165,.25);color:#8B95A5}
+ .note{margin-top:28px;border:1px solid rgba(56,189,248,.45);border-radius:10px;padding:24px 28px;font-size:32px;line-height:1.45;color:#F5F7FA}
+ .spacer{flex:1}
+ .footer{display:flex;justify-content:space-between;font-size:24px;color:#8B95A5;letter-spacing:.06em}
+</style></head><body><div class="card">
+ <div class="kicker">未来智能 · 工程拆解</div><div class="rule"></div>
+ <h1>Agent 是一个循环</h1>
+ <p class="sub">不是一次问答，是一条可回查的循环。</p>
+ <div class="loop">
+   <div class="ring"></div>
+   <div class="node n1">定目标</div>
+   <div class="node n2">调工具</div>
+   <div class="node n3">看结果</div>
+   <div class="node c">Agent</div>
+ </div>
+ <div class="ledger">
+   <div>目标 → 工具 → 观察 → 再决策</div>
+   <div>每一步留下记录，才能回查</div>
+   <div>所以看它怎么循环，不看它怎么回答</div>
+ </div>
+ <div class="note">一次问答只证明模型会说话；循环才证明它能做事。</div>
+ <div class="spacer"></div>
+ <div class="footer"><span>huashu-art-motion · y1 / t2</span><span>X 超玩 · 未来智能</span></div>
+</div></body></html>

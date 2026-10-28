@@ -1,0 +1,53 @@
+{
+  "schema": "contentops.speech-rate-check/v1",
+  "target_cpm": [
+    220,
+    260
+  ],
+  "method": "Chinese characters + English words / speech duration × 60 (M5 rule)",
+  "per_line": [
+    {
+      "line": 1,
+      "text": "Agent 不是一次问答。",
+      "units": 7,
+      "duration_s": 1.718,
+      "cpm": 244.5
+    },
+    {
+      "line": 2,
+      "text": "它先定目标，再决定下一步。",
+      "units": 11,
+      "duration_s": 2.635,
+      "cpm": 250.5
+    },
+    {
+      "line": 3,
+      "text": "用工具拿回结果，再改计划。",
+      "units": 11,
+      "duration_s": 2.543,
+      "cpm": 259.5
+    },
+    {
+      "line": 4,
+      "text": "这个循环会留下记录。",
+      "units": 9,
+      "duration_s": 1.614,
+      "cpm": 334.6
+    },
+    {
+      "line": 5,
+      "text": "能回查，才算跑过。",
+      "units": 7,
+      "duration_s": 2.252,
+      "cpm": 186.5
+    }
+  ],
+  "speech_units": 45,
+  "speech_seconds": 10.762,
+  "film_speech_cpm": 250.9,
+  "film_over_video_cpm": 135.0,
+  "atempo_applied": false,
+  "decision": "No atempo correction. The speech-only average is 250.9 cpm, inside 220-260. Per-line outliers (186.5-334.6) come from 7-11 unit lines where a fixed tail and punctuation dominate; slowing those would make the delivery unnatural. The over-video number (135) counts the 4 s windows' silence and is not a speaking-rate measure.",
+  "production_ready": false,
+  "human_review": "PENDING_FOUNDER_REVIEW"
+}

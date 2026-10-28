@@ -1,0 +1,32 @@
+{
+  "schema": "contentops.human-review/v1",
+  "package_id": "easel-fi-what-is-agent",
+  "review_bundle_fingerprint": "9761c00a3b72eb89d5202fd47f0c84a72a47be0cb3fcb8e51d45a8b2d854d013",
+  "scores": {
+    "hook": null,
+    "information_density": null,
+    "evidence_quality": null,
+    "voice_naturalness": null,
+    "visual_quality": null,
+    "pacing": null,
+    "platform_fit": null,
+    "trustworthiness": null
+  },
+  "weights": {
+    "hook": 15,
+    "information_density": 15,
+    "evidence_quality": 15,
+    "voice_naturalness": 15,
+    "visual_quality": 15,
+    "pacing": 10,
+    "platform_fit": 10,
+    "trustworthiness": 5
+  },
+  "total": null,
+  "hard_fail": null,
+  "notes": null,
+  "reviewer": null,
+  "reviewed_at": null,
+  "status": "PENDING_FOUNDER_REVIEW",
+  "production_ready": false
+}
