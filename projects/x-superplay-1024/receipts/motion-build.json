@@ -1,0 +1,34 @@
+{
+  "schema": "contentops.motion-build/v1",
+  "stages": {
+    "speed": {
+      "applied": 1.1,
+      "path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\x-superplay-1024\\work\\narration-1.10x.wav",
+      "caption": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\x-superplay-1024\\work\\caption-1.10x.srt"
+    },
+    "split": {
+      "lines": 15,
+      "total_s": 45.214
+    },
+    "specs": {
+      "count": 15
+    },
+    "presenter": {
+      "clip": "p00",
+      "replaces_line": 1,
+      "variant": "easel"
+    },
+    "render": {
+      "clips": 15,
+      "pad_s": 0.4
+    },
+    "compose": {
+      "returncode": 0,
+      "result": null
+    },
+    "qc": {
+      "returncode": 0
+    }
+  },
+  "overall": "WARN"
+}

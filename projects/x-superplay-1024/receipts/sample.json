@@ -1,6 +1,6 @@
 {
   "schema": "contentops.code-animation-sample/v1",
-  "built_at": "2026-10-28T17:18:06Z",
+  "built_at": "2026-10-28T18:24:31Z",
   "package_id": "x-superplay-1024",
   "content_type": "DEFINITIONAL_EXPLAINER",
   "claim_bearing": false,
@@ -16,168 +16,184 @@
     "windows_adapter": "Playwright channel fallback (chrome/msedge) and PYTHONUTF8=1 for spec JSON"
   },
   "timeline": {
-    "total_s": 49.735,
+    "total_s": 44.842,
     "segments": 15,
-    "beats": 15,
+    "beats": 14,
     "inserts": 0,
-    "presenter": 0
+    "presenter": 1
   },
   "generated_media": {
     "seconds": 0,
     "ratio": 0.0,
     "cap": 0.1,
     "policy": "claim-free inserts only; deletes if it does not improve",
-    "ai_presenter": null
+    "ai_presenter": {
+      "seconds": 4.458,
+      "ratio": 0.0994,
+      "kind": "AI digital human, MiniMax H3 Ref2VA",
+      "claim_bearing": false,
+      "labelled_ai_synthesised": true,
+      "speech_text_verified": false,
+      "shot": "project://work/generated/shot-6b2ef91bb6b7790c.mp4",
+      "shot_sha256": "4ad0a93eee63de6a63f4346c571ddfdce3d4e764a326fc5ae6030e5e3e1b9d82",
+      "shot_receipt": "project://work/generated/shot-6b2ef91bb6b7790c.mp4.receipt.json",
+      "contract": "project://motion/presenter/contract.json",
+      "outside_the_insert_cap": "founder-requested opening; declared, not exempted silently"
+    }
   },
   "segments": [
     {
-      "type": "beat",
-      "clip": "project://work/clips/p01.mp4",
-      "duration_s": 5.313,
-      "clip_sha256": "8ee2acf20cf35cfc9cd37b5f73c919fa497c3b8b380121cdd8bd67ee341ed949",
-      "line": 1,
-      "spec": "project://motion/specs/p01.json",
-      "spec_sha256": "7cb410ac7090903a5b2e7ff105fbecbdba2640e4aedc5e9448f9e5103e8fab9e",
-      "grammar": "y2_vox"
+      "type": "presenter",
+      "clip": "project://work/clips/p00.mp4",
+      "duration_s": 4.458,
+      "clip_sha256": "d3a6c323ffebb3db82575b6689b9623b4c13e12f8c94241592e06d9ab6452cee",
+      "line": 0,
+      "role": "AI digital-human opening",
+      "text": "但有个坑：网关健康检查探的是写死的默认端口。",
+      "voice": "minimax_h3_ref2va",
+      "generated": true,
+      "claim_bearing": false,
+      "labelled_ai_synthesised": true,
+      "speech_text_verified": false
     },
     {
       "type": "beat",
       "clip": "project://work/clips/p02.mp4",
-      "duration_s": 6.52,
-      "clip_sha256": "25d8e57d8d97a504528c656809010abc0ff2d2e5877d3e69b633259a328fdb33",
+      "duration_s": 5.927,
+      "clip_sha256": "1f614a384ad9e94118616ac69301b100e3997cfb136f903cb7e29c822a8b10d9",
       "line": 2,
       "spec": "project://motion/specs/p02.json",
-      "spec_sha256": "662730e5173be431bec723909cbefcca6d9bafbf5c83af5c7b33888dfa1f6dd1",
+      "spec_sha256": "8e4979e389e5cd28064e63e5082a4817eff50e49bb3d195dc07a392f2f2b8ca4",
       "grammar": "y2_vox"
     },
     {
       "type": "beat",
       "clip": "project://work/clips/p03.mp4",
-      "duration_s": 2.768,
-      "clip_sha256": "4a42fd436008ab49028cd09eacbae345112545394a6ad57306455b4625760665",
+      "duration_s": 2.517,
+      "clip_sha256": "11280ca8a4cd13f0ca3508f7255c4d113c8e78f04928b1a7ef04499368432d56",
       "line": 3,
       "spec": "project://motion/specs/p03.json",
-      "spec_sha256": "bfd45a32531b14c732289084fd36ec4729c24ecccb798b2382581a834391436d",
+      "spec_sha256": "a0baa0663f2474012429ebae93450a7a176705d35e2e90c699743e19e0288f16",
       "grammar": "y1_kurzgesagt"
     },
     {
       "type": "beat",
       "clip": "project://work/clips/p04.mp4",
-      "duration_s": 2.998,
-      "clip_sha256": "4f538e62a0c856fe1a1e9975fa5725fe75cba503998768af236ea19daab2a041",
+      "duration_s": 2.725,
+      "clip_sha256": "45a4374eda79e48108a1bcf8118ebe425b6044cac4f451216b240a218d61d26a",
       "line": 4,
       "spec": "project://motion/specs/p04.json",
-      "spec_sha256": "ce987b4b441fed537343a15f342cecd2f6e6a2042f1fb89460377e22aa638d3d",
+      "spec_sha256": "c753ecbf996a03e1ea2aefdd956e6cc83f17db0bc86c989d9ca81d3a804db92f",
       "grammar": "y1_kurzgesagt"
     },
     {
       "type": "beat",
       "clip": "project://work/clips/p05.mp4",
-      "duration_s": 2.306,
-      "clip_sha256": "1f87fcfe81955cd8547ac97e7199b44f1847cf08e123b993e1fa3ce1ac7ed496",
+      "duration_s": 2.097,
+      "clip_sha256": "6d8f3cb7fe5a1406d7aad4ea99ff05aab0bedcbbcd3d190e66a02d347070159b",
       "line": 5,
       "spec": "project://motion/specs/p05.json",
-      "spec_sha256": "8eefff287838622ef2b57a5cf1a9bc5a6a886917b7c4cf0c305bbe6f05495bbd",
+      "spec_sha256": "710ae4d12932891813fbf17e24bad5d98ea931dd5343422db29dcc230428aee2",
       "grammar": "y1_kurzgesagt"
     },
     {
       "type": "beat",
       "clip": "project://work/clips/p06.mp4",
-      "duration_s": 6.459,
-      "clip_sha256": "97e60564d93912d6702d2393a3fe30d2f75415ab21482a9f41ddb693ee2f131e",
+      "duration_s": 5.871,
+      "clip_sha256": "d015b36b402081fd4121955410ae3545abbe4fdfe7f530392f4e5b6a64a59616",
       "line": 6,
       "spec": "project://motion/specs/p06.json",
-      "spec_sha256": "78374054ae6addf805ca7da309009b10cd3d36f75c2712fe95b1617794e3cf4c",
+      "spec_sha256": "7ea2028b9102b119a88a5b41e5e4d426f5e20136b4a18d932d444d8d77052f8a",
       "grammar": "y2_vox"
     },
     {
       "type": "beat",
       "clip": "project://work/clips/p07.mp4",
-      "duration_s": 1.675,
-      "clip_sha256": "ff22b3dffe1b5330329d3e2e233cd268d3997b8ab1645e5eb2bdd6f18d48437a",
+      "duration_s": 1.523,
+      "clip_sha256": "2270ece0a7dcba6c638fb80e549a8cdade77639ed8d0edb9ca17074e4fcfea33",
       "line": 7,
       "spec": "project://motion/specs/p07.json",
-      "spec_sha256": "ee8100171857e3abf6a813d8a9cfc645b03ff01dd77cf19e2e570a8d717de4ee",
+      "spec_sha256": "809b869b5074f66c911a499237ac4f31a209abaf7ab53784cabc3454ce8fb73a",
       "grammar": "y2_vox"
     },
     {
       "type": "beat",
       "clip": "project://work/clips/p08.mp4",
-      "duration_s": 4.545,
-      "clip_sha256": "3a0a04e0f027b07eebc82b0ee60f719879c1831eee371e10577f8f566ee260bf",
+      "duration_s": 4.132,
+      "clip_sha256": "801375ae76fedc3f7ba47c7e56b97be45b6aeeb3a674d5e06df7a83bfc904fe0",
       "line": 8,
       "spec": "project://motion/specs/p08.json",
-      "spec_sha256": "2f493c90e24a3b0d17a7cc2c685f7b8a9b7eaac546baa9779cd38df0761d6191",
+      "spec_sha256": "c0c38f2f4210c7c6bdfd630d47ea293b23044ce6a221cd1ee13a6004eb9757f7",
       "grammar": "y2_vox"
     },
     {
       "type": "beat",
       "clip": "project://work/clips/p09.mp4",
-      "duration_s": 2.392,
-      "clip_sha256": "0e8a3ca114593b5bea64bd083a06c5b9635a65819012d4018800049d091430a7",
+      "duration_s": 2.175,
+      "clip_sha256": "7f8d4ca064f3d7d02d9d725ef204c1ca7979a84e8b784e616cc3a0c4c14e5fe3",
       "line": 9,
       "spec": "project://motion/specs/p09.json",
-      "spec_sha256": "ba90224f91c9710b34b7ee0a7e3143e81b1170e23c2b436f371b3cc51d2e8508",
+      "spec_sha256": "b8af1eb5df63b2f5ed5fcbb4f7927b448487020f2607fbd41624678cd1899791",
       "grammar": "y1_kurzgesagt"
     },
     {
       "type": "beat",
       "clip": "project://work/clips/p10.mp4",
-      "duration_s": 1.914,
-      "clip_sha256": "74a48444f5a5955b1c764e586bd96c9ae933a00a65722e54366a7318e7f7ee9a",
+      "duration_s": 1.74,
+      "clip_sha256": "4d76044b48249e5bd73d4f6586a90838deabadaada6bea36fdf3e15219a3c252",
       "line": 10,
       "spec": "project://motion/specs/p10.json",
-      "spec_sha256": "7f07f1fd74647b1ee85ed40e87af88210896e0cbf041a6c984f3bb44d9a8f547",
+      "spec_sha256": "14757a6db62061046c34aa9d550b560e78c80b19dc526718bc1696c307889d2a",
       "grammar": "y1_kurzgesagt"
     },
     {
       "type": "beat",
       "clip": "project://work/clips/p11.mp4",
-      "duration_s": 1.243,
-      "clip_sha256": "83a03c5e67e441baeb3c57ff7e7a9f8d4dc53da7a12d96e80ab1861c9a7b4c79",
+      "duration_s": 1.13,
+      "clip_sha256": "eef77e46199cad1d7559f7e5cdf93ff4495089406f060f853471c1c078f39601",
       "line": 11,
       "spec": "project://motion/specs/p11.json",
-      "spec_sha256": "67cebcd019dca7b29df35a569a9285f416e536177679ece3e22ce7bb45e47e26",
+      "spec_sha256": "2d6e0a3ddc13d533d092db1536dc171b3ce6c7619dc1853fb593b6569b9edb21",
       "grammar": "y1_kurzgesagt"
     },
     {
       "type": "beat",
       "clip": "project://work/clips/p12.mp4",
-      "duration_s": 3.315,
-      "clip_sha256": "ef189b808ddeb5faf5c2abafa72f6c757a4e3905324ec67e2c1ea84e47dbbb55",
+      "duration_s": 3.013,
+      "clip_sha256": "5f34121ef6188e09a367642fbdf1fba15595f5df5122b751eab52c86fd135893",
       "line": 12,
       "spec": "project://motion/specs/p12.json",
-      "spec_sha256": "848b3b4a2f6697c60c6c4d8c7474a0ef5580e24c52f120b162e616b32702fc44",
+      "spec_sha256": "687b56f3b4a1c3947eb9e0d484561347d20a18d1c93d11e0b17b0cc58a4d2435",
       "grammar": "y2_vox"
     },
     {
       "type": "beat",
       "clip": "project://work/clips/p13.mp4",
-      "duration_s": 3.729,
-      "clip_sha256": "40bdebec1825d1135f9eda7ecdfedb39f75fbfecb966e480317bb5c087f965a4",
+      "duration_s": 3.39,
+      "clip_sha256": "432172fd42b24937a6117b5c541bdd46edbda15dd21c26da5e6bb2281b0b309d",
       "line": 13,
       "spec": "project://motion/specs/p13.json",
-      "spec_sha256": "6ae9f331bb4873e5dcfdf8f3dec4b8f77ba688eed77e58fb137a550780bd9b73",
+      "spec_sha256": "e42113b7434109ed029c2d3a8704965851fcc0e9f0d056783499df27258bb0fd",
       "grammar": "y2_vox"
     },
     {
       "type": "beat",
       "clip": "project://work/clips/p14.mp4",
-      "duration_s": 3.315,
-      "clip_sha256": "f4edfaedf8642f3a14076f088850dea91af213c4caccf44b464ef58dad741828",
+      "duration_s": 3.014,
+      "clip_sha256": "eb36daf34fd4124fb2d581753cf78f6683ac6b445f4d5874b0023c79d6ef4f30",
       "line": 14,
       "spec": "project://motion/specs/p14.json",
-      "spec_sha256": "a52090d1d2b3c48a91b1e4245a096e34a4c4e5a39f06fa400061a059599bd744",
+      "spec_sha256": "30f456d3cf34e983de100ce9049533f0e2adda5290d9c81f832da451892426bd",
       "grammar": "y2_vox"
     },
     {
       "type": "beat",
       "clip": "project://work/clips/p15.mp4",
-      "duration_s": 1.243,
-      "clip_sha256": "c6321b56ff69acb1c6db0e24c222384fa4c395de3a192626fd89580217a275d8",
+      "duration_s": 1.13,
+      "clip_sha256": "4ea1417a9f6bfe832ca6b1f34993f44b47a8fb80b464fe8a25b2dcd348c05037",
       "line": 15,
       "spec": "project://motion/specs/p15.json",
-      "spec_sha256": "604f654d915811997c8d72fefbc467f9fa95af3d1be4ecb7f01be72d585d0b40",
+      "spec_sha256": "af804104ba0d94f996dd062ec4bbaa96a1d0bbf6b3df1a1c87e3279685af410b",
       "grammar": "y2_vox"
     }
   ],
@@ -186,7 +202,7 @@
     "status": "OMITTED"
   },
   "voice": {
-    "provider": "reused narration.wav (split at SRT cue boundaries)",
+    "provider": "split from narration-1.10x.wav at caption cue boundaries",
     "clone_alias": null,
     "clone_id_hash": null,
     "lines": [
@@ -194,109 +210,133 @@
         "line": 1,
         "text": "但有个坑：网关健康检查探的是写死的默认端口，",
         "path": "project://assets/voice/lines/line01.wav",
-        "duration_s": 5.313
+        "duration_s": 4.83
       },
       {
         "line": 2,
         "text": "和 Easel 实际网关端口对不上——那一行，是红的。",
         "path": "project://assets/voice/lines/line02.wav",
-        "duration_s": 6.52
+        "duration_s": 5.927
       },
       {
         "line": 3,
         "text": "装了 Easel 之后，",
         "path": "project://assets/voice/lines/line03.wav",
-        "duration_s": 2.768
+        "duration_s": 2.517
       },
       {
         "line": 4,
         "text": "最先要回答的只有一个问题：",
         "path": "project://assets/voice/lines/line04.wav",
-        "duration_s": 2.998
+        "duration_s": 2.725
       },
       {
         "line": 5,
         "text": "它到底跑不跑得起来？",
         "path": "project://assets/voice/lines/line05.wav",
-        "duration_s": 2.306
+        "duration_s": 2.097
       },
       {
         "line": 6,
         "text": "更直接的是 Web 工作台这条路：六项没过。依赖没装，",
         "path": "project://assets/voice/lines/line06.wav",
-        "duration_s": 6.459
+        "duration_s": 5.871
       },
       {
         "line": 7,
         "text": "前端也没构建，",
         "path": "project://assets/voice/lines/line07.wav",
-        "duration_s": 1.675
+        "duration_s": 1.523
       },
       {
         "line": 8,
         "text": ".env 里也没有 API Key——",
         "path": "project://assets/voice/lines/line08.wav",
-        "duration_s": 4.545
+        "duration_s": 4.132
       },
       {
         "line": 9,
         "text": "所以 Web 界面，",
         "path": "project://assets/voice/lines/line09.wav",
-        "duration_s": 2.392
+        "duration_s": 2.175
       },
       {
         "line": 10,
         "text": "到现在还没验证。",
         "path": "project://assets/voice/lines/line10.wav",
-        "duration_s": 1.914
+        "duration_s": 1.74
       },
       {
         "line": 11,
         "text": "一句话收尾：",
         "path": "project://assets/voice/lines/line11.wav",
-        "duration_s": 1.243
+        "duration_s": 1.13
       },
       {
         "line": 12,
         "text": "Easel 不是开箱即用的产品，",
         "path": "project://assets/voice/lines/line12.wav",
-        "duration_s": 3.315
+        "duration_s": 3.013
       },
       {
         "line": 13,
         "text": "但它是一个真能被调起来的生产引擎——",
         "path": "project://assets/voice/lines/line13.wav",
-        "duration_s": 3.729
+        "duration_s": 3.39
       },
       {
         "line": 14,
         "text": "CLI 和 Skill 这条线，",
         "path": "project://assets/voice/lines/line14.wav",
-        "duration_s": 3.315
+        "duration_s": 3.014
       },
       {
         "line": 15,
         "text": "今天是通的。",
         "path": "project://assets/voice/lines/line15.wav",
-        "duration_s": 1.243
+        "duration_s": 1.13
       }
     ],
-    "presenter": null,
+    "presenter": {
+      "text": "但有个坑：网关健康检查探的是写死的默认端口。",
+      "path": "project://assets/voice/presenter-opening.wav",
+      "wav_sha256": "cebcf10dbc1eeea6705f296b5d40c005cdffccf234eb30ac027c86e4a5239671",
+      "duration_s": 4.458,
+      "clip": "p00",
+      "variant": "easel",
+      "voice": "minimax_h3_ref2va",
+      "dialogue_language": "Chinese",
+      "shot": "project://work/generated/shot-6b2ef91bb6b7790c.mp4",
+      "shot_sha256": "4ad0a93eee63de6a63f4346c571ddfdce3d4e764a326fc5ae6030e5e3e1b9d82",
+      "shot_receipt": "project://work/generated/shot-6b2ef91bb6b7790c.mp4.receipt.json",
+      "speech_check": {
+        "model": "asr-1.0",
+        "provider": "minimax_m_plan",
+        "status": "DETECTED_PROBLEM",
+        "role": "DETECTOR_ONLY",
+        "coverage": 0.95,
+        "transcript": "但有个坑，网关健康检查探的是协死的默认端口。",
+        "checked_on": "2026-10-29",
+        "detail": null
+      }
+    },
     "receipts": "project://receipts/voice-lines.json"
   },
   "captions": {
     "path": "project://assets/captions/default.srt",
-    "sha256": "be110c1bf549096a3aac88f78c31f5c0f34fc755c4eaf3f20e9a02ce1cd18170",
+    "sha256": "7c9ab9b8b615b1d77269dbf5dfe5d212700c9a9772be341e68c25edd71c16fe6",
     "style_source": "config/accounts/x-superplay-1024.json",
     "cues": 15
   },
   "visual_track": {
-    "mode": "beat_clips"
+    "mode": "full_film_eras",
+    "path": "project://work/film.mp4",
+    "sha256": "d1f29b59499c770e3526dd8b0ac2f151f40fe27ef71b048b55e479a421cdc0a5"
   },
   "output": {
     "path": "project://final/easel.mp4",
-    "sha256": "0269f6acaec043da8f4fbbbd4f101024f39b65f800c7e15fea554ac892e105a4",
-    "duration_s": 49.735,
+    "sha256": "d4ac5faa5f9ba71a1bc276241806f0fef9866f175ece0bbc07ed95b3aae38121",
+    "duration_s": 44.842,
     "width": 1080,
     "height": 1920,
     "video_codec": "h264",
@@ -305,17 +345,17 @@
   "technical_qc": {
     "decodable": true,
     "longest_black_run_s": 0.0,
-    "longest_freeze_run_s": 2.694,
-    "analysed_frames": 240,
+    "longest_freeze_run_s": 2.6,
+    "analysed_frames": 224,
     "notes": [],
     "reasons": [
-      "frozen run of 2.69s exceeds 1.5s; the render appears stalled"
+      "frozen run of 2.60s exceeds 1.5s; the render appears stalled"
     ]
   },
   "red_lines": {
     "manual_recording": "none — pure code animation",
     "mouse_or_desktop": "none",
-    "ai_generated_footage": "generated inserts are claim-free and below the 10% cap",
+    "ai_generated_footage": "generated inserts are claim-free and below the 10% cap; the eras opening is an AI digital human, labelled AI-synthesised and declared separately in generated_media.ai_presenter",
     "platform_url_claimed": false
   },
   "production_ready": false,

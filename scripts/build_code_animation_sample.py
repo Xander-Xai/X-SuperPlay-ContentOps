@@ -138,7 +138,10 @@ def _voice_lines(voice: Dict[str, Any], variant: str) -> Dict[int, Dict[str, Any
     """
     lines = {int(row["line"]): row for row in voice["lines"]}
     presenter = voice.get("presenter")
-    if variant == "eras" and presenter:
+    # A presenter belongs to the variant it was recorded for. Projects with a
+    # baseline to protect declare "eras"; a project with no baseline can declare
+    # the variant it actually builds, so the opening is not silently dropped.
+    if presenter and presenter.get("variant", "eras") == variant:
         lines[PRESENTER_LINE] = {**presenter, "line": PRESENTER_LINE}
     return lines
 

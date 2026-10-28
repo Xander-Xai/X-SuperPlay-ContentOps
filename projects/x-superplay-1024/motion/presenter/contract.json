@@ -1,0 +1,13 @@
+{
+  "schema": "contentops.presenter-opening/v1",
+  "variant": "easel",
+  "clip": "p00",
+  "line": 0,
+  "text": "但有个坑：网关健康检查探的是写死的默认端口。",
+  "replaces_line": 1,
+  "max_share": 0.1,
+  "require_speech_verified": false,
+  "speech_note": "asr-1.0 transcribed 写死 as 协死 (coverage 0.95), so the take is NOT verified. The flag is off only so the 2026-10-29 integration test could render; turn it back on once a human has listened to assets/voice/presenter-opening.wav.",
+  "request": "project://motion/presenter/opening-shot.json",
+  "note": "The 1024 cut opens on a face carrying the first hook line. Declared here so a later build cannot drop the opening silently: the composer refuses this variant when the contract is unmet."
+}

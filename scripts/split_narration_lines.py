@@ -68,7 +68,17 @@ def split(project: Path, narration: Path, caption: Path) -> dict:
         "lines": rows,
         "total_s": round(sum(row["duration_s"] for row in rows), 3),
     }
-    (project / "receipts" / "voice-lines.json").write_text(
+    # The presenter block is generated once and must survive every re-split;
+    # dropping it here would silently remove the opening from the next build.
+    receipt = project / "receipts" / "voice-lines.json"
+    if receipt.is_file():
+        try:
+            previous = json.loads(receipt.read_text(encoding="utf-8"))
+        except ValueError:
+            previous = {}
+        if previous.get("presenter"):
+            document["presenter"] = previous["presenter"]
+    receipt.write_text(
         json.dumps(document, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return document
 
