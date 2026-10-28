@@ -49,7 +49,8 @@ REAL EXECUTION RECEIPT
 | Video replication capability reconciliation | EXPERIMENT — M1–M9 against the current runtime, four-way split, external-asset record, open conflicts | `video-replication/capability-reconciliation-2026-10-27.md` |
 | Benchmark verification (round 2) | VERIFIED via ASR transcripts — tools/flow/redaction confirmed; frame-level details still pending MP4 access | `video-replication/verification-round-2026-10-28.md` |
 | Three new creators (柱子哥/花叔/秋芝2046) | ANALYZED — code-rendered animation route; 7 GitHub repos located (lemo-opuscar 8.7k★, huashu-art-motion 5.5k★) | `video-replication/three-creators-analysis-2026-10-28.md` |
-| B-roll motion asset evaluation | ADOPTED HyperFrames 0.8.208 (Apache-2.0); huashu/xilo as references; X scan blocked by login | `video-replication/motion-asset-evaluation-2026-10-28.md` |
+| B-roll motion asset evaluation | ADOPTED HyperFrames 0.8.208 (Apache-2.0); huashu/xilo as references; initial X-login prerequisite recorded | `video-replication/motion-asset-evaluation-2026-10-28.md` |
+| X post-login motion/BGM/material scan | COMPLETED — trends inform process only; no license-unclear media or new dependency adopted | `video-replication/free-bgm-and-material-2026-10-28.md` |
 | Open-source animation skill selection | EVALUATED (read-only) — huashu-art-motion recommended as the Build animation layer; xilo as process reference; lemo deferred (WSL) | `video-replication/open-source-animation-eval-2026-10-28.md` |
 | Free BGM and authoritative material | SYNTHESISED BGM locally; Mermaid (MIT) for redrawn official diagrams; no unlicensed asset packs | `video-replication/free-bgm-and-material-2026-10-28.md` |
 | huashu-art-motion integration | INTEGRATED — external skill in the shared store, Windows adapter, 20 s definitional sample, QC WARN recorded | `video-replication/huashu-integration-2026-10-28.md` |

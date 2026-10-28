@@ -60,4 +60,14 @@ GitHub 上「AI Agent architecture」类仓库多为个人笔记（0–2 star、
 
 ## 3. X 渠道
 
-`agent-reach twitter search` 仍返回 `NEED_LOGIN`。创始人已表示可以协助登录；登录后补跑「AI 讲解视频 动效 / BGM / 架构图」三组查询，结果并入本文件。
+2026-10-28：`agent-reach login twitter` 仍报 `NEED_SETUP`（OpenCLI 1.8.6 版本判定问题），
+但 `agent-reach check twitter` 实测 `search` 与 `profile` 均 PASS（backend `opencli`），
+因此直接用只读搜索路径完成三组查询，未绕过认证、未换账号。
+
+| 查询 | 有效信号 | 决策 |
+|---|---|---|
+| `AI explainer motion graphics architecture diagram` | 多条帖子推荐把视觉语言、动效、渲染、审片拆为专门阶段；其中一条列出 HyperFrames、Motion Canvas、Manim 等代码渲染工具。 | 与现有「skill-first + huashu + Easel 编排」方向一致；不因帖子直接新增依赖。 |
+| `AI explainer background music free music license` | 结果以推广性“免费 AI 工具/工作流”为主；没有得到可直接复用且许可证明确的 BGM 素材库。 | 保持本机合成 BGM，不下载或接入未核验的音乐包。 |
+| `official AI agent architecture workflow agent diagram Anthropic` | X 结果主要是二手转述和工具清单；没有比 Anthropic 原文更权威的图源。 | P02 继续采用 Anthropic 原文概念的自主重绘，来源写入项目 `source_refs`。 |
+
+X 帖子只提供趋势与工具线索，不作为影片事实或架构断言的证据。其访问记录保留在本次 Agent Reach 的只读查询输出；不搬运帖子中的媒体、提示词或许可不明资源。
