@@ -1,0 +1,36 @@
+{
+  "voice": "speech-2.8-hd",
+  "lines": [
+    {
+      "line": 1,
+      "text": "Agent 不是一次问答。",
+      "path": "project://assets/voice/line-01.wav",
+      "duration_s": 1.718
+    },
+    {
+      "line": 2,
+      "text": "它先定目标，再决定下一步。",
+      "path": "project://assets/voice/line-02.wav",
+      "duration_s": 2.635
+    },
+    {
+      "line": 3,
+      "text": "用工具拿回结果，再改计划。",
+      "path": "project://assets/voice/line-03.wav",
+      "duration_s": 2.543
+    },
+    {
+      "line": 4,
+      "text": "这个循环会留下记录。",
+      "path": "project://assets/voice/line-04.wav",
+      "duration_s": 1.614
+    },
+    {
+      "line": 5,
+      "text": "能回查，才算跑过。",
+      "path": "project://assets/voice/line-05.wav",
+      "duration_s": 2.252
+    }
+  ],
+  "total_s": 10.762
+}

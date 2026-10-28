@@ -1,0 +1,124 @@
+{
+  "schema": "contentops.code-animation-sample/v1",
+  "built_at": "2026-10-28T02:35:19Z",
+  "package_id": "easel-fi-what-is-agent",
+  "content_type": "DEFINITIONAL_EXPLAINER",
+  "claim_bearing": false,
+  "external_skill": {
+    "name": "huashu-art-motion",
+    "version": "1.2.0",
+    "license": "MIT",
+    "engine": "scripts/engine/render.py",
+    "grammar": "t2_keynote_ui",
+    "windows_adapter": "Playwright channel fallback (chrome/msedge) and PYTHONUTF8=1 for spec JSON"
+  },
+  "timeline": {
+    "clip_seconds": 4.0,
+    "clips": 5,
+    "narration_s": 20.0
+  },
+  "clips": [
+    {
+      "spec": "project://motion/specs/p01.json",
+      "spec_sha256": "4b5b84a785262dde2b41e2d3baadda15fa5c203b87392de1e439ef1cb03dee03",
+      "clip": "project://work/clips/p01.mp4",
+      "clip_sha256": "4b92192935ed5911861ab991b49fbcca396b3ace31f01aaef53e54d39c1ff89a",
+      "duration_s": 4.0
+    },
+    {
+      "spec": "project://motion/specs/p02.json",
+      "spec_sha256": "adf6728b3802016d0f4e5ccabe0ec81b6bff951487b0b4262e3d3e72eafb795b",
+      "clip": "project://work/clips/p02.mp4",
+      "clip_sha256": "649a729f2f59f63f479edad12ab45ad2f714a33a71870a0c71870ea50fcc0a60",
+      "duration_s": 4.0
+    },
+    {
+      "spec": "project://motion/specs/p03.json",
+      "spec_sha256": "a69865b86489b1d69673cc15031397470a1ec21557f77a8b16fdec1ec7f1b8d4",
+      "clip": "project://work/clips/p03.mp4",
+      "clip_sha256": "0c6ad7f0be17a105bfea6b4ba233d381c61d8a15c78ceb5aae291dd945c1c75b",
+      "duration_s": 4.0
+    },
+    {
+      "spec": "project://motion/specs/p04.json",
+      "spec_sha256": "54e8d86e4fa5068c4099c909d78e0f9ee80dc4c8827fff2f6cdec64b196ce8e1",
+      "clip": "project://work/clips/p04.mp4",
+      "clip_sha256": "fa2db2de0f066d82c4470217c009008f9c34e8d898ec2af881d3949cc7429bc5",
+      "duration_s": 4.0
+    },
+    {
+      "spec": "project://motion/specs/p05.json",
+      "spec_sha256": "f3a9505686d5b3289bc3c5075b6005cc2c2dc4678a9ed7fbb1884026ea74b476",
+      "clip": "project://work/clips/p05.mp4",
+      "clip_sha256": "658ae9951a88e7fb6394eed194a94379a081dfc932f27fe6da0ae65bbb38ee05",
+      "duration_s": 4.0
+    }
+  ],
+  "voice": {
+    "provider": "speech-2.8-hd",
+    "lines": [
+      {
+        "line": 1,
+        "text": "Agent 不是一次问答。",
+        "path": "project://assets/voice/line-01.wav",
+        "duration_s": 1.718
+      },
+      {
+        "line": 2,
+        "text": "它先定目标，再决定下一步。",
+        "path": "project://assets/voice/line-02.wav",
+        "duration_s": 2.635
+      },
+      {
+        "line": 3,
+        "text": "用工具拿回结果，再改计划。",
+        "path": "project://assets/voice/line-03.wav",
+        "duration_s": 2.543
+      },
+      {
+        "line": 4,
+        "text": "这个循环会留下记录。",
+        "path": "project://assets/voice/line-04.wav",
+        "duration_s": 1.614
+      },
+      {
+        "line": 5,
+        "text": "能回查，才算跑过。",
+        "path": "project://assets/voice/line-05.wav",
+        "duration_s": 2.252
+      }
+    ],
+    "receipts": "project://receipts/voice-lines.json"
+  },
+  "captions": {
+    "path": "project://assets/captions/cut.srt",
+    "sha256": "3883cf90d253adbc832266362d9f558306e5852f22009f64e7784483212f5d52",
+    "style_source": "config/accounts/x-superplay-future-intelligence.json",
+    "cues": 5
+  },
+  "output": {
+    "path": "project://final/easel.mp4",
+    "sha256": "309cf5a764beb83b95ed1c34a459ee56bd2f325ab944a792b73e29a1d871ff3b",
+    "duration_s": 20.0,
+    "width": 1080,
+    "height": 1920,
+    "video_codec": "h264",
+    "audio_codec": "aac"
+  },
+  "technical_qc": {
+    "decodable": true,
+    "longest_black_run_s": 0.0,
+    "longest_freeze_run_s": 0.6,
+    "analysed_frames": 100,
+    "notes": [],
+    "reasons": []
+  },
+  "red_lines": {
+    "manual_recording": "none — pure code animation",
+    "mouse_or_desktop": "none",
+    "ai_generated_footage": "none",
+    "platform_url_claimed": false
+  },
+  "production_ready": false,
+  "human_review": "PENDING_FOUNDER_REVIEW"
+}

@@ -1,0 +1,40 @@
+{
+  "size": "1080x1920",
+  "engine": "easel",
+  "pad_mode": "trim",
+  "narration": "work/narration.wav",
+  "subtitle": "assets/captions/cut.srt",
+  "voice_provider": "minimax-mplan",
+  "shots": [
+    {
+      "video": "work/clips/p01.mp4",
+      "duration": 4.0,
+      "source": "huashu-art-motion:t2_keynote_ui",
+      "source_type": "vector_animation"
+    },
+    {
+      "video": "work/clips/p02.mp4",
+      "duration": 4.0,
+      "source": "huashu-art-motion:t2_keynote_ui",
+      "source_type": "vector_animation"
+    },
+    {
+      "video": "work/clips/p03.mp4",
+      "duration": 4.0,
+      "source": "huashu-art-motion:t2_keynote_ui",
+      "source_type": "vector_animation"
+    },
+    {
+      "video": "work/clips/p04.mp4",
+      "duration": 4.0,
+      "source": "huashu-art-motion:t2_keynote_ui",
+      "source_type": "vector_animation"
+    },
+    {
+      "video": "work/clips/p05.mp4",
+      "duration": 4.0,
+      "source": "huashu-art-motion:t2_keynote_ui",
+      "source_type": "vector_animation"
+    }
+  ]
+}

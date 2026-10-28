@@ -1,0 +1,46 @@
+{
+  "grammar": "t2_keynote_ui",
+  "duration": 4,
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": "ink",
+  "data": {
+    "eyebrow": "WHAT IS AN AGENT",
+    "accent": "#38BDF8"
+  },
+  "cues": [
+    {
+      "at": 0.0,
+      "kind": "title",
+      "text": "能回查，才算跑过",
+      "sub": "记录 → 复现 → 判断"
+    },
+    {
+      "at": 1.2,
+      "kind": "step",
+      "text": "记录可复现",
+      "data": {
+        "icon": "check"
+      }
+    },
+    {
+      "at": 2.4,
+      "kind": "step",
+      "text": "结论可核对",
+      "data": {
+        "step": "02",
+        "icon": "lock"
+      }
+    },
+    {
+      "at": 3.2,
+      "kind": "step",
+      "text": "没有记录就不算",
+      "data": {
+        "step": "03",
+        "icon": "lock"
+      }
+    }
+  ]
+}

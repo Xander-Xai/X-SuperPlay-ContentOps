@@ -1,0 +1,46 @@
+{
+  "grammar": "t2_keynote_ui",
+  "duration": 4,
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": "ink",
+  "data": {
+    "eyebrow": "WHAT IS AN AGENT",
+    "accent": "#38BDF8"
+  },
+  "cues": [
+    {
+      "at": 0.0,
+      "kind": "title",
+      "text": "先定目标",
+      "sub": "再决定下一步"
+    },
+    {
+      "at": 0.9,
+      "kind": "step",
+      "text": "目标",
+      "data": {
+        "icon": "check"
+      }
+    },
+    {
+      "at": 1.9,
+      "kind": "step",
+      "text": "下一步做什么",
+      "data": {
+        "step": "02",
+        "icon": "layers"
+      }
+    },
+    {
+      "at": 3.0,
+      "kind": "step",
+      "text": "然后才行动",
+      "data": {
+        "step": "03",
+        "icon": "check"
+      }
+    }
+  ]
+}

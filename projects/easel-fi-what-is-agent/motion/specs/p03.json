@@ -1,0 +1,46 @@
+{
+  "grammar": "t2_keynote_ui",
+  "duration": 4,
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": "ink",
+  "data": {
+    "eyebrow": "WHAT IS AN AGENT",
+    "accent": "#38BDF8"
+  },
+  "cues": [
+    {
+      "at": 0.0,
+      "kind": "title",
+      "text": "再调工具",
+      "sub": "拿回结果，再改计划"
+    },
+    {
+      "at": 0.8,
+      "kind": "step",
+      "text": "调工具",
+      "data": {
+        "icon": "bolt"
+      }
+    },
+    {
+      "at": 1.8,
+      "kind": "step",
+      "text": "看结果",
+      "data": {
+        "step": "02",
+        "icon": "chart"
+      }
+    },
+    {
+      "at": 2.8,
+      "kind": "step",
+      "text": "改计划",
+      "data": {
+        "step": "03",
+        "icon": "layers"
+      }
+    }
+  ]
+}

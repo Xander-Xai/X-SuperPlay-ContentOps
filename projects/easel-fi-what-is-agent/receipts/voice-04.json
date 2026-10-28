@@ -1,0 +1,173 @@
+{
+  "provider": "minimax_m_plan",
+  "product": "m_plan",
+  "plan": "explore",
+  "billing_mode": "subscription",
+  "payg_allowed": false,
+  "credit_pack_allowed": false,
+  "credential_recorded": "credential_class only; never a value",
+  "transport": "official_cli",
+  "transport_version": "mmx 1.0.27",
+  "model": "speech-2.8-hd",
+  "voice": "Chinese (Mandarin)_Reliable_Executive",
+  "display_text_sha256": "a73a170ba40c9637741f1e804778c8b05f5d34c50b57a5d9ff48f24500d5a6c7",
+  "spoken_text_sha256": "a73a170ba40c9637741f1e804778c8b05f5d34c50b57a5d9ff48f24500d5a6c7",
+  "lexicon_version": "zh-2026.10.04.1",
+  "fingerprint": "7e391d63216d917132c591d6a7b355eaa43dd60a2b62d3cae50769ba4c05adea",
+  "quota_before": {
+    "bucket": "general",
+    "interval_remaining_percent": 99.0,
+    "weekly_remaining_percent": 81.0,
+    "modality_breakdown": {}
+  },
+  "quota_after": {
+    "bucket": "general",
+    "interval_remaining_percent": 99.0,
+    "weekly_remaining_percent": 81.0,
+    "modality_breakdown": {}
+  },
+  "billing_guard_verdict": "SAFE_INCLUDED_PLAN",
+  "billing_guard_reasons": [],
+  "post_generation_billing_state": {
+    "quota_after": {
+      "bucket": "general",
+      "interval_remaining_percent": 99.0,
+      "weekly_remaining_percent": 81.0
+    }
+  },
+  "technical_qc": {
+    "approved": true,
+    "checks": [
+      {
+        "check": "file_exists",
+        "passed": true,
+        "detail": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-fi-what-is-agent\\assets\\voice\\narration-7e391d63216d9171.wav"
+      },
+      {
+        "check": "not_empty",
+        "passed": true,
+        "detail": "103362 bytes"
+      },
+      {
+        "check": "has_audio_codec",
+        "passed": true,
+        "detail": "pcm_s16le"
+      },
+      {
+        "check": "has_duration",
+        "passed": true,
+        "detail": 1.614
+      },
+      {
+        "check": "sample_rate",
+        "passed": true,
+        "detail": {
+          "expected": 32000,
+          "actual": 32000
+        }
+      },
+      {
+        "check": "mono_or_stereo",
+        "passed": true,
+        "detail": 1
+      },
+      {
+        "check": "duration_plausible",
+        "passed": true,
+        "detail": {
+          "expected_s": 1.6666666666666667,
+          "actual_s": 1.614
+        }
+      },
+      {
+        "check": "leading_silence",
+        "passed": true,
+        "detail": 0.0
+      },
+      {
+        "check": "trailing_silence",
+        "passed": true,
+        "detail": 0.0
+      },
+      {
+        "check": "not_mostly_silent",
+        "passed": true,
+        "detail": -1.5
+      },
+      {
+        "check": "no_clipping",
+        "passed": true,
+        "detail": -1.5
+      },
+      {
+        "check": "loudness_floor",
+        "passed": true,
+        "detail": -21.7
+      },
+      {
+        "check": "true_peak_headroom",
+        "passed": true,
+        "detail": -1.5
+      }
+    ],
+    "measurements": {
+      "codec": "pcm_s16le",
+      "sample_rate_hz": 32000,
+      "channels": 1,
+      "duration_s": 1.614,
+      "bytes": 103362,
+      "integrated_lufs": -21.7,
+      "true_peak_db": -1.5,
+      "peak_db": -1.5,
+      "mean_db": -21.3,
+      "loudness_range_lu": 0.0
+    },
+    "silence": {
+      "available": true,
+      "silences": [],
+      "leading_silence_s": 0.0,
+      "trailing_silence_s": 0.0
+    }
+  },
+  "semantic_qc": {
+    "status": "NO_PROBLEM_DETECTED",
+    "role": "DETECTOR_ONLY",
+    "can_approve_quality": false,
+    "transcript": "这个循环会留下记录。",
+    "coverage": 1.0,
+    "issues": [],
+    "missing": [],
+    "excess": [],
+    "detail": null
+  },
+  "raw_sha256": "a0c411866e7a55f0965539c6ec70a1c509f05ddebd94aa49dfcbae558d872ff6",
+  "normalized_sha256": "df7d258ac985d6101abc589827d27864327bf018925f40952e735a915326cedc",
+  "attempt": 1,
+  "retry_reason": null,
+  "fallback": {
+    "edge_tts_available": true,
+    "used": false,
+    "degraded": false,
+    "policy": "explicit only; a silent swap to edge-tts is forbidden"
+  },
+  "production_ready": false,
+  "human_review": "PENDING_FOUNDER_REVIEW",
+  "asset": {
+    "normalized_path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-fi-what-is-agent\\assets\\voice\\narration-7e391d63216d9171.wav",
+    "duration_s": 1.614,
+    "sample_rate_hz": 32000,
+    "channels": 1,
+    "codec": "pcm_s16le",
+    "peak_before_db": -0.6,
+    "peak_after_db": -1.5,
+    "loudness_before": -20.8,
+    "loudness_after": -21.7,
+    "approved": true
+  },
+  "reused_cached_asset": false,
+  "provider_request_made": true,
+  "credential_binding": {
+    "credential_class": "SUBSCRIPTION",
+    "credential_source": "MMX_CONFIG"
+  }
+}

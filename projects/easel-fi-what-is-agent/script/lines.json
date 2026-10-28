@@ -1,0 +1,14 @@
+{
+  "schema": "contentops.audio-first-lines/v1",
+  "package_id": "easel-fi-what-is-agent",
+  "evidence_mode": "EXPLANATORY",
+  "manual_recording": "FORBIDDEN",
+  "composition": [{"role": "vector_animation", "pct": 100}],
+  "beats": [
+    {"placement_id": "P-01", "claim_id": "C-01", "text": "Agent 不是一次问答。", "semantic_progress": "the question is reopened", "views": [{"asset_id": "A-MOTION-1", "crop": {"x":0,"y":0,"width":1080,"height":1920}}]},
+    {"placement_id": "P-02", "claim_id": "C-02", "text": "它先定目标，再决定下一步。", "semantic_progress": "goal then plan", "views": [{"asset_id": "A-MOTION-2", "crop": {"x":0,"y":0,"width":1080,"height":1920}}]},
+    {"placement_id": "P-03", "claim_id": "C-03", "text": "用工具拿回结果，再改计划。", "semantic_progress": "tool then observation", "views": [{"asset_id": "A-MOTION-3", "crop": {"x":0,"y":0,"width":1080,"height":1920}}]},
+    {"placement_id": "P-04", "claim_id": "C-04", "text": "这个循环会留下记录。", "semantic_progress": "the loop leaves a trace", "views": [{"asset_id": "A-MOTION-4", "crop": {"x":0,"y":0,"width":1080,"height":1920}}]},
+    {"placement_id": "P-05", "claim_id": "C-05", "text": "能回查，才算跑过。", "semantic_progress": "checkable is the bar", "views": [{"asset_id": "A-MOTION-5", "crop": {"x":0,"y":0,"width":1080,"height":1920}}]}
+  ]
+}

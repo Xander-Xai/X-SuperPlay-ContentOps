@@ -1,0 +1,44 @@
+{
+  "schema": "contentops.qc-summary/v1",
+  "graded": "project://final/easel.mp4",
+  "sha256": "309cf5a764beb83b95ed1c34a459ee56bd2f325ab944a792b73e29a1d871ff3b",
+  "qc_video": {
+    "overall": "WARN",
+    "report": "project://receipts/qc-report-easel.json",
+    "warnings": [
+      {
+        "id": "duration_range",
+        "severity": "WARN",
+        "detail": ""
+      },
+      {
+        "id": "source_refs_recorded",
+        "severity": "WARN",
+        "detail": ""
+      },
+      {
+        "id": "caption_srt_present",
+        "severity": "WARN",
+        "detail": ""
+      },
+      {
+        "id": "real_source_ratio",
+        "severity": "WARN",
+        "detail": "AI-generated key visuals must not be the majority"
+      },
+      {
+        "id": "real_evidence_present",
+        "severity": "WARN",
+        "detail": ""
+      }
+    ]
+  },
+  "technical": {
+    "decodable": true,
+    "black_s": 0.0,
+    "freeze_s": 0.6
+  },
+  "interpretation": "WARN, not PASS: the render is 20 s (below the 30 s floor), it is a pure-animation explainer so real-source ratio is not applicable, and no source_refs are declared. Technical decode, audio, subtitle burn and loudness pass.",
+  "production_ready": false,
+  "human_review": "PENDING_FOUNDER_REVIEW"
+}
