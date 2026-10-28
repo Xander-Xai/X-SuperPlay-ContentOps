@@ -14,6 +14,22 @@
       "at": 0.0,
       "kind": "image",
       "image": "diagram-workflow-vs-agent.png"
+    },
+    {
+      "at": 0.7,
+      "kind": "highlight",
+      "data": {
+        "rect": [0.05926, 0.21209, 0.88148, 0.15625],
+        "fill": 0.72
+      }
+    },
+    {
+      "at": 1.8,
+      "kind": "highlight",
+      "data": {
+        "rect": [0.05926, 0.37876, 0.88148, 0.26354],
+        "fill": 0.72
+      }
     }
   ]
 }

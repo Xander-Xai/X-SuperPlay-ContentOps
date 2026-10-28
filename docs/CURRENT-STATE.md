@@ -607,6 +607,17 @@ transition**, instead of concatenating twelve separately rendered clips. The
 baseline `final/easel.mp4` and its receipts were not touched; the four baseline
 artifacts were re-hashed after the variant build and were byte-identical.
 
+**Current local state of the baseline artefact:** `final/easel.mp4` is absent.
+A later eras compose was run without `--out-name eras`, so it wrote the variant
+film to the baseline path. `projects/*/final/` is git-ignored, so no tracked
+file changed, but the artefact was replaced by a file byte-identical to
+`final/eras.mp4`; it has been moved out of the tree rather than deleted. It
+cannot be rebuilt from the current inputs on this machine: the p03 clip is
+2.900 s against a 3.009 s window and the baseline assembler refuses to pad a
+tail (the same defect is recorded above for the ERAS adapter, which pads
+instead). `receipts/sample.json` is untouched and still describes the original
+build — sha `f5234901…`, 37.9 s.
+
 | Property | Value |
 |---|---|
 | Project | `projects/easel-fi-what-is-agent` — Build account, 1080×1920 |
@@ -668,13 +679,32 @@ over:
   `lib/fonts/*.woff`, so the project page needs those controls plus
   `<base href="/engine/">`; both are covered by tests.
 
-`freeze_s` for the variant is 2.4 s against 0.6 s for the baseline. A PSNR
-check across the bridge (t=23.0 vs t=24.2, y = 21.8 dB) shows the bridge is not
-a static frame, so the number is reported as measured rather than explained away.
-After the presenter was added, the freeze was localised by a 5 fps frame diff to
-**5.2–7.8 s** — the p02 diagram card — and the same 2.4 s freeze exists in the
-pre-presenter build at HEAD with the identical reason string, so it predates the
-opening and is not caused by it. It stays unfixed and visible.
+`freeze_s` for the variant was 2.4 s against 0.6 s for the baseline. A PSNR
+check across the bridge (t=23.0 vs t=24.2, y = 21.8 dB) showed the bridge is not
+a static frame, so the number was reported as measured rather than explained
+away. After the presenter was added, the freeze was localised by a 5 fps frame
+diff to **5.2–7.8 s** — the p02 diagram card — and the same 2.4 s freeze existed
+in the pre-presenter build at HEAD with the identical reason string, so it
+predated the opening and was not caused by it.
+
+That freeze is now fixed and the fix is measured, not asserted. `p02.json`
+declares two `highlight` cues instead of a bare `image`, so a full-bleed camera
+move carries the clip; **the longest freeze run in `final/eras.mp4` is 0.367 s**
+(`freezedetect=n=-60dB:d=0.25`), and the composer's own gate reports `0.4`.
+
+The first attempt at that fix introduced a second, worse defect, which is why
+the card and not the camera carries the constraint. A highlight rect drives a
+pan as well as a zoom — the engine clamps `z` to a 1.18 floor, so `fill` cannot
+soften it — and one push translates card content down by roughly 330 px. The
+film burns its caption into a fixed band at **y 1760–1798 of 1920**, so any card
+layout that reaches the caption baseline is swept through it: the closing line
+"关键不在..." collided with the burned subtitle at 6.9 s. The card was therefore
+rebuilt to end at **y 1233**: the attribution moved into the kicker row, the h1
+gap doubled so the closing push crops empty background rather than a line, and
+the bottom third is left blank for the caption. All 99 frames of the clip were
+scanned at rows 1750–1810 and carry **zero** non-caption ink; the lowest ink in
+any frame is row 1728.
+
 
 Two defects from the presenter build:
 

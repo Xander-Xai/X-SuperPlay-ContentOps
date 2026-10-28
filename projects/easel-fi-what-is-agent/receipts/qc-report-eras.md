@@ -4,12 +4,12 @@
 
 **Overall**: `WARN`
 
-**Checked at**: 2026-10-28T09:10:09Z
+**Checked at**: 2026-10-28T10:15:10Z
 
 | Check | Status | Severity | Detail |
 |---|---|---|---|
 | _video | OK | INFO | path=D:\Projects\X-SuperPlay-ContentOps\projects\easel-fi-what-is-agent\final\eras.mp4 |
-| file_size | OK | PASS | value_bytes=4572023, min_bytes=102400 |
+| file_size | OK | PASS | value_bytes=5115853, min_bytes=102400 |
 | ffprobe_parse | OK | PASS |  |
 | resolution | OK | PASS | value=1080x1920, expected=1080x1920 |
 | aspect_ratio_9_16 | OK | PASS | value=1080:1920 |

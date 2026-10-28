@@ -1,7 +1,7 @@
 {
   "schema": "contentops.review-bundle/v1",
   "package_id": "easel-fi-what-is-agent",
-  "built_at": "2026-10-28T09:10:12Z",
+  "built_at": "2026-10-28T10:15:24Z",
   "inputs": {
     "captions": {
       "path": "project://assets/captions/eras.srt",
@@ -13,7 +13,7 @@
     },
     "eras_film": {
       "path": "project://work/huashu-eras.mp4",
-      "sha256": "ba4dd73735ef2b8ba0ef6ffc4203e4013f32923b6e27d84d1e64dfeb17cd381d"
+      "sha256": "267314205c2155082f25113df56115397179cc71002b2ceab9a84f04ef9e0ad1"
     },
     "eras_source:eras.js": {
       "path": "project://motion/film/eras.js",
@@ -29,11 +29,11 @@
     },
     "qc": {
       "path": "project://receipts/qc-report-eras.json",
-      "sha256": "b0b61a64b0132b98fcd35ac0b9913ed609ee6fbcec6c720a16f3ddd3a6b7ce2f"
+      "sha256": "0b68b7cd9545657bee21da64121d83257a06cea8d401172bdaabd63bdae21c0d"
     },
     "sample": {
       "path": "project://receipts/eras/sample.json",
-      "sha256": "d97324f6807c4c6575e929369148cbf71329e3b5d0b3985b0cc81a0b73b50459"
+      "sha256": "f7d49299650215786af98cd0bad615f4cba2da968c13856227c8b15509aa25f7"
     },
     "spec:p01": {
       "path": "project://motion/specs/p01.json",
@@ -41,7 +41,7 @@
     },
     "spec:p02": {
       "path": "project://motion/specs/p02.json",
-      "sha256": "7f38104253896ee8c68a9fdce1a3cebf24e360f3ec4f26627a22bceeb7f3d19d"
+      "sha256": "38458937bbc0553d55ef49e00b0e9347841cc0d8454d5c920169c3ba9e4ae401"
     },
     "spec:p03": {
       "path": "project://motion/specs/p03.json",
@@ -85,14 +85,14 @@
     },
     "video": {
       "path": "project://final/eras.mp4",
-      "sha256": "366ab1efa863798cb469ba715531c9dcfea724d5db1e7516b24d1205e7d358ab"
+      "sha256": "1b099d5d3c0ca0e548f12d6dd730a32a173104e3619feaedbf98b309fd531e9a"
     },
     "voice": {
       "path": "project://receipts/voice-lines.json",
       "sha256": "3befca9c5c64d939e6b090feb19dfbaf82d3b7b9604070f6caf3eaa6ed117fa7"
     }
   },
-  "review_bundle_fingerprint": "1327f9ac17a7bc8d3ca29ab034e41427cfab224e8b7141acc58e62fbd58562f9",
+  "review_bundle_fingerprint": "07762b9297554e23f60afa0cb042c7fac6c266828c89e0165e403e72777ffaf0",
   "score": null,
   "reviewer": null,
   "hard_fail": null,

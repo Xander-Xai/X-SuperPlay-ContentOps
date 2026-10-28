@@ -1,6 +1,6 @@
 {
   "project": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-fi-what-is-agent",
-  "checked_at": "2026-10-28T09:10:09Z",
+  "checked_at": "2026-10-28T10:15:10Z",
   "video": "",
   "overall": "WARN",
   "checks": [
@@ -14,7 +14,7 @@
       "id": "file_size",
       "ok": true,
       "severity": "PASS",
-      "value_bytes": 4572023,
+      "value_bytes": 5115853,
       "min_bytes": 102400
     },
     {

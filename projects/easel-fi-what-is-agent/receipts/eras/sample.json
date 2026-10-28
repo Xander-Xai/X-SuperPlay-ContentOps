@@ -1,6 +1,6 @@
 {
   "schema": "contentops.code-animation-sample/v1",
-  "built_at": "2026-10-28T09:09:53Z",
+  "built_at": "2026-10-28T10:14:18Z",
   "package_id": "easel-fi-what-is-agent",
   "content_type": "DEFINITIONAL_EXPLAINER",
   "claim_bearing": false,
@@ -70,10 +70,10 @@
       "type": "beat",
       "clip": "project://work/eras/clips/p02.mp4",
       "duration_s": 2.904,
-      "clip_sha256": "e80918194cc8dd1c35b80da3aa85f501689272d322477e6b04b13cd0a3c85711",
+      "clip_sha256": "7ecb95003c27cac3fd6849971ee9f0eae74500ab056d02e84bf71a53aee9613f",
       "line": 2,
       "spec": "project://motion/specs/p02.json",
-      "spec_sha256": "7f38104253896ee8c68a9fdce1a3cebf24e360f3ec4f26627a22bceeb7f3d19d",
+      "spec_sha256": "38458937bbc0553d55ef49e00b0e9347841cc0d8454d5c920169c3ba9e4ae401",
       "grammar": "t2_keynote_ui"
     },
     {
@@ -311,11 +311,11 @@
   "visual_track": {
     "mode": "full_film_eras",
     "path": "project://work/huashu-eras.mp4",
-    "sha256": "ba4dd73735ef2b8ba0ef6ffc4203e4013f32923b6e27d84d1e64dfeb17cd381d"
+    "sha256": "267314205c2155082f25113df56115397179cc71002b2ceab9a84f04ef9e0ad1"
   },
   "output": {
     "path": "project://final/eras.mp4",
-    "sha256": "366ab1efa863798cb469ba715531c9dcfea724d5db1e7516b24d1205e7d358ab",
+    "sha256": "1b099d5d3c0ca0e548f12d6dd730a32a173104e3619feaedbf98b309fd531e9a",
     "duration_s": 38.9,
     "width": 1080,
     "height": 1920,
@@ -325,12 +325,10 @@
   "technical_qc": {
     "decodable": true,
     "longest_black_run_s": 0.0,
-    "longest_freeze_run_s": 2.4,
+    "longest_freeze_run_s": 0.4,
     "analysed_frames": 195,
     "notes": [],
-    "reasons": [
-      "frozen run of 2.40s exceeds 1.5s; the render appears stalled"
-    ]
+    "reasons": []
   },
   "red_lines": {
     "manual_recording": "none — pure code animation",
