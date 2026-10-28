@@ -1,7 +1,7 @@
 {
   "schema": "contentops.review-bundle/v1",
   "package_id": "easel-fi-what-is-agent",
-  "built_at": "2026-10-28T08:34:41Z",
+  "built_at": "2026-10-28T09:10:12Z",
   "inputs": {
     "captions": {
       "path": "project://assets/captions/eras.srt",
@@ -29,11 +29,11 @@
     },
     "qc": {
       "path": "project://receipts/qc-report-eras.json",
-      "sha256": "dd1cbbb1f43c06af345b1bdac174287ff32c776092af016023c3e183ece5a448"
+      "sha256": "b0b61a64b0132b98fcd35ac0b9913ed609ee6fbcec6c720a16f3ddd3a6b7ce2f"
     },
     "sample": {
       "path": "project://receipts/eras/sample.json",
-      "sha256": "bd50e098c9cd977bb799b41bc168b0a7ca558cafa7bed138588c6c92c8b03f4e"
+      "sha256": "d97324f6807c4c6575e929369148cbf71329e3b5d0b3985b0cc81a0b73b50459"
     },
     "spec:p01": {
       "path": "project://motion/specs/p01.json",
@@ -89,10 +89,10 @@
     },
     "voice": {
       "path": "project://receipts/voice-lines.json",
-      "sha256": "90f507c3c2018b326ed6934b473582e333b5bccadc01c743c87d7ae56c2c6469"
+      "sha256": "3befca9c5c64d939e6b090feb19dfbaf82d3b7b9604070f6caf3eaa6ed117fa7"
     }
   },
-  "review_bundle_fingerprint": "8ad55b4fb63c11ca0e66d56724506a61407edcffe5f6eac4c9f993ced3a75165",
+  "review_bundle_fingerprint": "1327f9ac17a7bc8d3ca29ab034e41427cfab224e8b7141acc58e62fbd58562f9",
   "score": null,
   "reviewer": null,
   "hard_fail": null,

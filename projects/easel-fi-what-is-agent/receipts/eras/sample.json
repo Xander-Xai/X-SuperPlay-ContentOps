@@ -1,6 +1,6 @@
 {
   "schema": "contentops.code-animation-sample/v1",
-  "built_at": "2026-10-28T08:32:36Z",
+  "built_at": "2026-10-28T09:09:53Z",
   "package_id": "easel-fi-what-is-agent",
   "content_type": "DEFINITIONAL_EXPLAINER",
   "claim_bearing": false,
@@ -33,10 +33,11 @@
       "kind": "AI digital human, MiniMax H3 Ref2VA",
       "claim_bearing": false,
       "labelled_ai_synthesised": true,
-      "speech_text_verified": false,
+      "speech_text_verified": true,
       "shot": "project://work/generated/shot-b666f8c64dc7a901.mp4",
       "shot_sha256": "9cb09c9e9e2eb470fe5e794841acd5248052f6e9d8d9873fb0c54a10b0c7f9ed",
       "shot_receipt": "project://work/generated/shot-b666f8c64dc7a901.mp4.receipt.json",
+      "contract": "project://motion/presenter/contract.json",
       "outside_the_insert_cap": "founder-requested opening; declared, not exempted silently"
     }
   },
@@ -53,7 +54,7 @@
       "generated": true,
       "claim_bearing": false,
       "labelled_ai_synthesised": true,
-      "speech_text_verified": false
+      "speech_text_verified": true
     },
     {
       "type": "beat",
@@ -286,8 +287,18 @@
       "shot": "project://work/generated/shot-b666f8c64dc7a901.mp4",
       "shot_sha256": "9cb09c9e9e2eb470fe5e794841acd5248052f6e9d8d9873fb0c54a10b0c7f9ed",
       "shot_receipt": "project://work/generated/shot-b666f8c64dc7a901.mp4.receipt.json",
-      "speech_text_verified": false,
-      "note": "spoken by the H3 model from a 4 s Ref2VA shot, not by speech-2.8-hd; the exact words need founder confirmation on playback"
+      "speech_text_verified": true,
+      "note": "spoken by the H3 model from a 4 s Ref2VA shot, not by speech-2.8-hd; asr-1.0 transcribes exactly the intended sentence, so what the founder still owns is whether the take is usable, not whether the words are right",
+      "speech_check": {
+        "model": "asr-1.0",
+        "provider": "minimax_m_plan",
+        "status": "NO_PROBLEM_DETECTED",
+        "role": "DETECTOR_ONLY",
+        "coverage": 1.0,
+        "transcript": "这条视频只讲一个问题。",
+        "checked_on": "2026-10-28",
+        "detail": null
+      }
     },
     "receipts": "project://receipts/voice-lines.json"
   },

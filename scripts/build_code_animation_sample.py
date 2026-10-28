@@ -157,6 +157,10 @@ def _validate_segments(segments: List[Dict[str, Any]], line_count: int) -> None:
                     f"a presenter segment must declare the variant it belongs to: {segment}")
             if int(segment["line"]) != PRESENTER_LINE:
                 raise SystemExit(f"a presenter segment speaks line 0: {segment}")
+            # A presenter is voiced, so it has no BEAT_SECONDS default to fall
+            # back on; a missing duration would reach float(None) later.
+            if not segment.get("duration"):
+                raise SystemExit(f"a presenter segment must declare its duration: {segment}")
         elif segment["type"] != "insert":
             raise SystemExit(f"unknown segment type: {segment['type']}")
 
@@ -329,6 +333,19 @@ def main() -> int:
     beat_lines = len(voice["lines"])
     lines = _voice_lines(voice, args.variant)
     segments = _timeline(project, beat_lines, args.variant)
+
+    # A project that declares a presenter opening must actually carry it: the
+    # contract is the difference between "he happened to be in this build" and
+    # "every build of this variant has him".
+    import presenter_opening
+    presenter_contract = presenter_opening.load_contract(project)
+    opening_issues = presenter_opening.problems(
+        presenter_contract, project, segments, args.variant, voice)
+    if opening_issues:
+        print(json.dumps({"status": "BLOCKED", "reason": "presenter opening",
+                          "problems": opening_issues}, ensure_ascii=False))
+        return 4
+
     presenter_s = sum(float(segment["duration"]) for segment in segments
                       if segment["type"] == "presenter")
 
@@ -468,6 +485,8 @@ def main() -> int:
                 "shot": (voice.get("presenter") or {}).get("shot"),
                 "shot_sha256": (voice.get("presenter") or {}).get("shot_sha256"),
                 "shot_receipt": (voice.get("presenter") or {}).get("shot_receipt"),
+                "contract": ("project://motion/presenter/contract.json"
+                             if presenter_contract else None),
                 "outside_the_insert_cap": "founder-requested opening; declared, not exempted silently",
             } if presenter_s else None),
         },

@@ -1,0 +1,11 @@
+{
+  "schema": "contentops.presenter-opening/v1",
+  "variant": "eras",
+  "clip": "p00",
+  "line": 0,
+  "text": "这条视频，只讲一个问题。",
+  "max_share": 0.1,
+  "require_speech_verified": true,
+  "request": "project://motion/presenter/opening-shot.json",
+  "note": "The eras film opens on a face. Declared here so a later build cannot drop the opening silently: the composer refuses the eras variant when this contract is unmet. The facts (text, paths, hashes) stay in receipts/voice-lines.json; this file only states the policy."
+}

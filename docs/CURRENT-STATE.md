@@ -640,9 +640,20 @@ filtered so it never sees the opening.
 | Timeline | `motion/timeline.json` carries the segment with `"variant": "eras"`; the builder and the adapter both filter by variant |
 | Ledger | `receipts/generated-media.json` → `presenter` plus `eras.{insert_ratio,presenter_ratio,ai_generated_total_ratio}` |
 | BGM | the bed now starts at 2.6 s, so the opening is dry and the bed still ends flush at 38.893 s |
-| Cost | 7 pp of the weekly H3 quota (81 % → 74 %); one create |
-| Disclosure | `labelled_ai_synthesised: true`, `speech_text_verified: false` — no local ASR exists, so the founder must confirm the sentence on playback |
+| Cost | as read from the shot receipt, the weekly counter did **not** move (74 % → 74 %, 0 pp); the 7 pp (81 % → 74 %) belongs to the earlier insert shot of the same length, so the opening's own cost is unmeasured and is not claimed |
+| Disclosure | `labelled_ai_synthesised: true`; `speech_text_verified: true` — MiniMax `asr-1.0` transcribes the line as `这条视频只讲一个问题。` at coverage 1.0 |
+| Contract | `motion/presenter/contract.json` states the policy (variant, clip, text, 10 % ceiling, verification required); the facts stay in `receipts/voice-lines.json` |
+| Gate | the composer refuses the eras build (`status: BLOCKED`, exit 4) when the contract is unmet — presenter segment gone, hash drifted, asset missing, or the line unverified |
 | Status | `production_ready: false`, `PENDING_FOUNDER_REVIEW` |
+
+The verification boundary matters: ASR proves **which words** were spoken, never
+whether the take is usable. The founder still owns the delivery. `speech_check`
+is written next to the flag so the claim can be re-run, not just believed:
+
+```bash
+python scripts/presenter_opening.py projects/easel-fi-what-is-agent --check
+python scripts/presenter_opening.py projects/easel-fi-what-is-agent --verify-speech
+```
 
 Three defects surfaced during this build and are recorded rather than smoothed
 over:

@@ -44,6 +44,21 @@ python projects\easel-fi-what-is-agent\motion\film\render.py `
 and `receipts/*.json` untouched; the variant writes `final/eras.mp4`,
 `assets/captions/eras.srt`, `work/eras/` and `receipts/eras/`.
 
+The eras film opens on the digital human. `motion/presenter/contract.json`
+declares that opening, and the composer refuses the eras build when the
+declaration is unmet — the segment dropped from `timeline.json`, a hash that no
+longer matches the files, a missing asset, or a spoken line nobody verified. The
+same check runs on its own:
+
+```powershell
+python scripts\presenter_opening.py projects\easel-fi-what-is-agent --check
+python scripts\presenter_opening.py projects\easel-fi-what-is-agent --verify-speech
+```
+
+`--verify-speech` transcribes the opening with MiniMax `asr-1.0` and compares it
+to the intended sentence. It is a detector: it can prove the words are right or
+wrong, never that the delivery is usable.
+
 ```powershell
 python scripts\build_code_animation_sample.py projects\easel-fi-what-is-agent `
   --variant eras --out-name eras `
