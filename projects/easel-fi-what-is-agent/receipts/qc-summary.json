@@ -1,7 +1,7 @@
 {
   "schema": "contentops.qc-summary/v1",
   "graded": "project://final/easel.mp4",
-  "sha256": "6648756bbbe3b28dc0193878a80f5c2ce568f80dad325101b64ddb14f4b98735",
+  "sha256": "eb56169b622d456f04c40511c07de96389a00810a3befd94448eb2364274f512",
   "qc_video": {
     "overall": "WARN",
     "report": "project://receipts/qc-report-easel.json",
@@ -30,7 +30,7 @@
     "mean_volume_db": -20.7,
     "max_volume_db": -3.9
   },
-  "interpretation": "WARN, not PASS: pure animation (real-source ratio and real-evidence checks do not apply) and a project.yaml parser quirk on `source_refs: []`. Duration (45 s), decode, audio, subtitle burn and loudness pass.",
+  "interpretation": "WARN, not PASS: pure animation (real-source ratio and real-evidence checks do not apply) and a project.yaml parser quirk on `source_refs: []`. Duration (43.5 s), decode, audio, subtitle burn and loudness pass.",
   "production_ready": false,
   "human_review": "PENDING_FOUNDER_REVIEW"
 }

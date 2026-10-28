@@ -1,7 +1,7 @@
 {
   "schema": "contentops.human-review/v1",
   "package_id": "easel-fi-what-is-agent",
-  "review_bundle_fingerprint": "5d9362e9f39073470cec668ed79321081386355a0a05e2d7adf7ac1fe2aa07d4",
+  "review_bundle_fingerprint": "ffab8467b4a816f5bc6b3e1df85b6f89564813903d6919d64f1520bceb59c59a",
   "scores": {
     "hook": null,
     "information_density": null,

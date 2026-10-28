@@ -32,8 +32,9 @@
       "width": 768,
       "height": 1344,
       "fps": 24,
-      "duration_s": 4.458,
-      "codec": "h264"
+      "duration_s": 2.5,
+      "codec": "h264",
+      "note": "trimmed to 2.5 s for pacing; source shot is 4.458 s"
     },
     "quota": {
       "weekly_before_percent": 81.0,
@@ -42,16 +43,16 @@
     },
     "create_count": 1,
     "placement": {
-      "window_s": "27.9-31.9",
+      "window_s": "27.9-30.4",
       "claim_bearing": false,
       "note": "silent bridge between the failure beat and the evaluation beat"
     },
     "normalisation": "scaled/cropped to 1080x1920, audio stripped, 30 fps",
     "improves": "keeps a visual pause in the middle of the film without narration"
   },
-  "generated_seconds": 4.0,
-  "film_seconds": 45.0,
-  "generated_ratio": 0.0889,
+  "generated_seconds": 2.5,
+  "film_seconds": 43.5,
+  "generated_ratio": 0.0575,
   "production_ready": false,
   "human_review": "PENDING_FOUNDER_REVIEW"
 }

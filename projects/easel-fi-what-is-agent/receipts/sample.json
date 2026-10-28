@@ -1,6 +1,6 @@
 {
   "schema": "contentops.code-animation-sample/v1",
-  "built_at": "2026-10-28T05:38:59Z",
+  "built_at": "2026-10-28T05:45:14Z",
   "package_id": "easel-fi-what-is-agent",
   "content_type": "DEFINITIONAL_EXPLAINER",
   "claim_bearing": false,
@@ -16,14 +16,14 @@
     "windows_adapter": "Playwright channel fallback (chrome/msedge) and PYTHONUTF8=1 for spec JSON"
   },
   "timeline": {
-    "total_s": 45.0,
+    "total_s": 43.5,
     "segments": 13,
     "beats": 12,
     "inserts": 1
   },
   "generated_media": {
-    "seconds": 4.0,
-    "ratio": 0.0889,
+    "seconds": 2.5,
+    "ratio": 0.0575,
     "cap": 0.1,
     "policy": "claim-free inserts only; deletes if it does not improve"
   },
@@ -111,8 +111,8 @@
     {
       "type": "insert",
       "clip": "project://work/clips/insert-video.mp4",
-      "duration_s": 4.0,
-      "clip_sha256": "10fa35d036daa091b70fe5fb3dc1e27388e68749980bb6be0a57b72697aa1533",
+      "duration_s": 2.5,
+      "clip_sha256": "32b6b10bc3ac509fe9d9a220e056e28dd5cf80072b042c9d72af073b45e4c896",
       "generated": "video",
       "claim_bearing": false,
       "role": "claim-free insert"
@@ -251,14 +251,14 @@
   },
   "captions": {
     "path": "project://assets/captions/default.srt",
-    "sha256": "c6ec7701dedeb8b0489f14e3f5c63625bacc71461d30037ae07d6d319769f6c4",
+    "sha256": "ae034034b4cdddc865c5b67297e7ff9a13d5bdff3e97f4f0dddddbb695bce9b1",
     "style_source": "config/accounts/x-superplay-future-intelligence.json",
     "cues": 12
   },
   "output": {
     "path": "project://final/easel.mp4",
-    "sha256": "6648756bbbe3b28dc0193878a80f5c2ce568f80dad325101b64ddb14f4b98735",
-    "duration_s": 45.0,
+    "sha256": "eb56169b622d456f04c40511c07de96389a00810a3befd94448eb2364274f512",
+    "duration_s": 43.5,
     "width": 1080,
     "height": 1920,
     "video_codec": "h264",
@@ -268,7 +268,7 @@
     "decodable": true,
     "longest_black_run_s": 0.0,
     "longest_freeze_run_s": 0.6,
-    "analysed_frames": 225,
+    "analysed_frames": 218,
     "notes": [],
     "reasons": []
   },
