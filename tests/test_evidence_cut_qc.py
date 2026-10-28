@@ -214,6 +214,43 @@ def test_a_frozen_render_fails_the_static_hold_gate():
     print("[ok] 7. a frozen render fails even when the plan declares its views")
 
 
+def _rewrite(project: Path, **target) -> None:
+    plan_path = project / "script" / "cut-plan.json"
+    plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    plan["target"].update(target)
+    plan_path.write_text(json.dumps(plan), encoding="utf-8")
+
+
+def test_a_no_recording_account_refuses_a_recording_asset():
+    with tempfile.TemporaryDirectory() as td:
+        project = make_project(Path(td), max_hold=5000)
+        _rewrite(project, manual_recording="FORBIDDEN", evidence_mode="EXPLANATORY")
+        report = qc_cut(project)
+        check = [c for c in report["checks"]
+                 if c["id"] == "manual_recording_forbidden"][0]
+        assert not check["ok"], check
+        assert report["overall"] == "FAIL"
+    print("[ok] 8. a no-recording account refuses a recording asset")
+
+
+def test_composition_drift_fails_the_declared_ratio():
+    with tempfile.TemporaryDirectory() as td:
+        project = make_project(Path(td), max_hold=5000)
+        assets_path = project / "script" / "assets.json"
+        assets = json.loads(assets_path.read_text(encoding="utf-8"))
+        assets["assets"]["A-REAL"]["role"] = "vector_animation"
+        assets_path.write_text(json.dumps(assets), encoding="utf-8")
+        _rewrite(project, evidence_mode="EXPLANATORY", composition=[
+            {"role": "vector_animation", "pct": 50},
+            {"role": "code_snapshot", "pct": 50},
+        ])
+        report = qc_cut(project)
+        check = [c for c in report["checks"] if c["id"] == "composition_ratio"][0]
+        assert not check["ok"], check
+        assert report["overall"] == "FAIL"
+    print("[ok] 9. a composition outside the declared ratio fails")
+
+
 def main() -> int:
     tests = (
         test_overlapping_intervals_count_once,
@@ -223,6 +260,8 @@ def main() -> int:
         test_missing_captions_fail_closed,
         test_a_long_undeclared_static_view_fails,
         test_a_frozen_render_fails_the_static_hold_gate,
+        test_a_no_recording_account_refuses_a_recording_asset,
+        test_composition_drift_fails_the_declared_ratio,
     )
     failures = []
     for fn in tests:

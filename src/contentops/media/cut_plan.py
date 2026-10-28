@@ -133,6 +133,7 @@ class Shot:
     crop: Dict[str, int]
     semantic_progress: str
     context_shot_id: Optional[str] = None
+    asset_id: Optional[str] = None
 
     def validate(self, placement_id: str, reading_class: str,
                  target: Dict[str, Any], previous_end: Optional[int]) -> "Shot":
@@ -168,6 +169,7 @@ class Shot:
             "crop": dict(self.crop),
             "semantic_progress": self.semantic_progress,
             "context_shot_id": self.context_shot_id,
+            **({"asset_id": self.asset_id} if self.asset_id else {}),
         }
 
 
@@ -237,6 +239,8 @@ class Placement:
             require(shot.shot_id not in by_id, "DUPLICATE_SHOT_ID",
                     f"duplicate shot_id {shot.shot_id!r}")
             shot.validate(self.placement_id, self.reading_class, target, previous_end)
+            if shot.asset_id:
+                require_text(shot.asset_id, f"{shot.shot_id}.asset_id")
             if shot.context_shot_id:
                 context = by_id.get(shot.context_shot_id)
                 require(context is not None, "UNKNOWN_CONTEXT_SHOT",
@@ -246,6 +250,11 @@ class Placement:
                         "CROP_NOT_CONTAINED_BY_CONTEXT",
                         f"{shot.shot_id} enlarges outside its context shot "
                         f"{context.shot_id}, so it is a different subject")
+                require((context.asset_id or self.asset_id)
+                        == (shot.asset_id or self.asset_id),
+                        "SHOT_CONTEXT_ASSET_MISMATCH",
+                        f"{shot.shot_id} and its context {context.shot_id} come "
+                        f"from different assets")
             by_id[shot.shot_id] = shot
             previous_end = shot.end_ms
 
@@ -392,7 +401,7 @@ class CutPlan:
         }
         shot_fields = {
             "shot_id", "start_ms", "end_ms", "source_time_range", "crop",
-            "semantic_progress", "context_shot_id",
+            "semantic_progress", "context_shot_id", "asset_id",
         }
         for index, raw in enumerate(document.get("placements") or []):
             require(isinstance(raw, dict), "INVALID_PLACEMENT",
@@ -417,6 +426,7 @@ class CutPlan:
                         crop=shot["crop"],
                         semantic_progress=shot.get("semantic_progress", ""),
                         context_shot_id=shot.get("context_shot_id"),
+                        asset_id=shot.get("asset_id"),
                     ))
                 except KeyError as exc:
                     raise ContractError(

@@ -211,8 +211,8 @@ def test_the_fingerprint_changes_when_a_placement_moves():
     print("[ok] the cut-plan fingerprint changes when timing changes")
 
 
-def shot(shot_id, start, end, crop=None, context_shot_id=None):
-    return {
+def shot(shot_id, start, end, crop=None, context_shot_id=None, asset_id=None):
+    item = {
         "shot_id": shot_id,
         "start_ms": start,
         "end_ms": end,
@@ -222,6 +222,9 @@ def shot(shot_id, start, end, crop=None, context_shot_id=None):
         "semantic_progress": "shows the result",
         "context_shot_id": context_shot_id,
     }
+    if asset_id:
+        item["asset_id"] = asset_id
+    return item
 
 
 def test_a_placement_may_show_several_views__each_capped_by_the_hold_limit():
@@ -277,6 +280,28 @@ def test_an_enlarged_view_must_be_contained_by_its_context():
     print("[ok] an enlarged view outside its context crop is refused")
 
 
+def test_a_shot_may_name_its_own_asset():
+    """One placement can move from a metric card to a vector summary."""
+    plan = CutPlan.from_dict(fixed(placements=[
+        placement("P-001", 0, 2000, reading_class="reading",
+                  shots=[shot("S-1", 0, 2000, asset_id="A-002")]),
+        placement("P-002", 2000, 8000),
+    ]))
+    assert plan.placements[0].shots[0].asset_id == "A-002"
+    print("[ok] a view may name its own asset")
+
+
+def test_a_context_view_cannot_cross_assets():
+    rejects("SHOT_CONTEXT_ASSET_MISMATCH", placements=[
+        placement("P-001", 0, 4000, claim_ids=["C-001"],
+                  shots=[shot("S-1", 0, 2000, asset_id="A-001"),
+                         shot("S-2", 2000, 4000, asset_id="A-002",
+                              context_shot_id="S-1")]),
+        placement("P-002", 4000, 8000),
+    ])
+    print("[ok] an enlargement cannot cite a context from another asset")
+
+
 def main() -> int:
     failures = []
     tests = (
@@ -293,6 +318,8 @@ def main() -> int:
         test_a_view_longer_than_the_hold_limit_is_refused,
         test_views_must_cover_the_placement_without_gaps,
         test_an_enlarged_view_must_be_contained_by_its_context,
+        test_a_shot_may_name_its_own_asset,
+        test_a_context_view_cannot_cross_assets,
     )
     for fn in tests:
         try:

@@ -28,6 +28,26 @@ from contentops.media.video_qc import HAVE_FFMPEG, HAVE_FFPROBE, measure_video
 
 MIN_REAL_SOURCE_RATIO = 0.70
 MAX_GENERATED_RATIO = 0.10
+#: A declared composition (vector / code / metric) is a target, not an exact
+#: contract; this is how far a role may drift before the cut is refused.
+COMPOSITION_TOLERANCE_PCT = 8.0
+
+
+def _role_seconds(cut_plan: CutPlan,
+                  assets: Dict[str, Dict[str, Any]]) -> Dict[str, float]:
+    """Duration per asset role, counting shots rather than placements."""
+    totals: Dict[str, float] = {}
+    for placement in cut_plan.placements:
+        views = ([(shot.asset_id or placement.asset_id,
+                   shot.end_ms - shot.start_ms) for shot in placement.shots]
+                 if placement.shots
+                 else [(placement.asset_id,
+                        placement.end_ms - placement.start_ms)])
+        for asset_id, duration_ms in views:
+            role = assets.get(asset_id, {}).get("role") or assets.get(
+                asset_id, {}).get("kind", "unknown")
+            totals[role] = totals.get(role, 0.0) + duration_ms / 1000.0
+    return totals
 
 
 def _union_seconds(intervals: Iterable[Tuple[int, int]]) -> float:
@@ -151,12 +171,48 @@ def qc_cut(project: Path, video: Optional[Path] = None) -> Dict[str, Any]:
                              "ffmpeg/ffprobe unavailable; unverified"))
 
     shares = source_shares(cut_plan, assets)
-    checks.append(_check("real_source_ratio", shares["real_ratio"] >= MIN_REAL_SOURCE_RATIO,
-                         "FAIL", f"{shares['real_ratio']:.1%} of {shares['total_s']:.1f}s "
-                                 f"(min {MIN_REAL_SOURCE_RATIO:.0%})"))
+    if target.get("evidence_mode", "EVIDENCE_LED") == "EVIDENCE_LED":
+        checks.append(_check("real_source_ratio",
+                             shares["real_ratio"] >= MIN_REAL_SOURCE_RATIO, "FAIL",
+                             f"{shares['real_ratio']:.1%} of {shares['total_s']:.1f}s "
+                             f"(min {MIN_REAL_SOURCE_RATIO:.0%})"))
+    else:
+        checks.append(_check("real_source_ratio", True, "FAIL",
+                             "not applicable: explanatory account, no recording asset by policy"))
     checks.append(_check("generated_ratio", shares["generated_ratio"] < MAX_GENERATED_RATIO,
                          "FAIL", f"{shares['generated_ratio']:.1%} "
                                  f"(max {MAX_GENERATED_RATIO:.0%})"))
+
+    # An account may forbid manual recordings outright (Future Intelligence).
+    # The check follows shots too, because a plan can switch asset inside a
+    # placement and hide a recording behind a card placement.
+    if target.get("manual_recording") == "FORBIDDEN":
+        used = {p.asset_id for p in cut_plan.placements}
+        used |= {shot.asset_id for p in cut_plan.placements for shot in p.shots
+                 if shot.asset_id}
+        offenders = sorted(aid for aid in used
+                           if assets.get(aid, {}).get("kind") == "recording")
+        checks.append(_check("manual_recording_forbidden", not offenders, "FAIL",
+                             f"recording assets in a no-recording account: {offenders}"
+                             if offenders else "no recording asset appears"))
+
+    declared = target.get("composition")
+    if declared:
+        actual = _role_seconds(cut_plan, assets)
+        total = sum(actual.values()) or 1.0
+        drift = []
+        for segment in declared:
+            role = segment["role"]
+            wanted = float(segment["pct"])
+            got = actual.get(role, 0.0) / total * 100.0
+            if abs(got - wanted) > COMPOSITION_TOLERANCE_PCT:
+                drift.append(f"{role} {got:.0f}% vs {wanted:.0f}%")
+        summary = ", ".join(f"{role} {seconds / total:.0%}"
+                            for role, seconds in sorted(actual.items()))
+        checks.append(_check("composition_ratio", not drift, "FAIL",
+                             f"{summary}; outside ±{COMPOSITION_TOLERANCE_PCT:.0f}pp: "
+                             f"{', '.join(drift)}" if drift
+                             else f"{summary} within ±{COMPOSITION_TOLERANCE_PCT:.0f}pp"))
     checks.append(_check("claim_bindings",
                          all(cid in {c.claim_id for c in claim_map.claims}
                              for cid in cut_plan.claim_ids()),

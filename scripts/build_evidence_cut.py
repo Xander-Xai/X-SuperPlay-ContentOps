@@ -206,12 +206,14 @@ def _views(placement) -> List[Dict[str, Any]]:
         return [{"crop": shot.crop,
                  "source_time_range": shot.source_time_range,
                  "duration_s": (shot.end_ms - shot.start_ms) / 1000.0,
-                 "shot_id": shot.shot_id}
+                 "shot_id": shot.shot_id,
+                 "asset_id": shot.asset_id or placement.asset_id}
                 for shot in placement.shots]
     return [{"crop": placement.crop,
              "source_time_range": placement.source_time_range,
              "duration_s": (placement.end_ms - placement.start_ms) / 1000.0,
-             "shot_id": placement.placement_id}]
+             "shot_id": placement.placement_id,
+             "asset_id": placement.asset_id}]
 
 
 def _segment(asset: Dict[str, Any], asset_id: str, view: Dict[str, Any],
@@ -371,9 +373,10 @@ def build(project: Path, tts_only: bool = False) -> Dict[str, Any]:
         return {"status": "TTS_ONLY", "placements": totals}
 
     duration_ms = cut_plan.placements[-1].end_ms
-    _fail(abs(duration_ms - int(config.get("duration_sec", "0")) * 1000) <= 1000,
+    expected_sec = float(config.get("duration_sec", "0") or 0)
+    _fail(abs(duration_ms - expected_sec * 1000) <= 1000,
           "DURATION_MISMATCH",
-          f"project.yaml says {config.get('duration_sec')}s but the plan ends at "
+          f"project.yaml says {expected_sec}s but the plan ends at "
           f"{duration_ms}ms")
 
     work = project / "work"
@@ -383,16 +386,20 @@ def build(project: Path, tts_only: bool = False) -> Dict[str, Any]:
     cues: List[Dict[str, Any]] = []
 
     for index, placement in enumerate(cut_plan.placements):
-        asset = assets[placement.asset_id]
         clip = work / f"seg-{index:02d}.mp4"
         views = _views(placement)
+        for view in views:
+            _fail(view["asset_id"] in assets, "UNKNOWN_ASSET",
+                  f"{view['shot_id']} cites {view['asset_id']}")
         if len(views) == 1:
-            _segment(asset, placement.asset_id, views[0], target, clip, project)
+            _segment(assets[views[0]["asset_id"]], views[0]["asset_id"], views[0],
+                     target, clip, project)
         else:
             parts = []
             for view_index, view in enumerate(views):
                 part = work / f"seg-{index:02d}-v{view_index:02d}.mp4"
-                _segment(asset, placement.asset_id, view, target, part, project)
+                _segment(assets[view["asset_id"]], view["asset_id"], view,
+                         target, part, project)
                 parts.append(part)
             _concat_video(parts, clip)
         clips.append(clip)
@@ -411,7 +418,11 @@ def build(project: Path, tts_only: bool = False) -> Dict[str, Any]:
             # line, so the card is the caption for that beat.
             # A card already renders its claim verbatim; a burned caption under
             # it repeats the same words and competes with the card's source line.
-            on_card = asset["kind"] == "card"
+            # A citation card renders its claim verbatim, so burning the same
+            # words underneath duplicates them. A diagram card does not, and
+            # says so with ``burns_caption``.
+            on_card = (assets[placement.asset_id]["kind"] == "card"
+                       and not assets[placement.asset_id].get("burns_caption"))
             if not on_card:
                 cues.append({"start_ms": start_ms, "end_ms": end_ms,
                              "text": line["text"], "claim_id": line["claim_id"]})
@@ -489,7 +500,8 @@ def build(project: Path, tts_only: bool = False) -> Dict[str, Any]:
         "output": {"path": f"project://{output.relative_to(project).as_posix()}",
                    "sha256": sha256_file(output),
                    "duration_s": float(ffprobe_json(output)["format"]["duration"])},
-        "voice_quality": "minimax_mplan_subscription",
+        "voice_quality": config.get("voice_quality", "minimax_mplan_subscription"),
+        "voice_provider": config.get("voice_provider", "miniMax/speech-2.8-hd"),
         "bgm": {"role": "optional_bgm", "status": "OMITTED_BY_POLICY",
                 "reason": "DASHSCOPE_API_KEY unavailable; video_ops loudness "
                           "regression prohibited"},
