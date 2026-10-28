@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --base: #0f1117; --surface: #161a22; --ink: #f5f7fa;
+        --muted: #8b95a5; --accent: #38bdf8; --line: #2a3240;
+        --sans: "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+        --mono: "Cascadia Mono", "Noto Sans Mono CJK SC", monospace;
+      }
+      @font-face { font-family: "Noto Sans CJK SC"; src: local("Noto Sans CJK SC"); }
+      @font-face { font-family: "Cascadia Mono"; src: local("Cascadia Mono"); }
+      @font-face { font-family: "Noto Sans Mono CJK SC"; src: local("Noto Sans Mono CJK SC"); }
+      @font-face { font-family: "Microsoft YaHei"; src: local("Microsoft YaHei"); }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--base); }
+      #root { position: relative; width: 1080px; height: 1920px; background: var(--base); color: var(--ink); overflow: hidden; }
+      #scene { position: absolute; inset: 0; width: 1080px; height: 1920px; transform-origin: 50% 42%; }
+      #grain { position: absolute; inset: 0; pointer-events: none; z-index: 50; opacity: .05;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>"); }
+      .topline { position: absolute; left: 86px; right: 86px; top: 96px; display: flex;
+        justify-content: space-between; font-family: var(--mono); font-size: 28px;
+        letter-spacing: .18em; color: var(--muted); }
+      .topline .tag { color: var(--accent); }
+      .topline span { white-space: nowrap; }
+      #rule { position: absolute; left: 86px; top: 150px; width: 908px; height: 2px;
+        background: var(--accent); transform-origin: left center; }
+      h1 { position: absolute; left: 86px; top: 210px; width: 908px; font-family: var(--sans);
+        font-size: 88px; line-height: 1.22; font-weight: 300; letter-spacing: -.02em; opacity: 0; }
+      #panel { position: absolute; left: 56px; top: 470px; width: 968px; height: 700px;
+        background: #272822; border: 1px solid #3a3a32; border-radius: 14px;
+        padding: 44px 40px; overflow: hidden; opacity: 0; }
+      #gutter { position: absolute; left: 88px; top: 514px; width: 3px; height: 0;
+        background: var(--accent); border-radius: 2px; }
+      .line { font-family: var(--mono); font-size: 28px; line-height: 56px; white-space: pre;
+        color: #f8f8f2; opacity: 0; }
+      .cm { color: #a8a294; } .kw { color: #f92672; } .fn { color: #a6e22e; }
+      .str { color: #e6db74; } .hl { color: #38bdf8; }
+      #sweep { position: absolute; left: 76px; top: 0; width: 928px; height: 48px;
+        background: rgba(56,189,248,.16); border-left: 4px solid var(--accent);
+        border-radius: 4px; opacity: 0; }
+      #badge { position: absolute; left: 86px; top: 1230px; display: inline-block;
+        border: 1px solid var(--accent); color: var(--accent); border-radius: 8px;
+        padding: 16px 26px; font-family: var(--mono); font-size: 28px;
+        letter-spacing: .18em; opacity: 0; }
+      #count { position: absolute; right: 86px; top: 1236px; font-family: var(--mono);
+        font-size: 28px; letter-spacing: .1em; color: var(--muted); opacity: 0; }
+      #foot { position: absolute; left: 86px; right: 86px; top: 1390px;
+        display: flex; justify-content: space-between; border-top: 1px solid var(--line);
+        padding-top: 16px; font-family: var(--mono); font-size: 28px;
+        letter-spacing: .1em; color: var(--muted); opacity: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="5"
+         data-width="1080" data-height="1920">
+      <div id="grain"></div>
+      <div id="scene">
+      <div id="topline" class="topline clip" data-start="0" data-duration="5" data-track-index="0">
+        <span class="tag">[ CODE SNAPSHOT ]</span><span>cut_qc.py</span>
+      </div>
+      <div id="rule" class="clip" data-start="0" data-duration="5" data-track-index="0"></div>
+      <h1 id="head" class="clip" data-start="0" data-duration="5" data-track-index="1">门禁看实测。</h1>
+      <div id="panel" class="clip" data-start="0" data-duration="5" data-track-index="2">
+        <div class="line cm" id="l1"># 结构：超上限的静态 placement 必须声明视图</div>
+        <div class="line" id="l2"><span class="hl">undeclared</span> = [p.placement_id <span class="kw">for</span> p <span class="kw">in</span></div>
+        <div class="line" id="l3">              cut_plan.placements</div>
+        <div class="line" id="l4">              <span class="kw">if</span> p.end_ms - p.start_ms &gt; max_hold_ms</div>
+        <div class="line" id="l5">              <span class="kw">and not</span> p.shots]</div>
+        <div class="line" id="l6"><span class="fn">_check</span>(<span class="str">"views_declared"</span>, <span class="kw">not</span> undeclared)</div>
+        <div class="line cm" id="l7"># 实测：冻结 run 不得超过声明停留</div>
+        <div class="line" id="l8"><span class="hl">freeze_limit</span> = max_hold_ms / 1000.0 + 0.2</div>
+        <div class="line" id="l9">longest = measured.longest_freeze_run_s</div>
+        <div class="line" id="l10"><span class="fn">_check</span>(<span class="str">"static_hold_within_limit"</span>,</div>
+        <div class="line" id="l11">       longest &lt;= <span class="hl">freeze_limit</span>)</div>
+      </div>
+      <div id="gutter" class="clip" data-start="0" data-duration="5" data-track-index="3"></div>
+      <div id="sweep" class="clip" data-start="0" data-duration="5" data-track-index="4"></div>
+      <div id="badge" class="clip" data-start="0" data-duration="5" data-track-index="5">MEASURED</div>
+      <div id="count" class="clip" data-start="0" data-duration="5" data-track-index="5">2 CHECKS</div>
+      <div id="foot" class="clip" data-start="0" data-duration="5" data-track-index="6">
+        <span>关键行节选，非整屏 IDE</span><span>02 / 03</span>
+      </div>
+      </div>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#scene", { scale: 1 }, { scale: 1.035, duration: 5, ease: "none" }, 0);
+      const lines = [...document.querySelectorAll(".line")];
+      const topOf = (el) => 470 + 44 + (lines.indexOf(el) * 52) - 10;
+
+      tl.fromTo("#rule", { scaleX: 0 }, { scaleX: 1, duration: .45, ease: "power3.out" }, .05);
+      tl.fromTo("#head", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: .4, ease: "power3.out" }, .25);
+      tl.fromTo("#panel", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: .45, ease: "power3.out" }, .55);
+      lines.forEach((line, i) => {
+        tl.to(line, { opacity: 1, duration: .18, ease: "power1.out" }, .85 + i * .075);
+      });
+      tl.to("#gutter", { height: 610, duration: .9, ease: "power2.inOut" }, 1.0);
+      tl.fromTo("#sweep", { opacity: 0, y: topOf(lines[0]) }, { opacity: 1, duration: .2 }, 2.05);
+      tl.to("#sweep", { y: topOf(lines[10]), duration: 1.35, ease: "power2.inOut" }, 2.15);
+      tl.to("#sweep", { boxShadow: "0 0 32px rgba(56,189,248,.35)", duration: .25 }, 3.5);
+      tl.fromTo("#badge", { opacity: 0, scale: .86 }, { opacity: 1, scale: 1, duration: .35, ease: "back.out(2)" }, 2.8);
+      tl.fromTo("#count", { opacity: 0 }, { opacity: 1, duration: .3, ease: "power2.out" }, 2.85);
+      tl.fromTo("#foot", { opacity: 0 }, { opacity: 1, duration: .3, ease: "power2.out" }, 2.9);
+
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

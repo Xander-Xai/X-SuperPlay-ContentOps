@@ -25,25 +25,26 @@
       "semantic_progress": "the window and the picture are two different lengths",
       "views": [
         {
-          "asset_id": "A-ARCH-1",
+          "asset_id": "A-MOTION-LEN",
           "crop": {
             "x": 0,
             "y": 0,
             "width": 1080,
             "height": 1920
           },
-          "semantic_progress": "the claim in one frame"
+          "source_time_range": "00:00.000-00:02.500",
+          "semantic_progress": "the narration length draws to 44 s"
         },
         {
-          "asset_id": "A-ARCH-1",
-          "context": true,
+          "asset_id": "A-MOTION-LEN",
           "crop": {
             "x": 0,
-            "y": 740,
+            "y": 0,
             "width": 1080,
-            "height": 300
+            "height": 1920
           },
-          "semantic_progress": "the 2 s view strip that outlasts the statement"
+          "source_time_range": "00:02.500-00:05.000",
+          "semantic_progress": "22 view cells pop in under it"
         }
       ]
     },
@@ -54,25 +55,26 @@
       "semantic_progress": "the tradeoff moves from duration to view changes",
       "views": [
         {
-          "asset_id": "A-ARCH-2",
+          "asset_id": "A-MOTION-SWAP",
           "crop": {
             "x": 0,
             "y": 0,
             "width": 1080,
             "height": 1920
           },
-          "semantic_progress": "one placement, three views"
+          "source_time_range": "00:00.000-00:02.500",
+          "semantic_progress": "the placement and its first view"
         },
         {
-          "asset_id": "A-ARCH-2",
-          "context": true,
+          "asset_id": "A-MOTION-SWAP",
           "crop": {
             "x": 0,
-            "y": 540,
+            "y": 0,
             "width": 1080,
-            "height": 760
+            "height": 1920
           },
-          "semantic_progress": "the view chain itself"
+          "source_time_range": "00:02.500-00:05.000",
+          "semantic_progress": "V2 and V3 take over by meaning"
         }
       ]
     },
@@ -83,25 +85,26 @@
       "semantic_progress": "the placement and its views",
       "views": [
         {
-          "asset_id": "A-ARCH-3",
+          "asset_id": "A-MOTION-FLOW",
           "crop": {
             "x": 0,
             "y": 0,
             "width": 1080,
             "height": 1920
           },
-          "semantic_progress": "two gates, one verdict"
+          "source_time_range": "00:00.000-00:02.500",
+          "semantic_progress": "placement, views and the gate assemble"
         },
         {
-          "asset_id": "A-ARCH-3",
-          "context": true,
+          "asset_id": "A-MOTION-FLOW",
           "crop": {
             "x": 0,
-            "y": 560,
+            "y": 0,
             "width": 1080,
-            "height": 700
+            "height": 1920
           },
-          "semantic_progress": "the two checks that must both pass"
+          "source_time_range": "00:02.500-00:05.000",
+          "semantic_progress": "the packet travels the chain"
         }
       ]
     },
@@ -112,25 +115,26 @@
       "semantic_progress": "the old gate trusted a declaration",
       "views": [
         {
-          "asset_id": "A-CODE",
+          "asset_id": "A-MOTION-CODE",
           "crop": {
             "x": 0,
             "y": 0,
             "width": 1080,
             "height": 1920
           },
-          "semantic_progress": "the replacement checks, as code"
+          "source_time_range": "00:00.000-00:02.500",
+          "semantic_progress": "the code panel reveals"
         },
         {
-          "asset_id": "A-CODE",
-          "context": true,
+          "asset_id": "A-MOTION-CODE",
           "crop": {
             "x": 0,
-            "y": 500,
+            "y": 0,
             "width": 1080,
-            "height": 700
+            "height": 1920
           },
-          "semantic_progress": "the structural and the measured check, enlarged"
+          "source_time_range": "00:02.500-00:05.000",
+          "semantic_progress": "the sweep lands on the measured check"
         }
       ]
     },
@@ -141,24 +145,26 @@
       "semantic_progress": "the measured result and the verdict",
       "views": [
         {
-          "asset_id": "A-METRIC",
+          "asset_id": "A-MOTION-METRIC",
           "crop": {
             "x": 0,
             "y": 0,
             "width": 1080,
             "height": 1920
           },
-          "semantic_progress": "the measured freeze against its limit"
+          "source_time_range": "00:00.000-00:02.500",
+          "semantic_progress": "1.80 s counts up against the limit"
         },
         {
-          "asset_id": "A-ARCH-4",
+          "asset_id": "A-MOTION-RESULT",
           "crop": {
             "x": 0,
             "y": 0,
             "width": 1080,
             "height": 1920
           },
-          "semantic_progress": "the same result as a chain a reader can re-count"
+          "source_time_range": "00:00.000-00:02.500",
+          "semantic_progress": "the same numbers as a chain"
         }
       ]
     }

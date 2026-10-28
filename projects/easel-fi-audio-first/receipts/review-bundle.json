@@ -1,11 +1,11 @@
 {
   "schema": "contentops.review-bundle/v1",
   "package_id": "easel-fi-audio-first",
-  "built_at": "2026-10-28T00:29:45Z",
+  "built_at": "2026-10-28T01:17:14Z",
   "inputs": {
     "video": {
       "path": "project://final/easel.mp4",
-      "sha256": "9229a2372468cbe685052ab755893415193952d4d79e85c0d21a9a114c2cf301"
+      "sha256": "d6c0795e51e4ed62400c6937d6c05e01d3b9134df1c1b2cfb54d80962b8f1bee"
     },
     "narration": {
       "path": "project://work/narration.wav",
@@ -17,23 +17,23 @@
     },
     "claim_map": {
       "path": "project://script/claim-map.json",
-      "sha256": "fa897224afb9ddcd7283fee39ec70b07a1979dcd2b5b13ea04e9c36fb31d4745"
+      "sha256": "058e3de9cb5faffa0025f6657f4125d66b65851606b1c53a5ea1149773ea839a"
     },
     "cut_plan": {
       "path": "project://script/cut-plan.json",
-      "sha256": "852ff2d608a7e518b3f445d730af937b83c1efb4c86c564e38ee72952e3c744d"
+      "sha256": "fa5dae7a20995165fbe7bb31bcf7d1f52fc1bf10e80574a5922b165ba837cca4"
     },
     "asset_map": {
       "path": "project://script/assets.json",
-      "sha256": "5b024dd36a67a3a54f15fc8dc061840b6ff49a40a2892224d289689536ff8db5"
+      "sha256": "b8b67151bb6dc41ccfbdf410c7f6d5a517d25dec2ac3f0b68a826f10da4b8102"
     },
     "qc_report": {
       "path": "project://receipts/qc-report.json",
-      "sha256": "1aba7577b07eb07cc1627f4b581573fcf42d14d1a5679e9eddef59dc4d586fdb"
+      "sha256": "b54971d80af354a6da3149c05b8ed3f4d92c6894f3713ae5b83f647acd94236d"
     },
     "build_receipt": {
       "path": "project://receipts/build-easel.json",
-      "sha256": "9fcac89e3441f6c8ab6b05afcd93da835e4eee5d6fb590c14f46eaa85000efbc"
+      "sha256": "870fb950160d799d0fc98981b1b4dd4cf696d47b0796cb726b7d2ab87ba623e3"
     },
     "target": {
       "width": 1080,
@@ -68,41 +68,16 @@
         }
       ]
     },
-    "claim_map_fingerprint": "14622041e875c9f813aa746e1fe59a1ccde301c1bb7bf36bc55a4ecebda78e32",
-    "cut_plan_fingerprint": "358f3ad14841a240da90800995c6e300d98b2a1a345dec1423966299856c41c8",
-    "cards": {
-      "A-ARCH-1": {
-        "path": "project://assets/cards/arch-window.png",
-        "sha256": "72dce1f0bc7682c63d8c5f31317b38fb63cb4fc9b3f93eae8451eb095ec7c783"
-      },
-      "A-ARCH-2": {
-        "path": "project://assets/cards/arch-views.png",
-        "sha256": "1e62cbc0371a10a0a24695a8304b92affb3a6268cab0fd40e3048b4e71989aec"
-      },
-      "A-ARCH-3": {
-        "path": "project://assets/cards/arch-gate.png",
-        "sha256": "c164e729cdf19eb8be7d21f25ea92fd7837af80ffcf96c8634cd8ffdd107e492"
-      },
-      "A-ARCH-4": {
-        "path": "project://assets/cards/arch-result.png",
-        "sha256": "0d115df9e74f4bdf3fda7da360ec93e260577be4971dd5b92ac3466042fa1808"
-      },
-      "A-CODE": {
-        "path": "project://assets/cards/code-gate.png",
-        "sha256": "a64d1abe8d072a2d3b4f450fc560ad111db7e4333d8cdf07204260690a79b7f0"
-      },
-      "A-METRIC": {
-        "path": "project://assets/cards/metric-freeze.png",
-        "sha256": "25a13aee406c83fd1e5706658a0c77a31b77177106eff52955b91f7ee8c2ca11"
-      }
-    },
+    "claim_map_fingerprint": "c59d9ddd33e4c2dad9b722d546ab3614d9cbf1b244ef3a0f1b910a601ca3d268",
+    "cut_plan_fingerprint": "80e4de5707193269c04abe40c5e888d97e3dc250cc97203a840cc9c63b86269b",
+    "cards": {},
     "cover": {
       "path": "project://assets/covers/cover.png",
       "sha256": "272557811292e9852db447982ead2f438db888baea23ccf51d05e0e9350866b7"
     },
     "cover_receipt": {
       "path": "project://receipts/cover.json",
-      "sha256": "0f91a8b1c06bfb2b5f30471fde10bba8fee5e98c51f8d4472bcef7e0b558a8f1"
+      "sha256": "b415a14646fd6ac0512517ca9240fa983a4f6ccf06c60915faf112df2f0ce455"
     },
     "captures": [],
     "capture_proofs_present": false,
@@ -116,5 +91,5 @@
   "hard_fail": null,
   "status": "PENDING_HUMAN_REVIEW",
   "production_ready": false,
-  "review_bundle_fingerprint": "7c24ebab52312bdc4ecfcd67c14510eebd8a944c8f899782dddf1021a490d8c7"
+  "review_bundle_fingerprint": "ea76775dc56a2415237ae3e51a8a8ead680d0161cc59d6219088a596913420e7"
 }

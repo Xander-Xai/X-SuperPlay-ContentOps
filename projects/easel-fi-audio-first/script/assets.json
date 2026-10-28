@@ -1,64 +1,70 @@
 {
   "schema": "contentops.asset-map/v1",
   "assets": {
-    "A-ARCH-1": {
-      "kind": "card",
+    "A-MOTION-LEN": {
+      "kind": "motion",
       "role": "vector_animation",
-      "html": "project://assets/cards/arch-window.html",
-      "png": "project://assets/cards/arch-window.png",
+      "path": "project://work/motion/narration-bar.mp4",
+      "sha256": "ee5f3aba2f07de7c133afeaf9bd07d615fb05d362b0dfb1271e3adf40d97e828",
       "width": 1080,
       "height": 1920,
       "source_document": "repo://docs/CURRENT-STATE.md",
+      "evidence_capable": false,
       "burns_caption": true
     },
-    "A-ARCH-2": {
-      "kind": "card",
+    "A-MOTION-SWAP": {
+      "kind": "motion",
       "role": "vector_animation",
-      "html": "project://assets/cards/arch-views.html",
-      "png": "project://assets/cards/arch-views.png",
+      "path": "project://work/motion/view-swap.mp4",
+      "sha256": "341898cfa2bcc1e7baca53806d41ca7914ec86e926943e14d21eb6e13325b1f9",
       "width": 1080,
       "height": 1920,
       "source_document": "repo://src/contentops/media/cut_plan.py",
+      "evidence_capable": false,
       "burns_caption": true
     },
-    "A-ARCH-3": {
-      "kind": "card",
+    "A-MOTION-FLOW": {
+      "kind": "motion",
       "role": "vector_animation",
-      "html": "project://assets/cards/arch-gate.html",
-      "png": "project://assets/cards/arch-gate.png",
+      "path": "project://work/motion/arch-flow.mp4",
+      "sha256": "b42ed2194fb999d5dfa409beb3ec82a6f21eaf12410159053722d6404db1fdf9",
       "width": 1080,
       "height": 1920,
       "source_document": "repo://src/contentops/media/cut_qc.py",
+      "evidence_capable": false,
       "burns_caption": true
     },
-    "A-ARCH-4": {
-      "kind": "card",
-      "role": "vector_animation",
-      "html": "project://assets/cards/arch-result.html",
-      "png": "project://assets/cards/arch-result.png",
-      "width": 1080,
-      "height": 1920,
-      "source_document": "repo://projects/easel-1024-proof/receipts/qc-report.json",
-      "burns_caption": true
-    },
-    "A-CODE": {
-      "kind": "card",
+    "A-MOTION-CODE": {
+      "kind": "motion",
       "role": "code_snapshot",
-      "html": "project://assets/cards/code-gate.html",
-      "png": "project://assets/cards/code-gate.png",
+      "path": "project://work/motion/code-sweep.mp4",
+      "sha256": "ec992e64a058b96aa39b59048765e56c7d64dac1c81a4187441fd19bbc0fdfe8",
       "width": 1080,
       "height": 1920,
       "source_document": "repo://src/contentops/media/cut_qc.py",
+      "evidence_capable": false,
       "burns_caption": true
     },
-    "A-METRIC": {
-      "kind": "card",
+    "A-MOTION-METRIC": {
+      "kind": "motion",
       "role": "metric_chart",
-      "html": "project://assets/cards/metric-freeze.html",
-      "png": "project://assets/cards/metric-freeze.png",
+      "path": "project://work/motion/metric-count.mp4",
+      "sha256": "9670b1c5180246e7b3d41c8b1ebfa87eb5e7489b12ded0a99424fd3a177a0cf1",
       "width": 1080,
       "height": 1920,
       "source_document": "repo://projects/easel-1024-proof/receipts/qc-report.json",
+      "evidence_capable": false,
+      "burns_caption": true
+    },
+    "A-MOTION-RESULT": {
+      "kind": "motion",
+      "role": "vector_animation",
+      "path": "project://work/motion/result-chain.mp4",
+      "sha256": "bc57bae456d260bd5802a31206cc4c2939fdbb322a5e072f05d969aaf1540add",
+      "width": 1080,
+      "height": 1920,
+      "source_document": "repo://projects/easel-1024-proof/receipts/qc-report.json",
+      "evidence_capable": false,
       "burns_caption": true
     }
   }

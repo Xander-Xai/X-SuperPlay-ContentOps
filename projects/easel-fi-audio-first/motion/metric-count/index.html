@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --base: #0f1117; --surface: #161a22; --ink: #f5f7fa;
+        --muted: #8b95a5; --accent: #38bdf8; --line: #2a3240;
+        --sans: "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+        --mono: "Cascadia Mono", "Noto Sans Mono CJK SC", monospace;
+      }
+      @font-face { font-family: "Noto Sans CJK SC"; src: local("Noto Sans CJK SC"); }
+      @font-face { font-family: "Cascadia Mono"; src: local("Cascadia Mono"); }
+      @font-face { font-family: "Noto Sans Mono CJK SC"; src: local("Noto Sans Mono CJK SC"); }
+      @font-face { font-family: "Microsoft YaHei"; src: local("Microsoft YaHei"); }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--base); }
+      #root { position: relative; width: 1080px; height: 1920px; background: var(--base); color: var(--ink); overflow: hidden; }
+      #scene { position: absolute; inset: 0; width: 1080px; height: 1920px; transform-origin: 50% 42%; }
+      #grain { position: absolute; inset: 0; pointer-events: none; z-index: 50; opacity: .05;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>"); }
+      .topline { position: absolute; left: 86px; right: 86px; top: 96px; display: flex;
+        justify-content: space-between; font-family: var(--mono); font-size: 28px;
+        letter-spacing: .18em; color: var(--muted); }
+      .topline .tag { color: var(--accent); }
+      .topline span, #foot span { white-space: nowrap; }
+      #rule { position: absolute; left: 86px; top: 150px; width: 908px; height: 2px;
+        background: var(--accent); transform-origin: left center; }
+      #kicker { position: absolute; left: 86px; top: 250px; font-family: var(--mono);
+        font-size: 28px; letter-spacing: .2em; color: var(--muted); opacity: 0; }
+      .big { position: absolute; left: 80px; top: 330px; display: flex; align-items: baseline; }
+      #num { font-family: var(--sans); font-size: 300px; line-height: 1; font-weight: 200;
+        letter-spacing: -.05em; color: var(--ink); }
+      #unit { font-family: var(--sans); font-size: 100px; color: var(--muted); margin-left: 18px; }
+      #gauge { position: absolute; left: 86px; top: 830px; width: 908px; height: 16px;
+        background: var(--surface); border-radius: 8px; overflow: hidden; }
+      #fill { width: 100%; height: 100%; background: var(--accent); transform-origin: left center; }
+      #limit { position: absolute; left: 751px; top: 790px; width: 3px; height: 96px;
+        background: var(--muted); transform-origin: top center; transform: scaleY(0); }
+      #limitLabel { position: absolute; left: 751px; top: 740px; transform: translateX(-50%);
+        font-family: var(--mono); font-size: 28px; letter-spacing: .12em;
+        color: var(--muted); white-space: nowrap; opacity: 0; }
+      #scale { position: absolute; left: 86px; right: 86px; top: 900px; display: flex;
+        justify-content: space-between; font-family: var(--mono); font-size: 28px;
+        color: var(--muted); opacity: 0; }
+      #verdict { position: absolute; left: 86px; top: 1060px; border: 1px solid var(--accent);
+        color: var(--accent); border-radius: 10px; padding: 26px 44px;
+        font-family: var(--mono); font-size: 40px; letter-spacing: .18em; opacity: 0; }
+      #note { position: absolute; left: 86px; top: 1210px; font-family: var(--sans);
+        font-size: 38px; line-height: 1.5; color: var(--muted); opacity: 0; }
+      #foot { position: absolute; left: 86px; right: 86px; top: 1390px;
+        display: flex; justify-content: space-between; border-top: 1px solid var(--line);
+        padding-top: 16px; font-family: var(--mono); font-size: 28px;
+        letter-spacing: .1em; color: var(--muted); opacity: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="5"
+         data-width="1080" data-height="1920">
+      <div id="grain"></div>
+      <div id="scene">
+      <div id="topline" class="topline clip" data-start="0" data-duration="5" data-track-index="0">
+        <span class="tag">[ QC · 2026-10-27 ]</span><span>STATIC HOLD</span>
+      </div>
+      <div id="rule" class="clip" data-start="0" data-duration="5" data-track-index="0"></div>
+      <div id="kicker" class="clip" data-start="0" data-duration="5" data-track-index="1">最长冻结 / 上限</div>
+      <div id="big" class="big clip" data-start="0" data-duration="5" data-track-index="2">
+        <div id="num">0.00</div><div id="unit">s</div>
+      </div>
+      <div id="gauge" class="clip" data-start="0" data-duration="5" data-track-index="3">
+        <div id="fill"></div>
+      </div>
+      <div id="limit" class="clip" data-start="0" data-duration="5" data-track-index="4"></div>
+      <div id="limitLabel" class="clip" data-start="0" data-duration="5" data-track-index="4">LIMIT 2.20 s</div>
+      <div id="scale" class="clip" data-start="0" data-duration="5" data-track-index="5">
+        <span>0 s</span><span>1.5</span><span>3.0</span>
+      </div>
+      <div id="verdict" class="clip" data-start="0" data-duration="5" data-track-index="6">QC PASS</div>
+      <div id="note" class="clip" data-start="0" data-duration="5" data-track-index="7">冻结停在 1.80 秒，没有越过门禁。</div>
+      <div id="foot" class="clip" data-start="0" data-duration="5" data-track-index="8">
+        <span>qc-report.json</span><span>03 / 03</span>
+      </div>
+      </div>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#scene", { scale: 1 }, { scale: 1.035, duration: 5, ease: "none" }, 0);
+      const numEl = document.querySelector("#num");
+      const counter = { v: 0 };
+
+      tl.fromTo("#rule", { scaleX: 0 }, { scaleX: 1, duration: .45, ease: "power3.out" }, .05);
+      tl.fromTo("#kicker", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: .3, ease: "power2.out" }, .3);
+      tl.to(counter, { v: 1.8, duration: 1.15, ease: "power2.out",
+        onUpdate: () => { numEl.textContent = counter.v.toFixed(2); } }, .55);
+      tl.fromTo("#num", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: .4, ease: "power3.out" }, .45);
+      tl.fromTo("#unit", { opacity: 0 }, { opacity: 1, duration: .3, ease: "power2.out" }, .7);
+      tl.fromTo("#fill", { scaleX: 0 }, { scaleX: .6, duration: 1.15, ease: "power2.out" }, .55);
+      tl.fromTo("#scale", { opacity: 0 }, { opacity: 1, duration: .3, ease: "power2.out" }, 1.0);
+      tl.fromTo("#limit", { scaleY: 0 }, { scaleY: 1, duration: .3, ease: "power2.out" }, 1.55);
+      tl.fromTo("#limitLabel", { opacity: 0 }, { opacity: 1, duration: .3, ease: "power2.out" }, 1.62);
+      tl.fromTo("#verdict", { opacity: 0, scale: .9 }, { opacity: 1, scale: 1, duration: .4, ease: "back.out(2)" }, 2.1);
+      tl.fromTo("#note", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: .35, ease: "power2.out" }, 2.35);
+      tl.fromTo("#foot", { opacity: 0 }, { opacity: 1, duration: .3, ease: "power2.out" }, 2.5);
+      tl.fromTo("#fill", { boxShadow: "0 0 0 rgba(56,189,248,0)" },
+        { boxShadow: "0 0 28px rgba(56,189,248,.55)", duration: .35, yoyo: true, repeat: 1 }, 2.9);
+
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

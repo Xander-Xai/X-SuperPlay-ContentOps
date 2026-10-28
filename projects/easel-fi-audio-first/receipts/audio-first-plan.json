@@ -1,6 +1,6 @@
 {
   "schema": "contentops.audio-first-plan/v1",
-  "built_at": "2026-10-28T00:29:16Z",
+  "built_at": "2026-10-28T00:57:48Z",
   "package_id": "easel-fi-audio-first",
   "method": "audio-first: synthesise, measure, then size the windows",
   "voice_provider": "miniMax/speech-2.8-hd",

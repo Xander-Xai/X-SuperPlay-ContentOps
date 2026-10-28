@@ -16,7 +16,7 @@
         {
           "evidence_id": "E-FI-CURRENT-STATE",
           "kind": "document",
-          "sha256": "e28c8f2424f224de94b87edabc9d79db83ecce43d3b607c80c89819a5e4e1ded",
+          "sha256": "5c869172dc25debe86ee5e4814a250ab95de925d84bde56384ff1bb090353fed",
           "logical_path": "repo://docs/CURRENT-STATE.md",
           "time_range": null,
           "permission_scope": "publishable"
@@ -50,7 +50,7 @@
         {
           "evidence_id": "E-FI-CURRENT-STATE",
           "kind": "document",
-          "sha256": "e28c8f2424f224de94b87edabc9d79db83ecce43d3b607c80c89819a5e4e1ded",
+          "sha256": "5c869172dc25debe86ee5e4814a250ab95de925d84bde56384ff1bb090353fed",
           "logical_path": "repo://docs/CURRENT-STATE.md",
           "time_range": null,
           "permission_scope": "publishable"
@@ -84,7 +84,7 @@
         {
           "evidence_id": "E-FI-CURRENT-STATE",
           "kind": "document",
-          "sha256": "e28c8f2424f224de94b87edabc9d79db83ecce43d3b607c80c89819a5e4e1ded",
+          "sha256": "5c869172dc25debe86ee5e4814a250ab95de925d84bde56384ff1bb090353fed",
           "logical_path": "repo://docs/CURRENT-STATE.md",
           "time_range": null,
           "permission_scope": "publishable"
@@ -126,7 +126,7 @@
         {
           "evidence_id": "E-FI-CURRENT-STATE",
           "kind": "document",
-          "sha256": "e28c8f2424f224de94b87edabc9d79db83ecce43d3b607c80c89819a5e4e1ded",
+          "sha256": "5c869172dc25debe86ee5e4814a250ab95de925d84bde56384ff1bb090353fed",
           "logical_path": "repo://docs/CURRENT-STATE.md",
           "time_range": null,
           "permission_scope": "publishable"
@@ -202,7 +202,7 @@
         {
           "evidence_id": "E-FI-CURRENT-STATE",
           "kind": "document",
-          "sha256": "e28c8f2424f224de94b87edabc9d79db83ecce43d3b607c80c89819a5e4e1ded",
+          "sha256": "5c869172dc25debe86ee5e4814a250ab95de925d84bde56384ff1bb090353fed",
           "logical_path": "repo://docs/CURRENT-STATE.md",
           "time_range": null,
           "permission_scope": "publishable"
@@ -212,6 +212,32 @@
         {
           "surface": "cover_title",
           "text": "口播四十四秒"
+        }
+      ]
+    },
+    {
+      "claim_id": "C-FI-METRIC",
+      "revision": 1,
+      "text": "1.80 s · LIMIT 2.20 s · QC PASS",
+      "kind": "historical",
+      "assertion_about": "data",
+      "support_status": "SUPPORTED",
+      "permission_scope": "publishable",
+      "limitation": "",
+      "evidence": [
+        {
+          "evidence_id": "E-FI-QC",
+          "kind": "data",
+          "sha256": "0190c3ca52945257e7c09d7aa33bb8a8d34a1996f4476a0cd72541181fb21199",
+          "logical_path": "repo://projects/easel-1024-proof/receipts/qc-report.json",
+          "time_range": null,
+          "permission_scope": "publishable"
+        }
+      ],
+      "appearances": [
+        {
+          "surface": "onscreen",
+          "text": "1.80 s · LIMIT 2.20 s · QC PASS"
         }
       ]
     }

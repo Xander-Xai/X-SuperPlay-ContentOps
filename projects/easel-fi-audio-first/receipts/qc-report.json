@@ -82,7 +82,7 @@
       "id": "static_hold_within_limit",
       "ok": true,
       "severity": "PASS",
-      "detail": "longest frozen run 2.40s (limit 3.20s)"
+      "detail": "longest frozen run 0.60s (limit 3.20s)"
     },
     {
       "id": "black_and_freeze_measured",

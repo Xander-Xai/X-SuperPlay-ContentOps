@@ -1,6 +1,6 @@
 {
   "schema": "contentops.evidence-build/v1",
-  "built_at": "2026-10-28T00:29:41Z",
+  "built_at": "2026-10-28T01:17:10Z",
   "package_id": "easel-fi-audio-first",
   "target": {
     "width": 1080,
@@ -40,32 +40,32 @@
     "script": ".runtime/easel/skills/openclaw/auto-short-video/scripts/assemble.py",
     "why": "owns storyboard composition; ContentOps only prepares evidence-bounded clips, narration and captions"
   },
-  "claim_map_fingerprint": "14622041e875c9f813aa746e1fe59a1ccde301c1bb7bf36bc55a4ecebda78e32",
-  "cut_plan_fingerprint": "358f3ad14841a240da90800995c6e300d98b2a1a345dec1423966299856c41c8",
+  "claim_map_fingerprint": "c59d9ddd33e4c2dad9b722d546ab3614d9cbf1b244ef3a0f1b910a601ca3d268",
+  "cut_plan_fingerprint": "80e4de5707193269c04abe40c5e888d97e3dc250cc97203a840cc9c63b86269b",
   "assets": {
-    "A-ARCH-1": {
-      "kind": "card",
-      "png_sha256": "72dce1f0bc7682c63d8c5f31317b38fb63cb4fc9b3f93eae8451eb095ec7c783"
+    "A-MOTION-LEN": {
+      "kind": "motion",
+      "sha256": "ee5f3aba2f07de7c133afeaf9bd07d615fb05d362b0dfb1271e3adf40d97e828"
     },
-    "A-ARCH-2": {
-      "kind": "card",
-      "png_sha256": "1e62cbc0371a10a0a24695a8304b92affb3a6268cab0fd40e3048b4e71989aec"
+    "A-MOTION-SWAP": {
+      "kind": "motion",
+      "sha256": "341898cfa2bcc1e7baca53806d41ca7914ec86e926943e14d21eb6e13325b1f9"
     },
-    "A-ARCH-3": {
-      "kind": "card",
-      "png_sha256": "c164e729cdf19eb8be7d21f25ea92fd7837af80ffcf96c8634cd8ffdd107e492"
+    "A-MOTION-FLOW": {
+      "kind": "motion",
+      "sha256": "b42ed2194fb999d5dfa409beb3ec82a6f21eaf12410159053722d6404db1fdf9"
     },
-    "A-ARCH-4": {
-      "kind": "card",
-      "png_sha256": "0d115df9e74f4bdf3fda7da360ec93e260577be4971dd5b92ac3466042fa1808"
+    "A-MOTION-CODE": {
+      "kind": "motion",
+      "sha256": "ec992e64a058b96aa39b59048765e56c7d64dac1c81a4187441fd19bbc0fdfe8"
     },
-    "A-CODE": {
-      "kind": "card",
-      "png_sha256": "a64d1abe8d072a2d3b4f450fc560ad111db7e4333d8cdf07204260690a79b7f0"
+    "A-MOTION-METRIC": {
+      "kind": "motion",
+      "sha256": "9670b1c5180246e7b3d41c8b1ebfa87eb5e7489b12ded0a99424fd3a177a0cf1"
     },
-    "A-METRIC": {
-      "kind": "card",
-      "png_sha256": "25a13aee406c83fd1e5706658a0c77a31b77177106eff52955b91f7ee8c2ca11"
+    "A-MOTION-RESULT": {
+      "kind": "motion",
+      "sha256": "bc57bae456d260bd5802a31206cc4c2939fdbb322a5e072f05d969aaf1540add"
     }
   },
   "narration": {
@@ -237,7 +237,7 @@
   ],
   "output": {
     "path": "project://final/easel.mp4",
-    "sha256": "9229a2372468cbe685052ab755893415193952d4d79e85c0d21a9a114c2cf301",
+    "sha256": "d6c0795e51e4ed62400c6937d6c05e01d3b9134df1c1b2cfb54d80962b8f1bee",
     "duration_s": 25.0
   },
   "voice_quality": "minimax_mplan_subscription",
