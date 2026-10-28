@@ -253,3 +253,17 @@ python scripts\build_evidence_package.py projects\easel-fi-audio-first
 - Build 账号的门禁是 `manual_recording_forbidden`、`composition_ratio` 与
   `evidence_mode: EXPLANATORY`；声明配比为矢量 70% / 代码 25% / 指标 5%，容差 ±8 个百分点。
 - 本机 edge-tts 需要外网代理；没有代理时规划器 fail closed，不会静默换声线。
+
+### 15.1 动效 B-roll（HyperFrames）
+
+```powershell
+cd projects\easel-fi-audio-first\motion\arch-flow
+npx --yes hyperframes@0.8.208 check
+npx --yes hyperframes@0.8.208 render . -o ../../work/motion/arch-flow.mp4 -q delivery
+```
+
+- 六个工程逐个执行；清单见 `motion/README.md`
+- `work/motion/` 被忽略；HTML 是源，mp4 可重新生成
+- 重渲染后必须再跑一次 `build_evidence_package.py`：它会重读每个片段的 SHA，
+  片段在已审核收据下发生变化会被拒绝
+- 这些片段是解释性画面（`evidence_capable: false`），永远不是证据

@@ -364,3 +364,17 @@ python scripts\build_evidence_package.py projects\easel-fi-audio-first
   is 70 % vector / 25 % code / 5 % metric within ±8 pp.
 - edge-tts needs an external proxy on this machine; without one the planner
   fails closed instead of silently substituting a different voice.
+
+### 15.1 Motion b-roll (HyperFrames)
+
+```powershell
+cd projects\easel-fi-audio-first\motion\arch-flow
+npx --yes hyperframes@0.8.208 check
+npx --yes hyperframes@0.8.208 render . -o ../../work/motion/arch-flow.mp4 -q delivery
+```
+
+- repeat per project; `motion/README.md` lists the six clips
+- `work/motion/` is ignored; the HTML is the source and the mp4 is reproducible
+- after a re-render, run `build_evidence_package.py` again: it re-reads each
+  clip's SHA and refuses an asset that changed under the reviewed receipt
+- the clips are support visuals (`evidence_capable: false`), never evidence

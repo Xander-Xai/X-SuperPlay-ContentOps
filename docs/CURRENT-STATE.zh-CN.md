@@ -647,3 +647,19 @@ DNA 现在承载 `X-SuperPlay-Strategy` 拥有的战略事实，让流水线和�
 保留字幕，而引用卡仍然用卡面替代字幕。
 
 不声称：矢量卡是静态的、没有动画；BGM 按政策省略；样片不是完整一期。
+
+## 未来智能样片的动效 B-roll（Issue #34）— 2026-10-28
+
+Build 组样片不再使用静态卡片。六个 HyperFrames 工程在
+`projects/easel-fi-audio-first/motion/` 下各渲染 5 s / 1080×1920 / 30 fps 片段，
+`build_evidence_cut` 以 `kind: motion` 素材接入。
+
+| 属性 | 值 |
+|---|---|
+| 渲染器 | HyperFrames CLI `0.8.208`（Apache-2.0），`check` 0 error，`render -q delivery` |
+| 片段 | `narration-bar`、`view-swap`、`arch-flow`、`code-sweep`、`metric-count`、`result-chain` |
+| 处理 | 5% 细颗粒、1.0→1.035 缓慢推镜、焦点压暗，只用 transform/opacity |
+| 证据角色 | 仅解释性画面；`evidence_capable: false`，不计入真实素材，也不计入生成媒体 |
+| 样片 | 25.0 s，QC PASS，最长冻结 1.60 s，配比 70/20/10 对 70/25/5 |
+
+动效片段的 SHA 同时写进 `assets.json` 与构建收据，重渲染后的片段无法冒充已审核版本。

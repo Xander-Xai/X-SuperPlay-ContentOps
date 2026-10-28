@@ -554,3 +554,21 @@ replaces them.
 
 Not claimed: the vector cards are static, not animated; BGM is omitted by
 policy; the sample is not a finished episode.
+
+## Motion b-roll for the Build sample (Issue #34) — 2026-10-28
+
+The Build sample no longer uses still cards. Six HyperFrames compositions render
+5 s / 1080×1920 / 30 fps clips under
+`projects/easel-fi-audio-first/motion/`, and `build_evidence_cut` accepts them as
+`kind: motion` assets.
+
+| Property | Value |
+|---|---|
+| Renderer | HyperFrames CLI `0.8.208` (Apache-2.0), `check` 0 errors, `render -q delivery` |
+| Clips | `narration-bar`, `view-swap`, `arch-flow`, `code-sweep`, `metric-count`, `result-chain` |
+| Treatment | 5 % grain, 1.0→1.035 camera push, focus dimming, transform/opacity only |
+| Evidence role | support visual only; `evidence_capable: false`, not counted as real source or generated media |
+| Sample | 25.0 s, QC PASS, longest freeze 1.60 s, composition 70/20/10 against 70/25/5 |
+
+A motion clip's SHA is recorded in `assets.json` and again in the build receipt,
+so a re-rendered clip cannot pass as the reviewed one.
