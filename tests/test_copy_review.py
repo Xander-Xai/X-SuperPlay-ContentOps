@@ -148,6 +148,28 @@ def test_both_accounts_are_gated() -> None:
     print(f"      current gate: {states}")
 
 
+def test_no_producer_wires_a_second_gate() -> None:
+    """One enforced gate, deliberately.
+
+    The ten-stage contract in ``contentops.workflow.contract`` names canonical
+    artefacts (``02_script/script.json``) that no project has, and it was never
+    enforced. Wiring it now would put a second, competing approval in front of
+    every build. The decision of 2026-10-29 is that the copy review is the single
+    enforced gate; this test fails if a producer starts importing the other one,
+    so the choice is visible instead of quietly reversed.
+    """
+    producers = ["run_v1.py", "build_code_animation_sample.py",
+                 "build_motion_film.py", "build_account_variants.py"]
+    offenders = []
+    for name in producers:
+        text = (ROOT / "scripts" / name).read_text(encoding="utf-8")
+        for forbidden in ("workflow.gate", "workflow.contract", "workflow_gate"):
+            if forbidden in text:
+                # copy_review is the intended gate; only other workflow imports count
+                offenders.append((name, forbidden))
+    assert not offenders, f"a second gate was wired into a producer: {offenders}"
+
+
 def main() -> int:
     failures = 0
     names = sorted(n for n in dir(sys.modules[__name__]) if n.startswith("test_"))

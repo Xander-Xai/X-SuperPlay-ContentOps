@@ -854,3 +854,20 @@ skill（26 条 `skills.entries` 全部关闭）。有一把 anthropic 凭据返�
 `python scripts/copy_review.py <project>` 查看门禁；带 `--approve` 或 `--request-changes`
 并给出 `--reviewer`、`--opinion` 即为记录一次决定。截至本条目，两个账号项目均为
 `NOT_REVIEWED`，因此在创始人审核前，它们的所有流水线都被阻断。
+
+### 只保留一条强制门禁 — 2026-10-29
+
+十阶段契约（`contentops.copy-to-video/v1`）与文案审核都声称保护"脚本之后"的交接，
+但真正生效的只有一个，因此把决定记录下来，并用测试固化。
+
+| 问题 | 答案 |
+|---|---|
+| 哪条门禁强制执行？ | `copy_review` —— `NOT_REVIEWED` 与 `STALE` 会让所有生产链路停止 |
+| 契约是什么？ | 一套经过测试的顺序与指纹规则库，已声明但未接入任何生产入口 |
+| 为什么不采纳它？ | 它的标准产物（`00_brief/…`、`02_script/script.json`）在任何项目里都不存在；采纳等于为每个项目发明十条路径，并在每次构建前再加一道审批 |
+| 什么情况会推翻这个决定 | 当流水线长到"上游交接过期"成为主要风险，而不是"文案没人看过"时 |
+| 守护方式 | `tests/test_copy_review.py::test_no_producer_wires_a_second_gate`：若有生产入口改接契约而非文案审核，测试即失败 |
+
+`python scripts/workflow_gate.py` 仍可用，且每次调用都会提示它未接入生产链路。
+没有任何代码被删除：若日后顺序规则确实有价值，改一行导入即可启用，决定是可见的，
+而不是需要重新发现。

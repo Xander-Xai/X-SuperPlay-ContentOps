@@ -838,3 +838,22 @@ without one:
 `--request-changes` with `--reviewer` and `--opinion` records one. Both account
 projects are `NOT_REVIEWED` as of this entry, so every pipeline for them is blocked
 until the founder reviews.
+
+### One enforced gate, not two — 2026-10-29
+
+The ten-stage contract (`contentops.copy-to-video/v1`) and the copy review both
+claim to protect the hand-off after the script. Only one of them is real, so the
+decision is recorded here and enforced by a test.
+
+| Question | Answer |
+|---|---|
+| Which gate is enforced? | `copy_review` — `NOT_REVIEWED` and `STALE` stop every producer |
+| What is the contract? | A tested library of ordering and fingerprint rules, declared but wired into no producer |
+| Why not adopt it? | Its canonical artefacts (`00_brief/…`, `02_script/script.json`) do not exist in any project; adopting it means inventing ten paths per project and putting a second approval in front of every build |
+| What would change the decision | A pipeline long enough that a stale upstream hand-off is the real risk, not an unreviewed script |
+| Guard | `tests/test_copy_review.py::test_no_producer_wires_a_second_gate` fails if a producer imports the contract instead of the copy review |
+
+`python scripts/workflow_gate.py` still works and now says on every invocation
+that it is not wired in. Nothing is deleted: if the ordering rules earn their
+place later, they are one import away, and the decision is visible instead of
+being rediscovered.
