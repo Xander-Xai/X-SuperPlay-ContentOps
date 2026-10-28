@@ -198,6 +198,18 @@ def test_writing_a_verdict_does_not_reformat_the_receipt():
     assert opening._dumps(json.loads(text)) + "\n" == text
 
 
+def test_the_other_pipeline_refuses_an_opening_it_cannot_place():
+    """run_v1 would otherwise ship the film without him and look complete."""
+    import run_v1
+
+    with tempfile.TemporaryDirectory() as temp:
+        project = _project(temp, contract=CONTRACT)
+        (project / "project.yaml").write_text("title: t\n", encoding="utf-8")
+        result = run_v1.run(project)
+        assert result["status"] == "BLOCKED", result
+        assert "build_code_animation_sample.py" in result["reason"], result
+
+
 def test_the_real_project_honours_its_own_declaration():
     """The shipped project must satisfy the contract it ships."""
     project = ROOT / "projects" / "easel-fi-what-is-agent"
@@ -227,6 +239,8 @@ def main() -> int:
         test_a_skipped_or_failing_check_never_verifies_the_line,
         test_a_repeat_verdict_with_the_same_result_is_not_a_change,
         test_the_check_cli_reports_blocked_then_ready,
+        test_writing_a_verdict_does_not_reformat_the_receipt,
+        test_the_other_pipeline_refuses_an_opening_it_cannot_place,
         test_the_real_project_honours_its_own_declaration,
     )
     failures = []

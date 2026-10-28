@@ -644,6 +644,7 @@ filtered so it never sees the opening.
 | Disclosure | `labelled_ai_synthesised: true`; `speech_text_verified: true` — MiniMax `asr-1.0` transcribes the line as `这条视频只讲一个问题。` at coverage 1.0 |
 | Contract | `motion/presenter/contract.json` states the policy (variant, clip, text, 10 % ceiling, verification required); the facts stay in `receipts/voice-lines.json` |
 | Gate | the composer refuses the eras build (`status: BLOCKED`, exit 4) when the contract is unmet — presenter segment gone, hash drifted, asset missing, or the line unverified |
+| Other producers | `scripts/run_v1.py` returns `BLOCKED` for a project that declares an opening it cannot place, instead of composing a film without him and calling it complete |
 | Status | `production_ready: false`, `PENDING_FOUNDER_REVIEW` |
 
 The verification boundary matters: ASR proves **which words** were spoken, never

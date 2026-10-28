@@ -342,6 +342,19 @@ def run(project: Path, voice_provider: str = "", engine: str = "easel") -> dict:
     if not project_yaml.exists():
         return {"status": "BLOCKED", "reason": f"project.yaml missing at {project_yaml}"}
 
+    # A declared presenter opening must not be produced by a pipeline that cannot
+    # place it. Without this, the second producer would ship the film without him
+    # and every receipt would still look complete.
+    import presenter_opening
+    contract = presenter_opening.load_contract(project)
+    if contract:
+        return {"status": "BLOCKED", "engine": engine,
+                "reason": ("this project declares a presenter opening in "
+                           + presenter_opening.CONTRACT_REL.as_posix()
+                           + " and this pipeline does not place it; compose it with "
+                           + "scripts/build_code_animation_sample.py --variant "
+                           + str(contract.get("variant", "eras")))}
+
     if engine == "easel":
         return run_easel(project)
 

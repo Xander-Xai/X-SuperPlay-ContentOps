@@ -728,6 +728,7 @@ eras 成片以一张脸开场。一条 MiniMax H3 `Ref2VA` 镜头（请求 4 s�
 | 披露 | `labelled_ai_synthesised: true`；`speech_text_verified: true` —— MiniMax `asr-1.0` 转写结果为 `这条视频只讲一个问题。`，覆盖率 1.0 |
 | 契约 | `motion/presenter/contract.json` 只写策略（变体、clip、台词、10 % 上限、必须通过核验）；事实仍在 `receipts/voice-lines.json` |
 | 闸门 | 契约不满足时构建器拒绝 eras 构建（`status: BLOCKED`，退出码 4）：presenter 段消失、哈希漂移、资产缺失或台词未核验，任一成立即拒绝 |
+| 其它产出管线 | 项目声明了开场而该管线无法放置它时，`scripts/run_v1.py` 直接返回 `BLOCKED`，不会拍出一条没有他的片子还当作完成 |
 | 状态 | `production_ready: false`、`PENDING_FOUNDER_REVIEW` |
 
 这条核验边界要说清：ASR 证明的是**说了哪些字**，不是这条表演能不能用。交付判断仍归创始人。`speech_check` 与标志一起落盘，结论可复跑而不只是被相信：
