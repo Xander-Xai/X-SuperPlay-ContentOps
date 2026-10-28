@@ -82,3 +82,17 @@ python scripts\qc_video.py projects\easel-fi-what-is-agent --video easel.mp4
    段落表（`eras.js`），本轮未做。
 3. **语速未实测闭环**：配音时长已测，但没有做 220–260 字/分的自动校正。
 4. **X 仍未登录**：对标动效的最新数据缺口还在。
+
+## 7. 收尾：封面、审核材料、语速实测
+
+| 项 | 结果 | 收据 |
+|---|---|---|
+| 封面 | 1080×1440，品牌色，单行标题，循环线稿；card-design 密度审计 PASS | `receipts/cover.json` |
+| 审核包 | 视频 + sample + QC + 配音 + specs + 封面的指纹；`score: null` | `receipts/review-bundle.json` |
+| 人工审核单 | 八个维度全部 `null`，`PENDING_FOUNDER_REVIEW` | `receipts/human-review.json` |
+| 运行收据 | 引擎、解释器、环境变量、渲染/组装/评级命令 | `receipts/runtime-receipt.md` |
+| 语速实测 | 口播均值 **250.9 字/分**（220–260 内）；逐句 186.5–334.6；未做 atempo | `receipts/speed.json` |
+
+语速说明：逐句极值来自 7–11 字的短句，固定句尾与标点占比大；把短句硬拉到区间中值会让语气变形。按整段口播均值判断，250.9 在 DNA 区间内，因此不改。
+
+**转场未做**：引擎的转场库（tiles/cube/iris…）属于整片 `eras` 模式，spec 片段之间没有转场契约；要在五段之间加转场，必须把每段改写成 `scenes/<id>.js` 并挂进 `eras.js`，这是下一轮的工作，不在本轮手搓 `xfade`。
