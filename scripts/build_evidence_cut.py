@@ -101,9 +101,9 @@ def load_assets(project: Path) -> Dict[str, Dict[str, Any]]:
     for asset_id, asset in assets.items():
         _fail(isinstance(asset, dict), "INVALID_ASSET", f"{asset_id} is not an object")
         kind = asset.get("kind")
-        _fail(kind in ("recording", "card"), "INVALID_ASSET",
-              f"{asset_id}.kind must be recording or card")
-        if kind == "recording":
+        _fail(kind in ("recording", "card", "motion"), "INVALID_ASSET",
+              f"{asset_id}.kind must be recording, card or motion")
+        if kind in ("recording", "motion"):
             local = _local(project, asset.get("path", ""))
             _fail(local.is_file(), "ASSET_MISSING", f"{asset_id}: {local}")
             actual = sha256_file(local)
@@ -231,7 +231,20 @@ def _segment(asset: Dict[str, Any], asset_id: str, view: Dict[str, Any],
         f"scale={width}:{panel_h}:force_original_aspect_ratio=decrease,"
         f"pad={width}:{height}:0:(oh-ih)/2:color=0x161A22,setsar=1,fps=30"
     )
-    if asset["kind"] == "card":
+    if asset["kind"] == "motion":
+        source = _local(project, asset["path"])
+        start_ms, _ = parse_time_range(view["source_time_range"], "source")
+        motion_vf = (
+            f"scale={width}:{height}:force_original_aspect_ratio=decrease,"
+            f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:color=0x0F1117,"
+            f"setsar=1,fps=30,tpad=stop_mode=clone:stop_duration={duration:.3f}"
+        )
+        command = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+                   "-ss", f"{start_ms / 1000.0:.3f}", "-i", str(source),
+                   "-t", f"{duration:.3f}", "-vf", motion_vf, "-an",
+                   "-c:v", "libx264", "-preset", "veryfast",
+                   "-pix_fmt", "yuv420p", str(out)]
+    elif asset["kind"] == "card":
         png = render_card(project, asset_id, asset)
         # A card is authored at the target canvas, so it maps 1:1 to the frame.
         # Capping it at the evidence-panel height would shrink a full card to
@@ -484,7 +497,7 @@ def build(project: Path, tts_only: bool = False) -> Dict[str, Any]:
         "cut_plan_fingerprint": cut_plan.fingerprint(),
         "assets": {aid: {"kind": a["kind"],
                          **({"sha256": sha256_file(_local(project, a["path"]))}
-                            if a["kind"] == "recording" else
+                            if a["kind"] in ("recording", "motion") else
                             {"png_sha256": sha256_file(render_card(project, aid, a))})}
                    for aid, a in assets.items()},
         "narration": {"path": "project://work/narration.wav",
