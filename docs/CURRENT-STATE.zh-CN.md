@@ -676,12 +676,14 @@ Build 组的动画层是一个外部 skill，不是自研引擎。`huashu-art-mo
 | Windows 适配 | Chrome/Edge 通道回退；运行时设 `PYTHONUTF8=1`（spec 读取用默认编码） |
 | 解释器 | 宿主 Python，让 Playwright 命中 `D:\DevCaches\ms-playwright\chromium-1223` |
 | 使用语法 | 两个机制 beat 用 `y1_kurzgesagt`（竖屏三颗卫星），三个支撑 beat 用 `t2_keynote_ui`；片段时长精确 |
-| 样片 | `projects/easel-fi-what-is-agent/` — 20.0 s、1080×1920、h264/aac、5×4.0 s |
-| 配音 | MiniMax `speech-2.8-hd`，5 句，实测 10.762 s，按每 4 s 窗口摆放 |
+| 样片 | `projects/easel-fi-what-is-agent/` — 52.0 s、1080×1920、h264/aac、12×4.0 s beat + 一个 4.0 s 生成插入 |
+| 配音 | MiniMax `speech-2.8-hd`，12 句，实测 28.165 s，按每 4 s 窗口摆放 |
 | 字幕 | 按实测句长生成 SRT，用未来智能 DNA 样式烧录 |
-| QC | `qc_video` **WARN**（20 s 低于 30 s 下限；纯动画没有真实素材比），技术解码/音频/字幕/响度通过 |
+| QC | `qc_video` **WARN**（纯动画：真实素材比与真实证据检查不适用；未声明 `source_refs`），时长/解码/音频/字幕/响度通过 |
 | 状态 | `production_ready: false`、`PENDING_FOUNDER_REVIEW`，无发布链接 |
 
-样片是定义型内容，不是断言型（`claim_bearing: false`）；画面全部是代码动画：
-零录屏、零鼠标、零生成画面。收据绑定 spec、片段与输出的 SHA；
-`receipts/qc-summary.json` 还把 QC 结论绑定到输出 SHA。
+样片是定义型内容，不是断言型（`claim_bearing: false`）；零录屏、零鼠标。
+一个 MiniMax H3 片段作为无口播、无断言的桥段（4.0 s = 全片 7.7%，低于 10% 上限）；
+另生成的一张静帧因为读起来像黑帧，已从时间线移除。两个决定与配额变化记录在
+`receipts/generated-media.json`。收据绑定 spec、片段与输出 SHA；
+`receipts/qc-summary.json` 也把 QC 结论绑定到输出 SHA。

@@ -585,13 +585,16 @@ the shared skill store and used through its `scripts/engine/render.py`.
 | Windows adapter | Chrome/Edge channel fallback; run with `PYTHONUTF8=1` (the spec reader uses the default codec) |
 | Interpreter | host Python, so Playwright resolves `D:\DevCaches\ms-playwright\chromium-1223` |
 | Grammar used | `y1_kurzgesagt` for the two mechanism beats (three satellites in portrait) and `t2_keynote_ui` for the three supporting beats; clip duration is exact |
-| Sample | `projects/easel-fi-what-is-agent/` — 20.0 s, 1080×1920, h264/aac, 5×4.0 s clips |
-| Voice | MiniMax `speech-2.8-hd`, 5 lines, 10.762 s measured, placed at each 4 s window |
+| Sample | `projects/easel-fi-what-is-agent/` — 52.0 s, 1080×1920, h264/aac, 12×4.0 s beats + one 4.0 s generated insert |
+| Voice | MiniMax `speech-2.8-hd`, 12 lines, 28.165 s measured, placed at each 4 s window |
 | Captions | SRT from measured durations, burned with the Future Intelligence DNA style |
-| QC | `qc_video` **WARN** (20 s below the 30 s floor; pure animation has no real-source ratio), technical decode/audio/subtitle/loudness pass |
+| QC | `qc_video` **WARN** (pure animation: real-source ratio and real-evidence checks do not apply; no `source_refs`), duration/decode/audio/subtitle/loudness pass |
 | Status | `production_ready: false`, `PENDING_FOUNDER_REVIEW`, no publishing URL |
 
-The sample is definitional, not claim-bearing (`claim_bearing: false`), and the
-visuals are code animation only: no recording, no mouse, no generated footage.
+The sample is definitional, not claim-bearing (`claim_bearing: false`). No
+recording and no mouse appears. One MiniMax H3 clip is used as a silent,
+claim-free bridge (4.0 s = 7.7 % of the film, below the 10 % cap); a generated
+still was produced, judged to read as a near-black frame, and removed from the
+cut. Both decisions and the quota delta are in `receipts/generated-media.json`.
 Receipts bind the spec, clip and output SHAs; `receipts/qc-summary.json` also
 binds the QC verdict to the output SHA.
