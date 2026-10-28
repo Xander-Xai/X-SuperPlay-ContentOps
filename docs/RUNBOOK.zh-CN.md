@@ -267,3 +267,20 @@ npx --yes hyperframes@0.8.208 render . -o ../../work/motion/arch-flow.mp4 -q del
 - 重渲染后必须再跑一次 `build_evidence_package.py`：它会重读每个片段的 SHA，
   片段在已审核收据下发生变化会被拒绝
 - 这些片段是解释性画面（`evidence_capable: false`），永远不是证据
+
+## 16. 通过外部 skill 做代码动画
+
+```powershell
+$env:PYTHONUTF8 = "1"
+python C:\Users\Administrator\.agents\skills\huashu-art-motion\scripts\engine\render.py `
+  --spec projects\easel-fi-what-is-agent\motion\specs\p01.json `
+  --out  projects\easel-fi-what-is-agent\work\clips\p01.mp4
+python scripts\build_code_animation_sample.py projects\easel-fi-what-is-agent
+python scripts\qc_video.py projects\easel-fi-what-is-agent --video easel.mp4
+```
+
+- 用宿主 Python，不要用 `uv run --with playwright`：宿主能命中本机已有的
+  Playwright Chromium，uv 会装更新的 Playwright 并索要本机没有的浏览器版本
+- 必须设 `PYTHONUTF8=1`；引擎用默认编码读 spec
+- 组装脚本把每句配音放到对应窗口起点，按实测时长写 SRT，并用账号 DNA 字幕样式烧录
+- 短视频纯动画样片的 `qc_video` WARN 是可预期的；如实记录，不要当成 PASS

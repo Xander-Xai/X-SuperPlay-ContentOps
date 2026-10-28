@@ -572,3 +572,26 @@ The Build sample no longer uses still cards. Six HyperFrames compositions render
 
 A motion clip's SHA is recorded in `assets.json` and again in the build receipt,
 so a re-rendered clip cannot pass as the reviewed one.
+
+## Code-animation layer: huashu-art-motion (Issue #34) — 2026-10-28
+
+The Build account's animation layer is an external skill, not a self-built
+engine. `huashu-art-motion` (MIT, commit `8a0d7d7`, SKILL 1.2.0) is installed in
+the shared skill store and used through its `scripts/engine/render.py`.
+
+| Property | Value |
+|---|---|
+| Engine path | `C:\Users\Administrator\.agents\skills\huashu-art-motion` |
+| Windows adapter | Chrome/Edge channel fallback; run with `PYTHONUTF8=1` (the spec reader uses the default codec) |
+| Interpreter | host Python, so Playwright resolves `D:\DevCaches\ms-playwright\chromium-1223` |
+| Grammar used | `t2_keynote_ui` (title + step cards); clip duration is exact |
+| Sample | `projects/easel-fi-what-is-agent/` — 20.0 s, 1080×1920, h264/aac, 5×4.0 s clips |
+| Voice | MiniMax `speech-2.8-hd`, 5 lines, 10.762 s measured, placed at each 4 s window |
+| Captions | SRT from measured durations, burned with the Future Intelligence DNA style |
+| QC | `qc_video` **WARN** (20 s below the 30 s floor; pure animation has no real-source ratio), technical decode/audio/subtitle/loudness pass |
+| Status | `production_ready: false`, `PENDING_FOUNDER_REVIEW`, no publishing URL |
+
+The sample is definitional, not claim-bearing (`claim_bearing: false`), and the
+visuals are code animation only: no recording, no mouse, no generated footage.
+Receipts bind the spec, clip and output SHAs; `receipts/qc-summary.json` also
+binds the QC verdict to the output SHA.

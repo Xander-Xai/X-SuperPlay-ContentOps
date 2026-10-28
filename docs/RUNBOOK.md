@@ -378,3 +378,23 @@ npx --yes hyperframes@0.8.208 render . -o ../../work/motion/arch-flow.mp4 -q del
 - after a re-render, run `build_evidence_package.py` again: it re-reads each
   clip's SHA and refuses an asset that changed under the reviewed receipt
 - the clips are support visuals (`evidence_capable: false`), never evidence
+
+## 16. Code animation through the external skill
+
+```powershell
+$env:PYTHONUTF8 = "1"
+python C:\Users\Administrator\.agents\skills\huashu-art-motion\scripts\engine\render.py `
+  --spec projects\easel-fi-what-is-agent\motion\specs\p01.json `
+  --out  projects\easel-fi-what-is-agent\work\clips\p01.mp4
+python scripts\build_code_animation_sample.py projects\easel-fi-what-is-agent
+python scripts\qc_video.py projects\easel-fi-what-is-agent --video easel.mp4
+```
+
+- use the host Python, not `uv run --with playwright`: the host resolves the
+  Playwright Chromium already on this machine, while uv fetches a newer
+  Playwright that asks for an absent browser revision
+- `PYTHONUTF8=1` is required; the engine reads the spec with the default codec
+- the composer places each synthesized line at its placement start, writes the
+  SRT from the measured durations, and burns the account DNA caption style
+- `qc_video` WARN is expected for a short pure-animation sample; record it, do
+  not turn it into a PASS
