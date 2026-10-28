@@ -398,3 +398,15 @@ python scripts\qc_video.py projects\easel-fi-what-is-agent --video easel.mp4
   SRT from the measured durations, and burns the account DNA caption style
 - `qc_video` WARN is expected for a short pure-animation sample; record it, do
   not turn it into a PASS
+
+Package a code-animation sample for review (cover + fingerprint + null-score
+review stub):
+
+```powershell
+python scripts\package_code_animation_sample.py projects\easel-fi-what-is-agent
+```
+
+It renders the cover through the shared card renderer and fails if the
+card-design density audit fails. It writes `receipts/cover.json`,
+`receipts/review-bundle.json`, `receipts/human-review.json` (every score null)
+and `receipts/runtime-receipt.md`. It never records a score.

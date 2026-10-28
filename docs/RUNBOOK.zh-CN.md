@@ -284,3 +284,13 @@ python scripts\qc_video.py projects\easel-fi-what-is-agent --video easel.mp4
 - 必须设 `PYTHONUTF8=1`；引擎用默认编码读 spec
 - 组装脚本把每句配音放到对应窗口起点，按实测时长写 SRT，并用账号 DNA 字幕样式烧录
 - 短视频纯动画样片的 `qc_video` WARN 是可预期的；如实记录，不要当成 PASS
+
+给代码动画样片打包审核材料（封面 + 指纹 + 空评分审核单）：
+
+```powershell
+python scripts\package_code_animation_sample.py projects\easel-fi-what-is-agent
+```
+
+它用共享卡片渲染器出封面，密度审计失败就报错；写出 `receipts/cover.json`、
+`receipts/review-bundle.json`、`receipts/human-review.json`（所有分数为 null）与
+`receipts/runtime-receipt.md`。它从不记录分数。
