@@ -50,7 +50,7 @@ date: 2026-10-28
 | 项 | 值 |
 |---|---|
 | 项目 | `projects/easel-fi-what-is-agent/` |
-| 语法 | `t2_keynote_ui`（发布会界面：标题 + 步骤卡） |
+| 语法 | 机制 beat 用 `y1_kurzgesagt`（中心物 + 3 卫星 + 流动信号），支撑 beat 用 `t2_keynote_ui`（标题 + 步骤卡） |
 | Specs | `motion/specs/p01..p05.json`（4 s / 1080×1920 / 30 fps，brand accent `#38BDF8`） |
 | 片段 | `work/clips/p01..p05.mp4`（每段 4.000 s） |
 | 配音 | MiniMax `speech-2.8-hd`，5 句，实测合计 10.762 s；逐句收据 `receipts/voice-0N.json` |
@@ -76,8 +76,8 @@ python scripts\qc_video.py projects\easel-fi-what-is-agent --video easel.mp4
 
 ## 6. 没做到的 / 下一步
 
-1. **语法层还停在 t2**：卡片式讲解清晰，但不是“机制动效”。机制类选题应换
-   `t1_3b1b`（推导/曲线）或 `y1_kurzgesagt`（尺度/流动），这两套需要另行验证。
+1. **机制 beat 已换 y1，支撑 beat 仍是 t2**：y1 的中心物 + 卫星 + 流动信号读起来是机制；
+   但竖屏最多 3 颗卫星，第 4 颗会被底部裁掉（已用 3 节点规避）。t1_3b1b 未验证。
 2. **没有转场**：五段之间是硬切；引擎支持整片模式与转场库，但需要把 spec 换成
    段落表（`eras.js`），本轮未做。
 3. **语速未实测闭环**：配音时长已测，但没有做 220–260 字/分的自动校正。
