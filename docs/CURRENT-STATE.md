@@ -584,7 +584,7 @@ the shared skill store and used through its `scripts/engine/render.py`.
 | Engine path | `C:\Users\Administrator\.agents\skills\huashu-art-motion` |
 | Windows adapter | Chrome/Edge channel fallback; run with `PYTHONUTF8=1` (the spec reader uses the default codec) |
 | Interpreter | host Python, so Playwright resolves `D:\DevCaches\ms-playwright\chromium-1223` |
-| Grammar used | `t2_keynote_ui` (title + step cards); clip duration is exact |
+| Grammar used | `y1_kurzgesagt` for the two mechanism beats (three satellites in portrait) and `t2_keynote_ui` for the three supporting beats; clip duration is exact |
 | Sample | `projects/easel-fi-what-is-agent/` — 20.0 s, 1080×1920, h264/aac, 5×4.0 s clips |
 | Voice | MiniMax `speech-2.8-hd`, 5 lines, 10.762 s measured, placed at each 4 s window |
 | Captions | SRT from measured durations, burned with the Future Intelligence DNA style |

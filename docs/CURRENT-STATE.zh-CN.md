@@ -675,7 +675,7 @@ Build 组的动画层是一个外部 skill，不是自研引擎。`huashu-art-mo
 | 引擎路径 | `C:\Users\Administrator\.agents\skills\huashu-art-motion` |
 | Windows 适配 | Chrome/Edge 通道回退；运行时设 `PYTHONUTF8=1`（spec 读取用默认编码） |
 | 解释器 | 宿主 Python，让 Playwright 命中 `D:\DevCaches\ms-playwright\chromium-1223` |
-| 使用语法 | `t2_keynote_ui`（标题 + 步骤卡）；片段时长精确 |
+| 使用语法 | 两个机制 beat 用 `y1_kurzgesagt`（竖屏三颗卫星），三个支撑 beat 用 `t2_keynote_ui`；片段时长精确 |
 | 样片 | `projects/easel-fi-what-is-agent/` — 20.0 s、1080×1920、h264/aac、5×4.0 s |
 | 配音 | MiniMax `speech-2.8-hd`，5 句，实测 10.762 s，按每 4 s 窗口摆放 |
 | 字幕 | 按实测句长生成 SRT，用未来智能 DNA 样式烧录 |
