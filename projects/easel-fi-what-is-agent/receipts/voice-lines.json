@@ -30,7 +30,49 @@
       "text": "能回查，才算跑过。",
       "path": "project://assets/voice/line-05.wav",
       "duration_s": 2.252
+    },
+    {
+      "line": 6,
+      "text": "模型不是记忆，窗口才是。",
+      "path": "project://assets/voice/line-06.wav",
+      "duration_s": 2.473
+    },
+    {
+      "line": 7,
+      "text": "工具要有边界，读和写分开。",
+      "path": "project://assets/voice/line-07.wav",
+      "duration_s": 2.763
+    },
+    {
+      "line": 8,
+      "text": "失败要能重试，也要能停下。",
+      "path": "project://assets/voice/line-08.wav",
+      "duration_s": 2.763
+    },
+    {
+      "line": 9,
+      "text": "评估看结果，不看话说得顺。",
+      "path": "project://assets/voice/line-09.wav",
+      "duration_s": 2.554
+    },
+    {
+      "line": 10,
+      "text": "成本是设计的一部分。",
+      "path": "project://assets/voice/line-10.wav",
+      "duration_s": 1.788
+    },
+    {
+      "line": 11,
+      "text": "不是所有任务都值得做成 Agent。",
+      "path": "project://assets/voice/line-11.wav",
+      "duration_s": 2.171
+    },
+    {
+      "line": 12,
+      "text": "先把边界写清楚，再谈自动化。",
+      "path": "project://assets/voice/line-12.wav",
+      "duration_s": 2.891
     }
   ],
-  "total_s": 10.762
+  "total_s": 28.165
 }

@@ -1,7 +1,7 @@
 {
   "schema": "contentops.review-bundle/v1",
   "package_id": "easel-fi-what-is-agent",
-  "built_at": "2026-10-28T03:03:37Z",
+  "built_at": "2026-10-28T03:29:21Z",
   "inputs": {
     "cover": {
       "path": "project://assets/covers/cover.png",
@@ -9,11 +9,11 @@
     },
     "qc_summary": {
       "path": "project://receipts/qc-summary.json",
-      "sha256": "f91d3f5e0df6f2c411291c8bd6f5090257c899b3e6b7c75caa1570dec3b5e8c9"
+      "sha256": "29da2ebb082334e46bf9d55d7b3f65ed5c08233a46d861c67583b3d24cd7030c"
     },
     "sample": {
       "path": "project://receipts/sample.json",
-      "sha256": "a0fda45484e91085655afb71d7987daca533fdadc46cb7dbeb87864aa99151dd"
+      "sha256": "d575e4dcd893078cda8812724adf04017c9fb50cfa4a16708c41fcff26786757"
     },
     "spec:p01": {
       "path": "project://motion/specs/p01.json",
@@ -35,16 +35,44 @@
       "path": "project://motion/specs/p05.json",
       "sha256": "f3a9505686d5b3289bc3c5075b6005cc2c2dc4678a9ed7fbb1884026ea74b476"
     },
+    "spec:p06": {
+      "path": "project://motion/specs/p06.json",
+      "sha256": "b295517adb42407aa4ba59e9661802c7b3e4d932c14e33087e1bec72ed7df91e"
+    },
+    "spec:p07": {
+      "path": "project://motion/specs/p07.json",
+      "sha256": "7717686dbd486f917fd872ee98d071acc7d226d1056b8f91cbef2a8fbfdef516"
+    },
+    "spec:p08": {
+      "path": "project://motion/specs/p08.json",
+      "sha256": "af940b7fd71a645d9889b4b10bae7256fe68cde30eab25bf753c0b6c9096f0d5"
+    },
+    "spec:p09": {
+      "path": "project://motion/specs/p09.json",
+      "sha256": "6e5e6dc87492f227745c6f294ce066b4db0fd122abe0babd0d968161e5932bcd"
+    },
+    "spec:p10": {
+      "path": "project://motion/specs/p10.json",
+      "sha256": "eeb1dbb7e879d01fff39207ccfde58fd47da081dfd7bdf9535a811561f0f0366"
+    },
+    "spec:p11": {
+      "path": "project://motion/specs/p11.json",
+      "sha256": "df85637755332e94ccdfefc7d00ef32e6674bd6f07d227bb229e623fdace726d"
+    },
+    "spec:p12": {
+      "path": "project://motion/specs/p12.json",
+      "sha256": "08f3c544e24455b16149e4464de39621956ee6888d28282c8868ec6695049b8a"
+    },
     "video": {
       "path": "project://final/easel.mp4",
-      "sha256": "531c93578862cb1b6d3620943e8391161ee8ad9505af27fe4d0ec33734f16835"
+      "sha256": "f4523c6f522e00112643127c4c20f81e19a17cee55132f95e8c8659374fc4967"
     },
     "voice": {
       "path": "project://receipts/voice-lines.json",
-      "sha256": "c00ddd68fad1602c8ea0a558105e0386e2611843a637649b923ef8186d52ef8d"
+      "sha256": "e0d1758d9cd3e23dc2421daac45e23e7935a3030acc307743b896611b9e14b4b"
     }
   },
-  "review_bundle_fingerprint": "9761c00a3b72eb89d5202fd47f0c84a72a47be0cb3fcb8e51d45a8b2d854d013",
+  "review_bundle_fingerprint": "6f7b05c8caa811ba629f27de962bbc72dcd20a30d4e45c051903a91e96b872fe",
   "score": null,
   "reviewer": null,
   "hard_fail": null,

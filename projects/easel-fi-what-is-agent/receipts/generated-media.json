@@ -1,0 +1,57 @@
+{
+  "schema": "contentops.generated-media-experiment/v1",
+  "policy": {
+    "cap": 0.1,
+    "claim_free_only": true,
+    "delete_if_not_improved": true,
+    "source": "docs/superpowers/specs/2026-10-27-evidence-led-video-v2-design.md"
+  },
+  "image": {
+    "provider": "minimax_m_plan/image-01",
+    "status": "NOT_USED",
+    "asset": "project://assets/generated/image-68d2e2fc9adb3643.jpg",
+    "sha256": "812ac7b173ed08caa53f15af74ac6b608339d759627ccc5cc20b78ea7d4465f4",
+    "provider_receipt": "project://assets/generated/image-68d2e2fc9adb3643.jpg.receipt.json",
+    "provider_receipt_sha256": "072ff5cf6e8ff3560b2c88ba213c578c380347e641184270968486fef4e7de7f",
+    "reason": "Rendered full-frame as a 1 s claim-free breath, the image reads as a near-black frame on a phone; it added neither comprehension nor pacing. Removed from the timeline; the asset and its receipt stay for provenance."
+  },
+  "video": {
+    "provider": "minimax_m_plan/MiniMax-H3",
+    "status": "USED",
+    "asset": "project://work/generated/shot-cafdc28ea9070de8.mp4",
+    "sha256": "984c351ca8022f33aa4bbda1de3c07d855d1ade14e46cefb2969169c793c7a4f",
+    "provider_receipt": "project://work/generated/shot-cafdc28ea9070de8.mp4.receipt.json",
+    "provider_receipt_sha256": "0b8a42e29a612f00cc267cc6ea98f35b2d44c6e74f920492b46a0fa1bdd3271a",
+    "requested": {
+      "duration_s": 4,
+      "resolution": "768P",
+      "ratio": "9:16",
+      "audio_policy": "MUTE"
+    },
+    "actual": {
+      "width": 768,
+      "height": 1344,
+      "fps": 24,
+      "duration_s": 4.458,
+      "codec": "h264"
+    },
+    "quota": {
+      "weekly_before_percent": 81.0,
+      "weekly_after_percent": 74.0,
+      "delta_pp": 7.0
+    },
+    "create_count": 1,
+    "placement": {
+      "window_s": "33.0-37.0",
+      "claim_bearing": false,
+      "note": "silent bridge between the failure beat and the evaluation beat"
+    },
+    "normalisation": "scaled/cropped to 1080x1920, audio stripped, 30 fps",
+    "improves": "keeps a visual pause in the middle of the film without narration"
+  },
+  "generated_seconds": 4.0,
+  "film_seconds": 52.0,
+  "generated_ratio": 0.0769,
+  "production_ready": false,
+  "human_review": "PENDING_FOUNDER_REVIEW"
+}

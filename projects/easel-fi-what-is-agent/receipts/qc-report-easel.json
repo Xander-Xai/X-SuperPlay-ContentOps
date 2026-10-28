@@ -1,6 +1,6 @@
 {
   "project": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-fi-what-is-agent",
-  "checked_at": "2026-10-28T02:55:39Z",
+  "checked_at": "2026-10-28T03:28:25Z",
   "video": "",
   "overall": "WARN",
   "checks": [
@@ -14,7 +14,7 @@
       "id": "file_size",
       "ok": true,
       "severity": "PASS",
-      "value_bytes": 1427543,
+      "value_bytes": 4660361,
       "min_bytes": 102400
     },
     {
@@ -37,9 +37,9 @@
     },
     {
       "id": "duration_range",
-      "ok": false,
-      "severity": "WARN",
-      "value_sec": 20.0,
+      "ok": true,
+      "severity": "PASS",
+      "value_sec": 52.0,
       "expected_range_sec": [
         30.0,
         120.0
@@ -118,14 +118,14 @@
       "ok": true,
       "severity": "PASS",
       "max_volume_db": "-4.4 dB",
-      "mean_volume_db": "-25.6 dB"
+      "mean_volume_db": "-25.4 dB"
     },
     {
       "id": "subtitle_burned_or_track",
       "ok": true,
       "severity": "PASS",
       "method": "burned_in_scan",
-      "note": "max bright-pixel ratio across 6 samples = 0.01065"
+      "note": "max bright-pixel ratio across 6 samples = 0.00240"
     },
     {
       "id": "real_evidence_present",

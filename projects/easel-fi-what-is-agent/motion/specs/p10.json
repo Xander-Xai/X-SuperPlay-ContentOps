@@ -1,0 +1,35 @@
+{
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": "ink",
+  "duration": 4,
+  "grammar": "y1_kurzgesagt",
+  "data": {
+    "center": "成本",
+    "flow": true,
+    "camera": "smooth"
+  },
+  "cues": [
+    {
+      "at": 0.0,
+      "kind": "title",
+      "text": "成本是设计"
+    },
+    {
+      "at": 0.4,
+      "kind": "point",
+      "text": "token"
+    },
+    {
+      "at": 1.1,
+      "kind": "point",
+      "text": "调用"
+    },
+    {
+      "at": 1.7999999999999998,
+      "kind": "point",
+      "text": "延迟"
+    }
+  ]
+}

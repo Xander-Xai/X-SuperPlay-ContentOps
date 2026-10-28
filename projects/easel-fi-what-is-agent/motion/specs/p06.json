@@ -1,0 +1,35 @@
+{
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": "ink",
+  "duration": 4,
+  "grammar": "y1_kurzgesagt",
+  "data": {
+    "center": "记忆",
+    "flow": true,
+    "camera": "smooth"
+  },
+  "cues": [
+    {
+      "at": 0.0,
+      "kind": "title",
+      "text": "记住的不是聊天"
+    },
+    {
+      "at": 0.4,
+      "kind": "point",
+      "text": "上下文窗口"
+    },
+    {
+      "at": 1.1,
+      "kind": "point",
+      "text": "工具结果"
+    },
+    {
+      "at": 1.7999999999999998,
+      "kind": "point",
+      "text": "摘要"
+    }
+  ]
+}

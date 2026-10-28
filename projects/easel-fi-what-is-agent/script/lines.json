@@ -3,12 +3,216 @@
   "package_id": "easel-fi-what-is-agent",
   "evidence_mode": "EXPLANATORY",
   "manual_recording": "FORBIDDEN",
-  "composition": [{"role": "vector_animation", "pct": 100}],
+  "composition": [
+    {
+      "role": "vector_animation",
+      "pct": 100
+    }
+  ],
   "beats": [
-    {"placement_id": "P-01", "claim_id": "C-01", "text": "Agent 不是一次问答。", "semantic_progress": "the question is reopened", "views": [{"asset_id": "A-MOTION-1", "crop": {"x":0,"y":0,"width":1080,"height":1920}}]},
-    {"placement_id": "P-02", "claim_id": "C-02", "text": "它先定目标，再决定下一步。", "semantic_progress": "goal then plan", "views": [{"asset_id": "A-MOTION-2", "crop": {"x":0,"y":0,"width":1080,"height":1920}}]},
-    {"placement_id": "P-03", "claim_id": "C-03", "text": "用工具拿回结果，再改计划。", "semantic_progress": "tool then observation", "views": [{"asset_id": "A-MOTION-3", "crop": {"x":0,"y":0,"width":1080,"height":1920}}]},
-    {"placement_id": "P-04", "claim_id": "C-04", "text": "这个循环会留下记录。", "semantic_progress": "the loop leaves a trace", "views": [{"asset_id": "A-MOTION-4", "crop": {"x":0,"y":0,"width":1080,"height":1920}}]},
-    {"placement_id": "P-05", "claim_id": "C-05", "text": "能回查，才算跑过。", "semantic_progress": "checkable is the bar", "views": [{"asset_id": "A-MOTION-5", "crop": {"x":0,"y":0,"width":1080,"height":1920}}]}
+    {
+      "placement_id": "P-01",
+      "claim_id": "C-01",
+      "text": "Agent 不是一次问答。",
+      "semantic_progress": "the question is reopened",
+      "views": [
+        {
+          "asset_id": "A-MOTION-1",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920
+          }
+        }
+      ]
+    },
+    {
+      "placement_id": "P-02",
+      "claim_id": "C-02",
+      "text": "它先定目标，再决定下一步。",
+      "semantic_progress": "goal then plan",
+      "views": [
+        {
+          "asset_id": "A-MOTION-2",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920
+          }
+        }
+      ]
+    },
+    {
+      "placement_id": "P-03",
+      "claim_id": "C-03",
+      "text": "用工具拿回结果，再改计划。",
+      "semantic_progress": "tool then observation",
+      "views": [
+        {
+          "asset_id": "A-MOTION-3",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920
+          }
+        }
+      ]
+    },
+    {
+      "placement_id": "P-04",
+      "claim_id": "C-04",
+      "text": "这个循环会留下记录。",
+      "semantic_progress": "the loop leaves a trace",
+      "views": [
+        {
+          "asset_id": "A-MOTION-4",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920
+          }
+        }
+      ]
+    },
+    {
+      "placement_id": "P-05",
+      "claim_id": "C-05",
+      "text": "能回查，才算跑过。",
+      "semantic_progress": "checkable is the bar",
+      "views": [
+        {
+          "asset_id": "A-MOTION-5",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920
+          }
+        }
+      ]
+    },
+    {
+      "placement_id": "P-06",
+      "claim_id": "C-06",
+      "text": "模型不是记忆，窗口才是。",
+      "semantic_progress": "definitional beat",
+      "views": [
+        {
+          "asset_id": "A-MOTION-6",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920
+          }
+        }
+      ]
+    },
+    {
+      "placement_id": "P-07",
+      "claim_id": "C-07",
+      "text": "工具要有边界，读和写分开。",
+      "semantic_progress": "definitional beat",
+      "views": [
+        {
+          "asset_id": "A-MOTION-7",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920
+          }
+        }
+      ]
+    },
+    {
+      "placement_id": "P-08",
+      "claim_id": "C-08",
+      "text": "失败要能重试，也要能停下。",
+      "semantic_progress": "definitional beat",
+      "views": [
+        {
+          "asset_id": "A-MOTION-8",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920
+          }
+        }
+      ]
+    },
+    {
+      "placement_id": "P-09",
+      "claim_id": "C-09",
+      "text": "评估看结果，不看话说得顺。",
+      "semantic_progress": "definitional beat",
+      "views": [
+        {
+          "asset_id": "A-MOTION-9",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920
+          }
+        }
+      ]
+    },
+    {
+      "placement_id": "P-10",
+      "claim_id": "C-10",
+      "text": "成本是设计的一部分。",
+      "semantic_progress": "definitional beat",
+      "views": [
+        {
+          "asset_id": "A-MOTION-10",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920
+          }
+        }
+      ]
+    },
+    {
+      "placement_id": "P-11",
+      "claim_id": "C-11",
+      "text": "不是所有任务都值得做成 Agent。",
+      "semantic_progress": "definitional beat",
+      "views": [
+        {
+          "asset_id": "A-MOTION-11",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920
+          }
+        }
+      ]
+    },
+    {
+      "placement_id": "P-12",
+      "claim_id": "C-12",
+      "text": "先把边界写清楚，再谈自动化。",
+      "semantic_progress": "definitional beat",
+      "views": [
+        {
+          "asset_id": "A-MOTION-12",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920
+          }
+        }
+      ]
+    }
   ]
 }

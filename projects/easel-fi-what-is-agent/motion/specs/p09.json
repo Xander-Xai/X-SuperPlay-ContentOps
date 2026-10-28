@@ -1,0 +1,46 @@
+{
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": "ink",
+  "duration": 4,
+  "grammar": "t2_keynote_ui",
+  "data": {
+    "eyebrow": "WHAT IS AN AGENT",
+    "accent": "#38BDF8"
+  },
+  "cues": [
+    {
+      "at": 0.0,
+      "kind": "title",
+      "text": "评估看结果"
+    },
+    {
+      "at": 0.8,
+      "kind": "step",
+      "text": "结果对",
+      "data": {
+        "icon": "check",
+        "step": "01"
+      }
+    },
+    {
+      "at": 1.7000000000000002,
+      "kind": "step",
+      "text": "可复现",
+      "data": {
+        "icon": "layers",
+        "step": "02"
+      }
+    },
+    {
+      "at": 2.6,
+      "kind": "step",
+      "text": "可回查",
+      "data": {
+        "icon": "memory",
+        "step": "03"
+      }
+    }
+  ]
+}

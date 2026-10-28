@@ -1,16 +1,11 @@
 {
   "schema": "contentops.qc-summary/v1",
   "graded": "project://final/easel.mp4",
-  "sha256": "531c93578862cb1b6d3620943e8391161ee8ad9505af27fe4d0ec33734f16835",
+  "sha256": "f4523c6f522e00112643127c4c20f81e19a17cee55132f95e8c8659374fc4967",
   "qc_video": {
     "overall": "WARN",
     "report": "project://receipts/qc-report-easel.json",
     "warnings": [
-      {
-        "id": "duration_range",
-        "severity": "WARN",
-        "detail": ""
-      },
       {
         "id": "source_refs_recorded",
         "severity": "WARN",
@@ -36,9 +31,9 @@
   "technical": {
     "decodable": true,
     "black_s": 0.0,
-    "freeze_s": 0.4
+    "freeze_s": 0.65
   },
-  "interpretation": "WARN, not PASS: 20 s is below the 30 s floor, the film is pure animation so the real-source ratio is not applicable, and no source_refs are declared. Decode, audio, subtitle burn and loudness pass.",
+  "interpretation": "WARN, not PASS: the film is pure animation, so the real-source ratio and real-evidence checks do not apply, and no source_refs are declared. Duration (52 s), decode, audio, subtitle burn and loudness pass.",
   "production_ready": false,
   "human_review": "PENDING_FOUNDER_REVIEW"
 }
