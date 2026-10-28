@@ -811,3 +811,30 @@ The `captions` route in both account DNAs named `auto-subtitle` and
 Both DNAs now declare `assemble_easel` with `path_base: repo`, and narration timing
 is attributed to the audio stage. `contract_stage` is not yet declared, so a
 `captions` receipt records `contract: null`.
+
+### The copy gate stops every producer — 2026-10-29
+
+Writing the copy no longer flows into a render. `src/contentops/workflow/copy_review.py`
+binds a human decision to a fingerprint of the copy, and the producers refuse to run
+without one:
+
+| Producer | Where it stops |
+|---|---|
+| `scripts/run_v1.py` | `run_easel`, before TTS |
+| `scripts/build_code_animation_sample.py` | `main`, before reading voice-lines |
+| `scripts/build_motion_film.py` | `build`, before any render |
+| `scripts/build_account_variants.py` | per account, before `build_variant` |
+
+| Property | Value |
+|---|---|
+| Record | `receipts/script-review.json`, schema `contentops.copy-review/v1` |
+| Decision | `APPROVED` or `CHANGES_REQUESTED`, with a named reviewer and a written opinion |
+| Fingerprint | `script/master.md`, `script/*.srt` and each shot's `unit`, `narration`, `image`, `source_type`, `duration`, `designer_card`, `placement`, plus `size` |
+| Excluded | `narration`, `subtitle`, `engine`, `runtime`, `voice_provider` — the pipeline writes those itself and they must not invalidate a review |
+| Bypass | none |
+| States | `NOT_REVIEWED` and `STALE` stop and need a new decision; `CHANGES_REQUESTED` stops and needs a copy change |
+
+`python scripts/copy_review.py <project>` prints the gate; `--approve` or
+`--request-changes` with `--reviewer` and `--opinion` records one. Both account
+projects are `NOT_REVIEWED` as of this entry, so every pipeline for them is blocked
+until the founder reviews.

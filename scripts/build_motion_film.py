@@ -38,6 +38,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from process_utils import hidden_run, python_executable  # noqa: E402
 
@@ -144,6 +145,12 @@ def _film_track(clips: list[tuple[Path, float]], out: Path) -> Path:
 def build(project: Path, *, speed: float, engine: Path, pad: float,
           skip_render: bool = False) -> dict:
     import split_narration_lines as splitter
+    from contentops.workflow import copy_review
+
+    try:
+        copy_review.require_approved(project)
+    except copy_review.CopyReviewRequired as exc:
+        raise SystemExit(f"BLOCKED: {exc.reason}\n  remedy: {exc.remedy}")
 
     storyboard = json.loads((project / "script" / "storyboard.json").read_text(encoding="utf-8"))
     narration = ROOT / str(storyboard.get("narration") or "")

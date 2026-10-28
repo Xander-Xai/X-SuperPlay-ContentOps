@@ -229,6 +229,12 @@ jobs:
       - name: Run OpenClaw bridge tests
         run: python tests/test_openclaw_agent.py
 
+      # The copy gate: every producer stops after the copy until a person records
+      # a decision against the current copy fingerprint. Build metadata must not
+      # invalidate a review; a copy change must.
+      - name: Run copy-review gate tests
+        run: python tests/test_copy_review.py
+
       # One source, two native assets: 1024 opens on the conflict and re-orders
       # complete units; Future Intelligence keeps the eight-unit walkthrough.
       # Both stop at PENDING_FOUNDER_REVIEW and claim no publication URL.

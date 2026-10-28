@@ -659,9 +659,19 @@ def main() -> int:
             units[shot["unit"]]["text"] = shot.get("narration", "")
 
     results = []
+    from contentops.workflow import copy_review
     for slug, spec in VARIANTS.items():
         if args.only and slug != args.only:
             continue
+        # The copy gate applies per account: a variant whose script has not been
+        # reviewed does not render, whatever the other account did.
+        try:
+            copy_review.require_approved(ROOT / "projects" / slug)
+        except copy_review.CopyReviewRequired as exc:
+            print(json.dumps({"status": "BLOCKED", "account": slug, "stage": "copy_review",
+                              "reason": exc.reason, "remedy": exc.remedy},
+                             ensure_ascii=False, indent=2))
+            return 4
         results.append(build_variant(slug, spec, units))
     print(json.dumps(results, indent=2, ensure_ascii=False))
     return 0

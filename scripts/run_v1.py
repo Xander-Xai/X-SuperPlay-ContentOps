@@ -260,6 +260,22 @@ def resolve_production_runtime() -> dict:
     return resolve_easel(live=False)
 
 
+def copy_gate(project: Path, engine: str = "") -> dict | None:
+    """Refuse to build until a person has reviewed the copy.
+
+    Every producer shares this: the copy is the last artefact a human can change
+    cheaply, so the pipeline stops there until someone records a decision.
+    """
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+    from contentops.workflow import copy_review
+    try:
+        copy_review.require_approved(project)
+    except copy_review.CopyReviewRequired as exc:
+        return {"status": "BLOCKED", "engine": engine, "stage": "copy_review",
+                "reason": exc.reason, "remedy": exc.remedy}
+    return None
+
+
 def pre_render_gate(project: Path) -> list:
     """Refuse a gated project whose script artefacts already fail.
 
@@ -288,6 +304,9 @@ def run_easel(project: Path, reuse_voice: bool = False) -> dict:
     if not script_exists(project):
         return {"status": "BLOCKED", "engine": "easel",
                 "reason": "script/master.md missing — production requires a project-authored script"}
+    gate = copy_gate(project, engine="easel")
+    if gate:
+        return gate
     findings = pre_render_gate(project)
     if findings:
         return {"status": "BLOCKED", "engine": "easel",

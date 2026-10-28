@@ -330,6 +330,16 @@ def main() -> int:
     if not project.is_absolute():
         project = ROOT / project
     project = project.resolve()
+
+    # The copy gate: no film is composed from copy nobody has reviewed.
+    from contentops.workflow import copy_review
+    try:
+        copy_review.require_approved(project)
+    except copy_review.CopyReviewRequired as exc:
+        print(json.dumps({"status": "BLOCKED", "stage": "copy_review",
+                          "reason": exc.reason, "remedy": exc.remedy},
+                         ensure_ascii=False))
+        return 4
     config = _yaml(project / "project.yaml")
     paths = _variant_paths(args.variant)
     voice = json.loads((project / "receipts" / "voice-lines.json").read_text(encoding="utf-8"))

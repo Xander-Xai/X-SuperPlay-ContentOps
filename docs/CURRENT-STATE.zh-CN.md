@@ -829,3 +829,28 @@ skill（26 条 `skills.entries` 全部关闭）。有一把 anthropic 凭据返�
 `scripts/assemble_easel.py`（`_srt_to_ass`、溢出闸门、ffmpeg 烧录）。两个 DNA 现已改为
 声明 `assemble_easel` 与 `path_base: repo`，旁白时间轴归入 audio 阶段。尚未声明
 `contract_stage`，因此 `captions` 收据记录 `contract: null`。
+
+### 文案门禁阻断所有生产链路 — 2026-10-29
+
+写完文案不再直接进入渲染。`src/contentops/workflow/copy_review.py` 把人工决定绑定到文案指纹上，
+没有决定的生产链路一律拒绝执行：
+
+| 生产入口 | 停在哪里 |
+|---|---|
+| `scripts/run_v1.py` | `run_easel`，TTS 之前 |
+| `scripts/build_code_animation_sample.py` | `main`，读取 voice-lines 之前 |
+| `scripts/build_motion_film.py` | `build`，任何渲染之前 |
+| `scripts/build_account_variants.py` | 逐账号，`build_variant` 之前 |
+
+| 事实 | 值 |
+|---|---|
+| 记录 | `receipts/script-review.json`，schema `contentops.copy-review/v1` |
+| 决定 | `APPROVED` 或 `CHANGES_REQUESTED`，必须有具名审核人与书面意见 |
+| 指纹 | `script/master.md`、`script/*.srt`，以及每个镜头的 `unit`、`narration`、`image`、`source_type`、`duration`、`designer_card`、`placement`，另加 `size` |
+| 排除 | `narration`、`subtitle`、`engine`、`runtime`、`voice_provider` —— 这些由流水线自己写回，不得让审核失效 |
+| 绕过 | 没有 |
+| 状态 | `NOT_REVIEWED` 与 `STALE` 停住，需重新决定；`CHANGES_REQUESTED` 停住，需改文案 |
+
+`python scripts/copy_review.py <project>` 查看门禁；带 `--approve` 或 `--request-changes`
+并给出 `--reviewer`、`--opinion` 即为记录一次决定。截至本条目，两个账号项目均为
+`NOT_REVIEWED`，因此在创始人审核前，它们的所有流水线都被阻断。
