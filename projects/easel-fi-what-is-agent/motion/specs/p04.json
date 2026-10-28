@@ -1,6 +1,6 @@
 {
   "grammar": "t2_keynote_ui",
-  "duration": 4,
+  "duration": 2.6,
   "fps": 30,
   "width": 1080,
   "height": 1920,
@@ -17,7 +17,7 @@
       "sub": "每一步都有记录"
     },
     {
-      "at": 0.9,
+      "at": 0.5,
       "kind": "step",
       "text": "调用了什么",
       "data": {
@@ -25,7 +25,7 @@
       }
     },
     {
-      "at": 1.9,
+      "at": 1.07,
       "kind": "step",
       "text": "拿回了什么",
       "data": {
@@ -34,7 +34,7 @@
       }
     },
     {
-      "at": 3.0,
+      "at": 1.63,
       "kind": "step",
       "text": "下一轮接着用",
       "data": {

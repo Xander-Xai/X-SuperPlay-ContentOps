@@ -1,6 +1,6 @@
 {
   "schema": "contentops.code-animation-sample/v1",
-  "built_at": "2026-10-28T03:28:22Z",
+  "built_at": "2026-10-28T05:38:59Z",
   "package_id": "easel-fi-what-is-agent",
   "content_type": "DEFINITIONAL_EXPLAINER",
   "claim_bearing": false,
@@ -16,14 +16,14 @@
     "windows_adapter": "Playwright channel fallback (chrome/msedge) and PYTHONUTF8=1 for spec JSON"
   },
   "timeline": {
-    "total_s": 52.0,
+    "total_s": 45.0,
     "segments": 13,
     "beats": 12,
     "inserts": 1
   },
   "generated_media": {
     "seconds": 4.0,
-    "ratio": 0.0769,
+    "ratio": 0.0889,
     "cap": 0.1,
     "policy": "claim-free inserts only; deletes if it does not improve"
   },
@@ -31,81 +31,81 @@
     {
       "type": "beat",
       "clip": "project://work/clips/p01.mp4",
-      "duration_s": 4.0,
-      "clip_sha256": "61a184c03c1a52c39337f1070d5ae563d572e8a143dc61789168c79a99eb0de1",
+      "duration_s": 3.1,
+      "clip_sha256": "e56dcbab78dfb23f4a2e3b880a1866e433b045f9eb59d93c6eccd031a1e96759",
       "line": 1,
       "spec": "project://motion/specs/p01.json",
-      "spec_sha256": "a544dc66598b98bab4254f7b6c5738558a71af6cb03ab4046a675399feb38152",
+      "spec_sha256": "b1ffa469315bbe89bb5381e6554d2894fa6806821b6b0d09f11e2fa50f4444b8",
       "grammar": "y1_kurzgesagt"
     },
     {
       "type": "beat",
       "clip": "project://work/clips/p02.mp4",
-      "duration_s": 4.0,
-      "clip_sha256": "649a729f2f59f63f479edad12ab45ad2f714a33a71870a0c71870ea50fcc0a60",
+      "duration_s": 4.1,
+      "clip_sha256": "9d513cc1876f8e6f09aa42822e8d659526904ad13e73fbc6ec064265a20305f2",
       "line": 2,
       "spec": "project://motion/specs/p02.json",
-      "spec_sha256": "adf6728b3802016d0f4e5ccabe0ec81b6bff951487b0b4262e3d3e72eafb795b",
+      "spec_sha256": "4ddae439e96a08021225290cc3c456f9d317ffb3e3f3ce11fae4bd501eea0d2a",
       "grammar": "t2_keynote_ui"
     },
     {
       "type": "beat",
       "clip": "project://work/clips/p03.mp4",
       "duration_s": 4.0,
-      "clip_sha256": "00c833446cc395a703134f1fc3857bd54058d4afc96f3abc9b0a8043c7524a27",
+      "clip_sha256": "5b37079279be179d8916b29c073cfac3e63c42ac2b1b8df70c2eab888fe349de",
       "line": 3,
       "spec": "project://motion/specs/p03.json",
-      "spec_sha256": "50f0ce9cc2fa695b18ab85c4f173c7ab3312de878b23315235976d64a2307aec",
+      "spec_sha256": "62a489fc14b9097ccdfe4382d23948eeeb4953e00dd49bcc6a08ade940f869da",
       "grammar": "y1_kurzgesagt"
     },
     {
       "type": "beat",
       "clip": "project://work/clips/p04.mp4",
-      "duration_s": 4.0,
-      "clip_sha256": "fa2db2de0f066d82c4470217c009008f9c34e8d898ec2af881d3949cc7429bc5",
+      "duration_s": 2.6,
+      "clip_sha256": "130c0e1334065af3395d1a073bec530024e4813f7aeee3be855389569a7e44dc",
       "line": 4,
       "spec": "project://motion/specs/p04.json",
-      "spec_sha256": "54e8d86e4fa5068c4099c909d78e0f9ee80dc4c8827fff2f6cdec64b196ce8e1",
+      "spec_sha256": "4bd348d3c93b81ab6d01d03c2a70d1821a4cfa7c68dac836a9b6236a6a4735ef",
       "grammar": "t2_keynote_ui"
     },
     {
       "type": "beat",
       "clip": "project://work/clips/p05.mp4",
-      "duration_s": 4.0,
-      "clip_sha256": "658ae9951a88e7fb6394eed194a94379a081dfc932f27fe6da0ae65bbb38ee05",
+      "duration_s": 2.9,
+      "clip_sha256": "c8a41ce45eac85ffccb26b43ba621a7757c6a49e6ddd1ec2d72a5f0880916204",
       "line": 5,
       "spec": "project://motion/specs/p05.json",
-      "spec_sha256": "f3a9505686d5b3289bc3c5075b6005cc2c2dc4678a9ed7fbb1884026ea74b476",
+      "spec_sha256": "dd3a60083088f809aa17145423c4bc613007ae0376c4b492ba1878c5a76decd8",
       "grammar": "t2_keynote_ui"
     },
     {
       "type": "beat",
       "clip": "project://work/clips/p06.mp4",
-      "duration_s": 4.0,
-      "clip_sha256": "a58c21bd0ce9f1d88cbc5ef233010c7e8377441a6cb46f5102f4d60295a17711",
+      "duration_s": 3.3,
+      "clip_sha256": "6265e32d9359d930592a31792449df4dd72b514ededddf0c7e25ea1a477fe773",
       "line": 6,
       "spec": "project://motion/specs/p06.json",
-      "spec_sha256": "b295517adb42407aa4ba59e9661802c7b3e4d932c14e33087e1bec72ed7df91e",
+      "spec_sha256": "609721e6c8e35b95a247d142cd4c8792808ecc6199491241db732b7159bc34cb",
       "grammar": "y1_kurzgesagt"
     },
     {
       "type": "beat",
       "clip": "project://work/clips/p07.mp4",
-      "duration_s": 4.0,
-      "clip_sha256": "46141bd3ac79bb6139c16ee4d7f29b29e3897c1198c2b8822eeb217091fbb3eb",
+      "duration_s": 4.1,
+      "clip_sha256": "f09189f67eca19f4e33eda82fac997bd2149d449bb605df6e4eea40e34f10903",
       "line": 7,
       "spec": "project://motion/specs/p07.json",
-      "spec_sha256": "7717686dbd486f917fd872ee98d071acc7d226d1056b8f91cbef2a8fbfdef516",
+      "spec_sha256": "eaf7c96299a2915035f947dfee78ab540f68d300f627364d5807e7acc777c975",
       "grammar": "t2_keynote_ui"
     },
     {
       "type": "beat",
       "clip": "project://work/clips/p08.mp4",
-      "duration_s": 4.0,
-      "clip_sha256": "17810e98c87add0bce2ee42696ab8cd5fb6681fa8b32bd2f7b279c8069762970",
+      "duration_s": 3.8,
+      "clip_sha256": "e29bdb90a4f527bc105f8daaaf46c40dc994a0970dfc91bea172f91207b7cc7d",
       "line": 8,
       "spec": "project://motion/specs/p08.json",
-      "spec_sha256": "af940b7fd71a645d9889b4b10bae7256fe68cde30eab25bf753c0b6c9096f0d5",
+      "spec_sha256": "57c8e33b19fcc65f4a7b7e09482e5c04b5ccc9319254b9637e2762760eed41b6",
       "grammar": "t2_keynote_ui"
     },
     {
@@ -120,132 +120,145 @@
     {
       "type": "beat",
       "clip": "project://work/clips/p09.mp4",
-      "duration_s": 4.0,
-      "clip_sha256": "320666d065edb2823318789daa16a2d28f6abe498d42cfb5c7370791496af993",
+      "duration_s": 3.6,
+      "clip_sha256": "c4171a420fb4f3624f144abc18567c3b9087f21d587cef197450ba933d5ecf0f",
       "line": 9,
       "spec": "project://motion/specs/p09.json",
-      "spec_sha256": "6e5e6dc87492f227745c6f294ce066b4db0fd122abe0babd0d968161e5932bcd",
+      "spec_sha256": "ed5b503e0176c4d3a712f4619a4044f111c0756134a2221e7f181fc50287ee8b",
       "grammar": "t2_keynote_ui"
     },
     {
       "type": "beat",
       "clip": "project://work/clips/p10.mp4",
-      "duration_s": 4.0,
-      "clip_sha256": "2c797c4bb457fc767ab9343fb167e2c51e43c35ad7021bb8f313ef105ddff826",
+      "duration_s": 2.6,
+      "clip_sha256": "a019e66a894d11e5c961aaad774fed233b7234ed04d39ca29df280bfd6903fac",
       "line": 10,
       "spec": "project://motion/specs/p10.json",
-      "spec_sha256": "eeb1dbb7e879d01fff39207ccfde58fd47da081dfd7bdf9535a811561f0f0366",
+      "spec_sha256": "2053171fb024d04da6f5d66e88232d19f0e6ec3143797c6c9d07e7e2d42de086",
       "grammar": "y1_kurzgesagt"
     },
     {
       "type": "beat",
       "clip": "project://work/clips/p11.mp4",
-      "duration_s": 4.0,
-      "clip_sha256": "cd973671933a991bcc03e3a1f1e396a0c937ee1df4e439e9cb04cba471fe96e1",
+      "duration_s": 3.2,
+      "clip_sha256": "074a601aed96156efcc70e3ef13cd398126be348e80c1015ac94bb08d4d40627",
       "line": 11,
       "spec": "project://motion/specs/p11.json",
-      "spec_sha256": "df85637755332e94ccdfefc7d00ef32e6674bd6f07d227bb229e623fdace726d",
+      "spec_sha256": "a109a6bec940a5e393c009caa044b3d9fe0596a7361814e49ac864ff7623d9a6",
       "grammar": "t2_keynote_ui"
     },
     {
       "type": "beat",
       "clip": "project://work/clips/p12.mp4",
-      "duration_s": 4.0,
-      "clip_sha256": "d1c9ccf15292c8db0245c21e93fe71ee465014c0c55e10a7902abd77e52cb561",
+      "duration_s": 3.7,
+      "clip_sha256": "3af7ce4b8efadb30f8873e73d884c94ec7cc02ae57231fa87ffe7d628034dafe",
       "line": 12,
       "spec": "project://motion/specs/p12.json",
-      "spec_sha256": "08f3c544e24455b16149e4464de39621956ee6888d28282c8868ec6695049b8a",
+      "spec_sha256": "bc8cd00108a41fec06f3ed5cf5662a05dfc9ed8bfadb71a6b21d3258e626ba8c",
       "grammar": "t2_keynote_ui"
     }
   ],
+  "bgm": {
+    "role": "bgm",
+    "status": "CODE_SYNTH",
+    "path": "project://work/bgm.wav",
+    "sha256": "bee9536ed0eff713861e948d949cb89c57fc016c27e43b6f5c13395c8109b055",
+    "voice_peak_db": -1.5,
+    "bgm_peak_db": -24.4,
+    "headroom_db": 22.9,
+    "receipt": "project://work/bgm.json",
+    "policy": "synthesised locally; no sample library and no provider"
+  },
   "voice": {
     "provider": "speech-2.8-hd",
+    "clone_alias": "founder_primary_v1",
+    "clone_id_hash": "7271d9c80c88821a6a09ed43328619d0ee08c3f2b2449237fe2c31f6899abeef",
     "lines": [
       {
         "line": 1,
         "text": "Agent 不是一次问答。",
         "path": "project://assets/voice/line-01.wav",
-        "duration_s": 1.718
+        "duration_s": 2.728
       },
       {
         "line": 2,
         "text": "它先定目标，再决定下一步。",
         "path": "project://assets/voice/line-02.wav",
-        "duration_s": 2.635
+        "duration_s": 3.796
       },
       {
         "line": 3,
         "text": "用工具拿回结果，再改计划。",
         "path": "project://assets/voice/line-03.wav",
-        "duration_s": 2.543
+        "duration_s": 3.669
       },
       {
         "line": 4,
         "text": "这个循环会留下记录。",
         "path": "project://assets/voice/line-04.wav",
-        "duration_s": 1.614
+        "duration_s": 2.218
       },
       {
         "line": 5,
         "text": "能回查，才算跑过。",
         "path": "project://assets/voice/line-05.wav",
-        "duration_s": 2.252
+        "duration_s": 2.508
       },
       {
         "line": 6,
         "text": "模型不是记忆，窗口才是。",
         "path": "project://assets/voice/line-06.wav",
-        "duration_s": 2.473
+        "duration_s": 2.937
       },
       {
         "line": 7,
         "text": "工具要有边界，读和写分开。",
         "path": "project://assets/voice/line-07.wav",
-        "duration_s": 2.763
+        "duration_s": 3.704
       },
       {
         "line": 8,
         "text": "失败要能重试，也要能停下。",
         "path": "project://assets/voice/line-08.wav",
-        "duration_s": 2.763
+        "duration_s": 3.448
       },
       {
         "line": 9,
         "text": "评估看结果，不看话说得顺。",
         "path": "project://assets/voice/line-09.wav",
-        "duration_s": 2.554
+        "duration_s": 3.274
       },
       {
         "line": 10,
         "text": "成本是设计的一部分。",
         "path": "project://assets/voice/line-10.wav",
-        "duration_s": 1.788
+        "duration_s": 2.218
       },
       {
         "line": 11,
         "text": "不是所有任务都值得做成 Agent。",
         "path": "project://assets/voice/line-11.wav",
-        "duration_s": 2.171
+        "duration_s": 2.891
       },
       {
         "line": 12,
         "text": "先把边界写清楚，再谈自动化。",
         "path": "project://assets/voice/line-12.wav",
-        "duration_s": 2.891
+        "duration_s": 3.367
       }
     ],
     "receipts": "project://receipts/voice-lines.json"
   },
   "captions": {
-    "path": "project://assets/captions/cut.srt",
-    "sha256": "7a6882769012f4034214d2939ef13594454627edc1efe90c3a4b3519a85c9927",
+    "path": "project://assets/captions/default.srt",
+    "sha256": "c6ec7701dedeb8b0489f14e3f5c63625bacc71461d30037ae07d6d319769f6c4",
     "style_source": "config/accounts/x-superplay-future-intelligence.json",
     "cues": 12
   },
   "output": {
     "path": "project://final/easel.mp4",
-    "sha256": "f4523c6f522e00112643127c4c20f81e19a17cee55132f95e8c8659374fc4967",
-    "duration_s": 52.0,
+    "sha256": "6648756bbbe3b28dc0193878a80f5c2ce568f80dad325101b64ddb14f4b98735",
+    "duration_s": 45.0,
     "width": 1080,
     "height": 1920,
     "video_codec": "h264",
@@ -254,8 +267,8 @@
   "technical_qc": {
     "decodable": true,
     "longest_black_run_s": 0.0,
-    "longest_freeze_run_s": 0.65,
-    "analysed_frames": 240,
+    "longest_freeze_run_s": 0.6,
+    "analysed_frames": 225,
     "notes": [],
     "reasons": []
   },

@@ -9,21 +9,21 @@
   "transport": "official_cli",
   "transport_version": "mmx 1.0.27",
   "model": "speech-2.8-hd",
-  "voice": "Chinese (Mandarin)_Reliable_Executive",
+  "voice": "founder_primary_v1",
   "display_text_sha256": "3d1e9db4186171c9ff5de676ae299405378e8ec3cdb5ef345a50cd76f0d75165",
   "spoken_text_sha256": "3d1e9db4186171c9ff5de676ae299405378e8ec3cdb5ef345a50cd76f0d75165",
   "lexicon_version": "zh-2026.10.04.1",
-  "fingerprint": "b9700e0fef7bdeac7497d94c4772918c329fd2aaa4817ff67f9e57bed897d36c",
+  "fingerprint": "40e7aece6197f1169b609574b20a378cdc49792253724a9e373fc7e5e07e1a3c",
   "quota_before": {
     "bucket": "general",
     "interval_remaining_percent": 99.0,
-    "weekly_remaining_percent": 81.0,
+    "weekly_remaining_percent": 74.0,
     "modality_breakdown": {}
   },
   "quota_after": {
     "bucket": "general",
     "interval_remaining_percent": 99.0,
-    "weekly_remaining_percent": 81.0,
+    "weekly_remaining_percent": 74.0,
     "modality_breakdown": {}
   },
   "billing_guard_verdict": "SAFE_INCLUDED_PLAN",
@@ -32,7 +32,7 @@
     "quota_after": {
       "bucket": "general",
       "interval_remaining_percent": 99.0,
-      "weekly_remaining_percent": 81.0
+      "weekly_remaining_percent": 74.0
     }
   },
   "technical_qc": {
@@ -41,12 +41,12 @@
       {
         "check": "file_exists",
         "passed": true,
-        "detail": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-fi-what-is-agent\\assets\\voice\\narration-b9700e0fef7bdeac.wav"
+        "detail": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-fi-what-is-agent\\assets\\voice\\narration-40e7aece6197f116.wav"
       },
       {
         "check": "not_empty",
         "passed": true,
-        "detail": "114506 bytes"
+        "detail": "142000 bytes"
       },
       {
         "check": "has_audio_codec",
@@ -56,7 +56,7 @@
       {
         "check": "has_duration",
         "passed": true,
-        "detail": 1.788
+        "detail": 2.218
       },
       {
         "check": "sample_rate",
@@ -76,7 +76,7 @@
         "passed": true,
         "detail": {
           "expected_s": 1.6666666666666667,
-          "actual_s": 1.788
+          "actual_s": 2.218
         }
       },
       {
@@ -102,7 +102,7 @@
       {
         "check": "loudness_floor",
         "passed": true,
-        "detail": -17.8
+        "detail": -18.7
       },
       {
         "check": "true_peak_headroom",
@@ -114,12 +114,12 @@
       "codec": "pcm_s16le",
       "sample_rate_hz": 32000,
       "channels": 1,
-      "duration_s": 1.788,
-      "bytes": 114506,
-      "integrated_lufs": -17.8,
+      "duration_s": 2.218,
+      "bytes": 142000,
+      "integrated_lufs": -18.7,
       "true_peak_db": -1.5,
       "peak_db": -1.5,
-      "mean_db": -18.3,
+      "mean_db": -19.1,
       "loudness_range_lu": 0.0
     },
     "silence": {
@@ -140,8 +140,8 @@
     "excess": [],
     "detail": null
   },
-  "raw_sha256": "6f69adadb6dec4699e5c3a61f1efef40c7917a71b42809b8c366102e52958def",
-  "normalized_sha256": "75c47b85197db85361f23b772f8b726a55193a36834b1bbe8c5fd9bb284a180b",
+  "raw_sha256": "81ae35940e61807662431132e93499cb2b71ebd1ec1b55fcd77dca90170b3248",
+  "normalized_sha256": "7cf66ab888a976f8e437dfc5a4b11e8ceb6a2469d7c98ec0f43b14b484df752b",
   "attempt": 1,
   "retry_reason": null,
   "fallback": {
@@ -153,15 +153,15 @@
   "production_ready": false,
   "human_review": "PENDING_FOUNDER_REVIEW",
   "asset": {
-    "normalized_path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-fi-what-is-agent\\assets\\voice\\narration-b9700e0fef7bdeac.wav",
-    "duration_s": 1.788,
+    "normalized_path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-fi-what-is-agent\\assets\\voice\\narration-40e7aece6197f116.wav",
+    "duration_s": 2.218,
     "sample_rate_hz": 32000,
     "channels": 1,
     "codec": "pcm_s16le",
-    "peak_before_db": -3.7,
+    "peak_before_db": -2.9,
     "peak_after_db": -1.5,
     "loudness_before": -20.0,
-    "loudness_after": -17.8,
+    "loudness_after": -18.7,
     "approved": true
   },
   "reused_cached_asset": false,

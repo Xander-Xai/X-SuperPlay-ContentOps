@@ -1,7 +1,7 @@
 {
   "schema": "contentops.review-bundle/v1",
   "package_id": "easel-fi-what-is-agent",
-  "built_at": "2026-10-28T03:29:21Z",
+  "built_at": "2026-10-28T05:40:02Z",
   "inputs": {
     "cover": {
       "path": "project://assets/covers/cover.png",
@@ -9,70 +9,70 @@
     },
     "qc_summary": {
       "path": "project://receipts/qc-summary.json",
-      "sha256": "29da2ebb082334e46bf9d55d7b3f65ed5c08233a46d861c67583b3d24cd7030c"
+      "sha256": "e02835062e4939a6bea76a6f72cbc7dbdf0d3399ae726ce8c21fb3008e4a8831"
     },
     "sample": {
       "path": "project://receipts/sample.json",
-      "sha256": "d575e4dcd893078cda8812724adf04017c9fb50cfa4a16708c41fcff26786757"
+      "sha256": "e148a304e284fe480748c65a847e94b441e1eb1b6fa5ec494bafc59e4c189a14"
     },
     "spec:p01": {
       "path": "project://motion/specs/p01.json",
-      "sha256": "a544dc66598b98bab4254f7b6c5738558a71af6cb03ab4046a675399feb38152"
+      "sha256": "b1ffa469315bbe89bb5381e6554d2894fa6806821b6b0d09f11e2fa50f4444b8"
     },
     "spec:p02": {
       "path": "project://motion/specs/p02.json",
-      "sha256": "adf6728b3802016d0f4e5ccabe0ec81b6bff951487b0b4262e3d3e72eafb795b"
+      "sha256": "4ddae439e96a08021225290cc3c456f9d317ffb3e3f3ce11fae4bd501eea0d2a"
     },
     "spec:p03": {
       "path": "project://motion/specs/p03.json",
-      "sha256": "50f0ce9cc2fa695b18ab85c4f173c7ab3312de878b23315235976d64a2307aec"
+      "sha256": "62a489fc14b9097ccdfe4382d23948eeeb4953e00dd49bcc6a08ade940f869da"
     },
     "spec:p04": {
       "path": "project://motion/specs/p04.json",
-      "sha256": "54e8d86e4fa5068c4099c909d78e0f9ee80dc4c8827fff2f6cdec64b196ce8e1"
+      "sha256": "4bd348d3c93b81ab6d01d03c2a70d1821a4cfa7c68dac836a9b6236a6a4735ef"
     },
     "spec:p05": {
       "path": "project://motion/specs/p05.json",
-      "sha256": "f3a9505686d5b3289bc3c5075b6005cc2c2dc4678a9ed7fbb1884026ea74b476"
+      "sha256": "dd3a60083088f809aa17145423c4bc613007ae0376c4b492ba1878c5a76decd8"
     },
     "spec:p06": {
       "path": "project://motion/specs/p06.json",
-      "sha256": "b295517adb42407aa4ba59e9661802c7b3e4d932c14e33087e1bec72ed7df91e"
+      "sha256": "609721e6c8e35b95a247d142cd4c8792808ecc6199491241db732b7159bc34cb"
     },
     "spec:p07": {
       "path": "project://motion/specs/p07.json",
-      "sha256": "7717686dbd486f917fd872ee98d071acc7d226d1056b8f91cbef2a8fbfdef516"
+      "sha256": "eaf7c96299a2915035f947dfee78ab540f68d300f627364d5807e7acc777c975"
     },
     "spec:p08": {
       "path": "project://motion/specs/p08.json",
-      "sha256": "af940b7fd71a645d9889b4b10bae7256fe68cde30eab25bf753c0b6c9096f0d5"
+      "sha256": "57c8e33b19fcc65f4a7b7e09482e5c04b5ccc9319254b9637e2762760eed41b6"
     },
     "spec:p09": {
       "path": "project://motion/specs/p09.json",
-      "sha256": "6e5e6dc87492f227745c6f294ce066b4db0fd122abe0babd0d968161e5932bcd"
+      "sha256": "ed5b503e0176c4d3a712f4619a4044f111c0756134a2221e7f181fc50287ee8b"
     },
     "spec:p10": {
       "path": "project://motion/specs/p10.json",
-      "sha256": "eeb1dbb7e879d01fff39207ccfde58fd47da081dfd7bdf9535a811561f0f0366"
+      "sha256": "2053171fb024d04da6f5d66e88232d19f0e6ec3143797c6c9d07e7e2d42de086"
     },
     "spec:p11": {
       "path": "project://motion/specs/p11.json",
-      "sha256": "df85637755332e94ccdfefc7d00ef32e6674bd6f07d227bb229e623fdace726d"
+      "sha256": "a109a6bec940a5e393c009caa044b3d9fe0596a7361814e49ac864ff7623d9a6"
     },
     "spec:p12": {
       "path": "project://motion/specs/p12.json",
-      "sha256": "08f3c544e24455b16149e4464de39621956ee6888d28282c8868ec6695049b8a"
+      "sha256": "bc8cd00108a41fec06f3ed5cf5662a05dfc9ed8bfadb71a6b21d3258e626ba8c"
     },
     "video": {
       "path": "project://final/easel.mp4",
-      "sha256": "f4523c6f522e00112643127c4c20f81e19a17cee55132f95e8c8659374fc4967"
+      "sha256": "6648756bbbe3b28dc0193878a80f5c2ce568f80dad325101b64ddb14f4b98735"
     },
     "voice": {
       "path": "project://receipts/voice-lines.json",
-      "sha256": "e0d1758d9cd3e23dc2421daac45e23e7935a3030acc307743b896611b9e14b4b"
+      "sha256": "753b8d09a5e76495fd949fbb24d9c8c4043319791b621fa003771d7ed8f10954"
     }
   },
-  "review_bundle_fingerprint": "6f7b05c8caa811ba629f27de962bbc72dcd20a30d4e45c051903a91e96b872fe",
+  "review_bundle_fingerprint": "5d9362e9f39073470cec668ed79321081386355a0a05e2d7adf7ac1fe2aa07d4",
   "score": null,
   "reviewer": null,
   "hard_fail": null,

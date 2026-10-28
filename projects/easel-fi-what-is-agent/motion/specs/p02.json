@@ -1,6 +1,6 @@
 {
   "grammar": "t2_keynote_ui",
-  "duration": 4,
+  "duration": 4.1,
   "fps": 30,
   "width": 1080,
   "height": 1920,
@@ -17,7 +17,7 @@
       "sub": "再决定下一步"
     },
     {
-      "at": 0.9,
+      "at": 0.5,
       "kind": "step",
       "text": "目标",
       "data": {
@@ -25,7 +25,7 @@
       }
     },
     {
-      "at": 1.9,
+      "at": 1.57,
       "kind": "step",
       "text": "下一步做什么",
       "data": {
@@ -34,7 +34,7 @@
       }
     },
     {
-      "at": 3.0,
+      "at": 2.63,
       "kind": "step",
       "text": "然后才行动",
       "data": {

@@ -4,42 +4,50 @@
     {
       "type": "beat",
       "clip": "p01",
-      "line": 1
+      "line": 1,
+      "duration": 3.1
     },
     {
       "type": "beat",
       "clip": "p02",
-      "line": 2
+      "line": 2,
+      "duration": 4.1
     },
     {
       "type": "beat",
       "clip": "p03",
-      "line": 3
+      "line": 3,
+      "duration": 4.0
     },
     {
       "type": "beat",
       "clip": "p04",
-      "line": 4
+      "line": 4,
+      "duration": 2.6
     },
     {
       "type": "beat",
       "clip": "p05",
-      "line": 5
+      "line": 5,
+      "duration": 2.9
     },
     {
       "type": "beat",
       "clip": "p06",
-      "line": 6
+      "line": 6,
+      "duration": 3.3
     },
     {
       "type": "beat",
       "clip": "p07",
-      "line": 7
+      "line": 7,
+      "duration": 4.1
     },
     {
       "type": "beat",
       "clip": "p08",
-      "line": 8
+      "line": 8,
+      "duration": 3.8
     },
     {
       "type": "insert",
@@ -51,22 +59,26 @@
     {
       "type": "beat",
       "clip": "p09",
-      "line": 9
+      "line": 9,
+      "duration": 3.6
     },
     {
       "type": "beat",
       "clip": "p10",
-      "line": 10
+      "line": 10,
+      "duration": 2.6
     },
     {
       "type": "beat",
       "clip": "p11",
-      "line": 11
+      "line": 11,
+      "duration": 3.2
     },
     {
       "type": "beat",
       "clip": "p12",
-      "line": 12
+      "line": 12,
+      "duration": 3.7
     }
   ]
 }

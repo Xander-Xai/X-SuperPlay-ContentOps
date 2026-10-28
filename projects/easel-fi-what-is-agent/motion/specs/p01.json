@@ -4,7 +4,7 @@
   "height": 1920,
   "theme": "ink",
   "grammar": "y1_kurzgesagt",
-  "duration": 4,
+  "duration": 3.1,
   "data": {
     "center": "Agent",
     "flow": true,
@@ -17,17 +17,17 @@
       "text": "Agent 是一个循环"
     },
     {
-      "at": 0.4,
+      "at": 0.25,
       "kind": "point",
       "text": "定目标"
     },
     {
-      "at": 1.0,
+      "at": 0.95,
       "kind": "point",
       "text": "调工具"
     },
     {
-      "at": 1.8,
+      "at": 1.65,
       "kind": "point",
       "text": "看结果"
     }

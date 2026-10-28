@@ -4,7 +4,7 @@
   "height": 1920,
   "theme": "ink",
   "grammar": "y1_kurzgesagt",
-  "duration": 4,
+  "duration": 4.0,
   "data": {
     "center": "工具",
     "flow": true,
@@ -17,17 +17,17 @@
       "text": "拿回结果，再改计划"
     },
     {
-      "at": 0.4,
+      "at": 0.25,
       "kind": "point",
       "text": "调用"
     },
     {
-      "at": 1.2,
+      "at": 0.95,
       "kind": "point",
       "text": "结果"
     },
     {
-      "at": 2.0,
+      "at": 1.65,
       "kind": "point",
       "text": "改计划"
     }

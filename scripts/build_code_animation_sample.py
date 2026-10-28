@@ -58,6 +58,46 @@ def _yaml(path: Path) -> Dict[str, str]:
     return data
 
 
+def _peak_db(path: Path) -> float:
+    from process_utils import hidden_run
+    result = hidden_run(["ffmpeg", "-hide_banner", "-i", str(path), "-af",
+                         "volumedetect", "-f", "null", "NUL"], timeout=120)
+    text = (result.stderr or "") + (result.stdout or "")
+    for line in text.splitlines():
+        if "max_volume:" in line:
+            return float(line.split("max_volume:")[1].replace("dB", "").strip())
+    return 0.0
+
+
+def _mix_bgm(project: Path, narration: Path) -> Tuple[Path, Dict[str, Any]]:
+    """Mix a synthetic bed under the voice, refusing less than 18 dB headroom."""
+    from process_utils import hidden_run
+    bgm = project / "work" / "bgm.wav"
+    if not bgm.is_file():
+        return narration, {"role": "bgm", "status": "OMITTED"}
+    voice_peak, bgm_peak = _peak_db(narration), _peak_db(bgm)
+    headroom = voice_peak - bgm_peak
+    if headroom < 18:
+        raise SystemExit(f"BGM is only {headroom:.1f} dB below the voice; 18 dB is the floor")
+    mixed = project / "work" / "narration-mix.wav"
+    result = hidden_run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+                         "-i", str(narration), "-i", str(bgm),
+                         "-filter_complex",
+                         "[0:a][1:a]amix=inputs=2:duration=first:normalize=0[a]",
+                         "-map", "[a]", "-c:a", "pcm_s16le", str(mixed)], timeout=300)
+    if result.returncode != 0 or not mixed.is_file():
+        raise SystemExit(f"BGM mix failed: {(result.stderr or '')[-400:]}")
+    bed_receipt = bgm.with_suffix(".json")
+    return mixed, {
+        "role": "bgm", "status": "CODE_SYNTH", "path": "project://work/bgm.wav",
+        "sha256": hashlib.sha256(bgm.read_bytes()).hexdigest(),
+        "voice_peak_db": voice_peak, "bgm_peak_db": bgm_peak,
+        "headroom_db": round(headroom, 1),
+        "receipt": "project://work/bgm.json" if bed_receipt.is_file() else None,
+        "policy": "synthesised locally; no sample library and no provider",
+    }
+
+
 def _caption_style(slug: str) -> Dict[str, Any]:
     dna = json.loads((ROOT / "config" / "accounts" / f"{slug}.json").read_text(
         encoding="utf-8"))
@@ -126,7 +166,7 @@ def _place_narration(project: Path, lines: Dict[int, Dict[str, Any]],
 
 def _write_srt(project: Path, lines: Dict[int, Dict[str, Any]],
                placed: List[Dict[str, Any]]) -> Path:
-    target = project / "assets" / "captions" / "cut.srt"
+    target = project / "assets" / "captions" / "default.srt"
     target.parent.mkdir(parents=True, exist_ok=True)
 
     def ts(ms: int) -> str:
@@ -174,6 +214,7 @@ def main() -> int:
 
     narration, placed = _place_narration(project, lines, segments)
     srt = _write_srt(project, lines, placed)
+    narration, bgm = _mix_bgm(project, narration)
 
     storyboard = {
         "size": config.get("format", "1080x1920"),
@@ -264,9 +305,12 @@ def main() -> int:
                             "cap": MAX_GENERATED_RATIO,
                             "policy": "claim-free inserts only; deletes if it does not improve"},
         "segments": segment_rows,
+        "bgm": bgm,
         "voice": {"provider": voice.get("voice", "speech-2.8-hd"),
+                  "clone_alias": voice.get("clone_alias"),
+                  "clone_id_hash": voice.get("clone_id_hash"),
                   "lines": voice["lines"], "receipts": "project://receipts/voice-lines.json"},
-        "captions": {"path": "project://assets/captions/cut.srt", "sha256": _sha(srt),
+        "captions": {"path": "project://assets/captions/default.srt", "sha256": _sha(srt),
                      "style_source": f"config/accounts/{config['account_slug']}.json",
                      "cues": len(placed)},
         "output": {"path": f"project://{output.relative_to(project).as_posix()}",

@@ -3,7 +3,7 @@
   "width": 1080,
   "height": 1920,
   "theme": "ink",
-  "duration": 4,
+  "duration": 3.3,
   "grammar": "y1_kurzgesagt",
   "data": {
     "center": "记忆",
@@ -17,17 +17,17 @@
       "text": "记住的不是聊天"
     },
     {
-      "at": 0.4,
+      "at": 0.25,
       "kind": "point",
       "text": "上下文窗口"
     },
     {
-      "at": 1.1,
+      "at": 0.95,
       "kind": "point",
       "text": "工具结果"
     },
     {
-      "at": 1.7999999999999998,
+      "at": 1.65,
       "kind": "point",
       "text": "摘要"
     }

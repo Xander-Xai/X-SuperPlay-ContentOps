@@ -1,78 +1,80 @@
 {
   "voice": "speech-2.8-hd",
+  "clone_alias": "founder_primary_v1",
+  "clone_id_hash": "7271d9c80c88821a6a09ed43328619d0ee08c3f2b2449237fe2c31f6899abeef",
   "lines": [
     {
       "line": 1,
       "text": "Agent 不是一次问答。",
       "path": "project://assets/voice/line-01.wav",
-      "duration_s": 1.718
+      "duration_s": 2.728
     },
     {
       "line": 2,
       "text": "它先定目标，再决定下一步。",
       "path": "project://assets/voice/line-02.wav",
-      "duration_s": 2.635
+      "duration_s": 3.796
     },
     {
       "line": 3,
       "text": "用工具拿回结果，再改计划。",
       "path": "project://assets/voice/line-03.wav",
-      "duration_s": 2.543
+      "duration_s": 3.669
     },
     {
       "line": 4,
       "text": "这个循环会留下记录。",
       "path": "project://assets/voice/line-04.wav",
-      "duration_s": 1.614
+      "duration_s": 2.218
     },
     {
       "line": 5,
       "text": "能回查，才算跑过。",
       "path": "project://assets/voice/line-05.wav",
-      "duration_s": 2.252
+      "duration_s": 2.508
     },
     {
       "line": 6,
       "text": "模型不是记忆，窗口才是。",
       "path": "project://assets/voice/line-06.wav",
-      "duration_s": 2.473
+      "duration_s": 2.937
     },
     {
       "line": 7,
       "text": "工具要有边界，读和写分开。",
       "path": "project://assets/voice/line-07.wav",
-      "duration_s": 2.763
+      "duration_s": 3.704
     },
     {
       "line": 8,
       "text": "失败要能重试，也要能停下。",
       "path": "project://assets/voice/line-08.wav",
-      "duration_s": 2.763
+      "duration_s": 3.448
     },
     {
       "line": 9,
       "text": "评估看结果，不看话说得顺。",
       "path": "project://assets/voice/line-09.wav",
-      "duration_s": 2.554
+      "duration_s": 3.274
     },
     {
       "line": 10,
       "text": "成本是设计的一部分。",
       "path": "project://assets/voice/line-10.wav",
-      "duration_s": 1.788
+      "duration_s": 2.218
     },
     {
       "line": 11,
       "text": "不是所有任务都值得做成 Agent。",
       "path": "project://assets/voice/line-11.wav",
-      "duration_s": 2.171
+      "duration_s": 2.891
     },
     {
       "line": 12,
       "text": "先把边界写清楚，再谈自动化。",
       "path": "project://assets/voice/line-12.wav",
-      "duration_s": 2.891
+      "duration_s": 3.367
     }
   ],
-  "total_s": 28.165
+  "total_s": 36.758
 }

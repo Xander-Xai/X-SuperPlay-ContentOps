@@ -4,50 +4,103 @@
     220,
     260
   ],
-  "method": "Chinese characters + English words / speech duration × 60 (M5 rule)",
+  "voice": {
+    "provider": "minimax_mplan",
+    "model": "speech-2.8-hd",
+    "clone_alias": "founder_primary_v1"
+  },
   "per_line": [
     {
       "line": 1,
-      "text": "Agent 不是一次问答。",
       "units": 7,
-      "duration_s": 1.718,
-      "cpm": 244.5
+      "speech_s": 2.728,
+      "window_s": 3.1,
+      "cpm": 154.0
     },
     {
       "line": 2,
-      "text": "它先定目标，再决定下一步。",
       "units": 11,
-      "duration_s": 2.635,
-      "cpm": 250.5
+      "speech_s": 3.796,
+      "window_s": 4.1,
+      "cpm": 173.9
     },
     {
       "line": 3,
-      "text": "用工具拿回结果，再改计划。",
       "units": 11,
-      "duration_s": 2.543,
-      "cpm": 259.5
+      "speech_s": 3.669,
+      "window_s": 4.0,
+      "cpm": 179.9
     },
     {
       "line": 4,
-      "text": "这个循环会留下记录。",
       "units": 9,
-      "duration_s": 1.614,
-      "cpm": 334.6
+      "speech_s": 2.218,
+      "window_s": 2.6,
+      "cpm": 243.5
     },
     {
       "line": 5,
-      "text": "能回查，才算跑过。",
       "units": 7,
-      "duration_s": 2.252,
-      "cpm": 186.5
+      "speech_s": 2.508,
+      "window_s": 2.9,
+      "cpm": 167.5
+    },
+    {
+      "line": 6,
+      "units": 10,
+      "speech_s": 2.937,
+      "window_s": 3.3,
+      "cpm": 204.3
+    },
+    {
+      "line": 7,
+      "units": 11,
+      "speech_s": 3.704,
+      "window_s": 4.1,
+      "cpm": 178.2
+    },
+    {
+      "line": 8,
+      "units": 11,
+      "speech_s": 3.448,
+      "window_s": 3.8,
+      "cpm": 191.4
+    },
+    {
+      "line": 9,
+      "units": 11,
+      "speech_s": 3.274,
+      "window_s": 3.6,
+      "cpm": 201.6
+    },
+    {
+      "line": 10,
+      "units": 9,
+      "speech_s": 2.218,
+      "window_s": 2.6,
+      "cpm": 243.5
+    },
+    {
+      "line": 11,
+      "units": 12,
+      "speech_s": 2.891,
+      "window_s": 3.2,
+      "cpm": 249.0
+    },
+    {
+      "line": 12,
+      "units": 12,
+      "speech_s": 3.367,
+      "window_s": 3.7,
+      "cpm": 213.8
     }
   ],
-  "speech_units": 45,
-  "speech_seconds": 10.762,
-  "film_speech_cpm": 250.9,
-  "film_over_video_cpm": 135.0,
+  "speech_units": 121,
+  "speech_seconds": 36.758,
+  "film_speech_cpm": 197.5,
   "atempo_applied": false,
-  "decision": "No atempo correction. The speech-only average is 250.9 cpm, inside 220-260. Per-line outliers (186.5-334.6) come from 7-11 unit lines where a fixed tail and punctuation dominate; slowing those would make the delivery unnatural. The over-video number (135) counts the 4 s windows' silence and is not a speaking-rate measure.",
+  "pause_policy": "each window = speech + 0.35 s; no fixed 4 s tail",
+  "decision": "Clone voice re-synthesised; windows follow the measured speech with a 0.35 s tail, which removes the 1.2-1.6 s dead air of the fixed 4 s cut. No atempo.",
   "production_ready": false,
   "human_review": "PENDING_FOUNDER_REVIEW"
 }

@@ -3,7 +3,7 @@
   "width": 1080,
   "height": 1920,
   "theme": "ink",
-  "duration": 4,
+  "duration": 2.6,
   "grammar": "y1_kurzgesagt",
   "data": {
     "center": "成本",
@@ -17,17 +17,17 @@
       "text": "成本是设计"
     },
     {
-      "at": 0.4,
+      "at": 0.25,
       "kind": "point",
       "text": "token"
     },
     {
-      "at": 1.1,
+      "at": 0.95,
       "kind": "point",
       "text": "调用"
     },
     {
-      "at": 1.7999999999999998,
+      "at": 1.65,
       "kind": "point",
       "text": "延迟"
     }

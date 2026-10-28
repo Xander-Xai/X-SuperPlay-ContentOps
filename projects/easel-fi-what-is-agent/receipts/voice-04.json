@@ -9,21 +9,21 @@
   "transport": "official_cli",
   "transport_version": "mmx 1.0.27",
   "model": "speech-2.8-hd",
-  "voice": "Chinese (Mandarin)_Reliable_Executive",
+  "voice": "founder_primary_v1",
   "display_text_sha256": "a73a170ba40c9637741f1e804778c8b05f5d34c50b57a5d9ff48f24500d5a6c7",
   "spoken_text_sha256": "a73a170ba40c9637741f1e804778c8b05f5d34c50b57a5d9ff48f24500d5a6c7",
   "lexicon_version": "zh-2026.10.04.1",
-  "fingerprint": "7e391d63216d917132c591d6a7b355eaa43dd60a2b62d3cae50769ba4c05adea",
+  "fingerprint": "c0534eb2d0ebc51477e28b04959a945f7016e817f129cf6f328cb9de48278931",
   "quota_before": {
     "bucket": "general",
     "interval_remaining_percent": 99.0,
-    "weekly_remaining_percent": 81.0,
+    "weekly_remaining_percent": 74.0,
     "modality_breakdown": {}
   },
   "quota_after": {
     "bucket": "general",
     "interval_remaining_percent": 99.0,
-    "weekly_remaining_percent": 81.0,
+    "weekly_remaining_percent": 74.0,
     "modality_breakdown": {}
   },
   "billing_guard_verdict": "SAFE_INCLUDED_PLAN",
@@ -32,7 +32,7 @@
     "quota_after": {
       "bucket": "general",
       "interval_remaining_percent": 99.0,
-      "weekly_remaining_percent": 81.0
+      "weekly_remaining_percent": 74.0
     }
   },
   "technical_qc": {
@@ -41,12 +41,12 @@
       {
         "check": "file_exists",
         "passed": true,
-        "detail": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-fi-what-is-agent\\assets\\voice\\narration-7e391d63216d9171.wav"
+        "detail": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-fi-what-is-agent\\assets\\voice\\narration-c0534eb2d0ebc514.wav"
       },
       {
         "check": "not_empty",
         "passed": true,
-        "detail": "103362 bytes"
+        "detail": "142000 bytes"
       },
       {
         "check": "has_audio_codec",
@@ -56,7 +56,7 @@
       {
         "check": "has_duration",
         "passed": true,
-        "detail": 1.614
+        "detail": 2.218
       },
       {
         "check": "sample_rate",
@@ -76,7 +76,7 @@
         "passed": true,
         "detail": {
           "expected_s": 1.6666666666666667,
-          "actual_s": 1.614
+          "actual_s": 2.218
         }
       },
       {
@@ -92,17 +92,17 @@
       {
         "check": "not_mostly_silent",
         "passed": true,
-        "detail": -1.5
+        "detail": -1.6
       },
       {
         "check": "no_clipping",
         "passed": true,
-        "detail": -1.5
+        "detail": -1.6
       },
       {
         "check": "loudness_floor",
         "passed": true,
-        "detail": -21.7
+        "detail": -17.4
       },
       {
         "check": "true_peak_headroom",
@@ -114,12 +114,12 @@
       "codec": "pcm_s16le",
       "sample_rate_hz": 32000,
       "channels": 1,
-      "duration_s": 1.614,
-      "bytes": 103362,
-      "integrated_lufs": -21.7,
+      "duration_s": 2.218,
+      "bytes": 142000,
+      "integrated_lufs": -17.4,
       "true_peak_db": -1.5,
-      "peak_db": -1.5,
-      "mean_db": -21.3,
+      "peak_db": -1.6,
+      "mean_db": -17.8,
       "loudness_range_lu": 0.0
     },
     "silence": {
@@ -140,8 +140,8 @@
     "excess": [],
     "detail": null
   },
-  "raw_sha256": "a0c411866e7a55f0965539c6ec70a1c509f05ddebd94aa49dfcbae558d872ff6",
-  "normalized_sha256": "df7d258ac985d6101abc589827d27864327bf018925f40952e735a915326cedc",
+  "raw_sha256": "a7775cee28059049eca73d1a6023c08876a7d73ee22d8446826d6cd01bc4ce33",
+  "normalized_sha256": "114e7bc062b11b1784936483230830b3da6e3475220f79d78fac343290b9005b",
   "attempt": 1,
   "retry_reason": null,
   "fallback": {
@@ -153,15 +153,15 @@
   "production_ready": false,
   "human_review": "PENDING_FOUNDER_REVIEW",
   "asset": {
-    "normalized_path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-fi-what-is-agent\\assets\\voice\\narration-7e391d63216d9171.wav",
-    "duration_s": 1.614,
+    "normalized_path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-fi-what-is-agent\\assets\\voice\\narration-c0534eb2d0ebc514.wav",
+    "duration_s": 2.218,
     "sample_rate_hz": 32000,
     "channels": 1,
     "codec": "pcm_s16le",
-    "peak_before_db": -0.6,
-    "peak_after_db": -1.5,
-    "loudness_before": -20.8,
-    "loudness_after": -21.7,
+    "peak_before_db": -3.8,
+    "peak_after_db": -1.6,
+    "loudness_before": -19.7,
+    "loudness_after": -17.4,
     "approved": true
   },
   "reused_cached_asset": false,

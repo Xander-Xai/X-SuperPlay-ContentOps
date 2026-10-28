@@ -1,6 +1,6 @@
 {
   "grammar": "t2_keynote_ui",
-  "duration": 4,
+  "duration": 2.9,
   "fps": 30,
   "width": 1080,
   "height": 1920,
@@ -17,7 +17,7 @@
       "sub": "记录 → 复现 → 判断"
     },
     {
-      "at": 1.2,
+      "at": 0.5,
       "kind": "step",
       "text": "记录可复现",
       "data": {
@@ -25,7 +25,7 @@
       }
     },
     {
-      "at": 2.4,
+      "at": 1.17,
       "kind": "step",
       "text": "结论可核对",
       "data": {
@@ -34,7 +34,7 @@
       }
     },
     {
-      "at": 3.2,
+      "at": 1.83,
       "kind": "step",
       "text": "没有记录就不算",
       "data": {
