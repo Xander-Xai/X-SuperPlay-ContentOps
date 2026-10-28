@@ -223,6 +223,12 @@ jobs:
       - name: Run skill-route policy tests
         run: python tests/test_skill_route_policy.py
 
+      # The OpenClaw bridge: envelope parsing among ANSI logs, OEM-codepage
+      # decoding, a receipt on every failure path, and no absolute paths in a
+      # committed receipt. Route-resolution tests skip without the Easel runtime.
+      - name: Run OpenClaw bridge tests
+        run: python tests/test_openclaw_agent.py
+
       # One source, two native assets: 1024 opens on the conflict and re-orders
       # complete units; Future Intelligence keeps the eight-unit walkthrough.
       # Both stop at PENDING_FOUNDER_REVIEW and claim no publication URL.
@@ -293,6 +299,90 @@ jobs:
       - name: Run review-bundle tests
         run: python tests/test_review_bundle.py
 
+      # The ordered production contract. These suites are the mechanical answer
+      # to "nothing stopped a build from skipping a stage": stage order,
+      # freshness invalidation, check/approve and the refusal to keep an
+      # approval after the bytes change. Stdlib only, no media, never skips.
+      - name: Run production-contract tests
+        run: python tests/test_workflow_contract.py
+
+      - name: Run production-gate tests
+        run: python tests/test_workflow_gate.py
+
+      # Editorial gates a codec check cannot see: one deterministic quality
+      # verdict, a script that is sayable in its window, and subtitles that do
+      # not overlap or overflow a portrait frame.
+      - name: Run editorial quality-gate tests
+        run: python tests/test_quality_gates.py
+
+      # Per-claim evidence coverage: the gate that replaces a whole-film
+      # real-source ratio. Proves a factual claim cannot be carried by a card,
+      # motion clip or generated visual, and that a CLAIM_LED package makes the
+      # ratio advisory without weakening the claim requirement.
+      - name: Run claim-coverage tests
+        run: python tests/test_claim_coverage.py
+
+      # Audience Lens and duration policy: one viewer per cut, with a stated
+      # trigger, workaround, proof requirement and emotion turn; and a target
+      # length that sits inside the band its content type owns.
+      - name: Run audience and duration tests
+        run: python tests/test_audience_duration.py
+
+      # Capabilities absorbed from the retired dy_x1024 workspace: topic
+      # backlog and candidate scoring, evidence feasibility, platform policy,
+      # rights ledger, improvement log, feedback/metrics and skill provenance.
+      - name: Run absorbed workflow-document tests
+        run: python tests/test_absorbed_workflow_docs.py
+
+      # Package identity, delivery manifest, semantic visual route, copy
+      # strategy card and the technical-explainer editorial gate.
+      - name: Run naming, delivery and route tests
+        run: python tests/test_naming_delivery_route.py
+
+      # The reviewed list a rights ledger must descend from: a source candidate
+      # keeps its canonical page, creator, licence text and URL, capture date
+      # and score, and may never mark itself cleared. Absorbed from the retired
+      # dy_x1024 material-source-research contract.
+      - name: Run source-candidate tests
+        run: python tests/test_source_candidates.py
+
+      # The pre-render script-quality rules as tests: a script table that drifts
+      # from the beats, a subtitle pointer to a missing file, a storyboard
+      # shorter than its captions and a missing call to action. The gate script
+      # above runs on real projects only; these prove the rules themselves.
+      - name: Run script-quality rule tests
+        run: python tests/test_script_quality.py
+
+      # Repository policy as tests: a tracked final or a video outside final/
+      # must be reported, the allowlisted exception respected, and source code
+      # must never be classified as media.
+      - name: Run repository policy rule tests
+        run: python tests/test_repo_policy.py
+
+      # Who owns the evidence policy: the account decides whether a film is
+      # proven or explained, the episode only its mix. These pin the split that
+      # let a 100% animation cut carry a 70% real-source floor.
+      - name: Run account evidence policy tests
+        run: python tests/test_account_evidence_policy.py
+
+      # The presenter opening is a declared pipeline step, not an optional
+      # garnish: these prove a film cannot ship without it.
+      - name: Run presenter-opening tests
+        run: python tests/test_presenter_opening.py
+
+      # Code-animation composition: the renderer's block contract and its
+      # refusal paths. Previously existed but was never executed here.
+      - name: Run code-animation composition tests
+        run: python tests/test_code_animation_composition.py
+
+      # Drift guard: a suite that exists but is never named in this file cannot
+      # report a pass, and a green CI run would cover less than it appears to.
+      - name: Run suite-runner tests
+        run: python tests/test_run_tests.py
+
+      - name: Check every test suite is wired into CI
+        run: python scripts/run_tests.py --missing-from .github/workflows/ci.yml
+
       - name: Enforce subprocess policy
         run: python scripts/check_subprocess_policy.py
 
@@ -304,6 +394,14 @@ jobs:
 
       - name: Check account DNA
         run: python scripts/check_account_dna.py
+
+      # Pre-render gate: catches the defects that only show up in a finished
+      # cut (silent filler shots, unclassifiable source types, one layout
+      # carrying most beats, script documents drifting from the film) before
+      # anything is rendered. Projects opt in with quality_gate: enforced, so
+      # this is a no-op on a checkout where no project declares it.
+      - name: Check script quality
+        run: python scripts/check_script_quality.py --all-gated
 
       - name: Check whitespace
         run: git diff --check --exit-code || exit 1

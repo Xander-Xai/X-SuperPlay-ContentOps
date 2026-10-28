@@ -717,3 +717,97 @@ Two defects from the presenter build:
 
 Both are covered by tests, as is the `amix` bed offset that keeps the BGM from
 starting under an unaccompanied voice.
+
+## Ordered production contract and gates — 2026-10-28
+
+| Property | Value |
+|---|---|
+| Contract | `contentops.copy-to-video/v1`, 10 ordered stages |
+| States | `pending` / `running` / `ready_for_review` / `approved` / `blocked` |
+| Approval binding | artifact SHA-256 + upstream fingerprint; a change makes it stale |
+| Bypass | none |
+| Stage validators | audience lens; script rhythm, duration, technical explainer and copy strategy; per-claim evidence coverage; rights ledger and source candidates; visual route; delivery manifest and publish plan |
+| Document gates | topic backlog, candidate scoring, evidence feasibility, platform policy, rights, improvement log, feedback/metrics, skill provenance |
+| Shared skills | 9 skills in `C:\Users\Administrator\.agents\skills`, declared with `path_base: "shared"` in the account DNAs |
+| Tests | 55 suites (`tests/test_*.py` plus `scripts/test_basic.py`), discovered and run by `scripts/run_tests.py`; the developer gate runs all of them and CI refuses a suite that exists but is never named |
+| `production_ready` | **false** — no cut has passed human review |
+
+### Source candidates before the ledger — 2026-10-28
+
+A rights ledger records that an asset is cleared; it cannot show the asset was
+ever *chosen* from a reviewed list. `src/contentops/workflow/sources.py` owns that
+earlier record (`contentops.source-candidates/v1`): canonical page, creator,
+licence text and URL, capture date and a three-part score, with `status` pinned
+to `candidate`.
+
+- the validator refuses a list that clears itself, a non-owned candidate with no
+  licence text or URL, a future capture date, and a score outside 0-10;
+- the weighted score is `0.4·relevance + 0.4·evidence + 0.2·rights`, and
+  `promotable()` is the promotion helper: it names what still blocks a candidate
+  (unknown or unrecognised licence, missing licence URL, a record that is not
+  `candidate`, incomplete score, under the 6.0 review floor). The gate enforces
+  the licence agreement; the floor is advice to the person promoting;
+- when a ledger row cites `source_candidate_id`, `validate_ledger_provenance`
+  requires the candidate to exist and to agree on `license`;
+- the `assets` stage runs it whenever `source-candidates.json` sits beside the
+  artifact, exactly as it runs the ledger.
+
+This is the contract absorbed from the retired `dy_x1024`
+`material-source-research` skill. The skill text alone had no code behind it;
+this does.
+
+### The gate runs every suite — 2026-10-28
+
+`scripts/dev_check.py` once printed "ALL CHECKS PASSED" while a migration suite
+was failing, because the suite was never called. It now runs
+`scripts/run_tests.py`, which discovers `tests/test_*.py` and runs each in its
+own process. `python scripts/run_tests.py --missing-from .github/workflows/ci.yml`
+fails CI when a suite exists but is never named there; four suites were in that
+state (`test_script_quality`, `test_repo_policy`, `test_presenter_opening`,
+`test_code_animation_composition`) and are now wired.
+
+`--quick` skips repo policy and the suite run; the full gate takes roughly five
+minutes, dominated by the offline speech fixture suite.
+
+### dy_x1024 absorption closure — 2026-10-28
+
+The workspace is being deleted, so the absorption was re-checked against what
+runs today rather than against what was copied:
+
+| Item | State |
+|---|---|
+| `b-roll-finder` (MIT, Louise de Sadeleer) | adopted verbatim into the shared store; routed as step `broll_finder` on `x-superplay-1024` |
+| `material-source-research` | adapted to `x-superplay-source-research`; its contract is now code (above) |
+| Skill contracts for 30 skill trees | archived under `research/archive/dy1024-skills-2026-10-28/` with a decision table (adopt / hold / reject) |
+| `clean-talking-video`, `manim-video`, `auto-editor*` | **hold** — each needs a toolchain or provider outside the current stack; not routed to |
+| `model-selector`, `prompt-translator`, `seedance-2.0-director` | **reject for now** — they recommend providers outside the MiniMax-only, `allow_payg: false` boundary |
+| Step-3 script smoke | closed and re-verified: md 口播 and `.narration.txt` agree line for line (8/8, 10/10), `wordcount.py check` exits 0 at 200/202 and 389/385, both CTAs unchanged |
+
+### OpenClaw bridge and the caption declaration — 2026-10-28
+
+`scripts/openclaw_agent.py` is the single place that runs an OpenClaw agent turn.
+Until now the pipeline called Easel skill scripts directly, so the harness layer
+(model choice, tool loop, skill selection) never ran.
+
+| Property | Value |
+|---|---|
+| Harness | OpenClaw 2026.9.7, profile `easel` (`~/.openclaw-easel`), model `anthropic/MiniMax-M2.7-highspeed` |
+| Primitive | `openclaw agent exec --json` with a persistent `--state-dir`; a temp state dir fails on Windows with `EBUSY: openclaw.sqlite-shm` |
+| Receipt | `contentops.openclaw-agent/v1` on every path, including a bad account slug or a missing CLI |
+| `skill_route` | copied from the account DNA, never guessed; `contract` is recorded when the stage is a contract stage |
+| Paths | no absolute paths in a committed receipt (`repo://` / `project://` / placeholders) |
+| Approval | `human_review: required`; an agent turn is never an approval |
+| Tests | `tests/test_openclaw_agent.py`, wired into CI; route tests skip without the Easel runtime |
+
+Verified on this machine: the gateway was stopped, `agent exec` worked standalone,
+and 114 Easel skills are synced into `~/.openclaw-easel/workspace/skills` while the
+harness registers 22 of its own and no Easel skill (all 26 `skills.entries` are
+disabled). One anthropic credential returns 401 and the run rotates to the
+`models.json` key, which costs roughly 4.5 s per turn.
+
+The `captions` route in both account DNAs named `auto-subtitle` and
+`skills/shared/scripts/subtitle_ops.py`. Neither was ever called: the real owner is
+`scripts/assemble_easel.py` (`_srt_to_ass`, the overflow gate, the ffmpeg burn).
+Both DNAs now declare `assemble_easel` with `path_base: repo`, and narration timing
+is attributed to the audio stage. `contract_stage` is not yet declared, so a
+`captions` receipt records `contract: null`.

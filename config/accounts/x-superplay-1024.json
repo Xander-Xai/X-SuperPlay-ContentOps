@@ -100,11 +100,11 @@
       "segments": [
         {
           "role": "screen_recording_evidence",
-          "pct": 65
+          "pct": 70
         },
         {
           "role": "vector_animation",
-          "pct": 30
+          "pct": 25
         },
         {
           "role": "comparison_card",
@@ -184,6 +184,7 @@
     }
   },
   "evidence": {
+    "mode": "EVIDENCE_LED",
     "manual_recording": "ALLOWED_CROPPED",
     "crop_rule": "只保留日志、报错、运行结果、模型输出区域",
     "required_evidence_class": "EXECUTED",
@@ -278,9 +279,10 @@
     },
     {
       "step": "captions",
-      "skill": "auto-subtitle",
-      "script": "skills/shared/scripts/subtitle_ops.py",
-      "why": "owns caption generation and the burn step"
+      "skill": "assemble_easel",
+      "script": "scripts/assemble_easel.py",
+      "path_base": "repo",
+      "why": "owns SRT to ASS conversion in the account caption style, the line and line-count overflow gate, and the ffmpeg burn; narration timing comes from the audio stage via Easel TTS, and the upstream auto-subtitle skill is not invoked by this pipeline"
     },
     {
       "step": "compose",
@@ -292,7 +294,50 @@
       "step": "qc",
       "skill": "qc_video",
       "script": "scripts/qc_video.py",
+      "path_base": "repo",
       "why": "owns the technical verdict; it never grants production readiness"
+    },
+    {
+      "step": "copy_orchestration",
+      "skill": "x-superplay-copy-orchestrator",
+      "script": "x-superplay-copy-orchestrator/SKILL.md",
+      "path_base": "shared",
+      "why": "owns the angle, hook variants, retention lint and claim-to-scene map above the deterministic script checks"
+    },
+    {
+      "step": "visual_direction",
+      "skill": "x-superplay-design-direction",
+      "script": "x-superplay-design-direction/SKILL.md",
+      "path_base": "shared",
+      "why": "owns one explicit visual direction per episode and the anti-fatigue ratio; stops a card-only look"
+    },
+    {
+      "step": "broll_plan",
+      "skill": "x-superplay-broll-production",
+      "script": "x-superplay-broll-production/SKILL.md",
+      "path_base": "shared",
+      "why": "owns the per-beat material duty, rights fields and naming contract before acquisition"
+    },
+    {
+      "step": "source_research",
+      "skill": "x-superplay-source-research",
+      "script": "x-superplay-source-research/SKILL.md",
+      "path_base": "shared",
+      "why": "owns the rights-aware candidate record (page, creator, licence text and URL, score) that the assets stage validates and a ledger row must descend from"
+    },
+    {
+      "step": "broll_finder",
+      "skill": "b-roll-finder",
+      "script": "b-roll-finder/SKILL.md",
+      "path_base": "shared",
+      "why": "owns how a beat is classified, which sources are in scope, and where the cutaway lands relative to the spoken word"
+    },
+    {
+      "step": "shot_vocabulary",
+      "skill": "video-shotcraft",
+      "script": "video-shotcraft/SKILL.md",
+      "path_base": "shared",
+      "why": "the compositor-neutral shot recipe vocabulary; re-express in HyperFrames, never run its Remotion assets"
     }
   ],
   "platforms": [

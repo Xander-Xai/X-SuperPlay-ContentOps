@@ -15,8 +15,17 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
+sys.path.insert(0, str(ROOT / "src"))
 
-from check_account_dna import REQUIRED_PROMPT_FIELDS, check_account  # noqa: E402
+from check_account_dna import (  # noqa: E402
+    REQUIRED_PROMPT_FIELDS,
+    _catalog_roots,
+    check_account,
+)
+from contentops.media.claim_coverage import (  # noqa: E402
+    EVIDENCE_MODES,
+    composition_policy_errors,
+)
 
 ACCOUNTS = ROOT / "config" / "accounts"
 EXPLORE = ACCOUNTS / "x-superplay-1024.json"
@@ -205,10 +214,192 @@ def test_the_prompt_carries_the_account_own_narrative_template():
     assert "不出现任何手动桌面录屏" in build
 
 
+CATALOG_ABSENT = "no skill catalog root is present"
+
+
+def _clone(path: Path) -> dict:
+    """A mutable deep copy, for the mutation tests below."""
+    return json.loads(json.dumps(_dna(path)))
+
+
+def test_every_account_declares_the_evidence_mode_that_gates_it():
+    """The field both the plan and the QC read; undeclared, each invented one."""
+    for path in (EXPLORE, BUILD):
+        assert _dna(path)["evidence"]["mode"] in EVIDENCE_MODES, path
+
+
+def test_the_proof_account_is_gated_by_the_real_source_floor():
+    dna = _dna(EXPLORE)
+    assert dna["evidence"]["mode"] == "EVIDENCE_LED"
+    assert dna["evidence"]["manual_recording"] == "ALLOWED_CROPPED"
+    assert "real_source_ratio_min_70" in dna["render"]["qc_checks"]
+    problems = composition_policy_errors(
+        "EVIDENCE_LED", dna["visual"]["composition"]["segments"])
+    assert problems == [], problems
+
+
+def test_the_explanatory_account_is_gated_by_its_own_composition():
+    dna = _dna(BUILD)
+    assert dna["evidence"]["mode"] == "EXPLANATORY"
+    assert dna["evidence"]["manual_recording"] == "FORBIDDEN"
+    assert "real_source_ratio_min_70" not in dna["render"]["qc_checks"]
+    assert "composition_ratio" in dna["render"]["qc_checks"]
+    # The same mix the proof account above must reach 70% with is legal here,
+    # because nothing in an explanatory cut is claimed to be a recording.
+    assert composition_policy_errors(
+        "EXPLANATORY", dna["visual"]["composition"]["segments"]) == []
+
+
+def test_an_undeclared_evidence_mode_fails():
+    dna = _clone(EXPLORE)
+    dna["evidence"].pop("mode")
+    failures = check_account(dna, ROOT)
+    assert any("evidence.mode" in failure for failure in failures), failures
+
+
+def test_a_proven_account_may_not_declare_a_mix_it_cannot_reach():
+    """The pair that shipped: 70% vector animation under a 70% real-source floor."""
+    dna = _clone(EXPLORE)
+    dna["visual"]["composition"]["segments"] = [
+        {"role": "vector_animation", "pct": 70},
+        {"role": "code_snapshot", "pct": 25},
+        {"role": "metric_chart", "pct": 5},
+    ]
+    failures = check_account(dna, ROOT)
+    assert any("tops out at 30%" in failure for failure in failures), failures
+
+
+def test_an_explanatory_account_may_not_keep_the_floor():
+    dna = _clone(BUILD)
+    dna["render"]["qc_checks"].append("real_source_ratio_min_70")
+    failures = check_account(dna, ROOT)
+    assert any("still demands it" in failure for failure in failures), failures
+
+
+def test_an_explanatory_account_may_not_plan_a_recording():
+    dna = _clone(BUILD)
+    dna["evidence"]["manual_recording"] = "ALLOWED_CROPPED"
+    dna["visual"]["composition"]["segments"] = [
+        {"role": "screen_recording_evidence", "pct": 60},
+        {"role": "vector_animation", "pct": 40},
+    ]
+    failures = check_account(dna, ROOT)
+    assert any("EXPLANATORY plans no recording" in failure for failure in failures), failures
+SHARED_STORE_ABSENT = "the shared skill store"
+
+#: Warnings that name a host-local resource this checkout does not have. Both
+#: are expected on a CI runner, where the Easel runtime and ~/.agents/skills are
+#: absent by design. Anything else in the warning channel is unexpected.
+HOST_LOCAL_WARNINGS = (CATALOG_ABSENT, SHARED_STORE_ABSENT)
+
+
 def test_the_dna_checker_passes_on_the_shipped_accounts():
     for path in (EXPLORE, BUILD):
-        failures = check_account(_dna(path), ROOT)
+        warnings: list = []
+        failures = check_account(_dna(path), ROOT, warnings)
         assert failures == [], failures
+        # A clean checkout has no catalog (both roots are gitignored) and no
+        # shared store (it lives in the user's home), so the membership half
+        # reports that it could not run. That is the expected state in CI, not
+        # a defect in the shipped DNA.
+        unexpected = [w for w in warnings
+                      if not any(marker in w for marker in HOST_LOCAL_WARNINGS)]
+        assert unexpected == [], unexpected
+
+
+def _mutated(dna: dict, step: str, **changes) -> dict:
+    clone = json.loads(json.dumps(dna))
+    entry = next(item for item in clone["skill_route"] if item["step"] == step)
+    entry.update(changes)
+    return clone
+
+
+def test_a_route_entry_naming_an_unknown_skill_fails():
+    """The gap this closes: the DNA read as sound while pointing at nothing."""
+    if not _catalog_roots():
+        print("catalog absent on this checkout; skipping membership assertion")
+        return
+    dna = _mutated(_dna(EXPLORE), "script", skill="video-script-that-does-not-exist")
+    warnings: list = []
+    failures = check_account(dna, ROOT, warnings)
+    assert len(failures) == 1, failures
+    assert "'script'" in failures[0], failures[0]
+    assert "video-script-that-does-not-exist" in failures[0], failures[0]
+    assert "not present under any catalog root" in failures[0], failures[0]
+    assert any("could not be determined" in w for w in warnings), warnings
+    assert all(w.startswith("[x-superplay-1024]") for w in warnings), \
+        "a warning must name the account it belongs to"
+
+
+def test_a_repo_relative_script_must_exist():
+    dna = _mutated(_dna(EXPLORE), "qc", script="scripts/no_such_script.py")
+    failures = check_account(dna, ROOT)
+    assert len(failures) == 1, failures
+    assert "scripts/no_such_script.py" in failures[0], failures[0]
+    assert "repository root" in failures[0], failures[0]
+
+
+def test_an_undeclared_path_base_is_not_silently_assumed():
+    """Dropping qc's path_base must fail loudly instead of falling back."""
+    if not _catalog_roots():
+        # With no catalog every entry skips membership, so the undeclared base
+        # has nothing left to be resolved against and cannot be demonstrated.
+        print("catalog absent on this checkout; skipping base-resolution assertion")
+        return
+    dna = _mutated(_dna(EXPLORE), "qc")
+    entry = next(item for item in dna["skill_route"] if item["step"] == "qc")
+    entry.pop("path_base")
+    warnings: list = []
+    failures = check_account(dna, ROOT, warnings)
+    assert failures, "an undeclared repo entry must not pass as catalog-relative"
+    assert any("could not be determined" in w for w in warnings), warnings
+
+
+def test_the_route_declares_repo_only_where_it_must():
+    # Steps whose owner is a repository script, not a catalog skill. ``captions``
+    # belongs here because the actual burn lives in scripts/assemble_easel.py;
+    # the upstream auto-subtitle skill is never called by this pipeline.
+    repo_expected = {"captions", "qc"}
+    shared_expected = {
+        EXPLORE: {"copy_orchestration", "visual_direction", "broll_plan", "shot_vocabulary",
+                  "source_research", "broll_finder"},
+        BUILD: {"copy_orchestration", "visual_direction", "broll_plan", "illustration",
+                "scene_illustration", "html_demo", "shot_vocabulary", "source_research"},
+    }
+    for path in (EXPLORE, BUILD):
+        route = _dna(path)["skill_route"]
+        repo = [item["step"] for item in route if item.get("path_base", "catalog") == "repo"]
+        assert repo == ["captions", "qc"], (path, repo)
+        shared = {item["step"] for item in route if item.get("path_base") == "shared"}
+        assert shared == shared_expected[path], (path, shared)
+        for item in route:
+            if item["step"] not in repo_expected and item["step"] not in shared:
+                assert "path_base" not in item, (path, item["step"], item.get("path_base"))
+
+
+def test_a_shared_route_naming_an_unknown_skill_fails():
+    from check_account_dna import SHARED_SKILL_ROOT
+    if not SHARED_SKILL_ROOT.is_dir():
+        print("shared store absent on this checkout; skipping the unknown-skill check")
+        return
+    dna = _mutated(_dna(EXPLORE), "visual_direction", skill="no-such-shared-skill")
+    failures = check_account(dna, ROOT)
+    assert len(failures) == 1, failures
+    assert "shared skill store" in failures[0], failures[0]
+
+
+def test_an_absent_shared_store_is_a_warning_not_a_failure():
+    """A CI runner has no ~/.agents/skills; that is unverified, not invalid."""
+    from unittest import mock
+
+    import check_account_dna
+
+    dna = _dna(EXPLORE)
+    with mock.patch.object(check_account_dna, "SHARED_SKILL_ROOT",
+                           ROOT / "no-such-store"), \
+         mock.patch.object(check_account_dna, "shared_skill", lambda name: None):
+        failures = check_account_dna.check_account(dna, ROOT)
+    assert failures == [], failures
 
 
 def test_the_variant_pipeline_reads_the_caption_style_from_the_dna():
@@ -231,6 +422,13 @@ def main() -> int:
         test_composition_sums_to_one_hundred,
         test_explore_allows_only_cropped_evidence,
         test_future_intelligence_forbids_manual_recording,
+        test_every_account_declares_the_evidence_mode_that_gates_it,
+        test_the_proof_account_is_gated_by_the_real_source_floor,
+        test_the_explanatory_account_is_gated_by_its_own_composition,
+        test_an_undeclared_evidence_mode_fails,
+        test_a_proven_account_may_not_declare_a_mix_it_cannot_reach,
+        test_an_explanatory_account_may_not_keep_the_floor,
+        test_an_explanatory_account_may_not_plan_a_recording,
         test_captions_are_borderless_and_shadowless,
         test_covers_keep_the_whitespace_floor_and_one_title_line,
         test_bgm_sits_at_least_18_db_under_the_voice,
@@ -248,6 +446,12 @@ def main() -> int:
         test_the_prompt_files_exist_and_name_every_output_field,
         test_the_prompt_carries_the_account_own_narrative_template,
         test_the_dna_checker_passes_on_the_shipped_accounts,
+        test_a_route_entry_naming_an_unknown_skill_fails,
+        test_a_repo_relative_script_must_exist,
+        test_an_undeclared_path_base_is_not_silently_assumed,
+        test_the_route_declares_repo_only_where_it_must,
+        test_a_shared_route_naming_an_unknown_skill_fails,
+        test_an_absent_shared_store_is_a_warning_not_a_failure,
         test_the_variant_pipeline_reads_the_caption_style_from_the_dna,
     )
     for fn in tests:

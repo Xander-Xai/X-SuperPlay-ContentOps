@@ -58,6 +58,10 @@ outputs/
 projects/*/final/
 projects/*/work/
 projects/*/assets/generated/
+
+# OpenClaw agent state (runtime, not source; receipts are committed)
+.openclaw/
+projects/*/.openclaw/
 projects/*/assets/processed/
 projects/*/assets/voice/
 projects/*/assets/captions/

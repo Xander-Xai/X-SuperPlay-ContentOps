@@ -759,3 +759,73 @@ python scripts/presenter_opening.py projects/easel-fi-what-is-agent --verify-spe
 - eras 构建器最初到 `work/clips/` 找所有片段，这会要求覆盖基线产物；现在 `_clip_path` 只在 eras 变体下读取 `work/eras/clips/`。
 
 两者都有测试覆盖，BGM 铺底的 `amix` 延迟同样有测试——它保证铺底不会压在清唱人声下面开始。
+
+## 有序生产合同与门禁 — 2026-10-28
+
+| 属性 | 值 |
+|---|---|
+| 合同 | `contentops.copy-to-video/v1`，10 个有序阶段 |
+| 状态 | `pending` / `running` / `ready_for_review` / `approved` / `blocked` |
+| 批准绑定 | 产物 SHA-256 + 上游指纹；任一变化即失效 |
+| 绕过 | 无 |
+| 阶段校验 | 受众 Lens；脚本节奏、时长、技术解释与文案策略；逐 claim 证据覆盖；版权台账与素材候选；视觉路由；交付清单与发布计划 |
+| 文档门禁 | 选题 backlog、候选评分、证据可行性、平台策略、版权、改进日志、反馈/指标、skill provenance |
+| 共享 skill | `C:\Users\Administrator\.agents\skills` 中 9 个 skill，账号 DNA 以 `path_base: "shared"` 声明 |
+| 测试 | 55 个套件（`tests/test_*.py` 加 `scripts/test_basic.py`），由 `scripts/run_tests.py` 发现并逐个运行；开发者门禁会跑全部，CI 拒收"存在但从未被点名"的套件 |
+| `production_ready` | **false** —— 尚无成片通过人工审阅 |
+
+### 素材候选先于台账 — 2026-10-28
+
+版权台账记录"某素材已获授权"，却无法证明该素材是从一份受审阅的候选清单里挑出来的。`src/contentops/workflow/sources.py` 负责这份更早的记录（`contentops.source-candidates/v1`）：规范页面、创作者、许可正文与许可链接、采集日期、三项评分，且 `status` 固定为 `candidate`。
+
+- 校验器拒绝：自行宣告已清权的清单、非自有许可却缺许可正文或链接的候选、未来的采集日期、超出 0–10 的评分；
+- 加权分 = `0.4·relevance + 0.4·evidence + 0.2·rights`；`promotable()` 是晋升辅助函数，列出仍挡住的项（许可未知或非法、缺许可链接、记录不是 `candidate`、评分不全、低于 6.0 复审线），门禁执行的是许可一致性，分数线只作建议；
+- 当台账行引用 `source_candidate_id` 时，`validate_ledger_provenance` 要求该候选存在且 `license` 一致；
+- 只要产物旁有 `source-candidates.json`，`assets` 阶段就会像跑台账一样跑它。
+
+这是从已退役的 `dy_x1024` `material-source-research` skill 吸收来的契约。此前只有 skill 文本、没有代码支撑，现在有了。
+
+### 门禁会跑每一个套件 — 2026-10-28
+
+`scripts/dev_check.py` 曾在一个迁移套件失败的同时打印 "ALL CHECKS PASSED"，因为那个套件从未被调用。现在它运行 `scripts/run_tests.py`：发现 `tests/test_*.py`，每个套件独立进程运行。`python scripts/run_tests.py --missing-from .github/workflows/ci.yml` 会在"套件存在但 CI 从未点名"时让 CI 失败；此前有四个套件处于该状态（`test_script_quality`、`test_repo_policy`、`test_presenter_opening`、`test_code_animation_composition`），现已接入。
+
+`--quick` 跳过仓库策略与套件运行；完整门禁约五分钟，主要耗时在离线的语音夹具套件。
+
+### dy_x1024 吸收收口 — 2026-10-28
+
+该工作区即将删除，因此本轮按"今天真正跑得起来的东西"复核吸收，而不是按"复制过来了什么"：
+
+| 项目 | 状态 |
+|---|---|
+| `b-roll-finder`（MIT，Louise de Sadeleer） | 原样收入共享 skill 库；在 `x-superplay-1024` 中路由为 `broll_finder` 步 |
+| `material-source-research` | 改写为 `x-superplay-source-research`；其契约已成为代码（见上） |
+| 30 个 skill 的契约文本 | 归档于 `research/archive/dy1024-skills-2026-10-28/`，附 adopt / hold / reject 决策表 |
+| `clean-talking-video`、`manim-video`、`auto-editor*` | **hold** —— 各自需要当前技术栈之外的工具链或供应商，未接入路由 |
+| `model-selector`、`prompt-translator`、`seedance-2.0-director` | **暂不采纳** —— 推荐的供应商在 MiniMax-only、`allow_payg: false` 边界之外 |
+| 第三步脚本冒烟 | 收口并复核：md 口播与 `.narration.txt` 逐行一致（8/8、10/10），`wordcount.py check` 在 200/202 与 389/385 均退出 0，两条 CTA 未改 |
+
+### OpenClaw 桥接层与字幕声明 — 2026-10-28
+
+`scripts/openclaw_agent.py` 是唯一执行 OpenClaw agent turn 的地方。此前流水线直接调用
+Easel 的 skill 脚本，harness 层（模型选择、工具循环、skill 选择）从未真正运行。
+
+| 事实 | 值 |
+|---|---|
+| Harness | OpenClaw 2026.9.7，profile `easel`（`~/.openclaw-easel`），模型 `anthropic/MiniMax-M2.7-highspeed` |
+| 原语 | `openclaw agent exec --json` 配持久化 `--state-dir`；临时 state 目录在 Windows 上会以 `EBUSY: openclaw.sqlite-shm` 失败 |
+| 收据 | `contentops.openclaw-agent/v1`，包括账号 slug 错误或 CLI 缺失在内的每条路径都写 |
+| `skill_route` | 复制自账号 DNA，不猜测；stage 属于契约阶段时记录 `contract` |
+| 路径 | 已提交收据不含绝对路径（`repo://` / `project://` / 占位符） |
+| 批准 | `human_review: required`；agent turn 永远不是批准 |
+| 测试 | `tests/test_openclaw_agent.py`，已接入 CI；无 Easel 运行时则跳过路由用例 |
+
+本机已验证：gateway 处于停止状态，`agent exec` 可独立运行；114 个 Easel skill 已同步到
+`~/.openclaw-easel/workspace/skills`，但 harness 只注册自己的 22 个、未注册任何 Easel
+skill（26 条 `skills.entries` 全部关闭）。有一把 anthropic 凭据返回 401，运行会轮转到
+`models.json` 中的 key，每次约多花 4.5 秒。
+
+两个账号 DNA 的 `captions` 路由原先声明 `auto-subtitle` 与
+`skills/shared/scripts/subtitle_ops.py`，但二者从未被调用：真正拥有者是
+`scripts/assemble_easel.py`（`_srt_to_ass`、溢出闸门、ffmpeg 烧录）。两个 DNA 现已改为
+声明 `assemble_easel` 与 `path_base: repo`，旁白时间轴归入 audio 阶段。尚未声明
+`contract_stage`，因此 `captions` 收据记录 `contract: null`。

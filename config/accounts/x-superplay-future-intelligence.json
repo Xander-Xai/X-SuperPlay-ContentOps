@@ -191,6 +191,7 @@
     }
   },
   "evidence": {
+    "mode": "EXPLANATORY",
     "manual_recording": "FORBIDDEN",
     "crop_rule": "不适用：本账号不出现任何手动操作画面",
     "required_evidence_class": "DOCUMENTED",
@@ -256,7 +257,7 @@
       "caption_safe_zone",
       "cover_present",
       "cta_present",
-      "real_source_ratio_min_70",
+      "composition_ratio",
       "no_generated_asset_in_claim_interval",
       "no_manual_recording_in_frame"
     ],
@@ -293,9 +294,10 @@
     },
     {
       "step": "captions",
-      "skill": "auto-subtitle",
-      "script": "skills/shared/scripts/subtitle_ops.py",
-      "why": "owns caption generation and the burn step"
+      "skill": "assemble_easel",
+      "script": "scripts/assemble_easel.py",
+      "path_base": "repo",
+      "why": "owns SRT to ASS conversion in the account caption style, the line and line-count overflow gate, and the ffmpeg burn; narration timing comes from the audio stage via Easel TTS, and the upstream auto-subtitle skill is not invoked by this pipeline"
     },
     {
       "step": "compose",
@@ -307,7 +309,64 @@
       "step": "qc",
       "skill": "qc_video",
       "script": "scripts/qc_video.py",
+      "path_base": "repo",
       "why": "owns the technical verdict; it never grants production readiness"
+    },
+    {
+      "step": "copy_orchestration",
+      "skill": "x-superplay-copy-orchestrator",
+      "script": "x-superplay-copy-orchestrator/SKILL.md",
+      "path_base": "shared",
+      "why": "owns the angle, hook variants, retention lint and claim-to-scene map above the deterministic script checks"
+    },
+    {
+      "step": "visual_direction",
+      "skill": "x-superplay-design-direction",
+      "script": "x-superplay-design-direction/SKILL.md",
+      "path_base": "shared",
+      "why": "owns one explicit visual direction per episode and the anti-fatigue ratio; stops a card-only look"
+    },
+    {
+      "step": "broll_plan",
+      "skill": "x-superplay-broll-production",
+      "script": "x-superplay-broll-production/SKILL.md",
+      "path_base": "shared",
+      "why": "owns the per-beat material duty, rights fields and naming contract before acquisition"
+    },
+    {
+      "step": "source_research",
+      "skill": "x-superplay-source-research",
+      "script": "x-superplay-source-research/SKILL.md",
+      "path_base": "shared",
+      "why": "owns the rights-aware candidate record (page, creator, licence text and URL, score) that the assets stage validates and a ledger row must descend from"
+    },
+    {
+      "step": "illustration",
+      "skill": "ian-xiaohei-illustrations",
+      "script": "ian-xiaohei-illustrations/SKILL.md",
+      "path_base": "shared",
+      "why": "owns the Chinese article/section illustration grammar for zero-recording beats"
+    },
+    {
+      "step": "scene_illustration",
+      "skill": "ian-xiaohei-scenes",
+      "script": "ian-xiaohei-scenes/SKILL.md",
+      "path_base": "shared",
+      "why": "owns the object-plus-action empathy scene and the long-scroll retrospective mode"
+    },
+    {
+      "step": "html_demo",
+      "skill": "jacky-motion",
+      "script": "jacky-motion/SKILL.md",
+      "path_base": "shared",
+      "why": "owns the SRT-synced HTML information-demo layout and beat contract for screen-recorded segments"
+    },
+    {
+      "step": "shot_vocabulary",
+      "skill": "video-shotcraft",
+      "script": "video-shotcraft/SKILL.md",
+      "path_base": "shared",
+      "why": "the compositor-neutral shot recipe vocabulary; re-express in HyperFrames, never run its Remotion assets"
     }
   ],
   "platforms": [

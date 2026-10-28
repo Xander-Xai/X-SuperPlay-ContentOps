@@ -1,0 +1,88 @@
+{
+  "schema": "contentops.openclaw-agent/v1",
+  "stage": "captions",
+  "contract": null,
+  "skill_route": {
+    "name": "assemble_easel",
+    "script": "scripts/assemble_easel.py",
+    "why": "owns SRT to ASS conversion in the account caption style, the line and line-count overflow gate, and the ffmpeg burn; narration timing comes from the audio stage via Easel TTS, and the upstream auto-subtitle skill is not invoked by this pipeline",
+    "step": "captions",
+    "path_base": "repo",
+    "resolved": true
+  },
+  "harness": {
+    "name": "openclaw",
+    "profile": "easel"
+  },
+  "prompt_sha256": "e771fb637fd5fee570c133fb7fc897aca89b771f206c1630435fc6912dbc847c",
+  "argv": [
+    "C:\\Program Files\\nodejs\\node.EXE",
+    "C:\\Users\\Administrator\\AppData\\Roaming\\npm\\node_modules\\openclaw\\openclaw.mjs",
+    "--profile",
+    "easel",
+    "agent",
+    "exec",
+    "--json",
+    "--timeout",
+    "120",
+    "--state-dir",
+    "{state_dir}",
+    "--cwd",
+    "{cwd}",
+    "--message-file",
+    "{prompt_file}"
+  ],
+  "project": "project://",
+  "duration_s": 78.8,
+  "usage": {
+    "input": 33888,
+    "output": 2561,
+    "cacheRead": 220481,
+    "cacheWrite": 0,
+    "total": 256930,
+    "cost": {
+      "total": 0
+    }
+  },
+  "result": {
+    "status": "OK",
+    "stage": "captions",
+    "final": "scripts/assemble_easel.py",
+    "session_id": "63f085f9-0ace-43ea-822b-a6989817f4b0",
+    "model": "MiniMax-M2.7-highspeed",
+    "provider": "anthropic",
+    "usage": {
+      "input": 33888,
+      "output": 2561,
+      "cacheRead": 220481,
+      "cacheWrite": 0,
+      "total": 256930,
+      "cost": {
+        "total": 0
+      }
+    },
+    "tools": {
+      "calls": 22,
+      "tools": [
+        "ls",
+        "exec"
+      ],
+      "failures": 0
+    },
+    "assistant_turns": 16,
+    "duration_s": 78.8,
+    "changed_files": [],
+    "state": "READY_FOR_HUMAN_REVIEW",
+    "skill_route": {
+      "name": "assemble_easel",
+      "script": "scripts/assemble_easel.py",
+      "why": "owns SRT to ASS conversion in the account caption style, the line and line-count overflow gate, and the ffmpeg burn; narration timing comes from the audio stage via Easel TTS, and the upstream auto-subtitle skill is not invoked by this pipeline",
+      "step": "captions",
+      "path_base": "repo",
+      "resolved": true
+    },
+    "contract": null
+  },
+  "agent_changed_files": [],
+  "human_review": "required"
+}
