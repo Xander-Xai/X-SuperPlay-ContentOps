@@ -50,6 +50,7 @@ REAL EXECUTION RECEIPT
 | Benchmark verification (round 2) | VERIFIED via ASR transcripts — tools/flow/redaction confirmed; frame-level details still pending MP4 access | `video-replication/verification-round-2026-10-28.md` |
 | Three new creators (柱子哥/花叔/秋芝2046) | ANALYZED — code-rendered animation route; 7 GitHub repos located (lemo-opuscar 8.7k★, huashu-art-motion 5.5k★) | `video-replication/three-creators-analysis-2026-10-28.md` |
 | B-roll motion asset evaluation | ADOPTED HyperFrames 0.8.208 (Apache-2.0); huashu/xilo as references; X scan blocked by login | `video-replication/motion-asset-evaluation-2026-10-28.md` |
+| Open-source animation skill selection | EVALUATED (read-only) — huashu-art-motion recommended as the Build animation layer; xilo as process reference; lemo deferred (WSL) | `video-replication/open-source-animation-eval-2026-10-28.md` |
 
 ## Archived
 
