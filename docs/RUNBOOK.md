@@ -342,3 +342,25 @@ a human decision.
 QC PASS is technical. The cut stays `production_ready: false` until a Founder
 score of at least 80 is recorded, and it stays distribution-blocked while any
 capture is `internal_review` without a redaction receipt.
+
+## 15. Audio-first cut planning (Build account)
+
+Write the lines, then let the voice decide the timing:
+
+```powershell
+python scripts\audio_first_plan.py projects\easel-fi-audio-first
+python scripts\build_evidence_package.py projects\easel-fi-audio-first
+```
+
+- `audio_first_plan.py` synthesises each line with MiniMax, measures it, writes
+  `receipts/audio-first-plan.json` and generates `script/cut-plan.json`. Edit
+  `script/lines.json`, never the generated plan; re-run with `--replan` after a
+  change (the audio cache is reused, so no second provider call).
+- a line needing more than 6.0 s is refused rather than held on one view;
+  split the line instead of stretching the picture.
+- `build_evidence_package.py` then runs build → cover → QC → review bundle.
+- the Build account's gates are `manual_recording_forbidden`,
+  `composition_ratio` and `evidence_mode: EXPLANATORY`; its declared composition
+  is 70 % vector / 25 % code / 5 % metric within ±8 pp.
+- edge-tts needs an external proxy on this machine; without one the planner
+  fails closed instead of silently substituting a different voice.

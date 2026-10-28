@@ -234,3 +234,22 @@ python scripts\build_evidence_package.py projects\easel-1024-proof --skip-build
 
 QC PASS 只是技术结论。在记录创始人 ≥80 分之前，成片保持 `production_ready: false`；
 只要还有 `internal_review` 且没有 redaction receipt 的捕获，分发就保持阻断。
+
+## 15. audio-first 分镜规划（Build 账号）
+
+先写台词，再让声音决定时长：
+
+```powershell
+python scripts\audio_first_plan.py projects\easel-fi-audio-first
+python scripts\build_evidence_package.py projects\easel-fi-audio-first
+```
+
+- `audio_first_plan.py` 用 MiniMax 逐句合成、实测时长，写
+  `receipts/audio-first-plan.json` 并生成 `script/cut-plan.json`。改
+  `script/lines.json`，不要改生成出来的 plan；改完用 `--replan` 重跑（音频缓存复用，
+  不会二次调用 provider）。
+- 需要超过 6.0 s 的台词会被拒绝，而不是让一个视图硬撑；应当拆句，不要拉长画面。
+- 之后 `build_evidence_package.py` 依次执行 构建 → 封面 → QC → 审核包。
+- Build 账号的门禁是 `manual_recording_forbidden`、`composition_ratio` 与
+  `evidence_mode: EXPLANATORY`；声明配比为矢量 70% / 代码 25% / 指标 5%，容差 ±8 个百分点。
+- 本机 edge-tts 需要外网代理；没有代理时规划器 fail closed，不会静默换声线。

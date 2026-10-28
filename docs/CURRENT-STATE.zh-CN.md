@@ -625,3 +625,25 @@ DNA 现在承载 `X-SuperPlay-Strategy` 拥有的战略事实，让流水线和�
   V2 要求真实素材 ≥ 70 %。重建后的片满足 V2（72.7 % 真实、0 % 矢量），因此没有满足
   DNA 的 30 % 矢量。这是创始人的决定，记录在
   `research/video-replication/capability-reconciliation-2026-10-27.md`。
+
+## 未来智能 audio-first 样片（Issue #34）— 2026-10-28
+
+`scripts/audio_first_plan.py` 让声音先成为产物：先逐句合成、实测时长，再据此写 CutPlan 的
+窗口；`scripts/build_evidence_package.py` 一条命令完成构建、评级与审核包。
+
+| 属性 | 值 |
+|---|---|
+| 项目 | `projects/easel-fi-audio-first` — Build 账号，1080×1920 |
+| 长度 | 25.0 s（5 个 beat、10 个视图）；账号模板目标 90–120 s，所以这是蓝图里的 20–30 s P0 闭环 |
+| 配音 | MiniMax `speech-2.8-hd`，5 次调用，逐句缓存 |
+| 画面 | 三张矢量卡、一张静态代码快照、一张指标卡；零生成媒体 |
+| QC | PASS — 最长冻结 2.40 s（上限 3.20 s），配比 70/20/10 对 70/25/5 |
+| 状态 | `production_ready: false`，`PENDING_FOUNDER_REVIEW` |
+
+为这个账号新增三道门：`manual_recording_forbidden`（不得出现录屏素材）、
+`composition_ratio`（声明的矢量/代码/指标占比偏差 ≤8 个百分点）、
+`evidence_mode: EXPLANATORY`（不适用 ≥70% 真实素材下限，由配比门替代）。视图现在可以
+自带 `asset_id`，所以一个 placement 能从指标卡切到矢量总结；`burns_caption` 让图解卡
+保留字幕，而引用卡仍然用卡面替代字幕。
+
+不声称：矢量卡是静态的、没有动画；BGM 按政策省略；样片不是完整一期。

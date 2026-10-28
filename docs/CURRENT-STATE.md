@@ -527,3 +527,30 @@ Two facts are deliberately not claimed:
   The rebuilt cut satisfies V2 (72.7 % real, 0 % vector) and therefore does not
   meet the DNA's 30 % vector share. That is a Founder decision, recorded in
   `research/video-replication/capability-reconciliation-2026-10-27.md`.
+
+## Audio-first B-account sample (Issue #34) — 2026-10-28
+
+`scripts/audio_first_plan.py` makes the voice the first artefact: it synthesises
+each line, measures it, and only then writes the CutPlan windows.
+`scripts/build_evidence_package.py` builds, grades and bundles the cut in one
+command.
+
+| Property | Value |
+|---|---|
+| Project | `projects/easel-fi-audio-first` — Build account, 1080×1920 |
+| Length | 25.0 s (5 beats, 10 views); the account template targets 90–120 s, so this is the blueprint's 20–30 s P0 loop |
+| Voice | MiniMax `speech-2.8-hd`, 5 calls, cached per line |
+| Visuals | three vector cards, one static code snapshot and one metric card; zero generated media |
+| QC | PASS — longest frozen run 2.40 s (limit 3.20 s), composition 70/20/10 against 70/25/5 |
+| Status | `production_ready: false`, `PENDING_FOUNDER_REVIEW` |
+
+Three gates were added for this account: `manual_recording_forbidden` (no
+recording asset may appear), `composition_ratio` (declared vector/code/metric
+shares within ±8 pp), and `evidence_mode: EXPLANATORY` (the ≥70 % real-source
+floor does not apply; the composition gate replaces it). A shot may now name its
+own asset, so one placement can move from a metric card to a vector summary;
+`burns_caption` lets a diagram card keep subtitles while a citation card still
+replaces them.
+
+Not claimed: the vector cards are static, not animated; BGM is omitted by
+policy; the sample is not a finished episode.
