@@ -96,3 +96,18 @@ python scripts\qc_video.py projects\easel-fi-what-is-agent --video easel.mp4
 语速说明：逐句极值来自 7–11 字的短句，固定句尾与标点占比大；把短句硬拉到区间中值会让语气变形。按整段口播均值判断，250.9 在 DNA 区间内，因此不改。
 
 **转场未做**：引擎的转场库（tiles/cube/iris…）属于整片 `eras` 模式，spec 片段之间没有转场契约；要在五段之间加转场，必须把每段改写成 `scenes/<id>.js` 并挂进 `eras.js`，这是下一轮的工作，不在本轮手搓 `xfade`。
+
+## 8. 生成物实验（MiniMax 图片 / 视频）
+
+主片先做成 52 秒零生成版本（12 个 4 秒 beat），再按 V2 规则加入生成物：
+
+| 资产 | 模型 | 结果 | 决策 |
+|---|---|---|---|
+| 静帧 | `image-01`，1080×1920，seed 7 | 四节点 + 中心光核；全幅播放时像黑帧 | **未使用**，移出时间线 |
+| 视频 | `MiniMax-H3` T2VA，4 s / 768P / 9:16 | 四球 + 青色连线 + 中心脉冲；充当失败段与评估段之间的无口播桥 | **使用**，占 7.7%（4/52） |
+
+- 生成区间内没有口播、字幕或 CTA；`claim_bearing: false`。
+- 配额：weekly 81% → 74%，一次创建，符合 7pp 预算；图片调用未改变窗口。
+- 视频经缩放/裁切到 1080×1920、去音轨、30 fps 后进入合成。
+- 图片与视频的 provider 收据留在本地（`assets/generated/`、`work/generated/`），
+  提交的是 `receipts/generated-media.json`（含 SHA、配额、决策）。
