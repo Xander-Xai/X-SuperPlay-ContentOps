@@ -43,16 +43,16 @@
     },
     "create_count": 1,
     "placement": {
-      "window_s": "27.9-30.4",
+      "window_s": "22.385-24.885",
       "claim_bearing": false,
-      "note": "silent bridge between the failure beat and the evaluation beat"
+      "note": "silent bridge between the failure beat and the evaluation beat; derived from motion/timeline.json"
     },
     "normalisation": "scaled/cropped to 1080x1920, audio stripped, 30 fps",
     "improves": "keeps a visual pause in the middle of the film without narration"
   },
   "generated_seconds": 2.5,
-  "film_seconds": 43.5,
-  "generated_ratio": 0.0575,
+  "film_seconds": 36.293,
+  "generated_ratio": 0.0689,
   "production_ready": false,
   "human_review": "PENDING_FOUNDER_REVIEW"
 }

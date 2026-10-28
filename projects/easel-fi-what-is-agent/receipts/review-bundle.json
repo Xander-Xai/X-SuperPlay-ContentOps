@@ -1,7 +1,7 @@
 {
   "schema": "contentops.review-bundle/v1",
   "package_id": "easel-fi-what-is-agent",
-  "built_at": "2026-10-28T05:45:48Z",
+  "built_at": "2026-10-28T07:00:03Z",
   "inputs": {
     "cover": {
       "path": "project://assets/covers/cover.png",
@@ -13,66 +13,66 @@
     },
     "sample": {
       "path": "project://receipts/sample.json",
-      "sha256": "cd40fe55a81ecfc69e54502948ab1e281f07b68d1d0d4d5927ef0f52669c7b0f"
+      "sha256": "5378da45e77bfd91ac3271fb3ab428262b9f6e024324379ccebb4522c5a14081"
     },
     "spec:p01": {
       "path": "project://motion/specs/p01.json",
-      "sha256": "b1ffa469315bbe89bb5381e6554d2894fa6806821b6b0d09f11e2fa50f4444b8"
+      "sha256": "37aa9f3156524e25ede5c4873b0112212bcba70460c27ba7fedfa73f302b2b2e"
     },
     "spec:p02": {
       "path": "project://motion/specs/p02.json",
-      "sha256": "4ddae439e96a08021225290cc3c456f9d317ffb3e3f3ce11fae4bd501eea0d2a"
+      "sha256": "7f38104253896ee8c68a9fdce1a3cebf24e360f3ec4f26627a22bceeb7f3d19d"
     },
     "spec:p03": {
       "path": "project://motion/specs/p03.json",
-      "sha256": "62a489fc14b9097ccdfe4382d23948eeeb4953e00dd49bcc6a08ade940f869da"
+      "sha256": "cac6de17e196ea23a92d06f87c8ca4c0879e84160bbebb625bea0ddc66915f42"
     },
     "spec:p04": {
       "path": "project://motion/specs/p04.json",
-      "sha256": "4bd348d3c93b81ab6d01d03c2a70d1821a4cfa7c68dac836a9b6236a6a4735ef"
+      "sha256": "205c9812593ac69d874bf2c78f28dec9ee19d3aea8245568c275bff950a94c0b"
     },
     "spec:p05": {
       "path": "project://motion/specs/p05.json",
-      "sha256": "dd3a60083088f809aa17145423c4bc613007ae0376c4b492ba1878c5a76decd8"
+      "sha256": "37f636fc226ee36aa4c5735b7a253299b8c4d06558b069b6202d8410fe79460e"
     },
     "spec:p06": {
       "path": "project://motion/specs/p06.json",
-      "sha256": "609721e6c8e35b95a247d142cd4c8792808ecc6199491241db732b7159bc34cb"
+      "sha256": "cd449cab0bfc53ce6422da60b29dd3bf6125849cd8d178ba004e6f0471c79de8"
     },
     "spec:p07": {
       "path": "project://motion/specs/p07.json",
-      "sha256": "eaf7c96299a2915035f947dfee78ab540f68d300f627364d5807e7acc777c975"
+      "sha256": "b2cbb67f62b57a5e32149565ea5a51fe84a0b2d7376ec6846cdbaacc63c33d44"
     },
     "spec:p08": {
       "path": "project://motion/specs/p08.json",
-      "sha256": "57c8e33b19fcc65f4a7b7e09482e5c04b5ccc9319254b9637e2762760eed41b6"
+      "sha256": "c5b567bbe5966c1cce3f164c3a82d054ea8eb1920fbb24092dd30849d97f411a"
     },
     "spec:p09": {
       "path": "project://motion/specs/p09.json",
-      "sha256": "ed5b503e0176c4d3a712f4619a4044f111c0756134a2221e7f181fc50287ee8b"
+      "sha256": "231bc8c7b487c164a8bf32de37127e39156707f0f818c1db436a3fa60d28781f"
     },
     "spec:p10": {
       "path": "project://motion/specs/p10.json",
-      "sha256": "2053171fb024d04da6f5d66e88232d19f0e6ec3143797c6c9d07e7e2d42de086"
+      "sha256": "0b47d84fb538fda8c653c59b54c818378c8bdd78b9eee5ff090b44ceb4f981a7"
     },
     "spec:p11": {
       "path": "project://motion/specs/p11.json",
-      "sha256": "a109a6bec940a5e393c009caa044b3d9fe0596a7361814e49ac864ff7623d9a6"
+      "sha256": "102e6d335265a79fa9be9e6981797d2a0d1a4beffd814f45bfaf995894921076"
     },
     "spec:p12": {
       "path": "project://motion/specs/p12.json",
-      "sha256": "bc8cd00108a41fec06f3ed5cf5662a05dfc9ed8bfadb71a6b21d3258e626ba8c"
+      "sha256": "7ded68f37e6f07e5abe01401396dbff6b14f8ff1e18e32182e9724580615751e"
     },
     "video": {
       "path": "project://final/easel.mp4",
-      "sha256": "eb56169b622d456f04c40511c07de96389a00810a3befd94448eb2364274f512"
+      "sha256": "f523490158f5bae83a5e5e7de93b063c46df7b9699a995b69a80f4659b0ec7a3"
     },
     "voice": {
       "path": "project://receipts/voice-lines.json",
-      "sha256": "753b8d09a5e76495fd949fbb24d9c8c4043319791b621fa003771d7ed8f10954"
+      "sha256": "4fd790480dc9964a8d4dabae62ed62131373acdd3173bff64a73d47323cfbd4e"
     }
   },
-  "review_bundle_fingerprint": "ffab8467b4a816f5bc6b3e1df85b6f89564813903d6919d64f1520bceb59c59a",
+  "review_bundle_fingerprint": "1daa137f1e27266fb09376efafb405e02525d1c1129c82988aebb84a62cfe7da",
   "score": null,
   "reviewer": null,
   "hard_fail": null,

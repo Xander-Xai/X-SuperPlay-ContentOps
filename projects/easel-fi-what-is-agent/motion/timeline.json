@@ -1,84 +1,18 @@
 {
   "schema": "contentops.timeline/v1",
   "segments": [
-    {
-      "type": "beat",
-      "clip": "p01",
-      "line": 1,
-      "duration": 3.1
-    },
-    {
-      "type": "beat",
-      "clip": "p02",
-      "line": 2,
-      "duration": 4.1
-    },
-    {
-      "type": "beat",
-      "clip": "p03",
-      "line": 3,
-      "duration": 4.0
-    },
-    {
-      "type": "beat",
-      "clip": "p04",
-      "line": 4,
-      "duration": 2.6
-    },
-    {
-      "type": "beat",
-      "clip": "p05",
-      "line": 5,
-      "duration": 2.9
-    },
-    {
-      "type": "beat",
-      "clip": "p06",
-      "line": 6,
-      "duration": 3.3
-    },
-    {
-      "type": "beat",
-      "clip": "p07",
-      "line": 7,
-      "duration": 4.1
-    },
-    {
-      "type": "beat",
-      "clip": "p08",
-      "line": 8,
-      "duration": 3.8
-    },
-    {
-      "type": "insert",
-      "clip": "insert-video",
-      "duration": 2.5,
-      "generated": "video",
-      "note": "claim-free visual bridge"
-    },
-    {
-      "type": "beat",
-      "clip": "p09",
-      "line": 9,
-      "duration": 3.6
-    },
-    {
-      "type": "beat",
-      "clip": "p10",
-      "line": 10,
-      "duration": 2.6
-    },
-    {
-      "type": "beat",
-      "clip": "p11",
-      "line": 11,
-      "duration": 3.2
-    },
-    {
-      "type": "beat",
-      "clip": "p12",
-      "line": 12,
-      "duration": 3.7
-    }
+    {"type": "beat", "clip": "p01", "line": 1, "duration": 2.37},
+    {"type": "beat", "clip": "p02", "line": 2, "duration": 2.904},
+    {"type": "beat", "clip": "p03", "line": 3, "duration": 3.009},
+    {"type": "beat", "clip": "p04", "line": 4, "duration": 2.057},
+    {"type": "beat", "clip": "p05", "line": 5, "duration": 2.544},
+    {"type": "beat", "clip": "p06", "line": 6, "duration": 3.078},
+    {"type": "beat", "clip": "p07", "line": 7, "duration": 3.194},
+    {"type": "beat", "clip": "p08", "line": 8, "duration": 3.229},
+    {"type": "insert", "clip": "insert-video", "duration": 2.5, "generated": "video", "note": "claim-free visual bridge"},
+    {"type": "beat", "clip": "p09", "line": 9, "duration": 2.939},
+    {"type": "beat", "clip": "p10", "line": 10, "duration": 2.196},
+    {"type": "beat", "clip": "p11", "line": 11, "duration": 3.264},
+    {"type": "beat", "clip": "p12", "line": 12, "duration": 3.009}
   ]
 }

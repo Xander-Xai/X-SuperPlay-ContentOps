@@ -1,6 +1,6 @@
 {
   "project": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-fi-what-is-agent",
-  "checked_at": "2026-10-28T05:45:46Z",
+  "checked_at": "2026-10-28T07:00:01Z",
   "video": "",
   "overall": "WARN",
   "checks": [
@@ -14,7 +14,7 @@
       "id": "file_size",
       "ok": true,
       "severity": "PASS",
-      "value_bytes": 4018618,
+      "value_bytes": 3657558,
       "min_bytes": 102400
     },
     {
@@ -39,7 +39,7 @@
       "id": "duration_range",
       "ok": true,
       "severity": "PASS",
-      "value_sec": 43.5,
+      "value_sec": 37.9,
       "expected_range_sec": [
         30.0,
         120.0
@@ -69,9 +69,9 @@
     },
     {
       "id": "source_refs_recorded",
-      "ok": false,
-      "severity": "WARN",
-      "value_count": 0
+      "ok": true,
+      "severity": "PASS",
+      "value_count": 1
     },
     {
       "id": "caption_srt_present",
@@ -117,15 +117,15 @@
       "id": "voice_not_silence",
       "ok": true,
       "severity": "PASS",
-      "max_volume_db": "-4.1 dB",
-      "mean_volume_db": "-20.5 dB"
+      "max_volume_db": "-4.4 dB",
+      "mean_volume_db": "-20.9 dB"
     },
     {
       "id": "subtitle_burned_or_track",
       "ok": true,
       "severity": "PASS",
       "method": "burned_in_scan",
-      "note": "max bright-pixel ratio across 6 samples = 0.01340"
+      "note": "max bright-pixel ratio across 6 samples = 0.01344"
     },
     {
       "id": "real_evidence_present",

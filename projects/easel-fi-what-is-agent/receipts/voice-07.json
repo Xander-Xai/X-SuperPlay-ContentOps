@@ -13,7 +13,7 @@
   "display_text_sha256": "c436325c34dafb7ebb5cd71ed30c9e3bb7b791435b51c3b6415d216240805a2d",
   "spoken_text_sha256": "c436325c34dafb7ebb5cd71ed30c9e3bb7b791435b51c3b6415d216240805a2d",
   "lexicon_version": "zh-2026.10.04.1",
-  "fingerprint": "2653ec019e4a0819a32cab759119d1cd98006fd45e14100bfa004685db408bbb",
+  "fingerprint": "59284e32bdf6423814241ef437bd92b0ede82d1fbad8092d9e3e7a9072be9e75",
   "quota_before": {
     "bucket": "general",
     "interval_remaining_percent": 99.0,
@@ -41,12 +41,12 @@
       {
         "check": "file_exists",
         "passed": true,
-        "detail": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-fi-what-is-agent\\assets\\voice\\narration-2653ec019e4a0819.wav"
+        "detail": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-fi-what-is-agent\\assets\\voice\\narration-59284e32bdf64238.wav"
       },
       {
         "check": "not_empty",
         "passed": true,
-        "detail": "237108 bytes"
+        "detail": "182124 bytes"
       },
       {
         "check": "has_audio_codec",
@@ -56,7 +56,7 @@
       {
         "check": "has_duration",
         "passed": true,
-        "detail": 3.704
+        "detail": 2.844
       },
       {
         "check": "sample_rate",
@@ -76,7 +76,7 @@
         "passed": true,
         "detail": {
           "expected_s": 2.1666666666666665,
-          "actual_s": 3.704
+          "actual_s": 2.844
         }
       },
       {
@@ -114,13 +114,13 @@
       "codec": "pcm_s16le",
       "sample_rate_hz": 32000,
       "channels": 1,
-      "duration_s": 3.704,
-      "bytes": 237108,
+      "duration_s": 2.844,
+      "bytes": 182124,
       "integrated_lufs": -16.0,
       "true_peak_db": -1.5,
       "peak_db": -1.5,
-      "mean_db": -16.2,
-      "loudness_range_lu": 0.9
+      "mean_db": -16.1,
+      "loudness_range_lu": 0.0
     },
     "silence": {
       "available": true,
@@ -140,8 +140,8 @@
     "excess": [],
     "detail": null
   },
-  "raw_sha256": "afbab12f3a53f4051b740e033eb4de5f590f69ec7d4a3a5b2428e1a631107fc8",
-  "normalized_sha256": "144f30138a3d4d3053beff8e1006aa33cfd7eb39bfd93d8bc822ad0172df585c",
+  "raw_sha256": "59d5d3bcfe1953043931f9889329cb363799d2675dd5f9a9d67f87cea3f92ab9",
+  "normalized_sha256": "5df587913fd5f5e67e43962991e891e2fbcb0788bf65cbec2711a460e57ade3e",
   "attempt": 1,
   "retry_reason": null,
   "fallback": {
@@ -153,14 +153,14 @@
   "production_ready": false,
   "human_review": "PENDING_FOUNDER_REVIEW",
   "asset": {
-    "normalized_path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-fi-what-is-agent\\assets\\voice\\narration-2653ec019e4a0819.wav",
-    "duration_s": 3.704,
+    "normalized_path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-fi-what-is-agent\\assets\\voice\\narration-59284e32bdf64238.wav",
+    "duration_s": 2.844,
     "sample_rate_hz": 32000,
     "channels": 1,
     "codec": "pcm_s16le",
-    "peak_before_db": -3.5,
+    "peak_before_db": -5.1,
     "peak_after_db": -1.5,
-    "loudness_before": -20.1,
+    "loudness_before": -19.5,
     "loudness_after": -16.0,
     "approved": true
   },
