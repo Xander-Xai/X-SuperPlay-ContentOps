@@ -410,3 +410,17 @@ It renders the cover through the shared card renderer and fails if the
 card-design density audit fails. It writes `receipts/cover.json`,
 `receipts/review-bundle.json`, `receipts/human-review.json` (every score null)
 and `receipts/runtime-receipt.md`. It never records a score.
+
+Cloned voice and a local ambient bed:
+
+```powershell
+$env:PYTHONUTF8 = "1"
+python scripts\synthesize_narration.py --text "..." --voice founder_primary_v1 `
+  --out-dir projects\easel-fi-what-is-agent\assets\voice --receipt projects\easel-fi-what-is-agent\receipts\voice-01.json
+python scripts\synthesize_ambient_bed.py --duration 45 --out projects\easel-fi-what-is-agent\work\bgm.wav
+python scripts\build_code_animation_sample.py projects\easel-fi-what-is-agent
+```
+
+- the clone alias is `founder_primary_v1`; the provider id stays private, only its hash is in the receipt
+- the bed is synthesised locally at −24.4 dBFS; the composer refuses a mix with less than 18 dB headroom
+- a beat window is `speech + 0.35 s`, not a fixed 4 s, so the narration does not sit in dead air

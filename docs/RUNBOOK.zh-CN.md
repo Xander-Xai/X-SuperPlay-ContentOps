@@ -294,3 +294,17 @@ python scripts\package_code_animation_sample.py projects\easel-fi-what-is-agent
 它用共享卡片渲染器出封面，密度审计失败就报错；写出 `receipts/cover.json`、
 `receipts/review-bundle.json`、`receipts/human-review.json`（所有分数为 null）与
 `receipts/runtime-receipt.md`。它从不记录分数。
+
+克隆音与本机配乐：
+
+```powershell
+$env:PYTHONUTF8 = "1"
+python scripts\synthesize_narration.py --text "..." --voice founder_primary_v1 `
+  --out-dir projects\easel-fi-what-is-agent\assets\voice --receipt projects\easel-fi-what-is-agent\receipts\voice-01.json
+python scripts\synthesize_ambient_bed.py --duration 45 --out projects\easel-fi-what-is-agent\work\bgm.wav
+python scripts\build_code_animation_sample.py projects\easel-fi-what-is-agent
+```
+
+- 克隆音别名 `founder_primary_v1`；provider voice id 留在私有配置，收据只存哈希
+- 配乐在本机合成，峰值 −24.4 dBFS；混音余量低于 18 dB 时组装器直接拒绝
+- beat 窗口 = 语音 + 0.35 s，不再用固定 4 s，口播不会落在长停顿里

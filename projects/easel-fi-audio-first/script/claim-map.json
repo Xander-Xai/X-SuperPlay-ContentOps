@@ -16,7 +16,7 @@
         {
           "evidence_id": "E-FI-CURRENT-STATE",
           "kind": "document",
-          "sha256": "f343a4a4463f542a42a93c000ffd6dab106a2596fe02d790165855cbaa8b5948",
+          "sha256": "21d2c36ff2a2569baf61b4d3e0b5e45ac9b58679ec80da50702b61335ec40296",
           "logical_path": "repo://docs/CURRENT-STATE.md",
           "time_range": null,
           "permission_scope": "publishable"
@@ -50,7 +50,7 @@
         {
           "evidence_id": "E-FI-CURRENT-STATE",
           "kind": "document",
-          "sha256": "f343a4a4463f542a42a93c000ffd6dab106a2596fe02d790165855cbaa8b5948",
+          "sha256": "21d2c36ff2a2569baf61b4d3e0b5e45ac9b58679ec80da50702b61335ec40296",
           "logical_path": "repo://docs/CURRENT-STATE.md",
           "time_range": null,
           "permission_scope": "publishable"
@@ -84,7 +84,7 @@
         {
           "evidence_id": "E-FI-CURRENT-STATE",
           "kind": "document",
-          "sha256": "f343a4a4463f542a42a93c000ffd6dab106a2596fe02d790165855cbaa8b5948",
+          "sha256": "21d2c36ff2a2569baf61b4d3e0b5e45ac9b58679ec80da50702b61335ec40296",
           "logical_path": "repo://docs/CURRENT-STATE.md",
           "time_range": null,
           "permission_scope": "publishable"
@@ -126,7 +126,7 @@
         {
           "evidence_id": "E-FI-CURRENT-STATE",
           "kind": "document",
-          "sha256": "f343a4a4463f542a42a93c000ffd6dab106a2596fe02d790165855cbaa8b5948",
+          "sha256": "21d2c36ff2a2569baf61b4d3e0b5e45ac9b58679ec80da50702b61335ec40296",
           "logical_path": "repo://docs/CURRENT-STATE.md",
           "time_range": null,
           "permission_scope": "publishable"
@@ -202,7 +202,7 @@
         {
           "evidence_id": "E-FI-CURRENT-STATE",
           "kind": "document",
-          "sha256": "f343a4a4463f542a42a93c000ffd6dab106a2596fe02d790165855cbaa8b5948",
+          "sha256": "21d2c36ff2a2569baf61b4d3e0b5e45ac9b58679ec80da50702b61335ec40296",
           "logical_path": "repo://docs/CURRENT-STATE.md",
           "time_range": null,
           "permission_scope": "publishable"

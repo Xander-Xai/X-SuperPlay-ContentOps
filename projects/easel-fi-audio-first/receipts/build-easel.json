@@ -1,6 +1,6 @@
 {
   "schema": "contentops.evidence-build/v1",
-  "built_at": "2026-10-28T03:30:45Z",
+  "built_at": "2026-10-28T05:42:36Z",
   "package_id": "easel-fi-audio-first",
   "target": {
     "width": 1080,
@@ -40,7 +40,7 @@
     "script": ".runtime/easel/skills/openclaw/auto-short-video/scripts/assemble.py",
     "why": "owns storyboard composition; ContentOps only prepares evidence-bounded clips, narration and captions"
   },
-  "claim_map_fingerprint": "60e1993608ae73346bc88f80a10a358678392bf32641e286ea0e7a23bb756689",
+  "claim_map_fingerprint": "539c27b9dd7edb67004f33b259e50e9af08db31fa877cd709fd2960232b121ff",
   "cut_plan_fingerprint": "80e4de5707193269c04abe40c5e888d97e3dc250cc97203a840cc9c63b86269b",
   "assets": {
     "A-MOTION-LEN": {
