@@ -99,3 +99,20 @@ date: 2026-10-27
 4. **脚本未走 `video-script` skill**：本片脚本为人工撰写 + 证据绑定，`build-easel.json` 只声明 `auto-short-video` 一跳。若要求全 skill 路由，需要补 `video-script` 与其输入契约。
 5. **分发仍被阻断**：4 条捕获都是 `internal_review`，`review-bundle.json` 正确标记 `distribution_blocked: true`。上平台前必须有 redaction receipt。
 6. **doctor 计数的可见性**：doctor 输出 7 项，但捕获窗口把 python/node 滚动到画外；画面可见 5 项 + exit 0。Claim Map 已记 limitation，未改口播。
+
+## 7. 第二轮迭代（2026-10-28）：audio-first 与 Build 组样片
+
+第二轮逐字稿复核（`verification-round-2026-10-28.md`）把三条制作原则从推断升级为口播证据：
+audio-first、脚手架 + 验证函数 + Fail Fast、A 组录屏必须带脱敏。本轮落地了第一条与对应门禁：
+
+| 项 | 实现 | 依据 |
+|---|---|---|
+| audio-first | `scripts/audio_first_plan.py` 先合成、实测，再写 CutPlan；单句超过 6 s 直接拒绝 | `projects/easel-fi-audio-first/receipts/audio-first-plan.json` |
+| 视图可跨素材 | `Shot.asset_id`；同一 placement 可从指标卡切到矢量总结 | `src/contentops/media/cut_plan.py` |
+| 零录屏门禁 | `manual_recording_forbidden` | `receipts/qc-report.json` |
+| 配比门禁 | `composition_ratio`，容差 ±8pp；`evidence_mode: EXPLANATORY` 时不套用 ≥70% 真实素材下限 | `src/contentops/media/cut_qc.py` |
+| 字幕保留 | `burns_caption`：图解卡保留字幕，引用卡仍以卡面替代 | `scripts/build_evidence_cut.py` |
+| 样片 | `easel-fi-audio-first`：25.0 s、5 beats / 10 views、QC PASS、配比 70/20/10 | `projects/easel-fi-audio-first/` |
+
+仍未做：矢量卡是静态的，没有真正动画；Manim/Remotion 未引入（需要新的依赖决策）；
+B 组 90–120 s 完整一期与 16:9 派生版未做；语速实测闭环（P1）仍未做。
