@@ -1,0 +1,20 @@
+{
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": "ink",
+  "grammar": "y1_kurzgesagt",
+  "duration": 3.168,
+  "data": {
+    "center": "装了 Eas",
+    "flow": true,
+    "camera": "smooth"
+  },
+  "cues": [
+    {
+      "at": 0.0,
+      "kind": "title",
+      "text": "装了 Easel 之后"
+    }
+  ]
+}

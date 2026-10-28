@@ -356,6 +356,16 @@ def main() -> int:
             print(json.dumps({"status": "BLOCKED", "reason": f"missing clip {clip}"},
                              ensure_ascii=False))
             return 4
+        try:
+            ffprobe_json(clip)
+        except RuntimeError as exc:
+            # A render still writing its MP4 has no moov atom yet. Without this
+            # probe the upstream assembler dies with an opaque "Invalid data
+            # found when processing input" hundreds of frames in.
+            print(json.dumps({"status": "BLOCKED",
+                              "reason": f"clip is not a complete media file: {clip.name}",
+                              "detail": str(exc)}, ensure_ascii=False))
+            return 4
         segment["path"] = clip
         clips.append(clip)
 

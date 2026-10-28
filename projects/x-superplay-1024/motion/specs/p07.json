@@ -1,0 +1,31 @@
+{
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": "ink",
+  "grammar": "y2_vox",
+  "duration": 2.075,
+  "data": {
+    "camera": "smooth"
+  },
+  "cues": [
+    {
+      "at": 0.0,
+      "kind": "image",
+      "image": "D:/Projects/X-SuperPlay-ContentOps/outputs/editorial-1024/by-placement/shot_04.png",
+      "data": {
+        "fit": "cover",
+        "aspect": 0.5625,
+        "focus": [
+          0.5,
+          0.5
+        ]
+      }
+    },
+    {
+      "at": 1.04,
+      "kind": "title",
+      "text": "前端没构建"
+    }
+  ]
+}

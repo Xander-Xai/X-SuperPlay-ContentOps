@@ -1,0 +1,20 @@
+{
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": "ink",
+  "grammar": "y1_kurzgesagt",
+  "duration": 2.314,
+  "data": {
+    "center": "到现在还没验",
+    "flow": true,
+    "camera": "smooth"
+  },
+  "cues": [
+    {
+      "at": 0.0,
+      "kind": "title",
+      "text": "到现在还没验证"
+    }
+  ]
+}

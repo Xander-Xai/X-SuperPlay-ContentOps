@@ -1,0 +1,95 @@
+{
+  "schema": "contentops.timeline/v1",
+  "segments": [
+    {
+      "type": "beat",
+      "clip": "p01",
+      "line": 1,
+      "duration": 5.313
+    },
+    {
+      "type": "beat",
+      "clip": "p02",
+      "line": 2,
+      "duration": 6.52
+    },
+    {
+      "type": "beat",
+      "clip": "p03",
+      "line": 3,
+      "duration": 2.768
+    },
+    {
+      "type": "beat",
+      "clip": "p04",
+      "line": 4,
+      "duration": 2.998
+    },
+    {
+      "type": "beat",
+      "clip": "p05",
+      "line": 5,
+      "duration": 2.306
+    },
+    {
+      "type": "beat",
+      "clip": "p06",
+      "line": 6,
+      "duration": 6.459
+    },
+    {
+      "type": "beat",
+      "clip": "p07",
+      "line": 7,
+      "duration": 1.675
+    },
+    {
+      "type": "beat",
+      "clip": "p08",
+      "line": 8,
+      "duration": 4.545
+    },
+    {
+      "type": "beat",
+      "clip": "p09",
+      "line": 9,
+      "duration": 2.392
+    },
+    {
+      "type": "beat",
+      "clip": "p10",
+      "line": 10,
+      "duration": 1.914
+    },
+    {
+      "type": "beat",
+      "clip": "p11",
+      "line": 11,
+      "duration": 1.243
+    },
+    {
+      "type": "beat",
+      "clip": "p12",
+      "line": 12,
+      "duration": 3.315
+    },
+    {
+      "type": "beat",
+      "clip": "p13",
+      "line": 13,
+      "duration": 3.729
+    },
+    {
+      "type": "beat",
+      "clip": "p14",
+      "line": 14,
+      "duration": 3.315
+    },
+    {
+      "type": "beat",
+      "clip": "p15",
+      "line": 15,
+      "duration": 1.243
+    }
+  ]
+}

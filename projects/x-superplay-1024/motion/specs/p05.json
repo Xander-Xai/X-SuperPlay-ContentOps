@@ -1,0 +1,30 @@
+{
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": "ink",
+  "grammar": "y1_kurzgesagt",
+  "duration": 2.706,
+  "data": {
+    "center": "跑得起来吗？",
+    "flow": true,
+    "camera": "smooth"
+  },
+  "cues": [
+    {
+      "at": 0.0,
+      "kind": "title",
+      "text": "跑得起来吗？"
+    },
+    {
+      "at": 1.04,
+      "kind": "point",
+      "text": "CLI"
+    },
+    {
+      "at": 1.55,
+      "kind": "point",
+      "text": "Skill"
+    }
+  ]
+}

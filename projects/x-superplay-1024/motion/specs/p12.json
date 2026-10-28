@@ -1,0 +1,36 @@
+{
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": "ink",
+  "grammar": "y2_vox",
+  "duration": 3.715,
+  "data": {
+    "camera": "smooth"
+  },
+  "cues": [
+    {
+      "at": 0.0,
+      "kind": "image",
+      "image": "D:/Projects/X-SuperPlay-ContentOps/outputs/editorial-1024/by-placement/shot_05.png",
+      "data": {
+        "fit": "cover",
+        "aspect": 0.5625,
+        "focus": [
+          0.5,
+          0.5
+        ]
+      }
+    },
+    {
+      "at": 2.06,
+      "kind": "title",
+      "text": "不是开箱即用"
+    },
+    {
+      "at": 2.65,
+      "kind": "point",
+      "text": "这一项标红"
+    }
+  ]
+}

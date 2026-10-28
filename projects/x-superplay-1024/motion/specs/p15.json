@@ -1,0 +1,31 @@
+{
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": "ink",
+  "grammar": "y2_vox",
+  "duration": 1.643,
+  "data": {
+    "camera": "smooth"
+  },
+  "cues": [
+    {
+      "at": 0.0,
+      "kind": "image",
+      "image": "D:/Projects/X-SuperPlay-ContentOps/projects/easel-review/sources/screenshots/11-easel-ping.png",
+      "data": {
+        "fit": "cover",
+        "aspect": 0.5625,
+        "focus": [
+          0.5,
+          0.5
+        ]
+      }
+    },
+    {
+      "at": 0.77,
+      "kind": "title",
+      "text": "今天是通的"
+    }
+  ]
+}

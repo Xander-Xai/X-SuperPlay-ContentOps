@@ -1,0 +1,36 @@
+{
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": "ink",
+  "grammar": "y2_vox",
+  "duration": 3.715,
+  "data": {
+    "camera": "smooth"
+  },
+  "cues": [
+    {
+      "at": 0.0,
+      "kind": "image",
+      "image": "D:/Projects/X-SuperPlay-ContentOps/projects/easel-review/sources/screenshots/14-easel-skills-dir.png",
+      "data": {
+        "fit": "cover",
+        "aspect": 0.5625,
+        "focus": [
+          0.5,
+          0.5
+        ]
+      }
+    },
+    {
+      "at": 2.06,
+      "kind": "title",
+      "text": "CLI + Skill"
+    },
+    {
+      "at": 2.65,
+      "kind": "point",
+      "text": "这条线"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "project": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\x-superplay-1024",
-  "checked_at": "2026-10-28T15:39:19Z",
+  "checked_at": "2026-10-28T17:20:10Z",
   "video": "",
   "overall": "WARN",
   "checks": [
@@ -14,7 +14,7 @@
       "id": "file_size",
       "ok": true,
       "severity": "PASS",
-      "value_bytes": 1573162,
+      "value_bytes": 9690552,
       "min_bytes": 102400
     },
     {
@@ -125,7 +125,7 @@
       "ok": true,
       "severity": "PASS",
       "method": "burned_in_scan",
-      "note": "max bright-pixel ratio across 6 samples = 0.93022"
+      "note": "max bright-pixel ratio across 6 samples = 0.52852"
     },
     {
       "id": "real_evidence_present",

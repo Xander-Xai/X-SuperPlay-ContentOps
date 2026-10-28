@@ -1,0 +1,31 @@
+{
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": "ink",
+  "grammar": "y2_vox",
+  "duration": 5.713,
+  "data": {
+    "camera": "smooth"
+  },
+  "cues": [
+    {
+      "at": 0.0,
+      "kind": "image",
+      "image": "D:/Projects/X-SuperPlay-ContentOps/outputs/editorial-1024/by-placement/shot_03.png",
+      "data": {
+        "fit": "cover",
+        "aspect": 0.5625,
+        "focus": [
+          0.5,
+          0.5
+        ]
+      }
+    },
+    {
+      "at": 3.29,
+      "kind": "title",
+      "text": "网关健康检查"
+    }
+  ]
+}
