@@ -48,6 +48,8 @@ REAL EXECUTION RECEIPT
 | Video replication (benchmark → pipeline) | EXPERIMENT — Claude Code master prompt for replicating benchmark video production capabilities into the existing runtime | `video-replication/claude-code-video-replication-prompt.md` |
 | Video replication capability reconciliation | EXPERIMENT — M1–M9 against the current runtime, four-way split, external-asset record, open conflicts | `video-replication/capability-reconciliation-2026-10-27.md` |
 | Benchmark verification (round 2) | VERIFIED via ASR transcripts — tools/flow/redaction confirmed; frame-level details still pending MP4 access | `video-replication/verification-round-2026-10-28.md` |
+| Three new creators (柱子哥/花叔/秋芝2046) | ANALYZED — code-rendered animation route; 7 GitHub repos located (lemo-opuscar 8.7k★, huashu-art-motion 5.5k★) | `video-replication/three-creators-analysis-2026-10-28.md` |
+| B-roll motion asset evaluation | ADOPTED HyperFrames 0.8.208 (Apache-2.0); huashu/xilo as references; X scan blocked by login | `video-replication/motion-asset-evaluation-2026-10-28.md` |
 
 ## Archived
 
