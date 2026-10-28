@@ -4,12 +4,12 @@
 
 **Overall**: `WARN`
 
-**Checked at**: 2026-10-28T02:36:55Z
+**Checked at**: 2026-10-28T02:55:39Z
 
 | Check | Status | Severity | Detail |
 |---|---|---|---|
 | _video | OK | INFO | path=D:\Projects\X-SuperPlay-ContentOps\projects\easel-fi-what-is-agent\final\easel.mp4 |
-| file_size | OK | PASS | value_bytes=1635904, min_bytes=102400 |
+| file_size | OK | PASS | value_bytes=1427543, min_bytes=102400 |
 | ffprobe_parse | OK | PASS |  |
 | resolution | OK | PASS | value=1080x1920, expected=1080x1920 |
 | aspect_ratio_9_16 | OK | PASS | value=1080:1920 |
@@ -26,6 +26,6 @@
 | source_provenance_complete | OK | PASS | missing_shot_indices=[] |
 | engine_recorded | OK | PASS | value=easel |
 | voice_not_silence | OK | PASS | max_volume_db=-4.4 dB, mean_volume_db=-25.6 dB |
-| subtitle_burned_or_track | OK | PASS | method=burned_in_scan, note=max bright-pixel ratio across 6 samples = 0.01063 |
+| subtitle_burned_or_track | OK | PASS | method=burned_in_scan, note=max bright-pixel ratio across 6 samples = 0.01065 |
 | real_evidence_present | FAIL | WARN | value_count=0 |
 | voice_quality_declared | OK | INFO | voice_provider=minimax-mplan, voice_quality=configured_provider, production_quality_warning=False, note=mechanical/fallback voice keeps the render at READY_FOR_HUMAN_REVIEW; only a human can accept it as production (V1 spec §11) |

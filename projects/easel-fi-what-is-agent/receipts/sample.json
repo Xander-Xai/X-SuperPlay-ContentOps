@@ -1,6 +1,6 @@
 {
   "schema": "contentops.code-animation-sample/v1",
-  "built_at": "2026-10-28T02:35:19Z",
+  "built_at": "2026-10-28T02:54:30Z",
   "package_id": "easel-fi-what-is-agent",
   "content_type": "DEFINITIONAL_EXPLAINER",
   "claim_bearing": false,
@@ -9,7 +9,10 @@
     "version": "1.2.0",
     "license": "MIT",
     "engine": "scripts/engine/render.py",
-    "grammar": "t2_keynote_ui",
+    "grammar": [
+      "t2_keynote_ui",
+      "y1_kurzgesagt"
+    ],
     "windows_adapter": "Playwright channel fallback (chrome/msedge) and PYTHONUTF8=1 for spec JSON"
   },
   "timeline": {
@@ -20,13 +23,15 @@
   "clips": [
     {
       "spec": "project://motion/specs/p01.json",
-      "spec_sha256": "4b5b84a785262dde2b41e2d3baadda15fa5c203b87392de1e439ef1cb03dee03",
+      "grammar": "y1_kurzgesagt",
+      "spec_sha256": "a544dc66598b98bab4254f7b6c5738558a71af6cb03ab4046a675399feb38152",
       "clip": "project://work/clips/p01.mp4",
-      "clip_sha256": "4b92192935ed5911861ab991b49fbcca396b3ace31f01aaef53e54d39c1ff89a",
+      "clip_sha256": "61a184c03c1a52c39337f1070d5ae563d572e8a143dc61789168c79a99eb0de1",
       "duration_s": 4.0
     },
     {
       "spec": "project://motion/specs/p02.json",
+      "grammar": "t2_keynote_ui",
       "spec_sha256": "adf6728b3802016d0f4e5ccabe0ec81b6bff951487b0b4262e3d3e72eafb795b",
       "clip": "project://work/clips/p02.mp4",
       "clip_sha256": "649a729f2f59f63f479edad12ab45ad2f714a33a71870a0c71870ea50fcc0a60",
@@ -34,13 +39,15 @@
     },
     {
       "spec": "project://motion/specs/p03.json",
-      "spec_sha256": "a69865b86489b1d69673cc15031397470a1ec21557f77a8b16fdec1ec7f1b8d4",
+      "grammar": "y1_kurzgesagt",
+      "spec_sha256": "50f0ce9cc2fa695b18ab85c4f173c7ab3312de878b23315235976d64a2307aec",
       "clip": "project://work/clips/p03.mp4",
-      "clip_sha256": "0c6ad7f0be17a105bfea6b4ba233d381c61d8a15c78ceb5aae291dd945c1c75b",
+      "clip_sha256": "00c833446cc395a703134f1fc3857bd54058d4afc96f3abc9b0a8043c7524a27",
       "duration_s": 4.0
     },
     {
       "spec": "project://motion/specs/p04.json",
+      "grammar": "t2_keynote_ui",
       "spec_sha256": "54e8d86e4fa5068c4099c909d78e0f9ee80dc4c8827fff2f6cdec64b196ce8e1",
       "clip": "project://work/clips/p04.mp4",
       "clip_sha256": "fa2db2de0f066d82c4470217c009008f9c34e8d898ec2af881d3949cc7429bc5",
@@ -48,6 +55,7 @@
     },
     {
       "spec": "project://motion/specs/p05.json",
+      "grammar": "t2_keynote_ui",
       "spec_sha256": "f3a9505686d5b3289bc3c5075b6005cc2c2dc4678a9ed7fbb1884026ea74b476",
       "clip": "project://work/clips/p05.mp4",
       "clip_sha256": "658ae9951a88e7fb6394eed194a94379a081dfc932f27fe6da0ae65bbb38ee05",
@@ -98,7 +106,7 @@
   },
   "output": {
     "path": "project://final/easel.mp4",
-    "sha256": "309cf5a764beb83b95ed1c34a459ee56bd2f325ab944a792b73e29a1d871ff3b",
+    "sha256": "531c93578862cb1b6d3620943e8391161ee8ad9505af27fe4d0ec33734f16835",
     "duration_s": 20.0,
     "width": 1080,
     "height": 1920,
@@ -108,7 +116,7 @@
   "technical_qc": {
     "decodable": true,
     "longest_black_run_s": 0.0,
-    "longest_freeze_run_s": 0.6,
+    "longest_freeze_run_s": 0.4,
     "analysed_frames": 100,
     "notes": [],
     "reasons": []

@@ -1,46 +1,35 @@
 {
-  "grammar": "t2_keynote_ui",
-  "duration": 4,
   "fps": 30,
   "width": 1080,
   "height": 1920,
   "theme": "ink",
+  "grammar": "y1_kurzgesagt",
+  "duration": 4,
   "data": {
-    "eyebrow": "WHAT IS AN AGENT",
-    "accent": "#38BDF8"
+    "center": "工具",
+    "flow": true,
+    "camera": "smooth"
   },
   "cues": [
     {
       "at": 0.0,
       "kind": "title",
-      "text": "再调工具",
-      "sub": "拿回结果，再改计划"
+      "text": "拿回结果，再改计划"
     },
     {
-      "at": 0.8,
-      "kind": "step",
-      "text": "调工具",
-      "data": {
-        "icon": "bolt"
-      }
+      "at": 0.4,
+      "kind": "point",
+      "text": "调用"
     },
     {
-      "at": 1.8,
-      "kind": "step",
-      "text": "看结果",
-      "data": {
-        "step": "02",
-        "icon": "chart"
-      }
+      "at": 1.2,
+      "kind": "point",
+      "text": "结果"
     },
     {
-      "at": 2.8,
-      "kind": "step",
-      "text": "改计划",
-      "data": {
-        "step": "03",
-        "icon": "layers"
-      }
+      "at": 2.0,
+      "kind": "point",
+      "text": "改计划"
     }
   ]
 }

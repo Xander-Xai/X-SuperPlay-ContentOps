@@ -166,9 +166,13 @@ def main() -> int:
     visual = next((s for s in meta.get("streams", []) if s.get("codec_type") == "video"), {})
 
     clip_rows = []
+    grammars = set()
     for clip, spec in zip(clips, sorted((project / "motion" / "specs").glob("p*.json"))):
+        spec_doc = json.loads(spec.read_text(encoding="utf-8"))
+        grammars.add(spec_doc.get("grammar", ""))
         clip_rows.append({
             "spec": f"project://motion/specs/{spec.name}",
+            "grammar": spec_doc.get("grammar"),
             "spec_sha256": _sha(spec),
             "clip": f"project://work/clips/{clip.name}",
             "clip_sha256": _sha(clip),
@@ -186,7 +190,7 @@ def main() -> int:
             "version": "1.2.0",
             "license": "MIT",
             "engine": "scripts/engine/render.py",
-            "grammar": "t2_keynote_ui",
+            "grammar": sorted(g for g in grammars if g),
             "windows_adapter": "Playwright channel fallback (chrome/msedge) and PYTHONUTF8=1 for spec JSON",
         },
         "timeline": {"clip_seconds": CLIP_SECONDS, "clips": len(clips),
