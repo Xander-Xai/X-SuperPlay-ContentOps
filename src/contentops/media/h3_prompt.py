@@ -167,6 +167,9 @@ class ShotPlan:
     action: str = ""
     camera: str = ""
     dialogue: str = ""
+    #: Language of ``dialogue``. The rewrite sections stay English; only the
+    #: spoken words and their tag keep the language actually being spoken.
+    dialogue_language: str = "English"
     sound: str = ""
     visual_style: str = ""
     #: Provider-neutral reference descriptors. Labels are assigned by the compiler.
@@ -352,7 +355,10 @@ class H3PromptCompiler:
         if plan.dialogue.strip():
             # Upstream: the speaker phrase and delivery sit outside <d>; inside
             # <d> only the language tag and the user's own words, verbatim.
-            parts.append(f"the speaker says: <d>[English] {plan.dialogue.strip()}</d>")
+            language = plan.dialogue_language.strip() or "English"
+            parts.append(
+                f"the speaker says: <d>[{language}] {plan.dialogue.strip()}</d>"
+            )
         if plan.sound.strip():
             parts.append(plan.sound.strip())
 

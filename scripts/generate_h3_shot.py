@@ -108,6 +108,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--action", default="")
     parser.add_argument("--camera", default="")
     parser.add_argument("--sound", default="")
+    parser.add_argument("--dialogue", default="",
+                        help="words the speaker says on camera, verbatim")
+    parser.add_argument("--dialogue-language", default="English",
+                        help="language tag for --dialogue; the sections stay English")
     parser.add_argument("--visual-style", default="Live-action, cinematic")
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--retry-from", default="")
@@ -138,6 +142,8 @@ def main() -> int:
         action=overrides.get("action", args.action),
         camera=overrides.get("camera", args.camera),
         sound=overrides.get("sound", args.sound),
+        dialogue=overrides.get("dialogue", args.dialogue),
+        dialogue_language=overrides.get("dialogue_language", args.dialogue_language),
         visual_style=overrides.get("visual_style", args.visual_style),
         reference_assets=tuple(overrides.get("reference_assets", ())),
         mode=overrides.get("mode", args.mode),

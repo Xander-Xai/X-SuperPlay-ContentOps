@@ -321,6 +321,27 @@ def test_reference_labels_are_consistent_across_ref2va_sections():
     print("[ok] 8. reference labels stay consistent across Ref2VA sections")
 
 
+def test_dialogue_defaults_to_the_english_language_tag():
+    text = _compiled(dialogue="A motorcycle enters the tunnel.")
+    assert "<d>[English] A motorcycle enters the tunnel.</d>" in text, text
+    print("[ok] dialogue without a declared language keeps the English tag")
+
+
+def test_dialogue_language_tag_follows_the_planned_language():
+    # Upstream: the rewrite sections are English, the dialogue keeps its own
+    # language, so the tag has to name the language actually spoken.
+    text = _compiled(dialogue="这条视频，只讲一个问题。", dialogue_language="Chinese")
+    assert "<d>[Chinese] 这条视频，只讲一个问题。</d>" in text, text
+    assert "[English]" not in text, text
+    print("[ok] a Chinese line is tagged Chinese rather than English")
+
+
+def test_blank_dialogue_language_falls_back_to_english():
+    text = _compiled(dialogue="A motorcycle.", dialogue_language="   ")
+    assert "<d>[English] A motorcycle.</d>" in text, text
+    print("[ok] a blank dialogue language falls back to English")
+
+
 def test_prompt_length_is_enforced_locally():
     compiler = H3PromptCompiler()
     assert MAX_PROMPT_CHARACTERS == 7000
@@ -2816,6 +2837,9 @@ TESTS = [
     test_effective_duration_uses_two_decimals,
     test_first_shot_has_no_timestamp_and_later_shots_increase,
     test_reference_labels_are_consistent_across_ref2va_sections,
+    test_dialogue_defaults_to_the_english_language_tag,
+    test_dialogue_language_tag_follows_the_planned_language,
+    test_blank_dialogue_language_falls_back_to_english,
     test_prompt_length_is_enforced_locally,
     test_modes_are_matched_case_insensitively_but_canonically,
     test_camera_motion_vocabulary_is_closed,
