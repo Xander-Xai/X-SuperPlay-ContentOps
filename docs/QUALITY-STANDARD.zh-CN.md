@@ -20,6 +20,27 @@ translation_status: synced
 | 时长 | ≤5min（短视频标准） |
 | 字幕 | 正确显示，无遮挡 |
 
+## 渲染前脚本门禁（SQ01–SQ07）
+
+`scripts/check_script_quality.py` 在渲染之前运行。下面每一条规则都来自一支已作废
+成片里真实出现过的缺陷——本文档其余门控检查的都是已经存在的 MP4，看不到这些问题。
+
+项目在 `project.yaml` 里写 `quality_gate: enforced` 即接入；`new_project.py`
+默认会写这一行，所以新项目自动受管，旧项目不受影响。
+
+| 规则 | 触发条件 |
+|---|---|
+| SQ01 silent_visual_gap | 某个镜头超过 1 秒没有口播覆盖，且未声明 `justification` |
+| SQ02 source_type_vocabulary | 镜头的 `source_type` 不在 `qc_video.py` 的真实/生成词表内——这类镜头会被静默排除在所有比例之外 |
+| SQ03 layout_undeclared | 拍没有声明 `layout`，重复度在成片之前无法度量 |
+| SQ04 layout_concentration | 单一版式承载超过 40% 的拍 |
+| SQ05 presenter_continuity | 数字人/主持只出现在两拍以下或不足 25% 的拍，且未声明 `presenter_scope` |
+| SQ06 doc_drift | `master.md`、`lines.json`、`storyboard.json` 与字幕文件在拍数、时长或字幕路径上不一致 |
+| SQ07 cta_missing | 未声明 CTA，且最后一拍也没有行动号召 |
+
+单项目运行：`--project projects/<slug>`；全部受管项目：`--all-gated`。
+该检查已接入 `scripts/dev_check.py` 与 CI。
+
 ## 仅用于测试的视频时长策略
 
 **本策略只约束开发、研究、冒烟与回归用的视频请求，对生产镜头时长没有任何约束力。**
@@ -62,7 +83,29 @@ TEST_VIDEO_DURATION_POLICY:
 
 ## 证据优先原则
 
+一支片子需要多少真实素材，是**账号**的决定，写在 DNA 的 `evidence.mode` 里。
+单集可以重复这个值，但只能与之一致；单集拥有自己的配比，而配比必须满足这个模式。
+
+| `evidence.mode` | 主门禁 | 比例处理 | 账号 |
+|---|---|---|---|
+| `EVIDENCE_LED` | 全片真实素材下限 | 生效：`cut_qc.py` 中为**失败**，`qc_video.py` 中为**警告** | X•超玩1024（证明片） |
+| `CLAIM_LED` | 逐条主张覆盖 | 比例仅提示；每条事实主张都必须有真实捕获 | — |
+| `EXPLANATORY` | 声明配比 ±8pp | 不适用；按策略不出现任何录屏资产 | X超玩·未来智能 |
+
+`qc_video.py` 目前仍把这条下限判为警告，本次未改动该判定；只有证据剪辑路径会因此失败。
+今天需要硬下限的账号，走 `cut_qc.py` 这条路径。
+
+算作真实素材的角色只有 `screen_recording_evidence`、`real_screenshot`、
+`real_recording`、`real_document`、`diagram`、`code_snapshot`、`metric_chart`。
+`vector_animation` 不在其中：以它为主的配比不可能达到 70% 下限，所以同一个账号
+不能同时声明这两者。`scripts/check_account_dna.py` 会拒绝这一组合，
+`scripts/audio_first_plan.py` 从 DNA 而非 `lines.json` 解析模式与录屏策略。
+
 所有声明必须可追溯到真实执行凭证。无凭证 = 声明无效。
+
+- 每个镜头都要带 `source_type` 与 `source` 出处
+- AI 生成画面不得占多数
+- 解释型片子不得把动画当成运行日志或客户案例
 
 ## 人工审查门控
 

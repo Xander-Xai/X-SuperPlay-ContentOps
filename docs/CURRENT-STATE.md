@@ -726,7 +726,7 @@ starting under an unaccompanied voice.
 | States | `pending` / `running` / `ready_for_review` / `approved` / `blocked` |
 | Approval binding | artifact SHA-256 + upstream fingerprint; a change makes it stale |
 | Bypass | none |
-| Stage validators | audience lens; script rhythm, duration, technical explainer and copy strategy; per-claim evidence coverage; rights ledger and source candidates; visual route; delivery manifest and publish plan |
+| Stage validators | audience lens; script rhythm, duration, technical explainer, copy strategy and naturalness; per-claim evidence coverage and the capture plan; rights ledger and source candidates; visual route; delivery manifest and publish plan |
 | Document gates | topic backlog, candidate scoring, evidence feasibility, platform policy, rights, improvement log, feedback/metrics, skill provenance |
 | Shared skills | 9 skills in `C:\Users\Administrator\.agents\skills`, declared with `path_base: "shared"` in the account DNAs |
 | Tests | 55 suites (`tests/test_*.py` plus `scripts/test_basic.py`), discovered and run by `scripts/run_tests.py`; the developer gate runs all of them and CI refuses a suite that exists but is never named |
@@ -857,3 +857,31 @@ decision is recorded here and enforced by a test.
 that it is not wired in. Nothing is deleted: if the ordering rules earn their
 place later, they are one import away, and the decision is visible instead of
 being rediscovered.
+
+### Capture contract and naturalness gates — 2026-10-29
+
+Three capabilities the retired `dy_x1024` workflow had and this one did not are
+now code, tested, and wired into a gate. None of them is a new engine; each
+refuses a document that cannot be produced honestly.
+
+| Capability | Module | Wired at |
+|---|---|---|
+| Recording brief per beat: surface, what must be visible, 9:16 crop, cursor, redaction | `src/contentops/workflow/capture_plan.py` + `scripts/recording_plan.py` | `storyboard` stage reads a sibling `capture-plan.json` |
+| Colloquial budget, filler-tic limit, fact-lock survival | `src/contentops/quality/naturalness.py` | `script` stage reads a sibling `naturalness.json`; `workflow_docs.py check --kind naturalness` |
+| A burned caption must transcribe its narration | `contentops.quality.subtitle.validate_caption_agreement` + `scripts/check_caption_text.py` | run by the burn step; CLI exit code |
+
+| Fact | Value |
+|---|---|
+| 1024 policy | `evidence.manual_recording: ALLOWED_CROPPED`; a dry run routed 8 storyboard beats to browser 5 / task_screen 3 (written to a temp path, not committed into the project) |
+| Future Intelligence policy | `FORBIDDEN`; a beat that demands a direct observation cannot produce a valid plan, so the CLI exits 1 and writes nothing |
+| Redaction default | `true` on beats derived from a storyboard, and a required redaction must reach the capture contract |
+| Skill | `x-superplay-capture-plan` in the shared store, routed as step `capture_plan` on both accounts |
+| Tests | `tests/test_capture_plan.py` (16), `tests/test_naturalness.py` (18), both named in CI |
+
+Two boundaries are claimed deliberately:
+
+- **The capture plan is a brief, not a capture.** Passing it does not prove
+  footage exists or is legible at phone size; usability stays a human decision.
+- **Naturalness passing is not a listening verdict.** It proves the rewrite
+  stayed inside the budget it declared and kept its locked facts. Caption
+  agreement is text identity, not pronunciation.

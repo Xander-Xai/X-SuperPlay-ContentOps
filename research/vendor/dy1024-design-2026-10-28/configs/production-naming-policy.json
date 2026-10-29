@@ -1,0 +1,37 @@
+{
+  "policy_id": "douyin-production-naming-v1",
+  "artifact_root_env": "DY_ARTIFACT_ROOT",
+  "default_artifact_root": "D:\\Projects\\dy_x1024\\production",
+  "default_behavior": "fail-closed; resolve workflow parent production when DY_ARTIFACT_ROOT is absent",
+  "non_production_override": "--allow-caller-selected or DY_ALLOW_CALLER_SELECTED=1",
+  "package_layout": "<DY_ARTIFACT_ROOT>/<content_id>/",
+  "pre_package_staging_layout": "<DY_ARTIFACT_ROOT>/_staging/<work-id>/",
+  "workflow_source_boundary": "dy_1024 contains only code, skills, schemas, configs, tests, and immutable workflow verification history; work-specific artifacts are forbidden",
+  "intermediate_artifact_policy": "candidate cards, drafts, research, assets, renders, QC, approvals, and delivery receipts stay under DY_ARTIFACT_ROOT; move staged files into the content package after content_id allocation",
+  "duration_policy_source": "profiles/profile.json:video.duration_policy",
+  "duration_selection": "content_type_defaults -> evidence_density_override -> bounded tier range",
+  "arbitrary_duration_input": "forbidden unless --allow-duration-override and --duration-override-reason are both present",
+  "content_id_pattern": "douyin-YYYYMMDD-NNN-<lowercase-ascii-topic-slug>",
+  "sequence": "next unused NNN (001-999) per local calendar day",
+  "title_policy": "keep the original title in content.json; do not put raw title text in paths",
+  "package_rule": "all works, intermediates, QC reports, approvals, and delivery receipts stay inside the package directory",
+  "final_filename_pattern": "08_exports/versions/<content_id>__vNN__<kind>.<ext>; current QC input remains 08_exports/final/<canonical-name>",
+  "directory_contract": {
+    "00_brief": "选题、路由、执行计划",
+    "01_research": "证据、来源快照、研究中间产物",
+    "02_script": "脚本和脚本审核",
+    "03_audio": "旁白、ASR、字幕和音频交接",
+    "04_visual": "视觉计划、设计方向、导演计划和视觉路由",
+    "05_assets": "资产台账、录屏回执、生成任务和媒体血缘",
+    "06_edit": "OpenChatCut、HyperFrames、Remotion 时间线和渲染工程",
+    "07_quality": "QC、机器检查和人工视觉审核",
+    "08_delivery": "交付清单和交付包",
+    "09_feedback": "发布回执、反馈和复盘"
+  },
+  "examples": {
+    "content_id": "douyin-20260824-001-topic-a1b2c3",
+    "project": "production/douyin-20260824-001-topic-a1b2c3",
+    "current_final_video": "08_delivery/final/master.mp4",
+    "archived_final_video": "08_delivery/versions/douyin-20260824-001-topic-a1b2c3__v01__master.mp4"
+  }
+}

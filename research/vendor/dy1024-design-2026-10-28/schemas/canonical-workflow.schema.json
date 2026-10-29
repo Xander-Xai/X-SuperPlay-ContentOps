@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/canonical-workflow.schema.json",
+  "title": "Canonical copy-to-video workflow",
+  "oneOf": [
+    { "$ref": "#/$defs/v1" },
+    { "$ref": "#/$defs/v2" }
+  ],
+  "$defs": {
+    "base": {
+      "type": "object",
+      "required": ["contract", "version", "current_step", "steps", "history"],
+      "properties": {
+        "contract": { "type": "string" },
+        "version": { "const": 2 },
+        "current_step": { "type": ["string", "null"] },
+        "steps": { "type": "object" },
+        "history": { "type": "array", "items": { "type": "object" } }
+      },
+      "additionalProperties": false
+    },
+    "stage": {
+      "type": "object",
+      "required": ["order", "label", "artifact", "required", "status"],
+      "properties": {
+        "order": { "type": "integer", "minimum": 1, "maximum": 13 },
+        "label": { "type": "string", "minLength": 1 },
+        "artifact": { "type": "string", "minLength": 1 },
+        "required": { "const": true },
+        "status": { "enum": ["pending", "running", "ready_for_review", "approved", "blocked"] },
+        "last_check": { "type": ["object", "null"] },
+        "approval": { "type": ["object", "null"] },
+        "started_at": { "type": "string", "format": "date-time" },
+        "ready_for_review_at": { "type": "string", "format": "date-time" },
+        "blocked": {
+          "type": "object",
+          "required": ["at", "reason"],
+          "properties": {
+            "at": { "type": "string", "format": "date-time" },
+            "reason": { "type": "string", "minLength": 1 },
+            "rule_id": { "type": "string", "minLength": 1 },
+            "source": { "const": "detector" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "v1": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        {
+          "properties": {
+            "contract": { "const": "canonical-copy-to-video-v1" },
+            "steps": {
+              "type": "object",
+              "propertyNames": { "enum": ["brief", "research", "script", "review", "audio", "visual_plan", "assets", "edit_render", "quality", "delivery"] },
+              "minProperties": 10,
+              "maxProperties": 10,
+              "additionalProperties": { "$ref": "#/$defs/stage" }
+            }
+          },
+          "required": ["contract", "steps"]
+        }
+      ]
+    },
+    "v2": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        {
+          "properties": {
+            "contract": { "const": "canonical-copy-to-video-v2" },
+            "steps": {
+              "type": "object",
+              "propertyNames": { "enum": ["brief", "research", "script", "review", "audio", "visual_plan", "visual_route", "assets_plan", "assets", "media_generation", "edit_render", "quality", "delivery"] },
+              "minProperties": 13,
+              "maxProperties": 13,
+              "additionalProperties": { "$ref": "#/$defs/stage" }
+            }
+          },
+          "required": ["contract", "steps"]
+        }
+      ]
+    }
+  }
+}

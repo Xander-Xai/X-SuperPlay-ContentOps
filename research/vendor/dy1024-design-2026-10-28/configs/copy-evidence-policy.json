@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "policy_id": "douyin-copy-evidence-v1",
+  "status": "active",
+  "platform": "douyin",
+  "research_basis": {
+    "platform_packaging": [
+      "https://ads.tiktok.com/business/en-US/creative-codes",
+      "https://support.google.com/youtube/answer/16559650?hl=en",
+      "https://support.google.com/youtube/answer/16559651?hl=en"
+    ],
+    "attribution_and_reproducibility": [
+      "https://aclanthology.org/2023.cl-4.2/",
+      "https://reproducibility.sigmodconf.hosting.acm.org/",
+      "https://pair.withgoogle.com/guidebook-v2/chapters"
+    ],
+    "transfer_limit": "TikTok/YouTube guidance is used for packaging and measurement principles; it is not a Douyin organic-distribution guarantee. Attribution and reproducibility guidance is adapted as an editorial evidence contract."
+  },
+  "platform_packaging": {
+    "structure": "hook-body-close",
+    "hook_max_seconds": 6,
+    "title_intro_match_required": true,
+    "cta_count": 1,
+    "body_must_deliver_promise": true
+  },
+  "editorial_structure": {
+    "argument": "question-hypothesis-method-evidence-result-limitation-verdict-action",
+    "packaging": "hook-body-close",
+    "taxonomy_structure_role": "beat_preset",
+    "angle_selection": "generate_3_to_8_candidates_select_one_primary_at_most_one_secondary",
+    "audience_contract_required": true
+  },
+  "claim_contract": {
+    "max_primary_claims": 1,
+    "required_fields": [
+      "claim_id",
+      "statement",
+      "evidence_level",
+      "viewer_job",
+      "operation",
+      "input_condition",
+      "changed_variable",
+      "checkpoint",
+      "evidence_asset_ids",
+      "metric",
+      "result",
+      "boundary",
+      "conclusion_dependency"
+    ],
+    "accepted_statuses": ["verified", "approved", "confirmed", "primary"],
+    "fact_statuses": ["planned", "observed", "verified", "inference", "hypothesis"],
+    "claim_modes": ["exact", "evidence", "explanation", "illustrative", "transition"]
+  },
+  "evidence_lifecycle": {
+    "states": ["planned", "captured", "verified", "not_applicable"],
+    "review_allowed_states": ["planned", "captured", "verified", "not_applicable"],
+    "quality_required_state": "verified",
+    "direct_evidence_types": [
+      "screen_recording",
+      "terminal",
+      "source_file",
+      "before_after",
+      "official_page",
+      "user_owned",
+      "data_chart"
+    ],
+    "non_direct_evidence_types": ["editable_diagram", "concept_illustration", "digital_human_explain", "text_card"],
+    "planned_is_not_proof": true,
+    "synthetic_presenter_is_not_proof": true
+  },
+  "cross_artifact_fields": {
+    "script": ["title_promise", "primary_claim_id", "hook_claim_id", "claim_map_ref", "evidence_policy_status", "packaging_structure"],
+    "teaching_contract": ["title_promise", "primary_claim_id", "hook_claim_id", "packaging_structure", "claim_to_scene_required"],
+    "storyboard": ["narrative_role", "evidence_state", "claim_mode", "source_ref"]
+  }
+}

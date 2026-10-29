@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/quality-report.schema.json",
+  "title": "Canonical quality report",
+  "type": "object",
+  "required": ["schema_version", "contract", "content_id", "status", "digital_human_present", "voice_clone_consistent", "direct_evidence_coverage", "i2v_lineage_valid", "caption_sync", "media_qc_passed", "human_review"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "contract": { "enum": ["canonical-copy-to-video-v1", "canonical-copy-to-video-v2"] },
+    "content_id": { "type": "string" },
+    "status": { "enum": ["pending", "ready_for_review", "approved", "blocked"] },
+    "digital_human_present": { "type": "boolean" },
+    "voice_clone_consistent": { "type": "boolean" },
+    "direct_evidence_coverage": { "type": "number", "minimum": 0, "maximum": 1 },
+    "i2v_lineage_valid": { "type": "boolean" },
+    "caption_sync": { "type": "boolean" },
+    "media_qc_passed": { "type": "boolean" },
+    "contact_sheet_coverage": { "enum": ["not-verified", "all-key-timepoints"] },
+    "audio_lufs": { "type": "number", "minimum": -100, "maximum": 0 },
+    "true_peak_db": { "type": "number", "minimum": -100, "maximum": 20 },
+    "clipping_count": { "type": "integer", "minimum": 0 },
+    "candidate_mp4": { "type": "string" },
+    "candidate_mp4_sha256": { "type": "string" },
+    "remotion_still": { "type": "string" }, "remotion_still_sha256": { "type": "string" },
+    "contact_sheet": { "type": "string" }, "contact_sheet_sha256": { "type": "string" },
+    "render_receipt": { "type": "string" }, "render_receipt_sha256": { "type": "string" },
+    "cover": { "type": "string" }, "publish_copy": { "type": "string" },
+    "human_review": { "oneOf": [{"const": false}, {"type": "object", "required": ["status", "reviewer", "candidate_mp4_sha256"], "properties": {"status": {"const": "approved"}, "reviewer": {"type": "string", "minLength": 1}, "candidate_mp4_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}, "additionalProperties": false}] }
+  },
+  "additionalProperties": false
+}

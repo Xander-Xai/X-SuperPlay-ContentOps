@@ -1,0 +1,170 @@
+{
+  "schema_version": 1,
+  "rule_version": "visual-route-1.0",
+  "precedence": [
+    "formula_derivation",
+    "evidence_screen_recording",
+    "architecture_diagram",
+    "data_chart",
+    "infographic_summary",
+    "xiaohei_illustration",
+    "cs_board_whiteboard",
+    "xiaohei_scene",
+    "concept_illustration",
+    "designed_card"
+  ],
+  "hard_bans": [
+    "exact architecture nodes, code, UI labels, ports and numbers cannot be produced by raster image generation",
+    "formula symbols and derivations must be typeset or kept in an editable whiteboard source",
+    "generated illustration cannot be presented as a screenshot, experiment result, official page or documentary evidence",
+    "no media generation or download before director-material-plan and assets approval"
+  ],
+  "defaults": {
+    "platform": "douyin",
+    "aspect_ratio": "9:16",
+    "source_ratios": {
+      "architecture_diagram": "16:9",
+      "formula_derivation": "4:3",
+      "data_chart": "4:3",
+      "xiaohei_illustration": "9:16",
+      "cs_board_whiteboard": "16:9",
+      "xiaohei_scene": "9:16",
+      "concept_illustration": "9:16"
+    },
+    "safe_area": "center 80%; keep subtitles and labels out of top/bottom UI zones",
+    "max_consecutive_generated_scenes": 2,
+    "max_visual_systems": 2
+  },
+  "routes": {
+    "formula_derivation": {
+      "purpose": "公式、推导、证明和 Q/K/V 计算",
+      "primary": "manim-video + latex-formatting",
+      "formats": [
+        "python+latex",
+        "mp4",
+        "mp4-frame"
+      ],
+      "generation": false
+    },
+    "architecture_diagram": {
+      "purpose": "Transformer、Agent、API、模块、依赖和调用链",
+      "primary": "cs-board-whiteboard or beautiful-mermaid chosen by narrative need",
+      "formats": [
+        "source-image+annotation",
+        "editable-mermaid",
+        "svg",
+        "png",
+        "mp4-frame"
+      ],
+      "generation": false
+    },
+    "evidence_screen_recording": {
+      "purpose": "真实产品、官方页面、仓库、终端和实验结果",
+      "primary": "media-use + media-delivery",
+      "formats": [
+        "png",
+        "mp4"
+      ],
+      "generation": false
+    },
+    "data_chart": {
+      "purpose": "有绑定数据的比较、趋势、指标和排行",
+      "primary": "deterministic SVG/HTML chart",
+      "formats": [
+        "svg",
+        "png",
+        "mp4-frame"
+      ],
+      "generation": false
+    },
+    "infographic_summary": {
+      "purpose": "步骤、清单、路线图和章节总结",
+      "primary": "baoyu-infographic or remotion",
+      "fallback": [
+        "beautiful-mermaid",
+        "remotion"
+      ],
+      "formats": [
+        "html",
+        "svg",
+        "png",
+        "mp4-frame"
+      ],
+      "generation": false
+    },
+    "concept_illustration": {
+      "purpose": "不承载精确事实的封面、隐喻、氛围和概念场景",
+      "primary": "chatgpt-bridge",
+      "formats": [
+        "png"
+      ],
+      "generation": true,
+      "text_policy": "generated-scene-text-free; all Chinese labels belong to Remotion/HTML",
+      "text_required": false,
+      "text_review": "human review must confirm that the image contains no text, letters, digits, logos or watermarks",
+      "provider": "chatgpt-bridge",
+      "generation_route": "bridge-concept",
+      "placeholder_policy": "planning-only; block production until exported and reviewed",
+      "source_ratio": "9:16",
+      "delivery_ratio": "9:16",
+      "renderer": "chatgpt-bridge"
+    },
+    "xiaohei_illustration": {
+      "purpose": "X•超玩手绘正文插画：把一个认知锚点转成单张可传播的怪诞解释图",
+      "primary": "ian-xiaohei-illustrations",
+      "formats": [
+        "png",
+        "mp4-frame"
+      ],
+      "generation": true,
+      "text_policy": "generated-scene-text-free; all Chinese labels belong to Remotion/HTML",
+      "text_required": false,
+      "text_review": "human review must confirm the Xiaohei style and absence of text, letters, digits, logos and watermarks",
+      "provider": "chatgpt-bridge",
+      "generation_route": "bridge-xiaohei",
+      "placeholder_policy": "planning-only; block production until exported and reviewed",
+      "source_ratio": "9:16",
+      "delivery_ratio": "9:16"
+    },
+    "cs_board_whiteboard": {
+      "purpose": "连续白板叙事、字幕同步、分区揭示和手绘笔迹",
+      "primary": "cs-board-whiteboard",
+      "formats": [
+        "editable-source-image",
+        "annotation-json",
+        "mp4-frame"
+      ],
+      "generation": false,
+      "text_policy": "labels must come from the human-authored source image or annotation; never use raster generation for exact UI, code or evidence",
+      "source_contract": "source image and same-image annotation JSON with integer pixel regions",
+      "delivery_contract": "Remotion owns 9:16 reframe, captions and final composition"
+    },
+    "xiaohei_scene": {
+      "purpose": "X•超玩真实物件场景：把项目处境、压力、转折和复盘节点转成物理现场",
+      "primary": "ian-xiaohei-scenes",
+      "formats": [
+        "png",
+        "mp4-frame"
+      ],
+      "generation": true,
+      "text_policy": "generated-scene-text-free; all Chinese labels belong to Remotion/HTML",
+      "text_required": false,
+      "text_review": "human review must confirm the Xiaohei style and absence of text, letters, digits, logos and watermarks",
+      "provider": "chatgpt-bridge",
+      "generation_route": "bridge-xiaohei",
+      "placeholder_policy": "planning-only; block production until exported and reviewed",
+      "source_ratio": "9:16",
+      "delivery_ratio": "9:16"
+    },
+    "designed_card": {
+      "purpose": "一条短结论或转场卡片",
+      "primary": "remotion + design-direction",
+      "formats": [
+        "svg",
+        "png",
+        "mp4-frame"
+      ],
+      "generation": false
+    }
+  }
+}

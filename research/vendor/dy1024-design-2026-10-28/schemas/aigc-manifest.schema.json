@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/aigc-manifest.schema.json",
+  "title": "Asset-level AIGC manifest",
+  "type": "object",
+  "required": ["schema_version", "contract", "content_id", "assets", "declaration", "visible_label", "metadata"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "contract": { "const": "workflow-v2-hardening-v1" },
+    "content_id": { "type": "string", "minLength": 1 },
+    "assets": {
+      "type": "object",
+      "required": ["script", "voice", "image", "video", "music"],
+      "additionalProperties": { "$ref": "#/$defs/asset" }
+    },
+    "declaration": { "$ref": "#/$defs/completion" },
+    "visible_label": { "$ref": "#/$defs/completion" },
+    "metadata": { "$ref": "#/$defs/completion" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "asset": {
+      "type": "object",
+      "required": ["required", "completed"],
+      "properties": {
+        "required": { "type": "boolean" },
+        "completed": { "type": "boolean" },
+        "ai_assisted": { "type": "boolean" },
+        "ai_generated": { "type": "boolean" },
+        "provider": { "type": "string" },
+        "model": { "type": "string" },
+        "artifact_ids": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "completion": {
+      "type": "object",
+      "required": ["required", "completed"],
+      "properties": {
+        "required": { "type": "boolean" },
+        "completed": { "type": "boolean" },
+        "location": { "type": "string" },
+        "metadata_sha256": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

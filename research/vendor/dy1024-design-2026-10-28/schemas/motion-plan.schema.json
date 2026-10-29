@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/motion-plan.schema.json",
+  "title": "Canonical motion ownership",
+  "type": "object",
+  "required": ["schema_version", "content_id", "status", "primary_renderer", "overlay_renderer", "components", "routes"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "content_id": { "type": "string" },
+    "status": { "enum": ["pending", "ready_for_review", "approved", "blocked"] },
+    "primary_renderer": { "const": "remotion-final-compositor" },
+    "overlay_renderer": { "const": "hyperframes-transparent-overlay" },
+    "components": { "type": "object", "additionalProperties": false },
+    "routes": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "account": "X•超玩1024",
+  "route_contract": "pillar -> copy_direction_route -> copy_direction_module",
+  "default_route_id": "capability-test-copy",
+  "routes": {
+    "AI 新能力实测": {
+      "route_id": "capability-test-copy",
+      "module": "skills/content-copy-orchestrator/SKILL.md",
+      "module_status": "current-module-adopted",
+      "method": "受众研究 + 观众进展 + 结果先看 + 条件复现 + 证据边界",
+      "required_beats": ["受众触发处境", "观众想取得的进展", "价值承诺", "情绪张力", "结果", "运行条件", "证据", "对观众的意义", "边界", "行动"],
+      "evidence_floor": ["实际运行记录", "关键参数", "结果或失败样本", "官方/仓库来源"],
+      "cta_mode": "problem_signal",
+      "research_basis": ["local-current-copy-orchestrator"],
+      "content_type_overrides": {
+        "technical_explainer": {
+          "route_id": "technical-explainer-copy",
+          "module": "skills/content-copy-orchestrator/SKILL.md",
+          "module_status": "current-module-adopted",
+          "method": "受众研究 + 观众进展 + 概念问题 + 机制术语 + 相邻能力边界 + 条件性收益",
+          "required_beats": ["受众触发处境", "观众想取得的进展", "价值承诺", "情绪张力", "概念问题", "机制", "关键术语", "对比边界", "对观众的意义", "条件性收益", "行动"],
+          "evidence_floor": ["官方文档/论文或用户提供来源", "术语定义", "明确未做本机 benchmark 时不写成实测", "适用条件与边界"],
+          "cta_mode": "problem_signal",
+          "research_basis": ["local-technical-explainer-qc"]
+        }
+      }
+    },
+    "AI × 现实任务实验": {
+      "route_id": "reality-task-copy",
+      "module": "skills/content-copy-orchestrator/directions/reality-task.md",
+      "module_status": "github-research-adapted",
+      "method": "受众研究 + 观众进展 + JTBD 任务走查 + 过去行为访谈 + 人工边界",
+      "required_beats": ["受众触发处境", "观众想取得的进展", "价值承诺", "情绪张力", "具体职业任务", "最近一次真实案例", "原流程", "AI介入一步", "完成率/时间/成本/质量", "人工介入", "对观众的意义", "迁移判断", "行动"],
+      "evidence_floor": ["任务输入与输出", "可复核指标", "从业者原话或用户素材", "人工复核记录"],
+      "cta_mode": "problem_signal",
+      "research_basis": [
+        "https://github.com/slgoodrich/agents/blob/main/plugins/ai-pm-copilot/skills/interview-frameworks/SKILL.md",
+        "https://github.com/guia-matthieu/clawfu-skills/blob/main/skills/validation/customer-discovery/SKILL.md"
+      ]
+    },
+    "AI 生意实验室": {
+      "route_id": "business-validation-copy",
+      "module": "skills/content-copy-orchestrator/directions/business-lab.md",
+      "module_status": "github-research-adapted",
+      "method": "受众研究 + 观众进展 + Build in Public 进展叙事 + Customer Discovery 行为验证",
+      "required_beats": ["受众触发处境", "观众想取得的进展", "价值承诺", "情绪张力", "问题与目标用户", "现有替代方案", "最小 Demo/服务", "用户测试", "行为或付费信号", "失败与成本", "对观众的意义", "下一轮假设", "行动"],
+      "evidence_floor": ["真实用户行为", "预约/试用/复用/付费信号", "成本与样本", "失败原因"],
+      "cta_mode": "problem_signal",
+      "research_basis": [
+        "https://github.com/Lock128/build-in-public/blob/main/docs/content-and-audience.md",
+        "https://github.com/lowwwbank/interview-to-jtbd",
+        "https://github.com/getagentseal/founder-playbook/blob/main/four-steps/SKILL.md"
+      ]
+    }
+  }
+}

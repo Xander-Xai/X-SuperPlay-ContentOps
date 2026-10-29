@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/comment-snapshot.schema.json",
+  "title": "Douyin Comment Snapshot",
+  "type": "object",
+  "required": ["schema_version", "content_id", "platform", "checkpoint", "status", "captured_at", "source", "comments"],
+  "properties": {
+    "schema_version": { "type": "integer", "minimum": 1 },
+    "content_id": { "type": "string" },
+    "platform": { "const": "douyin" },
+    "checkpoint": { "enum": ["post-publish", "1h", "24h", "72h", "7d"] },
+    "status": { "enum": ["pending", "captured", "ready"] },
+    "captured_at": { "type": "string", "minLength": 1 },
+    "source": { "enum": ["official-api", "creator-export", "manual"] },
+    "comments": { "type": "array", "items": { "type": "object" } }
+  },
+  "additionalProperties": true
+}

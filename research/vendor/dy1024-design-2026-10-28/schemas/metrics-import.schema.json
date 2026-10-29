@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/metrics-import.schema.json",
+  "title": "Platform Metrics Import",
+  "type": "object",
+  "required": ["schema_version", "content_id", "platform", "captured_at", "checkpoint", "source", "video_id", "metrics"],
+  "properties": {
+    "schema_version": { "type": "integer", "minimum": 1 },
+    "content_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,80}$" },
+    "platform": { "const": "douyin" },
+    "captured_at": { "type": "string", "minLength": 1 },
+    "checkpoint": { "enum": ["post-publish", "1h", "24h", "72h", "7d"] },
+    "source": { "enum": ["official-api", "creator-export", "manual"] },
+    "video_id": { "type": "string" },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "views": { "type": "number", "minimum": 0 },
+        "likes": { "type": "number", "minimum": 0 },
+        "comments": { "type": "number", "minimum": 0 },
+        "shares": { "type": "number", "minimum": 0 },
+        "favorites": { "type": "number", "minimum": 0 },
+        "completion_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "average_watch_seconds": { "type": "number", "minimum": 0 }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

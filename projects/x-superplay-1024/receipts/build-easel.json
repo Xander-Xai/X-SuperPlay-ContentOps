@@ -1,26 +1,6 @@
 {
-  "recorded_at": "2026-10-28T15:39:08Z",
-  "status": "OK",
-  "video": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\x-superplay-1024\\final\\easel.mp4",
-  "subtitles_burned": true,
-  "caption_overflows": [],
-  "upstream": "D:\\Projects\\X-SuperPlay-ContentOps\\.runtime\\easel\\skills\\openclaw\\auto-short-video\\scripts\\assemble.py",
+  "recorded_at": "2026-10-28T18:55:06Z",
+  "status": "BLOCKED",
   "engine": "easel",
-  "voice_provider": "reused projects/x-superplay-1024/assets/voice/narration.wav",
-  "voice_quality": "project_authored",
-  "production_quality_warning": true,
-  "production_ready": false,
-  "state": "READY_FOR_HUMAN_REVIEW",
-  "runtime": {
-    "repo": "ZJU-REAL/Easel",
-    "release": "v0.2.1",
-    "commit": "3fe2d9904c1619281ef57f81d9ee0b7854998399",
-    "acquisition": "release_archive",
-    "verification": "recorded"
-  },
-  "generated_visuals": {
-    "count": 0,
-    "total_shots": 8,
-    "policy": "real_assets_first"
-  }
+  "reason": "this project declares a presenter opening in motion/presenter/contract.json and this pipeline does not place it; compose it with scripts/build_code_animation_sample.py --variant easel"
 }

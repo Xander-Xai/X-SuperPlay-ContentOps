@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/variant-manifest.schema.json",
+  "title": "Platform Variant Manifest",
+  "type": "object",
+  "required": ["schema_version", "content_id", "account", "platforms"],
+  "properties": {
+    "schema_version": { "type": "integer", "minimum": 1 },
+    "content_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,80}$" },
+    "account": { "const": "X•超玩1024" },
+    "status": { "enum": ["pending", "review-required", "ready", "approved", "blocked"] },
+    "platforms": {
+      "type": "object",
+      "required": ["douyin"],
+      "maxProperties": 1,
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["variant_id", "title", "status", "duration_tier", "duration_seconds", "duration_range"],
+          "properties": {
+            "variant_id": { "type": "string", "minLength": 1 },
+            "title": { "type": "string", "minLength": 1, "maxLength": 120 },
+            "cover": { "type": "string" },
+            "content_type": { "type": "string" },
+            "pillar": { "enum": ["AI 新能力实测", "AI × 现实任务实验", "AI 生意实验室"] },
+            "cta_mode": { "enum": ["problem_signal", "handoff", "reproduction", "source", "judgment"] },
+            "duration_tier": { "enum": ["one_minute", "two_minute", "three_minute", "four_minute", "five_minute"] },
+            "duration_label": { "type": "string" },
+            "duration_seconds": { "type": "number", "minimum": 0 },
+            "duration_range": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "number" } },
+            "hashtags": { "type": "array", "items": { "type": "string" } },
+            "cta": { "type": "string" },
+            "media_path": { "type": "string" },
+            "media_qc_path": { "type": "string" },
+            "media_duration_seconds": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+            "safe_area_checked": { "type": "boolean" },
+            "status": { "enum": ["pending", "review-required", "ready", "approved", "blocked"] },
+            "reviewer": { "type": "string" },
+            "reviewed_at": { "type": "string" },
+            "review_note": { "type": "string" }
+          },
+          "additionalProperties": true
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}

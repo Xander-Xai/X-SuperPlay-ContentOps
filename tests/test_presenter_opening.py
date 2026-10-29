@@ -220,6 +220,15 @@ def test_the_real_project_honours_its_own_declaration():
     segments = [segment for segment in timeline["segments"]
                 if not segment.get("variant") or segment["variant"] == "eras"]
     issues = opening.problems(contract, project, segments, "eras", voice)
+    # The audio and the generated shot are gitignored, so a clean checkout (and
+    # every CI runner) lacks them. Absent media is not a contract violation —
+    # but anything else still fails, so this cannot hide a broken declaration.
+    host_local = bool(issues) and all(
+        issue.startswith(("missing opening audio:", "missing generated shot:"))
+        for issue in issues)
+    if host_local:
+        print("[skip] presenter opening: gitignored media absent on this checkout")
+        return
     assert issues == [], issues
 
 

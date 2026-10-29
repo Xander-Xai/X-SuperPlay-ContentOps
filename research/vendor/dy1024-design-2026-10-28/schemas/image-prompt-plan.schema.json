@@ -1,0 +1,273 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/image-prompt-plan.schema.json",
+  "title": "X•超玩 Image Prompt Plan",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "content_id",
+    "account",
+    "status",
+    "image_required",
+    "items"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "contract": {
+      "enum": ["", "canonical-copy-to-video-v1", "canonical-copy-to-video-v2"]
+    },
+    "content_id": {
+      "type": "string"
+    },
+    "account": {
+      "const": "X•超玩1024"
+    },
+    "status": {
+      "enum": [
+        "pending",
+        "planned",
+        "approved",
+        "ready",
+        "blocked",
+        "not_required"
+      ]
+    },
+    "image_required": {
+      "type": "boolean"
+    },
+    "engine": {
+      "enum": [
+        "",
+        "chatgpt-bridge"
+      ]
+    },
+    "routes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "text_policy": {
+      "enum": [
+        "",
+        "generated-scene-text-free; all Chinese labels belong to Remotion/HTML"
+      ]
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "asset_id",
+          "scene_id",
+          "purpose",
+          "mode",
+          "prompt",
+          "size",
+          "ratio",
+          "output",
+          "status",
+          "generation_provider",
+          "generation_route",
+          "placeholder_id",
+          "placeholder_marker",
+          "placeholder_asset_slot"
+        ],
+        "properties": {
+          "asset_id": {
+            "type": "string"
+          },
+          "scene_id": {
+            "type": "string"
+          },
+          "purpose": {
+            "enum": [
+              "architecture-diagram",
+              "explanatory-illustration",
+              "cover-background"
+            ]
+          },
+          "mode": {
+            "enum": [
+              "text-to-image",
+              "image-to-image",
+              "multi-image"
+            ]
+          },
+          "prompt": {
+            "type": "string",
+            "minLength": 1
+          },
+          "size": {
+            "type": "string"
+          },
+          "ratio": {
+            "type": "string"
+          },
+          "source_ratio": {
+            "type": "string"
+          },
+          "delivery_ratio": {
+            "const": "9:16"
+          },
+          "reframe": {
+            "type": "object",
+            "required": [
+              "mode",
+              "focal_point",
+              "safe_area"
+            ],
+            "properties": {
+              "mode": {
+                "const": "cover"
+              },
+              "focal_point": {
+                "type": "array",
+                "prefixItems": [
+                  {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  }
+                ],
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "safe_area": {
+                "const": "center-column"
+              }
+            },
+            "additionalProperties": false
+          },
+          "reference_assets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "reference_remote_upload_approved": {
+            "type": "boolean"
+          },
+          "reference_text_free_reviewed": {
+            "type": "boolean"
+          },
+          "reference_text_reviewed": {
+            "type": "boolean"
+          },
+          "text_required": {
+            "const": false
+          },
+          "text_reviewed": {
+            "type": "boolean"
+          },
+          "text_present": {
+            "type": "boolean"
+          },
+          "english_text_reviewed": {
+            "type": "boolean"
+          },
+          "english_text_present": {
+            "type": "boolean"
+          },
+          "chinese_text_reviewed": {
+            "type": "boolean"
+          },
+          "chinese_text_present": {
+            "type": "boolean"
+          },
+          "text_free_reviewed": {
+            "type": "boolean"
+          },
+          "ip_profile_id": {
+            "type": "string"
+          },
+          "ip_profile_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{64}$|^$"
+          },
+          "ip_reference_env": {
+            "type": "string"
+          },
+          "ip_reference_status": {
+            "enum": [
+              "",
+              "not_configured",
+              "missing",
+              "unsupported_format",
+              "too_large",
+              "configured"
+            ]
+          },
+          "ip_reference_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{64}$|^$"
+          },
+          "output": {
+            "type": "string"
+          },
+          "provenance": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "planned",
+              "approved",
+              "blocked-awaiting-human-decision",
+              "success",
+              "dry-run",
+              "failed"
+            ]
+          },
+          "generation_provider": {
+            "const": "chatgpt-bridge"
+          },
+          "generation_route": {
+            "enum": [
+              "bridge-xiaohei",
+              "bridge-concept"
+            ]
+          },
+          "execution_mode": {
+            "type": "string",
+            "minLength": 1
+          },
+          "placeholder_id": {
+            "type": "string",
+            "pattern": "^IMAGE__[A-Za-z0-9_-]+__[A-Za-z0-9_-]+$"
+          },
+          "placeholder_marker": {
+            "type": "string",
+            "pattern": "^\\[\\[IMAGE:IMAGE__[A-Za-z0-9_-]+__[A-Za-z0-9_-]+\\]\\]$"
+          },
+          "placeholder_insert_after_scene": {
+            "type": "string",
+            "minLength": 1
+          },
+          "placeholder_asset_slot": {
+            "type": "string",
+            "minLength": 1
+          },
+          "text_policy": {
+            "enum": [
+              "generated-scene-text-free; all Chinese labels belong to Remotion/HTML"
+            ]
+          },
+          "prompt_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{64}$"
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

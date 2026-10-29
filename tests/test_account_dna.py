@@ -362,9 +362,10 @@ def test_the_route_declares_repo_only_where_it_must():
     repo_expected = {"captions", "qc"}
     shared_expected = {
         EXPLORE: {"copy_orchestration", "visual_direction", "broll_plan", "shot_vocabulary",
-                  "source_research", "broll_finder"},
+                  "source_research", "broll_finder", "capture_plan"},
         BUILD: {"copy_orchestration", "visual_direction", "broll_plan", "illustration",
-                "scene_illustration", "html_demo", "shot_vocabulary", "source_research"},
+                "scene_illustration", "html_demo", "shot_vocabulary", "source_research",
+                "capture_plan"},
     }
     for path in (EXPLORE, BUILD):
         route = _dna(path)["skill_route"]

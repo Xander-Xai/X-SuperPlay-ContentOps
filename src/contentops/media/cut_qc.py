@@ -21,6 +21,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from contentops.evidence._common import ContractError
 from contentops.evidence.claim_map import ClaimMap
+from contentops.media.claim_coverage import evidence_mode_policy, validate_claim_coverage
 from contentops.media.cut_plan import DEFAULT_MAX_VISUAL_HOLD_MS, CutPlan
 from contentops.media.media_paths import resolve_media_path
 from contentops.media.transport import ffprobe_json
@@ -171,17 +172,33 @@ def qc_cut(project: Path, video: Optional[Path] = None) -> Dict[str, Any]:
                              "ffmpeg/ffprobe unavailable; unverified"))
 
     shares = source_shares(cut_plan, assets)
-    if target.get("evidence_mode", "EVIDENCE_LED") == "EVIDENCE_LED":
+    mode = target.get("evidence_mode", "EVIDENCE_LED")
+    policy = evidence_mode_policy(mode)
+    if policy["require_claim_coverage"]:
+        # Claim-led: the whole-film share is advisory, because the per-claim
+        # gate below is the one that can actually be satisfied or violated.
+        checks.append(_check("real_source_ratio",
+                             shares["real_ratio"] >= MIN_REAL_SOURCE_RATIO, "WARN",
+                             f"{shares['real_ratio']:.1%} of {shares['total_s']:.1f}s; "
+                             f"advisory (claim coverage is the gate)"))
+    elif policy["ratio_severity"] == "FAIL":
         checks.append(_check("real_source_ratio",
                              shares["real_ratio"] >= MIN_REAL_SOURCE_RATIO, "FAIL",
                              f"{shares['real_ratio']:.1%} of {shares['total_s']:.1f}s "
                              f"(min {MIN_REAL_SOURCE_RATIO:.0%})"))
     else:
-        checks.append(_check("real_source_ratio", True, "FAIL",
+        checks.append(_check("real_source_ratio", True, "INFO",
                              "not applicable: explanatory account, no recording asset by policy"))
     checks.append(_check("generated_ratio", shares["generated_ratio"] < MAX_GENERATED_RATIO,
                          "FAIL", f"{shares['generated_ratio']:.1%} "
                                  f"(max {MAX_GENERATED_RATIO:.0%})"))
+
+    if policy["require_claim_coverage"]:
+        coverage = validate_claim_coverage(cut_plan, claim_map, assets)
+        checks.append(_check("claim_coverage", coverage.ok, "FAIL",
+                             "; ".join(coverage.errors) if coverage.errors
+                             else f"{len(coverage.covered)} supported claim(s) covered, "
+                                  f"{len(coverage.uncovered)} never appear"))
 
     # An account may forbid manual recordings outright (Future Intelligence).
     # The check follows shots too, because a plan can switch asset inside a

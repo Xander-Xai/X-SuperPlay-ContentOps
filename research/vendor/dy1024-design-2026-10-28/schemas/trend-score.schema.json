@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/trend-score.schema.json",
+  "title": "Account Trend Score",
+  "type": "object",
+  "required": ["schema_version", "account", "status", "average_score", "items"],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "account": {"const": "X•超玩1024"},
+    "status": {"enum": ["ready", "review-required"]},
+    "average_score": {"type": "number", "minimum": 0, "maximum": 100},
+    "items": {"type": "array", "minItems": 1}
+  },
+  "additionalProperties": true
+}

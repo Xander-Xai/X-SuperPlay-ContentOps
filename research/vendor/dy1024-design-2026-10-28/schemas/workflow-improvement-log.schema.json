@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/workflow-improvement-log.schema.json",
+  "title": "Evidence-backed workflow improvement log",
+  "type": "object",
+  "required": ["schema_version", "contract", "content_id", "status", "entries"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "contract": {"enum": ["canonical-copy-to-video-v1", "canonical-copy-to-video-v2"]},
+    "content_id": {"type": "string"},
+    "status": {"enum": ["empty", "open", "in_review", "closed"]},
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "issue_id", "reported_at", "reported_by", "stage", "category", "severity", "status",
+          "summary", "observed", "expected", "reproduction", "evidence", "root_cause",
+          "proposed_change", "verification_plan", "resolution"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "issue_id": {"type": "string", "minLength": 3},
+          "reported_at": {"type": "string", "format": "date-time"},
+          "reported_by": {"type": "string", "minLength": 1},
+          "stage": {"enum": ["brief", "research", "script", "review", "audio", "visual_plan", "visual_route", "assets_plan", "assets", "media_generation", "edit_render", "quality", "delivery", "feedback", "workflow"]},
+          "category": {"enum": ["content", "gate", "path", "renderer", "provider", "environment", "documentation", "other"]},
+          "severity": {"enum": ["low", "medium", "high", "blocker"]},
+          "status": {"enum": ["reported", "triaged", "reproduced", "planned", "fixed", "verified", "wont_fix"]},
+          "summary": {"type": "string", "minLength": 1},
+          "observed": {"type": "string", "minLength": 1},
+          "expected": {"type": "string", "minLength": 1},
+          "reproduction": {"type": "string", "minLength": 1},
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["path", "sha256", "note"],
+              "additionalProperties": false,
+              "properties": {
+                "path": {"type": "string", "minLength": 1},
+                "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+                "note": {"type": "string"}
+              }
+            }
+          },
+          "root_cause": {"type": "string"},
+          "proposed_change": {"type": "string"},
+          "verification_plan": {"type": "string"},
+          "resolution": {"type": "string"}
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

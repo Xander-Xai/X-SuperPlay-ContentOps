@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "config_id": "content-positioning-v1",
+  "account": "X•超玩1024",
+  "account_promise": {
+    "target_audience": ["capability_decider", "workflow_adopter", "opportunity_builder"],
+    "core_problem": "在 AI 热点和复杂工具中判断什么值得投入，并把可复核的 AI 能力放进真实工作。",
+    "core_value": "用真实运行、代码、失败记录和业务边界，帮助观众做出可执行的投入或放弃决定。",
+    "trust_mechanism": ["REAL_REPRODUCTION", "SOURCE_CODE", "OFFICIAL_DOC", "BENCHMARK", "FAILURE_RECORD", "FIRST_HAND_USAGE", "BUSINESS_CASE"],
+    "content_shelves": ["ai_tool_validation", "ai_real_business", "ai_native_one_person_company", "failure_boundary"]
+  },
+  "content_shelves": {
+    "ai_tool_validation": {
+      "label": "AI 工具实测",
+      "user_problem": "这个东西到底值不值得用？",
+      "stable": true
+    },
+    "ai_real_business": {
+      "label": "AI × 真实业务",
+      "user_problem": "AI 到底怎么解决一个真实工作？",
+      "stable": true
+    },
+    "ai_native_one_person_company": {
+      "label": "AI Native 一人公司",
+      "user_problem": "一个人怎样借助 AI 完成过去需要团队才能完成的事情？",
+      "stable": true
+    },
+    "failure_boundary": {
+      "label": "踩坑 / 失败 / 反常识",
+      "user_problem": "别人没告诉我的限制、成本和失败边界是什么？",
+      "stable": true
+    },
+    "experimental": {
+      "label": "实验性题材",
+      "user_problem": "这个新方向是否值得低成本验证？",
+      "stable": false
+    }
+  },
+  "business_fit_levels": ["HIGH", "MEDIUM", "LOW", "NONE", "UNKNOWN"],
+  "content_strategies": ["AUTHORITY", "DISCOVERY", "TRUST", "CONVERSION", "RETENTION", "EXPERIMENT"],
+  "candidate_decisions": ["ACCEPT", "EXPERIMENT", "DEFER", "REJECT"],
+  "positioning_alignment_levels": ["ALIGNED", "ADJACENT", "EXPERIMENTAL", "OFF_POSITIONING"],
+  "trust_levels": ["HIGH", "MEDIUM", "LOW", "UNKNOWN"],
+  "trust_evidence_types": ["REAL_REPRODUCTION", "SOURCE_CODE", "OFFICIAL_DOC", "BENCHMARK", "FAILURE_RECORD", "FIRST_HAND_USAGE", "BUSINESS_CASE", "NONE"],
+  "broad_audience_terms": ["所有人", "互联网用户", "对 AI 感兴趣的人", "everyone", "internet users"],
+  "score_scale": {"min": 1, "max": 5},
+  "need_score_weights": {
+    "problem_frequency": 20,
+    "problem_severity": 20,
+    "decision_value": 20,
+    "information_gap": 15,
+    "existing_solution_quality": 10,
+    "audience_relevance": 15
+  },
+  "content_value_weights": {
+    "demand": 20,
+    "audience_relevance": 20,
+    "problem_severity": 15,
+    "trust_evidence_strength": 20,
+    "business_fit": 15,
+    "production_cost": 10
+  },
+  "null_semantics": "null means the platform or evidence source has not supplied a value; zero means the source confirmed none occurred."
+}

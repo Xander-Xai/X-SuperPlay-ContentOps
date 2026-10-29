@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/revenue-attribution.schema.json",
+  "title": "OPC content revenue attribution",
+  "type": "object",
+  "required": ["schema_version", "contract", "content_id", "origin", "production", "content_metrics", "intent_metrics", "business_metrics"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "contract": { "const": "workflow-v2-hardening-v1" },
+    "content_id": { "type": "string", "minLength": 1 },
+    "origin": { "type": "object" },
+    "production": { "type": "object" },
+    "content_metrics": { "type": "object" },
+    "intent_metrics": { "type": "object" },
+    "business_metrics": { "type": "object" }
+  },
+  "additionalProperties": true
+}

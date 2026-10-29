@@ -1,0 +1,4 @@
+interface:
+  display_name: "Design Direction"
+  short_description: "Rotate visual systems and prevent HTML-card fatigue"
+  default_prompt: "Use $design-direction to choose a distinctive, evidence-first visual direction for this content package and route HyperFrames or Remotion only at scene level."

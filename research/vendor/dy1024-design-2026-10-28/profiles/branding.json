@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "workflow_display_name": "X•超玩1024",
+  "ip_display_name": "X•超玩",
+  "legacy_display_names": ["AI哨兵", "AI 哨兵", "哨兵", "小黑", "Xiaohei"],
+  "technical_identifier_policy": "the canonical runtime account value is X•超玩1024; keep upstream Skill package names, route IDs, environment variable names, sentinel file prefixes and historical provenance identifiers unchanged",
+  "technical_routes": {
+    "illustration_skill": "ian-xiaohei-illustrations",
+    "scene_skill": "ian-xiaohei-scenes",
+    "illustration_route": "xiaohei_illustration",
+    "scene_route": "xiaohei_scene"
+  }
+}

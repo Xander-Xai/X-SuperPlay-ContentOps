@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/video-qc.schema.json",
+  "title": "Semantic Video QC Report",
+  "type": "object",
+  "required": ["schema_version", "input", "metrics", "passed"],
+  "properties": {
+    "schema_version": { "type": "integer", "minimum": 1 },
+    "content_id": { "type": "string" },
+    "input": { "type": "string", "minLength": 1 },
+    "metrics": {
+      "type": "object",
+      "required": ["duration_seconds", "width", "height", "fps", "audio_lufs", "true_peak_db", "clipping_count"],
+      "properties": {
+        "duration_seconds": { "type": "number", "exclusiveMinimum": 0 },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "fps": { "type": "number", "exclusiveMinimum": 0 },
+        "audio_lufs": { "type": "number" },
+        "true_peak_db": { "type": "number" },
+        "clipping_count": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": true
+    },
+    "passed": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/production-profile.schema.json",
+  "title": "Douyin Production Profile",
+  "type": "object",
+  "required": ["schema_version", "content_id", "status", "presenter_mode", "voice_mode", "voice_provider", "tts_model", "tts_policy", "runtime_required", "permissions"],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "content_id": {"type": "string"},
+    "status": {"enum": ["pending", "approved", "blocked"]},
+    "selected_source": {"enum": ["user-interaction", "automation", ""]},
+    "presenter_mode": {"enum": ["real-person", "digital-human", "voiceover-only", ""]},
+    "voice_mode": {"enum": ["recorded", "voice-clone", "synthetic", ""]},
+    "voice_provider": {"const": "index-tts-2.5"},
+    "tts_model": {"const": "IndexTTS2.5"},
+    "tts_policy": {"const": "local-only"},
+    "presenter_source": {"type": "string"},
+    "voice_reference": {"type": "string"},
+    "digital_assets": {
+      "type": "object",
+      "properties": {
+        "status": {"enum": ["pending", "partial", "ready", "blocked", "not_required"]},
+        "asset_root_env": {"type": "string"},
+        "asset_root": {"type": "string"},
+        "manifest": {"type": "string"},
+        "local_only": {"type": "boolean"},
+        "do_not_commit_media": {"type": "boolean"}
+      },
+      "additionalProperties": true
+    },
+    "runtime_required": {"type": "boolean"},
+    "permissions": {
+      "type": "object",
+      "required": ["presenter", "voice_clone", "avatar"],
+      "properties": {
+        "presenter": {"type": "boolean"},
+        "voice_clone": {"type": "boolean"},
+        "voice_reference": {"type": "boolean"},
+        "avatar": {"type": "boolean"}
+      }
+    }
+  },
+  "additionalProperties": true
+}

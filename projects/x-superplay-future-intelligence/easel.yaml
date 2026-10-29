@@ -58,13 +58,14 @@ qc:
     - caption_safe_zone
     - cover_present
     - cta_present
-    - real_source_ratio_min_70
+    - composition_ratio
     - no_generated_asset_in_claim_interval
     - no_manual_recording_in_frame
   cover_whitespace_min_ratio: 0.3
   cover_title_lines: 1
   real_source_ratio_min: 0.7
 evidence:
+  mode: EXPLANATORY
   manual_recording: FORBIDDEN
   required_evidence_class: DOCUMENTED
 engine: easel

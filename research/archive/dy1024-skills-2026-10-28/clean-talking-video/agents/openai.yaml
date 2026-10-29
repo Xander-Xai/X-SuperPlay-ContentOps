@@ -1,0 +1,4 @@
+interface:
+  display_name: "口播视频自动剪辑"
+  short_description: "自动去重、剪气口、压缩停顿并润色字幕，输出成片与精准 SRT"
+  default_prompt: "使用 $clean-talking-video 自动去重、剪气口、压缩停顿并润色这支口播视频的字幕，交付成片与精准匹配的 SRT。"

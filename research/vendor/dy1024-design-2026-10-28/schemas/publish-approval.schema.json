@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/publish-approval.schema.json",
+  "title": "Hash-bound publish approval",
+  "type": "object",
+  "required": ["contract", "status", "reviewer", "approved_at", "workflow_version", "policy_version", "artifact_sha256", "metadata_sha256", "artifacts"],
+  "properties": {
+    "contract": { "const": "workflow-v2-hardening-v1" },
+    "status": { "enum": ["pending", "approved", "invalidated"] },
+    "reviewer": { "type": "string", "minLength": 1 },
+    "approved_at": { "type": "string", "minLength": 1 },
+    "workflow_version": { "type": "string", "minLength": 1 },
+    "policy_version": { "type": "string", "minLength": 1 },
+    "artifact_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "metadata_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "artifacts": { "type": "array", "items": { "type": "object" } }
+  },
+  "additionalProperties": true
+}

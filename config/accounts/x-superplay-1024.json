@@ -326,6 +326,13 @@
       "why": "owns the rights-aware candidate record (page, creator, licence text and URL, score) that the assets stage validates and a ledger row must descend from"
     },
     {
+      "step": "capture_plan",
+      "skill": "x-superplay-capture-plan",
+      "script": "x-superplay-capture-plan/SKILL.md",
+      "path_base": "shared",
+      "why": "owns the recording brief per beat (surface, what must be visible, 9:16 crop, cursor, redaction) before anyone records; the storyboard stage refuses a card that stands in for an operation"
+    },
+    {
       "step": "broll_finder",
       "skill": "b-roll-finder",
       "script": "b-roll-finder/SKILL.md",

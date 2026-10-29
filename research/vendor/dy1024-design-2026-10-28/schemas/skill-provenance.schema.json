@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/skill-provenance.schema.json",
+  "title": "Skill Execution Provenance",
+  "type": "object",
+  "required": ["schema_version", "content_id", "account", "required_routes", "records", "passed"],
+  "properties": {
+    "schema_version": { "type": "integer", "minimum": 1 },
+    "content_id": { "type": "string" },
+    "account": { "const": "X•超玩1024" },
+    "required_routes": { "type": "array", "items": { "type": "string" } },
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["route", "stage", "status", "started_at", "finished_at", "skill_path", "skill_sha256"],
+        "properties": {
+          "route": { "type": "string" },
+          "stage": { "type": "string" },
+          "status": { "enum": ["success", "failed", "skipped"] },
+          "started_at": { "type": "string" },
+          "finished_at": { "type": "string" },
+          "inputs": { "type": "array" },
+          "outputs": { "type": "array" },
+          "skill_path": { "type": "string", "minLength": 1 },
+          "skill_sha256": { "type": "string", "pattern": "^[0-9a-fA-F]{64}$" },
+          "note": { "type": "string" },
+          "error": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "passed": { "type": "boolean" }
+  },
+  "additionalProperties": true
+}

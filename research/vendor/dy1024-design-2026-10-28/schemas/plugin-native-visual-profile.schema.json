@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/plugin-native-visual-profile.schema.json",
+  "title": "Plugin-native visual profile",
+  "type": "object",
+  "required": ["schema_version", "content_id", "account", "status", "family", "palette", "freshness_contract"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "content_id": {"type": "string", "minLength": 1},
+    "account": {"type": "string", "minLength": 1},
+    "status": {"enum": ["pending", "ready", "approved", "blocked"]},
+    "family": {"type": "string", "minLength": 1},
+    "palette": {"type": "object", "minProperties": 1},
+    "typography": {"type": "object"},
+    "motion_language": {"type": "object"},
+    "freshness_contract": {
+      "type": "object",
+      "required": ["must_be_reviewed_per_topic", "copied_from_previous_topic_allowed", "history_checked", "history_source", "history_snapshot_sha256", "recent_families", "current_family_reused"],
+      "properties": {
+        "must_be_reviewed_per_topic": {"type": "boolean"},
+        "copied_from_previous_topic_allowed": {"type": "boolean"},
+        "history_checked": {"const": true},
+        "history_source": {"type": "string", "minLength": 1},
+        "history_snapshot_sha256": {"type": "string", "pattern": "^[A-Fa-f0-9]{64}$"},
+        "recent_families": {"type": "array", "items": {"type": "string"}},
+        "current_family_reused": {"type": "boolean"}
+      }
+    }
+  },
+  "additionalProperties": true
+}

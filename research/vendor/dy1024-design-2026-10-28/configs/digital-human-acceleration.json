@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "contract_version": "h3-acceleration-e4-v2",
+  "purpose": "Workflow-owned MiniMax H3 Ref2VA acceleration contract for the X•超玩1024 digital-human module.",
+  "resolution": { "width": 768, "height": 1024, "fps": 24 },
+  "steps": 20,
+  "sampler": "res_multistep",
+  "seed": 20260814,
+  "audio_conditioning": {
+    "enabled": true,
+    "fps": 24,
+    "frame_grid": "17k+5",
+    "pad_trailing_silence": true,
+    "delivered_audio": "h3-source-locked",
+    "audio_lock": {
+      "enabled": true,
+      "mode": "h3-audio-latent-zero-mask",
+      "waveform_fit": "fit-to-target-before-zero-mask",
+      "target_audio_latent_fps": 40,
+      "zero_noise_mask": true,
+      "max_unlocked_audio_latent_values": 0,
+      "delivery_stream": "same-normalized-source-waveform"
+    }
+  },
+  "default_profile": "e4",
+  "profiles": {
+    "e4": {
+      "role": "production-default",
+      "base_acceleration": "native",
+      "sage_attention": true,
+      "spectrum": false,
+      "first_block_cache": {
+        "enabled": true,
+        "mode": "H3 Safe — 0.08 / max 2",
+        "threshold": 0.08,
+        "start_percent": 0.10,
+        "end_percent": 0.95,
+        "max_consecutive_hits": 2,
+        "temporal_guard": true
+      }
+    }
+  },
+  "comfyui_launch_contract": {
+    "required_flags": [
+      "--lowvram",
+      "--use-sage-attention",
+      "--port",
+      "8190",
+      "--disable-all-custom-nodes",
+      "--whitelist-custom-nodes",
+      "ComfyUI-MiniMaxH3-FirstBlockCache"
+    ],
+    "python_encoding": "utf-8",
+    "optional_nodes_disabled": ["ComfyUI-FlashVSR"],
+    "node_contract": {
+      "required": [
+        "ApplyMiniMaxH3FirstBlockCache"
+      ],
+      "reason": "口播数字人不启用超分；只加载 E4/Q4 所需 H3 节点，避免可选节点阻断服务启动。"
+    },
+    "note": "SageAttention is enabled at the ComfyUI server layer; the whitelist loads only the locked E4 node."
+  }
+}

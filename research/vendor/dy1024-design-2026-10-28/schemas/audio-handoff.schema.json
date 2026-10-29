@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/audio-handoff.schema.json",
+  "title": "Canonical Audio handoff",
+  "type": "object",
+  "required": ["schema_version", "contract", "content_id", "status", "narration_wav", "provider", "model", "voice_mode", "voice_authorization", "reference_audio_sha256", "script_sha256", "funasr_text", "srt", "audio_sha256", "duration_seconds"],
+  "properties": {
+    "schema_version": { "const": 1 }, "contract": { "enum": ["canonical-copy-to-video-v1", "canonical-copy-to-video-v2"] },
+    "content_id": { "type": "string" }, "status": { "enum": ["pending", "ready_for_review", "approved", "blocked"] }, "narration_wav": { "type": "string" },
+    "narration": { "type": "string" }, "narration_metadata": { "type": "string" }, "captions": { "type": "string" }, "asr_verification": { "type": "string" },
+    "provider": { "const": "index-tts-2.5" }, "model": { "const": "IndexTTS2.5" }, "voice_mode": { "const": "voice-clone" },
+    "voice_authorization": { "type": "string" }, "reference_audio_sha256": { "type": "string" }, "script_sha256": { "type": "string" },
+    "funasr_text": { "type": "string" }, "srt": { "type": "string" }, "audio_sha256": { "type": "string" }, "duration_seconds": { "type": "number", "minimum": 0 },
+    "segment_count": { "type": "integer", "minimum": 0 }, "segment_max_audio_seconds": { "type": "number", "exclusiveMaximum": 15, "exclusiveMinimum": 0 },
+    "segment_split_count": { "type": "integer", "minimum": 0 }, "segment_receipt": { "type": "string" },
+    "errors": { "type": "array", "items": { "type": "string" } },
+    "segment_duration_policy": { "type": "object", "required": ["max_seconds", "comparison", "overlong_action"], "properties": {
+      "max_seconds": { "type": "number", "exclusiveMaximum": 15, "exclusiveMinimum": 0 },
+      "comparison": { "const": "strictly-less-than" }, "overlong_action": { "const": "split-approved-text-and-rerender" }
+    }, "additionalProperties": false }
+  },
+  "additionalProperties": false
+}

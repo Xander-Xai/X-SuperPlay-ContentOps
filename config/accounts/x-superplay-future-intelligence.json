@@ -341,6 +341,13 @@
       "why": "owns the rights-aware candidate record (page, creator, licence text and URL, score) that the assets stage validates and a ledger row must descend from"
     },
     {
+      "step": "capture_plan",
+      "skill": "x-superplay-capture-plan",
+      "script": "x-superplay-capture-plan/SKILL.md",
+      "path_base": "shared",
+      "why": "owns the zero-recording brief: every beat lands on a composition surface, and the storyboard stage refuses a recording on this account's FORBIDDEN policy"
+    },
+    {
       "step": "illustration",
       "skill": "ian-xiaohei-illustrations",
       "script": "ian-xiaohei-illustrations/SKILL.md",

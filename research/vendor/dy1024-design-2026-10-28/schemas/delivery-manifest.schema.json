@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/delivery-manifest.schema.json",
+  "title": "Matrix Delivery Manifest",
+  "type": "object",
+  "required": ["schema_version", "content_id", "account", "files", "manual_publish_required"],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "content_id": {"type": "string"},
+    "account": {"const": "X•超玩1024"},
+    "platforms": {"const": ["douyin"]},
+    "files": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+    "manual_publish_required": {"type": "boolean"}
+  },
+  "additionalProperties": true
+}

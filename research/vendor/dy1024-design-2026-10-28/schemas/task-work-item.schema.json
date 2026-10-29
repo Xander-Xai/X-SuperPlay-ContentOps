@@ -1,0 +1,128 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://x-superplay.local/schemas/task-work-item.schema.json",
+  "title": "X-SuperPlay Task Work Item",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "task_id", "account", "status", "primary_audience", "task_statement", "desired_state", "acceptance_criteria", "task_units", "episode_policy", "publication_policy"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "task_id": {"type": "string", "pattern": "^task-[a-z0-9][a-z0-9._-]{2,80}$"},
+    "account": {"const": "X•超玩1024"},
+    "status": {"enum": ["backlog", "shaped", "ready", "evaluating", "applied", "evidence_ready", "accepted", "promoted_to_opc", "rework", "paused", "stopped"]},
+    "complexity": {"enum": ["simple", "multi_step", "system"]},
+    "primary_audience": {"enum": ["capability_decider", "workflow_adopter", "opportunity_builder"]},
+    "secondary_audience": {"enum": ["capability_decider", "workflow_adopter", "opportunity_builder", null]},
+    "audience_evidence_status": {"enum": ["validated", "mixed", "exploratory"]},
+    "task_statement": {"type": "string", "minLength": 1},
+    "trigger_context": {"type": "string"},
+    "current_state": {"type": "string"},
+    "desired_state": {"type": "string", "minLength": 1},
+    "non_goals": {"type": "array", "items": {"type": "string"}},
+    "acceptance_criteria": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "stop_conditions": {"type": "array", "items": {"type": "string"}},
+    "capacity_hours": {"type": ["number", "null"], "minimum": 0},
+    "task_units": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["task_unit_id", "current_state", "desired_state", "capability_required", "evidence_required", "acceptance_criteria"],
+        "properties": {
+          "task_unit_id": {"type": "string", "pattern": "^unit-[a-z0-9][a-z0-9._-]{1,60}$"},
+          "current_state": {"type": "string", "minLength": 1},
+          "desired_state": {"type": "string", "minLength": 1},
+          "input_and_access": {"type": "array", "items": {"type": "string"}},
+          "capability_required": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+          "candidate_solution_ids": {"type": "array", "items": {"type": "string"}},
+          "operation_to_run": {"type": "string"},
+          "evidence_required": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+          "acceptance_criteria": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+          "failure_boundary": {"type": "string"},
+          "depends_on": {"type": "array", "items": {"type": "string"}},
+          "status": {"enum": ["unshaped", "ready", "evaluating", "applied", "accepted", "blocked", "rework", "stopped"]}
+        }
+      }
+    },
+    "episode_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "preselect_topics"],
+      "properties": {
+        "mode": {"const": "derive_from_unclosed_task_units"},
+        "preselect_topics": {"const": false},
+        "episode_count": {"type": ["integer", "null"], "minimum": 0},
+        "closed_unit_ids": {"type": "array", "items": {"type": "string"}},
+        "open_unit_ids": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "publication_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "classification", "prohibited_categories", "script_review_required", "user_approval_status"],
+      "properties": {
+        "mode": {"const": "building_in_public_with_selective_disclosure"},
+        "classification": {"enum": ["p0_founder_private", "p1_operational", "p2_public_safe", "blocked"]},
+        "public_slice": {"type": "array", "items": {"type": "string"}},
+        "prohibited_categories": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+        "script_review_required": {"const": true},
+        "user_approval_status": {"enum": ["pending", "approved_public_safe", "rejected", "not_applicable"]},
+        "reviewer": {"type": "string"},
+        "reviewed_at": {"type": "string"},
+        "notes": {"type": "string"}
+      }
+    },
+    "github_candidates": {"type": "array", "items": {"$ref": "#/$defs/githubCandidate"}},
+    "application_receipts": {"type": "array", "items": {"$ref": "#/$defs/receipt"}},
+    "opc_review": {"$ref": "#/$defs/opcReview"},
+    "content_records": {"type": "array", "items": {"type": "string"}},
+    "next_task_id": {"type": ["string", "null"]}
+  },
+  "$defs": {
+    "githubCandidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_id", "repository_url", "target_task_unit_id", "status"],
+      "properties": {
+        "candidate_id": {"type": "string"},
+        "repository_url": {"type": "string", "format": "uri"},
+        "target_task_unit_id": {"type": "string"},
+        "source_refs": {"type": "array", "items": {"type": "string", "format": "uri"}},
+        "license": {"type": "string"},
+        "environment_and_cost": {"type": "string"},
+        "reproduction_result": {"type": "string"},
+        "migration_result": {"type": "string"},
+        "failure_boundary": {"type": "string"},
+        "status": {"enum": ["candidate", "screened", "reproduced", "applied", "not_fit", "blocked"]}
+      }
+    },
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["receipt_id", "task_unit_id", "status"],
+      "properties": {
+        "receipt_id": {"type": "string"},
+        "task_unit_id": {"type": "string"},
+        "status": {"enum": ["planned", "captured", "verified", "failed", "blocked"]},
+        "artifact_refs": {"type": "array", "items": {"type": "string"}},
+        "sha256": {"type": ["string", "null"]},
+        "notes": {"type": "string"}
+      }
+    },
+    "opcReview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "scope_defined", "acceptance_defined", "payment_or_demand_signal", "employment_ip_pass", "capacity_pass"],
+      "properties": {
+        "status": {"enum": ["not_ready", "research_candidate", "bounded_offer_candidate", "active_experiment", "promoted"]},
+        "scope_defined": {"type": "boolean"},
+        "acceptance_defined": {"type": "boolean"},
+        "payment_or_demand_signal": {"type": "string"},
+        "employment_ip_pass": {"type": "boolean"},
+        "capacity_pass": {"type": "boolean"},
+        "review_ref": {"type": "string"}
+      }
+    }
+  }
+}

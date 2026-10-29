@@ -18,6 +18,29 @@
 | Audio present | non-silent (volumedetect) |
 | Subtitles | burned in or subtitle stream |
 
+## Pre-Render Script Gate (SQ01–SQ07)
+
+`scripts/check_script_quality.py` runs before anything is rendered. Every rule
+below exists because a discarded cut shipped that defect and no gate could see
+it: everything else in this document inspects an MP4 that already exists.
+
+A project opts in with `quality_gate: enforced` in its `project.yaml`.
+`new_project.py` writes that line, so every new project is gated by default and
+no older project is disturbed.
+
+| Rule | Fails when |
+|---|---|
+| SQ01 silent_visual_gap | a shot runs over 1 s with no narration over it and declares no `justification` |
+| SQ02 source_type_vocabulary | a shot's `source_type` is outside `qc_video.py`'s real/generated vocabulary — such a shot is silently dropped from every ratio |
+| SQ03 layout_undeclared | a beat names no `layout`, so repetition cannot be measured before it is watched |
+| SQ04 layout_concentration | one layout carries more than 40% of the beats |
+| SQ05 presenter_continuity | a presenter appears in fewer than two beats or under 25% of them, with no declared `presenter_scope` |
+| SQ06 doc_drift | `master.md`, `lines.json`, `storyboard.json` and the caption file disagree on beat count, duration or subtitle path |
+| SQ07 cta_missing | no CTA is declared and the final beat carries none |
+
+Run it on one project with `--project projects/<slug>`, or across every gated
+project with `--all-gated`. It is part of `scripts/dev_check.py` and CI.
+
 ## Content (automated + human)
 
 - 3-second hook with result/conclusion
@@ -100,9 +123,30 @@ by `tests/test_minimax_speech.py`. No provider request is made in CI.
 
 ## Evidence-First Policy
 
-- Real source ratio ≥ 70% (automated check in qc_video.py)
-- AI-generated visuals must not be the majority
+How much real source a film needs is the **account's** decision, declared as
+`evidence.mode` in its DNA. An episode may repeat the mode, but only to agree
+with it; it owns its composition, and the composition must satisfy the mode.
+
+| `evidence.mode` | Gate that governs | Ratio behaviour | Account |
+|---|---|---|---|
+| `EVIDENCE_LED` | whole-film real-source floor | applies: **FAIL** in `cut_qc.py`, **WARN** in `qc_video.py` | X•超玩1024 (proof) |
+| `CLAIM_LED` | per-claim coverage | ratio advisory; every factual claim must show a real capture | — |
+| `EXPLANATORY` | declared composition, ±8 pp | not applicable; no recording asset by policy | X超玩·未来智能 |
+
+`qc_video.py` still grades the floor as a warning, and that severity is
+unchanged here; only the evidence-cut path fails on it. An account that needs a
+hard floor today is gated through `cut_qc.py`.
+
+A real-source role is one of `screen_recording_evidence`, `real_screenshot`,
+`real_recording`, `real_document`, `diagram`, `code_snapshot`, `metric_chart`.
+`vector_animation` is not one: a mix dominated by it cannot reach a 70% floor,
+so one account may not declare both. `scripts/check_account_dna.py` refuses
+that pair, and `scripts/audio_first_plan.py` resolves the mode and the
+recording policy from the DNA rather than from `lines.json`.
+
 - Each shot carries `source_type` and `source` provenance
+- AI-generated visuals must not be the majority
+- An explanatory cut may not present an animation as a run log or a client case
 
 ## Human Review (100-point scorecard)
 

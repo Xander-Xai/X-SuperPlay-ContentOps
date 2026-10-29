@@ -1,0 +1,4 @@
+interface:
+  display_name: "B-roll Production"
+  short_description: "Plan, source, and place evidence-first B-roll for Douyin"
+  default_prompt: "Use $broll-production to plan and source evidence-first B-roll for this dy_1024 video project."

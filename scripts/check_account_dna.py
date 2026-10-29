@@ -14,12 +14,31 @@ Checks, per account:
   5. motion allow-list and deny-list are both non-empty and disjoint
   6. caption style is borderless and shadowless, as the brand base requires
   7. cover keeps the whitespace floor and a single title line
-  8. the recording policy matches the composition
+  8. the evidence mode is declared, and the recording policy, the composition
+     and the QC checks all agree with it
   9. the render block names the engine, a 9:16 vertical canvas, the fonts, the
      audio and the QC checks, and its generated easel.yaml comes from this DNA
  10. the benchmark priority is a ranked TOP3 with a primary
  11. the one-click prompt exists, names every required output field, and
      repeats the same palette
+ 12. every skill_route entry resolves: its skill exists under a catalog root,
+     its SKILL.md front matter declares the same name, and its script path
+     exists under the base it declares
+
+skill_route path bases
+----------------------
+Each entry names ``script`` relative to one of two bases, and says which:
+
+  path_base: "catalog"   script is relative to the Easel checkout root, e.g.
+                         ``skills/openclaw/video-script``. This is the default,
+                         because every entry but the repository's own scripts
+                         lives there.
+  path_base: "repo"      script is relative to this repository's root, e.g.
+                         ``scripts/qc_video.py``.
+
+The base is declared, never guessed from the string prefix. An entry that
+declares no base and whose skill is not in the catalog is reported as a
+warning rather than silently assumed to be either one.
 
 Exit 0 = pass, exit 1 = fail.
 """
@@ -31,12 +50,33 @@ import json
 import re
 import sys
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
+
+# The skill catalog is resolved by the same helper the router uses, so the DNA
+# check and the router can never disagree about which skills exist.
+from skill_route import (
+    CATALOG_ROOTS,
+    SHARED_SKILL_ROOT,
+    _front_matter,
+    catalog,
+    shared_skill,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 ACCOUNTS = ROOT / "config" / "accounts"
 
+sys.path.insert(0, str(ROOT / "src"))
+# The mode table and the composition rule live beside the QC that enforces
+# them, so the DNA check cannot hold a second, drifting copy.
+from contentops.media.claim_coverage import (  # noqa: E402
+    EVIDENCE_MODES,
+    composition_policy_errors,
+)
+
 SCHEMA = "contentops.account-dna/v2"
+
+PATH_BASES = ("catalog", "repo", "shared")
+DEFAULT_PATH_BASE = "catalog"
 
 REQUIRED_TOP_LEVEL = (
     "schema", "slug", "account", "role", "promise", "audience", "prompt",
@@ -63,9 +103,24 @@ def _hex(value: Any) -> bool:
     return isinstance(value, str) and bool(HEX.match(value))
 
 
-def check_account(dna: Dict[str, Any], root: Path) -> List[str]:
-    """Every failure for one account DNA. Empty list means the file is sound."""
+def check_account(
+    dna: Dict[str, Any],
+    root: Path,
+    warnings: Optional[List[str]] = None,
+) -> List[str]:
+    """Every failure for one account DNA. Empty list means the file is sound.
+
+    ``warnings`` is an optional sink for non-fatal findings that the caller
+    should surface but must not fail on. It is a list the caller owns, so the
+    return type stays a plain list of failures.
+
+    Warnings reach the caller prefixed with the account slug, the same way
+    failures are. A warning that does not name its account is useless when the
+    check runs over both accounts and prints one flat list.
+    """
     failures: List[str] = []
+    warnings = warnings if warnings is not None else []
+    local_warnings: List[str] = []
     slug = str(dna.get("slug") or "<no slug>")
 
     if dna.get("schema") != SCHEMA:
@@ -162,6 +217,39 @@ def check_account(dna: Dict[str, Any], root: Path) -> List[str]:
         failures.append("cropped evidence is allowed but the composition has no evidence segment")
     if recording == "FORBIDDEN" and "screen_recording_evidence" in roles:
         failures.append("manual recording is forbidden but the composition requires one")
+
+    # The mode is the account's answer to "which gate governs this film?", and
+    # it is what the plan and the QC read. Left undeclared, each downstream
+    # reader invented its own default, which is how a 100% vector cut ended up
+    # carrying a 70% real-source floor it could never reach.
+    mode = evidence.get("mode")
+    qc_checks = [str(item) for item in (dna.get("render") or {}).get("qc_checks") or []]
+    if mode not in EVIDENCE_MODES:
+        failures.append(
+            f"evidence.mode is {mode!r}, expected one of {EVIDENCE_MODES}"
+        )
+    else:
+        failures.extend(composition_policy_errors(mode, segments))
+        if mode == "EVIDENCE_LED" and "real_source_ratio_min_70" not in qc_checks:
+            failures.append(
+                "EVIDENCE_LED owns the whole-film real-source floor, but "
+                "render.qc_checks does not list 'real_source_ratio_min_70'"
+            )
+        if mode != "EVIDENCE_LED" and "real_source_ratio_min_70" in qc_checks:
+            failures.append(
+                f"evidence.mode is {mode!r}, so the 70% real-source floor does not "
+                "apply, but render.qc_checks still demands it"
+            )
+        if mode == "EXPLANATORY" and "composition_ratio" not in qc_checks:
+            failures.append(
+                "EXPLANATORY is gated by its declared composition instead, but "
+                "render.qc_checks does not list 'composition_ratio'"
+            )
+        if mode == "EXPLANATORY" and recording != "FORBIDDEN":
+            failures.append(
+                "EXPLANATORY plans no recording asset, but evidence.manual_recording "
+                f"is {recording!r}"
+            )
 
     narrative = dna.get("narrative") or {}
     if not narrative.get("template"):
@@ -329,9 +417,164 @@ def check_account(dna: Dict[str, Any], root: Path) -> List[str]:
         for key in ("step", "skill", "script", "why"):
             if not entry.get(key):
                 failures.append(f"skill_route entry {entry.get('step')!r} is missing {key!r}")
+    failures.extend(_check_skill_route(route, root, local_warnings))
 
+    warnings.extend(f"[{slug}] {warning}" for warning in local_warnings)
     failures.extend(_check_prompt(dna, palette, root))
     return [f"[{slug}] {failure}" for failure in failures]
+
+
+def _catalog_roots() -> List[Path]:
+    """The catalog roots that exist on this checkout, in router order."""
+    return [candidate for candidate in CATALOG_ROOTS if candidate.is_dir()]
+
+
+def _catalog_skill(skill: str, roots: List[Path]):
+    """The first catalog root holding ``skill``, and that skill's directory."""
+    for root in roots:
+        candidate = root / skill
+        if candidate.is_dir():
+            return root, candidate
+    return None, None
+
+
+def _check_skill_route(
+    route: List[Dict[str, Any]],
+    root: Path,
+    warnings: List[str],
+) -> List[str]:
+    """Resolve every declared skill and script against its declared base.
+
+    A route entry that names a skill nobody ships is the failure this exists
+    for: the DNA would otherwise read as sound while pointing at a directory
+    that does not exist.
+    """
+    failures: List[str] = []
+    roots = _catalog_roots()
+    catalog_names = {item["name"] for item in catalog()[0]}
+    if not roots:
+        warnings.append(
+            "no skill catalog root is present on this checkout; skill membership "
+            "and catalog-relative script paths were not verified"
+        )
+    shared_present = SHARED_SKILL_ROOT.is_dir()
+    if not shared_present:
+        warnings.append(
+            f"the shared skill store {SHARED_SKILL_ROOT} is absent on this "
+            f"checkout; shared routes were not verified"
+        )
+
+    for entry in route:
+        step = entry.get("step")
+        skill = str(entry.get("skill") or "")
+        script = str(entry.get("script") or "")
+        if not skill or not script:
+            continue  # already reported as a missing required key
+
+        declared = "path_base" in entry
+        base = entry.get("path_base", DEFAULT_PATH_BASE)
+        if base not in PATH_BASES:
+            failures.append(
+                f"skill_route entry {step!r} has path_base {base!r}, "
+                f"expected one of {list(PATH_BASES)}"
+            )
+            continue
+
+        if base == "catalog":
+            if not roots:
+                continue
+            catalog_root, skill_dir = _catalog_skill(skill, roots)
+            if skill_dir is None:
+                failures.append(
+                    f"skill_route entry {step!r} names skill {skill!r}, which is "
+                    f"not present under any catalog root "
+                    f"({', '.join(r.relative_to(root).as_posix() for r in roots)})"
+                )
+                if not declared:
+                    warnings.append(
+                        f"skill_route entry {step!r} declares no path_base and "
+                        f"skill {skill!r} is not in the catalog; its path base "
+                        f"could not be determined"
+                    )
+                continue
+            try:
+                (catalog_root / skill).resolve().relative_to(catalog_root.resolve())
+            except ValueError:
+                failures.append(
+                    f"skill_route entry {step!r} names skill {skill!r}, which "
+                    f"resolves outside its catalog root"
+                )
+                continue
+            skill_md = skill_dir / "SKILL.md"
+            if not skill_md.is_file():
+                failures.append(
+                    f"skill_route entry {step!r} names skill {skill!r}, but "
+                    f"{skill_md.relative_to(root).as_posix()} does not exist"
+                )
+                continue
+            meta = _front_matter(skill_md.read_text(encoding="utf-8", errors="replace"))
+            declared_name = meta.get("name") or skill_dir.name
+            if declared_name != skill:
+                failures.append(
+                    f"skill_route entry {step!r} names skill {skill!r}, but "
+                    f"{skill_md.relative_to(root).as_posix()} declares name "
+                    f"{declared_name!r}"
+                )
+            # A catalog-relative script may name a skill directory or a file
+            # inside it; both are legitimate, so existence is the test.
+            bases = {catalog_root.parent.parent for catalog_root in roots}
+            if not any((catalog_base / script).exists() for catalog_base in bases):
+                failures.append(
+                    f"skill_route entry {step!r} script {script!r} does not exist "
+                    f"under any catalog base"
+                )
+        elif base == "repo":
+            if not (root / script).is_file():
+                failures.append(
+                    f"skill_route entry {step!r} script {script!r} does not exist "
+                    f"relative to the repository root"
+                )
+            if declared and skill in catalog_names:
+                warnings.append(
+                    f"skill_route entry {step!r} uses path_base 'repo' but "
+                    f"skill {skill!r} is also in the catalog; confirm the base"
+                )
+        else:  # shared
+            if not shared_present:
+                # Same rule as an absent catalog root: the store is host-local
+                # (a CI runner has no ~/.agents/skills), so its absence is a
+                # warning about what was not verified, not a DNA failure.
+                continue
+            skill_dir = shared_skill(skill)
+            if skill_dir is None:
+                failures.append(
+                    f"skill_route entry {step!r} names skill {skill!r}, which is "
+                    f"not present in the shared skill store {SHARED_SKILL_ROOT}"
+                )
+                continue
+            meta = _front_matter(
+                (skill_dir / "SKILL.md").read_text(encoding="utf-8", errors="replace"))
+            declared_name = meta.get("name") or skill_dir.name
+            if declared_name != skill:
+                failures.append(
+                    f"skill_route entry {step!r} names skill {skill!r}, but the "
+                    f"shared copy declares name {declared_name!r}"
+                )
+            script_path = (SHARED_SKILL_ROOT / script).resolve()
+            try:
+                script_path.relative_to(SHARED_SKILL_ROOT.resolve())
+            except ValueError:
+                failures.append(
+                    f"skill_route entry {step!r} script {script!r} resolves "
+                    f"outside the shared skill store"
+                )
+                continue
+            if not script_path.exists():
+                failures.append(
+                    f"skill_route entry {step!r} script {script!r} does not exist "
+                    f"relative to the shared skill store"
+                )
+    return failures
 
 
 def _check_prompt(dna: Dict[str, Any], palette: Dict[str, Any], root: Path) -> List[str]:
@@ -369,11 +612,15 @@ def main() -> int:
         return 1
 
     failures: List[str] = []
+    warnings: List[str] = []
     checked: List[str] = []
     for path in paths:
         dna = json.loads(path.read_text(encoding="utf-8"))
         checked.append(str(dna.get("slug") or path.stem))
-        failures.extend(check_account(dna, ROOT))
+        failures.extend(check_account(dna, ROOT, warnings))
+
+    # The catalog-absent warning is raised once per account; report it once.
+    warnings = list(dict.fromkeys(warnings))
 
     if args.json:
         print(json.dumps({
@@ -381,6 +628,7 @@ def main() -> int:
             "accounts": checked,
             "overall": "FAIL" if failures else "PASS",
             "failures": failures,
+            "warnings": warnings,
         }, indent=2, ensure_ascii=False))
         return 1 if failures else 0
 
@@ -388,8 +636,12 @@ def main() -> int:
         print("[account_dna] FAIL")
         for failure in failures:
             print(f"  [FAIL] {failure}")
+        for warning in warnings:
+            print(f"  [WARN] {warning}")
         print(f"\n{len(failures)} account DNA failure(s)")
         return 1
+    for warning in warnings:
+        print(f"  [WARN] {warning}")
     print(f"[account_dna] PASS ({len(checked)} accounts: {', '.join(checked)})")
     return 0
 

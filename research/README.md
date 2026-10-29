@@ -54,6 +54,10 @@ REAL EXECUTION RECEIPT
 | Open-source animation skill selection | EVALUATED (read-only) — huashu-art-motion recommended as the Build animation layer; xilo as process reference; lemo deferred (WSL) | `video-replication/open-source-animation-eval-2026-10-28.md` |
 | Free BGM and authoritative material | SYNTHESISED BGM locally; Mermaid (MIT) for redrawn official diagrams; no unlicensed asset packs | `video-replication/free-bgm-and-material-2026-10-28.md` |
 | huashu-art-motion integration | INTEGRATED — external skill in the shared store, Windows adapter, 20 s definitional sample, QC WARN recorded | `video-replication/huashu-integration-2026-10-28.md` |
+| video-script smoke audit | VERIFIED — both smoke scripts pass structure; facts independently re-run; A 组 real-source ratio below 70% blocker, B 组 at word-count ceiling | `video-replication/script-smoke-audit-2026-10-28.md` |
+| Skill-route hardening prompt | READY — catalog-membership + path-base validation fixes, B 组 wordcount trim; Claude Code step 2 | `video-replication/claude-code-step2-hardening-prompt.md` |
+| Script closure prompt (step 3) | READY — A 组 stale next-validation beat rewrite, B 组 root-cause-2 spoken closure; Claude Code step 3 | `video-replication/claude-code-step3-script-closure-prompt.md` |
+| dy_x1024 absorption re-check | VERIFIED — source-candidate contract added as code, `b-roll-finder` adopted, 4 manifest "pending" items resolved, 30 skill contract trees archived with an adopt/hold/reject table; adaptive router and teaching QC still open | `video-replication/dy1024-absorption-2026-10-28.md` |
 
 ## Archived
 
@@ -67,5 +71,6 @@ REAL EXECUTION RECEIPT
 | V1 execution methodology | `archive/v1-execution-methodology/v1-execution-methodology.md` | Philosophy absorbed into PRD + AGENTS.md |
 | V1 runbook | `archive/v1-execution-methodology/v1-runbook-replaced.md` | Replaced by `docs/RUNBOOK.md` (derived from actual code) |
 | OPC-Easel research | `archive/opc-easel-research/opc-easel-contentops-research.md` | Historical research, not current architecture |
+| dy_x1024 skill contracts (30 skills) | `archive/dy1024-skills-2026-10-28/` | Retired workspace; contracts preserved, runnable skills adopted into the shared store |
 
 All archived files carry a `status: superseded` YAML header.

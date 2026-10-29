@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "policy_id": "douyin-topic-selection-v1",
+  "status": "active",
+  "effective_date": "2026-09-05",
+  "account": "X•超玩1024",
+  "mode": "bounded_result_derived",
+  "decision_unit": "candidate_topic_card",
+  "platform_policy_ref": "configs/platform-policies/multi-platform-safe-publishing-v1.json",
+  "supported_platforms": ["douyin", "xiaohongshu", "wechat_channels"],
+  "platform_policy_gate": {
+    "required_before_brief": true,
+    "current_platform_notice_check_required": true,
+    "safe_title_required_per_platform": true,
+    "one_cta_required_per_platform": true,
+    "rights_and_ai_disclosure_required": true,
+    "manual_review_required": true,
+    "auto_publish": false
+  },
+  "audience_validation_gate": {
+    "required_before_queue": true,
+    "required_before_brief": true,
+    "status": "approved",
+    "required_fields": [
+      "viewer_quote",
+      "viewer_trigger",
+      "current_workaround",
+      "pain_or_stakes",
+      "desired_progress",
+      "source_refs"
+    ],
+    "pending_status_is_blocking": true
+  },
+  "scoring": {
+    "scale": "0-5 per dimension, weighted to 100",
+    "continue_threshold": 70,
+    "minimum_dimensions": {
+      "audience_problem": 3,
+      "evidence": 3
+    },
+    "dimensions": [
+      {"id": "audience_problem", "weight": 25},
+      {"id": "evidence", "weight": 20},
+      {"id": "platform_signal", "weight": 15},
+      {"id": "differentiation", "weight": 15},
+      {"id": "hook_clarity", "weight": 10},
+      {"id": "seriesability", "weight": 10},
+      {"id": "production_risk", "weight": 5}
+    ]
+  },
+  "vetoes": [
+    "no_defined_audience_or_job_to_be_done",
+    "no_proof_plan_for_result_claim",
+    "fabricated_or_non_reproducible_before_after",
+    "single_platform_heat_treated_as_universal_demand",
+    "title_hook_brief_scope_mismatch",
+    "privacy_credential_rights_or_authorization_risk_without_mitigation"
+  ],
+  "evidence_levels": {
+    "A": "公开问题信号 + 自己的可复现实验/交付结果",
+    "B": "官方变化或平台信号 + 自己的验证",
+    "C": "个人观点或通用建议；不得作为 Stage-0 结果型主选题的唯一依据"
+  },
+  "signal_sources": {
+    "tiktok_douyin": ["Creative Center Trends", "Top Ads/Inspiration", "search_or_creator_inspiration"],
+    "youtube": ["Studio Analytics", "Trends tab", "Search relevance", "audience retention"],
+    "github": ["Explore", "Search", "Issues", "Discussions", "Pull Requests", "Releases", "Stars_weak_proxy"],
+    "instagram": ["Professional Dashboard Best Practices"],
+    "bilibili": ["Creator Inspiration; freshness must be checked"]
+  },
+  "workflow_contract": [
+    "account_and_audience",
+    "signal_collection",
+    "candidate_card",
+    "evidence_check",
+    "platform_packaging",
+    "red_team_score",
+    "topic_contract",
+    "human_operation_forecast",
+    "route_and_production_gates"
+  ],
+  "freshness": {
+    "platform_signals_require_checked_at": true,
+    "stale_signal_is_not_proof": true,
+    "research_snapshot_required_before_brief_approval": true
+  },
+  "automation_boundary": {
+    "human_review_required": true,
+    "auto_accept": false,
+    "auto_publish": false,
+    "score_does_not_replace_user_route_confirmation": true
+  }
+}

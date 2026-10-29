@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/content-package.schema.json",
+  "title": "Douyin Creator Flow Content Package",
+  "type": "object",
+  "required": ["content_id", "workspace_id", "lifecycle", "account", "title", "status", "created_at", "deliverables", "platforms", "paths", "publish_mode", "publish_required", "comment_feedback_required", "policy_lock"],
+  "properties": {
+    "content_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,80}$" },
+    "workspace_id": { "type": "string", "minLength": 8 },
+    "lifecycle": { "enum": ["active", "delivered", "archived", "quarantine"] },
+    "account": { "const": "X•超玩1024" },
+    "title": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "status": { "enum": ["brief", "research", "draft", "review", "ready", "published", "archived"] },
+    "created_at": { "type": "string", "format": "date-time" },
+    "deliverables": { "const": ["video"] },
+    "platforms": { "const": ["douyin"] },
+    "workflow_contract": { "enum": ["canonical-copy-to-video-v1", "canonical-copy-to-video-v2"] },
+    "execution_contract_version": { "type": "integer", "minimum": 1 },
+    "strict_media_execution": { "type": "boolean" },
+    "media_execution_policy": { "type": "object" },
+    "publish_mode": { "enum": ["draft", "production"] },
+    "publish_required": { "type": "boolean" },
+    "comment_feedback_required": { "type": "boolean" },
+    "policy_lock": {
+      "type": "object",
+      "required": ["schema_version", "payload", "sha256"],
+      "properties": {
+        "schema_version": { "const": 1 },
+        "payload": { "type": "object" },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      },
+      "additionalProperties": false
+    },
+    "paths": {
+      "type": "object",
+      "required": ["brief", "topic_contract", "execution_plan", "audience_insight", "copy_strategy", "copy_brief", "sources", "claims", "evidence_plan", "evidence_provenance", "evidence_lineage", "trend_score", "source_snapshots", "video_script", "teaching_contract", "video", "storyboard", "asset_ledger", "asset_index", "distribution", "production_profile", "digital_assets", "creative_qc", "teaching_qc", "naturalness_qc", "video_planning_audit", "image_prompt_plan", "image_generation_provenance", "image_qc", "skill_provenance", "component_execution", "metrics", "comments", "motion_plan", "motion_check", "motion_provenance", "hyperframes_plan", "hyperframes_composition", "remotion_plan", "motion_render_report", "motion_adversarial_audit"],
+      "additionalProperties": { "type": "string" }
+    }
+  },
+  "additionalProperties": true
+}

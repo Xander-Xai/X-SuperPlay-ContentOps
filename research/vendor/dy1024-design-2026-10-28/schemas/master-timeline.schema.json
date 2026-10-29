@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/master-timeline.schema.json",
+  "title": "Canonical master timeline",
+  "type": "object",
+  "required": ["schema_version", "contract", "content_id", "status", "audio_source", "audio_sha256", "openchatcut_owner", "hyperframes_owner", "remotion_owner", "openchatcut_project", "remotion_project", "render_receipt", "candidate_mp4", "candidate_sha256", "digital_human_segments", "fit", "tracks"],
+  "properties": {
+    "schema_version": { "const": 1 }, "contract": { "enum": ["canonical-copy-to-video-v1", "canonical-copy-to-video-v2"] }, "content_id": { "type": "string" },
+    "status": { "enum": ["pending", "ready_for_review", "approved", "blocked"] }, "audio_source": { "const": "03_audio/audio-handoff.json" }, "audio_sha256": { "type": "string" },
+    "openchatcut_owner": { "const": "timeline-editor" }, "hyperframes_owner": { "enum": ["transparent-overlay", "information-overlay"] }, "remotion_owner": { "const": "final-compositor" },
+    "openchatcut_project": { "type": "string" }, "remotion_project": { "type": "string" }, "render_receipt": { "type": "string" }, "candidate_mp4": { "type": "string" }, "candidate_sha256": { "type": "string" },
+    "digital_human_segments": { "type": "array" }, "fit": { "enum": ["contain", "cover"] }, "tracks": { "type": "array", "items": { "type": "object" } }
+  },
+  "additionalProperties": false
+}

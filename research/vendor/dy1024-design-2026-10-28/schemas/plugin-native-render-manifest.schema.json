@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/plugin-native-render-manifest.schema.json",
+  "title": "Plugin-native render manifest",
+  "type": "object",
+  "required": ["schema_version", "content_id", "account", "status", "route", "components", "scenes", "handoff_policy", "fallback_policy", "audio_handoff"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "content_id": {"type": "string", "minLength": 1},
+    "account": {"type": "string", "minLength": 1},
+    "status": {"type": "string"},
+    "route": {"const": "plugin-native-opt-in"},
+    "components": {"type": "object", "minProperties": 1},
+    "scenes": {"type": "array", "minItems": 1},
+    "handoff_policy": {
+      "type": "object",
+      "required": ["source_hashes_required", "alpha_requires_ffprobe", "human_visual_review_required", "duration_tolerance_seconds"],
+      "properties": {"duration_tolerance_seconds": {"type": "number", "minimum": 0}}
+    },
+    "fallback_policy": {"type": "object", "required": ["route", "reason_required", "no_silent_mixing"]},
+    "audio_handoff": {
+      "type": "object",
+      "required": ["narration", "captions", "asr_verification", "audio_owner", "bindings"],
+      "properties": {
+        "audio_owner": {"const": "workflow-final-narration"},
+        "bindings": {
+          "type": "object",
+          "required": ["digital_human", "illustration", "cs_board", "hyperframes", "remotion", "final_delivery"],
+          "properties": {
+            "digital_human": {"const": "same-as-narration"},
+            "illustration": {"const": "timing-and-caption-only"},
+            "cs_board": {"const": "timing-and-caption-only"},
+            "hyperframes": {"const": "timing-only"},
+            "remotion": {"const": "same-as-narration"},
+            "final_delivery": {"const": "same-as-narration"}
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}

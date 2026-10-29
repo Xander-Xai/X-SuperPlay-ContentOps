@@ -1,0 +1,4 @@
+interface:
+  display_name: "Model Media Runtime"
+  short_description: "Run local TTS, ASR, lip sync, and editable video checks"
+  default_prompt: "Use the local model runtime doctor and gated execution path for TTS, FunASR, digital-human lip sync, and OpenChatCut delivery."

@@ -73,10 +73,15 @@ ALLOWED_FILES = {
 # Format: path -> reason
 INTERACTIVE_ALLOWLIST: dict[str, str] = {}
 
-# Path prefixes never scanned: third-party source that ContentOps does not own.
+# Path prefixes never scanned: source this repository does not run. The rule
+# protects code that spawns a window; reference copies of a retired repository
+# are never imported, executed or shipped, so scanning them would demand edits
+# to code nobody owns. Anything ported out of an archive is rewritten under
+# src/contentops/ (and therefore scanned) rather than imported in place.
 EXCLUDED_PREFIXES = (
     ".runtime/",
     "Easel/",
+    "research/vendor/",
 )
 
 SKIPPED_DIRS = {".git", ".runtime", "__pycache__", "Easel", "node_modules", ".venv"}

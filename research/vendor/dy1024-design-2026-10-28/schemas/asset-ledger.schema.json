@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/asset-ledger.schema.json",
+  "title": "Canonical asset ledger",
+  "type": "object",
+  "required": ["schema_version", "contract", "content_id", "status", "assets", "image_to_video_policy"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "contract": { "enum": ["canonical-copy-to-video-v1", "canonical-copy-to-video-v2"] },
+    "content_id": { "type": "string" },
+    "status": { "enum": ["pending", "ready_for_review", "approved", "blocked"] },
+    "assets": { "type": "array", "items": { "$ref": "#/$defs/asset" } },
+    "image_to_video_policy": { "const": { "provider": "gflow-cli", "mode": "i2v", "approved_image_required": true } }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "asset": {
+      "type": "object",
+      "required": ["asset_id", "asset_type", "source", "approval_status"],
+      "properties": {
+        "asset_id": { "type": "string" },
+        "asset_type": { "enum": ["digital_human", "real_screen_recording", "real_source", "generated_image", "generated_broll", "generated_i2v", "licensed_broll", "owned_broll", "information_motion"] },
+        "source": { "type": "string" },
+        "approval_status": { "enum": ["pending", "approved", "blocked"] },
+        "sha256": { "type": "string" },
+        "approved_sha256": { "type": "string" },
+        "input_image_asset_id": { "type": "string" },
+        "input_image_sha256": { "type": "string" },
+        "generation_id": { "type": "string" },
+        "generation_mode": { "const": "i2v" },
+        "provider": { "enum": ["chatgpt-bridge", "gemini-web-omni", "gflow-cli", "owned", "licensed", "recorded", "hyperframes", "digital-human"] },
+        "rights_risk": { "enum": ["LOW", "MEDIUM", "HIGH"] },
+        "rights": { "oneOf": [{ "type": "string" }, { "type": "object" }] },
+        "fact_evidence": { "type": "boolean" },
+        "media_type": { "type": "string" },
+        "route": { "type": "string" },
+        "motion_qc": { "type": "object" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

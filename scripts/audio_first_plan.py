@@ -14,6 +14,10 @@ It does not compose anything; run ``build_evidence_package.py`` afterwards.
 The narration cache is shared with ``build_evidence_cut`` so the later build
 makes no second provider request.
 
+The evidence mode and the recording policy come from the account DNA, resolved
+through ``account_slug``; ``lines.json`` may repeat them only to agree. Whether
+an account needs recordings at all is its own decision, not a per-episode one.
+
 Usage::
 
     python scripts/audio_first_plan.py projects/easel-fi-audio-first
@@ -38,6 +42,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from process_utils import hidden_run, python_executable  # noqa: E402
 from contentops.evidence._common import sha256_file  # noqa: E402
+from contentops.media.claim_coverage import composition_policy_errors  # noqa: E402
 from contentops.media.transport import ffprobe_json  # noqa: E402
 
 NARRATION = ROOT / "scripts" / "synthesize_narration.py"
@@ -78,6 +83,45 @@ def _track_provider_receipt(project: Path, digest: str) -> str | None:
     if not source.is_file():
         return None
     return f"project://{source.relative_to(project).as_posix()}"
+
+
+def _account_policy(config: Dict[str, str], lines: Dict[str, Any]) -> Dict[str, Any]:
+    """The account owns the evidence mode and the recording policy, not the episode.
+
+    ``lines.json`` used to carry both, and defaulted ``manual_recording`` to
+    ``ALLOWED_CROPPED`` -- so an account that forbids recording silently became
+    one that allows it as soon as the field was left out, and the
+    ``manual_recording_forbidden`` gate stopped applying at the same moment.
+    These two fields are account identity: an episode may repeat them, but only
+    to agree.
+
+    The composition is per-episode, so ``lines.json`` may declare its own; with
+    no declaration the account default applies. Either way it has to satisfy the
+    mode that governs it, which is the comparison nothing used to make.
+    """
+    slug = config.get("account_slug")
+    if not slug:
+        _fail("ACCOUNT_SLUG_MISSING",
+              "project.yaml declares no account_slug, so no account DNA resolves")
+    dna_path = ROOT / "config" / "accounts" / f"{slug}.json"
+    if not dna_path.is_file():
+        _fail("ACCOUNT_DNA_MISSING", str(dna_path))
+    dna = json.loads(dna_path.read_text(encoding="utf-8"))
+    evidence = dna["evidence"]
+    mode = evidence.get("mode")
+    recording = evidence.get("manual_recording")
+    for field, owned in (("evidence_mode", mode), ("manual_recording", recording)):
+        declared = lines.get(field)
+        if declared is not None and declared != owned:
+            _fail("ACCOUNT_POLICY_OVERRIDE",
+                  f"lines.json declares {field}={declared!r} but {slug} owns "
+                  f"{owned!r}; fix the DNA or drop the field from lines.json")
+    composition = lines.get("composition") or dna["visual"]["composition"]["segments"]
+    problems = composition_policy_errors(mode, composition)
+    if problems:
+        _fail("COMPOSITION_OUT_OF_POLICY", f"{slug}: " + "; ".join(problems))
+    return {"evidence_mode": mode, "manual_recording": recording,
+            "composition": composition}
 
 
 def _crop(crop: Dict[str, int], assets: Dict[str, Any], asset_id: str,
@@ -172,6 +216,8 @@ def main() -> int:
     assets = json.loads((project / "script" / "assets.json").read_text(
         encoding="utf-8"))["assets"]
     width, height = (int(x) for x in config.get("format", "1080x1920").split("x"))
+    # Resolved before the first provider call: a wrong policy must not spend.
+    policy = _account_policy(config, lines)
 
     beats: List[Dict[str, Any]] = []
     placements: List[Dict[str, Any]] = []
@@ -244,9 +290,9 @@ def main() -> int:
         "min_reading_hold_ms": MIN_READING_MS,
         "max_visual_hold_ms": MAX_HOLD_MS,
         "min_visual_hold_ms": 2000,
-        "evidence_mode": lines.get("evidence_mode", "EVIDENCE_LED"),
-        "manual_recording": lines.get("manual_recording", "ALLOWED_CROPPED"),
-        "composition": lines.get("composition", []),
+        "evidence_mode": policy["evidence_mode"],
+        "manual_recording": policy["manual_recording"],
+        "composition": policy["composition"],
     }
     plan = {
         "schema": "contentops.cut-plan/v1",

@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "contract": "dy-x1024-runtime-layout-v1",
+  "workspace_root": "D:/Projects/dy_x1024",
+  "runtime_root": "${workspace_root}/runtime",
+  "artifact_root": "${workspace_root}/production",
+  "policy": {
+    "dependency_install_drive": "D",
+    "cache_drive": "D",
+    "model_weights_are_external_assets": true,
+    "allow_c_drive_packages": false,
+    "allow_c_drive_caches": false
+  },
+  "directories": {
+    "toolchain": "${runtime_root}/toolchain",
+    "venv_workflow": "${runtime_root}/venv/workflow",
+    "venv_h3": "${runtime_root}/venv/h3",
+    "venv_tts": "${runtime_root}/venv/tts",
+    "provider_gflow_cli": "${runtime_root}/providers/gflow-cli",
+    "node_motion_runtime": "${runtime_root}/node/motion-runtime",
+    "browser_playwright": "${runtime_root}/browser/playwright",
+    "logs": "${runtime_root}/logs",
+    "locks": "${runtime_root}/locks",
+    "run_temp": "${runtime_root}/tmp/runs"
+  },
+  "tools": {
+    "ffmpeg": "${runtime_root}/node/motion-runtime/node_modules/@remotion/compositor-win32-x64-msvc/ffmpeg.exe",
+    "ffprobe": "${runtime_root}/node/motion-runtime/node_modules/@remotion/compositor-win32-x64-msvc/ffprobe.exe"
+  },
+  "engines": {
+    "workflow": {
+      "install_root": "${runtime_root}/venv/workflow",
+      "venv": "${runtime_root}/venv/workflow",
+      "python": "${runtime_root}/venv/workflow/Scripts/python.exe"
+    },
+    "tts": {
+      "install_root": "D:/Projects/Model/index-tts-2.5",
+      "model_root": "D:/Projects/Model/index-tts-2.5",
+      "venv": "${runtime_root}/venv/tts",
+      "python": "D:/Projects/Model/index-tts-2.5/.venv/Scripts/python.exe",
+      "cache_root": "${runtime_root}/cache/torch",
+      "module": "indextts.infer_v2_5",
+      "model": "IndexTTS2.5"
+    },
+    "funasr": {
+      "install_root": "D:/Projects/Model/FunASR",
+      "model_root": "D:/Projects/Model/FunASR",
+      "venv": "${runtime_root}/venv/tts",
+      "python": "D:/Projects/Model/FunASR/venv/Scripts/python.exe",
+      "cache_root": "${runtime_root}/cache/huggingface",
+      "module": "funasr",
+      "model": "paraformer-zh"
+    },
+    "h3": {
+      "install_root": "${runtime_root}/toolchain/h3",
+      "venv": "${runtime_root}/venv/h3",
+      "cache_root": "${runtime_root}/cache/h3",
+      "model_root": "D:/Projects/Model/Minimax_H3",
+      "comfyui_url": "http://127.0.0.1:8190",
+      "python": "${runtime_root}/venv/h3/Scripts/python.exe"
+    },
+    "chatgpt_bridge": {
+      "install_root": "${runtime_root}/toolchain/chatgpt-bridge",
+      "root": "${runtime_root}/toolchain/chatgpt-bridge",
+      "source_root": "D:/Projects/codex/plugins/cache/chatgpt-bridge/chatgpt-bridge/0.2.0",
+      "venv": "${runtime_root}/venv/workflow",
+      "cache_root": "${runtime_root}/cache/chatgpt-bridge",
+      "root_env": "CHATGPT_BRIDGE_ROOT"
+    },
+    "gemini_web": {
+      "install_root": "${runtime_root}/toolchain/gemini-web-omni",
+      "venv": "${runtime_root}/venv/workflow",
+      "cache_root": "${runtime_root}/cache/gemini-web-omni",
+      "surface": "https://gemini.google.com/",
+      "capability": "omni"
+    },
+    "openchatcut": {
+      "install_root": "${runtime_root}/toolchain/openchatcut-0.2.9",
+      "source_root": "D:/Projects/Model/OpenChatCut-0.2.9-raw-probe",
+      "cache_root": "${runtime_root}/cache/openchatcut",
+      "home": "${runtime_root}/cache/openchatcut/home",
+      "import_root": "${workspace_root}/production",
+      "appdata": "${runtime_root}/cache/openchatcut/home/AppData/Roaming",
+      "localappdata": "${runtime_root}/cache/openchatcut/home/AppData/Local",
+      "node_modules": "${runtime_root}/toolchain/openchatcut-0.2.9/node_modules",
+      "ffmpeg": "${runtime_root}/toolchain/ffmpeg-full/bin/ffmpeg.exe",
+      "ffprobe": "${runtime_root}/toolchain/ffmpeg-full/bin/ffprobe.exe",
+      "ui_url": "http://127.0.0.1:5199/",
+      "mcp_endpoint": "http://127.0.0.1:5199/api/external-mcp/mcp"
+    },
+    "gflow": {
+      "install_root": "${runtime_root}/providers/gflow-cli",
+      "venv": "D:/Projects/gflow-cli/.venv",
+      "cache_root": "${runtime_root}/cache/gflow-cli",
+      "home": "${runtime_root}/cache/gflow-cli/home",
+      "checkout_root": "${runtime_root}/providers/gflow-cli",
+      "source_root": "D:/Projects/gflow-cli",
+      "root_env": "GFLOW_CLI_ROOT",
+      "home_env": "GFLOW_CLI_HOME",
+      "concurrency": 1
+    },
+    "motion": {
+      "install_root": "${runtime_root}/toolchain/motion",
+      "cache_root": "${runtime_root}/cache/motion",
+      "project_root": "${runtime_root}/node/motion-runtime",
+      "node_modules": "${runtime_root}/node/motion-runtime/node_modules",
+      "source_root": "${workspace_root}/dy_1024/tools/motion-runtime"
+    }
+  },
+  "caches": {
+    "pip": "${runtime_root}/cache/pip",
+    "uv": "${runtime_root}/cache/uv",
+    "npm": "${runtime_root}/cache/npm",
+    "playwright": "${runtime_root}/browser/playwright",
+    "openchatcut": "${runtime_root}/cache/openchatcut",
+    "huggingface": "${runtime_root}/cache/huggingface",
+    "torch": "${runtime_root}/cache/torch",
+    "temp": "${runtime_root}/tmp",
+    "state": "${runtime_root}/state",
+    "artifacts": "${runtime_root}/artifacts"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/scene-analysis.schema.json",
+  "title": "Offline Scene Analysis",
+  "type": "object",
+  "required": ["schema_version", "status", "passed", "scenes"],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "status": {"enum": ["ready", "not_required", "blocked"]},
+    "passed": {"type": "boolean"},
+    "scenes": {"type": "array"}
+  },
+  "additionalProperties": true
+}

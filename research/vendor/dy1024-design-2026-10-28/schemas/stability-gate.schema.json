@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/stability-gate.schema.json",
+  "title": "Canonical v2 stable-production gate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "contract", "status", "required_runs", "passed_runs", "packages", "errors"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "contract": { "const": "canonical-copy-to-video-v2" },
+    "status": { "enum": ["blocked", "stable-production"] },
+    "required_runs": { "const": 3 },
+    "passed_runs": { "type": "integer", "minimum": 0, "maximum": 3 },
+    "promoted_at": { "type": "string", "minLength": 1 },
+    "marker": { "type": "string", "minLength": 1 },
+    "promoted_marker": { "type": "string", "minLength": 1 },
+    "packages": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["project", "content_id", "created_at", "passed", "errors", "evidence"],
+        "properties": {
+          "project": { "type": "string", "minLength": 1 },
+          "content_id": { "type": "string", "minLength": 1 },
+          "created_at": { "type": "string", "minLength": 1 },
+          "passed": { "type": "boolean" },
+          "errors": { "type": "array", "items": { "type": "string" } },
+          "evidence": {
+            "type": "object",
+            "additionalProperties": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "errors": { "type": "array", "items": { "type": "string" } }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "stable-production" } } },
+      "then": { "properties": { "passed_runs": { "const": 3 } } }
+    },
+    {
+      "if": {
+        "anyOf": [
+          { "required": ["marker"] },
+          { "required": ["promoted_at"] },
+          { "required": ["promoted_marker"] }
+        ]
+      },
+      "then": {
+        "properties": { "status": { "const": "stable-production" } },
+        "required": ["promoted_at", "marker"]
+      }
+    }
+  ]
+}

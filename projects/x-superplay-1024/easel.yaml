@@ -45,9 +45,9 @@ composition:
   basis: duration_weighted
   segments:
     - role: screen_recording_evidence
-      pct: 65
+      pct: 70
     - role: vector_animation
-      pct: 30
+      pct: 25
     - role: comparison_card
       pct: 5
 qc:
@@ -65,6 +65,7 @@ qc:
   cover_title_lines: 1
   real_source_ratio_min: 0.7
 evidence:
+  mode: EVIDENCE_LED
   manual_recording: ALLOWED_CROPPED
   required_evidence_class: EXECUTED
 engine: easel

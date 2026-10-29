@@ -37,6 +37,14 @@ LOCAL_ONLY = {
 # Size threshold for tracked binary files (5 MB)
 LARGE_FILE_THRESHOLD = 5 * 1024 * 1024
 
+# A rendered cut stays outside the repository; these are the human-blessed
+# exceptions, shared by the large-file and tracked-media checks.
+MEDIA_ALLOWLIST = {
+    "projects/easel-review/final/final.mp4",
+}
+
+VIDEO_SUFFIXES = {".mp4", ".mov", ".m4v", ".mkv", ".webm", ".avi"}
+
 
 def _git_files():
     r = hidden_run(["git", "-C", str(ROOT), "ls-files"], timeout=30)
@@ -103,11 +111,35 @@ def check_large_files():
                 size = path.stat().st_size
                 if size > LARGE_FILE_THRESHOLD:
                     # Check allowlist
-                    if rel in {"projects/easel-review/final/final.mp4"}:
+                    if rel in MEDIA_ALLOWLIST:
                         continue
                     failures.append(f"LARGE TRACKED FILE ({size//1024//1024}MB): {rel}")
             except Exception:
                 pass
+    return failures
+
+
+def check_tracked_media():
+    """Rendered output is generated, so it never belongs in the index.
+
+    ``.gitignore`` already covers ``projects/*/final/``, but an ignore rule has
+    no effect on a file once it is tracked, and one ignored directory is enough
+    to make a repository look like an archive of tries. This repo keeps the
+    system that makes a cut, not the cuts.
+
+    ``MEDIA_ALLOWLIST`` holds files a human deliberately committed; it is an
+    exception list, not a place to add entries to make a red check green.
+    """
+    failures = []
+    for rel in _git_files():
+        if rel in MEDIA_ALLOWLIST:
+            continue
+        parts = rel.split("/")
+        if parts[0] == "projects" and "final" in parts[1:-1]:
+            failures.append(f"TRACKED RENDERED OUTPUT: {rel}")
+            continue
+        if Path(rel).suffix.lower() in VIDEO_SUFFIXES:
+            failures.append(f"TRACKED VIDEO CONTAINER: {rel}")
     return failures
 
 
@@ -223,6 +255,7 @@ def main():
         ("forbidden_root", check_root_files),
         ("local_only", check_local_only),
         ("large_files", check_large_files),
+        ("tracked_media", check_tracked_media),
         ("archive_metadata", check_archive_metadata),
         ("research_metadata", check_research_metadata),
         ("no_c0_chars", check_no_c0_control_chars),

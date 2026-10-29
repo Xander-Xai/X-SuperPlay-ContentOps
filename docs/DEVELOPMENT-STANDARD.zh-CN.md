@@ -41,3 +41,12 @@ ADAPTER > EXTENSION > CUSTOM SKILL > UPSTREAM PATCH > FORK
 ```text
 真实执行凭证 > 代码 > 锁/配置 > ADR > 当前状态 > 运行手册 > 研究 > 旧计划
 ```
+## 测试要求
+
+- 每次 PR 前运行 `python scripts/dev_check.py`
+- `python scripts/run_tests.py` —— 运行全部 `tests/test_*.py` 加 `scripts/test_basic.py`，自动发现，每个套件独立进程
+- `python scripts/run_tests.py --missing-from .github/workflows/ci.yml` —— 套件存在但没有任何 CI `run:` 步骤执行它时失败（注释不算）
+- `python scripts/test_basic.py` —— 脚本层套件（9 项），同时也是被发现的套件之一
+- `python scripts/check_docs.py` —— 文档一致性
+- `python scripts/check_repo_policy.py` —— 文件放置 + 安全
+- Windows 路径处理必须有专项测试

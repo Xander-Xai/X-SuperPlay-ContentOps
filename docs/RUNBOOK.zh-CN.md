@@ -57,8 +57,21 @@ python scripts\qc_video.py projects\my-video
 ## 6. 开发门控
 
 ```bash
-python scripts/dev_check.py
+python scripts/dev_check.py            # 完整门禁：策略、文档、i18n、DNA、全部套件
+python scripts/dev_check.py --quick    # 跳过仓库策略与套件运行
+python scripts/run_tests.py            # 单独跑全部 tests/test_*.py
+python scripts/run_tests.py --list
+python scripts/run_tests.py --only workflow
+python scripts/run_tests.py --missing-from .github/workflows/ci.yml   # CI 漂移守卫
 ```
+
+共 55 个套件（`tests/test_*.py` 加 `scripts/test_basic.py`），采用**发现**而非手工清单：门禁曾在一个迁移套件失败的同时打印
+"ALL CHECKS PASSED"，因为那个套件从未被调用。每个套件独立进程运行；自行跳过
+（缺 ffmpeg 或被 gitignore 的夹具）的套件退出 0 记为通过，但**无法启动**的套件
+一律算失败，绝不算跳过。
+
+`--missing-from` 让 CI 保持诚实：它只认 workflow 的 `run:` 步骤（注释不算），
+某个套件存在却没有任何步骤执行它时就会失败。2026-10-28 之前有四个套件处于该状态。
 
 ## 7. Easel 上游监控
 
@@ -308,3 +321,57 @@ python scripts\build_code_animation_sample.py projects\easel-fi-what-is-agent
 - 克隆音别名 `founder_primary_v1`；provider voice id 留在私有配置，收据只存哈希
 - 配乐在本机合成，峰值 −24.4 dBFS；混音余量低于 18 dB 时组装器直接拒绝
 - beat 窗口 = 语音 + 0.35 s，不再用固定 4 s，口播不会落在长停顿里
+
+## 17. 有序生产合同与文档门禁
+
+新项目显式启用；旧项目保持原有目录结构。
+
+```bash
+python scripts/workflow_gate.py init    --project projects/<slug> --slug <slug> --account x-superplay-1024
+python scripts/workflow_gate.py status  --project projects/<slug>
+python scripts/workflow_gate.py check   --project projects/<slug> --stage script
+python scripts/workflow_gate.py approve --project projects/<slug> --stage script --reviewer Founder --confirm
+```
+
+阶段校验自动运行：受众 Lens（`audience`）、脚本节奏 + 时长 + 技术解释 + 文案策略
+（`script`）、逐 claim 证据覆盖（`storyboard`）、版权台账 + 素材候选（`assets`）、视觉路由
+（`compose`）、交付清单 + 发布计划（`delivery`）。产物或任一上游产物变化，批准即失效；
+没有 force 开关。
+
+纯文档检查：
+
+```bash
+python scripts/workflow_docs.py check --kind forecast --input forecast.json
+python scripts/workflow_docs.py check --kind rights   --input rights-ledger.json
+python scripts/workflow_docs.py check --kind sources  --input source-candidates.json
+python scripts/workflow_docs.py score --input candidate.json
+python scripts/workflow_docs.py next-id --topic "topic" --root projects
+python scripts/workflow_docs.py fingerprint-skill --dir <skill 目录>
+```
+
+退出码 `0` = 通过，`1` = 拒绝并列出原因，`2` = 用法错误。
+
+### 17.1 素材候选
+
+在采集之前，把 `source-candidates.json` 写在阶段产物旁边。只要它存在，`assets`
+阶段就会校验它。
+
+```json
+{"schema": "contentops.source-candidates/v1", "package_id": "pkg",
+ "candidates": [{"candidate_id": "SC-001", "creator": "Example Project",
+   "source_url": "https://example.com/x", "license": "public_domain",
+   "license_text": "CC0 1.0", "license_url": "https://creativecommons.org/...",
+   "capture_date": "2026-10-01", "status": "candidate",
+   "score": {"relevance": 9, "evidence": 8, "rights": 10}}]}
+```
+
+- `status` 永远是 `candidate`：能自行清权的研究清单，等于让台账无物可查；
+- 除 `owned` 之外的任何许可都同时需要 `license_text` 与 `license_url`；
+- `promotable(document, id)` 是晋升时调用的辅助函数，列出仍挡住的项（许可未知或非法、
+  缺许可链接、记录不是 `candidate`、评分不全、加权分低于 6.0）。它给建议；门禁执行的是
+  许可一致性，不是这条分数线；
+- 台账行可以引用 `source_candidate_id`，此时许可必须一致。
+
+skill 一侧：`x-superplay-source-research`（契约）在两个账号 DNA 中声明；
+`b-roll-finder`（找素材的方法论）只在 `x-superplay-1024` 声明，因为 Build 账号的
+视觉缺口是插画。

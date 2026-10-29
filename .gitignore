@@ -52,6 +52,7 @@ cookies/
 *.cookie.json
 .claude/
 .workbuddy/
+.local/
 
 # Outputs / cache (build artifacts)
 outputs/

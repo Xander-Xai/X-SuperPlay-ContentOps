@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "framing_contract_version": "medium-waist-up-static-shot-v2.3",
+  "local_only": true,
+  "purpose": "Machine-readable MiniMax H3 Ref2VA scene-window and action prompt contract.",
+  "prompt_schema_version": "minimax-h3-official-structured-single-shot-v2-dialogue-token",
+  "adaptive_action_contract_version": "h3-copy-semantic-action-v1",
+  "official_prompt_reference": "production/video-engine/references/minimax-h3-official/h3-video.md",
+  "scene_prompt_catalog": "production/video-engine/references/h3-scene-prompts/manifest.json",
+  "allowed_avatar_windows": ["none", "hook", "transition", "verdict", "cta", "caution", "explainer"],
+  "allowed_render_modes": ["none", "pip", "cutin"],
+  "default_action": {"category": "explanation", "emotion": "neutral_professional", "primary_action": "small_affirmative_nod", "secondary_action": "micro_brow_response", "intensity": 0.24},
+  "defaults": {
+    "avatar_window": "none",
+    "render_mode": "none",
+    "reference_image": "${SENTINEL_AVATAR_REFERENCE}",
+    "voice_reference": "${SENTINEL_DIGITAL_ASSET_ROOT}\\R1D-15s.wav",
+    "driving_audio_required": true,
+    "duration_source": "final_narration",
+    "max_scene_seconds": 14.9,
+    "min_visible_seconds": 2.5,
+    "max_visible_share": 0.30,
+    "position": "bottom-right"
+  },
+  "render_policy": {
+    "hook": {"render_mode": "cutin", "position": "center", "size": "100% frame width"},
+    "transition": {"render_mode": "pip", "position": "upper-right", "size": "22% frame width"},
+    "verdict": {"render_mode": "cutin", "position": "center", "size": "100% frame width"},
+    "cta": {"render_mode": "cutin", "position": "center", "size": "100% frame width"},
+    "caution": {"render_mode": "pip", "position": "upper-right", "size": "22% frame width"},
+    "explainer": {"render_mode": "pip", "position": "upper-right", "size": "22% frame width"},
+    "none": {"render_mode": "none", "position": "none", "size": "0% frame width"}
+  },
+  "base_prompt": {
+    "subject_definitions": "<Subject 1> is the single young East Asian male presenter shown in <Picture 1>, with medium-length wavy dark-brown hair, warm natural skin texture, calm dark eyes, a light-blue textured knit polo shirt, seated at a desk, with a black broadcast microphone at frame right. Preserve his identity, facial landmarks, hairstyle, clothing, microphone relationship and natural skin texture.\n<Subject 2> is the warm home-studio environment shown in <Picture 1>, including shelves, books, desk, laptop, microphone, warm practical lamp and soft background separation.\n<Picture 1> is the identity, wardrobe and lighting reference. Do not copy its tight crop or enlarge the face; use the explicit medium-shot framing contract below for the generated video.\n<Audio 1> is the exact final Mandarin narration for this scene. Apply the official H3 audio-reuse relationship <Audio 1>: fully_copy; the same waveform is locked into the target audio latent and delivered with the generated video. Use it for lip, jaw, cheek, cadence, pauses and pronunciation. It is not an extra speaker and must not add words, music or noise.",
+    "framing_contract": "Medium shot / waist-up presenter framing. Keep a comfortable safe margin above the hair and below the upper torso. Show the complete head, both shoulders, chest and upper torso below the sternum, the shirt front/buttons, and the complete microphone body and stand at frame right. Keep the head about 30–40% of the frame height; the face must not fill the frame. The presenter remains centered with stable eye-level perspective and natural breathing room on both sides. This framing is mandatory for hook, explainer, transition, verdict and CTA clips, whether the clip is later shown full-screen or as a picture-in-picture. Keep the same medium-shot composition from first frame to last frame.",
+    "camera_contract": "Static Shot. The frame never moves. The camera body, lens, focal length, eye-level position, subject distance and field of view remain unchanged from frame 0 to the final frame. The presenter must not lean, step, slide or move closer to the camera. The head size, top-of-head margin, shoulder line, microphone position and background shelf geometry remain compositionally constant; only facial expression, mouth, blinking, tiny head motion and low-amplitude hand motion may change.",
+    "summary": "Create one continuous photorealistic talking-head clip of <Subject 1>, beginning from <Picture 1>, with restrained facial motion and the scene action profile below.",
+    "retention_analysis": "<Subject 1>: fully_preserved. Preserve face shape, eyes, nose, mouth, hair, skin, clothing and microphone relationship.\n<Subject 2>: fully_preserved. Preserve shelves, desk, laptop, lamp, lighting and background separation.\n<Picture 1>: fully_preserved. Use it as the opening and continuity anchor.\n<Audio 1>: fully_copy. Preserve the exact scene narration waveform and its phoneme timing for mouth synchronization.",
+    "common_constraints": "Preserve the mandatory medium waist-up framing and Static Shot camera contract; do not use a close-up or extreme close-up. No push-in, pull-out, zoom, dolly, pan, tilt, pedestal, truck, orbit, tracking, handheld shake, digital crop, face enlargement, lens breathing, auto-reframe, crop, stretch, scene change, subtitles, logos, extra people or new props. Never crop the top of the head, either shoulder, chest/upper torso or the microphone body/stand. After the final syllable, close the mouth naturally and return to a neutral status-0 pose. Avoid pointing, thumbs-up, applause, finger counting, rapid nodding, body swaying, leaning toward camera, hand crossing the face, plastic skin, face melting, duplicated teeth, asymmetrical eyes and temporal flicker.",
+    "soundscape": "One clean single-speaker Mandarin narration from <Audio 1> with the official fully_copy relationship, with quiet room tone only. No music, crowd, echo or second voice."
+  },
+  "profiles": {
+    "locked": {
+      "window": "none",
+      "action": "Keep the presenter almost locked off: only natural blinking, breathing, tiny gaze changes and minimal jaw motion."
+    },
+    "douyin_micro_gesture": {
+      "window": "explainer",
+      "action": "Use restrained Douyin talking-head micro-gestures: one or two small nods, a slight head tilt that returns to center, tiny eyebrow and eye responses to sentence emphasis, subtle shoulder movement and at most one brief low-amplitude forearm hint at the lower frame edge. Every gesture must finish smoothly and return to status 0."
+    },
+    "hook_v1": {
+      "window": "hook",
+      "action": "Eyes already on lens; one tiny eyebrow lift on the first key phrase; one small affirmative nod; hands low; return to neutral before the final sentence."
+    },
+    "transition_v1": {
+      "window": "transition",
+      "action": "Begin in a relaxed status-0 pose. During the transition sentence, make a head turn under 5 degrees toward the viewer's left, followed by one half-nod. A brief low-amplitude open-palm hint may enter the lower frame edge for less than 0.7 seconds, with no readable fingers and no contact with the face or microphone. Return smoothly to center."
+    },
+    "verdict_v1": {
+      "window": "verdict",
+      "action": "When the key conclusion is spoken, make one slow small affirmative nod and a subtle confident smile. Let the right shoulder relax naturally. Keep the hands low and do not point at the viewer. Hold a clean neutral pose after the final syllable."
+    },
+    "cta_v1": {
+      "window": "cta",
+      "action": "Use a warm inviting expression while maintaining direct eye contact. On the CTA keyword, make one gentle low open-palm gesture without pointing, readable fingers or a thumbs-up. Make one small concluding nod, then close the mouth naturally and hold a calm friendly expression for the final 0.4 seconds."
+    },
+    "caution_v1": {
+      "window": "caution",
+      "action": "Use a calm serious expression rather than fear or exaggeration. Add one small eyebrow contraction and one subtle side response to the caution phrase. Do not shake the head repeatedly, raise the hands or create theatrical facial expressions. Return to neutral before the end."
+    },
+    "explainer_v1": {
+      "window": "explainer",
+      "action": "Keep a neutral professional expression. Add one small nod at the end of the main explanatory sentence and tiny eyebrow responses to important numbers. Keep both hands below the chest or outside the frame. Do not count with fingers, point at graphics or move the torso substantially."
+    }
+  }
+}

@@ -80,7 +80,9 @@ No receipt = task not done.
 ## Testing Requirements
 
 - `python scripts/dev_check.py` before every PR
-- `python scripts/test_basic.py` — current test suite (9 tests)
+- `python scripts/run_tests.py` — every `tests/test_*.py` plus `scripts/test_basic.py`, discovered and run in its own process
+- `python scripts/run_tests.py --missing-from .github/workflows/ci.yml` — fails when a suite exists but no CI `run:` step executes it (comments do not count)
+- `python scripts/test_basic.py` — the script-level suite (9 tests); also one of the discovered suites
 - `python scripts/check_docs.py` — doc consistency
 - `python scripts/check_repo_policy.py` — file placement + security
 - Windows-specific tests for path handling

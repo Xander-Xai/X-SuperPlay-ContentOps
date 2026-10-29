@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/claim-verification.schema.json",
+  "title": "Claim semantic verification",
+  "type": "object",
+  "required": ["verdict", "confidence", "contradictions", "assumptions", "human_review_required"],
+  "properties": {
+    "verdict": { "enum": ["ENTAILMENT", "PARTIAL", "CONTRADICTION", "UNKNOWN"] },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "contradictions": { "type": "array" },
+    "assumptions": { "type": "array" },
+    "human_review_required": { "type": "boolean" }
+  },
+  "additionalProperties": false
+}

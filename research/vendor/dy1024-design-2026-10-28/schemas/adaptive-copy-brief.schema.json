@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["schema_version", "content_id", "account", "title", "content_type", "pillar", "viewer_job", "audience", "audience_lens", "value_contract", "emotional_arc", "viewer_progress_structure", "viewer_intent", "evidence_level", "structure", "hook_type", "narrative_tension", "voice_contract", "cta", "cta_mode", "claims", "duration_tier", "target_seconds", "duration_range", "duration_selection_reason", "ai_disclosure"],
+  "additionalProperties": true,
+  "properties": {
+    "schema_version": {"const": 3},
+    "content_id": {"type": "string", "minLength": 1},
+    "account": {"const": "X•超玩1024"},
+    "title": {"type": "string", "minLength": 4},
+    "content_type": {"type": "string", "minLength": 1},
+    "pillar": {"enum": ["AI 新能力实测", "AI × 现实任务实验", "AI 生意实验室"]},
+    "copy_direction_route": {"type": "string", "minLength": 1},
+    "copy_direction_module": {"type": "string", "minLength": 1},
+    "copy_direction": {
+      "type": "object",
+      "required": ["pillar", "route_id", "module", "method"],
+      "properties": {
+        "pillar": {"type": "string", "minLength": 1},
+        "route_id": {"type": "string", "minLength": 1},
+        "module": {"type": "string", "minLength": 1},
+        "module_status": {"type": "string"},
+        "method": {"type": "string", "minLength": 1},
+        "required_beats": {"type": "array", "items": {"type": "string"}},
+        "evidence_floor": {"type": "array", "items": {"type": "string"}},
+        "research_basis": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "viewer_job": {"enum": ["判断", "复现", "迁移", "参与", "验证生意"]},
+    "audience_lens": {
+      "type": "object",
+      "required": [
+        "status", "source_path", "source_sha256", "fit_status", "primary_segment_id",
+        "primary_segment_label", "viewing_trigger", "current_workaround", "functional_job", "emotional_job",
+        "social_job", "before_state", "desired_after_state", "objections",
+        "proof_expectations", "primary_value_dimension", "primary_value_promise",
+        "meaning_for_viewer"
+      ]
+    },
+    "value_contract": {
+      "type": "object",
+      "required": ["primary_dimension", "secondary_dimensions", "primary_promise", "meaning_for_viewer"]
+    },
+    "emotional_arc": {
+      "type": "object",
+      "required": ["start_state", "recognition_cue", "turning_evidence", "end_state"]
+    },
+    "viewer_progress_structure": {"const": "recognition-tension-promise-discovery-proof-meaning-action"},
+    "duration_tier": {"enum": ["one_minute", "two_minute", "three_minute", "four_minute", "five_minute"]},
+    "duration_label": {"type": "string"},
+    "target_seconds": {"type": "number", "minimum": 45, "maximum": 330},
+    "duration_range": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}},
+    "duration_selection_reason": {"type": "string", "minLength": 1},
+    "audience": {"type": "string", "minLength": 1},
+    "viewer_intent": {"type": "string", "minLength": 1},
+    "hook_type": {"enum": ["反常识", "结果先看", "职业代入", "失败预警", "参与式实验"]},
+    "narrative_tension": {"type": "string", "minLength": 1},
+    "voice_contract": {
+      "type": "object",
+      "required": ["emotional_temperature", "narrative_mode", "first_person_rule", "signature_rule", "boundary_sentence_required", "audience_empathy_required", "empathy_rule", "emotional_turn_rule"],
+      "properties": {
+        "emotional_temperature": {"type": "string", "minLength": 1},
+        "narrative_mode": {"type": "string", "minLength": 1},
+        "first_person_rule": {"type": "string", "minLength": 1},
+        "signature_rule": {"type": "string", "minLength": 1},
+        "boundary_sentence_required": {"const": true},
+        "audience_empathy_required": {"const": true},
+        "empathy_rule": {"type": "string", "minLength": 1},
+        "emotional_turn_rule": {"type": "string", "minLength": 1}
+      }
+    },
+    "evidence_level": {"enum": ["official", "local_test", "user_owned", "hypothesis"]},
+    "structure": {"type": "string", "minLength": 1},
+    "structure_reason": {"type": "string"},
+    "packaging_contract": {
+      "type": "object",
+      "required": ["structure", "hook_max_seconds", "title_intro_match_required", "body_must_deliver_promise", "cta_count", "evidence_policy_id"],
+      "properties": {
+        "structure": {"const": "hook-body-close"},
+        "hook_max_seconds": {"type": "number", "exclusiveMinimum": 0, "maximum": 6},
+        "title_intro_match_required": {"const": true},
+        "body_must_deliver_promise": {"const": true},
+        "cta_count": {"const": 1},
+        "evidence_policy_id": {"const": "douyin-copy-evidence-v1"}
+      },
+      "additionalProperties": true
+    },
+    "cta": {"type": "string", "minLength": 1},
+    "cta_mode": {"enum": ["problem_signal", "handoff", "reproduction", "source", "judgment"]},
+    "ai_disclosure": {
+      "type": "object",
+      "required": ["required", "status", "location"],
+      "properties": {
+        "required": {"const": true},
+        "status": {"const": "ready"},
+        "location": {"type": "string", "minLength": 1}
+      }
+    },
+    "claims": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["claim", "evidence", "status"]}},
+    "strategy_ref": {
+      "type": "object",
+      "required": ["path", "selected_angle_id", "selected_hook_id"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "selected_angle_id": {"type": "string", "minLength": 1},
+        "selected_hook_id": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

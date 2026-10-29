@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/visual-plan.schema.json",
+  "title": "Canonical visual plan",
+  "type": "object",
+  "required": ["schema_version", "contract", "content_id", "status", "audio_sha256", "beats", "recording_policy"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "contract": { "enum": ["canonical-copy-to-video-v1", "canonical-copy-to-video-v2"] },
+    "content_id": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["pending", "ready_for_review", "approved", "blocked"] },
+    "audio_sha256": { "type": "string" },
+    "recording_policy": { "const": "claim-driven; no global ratio" },
+    "beats": { "type": "array", "items": { "$ref": "#/$defs/beat" } }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "beat": {
+      "type": "object",
+      "required": ["beat_id", "start_frame", "end_frame", "viewer_intent", "primary_visual", "claim_ids", "evidence_requirement", "asset_source", "owner", "rights_plan", "safe_areas", "rhythm_reason"],
+      "properties": {
+        "beat_id": { "type": "string", "minLength": 1 },
+        "start_frame": { "type": "integer", "minimum": 0 },
+        "end_frame": { "type": "integer", "minimum": 0 },
+        "viewer_intent": { "type": "string", "minLength": 1 },
+        "primary_visual": { "enum": ["digital_human", "real_screen_recording", "real_source", "generated_image", "generated_broll", "generated_i2v", "licensed_broll", "owned_broll", "information_motion"] },
+        "claim_ids": { "type": "array", "items": { "type": "string" } },
+        "evidence_requirement": { "type": "string" },
+        "asset_source": { "type": "string" },
+        "owner": { "type": "string" },
+        "rights_plan": { "type": "string" },
+        "safe_areas": { "type": "object" },
+        "rhythm_reason": { "type": "string" },
+        "evidence_asset_id": { "type": "string" },
+        "overlays": { "type": "array", "items": { "type": "string" } },
+        "digital_human_window": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

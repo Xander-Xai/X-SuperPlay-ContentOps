@@ -38,6 +38,11 @@ evidence_policy:
   ai_visuals_allowed: auxiliary_only
   fabricated_claims: forbidden
 
+# Enforced by scripts/check_script_quality.py before any render. A project that
+# does not declare this is not gated, which is how the pre-gate projects stay
+# out of the way while every new one is checked.
+quality_gate: enforced
+
 status: initialized
 
 outputs:

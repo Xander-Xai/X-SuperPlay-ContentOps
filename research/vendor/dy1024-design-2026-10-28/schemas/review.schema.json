@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/review.schema.json",
+  "title": "Canonical Script review",
+  "type": "object",
+  "required": ["schema_version", "contract", "content_id", "status", "promise_match", "audience_clear", "practical_value_present", "emotional_value_present", "evidence_plan_complete", "no_generated_evidence_claims", "conclusion_limits_cta_clear", "natural_read", "script_sha256"],
+  "properties": {
+    "schema_version": { "const": 1 }, "contract": { "enum": ["canonical-copy-to-video-v1", "canonical-copy-to-video-v2"] },
+    "content_id": { "type": "string" }, "status": { "enum": ["pending", "ready_for_review", "approved", "blocked"] },
+    "promise_match": { "type": "boolean" }, "audience_clear": { "type": "boolean" }, "practical_value_present": { "type": "boolean" },
+    "emotional_value_present": { "type": "boolean" }, "evidence_plan_complete": { "type": "boolean" }, "no_generated_evidence_claims": { "type": "boolean" },
+    "conclusion_limits_cta_clear": { "type": "boolean" }, "natural_read": { "type": "boolean" }, "script_sha256": { "type": "string" }
+  },
+  "additionalProperties": false
+}

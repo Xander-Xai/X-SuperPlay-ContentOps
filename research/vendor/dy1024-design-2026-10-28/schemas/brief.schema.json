@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/brief.schema.json",
+  "title": "Canonical Brief",
+  "type": "object",
+  "required": ["schema_version", "contract", "content_id", "account", "status", "content_pillar", "content_type", "primary_audience", "secondary_audience", "viewer_situation", "viewer_goal", "viewer_motivation", "promise", "expected_emotion_change", "cta", "duration_tier", "evidence_density_reason", "key_questions", "initial_evidence_plan", "production_disclosure"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "contract": { "enum": ["canonical-copy-to-video-v1", "canonical-copy-to-video-v2"] },
+    "content_id": { "type": "string", "minLength": 1 },
+    "account": { "const": "X•超玩1024" },
+    "status": { "enum": ["pending", "ready_for_review", "approved", "blocked"] },
+    "content_pillar": { "type": "string" }, "content_type": { "type": "string" }, "primary_audience": { "type": "string" }, "secondary_audience": { "type": "string" },
+    "viewer_situation": { "type": "string" }, "viewer_goal": { "type": "string" }, "viewer_motivation": { "type": "string" }, "promise": { "type": "string" },
+    "expected_emotion_change": { "type": "string" }, "cta": { "type": "string" }, "duration_tier": { "type": "string" }, "evidence_density_reason": { "type": "string" },
+    "key_questions": { "type": "array", "items": { "type": "string" } },
+    "initial_evidence_plan": { "type": "array", "items": { "type": ["string", "object"] } },
+    "production_disclosure": {
+      "type": "object", "required": ["digital_human", "voice_clone", "synthetic_visuals"],
+      "properties": { "digital_human": { "const": true }, "voice_clone": { "const": true }, "synthetic_visuals": { "const": true } },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

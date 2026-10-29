@@ -381,12 +381,22 @@ jobs:
       - name: Run code-animation composition tests
         run: python tests/test_code_animation_composition.py
 
+      # The capture contract a recording-heavy cut needs before anyone records:
+      # a direct observation cannot land on a card, a FORBIDDEN account cannot
+      # reach a recording surface, and a capture must name what the viewer sees.
+      - name: Run capture-plan tests
+        run: python tests/test_capture_plan.py
+
+      # Colloquial copy stays inside the budget it declares, filler phrases do
+      # not become tics, fact-lock tokens survive the rewrite, and a burned
+      # caption must transcribe the narration it sits under.
+      - name: Run naturalness and caption-integrity tests
+        run: python tests/test_naturalness.py
+
       # Drift guard: a suite that exists but is never named in this file cannot
       # report a pass, and a green CI run would cover less than it appears to.
       - name: Run suite-runner tests
-        run: python tests/test_run_tests.py
-
-      - name: Check every test suite is wired into CI
+        run: python tests/test_run_tests.py      - name: Check every test suite is wired into CI
         run: python scripts/run_tests.py --missing-from .github/workflows/ci.yml
 
       - name: Enforce subprocess policy

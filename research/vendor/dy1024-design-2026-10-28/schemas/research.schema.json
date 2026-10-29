@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/research.schema.json",
+  "title": "Canonical Research claims",
+  "type": "object",
+  "required": ["schema_version", "contract", "content_id", "status", "claims"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "contract": { "enum": ["canonical-copy-to-video-v1", "canonical-copy-to-video-v2"] },
+    "content_id": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["pending", "ready_for_review", "approved", "blocked"] },
+    "claims": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["claim_id", "input", "changed_variable", "operation", "visual_checkpoint", "metric_or_result", "boundary", "evidence_kind"],
+        "properties": {
+          "claim_id": { "type": "string" }, "text": { "type": "string" }, "type": { "type": "string" }, "risk_type": { "type": "string" },
+          "trust_level": { "const": "external_data" }, "input": { "type": "string" }, "changed_variable": { "type": "string" },
+          "operation": { "type": "string" }, "visual_checkpoint": { "type": "string" }, "metric_or_result": { "type": "string" },
+          "boundary": { "type": "string" },
+          "evidence_kind": { "enum": ["direct_screen_recording", "real_screenshot_or_document", "measured_result", "authoritative_source", "explanation_only"] },
+          "requires_direct_evidence": { "type": "boolean" }, "source_ids": { "type": "array", "items": { "type": "string" } },
+          "evidence": { "type": "array", "items": { "type": "object" } }, "verification": { "type": "object" },
+          "human_reviewed": { "type": "boolean" }, "core": { "type": "boolean" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

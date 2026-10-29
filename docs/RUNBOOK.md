@@ -154,12 +154,27 @@ If `qc_video.py` returns `FAIL`:
 ## 9. Test suite
 
 ```powershell
-python scripts\test_basic.py
+python scripts\run_tests.py                  # every tests/test_*.py, one verdict
+python scripts\run_tests.py --list           # names only
+python scripts\run_tests.py --only workflow  # substring filter
+python scripts\run_tests.py --missing-from .github/workflows/ci.yml   # CI drift guard
+python scripts\dev_check.py                  # the gate: policy, docs, i18n, DNA, all suites
 ```
 
-9 tests covering: doctor execution, project creation idempotency, QC FAIL on
-missing video, blob SHA-1 verification, path exclusion symmetry, foreign
-remote rejection, archive provenance acceptance/rejection.
+55 suites (the `tests/test_*.py` files plus `scripts/test_basic.py`). Discovery, not a hand-maintained list: the gate once reported
+"ALL CHECKS PASSED" while a migration suite was failing, because nothing called
+it. Each suite runs in its own process; a suite that skips itself (missing
+ffmpeg or a gitignored fixture) exits 0 and counts as a pass, but a suite that
+cannot start is a failure, never a skip.
+
+`scripts\test_basic.py` (9 tests: doctor execution, project creation
+idempotency, QC FAIL on missing video, blob SHA-1 verification, path exclusion
+symmetry, foreign remote rejection, archive provenance) is one of the suites and
+still runs standalone.
+
+`--missing-from` is what keeps CI honest: it parses the workflow's `run:` steps
+(comments do not count) and fails when a suite exists but nothing executes it.
+Four suites were in that state before 2026-10-28.
 
 ## 10. Native narration v2 (A/B/C sample)
 
@@ -424,3 +439,61 @@ python scripts\build_code_animation_sample.py projects\easel-fi-what-is-agent
 - the clone alias is `founder_primary_v1`; the provider id stays private, only its hash is in the receipt
 - the bed is synthesised locally at −24.4 dBFS; the composer refuses a mix with less than 18 dB headroom
 - a beat window is `speech + 0.35 s`, not a fixed 4 s, so the narration does not sit in dead air
+
+## 17. Ordered production contract and document gates
+
+New projects opt in; existing projects keep their layout.
+
+```bash
+python scripts/workflow_gate.py init    --project projects/<slug> --slug <slug> --account x-superplay-1024
+python scripts/workflow_gate.py status  --project projects/<slug>
+python scripts/workflow_gate.py check   --project projects/<slug> --stage script
+python scripts/workflow_gate.py approve --project projects/<slug> --stage script --reviewer Founder --confirm
+```
+
+Validators run automatically: audience lens (`audience`), script rhythm +
+duration + technical explainer + copy strategy (`script`), per-claim evidence
+coverage (`storyboard`), rights ledger + source candidates (`assets`), visual
+route (`compose`), and delivery manifest + publish plan (`delivery`). A change to
+an artifact or to any upstream artifact makes the approval stale; there is no
+force flag.
+
+### 17.1 Source candidates
+
+Write `source-candidates.json` beside the stage artifacts before acquisition.
+The `assets` stage validates it whenever it is present.
+
+```json
+{"schema": "contentops.source-candidates/v1", "package_id": "pkg",
+ "candidates": [{"candidate_id": "SC-001", "creator": "Example Project",
+   "source_url": "https://example.com/x", "license": "public_domain",
+   "license_text": "CC0 1.0", "license_url": "https://creativecommons.org/...",
+   "capture_date": "2026-10-01", "status": "candidate",
+   "score": {"relevance": 9, "evidence": 8, "rights": 10}}]}
+```
+
+- `status` is always `candidate`; a research list that can clear itself has
+  nothing left for the ledger to check
+- any licence except `owned` needs both `license_text` and `license_url`
+- `promotable(document, id)` is the helper you call while promoting: it lists what
+  still blocks the decision (unknown or unrecognised licence, missing licence URL,
+  a record that is not `candidate`, incomplete score, weighted score under 6.0).
+  It advises; the gate enforces the licence agreement, not the floor
+- a ledger row may cite `source_candidate_id`; the licence must then agree
+
+Skill side: `x-superplay-source-research` (the contract) is declared on both
+account DNAs; `b-roll-finder` (the finding methodology) is declared on
+`x-superplay-1024` only, because the Build account's visual gap is illustrations.
+
+Document-only checks:
+
+```bash
+python scripts/workflow_docs.py check --kind forecast --input forecast.json
+python scripts/workflow_docs.py check --kind rights   --input rights-ledger.json
+python scripts/workflow_docs.py check --kind sources  --input source-candidates.json
+python scripts/workflow_docs.py score --input candidate.json
+python scripts/workflow_docs.py next-id --topic "topic" --root projects
+python scripts/workflow_docs.py fingerprint-skill --dir <skill directory>
+```
+
+Exit `0` = pass, `1` = refused with named errors, `2` = usage error.

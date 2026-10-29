@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/audience-relationship.schema.json",
+  "title": "Audience Relationship and Four-Layer Content Metrics",
+  "type": "object",
+  "required": ["schema_version", "contract", "content_id", "content_candidate_id", "publication_id", "captured_at", "source", "layers", "repeated_exposure", "attribution_ref"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "contract": {"const": "audience-relationship-v1"},
+    "content_id": {"type": "string", "minLength": 1},
+    "content_candidate_id": {"type": ["string", "null"]},
+    "publication_id": {"type": ["string", "null"]},
+    "captured_at": {"type": ["string", "null"]},
+    "source": {"enum": ["official-api", "creator-export", "manual", null]},
+    "layers": {
+      "type": "object",
+      "required": ["L1_distribution", "L2_content_quality", "L3_audience_relationship", "L4_business"],
+      "properties": {
+        "L1_distribution": {"type": "object"},
+        "L2_content_quality": {"type": "object"},
+        "L3_audience_relationship": {"type": "object"},
+        "L4_business": {"type": "object"}
+      }
+    },
+    "repeated_exposure": {"type": "object"},
+    "attribution_ref": {"type": "string", "minLength": 1},
+    "notes": {"type": "array"}
+  },
+  "additionalProperties": true
+}

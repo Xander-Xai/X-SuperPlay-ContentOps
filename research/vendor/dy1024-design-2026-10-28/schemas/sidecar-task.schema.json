@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/sidecar-task.schema.json",
+  "title": "Douyin Sidecar Task Contract",
+  "type": "object",
+  "required": ["schema_version", "task_id", "content_id", "account", "platform", "operation", "status", "retry_count", "audit_record"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "task_id": { "type": "string", "minLength": 3 },
+    "content_id": { "type": "string", "minLength": 3 },
+    "account": { "const": "X•超玩1024" },
+    "platform": { "const": "douyin" },
+    "operation": { "enum": ["publish", "schedule", "works", "comments", "reply", "calendar", "approval", "inbox", "analytics"] },
+    "status": { "enum": ["dry-run", "ready", "queued", "running", "succeeded", "blocked", "failed", "duplicate"] },
+    "retry_count": { "type": "integer", "minimum": 0 },
+    "external_item_id": { "type": "string" },
+    "published_at": { "type": ["string", "null"] },
+    "error_code": { "type": ["string", "null"] },
+    "audit_record": { "type": "object" },
+    "input": { "type": "object" },
+    "output": { "type": "object" }
+  },
+  "additionalProperties": true
+}

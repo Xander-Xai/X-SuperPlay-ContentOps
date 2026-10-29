@@ -1,0 +1,629 @@
+{
+  "id": "X•超玩1024",
+  "display_name": "X•超玩1024",
+  "role": "AI 机会探索者 / 实验者（Explore）",
+  "mission": "通过真实 AI 新能力实测、职业与现实任务挑战、AI 生意实验，发现新能力、新场景、新用户问题与可验证机会；内容是公开市场研究与用户获取入口，不是终点。",
+  "audience": [
+    "AI、新科技、新产品兴趣用户",
+    "开发者和产品经理",
+    "职场人和内容创作者",
+    "独立开发者、创业者与 Freelancer",
+    "一人公司和小微企业主"
+  ],
+  "video": {
+    "duration_seconds": [
+      45,
+      330
+    ],
+    "duration_policy": {
+      "default_tier": "two_minute",
+      "tiers": [
+        {
+          "id": "one_minute",
+          "label": "1分钟",
+          "target_seconds": 60,
+          "allowed_range_seconds": [
+            45,
+            75
+          ]
+        },
+        {
+          "id": "two_minute",
+          "label": "2分钟",
+          "target_seconds": 120,
+          "allowed_range_seconds": [
+            90,
+            150
+          ]
+        },
+        {
+          "id": "three_minute",
+          "label": "3分钟",
+          "target_seconds": 180,
+          "allowed_range_seconds": [
+            150,
+            210
+          ]
+        },
+        {
+          "id": "four_minute",
+          "label": "4分钟",
+          "target_seconds": 240,
+          "allowed_range_seconds": [
+            210,
+            270
+          ]
+        },
+        {
+          "id": "five_minute",
+          "label": "5分钟",
+          "target_seconds": 300,
+          "allowed_range_seconds": [
+            270,
+            330
+          ]
+        }
+      ],
+      "content_type_defaults": {
+        "newsjacking": "one_minute",
+        "tool_test": "two_minute",
+        "technical_explainer": "two_minute",
+        "comparison": "three_minute",
+        "github_project": "three_minute",
+        "monetization_case": "four_minute",
+        "career_experiment": "three_minute",
+        "business_experiment": "four_minute",
+        "tutorial": "three_minute",
+        "failure_review": "two_minute",
+        "opinion": "one_minute"
+      },
+      "selection_rule": "content_type_default_then_evidence_density_override; never pad with repeated conclusions"
+    },
+    "best_practice_policy": {
+      "enabled": true,
+      "structure": "adaptive",
+      "structure_options": [
+        "hook-result-evidence-tradeoff-verdict-action",
+        "problem-test-result-boundary-action",
+        "concept-problem-mechanism-contrast-boundary-action",
+        "hot-fact-angle-impact-proof-action",
+        "problem-demo-install-boundary-action",
+        "scenario-input-process-evidence-risk-fit",
+        "goal-shortest-path-key-parameter-error-check",
+        "failure-expectation-root-cause-fix-boundary",
+        "claim-facts-counterview-judgment-question"
+      ],
+      "structure_reason_required": true,
+      "copy_brief_schema": "schemas/adaptive-copy-brief.schema.json",
+      "copy_router": "scripts/adaptive_copy_router.py",
+      "copy_evidence_policy": "configs/copy-evidence-policy.json",
+      "platform_packaging": "hook-body-close",
+      "title_intro_match_required": true,
+      "evidence_state_required": true,
+      "hook_max_seconds": 5,
+      "caption_max_chars": 38,
+      "subtitle_script_match_min": 0.65,
+      "asr_similarity_min": 0.85,
+      "speaker_similarity_min": 0.88,
+      "tts_emotion_range": [
+        0.5,
+        0.5
+      ],
+      "tts_use_random": false,
+      "tts_interval_silence_ms": [
+        200,
+        200
+      ],
+      "voice_policy": "voice-clone-it25-prod-01-v1",
+      "require_asset_inventory": true,
+      "require_computer_model_card_for_runtime": true,
+      "require_external_motion_render": true,
+      "forbidden_visual_markers": [
+        "__DEBUG_OVERLAY__",
+        "DESIGNED_CARD",
+        "transition-wash"
+      ],
+      "motion_contract": {
+        "fps": 30,
+        "primary_component": "remotion",
+        "overlay_component": "hyperframes",
+        "caption_source": "final-audio-asr",
+        "integer_frame_timeline": true
+      }
+    },
+    "account_production_policy": {
+      "fixed": true,
+      "presenter_mode": "digital-human",
+      "voice_mode": "voice-clone",
+      "voice_provider": "index-tts-2.5",
+      "tts_model": "IndexTTS2.5",
+      "tts_policy": "local-only",
+      "runtime_required": true,
+      "voice_reference_required": true,
+      "presenter_reference_required": true,
+      "voice_clone_permission_required": true,
+      "presenter_permission_required": true,
+      "reason": "X•超玩1024账号每条视频固定使用数字人和授权音色克隆"
+    },
+    "host_screen_share": [
+      0.15,
+      0.25
+    ],
+    "production_route": [
+      "runtime-media",
+      "compile-short-video",
+      "media-delivery"
+    ],
+    "recording_policy": {
+      "mode": "claim-driven",
+      "global_ratio": null,
+      "direct_evidence_required_for": ["operation", "product_capability", "before_after", "measured_result"],
+      "coverage_requirement": 1.0
+    },
+    "primary_claim": "展示结果并帮助用户快速判断是否值得行动",
+    "script_route": [
+      "content-copy-orchestrator"
+    ],
+    "design_route": [
+      "design-direction",
+      "playwright",
+      "remotion"
+    ],
+    "asset_route": [
+      "material-source-research",
+      "broll-production",
+      "source-collector",
+      "rights-audit"
+    ],
+    "material_policy": {
+      "contract_version": 1,
+      "plan_gate_step": "visual_plan",
+      "clearance_gate_step": "assets",
+      "plan_approval_required": true,
+      "clearance_approval_required": true,
+      "automation_modes": [
+        "automatic",
+        "hybrid",
+        "human-required"
+      ],
+      "human_confirmation_required": true,
+      "candidate_minimum": 1,
+      "naming_template": "<content-slug>__<scene-id>__<asset-role>__<route>__v<NN>.<ext>",
+      "naming_policy": "lower-ascii; scene-bound; asset-id/filename/provenance aligned",
+      "required_fields": [
+        "asset_id",
+        "scene_id",
+        "viewer_job",
+        "claim_ids",
+        "fact_status",
+        "route",
+        "visual_owner",
+        "asset_type",
+        "source_strategy",
+        "rights_plan",
+        "automation_mode",
+        "automation_owner",
+        "human_owner",
+        "human_confirmation_required",
+        "human_confirmation_status",
+        "filename_template",
+        "expected_filename",
+        "naming_check",
+        "source_url",
+        "creator_or_owner",
+        "license",
+        "capture_date",
+        "source_sha256",
+        "output_sha256",
+        "local_path",
+        "technical_qc",
+        "visual_qc",
+        "rights_qc",
+        "approval_status",
+        "provenance_path"
+      ],
+      "screen_recording": {
+        "required_when_claim_requires_direct_evidence": true,
+        "human_owner": "user",
+        "cannot_be_replaced_by": [
+          "screenshot-only",
+          "generated-image",
+          "generated-video"
+        ]
+      }
+    },
+    "visual_route": [
+      "visual-route"
+    ],
+    "image_route": [
+      "ian-xiaohei-illustrations",
+      "ian-xiaohei-scenes"
+    ],
+    "image_routes": [
+      "generative-media-guidance",
+      "ian-xiaohei-illustrations",
+      "ian-xiaohei-scenes"
+    ],
+    "motion_route": [
+      "hyperframes",
+      "remotion"
+    ],
+    "delivery_route": ["media-delivery", "delivery-package"],
+    "image_policy": {
+      "enabled": true,
+      "allowed_routes": [
+        "ian-xiaohei-illustrations",
+        "ian-xiaohei-scenes",
+        "chatgpt-bridge"
+      ],
+      "allowed_providers": [
+        "chatgpt-bridge"
+      ],
+      "reason": "ChatGPT Bridge 生成无字竖屏插画和首帧；文字后期添加；真实证据不得被生成图替代。",
+      "xiaohei_ip_profile": "profiles/xiaohei-ip-profile.json",
+      "xiaohei_ip_reference_env": "XIAOHEI_IP_REFERENCE",
+      "provider": "chatgpt-bridge",
+      "primary_provider": "chatgpt-bridge",
+      "provider_by_route": {
+        "xiaohei_illustration": "chatgpt-bridge",
+        "xiaohei_scene": "chatgpt-bridge",
+        "concept_illustration": "chatgpt-bridge"
+      },
+      "generation_routes": {
+        "bridge-xiaohei": {
+          "provider": "chatgpt-bridge",
+          "execution": "codex-browser-plugin",
+          "text_required": false,
+          "text_policy": "generated-scene-text-free; all Chinese labels belong to Remotion/HTML",
+          "source_ratio": "9:16",
+          "delivery_ratio": "9:16"
+        },
+        "bridge-concept": {
+          "provider": "chatgpt-bridge",
+          "execution": "codex-browser-plugin",
+          "text_required": false,
+          "text_policy": "generated-scene-text-free; all Chinese labels belong to Remotion/HTML",
+          "source_ratio": "9:16",
+          "delivery_ratio": "9:16"
+        }
+      },
+      "no_text_routes": [
+        "chatgpt-bridge"
+      ]
+    },
+    "runtime_route": [
+      "runtime-media",
+      "script-to-tts",
+      "clean-talking-video",
+      "remotion-captions"
+    ],
+    "voice_provider": "index-tts-2.5",
+    "tts_model": "IndexTTS2.5",
+    "tts_policy": "local-only",
+    "media_policy": "local-first-explicit-remote",
+    "remote_media_providers": [
+      "chatgpt-bridge",
+      "gflow-cli"
+    ],
+    "voice_reference_required": true,
+    "voice_reference_required_modes": [
+      "voice-clone"
+    ],
+    "voice_reference_required_routes": [
+      {
+        "voice_mode": "voice-clone",
+        "presenter_mode": "digital-human"
+      }
+    ],
+    "motion_policy": {
+      "enabled": true,
+      "primary_component": "remotion-final-compositor",
+      "overlay_component": "hyperframes-transparent-overlay",
+      "require_provenance": true,
+      "scene_owner_rule": "one-owner-per-scene",
+      "composition_mode": "canonical-master-timeline",
+      "supported_composition_modes": ["canonical-master-timeline"],
+      "quality_gate": "compare-standalone-and-composite-hero-frame-before-approval"
+    },
+    "avatar_policy": "local-minimax-h3-ref2va; enum-window; default-none; optional-pip-or-cutin",
+    "avatar_engine": "minimax_h3_ref2va",
+    "avatar_reference_policy": "Fig4.png primary; Fig1.png-Fig3.png and Fig5.png-Fig10.png controlled alternates",
+    "avatar_prompt_config": "configs/digital-human-scene-prompts.json",
+    "avatar_window_policy": "none|hook|transition|verdict|cta|caution|explainer; no free-text show values",
+    "avatar_driving_audio_policy": "per-scene-final-narration-required; X•超玩1024 digital-human routes require an authorized voice-clone reference",
+    "voice_clone_requires_permission": true,
+    "presenter_requires_permission": true,
+    "video_generation_policy": {
+      "guidance_route": "generative-media-guidance",
+      "provider": "gflow-cli",
+      "primary_mode": "i2v",
+      "allowed_modes": ["i2v"],
+      "input_policy": "approved-image-only-with-sha256-lineage",
+      "count": 1,
+      "aspect": "9:16",
+      "require_budget_approval": true,
+      "default_generated_audio": "muted-in-composite"
+    }
+  },
+  "research": {
+    "fast_routes": [
+      "agent-reach"
+    ],
+    "minimum_evidence": 2,
+    "prefer_official_or_repository_sources": true,
+    "source_ttl_days": 90,
+    "source_ttl_days_by_type": {
+      "official": 30,
+      "repository": 90,
+      "report": 90,
+      "interview": 180,
+      "user-owned": 30,
+      "web": 30
+    },
+    "require_unique_source_urls": true
+  },
+  "strategy": {
+    "routes": [
+      "content-strategy"
+    ],
+    "copy_direction_routes": "configs/copy-direction-routes.json",
+    "strategy_version": "x-superplay-1024-v3",
+    "account_role": "Explore",
+    "north_star": "有传播 + 有追问 + 有重复问题 + 自己愿意持续研究",
+    "cadence": "每周维护少量高优先级实验；以验证为目标，不以日更或粉丝绝对值为目标",
+    "pillars": [
+      "AI 新能力实测",
+      "AI × 现实任务实验",
+      "AI 生意实验室"
+    ],
+    "audience_model": {
+      "version": "audience-lens-v3",
+      "segment_config": "configs/audience-segments.json",
+      "identity_facets_source": "profile.audience",
+      "primary_segments": [
+        "capability_decider",
+        "workflow_adopter",
+        "opportunity_builder"
+      ],
+      "relationship_to_pillars": "orthogonal",
+      "primary_segment_required_per_topic": true,
+      "secondary_segment_max": 1,
+      "topic_level_research_artifact": "01_research/audience-insight.json",
+      "copy_ready_requires_audience_research": true,
+      "exploratory_mode_allowed": true,
+      "principle": "身份标签描述可能是谁；受众分群描述这条内容帮助谁取得什么进展；内容支柱不能自动锁定受众。"
+    },
+    "pillar_weights": {
+      "AI 新能力实测": 0.4,
+      "AI × 现实任务实验": 0.35,
+      "AI 生意实验室": 0.25
+    },
+    "pillar_contracts": {
+      "AI 新能力实测": {
+        "goal": "把新模型、工具、GitHub 项目或硬件转化为真实能力测试",
+        "required_beats": [
+          "发现",
+          "为什么值得关注",
+          "真实运行",
+          "结果",
+          "优点与问题",
+          "谁需要",
+          "商业机会"
+        ],
+        "evidence_rule": "必须有实际使用或可复核运行记录，不做未实测清单"
+      },
+      "AI × 现实任务实验": {
+        "goal": "用真实职业任务发现 Workflow、人工瓶颈与可产品化机会",
+        "required_beats": [
+          "真实任务",
+          "完成率",
+          "时间",
+          "成本",
+          "质量",
+          "人工介入",
+          "从业者反馈",
+          "最痛一步",
+          "AI 适配一步"
+        ],
+        "evidence_rule": "不能只让模型扮演职业；必须记录任务结果与人工边界"
+      },
+      "AI 生意实验室": {
+        "goal": "公开验证 AI 产品、服务或数字产品是否有人使用与付费",
+        "required_beats": [
+          "问题",
+          "现有方案",
+          "Demo",
+          "用户测试",
+          "付费信号",
+          "复盘",
+          "下一轮"
+        ],
+        "evidence_rule": "优先行为信号，不把口头兴趣当成付费验证"
+      }
+    },
+    "content_loop": [
+      "趋势或问题发现",
+      "真实实验",
+      "内容验证",
+      "需求信号分层",
+      "用户访谈",
+      "Problem Thesis",
+      "Concierge MVP",
+      "Workflow/Tool/SaaS"
+    ],
+    "signal_levels": [
+      "很酷",
+      "怎么做",
+      "能开源吗",
+      "能不能帮我搭",
+      "多少钱"
+    ],
+    "record_fields": [
+      "platform",
+      "pillar",
+      "topic",
+      "production_hours",
+      "reach",
+      "retention",
+      "saves",
+      "comments",
+      "follows",
+      "dm",
+      "high_quality_comments",
+      "demand_signals",
+      "commercial_signals",
+      "next_research_value"
+    ],
+    "problem_log_fields": [
+      "problem_id",
+      "user_type",
+      "industry",
+      "scenario",
+      "verbatim_quote",
+      "frequency",
+      "current_solution",
+      "time_cost",
+      "money_cost",
+      "severity",
+      "active_search",
+      "related_content",
+      "interview_status",
+      "mvp_status"
+    ],
+    "mvp_gate": [
+      "multiple_real_users",
+      "repeated_problem",
+      "active_solution_search",
+      "clear_time_or_money_cost",
+      "short_build_cycle",
+      "can_form_case_and_content",
+      "workflow_standardization_possible"
+    ],
+    "handoff_to_future_intelligence": [
+      "怎么实现",
+      "有源码吗",
+      "能不能出完整教程",
+      "能不能部署",
+      "可以帮我做吗",
+      "多少钱"
+    ],
+    "stop_rules": [
+      "纯资讯搬运",
+      "未实测 GitHub 项目列表",
+      "AI 暴富叙事",
+      "无目标 AI 娱乐",
+      "单纯跑分",
+      "未验证 Problem 直接开发 SaaS"
+    ],
+    "copy_contract": {
+      "required_fields": [
+        "pillar",
+        "viewer_job",
+        "audience_lens",
+        "value_contract",
+        "emotional_arc",
+        "viewer_progress_structure",
+        "hook_type",
+        "narrative_tension",
+        "voice_contract",
+        "cta_mode",
+        "ai_disclosure"
+      ],
+      "viewer_jobs": [
+        "判断",
+        "复现",
+        "迁移",
+        "参与",
+        "验证生意"
+      ],
+      "viewer_job_role": "topic_specific_progress_or_action; not an audience segment",
+      "hook_types": [
+        "反常识",
+        "结果先看",
+        "职业代入",
+        "失败预警",
+        "参与式实验"
+      ],
+      "voice_rules": [
+        "第一人称必须绑定具体实验动作、条件或观察",
+        "先给判断，再交代证据",
+        "至少说清一个边界",
+        "观众是主角，作者是向导；情绪价值必须服务于理解、信任和下一步行动"
+      ],
+      "ai_disclosure": {
+        "required": true,
+        "reason": "固定数字人和授权音色克隆路线必须在发布前显式披露合成表达"
+      }
+    },
+    "upstream_source": {
+      "repository": "yandexuanxuan/X-SuperPlay-Strategy",
+      "commit": "73fa34f0ecd4aa38bfc7c63d681e600f879f677e",
+      "account_file": "02-Accounts/X-SuperPlay-1024.md",
+      "strategy_file": "01-Strategy/AI-Content-Driven-Entrepreneurship-Strategy-V3.md",
+      "validation_file": "03-Execution/30-60-90-Day-Validation-Plan.md"
+    }
+  },
+  "feedback": {
+    "routes": ["independent-feedback-loop"],
+    "metric_sources": [
+      "creator-export",
+      "official-api",
+      "manual"
+    ]
+  },
+  "conversion": {
+    "account_scope": "single-account-only",
+    "default_cta": "你还想让我拿 AI 挑战什么职业？",
+    "content_type_ctas": {
+      "career_experiment": "你还想让我拿 AI 挑战什么职业？",
+      "business_experiment": "如果做成工具，你最需要哪个功能？",
+      "tool_test": "你还想让我拿 AI 测试什么能力？",
+      "technical_explainer": "你还想让我拆解哪个 AI 原理？",
+      "github_project": "你最想让我继续实测哪个开源项目？",
+      "failure_review": "你最想让我复盘哪一个 AI 坑？",
+      "comparison": "你正在纠结哪两个工具？",
+      "tutorial": "你最想复现哪一步？",
+      "newsjacking": "你觉得这项 AI 变化会先影响哪类工作？",
+      "monetization_case": "你现在怎么验证用户是否愿意付费？",
+      "opinion": "你遇到过同样的问题吗？"
+    },
+    "content_type_cta_modes": {
+      "career_experiment": "problem_signal",
+      "business_experiment": "problem_signal",
+      "tool_test": "problem_signal",
+      "technical_explainer": "problem_signal",
+      "github_project": "problem_signal",
+      "failure_review": "problem_signal",
+      "comparison": "problem_signal",
+      "tutorial": "reproduction",
+      "newsjacking": "problem_signal",
+      "monetization_case": "problem_signal",
+      "opinion": "problem_signal"
+    },
+    "problem_signal_ctas": [
+      "如果你就在这个行业，最浪费时间的一步是什么？",
+      "你现在怎么解决这个问题？",
+      "如果做成工具，你最需要哪个功能？"
+    ],
+    "handoff_cta": "想看完整部署和踩坑记录，评论区回复“X超玩”。",
+    "cta_policy": "优先收集 Problem Signal；只有出现深度解决方案需求时才使用工程承接 CTA"
+  },
+  "workflow": {
+    "required_steps": ["brief", "research", "script", "review", "audio", "visual_plan", "assets", "edit_render", "quality", "delivery"],
+    "optional_steps": [],
+    "minimum_evidence": 2,
+    "manual_approval_required": true,
+    "no_force_bypass": true
+  },
+  "route_policy": {
+    "required_routes_must_resolve_locally": true,
+    "external_routes": [
+      "firecrawl-search",
+      "funasr",
+      "index-tts",
+      "openchatcut",
+      "speech-to-text"
+    ],
+    "external_routes_are_optional": true
+  }
+}

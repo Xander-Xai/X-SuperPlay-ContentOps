@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/design-direction.schema.json",
+  "title": "Matrix Design Direction",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "content_id",
+    "account",
+    "status",
+    "family",
+    "source_projects",
+    "palette",
+    "typography",
+    "layout",
+    "motion",
+    "media_mix",
+    "anti_fatigue"
+  ],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "content_id": {"type": "string"},
+    "account": {"const": "X•超玩1024"},
+    "status": {"enum": ["ready", "approved", "retired"]},
+    "family": {"type": "string", "minLength": 3},
+    "source_projects": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+    "palette": {
+      "type": "object",
+      "required": ["background", "surface", "text", "muted", "accent", "signal"],
+      "additionalProperties": {"type": "string"}
+    },
+    "typography": {
+      "type": "object",
+      "required": ["heading", "body"],
+      "additionalProperties": {"type": "string"}
+    },
+    "layout": {
+      "type": "object",
+      "required": ["mode", "card_policy", "safe_area"],
+      "additionalProperties": true
+    },
+    "motion": {
+      "type": "object",
+      "required": ["intensity", "renderer", "easing"],
+      "additionalProperties": true
+    },
+    "media_mix": {
+      "type": "object",
+      "required": ["html_scene_ratio_max", "max_consecutive_html", "minimum_evidence_scenes"],
+      "additionalProperties": true
+    },
+    "anti_fatigue": {
+      "type": "object",
+      "required": ["same_family_streak_max", "palette_reuse_window", "banned_defaults"],
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

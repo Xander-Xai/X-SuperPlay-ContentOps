@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "profile_id": "xiaohei-custom-human-inspired-v1",
+  "display_name": "定制 X•超玩：真人形象灵感版",
+  "reference_env": "XIAOHEI_IP_REFERENCE",
+  "reference_role": "user-owned likeness reference; extract stylized visual anchors only",
+  "identity_policy": "stylized-human-inspired; never reproduce a photorealistic face or exact identity",
+  "visual_anchors": {
+    "hair": "medium-length wavy chestnut-brown hair, soft side part, loose natural strands",
+    "face_impression": "young East Asian male impression, soft oval face, warm skin tone, calm brown eyes",
+    "wardrobe": "light-blue fine-striped overshirt over a plain white T-shirt",
+    "expression": "quiet, approachable, slightly thoughtful",
+    "silhouette": "retain the established solid-black X•超玩 body, white dot eyes, thin legs and deadpan hand-drawn outline; use the hair and wardrobe colors as recognition anchors"
+  },
+  "prompt_contract": [
+    "Keep X•超玩 as the core action subject, not a photorealistic human avatar.",
+    "Translate the reference into simplified hand-drawn silhouette, color and attitude cues.",
+    "Use the chestnut wavy hair silhouette and light-blue striped overshirt sparingly so the black body remains dominant.",
+    "Generated X•超玩 pixels must contain 2-4 short legible Chinese labels; do not add UI, code, formula, exact numbers or logos."
+  ],
+  "negative_constraints": [
+    "no photorealistic face",
+    "no exact identity cloning",
+    "no skin-texture portrait",
+    "no extra people",
+    "no logos or watermarks",
+    "no dense UI or poster layout"
+  ]
+}

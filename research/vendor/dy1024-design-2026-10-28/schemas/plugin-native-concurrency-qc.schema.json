@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/plugin-native-concurrency-qc.schema.json",
+  "title": "Plugin-native concurrency QC",
+  "type": "object",
+  "required": ["schema_version", "status", "passed", "workers", "run_ids", "run_roots", "artifact_paths", "errors"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "status": {"enum": ["pending", "ready", "blocked"]},
+    "passed": {"type": "boolean"},
+    "workers": {"type": "integer", "minimum": 0},
+    "run_ids": {"type": "array", "items": {"type": "string"}},
+    "run_roots": {"type": "array", "items": {"type": "string"}},
+    "artifact_paths": {"type": "array", "items": {"type": "string"}},
+    "errors": {"type": "array"}
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "account": "X•超玩1024",
+  "platform": "douyin",
+  "entries": [
+    {
+      "template_id": "baseline.remotion-scene.v1",
+      "renderer": "remotion",
+      "source_repo": "https://github.com/remotion-dev/remotion",
+      "source_commit": "local-workflow",
+      "local_path": "scripts/motion_pipeline.py",
+      "license": "Remotion-license-review-required",
+      "attribution": "Current AI Sentinel motion bridge",
+      "status": "adapter-ready",
+      "supported_ratios": ["9:16"],
+      "fps": [30],
+      "safe_area": "douyin-center-column",
+      "deterministic": true,
+      "notes": "Existing scene bridge; renderer contract remains Remotion primary."
+    },
+    {
+      "template_id": "video-shotcraft.paper-title-card.v1",
+      "renderer": "remotion",
+      "source_repo": "https://github.com/Vincentwei1021/video-shotcraft",
+      "source_commit": "d4915443232e89527fdc9d7e79f132ba411fc440",
+      "local_path": "skills/video-shotcraft",
+      "license": "Apache-2.0",
+      "attribution": "Vincentwei1021/video-shotcraft; adapter owns current 9:16 props mapping",
+      "status": "adapter-ready",
+      "supported_ratios": ["9:16", "16:9"],
+      "fps": [30],
+      "safe_area": "douyin-center-column",
+      "deterministic": true,
+      "notes": "Source snapshot is local; do not copy its package.json or React/Remotion runtime."
+    },
+    {
+      "template_id": "remotion-ui.caption-scene.v1",
+      "renderer": "remotion",
+      "source_repo": "https://github.com/riaz37/remotion-ui",
+      "source_commit": "0389099fd6da2ca89006d6aac694a0760445e9e8",
+      "local_path": "skills/remotion-ui",
+      "license": "MIT",
+      "attribution": "riaz37/remotion-ui",
+      "status": "cloned",
+      "supported_ratios": ["9:16"],
+      "fps": [30],
+      "safe_area": "douyin-center-column",
+      "deterministic": true,
+      "notes": "Fixed commit is locally cloned and verified; this registry item remains source-only until an adapter is selected."
+    },
+    {
+      "template_id": "remotion-ui.title-card.v1",
+      "renderer": "remotion",
+      "source_repo": "https://github.com/riaz37/remotion-ui",
+      "source_commit": "0389099fd6da2ca89006d6aac694a0760445e9e8",
+      "local_path": "scripts/plugin_native_motion.py",
+      "license": "MIT",
+      "attribution": "riaz37/remotion-ui; current workflow owns the 9:16 prop mapping",
+      "status": "adapter-ready",
+      "supported_ratios": ["9:16"],
+      "fps": [30],
+      "safe_area": "douyin-center-column",
+      "deterministic": true,
+      "notes": "Repository-native adapter mapping is implemented in plugin_native_motion.py; upstream source provenance remains bound to the recorded commit and the clone is not required at runtime."
+    }
+  ]
+}

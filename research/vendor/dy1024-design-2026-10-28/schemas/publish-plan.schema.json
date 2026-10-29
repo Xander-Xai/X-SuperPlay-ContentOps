@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/publish-plan.schema.json",
+  "title": "Credential-Free Publish Plan",
+  "type": "object",
+  "required": ["schema_version", "status", "passed", "platform", "method", "title", "receipt_required"],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "status": {"enum": ["ready", "approved", "blocked"]},
+    "passed": {"type": "boolean"},
+    "platform": {"const": "douyin"},
+    "method": {"enum": ["manual", "manual-or-official", "official-api", "draft"]},
+    "title": {"type": "string", "minLength": 1},
+    "receipt_required": {"const": true}
+  },
+  "additionalProperties": true
+}

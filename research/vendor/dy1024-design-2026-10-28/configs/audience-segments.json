@@ -1,0 +1,118 @@
+{
+  "schema_version": 3,
+  "account": "X•超玩1024",
+  "principle": "内容支柱回答账号研究什么；受众分群回答这条内容帮助谁取得什么进展。两者是正交关系，不得按支柱自动锁定受众。",
+  "identity_facets": [
+    "AI、新科技、新产品兴趣用户",
+    "开发者和产品经理",
+    "职场人和内容创作者",
+    "独立开发者、创业者与 Freelancer",
+    "一人公司和小微企业主"
+  ],
+  "segments": {
+    "capability_decider": {
+      "label": "AI 能力判断者",
+      "core_progress": "判断一个 AI 能力、工具、模型或项目是否值得投入时间、金钱或学习成本",
+      "default_emotional_job": "降低焦虑",
+      "default_social_job": "保持专业判断，不被概念和热度带着走",
+      "content_type_affinity": [
+        "tool_test",
+        "comparison",
+        "technical_explainer",
+        "github_project",
+        "newsjacking",
+        "failure_review"
+      ]
+    },
+    "workflow_adopter": {
+      "label": "AI 任务迁移者",
+      "core_progress": "判断 AI 能否进入一个真实任务，以及 AI 和人工分别应该负责哪一步",
+      "default_emotional_job": "恢复掌控",
+      "default_social_job": "在使用 AI 的同时维持交付质量和职业可信度",
+      "content_type_affinity": [
+        "career_experiment",
+        "tutorial",
+        "failure_review",
+        "comparison",
+        "tool_test"
+      ]
+    },
+    "opportunity_builder": {
+      "label": "AI 机会验证者",
+      "core_progress": "判断一个 AI 产品、服务或数字产品需求是否值得继续验证和投入",
+      "default_emotional_job": "获得行动勇气",
+      "default_social_job": "成为可信、透明、用真实行为信号做判断的建设者",
+      "content_type_affinity": [
+        "business_experiment",
+        "monetization_case",
+        "github_project",
+        "career_experiment",
+        "newsjacking"
+      ]
+    }
+  },
+  "emotional_jobs": [
+    "降低焦虑",
+    "被理解",
+    "恢复掌控",
+    "获得行动勇气",
+    "参与共创"
+  ],
+  "awareness_levels": [
+    "problem_unaware",
+    "problem_aware",
+    "solution_aware",
+    "option_comparing",
+    "ready_to_act"
+  ],
+  "value_dimensions": {
+    "practical": "观众能做出一个决定或完成一个动作",
+    "epistemic": "观众获得一个更准确的理解或判断模型",
+    "emotional": "观众从不确定、担忧或犹豫转向可掌控状态",
+    "social_identity": "观众能维护或表达自己重视的专业身份",
+    "participation": "观众能把真实问题带入下一轮实验并看到反馈被使用"
+  },
+  "fit_statuses": [
+    "validated",
+    "mixed",
+    "exploratory"
+  ],
+  "source_statuses": [
+    "observed",
+    "user_quote",
+    "inference",
+    "hypothesis"
+  ],
+  "source_types": [
+    "owned_analytics",
+    "owned_comment",
+    "owned_dm",
+    "interview",
+    "support_or_sales",
+    "search_query",
+    "public_comment",
+    "github_issue_or_discussion",
+    "competitor_content",
+    "platform_insight",
+    "editorial_hypothesis"
+  ],
+  "direct_source_types": [
+    "owned_analytics",
+    "owned_comment",
+    "owned_dm",
+    "interview",
+    "support_or_sales"
+  ],
+  "research_policy": {
+    "primary_segment_count": 1,
+    "secondary_segment_max": 1,
+    "secondary_value_dimension_max": 2,
+    "validated_min_independent_sources": 2,
+    "validated_requires_direct_source": true,
+    "mixed_min_sources": 1,
+    "exploratory_min_sources": 1,
+    "exploratory_requires_learning_cta": true,
+    "verbatim_language_requires_source_ref": true,
+    "unsupported_audience_claims_must_remain_hypotheses": true
+  }
+}

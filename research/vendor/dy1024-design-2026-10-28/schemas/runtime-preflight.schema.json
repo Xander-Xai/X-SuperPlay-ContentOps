@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/runtime-preflight.schema.json",
+  "title": "X-SuperPlay 1024 runtime preflight",
+  "type": "object",
+  "required": ["schema_version", "contract", "status", "passed", "strict", "checked_at", "runtime_root", "checks", "errors", "warnings", "execution_ready", "execution_blockers"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "contract": { "const": "dy-x1024-runtime-preflight-v1" },
+    "status": { "enum": ["ready", "blocked"] },
+    "passed": { "type": "boolean" },
+    "strict": { "type": "boolean" },
+    "checked_at": { "type": "string", "minLength": 1 },
+    "layout": { "type": "string", "minLength": 1 },
+    "workspace_root": { "type": "string", "minLength": 1 },
+    "runtime_root": { "type": "string", "minLength": 1 },
+    "checks": { "type": "object" },
+    "errors": { "type": "array", "items": { "type": "string" } },
+    "warnings": { "type": "array", "items": { "type": "string" } },
+    "execution_ready": { "type": "boolean" },
+    "execution_blockers": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": true
+}

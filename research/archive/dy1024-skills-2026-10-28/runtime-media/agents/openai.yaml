@@ -1,0 +1,4 @@
+interface:
+  display_name: "Runtime Media"
+  short_description: "Run gated local voice, ASR and avatar workers"
+  default_prompt: "Use $runtime-media to preflight and run the local IndexTTS2.5, FunASR, MiniMax H3 and editable timeline chain without bypassing content gates."

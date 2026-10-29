@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/plugin-native-qc.schema.json",
+  "title": "Plugin-native QC",
+  "type": "object",
+  "required": ["schema_version", "content_id", "account", "status", "passed", "errors", "warnings"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "content_id": {"type": "string", "minLength": 1},
+    "account": {"type": "string", "minLength": 1},
+    "status": {"type": "string"},
+    "passed": {"type": "boolean"},
+    "errors": {"type": "array"},
+    "warnings": {"type": "array"},
+    "native_sources": {"type": "array"},
+    "native_execution": {"type": "object"}
+  },
+  "additionalProperties": true
+}

@@ -15,7 +15,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from skill_route import CATALOG_ROOTS, RULE_MARKER, catalog, rank  # noqa: E402
+from skill_route import (  # noqa: E402
+    CATALOG_ROOTS,
+    RULE_MARKER,
+    catalog,
+    rank,
+    shared_catalog,
+)
 
 
 def test_rule_is_in_both_agent_files():
@@ -72,6 +78,42 @@ def test_expected_catalog_roots_are_declared():
     assert any(path.name == "openclaw" for path in CATALOG_ROOTS)
 
 
+def test_a_shared_store_skill_is_reachable_by_routing():
+    """An adopted skill that --match cannot find is adopted in name only."""
+    shared = shared_catalog()
+    if not shared:
+        print("shared store absent on this checkout; skipping shared routing")
+        return
+    names = {skill["name"] for skill in shared}
+    if "b-roll-finder" not in names:
+        print("b-roll-finder not installed in the shared store; skipping")
+        return
+    top = rank(shared, "b-roll sourcing clips")[:3]
+    assert top, "the shared store matched nothing for a b-roll request"
+    assert top[0]["name"] in {"b-roll-finder", "x-superplay-broll-production"}, \
+        [skill["name"] for skill in top]
+
+
+def test_routing_still_answers_when_no_catalog_exists():
+    """A clean checkout has no Easel runtime; the shared store must still route."""
+    import tempfile
+    from unittest import mock
+
+    import skill_route
+
+    with tempfile.TemporaryDirectory() as td:
+        store = Path(td) / "skills"
+        skill = store / "demo-skill"
+        skill.mkdir(parents=True)
+        (skill / "SKILL.md").write_text(
+            "---\nname: demo-skill\ndescription: b-roll sourcing demo\n---\n# demo\n",
+            encoding="utf-8")
+        with mock.patch.object(skill_route, "CATALOG_ROOTS", (Path(td) / "absent",)), \
+             mock.patch.object(skill_route, "SHARED_SKILL_ROOT", store), \
+             mock.patch.object(sys, "argv", ["skill_route.py", "--match", "b-roll"]):
+            assert skill_route.main() == 0
+
+
 def main() -> int:
     failures = []
     tests = (
@@ -82,6 +124,8 @@ def main() -> int:
         test_ranking_sends_a_card_request_to_card_design,
         test_ranking_sends_a_slideshow_request_to_slideshow_video,
         test_expected_catalog_roots_are_declared,
+        test_a_shared_store_skill_is_reachable_by_routing,
+        test_routing_still_answers_when_no_catalog_exists,
     )
     for fn in tests:
         try:

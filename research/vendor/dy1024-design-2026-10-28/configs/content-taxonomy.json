@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "content_types": {
+    "newsjacking": {
+      "signals": ["hot_topic", "news", "热搜", "榜单"],
+      "structures": ["hot_fact-angle-impact-proof-action"],
+      "required_beats": ["事实", "AI角度", "影响", "证据", "行动"]
+    },
+    "comparison": {
+      "signals": ["对比", "比较", "替代", "横评", "benchmark", "同类"],
+      "structures": ["claim-options-dimensions-evidence-fit-verdict"],
+      "required_beats": ["比较问题", "选项", "维度", "证据", "适用场景", "结论"]
+    },
+    "tool_test": {
+      "signals": ["本机实测", "实验", "配置", "模型", "GPU", "耗时", "显存", "bad case", "对比"],
+      "structures": ["hook-result-evidence-tradeoff-verdict-action", "problem-test-result-boundary-action"],
+      "required_beats": ["问题", "结果", "条件", "证据", "取舍", "结论", "行动"]
+    },
+    "technical_explainer": {
+      "signals": ["原理", "机制", "为什么", "主要解决", "核心收益", "工作方式", "KV Cache", "Attention", "分页", "连续批处理"],
+      "structures": ["concept-problem-mechanism-contrast-boundary-action"],
+      "required_beats": ["概念问题", "机制", "关键术语", "对比边界", "条件性收益", "适用场景", "行动"]
+    },
+    "career_experiment": {
+      "signals": ["职业挑战", "职业实验", "真实任务", "从业者", "工作流", "人工介入", "完成率"],
+      "structures": ["scenario-input-process-evidence-risk-fit", "problem-test-result-boundary-action"],
+      "required_beats": ["真实任务", "完成率", "时间", "成本", "质量", "人工介入", "从业者反馈", "边界", "机会"]
+    },
+    "business_experiment": {
+      "signals": ["生意实验", "商业实验", "Demo", "用户测试", "付费", "预约", "MVP", "SaaS"],
+      "structures": ["scenario-input-process-evidence-risk-fit", "claim-facts-counterview-judgment-question"],
+      "required_beats": ["问题", "用户", "现有方案", "Demo", "行为信号", "付费信号", "失败或成功原因", "下一轮"]
+    },
+    "github_project": {
+      "signals": ["github", "开源", "仓库", "部署", "README", "issue"],
+      "structures": ["problem-demo-install-boundary-action"],
+      "required_beats": ["问题", "演示", "最短路径", "边界", "行动"]
+    },
+    "monetization_case": {
+      "signals": ["变现", "收入", "成本", "客户", "订单", "案例"],
+      "structures": ["scenario-input-process-evidence-risk-fit"],
+      "required_beats": ["场景", "投入", "过程", "证据", "风险", "适用条件"]
+    },
+    "tutorial": {
+      "signals": ["教程", "怎么用", "步骤", "参数", "安装"],
+      "structures": ["goal-shortest-path-key-parameter-error-check"],
+      "required_beats": ["目标", "步骤", "关键参数", "错误", "完成检查"]
+    },
+    "failure_review": {
+      "signals": ["失败", "踩坑", "报错", "bad case", "不工作"],
+      "structures": ["failure-expectation-root-cause-fix-boundary"],
+      "required_beats": ["失败", "预期", "原因", "修复", "边界"]
+    },
+    "opinion": {
+      "signals": ["我认为", "争议", "该不该", "伦理", "怎么看"],
+      "structures": ["claim-facts-counterview-judgment-question"],
+      "required_beats": ["命题", "事实", "不同意见", "判断", "问题"]
+    }
+  },
+  "default_content_type": "tool_test"
+}

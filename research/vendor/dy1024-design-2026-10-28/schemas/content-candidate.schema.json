@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/content-candidate.schema.json",
+  "title": "OPC Content Candidate V2.1",
+  "type": "object",
+  "required": ["schema_version", "contract", "content_id", "account", "status", "audience", "problem", "value", "trust", "business_fit", "content_shelf", "positioning_alignment", "content_strategy", "content_value", "need_score", "evaluation", "linkage"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "contract": {"const": "content-candidate-v2.1"},
+    "content_id": {"type": "string", "minLength": 1},
+    "account": {"const": "X•超玩1024"},
+    "opc_task_id": {"type": ["string", "null"]},
+    "status": {"enum": ["pending", "ready", "accepted", "experimental", "deferred", "rejected"]},
+    "audience": {"type": "object", "required": ["primary_segment_id", "secondary_segment_ids", "stage", "context"]},
+    "problem": {"type": "object", "required": ["job_to_be_done", "pain_point", "desired_outcome"]},
+    "value": {"type": "object", "required": ["user_takeaway", "decision_enabled", "action_enabled"]},
+    "trust": {"type": "object", "required": ["level", "reasons", "evidence_types", "proof_available"]},
+    "business_fit": {"type": "object", "required": ["level", "rationale", "related_service", "related_product", "related_opportunity"]},
+    "content_shelf": {"type": "object", "required": ["primary_shelf", "secondary_shelf"]},
+    "positioning_alignment": {"enum": ["ALIGNED", "ADJACENT", "EXPERIMENTAL", "OFF_POSITIONING"]},
+    "content_strategy": {"enum": ["AUTHORITY", "DISCOVERY", "TRUST", "CONVERSION", "RETENTION", "EXPERIMENT"]},
+    "distribution_signal": {"type": "object"},
+    "content_value": {"type": "object", "required": ["demand", "audience_relevance", "problem_severity", "trust_evidence_strength", "business_fit", "production_cost", "aggregate", "confidence"]},
+    "need_score": {"type": "object", "required": ["dimensions", "aggregate", "level", "confidence"]},
+    "evaluation": {"type": "object", "required": ["decision", "reason", "evaluated_by", "evaluated_at"]},
+    "override": {"type": ["object", "null"]},
+    "linkage": {"type": "object", "required": ["opc_task_id", "content_candidate_id", "content_id", "production_run_id", "publication_id"]}
+  },
+  "additionalProperties": true
+}

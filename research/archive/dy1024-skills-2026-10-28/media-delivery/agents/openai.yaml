@@ -1,0 +1,4 @@
+interface:
+  display_name: "Media Delivery"
+  short_description: "Build review-gated, editable vertical video packages"
+  default_prompt: "Use $media-delivery to turn the approved content package into a rights-audited, captioned, editable video delivery bundle."

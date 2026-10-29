@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/script.schema.json",
+  "title": "Canonical Script",
+  "type": "object",
+  "required": ["schema_version", "contract", "content_id", "status", "title", "hook", "close", "beats", "script_sha256"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "contract": { "enum": ["canonical-copy-to-video-v1", "canonical-copy-to-video-v2"] },
+    "content_id": { "type": "string", "minLength": 1 }, "status": { "enum": ["pending", "ready_for_review", "approved", "blocked"] },
+    "title": { "type": "string" }, "hook": { "type": "string" }, "close": { "type": "string" }, "script_sha256": { "type": "string" },
+    "beats": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["beat_id", "narration", "audience_task", "practical_value", "emotional_task", "claim_ids", "visual_intent", "duration_seconds"],
+        "properties": {
+          "beat_id": { "type": "string" }, "narration": { "type": "string" }, "audience_task": { "type": "string" },
+          "practical_value": { "type": "string" }, "emotional_task": { "type": "string" }, "claim_ids": { "type": "array", "items": { "type": "string" } },
+          "visual_intent": { "type": "string" }, "duration_seconds": { "type": "number", "minimum": 0 }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

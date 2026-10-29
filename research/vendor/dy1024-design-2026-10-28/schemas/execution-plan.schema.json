@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/execution-plan.schema.json",
+  "title": "Account Execution Plan",
+  "type": "object",
+  "required": ["schema_version", "content_id", "account", "deliverables", "evidence_floor", "required_gates"],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "content_id": {"type": "string"},
+    "title": {"type": "string"},
+    "account": {"const": "X•超玩1024"},
+    "deliverables": {"const": ["video"]},
+    "platforms": {"const": ["douyin"]},
+    "evidence_floor": {"type": "integer", "minimum": 1},
+    "required_gates": {"type": "array", "items": {"type": "string"}},
+    "optional_gates": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": true
+}

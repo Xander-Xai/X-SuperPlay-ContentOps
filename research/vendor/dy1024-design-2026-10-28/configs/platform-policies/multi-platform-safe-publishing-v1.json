@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "policy_id": "multi-platform-safe-publishing-v1",
+  "status": "active",
+  "effective_date": "2026-09-10",
+  "rule_basis": "internal_safe_baseline; verify_current_platform_notice_before_publish",
+  "scope": "topic_to_copy_to_publish_preflight",
+  "supported_platforms": ["douyin", "xiaohongshu", "wechat_channels"],
+  "universal_guardrails": {
+    "manual_review_required": true,
+    "auto_publish": false,
+    "one_primary_claim": true,
+    "one_cta_only": true,
+    "unverified_result_is_blocked": true,
+    "planned_evidence_is_not_proof": true,
+    "rights_status_for_publish": "approved",
+    "ai_disclosure": {
+      "required_when_ai_or_major_edit": true,
+      "required_fields": ["is_ai_or_major_edit", "label", "location"]
+    },
+    "commercial_disclosure": {
+      "required_when_promotional": true,
+      "required_fields": ["is_promotional", "status"]
+    },
+    "universal_blocked_patterns": [
+      "稳赚",
+      "保证赚钱",
+      "100%保证",
+      "包过",
+      "内部消息",
+      "刷量",
+      "绕过检测",
+      "破解平台",
+      "论文代写",
+      "代发论文",
+      "保证达到指标"
+    ]
+  },
+  "platforms": {
+    "douyin": {
+      "display_name": "抖音",
+      "role": "discovery_and_result_checklist",
+      "recommended_format": "9:16 vertical video",
+      "recommended_duration_seconds": [45, 75],
+      "title_max_chars_recommended": 30,
+      "first_screen_requirement": "在前3秒提出可验证问题或结果边界",
+      "cta_policy": "单一平台内动作；不得把评论引导成站外联系方式",
+      "off_platform_contact_policy": "no_external_contact_or_qr_in_topic_plan",
+      "blocked_patterns": ["加微信", "加V", "二维码", "私聊领资料", "私信拿项目"],
+      "required_review": ["title_hook_match", "claim_evidence_match", "rights", "ai_disclosure", "commercial_disclosure"]
+    },
+    "xiaohongshu": {
+      "display_name": "小红书",
+      "role": "search_pain_before_after_trust",
+      "recommended_format": "6-9 page note or 60-90 second video",
+      "recommended_duration_seconds": [60, 90],
+      "title_max_chars_recommended": 20,
+      "first_screen_requirement": "首屏给出可验证的收益、步骤或验收标准",
+      "cta_policy": "评论、点赞、收藏、关注或站内私信；不得承诺站外交付",
+      "off_platform_contact_policy": "no_off_platform_contact_or_qr",
+      "blocked_patterns": ["论文复现", "论文代写", "加微信", "加V", "二维码", "私信领资料", "包过", "全网第一"],
+      "required_review": ["search_intent", "keyword_safety", "no_off_platform_cta", "claim_evidence_match", "rights", "ai_disclosure", "commercial_disclosure"]
+    },
+    "wechat_channels": {
+      "display_name": "视频号",
+      "role": "trust_explanation_and_case_readback",
+      "recommended_format": "90-150 second explanation",
+      "recommended_duration_seconds": [90, 150],
+      "title_max_chars_recommended": 30,
+      "first_screen_requirement": "先给结论，再给背景、证据和边界",
+      "cta_policy": "单一评论、关注或站内沟通动作；不得制造夸张收益承诺",
+      "off_platform_contact_policy": "no_qr_or_unsolicited_external_contact",
+      "blocked_patterns": ["加微信", "加V", "二维码", "稳赚", "保证赚钱", "包过", "内部消息"],
+      "required_review": ["context_and_boundary", "claim_evidence_match", "rights", "ai_disclosure", "commercial_disclosure"]
+    }
+  },
+  "release_gate": {
+    "required_checks": [
+      "policy_version_present",
+      "current_platform_notice_checked",
+      "safe_title_present",
+      "one_primary_claim",
+      "one_cta_only",
+      "evidence_plan_present",
+      "rights_status_approved",
+      "ai_disclosure_complete",
+      "commercial_disclosure_complete",
+      "human_review_approved"
+    ],
+    "fail_closed_on_missing_policy": true,
+    "fail_closed_on_blocked_pattern": true,
+    "fail_closed_on_unverified_result": true
+  }
+}

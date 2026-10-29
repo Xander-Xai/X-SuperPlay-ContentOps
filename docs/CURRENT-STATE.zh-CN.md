@@ -768,7 +768,7 @@ python scripts/presenter_opening.py projects/easel-fi-what-is-agent --verify-spe
 | 状态 | `pending` / `running` / `ready_for_review` / `approved` / `blocked` |
 | 批准绑定 | 产物 SHA-256 + 上游指纹；任一变化即失效 |
 | 绕过 | 无 |
-| 阶段校验 | 受众 Lens；脚本节奏、时长、技术解释与文案策略；逐 claim 证据覆盖；版权台账与素材候选；视觉路由；交付清单与发布计划 |
+| 阶段校验 | 受众 Lens；脚本节奏、时长、技术解释、文案策略与自然度；逐 claim 证据覆盖与拍摄计划；版权台账与素材候选；视觉路由；交付清单与发布计划 |
 | 文档门禁 | 选题 backlog、候选评分、证据可行性、平台策略、版权、改进日志、反馈/指标、skill provenance |
 | 共享 skill | `C:\Users\Administrator\.agents\skills` 中 9 个 skill，账号 DNA 以 `path_base: "shared"` 声明 |
 | 测试 | 55 个套件（`tests/test_*.py` 加 `scripts/test_basic.py`），由 `scripts/run_tests.py` 发现并逐个运行；开发者门禁会跑全部，CI 拒收"存在但从未被点名"的套件 |
@@ -871,3 +871,27 @@ skill（26 条 `skills.entries` 全部关闭）。有一把 anthropic 凭据返�
 `python scripts/workflow_gate.py` 仍可用，且每次调用都会提示它未接入生产链路。
 没有任何代码被删除：若日后顺序规则确实有价值，改一行导入即可启用，决定是可见的，
 而不是需要重新发现。
+
+### 拍摄合同与自然度门禁 — 2026-10-29
+
+退役的 `dy_x1024` 有三项能力是当前流水线没有的，现在都已变成代码、有测试、且接入了门禁。
+它们都不是新引擎；每一项都只是拒绝一份无法诚实产出的文档。
+
+| 能力 | 模块 | 接入位置 |
+|---|---|---|
+| 逐 beat 的拍摄简报：画面来源、必须可见的内容、9:16 裁切、光标、脱敏 | `src/contentops/workflow/capture_plan.py` + `scripts/recording_plan.py` | `storyboard` 阶段读取同级 `capture-plan.json` |
+| 口语预算、口头禅上限、事实锁留存 | `src/contentops/quality/naturalness.py` | `script` 阶段读取同级 `naturalness.json`；`workflow_docs.py check --kind naturalness` |
+| 烧进画面的字幕必须转录该段旁白 | `contentops.quality.subtitle.validate_caption_agreement` + `scripts/check_caption_text.py` | 由烧字幕步骤调用；以退出码判定 |
+
+| 事实 | 值 |
+|---|---|
+| 1024 策略 | `evidence.manual_recording: ALLOWED_CROPPED`；实跑把 8 个分镜 beat 路由为 browser 5 / task_screen 3（写到临时路径，未提交进项目） |
+| 未来智能策略 | `FORBIDDEN`；要求"直接观察"的 beat 无法产出合法计划，CLI 退出 1 且不写文件 |
+| 脱敏默认 | 由分镜推导出的 beat 默认 `true`，且声明了脱敏就必须写进拍摄合同 |
+| Skill | 共享库新增 `x-superplay-capture-plan`，两个账号都以 `capture_plan` 步骤接入 |
+| 测试 | `tests/test_capture_plan.py`（16 项）、`tests/test_naturalness.py`（18 项），均已写入 CI |
+
+两条边界是有意声明的：
+
+- **拍摄计划是简报，不是拍摄结果。** 通过它不证明素材存在或在手机尺寸下可读；可用性仍由人判断。
+- **自然度通过不是听感结论。** 它证明改写没有超出自己声明的预算，且保留了锁定事实。字幕一致性是文本同一性，不是读音。

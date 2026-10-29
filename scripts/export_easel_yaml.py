@@ -123,6 +123,7 @@ def build(dna: dict) -> str:
             "real_source_ratio_min": 0.70,
         },
         "evidence": {
+            "mode": dna["evidence"]["mode"],
             "manual_recording": dna["evidence"]["manual_recording"],
             "required_evidence_class": dna["evidence"]["required_evidence_class"],
         },

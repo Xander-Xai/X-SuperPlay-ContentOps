@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creator-matrix.local/schemas/delivery-manifest-v2.schema.json",
+  "title": "Canonical Delivery manifest",
+  "type": "object",
+  "required": ["schema_version", "contract", "content_id", "account", "status", "files", "disclosures"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "contract": { "enum": ["canonical-copy-to-video-v1", "canonical-copy-to-video-v2"] },
+    "content_id": { "type": "string" },
+    "account": { "const": "X•超玩1024" },
+    "status": { "enum": ["pending", "ready_for_review", "approved", "blocked"] },
+    "files": { "type": "array", "items": { "type": "object", "required": ["path", "sha256", "bytes"], "properties": { "path": { "type": "string" }, "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }, "bytes": { "type": "integer", "minimum": 0 } }, "additionalProperties": false } },
+    "disclosures": { "type": "object", "required": ["digital_human", "voice_clone", "generated_visuals"], "additionalProperties": { "const": true } }
+  },
+  "additionalProperties": false
+}
