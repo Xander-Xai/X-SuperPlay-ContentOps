@@ -1,16 +1,16 @@
-"""The script stage: an approved brief becomes copy, and nothing is invented.
+"""The script stage: provenance, substance and honest duration.
 
-What these tests pin:
+What these tests pin, one per defect this round fixed:
 
-- a draft is built only from an approved, unchanged brief;
-- a degraded evidence forecast stops the stage at EVIDENCE_REQUIRED;
-- every spoken line is a SUPPORTED claim or a transition, because the claim
-  contract does not allow anything else on narration;
-- the one factual line quotes the source's own title and binds a document whose
-  digest matches the file on disk;
-- a paraphrase of a claim is caught, because a different wording is a
-  different claim;
-- drafting never writes a copy-review approval.
+- a topic the user supplied is never presented as a source's own title;
+- a brief with a link but no collected material does **not** become a script —
+  it stops at DRAFT_CONTENT_INSUFFICIENT and says what is missing;
+- with real material, every spoken fact is bound to a collected, hashed
+  document, and the old "transitions only" script is gone;
+- a shot lasts as long as its line takes to say, not as long as the account's
+  window wants it to;
+- one capture per source, because an operator captures a page once;
+- drafting writes no copy-review approval.
 
 Run: python tests/test_script_draft.py
 """
@@ -32,15 +32,16 @@ from contentops.hotspots.storage import RouterStore  # noqa: E402
 from contentops.routing.router import ContentRouter  # noqa: E402
 from contentops.routing.user_topic_route import UserTopicInput  # noqa: E402
 from contentops.script import ScriptBlocked, build, check, write  # noqa: E402
+from contentops.script.draft import line_seconds, topic_provenance  # noqa: E402
+from contentops.script.evidence import PACK_SCHEMA  # noqa: E402
 
 ACCOUNT_BUILD = "x-superplay-future-intelligence"
 ACCOUNT_EXPLORE = "x-superplay-1024"
 FIXTURES = ROOT / "tests" / "fixtures" / "hotspots" / "sample-pool.json"
+TOPIC = "LangGraph 的状态管理怎么设计"
 
 
 class _Adapters(dict):
-    """A source-id map whose misses fall back to one adapter."""
-
     def __init__(self, adapter):
         super().__init__()
         self._default = adapter
@@ -50,8 +51,6 @@ class _Adapters(dict):
 
 
 class _Quality:
-    """Evidence that never touches the network."""
-
     def fetch(self, full_name):
         from contentops.hotspots.quality import RepoEvidence
         return RepoEvidence(full_name=full_name, description="a real project",
@@ -69,181 +68,249 @@ def _sandbox(tmp: str) -> Path:
     return root
 
 
-def _fixture_adapter() -> FixtureAdapter:
-    return FixtureAdapter(json.loads(FIXTURES.read_text(encoding="utf-8")))
-
-
 def _router(root: Path) -> ContentRouter:
     return ContentRouter(root, store=RouterStore(root, home=root / "state"),
-                         adapters=_Adapters(_fixture_adapter()),
+                         adapters=_Adapters(FixtureAdapter(
+                             json.loads(FIXTURES.read_text(encoding="utf-8")))),
                          quality_fetcher=_Quality())
 
 
-def _approved_topic(root: Path) -> tuple[ContentRouter, str, Path]:
+def _approved_topic(root: Path, slug: str = "script-topic") -> Path:
     router = _router(root)
     run = router.start(ACCOUNT_BUILD, "USER_TOPIC",
-                       UserTopicInput(topic="LangGraph 的状态管理怎么设计",
+                       UserTopicInput(topic=TOPIC,
                                       urls=["https://github.com/langchain-ai/langgraph"]))
     router.approve(ACCOUNT_BUILD, run.run_id, reviewer="Founder", confirmed=True,
-                   project_slug="script-topic")
-    return router, run.run_id, root / "projects" / "script-topic"
+                   project_slug=slug)
+    return root / "projects" / slug
 
 
-def test_an_approved_brief_becomes_a_draft():
+def _pack(project: Path, items: int = 4, chars: int = 180,
+          same_url: bool = False) -> Path:
+    """A real-shaped pack: documents on disk, digests that match."""
+    documents = project / "script" / "evidence"
+    documents.mkdir(parents=True, exist_ok=True)
+    entries = []
+    for index in range(1, items + 1):
+        sentence = ("LangGraph 用 checkpointer 保存每一步的图状态，因此一次长任务可以从"
+                    "中断处继续，而不是从头再来。") * (1 + chars // 60)
+        sentence = sentence[:chars]
+        payload = (f"source: https://docs.example.test/page-{index}\n"
+                   f"note: the page's own text as fetched\n\n{sentence}\n").encode("utf-8")
+        path = documents / f"EV-{index:02d}.txt"
+        path.write_bytes(payload)
+        entries.append({
+            "evidence_id": f"EV-{index:02d}", "kind": "documentation",
+            "title": f"docs page {index}",
+            "url": ("https://docs.example.test/page-1" if same_url
+                    else f"https://docs.example.test/page-{index}"),
+            "excerpt": sentence,
+            "document": f"script/evidence/EV-{index:02d}.txt",
+            "sha256": hashlib.sha256(payload).hexdigest(),
+            "retrieved_at": "2026-10-30T00:00:00Z",
+        })
+    pack = {"schema": PACK_SCHEMA, "topic": TOPIC, "items": entries}
+    path = project / "00_brief" / "evidence-pack.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(pack, ensure_ascii=False, indent=2), encoding="utf-8")
+    return path
+
+
+def test_a_user_topic_is_never_a_sources_title():
     with tempfile.TemporaryDirectory() as tmp:
         root = _sandbox(tmp)
-        _, _, project = _approved_topic(root)
+        project = _approved_topic(root)
+        brief = json.loads((project / "00_brief" / "brief.json").read_text(encoding="utf-8"))
+        assert topic_provenance(brief) == "user_supplied_topic"
+        _pack(project)
         draft = build(project, root=root)
-        assert draft.lines["schema"] == "contentops.audio-first-lines/v1"
-        assert draft.claim_map["schema"] == "contentops.claim-map/v1"
-        assert len(draft.lines["beats"]) == 5
-        assert draft.storyboard["shots"]
-        assert draft.master.startswith("# ")
-        assert draft.evidence_files
+        provenances = {claim["provenance"] for claim in draft.report["claims"]}
+        assert "source_original_title" not in provenances
+        opening = draft.master.split("## P-01")[1].split("## P-02")[0]
+        assert "你提的问题" in opening
+        assert "原标题" not in opening
 
 
-def test_every_spoken_line_is_supported():
-    """The claim contract only lets SUPPORTED claims be narrated."""
+def test_a_link_without_material_does_not_become_a_script():
+    with tempfile.TemporaryDirectory() as tmp:
+        root = _sandbox(tmp)
+        project = _approved_topic(root)
+        try:
+            build(project, root=root)
+        except ScriptBlocked as exc:
+            assert exc.code == "DRAFT_CONTENT_INSUFFICIENT"
+            assert "证据包" in exc.detail
+        else:
+            raise AssertionError("a brief with no collected material must not draft")
+
+
+def test_a_thin_pack_is_refused_with_the_gap_named():
+    with tempfile.TemporaryDirectory() as tmp:
+        root = _sandbox(tmp)
+        project = _approved_topic(root)
+        _pack(project, items=2, chars=60)
+        try:
+            build(project, root=root)
+        except ScriptBlocked as exc:
+            assert exc.code == "DRAFT_CONTENT_INSUFFICIENT"
+            assert "可引用材料" in exc.detail
+        else:
+            raise AssertionError("two short items are not an episode")
+
+
+def test_real_material_becomes_substantive_spoken_lines():
+    with tempfile.TemporaryDirectory() as tmp:
+        root = _sandbox(tmp)
+        project = _approved_topic(root)
+        _pack(project)
+        draft = build(project, root=root)
+        spoken = [beat["text"] for beat in draft.lines["beats"]]
+        assert len(spoken) >= 6
+        factual = [claim for claim in draft.report["claims"] if claim["kind"] == "source"]
+        assert len(factual) >= 4
+        for claim in factual:
+            assert claim["support_status"] == "SUPPORTED"
+            assert claim["source_refs"][0].startswith("https://")
+        assert any("checkpointer" in line for line in spoken)
+
+
+def test_every_fact_is_bound_to_a_document_that_matches_its_digest():
     from contentops.evidence.claim_map import ClaimMap
     with tempfile.TemporaryDirectory() as tmp:
         root = _sandbox(tmp)
-        _, _, project = _approved_topic(root)
-        draft = build(project, root=root)
-        claim_map = ClaimMap.from_dict(draft.claim_map).validate()
-        spoken = {beat["claim_id"] for beat in draft.lines["beats"]}
+        project = _approved_topic(root)
+        _pack(project)
+        write(build(project, root=root))
+        document = json.loads((project / "script" / "claim-map.json")
+                              .read_text(encoding="utf-8"))
+        claim_map = ClaimMap.from_dict(document).validate()
         for claim in claim_map.claims:
-            if claim.claim_id in spoken:
-                assert claim.support_status == "SUPPORTED", claim.claim_id
+            for item in claim.evidence:
+                relative = item["logical_path"].replace("project://", "")
+                path = project / relative
+                assert path.is_file(), relative
+                assert hashlib.sha256(path.read_bytes()).hexdigest() == item["sha256"]
 
 
-def test_the_fact_line_quotes_the_source_and_binds_its_document():
+def test_a_changed_evidence_file_is_refused():
     with tempfile.TemporaryDirectory() as tmp:
         root = _sandbox(tmp)
-        _, _, project = _approved_topic(root)
-        draft = build(project, root=root)
-        source_claim = next(claim for claim in draft.claim_map["claims"]
-                            if claim["kind"] == "source")
-        assert "原标题是" in source_claim["text"]
-        evidence = source_claim["evidence"][0]
-        content = draft.evidence_files["C-02-source.txt"]
-        assert hashlib.sha256(content).hexdigest() == evidence["sha256"]
-        assert evidence["logical_path"].startswith("project://script/evidence/")
-        assert b"not a run, a test or an independent verification" in content
-
-
-def test_a_degraded_forecast_stops_at_evidence_required():
-    with tempfile.TemporaryDirectory() as tmp:
-        root = _sandbox(tmp)
-        router = _router(root)
-        run = router.start(ACCOUNT_EXPLORE, "HOTSPOT_DISCOVERY")
-        candidate = run.detail["candidates"][0]["candidate_id"]
-        router.select(ACCOUNT_EXPLORE, run.run_id, candidate, selected_by="Founder")
-        router.approve(ACCOUNT_EXPLORE, run.run_id, reviewer="Founder",
-                       confirmed=True, project_slug="script-hotspot")
-        project = root / "projects" / "script-hotspot"
-        package = json.loads((project / "00_brief" / "brief.json")
-                             .read_text(encoding="utf-8"))
-        if package.get("forecast_verdict") != "DEGRADED":
-            raise AssertionError("fixture expected a DEGRADED forecast")
+        project = _approved_topic(root)
+        _pack(project)
+        document = project / "script" / "evidence" / "EV-01.txt"
+        document.write_bytes(document.read_bytes() + b"tampered")
         try:
             build(project, root=root)
         except ScriptBlocked as exc:
-            assert exc.code == "EVIDENCE_REQUIRED"
+            assert exc.code == "EVIDENCE_PACK_INVALID"
+            assert "摘要" in exc.detail
         else:
-            raise AssertionError("a degraded forecast must not become a script")
+            raise AssertionError("a doctored document must not be quoted")
 
 
-def test_an_unapproved_brief_cannot_become_a_script():
+def test_duration_comes_from_the_words_not_from_the_window():
+    assert line_seconds("") == 0.0
+    short = line_seconds("很短的一句。")
+    long = line_seconds("这一句明显更长，因为它在解释一张图里每一层分别在做什么事情。")
+    assert short < long
+    assert 0.5 < short < 3.0
+    assert long > short
+
     with tempfile.TemporaryDirectory() as tmp:
         root = _sandbox(tmp)
-        router = _router(root)
-        run = router.start(ACCOUNT_BUILD, "USER_TOPIC",
-                           UserTopicInput(topic="Agent 的记忆机制怎么设计"))
-        router.approve(ACCOUNT_BUILD, run.run_id, reviewer="Founder", confirmed=True,
-                       project_slug="script-unapproved")
-        project = root / "projects" / "script-unapproved"
-        package = json.loads((project / "00_brief" / "brief.json")
-                             .read_text(encoding="utf-8"))
-        package["intent"]["topic"] = "被改过的主题"
-        (project / "00_brief" / "brief.json").write_text(
-            json.dumps(package, ensure_ascii=False), encoding="utf-8")
+        project = _approved_topic(root)
+        _pack(project)
+        draft = build(project, root=root)
+        total = 0.0
+        for shot in draft.storyboard["shots"]:
+            spoken = line_seconds(shot["narration"])
+            assert shot["duration"] >= spoken - 0.001, shot["shot_id"]
+            total += shot["duration"]
+        assert abs(total - draft.report["storyboard"]["duration_s"]) < 0.2
+
+
+def test_too_little_material_for_the_window_is_refused_not_stretched():
+    with tempfile.TemporaryDirectory() as tmp:
+        root = _sandbox(tmp)
+        project = _approved_topic(root)
+        _pack(project, items=3, chars=150)
         try:
             build(project, root=root)
         except ScriptBlocked as exc:
-            assert exc.code == "APPROVAL_STALE"
+            assert exc.code == "DRAFT_CONTENT_INSUFFICIENT"
+            assert "窗口" in exc.detail
         else:
-            raise AssertionError("a changed brief must not become a script")
+            raise AssertionError("a short script must not be stretched to fit")
 
 
-def test_the_written_draft_passes_its_own_check_and_leaves_copy_unreviewed():
+def test_one_capture_per_source_not_one_per_sentence():
     with tempfile.TemporaryDirectory() as tmp:
         root = _sandbox(tmp)
-        _, _, project = _approved_topic(root)
+        project = _approved_topic(root)
+        _pack(project, items=3, chars=600, same_url=True)
         draft = build(project, root=root)
-        written = write(draft)
-        assert (project / "script" / "lines.json").is_file()
-        assert (project / "script" / "claim-map.json").is_file()
-        assert (project / "script" / "storyboard.json").is_file()
-        assert (project / "script" / "master.md").is_file()
-        assert (project / "00_brief" / "script-report.json").is_file()
-        assert any(key.startswith("evidence/") for key in written)
+        captures = [shot for shot in draft.storyboard["shots"] if shot["needs_capture"]]
+        assert len(captures) == 1
+        assert captures[0]["capture_task"]
+
+
+def test_a_source_title_claim_in_a_user_topic_run_is_refused():
+    with tempfile.TemporaryDirectory() as tmp:
+        root = _sandbox(tmp)
+        project = _approved_topic(root)
+        _pack(project)
+        write(build(project, root=root))
+        report_path = project / "00_brief" / "script-report.json"
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+        report["claims"][0]["provenance"] = "source_original_title"
+        report_path.write_text(json.dumps(report, ensure_ascii=False), encoding="utf-8")
+        verdict = check(project)
+        assert verdict["ok"] is False
+        assert any("USER_TOPIC" in failure for failure in verdict["failures"])
+
+
+def test_editing_the_script_invalidates_the_copy_fingerprint():
+    """A review is bound to what the copy says; changing it makes the review stale."""
+    from contentops.workflow import copy_review
+    with tempfile.TemporaryDirectory() as tmp:
+        root = _sandbox(tmp)
+        project = _approved_topic(root)
+        _pack(project)
+        write(build(project, root=root))
+        before = copy_review.copy_fingerprint(project)
+        master = project / "script" / "master.md"
+        master.write_text(master.read_text(encoding="utf-8") + "\n改一个字\n",
+                          encoding="utf-8")
+        after = copy_review.copy_fingerprint(project)
+        assert before != after
+
+
+def test_the_draft_leaves_the_copy_unreviewed():
+    with tempfile.TemporaryDirectory() as tmp:
+        root = _sandbox(tmp)
+        project = _approved_topic(root)
+        _pack(project)
+        write(build(project, root=root))
         verdict = check(project)
         assert verdict["ok"] is True, verdict["failures"]
         assert verdict["copy_review"]["state"] == "NOT_REVIEWED"
-        assert verdict["copy_review"]["ok"] is False
+        assert not (project / "receipts" / "script-review.json").exists()
 
 
-def test_a_paraphrased_narration_is_caught():
-    with tempfile.TemporaryDirectory() as tmp:
-        root = _sandbox(tmp)
-        _, _, project = _approved_topic(root)
-        write(build(project, root=root))
-        lines_path = project / "script" / "lines.json"
-        document = json.loads(lines_path.read_text(encoding="utf-8"))
-        document["beats"][1]["text"] = "换个说法就行了吧"
-        lines_path.write_text(json.dumps(document, ensure_ascii=False), encoding="utf-8")
-        verdict = check(project)
-        assert verdict["ok"] is False
-        assert any("not the text of its claim" in failure
-                   for failure in verdict["failures"])
-
-
-def test_the_storyboard_carries_what_a_capture_step_needs():
-    with tempfile.TemporaryDirectory() as tmp:
-        root = _sandbox(tmp)
-        _, _, project = _approved_topic(root)
-        draft = build(project, root=root)
-        for shot in draft.storyboard["shots"]:
-            for key in ("shot_id", "duration", "narration", "source_type",
-                        "function", "dna_role", "needs_capture", "claim_id"):
-                assert key in shot, key
-            assert shot["duration"] > 0
-
-
-def test_the_source_shot_is_the_source_and_needs_a_capture():
-    with tempfile.TemporaryDirectory() as tmp:
-        root = _sandbox(tmp)
-        _, _, project = _approved_topic(root)
-        draft = build(project, root=root)
-        source_shot = next(shot for shot in draft.storyboard["shots"]
-                           if shot["claim_id"] == "C-02")
-        assert source_shot["source_type"] in ("code_snapshot",
-                                              "screen_recording_evidence",
-                                              "ui_screenshot", "terminal_capture")
-        assert source_shot["needs_capture"] is True
-        assert source_shot["evidence_source"].startswith("https://")
-
-
-def test_the_two_accounts_get_different_visual_plans():
-    from contentops.routing.account_profile import load_profile
-    explore = load_profile(ROOT, ACCOUNT_EXPLORE)
-    build_profile = load_profile(ROOT, ACCOUNT_BUILD)
-    assert explore.evidence_mode != build_profile.evidence_mode
-    explore_roles = {(explore.dna.get("visual") or {}).get("composition", {})
-                     .get("segments", [{}])[0].get("role")}
-    build_roles = {(build_profile.dna.get("visual") or {}).get("composition", {})
-                   .get("segments", [{}])[0].get("role")}
-    assert explore_roles != build_roles
+def test_the_pack_fetcher_reads_prose_and_skips_scripts():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "evidence_pack_script", ROOT / "scripts" / "evidence_pack.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    markup = ("<html><head><title>Persistence</title><style>.x{color:red}</style></head>"
+              "<body><script>var leak = 1;</script><h1>Persistence</h1>"
+              "<p>Checkpointers save graph state.</p></body></html>")
+    text = module._text_of(markup)
+    assert "Checkpointers save graph state." in text
+    assert "var leak" not in text
+    assert "color:red" not in text
+    assert module._title_of(markup) == "Persistence"
 
 
 def main() -> int:

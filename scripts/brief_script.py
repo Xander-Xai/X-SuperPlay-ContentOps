@@ -41,6 +41,8 @@ def main(argv=None) -> int:
     parser.add_argument("--dry-run", action="store_true", help="build but write nothing")
     parser.add_argument("--check", action="store_true",
                         help="validate a draft already on disk; write nothing")
+    parser.add_argument("--evidence", default=None,
+                        help="evidence pack (default: 00_brief/evidence-pack.json)")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
     if hasattr(sys.stdout, "reconfigure"):
@@ -56,7 +58,7 @@ def main(argv=None) -> int:
         code = 0 if verdict["ok"] else BLOCKED_EXIT
     else:
         try:
-            draft = build(project)
+            draft = build(project, pack_path=Path(args.evidence) if args.evidence else None)
         except ScriptBlocked as exc:
             payload = {"status": "BLOCKED", "code": exc.code, "detail": exc.detail,
                        "project": str(project)}

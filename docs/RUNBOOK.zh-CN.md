@@ -519,9 +519,12 @@ Brief 在审批之后被改动时，`verify` 返回 `APPROVAL_STALE`。
 `brief_handoff.py` 同样拒绝，并且对 `DEGRADED` 的证据预测额外以
 `EVIDENCE_REQUIRED` 拒绝。退出码 4 表示"尚未就绪"。
 
-下一步是脚本阶段：把 Brief 变成文案、主张与分镜——并停在复制评审：
+下一步是脚本阶段。它只讲真正采集到的材料，所以先采集：
 
 ```powershell
+python scripts\evidence_pack.py --topic "LangGraph 状态管理" --out projects\my-episode `
+    https://raw.githubusercontent.com/langchain-ai/docs/main/src/oss/langgraph/persistence.mdx `
+    https://github.com/langchain-ai/langgraph
 python scripts\brief_script.py projects\my-episode
 python scripts\brief_script.py projects\my-episode --check
 ```

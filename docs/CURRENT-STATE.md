@@ -1336,3 +1336,13 @@ itself reviewed.
 | Refusals | `EVIDENCE_REQUIRED` on a DEGRADED forecast or a missing source; `APPROVAL_STALE` on a changed brief; `AUTOMATION_APPROVAL` outside a sandbox |
 | End state | the draft stops at `NOT_REVIEWED` in the copy gate and writes no review record. M-ROUTER-SCRIPT is no longer "not started"; the remaining gap is a person's copy, not machinery |
 | Known limit | the draft's factual content is one quoted title. A no-model generator cannot write the substance, and pretending otherwise would be the failure this stage exists to prevent |
+
+### Round six — the script stage stops pretending, 2026-10-30
+
+| Area | What is now true |
+|---|---|
+| Provenance | every claim says which of five kinds it is; a `USER_TOPIC` run can no longer present the owner's topic as a source's title, and `check()` fails it if one appears |
+| Substance | the script quotes sentences from an **evidence pack** — documents fetched by `scripts/evidence_pack.py`, saved and hashed. A link alone is not material: the stage stops at `DRAFT_CONTENT_INSUFFICIENT` and names the gap |
+| Duration | `characters / 4.5` s for Chinese, 2.6 words/s for English, plus a pause; a capture shot lasts at least 5 s; one capture per source. If the material is shorter than the window, the draft is refused rather than slowed down |
+| Language | a Chinese account quoting English documentation is marked `needs_rewrite` per shot; the report states the mix (13 en / 2 zh on the real run) |
+| Honest limit | the lines are the sources' sentences, not written narration. The digest proves the document has not changed, not that it is right |

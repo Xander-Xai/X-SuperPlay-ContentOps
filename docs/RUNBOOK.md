@@ -656,10 +656,13 @@ python scripts\brief_handoff.py projects\my-episode
 `brief_handoff.py` refuses the same way, and additionally refuses a `DEGRADED`
 evidence forecast with `EVIDENCE_REQUIRED`. Exit code 4 means "not ready".
 
-The next step is the script stage, which turns the brief into copy, claims and
-shots — and stops at the copy review:
+The next step is the script stage. It only speaks about material that was
+actually collected, so collect first:
 
 ```powershell
+python scripts\evidence_pack.py --topic "LangGraph 状态管理" --out projects\my-episode `
+    https://raw.githubusercontent.com/langchain-ai/docs/main/src/oss/langgraph/persistence.mdx `
+    https://github.com/langchain-ai/langgraph
 python scripts\brief_script.py projects\my-episode
 python scripts\brief_script.py projects\my-episode --check
 ```

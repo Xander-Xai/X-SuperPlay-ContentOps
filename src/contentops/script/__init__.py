@@ -12,21 +12,43 @@ See ``draft.py`` for the contract and the reasons.
 from .draft import (  # noqa: F401
     DRAFT_SCHEMA,
     LINES_SCHEMA,
+    PROVENANCE,
     REPORT_FILE,
+    SPEAK_RATE_ZH,
     Draft,
     ScriptBlocked,
     build,
     check,
+    line_seconds,
+    topic_provenance,
     write,
+)
+from .evidence import (  # noqa: F401
+    PACK_FILE,
+    PACK_SCHEMA,
+    EvidenceItem,
+    EvidencePack,
+    load_pack,
+    sufficiency,
 )
 
 __all__ = [
     "DRAFT_SCHEMA",
     "LINES_SCHEMA",
+    "PACK_FILE",
+    "PACK_SCHEMA",
+    "PROVENANCE",
     "REPORT_FILE",
+    "SPEAK_RATE_ZH",
+    "EvidenceItem",
+    "EvidencePack",
     "Draft",
     "ScriptBlocked",
     "build",
     "check",
+    "line_seconds",
+    "load_pack",
+    "sufficiency",
+    "topic_provenance",
     "write",
 ]

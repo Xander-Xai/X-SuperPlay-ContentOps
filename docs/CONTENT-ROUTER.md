@@ -591,6 +591,38 @@ The stage never writes `receipts/script-review.json`. After a successful draft
 the copy gate reads `NOT_REVIEWED` and the pipeline stops there — which is the
 correct end state for an unattended run.
 
+## What the script stage is allowed to say
+
+The first version of the script stage produced a compliant, hollow draft: a
+title restated as if it were the source's own words, a few transitions, a call
+to action. Three rules now govern it.
+
+**Provenance is stated, per line.** Every claim carries one of
+`user_supplied_topic`, `source_original_title`, `source_description`,
+`verified_factual_claim`, `editorial_statement`. A topic the owner typed is
+never attributed to a source — the earlier draft did that, and `check()` now
+fails a `source_original_title` claim in a `USER_TOPIC` run.
+
+**Only collected material may be spoken.** `scripts/evidence_pack.py` fetches
+official documentation, a repository page or a data file, saves the text it
+read, hashes it, and writes the pack. The script quotes sentences from that
+pack; a claim is `SUPPORTED` only because a document exists whose digest
+matches. A link on its own is not material, so a brief with a link and nothing
+else stops at `DRAFT_CONTENT_INSUFFICIENT`, naming the gap — never padded with
+transitions to reach the account's window.
+
+**Duration follows the words.** A beat lasts `characters / 4.5` seconds for
+Chinese (2.6 words/s for English) plus a half-second pause; a shot that shows a
+real artifact lasts at least five seconds so it can be read. One capture per
+source, not per sentence. If the material adds up to less than the account's
+window, the stage refuses rather than slowing the voice down.
+
+What the draft still is not: written. The lines are the sources' sentences, and
+where a Chinese account is quoting English documentation the shot is marked
+`needs_rewrite` — a person writes the spoken Chinese and the copy review
+approves it. The digest proves the document has not changed; it proves nothing
+about whether the document is right.
+
 ## What this does not do
 
 - It does not choose a topic for you. It proposes; a person decides.
