@@ -22,6 +22,10 @@ import tempfile
 from pathlib import Path
 from typing import List
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 ROOT = Path(__file__).resolve().parents[1]
 for candidate in (ROOT / "src", ROOT / "scripts"):
     if str(candidate) not in sys.path:

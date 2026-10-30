@@ -145,10 +145,11 @@ def test_easel_adapter_keeps_upstream_outputs_and_temp_files_in_project_work():
         assert requested_output.resolve().is_relative_to(work_dir.resolve()), requested_output
         assert not requested_output.resolve().is_relative_to(fake_runtime.resolve()), requested_output
         child_env = calls[0][1]["env"]
-        assert child_env["TEMP"] == str(work_dir)
-        assert child_env["TMP"] == str(work_dir)
-        assert child_env["TMPDIR"] == str(work_dir)
-        assert result["video"] == str(project / "final" / "easel.mp4")
+        resolved_work = work_dir.resolve()
+        assert Path(child_env["TEMP"]).resolve() == resolved_work, child_env["TEMP"]
+        assert Path(child_env["TMP"]).resolve() == resolved_work, child_env["TMP"]
+        assert Path(child_env["TMPDIR"]).resolve() == resolved_work, child_env["TMPDIR"]
+        assert Path(result["video"]).resolve() == (project / "final" / "easel.mp4").resolve()
         assert not (fake_runtime / "outputs").exists()
     print("[ok] Easel adapter project-owned work paths")
 
