@@ -45,14 +45,30 @@ def _now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
+def observation_path(home: Path) -> Path:
+    """Where the daily observation lines live, next to the router's own state."""
+    return Path(home) / "observation" / "daily.jsonl"
+
+
 def _record(router: ContentRouter, account: str, trendradar_db: Optional[str]) -> Dict[str, Any]:
-    started = _now()
-    entry: Dict[str, Any] = {"at": started, "account": account, "route": "HOTSPOT_DISCOVERY"}
+    entry: Dict[str, Any] = {"at": _now(), "account": account, "route": "HOTSPOT_DISCOVERY"}
     try:
         result = router.start(account, "HOTSPOT_DISCOVERY")
     except RoutingError as exc:
         entry.update({"status": "BLOCKED", "code": exc.code, "detail": exc.detail})
         return entry
+    return entry_from_result(account, result, trendradar_db)
+
+
+def entry_from_result(account: str, result: Any, trendradar_db: Optional[str]
+                      ) -> Dict[str, Any]:
+    """One observation line, from a run that already happened.
+
+    Split out so the scheduled collection records the same shape as the manual
+    one: a week of data is only comparable if both wrote it the same way.
+    """
+    entry: Dict[str, Any] = {"at": _now(), "account": account,
+                             "route": "HOTSPOT_DISCOVERY"}
     collection = (result.detail or {}).get("collection") or {}
     sources = collection.get("sources") or []
     entry.update({
@@ -82,7 +98,7 @@ def _record(router: ContentRouter, account: str, trendradar_db: Optional[str]) -
     return entry
 
 
-def _append(path: Path, entry: Dict[str, Any]) -> None:
+def append_entry(path: Path, entry: Dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(entry, ensure_ascii=False) + "\n")
@@ -149,7 +165,7 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
 
     store = RouterStore(ROOT, home=Path(args.home) if args.home else None)
-    log_path = store.home / "observation" / "daily.jsonl"
+    log_path = observation_path(store.home)
 
     if args.report:
         rows = _read(log_path, args.days)
@@ -168,7 +184,7 @@ def main(argv=None) -> int:
         print(f"{account}: {entry.get('status')} fetched={entry.get('fetched')} "
               f"candidates={entry.get('candidates')} stale={entry.get('stale_sources')}")
         if not args.dry_run:
-            _append(log_path, entry)
+            append_entry(log_path, entry)
     if args.json:
         print(json.dumps(entries, ensure_ascii=False, indent=2))
     if not args.dry_run:

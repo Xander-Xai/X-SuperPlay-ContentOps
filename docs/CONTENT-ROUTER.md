@@ -455,7 +455,7 @@ owner's decision.
 
 `scripts/router_schedule.py` does one collection cycle: crawl through
 TrendRadar's own entry point, discover the newest database, collect for both
-accounts, write a receipt. It is the only component that runs unattended, and
+accounts, append the day's observation line, and write a receipt. It is the only component that runs unattended, and
 what it may do is bounded by construction and checked by test — it cannot
 select a topic, approve a brief, render or publish.
 

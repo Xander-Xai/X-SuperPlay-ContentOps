@@ -48,6 +48,7 @@ sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from contentops.hotspots.adapters import TRENDRADAR_STALE_HOURS  # noqa: E402
+import router_observe  # noqa: E402
 from contentops.hotspots.storage import RouterStore  # noqa: E402
 from contentops.routing.router import ContentRouter  # noqa: E402
 from process_utils import hidden_run  # noqa: E402
@@ -276,6 +277,11 @@ def cmd_run(args: argparse.Namespace) -> int:
                                   "fetched": collection.get("fetched"),
                                   "candidates": collection.get("candidates"),
                                   "stale_sources": collection.get("stale_sources") or []})
+                    # The scheduled run records the same daily line the manual
+                    # one does, so a week of observations is one series.
+                    router_observe.append_entry(
+                        router_observe.observation_path(paths["store"]),
+                        router_observe.entry_from_result(account, result, chosen))
                 except Exception as exc:  # noqa: BLE001 - recorded, not swallowed
                     entry.update({"state": "BLOCKED", "code": type(exc).__name__,
                                   "detail": str(exc)[:300]})
