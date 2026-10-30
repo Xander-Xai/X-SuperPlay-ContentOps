@@ -234,6 +234,12 @@ jobs:
       - name: Run skill-route catalog tests
         run: python tests/test_skill_route_catalogs.py
 
+      # The doctor and exact resolver: catalog roots, duplicate names, the
+      # permissions a skill declares, and paths that leave the trusted roots.
+      # It never executes a skill.
+      - name: Run skill doctor tests
+        run: python tests/test_skill_doctor.py
+
       # The OpenClaw bridge: envelope parsing among ANSI logs, OEM-codepage
       # decoding, a receipt on every failure path, and no absolute paths in a
       # committed receipt. Route-resolution tests skip without the Easel runtime.

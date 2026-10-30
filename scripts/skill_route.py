@@ -178,6 +178,136 @@ def shared_catalog() -> List[Dict[str, Any]]:
     return skills
 
 
+def _all_skill_entries() -> List[Dict[str, Any]]:
+    """Every skill on every root, including names shadowed by an earlier root."""
+    entries: List[Dict[str, Any]] = []
+    for root in CATALOG_ROOTS:
+        if not root.is_dir():
+            continue
+        label = _catalog_label(root)
+        for skill_md in sorted(root.glob("*/SKILL.md")):
+            text = skill_md.read_text(encoding="utf-8", errors="replace")
+            meta = _front_matter(text)
+            entries.append({
+                "name": meta.get("name") or skill_md.parent.name,
+                "dir_name": skill_md.parent.name,
+                "description": meta.get("description", ""),
+                "source": label,
+                "path": _display(skill_md),
+                "resolved": str(skill_md.resolve()),
+                "root": str(root.resolve()),
+                "meta": meta,
+            })
+    if SHARED_SKILL_ROOT.is_dir():
+        for skill_md in sorted(SHARED_SKILL_ROOT.glob("*/SKILL.md")):
+            meta = _front_matter(skill_md.read_text(encoding="utf-8", errors="replace"))
+            entries.append({
+                "name": meta.get("name") or skill_md.parent.name,
+                "dir_name": skill_md.parent.name,
+                "description": meta.get("description", ""),
+                "source": "shared",
+                "path": str(skill_md.parent),
+                "resolved": str(skill_md.resolve()),
+                "root": str(SHARED_SKILL_ROOT.resolve()),
+                "meta": meta,
+            })
+    return entries
+
+
+def resolve_skill(name: str) -> List[Dict[str, Any]]:
+    """Every exact occurrence of ``name``, in catalog priority order.
+
+    A directory name and the declared ``name`` are both accepted. Shadowed
+    copies are returned too, so a caller can see the collision instead of
+    believing there is only one copy.
+    """
+    needle = (name or "").strip()
+    if not needle:
+        return []
+    return [
+        entry for entry in _all_skill_entries()
+        if entry["name"] == needle or entry["dir_name"] == needle
+    ]
+
+
+def doctor() -> Dict[str, Any]:
+    """Structural health of the catalogs. Read-only; no skill is executed."""
+    entries = _all_skill_entries()
+    by_name: Dict[str, List[Dict[str, Any]]] = {}
+    for entry in entries:
+        by_name.setdefault(entry["name"], []).append(entry)
+    duplicates = [
+        {"name": name, "copies": [
+            {"source": item["source"], "path": item["path"]} for item in copies
+        ]}
+        for name, copies in sorted(by_name.items()) if len(copies) > 1
+    ]
+    missing_description = [entry["name"] for entry in entries
+                           if not entry["description"].strip()]
+    missing_name = [entry["dir_name"] for entry in entries
+                    if not entry["meta"].get("name")]
+    permission_fields = ("allowed-tools", "permissions", "tools", "requires")
+    with_permissions = [
+        entry["name"] for entry in entries
+        if any(field in entry["meta"] for field in permission_fields)
+    ]
+    allowed_roots = [str(ROOT.resolve())] + [str(item.resolve())
+                                             for item in CATALOG_ROOTS
+                                             if item.is_dir()]
+    if SHARED_SKILL_ROOT.is_dir():
+        allowed_roots.append(str(SHARED_SKILL_ROOT.resolve()))
+    unsafe = []
+    dangling = []
+    for entry in entries:
+        original = Path(entry["path"])
+        if not original.is_absolute():
+            original = ROOT / original
+        # A shared-store skill is a link into a catalog root by design. Its
+        # original path is inside the shared store even when the link target
+        # belongs to another checkout's runtime; do not call that unsafe.
+        # Compare lexically: resolving the link would leave the shared root.
+        try:
+            in_shared = original.is_relative_to(SHARED_SKILL_ROOT)
+        except (OSError, ValueError):
+            in_shared = False
+        resolved = Path(entry["resolved"])
+        if not resolved.exists():
+            dangling.append(entry["path"])
+            continue
+        if in_shared:
+            continue
+        if not any(str(resolved).startswith(root + os.sep) for root in allowed_roots):
+            unsafe.append(entry["path"])
+    roots = catalog_sources()
+    shared_present = SHARED_SKILL_ROOT.is_dir()
+    ok = bool(entries) and not unsafe
+    return {
+        "schema": "contentops.skill-doctor/v1",
+        "ok": ok,
+        "roots": roots,
+        "shared": {
+            "path": str(SHARED_SKILL_ROOT),
+            "exists": shared_present,
+            "skills": len(shared_catalog()),
+        },
+        "total": len(entries),
+        "duplicates": duplicates,
+        "missing_description": missing_description,
+        "missing_name": missing_name,
+        "permission_declarations": {
+            "declared": len(with_permissions),
+            "total": len(entries),
+            "names": with_permissions,
+        },
+        "unsafe_paths": unsafe,
+        "dangling_links": dangling,
+        "warnings": [warning for warning in (
+            "no catalog or shared skill was found" if not entries else "",
+            "the shared skill store is absent on this checkout" if not shared_present else "",
+        ) if warning],
+    }
+
+
 def rank(skills: List[Dict[str, Any]], query: str) -> List[Dict[str, Any]]:
     """Keyword overlap against name + description, with name hits weighted 3x."""
     terms = [term for term in re.split(r"[\s,，/、]+", query.lower()) if term]
@@ -210,9 +340,49 @@ def main() -> int:
     parser.add_argument("--list", action="store_true", help="list every skill")
     parser.add_argument("--match", default="", help="rank skills for a deliverable")
     parser.add_argument("--sources", action="store_true", help="list every catalog root")
+    parser.add_argument("--doctor", action="store_true",
+                        help="check catalog roots, duplicates, permissions and paths")
+    parser.add_argument("--resolve", default="",
+                        help="resolve one exact skill name to every copy")
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--limit", type=int, default=5)
     args = parser.parse_args()
+
+    if args.doctor:
+        report = doctor()
+        if args.json:
+            print(json.dumps(report, indent=2, ensure_ascii=False))
+        else:
+            for item in report["roots"]:
+                state = "ok" if item["exists"] else "absent"
+                print(f"{item['label']:<16} {state:<7} {item['skills']:>3} skills  {item['path']}")
+            print(f"{'shared':<16} {'ok' if report['shared']['exists'] else 'absent':<7} "
+                  f"{report['shared']['skills']:>3} skills  {report['shared']['path']}")
+            print(f"total            {report['total']}")
+            print(f"duplicates       {len(report['duplicates'])}")
+            for duplicate in report["duplicates"][:10]:
+                sources = ", ".join(copy["source"] for copy in duplicate["copies"])
+                print(f"  {duplicate['name']}: {sources}")
+            print(f"no description   {len(report['missing_description'])}")
+            print(f"no declared name {len(report['missing_name'])}")
+            print(f"permissions      {report['permission_declarations']['declared']}"
+                  f"/{report['permission_declarations']['total']} declare a permission field")
+            print(f"unsafe paths     {len(report['unsafe_paths'])}")
+            print(f"dangling links   {len(report['dangling_links'])}")
+            print("OK" if report["ok"] else "FAILED")
+        return 0 if report["ok"] else 1
+
+    if args.resolve:
+        found = resolve_skill(args.resolve)
+        if args.json:
+            print(json.dumps({"name": args.resolve, "copies": found}, indent=2,
+                             ensure_ascii=False))
+        elif not found:
+            print(f"no skill named {args.resolve!r}", file=sys.stderr)
+        else:
+            for item in found:
+                print(f"[{item['source']}] {item['name']}  {item['path']}")
+        return 0 if found else 2
 
     if args.sources:
         sources = catalog_sources()
