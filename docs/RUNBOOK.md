@@ -692,3 +692,40 @@ Run it once a day for seven days. The report prints, per source, how often it
 answered, how many rows it gave, how often its data was stale, and how many
 candidates the account's filter produced. That is the evidence for keeping or
 dropping a source from the allowlist — not a single good or bad day.
+
+### 19.5 Rolling this back without losing work
+
+The router's work is three commits on `feat/content-router`. Nothing is
+pushed, so every step below is local and reversible. None of them is a
+default: run the one that matches what you decided.
+
+```powershell
+# 1. Look first. This changes nothing.
+git status
+git log --oneline -3
+
+# 2. Leave the branch as it is and go back to main. The branch still exists.
+git switch main
+
+# 3. Stop using the router's runtime state without deleting it.
+Rename-Item .local\content-router .local\content-router.parked
+
+# 4. Drop the branch only when you are sure, and only locally.
+#    -d refuses if the branch is not merged; that refusal is information.
+git branch -d feat/content-router
+```
+
+What not to do, and why:
+
+- **Do not `git reset --hard` or `git checkout --`.** The working tree holds
+  other people's uncommitted work (the 公众号/vendor line). A hard reset
+  discards it and there is no undo.
+- **Do not `rm -rf` the repository's directories.** `vendor/` and
+  `.runtime/easel/` are not regenerable from this repository; deleting them
+  turns a clean rollback into a rebuild.
+- **Do not delete `.local/` outright.** It is gitignored runtime state, so it
+  is safe to remove, but renaming it keeps the receipts and the candidate
+  pool available if you change your mind.
+- **TrendRadar is not a service.** It has no daemon, no port and no scheduled
+  run here; stopping it means not running it. Its directory can stay where it
+  is with no effect on the repository.

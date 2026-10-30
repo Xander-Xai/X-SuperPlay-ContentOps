@@ -552,3 +552,35 @@ python scripts\router_observe.py --report --days 7
 
 每天跑一次、连续七天。报告按来源打印：应答了多少次、给了多少行、多少次数据陈旧、
 账号过滤产出了多少候选。这些才是保留或移除某个来源的依据，而不是某一天的好坏。
+
+### 19.5 安全回滚
+
+路由器的成果是 `feat/content-router` 上的三个提交。什么都没推送，所以下面每一步
+都只在本地、都可逆。它们都不是默认动作：按你真正做出的决定，只跑对应的那一条。
+
+```powershell
+# 1. 先看。这一步不改变任何东西。
+git status
+git log --oneline -3
+
+# 2. 留在原地、回到 main。分支仍然存在。
+git switch main
+
+# 3. 停用运行状态，但不删除。
+Rename-Item .local\content-router .local\content-router.parked
+
+# 4. 确认之后才删除分支，且只在本地。
+#    -d 在分支未合并时会拒绝；这个拒绝本身就是信息。
+git branch -d feat/content-router
+```
+
+不要做的事，以及原因：
+
+- **不要 `git reset --hard`、不要 `git checkout --`。** 工作区里有别人未提交的
+  工作（公众号/vendor 那条线），硬重置会丢掉它，且无法撤销。
+- **不要 `rm -rf` 仓库目录。** `vendor/` 和 `.runtime/easel/` 无法从本仓库重新生成，
+  删掉它们会把一次干净回滚变成一次重建。
+- **不要直接删除 `.local/`。** 它是被忽略的运行状态，删掉是安全的，但改名能保留
+  回执与候选池，万一改主意还在。
+- **TrendRadar 不是服务。** 本机没有守护进程、没有端口、没有定时任务；"停止"就是
+  不再运行它。它的目录留在原地对仓库没有任何影响。
