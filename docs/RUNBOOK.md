@@ -637,3 +637,58 @@ python scripts\router_e2e.py --actor "Founder" --offline
 - When a source is unreachable, the receipt names the failure and the run
   continues without it. `--offline` skips the network entirely and reports the
   hot-list leg as `OFFLINE_BY_REQUEST` rather than filling it with a fixture.
+- The acceptance harness approves with `actor_kind="automation"` and
+  `allow_automation=True`. A production caller cannot do that by accident: the
+  same call without the opt-in is refused with `AUTOMATION_APPROVAL_REFUSED`.
+
+### 19.2 Checking an approval, and handing the brief on
+
+```powershell
+# does the approval still match the brief on disk?
+python scripts\content_route.py verify --run RUN-20261030-XXXXXXXX
+
+# carry it into the pipeline (writes 00_brief\handoff.json), or check only
+python scripts\brief_handoff.py projects\my-episode --dry-run
+python scripts\brief_handoff.py projects\my-episode
+```
+
+`verify` returns `APPROVAL_STALE` when the brief changed after it was approved.
+`brief_handoff.py` refuses the same way, and additionally refuses a `DEGRADED`
+evidence forecast with `EVIDENCE_REQUIRED`. Exit code 4 means "not ready".
+
+The next real step is still the script and the copy review:
+
+```powershell
+python scripts\audio_first_plan.py projects\my-episode
+# {"status": "BLOCKED", "stage": "copy_review", ...}  (exit 4, nothing synthesised)
+```
+
+### 19.3 A real TrendRadar database
+
+TrendRadar runs outside this repository (`D:\Software\sansan0\TrendRadar\v6.11.0`).
+Point the router at the day it should read:
+
+```powershell
+$env:TRENDRADAR_DB_PATH = "D:\Software\sansan0\TrendRadar\v6.11.0\output\news\2026-10-30.db"
+python scripts\content_route.py start --account x-superplay-1024 --mode hotspot
+```
+
+A directory also works — the newest `news\*.db` is used. The file is opened
+read-only and is never written to. A database older than 24 hours is reported
+`stale`, and its rows are rejected with `STALE_SOURCE` instead of entering the
+pool as new hotspots.
+
+### 19.4 The seven-day observation
+
+```powershell
+# one line per account per day, under .local\content-router\observation\
+python scripts\router_observe.py --trendradar-db "D:\Software\sansan0\TrendRadar\v6.11.0\output\news\2026-10-30.db"
+
+# the window so far
+python scripts\router_observe.py --report --days 7
+```
+
+Run it once a day for seven days. The report prints, per source, how often it
+answered, how many rows it gave, how often its data was stale, and how many
+candidates the account's filter produced. That is the evidence for keeping or
+dropping a source from the allowlist — not a single good or bad day.

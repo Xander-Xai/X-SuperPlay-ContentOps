@@ -223,18 +223,32 @@ publishing or paid-media authority of its own.
 
 ## The commands
 
-```bash
+Windows PowerShell, as they are actually run here:
+
+```powershell
 python scripts/content_route.py accounts
 python scripts/content_route.py sources
 python scripts/content_route.py start --account x-superplay-1024 --mode hotspot
-python scripts/content_route.py start --account x-superplay-1024 --mode topic \
+python scripts/content_route.py start --account x-superplay-1024 --mode topic `
     --topic "如何使用 LangGraph 开发可靠的 Agent？"
 python scripts/content_route.py candidates --account x-superplay-1024
 python scripts/content_route.py select --candidate CAND-XXXX --by "Founder"
 python scripts/content_route.py status --run RUN-XXXX
 python scripts/content_route.py resume --run RUN-XXXX
-python scripts/content_route.py approve --run RUN-XXXX --reviewer "Founder" --confirm \
+python scripts/content_route.py approve --run RUN-XXXX --reviewer "Founder" --confirm `
     --project my-episode
+python scripts/content_route.py verify --run RUN-XXXX
+python scripts/brief_handoff.py projects/my-episode --dry-run
+python scripts/router_observe.py --trendradar-db "D:\Software\sansan0\TrendRadar\v6.11.0\output\news\2026-10-30.db"
+python scripts/router_observe.py --report --days 7
+```
+
+A hotspot run against the real TrendRadar database needs its path once; after
+that the adapter also accepts `TRENDRADAR_DB_PATH`:
+
+```powershell
+$env:TRENDRADAR_DB_PATH = "D:\Software\sansan0\TrendRadar\v6.11.0\output\news\2026-10-30.db"
+python scripts/content_route.py start --account x-superplay-1024 --mode hotspot
 ```
 
 `accounts` lists the accounts and whether each can be routed. `sources` lists
@@ -292,6 +306,111 @@ accounts produces two candidates and neither can select the other's.
 The run record keeps the profile version the run searched against. When the
 account's profile changes, new runs carry the new version and old runs keep
 the version they actually used.
+
+## TrendRadar: a real deployment, read read-only
+
+TrendRadar is deployed outside this repository, pinned at **v6.11.0**
+(`D:\Software\sansan0\TrendRadar\v6.11.0`, clone tag `ceabb02`), with AI
+analysis, AI translation, notifications and the HTML report all disabled so a
+collection costs nothing and calls no paid API. It writes
+`output/news/YYYY-MM-DD.db` and `output/rss/YYYY-MM-DD.db`.
+
+The adapter was rewritten against a database a real crawl produced. The
+earlier version expected invented table names and would have answered
+`SOURCE_DATA_MALFORMED` on every genuine file — the failure a fixture hides.
+What a v6 file actually contains:
+
+| Table | What is read |
+|---|---|
+| `news_items` | `title`, `platform_id`, `rank`, `url`, `created_at`, `first_crawl_time` |
+| `platforms` | the platform's display name |
+
+Two facts matter downstream:
+
+- **TrendRadar records when it first saw a title, not when it was published.**
+  The adapter returns that as `published_at` and marks it
+  `extra.published_at_source = "trendradar_crawl_time"`, so nothing can
+  mistake it for the article's own date.
+- **Timestamps are local (UTC+8).** The official compose runs with
+  `TZ=Asia/Shanghai`; reading them as UTC would move every item eight hours
+  into the future.
+
+A database whose newest row is older than 24 hours is reported `stale`, and
+its items are rejected with `STALE_SOURCE` rather than offered as new
+hotspots. The file is opened with `mode=ro` through a URI and is never
+written to.
+
+## Failures have a taxonomy, and a budget
+
+| Code | Meaning | Retried |
+|---|---|---|
+| `SOURCE_RATE_LIMITED` | HTTP 429; the service asked us to wait | yes, after `Retry-After` |
+| `SOURCE_UNAVAILABLE` | 5xx, dropped connection, truncated body | yes, 3 attempts |
+| `SOURCE_TIMEOUT` | no answer within the timeout | yes, 3 attempts |
+| `SOURCE_CREDENTIALS_REQUIRED` | 401/403; we hold no credential and will not pretend to | no |
+| `SOURCE_DATA_MALFORMED` | the answer is not the shape it claims | no |
+| `SOURCE_CIRCUIT_OPEN` | this source failed repeatedly in this process | no, until the cooldown |
+| `SOURCE_UNAVAILABLE_STATE` | nothing is deployed or configured | no |
+
+Backoff is exponential with jitter and capped at 8 s. A 422 is the request's
+fault and is never retried — the earlier GitHub query failed that way because
+it carried more `OR` operators than GitHub accepts, which is now capped per
+source in the registry (`max_query_terms`).
+
+The collector never presents a browser identity to get past a block: it sends
+`Mozilla/5.0 (compatible; ContentOps/1.0)`, which is the conventional way for
+a non-browser agent to identify itself, and it does not hold, reuse or forge
+any credential.
+
+## Approval is bound to the content that was approved
+
+An approval is not a status flag on a run. It records who approved, when,
+whether that was a person or an acceptance run, and the **digest of the brief**
+being approved — topic, candidate, forecast and profile version.
+
+That digest is the whole point:
+
+- a brief edited after approval no longer matches, so
+  `content route verify --run <id>` reports `APPROVAL_STALE` and
+  `materialize_project` refuses with `APPROVAL_NOT_VALID`;
+- an old approved package copied into another run does not carry its approval
+  into it;
+- `approve` refuses without `--confirm`, and refuses an `automation` actor
+  unless the caller passes `--allow-automation`, which only the acceptance
+  harness does. The receipt records which it was, so an automated approval can
+  never be mistaken for a person's.
+
+The name a reviewer types is a claim, not an authentication. The repository
+has no identity provider for it, and pretending otherwise would be worse than
+saying so: what the record does guarantee is that *this content* was approved
+*at this time* by *someone claiming this name*, and that the claim is visible
+next to the digest it belongs to.
+
+## Handing off to the pipeline
+
+`scripts/brief_handoff.py` is the adapter between an approved project and the
+existing production scripts. It re-checks the approval digest locally, refuses
+a `DEGRADED` evidence forecast with `EVIDENCE_REQUIRED`, resolves the account's
+pipeline through `scripts/account_route.py`, and writes
+`00_brief/handoff.json`.
+
+It does not write a script or a storyboard. Running the real entry point
+against such a project stops at the copy review, which is the correct answer:
+`scripts/audio_first_plan.py` exits 4 with
+`{"status":"BLOCKED","stage":"copy_review"}` before synthesising any narration,
+so the handoff proves the chain and spends nothing.
+
+## Watching it for a week
+
+`scripts/router_observe.py` records one line per account per run under
+`.local/content-router/observation/daily.jsonl`: per source, whether it
+answered, how many rows, whether its data was stale, and what the account's
+filter did with them. `--report --days 7` prints the per-source success rate
+and the candidate yield.
+
+Run it once a day for seven days; the mechanism exists and one run is
+recorded. Seven days of data do not exist yet, and this document does not
+claim they do.
 
 ## What this does not do
 

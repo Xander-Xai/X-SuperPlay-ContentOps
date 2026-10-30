@@ -309,18 +309,34 @@ def cmd_approve(args: argparse.Namespace) -> int:
     if not account:
         raise RoutingError("RUN_NOT_FOUND", f"no run {args.run!r}")
     result = router.approve(account, args.run, reviewer=args.reviewer or "",
-                            note=args.note or "", project_slug=args.project)
+                            note=args.note or "", project_slug=args.project,
+                            confirmed=True, actor_kind=args.actor_kind,
+                            allow_automation=args.allow_automation)
     if args.json:
         _emit(result.to_dict(), True)
         return 0
     print(f"run        {result.run_id}")
     print(f"state      {result.state}")
-    print(f"reviewer   {result.detail.get('reviewer')}")
+    print(f"reviewer   {result.detail.get('reviewer')} "
+          f"({result.detail.get('actor_kind')})")
+    print(f"digest     {str(result.detail.get('content_digest'))[:16]}")
     if result.detail.get("project"):
         print(f"project    {result.detail.get('project')}")
     print()
     print("the copy review is still the gate before anything is rendered")
     return 0
+
+
+def cmd_verify(args: argparse.Namespace) -> int:
+    router = _router(args)
+    verdict = router.verify_approval(args.run)
+    if args.json:
+        _emit(verdict, True)
+        return 0 if verdict["ok"] else 1
+    print(f"run        {args.run}")
+    print(f"approval   {'VALID' if verdict['ok'] else verdict['reason']}")
+    print(f"detail     {verdict.get('detail') or 'the brief still matches what was approved'}")
+    return 0 if verdict["ok"] else 1
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -399,7 +415,18 @@ def build_parser() -> argparse.ArgumentParser:
     approve.add_argument("--project", default=None,
                          help="also create this project and put the brief in it")
     approve.add_argument("--confirm", action="store_true")
+    approve.add_argument("--actor-kind", choices=("human", "automation"),
+                         default="human",
+                         help="who is approving; automation is refused unless "
+                              "--allow-automation is also given")
+    approve.add_argument("--allow-automation", action="store_true",
+                         help="accept an automation approval (sandboxes and "
+                              "acceptance runs only)")
     approve.set_defaults(func=cmd_approve)
+
+    verify = add("verify", "check that an approval still matches the brief")
+    verify.add_argument("--run", required=True)
+    verify.set_defaults(func=cmd_verify)
 
     return parser
 

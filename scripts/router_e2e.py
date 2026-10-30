@@ -85,7 +85,9 @@ def _approve_and_materialise(router: ContentRouter, account: str, run_id: str,
     outcome: Dict[str, Any] = {}
     try:
         approved = router.approve(account, run_id, reviewer=actor,
-                                  note="acceptance run", project_slug=slug)
+                                  note="acceptance run", project_slug=slug,
+                                  confirmed=True, actor_kind="automation",
+                                  allow_automation=True)
     except RoutingError as exc:
         outcome["approved"] = False
         outcome["code"] = exc.code
@@ -100,6 +102,9 @@ def _approve_and_materialise(router: ContentRouter, account: str, run_id: str,
         return outcome
     outcome["approved"] = True
     outcome["state"] = approved.state
+    outcome["actor_kind"] = approved.detail.get("actor_kind")
+    outcome["content_digest"] = approved.detail.get("content_digest")
+    outcome["approval_valid"] = router.verify_approval(run_id)["ok"]
     outcome["project"] = approved.detail.get("project")
     project = Path(str(approved.detail.get("project") or ""))
     if project.is_dir():
@@ -139,6 +144,17 @@ def run_hotspot(router: ContentRouter, actor: str, offline: bool) -> dict:
         "sources_contacted": [entry.get("source_id")
                               for entry in collection.get("sources") or []],
         "source_failures": collection.get("failures") or [],
+        # Every source, successful or not, with what it contributed. This is
+        # the per-source record the daily observation keeps.
+        "source_summary": [
+            {"source_id": entry.get("source_id"), "ok": entry.get("ok"),
+             "count": entry.get("count"), "stale": entry.get("stale"),
+             "schema": entry.get("schema"), "observed_at": entry.get("observed_at"),
+             "query": entry.get("query"), "error_code": entry.get("error_code")}
+            for entry in collection.get("sources") or []
+        ],
+        "rejected_by_reason": collection.get("rejected_by_reason") or {},
+        "stale_sources": collection.get("stale_sources") or [],
         "fetched": collection.get("fetched"),
         "rejected_off_profile": collection.get("rejected"),
         "candidates": len(result.detail.get("candidates") or []),
@@ -242,6 +258,9 @@ def main(argv=None) -> int:
     parser.add_argument("--out", default=None, help="where to write the receipt")
     parser.add_argument("--home", default=None,
                         help="where the run's own state lives")
+    parser.add_argument("--trendradar-db", default=None,
+                        help="path to a real TrendRadar database (defaults to "
+                             "TRENDRADAR_DB_PATH when set)")
     args = parser.parse_args(argv)
 
     home = Path(args.home) if args.home else _sandbox(ROOT)
@@ -254,7 +273,8 @@ def main(argv=None) -> int:
         sandbox_reset = True
     store = RouterStore(ROOT, home=home)
     router = ContentRouter(ROOT, store=store,
-                            projects_root=home / "projects")
+                            projects_root=home / "projects",
+                            trendradar_db=args.trendradar_db)
 
     receipt = {
         "schema": RECEIPT_SCHEMA,
@@ -288,6 +308,8 @@ def main(argv=None) -> int:
     ok = all(leg["status"] == "BRIEF_READY"
              and (leg.get("production") or {}).get("approved")
              and (leg.get("production") or {}).get("project_brief_present")
+             and (leg.get("production") or {}).get("approval_valid")
+             and (leg.get("production") or {}).get("actor_kind") == "automation"
              for leg in receipt["runs"])
     receipt["overall"] = "PASS" if ok else "INCOMPLETE"
 

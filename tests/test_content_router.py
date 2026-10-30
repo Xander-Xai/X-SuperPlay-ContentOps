@@ -286,6 +286,26 @@ def test_the_hot_list_route_calls_the_collector():
         assert result.detail["collection"]["sources"]
 
 
+def test_a_source_that_says_its_data_is_old_cannot_supply_new_hotspots():
+    """A frozen list is evidence of what was hot then, not of what is hot now."""
+    inner = _fixture_adapter()
+
+    class Frozen:
+        def fetch(self, source, *, limit, timeout=12.0, query=None):
+            result = inner.fetch(source, limit=limit, timeout=timeout, query=query)
+            result.stale = True
+            result.observed_at = "2026-09-01T00:00:00Z"
+            return result
+
+    with tempfile.TemporaryDirectory() as tmp:
+        router = _router(_sandbox(tmp), adapters=_Adapters(Frozen()))
+        result = router.start(ACCOUNT_EXPLORE, "HOTSPOT_DISCOVERY")
+        collection = result.detail["collection"]
+        assert collection["candidates"] == 0
+        assert set(collection["stale_sources"])
+        assert collection["rejected_by_reason"] == {"STALE_SOURCE": collection["rejected"]}
+
+
 def test_a_run_resumes_in_the_route_it_started_in():
     with tempfile.TemporaryDirectory() as tmp:
         router = _router(_sandbox(tmp), adapters=_fixture_adapter())
@@ -409,12 +429,12 @@ def test_both_routes_reach_the_same_project_creation():
         candidate = hotspot.detail["candidates"][0]["candidate_id"]
         router.select(ACCOUNT_EXPLORE, hotspot.run_id, candidate, selected_by="Founder")
         router.approve(ACCOUNT_EXPLORE, hotspot.run_id, reviewer="Founder",
-                       project_slug="router-hotspot")
+                       project_slug="router-hotspot", confirmed=True)
 
         topic = router.start(ACCOUNT_BUILD, "USER_TOPIC",
                              UserTopicInput(topic="LangGraph 的状态管理怎么设计"))
         router.approve(ACCOUNT_BUILD, topic.run_id, reviewer="Founder",
-                       project_slug="router-topic")
+                       project_slug="router-topic", confirmed=True)
 
         for slug, account in (("router-hotspot", ACCOUNT_EXPLORE),
                               ("router-topic", ACCOUNT_BUILD)):
@@ -673,7 +693,7 @@ def test_chinese_content_and_windows_paths_survive_a_whole_run():
         assert package["intent"]["route_context"]["detail"]["input"]["notes"] == \
             "备注：含中文标点，测试编码"
         router.approve(ACCOUNT_EXPLORE, result.run_id, reviewer="创始人",
-                       project_slug="router-chinese")
+                       project_slug="router-chinese", confirmed=True)
         project = root / "projects" / "router-chinese"
         assert (project / "00_brief" / "brief.json").is_file()
         text = (project / "00_brief" / "brief.json").read_text(encoding="utf-8")
@@ -714,6 +734,170 @@ def test_a_brief_that_would_not_pass_the_repository_contracts_is_not_written():
         from contentops.workflow.topics import validate_candidate
         assert validate_forecast(package["forecast"]) == []
         assert validate_candidate(package["candidate"]) == []
+
+
+def _approved_run(router, account, slug=None):
+    run = router.start(account, "USER_TOPIC",
+                       UserTopicInput(topic="LangGraph 的状态管理怎么设计"))
+    router.approve(account, run.run_id, reviewer="Founder", confirmed=True,
+                   project_slug=slug)
+    return run
+
+
+def test_an_approval_must_be_confirmed_explicitly():
+    with tempfile.TemporaryDirectory() as tmp:
+        router = _router(_sandbox(tmp), adapters=_fixture_adapter())
+        run = router.start(ACCOUNT_BUILD, "USER_TOPIC",
+                           UserTopicInput(topic="LangGraph 的状态管理怎么设计"))
+        _expect("CONFIRMATION_REQUIRED",
+                lambda: router.approve(ACCOUNT_BUILD, run.run_id, reviewer="Founder"))
+
+
+def test_an_automation_cannot_approve_without_opting_in():
+    with tempfile.TemporaryDirectory() as tmp:
+        router = _router(_sandbox(tmp), adapters=_fixture_adapter())
+        run = router.start(ACCOUNT_BUILD, "USER_TOPIC",
+                           UserTopicInput(topic="LangGraph 的状态管理怎么设计"))
+        _expect("AUTOMATION_APPROVAL_REFUSED",
+                lambda: router.approve(ACCOUNT_BUILD, run.run_id, reviewer="Acceptance",
+                                       confirmed=True, actor_kind="automation"))
+
+
+def test_an_automation_approval_is_recorded_as_one():
+    with tempfile.TemporaryDirectory() as tmp:
+        router = _router(_sandbox(tmp), adapters=_fixture_adapter())
+        run = router.start(ACCOUNT_BUILD, "USER_TOPIC",
+                           UserTopicInput(topic="LangGraph 的状态管理怎么设计"))
+        result = router.approve(ACCOUNT_BUILD, run.run_id, reviewer="Acceptance",
+                                confirmed=True, actor_kind="automation",
+                                allow_automation=True)
+        assert result.detail["actor_kind"] == "automation"
+        approval = router.status(ACCOUNT_BUILD, run.run_id).detail["intent"][
+            "route_context"]["detail"]["approval"]
+        assert approval["actor_kind"] == "automation"
+
+
+def test_an_approval_records_who_when_and_what():
+    with tempfile.TemporaryDirectory() as tmp:
+        router = _router(_sandbox(tmp), adapters=_fixture_adapter())
+        run = _approved_run(router, ACCOUNT_BUILD)
+        verdict = router.verify_approval(run.run_id)
+        assert verdict["ok"] is True
+        approval = verdict["approval"]
+        assert approval["reviewer"] == "Founder"
+        assert approval["approved_at"].endswith("Z")
+        assert len(approval["content_digest"]) == 64
+        assert approval["actor_kind"] == "human"
+
+
+def test_an_approval_stops_applying_when_the_brief_changes():
+    with tempfile.TemporaryDirectory() as tmp:
+        router = _router(_sandbox(tmp), adapters=_fixture_adapter())
+        run = _approved_run(router, ACCOUNT_BUILD)
+        path = router.brief_path(run.run_id)
+        package = json.loads(path.read_text(encoding="utf-8"))
+        package["intent"]["topic"] = "换了一个完全不同的主题"
+        path.write_text(json.dumps(package, ensure_ascii=False), encoding="utf-8")
+        verdict = router.verify_approval(run.run_id)
+        assert verdict["ok"] is False
+        assert verdict["reason"] == "APPROVAL_STALE"
+        assert verdict["current_digest"] != verdict["approval"]["content_digest"]
+
+
+def test_a_project_cannot_be_made_from_a_stale_approval():
+    with tempfile.TemporaryDirectory() as tmp:
+        router = _router(_sandbox(tmp), adapters=_fixture_adapter())
+        run = _approved_run(router, ACCOUNT_BUILD)
+        path = router.brief_path(run.run_id)
+        package = json.loads(path.read_text(encoding="utf-8"))
+        package["forecast"]["topic_id"] = "TOPIC-SOMETHING-ELSE"
+        path.write_text(json.dumps(package, ensure_ascii=False), encoding="utf-8")
+        profile = router.profile(ACCOUNT_BUILD)
+        _expect("APPROVAL_NOT_VALID",
+                lambda: router.materialize_project(profile, run.run_id, None,
+                                                   "router-stale"))
+
+
+def test_an_old_brief_cannot_be_replayed_into_another_run():
+    with tempfile.TemporaryDirectory() as tmp:
+        router = _router(_sandbox(tmp), adapters=_fixture_adapter())
+        first = _approved_run(router, ACCOUNT_BUILD)
+        second = router.start(ACCOUNT_BUILD, "USER_TOPIC",
+                              UserTopicInput(topic="Agent 的记忆机制怎么设计"))
+        router.approve(ACCOUNT_BUILD, second.run_id, reviewer="Founder", confirmed=True)
+        # Put the first run's approved package where the second run reads its own.
+        shutil.copy(router.brief_path(first.run_id), router.brief_path(second.run_id))
+        verdict = router.verify_approval(second.run_id)
+        assert verdict["ok"] is False
+        assert verdict["reason"] == "APPROVAL_STALE"
+
+
+def test_an_approved_project_hands_off_to_its_pipeline():
+    from contentops.routing import handoff
+    with tempfile.TemporaryDirectory() as tmp:
+        root = _sandbox(tmp)
+        router = _router(root, adapters=_fixture_adapter())
+        run = _approved_run(router, ACCOUNT_BUILD, slug="handoff-ok")
+        project = root / "projects" / "handoff-ok"
+        package = handoff.read_brief(project)
+        verdict = handoff.check(package)
+        assert verdict["ok"] is True, verdict
+        record = handoff.handoff_record(project, package)
+        assert record["schema"] == "contentops.brief-handoff/v1"
+        assert record["account_id"] == ACCOUNT_BUILD
+        assert record["route_mode"] == "USER_TOPIC"
+        assert record["topic"]
+        assert record["approval"]["content_digest"] == verdict["content_digest"]
+        # The handoff is the start of the pipeline, not a pass through it.
+        assert any("copy review" in item for item in record["still_gated_by"])
+        path = handoff.write_handoff(project, record)
+        assert path.is_file()
+
+
+def test_a_degraded_forecast_blocks_the_handoff():
+    from contentops.routing import handoff
+    with tempfile.TemporaryDirectory() as tmp:
+        root = _sandbox(tmp)
+        router = _router(root, adapters=_fixture_adapter())
+        run = router.start(ACCOUNT_EXPLORE, "USER_TOPIC",
+                           UserTopicInput(topic="AI 新工具实测",
+                                          urls=["https://example.test/a"]))
+        router.approve(ACCOUNT_EXPLORE, run.run_id, reviewer="Founder",
+                       confirmed=True, project_slug="handoff-degraded")
+        project = root / "projects" / "handoff-degraded"
+        verdict = handoff.check(handoff.read_brief(project))
+        if verdict["ok"]:
+            # This account's forecast happens to be feasible; the rule is
+            # still exercised below by forcing the verdict.
+            package = handoff.read_brief(project)
+            package["forecast_verdict"] = "DEGRADED"
+            verdict = handoff.check(package)
+        assert verdict["ok"] is False
+        assert verdict["reason"] == "EVIDENCE_REQUIRED"
+
+
+def test_a_project_whose_brief_changed_after_approval_is_refused():
+    from contentops.routing import handoff
+    with tempfile.TemporaryDirectory() as tmp:
+        root = _sandbox(tmp)
+        router = _router(root, adapters=_fixture_adapter())
+        _approved_run(router, ACCOUNT_BUILD, slug="handoff-tampered")
+        project = root / "projects" / "handoff-tampered"
+        path = project / "00_brief" / "brief.json"
+        package = json.loads(path.read_text(encoding="utf-8"))
+        package["intent"]["topic"] = "被改过的主题"
+        path.write_text(json.dumps(package, ensure_ascii=False), encoding="utf-8")
+        verdict = handoff.check(handoff.read_brief(project))
+        assert verdict["ok"] is False
+        assert verdict["reason"] == "APPROVAL_STALE"
+
+
+def test_a_project_with_no_brief_cannot_hand_off():
+    from contentops.routing import handoff
+    with tempfile.TemporaryDirectory() as tmp:
+        verdict = handoff.check(handoff.read_brief(Path(tmp)))
+        assert verdict["ok"] is False
+        assert verdict["reason"] == "BRIEF_MISSING"
 
 
 def main() -> int:

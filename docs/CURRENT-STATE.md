@@ -1264,12 +1264,31 @@ failure, not a reason to find a topic another way.
 
 ### What is not done
 
-- **TrendRadar is not deployed here.** The adapter reads a local SQLite
-  database read-only through a URI, and it is present in the registry. Without
-  `TRENDRADAR_DB_PATH` it reports `SOURCE_UNAVAILABLE_STATE` and the run
-  continues without it. The four failure modes it handles by name are: the
-  file absent, the file locked, the schema drifted (a table with no `title`
-  column is refused rather than half-read) and duplicated rows.
-- **No live source has been collected on this machine.** The end-to-end runs
-  recorded against the real sources are marked as blocked in the run report;
-  the offline suites cover the same paths with fixtures.
+- **TrendRadar is deployed, at one pinned version.** A real v6.11.0
+  deployment at `D:\Software\sansan0\TrendRadar\v6.11.0` wrote
+  `output/news/2026-10-30.db` (255 rows, 11 platforms) in a crawl on
+  2026-10-30, and the adapter reads it read-only. The earlier claim that the
+  adapter handled a local database was true of a *fixture* only: the real v6
+  schema is `news_items` + `platforms`, and the adapter has been rewritten
+  against it. Without `TRENDRADAR_DB_PATH` it still reports
+  `SOURCE_UNAVAILABLE_STATE` and the run continues without it.
+- **Live collection has happened, once.** Both routes ran against the real
+  sources on 2026-10-30 and reached `APPROVED_FOR_PRODUCTION`; the numbers are
+  in `research/router-precision-audit-2026-10-30.md`. Three NewsNow endpoints
+  answered 500 on that day and are recorded as failures, not as absence.
+- **Seven days of observation do not exist.** `scripts/router_observe.py`
+  records one line per account per day and one run is recorded; the claim
+  stops there.
+- **1024's candidate yield is poor and no positioning change was made.** 3
+  candidates from 211 rows, all weak; the recommendations that would change
+  it are written down in the audit and are waiting for the owner's approval.
+
+### Round two — hardening, 2026-10-30
+
+| Area | What is now true |
+|---|---|
+| TrendRadar | real v6 schema, platform names, UTC+8 timestamps, `stale` flag after 24 h, rows rejected as `STALE_SOURCE` |
+| Failures | 429/5xx/timeout/truncated retried 3× with backoff; 401/403/422 never retried; per-process breaker after 3 consecutive failures |
+| Approval | `--confirm` required; `automation` actor refused unless explicitly allowed; approval bound to a content digest; `verify` reports `APPROVAL_STALE`; a stale approval cannot materialise a project |
+| Handoff | `scripts/brief_handoff.py` checks the digest and the evidence forecast, writes `00_brief/handoff.json`; the real pipeline entry blocks at copy review without spending |
+| Observation | `scripts/router_observe.py` writes one JSONL line per account per run; `--report --days 7` prints the window |

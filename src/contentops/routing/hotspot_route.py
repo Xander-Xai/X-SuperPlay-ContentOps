@@ -58,12 +58,19 @@ class CollectionResult:
         return [result.to_dict() for result in self.fetch_results if not result.ok]
 
     def to_dict(self) -> Dict[str, Any]:
+        reasons: Dict[str, int] = {}
+        for entry in self.rejected:
+            key = str(entry.get("reason") or "UNKNOWN")
+            reasons[key] = reasons.get(key, 0) + 1
         return {
             "plan_id": self.plan.get("plan_id"),
             "collected_at": self.collected_at,
             "fetched": len(self.items),
             "candidates": len(self.candidates),
             "rejected": len(self.rejected),
+            "rejected_by_reason": reasons,
+            "stale_sources": [result.source_id for result in self.fetch_results
+                              if result.stale],
             "sources": [result.to_dict() for result in self.fetch_results],
             "failures": self.failures,
         }
@@ -119,7 +126,24 @@ def collect(profile: AccountProfile, plan: Dict[str, Any], *,
     accepted_raw: List[Dict[str, Any]] = []
     rejected: List[Dict[str, Any]] = []
 
+    # A source that says its own data is old is telling the truth about a
+    # frozen list. Its rows are real, but they record what was hot *then*, so
+    # they are rejected by name instead of being offered as new hotspots.
+    stale_sources = {result.source_id: result.observed_at
+                     for result in fetch_results if result.stale}
+
     for item in items:
+        if item.source_id in stale_sources:
+            rejected.append({
+                "source_id": item.source_id,
+                "title": item.title,
+                "url": item.url,
+                "reason": "STALE_SOURCE",
+                "detail": f"the source's newest data is from "
+                          f"{stale_sources[item.source_id] or 'an unrecorded time'}; "
+                          f"it may not enter the pool as a new hotspot",
+            })
+            continue
         verdict = relevance_verdict(item, profile)
         if not verdict["accepted"]:
             rejected.append({

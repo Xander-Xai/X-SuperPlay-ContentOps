@@ -500,3 +500,55 @@ python scripts\router_e2e.py --actor "Founder" --offline
 - 它不发布任何内容，也不生成任何媒体。
 - 某个来源不可达时，回执会指名这次失败，运行跳过它继续。`--offline` 完全
   跳过网络，并把热点那条腿报为 `OFFLINE_BY_REQUEST`，而不是拿 fixture 填上。
+- 验收脚本以 `actor_kind="automation"` 与 `allow_automation=True` 批准。生产调用方
+  不可能误打误撞做到这一点：同样的调用不带该显式选项会以
+  `AUTOMATION_APPROVAL_REFUSED` 被拒绝。
+
+### 19.2 校验一次审批，并把 Brief 交接出去
+
+```powershell
+# 审批是否仍然匹配磁盘上的 Brief
+python scripts\content_route.py verify --run RUN-20261030-XXXXXXXX
+
+# 交接进流水线（写出 00_brief\handoff.json），或者只检查
+python scripts\brief_handoff.py projects\my-episode --dry-run
+python scripts\brief_handoff.py projects\my-episode
+```
+
+Brief 在审批之后被改动时，`verify` 返回 `APPROVAL_STALE`。
+`brief_handoff.py` 同样拒绝，并且对 `DEGRADED` 的证据预测额外以
+`EVIDENCE_REQUIRED` 拒绝。退出码 4 表示"尚未就绪"。
+
+真正的下一步仍然是写稿与复制评审：
+
+```powershell
+python scripts\audio_first_plan.py projects\my-episode
+# {"status": "BLOCKED", "stage": "copy_review", ...}（退出码 4，未合成任何内容）
+```
+
+### 19.3 使用真实的 TrendRadar 数据库
+
+TrendRadar 运行在本仓库之外（`D:\Software\sansan0\TrendRadar\v6.11.0`）。
+把路由器指向它要读的那一天：
+
+```powershell
+$env:TRENDRADAR_DB_PATH = "D:\Software\sansan0\TrendRadar\v6.11.0\output\news\2026-10-30.db"
+python scripts\content_route.py start --account x-superplay-1024 --mode hotspot
+```
+
+也可以直接给目录——会使用最新的 `news\*.db`。文件以只读方式打开，绝不写入。
+超过 24 小时的数据库会被报为 `stale`，其行以 `STALE_SOURCE` 被拒，
+不会作为新热点进入候选池。
+
+### 19.4 七天观察
+
+```powershell
+# 每天每账号一行，写在 .local\content-router\observation\ 下
+python scripts\router_observe.py --trendradar-db "D:\Software\sansan0\TrendRadar\v6.11.0\output\news\2026-10-30.db"
+
+# 目前窗口内的汇总
+python scripts\router_observe.py --report --days 7
+```
+
+每天跑一次、连续七天。报告按来源打印：应答了多少次、给了多少行、多少次数据陈旧、
+账号过滤产出了多少候选。这些才是保留或移除某个来源的依据，而不是某一天的好坏。

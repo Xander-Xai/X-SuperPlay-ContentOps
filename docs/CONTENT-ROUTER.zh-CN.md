@@ -103,12 +103,32 @@ Account DNA 在任何抓取**之前**就被读取，它的 `discovery` 块驱动
 
 这里的适配器都不需要凭据。失败的来源绝不会变成一份"看起来像结果"的空候选列表。
 
-### TrendRadar
+### TrendRadar：真实部署，只读访问
 
-TrendRadar 部署在本仓库之外。它通过只读 SQLite URI 访问，绝不会被写入。
-四种情况被分别指名处理：文件不存在、文件被锁、上游 Schema 漂移
-（表里已经没有 `title` 列，于是这些行根本不被读取）、以及重复行
-（被丢弃，避免同一个故事变成两个信号）。
+TrendRadar 部署在本仓库之外，固定为 **v6.11.0**
+（`D:\Software\sansan0\TrendRadar\v6.11.0`，克隆标签 `ceabb02`），并且关闭了
+AI 分析、AI 翻译、通知和 HTML 报告，因此一次采集不花钱、不调用任何付费 API。
+它写出 `output/news/YYYY-MM-DD.db` 与 `output/rss/YYYY-MM-DD.db`。
+
+适配器是按一次真实采集产出的数据库重写的。上一版假设了并不存在的表名，
+对每一个真实文件都会返回 `SOURCE_DATA_MALFORMED`——这正是 fixture 最容易长期掩盖的失败。
+v6 文件的真实内容：
+
+| 表 | 读取内容 |
+|---|---|
+| `news_items` | `title`、`platform_id`、`rank`、`url`、`created_at`、`first_crawl_time` |
+| `platforms` | 平台显示名 |
+
+两件对下游重要的事实：
+
+- **TrendRadar 记录的是它第一次看到标题的时间，不是发布时间。** 适配器把它作为
+  `published_at` 返回，并标注 `extra.published_at_source = "trendradar_crawl_time"`，
+  任何下游都无法把它误当成文章自身的日期。
+- **时间戳是本地时间（UTC+8）。** 官方 compose 使用 `TZ=Asia/Shanghai`；
+  按 UTC 读取会把每一条都推到八小时之后。
+
+最新一条记录超过 24 小时的数据库会被标记 `stale`，其条目以 `STALE_SOURCE` 被拒，
+而不会当作新热点提供。文件通过 URI 以 `mode=ro` 打开，绝不会被写入。
 
 ## 排序是账号自己的
 
@@ -202,18 +222,29 @@ Brief 里写着 `evidence_status: verified`，指的是证据**路径**已被记
 
 ## 命令
 
-```bash
+```powershell
 python scripts/content_route.py accounts
 python scripts/content_route.py sources
 python scripts/content_route.py start --account x-superplay-1024 --mode hotspot
-python scripts/content_route.py start --account x-superplay-1024 --mode topic \
+python scripts/content_route.py start --account x-superplay-1024 --mode topic `
     --topic "如何使用 LangGraph 开发可靠的 Agent？"
 python scripts/content_route.py candidates --account x-superplay-1024
 python scripts/content_route.py select --candidate CAND-XXXX --by "Founder"
 python scripts/content_route.py status --run RUN-XXXX
 python scripts/content_route.py resume --run RUN-XXXX
-python scripts/content_route.py approve --run RUN-XXXX --reviewer "Founder" --confirm \
+python scripts/content_route.py approve --run RUN-XXXX --reviewer "Founder" --confirm `
     --project my-episode
+python scripts/content_route.py verify --run RUN-XXXX
+python scripts/brief_handoff.py projects/my-episode --dry-run
+python scripts/router_observe.py --trendradar-db "D:\Software\sansan0\TrendRadar\v6.11.0\output\news\2026-10-30.db"
+python scripts/router_observe.py --report --days 7
+```
+
+对真实 TrendRadar 库只需要给一次路径，之后也可以直接用环境变量：
+
+```powershell
+$env:TRENDRADAR_DB_PATH = "D:\Software\sansan0\TrendRadar\v6.11.0\output\news\2026-10-30.db"
+python scripts/content_route.py start --account x-superplay-1024 --mode hotspot
 ```
 
 `accounts` 列出各账号以及是否可路由；`sources` 列出来源目录，以及每个来源实际能做什么——
@@ -266,6 +297,64 @@ content route approve --run RUN-XXXX --reviewer "Founder" --confirm
 
 运行记录保留本次运行所依据的定位版本。账号定位变更后，
 新运行使用新版本，旧运行保留它当时实际使用的版本。
+
+## 失败有分类，也有预算
+
+| 代码 | 含义 | 是否重试 |
+|---|---|---|
+| `SOURCE_RATE_LIMITED` | HTTP 429，服务要求等待 | 是，按 `Retry-After` |
+| `SOURCE_UNAVAILABLE` | 5xx、连接中断、响应被截断 | 是，3 次 |
+| `SOURCE_TIMEOUT` | 超时无响应 | 是，3 次 |
+| `SOURCE_CREDENTIALS_REQUIRED` | 401/403，我们没有凭据，也不会伪造 | 否 |
+| `SOURCE_DATA_MALFORMED` | 返回的结构与声明不符 | 否 |
+| `SOURCE_CIRCUIT_OPEN` | 本进程内该源反复失败，熔断中 | 否，冷却后恢复 |
+| `SOURCE_UNAVAILABLE_STATE` | 未部署或未配置 | 否 |
+
+退避是指数加抖动、上限 8 秒。422 属于请求本身错误，绝不重试——上一轮 GitHub
+查询就是因为它带的 `OR` 超过服务允许的数量而返回 422，现在按源在注册表里
+声明 `max_query_terms` 截断。
+
+采集器不会伪装浏览器身份去绕过限制：它发送
+`Mozilla/5.0 (compatible; ContentOps/1.0)`，这是非浏览器代理表明身份的标准写法，
+并且不持有、不复用、不伪造任何凭据。
+
+## 审批与被审批的内容绑定
+
+审批不是运行记录上的一个状态位。它记录谁批的、什么时候、是人还是验收脚本，
+以及**被批 Brief 的摘要**——主题、候选、证据预测与 profile 版本。
+
+摘要就是重点：
+
+- 审批后被改过的 Brief 不再匹配，`content route verify --run <id>` 会给出
+  `APPROVAL_STALE`，`materialize_project` 以 `APPROVAL_NOT_VALID` 拒绝；
+- 把旧的已批包复制进另一个运行，不会把审批带过去；
+- `approve` 没有 `--confirm` 就拒绝；`automation` 身份除非显式
+  `--allow-automation`（只有验收脚本会传）否则拒绝。回执里写明是哪一种，
+  自动审批不可能被人误当成人工审批。
+
+审核人填的名字是声明，不是身份认证。仓库没有为它准备身份提供方，假装有会更糟：
+记录能保证的是**这份内容**在**这个时间**由**声称叫这个名字的人**批准，并且这个声明
+就写在它对应的摘要旁边。
+
+## 交接给生产流水线
+
+`scripts/brief_handoff.py` 是已批准工程与现有生产脚本之间的适配器。它在本机重新
+校验审批摘要，遇到 `DEGRADED` 证据预测以 `EVIDENCE_REQUIRED` 拒绝，通过
+`scripts/account_route.py` 解析账号流水线，并写出 `00_brief/handoff.json`。
+
+它不写脚本，也不写分镜。对这样的工程运行真正的入口脚本会停在 copy review——
+这正是正确答案：`scripts/audio_first_plan.py` 在合成任何旁白之前就以
+`{"status":"BLOCKED","stage":"copy_review"}` 退出码 4 结束，因此交接证明了链路，
+且一分钱不花。
+
+## 连续一周的观察
+
+`scripts/router_observe.py` 在 `.local/content-router/observation/daily.jsonl`
+里每次每账号记录一行：每个来源是否应答、给了多少行、数据是否陈旧、账号过滤做了什么。
+`--report --days 7` 打印每个来源的成功率与候选产出。
+
+每天跑一次、连续七天；机制已经存在，也已记录一次运行。七天的数据并不存在，
+本文档也不声称存在。
 
 ## 这个模块不做什么
 

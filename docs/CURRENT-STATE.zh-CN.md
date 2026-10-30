@@ -1206,9 +1206,25 @@ DNA 检查直接失败。不存在任何一条路径，能让一个无出处的�
 
 ### 尚未完成的部分
 
-- **TrendRadar 在本机没有部署。** 适配器通过只读 URI 读取本地 SQLite 数据库，
-  它在注册表里。没有 `TRENDRADAR_DB_PATH` 时返回 `SOURCE_UNAVAILABLE_STATE`，
-  本次运行跳过它继续。它分别按名处理四种失败：文件不存在、文件被锁、
-  Schema 漂移（没有 `title` 列的表会被拒绝，而不是被读一半）、以及重复行。
-- **本机没有对真实来源做过一次采集。** 针对真实来源的端到端运行在运行报告中标为阻塞；
-  离线测试套件用 fixture 覆盖了同样的路径。
+- **TrendRadar 已部署，且只固定一个版本。** `D:\Software\sansan0\TrendRadar\v6.11.0`
+  的真实部署在 2026-10-30 完成了一次采集，写出 `output/news/2026-10-30.db`
+  （255 行、11 个平台），适配器只读它。此前"适配器能读本地数据库"的说法只对
+  *fixture* 成立：真实 v6 的 Schema 是 `news_items` + `platforms`，适配器已按其重写。
+  没有 `TRENDRADAR_DB_PATH` 时仍返回 `SOURCE_UNAVAILABLE_STATE`，运行跳过它继续。
+- **真实采集发生过一次。** 两条路线在 2026-10-30 都对真实来源跑通并到达
+  `APPROVED_FOR_PRODUCTION`；数字见 `research/router-precision-audit-2026-10-30.md`。
+  当天有三个 NewsNow 端点返回 500，被记为失败，而不是被当作不存在。
+- **七天的观察数据并不存在。** `scripts/router_observe.py` 每账号每天记录一行，
+  目前只记录了一次；说法到此为止。
+- **1024 的候选产出很差，且没有做任何定位变更。** 211 条里只出 3 条且都偏弱；
+  能改变这一点的建议写在审计里，等账号所有者批准。
+
+### 第二轮——加固，2026-10-30
+
+| 方面 | 现在为真的事实 |
+|---|---|
+| TrendRadar | 真实 v6 Schema、平台名、UTC+8 时间戳、超过 24h 标记 `stale`、条目以 `STALE_SOURCE` 被拒 |
+| 失败处理 | 429/5xx/超时/截断响应重试 3 次并退避；401/403/422 不重试；本进程内连续 3 次失败后熔断 |
+| 审批 | 必须 `--confirm`；`automation` 身份除非显式允许一律拒绝；审批与内容摘要绑定；`verify` 报 `APPROVAL_STALE`；失效审批无法创建工程 |
+| 交接 | `scripts/brief_handoff.py` 校验摘要与证据预测，写出 `00_brief/handoff.json`；真正流水线入口在 copy review 处阻塞，不花钱 |
+| 观察 | `scripts/router_observe.py` 每账号每次运行写一行 JSONL；`--report --days 7` 打印窗口 |

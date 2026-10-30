@@ -163,6 +163,15 @@ def _query_for(source: Source, profile: Any, pillar: Optional[str],
         terms = list(dict.fromkeys(terms_en + terms_zh))
         if not terms:
             return None
+        # A term that is the source's own name discriminates nothing here: on
+        # GitHub, "GitHub" matches every repository, and asking for it spends
+        # one of the few operators the service allows on a term that cannot
+        # narrow anything. It stays in the account's keywords — it is still
+        # used for filtering and ranking — it just does not lead the query.
+        platform = str(getattr(source, "platform", "") or "").casefold()
+        discriminating = [term for term in terms
+                          if term.casefold() != platform and platform not in term.casefold()]
+        terms = discriminating or terms
         ordered = _pillar_first(profile, pillar, terms)
         cap = source.max_query_terms or MAX_QUERY_TERMS
         chosen: List[str] = []

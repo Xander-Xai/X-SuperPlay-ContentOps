@@ -310,6 +310,28 @@ def build_brief_package(*, intent: ContentIntent, profile: AccountProfile,
     return document
 
 
+def content_digest(package: Dict[str, Any]) -> str:
+    """A digest of what a reviewer actually approved.
+
+    It covers the topic, the candidate, the forecast and the profile version —
+    the parts a person reads to decide — and deliberately not the approval
+    bookkeeping, so recording an approval does not change the thing approved.
+    A later edit to any of those parts changes the digest, which is how an
+    approval stops applying to content it was not given for.
+    """
+    intent = package.get("intent") or {}
+    context = intent.get("route_context") or {}
+    return digest({
+        "topic": intent.get("topic"),
+        "route_mode": intent.get("route_mode"),
+        "profile_version": intent.get("account_profile_version"),
+        "candidate_id": context.get("candidate_id"),
+        "topic_origin": context.get("topic_origin"),
+        "candidate": package.get("candidate"),
+        "forecast": package.get("forecast"),
+    })
+
+
 def record_approval(package: Dict[str, Any], intent: ContentIntent) -> Dict[str, Any]:
     """The same brief, with the approval it received written into it.
 

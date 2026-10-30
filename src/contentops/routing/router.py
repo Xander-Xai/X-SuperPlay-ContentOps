@@ -377,8 +377,22 @@ class ContentRouter:
     # -- approval -----------------------------------------------------------
 
     def approve(self, account_id: str, run_id: str, *, reviewer: str,
-                note: str = "", project_slug: Optional[str] = None) -> RunResult:
-        """A person confirms the brief may enter the pipeline."""
+                note: str = "", project_slug: Optional[str] = None,
+                confirmed: bool = False, actor_kind: str = "human",
+                allow_automation: bool = False) -> RunResult:
+        """A person confirms the brief may enter the pipeline.
+
+        Three things are required and none of them can be inferred:
+
+        - ``confirmed`` — the caller has to say so. A running collector never
+          reaches this method with it set, so collection cannot approve itself.
+        - ``reviewer`` — a name, recorded with the time and the digest of what
+          was approved.
+        - ``actor_kind`` — ``human`` or ``automation``. An automation approval
+          is refused unless the caller also passes ``allow_automation``, which
+          exists so the acceptance harness can exercise the path in a sandbox
+          and so that no production caller can do it by accident.
+        """
         profile = self.profile(account_id)
         run = self.store.get_run(run_id)
         if run is None:
@@ -393,6 +407,25 @@ class ContentRouter:
                 f"from {AWAITING_HUMAN_APPROVAL!r}")
         if not reviewer.strip():
             raise RoutingError("REVIEWER_REQUIRED", "an approval needs a named reviewer")
+        if actor_kind not in ("human", "automation"):
+            raise RoutingError("ACTOR_KIND_INVALID",
+                               "an approval is either 'human' or 'automation'")
+        if actor_kind == "automation" and not allow_automation:
+            raise RoutingError(
+                "AUTOMATION_APPROVAL_REFUSED",
+                "an automation may not approve a brief; only a person can, and the "
+                "acceptance harness must opt in explicitly")
+        if not confirmed:
+            raise RoutingError(
+                "CONFIRMATION_REQUIRED",
+                "an approval has to be confirmed explicitly; nothing reaches "
+                "production without a person saying so")
+
+        package = self.read_brief(run_id)
+        if package is None:
+            raise RoutingError("BRIEF_MISSING",
+                               f"run {run_id} has no brief to approve")
+        approved_digest = brief_module.content_digest(package)
 
         assert_transition(AWAITING_HUMAN_APPROVAL, APPROVED_FOR_PRODUCTION)
         intent_payload = run.get("intent_json")
@@ -403,8 +436,10 @@ class ContentRouter:
             intent.brief_status = "approved"
             intent.route_context.detail["approval"] = {
                 "reviewer": reviewer.strip(),
+                "actor_kind": actor_kind,
                 "approved_at": utcnow(),
                 "note": note.strip(),
+                "content_digest": approved_digest,
             }
         self.store.save_run(run_id, account_id=profile.account_id,
                             profile_version=profile.profile_version,
@@ -413,7 +448,8 @@ class ContentRouter:
                             plan=json.loads(run["plan_json"]) if run.get("plan_json") else None,
                             intent=intent.to_dict() if intent is not None else None)
         self.store.record_event(run_id, profile.account_id, APPROVED_FOR_PRODUCTION,
-                                f"approved by {reviewer}")
+                                f"approved by {reviewer} ({actor_kind}) "
+                                f"digest {approved_digest[:12]}")
 
         # The brief is the document the pipeline reads, so the approval is
         # written back into it before it is handed on.
@@ -422,12 +458,56 @@ class ContentRouter:
             if package is not None:
                 self._write_brief(run_id, brief_module.record_approval(package, intent))
 
-        detail: Dict[str, Any] = {"reviewer": reviewer.strip(), "note": note.strip()}
+        detail: Dict[str, Any] = {"reviewer": reviewer.strip(), "note": note.strip(),
+                                  "actor_kind": actor_kind,
+                                  "content_digest": approved_digest,
+                                  "approved_at": utcnow()}
         if project_slug:
             detail["project"] = str(self.materialize_project(profile, run_id,
                                                               intent, project_slug))
         return RunResult(run_id, profile.account_id, str(run.get("route_mode")),
                          APPROVED_FOR_PRODUCTION, detail)
+
+    def verify_approval(self, run_id: str) -> Dict[str, Any]:
+        """Whether the approval on a run still applies to the brief on disk.
+
+        An approval is given for a piece of content, not for a run id. If the
+        brief changed after it was approved — a different topic, a different
+        candidate, a revised profile — the digest no longer matches and the
+        approval is stale, which means the content has to be reviewed again.
+        """
+        run = self.store.get_run(run_id)
+        if run is None:
+            raise RoutingError("RUN_NOT_FOUND", f"no run {run_id!r}")
+        recorded = {}
+        intent_payload = run.get("intent_json")
+        if intent_payload:
+            try:
+                recorded = ((json.loads(intent_payload).get("route_context") or {})
+                            .get("detail") or {}).get("approval") or {}
+            except (TypeError, ValueError):
+                recorded = {}
+        approved = str(recorded.get("content_digest") or "")
+        package = self.read_brief(run_id)
+        if str(run.get("state")) != APPROVED_FOR_PRODUCTION:
+            return {"ok": False, "reason": "NOT_APPROVED",
+                    "detail": f"the run is {run.get('state')!r}", "approval": recorded}
+        if not approved:
+            return {"ok": False, "reason": "APPROVAL_UNBOUND",
+                    "detail": "the approval records no content digest, so it cannot "
+                              "be tied to what was reviewed",
+                    "approval": recorded}
+        if package is None:
+            return {"ok": False, "reason": "BRIEF_MISSING",
+                    "detail": "the approved brief is not on disk", "approval": recorded}
+        current = brief_module.content_digest(package)
+        if current != approved:
+            return {"ok": False, "reason": "APPROVAL_STALE",
+                    "detail": f"the brief changed after approval (approved "
+                              f"{approved[:12]}, now {current[:12]}); review it again",
+                    "approval": recorded, "current_digest": current}
+        return {"ok": True, "reason": "APPROVED", "content_digest": current,
+                "approval": recorded}
 
     def materialize_project(self, profile: AccountProfile, run_id: str,
                             intent: Optional[ContentIntent],
@@ -438,6 +518,11 @@ class ContentRouter:
         layout, the ``project.yaml`` and the directory set are the ones the
         pipeline already knows.
         """
+        verdict = self.verify_approval(run_id)
+        if not verdict["ok"]:
+            raise RoutingError(
+                "APPROVAL_NOT_VALID",
+                f"the brief may not enter the pipeline: {verdict['detail']}")
         script_root = Path(__file__).resolve().parents[3] / "scripts"
         if str(script_root) not in sys.path:
             sys.path.insert(0, str(script_root))
