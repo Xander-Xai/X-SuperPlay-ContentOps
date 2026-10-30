@@ -747,6 +747,43 @@
         }
       }
     ],
+    "query_expressions": {
+      "github_search": {
+        "why": "The account's pillar vocabulary is already English engineering language, which is what repository descriptions use. The order is specific-to-general so the six-term budget keeps the terms that narrow most. No new term is introduced.",
+        "terms": [
+          {
+            "term": "LangGraph",
+            "language": "en",
+            "from_keyword": "LangGraph"
+          },
+          {
+            "term": "Agent",
+            "language": "en",
+            "from_keyword": "Agent"
+          },
+          {
+            "term": "RAG",
+            "language": "en",
+            "from_keyword": "RAG"
+          },
+          {
+            "term": "LLM",
+            "language": "en",
+            "from_keyword": "LLM"
+          },
+          {
+            "term": "MCP",
+            "language": "en",
+            "from_keyword": "MCP"
+          },
+          {
+            "term": "Tool Calling",
+            "language": "en",
+            "from_keyword": "Tool Calling"
+          }
+        ]
+      }
+    },
     "source_allowlist": [
       {
         "source_id": "github-search",

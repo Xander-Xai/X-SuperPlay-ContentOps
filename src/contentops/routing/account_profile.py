@@ -129,6 +129,11 @@ class AccountProfile:
     match_weights: Dict[str, int]
     #: Why the account named each source, keyed by source id.
     source_reasons: Dict[str, str] = field(default_factory=dict)
+    #: Per-adapter query expressions, each term traceable to a declared
+    #: keyword. Keyed by adapter name (``github_search``); the value is the
+    #: ordered list of terms the account wants that source asked for. Empty
+    #: means "use the keywords as they are".
+    query_expressions: Dict[str, Tuple[str, ...]] = field(default_factory=dict)
     dna: Dict[str, Any] = field(default_factory=dict, repr=False)
 
     # -- convenience used by the collectors and the ranker ------------------
@@ -384,6 +389,36 @@ def _source_entries(value: Any) -> Tuple[Dict[str, Any], ...]:
     return tuple(entries)
 
 
+def _query_expressions(discovery: Dict[str, Any]) -> Dict[str, Tuple[str, ...]]:
+    """Per-adapter query terms, in the order the account wants them asked.
+
+    A query expression is not a positioning change. Each term names the
+    declared keyword it renders (``from_keyword``), and that keyword already
+    carries its own origin in the DNA, so the chain back to something the
+    owner wrote is unbroken. What the expression adds is a choice: which of
+    those declared terms are worth spending a source's limited query budget
+    on, and in what order.
+    """
+    raw = discovery.get("query_expressions")
+    if not isinstance(raw, dict):
+        return {}
+    expressions: Dict[str, Tuple[str, ...]] = {}
+    for adapter, spec in raw.items():
+        if not isinstance(spec, dict):
+            continue
+        terms: List[str] = []
+        for item in spec.get("terms") or []:
+            if isinstance(item, dict):
+                term = str(item.get("term") or "").strip()
+            else:
+                term = str(item or "").strip()
+            if term and term not in terms:
+                terms.append(term)
+        if terms:
+            expressions[str(adapter)] = tuple(terms)
+    return expressions
+
+
 def _strings(value: Any) -> Tuple[str, ...]:
     if isinstance(value, str):
         return (value,)
@@ -552,6 +587,7 @@ def load_profile(root: Path, slug: str) -> AccountProfile:
         source_reasons={entry["source_id"]: entry["why"]
                         for entry in _source_entries(discovery.get("source_allowlist"))
                         if entry["why"]},
+        query_expressions=_query_expressions(discovery),
         dna=dna,
     )
 

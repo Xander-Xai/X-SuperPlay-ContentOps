@@ -92,13 +92,17 @@ date: 2026-10-30
 ```
 "source_allowlist": [
    "github-search", "github-trending", "producthunt", "juejin-hot",
-   "v2ex-hot", "36kr-hot", "trendradar-sqlite"
--  , "weibo-hot", "ithome", "baidu-hot", "bilibili-hot"
+   "v2ex-hot", "36kr-hot", "hacker-news", "zhihu-hot", "trendradar-sqlite"
+-  , "weibo-hot", "ithome"
  ]
 ```
 
-依据：weibo/ithome/baidu/bilibili 在本轮及上一轮都没有贡献任何候选。
-`trendradar-sqlite` 保留，它一次覆盖 11 个平台，且带平台字段可事后分析。
+依据：`weibo-hot` 与 `ithome` 在最近两次采集里都返回了数据（30 与 60 条），
+但对 1024 的候选贡献为 **0**。它们仍在白名单里是因为任务要求先观察两周再决定；
+两周后若仍为 0，再提移除。
+
+更正：上一轮建议里写的 `baidu-hot` / `bilibili-hot` **本来就在黑名单里**
+（`source_blocklist`），不在白名单，所以那条建议是错的，这里撤回。
 
 ### 建议 C：未来智能维持现状
 
@@ -125,3 +129,88 @@ date: 2026-10-30
 python scripts/router_observe.py --trendradar-db "D:\Software\sansan0\TrendRadar\v6.11.0\output\news\2026-10-30.db"
 python scripts/router_observe.py --report --days 7
 ```
+
+---
+
+# 第三轮追加：候选精确率抽检（2026-10-30 晚）
+
+## 方法
+
+对每个账号当次采集的候选池逐条人工判读（依据该账号 `positioning` 与三根支柱），
+统计**精确率 = 判定相关或可用的候选 / 抽检候选数**，而不仅是候选数量。
+判读依据是候选的 GitHub 仓库描述、热榜标题与来源，不额外抓取正文。
+
+## x-superplay-1024（定位：亲自测试 AI 新能力、新玩法、新生意）
+
+| # | 候选 | 分数 | 判读 |
+|---|---|---|---|
+| 1 | AGvin/ai-lab — "Practical notes, setups, benchmarks, and workflows for AI models" | 5.85 | 相关：正好是"亲自测试"的形态 |
+| 2 | cedricvogel92/aicalc-web-workflow-tools — token 计数/定价小工具 | 5.10 | 边缘：可归入"AI 工具"，但非新物种 |
+| 3 | halfsend-06/test-repo-02-mint-host — "behaviour test: mint probe workflow host" | 5.05 | **不相关：测试垃圾仓库** |
+| 4 | halfsend-04/test-repo-10-mint-host | 5.05 | **不相关：测试垃圾仓库** |
+| 5 | halfsend-06/test-repo-07-mint-host | 5.05 | **不相关：测试垃圾仓库** |
+| 6 | kabir1921/kabir1921.github.io — 个人作品集站点 | 5.05 | **不相关** |
+| 7 | Donchitos/Claude-Code-Game-Studios — 把 Claude Code 变成游戏工作室 | 3.60 | 边缘：属于"新玩法"演示 |
+| 8 | HelloGitHub 127 期 | 2.75 | 边缘：可支撑"本周值得试的工具"选题 |
+
+**precision@8 = 1/8 = 12.5%**（宽口径含边缘 = 4/8 = 50%）。
+
+关键发现：4 条垃圾/无关项里有 3 条是 `halfsend-*` 的 mint 探测仓库，描述里含 "workflow"，
+通过了"命中账号词"的门槛。**这不是查询问题，是匹配语义问题**——修它要改账号的否定词或
+匹配规则，属于定位变更，已列为待批准建议 D（见下）。
+
+## x-superplay-future-intelligence（定位：把 AI 做成真正能运行、上线和解决问题的项目）
+
+| # | 候选 | 分数 | 判读 |
+|---|---|---|---|
+| 1 | IBM/mcp-context-forge — MCP/A2A/REST 的 AI 网关与注册中心 | 7.50 | 相关 |
+| 2 | elcoosp/kod — 终端内本地优先的 AI 编码 agent（Rust） | 7.50 | 相关 |
+| 3 | Emmad-Ud-Din/rag-chatbot — RAG + LLM-judge 评测 + 限流 | 6.90 | 相关（工程细节齐全） |
+| 4 | dhandan/football-copilot — 本地 LLM + 工具调用 + DuckDB 端到端 | 6.75 | 相关 |
+| 5 | MaxXSammy/procurement-rag-agent — 采购选型的 RAG agent | 6.75 | 相关（德文项目，工程可拆） |
+| 6 | tawfeeqimtiyaz/Search-Engine-LLM — 多源检索 chat agent | 6.75 | 相关（完整但玩具级） |
+| 7 | raullenchai/Rapid-MLX — Apple Silicon 上的推理服务 | 6.75 | 相关（部署/上线） |
+| 8 | venkateshyadagiri468/V18.AI — ReAct 多步 agent | 6.60 | 相关 |
+| 9 | egtimer/agentic-sql-assistant — LangGraph + Ollama + Qdrant | 6.60 | 相关 |
+| 10 | ACGlove/scout — 从零实现 LLM Agent 框架 | 6.15 | 相关（"拆解"向） |
+| 11 | Shradhhameduri/agentdesk — 工具调用客服 agent + 人工审批 | 6.00 | 相关 |
+| 12 | scalekit-inc/scalekit-sdk-java — 厂商 SDK | 6.00 | 弱：偏营销 |
+
+**precision@12 = 11/12 = 91.7%**（宽口径含 1 条弱相关 = 12/12）。
+
+## 前后对比（查询表达式的影响）
+
+| 账号 | 变更前 precision | 变更后 precision | 说明 |
+|---|---|---|---|
+| future-intelligence | 0.233（关键词推导查询） | **0.567**（表达式查询，仅 GitHub） | 保留表达式 |
+| 1024 | 0.200（关键词推导查询） | 0.133（表达式）→ **未采用** | 表达式实测更差，已从 DNA 移除 |
+
+注意：上表是**来源端（GitHub）精确率**，下表是**候选端精确率**，两者不可混为一谈：
+
+| 账号 | 来源端 precision（GitHub） | 候选端 precision（人工抽检） | 候选数 |
+|---|---|---|---|
+| 1024 | 0.200 | 0.125（@8） | 3–6（波动） |
+| future-intelligence | 0.567 | 0.917（@12） | 32–34 |
+
+## 新增建议 D（需要人工批准，未应用）
+
+```
+1024 discovery.keywords_negative 追加：
+  { "term": "test-repo",   "language": "en", "origin": {"kind": "not_doing", "index": 2} }
+  { "term": "mint probe",  "language": "en", "origin": {"kind": "not_doing", "index": 2} }
+```
+
+依据：本轮 4 条垃圾候选中 3 条来自这两个描述片段。但这仍属"什么算这个账号的内容"，
+需要账号所有者批准；未批准前宁可有这 3 条噪音，也不擅自扩大排除范围。
+
+## 四个零产出源的处理
+
+任务要求"暂不永久移除，观察后再形成建议"。按本轮实测把两类原因分开：
+
+| 来源 | 状态 | 原因 | 处理 |
+|---|---|---|---|
+| 36kr-hot / hacker-news / zhihu-hot | 连续 2 次 `SOURCE_UNAVAILABLE`（HTTP 500，重试 3 次） | **上游故障**，不是账号不匹配 | 保留；上游恢复即恢复 |
+| weibo-hot / ithome | 有数据（30 / 60 条），候选贡献 **0** | 与账号定位不匹配 | 保留观察两周，再决定 |
+| producthunt | 有数据（20–40 条），候选贡献偶发 | 边界 | 保留 |
+
+本轮**不动白名单**。

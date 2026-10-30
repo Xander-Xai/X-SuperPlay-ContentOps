@@ -87,9 +87,17 @@ from contentops.routing.account_profile import (  # noqa: E402
     Keyword,
     verify_origin,
 )
-from contentops.hotspots.source_registry import SOURCES  # noqa: E402
+from contentops.hotspots.source_registry import (  # noqa: E402
+    GITHUB_SEARCH,
+    SOURCES,
+)
 
 SCHEMA = "contentops.account-dna/v2"
+
+#: The adapters that actually accept a query. A query expression written for
+#: any other adapter would be silently inert — the source is read as a list and
+#: the expression never reaches it — so it is refused rather than ignored.
+QUERY_ADAPTERS = frozenset({GITHUB_SEARCH})
 
 PATH_BASES = ("catalog", "repo", "shared")
 DEFAULT_PATH_BASE = "catalog"
@@ -511,6 +519,8 @@ def _check_discovery(dna: Dict[str, Any], warnings: List[str]) -> List[str]:
                 failures.append(f"{slug}: discovery.{key} entry {source_id!r} gives no "
                                 f"reason; the reason travels into the search plan")
 
+    failures.extend(_check_query_expressions(slug, discovery, keywords))
+
     weights = discovery.get("match_weights")
     if weights is not None:
         if not isinstance(weights, dict) or sum(weights.values()) != 100:
@@ -523,6 +533,64 @@ def _check_discovery(dna: Dict[str, Any], warnings: List[str]) -> List[str]:
             if policy.get(key) is not True:
                 failures.append(f"{slug}: discovery.approval_policy.{key} must be true; "
                                 f"an account cannot exempt itself from the human gates")
+    return failures
+
+
+def _check_query_expressions(slug: str, discovery: Dict[str, Any],
+                             keywords: List[Any]) -> List[str]:
+    """Validate the per-adapter query expressions, when the account has any.
+
+    A query expression is a narrowing of what already exists, so the only
+    rule that matters is the chain: every term must name a keyword this same
+    DNA declares, with that keyword's language. A term that names nothing is
+    an invented search term, which is exactly what this check exists to stop.
+    """
+    raw = discovery.get("query_expressions")
+    if raw is None:
+        return []
+    if not isinstance(raw, dict):
+        return [f"{slug}: discovery.query_expressions must be an object"]
+    declared = {}
+    for item in keywords:
+        if isinstance(item, dict) and item.get("term"):
+            declared[str(item["term"]).casefold()] = str(item.get("language") or "zh")
+    failures: List[str] = []
+    for adapter, spec in raw.items():
+        if adapter not in QUERY_ADAPTERS:
+            failures.append(f"{slug}: query_expressions names adapter {adapter!r}, which "
+                            f"does not accept a query; adapters that do: "
+                            f"{sorted(QUERY_ADAPTERS)}")
+        if not isinstance(spec, dict):
+            failures.append(f"{slug}: query_expressions.{adapter} must be an object")
+            continue
+        if not str(spec.get("why") or "").strip():
+            failures.append(f"{slug}: query_expressions.{adapter} gives no reason")
+        terms = spec.get("terms")
+        if not isinstance(terms, list) or not terms:
+            failures.append(f"{slug}: query_expressions.{adapter}.terms is empty")
+            continue
+        for entry in terms:
+            term = str((entry or {}).get("term") or "").strip() if isinstance(entry, dict) \
+                else str(entry or "").strip()
+            if not term:
+                failures.append(f"{slug}: query_expressions.{adapter} has a term with no "
+                                f"text")
+                continue
+            source_keyword = str((entry or {}).get("from_keyword") or "").strip() \
+                if isinstance(entry, dict) else ""
+            if not source_keyword:
+                failures.append(f"{slug}: query term {term!r} names no from_keyword, so it "
+                                f"cannot be traced to a declared keyword")
+                continue
+            declared_language = declared.get(source_keyword.casefold())
+            if declared_language is None:
+                failures.append(f"{slug}: query term {term!r} cites {source_keyword!r}, "
+                                f"which is not a declared keyword of this account")
+                continue
+            stated = str(entry.get("language") or declared_language)
+            if stated != declared_language:
+                failures.append(f"{slug}: query term {term!r} is {stated!r} but the keyword "
+                                f"it cites is {declared_language!r}")
     return failures
 
 

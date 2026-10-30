@@ -310,8 +310,7 @@ def cmd_approve(args: argparse.Namespace) -> int:
         raise RoutingError("RUN_NOT_FOUND", f"no run {args.run!r}")
     result = router.approve(account, args.run, reviewer=args.reviewer or "",
                             note=args.note or "", project_slug=args.project,
-                            confirmed=True, actor_kind=args.actor_kind,
-                            allow_automation=args.allow_automation)
+                            confirmed=True, actor_kind=args.actor_kind)
     if args.json:
         _emit(result.to_dict(), True)
         return 0
@@ -417,11 +416,8 @@ def build_parser() -> argparse.ArgumentParser:
     approve.add_argument("--confirm", action="store_true")
     approve.add_argument("--actor-kind", choices=("human", "automation"),
                          default="human",
-                         help="who is approving; automation is refused unless "
-                              "--allow-automation is also given")
-    approve.add_argument("--allow-automation", action="store_true",
-                         help="accept an automation approval (sandboxes and "
-                              "acceptance runs only)")
+                         help="who is approving; an automation approval is always "
+                              "refused from this command line")
     approve.set_defaults(func=cmd_approve)
 
     verify = add("verify", "check that an approval still matches the brief")

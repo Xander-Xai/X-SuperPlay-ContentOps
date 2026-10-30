@@ -79,9 +79,14 @@ def main(argv=None) -> int:
             outcome["would_write"] = str(project / handoff.BRIEF_DIR / handoff.HANDOFF_FILE)
         else:
             outcome["handoff"] = str(handoff.write_handoff(project, record))
+        script = handoff.script_state(project)
+        outcome["script_ready"] = script["ready"]
+        outcome["script_problems"] = script["problems"]
         outcome["next"] = (
-            "write the script, then pass scripts/copy_review.py before any "
-            "narration is synthesised")
+            "run scripts/copy_review.py before any narration is synthesised"
+            if script["ready"] else
+            "write script/lines.json and script/assets.json, then run "
+            "scripts/copy_review.py before any narration is synthesised")
 
     if args.json:
         print(json.dumps(outcome, ensure_ascii=False, indent=2))
@@ -95,6 +100,10 @@ def main(argv=None) -> int:
             print(f"would write {outcome['would_write']} (dry run)")
         if not route.get("resolved"):
             print(f"pipeline   unresolved: {route.get('reason')}")
+        if "script_ready" in outcome:
+            print(f"script     {'ready' if outcome['script_ready'] else 'not written'}")
+            for problem in outcome.get("script_problems") or []:
+                print(f"  - {problem}")
         if outcome.get("next"):
             print(f"next       {outcome['next']}")
     return 0 if verdict["ok"] else BLOCKED_EXIT

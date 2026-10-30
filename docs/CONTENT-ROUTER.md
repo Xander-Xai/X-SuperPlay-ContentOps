@@ -412,6 +412,108 @@ Run it once a day for seven days; the mechanism exists and one run is
 recorded. Seven days of data do not exist yet, and this document does not
 claim they do.
 
+## Query expressions are not positioning
+
+An account may state, per adapter, which of its declared terms are worth
+asking that source about, and in what order:
+
+```json
+"query_expressions": {
+  "github_search": {
+    "why": "…",
+    "terms": [{"term": "LangGraph", "language": "en", "from_keyword": "LangGraph"}]
+  }
+}
+```
+
+Each term names the keyword it renders (``from_keyword``), and every keyword
+already carries its own origin in the DNA, so the chain back to something the
+owner wrote stays unbroken. What the expression adds is a *query* decision —
+which declared terms to spend a source's limited operator budget on — not a
+new positioning claim. `check_account_dna.py` fails a term that cites a
+keyword the account does not declare, so an invented search term cannot get in
+through this door either.
+
+Measured on 2026-10-30 with `scripts/router_query_experiment.py` (one run each,
+same moment, GitHub only):
+
+| Account | query | returned | passed the gate | precision |
+|---|---|---|---|---|
+| future-intelligence | expression | 30 | 17 | **0.567** |
+| future-intelligence | keyword-derived | 30 | 7 | 0.233 |
+| 1024 | expression | 30 | 4 | 0.133 |
+| 1024 | keyword-derived | 30 | 6 | 0.200 |
+
+The expression is kept for future-intelligence and **removed for 1024**: it
+measurably lowered that account's precision, so shipping it would have been a
+change made for symmetry rather than for evidence. 1024's problem is not its
+query — generic English terms match spam repositories that pass its gate — and
+fixing that changes what counts as the account's content, which is the
+owner's decision.
+
+## Running it on a clock
+
+`scripts/router_schedule.py` does one collection cycle: crawl through
+TrendRadar's own entry point, discover the newest database, collect for both
+accounts, write a receipt. It is the only component that runs unattended, and
+what it may do is bounded by construction and checked by test — it cannot
+select a topic, approve a brief, render or publish.
+
+```powershell
+python scripts\router_schedule.py run                 # one cycle, with a crawl
+python scripts\router_schedule.py run --skip-crawl    # read what exists
+python scripts\router_schedule.py status              # lock, last runs, missed runs
+python scripts\router_schedule.py register            # print the schtasks command
+```
+
+Four properties it has to hold on a machine with a clock:
+
+- **one at a time.** A lock file in the state directory makes a second run exit
+  `ALREADY_RUNNING` (exit 3) instead of crawling twice; a lock older than three
+  hours is treated as abandoned.
+- **the newest database, not a date.** It reads `output/news/*.db` newest-first
+  and falls back when today's file is locked by a crawl that is still writing.
+  The newest RSS file is recorded too, though the router does not read it.
+- **staleness is a judgement, not an accident.** The chosen database's age is
+  in the receipt, and anything older than 24 h is marked `stale` there — on top
+  of the adapter's own `STALE_SOURCE` rejection.
+- **missed runs are visible.** `status` compares the last successful receipt
+  with the expected interval and says so; a run that fails still writes a
+  receipt saying which stage failed.
+
+Registration is a separate, deliberate step (`register --apply`); it creates a
+Windows scheduled task and therefore changes the machine. It is not run
+automatically by anything in this repository.
+
+## What an approval does and does not prove
+
+Three different things are easy to confuse, so they are separated here:
+
+| Level | What it is | What we have |
+|---|---|---|
+| Operator declaration | a name typed into `--reviewer` | yes; it is a claim, not an identity |
+| Interactive confirmation | a person at a terminal passing `--confirm` | yes; it marks intent, not identity |
+| Authenticated approval | a verified identity bound to the approval | **no** — this repository has no identity provider |
+
+The guarantee this system actually offers is therefore narrow and stated:
+
+- **content binding**: the approval records the digest of the exact brief
+  (topic, candidate, forecast, profile version). If any of that changes, the
+  approval stops applying (`APPROVAL_STALE`) and no project can be made from
+  it;
+- **an audit trail**: who claimed what, when, and whether the actor was a
+  person or an acceptance run, next to the digest it belongs to;
+- **no automation path into production**: `approve` needs `--confirm`, and an
+  `automation` actor is refused unless the caller opts in *in code* and the
+  process runs with `CONTENTOPS_TEST_SANDBOX=1`. That environment marker is
+  deliberately not a CLI flag: a flag is a workflow parameter, and a workflow
+  parameter can be copied into a production job by anyone editing it.
+
+It does **not** provide: proof that the named person is that person, protection
+against an operator who knowingly approves bad content, or protection against
+someone with write access to the state directory editing it. Those need an
+identity provider and a trusted host, and neither exists here.
+
 ## What this does not do
 
 - It does not choose a topic for you. It proposes; a person decides.

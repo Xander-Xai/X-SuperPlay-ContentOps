@@ -45,6 +45,7 @@ stands between a script and a render.
 from __future__ import annotations
 
 import json
+import os
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -87,6 +88,18 @@ from .user_topic_route import UserTopicInput
 
 #: The default freshness window for a hot-list run, in hours.
 DEFAULT_FRESHNESS_HOURS = 72
+
+#: The environment marker that says "this process is an isolated sandbox".
+#: It is deliberately an environment variable and not a command-line flag: a
+#: flag is a workflow parameter, and a workflow parameter can be added to a
+#: production job by anyone editing it. An environment the production runs do
+#: not set cannot be switched on by accident.
+SANDBOX_ENV = "CONTENTOPS_TEST_SANDBOX"
+
+
+def sandbox_environment() -> bool:
+    """Whether this process declares itself an isolated test sandbox."""
+    return os.environ.get(SANDBOX_ENV, "").strip().lower() in ("1", "true", "yes")
 
 
 @dataclass
@@ -410,11 +423,12 @@ class ContentRouter:
         if actor_kind not in ("human", "automation"):
             raise RoutingError("ACTOR_KIND_INVALID",
                                "an approval is either 'human' or 'automation'")
-        if actor_kind == "automation" and not allow_automation:
+        if actor_kind == "automation" and not (allow_automation and sandbox_environment()):
             raise RoutingError(
                 "AUTOMATION_APPROVAL_REFUSED",
                 "an automation may not approve a brief; only a person can, and the "
-                "acceptance harness must opt in explicitly")
+                "acceptance harness must opt in both in code and through "
+                "CONTENTOPS_TEST_SANDBOX=1 in an isolated environment")
         if not confirmed:
             raise RoutingError(
                 "CONFIRMATION_REQUIRED",

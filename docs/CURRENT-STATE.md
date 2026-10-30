@@ -1292,3 +1292,26 @@ failure, not a reason to find a topic another way.
 | Approval | `--confirm` required; `automation` actor refused unless explicitly allowed; approval bound to a content digest; `verify` reports `APPROVAL_STALE`; a stale approval cannot materialise a project |
 | Handoff | `scripts/brief_handoff.py` checks the digest and the evidence forecast, writes `00_brief/handoff.json`; the real pipeline entry blocks at copy review without spending |
 | Observation | `scripts/router_observe.py` writes one JSONL line per account per run; `--report --days 7` prints the window |
+
+### Round three — precision, a clock, and the approval boundary, 2026-10-30
+
+| Area | What is now true |
+|---|---|
+| Query expressions | `discovery.query_expressions` lets an account choose, per adapter, which declared keywords to spend a source's operator budget on; each term cites the keyword it renders and the DNA check verifies the chain. Measured with `scripts/router_query_experiment.py`: future-intelligence 0.233 → 0.567 precision on GitHub, so its expression is kept; 1024 measured *worse* (0.200 → 0.133) and its expression was removed rather than shipped for symmetry |
+| Candidate precision | Judged by hand against each account's own positioning: future-intelligence **11/12 = 92%**, 1024 **1/8 = 12.5%** — see `research/router-precision-audit-2026-10-30.md`. 1024's shortfall is a match-semantics problem (spam repositories pass its gate), not a query problem, and the fix is a positioning decision awaiting the owner |
+| Scheduled collection | `scripts/router_schedule.py` runs one cycle: crawl through TrendRadar's entry point, discover the newest database, collect, write a receipt. A lock makes a second run exit `ALREADY_RUNNING`, a stale lock is abandoned after three hours, a locked database falls back to the previous day, and `status` reports a missed run |
+| Approval boundary | The automation exception now needs both `allow_automation=True` **and** `CONTENTOPS_TEST_SANDBOX=1`; the CLI no longer exposes it at all, so a production workflow parameter cannot enable it. The guarantee is stated as content binding plus an audit trail — there is no identity provider and the docs say so |
+| Downstream | Both routes hand off through one `contentops.brief-handoff/v1` record; `script_state()` names the missing `script/lines.json` and `script/assets.json` instead of failing later. Script and storyboard production remain unwritten and are recorded as a separate milestone |
+
+### Not started: M-ROUTER-SCRIPT (script and storyboard production)
+
+The router hands an approved brief to a project and stops. What turns a brief
+into `script/lines.json` and `script/assets.json` — the narration and the
+storyboard — does not exist yet, and `scripts/brief_handoff.py` reports those
+two files as a named gap rather than writing a placeholder.
+
+Scope of the milestone, when it is taken up: given `00_brief/handoff.json`,
+produce the two files under `script/`, with every claim traceable to the
+brief's `source_artifact_refs`, and stop at the copy review like every other
+producer. It must not call a paid provider on its own, and it must not mark
+itself reviewed.

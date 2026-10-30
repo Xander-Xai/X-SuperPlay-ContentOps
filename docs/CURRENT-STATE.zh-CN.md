@@ -1228,3 +1228,23 @@ DNA 检查直接失败。不存在任何一条路径，能让一个无出处的�
 | 审批 | 必须 `--confirm`；`automation` 身份除非显式允许一律拒绝；审批与内容摘要绑定；`verify` 报 `APPROVAL_STALE`；失效审批无法创建工程 |
 | 交接 | `scripts/brief_handoff.py` 校验摘要与证据预测，写出 `00_brief/handoff.json`；真正流水线入口在 copy review 处阻塞，不花钱 |
 | 观察 | `scripts/router_observe.py` 每账号每次运行写一行 JSONL；`--report --days 7` 打印窗口 |
+
+### 第三轮——精准度、定时任务与审批边界，2026-10-30
+
+| 方面 | 现在为真的事实 |
+|---|---|
+| 查询表达式 | `discovery.query_expressions` 让账号按适配器选择：把自己已声明的哪些关键词花在某个来源有限的 operator 预算上；每个词都引用它渲染的关键词，DNA 检查逐条验链。用 `scripts/router_query_experiment.py` 实测：future-intelligence 在 GitHub 上 0.233 → 0.567，保留其表达式；1024 实测**更差**（0.200 → 0.133），因此移除而不是为对称而保留 |
+| 候选精确率 | 按各自定位人工判读：future-intelligence **11/12 = 92%**，1024 **1/8 = 12.5%**——见 `research/router-precision-audit-2026-10-30.md`。1024 的短板是匹配语义（垃圾仓库能通过它的门禁），不是查询问题，修它属于定位决策，等账号所有者 |
+| 定时采集 | `scripts/router_schedule.py` 跑一个周期：经 TrendRadar 入口抓取、发现最新数据库、采集、写回执。锁让第二个运行以 `ALREADY_RUNNING` 结束，超过三小时的锁视为废弃，数据库被锁时回退到前一天，`status` 报告漏跑 |
+| 审批边界 | 自动审批例外现在同时需要 `allow_automation=True` **和** `CONTENTOPS_TEST_SANDBOX=1`；命令行不再暴露它，因此生产的工作流参数无法开启。保证被明确限定为内容绑定加审计留痕——没有身份提供方，文档也这么说 |
+| 下游 | 两条路线经同一个 `contentops.brief-handoff/v1` 记录交接；`script_state()` 把缺失的 `script/lines.json` 与 `script/assets.json` 作为命名状态报出，而不是留到下游崩溃。脚本与分镜生产仍未实现，已登记为独立里程碑 |
+
+### 尚未开始：M-ROUTER-SCRIPT（脚本与分镜生产）
+
+路由器把已批准的 Brief 交给工程后即停止。把 Brief 变成 `script/lines.json` 与
+`script/assets.json`——也就是旁白与分镜——的部分尚不存在，`scripts/brief_handoff.py`
+把这两个文件作为命名缺口报出，而不是写一个占位文件。
+
+该里程碑的范围：以 `00_brief/handoff.json` 为输入，在 `script/` 下产出这两个文件，
+每条主张都要能追溯到 Brief 的 `source_artifact_refs`，并且和其他生产者一样停在
+copy review。它不得自行调用付费服务，也不得把自己标记为已审核。

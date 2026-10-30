@@ -29,12 +29,37 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from .brief import BRIEF_DIR, BRIEF_FILE, content_digest
 
 HANDOFF_SCHEMA = "contentops.brief-handoff/v1"
 HANDOFF_FILE = "handoff.json"
+
+#: Where the pipeline's own entry point expects the written episode.
+SCRIPT_DIR = "script"
+
+
+def script_state(project: Path) -> Dict[str, Any]:
+    """Whether the episode has been written yet, and what is missing.
+
+    The brief stops where a person starts: it says what the episode is about
+    and what evidence it needs, not what the narration says. This reports the
+    two files the production entry point reads, so "not written yet" is a
+    named state with a next action rather than a crash somewhere downstream.
+    """
+    project = Path(project)
+    lines = project / SCRIPT_DIR / "lines.json"
+    assets = project / SCRIPT_DIR / "assets.json"
+    problems: List[str] = []
+    if not lines.is_file():
+        problems.append("script/lines.json is missing: the narration has not been "
+                        "written (a person writes it; the copy review approves it)")
+    if not assets.is_file():
+        problems.append("script/assets.json is missing: the evidence assets have not "
+                        "been listed")
+    return {"ready": not problems, "problems": problems,
+            "lines": str(lines), "assets": str(assets)}
 
 
 def read_brief(project: Path) -> Optional[Dict[str, Any]]:

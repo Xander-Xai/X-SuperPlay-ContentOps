@@ -763,18 +763,61 @@ def test_an_automation_cannot_approve_without_opting_in():
                                        confirmed=True, actor_kind="automation"))
 
 
-def test_an_automation_approval_is_recorded_as_one():
+def test_an_automation_approval_needs_the_sandbox_environment():
+    """The opt-in is code *and* environment; a copied command line is not enough."""
+    import os
     with tempfile.TemporaryDirectory() as tmp:
         router = _router(_sandbox(tmp), adapters=_fixture_adapter())
         run = router.start(ACCOUNT_BUILD, "USER_TOPIC",
                            UserTopicInput(topic="LangGraph 的状态管理怎么设计"))
-        result = router.approve(ACCOUNT_BUILD, run.run_id, reviewer="Acceptance",
-                                confirmed=True, actor_kind="automation",
-                                allow_automation=True)
+        previous = os.environ.pop("CONTENTOPS_TEST_SANDBOX", None)
+        try:
+            _expect("AUTOMATION_APPROVAL_REFUSED",
+                    lambda: router.approve(ACCOUNT_BUILD, run.run_id,
+                                           reviewer="Acceptance", confirmed=True,
+                                           actor_kind="automation",
+                                           allow_automation=True))
+        finally:
+            if previous is not None:
+                os.environ["CONTENTOPS_TEST_SANDBOX"] = previous
+
+
+def test_an_automation_approval_is_recorded_as_one():
+    import os
+    with tempfile.TemporaryDirectory() as tmp:
+        router = _router(_sandbox(tmp), adapters=_fixture_adapter())
+        run = router.start(ACCOUNT_BUILD, "USER_TOPIC",
+                           UserTopicInput(topic="LangGraph 的状态管理怎么设计"))
+        previous = os.environ.get("CONTENTOPS_TEST_SANDBOX")
+        os.environ["CONTENTOPS_TEST_SANDBOX"] = "1"
+        try:
+            result = router.approve(ACCOUNT_BUILD, run.run_id, reviewer="Acceptance",
+                                    confirmed=True, actor_kind="automation",
+                                    allow_automation=True)
+        finally:
+            if previous is None:
+                os.environ.pop("CONTENTOPS_TEST_SANDBOX", None)
+            else:
+                os.environ["CONTENTOPS_TEST_SANDBOX"] = previous
         assert result.detail["actor_kind"] == "automation"
         approval = router.status(ACCOUNT_BUILD, run.run_id).detail["intent"][
             "route_context"]["detail"]["approval"]
         assert approval["actor_kind"] == "automation"
+
+
+def test_the_command_line_cannot_enable_an_automation_approval():
+    """A production workflow parameter must not be able to unlock the exception."""
+    text = (ROOT / "scripts" / "content_route.py").read_text(encoding="utf-8")
+    assert "--allow-automation" not in text
+    assert "allow_automation" not in text
+
+
+def test_the_scheduled_collection_cannot_reach_a_human_decision():
+    """The clock may collect; it may never choose, approve, render or publish."""
+    text = (ROOT / "scripts" / "router_schedule.py").read_text(encoding="utf-8")
+    for forbidden in (".select(", ".approve(", "materialize_project",
+                      "build_evidence_package", "assemble_easel"):
+        assert forbidden not in text, forbidden
 
 
 def test_an_approval_records_who_when_and_what():
@@ -898,6 +941,50 @@ def test_a_project_with_no_brief_cannot_hand_off():
         verdict = handoff.check(handoff.read_brief(Path(tmp)))
         assert verdict["ok"] is False
         assert verdict["reason"] == "BRIEF_MISSING"
+
+
+def test_both_routes_hand_off_through_one_interface():
+    """Route A and Route B differ in the brief's values, never in its shape."""
+    from contentops.routing import handoff
+    with tempfile.TemporaryDirectory() as tmp:
+        root = _sandbox(tmp)
+        router = _router(root, adapters=_fixture_adapter())
+        hotspot = router.start(ACCOUNT_EXPLORE, "HOTSPOT_DISCOVERY")
+        candidate = hotspot.detail["candidates"][0]["candidate_id"]
+        router.select(ACCOUNT_EXPLORE, hotspot.run_id, candidate, selected_by="Founder")
+        router.approve(ACCOUNT_EXPLORE, hotspot.run_id, reviewer="Founder",
+                       confirmed=True, project_slug="handoff-a")
+        topic = router.start(ACCOUNT_BUILD, "USER_TOPIC",
+                             UserTopicInput(topic="LangGraph 的状态管理怎么设计"))
+        router.approve(ACCOUNT_BUILD, topic.run_id, reviewer="Founder",
+                       confirmed=True, project_slug="handoff-b")
+
+        records = []
+        for slug in ("handoff-a", "handoff-b"):
+            project = root / "projects" / slug
+            records.append(handoff.handoff_record(project, handoff.read_brief(project)))
+        assert set(records[0]) == set(records[1])
+        assert records[0]["route_mode"] != records[1]["route_mode"]
+        assert records[0]["account_id"] != records[1]["account_id"]
+        for record in records:
+            assert record["content_digest"]
+            assert any("copy review" in item for item in record["still_gated_by"])
+
+
+def test_the_script_step_is_a_named_gap_not_a_crash():
+    from contentops.routing import handoff
+    with tempfile.TemporaryDirectory() as tmp:
+        root = _sandbox(tmp)
+        router = _router(root, adapters=_fixture_adapter())
+        _approved_run(router, ACCOUNT_BUILD, slug="handoff-script")
+        project = root / "projects" / "handoff-script"
+        state = handoff.script_state(project)
+        assert state["ready"] is False
+        assert len(state["problems"]) == 2
+        (project / "script").mkdir(exist_ok=True)
+        (project / "script" / "lines.json").write_text("[]", encoding="utf-8")
+        (project / "script" / "assets.json").write_text("[]", encoding="utf-8")
+        assert handoff.script_state(project)["ready"] is True
 
 
 def main() -> int:

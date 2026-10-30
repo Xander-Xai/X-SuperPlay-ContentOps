@@ -152,7 +152,14 @@ def _query_for(source: Source, profile: Any, pillar: Optional[str],
     """
     if source.query_mode != NATIVE_SEARCH:
         return None
-    if source.adapter == "github_search":
+    # An account may state, per adapter, which of its declared terms are worth
+    # asking a particular source about. That is a query decision, not a
+    # positioning change: every term in the expression still names a keyword
+    # the account declared, and the DNA check verifies the chain.
+    expression = (getattr(profile, "query_expressions", None) or {}).get(source.adapter)
+    if expression:
+        terms = [str(term) for term in expression]
+    elif source.adapter == "github_search":
         # GitHub's search ANDs space-separated terms, so asking for every one
         # of the account's terms at once would ask for a repository that
         # mentions all of them and find nothing. The account's terms are
@@ -161,29 +168,32 @@ def _query_for(source: Source, profile: Any, pillar: Optional[str],
         # accepts it. The exact query is recorded in the plan, so a reader can
         # see what was actually asked.
         terms = list(dict.fromkeys(terms_en + terms_zh))
-        if not terms:
-            return None
-        # A term that is the source's own name discriminates nothing here: on
-        # GitHub, "GitHub" matches every repository, and asking for it spends
-        # one of the few operators the service allows on a term that cannot
-        # narrow anything. It stays in the account's keywords — it is still
-        # used for filtering and ranking — it just does not lead the query.
-        platform = str(getattr(source, "platform", "") or "").casefold()
-        discriminating = [term for term in terms
-                          if term.casefold() != platform and platform not in term.casefold()]
-        terms = discriminating or terms
-        ordered = _pillar_first(profile, pillar, terms)
-        cap = source.max_query_terms or MAX_QUERY_TERMS
-        chosen: List[str] = []
-        for term in ordered:
-            trial = chosen + [term]
-            if len(" OR ".join(trial)) > MAX_QUERY_CHARS:
-                break
-            chosen = trial
-            if len(chosen) >= cap:
-                break
-        return " OR ".join(chosen) if chosen else None
-    return None
+    else:
+        return None
+    if not terms:
+        return None
+    # A term that is the source's own name discriminates nothing here: on
+    # GitHub, "GitHub" matches every repository, and asking for it spends one
+    # of the few operators the service allows on a term that cannot narrow
+    # anything. It stays in the account's keywords — it is still used for
+    # filtering and ranking — it just does not lead the query.
+    platform = str(getattr(source, "platform", "") or "").casefold()
+    discriminating = [term for term in terms
+                      if term.casefold() != platform and platform not in term.casefold()]
+    terms = discriminating or terms
+    # A stated expression carries the account's own order; the keyword-derived
+    # fallback is re-ordered so a capped query keeps the specific terms.
+    ordered = list(terms) if expression else _pillar_first(profile, pillar, terms)
+    cap = source.max_query_terms or MAX_QUERY_TERMS
+    chosen: List[str] = []
+    for term in ordered:
+        trial = chosen + [term]
+        if len(" OR ".join(trial)) > MAX_QUERY_CHARS:
+            break
+        chosen = trial
+        if len(chosen) >= cap:
+            break
+    return " OR ".join(chosen) if chosen else None
 
 
 def _pillar_first(profile: Any, pillar: Optional[str], terms: List[str]) -> List[str]:
