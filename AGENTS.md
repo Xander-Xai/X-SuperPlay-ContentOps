@@ -102,7 +102,7 @@ pin. Same rule as the 公众号 tree: it is an owned copy, not a sixth productio
 - `python scripts/x_growth_pin.py` must pass before any X work; `--suite` also runs
   the vendored analytics tests.
 - The gate is this repository's, not the vendor's: `python scripts/x_post.py --check
-  projects/x-growth-en/posts/<id>.json`. A verdict of `DRAFT`, `IMAGE_MISSING`,
+  projects/x-growth-en --id <content-id>`. A verdict of `DRAFT`, `IMAGE_MISSING`,
   `READY`, `PUBLISHED` or `BLOCKED` is derived from the named issues, never guessed.
 - Publication is `MANUAL_ONLY`: `--package` stops at `AWAITING_MANUAL_PUBLISH`, and a
   person posts it and records the real `x.com/<handle>/status/<id>` URL with

@@ -99,7 +99,7 @@ python scripts\x_growth_pin.py                       # pin + digest must pass fi
 python scripts\x_growth_pin.py --suite               # also run the vendored analytics tests
 
 python scripts\x_post.py --new projects\x-growth-en --id 20261102-001 --topic "..."
-python scripts\x_post.py --check projects\x-growth-en\posts\20261102-001.json
+python scripts\x_post.py --check projects\x-growth-en --id 20261102-001
 python scripts\x_post.py --package projects\x-growth-en --id 20261102-001
 python scripts\x_post.py --mark-published projects\x-growth-en --id 20261102-001 `
     --url https://x.com/<handle>/status/<id> --reviewer "<name>" --opinion "<one line>"
