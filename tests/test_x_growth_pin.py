@@ -14,7 +14,6 @@ the properties that make that record worth trusting:
 
 from __future__ import annotations
 
-import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -26,6 +25,7 @@ for candidate in (ROOT / "src", ROOT / "scripts"):
         sys.path.insert(0, str(candidate))
 
 import x_growth_pin as pin  # noqa: E402
+from process_utils import hidden_run  # noqa: E402
 
 TESTS: List = []
 
@@ -124,9 +124,9 @@ def test_an_oversized_file_is_refused():
 def test_a_checkout_at_the_wrong_commit_is_refused():
     with tempfile.TemporaryDirectory() as temp:
         checkout = Path(temp)
-        subprocess.run(["git", "init", "-q", str(checkout)], check=True)
-        subprocess.run(["git", "-C", str(checkout), "-c", "user.email=a@b", "-c", "user.name=a",
-                        "commit", "-q", "--allow-empty", "-m", "not the pin"], check=True)
+        hidden_run(["git", "init", "-q", str(checkout)], check=True)
+        hidden_run(["git", "-C", str(checkout), "-c", "user.email=a@b", "-c", "user.name=a",
+                    "commit", "-q", "--allow-empty", "-m", "not the pin"], check=True)
         result = pin.verify(checkout=checkout)
     assert "commit" in result["failures"], result["failures"]
     assert result["ok"] is False
@@ -143,6 +143,23 @@ def test_a_missing_or_non_repository_checkout_is_refused():
         not_repo = pin.verify(checkout=base / "plain")
         assert not_repo["failures"] == ["checkout_is_repo"], not_repo["failures"]
     print("[ok] 9. a missing checkout and a non-repository are distinct failures")
+
+
+@test
+def test_the_vendored_suite_flag_reports_pass_and_failure():
+    passing = "import unittest\nclass T(unittest.TestCase):\n    def test(self):\n        self.assertTrue(True)\n"
+    failing = "import unittest\nclass T(unittest.TestCase):\n    def test(self):\n        self.fail('boom')\n"
+    with tempfile.TemporaryDirectory() as temp:
+        base = Path(temp)
+        (base / "tests").mkdir()
+        (base / "tests" / "test_ok.py").write_text(passing, encoding="utf-8")
+        ok = pin.run_vendored_suite(base)
+        (base / "tests" / "test_ok.py").write_text(failing, encoding="utf-8")
+        bad = pin.run_vendored_suite(base)
+    assert ok["ok"] is True and ok["returncode"] == 0, ok["output"]
+    assert bad["ok"] is False and bad["returncode"] != 0, bad["output"]
+    assert "boom" in bad["output"], "a failing vendored test must surface its output"
+    print("[ok] 10. --suite passes a green tree and reports a red one with its output")
 
 
 def main() -> int:

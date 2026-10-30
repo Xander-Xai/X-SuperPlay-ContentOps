@@ -22,6 +22,7 @@ Usage
 -----
     python scripts/x_growth_pin.py
     python scripts/x_growth_pin.py --checkout D:\\Temp\\x-growth-os --json
+    python scripts/x_growth_pin.py --suite
 """
 
 from __future__ import annotations
@@ -38,7 +39,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT / "scripts") not in sys.path:
     sys.path.insert(0, str(ROOT / "scripts"))
 
-from process_utils import hidden_run  # noqa: E402
+from process_utils import hidden_run, python_executable  # noqa: E402
 
 SCHEMA = "contentops.external-pin/v1"
 
@@ -177,14 +178,45 @@ def verify(checkout: Optional[Path] = None, vendored: Optional[Path] = None) -> 
     }
 
 
+def run_vendored_suite(vendored: Optional[Path] = None) -> Dict[str, Any]:
+    """Run the vendored analytics tests in place.
+
+    The pin proves the tree is byte-identical to the import; this proves the
+    imported script still runs under the current interpreter. It is kept out of
+    the default `verify()` so the pin stays fast and offline, and it is a
+    separate CI step rather than a silent part of the gate.
+    """
+    root = vendored or VENDORED
+    tests = root / "tests"
+    result = hidden_run(
+        [python_executable(), "-m", "unittest", "discover", "-s", str(tests),
+         "-t", str(tests), "-p", "test_*.py", "-v"],
+        cwd=str(root), timeout=300,
+    )
+    output = (result.stdout or "") + (result.stderr or "")
+    return {
+        "schema": "contentops.x-growth-suite/v1",
+        "suite": str(tests),
+        "ok": result.returncode == 0,
+        "returncode": result.returncode,
+        "output": output,
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Verify the pinned X growth workflow.")
     parser.add_argument("--checkout", default=None,
                         help="a clone of the source repository to verify against the pin")
+    parser.add_argument("--suite", action="store_true",
+                        help="also run the vendored analytics tests in place")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
 
     result = verify(Path(args.checkout) if args.checkout else None)
+    suite = run_vendored_suite() if args.suite else None
+    if suite is not None:
+        result["suite"] = suite
+        result["ok"] = result["ok"] and suite["ok"]
     if args.json:
         print(json.dumps(result, ensure_ascii=False, indent=2))
     else:
@@ -195,6 +227,10 @@ def main() -> int:
         print(f"vendored    {result['vendored']}")
         for check in result["checks"]:
             print(f"  {'OK  ' if check['ok'] else 'FAIL'} {check['id']}")
+        if suite is not None:
+            print(f"  {'OK  ' if suite['ok'] else 'FAIL'} vendored_suite")
+            if not suite["ok"]:
+                print(suite["output"])
         if result["failures"]:
             print()
             print("FAILED: " + ", ".join(result["failures"]))

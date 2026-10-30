@@ -322,6 +322,12 @@ jobs:
       - name: Run X growth pin tests
         run: python tests/test_x_growth_pin.py
 
+      # The pin proves the tree is byte-identical to the import; this proves the
+      # imported analytics still runs. It is a step of its own so a red vendored
+      # test is attributed to the tree, not to our pin.
+      - name: Run the vendored X analytics suite
+        run: python scripts/x_growth_pin.py --suite
+
       # The English X account's own schema. A text account is not a film account:
       # it declares a pipeline instead of an evidence mode, and the video readers
       # must skip it rather than index keys it does not have.
