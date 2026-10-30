@@ -885,3 +885,297 @@ Two boundaries are claimed deliberately:
 - **Naturalness passing is not a listening verdict.** It proves the rewrite
   stayed inside the budget it declared and kept its locked facts. Caption
   agreement is text identity, not pronunciation.
+
+### Reference replication contract — 2026-10-30
+
+A benchmark video can now become an episode plan without either pretending to
+know cut points it never saw or lifting the reference creator's footage. The
+contract has three documents and one gate.
+
+| Stage | Schema | Written by | Bound to |
+|---|---|---|---|
+| Observe | `contentops.reference-observation/v1` → `reference/observation.json` | a person, frame by frame | SHA-256 of a decodable local film inside the project |
+| Plan | `contentops.replication-plan/v1` → `script/replication-plan.json` | `replicate_reference.py --plan` | the observation's hash, the account DNA, `reuse_reference_media: false` |
+| Check | `contentops.replication-check/v1` | `qc_video.py` for any project that wrote a plan | the plan and the shipped storyboard |
+
+| Rule | Why it exists |
+|---|---|
+| `TRANSCRIPT_ONLY` observations may carry no `start_s`/`end_s` | A subtitle file describes words, not cuts; guessing seconds from it is the fabrication this gate exists to stop |
+| A plan's budget is clamped into the account's declared duration window | A reference may be longer than the account allows; the account wins |
+| A cut may cite no asset or source under `reference/` | Style is reusable, footage and facts are not |
+| Every shot declares `function` (closed vocabulary) and `dna_role` | "It looked similar" is not a measurement; the share is checked within ±8pp of the DNA |
+| Hook ≤ DNA `max_hook_s`, no static hold above the DNA limit, beat order follows the template | The three things a viewer notices before the content does |
+| Only projects with `script/replication-plan.json` are graded as a replication | An ordinary episode does not owe a reference contract |
+
+| Fact | Value |
+|---|---|
+| Entry point | `scripts/replicate_reference.py` — `--observe`, `--plan`, `--check` |
+| Exit codes | 0 pass · 1 contract failure · 4 nothing observed or planned · 2 contradictory inputs or no `script` skill route |
+| Receipt | `receipts/replication.json`, status `DERIVED` — a derived budget is not an approval |
+| Producer gate | `replication.stage_gate()` — `run_v1.py` and `build_evidence_package.py` refuse to render a project whose cut left its plan; a project with no plan is untouched |
+| Attribution fixes in the same change | `cut_qc.source_shares` counts shots, not placements; `qc_video.real_source_ratio` weights by duration, not shot count |
+| Tests | `tests/test_reference_replication.py` (20), `tests/test_evidence_cut_qc.py` (10), both named in CI |
+
+Two boundaries are claimed deliberately:
+
+- **No original film has been obtained, so no real plan exists.** Every test
+  builds its own fixture. The command refuses to plan without a hashed,
+  decodable film — refusing is the correct output, not a failure to implement.
+- **A passing check is not a human verdict.** It proves the cut stayed inside
+  the budget, composition and ordering it declared. Whether the result is worth
+  watching stays with the Founder, alongside `copy_review`.
+
+### QC reads the documents production writes — 2026-10-30
+
+Grading `projects/easel-1024-proof` reproduced a family of defects: `qc_video`
+and `cut_qc` disagreed about one film because each read a different document.
+All three are fixed and tested; the flagship evidence project now grades PASS
+where it previously warned for the wrong reasons.
+
+| Fact | Value |
+|---|---|
+| Storyboard | `work/<target>/storyboard.json` → `script/storyboard.json` → `work/storyboard.json`, in that order |
+| Real-source share | measured from `script/cut-plan.json` + `assets.json` by final-cut duration when present; the storyboard is only a fallback |
+| Provenance | a cited asset must declare `sha256`/`path`/`png`/`html`; an unproven recording counts as time but never as evidence |
+| Caption presence | `assets/captions/<target>.srt` → `default.srt` → `cut.srt` |
+| Subtitle burn | frames are sampled at each SRT cue's midpoint; fixed fractions of the film are the fallback, because sparse cues cover none of six even samples |
+| Evidence film result | 72.7% real (32 s recording / 12 s card), captions found and burn detected at 0.0142 bright ratio, overall PASS |
+
+Two things this does **not** do: it does not prove the render matches the cut
+plan (both gates trust the plan), and it does not approve the film — copy review
+and distribution stay blocked until a person reviews them.
+
+### The replication contract stops trusting its own inputs — 2026-10-30
+
+An adversarial review of the contract found four ways to certify a film that
+never existed. They share one shape: a document asserted something the film
+never did, and the next gate read the assertion. All four now fail closed.
+
+| Hole | What it allowed | What now happens |
+|---|---|---|
+| A hand-typed shot list | `mode: FRAME_VIEWED` plus plausible seconds derived a budget from a film nobody opened | `--frames` cuts a 32×32 frame per shot out of the reference and records its SHA-256; a shot with no frame is refused, and `probe_reference` re-extracts each frame at its own timestamp and compares the bytes (`FRAME_NOT_FROM_REFERENCE`) |
+| The budget was the storyboard's arithmetic | summing `duration` fields let a 47.2 s plan certify a 2 s render | `check()` measures `final/easel.mp4` with ffprobe and grades that; no film is `render_present` FAIL, so `--check` cannot exit 0 on a plan alone |
+| The plan carried its own thresholds | editing `target_s` / `max_hook_s` / `max_static_hold_s` / composition turned a failing cut into a PASS | `plan_matches_derivation` re-derives the plan from the verified observation and the account DNA and requires equality |
+| Account policy was an episode field | `evidence_mode: EXPLANATORY` retired the 70% floor, `manual_recording: ALLOWED` cancelled a recording ban, deleting `composition` skipped the ratio gate | `cut_qc` resolves the DNA from `project.yaml`; the account's values govern, a disagreeing declaration is a FAIL, and `account_composition` measures the cut against the DNA's picture budget |
+
+| Fact | Value |
+|---|---|
+| Frames | `reference/frames/NNN.png` (viewable, 160 px) and `NNN.gray` (32×32, hash-bound). Nearest-neighbour scaling, so a re-extraction is byte-stable across ffmpeg builds |
+| Observation | a frame cut at the shot's midpoint, or stepped back inside the same shot when the midpoint lands past the film's last frame |
+| Render | `final/easel.mp4` measured with ffprobe. `require_render=False` is the pre-render claim `stage_gate` makes before a film exists |
+| Tests | `tests/test_reference_replication.py` (26), `tests/test_evidence_cut_qc.py` (12); 61/61 suites in `dev_check.py` |
+| Newly exposed failure | `cut_qc` now grades `projects/easel-1024-proof` against its own DNA: 73% recording / 27% comparison card against a 70/25/5 budget, so `account_composition` FAILs and the evidence package returns FAIL. The film did not change; the gate stopped skipping the question its plan never declared. |
+
+Two things this still does not do: it does not prove each rendered beat is the
+beat the plan named (only the film's duration and the storyboard are graded), and
+it does not approve the film — copy review and distribution stay blocked.
+
+### The contract stops trusting the storyboard's labels — 2026-10-30 (round 2)
+
+A second adversarial pass was run against the fixed contract. It found that the
+gates had learned to measure *length* but still believed every *label* a
+storyboard or asset map writes about itself. All of the following now fail
+closed.
+
+| Hole | What it allowed | What now happens |
+|---|---|---|
+| Only length was measured | a 47 s film made of one still image passed the hold gate, and a shot with no `duration` read as a `0.00 s` hook that passed | `static_hold_within_limit` grades ffmpeg's measured longest frozen run and fails when it cannot be measured; `hook_within_limit` requires a positive hook |
+| An evidence role was a free label | `dna_role: screen_recording_evidence` on `source_type: generated` still read as 70 % recording | `dna_role_matches_source` (storyboard) and `role_matches_source` (asset map, in `cut_qc`) require an evidence role to sit on a capture source |
+| Reference reuse was a path substring | copying the reference's frames and repointing `image`/`video` passed | `reference_frames_not_in_cut` samples the shipped film at 2 fps as 32×32 grey and fails on any reference frame's exact bytes; `claims_do_not_cite_the_reference` refuses a claim evidenced by the reference film's digest |
+| The observation's account could differ from the episode's | an observation written for Future Intelligence derived a plan graded against the 1024 DNA | `--plan`/`--check` refuse a mismatch, and `qc_video` reads the account from `project.yaml` (`replication_plan_account`) |
+| `--target-seconds` left the DNA window | a 20 s or 90 s episode could be planned for an account that publishes 45–60 s | the override only picks a point inside the DNA's `target_duration_s` |
+| An audio-only file passed as a film | a decodable audio file whose digest matched "proved" a shot list nobody could have looked at | `REFERENCE_NOT_A_FILM`; missing ffmpeg/ffprobe is `REFERENCE_UNVERIFIED`, not a silent pass |
+| The check receipt erased its derivation | `--check` overwrote the plan digest, reference digest and skill route with a bare PASS | derivation fields are preserved across checks |
+| No rights decision was required | nothing recorded what the reference film may be used for | `reference/observation.json` must carry `rights.cleared_by / decided_at / scope` (`RIGHTS_MISSING`) |
+| `qc_video`'s real-source share was advisory | an evidence-led account could ship a sub-floor cut as WARN, and nothing capped the generated share | for an `EVIDENCE_LED` account a sub-floor share is FAIL and `generated_ratio` caps generated time at 10 % |
+| The copy review did not cover the gate's fields | a shot could be relabelled (`function`, `dna_role`) after approval with the review still valid | both are in `COPY_FIELDS`, so relabelling makes the review STALE |
+| "Nothing reappears" could be printed without looking | with no captured frame, or only near-uniform ones, the leak check returned an empty list and printed a clean result | the check separates `compared` / `flat` / `none`: only a real comparison may pass, near-uniform frames are WARN ("reported, not measured"), no captured frame is FAIL |
+
+| Fact | Value |
+|---|---|
+| Measured hold | `measure_video`'s `longest_freeze_run_s` on `final/easel.mp4`; `require_render=False` (the pre-render `stage_gate` claim) falls back to the declared shot lengths |
+| Reference leak | a verbatim frame is caught; a cropped or recoloured steal is not — that still needs eyes |
+| Tests | `tests/test_reference_replication.py` (37), `tests/test_evidence_cut_qc.py` (16), `tests/test_code_animation_composition.py` (27); 61/61 suites in `dev_check.py` |
+
+### A third pass asked which gates fail an honest film — 2026-10-30
+
+Round two closed holes that let a dishonest cut pass. The same sweep also
+produced eight claims that a *clean* cut was being refused. Each was reproduced
+before it was believed: six were real and are fixed, two were refuted by
+experiment and no gate was weakened for them.
+
+| False failure | What it did to an honest project | What now happens |
+|---|---|---|
+| A share nobody measured read as 0 % | a storyboard of `vector_animation` shots is neither capture nor generated, so the ratio printed `0.0` — "0 % real" for a film no gate had measured | ratios report `value: null` and "not measured"; for EVIDENCE_LED this is FAIL, because unmeasured is not evidence of compliance |
+| The generated ceiling was a flat 10 % | 1024's DNA spends 25 % of the frame on vector and 5 % on a comparison card, and the alias table maps generated media into that budget, so a cut that met its DNA was refused by a different constant | the ceiling is the account's own non-evidence share (30 % for 1024); with no DNA the flat floor still applies. Fixed in both `qc_video` and `cut_qc` |
+| An episode could not be stricter than its account | the account's value was copied over the episode's unconditionally, so an episode that forbade recordings it could still shoot was graded as if it allowed them | recording restrictions may be stricter; evidence modes are incomparable and cannot replace the account's mode |
+| One unlisted surface failed on its own | a 4 % title card failed as "has no DNA budget" even though it sat inside the ±8 pp tolerance the declared budgets already carry | unlisted roles are one residual, and only the residual as a whole past the tolerance drifts |
+| A zero-byte SRT beat a real one | the empty file existed, so it was chosen, and a film with burned captions was graded as having none | a file with no timing line is a placeholder; the first candidate that has a cue wins, and a placeholder is still named if nothing has one |
+| `qc_video` crashed when there were no captions | calling `.exists()` on `None` aborted the whole report before a single ratio was computed | missing captions are a WARN row; the report completes |
+| Four gates spelled "a capture" differently | an honest `screen_recording` could count as evidence in one check, nothing in another, and lose the ratio in a third | one `CAPTURE_SPELLINGS` vocabulary shared by the claim, cut and QC gates; `diagram` added where a hand-drawn diagram is a real artefact |
+| The rights scope accepted four of six legal answers | `licensed` and `permission_granted` were rejected as `RIGHTS_SCOPE` | both scopes accepted; the scope string is normalised before comparison |
+
+Two claims were **refuted**, not fixed: that two 6 s cards sharing a background
+would be measured as one 12 s freeze (measured 5.8 s, and the cited real film's
+own declared shots already exceed 10 s), and that two unrelated 32×32
+thumbnails would collide (measured mean absolute difference 31.1 of 255). The
+gates survived both experiments; no threshold was loosened for them.
+
+One more defect surfaced while writing those regressions: `--check` inherited
+`plan_sha256`, `target_s`, `beats` and `reference_video_sha256` from whatever
+receipt was already on disk (and wrote none when there was no receipt), so a
+PASS could name a plan that had since changed; and `--frames` overwrote the
+derivation receipt with the frame inventory. Frames now get their own receipt,
+and `--check` binds to the plan and the render it actually graded.
+
+### Follow-up reliability changes — 2026-10-30
+
+Motion composition now compares timeline and voice text with the approved SRT and binds the timeline and declared presenter inputs into the review package. A later ASR failure revokes an earlier presenter verification. The external renderer's dependency closure is not proven, so `--skip-render` currently renders again; the composer result must contain a matching output digest. These are tested with fixtures, not a real production render; existing human-review freshness has no general downstream validator. A locked-input regression now uses a separate fixture Git repository rather than altering this checkout's index.
+
+**Two things this still does not do.** It does not prove each rendered beat is
+the beat the plan named — pacing is now measured, but a film of the right length
+and motion could still show other content. And the 1024 DNA contains a
+contradiction only the founder can settle: `narrative.template` includes
+`COST_AND_LIMITS` while `narrative.template_coverage.deferred` declares the same
+beat deferred. The plan follows `template`; changing that is an account decision,
+not a code fix.
+
+### The account owns the episode length — 2026-10-30
+
+`audio_first_plan.py` sized `target.duration_ms_range` from the narration it had just
+synthesised, so a cut declared the window it happened to occupy and its own `duration`
+check could never fail. A 25-second Future Intelligence prototype therefore read as
+conforming while that account's DNA asks for 90–120 s, and nothing in the pipeline
+noticed.
+
+`cut_qc` now grades the measured media against the account's own
+`narrative.target_duration_s` as a separate `account_duration` check (FAIL), and the
+audio-first receipt carries a `duration_contract` block plus a warning when the measured
+narration lands outside the window. The plan is still written — a prototype is allowed
+to exist — but it can no longer be reported as meeting the account's contract. The
+episode's own declaration cannot satisfy this check; only the account's window can.
+
+Measured against today's gate, on a copy of each project so no stored receipt was
+overwritten:
+
+| Project | Verdict | Detail |
+|---|---|---|
+| `easel-fi-audio-first` | **FAIL** | `account_duration` 25.00 s vs 90–120 s; every other check passes, including `account_composition` at 70/20/10 |
+| `easel-fi-what-is-agent` | not gradable | no `script/cut-plan.json`; its history is `qc_video` only (WARN), which never had an account-duration gate |
+
+`qc_video.py` keeps its generic 30–120 s `duration_range` as WARN. It is a technical
+check, not the acceptance path: `build_evidence_package.py` runs `cut_qc`, which is
+where the account window now lives.
+
+**Open question for the account owner, not code:** Future Intelligence's composition
+is 100 % non-capture (70/25/5), so the generated-media ceiling derived from "the share
+the account does not spend on captures" evaluates to 100 % for that account. An
+AI-generated illustration could therefore fill the whole film and still pass
+`generated_ratio`. The DNA forbids generated material standing in for evidence, but it
+declares no numeric cap; the flat 10 % the old gate used has no account basis here
+either. Someone has to set that number.
+
+**Two test-safety defects fixed in the same pass.** `test_locked_input_reproducibility.py`
+required the git-ignored historical caption at import, so a clean checkout failed the
+whole module; it is now optional and the one scenario that needs it skips by name.
+`test_minimax_voice_clone.py` staged a synthetic WAV into this repository's real index
+and now builds a disposable fixture repository instead. The locked-input suite also
+stopped printing "All 10 passed" when a scenario had been skipped.
+
+**Unchanged this round:** the pinned runtime still verifies 981/982 blobs with one
+mismatch (`skills/openclaw/video-script/SKILL.md`) and one extra file
+(`skills/openclaw/video-script/references/benchmark-playbook.md`). That patched skill is
+the one Future Intelligence routes its script step to, and the patch contradicts
+ADR-001's "no upstream source modification". Restoring it is a protected-directory
+decision that needs the founder's approval.
+
+### Two workflows, one entry point — 2026-10-30
+
+Both accounts can produce a film on their own, and they do not produce the same film:
+
+| Account | Mode | Chain | Picture budget |
+|---|---|---|---|
+| `x-superplay-1024` | `EVIDENCE_LED` | `audio_first_plan` → `recording_plan` → `capture_terminal_evidence` → `build_evidence_package` → `qc_video` | 70 % screen recording / 25 % vector / 5 % card |
+| `x-superplay-future-intelligence` | `EXPLANATORY` | `audio_first_plan` → `build_evidence_package` → `qc_video` | 70 % vector / 25 % code / 5 % metric |
+
+Until now nothing in production code read the account to choose between them: the
+DNA's `skill_route` table was validated by `check_account_dna.py` and read by no
+producer, and the choice lived in the runbook and in whoever remembered it.
+
+`scripts/account_route.py` resolves it: `project.yaml` → `account_slug` → DNA →
+the ordered chain the account's `evidence.mode` implies, with the creative skill
+owners echoed from the same DNA. It refuses a project with no account and a mode with
+no declared pipeline, and never guesses. One command, so "which workflow does this
+project use" is answered by the account rather than by memory.
+
+Both chains converge on `build_evidence_package` and `qc_video`. That is deliberate:
+shared producers were not the goal, a shared receipt substrate was. The router says
+which chain to run; it does not certify the result — `cut_qc` still decides whether
+the finished film belongs to the account.
+
+### One cut, three platforms — 2026-10-30
+
+Douyin, Bilibili and Xiaohongshu do not publish the same frame, and until now the
+pipeline could only produce and grade the vertical one.
+
+- `qc_video.py` graded every project against the constant 1080x1920, so the
+  repository's own horizontal project (`easel-engineering-proof`, 64 s,
+  1920x1080) read as a broken vertical one. It now grades the frame `project.yaml`
+  declares, with `--expect WxH` for a file that has no project of its own.
+- `derive_variants.py` derives the other frames from a graded master with the pinned
+  runtime's `reframe.py` (a hand-rolled filter chain is not allowed), probes each
+  output, and writes `receipts/variants.json` binding the master, every derivative
+  and the digest of the exact tool file that ran.
+- It refuses an ungraded master, a receipt older than the master, and a master whose
+  own QC says FAIL. **One FAIL is enough**; a newer PASS from a different gate does
+  not override it, because the two gates check different things.
+- Covers are reported, never cropped: the receipt says PRESENT, ABSENT or
+  WRONG_FRAME per platform, and the fix is a card rendered at that frame.
+
+Measured against the real projects: `easel-1024-proof` cannot be derived today. Its
+`qc-report.json` says FAIL (`account_composition` 73/27/0 against 70/25/5), so the
+variant step blocks with `MASTER_QC_FAILED`. That is the correct answer to "can we
+publish this on three platforms next time": the master has to pass its own gate
+first, and re-framing a failing cut only makes three failing cuts.
+
+What still stands between a project and a publishable package, and is not code:
+a human review with a score, capture rights and redaction for any recorded
+evidence, and — for Future Intelligence — a master that meets its own 90–120 s
+window at all.
+
+### Three platform tracks in one repository — 2026-10-30
+
+The repository now carries the workflow for every platform it publishes to, instead
+of one track plus an external dependency that was about to disappear.
+
+| Track | Where | State |
+|---|---|---|
+| Video (Douyin / Bilibili / Xiaohongshu / 视频号) | `src/contentops`, `scripts/` | producers and gates exist; the master still has to pass its own QC before variants are derived |
+| 公众号 (WeChat article) | `vendor/gzh-thinktank/` | imported verbatim: 679 files, 8 MB, ten ordered stages, its own receipts |
+| X | — | not started: no account DNA and no publisher |
+
+**Why the 公众号 workflow is vendored rather than external.** Its checkout's history
+diverged from GitHub origin (`origin/main` was `e9303d1`, the checkout `93645f1`) and
+the checkout and possibly its remote are being retired. An external dependency
+scheduled to disappear is a gap, not a dependency. The import is verbatim and
+unmodified; a change means a new import with a new digest.
+
+- Excluded: `node_modules` (32 MB) and the excalidraw pack's `.venv` (regenerable),
+  `.aws-article/config.yaml` (credentials), and the account's `production/` artifacts.
+  The complete original, including every commit the divergence left off GitHub, is a
+  15 MB git bundle under `D:\Archives\repos\gzh-thinktank\`.
+- `scripts/gzh_pin.py` verifies both: the bundle by digest and the vendored tree by a
+  content digest over 679 files. `tests/test_gzh_pin.py` pins the refusals.
+- The workflow keeps its workspace outside its own root, so articles live at
+  `projects/gzh-thinktank/` through `GZH_ARTIFACT_ROOT`, and it still refuses a
+  hand-made article directory.
+
+**Three expected findings, none caused by the import.** The vendored
+`validate_matrix.py` reports the deliberately excluded credential config and two
+`gzh-draft-publisher` hash drifts that appear identically in the original checkout —
+its `split-manifest.json` was not regenerated after the publisher changed. The
+imported tree does not try to hide that.
+
+**Publishing is unchanged.** The vendored workflow still ends at a WeChat draft with
+a `draft/get` read-back. Nothing in this repository publishes publicly, and no
+credential entered either tree.

@@ -42,7 +42,35 @@ python scripts/verify_easel_runtime.py --resolve-tag
 python scripts\new_project.py --slug my-video --title "My Video Title"
 ```
 
+### 3.1 这个项目该走哪条流水线？
+
+账号决定。两个账号、两条链路，一条命令给出答案：
+
+```powershell
+python scripts\account_route.py projects\easel-fi-audio-first
+python scripts\account_route.py projects\easel-1024-proof --json
+```
+
+它读 `project.yaml` → `account_slug` → 账号 DNA，输出该账号 `evidence.mode` 决定的
+生产者顺序，以及同一份 DNA 里声明的创作类 skill 归属：
+
+| 账号 | 模式 | 流水线 |
+|---|---|---|
+| `x-superplay-1024` | `EVIDENCE_LED` | `audio_first_plan` → `recording_plan` → `capture_terminal_evidence` → `build_evidence_package` → `qc_video` |
+| `x-superplay-future-intelligence` | `EXPLANATORY` | `audio_first_plan` → `build_evidence_package` → `qc_video` |
+
+- 两条链路最后都落到同一个打包器和同一个 QC。正因为收据底座共用，门禁才是同一套，
+  而生产者不是。
+- 没有声明流水线的模式会被拒绝（`EVIDENCE_MODE_UNMAPPED`），路由器不猜；没有
+  `account_slug` 的项目根本得不到流水线。
+- 路由器只说明该跑哪条链，不认证结果。成片是否属于该账号仍由 `cut_qc`
+  （`account_composition`、`manual_recording_forbidden`、`account_duration`）和人决定。
+
 ## 4. 运行生产流水线
+
+> 这是最早的一代流水线，**不读任何账号 DNA**。凡是属于 1024 或未来智能的项目，先用
+> §3.1 解析出链路并按它执行；账号的配比、录屏与时长规则随后由 `cut_qc` 强制。只有
+> 账号没有声明流水线的项目，或下面诊断用的 fallback 引擎，才直接用 V1。
 
 ```powershell
 python scripts\run_v1.py projects\my-video
@@ -375,3 +403,30 @@ python scripts/workflow_docs.py fingerprint-skill --dir <skill 目录>
 skill 一侧：`x-superplay-source-research`（契约）在两个账号 DNA 中声明；
 `b-roll-finder`（找素材的方法论）只在 `x-superplay-1024` 声明，因为 Build 账号的
 视觉缺口是插画。
+
+## 18. 一条片，三个平台
+
+抖音、B站、小红书发布的不是同一个画幅：DNA 的竖屏母片是 1080x1920，B站版是
+1920x1080，小红书用竖屏片 + 3:4 封面。
+
+```powershell
+# 按项目自己声明的画幅评级（不再用常量）
+python scripts\qc_video.py projects\easel-1024-proof
+
+# 先看要派生什么，不写任何文件
+python scripts\derive_variants.py projects\easel-1024-proof --dry-run
+
+# 派生，并在同一趟里打包
+python scripts\build_evidence_package.py projects\easel-1024-proof --variants
+```
+
+- `qc_video` 按 `project.yaml` 的 `format` 判；没有项目归属的文件用
+  `--expect 1920x1080` 覆盖。旧常量会把横屏片读成"坏掉的竖屏"。
+- `derive_variants` 用固定运行时的 `reframe.py` 转画幅（不允许手写滤镜链），逐个
+  探测输出，并写 `receipts/variants.json`，绑定母片、每个衍生片和工具摘要。
+- 它拒绝没有评级的母片、比母片更旧的收据，以及自己 QC 就 FAIL 的母片——
+  **一个 FAIL 就够了**，另一个门禁更新的 PASS 不能覆盖。
+- 封面**只报告、不裁剪**：收据按平台写 PRESENT / ABSENT / WRONG_FRAME，修法是按
+  该画幅重新出卡。
+- 衍生片技术上正确，不代表内容通过。`production_ready` 仍为 false，仍由人工
+  审核决定。

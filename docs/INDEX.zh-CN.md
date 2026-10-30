@@ -58,6 +58,8 @@ translation_status: synced
 - [adr/ADR-007-minimax-speech-transport.md](adr/ADR-007-minimax-speech-transport.md)
 - [adr/ADR-008-native-narration-v2.md](adr/ADR-008-native-narration-v2.md)
 - [adr/ADR-009-narration-v3-creator-director.md](adr/ADR-009-narration-v3-creator-director.md)
+- [adr/ADR-010-gzh-integration.md](adr/ADR-010-gzh-integration.md)
+- [adr/ADR-011-single-home-platform-tracks.md](adr/ADR-011-single-home-platform-tracks.md)
 
 ## 事实优先级
 
@@ -75,5 +77,5 @@ translation_status: synced
 
 ## 审计
 
-- [AUDIT-REPORT.md](AUDIT-REPORT.md) — 仓库审计（2026-10-03）
+- [AUDIT-REPORT.md](AUDIT-REPORT.md) — 仓库审计（2026-10-03）与视频复刻审查（2026-10-29 → 10-30）
 - [audits/windows-subprocess-audit.zh-CN.md](audits/windows-subprocess-audit.zh-CN.md) — Windows 控制台弹窗审计、每个子进程调用点的分类，以及统一进程层（Issue #16）

@@ -300,6 +300,22 @@ jobs:
       - name: Run evidence cut QC tests
         run: python tests/test_evidence_cut_qc.py
 
+      # The account decides the pipeline. Two accounts, two chains; the mode is
+      # what chooses, and the probe refuses an undeclared mode instead of guessing.
+      - name: Run account-route tests
+        run: python tests/test_account_route.py
+
+      # Per-platform frames: only the platform whose frame differs is derived, an
+      # ungraded or failing master is refused, and the tool that ran is bound.
+      - name: Run variant-derivation tests
+        run: python tests/test_derive_variants.py
+
+      # The external 公众号 workflow's cold archive. Its history diverged from
+      # GitHub origin, so the pin checks a bundle digest and a restored tree, not
+      # an upstream branch that does not contain these commits.
+      - name: Run external-pin tests
+        run: python tests/test_gzh_pin.py
+
       # Review bundles: input-only fingerprints, stale-review invalidation and
       # the score-80 threshold with no hard fail.
       - name: Run review-bundle tests
@@ -387,6 +403,18 @@ jobs:
       - name: Run capture-plan tests
         run: python tests/test_capture_plan.py
 
+      # Reference replication: a transcript may not carry cut points, a plan is
+      # bound to the reference bytes, nothing from the reference may reach the
+      # cut, and the finished film must still meet the account composition.
+      - name: Run reference-replication tests
+        run: python tests/test_reference_replication.py
+
+      - name: Run motion-build reliability tests
+        run: python tests/test_motion_build_reliability.py
+
+      - name: Run code-animation consistency tests
+        run: python tests/test_code_animation_consistency.py
+
       # Colloquial copy stays inside the budget it declares, filler phrases do
       # not become tics, fact-lock tokens survive the rewrite, and a burned
       # caption must transcribe the narration it sits under.
@@ -396,7 +424,8 @@ jobs:
       # Drift guard: a suite that exists but is never named in this file cannot
       # report a pass, and a green CI run would cover less than it appears to.
       - name: Run suite-runner tests
-        run: python tests/test_run_tests.py      - name: Check every test suite is wired into CI
+        run: python tests/test_run_tests.py
+      - name: Check every test suite is wired into CI
         run: python scripts/run_tests.py --missing-from .github/workflows/ci.yml
 
       - name: Enforce subprocess policy

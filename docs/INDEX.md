@@ -57,6 +57,8 @@ Tier-1 docs have zh-CN mirrors with `.zh-CN.md` suffix. Run `python scripts/chec
 - [adr/ADR-007-minimax-speech-transport.md](adr/ADR-007-minimax-speech-transport.md)
 - [adr/ADR-008-native-narration-v2.md](adr/ADR-008-native-narration-v2.md)
 - [adr/ADR-009-narration-v3-creator-director.md](adr/ADR-009-narration-v3-creator-director.md)
+- [adr/ADR-010-gzh-integration.md](adr/ADR-010-gzh-integration.md)
+- [adr/ADR-011-single-home-platform-tracks.md](adr/ADR-011-single-home-platform-tracks.md)
 
 ## Agent Rules
 
@@ -68,7 +70,7 @@ Tier-1 docs have zh-CN mirrors with `.zh-CN.md` suffix. Run `python scripts/chec
 
 ## Audit
 
-- [AUDIT-REPORT.md](AUDIT-REPORT.md) — Repository audit (2026-10-03)
+- [AUDIT-REPORT.md](AUDIT-REPORT.md) — Repository audit (2026-10-03) and video-replication review (2026-10-29 → 10-30)
 - [audits/windows-subprocess-audit.md](audits/windows-subprocess-audit.md) — Windows console popup audit, classification of every subprocess callsite, and the unified process layer (Issue #16)
 
 ## Fact Priority

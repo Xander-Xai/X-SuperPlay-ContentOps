@@ -213,6 +213,27 @@ GitHub governance only:
 
 Vendored upstream runtime. Gitignored. Never modified.
 
+## vendor/
+
+Committed code from another repository that must survive its own upstream.
+
+```
+vendor/
+└── gzh-thinktank/          # 公众号 workflow, imported verbatim
+    ├── MANIFEST.md         # provenance, exclusions, expected validator output
+    └── gzh_未来智能/        # never edited
+```
+
+- `vendor/` is for code whose upstream is being retired, so it is **committed** —
+  unlike `.runtime/`, which is gitignored because it can be re-acquired.
+- The tree is never edited. A change means a new import with a new digest.
+- Every vendored tree carries a `MANIFEST.md`: source repository and commit, tree
+  digest, what was excluded and why, and the expected output of its own validator.
+- Regenerable dependencies (`node_modules`, `.venv`) and anything credential-bearing
+  are never vendored.
+- `scripts/gzh_pin.py` recomputes the digest. A mismatch is a failure, not a
+  warning.
+
 ## Local-only Files (gitignored)
 
 These must never be committed:

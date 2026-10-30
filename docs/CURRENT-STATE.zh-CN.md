@@ -895,3 +895,243 @@ skill（26 条 `skills.entries` 全部关闭）。有一把 anthropic 凭据返�
 
 - **拍摄计划是简报，不是拍摄结果。** 通过它不证明素材存在或在手机尺寸下可读；可用性仍由人判断。
 - **自然度通过不是听感结论。** 它证明改写没有超出自己声明的预算，且保留了锁定事实。字幕一致性是文本同一性，不是读音。
+
+### 对标复刻契约 — 2026-10-30
+
+对标视频现在可以变成一份原创集的计划，既不需要假装知道没看过的切点，也不需要搬用参考博主的素材。契约由三份文档和一个质检关组成。
+
+| 阶段 | Schema | 由谁写 | 绑定到 |
+|---|---|---|---|
+| 观察 | `contentops.reference-observation/v1` → `reference/observation.json` | 人，逐段实看 | 项目内可解码影片的 SHA-256 |
+| 计划 | `contentops.replication-plan/v1` → `script/replication-plan.json` | `replicate_reference.py --plan` | 观察的哈希、账号 DNA、`reuse_reference_media: false` |
+| 对账 | `contentops.replication-check/v1` | 写了计划的项目的 `qc_video.py` | 计划与实际上线的 storyboard |
+
+| 规则 | 为什么存在 |
+|---|---|
+| `TRANSCRIPT_ONLY` 观察不得带 `start_s`/`end_s` | 字幕描述的是词，不是切点；用它猜秒数正是这道关要挡的伪造 |
+| 计划预算被夹进账号声明的时长窗口 | 参考片可能长于账号允许的长度，以账号为准 |
+| 成片不得引用 `reference/` 下任何素材或来源 | 可复用的是镜头功能，不是画面和事实 |
+| 每镜声明 `function`（封闭词表）与 `dna_role` | “看着像”不是测量；占比与 DNA 相差不得超过 ±8 个百分点 |
+| 钩子 ≤ DNA 的 `max_hook_s`，静帧不超过 DNA 上限，节奏顺序遵循模板 | 观众在内容之前先注意到的三件事 |
+| 只有写了 `script/replication-plan.json` 的项目才按复刻对账 | 普通一集不欠任何参考契约 |
+
+| 事实 | 值 |
+|---|---|
+| 入口 | `scripts/replicate_reference.py` — `--observe`、`--plan`、`--check` |
+| 退出码 | 0 通过 · 1 契约失败 · 4 尚未观察或尚无计划 · 2 输入矛盾或无 `script` 技能路由 |
+| 收据 | `receipts/replication.json`，状态 `DERIVED`——派生预算不是审批 |
+| 生产拦截 | `replication.stage_gate()`——`run_v1.py` 与 `build_evidence_package.py` 拒绝渲染偏离计划的成片；没有计划的项目不受影响 |
+| 同批修复 | `cut_qc.source_shares` 按 shot 而非 placement 计时；`qc_video.real_source_ratio` 按时长而非镜头数加权 |
+| 测试 | `tests/test_reference_replication.py`（20）、`tests/test_evidence_cut_qc.py`（10），均在 CI 中列出 |
+
+两条边界是有意声明的：
+
+- **尚未取得原片，因此没有任何真实计划。** 每个测试都自建夹具。命令在没有可解码且有哈希的影片时拒绝出计划——拒绝就是正确答案，不是没实现。
+- **对账通过不是人的结论。** 它证明成片没有超出自己声明的预算、占比和顺序。值不值得看仍由 Founder 与 `copy_review` 一起决定。
+
+### 质检读生产实际写的文档 — 2026-10-30
+
+对 `projects/easel-1024-proof` 复查时暴露出一组同源缺陷：`qc_video` 与 `cut_qc` 对同一部片结论相反，因为各自读了不同的文档。三处均已修复并有回归测试；旗舰证据片现在由警告变为 PASS，而此前是“以错误的理由警告”。
+
+| 事实 | 值 |
+|---|---|
+| 故事板 | 依次为 `work/<target>/storyboard.json` → `script/storyboard.json` → `work/storyboard.json` |
+| 真实素材占比 | 存在 `script/cut-plan.json` + `assets.json` 时按最终成片时长从计划计量，故事板仅作兜底 |
+| 来源完整 | 被引用的资产必须声明 `sha256`/`path`/`png`/`html`；无来源的录屏计时间，但不计入证据 |
+| 字幕存在 | `assets/captions/<target>.srt` → `default.srt` → `cut.srt` |
+| 字幕烧录 | 按每条 SRT 字幕的中点取帧；按片长固定比例只是兜底，因为稀疏字幕覆盖不到六个等距点 |
+| 证据片结果 | 72.7% 真实（32 秒录屏 / 12 秒卡片），字幕存在且烧录实测亮像素比 0.0142，整体 PASS |
+
+这**不**做两件事：不证明成片画面等于 cut plan（两个质检都信任计划），也不批准该片——人审与分发在本人审核前仍被阻断。
+
+### 复刻契约不再信任自己的输入 — 2026-10-30
+
+对契约的对抗式复核找到四条“证明一部不存在的片”的路径。它们的形状相同：某份文档断言了影片从未发生的事，而下一关直接读这份断言。现在四条都失败即拦。
+
+| 漏洞 | 它允许了什么 | 现在的行为 |
+|---|---|---|
+| 手打的镜头表 | 写 `mode: FRAME_VIEWED` 加几个像样的秒数，就能从没人打开过的影片派生预算 | `--frames` 按每镜中点从原片切出 32×32 帧并记录 SHA-256；没有帧的镜头被拒绝，`probe_reference` 按各自时间点重新切帧逐字节比对（`FRAME_NOT_FROM_REFERENCE`） |
+| 预算只是故事板的算术 | 累加 `duration` 字段让 47.2 秒的计划为 2 秒的成片背书 | `check()` 用 ffprobe 实测 `final/easel.mp4` 并以实测为准；没有成片即 `render_present` FAIL，`--check` 不能只凭计划退出 0 |
+| 计划自己带着阈值 | 改 `target_s` / `max_hook_s` / `max_static_hold_s` / 占比，把失败的成片改成 PASS | `plan_matches_derivation` 用已核验的观察与账号 DNA 重新派生计划，要求完全相等 |
+| 账号策略被写成单集字段 | `evidence_mode: EXPLANATORY` 关掉 70% 下限，`manual_recording: ALLOWED` 取消禁录，删掉 `composition` 跳过占比关 | `cut_qc` 从 `project.yaml` 解析 DNA；以账号的值执行，声明不一致即 FAIL，`account_composition` 按 DNA 的画面预算实测成片 |
+
+| 事实 | 值 |
+|---|---|
+| 帧 | `reference/frames/NNN.png`（可查看，160 px）与 `NNN.gray`（32×32，按字节绑定）。用最近邻缩放，因此重新切帧在不同 ffmpeg 构建间字节稳定 |
+| 观察 | 帧切在镜头中点；中点落到影片最后一帧之后时，在同一镜头内向前回退，绝不换到别的镜头 |
+| 成片 | `final/easel.mp4`，用 ffprobe 实测。`require_render=False` 是 `stage_gate` 在成片存在前所做的“渲染前声明” |
+| 测试 | `tests/test_reference_replication.py`（26）、`tests/test_evidence_cut_qc.py`（12）；`dev_check.py` 61/61 suites |
+| 新暴露的失败 | `cut_qc` 现在按自己的 DNA 评判 `projects/easel-1024-proof`：73% 录屏 / 27% 对比卡，而预算是 70/25/5，于是 `account_composition` FAIL、证据包返回 FAIL。片没变，是关卡不再跳过它计划里从未声明的那个问题。 |
+
+这**不**做两件事：不证明成片每一拍就是计划点名的那个拍（只核了成片时长与故事板），也不批准该片——人审与分发仍被阻断。
+
+### 契约不再信任故事板上的标签 — 2026-10-30（第二轮）
+
+对修好的契约又做了一轮对抗式复核。结论是：门禁已经学会量**长度**，但仍然相信故事板和资产图对自己写的每一个**标签**。以下全部改为失败即拦。
+
+| 漏洞 | 它允许了什么 | 现在怎么处理 |
+|---|---|---|
+| 只量了长度 | 一张静帧拉满 47 秒能过静帧关；镜头不写 `duration` 会读成 `0.00 s` 的钩子并“合格” | `static_hold_within_limit` 改用 ffmpeg 实测的最长冻结段，量不出来就 FAIL；`hook_within_limit` 要求钩子大于 0 |
+| 证据角色是自由标签 | `dna_role: screen_recording_evidence` 挂在 `source_type: generated` 上，仍被算成 70% 录屏 | 新增 `dna_role_matches_source`（故事板）与 `role_matches_source`（资产图，在 `cut_qc`）：证据角色必须落在实拍来源上 |
+| 参考片复用只是路径子串 | 把参考片帧复制过来、再改掉 `image`/`video` 路径即可通过 | `reference_frames_not_in_cut` 以 2 fps 把成片抽成 32×32 灰度，与参考片帧逐字节比对，命中即 FAIL；`claims_do_not_cite_the_reference` 拒绝用参考片摘要做事实证据 |
+| 观察记录可以写着另一个账号 | 为“未来智能”写的观察可以派生出一份拿 1024 DNA 评判的计划 | `--plan`/`--check` 拒绝不一致；`qc_video` 从 `project.yaml` 读账号（`replication_plan_account`） |
+| `--target-seconds` 可以离开 DNA 窗口 | 给一个只发 45–60 秒的账号排了 20 秒或 90 秒的片 | 该参数只能在该账号 `target_duration_s` 窗口内选点 |
+| 纯音频文件可以冒充影片 | 一个可解码、摘要匹配的音频“证明”了一份没人看得到的镜头表 | `REFERENCE_NOT_A_FILM`；缺 ffmpeg/ffprobe 是 `REFERENCE_UNVERIFIED`，不再静默通过 |
+| 对账收据抹掉了派生记录 | `--check` 用一句 PASS 覆盖了计划摘要、参考片摘要与技能路由 | 派生字段在多次对账间保留 |
+| 没有要求权利决定 | 没有任何地方记录这部参考片能用来做什么 | `reference/observation.json` 必须带 `rights.cleared_by / decided_at / scope`（`RIGHTS_MISSING`） |
+| `qc_video` 的真实来源占比只是提示 | 证据型账号可以按 WARN 放过低于下限的片，生成画面也没有上限 | `EVIDENCE_LED` 账号低于下限即 FAIL，并有 `generated_ratio` 把生成时长压在 10% 以内 |
+| 人审不覆盖门禁读的字段 | 审批后把镜头重新标成别的 `function`/`dna_role`，人审仍然有效 | 两者纳入 `COPY_FIELDS`，改标签即 STALE |
+| “没有复用”可以不看就打印 | 没有存下帧、或存下的帧全是近纯色时，泄漏检查返回空列表并打印“干净” | 检查区分 `compared` / `flat` / `none`：只有真正比对过才能通过；全是近纯色帧记 WARN（“已报告、未测量”）；一帧未存为 FAIL |
+
+| 事实 | 值 |
+|---|---|
+| 实测静帧 | `measure_video` 的 `longest_freeze_run_s`（作用于 `final/easel.mp4`）；`require_render=False`（`stage_gate` 的渲染前声明）回退到声明镜头时长 |
+| 参考片泄漏 | 能抓逐字节复制的帧；裁剪过或调过色的搬运抓不到——那仍需人眼 |
+| 测试 | `tests/test_reference_replication.py`（37）、`tests/test_evidence_cut_qc.py`（16）、`tests/test_code_animation_composition.py`（27）；`dev_check.py` 61/61 suites |
+
+### 第三轮：问一句“这些门禁会不会误杀诚实的片” — 2026-10-30
+
+第二轮补的是“不诚实的片能通过”。同一轮对抗扫描也提出了八条“**干净的片被拒**”
+的说法。每一条都先复现再采信：六条属实并已修复，两条被实验**否掉**，没有为了让它们
+通过而放松任何阈值。
+
+| 误判 | 对诚实项目做了什么 | 现在的行为 |
+|---|---|---|
+| 没量过的占比读成 0% | 全是 `vector_animation` 的故事板既非实拍也非生成，占比打出 `0.0`——一部根本没被量过的片被报成“0% 真实” | 占比输出 `value: null` 和“未测量”；EVIDENCE_LED 账号仍为 FAIL，未测量不能证明符合要求 |
+| 生成上限写死 10% | 1024 DNA 的画面预算里 25% 是矢量、5% 是对比卡，别名表又把这些生成画面映射进该预算，于是**符合自己 DNA** 的片被另一个常数拒掉 | 上限取账号自己的非证据份额（1024 为 30%）；无 DNA 时仍用 10% 地板。`qc_video` 与 `cut_qc` 同步修正 |
+| 单集不能比账号更严 | 账号的值被无条件覆盖到单集上，一部自己声明“禁录”却仍用了录屏的片，被当成允许录屏来评 | 录屏限制可以更严格；证据模式各有不同保护，不允许单集替换账号模式 |
+| 一个未列名画面单独判死 | 4% 的标题卡被判“没有 DNA 预算”，而它本就在已声明预算自带的 ±8pp 容差内 | 未列名角色合成一个残差，只有残差整体超过容差才算漂移 |
+| 0 字节 SRT 打败真字幕 | 空文件“存在”所以被选中，烧了字幕的片被报成没字幕 | 没有时间轴行的文件是占位符；优先选第一条有 cue 的候选；全都只有占位符时仍点名占位符 |
+| 没有字幕时 `qc_video` 直接崩 | 对 `None` 调 `.exists()`，整份报告在算出第一个占比之前就中断 | 缺字幕是一行 WARN，报告完整跑完 |
+| 四道门禁各拼一种“实拍” | 诚实的 `screen_recording` 在一处算证据、在另一处什么都不算、在第三处丢掉占比 | 统一 `CAPTURE_SPELLINGS`，由 claim、cut、QC 共用；手绘 `diagram` 也作为真实产物纳入 |
+| 权利范围六种合法答案只认四种 | `licensed` 与 `permission_granted` 被判 `RIGHTS_SCOPE` | 两种都接受；比较前统一规范化范围字符串 |
+
+被**否掉**的两条：两张共用背景的 6 秒卡会被量成一段 12 秒静帧（实测 5.8 秒，且所引
+真实作品自己声明的镜头本来就超过 10 秒）；两张无关画面的 32×32 缩略图会撞成同一字节
+（实测平均绝对差 31.1/255）。门禁经受住了这两个实验，没有为它们调整阈值。
+
+写这些回归时又发现一处缺陷：`--check` 会从磁盘上已有的收据**继承** `plan_sha256`、
+`target_s`、`beats`、`reference_video_sha256`（没有旧收据时则一个都不写），于是 PASS
+可能指向一份已经变过的计划；`--frames` 又会用帧清单覆盖派生收据。现在帧有自己的收据，
+`--check` 绑定到它实际评过的计划与成片。
+
+### 后续可靠性修复 — 2026-10-30
+
+动效合成现在将时间线和语音文本与已审批 SRT 比对，并将时间线及声明的主持人输入绑定到审核包。后续 ASR 失败会撤销先前的主持人验证。由于尚不能证明外部渲染器的完整依赖，`--skip-render` 当前仍会重新渲染；组合结果必须带有与输出匹配的摘要。这些已用测试夹具验证，而非真实生产重渲；现有人工审核的新鲜度仍缺少通用的下游验证。锁定输入回归测试改用独立的临时 Git 仓库，不再修改当前工作区索引。
+
+**这仍然不做两件事。** 一是不证明成片每一拍就是计划点名的那个拍——节奏现在是实测的，但一部长度和运动量都对、内容却不对的片仍可能通过。二是 1024 DNA 自身存在一个只有 Founder 能定的矛盾：`narrative.template` 包含 `COST_AND_LIMITS`，而 `narrative.template_coverage.deferred` 又把同一个拍声明为延后。计划跟随 `template`；改它属于账号决策，不是代码能替它决定的事。
+
+### 账号拥有成片时长 — 2026-10-30
+
+`audio_first_plan.py` 用刚合成出来的口播长度去定义 `target.duration_ms_range`，于是成片
+自己声明了它恰好占据的那个窗口，自己的 `duration` 检查永远不可能失败。一个 25 秒的未来智能
+样片因此看起来“符合”，而该账号 DNA 要求的是 90–120 秒，整条流水线没有一处发现。
+
+`cut_qc` 现在把实测媒体与账号自己的 `narrative.target_duration_s` 单独比对，产出
+`account_duration` 检查（FAIL 级）；音频优先收据同时写入 `duration_contract`，实测落在窗口
+之外时给出警告。计划仍然会写出——允许原型存在——但它不能再被报成符合账号合同。这条检查
+不接受单集自己的声明，只认账号窗口。
+
+对当前门禁的实测（在项目副本上运行，未覆盖任何既有收据）：
+
+| 项目 | 结论 | 细节 |
+|---|---|---|
+| `easel-fi-audio-first` | **FAIL** | `account_duration` 25.00 秒 vs 90–120 秒；其余检查全部通过，含 `account_composition` 70/20/10 |
+| `easel-fi-what-is-agent` | 无法评级 | 没有 `script/cut-plan.json`；它的历史只有 `qc_video`（WARN），而那条路径从来没有账号时长门 |
+
+`qc_video.py` 保留通用的 30–120 秒 `duration_range`，级别是 WARN。它是技术检查，不是验收
+路径：`build_evidence_package.py` 走的是 `cut_qc`，账号窗口现在落在那里。
+
+**需要账号主人决定、而不是由代码决定：** 未来智能的画面配比 100% 不是实拍（70/25/5），
+因此“账号没花在实拍上的份额”推导出的生成素材上限对这个账号等于 100%。一张 AI 生成插图
+可以填满整部片且仍然通过 `generated_ratio`。DNA 禁止用生成物冒充证据，但没有给数字；
+旧门禁的固定 10% 在这个账号上同样没有依据。这个数字需要人来定。
+
+**同一轮修掉的两处测试安全问题。** `test_locked_input_reproducibility.py` 在导入时依赖被
+Git 忽略的历史字幕，干净检出会让整个模块失败；现在它是可选项，唯一需要它的场景按名跳过。
+`test_minimax_voice_clone.py` 会把合成 WAV 暂存进本仓库的真实索引，现在改为在独立临时
+测试仓库里进行。锁定输入套件也不再在有场景被跳过时打印“All 10 passed”。
+
+**本轮未改变：** 固定运行时仍是 981/982 个 blob 匹配，一处不一致
+（`skills/openclaw/video-script/SKILL.md`）、一处额外文件
+（`skills/openclaw/video-script/references/benchmark-playbook.md`）。被改的正是未来智能
+脚本步骤路由到的那个 skill，而这处改动与 ADR-001 的“不修改上游源码”相冲突。恢复它属于
+受保护目录决策，需要 Founder 批准。
+
+### 两条工作流，一个入口 — 2026-10-30
+
+两个账号都能独立出片，而且出的不是同一种片：
+
+| 账号 | 模式 | 链路 | 画面配比 |
+|---|---|---|---|
+| `x-superplay-1024` | `EVIDENCE_LED` | `audio_first_plan` → `recording_plan` → `capture_terminal_evidence` → `build_evidence_package` → `qc_video` | 70% 实拍录屏 / 25% 矢量 / 5% 对比卡 |
+| `x-superplay-future-intelligence` | `EXPLANATORY` | `audio_first_plan` → `build_evidence_package` → `qc_video` | 70% 矢量 / 25% 代码 / 5% 指标图 |
+
+在这之前，生产代码里**没有任何一处**读账号来决定走哪条：DNA 的 `skill_route` 表只被
+`check_account_dna.py` 校验能否解析，没有任何生产者读它；选路只存在于运行手册和执行者的
+记忆里。
+
+`scripts/account_route.py` 把它变成可执行的：`project.yaml` → `account_slug` → DNA →
+由账号 `evidence.mode` 推出的有序链路，同时回显同一份 DNA 里的创作类 skill 归属。没有账号
+的项目、没有声明流水线的模式，一律拒绝，绝不猜。一条命令，让“这个项目走哪条工作流”由账号
+回答，而不是由记忆回答。
+
+两条链最后都汇到 `build_evidence_package` 与 `qc_video`。这是有意的：目标不是共用生产者，
+而是共用收据底座。路由器只说明该跑哪条链，**不认证结果**——成片是否属于该账号，仍由
+`cut_qc` 判定。
+
+### 一条片，三个平台 — 2026-10-30
+
+抖音、B站、小红书要的不是同一个画幅，而在此之前流水线只能产出并校验竖屏那一个。
+
+- `qc_video.py` 一直用常量 1080x1920 判所有项目，于是仓库里自己的横屏项目
+  （`easel-engineering-proof`，64 秒，1920x1080）被读成"坏掉的竖屏"。现在它按
+  `project.yaml` 声明的 `format` 判，没有项目的文件可用 `--expect WxH` 指定。
+- `derive_variants.py` 用固定运行时的 `reframe.py` 从已评级的母片派生其它画幅
+  （不允许手写滤镜链），逐个探测输出，并写 `receipts/variants.json`，把母片、
+  每个衍生片和实际运行的工具文件摘要一起绑定。
+- 它拒绝没有评级的母片、比母片更旧的收据，以及自己 QC 就 FAIL 的母片。
+  **一个 FAIL 就够了**——另一个门禁更新的 PASS 不能覆盖它，因为两个门禁查的是
+  不同的东西。
+- 封面只报告、不裁剪：收据按平台写 PRESENT / ABSENT / WRONG_FRAME，修法是按该
+  画幅重新出卡，而不是把为另一个画幅排好版的卡裁一刀。
+
+对真实项目的实测：`easel-1024-proof` 今天不能被派生。它的 `qc-report.json` 是
+FAIL（`account_composition` 73/27/0 对 70/25/5），所以派生步骤以
+`MASTER_QC_FAILED` 阻断。这正是"下次能不能三平台发布"的答案：母片先过自己的门，
+给一部没过的片换三种画幅，只会得到三份没过的片。
+
+仍挡在"可发布"之前的、且不是代码能解决的：带评分的人工审核、任何录制证据的
+拍摄权利与去敏，以及——对 未来智能——一部达到自己 90–120 秒窗口的母片。
+
+### 一个仓库，三条平台轨道 — 2026-10-30
+
+仓库现在承载它发布到的每个平台的工作流，而不是"一条轨道 + 一个即将消失的外部依赖"。
+
+| 轨道 | 位置 | 状态 |
+|---|---|---|
+| 视频（抖音 / B站 / 小红书 / 视频号） | `src/contentops`、`scripts/` | 生产者与门禁齐全；母片仍须先过自己的 QC 才允许派生 |
+| 公众号 | `vendor/gzh-thinktank/` | 逐字节导入：679 个文件、8 MB、十阶段门禁、自铸收据 |
+| X | — | 未开始：没有账号 DNA，也没有发布能力 |
+
+**公众号为什么改为入库而不是留外部。** 那个工作副本的历史与 GitHub origin **分叉**
+（`origin/main` 是 `e9303d1`，副本是 `93645f1`），而且副本（可能连远端）即将退役。
+一个注定会消失的外部依赖不是依赖，是缺口。导入保持逐字节、不修改；要变更就是重新
+导入并更新摘要。
+
+- 排除项：`node_modules`（32 MB）与 excalidraw 包里的 `.venv`（可重建）、
+  `.aws-article/config.yaml`（凭据）、账号的 `production/` 产物。完整的原始仓库
+  （含分叉时没上 GitHub 的全部提交）是 `D:\Archives\repos\gzh-thinktank\` 下的
+  15 MB git bundle。
+- `scripts/gzh_pin.py` 两样都校验：bundle 按摘要、vendored 树按 679 个文件的内容
+  摘要。`tests/test_gzh_pin.py` 锁住拒绝行为。
+- 工作流仍要求作品目录在它自己的根之外，因此文章落在 `projects/gzh-thinktank/`
+  （通过 `GZH_ARTIFACT_ROOT`），手建文章目录仍会被拒绝。
+
+**三个预期内的失败，都不是导入造成的。** vendored 的 `validate_matrix.py` 报三项：
+故意排除的凭据配置，以及 `gzh-draft-publisher` 的两处 hash drift——这两处在原副本里
+一模一样，因为它的 `split-manifest.json` 在发布脚本改动后没有重新生成。导入的树
+不打算掩盖这一点。
+
+**发布行为不变。** vendored 流程仍然止于公众号草稿 + `draft/get` 回读。本仓库不会
+公开发布任何内容，凭据也没有进入任何一棵树。

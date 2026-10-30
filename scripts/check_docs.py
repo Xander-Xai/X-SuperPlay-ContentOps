@@ -65,6 +65,7 @@ SENSITIVE_PATTERNS = [
 EXCLUDE_DIRS = {
     ".runtime",        # vendored Easel runtime
     "Easel",           # upstream Easel working clone
+    "vendor",          # vendored 公众号 workflow: its own links, not our docs
     "node_modules",    # npm packages
     ".venv",           # Python venvs
     "__pycache__",

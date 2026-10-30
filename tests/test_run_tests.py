@@ -74,6 +74,12 @@ def test_the_real_workflow_runs_every_suite():
     assert missing == [], missing
 
 
+def test_suite_runner_steps_are_separate_yaml_items():
+    workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    assert "        run: python tests/test_run_tests.py\n      - name: Check every test suite is wired into CI\n" in workflow
+    assert "        run: python scripts/run_tests.py --missing-from .github/workflows/ci.yml\n" in workflow
+
+
 def main() -> int:
     tests = (
         test_every_suite_is_discovered_including_the_script_suite,
@@ -85,6 +91,7 @@ def main() -> int:
         test_a_suite_named_inside_an_echo_is_not_wired,
         test_a_suffixed_lookalike_file_does_not_wire_a_suite,
         test_the_real_workflow_runs_every_suite,
+        test_suite_runner_steps_are_separate_yaml_items,
     )
     failures = []
     for fn in tests:

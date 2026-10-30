@@ -55,6 +55,32 @@ python scripts\new_project.py --slug my-video --title "My Video Title"
 Creates: `projects/my-video/` with `project.yaml` and standard subdirs.
 Refuses to overwrite existing project.
 
+### 3.1 Which pipeline does this project use?
+
+The account decides. Two accounts, two chains, one command that says which:
+
+```powershell
+python scripts\account_route.py projects\easel-fi-audio-first
+python scripts\account_route.py projects\easel-1024-proof --json
+```
+
+It reads `project.yaml` → `account_slug` → the DNA, and prints the ordered producer
+sequence that the account's `evidence.mode` implies, plus the creative skill owners
+declared in the same DNA:
+
+| Account | Mode | Pipeline |
+|---|---|---|
+| `x-superplay-1024` | `EVIDENCE_LED` | `audio_first_plan` → `recording_plan` → `capture_terminal_evidence` → `build_evidence_package` → `qc_video` |
+| `x-superplay-future-intelligence` | `EXPLANATORY` | `audio_first_plan` → `build_evidence_package` → `qc_video` |
+
+- Both chains end at the same packager and the same QC. That shared receipt substrate is
+  why the gates are common while the producers are not.
+- A mode with no declared pipeline is refused (`EVIDENCE_MODE_UNMAPPED`); the router
+  never guesses one, and a project with no `account_slug` has no pipeline at all.
+- The router says which chain to run. It does not certify the result: that stays with
+  `cut_qc` (`account_composition`, `manual_recording_forbidden`, `account_duration`) and
+  with a person.
+
 ## 4. Prepare source assets
 
 Place real evidence in:
@@ -78,6 +104,12 @@ projects/my-video/
 ```
 
 ## 5. Run V1 pipeline
+
+> This is the oldest generation of the pipeline and it reads no account DNA. For
+> anything that belongs to 1024 or Future Intelligence, resolve the chain first
+> (§3.1) and follow the chain it prints; the account's composition, recording and
+> duration rules are then enforced by `cut_qc`. Run V1 only for a project whose
+> account declares no pipeline, or for the diagnostic fallback engine below.
 
 ### Production engine (Easel)
 
@@ -497,3 +529,35 @@ python scripts/workflow_docs.py fingerprint-skill --dir <skill directory>
 ```
 
 Exit `0` = pass, `1` = refused with named errors, `2` = usage error.
+
+## 18. One cut, three platforms
+
+Douyin, Bilibili and Xiaohongshu do not publish the same frame: the DNA's vertical
+cut is 1080x1920, the Bilibili cut is 1920x1080, and Xiaohongshu takes the vertical
+film with a 3:4 cover.
+
+```powershell
+# grade the master at its own declared frame (not a constant)
+python scripts\qc_video.py projects\easel-1024-proof
+
+# plan the other frames without writing anything
+python scripts\derive_variants.py projects\easel-1024-proof --dry-run
+
+# derive them, then package (the packager can do it in the same pass)
+python scripts\build_evidence_package.py projects\easel-1024-proof --variants
+```
+
+- `qc_video` grades against `project.yaml`'s `format`; `--expect 1920x1080` overrides
+  it for a file that has no project of its own. The old constant made a horizontal
+  cut read as a broken vertical one.
+- `derive_variants` converts with the pinned runtime's `reframe.py` (a hand-rolled
+  filter chain is not allowed), probes every output, and writes
+  `receipts/variants.json` binding the master, each derivative and the tool digest.
+- It refuses an ungraded master, a receipt older than the master, and a master whose
+  own QC says FAIL — **one FAIL is enough**, a newer PASS from another gate does not
+  override it.
+- Covers are **reported, never cropped**: `receipts/variants.json` says PRESENT,
+  ABSENT or WRONG_FRAME per platform, and the fix is a card rendered at that frame,
+  not a crop of the card designed for another one.
+- A derivative is technically correct, not content-approved. `production_ready`
+  stays false and the master's human review still decides.

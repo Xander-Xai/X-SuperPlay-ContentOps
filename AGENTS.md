@@ -57,6 +57,39 @@ audio or copy deliverable:
 A bare `assemble.py` call with raw screenshots is a compositor step, not a
 production decision, and is the failure this rule prevents.
 
+### Account-First Routing (mandatory before any build)
+
+Skills do not choose the pipeline; the account does. Before running any producer:
+
+```bash
+python scripts/account_route.py projects/<project>
+```
+
+It resolves `project.yaml → account_slug → account DNA` and prints the ordered
+chain that the account's `evidence.mode` implies, with the creative skill owners
+from the same DNA. `EVIDENCE_LED` starts from capture contracts; `EXPLANATORY`
+starts from audio-first planning and has no capture step at all. A mode with no
+declared pipeline is refused — never substitute one pipeline for the other, and
+never hand-assemble a chain from the runbook.
+
+The router says which chain to run. It does not certify the result: `cut_qc`
+(`account_composition`, `manual_recording_forbidden`, `account_duration`) and a
+person still decide whether the film belongs to the account.
+
+### Vendored 公众号 workflow (never edit)
+
+The WeChat Official Account track is vendored at `vendor/gzh-thinktank/`, imported
+from a checkout whose history diverged from its own remote and which is being
+retired. It is **not** a sixth production system: it is an owned copy of an existing
+one, pinned by digest.
+
+- Never edit anything under `vendor/`. A change is a new import with a new digest.
+- Its workspace lives at `projects/gzh-thinktank/` via `GZH_ARTIFACT_ROOT`; the
+  workflow refuses a hand-made article directory.
+- `python scripts/gzh_pin.py` must pass before any 公众号 work.
+- Publishing stays inside the vendored workflow (preflight → create draft →
+  read-back). It never publishes publicly, and credentials never enter this tree.
+
 ## 3. Content Truth Boundary
 
 ### Allowed
