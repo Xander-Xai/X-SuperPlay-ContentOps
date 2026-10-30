@@ -28,6 +28,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from process_utils import hidden_run  # noqa: E402
 from assemble_easel import run as assemble_run  # noqa: E402
 from qc_video import qc as qc_run  # noqa: E402
+from contentops.accounts import video_accounts  # noqa: E402
 from contentops.media.qc_canonical import (  # noqa: E402
     CURRENCY_CURRENT,
     canonical_qc_report,
@@ -45,10 +46,14 @@ OUTRO = ROOT / "outputs" / "editorial" / "outro-editorial.mp4"
 SHARED = ROOT / ".runtime" / "easel" / "skills" / "shared" / "scripts"
 
 def load_specs() -> Dict[str, Dict[str, Any]]:
-    """Account DNA is the gene: the workflow reads it, it is not hardcoded here."""
+    """Account DNA is the gene: the workflow reads it, it is not hardcoded here.
+
+    Only video accounts: this builds a video variant and indexes ``narrative`` and
+    ``role``, which the X account does not have. The schema boundary lives in
+    `contentops.accounts` rather than in a key check here.
+    """
     specs: Dict[str, Dict[str, Any]] = {}
-    for path in sorted((ROOT / "config" / "accounts").glob("*.json")):
-        dna = json.loads(path.read_text(encoding="utf-8"))
+    for path, dna in video_accounts():
         slug = dna["slug"]
         specs[slug] = {
             "account": dna["account"],

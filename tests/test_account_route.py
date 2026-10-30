@@ -34,6 +34,7 @@ TESTS: List = []
 
 EVIDENCE_ACCOUNT = "x-superplay-1024"
 EXPLANATORY_ACCOUNT = "x-superplay-future-intelligence"
+X_ACCOUNT = "x-superplay-english"
 
 
 def test(fn):
@@ -115,7 +116,7 @@ def test_a_mode_with_no_declared_pipeline_is_refused():
 @test
 def test_every_route_command_names_a_script_that_exists():
     """A route that points at a deleted script is a runbook, not a router."""
-    for slug in (EVIDENCE_ACCOUNT, EXPLANATORY_ACCOUNT):
+    for slug in (EVIDENCE_ACCOUNT, EXPLANATORY_ACCOUNT, X_ACCOUNT):
         route = _route(slug)
         for group in ("pipeline", "alternatives"):
             for step in route[group]:
@@ -193,6 +194,74 @@ def test_the_cli_resolves_a_real_project_and_echoes_the_creative_owners():
     assert all(entry["skill"] for entry in route["skills"])
     assert any("90-120" in warning for warning in route["warnings"]), route["warnings"]
     print("[ok] 9. the CLI resolves a real project and echoes its skill owners")
+
+
+@test
+def test_a_declared_pipeline_beats_an_evidence_mode():
+    """A text account has no film, so it names its chain instead of a mode."""
+    route = _route(X_ACCOUNT)
+    assert route["pipeline_source"] == "pipeline", route["pipeline_source"]
+    assert route["pipeline_name"] == "X_EDITORIAL"
+    assert route["evidence_mode"] is None, route["evidence_mode"]
+
+    decoy = {"slug": "x-test-decoy", "pipeline": "X_EDITORIAL",
+             "evidence": {"mode": "EVIDENCE_LED"}, "visual": {}, "narrative": {}}
+    assert ar.route_for(decoy)["pipeline_name"] == "X_EDITORIAL"
+    print("[ok] 10. a declared pipeline wins over an evidence mode")
+
+
+@test
+def test_the_x_chain_ends_at_measurement_and_has_no_render_step():
+    steps = [step["step"] for step in _route(X_ACCOUNT)["pipeline"]]
+    assert steps == ["research", "editorial", "visual", "package", "publish", "measure"], steps
+    for forbidden in ("build", "qc", "capture", "cut-plan"):
+        assert forbidden not in steps, (forbidden, steps)
+    commands = " ".join(step["command"] for step in _route(X_ACCOUNT)["pipeline"])
+    assert "vendor/x-growth-os/scripts/x_growth_report.py" in commands, commands
+    assert "--root" in commands, commands
+    print("[ok] 11. the X chain measures with the vendored script and renders no film")
+
+
+@test
+def test_every_x_step_says_what_it_cannot_do():
+    """Each step names its producer; the publish step must be a person's."""
+    for step in _route(X_ACCOUNT)["pipeline"]:
+        for key in ("step", "command", "produces", "why"):
+            assert step.get(key), (key, step)
+    publish = next(step for step in _route(X_ACCOUNT)["pipeline"]
+                   if step["step"] == "publish")
+    assert "manual" in publish["why"].lower(), publish["why"]
+    print("[ok] 12. every X step has a producer and the publish step is manual")
+
+
+@test
+def test_a_declared_pipeline_with_no_chain_is_refused():
+    fake = {"slug": "x-test-text", "pipeline": "TEXT_SOMEWHERE",
+            "evidence": {"mode": "EVIDENCE_LED"}, "narrative": {}, "visual": {}}
+    try:
+        ar.route_for(fake)
+    except ar.RouteBlocked as blocked:
+        assert blocked.code == "PIPELINE_UNMAPPED", blocked.code
+        assert "X_EDITORIAL" in blocked.detail, blocked.detail
+    else:
+        raise AssertionError("an unimplemented declared pipeline produced a chain")
+    print("[ok] 13. an undeclared pipeline is refused even when a mode would resolve")
+
+
+@test
+def test_a_manual_only_project_is_told_it_cannot_publish_itself():
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        (project / "project.yaml").write_text(
+            f"slug: x-growth-en\naccount_slug: {X_ACCOUNT}\n", encoding="utf-8")
+        route = ar.resolve(project)
+        warnings = " ".join(route["warnings"])
+        assert "MANUAL_ONLY" in warnings, warnings
+        assert "AWAITING_MANUAL_PUBLISH" in warnings, warnings
+        # The X account has no duration window, so no cut warning may appear.
+        assert "window" not in warnings, warnings
+        assert route["publication_mode"] == "MANUAL_ONLY"
+    print("[ok] 14. a MANUAL_ONLY project is told it cannot publish itself")
 
 
 def main() -> int:

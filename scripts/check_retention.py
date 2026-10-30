@@ -18,6 +18,7 @@ if str(ROOT / "src") not in sys.path:
     sys.path.insert(0, str(ROOT / "src"))
 
 from process_utils import hidden_run  # noqa: E402
+from contentops.accounts import video_accounts  # noqa: E402
 from contentops.optimization.retention import evaluate_retention  # noqa: E402
 
 
@@ -105,8 +106,8 @@ def main() -> int:
         sys.stdout.reconfigure(encoding="utf-8")
 
     results = []
-    for dna_path in sorted((ROOT / "config" / "accounts").glob("*.json")):
-        dna = json.loads(dna_path.read_text(encoding="utf-8"))
+    # Retention measures a video project; the X account has no film to retain.
+    for dna_path, dna in video_accounts(root=ROOT):
         results.append(run_account(dna["slug"], dna_path))
 
     if args.json:

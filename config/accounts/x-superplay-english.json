@@ -1,0 +1,235 @@
+{
+  "schema": "contentops.x-account/v1",
+  "slug": "x-superplay-english",
+  "account": "X · SuperPlay English",
+  "language": "en",
+  "platforms": ["x"],
+  "platform_roles": {
+    "x": "the only platform this account publishes to: one English post (2-3 only when a runnable example needs them) plus one actual 16:9 image"
+  },
+
+  "mission": "Turn one real AI-workflow artifact into one defensible English X post, or publish nothing.",
+  "promise": "An English account for indie AI builders and freelancers: what actually changed in a real workflow, what it cost, and where it failed, with the artifact to check it against.",
+  "tagline": "A workflow claim is worth what its artifact is worth.",
+  "decision_question": "Should I keep doing this workflow this way, or change exactly one step?",
+
+  "audience": "English-speaking indie AI builders and freelancers shipping useful automations with agent tooling.",
+  "core_audience": "A solo builder who runs agent workflows on real client or product work and has to decide, this week, whether to change one step of them.",
+  "audience_layers": [
+    {
+      "layer": "core",
+      "who": "Indie AI builder or freelancer running agent tooling on real deliverables",
+      "job": "Decide whether a workflow step should change, and what would prove it",
+      "reads_for": "the artifact, the failure mode, the reproduction command"
+    },
+    {
+      "layer": "adjacent",
+      "who": "A technically literate founder evaluating tools and vendors",
+      "job": "Separate a vendor claim from a demonstrated result",
+      "reads_for": "the boundary between what the source says and what was actually run"
+    }
+  ],
+
+  "content_pillars": [
+    {
+      "name": "workflow_artifact",
+      "weight_pct": 66,
+      "proof_floor": "P1",
+      "structure": ["reader problem", "what changed", "artifact or failed step", "cost and limit", "one action"],
+      "scope": "Two of every three posts: a real workflow, its pain, an artifact, benchmark or failed step, and the reproduction or the decision it supports."
+    },
+    {
+      "name": "source_analysis",
+      "weight_pct": 34,
+      "proof_floor": "P0",
+      "structure": ["source fact", "tension", "mechanism", "counterexample", "who should change what"],
+      "scope": "One of every three: independent analysis of a relevant tool update, anchored to the same buyer and job. A mechanism and a counterexample are mandatory."
+    }
+  ],
+  "content_pillars_note": {
+    "superseded_mix": {
+      "SKILL_EVERGREEN": 30,
+      "AI_NEWS": 30,
+      "MONETIZATION": 20,
+      "TUTORIAL": 20
+    },
+    "reason": "vendor/x-growth-os/docs/X-GROWTH-RECOVERY-2026-10-26.md §1 and §6 record 30/30/20/20 as a content-mix hypothesis, not a proven schedule, and suspend the daily quota during recovery. The old mix is kept here so it is neither silently forgotten nor accidentally restored."
+  },
+
+  "non_negotiable": [
+    "No invented numbers, results, clients or performance claims; a prediction is labelled as one.",
+    "A post with no permission-cleared firsthand artifact carries SOURCE_ANALYSIS and may not say 'I tested', 'we ran' or claim a measured result.",
+    "Every post carries an actual 1600x900 PNG or JPEG; an SVG alone is not an X-uploadable image.",
+    "Human review is recorded by a person; an assistant may prepare it and never approve it.",
+    "published requires a real https://x.com/<handle>/status/<digits> URL; nothing else counts.",
+    "Unobserved metrics stay null; an empty cell is not a zero.",
+    "No automated likes, follow/unfollow, reply bots, scheduled browser actions or duplicative posting."
+  ],
+
+  "evidence": {
+    "note": "claim_coverage.EVIDENCE_MODES (CLAIM_LED / EVIDENCE_LED / EXPLANATORY) is the video vocabulary and describes how a film is composed. An X post's evidence question is a proof grade, so this account declares proof_ladder beside it. Routing resolves the DNA's 'pipeline' first and never reads a video mode off this file.",
+    "required_evidence_class": "EXTERNAL_SOURCE",
+    "firsthand_required_for_results": true,
+    "proof_ladder": {
+      "P0": "Primary source read only: the post cites what the source says, never what the author achieved.",
+      "P1": "Locally run example with the exact version, a minimal sanitized input/output, the command and the failure modes.",
+      "P2": "Same-task baseline versus the changed workflow, including human review time, errors, cost and repeatability.",
+      "P3": "Qualified external feedback or a permission-cleared buyer pilot with traceable outcomes. Not automatic paid demand."
+    },
+    "rules": [
+      "A practical-results claim needs at least one permission-cleared firsthand artifact: code, a reproducible command, a consented before/after comparison, a permitted screenshot or a trace with identifiers removed.",
+      "A source URL is not mandatory inside the 280 characters; the claim stays traceable in the post record.",
+      "There is no proven universal external-link penalty; do not use a hidden-link trick."
+    ]
+  },
+
+  "evidence_ladder": {
+    "order": ["impression", "qualified_reply", "profile_visit", "account_net_follow"],
+    "rule": "A lower rung never proves a higher one. An impression is not a reader, a like is not a qualified reply, and a profile visit is not a follow.",
+    "note": "Only observed native metrics move a rung, at a recorded age window (T+2H / T+24H / T+72H / T+7D). The rates are a funnel of observations, never one algorithm score and never an attribution model."
+  },
+
+  "editorial": {
+    "max_chars_per_post": 280,
+    "max_thread_posts": 3,
+    "char_metric": "X weighted length: a URL counts 23, CJK/fullwidth/emoji count 2, everything else counts 1. The raw string length is not the final length.",
+    "hook_chars": 160,
+    "theses_required": 3,
+    "red_team_questions": 3,
+    "review_dimensions": [
+      {"id": "novelty", "max": 5, "low": "README restatement or common knowledge", "high": "non-obvious and defensible"},
+      {"id": "evidence", "max": 5, "low": "unverifiable or no primary link", "high": "firsthand, with scope and counterexample stated"},
+      {"id": "mechanism", "max": 5, "low": "\"AI speeds things up\"", "high": "which step changed, why, and when it stops working"},
+      {"id": "audience_decision", "max": 5, "low": "the reader cannot act", "high": "changes one real tool, build or purchasing decision"},
+      {"id": "falsifiable", "max": 5, "low": "a slogan", "high": "names an input, an output and a metric that could refute it"},
+      {"id": "tension", "max": 5, "low": "a product description", "high": "the first two sentences state a real technical contradiction and its consequence"}
+    ],
+    "score_floor": 24,
+    "dimension_floor": 4,
+    "dimension_floor_required": ["novelty", "evidence", "mechanism"],
+    "recovery_fields": ["audience_job", "proof_grade", "unique_artifact_ref", "experiment_variable"],
+    "source_analysis_label": "SOURCE_ANALYSIS",
+    "score_note": "24/30 with novelty, evidence and mechanism each >=4 is a human editorial heuristic, not an X ranking formula and not evidence of reach. A self-awarded perfect score authorizes nothing on its own; the recovery fields and the proof grade are what the gate reads."
+  },
+
+  "visual": {
+    "target": "1600x900",
+    "width": 1600,
+    "height": 900,
+    "aspect": "16:9",
+    "formats": ["png", "jpeg"],
+    "svg_alone": false,
+    "alt_required": true,
+    "alt_sentences": [1, 2],
+    "alt_forbids_url": true,
+    "image_status_enum": ["missing", "failed_qa", "pending_export", "generated", "external_image_pending_archive"],
+    "image_score_floor": 8,
+    "owner": "card-quote",
+    "rule": "The image must carry this post's exact claim, not a generic tech motif. Deterministic HTML -> PNG for anything with text or numbers, so labels stay legible at ~400px width. A conceptual illustration is allowed and must not pose as a benchmark, a real screenshot or a measured effect. If the image is absent, mismatched or unreadable, the post stays draft and is not recommended for publishing.",
+    "authority": "vendor/x-growth-os/docs/POST-IMAGE-DELIVERY-GATE.md"
+  },
+
+  "publication": {
+    "mode": "MANUAL_ONLY",
+    "requires_status_url": true,
+    "handle": null,
+    "handle_status": "UNKNOWN",
+    "post_status_enum": ["draft", "scheduled", "published", "failed"],
+    "api": "not_implemented",
+    "rule": "The workflow emits a publish package a person posts by hand. No X API call and no credentials in this repository. The handle is genuinely unknown until the first real status URL teaches it; recording it from that URL is allowed, guessing it is not."
+  },
+
+  "cadence": {
+    "original_posts_per_week": [3, 4],
+    "max_original_posts_per_day": 1,
+    "community_minutes_per_active_day": [10, 15],
+    "source_artifacts_per_week": 1,
+    "rule": "Three or four original posts a week from at most one real source artifact, and ten to fifteen minutes a day of manual reading and replying. No quota-driven triple-post day.",
+    "note": "A workload and confounder control from the 14-day recovery experiment, not an asserted X algorithm optimum."
+  },
+
+  "business": {
+    "source_of_truth": "vendor/x-growth-os/docs/X-GROWTH-RECOVERY-2026-10-26.md",
+    "stage": "pre_pmf",
+    "hypothesis": "A narrow, artifact-backed workflow account earns qualified replies from indie AI builders before it earns reach.",
+    "rule": "Content may feed the business; it may not move the business stage. Follower count and a self-awarded score are not demand.",
+    "not_claimed": [
+      "reach, follower growth or demand",
+      "that a post caused any follower change",
+      "paid demand from any external feedback"
+    ]
+  },
+
+  "acceptance_metrics": {
+    "first_stage_priority": ["real_publish_rate", "qualified_signal_rate", "founder_minutes_per_post", "account_net_follows"],
+    "metrics": [
+      {"id": "real_publish_rate", "how": "share of packages a person actually published, counted from real status URLs"},
+      {"id": "qualified_signal_rate", "how": "unique relevant questions or requests / impressions, manually coded, both observed"},
+      {"id": "founder_minutes_per_post", "how": "record founder minutes and rework count per post"},
+      {"id": "account_net_follows", "how": "end minus start followers on account snapshots, never attributed to one post"},
+      {"id": "evidence_integrity", "how": "every claim binds to its proof grade and its artifact ref"},
+      {"id": "image_first_pass", "how": "share of posts whose image is approved on the first render"},
+      {"id": "review_loop", "how": "the single experiment variable recorded per post and read back at T+7D"}
+    ]
+  },
+
+  "forbidden": [
+    "invented numbers",
+    "generated evidence substituted for real screenshots",
+    "auto-publish without human approval",
+    "published without a status URL",
+    "blank treated as zero",
+    "deleting or reposting a low-performing post as a growth tactic",
+    "engagement bait, quote-tweet dunks and unsolicited automated replies",
+    "a conceptual illustration presented as measured performance"
+  ],
+
+  "brand": {
+    "slogan": "A workflow claim is worth what its artifact is worth.",
+    "production_paradigm": "One Artifact, One Card",
+    "palette": {
+      "base": "#0F1117",
+      "accent": "#38BDF8",
+      "ink": "#F5F7FA",
+      "muted": "#8B95A5",
+      "surface": "#161A22",
+      "problem": "#F07167"
+    },
+    "palette_note": "The same brand as the video accounts: one accent colour, and a literal failure marker that may only appear while the failure exists.",
+    "forbidden_effects": [
+      "blue_purple_gradient",
+      "gradient_text",
+      "glass_morphism",
+      "emoji_as_icon",
+      "oversized_bold_black_banner",
+      "stock robot or neon cyber imagery"
+    ]
+  },
+
+  "prompt": "config/accounts/prompts/x-superplay-english.prompt.md",
+
+  "skill_route": [
+    {
+      "step": "source_research",
+      "skill": "x-superplay-source-research",
+      "script": "x-superplay-source-research/SKILL.md",
+      "path_base": "shared",
+      "why": "owns the rights-aware candidate record (page, creator, licence, URL) that a post's unique_artifact_ref must descend from"
+    },
+    {
+      "step": "copy_orchestration",
+      "skill": "x-superplay-copy-orchestrator",
+      "script": "x-superplay-copy-orchestrator/SKILL.md",
+      "path_base": "shared",
+      "why": "owns the three competing theses and the red-team pass above the deterministic character check"
+    },
+    {
+      "step": "card_render",
+      "skill": "card-quote",
+      "script": "skills/shared/scripts/render_card.py",
+      "why": "owns the 16:9 horizontal quote/data card and its card-design system; the deterministic HTML -> PNG render is what makes text and numbers exact"
+    }
+  ],
+
+  "pipeline": "X_EDITORIAL"
+}

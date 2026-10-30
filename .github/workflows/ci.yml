@@ -316,6 +316,24 @@ jobs:
       - name: Run external-pin tests
         run: python tests/test_gzh_pin.py
 
+      # The third platform track, vendored verbatim and pinned: the digest over the
+      # imported tree, the manifest's file count, and the vendored analytics script
+      # still running unmodified. Hermetic: temp fixtures, no network.
+      - name: Run X growth pin tests
+        run: python tests/test_x_growth_pin.py
+
+      # The English X account's own schema. A text account is not a film account:
+      # it declares a pipeline instead of an evidence mode, and the video readers
+      # must skip it rather than index keys it does not have.
+      - name: Run X account schema tests
+        run: python tests/test_x_account.py
+
+      # The X delivery and editorial gate. Every refusal is named -- an SVG card,
+      # a 280-weighted-character overrun, a duplicate thesis, a published post with
+      # no real status URL -- and no path here can call an API or publish.
+      - name: Run X post gate tests
+        run: python tests/test_x_post.py
+
       # Review bundles: input-only fingerprints, stale-review invalidation and
       # the score-80 threshold with no hard fail.
       - name: Run review-bundle tests

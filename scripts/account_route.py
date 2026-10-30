@@ -3,29 +3,32 @@
 
 Why this exists
 ---------------
-Two accounts share this repository and share the receipt/approval substrate, but
-they do not make the same film:
+Three accounts share this repository and share the receipt/approval substrate, but
+they do not make the same deliverable:
 
 - ``x-superplay-1024`` is ``EVIDENCE_LED``: captures are the evidence, and the
   account's composition is 70 % screen recording / 25 % vector / 5 % card.
 - ``x-superplay-future-intelligence`` is ``EXPLANATORY``: manual recording is
   ``FORBIDDEN``, the picture budget is 70 % vector / 25 % code / 5 % metric, and
   an episode runs 90--120 s.
+- ``x-superplay-english`` is a **text** account. It has no film and therefore no
+  evidence mode, so its DNA declares ``pipeline: X_EDITORIAL`` and that wins.
 
 The DNA already declares all of that, including a ``skill_route`` table. What was
 missing was a way to ask "so which scripts do I run for *this* project?" without
-reading the runbook and remembering which of the two chains applies.
+reading the runbook and remembering which of the chains applies.
 ``skill_route.py`` routes a deliverable to a *skill*; this routes a *project* to
-the ordered producer sequence its account's evidence mode implies.
+the ordered producer sequence its account implies.
 
 It is read-only. It resolves the DNA, prints the sequence, and refuses when the
-account cannot be resolved or its evidence mode has no declared pipeline. It does
-not run anything, does not spend, and never records approval.
+account cannot be resolved or its pipeline has no declared chain. It does not run
+anything, does not spend, and never records approval.
 
 Usage
 -----
     python scripts/account_route.py projects/easel-fi-audio-first
     python scripts/account_route.py projects/easel-1024-proof --json
+    python scripts/account_route.py projects/x-growth-en
 
 Exit codes: 0 route resolved, 1 route refused, 2 usage.
 """
@@ -45,11 +48,13 @@ for candidate in (ROOT / "src", ROOT / "scripts"):
 
 SCHEMA = "contentops.account-route/v1"
 
-#: Which producers an evidence mode implies.
+#: Which producers a DNA implies.
 #:
-#: The mode is the account's own word for how a film is made, so it -- not a
-#: project-level flag -- decides the chain. ``{project}`` expands to the project
-#: path as it was given on the command line.
+#: A key is either an evidence mode (the video account's own word for how a film
+#: is made) or a declared ``pipeline`` name (what a text account has instead, since
+#: it has no film to describe). A declared ``pipeline`` always wins, because it is
+#: the more specific statement. ``{project}`` expands to the project path as it was
+#: given on the command line.
 PIPELINES: Dict[str, Tuple[Dict[str, str], ...]] = {
     "EVIDENCE_LED": (
         {
@@ -110,6 +115,59 @@ PIPELINES: Dict[str, Tuple[Dict[str, str], ...]] = {
             "why": "technical QC; WARN is not a pass and never a human decision",
         },
     ),
+    # The X track. Nothing here renders a film, and the last two steps are a
+    # person's: no command below can publish anything.
+    "X_EDITORIAL": (
+        {
+            "step": "research",
+            "command": "python scripts/x_post.py --new {project} --id <content-id> "
+                       "--topic \"<topic>\"",
+            "produces": "posts/<content-id>.json (status draft, image_status missing) "
+                        "+ one seeded row in templates/posts.csv",
+            "why": "the draft record comes before the copy: it is what carries the "
+                   "audience job, the proof grade, the artifact ref and the one "
+                   "experiment variable that the editorial gate reads",
+        },
+        {
+            "step": "editorial",
+            "command": "python scripts/x_post.py --check {project} --id <content-id>",
+            "produces": "a named refusal or a PASS receipt",
+            "why": "three theses, the red-team pass, six scored dimensions and the "
+                   "280-weighted-character budget; a post with no image is refused "
+                   "at IMAGE_MISSING, not waved through",
+        },
+        {
+            "step": "visual",
+            "command": "python scripts/skill_route.py --match \"X post 1600x900 editorial card\"",
+            "produces": "the owning skill and its renderer",
+            "why": "routes the card to card-quote; the image is rendered from HTML so "
+                   "labels and numbers are exact, and an SVG alone is not uploadable",
+        },
+        {
+            "step": "package",
+            "command": "python scripts/x_post.py --package {project} --id <content-id>",
+            "produces": "receipts/x-package-<content-id>.json with "
+                        "status=AWAITING_MANUAL_PUBLISH",
+            "why": "assembles the copy, the image path, the ALT text and the review "
+                   "record so a person can paste and attach them; it cannot publish",
+        },
+        {
+            "step": "publish",
+            "command": "python scripts/x_post.py --mark-published {project} "
+                       "--id <content-id> --url <status-url>",
+            "produces": "status=published in the post record and the CSV row",
+            "why": "manual by contract: this step only records a URL a person "
+                   "actually has, and refuses anything that is not a real status link",
+        },
+        {
+            "step": "measure",
+            "command": "python vendor/x-growth-os/scripts/x_growth_report.py "
+                       "--root {project}",
+            "produces": "the read-only metric report",
+            "why": "the vendored analytics script runs unmodified against this "
+                   "project; blank stays blank because it is not zero",
+        },
+    ),
 }
 
 #: Legitimate variants of a pipeline, never the default.
@@ -159,29 +217,41 @@ def load_dna(slug: str) -> Dict[str, Any]:
 
 
 def route_for(dna: Dict[str, Any]) -> Dict[str, Any]:
-    """The pipeline a parsed DNA implies. Pure: no filesystem, no project path."""
+    """The pipeline a parsed DNA implies. Pure: no filesystem, no project path.
+
+    A declared ``pipeline`` wins over an evidence mode. A text account has no
+    film, so it has no evidence mode to declare, and borrowing a video mode to
+    name its chain would make the vocabulary mean two things at once.
+    """
     evidence = dna.get("evidence") or {}
     mode = str(evidence.get("mode") or "")
-    if not mode:
-        raise RouteBlocked("EVIDENCE_MODE_MISSING",
-                           f"{dna.get('slug')!r} declares no evidence.mode")
-    pipeline = PIPELINES.get(mode)
-    if pipeline is None:
+    declared = str(dna.get("pipeline") or "")
+    name, source = (declared, "pipeline") if declared else (mode, "evidence_mode")
+    if not name:
         raise RouteBlocked(
-            "EVIDENCE_MODE_UNMAPPED",
-            f"{dna.get('slug')!r} is {mode!r}, which has no declared pipeline; "
-            f"declared modes: {sorted(PIPELINES)}")
+            "EVIDENCE_MODE_MISSING",
+            f"{dna.get('slug')!r} declares neither a pipeline nor an evidence.mode")
+    pipeline = PIPELINES.get(name)
+    if pipeline is None:
+        code = "PIPELINE_UNMAPPED" if source == "pipeline" else "EVIDENCE_MODE_UNMAPPED"
+        raise RouteBlocked(
+            code,
+            f"{dna.get('slug')!r} is {name!r}, which has no declared pipeline; "
+            f"declared pipelines: {sorted(PIPELINES)}")
     narrative = dna.get("narrative") or {}
     visual = dna.get("visual") or {}
     return {
         "account_slug": dna.get("slug"),
-        "evidence_mode": mode,
+        "pipeline_name": name,
+        "pipeline_source": source,
+        "evidence_mode": mode or None,
         "required_evidence_class": evidence.get("required_evidence_class"),
         "manual_recording": evidence.get("manual_recording"),
+        "publication_mode": (dna.get("publication") or {}).get("mode"),
         "duration_s": narrative.get("target_duration_s"),
         "composition": (visual.get("composition") or {}).get("segments"),
         "pipeline": [dict(step) for step in pipeline],
-        "alternatives": [dict(step) for step in ALTERNATIVES.get(mode, ())],
+        "alternatives": [dict(step) for step in ALTERNATIVES.get(name, ())],
         "skills": [
             {"step": entry.get("step"), "skill": entry.get("skill"),
              "script": entry.get("script")}
@@ -219,6 +289,11 @@ def _warnings(route: Dict[str, Any], project: Path) -> List[str]:
         warnings.append(
             "manual recording is FORBIDDEN for this account; a capture step is not "
             "part of its pipeline")
+    if route.get("publication_mode") == "MANUAL_ONLY":
+        warnings.append(
+            "publication is MANUAL_ONLY: the package stops at "
+            "AWAITING_MANUAL_PUBLISH, and no step here can publish it — a person "
+            "posts the copy with the image, then records the real status URL")
     for step in route["pipeline"]:
         executable = step["command"].split()
         if len(executable) > 1 and executable[0].startswith("python"):
@@ -243,9 +318,16 @@ def _warnings(route: Dict[str, Any], project: Path) -> List[str]:
 
 def _print_route(route: Dict[str, Any]) -> None:
     print(f"account      {route['account_slug']}")
-    print(f"evidence     {route['evidence_mode']} "
-          f"(required class {route['required_evidence_class']})")
-    print(f"recording    {route['manual_recording']}")
+    if route.get("pipeline_source") == "pipeline":
+        print(f"pipeline     {route['pipeline_name']} (declared by the DNA; "
+              f"evidence class {route['required_evidence_class']})")
+    else:
+        print(f"evidence     {route['evidence_mode']} "
+              f"(required class {route['required_evidence_class']})")
+    if route.get("manual_recording"):
+        print(f"recording    {route['manual_recording']}")
+    if route.get("publication_mode"):
+        print(f"publication  {route['publication_mode']}")
     span = route.get("duration_s") or []
     if span:
         print(f"duration     {span[0]}-{span[1]} s")

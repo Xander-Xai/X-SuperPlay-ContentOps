@@ -20,13 +20,15 @@ python scripts/export_easel_yaml.py --check   # fail if a file is stale
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 from typing import Any, List
 
 ROOT = Path(__file__).resolve().parents[1]
-ACCOUNTS = ROOT / "config" / "accounts"
+if str(ROOT / "src") not in sys.path:
+    sys.path.insert(0, str(ROOT / "src"))
+
+from contentops.accounts import video_accounts  # noqa: E402
 
 
 def _scalar(value: Any) -> str:
@@ -147,8 +149,9 @@ def main() -> int:
 
     stale = []
     written = []
-    for dna_path in sorted(ACCOUNTS.glob("*.json")):
-        dna = json.loads(dna_path.read_text(encoding="utf-8"))
+    # An X account has no Easel render, so writing it an easel.yaml would invent
+    # a renderer that does not exist. Only video accounts get one.
+    for _dna_path, dna in video_accounts(root=ROOT):
         text = build(dna)
         target = ROOT / "projects" / dna["slug"] / "easel.yaml"
         if args.check:
