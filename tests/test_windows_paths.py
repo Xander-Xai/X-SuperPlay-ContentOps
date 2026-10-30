@@ -140,8 +140,10 @@ def test_easel_adapter_keeps_upstream_outputs_and_temp_files_in_project_work():
         assert len(calls) == 1
         requested_output = Path(calls[0][0][calls[0][0].index("-o") + 1])
         work_dir = project / "work"
-        assert requested_output.is_relative_to(work_dir), requested_output
-        assert not requested_output.is_relative_to(fake_runtime), requested_output
+        # A Windows runner can hand back an 8.3 short temp path while the
+        # adapter resolves the output to the long form. Compare resolved paths.
+        assert requested_output.resolve().is_relative_to(work_dir.resolve()), requested_output
+        assert not requested_output.resolve().is_relative_to(fake_runtime.resolve()), requested_output
         child_env = calls[0][1]["env"]
         assert child_env["TEMP"] == str(work_dir)
         assert child_env["TMP"] == str(work_dir)
