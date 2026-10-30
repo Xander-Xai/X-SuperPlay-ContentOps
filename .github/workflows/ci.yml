@@ -18,6 +18,11 @@ jobs:
         os: [windows-latest, ubuntu-latest]
         python-version: ['3.11']
     runs-on: ${{ matrix.os }}
+    env:
+      # Windows runners default stdout to cp1252; several suites print the
+      # repository's Chinese labels. UTF-8 mode makes every suite deterministic
+      # without editing each one or weakening an assertion.
+      PYTHONUTF8: "1"
 
     steps:
       - name: Checkout
