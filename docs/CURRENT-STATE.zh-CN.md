@@ -1112,7 +1112,7 @@ FAIL（`account_composition` 73/27/0 对 70/25/5），所以派生步骤以
 |---|---|---|
 | 视频（抖音 / B站 / 小红书 / 视频号） | `src/contentops`、`scripts/` | 生产者与门禁齐全；母片仍须先过自己的 QC 才允许派生 |
 | 公众号 | `vendor/gzh-thinktank/` | 逐字节导入：679 个文件、8 MB、十阶段门禁、自铸收据 |
-| X | — | 未开始：没有账号 DNA，也没有发布能力 |
+| X（英文文本） | `vendor/x-growth-os/`、`scripts/x_post.py` | 逐字节导入：64 个文件、摘要钉死；`MANUAL_ONLY` 发布包门禁；`PublishMode.API` 直接抛错 |
 
 **公众号为什么改为入库而不是留外部。** 那个工作副本的历史与 GitHub origin **分叉**
 （`origin/main` 是 `e9303d1`，副本是 `93645f1`），而且副本（可能连远端）即将退役。
@@ -1135,3 +1135,24 @@ FAIL（`account_composition` 73/27/0 对 70/25/5），所以派生步骤以
 
 **发布行为不变。** vendored 流程仍然止于公众号草稿 + `draft/get` 回读。本仓库不会
 公开发布任何内容，凭据也没有进入任何一棵树。
+
+**X 轨道：入库、有门禁、只能手动发布。** `vendor/x-growth-os/` 是 commit `3154db49`
+的 64 文件增长工作流，由 `scripts/x_growth_pin.py` 钉死摘要。账号
+`x-superplay-english` 声明的是 `contentops.x-account/v1` 而不是视频 DNA，因为文本
+账号没有构图、没有 `easel` 渲染、也不产 `easel.yaml`。它还声明
+`pipeline: X_EDITORIAL`，`scripts/account_route.py` 先解析显式 pipeline 再看
+evidence mode；链路是 `research → editorial → visual → package → publish → measure`，
+而声明了未知 pipeline 会得到 `PIPELINE_UNMAPPED`，不会静默退回视频链。
+
+门禁是 `scripts/x_post.py`，拒绝时逐条点名：超过 280 加权字符、用 SVG 冒充卡片、
+画布尺寸不对、ALT 缺失或带链接、三条论点其实是同一个判断写两遍、评审低于账号下限、
+P0 帖子声称自己跑过、指标存成字符串、以及 `status: published` 却没有真实的
+`x.com/<handle>/status/<id>` URL。`--package` 写出
+`receipts/x-package-<id>.json` 并停在 `AWAITING_MANUAL_PUBLISH`；`PublishMode.API`
+直接抛错。
+
+今天的实测状态：`projects/x-growth-en/` 只有一条记录 `20261030-001`，卡片已按
+1600×900 渲染。它的判定是 **DRAFT**，唯一未过项是 `REVIEW_MISSING`——人工评审还没
+发生，所以 `--package` 会拒绝，也没有发布任何内容。账号 handle 是 `null` /
+`UNKNOWN`，由第一个真实 status URL 教会。本仓库没有任何 X API 调用，也没有为它存
+任何凭据。

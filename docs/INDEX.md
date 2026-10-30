@@ -59,6 +59,7 @@ Tier-1 docs have zh-CN mirrors with `.zh-CN.md` suffix. Run `python scripts/chec
 - [adr/ADR-009-narration-v3-creator-director.md](adr/ADR-009-narration-v3-creator-director.md)
 - [adr/ADR-010-gzh-integration.md](adr/ADR-010-gzh-integration.md)
 - [adr/ADR-011-single-home-platform-tracks.md](adr/ADR-011-single-home-platform-tracks.md)
+- [adr/ADR-012-x-platform-track.md](adr/ADR-012-x-platform-track.md)
 
 ## Agent Rules
 

@@ -81,6 +81,61 @@ declared in the same DNA:
   `cut_qc` (`account_composition`, `manual_recording_forbidden`, `account_duration`) and
   with a person.
 
+The X account is a text account and has no `evidence.mode`. It declares
+`pipeline: "X_EDITORIAL"` instead, and a declared pipeline wins over a mode:
+
+| Account | Pipeline | Chain |
+|---|---|---|
+| `x-superplay-english` | `X_EDITORIAL` | `research` → `editorial` → `visual` → `package` → `publish` → `measure` |
+
+A declared pipeline the router does not know is `PIPELINE_UNMAPPED`. That is a
+separate refusal from `EVIDENCE_MODE_UNMAPPED`, and neither falls back to a video chain.
+
+### 3.2 The X track (manual-only)
+
+```powershell
+python scripts\account_route.py projects\x-growth-en
+python scripts\x_growth_pin.py                       # pin + digest must pass first
+python scripts\x_growth_pin.py --suite               # also run the vendored analytics tests
+
+python scripts\x_post.py --new projects\x-growth-en --id 20261102-001 --topic "..."
+python scripts\x_post.py --check projects\x-growth-en\posts\20261102-001.json
+python scripts\x_post.py --package projects\x-growth-en --id 20261102-001
+python scripts\x_post.py --mark-published projects\x-growth-en --id 20261102-001 `
+    --url https://x.com/<handle>/status/<id> --reviewer "<name>" --opinion "<one line>"
+python scripts\x_post.py --verify-log projects\x-growth-en
+```
+
+- `--check` exits 0 on `READY`/`PUBLISHED`, 1 on a refusal, 2 on misuse, and prints
+  every issue by code. A `--json` run writes a `contentops.x-post-gate/v1` receipt.
+- `--package` refuses anything that is not `READY`, writes
+  `receipts/x-package-<content-id>.json`, and stops at `AWAITING_MANUAL_PUBLISH`. It
+  cannot return `PUBLISHED`: a person posts the copy and the image, then records the URL.
+- `--mark-published` accepts only a real `https://(x|twitter).com/<handle>/status/<digits>`
+  URL, upserts one row in `templates/posts.csv`, and writes `receipts/x-publish-<id>.json`.
+- `--verify-log` cross-checks every published post JSON against its CSV row and reports drift.
+
+The card image is rendered from tracked HTML through the routed skill, not by an image
+model:
+
+```powershell
+python .runtime\easel\skills\shared\scripts\render_card.py `
+  --html projects\x-growth-en\assets\cards\<id>.html --out projects\x-growth-en\assets\cards\<id>.png `
+  --full-page --width 1600 --height 900 --scale 1
+```
+
+The PNG is gitignored. A fresh checkout re-renders it; until it does, the gate answers
+`IMAGE_MISSING`, which is honest rather than broken.
+
+Measurement is the vendored read-only report, pointed at the project root:
+
+```powershell
+python vendor\x-growth-os\scripts\x_growth_report.py --root projects\x-growth-en
+```
+
+It reports `observational_audit_not_causal_attribution`. Blank metrics stay blank; they
+are never zeros.
+
 ## 4. Prepare source assets
 
 Place real evidence in:

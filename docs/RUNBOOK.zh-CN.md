@@ -66,6 +66,59 @@ python scripts\account_route.py projects\easel-1024-proof --json
 - 路由器只说明该跑哪条链，不认证结果。成片是否属于该账号仍由 `cut_qc`
   （`account_composition`、`manual_recording_forbidden`、`account_duration`）和人决定。
 
+X 账号是文本账号，没有 `evidence.mode`。它改为声明 `pipeline: "X_EDITORIAL"`，
+而显式声明的 pipeline 优先于 evidence mode：
+
+| 账号 | 流水线 | 链路 |
+|---|---|---|
+| `x-superplay-english` | `X_EDITORIAL` | `research` → `editorial` → `visual` → `package` → `publish` → `measure` |
+
+路由器不认识的显式 pipeline 是 `PIPELINE_UNMAPPED`。它与 `EVIDENCE_MODE_UNMAPPED`
+是两个不同的拒绝，二者都不会退回视频链路。
+
+### 3.2 X 轨道（只能手动发布）
+
+```powershell
+python scripts\account_route.py projects\x-growth-en
+python scripts\x_growth_pin.py                       # 先过摘要钉
+python scripts\x_growth_pin.py --suite               # 顺带跑 vendored 分析脚本的测试
+
+python scripts\x_post.py --new projects\x-growth-en --id 20261102-001 --topic "..."
+python scripts\x_post.py --check projects\x-growth-en\posts\20261102-001.json
+python scripts\x_post.py --package projects\x-growth-en --id 20261102-001
+python scripts\x_post.py --mark-published projects\x-growth-en --id 20261102-001 `
+    --url https://x.com/<handle>/status/<id> --reviewer "<name>" --opinion "<one line>"
+python scripts\x_post.py --verify-log projects\x-growth-en
+```
+
+- `--check` 在 `READY`/`PUBLISHED` 时退出 0，拒绝时 1，误用 2，并逐条打印 issue 代码。
+  `--json` 会写出 `contentops.x-post-gate/v1` 收据。
+- `--package` 只接受 `READY` 的帖子，写出 `receipts/x-package-<content-id>.json`，停在
+  `AWAITING_MANUAL_PUBLISH`。它没有任何代码路径能返回 `PUBLISHED`：由人把文案和配图发出去，
+  再把 URL 记回来。
+- `--mark-published` 只接受真实的 `https://(x|twitter).com/<handle>/status/<digits>` URL，
+  upsert `templates/posts.csv` 的一行，并写出 `receipts/x-publish-<id>.json`。
+- `--verify-log` 把每条已发布帖子的 JSON 与它的 CSV 行对照，报告漂移。
+
+卡片图由路由到的 skill 从受版本管理的 HTML 渲染，不是图像模型：
+
+```powershell
+python .runtime\easel\skills\shared\scripts\render_card.py `
+  --html projects\x-growth-en\assets\cards\<id>.html --out projects\x-growth-en\assets\cards\<id>.png `
+  --full-page --width 1600 --height 900 --scale 1
+```
+
+PNG 是 gitignored 的。新检出的工作副本要重新渲染；在那之前门禁给出 `IMAGE_MISSING`，
+这是诚实的答案，不是坏掉。
+
+度量用 vendored 的只读报告，指向项目根：
+
+```powershell
+python vendor\x-growth-os\scripts\x_growth_report.py --root projects\x-growth-en
+```
+
+它报 `observational_audit_not_causal_attribution`。空指标保持空，永远不会被当成 0。
+
 ## 4. 运行生产流水线
 
 > 这是最早的一代流水线，**不读任何账号 DNA**。凡是属于 1024 或未来智能的项目，先用

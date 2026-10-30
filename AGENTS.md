@@ -66,11 +66,13 @@ python scripts/account_route.py projects/<project>
 ```
 
 It resolves `project.yaml → account_slug → account DNA` and prints the ordered
-chain that the account's `evidence.mode` implies, with the creative skill owners
-from the same DNA. `EVIDENCE_LED` starts from capture contracts; `EXPLANATORY`
-starts from audio-first planning and has no capture step at all. A mode with no
-declared pipeline is refused — never substitute one pipeline for the other, and
-never hand-assemble a chain from the runbook.
+chain that the account declares, with the creative skill owners from the same DNA.
+A declared `pipeline` wins: `X_EDITORIAL` is a text chain with no capture step and
+no film. Otherwise the account's `evidence.mode` decides — `EVIDENCE_LED` starts
+from capture contracts, `EXPLANATORY` starts from audio-first planning and has no
+capture step at all. A mode, or a declared pipeline, with no known chain is refused
+(`EVIDENCE_MODE_UNMAPPED` / `PIPELINE_UNMAPPED`) — never substitute one pipeline for
+another, and never hand-assemble a chain from the runbook.
 
 The router says which chain to run. It does not certify the result: `cut_qc`
 (`account_composition`, `manual_recording_forbidden`, `account_duration`) and a
@@ -89,6 +91,24 @@ one, pinned by digest.
 - `python scripts/gzh_pin.py` must pass before any 公众号 work.
 - Publishing stays inside the vendored workflow (preflight → create draft →
   read-back). It never publishes publicly, and credentials never enter this tree.
+
+### Vendored X workflow (never edit)
+
+The X track is vendored at `vendor/x-growth-os/`, imported verbatim from
+`Xander-Xai/X-SuperPlay-X-Growth-OS` (64 files, commit `3154db49`) behind a digest
+pin. Same rule as the 公众号 tree: it is an owned copy, not a sixth production system.
+
+- Never edit anything under `vendor/`. A change is a new import with a new digest.
+- `python scripts/x_growth_pin.py` must pass before any X work; `--suite` also runs
+  the vendored analytics tests.
+- The gate is this repository's, not the vendor's: `python scripts/x_post.py --check
+  projects/x-growth-en/posts/<id>.json`. A verdict of `DRAFT`, `IMAGE_MISSING`,
+  `READY`, `PUBLISHED` or `BLOCKED` is derived from the named issues, never guessed.
+- Publication is `MANUAL_ONLY`: `--package` stops at `AWAITING_MANUAL_PUBLISH`, and a
+  person posts it and records the real `x.com/<handle>/status/<id>` URL with
+  `--mark-published`. `PublishMode.API` raises. There is no X API call here and there
+  must be none without a capability spike, an ADR and credentials outside the tree.
+- A post that says `published` without a real status URL is a lie the gate refuses.
 
 ## 3. Content Truth Boundary
 

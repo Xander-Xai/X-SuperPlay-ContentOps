@@ -177,6 +177,30 @@ projects/
 
 Large generated files (MP4, WAV, PNG) follow `.gitignore` artifact policy.
 
+### Text-track projects (`projects/x-growth-en/`)
+
+An X project has no `sources/`, `script/`, `work/` or `final/`: there is no film.
+It is placed like any other project, with a text-shaped layout:
+
+```
+projects/x-growth-en/
+├── project.yaml          # account_slug, platforms: [x], language: en, gate: scripts/x_post.py
+├── posts/                # <content_id>.json — one contentops.x-post/v1 record per post
+├── templates/            # posts.csv, x-metric-snapshots.csv, x-account-snapshots.csv
+├── assets/
+│   └── cards/            # <id>.html is tracked; the rendered <id>.png is gitignored
+└── receipts/             # x-check-*.json, x-package-*.json, x-publish-*.json
+```
+
+- One post is one file in `posts/`. The file is the record; `templates/posts.csv` is the
+  row-shaped mirror that `--mark-published` upserts and `--verify-log` cross-checks.
+- The card's HTML is the artifact. The PNG is a render, so it is generated and
+  gitignored — re-render it rather than committing it.
+- `project.yaml` must not carry `quality_gate: enforced`: that key opts a project into
+  the video script gate (SQ01–SQ07), which does not describe an X post. The X gate is
+  `scripts/x_post.py`, named in `gate:`.
+- The workflow itself lives at `vendor/x-growth-os/` and is never edited.
+
 ## tests/
 
 Formal test layout (established from M1):

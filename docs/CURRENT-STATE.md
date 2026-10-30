@@ -1152,7 +1152,7 @@ of one track plus an external dependency that was about to disappear.
 |---|---|---|
 | Video (Douyin / Bilibili / Xiaohongshu / 视频号) | `src/contentops`, `scripts/` | producers and gates exist; the master still has to pass its own QC before variants are derived |
 | 公众号 (WeChat article) | `vendor/gzh-thinktank/` | imported verbatim: 679 files, 8 MB, ten ordered stages, its own receipts |
-| X | — | not started: no account DNA and no publisher |
+| X (English text) | `vendor/x-growth-os/`, `scripts/x_post.py` | imported verbatim: 64 files, pinned; `MANUAL_ONLY` package gate; `PublishMode.API` raises |
 
 **Why the 公众号 workflow is vendored rather than external.** Its checkout's history
 diverged from GitHub origin (`origin/main` was `e9303d1`, the checkout `93645f1`) and
@@ -1179,3 +1179,27 @@ imported tree does not try to hide that.
 **Publishing is unchanged.** The vendored workflow still ends at a WeChat draft with
 a `draft/get` read-back. Nothing in this repository publishes publicly, and no
 credential entered either tree.
+
+**The X track is vendored, gated, and manual-only.** `vendor/x-growth-os/` is the
+64-file growth workflow at commit `3154db49`, pinned by `scripts/x_growth_pin.py`.
+The account `x-superplay-english` declares `contentops.x-account/v1` rather than the
+video DNA, because a text account has no composition, no `easel` render and no
+`easel.yaml`. It also declares `pipeline: X_EDITORIAL`, which
+`scripts/account_route.py` resolves before an evidence mode; the chain runs
+`research → editorial → visual → package → publish → measure`, and an unknown
+declared pipeline is `PIPELINE_UNMAPPED` instead of a silent video fallback.
+
+`scripts/x_post.py` is the gate. It refuses a post by name — over 280 weighted
+characters, an SVG standing in for a card, the wrong canvas, missing or link-bearing
+ALT, three theses that are one judgment written twice, a review under the account's
+floor, a P0 post claiming a run, a metric stored as a string, or `status: published`
+without a real `x.com/<handle>/status/<id>` URL. `--package` writes
+`receipts/x-package-<id>.json` and stops at `AWAITING_MANUAL_PUBLISH`;
+`PublishMode.API` raises.
+
+Measured today: `projects/x-growth-en/` holds one record, `20261030-001`, whose card
+is rendered at 1600×900. Its verdict is **DRAFT** with a single `REVIEW_MISSING` —
+the human review has not happened, so `--package` refuses it and nothing is
+published. The account's handle is `null` / `UNKNOWN`; the first real status URL
+will teach it. No X API call exists in this repository and no credential is stored
+for one.

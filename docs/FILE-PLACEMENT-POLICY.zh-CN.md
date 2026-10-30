@@ -64,9 +64,11 @@ config/
 
 ```
 vendor/
-└── gzh-thinktank/          # 公众号工作流，逐字节导入
-    ├── MANIFEST.md         # 来源、排除项、预期的校验器输出
-    └── gzh_未来智能/        # 永不修改
+├── gzh-thinktank/          # 公众号工作流，逐字节导入
+│   ├── MANIFEST.md         # 来源、排除项、预期的校验器输出
+│   └── gzh_未来智能/        # 永不修改
+└── x-growth-os/            # X 增长工作流，逐字节导入（64 个文件）
+    └── MANIFEST.md         # 来源、什么都没排除、永不修改
 ```
 
 - `vendor/` 用于上游正在退役的代码，因此**入库提交**——与 `.runtime/` 相反，后者
@@ -76,6 +78,47 @@ vendor/
   为什么、它自己的校验器预期输出是什么。
 - 可重建依赖（`node_modules`、`.venv`）和任何带凭据的内容一律不入库。
 - `scripts/gzh_pin.py` 会重算摘要。不符即是失败，不是警告。
+- `scripts/x_growth_pin.py` 对 X 树做同样的事；`--suite` 还会跑 vendored 分析脚本的测试。
+
+## projects/
+
+内容运行项目与金样本：
+
+```
+projects/
+└── <slug>/
+    ├── project.yaml
+    ├── sources/
+    ├── script/
+    ├── assets/
+    ├── work/           # 中间渲染（gitignored）
+    ├── final/          # 输出 MP4（gitignored）
+    └── receipts/
+```
+
+大体积生成文件（MP4、WAV、PNG）按 `.gitignore` 的产物策略处理。
+
+### 文本轨项目（`projects/x-growth-en/`）
+
+X 项目没有 `sources/`、`script/`、`work/`、`final/`：没有成片。它仍按项目放置，
+只是布局是文本形状：
+
+```
+projects/x-growth-en/
+├── project.yaml          # account_slug、platforms: [x]、language: en、gate: scripts/x_post.py
+├── posts/                # <content_id>.json —— 每条帖子一个 contentops.x-post/v1 记录
+├── templates/            # posts.csv、x-metric-snapshots.csv、x-account-snapshots.csv
+├── assets/
+│   └── cards/            # <id>.html 入库；渲染出的 <id>.png 被 gitignore
+└── receipts/             # x-check-*.json、x-package-*.json、x-publish-*.json
+```
+
+- 一条帖子就是一个文件，放在 `posts/`。JSON 是记录本体；`templates/posts.csv` 是它的
+  行式镜像，由 `--mark-published` upsert、由 `--verify-log` 对照。
+- 卡片以 HTML 为产物，PNG 是渲染结果，因此被 gitignore——重新渲染，不要提交。
+- `project.yaml` 不得出现 `quality_gate: enforced`：那个键会让项目进入视频脚本门禁
+  （SQ01–SQ07），而它并不描述一条 X 帖子。X 的门禁是 `scripts/x_post.py`，写在 `gate:` 里。
+- 工作流本体在 `vendor/x-growth-os/`，永不修改。
 
 ## tests/
 
