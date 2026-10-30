@@ -61,10 +61,16 @@ def _route_bases() -> dict:
     Asks the same helpers ``check_account_dna.py`` uses, so the bridge and the
     DNA checker cannot disagree about whether a declared script exists.
     """
-    from skill_route import SHARED_SKILL_ROOT, catalog
+    from skill_route import CATALOG_ROOTS, SHARED_SKILL_ROOT
 
-    _, catalog_root = catalog()
-    easel_root = catalog_root.parent.parent if catalog_root else None
+    # ``catalog()`` returns the first existing root, which may be the gzh
+    # vendor. A ``catalog`` path base means the Easel catalog, so find an
+    # actual ``openclaw`` root instead of treating any vendor as Easel.
+    easel_root = None
+    for root in CATALOG_ROOTS:
+        if root.name == "openclaw" and root.is_dir():
+            easel_root = root.parent.parent
+            break
     return {"catalog": easel_root, "shared": SHARED_SKILL_ROOT, "repo": ROOT}
 
 

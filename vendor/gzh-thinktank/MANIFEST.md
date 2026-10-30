@@ -13,7 +13,7 @@ Account workflow**, imported because its own repository is being retired.
 | Git tree object | `7b75e4e840b29a18f5262c0e81e64c080c274c6a` |
 | Imported | 2026-10-30 |
 | Files / size | 667 / 8 MB |
-| Tree digest | `5bef4c54e8659c06e5682a0de257752391f031b7c962b5a0bc9af3ecd2ad2051` |
+| Tree digest | `0b96d179a224f0b9668843fd78fcdcefb8f9a83d7918b7d8127fce5d6687919a` |
 
 The digest is SHA-256 over the sorted list of `relative/path\0file-sha256\n` for
 every file under the workflow root (`gzh_未来智能/`), with the path relative to that

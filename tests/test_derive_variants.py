@@ -245,7 +245,17 @@ def test_covers_are_reported_at_their_own_frame_never_cropped_into_one():
 
 def main() -> int:
     failures = []
-    for fn in TESTS:
+    planner_only = {
+        "test_the_platform_that_already_has_the_master_gets_no_derivative",
+        "test_a_horizontal_master_derives_the_vertical_cut",
+        "test_a_platform_with_no_declared_frame_is_reported_not_substituted",
+    }
+    if not dv.RUNTIME_TOOL.is_file():
+        tests = [fn for fn in TESTS if fn.__name__ in planner_only]
+        print("[skip] pinned runtime reframe.py absent; running planner tests only")
+    else:
+        tests = list(TESTS)
+    for fn in tests:
         try:
             fn()
         except AssertionError as exc:
@@ -256,9 +266,12 @@ def main() -> int:
             print(f"[ERR ] {fn.__name__}: {exc!r}")
     print()
     if failures:
-        print(f"{len(failures)} of {len(TESTS)} test(s) failed")
+        print(f"{len(failures)} of {len(tests)} test(s) failed")
         return 1
-    print(f"All {len(TESTS)} variant-derivation tests passed.")
+    if len(tests) != len(TESTS):
+        print(f"All {len(tests)} planner tests passed; derive tests skipped (runtime absent).")
+    else:
+        print(f"All {len(TESTS)} variant-derivation tests passed.")
     return 0
 
 
