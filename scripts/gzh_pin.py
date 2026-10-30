@@ -77,7 +77,7 @@ VENDORED_FILES = 667
 #: files this repository cannot track).
 BUNDLE_RETIRED = True
 
-VENDORED_DIGEST = "5bef4c54e8659c06e5682a0de257752391f031b7c962b5a0bc9af3ecd2ad2051"
+VENDORED_DIGEST = "0b96d179a224f0b9668843fd78fcdcefb8f9a83d7918b7d8127fce5d6687919a"
 
 
 def _file_digest(path: Path) -> str:
@@ -104,7 +104,11 @@ def vendored_digest(root: Path) -> tuple[int, str]:
     is exactly what "do not edit the vendor tree" means.
     """
     rows = []
-    for path in sorted(root.rglob("*")):
+    # Sort by the relative POSIX path string, not by Path objects: Windows
+    # compares paths case-insensitively and POSIX does not, so the same tree
+    # would hash in two different orders and produce two digests.
+    for path in sorted(root.rglob("*"),
+                       key=lambda item: item.relative_to(root).as_posix()):
         if not path.is_file():
             continue
         # Running the vendored workflow writes __pycache__ inside it. Those are
