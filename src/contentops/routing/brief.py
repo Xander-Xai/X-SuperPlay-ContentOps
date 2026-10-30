@@ -310,6 +310,22 @@ def build_brief_package(*, intent: ContentIntent, profile: AccountProfile,
     return document
 
 
+def record_approval(package: Dict[str, Any], intent: ContentIntent) -> Dict[str, Any]:
+    """The same brief, with the approval it received written into it.
+
+    The brief is what the pipeline reads, so it has to say what happened to
+    it. A brief frozen at ``pending`` while the run moved to
+    ``APPROVED_FOR_PRODUCTION`` would tell a producer to stop — correctly, but
+    about a decision that had already been made. The content is unchanged
+    apart from the intent, so the id is recomputed over the new document.
+    """
+    updated = dict(package)
+    updated["intent"] = intent.to_dict()
+    updated.pop("brief_id", None)
+    updated["brief_id"] = "BRIEF-" + digest(updated)[:16].upper()
+    return updated
+
+
 def write_brief_package(directory: Path, package: Dict[str, Any]) -> Path:
     """Write the package, creating its directory. Returns the file written."""
     directory = Path(directory)

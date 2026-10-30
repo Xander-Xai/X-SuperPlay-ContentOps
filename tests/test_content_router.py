@@ -424,6 +424,10 @@ def test_both_routes_reach_the_same_project_creation():
             assert brief.is_file(), brief
             package = json.loads(brief.read_text(encoding="utf-8"))
             assert package["intent"]["account_id"] == account
+            # The brief is what the pipeline reads, so the approval has to be
+            # in it. A brief frozen at "pending" would tell a producer to stop
+            # about a decision that had already been made.
+            assert package["intent"]["approval_status"] == "approved"
             yaml_text = (project / "project.yaml").read_text(encoding="utf-8")
             assert f"account_slug: {account}" in yaml_text
 

@@ -415,6 +415,13 @@ class ContentRouter:
         self.store.record_event(run_id, profile.account_id, APPROVED_FOR_PRODUCTION,
                                 f"approved by {reviewer}")
 
+        # The brief is the document the pipeline reads, so the approval is
+        # written back into it before it is handed on.
+        if intent is not None:
+            package = self.read_brief(run_id)
+            if package is not None:
+                self._write_brief(run_id, brief_module.record_approval(package, intent))
+
         detail: Dict[str, Any] = {"reviewer": reviewer.strip(), "note": note.strip()}
         if project_slug:
             detail["project"] = str(self.materialize_project(profile, run_id,
