@@ -33,9 +33,27 @@ from contentops.media.cut_plan import CutPlan
 #: a CTA is not a fact and may appear without real capture.
 FACTUAL_KINDS = ("runtime", "source", "historical")
 
+#: Every spelling this repository has used for "a capture of something real".
+#: One list, because four gates used to carry their own: a storyboard that said
+#: ``screen_recording`` counted as evidence in one check, as nothing in another,
+#: and an honest author could lose the ratio gate for choosing a synonym.
+CAPTURE_SPELLINGS = frozenset({
+    "recording",
+    "real_source",
+    "real_document",
+    "real_screenshot",
+    "real_recording",
+    "real_capture",
+    "screen_recording",
+    "screen_capture",
+    "terminal_recording",
+    "terminal_capture",
+    "recorded",
+})
+
 #: Asset kinds that can carry real evidence. A card, a motion clip and a
 #: generated visual are support, not proof.
-REAL_EVIDENCE_KINDS = ("recording", "real_source", "real_document", "real_screenshot")
+REAL_EVIDENCE_KINDS = tuple(sorted(CAPTURE_SPELLINGS))
 
 #: Evidence modes the QC understands, in one place so the check and the report
 #: cannot disagree about what a mode means.

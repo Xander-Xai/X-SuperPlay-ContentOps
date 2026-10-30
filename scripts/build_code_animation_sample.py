@@ -168,6 +168,79 @@ def _validate_segments(segments: List[Dict[str, Any]], line_count: int) -> None:
             raise SystemExit(f"unknown segment type: {segment['type']}")
 
 
+def _require_unchanged_copy_approval(review_module: Any, project: Path,
+                                      approved_sha256: str) -> Dict[str, Any]:
+    """Recheck approved semantic inputs at the final composition boundary."""
+    current = review_module.require_approved(project)
+    if current.get("copy_sha256") != approved_sha256:
+        raise review_module.CopyReviewRequired(
+            "copy changed after approval while the build was preparing media",
+            current.get("remedy", ""))
+    return current
+
+
+def _srt_texts(path: Path) -> List[str]:
+    """Read ordered cue text without confusing timestamps with spoken copy."""
+    text = path.read_text(encoding="utf-8-sig").replace("\r\n", "\n").strip()
+    cues = []
+    for block in text.split("\n\n"):
+        rows = block.splitlines()
+        if len(rows) < 3 or "-->" not in rows[1]:
+            continue
+        cue_text = "".join(row.strip() for row in rows[2:])
+        if cue_text:
+            cues.append(cue_text)
+    if not cues:
+        raise SystemExit(f"approved copy has no readable SRT cues: {path}")
+    return cues
+
+
+def _validate_motion_copy(project: Path, voice: Dict[str, Any],
+                          segments: List[Dict[str, Any]], variant: str,
+                          presenter_contract: Optional[Dict[str, Any]]) -> None:
+    """Require motion voice and order to reproduce the copy bound by approval."""
+    script_dir = project / "script"
+    captions = sorted(script_dir.glob("*.srt"))
+    if len(captions) != 1:
+        raise SystemExit(
+            f"motion consistency gate requires exactly one approved script/*.srt; found {len(captions)}")
+    approved = _srt_texts(captions[0])
+    rows = {int(row["line"]): row for row in voice.get("lines", [])}
+    if len(rows) != len(voice.get("lines", [])):
+        raise SystemExit("motion consistency gate found duplicate voice line numbers")
+
+    spoken = []
+    for segment in segments:
+        if segment["type"] not in VOICED_TYPES:
+            continue
+        number = int(segment["line"])
+        row = voice.get("presenter") if segment["type"] == "presenter" else rows.get(number)
+        if not isinstance(row, dict) or not row.get("text"):
+            raise SystemExit(f"motion timeline line {number} has no approved voice text")
+        spoken.append((number, str(row["text"])))
+
+    expected_numbers = ([PRESENTER_LINE] if presenter_contract and
+                        presenter_contract.get("variant", "eras") == variant else [])
+    replaced = (presenter_contract or {}).get("replaces_line") if expected_numbers else None
+    if replaced is not None:
+        replaced = int(replaced)
+    expected_numbers.extend(int(row["line"]) for row in voice.get("lines", [])
+                            if int(row["line"]) != replaced)
+    actual_numbers = [number for number, _ in spoken]
+    if actual_numbers != expected_numbers:
+        raise SystemExit(
+            f"motion timeline voice order differs from approved copy: "
+            f"expected {expected_numbers}, got {actual_numbers}")
+    voice_texts = [line for _, line in spoken]
+    if expected_numbers and expected_numbers[0] == PRESENTER_LINE:
+        block = voice.get("presenter") or {}
+        declared_text = presenter_contract.get("text") if presenter_contract else None
+        if not declared_text or block.get("text") != declared_text or block.get("text") != approved[0]:
+            raise SystemExit("presenter text differs from its contract or approved script SRT")
+    if voice_texts != approved:
+        raise SystemExit("generated voice lines or timeline order differ from approved script SRT")
+
+
 def _timeline(project: Path, line_count: int,
               variant: str = "easel") -> List[Dict[str, Any]]:
     path = project / "motion" / "timeline.json"
@@ -205,6 +278,12 @@ def _storyboard_shots(segments: List[Dict[str, Any]],
         return [{"video": str(motion_video), "duration": total_s}]
     return [{"video": str(segment["path"]), "duration": float(segment["duration"])}
             for segment in segments]
+
+
+def _output_name(variant: str, requested: Optional[str]) -> str:
+    if requested is not None and requested != variant:
+        raise ValueError(f"output name {requested!r} must match variant {variant!r}")
+    return variant
 
 
 def _variant_paths(variant: str) -> Dict[str, Path]:
@@ -267,7 +346,7 @@ def _write_srt(project: Path, lines: Dict[int, Dict[str, Any]],
     for index, item in enumerate(placed, 1):
         row = lines[item["line"]]
         start = int(round(item["start_s"] * 1000))
-        end = min(start + int(round(row["duration_s"] * 1000)), start + 3900)
+        end = start + int(round(row["duration_s"] * 1000))
         rows.append(f"{index}\n{ts(start)} --> {ts(end)}\n{row['text']}\n")
     target.write_text("\n".join(rows), encoding="utf-8")
     return target
@@ -319,12 +398,16 @@ def main() -> int:
         sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser()
     parser.add_argument("project")
-    parser.add_argument("--out-name", default="easel")
+    parser.add_argument("--out-name")
     parser.add_argument("--variant", choices=("easel", "eras"), default="easel",
                         help="eras keeps the baseline clips, captions and receipts untouched")
     parser.add_argument("--motion-video", type=Path,
                         help="one huashu eras render used as the complete visual track")
     args = parser.parse_args()
+    try:
+        out_name = _output_name(args.variant, args.out_name)
+    except ValueError as exc:
+        parser.error(str(exc))
 
     project = Path(args.project)
     if not project.is_absolute():
@@ -334,7 +417,7 @@ def main() -> int:
     # The copy gate: no film is composed from copy nobody has reviewed.
     from contentops.workflow import copy_review
     try:
-        copy_review.require_approved(project)
+        approved_copy = copy_review.require_approved(project)
     except copy_review.CopyReviewRequired as exc:
         print(json.dumps({"status": "BLOCKED", "stage": "copy_review",
                           "reason": exc.reason, "remedy": exc.remedy},
@@ -358,6 +441,13 @@ def main() -> int:
         print(json.dumps({"status": "BLOCKED", "reason": "presenter opening",
                           "problems": opening_issues}, ensure_ascii=False))
         return 4
+    if (project / "motion" / "timeline.json").is_file():
+        try:
+            _validate_motion_copy(project, voice, segments, args.variant, presenter_contract)
+        except (OSError, ValueError, KeyError, SystemExit) as exc:
+            print(json.dumps({"status": "BLOCKED", "stage": "motion_copy_consistency",
+                              "reason": str(exc)}, ensure_ascii=False))
+            return 4
 
     presenter_s = sum(float(segment["duration"]) for segment in segments
                       if segment["type"] == "presenter")
@@ -421,8 +511,18 @@ def main() -> int:
         return 6
 
     style = _caption_style(config["account_slug"])
+    # Copy may be edited while synthesis/render inputs are being prepared. Refuse
+    # to cross the composition boundary unless the same approved copy is current.
+    try:
+        _require_unchanged_copy_approval(copy_review, project,
+                                         approved_copy["copy_sha256"])
+    except copy_review.CopyReviewRequired as exc:
+        print(json.dumps({"status": "BLOCKED", "stage": "copy_review",
+                          "reason": exc.reason, "remedy": exc.remedy},
+                         ensure_ascii=False))
+        return 4
     from assemble_easel import run as assemble
-    result = assemble(project, out_name=args.out_name, strict_captions=True,
+    result = assemble(project, out_name=out_name, strict_captions=True,
                       storyboard_path=storyboard_path,
                       caption_style=style["style"],
                       caption_font_size=style["font_size"],

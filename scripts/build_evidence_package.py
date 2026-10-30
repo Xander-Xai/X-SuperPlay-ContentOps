@@ -33,6 +33,8 @@ import build_evidence_cover  # noqa: E402
 import build_evidence_cut  # noqa: E402
 from contentops.media.cut_qc import qc_cut  # noqa: E402
 from contentops.media.review_bundle import write_review_bundle  # noqa: E402
+from contentops.workflow import copy_review  # noqa: E402
+from contentops.workflow import replication  # noqa: E402
 
 
 def main() -> int:
@@ -43,6 +45,8 @@ def main() -> int:
     parser.add_argument("--skip-build", action="store_true",
                         help="grade and bundle the existing render")
     parser.add_argument("--skip-cover", action="store_true")
+    parser.add_argument("--variants", action="store_true",
+                        help="also derive the other platforms' frames from this master")
     args = parser.parse_args()
 
     project = Path(args.project)
@@ -51,7 +55,12 @@ def main() -> int:
 
     summary = {"project": project.name}
     if not args.skip_build:
-        built = build_evidence_cut.build(project)
+        try:
+            built = build_evidence_cut.build(project)
+        except copy_review.CopyReviewRequired as exc:
+            print(json.dumps({"status": "BLOCKED", "stage": "copy_review",
+                              "reason": exc.reason, "remedy": exc.remedy}, ensure_ascii=False))
+            return 4
         if built.get("status") != "OK":
             print(json.dumps({"status": "BLOCKED", "stage": "build",
                               "reason": built.get("reason")}, ensure_ascii=False))
@@ -70,6 +79,14 @@ def main() -> int:
     summary["qc"] = {"overall": report["overall"],
                      "failed": [c["id"] for c in report["checks"] if not c["ok"]]}
 
+    # A project that claimed a reference must still honour the plan derived from
+    # it. Evidence projects write their storyboard to work/, not script/.
+    drift = replication.stage_gate(project, storyboard=project / "work" / "storyboard.json")
+    if drift:
+        summary["replication"] = {"status": "FAIL", "failed": drift}
+    elif (project / "script" / "replication-plan.json").is_file():
+        summary["replication"] = {"status": "PASS"}
+
     bundle = write_review_bundle(project)
     summary["review"] = {
         "status": bundle["status"],
@@ -77,8 +94,30 @@ def main() -> int:
         "fingerprint": bundle["review_bundle_fingerprint"],
         "distribution_blocked": bundle["inputs"]["distribution_blocked"],
     }
+
+    # Deriving the other platforms is opt-in, and only after this cut has its own
+    # verdict: a derivative inherits the master's verdict, so deriving a FAIL is
+    # the same failure in more shapes.
+    if args.variants:
+        if report["overall"] == "FAIL":
+            summary["variants"] = {"status": "SKIPPED",
+                                   "reason": "the master's own QC failed"}
+        else:
+            import derive_variants  # noqa: E402 - sibling script, same directory
+
+            try:
+                derived = derive_variants.derive(project)
+                summary["variants"] = {
+                    "status": "DERIVED",
+                    "variants": derived["variants"],
+                    "covers": derived["covers"],
+                }
+            except SystemExit:
+                summary["variants"] = {"status": "BLOCKED",
+                                       "reason": "derive_variants refused; see its output"}
     print(json.dumps(summary, indent=2, ensure_ascii=False))
-    return 0 if report["overall"] != "FAIL" else 3
+    failed = report["overall"] == "FAIL" or bool(drift)
+    return 3 if failed else 0
 
 
 if __name__ == "__main__":

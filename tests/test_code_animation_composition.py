@@ -21,6 +21,23 @@ SEGMENTS = [
 ]
 
 
+def test_composer_rechecks_copy_approval_before_final_assembly():
+    builder = _builder()
+    assert hasattr(builder, "_require_unchanged_copy_approval")
+    class Review:
+        class CopyReviewRequired(Exception):
+            pass
+        @staticmethod
+        def require_approved(project):
+            return {"copy_sha256": "new"}
+    try:
+        builder._require_unchanged_copy_approval(Review, Path("project"), "old")
+    except Review.CopyReviewRequired as exc:
+        assert "changed" in str(exc).lower()
+    else:
+        raise AssertionError("copy changed after approval was allowed to compose")
+
+
 def test_full_film_is_the_only_visual_shot():
     """A huashu eras render must not be re-cut into hard-joined beat clips."""
     film = Path("whole-film.mp4")
@@ -229,6 +246,228 @@ def test_variant_qc_grades_its_own_captions_and_storyboard():
         assert storyboard == project / "work" / "eras" / "storyboard.json"
 
 
+def test_qc_grades_the_storyboard_the_build_actually_rendered():
+    """An evidence film has no script/storyboard.json, only work/storyboard.json.
+
+    Grading it against the absent canonical path reported "no storyboard" for a
+    render that had eight shots, and then measured its real/generated ratio over
+    zero shots — a FAIL for the wrong reason is as misleading as a false PASS.
+    """
+    import importlib.util
+    import tempfile
+
+    qc_path = ROOT / "scripts" / "qc_video.py"
+    spec = importlib.util.spec_from_file_location("qc_video_workfallback", qc_path)
+    assert spec and spec.loader
+    qc = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(qc)
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        (project / "work").mkdir(parents=True)
+        (project / "work" / "storyboard.json").write_text("{}", encoding="utf-8")
+        _, storyboard = qc._graded_inputs(project, "easel")
+        assert storyboard == project / "work" / "storyboard.json"
+        # The canonical script/ document still wins when both exist.
+        (project / "script").mkdir(parents=True)
+        (project / "script" / "storyboard.json").write_text("{}", encoding="utf-8")
+        _, storyboard = qc._graded_inputs(project, "easel")
+        assert storyboard == project / "script" / "storyboard.json"
+
+
+def test_subtitle_sampling_lands_on_cues_not_on_gaps():
+    """Five sparse cues over 44 s cover none of the six fixed sample points.
+
+    The old scan reported "nothing burned in" for the 1024 evidence film whose
+    captions were all present; sampling the declared cue midpoints sees them.
+    """
+    import importlib.util
+    import tempfile
+
+    qc_path = ROOT / "scripts" / "qc_video.py"
+    spec = importlib.util.spec_from_file_location("qc_video_cues", qc_path)
+    assert spec and spec.loader
+    qc = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(qc)
+
+    srt_text = (
+        "1\n00:00:02,000 --> 00:00:05,878\n这次验证的修订是 4efd5930。\n\n"
+        "2\n00:00:08,000 --> 00:00:11,065\ndoctor 的七项核心检查，返回 0。\n\n"
+        "3\n00:00:34,000 --> 00:00:37,750\n边界：工具链可用，Web 还不能算交付。\n"
+    )
+    with tempfile.TemporaryDirectory() as temp:
+        srt = Path(temp) / "cut.srt"
+        srt.write_text(srt_text, encoding="utf-8")
+        moments = qc._cue_moments(srt, 44.0)
+        assert len(moments) == 3, moments
+        assert abs(moments[0] - 3.939) < 0.01, moments
+        assert abs(moments[2] - 35.875) < 0.01, moments
+        # No caption file: fall back to fixed fractions of the film.
+        fallback = qc._cue_moments(None, 44.0)
+        assert len(fallback) == 6 and abs(fallback[0] - 6.6) < 0.01, fallback
+
+
+def test_qc_measures_provenance_from_the_cut_plan_when_there_is_one():
+    """A cut plan declares which captured asset each placement shows.
+
+    The storyboard of an evidence film carries only video+duration, so grading
+    it there reported 0% real for a film that was 72.7% recordings, and the
+    capture folder probe looked in a directory no builder writes.
+    """
+    import importlib.util
+    import json
+    import tempfile
+
+    qc_path = ROOT / "scripts" / "qc_video.py"
+    spec = importlib.util.spec_from_file_location("qc_video_plan", qc_path)
+    assert spec and spec.loader
+    qc = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(qc)
+
+    def placement(pid, start, end, asset):
+        return {"placement_id": pid, "start_ms": start, "end_ms": end,
+                "asset_id": asset, "source_time_range": "00:00.000-00:04.500",
+                "crop": {"x": 0, "y": 0, "width": 1080, "height": 1920,
+                         "source_width": 1080, "source_height": 1920},
+                "reading_class": "reading", "semantic_progress": "shows it",
+                "claim_ids": [], "caption_cue_ids": [], "claim_bearing": False,
+                "context_first": False, "context_placement_id": None,
+                "transition": "cut"}
+
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        (project / "script").mkdir(parents=True)
+        (project / "script" / "assets.json").write_text(json.dumps({
+            "schema": "contentops.asset-map/v1",
+            "assets": {
+                "A-REV": {"kind": "recording", "path": "repo://cap.mp4",
+                          "sha256": "a" * 64},
+                "A-CARD": {"kind": "card", "html": "project://c.html",
+                           "png": "project://c.png"},
+                "A-BARE": {"kind": "recording"},
+            },
+        }), encoding="utf-8")
+        (project / "script" / "cut-plan.json").write_text(json.dumps({
+            "schema": "contentops.cut-plan/v1", "package_id": "p",
+            "target": {"width": 1080, "height": 1920,
+                       "duration_ms_range": [3000, 6000],
+                       "caption_safe_area": {"x": 0, "y": 1600,
+                                             "width": 1080, "height": 300}},
+            "placements": [
+                placement("P-1", 0, 4000, "A-REV"),
+                placement("P-2", 4000, 5000, "A-CARD"),
+                placement("P-3", 5000, 5500, "A-BARE"),
+            ],
+        }), encoding="utf-8")
+        shares = qc._cut_plan_shares(project)
+        # None when the project declares no plan at all.
+        (project / "script" / "cut-plan.json").unlink()
+        assert qc._cut_plan_shares(project) is None
+
+    assert shares is not None
+    # 4.5 s recording + 1 s card; the unproven recording still counts as
+    # recording time in the share, but never as presentable evidence.
+    assert abs(shares["real_ratio"] - 4.5 / 5.5) < 0.01, shares
+    assert shares["real_assets"] == ["A-REV"], shares
+    assert shares["unproven_assets"] == ["A-BARE"], shares
+
+
+def test_an_empty_caption_file_does_not_beat_one_with_cues():
+    """A zero-byte easel.srt used to win on existence and report "no captions".
+
+    The file was present, so it was chosen, and a film whose cues lived in
+    default.srt was graded as having none.
+    """
+    import importlib.util
+    import tempfile
+
+    spec = importlib.util.spec_from_file_location(
+        "qc_video_empty_srt", ROOT / "scripts" / "qc_video.py")
+    assert spec and spec.loader
+    qc = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(qc)
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        captions = project / "assets" / "captions"
+        captions.mkdir(parents=True)
+        (project / "script").mkdir(parents=True)
+        (project / "script" / "storyboard.json").write_text("{}", encoding="utf-8")
+        (captions / "easel.srt").write_text("", encoding="utf-8")
+        (captions / "default.srt").write_text(
+            "1\n00:00:00,500 --> 00:00:02,000\n有字幕。\n", encoding="utf-8")
+        srt, _ = qc._graded_inputs(project, "easel")
+        assert srt == captions / "default.srt", srt
+        # With no candidate carrying a cue, the placeholder is still named, so the
+        # report points at the file the author has to fix.
+        (captions / "default.srt").write_text("", encoding="utf-8")
+        srt, _ = qc._graded_inputs(project, "easel")
+        assert srt == captions / "easel.srt", srt
+
+
+def test_a_storyboard_without_captures_reports_the_ratio_as_unmeasured():
+    """vector_animation is in neither source set, so its share was published as 0%.
+
+    That artefact turned "this storyboard declares no capture" into "0% of this
+    film is real", and for an evidence-led account into a FAIL. It has to read
+    as unmeasured: a different statement, with a different severity.
+    """
+    import importlib.util
+    import json
+    import tempfile
+
+    from process_utils import hidden_run
+
+    spec = importlib.util.spec_from_file_location(
+        "qc_video_unmeasured", ROOT / "scripts" / "qc_video.py")
+    assert spec and spec.loader
+    qc = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(qc)
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        (project / "final").mkdir(parents=True)
+        render = project / "final" / "easel.mp4"
+        result = hidden_run([
+            "ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+            "-f", "lavfi", "-i", "testsrc=size=1080x1920:rate=15:duration=4",
+            "-f", "lavfi", "-i", "sine=frequency=440:duration=4",
+            "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p",
+            "-c:a", "aac", "-shortest", str(render),
+        ], timeout=180)
+        assert result.returncode == 0 and render.exists(), result.stderr
+        (project / "project.yaml").write_text(
+            "slug: qc\naccount_slug: x-superplay-1024\n", encoding="utf-8")
+        (project / "script").mkdir(parents=True)
+        (project / "script" / "storyboard.json").write_text(json.dumps({
+            "shots": [{"source_type": "vector_animation", "duration_s": 2.0},
+                      {"source_type": "vector_animation", "duration_s": 2.0}]}),
+            encoding="utf-8")
+        report = qc.qc(project)
+    rows = {c["id"]: c for c in report["checks"]}
+    assert rows["real_source_ratio"]["value"] is None, rows["real_source_ratio"]
+    assert rows["real_source_ratio"]["severity"] == "FAIL", rows["real_source_ratio"]
+    assert "not measured" in rows["real_source_ratio"]["note"], rows["real_source_ratio"]
+    assert rows["generated_ratio"]["value"] is None, rows["generated_ratio"]
+    assert rows["generated_ratio"]["severity"] == "FAIL", rows["generated_ratio"]
+
+
+def test_packaging_refuses_to_overwrite_a_human_decision():
+    import json
+    import tempfile
+
+    pack = __import__("package_code_animation_sample")
+    with tempfile.TemporaryDirectory() as temp:
+        receipts = Path(temp)
+        (receipts / "human-review.json").write_text(json.dumps({
+            "status": "APPROVED", "review_bundle_fingerprint": "old",
+            "scores": {"visual_quality": 90},
+        }), encoding="utf-8")
+        try:
+            pack._assert_review_is_pending(receipts, "new")
+        except SystemExit as exc:
+            assert "refusing overwrite" in str(exc).lower(), str(exc)
+        else:
+            raise AssertionError("packaging overwrote an existing human decision")
+
+
 def test_packaging_keeps_variant_receipts_out_of_the_baseline():
     import importlib.util
 
@@ -308,8 +547,70 @@ def test_the_build_reads_an_eras_only_clip_from_its_own_directory():
         assert builder._clip_path(project, "p00", "easel") == project / "work" / "clips" / "p00.mp4"
 
 
+def test_variant_cannot_overwrite_the_baseline_video():
+    builder = _builder()
+    assert builder._output_name("eras", None) == "eras"
+    try:
+        builder._output_name("eras", "easel")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("ERAS output could overwrite the baseline")
+
+
+def test_motion_qc_uses_the_rendered_storyboard_not_the_legacy_script():
+    import importlib.util
+    import tempfile
+
+    path = ROOT / "scripts" / "qc_video.py"
+    spec = importlib.util.spec_from_file_location("qc_rendered_storyboard", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        source = project / "script" / "storyboard.json"
+        rendered = project / "work" / "storyboard.json"
+        source.parent.mkdir(parents=True)
+        rendered.parent.mkdir(parents=True)
+        source.write_text('{"shots":[{"source_type":"real_screenshot"}]}', encoding="utf-8")
+        rendered.write_text('{"shots":[{"source_type":"motion"}]}', encoding="utf-8")
+        _, selected = module._graded_inputs(project, "easel", rendered)
+        assert selected == rendered
+        motion_builder = (ROOT / "scripts" / "build_motion_film.py").read_text(encoding="utf-8")
+        assert '"--storyboard", str(project / "work" / "storyboard.json")' in motion_builder
+
+
+def test_long_narration_caption_reaches_the_end_of_speech():
+    import tempfile
+
+    builder = _builder()
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        srt = builder._write_srt(
+            project,
+            {2: {"text": "这句超过四秒", "duration_s": 5.927}},
+            [{"line": 2, "start_s": 4.458, "duration_s": 5.927}],
+        ).read_text(encoding="utf-8")
+        assert "00:00:04,458 --> 00:00:10,385" in srt, srt
+
+
+def test_motion_qc_does_not_trust_a_stale_report_or_failed_child():
+    import importlib.util
+    from types import SimpleNamespace
+
+    path = ROOT / "scripts" / "build_motion_film.py"
+    spec = importlib.util.spec_from_file_location("motion_build_gate", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    assert module._qc_outcome(SimpleNamespace(returncode=1, stdout='{"overall":"PASS"}')) == "FAIL"
+    assert module._qc_outcome(SimpleNamespace(returncode=0, stdout="")) == "FAIL"
+    assert module._qc_outcome(SimpleNamespace(returncode=0, stdout="[]")) == "FAIL"
+    assert module._qc_outcome(SimpleNamespace(returncode=0, stdout='{"overall":"WARN"}')) == "WARN"
+
+
 def main() -> int:
     tests = (
+        test_composer_rechecks_copy_approval_before_final_assembly,
         test_full_film_is_the_only_visual_shot,
         test_beat_clips_remain_the_explicit_fallback,
         test_runtime_receipt_uses_the_measured_film_duration,
@@ -324,10 +625,20 @@ def main() -> int:
         test_eras_clip_override_keeps_the_baseline_clip_untouched,
         test_variant_paths_never_point_at_baseline_artifacts,
         test_variant_qc_grades_its_own_captions_and_storyboard,
+        test_qc_grades_the_storyboard_the_build_actually_rendered,
+        test_subtitle_sampling_lands_on_cues_not_on_gaps,
+        test_qc_measures_provenance_from_the_cut_plan_when_there_is_one,
+        test_an_empty_caption_file_does_not_beat_one_with_cues,
+        test_a_storyboard_without_captures_reports_the_ratio_as_unmeasured,
+        test_packaging_refuses_to_overwrite_a_human_decision,
         test_packaging_keeps_variant_receipts_out_of_the_baseline,
         test_timing_reconciliation_proves_the_film_arithmetic,
         test_reconciliation_counts_the_presenter_as_voice_not_as_a_tail,
         test_the_build_reads_an_eras_only_clip_from_its_own_directory,
+        test_variant_cannot_overwrite_the_baseline_video,
+        test_motion_qc_uses_the_rendered_storyboard_not_the_legacy_script,
+        test_long_narration_caption_reaches_the_end_of_speech,
+        test_motion_qc_does_not_trust_a_stale_report_or_failed_child,
     )
     failures = []
     for test in tests:

@@ -63,6 +63,67 @@ def _run(command: List[str], cwd: Path) -> str:
     return text
 
 
+def _assert_review_is_pending(receipts_dir: Path, fingerprint: str) -> None:
+    """Never replace a human decision with a freshly generated pending stub."""
+    human_path = receipts_dir / "human-review.json"
+    if not human_path.is_file():
+        return
+    try:
+        human = json.loads(human_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise SystemExit(f"cannot safely replace unreadable human review: {human_path}") from exc
+    if human.get("status") not in (None, "PENDING_FOUNDER_REVIEW"):
+        if human.get("review_bundle_fingerprint") != fingerprint:
+            raise SystemExit("human review is bound to another review bundle; refusing overwrite")
+        raise SystemExit("human review already exists; refusing to overwrite the decision")
+    scores = human.get("scores")
+    if isinstance(scores, dict) and any(value is not None for value in scores.values()):
+        raise SystemExit("human review contains scores; refusing to overwrite the decision")
+
+
+def _project_input(project: Path, name: str, logical_path: str) -> tuple[str, str]:
+    """Hash a declared project asset without allowing paths outside the package."""
+    relative = logical_path.removeprefix("project://")
+    path = (project / relative).resolve()
+    try:
+        canonical = path.relative_to(project.resolve()).as_posix()
+    except ValueError as exc:
+        raise SystemExit(f"{name} path escapes the project: {logical_path}") from exc
+    if not path.is_file():
+        raise SystemExit(f"{name} is missing: {logical_path}")
+    return f"project://{canonical}", _sha(path)
+
+
+def _motion_inputs(project: Path, sample: Dict[str, Any]) -> Dict[str, tuple[str, str]]:
+    """Bind the composition timeline and any declared presenter to review."""
+    timeline_path = project / "motion" / "timeline.json"
+    if not timeline_path.is_file():
+        raise SystemExit("motion review package requires motion/timeline.json")
+    inputs = {"timeline": ("project://motion/timeline.json", _sha(timeline_path))}
+
+    presenter_contract_path = project / "motion" / "presenter" / "contract.json"
+    presenter = (sample.get("voice") or {}).get("presenter") or {}
+    has_presenter = bool(sample.get("timeline", {}).get("presenter"))
+    if presenter_contract_path.is_file():
+        inputs["presenter_contract"] = (
+            "project://motion/presenter/contract.json", _sha(presenter_contract_path))
+    elif has_presenter:
+        raise SystemExit("presenter segment has no declared motion/presenter/contract.json")
+    if has_presenter:
+        for name, path_key, hash_key in (
+                ("presenter_audio", "path", "wav_sha256"),
+                ("presenter_media", "shot", "shot_sha256")):
+            logical = presenter.get(path_key)
+            expected_sha = presenter.get(hash_key)
+            if not logical or not expected_sha:
+                raise SystemExit(f"presenter record has no {name} path or recorded hash")
+            bound_path, actual_sha = _project_input(project, name, logical)
+            if actual_sha != expected_sha:
+                raise SystemExit(f"presenter {name} differs from voice-lines.json hash")
+            inputs[name] = (bound_path, actual_sha)
+    return inputs
+
+
 def _variant_io(variant: str) -> Dict[str, Path]:
     """Variant outputs stay in their own namespace; the baseline keeps its files."""
     if variant == "eras":
@@ -157,6 +218,14 @@ def main() -> int:
         "voice": ("project://receipts/voice-lines.json", _sha(project / "receipts" / "voice-lines.json")),
         "captions": (sample["captions"]["path"], sample["captions"]["sha256"]),
     }
+    inputs.update(_motion_inputs(project, sample))
+
+    # Bind the review package to the exact copy approval authorising its build.
+    from contentops.workflow.copy_review import require_approved
+    approval = require_approved(project)
+    inputs["copy_review"] = (
+        "project://receipts/script-review.json",
+        _sha(project / "receipts" / "script-review.json"))
     if sample.get("visual_track", {}).get("mode") == "full_film_eras":
         film = project / sample["visual_track"]["path"].replace("project://", "")
         inputs["eras_film"] = (sample["visual_track"]["path"], _sha(film))
@@ -185,6 +254,7 @@ def main() -> int:
     }
     receipts_dir = project / io["receipts"]
     receipts_dir.mkdir(parents=True, exist_ok=True)
+    _assert_review_is_pending(receipts_dir, fingerprint)
     (receipts_dir / "review-bundle.json").write_text(
         json.dumps(bundle, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 

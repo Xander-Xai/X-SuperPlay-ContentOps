@@ -32,6 +32,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -142,6 +143,55 @@ def _film_track(clips: list[tuple[Path, float]], out: Path) -> Path:
     return out
 
 
+def _compose_outcome(output: str) -> tuple[bool, dict | None]:
+    # The composer emits a complete JSON object after any diagnostic lines.
+    # Decode from line boundaries rather than interpreting nested objects as
+    # independent results; the final envelope must have no trailing output.
+    decoder = json.JSONDecoder()
+    for index, char in enumerate(output):
+        if char != "{" or (index and output[index - 1] != "\n"):
+            continue
+        try:
+            result, end = decoder.raw_decode(output, index)
+        except ValueError:
+            continue
+        if isinstance(result, dict) and not output[end:].strip():
+            return result.get("status") == "OK", result
+    return False, None
+
+
+def _compose_output_matches(project: Path, result: dict) -> bool:
+    output = result.get("output")
+    if not isinstance(output, dict):
+        return False
+    ref, expected = output.get("path"), output.get("sha256")
+    if not isinstance(ref, str) or not ref.startswith("project://") or not isinstance(expected, str):
+        return False
+    path = (project / ref[len("project://"):]).resolve()
+    if not path.is_relative_to(project.resolve()) or not path.is_file():
+        return False
+    digest = hashlib.sha256()
+    try:
+        with path.open("rb") as stream:
+            for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                digest.update(chunk)
+    except OSError:
+        return False
+    return digest.hexdigest() == expected
+
+
+def _qc_outcome(proc) -> str:
+    if proc.returncode != 0:
+        return "FAIL"
+    try:
+        report = json.loads((proc.stdout or "").strip())
+    except (ValueError, TypeError):
+        return "FAIL"
+    if not isinstance(report, dict):
+        return "FAIL"
+    return report.get("overall") if report.get("overall") in {"PASS", "WARN"} else "FAIL"
+
+
 def build(project: Path, *, speed: float, engine: Path, pad: float,
           skip_render: bool = False) -> dict:
     import split_narration_lines as splitter
@@ -221,9 +271,12 @@ def build(project: Path, *, speed: float, engine: Path, pad: float,
         data["duration"] = duration
         spec.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         out = clips / f"p{row['line']:02d}.mp4"
-        if skip_render and _ffprobe_duration(out) >= duration:
-            _log("render", f"{spec.stem} reused")
-            continue
+        # The external renderer's transitive dependencies are not declared by
+        # this project, so matching the spec and entrypoint cannot prove a hit.
+        # Render again even when --skip-render was requested rather than reusing
+        # an output whose inputs cannot be verified.
+        if skip_render:
+            _log("render", f"{spec.stem}: cache unverified; rendering again")
         _log("render", f"{spec.stem} ({duration}s)")
         proc = hidden_run([python_executable(), str(engine), "--spec", str(spec), "--out", str(out)],
                           timeout=1800, env=dict(os.environ, PYTHONUTF8="1", PYTHONIOENCODING="utf-8"))
@@ -239,15 +292,14 @@ def build(project: Path, *, speed: float, engine: Path, pad: float,
             # The composer probes work/clips/<clip>.mp4 for every segment even when
             # a full-film render is supplied, so the opening is staged there too.
             staged = clips / f"{segment['clip']}.mp4"
-            if _ffprobe_duration(staged) < segment["duration"]:
-                proc = hidden_run(["ffmpeg", "-y", "-i", str(shot),
-                                   "-t", f"{segment['duration']:.3f}",
-                                   "-vf", "scale=1080:1920:force_original_aspect_ratio=decrease,"
-                                          "pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black,setsar=1,fps=30",
-                                   "-c:v", "libx264", "-preset", "veryfast", "-crf", "16",
-                                   "-pix_fmt", "yuv420p", str(staged)], timeout=600)
-                if proc.returncode != 0 or not staged.is_file():
-                    raise SystemExit(f"presenter staging failed: {(proc.stderr or '')[-400:]}")
+            proc = hidden_run(["ffmpeg", "-y", "-i", str(shot),
+                               "-t", f"{segment['duration']:.3f}",
+                               "-vf", "scale=1080:1920:force_original_aspect_ratio=decrease,"
+                                      "pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black,setsar=1,fps=30",
+                               "-c:v", "libx264", "-preset", "veryfast", "-crf", "16",
+                               "-pix_fmt", "yuv420p", str(staged)], timeout=600)
+            if proc.returncode != 0 or not staged.is_file():
+                raise SystemExit(f"presenter staging failed: {(proc.stderr or '')[-400:]}")
             source = staged
         else:
             source = clips / f"{segment['clip']}.mp4"
@@ -273,27 +325,19 @@ def build(project: Path, *, speed: float, engine: Path, pad: float,
     compose_out = (proc.stdout or "").strip()
     if proc.returncode != 0:
         raise SystemExit(f"compose failed:\n{compose_out[-800:]}\n{(proc.stderr or '')[-800:]}")
-    # The composer prints its envelope last, but ffmpeg notices reach stdout too,
-    # so scan from the end for the first line that parses instead of assuming the
-    # final line is the JSON.
-    compose_result = None
-    for line in reversed(compose_out.splitlines()):
-        try:
-            compose_result = json.loads(line)
-            break
-        except ValueError:
-            continue
+    compose_ok, compose_result = _compose_outcome(compose_out)
     receipt["stages"]["compose"] = {"returncode": proc.returncode,
                                     "result": compose_result}
+    if not compose_ok or not _compose_output_matches(project, compose_result):
+        raise SystemExit(f"compose returned no verified successful output:\n{compose_out[-800:]}\n"
+                         f"{(proc.stderr or '')[-800:]}")
 
     _log("qc", "qc_video")
-    proc = hidden_run([python_executable(), str(ROOT / "scripts" / "qc_video.py"), str(project)],
+    proc = hidden_run([python_executable(), str(ROOT / "scripts" / "qc_video.py"),
+                       str(project), "--storyboard", str(project / "work" / "storyboard.json")],
                       timeout=1800, cwd=str(ROOT))
-    receipt["stages"]["qc"] = {"returncode": proc.returncode}
-    verdict = "-"
-    report = project / "receipts" / "qc-report-easel.json"
-    if report.is_file():
-        verdict = json.loads(report.read_text(encoding="utf-8")).get("overall", "-")
+    verdict = _qc_outcome(proc)
+    receipt["stages"]["qc"] = {"returncode": proc.returncode, "overall": verdict}
     receipt["overall"] = verdict
 
     out = project / "receipts" / "motion-build.json"
@@ -312,7 +356,7 @@ def main() -> int:
     parser.add_argument("--pad", type=float, default=PAD_S,
                         help="extra seconds rendered per clip so trim always has headroom")
     parser.add_argument("--skip-render", action="store_true",
-                        help="reuse rendered clips that already cover their beat")
+                        help="legacy option: renders again until cache provenance is verifiable")
     args = parser.parse_args()
 
     project = Path(args.project)
@@ -325,9 +369,10 @@ def main() -> int:
 
     receipt = build(project, speed=args.speed, engine=engine, pad=args.pad,
                     skip_render=args.skip_render)
-    print(json.dumps({"status": "OK", "overall": receipt.get("overall"),
+    print(json.dumps({"status": "BLOCKED" if receipt.get("overall") == "FAIL" else "OK",
+                      "overall": receipt.get("overall"),
                       "receipt": "receipts/motion-build.json"}, ensure_ascii=False))
-    return 0
+    return 1 if receipt.get("overall") == "FAIL" else 0
 
 
 if __name__ == "__main__":

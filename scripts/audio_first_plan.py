@@ -121,7 +121,42 @@ def _account_policy(config: Dict[str, str], lines: Dict[str, Any]) -> Dict[str, 
     if problems:
         _fail("COMPOSITION_OUT_OF_POLICY", f"{slug}: " + "; ".join(problems))
     return {"evidence_mode": mode, "manual_recording": recording,
-            "composition": composition}
+            "composition": composition,
+            # The account also owns how long an episode runs. It is returned so the
+            # plan can say whether the narration it just measured lands inside the
+            # contract, rather than silently redefining the contract as its own
+            # measured length.
+            "duration_s": (dna.get("narrative") or {}).get("target_duration_s")}
+
+
+def _duration_contract(span: Any, measured_s: float) -> tuple[Any, List[str]]:
+    """Grade the measured narration against the account's own length window.
+
+    The planner sizes ``target.duration_ms_range`` from the narration it has just
+    synthesised, so the cut's declared window was whatever it happened to be and its
+    own duration check could not fail -- a 25-second Future Intelligence prototype
+    passed while the account asks for 90--120 s. The account window is the contract.
+    A plan outside it is still written, because a prototype is allowed to exist, but
+    it is marked non-conforming here and fails ``account_duration`` at QC.
+    """
+    if not span:
+        return None, []
+    low_s, high_s = float(span[0]), float(span[1])
+    inside = low_s - 0.5 <= measured_s <= high_s + 0.5
+    contract = {
+        "schema": "contentops.duration-contract/v1",
+        "account_range_s": [low_s, high_s],
+        "measured_s": round(measured_s, 3),
+        "status": "WITHIN_ACCOUNT_WINDOW" if inside else "OUTSIDE_ACCOUNT_WINDOW",
+        "conforming": inside,
+    }
+    warnings = [] if inside else [
+        f"measured {measured_s:.1f}s is outside the account window "
+        f"{low_s:.0f}-{high_s:.0f}s: this plan cannot pass account_duration at QC. "
+        "Add narration or treat the cut as a prototype, not an account-conforming "
+        "episode."
+    ]
+    return contract, warnings
 
 
 def _crop(crop: Dict[str, int], assets: Dict[str, Any], asset_id: str,
@@ -210,6 +245,14 @@ def main() -> int:
     if not project.is_absolute():
         project = ROOT / project
     project = project.resolve()
+
+    from contentops.workflow import copy_review
+    try:
+        copy_review.require_approved(project)
+    except copy_review.CopyReviewRequired as exc:
+        print(json.dumps({"status": "BLOCKED", "stage": "copy_review",
+                          "reason": exc.reason, "remedy": exc.remedy}, ensure_ascii=False))
+        return 4
 
     config = _yaml(project / "project.yaml")
     lines = json.loads((project / "script" / "lines.json").read_text(encoding="utf-8"))
@@ -303,6 +346,8 @@ def main() -> int:
     (project / "script" / "cut-plan.json").write_text(
         json.dumps(plan, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
+    total_s = cursor / 1000.0
+    contract, warnings = _duration_contract(policy.get("duration_s"), total_s)
     receipt = {
         "schema": PLAN_SCHEMA,
         "built_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -315,7 +360,9 @@ def main() -> int:
                   "min_reading_hold_ms": MIN_READING_MS,
                   "tail_ms": TAIL_MS},
         "beats": beats,
-        "total_s": cursor / 1000.0,
+        "total_s": total_s,
+        "duration_contract": contract,
+        "warnings": warnings,
         "production_ready": False,
         "human_review": "PENDING_FOUNDER_REVIEW",
     }
@@ -335,7 +382,9 @@ def main() -> int:
     yaml_path.write_text("\n".join(lines_out) + "\n", encoding="utf-8")
 
     print(json.dumps({"status": "OK", "total_s": receipt["total_s"],
-                      "beats": len(beats)}, ensure_ascii=False, indent=2))
+                      "beats": len(beats),
+                      "duration_contract": contract,
+                      "warnings": warnings}, ensure_ascii=False, indent=2))
     return 0
 
 

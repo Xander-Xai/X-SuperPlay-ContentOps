@@ -348,7 +348,10 @@ def _caption_style(config: Dict[str, str], target: Tuple[int, int]) -> Tuple[Dic
 
 
 def build(project: Path, tts_only: bool = False) -> Dict[str, Any]:
+    from contentops.workflow import copy_review
+
     project = project.resolve()
+    copy_review.require_approved(project)
     config = parse_project_yaml(project / "project.yaml")
     claim_map = ClaimMap.from_dict(json.loads(
         (project / "script" / "claim-map.json").read_text(encoding="utf-8")))
@@ -542,10 +545,17 @@ def main() -> int:
     project = Path(args.project)
     if not project.is_absolute():
         project = ROOT / project
+    from contentops.workflow import copy_review
+
     try:
         result = build(project, tts_only=args.tts_only)
     except (BuildFailed, ContractError) as exc:
         print(json.dumps({"status": "BLOCKED", "reason": str(exc)},
+                         indent=2, ensure_ascii=False))
+        return 4
+    except copy_review.CopyReviewRequired as exc:
+        print(json.dumps({"status": "BLOCKED", "stage": "copy_review",
+                          "reason": exc.reason, "remedy": exc.remedy},
                          indent=2, ensure_ascii=False))
         return 4
     print(json.dumps(result, indent=2, ensure_ascii=False))

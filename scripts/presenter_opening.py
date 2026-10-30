@@ -164,8 +164,7 @@ def apply_verdict(voice: Dict[str, Any], verdict: Dict[str, Any],
         "detail": verdict.get("detail"),
     }
     before = (block.get("speech_text_verified"), block.get("speech_check"))
-    if passed:
-        block["speech_text_verified"] = True
+    block["speech_text_verified"] = passed
     block["speech_check"] = check
     return (block.get("speech_text_verified"), block.get("speech_check")) != before
 

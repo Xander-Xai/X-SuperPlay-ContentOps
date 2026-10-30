@@ -172,6 +172,15 @@ def test_a_skipped_or_failing_check_never_verifies_the_line():
         assert voice["presenter"]["speech_check"]["status"] == status, status
 
 
+def test_a_nonpassing_verdict_revokes_a_previous_verification():
+    voice = _voice(True)
+    verdict = {"status": "DETECTED_PROBLEM", "coverage": 0.4, "transcript": "别的话"}
+
+    assert opening.apply_verdict(voice, verdict, verified_on="2026-10-29") is True
+    assert voice["presenter"]["speech_text_verified"] is False
+    assert voice["presenter"]["speech_check"]["status"] == "DETECTED_PROBLEM"
+
+
 def test_a_repeat_verdict_with_the_same_result_is_not_a_change():
     voice = _voice(False)
     verdict = {"status": "NO_PROBLEM_DETECTED", "coverage": 1.0, "transcript": TEXT}
@@ -246,6 +255,7 @@ def main() -> int:
         test_a_matching_declaration_is_ready,
         test_a_passing_transcript_flips_the_flag_and_keeps_the_evidence,
         test_a_skipped_or_failing_check_never_verifies_the_line,
+        test_a_nonpassing_verdict_revokes_a_previous_verification,
         test_a_repeat_verdict_with_the_same_result_is_not_a_change,
         test_the_check_cli_reports_blocked_then_ready,
         test_writing_a_verdict_does_not_reformat_the_receipt,

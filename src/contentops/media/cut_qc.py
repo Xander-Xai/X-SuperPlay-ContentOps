@@ -16,12 +16,14 @@ review recorded in the review bundle.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from contentops.evidence._common import ContractError
 from contentops.evidence.claim_map import ClaimMap
-from contentops.media.claim_coverage import evidence_mode_policy, validate_claim_coverage
+from contentops.media.claim_coverage import (REAL_EVIDENCE_KINDS, evidence_mode_policy,
+                                             validate_claim_coverage)
 from contentops.media.cut_plan import DEFAULT_MAX_VISUAL_HOLD_MS, CutPlan
 from contentops.media.media_paths import resolve_media_path
 from contentops.media.transport import ffprobe_json
@@ -33,21 +35,96 @@ MAX_GENERATED_RATIO = 0.10
 #: contract; this is how far a role may drift before the cut is refused.
 COMPOSITION_TOLERANCE_PCT = 8.0
 
+REPO_ROOT = Path(__file__).resolve().parents[3]
+
+#: Asset ``kind`` values and DNA composition role names are two vocabularies for
+#: the same picture duty. Comparing them without a translation is why the same
+#: film measured 73/27 in one gate and 0/0 in the other.
+ROLE_ALIASES = {
+    "recording": "screen_recording_evidence",
+    "card": "comparison_card",
+    "generated": "vector_animation",
+    "generated_image": "vector_animation",
+    "generated_video": "vector_animation",
+}
+
+#: Roles that promise a real capture. Each must sit on an asset whose ``kind`` is
+#: in :data:`REAL_EVIDENCE_KINDS`; otherwise the role is a free label.
+EVIDENCE_ROLES = frozenset({
+    "screen_recording_evidence", "real_recording", "real_screenshot", "real_document",
+})
+
+#: Recording permissions form an ordering; evidence modes do not. CLAIM_LED
+#: requires per-claim coverage while EVIDENCE_LED requires a whole-film floor,
+#: so neither can replace the other without discarding a different protection.
+STRICTNESS = {
+    "manual_recording": {"ALLOWED": 0, "ALLOWED_CROPPED": 1, "FORBIDDEN": 2},
+}
+
+
+def _looser(declared: Any, owned: Any, field: str) -> bool:
+    """Refuse replacing an incomparable evidence mode or relaxing a policy."""
+    if declared == owned:
+        return False
+    if field == "evidence_mode":
+        return True
+    order = STRICTNESS[field]
+    if declared in order and owned in order:
+        return bool(order[declared] < order[owned])
+    return True
+
+
+def account_dna_for(project: Path) -> Optional[Dict[str, Any]]:
+    """The account DNA the episode belongs to, or None when it names none.
+
+    ``project.yaml`` carries a handful of scalar keys, so this reads the one line
+    it needs rather than taking on a YAML dependency. An unreadable or
+    unannounced account returns None, which means "no pinning" — not "pinned to
+    the episode's own word for it".
+    """
+    path = Path(project) / "project.yaml"
+    if not path.is_file():
+        return None
+    slug = ""
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        if line.strip().startswith("account_slug:"):
+            slug = line.split(":", 1)[1].strip().strip("'\"")
+            break
+    if not slug:
+        return None
+    dna_path = REPO_ROOT / "config" / "accounts" / f"{slug}.json"
+    if not dna_path.is_file():
+        return None
+    try:
+        document = json.loads(dna_path.read_text(encoding="utf-8"))
+    except ValueError:
+        return None
+    return document if isinstance(document, dict) else None
+
+
+def _views(placement) -> List[Tuple[str, int, int]]:
+    """Every (asset, start, end) that actually reaches the screen.
+
+    A placement may switch asset inside itself, so its own asset is only the
+    default. Counting by placement credited a generated view to the recording it
+    replaced, which is the one direction this gate must never be wrong in.
+    """
+    shots = getattr(placement, "shots", None) or []
+    if shots:
+        return [(shot.asset_id or placement.asset_id, shot.start_ms, shot.end_ms)
+                for shot in shots]
+    return [(placement.asset_id, placement.start_ms, placement.end_ms)]
+
 
 def _role_seconds(cut_plan: CutPlan,
                   assets: Dict[str, Dict[str, Any]]) -> Dict[str, float]:
     """Duration per asset role, counting shots rather than placements."""
     totals: Dict[str, float] = {}
     for placement in cut_plan.placements:
-        views = ([(shot.asset_id or placement.asset_id,
-                   shot.end_ms - shot.start_ms) for shot in placement.shots]
-                 if placement.shots
-                 else [(placement.asset_id,
-                        placement.end_ms - placement.start_ms)])
-        for asset_id, duration_ms in views:
+        for asset_id, start_ms, end_ms in _views(placement):
             role = assets.get(asset_id, {}).get("role") or assets.get(
                 asset_id, {}).get("kind", "unknown")
-            totals[role] = totals.get(role, 0.0) + duration_ms / 1000.0
+            totals[role] = totals.get(role, 0.0) + (end_ms - start_ms) / 1000.0
     return totals
 
 
@@ -76,19 +153,20 @@ def source_shares(cut_plan: CutPlan,
     generated: List[Tuple[int, int]] = []
     card: List[Tuple[int, int]] = []
     for placement in cut_plan.placements:
-        asset = assets.get(placement.asset_id)
-        if asset is None:
-            raise ContractError("UNKNOWN_ASSET",
-                                f"{placement.placement_id} cites {placement.asset_id}")
-        interval = (placement.start_ms, placement.end_ms)
-        kind = asset.get("kind")
-        if kind == "recording" and asset.get("source_type", "real_recording") in (
-                "real_recording", "real_screenshot", "real_document"):
-            real.append(interval)
-        elif kind in ("generated_image", "generated_video", "generated"):
-            generated.append(interval)
-        else:
-            card.append(interval)
+        for asset_id, start_ms, end_ms in _views(placement):
+            asset = assets.get(asset_id)
+            if asset is None:
+                raise ContractError("UNKNOWN_ASSET",
+                                    f"{placement.placement_id} cites {asset_id}")
+            interval = (start_ms, end_ms)
+            kind = asset.get("kind")
+            if kind == "recording" and asset.get("source_type", "real_recording") in (
+                    "real_recording", "real_screenshot", "real_document"):
+                real.append(interval)
+            elif kind in ("generated_image", "generated_video", "generated"):
+                generated.append(interval)
+            else:
+                card.append(interval)
     end_ms = max((p.end_ms for p in cut_plan.placements), default=0)
     total = max(end_ms, 1) / 1000.0
     return {
@@ -119,6 +197,35 @@ def qc_cut(project: Path, video: Optional[Path] = None) -> Dict[str, Any]:
     if not video.is_file():
         return _emit(project, checks, target)
 
+    # The account owns the evidence mode and the recording policy. An episode may
+    # repeat or strengthen them, never weaken them: an episode that could write
+    # evidence_mode=EXPLANATORY switched off the very ratio gate it was about to
+    # fail, and one that wrote manual_recording=ALLOWED cancelled the ban its
+    # account declares. So the account is the floor, and every gate below uses the
+    # stricter of the two declarations.
+    dna = account_dna_for(project)
+    owned = (dna or {}).get("evidence") or {}
+    conflicts: List[str] = []
+    for field, key in (("evidence_mode", "mode"), ("manual_recording", "manual_recording")):
+        value = owned.get(key)
+        if not value:
+            continue
+        declared = target.get(field)
+        if declared is not None:
+            if _looser(declared, value, field):
+                conflicts.append(f"target.{field}={declared!r} licenses more than the "
+                                 f"account's {value!r}")
+            elif _looser(value, declared, field):
+                # The episode is stricter than its account. Its own rule governs;
+                # the account's value is a floor, not a ceiling on strictness.
+                continue
+        target = {**target, field: value}
+    if dna is not None:
+        checks.append(_check(
+            "account_policy", not conflicts, "FAIL",
+            "; ".join(conflicts)
+            or f"{owned.get('mode')} / {owned.get('manual_recording')} from {dna.get('slug')}"))
+
     meta = ffprobe_json(video)
     streams = meta.get("streams") or []
     visual = next((s for s in streams if s.get("codec_type") == "video"), {})
@@ -134,6 +241,20 @@ def qc_cut(project: Path, video: Optional[Path] = None) -> Dict[str, Any]:
     low, high = target["duration_ms_range"]
     checks.append(_check("duration", low / 1000.0 - 0.5 <= duration <= high / 1000.0 + 0.5,
                          "FAIL", f"{duration:.2f}s expected {low/1000:.0f}-{high/1000:.0f}s"))
+    # The account owns how long an episode runs, and nothing used to check it. The
+    # audio-first planner sizes its target window from the narration it has just
+    # measured, so a 25-second cut declared 24.5--25.5 s, matched itself, and passed
+    # while missing a 90--120 s account contract outright. A window an episode sets
+    # from its own output is not a contract, so the account's window is graded
+    # separately and the episode's own declaration cannot satisfy it.
+    account_span = ((dna or {}).get("narrative") or {}).get("target_duration_s")
+    if account_span:
+        span_low, span_high = float(account_span[0]), float(account_span[1])
+        checks.append(_check(
+            "account_duration",
+            span_low - 0.5 <= duration <= span_high + 0.5,
+            "FAIL",
+            f"{duration:.2f}s vs {dna.get('slug')} {span_low:.0f}-{span_high:.0f}s"))
     checks.append(_check("video_codec", visual.get("codec_name") in ("h264", "libx264"),
                          "FAIL", visual.get("codec_name") or "none"))
     checks.append(_check("audio_present", bool(audio), "FAIL",
@@ -189,9 +310,26 @@ def qc_cut(project: Path, video: Optional[Path] = None) -> Dict[str, Any]:
     else:
         checks.append(_check("real_source_ratio", True, "INFO",
                              "not applicable: explanatory account, no recording asset by policy"))
-    checks.append(_check("generated_ratio", shares["generated_ratio"] < MAX_GENERATED_RATIO,
-                         "FAIL", f"{shares['generated_ratio']:.1%} "
-                                 f"(max {MAX_GENERATED_RATIO:.0%})"))
+    # The ceiling on generated time comes from the account's own composition: the
+    # share it does not spend on captures is the share abstraction may fill. A
+    # flat 10 % contradicted 1024's declared 25 % vector budget — the alias table
+    # maps generated media into that budget, so the two gates refused a cut that
+    # met its DNA. Without a DNA the flat floor still applies.
+    segments = ((dna or {}).get("visual") or {}).get("composition") or {}
+    segments = segments.get("segments") or []
+    evidence_pct = sum(float(segment.get("pct") or 0) for segment in segments
+                       if str(segment.get("role")) in EVIDENCE_ROLES)
+    max_generated = (max(MAX_GENERATED_RATIO, (100.0 - evidence_pct) / 100.0)
+                     if segments else MAX_GENERATED_RATIO)
+    if policy["require_claim_coverage"]:
+        cap_severity = "WARN"
+    elif policy["ratio_severity"] == "INFO":
+        cap_severity = "INFO"
+    else:
+        cap_severity = "FAIL"
+    checks.append(_check("generated_ratio", shares["generated_ratio"] <= max_generated,
+                         cap_severity, f"{shares['generated_ratio']:.1%} "
+                                       f"(max {max_generated:.0%})"))
 
     if policy["require_claim_coverage"]:
         coverage = validate_claim_coverage(cut_plan, claim_map, assets)
@@ -230,6 +368,59 @@ def qc_cut(project: Path, video: Optional[Path] = None) -> Dict[str, Any]:
                              f"{summary}; outside ±{COMPOSITION_TOLERANCE_PCT:.0f}pp: "
                              f"{', '.join(drift)}" if drift
                              else f"{summary} within ±{COMPOSITION_TOLERANCE_PCT:.0f}pp"))
+
+    # A role is a label the asset map writes about itself. If an evidence role
+    # may sit on a generated asset, the composition gate counts screen recording
+    # that was never shot, and the account's evidence budget is spent on nothing.
+    mislabeled = [
+        f"{aid}: role {entry.get('role')!r} on kind {entry.get('kind')!r}"
+        for aid, entry in assets.items()
+        if str(entry.get("role") or "") in EVIDENCE_ROLES
+        and entry.get("kind") not in REAL_EVIDENCE_KINDS
+    ]
+    checks.append(_check("role_matches_source", not mislabeled, "FAIL",
+                         "; ".join(mislabeled) if mislabeled
+                         else "every evidence role points at a real capture"))
+
+    # The declared composition is measured against the episode's own word. With a
+    # DNA resolved there is a second, stronger question: does the cut spend the
+    # account's picture budget? Deleting target.composition used to skip the
+    # ratio gate altogether, which left the account's own composition unmeasured.
+    if dna is not None:
+        segments = ((dna.get("visual") or {}).get("composition") or {}).get("segments") or []
+        actual = _role_seconds(cut_plan, assets)
+        total = sum(actual.values()) or 1.0
+        aliased: Dict[str, float] = {}
+        for role, seconds in actual.items():
+            name = ROLE_ALIASES.get(role, role)
+            aliased[name] = aliased.get(name, 0.0) + seconds
+        wanted_roles = {str(s.get("role")) for s in segments}
+        drift = []
+        for segment in segments:
+            role = str(segment.get("role"))
+            try:
+                wanted = float(segment.get("pct"))
+            except (TypeError, ValueError):
+                continue
+            got = aliased.get(role, 0.0) / total * 100.0
+            if abs(got - wanted) > COMPOSITION_TOLERANCE_PCT:
+                drift.append(f"{role} {got:.0f}% vs {wanted:.0f}%")
+        residual = sum(sec for role, sec in aliased.items() if role not in wanted_roles)
+        for role, seconds in sorted(aliased.items()):
+            if segments and role not in wanted_roles:
+                share = seconds / total * 100.0
+                # The DNA names the surfaces it pays for. A small surface it never
+                # mentioned — a transition, a title card — is not a violation
+                # until the unlisted share as a whole eats more than the tolerance
+                # the declared budgets already allow.
+                if residual / total * 100.0 > COMPOSITION_TOLERANCE_PCT:
+                    drift.append(f"{role} {share:.0f}% has no DNA budget")
+        summary = ", ".join(f"{role} {seconds / total:.0%}"
+                            for role, seconds in sorted(aliased.items()))
+        checks.append(_check(
+            "account_composition", bool(segments) and not drift, "FAIL",
+            f"{summary}; outside ±{COMPOSITION_TOLERANCE_PCT:.0f}pp: {', '.join(drift)}"
+            if drift else (summary or "no screen time measured")))
     checks.append(_check("claim_bindings",
                          all(cid in {c.claim_id for c in claim_map.claims}
                              for cid in cut_plan.claim_ids()),

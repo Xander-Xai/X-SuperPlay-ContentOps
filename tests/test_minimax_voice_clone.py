@@ -35,6 +35,7 @@ from __future__ import annotations
 import json
 import math
 import os
+import shutil
 import struct
 import sys
 import tempfile
@@ -90,6 +91,31 @@ def synthetic_wav(path: Path, seconds: float = 15.0, rate: int = 16000) -> Path:
         )
         handle.writeframes(data)
     return path
+
+
+def _make_fixture_repository() -> Optional[Path]:
+    """A disposable Git repository under the governed agent-temp root.
+
+    ``_is_tracked`` asks Git about the repository that contains the sample path, so a
+    sample placed inside its own repository exercises the real index lookup without
+    touching this checkout. Returns ``None`` when Git cannot initialise the fixture.
+    """
+    governed_root = (
+        Path(r"D:\Temp\AI-Agents")
+        if os.name == "nt"
+        else Path(tempfile.gettempdir()) / "AI-Agents"
+    )
+    temp_root = governed_root / "claude-code"
+    try:
+        temp_root.mkdir(parents=True, exist_ok=True)
+        fixture = Path(tempfile.mkdtemp(prefix="2026-10-30-voice-clone-tracked-", dir=temp_root))
+    except OSError:
+        return None
+    initialized = hidden_run(["git", "init", "-q"], cwd=str(fixture), timeout=60)
+    if initialized.returncode != 0:
+        shutil.rmtree(fixture, ignore_errors=True)
+        return None
+    return fixture
 
 
 def subscription_binding() -> CredentialBinding:
@@ -311,21 +337,28 @@ def test_the_receipt_refuses_to_serialise_a_credential_or_bare_alias():
 def test_a_tracked_sample_is_refused_as_a_privacy_violation():
     """Uploading a committed raw voice would mean the breach already happened.
 
-    The check is done against the real Git index on a real (synthetic) file, because a
+    The check is done against a real Git index on a real (synthetic) file, because a
     stub for "is tracked" would not prove the index is actually consulted.
+
+    The index belongs to a disposable fixture repository created for this test. Staging
+    into this checkout's own index made the test mutate the repository it lives in: a
+    crash between ``git add`` and ``git rm --cached`` would leave the project's index
+    disagreeing with its HEAD, and a test must never be able to do that.
     """
-    rel = "projects/easel-enhanced-golden/receipts/.clone-test-tracked.wav"
-    tracked = ROOT / rel
+    fixture = _make_fixture_repository()
+    if fixture is None:
+        _skip(6, "tracked sample refused", "an initialisable git repository")
+        return
     transport = FakeTransport()
     provider = make_provider(transport)
     try:
+        tracked = fixture / "sample.wav"
         synthetic_wav(tracked, seconds=11.0)
         add = hidden_run(
-            ["git", "add", "-f", "--", rel], cwd=str(ROOT), timeout=120
+            ["git", "add", "-f", "--", "sample.wav"], cwd=str(fixture), timeout=120
         )
         if add.returncode != 0:
-            _skip(6, "tracked sample refused",
-                  "a writable git index")
+            _skip(6, "tracked sample refused", "a writable git index")
             return
         try:
             provider.validate_sample(tracked, duration_s=11.0)
@@ -336,10 +369,7 @@ def test_a_tracked_sample_is_refused_as_a_privacy_violation():
         assert provider.upload_count == 0
         print("[ok] 6. a Git-tracked sample is refused with no upload attempted")
     finally:
-        hidden_run(["git", "rm", "--cached", "-q", "--force", "--", rel],
-                   cwd=str(ROOT), timeout=120)
-        if tracked.exists():
-            tracked.unlink()
+        shutil.rmtree(fixture, ignore_errors=True)
 
 
 @test

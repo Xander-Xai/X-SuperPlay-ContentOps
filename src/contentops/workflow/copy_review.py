@@ -34,8 +34,11 @@ STATUSES = ("APPROVED", "CHANGES_REQUESTED")
 
 #: Storyboard fields that carry meaning. Everything else is build metadata the
 #: pipeline rewrites, and including it would invalidate a review on every build.
+#: ``function`` and ``dna_role`` are here because the replication and composition
+#: gates read them: without them, a shot could be relabelled from a recording to
+#: an abstraction after approval and no review would be stale.
 COPY_FIELDS = ("unit", "narration", "image", "source_type", "duration",
-               "designed_card", "placement")
+               "designed_card", "placement", "function", "dna_role")
 
 
 class CopyReviewRequired(Exception):
@@ -63,6 +66,10 @@ def copy_fingerprint(project: Path) -> str:
     parts.append(b"master\0" + (master.read_bytes() if master.is_file() else b""))
     for caption in sorted(script.glob("*.srt")):
         parts.append(b"srt\0" + caption.name.encode("utf-8") + b"\0" + caption.read_bytes())
+    for name in ("lines.json", "claim-map.json"):
+        source = script / name
+        if source.is_file():
+            parts.append(name.encode("utf-8") + b"\0" + source.read_bytes())
     board = script / "storyboard.json"
     shots: List[Dict[str, Any]] = []
     if board.is_file():

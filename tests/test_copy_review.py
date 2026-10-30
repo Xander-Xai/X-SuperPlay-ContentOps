@@ -148,6 +148,56 @@ def test_both_accounts_are_gated() -> None:
     print(f"      current gate: {states}")
 
 
+def test_semantic_shot_fields_invalidate_review() -> None:
+    for field in ("function", "dna_role"):
+        with tempfile.TemporaryDirectory() as td:
+            project = _project(Path(td))
+            _approve(project)
+            board = project / "script" / "storyboard.json"
+            document = json.loads(board.read_text(encoding="utf-8"))
+            document["shots"][0][field] = "changed-semantic-label"
+            board.write_text(json.dumps(document, ensure_ascii=False), encoding="utf-8")
+            assert copy_review.status(project)["state"] == "STALE", field
+
+
+def test_evidence_copy_inputs_invalidate_review() -> None:
+    for name in ("lines.json", "claim-map.json"):
+        with tempfile.TemporaryDirectory() as td:
+            project = _project(Path(td))
+            path = project / "script" / name
+            path.write_text('{"text":"第一句。"}', encoding="utf-8")
+            _approve(project)
+            path.write_text('{"text":"另一句。"}', encoding="utf-8")
+            assert copy_review.status(project)["state"] == "STALE", name
+
+
+def test_evidence_producers_block_before_reading_inputs_or_synthesis() -> None:
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import build_evidence_cut
+    import build_evidence_package
+    import audio_first_plan
+
+    with tempfile.TemporaryDirectory() as td:
+        project = Path(td)
+        try:
+            build_evidence_cut.build(project)
+        except copy_review.CopyReviewRequired as exc:
+            assert "NOT_REVIEWED" in exc.reason, exc.reason
+        else:
+            raise AssertionError("evidence cut reached inputs without copy approval")
+        assert _audio_first(project, audio_first_plan) == 4
+        assert _audio_first(project, build_evidence_package) == 4
+
+
+def _audio_first(project: Path, module) -> int:
+    previous = sys.argv
+    try:
+        sys.argv = ["audio_first_plan.py", str(project)]
+        return module.main()
+    finally:
+        sys.argv = previous
+
+
 def test_no_producer_wires_a_second_gate() -> None:
     """One enforced gate, deliberately.
 

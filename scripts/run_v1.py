@@ -294,6 +294,19 @@ def pre_render_gate(project: Path) -> list:
     return check_project(project)["failures"]
 
 
+def replication_gate(project: Path) -> list:
+    """Refuse a cut that drifted from the reference plan it was derived from.
+
+    Only a project that wrote ``script/replication-plan.json`` is checked, so an
+    ordinary episode renders exactly as before. Without this the contract would
+    only bind the builders that happen to call qc_video.
+    """
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+    from contentops.workflow import replication
+
+    return replication.stage_gate(project)
+
+
 def run_easel(project: Path, reuse_voice: bool = False) -> dict:
     """Production path: Easel TTS + upstream assemble.py."""
     shots = parse_script_shots(project)
@@ -314,6 +327,13 @@ def run_easel(project: Path, reuse_voice: bool = False) -> dict:
                     f"{item['rule']}: {item['detail']}" for item in findings),
                 "remedy": "python scripts/check_script_quality.py --project "
                           + project.name}
+    drift = replication_gate(project)
+    if drift:
+        return {"status": "BLOCKED", "engine": "easel",
+                "reason": "the cut no longer honours its replication plan: "
+                          + "; ".join(drift),
+                "remedy": "re-derive the plan (scripts/replicate_reference.py "
+                          "--plan) or fix the storyboard"}
     runtime = resolve_production_runtime()
     if runtime["status"] != "OK":
         return {"status": "BLOCKED", "engine": "easel",
