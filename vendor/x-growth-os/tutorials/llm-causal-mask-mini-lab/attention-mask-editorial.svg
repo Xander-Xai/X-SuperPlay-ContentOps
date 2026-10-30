@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+<title id="title">Learn LLMs by proving one thing: causal masking prevents future-token leakage</title>
+<desc id="desc">An editorial evidence card comparing a tested toy causal mask experiment. In the causal row the first token output remains 1.000 before and after a future token changes. With the mask removed, the first output changes from 2.575 to 30.000. The result is from a small Python standard-library demonstration, not a trained language model.</desc>
+<rect width="1600" height="900" fill="#F8F9F6"/>
+<g font-family="DejaVu Sans,Arial,sans-serif">
+ <text x="97" y="105" font-size="24" fill="#466458" font-weight="700" letter-spacing="4">BUILD &amp; LEARN   /   LAB 01</text>
+ <path d="M95 135H1505" stroke="#ADB7AF" stroke-width="2"/>
+ <text x="96" y="237" font-size="68" font-weight="750" fill="#192925">Don't just read</text>
+ <text x="96" y="327" font-size="68" font-weight="750" fill="#192925">about attention.</text>
+ <text x="97" y="389" font-size="33" fill="#52645D">Test what happens when a future token changes.</text>
+ <path d="M95 430H1505" stroke="#ADB7AF" stroke-width="2"/>
+ <text x="104" y="486" font-size="22" fill="#53675D" font-weight="700" letter-spacing="2">TEST</text>
+ <text x="789" y="486" font-size="22" fill="#53675D" font-weight="700" letter-spacing="2">FIRST TOKEN OUTPUT</text>
+ <g font-size="38" font-weight="650" fill="#1A2922">
+  <text x="102" y="573">Causal mask on</text>
+  <text x="102" y="704">Mask off</text>
+ </g>
+ <text x="789" y="576" font-size="44" font-weight="720" fill="#1C7158">1.000  →  1.000</text>
+ <text x="789" y="706" font-size="44" font-weight="720" fill="#B05843">2.575  →  30.000</text>
+ <text x="789" y="611" font-size="23" fill="#1C7158">UNCHANGED: future token stays hidden</text>
+ <text x="789" y="741" font-size="23" fill="#B05843">CHANGED: future token leaks into output</text>
+ <path d="M98 624H1498" stroke="#D4DCD5" stroke-width="2"/>
+ <path d="M95 781H1505" stroke="#ADB7AF" stroke-width="2"/>
+ <text x="102" y="828" font-size="23" fill="#506158">Python stdlib · CPU-only · 5 passing tests</text>
+ <text x="101" y="864" font-size="19" fill="#7B8981">Original toy lab inspired by Datawhale DIY-LLM, Chapter 4 — not a trained LLM</text>
+</g>
+</svg>

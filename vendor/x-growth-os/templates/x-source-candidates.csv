@@ -1,0 +1,2 @@
+post_id,post_url,author,post_date_utc,observed_at_utc,views,likes,reposts,replies,metric_provenance,metric_source_url,topic,relevance_status,claim_verification,content_mode,decision,notes
+2109262337500705094,https://x.com/levelsio/status/2109262337500705094,levelsio,2026-10-11,,1700000,5600,,,third_party_snapshot,https://xoutlier.il.ly/u/levelsio,personal software AI coding,eligible_business_debate,opinion_not_verified,evergreen,selected_for_research,Approximate public third-party snapshot seen Oct 24 2026; no official X API verification

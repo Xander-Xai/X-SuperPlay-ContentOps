@@ -1,0 +1,40 @@
+name: X growth report checks
+
+on:
+  pull_request:
+    paths:
+      - "scripts/x_growth_report.py"
+      - "tests/test_x_growth_report.py"
+      - "templates/posts.csv"
+      - "templates/x-metric-snapshots.csv"
+      - "templates/x-account-snapshots.csv"
+      - ".github/workflows/x-growth-report-ci.yml"
+  workflow_dispatch:
+
+jobs:
+  read-only-data-audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Unit tests
+        run: python -m unittest discover -s tests -p 'test_x_growth_report.py' -v
+      - name: Read-only report smoke test
+        run: python scripts/x_growth_report.py > /tmp/x-growth-report.json
+      - name: Verify report invariants
+        run: |
+          python - <<'PY'
+          import json
+          with open("/tmp/x-growth-report.json", encoding="utf-8") as file:
+              report = json.load(file)
+          assert report["status"] == "observational_audit_not_causal_attribution"
+          # These invariants must also hold AFTER the owner supplies real X URLs.
+          assert report["published_rows_without_valid_url"] == []
+          assert report["verified_published_posts"] >= 0
+          assert report["needs_actual_post_urls"] == bool(report["owner_reported_published_url_pending"])
+          print("Publication integrity checks passed; no assumed permanent URL gap.")
+          PY

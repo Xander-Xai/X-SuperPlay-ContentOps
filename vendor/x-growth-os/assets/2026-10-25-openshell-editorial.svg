@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title description">
+<title id="title">Permission beats persuasion</title>
+<desc id="description">Editorial conceptual diagram for OpenShell. An agent makes a request, a runtime policy permits an approved API and blocks an unapproved destination.</desc>
+<rect width="1600" height="900" fill="#F8F8F6"/>
+<path d="M80 80H1520" stroke="#AEB4B6" stroke-width="2"/>
+<text x="82" y="174" font-family="Georgia,serif" font-size="92" font-weight="700" fill="#172129">Permission beats</text>
+<text x="82" y="278" font-family="Georgia,serif" font-size="92" font-weight="700" fill="#2554A7">persuasion.</text>
+<text x="87" y="341" font-family="Arial,sans-serif" font-size="29" fill="#53616D">What can an agent reach when it ignores the prompt?</text>
+<path d="M80 381H1520" stroke="#C7CBCE"/>
+<text x="90" y="450" font-family="Arial,sans-serif" font-size="23" letter-spacing="2" fill="#57616B">AGENT</text>
+<text x="615" y="450" font-family="Arial,sans-serif" font-size="23" letter-spacing="2" fill="#2554A7">RUNTIME POLICY</text>
+<rect x="82" y="480" width="338" height="216" fill="none" stroke="#899199" stroke-width="2"/>
+<text x="111" y="551" font-family="Georgia,serif" font-size="36" fill="#172129">Agent request</text>
+<text x="113" y="606" font-family="Arial,sans-serif" font-size="27" fill="#53616D">file / network / API</text>
+<path d="M426 579H560" stroke="#36454F" stroke-width="4"/>
+<path d="M544 569L560 579L544 589" fill="none" stroke="#36454F" stroke-width="4"/>
+<rect x="575" y="479" width="372" height="216" fill="#E9EEF7" stroke="#2554A7" stroke-width="2"/>
+<text x="600" y="548" font-family="Georgia,serif" font-size="36" fill="#173D82">Enforced rules</text>
+<text x="602" y="600" font-family="Arial,sans-serif" font-size="27" fill="#374758">approved endpoint?</text>
+<text x="602" y="644" font-family="Arial,sans-serif" font-size="27" fill="#374758">credential allowed?</text>
+<path d="M948 534H1087" stroke="#2554A7" stroke-width="4"/>
+<path d="M1072 524L1088 534L1072 544" fill="none" stroke="#2554A7" stroke-width="4"/>
+<path d="M948 635H1087" stroke="#B74B4D" stroke-width="4" stroke-dasharray="12 10"/>
+<path d="M1069 620L1091 646M1091 620L1069 646" stroke="#B74B4D" stroke-width="4"/>
+<rect x="1104" y="485" width="416" height="103" fill="none" stroke="#2554A7" stroke-width="2"/>
+<text x="1130" y="543" font-family="Georgia,serif" font-size="32" fill="#172129">Approved request</text>
+<rect x="1104" y="608" width="416" height="101" fill="none" stroke="#B74B4D" stroke-width="2"/>
+<text x="1130" y="668" font-family="Georgia,serif" font-size="32" fill="#172129">Blocked request</text>
+<path d="M80 766H1520" stroke="#AEB4B6" stroke-width="2"/>
+<text x="86" y="814" font-family="Arial,sans-serif" font-size="27" fill="#253445">NVIDIA OpenShell</text>
+<text x="370" y="814" font-family="Arial,sans-serif" font-size="23" fill="#667179">Conceptual diagram — not test evidence</text>
+<text x="89" y="859" font-family="Arial,sans-serif" font-size="21" fill="#7B858C">github.com/NVIDIA/OpenShell</text>
+</svg>

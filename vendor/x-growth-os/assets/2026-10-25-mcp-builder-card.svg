@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+<title id="title">MCP tools agents can actually use</title>
+<desc id="desc">A conceptual four-step checklist inspired by Anthropic's mcp-builder Skill: discover clear tool names, respond with focused results, recover using actionable errors, and verify with real task evaluations. The source recommends 10 verifiable evaluation questions.</desc>
+<defs>
+<linearGradient id="background" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#071021"/><stop offset="0.57" stop-color="#10233a"/><stop offset="1" stop-color="#063b3b"/></linearGradient>
+<linearGradient id="card" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#1a2b43"/><stop offset="1" stop-color="#102137"/></linearGradient>
+<linearGradient id="accent" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#63dbdf"/><stop offset="1" stop-color="#78efb8"/></linearGradient>
+<filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="17"/></filter>
+</defs>
+<rect width="1600" height="900" fill="url(#background)"/>
+<circle cx="1470" cy="130" r="230" fill="#0d737b" opacity="0.13" filter="url(#shadow)"/>
+<circle cx="170" cy="760" r="255" fill="#1b5b97" opacity="0.15" filter="url(#shadow)"/>
+<rect x="70" y="61" width="1460" height="778" rx="36" fill="#08182b" stroke="#35546a" stroke-width="2"/>
+<rect x="116" y="104" width="344" height="50" rx="25" fill="#153d44" stroke="#347e86"/>
+<text x="142" y="137" font-family="Inter,Lato,Arial,sans-serif" font-size="23" font-weight="750" letter-spacing="2" fill="#94f1ce">SKILL / MCP-BUILDER</text>
+<text x="115" y="246" font-family="Inter,Lato,Arial,sans-serif" font-size="68" font-weight="800" fill="#f7fbff">MCP TOOLS AGENTS</text>
+<text x="115" y="326" font-family="Inter,Lato,Arial,sans-serif" font-size="68" font-weight="800" fill="#78e8d0">CAN ACTUALLY USE</text>
+<text x="117" y="380" font-family="Inter,Lato,Arial,sans-serif" font-size="29" fill="#a9c2d2">An API wrapper is the starting point, not the finish line.</text>
+<g fill="url(#card)" stroke="#39586b" stroke-width="2">
+<rect x="110" y="445" width="320" height="229" rx="24"/>
+<rect x="466" y="445" width="320" height="229" rx="24"/>
+<rect x="822" y="445" width="320" height="229" rx="24"/>
+<rect x="1178" y="445" width="312" height="229" rx="24"/>
+</g>
+<g fill="#2c786f"><rect x="131" y="469" width="55" height="44" rx="13"/><rect x="487" y="469" width="55" height="44" rx="13"/><rect x="843" y="469" width="55" height="44" rx="13"/><rect x="1199" y="469" width="55" height="44" rx="13"/></g>
+<g font-family="Inter,Lato,Arial,sans-serif" font-size="24" font-weight="800" fill="#e0fff1"><text x="142" y="498">01</text><text x="498" y="498">02</text><text x="854" y="498">03</text><text x="1210" y="498">04</text></g>
+<g font-family="Inter,Lato,Arial,sans-serif" font-size="30" font-weight="800" fill="#f3faff"><text x="132" y="563">DISCOVER</text><text x="488" y="563">RESPOND</text><text x="844" y="563">RECOVER</text><text x="1200" y="563">VERIFY</text></g>
+<g font-family="Inter,Lato,Arial,sans-serif" font-size="23" fill="#b1c8d8"><text x="132" y="613">Clear tool names</text><text x="488" y="613">Focused results</text><text x="844" y="613">Actionable errors</text><text x="1200" y="613">Real task tests</text></g>
+<g fill="#7beac4"><path d="M437 555h20v-8l12 16-12 16v-8h-20z"/><path d="M793 555h20v-8l12 16-12 16v-8h-20z"/><path d="M1149 555h20v-8l12 16-12 16v-8h-20z"/></g>
+<rect x="109" y="707" width="880" height="73" rx="19" fill="#174f4b" stroke="#439488"/>
+<text x="139" y="754" font-family="Inter,Lato,Arial,sans-serif" font-weight="800" font-size="30" fill="#bdffe6">TRY 10 VERIFIABLE EVAL QUESTIONS</text>
+<text x="1198" y="732" font-family="Inter,Lato,Arial,sans-serif" font-size="19" fill="#98b5c7">SOURCE</text>
+<text x="1198" y="766" font-family="Inter,Lato,Arial,sans-serif" font-size="24" font-weight="750" fill="#eaf7ff">anthropics/skills</text>
+<text x="113" y="815" font-family="Inter,Lato,Arial,sans-serif" font-size="19" fill="#83a0b8">Conceptual workflow checklist based on Anthropic's public MCP Builder Skill</text>
+</svg>

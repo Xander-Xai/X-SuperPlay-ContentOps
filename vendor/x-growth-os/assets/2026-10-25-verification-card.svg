@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+<title id="title">Fixed is not proof — verify before completion</title>
+<desc id="desc">Three verification steps: the exact test command, fresh test output, and exit status. No fresh run means unverified.</desc>
+<defs>
+  <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#081323"/><stop offset="1" stop-color="#113740"/></linearGradient>
+  <linearGradient id="panel" x2="1" y2="0"><stop stop-color="#182a3e"/><stop offset="1" stop-color="#142438"/></linearGradient>
+</defs>
+<rect width="1600" height="900" fill="url(#bg)"/>
+<rect x="55" y="52" width="1490" height="796" rx="35" fill="#0d1627" stroke="#466077" stroke-width="2"/>
+<rect x="100" y="94" width="518" height="50" rx="24" fill="#143f45" stroke="#2dbb96"/>
+<text x="122" y="127" font-family="Arial, sans-serif" fill="#8ff0c9" font-size="24" font-weight="700">AI CODING AGENTS / EVIDENCE-FIRST</text>
+<text x="97" y="269" font-family="Arial, sans-serif" font-weight="800" font-size="80" fill="#f5f8ff">“FIXED” IS NOT PROOF.</text>
+<text x="100" y="333" font-family="Arial, sans-serif" font-size="40" fill="#b4c5d5">Verify the work before you merge.</text>
+<g fill="url(#panel)" stroke="#487c92" stroke-width="2">
+ <rect x="97" y="415" width="433" height="248" rx="23"/>
+ <rect x="584" y="415" width="433" height="248" rx="23"/>
+ <rect x="1071" y="415" width="433" height="248" rx="23"/>
+</g>
+<g fill="#167a67">
+ <rect x="122" y="441" width="76" height="68" rx="16"/><rect x="609" y="441" width="76" height="68" rx="16"/><rect x="1096" y="441" width="76" height="68" rx="16"/>
+</g>
+<g font-family="Arial, sans-serif" font-size="43" font-weight="800" fill="#74eec2">
+ <text x="139" y="490">01</text><text x="626" y="490">02</text><text x="1113" y="490">03</text>
+</g>
+<g font-family="Arial, sans-serif" font-size="33" font-weight="700" fill="#f5fbff">
+ <text x="122" y="573">TEST COMMAND</text><text x="609" y="573">FRESH OUTPUT</text><text x="1096" y="573">EXIT STATUS</text>
+</g>
+<g font-family="Arial, sans-serif" font-size="25" fill="#b8cddd">
+ <text x="122" y="627">The exact command run</text><text x="609" y="627">Logs from this run</text><text x="1096" y="627">Pass or fail evidence</text>
+</g>
+<g fill="#7deaca"><path d="M546 533h26v-8l15 16-15 16v-8h-26z"/><path d="M1033 533h26v-8l15 16-15 16v-8h-26z"/></g>
+<rect x="100" y="716" width="668" height="68" rx="19" fill="#4b2030" stroke="#ef7184"/>
+<text x="129" y="762" font-family="Arial, sans-serif" font-size="31" font-weight="750" fill="#ffd1d5">NO FRESH RUN = UNVERIFIED</text>
+<text x="103" y="824" font-family="Arial, sans-serif" font-size="21" fill="#93a9bd">Source: obra/superpowers · verification-before-completion</text>
+</svg>

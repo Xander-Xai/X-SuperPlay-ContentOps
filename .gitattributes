@@ -12,6 +12,11 @@
 *.json text eol=lf
 *.md text eol=lf
 *.txt text eol=lf
+# Data and vector sources are digested by `scripts/x_growth_pin.py`. Without an
+# explicit eol both are checked out as CRLF on a Windows host with autocrlf=true
+# and as LF on CI, so the pinned digest would disagree with itself across hosts.
+*.csv text eol=lf
+*.svg text eol=lf
 
 # Binary media — never modify
 *.mp4  binary

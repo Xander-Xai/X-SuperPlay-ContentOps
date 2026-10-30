@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+<title>AI Agent authority is bounded by runtime policy</title>
+<defs><linearGradient id="a" x2="1" y2="1"><stop stop-color="#061426"/><stop offset="1" stop-color="#083d4b"/></linearGradient></defs>
+<rect width="1600" height="900" fill="url(#a)"/><rect x="58" y="56" width="1484" height="788" rx="32" fill="#0c1c2e" stroke="#368198" stroke-width="2"/>
+<text x="100" y="158" font-family="Arial,sans-serif" font-size="70" font-weight="bold" fill="#f5fbff">PROMPTS SHAPE INTENT.</text>
+<text x="100" y="238" font-family="Arial,sans-serif" font-size="70" font-weight="bold" fill="#73ecc9">POLICY LIMITS REACH.</text>
+<text x="100" y="291" font-family="Arial,sans-serif" font-size="29" fill="#b8d1de">NVIDIA OpenShell — Conceptual architecture, not a real deployment screenshot</text>
+<rect x="100" y="375" width="350" height="268" rx="24" fill="#18324a" stroke="#5299c2" stroke-width="3"/>
+<text x="139" y="448" font-family="Arial,sans-serif" font-size="37" font-weight="bold" fill="#e7f8ff">AGENT SANDBOX</text>
+<text x="143" y="504" font-family="Arial,sans-serif" font-size="30" fill="#a9d8e8">Files: restricted</text><text x="143" y="549" font-family="Arial,sans-serif" font-size="30" fill="#a9d8e8">Secrets: not exposed</text>
+<text x="143" y="594" font-family="Arial,sans-serif" font-size="30" fill="#a9d8e8">Network: checked</text>
+<path d="M470 505 L612 505" fill="none" stroke="#80efd2" stroke-width="9"/><path d="M595 485 l26 20 -26 20" fill="#80efd2"/>
+<rect x="624" y="375" width="352" height="268" rx="24" fill="#0c4c4b" stroke="#6eedd0" stroke-width="3"/>
+<text x="660" y="449" font-family="Arial,sans-serif" font-size="38" font-weight="bold" fill="#e7fff1">RUNTIME POLICY</text>
+<text x="658" y="507" font-family="Arial,sans-serif" font-size="27" fill="#c2fce8">Approve / deny routes</text><text x="658" y="552" font-family="Arial,sans-serif" font-size="27" fill="#c2fce8">Enforce file access</text><text x="658" y="597" font-family="Arial,sans-serif" font-size="27" fill="#c2fce8">Bind credentials</text>
+<path d="M996 463 L1100 463" fill="none" stroke="#70f2bf" stroke-width="9"/><path d="M1085 447 l23 16 -23 17" fill="#70f2bf"/>
+<path d="M996 577 L1100 577" fill="none" stroke="#ff7c77" stroke-width="9" stroke-dasharray="20 18"/><path d="M1085 562 l23 16 -23 17" fill="#ff7c77"/>
+<rect x="1114" y="377" width="376" height="120" rx="22" fill="#184c40" stroke="#4dda9d" stroke-width="3"/>
+<text x="1142" y="429" font-family="Arial,sans-serif" font-size="32" font-weight="bold" fill="#a6ffca">APPROVED API</text><text x="1142" y="469" font-family="Arial,sans-serif" font-size="24" fill="#e5fff1">Credentials attached</text>
+<rect x="1114" y="522" width="376" height="120" rx="22" fill="#4d222d" stroke="#ed827f" stroke-width="3"/>
+<text x="1142" y="571" font-family="Arial,sans-serif" font-size="32" font-weight="bold" fill="#ffb4b1">UNAPPROVED</text><text x="1142" y="610" font-family="Arial,sans-serif" font-size="24" fill="#ffdbd9">Request blocked</text>
+<text x="104" y="738" font-family="Arial,sans-serif" font-size="37" font-weight="bold" fill="#effaff">QUESTION: WHAT CAN THE AGENT REACH IF IT DISOBEYS?</text>
+<text x="104" y="800" font-family="Arial,sans-serif" font-size="24" fill="#8ccfd7">Primary source: github.com/NVIDIA/OpenShell — policy and sandbox documentation</text>
+</svg>
