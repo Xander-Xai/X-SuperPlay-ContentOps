@@ -655,6 +655,18 @@ def _check_skill_route(
                 continue
             catalog_root, skill_dir = _catalog_skill(skill, roots)
             if skill_dir is None:
+                missing_roots = [item for item in CATALOG_ROOTS if not item.is_dir()]
+                if missing_roots:
+                    # The catalog is host-local and gitignored. A CI runner has
+                    # the gzh vendor but no Easel runtime; calling that a DNA
+                    # failure would report an unverified route as invalid.
+                    warnings.append(
+                        f"skill_route entry {step!r} names skill {skill!r}, which "
+                        f"is not in the present catalog roots; "
+                        f"{len(missing_roots)} declared root(s) are absent, so "
+                        f"membership was not verified"
+                    )
+                    continue
                 failures.append(
                     f"skill_route entry {step!r} names skill {skill!r}, which is "
                     f"not present under any catalog root "

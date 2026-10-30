@@ -215,6 +215,7 @@ def test_the_prompt_carries_the_account_own_narrative_template():
 
 
 CATALOG_ABSENT = "no skill catalog root is present"
+MEMBERSHIP_UNVERIFIED = "membership was not verified"
 
 
 def _clone(path: Path) -> dict:
@@ -290,7 +291,8 @@ SHARED_STORE_ABSENT = "the shared skill store"
 #: Warnings that name a host-local resource this checkout does not have. Both
 #: are expected on a CI runner, where the Easel runtime and ~/.agents/skills are
 #: absent by design. Anything else in the warning channel is unexpected.
-HOST_LOCAL_WARNINGS = (CATALOG_ABSENT, SHARED_STORE_ABSENT)
+HOST_LOCAL_WARNINGS = (CATALOG_ABSENT, SHARED_STORE_ABSENT,
+                       MEMBERSHIP_UNVERIFIED)
 
 
 def test_the_dna_checker_passes_on_the_shipped_accounts():
@@ -316,8 +318,8 @@ def _mutated(dna: dict, step: str, **changes) -> dict:
 
 def test_a_route_entry_naming_an_unknown_skill_fails():
     """The gap this closes: the DNA read as sound while pointing at nothing."""
-    if not _catalog_roots():
-        print("catalog absent on this checkout; skipping membership assertion")
+    if not _easel_catalog_present():
+        print("Easel catalog absent on this checkout; skipping membership assertion")
         return
     dna = _mutated(_dna(EXPLORE), "script", skill="video-script-that-does-not-exist")
     warnings: list = []
@@ -339,12 +341,18 @@ def test_a_repo_relative_script_must_exist():
     assert "repository root" in failures[0], failures[0]
 
 
+def _easel_catalog_present() -> bool:
+    import check_account_dna
+    return any(root.name == "openclaw" and root.is_dir()
+               for root in check_account_dna.CATALOG_ROOTS)
+
+
 def test_an_undeclared_path_base_is_not_silently_assumed():
     """Dropping qc's path_base must fail loudly instead of falling back."""
-    if not _catalog_roots():
-        # With no catalog every entry skips membership, so the undeclared base
-        # has nothing left to be resolved against and cannot be demonstrated.
-        print("catalog absent on this checkout; skipping base-resolution assertion")
+    if not _easel_catalog_present():
+        # The gzh vendor is a catalog root too, but the route this mutates is
+        # an Easel entry. Without Easel, base resolution is unverifiable.
+        print("Easel catalog absent on this checkout; skipping base-resolution assertion")
         return
     dna = _mutated(_dna(EXPLORE), "qc")
     entry = next(item for item in dna["skill_route"] if item["step"] == "qc")

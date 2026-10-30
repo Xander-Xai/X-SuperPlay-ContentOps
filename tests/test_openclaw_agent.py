@@ -94,7 +94,9 @@ def _route_bases_available() -> bool:
 def test_logical_never_returns_an_absolute_path() -> None:
     assert _logical(ROOT / "docs" / "INDEX.md") == "repo://docs/INDEX.md"
     assert _logical(ROOT, None) == "repo://"
-    outside = _logical(Path("C:/Windows/System32/notepad.exe"), None)
+    # A Windows drive-letter path is relative on POSIX. Use the system temp
+    # directory so the "outside the repository" case is real on both platforms.
+    outside = _logical(Path(tempfile.gettempdir()) / "notepad.exe", None)
     assert not re.match(r"^[A-Za-z]:", outside or ""), outside
     assert outside == "external://notepad.exe"
 
