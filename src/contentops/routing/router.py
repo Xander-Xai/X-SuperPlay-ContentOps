@@ -96,6 +96,10 @@ DEFAULT_FRESHNESS_HOURS = 72
 #: not set cannot be switched on by accident.
 SANDBOX_ENV = "CONTENTOPS_TEST_SANDBOX"
 
+#: A sentinel meaning "build the real fetcher". Passing ``None`` explicitly
+#: turns the gate off, which a test does when it is not about quality.
+_QUALITY_DEFAULT: Any = object()
+
 
 def sandbox_environment() -> bool:
     """Whether this process declares itself an isolated test sandbox."""
@@ -131,7 +135,8 @@ class ContentRouter:
                  adapters: Optional[Dict[str, Any]] = None,
                  trendradar_db: Optional[str] = None,
                  projects_root: Optional[Path] = None,
-                 timeout: float = 12.0) -> None:
+                 timeout: float = 12.0,
+                 quality_fetcher: Optional[Any] = _QUALITY_DEFAULT) -> None:
         self.root = Path(root)
         self.store = store if store is not None else RouterStore(self.root)
         self.adapters = adapters
@@ -141,6 +146,17 @@ class ContentRouter:
         self.projects_root = (Path(projects_root) if projects_root is not None
                               else self.root / "projects")
         self.timeout = timeout
+        #: The source-quality gate inspects GitHub repositories. It is on by
+        #: default for real runs; tests inject a fetcher so they never reach
+        #: the network, and None turns it off entirely.
+        if quality_fetcher is _QUALITY_DEFAULT:
+            from ..hotspots.adapters import _http_get
+            from ..hotspots.quality import GitHubRepoEvidenceFetcher
+            self.quality_fetcher = GitHubRepoEvidenceFetcher(
+                _http_get, timeout=timeout,
+                cache_path=self.store.home / "quality-cache.json")
+        else:
+            self.quality_fetcher = quality_fetcher
 
     # -- accounts -----------------------------------------------------------
 
@@ -261,7 +277,8 @@ class ContentRouter:
             profile, plan, adapters=self.adapters,
             trendradar_db=self.trendradar_db, timeout=self.timeout,
             prior_appearances=lambda title: self.store.title_appearances(
-                profile.account_id, title))
+                profile.account_id, title),
+            quality_fetcher=self.quality_fetcher)
         self.store.save_candidates(run_id, account_id=profile.account_id,
                                    profile_version=profile.profile_version,
                                    candidates=result.candidates)
@@ -451,6 +468,7 @@ class ContentRouter:
             intent.route_context.detail["approval"] = {
                 "reviewer": reviewer.strip(),
                 "actor_kind": actor_kind,
+                "sandbox": sandbox_environment(),
                 "approved_at": utcnow(),
                 "note": note.strip(),
                 "content_digest": approved_digest,

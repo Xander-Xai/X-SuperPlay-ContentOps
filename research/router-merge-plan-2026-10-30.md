@@ -97,3 +97,45 @@ PR 2 的描述里应写明：本分支不修改父亲分支的任何既有契约
 | PR 1 因 `vendor/` 缺失在 CI 红 | PR 1 无法合并，PR 2 随之阻塞 | 先决定 vendor 的入库/获取方案；或让该套件在缺输入时 skip 并打印原因 |
 | 两个 PR 同时改动同一批共享文件 | 合并冲突 | 路由器分支对共享文件只做尾部追加（已验证） |
 | 父亲分支长期不合并 | 路由器分支继续累积 | 路由器分支保持 4 个提交不再扩张；新工作另开分支 |
+
+---
+
+## 附：91 个父提交的最小依赖清单（第四轮实测）
+
+方法：静态解析路由器（`src/contentops/routing/*`、`src/contentops/hotspots/*`、
+`canonical.py`、5 个脚本）的 import 闭包 → 24 个文件；再用
+`git log main..8ff3dfa --format` 与 `git show --name-only` 求出真正被触达的提交。
+
+结果：**91 个父提交里只有 12 个碰过路由器依赖的文件，79 个与路由器无关。**
+
+### 代码与数据依赖（8 个路径，全部为新增，共 +2051 行）
+
+| 路径 | 路由器为什么需要它 |
+|---|---|
+| `src/contentops/workflow/topics.py` (+182) | `contentops.content-candidate/v1` 契约与 `validate_candidate` |
+| `src/contentops/workflow/human_forecast.py` (+90) | `contentops.evidence-feasibility/v1` 与 `forecast_verdict` |
+| `scripts/account_route.py` (+304) | 账号 → 流水线解析（读 `project.yaml` 的 `account_slug`） |
+| `scripts/copy_review.py` (+70) | 生产前的唯一人工门禁（handoff 之后的下一个闸门） |
+| `scripts/new_project.py` (+5) | `account_slug` 参数与 `create_project()` |
+| `scripts/process_utils.py` (+42) | 后台子进程必须隐藏窗口（调度器抓取走它） |
+| `config/accounts/x-superplay-1024.json` (+664) | 账号 DNA + discovery 块 |
+| `config/accounts/x-superplay-future-intelligence.json` (+694) | 同上 |
+
+```powershell
+# 只审这 8 个路径的父分支差异，而不是 692 个文件
+git diff --stat main 8ff3dfa -- `
+  src/contentops/workflow/topics.py src/contentops/workflow/human_forecast.py `
+  scripts/account_route.py scripts/copy_review.py scripts/new_project.py `
+  scripts/process_utils.py `
+  config/accounts/x-superplay-1024.json config/accounts/x-superplay-future-intelligence.json
+```
+
+### 建议的分支治理
+
+| 方案 | 做法 | 代价 | 风险 |
+|---|---|---|---|
+| **A（推荐）** | 先把上面 8 个路径的差异单独做成一个 review PR 供审阅（**只读审阅，不合并**），确认后按原计划堆叠合并 PR 1 → PR 2 | 一次额外的 scoped review | 低：不改历史、不 rebase |
+| B | 直接合并 PR 1（91 提交 / 692 文件） | 审查面大 | 中：无关功能（motion/公众号/vendor）一并入库 |
+| C | 把 8 个文件 cherry-pick 到 main 再合路由器 | 会造出一个**未经测试的树**：那 8 个文件依赖父分支里的其他模块（如 `contentops.media.*`） | **高，不建议** |
+
+**明确不做**：rebase 到 main、force push、删除分支、合并 main。

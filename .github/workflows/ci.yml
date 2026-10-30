@@ -264,6 +264,12 @@ jobs:
       - name: Run hotspot source tests
         run: python tests/test_hotspot_sources.py
 
+      # The source-quality gate: a keyword match is not a project. Two
+      # independent signals reject; one never does; an uninspected repository
+      # passes marked rather than being dropped.
+      - name: Run source quality tests
+        run: python tests/test_source_quality.py
+
       # The optimization layer: signal validation, ADOPT policy (GitHub + evidence
       # + no GPU), action-before-deferral ranking and the blocked MEASURE/LEARN
       # flywheel stages.

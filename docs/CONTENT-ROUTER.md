@@ -514,6 +514,43 @@ against an operator who knowingly approves bad content, or protection against
 someone with write access to the state directory editing it. Those need an
 identity provider and a trusted host, and neither exists here.
 
+## A keyword match is not a project
+
+For GitHub, the account's subject has a second question behind it: is there a
+real project at the link? A repository whose description reads
+``behaviour test: mint probe workflow host`` contains the account's word and
+is worth nothing to an audience.
+
+`contentops.hotspots.quality` asks that question and nothing else. It is not a
+relevance score — the DNA decides the subject, this decides whether a project
+exists.
+
+**No single weak signal decides.** Stars, age, a word in the description — each
+is one signal, and a rejection needs two independent ones:
+
+| Signal | What it is evidence of |
+|---|---|
+| `placeholder_name` | the repository is named after a fixture (`test-repo`, `mint-probe`) |
+| `placeholder_description` | its own description calls itself a test |
+| `no_readme` | nothing documents what it does |
+| `tiny_repository` | below the size floor — there is little code in it |
+| `archived` | it will not change |
+| `young_and_unproven` | created days ago with no stars — one signal, never a verdict |
+
+The first two are readable from the list itself, so a repository that names
+itself a fixture twice is rejected without spending an API call. Everything
+else needs the repository inspected, and **an inspection that fails is not a
+rejection**: the item passes with `UNVERIFIED` and the reason attached. A rate
+limit must never delete candidates.
+
+The policy is numbers, not prejudice (`QualityPolicy`, configurable per run),
+and every verdict carries the evidence and the signals that produced it, so a
+reviewer can disagree on the record rather than on trust.
+
+The gate removes fixtures. It does **not** remove real projects that are a
+poor fit for the account — that is the DNA's job, and the two failures look
+different in the pool: one is spam, the other is an honest mismatch.
+
 ## What this does not do
 
 - It does not choose a topic for you. It proposes; a person decides.

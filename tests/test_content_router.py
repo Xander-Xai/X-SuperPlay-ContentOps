@@ -89,13 +89,37 @@ def _fixture_adapter() -> FixtureAdapter:
     return FixtureAdapter(resolved)
 
 
-def _router(root: Path, adapters=None) -> ContentRouter:
+class _OfflineQuality:
+    """Repository evidence that never touches the network.
+
+    Every repository looks like a real project unless a test says otherwise,
+    so the quality gate is exercised without changing what the other tests
+    are about.
+    """
+
+    def __init__(self, overrides=None):
+        self.overrides = dict(overrides or {})
+        self.calls = []
+
+    def fetch(self, full_name):
+        from contentops.hotspots.quality import RepoEvidence
+        self.calls.append(full_name)
+        if full_name in self.overrides:
+            return self.overrides[full_name]
+        return RepoEvidence(full_name=full_name, description="a real project",
+                            size_kb=2048, stars=120, forks=12, has_readme=True,
+                            created_at="2025-01-01T00:00:00Z", fetched=True)
+
+
+def _router(root: Path, adapters=None, quality=None) -> ContentRouter:
     store = RouterStore(root, home=root / "state")
     if adapters is not None and not hasattr(adapters, "get"):
         # The router reads its override as a source-id map. A single adapter
         # that answers for every source is wrapped so both shapes work.
         adapters = _Adapters(adapters)
-    return ContentRouter(root, store=store, adapters=adapters)
+    return ContentRouter(root, store=store, adapters=adapters,
+                         quality_fetcher=quality if quality is not None
+                         else _OfflineQuality())
 
 
 class _Spy:
@@ -284,6 +308,62 @@ def test_the_hot_list_route_calls_the_collector():
         result = router.start(ACCOUNT_EXPLORE, "HOTSPOT_DISCOVERY")
         assert result.route_mode == "HOTSPOT_DISCOVERY"
         assert result.detail["collection"]["sources"]
+
+
+def test_a_repository_with_no_product_is_not_offered():
+    """The account's word matched; there is still nothing to make an episode about."""
+    from contentops.hotspots.quality import RepoEvidence
+    spam = RepoEvidence(full_name="langchain-ai/langgraph",
+                        description="behaviour test: mint probe workflow host",
+                        size_kb=4, has_readme=False, stars=0,
+                        created_at="2026-10-01T00:00:00Z", fetched=True)
+    with tempfile.TemporaryDirectory() as tmp:
+        router = _router(_sandbox(tmp), adapters=_fixture_adapter(),
+                         quality=_OfflineQuality({"langchain-ai/langgraph": spam}))
+        result = router.start(ACCOUNT_BUILD, "HOTSPOT_DISCOVERY")
+        collection = result.detail["collection"]
+        titles = [candidate["title"] for candidate in result.detail["candidates"]]
+        assert "langchain-ai/langgraph" not in titles
+        assert collection["rejected_by_reason"].get("SOURCE_QUALITY", 0) >= 1
+
+
+def test_a_repository_the_gate_could_not_inspect_is_still_offered():
+    from contentops.hotspots.quality import RepoEvidence
+    unknown = RepoEvidence(full_name="langchain-ai/langgraph",
+                           fetch_error="SOURCE_TIMEOUT", fetched=False)
+    with tempfile.TemporaryDirectory() as tmp:
+        router = _router(_sandbox(tmp), adapters=_fixture_adapter(),
+                         quality=_OfflineQuality({"langchain-ai/langgraph": unknown}))
+        result = router.start(ACCOUNT_BUILD, "HOTSPOT_DISCOVERY")
+        titles = [candidate["title"] for candidate in result.detail["candidates"]]
+        assert "langchain-ai/langgraph" in titles
+        offered = next(candidate for candidate in result.detail["candidates"]
+                       if candidate["title"] == "langchain-ai/langgraph")
+        assert offered["quality"]["verdict"] == "UNVERIFIED"
+
+
+def test_a_candidate_carries_the_evidence_the_gate_used():
+    with tempfile.TemporaryDirectory() as tmp:
+        router = _router(_sandbox(tmp), adapters=_fixture_adapter())
+        result = router.start(ACCOUNT_BUILD, "HOTSPOT_DISCOVERY")
+        offered = next(candidate for candidate in result.detail["candidates"]
+                       if candidate["title"] == "langchain-ai/langgraph")
+        quality = offered["quality"]
+        assert quality["verdict"] == "ACCEPT"
+        assert quality["evidence"]["has_readme"] is True
+        assert json.dumps(quality, ensure_ascii=False)  # serialisable into the pool
+
+
+def test_the_quality_gate_is_off_when_no_fetcher_is_given():
+    with tempfile.TemporaryDirectory() as tmp:
+        root = _sandbox(tmp)
+        router = ContentRouter(root,
+                               store=RouterStore(root, home=root / "state"),
+                               adapters=_Adapters(_fixture_adapter()),
+                               quality_fetcher=None)
+        result = router.start(ACCOUNT_BUILD, "HOTSPOT_DISCOVERY")
+        for candidate in result.detail["candidates"]:
+            assert candidate["quality"] is None
 
 
 def test_a_source_that_says_its_data_is_old_cannot_supply_new_hotspots():
@@ -985,6 +1065,63 @@ def test_the_script_step_is_a_named_gap_not_a_crash():
         (project / "script" / "lines.json").write_text("[]", encoding="utf-8")
         (project / "script" / "assets.json").write_text("[]", encoding="utf-8")
         assert handoff.script_state(project)["ready"] is True
+
+
+def test_an_automation_approval_cannot_be_handed_to_the_pipeline():
+    """Acceptance approval proves the path; it is not a permission for an episode."""
+    import os
+    from contentops.routing import handoff
+    with tempfile.TemporaryDirectory() as tmp:
+        root = _sandbox(tmp)
+        router = _router(root, adapters=_fixture_adapter())
+        run = router.start(ACCOUNT_BUILD, "USER_TOPIC",
+                           UserTopicInput(topic="LangGraph 的状态管理怎么设计"))
+        previous = os.environ.get("CONTENTOPS_TEST_SANDBOX")
+        os.environ["CONTENTOPS_TEST_SANDBOX"] = "1"
+        try:
+            router.approve(ACCOUNT_BUILD, run.run_id, reviewer="Acceptance",
+                           confirmed=True, actor_kind="automation",
+                           allow_automation=True, project_slug="handoff-auto")
+        finally:
+            if previous is None:
+                os.environ.pop("CONTENTOPS_TEST_SANDBOX", None)
+            else:
+                os.environ["CONTENTOPS_TEST_SANDBOX"] = previous
+        project = root / "projects" / "handoff-auto"
+        verdict = handoff.check(handoff.read_brief(project))
+        assert verdict["ok"] is False
+        assert verdict["reason"] == "AUTOMATION_APPROVAL"
+
+
+def test_a_human_approval_records_that_it_was_not_a_sandbox():
+    with tempfile.TemporaryDirectory() as tmp:
+        router = _router(_sandbox(tmp), adapters=_fixture_adapter())
+        run = _approved_run(router, ACCOUNT_BUILD)
+        approval = router.verify_approval(run.run_id)["approval"]
+        assert approval["actor_kind"] == "human"
+        assert approval["sandbox"] is False
+
+
+def test_a_scheduled_run_that_finds_nothing_still_writes_a_receipt():
+    """No database means a named failure and a receipt, never an approval."""
+    import importlib.util
+    with tempfile.TemporaryDirectory() as tmp:
+        spec = importlib.util.spec_from_file_location(
+            "router_schedule", ROOT / "scripts" / "router_schedule.py")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        empty_home = Path(tmp) / "trendradar"
+        home = Path(tmp) / "state"
+        code = module.main(["run", "--skip-crawl", "--home", str(home),
+                            "--trendradar-home", str(empty_home),
+                            "--account", ACCOUNT_EXPLORE, "--json"])
+        assert code == 4
+        receipts = list((home / "schedule" / "runs").glob("*.json"))
+        assert len(receipts) == 1
+        record = json.loads(receipts[0].read_text(encoding="utf-8"))
+        assert record["status"] == "DEGRADED"
+        assert record["database"]["chosen"] is None
+        assert record["accounts"] == []
 
 
 def main() -> int:

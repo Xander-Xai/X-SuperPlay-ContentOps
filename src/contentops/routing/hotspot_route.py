@@ -90,6 +90,8 @@ def collect(profile: AccountProfile, plan: Dict[str, Any], *,
             trendradar_db: Optional[str] = None,
             timeout: float = 12.0,
             prior_appearances: Optional[Callable[[str], int]] = None,
+            quality_fetcher: Optional[Any] = None,
+            quality_policy: Optional[Any] = None,
             now: Optional[str] = None) -> CollectionResult:
     """Fetch, filter and rank, according to the plan.
 
@@ -167,6 +169,35 @@ def collect(profile: AccountProfile, plan: Dict[str, Any], *,
                           f"{window_hours:.0f} h window",
             })
             continue
+        # The account's subject is decided above; this asks a different
+        # question — is there a real project behind the link? It runs after
+        # relevance so a run never spends its API budget inspecting items the
+        # account was never going to consider.
+        quality: Optional[Dict[str, Any]] = None
+        if quality_fetcher is not None:
+            from ..hotspots.quality import RepoEvidence, assess, repo_from_url
+            source = _source_from_registry(item.source_id)
+            repo = repo_from_url(item.url) if source and source.platform == "github" else None
+            if repo:
+                # Judge what the list already told us first: a repository that
+                # names itself a fixture in its name and its description needs
+                # no API call to be understood, and not making that call keeps
+                # the rate limit for the repositories worth inspecting.
+                quality = assess(RepoEvidence(full_name=repo,
+                                              description=item.snippet),
+                                 quality_policy)
+                if quality["verdict"] != "REJECT":
+                    quality = assess(quality_fetcher.fetch(repo), quality_policy)
+                if quality["verdict"] == "REJECT":
+                    rejected.append({
+                        "source_id": item.source_id,
+                        "title": item.title,
+                        "url": item.url,
+                        "reason": "SOURCE_QUALITY",
+                        "detail": quality["detail"],
+                        "quality": quality,
+                    })
+                    continue
         accepted_raw.append({
             "source_id": item.source_id,
             "title": item.title,
@@ -176,6 +207,7 @@ def collect(profile: AccountProfile, plan: Dict[str, Any], *,
             "metrics": dict(item.metrics),
             "extra": dict(item.extra),
             "source_rank": item.rank,
+            "quality": quality,
         })
 
     # De-duplication happens before scoring, so each candidate is scored once
@@ -205,6 +237,9 @@ def collect(profile: AccountProfile, plan: Dict[str, Any], *,
         full["candidate_id"] = candidate_id_for(profile, full)
         full["plan_id"] = plan.get("plan_id")
         full["status"] = "candidate"
+        # The quality judgement travels with the candidate, so a reviewer sees
+        # the evidence the gate used rather than an unexplained score.
+        full["quality"] = record.get("quality")
         full["sources"] = _sources_for(record, merged)
         accepted.append(full)
 

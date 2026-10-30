@@ -109,6 +109,15 @@ def check(package: Optional[Dict[str, Any]]) -> Dict[str, Any]:
         return {"ok": False, "reason": "NOT_APPROVED",
                 "detail": f"the brief says approval_status "
                           f"{intent.get('approval_status')!r}"}
+    if str(approval.get("actor_kind")) == "automation":
+        # An acceptance run's approval is evidence that the path works, not a
+        # permission for an episode. It cannot travel into a real pipeline.
+        from .router import sandbox_environment
+        if not sandbox_environment():
+            return {"ok": False, "reason": "AUTOMATION_APPROVAL",
+                    "detail": "the brief was approved by an automation, which may be "
+                              "used in an acceptance sandbox but never handed to the "
+                              "pipeline", "content_digest": current}
     if str(package.get("forecast_verdict")) == "DEGRADED":
         return {"ok": False, "reason": "EVIDENCE_REQUIRED",
                 "detail": "the evidence forecast is DEGRADED: the episode needs a "

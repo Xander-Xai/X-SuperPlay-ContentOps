@@ -244,11 +244,48 @@ def _missed(runs_dir: Path, interval_hours: float) -> Dict[str, Any]:
             "last_success_at": last.get("started_at")}
 
 
+class _Tee:
+    """Write to the console and to the run's log at the same time.
+
+    A scheduled task has no terminal, so the console half may be writing to
+    nowhere; the file half is what a person reads afterwards.
+    """
+
+    def __init__(self, *streams):
+        self.streams = [stream for stream in streams if stream is not None]
+
+    def write(self, text):
+        for stream in self.streams:
+            try:
+                stream.write(text)
+                stream.flush()
+            except (OSError, ValueError):
+                pass
+
+    def flush(self):
+        for stream in self.streams:
+            try:
+                stream.flush()
+            except (OSError, ValueError):
+                pass
+
+
+def _log_path(paths: Dict[str, Path]) -> Path:
+    stamp = _now().replace(":", "").replace("-", "")
+    return paths["base"] / "logs" / f"{stamp}.log"
+
+
 def cmd_run(args: argparse.Namespace) -> int:
     paths = _paths(Path(args.home) if args.home else None)
     if not _acquire_lock(paths["lock"]):
         print("ALREADY_RUNNING: another scheduled collection holds the lock")
         return EXIT_LOCKED
+    log_path = _log_path(paths)
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    log_stream = log_path.open("w", encoding="utf-8")
+    original_stdout, original_stderr = sys.stdout, sys.stderr
+    sys.stdout = _Tee(original_stdout, log_stream)
+    sys.stderr = _Tee(original_stderr, log_stream)
     record: Dict[str, Any] = {"schema": "contentops.router-schedule/v1",
                               "started_at": _now(), "pid": os.getpid(),
                               "trendradar_home": str(_trendradar_home(args.trendradar_home)),
@@ -297,6 +334,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         record["missed_before_this_run"] = _missed(paths["runs"], args.interval_hours)
     finally:
         record["finished_at"] = _now()
+        record["log"] = str(log_path)
         paths["runs"].mkdir(parents=True, exist_ok=True)
         out = paths["runs"] / f"{record['started_at'].replace(':', '').replace('-', '')}.json"
         out.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n",
@@ -323,6 +361,9 @@ def cmd_run(args: argparse.Namespace) -> int:
             print(f"missed     {missed.get('hours_since_last_success')} h since the last "
                   f"successful run (expected every {missed.get('expected_interval_hours')} h)")
         print(f"receipt    {out}")
+
+    sys.stdout, sys.stderr = original_stdout, original_stderr
+    log_stream.close()
     return status
 
 

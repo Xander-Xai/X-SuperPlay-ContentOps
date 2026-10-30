@@ -1315,3 +1315,14 @@ produce the two files under `script/`, with every claim traceable to the
 brief's `source_artifact_refs`, and stop at the copy review like every other
 producer. It must not call a paid provider on its own, and it must not mark
 itself reviewed.
+
+### Round four — a quality gate, an unattended run, and the dependency ledger, 2026-10-30
+
+| Area | What is now true |
+|---|---|
+| Source quality | `contentops.hotspots.quality` rejects a repository only on two independent signals, keeps the evidence on the record, and passes anything it could not inspect as `UNVERIFIED`. Measured on one 1024 snapshot: 7 → 6 candidates, one fixture removed, **0 false rejections**; the two remaining off-topic-but-real projects are not its business and stay |
+| Precision, stated honestly | automatic gate pass rate 6/7 = 86%, human-labelled precision 4/6 = 67% (wide) and 0/6 (strict). The gate removes fixtures, not bad fit |
+| Regression | future-intelligence: 40 candidates, 0 rejected by the gate. No cross-account change |
+| Unattended run | the scheduler writes a per-run log next to its receipt, survives a `pythonw` launch with no console (`sys.stdout is None`), and a hidden `Start-Process` run was executed end to end |
+| Approval boundary | an automation approval can no longer be handed to the pipeline at all (`AUTOMATION_APPROVAL`), not merely marked |
+| Dependency ledger | of the 91 parent commits, 12 touch a file the router depends on; the actual dependency is **8 paths, +2,051 lines, all additive** |
