@@ -1,0 +1,453 @@
+{
+  "schema_version": 1,
+  "source": "agent-reach/aggregate",
+  "query": "MCP Agent2Agent 工具调用 生产 部署",
+  "retrieved_at": "2026-08-24T16:31:23+00:00",
+  "passed": true,
+  "freshness_verified": true,
+  "verification_method": "live unified Agent Reach-compatible adapter aggregation",
+  "sources": [
+    "twitter",
+    "github",
+    "youtube",
+    "douyin",
+    "xhs",
+    "bilibili",
+    "weibo",
+    "domestic_rss",
+    "rss",
+    "v2ex"
+  ],
+  "source_priority_policy": {
+    "primary_global": [
+      "twitter",
+      "github",
+      "youtube"
+    ],
+    "primary_domestic": [
+      "douyin",
+      "xhs",
+      "bilibili",
+      "weibo"
+    ],
+    "supplementary": [
+      "domestic_rss",
+      "rss",
+      "v2ex"
+    ]
+  },
+  "network": {
+    "proxy_configured": true,
+    "proxy_source": "windows-internet-settings"
+  },
+  "source_health": [
+    {
+      "source": "twitter",
+      "backend": "Agent Reach -> twitter-cli/OpenCLI",
+      "priority_tier": "primary_global",
+      "priority_rank": 1,
+      "status": "ok",
+      "item_count": 15,
+      "error": ""
+    },
+    {
+      "source": "github",
+      "backend": "Agent Reach -> gh CLI",
+      "priority_tier": "primary_global",
+      "priority_rank": 2,
+      "status": "empty",
+      "item_count": 0,
+      "error": "source returned no usable candidates"
+    },
+    {
+      "source": "youtube",
+      "backend": "Agent Reach -> yt-dlp",
+      "priority_tier": "primary_global",
+      "priority_rank": 3,
+      "status": "error",
+      "item_count": 0,
+      "error": "Agent Reach YouTube search returned no video candidates"
+    },
+    {
+      "source": "douyin",
+      "backend": "抖音官方 hotsearch API / 公开网页热榜后备",
+      "priority_tier": "primary_domestic",
+      "priority_rank": 4,
+      "status": "ok",
+      "item_count": 15,
+      "error": ""
+    },
+    {
+      "source": "xhs",
+      "backend": "Agent Reach -> xiaohongshu-mcp/OpenCLI/xhs-cli / 公开 Explore SSR 后备",
+      "priority_tier": "primary_domestic",
+      "priority_rank": 5,
+      "status": "error",
+      "item_count": 0,
+      "error": "opencli: Command '['C:\\\\Users\\\\Administrator\\\\AppData\\\\Roaming\\\\npm\\\\opencli.CMD', 'xiaohongshu', 'search', 'MCP Agent2Agent 工具调用 生产 部署', '-f', 'yaml']' timed out after 12 seconds; xhs: Command '['C:\\\\Users\\\\Administrator\\\\.local\\\\bin\\\\xhs.EXE', 'search', 'MCP Agent2Agent 工具调用 生产 部署', '--sort', 'latest', '--json']' timed out after 8 seconds; xhs: Command '['C:\\\\Users\\\\Administrator\\\\.local\\\\bin\\\\xhs.EXE', 'hot', '--json']' timed out after 6 seconds; public Explore SSR: public Explore page has no SSR state"
+    },
+    {
+      "source": "bilibili",
+      "backend": "Agent Reach -> B站搜索 API",
+      "priority_tier": "primary_domestic",
+      "priority_rank": 6,
+      "status": "ok",
+      "item_count": 15,
+      "error": ""
+    },
+    {
+      "source": "weibo",
+      "backend": "Agent Reach-compatible -> 微博 hot_band",
+      "priority_tier": "primary_domestic",
+      "priority_rank": 7,
+      "status": "ok",
+      "item_count": 15,
+      "error": ""
+    },
+    {
+      "source": "domestic_rss",
+      "backend": "Agent Reach -> RSS adapters",
+      "priority_tier": "supplementary",
+      "priority_rank": 8,
+      "status": "ok",
+      "item_count": 11,
+      "error": ""
+    },
+    {
+      "source": "rss",
+      "backend": "Agent Reach -> RSS adapters",
+      "priority_tier": "supplementary",
+      "priority_rank": 9,
+      "status": "ok",
+      "item_count": 1,
+      "error": ""
+    },
+    {
+      "source": "v2ex",
+      "backend": "Agent Reach -> V2EX public API",
+      "priority_tier": "supplementary",
+      "priority_rank": 10,
+      "status": "ok",
+      "item_count": 10,
+      "error": ""
+    }
+  ],
+  "items": [
+    {
+      "title": "90% 的人不知道 AI 赚钱如此简单！\n\n谁要是跟你说 AI 不能赚钱，你直接把这5个仓库甩在他的脸上！\n\n直接看这 5 个 GitHub 就够了：\n\n1、AI Money Maker Handbook\n https://t.co/F7YkaGJTLl\n这是最重要的 AI 赚钱信息库，整合了 AI 副业、创业案例、赚钱模式和避坑经验，告诉你 AI 变现方法。\n\n2、n8n 自动化工作流\n https://t.co/ayzzarVf17\n自动化平台可以帮你连接 AI、API 和各种工具，快速搭建 agent、内容生产、业务自动化流程，是赚钱提效工具。\n\n3、Remote Job\n https://t.co/XTooMyNMzN\n远程工作资源合集，收录大量远程招聘网站、面试资源和数字游民指南，帮你寻找海外远程机会。\n\n4、Awesome\n https://t.co/rOZH3ylI4s\n如果你是普通人，这个能教你 AI、编程、设计、创业等多个领域，帮你快速找到优质学习资料，帮助你快人一步做出赚钱内容容。\n\n5、Public Datasets\n https://t.co/ZZPOIC7kWr\n包含40多种量化交易策略，90多个有关交易的仓库和软件包，覆盖多个行业领域，适合小白卖工具养家。",
+      "description": "",
+      "source_url": "https://x.com/i/web/status/2091428188224450823",
+      "source_type": "twitter",
+      "published_at": "",
+      "captured_at": "2026-08-24T16:31:23+00:00",
+      "source_priority": 1,
+      "source_priority_tier": "primary_global",
+      "engagement": {
+        "like_count": 0,
+        "retweet_count": 0
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "八仙捞饭好吃到停不下来",
+      "description": "",
+      "source_url": "https://www.douyin.com/search/%E5%85%AB%E4%BB%99%E6%8D%9E%E9%A5%AD%E5%A5%BD%E5%90%83%E5%88%B0%E5%81%9C%E4%B8%8D%E4%B8%8B%E6%9D%A5",
+      "source_type": "douyin",
+      "published_at": "2026-08-24T16:31:23+00:00",
+      "captured_at": "2026-08-24T16:31:23+00:00",
+      "source_priority": 4,
+      "source_priority_tier": "primary_domestic",
+      "engagement": {
+        "hot_rank": 1,
+        "hot_value": 11975292
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "Comfy MCP 本地开源版，MCP+Agent，小白的入门助手，老鸟的修为神器",
+      "description": "转自@ComfyUI官方 \n\n很高兴同大家宣布 Comfy MCP 本地版现已正式发布，并完全开源。\n现在将 Claude、Codex、Cursor 或任何其他 Agent 连上你本地的 ComfyUI，即可用自然语言构建、编辑和运行工作流。Agent 会查看你的 GPU，自动完成模型下载与工作流配置，本地新手也能轻松上手开始使用 ComfyUI。\n\n## 开始使用\n1. 将下面这段粘贴给你的 Agent，让它自动完成本地连接配置：\n「帮我设置本地 Comfy MCP 连接，按照 https://docs",
+      "source_url": "http://www.bilibili.com/video/av117126828394071",
+      "source_type": "bilibili",
+      "published_at": "2026-08-20T08:17:47+00:00",
+      "captured_at": "2026-08-24T16:31:23+00:00",
+      "source_priority": 6,
+      "source_priority_tier": "primary_domestic",
+      "engagement": {
+        "play": 2322,
+        "favorites": 156,
+        "like": 90
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "官方确认帮扶老人遭索赔店主不担责",
+      "description": "民生新闻",
+      "source_url": "https://s.weibo.com/weibo?q=%E5%AE%98%E6%96%B9%E7%A1%AE%E8%AE%A4%E5%B8%AE%E6%89%B6%E8%80%81%E4%BA%BA%E9%81%AD%E7%B4%A2%E8%B5%94%E5%BA%97%E4%B8%BB%E4%B8%8D%E6%8B%85%E8%B4%A3",
+      "source_type": "weibo",
+      "published_at": "2026-08-24T16:31:23+00:00",
+      "captured_at": "2026-08-24T16:31:23+00:00",
+      "source_priority": 7,
+      "source_priority_tier": "primary_domestic",
+      "engagement": {
+        "hot_rank": 1,
+        "hot_value": 2184217
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "Cloudflare WriteGuard 为 MCP 服务器提供了精细化的安全控制",
+      "description": "<div align='right'><a href='https://www.infoq.cn/article/1pa8asW4xOs6y2GYfl8T?utm_source=rss&utm_medium=article'>点击查看原文></a></div>",
+      "source_url": "https://www.infoq.cn/article/1pa8asW4xOs6y2GYfl8T?utm_source=rss&utm_medium=article",
+      "source_type": "domestic_rss",
+      "published_at": "Mon, 24 Aug 2026 09:03:00 GMT",
+      "captured_at": "2026-08-24T16:31:23+00:00",
+      "source_priority": 8,
+      "source_priority_tier": "supplementary",
+      "engagement": {},
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "Nexus: Depth-Adaptive KV-Cache Splicing and Retrieval-Decoupled Tool Routing for Agentic LLMs on Unified Memory",
+      "description": "arXiv:2608.20397v1 Announce Type: new \nAbstract: Agentic large language models (LLMs) on the Model Context Protocol (MCP) re-encode verbose tool schemas every turn, so prefill - quadratic in sequence length - dominates time-to-first-token (TTFT) as the tool registry grows. Nexus's primary lever is to decouple routing from the schema-prefill cost: an INT8 semantic lookaside buffer (SLB) with a calibrated cross-encoder margin gate selects tools by retrieval, and arguments are generated over a compressed textual signature (median 19 tokens) rather than over spliced key/value (KV) cache. This path is depth-independent: routing accuracy stays near 89% as the registry scales to 250 tools - where a concatenate-all-schemas baseline overflows the context window entirely - and it reaches a first-argument token 1.66x sooner than a full-schema re-prefill at a ~80% main-context token saving. As a secondary, bounded lever we transplant a compiled schema KV block directly into the live context. This is fundamentally limited by rotary position embedding (RoPE) phase drift: an anchored splice is output-exact, but off-anchor placement corrupts attention, so beyond a threshold P=256 Nexus repairs the seam with a depth-adaptive suffix redecode that escalates to a full re-prefill. The resulting never-regress property is a guarantee on output fidelity (top-1 agreement, D_KL approx. 0) - not on latency, which can dip to 0.98x before converging to parity - alongside a 1.1-1.7x TTFT speedup at moderate depth that narrows to parity at deep context. Two negative results bound the design: the off-anchor RoPE fidelity boundary, and the failure of a reference-free drift gate to predict drift (Spearman rho = 0.193). All measurements are from one model tuple (Qwen2.5-14B-Instruct Q4_K_M) on Apple-silicon unified memory; the qualitative boundaries generalize, while the quantitative envelope is tuple-specific.",
+      "source_url": "https://arxiv.org/abs/2608.20397",
+      "source_type": "rss",
+      "published_at": "Mon, 24 Aug 2026 00:00:00 -0400",
+      "captured_at": "2026-08-24T16:31:23+00:00",
+      "source_priority": 9,
+      "source_priority_tier": "supplementary",
+      "engagement": {},
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "用小米这款显示器的注意，周六晚上烧了.",
+      "description": "",
+      "source_url": "https://www.v2ex.com/t/1236662",
+      "source_type": "v2ex",
+      "published_at": "1787532095",
+      "captured_at": "2026-08-24T16:31:23+00:00",
+      "source_priority": 10,
+      "source_priority_tier": "supplementary",
+      "engagement": {
+        "replies": 177
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "https://t.co/7bPLnuZH0V",
+      "description": "",
+      "source_url": "https://x.com/i/web/status/2051852464400261429",
+      "source_type": "twitter",
+      "published_at": "",
+      "captured_at": "2026-08-24T16:31:23+00:00",
+      "source_priority": 1,
+      "source_priority_tier": "primary_global",
+      "engagement": {
+        "like_count": 0,
+        "retweet_count": 0
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "那些我们怀念的童年经典零食",
+      "description": "",
+      "source_url": "https://www.douyin.com/search/%E9%82%A3%E4%BA%9B%E6%88%91%E4%BB%AC%E6%80%80%E5%BF%B5%E7%9A%84%E7%AB%A5%E5%B9%B4%E7%BB%8F%E5%85%B8%E9%9B%B6%E9%A3%9F",
+      "source_type": "douyin",
+      "published_at": "2026-08-24T16:31:23+00:00",
+      "captured_at": "2026-08-24T16:31:23+00:00",
+      "source_priority": 4,
+      "source_priority_tier": "primary_domestic",
+      "engagement": {
+        "hot_rank": 2,
+        "hot_value": 11787992
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "Pi Agent 扩展实战系列教程之MCP：使用 Pi MCP Adapter 接入 MCP Server",
+      "description": "本期是「Pi Agent 扩展实战系列教程」，带大家安装并使用 Pi MCP Adapter，让 Pi Agent 能够接入 MCP Server。\n视频内容包括：\n安装并验证 Pi MCP Adapter\n配置全局 MCP Server\n配置项目级 MCP Server\nMCP 配置文件的常见注意事项\n实战调用时间查询和 filesystem 服务\n安装命令：pi install npm:pi-mcp-adapter\n项目地址：https://github.com/nicobailon/pi-mcp-a",
+      "source_url": "http://www.bilibili.com/video/av117018044925153",
+      "source_type": "bilibili",
+      "published_at": "2026-08-01T03:11:48+00:00",
+      "captured_at": "2026-08-24T16:31:23+00:00",
+      "source_priority": 6,
+      "source_priority_tier": "primary_domestic",
+      "engagement": {
+        "play": 2252,
+        "favorites": 102,
+        "like": 33
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "湖北长阳通报韩红基金会救护车",
+      "description": "民生新闻",
+      "source_url": "https://s.weibo.com/weibo?q=%E6%B9%96%E5%8C%97%E9%95%BF%E9%98%B3%E9%80%9A%E6%8A%A5%E9%9F%A9%E7%BA%A2%E5%9F%BA%E9%87%91%E4%BC%9A%E6%95%91%E6%8A%A4%E8%BD%A6",
+      "source_type": "weibo",
+      "published_at": "2026-08-24T16:31:23+00:00",
+      "captured_at": "2026-08-24T16:31:23+00:00",
+      "source_priority": 7,
+      "source_priority_tier": "primary_domestic",
+      "engagement": {
+        "hot_rank": 2,
+        "hot_value": 790445
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "亚马逊云科技开源 Dogwood：给 AI 智能体的工具调用立规矩",
+      "description": "<div align='right'><a href='https://www.infoq.cn/article/cwj5Ikvhqu5mKH22zKsO?utm_source=rss&utm_medium=article'>点击查看原文></a></div>",
+      "source_url": "https://www.infoq.cn/article/cwj5Ikvhqu5mKH22zKsO?utm_source=rss&utm_medium=article",
+      "source_type": "domestic_rss",
+      "published_at": "Sun, 23 Aug 2026 17:00:00 GMT",
+      "captured_at": "2026-08-24T16:31:23+00:00",
+      "source_priority": 8,
+      "source_priority_tier": "supplementary",
+      "engagement": {},
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "周末回了躺老家，两件小事打破了县城低价养老的幻想",
+      "description": "",
+      "source_url": "https://www.v2ex.com/t/1236691",
+      "source_type": "v2ex",
+      "published_at": "1787538609",
+      "captured_at": "2026-08-24T16:31:23+00:00",
+      "source_priority": 10,
+      "source_priority_tier": "supplementary",
+      "engagement": {
+        "replies": 172
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "简直就是省Token焚决！！！\n\nVercel Next.js团队的老哥，烧了大约60B tokens，总结出一份AGENTS.md，核心就8条规则。\n\n60B tokens什么概念？大概六位数美元。\n\n这8条规则的本质就一句话：让你的AI编程Agent别像个实习生什么都想自己造，要像个干了十年的老油条一样写代码。\n\n直接上规则：\n\n1. 不保留向后兼容。过时的直接删，别加兼容层、别写migration、别留fallback。\n\n2. 选能满足当前需求的最简单实现。不要预防性抽象，不要多此一举的配置层。\n\n3. 系统分层长。先跑通一个最小的端到端版本，再往上加东西。绝不为了未完成的复杂度拆掉能跑的东西。\n\n4. 组件保持模块化，关注点分离。\n\n5. 优先用成熟的、有人维护的库。没有明确理由别自己重写。\n\n6. 先翻项目里已有的依赖能做什么，再考虑加新包或自己写。别上来就假设库里没有。\n\n7. 架构决策往长了做。不接受\"先这样以后再换\"的临时方案。\n\n8. 先看成熟产品怎么解决同一个问题，用已验证的模式，别从零发明。\n\n就这8条，丢进你项目根目录的AGENTS.md里，Cursor、Claude Code、Codex、Windsurf全会自动读。\n\n为什么这能省token？因为AI写代码最大的浪费其实不是写错，是重复写多。\n\n它给你引三个依赖写五个抽象层来解决一个标准库十行就能搞定的事，你让它改，它再给你写两百行。\n\n这8条规则就是在它动笔之前先把它摁住：能不写的不写，能复用的复用，能简单的别复杂。\n\n代码短了，返工少了，token自然就省了。\n\n之前推荐过的Ponytail那个插件，干的是同一件事，只不过它是在运行时强制检查，这个是在AGENTS.md里从源头约束，两个一起用，简直效果拔群。\n\n但作者自己加了个非常重要的警告：\n\n这玩意儿只适合side projects，生产环境慎用。\n\n他亲口说的，\"不保留向后兼容\"那条曾经让Agent差点删了生产数据库的表，差点丢了2000美元的数据。生产环境你得自己改，至少把第一条删了或者改温和点。\n\n所以如果你在做side project、做内部工具、做原型，把这8条抄进AGENTS.md，你会发现AI写出来的代码突然像个人了。\n\n如果你在生产环境用，把第一条和第七条之间的度自己把握好，别让AI把你库表删了。\n\n省token的方法有很多种，换便宜模型是一种，写好prompt是一种，但最有效的，是在你项目根目录放一个文件，告诉AI：\n\n别给我整花活，写最少的能跑的代码。",
+      "description": "",
+      "source_url": "https://x.com/i/web/status/2084522269745820010",
+      "source_type": "twitter",
+      "published_at": "",
+      "captured_at": "2026-08-24T16:31:23+00:00",
+      "source_priority": 1,
+      "source_priority_tier": "primary_global",
+      "engagement": {
+        "like_count": 0,
+        "retweet_count": 0
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "文化纳凉拉动文旅消费",
+      "description": "",
+      "source_url": "https://www.douyin.com/search/%E6%96%87%E5%8C%96%E7%BA%B3%E5%87%89%E6%8B%89%E5%8A%A8%E6%96%87%E6%97%85%E6%B6%88%E8%B4%B9",
+      "source_type": "douyin",
+      "published_at": "2026-08-24T16:31:23+00:00",
+      "captured_at": "2026-08-24T16:31:23+00:00",
+      "source_priority": 4,
+      "source_priority_tier": "primary_domestic",
+      "engagement": {
+        "hot_rank": 3,
+        "hot_value": 11645199
+      },
+      "status": "verified-live-candidate"
+    }
+  ],
+  "warnings": [
+    "这是来源聚合候选，不代表所有平台热度相同；正式文案仍需完成事实与账号相关性核验。",
+    "部分主源不可用；未用补充来源替代，详见 required_source_failures/source_tier_health。"
+  ],
+  "required_sources": [
+    "twitter",
+    "github",
+    "youtube",
+    "douyin",
+    "xhs",
+    "bilibili",
+    "weibo"
+  ],
+  "required_source_failures": [
+    {
+      "source": "github",
+      "status": "empty",
+      "error": "source returned no usable candidates"
+    },
+    {
+      "source": "youtube",
+      "status": "error",
+      "error": "Agent Reach YouTube search returned no video candidates"
+    },
+    {
+      "source": "xhs",
+      "status": "error",
+      "error": "opencli: Command '['C:\\\\Users\\\\Administrator\\\\AppData\\\\Roaming\\\\npm\\\\opencli.CMD', 'xiaohongshu', 'search', 'MCP Agent2Agent 工具调用 生产 部署', '-f', 'yaml']' timed out after 12 seconds; xhs: Command '['C:\\\\Users\\\\Administrator\\\\.local\\\\bin\\\\xhs.EXE', 'search', 'MCP Agent2Agent 工具调用 生产 部署', '--sort', 'latest', '--json']' timed out after 8 seconds; xhs: Command '['C:\\\\Users\\\\Administrator\\\\.local\\\\bin\\\\xhs.EXE', 'hot', '--json']' timed out after 6 seconds; public Explore SSR: public Explore page has no SSR state"
+    }
+  ],
+  "required_sources_ok": false,
+  "source_tier_health": {
+    "primary_global": {
+      "sources": [
+        "twitter",
+        "github",
+        "youtube"
+      ],
+      "ok_sources": [
+        "twitter"
+      ],
+      "failed_sources": [
+        {
+          "source": "github",
+          "status": "empty",
+          "error": "source returned no usable candidates"
+        },
+        {
+          "source": "youtube",
+          "status": "error",
+          "error": "Agent Reach YouTube search returned no video candidates"
+        }
+      ],
+      "complete": false
+    },
+    "primary_domestic": {
+      "sources": [
+        "douyin",
+        "xhs",
+        "bilibili",
+        "weibo"
+      ],
+      "ok_sources": [
+        "douyin",
+        "bilibili",
+        "weibo"
+      ],
+      "failed_sources": [
+        {
+          "source": "xhs",
+          "status": "error",
+          "error": "opencli: Command '['C:\\\\Users\\\\Administrator\\\\AppData\\\\Roaming\\\\npm\\\\opencli.CMD', 'xiaohongshu', 'search', 'MCP Agent2Agent 工具调用 生产 部署', '-f', 'yaml']' timed out after 12 seconds; xhs: Command '['C:\\\\Users\\\\Administrator\\\\.local\\\\bin\\\\xhs.EXE', 'search', 'MCP Agent2Agent 工具调用 生产 部署', '--sort', 'latest', '--json']' timed out after 8 seconds; xhs: Command '['C:\\\\Users\\\\Administrator\\\\.local\\\\bin\\\\xhs.EXE', 'hot', '--json']' timed out after 6 seconds; public Explore SSR: public Explore page has no SSR state"
+        }
+      ],
+      "complete": false
+    },
+    "supplementary": {
+      "sources": [
+        "domestic_rss",
+        "rss",
+        "v2ex"
+      ],
+      "ok_sources": [
+        "domestic_rss",
+        "rss",
+        "v2ex"
+      ],
+      "failed_sources": [],
+      "complete": true
+    }
+  },
+  "collection_gate": "passed-with-primary-source-warnings",
+  "agent_reach": {
+    "adapter": "agent-reach",
+    "root": null,
+    "executable": "D:\\Projects\\codex\\Agent-Reach\\.venv\\Scripts\\agent-reach.EXE",
+    "available": true,
+    "network_verified": false,
+    "doctor_run": false
+  }
+}

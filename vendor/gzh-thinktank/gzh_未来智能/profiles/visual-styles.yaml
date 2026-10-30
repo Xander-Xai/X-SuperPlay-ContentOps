@@ -1,0 +1,113 @@
+schema_version: 1
+description: "本独立工作流的公众号视觉系统与图片验收契约。图片先有视觉简报，再生成候选，最后由人工确认。"
+# 动态配额：正文每多少汉字配 1 张正文插图。按字数计算后，仍受账号 body_visual_count
+# 与全局 max_body_visual_count 夹逼，避免长文图过密、短文图过稀。
+# 参考文献：新榜 2024 公众号全样本，平均 1:207；严肃/教程类 1:516。
+body_visual_policy:
+  words_per_visual: 600
+  min_body_visuals: 2
+  max_body_visual_count: 8
+default_body_visual_count: 5
+max_body_visual_count: 8
+mobile_preview_width: 390
+# 单一来源的设计 token：所有脚本（提示词配色、SVG 模板、降级海报、排版）
+# 都从这里读取，禁止在脚本里再硬编码一套颜色（RC3）。
+design_tokens_default:
+  background: "#F4F0E8"
+  surface: "#FFFCF7"
+  ink: "#17324D"
+  muted: "#5E6872"
+  vermilion: "#B24A2B"
+  signal: "#557A96"
+  code_background: "#F1F4F5"
+  code_border: "#C9D5DD"
+  code_keyword: "#A23E25"
+  code_string: "#2F6F7E"
+  code_number: "#8A5A44"
+  code_comment: "#75808A"
+  code_function: "#8C4A2D"
+  font_stack: "'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif"
+  mono_stack: "'JetBrains Mono', 'SFMono-Regular', Consolas, monospace"
+accounts:
+  thinktank:
+    display_name: X超玩•未来智能
+    internal_account_name: X超玩•未来智能
+    public_brand: X超玩•未来智能
+    formatter_theme: thinktank-atlas
+    image_theme: thinktank-atlas
+    art_direction: "Build 工程手记：纸白底、墨蓝正文、朱砂色锚点和细线结构；强调真实问题、证据、步骤、限制和可复用项目资产。"
+    cover_ratio: "2.35:1"
+    preferred_visuals: [architecture, flow, comparison, checklist]
+    body_visual_count: 6
+    alt_prefix: "X超玩•未来智能视觉"
+    preferred_generation_provider: agnes
+    preferred_generation_model: agnes-image-2.1-flash
+    deterministic_visuals: [architecture, flow, qkv, shape, attention, numeric, multihead, kv-cache, checklist, code]
+    formula_renderer: katex-html-chrome-tight-v3
+    technical_visual_backends:
+      qkv: katex-html-composite
+      shape: katex-html-composite
+      attention: katex-html-composite
+      numeric: katex-html-composite
+      multihead: beautiful-mermaid
+      kv-cache: deterministic-svg
+      checklist: deterministic-infographic
+    design_tokens:
+      background: "#F4F0E8"
+      surface: "#FFFCF7"
+      ink: "#17324D"
+      muted: "#5E6872"
+      vermilion: "#B24A2B"
+      signal: "#557A96"
+      code_background: "#F1F4F5"
+      code_border: "#C9D5DD"
+      code_keyword: "#A23E25"
+      code_string: "#2F6F7E"
+      code_number: "#8A5A44"
+      code_comment: "#75808A"
+      code_function: "#8C4A2D"
+      font_stack: "'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif"
+      mono_stack: "'JetBrains Mono', 'SFMono-Regular', Consolas, monospace"
+    cta:
+      primary: "关注 X超玩•未来智能，留言你的真实项目问题或部署场景，获取本期项目的可复现清单与验收模板"
+      secondary: "请说明当前卡点、已有方案和希望上线的结果"
+      lead_magnet: "本期项目的可复现清单、部署步骤与验收模板"
+      reply_keyword: ""
+    max_consecutive_generated_cards: 2
+quality:
+  required_formats: [png, jpg, jpeg, webp]
+  min_width: 600
+  min_height: 300
+  max_duplicate_ratio: 0.85
+  require_alt_text: true
+  require_mobile_review: true
+  require_cover_selection_approval: true
+
+# visual-taste-review-v1 is intentionally warning-first until the calibration
+# set is approved. It complements, but does not replace, semantic/geometry QA.
+visual_taste:
+  contract: visual-taste-policy-v1
+  policy_file: profiles/visual-taste-policy.yaml
+  review_mode: warning-first
+  required_sidecar: art-direction.yaml
+  receipt: visual-taste-review.json
+  contract_audit_receipt: visual-contract-audit.json
+  min_layout_families: 2
+  min_backend_families: 2
+  max_same_layout_run: 2
+  require_human_or_multimodal_review: true
+
+# visual-consistency-v1: 正文画布背景是文章级不变量；卡片表面可以分层，
+# 封面保持独立品牌策略。几何图另由 visual-contract 的
+# geometry_required + geometry-contract-v1 审核，不能用颜色一致性替代拓扑正确性。
+visual_consistency:
+  contract: background-contract-v1
+  body_canvas_token: background
+  body_canvas_hex: "#F4F0E8"
+  body_surface_token: surface
+  body_surface_hex: "#FFFCF7"
+  strict_body_canvas: true
+  cover_policy: brand-specific
+  geometry_contract: geometry-contract-v1
+  line_clearance_px: 6
+  mobile_preview_width: 390

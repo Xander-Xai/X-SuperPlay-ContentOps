@@ -1111,7 +1111,7 @@ FAIL（`account_composition` 73/27/0 对 70/25/5），所以派生步骤以
 | 轨道 | 位置 | 状态 |
 |---|---|---|
 | 视频（抖音 / B站 / 小红书 / 视频号） | `src/contentops`、`scripts/` | 生产者与门禁齐全；母片仍须先过自己的 QC 才允许派生 |
-| 公众号 | `vendor/gzh-thinktank/` | 逐字节导入：679 个文件、8 MB、十阶段门禁、自铸收据 |
+| 公众号 | `vendor/gzh-thinktank/` | 逐字节导入：667 个文件、8 MB、十阶段门禁、自铸收据；`python scripts/account_route.py projects/gzh-thinktank` 给出链路 |
 | X | — | 未开始：没有账号 DNA，也没有发布能力 |
 
 **公众号为什么改为入库而不是留外部。** 那个工作副本的历史与 GitHub origin **分叉**
@@ -1120,11 +1120,13 @@ FAIL（`account_composition` 73/27/0 对 70/25/5），所以派生步骤以
 导入并更新摘要。
 
 - 排除项：`node_modules`（32 MB）与 excalidraw 包里的 `.venv`（可重建）、
-  `.aws-article/config.yaml`（凭据）、账号的 `production/` 产物。完整的原始仓库
-  （含分叉时没上 GitHub 的全部提交）是 `D:\Archives\repos\gzh-thinktank\` 下的
-  15 MB git bundle。
-- `scripts/gzh_pin.py` 两样都校验：bundle 按摘要、vendored 树按 679 个文件的内容
-  摘要。`tests/test_gzh_pin.py` 锁住拒绝行为。
+  `.aws-article/config.yaml`（凭据）、账号的 `production/` 产物。完整原始仓库曾以
+  15 MB git bundle 形式校验留存，随后于 2026-10-30 与工作副本、远端一并退役
+  （两个路径均已不存在，仓库 URL 返回 404）。现在 `vendor/gzh-thinktank/` 是唯一
+  副本，`MANIFEST.md` 记录了退役的确切代价。
+- `scripts/gzh_pin.py` 按 667 个文件的内容摘要校验 vendored 树，并先把 CRLF 折成
+  LF，使会在检出时改写行尾的平台无法改变结果。bundle 已退役；若仍存在，仍须与摘要
+  一致。`tests/test_gzh_pin.py` 锁住拒绝行为。
 - 工作流仍要求作品目录在它自己的根之外，因此文章落在 `projects/gzh-thinktank/`
   （通过 `GZH_ARTIFACT_ROOT`），手建文章目录仍会被拒绝。
 

@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "contract": "vision-review-v1",
+  "status": "passed",
+  "reviewer_mode": "native",
+  "reviewer": "codex-native-multimodal",
+  "capability_evidence": "native-image-input:view_image inspected cover pixels, typography, contrast, and composition",
+  "provider_trace": "codex.view_image.cover.native.v1",
+  "reviewed_at": "2026-08-24T19:39:43.102555+00:00",
+  "source_semantic_sha256": "ee0ebcd11f8b05934a6bb135d4e1594228da7b1869d51eccafc73df4b91ffbfe",
+  "reviews": [
+    {
+      "id": "cover",
+      "status": "passed",
+      "reviewer_mode": "native",
+      "reviewer": "codex-native-multimodal",
+      "signed_by": "",
+      "approval_event_id": "",
+      "capability_evidence": "native-image-input:view_image inspected cover pixels, typography, contrast, and composition",
+      "provider_trace": "codex.view_image.cover.native.v1",
+      "input_sha256": "226ccb6bbab38f5570a2f265e256a5c8f4e5100a1eebfcdc8f01a466127cf49b",
+      "image_sha256": "226ccb6bbab38f5570a2f265e256a5c8f4e5100a1eebfcdc8f01a466127cf49b",
+      "reader_job": "首屏用可信英文主题文案清晰说明文章主题：A PRACTICAL ENGINEERING MAP；背景只承担氛围与视觉隐喻。",
+      "visible_claims": [],
+      "defects": [],
+      "contrast_status": "passed",
+      "legibility_status": "passed",
+      "reviewed_at": "2026-08-24T19:39:43.101738+00:00"
+    }
+  ],
+  "deterministic_receipts": [
+    {
+      "id": "body-01",
+      "status": "passed",
+      "image_sha256": "b7c4d77df50bc14258129c3af5afb4e21f3e1a40d5209de5898e913bca2ac6ab",
+      "editable_source": "imgs\\diagram-sources\\body-01.svg",
+      "evidence": [
+        "visual_artifact_qa",
+        "visual_geometry_qa",
+        "visual_aesthetic_qa"
+      ],
+      "reviewed_at": "2026-08-24T22:56:19.467369+00:00"
+    },
+    {
+      "id": "body-02",
+      "status": "passed",
+      "image_sha256": "993ea5e94ec81d058fbe81457a6ac03dcec582979b9687aeea068e01d14b55a4",
+      "editable_source": "imgs\\diagram-sources\\body-02.svg",
+      "evidence": [
+        "visual_artifact_qa",
+        "visual_geometry_qa",
+        "visual_aesthetic_qa"
+      ],
+      "reviewed_at": "2026-08-24T22:56:19.467657+00:00"
+    },
+    {
+      "id": "body-03",
+      "status": "passed",
+      "image_sha256": "bf4f4fdaecaa9694a91aa54d9ff5d1be7909001247dd4fb1c0644ea75a25f625",
+      "editable_source": "imgs\\diagram-sources\\body-03.html",
+      "evidence": [
+        "visual_artifact_qa",
+        "visual_geometry_qa",
+        "visual_aesthetic_qa"
+      ],
+      "reviewed_at": "2026-08-24T22:56:19.467792+00:00"
+    },
+    {
+      "id": "body-04",
+      "status": "passed",
+      "image_sha256": "99ebe1cfa351463c0bdfb6687acacc7e557d007ef8c36f24f882fc7604340dfe",
+      "editable_source": "imgs\\diagram-sources\\body-04.svg",
+      "evidence": [
+        "visual_artifact_qa",
+        "visual_geometry_qa",
+        "visual_aesthetic_qa"
+      ],
+      "reviewed_at": "2026-08-24T22:56:19.467971+00:00"
+    },
+    {
+      "id": "body-05",
+      "status": "passed",
+      "image_sha256": "6c6d7617be7f7151e477011fb26393633e1a11a6f1b73a9a65b80b522723439e",
+      "editable_source": "imgs\\diagram-sources\\body-05.svg",
+      "evidence": [
+        "visual_artifact_qa",
+        "visual_geometry_qa",
+        "visual_aesthetic_qa"
+      ],
+      "reviewed_at": "2026-08-24T22:56:19.468136+00:00"
+    }
+  ],
+  "rebound_at": "2026-08-24T22:56:19.468529+00:00",
+  "rebind_reason": "deterministic SVG assets use source/raster, geometry and aesthetic QA; this receipt retains external-pixel assets only"
+}

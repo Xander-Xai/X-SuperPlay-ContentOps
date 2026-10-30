@@ -223,6 +223,12 @@ jobs:
       - name: Run skill-route policy tests
         run: python tests/test_skill_route_policy.py
 
+      # Every project track must be routable, not just Easel. The vendored
+      # 公众号 catalog is checked here; the test skips itself when the vendor
+      # directory is absent.
+      - name: Run skill-route catalog tests
+        run: python tests/test_skill_route_catalogs.py
+
       # The OpenClaw bridge: envelope parsing among ANSI logs, OEM-codepage
       # decoding, a receipt on every failure path, and no absolute paths in a
       # committed receipt. Route-resolution tests skip without the Easel runtime.

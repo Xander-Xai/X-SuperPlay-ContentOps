@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "contract": "topic-evidence-isolation-v1",
+  "verifier": "topic_evidence_isolation.py",
+  "verifier_version": "1.0.0",
+  "status": "blocked",
+  "audited_at": "2026-08-24T19:34:05.818178+00:00",
+  "topic_binding": {
+    "contract": "topic-evidence-binding-v1",
+    "topic_contract_sha256": "b25d8bb11f2855e41f193fe510d765c8977e474503acf535ea35835c23b5c201",
+    "topic_fingerprint": "14ae65fd25730a6608cef99d88d754bc50978434baa3496ca7c5fb98052c124e",
+    "canonical_topic": "",
+    "topic_terms": [],
+    "bound_at": "2026-08-24T19:34:05.817914+00:00"
+  },
+  "plan_topic_binding": {},
+  "source_ids": [],
+  "used_source_ids": [],
+  "matched_source_ids": [],
+  "errors": [
+    "缺少有效 topic-contract.yaml；证据不能在无主题合同的情况下复用",
+    "缺少 evidence-plan.json；无法校验主题绑定",
+    "evidence-plan.json 缺少 topic_binding；请运行 source_evidence.py bind",
+    "主题绑定 contract 与当前 topic-contract 不一致；必须重新初始化证据计划",
+    "主题绑定 topic_contract_sha256 与当前 topic-contract 不一致；必须重新初始化证据计划",
+    "主题绑定 topic_fingerprint 与当前 topic-contract 不一致；必须重新初始化证据计划",
+    "证据计划没有正文使用的来源"
+  ]
+}

@@ -1,0 +1,1 @@
+Dogwood decisions can reason over accumulated event history and temporal expressions. Its authorization model is default-deny: a request is allowed only when a permit matches and no forbid overrides it.

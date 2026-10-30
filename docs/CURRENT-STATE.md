@@ -1151,7 +1151,7 @@ of one track plus an external dependency that was about to disappear.
 | Track | Where | State |
 |---|---|---|
 | Video (Douyin / Bilibili / Xiaohongshu / 视频号) | `src/contentops`, `scripts/` | producers and gates exist; the master still has to pass its own QC before variants are derived |
-| 公众号 (WeChat article) | `vendor/gzh-thinktank/` | imported verbatim: 679 files, 8 MB, ten ordered stages, its own receipts |
+| 公众号 (WeChat article) | `vendor/gzh-thinktank/` | imported verbatim: 667 files, 8 MB, ten ordered stages, its own receipts; `python scripts/account_route.py projects/gzh-thinktank` prints its chain |
 | X | — | not started: no account DNA and no publisher |
 
 **Why the 公众号 workflow is vendored rather than external.** Its checkout's history
@@ -1162,10 +1162,14 @@ unmodified; a change means a new import with a new digest.
 
 - Excluded: `node_modules` (32 MB) and the excalidraw pack's `.venv` (regenerable),
   `.aws-article/config.yaml` (credentials), and the account's `production/` artifacts.
-  The complete original, including every commit the divergence left off GitHub, is a
-  15 MB git bundle under `D:\Archives\repos\gzh-thinktank\`.
-- `scripts/gzh_pin.py` verifies both: the bundle by digest and the vendored tree by a
-  content digest over 679 files. `tests/test_gzh_pin.py` pins the refusals.
+  The complete original was verified as a 15 MB git bundle, then retired with the
+  checkout and its remote on 2026-10-30 (both paths absent, the repository URL returns
+  404). `vendor/gzh-thinktank/` is now the only copy, and its `MANIFEST.md` records
+  exactly what retirement cost.
+- `scripts/gzh_pin.py` verifies the vendored tree by a content digest over 667
+  files, with CRLF folded to LF so a platform that rewrites line endings on
+  checkout cannot change the result. The bundle is retired; one that is still
+  present must match its digest. `tests/test_gzh_pin.py` pins the refusals.
 - The workflow keeps its workspace outside its own root, so articles live at
   `projects/gzh-thinktank/` through `GZH_ARTIFACT_ROOT`, and it still refuses a
   hand-made article directory.

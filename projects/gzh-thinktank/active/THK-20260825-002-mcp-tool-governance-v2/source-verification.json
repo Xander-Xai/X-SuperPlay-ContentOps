@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "contract": "source-verification-v1",
+  "verifier": "verify_sources.py",
+  "verifier_version": "1.2.0",
+  "mode": "offline-import",
+  "verified_at": "2026-08-24T18:21:43.136789+00:00",
+  "sources": [
+    {
+      "id": "mcp-spec-20260728",
+      "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/docs/specification/2026-07-28/changelog.mdx",
+      "url_normalized": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/docs/specification/2026-07-28/changelog.mdx",
+      "status": "passed",
+      "http_status": 200,
+      "content_sha256": "246101bcf7d66aad38b6831ae3c8bac34093ef6f2a7f869fe50fd04953f13e8a",
+      "snapshot": "evidence/mcp-spec-20260728-excerpt.txt",
+      "snapshot_sha256": "246101bcf7d66aad38b6831ae3c8bac34093ef6f2a7f869fe50fd04953f13e8a",
+      "fetched_at": "2026-08-24T18:21:43.134978+00:00"
+    },
+    {
+      "id": "mcp-authorization-20260728",
+      "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/docs/specification/2026-07-28/basic/authorization/index.mdx",
+      "url_normalized": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/docs/specification/2026-07-28/basic/authorization/index.mdx",
+      "status": "passed",
+      "http_status": 200,
+      "content_sha256": "51317fa07863e65a9eb952390ffd2ee1216635ca6519f3d7f398890bc2d555a1",
+      "snapshot": "evidence/mcp-authorization-excerpt.txt",
+      "snapshot_sha256": "51317fa07863e65a9eb952390ffd2ee1216635ca6519f3d7f398890bc2d555a1",
+      "fetched_at": "2026-08-25T05:00:00+08:00"
+    },
+    {
+      "id": "mcp-release-mrtr-20260728",
+      "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/blog/content/posts/2026-07-28-spec-ga/index.md",
+      "url_normalized": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/blog/content/posts/2026-07-28-spec-ga/index.md",
+      "status": "passed",
+      "http_status": 200,
+      "content_sha256": "cebcb47e20edf5889df0bda404da2f10ff2c104be66c64a8439558af1c785e6f",
+      "snapshot": "evidence/mcp-release-mrtr-excerpt.txt",
+      "snapshot_sha256": "cebcb47e20edf5889df0bda404da2f10ff2c104be66c64a8439558af1c785e6f",
+      "fetched_at": "2026-08-25T05:00:00+08:00"
+    },
+    {
+      "id": "mcp-schema-clientinfo-20260728",
+      "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/schema/2026-07-28/schema.ts",
+      "url_normalized": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/schema/2026-07-28/schema.ts",
+      "status": "passed",
+      "http_status": 200,
+      "content_sha256": "f78cddd1fc438770253f6e583ad86cca4d56b4bc5b55fc1e3341694f73b25c69",
+      "snapshot": "evidence/mcp-schema-clientinfo-excerpt.txt",
+      "snapshot_sha256": "f78cddd1fc438770253f6e583ad86cca4d56b4bc5b55fc1e3341694f73b25c69",
+      "fetched_at": "2026-08-25T06:35:00+08:00"
+    },
+    {
+      "id": "mcp-streamable-http-headers-20260728",
+      "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/docs/specification/2026-07-28/basic/transports/streamable-http.mdx",
+      "url_normalized": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/docs/specification/2026-07-28/basic/transports/streamable-http.mdx",
+      "status": "passed",
+      "http_status": 200,
+      "content_sha256": "d2ac75c2e5a659bc1b832f614d5b840a0e2991d4a76f63e150ed727c9d51577e",
+      "snapshot": "evidence/mcp-streamable-http-headers-excerpt.txt",
+      "snapshot_sha256": "d2ac75c2e5a659bc1b832f614d5b840a0e2991d4a76f63e150ed727c9d51577e",
+      "fetched_at": "2026-08-25T06:35:00+08:00"
+    },
+    {
+      "id": "dogwood-guide",
+      "url": "https://github.com/dogwood-policy/dogwood/blob/main/dogwood-docs/guide/00-introduction.md",
+      "url_normalized": "https://github.com/dogwood-policy/dogwood/blob/main/dogwood-docs/guide/00-introduction.md",
+      "status": "passed",
+      "http_status": 200,
+      "content_sha256": "f2be92d2be84c5c3d129c0f5e491711af1e5b40924e193f67bea7feb7e092796",
+      "snapshot": "source-snapshots/dogwood-guide.raw",
+      "snapshot_sha256": "f2be92d2be84c5c3d129c0f5e491711af1e5b40924e193f67bea7feb7e092796",
+      "fetched_at": "2026-08-24T18:21:43.135761+00:00"
+    },
+    {
+      "id": "dogwood-readme",
+      "url": "https://github.com/dogwood-policy/dogwood/blob/main/README.md",
+      "url_normalized": "https://github.com/dogwood-policy/dogwood/blob/main/README.md",
+      "status": "passed",
+      "http_status": 200,
+      "content_sha256": "1b23936dc8f3e86a96c6dbf557b20ae4555a799541835e59ed9dfe86f6f11dbe",
+      "snapshot": "evidence/dogwood-readme-production-excerpt.txt",
+      "snapshot_sha256": "1b23936dc8f3e86a96c6dbf557b20ae4555a799541835e59ed9dfe86f6f11dbe",
+      "fetched_at": "2026-08-25T05:00:00+08:00"
+    },
+    {
+      "id": "anthropic-claude-code-mcp-permissions",
+      "url": "https://code.claude.com/docs/en/cli-usage",
+      "url_normalized": "https://code.claude.com/docs/en/cli-usage",
+      "status": "passed",
+      "http_status": 200,
+      "content_sha256": "177c26455accdbad4657160710d27f7488669009a5701b855daf962e5276a825",
+      "snapshot": "evidence/anthropic-claude-code-mcp-permissions-excerpt.txt",
+      "snapshot_sha256": "177c26455accdbad4657160710d27f7488669009a5701b855daf962e5276a825",
+      "fetched_at": "2026-08-25T05:00:00+08:00"
+    }
+  ]
+}

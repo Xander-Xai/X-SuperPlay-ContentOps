@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "contract": "workspace-index-v1",
+  "workspaces": [
+    {
+      "workspace_id": "THK-20260825-002",
+      "account_id": "thinktank",
+      "title": "MCP工具调用之后，谁来管Agent的下一步？",
+      "slug": "mcp-tool-governance-v2",
+      "lifecycle": "active",
+      "relative_path": "active/THK-20260825-002-mcp-tool-governance-v2",
+      "created_at": "2026-08-25T02:16:24.227622+08:00"
+    }
+  ]
+}

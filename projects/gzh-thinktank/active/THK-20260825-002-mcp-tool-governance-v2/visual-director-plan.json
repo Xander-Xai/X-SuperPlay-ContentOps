@@ -1,0 +1,950 @@
+{
+  "schema_version": 1,
+  "contract": "visual-director-v1",
+  "status": "ready",
+  "account": "thinktank",
+  "title": "MCP工具调用之后，谁来管Agent的下一步？",
+  "visual_direction": {
+    "family": "thinktank-atlas",
+    "art_direction": "Build 工程手记：纸白底、墨蓝正文、朱砂色锚点和细线结构；强调真实问题、证据、步骤、限制和可复用项目资产。",
+    "safe_area": "关键主体和信息位于画布 10% 内边距；公众号标题由 HTML 后置叠加",
+    "source_policy": "证据素材优先；确定性图优先；Agnes 仅用于 illustrative 视觉增强",
+    "rights_policy": "生成图标记 illustrative；不冒充事实证据；人工复核后方可发布",
+    "anti_fatigue": {
+      "max_consecutive_generated": 2,
+      "same_continuity_group": true,
+      "prefer_different_composition": true
+    }
+  },
+  "records": [
+    {
+      "id": "cover",
+      "asset": "imgs/cover.png",
+      "section": "封面",
+      "kind": "cover",
+      "viewer_job": "首屏用可信英文主题文案清晰说明文章主题：A PRACTICAL ENGINEERING MAP；背景只承担氛围与视觉隐喻。",
+      "fallback": "text_poster.py",
+      "visual_owner": "illustration",
+      "generation_mode": "agnes",
+      "source_strategy": "generated-illustrative",
+      "rights_status": "pending-human-review",
+      "claim_ids": [],
+      "continuity_group": "thinktank-editorial-visual-system",
+      "safe_area": "关键主体和信息位于画布 10% 内边距；公众号标题由 HTML 后置叠加",
+      "prompt_file": "imgs/prompts/00-cover.md",
+      "reference_images": [],
+      "cover_copy": {
+        "eyebrow": "MCP · AGENT",
+        "headline": "A PRACTICAL ENGINEERING MAP",
+        "keywords": "CONCEPT  ·  SYSTEM  ·  PRACTICE",
+        "caption": "What it is, how it works, and how it ships",
+        "motif": "generic-engineering-loop",
+        "motif_expected": [
+          "INPUT",
+          "PROCESS",
+          "OUTPUT"
+        ],
+        "motif_forbidden": [
+          "AGENTSTATE",
+          "STATEGRAPH"
+        ]
+      },
+      "cover_motif": "generic-engineering-loop",
+      "language_policy": {
+        "scope": "cover-only",
+        "display_language": "english-required",
+        "rule": "封面必须有与主题直接相关、可审计的英文信息；由确定性叠层渲染，不交给生图模型写字。",
+        "exceptions": [
+          "产品名、框架名、API 名、代码标识符"
+        ]
+      },
+      "section_heading": "封面",
+      "cognitive_role": "",
+      "expected_elements": [
+        "MCP · AGENT",
+        "A PRACTICAL ENGINEERING MAP",
+        "CONCEPT  ·  SYSTEM  ·  PRACTICE",
+        "What it is, how it works, and how it ships",
+        "INPUT",
+        "PROCESS",
+        "OUTPUT"
+      ],
+      "forbidden_elements": [
+        "AGENTSTATE",
+        "STATEGRAPH"
+      ],
+      "source_excerpt_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "render_backend": "agnes-or-brand-cover",
+      "content_signal": "cover",
+      "route_rule": "",
+      "route_reason": "",
+      "recommended_skill": "",
+      "secondary_backend": "",
+      "secondary_skill": "",
+      "public_brand": "X超玩•未来智能",
+      "requested_backend": "agnes-or-brand-cover",
+      "execution_backend": "agnes-or-brand-cover",
+      "fallback_reason": "",
+      "semantic_features": {},
+      "skill_evaluation": [],
+      "semantic_threshold": 1.0,
+      "mermaid": "",
+      "diagram": "",
+      "diagram_data": {},
+      "layout_archetype": "",
+      "source_raster_required": false,
+      "depth_contract": "",
+      "reader_question": "",
+      "answer_sentence": "",
+      "visual_thesis": "",
+      "entities": [],
+      "relations": [],
+      "evidence_ids": [],
+      "layout_grammar": "",
+      "must_explain": [],
+      "fallback_backend": "",
+      "fallback_trigger": "",
+      "fallback_semantic_equivalence": "",
+      "geometry_required": false,
+      "canvas_background": "",
+      "surface_background": "",
+      "status": "ready",
+      "source_excerpt": ""
+    },
+    {
+      "id": "body-01",
+      "asset": "imgs/section-01.png",
+      "section": "一、能调用工具，不等于能安全上线",
+      "kind": "architecture",
+      "viewer_job": "解释“一、能调用工具，不等于能安全上线”中最重要的一条因果或结构关系",
+      "fallback": "deterministic-svg",
+      "visual_owner": "diagram",
+      "generation_mode": "deterministic",
+      "source_strategy": "deterministic-renderer",
+      "rights_status": "user-owned-or-official",
+      "claim_ids": [
+        "claim-governance-synthesis"
+      ],
+      "continuity_group": "thinktank-editorial-visual-system",
+      "safe_area": "关键主体和信息位于画布 10% 内边距；公众号标题由 HTML 后置叠加",
+      "prompt_file": "imgs/prompts/01-body-01.md",
+      "reference_images": [],
+      "cover_copy": {},
+      "cover_motif": "",
+      "language_policy": {
+        "scope": "body-visuals",
+        "display_language": "zh-CN-first",
+        "rule": "正文图优先使用清晰自然的中文；仅在中文不如原术语准确时保留英文，例如 LangGraph、StateGraph、AgentState、API、代码。",
+        "exceptions": [
+          "产品名、框架名、API 名、代码标识符、国际通用术语"
+        ]
+      },
+      "section_heading": "一、能调用工具，不等于能安全上线",
+      "cognitive_role": "bridge",
+      "expected_elements": [
+        "权限",
+        "审批",
+        "审计",
+        "回滚",
+        "Agent",
+        "调用工具"
+      ],
+      "forbidden_elements": [
+        "目标",
+        "关系",
+        "门禁",
+        "资产",
+        "输入",
+        "检查",
+        "放行",
+        "回读",
+        "现状",
+        "证据",
+        "判断"
+      ],
+      "source_excerpt_sha256": "bf13ea9096e9a943f4949076748c164f9616c15c1dbceb0377296643846222c7",
+      "render_backend": "deterministic-svg",
+      "content_signal": "relationship",
+      "route_rule": "R17-stateful-graph",
+      "route_reason": "StateGraph/Reducer/conditional edge 等机制必须显式表达读写、合并和分支，禁止退化为线性标签图",
+      "recommended_skill": "deterministic SVG / typed-state-contract",
+      "secondary_backend": "beautiful-mermaid",
+      "secondary_skill": "beautiful-mermaid",
+      "public_brand": "X超玩•未来智能",
+      "requested_backend": "deterministic-svg",
+      "execution_backend": "deterministic-svg",
+      "fallback_reason": "",
+      "semantic_features": {
+        "formula_count": 0,
+        "code_block_count": 0,
+        "table_present": false,
+        "numeric_signal": true,
+        "matrix_signal": false,
+        "relationship_signal": false,
+        "stateful_signal": false,
+        "checkpoint_signal": true,
+        "runtime_boundary_signal": false,
+        "decision_matrix_signal": false,
+        "timeline_signal": false,
+        "concept_signal": false,
+        "checklist_signal": true,
+        "code_signal": false,
+        "pseudocode_signal": false,
+        "card_deck_signal": false,
+        "excalidraw_signal": false,
+        "code_heading": false,
+        "pseudocode_heading": false,
+        "strong_code_signal": false,
+        "strong_pseudocode_signal": false,
+        "code_style": "",
+        "kv_cache_signal": false,
+        "multihead_signal": false,
+        "shape_signal": false,
+        "attention_signal": false,
+        "qkv_signal": false,
+        "qkv_heading": false,
+        "numeric_heading": false,
+        "shape_heading": false,
+        "attention_heading": false,
+        "keyword_hits": []
+      },
+      "skill_evaluation": [],
+      "semantic_threshold": 1.0,
+      "mermaid": "",
+      "diagram": "",
+      "diagram_data": {
+        "layout_archetype": "relationship-board",
+        "nodes": [
+          {
+            "id": "n0",
+            "label": "权限",
+            "accent": true
+          },
+          {
+            "id": "n1",
+            "label": "审批",
+            "accent": false
+          },
+          {
+            "id": "n2",
+            "label": "审计",
+            "accent": false
+          },
+          {
+            "id": "n3",
+            "label": "回滚",
+            "accent": false
+          },
+          {
+            "id": "n4",
+            "label": "Agent",
+            "accent": false
+          },
+          {
+            "id": "n5",
+            "label": "能调用工具",
+            "accent": true
+          }
+        ],
+        "edges": [
+          {
+            "source": "n0",
+            "target": "n1"
+          },
+          {
+            "source": "n1",
+            "target": "n2"
+          },
+          {
+            "source": "n2",
+            "target": "n3"
+          },
+          {
+            "source": "n3",
+            "target": "n4"
+          },
+          {
+            "source": "n4",
+            "target": "n5"
+          }
+        ],
+        "left_title": "",
+        "right_title": ""
+      },
+      "layout_archetype": "relationship-board",
+      "source_raster_required": true,
+      "depth_contract": "",
+      "reader_question": "",
+      "answer_sentence": "",
+      "visual_thesis": "",
+      "entities": [],
+      "relations": [],
+      "evidence_ids": [],
+      "layout_grammar": "",
+      "must_explain": [],
+      "fallback_backend": "",
+      "fallback_trigger": "",
+      "fallback_semantic_equivalence": "",
+      "geometry_required": true,
+      "canvas_background": "#F4F0E8",
+      "surface_background": "#FFFCF7",
+      "status": "ready",
+      "source_excerpt": "![配图：从工具调用到生产治理的风险断点](imgs/section-01.png)\n\n把 Agent 看成一个“会规划的调用器”，风险就更容易看清。调用工具至少包含四个动作：选择工具、填写参数、执行副作用、处理结果。只要其中一个动作没有边界，系统就可能出现越权、误操作或无法追责。\n\n生产治理要回答的不是“模型聪不聪明”，而是四个可验收的问题：\n\n1. **权限**：当前身份和当前任务，允许哪些工具、哪些参数？\n2. **审批**：哪些动作必须让人确认，哪些低风险动作可以自动放行？\n3. **审计**：能否还原谁在什么时间、基于什么上下文发起了什么调用？\n4. **回滚**：动作失败或策略变化后，能否撤销、补偿或阻断后续动作？\n\n这四个问题构成文章的治理闭环。它们是本文的工程综合，不是某一份资料声称已经提供的完整产品方案。"
+    },
+    {
+      "id": "body-02",
+      "asset": "imgs/section-02.png",
+      "section": "二、MCP的新边界：请求本身要能被治理",
+      "kind": "architecture",
+      "viewer_job": "呈现“二、MCP的新边界：请求本身要能被治理”中节点、状态与流转关系",
+      "fallback": "deterministic-svg",
+      "visual_owner": "diagram",
+      "generation_mode": "deterministic",
+      "source_strategy": "deterministic-renderer",
+      "rights_status": "user-owned-or-official",
+      "claim_ids": [
+        "claim-mcp-stateless-boundary"
+      ],
+      "continuity_group": "thinktank-editorial-visual-system",
+      "safe_area": "关键主体和信息位于画布 10% 内边距；公众号标题由 HTML 后置叠加",
+      "prompt_file": "imgs/prompts/02-body-02.md",
+      "reference_images": [],
+      "cover_copy": {},
+      "cover_motif": "",
+      "language_policy": {
+        "scope": "body-visuals",
+        "display_language": "zh-CN-first",
+        "rule": "正文图优先使用清晰自然的中文；仅在中文不如原术语准确时保留英文，例如 LangGraph、StateGraph、AgentState、API、代码。",
+        "exceptions": [
+          "产品名、框架名、API 名、代码标识符、国际通用术语"
+        ]
+      },
+      "section_heading": "二、MCP的新边界：请求本身要能被治理",
+      "cognitive_role": "bridge",
+      "expected_elements": [
+        "MCP",
+        "Agent",
+        "协议",
+        "请求",
+        "网关",
+        "元数据"
+      ],
+      "forbidden_elements": [
+        "目标",
+        "关系",
+        "门禁",
+        "资产",
+        "输入",
+        "检查",
+        "放行",
+        "回读",
+        "现状",
+        "证据",
+        "判断"
+      ],
+      "source_excerpt_sha256": "1c35f8f9453343fa874cb9bfd2ce2b36acb86e72c6234409970251bdec243265",
+      "render_backend": "deterministic-svg",
+      "content_signal": "relationship",
+      "route_rule": "R17-stateful-graph",
+      "route_reason": "StateGraph/Reducer/conditional edge 等机制必须显式表达读写、合并和分支，禁止退化为线性标签图",
+      "recommended_skill": "deterministic SVG / typed-state-contract",
+      "secondary_backend": "beautiful-mermaid",
+      "secondary_skill": "beautiful-mermaid",
+      "public_brand": "X超玩•未来智能",
+      "requested_backend": "deterministic-svg",
+      "execution_backend": "deterministic-svg",
+      "fallback_reason": "",
+      "semantic_features": {
+        "formula_count": 0,
+        "code_block_count": 1,
+        "table_present": false,
+        "numeric_signal": true,
+        "matrix_signal": false,
+        "relationship_signal": true,
+        "stateful_signal": false,
+        "checkpoint_signal": false,
+        "runtime_boundary_signal": false,
+        "decision_matrix_signal": false,
+        "timeline_signal": false,
+        "concept_signal": false,
+        "checklist_signal": false,
+        "code_signal": true,
+        "pseudocode_signal": false,
+        "card_deck_signal": false,
+        "excalidraw_signal": false,
+        "code_heading": false,
+        "pseudocode_heading": false,
+        "strong_code_signal": true,
+        "strong_pseudocode_signal": false,
+        "code_style": "production",
+        "kv_cache_signal": false,
+        "multihead_signal": false,
+        "shape_signal": false,
+        "attention_signal": false,
+        "qkv_signal": false,
+        "qkv_heading": false,
+        "numeric_heading": false,
+        "shape_heading": false,
+        "attention_heading": false,
+        "keyword_hits": []
+      },
+      "skill_evaluation": [],
+      "semantic_threshold": 1.0,
+      "mermaid": "",
+      "diagram": "",
+      "diagram_data": {
+        "layout_archetype": "relationship-board",
+        "nodes": [
+          {
+            "id": "n0",
+            "label": "二",
+            "accent": true
+          },
+          {
+            "id": "n1",
+            "label": "MCP的新边界：请求本身要能被治理",
+            "accent": false
+          },
+          {
+            "id": "n2",
+            "label": "MCP",
+            "accent": false
+          },
+          {
+            "id": "n3",
+            "label": "Agent",
+            "accent": false
+          },
+          {
+            "id": "n4",
+            "label": "状态",
+            "accent": false
+          },
+          {
+            "id": "n5",
+            "label": "MCP的新边界",
+            "accent": true
+          }
+        ],
+        "edges": [
+          {
+            "source": "n0",
+            "target": "n1"
+          },
+          {
+            "source": "n1",
+            "target": "n2"
+          },
+          {
+            "source": "n2",
+            "target": "n3"
+          },
+          {
+            "source": "n3",
+            "target": "n4"
+          },
+          {
+            "source": "n4",
+            "target": "n5"
+          }
+        ],
+        "left_title": "",
+        "right_title": ""
+      },
+      "layout_archetype": "relationship-board",
+      "source_raster_required": true,
+      "depth_contract": "",
+      "reader_question": "",
+      "answer_sentence": "",
+      "visual_thesis": "",
+      "entities": [],
+      "relations": [],
+      "evidence_ids": [],
+      "layout_grammar": "",
+      "must_explain": [],
+      "fallback_backend": "",
+      "fallback_trigger": "",
+      "fallback_semantic_equivalence": "",
+      "geometry_required": true,
+      "canvas_background": "#F4F0E8",
+      "surface_background": "#FFFCF7",
+      "status": "ready",
+      "source_excerpt": "![配图：无状态请求与网关控制层](imgs/section-02.png)\n\nMCP 2026-07-28 changelog 的一个关键变化，是移除协议层的 session 和 `initialize/initialized` handshake。这里的“无状态”指协议核心不再依赖隐藏的传输层 session，并不意味着业务应用本身不能维护状态。每个请求通过 `_meta` 携带协议版本、客户端能力，以及客户端自报的软件信息 `clientInfo`。需要注意，`clientInfo` 不是经过协议验证的安全身份，规范明确不建议依赖它做安全决策；真正用于授权和审计的 principal_id，应来自 OAuth、IAM 或应用自身经过认证的身份上下文。对于 Streamable HTTP，请求必须携带标准的 `Mcp-Method`；对于 `tools/call`、`resources/read`、`prompts/get` 等具有工具名或资源标识的请求，还必须携带 `Mcp-Name`。这样网关、限流器或 WAF 可以直接根据请求头进行路由和计量，并在适合的场景下做前置授权判断，而不必先解析完整 JSON body。\n\n这里要注意两层边界：MCP 2026-07-28 已经定义了可选的 HTTP 传输层 OAuth 授权能力，包括 access token、资源指示和 issuer 校验；但它不替企业决定“哪个 Agent 在什么业务任务下能调用 refund、金额上限是多少、是否必须经理审批”。细粒度的工具、参数和业务动作策略，仍然要由 Host、Gateway 或策略系统实现。\n\n一个最小的请求审计记录，至少应包含：\n\n```text\nrequest_id          每次工具调用唯一\ntrace_id            贯穿同一任务/调用链\ntimestamp           决策与执行发生的时间\nprincipal_id        经认证并绑定的真实主体；可附 tenant_id\nagent_id            发起调用的 Agent 身份\ntool_name/version   工具名与版本\nresource             被访问的资源\narguments_redacted  脱敏后的参数，供审计阅读\narguments_digest    完整参数摘要，供完整性校验\npolicy_version      命中的策略版本\ndecision             allow / deny / require_approval\ndecision_reason      决策原因；可附 approval_id\nexecution_status     最终执行状态\nresult_digest        结"
+    },
+    {
+      "id": "body-03",
+      "asset": "imgs/section-03.png",
+      "section": "四、显式许可：让工具调用先过一道看得见的门",
+      "kind": "code",
+      "viewer_job": "用可运行代码（默认 PyTorch 实战，基础版可用 NumPy 直觉）复现「四、显式许可：让工具调用先过一道看得见的门」的核心公式或算法，控制在前 40 行内",
+      "fallback": "code-block",
+      "visual_owner": "diagram",
+      "generation_mode": "deterministic",
+      "source_strategy": "deterministic-renderer",
+      "rights_status": "user-owned-or-official",
+      "claim_ids": [
+        "claim-anthropic-explicit-permissions"
+      ],
+      "continuity_group": "thinktank-editorial-visual-system",
+      "safe_area": "关键主体和信息位于画布 10% 内边距；公众号标题由 HTML 后置叠加",
+      "prompt_file": "imgs/prompts/03-body-03.md",
+      "reference_images": [],
+      "cover_copy": {},
+      "cover_motif": "",
+      "language_policy": {
+        "scope": "body-visuals",
+        "display_language": "zh-CN-first",
+        "rule": "正文图优先使用清晰自然的中文；仅在中文不如原术语准确时保留英文，例如 LangGraph、StateGraph、AgentState、API、代码。",
+        "exceptions": [
+          "产品名、框架名、API 名、代码标识符、国际通用术语"
+        ]
+      },
+      "section_heading": "四、显式许可：让工具调用先过一道看得见的门",
+      "cognitive_role": "mechanism",
+      "expected_elements": [
+        "四、显式许可：让工具调用先过一道看得见的门",
+        "PyTorch 实战",
+        "def",
+        "decide",
+        "tool_name"
+      ],
+      "forbidden_elements": [
+        "目标",
+        "关系",
+        "门禁",
+        "资产",
+        "输入",
+        "检查",
+        "放行",
+        "回读",
+        "现状",
+        "证据",
+        "判断"
+      ],
+      "source_excerpt_sha256": "684d048ddd5d875035b52e5bae29e3576dfbfd35ac0877206188b4ce649ab1e3",
+      "render_backend": "code-block",
+      "content_signal": "code",
+      "route_rule": "R11-code-implementation",
+      "route_reason": "强公式/架构/关系内容应给出可运行代码实现，而非仅插图",
+      "recommended_skill": "deterministic code-block (HTML/SVG, account-themed)",
+      "secondary_backend": "beautiful-mermaid",
+      "secondary_skill": "beautiful-mermaid",
+      "public_brand": "X超玩•未来智能",
+      "requested_backend": "code-block",
+      "execution_backend": "code-block",
+      "fallback_reason": "",
+      "semantic_features": {
+        "formula_count": 0,
+        "code_block_count": 1,
+        "table_present": false,
+        "numeric_signal": true,
+        "matrix_signal": false,
+        "relationship_signal": false,
+        "stateful_signal": false,
+        "checkpoint_signal": false,
+        "runtime_boundary_signal": true,
+        "decision_matrix_signal": false,
+        "timeline_signal": false,
+        "concept_signal": false,
+        "checklist_signal": false,
+        "code_signal": true,
+        "pseudocode_signal": false,
+        "card_deck_signal": false,
+        "excalidraw_signal": false,
+        "code_heading": false,
+        "pseudocode_heading": false,
+        "strong_code_signal": true,
+        "strong_pseudocode_signal": false,
+        "code_style": "production",
+        "kv_cache_signal": false,
+        "multihead_signal": false,
+        "shape_signal": false,
+        "attention_signal": false,
+        "qkv_signal": false,
+        "qkv_heading": false,
+        "numeric_heading": false,
+        "shape_heading": false,
+        "attention_heading": false,
+        "keyword_hits": []
+      },
+      "skill_evaluation": [],
+      "semantic_threshold": 1.0,
+      "mermaid": "",
+      "diagram": "",
+      "diagram_data": {},
+      "layout_archetype": "runnable-snippet",
+      "source_raster_required": true,
+      "depth_contract": "",
+      "reader_question": "",
+      "answer_sentence": "",
+      "visual_thesis": "",
+      "entities": [],
+      "relations": [],
+      "evidence_ids": [],
+      "layout_grammar": "",
+      "must_explain": [],
+      "fallback_backend": "",
+      "fallback_trigger": "",
+      "fallback_semantic_equivalence": "",
+      "geometry_required": false,
+      "canvas_background": "#F4F0E8",
+      "surface_background": "#FFFCF7",
+      "status": "ready",
+      "source_excerpt": "![配图：允许列表、权限提示与拒绝路径](imgs/section-03.png)\n\nAnthropic Claude Code 的 CLI 文档给出了一个清晰的实现例子：`--allowedTools` 让匹配的工具**无需再次弹出权限提示即可执行**；`--permission-prompt-tool` 可以在非交互模式下把权限请求交给指定 MCP 工具处理；`--disallowedTools` 用于声明拒绝规则，其中裸工具名还可以将匹配工具从 Claude 的上下文中移除。需要注意，`--tools` 只限制 Claude Code 的内置工具，并不直接限制 MCP 工具。因此，`--allowedTools` 不是严格的“唯一允许列表”，工具的可见性、拒绝规则和执行许可需要分别治理。这是 Claude Code 的产品实现，不代表所有 MCP 客户端都默认采用同样的参数；但它说明了一条通用原则：工具权限应当可声明、可审查、可拒绝。\n\n在自己的 Agent 网关里，可以采用同样的三段式：\n\n1. **默认拒绝**：没有出现在任务权限包里的工具，不进入模型可用列表。\n2. **风险分级**：读取、写入、外发、删除分别设定不同的审批门槛。\n3. **运行时提示**：策略要求人工确认时，返回结构化的 require_approval，而不是让模型猜测下一步。\n\n不要只在系统提示词里写“请谨慎调用”。提示词是意图，策略引擎才是约束。\n\n```python\ndef decide(tool_name, allowed_tools, risk_level, approved):\n    if tool_name not in allowed_tools:\n        return \"deny\"\n    if risk_level in {\"write\", \"external\", \"delete\"} and not approved:\n        return \"require_approval\"\n    return \"allow\"\n```\n\n**协议能承载确认，不代表协议替你做审批。** MCP 2026-07-28 新增的 Multi Round-Trip Requests（MRTR）允许工具在执行过程中返回 resultType 为“input_required”的结果，要求客户端补充用户确认或缺失参数，再用 inputResponses 重试原请求。这给本文定义的“require_approval”提供了协议级交互通道；“require_approval”不是 MCP 标准字段，MCP 标准字段是“input_required”。但谁可以审批、什么金额必须审批、批准多长时间有效，仍由应用侧策略决定。"
+    },
+    {
+      "id": "body-04",
+      "asset": "imgs/section-04.png",
+      "section": "五、最小可复现实践：用三个工具跑通治理闭环",
+      "kind": "architecture",
+      "viewer_job": "呈现“五、最小可复现实践：用三个工具跑通治理闭环”从入口到运行时与持久化的系统边界",
+      "fallback": "deterministic-svg",
+      "visual_owner": "diagram",
+      "generation_mode": "deterministic",
+      "source_strategy": "deterministic-renderer",
+      "rights_status": "user-owned-or-official",
+      "claim_ids": [
+        "claim-governance-synthesis"
+      ],
+      "continuity_group": "thinktank-editorial-visual-system",
+      "safe_area": "关键主体和信息位于画布 10% 内边距；公众号标题由 HTML 后置叠加",
+      "prompt_file": "imgs/prompts/04-body-04.md",
+      "reference_images": [],
+      "cover_copy": {},
+      "cover_motif": "",
+      "language_policy": {
+        "scope": "body-visuals",
+        "display_language": "zh-CN-first",
+        "rule": "正文图优先使用清晰自然的中文；仅在中文不如原术语准确时保留英文，例如 LangGraph、StateGraph、AgentState、API、代码。",
+        "exceptions": [
+          "产品名、框架名、API 名、代码标识符、国际通用术语"
+        ]
+      },
+      "section_heading": "五、最小可复现实践：用三个工具跑通治理闭环",
+      "cognitive_role": "bridge",
+      "expected_elements": [
+        "read_record",
+        "update_record",
+        "send_message",
+        "五个场景",
+        "权限包"
+      ],
+      "forbidden_elements": [
+        "目标",
+        "关系",
+        "门禁",
+        "资产",
+        "输入",
+        "检查",
+        "放行",
+        "回读",
+        "现状",
+        "证据",
+        "判断"
+      ],
+      "source_excerpt_sha256": "0fb73d4b7b0dedf505097d961d0d6ba70d0e5776e10880ff94fbe2522c436727",
+      "render_backend": "deterministic-svg",
+      "content_signal": "relationship",
+      "route_rule": "R17-stateful-graph",
+      "route_reason": "StateGraph/Reducer/conditional edge 等机制必须显式表达读写、合并和分支，禁止退化为线性标签图",
+      "recommended_skill": "deterministic SVG / typed-state-contract",
+      "secondary_backend": "beautiful-mermaid",
+      "secondary_skill": "beautiful-mermaid",
+      "public_brand": "X超玩•未来智能",
+      "requested_backend": "deterministic-svg",
+      "execution_backend": "deterministic-svg",
+      "fallback_reason": "",
+      "semantic_features": {
+        "formula_count": 0,
+        "code_block_count": 0,
+        "table_present": false,
+        "numeric_signal": true,
+        "matrix_signal": true,
+        "relationship_signal": true,
+        "stateful_signal": false,
+        "checkpoint_signal": false,
+        "runtime_boundary_signal": false,
+        "decision_matrix_signal": false,
+        "timeline_signal": false,
+        "concept_signal": false,
+        "checklist_signal": true,
+        "code_signal": true,
+        "pseudocode_signal": false,
+        "card_deck_signal": false,
+        "excalidraw_signal": false,
+        "code_heading": true,
+        "pseudocode_heading": false,
+        "strong_code_signal": true,
+        "strong_pseudocode_signal": false,
+        "code_style": "teaching",
+        "kv_cache_signal": false,
+        "multihead_signal": false,
+        "shape_signal": false,
+        "attention_signal": false,
+        "qkv_signal": false,
+        "qkv_heading": false,
+        "numeric_heading": false,
+        "shape_heading": false,
+        "attention_heading": false,
+        "keyword_hits": []
+      },
+      "skill_evaluation": [],
+      "semantic_threshold": 1.0,
+      "mermaid": "",
+      "diagram": "",
+      "diagram_data": {
+        "layout_archetype": "architecture-board",
+        "nodes": [
+          {
+            "id": "n0",
+            "label": "五",
+            "accent": true
+          },
+          {
+            "id": "n1",
+            "label": "最小可复现实践：用三个工具跑通治理闭环",
+            "accent": false
+          },
+          {
+            "id": "n2",
+            "label": "最小可复现实践",
+            "accent": false
+          },
+          {
+            "id": "n3",
+            "label": "用三个工具跑通治理闭环",
+            "accent": false
+          },
+          {
+            "id": "n4",
+            "label": "配图",
+            "accent": false
+          },
+          {
+            "id": "n5",
+            "label": "png",
+            "accent": true
+          }
+        ],
+        "edges": [
+          {
+            "source": "n0",
+            "target": "n1"
+          },
+          {
+            "source": "n1",
+            "target": "n2"
+          },
+          {
+            "source": "n2",
+            "target": "n3"
+          },
+          {
+            "source": "n3",
+            "target": "n4"
+          },
+          {
+            "source": "n4",
+            "target": "n5"
+          }
+        ],
+        "left_title": "入口",
+        "right_title": "运行与持久化"
+      },
+      "layout_archetype": "architecture-board",
+      "source_raster_required": true,
+      "depth_contract": "",
+      "reader_question": "",
+      "answer_sentence": "",
+      "visual_thesis": "",
+      "entities": [],
+      "relations": [],
+      "evidence_ids": [],
+      "layout_grammar": "",
+      "must_explain": [],
+      "fallback_backend": "",
+      "fallback_trigger": "",
+      "fallback_semantic_equivalence": "",
+      "geometry_required": true,
+      "canvas_background": "#F4F0E8",
+      "surface_background": "#FFFCF7",
+      "status": "ready",
+      "source_excerpt": "![配图：三工具五场景的最小验证矩阵](imgs/section-04.png)\n\n如果要开始部署，不必先做一套庞大的平台。可以用三个工具和五个场景完成第一轮教程式验收：\n\n**工具**：read_record（只读）、update_record（写入）、send_message（外发）。\n\n**步骤 1：建立权限包。** 为每个工具登记参数 schema、数据范围、风险级别、可审批角色和补偿动作。\n\n**步骤 2：设置三类授权决策和一类异常恢复路径。** allow 自动放行，deny 直接拒绝，require_approval 暂停等待审批；如果已经产生副作用后发生失败，则进入 compensate 补偿或回滚流程。前三个回答“现在能不能执行”，最后一个回答“已经执行或部分执行后如何修复”。\n\n**步骤 3：跑五个场景。** 正常读取；越权读取；低金额更新；超阈值更新；外发消息前人工确认。每个场景都保存请求、策略版本、决策和最终结果。\n\n**步骤 4：检查序列。** 先调用 update_record 再调用 send_message 时，策略应能读取前一步结果；如果更新失败，外发动作必须被阻断。\n\n**步骤 5：制造一次失败。** 人为撤销策略或让工具返回错误，验证系统能否停止后续调用，并留下可读的失败原因。\n\n这套小实验的价值，不是证明系统“绝对安全”，而是让权限、审批、审计和回滚都有可观察证据。"
+    },
+    {
+      "id": "body-05",
+      "asset": "imgs/section-05.png",
+      "section": "七、结语：治理的对象是下一步动作",
+      "kind": "architecture",
+      "viewer_job": "呈现“七、结语：治理的对象是下一步动作”从入口到运行时与持久化的系统边界",
+      "fallback": "deterministic-svg",
+      "visual_owner": "diagram",
+      "generation_mode": "deterministic",
+      "source_strategy": "deterministic-renderer",
+      "rights_status": "user-owned-or-official",
+      "claim_ids": [
+        "claim-governance-synthesis"
+      ],
+      "continuity_group": "thinktank-editorial-visual-system",
+      "safe_area": "关键主体和信息位于画布 10% 内边距；公众号标题由 HTML 后置叠加",
+      "prompt_file": "imgs/prompts/05-body-05.md",
+      "reference_images": [],
+      "cover_copy": {},
+      "cover_motif": "",
+      "language_policy": {
+        "scope": "body-visuals",
+        "display_language": "zh-CN-first",
+        "rule": "正文图优先使用清晰自然的中文；仅在中文不如原术语准确时保留英文，例如 LangGraph、StateGraph、AgentState、API、代码。",
+        "exceptions": [
+          "产品名、框架名、API 名、代码标识符、国际通用术语"
+        ]
+      },
+      "section_heading": "七、结语：治理的对象是下一步动作",
+      "cognitive_role": "closer",
+      "expected_elements": [
+        "MCP",
+        "治理",
+        "下一步",
+        "策略",
+        "日志",
+        "回滚"
+      ],
+      "forbidden_elements": [
+        "目标",
+        "关系",
+        "门禁",
+        "资产",
+        "输入",
+        "检查",
+        "放行",
+        "回读",
+        "现状",
+        "证据",
+        "判断"
+      ],
+      "source_excerpt_sha256": "e2de36446042856011617e8952d76e738abe3f20d6083ff959a2760bd151b656",
+      "render_backend": "deterministic-svg",
+      "content_signal": "relationship",
+      "route_rule": "R17-stateful-graph",
+      "route_reason": "StateGraph/Reducer/conditional edge 等机制必须显式表达读写、合并和分支，禁止退化为线性标签图",
+      "recommended_skill": "deterministic SVG / typed-state-contract",
+      "secondary_backend": "beautiful-mermaid",
+      "secondary_skill": "beautiful-mermaid",
+      "public_brand": "X超玩•未来智能",
+      "requested_backend": "deterministic-svg",
+      "execution_backend": "deterministic-svg",
+      "fallback_reason": "",
+      "semantic_features": {
+        "formula_count": 0,
+        "code_block_count": 0,
+        "table_present": false,
+        "numeric_signal": true,
+        "matrix_signal": false,
+        "relationship_signal": false,
+        "stateful_signal": false,
+        "checkpoint_signal": false,
+        "runtime_boundary_signal": false,
+        "decision_matrix_signal": false,
+        "timeline_signal": true,
+        "concept_signal": false,
+        "checklist_signal": true,
+        "code_signal": true,
+        "pseudocode_signal": false,
+        "card_deck_signal": false,
+        "excalidraw_signal": false,
+        "code_heading": false,
+        "pseudocode_heading": false,
+        "strong_code_signal": false,
+        "strong_pseudocode_signal": false,
+        "code_style": "production",
+        "kv_cache_signal": false,
+        "multihead_signal": false,
+        "shape_signal": false,
+        "attention_signal": false,
+        "qkv_signal": false,
+        "qkv_heading": false,
+        "numeric_heading": false,
+        "shape_heading": false,
+        "attention_heading": false,
+        "keyword_hits": []
+      },
+      "skill_evaluation": [],
+      "semantic_threshold": 1.0,
+      "mermaid": "",
+      "diagram": "",
+      "diagram_data": {
+        "layout_archetype": "architecture-board",
+        "nodes": [
+          {
+            "id": "n0",
+            "label": "七",
+            "accent": true
+          },
+          {
+            "id": "n1",
+            "label": "结语：治理的对象是下一步动作",
+            "accent": false
+          },
+          {
+            "id": "n2",
+            "label": "MCP",
+            "accent": false
+          },
+          {
+            "id": "n3",
+            "label": "START",
+            "accent": false
+          },
+          {
+            "id": "n4",
+            "label": "结语",
+            "accent": true
+          }
+        ],
+        "edges": [
+          {
+            "source": "n0",
+            "target": "n1"
+          },
+          {
+            "source": "n1",
+            "target": "n2"
+          },
+          {
+            "source": "n2",
+            "target": "n3"
+          },
+          {
+            "source": "n3",
+            "target": "n4"
+          }
+        ],
+        "left_title": "入口",
+        "right_title": "运行与持久化"
+      },
+      "layout_archetype": "architecture-board",
+      "source_raster_required": true,
+      "depth_contract": "",
+      "reader_question": "",
+      "answer_sentence": "",
+      "visual_thesis": "",
+      "entities": [],
+      "relations": [],
+      "evidence_ids": [],
+      "layout_grammar": "",
+      "must_explain": [],
+      "fallback_backend": "",
+      "fallback_trigger": "",
+      "fallback_semantic_equivalence": "",
+      "geometry_required": true,
+      "canvas_background": "#F4F0E8",
+      "surface_background": "#FFFCF7",
+      "status": "ready",
+      "source_excerpt": "![配图：从能力展示到可控行动的闭环](imgs/section-05.png)\n\nMCP 解决的是模型与工具之间如何通信，并在 2026-07-28 版本中补充了无状态请求、传输层授权和 MRTR 等能力；生产治理仍要继续追问：下一步动作凭什么被允许，谁有权确认，出了问题谁能停下来，以及事后能不能还原现场。协议能力、时间与历史条件、显式工具许可，分别提供了可组合的观察角度，但它们必须经过本地策略、日志和回滚机制才能变成真正的上线能力。\n\n关注 X超玩•未来智能，回复‘MCP治理’领取MCP工具调用生产治理权限与上线验收清单。如果你正在把MCP工具调用生产治理落到项目里，留言你的具体问题，我会继续补充实现与部署细节。\n\n<!-- HYBRID-EVIDENCE-REFERENCES:START -->"
+    }
+  ],
+  "review": {
+    "required_before_generation": true,
+    "reviewer_type": "pending"
+  }
+}

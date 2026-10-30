@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "contract": "content-truth-qa-v1",
+  "status": "passed",
+  "source": "article.md",
+  "errors": []
+}

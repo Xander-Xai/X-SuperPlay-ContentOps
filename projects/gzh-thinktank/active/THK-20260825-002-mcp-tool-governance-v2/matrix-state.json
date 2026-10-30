@@ -1,0 +1,136 @@
+{
+  "schema_version": 4,
+  "account": "thinktank",
+  "title": "MCP工具调用之后，谁来管Agent的下一步？",
+  "slug": "mcp-tool-governance-v2",
+  "workspace_id": "THK-20260825-002",
+  "workspace_sequence": 2,
+  "workspace_relative_path": "active/THK-20260825-002-mcp-tool-governance-v2",
+  "workspace_lifecycle": "active",
+  "process_files_dir": "work",
+  "deliverable_dir": "exports",
+  "checkpoint_dir": "snapshots",
+  "status": "draft_submitted",
+  "current_stage": "draft_submitted",
+  "gate_history": [
+    {
+      "stage": "environment_ready",
+      "passed_at": "2026-08-24T18:18:55.424494+00:00",
+      "checks": "strict"
+    },
+    {
+      "stage": "topic_selected",
+      "passed_at": "2026-08-24T18:18:55.867036+00:00",
+      "checks": "strict"
+    },
+    {
+      "stage": "research_complete",
+      "passed_at": "2026-08-24T18:21:54.549684+00:00",
+      "checks": "strict"
+    },
+    {
+      "stage": "research_reviewed",
+      "passed_at": "2026-08-24T18:23:16.928664+00:00",
+      "checks": "strict"
+    },
+    {
+      "stage": "draft_complete",
+      "passed_at": "2026-08-24T18:33:02.693060+00:00",
+      "checks": "strict"
+    },
+    {
+      "stage": "content_reviewed",
+      "passed_at": "2026-08-24T18:42:58.337140+00:00",
+      "checks": "strict"
+    },
+    {
+      "stage": "formatted",
+      "passed_at": "2026-08-24T19:37:39.499523+00:00",
+      "checks": "strict"
+    },
+    {
+      "stage": "illustrated",
+      "passed_at": "2026-08-24T19:41:21.737353+00:00",
+      "checks": "strict"
+    },
+    {
+      "stage": "final_reviewed",
+      "passed_at": "2026-08-24T19:44:40.519910+00:00",
+      "checks": "strict"
+    },
+    {
+      "stage": "draft_submitted",
+      "passed_at": "2026-08-24T23:03:38.971258+00:00",
+      "checks": "strict"
+    }
+  ],
+  "publish_mode": "draft",
+  "content_medium": "wechat_article",
+  "routing_status": "confirmed",
+  "routing_digest": "d9a18a4ee561cceb8b2a5cb48888bf47e3017b844ea924ae16089f850039e43d",
+  "article_dir": "active/THK-20260825-002-mcp-tool-governance-v2",
+  "artifacts": [
+    "workspace-manifest.json",
+    "routing.yaml",
+    "topic-card.md",
+    "topic-contract.yaml",
+    "topic-cluster.md",
+    "content-calendar.md",
+    "topic-integrity.json",
+    "content-brief.yaml",
+    "cta-contract.json",
+    "seo-report.json",
+    "research.md",
+    "sources.json",
+    "source-verification.json",
+    "source-review.json",
+    "source-snapshots/",
+    "evidence-plan.json",
+    "source-evidence.json",
+    "evidence-provenance.json",
+    "evidence-lineage.json",
+    "topic-evidence-isolation.json",
+    "evidence/",
+    "draft.md",
+    "content-revision.json",
+    "review-report.md",
+    "review-checks.json",
+    "review-evidence.json",
+    "content-truth-qa.json",
+    "claim-verification.json",
+    "fact-review.json",
+    "ai-disclosure.yaml",
+    "article.md",
+    "article.html",
+    "format-report.json",
+    "visual-brief.yaml",
+    "visual-routing.json",
+    "skill-evaluation.json",
+    "image-plan.md",
+    "visual-director-plan.json",
+    "visual-director-plan.md",
+    "image-generation-plan.json",
+    "img_analysis.md",
+    "image-sources.json",
+    "asset-index.json",
+    "visual-semantic-review.json",
+    "visual-content-qa.json",
+    "visual-depth-review.json",
+    "visual-reader-test.json",
+    "vision-review.json",
+    "workflow-status.json",
+    "checkpoint-manifest.json",
+    "final-review.md",
+    "preview-capture.json",
+    "preview-fullpage.png",
+    "preview-slices/",
+    "publish-preflight.json",
+    "publish-attempt.json",
+    "publish-receipt.json",
+    "publish-result.json",
+    "metrics.json",
+    "work/",
+    "exports/",
+    "snapshots/"
+  ]
+}

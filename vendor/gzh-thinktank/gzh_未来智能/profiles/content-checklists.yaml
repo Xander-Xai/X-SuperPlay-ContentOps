@@ -1,0 +1,53 @@
+schema_version: 1
+description: "内容生产的账号级检查项；外层顺序由 workflow-gates.yaml 控制。"
+common:
+  topic:
+    - audience_defined
+    - searchable_keyword_defined
+    - shareable_angle_defined
+    - primary_claim_defined
+    - seo_report_passed
+  research:
+    - source_snapshot
+    - structured_source_records
+    - claim_to_source_mapping
+    - version_or_date
+    - claim_level_freshness_and_official_source
+    - package_version_or_version_scope
+    - reproducible_action
+    - limitation_recorded
+  review:
+    - facts_checked
+    - compliance_checked
+    - typo_checked
+    - ai_flavor_reviewed
+    - structured_review_evidence
+    - ai_disclosure_recorded
+    - format_report
+  visual:
+    - visual_brief_approved
+    - cover_selected
+    - image_quality_checked
+    - image_source_recorded
+    - mobile_preview_checked
+    - fullpage_and_scroll_slice_checked
+    - vision_review_receipt_per_asset
+    - contrast_and_code_style_checked
+    - asset_sha256_recorded
+thinktank:
+  strategy_alignment:
+    - build_role_declared
+    - problem_signal_or_user_material
+    - demand_signal_recorded
+  draft:
+    - 2500_to_5000_chars
+    - problem_to_principle_to_practice
+    - reproducible_steps
+    - failure_handling
+    - conversion_asset
+  outputs:
+    - wechat_draft
+    - architecture_or_flow_diagram
+    - knowledge_note
+    - conversion_asset
+    - post_publish_adapters_if_requested

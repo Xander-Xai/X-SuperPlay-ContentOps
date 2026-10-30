@@ -1,0 +1,142 @@
+{
+  "schema_version": 1,
+  "contract": "visual-taste-review-v1",
+  "status": "passed",
+  "review_mode": "blocking-pending-human",
+  "reviewed_at": "2026-08-24T23:09:54.503065+00:00",
+  "article": "D:\\Projects\\gzh_x未来智能\\production\\active\\THK-20260825-002-mcp-tool-governance-v2",
+  "policy": "profiles/visual-taste-policy.yaml",
+  "policy_sha256": "1bd95c6a7045b7fdd2fdc619af771bd92598aa96a3c36ac2d3872bae79607fed",
+  "art_direction": {
+    "path": "art-direction.yaml",
+    "sha256": "9552997c5097328893c07cf631b86d55a19d3a4b08934f1f843a72bbf098cbea",
+    "status": "proposed"
+  },
+  "aesthetic_review": {
+    "path": "visual-aesthetic-review.json",
+    "sha256": "e5c03f8d5af1f1ce09be07989af276603ba4591cb06d653a8c945abeaa2bcd23",
+    "status": "passed"
+  },
+  "metrics": {
+    "body_visual_count": 5,
+    "unique_execution_backends": [
+      "code-block",
+      "deterministic-svg"
+    ],
+    "unique_layout_families": [
+      "architecture-board",
+      "relationship-board",
+      "runnable-snippet"
+    ],
+    "unique_cognitive_roles": [
+      "bridge",
+      "closer",
+      "mechanism"
+    ],
+    "backend_diversity": 1.0,
+    "layout_diversity": 1.5
+  },
+  "scores": {
+    "focal_hierarchy": 3,
+    "composition_tension": 3,
+    "material_depth": 4,
+    "metaphor_isomorphism": 3,
+    "mobile_legibility": 3,
+    "template_repetition": 4
+  },
+  "rubric": {
+    "version": "visual-taste-rubric-v1",
+    "anchors": {
+      "focal_hierarchy": {
+        "0": "无主焦点；读者无法判断先看什么",
+        "2": "有主焦点但层级弱；次要信息与主路径竞争",
+        "4": "主路径、次级证据和收束动作清晰分层"
+      },
+      "composition_tension": {
+        "0": "等权卡片或线段堆叠，关系不成组",
+        "2": "有分组但仍存在无意义对称或长绕线",
+        "4": "布局服务关系，端口、留白和阅读方向明确"
+      },
+      "material_depth": {
+        "0": "纯默认模板，缺少材质和节奏",
+        "2": "有色板/线条变化，但只形成装饰",
+        "4": "色、线、纸面、留白共同强化认知层级"
+      },
+      "metaphor_isomorphism": {
+        "0": "视觉元素与读者问题无对应关系",
+        "2": "主题相关但关系仍需正文补足",
+        "4": "图中结构本身即可回答核心关系问题"
+      },
+      "mobile_legibility": {
+        "0": "390px 下文字或路径不可读",
+        "2": "主标题可读，细节需要放大",
+        "4": "主路径、标签和结论在 390px 下均可读"
+      },
+      "template_repetition": {
+        "0": "与同篇图完全同构",
+        "2": "局部变化但仍共享大量布局骨架",
+        "4": "每张图的构图族与认知角色相匹配且不重复"
+      }
+    },
+    "reviewer_id": "automated-heuristic",
+    "calibration_status": "not_calibrated",
+    "human_review_status": "passed",
+    "human_reviewer": "user-authorized-direct-execution"
+  },
+  "assets": [
+    {
+      "id": "body-01",
+      "asset": "imgs\\section-01.png",
+      "exists": true,
+      "size": [
+        1200,
+        720
+      ],
+      "sha256": "b7c4d77df50bc14258129c3af5afb4e21f3e1a40d5209de5898e913bca2ac6ab"
+    },
+    {
+      "id": "body-02",
+      "asset": "imgs\\section-02.png",
+      "exists": true,
+      "size": [
+        1200,
+        720
+      ],
+      "sha256": "993ea5e94ec81d058fbe81457a6ac03dcec582979b9687aeea068e01d14b55a4"
+    },
+    {
+      "id": "body-03",
+      "asset": "imgs\\section-03.png",
+      "exists": true,
+      "size": [
+        720,
+        320
+      ],
+      "sha256": "bf4f4fdaecaa9694a91aa54d9ff5d1be7909001247dd4fb1c0644ea75a25f625"
+    },
+    {
+      "id": "body-04",
+      "asset": "imgs\\section-04.png",
+      "exists": true,
+      "size": [
+        1200,
+        720
+      ],
+      "sha256": "99ebe1cfa351463c0bdfb6687acacc7e557d007ef8c36f24f882fc7604340dfe"
+    },
+    {
+      "id": "body-05",
+      "asset": "imgs\\section-05.png",
+      "exists": true,
+      "size": [
+        1200,
+        720
+      ],
+      "sha256": "6c6d7617be7f7151e477011fb26393633e1a11a6f1b73a9a65b80b522723439e"
+    }
+  ],
+  "warnings": [],
+  "errors": [],
+  "human_review_required": false,
+  "note": "结构启发式只能发现硬缺陷；未有真人确认时状态为 pending-human，不得当作人眼观感通过。"
+}

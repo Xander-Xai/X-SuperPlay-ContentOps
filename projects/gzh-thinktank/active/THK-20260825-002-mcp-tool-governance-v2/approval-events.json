@@ -1,0 +1,257 @@
+[
+  {
+    "schema_version": 1,
+    "event_id": "cover_selection-20260824T1845511739420000",
+    "subject": "cover_selection",
+    "reviewer_type": "agent",
+    "reviewer": "codex",
+    "signed_by": "",
+    "scope": [
+      "visual-brief.yaml"
+    ],
+    "scope_sha256": {
+      "visual-brief.yaml": "7a84ad424294a11217c4f9975b94cec19f68eec50f8d5f819d24e2962a7c54af"
+    },
+    "summary_sha256": "00f70fbcf805500513b37c5e22bdebc39f94c2a23d6df1363e96b54f593a70a1",
+    "reviewed_at": "2026-08-24T18:45:51.173961+00:00",
+    "operator": "codex"
+  },
+  {
+    "schema_version": 1,
+    "event_id": "cover_selection-20260824T1851022070660000",
+    "subject": "cover_selection",
+    "reviewer_type": "agent",
+    "reviewer": "codex",
+    "signed_by": "",
+    "scope": [
+      "visual-brief.yaml"
+    ],
+    "scope_sha256": {
+      "visual-brief.yaml": "1d54630921a294492de53a3fac145df0ea0bacafa357d2fabfaf53513e80e941"
+    },
+    "summary_sha256": "ae53d4ef7ac7f2358bd9b3b0c9309e632c030bf181360ba3d5254576925bded0",
+    "reviewed_at": "2026-08-24T18:51:02.207085+00:00",
+    "operator": "codex"
+  },
+  {
+    "schema_version": 1,
+    "event_id": "cover_selection-20260824T1858197079500000",
+    "subject": "cover_selection",
+    "reviewer_type": "agent",
+    "reviewer": "codex",
+    "signed_by": "",
+    "scope": [
+      "visual-brief.yaml"
+    ],
+    "scope_sha256": {
+      "visual-brief.yaml": "d897c432ce10d43803d8a6dea3b1864af5878669f44640ab96e548a9190ce9b7"
+    },
+    "summary_sha256": "481b5baa51a79e7493b1ebbae78a777d4c1610f9572d2cad6279a1745b401b9a",
+    "reviewed_at": "2026-08-24T18:58:19.707970+00:00",
+    "operator": "codex"
+  },
+  {
+    "schema_version": 1,
+    "event_id": "cover_selection-20260824T1907502288840000",
+    "subject": "cover_selection",
+    "reviewer_type": "agent",
+    "reviewer": "codex",
+    "signed_by": "",
+    "scope": [
+      "visual-brief.yaml"
+    ],
+    "scope_sha256": {
+      "visual-brief.yaml": "d2b0045e0198cbbeccf59a0193f2645923435f3864aa31019d5e224a102054ec"
+    },
+    "summary_sha256": "fb80b90d0661356d452fe16482ef171db7c10f7dd7a02a09c0823bc258a8b745",
+    "reviewed_at": "2026-08-24T19:07:50.228904+00:00",
+    "operator": "codex"
+  },
+  {
+    "schema_version": 1,
+    "event_id": "cover_selection-20260824T1909495469270000",
+    "subject": "cover_selection",
+    "reviewer_type": "agent",
+    "reviewer": "codex",
+    "signed_by": "",
+    "scope": [
+      "visual-brief.yaml"
+    ],
+    "scope_sha256": {
+      "visual-brief.yaml": "378fb1b93613675fde157bf1512d84bae9a462f7d35d4584789a7e1dca499220"
+    },
+    "summary_sha256": "7712d822d8a285eebdabc1007e1b99b248fd91050371a5c4915c8ca4ddfc6f91",
+    "reviewed_at": "2026-08-24T19:09:49.546944+00:00",
+    "operator": "codex"
+  },
+  {
+    "schema_version": 1,
+    "event_id": "cover_selection-20260824T1911192140140000",
+    "subject": "cover_selection",
+    "reviewer_type": "agent",
+    "reviewer": "codex",
+    "signed_by": "",
+    "scope": [
+      "visual-brief.yaml"
+    ],
+    "scope_sha256": {
+      "visual-brief.yaml": "d3c8856ae20a5c1fadfceccd5a7119ef4ac23bd6e5276576dd0330450bfe2ea6"
+    },
+    "summary_sha256": "37071170cc4ce322e03766ccb3a5e96e9fd27e8fefff955c6adfb4234dafcc56",
+    "reviewed_at": "2026-08-24T19:11:19.214036+00:00",
+    "operator": "codex"
+  },
+  {
+    "schema_version": 1,
+    "event_id": "cover_selection-20260824T1913066594660000",
+    "subject": "cover_selection",
+    "reviewer_type": "agent",
+    "reviewer": "codex",
+    "signed_by": "",
+    "scope": [
+      "visual-brief.yaml"
+    ],
+    "scope_sha256": {
+      "visual-brief.yaml": "2da3253d0f0d67d2472f0db0ead5bf89d6751e1c46bc78279e42bf8e49c6f8f0"
+    },
+    "summary_sha256": "d07d73f60df5b655b487bb7b2b43e25d31c826a7bd0eb9c89f2c039a0612c30b",
+    "reviewed_at": "2026-08-24T19:13:06.659486+00:00",
+    "operator": "codex"
+  },
+  {
+    "schema_version": 1,
+    "event_id": "cover_selection-20260824T1915587501830000",
+    "subject": "cover_selection",
+    "reviewer_type": "agent",
+    "reviewer": "codex",
+    "signed_by": "",
+    "scope": [
+      "visual-brief.yaml"
+    ],
+    "scope_sha256": {
+      "visual-brief.yaml": "9da4e338add044d81dd49ccec6321e908c045dcb5b3063c661b5e6b64276d11c"
+    },
+    "summary_sha256": "55051402762ca229d2e55c1d227403af993d00e6afaf2eb27a3636df3898f326",
+    "reviewed_at": "2026-08-24T19:15:58.750201+00:00",
+    "operator": "codex"
+  },
+  {
+    "schema_version": 1,
+    "event_id": "cover_selection-20260824T1917587467530000",
+    "subject": "cover_selection",
+    "reviewer_type": "agent",
+    "reviewer": "codex",
+    "signed_by": "",
+    "scope": [
+      "visual-brief.yaml"
+    ],
+    "scope_sha256": {
+      "visual-brief.yaml": "6d02da60765923038e460def3cd6fdd4cb7c0a44d980159ac9ad1146aaeb2bf9"
+    },
+    "summary_sha256": "4d4d6cb21f3c16a427b913663121873fc2381a44bda7c48916984dbb8bae7056",
+    "reviewed_at": "2026-08-24T19:17:58.746772+00:00",
+    "operator": "codex"
+  },
+  {
+    "schema_version": 1,
+    "event_id": "cover_selection-20260824T1922461037810000",
+    "subject": "cover_selection",
+    "reviewer_type": "agent",
+    "reviewer": "codex",
+    "signed_by": "",
+    "scope": [
+      "visual-brief.yaml"
+    ],
+    "scope_sha256": {
+      "visual-brief.yaml": "76141c7bef056611597c13bf93a4d25716357b2cc5fbd1f483d4e8947199349e"
+    },
+    "summary_sha256": "80a7689ca83b1352483c2a3b2b6909ab3f86756fa81f57f55a1179bec1bb4f4a",
+    "reviewed_at": "2026-08-24T19:22:46.103801+00:00",
+    "operator": "codex"
+  },
+  {
+    "schema_version": 1,
+    "event_id": "cover_selection-20260824T1939347083780000",
+    "subject": "cover_selection",
+    "reviewer_type": "agent",
+    "reviewer": "codex",
+    "signed_by": "",
+    "scope": [
+      "visual-brief.yaml"
+    ],
+    "scope_sha256": {
+      "visual-brief.yaml": "c97924a4dccda3c8da075bd271d4e5d78c4648dcb87069bffc9be600b13f6227"
+    },
+    "summary_sha256": "be6f7f4039ea0355ab1bf3ec679241e8f6a0c3b2d66a8e51609bb11c66ad37d3",
+    "reviewed_at": "2026-08-24T19:39:34.708397+00:00",
+    "operator": "codex"
+  },
+  {
+    "schema_version": 1,
+    "event_id": "factual_review-20260824T2200598673220000",
+    "subject": "factual_review",
+    "reviewer_type": "human",
+    "reviewer": "user-audit-20260825",
+    "signed_by": "用户提供的审核意见（人工触发）",
+    "scope": [
+      "review-checks.json"
+    ],
+    "scope_sha256": {
+      "review-checks.json": "8a1b1534961222b2c608898470783eda6ca4d342d9b6ab8f6c96243d14dcd837"
+    },
+    "summary_sha256": "4f46c0b3e9cdbae7846eae9611273501f02aaac19af90e5fb13dbbfcaee4d1c2",
+    "reviewed_at": "2026-08-24T22:00:59.867344+00:00",
+    "operator": "codex"
+  },
+  {
+    "schema_version": 1,
+    "event_id": "factual_review-20260824T2226043306470000",
+    "subject": "factual_review",
+    "reviewer_type": "human",
+    "reviewer": "user-audit-20260825-final",
+    "signed_by": "用户提供的终审意见（人工触发）",
+    "scope": [
+      "review-checks.json"
+    ],
+    "scope_sha256": {
+      "review-checks.json": "8c5669783b7c1ef22f1aaee68dd1be4f5afaae31f2a894ebd189e4c6982a581a"
+    },
+    "summary_sha256": "2d9700447627821107e9d8cac0feacb5bb8d53bef9dd48c3926e8babfda45dc2",
+    "reviewed_at": "2026-08-24T22:26:04.330671+00:00",
+    "operator": "codex"
+  },
+  {
+    "schema_version": 1,
+    "event_id": "factual_review-20260824T2253174418600000",
+    "subject": "factual_review",
+    "reviewer_type": "human",
+    "reviewer": "user-audit-20260825-final",
+    "signed_by": "用户提供的审核意见（人工触发）",
+    "scope": [
+      "review-checks.json"
+    ],
+    "scope_sha256": {
+      "review-checks.json": "800f31d49e78debfac0203c40f650f0cf9157b8797c36df953933a753f5644bf"
+    },
+    "summary_sha256": "2f81693a2db88eff5bd008c32f1cffbf3d8221b04b78cda66f60f51096444fc8",
+    "reviewed_at": "2026-08-24T22:53:17.441882+00:00",
+    "operator": "codex"
+  },
+  {
+    "schema_version": 1,
+    "event_id": "cover_selection-20260824T2255577722620000",
+    "subject": "cover_selection",
+    "reviewer_type": "agent",
+    "reviewer": "codex-publish-repair",
+    "signed_by": "",
+    "scope": [
+      "visual-brief.yaml"
+    ],
+    "scope_sha256": {
+      "visual-brief.yaml": "6768047a43b4fa4203580b7355bd8d2c71ad856616465286628b294914ce8b8c"
+    },
+    "summary_sha256": "c0f3e7083afd90e8803d20f7c56294518ecfb7dec6ab8ead9bbe55658447ef4a",
+    "reviewed_at": "2026-08-24T22:55:57.772281+00:00",
+    "operator": "codex-publish-repair"
+  }
+]

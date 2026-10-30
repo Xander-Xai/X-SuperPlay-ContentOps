@@ -1,0 +1,38 @@
+schema_version: 1
+contract: article-workspace-governance-v1
+account_id: thinktank
+content_medium: wechat_article
+artifact_root:
+  env: GZH_ARTIFACT_ROOT
+  default: "../production"
+  must_be_outside_workflow_root: true
+lifecycle:
+  - active
+  - delivered
+  - archive
+  - quarantine
+registry:
+  relative_path: registry/workspace-index.json
+  routes_path: registry/routes
+  assets_path: registry/assets/index.json
+naming:
+  workspace_id: "THK-YYYYMMDD-NNN"
+  directory: "THK-YYYYMMDD-NNN-slug"
+  sequence_scope: daily
+  allocation: atomic_registry_lock
+workspace:
+  required_dirs:
+    - work
+    - exports
+    - snapshots
+  root_policy: standard_gate_artifacts_only
+  process_files_dir: work
+  deliverable_dir: exports
+  checkpoint_dir: snapshots
+legacy:
+  repository_drafts: blocked
+  migration: scripts/migrate_article_workspace.py
+operations:
+  initialize: "python scripts/matrix_init.py --route <external-route> --title <title>"
+  audit: "python scripts/workspace_audit.py --check"
+  lifecycle: "python scripts/workspace_lifecycle.py --workspace <workspace> --to delivered|archive|quarantine"

@@ -1,0 +1,1 @@
+When using MCP tools, explicitly allow them with --allowedTools. An optional --permission-prompt-tool can check whether the user grants permission to invoke a tool. This ensures MCP tools are used only when explicitly allowed.

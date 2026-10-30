@@ -1,0 +1,1 @@
+“Remove protocol-level sessions” and “Make MCP stateless”; the 2026-07-28 changelog also requires standard MCP request headers for Streamable HTTP POST requests.

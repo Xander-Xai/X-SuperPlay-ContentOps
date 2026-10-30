@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "reviewer_type": "human",
+  "reviewer": "user-audit-20260825-final",
+  "reviewed_at": "2026-08-24T22:53:17.333642+00:00",
+  "digest_mode": "stable-text-v1",
+  "article_digest": "8d3254c3623916647c042bb9a556323a86c1c7946fee3d0c60ccbb7ada52e87d",
+  "report_digest": "82e0f9c21b13e4209b58c5a17333a2aa8758913fbd21082b3d2a3044db0e7d89",
+  "checks": {
+    "content": "passed",
+    "facts": "passed",
+    "sensitivity": "passed",
+    "spelling": "passed",
+    "humanizer": "passed"
+  },
+  "findings": []
+}

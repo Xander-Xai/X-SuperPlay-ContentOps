@@ -1,0 +1,1 @@
+Standard Request Headers: Mcp-Method is required for all requests; Mcp-Name is sourced from params.name or params.uri and is required for tools/call, resources/read, and prompts/get requests. These headers are REQUIRED for compliance.

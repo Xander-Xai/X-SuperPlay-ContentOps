@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Route a deliverable to the project's own Easel skills.
+"""Route a deliverable to the project's own skills.
 
 Why this exists
 ---------------
@@ -17,11 +17,15 @@ Usage
 python scripts/skill_route.py --match "vertical evidence explainer with narration"
 python scripts/skill_route.py --list
 python scripts/skill_route.py --list --json
+python scripts/skill_route.py --sources
 ```
 
-Catalog resolution: the pinned runtime first (``.runtime/easel/skills/openclaw``),
-then the working checkout (``Easel/skills/openclaw``). Both are gitignored, so
-the helper reports a clear error rather than an empty success when neither is
+Catalog resolution, in priority order: the pinned Easel runtime
+(``.runtime/easel/skills/openclaw``), the working Easel checkout
+(``Easel/skills/openclaw``), then the vendored 公众号 track
+(``vendor/gzh-thinktank/.../skills``). A name that appears in more than one root
+is indexed once, from the earliest root. Every root is gitignored or vendored,
+so the helper reports a clear error rather than an empty success when none is
 present.
 """
 
@@ -40,7 +44,16 @@ ROOT = Path(__file__).resolve().parents[1]
 CATALOG_ROOTS: Tuple[Path, ...] = (
     ROOT / ".runtime" / "easel" / "skills" / "openclaw",
     ROOT / "Easel" / "skills" / "openclaw",
+    ROOT / "vendor" / "gzh-thinktank" / "gzh_未来智能" / "skills",
 )
+
+#: Read order is priority order: the pinned runtime shadows the working
+#: checkout, and both shadow a vendored track, so a name is indexed once.
+CATALOG_LABELS: Dict[str, str] = {
+    ".runtime": "easel-pinned",
+    "Easel": "easel-checkout",
+    "gzh_未来智能": "gzh",
+}
 
 #: Skills installed in the agent shared store. They are not Easel skills and do
 #: not live under a catalog root, so they need their own declared base. The
@@ -77,22 +90,67 @@ def _front_matter(text: str) -> Dict[str, str]:
     return data
 
 
+def _catalog_label(root: Path) -> str:
+    for part in root.parts:
+        if part in CATALOG_LABELS:
+            return CATALOG_LABELS[part]
+    return root.name
+
+
+def catalog_sources() -> List[Dict[str, Any]]:
+    """Every declared project catalog root, present or not.
+
+    Read-only. It exists so the router can say *where* a skill came from and so
+    an absent track (a clean checkout has neither Easel nor the gzh vendor) is
+    reported honestly instead of silently contributing zero skills.
+    """
+    return [
+        {
+            "label": _catalog_label(root),
+            "path": _display(root),
+            "exists": root.is_dir(),
+            "skills": len(list(root.glob("*/SKILL.md"))) if root.is_dir() else 0,
+        }
+        for root in CATALOG_ROOTS
+    ]
+
+
 def catalog() -> Tuple[List[Dict[str, Any]], Optional[Path]]:
-    """Every skill under the first catalog root that exists."""
-    root = next((candidate for candidate in CATALOG_ROOTS if candidate.is_dir()), None)
-    if root is None:
+    """Every skill across the declared catalog roots, deduplicated by name.
+
+    Roots are read in declared order, so the pinned runtime shadows the working
+    checkout and both shadow a vendored track. The second return value is the
+    first root that exists, kept for callers that only need a display path.
+    """
+    existing = [candidate for candidate in CATALOG_ROOTS if candidate.is_dir()]
+    if not existing:
         return [], None
     skills: List[Dict[str, Any]] = []
-    for skill_md in sorted(root.glob("*/SKILL.md")):
-        text = skill_md.read_text(encoding="utf-8", errors="replace")
-        meta = _front_matter(text)
-        skills.append({
-            "name": meta.get("name") or skill_md.parent.name,
-            "layer": meta.get("layer", ""),
-            "description": meta.get("description", ""),
-            "path": skill_md.relative_to(ROOT).as_posix(),
-        })
-    return skills, root
+    by_name: Dict[str, Dict[str, Any]] = {}
+    for root in existing:
+        label = _catalog_label(root)
+        for skill_md in sorted(root.glob("*/SKILL.md")):
+            text = skill_md.read_text(encoding="utf-8", errors="replace")
+            meta = _front_matter(text)
+            name = meta.get("name") or skill_md.parent.name
+            if name in by_name:
+                # A later root lost the name. Record it instead of dropping it
+                # silently: a cross-track collision is a fact worth seeing.
+                by_name[name].setdefault("shadowed", []).append({
+                    "source": label,
+                    "path": _display(skill_md),
+                })
+                continue
+            entry = {
+                "name": name,
+                "layer": meta.get("layer", ""),
+                "description": meta.get("description", ""),
+                "source": label,
+                "path": _display(skill_md),
+            }
+            by_name[name] = entry
+            skills.append(entry)
+    return skills, existing[0]
 
 
 def shared_skill(name: str) -> Optional[Path]:
@@ -151,19 +209,31 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--list", action="store_true", help="list every skill")
     parser.add_argument("--match", default="", help="rank skills for a deliverable")
+    parser.add_argument("--sources", action="store_true", help="list every catalog root")
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--limit", type=int, default=5)
     args = parser.parse_args()
+
+    if args.sources:
+        sources = catalog_sources()
+        if args.json:
+            print(json.dumps(sources, indent=2, ensure_ascii=False))
+            return 0
+        for item in sources:
+            state = "ok" if item["exists"] else "absent"
+            print(f"{item['label']:<16} {state:<7} {item['skills']:>3} skills  {item['path']}")
+        return 0
 
     skills, root = catalog()
     shared = shared_catalog()
     if root is None:
         shared_hits = rank(shared, args.match)[: args.limit] if args.match else []
         if shared_hits:
-            # A clean checkout has no Easel runtime (it is gitignored). The
-            # shared store is still real, so routing must not pretend otherwise.
+            # A clean checkout has no project catalog (both are gitignored or
+            # vendored). The shared store is still real, so routing must not
+            # pretend otherwise.
             print(
-                "no Easel skill catalog found ("
+                "no project skill catalog found ("
                 + ", ".join(_display(path) for path in CATALOG_ROOTS)
                 + "); routing against the shared store only",
                 file=sys.stderr,
@@ -176,14 +246,14 @@ def main() -> int:
                 print(f"      {skill['path']}")
             return 0
         print(
-            "no Easel skill catalog found. Expected one of: "
+            "no project skill catalog found. Expected one of: "
             + ", ".join(_display(path) for path in CATALOG_ROOTS),
             file=sys.stderr,
         )
         return 2
 
     selected = rank(skills, args.match)[: args.limit] if args.match else skills
-    # The shared store is not an Easel catalog and is ranked separately, so the
+    # The shared store is not a project catalog and is ranked separately, so the
     # catalog answer keeps its meaning while a project skill still shows up.
     shared_hits = rank(shared, args.match)[: args.limit] if args.match else []
     if args.match and not selected and not shared_hits:
@@ -195,7 +265,7 @@ def main() -> int:
 
     if args.json:
         payload = {
-            "catalog": _display(root),
+            "catalogs": catalog_sources(),
             "skills": selected,
             "shared_root": str(SHARED_SKILL_ROOT),
             "shared": shared_hits,
@@ -203,10 +273,10 @@ def main() -> int:
         print(json.dumps(payload, indent=2, ensure_ascii=False))
         return 0
 
-    print(f"catalog: {_display(root)} ({len(skills)} skills)")
+    print(f"catalog: {len(skills)} skills from {', '.join(item['label'] for item in catalog_sources() if item['exists'])}")
     for skill in selected:
         layer = f"[{skill['layer']}] " if skill["layer"] else ""
-        print(f"  {layer}{skill['name']}")
+        print(f"  {layer}{skill['name']}  ({skill.get('source', '')})")
         if skill["description"]:
             print(f"      {skill['description'][:160]}")
         print(f"      {skill['path']}")

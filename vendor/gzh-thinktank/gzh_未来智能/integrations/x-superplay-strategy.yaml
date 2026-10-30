@@ -1,0 +1,117 @@
+schema_version: 2
+integration_id: x-superplay-strategy
+kind: github-reference-project
+status: reference-verified-private
+account:
+  account_id: thinktank
+  canonical_public_brand: X超玩•未来智能
+  supplied_display_alias: "X超玩•未来智能"
+  publish_slot: 1
+  content_medium: wechat_article
+  credentials: external-only
+  strategy_role: Build
+source:
+  url: https://github.com/yandexuanxuan/X-SuperPlay-Strategy
+  owner: yandexuanxuan
+  repository: X-SuperPlay-Strategy
+  requested_ref: main
+  resolved_commit: 73fa34f0ecd4aa38bfc7c63d681e600f879f677e
+  checked_at: "2026-08-24"
+  access:
+    visibility: private
+    method: github_cli_authenticated
+    transport: local_http_proxy
+    proxy_endpoint: http://127.0.0.1:7897
+  availability:
+    status: accessible-authenticated
+    http_status: 200
+    checked_endpoints:
+      - https://api.github.com/repos/yandexuanxuan/X-SuperPlay-Strategy
+    note: "仓库为私有仓库；未授权请求会表现为 404，已通过本机 GitHub CLI 授权读取。"
+  evidence:
+    - path: README.md
+      bytes: 2461
+      sha256: e814a83222385133efe189deea601f862b79c99c2ffa77866266db6e11dd1875
+    - path: 01-Strategy/AI-Content-Driven-Entrepreneurship-Strategy-V3.md
+      bytes: 14411
+      sha256: 2a947dbe8f4ce986c800b7c4e829bd03e68afa7aded347070ace3cde92d79f2e
+    - path: 02-Accounts/X-SuperPlay-Future-Intelligence.md
+      bytes: 4584
+      sha256: b9dd1c34e2ed39bfa5c73b12ad5f5d3673ae901c7ef2da11015f79e1db276671
+    - path: 03-Execution/30-60-90-Day-Validation-Plan.md
+      bytes: 5193
+      sha256: 59105ed41d7007dc26cec68b710d62673aa2bbe0aff67c9dbafa9e1a64a728b3
+runtime:
+  execution_status: reference-only
+  install_required: false
+  primary_renderer: false
+  publish_adapter: false
+  secret_keys: []
+workflow_role:
+  allowed:
+    - research_reference
+    - source_evidence_candidate
+    - account_positioning
+    - topic_signal_routing
+  blocked_until_verified:
+    - code_execution
+    - dependency_installation
+    - asset_ingestion
+    - publish_or_cross_platform_action
+strategy_mapping:
+  paired_accounts:
+    explore:
+      public_brand: X•超玩1024
+      role: Explore
+    build:
+      public_brand: X超玩•未来智能
+      account_id: thinktank
+      role: Build
+  funnel:
+    - trend_discovery
+    - content_experiment
+    - problem_signal
+    - user_interview
+    - demo_or_mvp
+    - paid_validation
+    - workflow_agent_saas
+  build_content_pillars:
+    - ai_engineering_deconstruction
+    - from_need_to_launch
+    - ai_capability_monetization
+  demand_signal_levels:
+    - level: 1
+      signal: "很酷"
+      meaning: weak_interest
+    - level: 2
+      signal: "怎么做？"
+      meaning: learning_demand
+    - level: 3
+      signal: "能开源吗？"
+      meaning: solution_demand
+    - level: 4
+      signal: "能不能帮我搭？"
+      meaning: strong_demand
+    - level: 5
+      signal: "多少钱？"
+      meaning: commercial_signal
+  escalation_triggers:
+    - "怎么实现？"
+    - "有源码吗？"
+    - "能不能出完整教程？"
+    - "能不能部署？"
+    - "可以帮我做吗？"
+    - "多少钱？"
+verification:
+  verified_at: "2026-08-24"
+  method: "GitHub CLI authenticated API read at immutable commit"
+  repository_type: documentation_strategy_reference
+  license: not_declared
+  dependencies: none_declared
+  required_before_code_enable:
+    - immutable_commit
+    - license_and_reuse_scope
+    - dependency_manifest
+    - isolated_smoke_test
+    - evidence_receipt_with_sha256
+  next_action: "使用 integrations/x-superplay-strategy-contract.yaml 消费已验证战略映射；不将该仓库作为运行时依赖。"

@@ -45,7 +45,9 @@ code, a storyboard, or any ffmpeg/HTML composition for a video, image, card,
 audio or copy deliverable:
 
 1. Run `python scripts/skill_route.py --match "<the deliverable>"` and read the
-   `SKILL.md` of every matching candidate.
+   `SKILL.md` of every matching candidate. It covers the pinned Easel runtime,
+   the working Easel checkout, and the vendored 公众号 track, deduplicated by
+   name; `--sources` prints every catalog root and its count.
 2. State the chosen skill, its input/output contract, and why it owns the task.
 3. Use that skill's scripts; do not hand-roll `zoompan`/`xfade`, card HTML or a
    subtitle burn when a skill owns the step.

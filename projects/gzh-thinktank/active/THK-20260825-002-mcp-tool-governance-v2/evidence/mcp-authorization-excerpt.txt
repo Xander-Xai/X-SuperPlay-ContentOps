@@ -1,0 +1,1 @@
+The Model Context Protocol provides authorization capabilities at the transport level. Authorization is OPTIONAL for MCP implementations; when supported, HTTP-based transports should conform to this specification. A protected MCP server acts as an OAuth resource server and accepts access tokens.

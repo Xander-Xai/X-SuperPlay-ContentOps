@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "renderer": "chrome-headless",
+  "browser": "chrome.exe",
+  "target_kind": "local_preview",
+  "target_url": "",
+  "target_uri_id": "local_preview:article_预览.html",
+  "source": "article_预览.html",
+  "source_sha256": "f1ae53049ec0359a9328bde808d6b67ea282e3366c315f324c4825e6e6c6aeaf",
+  "viewport": {
+    "width": 390,
+    "height": 1200
+  },
+  "screenshot": "preview_screenshot.png",
+  "screenshot_sha256": "b605a5d41bb1dd5d59b40a767ae6e52e82b4222ec5bfdf5acff9260334d0d6a0",
+  "fullpage_screenshot": "preview-fullpage.png",
+  "fullpage_screenshot_sha256": "c9a283d902d09736eef9f64e70f7972e6ae9f4951e188952c9891d82bfef7264",
+  "fullpage_capture_mode": "tall-browser-viewport",
+  "scroll_slices": [
+    {
+      "path": "preview-slices/segment-001.png",
+      "top": 0,
+      "bottom": 1200,
+      "sha256": "2258707a55a9c62434eb3580444bc514956d8b9ccb266ca984a69dedd17d4832"
+    },
+    {
+      "path": "preview-slices/segment-002.png",
+      "top": 1200,
+      "bottom": 2400,
+      "sha256": "0b92a74177dbc68a46783e6ee21b5204d718a73b2526146b6ab16acb5c74e06f"
+    },
+    {
+      "path": "preview-slices/segment-003.png",
+      "top": 2400,
+      "bottom": 3600,
+      "sha256": "2d006c55d33d0fc7520211dec3e7855cc60afcf7ad4e4b185225af2b4070143f"
+    },
+    {
+      "path": "preview-slices/segment-004.png",
+      "top": 3600,
+      "bottom": 4800,
+      "sha256": "d54bdf9296e07dde09fd2a8e6ea5b60235a8342daac3765ca3c395b64e2cce47"
+    },
+    {
+      "path": "preview-slices/segment-005.png",
+      "top": 4800,
+      "bottom": 6000,
+      "sha256": "3eba4e274d96232d3e1d18e3a664cfd4552d611d4c5f08051e616f4daed054ab"
+    },
+    {
+      "path": "preview-slices/segment-006.png",
+      "top": 6000,
+      "bottom": 7200,
+      "sha256": "124ad1afb24decadb7c4a32b9926a8598c4a3f183bd7e8c7aa5f7b88b84bee3b"
+    },
+    {
+      "path": "preview-slices/segment-007.png",
+      "top": 7200,
+      "bottom": 8400,
+      "sha256": "dacacc91e3a4034b1acfe926c9f8e589b5f0180e423ca8a875a7ea032d7ea4fd"
+    },
+    {
+      "path": "preview-slices/segment-008.png",
+      "top": 8400,
+      "bottom": 9310,
+      "sha256": "1d86dfd4126b05db68096864a863463193512d18c3c9f7a55ebc36bba4be01d5"
+    }
+  ],
+  "scroll_slice_height": 1200,
+  "scroll_slice_count": 8,
+  "dom_sha256": "73e1b1bf1262a1b0c107e58ab503ac435f4da5a69ec9064043a2920ea703812f",
+  "dom_check": {
+    "status": "passed",
+    "title_present": true,
+    "body_text_chars": 5314,
+    "image_count": 5,
+    "heading_count": 8,
+    "placeholder_count": 0,
+    "horizontal_overflow": false,
+    "image_overflow": false
+  },
+  "captured_at": "2026-08-24T22:52:43.356883+00:00"
+}

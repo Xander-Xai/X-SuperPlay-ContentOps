@@ -1,0 +1,14 @@
+{
+  "name": "gzh-article-format",
+  "version": "0.3.0",
+  "author": "Matrix Ops",
+  "description": "给公众号文章排版，转换为可直接粘贴到微信后台的格式，支持多套主题。",
+  "license": "MIT",
+  "homepage": "https://localhost/",
+  "tags": ["wechat", "公众号", "formatting", "html"],
+  "permissions": ["filesystem", "shell"],
+  "entryPoint": {
+    "type": "natural",
+    "path": "SKILL.md"
+  }
+}

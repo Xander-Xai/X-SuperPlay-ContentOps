@@ -1,0 +1,18 @@
+{
+  "topic_evidence_isolation": {
+    "status": "blocked",
+    "receipt": "topic-evidence-isolation.json",
+    "matched_source_ids": []
+  },
+  "status": "blocked",
+  "errors": [
+    "sources.json 缺失或无法解析",
+    "topic-evidence-isolation: 缺少有效 topic-contract.yaml；证据不能在无主题合同的情况下复用",
+    "topic-evidence-isolation: 缺少 evidence-plan.json；无法校验主题绑定",
+    "topic-evidence-isolation: evidence-plan.json 缺少 topic_binding；请运行 source_evidence.py bind",
+    "topic-evidence-isolation: 主题绑定 contract 与当前 topic-contract 不一致；必须重新初始化证据计划",
+    "topic-evidence-isolation: 主题绑定 topic_contract_sha256 与当前 topic-contract 不一致；必须重新初始化证据计划",
+    "topic-evidence-isolation: 主题绑定 topic_fingerprint 与当前 topic-contract 不一致；必须重新初始化证据计划",
+    "topic-evidence-isolation: 证据计划没有正文使用的来源"
+  ]
+}

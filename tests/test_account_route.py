@@ -195,6 +195,42 @@ def test_the_cli_resolves_a_real_project_and_echoes_the_creative_owners():
     print("[ok] 9. the CLI resolves a real project and echoes its skill owners")
 
 
+@test
+def test_a_wechat_workspace_routes_to_the_vendored_workflow():
+    """The 公众号 track has no account DNA; its registry is what identifies it."""
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        (project / "registry").mkdir(parents=True)
+        (project / "registry" / "workspace-index.json").write_text("{}", encoding="utf-8")
+        route = ar.resolve(project)
+    assert route["platform"] == "wechat_article", route
+    assert route["evidence_mode"] == "WECHAT_ARTICLE", route
+    assert [step["step"] for step in route["pipeline"]] == [
+        "workspace", "init", "gate", "audit"], route["pipeline"]
+    for step in route["pipeline"]:
+        words = step["command"].split()
+        assert words[0] == "python", step["command"]
+        assert (ROOT / words[1]).is_file() or Path(words[1]).name.endswith(".py"), \
+            f"route names a script that does not exist: {words[1]}"
+    assert any("GZH_ARTIFACT_ROOT" in warning for warning in route["warnings"]), \
+        route["warnings"]
+    print("[ok] 10. a 公众号 workspace routes to the vendored workflow")
+
+
+@test
+def test_a_directory_without_the_registry_is_not_treated_as_a_wechat_workspace():
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        (project / "active").mkdir()
+        try:
+            ar.resolve(project)
+        except ar.RouteBlocked as blocked:
+            assert blocked.code == "ACCOUNT_SLUG_MISSING", blocked.code
+        else:
+            raise AssertionError("an unregistered directory was routed as 公众号")
+    print("[ok] 11. only a registered workspace is routed as 公众号")
+
+
 def main() -> int:
     failures = []
     for fn in TESTS:

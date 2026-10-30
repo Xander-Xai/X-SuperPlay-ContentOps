@@ -1,0 +1,8 @@
+{
+  "name": "gzh-formula-rendering",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "katex": "0.18.1"
+  }
+}

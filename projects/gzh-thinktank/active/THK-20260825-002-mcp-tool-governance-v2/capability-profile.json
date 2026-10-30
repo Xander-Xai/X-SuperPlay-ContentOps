@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "contract": "capability-profile-v1",
+  "external_image_api_required": true,
+  "approval_signature_required": false,
+  "selected_backends": [
+    "agnes",
+    "deterministic-svg",
+    "katex-html-composite"
+  ],
+  "offline_allowed": false,
+  "fallback_policy": "blocked-unless-explicitly-switched"
+}

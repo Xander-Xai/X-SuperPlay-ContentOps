@@ -1,0 +1,18 @@
+schema_version: 3
+account: thinktank
+title: "MCP工具调用之后，谁来管Agent的下一步？"
+audience: "AI应用开发者、软件与算法工程师、AI产品经理、独立开发者和小型创业团队"
+primary_keyword: "MCP工具调用生产治理"
+shareable_angle: "Agent能调用工具不等于能安全上线；用一张治理闭环图解释权限、审批、审计与回滚。"
+primary_claim: "生产级Agent必须在MCP工具调用边界建立可限制、可解释、可审计、可回滚的控制层。"
+cta: "关注 X超玩•未来智能，回复‘MCP治理’领取MCP工具调用生产治理权限与上线验收清单"
+public_brand: "X超玩•未来智能"
+conversion_stage: trust_to_lead
+primary_cta: "关注 X超玩•未来智能，回复‘MCP治理’领取MCP工具调用生产治理权限与上线验收清单"
+secondary_cta: "如果你正在把MCP工具调用生产治理落到项目里，留言你的具体问题，我会继续补充实现与部署细节"
+lead_magnet: "MCP工具调用生产治理权限与上线验收清单"
+reply_keyword: MCP治理
+commercial_offer: "源码、模板、部署支持、项目诊断和企业定制开发"
+risk_level: medium
+human_review_required: false
+status: approved

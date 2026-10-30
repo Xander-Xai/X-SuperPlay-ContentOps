@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "contract": "visual-depth-contract-v1",
+  "status": "passed",
+  "article": "THK-20260825-002-mcp-tool-governance-v2",
+  "article_sha256": "6c649748ab9537759fef35e286a762ca195de7e0ae22f3e36021eabfd9b5e35f",
+  "visual_contract_sha256": "5e6811dbdf116a671ea7a51a388340c07e87a4eb3f66453aca418d4a31a5e8d4",
+  "reviewed_at": "2026-08-24T23:03:38.665028+00:00",
+  "review_mode": "structural-contract",
+  "reader_test_status": "pending-human",
+  "reader_test_receipt": {
+    "path": "visual-reader-test.json",
+    "status": "pending-human",
+    "sample_size": 0
+  },
+  "records": [
+    {
+      "id": "body-01",
+      "claim_ids": [
+        "claim-governance-synthesis"
+      ],
+      "evidence_ids": [
+        "ev-mcp-stateless",
+        "ev-mcp-authorization",
+        "ev-mcp-mrtr",
+        "ev-mcp-clientinfo",
+        "ev-mcp-streamable-headers",
+        "ev-dogwood-temporal",
+        "ev-dogwood-production",
+        "ev-anthropic-explicit-permissions"
+      ],
+      "relation_count": 5,
+      "verified_relation_count": 5,
+      "relation_types": [
+        "contains"
+      ],
+      "evidence_bound_relation_count": 5,
+      "structural_score": 4,
+      "reader_test_status": "pending-human",
+      "status": "passed"
+    },
+    {
+      "id": "body-02",
+      "claim_ids": [
+        "claim-mcp-stateless-boundary"
+      ],
+      "evidence_ids": [
+        "ev-mcp-stateless"
+      ],
+      "relation_count": 5,
+      "verified_relation_count": 5,
+      "relation_types": [
+        "contains"
+      ],
+      "evidence_bound_relation_count": 5,
+      "structural_score": 4,
+      "reader_test_status": "pending-human",
+      "status": "passed"
+    },
+    {
+      "id": "body-03",
+      "claim_ids": [
+        "claim-anthropic-explicit-permissions"
+      ],
+      "evidence_ids": [
+        "ev-anthropic-explicit-permissions"
+      ],
+      "relation_count": 4,
+      "verified_relation_count": 4,
+      "relation_types": [
+        "implements"
+      ],
+      "evidence_bound_relation_count": 4,
+      "structural_score": 4,
+      "reader_test_status": "pending-human",
+      "status": "passed"
+    },
+    {
+      "id": "body-04",
+      "claim_ids": [
+        "claim-governance-synthesis"
+      ],
+      "evidence_ids": [
+        "ev-mcp-stateless",
+        "ev-mcp-authorization",
+        "ev-mcp-mrtr",
+        "ev-mcp-clientinfo",
+        "ev-mcp-streamable-headers",
+        "ev-dogwood-temporal",
+        "ev-dogwood-production",
+        "ev-anthropic-explicit-permissions"
+      ],
+      "relation_count": 5,
+      "verified_relation_count": 5,
+      "relation_types": [
+        "contains"
+      ],
+      "evidence_bound_relation_count": 5,
+      "structural_score": 4,
+      "reader_test_status": "pending-human",
+      "status": "passed"
+    },
+    {
+      "id": "body-05",
+      "claim_ids": [
+        "claim-governance-synthesis"
+      ],
+      "evidence_ids": [
+        "ev-mcp-stateless",
+        "ev-mcp-authorization",
+        "ev-mcp-mrtr",
+        "ev-mcp-clientinfo",
+        "ev-mcp-streamable-headers",
+        "ev-dogwood-temporal",
+        "ev-dogwood-production",
+        "ev-anthropic-explicit-permissions"
+      ],
+      "relation_count": 4,
+      "verified_relation_count": 4,
+      "relation_types": [
+        "contains"
+      ],
+      "evidence_bound_relation_count": 4,
+      "structural_score": 4,
+      "reader_test_status": "pending-human",
+      "status": "passed"
+    }
+  ],
+  "claim_coverage": [
+    "claim-anthropic-explicit-permissions",
+    "claim-governance-synthesis",
+    "claim-mcp-stateless-boundary"
+  ],
+  "errors": [],
+  "note": "结构深度检查通过不等于真人 reader test 通过；reader_test_status 必须单独签名。"
+}

@@ -1,0 +1,317 @@
+schema_version: 1
+contract: visual-capability-registry-v1
+scan:
+  roots:
+    - skills/
+  skill_filename: SKILL.md
+  skill_file_count: 42
+  scanned_at: "2026-08-12"
+  inventory: reports/skill-inventory-current.json
+
+# The director evaluates every listed capability during planning, but only
+# capabilities with execution_status=integrated may be selected as a primary
+# renderer. Advisory capabilities remain visible as future/optional candidates.
+# Planning/quality contracts are evaluated beside renderers but are not
+# image backends. Keeping them explicit prevents a style brief from being
+# mistaken for an executable renderer.
+planning_contracts:
+  - contract_id: visual-depth-contract-v1
+    execution_status: integrated
+    adapter: scripts/visual_depth_qa.py
+    editable_source: json
+    deterministic: true
+    fallback: structural-qa-block
+    note: "解释深度合同；不是图片 renderer。检查 reader question、typed relations、claim/evidence 和 fallback"
+  - contract_id: art-direction-v1
+    execution_status: integrated
+    adapter: scripts/build_art_direction.py
+    editable_source: yaml
+    deterministic: true
+    fallback: account-art-direction
+  - contract_id: visual-taste-review-v1
+    execution_status: integrated
+    adapter: scripts/visual_taste_review.py
+    editable_source: json
+    deterministic: true
+    review_mode: warning-first
+    fallback: no-aesthetic-block
+  - contract_id: visual-aesthetic-contract-v1
+    execution_status: integrated
+    adapter: scripts/visual_aesthetic_qa.py
+    editable_source: svg
+    deterministic: true
+    fallback: visual-aesthetic-block
+    note: "客观图面卫生合同；不是 renderer。检查箭头方向、标签/节点/连线碰撞、safe frame 与 footer 裁切"
+  - contract_id: visual-reader-test-v1
+    execution_status: integrated
+    adapter: scripts/visual_reader_test.py
+    editable_source: json
+    deterministic: true
+    fallback: pending-human
+    note: "固定读者问题与评分回执；默认 pending-human，不冒充真人理解或审美批准"
+
+capabilities:
+  - skill_id: katex-html-composite
+    skill_paths:
+      - skills/formula-rendering
+      - skills/gzh-article-format
+    backend: katex-html-composite
+    task_types: [formula, exact_math, shape, numeric, qkv, attention]
+    execution_status: integrated
+    adapter: scripts/render_visual_anchor.py
+    editable_source: html
+    deterministic: true
+    exact_text: true
+    needs_api: false
+    mobile_score: 0.95
+    fallback: deterministic-svg
+
+  - skill_id: beautiful-mermaid
+    skill_paths:
+      - skills/beautiful-mermaid
+    backend: beautiful-mermaid
+    task_types: [relationship, branch, architecture, flow, multihead, sequence]
+    execution_status: integrated
+    adapter: scripts/render_visual_anchor.py
+    editable_source: svg
+    deterministic: true
+    exact_text: true
+    needs_api: false
+    mobile_score: 0.9
+    fallback: deterministic-svg
+
+  - skill_id: deterministic-svg
+    skill_paths:
+      - scripts/render_visual_anchor.py
+      - skills/wechat-svg-interactive
+    backend: deterministic-svg
+    task_types: [timeline, state, flow, architecture, illustration, kv-cache]
+    execution_status: integrated
+    adapter: scripts/render_visual_anchor.py
+    editable_source: svg
+    deterministic: true
+    exact_text: true
+    needs_api: false
+    mobile_score: 0.9
+    fallback: deterministic-infographic
+
+  - skill_id: deterministic-infographic
+    skill_paths:
+      - skills/gzh-visual-assets
+      - scripts/render_visual_anchor.py
+    source_kind: local-integrated-adapter
+    external_candidates:
+      - candidate_id: baoyu-infographic
+        status: advisory-external
+        source: GitHub/npm candidate; not required by the local adapter
+      - candidate_id: openclaw-article-to-image
+        status: advisory-external
+        source: GitHub/local catalog candidate; not required by the local adapter
+    backend: deterministic-infographic
+    task_types: [checklist, comparison, numeric, data, table, evidence]
+    execution_status: integrated
+    adapter: scripts/render_visual_anchor.py
+    editable_source: html
+    deterministic: true
+    exact_text: true
+    needs_api: false
+    mobile_score: 0.92
+    fallback: deterministic-svg
+
+  # ── RC7 / Enhancement #4~#6: 代码、公式对照、卡组、手绘四个后端 ──────────
+  # 这四个后端已在 scripts/visual_backend_registry.py 与 render_visual_anchor.py
+  # 中落地，此前遗漏登记，导致 evaluate_capabilities() 找不到 primary 能力，
+  # skill-evaluation.json 会把命中的路由误报为 candidate/rejected。
+  - skill_id: code-block
+    skill_paths:
+      - scripts/render_code_block.py
+    backend: code-block
+    task_types: [code, pseudocode, implementation, exact_text, algorithm, procedure]
+    execution_status: integrated
+    adapter: scripts/render_visual_anchor.py
+    editable_source: html
+    deterministic: true
+    exact_text: true
+    needs_api: false
+    mobile_score: 0.88
+    fallback: deterministic-svg
+    note: "账号主题代码/伪代码卡，高度自适应（Enhancement #7）；支持 code_style 信号 teaching=NumPy 直觉 / production=PyTorch 实战 / pseudocode"
+
+  - skill_id: formula-code-map
+    skill_paths:
+      - scripts/render_formula_code_map.mjs
+      - skills/formula-rendering
+    backend: formula-code-map
+    task_types: [formula, exact_math, code, implementation, exact_text]
+    execution_status: integrated
+    adapter: scripts/render_visual_anchor.py
+    editable_source: html
+    deterministic: true
+    exact_text: true
+    needs_api: false
+    mobile_score: 0.86
+    fallback: katex-html-composite
+    note: "KaTeX 公式（左）↔ 代码（右）并排对照，带编号映射徽章"
+
+  - skill_id: interactive-card-deck
+    skill_paths:
+      - scripts/render_interactive_card_deck.py
+      - skills/wechat-svg-interactive
+    backend: interactive-card-deck
+    task_types: [card_deck, comparison, checklist, concept]
+    execution_status: integrated
+    adapter: scripts/render_visual_anchor.py
+    editable_source: svg
+    deterministic: true
+    exact_text: true
+    needs_api: false
+    mobile_score: 0.84
+    fallback: deterministic-svg
+    note: "单视觉位承载多张层叠卡片，附静态 HTML fallback"
+
+  - skill_id: excalidraw-style
+    skill_paths:
+      - scripts/render_excalidraw_style.py
+      - skills/excalidraw-diagram
+    backend: excalidraw-style
+    task_types: [diagram, relationship, flow, concept, whiteboard, tutorial]
+    execution_status: integrated
+    adapter: scripts/render_visual_anchor.py
+    editable_source: svg
+    deterministic: true
+    exact_text: true
+    needs_api: false
+    mobile_score: 0.82
+    fallback: deterministic-svg
+    note: "手绘风 SVG（wobble 路径 + 手写字体栈 + 账号色），去 AI 味"
+
+  - skill_id: excalidraw-diagram
+    skill_paths:
+      - skills/excalidraw-diagram
+      - skills/excalidraw-skill-pack/packages/core
+    backend: excalidraw
+    task_types: [concept, metaphor, whiteboard, flow, relationship, tutorial]
+    execution_status: integrated
+    adapter: scripts/render_visual_anchor.py
+    editable_source: excalidraw.json
+    deterministic: true
+    exact_text: true
+    needs_api: false
+    mobile_score: 0.82
+    fallback: excalidraw-style
+    note: "原生 Excalidraw JSON + SVG sidecar；PNG 优先由 excalidraw-skill-pack renderer 栅格化，失败时回退 Chrome SVG"
+
+  - skill_id: tldraw-whiteboard
+    skill_paths:
+      - D:/Projects/codex/skills/tldraw-skill/skills/tldraw-skill
+    backend: tldraw
+    task_types: [whiteboard, concept, flow, relationship, tutorial]
+    execution_status: advisory
+    adapter: ""
+    editable_source: tldr
+    deterministic: true
+    exact_text: true
+    needs_api: false
+    mobile_score: 0.82
+    fallback: deterministic-svg
+
+  - skill_id: baoyu-article-illustrator
+    skill_paths:
+      - D:/Projects/codex/skills/baoyu-skills-main/skills/baoyu-article-illustrator
+    backend: html-illustration
+    task_types: [concept, metaphor, scene, tutorial]
+    execution_status: advisory
+    adapter: ""
+    editable_source: html
+    deterministic: true
+    exact_text: false
+    needs_api: false
+    mobile_score: 0.78
+    fallback: deterministic-svg
+
+  - skill_id: canvas-design
+    skill_paths:
+      - D:/Projects/codex/skills/canvas-design
+      - D:/Projects/codex/open-design-projects/open-design/skills/canvas-design
+    backend: canvas
+    task_types: [cover, concept, poster, brand]
+    execution_status: advisory
+    adapter: ""
+    editable_source: html
+    deterministic: true
+    exact_text: true
+    needs_api: false
+    mobile_score: 0.8
+    fallback: brand-cover
+
+  - skill_id: agnes-image-21-flash
+    skill_paths:
+      - skills/agnes-image-21-flash
+      - D:/Projects/codex/skills/Agnes Image 2.1 Flash
+    backend: agnes
+    task_types: [cover, concept, metaphor, scene, atmosphere]
+    execution_status: integrated
+    adapter: scripts/generate_article_images.py
+    editable_source: ""
+    deterministic: false
+    exact_text: false
+    needs_api: true
+    mobile_score: 0.8
+    fallback: brand-cover-or-topic-semantic-local
+
+  - skill_id: brand-cover-local
+    skill_paths:
+      - skills/gzh-visual-assets/scripts/text_poster.py
+    backend: brand-cover
+    task_types: [cover]
+    execution_status: integrated
+    adapter: skills/gzh-visual-assets/scripts/text_poster.py
+    editable_source: svg
+    deterministic: true
+    exact_text: true
+    needs_api: false
+    mobile_score: 0.9
+    fallback: block
+
+  - skill_id: baoyu-comic
+    skill_paths:
+      - D:/Projects/codex/skills/baoyu-skills-main/skills/baoyu-comic
+    backend: comic
+    task_types: [story, tutorial, metaphor, scene]
+    execution_status: advisory
+    adapter: ""
+    editable_source: ""
+    deterministic: false
+    exact_text: false
+    needs_api: true
+    mobile_score: 0.72
+    fallback: deterministic-svg
+
+  - skill_id: figma-design
+    skill_paths:
+      - D:/Projects/codex/skills/figma
+      - D:/Projects/codex/skills/figma-generate-design
+    backend: figma
+    task_types: [cover, brand, poster, diagram, infographic]
+    execution_status: advisory
+    adapter: ""
+    editable_source: figma
+    deterministic: false
+    exact_text: true
+    needs_api: false
+    mobile_score: 0.84
+    fallback: deterministic-infographic
+
+  - skill_id: image-to-code
+    skill_paths:
+      - D:/Projects/codex/skills/image-to-code
+    backend: image-to-code
+    task_types: [screenshot, ui, evidence]
+    execution_status: advisory
+    adapter: ""
+    editable_source: html
+    deterministic: false
+    exact_text: true
+    needs_api: false
+    mobile_score: 0.75
+    fallback: user-authorized-screenshot

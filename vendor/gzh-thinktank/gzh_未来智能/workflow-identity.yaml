@@ -1,0 +1,16 @@
+# X超玩•未来智能（对外品牌 X超玩•未来智能）独立工作流身份合同
+# 本文件由 gzh-split-plan 拆分工具生成，禁止改为其他账号值。
+workflow_id: gzh-thinktank
+account_id: thinktank
+display_name: X超玩•未来智能
+public_brand: X超玩•未来智能
+# 用户提供的账号展示别名。canonical public_brand 保持无空格，避免破坏既有路由、CTA 与历史作品。
+account_aliases:
+  - "X超玩•未来智能"
+internal_account_name: X超玩•未来智能
+formatter_theme: thinktank-atlas
+image_theme: thinktank-atlas
+wechat_publish_slot: 1
+content_medium: wechat_article
+content_length: 2500-5000
+source_manifest: split-manifest.json

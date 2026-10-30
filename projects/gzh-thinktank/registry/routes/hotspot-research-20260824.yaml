@@ -1,0 +1,18 @@
+schema_version: 1
+status: confirmed
+content_medium: wechat_article
+sequence:
+- topic_route
+- account_route
+topic_route:
+  mode: hotspot
+  topic: 近期AI工程与从需求到上线方向的热点筛选
+  reference: ''
+  selected_skill: gzh-topic-research
+  routed_at: '2026-08-24T15:40:15.442712+00:00'
+account_route:
+  account: thinktank
+  display_name: X超玩•未来智能
+  routed_at: '2026-08-24T15:40:15.442712+00:00'
+operator: codex
+confirmed_at: '2026-08-24T15:40:15.442712+00:00'

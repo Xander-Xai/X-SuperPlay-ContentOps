@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "contract": "topic-evidence-isolation-v1",
+  "verifier": "topic_evidence_isolation.py",
+  "verifier_version": "1.0.0",
+  "status": "passed",
+  "audited_at": "2026-08-24T22:53:34.067006+00:00",
+  "topic_binding": {
+    "contract": "topic-evidence-binding-v1",
+    "topic_contract_sha256": "3c727ad45554305483ce7fe5f63555fe01275b4a6bff0e13958cf4f96ad566ab",
+    "topic_fingerprint": "8805b517217a3f106b70ce60e1f8e26cada58f2e4a2a764e0d003058c88829a4",
+    "canonical_topic": "MCP工具调用的生产治理",
+    "topic_terms": [
+      "MCP工具调用的生产治理",
+      "MCP工具调用之后，谁来管Agent的下一步？",
+      "MCP工具调用生产治理",
+      "MCP",
+      "工具调用",
+      "生产治理",
+      "审批",
+      "审计",
+      "回滚",
+      "Model Context Protocol",
+      "Agent工具调用",
+      "temporal policy",
+      "Dogwood"
+    ],
+    "bound_at": "2026-08-24T22:53:34.056115+00:00"
+  },
+  "plan_topic_binding": {
+    "contract": "topic-evidence-binding-v1",
+    "topic_contract_sha256": "3c727ad45554305483ce7fe5f63555fe01275b4a6bff0e13958cf4f96ad566ab",
+    "topic_fingerprint": "8805b517217a3f106b70ce60e1f8e26cada58f2e4a2a764e0d003058c88829a4",
+    "canonical_topic": "MCP工具调用的生产治理",
+    "topic_terms": [
+      "MCP工具调用的生产治理",
+      "MCP工具调用之后，谁来管Agent的下一步？",
+      "MCP工具调用生产治理",
+      "MCP",
+      "工具调用",
+      "生产治理",
+      "审批",
+      "审计",
+      "回滚",
+      "Model Context Protocol",
+      "Agent工具调用",
+      "temporal policy",
+      "Dogwood"
+    ],
+    "bound_at": "2026-08-24T18:21:09.067733+00:00"
+  },
+  "source_ids": [
+    "anthropic-claude-code-mcp-permissions",
+    "dogwood-guide",
+    "dogwood-readme",
+    "mcp-authorization-20260728",
+    "mcp-release-mrtr-20260728",
+    "mcp-schema-clientinfo-20260728",
+    "mcp-spec-20260728",
+    "mcp-streamable-http-headers-20260728"
+  ],
+  "used_source_ids": [
+    "anthropic-claude-code-mcp-permissions",
+    "dogwood-guide",
+    "dogwood-readme",
+    "mcp-authorization-20260728",
+    "mcp-release-mrtr-20260728",
+    "mcp-schema-clientinfo-20260728",
+    "mcp-spec-20260728",
+    "mcp-streamable-http-headers-20260728"
+  ],
+  "matched_source_ids": [
+    "anthropic-claude-code-mcp-permissions",
+    "mcp-authorization-20260728",
+    "mcp-release-mrtr-20260728",
+    "mcp-schema-clientinfo-20260728",
+    "mcp-spec-20260728",
+    "mcp-streamable-http-headers-20260728"
+  ],
+  "errors": []
+}

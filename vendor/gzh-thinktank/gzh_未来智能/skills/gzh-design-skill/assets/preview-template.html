@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}} · 公众号排版预览</title>
+<style>
+  :root{color-scheme:light;}
+  body{margin:0;background:#f3f5f7;color:#1f2937;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;-webkit-text-size-adjust:100%;overflow-x:hidden;}
+  .gzh-toolbar{position:fixed;top:0;left:0;right:0;height:58px;background:rgba(255,255,255,.96);border-bottom:1px solid #e5e7eb;box-shadow:0 4px 18px rgba(15,23,42,.08);display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 max(16px,calc((100vw - 720px)/2));box-sizing:border-box;z-index:99;backdrop-filter:blur(12px);}
+  .gzh-hint{font-size:13px;color:#6b7280;line-height:1.4;min-width:0;overflow:hidden;}
+  .gzh-hint b{color:#111827;}
+  .gzh-copy{background:#17324d;color:#fff;border:0;border-radius:999px;padding:10px 20px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 5px 14px rgba(23,50,77,.22);white-space:nowrap;transition:transform .08s,background .15s,box-shadow .15s;}
+  .gzh-copy:hover{background:#234b70;box-shadow:0 7px 18px rgba(23,50,77,.28);}
+  .gzh-copy:active{transform:translateY(1px);}
+  .gzh-toast{position:fixed;top:66px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:11px 20px;border-radius:10px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s;z-index:100;box-shadow:0 6px 20px rgba(0,0,0,.25);max-width:88vw;text-align:center;}
+  .gzh-toast.show{opacity:1;}
+  .gzh-stage{max-width:677px;margin:82px auto 64px;padding:28px 22px 36px;background:#fff;border:1px solid #e5e7eb;border-radius:18px;box-shadow:0 18px 45px rgba(15,23,42,.10);box-sizing:border-box;overflow:hidden;}
+  #gzh-content{max-width:100%;min-width:0;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;}
+  #gzh-content section{max-width:100%;box-sizing:border-box;overflow:hidden;}
+  #gzh-content img{max-width:100%!important;height:auto!important;}
+  #gzh-content table{width:100%!important;max-width:100%;table-layout:fixed;word-break:break-word;overflow-wrap:anywhere;}
+  #gzh-content pre{max-width:100%;box-sizing:border-box;overflow-x:auto;white-space:pre-wrap;word-break:break-word;}
+  @media(max-width:720px){.gzh-stage{margin:76px 10px 42px;padding:20px 14px 28px;border-radius:14px;}}
+  @media(max-width:520px){.gzh-hint{max-width:150px;font-size:12px;}.gzh-copy{padding:9px 14px;font-size:13px;}.gzh-toolbar{height:54px;padding:0 12px;}}
+</style>
+</head>
+<body>
+<div class="gzh-toolbar">
+  <span class="gzh-hint">👇 下方是排版效果 · 点右侧 <b>复制</b> 直接粘到公众号</span>
+  <button class="gzh-copy" id="gzhCopyBtn" onclick="gzhCopy()">📋 复制到公众号</button>
+</div>
+<div class="gzh-toast" id="gzhToast"></div>
+<div class="gzh-stage">
+  <div id="gzh-content">
+<!--GZH_CONTENT-->
+  </div>
+</div>
+<script>
+  function gzhShowToast(msg){
+    var t=document.getElementById('gzhToast');
+    t.textContent=msg;t.classList.add('show');
+    clearTimeout(t._timer);
+    t._timer=setTimeout(function(){t.classList.remove('show');},2800);
+  }
+  function gzhCopy(){
+    var el=document.getElementById('gzh-content');
+    // 选中渲染后的富文本节点并复制（等价于手动 Ctrl+A / Ctrl+C，保留全部样式）
+    var range=document.createRange();
+    range.selectNodeContents(el);
+    var sel=window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    var ok=false;
+    try{ok=document.execCommand('copy');}catch(e){ok=false;}
+    sel.removeAllRanges();
+    var btn=document.getElementById('gzhCopyBtn');
+    if(ok){
+      gzhShowToast('✅ 已复制！去公众号编辑器按 Ctrl/⌘+V 粘贴即可');
+      var old=btn.textContent;btn.textContent='✅ 已复制';
+      setTimeout(function(){btn.textContent=old;},2200);
+    }else{
+      gzhShowToast('⚠ 自动复制失败，请手动全选(Ctrl/⌘+A)再复制(Ctrl/⌘+C)');
+    }
+  }
+  function gzhLayoutChecks(){
+    var root=document.getElementById('gzh-content');
+    if(!root)return;
+    var rootRect=root.getBoundingClientRect();
+    var overflow=Math.max(document.documentElement.scrollWidth,document.body.scrollWidth)>window.innerWidth+1;
+    var imageOverflow=[].some.call(root.querySelectorAll('img'),function(img){
+      var r=img.getBoundingClientRect();
+      return r.left < rootRect.left-1 || r.right > rootRect.right+1 || r.width > rootRect.width+1;
+    });
+    root.setAttribute('data-gzh-horizontal-overflow',overflow?'1':'0');
+    root.setAttribute('data-gzh-image-overflow',imageOverflow?'1':'0');
+  }
+  window.addEventListener('load',function(){setTimeout(gzhLayoutChecks,80);});
+  setTimeout(gzhLayoutChecks,180);
+</script>
+</body>
+</html>

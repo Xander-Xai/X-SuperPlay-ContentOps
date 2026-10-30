@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "contract": "visual-aesthetic-contract-v1",
+  "status": "passed",
+  "errors": [],
+  "warnings": [],
+  "records": [
+    {
+      "source": "imgs/diagram-sources/body-01.svg",
+      "status": "passed",
+      "errors": [],
+      "warnings": [],
+      "metrics": {
+        "nodes": 6,
+        "edges": 4,
+        "edge_labels": 0,
+        "layout": "relationship-board"
+      }
+    },
+    {
+      "source": "imgs/diagram-sources/body-02.svg",
+      "status": "passed",
+      "errors": [],
+      "warnings": [],
+      "metrics": {
+        "nodes": 6,
+        "edges": 4,
+        "edge_labels": 0,
+        "layout": "relationship-board"
+      }
+    },
+    {
+      "source": "imgs/diagram-sources/body-03.html",
+      "status": "passed",
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "source": "imgs/diagram-sources/body-04.svg",
+      "status": "passed",
+      "errors": [],
+      "warnings": [],
+      "metrics": {
+        "nodes": 6,
+        "edges": 4,
+        "edge_labels": 0,
+        "layout": "architecture-board"
+      }
+    },
+    {
+      "source": "imgs/diagram-sources/body-05.svg",
+      "status": "passed",
+      "errors": [],
+      "warnings": [],
+      "metrics": {
+        "nodes": 5,
+        "edges": 3,
+        "edge_labels": 0,
+        "layout": "architecture-board"
+      }
+    }
+  ]
+}

@@ -1,0 +1,360 @@
+version: 2
+project: gzh-thinktank-workflow
+
+# v2 adds an executable inventory without changing the compatibility slugs
+# above.  Runtime code must resolve paths through scripts/skill_resolver.py;
+# deprecated entries are provenance-only and can never be dispatched.
+schema:
+  contract: skill-registry-v2
+  resolver: scripts/skill_resolver.py
+  required_runtime_fields: [kind, path, entrypoint, stage, inputs, outputs, execution_status]
+  dispatch_fail_closed: true
+
+# The repository keeps the public compatibility slugs used by existing agents,
+# while local paths use stable, source-neutral names.  Do not infer a path from
+# a skill name; resolve it through this registry.
+canonical:
+  matrix_thinktank:
+    path: skills/ai-thinktank-workflow
+    aliases: [ai-thinktank-workflow]
+  article_main:
+    path: skills/gzh-article-orchestrator
+    aliases: [gzh-article-orchestrator, wechat-main-orchestrator, aws-wechat-article-main]
+  article_topics:
+    path: skills/gzh-topic-research
+    aliases: [gzh-topic-research, wechat-topic-research, aws-wechat-article-topics]
+  article_title:
+    path: skills/gzh-title-seo
+    aliases: [gzh-title-seo, wechat-title]
+  article_seo:
+    path: skills/wechat-seo-optimizer
+    aliases: [wechat-seo-optimizer]
+  article_writing:
+    path: skills/gzh-article-writing
+    aliases: [gzh-article-writing, wechat-writing-spec, aws-wechat-article-writing]
+  article_review:
+    path: skills/gzh-editorial-review
+    aliases: [gzh-editorial-review, wechat-content-audit, aws-wechat-article-review]
+  article_formatting:
+    path: skills/gzh-article-format
+    aliases: [gzh-article-format, wechat-format-theme, aws-wechat-article-formatting]
+  article_images:
+    path: skills/gzh-visual-assets
+    aliases: [gzh-visual-assets, wechat-image-gen, aws-wechat-article-images]
+  visual_director:
+    path: skills/gzh-visual-director
+    aliases: [gzh-visual-director, wechat-visual-director]
+  article_publish:
+    path: skills/gzh-draft-publisher
+    aliases: [gzh-draft-publisher, wechat-draft-publish, aws-wechat-article-publish]
+  article_assets:
+    path: skills/gzh-article-assets
+    aliases: [gzh-article-assets, wechat-assets, aws-wechat-article-assets]
+  article_sticker:
+    path: skills/gzh-sticker-assets
+    aliases: [gzh-sticker-assets, wechat-sticker-gen, aws-wechat-sticker]
+
+# Archived aliases remain visible as provenance-only records when the local
+# split workspace keeps the historical _archive directory. They are never
+# eligible for dispatch; new work must resolve through canonical paths above.
+deprecated:
+  aws_wechat_article_main:
+    archive_path: skills/_archive/aws-wechat-article-main
+    replaced_by: article_main
+  aws_wechat_article_topics:
+    archive_path: skills/_archive/aws-wechat-article-topics
+    replaced_by: article_topics
+  aws_wechat_article_writing:
+    archive_path: skills/_archive/aws-wechat-article-writing
+    replaced_by: article_writing
+  aws_wechat_article_review:
+    archive_path: skills/_archive/aws-wechat-article-review
+    replaced_by: article_review
+  aws_wechat_article_formatting:
+    archive_path: skills/_archive/aws-wechat-article-formatting
+    replaced_by: article_formatting
+  aws_wechat_article_images:
+    archive_path: skills/_archive/aws-wechat-article-images
+    replaced_by: article_images
+  aws_wechat_article_publish:
+    archive_path: skills/_archive/aws-wechat-article-publish
+    replaced_by: article_publish
+  aws_wechat_article_assets:
+    archive_path: skills/_archive/aws-wechat-article-assets
+    replaced_by: article_assets
+  aws_wechat_sticker:
+    archive_path: skills/_archive/aws-wechat-sticker
+    replaced_by: article_sticker
+
+supporting:
+  topic_integrity:
+    path: scripts/topic_integrity.py
+    mode: mandatory-topic-boundary-and-drift-gate
+  content_strategy:
+    path: skills/content-strategy
+    mode: pre-topic-strategy
+  conversion_loop:
+    path: skills/opc-conversion-loop
+    mode: confirmed-conversion-architecture
+  content_production:
+    path: skills/content-production
+    mode: local-methodology
+  content_humanizer:
+    path: skills/content-humanizer
+    mode: local-methodology
+  visual_quality:
+    path: scripts/visual_qa.py
+    mode: local-checker
+  visual_semantic_quality:
+    path: scripts/visual_semantic_qa.py
+    mode: mandatory-semantic-checker
+  visual_director_plan:
+    path: scripts/build_image_prompt_plan.py
+    mode: evidence-first-visual-director
+  visual_capability_registry:
+    path: profiles/visual-capability-registry.yaml
+    mode: scanned-capability-catalog
+  visual_semantic_router:
+    path: scripts/visual_semantic_router.py
+    mode: director-capability-evaluator
+  article_environment:
+    path: scripts/bootstrap_article_environment.py
+    mode: local-bootstrap
+  article_gate_contract:
+    path: scripts/workflow_gate.py
+    mode: local-checker
+  content_route_contract:
+    path: scripts/route_content.py
+    mode: mandatory-preflight
+  content_revision_contract:
+    path: scripts/record_revision.py
+    mode: mandatory-freshness-preflight
+  derivative_media_guard:
+    path: scripts/media_guard.py
+    mode: post-final-review-guard
+  html_quality:
+    path: skills/gzh-design-skill
+    mode: canonical-html-validator
+  formula_rendering:
+    path: skills/formula-rendering/SKILL.md
+    mode: mandatory-katex-to-wechat-png
+  wechat_svg_compatibility:
+    path: scripts/check_wechat_svg_compatibility.py
+    mode: optional-wechat-paste-profile-check
+  publish_preflight:
+    path: scripts/publish_preflight.py
+    mode: local-checker
+  browser_preview:
+    path: scripts/render_mobile_preview.py
+    mode: real-browser-screenshot-and-dom-check
+  source_evidence:
+    path: skills/source-evidence-layer
+    mode: mandatory-hybrid-evidence-ledger-and-reference-appendix
+  evidence_provenance:
+    path: scripts/source_evidence.py
+    mode: mandatory-content-addressed-evidence-run-and-lineage-receipt
+
+optional_capabilities:
+  deep_research:
+    path: skills/deep-research
+    mode: optional-research
+    accounts: [thinktank]
+  archivebox_capture:
+    path: skills/source-evidence-layer
+    mode: optional-archivebox-compatible-evidence-import
+    accounts: [thinktank]
+  playwright_capture:
+    path: skills/source-evidence-layer
+    mode: optional-playwright-compatible-browser-capture
+    accounts: [thinktank]
+  citation_manager:
+    path: skills/source-evidence-layer
+    mode: optional-csl-json-zotero-citation-adapter
+    accounts: [thinktank]
+  lineage_export:
+    path: skills/source-evidence-layer
+    mode: optional-openlineage-compatible-run-export
+    accounts: [thinktank]
+  static_diagrams:
+    path: skills/beautiful-mermaid
+    mode: optional-visual-backend
+    accounts: [thinktank]
+  architecture_diagrams:
+    path: skills/excalidraw-diagram
+    mode: optional-visual-backend
+    accounts: [thinktank]
+  interactive_svg:
+    path: skills/wechat-svg-interactive
+    mode: optional-enhancement-with-static-fallback
+    accounts: [thinktank]
+  cover_art_direction:
+    path: skills/wechat-cover
+    mode: optional-visual-backend
+    accounts: [thinktank]
+  follow_card_qrcode:
+    path: skills/wechat-card-qrcode
+    mode: optional-conversion-asset
+    accounts: [thinktank]
+  follow_card_footer:
+    path: scripts/render_footer_card.py
+    mode: optional-conversion-asset
+    accounts: [thinktank]
+  audio_attachment:
+    path: skills/wechat-tts-audio
+    mode: optional-postpublish-attachment
+    accounts: [thinktank]
+  agnes_image_provider:
+    path: skills/agnes-image-21-flash
+    mode: optional-external-image-provider-with-local-fallback
+    accounts: [thinktank]
+
+post_publish_adapters:
+  analytics:
+    path: skills/wemp-operator
+    mode: external-source-adapter
+    activation: opt-in
+    requires: final_reviewed
+    guard: media_guard
+  z5_review:
+    path: skills/z5-wechat-sop
+    mode: external-source-adapter
+    activation: opt-in
+    requires: final_reviewed
+    guard: media_guard
+  fallback_publisher:
+    path: skills/wechat-publisher
+    mode: local-cli-fallback
+    activation: opt-in
+    requires: final_reviewed
+    guard: media_guard
+  cross_platform_repurpose:
+    path: skills/content-repurposer
+    mode: opt-in-adapter-after-final-review
+    activation: opt-in
+    requires: final_reviewed
+    guard: media_guard
+
+rules:
+  primary_publisher: article_publish
+  publish_default: draft
+  external_adapters_are_opt_in: true
+  optional_capabilities_are_non_blocking: true
+  never_store_secrets_in_profiles: true
+  default_account_themes:
+    thinktank: thinktank-atlas
+
+# Runtime helpers used by workflow_gate/AGENTS and therefore part of the
+# executable surface.  Keeping them here closes the runtime -> registry gap.
+runtime_scripts:
+  workflow_gate:
+    kind: runtime_script
+    path: scripts/workflow_gate.py
+    entrypoint: scripts/workflow_gate.py
+    stage: all
+    inputs: [article_dir, stage, env]
+    outputs: [matrix-state.json, workflow-status.json]
+    execution_status: active
+  receipt_integrity:
+    kind: runtime_script
+    path: scripts/receipt_integrity.py
+    entrypoint: scripts/receipt_integrity.py
+    stage: publish
+    inputs: [article_dir, receipt]
+    outputs: [signed_receipt]
+    execution_status: active
+  publish_preflight_runner:
+    kind: runtime_script
+    path: scripts/publish_preflight.py
+    entrypoint: scripts/publish_preflight.py
+    stage: environment_ready
+    inputs: [article_dir, external_env]
+    outputs: [publish-preflight.json]
+    execution_status: active
+  verify_draft_submission:
+    kind: runtime_script
+    path: scripts/verify_draft_submission.py
+    entrypoint: scripts/verify_draft_submission.py
+    stage: draft_submitted
+    inputs: [article_dir, external_env, media_id]
+    outputs: [publish-receipt.json, publish-attempt.json]
+    execution_status: active
+  visual_qa:
+    kind: runtime_script
+    path: scripts/visual_qa.py
+    entrypoint: scripts/visual_qa.py
+    stage: illustrated
+    inputs: [article_dir]
+    outputs: [visual-contract-audit.json, visual-taste-review.json]
+    execution_status: active
+  visual_semantic_qa:
+    kind: runtime_script
+    path: scripts/visual_semantic_qa.py
+    entrypoint: scripts/visual_semantic_qa.py
+    stage: illustrated
+    inputs: [article_dir]
+    outputs: [visual-semantic-review.json]
+    execution_status: active
+  visual_route_consistency:
+    kind: runtime_script
+    path: scripts/visual_route_consistency.py
+    entrypoint: scripts/visual_route_consistency.py
+    stage: illustrated
+    inputs: [article_dir]
+    outputs: [visual-route-consistency.json]
+    execution_status: active
+  vision_review:
+    kind: runtime_script
+    path: scripts/vision_review.py
+    entrypoint: scripts/vision_review.py
+    stage: illustrated
+    inputs: [article_dir]
+    outputs: [vision-review.json]
+    execution_status: active
+  visual_depth_qa:
+    kind: runtime_script
+    path: scripts/visual_depth_qa.py
+    entrypoint: scripts/visual_depth_qa.py
+    stage: illustrated
+    inputs: [article_dir]
+    outputs: [visual-depth-review.json]
+    execution_status: active
+  visual_aesthetic_qa:
+    kind: runtime_script
+    path: scripts/visual_aesthetic_qa.py
+    entrypoint: scripts/visual_aesthetic_qa.py
+    stage: illustrated
+    inputs: [article_dir]
+    outputs: [visual-aesthetic-review.json]
+    execution_status: active
+  visual_taste_review:
+    kind: runtime_script
+    path: scripts/visual_taste_review.py
+    entrypoint: scripts/visual_taste_review.py
+    stage: illustrated
+    inputs: [article_dir]
+    outputs: [visual-taste-review.json]
+    execution_status: active
+  render_mobile_preview:
+    kind: runtime_script
+    path: scripts/render_mobile_preview.py
+    entrypoint: scripts/render_mobile_preview.py
+    stage: final_reviewed
+    inputs: [article_dir]
+    outputs: [preview-capture.json, preview_screenshot.png]
+    execution_status: active
+  style_lint:
+    kind: runtime_script
+    path: scripts/style_lint.py
+    entrypoint: scripts/style_lint.py
+    stage: formatted
+    inputs: [article_dir]
+    outputs: [style-report.json]
+    execution_status: active
+  formula_source_check:
+    kind: runtime_script
+    path: scripts/check_formula_source.py
+    entrypoint: scripts/check_formula_source.py
+    stage: formatted
+    inputs: [article_dir]
+    outputs: []
+    execution_status: active

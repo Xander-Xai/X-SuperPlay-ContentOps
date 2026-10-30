@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "contract": "hybrid-evidence-provenance-v1",
+  "verifier": "source_evidence.py",
+  "verifier_version": "1.0.0",
+  "status": "passed",
+  "run_id": "2334585e7147dff4004599e87c6713c7",
+  "generated_at": "2026-08-24T22:53:34.024921+00:00",
+  "pack_sha256": "2334585e7147dff4004599e87c6713c709f5c6b026b3c132c517bed54b66148e",
+  "topic_fingerprint": "8805b517217a3f106b70ce60e1f8e26cada58f2e4a2a764e0d003058c88829a4",
+  "source_ids": [
+    "anthropic-claude-code-mcp-permissions",
+    "dogwood-guide",
+    "dogwood-readme",
+    "mcp-authorization-20260728",
+    "mcp-release-mrtr-20260728",
+    "mcp-schema-clientinfo-20260728",
+    "mcp-spec-20260728",
+    "mcp-streamable-http-headers-20260728"
+  ],
+  "claim_ids": [
+    "claim-anthropic-explicit-permissions",
+    "claim-dogwood-production-boundary",
+    "claim-dogwood-temporal-authorization",
+    "claim-governance-synthesis",
+    "claim-mcp-clientinfo-security-boundary",
+    "claim-mcp-mrtr",
+    "claim-mcp-stateless-boundary",
+    "claim-mcp-streamable-header-scope",
+    "claim-mcp-transport-authorization"
+  ],
+  "inputs": [
+    {
+      "path": "article.html",
+      "sha256": "47ca4eef9daf75a00c0c0e253ccd7215237fd00596bacdd954b58312fceb25f7",
+      "size": 29558
+    },
+    {
+      "path": "article.md",
+      "sha256": "6c649748ab9537759fef35e286a762ca195de7e0ae22f3e36021eabfd9b5e35f",
+      "size": 13247
+    },
+    {
+      "path": "evidence-plan.json",
+      "sha256": "41622ef911040fb4b6661aee0370bb973361dabd67aba8fdcae6ffda653ca272",
+      "size": 9653
+    },
+    {
+      "path": "evidence/anthropic-claude-code-mcp-permissions-excerpt.txt",
+      "sha256": "177c26455accdbad4657160710d27f7488669009a5701b855daf962e5276a825",
+      "size": 237
+    },
+    {
+      "path": "evidence/dogwood-guide-excerpt.txt",
+      "sha256": "f2be92d2be84c5c3d129c0f5e491711af1e5b40924e193f67bea7feb7e092796",
+      "size": 203
+    },
+    {
+      "path": "evidence/dogwood-readme-production-excerpt.txt",
+      "sha256": "1b23936dc8f3e86a96c6dbf557b20ae4555a799541835e59ed9dfe86f6f11dbe",
+      "size": 193
+    },
+    {
+      "path": "evidence/mcp-authorization-excerpt.txt",
+      "sha256": "51317fa07863e65a9eb952390ffd2ee1216635ca6519f3d7f398890bc2d555a1",
+      "size": 297
+    },
+    {
+      "path": "evidence/mcp-release-mrtr-excerpt.txt",
+      "sha256": "cebcb47e20edf5889df0bda404da2f10ff2c104be66c64a8439558af1c785e6f",
+      "size": 280
+    },
+    {
+      "path": "evidence/mcp-schema-clientinfo-excerpt.txt",
+      "sha256": "f78cddd1fc438770253f6e583ad86cca4d56b4bc5b55fc1e3341694f73b25c69",
+      "size": 317
+    },
+    {
+      "path": "evidence/mcp-spec-20260728-excerpt.txt",
+      "sha256": "246101bcf7d66aad38b6831ae3c8bac34093ef6f2a7f869fe50fd04953f13e8a",
+      "size": 420
+    },
+    {
+      "path": "evidence/mcp-streamable-http-headers-excerpt.txt",
+      "sha256": "d2ac75c2e5a659bc1b832f614d5b840a0e2991d4a76f63e150ed727c9d51577e",
+      "size": 235
+    },
+    {
+      "path": "source-snapshots/dogwood-guide.raw",
+      "sha256": "f2be92d2be84c5c3d129c0f5e491711af1e5b40924e193f67bea7feb7e092796",
+      "size": 203
+    },
+    {
+      "path": "source-verification.json",
+      "sha256": "a79f849d6e1093c734a031a51a6b5cd3a3834ca6b9827d5d8f78d148045b1485",
+      "size": 5437
+    },
+    {
+      "path": "sources.json",
+      "sha256": "965900fe427a6e2de3c28864e1293f894aa8c325246bf73c2bfb8330bda33e76",
+      "size": 13217
+    },
+    {
+      "path": "topic-contract.yaml",
+      "sha256": "3173798164b561beeaf6f5a5aaa9c5a76febfde800dc8634d6657992dfdfbf09",
+      "size": 2394
+    }
+  ],
+  "attestation": "unsigned-local-integrity",
+  "identity_authenticated": false,
+  "operator_note": "证明本地证据输入与本次审计回执可重放；不证明来源真伪、真人身份或不可抵赖性。"
+}

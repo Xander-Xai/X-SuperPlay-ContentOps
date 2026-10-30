@@ -1,0 +1,441 @@
+{
+  "schema_version": 1,
+  "source": "agent-reach/aggregate",
+  "query": "Vibe Coding 开源 项目 多智能体",
+  "retrieved_at": "2026-08-24T16:31:23+00:00",
+  "passed": true,
+  "freshness_verified": true,
+  "verification_method": "live unified Agent Reach-compatible adapter aggregation",
+  "sources": [
+    "twitter",
+    "github",
+    "youtube",
+    "douyin",
+    "xhs",
+    "bilibili",
+    "weibo",
+    "domestic_rss",
+    "rss",
+    "v2ex"
+  ],
+  "source_priority_policy": {
+    "primary_global": [
+      "twitter",
+      "github",
+      "youtube"
+    ],
+    "primary_domestic": [
+      "douyin",
+      "xhs",
+      "bilibili",
+      "weibo"
+    ],
+    "supplementary": [
+      "domestic_rss",
+      "rss",
+      "v2ex"
+    ]
+  },
+  "network": {
+    "proxy_configured": true,
+    "proxy_source": "windows-internet-settings"
+  },
+  "source_health": [
+    {
+      "source": "twitter",
+      "backend": "Agent Reach -> twitter-cli/OpenCLI",
+      "priority_tier": "primary_global",
+      "priority_rank": 1,
+      "status": "ok",
+      "item_count": 15,
+      "error": ""
+    },
+    {
+      "source": "github",
+      "backend": "Agent Reach -> gh CLI",
+      "priority_tier": "primary_global",
+      "priority_rank": 2,
+      "status": "empty",
+      "item_count": 0,
+      "error": "source returned no usable candidates"
+    },
+    {
+      "source": "youtube",
+      "backend": "Agent Reach -> yt-dlp",
+      "priority_tier": "primary_global",
+      "priority_rank": 3,
+      "status": "ok",
+      "item_count": 15,
+      "error": ""
+    },
+    {
+      "source": "douyin",
+      "backend": "抖音官方 hotsearch API / 公开网页热榜后备",
+      "priority_tier": "primary_domestic",
+      "priority_rank": 4,
+      "status": "ok",
+      "item_count": 1,
+      "error": ""
+    },
+    {
+      "source": "xhs",
+      "backend": "Agent Reach -> xiaohongshu-mcp/OpenCLI/xhs-cli / 公开 Explore SSR 后备",
+      "priority_tier": "primary_domestic",
+      "priority_rank": 5,
+      "status": "error",
+      "item_count": 0,
+      "error": "opencli: Command '['C:\\\\Users\\\\Administrator\\\\AppData\\\\Roaming\\\\npm\\\\opencli.CMD', 'xiaohongshu', 'search', 'Vibe Coding 开源 项目 多智能体', '-f', 'yaml']' timed out after 12 seconds; xhs: Command '['C:\\\\Users\\\\Administrator\\\\.local\\\\bin\\\\xhs.EXE', 'search', 'Vibe Coding 开源 项目 多智能体', '--sort', 'latest', '--json']' timed out after 8 seconds; xhs: Command '['C:\\\\Users\\\\Administrator\\\\.local\\\\bin\\\\xhs.EXE', 'hot', '--json']' timed out after 6 seconds; public Explore SSR: public Explore page has no SSR state"
+    },
+    {
+      "source": "bilibili",
+      "backend": "Agent Reach -> B站搜索 API",
+      "priority_tier": "primary_domestic",
+      "priority_rank": 6,
+      "status": "ok",
+      "item_count": 15,
+      "error": ""
+    },
+    {
+      "source": "weibo",
+      "backend": "Agent Reach-compatible -> 微博 hot_band",
+      "priority_tier": "primary_domestic",
+      "priority_rank": 7,
+      "status": "ok",
+      "item_count": 15,
+      "error": ""
+    },
+    {
+      "source": "domestic_rss",
+      "backend": "Agent Reach -> RSS adapters",
+      "priority_tier": "supplementary",
+      "priority_rank": 8,
+      "status": "ok",
+      "item_count": 11,
+      "error": ""
+    },
+    {
+      "source": "rss",
+      "backend": "Agent Reach -> RSS adapters",
+      "priority_tier": "supplementary",
+      "priority_rank": 9,
+      "status": "ok",
+      "item_count": 3,
+      "error": ""
+    },
+    {
+      "source": "v2ex",
+      "backend": "Agent Reach -> V2EX public API",
+      "priority_tier": "supplementary",
+      "priority_rank": 10,
+      "status": "ok",
+      "item_count": 10,
+      "error": ""
+    }
+  ],
+  "items": [
+    {
+      "title": "20岁大四学生，用10天Vibe Coding手搓出来的开源项目：MiroFish，连续3天霸占GitHub Trending榜单前列，目前Star数已狂飙至8.3k，且还在持续增长中。  \n\n盛大创始人陈天桥看了Demo后，24小时内当场拍板注资3000万。 \n\n它是一个「预测万物」的 AI 仿真沙盘。只要丢给它一段新闻、政策或金融信号，它会自动生成成千上万个具备独立人格的 AI Agent，直接推演出未来的发展方向。 \n\n当你还在靠人工收集数据、靠经验做判断时，此项目已经开始用成千上万个 agent替自己预演未来了。  \n\n仓库地址：https://t.co/0Einknjq3V",
+      "description": "",
+      "source_url": "https://x.com/i/web/status/2030945915452916218",
+      "source_type": "twitter",
+      "published_at": "",
+      "captured_at": "2026-08-24T16:31:23+00:00",
+      "source_priority": 1,
+      "source_priority_tier": "primary_global",
+      "engagement": {
+        "like_count": 0,
+        "retweet_count": 0
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "赋范AI大模型Agent智能体开发实战2026【阶段二】1  基于VIbe Coding进行开源项目二次开发思路",
+      "description": "NO DATA",
+      "source_url": "https://www.youtube.com/watch?v=iw67hb9CCB4",
+      "source_type": "youtube",
+      "published_at": "",
+      "captured_at": "2026-08-24T16:31:23+00:00",
+      "source_priority": 3,
+      "source_priority_tier": "primary_global",
+      "engagement": {
+        "like_count": 0,
+        "view_count": 1
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "Spirit获电竞世俱杯CS2项目冠军",
+      "description": "",
+      "source_url": "https://www.douyin.com/search/Spirit%E8%8E%B7%E7%94%B5%E7%AB%9E%E4%B8%96%E4%BF%B1%E6%9D%AFCS2%E9%A1%B9%E7%9B%AE%E5%86%A0%E5%86%9B",
+      "source_type": "douyin",
+      "published_at": "2026-08-24T16:31:23+00:00",
+      "captured_at": "2026-08-24T16:31:23+00:00",
+      "source_priority": 4,
+      "source_priority_tier": "primary_domestic",
+      "engagement": {
+        "hot_rank": 41,
+        "hot_value": 7668662
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "尚硅谷2026年AI全能开发，Vibe coding+智能体教程",
+      "description": "学习资源代找+\\/（hcce1024） #资料\n配套全套视频和课件笔记",
+      "source_url": "http://www.bilibili.com/video/av117115034014793",
+      "source_type": "bilibili",
+      "published_at": "2026-08-18T06:14:41+00:00",
+      "captured_at": "2026-08-24T16:31:23+00:00",
+      "source_priority": 6,
+      "source_priority_tier": "primary_domestic",
+      "engagement": {
+        "play": 150,
+        "favorites": 0,
+        "like": 0
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "官方确认帮扶老人遭索赔店主不担责",
+      "description": "民生新闻",
+      "source_url": "https://s.weibo.com/weibo?q=%E5%AE%98%E6%96%B9%E7%A1%AE%E8%AE%A4%E5%B8%AE%E6%89%B6%E8%80%81%E4%BA%BA%E9%81%AD%E7%B4%A2%E8%B5%94%E5%BA%97%E4%B8%BB%E4%B8%8D%E6%8B%85%E8%B4%A3",
+      "source_type": "weibo",
+      "published_at": "2026-08-24T16:31:23+00:00",
+      "captured_at": "2026-08-24T16:31:23+00:00",
+      "source_priority": 7,
+      "source_priority_tier": "primary_domestic",
+      "engagement": {
+        "hot_rank": 1,
+        "hot_value": 2184217
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "Netflix 开源了一个用于因果推理的智能代理工作流",
+      "description": "<div align='right'><a href='https://www.infoq.cn/article/4h2jb2eOcBrP5AG5hLYt?utm_source=rss&utm_medium=article'>点击查看原文></a></div>",
+      "source_url": "https://www.infoq.cn/article/4h2jb2eOcBrP5AG5hLYt?utm_source=rss&utm_medium=article",
+      "source_type": "domestic_rss",
+      "published_at": "Mon, 24 Aug 2026 10:44:00 GMT",
+      "captured_at": "2026-08-24T16:31:23+00:00",
+      "source_priority": 8,
+      "source_priority_tier": "supplementary",
+      "engagement": {},
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "SDAD: Spec-Driven Agentic Development for the AI-Native SDLC",
+      "description": "arXiv:2608.20341v1 Announce Type: new \nAbstract: Frontier coding agents backed by large language models with context windows from hundreds of thousands to millions of tokens are restructuring the Software Development Life Cycle (SDLC). Rich context handling and multi-step reasoning now allow substantial Functional Requirement Documents (FRDs) and repository context to be ingested in a single workflow, making specification quality the execution fuel for autonomous delivery. This report formalises Spec-Driven Agentic Development (SDAD) as a synthesis of disciplined up-front formalisation and high-velocity implementation: intent capture, machine-readable specification, agentic synthesis, and independent multi-agent verification under human sign-off. We revisit the historical pendulum between Waterfall and Agile, introduce AI-code as a fourth production paradigm, and compare Human-Agile (circa 2020) with Agentic-SDAD (circa 2026) across artefacts, cadence, accountability, and security posture. Beyond process description, we extend the model to team role metamorphosis (engineer, QA, platform, and product functions), quantitative governance (Ambiguity Tax, Spec Fidelity, SER, and TCI_agentic with repair multiplier phi), and pragmatic adoption via hybrid estimation and a staged migration blueprint. Industrial and research evidence on AI-augmented testing and verification is integrated to motivate separation between synthesis and release authority. Overall, the paper argues that agentic speed does not eliminate engineering discipline; it relocates discipline upstream into specification precision, explicit gates, and auditable provenance.",
+      "source_url": "https://arxiv.org/abs/2608.20341",
+      "source_type": "rss",
+      "published_at": "Mon, 24 Aug 2026 00:00:00 -0400",
+      "captured_at": "2026-08-24T16:31:23+00:00",
+      "source_priority": 9,
+      "source_priority_tier": "supplementary",
+      "engagement": {},
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "用小米这款显示器的注意，周六晚上烧了.",
+      "description": "",
+      "source_url": "https://www.v2ex.com/t/1236662",
+      "source_type": "v2ex",
+      "published_at": "1787532095",
+      "captured_at": "2026-08-24T16:31:23+00:00",
+      "source_priority": 10,
+      "source_priority_tier": "supplementary",
+      "engagement": {
+        "replies": 177
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "https://t.co/lOSsL7aSVq",
+      "description": "",
+      "source_url": "https://x.com/i/web/status/2086372334089462208",
+      "source_type": "twitter",
+      "published_at": "",
+      "captured_at": "2026-08-24T16:31:23+00:00",
+      "source_priority": 1,
+      "source_priority_tier": "primary_global",
+      "engagement": {
+        "like_count": 0,
+        "retweet_count": 0
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "从 Cursor 到 Codex：我做 Vibe Coding 一年后，才明白 AI 工具真正的价值",
+      "description": "AI华哥",
+      "source_url": "https://www.youtube.com/watch?v=r4rofZCjLkw",
+      "source_type": "youtube",
+      "published_at": "",
+      "captured_at": "2026-08-24T16:31:23+00:00",
+      "source_priority": 3,
+      "source_priority_tier": "primary_global",
+      "engagement": {
+        "like_count": 0,
+        "view_count": 360
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "国产agent工具集合使用指南，17款AI编程工具薅羊毛，免费token，来不嘛，bro",
+      "description": "一代人有一代人的鸡蛋要领，AI时代，我们的token鸡蛋来喽",
+      "source_url": "http://www.bilibili.com/video/av116944963375581",
+      "source_type": "bilibili",
+      "published_at": "2026-07-19T05:27:54+00:00",
+      "captured_at": "2026-08-24T16:31:23+00:00",
+      "source_priority": 6,
+      "source_priority_tier": "primary_domestic",
+      "engagement": {
+        "play": 4330,
+        "favorites": 154,
+        "like": 98
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "湖北长阳通报韩红基金会救护车",
+      "description": "民生新闻",
+      "source_url": "https://s.weibo.com/weibo?q=%E6%B9%96%E5%8C%97%E9%95%BF%E9%98%B3%E9%80%9A%E6%8A%A5%E9%9F%A9%E7%BA%A2%E5%9F%BA%E9%87%91%E4%BC%9A%E6%95%91%E6%8A%A4%E8%BD%A6",
+      "source_type": "weibo",
+      "published_at": "2026-08-24T16:31:23+00:00",
+      "captured_at": "2026-08-24T16:31:23+00:00",
+      "source_priority": 7,
+      "source_priority_tier": "primary_domestic",
+      "engagement": {
+        "hot_rank": 2,
+        "hot_value": 790445
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "亚马逊云科技开源 Dogwood：给 AI 智能体的工具调用立规矩",
+      "description": "<div align='right'><a href='https://www.infoq.cn/article/cwj5Ikvhqu5mKH22zKsO?utm_source=rss&utm_medium=article'>点击查看原文></a></div>",
+      "source_url": "https://www.infoq.cn/article/cwj5Ikvhqu5mKH22zKsO?utm_source=rss&utm_medium=article",
+      "source_type": "domestic_rss",
+      "published_at": "Sun, 23 Aug 2026 17:00:00 GMT",
+      "captured_at": "2026-08-24T16:31:23+00:00",
+      "source_priority": 8,
+      "source_priority_tier": "supplementary",
+      "engagement": {},
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "PrimeAgentOrchestrator: Memory-Primed Agent Spawning for Personal AI Infrastructure",
+      "description": "arXiv:2608.20342v1 Announce Type: new \nAbstract: Large language model (LLM) coding agents start each session with an empty context window, discarding accumulated knowledge from prior work. We present PrimeAgentOrchestrator (PAO), a system that spawns new instances of Claude Code -- Anthropic's terminal-based coding agent -- pre-loaded with relevant memories compiled from the user's existing personal databases. At spawn time, PAO queries two independently-operated memory backends in parallel (a PostgreSQL entity-observation database and a Cloudflare Worker semantic search index), fuses results using backend-specific retrieval strategies, and delivers the compiled briefing via filesystem injection that exploits the host agent's configuration auto-read behavior. PAO manages the full agent lifecycle including trust pre-seeding, readiness polling with error detection, and adaptive terminal text injection. We report on four months of regular deployment (December 2025 through March 2026) as an experience report, documenting three generations of context delivery mechanisms, the failure modes that motivated each redesign, and the engineering tradeoffs of bridging heterogeneous memory systems rather than building a unified one.",
+      "source_url": "https://arxiv.org/abs/2608.20342",
+      "source_type": "rss",
+      "published_at": "Mon, 24 Aug 2026 00:00:00 -0400",
+      "captured_at": "2026-08-24T16:31:23+00:00",
+      "source_priority": 9,
+      "source_priority_tier": "supplementary",
+      "engagement": {},
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "周末回了躺老家，两件小事打破了县城低价养老的幻想",
+      "description": "",
+      "source_url": "https://www.v2ex.com/t/1236691",
+      "source_type": "v2ex",
+      "published_at": "1787538609",
+      "captured_at": "2026-08-24T16:31:23+00:00",
+      "source_priority": 10,
+      "source_priority_tier": "supplementary",
+      "engagement": {
+        "replies": 172
+      },
+      "status": "verified-live-candidate"
+    }
+  ],
+  "warnings": [
+    "这是来源聚合候选，不代表所有平台热度相同；正式文案仍需完成事实与账号相关性核验。",
+    "部分主源不可用；未用补充来源替代，详见 required_source_failures/source_tier_health。"
+  ],
+  "required_sources": [
+    "twitter",
+    "github",
+    "youtube",
+    "douyin",
+    "xhs",
+    "bilibili",
+    "weibo"
+  ],
+  "required_source_failures": [
+    {
+      "source": "github",
+      "status": "empty",
+      "error": "source returned no usable candidates"
+    },
+    {
+      "source": "xhs",
+      "status": "error",
+      "error": "opencli: Command '['C:\\\\Users\\\\Administrator\\\\AppData\\\\Roaming\\\\npm\\\\opencli.CMD', 'xiaohongshu', 'search', 'Vibe Coding 开源 项目 多智能体', '-f', 'yaml']' timed out after 12 seconds; xhs: Command '['C:\\\\Users\\\\Administrator\\\\.local\\\\bin\\\\xhs.EXE', 'search', 'Vibe Coding 开源 项目 多智能体', '--sort', 'latest', '--json']' timed out after 8 seconds; xhs: Command '['C:\\\\Users\\\\Administrator\\\\.local\\\\bin\\\\xhs.EXE', 'hot', '--json']' timed out after 6 seconds; public Explore SSR: public Explore page has no SSR state"
+    }
+  ],
+  "required_sources_ok": false,
+  "source_tier_health": {
+    "primary_global": {
+      "sources": [
+        "twitter",
+        "github",
+        "youtube"
+      ],
+      "ok_sources": [
+        "twitter",
+        "youtube"
+      ],
+      "failed_sources": [
+        {
+          "source": "github",
+          "status": "empty",
+          "error": "source returned no usable candidates"
+        }
+      ],
+      "complete": false
+    },
+    "primary_domestic": {
+      "sources": [
+        "douyin",
+        "xhs",
+        "bilibili",
+        "weibo"
+      ],
+      "ok_sources": [
+        "douyin",
+        "bilibili",
+        "weibo"
+      ],
+      "failed_sources": [
+        {
+          "source": "xhs",
+          "status": "error",
+          "error": "opencli: Command '['C:\\\\Users\\\\Administrator\\\\AppData\\\\Roaming\\\\npm\\\\opencli.CMD', 'xiaohongshu', 'search', 'Vibe Coding 开源 项目 多智能体', '-f', 'yaml']' timed out after 12 seconds; xhs: Command '['C:\\\\Users\\\\Administrator\\\\.local\\\\bin\\\\xhs.EXE', 'search', 'Vibe Coding 开源 项目 多智能体', '--sort', 'latest', '--json']' timed out after 8 seconds; xhs: Command '['C:\\\\Users\\\\Administrator\\\\.local\\\\bin\\\\xhs.EXE', 'hot', '--json']' timed out after 6 seconds; public Explore SSR: public Explore page has no SSR state"
+        }
+      ],
+      "complete": false
+    },
+    "supplementary": {
+      "sources": [
+        "domestic_rss",
+        "rss",
+        "v2ex"
+      ],
+      "ok_sources": [
+        "domestic_rss",
+        "rss",
+        "v2ex"
+      ],
+      "failed_sources": [],
+      "complete": true
+    }
+  },
+  "collection_gate": "passed-with-primary-source-warnings",
+  "agent_reach": {
+    "adapter": "agent-reach",
+    "root": null,
+    "executable": "D:\\Projects\\codex\\Agent-Reach\\.venv\\Scripts\\agent-reach.EXE",
+    "available": true,
+    "network_verified": false,
+    "doctor_run": false
+  }
+}

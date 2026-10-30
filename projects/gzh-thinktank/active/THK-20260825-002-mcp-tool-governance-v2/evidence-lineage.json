@@ -1,0 +1,160 @@
+{
+  "schema_version": 1,
+  "contract": "evidence-lineage-v1",
+  "verifier_version": "1.0.0",
+  "status": "passed",
+  "run": {
+    "run_id": "2334585e7147dff4004599e87c6713c7",
+    "started_at": "2026-08-24T22:53:34.024921+00:00",
+    "finished_at": "2026-08-24T22:53:34.025777+00:00"
+  },
+  "job": {
+    "namespace": "gzh-thinktank",
+    "name": "hybrid-evidence-audit",
+    "tool": "scripts/source_evidence.py"
+  },
+  "topic_fingerprint": "8805b517217a3f106b70ce60e1f8e26cada58f2e4a2a764e0d003058c88829a4",
+  "inputs": [
+    {
+      "namespace": "article",
+      "name": "article.html",
+      "digest": {
+        "sha256": "47ca4eef9daf75a00c0c0e253ccd7215237fd00596bacdd954b58312fceb25f7"
+      },
+      "role": "material"
+    },
+    {
+      "namespace": "article",
+      "name": "article.md",
+      "digest": {
+        "sha256": "6c649748ab9537759fef35e286a762ca195de7e0ae22f3e36021eabfd9b5e35f"
+      },
+      "role": "material"
+    },
+    {
+      "namespace": "article",
+      "name": "evidence-plan.json",
+      "digest": {
+        "sha256": "41622ef911040fb4b6661aee0370bb973361dabd67aba8fdcae6ffda653ca272"
+      },
+      "role": "material"
+    },
+    {
+      "namespace": "article",
+      "name": "evidence/anthropic-claude-code-mcp-permissions-excerpt.txt",
+      "digest": {
+        "sha256": "177c26455accdbad4657160710d27f7488669009a5701b855daf962e5276a825"
+      },
+      "role": "material"
+    },
+    {
+      "namespace": "article",
+      "name": "evidence/dogwood-guide-excerpt.txt",
+      "digest": {
+        "sha256": "f2be92d2be84c5c3d129c0f5e491711af1e5b40924e193f67bea7feb7e092796"
+      },
+      "role": "material"
+    },
+    {
+      "namespace": "article",
+      "name": "evidence/dogwood-readme-production-excerpt.txt",
+      "digest": {
+        "sha256": "1b23936dc8f3e86a96c6dbf557b20ae4555a799541835e59ed9dfe86f6f11dbe"
+      },
+      "role": "material"
+    },
+    {
+      "namespace": "article",
+      "name": "evidence/mcp-authorization-excerpt.txt",
+      "digest": {
+        "sha256": "51317fa07863e65a9eb952390ffd2ee1216635ca6519f3d7f398890bc2d555a1"
+      },
+      "role": "material"
+    },
+    {
+      "namespace": "article",
+      "name": "evidence/mcp-release-mrtr-excerpt.txt",
+      "digest": {
+        "sha256": "cebcb47e20edf5889df0bda404da2f10ff2c104be66c64a8439558af1c785e6f"
+      },
+      "role": "material"
+    },
+    {
+      "namespace": "article",
+      "name": "evidence/mcp-schema-clientinfo-excerpt.txt",
+      "digest": {
+        "sha256": "f78cddd1fc438770253f6e583ad86cca4d56b4bc5b55fc1e3341694f73b25c69"
+      },
+      "role": "material"
+    },
+    {
+      "namespace": "article",
+      "name": "evidence/mcp-spec-20260728-excerpt.txt",
+      "digest": {
+        "sha256": "246101bcf7d66aad38b6831ae3c8bac34093ef6f2a7f869fe50fd04953f13e8a"
+      },
+      "role": "material"
+    },
+    {
+      "namespace": "article",
+      "name": "evidence/mcp-streamable-http-headers-excerpt.txt",
+      "digest": {
+        "sha256": "d2ac75c2e5a659bc1b832f614d5b840a0e2991d4a76f63e150ed727c9d51577e"
+      },
+      "role": "material"
+    },
+    {
+      "namespace": "article",
+      "name": "source-snapshots/dogwood-guide.raw",
+      "digest": {
+        "sha256": "f2be92d2be84c5c3d129c0f5e491711af1e5b40924e193f67bea7feb7e092796"
+      },
+      "role": "material"
+    },
+    {
+      "namespace": "article",
+      "name": "source-verification.json",
+      "digest": {
+        "sha256": "a79f849d6e1093c734a031a51a6b5cd3a3834ca6b9827d5d8f78d148045b1485"
+      },
+      "role": "material"
+    },
+    {
+      "namespace": "article",
+      "name": "sources.json",
+      "digest": {
+        "sha256": "965900fe427a6e2de3c28864e1293f894aa8c325246bf73c2bfb8330bda33e76"
+      },
+      "role": "material"
+    },
+    {
+      "namespace": "article",
+      "name": "topic-contract.yaml",
+      "digest": {
+        "sha256": "3173798164b561beeaf6f5a5aaa9c5a76febfde800dc8634d6657992dfdfbf09"
+      },
+      "role": "material"
+    }
+  ],
+  "outputs": [
+    {
+      "namespace": "article",
+      "name": "evidence-provenance.json",
+      "digest": {
+        "sha256": "b72697722fb7e53f5ea6c054a66d1a244c58d4e183a10e4c60891e8b9b67ad1b"
+      },
+      "role": "product"
+    },
+    {
+      "namespace": "article",
+      "name": "topic-evidence-isolation.json",
+      "digest": {
+        "sha256": "bdacc68490f090d847427df412daf3288c5d6c1a0ceb8592191df74d850d97b6"
+      },
+      "role": "product"
+    }
+  ],
+  "attestation": "unsigned-local-lineage",
+  "identity_authenticated": false,
+  "operator_note": "仅记录本地 run/job/material/product 血缘；不证明真人身份、来源真伪或不可抵赖性。"
+}

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><title>文章工作区隔离实施报告</title>
+<style>body{font-family:system-ui,'Microsoft YaHei',sans-serif;line-height:1.6;color:#17324d;max-width:1100px;margin:32px auto;padding:0 20px}h1,h2{color:#163a5f}code{background:#eef3f7;padding:2px 5px;border-radius:4px}table{border-collapse:collapse;width:100%;margin:12px 0 24px}th,td{border:1px solid #c9d5df;padding:8px;text-align:left}th{background:#e9f0f5}.ok{color:#176b45;font-weight:700}.warn{color:#8a4b08}.box{background:#f4f8fb;border-left:4px solid #557a96;padding:10px 14px}</style></head>
+<body><h1>X超玩•未来智能作品工作区隔离实施报告</h1>
+<p>生成时间：2026-08-25T06:16:59.942054+08:00</p>
+<div class="box"><strong>结论：</strong>工作流源仓库与作品产物已分离。新作品只能进入外部 artifact root，根目录 <code>drafts/</code> 入口已阻断；当前存量文章已迁移且保留字节。</div>
+<h2>一、实际落地位置</h2>
+<ul><li>源仓库：<code>D:\Projects\gzh_x未来智能\gzh_未来智能</code>，只保留代码、Skill、配置、测试、规范和报告。</li>
+<li>作品仓：<code>D:\Projects\gzh_x未来智能\gzh_未来智能-workspaces</code>，包含 <code>active/</code>、<code>delivered/</code>、<code>archive/</code>、<code>quarantine/</code>、<code>registry/</code>、<code>inbox/</code>、<code>tmp/</code>。</li>
+<li>路由：<code>registry/routes/</code>；素材索引：<code>registry/assets/index.json</code>；迁移凭证：<code>registry/migrations/</code>。</li></ul>
+<h2>二、编号与生命周期</h2><p>编号格式为 <code>THK-YYYYMMDD-NNN-slug</code>。日期内序号由 registry 锁原子分配，manifest 与 matrix-state 绑定同一 workspace_id。生命周期只能通过 <code>workspace_lifecycle.py</code> 同步搬运并更新 registry/manifest。</p>
+<table><thead><tr><th>workspace_id</th><th>生命周期</th><th>相对路径</th><th>标题</th></tr></thead><tbody><tr><td colspan="4">无登记工作区</td></tr></tbody></table>
+<h2>三、当前存量迁移</h2><p class="ok">已将旧仓库 <code>drafts/20260811-qlora-量化微调全解-4bit-nf4-lora-消费级显卡也能炼大模型</code> 移动到：</p>
+<p><code>D:\Projects\gzh_x未来智能\gzh_未来智能-workspaces\active\THK-20260811-001-qlora-量化微调全解-4bit-nf4-lora-消费级显卡也能炼大模型</code></p>
+<p>迁移模式为 move-preserving-bytes；5 个文章级自定义过程脚本进入 <code>work/legacy-process/</code>，标准图片/证据/预览仍保留在既有工作区语义目录。迁移记录位于 <code>registry/migrations/THK-20260811-001.json</code>。</p>
+<h2>四、已实现的防污染控制</h2><ul><li><code>matrix_init.py</code>：禁止 <code>drafts</code>，外部 registry 原子编号，创建 manifest、work/exports/snapshots。</li><li><code>workspace_paths.py</code>：所有门禁文章路径必须是已登记 THK 工作区；未登记、无 manifest 或错误生命周期会阻断。</li><li><code>workspace_audit.py</code>：校验根部白名单、标准目录、manifest、registry、编号和生命周期。</li><li><code>workspace_hygiene.py</code>：根 drafts/、manifest 漂移和外部 workspace 审计失败都会阻断。</li><li><code>route_content.py</code>、<code>build_asset_index.py</code>：路由/素材 registry 不再写回仓库。</li><li><code>checkpoint.py</code>、<code>reopen_article.py</code>：快照和 reopen 归档进入文章 <code>snapshots/</code>，不生成根级动态文件。</li><li><code>workspace-contract.yaml</code> 与治理文档成为人读/机读双合同。</li></ul>
+<h2>五、头脑风暴补全的遗漏维度</h2><ul><li>并发编号竞争：registry lock + collision check。</li><li>恢复与回滚：snapshots、可逆 lifecycle archive、迁移凭证。</li><li>权限与隐私：凭证永不进入工作区；quarantine 隔离异常/未批准素材。</li><li>可移植性：manifest 不保存本机绝对路径；state 使用 artifact-relative path。</li><li>根部漂移：标准产物白名单，未知文件即时阻断；过程输出统一 work/。</li><li>失败半成品：初始化先占位 manifest，路径审计发现未登记目录。</li><li>长期维护：registry routes/assets/migrations 分层，README/SOP/Skill 同步更新。</li><li>测试隔离：<code>WORKFLOW_TEST_MODE=1</code> 仅允许临时 fixture，不可用于生产发布。</li></ul>
+<h2>六、验证结果</h2><table><thead><tr><th>检查</th><th>结果</th></tr></thead><tbody>
+<tr><td>workspace path tests</td><td class="ok">PASSED</td></tr><tr><td>routing tests</td><td class="ok">PASSED</td></tr><tr><td>checkpoint tests</td><td class="ok">PASSED</td></tr><tr><td>adversarial controls v2</td><td class="ok">15 checks PASSED</td></tr><tr><td>workflow hardening</td><td class="ok">PASSED</td></tr><tr><td>workspace_audit</td><td class="ok">PASSED</td></tr><tr><td>workspace_hygiene</td><td class="ok">PASSED</td></tr><tr><td>validate_matrix --no-links</td><td class="ok">PASSED</td></tr></tbody></table>
+<h2>七、以后唯一推荐入口</h2><pre><code>python scripts/route_content.py --interactive
+python scripts/matrix_init.py --route &lt;GZH_ARTIFACT_ROOT&gt;/registry/routes/&lt;route&gt;.yaml --title "..."
+python scripts/workspace_audit.py --check
+python scripts/workflow_gate.py --article &lt;GZH_ARTIFACT_ROOT&gt;/active/THK-... --stage &lt;stage&gt; --advance</code></pre>
+<p class="warn">不要手工创建编号、不要使用仓库 drafts/、不要把过程脚本塞进 scripts/、不要直接把 active 目录移动而不运行 lifecycle 工具。</p>
+</body></html>

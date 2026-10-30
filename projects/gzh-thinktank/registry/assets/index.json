@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "contract": "asset-index-v1",
+  "assets": [
+    {
+      "path": "imgs/cover.png",
+      "origin": "generated",
+      "source": "workflow-generated Agnes cover with deterministic overlay",
+      "license": "workflow-owned generated asset",
+      "reuse_approved": false,
+      "source_ref": "",
+      "reuse_reason": "",
+      "status": "verified",
+      "sha256": "226ccb6bbab38f5570a2f265e256a5c8f4e5100a1eebfcdc8f01a466127cf49b",
+      "bytes": 276696,
+      "asset_id": "226ccb6bbab38f5570a2f265e256a5c8f4e5100a1eebfcdc8f01a466127cf49b",
+      "article_id": "THK-20260825-002-mcp-tool-governance-v2"
+    },
+    {
+      "path": "imgs/section-05.png",
+      "origin": "generated",
+      "source": "workflow-generated deterministic renderer",
+      "license": "workflow-owned generated asset",
+      "reuse_approved": false,
+      "source_ref": "",
+      "reuse_reason": "",
+      "status": "verified",
+      "sha256": "6c6d7617be7f7151e477011fb26393633e1a11a6f1b73a9a65b80b522723439e",
+      "bytes": 63591,
+      "asset_id": "6c6d7617be7f7151e477011fb26393633e1a11a6f1b73a9a65b80b522723439e",
+      "article_id": "THK-20260825-002-mcp-tool-governance-v2"
+    },
+    {
+      "path": "imgs/section-02.png",
+      "origin": "generated",
+      "source": "workflow-generated deterministic renderer",
+      "license": "workflow-owned generated asset",
+      "reuse_approved": false,
+      "source_ref": "",
+      "reuse_reason": "",
+      "status": "verified",
+      "sha256": "993ea5e94ec81d058fbe81457a6ac03dcec582979b9687aeea068e01d14b55a4",
+      "bytes": 70591,
+      "asset_id": "993ea5e94ec81d058fbe81457a6ac03dcec582979b9687aeea068e01d14b55a4",
+      "article_id": "THK-20260825-002-mcp-tool-governance-v2"
+    },
+    {
+      "path": "imgs/section-04.png",
+      "origin": "generated",
+      "source": "workflow-generated deterministic renderer",
+      "license": "workflow-owned generated asset",
+      "reuse_approved": false,
+      "source_ref": "",
+      "reuse_reason": "",
+      "status": "verified",
+      "sha256": "99ebe1cfa351463c0bdfb6687acacc7e557d007ef8c36f24f882fc7604340dfe",
+      "bytes": 70745,
+      "asset_id": "99ebe1cfa351463c0bdfb6687acacc7e557d007ef8c36f24f882fc7604340dfe",
+      "article_id": "THK-20260825-002-mcp-tool-governance-v2"
+    },
+    {
+      "path": "imgs/section-01.png",
+      "origin": "generated",
+      "source": "workflow-generated deterministic renderer",
+      "license": "workflow-owned generated asset",
+      "reuse_approved": false,
+      "source_ref": "",
+      "reuse_reason": "",
+      "status": "verified",
+      "sha256": "b7c4d77df50bc14258129c3af5afb4e21f3e1a40d5209de5898e913bca2ac6ab",
+      "bytes": 61032,
+      "asset_id": "b7c4d77df50bc14258129c3af5afb4e21f3e1a40d5209de5898e913bca2ac6ab",
+      "article_id": "THK-20260825-002-mcp-tool-governance-v2"
+    },
+    {
+      "path": "imgs/section-03.png",
+      "origin": "generated",
+      "source": "workflow-generated deterministic renderer",
+      "license": "workflow-owned generated asset",
+      "reuse_approved": false,
+      "source_ref": "",
+      "reuse_reason": "",
+      "status": "verified",
+      "sha256": "bf4f4fdaecaa9694a91aa54d9ff5d1be7909001247dd4fb1c0644ea75a25f625",
+      "bytes": 19349,
+      "asset_id": "bf4f4fdaecaa9694a91aa54d9ff5d1be7909001247dd4fb1c0644ea75a25f625",
+      "article_id": "THK-20260825-002-mcp-tool-governance-v2"
+    }
+  ],
+  "generated_at": "2026-08-24T22:59:47.105361+00:00"
+}

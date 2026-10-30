@@ -1,0 +1,5 @@
+# Runtime dependencies used by the deterministic article/visual gates.
+# Keep these separate from article content dependencies so a clean machine
+# cannot silently downgrade a failed YAML/image check to an empty receipt.
+PyYAML>=6.0,<7
+Pillow>=10.0,<13

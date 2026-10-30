@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "mode": "new",
+  "operator": "codex",
+  "created_at": "2026-08-24T18:32:51.955025+00:00",
+  "change_summary": "完成来源审查后的公众号正文初稿，加入协议边界、相邻授权模式、显式工具许可、最小实践和上线验收清单。",
+  "reuse_approved": false,
+  "source": {
+    "kind": "fresh_draft",
+    "note": "仅使用已通过 source-review-v1 的三份官方来源；Dogwood 和 Anthropic 明确标注适用边界。"
+  },
+  "draft_digest": "2d8bc94071a326ffb346d3221dc3f3795f944fa157c830bc80f51631a50f57f5",
+  "final_digest": "8d3254c3623916647c042bb9a556323a86c1c7946fee3d0c60ccbb7ada52e87d",
+  "finalized_at": "2026-08-24T22:53:55.170199+00:00"
+}

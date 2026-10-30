@@ -220,3 +220,10 @@ assert/
 !vendor/gzh-thinktank/*/opc-doc/outputs/
 !vendor/gzh-thinktank/*/opc-doc/outputs/**
 !vendor/gzh-thinktank/**/package-lock.json
+
+# The 公众号 article workspace keeps its text and JSON here, not its image
+# assets. This one SVG is a generated overlay: it embeds the 5 MB cover image as
+# base64 and is 6.9 MB on its own, so it trips the repository's large-file
+# policy and is regenerable from `cover-agnes-background.png` (itself ignored).
+# The five small diagram SVGs beside it are text and stay tracked.
+projects/gzh-thinktank/**/imgs/diagram-sources/cover-overlay.svg
