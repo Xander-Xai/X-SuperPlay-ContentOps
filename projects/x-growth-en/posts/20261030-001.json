@@ -1,0 +1,57 @@
+{
+  "schema": "contentops.x-post/v1",
+  "content_id": "20261030-001",
+  "account_slug": "x-superplay-english",
+  "mode": "source_analysis",
+  "topic": "verification before completion",
+  "sources": [
+    "https://github.com/obra/superpowers/blob/main/skills/verification-before-completion/SKILL.md"
+  ],
+  "audience_job": "decide, before merging, whether an agent's 'fixed' claim has actually been verified",
+  "proof_grade": "P0",
+  "unique_artifact_ref": "vendor/x-growth-os/posts/2026-10-25-001-verification-before-completion.md",
+  "experiment_variable": "opening line: the agent's quoted claim versus a plain statement",
+  "label": "SOURCE_ANALYSIS",
+  "theses": [
+    {
+      "thesis": "A 'fixed' claim is unverified until a fresh command and its exit code exist",
+      "evidence": "the upstream skill file requires proof of completed work from a fresh verification command and its actual output, including exit status",
+      "counterexample": "a passing suite that never reproduced the original failure proves that suite is green, not that the bug is gone",
+      "reader_action": "paste the exact command and its exit code into the pull request before merging"
+    },
+    {
+      "thesis": "Agent confidence and agent evidence arrive in the same tone, so the log is the only distinction",
+      "evidence": "the same summary sentence carried a correct and an incorrect fix in this trial with no change in wording",
+      "counterexample": "a one-line typo correction needs no log, and demanding one there trains people to skip the cases that matter",
+      "reader_action": "require the raw log only for claims that change behaviour"
+    },
+    {
+      "thesis": "Selling an AI verification report service now would be premature",
+      "evidence": "this draft records no paying customer, no price and no qualified demand for such a report",
+      "counterexample": "a team already paying a manual QA reviewer has both the budget and the pain today",
+      "reader_action": "run one paid pilot before building any report product"
+    }
+  ],
+  "red_team": [
+    "Objection: reviewers already ask for a passing test. Answer: they ask for a summary, and the requirement here is the exit code from a fresh run, which a pasted summary cannot carry.",
+    "Objection: a screenshot of the run is enough. Answer: a screenshot is not recheckable by the next reader and does not survive review; the command and its exit status do.",
+    "Objection: this collapses on flaky suites. Answer: it does, and that is the useful part -- a flaky suite is exactly why a green summary is not proof."
+  ],
+  "post_copy": {
+    "parts": [
+      "AI coding agent: \"Fixed.\"\nProof?\n\nBefore merging, check:\n1) exact test command\n2) fresh output + exit code\n3) original failure now passes\n\nNo run = unverified fix.\n\nSkill: https://github.com/obra/superpowers/tree/main/skills/verification-before-completion"
+    ]
+  },
+  "image_brief": "Dark card, title FIXED IS NOT PROOF, three numbered checks, footer 'No fresh run means an unverified fix'. No numbers or benchmark claimed.",
+  "image": {
+    "path": "assets/cards/20261030-001.png"
+  },
+  "image_status": "generated",
+  "alt_text": "A dark card titled FIXED IS NOT PROOF listing three checks: the exact test command, fresh output with its exit code, and the original failure now passing.",
+  "review": null,
+  "status": "draft",
+  "status_url": null,
+  "scheduled_for": null,
+  "metrics": null,
+  "notes": "Imported from the vendored draft 2026-10-25-001 as the track's first record. The card is tracked as HTML at assets/cards/20261030-001.html and rendered to PNG by skills/shared/scripts/render_card.py at 1600x900 -- the PNG is gitignored, so a fresh checkout must re-render it and will then see IMAGE_ABSENT until it does. The review is a person's and has not happened; that is the one refusal left."
+}
