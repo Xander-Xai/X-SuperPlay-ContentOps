@@ -212,3 +212,11 @@ task-state/
 # sample is a private input, and the receipts that DO get committed carry only hashes
 # and measurements.
 assert/
+
+# The vendored 公众号 workflow is committed verbatim: its fixtures, generated
+# docs and lockfiles are part of the copy. Without these negations the root rules
+# (outputs/, *.png, lockfiles) would silently drop 15 of its 679 files.
+!vendor/gzh-thinktank/**
+!vendor/gzh-thinktank/*/opc-doc/outputs/
+!vendor/gzh-thinktank/*/opc-doc/outputs/**
+!vendor/gzh-thinktank/**/package-lock.json
