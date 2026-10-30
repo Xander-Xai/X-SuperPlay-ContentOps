@@ -41,12 +41,22 @@ def test_helper_exists():
     assert (ROOT / "scripts" / "skill_route.py").is_file()
 
 
+def _easel_catalog_present() -> bool:
+    """Whether the gitignored Easel runtime/checkout is available.
+
+    The gzh vendor is a catalog root too, but it is not the Easel catalog these
+    assertions are about. A clean CI checkout has the vendor and no Easel, so
+    "some catalog exists" is the wrong gate.
+    """
+    return any(path.is_dir() for path in CATALOG_ROOTS if path.name == "openclaw")
+
+
 def test_catalog_is_discoverable_when_present():
     skills, root = catalog()
-    if root is None:
+    if not _easel_catalog_present():
         # The runtime is gitignored, so a clean checkout cannot enumerate it.
         # The rule text above still applies; this half is host-local by design.
-        print("catalog absent on this checkout; skipping catalog assertions")
+        print("Easel catalog absent on this checkout; skipping catalog assertions")
         return
     assert skills, f"catalog root {root} contains no SKILL.md"
     names = {skill["name"] for skill in skills}
@@ -56,8 +66,8 @@ def test_catalog_is_discoverable_when_present():
 
 def test_ranking_sends_a_card_request_to_card_design():
     skills, root = catalog()
-    if root is None:
-        print("catalog absent on this checkout; skipping ranking assertion")
+    if not _easel_catalog_present():
+        print("Easel catalog absent on this checkout; skipping ranking assertion")
         return
     top = rank(skills, "card design poster layout")[:3]
     assert top, "no skill matched a card request"
@@ -66,8 +76,8 @@ def test_ranking_sends_a_card_request_to_card_design():
 
 def test_ranking_sends_a_slideshow_request_to_slideshow_video():
     skills, root = catalog()
-    if root is None:
-        print("catalog absent on this checkout; skipping ranking assertion")
+    if not _easel_catalog_present():
+        print("Easel catalog absent on this checkout; skipping ranking assertion")
         return
     top = rank(skills, "图片做成视频 相册 幻灯片")[:3]
     assert top, "no skill matched a slideshow request"
