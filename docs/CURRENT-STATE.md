@@ -1326,3 +1326,13 @@ itself reviewed.
 | Unattended run | the scheduler writes a per-run log next to its receipt, survives a `pythonw` launch with no console (`sys.stdout is None`), and a hidden `Start-Process` run was executed end to end |
 | Approval boundary | an automation approval can no longer be handed to the pipeline at all (`AUTOMATION_APPROVAL`), not merely marked |
 | Dependency ledger | of the 91 parent commits, 12 touch a file the router depends on; the actual dependency is **8 paths, +2,051 lines, all additive** |
+
+### Round five — the script stage, 2026-10-30
+
+| Area | What is now true |
+|---|---|
+| Script draft | `scripts/brief_script.py` turns an approved brief into `lines.json`, `claim-map.json`, `storyboard.json`, `master.md` and a claim→source report. **No model call**: every spoken line is a transition, the source's own quoted title bound to a recorded document, or a CTA |
+| Contract reuse | it speaks the repository's existing `contentops.claim-map/v1` and `contentops.audio-first-lines/v1`; the copy review already fingerprints both, so a later edit invalidates a review without new code |
+| Refusals | `EVIDENCE_REQUIRED` on a DEGRADED forecast or a missing source; `APPROVAL_STALE` on a changed brief; `AUTOMATION_APPROVAL` outside a sandbox |
+| End state | the draft stops at `NOT_REVIEWED` in the copy gate and writes no review record. M-ROUTER-SCRIPT is no longer "not started"; the remaining gap is a person's copy, not machinery |
+| Known limit | the draft's factual content is one quoted title. A no-model generator cannot write the substance, and pretending otherwise would be the failure this stage exists to prevent |

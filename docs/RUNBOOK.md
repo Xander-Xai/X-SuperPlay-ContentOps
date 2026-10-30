@@ -656,12 +656,27 @@ python scripts\brief_handoff.py projects\my-episode
 `brief_handoff.py` refuses the same way, and additionally refuses a `DEGRADED`
 evidence forecast with `EVIDENCE_REQUIRED`. Exit code 4 means "not ready".
 
-The next real step is still the script and the copy review:
+The next step is the script stage, which turns the brief into copy, claims and
+shots — and stops at the copy review:
 
 ```powershell
+python scripts\brief_script.py projects\my-episode
+python scripts\brief_script.py projects\my-episode --check
+```
+
+It writes `script/lines.json`, `script/claim-map.json`, `script/storyboard.json`,
+`script/master.md` and `00_brief/script-report.json`. It refuses a degraded
+evidence forecast with `EVIDENCE_REQUIRED` (exit 4) rather than writing a script
+nobody could back. After a successful draft the copy gate reads `NOT_REVIEWED`:
+
+```powershell
+python scripts\copy_review.py projects\my-episode
 python scripts\audio_first_plan.py projects\my-episode
 # {"status": "BLOCKED", "stage": "copy_review", ...}  (exit 4, nothing synthesised)
 ```
+
+Approving the copy is a person's step: `copy_review.py ... --approve --reviewer
+<name> --opinion "<what you decided>"`. Nothing in the router writes it.
 
 ### 19.3 A real TrendRadar database
 

@@ -1060,11 +1060,19 @@ def test_the_script_step_is_a_named_gap_not_a_crash():
         project = root / "projects" / "handoff-script"
         state = handoff.script_state(project)
         assert state["ready"] is False
-        assert len(state["problems"]) == 2
+        assert len(state["problems"]) == 1
+        assert "lines.json" in state["problems"][0]
         (project / "script").mkdir(exist_ok=True)
         (project / "script" / "lines.json").write_text("[]", encoding="utf-8")
-        (project / "script" / "assets.json").write_text("[]", encoding="utf-8")
-        assert handoff.script_state(project)["ready"] is True
+        midway = handoff.script_state(project)
+        assert midway["ready"] is False
+        assert "claim-map.json" in midway["problems"][0]
+        (project / "script" / "claim-map.json").write_text("{}", encoding="utf-8")
+        ready = handoff.script_state(project)
+        assert ready["ready"] is True
+        # The asset map is produced after the copy review, so it is reported
+        # but never blocks the draft from being recognised as written.
+        assert ready["assets_listed"] is False
 
 
 def test_an_automation_approval_cannot_be_handed_to_the_pipeline():

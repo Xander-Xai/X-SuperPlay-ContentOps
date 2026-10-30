@@ -50,16 +50,21 @@ def script_state(project: Path) -> Dict[str, Any]:
     """
     project = Path(project)
     lines = project / SCRIPT_DIR / "lines.json"
+    claims = project / SCRIPT_DIR / "claim-map.json"
     assets = project / SCRIPT_DIR / "assets.json"
     problems: List[str] = []
     if not lines.is_file():
         problems.append("script/lines.json is missing: the narration has not been "
                         "written (a person writes it; the copy review approves it)")
-    if not assets.is_file():
-        problems.append("script/assets.json is missing: the evidence assets have not "
-                        "been listed")
+    elif not claims.is_file():
+        problems.append("script/claim-map.json is missing: the narration is not bound "
+                        "to claims and evidence yet")
+    # The asset map is produced when the assets are registered, which happens
+    # after the copy review, so its absence is reported but never blocks the
+    # draft from being recognised as written.
     return {"ready": not problems, "problems": problems,
-            "lines": str(lines), "assets": str(assets)}
+            "lines": str(lines), "assets": str(assets),
+            "assets_listed": assets.is_file()}
 
 
 def read_brief(project: Path) -> Optional[Dict[str, Any]]:

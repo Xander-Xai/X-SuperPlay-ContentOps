@@ -270,6 +270,12 @@ jobs:
       - name: Run source quality tests
         run: python tests/test_source_quality.py
 
+      # The script stage: an approved brief becomes copy under the claim
+      # contract. Nothing is invented, and a degraded forecast stops at
+      # EVIDENCE_REQUIRED instead of producing a script.
+      - name: Run script draft tests
+        run: python tests/test_script_draft.py
+
       # The optimization layer: signal validation, ADOPT policy (GitHub + evidence
       # + no GPU), action-before-deferral ranking and the blocked MEASURE/LEARN
       # flywheel stages.

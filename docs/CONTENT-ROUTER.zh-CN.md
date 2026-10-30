@@ -467,6 +467,40 @@ DNA 决定，它只决定"有没有项目"。
 这道门移除的是夹具。它**不会**移除"真实但不适合该账号"的项目——那是 DNA 的职责，
 而且两种失败在候选池里长得很不一样：一个是垃圾，一个是诚实的不匹配。
 
+## 从已批准的 Brief 到文案与分镜
+
+`scripts/brief_script.py` 是交接之后的阶段。它把已批准的 Brief 变成流水线本来就在读的
+四个文件：
+
+| 文件 | 契约 |
+|---|---|
+| `script/lines.json` | `contentops.audio-first-lines/v1` — 带 claim id 与视图的节拍 |
+| `script/claim-map.json` | `contentops.claim-map/v1` — 仓库自己的主张契约 |
+| `script/storyboard.json` | 每条节拍一个镜头，含采集需求 |
+| `script/master.md` | 可读的文案 |
+| `00_brief/script-report.json` | 审阅者要核对的"主张 → 来源"映射 |
+
+**里面没有任何模型调用。** 它不可能编造事实、数字或引文，这正是重点：这一阶段绝不能
+复现的失败，是热榜标题被悄悄升级成"已核实的主张"。每一句被念出来的话只可能是：
+
+- **编辑转场**——这一集要做什么（不含事实断言）；
+- 来源**自己的标题**，引用它，并绑定到一份记录"在哪里读到、它是描述而非验证"的文档；
+- **CTA**（行动号召）。
+
+其余一律停下。仓库的主张契约只允许 `SUPPORTED` 的主张出现在旁白上，而判断无法
+`SUPPORTED`，所以观点句在这里根本不被允许——那部分由写文案的人补上，复制评审是闸门。
+
+拒绝状态，全部具名：
+
+| 代码 | 何时 |
+|---|---|
+| `EVIDENCE_REQUIRED` | Brief 的证据预测为 `DEGRADED`，或账号需要来源而 Brief 没有 |
+| `APPROVAL_STALE` / `NOT_APPROVED` | Brief 在审批后被改动，或从未被批准 |
+| `AUTOMATION_APPROVAL` | Brief 由验收运行在沙箱之外批准 |
+
+这一阶段**从不写** `receipts/script-review.json`。草稿成功后，复制门禁读到
+`NOT_REVIEWED`，流水线就停在那里——对无人值守的运行来说，这正是正确的终态。
+
 ## 这个模块不做什么
 
 - 它不替你选选题。它只提出，由人决定。

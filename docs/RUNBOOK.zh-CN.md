@@ -519,12 +519,26 @@ Brief 在审批之后被改动时，`verify` 返回 `APPROVAL_STALE`。
 `brief_handoff.py` 同样拒绝，并且对 `DEGRADED` 的证据预测额外以
 `EVIDENCE_REQUIRED` 拒绝。退出码 4 表示"尚未就绪"。
 
-真正的下一步仍然是写稿与复制评审：
+下一步是脚本阶段：把 Brief 变成文案、主张与分镜——并停在复制评审：
 
 ```powershell
+python scripts\brief_script.py projects\my-episode
+python scripts\brief_script.py projects\my-episode --check
+```
+
+它写出 `script/lines.json`、`script/claim-map.json`、`script/storyboard.json`、
+`script/master.md` 与 `00_brief/script-report.json`。证据预测为 `DEGRADED` 时以
+`EVIDENCE_REQUIRED`（退出码 4）拒绝，而不是写一份没人能背书的稿子。
+草稿成功后复制门禁读到 `NOT_REVIEWED`：
+
+```powershell
+python scripts\copy_review.py projects\my-episode
 python scripts\audio_first_plan.py projects\my-episode
 # {"status": "BLOCKED", "stage": "copy_review", ...}（退出码 4，未合成任何内容）
 ```
+
+批准复制是人的步骤：`copy_review.py ... --approve --reviewer <name> --opinion "<你决定的>"`。
+路由器里的任何东西都不会写它。
 
 ### 19.3 使用真实的 TrendRadar 数据库
 

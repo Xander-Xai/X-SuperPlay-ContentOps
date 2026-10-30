@@ -1259,3 +1259,13 @@ copy review。它不得自行调用付费服务，也不得把自己标记为已
 | 无人值守 | 调度器在回执旁写每次运行的日志；`pythonw` 无控制台（`sys.stdout is None`）也能跑通，并已用隐藏的 `Start-Process` 实测 |
 | 审批边界 | 自动审批的 Brief 现在**根本无法交接**给流水线（`AUTOMATION_APPROVAL`），而不只是标个记号 |
 | 依赖台账 | 91 个父提交里只有 12 个碰过路由器依赖的文件；真实依赖是 **8 个路径、+2051 行、全部为新增** |
+
+### 第五轮——脚本阶段，2026-10-30
+
+| 方面 | 现在为真的事实 |
+|---|---|
+| 脚本草稿 | `scripts/brief_script.py` 把已批准的 Brief 变成 `lines.json`、`claim-map.json`、`storyboard.json`、`master.md` 和"主张→来源"报告。**没有任何模型调用**：每一句被念出来的话都是转场、来源自己标题的引用（绑定到记录下来的文档），或 CTA |
+| 契约复用 | 它说仓库既有的 `contentops.claim-map/v1` 与 `contentops.audio-first-lines/v1`；复制评审本来就会对两者取指纹，所以之后改动会让评审失效，无需新代码 |
+| 拒绝 | 证据预测 `DEGRADED` 或缺来源 → `EVIDENCE_REQUIRED`；Brief 被改动 → `APPROVAL_STALE`；沙箱之外 → `AUTOMATION_APPROVAL` |
+| 终态 | 草稿停在复制门禁的 `NOT_REVIEWED`，且不写任何评审记录。M-ROUTER-SCRIPT 不再是"未开始"；剩下的缺口是人写的文案，不是机器 |
+| 已知限制 | 草稿的事实内容只有一句被引用的标题。没有模型的生成器写不出实质内容，假装能写才是这一阶段存在要防的事 |

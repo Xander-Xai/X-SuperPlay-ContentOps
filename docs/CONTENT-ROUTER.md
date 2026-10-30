@@ -551,6 +551,46 @@ The gate removes fixtures. It does **not** remove real projects that are a
 poor fit for the account — that is the DNA's job, and the two failures look
 different in the pool: one is spam, the other is an honest mismatch.
 
+## From an approved brief to copy and shots
+
+`scripts/brief_script.py` is the stage after the handoff. It turns an approved
+brief into the four files the pipeline already reads:
+
+| File | Contract |
+|---|---|
+| `script/lines.json` | `contentops.audio-first-lines/v1` — beats with a claim id and their views |
+| `script/claim-map.json` | `contentops.claim-map/v1` — the repository's own claim contract |
+| `script/storyboard.json` | shots with their capture needs, one per beat |
+| `script/master.md` | the readable copy |
+| `00_brief/script-report.json` | the claim → source mapping a reviewer checks |
+
+**There is no model call in it.** It cannot invent a fact, a number or a
+quotation, and that is the point: the failure this stage must not reproduce is
+a hot-list title quietly promoted to a verified claim. Every spoken line is one
+of:
+
+- an **editorial transition** — what the episode will do (no factual assertion);
+- the source's **own title**, quoted, bound to a document that records where it
+  was read and states that it is a description, not a verification;
+- a **CTA**.
+
+Anything else stops. The repository's claim contract only allows a `SUPPORTED`
+claim on narration, and a judgement cannot be `SUPPORTED`, so opinion lines are
+not permitted here at all — the person writing the copy adds them, with the
+copy review as the gate.
+
+Refusals, all named:
+
+| Code | When |
+|---|---|
+| `EVIDENCE_REQUIRED` | the brief's forecast is `DEGRADED`, or the account needs a source and the brief carries none |
+| `APPROVAL_STALE` / `NOT_APPROVED` | the brief changed after approval, or was never approved |
+| `AUTOMATION_APPROVAL` | the brief was approved by an acceptance run outside a sandbox |
+
+The stage never writes `receipts/script-review.json`. After a successful draft
+the copy gate reads `NOT_REVIEWED` and the pipeline stops there — which is the
+correct end state for an unattended run.
+
 ## What this does not do
 
 - It does not choose a topic for you. It proposes; a person decides.
