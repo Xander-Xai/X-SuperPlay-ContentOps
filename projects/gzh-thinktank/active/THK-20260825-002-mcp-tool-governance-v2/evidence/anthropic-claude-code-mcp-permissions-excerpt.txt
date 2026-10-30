@@ -1,0 +1,1 @@
+--allowedTools makes matching tools execute without prompting for permission. --disallowedTools provides deny rules, while --tools restricts which tools are available. An optional --permission-prompt-tool can handle permission requests.

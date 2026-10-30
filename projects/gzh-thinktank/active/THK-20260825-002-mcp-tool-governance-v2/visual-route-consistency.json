@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "contract": "visual-route-consistency-v1",
+  "status": "passed",
+  "article": "THK-20260825-002-mcp-tool-governance-v2",
+  "checked_at": "2026-08-24T23:09:46.080715+00:00",
+  "records": [
+    {
+      "id": "body-01",
+      "requested_backend": "deterministic-svg",
+      "selected_backend": "deterministic-svg",
+      "execution_backend": "deterministic-svg",
+      "output": "imgs/section-01.png",
+      "output_sha256": "b7c4d77df50bc14258129c3af5afb4e21f3e1a40d5209de5898e913bca2ac6ab",
+      "status": "passed"
+    },
+    {
+      "id": "body-02",
+      "requested_backend": "deterministic-svg",
+      "selected_backend": "deterministic-svg",
+      "execution_backend": "deterministic-svg",
+      "output": "imgs/section-02.png",
+      "output_sha256": "993ea5e94ec81d058fbe81457a6ac03dcec582979b9687aeea068e01d14b55a4",
+      "status": "passed"
+    },
+    {
+      "id": "body-03",
+      "requested_backend": "code-block",
+      "selected_backend": "code-block",
+      "execution_backend": "code-block",
+      "output": "imgs/section-03.png",
+      "output_sha256": "bf4f4fdaecaa9694a91aa54d9ff5d1be7909001247dd4fb1c0644ea75a25f625",
+      "status": "passed"
+    },
+    {
+      "id": "body-04",
+      "requested_backend": "deterministic-svg",
+      "selected_backend": "deterministic-svg",
+      "execution_backend": "deterministic-svg",
+      "output": "imgs/section-04.png",
+      "output_sha256": "99ebe1cfa351463c0bdfb6687acacc7e557d007ef8c36f24f882fc7604340dfe",
+      "status": "passed"
+    },
+    {
+      "id": "body-05",
+      "requested_backend": "deterministic-svg",
+      "selected_backend": "deterministic-svg",
+      "execution_backend": "deterministic-svg",
+      "output": "imgs/section-05.png",
+      "output_sha256": "6c6d7617be7f7151e477011fb26393633e1a11a6f1b73a9a65b80b522723439e",
+      "status": "passed"
+    }
+  ],
+  "errors": [],
+  "note": "route drift is blocking; a historical override must be represented by a superseded event, not stale free text."
+}

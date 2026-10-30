@@ -1,0 +1,22 @@
+{
+  "name": "gzh-article-orchestrator",
+  "version": "0.4.0",
+  "author": "Matrix Ops",
+  "description": "管理微信公众号从选题到发布的完整内容流程，路由到各子能力。",
+  "license": "MIT",
+  "homepage": "https://localhost/",
+  "tags": ["wechat", "公众号", "content-automation", "orchestration"],
+  "permissions": ["filesystem"],
+  "entryPoint": {
+    "type": "natural",
+    "path": "SKILL.md"
+  },
+  "dependencies": [
+    "gzh-topic-research",
+    "gzh-article-writing",
+    "gzh-editorial-review",
+    "gzh-article-format",
+    "gzh-visual-assets",
+    "gzh-draft-publisher"
+  ]
+}

@@ -652,3 +652,189 @@ python scripts\build_evidence_package.py projects\easel-1024-proof --variants
   not a crop of the card designed for another one.
 - A derivative is technically correct, not content-approved. `production_ready`
   stays false and the master's human review still decides.
+
+## 19. Content router: choosing a topic
+
+The router runs *before* a project exists. It answers "who is this for, and
+what is it about", and it writes a brief the pipeline can pick up.
+
+```powershell
+# which accounts can be routed, and are they usable
+python scripts\content_route.py accounts
+
+# Route A: look for a topic, scoped by the account
+python scripts\content_route.py start --account x-superplay-1024 --mode hotspot
+
+# see the plan without fetching anything
+python scripts\content_route.py start --account x-superplay-1024 --mode hotspot --plan-only
+
+# Route B: the owner names the topic
+python scripts\content_route.py start --account x-superplay-future-intelligence --mode topic `
+    --topic "如何使用 LangGraph 开发可靠的 Agent？"
+
+# a person chooses one candidate, by name
+python scripts\content_route.py select --candidate CAND-XXXXXXXX --by "Founder"
+
+# where is the run, and what does it need next
+python scripts\content_route.py status --run RUN-20261030-XXXXXXXX
+
+# a person approves the brief, and the project is created with it
+python scripts\content_route.py approve --run RUN-20261030-XXXXXXXX `
+    --reviewer "Founder" --note "值得做" --confirm --project langgraph-reliable-agent
+```
+
+- `--mode` is required. A run without one is refused with `ROUTE_SELECTION_REQUIRED`;
+  the router never infers the route, and a run never changes route when it resumes.
+- `start --mode hotspot` writes the plan, collects, filters and ranks, and stops
+  at `CANDIDATES_READY`. It does **not** create a project and it does **not** call
+  a media generator.
+- `select` is the step a person takes. `--by` is required; there is no
+  anonymous selection.
+- `approve --confirm` is the step a person takes before the brief enters the
+  pipeline. `--project <slug>` creates the project with `scripts/new_project.py`
+  and puts `00_brief/brief.json` in it, so the episode starts where every other
+  episode starts.
+- An off-profile topic stops at `OUT_OF_PROFILE_REVIEW_REQUIRED`. The owner
+  either changes the topic or re-runs with `--accept-off-profile --note "why"`.
+- The pool lives in SQLite under `.local/content-router/` (gitignored).
+  `CONTENTOPS_ROUTER_HOME` moves it.
+- `--json` on any command prints the same result as JSON.
+
+After the brief exists, the episode continues through the ordinary pipeline.
+The copy review (`scripts\copy_review.py <project>`) is still the gate before
+anything is rendered.
+
+See [CONTENT-ROUTER.md](CONTENT-ROUTER.md) for the contract and the states.
+
+### 19.1 The acceptance run
+
+`scripts/router_e2e.py` runs both routes end to end and writes one receipt.
+
+```powershell
+# both routes, against the real sources
+python scripts\router_e2e.py --actor "Founder"
+
+# the topic route only; the hot-list leg is reported as blocked, not faked
+python scripts\router_e2e.py --actor "Founder" --offline
+```
+
+- It creates its projects under `.verify-tmp\router-e2e\projects\`, not in the
+  repository's own `projects\`, so an acceptance run leaves no episode behind.
+- **The topic selection and the brief approval are performed by the acceptance
+  run**, under the name `--actor` gives. The receipt says so in as many words.
+  That is an acceptance run, not a standing approval: the copy review is still
+  the gate before anything is rendered.
+- It publishes nothing and generates no media.
+- When a source is unreachable, the receipt names the failure and the run
+  continues without it. `--offline` skips the network entirely and reports the
+  hot-list leg as `OFFLINE_BY_REQUEST` rather than filling it with a fixture.
+- The acceptance harness approves with `actor_kind="automation"` and
+  `allow_automation=True`. A production caller cannot do that by accident: the
+  same call without the opt-in is refused with `AUTOMATION_APPROVAL_REFUSED`.
+
+### 19.2 Checking an approval, and handing the brief on
+
+```powershell
+# does the approval still match the brief on disk?
+python scripts\content_route.py verify --run RUN-20261030-XXXXXXXX
+
+# carry it into the pipeline (writes 00_brief\handoff.json), or check only
+python scripts\brief_handoff.py projects\my-episode --dry-run
+python scripts\brief_handoff.py projects\my-episode
+```
+
+`verify` returns `APPROVAL_STALE` when the brief changed after it was approved.
+`brief_handoff.py` refuses the same way, and additionally refuses a `DEGRADED`
+evidence forecast with `EVIDENCE_REQUIRED`. Exit code 4 means "not ready".
+
+The next step is the script stage. It only speaks about material that was
+actually collected, so collect first:
+
+```powershell
+python scripts\evidence_pack.py --topic "LangGraph 状态管理" --out projects\my-episode `
+    https://raw.githubusercontent.com/langchain-ai/docs/main/src/oss/langgraph/persistence.mdx `
+    https://github.com/langchain-ai/langgraph
+python scripts\brief_script.py projects\my-episode
+python scripts\brief_script.py projects\my-episode --check
+```
+
+It writes `script/lines.json`, `script/claim-map.json`, `script/storyboard.json`,
+`script/master.md` and `00_brief/script-report.json`. It refuses a degraded
+evidence forecast with `EVIDENCE_REQUIRED` (exit 4) rather than writing a script
+nobody could back. After a successful draft the copy gate reads `NOT_REVIEWED`:
+
+```powershell
+python scripts\copy_review.py projects\my-episode
+python scripts\audio_first_plan.py projects\my-episode
+# {"status": "BLOCKED", "stage": "copy_review", ...}  (exit 4, nothing synthesised)
+```
+
+Approving the copy is a person's step: `copy_review.py ... --approve --reviewer
+<name> --opinion "<what you decided>"`. Nothing in the router writes it.
+
+### 19.3 A real TrendRadar database
+
+TrendRadar runs outside this repository (`D:\Software\sansan0\TrendRadar\v6.11.0`).
+Point the router at the day it should read:
+
+```powershell
+$env:TRENDRADAR_DB_PATH = "D:\Software\sansan0\TrendRadar\v6.11.0\output\news\2026-10-30.db"
+python scripts\content_route.py start --account x-superplay-1024 --mode hotspot
+```
+
+A directory also works — the newest `news\*.db` is used. The file is opened
+read-only and is never written to. A database older than 24 hours is reported
+`stale`, and its rows are rejected with `STALE_SOURCE` instead of entering the
+pool as new hotspots.
+
+### 19.4 The seven-day observation
+
+```powershell
+# one line per account per day, under .local\content-router\observation\
+python scripts\router_observe.py --trendradar-db "D:\Software\sansan0\TrendRadar\v6.11.0\output\news\2026-10-30.db"
+
+# the window so far
+python scripts\router_observe.py --report --days 7
+```
+
+Run it once a day for seven days. The report prints, per source, how often it
+answered, how many rows it gave, how often its data was stale, and how many
+candidates the account's filter produced. That is the evidence for keeping or
+dropping a source from the allowlist — not a single good or bad day.
+
+### 19.5 Rolling this back without losing work
+
+The router's work is three commits on `feat/content-router`. Nothing is
+pushed, so every step below is local and reversible. None of them is a
+default: run the one that matches what you decided.
+
+```powershell
+# 1. Look first. This changes nothing.
+git status
+git log --oneline -3
+
+# 2. Leave the branch as it is and go back to main. The branch still exists.
+git switch main
+
+# 3. Stop using the router's runtime state without deleting it.
+Rename-Item .local\content-router .local\content-router.parked
+
+# 4. Drop the branch only when you are sure, and only locally.
+#    -d refuses if the branch is not merged; that refusal is information.
+git branch -d feat/content-router
+```
+
+What not to do, and why:
+
+- **Do not `git reset --hard` or `git checkout --`.** The working tree holds
+  other people's uncommitted work (the 公众号/vendor line). A hard reset
+  discards it and there is no undo.
+- **Do not `rm -rf` the repository's directories.** `vendor/` and
+  `.runtime/easel/` are not regenerable from this repository; deleting them
+  turns a clean rollback into a rebuild.
+- **Do not delete `.local/` outright.** It is gitignored runtime state, so it
+  is safe to remove, but renaming it keeps the receipts and the candidate
+  pool available if you change your mind.
+- **TrendRadar is not a service.** It has no daemon, no port and no scheduled
+  run here; stopping it means not running it. Its directory can stay where it
+  is with no effect on the repository.

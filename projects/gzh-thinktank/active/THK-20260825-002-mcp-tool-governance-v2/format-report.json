@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "validator": "passed",
+  "source": "article.md",
+  "canonical_source": "article.md",
+  "output": "article.html",
+  "checked_at": "2026-08-24T22:52:39.009775+00:00",
+  "source_digest": "6c649748ab9537759fef35e286a762ca195de7e0ae22f3e36021eabfd9b5e35f",
+  "canonical_source_digest": "6c649748ab9537759fef35e286a762ca195de7e0ae22f3e36021eabfd9b5e35f",
+  "html_digest": "47ca4eef9daf75a00c0c0e253ccd7215237fd00596bacdd954b58312fceb25f7"
+}

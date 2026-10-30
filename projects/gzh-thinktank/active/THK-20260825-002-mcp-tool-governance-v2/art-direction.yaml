@@ -1,0 +1,46 @@
+schema_version: 1
+contract: art-direction-v1
+status: proposed
+owner: gzh-visual-director
+created_at: '2026-08-24T22:03:07.484443+00:00'
+article_title: MCP工具调用之后，谁来管Agent的下一步？
+account: thinktank
+visual_thesis: Build 工程手记：纸白底、墨蓝正文、朱砂色锚点和细线结构；强调真实问题、证据、步骤、限制和可复用项目资产。；本篇不把每个认知锚点都画成等宽卡片，而是用结构差异帮助读者完成理解。
+reader_promise: 读者在 390px 宽度下先抓住主论点，再沿证据路径回到正文与代码。
+palette:
+  background: '#F4F0E8'
+  surface: '#FFFCF7'
+  ink: '#17324D'
+  accent: '#B24A2B'
+  signal: '#557A96'
+material_language:
+- paper-grain restraint
+- thin editorial rules
+- one signal accent
+- asymmetric whitespace
+layout_families:
+- relationship-board
+- runnable-snippet
+- architecture-board
+- editorial-split
+- hand-drawn-flow
+- evidence-strip
+continuity_group: thinktank-editorial-visual-system-v2
+anti_patterns:
+- uniform-card-grid
+- centered-title-plus-two-row-boxes
+- generic-ai-gradient
+- generated-long-text
+- decorative-visual-without-reader-job
+variation_policy:
+  max_same_layout_run: 2
+  min_layout_families_when_body_visuals_gte_3: 2
+  min_backend_families_when_body_visuals_gte_3: 2
+  prefer_different_composition: true
+references: []
+data_egress: none-unless-explicitly-approved
+fallback_policy:
+  technical_visual: block-on-render-or-geometry-failure
+  cover: brand-cover-only-with-explicit-fallback-reason
+  concept_visual: deterministic-local-illustration-or-block
+source_visual_brief_sha256: bc00eaa3fd9032ccf8e7dacf61e7bb539140a2d9a8276a5a6d8255b4cafaa1b6

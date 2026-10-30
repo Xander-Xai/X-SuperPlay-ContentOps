@@ -24,6 +24,12 @@ Checks, per account:
  12. every skill_route entry resolves: its skill exists under a catalog root,
      its SKILL.md front matter declares the same name, and its script path
      exists under the base it declares
+ 13. the discovery block, when present, is sound: its schema, its keywords
+     (each one must resolve to a field of this same DNA), its source
+     allowlist and blocklist (each source must exist in the registry and
+     carry a reason), its ranking weights, and the approval policy. An
+     account with no discovery block is warned about rather than failed:
+     the router refuses a hot-list search for it by name.
 
 skill_route path bases
 ----------------------
@@ -73,10 +79,28 @@ from contentops.media.claim_coverage import (  # noqa: E402
     EVIDENCE_MODES,
     composition_policy_errors,
 )
+# The discovery block is what makes a hot-list search account-aware, so the
+# DNA check is where an unsourced keyword has to be caught: a keyword that
+# no field of this DNA supports would otherwise send a search somewhere the
+# account never asked to go.
+from contentops.routing.account_profile import (  # noqa: E402
+    DISCOVERY_SCHEMA,
+    Keyword,
+    verify_origin,
+)
+from contentops.hotspots.source_registry import (  # noqa: E402
+    GITHUB_SEARCH,
+    SOURCES,
+)
 
 #: The video schema. Kept under its old name because callers name it, and it is
 #: now the shared constant rather than a second string literal.
 SCHEMA = VIDEO_SCHEMA
+
+#: The adapters that actually accept a query. A query expression written for
+#: any other adapter would be silently inert — the source is read as a list and
+#: the expression never reaches it — so it is refused rather than ignored.
+QUERY_ADAPTERS = frozenset({GITHUB_SEARCH})
 
 PATH_BASES = ("catalog", "repo", "shared")
 DEFAULT_PATH_BASE = "catalog"
@@ -460,9 +484,155 @@ def check_account(
                 failures.append(f"skill_route entry {entry.get('step')!r} is missing {key!r}")
     failures.extend(_check_skill_route(route, root, local_warnings))
 
+    failures.extend(_check_discovery(dna, local_warnings))
+
     warnings.extend(f"[{slug}] {warning}" for warning in local_warnings)
     failures.extend(_check_prompt(dna, palette, root))
     return [f"[{slug}] {failure}" for failure in failures]
+
+
+def _check_discovery(dna: Dict[str, Any], warnings: List[str]) -> List[str]:
+    """Validate the account's discovery block, when it has one.
+
+    An account without a discovery block is not a failure: the router refuses
+    a hot-list search for it by name, and the account may be a text-only
+    track that never needs one. It is a warning, so the owner can see it.
+
+    A discovery block that *is* present has to be sound. The rule that matters
+    is the keyword origin: every search term must resolve to a field of this
+    same DNA, so no term can exist that the account owner did not write.
+    """
+    slug = str(dna.get("slug") or "<no slug>")
+    discovery = dna.get("discovery")
+    if discovery is None:
+        warnings.append(
+            f"{slug} declares no discovery block, so the content router will "
+            f"refuse a hot-list search for it (ACCOUNT_DNA_MISSING) and only the "
+            f"user-topic route is available")
+        return []
+    if not isinstance(discovery, dict):
+        return [f"{slug}: discovery must be a JSON object"]
+    failures: List[str] = []
+
+    if discovery.get("schema") != DISCOVERY_SCHEMA:
+        failures.append(f"{slug}: discovery schema is {discovery.get('schema')!r}, "
+                        f"expected {DISCOVERY_SCHEMA!r}")
+    for key in ("profile_version", "profile_source"):
+        if not discovery.get(key):
+            failures.append(f"{slug}: discovery.{key} is missing")
+
+    keywords = discovery.get("keywords_positive")
+    if not isinstance(keywords, list) or not keywords:
+        failures.append(f"{slug}: discovery.keywords_positive is empty")
+        keywords = []
+    negatives = discovery.get("keywords_negative")
+    if not isinstance(negatives, list):
+        failures.append(f"{slug}: discovery.keywords_negative must be a list")
+        negatives = []
+
+    for index, item in enumerate(list(keywords) + list(negatives)):
+        if not isinstance(item, dict):
+            failures.append(f"{slug}: discovery keyword {index} must be an object")
+            continue
+        keyword = Keyword(term=str(item.get("term") or ""),
+                          language=str(item.get("language") or "zh"),
+                          origin=dict(item.get("origin") or {}))
+        for message in verify_origin(dna, keyword):
+            failures.append(f"{slug}: {message}")
+
+    for key in ("source_allowlist", "source_blocklist"):
+        entries = discovery.get(key)
+        if entries is None:
+            failures.append(f"{slug}: discovery.{key} is missing")
+            continue
+        if not isinstance(entries, list):
+            failures.append(f"{slug}: discovery.{key} must be a list")
+            continue
+        for entry in entries:
+            source_id = entry.get("source_id") if isinstance(entry, dict) else entry
+            if not isinstance(source_id, str) or not source_id.strip():
+                failures.append(f"{slug}: discovery.{key} has an entry with no source id")
+                continue
+            if source_id not in SOURCES:
+                failures.append(f"{slug}: discovery.{key} names {source_id!r}, which is "
+                                f"not a source in the registry")
+            if isinstance(entry, dict) and not entry.get("why"):
+                failures.append(f"{slug}: discovery.{key} entry {source_id!r} gives no "
+                                f"reason; the reason travels into the search plan")
+
+    failures.extend(_check_query_expressions(slug, discovery, keywords))
+
+    weights = discovery.get("match_weights")
+    if weights is not None:
+        if not isinstance(weights, dict) or sum(weights.values()) != 100:
+            failures.append(f"{slug}: discovery.match_weights must be a percentage map "
+                            f"summing to 100, got {weights!r}")
+
+    policy = discovery.get("approval_policy")
+    if isinstance(policy, dict):
+        for key in ("topic_selection_required", "brief_approval_required"):
+            if policy.get(key) is not True:
+                failures.append(f"{slug}: discovery.approval_policy.{key} must be true; "
+                                f"an account cannot exempt itself from the human gates")
+    return failures
+
+
+def _check_query_expressions(slug: str, discovery: Dict[str, Any],
+                             keywords: List[Any]) -> List[str]:
+    """Validate the per-adapter query expressions, when the account has any.
+
+    A query expression is a narrowing of what already exists, so the only
+    rule that matters is the chain: every term must name a keyword this same
+    DNA declares, with that keyword's language. A term that names nothing is
+    an invented search term, which is exactly what this check exists to stop.
+    """
+    raw = discovery.get("query_expressions")
+    if raw is None:
+        return []
+    if not isinstance(raw, dict):
+        return [f"{slug}: discovery.query_expressions must be an object"]
+    declared = {}
+    for item in keywords:
+        if isinstance(item, dict) and item.get("term"):
+            declared[str(item["term"]).casefold()] = str(item.get("language") or "zh")
+    failures: List[str] = []
+    for adapter, spec in raw.items():
+        if adapter not in QUERY_ADAPTERS:
+            failures.append(f"{slug}: query_expressions names adapter {adapter!r}, which "
+                            f"does not accept a query; adapters that do: "
+                            f"{sorted(QUERY_ADAPTERS)}")
+        if not isinstance(spec, dict):
+            failures.append(f"{slug}: query_expressions.{adapter} must be an object")
+            continue
+        if not str(spec.get("why") or "").strip():
+            failures.append(f"{slug}: query_expressions.{adapter} gives no reason")
+        terms = spec.get("terms")
+        if not isinstance(terms, list) or not terms:
+            failures.append(f"{slug}: query_expressions.{adapter}.terms is empty")
+            continue
+        for entry in terms:
+            term = str((entry or {}).get("term") or "").strip() if isinstance(entry, dict) \
+                else str(entry or "").strip()
+            if not term:
+                failures.append(f"{slug}: query_expressions.{adapter} has a term with no "
+                                f"text")
+                continue
+            source_keyword = str((entry or {}).get("from_keyword") or "").strip() \
+                if isinstance(entry, dict) else ""
+            if not source_keyword:
+                failures.append(f"{slug}: query term {term!r} names no from_keyword, so it "
+                                f"cannot be traced to a declared keyword")
+                continue
+            declared_language = declared.get(source_keyword.casefold())
+            if declared_language is None:
+                failures.append(f"{slug}: query term {term!r} cites {source_keyword!r}, "
+                                f"which is not a declared keyword of this account")
+                continue
+            stated = str(entry.get("language") or declared_language)
+            if stated != declared_language:
+                failures.append(f"{slug}: query term {term!r} is {stated!r} but the keyword "
+                                f"it cites is {declared_language!r}")
+    return failures
 
 
 def _catalog_roots() -> List[Path]:

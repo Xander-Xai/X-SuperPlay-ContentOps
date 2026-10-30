@@ -1,0 +1,36 @@
+name: Atlas Journal
+description: X超玩•未来智能专用的知识地图手记风格，强调证据、步骤和可复用资产
+
+variables:
+  primary-color: "#17324D"
+  bg-accent-color: "#FFF4EE"
+  text-color: "#2B3035"
+  text-light: "#5E6872"
+  text-muted: "#87919A"
+  bg-light: "#F5F2EC"
+  border-color: "#DCD6CC"
+  link-color: "#B24A2B"
+  font-size: "16px"
+  font-family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif"
+  line-height: "1.95"
+  paragraph-spacing: "1.45em"
+
+styles:
+  h1: "font-size:24px; line-height:1.4; font-weight:700; color:#17324D; letter-spacing:0.6px; padding:0 0 14px; margin-bottom:30px; border-bottom:1px solid #17324D;"
+  h2: "font-size:19px; line-height:1.5; font-weight:700; color:#17324D; padding:0 0 7px; margin:2.5em 0 1em; border-bottom:2px solid #D7B09E;"
+  h3: "font-size:16px; line-height:1.6; font-weight:700; color:#B24A2B; margin:1.7em 0 0.7em;"
+  h4: "font-size:15px; font-weight:700; color:#4B5660; margin:1.2em 0 0.6em;"
+  p: "font-size:16px; line-height:1.95; color:#2B3035; margin:1.45em 0; letter-spacing:0.25px;"
+  strong: "color:#17324D; font-weight:800;"
+  em: "font-style:normal; color:#B24A2B; background:#FFF4EE; padding:0 3px;"
+  a: "color:#B24A2B; text-decoration:none; border-bottom:1px solid #D7B09E;"
+  blockquote: "border-left:3px solid #B24A2B; background:#FFF8F4; padding:16px 18px; margin:1.5em 0; color:#4B5660; border-radius:0 6px 6px 0;"
+  ul: "padding-left:20px; margin:0.8em 0;"
+  ol: "padding-left:20px; margin:0.8em 0;"
+  li: "margin-bottom:9px; line-height:1.9; color:#2B3035;"
+  hr: "border:none; border-top:1px solid #DCD6CC; margin:2.5em 0;"
+  img: "max-width:100%; height:auto; border-radius:6px; display:block; margin:24px auto; box-shadow:0 5px 18px rgba(23,50,77,0.09);"
+  figcaption: "text-align:center; font-size:12px; color:#87919A; margin-top:7px; letter-spacing:0.3px;"
+  code: "color:#B24A2B; background:#FFF4EE; padding:2px 6px; border-radius:3px; font-size:90%;"
+  pre: "background:#F1F4F5; color:#17324D; padding:18px; border:1px solid #C9D5DD; border-left:4px solid #B24A2B; border-radius:8px; font-size:13px; line-height:1.8; overflow-x:auto; box-shadow:0 5px 16px rgba(23,50,77,0.08);"
+  strong-color: "#17324D"

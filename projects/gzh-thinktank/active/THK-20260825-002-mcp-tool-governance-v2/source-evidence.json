@@ -1,0 +1,394 @@
+{
+  "schema_version": 2,
+  "contract": "hybrid-evidence-v1",
+  "verifier": "source_evidence.py",
+  "verifier_version": "1.2.0",
+  "status": "passed",
+  "audited_at": "2026-08-24T22:53:34.033681+00:00",
+  "policy": {
+    "minimum_trusted_sources": 3,
+    "minimum_primary_sources": 2,
+    "minimum_source_domains": 2,
+    "minimum_evidence_units_per_source": 1,
+    "maximum_excerpt_chars": 420,
+    "require_attribution": true,
+    "require_reuse_approval_for_embedded_assets": true,
+    "require_claim_evidence": true,
+    "require_source_verification": true,
+    "require_provenance": true
+  },
+  "source_count": 8,
+  "trusted_source_count": 8,
+  "primary_source_count": 8,
+  "source_domain_count": 2,
+  "trusted_source_ids": [
+    "anthropic-claude-code-mcp-permissions",
+    "dogwood-guide",
+    "dogwood-readme",
+    "mcp-authorization-20260728",
+    "mcp-release-mrtr-20260728",
+    "mcp-schema-clientinfo-20260728",
+    "mcp-spec-20260728",
+    "mcp-streamable-http-headers-20260728"
+  ],
+  "primary_source_ids": [
+    "anthropic-claude-code-mcp-permissions",
+    "dogwood-guide",
+    "dogwood-readme",
+    "mcp-authorization-20260728",
+    "mcp-release-mrtr-20260728",
+    "mcp-schema-clientinfo-20260728",
+    "mcp-spec-20260728",
+    "mcp-streamable-http-headers-20260728"
+  ],
+  "source_domains": [
+    "code.claude.com",
+    "github.com"
+  ],
+  "used_trusted_source_ids": [
+    "anthropic-claude-code-mcp-permissions",
+    "dogwood-guide",
+    "dogwood-readme",
+    "mcp-authorization-20260728",
+    "mcp-release-mrtr-20260728",
+    "mcp-schema-clientinfo-20260728",
+    "mcp-spec-20260728",
+    "mcp-streamable-http-headers-20260728"
+  ],
+  "used_primary_source_ids": [
+    "anthropic-claude-code-mcp-permissions",
+    "dogwood-guide",
+    "dogwood-readme",
+    "mcp-authorization-20260728",
+    "mcp-release-mrtr-20260728",
+    "mcp-schema-clientinfo-20260728",
+    "mcp-spec-20260728",
+    "mcp-streamable-http-headers-20260728"
+  ],
+  "used_source_domains": [
+    "code.claude.com",
+    "github.com"
+  ],
+  "used_trusted_source_count": 8,
+  "used_primary_source_count": 8,
+  "used_source_domain_count": 2,
+  "sources": [
+    {
+      "source_id": "mcp-spec-20260728",
+      "title": "MCP 2026-07-28 specification changelog",
+      "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/docs/specification/2026-07-28/changelog.mdx",
+      "retrieved_at": "2026-08-24T18:21:43.134831+00:00",
+      "evidence_level": "official-repo",
+      "tier": "primary",
+      "trusted": true,
+      "trust_reason": "evidence_level=official-repo; official_host=github.com",
+      "used_in_article": true,
+      "claim_ids": [
+        "claim-governance-synthesis",
+        "claim-mcp-stateless-boundary"
+      ],
+      "evidence": [
+        {
+          "id": "ev-mcp-stateless",
+          "kind": "excerpt",
+          "path": "evidence/mcp-spec-20260728-excerpt.txt",
+          "sha256": "246101bcf7d66aad38b6831ae3c8bac34093ef6f2a7f869fe50fd04953f13e8a",
+          "claim_ids": [
+            "claim-governance-synthesis",
+            "claim-mcp-stateless-boundary"
+          ],
+          "source_locator": "docs/specification/2026-07-28/changelog.mdx#major-changes",
+          "captured_at": "2026-08-25T05:00:00+08:00",
+          "license_status": "public-source-short-excerpt"
+        }
+      ],
+      "reuse_approved": false,
+      "reuse_reason": "只保留短摘录并保留原始URL，不嵌入整页。"
+    },
+    {
+      "source_id": "mcp-authorization-20260728",
+      "title": "MCP 2026-07-28 transport authorization",
+      "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/docs/specification/2026-07-28/basic/authorization/index.mdx",
+      "retrieved_at": "2026-08-25T05:00:00+08:00",
+      "evidence_level": "official-repo",
+      "tier": "primary",
+      "trusted": true,
+      "trust_reason": "evidence_level=official-repo; official_host=github.com",
+      "used_in_article": true,
+      "claim_ids": [
+        "claim-governance-synthesis",
+        "claim-mcp-transport-authorization"
+      ],
+      "evidence": [
+        {
+          "id": "ev-mcp-authorization",
+          "kind": "excerpt",
+          "path": "evidence/mcp-authorization-excerpt.txt",
+          "sha256": "51317fa07863e65a9eb952390ffd2ee1216635ca6519f3d7f398890bc2d555a1",
+          "claim_ids": [
+            "claim-governance-synthesis",
+            "claim-mcp-transport-authorization"
+          ],
+          "source_locator": "docs/specification/2026-07-28/basic/authorization/index.mdx#purpose-and-scope",
+          "captured_at": "2026-08-25T05:00:00+08:00",
+          "license_status": "public-source-short-excerpt"
+        }
+      ],
+      "reuse_approved": false,
+      "reuse_reason": "只保留短摘录并保留原始URL，不嵌入整页。"
+    },
+    {
+      "source_id": "mcp-release-mrtr-20260728",
+      "title": "MCP 2026-07-28 specification release notes and MRTR",
+      "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/blog/content/posts/2026-07-28-spec-ga/index.md",
+      "retrieved_at": "2026-08-25T05:00:00+08:00",
+      "evidence_level": "official-repo",
+      "tier": "primary",
+      "trusted": true,
+      "trust_reason": "evidence_level=official-repo; official_host=github.com",
+      "used_in_article": true,
+      "claim_ids": [
+        "claim-governance-synthesis",
+        "claim-mcp-mrtr"
+      ],
+      "evidence": [
+        {
+          "id": "ev-mcp-mrtr",
+          "kind": "excerpt",
+          "path": "evidence/mcp-release-mrtr-excerpt.txt",
+          "sha256": "cebcb47e20edf5889df0bda404da2f10ff2c104be66c64a8439558af1c785e6f",
+          "claim_ids": [
+            "claim-governance-synthesis",
+            "claim-mcp-mrtr"
+          ],
+          "source_locator": "blog/content/posts/2026-07-28-spec-ga/index.md#multi-round-trip-requests-mrtr",
+          "captured_at": "2026-08-25T05:00:00+08:00",
+          "license_status": "public-source-short-excerpt"
+        }
+      ],
+      "reuse_approved": false,
+      "reuse_reason": "只保留短摘录并保留原始URL，不嵌入整页。"
+    },
+    {
+      "source_id": "mcp-schema-clientinfo-20260728",
+      "title": "MCP 2026-07-28 schema clientInfo security boundary",
+      "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/schema/2026-07-28/schema.ts",
+      "retrieved_at": "2026-08-25T06:35:00+08:00",
+      "evidence_level": "official-repo",
+      "tier": "primary",
+      "trusted": true,
+      "trust_reason": "evidence_level=official-repo; official_host=github.com",
+      "used_in_article": true,
+      "claim_ids": [
+        "claim-governance-synthesis",
+        "claim-mcp-clientinfo-security-boundary"
+      ],
+      "evidence": [
+        {
+          "id": "ev-mcp-clientinfo",
+          "kind": "excerpt",
+          "path": "evidence/mcp-schema-clientinfo-excerpt.txt",
+          "sha256": "f78cddd1fc438770253f6e583ad86cca4d56b4bc5b55fc1e3341694f73b25c69",
+          "claim_ids": [
+            "claim-governance-synthesis",
+            "claim-mcp-clientinfo-security-boundary"
+          ],
+          "source_locator": "schema/2026-07-28/schema.ts#RequestMetaObject",
+          "captured_at": "2026-08-25T06:35:00+08:00",
+          "license_status": "public-source-short-excerpt"
+        }
+      ],
+      "reuse_approved": false,
+      "reuse_reason": "只保留短摘录并保留原始URL，不嵌入整页。"
+    },
+    {
+      "source_id": "mcp-streamable-http-headers-20260728",
+      "title": "MCP 2026-07-28 Streamable HTTP standard request headers",
+      "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/docs/specification/2026-07-28/basic/transports/streamable-http.mdx",
+      "retrieved_at": "2026-08-25T06:35:00+08:00",
+      "evidence_level": "official-repo",
+      "tier": "primary",
+      "trusted": true,
+      "trust_reason": "evidence_level=official-repo; official_host=github.com",
+      "used_in_article": true,
+      "claim_ids": [
+        "claim-governance-synthesis",
+        "claim-mcp-streamable-header-scope"
+      ],
+      "evidence": [
+        {
+          "id": "ev-mcp-streamable-headers",
+          "kind": "excerpt",
+          "path": "evidence/mcp-streamable-http-headers-excerpt.txt",
+          "sha256": "d2ac75c2e5a659bc1b832f614d5b840a0e2991d4a76f63e150ed727c9d51577e",
+          "claim_ids": [
+            "claim-governance-synthesis",
+            "claim-mcp-streamable-header-scope"
+          ],
+          "source_locator": "docs/specification/2026-07-28/basic/transports/streamable-http.mdx#standard-request-headers",
+          "captured_at": "2026-08-25T06:35:00+08:00",
+          "license_status": "public-source-short-excerpt"
+        }
+      ],
+      "reuse_approved": false,
+      "reuse_reason": "只保留短摘录并保留原始URL，不嵌入整页。"
+    },
+    {
+      "source_id": "dogwood-guide",
+      "title": "Dogwood authorization and temporal policy introduction",
+      "url": "https://github.com/dogwood-policy/dogwood/blob/main/dogwood-docs/guide/00-introduction.md",
+      "retrieved_at": "2026-08-24T18:21:43.135581+00:00",
+      "evidence_level": "official-repo",
+      "tier": "primary",
+      "trusted": true,
+      "trust_reason": "evidence_level=official-repo; official_host=github.com",
+      "used_in_article": true,
+      "claim_ids": [
+        "claim-dogwood-temporal-authorization",
+        "claim-governance-synthesis"
+      ],
+      "evidence": [
+        {
+          "id": "ev-dogwood-temporal",
+          "kind": "excerpt",
+          "path": "evidence/dogwood-guide-excerpt.txt",
+          "sha256": "f2be92d2be84c5c3d129c0f5e491711af1e5b40924e193f67bea7feb7e092796",
+          "claim_ids": [
+            "claim-dogwood-temporal-authorization",
+            "claim-governance-synthesis"
+          ],
+          "source_locator": "dogwood-docs/guide/00-introduction.md#what-dogwood-is",
+          "captured_at": "2026-08-25T02:40:00+08:00",
+          "license_status": "public-source-short-excerpt"
+        }
+      ],
+      "reuse_approved": false,
+      "reuse_reason": "明确标注为相邻机制参考，不把Dogwood改写成MCP原生能力。"
+    },
+    {
+      "source_id": "dogwood-readme",
+      "title": "Dogwood repository README and production-use limitation",
+      "url": "https://github.com/dogwood-policy/dogwood/blob/main/README.md",
+      "retrieved_at": "2026-08-25T05:00:00+08:00",
+      "evidence_level": "official-repo",
+      "tier": "primary",
+      "trusted": true,
+      "trust_reason": "evidence_level=official-repo; official_host=github.com",
+      "used_in_article": true,
+      "claim_ids": [
+        "claim-dogwood-production-boundary",
+        "claim-governance-synthesis"
+      ],
+      "evidence": [
+        {
+          "id": "ev-dogwood-production",
+          "kind": "excerpt",
+          "path": "evidence/dogwood-readme-production-excerpt.txt",
+          "sha256": "1b23936dc8f3e86a96c6dbf557b20ae4555a799541835e59ed9dfe86f6f11dbe",
+          "claim_ids": [
+            "claim-dogwood-production-boundary",
+            "claim-governance-synthesis"
+          ],
+          "source_locator": "README.md#dogwood",
+          "captured_at": "2026-08-25T05:00:00+08:00",
+          "license_status": "public-source-short-excerpt"
+        }
+      ],
+      "reuse_approved": false,
+      "reuse_reason": "只保留短摘录并保留原始URL，不嵌入整页。"
+    },
+    {
+      "source_id": "anthropic-claude-code-mcp-permissions",
+      "title": "Claude Code CLI reference",
+      "url": "https://code.claude.com/docs/en/cli-usage",
+      "retrieved_at": "2026-08-24T18:21:43.136134+00:00",
+      "evidence_level": "official-docs",
+      "tier": "primary",
+      "trusted": true,
+      "trust_reason": "evidence_level=official-docs; official_host=code.claude.com",
+      "used_in_article": true,
+      "claim_ids": [
+        "claim-anthropic-explicit-permissions",
+        "claim-governance-synthesis"
+      ],
+      "evidence": [
+        {
+          "id": "ev-anthropic-explicit-permissions",
+          "kind": "excerpt",
+          "path": "evidence/anthropic-claude-code-mcp-permissions-excerpt.txt",
+          "sha256": "177c26455accdbad4657160710d27f7488669009a5701b855daf962e5276a825",
+          "claim_ids": [
+            "claim-anthropic-explicit-permissions",
+            "claim-governance-synthesis"
+          ],
+          "source_locator": "https://code.claude.com/docs/en/cli-usage",
+          "captured_at": "2026-08-25T05:00:00+08:00",
+          "license_status": "public-source-short-excerpt"
+        }
+      ],
+      "reuse_approved": false,
+      "reuse_reason": "明确标注为Claude Code实现案例，不外推为所有MCP客户端行为。"
+    }
+  ],
+  "claim_evidence_coverage": {
+    "claim-anthropic-explicit-permissions": [
+      "ev-anthropic-explicit-permissions"
+    ],
+    "claim-dogwood-production-boundary": [
+      "ev-dogwood-production"
+    ],
+    "claim-dogwood-temporal-authorization": [
+      "ev-dogwood-temporal"
+    ],
+    "claim-governance-synthesis": [
+      "ev-anthropic-explicit-permissions",
+      "ev-dogwood-production",
+      "ev-dogwood-temporal",
+      "ev-mcp-authorization",
+      "ev-mcp-clientinfo",
+      "ev-mcp-mrtr",
+      "ev-mcp-stateless",
+      "ev-mcp-streamable-headers"
+    ],
+    "claim-mcp-clientinfo-security-boundary": [
+      "ev-mcp-clientinfo"
+    ],
+    "claim-mcp-mrtr": [
+      "ev-mcp-mrtr"
+    ],
+    "claim-mcp-stateless-boundary": [
+      "ev-mcp-stateless"
+    ],
+    "claim-mcp-streamable-header-scope": [
+      "ev-mcp-streamable-headers"
+    ],
+    "claim-mcp-transport-authorization": [
+      "ev-mcp-authorization"
+    ]
+  },
+  "evidence_pack_sha256": "2334585e7147dff4004599e87c6713c709f5c6b026b3c132c517bed54b66148e",
+  "errors": [],
+  "topic_evidence_isolation": {
+    "status": "passed",
+    "receipt": "topic-evidence-isolation.json",
+    "matched_source_ids": [
+      "anthropic-claude-code-mcp-permissions",
+      "mcp-authorization-20260728",
+      "mcp-release-mrtr-20260728",
+      "mcp-schema-clientinfo-20260728",
+      "mcp-spec-20260728",
+      "mcp-streamable-http-headers-20260728"
+    ]
+  },
+  "lineage": {
+    "receipt": "evidence-lineage.json",
+    "run_id": "2334585e7147dff4004599e87c6713c7"
+  },
+  "appendix": {
+    "markdown": "<!-- HYBRID-EVIDENCE-REFERENCES:START -->",
+    "html": "data-hybrid-evidence=\"v1\"",
+    "appended_at": "2026-08-24T22:53:05.420230+00:00",
+    "article_markdown_sha256": "6c649748ab9537759fef35e286a762ca195de7e0ae22f3e36021eabfd9b5e35f",
+    "article_html_sha256": "47ca4eef9daf75a00c0c0e253ccd7215237fd00596bacdd954b58312fceb25f7"
+  }
+}

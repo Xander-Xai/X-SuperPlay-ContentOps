@@ -1151,7 +1151,7 @@ of one track plus an external dependency that was about to disappear.
 | Track | Where | State |
 |---|---|---|
 | Video (Douyin / Bilibili / Xiaohongshu / 视频号) | `src/contentops`, `scripts/` | producers and gates exist; the master still has to pass its own QC before variants are derived |
-| 公众号 (WeChat article) | `vendor/gzh-thinktank/` | imported verbatim: 679 files, 8 MB, ten ordered stages, its own receipts |
+| 公众号 (WeChat article) | `vendor/gzh-thinktank/` | imported verbatim: 667 files, 8 MB, ten ordered stages, its own receipts; `python scripts/account_route.py projects/gzh-thinktank` prints its chain |
 | X (English text) | `vendor/x-growth-os/`, `scripts/x_post.py` | imported verbatim: 64 files, pinned; the source repository was retired into this tree on 2026-10-30; `MANUAL_ONLY` package gate; `PublishMode.API` raises |
 
 **Why the 公众号 workflow is vendored rather than external.** Its checkout's history
@@ -1162,10 +1162,14 @@ unmodified; a change means a new import with a new digest.
 
 - Excluded: `node_modules` (32 MB) and the excalidraw pack's `.venv` (regenerable),
   `.aws-article/config.yaml` (credentials), and the account's `production/` artifacts.
-  The complete original, including every commit the divergence left off GitHub, is a
-  15 MB git bundle under `D:\Archives\repos\gzh-thinktank\`.
-- `scripts/gzh_pin.py` verifies both: the bundle by digest and the vendored tree by a
-  content digest over 679 files. `tests/test_gzh_pin.py` pins the refusals.
+  The complete original was verified as a 15 MB git bundle, then retired with the
+  checkout and its remote on 2026-10-30 (both paths absent, the repository URL returns
+  404). `vendor/gzh-thinktank/` is now the only copy, and its `MANIFEST.md` records
+  exactly what retirement cost.
+- `scripts/gzh_pin.py` verifies the vendored tree by a content digest over 667
+  files, with CRLF folded to LF so a platform that rewrites line endings on
+  checkout cannot change the result. The bundle is retired; one that is still
+  present must match its digest. `tests/test_gzh_pin.py` pins the refusals.
 - The workflow keeps its workspace outside its own root, so articles live at
   `projects/gzh-thinktank/` through `GZH_ARTIFACT_ROOT`, and it still refuses a
   hand-made article directory.
@@ -1179,6 +1183,173 @@ imported tree does not try to hide that.
 **Publishing is unchanged.** The vendored workflow still ends at a WeChat draft with
 a `draft/get` read-back. Nothing in this repository publishes publicly, and no
 credential entered either tree.
+
+### The content router — account-aware topic selection — 2026-10-30
+
+The pipeline could make a film and could not answer the two questions that
+come first: *who is this for*, and *what is it about*. Those answers lived in
+a hot list nobody had asked for and in somebody's head, and neither left a
+record. A downstream stage could not tell them apart, so it could not enforce
+anything about either.
+
+`src/contentops/routing/` is the layer between those answers and the
+pipeline. Two routes enter it and both produce the same contract.
+
+| Property | Value |
+|---|---|
+| Entry point | `scripts/content_route.py` — `accounts`, `start`, `candidates`, `select`, `status`, `resume`, `approve` |
+| Routes | `HOTSPOT_DISCOVERY` and `USER_TOPIC`, named explicitly; a call without one is refused with `ROUTE_SELECTION_REQUIRED` |
+| Contract | `contentops.content-intent/v1` — one shape for both routes; route-specific fields live under `route_context`, whose keys are identical either way |
+| Brief on disk | `00_brief/brief.json` — `contentops.content-brief/v1`, carrying the intent plus `contentops.content-candidate/v1` and `contentops.evidence-feasibility/v1` |
+| Account input | the account DNA's new `discovery` block: keywords, source allowlist and blocklist, weights, approval policy |
+| Ranking | seven components, weighted by the account's own percentages (sum 100), each carrying its reason; the hot list's own rank is never the sort key |
+| Sources | 15 in the registry; each declares `NATIVE_SEARCH` or `LIST_ONLY`, and the plan states which for every source it names |
+| Storage | SQLite under `.local/content-router/`, per account; every candidate read and write carries the account id |
+| Tests | `tests/test_content_router.py`, `tests/test_hotspot_sources.py`, `tests/test_account_discovery.py` — all offline, all named in CI |
+
+### The DNA decides the search, and cannot be made to say something else
+
+The account's positioning is read before anything is fetched. Its keywords
+decide what a source is asked for, its allowlist decides which sources are
+contacted at all, its pillars decide which shelf a candidate lands on, its
+not-doing decides which candidates are rejected before a person sees them,
+and its weights decide the order of the shortlist.
+
+**Every keyword cites the field of the DNA it came from, and the citation is
+machine-checked.** `scripts/check_account_dna.py` resolves it against the DNA
+in the same file; a keyword whose origin does not resolve fails the DNA
+check. There is no path by which an unsourced term enters a search. An
+English keyword may be a declared `translation` of a Chinese one — a
+translation renders an existing term rather than asserting a new positioning
+claim — but the Chinese source must itself resolve.
+
+An account with no `discovery` block is refused a hot-list search with
+`ACCOUNT_DNA_MISSING`. It is warned about rather than failed, because the
+router refuses it by name and the user-topic route still works for it.
+
+### The states are the point
+
+One machine, no force path.
+
+| State | What it means |
+|---|---|
+| `ROUTE_SELECTION_REQUIRED` | no route was named; nothing else happens |
+| `ACCOUNT_DNA_MISSING` | the account has no usable discovery block |
+| `SEARCH_PLAN_READY` | the written plan exists; nothing has been fetched |
+| `CANDIDATES_READY` | a shortlist exists. There is **no edge** from here to `BRIEF_READY`: a topic is chosen by a person or not at all |
+| `TOPIC_SELECTED` | a person chose a candidate, by name |
+| `OUT_OF_PROFILE_REVIEW_REQUIRED` | a user topic the account's own declaration does not cover; the owner changes the topic or approves the exception explicitly, and the override records who and why |
+| `BRIEF_READY` | the brief package is written and passes the repository's own validators |
+| `AWAITING_HUMAN_APPROVAL` | the brief waits for a person |
+| `APPROVED_FOR_PRODUCTION` | a person confirmed the brief may enter the pipeline |
+| `BLOCKED` | terminal; a record of what stopped it |
+
+A run never changes route. A source being down is a reason to report a
+failure, not a reason to find a topic another way.
+
+### Three things this deliberately does not claim
+
+- **A brief is not a fact check.** `evidence_status: verified` means the
+  evidence *paths* were recorded. The copy review, downstream and unchanged,
+  is still what stands between a script and a render. This router is a second
+  gate at a different point — before production, not before rendering — and
+  it grants no publishing or paid-media authority. A test asserts that no
+  module under `src/contentops/routing/` reaches a media or publishing path.
+- **A filtered list is not a search.** NewsNow and TrendRadar publish
+  pre-ranked lists with no keyword query; GitHub's search API is a genuine
+  server-side query. Each source says which it is, and the plan repeats it.
+  Reading a popular list and keeping what fits is legitimate; calling it a
+  search is not.
+- **Platform counters are never added together.** A view count and a heat
+  index are not the same quantity. They are recorded on the candidate, marked
+  `metrics_comparable: false`, and they do not enter the score. The only
+  cross-source signal is a count of distinct sources, which is a fact about
+  coverage rather than a comparison of incompatible scales.
+
+### What is not done
+
+- **TrendRadar is deployed, at one pinned version.** A real v6.11.0
+  deployment at `D:\Software\sansan0\TrendRadar\v6.11.0` wrote
+  `output/news/2026-10-30.db` (255 rows, 11 platforms) in a crawl on
+  2026-10-30, and the adapter reads it read-only. The earlier claim that the
+  adapter handled a local database was true of a *fixture* only: the real v6
+  schema is `news_items` + `platforms`, and the adapter has been rewritten
+  against it. Without `TRENDRADAR_DB_PATH` it still reports
+  `SOURCE_UNAVAILABLE_STATE` and the run continues without it.
+- **Live collection has happened, once.** Both routes ran against the real
+  sources on 2026-10-30 and reached `APPROVED_FOR_PRODUCTION`; the numbers are
+  in `research/router-precision-audit-2026-10-30.md`. Three NewsNow endpoints
+  answered 500 on that day and are recorded as failures, not as absence.
+- **Seven days of observation do not exist.** `scripts/router_observe.py`
+  records one line per account per day and one run is recorded; the claim
+  stops there.
+- **1024's candidate yield is poor and no positioning change was made.** 3
+  candidates from 211 rows, all weak; the recommendations that would change
+  it are written down in the audit and are waiting for the owner's approval.
+
+### Round two — hardening, 2026-10-30
+
+| Area | What is now true |
+|---|---|
+| TrendRadar | real v6 schema, platform names, UTC+8 timestamps, `stale` flag after 24 h, rows rejected as `STALE_SOURCE` |
+| Failures | 429/5xx/timeout/truncated retried 3× with backoff; 401/403/422 never retried; per-process breaker after 3 consecutive failures |
+| Approval | `--confirm` required; `automation` actor refused unless explicitly allowed; approval bound to a content digest; `verify` reports `APPROVAL_STALE`; a stale approval cannot materialise a project |
+| Handoff | `scripts/brief_handoff.py` checks the digest and the evidence forecast, writes `00_brief/handoff.json`; the real pipeline entry blocks at copy review without spending |
+| Observation | `scripts/router_observe.py` writes one JSONL line per account per run; `--report --days 7` prints the window |
+
+### Round three — precision, a clock, and the approval boundary, 2026-10-30
+
+| Area | What is now true |
+|---|---|
+| Query expressions | `discovery.query_expressions` lets an account choose, per adapter, which declared keywords to spend a source's operator budget on; each term cites the keyword it renders and the DNA check verifies the chain. Measured with `scripts/router_query_experiment.py`: future-intelligence 0.233 → 0.567 precision on GitHub, so its expression is kept; 1024 measured *worse* (0.200 → 0.133) and its expression was removed rather than shipped for symmetry |
+| Candidate precision | Judged by hand against each account's own positioning: future-intelligence **11/12 = 92%**, 1024 **1/8 = 12.5%** — see `research/router-precision-audit-2026-10-30.md`. 1024's shortfall is a match-semantics problem (spam repositories pass its gate), not a query problem, and the fix is a positioning decision awaiting the owner |
+| Scheduled collection | `scripts/router_schedule.py` runs one cycle: crawl through TrendRadar's entry point, discover the newest database, collect, write a receipt. A lock makes a second run exit `ALREADY_RUNNING`, a stale lock is abandoned after three hours, a locked database falls back to the previous day, and `status` reports a missed run |
+| Approval boundary | The automation exception now needs both `allow_automation=True` **and** `CONTENTOPS_TEST_SANDBOX=1`; the CLI no longer exposes it at all, so a production workflow parameter cannot enable it. The guarantee is stated as content binding plus an audit trail — there is no identity provider and the docs say so |
+| Downstream | Both routes hand off through one `contentops.brief-handoff/v1` record; `script_state()` names the missing `script/lines.json` and `script/assets.json` instead of failing later. Script and storyboard production remain unwritten and are recorded as a separate milestone |
+
+### Not started: M-ROUTER-SCRIPT (script and storyboard production)
+
+The router hands an approved brief to a project and stops. What turns a brief
+into `script/lines.json` and `script/assets.json` — the narration and the
+storyboard — does not exist yet, and `scripts/brief_handoff.py` reports those
+two files as a named gap rather than writing a placeholder.
+
+Scope of the milestone, when it is taken up: given `00_brief/handoff.json`,
+produce the two files under `script/`, with every claim traceable to the
+brief's `source_artifact_refs`, and stop at the copy review like every other
+producer. It must not call a paid provider on its own, and it must not mark
+itself reviewed.
+
+### Round four — a quality gate, an unattended run, and the dependency ledger, 2026-10-30
+
+| Area | What is now true |
+|---|---|
+| Source quality | `contentops.hotspots.quality` rejects a repository only on two independent signals, keeps the evidence on the record, and passes anything it could not inspect as `UNVERIFIED`. Measured on one 1024 snapshot: 7 → 6 candidates, one fixture removed, **0 false rejections**; the two remaining off-topic-but-real projects are not its business and stay |
+| Precision, stated honestly | automatic gate pass rate 6/7 = 86%, human-labelled precision 4/6 = 67% (wide) and 0/6 (strict). The gate removes fixtures, not bad fit |
+| Regression | future-intelligence: 40 candidates, 0 rejected by the gate. No cross-account change |
+| Unattended run | the scheduler writes a per-run log next to its receipt, survives a `pythonw` launch with no console (`sys.stdout is None`), and a hidden `Start-Process` run was executed end to end |
+| Approval boundary | an automation approval can no longer be handed to the pipeline at all (`AUTOMATION_APPROVAL`), not merely marked |
+| Dependency ledger | of the 91 parent commits, 12 touch a file the router depends on; the actual dependency is **8 paths, +2,051 lines, all additive** |
+
+### Round five — the script stage, 2026-10-30
+
+| Area | What is now true |
+|---|---|
+| Script draft | `scripts/brief_script.py` turns an approved brief into `lines.json`, `claim-map.json`, `storyboard.json`, `master.md` and a claim→source report. **No model call**: every spoken line is a transition, the source's own quoted title bound to a recorded document, or a CTA |
+| Contract reuse | it speaks the repository's existing `contentops.claim-map/v1` and `contentops.audio-first-lines/v1`; the copy review already fingerprints both, so a later edit invalidates a review without new code |
+| Refusals | `EVIDENCE_REQUIRED` on a DEGRADED forecast or a missing source; `APPROVAL_STALE` on a changed brief; `AUTOMATION_APPROVAL` outside a sandbox |
+| End state | the draft stops at `NOT_REVIEWED` in the copy gate and writes no review record. M-ROUTER-SCRIPT is no longer "not started"; the remaining gap is a person's copy, not machinery |
+| Known limit | the draft's factual content is one quoted title. A no-model generator cannot write the substance, and pretending otherwise would be the failure this stage exists to prevent |
+
+### Round six — the script stage stops pretending, 2026-10-30
+
+| Area | What is now true |
+|---|---|
+| Provenance | every claim says which of five kinds it is; a `USER_TOPIC` run can no longer present the owner's topic as a source's title, and `check()` fails it if one appears |
+| Substance | the script quotes sentences from an **evidence pack** — documents fetched by `scripts/evidence_pack.py`, saved and hashed. A link alone is not material: the stage stops at `DRAFT_CONTENT_INSUFFICIENT` and names the gap |
+| Duration | `characters / 4.5` s for Chinese, 2.6 words/s for English, plus a pause; a capture shot lasts at least 5 s; one capture per source. If the material is shorter than the window, the draft is refused rather than slowed down |
+| Language | a Chinese account quoting English documentation is marked `needs_rewrite` per shot; the report states the mix (13 en / 2 zh on the real run) |
+| Honest limit | the lines are the sources' sentences, not written narration. The digest proves the document has not changed, not that it is right |
 
 **The X track is vendored, gated, and manual-only.** `vendor/x-growth-os/` is the
 64-file growth workflow at commit `3154db49`, pinned by `scripts/x_growth_pin.py`.

@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "contract": "workflow-status-v1",
+  "article": "THK-20260825-002-mcp-tool-governance-v2",
+  "current_stage": "draft_submitted",
+  "interpretation": "checked_receipt and advanced are separate; no file presence is treated as completion",
+  "stages": [
+    {
+      "stage": "environment_ready",
+      "status": "advanced",
+      "checked_receipt": true
+    },
+    {
+      "stage": "topic_selected",
+      "status": "advanced",
+      "checked_receipt": true
+    },
+    {
+      "stage": "research_complete",
+      "status": "advanced",
+      "checked_receipt": true
+    },
+    {
+      "stage": "research_reviewed",
+      "status": "advanced",
+      "checked_receipt": true
+    },
+    {
+      "stage": "draft_complete",
+      "status": "advanced",
+      "checked_receipt": true
+    },
+    {
+      "stage": "content_reviewed",
+      "status": "advanced",
+      "checked_receipt": true
+    },
+    {
+      "stage": "formatted",
+      "status": "advanced",
+      "checked_receipt": true
+    },
+    {
+      "stage": "illustrated",
+      "status": "advanced",
+      "checked_receipt": true
+    },
+    {
+      "stage": "final_reviewed",
+      "status": "advanced",
+      "checked_receipt": true
+    },
+    {
+      "stage": "draft_submitted",
+      "status": "advanced",
+      "checked_receipt": true
+    }
+  ],
+  "external_effects": {
+    "publish_mode": "draft",
+    "draft_status": "draft_created_and_verified",
+    "side_effect_completed": true,
+    "media_id_present": true
+  },
+  "generated_at": "2026-08-24T23:03:38.979935+00:00"
+}

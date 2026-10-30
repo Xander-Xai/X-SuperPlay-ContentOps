@@ -193,6 +193,76 @@ class RouteBlocked(Exception):
         self.detail = detail
 
 
+#: The vendored WeChat workflow. It has no ContentOps account DNA, so its chain is
+#: read from the workflow itself rather than derived from `evidence.mode`.
+WECHAT_HOME = ROOT / "vendor" / "gzh-thinktank" / "gzh_未来智能"
+
+WECHAT_STEPS: Tuple[Dict[str, str], ...] = (
+    {
+        "step": "workspace",
+        "command": "python {home}/scripts/route_content.py --interactive",
+        "why": "writes a confirmed route; the workflow refuses a hand-made article "
+               "directory and allocates the workspace itself",
+    },
+    {
+        "step": "init",
+        "command": "python {home}/scripts/matrix_init.py --route <route> --title \"<title>\"",
+        "why": "allocates THK-YYYYMMDD-NNN-<slug> under the artifact root and seeds "
+               "the stage artifacts, all of them deliberately failing",
+    },
+    {
+        "step": "gate",
+        "command": "python {home}/scripts/workflow_gate.py --article <dir> --stage <stage> --advance",
+        "why": "ten ordered stages; each refuses until its own artifacts and evidence "
+               "exist, and publishing stops at a WeChat draft",
+    },
+    {
+        "step": "audit",
+        "command": "python {home}/scripts/workspace_audit.py --check",
+        "why": "proves the artifact root fits the workspace contract before the "
+               "next article is started",
+    },
+)
+
+
+def is_wechat_workspace(project: Path) -> bool:
+    """A 公众号 artifact root is recognised by its registry, not by its name."""
+    return (Path(project) / "registry" / "workspace-index.json").is_file()
+
+
+def wechat_route(project: Path) -> Dict[str, Any]:
+    project_text = Path(project).as_posix()
+    steps = []
+    home = WECHAT_HOME.relative_to(ROOT).as_posix() if WECHAT_HOME.is_dir() \
+        else WECHAT_HOME.as_posix()
+    for step in WECHAT_STEPS:
+        steps.append({**step, "command": step["command"].replace("{home}", home)})
+    warnings = [
+        "this is the 公众号 track: its workspace is the artifact root, not a "
+        "ContentOps project",
+        "set GZH_ARTIFACT_ROOT to the artifact root before running anything",
+        "the environment stage needs a local .aws-article/config.yaml; it was never "
+        "versioned, and credentials must stay outside the repository",
+    ]
+    if not WECHAT_HOME.is_dir():
+        warnings.append(f"the vendored workflow is missing: {WECHAT_HOME}")
+    return {
+        "schema": SCHEMA,
+        "project": project_text,
+        "platform": "wechat_article",
+        "account_slug": "x-superplay-future-intelligence",
+        "evidence_mode": "WECHAT_ARTICLE",
+        "required_evidence_class": "DOCUMENTED",
+        "manual_recording": "n/a",
+        "duration_s": None,
+        "composition": None,
+        "pipeline": steps,
+        "alternatives": [],
+        "skills": [],
+        "warnings": warnings,
+    }
+
+
 def declared_account_slug(project: Path) -> Optional[str]:
     """Read ``account_slug`` from project.yaml.
 
@@ -261,6 +331,8 @@ def route_for(dna: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def resolve(project: Path) -> Dict[str, Any]:
+    if is_wechat_workspace(project):
+        return wechat_route(project)
     slug = declared_account_slug(project)
     if not slug:
         raise RouteBlocked(

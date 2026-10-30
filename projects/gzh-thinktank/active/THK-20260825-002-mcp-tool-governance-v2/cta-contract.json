@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "contract": "cta-contract-v1",
+  "mode": "topic_bound",
+  "account": "thinktank",
+  "topic": "MCP工具调用的生产治理",
+  "topic_fingerprint": "89eed244749998a261db3754c238d01e4c8431627fbd7c6bb0be16b43f50d59f",
+  "reply_keyword": "MCP治理",
+  "lead_magnet": "MCP工具调用生产治理权限与上线验收清单",
+  "primary_cta": "关注 X超玩•未来智能，回复‘MCP治理’领取MCP工具调用生产治理权限与上线验收清单",
+  "secondary_cta": "如果你正在把MCP工具调用生产治理落到项目里，留言你的具体问题，我会继续补充实现与部署细节",
+  "rules": {
+    "reply_keyword_required": true,
+    "lead_magnet_required": true,
+    "primary_cta_exactly_once": true,
+    "primary_cta_topic_bound": true
+  }
+}

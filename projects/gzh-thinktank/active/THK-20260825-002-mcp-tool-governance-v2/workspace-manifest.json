@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "contract": "article-workspace-v1",
+  "workspace_id": "THK-20260825-002",
+  "account_id": "thinktank",
+  "content_medium": "wechat_article",
+  "title": "MCP工具调用之后，谁来管Agent的下一步？",
+  "slug": "mcp-tool-governance-v2",
+  "lifecycle": "active",
+  "workspace_root": "<GZH_ARTIFACT_ROOT>",
+  "relative_path": "active/THK-20260825-002-mcp-tool-governance-v2",
+  "standard_artifacts_at_root": true,
+  "process_files_dir": "work",
+  "deliverable_dir": "exports",
+  "checkpoint_dir": "snapshots",
+  "created_at": "2026-08-25T02:16:24.229099+08:00"
+}

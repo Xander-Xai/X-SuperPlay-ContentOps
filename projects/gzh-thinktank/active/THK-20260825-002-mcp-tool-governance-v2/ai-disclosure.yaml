@@ -1,0 +1,7 @@
+schema_version: 1
+status: passed
+contains_ai_generated: true
+text_generation: 本文由当前Agent本地生成并经过结构化内容审稿
+image_generation: 正文配图将使用工作流登记的Agnes图像生成或确定性本地视觉后端，并逐项记录来源与执行方式
+disclosure_text: 本文部分内容或配图由人工智能生成，已完成人工审核。
+metadata_preserved: true

@@ -54,6 +54,19 @@ source of those packs is 4 MB and is what was imported.
 
 ## Consequences
 
+- **The archive is retired.** The bundle, the original checkout and its GitHub remote
+  were deleted on 2026-10-30 (both paths absent, the URL returns 404), so
+  `vendor/gzh-thinktank/` is the only copy. Lost with them:
+  the original's four commits, the twelve files this repository cannot track, and
+  `production/`'s image assets (its text and JSON were copied to
+  `projects/gzh-thinktank/` first). `scripts/gzh_pin.py` sets
+  `BUNDLE_RETIRED = True`, so a missing bundle is expected; a present one must still
+  match its digest.
+- **The capability was measured, not assumed.** A clean clone of the original bundle
+  and the vendored copy fail the *same* five of twenty-eight workflow-gate tests —
+  the ones needing the never-versioned `.aws-article/config.yaml`. The import is
+  faithful to what the original actually contained.
+
 - This repository now contains two Python codebases. `dev_check` runs this one's
   suites; the vendored workflow keeps its own per-script tests and its
   `validate_matrix.py`, which reports three expected findings (documented in

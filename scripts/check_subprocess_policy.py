@@ -73,15 +73,18 @@ ALLOWED_FILES = {
 # Format: path -> reason
 INTERACTIVE_ALLOWLIST: dict[str, str] = {}
 
-# Path prefixes never scanned: source this repository does not run. The rule
-# protects code that spawns a window; reference copies of a retired repository
-# are never imported, executed or shipped, so scanning them would demand edits
-# to code nobody owns. Anything ported out of an archive is rewritten under
+# Path prefixes never scanned: source this repository does not own. The rule
+# protects code that spawns a window; reference copies and vendored trees are
+# not edited here, so scanning them would demand changes to code nobody in this
+# repository owns. The vendored 公众号 workflow is executed as its own track, but
+# its subprocess behaviour is its own tests' business (and editing it would be
+# lost on the next import). Anything ported out of an archive is rewritten under
 # src/contentops/ (and therefore scanned) rather than imported in place.
 EXCLUDED_PREFIXES = (
     ".runtime/",
     "Easel/",
     "research/vendor/",
+    "vendor/",
 )
 
 SKIPPED_DIRS = {".git", ".runtime", "__pycache__", "Easel", "node_modules", ".venv"}
@@ -268,13 +271,17 @@ def _tracked_python_files() -> list[Path]:
     Using ``git ls-files`` means untracked scratch files and gitignored runtime
     checkouts are never scanned, so the policy result matches what CI will see.
     """
-    r = hidden_run(["git", "-C", str(ROOT), "ls-files", "--", "*.py"], timeout=60)
+    r = hidden_run(["git", "-C", str(ROOT), "ls-files", "-z", "--", "*.py"], timeout=60)
     if r.returncode != 0:
         return sorted(p for p in ROOT.rglob("*.py") if _include(p))
+    # `-z` is NUL-separated and unquoted. The default output quotes any path
+    # holding non-ASCII bytes, which is exactly what the vendored 公众号 tree
+    # has; splitting that on newlines yields a literal quoted path that cannot
+    # be opened.
     return sorted(
-        (ROOT / line.strip())
-        for line in (r.stdout or "").splitlines()
-        if line.strip() and _include(ROOT / line.strip())
+        (ROOT / entry)
+        for entry in (r.stdout or "").split("\0")
+        if entry and _include(ROOT / entry)
     )
 
 

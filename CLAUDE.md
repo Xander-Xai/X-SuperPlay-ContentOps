@@ -33,8 +33,10 @@ deliverable (video, image, card, audio, copy):
    ```bash
    python scripts/skill_route.py --match "<what the deliverable is>"
    ```
-   It reads `.runtime/easel/skills/openclaw/*/SKILL.md`, then falls back to
-   `Easel/skills/openclaw/`.
+   It reads the pinned Easel runtime (`.runtime/easel/skills/openclaw/*/SKILL.md`),
+   then the working checkout (`Easel/skills/openclaw/`), then the vendored
+   公众号 track (`vendor/gzh-thinktank/gzh_未来智能/skills/*/SKILL.md`),
+   deduplicated by name. `--sources` prints every catalog root and its count.
 2. Read the `SKILL.md` of every candidate whose description matches the
    deliverable. State the chosen skill, its input/output contract, and why it
    owns the task.

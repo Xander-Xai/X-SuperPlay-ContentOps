@@ -223,6 +223,12 @@ jobs:
       - name: Run skill-route policy tests
         run: python tests/test_skill_route_policy.py
 
+      # Every project track must be routable, not just Easel. The vendored
+      # 公众号 catalog is checked here; the test skips itself when the vendor
+      # directory is absent.
+      - name: Run skill-route catalog tests
+        run: python tests/test_skill_route_catalogs.py
+
       # The OpenClaw bridge: envelope parsing among ANSI logs, OEM-codepage
       # decoding, a receipt on every failure path, and no absolute paths in a
       # committed receipt. Route-resolution tests skip without the Easel runtime.
@@ -246,6 +252,35 @@ jobs:
       # pipeline renders a different look from the one the account asked for.
       - name: Run account DNA tests
         run: python tests/test_account_dna.py
+
+      # The discovery block: every search term must resolve to a field of the
+      # account's own DNA, or the router would search somewhere the account
+      # never asked to go.
+      - name: Run account discovery tests
+        run: python tests/test_account_discovery.py
+
+      # The content router: two routes, one contract, and the human gates.
+      # A candidate never becomes a brief without a choice, and a brief never
+      # becomes production without an approval.
+      - name: Run content router tests
+        run: python tests/test_content_router.py
+
+      # The hot-list side: sources, the search plan, the account-weighted
+      # ranking, de-duplication, and the failures a real collector meets.
+      - name: Run hotspot source tests
+        run: python tests/test_hotspot_sources.py
+
+      # The source-quality gate: a keyword match is not a project. Two
+      # independent signals reject; one never does; an uninspected repository
+      # passes marked rather than being dropped.
+      - name: Run source quality tests
+        run: python tests/test_source_quality.py
+
+      # The script stage: an approved brief becomes copy under the claim
+      # contract. Nothing is invented, and a degraded forecast stops at
+      # EVIDENCE_REQUIRED instead of producing a script.
+      - name: Run script draft tests
+        run: python tests/test_script_draft.py
 
       # The optimization layer: signal validation, ADOPT policy (GitHub + evidence
       # + no GPU), action-before-deferral ranking and the blocked MEASURE/LEARN

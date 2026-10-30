@@ -514,3 +514,174 @@ python scripts\build_evidence_package.py projects\easel-1024-proof --variants
   该画幅重新出卡。
 - 衍生片技术上正确，不代表内容通过。`production_ready` 仍为 false，仍由人工
   审核决定。
+
+## 19. 内容路由器：选题
+
+路由器运行在项目存在**之前**。它回答"这是为谁做的、这讲的是什么"，
+并产出一份流水线可以直接接手的 Brief。
+
+```powershell
+# 哪些账号可以路由，是否可用
+python scripts\content_route.py accounts
+
+# 路线 A：由账号圈定范围去找选题
+python scripts\content_route.py start --account x-superplay-1024 --mode hotspot
+
+# 只看检索计划，不抓取任何东西
+python scripts\content_route.py start --account x-superplay-1024 --mode hotspot --plan-only
+
+# 路线 B：由所有者指定主题
+python scripts\content_route.py start --account x-superplay-future-intelligence --mode topic `
+    --topic "如何使用 LangGraph 开发可靠的 Agent？"
+
+# 由人具名选定一个候选
+python scripts\content_route.py select --candidate CAND-XXXXXXXX --by "Founder"
+
+# 这次运行到哪了，下一步需要什么
+python scripts\content_route.py status --run RUN-20261030-XXXXXXXX
+
+# 由人审核通过 Brief，并创建项目
+python scripts\content_route.py approve --run RUN-20261030-XXXXXXXX `
+    --reviewer "Founder" --note "值得做" --confirm --project langgraph-reliable-agent
+```
+
+- `--mode` 是必填的。不指定会被 `ROUTE_SELECTION_REQUIRED` 拒绝；路由器绝不推断
+  路线，运行恢复时也绝不改变路线。
+- `start --mode hotspot` 会写下计划、采集、过滤、排序，停在 `CANDIDATES_READY`。
+  它**不**创建项目，也**不**调用任何媒体生成接口。
+- `select` 是人做的那一步。`--by` 必填，不存在匿名选择。
+- `approve --confirm` 是 Brief 进入流水线前人做的那一步。`--project <slug>` 用
+  `scripts/new_project.py` 创建项目，并把 `00_brief/brief.json` 放进去，
+  于是这一集从和其他每一集相同的地方开始。
+- 偏离定位的主题会停在 `OUT_OF_PROFILE_REVIEW_REQUIRED`。所有者要么改主题，
+  要么用 `--accept-off-profile --note "为什么"` 重跑。
+- 候选池是 SQLite，位于 `.local/content-router/`（已被 gitignore）。
+  `CONTENTOPS_ROUTER_HOME` 可以搬走它。
+- 任何命令加 `--json` 都会输出同样的 JSON 结果。
+
+Brief 生成之后，这一集继续走普通流水线。复制评审
+（`scripts\copy_review.py <project>`）仍然是渲染之前的门禁。
+
+合约与状态见 [CONTENT-ROUTER.zh-CN.md](CONTENT-ROUTER.zh-CN.md)。
+
+### 19.1 验收运行
+
+`scripts/router_e2e.py` 把两条路线端到端跑一遍，并写出一份回执。
+
+```powershell
+# 两条路线都走，针对真实来源
+python scripts\router_e2e.py --actor "Founder"
+
+# 只走指定主题路线；热点那条腿报为阻塞，而不是拿 fixture 冒充
+python scripts\router_e2e.py --actor "Founder" --offline
+```
+
+- 它把项目建在 `.verify-tmp\router-e2e\projects\`，而不是仓库自己的
+  `projects\`，所以一次验收运行不会留下任何成片项目。
+- **选题与 Brief 审核都由验收运行代为完成**，用的是 `--actor` 给的名字。
+  回执里原样写明这一点。这是验收运行，不是长期授权：渲染之前的门禁仍然是
+  复制评审。
+- 它不发布任何内容，也不生成任何媒体。
+- 某个来源不可达时，回执会指名这次失败，运行跳过它继续。`--offline` 完全
+  跳过网络，并把热点那条腿报为 `OFFLINE_BY_REQUEST`，而不是拿 fixture 填上。
+- 验收脚本以 `actor_kind="automation"` 与 `allow_automation=True` 批准。生产调用方
+  不可能误打误撞做到这一点：同样的调用不带该显式选项会以
+  `AUTOMATION_APPROVAL_REFUSED` 被拒绝。
+
+### 19.2 校验一次审批，并把 Brief 交接出去
+
+```powershell
+# 审批是否仍然匹配磁盘上的 Brief
+python scripts\content_route.py verify --run RUN-20261030-XXXXXXXX
+
+# 交接进流水线（写出 00_brief\handoff.json），或者只检查
+python scripts\brief_handoff.py projects\my-episode --dry-run
+python scripts\brief_handoff.py projects\my-episode
+```
+
+Brief 在审批之后被改动时，`verify` 返回 `APPROVAL_STALE`。
+`brief_handoff.py` 同样拒绝，并且对 `DEGRADED` 的证据预测额外以
+`EVIDENCE_REQUIRED` 拒绝。退出码 4 表示"尚未就绪"。
+
+下一步是脚本阶段。它只讲真正采集到的材料，所以先采集：
+
+```powershell
+python scripts\evidence_pack.py --topic "LangGraph 状态管理" --out projects\my-episode `
+    https://raw.githubusercontent.com/langchain-ai/docs/main/src/oss/langgraph/persistence.mdx `
+    https://github.com/langchain-ai/langgraph
+python scripts\brief_script.py projects\my-episode
+python scripts\brief_script.py projects\my-episode --check
+```
+
+它写出 `script/lines.json`、`script/claim-map.json`、`script/storyboard.json`、
+`script/master.md` 与 `00_brief/script-report.json`。证据预测为 `DEGRADED` 时以
+`EVIDENCE_REQUIRED`（退出码 4）拒绝，而不是写一份没人能背书的稿子。
+草稿成功后复制门禁读到 `NOT_REVIEWED`：
+
+```powershell
+python scripts\copy_review.py projects\my-episode
+python scripts\audio_first_plan.py projects\my-episode
+# {"status": "BLOCKED", "stage": "copy_review", ...}（退出码 4，未合成任何内容）
+```
+
+批准复制是人的步骤：`copy_review.py ... --approve --reviewer <name> --opinion "<你决定的>"`。
+路由器里的任何东西都不会写它。
+
+### 19.3 使用真实的 TrendRadar 数据库
+
+TrendRadar 运行在本仓库之外（`D:\Software\sansan0\TrendRadar\v6.11.0`）。
+把路由器指向它要读的那一天：
+
+```powershell
+$env:TRENDRADAR_DB_PATH = "D:\Software\sansan0\TrendRadar\v6.11.0\output\news\2026-10-30.db"
+python scripts\content_route.py start --account x-superplay-1024 --mode hotspot
+```
+
+也可以直接给目录——会使用最新的 `news\*.db`。文件以只读方式打开，绝不写入。
+超过 24 小时的数据库会被报为 `stale`，其行以 `STALE_SOURCE` 被拒，
+不会作为新热点进入候选池。
+
+### 19.4 七天观察
+
+```powershell
+# 每天每账号一行，写在 .local\content-router\observation\ 下
+python scripts\router_observe.py --trendradar-db "D:\Software\sansan0\TrendRadar\v6.11.0\output\news\2026-10-30.db"
+
+# 目前窗口内的汇总
+python scripts\router_observe.py --report --days 7
+```
+
+每天跑一次、连续七天。报告按来源打印：应答了多少次、给了多少行、多少次数据陈旧、
+账号过滤产出了多少候选。这些才是保留或移除某个来源的依据，而不是某一天的好坏。
+
+### 19.5 安全回滚
+
+路由器的成果是 `feat/content-router` 上的三个提交。什么都没推送，所以下面每一步
+都只在本地、都可逆。它们都不是默认动作：按你真正做出的决定，只跑对应的那一条。
+
+```powershell
+# 1. 先看。这一步不改变任何东西。
+git status
+git log --oneline -3
+
+# 2. 留在原地、回到 main。分支仍然存在。
+git switch main
+
+# 3. 停用运行状态，但不删除。
+Rename-Item .local\content-router .local\content-router.parked
+
+# 4. 确认之后才删除分支，且只在本地。
+#    -d 在分支未合并时会拒绝；这个拒绝本身就是信息。
+git branch -d feat/content-router
+```
+
+不要做的事，以及原因：
+
+- **不要 `git reset --hard`、不要 `git checkout --`。** 工作区里有别人未提交的
+  工作（公众号/vendor 那条线），硬重置会丢掉它，且无法撤销。
+- **不要 `rm -rf` 仓库目录。** `vendor/` 和 `.runtime/easel/` 无法从本仓库重新生成，
+  删掉它们会把一次干净回滚变成一次重建。
+- **不要直接删除 `.local/`。** 它是被忽略的运行状态，删掉是安全的，但改名能保留
+  回执与候选池，万一改主意还在。
+- **TrendRadar 不是服务。** 本机没有守护进程、没有端口、没有定时任务；"停止"就是
+  不再运行它。它的目录留在原地对仓库没有任何影响。

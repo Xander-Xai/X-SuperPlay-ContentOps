@@ -1,0 +1,86 @@
+schema_version: 1
+contract_id: x-superplay-content-to-startup
+status: active-reference
+source_registration: integrations/x-superplay-strategy.yaml
+
+account:
+  account_id: thinktank
+  public_brand: X超玩•未来智能
+  role: Build
+  paired_explore_brand: X•超玩1024
+  content_medium: wechat_article
+
+thesis: "把内容变成市场研究，把项目变成用户验证，再把重复问题产品化。"
+
+funnel:
+  - id: trend_discovery
+    output: candidate_topic
+  - id: content_experiment
+    output: measured_content_result
+  - id: problem_signal
+    output: problem_log_entry
+  - id: user_interview
+    output: problem_thesis
+  - id: demo_or_mvp
+    output: reproducible_project
+  - id: paid_validation
+    output: payment_or_commitment_signal
+  - id: workflow_agent_saas
+    output: standardized_solution_candidate
+
+content_pillars:
+  - id: ai_engineering_deconstruction
+    title: AI 工程拆解
+    account_role: Build
+  - id: from_need_to_launch
+    title: 从需求到上线
+    account_role: Build
+  - id: ai_capability_monetization
+    title: AI 能力变现
+    account_role: Build
+
+demand_signals:
+  - level: 1
+    phrase: "很酷"
+    strength: weak_interest
+  - level: 2
+    phrase: "怎么做？"
+    strength: learning_demand
+  - level: 3
+    phrase: "能开源吗？"
+    strength: solution_demand
+  - level: 4
+    phrase: "能不能帮我搭？"
+    strength: strong_demand
+  - level: 5
+    phrase: "多少钱？"
+    strength: commercial_signal
+
+escalation_triggers:
+  - "怎么实现？"
+  - "有源码吗？"
+  - "能不能出完整教程？"
+  - "能不能部署？"
+  - "可以帮我做吗？"
+  - "多少钱？"
+
+validation_horizons:
+  first_30_days:
+    goal: content_market_signal
+    required_record: [topic, production_cost, reach, saves, comments, demand_signals]
+  days_31_to_60:
+    goal: repeated_problem
+    required_record: [problem_id, user_type, scenario, current_solution, time_cost, money_cost, interview_status]
+  days_61_to_90:
+    goal: first_real_validation
+    preferred_path: [concierge_mvp, internal_workflow, semi_automated_tool, self_serve_tool, saas]
+
+boundaries:
+  reference_only: true
+  runtime_dependency: false
+  renderer_or_publisher: false
+  no_untested_hype: true
+  no_lie_flattening_or_guaranteed_income_claims: true
+  student_work_boundaries:
+    allowed: [resume_review, project_planning, code_review, github_review, portfolio_guidance, mock_interview]
+    forbidden: [thesis_writing, coursework_doing, fabricated_experience, interview_substitution]

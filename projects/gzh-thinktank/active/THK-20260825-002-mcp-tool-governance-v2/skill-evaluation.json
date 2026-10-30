@@ -1,0 +1,1102 @@
+{
+  "schema_version": 1,
+  "contract": "visual-skill-evaluation-v1",
+  "status": "passed",
+  "registry": "profiles/visual-capability-registry.yaml",
+  "routes": [
+    {
+      "id": "body-01",
+      "section": "一、能调用工具，不等于能安全上线",
+      "evaluations": [
+        {
+          "skill_id": "interactive-card-deck",
+          "backend": "interactive-card-deck",
+          "task_overlap": [
+            "concept"
+          ],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.9888,
+          "eligible": true,
+          "selection": "candidate",
+          "reason": "候选能力未被当前主/备路由选中",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "excalidraw-diagram",
+          "backend": "excalidraw",
+          "task_overlap": [
+            "concept"
+          ],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.9874,
+          "eligible": true,
+          "selection": "candidate",
+          "reason": "候选能力未被当前主/备路由选中",
+          "fallback": "excalidraw-style"
+        },
+        {
+          "skill_id": "excalidraw-style",
+          "backend": "excalidraw-style",
+          "task_overlap": [
+            "concept"
+          ],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.9874,
+          "eligible": true,
+          "selection": "candidate",
+          "reason": "候选能力未被当前主/备路由选中",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "agnes-image-21-flash",
+          "backend": "agnes",
+          "task_overlap": [
+            "concept"
+          ],
+          "execution_status": "integrated",
+          "adapter": "scripts/generate_article_images.py",
+          "score": 0.908,
+          "eligible": true,
+          "selection": "candidate",
+          "reason": "候选能力未被当前主/备路由选中",
+          "fallback": "brand-cover-or-topic-semantic-local"
+        },
+        {
+          "skill_id": "tldraw-whiteboard",
+          "backend": "tldraw",
+          "task_overlap": [
+            "concept"
+          ],
+          "execution_status": "advisory",
+          "adapter": "",
+          "score": 0.8704,
+          "eligible": false,
+          "selection": "candidate",
+          "reason": "执行状态为 advisory",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "canvas-design",
+          "backend": "canvas",
+          "task_overlap": [
+            "concept"
+          ],
+          "execution_status": "advisory",
+          "adapter": "",
+          "score": 0.869,
+          "eligible": false,
+          "selection": "candidate",
+          "reason": "执行状态为 advisory",
+          "fallback": "brand-cover"
+        },
+        {
+          "skill_id": "baoyu-article-illustrator",
+          "backend": "html-illustration",
+          "task_overlap": [
+            "concept"
+          ],
+          "execution_status": "advisory",
+          "adapter": "",
+          "score": 0.8676,
+          "eligible": false,
+          "selection": "candidate",
+          "reason": "执行状态为 advisory",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "katex-html-composite",
+          "backend": "katex-html-composite",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.6849,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "deterministic-infographic",
+          "backend": "deterministic-infographic",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.6828,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "beautiful-mermaid",
+          "backend": "beautiful-mermaid",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.6814,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "brand-cover-local",
+          "backend": "brand-cover",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "skills/gzh-visual-assets/scripts/text_poster.py",
+          "score": 0.6814,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "block"
+        },
+        {
+          "skill_id": "deterministic-svg",
+          "backend": "deterministic-svg",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.6814,
+          "eligible": false,
+          "selection": "primary",
+          "reason": "命中导演主后端",
+          "fallback": "deterministic-infographic"
+        },
+        {
+          "skill_id": "code-block",
+          "backend": "code-block",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.68,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "formula-code-map",
+          "backend": "formula-code-map",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.6786,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "katex-html-composite"
+        },
+        {
+          "skill_id": "figma-design",
+          "backend": "figma",
+          "task_overlap": [],
+          "execution_status": "advisory",
+          "adapter": "",
+          "score": 0.4822,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-infographic"
+        },
+        {
+          "skill_id": "image-to-code",
+          "backend": "image-to-code",
+          "task_overlap": [],
+          "execution_status": "advisory",
+          "adapter": "",
+          "score": 0.4759,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "user-authorized-screenshot"
+        },
+        {
+          "skill_id": "baoyu-comic",
+          "backend": "comic",
+          "task_overlap": [],
+          "execution_status": "advisory",
+          "adapter": "",
+          "score": 0.4738,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        }
+      ]
+    },
+    {
+      "id": "body-02",
+      "section": "二、MCP的新边界：请求本身要能被治理",
+      "evaluations": [
+        {
+          "skill_id": "code-block",
+          "backend": "code-block",
+          "task_overlap": [
+            "code",
+            "exact_text",
+            "implementation"
+          ],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.9916,
+          "eligible": true,
+          "selection": "primary",
+          "reason": "命中导演主后端",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "formula-code-map",
+          "backend": "formula-code-map",
+          "task_overlap": [
+            "code",
+            "exact_text",
+            "implementation"
+          ],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.9902,
+          "eligible": true,
+          "selection": "candidate",
+          "reason": "候选能力未被当前主/备路由选中",
+          "fallback": "katex-html-composite"
+        },
+        {
+          "skill_id": "katex-html-composite",
+          "backend": "katex-html-composite",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.6849,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "deterministic-infographic",
+          "backend": "deterministic-infographic",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.6828,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "beautiful-mermaid",
+          "backend": "beautiful-mermaid",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.6814,
+          "eligible": false,
+          "selection": "secondary",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "brand-cover-local",
+          "backend": "brand-cover",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "skills/gzh-visual-assets/scripts/text_poster.py",
+          "score": 0.6814,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "block"
+        },
+        {
+          "skill_id": "deterministic-svg",
+          "backend": "deterministic-svg",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.6814,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-infographic"
+        },
+        {
+          "skill_id": "interactive-card-deck",
+          "backend": "interactive-card-deck",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.6772,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "excalidraw-diagram",
+          "backend": "excalidraw",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.6758,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "excalidraw-style"
+        },
+        {
+          "skill_id": "excalidraw-style",
+          "backend": "excalidraw-style",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.6758,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "agnes-image-21-flash",
+          "backend": "agnes",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/generate_article_images.py",
+          "score": 0.5964,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "brand-cover-or-topic-semantic-local"
+        },
+        {
+          "skill_id": "tldraw-whiteboard",
+          "backend": "tldraw",
+          "task_overlap": [],
+          "execution_status": "advisory",
+          "adapter": "",
+          "score": 0.5588,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "canvas-design",
+          "backend": "canvas",
+          "task_overlap": [],
+          "execution_status": "advisory",
+          "adapter": "",
+          "score": 0.5574,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "brand-cover"
+        },
+        {
+          "skill_id": "baoyu-article-illustrator",
+          "backend": "html-illustration",
+          "task_overlap": [],
+          "execution_status": "advisory",
+          "adapter": "",
+          "score": 0.556,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "figma-design",
+          "backend": "figma",
+          "task_overlap": [],
+          "execution_status": "advisory",
+          "adapter": "",
+          "score": 0.4822,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-infographic"
+        },
+        {
+          "skill_id": "image-to-code",
+          "backend": "image-to-code",
+          "task_overlap": [],
+          "execution_status": "advisory",
+          "adapter": "",
+          "score": 0.4759,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "user-authorized-screenshot"
+        },
+        {
+          "skill_id": "baoyu-comic",
+          "backend": "comic",
+          "task_overlap": [],
+          "execution_status": "advisory",
+          "adapter": "",
+          "score": 0.4738,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        }
+      ]
+    },
+    {
+      "id": "body-03",
+      "section": "四、显式许可：让工具调用先过一道看得见的门",
+      "evaluations": [
+        {
+          "skill_id": "code-block",
+          "backend": "code-block",
+          "task_overlap": [
+            "code",
+            "exact_text",
+            "implementation"
+          ],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.9916,
+          "eligible": true,
+          "selection": "primary",
+          "reason": "命中导演主后端",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "formula-code-map",
+          "backend": "formula-code-map",
+          "task_overlap": [
+            "code",
+            "exact_text",
+            "implementation"
+          ],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.9902,
+          "eligible": true,
+          "selection": "candidate",
+          "reason": "候选能力未被当前主/备路由选中",
+          "fallback": "katex-html-composite"
+        },
+        {
+          "skill_id": "katex-html-composite",
+          "backend": "katex-html-composite",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.6849,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "deterministic-infographic",
+          "backend": "deterministic-infographic",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.6828,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "beautiful-mermaid",
+          "backend": "beautiful-mermaid",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.6814,
+          "eligible": false,
+          "selection": "secondary",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "brand-cover-local",
+          "backend": "brand-cover",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "skills/gzh-visual-assets/scripts/text_poster.py",
+          "score": 0.6814,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "block"
+        },
+        {
+          "skill_id": "deterministic-svg",
+          "backend": "deterministic-svg",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.6814,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-infographic"
+        },
+        {
+          "skill_id": "interactive-card-deck",
+          "backend": "interactive-card-deck",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.6772,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "excalidraw-diagram",
+          "backend": "excalidraw",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.6758,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "excalidraw-style"
+        },
+        {
+          "skill_id": "excalidraw-style",
+          "backend": "excalidraw-style",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.6758,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "agnes-image-21-flash",
+          "backend": "agnes",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/generate_article_images.py",
+          "score": 0.5964,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "brand-cover-or-topic-semantic-local"
+        },
+        {
+          "skill_id": "tldraw-whiteboard",
+          "backend": "tldraw",
+          "task_overlap": [],
+          "execution_status": "advisory",
+          "adapter": "",
+          "score": 0.5588,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "canvas-design",
+          "backend": "canvas",
+          "task_overlap": [],
+          "execution_status": "advisory",
+          "adapter": "",
+          "score": 0.5574,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "brand-cover"
+        },
+        {
+          "skill_id": "baoyu-article-illustrator",
+          "backend": "html-illustration",
+          "task_overlap": [],
+          "execution_status": "advisory",
+          "adapter": "",
+          "score": 0.556,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "figma-design",
+          "backend": "figma",
+          "task_overlap": [],
+          "execution_status": "advisory",
+          "adapter": "",
+          "score": 0.4822,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-infographic"
+        },
+        {
+          "skill_id": "image-to-code",
+          "backend": "image-to-code",
+          "task_overlap": [],
+          "execution_status": "advisory",
+          "adapter": "",
+          "score": 0.4759,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "user-authorized-screenshot"
+        },
+        {
+          "skill_id": "baoyu-comic",
+          "backend": "comic",
+          "task_overlap": [],
+          "execution_status": "advisory",
+          "adapter": "",
+          "score": 0.4738,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        }
+      ]
+    },
+    {
+      "id": "body-04",
+      "section": "五、最小可复现实践：用三个工具跑通治理闭环",
+      "evaluations": [
+        {
+          "skill_id": "code-block",
+          "backend": "code-block",
+          "task_overlap": [
+            "code",
+            "exact_text",
+            "implementation"
+          ],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.9916,
+          "eligible": true,
+          "selection": "primary",
+          "reason": "命中导演主后端",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "formula-code-map",
+          "backend": "formula-code-map",
+          "task_overlap": [
+            "code",
+            "exact_text",
+            "implementation"
+          ],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.9902,
+          "eligible": true,
+          "selection": "candidate",
+          "reason": "候选能力未被当前主/备路由选中",
+          "fallback": "katex-html-composite"
+        },
+        {
+          "skill_id": "katex-html-composite",
+          "backend": "katex-html-composite",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.6849,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "deterministic-infographic",
+          "backend": "deterministic-infographic",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.6828,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "beautiful-mermaid",
+          "backend": "beautiful-mermaid",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.6814,
+          "eligible": false,
+          "selection": "secondary",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "brand-cover-local",
+          "backend": "brand-cover",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "skills/gzh-visual-assets/scripts/text_poster.py",
+          "score": 0.6814,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "block"
+        },
+        {
+          "skill_id": "deterministic-svg",
+          "backend": "deterministic-svg",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.6814,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-infographic"
+        },
+        {
+          "skill_id": "interactive-card-deck",
+          "backend": "interactive-card-deck",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.6772,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "excalidraw-diagram",
+          "backend": "excalidraw",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.6758,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "excalidraw-style"
+        },
+        {
+          "skill_id": "excalidraw-style",
+          "backend": "excalidraw-style",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.6758,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "agnes-image-21-flash",
+          "backend": "agnes",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/generate_article_images.py",
+          "score": 0.5964,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "brand-cover-or-topic-semantic-local"
+        },
+        {
+          "skill_id": "tldraw-whiteboard",
+          "backend": "tldraw",
+          "task_overlap": [],
+          "execution_status": "advisory",
+          "adapter": "",
+          "score": 0.5588,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "canvas-design",
+          "backend": "canvas",
+          "task_overlap": [],
+          "execution_status": "advisory",
+          "adapter": "",
+          "score": 0.5574,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "brand-cover"
+        },
+        {
+          "skill_id": "baoyu-article-illustrator",
+          "backend": "html-illustration",
+          "task_overlap": [],
+          "execution_status": "advisory",
+          "adapter": "",
+          "score": 0.556,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "figma-design",
+          "backend": "figma",
+          "task_overlap": [],
+          "execution_status": "advisory",
+          "adapter": "",
+          "score": 0.4822,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-infographic"
+        },
+        {
+          "skill_id": "image-to-code",
+          "backend": "image-to-code",
+          "task_overlap": [],
+          "execution_status": "advisory",
+          "adapter": "",
+          "score": 0.4759,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "user-authorized-screenshot"
+        },
+        {
+          "skill_id": "baoyu-comic",
+          "backend": "comic",
+          "task_overlap": [],
+          "execution_status": "advisory",
+          "adapter": "",
+          "score": 0.4738,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        }
+      ]
+    },
+    {
+      "id": "body-05",
+      "section": "七、结语：治理的对象是下一步动作",
+      "evaluations": [
+        {
+          "skill_id": "deterministic-infographic",
+          "backend": "deterministic-infographic",
+          "task_overlap": [
+            "checklist",
+            "comparison"
+          ],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.9944,
+          "eligible": true,
+          "selection": "primary",
+          "reason": "命中导演主后端",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "interactive-card-deck",
+          "backend": "interactive-card-deck",
+          "task_overlap": [
+            "checklist",
+            "comparison"
+          ],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.9888,
+          "eligible": true,
+          "selection": "candidate",
+          "reason": "候选能力未被当前主/备路由选中",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "katex-html-composite",
+          "backend": "katex-html-composite",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.6849,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "beautiful-mermaid",
+          "backend": "beautiful-mermaid",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.6814,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "brand-cover-local",
+          "backend": "brand-cover",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "skills/gzh-visual-assets/scripts/text_poster.py",
+          "score": 0.6814,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "block"
+        },
+        {
+          "skill_id": "deterministic-svg",
+          "backend": "deterministic-svg",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.6814,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-infographic"
+        },
+        {
+          "skill_id": "code-block",
+          "backend": "code-block",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.68,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "formula-code-map",
+          "backend": "formula-code-map",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.6786,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "katex-html-composite"
+        },
+        {
+          "skill_id": "excalidraw-diagram",
+          "backend": "excalidraw",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.6758,
+          "eligible": false,
+          "selection": "secondary",
+          "reason": "任务类型不匹配",
+          "fallback": "excalidraw-style"
+        },
+        {
+          "skill_id": "excalidraw-style",
+          "backend": "excalidraw-style",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/render_visual_anchor.py",
+          "score": 0.6758,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "agnes-image-21-flash",
+          "backend": "agnes",
+          "task_overlap": [],
+          "execution_status": "integrated",
+          "adapter": "scripts/generate_article_images.py",
+          "score": 0.5964,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "brand-cover-or-topic-semantic-local"
+        },
+        {
+          "skill_id": "tldraw-whiteboard",
+          "backend": "tldraw",
+          "task_overlap": [],
+          "execution_status": "advisory",
+          "adapter": "",
+          "score": 0.5588,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "canvas-design",
+          "backend": "canvas",
+          "task_overlap": [],
+          "execution_status": "advisory",
+          "adapter": "",
+          "score": 0.5574,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "brand-cover"
+        },
+        {
+          "skill_id": "baoyu-article-illustrator",
+          "backend": "html-illustration",
+          "task_overlap": [],
+          "execution_status": "advisory",
+          "adapter": "",
+          "score": 0.556,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        },
+        {
+          "skill_id": "figma-design",
+          "backend": "figma",
+          "task_overlap": [],
+          "execution_status": "advisory",
+          "adapter": "",
+          "score": 0.4822,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-infographic"
+        },
+        {
+          "skill_id": "image-to-code",
+          "backend": "image-to-code",
+          "task_overlap": [],
+          "execution_status": "advisory",
+          "adapter": "",
+          "score": 0.4759,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "user-authorized-screenshot"
+        },
+        {
+          "skill_id": "baoyu-comic",
+          "backend": "comic",
+          "task_overlap": [],
+          "execution_status": "advisory",
+          "adapter": "",
+          "score": 0.4738,
+          "eligible": false,
+          "selection": "rejected",
+          "reason": "任务类型不匹配",
+          "fallback": "deterministic-svg"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+schema_version: 1
+status: template_pending_official_qr_url
+account: thinktank
+public_brand: X超玩•未来智能
+slogan: "关注 X超玩•未来智能，留言你的真实 AI 项目问题或部署场景，获取可复现清单与验收模板"
+qr_url: ""
+output: opc-doc/assets/wechat-follow-card.png
+publishable: false
+reason: "尚未提供官方账号二维码 URL；不得用 weixin.qq.com 等公共入口冒充本账号二维码。"

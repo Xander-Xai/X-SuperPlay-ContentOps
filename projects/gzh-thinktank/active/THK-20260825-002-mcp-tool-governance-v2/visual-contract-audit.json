@@ -1,0 +1,192 @@
+{
+  "schema_version": 1,
+  "contract": "visual-contract-audit-v1",
+  "status": "passed",
+  "reviewed_at": "2026-08-24T23:09:54.378270+00:00",
+  "records": [
+    {
+      "id": "body-01",
+      "checks": {
+        "route_rule": {
+          "brief": "R17-stateful-graph",
+          "routing": "R17-stateful-graph"
+        },
+        "layout_archetype": {
+          "brief": "relationship-board",
+          "routing": "relationship-board"
+        },
+        "recommended_skill": {
+          "brief": "deterministic SVG / typed-state-contract",
+          "routing": "deterministic SVG / typed-state-contract"
+        },
+        "claim_ids": {
+          "brief": [
+            "claim-governance-synthesis"
+          ],
+          "contract": [
+            "claim-governance-synthesis"
+          ]
+        },
+        "backend": {
+          "requested": "deterministic-svg",
+          "routing_primary": "deterministic-svg",
+          "execution": "deterministic-svg"
+        }
+      }
+    },
+    {
+      "id": "body-02",
+      "checks": {
+        "route_rule": {
+          "brief": "R17-stateful-graph",
+          "routing": "R17-stateful-graph"
+        },
+        "layout_archetype": {
+          "brief": "relationship-board",
+          "routing": "relationship-board"
+        },
+        "recommended_skill": {
+          "brief": "deterministic SVG / typed-state-contract",
+          "routing": "deterministic SVG / typed-state-contract"
+        },
+        "claim_ids": {
+          "brief": [
+            "claim-mcp-stateless-boundary"
+          ],
+          "contract": [
+            "claim-mcp-stateless-boundary"
+          ]
+        },
+        "backend": {
+          "requested": "deterministic-svg",
+          "routing_primary": "deterministic-svg",
+          "execution": "deterministic-svg"
+        }
+      }
+    },
+    {
+      "id": "body-03",
+      "checks": {
+        "route_rule": {
+          "brief": "R11-code-implementation",
+          "routing": "R11-code-implementation"
+        },
+        "layout_archetype": {
+          "brief": "runnable-snippet",
+          "routing": "runnable-snippet"
+        },
+        "recommended_skill": {
+          "brief": "deterministic code-block (HTML/SVG, account-themed)",
+          "routing": "deterministic code-block (HTML/SVG, account-themed)"
+        },
+        "claim_ids": {
+          "brief": [
+            "claim-anthropic-explicit-permissions"
+          ],
+          "contract": [
+            "claim-anthropic-explicit-permissions"
+          ]
+        },
+        "backend": {
+          "requested": "code-block",
+          "routing_primary": "code-block",
+          "execution": "code-block"
+        }
+      }
+    },
+    {
+      "id": "body-04",
+      "checks": {
+        "route_rule": {
+          "brief": "R17-stateful-graph",
+          "routing": "R17-stateful-graph"
+        },
+        "layout_archetype": {
+          "brief": "architecture-board",
+          "routing": "architecture-board"
+        },
+        "recommended_skill": {
+          "brief": "deterministic SVG / typed-state-contract",
+          "routing": "deterministic SVG / typed-state-contract"
+        },
+        "claim_ids": {
+          "brief": [
+            "claim-governance-synthesis"
+          ],
+          "contract": [
+            "claim-governance-synthesis"
+          ]
+        },
+        "backend": {
+          "requested": "deterministic-svg",
+          "routing_primary": "deterministic-svg",
+          "execution": "deterministic-svg"
+        }
+      }
+    },
+    {
+      "id": "body-05",
+      "checks": {
+        "route_rule": {
+          "brief": "R17-stateful-graph",
+          "routing": "R17-stateful-graph"
+        },
+        "layout_archetype": {
+          "brief": "architecture-board",
+          "routing": "architecture-board"
+        },
+        "recommended_skill": {
+          "brief": "deterministic SVG / typed-state-contract",
+          "routing": "deterministic SVG / typed-state-contract"
+        },
+        "claim_ids": {
+          "brief": [
+            "claim-governance-synthesis"
+          ],
+          "contract": [
+            "claim-governance-synthesis"
+          ]
+        },
+        "backend": {
+          "requested": "deterministic-svg",
+          "routing_primary": "deterministic-svg",
+          "execution": "deterministic-svg"
+        }
+      }
+    },
+    {
+      "id": "cover",
+      "checks": {
+        "route_rule": {
+          "brief": "",
+          "routing": ""
+        },
+        "layout_archetype": {
+          "brief": "",
+          "routing": ""
+        },
+        "recommended_skill": {
+          "brief": "",
+          "routing": ""
+        },
+        "claim_ids": {
+          "brief": [],
+          "contract": []
+        },
+        "backend": {
+          "requested": "agnes-or-brand-cover",
+          "routing_primary": "",
+          "execution": "agnes-or-brand-cover"
+        }
+      }
+    }
+  ],
+  "warnings": [],
+  "errors": [],
+  "source_hashes": {
+    "visual-brief.yaml": "6768047a43b4fa4203580b7355bd8d2c71ad856616465286628b294914ce8b8c",
+    "visual-routing.json": "78ddae7aa450202af9955f2222cab28ad6ee49d5c397cf3f38d2ec503bd0ca38",
+    "visual-contract.json": "5e6811dbdf116a671ea7a51a388340c07e87a4eb3f66453aca418d4a31a5e8d4",
+    "image-sources.json": "c79c7141a095ce9bd2822539912b59b261de422f69f1df5ba3a61392c2f3378d"
+  }
+}

@@ -459,6 +459,383 @@
     "无目标 AI 娱乐",
     "纯参数和排行榜"
   ],
+  "discovery": {
+    "schema": "contentops.account-discovery/v1",
+    "profile_version": "2026-10-30.1",
+    "profile_source": "config/accounts/x-superplay-1024.json#discovery",
+    "declared_by": "Founder. The initial values transcribe this DNA's own pillars, audience, not_doing and platform list; every keyword cites the field it was taken from, and scripts/check_account_dna.py fails the file if a citation does not resolve.",
+    "keywords_positive": [
+      {
+        "term": "AI 新物种",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_name",
+          "pillar": "AI 新物种"
+        }
+      },
+      {
+        "term": "新模型",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 新物种"
+        }
+      },
+      {
+        "term": "新工具",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 新物种"
+        }
+      },
+      {
+        "term": "GitHub",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 新物种"
+        }
+      },
+      {
+        "term": "新硬件",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 新物种"
+        }
+      },
+      {
+        "term": "AI 挑战100个职业",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_name",
+          "pillar": "AI 挑战100个职业"
+        }
+      },
+      {
+        "term": "Workflow",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 挑战100个职业"
+        }
+      },
+      {
+        "term": "真实职业任务",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 挑战100个职业"
+        }
+      },
+      {
+        "term": "人工瓶颈",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 挑战100个职业"
+        }
+      },
+      {
+        "term": "产品机会",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 挑战100个职业"
+        }
+      },
+      {
+        "term": "AI 生意实验室",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_name",
+          "pillar": "AI 生意实验室"
+        }
+      },
+      {
+        "term": "AI 产品",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 生意实验室"
+        }
+      },
+      {
+        "term": "数字产品",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 生意实验室"
+        }
+      },
+      {
+        "term": "付费",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 生意实验室"
+        }
+      },
+      {
+        "term": "开发者",
+        "language": "zh",
+        "origin": {
+          "kind": "audience",
+          "index": 1
+        }
+      },
+      {
+        "term": "独立开发者",
+        "language": "zh",
+        "origin": {
+          "kind": "core_audience",
+          "index": 0
+        }
+      },
+      {
+        "term": "小微企业经营者",
+        "language": "zh",
+        "origin": {
+          "kind": "core_audience",
+          "index": 1
+        }
+      },
+      {
+        "term": "实测",
+        "language": "zh",
+        "origin": {
+          "kind": "tagline"
+        }
+      },
+      {
+        "term": "新玩法",
+        "language": "zh",
+        "origin": {
+          "kind": "promise"
+        }
+      },
+      {
+        "term": "新生意",
+        "language": "zh",
+        "origin": {
+          "kind": "promise"
+        }
+      },
+      {
+        "term": "open source",
+        "language": "en",
+        "origin": {
+          "kind": "translation",
+          "origin_kind": "pillar_scope",
+          "pillar": "AI 新物种",
+          "origin_term": "新 GitHub 项目",
+          "origin_language": "zh"
+        }
+      },
+      {
+        "term": "AI model",
+        "language": "en",
+        "origin": {
+          "kind": "translation",
+          "origin_kind": "pillar_scope",
+          "pillar": "AI 新物种",
+          "origin_term": "新模型",
+          "origin_language": "zh"
+        }
+      },
+      {
+        "term": "AI tool",
+        "language": "en",
+        "origin": {
+          "kind": "translation",
+          "origin_kind": "pillar_scope",
+          "pillar": "AI 新物种",
+          "origin_term": "新工具",
+          "origin_language": "zh"
+        }
+      },
+      {
+        "term": "AI hardware",
+        "language": "en",
+        "origin": {
+          "kind": "translation",
+          "origin_kind": "pillar_scope",
+          "pillar": "AI 新物种",
+          "origin_term": "新硬件",
+          "origin_language": "zh"
+        }
+      },
+      {
+        "term": "developer tools",
+        "language": "en",
+        "origin": {
+          "kind": "translation",
+          "origin_kind": "audience",
+          "index": 1,
+          "origin_term": "开发者",
+          "origin_language": "zh"
+        }
+      },
+      {
+        "term": "工作流",
+        "language": "zh",
+        "origin": {
+          "kind": "translation",
+          "origin_kind": "pillar_scope",
+          "pillar": "AI 挑战100个职业",
+          "origin_term": "Workflow",
+          "origin_language": "en"
+        }
+      }
+    ],
+    "keywords_negative": [
+      {
+        "term": "纯新闻搬运",
+        "language": "zh",
+        "origin": {
+          "kind": "not_doing",
+          "index": 0
+        }
+      },
+      {
+        "term": "未实测",
+        "language": "zh",
+        "origin": {
+          "kind": "not_doing",
+          "index": 1
+        }
+      },
+      {
+        "term": "暴富",
+        "language": "zh",
+        "origin": {
+          "kind": "not_doing",
+          "index": 2
+        }
+      },
+      {
+        "term": "无目标 AI 娱乐",
+        "language": "zh",
+        "origin": {
+          "kind": "not_doing",
+          "index": 3
+        }
+      },
+      {
+        "term": "纯参数和排行榜",
+        "language": "zh",
+        "origin": {
+          "kind": "not_doing",
+          "index": 4
+        }
+      }
+    ],
+    "source_allowlist": [
+      {
+        "source_id": "github-search",
+        "why": "新 GitHub 项目：the account tests what a repository actually does, and GitHub's search accepts the account's terms as a server-side query."
+      },
+      {
+        "source_id": "github-trending",
+        "why": "新 GitHub 项目：the trending list is where new tools surface before they are written about."
+      },
+      {
+        "source_id": "juejin-hot",
+        "why": "开发者、产品经理、互联网从业者：a developer list, where a new tool is first tried in anger."
+      },
+      {
+        "source_id": "v2ex-hot",
+        "why": "开发者、产品经理、互联网从业者：where practitioners ask the questions an 实测 episode answers."
+      },
+      {
+        "source_id": "36kr-hot",
+        "why": "AI 生意实验室：a business list, where the cost and the market of an AI product are argued."
+      },
+      {
+        "source_id": "producthunt",
+        "why": "新工具：a launch list, which is the earliest sighting of a new product."
+      },
+      {
+        "source_id": "hacker-news",
+        "why": "AI 新物种：the English-language list, where a new model or tool is discussed before it reaches Chinese media."
+      },
+      {
+        "source_id": "zhihu-hot",
+        "why": "真实职业任务：a question list, which is where a real职业 task is described."
+      },
+      {
+        "source_id": "weibo-hot",
+        "why": "AI 新玩法：a general interest list, read for the 新玩法 an ordinary user has found."
+      },
+      {
+        "source_id": "ithome",
+        "why": "新模型、新硬件：a hardware and release list."
+      },
+      {
+        "source_id": "trendradar-sqlite",
+        "why": "the account's own TrendRadar deployment, read read-only when it is present."
+      }
+    ],
+    "source_blocklist": [
+      {
+        "source_id": "baidu-hot",
+        "why": "纯新闻搬运：a general-interest list, which is the account's first not_doing."
+      },
+      {
+        "source_id": "solidot",
+        "why": "纯新闻搬运：a newswire, which is the account's first not_doing."
+      },
+      {
+        "source_id": "douyin-hot",
+        "why": "无目标 AI 娱乐：an entertainment list, which the account's third not_doing excludes."
+      },
+      {
+        "source_id": "bilibili-hot",
+        "why": "无目标 AI 娱乐：an entertainment list, which the account's third not_doing excludes."
+      }
+    ],
+    "preferred_sources": [
+      {
+        "source_id": "github-search",
+        "why": "the only source that narrows server-side, so it carries the account's terms into the request itself"
+      },
+      {
+        "source_id": "github-trending",
+        "why": "the account's pillar names 新 GitHub 项目 explicitly"
+      }
+    ],
+    "language": [
+      "zh",
+      "en"
+    ],
+    "geography": [
+      "CN",
+      "global"
+    ],
+    "content_formats": [
+      "tech_review",
+      "tool_test",
+      "business_experiment",
+      "comparison"
+    ],
+    "approval_policy": {
+      "topic_selection_required": true,
+      "brief_approval_required": true,
+      "approver_role": "Founder",
+      "publishing_requires_copy_review": true,
+      "note": "The hot list proposes; a person chooses. The brief is approved before it reaches the pipeline, and the copy review remains the gate before anything is rendered."
+    },
+    "match_weights": {
+      "profile_relevance": 30,
+      "audience_value": 15,
+      "evidence_availability": 20,
+      "freshness": 15,
+      "cross_source_signal": 10,
+      "originality_potential": 5,
+      "non_repetition": 5
+    }
+  },
   "expression_formula": "Technology × Story × Experiment × Opportunity",
   "platform_roles": {
     "douyin": {

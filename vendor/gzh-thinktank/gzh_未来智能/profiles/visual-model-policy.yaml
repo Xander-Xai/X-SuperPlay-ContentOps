@@ -1,0 +1,66 @@
+schema_version: 1
+contract: visual-model-policy-v1
+description: "公众号图文工作流的模型职责边界；禁止用单一模型包办文字推理、像素审查和技术图渲染。"
+
+routes:
+  text_reasoning:
+    required: true
+    role: "text-llm"
+    use_for:
+      - topic-routing
+      - research-synthesis
+      - article-drafting
+      - fact-and-compliance-review
+      - visual-contract
+      - prompt-plan
+      - diagram-specification
+    must_not_claim:
+      - pixel-level-image-review
+      - line-intersection-judgement
+      - mobile-crop-judgement
+
+  image_understanding:
+    required_for:
+      - final-pixel-review
+      - typography-legibility
+      - composition-and-hierarchy
+      - raster-image-artifact-review
+      - mobile-screenshot-review
+    role: "multimodal-vision-llm-or-human"
+    rule: "没有真实图片输入能力时，不能把 visual review 标记为 passed；只能保持 pending-human。"
+    machine_companions:
+      - scripts/visual_geometry_qa.py
+      - scripts/visual_qa.py
+      - scripts/render_mobile_preview.py
+    receipt_contract: vision-review-v1
+    receipt_script: scripts/vision_review.py
+    receipt_rule: "每张图必须绑定 image_sha256、reader_job、reviewer_mode、capability_evidence、contrast_status 和 legibility_status；仅 check-routing 不得视为完成审图。"
+    skill_entrypoint: skills/vision/vision.py
+    skill_contract: skills/vision/SKILL.md
+
+  deterministic_rendering:
+    required_for:
+      - architecture
+      - flow
+      - relationship
+      - formula
+      - code
+      - numeric
+      - checklist
+    role: "local-svg-html-mermaid-katex-renderer"
+    model_required: false
+    rule: "精确标签、数字、公式、节点和连线不得交给生图模型。"
+
+  image_generation:
+    allowed_for:
+      - cover
+      - concept-illustration
+      - abstract-mechanism
+    preferred_provider: agnes
+    preferred_model: agnes-image-2.1-flash
+    rule: "生成模型输出只能作为 illustrative 素材，不能冒充技术图事实来源。"
+
+fallbacks:
+  missing_image_understanding: "machine-qa-passed-but-human-review-required"
+  missing_image_generation: "current-topic-deterministic-renderer"
+  missing_text_reasoning: "block-workflow"

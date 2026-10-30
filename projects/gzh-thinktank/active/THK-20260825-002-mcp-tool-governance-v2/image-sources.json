@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "assets": [
+    {
+      "path": "imgs/cover.png",
+      "origin": "generated",
+      "source": "workflow-generated Agnes cover with deterministic overlay",
+      "license": "workflow-owned generated asset",
+      "reuse_approved": false,
+      "actual_width": 1880,
+      "actual_height": 800,
+      "actual_sha256": "226ccb6bbab38f5570a2f265e256a5c8f4e5100a1eebfcdc8f01a466127cf49b",
+      "sha256": "226ccb6bbab38f5570a2f265e256a5c8f4e5100a1eebfcdc8f01a466127cf49b",
+      "generation": {
+        "status": "generated",
+        "execution_mode": "mixed",
+        "provider": "agnes",
+        "requested_backend": "agnes-or-brand-cover",
+        "execution_backend": "agnes-or-brand-cover"
+      }
+    },
+    {
+      "path": "imgs/section-01.png",
+      "origin": "generated",
+      "source": "workflow-generated deterministic renderer",
+      "license": "workflow-owned generated asset",
+      "reuse_approved": false,
+      "actual_width": 1200,
+      "actual_height": 720,
+      "actual_sha256": "b7c4d77df50bc14258129c3af5afb4e21f3e1a40d5209de5898e913bca2ac6ab",
+      "sha256": "b7c4d77df50bc14258129c3af5afb4e21f3e1a40d5209de5898e913bca2ac6ab",
+      "generation": {
+        "status": "deterministic",
+        "execution_mode": "mixed",
+        "provider": "local-deterministic",
+        "requested_backend": "deterministic-svg",
+        "execution_backend": "deterministic-svg"
+      }
+    },
+    {
+      "path": "imgs/section-02.png",
+      "origin": "generated",
+      "source": "workflow-generated deterministic renderer",
+      "license": "workflow-owned generated asset",
+      "reuse_approved": false,
+      "actual_width": 1200,
+      "actual_height": 720,
+      "actual_sha256": "993ea5e94ec81d058fbe81457a6ac03dcec582979b9687aeea068e01d14b55a4",
+      "sha256": "993ea5e94ec81d058fbe81457a6ac03dcec582979b9687aeea068e01d14b55a4",
+      "generation": {
+        "status": "deterministic",
+        "execution_mode": "mixed",
+        "provider": "local-deterministic",
+        "requested_backend": "deterministic-svg",
+        "execution_backend": "deterministic-svg"
+      }
+    },
+    {
+      "path": "imgs/section-03.png",
+      "origin": "generated",
+      "source": "workflow-generated deterministic renderer",
+      "license": "workflow-owned generated asset",
+      "reuse_approved": false,
+      "actual_width": 720,
+      "actual_height": 320,
+      "actual_sha256": "bf4f4fdaecaa9694a91aa54d9ff5d1be7909001247dd4fb1c0644ea75a25f625",
+      "sha256": "bf4f4fdaecaa9694a91aa54d9ff5d1be7909001247dd4fb1c0644ea75a25f625",
+      "generation": {
+        "status": "deterministic",
+        "execution_mode": "mixed",
+        "provider": "local-deterministic",
+        "requested_backend": "code-block",
+        "execution_backend": "code-block"
+      }
+    },
+    {
+      "path": "imgs/section-04.png",
+      "origin": "generated",
+      "source": "workflow-generated deterministic renderer",
+      "license": "workflow-owned generated asset",
+      "reuse_approved": false,
+      "actual_width": 1200,
+      "actual_height": 720,
+      "actual_sha256": "99ebe1cfa351463c0bdfb6687acacc7e557d007ef8c36f24f882fc7604340dfe",
+      "sha256": "99ebe1cfa351463c0bdfb6687acacc7e557d007ef8c36f24f882fc7604340dfe",
+      "generation": {
+        "status": "deterministic",
+        "execution_mode": "mixed",
+        "provider": "local-deterministic",
+        "requested_backend": "deterministic-svg",
+        "execution_backend": "deterministic-svg"
+      }
+    },
+    {
+      "path": "imgs/section-05.png",
+      "origin": "generated",
+      "source": "workflow-generated deterministic renderer",
+      "license": "workflow-owned generated asset",
+      "reuse_approved": false,
+      "actual_width": 1200,
+      "actual_height": 720,
+      "actual_sha256": "6c6d7617be7f7151e477011fb26393633e1a11a6f1b73a9a65b80b522723439e",
+      "sha256": "6c6d7617be7f7151e477011fb26393633e1a11a6f1b73a9a65b80b522723439e",
+      "generation": {
+        "status": "deterministic",
+        "execution_mode": "mixed",
+        "provider": "local-deterministic",
+        "requested_backend": "deterministic-svg",
+        "execution_backend": "deterministic-svg"
+      }
+    }
+  ],
+  "generated_at": "2026-08-25T05:45:00+08:00"
+}

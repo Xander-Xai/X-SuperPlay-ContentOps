@@ -1,0 +1,510 @@
+{
+  "schema_version": 1,
+  "source": "agent-reach/aggregate",
+  "query": "AI 工程 项目 部署 Agent RAG Vibe Coding",
+  "retrieved_at": "2026-08-24T16:28:58+00:00",
+  "passed": true,
+  "freshness_verified": true,
+  "verification_method": "live unified Agent Reach-compatible adapter aggregation",
+  "sources": [
+    "twitter",
+    "github",
+    "youtube",
+    "douyin",
+    "xhs",
+    "bilibili",
+    "weibo",
+    "domestic_rss",
+    "rss",
+    "v2ex"
+  ],
+  "source_priority_policy": {
+    "primary_global": [
+      "twitter",
+      "github",
+      "youtube"
+    ],
+    "primary_domestic": [
+      "douyin",
+      "xhs",
+      "bilibili",
+      "weibo"
+    ],
+    "supplementary": [
+      "domestic_rss",
+      "rss",
+      "v2ex"
+    ]
+  },
+  "network": {
+    "proxy_configured": true,
+    "proxy_source": "windows-internet-settings"
+  },
+  "source_health": [
+    {
+      "source": "twitter",
+      "backend": "Agent Reach -> twitter-cli/OpenCLI",
+      "priority_tier": "primary_global",
+      "priority_rank": 1,
+      "status": "ok",
+      "item_count": 20,
+      "error": ""
+    },
+    {
+      "source": "github",
+      "backend": "Agent Reach -> gh CLI",
+      "priority_tier": "primary_global",
+      "priority_rank": 2,
+      "status": "empty",
+      "item_count": 0,
+      "error": "source returned no usable candidates"
+    },
+    {
+      "source": "youtube",
+      "backend": "Agent Reach -> yt-dlp",
+      "priority_tier": "primary_global",
+      "priority_rank": 3,
+      "status": "ok",
+      "item_count": 7,
+      "error": ""
+    },
+    {
+      "source": "douyin",
+      "backend": "抖音官方 hotsearch API / 公开网页热榜后备",
+      "priority_tier": "primary_domestic",
+      "priority_rank": 4,
+      "status": "ok",
+      "item_count": 1,
+      "error": ""
+    },
+    {
+      "source": "xhs",
+      "backend": "Agent Reach -> xiaohongshu-mcp/OpenCLI/xhs-cli / 公开 Explore SSR 后备",
+      "priority_tier": "primary_domestic",
+      "priority_rank": 5,
+      "status": "error",
+      "item_count": 0,
+      "error": "opencli: Command '['C:\\\\Users\\\\Administrator\\\\AppData\\\\Roaming\\\\npm\\\\opencli.CMD', 'xiaohongshu', 'search', 'AI 工程 项目 部署 Agent RAG Vibe Coding', '-f', 'yaml']' timed out after 12 seconds; xhs: Command '['C:\\\\Users\\\\Administrator\\\\.local\\\\bin\\\\xhs.EXE', 'search', 'AI 工程 项目 部署 Agent RAG Vibe Coding', '--sort', 'latest', '--json']' timed out after 8 seconds; xhs: Command '['C:\\\\Users\\\\Administrator\\\\.local\\\\bin\\\\xhs.EXE', 'hot', '--json']' timed out after 6 seconds; public Explore SSR: public Explore page has no SSR state"
+    },
+    {
+      "source": "bilibili",
+      "backend": "Agent Reach -> B站搜索 API",
+      "priority_tier": "primary_domestic",
+      "priority_rank": 6,
+      "status": "ok",
+      "item_count": 20,
+      "error": ""
+    },
+    {
+      "source": "weibo",
+      "backend": "Agent Reach-compatible -> 微博 hot_band",
+      "priority_tier": "primary_domestic",
+      "priority_rank": 7,
+      "status": "ok",
+      "item_count": 1,
+      "error": ""
+    },
+    {
+      "source": "domestic_rss",
+      "backend": "Agent Reach -> RSS adapters",
+      "priority_tier": "supplementary",
+      "priority_rank": 8,
+      "status": "ok",
+      "item_count": 20,
+      "error": ""
+    },
+    {
+      "source": "rss",
+      "backend": "Agent Reach -> RSS adapters",
+      "priority_tier": "supplementary",
+      "priority_rank": 9,
+      "status": "ok",
+      "item_count": 20,
+      "error": ""
+    },
+    {
+      "source": "v2ex",
+      "backend": "Agent Reach -> V2EX public API",
+      "priority_tier": "supplementary",
+      "priority_rank": 10,
+      "status": "ok",
+      "item_count": 10,
+      "error": ""
+    }
+  ],
+  "items": [
+    {
+      "title": "挺有趣，听朋友说我这几篇文章成为了现在 AI 岗位面试准备必读的文章，那我来汇总一下给大伙好啦，希望有帮助，当然也祝福最近从传统岗位工程师转型成 AI 岗位的小伙伴找到自己满意的工作。\n\n1.  你不知道的 Claude Code：架构、治理与工程实践 \nhttps://t.co/p0RWjHcklI\n\n2. 你不知道的 Agent：原理、架构与工程实践\nhttps://t.co/4FXcGYqbaJ\n\n3. 你不知道的大模型训练：原理、路径与新实践\nhttps://t.co/DJuvPaBvhu\n\n4. 你不知道的 AI Coding：非技术人的上手、场景与实战\nhttps://t.co/TLi4q9XOtJ\n\n5. 你不知道的 GEO：AI 可见性的原理、实践与取舍\nhttps://t.co/VrLUqgucwR\n\n6. 你不知道的具身智能：从小机器狗到 Optimus\nhttps://t.co/bRBbRZXIZg",
+      "description": "",
+      "source_url": "https://x.com/i/web/status/2067851910464565374",
+      "source_type": "twitter",
+      "published_at": "",
+      "captured_at": "2026-08-24T16:28:58+00:00",
+      "source_priority": 1,
+      "source_priority_tier": "primary_global",
+      "engagement": {
+        "like_count": 0,
+        "retweet_count": 0
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "還在羨慕別人用 AI 開發酷產品？Claude Code 保姆級教學讓你輕鬆體驗 Vibe Coding, 動動嘴就能做出 Anything！",
+      "description": "PAPAYA 電腦教室",
+      "source_url": "https://www.youtube.com/watch?v=2pM-7fBXc_M",
+      "source_type": "youtube",
+      "published_at": "",
+      "captured_at": "2026-08-24T16:28:58+00:00",
+      "source_priority": 3,
+      "source_priority_tier": "primary_global",
+      "engagement": {
+        "like_count": 0,
+        "view_count": 489335
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "Spirit获电竞世俱杯CS2项目冠军",
+      "description": "",
+      "source_url": "https://www.douyin.com/search/Spirit%E8%8E%B7%E7%94%B5%E7%AB%9E%E4%B8%96%E4%BF%B1%E6%9D%AFCS2%E9%A1%B9%E7%9B%AE%E5%86%A0%E5%86%9B",
+      "source_type": "douyin",
+      "published_at": "2026-08-24T16:28:59+00:00",
+      "captured_at": "2026-08-24T16:28:58+00:00",
+      "source_priority": 4,
+      "source_priority_tier": "primary_domestic",
+      "engagement": {
+        "hot_rank": 42,
+        "hot_value": 7668662
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "【AI实战】AI Agent智能电商导购平台，基于SpringAI+RAG+Springboot的智能商城导购和运营增长平台",
+      "description": "完整项目资料：https://aigcbaba.com/course/99",
+      "source_url": "http://www.bilibili.com/video/av117009018850188",
+      "source_type": "bilibili",
+      "published_at": "2026-07-30T12:57:11+00:00",
+      "captured_at": "2026-08-24T16:28:58+00:00",
+      "source_priority": 6,
+      "source_priority_tier": "primary_domestic",
+      "engagement": {
+        "play": 22414,
+        "favorites": 647,
+        "like": 356
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "AI眼镜成为隐私重灾区",
+      "description": "数码,互联网",
+      "source_url": "https://s.weibo.com/weibo?q=AI%E7%9C%BC%E9%95%9C%E6%88%90%E4%B8%BA%E9%9A%90%E7%A7%81%E9%87%8D%E7%81%BE%E5%8C%BA",
+      "source_type": "weibo",
+      "published_at": "2026-08-24T16:28:59+00:00",
+      "captured_at": "2026-08-24T16:28:58+00:00",
+      "source_priority": 7,
+      "source_priority_tier": "primary_domestic",
+      "engagement": {
+        "hot_rank": 20,
+        "hot_value": 221866
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "派评 | 近期值得关注的 App",
+      "description": ">下载少数派2.0客户端、关注少数派公众号，解锁全新阅读体验📰>实用、好用的正版软件，少数派为你呈现🚀<a href=\"https://sspai.com/post/113795\" target=\"_blank\">查看全文</a>",
+      "source_url": "https://sspai.com/post/113795",
+      "source_type": "domestic_rss",
+      "published_at": "Mon, 24 Aug 2026 17:52:01 +0800",
+      "captured_at": "2026-08-24T16:28:58+00:00",
+      "source_priority": 8,
+      "source_priority_tier": "supplementary",
+      "engagement": {},
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "SDAD: Spec-Driven Agentic Development for the AI-Native SDLC",
+      "description": "arXiv:2608.20341v1 Announce Type: new \nAbstract: Frontier coding agents backed by large language models with context windows from hundreds of thousands to millions of tokens are restructuring the Software Development Life Cycle (SDLC). Rich context handling and multi-step reasoning now allow substantial Functional Requirement Documents (FRDs) and repository context to be ingested in a single workflow, making specification quality the execution fuel for autonomous delivery. This report formalises Spec-Driven Agentic Development (SDAD) as a synthesis of disciplined up-front formalisation and high-velocity implementation: intent capture, machine-readable specification, agentic synthesis, and independent multi-agent verification under human sign-off. We revisit the historical pendulum between Waterfall and Agile, introduce AI-code as a fourth production paradigm, and compare Human-Agile (circa 2020) with Agentic-SDAD (circa 2026) across artefacts, cadence, accountability, and security posture. Beyond process description, we extend the model to team role metamorphosis (engineer, QA, platform, and product functions), quantitative governance (Ambiguity Tax, Spec Fidelity, SER, and TCI_agentic with repair multiplier phi), and pragmatic adoption via hybrid estimation and a staged migration blueprint. Industrial and research evidence on AI-augmented testing and verification is integrated to motivate separation between synthesis and release authority. Overall, the paper argues that agentic speed does not eliminate engineering discipline; it relocates discipline upstream into specification precision, explicit gates, and auditable provenance.",
+      "source_url": "https://arxiv.org/abs/2608.20341",
+      "source_type": "rss",
+      "published_at": "Mon, 24 Aug 2026 00:00:00 -0400",
+      "captured_at": "2026-08-24T16:28:58+00:00",
+      "source_priority": 9,
+      "source_priority_tier": "supplementary",
+      "engagement": {},
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "用小米这款显示器的注意，周六晚上烧了.",
+      "description": "",
+      "source_url": "https://www.v2ex.com/t/1236662",
+      "source_type": "v2ex",
+      "published_at": "1787532095",
+      "captured_at": "2026-08-24T16:28:58+00:00",
+      "source_priority": 10,
+      "source_priority_tier": "supplementary",
+      "engagement": {
+        "replies": 177
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "上个月我发过这条：ChatGPT 网页聊天和 Codex 是两块分开的额度。\n\n但当时我只跑通了一个很笨的办法：\n\nCodex 打包任务 → 我手动丢给网页 ChatGPT → 它做完 → 再搬回本地编译测试。\n\n它证明了 Chat 里确实还有另一桶额度，却没有真正解决问题：ChatGPT 自己碰不到电脑，派发、搬运和验收仍然要靠 Codex，交接本身继续烧 Codex 额度。\n\n今天这个缺口终于补上了。\n\n现在 Codex / Work 的额度用完后，我可以直接在普通 ChatGPT 聊天窗口里，让它继续操作本地电脑干活：\n\n- 读本地文件\n- 改文件\n- 跑命令\n- 跑测试\n- 验证结果\n\n这条链路走的是 Chat 这边的可用额度，不需要再把代码和结果人工搬来搬去。\n\n这个想法来自两条线索。\n\n昨天另一条额度帖的评论区里，@studyouwei 提到：他用 DevSpace 把本地目录接到了 ChatGPT Chat，相当于用 Chat 的额度搞 coding。\n\n差不多同一时间，微信群里有群友提到了 MCPX。\n\n我把两条线索合起来，自己跑了一遍。通了。\n\n最小实现是：\n\n1. 在自己的电脑上运行 MCPX，只登记准备交给 AI 工作的项目目录\n2. 给本地 MCPX 配一个 HTTPS + 鉴权的 Remote MCP 入口，不要裸开端口\n3. 在 ChatGPT 设置里创建或启用 custom MCP app\n4. 绑定 Workspace；需要跨聊天持续接力，再使用 Remote Session\n5. 回到普通 ChatGPT 对话，直接让它 read / edit / execute / verify\n\n这篇稿子本身，就是用这条链路完成的。\n\n它在这个普通 ChatGPT 对话里回查旧帖和旧视频、更新本地稿件、再跑验证。不是演示，是真的在继续工作。\n\n照抄之前，先看三个边界：\n\n第一，先确认你的 ChatGPT 设置里有没有 custom MCP 入口。不同账户和 rollout 可能不一样。\n\n第二，Workspace 约束的是文件工具，不代表 execute 天然只能看这个目录。命令权限要单独卡。\n\n第三，公网入口必须有 HTTPS 和鉴权。资金、账号、凭证、公开发布、部署、生产等动作，继续单独确认。\n\n所以这次和上个月最大的区别很简单：\n\n上次只是发现 Chat 里还有一桶额度。\n这次终于把这桶额度接到了电脑上，能直接完成真实工作。\n\nCodex / Work 额度用完后，不一定只能买号或者等重置。\n\n至少现在，我还能换到普通 ChatGPT 对话里，接着干。\n\nhttps://t.co/kcD5Td7R4m",
+      "description": "",
+      "source_url": "https://x.com/i/web/status/2090442625820356780",
+      "source_type": "twitter",
+      "published_at": "",
+      "captured_at": "2026-08-24T16:28:58+00:00",
+      "source_priority": 1,
+      "source_priority_tier": "primary_global",
+      "engagement": {
+        "like_count": 0,
+        "retweet_count": 0
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "AI知识库RAG技术原理，三大痛点，与进阶方案【不用编程】#ai #MCP#科技 #计算机",
+      "description": "技术爬爬虾  TechShrimp",
+      "source_url": "https://www.youtube.com/watch?v=p1AwNrOWTRQ",
+      "source_type": "youtube",
+      "published_at": "",
+      "captured_at": "2026-08-24T16:28:58+00:00",
+      "source_priority": 3,
+      "source_priority_tier": "primary_global",
+      "engagement": {
+        "like_count": 0,
+        "view_count": 58511
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "nvim中使用AI coding agent插件sidekick.nvim",
+      "description": "nvim使用AI coding agent插件sidekick.nvim 这个插件基本各家的cli都支持 claude code，codex，opencode，gemini等等。\n给大家演示一下，我平时在开发时是怎样使用的。\n\n我的配置：\nhttps://github.com/nicholasxjy/dotfiles/blob/main/nvim/lua/plugins/sidekick.lua",
+      "source_url": "http://www.bilibili.com/video/av116390946149720",
+      "source_type": "bilibili",
+      "published_at": "2026-04-12T09:22:10+00:00",
+      "captured_at": "2026-08-24T16:28:58+00:00",
+      "source_priority": 6,
+      "source_priority_tier": "primary_domestic",
+      "engagement": {
+        "play": 1031,
+        "favorites": 16,
+        "like": 17
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "Windows On ARM 原生应用少？你可以试试这些改造方法",
+      "description": "相比大家熟知的基于Intel或AMD处理器的传统x86架构Windows，不少人以为WindowsonARM是近几年的新产物。事实上，微软早在2012年就曾通过WindowsRT尝试探索ARM设备，但 ...<a href=\"https://sspai.com/prime/story/create-your-own-windows-apps\" target=\"_blank\">查看全文</a><p>本文为会员文章，出自<a href=\"https://sspai.com/prime/precog/single\" target=\"_blank\">《单篇文章》</a >，订阅后可阅读全文。</p >",
+      "source_url": "https://sspai.com/prime/story/create-your-own-windows-apps",
+      "source_type": "domestic_rss",
+      "published_at": "Mon, 24 Aug 2026 16:28:26 +0800",
+      "captured_at": "2026-08-24T16:28:58+00:00",
+      "source_priority": 8,
+      "source_priority_tier": "supplementary",
+      "engagement": {},
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "PrimeAgentOrchestrator: Memory-Primed Agent Spawning for Personal AI Infrastructure",
+      "description": "arXiv:2608.20342v1 Announce Type: new \nAbstract: Large language model (LLM) coding agents start each session with an empty context window, discarding accumulated knowledge from prior work. We present PrimeAgentOrchestrator (PAO), a system that spawns new instances of Claude Code -- Anthropic's terminal-based coding agent -- pre-loaded with relevant memories compiled from the user's existing personal databases. At spawn time, PAO queries two independently-operated memory backends in parallel (a PostgreSQL entity-observation database and a Cloudflare Worker semantic search index), fuses results using backend-specific retrieval strategies, and delivers the compiled briefing via filesystem injection that exploits the host agent's configuration auto-read behavior. PAO manages the full agent lifecycle including trust pre-seeding, readiness polling with error detection, and adaptive terminal text injection. We report on four months of regular deployment (December 2025 through March 2026) as an experience report, documenting three generations of context delivery mechanisms, the failure modes that motivated each redesign, and the engineering tradeoffs of bridging heterogeneous memory systems rather than building a unified one.",
+      "source_url": "https://arxiv.org/abs/2608.20342",
+      "source_type": "rss",
+      "published_at": "Mon, 24 Aug 2026 00:00:00 -0400",
+      "captured_at": "2026-08-24T16:28:58+00:00",
+      "source_priority": 9,
+      "source_priority_tier": "supplementary",
+      "engagement": {},
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "周末回了躺老家，两件小事打破了县城低价养老的幻想",
+      "description": "",
+      "source_url": "https://www.v2ex.com/t/1236691",
+      "source_type": "v2ex",
+      "published_at": "1787538609",
+      "captured_at": "2026-08-24T16:28:58+00:00",
+      "source_priority": 10,
+      "source_priority_tier": "supplementary",
+      "engagement": {
+        "replies": 172
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "20岁大四学生，用10天Vibe Coding手搓出来的开源项目：MiroFish，连续3天霸占GitHub Trending榜单前列，目前Star数已狂飙至8.3k，且还在持续增长中。  \n\n盛大创始人陈天桥看了Demo后，24小时内当场拍板注资3000万。 \n\n它是一个「预测万物」的 AI 仿真沙盘。只要丢给它一段新闻、政策或金融信号，它会自动生成成千上万个具备独立人格的 AI Agent，直接推演出未来的发展方向。 \n\n当你还在靠人工收集数据、靠经验做判断时，此项目已经开始用成千上万个 agent替自己预演未来了。  \n\n仓库地址：https://t.co/0Einknjq3V",
+      "description": "",
+      "source_url": "https://x.com/i/web/status/2030945915452916218",
+      "source_type": "twitter",
+      "published_at": "",
+      "captured_at": "2026-08-24T16:28:58+00:00",
+      "source_priority": 1,
+      "source_priority_tier": "primary_global",
+      "engagement": {
+        "like_count": 0,
+        "retweet_count": 0
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "AI Explained in 10 Minutes: Prompt, Agent, MCP & Function Calling",
+      "description": "程序员老王",
+      "source_url": "https://www.youtube.com/watch?v=1UQ8uz4kuIc",
+      "source_type": "youtube",
+      "published_at": "",
+      "captured_at": "2026-08-24T16:28:58+00:00",
+      "source_priority": 3,
+      "source_priority_tier": "primary_global",
+      "engagement": {
+        "like_count": 0,
+        "view_count": 260139
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "2026年AI前沿部署工程师（FDE）入门到就业完整版教程：核心技能+实战指南+面试题解析",
+      "description": "当整个AI行业都在内卷大模型参数、算法精度、通用模型微调时，真正能落地赚钱、帮企业降本增效的从业者，早已聚焦解决核心问题：如何把AI技术真正落地到生产车间、线下柜台、医疗病历、政企办公等真实业务场景。\n\nFDE（前沿部署工程师），正是当下AI产业最稀缺的角色——负责把实验室里的AI Demo，转化为企业可复用、可盈利、可量产的真实生产力。",
+      "source_url": "http://www.bilibili.com/video/av117054065608369",
+      "source_type": "bilibili",
+      "published_at": "2026-08-07T12:21:55+00:00",
+      "captured_at": "2026-08-24T16:28:58+00:00",
+      "source_priority": 6,
+      "source_priority_tier": "primary_domestic",
+      "engagement": {
+        "play": 21504,
+        "favorites": 1403,
+        "like": 417
+      },
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "AI 助力改造非智能升降桌：智能升降、语音控制、多端联动……",
+      "description": "把非智能的双电机升降桌，改成我梦想中的智能升降中枢。<a href=\"https://sspai.com/post/113563\" target=\"_blank\">查看全文</a>",
+      "source_url": "https://sspai.com/post/113563",
+      "source_type": "domestic_rss",
+      "published_at": "Mon, 24 Aug 2026 15:14:08 +0800",
+      "captured_at": "2026-08-24T16:28:58+00:00",
+      "source_priority": 8,
+      "source_priority_tier": "supplementary",
+      "engagement": {},
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "Truth Lies Deep: Countering Semantic Camouflage via Latent Intent Verification",
+      "description": "arXiv:2608.20378v1 Announce Type: new \nAbstract: Safety alignment in Large Language Models (LLMs) is often superficial, relying on refusal mechanisms that trigger only at the final stages of generation without erasing the foundational knowledge of harmful concepts acquired during pretraining. This study demonstrates that this architectural disconnect leaves models vulnerable to Semantic Camouflage -- adversarial attacks that wrap harmful intent in benign narrative contexts (e.g., creative writing), effectively bypassing standard input and output guardrails. By analyzing the latent activation trajectories of three distinct Small Language Model (SLM) families (Phi-3, Qwen2.5, and Gemma-2b) under adversarial stress, this research identifies a universal ``Intent Horizon'' -- a critical depth (typically 15--20\\% of total layers) where the model's distinct, pre-trained representation of harmful intent collapses as it contextualizes the query into a ``safe'' narrative. Results indicate that while late-layer representations of camouflaged attacks are mathematically indistinguishable from safe queries (Detection Rate $< 20\\%$), early-layer representations retain a distinct, detectable ``harm signature.'' Leveraging this insight, this paper proposes Latent Intent Verification (LIV), a lightweight probing defense. Experiments on the PKU-SafeRLHF dataset demonstrate that LIV outperforms standard guardrails by a margin of 20--50\\% across all tested architectures, effectively neutralizing zero-day semantic attacks without requiring model retraining.",
+      "source_url": "https://arxiv.org/abs/2608.20378",
+      "source_type": "rss",
+      "published_at": "Mon, 24 Aug 2026 00:00:00 -0400",
+      "captured_at": "2026-08-24T16:28:58+00:00",
+      "source_priority": 9,
+      "source_priority_tier": "supplementary",
+      "engagement": {},
+      "status": "verified-live-candidate"
+    },
+    {
+      "title": "我今年 45，我以为我已经见过了世界，直到今天我用了一次汇丰的网银",
+      "description": "",
+      "source_url": "https://www.v2ex.com/t/1236750",
+      "source_type": "v2ex",
+      "published_at": "1787541983",
+      "captured_at": "2026-08-24T16:28:58+00:00",
+      "source_priority": 10,
+      "source_priority_tier": "supplementary",
+      "engagement": {
+        "replies": 142
+      },
+      "status": "verified-live-candidate"
+    }
+  ],
+  "warnings": [
+    "这是来源聚合候选，不代表所有平台热度相同；正式文案仍需完成事实与账号相关性核验。",
+    "部分主源不可用；未用补充来源替代，详见 required_source_failures/source_tier_health。"
+  ],
+  "required_sources": [
+    "twitter",
+    "github",
+    "youtube",
+    "douyin",
+    "xhs",
+    "bilibili",
+    "weibo"
+  ],
+  "required_source_failures": [
+    {
+      "source": "github",
+      "status": "empty",
+      "error": "source returned no usable candidates"
+    },
+    {
+      "source": "xhs",
+      "status": "error",
+      "error": "opencli: Command '['C:\\\\Users\\\\Administrator\\\\AppData\\\\Roaming\\\\npm\\\\opencli.CMD', 'xiaohongshu', 'search', 'AI 工程 项目 部署 Agent RAG Vibe Coding', '-f', 'yaml']' timed out after 12 seconds; xhs: Command '['C:\\\\Users\\\\Administrator\\\\.local\\\\bin\\\\xhs.EXE', 'search', 'AI 工程 项目 部署 Agent RAG Vibe Coding', '--sort', 'latest', '--json']' timed out after 8 seconds; xhs: Command '['C:\\\\Users\\\\Administrator\\\\.local\\\\bin\\\\xhs.EXE', 'hot', '--json']' timed out after 6 seconds; public Explore SSR: public Explore page has no SSR state"
+    }
+  ],
+  "required_sources_ok": false,
+  "source_tier_health": {
+    "primary_global": {
+      "sources": [
+        "twitter",
+        "github",
+        "youtube"
+      ],
+      "ok_sources": [
+        "twitter",
+        "youtube"
+      ],
+      "failed_sources": [
+        {
+          "source": "github",
+          "status": "empty",
+          "error": "source returned no usable candidates"
+        }
+      ],
+      "complete": false
+    },
+    "primary_domestic": {
+      "sources": [
+        "douyin",
+        "xhs",
+        "bilibili",
+        "weibo"
+      ],
+      "ok_sources": [
+        "douyin",
+        "bilibili",
+        "weibo"
+      ],
+      "failed_sources": [
+        {
+          "source": "xhs",
+          "status": "error",
+          "error": "opencli: Command '['C:\\\\Users\\\\Administrator\\\\AppData\\\\Roaming\\\\npm\\\\opencli.CMD', 'xiaohongshu', 'search', 'AI 工程 项目 部署 Agent RAG Vibe Coding', '-f', 'yaml']' timed out after 12 seconds; xhs: Command '['C:\\\\Users\\\\Administrator\\\\.local\\\\bin\\\\xhs.EXE', 'search', 'AI 工程 项目 部署 Agent RAG Vibe Coding', '--sort', 'latest', '--json']' timed out after 8 seconds; xhs: Command '['C:\\\\Users\\\\Administrator\\\\.local\\\\bin\\\\xhs.EXE', 'hot', '--json']' timed out after 6 seconds; public Explore SSR: public Explore page has no SSR state"
+        }
+      ],
+      "complete": false
+    },
+    "supplementary": {
+      "sources": [
+        "domestic_rss",
+        "rss",
+        "v2ex"
+      ],
+      "ok_sources": [
+        "domestic_rss",
+        "rss",
+        "v2ex"
+      ],
+      "failed_sources": [],
+      "complete": true
+    }
+  },
+  "collection_gate": "passed-with-primary-source-warnings",
+  "agent_reach": {
+    "adapter": "agent-reach",
+    "root": null,
+    "executable": "D:\\Projects\\codex\\Agent-Reach\\.venv\\Scripts\\agent-reach.EXE",
+    "available": true,
+    "network_verified": false,
+    "doctor_run": false
+  }
+}

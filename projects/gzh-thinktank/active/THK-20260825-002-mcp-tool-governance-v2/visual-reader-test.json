@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "contract": "visual-reader-test-v1",
+  "status": "pending-human",
+  "review_mode": "blind-reader-packet",
+  "reviewer_id": "user-authorized-direct-execution",
+  "created_at": "2026-08-24T23:03:38.753919+00:00",
+  "article": "THK-20260825-002-mcp-tool-governance-v2",
+  "article_sha256": "6c649748ab9537759fef35e286a762ca195de7e0ae22f3e36021eabfd9b5e35f",
+  "visual_contract_sha256": "5e6811dbdf116a671ea7a51a388340c07e87a4eb3f66453aca418d4a31a5e8d4",
+  "visual_depth_review_sha256": "d96d9d00842ac07b2dca99ed884d67fbad7dd3395e9700df6403cc3c638717ee",
+  "sample_size": 0,
+  "question_count": 5,
+  "threshold": {
+    "min_score": 3,
+    "max_score": 4,
+    "all_questions_correct": true
+  },
+  "experiment_design": {
+    "type": "three-arm-visual-deletion-test",
+    "conditions": [
+      "no_visual",
+      "current_visual",
+      "deep_visual"
+    ],
+    "primary_outcome": "mean_score_by_condition",
+    "secondary_outcome": "answer_time_seconds",
+    "pre_registered_threshold": "deep_visual mean_score >= no_visual mean_score + 0.5 and >= 3.0",
+    "status": "pre-registered-packet",
+    "note": "未提供真人回答时不得推断信息增益；current_visual 是当前产物，deep_visual 是改版候选条件。"
+  },
+  "mean_score": null,
+  "mean_score_by_condition": {},
+  "questions": [
+    {
+      "question_id": "q-01",
+      "unit_id": "body-01",
+      "prompt": "读者能否根据这张图回答：解释“一、能调用工具，不等于能安全上线”中最重要的一条因果或结构关系？",
+      "expected_answer": "解释“一、能调用工具，不等于能安全上线”中最重要的一条因果或结构关系",
+      "scoring_rubric": {
+        "4": "准确指出实体、关系类型和条件，并能回答 expected_answer",
+        "3": "回答核心机制，允许一个次要遗漏",
+        "2": "只复述名词或顺序，未说明机制",
+        "1": "与图/正文无关或明显错误",
+        "0": "无法回答"
+      },
+      "claim_ids": [
+        "claim-governance-synthesis"
+      ],
+      "blind": true
+    },
+    {
+      "question_id": "q-02",
+      "unit_id": "body-02",
+      "prompt": "读者能否根据这张图回答：呈现“二、MCP的新边界：请求本身要能被治理”中节点、状态与流转关系？",
+      "expected_answer": "呈现“二、MCP的新边界：请求本身要能被治理”中节点、状态与流转关系",
+      "scoring_rubric": {
+        "4": "准确指出实体、关系类型和条件，并能回答 expected_answer",
+        "3": "回答核心机制，允许一个次要遗漏",
+        "2": "只复述名词或顺序，未说明机制",
+        "1": "与图/正文无关或明显错误",
+        "0": "无法回答"
+      },
+      "claim_ids": [
+        "claim-mcp-stateless-boundary"
+      ],
+      "blind": true
+    },
+    {
+      "question_id": "q-03",
+      "unit_id": "body-03",
+      "prompt": "读者能否根据这张图回答：用可运行代码（默认 PyTorch 实战，基础版可用 NumPy 直觉）复现「四、显式许可：让工具调用先过一道看得见的门」的核心公式或算法，控制在前 40 行内？",
+      "expected_answer": "用可运行代码（默认 PyTorch 实战，基础版可用 NumPy 直觉）复现「四、显式许可：让工具调用先过一道看得见的门」的核心公式或算法，控制在前 40 行内",
+      "scoring_rubric": {
+        "4": "准确指出实体、关系类型和条件，并能回答 expected_answer",
+        "3": "回答核心机制，允许一个次要遗漏",
+        "2": "只复述名词或顺序，未说明机制",
+        "1": "与图/正文无关或明显错误",
+        "0": "无法回答"
+      },
+      "claim_ids": [
+        "claim-anthropic-explicit-permissions"
+      ],
+      "blind": true
+    },
+    {
+      "question_id": "q-04",
+      "unit_id": "body-04",
+      "prompt": "读者能否根据这张图回答：呈现“五、最小可复现实践：用三个工具跑通治理闭环”从入口到运行时与持久化的系统边界？",
+      "expected_answer": "呈现“五、最小可复现实践：用三个工具跑通治理闭环”从入口到运行时与持久化的系统边界",
+      "scoring_rubric": {
+        "4": "准确指出实体、关系类型和条件，并能回答 expected_answer",
+        "3": "回答核心机制，允许一个次要遗漏",
+        "2": "只复述名词或顺序，未说明机制",
+        "1": "与图/正文无关或明显错误",
+        "0": "无法回答"
+      },
+      "claim_ids": [
+        "claim-governance-synthesis"
+      ],
+      "blind": true
+    },
+    {
+      "question_id": "q-05",
+      "unit_id": "body-05",
+      "prompt": "读者能否根据这张图回答：呈现“七、结语：治理的对象是下一步动作”从入口到运行时与持久化的系统边界？",
+      "expected_answer": "呈现“七、结语：治理的对象是下一步动作”从入口到运行时与持久化的系统边界",
+      "scoring_rubric": {
+        "4": "准确指出实体、关系类型和条件，并能回答 expected_answer",
+        "3": "回答核心机制，允许一个次要遗漏",
+        "2": "只复述名词或顺序，未说明机制",
+        "1": "与图/正文无关或明显错误",
+        "0": "无法回答"
+      },
+      "claim_ids": [
+        "claim-governance-synthesis"
+      ],
+      "blind": true
+    }
+  ],
+  "responses": [],
+  "approval": {
+    "contract": "",
+    "approval_event_id": "",
+    "reviewer_id": "",
+    "signed_by": "",
+    "signed_at": "",
+    "errors": []
+  },
+  "note": "pending-human 是未完成的读者测试包；不得解释为真人或多模态审美批准。"
+}

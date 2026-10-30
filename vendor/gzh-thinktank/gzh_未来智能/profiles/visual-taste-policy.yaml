@@ -1,0 +1,53 @@
+schema_version: 1
+contract: visual-taste-policy-v1
+description: "公众号视觉高级感的可审计审美门禁；结构启发式先拦硬缺陷，最终必须有真人逐图确认。"
+review_mode: blocking-pending-human
+min_layout_families: 2
+min_backend_families: 2
+min_cognitive_roles: 2
+max_same_canvas_ratio: 1.0
+max_same_layout_run: 2
+required_art_direction_fields:
+  - schema_version
+  - owner
+  - visual_thesis
+  - palette
+  - material_language
+  - layout_families
+  - anti_patterns
+  - data_egress
+  - source_visual_brief_sha256
+score_axes:
+  focal_hierarchy: "0-4; 是否有明确主焦点与次级信息层"
+  composition_tension: "0-4; 是否避免对称卡片网格与等权节点"
+  material_depth: "0-4; 纸张/线稿/色块/留白是否形成材质层"
+  metaphor_isomorphism: "0-4; 视觉结构是否映射读者要理解的关系"
+  mobile_legibility: "0-4; 390px 下标题、标签和主路径是否可读"
+  template_repetition: "0-4; 与同篇其它图的结构重复程度（越高越好）"
+blocking_after_calibration: true
+rubric_version: visual-taste-rubric-v1
+score_anchors:
+  focal_hierarchy:
+    "0": "无主焦点；读者无法判断先看什么"
+    "2": "有主焦点但层级弱；次要信息与主路径竞争"
+    "4": "主路径、次级证据和收束动作清晰分层"
+  composition_tension:
+    "0": "等权卡片或线段堆叠，关系不成组"
+    "2": "有分组但仍存在无意义对称或长绕线"
+    "4": "布局服务关系，端口、留白和阅读方向明确"
+  material_depth:
+    "0": "纯默认模板，缺少材质和节奏"
+    "2": "有色板/线条变化，但只形成装饰"
+    "4": "色、线、纸面、留白共同强化认知层级"
+  metaphor_isomorphism:
+    "0": "视觉元素与读者问题无对应关系"
+    "2": "主题相关但关系仍需正文补足"
+    "4": "图中结构本身即可回答核心关系问题"
+  mobile_legibility:
+    "0": "390px 下文字或路径不可读"
+    "2": "主标题可读，细节需要放大"
+    "4": "主路径、标签和结论在 390px 下均可读"
+  template_repetition:
+    "0": "与同篇图完全同构"
+    "2": "局部变化但仍共享大量布局骨架"
+    "4": "每张图的构图族与认知角色相匹配且不重复"

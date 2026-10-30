@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "contract": "claim-verification-v1",
+  "verifier": "verify_claims.py",
+  "verifier_version": "1.0.0",
+  "status": "passed",
+  "verified_at": "2026-08-24T22:38:14.938587+00:00",
+  "sources_digest": "965900fe427a6e2de3c28864e1293f894aa8c325246bf73c2bfb8330bda33e76",
+  "claims_digest": "f7498a8bfb1b0ba4e793fcab4f48e956202cd7e10fbf7f86fe8660efdddcce30",
+  "records": [
+    {
+      "claim_id": "claim-mcp-stateless-boundary",
+      "status": "passed",
+      "source_ids": [
+        "mcp-spec-20260728"
+      ],
+      "errors": [],
+      "verified_by": "verify_claims.py"
+    },
+    {
+      "claim_id": "claim-dogwood-temporal-authorization",
+      "status": "passed",
+      "source_ids": [
+        "dogwood-guide"
+      ],
+      "errors": [],
+      "verified_by": "verify_claims.py"
+    },
+    {
+      "claim_id": "claim-anthropic-explicit-permissions",
+      "status": "passed",
+      "source_ids": [
+        "anthropic-claude-code-mcp-permissions"
+      ],
+      "errors": [],
+      "verified_by": "verify_claims.py"
+    },
+    {
+      "claim_id": "claim-mcp-clientinfo-security-boundary",
+      "status": "passed",
+      "source_ids": [
+        "mcp-schema-clientinfo-20260728"
+      ],
+      "errors": [],
+      "verified_by": "verify_claims.py"
+    },
+    {
+      "claim_id": "claim-mcp-streamable-header-scope",
+      "status": "passed",
+      "source_ids": [
+        "mcp-streamable-http-headers-20260728"
+      ],
+      "errors": [],
+      "verified_by": "verify_claims.py"
+    },
+    {
+      "claim_id": "claim-mcp-transport-authorization",
+      "status": "passed",
+      "source_ids": [
+        "mcp-authorization-20260728"
+      ],
+      "errors": [],
+      "verified_by": "verify_claims.py"
+    },
+    {
+      "claim_id": "claim-mcp-mrtr",
+      "status": "passed",
+      "source_ids": [
+        "mcp-release-mrtr-20260728"
+      ],
+      "errors": [],
+      "verified_by": "verify_claims.py"
+    },
+    {
+      "claim_id": "claim-dogwood-production-boundary",
+      "status": "passed",
+      "source_ids": [
+        "dogwood-readme"
+      ],
+      "errors": [],
+      "verified_by": "verify_claims.py"
+    },
+    {
+      "claim_id": "claim-governance-synthesis",
+      "status": "passed",
+      "source_ids": [
+        "mcp-spec-20260728",
+        "mcp-authorization-20260728",
+        "mcp-release-mrtr-20260728",
+        "mcp-schema-clientinfo-20260728",
+        "mcp-streamable-http-headers-20260728",
+        "dogwood-guide",
+        "dogwood-readme",
+        "anthropic-claude-code-mcp-permissions"
+      ],
+      "errors": [],
+      "verified_by": "verify_claims.py"
+    }
+  ],
+  "errors": [],
+  "semantic_truth_check": "not_performed"
+}

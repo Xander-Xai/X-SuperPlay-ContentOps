@@ -1,0 +1,23 @@
+[
+  {
+    "stage": "07-conversion-loop",
+    "decision": "content_to_keyword_reply_to_lead_magnet_to_human_diagnosis",
+    "channel": "wechat_article",
+    "reply_keyword": "架构",
+    "lead_magnet": "本期主题的可复用图解与检查清单",
+    "confirmed_by": "user",
+    "confirmed_at": "2026-08-09",
+    "status": "confirmed"
+  },
+  {
+    "stage": "07-conversion-loop",
+    "decision": "build_role_demand_signal_to_project_validation",
+    "channel": "wechat_article",
+    "signals": ["怎么实现？", "有源码吗？", "能不能部署？", "可以帮我做吗？", "多少钱？"],
+    "lead_magnet": "本期项目的可复现清单、部署步骤与验收模板",
+    "next_step": "人工项目诊断、Code Review、部署支持或产品化验证",
+    "confirmed_by": "workflow-adaptation",
+    "confirmed_at": "2026-08-24",
+    "status": "active"
+  }
+]

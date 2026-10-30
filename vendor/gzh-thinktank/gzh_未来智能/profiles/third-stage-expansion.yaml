@@ -1,0 +1,58 @@
+schema_version: 1
+stage: third_stage_local_expansion
+status: active_local_only
+account: thinktank
+activated:
+  - skill: topic-integrity
+    path: scripts/topic_integrity.py
+    role: mandatory-topic-boundary-and-drift-gate
+    outputs:
+      - topic-contract.yaml
+      - topic-cluster.md
+      - content-calendar.md
+      - topic-integrity.json
+  - skill: content-strategy
+    path: skills/content-strategy
+    role: pre-topic-strategy
+    outputs:
+      - topic-cluster.md
+      - content-calendar.md
+  - skill: opc-conversion-loop
+    path: skills/opc-conversion-loop
+    role: confirmed-conversion-architecture
+    outputs:
+      - opc-doc/outputs/07-conversion-loop/channel-strategy.md
+      - opc-doc/outputs/07-conversion-loop/content-plan.md
+      - opc-doc/outputs/07-conversion-loop/conversion-path.md
+  - skill: wechat-card-qrcode
+    path: skills/wechat-card-qrcode
+    role: conversion-asset-template
+    status: template_pending_official_qr_url
+available_opt_in_adapters:
+  - skill: z5-wechat-sop
+    path: skills/z5-wechat-sop
+    requires: final_reviewed
+    guard: media_guard
+    status: registry-enabled-opt-in
+  - skill: wechat-publisher
+    path: skills/wechat-publisher
+    requires: final_reviewed
+    guard: media_guard
+    status: local-cli-fallback-opt-in
+  - skill: content-repurposer
+    path: skills/content-repurposer
+    requires: final_reviewed
+    guard: media_guard
+    status: derivative-only-opt-in
+deferred:
+  - skill: wemp-operator
+    reason: external source adapter requires real post-publish metrics
+  - skill: agnes-image-21-flash
+    reason: external provider remains opt-in; local deterministic fallback is active
+  - skill: content-repurposer
+    reason: derivative media remains deferred until final_reviewed and media_guard; registry opt-in is available
+evidence_boundary:
+  publish_state: final_reviewed
+  draft_readback: pending_ip_whitelist
+  t1_t7_metrics: not_available
+  note: "Third-stage local assets are active; no external publish state is inferred."

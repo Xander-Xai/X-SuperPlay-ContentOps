@@ -1,0 +1,18 @@
+schema_version: 1
+status: confirmed
+content_medium: wechat_article
+sequence:
+- topic_route
+- account_route
+topic_route:
+  mode: hotspot
+  topic: MCP工具调用生产治理：Agent权限、审批、审计与回滚
+  reference: production/registry/hotspot-mcp-20260825.json
+  selected_skill: gzh-topic-research
+  routed_at: '2026-08-24T16:44:01.960373+00:00'
+account_route:
+  account: thinktank
+  display_name: X超玩•未来智能
+  routed_at: '2026-08-24T16:44:01.960373+00:00'
+operator: codex
+confirmed_at: '2026-08-24T16:44:01.960373+00:00'

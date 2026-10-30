@@ -1,0 +1,34 @@
+schema_version: 1
+description: "公众号内容生产的顺序门禁；任何阶段失败都不得推进或调用发布器。"
+advance_command: "python scripts/workflow_gate.py --article <article_dir> --stage <stage> --advance"
+stages:
+  - id: environment_ready
+    label: 环境与账号就绪
+    required: ".aws-article/config.yaml + routing.yaml（选题路由 → 账号路由）+ content_medium: wechat_article + capability-profile.json + 实际选用外部内容能力所需的仓库外凭证 + 预设目录/种子；微信凭证与 token preflight 只在 draft_submitted 校验"
+  - id: topic_selected
+    label: 选题确认
+    required: "topic-card.md + topic-contract.yaml + topic-cluster.md + content-brief.yaml + seo-report.json + article.yaml；主题母题、范围、锚点词、子题回链、偏题阈值、审批记录、账号、读者、关键词、传播角度、核心判断、CTA、risk_level 和 human_review_required 齐全，标题长度与 SEO 分数合规；新工作区的 cta-contract.json 必须与 content-brief.yaml 一致；若 user_material 引用 handoff-card.md，必须通过 handoff-contract-v1"
+  - id: research_complete
+    label: 调研与实测完成
+    required: "research.md + sources.json + source-verification.json + evidence-plan.json + source-evidence.json + evidence-provenance.json + evidence-lineage.json + topic-evidence-isolation.json：来源/本地复现证据、逐主张—逐证据单元映射、标题、检索时间、版本/环境、复现命令、限制；可信来源分级、至少一个真实摘录/截图/代码/快照证据单元、授权与 SHA-256；每次审计生成 content-addressed pack_sha256 与离线 run/job/material/product 血缘回执，明确只证明完整性不证明真人身份；证据计划必须绑定当前 topic-contract 指纹并逐项通过主题命中/残留文件检查；文本本地证据使用 hash_mode: canonical-text"
+  - id: research_reviewed
+    label: 研究来源审查通过
+    required: "source-review.json：对 sources.json 中每个来源逐条提取摘要/短摘录并记录定位、主题匹配（direct/adjacent/background/none）、include/conditional/exclude 决策、支持范围、局限、claim 映射和审查理由；sources_digest 与 topic_fingerprint 必须绑定当前研究输入；正文采用的来源只能是 included/conditional，metadata-only 或 excluded 来源不得进入 evidence-plan/claims；该门禁只证明相关性与范围审查，不替代高风险事实的人审"
+  - id: draft_complete
+    label: 初稿完成
+    required: "draft.md + content-revision.json：按账号字数、章节、账号结构和封面/认知锚点图片占位要求；新稿/复用稿、规范化来源哈希和改动说明齐全"
+  - id: content_reviewed
+    label: 内容审稿通过
+    required: "article.md + content-revision.json(final_digest) + review-report.md + review-checks.json + review-evidence.json + content-truth-qa.json + ai-disclosure.yaml；结构化记录审稿人、时间、内容/事实/合规/校对/去 AI 味检查；步骤数、安装依赖、硬阈值和绝对化主张必须通过内容真实性检查，并阻断内部路径或凭证标记"
+  - id: formatted
+    label: 微信排版通过
+    required: "article.html + format-report.json（绑定当前 article.md/article.html 哈希）+ 严格 HTML 校验 0 ERROR/0 WARNING"
+  - id: illustrated
+    label: 配图与素材通过
+    required: "visual-brief.yaml + image-plan.md + visual-director-plan.json + image-generation-plan.json + img_analysis.md + image-sources.json + visual-contract.json + visual-semantic-review.json + visual-content-qa.json + visual-depth-review.json + visual-route-consistency.json + visual-run-manifest.jsonl + visual-taste-review.json + vision-review.json（必须记录 vision-skill-v1 路由并绑定每张图的 image_sha256、reader_job、实际 native/external/human 审查能力、对比度和可读性；每个素材 origin/source/license/SHA-256；生成素材还要有 provider/model/method/prompt/request 指纹；requested/selected/execution 后端必须跨合同、路由、计划、台账一致；关系/流程/架构图必须有可见节点和箭头，比较图必须有两组或表格，代码图必须有代码结构，清单必须有可勾选结构；visual-depth-contract-v1 对所有正文技术图强制生效；关系图必须通过 geometry-contract-v1；正文画布必须通过 background-contract-v1；源 SVG/HTML/Excalidraw 不得有重复属性、未解析 CSS 变量、脚本、事件处理器或外部引用；最终 PNG 必须通过 source-to-raster 等价检查且不得有浅色画布上的异常黑色连通域；重建前不得有 orphan asset；复用素材需 reuse_approved 和来源稿件）；封面已确认，图片质量、替代文本、来源、连续性、fallback 和真人逐图审美确认通过"
+  - id: final_reviewed
+    label: 终审通过
+    required: "终审门禁清单 + final-review.md（绑定正文、HTML、真实审阅者和预览哈希；高风险内容必须真人确认）+ preview-capture.json + preview-fullpage.png + preview-slices/ + Chrome/Edge 真实 390px 手机截图、全页滚动切片和 DOM 运行时检查"
+  - id: draft_submitted
+    label: 草稿提交并回读
+    required: "publish-preflight.json（含实际 token probe）+ publish-attempt.json + publish-receipt.json：权限/IP 白名单预检、自动传递 media_id、微信归一化正文指纹回读和图片数量"

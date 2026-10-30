@@ -1,27 +1,22 @@
 #!/usr/bin/env python3
-"""The WeChat workflow's durable pin: one bundle, one commit, one check.
+"""The WeChat workflow's pin: one vendored tree, one digest, one check.
 
-The Future Intelligence 公众号 workflow lives in its own repository
-(`D:\\Projects\\gzh_x未来智能`). Its local history is **divergent** from GitHub
-origin: `origin/main` is `e9303d1`, the working copy is `93645f1`, and the four
-local commits exist on no remote. So that folder is not a cache of something
-reproducible — it is the only copy, and the pattern `verify_easel_runtime.py` uses
-(compare against a live upstream tree) cannot check it.
+The Future Intelligence 公众号 workflow used to live in its own repository at
+`D:\\Projects\\gzh_x未来智能`, whose local history was **divergent** from GitHub
+origin (`origin/main` was `e9303d1`, the checkout `93645f1`). That checkout, its
+remote and the cold archive made from it are being retired, so the workflow now
+lives here, at `vendor/gzh-thinktank/gzh_未来智能`, imported verbatim.
 
-What makes it durable instead is a cold archive outside both repositories:
-`D:\\Archives\\repos\\gzh-thinktank\\2026-10-30\\gzh-thinktank.bundle`, verified at
-creation to restore a clone with an identical tree. This module records what that
-archive must reproduce and refuses a checkout that disagrees.
-
-Restore:
-
-    git clone <bundle> D:\\Projects\\gzh-Future-Intelligence
-    python scripts/gzh_pin.py --checkout D:\\Projects\\gzh-Future-Intelligence
+With the archive gone, this directory is the only copy. The pin therefore checks
+the tree's content digest — which also catches an edit made in place, the thing
+"do not edit the vendor tree" is meant to prevent. `vendor/gzh-thinktank/MANIFEST.md`
+records what retirement cost (the original's commits and the files this repository
+cannot track).
 
 Usage
 -----
     python scripts/gzh_pin.py
-    python scripts/gzh_pin.py --checkout D:\\Projects\\gzh-Future-Intelligence --json
+    python scripts/gzh_pin.py --json
 """
 
 from __future__ import annotations
@@ -76,7 +71,28 @@ def _sha256(path: Path) -> str:
 #: `vendor/gzh-thinktank/MANIFEST.md` explains what was left out and why.
 VENDORED = ROOT / "vendor" / "gzh-thinktank" / "gzh_未来智能"
 VENDORED_FILES = 667
-VENDORED_DIGEST = "39d3ee1cdc80c9a44e598586cf5199bf4a297c016d0fd82295464ca76ba48e52"
+#: The cold archive is retired: the Founder is deleting it together with the
+#: original checkout and its remote. From here the vendored tree is the only copy,
+#: and `MANIFEST.md` records what that costs (the original's commits and the twelve
+#: files this repository cannot track).
+BUNDLE_RETIRED = True
+
+VENDORED_DIGEST = "5bef4c54e8659c06e5682a0de257752391f031b7c962b5a0bc9af3ecd2ad2051"
+
+
+def _file_digest(path: Path) -> str:
+    """SHA-256 of a file's content with CRLF folded to LF.
+
+    The digest exists to catch an edit to the tree, not to police how a platform
+    checked it out. Git's ``core.autocrlf`` rewrites line endings on checkout on
+    some platforms and not others, so hashing raw bytes would let the same commit
+    pass on Linux and fail on Windows (or on a ``git archive`` extraction). Folding
+    CRLF to LF preserves the content-level guarantee — a changed line still changes
+    the digest — and makes the pin platform-independent. Line endings alone are
+    not content this pin is defending.
+    """
+    data = path.read_bytes().replace(b"\r\n", b"\n")
+    return hashlib.sha256(data).hexdigest()
 
 
 def vendored_digest(root: Path) -> tuple[int, str]:
@@ -84,8 +100,8 @@ def vendored_digest(root: Path) -> tuple[int, str]:
 
     The vendored copy is not a git checkout (the import dropped caches and the
     credential-bearing config), so a tree object cannot identify it. Hashing every
-    file's path and bytes can, and it also catches an edit made in place — which is
-    exactly what "do not edit the vendor tree" means.
+    file's path and content can, and it also catches an edit made in place — which
+    is exactly what "do not edit the vendor tree" means.
     """
     rows = []
     for path in sorted(root.rglob("*")):
@@ -96,7 +112,7 @@ def vendored_digest(root: Path) -> tuple[int, str]:
         # survive the workflow being used at all.
         if "__pycache__" in path.parts or path.suffix == ".pyc":
             continue
-        rows.append((path.relative_to(root).as_posix(), _sha256(path)))
+        rows.append((path.relative_to(root).as_posix(), _file_digest(path)))
     digest = hashlib.sha256()
     for rel, file_digest in rows:
         digest.update(rel.encode("utf-8") + b"\0" + file_digest.encode("ascii") + b"\n")
@@ -123,9 +139,16 @@ def _git(cwd: Path, *args: str):
 def _check(bundle: Path) -> List[Dict[str, Any]]:
     checks: List[Dict[str, Any]] = []
     present = bundle.is_file()
-    checks.append({"id": "bundle_present", "ok": present, "path": str(bundle)})
     if not present:
+        # The archive is being retired; the vendored tree becomes the only copy.
+        # Absence is then expected, not a failure -- but if a bundle is still
+        # there, it has to be the one this pin describes.
+        checks.append({"id": "bundle_retired", "ok": BUNDLE_RETIRED,
+                       "note": "the cold archive is retired; the vendored tree is the "
+                               "source of truth" if BUNDLE_RETIRED
+                               else "no bundle and no retirement recorded"})
         return checks
+    checks.append({"id": "bundle_present", "ok": True, "path": str(bundle)})
     checks.append({
         "id": "bundle_bytes", "ok": bundle.stat().st_size == PIN["bundle_bytes"],
         "value": bundle.stat().st_size, "expected": PIN["bundle_bytes"],
@@ -190,17 +213,24 @@ def main() -> int:
     if args.json:
         print(json.dumps(result, ensure_ascii=False, indent=2))
     else:
-        print(f"repository  {result['pin']['repo']}")
-        print(f"commit      {result['pin']['commit']}  ({result['pin']['commit_subject']})")
-        print(f"tree        {result['pin']['tree']}")
-        print(f"files       {result['pin']['tracked_files']}")
-        print(f"bundle      {result['bundle']}")
+        print(f"repository  {result['pin']['repo']}  (provenance, not a live clone)")
+        print(f"upstream    {result['pin']['commit']}  ({result['pin']['commit_subject']})")
+        print(f"            {result['pin']['tracked_files']} tracked files at that commit; "
+              f"{VENDORED_FILES} vendored here")
+        if result["bundle"].endswith(".bundle") and not Path(result["bundle"]).is_file():
+            print("archive     retired — the vendored tree is the only copy")
+        else:
+            print(f"bundle      {result['bundle']}")
         for check in result["checks"]:
             print(f"  {'OK  ' if check['ok'] else 'FAIL'} {check['id']}")
         if result["failures"]:
             print()
             print("FAILED: " + ", ".join(result["failures"]))
-            print("Restore with: git clone <bundle> D:\\Projects\\gzh-Future-Intelligence")
+            if Path(result["bundle"]).is_file():
+                print("Restore with: git clone <bundle> D:\\Projects\\gzh-Future-Intelligence")
+            else:
+                print("The archive is retired; re-import the workflow and update the pin "
+                      "(see vendor/gzh-thinktank/MANIFEST.md).")
     return 0 if result["ok"] else 1
 
 

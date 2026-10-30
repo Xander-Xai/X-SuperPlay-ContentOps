@@ -34,6 +34,7 @@ CANONICAL_DOCS = [
     "docs/UPSTREAM-EASEL.md",
     "docs/GLOSSARY.md",
     "docs/SOURCE-ARTIFACT-CONTRACT.md",
+    "docs/CONTENT-ROUTER.md",
     "docs/MEDIA-PROVIDER-CONTRACT.md",
     "docs/CROSS-REPO-INTEGRATION.md",
     "docs/AUDIT-REPORT.md",

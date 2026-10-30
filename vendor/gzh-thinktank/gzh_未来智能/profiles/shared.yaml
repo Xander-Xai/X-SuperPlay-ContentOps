@@ -1,0 +1,58 @@
+schema_version: 1
+matrix_id: gzh-thinktank
+timezone: Asia/Shanghai
+default_publish_mode: draft
+human_approval_required:
+  - topic_selection
+  - factual_review
+  - compliance_review
+  - cover_selection
+  - external_publish
+artifact_contract:
+  routing: routing.yaml
+  topic_card: topic-card.md
+  topic_contract: topic-contract.yaml
+  topic_cluster: topic-cluster.md
+  content_calendar: content-calendar.md
+  topic_integrity: topic-integrity.json
+  research: research.md
+  source_records: sources.json
+  draft: draft.md
+  content_revision: content-revision.json
+  reviewed_article: article.md
+  formatted_html: article.html
+  format_report: format-report.json
+  review_report: review-report.md
+  review_evidence: review-evidence.json
+  ai_disclosure: ai-disclosure.yaml
+  publish_receipt: publish-receipt.json
+  publish_preflight: publish-preflight.json
+  metrics: metrics.json
+  content_brief: content-brief.yaml
+  seo_report: seo-report.json
+  visual_brief: visual-brief.yaml
+  image_plan: image-plan.md
+  image_analysis: img_analysis.md
+  image_sources: image-sources.json
+  visual_director_plan: visual-director-plan.json
+  image_generation_plan: image-generation-plan.json
+  final_review: final-review.md
+  cta_contract: cta-contract.json
+handoff:
+  contract: handoff-contract-v1
+  min_signal_count: 3
+  required_signals:
+    - repeated_deployment_questions
+    - source_or_code_requests
+    - above_baseline_engagement
+  # 可选输入：人工放入 inbox/handoff/<handoff_id>/ 的已批准卡片副本。
+  # X超玩•未来智能不会读取任何外部工作流目录；卡片仅作 user_material 路由的参考来源。
+  input_contract: inbox/handoff/<handoff_id>/handoff-card.md
+  human_confirm: true
+security:
+  secret_files:
+    - aws.env
+    - .env
+  never_log:
+    - AGNES_API_KEY
+    - WECHAT_*_APPSECRET

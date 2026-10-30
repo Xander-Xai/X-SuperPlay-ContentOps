@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "contract": "fact-review-v1",
+  "status": "not_prepared",
+  "semantic_truth_check": "pending_independent_human_review"
+}

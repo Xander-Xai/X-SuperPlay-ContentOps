@@ -47,12 +47,15 @@ def test_the_pin_is_internally_well_formed():
 
 
 @test
-def test_a_missing_bundle_is_a_named_failure():
+def test_a_retired_archive_is_not_a_failure():
+    """Once the bundle is retired the vendored tree is the only copy, so its
+    absence is expected -- a *wrong* bundle is still refused (next test)."""
     with tempfile.TemporaryDirectory() as temp:
         result = pin.verify(bundle=Path(temp) / "absent.bundle")
-    assert result["ok"] is False
-    assert result["failures"] == ["bundle_present"], result["failures"]
-    print("[ok] 2. a missing archive is refused by name")
+    assert pin.BUNDLE_RETIRED is True, "this test only holds while the archive is retired"
+    assert "bundle_retired" in [c["id"] for c in result["checks"]], result["checks"]
+    assert result["ok"] is True, result["failures"]
+    print("[ok] 2. a retired archive is expected, not a failure")
 
 
 @test

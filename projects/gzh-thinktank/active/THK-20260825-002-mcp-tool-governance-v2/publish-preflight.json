@@ -1,0 +1,33 @@
+{
+  "schema_version": 2,
+  "status": "passed",
+  "account_slot": 1,
+  "appid_key": "WECHAT_1_APPID",
+  "appsecret_key": "WECHAT_1_APPSECRET",
+  "draft_permission": true,
+  "ip_whitelist_checked": true,
+  "checked_at": "2026-08-24T23:25:07.791280+00:00",
+  "operator": "human-review",
+  "credential_names_found": [
+    "WECHAT_1_APPID",
+    "WECHAT_1_APPSECRET"
+  ],
+  "errors": [],
+  "probe": {
+    "status": "passed",
+    "api_base": "https://api.weixin.qq.com"
+  },
+  "producer": "gzh-workflow-receipt-producer",
+  "receipt_kind": "publish-preflight",
+  "operation_id": "b84a4eda-752a-489a-9694-e904da780653",
+  "article_sha256": "6c649748ab9537759fef35e286a762ca195de7e0ae22f3e36021eabfd9b5e35f",
+  "html_sha256": "47ca4eef9daf75a00c0c0e253ccd7215237fd00596bacdd954b58312fceb25f7",
+  "signed_at": "2026-08-24T23:25:07.792391+00:00",
+  "signature_algorithm": "hmac-sha256",
+  "trust_namespace": "production",
+  "issuer": "external-signer",
+  "env_sha256": "d2ddf5599d9634757b280f2cf9a3a3aa8cda67c14a0a62146bac681527944b25",
+  "signed_payload_sha256": "cfd928bb08cadb851fa694f3a09fab6d812e90af30fbec4a905c18104463dfd4",
+  "signature": "3b207f6ea18d60acb116918deb7195b4a4f33271595354b528c8d2d328ee0785",
+  "signature_status": "signed"
+}

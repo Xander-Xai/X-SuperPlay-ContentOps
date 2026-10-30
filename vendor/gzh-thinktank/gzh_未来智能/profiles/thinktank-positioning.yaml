@@ -1,0 +1,69 @@
+schema_version: 1
+contract_id: thinktank-positioning-v1
+account_id: thinktank
+public_brand: X超玩•未来智能
+strategy_role: Build
+paired_explore_brand: X•超玩1024
+
+positioning:
+  one_liner: "把 AI 做成真正能运行、能上线、能解决问题的项目。"
+  public_intro: "AI 项目实战｜RAG｜Agent｜Vibe Coding｜从需求到上线"
+  promise: "把经过验证的问题沉淀成工程方法、项目案例、Workflow 和可复用解决方案。"
+
+audience:
+  core:
+    - AI 应用开发者
+    - 软件工程师与算法工程师
+    - AI 转型程序员
+    - AI 产品经理
+    - 独立开发者与小型创业团队
+    - 愿意亲自动手把 AI 做成真实项目的人
+  exclude:
+    - 只追新闻、不愿实践的人
+    - 只复制 Prompt 的用户
+    - 希望代写、代做或伪造经历的人
+
+content_pillars:
+  - id: ai_engineering_deconstruction
+    title: AI 工程拆解
+    angle: "从真实工程问题出发，解释为什么会失败、如何验证和如何上线。"
+  - id: from_need_to_launch
+    title: 从需求到上线
+    angle: "完整记录需求、架构、Coding、Evaluation、Testing、Deployment、Monitoring 与迭代。"
+  - id: ai_capability_monetization
+    title: AI 能力变现
+    angle: "能力 → 作品 → 用户 → 服务 → 产品，不承诺躺赚。"
+
+voice:
+  tone: [问题驱动, 工程具体, 实测优先, 克制诚实, 可复现]
+  must:
+    - 先讲真实问题，再讲技术名词
+    - 明确成本、限制、失败和人工介入
+    - 给出可验证步骤、验收标准和边界
+    - 把商业表达落到用户行为与付费信号
+  avoid:
+    - 纯资讯搬运
+    - 未实测的项目清单
+    - AI 暴富、躺赚或收益保证
+    - 只展示 Demo 不说明上线条件
+    - 把复杂工程压成空泛鸡汤
+
+demand_signals:
+  - "怎么实现？"
+  - "有源码吗？"
+  - "能不能出完整教程？"
+  - "能不能部署？"
+  - "可以帮我做吗？"
+  - "多少钱？"
+
+conversion:
+  primary_action: "留言真实项目问题或部署场景"
+  lead_magnet: "本期项目的可复现清单、部署步骤与验收模板"
+  service_ladder: [GitHub Demo, 项目包与模板, Code Review, 项目训练, 企业 Workflow, 产品化]
+
+boundaries:
+  primary_medium: wechat_article
+  default_publish_mode: draft
+  no_guaranteed_income: true
+  no_fabricated_experience: true
+  no_unverified_claims: true

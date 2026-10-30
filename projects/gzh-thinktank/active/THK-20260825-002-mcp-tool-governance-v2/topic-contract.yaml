@@ -1,0 +1,45 @@
+schema_version: 1
+status: approved
+canonical_topic: "MCP工具调用的生产治理"
+topic_thesis: "Agent能够调用工具不等于能够安全上线；生产级Agent必须在工具调用边界建立权限、审批、序列约束、审计与回滚控制。"
+reader_problem: "开发者可以把MCP接通，却缺少判断何时允许写入、何时需要审批、如何审计和限制连续调用的工程方案。"
+scope:
+  in_scope:
+    - "MCP请求边界、工具身份、参数和执行结果"
+    - "Agent权限、人工审批、调用顺序、频率限制和敏感数据后的权限收缩"
+    - "审计日志、拒绝原因、回滚路径和最小可复现实验"
+  out_of_scope:
+    - "模型排行榜、Prompt技巧和泛泛的Agent入门"
+    - "未核验的厂商效果保证、融资消息或安全绝对化结论"
+anchor:
+  required_terms: ["MCP", "工具调用", "生产治理", "审批", "审计", "回滚"]
+  aliases: ["Model Context Protocol", "Agent工具调用", "temporal policy", "Dogwood"]
+  minimum_total_hits: 3
+series:
+  mode: cluster
+  subtopics:
+    - id: mcp-call-boundary
+      title: "MCP工具调用边界：从工具清单到执行结果"
+      relation: core
+      why_it_belongs: "先定义请求和工具边界，才能判断生产治理是否完整。"
+      return_to_topic: "回到MCP工具调用的生产治理，作为权限与审计的输入合同。"
+    - id: temporal-agent-policy
+      title: "时间序列授权：为什么要检查连续动作"
+      relation: adjacent
+      why_it_belongs: "单次允许不代表动作序列安全，必须把历史和时间纳入策略。"
+      return_to_topic: "回到连续调用、审批和回滚的治理闭环。"
+    - id: explicit-tool-permissions
+      title: "显式工具许可：让Agent的下一步可被批准"
+      relation: adjacent
+      why_it_belongs: "工具允许列表和权限提示是调用前门禁的具体实现。"
+      return_to_topic: "回到工具调用的权限、审计和上线验收。"
+drift_rules:
+  min_anchor_coverage: 0.6
+  max_anchorless_sections: 1
+  require_anchor_in_title: true
+  require_anchor_in_lead: true
+  require_section_return: true
+approval:
+  reviewer: "codex"
+  approved_at: "2026-08-25T02:30:00+08:00"
+  decision_note: "从既有热点调研中选择MCP工具调用生产治理方向，锁定官方规范与实现文档作为研究输入。"

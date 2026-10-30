@@ -1111,7 +1111,7 @@ FAIL（`account_composition` 73/27/0 对 70/25/5），所以派生步骤以
 | 轨道 | 位置 | 状态 |
 |---|---|---|
 | 视频（抖音 / B站 / 小红书 / 视频号） | `src/contentops`、`scripts/` | 生产者与门禁齐全；母片仍须先过自己的 QC 才允许派生 |
-| 公众号 | `vendor/gzh-thinktank/` | 逐字节导入：679 个文件、8 MB、十阶段门禁、自铸收据 |
+| 公众号 | `vendor/gzh-thinktank/` | 逐字节导入：667 个文件、8 MB、十阶段门禁、自铸收据；`python scripts/account_route.py projects/gzh-thinktank` 给出链路 |
 | X（英文文本） | `vendor/x-growth-os/`、`scripts/x_post.py` | 逐字节导入：64 个文件、摘要钉死；`MANUAL_ONLY` 发布包门禁；`PublishMode.API` 直接抛错 |
 
 **公众号为什么改为入库而不是留外部。** 那个工作副本的历史与 GitHub origin **分叉**
@@ -1120,11 +1120,13 @@ FAIL（`account_composition` 73/27/0 对 70/25/5），所以派生步骤以
 导入并更新摘要。
 
 - 排除项：`node_modules`（32 MB）与 excalidraw 包里的 `.venv`（可重建）、
-  `.aws-article/config.yaml`（凭据）、账号的 `production/` 产物。完整的原始仓库
-  （含分叉时没上 GitHub 的全部提交）是 `D:\Archives\repos\gzh-thinktank\` 下的
-  15 MB git bundle。
-- `scripts/gzh_pin.py` 两样都校验：bundle 按摘要、vendored 树按 679 个文件的内容
-  摘要。`tests/test_gzh_pin.py` 锁住拒绝行为。
+  `.aws-article/config.yaml`（凭据）、账号的 `production/` 产物。完整原始仓库曾以
+  15 MB git bundle 形式校验留存，随后于 2026-10-30 与工作副本、远端一并退役
+  （两个路径均已不存在，仓库 URL 返回 404）。现在 `vendor/gzh-thinktank/` 是唯一
+  副本，`MANIFEST.md` 记录了退役的确切代价。
+- `scripts/gzh_pin.py` 按 667 个文件的内容摘要校验 vendored 树，并先把 CRLF 折成
+  LF，使会在检出时改写行尾的平台无法改变结果。bundle 已退役；若仍存在，仍须与摘要
+  一致。`tests/test_gzh_pin.py` 锁住拒绝行为。
 - 工作流仍要求作品目录在它自己的根之外，因此文章落在 `projects/gzh-thinktank/`
   （通过 `GZH_ARTIFACT_ROOT`），手建文章目录仍会被拒绝。
 
@@ -1135,6 +1137,150 @@ FAIL（`account_composition` 73/27/0 对 70/25/5），所以派生步骤以
 
 **发布行为不变。** vendored 流程仍然止于公众号草稿 + `draft/get` 回读。本仓库不会
 公开发布任何内容，凭据也没有进入任何一棵树。
+
+### 内容路由器——账号感知的选题层——2026-10-30
+
+流水线能做出片子，却答不上前置的两个问题：**这是为谁做的**，以及**这讲的是什么**。
+答案原本散在两份没人要求过的热榜和某个人的脑子里，两边都没有留下记录。
+下游因此分辨不出这两者，也就无法对其中任何一种施加约束。
+
+`src/contentops/routing/` 就是这两个答案与流水线之间的一层。两条路线从这里进入，
+产出同一个合约。
+
+| 属性 | 取值 |
+|---|---|
+| 入口 | `scripts/content_route.py`——`accounts`、`start`、`candidates`、`select`、`status`、`resume`、`approve` |
+| 路线 | `HOTSPOT_DISCOVERY` 与 `USER_TOPIC`，必须显式指定；不指定返回 `ROUTE_SELECTION_REQUIRED` |
+| 合约 | `contentops.content-intent/v1`——两条路线同一个形状；与路线相关的字段全部放在 `route_context`，其键在两种模式下完全相同 |
+| 磁盘上的 Brief | `00_brief/brief.json`——`contentops.content-brief/v1`，内含 intent，外加 `contentops.content-candidate/v1` 与 `contentops.evidence-feasibility/v1` |
+| 账号输入 | 账号 DNA 新增的 `discovery` 块：关键词、来源白名单与黑名单、权重、审核策略 |
+| 排序 | 七个分量，权重由账号自己给出（合计 100），每个分量都带解释；榜单自身名次从不作为排序依据 |
+| 来源 | 注册表共 15 个；每个都声明 `NATIVE_SEARCH` 或 `LIST_ONLY`，计划会为列出的每个来源写明是哪种 |
+| 存储 | SQLite，位于 `.local/content-router/`，按账号隔离；候选的每次读写都带账号 id |
+| 测试 | `tests/test_content_router.py`、`tests/test_hotspot_sources.py`、`tests/test_account_discovery.py`——全部离线运行，均已写入 CI |
+
+### 由 DNA 决定检索，而且不能被改写成别的意思
+
+账号定位在抓取之前就被读取。它的关键词决定向来源问什么，白名单决定哪些来源会被访问，
+内容支柱决定候选落在哪个货架，not_doing 决定哪些候选在人工看到之前就被淘汰，
+权重决定候选列表的顺序。
+
+**每个关键词都引用它取自的 DNA 字段，而且这条引用由机器校验。**
+`scripts/check_account_dna.py` 会在同一份 DNA 里解析它；凡是 origin 无法解析的关键词，
+DNA 检查直接失败。不存在任何一条路径，能让一个无出处的词进入检索。
+英文关键词可以声明为某个中文词的 `translation`——翻译是换一种语言表达已有的词，
+而不是新增一个定位主张——但中文出处同样必须能解析。
+
+没有 `discovery` 块的账号，热点检索会被 `ACCOUNT_DNA_MISSING` 拒绝。
+它只被警告而不算失败，因为路由器会指名拒绝它，而指定主题路线对它仍然可用。
+
+### 状态机才是重点
+
+一台状态机，没有强制路径。
+
+| 状态 | 含义 |
+|---|---|
+| `ROUTE_SELECTION_REQUIRED` | 没有指定路线；不会发生任何别的事 |
+| `ACCOUNT_DNA_MISSING` | 账号没有可用的 discovery 块 |
+| `SEARCH_PLAN_READY` | 检索计划已写下；尚未抓取任何东西 |
+| `CANDIDATES_READY` | 候选列表已生成。这里到 `BRIEF_READY` **没有边**：选题由人决定，否则不做 |
+| `TOPIC_SELECTED` | 有人具名选定了一个候选 |
+| `OUT_OF_PROFILE_REVIEW_REQUIRED` | 用户主题不在账号自身声明覆盖范围内；所有者可以改主题，也可以明确批准例外，例外会记录是谁、为什么 |
+| `BRIEF_READY` | Brief 包已写盘，并通过仓库既有的校验器 |
+| `AWAITING_HUMAN_APPROVAL` | Brief 等待人工审核 |
+| `APPROVED_FOR_PRODUCTION` | 有人确认这份 Brief 可以进入流水线 |
+| `BLOCKED` | 终态；记录是什么拦住了它 |
+
+运行不会改变路线。来源挂了是报告失败的理由，不是绕道找题的理由。
+
+### 三件刻意不宣称的事
+
+- **Brief 不是事实核查。** `evidence_status: verified` 指的是证据**路径**已被记录。
+  下游那道复制评审关卡保持原样，仍然是脚本与渲染之间唯一的门。这里是**另一道处于
+  不同位置的关卡**——生产之前，而不是渲染之前——它本身不授予发布或付费媒体权限。
+  有一条测试断言 `src/contentops/routing/` 下没有任何模块触及媒体或发布路径。
+- **过滤后的榜单不是搜索。** NewsNow 和 TrendRadar 发布的是预先排好的榜单，不接受
+  关键词查询；GitHub 搜索 API 才是真正的服务端查询。每个来源都写明自己是哪一种，
+  计划也会重复一遍。读一份热门榜单并留下合适的部分是正当做法；把它称作搜索不是。
+- **不同平台的计数器绝不相加。** 浏览量和热度指数不是同一个量纲。它们被记录在候选上，
+  标记为 `metrics_comparable: false`，并且不进入评分。唯一的跨源信号是"不同来源的
+  数量"，这是关于覆盖范围的事实，而不是不可比的量纲之间的比较。
+
+### 尚未完成的部分
+
+- **TrendRadar 已部署，且只固定一个版本。** `D:\Software\sansan0\TrendRadar\v6.11.0`
+  的真实部署在 2026-10-30 完成了一次采集，写出 `output/news/2026-10-30.db`
+  （255 行、11 个平台），适配器只读它。此前"适配器能读本地数据库"的说法只对
+  *fixture* 成立：真实 v6 的 Schema 是 `news_items` + `platforms`，适配器已按其重写。
+  没有 `TRENDRADAR_DB_PATH` 时仍返回 `SOURCE_UNAVAILABLE_STATE`，运行跳过它继续。
+- **真实采集发生过一次。** 两条路线在 2026-10-30 都对真实来源跑通并到达
+  `APPROVED_FOR_PRODUCTION`；数字见 `research/router-precision-audit-2026-10-30.md`。
+  当天有三个 NewsNow 端点返回 500，被记为失败，而不是被当作不存在。
+- **七天的观察数据并不存在。** `scripts/router_observe.py` 每账号每天记录一行，
+  目前只记录了一次；说法到此为止。
+- **1024 的候选产出很差，且没有做任何定位变更。** 211 条里只出 3 条且都偏弱；
+  能改变这一点的建议写在审计里，等账号所有者批准。
+
+### 第二轮——加固，2026-10-30
+
+| 方面 | 现在为真的事实 |
+|---|---|
+| TrendRadar | 真实 v6 Schema、平台名、UTC+8 时间戳、超过 24h 标记 `stale`、条目以 `STALE_SOURCE` 被拒 |
+| 失败处理 | 429/5xx/超时/截断响应重试 3 次并退避；401/403/422 不重试；本进程内连续 3 次失败后熔断 |
+| 审批 | 必须 `--confirm`；`automation` 身份除非显式允许一律拒绝；审批与内容摘要绑定；`verify` 报 `APPROVAL_STALE`；失效审批无法创建工程 |
+| 交接 | `scripts/brief_handoff.py` 校验摘要与证据预测，写出 `00_brief/handoff.json`；真正流水线入口在 copy review 处阻塞，不花钱 |
+| 观察 | `scripts/router_observe.py` 每账号每次运行写一行 JSONL；`--report --days 7` 打印窗口 |
+
+### 第三轮——精准度、定时任务与审批边界，2026-10-30
+
+| 方面 | 现在为真的事实 |
+|---|---|
+| 查询表达式 | `discovery.query_expressions` 让账号按适配器选择：把自己已声明的哪些关键词花在某个来源有限的 operator 预算上；每个词都引用它渲染的关键词，DNA 检查逐条验链。用 `scripts/router_query_experiment.py` 实测：future-intelligence 在 GitHub 上 0.233 → 0.567，保留其表达式；1024 实测**更差**（0.200 → 0.133），因此移除而不是为对称而保留 |
+| 候选精确率 | 按各自定位人工判读：future-intelligence **11/12 = 92%**，1024 **1/8 = 12.5%**——见 `research/router-precision-audit-2026-10-30.md`。1024 的短板是匹配语义（垃圾仓库能通过它的门禁），不是查询问题，修它属于定位决策，等账号所有者 |
+| 定时采集 | `scripts/router_schedule.py` 跑一个周期：经 TrendRadar 入口抓取、发现最新数据库、采集、写回执。锁让第二个运行以 `ALREADY_RUNNING` 结束，超过三小时的锁视为废弃，数据库被锁时回退到前一天，`status` 报告漏跑 |
+| 审批边界 | 自动审批例外现在同时需要 `allow_automation=True` **和** `CONTENTOPS_TEST_SANDBOX=1`；命令行不再暴露它，因此生产的工作流参数无法开启。保证被明确限定为内容绑定加审计留痕——没有身份提供方，文档也这么说 |
+| 下游 | 两条路线经同一个 `contentops.brief-handoff/v1` 记录交接；`script_state()` 把缺失的 `script/lines.json` 与 `script/assets.json` 作为命名状态报出，而不是留到下游崩溃。脚本与分镜生产仍未实现，已登记为独立里程碑 |
+
+### 尚未开始：M-ROUTER-SCRIPT（脚本与分镜生产）
+
+路由器把已批准的 Brief 交给工程后即停止。把 Brief 变成 `script/lines.json` 与
+`script/assets.json`——也就是旁白与分镜——的部分尚不存在，`scripts/brief_handoff.py`
+把这两个文件作为命名缺口报出，而不是写一个占位文件。
+
+该里程碑的范围：以 `00_brief/handoff.json` 为输入，在 `script/` 下产出这两个文件，
+每条主张都要能追溯到 Brief 的 `source_artifact_refs`，并且和其他生产者一样停在
+copy review。它不得自行调用付费服务，也不得把自己标记为已审核。
+
+### 第四轮——质量门禁、无人值守与依赖台账，2026-10-30
+
+| 方面 | 现在为真的事实 |
+|---|---|
+| 来源质量 | `contentops.hotspots.quality` 只在**两个相互独立**的信号上拒绝仓库，证据留在记录里；无法检视的一律 `UNVERIFIED` 通过。在 1024 的同一快照上实测：7 → 6 条候选，移除 1 条夹具，**误杀 0**；剩下两条"真实但跑题"的项目不归它管 |
+| 精确率，如实分开 | 自动门禁通过率 6/7 = 86%，人工标注精确率 4/6 = 67%（宽口径）、0/6（严格口径）。门禁移除的是夹具，不是跑题 |
+| 回归 | 未来智能：40 条候选，门禁拒绝 0 条。无跨账号变化 |
+| 无人值守 | 调度器在回执旁写每次运行的日志；`pythonw` 无控制台（`sys.stdout is None`）也能跑通，并已用隐藏的 `Start-Process` 实测 |
+| 审批边界 | 自动审批的 Brief 现在**根本无法交接**给流水线（`AUTOMATION_APPROVAL`），而不只是标个记号 |
+| 依赖台账 | 91 个父提交里只有 12 个碰过路由器依赖的文件；真实依赖是 **8 个路径、+2051 行、全部为新增** |
+
+### 第五轮——脚本阶段，2026-10-30
+
+| 方面 | 现在为真的事实 |
+|---|---|
+| 脚本草稿 | `scripts/brief_script.py` 把已批准的 Brief 变成 `lines.json`、`claim-map.json`、`storyboard.json`、`master.md` 和"主张→来源"报告。**没有任何模型调用**：每一句被念出来的话都是转场、来源自己标题的引用（绑定到记录下来的文档），或 CTA |
+| 契约复用 | 它说仓库既有的 `contentops.claim-map/v1` 与 `contentops.audio-first-lines/v1`；复制评审本来就会对两者取指纹，所以之后改动会让评审失效，无需新代码 |
+| 拒绝 | 证据预测 `DEGRADED` 或缺来源 → `EVIDENCE_REQUIRED`；Brief 被改动 → `APPROVAL_STALE`；沙箱之外 → `AUTOMATION_APPROVAL` |
+| 终态 | 草稿停在复制门禁的 `NOT_REVIEWED`，且不写任何评审记录。M-ROUTER-SCRIPT 不再是"未开始"；剩下的缺口是人写的文案，不是机器 |
+| 已知限制 | 草稿的事实内容只有一句被引用的标题。没有模型的生成器写不出实质内容，假装能写才是这一阶段存在要防的事 |
+
+### 第六轮——脚本阶段不再假装，2026-10-30
+
+| 方面 | 现在为真的事实 |
+|---|---|
+| 出处 | 每条主张写明是五种之一；`USER_TOPIC` 运行不能再把所有者给的题目说成来源标题，出现即由 `check()` 判定失败 |
+| 实质内容 | 脚本引用**证据包**里的句子——由 `scripts/evidence_pack.py` 抓取、保存、哈希的文档。只给链接不算材料：这一阶段以 `DRAFT_CONTENT_INSUFFICIENT` 停下并说明缺什么 |
+| 时长 | 中文按 `字数 / 4.5` 秒、英文 2.6 词/秒，再加停顿；采集镜头至少 5 秒；每个来源只采一次。材料短于窗口就拒绝，而不是把语速放慢 |
+| 语言 | 中文账号引用英文文档时逐镜标记 `needs_rewrite`；报告写明比例（真实运行 13 英 / 2 中） |
+| 诚实边界 | 这些句子是来源的原话，不是写好的口播。摘要只证明文档没变，不证明它是对的 |
 
 **X 轨道：入库、有门禁、只能手动发布。** `vendor/x-growth-os/` 是 commit `3154db49`
 的 64 文件增长工作流，由 `scripts/x_growth_pin.py` 钉死摘要。账号

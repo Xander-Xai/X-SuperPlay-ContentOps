@@ -37,3 +37,11 @@
 *.dll  binary
 *.so   binary
 *.pyd  binary
+
+# The vendored 公众号 tree is a byte-exact import. `-text -eol` stops Git from
+# rewriting line endings, so a checkout here reproduces what was imported rather
+# than what the platform's `core.autocrlf` prefers. The pin digest is deliberately
+# line-ending-agnostic (see `scripts/gzh_pin.py`), so this rule protects fidelity;
+# it is not what makes the pin platform-independent.
+vendor/gzh-thinktank/** -text -eol
+projects/gzh-thinktank/** -text -eol

@@ -1,0 +1,1 @@
+Sometimes a tool needs something from the user mid-call, such as a confirmation or a missing parameter. MRTR enables this over a stateless protocol: the server returns resultType: "input_required", and the client retries the original call with answers attached in inputResponses.

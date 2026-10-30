@@ -197,6 +197,41 @@ def test_the_cli_resolves_a_real_project_and_echoes_the_creative_owners():
 
 
 @test
+@test
+def test_a_wechat_workspace_routes_to_the_vendored_workflow():
+    """The 公众号 track has no account DNA; its registry is what identifies it."""
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        (project / "registry").mkdir(parents=True)
+        (project / "registry" / "workspace-index.json").write_text("{}", encoding="utf-8")
+        route = ar.resolve(project)
+    assert route["platform"] == "wechat_article", route
+    assert route["evidence_mode"] == "WECHAT_ARTICLE", route
+    assert [step["step"] for step in route["pipeline"]] == [
+        "workspace", "init", "gate", "audit"], route["pipeline"]
+    for step in route["pipeline"]:
+        words = step["command"].split()
+        assert words[0] == "python", step["command"]
+        assert (ROOT / words[1]).is_file() or Path(words[1]).name.endswith(".py"),             f"route names a script that does not exist: {words[1]}"
+    assert any("GZH_ARTIFACT_ROOT" in warning for warning in route["warnings"]),         route["warnings"]
+    print("[ok] 10. a 公众号 workspace routes to the vendored workflow")
+
+
+@test
+def test_a_directory_without_the_registry_is_not_treated_as_a_wechat_workspace():
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        (project / "active").mkdir()
+        try:
+            ar.resolve(project)
+        except ar.RouteBlocked as blocked:
+            assert blocked.code == "ACCOUNT_SLUG_MISSING", blocked.code
+        else:
+            raise AssertionError("an unregistered directory was routed as 公众号")
+    print("[ok] 11. only a registered workspace is routed as 公众号")
+
+
+@test
 def test_a_declared_pipeline_beats_an_evidence_mode():
     """A text account has no film, so it names its chain instead of a mode."""
     route = _route(X_ACCOUNT)
@@ -207,7 +242,7 @@ def test_a_declared_pipeline_beats_an_evidence_mode():
     decoy = {"slug": "x-test-decoy", "pipeline": "X_EDITORIAL",
              "evidence": {"mode": "EVIDENCE_LED"}, "visual": {}, "narrative": {}}
     assert ar.route_for(decoy)["pipeline_name"] == "X_EDITORIAL"
-    print("[ok] 10. a declared pipeline wins over an evidence mode")
+    print("[ok] 12. a declared pipeline wins over an evidence mode")
 
 
 @test
@@ -219,7 +254,7 @@ def test_the_x_chain_ends_at_measurement_and_has_no_render_step():
     commands = " ".join(step["command"] for step in _route(X_ACCOUNT)["pipeline"])
     assert "vendor/x-growth-os/scripts/x_growth_report.py" in commands, commands
     assert "--root" in commands, commands
-    print("[ok] 11. the X chain measures with the vendored script and renders no film")
+    print("[ok] 13. the X chain measures with the vendored script and renders no film")
 
 
 @test
@@ -231,7 +266,7 @@ def test_every_x_step_says_what_it_cannot_do():
     publish = next(step for step in _route(X_ACCOUNT)["pipeline"]
                    if step["step"] == "publish")
     assert "manual" in publish["why"].lower(), publish["why"]
-    print("[ok] 12. every X step has a producer and the publish step is manual")
+    print("[ok] 14. every X step has a producer and the publish step is manual")
 
 
 @test
@@ -245,7 +280,7 @@ def test_a_declared_pipeline_with_no_chain_is_refused():
         assert "X_EDITORIAL" in blocked.detail, blocked.detail
     else:
         raise AssertionError("an unimplemented declared pipeline produced a chain")
-    print("[ok] 13. an undeclared pipeline is refused even when a mode would resolve")
+    print("[ok] 15. an undeclared pipeline is refused even when a mode would resolve")
 
 
 @test
@@ -261,7 +296,7 @@ def test_a_manual_only_project_is_told_it_cannot_publish_itself():
         # The X account has no duration window, so no cut warning may appear.
         assert "window" not in warnings, warnings
         assert route["publication_mode"] == "MANUAL_ONLY"
-    print("[ok] 14. a MANUAL_ONLY project is told it cannot publish itself")
+    print("[ok] 16. a MANUAL_ONLY project is told it cannot publish itself")
 
 
 def main() -> int:
