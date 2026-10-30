@@ -1,0 +1,176 @@
+{
+  "project": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-1024-proof",
+  "checked_at": "2026-10-29T18:03:12Z",
+  "video": "",
+  "overall": "PASS",
+  "checks": [
+    {
+      "id": "_video",
+      "ok": true,
+      "severity": "INFO",
+      "path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-1024-proof\\final\\easel.mp4"
+    },
+    {
+      "id": "file_size",
+      "ok": true,
+      "severity": "PASS",
+      "value_bytes": 1042693,
+      "min_bytes": 102400
+    },
+    {
+      "id": "ffprobe_parse",
+      "ok": true,
+      "severity": "PASS"
+    },
+    {
+      "id": "resolution",
+      "ok": true,
+      "severity": "PASS",
+      "value": "1080x1920",
+      "expected": "1080x1920"
+    },
+    {
+      "id": "aspect_ratio_9_16",
+      "ok": true,
+      "severity": "PASS",
+      "value": "1080:1920"
+    },
+    {
+      "id": "duration_range",
+      "ok": true,
+      "severity": "PASS",
+      "value_sec": 44.0,
+      "expected_range_sec": [
+        30.0,
+        120.0
+      ]
+    },
+    {
+      "id": "video_codec_h264",
+      "ok": true,
+      "severity": "PASS",
+      "value": "h264"
+    },
+    {
+      "id": "audio_present",
+      "ok": true,
+      "severity": "PASS"
+    },
+    {
+      "id": "audio_codec_aac",
+      "ok": true,
+      "severity": "PASS",
+      "value": "aac"
+    },
+    {
+      "id": "project_yaml",
+      "ok": true,
+      "severity": "PASS"
+    },
+    {
+      "id": "source_refs_recorded",
+      "ok": true,
+      "severity": "PASS",
+      "value_count": 0
+    },
+    {
+      "id": "graded_storyboard",
+      "ok": true,
+      "severity": "PASS",
+      "path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-1024-proof\\work\\storyboard.json"
+    },
+    {
+      "id": "caption_srt_present",
+      "ok": true,
+      "severity": "PASS",
+      "path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-1024-proof\\assets\\captions\\cut.srt"
+    },
+    {
+      "id": "script_exists",
+      "ok": true,
+      "severity": "PASS",
+      "path": "D:\\Projects\\X-SuperPlay-ContentOps\\projects\\easel-1024-proof\\script\\master.md"
+    },
+    {
+      "id": "storyboard_exists",
+      "ok": true,
+      "severity": "PASS",
+      "shot_count": 8
+    },
+    {
+      "id": "real_source_ratio",
+      "ok": true,
+      "severity": "PASS",
+      "value": 0.727,
+      "min": 0.7,
+      "account_mode": "EVIDENCE_LED",
+      "basis": "cut_plan_duration",
+      "real_seconds": 32.0,
+      "generated_seconds": 0.0,
+      "real_shots": null,
+      "generated_shots": null,
+      "real_assets": 4,
+      "generated_assets": 0,
+      "note": "AI-generated key visuals must not be the majority"
+    },
+    {
+      "id": "generated_ratio",
+      "ok": true,
+      "severity": "PASS",
+      "value": 0.0,
+      "max": 0.3,
+      "account_mode": "EVIDENCE_LED",
+      "basis": "cut_plan_duration",
+      "note": "a generated clip may illustrate a beat, never carry the cut"
+    },
+    {
+      "id": "source_provenance_complete",
+      "ok": true,
+      "severity": "PASS",
+      "basis": "cut_plan",
+      "assets_without_a_source": []
+    },
+    {
+      "id": "engine_recorded",
+      "ok": true,
+      "severity": "PASS",
+      "value": "easel"
+    },
+    {
+      "id": "voice_not_silence",
+      "ok": true,
+      "severity": "PASS",
+      "max_volume_db": "-4.3 dB",
+      "mean_volume_db": "-23.3 dB"
+    },
+    {
+      "id": "subtitle_burned_or_track",
+      "ok": true,
+      "severity": "PASS",
+      "method": "burned_in_scan",
+      "source": "caption_cues",
+      "note": "max bright-pixel ratio across 5 samples = 0.01417"
+    },
+    {
+      "id": "real_evidence_present",
+      "ok": true,
+      "severity": "PASS",
+      "basis": "cut_plan",
+      "assets": [
+        "A-DOCTOR",
+        "A-REV",
+        "A-SKILL",
+        "A-SUB"
+      ]
+    },
+    {
+      "id": "voice_quality_declared",
+      "ok": true,
+      "severity": "INFO",
+      "voice_provider": "minimax-mplan",
+      "voice_quality": "configured_provider",
+      "production_quality_warning": false,
+      "note": "mechanical/fallback voice keeps the render at READY_FOR_HUMAN_REVIEW; only a human can accept it as production (V1 spec §11)"
+    }
+  ]
+}

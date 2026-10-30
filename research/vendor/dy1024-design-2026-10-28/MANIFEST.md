@@ -7,7 +7,7 @@ date: 2026-10-28
 
 # dy_x1024 design-layer archive
 
-The source workspace `D:\Projects\dy_x1024` is being retired. This directory is
+The source workspace `D:\Projects\dy_x1024` was retired on 2026-10-29. This directory is
 the deletion-safe copy of the parts that were judged portable: stdlib logic,
 declarative config, JSON schemas and operating documents.
 

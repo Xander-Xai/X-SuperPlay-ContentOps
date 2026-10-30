@@ -16,15 +16,23 @@
     },
     "min_reading_hold_ms": 2000,
     "max_visual_hold_ms": 2000,
-    "min_visual_hold_ms": 1200
+    "min_visual_hold_ms": 1200,
+    "evidence_mode": "EVIDENCE_LED",
+    "manual_recording": "ALLOWED_CROPPED"
   },
-  "overall": "PASS",
+  "overall": "FAIL",
   "checks": [
     {
       "id": "video_exists",
       "ok": true,
       "severity": "PASS",
       "detail": "project://final/easel.mp4"
+    },
+    {
+      "id": "account_policy",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "EVIDENCE_LED / ALLOWED_CROPPED from x-superplay-1024"
     },
     {
       "id": "resolution",
@@ -84,7 +92,19 @@
       "id": "generated_ratio",
       "ok": true,
       "severity": "PASS",
-      "detail": "0.0% (max 10%)"
+      "detail": "0.0% (max 30%)"
+    },
+    {
+      "id": "role_matches_source",
+      "ok": true,
+      "severity": "PASS",
+      "detail": "every evidence role points at a real capture"
+    },
+    {
+      "id": "account_composition",
+      "ok": false,
+      "severity": "FAIL",
+      "detail": "comparison_card 27%, screen_recording_evidence 73%; outside ±8pp: vector_animation 0% vs 25%, comparison_card 27% vs 5%"
     },
     {
       "id": "claim_bindings",
