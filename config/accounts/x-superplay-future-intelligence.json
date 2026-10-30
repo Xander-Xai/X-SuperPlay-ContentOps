@@ -447,6 +447,411 @@
     "只复制 Prompt 的用户",
     "希望代写、代做、伪造经历的人"
   ],
+  "discovery": {
+    "schema": "contentops.account-discovery/v1",
+    "profile_version": "2026-10-30.1",
+    "profile_source": "config/accounts/x-superplay-future-intelligence.json#discovery",
+    "declared_by": "Founder. The initial values transcribe this DNA's own pillars, audience, excluded and platform list; every keyword cites the field it was taken from, and scripts/check_account_dna.py fails the file if a citation does not resolve.",
+    "keywords_positive": [
+      {
+        "term": "AI 工程拆解",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_name",
+          "pillar": "AI 工程拆解"
+        }
+      },
+      {
+        "term": "问题驱动",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 工程拆解"
+        }
+      },
+      {
+        "term": "从需求到上线",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_name",
+          "pillar": "从需求到上线"
+        }
+      },
+      {
+        "term": "AI Project Library",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "从需求到上线"
+        }
+      },
+      {
+        "term": "PRD",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_structure",
+          "pillar": "从需求到上线"
+        }
+      },
+      {
+        "term": "Testing",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_structure",
+          "pillar": "从需求到上线"
+        }
+      },
+      {
+        "term": "Deployment",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_structure",
+          "pillar": "从需求到上线"
+        }
+      },
+      {
+        "term": "Monitoring",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_structure",
+          "pillar": "从需求到上线"
+        }
+      },
+      {
+        "term": "Cost",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_structure",
+          "pillar": "从需求到上线"
+        }
+      },
+      {
+        "term": "AI 能力变现",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_name",
+          "pillar": "AI 能力变现"
+        }
+      },
+      {
+        "term": "AI 求职",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 能力变现"
+        }
+      },
+      {
+        "term": "项目库",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 能力变现"
+        }
+      },
+      {
+        "term": "LLM",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 工程拆解"
+        }
+      },
+      {
+        "term": "RAG",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 工程拆解"
+        }
+      },
+      {
+        "term": "Agent",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 工程拆解"
+        }
+      },
+      {
+        "term": "LangGraph",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 工程拆解"
+        }
+      },
+      {
+        "term": "MCP",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 工程拆解"
+        }
+      },
+      {
+        "term": "Context",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 工程拆解"
+        }
+      },
+      {
+        "term": "Evaluation",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 工程拆解"
+        }
+      },
+      {
+        "term": "Guardrails",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 工程拆解"
+        }
+      },
+      {
+        "term": "Memory",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 工程拆解"
+        }
+      },
+      {
+        "term": "Tool Calling",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 工程拆解"
+        }
+      },
+      {
+        "term": "Freelance",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 能力变现"
+        }
+      },
+      {
+        "term": "Workflow",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 能力变现"
+        }
+      },
+      {
+        "term": "AI 应用开发者",
+        "language": "zh",
+        "origin": {
+          "kind": "core_audience",
+          "index": 0
+        }
+      },
+      {
+        "term": "软件工程师",
+        "language": "zh",
+        "origin": {
+          "kind": "core_audience",
+          "index": 1
+        }
+      },
+      {
+        "term": "独立开发者",
+        "language": "zh",
+        "origin": {
+          "kind": "core_audience",
+          "index": 3
+        }
+      },
+      {
+        "term": "上线",
+        "language": "zh",
+        "origin": {
+          "kind": "promise"
+        }
+      },
+      {
+        "term": "能运行",
+        "language": "zh",
+        "origin": {
+          "kind": "promise"
+        }
+      },
+      {
+        "term": "复现",
+        "language": "zh",
+        "origin": {
+          "kind": "tagline"
+        }
+      },
+      {
+        "term": "部署",
+        "language": "zh",
+        "origin": {
+          "kind": "translation",
+          "origin_kind": "pillar_structure",
+          "pillar": "从需求到上线",
+          "origin_term": "Deployment",
+          "origin_language": "en"
+        }
+      },
+      {
+        "term": "评测",
+        "language": "zh",
+        "origin": {
+          "kind": "translation",
+          "origin_kind": "pillar_scope",
+          "pillar": "AI 工程拆解",
+          "origin_term": "Evaluation",
+          "origin_language": "en"
+        }
+      }
+    ],
+    "keywords_negative": [
+      {
+        "term": "只追新闻",
+        "language": "zh",
+        "origin": {
+          "kind": "excluded",
+          "index": 0
+        }
+      },
+      {
+        "term": "只复制 Prompt",
+        "language": "zh",
+        "origin": {
+          "kind": "excluded",
+          "index": 1
+        }
+      },
+      {
+        "term": "代写",
+        "language": "zh",
+        "origin": {
+          "kind": "excluded",
+          "index": 2
+        }
+      },
+      {
+        "term": "伪造",
+        "language": "zh",
+        "origin": {
+          "kind": "excluded",
+          "index": 2
+        }
+      }
+    ],
+    "source_allowlist": [
+      {
+        "source_id": "github-search",
+        "why": "AI 工程拆解：the account拆解 the implementation, and GitHub's search accepts the account's terms as a server-side query."
+      },
+      {
+        "source_id": "github-trending",
+        "why": "AI 工程拆解：a repository list, where a new implementation is first published."
+      },
+      {
+        "source_id": "juejin-hot",
+        "why": "AI 应用开发者、软件工程师：a developer list, where an implementation is written up."
+      },
+      {
+        "source_id": "v2ex-hot",
+        "why": "问题驱动：where a practitioner asks the question an工程拆解 episode answers."
+      },
+      {
+        "source_id": "hacker-news",
+        "why": "LLM / RAG / Agent：the English-language list, where a technique is argued before it is written up."
+      },
+      {
+        "source_id": "zhihu-hot",
+        "why": "问题驱动：a question list, which is where a real工程 problem is described."
+      },
+      {
+        "source_id": "36kr-hot",
+        "why": "AI 能力变现：a business list, where an AI skill is priced and bought."
+      },
+      {
+        "source_id": "ithome",
+        "why": "从需求到上线：a release list, where a finished product is announced."
+      },
+      {
+        "source_id": "producthunt",
+        "why": "AI 能力变现：a launch list, where a new AI product first finds its users."
+      },
+      {
+        "source_id": "trendradar-sqlite",
+        "why": "the account's own TrendRadar deployment, read read-only when it is present."
+      }
+    ],
+    "source_blocklist": [
+      {
+        "source_id": "weibo-hot",
+        "why": "只追新闻、不愿实践的人：a general-interest list, which the account's first excluded audience does not follow."
+      },
+      {
+        "source_id": "baidu-hot",
+        "why": "只追新闻、不愿实践的人：a general-interest list, which the account's first excluded audience does not follow."
+      },
+      {
+        "source_id": "solidot",
+        "why": "只追新闻、不愿实践的人：a newswire, which the account's first excluded audience does not follow."
+      },
+      {
+        "source_id": "douyin-hot",
+        "why": "AI 应用开发者、软件工程师：an entertainment list, which serves none of the account's engineering pillars."
+      },
+      {
+        "source_id": "bilibili-hot",
+        "why": "AI 应用开发者、软件工程师：an entertainment list, which serves none of the account's engineering pillars."
+      }
+    ],
+    "preferred_sources": [
+      {
+        "source_id": "github-search",
+        "why": "the only source that narrows server-side, so it carries the account's terms into the request itself"
+      },
+      {
+        "source_id": "v2ex-hot",
+        "why": "the account's first pillar is 问题驱动, and a question list is where a driven problem is stated"
+      }
+    ],
+    "language": [
+      "zh",
+      "en"
+    ],
+    "geography": [
+      "CN",
+      "global"
+    ],
+    "content_formats": [
+      "technical_explainer",
+      "github_project",
+      "tutorial",
+      "monetization_case"
+    ],
+    "approval_policy": {
+      "topic_selection_required": true,
+      "brief_approval_required": true,
+      "approver_role": "Founder",
+      "publishing_requires_copy_review": true,
+      "note": "The hot list proposes; a person chooses. The brief is approved before it reaches the pipeline, and the copy review remains the gate before anything is rendered."
+    },
+    "match_weights": {
+      "profile_relevance": 30,
+      "audience_value": 15,
+      "evidence_availability": 20,
+      "freshness": 15,
+      "cross_source_signal": 10,
+      "originality_potential": 5,
+      "non_repetition": 5
+    }
+  },
   "content_pillars": [
     {
       "name": "AI 工程拆解",

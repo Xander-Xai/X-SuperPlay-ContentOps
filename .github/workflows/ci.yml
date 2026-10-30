@@ -247,6 +247,23 @@ jobs:
       - name: Run account DNA tests
         run: python tests/test_account_dna.py
 
+      # The discovery block: every search term must resolve to a field of the
+      # account's own DNA, or the router would search somewhere the account
+      # never asked to go.
+      - name: Run account discovery tests
+        run: python tests/test_account_discovery.py
+
+      # The content router: two routes, one contract, and the human gates.
+      # A candidate never becomes a brief without a choice, and a brief never
+      # becomes production without an approval.
+      - name: Run content router tests
+        run: python tests/test_content_router.py
+
+      # The hot-list side: sources, the search plan, the account-weighted
+      # ranking, de-duplication, and the failures a real collector meets.
+      - name: Run hotspot source tests
+        run: python tests/test_hotspot_sources.py
+
       # The optimization layer: signal validation, ADOPT policy (GitHub + evidence
       # + no GPU), action-before-deferral ranking and the blocked MEASURE/LEARN
       # flywheel stages.

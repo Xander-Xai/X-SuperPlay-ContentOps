@@ -561,3 +561,79 @@ python scripts\build_evidence_package.py projects\easel-1024-proof --variants
   not a crop of the card designed for another one.
 - A derivative is technically correct, not content-approved. `production_ready`
   stays false and the master's human review still decides.
+
+## 19. Content router: choosing a topic
+
+The router runs *before* a project exists. It answers "who is this for, and
+what is it about", and it writes a brief the pipeline can pick up.
+
+```powershell
+# which accounts can be routed, and are they usable
+python scripts\content_route.py accounts
+
+# Route A: look for a topic, scoped by the account
+python scripts\content_route.py start --account x-superplay-1024 --mode hotspot
+
+# see the plan without fetching anything
+python scripts\content_route.py start --account x-superplay-1024 --mode hotspot --plan-only
+
+# Route B: the owner names the topic
+python scripts\content_route.py start --account x-superplay-future-intelligence --mode topic `
+    --topic "如何使用 LangGraph 开发可靠的 Agent？"
+
+# a person chooses one candidate, by name
+python scripts\content_route.py select --candidate CAND-XXXXXXXX --by "Founder"
+
+# where is the run, and what does it need next
+python scripts\content_route.py status --run RUN-20261030-XXXXXXXX
+
+# a person approves the brief, and the project is created with it
+python scripts\content_route.py approve --run RUN-20261030-XXXXXXXX `
+    --reviewer "Founder" --note "值得做" --confirm --project langgraph-reliable-agent
+```
+
+- `--mode` is required. A run without one is refused with `ROUTE_SELECTION_REQUIRED`;
+  the router never infers the route, and a run never changes route when it resumes.
+- `start --mode hotspot` writes the plan, collects, filters and ranks, and stops
+  at `CANDIDATES_READY`. It does **not** create a project and it does **not** call
+  a media generator.
+- `select` is the step a person takes. `--by` is required; there is no
+  anonymous selection.
+- `approve --confirm` is the step a person takes before the brief enters the
+  pipeline. `--project <slug>` creates the project with `scripts/new_project.py`
+  and puts `00_brief/brief.json` in it, so the episode starts where every other
+  episode starts.
+- An off-profile topic stops at `OUT_OF_PROFILE_REVIEW_REQUIRED`. The owner
+  either changes the topic or re-runs with `--accept-off-profile --note "why"`.
+- The pool lives in SQLite under `.local/content-router/` (gitignored).
+  `CONTENTOPS_ROUTER_HOME` moves it.
+- `--json` on any command prints the same result as JSON.
+
+After the brief exists, the episode continues through the ordinary pipeline.
+The copy review (`scripts\copy_review.py <project>`) is still the gate before
+anything is rendered.
+
+See [CONTENT-ROUTER.md](CONTENT-ROUTER.md) for the contract and the states.
+
+### 19.1 The acceptance run
+
+`scripts/router_e2e.py` runs both routes end to end and writes one receipt.
+
+```powershell
+# both routes, against the real sources
+python scripts\router_e2e.py --actor "Founder"
+
+# the topic route only; the hot-list leg is reported as blocked, not faked
+python scripts\router_e2e.py --actor "Founder" --offline
+```
+
+- It creates its projects under `.verify-tmp\router-e2e\projects\`, not in the
+  repository's own `projects\`, so an acceptance run leaves no episode behind.
+- **The topic selection and the brief approval are performed by the acceptance
+  run**, under the name `--actor` gives. The receipt says so in as many words.
+  That is an acceptance run, not a standing approval: the copy review is still
+  the gate before anything is rendered.
+- It publishes nothing and generates no media.
+- When a source is unreachable, the receipt names the failure and the run
+  continues without it. `--offline` skips the network entirely and reports the
+  hot-list leg as `OFFLINE_BY_REQUEST` rather than filling it with a fixture.

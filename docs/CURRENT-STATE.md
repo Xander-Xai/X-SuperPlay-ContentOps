@@ -1179,3 +1179,97 @@ imported tree does not try to hide that.
 **Publishing is unchanged.** The vendored workflow still ends at a WeChat draft with
 a `draft/get` read-back. Nothing in this repository publishes publicly, and no
 credential entered either tree.
+
+### The content router — account-aware topic selection — 2026-10-30
+
+The pipeline could make a film and could not answer the two questions that
+come first: *who is this for*, and *what is it about*. Those answers lived in
+a hot list nobody had asked for and in somebody's head, and neither left a
+record. A downstream stage could not tell them apart, so it could not enforce
+anything about either.
+
+`src/contentops/routing/` is the layer between those answers and the
+pipeline. Two routes enter it and both produce the same contract.
+
+| Property | Value |
+|---|---|
+| Entry point | `scripts/content_route.py` — `accounts`, `start`, `candidates`, `select`, `status`, `resume`, `approve` |
+| Routes | `HOTSPOT_DISCOVERY` and `USER_TOPIC`, named explicitly; a call without one is refused with `ROUTE_SELECTION_REQUIRED` |
+| Contract | `contentops.content-intent/v1` — one shape for both routes; route-specific fields live under `route_context`, whose keys are identical either way |
+| Brief on disk | `00_brief/brief.json` — `contentops.content-brief/v1`, carrying the intent plus `contentops.content-candidate/v1` and `contentops.evidence-feasibility/v1` |
+| Account input | the account DNA's new `discovery` block: keywords, source allowlist and blocklist, weights, approval policy |
+| Ranking | seven components, weighted by the account's own percentages (sum 100), each carrying its reason; the hot list's own rank is never the sort key |
+| Sources | 15 in the registry; each declares `NATIVE_SEARCH` or `LIST_ONLY`, and the plan states which for every source it names |
+| Storage | SQLite under `.local/content-router/`, per account; every candidate read and write carries the account id |
+| Tests | `tests/test_content_router.py`, `tests/test_hotspot_sources.py`, `tests/test_account_discovery.py` — all offline, all named in CI |
+
+### The DNA decides the search, and cannot be made to say something else
+
+The account's positioning is read before anything is fetched. Its keywords
+decide what a source is asked for, its allowlist decides which sources are
+contacted at all, its pillars decide which shelf a candidate lands on, its
+not-doing decides which candidates are rejected before a person sees them,
+and its weights decide the order of the shortlist.
+
+**Every keyword cites the field of the DNA it came from, and the citation is
+machine-checked.** `scripts/check_account_dna.py` resolves it against the DNA
+in the same file; a keyword whose origin does not resolve fails the DNA
+check. There is no path by which an unsourced term enters a search. An
+English keyword may be a declared `translation` of a Chinese one — a
+translation renders an existing term rather than asserting a new positioning
+claim — but the Chinese source must itself resolve.
+
+An account with no `discovery` block is refused a hot-list search with
+`ACCOUNT_DNA_MISSING`. It is warned about rather than failed, because the
+router refuses it by name and the user-topic route still works for it.
+
+### The states are the point
+
+One machine, no force path.
+
+| State | What it means |
+|---|---|
+| `ROUTE_SELECTION_REQUIRED` | no route was named; nothing else happens |
+| `ACCOUNT_DNA_MISSING` | the account has no usable discovery block |
+| `SEARCH_PLAN_READY` | the written plan exists; nothing has been fetched |
+| `CANDIDATES_READY` | a shortlist exists. There is **no edge** from here to `BRIEF_READY`: a topic is chosen by a person or not at all |
+| `TOPIC_SELECTED` | a person chose a candidate, by name |
+| `OUT_OF_PROFILE_REVIEW_REQUIRED` | a user topic the account's own declaration does not cover; the owner changes the topic or approves the exception explicitly, and the override records who and why |
+| `BRIEF_READY` | the brief package is written and passes the repository's own validators |
+| `AWAITING_HUMAN_APPROVAL` | the brief waits for a person |
+| `APPROVED_FOR_PRODUCTION` | a person confirmed the brief may enter the pipeline |
+| `BLOCKED` | terminal; a record of what stopped it |
+
+A run never changes route. A source being down is a reason to report a
+failure, not a reason to find a topic another way.
+
+### Three things this deliberately does not claim
+
+- **A brief is not a fact check.** `evidence_status: verified` means the
+  evidence *paths* were recorded. The copy review, downstream and unchanged,
+  is still what stands between a script and a render. This router is a second
+  gate at a different point — before production, not before rendering — and
+  it grants no publishing or paid-media authority. A test asserts that no
+  module under `src/contentops/routing/` reaches a media or publishing path.
+- **A filtered list is not a search.** NewsNow and TrendRadar publish
+  pre-ranked lists with no keyword query; GitHub's search API is a genuine
+  server-side query. Each source says which it is, and the plan repeats it.
+  Reading a popular list and keeping what fits is legitimate; calling it a
+  search is not.
+- **Platform counters are never added together.** A view count and a heat
+  index are not the same quantity. They are recorded on the candidate, marked
+  `metrics_comparable: false`, and they do not enter the score. The only
+  cross-source signal is a count of distinct sources, which is a fact about
+  coverage rather than a comparison of incompatible scales.
+
+### What is not done
+
+- **TrendRadar is not deployed here.** The adapter reads a local SQLite
+  database read-only through a URI, and it is present in the registry. Without
+  `TRENDRADAR_DB_PATH` it reports `SOURCE_UNAVAILABLE_STATE` and the run
+  continues without it. The four failure modes it handles by name are: the
+  file absent, the file locked, the schema drifted (a table with no `title`
+  column is refused rather than half-read) and duplicated rows.
+- **No live source has been collected on this machine.** The end-to-end runs
+  recorded against the real sources are marked as blocked in the run report;
+  the offline suites cover the same paths with fixtures.

@@ -35,6 +35,7 @@ TIER1_DOCS = [
     "docs/TEST-PLAN.md",
     "docs/UPSTREAM-EASEL.md",
     "docs/GLOSSARY.md",
+    "docs/CONTENT-ROUTER.md",
 ]
 
 

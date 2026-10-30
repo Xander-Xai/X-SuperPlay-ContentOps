@@ -430,3 +430,73 @@ python scripts\build_evidence_package.py projects\easel-1024-proof --variants
   该画幅重新出卡。
 - 衍生片技术上正确，不代表内容通过。`production_ready` 仍为 false，仍由人工
   审核决定。
+
+## 19. 内容路由器：选题
+
+路由器运行在项目存在**之前**。它回答"这是为谁做的、这讲的是什么"，
+并产出一份流水线可以直接接手的 Brief。
+
+```powershell
+# 哪些账号可以路由，是否可用
+python scripts\content_route.py accounts
+
+# 路线 A：由账号圈定范围去找选题
+python scripts\content_route.py start --account x-superplay-1024 --mode hotspot
+
+# 只看检索计划，不抓取任何东西
+python scripts\content_route.py start --account x-superplay-1024 --mode hotspot --plan-only
+
+# 路线 B：由所有者指定主题
+python scripts\content_route.py start --account x-superplay-future-intelligence --mode topic `
+    --topic "如何使用 LangGraph 开发可靠的 Agent？"
+
+# 由人具名选定一个候选
+python scripts\content_route.py select --candidate CAND-XXXXXXXX --by "Founder"
+
+# 这次运行到哪了，下一步需要什么
+python scripts\content_route.py status --run RUN-20261030-XXXXXXXX
+
+# 由人审核通过 Brief，并创建项目
+python scripts\content_route.py approve --run RUN-20261030-XXXXXXXX `
+    --reviewer "Founder" --note "值得做" --confirm --project langgraph-reliable-agent
+```
+
+- `--mode` 是必填的。不指定会被 `ROUTE_SELECTION_REQUIRED` 拒绝；路由器绝不推断
+  路线，运行恢复时也绝不改变路线。
+- `start --mode hotspot` 会写下计划、采集、过滤、排序，停在 `CANDIDATES_READY`。
+  它**不**创建项目，也**不**调用任何媒体生成接口。
+- `select` 是人做的那一步。`--by` 必填，不存在匿名选择。
+- `approve --confirm` 是 Brief 进入流水线前人做的那一步。`--project <slug>` 用
+  `scripts/new_project.py` 创建项目，并把 `00_brief/brief.json` 放进去，
+  于是这一集从和其他每一集相同的地方开始。
+- 偏离定位的主题会停在 `OUT_OF_PROFILE_REVIEW_REQUIRED`。所有者要么改主题，
+  要么用 `--accept-off-profile --note "为什么"` 重跑。
+- 候选池是 SQLite，位于 `.local/content-router/`（已被 gitignore）。
+  `CONTENTOPS_ROUTER_HOME` 可以搬走它。
+- 任何命令加 `--json` 都会输出同样的 JSON 结果。
+
+Brief 生成之后，这一集继续走普通流水线。复制评审
+（`scripts\copy_review.py <project>`）仍然是渲染之前的门禁。
+
+合约与状态见 [CONTENT-ROUTER.zh-CN.md](CONTENT-ROUTER.zh-CN.md)。
+
+### 19.1 验收运行
+
+`scripts/router_e2e.py` 把两条路线端到端跑一遍，并写出一份回执。
+
+```powershell
+# 两条路线都走，针对真实来源
+python scripts\router_e2e.py --actor "Founder"
+
+# 只走指定主题路线；热点那条腿报为阻塞，而不是拿 fixture 冒充
+python scripts\router_e2e.py --actor "Founder" --offline
+```
+
+- 它把项目建在 `.verify-tmp\router-e2e\projects\`，而不是仓库自己的
+  `projects\`，所以一次验收运行不会留下任何成片项目。
+- **选题与 Brief 审核都由验收运行代为完成**，用的是 `--actor` 给的名字。
+  回执里原样写明这一点。这是验收运行，不是长期授权：渲染之前的门禁仍然是
+  复制评审。
+- 它不发布任何内容，也不生成任何媒体。
+- 某个来源不可达时，回执会指名这次失败，运行跳过它继续。`--offline` 完全
+  跳过网络，并把热点那条腿报为 `OFFLINE_BY_REQUEST`，而不是拿 fixture 填上。

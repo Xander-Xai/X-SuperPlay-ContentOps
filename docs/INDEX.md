@@ -20,6 +20,7 @@
 - [SOURCE-ARTIFACT-CONTRACT.md](SOURCE-ARTIFACT-CONTRACT.md) — SourceArtifact schema
 - [MEDIA-PROVIDER-CONTRACT.md](MEDIA-PROVIDER-CONTRACT.md) — MediaProvider interface
 - [CROSS-REPO-INTEGRATION.md](CROSS-REPO-INTEGRATION.md) — RepoSourceAdapter, repo registry
+- [CONTENT-ROUTER.md](CONTENT-ROUTER.md) — Account-aware content router: two routes, one brief, the human gates
 
 ## Upstream
 

@@ -1135,3 +1135,80 @@ FAIL（`account_composition` 73/27/0 对 70/25/5），所以派生步骤以
 
 **发布行为不变。** vendored 流程仍然止于公众号草稿 + `draft/get` 回读。本仓库不会
 公开发布任何内容，凭据也没有进入任何一棵树。
+
+### 内容路由器——账号感知的选题层——2026-10-30
+
+流水线能做出片子，却答不上前置的两个问题：**这是为谁做的**，以及**这讲的是什么**。
+答案原本散在两份没人要求过的热榜和某个人的脑子里，两边都没有留下记录。
+下游因此分辨不出这两者，也就无法对其中任何一种施加约束。
+
+`src/contentops/routing/` 就是这两个答案与流水线之间的一层。两条路线从这里进入，
+产出同一个合约。
+
+| 属性 | 取值 |
+|---|---|
+| 入口 | `scripts/content_route.py`——`accounts`、`start`、`candidates`、`select`、`status`、`resume`、`approve` |
+| 路线 | `HOTSPOT_DISCOVERY` 与 `USER_TOPIC`，必须显式指定；不指定返回 `ROUTE_SELECTION_REQUIRED` |
+| 合约 | `contentops.content-intent/v1`——两条路线同一个形状；与路线相关的字段全部放在 `route_context`，其键在两种模式下完全相同 |
+| 磁盘上的 Brief | `00_brief/brief.json`——`contentops.content-brief/v1`，内含 intent，外加 `contentops.content-candidate/v1` 与 `contentops.evidence-feasibility/v1` |
+| 账号输入 | 账号 DNA 新增的 `discovery` 块：关键词、来源白名单与黑名单、权重、审核策略 |
+| 排序 | 七个分量，权重由账号自己给出（合计 100），每个分量都带解释；榜单自身名次从不作为排序依据 |
+| 来源 | 注册表共 15 个；每个都声明 `NATIVE_SEARCH` 或 `LIST_ONLY`，计划会为列出的每个来源写明是哪种 |
+| 存储 | SQLite，位于 `.local/content-router/`，按账号隔离；候选的每次读写都带账号 id |
+| 测试 | `tests/test_content_router.py`、`tests/test_hotspot_sources.py`、`tests/test_account_discovery.py`——全部离线运行，均已写入 CI |
+
+### 由 DNA 决定检索，而且不能被改写成别的意思
+
+账号定位在抓取之前就被读取。它的关键词决定向来源问什么，白名单决定哪些来源会被访问，
+内容支柱决定候选落在哪个货架，not_doing 决定哪些候选在人工看到之前就被淘汰，
+权重决定候选列表的顺序。
+
+**每个关键词都引用它取自的 DNA 字段，而且这条引用由机器校验。**
+`scripts/check_account_dna.py` 会在同一份 DNA 里解析它；凡是 origin 无法解析的关键词，
+DNA 检查直接失败。不存在任何一条路径，能让一个无出处的词进入检索。
+英文关键词可以声明为某个中文词的 `translation`——翻译是换一种语言表达已有的词，
+而不是新增一个定位主张——但中文出处同样必须能解析。
+
+没有 `discovery` 块的账号，热点检索会被 `ACCOUNT_DNA_MISSING` 拒绝。
+它只被警告而不算失败，因为路由器会指名拒绝它，而指定主题路线对它仍然可用。
+
+### 状态机才是重点
+
+一台状态机，没有强制路径。
+
+| 状态 | 含义 |
+|---|---|
+| `ROUTE_SELECTION_REQUIRED` | 没有指定路线；不会发生任何别的事 |
+| `ACCOUNT_DNA_MISSING` | 账号没有可用的 discovery 块 |
+| `SEARCH_PLAN_READY` | 检索计划已写下；尚未抓取任何东西 |
+| `CANDIDATES_READY` | 候选列表已生成。这里到 `BRIEF_READY` **没有边**：选题由人决定，否则不做 |
+| `TOPIC_SELECTED` | 有人具名选定了一个候选 |
+| `OUT_OF_PROFILE_REVIEW_REQUIRED` | 用户主题不在账号自身声明覆盖范围内；所有者可以改主题，也可以明确批准例外，例外会记录是谁、为什么 |
+| `BRIEF_READY` | Brief 包已写盘，并通过仓库既有的校验器 |
+| `AWAITING_HUMAN_APPROVAL` | Brief 等待人工审核 |
+| `APPROVED_FOR_PRODUCTION` | 有人确认这份 Brief 可以进入流水线 |
+| `BLOCKED` | 终态；记录是什么拦住了它 |
+
+运行不会改变路线。来源挂了是报告失败的理由，不是绕道找题的理由。
+
+### 三件刻意不宣称的事
+
+- **Brief 不是事实核查。** `evidence_status: verified` 指的是证据**路径**已被记录。
+  下游那道复制评审关卡保持原样，仍然是脚本与渲染之间唯一的门。这里是**另一道处于
+  不同位置的关卡**——生产之前，而不是渲染之前——它本身不授予发布或付费媒体权限。
+  有一条测试断言 `src/contentops/routing/` 下没有任何模块触及媒体或发布路径。
+- **过滤后的榜单不是搜索。** NewsNow 和 TrendRadar 发布的是预先排好的榜单，不接受
+  关键词查询；GitHub 搜索 API 才是真正的服务端查询。每个来源都写明自己是哪一种，
+  计划也会重复一遍。读一份热门榜单并留下合适的部分是正当做法；把它称作搜索不是。
+- **不同平台的计数器绝不相加。** 浏览量和热度指数不是同一个量纲。它们被记录在候选上，
+  标记为 `metrics_comparable: false`，并且不进入评分。唯一的跨源信号是"不同来源的
+  数量"，这是关于覆盖范围的事实，而不是不可比的量纲之间的比较。
+
+### 尚未完成的部分
+
+- **TrendRadar 在本机没有部署。** 适配器通过只读 URI 读取本地 SQLite 数据库，
+  它在注册表里。没有 `TRENDRADAR_DB_PATH` 时返回 `SOURCE_UNAVAILABLE_STATE`，
+  本次运行跳过它继续。它分别按名处理四种失败：文件不存在、文件被锁、
+  Schema 漂移（没有 `title` 列的表会被拒绝，而不是被读一半）、以及重复行。
+- **本机没有对真实来源做过一次采集。** 针对真实来源的端到端运行在运行报告中标为阻塞；
+  离线测试套件用 fixture 覆盖了同样的路径。
