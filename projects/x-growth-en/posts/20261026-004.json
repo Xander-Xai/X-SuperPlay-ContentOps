@@ -1,0 +1,64 @@
+{
+  "schema": "contentops.x-post/v1",
+  "content_id": "20261026-004",
+  "account_slug": "x-superplay-english",
+  "mode": "workflow_artifact",
+  "topic": "a send counter is not demand: instrument accepted, delivered, replied and qualified separately",
+  "sources": [
+    "https://docs.aws.amazon.com/ses/latest/dg/monitor-using-event-publishing.html",
+    "https://knowledge.hubspot.com/marketing-email/analyze-marketing-email-recipients"
+  ],
+  "audience_job": "decide whether to raise outreach volume or instrument the first stage of the funnel that has no evidence",
+  "proof_grade": "P1",
+  "unique_artifact_ref": "projects/x-growth-en/assets/imported/outreach-events-2026-10-26/2026-10-26-004-outreach-telemetry.md",
+  "experiment_variable": "which funnel stage gets measured first",
+  "label": "LOCAL_RUN",
+  "theses": [
+    {
+      "thesis": "Instrument accepted, delivered, human reply and manually qualified conversation separately: a successful send API call is a transport event, not evidence of delivery or demand",
+      "evidence": "AWS SES defines Send as a successful send request and intent to attempt delivery, and Delivery as recipient mail-server delivery, not inbox placement or human reading; the local synthetic funnel script distinguishes a duplicate event, a bounce, a delivery-not-observed and a reply-not-qualified, and the draft records four assertions passing on Python 3",
+      "counterexample": "A CRM may already expose all these stages, in which case this advice is redundant",
+      "reader_action": "Compare deduplicated stage counts and check for unknown events on a synthetic fixture"
+    },
+    {
+      "thesis": "Suppression, bounce and opt-out stop states should be policy-controlled, not improvised by an LLM",
+      "evidence": "HubSpot reports sent, delivered, replied and bounced as distinct report categories, so the stages are separate evidence classes rather than one counter; the local run exercises a bounce event",
+      "counterexample": "A human-only outbound channel can already enforce this without an agent",
+      "reader_action": "Dry-run replay after opt-out"
+    },
+    {
+      "thesis": "Better message composition cannot establish buyer willingness to pay",
+      "evidence": "The run measured no customer behavior, no deliverability, no earnings and no performance; the absence is the bound of this claim",
+      "counterexample": "A known target market with demonstrated demand can rationally automate a validated process",
+      "reader_action": "Distinguish qualified discovery calls from total automated sends, with consent"
+    }
+  ],
+  "red_team": [
+    "Objection: a CRM already reports sent, delivered, replied and bounced, so this is redundant. Answer: that is the counterexample the draft records for its first angle, and the test is whether the deduplicated stage counts and unknown events are checked at all. The draft does not claim the tooling is missing.",
+    "Objection: a human-only channel already enforces suppression and opt-out. Answer: the draft's second angle records that as its own counterexample and defers it for exactly that reason; the proposed answer is a dry-run replay after opt-out, not a claim that an agent is needed.",
+    "Objection: a validated market can automate a proven process, so message quality is not the bottleneck. Answer: the third angle says the same and is deferred for that reason. The draft keeps them as candidates, not as claims."
+  ],
+  "post_copy": {
+    "parts": [
+      "Your AI outreach bot says “sent successfully.”\n\nThat proves neither delivery nor demand.\n\nTrack 4 separate events: accepted → delivered → human reply → qualified conversation.\n\nBefore automating more volume, find the stage with missing evidence."
+    ]
+  },
+  "image_brief": "Off-white typography-first editorial diagram: four labelled checkpoints separating accepted, delivered, human replied and qualified, against the message that a send is not a delivery. It marks itself a conceptual diagram, not real campaign data.",
+  "image": null,
+  "image_status": "external_image_pending_archive",
+  "alt_text": "Editorial diagram reading ‘Sent is not delivered. Delivered is not demand.’ Four labeled checkpoints separate accepted, delivered, human replied and qualified, with a note that it is not real campaign data.",
+  "prompt_ref": "daily_post",
+  "provenance": {
+    "source": "projects/x-growth-en/assets/imported/outreach-events-2026-10-26/2026-10-26-004-outreach-telemetry.md",
+    "section": "Final English X copy - single post",
+    "origin": "branch content/20261026-outreach-telemetry-p1 @ f7e56cb of X-SuperPlay-X-Growth-OS, imported into this tree before that repository was deleted"
+  },
+  "source_category": "PAIRED_READY_FOR_HUMAN_REVIEW",
+  "source_angles": [],
+  "review": null,
+  "status": "draft",
+  "status_url": null,
+  "scheduled_for": null,
+  "metrics": null,
+  "notes": "Migrated from an unmerged branch of the source repository: content/20261026-outreach-telemetry-p1 at f7e56cb, which was never merged into its main branch. The draft text is copied into assets/imported/outreach-events-2026-10-26/ so this record does not depend on a remote that is being deleted, and the draft's own SVG and its experiment script (experiments/outreach-event-funnel/outreach_events.py, the artifact the P1 grade rests on) are preserved whole in the cold bundle at that branch tip. The copy is the draft's verbatim block. The proof grade is P1 because the local synthetic funnel script ran with four assertions passing; the draft states that no email was sent and that no customer behavior, deliverability, earnings or performance was measured, and the record keeps that bound rather than reading a growth result out of a fixture. The third thesis is a mechanism claim whose evidence is the recorded absence of demand, not a demand finding. The draft's internal 26/30 rubric score is the author's own editorial judgement, not a person's review, so review stays null and the score is not carried into the record at all. The 1600x900 PNG was a conversation attachment and was never stored in the source repository, so image is null and image_status is external_image_pending_archive. The draft was written under a recovery hold that prohibited a fourth original post that day, and it says the account handle and native metrics are unknown; that hold is why this record is a preserved draft and not a scheduled post. prompt_ref names the account's daily brief because this draft follows that brief; the draft names no prompt itself. No review, no metrics, no publication."
+}

@@ -1,0 +1,63 @@
+{
+  "schema": "contentops.x-post/v1",
+  "content_id": "20261025-006",
+  "account_slug": "x-superplay-english",
+  "mode": "workflow_artifact",
+  "topic": "prove causal masking with a falsifiable invariant in a CPU-only mini lab",
+  "sources": [
+    "https://datawhalechina.github.io/diy-llm/",
+    "https://docs.pytorch.org/docs/stable/generated/torch.nn.functional.scaled_dot_product_attention.html"
+  ],
+  "audience_job": "decide, before teaching attention, which claim to make testable first and what a toy result does and does not prove",
+  "proof_grade": "P1",
+  "unique_artifact_ref": "vendor/x-growth-os/tutorials/llm-causal-mask-mini-lab/README.md",
+  "experiment_variable": "the single measured pair: first output with masking against first output without masking",
+  "label": "LOCAL_RUN",
+  "theses": [],
+  "red_team": [],
+  "post_copy": {
+    "parts": [
+      "LLM tutorials should start with a claim you can test.\n\nChange a future token. With causal masking, the first output stays 1.000. Without it, the output shifts from 2.575 to 30.000.\n\nCPU-only toy lab; 5 tests pass.\n\nSource curriculum: https://datawhalechina.github.io/diy-llm/"
+    ]
+  },
+  "image_brief": "Minimal infographic comparing the CPU-only causal-attention mini lab: after a future token changes, the first output stays 1.000 with masking and shifts from 2.575 to 30.000 without it. A toy demonstration, not a trained LLM.",
+  "image": null,
+  "image_status": "external_image_pending_archive",
+  "alt_text": "A minimal English infographic compares a CPU-only causal-attention mini lab: after a future token changes, the first output remains 1.000 with masking but shifts from 2.575 to 30.000 without masking. Five Python tests passed. This is a toy demonstration, not a trained LLM.",
+  "prompt_ref": "tutorial",
+  "provenance": {
+    "source": "vendor/x-growth-os/posts/2026-10-25-006-llm-causal-mask-tutorial.md",
+    "section": "English publication copy - exactly one X post",
+    "origin": "X-SuperPlay-X-Growth-OS @ 3154db49, vendored verbatim"
+  },
+  "source_category": "TUTORIAL_BUILD_AND_LEARN",
+  "source_angles": [
+    {
+      "angle": "Start with a falsifiable invariant (selected)",
+      "thesis": "Learn causal attention by changing a future token and confirming the early output is invariant.",
+      "evidence": "The mini lab passes on Python 3.13.5 on Linux CPU with five standard-library tests.",
+      "counterexample": "A toy one-dimensional Q=K=V example does not represent a trained LLM or a benchmark.",
+      "score": "27/30"
+    },
+    {
+      "angle": "Start with full training",
+      "thesis": "Real end-to-end training shows models in action.",
+      "evidence": "",
+      "counterexample": "Unpinned tokenizer, weights and data create heavy dependencies; no run was attempted.",
+      "score": "18/30"
+    },
+    {
+      "angle": "Read 10 curated repositories",
+      "thesis": "A great survey of architecture patterns.",
+      "evidence": "",
+      "counterexample": "Passive curation alone does not prove learner understanding.",
+      "score": "18/30"
+    }
+  ],
+  "review": null,
+  "status": "draft",
+  "status_url": null,
+  "scheduled_for": null,
+  "metrics": null,
+  "notes": "Migrated from the vendored draft 2026-10-25-006-llm-causal-mask-tutorial.md. The copy and the ALT are that draft's verbatim. This is the one vendor draft with a firsthand artifact: the CPU mini lab in the source repository ran on Python 3.13.5 on Linux CPU with five standard-library tests passing, so the proof grade is P1 and the label is LOCAL_RUN; the numbers 1.000, 2.575 and 30.000 come from that run and are quoted unchanged. It is not an upstream course run and not a training run. The draft also records that the mini lab lives in a private repository, so the copy links the public Datawhale curriculum instead of advertising a guide nobody can read; that constraint is kept here. The three angles are preserved as source_angles, not as theses, because only the selected angle carries a runnable minimal test. The tutorial track is not wired into this account, so this record is a reference and a preserved draft, not a scheduled post; its source_category keeps the vendor's own TUTORIAL_BUILD_AND_LEARN so the mapping is visible. The 1600x900 PNG was a conversation attachment and the repository holds an editable SVG, so image is null and image_status is external_image_pending_archive. prompt_ref names the account's tutorial prompt because this draft follows that brief; the draft names no prompt itself. No review, no metrics, no publication."
+}

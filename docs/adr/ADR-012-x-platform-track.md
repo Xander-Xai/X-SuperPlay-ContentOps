@@ -106,17 +106,81 @@ Typography and numbers are therefore exact and legible. The HTML is tracked; the
 PNG is gitignored, so a fresh checkout re-renders it and sees `IMAGE_ABSENT` until
 it does — which is the honest state, not a broken one.
 
+## Addendum 2026-10-30: the source repository was retired into this one
+
+The remote `Xander-Xai/X-SuperPlay-X-Growth-OS` was deleted after its content,
+its two unmerged branches and its history were moved here. Five decisions
+record how.
+
+**The archive comes first, and it verified.** The repository was mirror-cloned
+into `D:\Temp\AI-Agents\claude\x-growth-mirror-2026-10-30` and bundled with
+`--all` into `D:\Archives\repos\x-growth-os\2026-10-30\x-growth-os.bundle`
+(311,907 B, SHA-256 `27b901a3…c044ca`). `git bundle verify` reports 13 refs and
+a complete history. The bundle holds four branches (`main` at `6465b56`,
+`content/20261026-005-build-vs-conversation`, `content/20261026-outreach-telemetry-p1`,
+`docs/portfolio-role-link-20261030`) and the eight pull-request refs. The remote
+was deleted only after that verification, and `gh repo view` returns 404
+afterwards.
+
+**Nine records, nine drafts.** The seven vendored drafts and the two branch
+drafts became `contentops.x-post/v1` records. Each names its origin in
+`provenance`, keeps the source's own classification in `source_category`, and
+says in `notes` what was quoted, what was mapped and what is missing. The two
+branch drafts were never merged into the source's `main`, so their text, SVG and
+experiment script were copied into `projects/x-growth-en/assets/imported/` before
+the remote went away — the tree no longer depends on a repository that does not
+exist.
+
+**Two records are honest where the source was not.** The work-seeking draft
+carries its own evidence class `P0_OWNER_REPORT`, which is not a grade on this
+account's ladder, and grading it `P0` would force the `SOURCE_ANALYSIS` label
+onto a first-person field note. Its `proof_grade` is therefore `null` and the
+gate refuses it with `RECOVERY_FIELD_MISSING` until a person decides what an
+owner-reported experience may carry. Its own privacy decision — no employer
+name, no salary, no recruiter count, no screenshots — is recorded in the record
+and binds any later use.
+
+**Three rows stay claims.** The source table recorded three posts that a person
+says went out, with no URL and no draft behind them. They are carried in the
+post table with the status `reported_published_url_pending` and no record.
+`POST_STATUSES` stays closed: a record is something a person can vet, and
+`--mark-published` rightly demands `READY` first, so a new record status would
+only have produced a record that could never legitimately reach `published`.
+`--verify-tables` accepts that status only on a row with no record and counts
+the three separately from anything verified.
+
+**The tutorial track is deliberately not wired.** `tutorial-candidates.csv`,
+`tutorial-work-value-candidates.csv`, the two tutorials and the V1.3 gate stay
+vendored reference material. The account DNA already records tutorials as a
+superseded pillar, and no tutorial is scheduled, gated or published here.
+
+**Prompts are references.** The account declares the five vendored prompts by
+path; a record may name one in `prompt_ref` and `--new` prints that prompt's own
+requirement headings back as a checklist. Nothing generates copy. The gate
+checks only that the name is declared and the file is in this tree
+(`PROMPT_REF_UNKNOWN`, `PROMPT_REF_ABSENT`).
+
+**Nothing was re-dated or re-graded.** A migrated draft keeps the source's
+content id and date. The one record this repository authored before the
+migration (`20261030-001`) keeps its own id, and its note says which source row
+it came from. The rubric scores in the source drafts (26/30, 27/30, 25/30) are
+an editor's own judgement, so `review` stays `null` on every migrated record:
+they are not a person's approval, and this repository does not manufacture one.
+
 ## Consequences
 
 - A project can be routed to `X_EDITORIAL`, a draft can be graded, a package can be
   produced, and a real URL can be recorded. No network call, no credential.
 - The X account's handle is `null` with `handle_status: "UNKNOWN"`. It is not
   invented; the first real status URL teaches it, and is recorded.
-- `projects/x-growth-en/` carries one real record whose terminal state today is
-  `DRAFT` with a single `REVIEW_MISSING`. The review is a person's and has not
-  happened. `--package` refuses it, correctly.
-- The seven vendored drafts stay `draft`. Rendering them into packages is content
-  work, not an import task, and this ADR does not claim it.
+- `projects/x-growth-en/` carries nine records: one authored here and eight
+  migrated from the retired repository. Every one of them is a draft. The
+  terminal state of the migrated ones is `BLOCKED` or `DRAFT`, each for a named
+  reason — no human review, no card in this tree, no proof grade, no ALT text.
+  `--package` refuses every one of them, correctly.
+- The post table carries twelve rows: nine records and three owner-reported
+  claims with no URL. `verified_published_posts` is 0, and that is the honest
+  number.
 - Metrics that were never observed stay `null`. The vendored analytics already
   refuses to treat blanks as zeros and the gate does not undo that.
 - Nothing here proves reach, demand or follower growth, and nothing in the X track
@@ -152,5 +216,8 @@ exactly the two accounts they had.
    at three posts a week without becoming ritual?
 2. Does the English account publish under this repository's identity or its own?
    The handle is unknown today, so the record keeps it unknown.
-3. Should the seven vendored drafts be re-dated into `projects/x-growth-en/posts/`,
-   and if so, does one of them still describe work that has not happened?
+3. The seven vendored drafts were re-dated into `projects/x-growth-en/posts/`
+   when the source repository was retired. They kept their original ids and
+   dates, and several of them describe work that has not happened here. Which
+   of them are still worth publishing, and which should be deleted rather than
+   kept as a permanent list of refusals?

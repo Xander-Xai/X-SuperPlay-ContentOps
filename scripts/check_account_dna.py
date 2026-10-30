@@ -796,6 +796,20 @@ def check_x_account(
             "editorial.source_analysis_label is empty; a post with no firsthand "
             "artifact would have no honest label")
 
+    # The prompts the account points at. A prompt is a reference, and a reference
+    # to a file that is not here is worse than no reference at all.
+    prompts = editorial.get("prompts") or {}
+    if not isinstance(prompts, dict) or not prompts:
+        failures.append(
+            "editorial.prompts is empty; a record may then name no prompt at all")
+    else:
+        for name, path in sorted(prompts.items()):
+            candidate = root / str(path)
+            if not candidate.is_file():
+                failures.append(
+                    f"editorial.prompts[{name!r}] points at {str(path)!r}, which is "
+                    "not a file in this tree")
+
     # The image requirement: an actual raster at the exact canvas, never an SVG alone.
     visual = dna.get("visual") or {}
     width, height = visual.get("width"), visual.get("height")

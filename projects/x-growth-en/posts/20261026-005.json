@@ -1,0 +1,65 @@
+{
+  "schema": "contentops.x-post/v1",
+  "content_id": "20261026-005",
+  "account_slug": "x-superplay-english",
+  "mode": "source_analysis",
+  "topic": "building the system is not access to the person who can hire or buy",
+  "sources": [
+    "https://github.com/Xander-Xai/Beauty-Industry-RAG-QA-System",
+    "https://github.com/Xander-Xai/Customer-Service-AI-Agent",
+    "https://github.com/waddington/job-application-tracker"
+  ],
+  "audience_job": "decide, when looking for real work, whether another technical demo moves anything or a specific introduction would",
+  "proof_grade": null,
+  "unique_artifact_ref": "projects/x-growth-en/assets/imported/build-vs-conversation-2026-10-26/2026-10-26-005-build-vs-conversation.md",
+  "experiment_variable": "the opening line: the stack versus the reply",
+  "label": "",
+  "theses": [
+    {
+      "thesis": "A working RAG or agent system is not the same as access to a person who can hire or buy; an agency is not an escape hatch when buyer discovery is absent",
+      "evidence": "The draft's own record: about three years of enterprise algorithm and AI engineering including enterprise OCR/multimodal RAG and a LangGraph customer-support agent, with the public repositories written as post-employment recreations rather than employer source code, and the mechanism it names -- engineering skill produces an artifact, not recruiter discovery, formal review, budget-holder access or procurement",
+      "counterexample": "Referral networks, inbound communities, established distribution or recurring clients can make self-employment viable for others",
+      "reader_action": "State a concrete offering, region and requested introduction rather than posting a generic build-agency slogan"
+    },
+    {
+      "thesis": "A recruiter greeting is not a verified formal application, and an interview is a separate stage again",
+      "evidence": "The owner's report of very large volumes of recruiter greetings against few real interviews, with actual unique formal submissions and resume-review rates stated as unknown; the comparator repository records recruiter contacts, application status, resume versions and interview stages as separate lifecycle events and was not installed or run here",
+      "counterexample": "Some hiring platforms auto-share the resume at first greeting, and stage visibility differs between platforms, so the claim cannot be universal",
+      "reader_action": "Verify the status of existing candidate opportunities before raising outreach volume"
+    },
+    {
+      "thesis": "Actual interview questions concern OCR table structure, RAG limitations, module choice, design documents and workflow/ReAct, not framework collecting",
+      "evidence": "The owner's account of the questions he is actually asked, against a public project set covering OCR, RAG and agent backends",
+      "counterexample": "Some jobs genuinely demand specialized model research or different languages",
+      "reader_action": "Show architecture decisions and failure handling in the project proof"
+    }
+  ],
+  "red_team": [
+    "Objection: referral networks, inbound communities, established distribution or recurring clients can make self-employment viable for others. Answer: the draft records this as the strongest counterexample to its chosen angle and selects the angle anyway for authentic relevance and a direct opportunity call to action; it does not refute the objection.",
+    "Objection: some hiring platforms auto-share the resume at first greeting, so stage counts are not comparable. Answer: the draft says the same and rejects the second angle partly for overlapping its earlier send-versus-response draft; no universal claim is made.",
+    "Objection: some jobs genuinely demand specialized model research or different languages. Answer: the draft records this as the counterexample to its third angle and sets that angle aside as less direct for a request to seek opportunities."
+  ],
+  "post_copy": {
+    "parts": [
+      "I build RAG/agent systems. I can't make a recruiter—or a buyer—reply.\n\n'Start an AI agency' skips the same hurdle as hiring: reaching decision-makers.\n\nStack: OCR/RAG, LangGraph, Python/FastAPI.\n\nSeeking Python/AI integration work in Guangzhou or China-remote. Intros welcome."
+    ]
+  },
+  "image_brief": "Editorial off-white document cover, dark and rust typography, headline 'I CAN BUILD AN AI PIPELINE. I CAN'T AUTOMATE A HUMAN REPLY.', footer carrying only the engineering stack and the geography. No synthetic UI, no fake logo, no metric chart.",
+  "image": null,
+  "image_status": "external_image_pending_archive",
+  "alt_text": "Minimal editorial graphic on an off-white background: “I CAN BUILD AN AI PIPELINE. I CAN'T AUTOMATE A HUMAN REPLY.” Beneath the message are OCR, RAG, LangGraph and Python, with Guangzhou and China-remote availability. This is a personal perspective, not campaign data.",
+  "prompt_ref": "daily_post",
+  "provenance": {
+    "source": "projects/x-growth-en/assets/imported/build-vs-conversation-2026-10-26/2026-10-26-005-build-vs-conversation.md",
+    "section": "Final English X copy (single post)",
+    "origin": "branch content/20261026-005-build-vs-conversation @ 35602b8 of X-SuperPlay-X-Growth-OS, imported into this tree before that repository was deleted"
+  },
+  "source_category": "OWNER_REVIEW_REQUIRED",
+  "source_angles": [],
+  "review": null,
+  "status": "draft",
+  "status_url": null,
+  "scheduled_for": null,
+  "metrics": null,
+  "notes": "Migrated from an unmerged branch of the source repository: content/20261026-005-build-vs-conversation at 35602b8, which was never merged into its main branch. The draft and its SVG are copied into assets/imported/build-vs-conversation-2026-10-26/ so nothing here depends on a remote that is being deleted. The copy is the draft's verbatim block. Two refusals are load-bearing here. First, the proof grade is null on purpose: the draft's own evidence class is P0_OWNER_REPORT, which is not a grade on this account's ladder, and grading it P0 would force the SOURCE_ANALYSIS label, which would be false for a first-person field note. The gate therefore reports RECOVERY_FIELD_MISSING and the record stays BLOCKED until a person decides what grade an owner-reported experience may carry. Second, the draft's own public privacy decision is kept here and is binding on any later use: no past employer name, no salary, no bank balance or runway, no precise recruiter count, no screenshots, no interview company and no unverified metric may appear in X copy; Guangzhou and China-remote are consistent with the active search profile but still need the owner's approval for public disclosure, and the private career documents the draft cites are deliberately not reproduced here. The three X discussion links in the draft are treated as unverified discourse and are not carried into the copy. The 25/30 internal score is the author's own judgement, so review stays null. The 1600x900 PNG was a conversation attachment and is not in the source repository, so image is null and image_status is external_image_pending_archive. The draft was written under a recovery hold that prohibited another original post that day. prompt_ref names the account's daily brief because this draft follows that brief; the draft names no prompt itself. No review, no metrics, no publication."
+}

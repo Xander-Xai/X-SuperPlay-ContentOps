@@ -1,0 +1,63 @@
+{
+  "schema": "contentops.x-post/v1",
+  "content_id": "20261025-005",
+  "account_slug": "x-superplay-english",
+  "mode": "source_analysis",
+  "topic": "parsing is not approval: an invoice amount needs a source link and a human exception step",
+  "sources": [
+    "https://github.com/docling-project/docling",
+    "https://github.com/activepieces/activepieces"
+  ],
+  "audience_job": "decide, before selling invoice automation, what has to be traceable and human-approved",
+  "proof_grade": "P0",
+  "unique_artifact_ref": "vendor/x-growth-os/posts/2026-10-25-005-invoice-provenance.md",
+  "experiment_variable": "opening line: JSON extraction versus approval",
+  "label": "SOURCE_ANALYSIS",
+  "theses": [],
+  "red_team": [],
+  "post_copy": {
+    "parts": [
+      "An invoice-to-JSON demo isn't an accounts-payable product.\n\nDocling parses PDF tables with provenance. Activepieces supports approvals.\n\nThe service to test: link each amount to its source, flag mismatches, and leave a review trail.\n\nhttps://github.com/docling-project/docling"
+    ]
+  },
+  "image_brief": "Editorial diagram titled 'Parsing is not approval': an invoice flows into source-linked fields and then into human review of exceptions. A proposal, not a tested integration.",
+  "image": null,
+  "image_status": "external_image_pending_archive",
+  "alt_text": "Minimal editorial diagram titled 'Parsing is not approval.' An original invoice flows into traceable source-linked fields and then human review of exceptions. This is a proposed Docling and Activepieces workflow, not a tested integration.",
+  "prompt_ref": "github_url",
+  "provenance": {
+    "source": "vendor/x-growth-os/posts/2026-10-25-005-invoice-provenance.md",
+    "section": "Final English X copy (paste verbatim)",
+    "origin": "X-SuperPlay-X-Growth-OS @ 3154db49, vendored verbatim"
+  },
+  "source_category": "TOOL_EVERGREEN",
+  "source_angles": [
+    {
+      "angle": "A - Extraction is not approval (chosen)",
+      "thesis": "Financial process value depends on traceable source evidence plus an explicit exception and approval step.",
+      "evidence": "Docling's structured document provenance and Activepieces' approval workflow; the proposed process connects them.",
+      "counterexample": "No actual integration or invoice accuracy test has been done.",
+      "score": "26/30"
+    },
+    {
+      "angle": "B - Accuracy needs field-level proof",
+      "thesis": "A perfect-looking JSON response may hide a false amount unless it is linked to its PDF position.",
+      "evidence": "DoclingDocument provenance and geometry can support traceability.",
+      "counterexample": "Source coordinates alone do not verify the amount or the payment authority.",
+      "score": "24/30"
+    },
+    {
+      "angle": "C - Sell the exception queue",
+      "thesis": "A buyer might prefer paying for fewer unresolved invoice disputes rather than for PDF conversion alone.",
+      "evidence": "Possible delivery is a reviewed queue with audit logs, not a proven commercial product.",
+      "counterexample": "No customer commitment, cost model or willingness-to-pay validation yet.",
+      "score": "23/30"
+    }
+  ],
+  "review": null,
+  "status": "draft",
+  "status_url": null,
+  "scheduled_for": null,
+  "metrics": null,
+  "notes": "Migrated from the vendored draft 2026-10-25-005-invoice-provenance.md. The copy and the ALT are that draft's verbatim. The three angles are preserved as source_angles rather than theses: only the chosen angle has a proposed test, and the test is the draft's own proposal with no test conducted here. The draft's red-team paragraph (approval stages can slow straightforward invoices, provenance links can be wrong or coarse, expensive manual review can erase savings) is kept in the source angles and the notes rather than promoted into a red-team answer the draft does not give. No invoice was parsed and no integration was built, so the grade is P0 and the label is SOURCE_ANALYSIS; the draft's own caution is kept, that the documentation does not establish flawless invoice extraction and no price, customer revenue or ROI was verified. The 1600x900 PNG was a conversation attachment and the repository holds an editable SVG, so image is null and image_status is external_image_pending_archive. prompt_ref is this record's mapping onto the account's prompt set (the draft starts from a GitHub URL); the draft names no prompt itself. No review, no metrics, no publication."
+}

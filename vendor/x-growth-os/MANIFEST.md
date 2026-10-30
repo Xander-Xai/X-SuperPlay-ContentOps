@@ -16,6 +16,13 @@ written here and it is not maintained here.
 | Files / bytes | 64 / 345,872 (blob bytes, LF) |
 | Imported | 2026-10-30 |
 | License | **ABSENT** — the source repository declares none. Nothing here is a grant of rights. |
+| Source repository | **DELETED 2026-10-30.** The remote was retired after its content, its two unmerged branches and its history were moved into this repository. The cold copy is a verified bundle: `D:\Archives\repos\x-growth-os\2026-10-30\x-growth-os.bundle` (all refs, complete history, SHA-256 `27b901a3b458baa55629bbcc87ff336f4c9bd9fd506f2afc195116ba65c044ca`), with the refs and commits recorded in the `INDEX.md` beside it. |
+
+The pin below still describes this tree exactly, because the tree was not edited
+when the remote went away. What the pin cannot describe is the history the remote
+held after `3154db49`: one governance commit on `main` and the two unmerged
+content branches. Both were carried into `projects/x-growth-en/` before the
+deletion, and the bundle holds them in full.
 
 ## What was not excluded
 

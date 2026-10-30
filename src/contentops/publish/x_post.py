@@ -26,7 +26,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from contentops.publish import x_editorial, x_image, x_text
+from contentops.publish import x_editorial, x_image, x_prompts, x_text
 
 #: The record's schema. One record, one intended post.
 SCHEMA = "contentops.x-post/v1"
@@ -48,6 +48,59 @@ _STATUS_HOSTS = frozenset({"x.com", "www.x.com", "twitter.com", "www.twitter.com
 
 #: A URL anywhere in ALT text: the link belongs in the post, not the description.
 _ANY_URL = re.compile(r"https?://\S+", re.IGNORECASE)
+
+#: The repository root, for the repo-relative references a record carries.
+REPO_ROOT = Path(__file__).resolve().parents[3]
+
+
+def _check_prompt_ref(post: Dict[str, Any], account: Dict[str, Any]) -> List[Issue]:
+    """The prompt a record names must be one this account declares, and be here.
+
+    A prompt is a reference, not a source of copy: this gate never generates
+    anything. What it refuses is a record that points at a prompt nobody
+    declared, or at a file that is not in this tree.
+    """
+    name = str(post.get("prompt_ref") or "").strip()
+    if not name:
+        return []
+    prompts = x_prompts.prompt_map(account)
+    if name not in prompts:
+        return [Issue("PROMPT_REF_UNKNOWN",
+                      f"prompt_ref {name!r} is not one of the account's prompts "
+                      f"{sorted(prompts)}")]
+    path = x_prompts.prompt_path(account, name)
+    if path is None or not path.is_file():
+        return [Issue("PROMPT_REF_ABSENT",
+                      f"prompt_ref {name!r} points at {prompts[name]!r}, which is not "
+                      "a file in this tree")]
+    return []
+
+
+def _check_provenance(post: Dict[str, Any]) -> List[Issue]:
+    """A record that says where it came from must point at something real.
+
+    ``provenance.source`` is repo-relative (the vendored draft, or a copy of a
+    draft imported from a branch). A URL source is accepted as-is: this gate
+    does not fetch, so it can only refuse a path it can look at.
+    """
+    provenance = post.get("provenance")
+    if provenance is None:
+        return []
+    if not isinstance(provenance, dict):
+        return [Issue("PROVENANCE_INVALID",
+                      f"provenance is a {type(provenance).__name__}, not an object")]
+    source = str(provenance.get("source") or "").strip()
+    if not source:
+        return [Issue("PROVENANCE_INVALID",
+                      "provenance has no 'source'; a record that says nothing about "
+                      "where it came from cannot be checked against anything")]
+    if source.lower().startswith(("http://", "https://")):
+        return []
+    if not (REPO_ROOT / source).exists():
+        return [Issue("PROVENANCE_SOURCE_ABSENT",
+                      f"provenance source {source!r} is not a path in this tree")]
+    return []
+
 
 
 class PostFormatError(ValueError):
@@ -318,6 +371,8 @@ def validate_post(post: Dict[str, Any], account: Dict[str, Any],
     issues.extend(_check_alt(post, account))
     issues.extend(_check_image(post, account, root))
     issues.extend(_check_image_status(post, account))
+    issues.extend(_check_prompt_ref(post, account))
+    issues.extend(_check_provenance(post))
     # `x_editorial` reports `(code, detail)` pairs; the record's surface is `Issue`.
     issues.extend(Issue(code, detail) for code, detail in x_editorial.validate_editorial(
         post, account, "\n".join(copy_parts(post))))

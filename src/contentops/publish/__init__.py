@@ -11,6 +11,7 @@ The four modules:
 - :mod:`contentops.publish.x_text`   — the 280-weighted-character budget
 - :mod:`contentops.publish.x_image`  — is this actually a 1600x900 PNG or JPEG
 - :mod:`contentops.publish.x_editorial` — the theses, recovery fields and review
+- :mod:`contentops.publish.x_prompts` — the prompt a record names, as a reference
 - :mod:`contentops.publish.x_post`   — the record, its validators and its verdict
 - :mod:`contentops.publish.publisher` — the package, and the refused API mode
 
@@ -23,6 +24,7 @@ from contentops.publish import (  # noqa: F401
     publisher,
     x_editorial,
     x_image,
+    x_prompts,
     x_post,
     x_text,
 )

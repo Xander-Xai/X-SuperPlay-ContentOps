@@ -1,0 +1,62 @@
+{
+  "schema": "contentops.x-post/v1",
+  "content_id": "20261025-004",
+  "account_slug": "x-superplay-english",
+  "mode": "source_analysis",
+  "topic": "selling an outcome, not an app: verified exception reduction instead of an agent demo",
+  "sources": [
+    "https://www.nber.org/papers/w34836"
+  ],
+  "audience_job": "decide whether to sell a measurable reduction of manual exceptions instead of an AI demo",
+  "proof_grade": "P0",
+  "unique_artifact_ref": "vendor/x-growth-os/posts/2026-10-25-004-proof-of-value.md",
+  "experiment_variable": "opening line: app generation versus business outcome",
+  "label": "SOURCE_ANALYSIS",
+  "theses": [],
+  "red_team": [],
+  "post_copy": {
+    "parts": [
+      "AI can generate an app. It cannot guarantee a business outcome.\n\nNBER's revised survey: 78% of firms use AI, but executives report only a 0.2% annual productivity-growth boost.\n\nSell verified exception reduction, not an agent demo.\n\nhttps://www.nber.org/papers/w34836"
+    ]
+  },
+  "image_brief": "The source draft recommends no image: it treats a 78% adoption and a 0.2% productivity figure as a dual-axis graphic that would mislead, and a decorative AI visual as less truthful than the source link. A card for this post would have to carry the claim without mixing denominators.",
+  "image": null,
+  "image_status": "external_image_pending_archive",
+  "alt_text": "",
+  "prompt_ref": "x_signal",
+  "provenance": {
+    "source": "vendor/x-growth-os/posts/2026-10-25-004-proof-of-value.md",
+    "section": "Publication-ready English (copy exactly)",
+    "origin": "X-SuperPlay-X-Growth-OS @ 3154db49, vendored verbatim"
+  },
+  "source_category": "EVERGREEN_DISCUSSION",
+  "source_angles": [
+    {
+      "angle": "A - Show me the outcome (selected)",
+      "thesis": "Cheap app creation does not establish firm productivity; a builder should sell an auditable reduction of costly manual exceptions rather than only an agent demo.",
+      "evidence": "NBER Working Paper 34836 (October 2026 revision): nearly 9,000 executives across seven countries, 78% of firms use AI, executives estimate AI raised annual labor-productivity growth by 0.2% over the previous three years.",
+      "counterexample": "A buyer might prefer fixed-price software or staff training, and surveys average across firms rather than proving the service is profitable.",
+      "score": "26/30"
+    },
+    {
+      "angle": "B - Operations as moat",
+      "thesis": "As app generation becomes easier, connecting legacy data, error handling, approvals and compliance may retain cost and value.",
+      "evidence": "",
+      "counterexample": "Good horizontal platform vendors may bundle these functions, depressing margins.",
+      "score": "24/30"
+    },
+    {
+      "angle": "C - No universal AI ROI",
+      "thesis": "Generic AI adoption metrics do not predict ROI; target a narrower job or process and calculate task-level economics.",
+      "evidence": "",
+      "counterexample": "Micro-metrics can be gamed and may miss broader innovation benefits.",
+      "score": "23/30"
+    }
+  ],
+  "review": null,
+  "status": "draft",
+  "status_url": null,
+  "scheduled_for": null,
+  "metrics": null,
+  "notes": "Migrated from the vendored draft 2026-10-25-004-proof-of-value.md. The copy is that draft's verbatim block; the ALT is empty because the draft recommends a text-only post and says why (a 78% adoption against a 0.2% productivity figure has different denominators, so a dual-axis card would mislead). Our account requires a 1600x900 card on every post, so this record is refused by the gate on two counts and the draft's recommendation is not silently adopted. The X popularity figure in the draft (about 1.7M views / 5.6K likes) comes from a third-party snapshot and is not carried into the copy. The NBER figures are the draft's reading of the October 2026 revision; the draft explicitly warns against reusing the earlier 69% figure, and nothing here claims a causal experiment, since the survey is self-report. The three angles are preserved as source_angles rather than theses because only the chosen angle carries a reader action; the commercial minimum test in the draft is preserved in the notes rather than promoted into a thesis. The 26/30 rubric score is the draft editor's own judgement, so review stays null. proof_grade is P0 and the label is SOURCE_ANALYSIS: no buyer interest, price or saving is claimed. prompt_ref is this record's mapping onto the account's prompt set (the draft's first lane is an X discussion signal); the draft names no prompt itself. No review, no metrics, no publication."
+}

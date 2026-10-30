@@ -1,0 +1,40 @@
+{
+  "schema": "contentops.x-post/v1",
+  "content_id": "20261025-002",
+  "account_slug": "x-superplay-english",
+  "mode": "source_analysis",
+  "topic": "an MCP server is judged by whether an agent can finish a task, not by endpoint coverage",
+  "sources": [
+    "https://github.com/anthropics/skills/blob/main/skills/mcp-builder/SKILL.md"
+  ],
+  "audience_job": "decide, before shipping an MCP server, whether an agent can actually discover and use its tools",
+  "proof_grade": "P0",
+  "unique_artifact_ref": "vendor/x-growth-os/posts/2026-10-25-002-mcp-builder.md",
+  "experiment_variable": "opening line: tool discovery versus endpoint coverage",
+  "label": "SOURCE_ANALYSIS",
+  "theses": [],
+  "red_team": [],
+  "post_copy": {
+    "parts": [
+      "An MCP server is more than an API wrapper.\n\nCan an AI agent find a tool, handle errors, and finish real tasks?\n\nAnthropic's mcp-builder recommends 10 verifiable eval questions.\n\nTest outcomes, not endpoints:\nhttps://github.com/anthropics/skills/tree/main/skills/mcp-builder"
+    ]
+  },
+  "image_brief": "Conceptual workflow diagram with four stages: discover clear tool names, respond with focused results, recover using actionable errors, verify by testing real tasks. An illustration, not a measured result.",
+  "image": null,
+  "image_status": "external_image_pending_archive",
+  "alt_text": "An MCP workflow diagram: Discover clear tool names, Respond with focused results, Recover using actionable errors, Verify by testing real tasks. Anthropic mcp-builder recommends 10 verifiable evaluation questions.",
+  "prompt_ref": "github_url",
+  "provenance": {
+    "source": "vendor/x-growth-os/posts/2026-10-25-002-mcp-builder.md",
+    "section": "English post (copy exactly)",
+    "origin": "X-SuperPlay-X-Growth-OS @ 3154db49, vendored verbatim"
+  },
+  "source_category": "SKILL_EVERGREEN",
+  "source_angles": [],
+  "review": null,
+  "status": "draft",
+  "status_url": null,
+  "scheduled_for": null,
+  "metrics": null,
+  "notes": "Migrated from the vendored draft 2026-10-25-002-mcp-builder.md. The copy is that draft's English block verbatim and the ALT is its own ALT verbatim. The draft's verification table records 'Hands-on implementation tested: no', so the proof grade is P0 and the label is SOURCE_ANALYSIS; the draft also notes that comprehensive API coverage can matter for some clients, so the copy is not an argument against low-level endpoints. The draft carries no three-thesis table, so theses and red_team are empty and the gate refuses the record by name rather than the record borrowing a structure it does not have. The 1600x900 PNG existed only as a chat attachment and the repository holds an editable SVG, so image is null and image_status is external_image_pending_archive -- an SVG is not an X-uploadable image. prompt_ref is this record's mapping onto the account's prompt set (the draft starts from a GitHub URL); the draft names no prompt itself. No review, no metrics, no publication."
+}

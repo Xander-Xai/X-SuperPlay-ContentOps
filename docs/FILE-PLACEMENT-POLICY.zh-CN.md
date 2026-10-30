@@ -109,8 +109,9 @@ projects/x-growth-en/
 ├── posts/                # <content_id>.json —— 每条帖子一个 contentops.x-post/v1 记录
 ├── templates/            # posts.csv、x-metric-snapshots.csv、x-account-snapshots.csv
 ├── assets/
-│   └── cards/            # <id>.html 入库；渲染出的 <id>.png 被 gitignore
-└── receipts/             # x-check-*.json、x-package-*.json、x-publish-*.json
+│   ├── cards/            # <id>.html 入库；渲染出的 <id>.png 被 gitignore
+│   └── imported/         # 从已退役的源仓库迁入的文本（见下）
+└── receipts/             # x-check-*.json、x-package-*.json、x-publish-*.json、x-tables-*.json
 ```
 
 - 一条帖子就是一个文件，放在 `posts/`。JSON 是记录本体；`templates/posts.csv` 是它的
@@ -119,6 +120,12 @@ projects/x-growth-en/
 - `project.yaml` 不得出现 `quality_gate: enforced`：那个键会让项目进入视频脚本门禁
   （SQ01–SQ07），而它并不描述一条 X 帖子。X 的门禁是 `scripts/x_post.py`，写在 `gate:` 里。
 - 工作流本体在 `vendor/x-growth-os/`，永不修改。
+- `assets/imported/` 存放从已退役源仓库迁入的文本：只存在于那两条未合并分支上的两篇
+  草稿、它们的 SVG 和实验脚本。它要入库，因为来源远程已不存在，而记录的 `provenance`
+  指向它。别的内容不得放进去：这里是一个死仓库的归档，不是一般的导入抽屉。
+
+那个仓库的冷副本根本不在本树里。它是 `D:\Archives\repos\x-growth-os\2026-10-30\` 下一个
+已核验的 git bundle，refs、commit 与摘要记录在同目录的 `INDEX.md` 里。
 
 ## tests/
 

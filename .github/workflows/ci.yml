@@ -340,6 +340,12 @@ jobs:
       - name: Run X post gate tests
         run: python tests/test_x_post.py
 
+      # What came over from the source repository: every record names a
+      # provenance that is really here, the post table and the records agree,
+      # and the three owner-reported posts stay unverified claims.
+      - name: Run X migration tests
+        run: python tests/test_x_import.py
+
       # Review bundles: input-only fingerprints, stale-review invalidation and
       # the score-80 threshold with no hard fail.
       - name: Run review-bundle tests

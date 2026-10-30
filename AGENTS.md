@@ -104,6 +104,12 @@ pin. Same rule as the 公众号 tree: it is an owned copy, not a sixth productio
 - The gate is this repository's, not the vendor's: `python scripts/x_post.py --check
   projects/x-growth-en --id <content-id>`. A verdict of `DRAFT`, `IMAGE_MISSING`,
   `READY`, `PUBLISHED` or `BLOCKED` is derived from the named issues, never guessed.
+- The post table has its own check: `python scripts/x_post.py --verify-tables
+  projects/x-growth-en`. A blank metric is unobserved and a `0` is observed and zero;
+  the two are never the same cell.
+- `--new --prompt <name>` names the account prompt a record is written from. It is a
+  reference, not a generator: the prompt's own requirement headings are read back as
+  a checklist, and an undeclared name is refused.
 - Publication is `MANUAL_ONLY`: `--package` stops at `AWAITING_MANUAL_PUBLISH`, and a
   person posts it and records the real `x.com/<handle>/status/<id>` URL with
   `--mark-published`. `PublishMode.API` raises. There is no X API call here and there

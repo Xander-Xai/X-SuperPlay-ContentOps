@@ -48,10 +48,33 @@
   },
   "image_status": "generated",
   "alt_text": "A dark card titled FIXED IS NOT PROOF listing three checks: the exact test command, fresh output with its exit code, and the original failure now passing.",
+  "prompt_ref": "daily_post",
+  "provenance": {
+    "source": "vendor/x-growth-os/posts/2026-10-25-001-verification-before-completion.md",
+    "section": "English post - copy exactly",
+    "origin": "X-SuperPlay-X-Growth-OS @ 3154db49, vendored verbatim"
+  },
+  "source_category": "SKILL_EVERGREEN",
+  "source_angles": [
+    {
+      "angle": "Selected",
+      "thesis": "An AI-generated \"fixed\" claim is not proof; show the evidence checklist.",
+      "evidence": "The upstream SKILL.md requires proof of completed work from a fresh verification command and its actual output, including exit status.",
+      "counterexample": "",
+      "score": ""
+    },
+    {
+      "angle": "Competing angle (not selected)",
+      "thesis": "Sell an AI QA report service.",
+      "evidence": "",
+      "counterexample": "Deferred because no validated paying customer or pricing evidence exists.",
+      "score": ""
+    }
+  ],
   "review": null,
   "status": "draft",
   "status_url": null,
   "scheduled_for": null,
   "metrics": null,
-  "notes": "Imported from the vendored draft 2026-10-25-001 as the track's first record. The card is tracked as HTML at assets/cards/20261030-001.html and rendered to PNG by skills/shared/scripts/render_card.py at 1600x900 -- the PNG is gitignored, so a fresh checkout must re-render it and will then see IMAGE_ABSENT until it does. The review is a person's and has not happened; that is the one refusal left."
+  "notes": "Imported from the vendored draft 2026-10-25-001 as the track's first record; the source table's own row id for that draft was 20261025-001 and this record was created on 2026-10-30, so the two ids differ on purpose. The card is tracked as HTML at assets/cards/20261030-001.html and rendered to PNG by skills/shared/scripts/render_card.py at 1600x900 -- the PNG is gitignored, so a fresh checkout must re-render it and will then see IMAGE_ABSENT until it does. The review is a person's and has not happened; that is the one refusal left."
 }

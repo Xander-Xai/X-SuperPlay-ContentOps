@@ -1,0 +1,62 @@
+{
+  "schema": "contentops.x-post/v1",
+  "content_id": "20261025-003",
+  "account_slug": "x-superplay-english",
+  "mode": "source_analysis",
+  "topic": "runtime policy, not prompt wording, limits what an agent can reach",
+  "sources": [
+    "https://github.com/NVIDIA/OpenShell"
+  ],
+  "audience_job": "decide whether to treat prompt wording or runtime policy as the control that bounds an agent's reach",
+  "proof_grade": "P0",
+  "unique_artifact_ref": "vendor/x-growth-os/posts/2026-10-25-003-nvidia-openshell-policy.md",
+  "experiment_variable": "opening line: invisible credentials versus runtime enforcement",
+  "label": "SOURCE_ANALYSIS",
+  "theses": [],
+  "red_team": [],
+  "post_copy": {
+    "parts": [
+      "An AI agent can use an API without ever seeing its key.\n\nNVIDIA OpenShell injects credentials only into approved requests and enforces file/network rules at runtime.\n\nPrompts shape intent. Policy limits the blast radius.\n\nhttps://github.com/NVIDIA/OpenShell"
+    ]
+  },
+  "image_brief": "Editorial architecture diagram on a light base: an agent inside a sandbox with no visible credentials, runtime policy permitting approved file and network access and blocking unapproved destinations. A conceptual diagram, not a deployment.",
+  "image": null,
+  "image_status": "external_image_pending_archive",
+  "alt_text": "Conceptual NVIDIA OpenShell architecture: an AI agent operates inside a sandbox without visible credentials. Runtime policy permits approved file and network access, adds credentials only to approved requests, and blocks unapproved destinations.",
+  "prompt_ref": "github_url",
+  "provenance": {
+    "source": "vendor/x-growth-os/posts/2026-10-25-003-nvidia-openshell-policy.md",
+    "section": "Final English X post - one post",
+    "origin": "X-SuperPlay-X-Growth-OS @ 3154db49, vendored verbatim"
+  },
+  "source_category": "TOOL_EVERGREEN",
+  "source_angles": [
+    {
+      "angle": "A - Least authority, not just better prompting",
+      "thesis": "Intent instructions cannot replace runtime control over files, network and secrets; capability policies constrain what agents can reach if they disobey.",
+      "evidence": "The README describes kernel enforcement, sandboxes and credential injection at approved endpoints.",
+      "counterexample": "Policies may be misconfigured and authorized access can still be abused; no independent isolation test was done.",
+      "score": "27/30"
+    },
+    {
+      "angle": "B - Credentialless agent pattern",
+      "thesis": "An agent can call an approved API without ever viewing the real key, moving credential attachment to a gateway.",
+      "evidence": "The README states that agents never see real credentials and they are added only to approved requests.",
+      "counterexample": "The deployment operator still manages secrets and approved endpoints.",
+      "score": "26/30"
+    },
+    {
+      "angle": "C - Monetization: policy engineering",
+      "thesis": "Small B2B operators may pay for bounded-agent deployment, access policy design and review logs more than for agent prompts alone.",
+      "evidence": "The technical building blocks exist; paying customers or budgets were not verified.",
+      "counterexample": "Native vendor tools, buyer trust, security liability and integration labor could erase the margin.",
+      "score": "21/30"
+    }
+  ],
+  "review": null,
+  "status": "draft",
+  "status_url": null,
+  "scheduled_for": null,
+  "metrics": null,
+  "notes": "Migrated from the vendored draft 2026-10-25-003-nvidia-openshell-policy.md. The copy and the ALT are that draft's verbatim. The three angles are preserved as source_angles, not as theses: the draft gives each angle a claim, evidence and a strongest objection, but a reader action only for the chosen angle, and a thesis without its reader action is not a candidate, so theses is empty and the gate says so. The 27/30 rubric score is the draft's own editorial judgement, not a person's review, so review stays null and the score stays in source_angles. Nothing was run against OpenShell, so the grade is P0 and the label is SOURCE_ANALYSIS. The draft's own disclaimers are kept: runtime policy is not a proof of safety, and the last release examined was 2026-10-20, so this is not a launch post. The 1600x900 PNG was never uploaded to the source repository; the editable SVG lives there, so image is null and image_status is external_image_pending_archive. prompt_ref is this record's mapping onto the account's prompt set (the draft starts from a GitHub URL); the draft names no prompt itself. No review, no metrics, no publication."
+}

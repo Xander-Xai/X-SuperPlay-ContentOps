@@ -98,12 +98,14 @@ python scripts\account_route.py projects\x-growth-en
 python scripts\x_growth_pin.py                       # pin + digest must pass first
 python scripts\x_growth_pin.py --suite               # also run the vendored analytics tests
 
-python scripts\x_post.py --new projects\x-growth-en --id 20261102-001 --topic "..."
+python scripts\x_post.py --new projects\x-growth-en --id 20261102-001 --topic "..." `
+    --prompt daily_post
 python scripts\x_post.py --check projects\x-growth-en --id 20261102-001
 python scripts\x_post.py --package projects\x-growth-en --id 20261102-001
 python scripts\x_post.py --mark-published projects\x-growth-en --id 20261102-001 `
     --url https://x.com/<handle>/status/<id> --reviewer "<name>" --opinion "<one line>"
 python scripts\x_post.py --verify-log projects\x-growth-en
+python scripts\x_post.py --verify-tables projects\x-growth-en
 ```
 
 - `--check` exits 0 on `READY`/`PUBLISHED`, 1 on a refusal, 2 on misuse, and prints
@@ -114,6 +116,17 @@ python scripts\x_post.py --verify-log projects\x-growth-en
 - `--mark-published` accepts only a real `https://(x|twitter).com/<handle>/status/<digits>`
   URL, upserts one row in `templates/posts.csv`, and writes `receipts/x-publish-<id>.json`.
 - `--verify-log` cross-checks every published post JSON against its CSV row and reports drift.
+- `--prompt <name>` names the account prompt a record is written from. It is a
+  reference, not a generator: the command reads that prompt's own requirement
+  headings back as a checklist and refuses a name the account does not declare
+  (`PROMPT_REF_UNKNOWN`) or a file that is not in this tree (`PROMPT_REF_ABSENT`).
+- `--verify-tables` checks the three CSV tables against the vendored contract: the
+  headers must match the vendored templates, a metric cell is blank (unobserved) or a
+  non-negative integer (observed and zero), an age window is one of
+  `T+2H / T+24H / T+72H / T+7D`, and a row that says `published` needs a real
+  `x_post_url`. It writes `receipts/x-tables-<date>.json` and lists the rows that
+  record a person's claim of publication with no URL — those are reported
+  separately and never counted as verified publications.
 
 The card image is rendered from tracked HTML through the routed skill, not by an image
 model:
@@ -135,6 +148,29 @@ python vendor\x-growth-os\scripts\x_growth_report.py --root projects\x-growth-en
 
 It reports `observational_audit_not_causal_attribution`. Blank metrics stay blank; they
 are never zeros.
+
+### 3.3 What came over from the retired source repository
+
+`Xander-Xai/X-SuperPlay-X-Growth-OS` was deleted on 2026-10-30 after its content was
+moved here. The cold copy is a verified bundle, not a remote:
+
+```
+D:\Archives\repos\x-growth-os\2026-10-30\x-growth-os.bundle   (all refs, complete history)
+D:\Archives\repos\x-growth-os\2026-10-30\INDEX.md              (refs, commits, SHA-256)
+```
+
+`projects/x-growth-en/posts/` holds the nine records that came over: seven drafts from
+the vendored tree, one draft from each of the two unmerged branches, and the record this
+repository authored before the migration. Two drafts that existed only on those branches
+were copied into `projects/x-growth-en/assets/imported/` with their SVG and their
+experiment script, so nothing in this tree depends on a repository that no longer exists.
+
+Every migrated record names its origin in `provenance`, keeps the source's own
+classification in `source_category`, and says in `notes` what was quoted, what was
+mapped and what is missing. None of them is `READY`: a rubric score inside a source
+draft is an editor's own judgement, not a person's review, so `review` stays `null`
+everywhere. See [ADR-012](adr/ADR-012-x-platform-track.md) for the addendum that records
+what moved and what stayed a claim.
 
 ## 4. Prepare source assets
 

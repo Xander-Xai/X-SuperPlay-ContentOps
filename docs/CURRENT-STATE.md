@@ -1152,7 +1152,7 @@ of one track plus an external dependency that was about to disappear.
 |---|---|---|
 | Video (Douyin / Bilibili / Xiaohongshu / 视频号) | `src/contentops`, `scripts/` | producers and gates exist; the master still has to pass its own QC before variants are derived |
 | 公众号 (WeChat article) | `vendor/gzh-thinktank/` | imported verbatim: 679 files, 8 MB, ten ordered stages, its own receipts |
-| X (English text) | `vendor/x-growth-os/`, `scripts/x_post.py` | imported verbatim: 64 files, pinned; `MANUAL_ONLY` package gate; `PublishMode.API` raises |
+| X (English text) | `vendor/x-growth-os/`, `scripts/x_post.py` | imported verbatim: 64 files, pinned; the source repository was retired into this tree on 2026-10-30; `MANUAL_ONLY` package gate; `PublishMode.API` raises |
 
 **Why the 公众号 workflow is vendored rather than external.** Its checkout's history
 diverged from GitHub origin (`origin/main` was `e9303d1`, the checkout `93645f1`) and
@@ -1197,9 +1197,41 @@ without a real `x.com/<handle>/status/<id>` URL. `--package` writes
 `receipts/x-package-<id>.json` and stops at `AWAITING_MANUAL_PUBLISH`;
 `PublishMode.API` raises.
 
-Measured today: `projects/x-growth-en/` holds one record, `20261030-001`, whose card
+Measured today: `projects/x-growth-en/` holds nine records, whose card
 is rendered at 1600×900. Its verdict is **DRAFT** with a single `REVIEW_MISSING` —
 the human review has not happened, so `--package` refuses it and nothing is
 published. The account's handle is `null` / `UNKNOWN`; the first real status URL
 will teach it. No X API call exists in this repository and no credential is stored
 for one.
+
+### The source repository was retired into this one — 2026-10-30
+
+`Xander-Xai/X-SuperPlay-X-Growth-OS` no longer exists on GitHub. Its content, its two
+unmerged branches and its history were moved here first, and the remote was deleted only
+after a cold bundle verified.
+
+- **The archive is a verified bundle, not a remote.**
+  `D:\Archives\repos\x-growth-os\2026-10-30\x-growth-os.bundle` (311,907 B, SHA-256
+  `27b901a3…c044ca`) carries all 13 refs — four branches and the eight pull-request
+  refs — and `git bundle verify` reports a complete history. `INDEX.md` beside it records
+  the refs, the commits and the digest.
+- **Nine records** now hold the drafts: the seven vendored ones, one from each unmerged
+  branch, and the record this repository authored before the migration. Each names its
+  origin in `provenance` and keeps the source's own classification in `source_category`.
+  The two branch drafts, their SVG and their experiment script were copied into
+  `projects/x-growth-en/assets/imported/`.
+- **Twelve CSV rows**: nine records and three owner-reported publications with no URL and
+  no draft. Those three keep the status `reported_published_url_pending`, have no record,
+  and are counted separately by `--verify-tables`. `POST_STATUSES` did not grow: a record
+  is something a person can vet, and `--mark-published` demands `READY` first.
+- **No record was upgraded by the move.** A rubric score inside a source draft is an
+  editor's own judgement, not a person's review, so `review` stays `null` everywhere and
+  no migrated record is `READY`. The work-seeking draft's own evidence class
+  (`P0_OWNER_REPORT`) is not on this account's ladder, so its `proof_grade` stays `null`
+  and the gate refuses it by name.
+- **The tutorial track is deliberately not wired.** It stays vendored reference material.
+- **Prompts are references.** The account declares the five vendored prompts by path;
+  `--new --prompt <name>` prints that prompt's own requirement headings back as a
+  checklist and refuses an undeclared name. Nothing generates copy.
+
+The account's own metrics are unchanged by any of this: `verified_published_posts` is 0.

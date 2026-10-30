@@ -1,0 +1,66 @@
+{
+  "schema": "contentops.x-post/v1",
+  "content_id": "20261025-007",
+  "account_slug": "x-superplay-english",
+  "mode": "workflow_artifact",
+  "topic": "turn GitHub bookmarks into practice: three repos, one runnable lesson, one saved result",
+  "sources": [
+    "https://datawhalechina.github.io/diy-llm/",
+    "https://github.com/datawhalechina/self-llm",
+    "https://github.com/microsoft/generative-ai-for-beginners",
+    "https://docs.github.com/en/search-github/searching-on-github/searching-for-repositories"
+  ],
+  "audience_job": "decide, when starting to learn LLMs from GitHub, what to run first and what to write down",
+  "proof_grade": "P1",
+  "unique_artifact_ref": "vendor/x-growth-os/tutorials/github-llm-complete-guide/README.md",
+  "experiment_variable": "the thread's first post versus its second post",
+  "label": "LOCAL_RUN",
+  "theses": [],
+  "red_team": [],
+  "post_copy": {
+    "parts": [
+      "Most people don’t fail at learning LLMs because of math.\n\nThey fail at turning GitHub bookmarks into practice.\n\nA better path:\n1. Find 3 credible repos\n2. Choose ONE runnable lesson\n3. Save the output in your own learning repo\n\nI built a 13-step guide around that workflow.",
+      "Your first deliverable shouldn't be a trained 7B model.\n\nMake an `llm-learning-notes` repo: sources, pinned versions, one actual test result, errors, and the next task.\n\nStart with the public Datawhale curriculum: https://datawhalechina.github.io/diy-llm/"
+    ]
+  },
+  "image_brief": "Clean editorial cover for a beginner GitHub-to-LLM learning guide with three steps -- find, run, record: choose credible repositories, complete one checked lab, then save the evidence in a learning-notes repository. No training or income figures.",
+  "image": null,
+  "image_status": "external_image_pending_archive",
+  "alt_text": "Clean editorial cover for a beginner GitHub-to-LLM learning guide. Three steps read Find, Run, Record: choose credible repositories, complete one checked lab, then save the evidence in llm-learning-notes. No training or income figures are claimed.",
+  "prompt_ref": "tutorial",
+  "provenance": {
+    "source": "vendor/x-growth-os/posts/2026-10-25-007-github-llm-longform.md",
+    "section": "English X Thread proposal (2 posts, no broken private link)",
+    "origin": "X-SuperPlay-X-Growth-OS @ 3154db49, vendored verbatim"
+  },
+  "source_category": "TUTORIAL_BUILD_AND_LEARN",
+  "source_angles": [
+    {
+      "angle": "Bookmarks-to-proof learning pipeline (chosen)",
+      "thesis": "The learning failure is turning GitHub bookmarks into practice, not missing mathematics.",
+      "evidence": "The 13-section guide is written and archived internally; the toy attention experiment inside it passed with five unit tests.",
+      "counterexample": "Saving notes and running a one-dimensional causal attention test does not establish competent LLM engineering; it is a start, not mastery.",
+      "score": "27/30"
+    },
+    {
+      "angle": "Choosing an appropriate repo by prerequisites",
+      "thesis": "",
+      "evidence": "",
+      "counterexample": "",
+      "score": "25/30"
+    },
+    {
+      "angle": "Lab-first route before heavyweight training",
+      "thesis": "",
+      "evidence": "",
+      "counterexample": "",
+      "score": "24/30"
+    }
+  ],
+  "review": null,
+  "status": "draft",
+  "status_url": null,
+  "scheduled_for": null,
+  "metrics": null,
+  "notes": "Migrated from the vendored draft 2026-10-25-007-github-llm-longform.md. Both thread parts are that draft's verbatim blocks; the draft measured them at 273 and 237 weighted characters. The draft's own state is DRAFT_NO_PUBLIC_ARTICLE_URL and that is kept here: the 13-step guide lives in the private source repository and no public URL exists, so nothing in this record claims a publicly readable course. The proof grade is P1 because the draft's evidence boundary is a real local run (the toy attention experiment passed on Python 3.13.5 on Linux with five unit tests); the 13 web/UI steps were not independently performed from a fresh reader account and the whole Datawhale training was not executed, and the record says so rather than rounding the guide up to a verified course. The draft replaces the earlier #006 as the broad beginner topic; #006 remains the narrow experiment and is a separate record, so the two are not republished into one another. The tutorial track is not wired into this account, so this record is a preserved draft, not a scheduled post. The 1600x900 cover PNG was a conversation attachment and is not in the source repository, so image is null and image_status is external_image_pending_archive. prompt_ref names the account's tutorial prompt because this draft follows that brief; the draft names no prompt itself. No review, no metrics, no publication."
+}

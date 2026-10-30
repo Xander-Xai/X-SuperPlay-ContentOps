@@ -14,19 +14,27 @@ enforced gate, and it never publishes: ``--package`` assembles what a person
 pastes and attaches, and ``--mark-published`` only records a URL that person
 already has.
 
+``--prompt`` names the account prompt a record was written from. It is a
+reference, not a generator: the command reads that prompt's own requirement
+headings back as a checklist and refuses a name the account does not declare.
+
 Usage
 -----
     python scripts/x_post.py --new projects/x-growth-en --id 20261030-001 \
         --topic "verification before completion"
+    python scripts/x_post.py --new projects/x-growth-en --id 20261030-002 \
+        --topic "..." --prompt daily_post
     python scripts/x_post.py --check projects/x-growth-en --id 20261030-001
     python scripts/x_post.py --package projects/x-growth-en --id 20261030-001
     python scripts/x_post.py --mark-published projects/x-growth-en \
         --id 20261030-001 --url https://x.com/<handle>/status/<id>
     python scripts/x_post.py --verify-log projects/x-growth-en
+    python scripts/x_post.py --verify-tables projects/x-growth-en
 
 Every action writes a receipt under the project's ``receipts/`` directory:
 ``x-check-<id>.json`` for a grade, ``x-package-<id>.json`` for a package,
-``x-publish-<id>.json`` for a recorded publication.
+``x-publish-<id>.json`` for a recorded publication, ``x-tables-<date>.json``
+for the CSV tables.
 
 Exit codes: 0 pass, 1 refusal, 2 misuse.
 """
@@ -62,6 +70,7 @@ from contentops.publish import (  # noqa: E402
     valid_status_url,
     validate_post,
 )
+from contentops.publish import x_prompts, x_tables  # noqa: E402
 from contentops.publish.x_text import parts_lengths  # noqa: E402
 
 #: What this command's receipts declare.
@@ -71,18 +80,10 @@ EXIT_PASS, EXIT_REFUSED, EXIT_MISUSE = 0, 1, 2
 
 #: The vendored posts table, unchanged, so its own report script can read ours.
 POSTS_CSV = Path("templates") / "posts.csv"
-COLUMNS = (
-    "date_local", "timezone", "content_id", "mode", "topic", "source_url",
-    "status", "x_post_url", "post_count", "image_status", "impressions", "likes",
-    "reposts", "replies", "bookmarks", "profile_visits", "follower_delta", "notes",
-    "account_handle", "icp", "proof_grade", "experiment_variable", "post_published_at",
-)
+COLUMNS = x_tables.POSTS_COLUMNS
 
 #: The metric columns. Blank means unobserved; `0` means observed and zero.
-METRIC_COLUMNS = (
-    "impressions", "likes", "reposts", "replies", "bookmarks", "profile_visits",
-    "follower_delta",
-)
+METRIC_COLUMNS = x_tables.POST_METRIC_COLUMNS
 
 
 class Refusal(Exception):
@@ -197,7 +198,8 @@ def _row_for(project: Path, content_id: str) -> Optional[Dict[str, str]]:
 
 
 def _template(account: Dict[str, Any], content_id: str, topic: str,
-              sources: List[str], mode: str) -> Dict[str, Any]:
+              sources: List[str], mode: str,
+              prompt_ref: str = "") -> Dict[str, Any]:
     """A draft record with the holes a person has to fill, and nothing invented."""
     pillars = [str(pillar.get("name")) for pillar in account.get("content_pillars") or []
                if isinstance(pillar, dict)]
@@ -223,6 +225,10 @@ def _template(account: Dict[str, Any], content_id: str, topic: str,
         "image": None,
         "image_status": "missing",
         "alt_text": "",
+        "prompt_ref": prompt_ref,
+        "provenance": None,
+        "source_category": "",
+        "source_angles": [],
         "review": None,
         "status": "draft",
         "status_url": None,
@@ -254,7 +260,7 @@ def _issues(issues: List[Issue]) -> List[Dict[str, str]]:
 
 
 def action_new(project: Path, content_id: str, topic: str, sources: List[str],
-               mode: str) -> Dict[str, Any]:
+               mode: str, prompt: str = "") -> Dict[str, Any]:
     account = account_for(project)
     path = post_path(project, content_id)
     if path.exists():
@@ -264,7 +270,23 @@ def action_new(project: Path, content_id: str, topic: str, sources: List[str],
     if not str(topic or "").strip():
         raise Refusal("TOPIC_MISSING", "--new needs --topic; a record with no subject "
                                        "gates nothing")
-    post = _template(account, content_id, topic.strip(), sources, mode)
+    prompt_ref = ""
+    checklist: List[str] = []
+    prompt_path: Optional[Path] = None
+    if str(prompt or "").strip():
+        prompt_ref, prompt_path, code = x_prompts.resolve(account, prompt.strip())
+        if code == "PROMPT_REF_UNKNOWN":
+            raise Refusal(
+                code,
+                f"prompt {prompt_ref!r} is not one of the account's prompts "
+                f"{sorted(x_prompts.prompt_map(account))}")
+        if code == "PROMPT_REF_ABSENT":
+            raise Refusal(
+                code,
+                f"prompt {prompt_ref!r} points at a file that is not in this tree; "
+                "a prompt reference must be real")
+        checklist = x_prompts.prompt_checklist(prompt_path)
+    post = _template(account, content_id, topic.strip(), sources, mode, prompt_ref)
     _write_post(path, post)
 
     publication = account.get("publication") or {}
@@ -296,12 +318,18 @@ def action_new(project: Path, content_id: str, topic: str, sources: List[str],
         "post": path.relative_to(project).as_posix(),
         "csv": Path(csv_path).relative_to(project).as_posix(),
         "verdict": verdict,
+        "prompt_ref": prompt_ref or None,
+        "prompt_source": (Path(x_prompts.prompt_map(account)[prompt_ref]).as_posix()
+                          if prompt_ref else None),
+        "prompt_requirements": checklist,
         "outstanding": _issues(issues),
         "cannot": ["nothing was posted, rendered or scored; every field below empty "
                    "is a person's to fill"],
     })
     return {"action": "new", "content_id": content_id, "verdict": verdict,
             "post": post, "issues": issues,
+            "prompt_ref": prompt_ref or None,
+            "prompt_requirements": checklist,
             "receipt": receipt.relative_to(project).as_posix()}
 
 
@@ -454,6 +482,35 @@ def action_verify_log(project: Path) -> Dict[str, Any]:
             "posts": len(ids), "drift": drift, "verdict": "PASS" if not drift else "BLOCKED"}
 
 
+def action_verify_tables(project: Path) -> Dict[str, Any]:
+    """Check the three CSV tables against the vendored contract and the records."""
+    account = account_for(project)
+    ids = _post_ids(project)
+    issues = x_tables.verify_tables(project, ids)
+    pending = [
+        row.get("content_id")
+        for row in _read_rows(Path(project) / POSTS_CSV)[1]
+        if row.get("status") == x_tables.PENDING_STATUS
+    ]
+    receipt = _receipt(project, f"x-tables-{date.today().isoformat()}.json", {
+        "schema": RECEIPT_SCHEMA,
+        "action": "verify-tables",
+        "checked_at": _now(),
+        "records": len(ids),
+        "tables": ["templates/posts.csv", "templates/x-metric-snapshots.csv",
+                   "templates/x-account-snapshots.csv"],
+        "unverified_reported_publications": sorted(str(item) for item in pending),
+        "issues": _issues(issues),
+        "verdict": "PASS" if not issues else "BLOCKED",
+        "cannot": ["a pending row is a person's claim that a post went out; nothing "
+                   "in this tree can verify it until the real URL is recorded"],
+    })
+    return {"action": "verify-tables", "records": len(ids), "issues": issues,
+            "unverified_reported_publications": sorted(str(item) for item in pending),
+            "verdict": "PASS" if not issues else "BLOCKED",
+            "receipt": receipt.relative_to(project).as_posix()}
+
+
 # ---------------------------------------------------------------------- printing
 
 
@@ -477,12 +534,17 @@ def main(argv: Optional[List[str]] = None) -> int:
                          help="record a real status URL for a READY post")
     actions.add_argument("--verify-log", action="store_true",
                          help="cross-check published records against posts.csv")
+    actions.add_argument("--verify-tables", action="store_true",
+                         help="check the CSV tables against the vendored contract")
     parser.add_argument("--id", dest="content_id", help="content id, e.g. 20261030-001")
     parser.add_argument("--topic", help="the post's subject, for --new")
     parser.add_argument("--source", action="append", default=[],
                         help="a source URL, repeatable")
     parser.add_argument("--mode", default="workflow_artifact",
                         help="one of the account's content pillars")
+    parser.add_argument("--prompt", default="",
+                        help="the account prompt this record is written from, e.g. "
+                             "daily_post")
     parser.add_argument("--url", help="the real x.com/<handle>/status/<id> URL")
     parser.add_argument("--reviewer", help="who confirmed the publication")
     parser.add_argument("--opinion", help="their note, recorded verbatim")
@@ -508,11 +570,23 @@ def main(argv: Optional[List[str]] = None) -> int:
                 print(result["verdict"])
             return EXIT_PASS if result["verdict"] == "PASS" else EXIT_REFUSED
 
+        if args.verify_tables:
+            result = action_verify_tables(project)
+            emit(result)
+            if not args.json:
+                print(f"{result['records']} record(s), {len(result['issues'])} issue(s)")
+                for item in result["issues"]:
+                    print(f"  {item.code}: {item.detail}")
+                for content_id in result["unverified_reported_publications"]:
+                    print(f"  UNVERIFIED {content_id}: reported published, no URL")
+                print(result["verdict"])
+            return EXIT_PASS if result["verdict"] == "PASS" else EXIT_REFUSED
+
         content_id = _resolve_id(project, args.content_id)
 
         if args.new:
             result = action_new(project, content_id, args.topic or "", args.source,
-                                args.mode)
+                                args.mode, args.prompt)
         elif args.check:
             result = action_check(project, content_id)
         elif args.package:
@@ -529,6 +603,10 @@ def main(argv: Optional[List[str]] = None) -> int:
             if result["action"] == "new":
                 print(f"{result['content_id']}: created, {len(result['issues'])} "
                       "field(s) outstanding before the gate can pass")
+                if result.get("prompt_ref"):
+                    print(f"  prompt {result['prompt_ref']} asks for:")
+                    for item in result.get("prompt_requirements") or []:
+                        print(f"    - {item}")
                 _print_issues(result["issues"])
             else:
                 print(f"{result['content_id']}: {result['verdict']}")

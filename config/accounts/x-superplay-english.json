@@ -108,6 +108,14 @@
     "dimension_floor": 4,
     "dimension_floor_required": ["novelty", "evidence", "mechanism"],
     "recovery_fields": ["audience_job", "proof_grade", "unique_artifact_ref", "experiment_variable"],
+    "prompts": {
+      "daily_post": "vendor/x-growth-os/prompts/DAILY-POST.md",
+      "github_url": "vendor/x-growth-os/prompts/GITHUB-URL-TO-X.md",
+      "x_signal": "vendor/x-growth-os/prompts/X-HIGH-SIGNAL-TO-POST.md",
+      "tutorial": "vendor/x-growth-os/prompts/TUTORIAL-TO-X.md",
+      "visual_brief": "vendor/x-growth-os/prompts/VISUAL-BRIEF.md"
+    },
+    "prompts_note": "These five are the vendored workflow's own prompts, referenced by path. A record may name one in 'prompt_ref' so a reader can see which brief it was written from; the gate only checks that the name is declared here and the file is really in this tree. Nothing here generates copy, and the tutorial prompt is a reference only -- the tutorial track is not wired into this account.",
     "source_analysis_label": "SOURCE_ANALYSIS",
     "score_note": "24/30 with novelty, evidence and mechanism each >=4 is a human editorial heuristic, not an X ranking formula and not evidence of reach. A self-awarded perfect score authorizes nothing on its own; the recovery fields and the proof grade are what the gate reads."
   },

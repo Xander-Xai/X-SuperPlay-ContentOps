@@ -83,12 +83,14 @@ python scripts\account_route.py projects\x-growth-en
 python scripts\x_growth_pin.py                       # 先过摘要钉
 python scripts\x_growth_pin.py --suite               # 顺带跑 vendored 分析脚本的测试
 
-python scripts\x_post.py --new projects\x-growth-en --id 20261102-001 --topic "..."
+python scripts\x_post.py --new projects\x-growth-en --id 20261102-001 --topic "..." `
+    --prompt daily_post
 python scripts\x_post.py --check projects\x-growth-en --id 20261102-001
 python scripts\x_post.py --package projects\x-growth-en --id 20261102-001
 python scripts\x_post.py --mark-published projects\x-growth-en --id 20261102-001 `
     --url https://x.com/<handle>/status/<id> --reviewer "<name>" --opinion "<one line>"
 python scripts\x_post.py --verify-log projects\x-growth-en
+python scripts\x_post.py --verify-tables projects\x-growth-en
 ```
 
 - `--check` 在 `READY`/`PUBLISHED` 时退出 0，拒绝时 1，误用 2，并逐条打印 issue 代码。
@@ -99,6 +101,14 @@ python scripts\x_post.py --verify-log projects\x-growth-en
 - `--mark-published` 只接受真实的 `https://(x|twitter).com/<handle>/status/<digits>` URL，
   upsert `templates/posts.csv` 的一行，并写出 `receipts/x-publish-<id>.json`。
 - `--verify-log` 把每条已发布帖子的 JSON 与它的 CSV 行对照，报告漂移。
+- `--prompt <name>` 声明这条记录是照着哪一份提示词写的。它只是引用，不生成内容：
+  命令会把那份提示词自己写下的要求标题读回来当作清单；账号没声明的名字会被拒
+  （`PROMPT_REF_UNKNOWN`），指向树外文件的也会被拒（`PROMPT_REF_ABSENT`）。
+- `--verify-tables` 按 vendored 契约检查三张 CSV：表头必须与 vendored 模板一致；度量列
+  要么为空（未观测）要么是非负整数（观测到了且是零）；age window 只能是
+  `T+2H / T+24H / T+72H / T+7D`；状态写成 `published` 的行必须带真实的 `x_post_url`。
+  它写出 `receipts/x-tables-<date>.json`，并把"有人声称发出去了但没有 URL"的行单独列出——
+  这些行永远不计入已核实的发布。
 
 卡片图由路由到的 skill 从受版本管理的 HTML 渲染，不是图像模型：
 
@@ -118,6 +128,27 @@ python vendor\x-growth-os\scripts\x_growth_report.py --root projects\x-growth-en
 ```
 
 它报 `observational_audit_not_causal_attribution`。空指标保持空，永远不会被当成 0。
+
+### 3.3 从已退役的源仓库迁进来的内容
+
+`Xander-Xai/X-SuperPlay-X-Growth-OS` 已于 2026-10-30 删除，其内容先迁入本仓库。冷副本是
+一个已核验的 bundle，不是远程：
+
+```
+D:\Archives\repos\x-growth-os\2026-10-30\x-growth-os.bundle   （全部 refs，完整历史）
+D:\Archives\repos\x-growth-os\2026-10-30\INDEX.md              （refs、commit、SHA-256）
+```
+
+`projects/x-growth-en/posts/` 现有九条迁入的记录：vendored 树里的七篇草稿、两条未合并
+分支各一篇草稿，以及本仓库在迁移前自己写的一条。只有存在于那两条分支上的草稿，连同它的
+SVG 和实验脚本，都被复制进 `projects/x-growth-en/assets/imported/`，因此本仓库不再依赖
+一个已经不存在的远程仓库。
+
+每条迁入记录都在 `provenance` 里写明来源，在 `source_category` 里保留来源自己的分类，
+并在 `notes` 里写清哪些是引用、哪些是映射、哪些缺失。它们没有一条是 `READY`：来源草稿里
+的评分是编辑自己的判断，不是某个人的评审，所以 `review` 全部保持 `null`。
+详见 [ADR-012](adr/ADR-012-x-platform-track.md) 的附录，其中记录了迁入的内容与仍属"声称"的
+部分。
 
 ## 4. 运行生产流水线
 

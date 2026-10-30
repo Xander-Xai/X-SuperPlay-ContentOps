@@ -1151,8 +1151,33 @@ P0 帖子声称自己跑过、指标存成字符串、以及 `status: published`
 `receipts/x-package-<id>.json` 并停在 `AWAITING_MANUAL_PUBLISH`；`PublishMode.API`
 直接抛错。
 
-今天的实测状态：`projects/x-growth-en/` 只有一条记录 `20261030-001`，卡片已按
-1600×900 渲染。它的判定是 **DRAFT**，唯一未过项是 `REVIEW_MISSING`——人工评审还没
+今天的实测状态：`projects/x-growth-en/` 现有九条记录，卡片已按
+1600×900 渲染。它们的判定是 **DRAFT**，唯一未过项是 `REVIEW_MISSING`——人工评审还没
 发生，所以 `--package` 会拒绝，也没有发布任何内容。账号 handle 是 `null` /
 `UNKNOWN`，由第一个真实 status URL 教会。本仓库没有任何 X API 调用，也没有为它存
 任何凭据。
+
+### 源仓库已退役并迁入本仓库 —— 2026-10-30
+
+`Xander-Xai/X-SuperPlay-X-Growth-OS` 在 GitHub 上已不存在。它的内容、两条未合并分支和
+历史先迁入本仓库，远程仓库是在冷 bundle 核验通过之后才删除的。
+
+- **冷副本是已核验的 bundle，不是远程。**
+  `D:\Archives\repos\x-growth-os\2026-10-30\x-growth-os.bundle`（311,907 B，SHA-256
+  `27b901a3…c044ca`）包含全部 13 个 refs——四个分支和八个 PR ref——`git bundle verify`
+  报告历史完整。同目录的 `INDEX.md` 记录了 refs、commit 与摘要。
+- **九条记录**承载了这些草稿：vendored 的七篇、两条未合并分支各一篇，以及迁移前本仓库
+  自己写的一条。每条都在 `provenance` 里写明来源，在 `source_category` 里保留来源自己的
+  分类。两篇分支草稿连同它的 SVG 和实验脚本被复制进
+  `projects/x-growth-en/assets/imported/`。
+- **十二条 CSV 行**：九条记录，加三条"有人说发出去了但没有 URL、也没有草稿"的行。这三行
+  保持 `reported_published_url_pending` 状态、没有记录，由 `--verify-tables` 单独计数。
+  `POST_STATUSES` 没有新增取值：记录是给人审的，而 `--mark-published` 要求先到 `READY`。
+- **迁移没有把任何记录"升级"。** 来源草稿里的评分是编辑自己的判断，不是某个人的评审，
+  所以 `review` 全部保持 `null`，没有一条迁入记录是 `READY`。求职那篇草稿自己的证据类
+  （`P0_OWNER_REPORT`）不在本账号的阶梯上，所以 `proof_grade` 保持 `null`，门禁按名拒绝。
+- **教程轨刻意没有接入**，仍是 vendored 参考材料。
+- **提示词只是引用。** 账号按路径声明了五份 vendored 提示词；`--new --prompt <name>`
+  把那份提示词自己的要求标题读回来当作清单，并拒绝未声明的名字。没有任何生成。
+
+账号自身的度量不因这些而改变：`verified_published_posts` 是 0。

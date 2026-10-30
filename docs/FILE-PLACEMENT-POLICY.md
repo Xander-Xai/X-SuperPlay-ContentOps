@@ -188,8 +188,9 @@ projects/x-growth-en/
 ├── posts/                # <content_id>.json — one contentops.x-post/v1 record per post
 ├── templates/            # posts.csv, x-metric-snapshots.csv, x-account-snapshots.csv
 ├── assets/
-│   └── cards/            # <id>.html is tracked; the rendered <id>.png is gitignored
-└── receipts/             # x-check-*.json, x-package-*.json, x-publish-*.json
+│   ├── cards/            # <id>.html is tracked; the rendered <id>.png is gitignored
+│   └── imported/         # text that came from the retired source repository (see below)
+└── receipts/             # x-check-*.json, x-package-*.json, x-publish-*.json, x-tables-*.json
 ```
 
 - One post is one file in `posts/`. The file is the record; `templates/posts.csv` is the
@@ -200,6 +201,15 @@ projects/x-growth-en/
   the video script gate (SQ01–SQ07), which does not describe an X post. The X gate is
   `scripts/x_post.py`, named in `gate:`.
 - The workflow itself lives at `vendor/x-growth-os/` and is never edited.
+- `assets/imported/` holds the text that came from the retired source repository: the
+  two drafts that existed only on its unmerged branches, their SVG and their experiment
+  script. It is tracked, because the remote they came from no longer exists and the
+  record's `provenance` points into it. Nothing else may go there: it is an archive of
+  one dead repository, not a general import drawer.
+
+The cold copy of that repository is not in this tree at all. It is a verified git
+bundle under `D:\Archives\repos\x-growth-os\2026-10-30\`, with the refs, the commits
+and the digest recorded in the `INDEX.md` beside it.
 
 ## tests/
 
