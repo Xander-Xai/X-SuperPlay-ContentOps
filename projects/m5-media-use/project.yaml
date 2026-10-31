@@ -38,7 +38,7 @@ media_use:
       kind: image
       intent: "Easel runtime hero screenshot for a pinned-version explainer"
       license: "OWNED-BY-OPERATOR"
-      attribution: "Owner-captured screenshot of the pinned Easel runtime"
+      attribution: "Repository-classified CREATED_BY_OWNER screenshot of the pinned Easel runtime; no separate capture receipt"
       rights_reviewed: true
     - id: bed
       kind: bgm

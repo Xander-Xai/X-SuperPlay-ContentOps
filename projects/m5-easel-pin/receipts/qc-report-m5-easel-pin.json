@@ -1,14 +1,16 @@
 {
-  "project": "D:\\Projects\\X-SuperPlay-ContentOps\\.claude\\worktrees\\m5-production\\projects\\m5-easel-pin",
-  "checked_at": "2026-10-31T09:18:21Z",
-  "video": "",
+  "schema": "contentops.qc-canonical/v1",
+  "currency": "CURRENT",
+  "project": "projects/m5-easel-pin",
+  "graded_target": "project://final/m5-easel-pin.mp4",
   "overall": "PASS",
+  "checked_at": "2026-10-31T10:52:08Z",
   "checks": [
     {
       "id": "_video",
       "ok": true,
       "severity": "INFO",
-      "path": "D:\\Projects\\X-SuperPlay-ContentOps\\.claude\\worktrees\\m5-production\\projects\\m5-easel-pin\\final\\m5-easel-pin.mp4"
+      "path": "project://final/m5-easel-pin.mp4"
     },
     {
       "id": "file_size",
@@ -77,13 +79,13 @@
       "id": "caption_srt_present",
       "ok": true,
       "severity": "PASS",
-      "path": "D:\\Projects\\X-SuperPlay-ContentOps\\.claude\\worktrees\\m5-production\\projects\\m5-easel-pin\\assets\\captions\\default.srt"
+      "path": "project://assets/captions/default.srt"
     },
     {
       "id": "script_exists",
       "ok": true,
       "severity": "PASS",
-      "path": "D:\\Projects\\X-SuperPlay-ContentOps\\.claude\\worktrees\\m5-production\\projects\\m5-easel-pin\\script\\master.md"
+      "path": "project://script/master.md"
     },
     {
       "id": "storyboard_exists",
@@ -144,6 +146,7 @@
       "note": "mechanical/fallback voice keeps the render at READY_FOR_HUMAN_REVIEW; only a human can accept it as production (V1 spec §11)"
     }
   ],
+  "path_policy": "logical references (project://, repo://); no absolute paths",
   "m5_checks": {
     "audio_stream": true,
     "overall_after_m5": "PASS"

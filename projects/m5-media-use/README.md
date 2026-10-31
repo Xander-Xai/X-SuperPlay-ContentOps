@@ -24,7 +24,7 @@ mixes both audio tracks under the narration.
 
 | Input | Origin | Licence |
 |---|---|---|
-| `assets/support.png` | owner-captured screenshot, copied from `projects/easel-review/sources/screenshots/01-easel-hero.png` | `OWNED-BY-OPERATOR` |
+| `assets/support.png` | classified `CREATED_BY_OWNER` in the repository manifests, copied from `projects/easel-review/sources/screenshots/01-easel-hero.png`; no separate capture receipt exists | `OWNED-BY-OPERATOR` |
 | `assets/bed.mp3` | deterministic ffmpeg sine bed generated for this sample | `OWNED-GENERATED-LOCAL` |
 | bundled SFX | resolved offline by media-use from `skills/media-use/audio` | `Pixabay-Content-License` |
 

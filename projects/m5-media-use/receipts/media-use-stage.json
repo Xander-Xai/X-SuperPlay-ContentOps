@@ -14,7 +14,7 @@
       "path": "project://assets/support.png",
       "receipt_ref": "support.png.receipt.json",
       "license": "OWNED-BY-OPERATOR",
-      "attribution": "Owner-captured screenshot of the pinned Easel runtime",
+      "attribution": "Repository-classified CREATED_BY_OWNER screenshot of the pinned Easel runtime; no separate capture receipt",
       "evidence_capable": false,
       "provider_call": false
     },

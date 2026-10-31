@@ -337,16 +337,36 @@ def an_audio_request_cannot_be_declared_in_the_visual_manifest():
 
 @check
 def committed_example_receipts_carry_no_machine_paths():
-    root = ROOT / "projects" / "m5-media-use"
     skip = {".media", "final", "work", "assets"}
-    for path in root.rglob("*"):
-        if not path.is_file() or skip & set(path.relative_to(root).parts):
-            continue
-        if path.suffix not in {".json", ".yaml", ".md"}:
-            continue
-        text = path.read_text(encoding="utf-8")
-        machine = re.search(r"(?<![A-Za-z])[A-Za-z]:[\\/]|/c/Users|/d/Projects", text)
-        assert not machine, f"machine path {machine.group(0)!r} in {path}"
+    for name in ("m5-media-use", "m5-easel-pin"):
+        root = ROOT / "projects" / name
+        for path in root.rglob("*"):
+            if not path.is_file() or skip & set(path.relative_to(root).parts):
+                continue
+            if path.suffix not in {".json", ".yaml", ".md"}:
+                continue
+            text = path.read_text(encoding="utf-8")
+            machine = re.search(r"(?<![A-Za-z])[A-Za-z]:[\\/]|/c/Users|/d/Projects", text)
+            assert not machine, f"machine path {machine.group(0)!r} in {path}"
+
+
+@check
+def legacy_m5_project_keeps_the_media_use_stage_disabled():
+    run = json.loads((ROOT / "projects" / "m5-easel-pin" / "receipts" / "m5-run.json")
+                     .read_text(encoding="utf-8"))
+    stage = run["stages"]["media_use"]
+    assert stage["state"] == "DISABLED" and stage["count"] == 0
+    assert not (ROOT / "projects" / "m5-easel-pin" / "receipts" / "media-use-stage.json").exists()
+
+
+@check
+def the_same_bytes_cannot_be_imported_under_two_ids():
+    project, config, digest = project_and_config()
+    config["media_use"]["requests"].append({
+        "id": "support_visual_copy", "kind": "image", "intent": "same file",
+        "license": "OWNED-FIXTURE", "rights_reviewed": True,
+    })
+    refused(lambda: m5.stage_media_use(project, config, adapter=FakeMediaAdapter(digest)))
 
 
 def main():
