@@ -82,6 +82,7 @@ def main():
     py = python_executable()
     checks = [
         ("repo_policy", [py, "scripts/check_repo_policy.py"]) if not args.quick else None,
+        ("gzh_skill_rights", [py, "scripts/check_gzh_skill_rights.py"]),
         ("subprocess_policy", [py, "scripts/check_subprocess_policy.py"]),
         ("docs_check",  [py, "scripts/check_docs.py"]),
         ("i18n_check",  [py, "scripts/check_i18n.py"]),

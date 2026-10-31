@@ -1,0 +1,513 @@
+{
+  "schema": "contentops.gzh-skill-rights/v1",
+  "note": "Rights classes and dispatch decisions for the vendored GZH skills. This is an engineering record, not a legal opinion. Unknown is not infringement; it is a hold.",
+  "classes": {
+    "OWNED_AND_CLEARED": "Git authorship in the owner private repository; no third-party marker",
+    "OWNER_ATTESTED": "owner attestation only; public release held",
+    "THIRD_PARTY_LICENSE_VERIFIED": "licence text or declared licence plus a source",
+    "RESTRICTED": "known obligation that blocks or conditions use",
+    "RIGHTS_UNKNOWN": "no author, source or licence evidence; dispatch blocked"
+  },
+  "skills": {
+    "_archive/aws-wechat-article-assets": {
+      "path": "_archive/aws-wechat-article-assets",
+      "class": "OWNED_AND_CLEARED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; Git authorship",
+      "license": "owner-controlled; Git authorship evidence",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": false,
+      "decision": "keep"
+    },
+    "_archive/aws-wechat-article-formatting": {
+      "path": "_archive/aws-wechat-article-formatting",
+      "class": "OWNED_AND_CLEARED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; Git authorship",
+      "license": "owner-controlled; Git authorship evidence",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": false,
+      "decision": "keep"
+    },
+    "_archive/aws-wechat-article-images": {
+      "path": "_archive/aws-wechat-article-images",
+      "class": "OWNED_AND_CLEARED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; Git authorship",
+      "license": "owner-controlled; Git authorship evidence",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": false,
+      "decision": "keep"
+    },
+    "_archive/aws-wechat-article-main": {
+      "path": "_archive/aws-wechat-article-main",
+      "class": "OWNED_AND_CLEARED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; Git authorship",
+      "license": "owner-controlled; Git authorship evidence",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": false,
+      "decision": "keep"
+    },
+    "_archive/aws-wechat-article-publish": {
+      "path": "_archive/aws-wechat-article-publish",
+      "class": "OWNED_AND_CLEARED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; Git authorship",
+      "license": "owner-controlled; Git authorship evidence",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": false,
+      "decision": "keep"
+    },
+    "_archive/aws-wechat-article-review": {
+      "path": "_archive/aws-wechat-article-review",
+      "class": "OWNED_AND_CLEARED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; Git authorship",
+      "license": "owner-controlled; Git authorship evidence",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": false,
+      "decision": "keep"
+    },
+    "_archive/aws-wechat-article-topics": {
+      "path": "_archive/aws-wechat-article-topics",
+      "class": "OWNED_AND_CLEARED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; Git authorship",
+      "license": "owner-controlled; Git authorship evidence",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": false,
+      "decision": "keep"
+    },
+    "_archive/aws-wechat-article-writing": {
+      "path": "_archive/aws-wechat-article-writing",
+      "class": "OWNED_AND_CLEARED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; Git authorship",
+      "license": "owner-controlled; Git authorship evidence",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": false,
+      "decision": "keep"
+    },
+    "_archive/aws-wechat-sticker": {
+      "path": "_archive/aws-wechat-sticker",
+      "class": "OWNED_AND_CLEARED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; Git authorship",
+      "license": "owner-controlled; Git authorship evidence",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": false,
+      "decision": "keep"
+    },
+    "agnes-image-21-flash": {
+      "path": "agnes-image-21-flash",
+      "class": "OWNED_AND_CLEARED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; Git authorship",
+      "license": "owner-controlled; Git authorship evidence",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": false,
+      "decision": "keep"
+    },
+    "ai-thinktank-workflow": {
+      "path": "ai-thinktank-workflow",
+      "class": "OWNED_AND_CLEARED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; Git authorship",
+      "license": "owner-controlled; Git authorship evidence",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": false,
+      "decision": "keep"
+    },
+    "arxiv-search": {
+      "path": "arxiv-search",
+      "class": "THIRD_PARTY_LICENSE_VERIFIED",
+      "source": "https://github.com/langchain-ai/deepagents (libs/code/examples/skills/arxiv-search)",
+      "license": "MIT",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": true,
+      "decision": "keep; preserve the upstream licence and this notice"
+    },
+    "beautiful-mermaid": {
+      "path": "beautiful-mermaid",
+      "class": "THIRD_PARTY_LICENSE_VERIFIED",
+      "source": "https://github.com/Alex",
+      "license": "MIT (local LICENSE)",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": true,
+      "decision": "keep; preserve the upstream licence and this notice"
+    },
+    "content-humanizer": {
+      "path": "content-humanizer",
+      "class": "OWNER_ATTESTED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; owner THIRD_PARTY_NOTICES attestation only",
+      "license": "attestation only; not independently verified",
+      "dispatch": "allowed",
+      "distribution": "hold",
+      "notice_required": false,
+      "decision": "internal use; public release held pending file-level evidence or legal sign-off"
+    },
+    "content-production": {
+      "path": "content-production",
+      "class": "OWNER_ATTESTED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; owner THIRD_PARTY_NOTICES attestation only",
+      "license": "attestation only; not independently verified",
+      "dispatch": "allowed",
+      "distribution": "hold",
+      "notice_required": false,
+      "decision": "internal use; public release held pending file-level evidence or legal sign-off"
+    },
+    "content-repurposer": {
+      "path": "content-repurposer",
+      "class": "RIGHTS_UNKNOWN",
+      "source": "public OpenClaw skill collections; original author not established",
+      "license": "none found",
+      "dispatch": "blocked",
+      "distribution": "hold",
+      "notice_required": false,
+      "decision": "exclude from dispatch and hold public distribution until cleared"
+    },
+    "content-strategy": {
+      "path": "content-strategy",
+      "class": "OWNER_ATTESTED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; owner THIRD_PARTY_NOTICES attestation only",
+      "license": "attestation only; not independently verified",
+      "dispatch": "allowed",
+      "distribution": "hold",
+      "notice_required": false,
+      "decision": "internal use; public release held pending file-level evidence or legal sign-off"
+    },
+    "deep-research": {
+      "path": "deep-research",
+      "class": "RESTRICTED",
+      "source": "https://github.com/Imbad0202/academic-research-skills (deep-research)",
+      "license": "CC BY-NC 4.0 (noncommercial)",
+      "dispatch": "blocked",
+      "distribution": "blocked",
+      "notice_required": true,
+      "decision": "keep and comply, or obtain permission; never remove the HTML gate"
+    },
+    "exa-web-search-free": {
+      "path": "exa-web-search-free",
+      "class": "RIGHTS_UNKNOWN",
+      "source": "OpenClaw community skill; no upstream licence found",
+      "license": null,
+      "dispatch": "blocked",
+      "distribution": "hold",
+      "notice_required": false,
+      "decision": "exclude from dispatch and hold public distribution until cleared"
+    },
+    "excalidraw-diagram": {
+      "path": "excalidraw-diagram",
+      "class": "OWNED_AND_CLEARED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; Git authorship",
+      "license": "owner-controlled; Git authorship evidence",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": false,
+      "decision": "keep"
+    },
+    "excalidraw-skill-pack": {
+      "path": "excalidraw-skill-pack",
+      "class": "THIRD_PARTY_LICENSE_VERIFIED",
+      "source": "Timur Isachenko",
+      "license": "MIT (local LICENSE)",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": true,
+      "decision": "keep; preserve the upstream licence and this notice"
+    },
+    "formula-rendering": {
+      "path": "formula-rendering",
+      "class": "OWNED_AND_CLEARED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; Git authorship",
+      "license": "owner-controlled; Git authorship evidence",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": false,
+      "decision": "keep"
+    },
+    "gzh-article-assets": {
+      "path": "gzh-article-assets",
+      "class": "OWNED_AND_CLEARED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; Git authorship",
+      "license": "owner-controlled; Git authorship evidence",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": false,
+      "decision": "keep"
+    },
+    "gzh-article-format": {
+      "path": "gzh-article-format",
+      "class": "OWNED_AND_CLEARED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; Git authorship",
+      "license": "owner-controlled; Git authorship evidence",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": false,
+      "decision": "keep"
+    },
+    "gzh-article-orchestrator": {
+      "path": "gzh-article-orchestrator",
+      "class": "OWNED_AND_CLEARED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; Git authorship",
+      "license": "owner-controlled; Git authorship evidence",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": false,
+      "decision": "keep"
+    },
+    "gzh-article-writing": {
+      "path": "gzh-article-writing",
+      "class": "OWNED_AND_CLEARED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; Git authorship",
+      "license": "owner-controlled; Git authorship evidence",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": false,
+      "decision": "keep"
+    },
+    "gzh-design-skill": {
+      "path": "gzh-design-skill",
+      "class": "RESTRICTED",
+      "source": "甲木 (Jiamu) × 摸鱼小李 (Moyu Xiaoli)",
+      "license": "AGPL-3.0 (local LICENSE)",
+      "dispatch": "allowed_agpl",
+      "distribution": "allowed_agpl",
+      "notice_required": true,
+      "decision": "keep and comply, or obtain permission; never remove the HTML gate"
+    },
+    "gzh-draft-publisher": {
+      "path": "gzh-draft-publisher",
+      "class": "OWNED_AND_CLEARED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; Git authorship",
+      "license": "owner-controlled; Git authorship evidence",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": false,
+      "decision": "keep"
+    },
+    "gzh-editorial-review": {
+      "path": "gzh-editorial-review",
+      "class": "OWNED_AND_CLEARED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; Git authorship",
+      "license": "owner-controlled; Git authorship evidence",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": false,
+      "decision": "keep"
+    },
+    "gzh-sticker-assets": {
+      "path": "gzh-sticker-assets",
+      "class": "OWNED_AND_CLEARED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; Git authorship",
+      "license": "owner-controlled; Git authorship evidence",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": false,
+      "decision": "keep"
+    },
+    "gzh-title-seo": {
+      "path": "gzh-title-seo",
+      "class": "OWNED_AND_CLEARED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; Git authorship",
+      "license": "owner-controlled; Git authorship evidence",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": false,
+      "decision": "keep"
+    },
+    "gzh-topic-research": {
+      "path": "gzh-topic-research",
+      "class": "OWNED_AND_CLEARED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; Git authorship",
+      "license": "owner-controlled; Git authorship evidence",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": false,
+      "decision": "keep"
+    },
+    "gzh-visual-assets": {
+      "path": "gzh-visual-assets",
+      "class": "OWNED_AND_CLEARED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; Git authorship",
+      "license": "owner-controlled; Git authorship evidence",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": false,
+      "decision": "keep"
+    },
+    "gzh-visual-director": {
+      "path": "gzh-visual-director",
+      "class": "OWNED_AND_CLEARED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; Git authorship",
+      "license": "owner-controlled; Git authorship evidence",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": false,
+      "decision": "keep"
+    },
+    "khazix-writer": {
+      "path": "khazix-writer",
+      "class": "THIRD_PARTY_LICENSE_VERIFIED",
+      "source": "https://github.com/KKKKhazix/khazix-skills (khazix-writer)",
+      "license": "MIT",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": true,
+      "decision": "keep; preserve the upstream licence and this notice"
+    },
+    "midu-proofread": {
+      "path": "midu-proofread",
+      "class": "RIGHTS_UNKNOWN",
+      "source": "Midu API wrapper; no upstream licence found",
+      "license": null,
+      "dispatch": "blocked",
+      "distribution": "hold",
+      "notice_required": false,
+      "decision": "exclude from dispatch and hold public distribution until cleared"
+    },
+    "obsidian": {
+      "path": "obsidian",
+      "class": "THIRD_PARTY_LICENSE_VERIFIED",
+      "source": "https://github.com/openclaw/openclaw (skills/obsidian)",
+      "license": "MIT",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": true,
+      "decision": "keep; preserve the upstream licence and this notice"
+    },
+    "opc-conversion-loop": {
+      "path": "opc-conversion-loop",
+      "class": "OWNED_AND_CLEARED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; Git authorship",
+      "license": "owner-controlled; Git authorship evidence",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": false,
+      "decision": "keep"
+    },
+    "read-arxiv-paper": {
+      "path": "read-arxiv-paper",
+      "class": "THIRD_PARTY_LICENSE_VERIFIED",
+      "source": "https://github.com/karpathy/nanochat (.claude/skills/read-arxiv-paper)",
+      "license": "MIT",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": true,
+      "decision": "keep; preserve the upstream licence and this notice"
+    },
+    "source-evidence-layer": {
+      "path": "source-evidence-layer",
+      "class": "OWNED_AND_CLEARED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; Git authorship",
+      "license": "owner-controlled; Git authorship evidence",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": false,
+      "decision": "keep"
+    },
+    "vision": {
+      "path": "vision",
+      "class": "RIGHTS_UNKNOWN",
+      "source": "local multi-provider wrapper; no author or licence metadata",
+      "license": null,
+      "dispatch": "blocked",
+      "distribution": "hold",
+      "notice_required": false,
+      "decision": "exclude from dispatch and hold public distribution until cleared"
+    },
+    "wechat-card-qrcode": {
+      "path": "wechat-card-qrcode",
+      "class": "OWNED_AND_CLEARED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; Git authorship",
+      "license": "owner-controlled; Git authorship evidence",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": false,
+      "decision": "keep"
+    },
+    "wechat-cover": {
+      "path": "wechat-cover",
+      "class": "OWNED_AND_CLEARED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; Git authorship",
+      "license": "owner-controlled; Git authorship evidence",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": false,
+      "decision": "keep"
+    },
+    "wechat-publisher": {
+      "path": "wechat-publisher",
+      "class": "THIRD_PARTY_LICENSE_VERIFIED",
+      "source": "https://github.com/0731coderlee-sudo/wechat-publisher",
+      "license": "MIT; depends on wenyan-cli (Apache-2.0, not bundled)",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": true,
+      "decision": "keep; preserve the upstream licence and this notice"
+    },
+    "wechat-seo-optimizer": {
+      "path": "wechat-seo-optimizer",
+      "class": "OWNED_AND_CLEARED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; Git authorship",
+      "license": "owner-controlled; Git authorship evidence",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": false,
+      "decision": "keep"
+    },
+    "wechat-svg-interactive": {
+      "path": "wechat-svg-interactive",
+      "class": "OWNED_AND_CLEARED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; Git authorship",
+      "license": "owner-controlled; Git authorship evidence",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": false,
+      "decision": "keep"
+    },
+    "wechat-tts-audio": {
+      "path": "wechat-tts-audio",
+      "class": "OWNED_AND_CLEARED",
+      "source": "Xander-Xai private gzh-Future-Intelligence; Git authorship",
+      "license": "owner-controlled; Git authorship evidence",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": false,
+      "decision": "keep"
+    },
+    "wechat-viral-topic": {
+      "path": "wechat-viral-topic",
+      "class": "RIGHTS_UNKNOWN",
+      "source": "third-party skill mirrored without a licence; original author not established",
+      "license": null,
+      "dispatch": "blocked",
+      "distribution": "hold",
+      "notice_required": false,
+      "decision": "exclude from dispatch and hold public distribution until cleared"
+    },
+    "wemp-operator": {
+      "path": "wemp-operator",
+      "class": "THIRD_PARTY_LICENSE_VERIFIED",
+      "source": "https://github.com/gaozejie/wemp-operator",
+      "license": "MIT (declared)",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": true,
+      "decision": "keep; preserve the upstream licence and this notice"
+    },
+    "z5-wechat-sop": {
+      "path": "z5-wechat-sop",
+      "class": "THIRD_PARTY_LICENSE_VERIFIED",
+      "source": "https://github.com/Z5Research/Z5-WeChat-SOP",
+      "license": "MIT (declared)",
+      "dispatch": "allowed",
+      "distribution": "allowed",
+      "notice_required": true,
+      "decision": "keep; preserve the upstream licence and this notice"
+    }
+  }
+}

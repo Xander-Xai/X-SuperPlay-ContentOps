@@ -228,6 +228,9 @@ jobs:
       - name: Run skill-route policy tests
         run: python tests/test_skill_route_policy.py
 
+      - name: Run GZH skill rights tests
+        run: python tests/test_gzh_skill_rights.py
+
       # Every project track must be routable, not just Easel. The vendored
       # 公众号 catalog is checked here; the test skips itself when the vendor
       # directory is absent.
@@ -509,6 +512,8 @@ jobs:
           python-version: '3.11'
       - name: Repo policy check
         run: python scripts/check_repo_policy.py
+      - name: GZH skill rights check
+        run: python scripts/check_gzh_skill_rights.py
       - name: Receipt secret check
         run: python scripts/check_receipt_secrets.py
       - name: Subprocess policy check

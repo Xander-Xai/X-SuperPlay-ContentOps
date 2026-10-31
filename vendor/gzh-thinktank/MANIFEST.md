@@ -20,7 +20,7 @@ private remote.
 
 The digest is SHA-256 over the sorted list of `relative/path\0file-sha256\n` for
 every file under the workflow root (`gzh_未来智能/`), with the path relative to that
-root and sorted by the relative POSIX path string. Each file\'s SHA-256 is taken
+root and sorted by the relative POSIX path string. Each file's SHA-256 is taken
 over its content with CRLF folded to LF, so the pin is the same on a platform that
 rewrites line endings on checkout and one that does not. `scripts/gzh_pin.py`
 recomputes it.

@@ -3,15 +3,14 @@
 
 The Future Intelligence 公众号 workflow used to live in its own repository at
 `D:\\Projects\\gzh_x未来智能`, whose local history was **divergent** from GitHub
-origin (`origin/main` was `e9303d1`, the checkout `93645f1`). That checkout, its
-remote and the cold archive made from it are being retired, so the workflow now
-lives here, at `vendor/gzh-thinktank/gzh_未来智能`, imported verbatim.
+origin (`origin/main` was `e9303d1`, the checkout `93645f1`). That local checkout
+and its cold archive are absent, but the private remote is alive, so the workflow
+now lives here and remains recoverable from Git.
 
-With the archive gone, this directory is the only copy. The pin therefore checks
-the tree's content digest — which also catches an edit made in place, the thing
-"do not edit the vendor tree" is meant to prevent. `vendor/gzh-thinktank/MANIFEST.md`
-records what retirement cost (the original's commits and the files this repository
-cannot track).
+The pin checks the tree's content digest — which also catches an edit made in
+place, the thing "do not edit the vendor tree" is meant to prevent.
+`vendor/gzh-thinktank/MANIFEST.md` records the provenance and what the import
+left out.
 
 Usage
 -----
@@ -71,10 +70,9 @@ def _sha256(path: Path) -> str:
 #: `vendor/gzh-thinktank/MANIFEST.md` explains what was left out and why.
 VENDORED = ROOT / "vendor" / "gzh-thinktank" / "gzh_未来智能"
 VENDORED_FILES = 667
-#: The cold archive is retired: the Founder is deleting it together with the
-#: original checkout and its remote. From here the vendored tree is the only copy,
-#: and `MANIFEST.md` records what that costs (the original's commits and the twelve
-#: files this repository cannot track).
+#: The cold archive and the original checkout are absent; the private remote is
+#: alive and its tree matches the imported tree, so this is a verified copy, not
+#: the only copy. `MANIFEST.md` records the provenance.
 BUNDLE_RETIRED = True
 
 VENDORED_DIGEST = "0b96d179a224f0b9668843fd78fcdcefb8f9a83d7918b7d8127fce5d6687919a"
