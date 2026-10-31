@@ -215,6 +215,12 @@ jobs:
       - name: Run M5 media-use automatic sourcing regression tests
         run: python tests/test_m5_media_use_workflow.py
 
+      # The direct ``ingest`` verb copies a file into the project exactly like
+      # ``import`` does, so it must apply the same rights policy. The adapter is
+      # mocked: this asserts which decision the CLI takes, not how the skill runs.
+      - name: Run media-use ingest rights regression tests
+        run: python tests/test_media_use_ingest_rights.py
+
       # Discovery and diagnosis only: these suites build temporary catalogs and
       # never download a runtime or execute a skill.
       - name: Run skill doctor regression tests
