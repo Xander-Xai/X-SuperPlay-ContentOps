@@ -70,7 +70,7 @@ def _operation_executor(operation: str):
         adapter = MediaUseAdapter()
         if operation == "status":
             status = adapter.status(refresh=True)
-            return {"ok": bool(status.usable), "receipt": status.as_dict()}
+            return {"ok": bool(status.available), "receipt": status.as_dict()}
         if operation == "doctor":
             doctor = adapter.doctor()
             return {"ok": True, "receipt": doctor.as_dict()}

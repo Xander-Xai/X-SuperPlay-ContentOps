@@ -227,6 +227,9 @@ jobs:
       - name: Run skill execution authorization regression tests
         run: python tests/test_skill_execution_authorization.py
 
+      - name: Run managed media-use status wrapper regression tests
+        run: python tests/test_skill_execute_status.py
+
       # Temporary projects on disk, injected executors, no adapter and no runtime.
       - name: Run trusted grant source regression tests
         run: python tests/test_trusted_grant_source.py
