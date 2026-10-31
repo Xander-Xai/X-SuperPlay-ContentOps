@@ -216,6 +216,18 @@ jobs:
       - name: Run skill router capability regression tests
         run: python tests/test_skill_router_capabilities.py
 
+      - name: Run X organic growth offline contract tests
+        run: python tests/test_x_organic_growth.py
+
+      - name: Run X engagement brief tests
+        run: python tests/test_x_growth_engagement.py
+
+      - name: Run X compatibility contract tests
+        run: python tests/test_x_growth_contract.py
+
+      - name: Run X weekly metrics tests
+        run: python tests/test_x_growth_metrics.py
+
       # Pure decision logic: no adapter, no runtime, no I/O.
       - name: Run skill execution authorization regression tests
         run: python tests/test_skill_execution_authorization.py

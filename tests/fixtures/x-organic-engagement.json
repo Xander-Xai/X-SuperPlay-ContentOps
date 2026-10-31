@@ -1,0 +1,20 @@
+{
+  "account_id": "fixture-account",
+  "language": "en",
+  "privacy": "public",
+  "fixture": true,
+  "operation": "engagement",
+  "candidate": {
+    "source_url": "https://x.com/fixture_a/status/10001",
+    "text": "How can teams verify agent permissions?",
+    "context": "Fictional example about tool access and permission boundaries.",
+    "audience": "agent builders",
+    "evidence": [
+      {"url": "https://github.com/Xander-Xai/X-SuperPlay-ContentOps/blob/4b2091fab00288fbd77d3a87c152a9acb9b8e425/docs/SKILL-REGISTRY.md", "quote": "Discovery alone never promotes a skill to executable."}
+    ],
+    "drafts": [
+      "For agent permissions, one useful distinction is whether a tool is visible versus whether a specific action is authorized.",
+      "How do you verify that an agent permission applies to the exact operation, account, and expiration window?"
+    ]
+  }
+}
