@@ -125,8 +125,8 @@ Runtime Reality before Documentation.
 
 This public note defines technical responsibilities only. Any private portfolio registry or business operation remains outside this repository; there is no claim that other privately managed systems are accessible, commercialized, or operational.
 
-- **Owns:** production and human review of source-grounded video/multimedia artifacts.
-- **Outputs:** media assets, QC results and reproducible generation workflows; actual platform publication tracked by its authorized operators.
+- **Owns:** production and human review of source-grounded video, 公众号 articles, 小红书 image-text and X editorial artifacts.
+- **Outputs:** media assets, articles, upload packages, QC results and reproducible generation workflows; actual platform publication tracked by its authorized operators.
 - **Does not own:** not a social-platform account, paid-customer CRM, revenue source of truth or automatic publisher.
 - **Public interfaces and handoff:** Technical public-source examples may originate from [Beauty RAG](https://github.com/Xander-Xai/Beauty-Industry-RAG-QA-System) and [Customer-Service AI Agent](https://github.com/Xander-Xai/Customer-Service-AI-Agent), with licenses and publicity permission checked separately.
 - Technical implementation, testing and release evidence stay in this repository. An upstream portfolio document cannot promote draft, local tests or CI into real production usage, payment or user traction.
