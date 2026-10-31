@@ -329,6 +329,22 @@ def _check_metrics(post: Dict[str, Any]) -> List[Issue]:
     return issues
 
 
+def _check_account(post: Dict[str, Any], account: Dict[str, Any]) -> List[Issue]:
+    """A record may only claim the account its project resolved.
+
+    ``validate_post`` is called with one DNA. If the record names a different
+    slug, the two disagree about whose post this is, and grading it against this
+    account would silently lend one account's review to another's copy.
+    """
+    declared = str(post.get("account_slug") or "").strip()
+    expected = str(account.get("slug") or "").strip()
+    if declared and expected and declared != expected:
+        return [Issue("ACCOUNT_MISMATCH",
+                      f"record account_slug is {declared!r} but the project's account "
+                      f"is {expected!r}; one record cannot borrow another account's gate")]
+    return []
+
+
 def _check_status(post: Dict[str, Any], account: Dict[str, Any]) -> List[Issue]:
     publication = account.get("publication") or {}
     issues: List[Issue] = []
@@ -365,6 +381,7 @@ def validate_post(post: Dict[str, Any], account: Dict[str, Any],
     """Every reason this record is not publishable, in a stable order."""
     editorial = x_editorial.editorial_rules(account)
     issues: List[Issue] = []
+    issues.extend(_check_account(post, account))
     issues.extend(_check_mode(post, account))
     issues.extend(_check_copy(post, editorial))
     issues.extend(_check_status(post, account))

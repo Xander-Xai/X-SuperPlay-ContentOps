@@ -254,6 +254,12 @@ jobs:
       - name: Run X contract-handoff regression tests
         run: python tests/test_x_contract_handoff.py
 
+      # The positive path: a complete synthetic record reaches a manual publish
+      # package, and every bypass attempt (review_status, ready_for_publish, URL
+      # syntax, another account's slug) is refused.
+      - name: Run X positive acceptance tests
+        run: python tests/test_x_positive_acceptance.py
+
       - name: Enforce subprocess policy
         run: python scripts/check_subprocess_policy.py
 
