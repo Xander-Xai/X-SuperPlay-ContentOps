@@ -50,6 +50,9 @@ X_PATH = ACCOUNTS / "x-superplay-english.json"
 HOST_LOCAL_WARNINGS = (
     "no skill catalog root is present",
     "the shared skill store",
+    # The Easel catalog can be absent while another catalog root is present
+    # (the vendored GZH track is tracked). That is still "not verified here".
+    "membership was not verified",
 )
 
 TESTS: list = []
