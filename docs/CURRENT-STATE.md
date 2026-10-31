@@ -389,7 +389,7 @@ egress; installation itself is a separate, reviewed preparation step.
 | Install / lock entry point | `scripts/media_use_runtime.py` — `approve`, `install`, `lock`, `verify`, `selfcheck`; approving and lock generation are separate actions |
 | Tests | 53 adapter tests PASS; 97 M4.5 convergence tests PASS (re-run 2026-10-31) |
 | Pull request | Draft [#64](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/64) |
-| Skill Router | Not rebuilt; #49/#59 remain unmerged. The adapter exposes `status/doctor/candidates/resolve/adopt` for future registration with the existing discovery mechanism |
+| Skill Router | **Merged via [#77](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/77)** — `scripts/skill_route.py` and `runtime/skill-registry.json` register `media-use` as a declared capability. #49 remains unmerged; #59 was closed as superseded by #77. The adapter still exposes `status/doctor/candidates/resolve/adopt`; the registry is the routing pointer |
 
 ### What the approval does and does not authorize
 
@@ -433,8 +433,9 @@ and no Founder approval, and `qc_video` warns about exactly that.
 
 ## M5 media-use automation — INTEGRATION_VERIFIED 2026-10-31
 
-Branch `feat/57-media-use-m5-integration` (worktree), stacked from `main` plus
-Draft PRs #64, #68 and #69. **Zero provider calls; zero network.** The real
+Merged to `main` through [#71](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/71).
+The rights-gate follow-up is [#76](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/76).
+**Zero provider calls; zero network.** The real
 `scripts/m5_production.py` entry ran the real `MediaUseAdapter` against the
 approved `hyperframes@0.8.222` runtime on Windows.
 
@@ -456,19 +457,20 @@ approved `hyperframes@0.8.222` runtime on Windows.
 | Narration preservation | the same voice window measures −26.8 dB in all three renders, so neither track replaced the voice |
 | Audio controls | volume, placement and mix verified; per-track fade is **not expressible** in the pinned Easel contract (sample bed has fades baked into the file) |
 | Negative acceptance | 11/11 blocked: missing/wrong lock, missing material, hash mismatch, path escape, missing import file, network, paid, unlicensed, duplicate id, legacy project unchanged |
+| Rights gate | `src/contentops/media/rights_gate.py` refuses a bare `rights_reviewed` flag; each request needs a matching `assets/<id>.rights.json` review record. Unknown, software and non-commercial licences are refused; synthetic assets are never evidence |
 | Committed example | `projects/m5-media-use/`; media binaries and `.media/` stay gitignored, receipts are committed |
-| Pull request | Draft [#71](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/71) |
-| Routing | **branch only, not on `main`** — `scripts/skill_route.py` and the declared-capability registry are in a separate PR; see *Skill discovery and resolution* below |
+| Pull request | Merged [#71](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/71); rights-gate follow-up [#76](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/76) |
+| Routing | **MERGED via [#77](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/77)** — `scripts/skill_route.py` and `runtime/skill-registry.json` are on `main`; see *Skill discovery and resolution* below |
 
 `INTEGRATION_VERIFIED` is a statement about this machine and this lock. It is
 not `MERGED_TO_MAIN`, and it does not approve the imported material, the voice
 track or the video for publication.
 
-## Skill discovery and resolution (Issue #57) — PARTIAL, branch only 2026-10-31
+## Skill discovery and resolution (Issue #57) — MERGED 2026-10-31
 
-Branch `feat/57-skill-router-integration`. **Not merged.** Nothing in this
-section runs on `main` today; it records what the branch does and what remains
-blocked.
+Merged to `main` through [#77](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/77).
+The router and registry run on `main` today; this section records what they do
+and what remains blocked.
 
 | Property | Value |
 |---|---|
@@ -487,7 +489,7 @@ blocked.
 | X track | `BLOCKED` — platform track unmerged (`feat/47-x-platform-track`, PR #50) |
 | XHS track | `BLOCKED` — migration unmerged and under rights review; no catalog root |
 | Tests | `tests/test_skill_doctor.py`, `tests/test_skill_router_capabilities.py`; both registered in CI |
-| Pull request | Draft, branch `feat/57-skill-router-integration` |
+| Pull request | Merged [#77](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/77) |
 
 The router adds no second skill engine and copies no third-party skill. A
 declaration is a pointer to code this repository already owns; the adapter, the

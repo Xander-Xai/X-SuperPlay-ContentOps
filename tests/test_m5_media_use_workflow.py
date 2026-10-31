@@ -24,6 +24,36 @@ def check(fn):
     return fn
 
 
+def rights_record(project, asset_id, *, license_id="OWNED-BY-OPERATOR",
+                  source_url="OWNED", attribution="synthetic test asset",
+                  synthetic=False, reviewed_by="fixture-reviewer",
+                  reviewed_at="2026-10-31"):
+    """Write a review sidecar and return the matching request rights block."""
+    relative = f"assets/{asset_id}.rights.json"
+    record = {
+        "schema": "contentops.media-rights-review/v1",
+        "license_id": license_id,
+        "source_url": source_url,
+        "reviewed_by": reviewed_by,
+        "reviewed_at": reviewed_at,
+        "attribution": attribution,
+        "synthetic": synthetic,
+    }
+    path = project / relative
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(record), encoding="utf-8")
+    return {
+        "schema": "contentops.media-rights/v1",
+        "license_id": license_id,
+        "source_url": source_url,
+        "reviewed_by": reviewed_by,
+        "reviewed_at": reviewed_at,
+        "review_evidence": relative,
+        "attribution": attribution,
+        "synthetic": synthetic,
+    }
+
+
 def project_and_config():
     location = ROOT / ".verify-tmp" / "m5-media-use-workflow"
     location.mkdir(parents=True, exist_ok=True)
@@ -43,8 +73,7 @@ def project_and_config():
             "mode": "local-only",
             "requests": [{
                 "id": "support_visual", "kind": "image", "intent": "local support image",
-                "license": "OWNED-FIXTURE", "rights_reviewed": True,
-                "attribution": "synthetic test asset",
+                "rights": rights_record(project, "support_visual"),
             }],
         },
         "source_refs": [],
@@ -155,12 +184,79 @@ def declared_assets_are_reused_before_any_adapter_call():
 
 @check
 def missing_license_or_rights_blocks_before_adapter_call():
-    for key, value in (("license", ""), ("rights_reviewed", False), ("intent", "")):
+    for mutate in (
+        lambda req: req.pop("rights", None),
+        lambda req: req.update({"intent": ""}),
+        lambda req: req["rights"].update({"review_evidence": ""}),
+    ):
         project, config, digest = project_and_config()
-        config["media_use"]["requests"][0][key] = value
+        mutate(config["media_use"]["requests"][0])
         adapter = FakeMediaAdapter(digest)
         refused(lambda: m5.stage_media_use(project, config, adapter=adapter))
         assert not adapter.calls
+
+
+@check
+def a_bare_rights_reviewed_flag_is_not_evidence():
+    project, config, digest = project_and_config()
+    config["media_use"]["requests"][0].pop("rights", None)
+    config["media_use"]["requests"][0]["rights_reviewed"] = True
+    adapter = FakeMediaAdapter(digest)
+    refused(lambda: m5.stage_media_use(project, config, adapter=adapter))
+    assert not adapter.calls
+
+
+@check
+def software_and_noncommercial_licences_cannot_license_media():
+    for license_id in ("Apache-2.0", "MIT", "AGPL-3.0", "CC-BY-NC-4.0", "UNKNOWN-1.0"):
+        project, config, digest = project_and_config()
+        config["media_use"]["requests"][0]["rights"].update({"license_id": license_id})
+        adapter = FakeMediaAdapter(digest)
+        refused(lambda: m5.stage_media_use(project, config, adapter=adapter))
+        assert not adapter.calls
+
+
+@check
+def the_review_record_must_match_the_request_and_exist():
+    for field, value in (("source_url", "https://example.com/other"),
+                         ("attribution", "different credit"),
+                         ("reviewed_at", "2026-10-30")):
+        project, config, digest = project_and_config()
+        config["media_use"]["requests"][0]["rights"].update({field: value})
+        refused(lambda: m5.stage_media_use(project, config, adapter=FakeMediaAdapter(digest)))
+    project, config, digest = project_and_config()
+    (project / "assets" / "support_visual.rights.json").unlink()
+    refused(lambda: m5.stage_media_use(project, config, adapter=FakeMediaAdapter(digest)))
+
+
+@check
+def a_third_party_asset_needs_an_http_source_and_attribution():
+    project, config, digest = project_and_config()
+    config["media_use"]["requests"][0]["rights"] = rights_record(
+        project, "support_visual", license_id="Pixabay-Content-License",
+        source_url="pixabay", attribution="Pixabay item",
+    )
+    refused(lambda: m5.stage_media_use(project, config, adapter=FakeMediaAdapter(digest)))
+    project, config, digest = project_and_config()
+    config["media_use"]["requests"][0]["rights"] = rights_record(
+        project, "support_visual", license_id="CC-BY-4.0",
+        source_url="https://example.com/asset", attribution="",
+    )
+    refused(lambda: m5.stage_media_use(project, config, adapter=FakeMediaAdapter(digest)))
+
+
+@check
+def synthetic_assets_are_never_evidence():
+    project, config, digest = audio_config()
+    adapter = FakeMediaAdapter(digest)
+    result = m5.stage_media_use(project, config, adapter=adapter)
+    assert result["audio"]["bgm"]["rights"]["synthetic"] is True
+    assert result["audio"]["bgm"]["rights"]["evidence_capable"] is False
+    receipt = json.loads((project / "receipts" / "media-use-stage.json").read_text(encoding="utf-8"))
+    by_id = {row["id"]: row for row in receipt["results"]}
+    assert by_id["bed"]["rights"]["synthetic"] is True
+    assert by_id["bed"]["evidence_capable"] is False
+    assert by_id["support_visual"]["evidence_capable"] is False
 
 
 @check
@@ -189,12 +285,12 @@ def unimportable_and_tampered_bytes_block():
 
 
 @check
-def duplicate_ids_or_unsupported_kind_refuse():
+def duplicate_ids_or_unsupported_audio_refuse():
     project, config, digest = project_and_config()
     config["media_use"]["requests"].append(dict(config["media_use"]["requests"][0]))
     refused(lambda: m5.stage_media_use(project, config, adapter=FakeMediaAdapter(digest)))
     project, config, digest = project_and_config()
-    config["media_use"]["requests"][0]["kind"] = "voice"
+    config["media_use"]["requests"][0]["kind"] = "sfx"
     refused(lambda: m5.stage_media_use(project, config, adapter=FakeMediaAdapter(digest)))
 
 
@@ -236,11 +332,19 @@ def audio_config():
     sfx.parent.mkdir(parents=True)
     sfx.write_bytes(b"synthetic-sfx-fixture")
     config["media_use"]["requests"] += [
-        {"id": "bed", "kind": "bgm", "intent": "calm bed",
-         "license": "OWNED-FIXTURE", "rights_reviewed": True, "volume": 0.2},
+        {"id": "bed", "kind": "bgm", "intent": "calm bed", "volume": 0.2,
+         "rights": rights_record(
+             project, "bed", license_id="OWNED-GENERATED-LOCAL",
+             source_url="GENERATED", attribution="deterministic tone bed",
+             synthetic=True,
+         )},
         {"id": "click", "kind": "sfx", "intent": "soft click",
-         "license": "Pixabay-Content-License", "rights_reviewed": True,
-         "at": 1.5, "volume": 0.6},
+         "at": 1.5, "volume": 0.6,
+         "rights": rights_record(
+             project, "click", license_id="Pixabay-Content-License",
+             source_url="https://pixabay.com/sound-effects/",
+             attribution="bundled media-use SFX (Pixabay Content License)",
+         )},
     ]
     return project, config, digest
 
@@ -364,7 +468,7 @@ def the_same_bytes_cannot_be_imported_under_two_ids():
     project, config, digest = project_and_config()
     config["media_use"]["requests"].append({
         "id": "support_visual_copy", "kind": "image", "intent": "same file",
-        "license": "OWNED-FIXTURE", "rights_reviewed": True,
+        "rights": rights_record(project, "support_visual_copy"),
     })
     refused(lambda: m5.stage_media_use(project, config, adapter=FakeMediaAdapter(digest)))
 

@@ -147,10 +147,21 @@ media_use:
     - id: support_visual
       kind: image
       intent: local support image
-      license: OWNED
-      rights_reviewed: true
-      attribution: project owner
+      rights:
+        license_id: OWNED-BY-OPERATOR
+        source_url: OWNED
+        reviewed_by: <reviewer>
+        reviewed_at: "2026-10-31"
+        review_evidence: assets/support.rights.json
+        attribution: project owner
+        synthetic: false
 ~~~
+
+A bare `rights_reviewed: true` is refused. Each request needs a review sidecar
+(`assets/<id>.rights.json`, schema `contentops.media-rights-review/v1`) whose
+licence, source URL, reviewer, date and attribution match the request exactly.
+Software licences and non-commercial licences cannot license media; synthetic
+assets are never evidence.
 
 Place a rights-cleared candidate in the project's assets/ directory and refer
 to support_visual in script/script.json as the asset_id. Then run the normal
@@ -169,8 +180,8 @@ than silently accessing a network or paid provider.
 
 The stage creates receipts/media-use-stage.json plus the adapter's per-file
 import receipt. Licensed external visuals are visual support only and may
-not become factual evidence. This version supports image/icon/logo placement;
-bgm/sfx are refused until audio placement is wired to the existing timeline.
+not become factual evidence. This version supports image/icon/logo placement and
+BGM/SFX support tracks; audio never becomes evidence.
 Projects without media_use.enabled=true behave as before.
 
 Integration PR: stacked on M5 PR #68; actual external execution also requires
@@ -333,9 +344,9 @@ media_use:
   enabled: true
   mode: local-only
   requests:
-    - {id: hero, kind: image, intent: "...", license: OWNED-BY-OPERATOR, rights_reviewed: true}
-    - {id: bed, kind: bgm, intent: "...", license: OWNED-GENERATED-LOCAL, rights_reviewed: true, volume: 0.18}
-    - {id: click, kind: sfx, intent: "...", license: Pixabay-Content-License, rights_reviewed: true, at: 6.15, volume: 0.55}
+    - {id: hero, kind: image, intent: "...", rights: {license_id: OWNED-BY-OPERATOR, source_url: OWNED, reviewed_by: me, reviewed_at: "2026-10-31", review_evidence: assets/hero.rights.json, attribution: "owner capture", synthetic: false}}
+    - {id: bed, kind: bgm, intent: "...", volume: 0.18, rights: {license_id: OWNED-GENERATED-LOCAL, source_url: GENERATED, reviewed_by: me, reviewed_at: "2026-10-31", review_evidence: assets/bed.rights.json, attribution: "generated tone", synthetic: true}}
+    - {id: click, kind: sfx, intent: "...", at: 6.15, volume: 0.55, rights: {license_id: Pixabay-Content-License, source_url: "https://pixabay.com/sound-effects/", reviewed_by: me, reviewed_at: "2026-10-31", review_evidence: assets/click.rights.json, attribution: "Pixabay", synthetic: false}}
 ```
 
 ```powershell

@@ -506,7 +506,7 @@ QC 回执在被提交前会经过一道净化边界（`contentops.qc_canonical`�
 | 安装 / 生成锁入口 | `scripts/media_use_runtime.py` —— `approve`、`install`、`lock`、`verify`、`selfcheck`；批准与生成锁是两个独立动作 |
 | 测试 | 53 项适配器测试通过；97 项 M4.5 收敛测试通过（2026-10-31 重新运行） |
 | Pull Request | Draft [#64](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/64) |
-| Skill Router | 未重建；#49/#59 尚未合并。适配器暴露 `status/doctor/candidates/resolve/adopt`，供未来注册到现有发现机制 |
+| Skill Router | **已通过 [#77](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/77) 合并** —— `scripts/skill_route.py` 与 `runtime/skill-registry.json` 已将 `media-use` 注册为声明能力。#49 仍未合并；#59 已因被 #77 替代而关闭。适配器仍暴露 `status/doctor/candidates/resolve/adopt`；注册表是路由指针 |
 
 ### 批准覆盖与不覆盖的范围
 
@@ -543,7 +543,8 @@ QC 回执在被提交前会经过一道净化边界（`contentops.qc_canonical`�
 
 ## M5 media-use 自动化 —— INTEGRATION_VERIFIED 2026-10-31
 
-分支 `feat/57-media-use-m5-integration`（工作树），由 `main` 叠加 Draft PR #64、#68、#69。
+已通过 [#71](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/71) 合并到 `main`。
+权利门禁后续为 [#76](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/76)。
 **零供应商调用、零网络。** 真实的 `scripts/m5_production.py` 入口在 Windows 上调用真实的
 `MediaUseAdapter`，运行时为已批准的 `hyperframes@0.8.222`。
 
@@ -565,17 +566,18 @@ QC 回执在被提交前会经过一道净化边界（`contentops.qc_canonical`�
 | 旁白保留 | 三段渲染中同一语音窗口均为 −26.8 dB，说明两条音轨都没有替代旁白 |
 | 音频控制 | 音量、放置与混音已验证；逐轨淡入淡出在钉死的 Easel 合约中**无法表达**（示例音床把淡入淡出烘焙进了文件） |
 | 负向验收 | 11/11 正确阻断：缺失/错误锁、素材缺失、哈希不匹配、路径越界、导入文件缺失、网络、付费、未授权、重复 ID、旧项目行为不变 |
+| 权利门禁 | `src/contentops/media/rights_gate.py` 拒绝裸 `rights_reviewed`；每个请求必须匹配 `assets/<id>.rights.json` 复核记录。未知、软件与非商业许可证一律拒绝；合成素材永远不能作为证据 |
 | 提交的示例 | `projects/m5-media-use/`；媒体二进制与 `.media/` 仍被忽略，回执入库 |
-| Pull Request | Draft [#71](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/71) |
-| 路由 | **仅分支，未进入 `main`** —— `scripts/skill_route.py` 与已声明能力注册表在独立 PR 中；见下文「Skill 发现与解析」 |
+| Pull Request | 已合并 [#71](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/71)；权利门禁后续 [#76](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/76) |
+| 路由 | **已通过 [#77](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/77) 合并** —— `scripts/skill_route.py` 与 `runtime/skill-registry.json` 已在 `main`；见下文「Skill 发现与解析」 |
 
 `INTEGRATION_VERIFIED` 只说明这台机器与这把锁。它不是 `MERGED_TO_MAIN`，也不代表
 导入素材、旁白或视频已获批发布。
 
-## Skill 发现与解析（Issue #57）—— PARTIAL，仅分支 2026-10-31
+## Skill 发现与解析（Issue #57）—— 已合并 2026-10-31
 
-分支 `feat/57-skill-router-integration`。**未合并。** 本节描述的都不是 `main`
-上今天运行的东西，只记录该分支做了什么、还有哪些仍被阻断。
+已通过 [#77](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/77) 合并到 `main`。
+路由器与注册表已在 `main` 上运行；本节记录它们做什么、还有哪些仍被阻断。
 
 | 属性 | 值 |
 |---|---|
@@ -594,7 +596,7 @@ QC 回执在被提交前会经过一道净化边界（`contentops.qc_canonical`�
 | X 轨 | `BLOCKED` —— 平台轨未合并（`feat/47-x-platform-track`，PR #50） |
 | XHS 轨 | `BLOCKED` —— 迁移未合并且处于权利审查；无目录根 |
 | 测试 | `tests/test_skill_doctor.py`、`tests/test_skill_router_capabilities.py`，均已注册进 CI |
-| Pull Request | Draft，分支 `feat/57-skill-router-integration` |
+| Pull Request | 已合并 [#77](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/77) |
 
 路由器不建第二套 Skill Engine，也不复制任何第三方 Skill。声明只是指向本仓库已拥有的代码；
 适配器、运行时锁校验器与 M5 门禁各自保留最终权威。

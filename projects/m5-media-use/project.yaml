@@ -37,24 +37,42 @@ media_use:
     - id: support_visual
       kind: image
       intent: "Easel runtime hero screenshot for a pinned-version explainer"
-      license: "OWNED-BY-OPERATOR"
-      attribution: "Repository-classified CREATED_BY_OWNER screenshot of the pinned Easel runtime; no separate capture receipt"
-      rights_reviewed: true
+      rights:
+        schema: contentops.media-rights/v1
+        license_id: OWNED-BY-OPERATOR
+        source_url: OWNED
+        reviewed_by: Xander-Xai
+        reviewed_at: "2026-10-31"
+        review_evidence: assets/support.rights.json
+        attribution: "Repository-classified CREATED_BY_OWNER screenshot of the pinned Easel runtime; no separate capture receipt"
+        synthetic: false
     - id: bed
       kind: bgm
       intent: "calm technology explainer bed"
-      license: "OWNED-GENERATED-LOCAL"
-      attribution: "Deterministic ffmpeg tone bed generated for this verification; not catalog music"
-      rights_reviewed: true
       volume: 0.18
+      rights:
+        schema: contentops.media-rights/v1
+        license_id: OWNED-GENERATED-LOCAL
+        source_url: GENERATED
+        reviewed_by: Xander-Xai
+        reviewed_at: "2026-10-31"
+        review_evidence: assets/bed.rights.json
+        attribution: "Deterministic ffmpeg tone bed generated for this verification; not catalog music"
+        synthetic: true
     - id: click_accent
       kind: sfx
       intent: "soft click transition"
-      license: "Pixabay-Content-License"
-      attribution: "Bundled media-use SFX (Pixabay Content License)"
-      rights_reviewed: true
       at: 6.15
       volume: 0.55
+      rights:
+        schema: contentops.media-rights/v1
+        license_id: Pixabay-Content-License
+        source_url: "https://pixabay.com/sound-effects/"
+        reviewed_by: Xander-Xai
+        reviewed_at: "2026-10-31"
+        review_evidence: assets/click_accent.rights.json
+        attribution: "Bundled media-use SFX (Pixabay Content License)"
+        synthetic: false
 
 status: initialized
 
