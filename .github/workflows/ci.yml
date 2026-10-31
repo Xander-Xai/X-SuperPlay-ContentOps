@@ -292,6 +292,23 @@ jobs:
       - name: Run X positive acceptance tests
         run: python tests/test_x_positive_acceptance.py
 
+      # The growth skill imported from #83. Offline only: fixtures, no X access.
+      - name: Run X growth contract tests
+        run: python tests/test_x_growth_contract.py
+
+      - name: Run X growth engagement tests
+        run: python tests/test_x_growth_engagement.py
+
+      - name: Run X growth metrics tests
+        run: python tests/test_x_growth_metrics.py
+
+      - name: Run X organic growth operator tests
+        run: python tests/test_x_organic_growth.py
+
+      # The end-to-end chain: growth -> enrichment -> gate -> manual package.
+      - name: Run X growth integration tests
+        run: python tests/test_x_growth_integration.py
+
       - name: Enforce subprocess policy
         run: python scripts/check_subprocess_policy.py
 
