@@ -1,0 +1,22 @@
+{
+  "schema": "contentops.x-post/v1",
+  "account_slug": "x-superplay-english",
+  "post_copy": {
+    "parts": [
+      "A short claim about an artifact, with one source."
+    ]
+  },
+  "status": "draft",
+  "status_url": null,
+  "review_status": "UNREVIEWED",
+  "provenance": {
+    "source": "https://example.org/source"
+  },
+  "source_draft": {
+    "account_id": "x-superplay-english",
+    "draft": "A short claim about an artifact, with one source.",
+    "source_url": "https://example.org/source"
+  },
+  "contract_completeness": "PARTIAL_CONTRACT",
+  "upstream_validator": "NOT_APPLIED"
+}

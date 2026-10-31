@@ -237,6 +237,23 @@ jobs:
       - name: Run execution gate regression tests
         run: python tests/test_execution_gate.py
 
+      # The X editorial track without the vendor bundle. Offline only: no X API,
+      # no browser, no vendor tree. The account suite validates the DNA document;
+      # the project suite validates the CSV contract and account resolution; the
+      # gate suite drives a real record through draft, refusal and manual package;
+      # the handoff suite proves a PARTIAL_CONTRACT record is refused by name.
+      - name: Run X account DNA regression tests
+        run: python tests/test_x_account.py
+
+      - name: Run X project contract regression tests
+        run: python tests/test_x_project.py
+
+      - name: Run X post gate regression tests
+        run: python tests/test_x_post.py
+
+      - name: Run X contract-handoff regression tests
+        run: python tests/test_x_contract_handoff.py
+
       - name: Enforce subprocess policy
         run: python scripts/check_subprocess_policy.py
 
