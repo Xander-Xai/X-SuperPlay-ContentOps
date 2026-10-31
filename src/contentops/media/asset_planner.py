@@ -57,6 +57,10 @@ EVIDENCE_PRIORITY = (
     AssetKind.SCREENSHOT,
     AssetKind.SCREEN_RECORDING,
     AssetKind.DIAGRAM,
+    # Licensed catalog material is cheaper than generating a new image and is
+    # honestly non-evidence, so it sits above the generated option and below
+    # every real capture.
+    AssetKind.LICENSED_EXTERNAL,
     MINIMAX_IMAGE,
 )
 
@@ -123,6 +127,10 @@ OPTIONS: Dict[str, AssetOption] = {
     AssetKind.DIAGRAM: AssetOption(
         AssetKind.DIAGRAM,
         "a deterministically drawn diagram; explains, never proves",
+    ),
+    AssetKind.LICENSED_EXTERNAL: AssetOption(
+        AssetKind.LICENSED_EXTERNAL,
+        "licensed third-party stock material; support only, never evidence",
     ),
     MINIMAX_IMAGE: AssetOption(
         MINIMAX_IMAGE, "a generated support visual; never evidence"

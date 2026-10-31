@@ -1758,9 +1758,11 @@ def test_planner_refuses_evidence_when_only_generation_is_available():
 
 def test_planner_priority_order_is_evidence_first():
     planner = AssetPlanner()
+    # Licensed external material sits below every real capture and above
+    # generation: reuse is cheaper than generating and honestly non-evidence.
     assert planner.options == [
         AssetKind.REAL, AssetKind.SCREENSHOT, AssetKind.SCREEN_RECORDING,
-        AssetKind.DIAGRAM, MINIMAX_IMAGE,
+        AssetKind.DIAGRAM, AssetKind.LICENSED_EXTERNAL, MINIMAX_IMAGE,
     ]
     print("[ok] 88. planner priority runs from real evidence down to generated visuals")
 

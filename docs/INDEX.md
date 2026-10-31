@@ -19,6 +19,7 @@
 
 - [SOURCE-ARTIFACT-CONTRACT.md](SOURCE-ARTIFACT-CONTRACT.md) — SourceArtifact schema
 - [MEDIA-PROVIDER-CONTRACT.md](MEDIA-PROVIDER-CONTRACT.md) — MediaProvider interface
+- [adr/ADR-008-media-use-adapter.md](adr/ADR-008-media-use-adapter.md) — HyperFrames `media-use` integration: pinned adapter, not a fork
 - [CROSS-REPO-INTEGRATION.md](CROSS-REPO-INTEGRATION.md) — RepoSourceAdapter, repo registry
 
 ## Upstream

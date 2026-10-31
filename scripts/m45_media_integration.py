@@ -445,6 +445,36 @@ def _receipt_from_disk(receipt_path: Path, fingerprint: str, shot: Path) -> Dict
 # --- manifest -> storyboard --------------------------------------------------
 
 
+#: Storyboard ``source_type`` per asset kind. Final QC classifies the composition
+#: from this field, so a licensed stock photo must not be allowed to borrow the
+#: ``real_screenshot`` label and inflate the real-source ratio. Anything not
+#: listed here falls back to ``real_screenshot`` only if the envelope is genuinely
+#: evidence-capable; otherwise it is reported as ``stock``.
+_STORYBOARD_SOURCE_TYPES = {
+    AssetKind.DIAGRAM: "diagram",
+    AssetKind.SCREEN_RECORDING: "real_recording",
+    AssetKind.SCREENSHOT: "real_screenshot",
+    AssetKind.REAL: "real_screenshot",
+    AssetKind.LICENSED_EXTERNAL: "stock",
+}
+
+
+def _storyboard_source_type(envelope: MediaAssetEnvelope) -> str:
+    """The ``source_type`` a shot may honestly declare.
+
+    Generated-ness wins: a ``GENERATED_IMAGE`` is ``ai_generated`` whatever else
+    it is. A licensed external asset is ``stock``, never a capture. A kind with
+    no mapping is treated as non-real unless it is evidence-capable, so an
+    unknown future kind degrades to "not evidence" rather than to "proof".
+    """
+    if envelope.generated:
+        return "ai_generated"
+    kind = (envelope.asset_kind or "").upper()
+    if kind in _STORYBOARD_SOURCE_TYPES:
+        return _STORYBOARD_SOURCE_TYPES[kind]
+    return "real_screenshot" if envelope.evidence_capable else "stock"
+
+
 def manifest_to_storyboard(
     manifest: MediaManifest,
     *,
@@ -452,6 +482,8 @@ def manifest_to_storyboard(
     repo_root: Path,
     project_root: Path,
     size: str = "1080x1920",
+    still_seconds: float = 3.0,
+    shot_motion: str = "static",
 ) -> Dict[str, Any]:
     """Translate the manifest into the one shape the pinned Easel path consumes.
 
@@ -464,7 +496,18 @@ def manifest_to_storyboard(
 
     ``qc_video`` then reads this same file, which is what makes the final QC a
     check of the manifest rather than a second opinion from a separate list.
+
+    ``still_seconds`` and ``shot_motion`` exist for integration samples whose
+    composition must satisfy the final QC's duration floor. They change the
+    storyboard only; the asset selection above is untouched.
     """
+    if shot_motion not in ("static", "ken-burns"):
+        raise ValueError(
+            f"unsupported shot motion {shot_motion!r}; the pinned assembler accepts "
+            f"only 'static' or 'ken-burns'"
+        )
+    if float(still_seconds) <= 0:
+        raise ValueError(f"still_seconds must be positive, got {still_seconds!r}")
     shots: List[Dict[str, Any]] = []
     # The *timeline*, not the inventory. Iterating ``usable_assets()`` is the bug
     # that put two shots on placement ``beat-05``: both ``beat-05`` and
@@ -485,10 +528,10 @@ def manifest_to_storyboard(
         shot: Dict[str, Any] = {
             "shot_id": envelope.placement_id or envelope.asset_id,
             "image": reference,
-            "motion": "static",
-            "duration": SHOT_SECONDS if is_video else 3.0,
+            "motion": shot_motion,
+            "duration": SHOT_SECONDS if is_video else float(still_seconds),
             "source": reference,
-            "source_type": "ai_generated" if envelope.generated else "real_screenshot",
+            "source_type": _storyboard_source_type(envelope),
         }
         if is_video:
             shot["video"] = reference
