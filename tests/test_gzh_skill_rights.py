@@ -109,5 +109,58 @@ class GzhSkillRightsTests(unittest.TestCase):
         self.assertEqual(set(config["skills"]) - set(actual), set())
 
 
+class GzhCallsiteAndRepackagingTests(unittest.TestCase):
+    """A blocked skill must not be reachable outside a routing.yaml selection."""
+
+    def test_a_callsite_referencing_a_blocked_skill_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = _root(raw, {"unknown": _entry(
+                "unknown", "RIGHTS_UNKNOWN", "blocked", "hold")})
+            runner = root / "scripts" / "runner.py"
+            runner.parent.mkdir(parents=True, exist_ok=True)
+            runner.write_text('cmd = ["skills/unknown/run.py"]\n', encoding="utf-8")
+            result = checker.check(root)
+            self.assertFalse(result["ok"])
+            self.assertIn("callsite_blocked_skill", {f["id"] for f in result["failures"]})
+
+    def test_a_callsite_referencing_an_allowed_skill_passes(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = _root(raw, {"owned": _entry("owned")})
+            runner = root / "scripts" / "runner.py"
+            runner.parent.mkdir(parents=True, exist_ok=True)
+            runner.write_text('cmd = ["skills/owned/run.py"]\n', encoding="utf-8")
+            self.assertTrue(checker.check(root)["ok"])
+
+    def test_a_repackaged_held_skill_outside_vendor_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = _root(raw, {"attested": _entry(
+                "attested", "OWNER_ATTESTED", "allowed", "hold")})
+            src = (root / "vendor" / "gzh-thinktank" / "gzh_未来智能" / "skills"
+                   / "attested" / "SKILL.md")
+            src.write_text("---\nname: attested\n---\nunique-body\n", encoding="utf-8")
+            copy = root / "skills" / "copy" / "SKILL.md"
+            copy.parent.mkdir(parents=True, exist_ok=True)
+            copy.write_bytes(src.read_bytes())
+            result = checker.check(root)
+            self.assertFalse(result["ok"])
+            self.assertIn("repackaged_skill", {f["id"] for f in result["failures"]})
+
+    def test_a_copy_under_research_is_not_a_repackage(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = _root(raw, {"attested": _entry(
+                "attested", "OWNER_ATTESTED", "allowed", "hold")})
+            src = (root / "vendor" / "gzh-thinktank" / "gzh_未来智能" / "skills"
+                   / "attested" / "SKILL.md")
+            src.write_text("---\nname: attested\n---\nunique-body\n", encoding="utf-8")
+            copy = root / "research" / "archive" / "x" / "SKILL.md"
+            copy.parent.mkdir(parents=True, exist_ok=True)
+            copy.write_bytes(src.read_bytes())
+            self.assertTrue(checker.check(root)["ok"])
+
+    def test_the_committed_gate_passes_on_the_real_tree(self) -> None:
+        result = checker.check(checker.ROOT)
+        self.assertTrue(result["ok"], result)
+
+
 if __name__ == "__main__":
     unittest.main()

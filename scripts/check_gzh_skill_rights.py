@@ -13,11 +13,17 @@ guessing. `RESTRICTED` records a known obligation; only a reviewed
 `allowed_agpl` dispatch is accepted.
 
 This is an engineering gate, not a legal opinion.
+
+A routing.yaml selection is not the only way to reach a skill. The gate also
+fails closed when ContentOps-owned code (`scripts/`, `src/`) references a blocked
+skill by path (`skills/<name>`), and when a held or blocked skill's `SKILL.md` is
+copied byte-for-byte into a distributable location outside the vendored tree.
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -40,6 +46,16 @@ CLASSES = {
 DISPATCH = {"allowed", "allowed_agpl", "blocked"}
 DISTRIBUTION = {"allowed", "allowed_agpl", "hold", "blocked"}
 SELECTED = re.compile(r"^\s+selected_skill:\s*['\"]?([A-Za-z0-9._/-]+)")
+
+# Where a ContentOps-owned callsite could reach a vendored skill directly, and
+# where a held/blocked skill must not be re-packaged for distribution.
+CALLSITE_DIRS = ("scripts", "src")
+CALLSITE_SUFFIXES = {".py", ".yaml", ".yml", ".json"}
+REPACKAGE_SKIP_PREFIXES = (
+    "vendor/gzh-thinktank", "research", ".git", "node_modules", ".venv",
+    ".runtime", "__pycache__",
+)
+ALLOWED_DISPATCH = {"allowed", "allowed_agpl"}
 
 
 class RightsError(Exception):
@@ -89,6 +105,83 @@ def _selected_skills(root: Path) -> List[tuple[str, str]]:
     return found
 
 
+def _sha256_bytes(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def _callsites(root: Path, skills: Dict[str, Any]) -> List[Dict[str, str]]:
+    """A ContentOps-owned script must not reach a blocked skill directly.
+
+    The routing.yaml check only sees declared selections; a runner can still call
+    a skill by path. Scan ContentOps-owned code for `skills/<path>` references to
+    any skill whose dispatch is not allowed.
+    """
+    failures: List[Dict[str, str]] = []
+    blocked = {
+        name: entry.get("path")
+        for name, entry in skills.items()
+        if isinstance(entry, dict) and entry.get("dispatch") not in ALLOWED_DISPATCH
+    }
+    if not blocked:
+        return failures
+    for directory in CALLSITE_DIRS:
+        base = root / directory
+        if not base.is_dir():
+            continue
+        for path in base.rglob("*"):
+            if not path.is_file() or path.suffix.lower() not in CALLSITE_SUFFIXES:
+                continue
+            try:
+                text = path.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            for name, rel in blocked.items():
+                if isinstance(rel, str) and f"skills/{rel}" in text:
+                    failures.append({
+                        "id": "callsite_blocked_skill",
+                        "file": path.relative_to(root).as_posix(),
+                        "skill": name,
+                    })
+    return failures
+
+
+def _repackaged(root: Path, skills: Dict[str, Any]) -> List[Dict[str, str]]:
+    """A held or blocked skill must not be copied into a distributable location.
+
+    Identity is the exact bytes of the skill's SKILL.md, so a same-named but
+    different skill (for example an unrelated archival copy) is not flagged.
+    """
+    failures: List[Dict[str, str]] = []
+    held = {
+        name: entry.get("path")
+        for name, entry in skills.items()
+        if isinstance(entry, dict) and entry.get("distribution") in {"blocked", "hold"}
+    }
+    if not held:
+        return failures
+    gzh = root / "vendor" / "gzh-thinktank" / "gzh_未来智能" / "skills"
+    held_shas: Dict[str, str] = {}
+    for name, rel in held.items():
+        candidate = gzh / str(rel) / "SKILL.md"
+        if candidate.is_file():
+            held_shas[name] = _sha256_bytes(candidate.read_bytes())
+    if not held_shas:
+        return failures
+    for path in root.rglob("SKILL.md"):
+        rel = path.relative_to(root).as_posix()
+        if any(rel == prefix or rel.startswith(prefix + "/")
+               for prefix in REPACKAGE_SKIP_PREFIXES):
+            continue
+        try:
+            digest = _sha256_bytes(path.read_bytes())
+        except OSError:
+            continue
+        for name, held_sha in held_shas.items():
+            if digest == held_sha:
+                failures.append({"id": "repackaged_skill", "file": rel, "skill": name})
+    return failures
+
+
 def check(root: Path = ROOT, config: Path | None = None) -> Dict[str, Any]:
     if config is None:
         config = root / "config" / "gzh-skill-rights.json"
@@ -131,6 +224,11 @@ def check(root: Path = ROOT, config: Path | None = None) -> Dict[str, Any]:
         if not (root / "vendor" / "gzh-thinktank" / "THIRD_PARTY_NOTICES.md").is_file():
             failures.append({"id": "notice_missing",
                              "path": "vendor/gzh-thinktank/THIRD_PARTY_NOTICES.md"})
+
+    # A route is not the only way to reach a skill: scan direct callsites and
+    # repackaged copies too, so a restricted component cannot slip past the gate.
+    failures.extend(_callsites(root, skills))
+    failures.extend(_repackaged(root, skills))
 
     return {
         "schema": "contentops.gzh-skill-rights-check/v1",
