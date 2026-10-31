@@ -192,3 +192,19 @@ explicit and off by default.
 
 `import` refuses an empty `--license`. media-use records carry no licence field,
 so the licence is a human decision and is never defaulted.
+
+### Runtime lock (required before any external call)
+
+Nothing is executed until a reviewed lock names every byte:
+
+```powershell
+$env:CONTENTOPS_MEDIA_USE_RUNTIME_LOCK = "D:\path\to\runtime-lock.json"
+python scripts\media_use_adapter.py status
+```
+
+`status` re-hashes the tree on every call and reports one of `TRUSTED_RUNTIME`,
+`RUNTIME_MISSING`, `INTEGRITY_MISMATCH`, `VERSION_MISMATCH` or
+`DEPENDENCY_UNVERIFIED`. A lock records the package version, the published
+integrity value, the node binary hash, the entry point and a SHA-256 per file.
+It is host-specific and is not committed. Without it, local project imports still
+work and every external call is refused.

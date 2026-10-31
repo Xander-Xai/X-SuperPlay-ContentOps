@@ -962,9 +962,14 @@ class MediaUseAdapter:
         timeout: Optional[float] = None,
         home: Optional[Path] = None,
     ) -> MediaUseProcessResult:
-        # Availability answers "is anything here at all" with its own codes;
-        # trust answers "are these the bytes that may run". Both precede a spawn.
-        self.require_available()
+        # A missing skill is the first thing to report when no runtime is
+        # configured at all. A configured lock speaks for itself: its own state
+        # (missing / mismatched / version drift) is the useful diagnosis. Either
+        # way this is a cheap existence check, not a second full hash pass.
+        if self.runtime_lock is None and not (self.skill_dir / "SKILL.md").is_file():
+            raise MediaUseError(
+                CODE_SKILL_UNAVAILABLE, "media-use skill is not installed at the configured path"
+            )
         runtime = self._require_trusted_runtime()
         node = str(runtime.node) if runtime.node else (self.node or self._which("node"))
         if not node:

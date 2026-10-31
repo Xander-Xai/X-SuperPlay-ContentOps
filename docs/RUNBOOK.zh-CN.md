@@ -95,3 +95,18 @@ python scripts\media_use_adapter.py demo --project projects\media-use-demo
 退出码：`0` 完成，`2` 用法错误，`5` 被阻断／需要人工决定，`1` 意外失败。授权开关（`--allow-network`、`--allow-paid --budget`、`--allow-cross-project`、`--allowed-provider`）必须显式给出，默认关闭。
 
 `import` 拒绝空 `--license`。media-use 记录本身没有许可证字段，因此许可证必须由人决定，不能被默认填充。
+
+### 运行时锁（任何外部调用前必需）
+
+在存在经过审核的锁之前，不会执行任何外部程序：
+
+```powershell
+$env:CONTENTOPS_MEDIA_USE_RUNTIME_LOCK = "D:\path\to\runtime-lock.json"
+python scripts\media_use_adapter.py status
+```
+
+`status` 每次都会重新哈希整棵运行时树，并报告 `TRUSTED_RUNTIME`、
+`RUNTIME_MISSING`、`INTEGRITY_MISMATCH`、`VERSION_MISMATCH` 或
+`DEPENDENCY_UNVERIFIED` 之一。锁记录包版本、官方 integrity、node 二进制哈希、
+入口文件，以及每个文件的 SHA-256。锁与本机绑定，不提交到仓库。没有锁时，
+项目内本地导入仍然可用，但所有外部调用都会被拒绝。

@@ -1,14 +1,12 @@
 # ADR-008: HyperFrames `media-use` is integrated as a pinned adapter, not a fork
 
-Status: Under review — trusted execution is blocked
+Status: Accepted — external execution only through a verified runtime lock
 Date: 2026-10-31
 
-> **Security correction:** the commit IDs below are target provenance, not
-> verified runtime identity. The launcher delegates to an external CLI and its
-> dependencies. Hashing the launcher alone does not verify that execution chain.
-> The adapter currently blocks external execution pending a complete, reviewed
-> runtime lock and real offline test. The historical decision below is not proof
-> that this verification exists.
+> **Trust model:** an installed CLI is an unknown program until a reviewed lock
+> names every byte it may execute. The adapter re-hashes that lock before each
+> spawn and refuses when the tree is missing, drifted or version-mismatched.
+> Committing the lock is not enough and is not what makes this safe.
 Issue: #57
 Related: ADR-004 (cross-repo source contract), ADR-006 (upstream upgrade policy),
 `docs/MEDIA-PROVIDER-CONTRACT.md`
@@ -31,12 +29,11 @@ Three approaches were possible:
 
 ## Decision
 
-Option 3. `src/contentops/media/media_use_adapter.py` wraps the pinned
-`resolve.mjs` and is the only place that knows the skill exists. The upstream
-source is **not** copied and **not** modified. `scripts/media_use_adapter.py`
-is the operator CLI.
+Option 3. `src/contentops/media/media_use_adapter.py` wraps the locked CLI entry
+and is the only place that knows the skill exists. The upstream source is **not**
+copied and **not** modified. `scripts/media_use_adapter.py` is the operator CLI.
 
-Target provenance, not verified execution provenance:
+Skill source reference (reviewed, not executed):
 
 | Field | Value |
 |---|---|
@@ -46,22 +43,56 @@ Target provenance, not verified execution provenance:
 | License | Apache-2.0 |
 | Local skill directory | `~/.agents/skills/media-use` (override: `MEDIA_USE_SKILL_DIR`) |
 
-## Candidate runtimes — not yet approved
+## Two provenance lines, deliberately separate
 
-- **npm `hyperframes@0.8.222`:** the registry advertises
-  `sha512-kTPOStlNXvbuZIsT9eHr8FlA9PK26cT/fXXZkdAZKiUIe3RElIolum+/FS/25YHBilobyPGGb78rRy+pDT73Iw==`;
-  the downloaded tarball was checked against that integrity value. Its
-  `gitHead` is `e28dbe4ce48842cfbeab34a1bf0090fd9e428b6d`, not the target
-  commit. The target is 15 commits ahead and includes media-use changes. The
-  tarball does not bundle the entire npm dependency tree or its lockfile.
-- **Build the target source:** the pinned checkout uses a Bun workspace and CLI
-  build steps that require other workspace packages and generated assets. A
-  verified full dependency cache and reproducible clean build have not been
-  established.
+- **Skill source reference:** the Git commit above describes the skill as it was
+  read and reviewed. It is not what executes.
+- **Execution baseline:** the published package `hyperframes@0.8.222`,
+  integrity `sha512-kTPOStlNXvbuZIsT9eHr8FlA9PK26cT/fXXZkdAZKiUIe3RElIolum+/FS/25YHBilobyPGGb78rRy+pDT73Iw==`.
+  Its `gitHead` is `e28dbe4ce48842cfbeab34a1bf0090fd9e428b6d`, 15 commits behind
+  the reference; the two are **not** the same code and are never described as
+  such. The package was chosen because it is the artifact that can be pinned,
+  mirrored and hashed end to end.
 
-Neither candidate has passed an isolated real-CLI execution or complete
-transitive integrity verification. Selection remains open; do not execute one
-as a trusted ContentOps runtime based on these observations.
+## Runtime lock
+
+`CONTENTOPS_MEDIA_USE_RUNTIME_LOCK` points at a JSON document
+(`contentops.media-use-runtime-lock/v1`) produced when an operator installs and
+reviews a runtime. It records the package name and version, the published
+integrity value, the node binary and its SHA-256, the entry point, the verb
+prefix, and the SHA-256 of every file in the tree.
+
+Verification states are distinct because they prompt different actions:
+
+| State | Meaning |
+|---|---|
+| `TRUSTED_RUNTIME` | every listed byte matches; execution allowed |
+| `RUNTIME_MISSING` | lock or tree absent — install it |
+| `INTEGRITY_MISMATCH` | a file changed after review — do not run, investigate |
+| `VERSION_MISMATCH` | installed version differs from the locked one |
+| `DEPENDENCY_UNVERIFIED` | no lock configured; execution refused |
+
+The lock is machine-specific and is **not** committed: it names absolute paths
+and a node build for one host. What is committed is the schema, the verifier and
+its tests. The hash pass (about 0.6 s for 5 407 files on a local disk) runs
+before every spawn, so a stale `available=true` cannot authorise a tree that
+changed afterwards.
+
+## Verified by execution, 2026-10-31
+
+Isolated WSL, network namespace with no egress (`unshare -Urn`, verified by a
+failing outbound probe), no credentials, no provider, no `npx`:
+
+| Command | Result |
+|---|---|
+| `hyperframes media-use adopt --project … --json --local-only` | `ok:true`, `adopted:1`, exit 0 |
+| `hyperframes media-use candidates --type image … --local-only` | one project candidate, exit 0 |
+| `hyperframes media-use resolve --type sfx --local-only` | bundled `click-soft`, `.media/audio/sfx/sfx_001.mp3`, exit 0 |
+| adapter `candidates → resolve → import_record → verify` | `available:true`, import sidecar written, `verify.ok:true` |
+| runtime file edited after review | `INTEGRITY_MISMATCH`, refused before any process start |
+
+The import receipt records `upstream_provenance: UNVERIFIED` and no commit ID:
+a verified runtime proves *what executed*, never *where an asset came from*.
 
 ## Why not a fork or a reimplementation
 
@@ -72,8 +103,8 @@ as a trusted ContentOps runtime based on these observations.
   routing and the bundled SFX library, none of which ContentOps owns, and would
   still need the same provenance fields.
 - A commit identifier and launcher hash alone do not establish which CLI and
-  dependencies executed. The full execution chain remains to be independently
-  locked and verified before this option can be declared operational.
+  dependencies executed. That gap is closed by the runtime lock above, not by
+  the commit constant.
 
 ## Contract mapping
 
@@ -113,11 +144,14 @@ media-use's own `.media/manifest.jsonl` only to look up a record by id.
 
 ## Consequences
 
-- Upgrading media-use is an explicit change: bump the three constants, re-run
-  `tests/test_media_use_adapter.py`, and record the new hashes. The adapter does
-  not auto-update.
-- The integration requires Node ≥ 22 but remains blocked even when Node and the
-  skill are present: the complete runtime has not been verified.
+- Upgrading media-use is an explicit change: install the new version, regenerate
+  the runtime lock, re-run `tests/test_media_use_adapter.py`, and repeat the
+  isolated execution check. The adapter does not auto-update.
+- Execution is blocked until a lock exists for the host. Without
+  `CONTENTOPS_MEDIA_USE_RUNTIME_LOCK` every external call reports
+  `DEPENDENCY_UNVERIFIED`; local project imports keep working.
+- Network and paid paths stay blocked: the released resolver can fall back from
+  retrieval to generation, and no enforceable spending ceiling has been verified.
 - Images and icons currently require a network provider; the only offline
   third-party source is the bundled SFX library. The demo records the image
   refusal rather than fabricating a download.
