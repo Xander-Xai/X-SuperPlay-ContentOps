@@ -101,6 +101,44 @@ def _fake_easel_tree(base: Path) -> Path:
     return easel
 
 
+def test_check_docs_ignores_local_claude_worktrees_but_detects_real_broken_links():
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import check_docs
+
+    original_scan_markdown_files = check_docs._scan_markdown_files
+    original_canonical_docs = check_docs.CANONICAL_DOCS
+    original_lock_consistency = check_docs.check_lock_consistency
+    original_sensitive_strings = check_docs.check_sensitive_strings
+    with tempfile.TemporaryDirectory() as td:
+        fake_root = Path(td)
+        worktree = fake_root / ".claude" / "worktrees" / "local"
+        worktree.mkdir(parents=True)
+        (worktree / "AGENTS.md").write_text("[local](missing.md)\n", encoding="utf-8")
+        (fake_root / "docs").mkdir()
+        real_doc = fake_root / "docs" / "real.md"
+        real_doc.write_text("[broken](missing.md)\n", encoding="utf-8")
+
+        original_root = check_docs.ROOT
+        try:
+            check_docs.ROOT = fake_root
+            check_docs.CANONICAL_DOCS = []
+            check_docs.check_lock_consistency = lambda: []
+            check_docs.check_sensitive_strings = lambda: []
+            failures = check_docs.check_broken_links()
+        finally:
+            check_docs.ROOT = original_root
+            check_docs._scan_markdown_files = original_scan_markdown_files
+            check_docs.CANONICAL_DOCS = original_canonical_docs
+            check_docs.check_lock_consistency = original_lock_consistency
+            check_docs.check_sensitive_strings = original_sensitive_strings
+
+    assert failures and all(
+        failure.replace("\\", "/") == "BROKEN LINK: docs/real.md -> missing.md"
+        for failure in failures
+    ), failures
+    print("[ok] check_docs isolates local worktrees and detects real broken links")
+
+
 def test_verify_blob_sha1_matches_git():
     rez, ver = _scripts_imports()
     with tempfile.TemporaryDirectory() as td:
@@ -174,6 +212,7 @@ if __name__ == "__main__":
     for fn in (test_doctor_runs, test_doctor_json,
                test_new_project_creates_and_refuses_overwrite,
                test_qc_on_missing_final_returns_fail,
+               test_check_docs_ignores_local_claude_worktrees_but_detects_real_broken_links,
                test_verify_blob_sha1_matches_git,
                test_verify_generated_exclusion,
                test_resolver_rejects_foreign_remote,

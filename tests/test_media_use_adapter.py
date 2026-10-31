@@ -149,9 +149,24 @@ def _fake_skill(tmp: Path, **responses: Dict[str, Any]) -> Path:
     return skill
 
 
+class _FixtureAdapter(MediaUseAdapter):
+    """Exercise the process protocol using only the generated fake skill.
+
+    This subclass exists exclusively in the test file. It does not establish
+    production dependency trust or demonstrate that the real CLI is usable.
+    """
+
+    @staticmethod
+    def _require_trusted_runtime():
+        return None
+
+    def require_available(self):
+        return self.status()
+
+
 def _adapter(tmp: Path, **responses: Dict[str, Any]) -> MediaUseAdapter:
     node = _require_node()
-    return MediaUseAdapter(skill_dir=_fake_skill(tmp, **responses), node=node, timeout=10)
+    return _FixtureAdapter(skill_dir=_fake_skill(tmp, **responses), node=node, timeout=10)
 
 
 def _project(tmp: Path) -> Path:
@@ -603,7 +618,7 @@ def test_a_timeout_is_reported_as_a_timeout_not_a_hang():
         tmp = Path(raw)
         project = _project(tmp)
         node = _require_node()
-        adapter = MediaUseAdapter(
+        adapter = _FixtureAdapter(
             skill_dir=_fake_skill(
                 tmp, candidates={"ok": True, "candidates": [], "__sleep_ms": 4000}
             ),
@@ -686,7 +701,7 @@ def test_the_child_is_argv_only_and_never_sees_a_credential():
             skill = _fake_skill(tmp)
             module.hidden_run = recorder
             try:
-                adapter = MediaUseAdapter(skill_dir=skill, node="node", timeout=5)
+                adapter = _FixtureAdapter(skill_dir=skill, node="node", timeout=5)
                 adapter.candidates("image", project_dir=_project(tmp))
             finally:
                 module.hidden_run = original
@@ -702,6 +717,67 @@ def test_the_child_is_argv_only_and_never_sees_a_credential():
         env = call["kwargs"].get("env") or {}
         assert "MINIMAX_API_KEY" not in env
         assert not any("TOKEN" in key or "KEY" in key for key in env), env.keys()
+
+
+@test
+def test_local_import_rejects_bad_provenance_before_writing_receipt():
+    import hashlib
+    with tempfile.TemporaryDirectory() as raw:
+        tmp = Path(raw)
+        project = _project(tmp)
+        asset = _write(project / "assets" / "pic.png", b"local asset")
+        adapter = MediaUseAdapter(skill_dir=tmp / "absent")
+        receipt = asset.with_name(asset.name + ".receipt.json")
+        record = _record("assets/pic.png")
+        for bad, code in (({**record, "sha256": "0" * 64}, "HASH_MISMATCH"),
+                          ({**record, "type": "sfx"}, CODE_CLI_FAILED),
+                          ({**record, "_source": "generated"}, CODE_GENERATED_NOT_IMPORTABLE)):
+            _expect(code, lambda: adapter.import_record(bad, project_dir=project, kind="image", license="owned"))
+            assert not receipt.exists()
+        record["sha256"] = hashlib.sha256(b"local asset").hexdigest()
+        result = adapter.import_record(record, project_dir=project, kind="image", license="owned")
+        assert result.sha256 == record["sha256"]
+        payload = json.loads(receipt.read_text(encoding="utf-8"))
+        assert payload["upstream_provenance"] == "UNVERIFIED"
+        assert payload["upstream_commit"] is None
+
+
+@test
+def test_unverified_launcher_is_blocked_before_process_spawn():
+    import contentops.media.media_use_adapter as module
+    original = module.hidden_run
+    def forbidden(*args, **kwargs):
+        raise AssertionError("unverified launcher reached subprocess")
+    with tempfile.TemporaryDirectory() as raw:
+        adapter = MediaUseAdapter(skill_dir=_fake_skill(Path(raw)))
+        module.hidden_run = forbidden
+        try:
+            try:
+                adapter._run(["--doctor", "--json"])
+            except MediaUseError as exc:
+                assert exc.code == "DEPENDENCY_UNVERIFIED"
+            else:
+                raise AssertionError("unverified launcher was executed")
+        finally:
+            module.hidden_run = original
+
+
+@test
+def test_network_authorization_never_starts_unclassified_resolver():
+    from contentops.media.media_use_adapter import CODE_PAID_NOT_AUTHORIZED
+
+    adapter = MediaUseAdapter()
+    def forbidden(*args, **kwargs):
+        raise AssertionError("subprocess path reached before billing refusal")
+    adapter.candidates = forbidden
+    for auth in (MediaUseAuthorization(allow_network=True),
+                 MediaUseAuthorization(allow_network=True, allow_paid=True, paid_budget="10")):
+        try:
+            adapter.resolve("image", "test", project_dir=Path("."), authorization=auth)
+        except MediaUseError as exc:
+            assert exc.code == CODE_PAID_NOT_AUTHORIZED
+        else:
+            raise AssertionError("unclassified network resolution was permitted")
 
 
 @test

@@ -134,7 +134,9 @@ DEFAULT_SKILL_DIR = Path.home() / ".agents" / "skills" / SKILL_NAME
 ENV_SKILL_DIR = "CONTENTOPS_MEDIA_USE_SKILL_DIR"
 ENV_NODE = "CONTENTOPS_NODE_BINARY"
 RESOLVE_RELATIVE = Path("scripts") / "resolve.mjs"
-MIN_NODE_MAJOR = 18
+# The official published HyperFrames CLI declares Node >=22. This is a
+# necessary prerequisite, not proof that the CLI dependency tree is trusted.
+MIN_NODE_MAJOR = 22
 
 #: Types this adapter routes. Everything else is refused with a reason.
 SUPPORTED_TYPES: Tuple[str, ...] = ("image", "icon", "logo", "brand", "bgm", "sfx")
@@ -373,6 +375,7 @@ class MediaUseStatus:
             "available": self.available,
             "reasons": list(self.reasons),
             "upstream_repository": self.upstream_repository,
+            "upstream_provenance": "UNVERIFIED",
             "upstream_commit": self.upstream_commit,
             "skill_commit": self.skill_commit,
             "upstream_license": self.upstream_license,
@@ -583,10 +586,10 @@ class MediaUseAdapter:
         return self.skill_dir / RESOLVE_RELATIVE
 
     def status(self, *, refresh: bool = False) -> MediaUseStatus:
-        if self._status is not None and not refresh:
-            return self._status
-
-        reasons: List[str] = []
+        # Re-evaluate on each call; cached success must never hide a later change.
+        reasons: List[str] = [
+            "DEPENDENCY_UNVERIFIED: the launcher and complete CLI runtime are not verified"
+        ]
         skill_present = (self.skill_dir / "SKILL.md").is_file()
         resolve_present = self.resolve_script.is_file()
         if not skill_present:
@@ -636,7 +639,7 @@ class MediaUseAdapter:
             ffmpeg_present=bool(self._which("ffmpeg")),
             ffprobe_present=bool(self._which("ffprobe")),
             resolve_sha256=resolve_sha256,
-            available=skill_present and resolve_present and node_ok,
+            available=False,
             reasons=tuple(reasons),
         )
         return self._status
@@ -645,7 +648,12 @@ class MediaUseAdapter:
         status = self.status()
         if status.available:
             return status
-        code = CODE_NODE_UNAVAILABLE if not status.node_present else CODE_SKILL_UNAVAILABLE
+        if not status.node_present:
+            code = CODE_NODE_UNAVAILABLE
+        elif not status.skill_present or not status.resolve_present:
+            code = CODE_SKILL_UNAVAILABLE
+        else:
+            code = "DEPENDENCY_UNVERIFIED"
         raise MediaUseError(
             code,
             "media-use is unavailable: " + "; ".join(status.reasons or ["unknown reason"]),
@@ -683,6 +691,15 @@ class MediaUseAdapter:
             env["USERPROFILE"] = str(home)
         return env
 
+    @staticmethod
+    def _require_trusted_runtime() -> None:
+        # Launcher integrity alone cannot verify npx, Bun or the CLI dependency tree.
+        raise MediaUseError(
+            "DEPENDENCY_UNVERIFIED",
+            "media-use execution is blocked until the complete launcher and CLI "
+            "dependency tree can be verified without implicit installation",
+        )
+
     def _run(
         self,
         args: Sequence[str],
@@ -691,6 +708,9 @@ class MediaUseAdapter:
         timeout: Optional[float] = None,
         home: Optional[Path] = None,
     ) -> MediaUseProcessResult:
+        if not (self.skill_dir / "SKILL.md").is_file() or not self.resolve_script.is_file():
+            raise MediaUseError(CODE_SKILL_UNAVAILABLE, "media-use skill or launcher is missing")
+        self._require_trusted_runtime()
         status = self.require_available()
         node = self.node or self._which("node")
         if not node:
@@ -853,6 +873,16 @@ class MediaUseAdapter:
         """
         self._require_supported(kind)
         auth = authorization or MediaUseAuthorization()
+        # The upstream resolver can fall back from retrieval to generation and
+        # provides no verified enforceable spending ceiling. An authorization
+        # flag or a budget string cannot make that safe. Refuse before invoking
+        # even the candidate subprocess; callers can request offline reuse instead.
+        if auth.allow_network or auth.allow_paid:
+            raise MediaUseError(
+                CODE_PAID_NOT_AUTHORIZED,
+                "network resolution is blocked: upstream cost classification and "
+                "a binding budget limit have not been verified",
+            )
         if provider:
             auth.require_provider(provider)
 
@@ -1063,6 +1093,11 @@ class MediaUseAdapter:
         """
         self._require_supported(kind)
         self._require_license(license)
+        record_kind = record.get("type")
+        if record_kind and record_kind != kind:
+            raise MediaUseError(CODE_CLI_FAILED, "record type does not match requested kind")
+        if record.get("generated") is True or record.get("source") == "generated" or record.get("_source") == "generated":
+            raise MediaUseError(CODE_GENERATED_NOT_IMPORTABLE, "generated material cannot be imported as licensed external media")
         project_root = Path(project_dir).expanduser().resolve()
         relative = record.get("path")
         if not isinstance(relative, str) or not relative.strip():
@@ -1080,6 +1115,9 @@ class MediaUseAdapter:
             )
 
         digest = sha256_file(full_path)
+        declared_digest = record.get("sha256") or record.get("sha")
+        if declared_digest and (not isinstance(declared_digest, str) or declared_digest.lower() != digest):
+            raise MediaUseError(CODE_HASH_MISMATCH, "recorded digest does not match the local file")
         asset_id = f"{asset_id_prefix}-{kind}-{digest[:12]}"
         modality, asset_kind = self._modality_for(kind)
         # A project under this repository must still read as project:// so the
@@ -1100,8 +1138,11 @@ class MediaUseAdapter:
             "provider": "hyperframes_media_use",
             "product": "hyperframes",
             "upstream_repository": UPSTREAM_REPOSITORY,
-            "upstream_commit": UPSTREAM_COMMIT,
-            "skill_commit": SKILL_COMMIT,
+            "upstream_commit": None,
+            "skill_commit": None,
+            "upstream_provenance": "UNVERIFIED",
+            "expected_upstream_commit": UPSTREAM_COMMIT,
+            "expected_skill_commit": SKILL_COMMIT,
             "upstream_license": UPSTREAM_LICENSE,
             "transport": "media_use_resolve",
             "transport_version": "1",
@@ -1127,8 +1168,8 @@ class MediaUseAdapter:
             "production_ready": False,
             "human_review": HUMAN_REVIEW_PENDING,
             "note": (
-                "Licensed external material adopted through the pinned media-use "
-                "adapter. It supports a video and never witnesses a claim, so "
+                "External material imported from a local record; upstream "
+                "execution provenance has not been verified. It supports a video "
                 "evidence_capable is false by construction. No provider was called "
                 "by this import."
             ),
