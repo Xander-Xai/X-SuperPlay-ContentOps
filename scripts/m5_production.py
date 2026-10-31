@@ -153,6 +153,15 @@ def stage_media_use(project: Path, config: Dict[str, Any], *, adapter: Any = Non
             ) from exc
         adapter = MediaUseAdapter()
 
+    # Index existing project-local files before choosing candidates. The same
+    # reviewed adapter does this offline; no manual media-use CLI pre-step needed.
+    if todo:
+        try:
+            adapter.adopt(project_dir=project)
+        except Exception as exc:
+            code = getattr(exc, "code", type(exc).__name__)
+            raise M5Blocked(f"media-use local adopt failed ({code}): {exc}") from exc
+
     discovered: Dict[str, Dict[str, Any]] = {}
     for asset_id, kind, intent, license_name, attribution in todo:
         try:
