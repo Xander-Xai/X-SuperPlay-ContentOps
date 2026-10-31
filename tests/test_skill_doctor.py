@@ -89,6 +89,8 @@ class SkillDoctorScopeTests(unittest.TestCase):
             self.assertFalse(report["execution"]["authorized"])
             self.assertEqual(report["execution"]["remaining_gate"], "#57")
             self.assertGreater(report["permission_declarations"]["declared"], 0)
+            self.assertLess(report["permission_declarations"]["declared"], report["total"],
+                            "the missing-permission case must not read as fully declared")
 
     def test_a_symlink_that_leaves_the_root_is_unsafe(self) -> None:
         import os
