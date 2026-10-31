@@ -26,6 +26,13 @@ from process_utils import hidden_run, python_executable
 
 ROOT = Path(__file__).resolve().parents[1]
 
+# A failing check must be readable, not a UnicodeEncodeError on a Windows console.
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except (AttributeError, ValueError):
+    pass
+
 
 def run_check(name: str, cmd: list[str]) -> bool:
     print(f"\n=== {name} ===")

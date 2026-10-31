@@ -1,0 +1,18 @@
+{
+  "schema": "contentops.media-use-upstream-observation/v1",
+  "purpose": "Partial source observation only; not an executable runtime lock or authorization",
+  "repository": "https://github.com/heygen-com/hyperframes",
+  "commit": "5e4f5aefb58a9996ea5920f008184e9789346871",
+  "files": {
+    "skills/media-use/SKILL.md": "27953684efc3615938f824371462b2f6085b0e0982ae3667fe0a12ac89d0ebf9",
+    "skills/media-use/scripts/resolve.mjs": "85aec401d22b65639fa6a91056e515563135962a127516aaae1e2644d48fa0b9",
+    "skills/media-use/scripts/lib/npx-sync.mjs": "1dc7f6372da36242f8c373defcba80fe9e006ce824e0f459e6d56226b3bf919a",
+    "packages/cli/package.json": "6e0a39a99bc08e395e488a1134aa486242921df1bf26098ca6275a00101d59e4"
+  },
+  "hash_algorithm": "sha256",
+  "retrieval": "GitHub contents API at exact commit; decoded file bytes",
+  "runtime_verified": false,
+  "execution_baseline": "runtime/media-use-runtime-baseline.json",
+  "scope_note": "These are skill source files at a commit 15 commits ahead of the release that actually executes (gitHead e28dbe4ce48842cfbeab34a1bf0090fd9e428b6d). They describe the interface; they are not the bytes of the installed runtime and are not compared against it.",
+  "incomplete_reason": "The launcher delegates to a CLI and transitive dependency tree not covered by these file hashes; no verified source-to-release mapping or offline execution has been established."
+}

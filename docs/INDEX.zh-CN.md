@@ -25,6 +25,7 @@ translation_status: synced
 
 - [SOURCE-ARTIFACT-CONTRACT.md](SOURCE-ARTIFACT-CONTRACT.md)
 - [MEDIA-PROVIDER-CONTRACT.md](MEDIA-PROVIDER-CONTRACT.md)
+- [adr/ADR-008-media-use-adapter.md](adr/ADR-008-media-use-adapter.md) — HyperFrames `media-use` 集成：固定版本适配器，不复制上游
 - [CROSS-REPO-INTEGRATION.md](CROSS-REPO-INTEGRATION.md)
 
 ## 上游
@@ -41,6 +42,16 @@ translation_status: synced
 - [DEVELOPMENT-STANDARD.md](DEVELOPMENT-STANDARD.md) — 开发规则
 - [FILE-PLACEMENT-POLICY.md](FILE-PLACEMENT-POLICY.md) — 文件归属规则
 - [GLOSSARY.md](GLOSSARY.md) — 高频术语表
+
+## 决策
+
+- [adr/ADR-001-easel-runtime.md](adr/ADR-001-easel-runtime.md)
+- [adr/ADR-002-contentops-boundaries.md](adr/ADR-002-contentops-boundaries.md)
+- [adr/ADR-003-minimax-plan-provider.md](adr/ADR-003-minimax-plan-provider.md)
+- [adr/ADR-004-cross-repo-source-contract.md](adr/ADR-004-cross-repo-source-contract.md)
+- [adr/ADR-005-human-approval.md](adr/ADR-005-human-approval.md)
+- [adr/ADR-006-upstream-upgrade-policy.md](adr/ADR-006-upstream-upgrade-policy.md)
+- [adr/ADR-008-media-use-adapter.md](adr/ADR-008-media-use-adapter.md)
 
 ## 事实优先级
 
@@ -63,5 +74,6 @@ translation_status: synced
 - [../reports/audits/github-governance-2026-10-31.md](../reports/audits/github-governance-2026-10-31.md) — GitHub 治理执行：PR/Issue/Branch/CI/安全复核与 PR #48 合并（2026-10-31）
 - [../reports/audits/contentops-phase2-security-and-unblock-2026-10-31.md](../reports/audits/contentops-phase2-security-and-unblock-2026-10-31.md) — 第二阶段安全、第三方版权与 PR 解锁审计（2026-10-31）
 - [../reports/audits/contentops-phase3-p0-convergence-2026-10-31.md](../reports/audits/contentops-phase3-p0-convergence-2026-10-31.md) — 第三阶段 P0 收敛与堆栈解锁（2026-10-31）
+- [../reports/audits/contentops-pr71-media-use-final-audit-2026-10-31.md](../reports/audits/contentops-pr71-media-use-final-audit-2026-10-31.md) — PR #71 media-use 集成：安全、版权、代码、端到端与合并门禁审计（2026-10-31）
 - [../reports/audits/contentops-phase4-delivery-unlock-2026-10-31.md](../reports/audits/contentops-phase4-delivery-unlock-2026-10-31.md) — 第四阶段交付解锁：#62 合并准备、M5 联合验收、#49 顺序与 Owner 决策（2026-10-31）
 - [../reports/audits/contentops-phase5-integration-convergence-2026-10-31.md](../reports/audits/contentops-phase5-integration-convergence-2026-10-31.md) — 第五阶段集成收敛：#71 重叠矩阵、推荐路线、素材授权门禁与 #62 复核（2026-10-31）

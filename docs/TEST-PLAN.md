@@ -11,6 +11,7 @@
 | Windows subprocess regression | `tests/test_windows_subprocess.py` | 47 | Windows + Ubuntu |
 | M2 speech regression | `tests/test_minimax_speech.py` | 85 | Windows + Ubuntu |
 | M3 image regression | `tests/test_minimax_image.py` | 63 | Windows + Ubuntu |
+| M5 evidence regression | `tests/test_m5_evidence.py` | 18 | Windows + Ubuntu |
 
 `scripts/test_basic.py` — 9 tests, all PASS:
 - doctor.py execution + JSON output

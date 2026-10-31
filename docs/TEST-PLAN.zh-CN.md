@@ -17,6 +17,7 @@ translation_status: synced
 | M3 图片回归（63 项） | ```tests/test_minimax_image.py``` | Windows + Ubuntu |
 | Windows 路径回归 | ```tests/test_windows_paths.py``` | Windows + Ubuntu |
 | Windows 子进程回归 | ```tests/test_windows_subprocess.py``` | Windows + Ubuntu |
+| M5 证据回归（18 项） | ```tests/test_m5_evidence.py``` | Windows + Ubuntu |
 
 ## CI 检查
 

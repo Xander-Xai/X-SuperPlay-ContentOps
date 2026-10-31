@@ -1,0 +1,51 @@
+{
+  "schema": "contentops.m5-media-use/v1",
+  "mode": "local-only",
+  "network": false,
+  "paid": false,
+  "cross_project": false,
+  "results": [
+    {
+      "id": "support_visual",
+      "state": "IMPORTED",
+      "kind": "image",
+      "source": "project-candidate",
+      "sha256": "85c4ab5c5368b1ab60a98854ee292529d6b7908be58acfccc1d5f4ed06cddb53",
+      "path": "project://assets/support.png",
+      "receipt_ref": "support.png.receipt.json",
+      "license": "OWNED-BY-OPERATOR",
+      "attribution": "Repository-classified CREATED_BY_OWNER screenshot of the pinned Easel runtime; no separate capture receipt",
+      "evidence_capable": false,
+      "provider_call": false
+    },
+    {
+      "id": "bed",
+      "state": "IMPORTED",
+      "kind": "bgm",
+      "source": "project-candidate",
+      "sha256": "1dcb9c7e3708cfc0cc68663642cc9d6b779ff7bd5812fdb6e31e4d74f5b4ee5e",
+      "path": "project://assets/bed.mp3",
+      "receipt_ref": "bed.mp3.receipt.json",
+      "license": "OWNED-GENERATED-LOCAL",
+      "attribution": "Deterministic ffmpeg tone bed generated for this verification; not catalog music",
+      "evidence_capable": false,
+      "provider_call": false,
+      "volume": 0.18
+    },
+    {
+      "id": "click_accent",
+      "state": "IMPORTED",
+      "kind": "sfx",
+      "source": "project-candidate",
+      "sha256": "075e17bdac5c13662a1c9530050e0046f81d4138e00eb3bf30427a7b4404103d",
+      "path": "project://.media/audio/sfx/sfx_001.mp3",
+      "receipt_ref": "sfx_001.mp3.receipt.json",
+      "license": "Pixabay-Content-License",
+      "attribution": "Bundled media-use SFX (Pixabay Content License)",
+      "evidence_capable": false,
+      "provider_call": false,
+      "volume": 0.55,
+      "at": 6.15
+    }
+  ]
+}

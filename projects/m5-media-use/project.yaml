@@ -1,0 +1,63 @@
+id: m5-media-use
+title: "media-use 如何进入 ContentOps 生产链"
+created_at: "2026-10-31T18:05:00Z"
+
+source_refs:
+  - id: adr_008
+    type: repo_doc
+    title: "ADR-008 — media-use 作为固定版本适配器接入"
+    path: "docs/adr/ADR-008-media-use-adapter.md"
+    permission: CREATED_BY_OWNER
+  - id: baseline
+    type: lock_file
+    title: "runtime/media-use-runtime-baseline.json — 已批准的离线运行时基线"
+    path: "runtime/media-use-runtime-baseline.json"
+    permission: CREATED_BY_OWNER
+
+content_type: tech_review
+topic_cluster: "media-use"
+
+target:
+  platform_primary: douyin
+  aspect_ratio: "9:16"
+  resolution: "1080x1920"
+  duration_target_sec: 20
+
+evidence_policy:
+  real_assets_first: true
+  ai_visuals_allowed: auxiliary_only
+  fabricated_claims: forbidden
+
+# Declares the media need. The M5 main entry resolves it automatically through
+# the approved offline adapter; no separate media-use CLI step is required.
+media_use:
+  enabled: true
+  mode: local-only
+  requests:
+    - id: support_visual
+      kind: image
+      intent: "Easel runtime hero screenshot for a pinned-version explainer"
+      license: "OWNED-BY-OPERATOR"
+      attribution: "Repository-classified CREATED_BY_OWNER screenshot of the pinned Easel runtime; no separate capture receipt"
+      rights_reviewed: true
+    - id: bed
+      kind: bgm
+      intent: "calm technology explainer bed"
+      license: "OWNED-GENERATED-LOCAL"
+      attribution: "Deterministic ffmpeg tone bed generated for this verification; not catalog music"
+      rights_reviewed: true
+      volume: 0.18
+    - id: click_accent
+      kind: sfx
+      intent: "soft click transition"
+      license: "Pixabay-Content-License"
+      attribution: "Bundled media-use SFX (Pixabay Content License)"
+      rights_reviewed: true
+      at: 6.15
+      volume: 0.55
+
+status: initialized
+
+outputs:
+  final_video: ""
+  qc_report: ""

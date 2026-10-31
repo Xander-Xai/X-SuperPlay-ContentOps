@@ -1,0 +1,34 @@
+{
+  "schema": "contentops.m5-script/v1",
+  "language": "zh-CN",
+  "lines": [
+    {
+      "id": "l1",
+      "claim": "adapter_choice",
+      "narration": "media-use 不是复制进来的代码，也不是重写的引擎。",
+      "caption": "不复制，不重写",
+      "asset_id": "support_visual"
+    },
+    {
+      "id": "l2",
+      "claim": "adapter_choice",
+      "narration": "它是外部固定版本依赖，中间只隔一层薄适配器。",
+      "caption": "固定版本 + 薄适配器",
+      "asset_id": "support_visual"
+    },
+    {
+      "id": "l3",
+      "claim": "runtime_trust",
+      "narration": "机器锁必须指向已批准的基线，每个字节都要对得上。",
+      "caption": "锁指向基线，字节一致",
+      "asset_id": "support_visual"
+    },
+    {
+      "id": "l4",
+      "claim": "offline_only",
+      "narration": "这次批准只覆盖离线本地素材，网络和付费生成都没开。",
+      "caption": "只开离线本地素材",
+      "asset_id": "support_visual"
+    }
+  ]
+}

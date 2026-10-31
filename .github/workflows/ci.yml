@@ -140,6 +140,15 @@ jobs:
       - name: Run M4.5 media convergence regression tests
         run: python tests/test_media_convergence.py
 
+      # HyperFrames media-use adapter. The suite never reaches a provider: the
+      # CLI-driving tests use a fake skill that prints a JSON file the test wrote,
+      # and they report SKIP when node is absent rather than pretending to pass.
+      # The decisive assertions are fail-closed defaults, no cross-project reuse,
+      # no path escape, licensed material never evidence-capable, and generated
+      # bytes never importable as licensed external material.
+      - name: Run media-use adapter regression tests
+        run: python tests/test_media_use_adapter.py
+
       # M4.6 provider-free: fixtures only, no MiniMax request, no quota. Skips
       # itself when the M4.5 artifacts are absent, which they are on a clean
       # checkout because media binaries are gitignored.
@@ -184,6 +193,20 @@ jobs:
       # must fail. Existing exposure is baselined by field path only.
       - name: Run receipt-secret tests
         run: python tests/test_receipt_secrets.py
+
+      # M5 evidence layer. Fully offline: temporary fixtures only, no ffmpeg, no
+      # provider. The decisive assertions are that an artifact with permission
+      # NONE cannot back a claim even when its quote matches, that a claim whose
+      # quote disappeared is reported instead of accepted, and that burned
+      # subtitle timestamps stay in ASS centiseconds (a 3-digit fraction silently
+      # stretched every cue by an order of magnitude).
+      - name: Run M5 evidence regression tests
+        run: python tests/test_m5_evidence.py
+
+      # Integration boundary only; no runtime download, no external CLI execution,
+      # and no network or provider calls on hosted CI runners.
+      - name: Run M5 media-use automatic sourcing regression tests
+        run: python tests/test_m5_media_use_workflow.py
 
       - name: Enforce subprocess policy
         run: python scripts/check_subprocess_policy.py

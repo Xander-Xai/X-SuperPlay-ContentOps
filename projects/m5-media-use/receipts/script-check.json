@@ -1,0 +1,11 @@
+{
+  "schema": "contentops.m5-script-check/v1",
+  "ok": true,
+  "lines": 4,
+  "claims_cited": [
+    "adapter_choice",
+    "offline_only",
+    "runtime_trust"
+  ],
+  "claims_unused": []
+}

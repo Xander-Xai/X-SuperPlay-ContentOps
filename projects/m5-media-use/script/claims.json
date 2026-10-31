@@ -1,0 +1,26 @@
+{
+  "schema": "contentops.claim-ledger/v1",
+  "claims": [
+    {
+      "id": "adapter_choice",
+      "text": "media-use 以外部固定版本依赖接入，只写一层薄适配器。",
+      "artifacts": ["adr_008"],
+      "quotes": ["keep it as an external, version-pinned dependency and write a thin adapter."]
+    },
+    {
+      "id": "runtime_trust",
+      "text": "只有机器锁指向已批准基线、并且每个字节都匹配，运行时才算可信。",
+      "artifacts": ["adr_008", "baseline"],
+      "quotes": [
+        "A lock is trusted only when it names the approved baseline by digest",
+        "\"status\": \"approved\""
+      ]
+    },
+    {
+      "id": "offline_only",
+      "text": "这次批准只覆盖离线本地素材操作，不包含网络和付费生成。",
+      "artifacts": ["adr_008"],
+      "quotes": ["for offline-only scope"]
+    }
+  ]
+}
