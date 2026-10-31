@@ -9,7 +9,7 @@
   "extra_segments_requested": [
     "S04"
   ],
-  "voice_id": "founder_primary_v1",
+  "voice_id": "<redacted>",
   "voice_id_hash": "7271d9c80c88821a6a09ed43328619d0ee08c3f2b2449237fe2c31f6899abeef",
   "model": "speech-2.8-hd",
   "host": "https://api.minimax.cn",
@@ -114,9 +114,9 @@
       "reasons": [],
       "balances": {
         "available_amount": "15.08",
-        "cash_balance": "10.00",
-        "voucher_balance": "5.08",
-        "credit_balance": "0.00",
+        "cash_balance": null,
+        "voucher_balance": null,
+        "credit_balance": null,
         "owed_amount": "0.00"
       },
       "quota": {
@@ -143,9 +143,9 @@
     },
     "balances_after": {
       "available_amount": "15.08",
-      "cash_balance": "10.00",
-      "voucher_balance": "5.08",
-      "credit_balance": "0.00",
+      "cash_balance": null,
+      "voucher_balance": null,
+      "credit_balance": null,
       "owed_amount": "0.00"
     },
     "deltas": {
@@ -244,16 +244,16 @@
           },
           "balances_before": {
             "available_amount": "15.08",
-            "cash_balance": "10.00",
-            "voucher_balance": "5.08",
-            "credit_balance": "0.00",
+            "cash_balance": null,
+            "voucher_balance": null,
+            "credit_balance": null,
             "owed_amount": "0.00"
           },
           "balances_after": {
             "available_amount": "15.08",
-            "cash_balance": "10.00",
-            "voucher_balance": "5.08",
-            "credit_balance": "0.00",
+            "cash_balance": null,
+            "voucher_balance": null,
+            "credit_balance": null,
             "owed_amount": "0.00"
           },
           "deltas": {
@@ -314,7 +314,7 @@
           "http_status": 200,
           "status_code": 0,
           "status_msg": "success",
-          "trace_id": "071c6ef9190d23dbc35c6b7c5e2ef710",
+          "trace_id": "<redacted>",
           "usage_characters": 92,
           "usage_voice_count": null
         },
@@ -478,16 +478,16 @@
         },
         "balances_before": {
           "available_amount": "15.08",
-          "cash_balance": "10.00",
-          "voucher_balance": "5.08",
-          "credit_balance": "0.00",
+          "cash_balance": null,
+          "voucher_balance": null,
+          "credit_balance": null,
           "owed_amount": "0.00"
         },
         "balances_after": {
           "available_amount": "15.08",
-          "cash_balance": "10.00",
-          "voucher_balance": "5.08",
-          "credit_balance": "0.00",
+          "cash_balance": null,
+          "voucher_balance": null,
+          "credit_balance": null,
           "owed_amount": "0.00"
         },
         "deltas": {
@@ -548,7 +548,7 @@
         "http_status": 200,
         "status_code": 0,
         "status_msg": "success",
-        "trace_id": "071c6ef9190d23dbc35c6b7c5e2ef710",
+        "trace_id": "<redacted>",
         "usage_characters": 92,
         "usage_voice_count": null
       },

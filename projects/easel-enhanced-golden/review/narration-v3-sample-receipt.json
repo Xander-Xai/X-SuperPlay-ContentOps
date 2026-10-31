@@ -16,7 +16,7 @@
   "director_plan": "8c7e3f9e86f327407d935d116574caf0c31d2ab3f95c7e2be27e458a6472f262",
   "diagnosis": "projects/easel-enhanced-golden/review/narration-v3-diagnosis.md",
   "preset_voice_evidence": {
-    "voice_id": "Chinese (Mandarin)_Reliable_Executive",
+    "voice_id": "<redacted>",
     "basis": "used for the M2.0 Golden B asset on this account's M Plan",
     "receipt": "projects/easel-enhanced-golden/golden-assets/voice/B-minimax-speech-2.8-hd.receipt.json",
     "verified_on": "2026-10-04"
@@ -298,9 +298,9 @@
       "reasons": [],
       "balances": {
         "available_amount": "15.08",
-        "cash_balance": "10.00",
-        "voucher_balance": "5.08",
-        "credit_balance": "0.00",
+        "cash_balance": null,
+        "voucher_balance": null,
+        "credit_balance": null,
         "owed_amount": "0.00"
       },
       "quota": {
@@ -327,9 +327,9 @@
     },
     "balances_after": {
       "available_amount": "15.08",
-      "cash_balance": "10.00",
-      "voucher_balance": "5.08",
-      "credit_balance": "0.00",
+      "cash_balance": null,
+      "voucher_balance": null,
+      "credit_balance": null,
       "owed_amount": "0.00"
     },
     "deltas": {
@@ -390,7 +390,7 @@
     "D": {
       "id": "D",
       "label": "new script + clone voice + auto emotion (no director controls)",
-      "voice_id": "founder_primary_v1",
+      "voice_id": "<redacted>",
       "voice_id_hash": "7271d9c80c88821a6a09ed43328619d0ee08c3f2b2449237fe2c31f6899abeef",
       "fingerprint": "19b05758f6b9db589828ede922150851ec110bd6c23c508e0a22d5fdd52c7931",
       "synthesis_sha256": "54a953fb13f0913e204bb27ab154e9a727b113430e7c81d8b80086949f6e6e11",
@@ -428,16 +428,16 @@
           },
           "balances_before": {
             "available_amount": "15.08",
-            "cash_balance": "10.00",
-            "voucher_balance": "5.08",
-            "credit_balance": "0.00",
+            "cash_balance": null,
+            "voucher_balance": null,
+            "credit_balance": null,
             "owed_amount": "0.00"
           },
           "balances_after": {
             "available_amount": "15.08",
-            "cash_balance": "10.00",
-            "voucher_balance": "5.08",
-            "credit_balance": "0.00",
+            "cash_balance": null,
+            "voucher_balance": null,
+            "credit_balance": null,
             "owed_amount": "0.00"
           },
           "deltas": {
@@ -498,7 +498,7 @@
           "http_status": 200,
           "status_code": 0,
           "status_msg": "success",
-          "trace_id": "071c78e80199bf329ae1fbb691801d84",
+          "trace_id": "<redacted>",
           "usage_characters": 218,
           "usage_voice_count": null
         },
@@ -667,7 +667,7 @@
     "E": {
       "id": "E",
       "label": "same text + clone voice + selective director controls",
-      "voice_id": "founder_primary_v1",
+      "voice_id": "<redacted>",
       "voice_id_hash": "7271d9c80c88821a6a09ed43328619d0ee08c3f2b2449237fe2c31f6899abeef",
       "segmented": true,
       "groups": [
@@ -714,16 +714,16 @@
               },
               "balances_before": {
                 "available_amount": "15.08",
-                "cash_balance": "10.00",
-                "voucher_balance": "5.08",
-                "credit_balance": "0.00",
+                "cash_balance": null,
+                "voucher_balance": null,
+                "credit_balance": null,
                 "owed_amount": "0.00"
               },
               "balances_after": {
                 "available_amount": "15.08",
-                "cash_balance": "10.00",
-                "voucher_balance": "5.08",
-                "credit_balance": "0.00",
+                "cash_balance": null,
+                "voucher_balance": null,
+                "credit_balance": null,
                 "owed_amount": "0.00"
               },
               "deltas": {
@@ -784,7 +784,7 @@
               "http_status": 200,
               "status_code": 0,
               "status_msg": "success",
-              "trace_id": "071c78f5874001353bca4b69a07b07fa",
+              "trace_id": "<redacted>",
               "usage_characters": 146,
               "usage_voice_count": null
             },
@@ -939,16 +939,16 @@
               },
               "balances_before": {
                 "available_amount": "15.08",
-                "cash_balance": "10.00",
-                "voucher_balance": "5.08",
-                "credit_balance": "0.00",
+                "cash_balance": null,
+                "voucher_balance": null,
+                "credit_balance": null,
                 "owed_amount": "0.00"
               },
               "balances_after": {
                 "available_amount": "15.08",
-                "cash_balance": "10.00",
-                "voucher_balance": "5.08",
-                "credit_balance": "0.00",
+                "cash_balance": null,
+                "voucher_balance": null,
+                "credit_balance": null,
                 "owed_amount": "0.00"
               },
               "deltas": {
@@ -1009,7 +1009,7 @@
               "http_status": 200,
               "status_code": 0,
               "status_msg": "success",
-              "trace_id": "071c7901b19cf62de3e245f5bcaf3995",
+              "trace_id": "<redacted>",
               "usage_characters": 94,
               "usage_voice_count": null
             },
@@ -1278,7 +1278,7 @@
     "F": {
       "id": "F",
       "label": "same script and parameters as D, official preset voice (auto emotion)",
-      "voice_id": "Chinese (Mandarin)_Reliable_Executive",
+      "voice_id": "<redacted>",
       "voice_id_hash": "0086eaeca594c51843ea3f65de81b6a12687f6ed84b4ef148efeddecd53c79cb",
       "fingerprint": "1426f1e00bd625afdfd3822f44bad0563d73631266fc70dc863a180dcb3c9cb3",
       "synthesis_sha256": "54a953fb13f0913e204bb27ab154e9a727b113430e7c81d8b80086949f6e6e11",
@@ -1316,16 +1316,16 @@
           },
           "balances_before": {
             "available_amount": "15.08",
-            "cash_balance": "10.00",
-            "voucher_balance": "5.08",
-            "credit_balance": "0.00",
+            "cash_balance": null,
+            "voucher_balance": null,
+            "credit_balance": null,
             "owed_amount": "0.00"
           },
           "balances_after": {
             "available_amount": "15.08",
-            "cash_balance": "10.00",
-            "voucher_balance": "5.08",
-            "credit_balance": "0.00",
+            "cash_balance": null,
+            "voucher_balance": null,
+            "credit_balance": null,
             "owed_amount": "0.00"
           },
           "deltas": {
@@ -1386,7 +1386,7 @@
           "http_status": 200,
           "status_code": 0,
           "status_msg": "success",
-          "trace_id": "071c790d88a66a6dfdfce60ccef7cae6",
+          "trace_id": "<redacted>",
           "usage_characters": 218,
           "usage_voice_count": null
         },
@@ -1591,16 +1591,16 @@
         },
         "balances_before": {
           "available_amount": "15.08",
-          "cash_balance": "10.00",
-          "voucher_balance": "5.08",
-          "credit_balance": "0.00",
+          "cash_balance": null,
+          "voucher_balance": null,
+          "credit_balance": null,
           "owed_amount": "0.00"
         },
         "balances_after": {
           "available_amount": "15.08",
-          "cash_balance": "10.00",
-          "voucher_balance": "5.08",
-          "credit_balance": "0.00",
+          "cash_balance": null,
+          "voucher_balance": null,
+          "credit_balance": null,
           "owed_amount": "0.00"
         },
         "deltas": {
@@ -1661,7 +1661,7 @@
         "http_status": 200,
         "status_code": 0,
         "status_msg": "success",
-        "trace_id": "071c78e80199bf329ae1fbb691801d84",
+        "trace_id": "<redacted>",
         "usage_characters": 218,
         "usage_voice_count": null
       },
@@ -1695,16 +1695,16 @@
         },
         "balances_before": {
           "available_amount": "15.08",
-          "cash_balance": "10.00",
-          "voucher_balance": "5.08",
-          "credit_balance": "0.00",
+          "cash_balance": null,
+          "voucher_balance": null,
+          "credit_balance": null,
           "owed_amount": "0.00"
         },
         "balances_after": {
           "available_amount": "15.08",
-          "cash_balance": "10.00",
-          "voucher_balance": "5.08",
-          "credit_balance": "0.00",
+          "cash_balance": null,
+          "voucher_balance": null,
+          "credit_balance": null,
           "owed_amount": "0.00"
         },
         "deltas": {
@@ -1765,7 +1765,7 @@
         "http_status": 200,
         "status_code": 0,
         "status_msg": "success",
-        "trace_id": "071c78f5874001353bca4b69a07b07fa",
+        "trace_id": "<redacted>",
         "usage_characters": 146,
         "usage_voice_count": null
       },
@@ -1799,16 +1799,16 @@
         },
         "balances_before": {
           "available_amount": "15.08",
-          "cash_balance": "10.00",
-          "voucher_balance": "5.08",
-          "credit_balance": "0.00",
+          "cash_balance": null,
+          "voucher_balance": null,
+          "credit_balance": null,
           "owed_amount": "0.00"
         },
         "balances_after": {
           "available_amount": "15.08",
-          "cash_balance": "10.00",
-          "voucher_balance": "5.08",
-          "credit_balance": "0.00",
+          "cash_balance": null,
+          "voucher_balance": null,
+          "credit_balance": null,
           "owed_amount": "0.00"
         },
         "deltas": {
@@ -1869,7 +1869,7 @@
         "http_status": 200,
         "status_code": 0,
         "status_msg": "success",
-        "trace_id": "071c7901b19cf62de3e245f5bcaf3995",
+        "trace_id": "<redacted>",
         "usage_characters": 94,
         "usage_voice_count": null
       },
@@ -1903,16 +1903,16 @@
         },
         "balances_before": {
           "available_amount": "15.08",
-          "cash_balance": "10.00",
-          "voucher_balance": "5.08",
-          "credit_balance": "0.00",
+          "cash_balance": null,
+          "voucher_balance": null,
+          "credit_balance": null,
           "owed_amount": "0.00"
         },
         "balances_after": {
           "available_amount": "15.08",
-          "cash_balance": "10.00",
-          "voucher_balance": "5.08",
-          "credit_balance": "0.00",
+          "cash_balance": null,
+          "voucher_balance": null,
+          "credit_balance": null,
           "owed_amount": "0.00"
         },
         "deltas": {
@@ -1973,7 +1973,7 @@
         "http_status": 200,
         "status_code": 0,
         "status_msg": "success",
-        "trace_id": "071c790d88a66a6dfdfce60ccef7cae6",
+        "trace_id": "<redacted>",
         "usage_characters": 218,
         "usage_voice_count": null
       },

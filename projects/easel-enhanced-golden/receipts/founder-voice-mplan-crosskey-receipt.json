@@ -6,7 +6,7 @@
   "issue": "#34",
   "started_at": "2026-10-12T15:31:21.526512+00:00",
   "executed": true,
-  "voice_id": "founder_primary_v1",
+  "voice_id": "<redacted>",
   "voice_id_hash": "7271d9c80c88821a6a09ed43328619d0ee08c3f2b2449237fe2c31f6899abeef",
   "model": "speech-2.8-hd",
   "text": "这是一段用于首次激活的最短自然中文语音样本。",
@@ -30,7 +30,7 @@
     "paid_by": [
       "voucher"
     ],
-    "trace_id": "071c2f987a3d496f54083002944d5506"
+    "trace_id": "<redacted>"
   },
   "notes": [],
   "preflight": {
@@ -42,9 +42,9 @@
     },
     "balances": {
       "available_amount": "15.08",
-      "cash_balance": "10.00",
-      "voucher_balance": "5.08",
-      "credit_balance": "0.00",
+      "cash_balance": null,
+      "voucher_balance": null,
+      "credit_balance": null,
       "owed_amount": "0.00"
     },
     "decision": {
@@ -81,7 +81,7 @@
     "text_sha256": "f9e732a89501c137642e7b765df4e5e5cd0182683f9ae923b6f2051dab191678",
     "text_billable_characters": 44,
     "voice_setting": {
-      "voice_id": "founder_primary_v1",
+      "voice_id": "<redacted>",
       "speed": 1,
       "vol": 1,
       "pitch": 0
@@ -200,7 +200,7 @@
       "status_code": 0,
       "status_msg": "success"
     },
-    "trace_id": "071c30589ac04154605dc560ef5d0085",
+    "trace_id": "<redacted>",
     "audio_hex_chars": 613108,
     "extra_info": {
       "audio_length": 4771,
@@ -227,7 +227,7 @@
     "credential_source": "MMX_CONFIG",
     "model": "speech-2.8-hd",
     "voice_id_hash": "7271d9c80c88821a6a09ed43328619d0ee08c3f2b2449237fe2c31f6899abeef",
-    "trace_id": "071c30589ac04154605dc560ef5d0085",
+    "trace_id": "<redacted>",
     "http_status": 200,
     "provider_status_code": 0,
     "usage_characters": 43,
@@ -327,7 +327,7 @@
     "status_code": 0,
     "status_meaning": "success",
     "http_status": 200,
-    "trace_id": "071c30589ac04154605dc560ef5d0085",
+    "trace_id": "<redacted>",
     "usage_characters": 43,
     "usage_voice_count": null
   },
@@ -338,9 +338,9 @@
   },
   "balances_after": {
     "available_amount": "15.08",
-    "cash_balance": "10.00",
-    "voucher_balance": "5.08",
-    "credit_balance": "0.00",
+    "cash_balance": null,
+    "voucher_balance": null,
+    "credit_balance": null,
     "owed_amount": "0.00"
   },
   "deltas": {

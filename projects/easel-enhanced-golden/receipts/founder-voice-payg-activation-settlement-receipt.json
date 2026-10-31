@@ -10,23 +10,23 @@
     "status_code": 0,
     "status_meaning": "success",
     "http_status": 200,
-    "trace_id": "071c2f987a3d496f54083002944d5506",
+    "trace_id": "<redacted>",
     "usage_characters": 43,
     "usage_voice_count": 1
   },
   "usage_voice_count": 1,
   "money_before": {
     "available_amount": "25.00",
-    "cash_balance": "10.00",
-    "voucher_balance": "15.00",
-    "credit_balance": "0.00",
+    "cash_balance": null,
+    "voucher_balance": null,
+    "credit_balance": null,
     "owed_amount": "0.00"
   },
   "money_now": {
     "available_amount": "15.08",
-    "cash_balance": "10.00",
-    "voucher_balance": "5.08",
-    "credit_balance": "0.00",
+    "cash_balance": null,
+    "voucher_balance": null,
+    "credit_balance": null,
     "owed_amount": "0.00"
   },
   "deltas": {

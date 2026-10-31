@@ -15,7 +15,7 @@
     "path": "outputs/founder-v3-sample/candidate-3.wav",
     "sha256": "7001c90ba2f4213f283b8d1345a154e9cf37fc339e42d793aa2b42fe7167c982",
     "duration_s": 26.585,
-    "voice_id": "founder_primary_v1",
+    "voice_id": "<redacted>",
     "model": "speech-2.8-hd"
   },
   "units": [

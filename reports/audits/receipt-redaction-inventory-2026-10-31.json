@@ -1,0 +1,1169 @@
+{
+  "schema": "contentops.receipt-redaction-inventory/v1",
+  "generated": "2026-10-31",
+  "note": "Field paths and kinds only. No values are collected, printed or stored.",
+  "source": "pre-redaction blobs at the parent commit of the redaction commit",
+  "count": 228,
+  "by_kind": {
+    "balance": 180,
+    "provider_id": 46,
+    "key_fingerprint": 2
+  },
+  "by_file": {
+    "projects/easel-enhanced-golden/receipts/founder-voice-activation-history.json": 28,
+    "projects/easel-enhanced-golden/receipts/founder-voice-golden-narration-receipt.json": 9,
+    "projects/easel-enhanced-golden/receipts/founder-voice-mplan-crosskey-receipt.json": 12,
+    "projects/easel-enhanced-golden/receipts/founder-voice-payg-activation-settlement-receipt.json": 7,
+    "projects/easel-enhanced-golden/receipts/founder-voice-payg-first-activation-receipt.json": 17,
+    "projects/easel-enhanced-golden/review/ab-c-sample-receipt-term-check.json": 21,
+    "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json": 63,
+    "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json": 66,
+    "projects/easel-enhanced-golden/v3-editorial/receipts/v3-sample-video.json": 1,
+    "projects/easel-enhanced-golden/v3-full-editorial/receipts/v3-sample-video.json": 1,
+    "projects/easel-enhanced-golden/v3-sample-cards/receipts/v3-sample-video.json": 1,
+    "projects/easel-enhanced-golden/v3-sample-motion/receipts/v3-sample-video.json": 1,
+    "projects/easel-enhanced-golden/v3-sample-video/receipts/v3-sample-video.json": 1
+  },
+  "entries": [
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-activation-history.json",
+      "field": "attempts[0].money_before.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-activation-history.json",
+      "field": "attempts[0].money_before.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-activation-history.json",
+      "field": "attempts[0].money_before.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-activation-history.json",
+      "field": "attempts[1].money_after.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-activation-history.json",
+      "field": "attempts[1].money_after.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-activation-history.json",
+      "field": "attempts[1].money_after.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-activation-history.json",
+      "field": "attempts[1].money_before.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-activation-history.json",
+      "field": "attempts[1].money_before.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-activation-history.json",
+      "field": "attempts[1].money_before.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-activation-history.json",
+      "field": "attempts[2].money_before.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-activation-history.json",
+      "field": "attempts[2].money_before.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-activation-history.json",
+      "field": "attempts[2].money_before.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-activation-history.json",
+      "field": "attempts[3].money_after.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-activation-history.json",
+      "field": "attempts[3].money_after.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-activation-history.json",
+      "field": "attempts[3].money_after.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-activation-history.json",
+      "field": "attempts[3].money_before.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-activation-history.json",
+      "field": "attempts[3].money_before.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-activation-history.json",
+      "field": "attempts[3].money_before.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-activation-history.json",
+      "field": "attempts[4].money_before.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-activation-history.json",
+      "field": "attempts[4].money_before.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-activation-history.json",
+      "field": "attempts[4].money_before.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-activation-history.json",
+      "field": "attempts[5].money_after.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-activation-history.json",
+      "field": "attempts[5].money_after.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-activation-history.json",
+      "field": "attempts[5].money_after.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-activation-history.json",
+      "field": "attempts[5].money_before.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-activation-history.json",
+      "field": "attempts[5].money_before.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-activation-history.json",
+      "field": "attempts[5].money_before.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-activation-history.json",
+      "field": "attempts[5].provider_status.trace_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-golden-narration-receipt.json",
+      "field": "balances_after.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-golden-narration-receipt.json",
+      "field": "balances_after.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-golden-narration-receipt.json",
+      "field": "balances_after.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-golden-narration-receipt.json",
+      "field": "error_taxonomy.trace_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-golden-narration-receipt.json",
+      "field": "preflight.balances.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-golden-narration-receipt.json",
+      "field": "preflight.balances.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-golden-narration-receipt.json",
+      "field": "preflight.balances.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-golden-narration-receipt.json",
+      "field": "provider_status.trace_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-golden-narration-receipt.json",
+      "field": "voice_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-mplan-crosskey-receipt.json",
+      "field": "activation_precondition.trace_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-mplan-crosskey-receipt.json",
+      "field": "balances_after.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-mplan-crosskey-receipt.json",
+      "field": "balances_after.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-mplan-crosskey-receipt.json",
+      "field": "balances_after.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-mplan-crosskey-receipt.json",
+      "field": "preflight.balances.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-mplan-crosskey-receipt.json",
+      "field": "preflight.balances.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-mplan-crosskey-receipt.json",
+      "field": "preflight.balances.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-mplan-crosskey-receipt.json",
+      "field": "provider_receipt.trace_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-mplan-crosskey-receipt.json",
+      "field": "provider_response.trace_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-mplan-crosskey-receipt.json",
+      "field": "provider_status.trace_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-mplan-crosskey-receipt.json",
+      "field": "request_payload.voice_setting.voice_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-mplan-crosskey-receipt.json",
+      "field": "voice_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-payg-activation-settlement-receipt.json",
+      "field": "money_before.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-payg-activation-settlement-receipt.json",
+      "field": "money_before.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-payg-activation-settlement-receipt.json",
+      "field": "money_before.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-payg-activation-settlement-receipt.json",
+      "field": "money_now.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-payg-activation-settlement-receipt.json",
+      "field": "money_now.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-payg-activation-settlement-receipt.json",
+      "field": "money_now.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-payg-activation-settlement-receipt.json",
+      "field": "provider_status.trace_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-payg-first-activation-receipt.json",
+      "field": "decision.verdict.evidence.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-payg-first-activation-receipt.json",
+      "field": "decision.verdict.evidence.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-payg-first-activation-receipt.json",
+      "field": "decision.verdict.evidence.payg_key_fingerprint",
+      "kind": "key_fingerprint"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-payg-first-activation-receipt.json",
+      "field": "decision.verdict.evidence.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-payg-first-activation-receipt.json",
+      "field": "error_taxonomy.trace_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-payg-first-activation-receipt.json",
+      "field": "money_after.balances.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-payg-first-activation-receipt.json",
+      "field": "money_after.balances.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-payg-first-activation-receipt.json",
+      "field": "money_after.balances.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-payg-first-activation-receipt.json",
+      "field": "money_before.balances.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-payg-first-activation-receipt.json",
+      "field": "money_before.balances.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-payg-first-activation-receipt.json",
+      "field": "money_before.balances.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-payg-first-activation-receipt.json",
+      "field": "payg_key_fingerprint",
+      "kind": "key_fingerprint"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-payg-first-activation-receipt.json",
+      "field": "provider_receipt.trace_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-payg-first-activation-receipt.json",
+      "field": "provider_response.trace_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-payg-first-activation-receipt.json",
+      "field": "provider_status.trace_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-payg-first-activation-receipt.json",
+      "field": "request_payload.voice_setting.voice_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/receipts/founder-voice-payg-first-activation-receipt.json",
+      "field": "voice_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt-term-check.json",
+      "field": "extra_segments[0].request.billing.balances_after.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt-term-check.json",
+      "field": "extra_segments[0].request.billing.balances_after.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt-term-check.json",
+      "field": "extra_segments[0].request.billing.balances_after.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt-term-check.json",
+      "field": "extra_segments[0].request.billing.balances_before.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt-term-check.json",
+      "field": "extra_segments[0].request.billing.balances_before.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt-term-check.json",
+      "field": "extra_segments[0].request.billing.balances_before.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt-term-check.json",
+      "field": "extra_segments[0].request.provider.trace_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt-term-check.json",
+      "field": "postflight.balances_after.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt-term-check.json",
+      "field": "postflight.balances_after.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt-term-check.json",
+      "field": "postflight.balances_after.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt-term-check.json",
+      "field": "preflight.money.balances.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt-term-check.json",
+      "field": "preflight.money.balances.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt-term-check.json",
+      "field": "preflight.money.balances.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt-term-check.json",
+      "field": "requests[0].billing.balances_after.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt-term-check.json",
+      "field": "requests[0].billing.balances_after.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt-term-check.json",
+      "field": "requests[0].billing.balances_after.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt-term-check.json",
+      "field": "requests[0].billing.balances_before.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt-term-check.json",
+      "field": "requests[0].billing.balances_before.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt-term-check.json",
+      "field": "requests[0].billing.balances_before.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt-term-check.json",
+      "field": "requests[0].provider.trace_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt-term-check.json",
+      "field": "voice_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "postflight.balances_after.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "postflight.balances_after.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "postflight.balances_after.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "preflight.money.balances.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "preflight.money.balances.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "preflight.money.balances.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "requests[0].billing.balances_after.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "requests[0].billing.balances_after.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "requests[0].billing.balances_after.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "requests[0].billing.balances_before.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "requests[0].billing.balances_before.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "requests[0].billing.balances_before.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "requests[0].provider.trace_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "requests[1].billing.balances_after.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "requests[1].billing.balances_after.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "requests[1].billing.balances_after.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "requests[1].billing.balances_before.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "requests[1].billing.balances_before.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "requests[1].billing.balances_before.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "requests[1].provider.trace_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "requests[2].billing.balances_after.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "requests[2].billing.balances_after.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "requests[2].billing.balances_after.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "requests[2].billing.balances_before.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "requests[2].billing.balances_before.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "requests[2].billing.balances_before.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "requests[2].provider.trace_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "requests[3].billing.balances_after.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "requests[3].billing.balances_after.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "requests[3].billing.balances_after.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "requests[3].billing.balances_before.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "requests[3].billing.balances_before.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "requests[3].billing.balances_before.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "requests[3].provider.trace_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "variants.B.request.billing.balances_after.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "variants.B.request.billing.balances_after.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "variants.B.request.billing.balances_after.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "variants.B.request.billing.balances_before.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "variants.B.request.billing.balances_before.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "variants.B.request.billing.balances_before.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "variants.B.request.provider.trace_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "variants.C.segments[0].request.billing.balances_after.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "variants.C.segments[0].request.billing.balances_after.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "variants.C.segments[0].request.billing.balances_after.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "variants.C.segments[0].request.billing.balances_before.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "variants.C.segments[0].request.billing.balances_before.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "variants.C.segments[0].request.billing.balances_before.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "variants.C.segments[0].request.provider.trace_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "variants.C.segments[1].request.billing.balances_after.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "variants.C.segments[1].request.billing.balances_after.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "variants.C.segments[1].request.billing.balances_after.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "variants.C.segments[1].request.billing.balances_before.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "variants.C.segments[1].request.billing.balances_before.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "variants.C.segments[1].request.billing.balances_before.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "variants.C.segments[1].request.provider.trace_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "variants.C.segments[2].request.billing.balances_after.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "variants.C.segments[2].request.billing.balances_after.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "variants.C.segments[2].request.billing.balances_after.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "variants.C.segments[2].request.billing.balances_before.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "variants.C.segments[2].request.billing.balances_before.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "variants.C.segments[2].request.billing.balances_before.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "variants.C.segments[2].request.provider.trace_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/ab-c-sample-receipt.json",
+      "field": "voice_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "candidates.D.request.billing.balances_after.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "candidates.D.request.billing.balances_after.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "candidates.D.request.billing.balances_after.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "candidates.D.request.billing.balances_before.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "candidates.D.request.billing.balances_before.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "candidates.D.request.billing.balances_before.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "candidates.D.request.provider.trace_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "candidates.D.voice_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "candidates.E.groups[0].request.billing.balances_after.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "candidates.E.groups[0].request.billing.balances_after.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "candidates.E.groups[0].request.billing.balances_after.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "candidates.E.groups[0].request.billing.balances_before.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "candidates.E.groups[0].request.billing.balances_before.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "candidates.E.groups[0].request.billing.balances_before.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "candidates.E.groups[0].request.provider.trace_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "candidates.E.groups[1].request.billing.balances_after.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "candidates.E.groups[1].request.billing.balances_after.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "candidates.E.groups[1].request.billing.balances_after.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "candidates.E.groups[1].request.billing.balances_before.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "candidates.E.groups[1].request.billing.balances_before.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "candidates.E.groups[1].request.billing.balances_before.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "candidates.E.groups[1].request.provider.trace_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "candidates.E.voice_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "candidates.F.request.billing.balances_after.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "candidates.F.request.billing.balances_after.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "candidates.F.request.billing.balances_after.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "candidates.F.request.billing.balances_before.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "candidates.F.request.billing.balances_before.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "candidates.F.request.billing.balances_before.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "candidates.F.request.provider.trace_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "candidates.F.voice_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "postflight.balances_after.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "postflight.balances_after.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "postflight.balances_after.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "preflight.money.balances.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "preflight.money.balances.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "preflight.money.balances.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "preset_voice_evidence.voice_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "requests[0].billing.balances_after.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "requests[0].billing.balances_after.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "requests[0].billing.balances_after.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "requests[0].billing.balances_before.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "requests[0].billing.balances_before.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "requests[0].billing.balances_before.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "requests[0].provider.trace_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "requests[1].billing.balances_after.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "requests[1].billing.balances_after.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "requests[1].billing.balances_after.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "requests[1].billing.balances_before.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "requests[1].billing.balances_before.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "requests[1].billing.balances_before.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "requests[1].provider.trace_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "requests[2].billing.balances_after.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "requests[2].billing.balances_after.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "requests[2].billing.balances_after.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "requests[2].billing.balances_before.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "requests[2].billing.balances_before.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "requests[2].billing.balances_before.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "requests[2].provider.trace_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "requests[3].billing.balances_after.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "requests[3].billing.balances_after.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "requests[3].billing.balances_after.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "requests[3].billing.balances_before.cash_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "requests[3].billing.balances_before.credit_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "requests[3].billing.balances_before.voucher_balance",
+      "kind": "balance"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/review/narration-v3-sample-receipt.json",
+      "field": "requests[3].provider.trace_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/v3-editorial/receipts/v3-sample-video.json",
+      "field": "narration.voice_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/v3-full-editorial/receipts/v3-sample-video.json",
+      "field": "narration.voice_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/v3-sample-cards/receipts/v3-sample-video.json",
+      "field": "narration.voice_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/v3-sample-motion/receipts/v3-sample-video.json",
+      "field": "narration.voice_id",
+      "kind": "provider_id"
+    },
+    {
+      "file": "projects/easel-enhanced-golden/v3-sample-video/receipts/v3-sample-video.json",
+      "field": "narration.voice_id",
+      "kind": "provider_id"
+    }
+  ]
+}

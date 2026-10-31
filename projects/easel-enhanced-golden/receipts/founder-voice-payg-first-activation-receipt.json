@@ -23,7 +23,7 @@
     },
     "note": "new independent authorisation; it does not restore, replace or clear any earlier attempt or consumed authorisation"
   },
-  "voice_id": "founder_primary_v1",
+  "voice_id": "<redacted>",
   "voice_id_hash": "7271d9c80c88821a6a09ed43328619d0ee08c3f2b2449237fe2c31f6899abeef",
   "voice_sample_sha256": "bb56d052cd637bd8a369f6e37a745c7609de9988ada0fa0827d4d5c59035df8d",
   "clone_reused": true,
@@ -36,7 +36,7 @@
   "character_cost_cny": "0.015400",
   "one_time_activation_cny": "9.90",
   "max_cash_debit_cny": "10.00",
-  "payg_key_fingerprint": "2ac10c6e9029",
+  "payg_key_fingerprint": "<redacted>",
   "payg_key_exposed": true,
   "exposed_key_exception": "FOUNDER_AUTHORISED_EXPOSED_KEY_REUSE",
   "exposed_key_exception_granted": true,
@@ -70,9 +70,9 @@
     ],
     "balances": {
       "available_amount": "25.00",
-      "cash_balance": "10.00",
-      "voucher_balance": "15.00",
-      "credit_balance": "0.00",
+      "cash_balance": null,
+      "voucher_balance": null,
+      "credit_balance": null,
       "owed_amount": "0.00"
     },
     "quota": {
@@ -116,7 +116,7 @@
         "[FOUNDER_AUTHORISED_EXPOSED_KEY_REUSE] the pay-as-you-go key is exposed (fingerprint 2ac10c6e9029) and this run proceeds under a Founder-granted, single-use, scope-limited exception. The key should still be rotated; this does not make it safe."
       ],
       "evidence": {
-        "payg_key_fingerprint": "2ac10c6e9029",
+        "payg_key_fingerprint": "<redacted>",
         "payg_key_is_payg_class": true,
         "exposed_key": true,
         "exposed_key_exception_applied": true,
@@ -135,9 +135,9 @@
         },
         "voice_id_hash": "7271d9c80c88821a6a09ed43328619d0ee08c3f2b2449237fe2c31f6899abeef",
         "voice_window_remaining_h": 164.52,
-        "cash_balance": 10.0,
-        "credit_balance": 0.0,
-        "voucher_balance": 15.0,
+        "cash_balance": null,
+        "credit_balance": null,
+        "voucher_balance": null,
         "owed_amount": 0.0,
         "billable_characters": 44,
         "character_cost_cny": "0.015400",
@@ -195,7 +195,7 @@
     "text_sha256": "f9e732a89501c137642e7b765df4e5e5cd0182683f9ae923b6f2051dab191678",
     "text_billable_characters": 44,
     "voice_setting": {
-      "voice_id": "founder_primary_v1",
+      "voice_id": "<redacted>",
       "speed": 1,
       "vol": 1,
       "pitch": 0
@@ -314,7 +314,7 @@
       "status_code": 0,
       "status_msg": "success"
     },
-    "trace_id": "071c2f987a3d496f54083002944d5506",
+    "trace_id": "<redacted>",
     "audio_hex_chars": 596760,
     "extra_info": {
       "audio_length": 4643,
@@ -338,7 +338,7 @@
     "status_code": 0,
     "status_meaning": "success",
     "http_status": 200,
-    "trace_id": "071c2f987a3d496f54083002944d5506",
+    "trace_id": "<redacted>",
     "usage_characters": 43,
     "usage_voice_count": 1
   },
@@ -346,7 +346,7 @@
     "http_status": 200,
     "provider_status_code": null,
     "provider_status_msg": null,
-    "trace_id": "071c2f987a3d496f54083002944d5506",
+    "trace_id": "<redacted>",
     "cli_exit_code": null,
     "cli_exit_code_note": "not applicable: this round uses the native HTTP transport; the CLI is not in the request path",
     "local_precheck": "decide_payg_native_activation",
@@ -361,9 +361,9 @@
     ],
     "balances": {
       "available_amount": "25.00",
-      "cash_balance": "10.00",
-      "voucher_balance": "15.00",
-      "credit_balance": "0.00",
+      "cash_balance": null,
+      "voucher_balance": null,
+      "credit_balance": null,
       "owed_amount": "0.00"
     },
     "quota": {
@@ -422,7 +422,7 @@
     "credential_source": "MINIMAX_CLONE_KEY_ENV",
     "model": "speech-2.8-hd",
     "voice_id_hash": "7271d9c80c88821a6a09ed43328619d0ee08c3f2b2449237fe2c31f6899abeef",
-    "trace_id": "071c2f987a3d496f54083002944d5506",
+    "trace_id": "<redacted>",
     "http_status": 200,
     "provider_status_code": 0,
     "usage_characters": 43,

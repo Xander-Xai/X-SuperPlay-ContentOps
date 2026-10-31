@@ -6,7 +6,7 @@
   "issue": "#34",
   "started_at": "2026-10-12T15:32:32.621985+00:00",
   "executed": true,
-  "voice_id": "founder_primary_v1",
+  "voice_id": "<redacted>",
   "voice_id_hash": "7271d9c80c88821a6a09ed43328619d0ee08c3f2b2449237fe2c31f6899abeef",
   "model": "speech-2.8-hd",
   "locked_source": {
@@ -43,9 +43,9 @@
     },
     "balances": {
       "available_amount": "15.08",
-      "cash_balance": "10.00",
-      "voucher_balance": "5.08",
-      "credit_balance": "0.00",
+      "cash_balance": null,
+      "voucher_balance": null,
+      "credit_balance": null,
       "owed_amount": "0.00"
     },
     "decision": {
@@ -72,7 +72,7 @@
     "status_code": 0,
     "status_meaning": "success",
     "http_status": 200,
-    "trace_id": "071c30971d12d1b1dc720da6e64ac4dd",
+    "trace_id": "<redacted>",
     "usage_characters": 586,
     "usage_voice_count": null
   },
@@ -80,7 +80,7 @@
     "http_status": 200,
     "provider_status_code": 0,
     "provider_status_msg": "success",
-    "trace_id": "071c30971d12d1b1dc720da6e64ac4dd",
+    "trace_id": "<redacted>",
     "cli_exit_code": null,
     "transport": "native_http_cn"
   },
@@ -309,9 +309,9 @@
   },
   "balances_after": {
     "available_amount": "15.08",
-    "cash_balance": "10.00",
-    "voucher_balance": "5.08",
-    "credit_balance": "0.00",
+    "cash_balance": null,
+    "voucher_balance": null,
+    "credit_balance": null,
     "owed_amount": "0.00"
   },
   "deltas": {
