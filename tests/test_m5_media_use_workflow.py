@@ -473,6 +473,68 @@ def the_same_bytes_cannot_be_imported_under_two_ids():
     refused(lambda: m5.stage_media_use(project, config, adapter=FakeMediaAdapter(digest)))
 
 
+def _declare(project, asset_id, permission, *, license_name="", rights=None):
+    image = project / "assets" / f"{asset_id}.png"
+    image.write_bytes(b"synthetic-offline-fixture-only")
+    entry = {
+        "id": asset_id,
+        "type": "LICENSED_EXTERNAL",
+        "repo_path": image.relative_to(ROOT).as_posix(),
+        "sha256": hashlib.sha256(image.read_bytes()).hexdigest(),
+        "permission": permission,
+    }
+    if license_name:
+        entry["license"] = license_name
+    if rights:
+        entry["rights"] = rights
+    (project / "sources" / "assets.json").write_text(
+        json.dumps({"schema": "contentops.m5-assets/v1", "assets": [entry]}),
+        encoding="utf-8",
+    )
+    return entry
+
+
+@check
+def a_licensed_declared_asset_needs_a_review_record():
+    project, _config, _digest = project_and_config()
+    _declare(project, "external", "LICENSED", license_name="Pixabay-Content-License")
+    refused(lambda: m5.stage_assets(project))
+
+
+@check
+def a_licensed_declared_asset_cannot_bypass_the_media_use_gate():
+    project, config, digest = project_and_config()
+    _declare(project, "external", "LICENSED", license_name="Pixabay-Content-License")
+    config["media_use"]["requests"].append(
+        {"id": "external", "kind": "image", "intent": "reuse the declared file"}
+    )
+    adapter = FakeMediaAdapter(digest)
+    refused(lambda: m5.stage_media_use(project, config, adapter=adapter))
+    assert not adapter.calls
+
+
+@check
+def an_owned_declared_asset_needs_no_third_party_url():
+    project, _config, _digest = project_and_config()
+    _declare(project, "owned", "CREATED_BY_OWNER")
+    m5.stage_assets(project)
+
+
+@check
+def a_licensed_declared_asset_with_a_matching_review_passes():
+    project, _config, _digest = project_and_config()
+    rights = rights_record(
+        project, "external", license_id="Pixabay-Content-License",
+        source_url="https://pixabay.com/sound-effects/",
+        attribution="Pixabay item",
+    )
+    _declare(
+        project, "external", "LICENSED",
+        license_name="Pixabay-Content-License", rights=rights,
+    )
+    m5.stage_assets(project)
+
+
 def main():
     errors = []
     for fn in TESTS:

@@ -216,3 +216,38 @@ def validate_request_rights(
         "third_party": policy["third_party"],
         "evidence_capable": False,
     }
+
+
+def license_policy(license_id: str) -> Dict[str, Any]:
+    """Public, read-only view of the media licence policy.
+
+    Raises :class:`RightsError` for unknown, software and non-commercial
+    licences, exactly like :func:`validate_request_rights`.
+    """
+    return dict(_policy(license_id))
+
+
+def validate_declared_asset(asset: Dict[str, Any], project_dir: Path) -> Dict[str, Any]:
+    """Validate a ``sources/assets.json`` entry against the same policy.
+
+    Owned entries (``OWNED`` / ``CREATED_BY_OWNER``) keep their existing trust
+    semantics: they need no third-party URL. Any entry carrying a ``rights``
+    block is validated exactly like a media_use request, so a third-party
+    ``LICENSED`` entry cannot reach production with only a permission label.
+    """
+    permission = _text(asset.get("permission"))
+    rights = asset.get("rights")
+    if isinstance(rights, dict) and rights:
+        request = {"license": _text(asset.get("license")), "rights": rights}
+        return validate_request_rights(request, project_dir)
+    if permission in {"OWNED", "CREATED_BY_OWNER"}:
+        return {
+            "schema": RIGHTS_CLAIM_SCHEMA,
+            "license_id": _text(asset.get("license")) or permission,
+            "third_party": False,
+            "synthetic": False,
+            "evidence_capable": False,
+        }
+    raise RightsError(
+        f"a {permission or 'missing'} asset needs a rights block and a review "
+        "record; a permission label alone is not a rights review")
