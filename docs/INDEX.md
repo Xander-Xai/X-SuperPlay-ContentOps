@@ -73,6 +73,8 @@ Tier-1 docs have zh-CN mirrors with `.zh-CN.md` suffix. Run `python scripts/chec
 
 - [AUDIT-REPORT.md](AUDIT-REPORT.md) — Repository audit (2026-10-03) and video-replication review (2026-10-29 → 10-30)
 - [audits/windows-subprocess-audit.md](audits/windows-subprocess-audit.md) — Windows console popup audit, classification of every subprocess callsite, and the unified process layer (Issue #16)
+- [../reports/audits/gzh-skill-license-matrix.md](../reports/audits/gzh-skill-license-matrix.md) — GZH skill licence matrix and publication hold (Issue #56)
+- [../reports/audits/sensitive-receipts-2026-10-31.md](../reports/audits/sensitive-receipts-2026-10-31.md) — redacted sensitive-receipt audit (Issue #56)
 
 ## Fact Priority
 

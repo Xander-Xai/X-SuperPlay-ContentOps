@@ -80,3 +80,5 @@ translation_status: synced
 
 - [AUDIT-REPORT.md](AUDIT-REPORT.md) — 仓库审计（2026-10-03）与视频复刻审查（2026-10-29 → 10-30）
 - [audits/windows-subprocess-audit.zh-CN.md](audits/windows-subprocess-audit.zh-CN.md) — Windows 控制台弹窗审计、每个子进程调用点的分类，以及统一进程层（Issue #16）
+- [../reports/audits/gzh-skill-license-matrix.md](../reports/audits/gzh-skill-license-matrix.md) — 公众号 skill 许可矩阵与发布禁令（Issue #56）
+- [../reports/audits/sensitive-receipts-2026-10-31.md](../reports/audits/sensitive-receipts-2026-10-31.md) — 敏感回执审计（已脱敏，Issue #56）
