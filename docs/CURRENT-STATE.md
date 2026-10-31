@@ -454,6 +454,7 @@ approved `hyperframes@0.8.222` runtime on Windows.
 | BGM proof | inter-line pause 11.70–12.20 s: −60.9 dB with BGM vs −91.0 dB without (−30.1 dB difference) |
 | SFX proof | 6.15–6.28 s: −33.4 dB with SFX vs −60.8 dB without (−27.4 dB difference) |
 | Narration preservation | the same voice window measures −26.8 dB in all three renders, so neither track replaced the voice |
+| Audio controls | volume, placement and mix verified; per-track fade is **not expressible** in the pinned Easel contract (sample bed has fades baked into the file) |
 | Negative acceptance | 11/11 blocked: missing/wrong lock, missing material, hash mismatch, path escape, missing import file, network, paid, unlicensed, duplicate id, legacy project unchanged |
 | Committed example | `projects/m5-media-use/`; media binaries and `.media/` stay gitignored, receipts are committed |
 | Pull request | Draft [#71](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/71) |
