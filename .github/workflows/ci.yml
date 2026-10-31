@@ -220,6 +220,13 @@ jobs:
       - name: Run skill execution authorization regression tests
         run: python tests/test_skill_execution_authorization.py
 
+      # Temporary projects on disk, injected executors, no adapter and no runtime.
+      - name: Run trusted grant source regression tests
+        run: python tests/test_trusted_grant_source.py
+
+      - name: Run execution gate regression tests
+        run: python tests/test_execution_gate.py
+
       - name: Enforce subprocess policy
         run: python scripts/check_subprocess_policy.py
 

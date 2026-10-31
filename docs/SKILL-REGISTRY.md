@@ -111,11 +111,36 @@ DISCOVERED -> RESOLVABLE -> EXECUTION_REQUESTED -> AUTHORIZED -> EXECUTED
 ```
 
 A caller must present a grant bound to the exact skill version, account, pipeline,
-stage, operations, caller and budget, with an expiry and a revocation state. Every
+stage, operations, subject and budget, with an expiry and a revocation state. Every
 blocked path returns `execution_authorized: false`. The adapter's runtime lock
 verifier and the M5 `rights_reviewed` gate are unchanged and remain the authority
 for their own questions. See
 [ADR-009](adr/ADR-009-skill-execution-authorization.md).
+
+Where the grant comes from, and how it is spent, is ADR-010:
+
+| Piece | Where |
+|---|---|
+| approval record | `projects/<slug>/receipts/skill-execution-approval.json`, `purpose: skill_execution` |
+| optional evidence | `receipts/human-review.json`, digest-checked but never authorizing |
+| issuer allow-list | `CONTENTOPS_OWNER_IDENTITIES` (unset trusts nobody) |
+| executing subject | `CONTENTOPS_EXECUTION_SUBJECT` (a declared label, not authentication) |
+| atomic spend | `receipts/grants/<approval_id>/use-NNNN.json` created with `O_EXCL` |
+| request dedupe | `receipts/grants/<approval_id>/request-<hash>.json` created with `O_EXCL` |
+| managed entry | `python scripts/skill_execute.py <project> --account <one> --operation status\|doctor` |
+| receipt | `receipts/executions/<approval_id>-use-NNNN.json`, exclusive, sanitized |
+
+A video review (`human-review.json`) is **not** an execution approval and cannot be
+upgraded into one. Every scope field is read from the single approval record, so
+there is no derived copy to drift. `approval_id` must be one safe path component;
+traversal, symlink escapes and Windows device names are refused, not sanitised.
+Consumption is atomic on one local filesystem; a spent use is permanent.
+
+
+`scripts/m5_production.py` does not import any of this, so the verified M5 chain
+keeps its existing trust boundary. Making authorization mandatory inside M5 is a
+separate Owner-approved migration. See
+[ADR-010](adr/ADR-010-trusted-grant-execution-gate.md).
 
 ## media-use
 

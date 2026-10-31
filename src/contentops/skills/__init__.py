@@ -13,10 +13,23 @@ from .authorization import (  # noqa: F401
     ExecutionRequest,
     evaluate,
 )
+from .execution_gate import GateResult, execute  # noqa: F401
+from .grant_source import (  # noqa: F401
+    GrantSourceError,
+    consume,
+    load_grant,
+    record_digest,
+)
 
 __all__ = [
     "Decision",
     "ExecutionGrant",
     "ExecutionRequest",
+    "GateResult",
+    "GrantSourceError",
+    "consume",
     "evaluate",
+    "execute",
+    "load_grant",
+    "record_digest",
 ]

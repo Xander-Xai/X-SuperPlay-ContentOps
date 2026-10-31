@@ -97,7 +97,25 @@ translation_status: synced
 DISCOVERED -> RESOLVABLE -> EXECUTION_REQUESTED -> AUTHORIZED -> EXECUTED
 ```
 
-调用方必须出示一份与精确的 Skill 版本、账号、流水线、阶段、操作、调用者与预算绑定的授权，并带有效期与撤销状态。任何被阻断的路径都返回 `execution_authorized: false`。适配器的运行时锁校验器与 M5 的 `rights_reviewed` 门禁保持不变，仍是各自问题的权威。见 [ADR-009](adr/ADR-009-skill-execution-authorization.md)。
+调用方必须出示一份与精确的 Skill 版本、账号、流水线、阶段、操作、执行主体与预算绑定的授权，并带有效期与撤销状态。任何被阻断的路径都返回 `execution_authorized: false`。适配器的运行时锁校验器与 M5 的 `rights_reviewed` 门禁保持不变，仍是各自问题的权威。见 [ADR-009](adr/ADR-009-skill-execution-authorization.md)。
+
+授权从何而来、如何被消耗，见 ADR-010：
+
+| 组成 | 位置 |
+|---|---|
+| 批准记录 | `projects/<slug>/receipts/skill-execution-approval.json`，`purpose: skill_execution` |
+| 可选证据 | `receipts/human-review.json`，仅校验摘要，从不授权 |
+| 签发者白名单 | `CONTENTOPS_OWNER_IDENTITIES`（未设置则谁都不信任） |
+| 执行主体 | `CONTENTOPS_EXECUTION_SUBJECT`（宿主声明的标签，不是身份认证） |
+| 原子消耗 | `receipts/grants/<approval_id>/use-NNNN.json`，以 `O_EXCL` 创建 |
+| 请求去重 | `receipts/grants/<approval_id>/request-<hash>.json`，以 `O_EXCL` 创建 |
+| 受管入口 | `python scripts/skill_execute.py <project> --account <单一账号> --operation status\|doctor` |
+| 回执 | `receipts/executions/<approval_id>-use-NNNN.json`，独占创建、已脱敏 |
+
+视频审核（`human-review.json`）**不是**执行批准，也不能被升级为执行批准。所有范围字段都从这一份批准记录读取，不存在会漂移的派生副本。`approval_id` 必须是单一安全路径分量；路径穿越、符号链接逃逸与 Windows 设备名一律拒绝，而不是清洗。消耗在单机本地文件系统上原子；已消耗的额度不可恢复。
+
+
+`scripts/m5_production.py` 不导入上述任何模块，已验证的 M5 链路保持既有信任边界。要让 M5 强制依赖授权，需要另行取得 Owner 批准的迁移决策。见 [ADR-010](adr/ADR-010-trusted-grant-execution-gate.md)。
 
 ## media-use
 
