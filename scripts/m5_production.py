@@ -35,7 +35,11 @@ for candidate in (ROOT / "src", ROOT / "scripts"):
 from process_utils import hidden_run, python_executable  # noqa: E402
 
 from contentops.evidence import ClaimLedger, build_artifacts  # noqa: E402
-from contentops.media.rights_gate import RightsError, validate_request_rights  # noqa: E402
+from contentops.media.rights_gate import (  # noqa: E402
+    RightsError,
+    validate_declared_asset,
+    validate_request_rights,
+)
 
 RUN_SCHEMA = "contentops.m5-run/v1"
 SCRIPT_SCHEMA = "contentops.m5-script/v1"
@@ -148,7 +152,8 @@ def stage_media_use(project: Path, config: Dict[str, Any], *, adapter: Any = Non
     if not declared_path.is_file():
         raise M5Blocked("sources/assets.json is required before media_use resolution")
     declared = json.loads(declared_path.read_text(encoding="utf-8"))
-    existing = {str(item.get("id")) for item in declared.get("assets", [])}
+    declared_assets = {str(item.get("id")): item for item in declared.get("assets", [])}
+    existing = set(declared_assets)
     seen = set()
     todo = []
     results: List[Dict[str, Any]] = []
@@ -165,6 +170,10 @@ def stage_media_use(project: Path, config: Dict[str, Any], *, adapter: Any = Non
                     f"{asset_id}: audio requests cannot be declared in "
                     f"sources/assets.json; declare them under media_use.requests"
                 )
+            try:
+                validate_declared_asset(declared_assets[asset_id], project)
+            except RightsError as exc:
+                raise M5Blocked(f"{asset_id}: {exc}") from exc
             results.append({"id": asset_id, "state": "REUSED_DECLARED", "provider_call": False})
             continue
         kind = str(request.get("kind") or "").strip()
@@ -330,6 +339,11 @@ def stage_assets(project: Path, extra_assets: Optional[Dict[str, Dict[str, Any]]
             continue
         if asset.get("permission") not in {"OWNED", "CREATED_BY_OWNER", "LICENSED"}:
             problems.append(f"{asset['id']}: permission {asset.get('permission')} is not usable")
+            continue
+        try:
+            validate_declared_asset(asset, project)
+        except RightsError as exc:
+            problems.append(f"{asset['id']}: {exc}")
             continue
         verified[asset["id"]] = {**asset, "verified_sha256": actual}
     payload = {

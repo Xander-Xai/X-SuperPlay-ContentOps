@@ -78,6 +78,8 @@ from contentops.media.quality_gate import (  # noqa: E402
     build_manifest,
 )
 
+import media_use_adapter as cli  # noqa: E402
+
 TESTS = []
 SKIPS = []
 
@@ -781,6 +783,44 @@ def test_adopt_ingest_and_verify_round_trip_through_the_cli():
         assert adapter.verify(
             project_dir=project, relative_path="assets/pic.png"
         ).ok, imported.receipt_path
+
+
+@register
+def test_an_owned_import_needs_no_third_party_review():
+    with tempfile.TemporaryDirectory() as raw:
+        project = _project(Path(raw))
+        assert cli._import_rights(project, "OWNED-BY-OPERATOR", "", "", False) is None
+
+
+@register
+def test_a_third_party_import_without_a_review_is_refused():
+    with tempfile.TemporaryDirectory() as raw:
+        project = _project(Path(raw))
+        try:
+            cli._import_rights(project, "Pixabay-Content-License", "", "", False)
+        except MediaUseError as exc:
+            assert exc.code == cli.CODE_RIGHTS_REVIEW_REQUIRED, exc.code
+        else:
+            raise AssertionError("a third-party import without a review must be refused")
+
+
+@register
+def test_a_third_party_import_with_a_matching_review_passes():
+    with tempfile.TemporaryDirectory() as raw:
+        project = _project(Path(raw))
+        (project / "assets" / "x.rights.json").write_text(json.dumps({
+            "schema": "contentops.media-rights-review/v1",
+            "license_id": "Pixabay-Content-License",
+            "source_url": "https://pixabay.com/sound-effects/",
+            "reviewed_by": "reviewer",
+            "reviewed_at": "2026-10-31",
+            "attribution": "Pixabay",
+            "synthetic": False,
+        }), encoding="utf-8")
+        block = cli._import_rights(
+            project, "Pixabay-Content-License", "assets/x.rights.json", "Pixabay", False)
+        assert block["review_evidence"] == "assets/x.rights.json"
+        assert block["license_id"] == "Pixabay-Content-License"
 
 
 # ---------------------------------------------------------------------------

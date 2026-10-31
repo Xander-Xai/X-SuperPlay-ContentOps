@@ -73,6 +73,11 @@ from contentops.media.media_use_adapter import (  # noqa: E402
     redact_text,
 )
 from contentops.media.media_validation import IMPORT_SCHEMA  # noqa: E402
+from contentops.media.rights_gate import (  # noqa: E402
+    RightsError,
+    license_policy,
+    validate_declared_asset,
+)
 from contentops.media.quality_gate import (  # noqa: E402
     ADMISSIBLE_GATE_STATES,
     AssetQualityGate,
@@ -88,8 +93,11 @@ EXIT_OK = 0
 EXIT_FAILURE = 1
 EXIT_BLOCKED = 5
 
+CODE_RIGHTS_REVIEW_REQUIRED = "RIGHTS_REVIEW_REQUIRED"
+
 #: Refusals that are policy outcomes rather than defects.
 BLOCKED_CODES = {
+    CODE_RIGHTS_REVIEW_REQUIRED,
     CODE_NEEDS_HUMAN_ACTION,
     CODE_NETWORK_NOT_AUTHORIZED,
     CODE_PAID_NOT_AUTHORIZED,
@@ -285,8 +293,59 @@ def cmd_ingest(args: argparse.Namespace) -> int:
     return _emit(_ok({"record": record}), EXIT_OK)
 
 
+def _import_rights(project_dir: Path, license_name: str, review: str,
+                   attribution: str, synthetic: bool) -> Optional[Dict[str, Any]]:
+    """Return the rights block a third-party import must carry.
+
+    Owned licences keep their existing semantics and need no sidecar. A
+    third-party licence must point at a review record inside the project, and
+    that record is validated by the same gate the M5 chain uses.
+    """
+    try:
+        policy = license_policy(license_name)
+    except RightsError as exc:
+        raise MediaUseError(CODE_RIGHTS_REVIEW_REQUIRED, str(exc)) from exc
+    if not policy["third_party"]:
+        return None
+    if not review:
+        raise MediaUseError(
+            CODE_RIGHTS_REVIEW_REQUIRED,
+            "a third-party import needs --rights-review pointing at "
+            "assets/<id>.rights.json")
+    path = Path(review)
+    if not path.is_absolute():
+        path = project_dir / path
+    try:
+        relative = path.resolve().relative_to(project_dir.resolve()).as_posix()
+        record = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise MediaUseError(
+            CODE_RIGHTS_REVIEW_REQUIRED,
+            f"the rights review cannot be read inside the project: {exc}") from exc
+    block = {
+        "schema": "contentops.media-rights/v1",
+        "license_id": str(record.get("license_id") or license_name),
+        "source_url": str(record.get("source_url") or ""),
+        "reviewed_by": str(record.get("reviewed_by") or ""),
+        "reviewed_at": str(record.get("reviewed_at") or ""),
+        "review_evidence": relative,
+        "attribution": attribution or str(record.get("attribution") or ""),
+        "synthetic": bool(record.get("synthetic", synthetic)),
+    }
+    try:
+        validate_declared_asset(
+            {"permission": "LICENSED", "license": license_name, "rights": block},
+            project_dir,
+        )
+    except RightsError as exc:
+        raise MediaUseError(CODE_RIGHTS_REVIEW_REQUIRED, str(exc)) from exc
+    return block
+
+
 def cmd_import(args: argparse.Namespace) -> int:
     project_dir = _project(args)
+    _import_rights(project_dir, args.license or "", args.rights_review or "",
+                   args.attribution or "", bool(args.synthetic))
     record = (
         _find_record(project_dir, args.record_id)
         if args.record_id
@@ -865,6 +924,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--record-file", default=None)
     p.add_argument("--license", default="")
     p.add_argument("--attribution", default="")
+    p.add_argument("--rights-review", default="",
+                   help="project-relative assets/<id>.rights.json for third-party imports")
+    p.add_argument("--synthetic", action="store_true",
+                   help="mark this import as generated/synthetic")
     p.add_argument("--role", default="visual_support")
     p.add_argument("--placement", default=None)
     p.add_argument("--asset-prefix", default="media-use")
