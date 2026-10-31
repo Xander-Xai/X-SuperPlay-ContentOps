@@ -461,6 +461,12 @@ jobs:
       - name: Run naturalness and caption-integrity tests
         run: python tests/test_naturalness.py
 
+      # New raw provider IDs, balances and key fingerprints in tracked receipts
+      # must fail. Existing exposure is baselined by field path only; no value
+      # is stored or printed.
+      - name: Run receipt-secret tests
+        run: python tests/test_receipt_secrets.py
+
       # Drift guard: a suite that exists but is never named in this file cannot
       # report a pass, and a green CI run would cover less than it appears to.
       - name: Run suite-runner tests
@@ -503,6 +509,8 @@ jobs:
           python-version: '3.11'
       - name: Repo policy check
         run: python scripts/check_repo_policy.py
+      - name: Receipt secret check
+        run: python scripts/check_receipt_secrets.py
       - name: Subprocess policy check
         run: python scripts/check_subprocess_policy.py
       - name: Docs consistency check

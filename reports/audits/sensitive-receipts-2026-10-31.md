@@ -73,3 +73,51 @@ the public PR #49 branch. Therefore:
 `CREDENTIAL_ROTATION_REQUIRED` — the key exposure is not fixed.
 `HISTORY_EXPOSURE_ACKNOWLEDGED` — 12 receipt files are already on `main`.
 `AWAITING_OWNER_ACTION` — rotation and any history rewrite require the owner.
+
+## Addendum — tracked-receipt guard and public history
+
+The guard is `scripts/check_receipt_secrets.py`; the value-free baseline is
+`reports/audits/receipt-exposure-baseline.json`.
+
+| Item | Value |
+|---|---:|
+| Tracked receipt JSON files scanned | 123 |
+| Files with existing sensitive field paths | 20 (19 under `projects/easel-enhanced-golden/`) |
+| Baselined field paths | 278 |
+| Values stored in the baseline | **0** — field paths and kinds only |
+| New raw provider IDs / balances / fingerprints | **rejected by CI** |
+
+The guard rejects a new `voice_id`, `task_id`, `trace_id`, `file_id`,
+`payg_key_fingerprint`, `*_balance`, credential field or key-like value. A
+64-hex ID is treated as a hash and is not rejected. The baseline suppresses only
+the exact existing `file → field::kind` paths; it does not authorize a new one.
+
+### Public history
+
+The receipt files were introduced across these public commits (dates from Git,
+no values):
+
+```text
+aaa1059 2026-10-12  docs: activation executed and settled; cross-key verified; Golden narration generated (#34)
+5d1fcf2 2026-10-12  fix: native CN T2A adapter + host/credential-binding audit (#43)
+45c9e9c 2026-10-12  test: Founder-authorised exposed-key reuse; third refusal (#42)
+2739a2b 2026-10-12  feat: CASH_ACTIVATION_RECOVERY; stopped on an exposed key (#41)
+21afc42 2026-10-12  feat: Founder voice clone executed; the voucher does not fund it (#40)
+ec297e8 2026-10-12  feat: encode FOUNDER_VOUCHER_ACTIVATION (#39)
+af2f1dd 2026-10-12  fix: scope BillingGuard to the deduction chain (#38)
+9b5f6f2 2026-10-12  fix: correct the clone route to VENDOR_CONFIRMED (#36)
+0f871fd 2026-10-12  feat: gate the M2.2 two-key clone route (#35)
+0eee9f1 2026-10-12  feat: add the M2.1 voice-clone capability (#32)
+5a4ac76 2026-10-06  feat: build reproducible enhanced-golden A/B voice variants (#31)
+93b7fd3 2026-10-06  feat: establish reproducible enhanced-golden baseline (#30)
+```
+
+The 12 files on `main` and the 5 added by #49 are public. A new commit lowers
+future exposure but does not remove history. Removing it requires a rewrite
+force-push or a repository visibility change, both of which need explicit owner
+authorization; neither was performed.
+
+### Rotation status
+
+`reports/audits/credential-rotation-status.md` records `NOT_ROTATED` and the
+owner action. No key value or fingerprint is written.
