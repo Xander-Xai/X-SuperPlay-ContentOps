@@ -42,6 +42,12 @@ runtime-diagnostics/
 /Easel/dist/
 /Easel/build/
 
+# Locally vendored third-party tracks (GZH and similar). These carry no
+# redistribution grant we have verified, so they stay on the operator's machine
+# and must never enter the public repository. The skill router reports them as
+# unverified-vendor when present and as absent otherwise.
+/vendor/
+
 # Secrets & local config
 .env
 .env.local
