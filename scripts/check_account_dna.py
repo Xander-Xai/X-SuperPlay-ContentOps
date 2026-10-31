@@ -640,6 +640,21 @@ def _catalog_roots() -> List[Path]:
     return [candidate for candidate in CATALOG_ROOTS if candidate.is_dir()]
 
 
+def _easel_catalog_present() -> bool:
+    """True when the authoritative Easel catalog is on this checkout.
+
+    The two Easel roots are the pinned runtime and the working checkout of the
+    same upstream library. Either one makes membership verifiable; the working
+    checkout being absent while the pinned runtime exists is redundancy, not
+    uncertainty. The vendored GZH track is a separate catalog and cannot stand
+    in for Easel here.
+    """
+    return any(
+        candidate.name == "openclaw" and candidate.is_dir()
+        for candidate in CATALOG_ROOTS
+    )
+
+
 def _catalog_skill(skill: str, roots: List[Path]):
     """The first catalog root holding ``skill``, and that skill's directory."""
     for root in roots:
@@ -696,16 +711,14 @@ def _check_skill_route(
                 continue
             catalog_root, skill_dir = _catalog_skill(skill, roots)
             if skill_dir is None:
-                missing_roots = [item for item in CATALOG_ROOTS if not item.is_dir()]
-                if missing_roots:
-                    # The catalog is host-local and gitignored. A CI runner has
-                    # the gzh vendor but no Easel runtime; calling that a DNA
-                    # failure would report an unverified route as invalid.
+                if not _easel_catalog_present():
+                    # The catalog is host-local and gitignored. A clean clone or
+                    # a CI runner has no Easel runtime, so an unknown skill there
+                    # is genuinely unverifiable: warn, never call it valid.
                     warnings.append(
                         f"skill_route entry {step!r} names skill {skill!r}, which "
-                        f"is not in the present catalog roots; "
-                        f"{len(missing_roots)} declared root(s) are absent, so "
-                        f"membership was not verified"
+                        f"is not in the present catalog roots; the Easel catalog "
+                        f"is absent, so membership was not verified"
                     )
                     continue
                 failures.append(
