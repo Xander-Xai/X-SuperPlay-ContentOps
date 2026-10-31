@@ -54,7 +54,8 @@ that actually ran, from its own receipt — this module never claims a run happe
 | `skill_id`, `skill_version` | a grant for one version must not authorize another |
 | `account`, `pipeline`, `stage` | the same skill means different things per track |
 | `operations` | the exact verbs; a superset request is refused, never narrowed silently |
-| `principal` vs request `caller` | a grant cannot be borrowed by another caller |
+| `issuer` vs `subject` | "who approved" and "who runs" are separate, so delegation is expressible without collapsing the two |
+| `provenance` | the digest of the approval record the grant came from; a grant with no provenance is refused |
 | `issued_at`, `expires_at` | authorization is time-bounded, not permanent |
 | `max_units`, `max_uses`, `uses_consumed` | single-execution boundary and budget |
 | `revoked`, `revoked_reason` | withdrawal is a first-class state |
@@ -70,37 +71,60 @@ that actually ran, from its own receipt — this module never claims a run happe
 | **May this caller run this once?** | **this module** | the only new decision |
 
 The module deliberately has no network, no subprocess, no credential, and no
-store. Grants are supplied by the caller from wherever the Owner decision is
-recorded; issuing them is out of scope here.
+store. A grant must name the approval record it was derived from; locating and
+hashing that record is the execution gate's job (ADR-010).
 
 ### Default deny, in this order
 
-1. no `RESOLVABLE` verdict → `NOT_RESOLVABLE`
-2. skill id not the declared one → `UNKNOWN_SKILL`
-3. pinned version differs from the declaration → `VERSION_MISMATCH`
-4. no grant → `NO_GRANT`
-5. revoked → `GRANT_REVOKED`
-6. unusable, future-dated or expired → `GRANT_NOT_YET_VALID` / `GRANT_EXPIRED`
-7. any bound context differs → `CONTEXT_MISMATCH`
-8. caller is not the principal → `CALLER_MISMATCH`
-9. operation not granted → `OPERATION_NOT_GRANTED`
-10. uses exhausted → `USES_EXHAUSTED`
-11. budget exceeded → `BUDGET_EXCEEDED`
-12. otherwise → `AUTHORIZED`
+1. empty identity field, empty operation, or a non-integer/out-of-range count → `EMPTY_FIELD` / `INVALID_NUMBER`
+2. no `RESOLVABLE` verdict → `NOT_RESOLVABLE`
+3. a verdict that claims `execution_authorized: true` → `UNTRUSTED_VERDICT`
+4. no registry entry, or the id is not the declared one → `UNKNOWN_SKILL`
+5. the declaration pins no version, or the version differs → `VERSION_MISMATCH`
+6. no grant → `NO_GRANT`
+7. a grant with no provenance digest → `UNTRUSTED_GRANT`
+8. empty grant identity, or invalid grant counts → `EMPTY_FIELD` / `INVALID_NUMBER`
+9. revoked → `GRANT_REVOKED`
+10. unusable, future-dated or expired → `GRANT_NOT_YET_VALID` / `GRANT_EXPIRED`
+11. `issued_at >= expires_at` → `GRANT_WINDOW_INVALID`
+12. any bound context differs → `CONTEXT_MISMATCH`
+13. subject is not the granted subject → `SUBJECT_MISMATCH`
+14. operation not granted → `OPERATION_NOT_GRANTED`
+15. uses exhausted → `USES_EXHAUSTED`
+16. budget exceeded → `BUDGET_EXCEEDED`
+17. otherwise → `AUTHORIZED`
 
 Every blocked path returns `execution_authorized: false` and a machine-readable
 reason. A test asserts that no blocked path can report otherwise.
+
+### Implemented here vs the gate's responsibility
+
+| Property | In this module | Gate responsibility (ADR-010) |
+|---|---|---|
+| Version, account, pipeline, stage, operation, subject binding | enforced | — |
+| Empty / invalid numeric input | refused | — |
+| Inverted or unusable time windows | refused | — |
+| Grant with no provenance | refused | verify the digest against the record |
+| Verdict claiming execution authority | refused | call the router in-process; never accept a stored string |
+| Unexpired / unrevoked / unexhausted | evaluated from the supplied grant | atomic consumption under concurrency |
+| `registry_entry` omission | **refused** (required argument) | supply the real declaration |
+
+The residual limit is stated plainly: a pure function cannot prove where its
+arguments came from. Making provenance mandatory turns silent fabrication into a
+named refusal, and the gate turns a named digest into a checked one.
 
 ## What this does not do
 
 - It does not modify the `media-use` runtime approval, the adapter, or the M5
   `media_use` stage.
 - It does not add a grant store, a UI, or an approval workflow.
+- It does not verify provenance digests or make consumption atomic; ADR-010 adds
+  a trusted source and a gate for that.
 - It is not wired into `scripts/m5_production.py`. Wiring needs a separate
   decision, because it changes the failure mode of an already-verified chain.
 - It does not close Issue #57 by itself: the final criterion — authorization has
-  one authority and untrusted skills are denied by default — is met by this
-  design, but closure is an Owner decision.
+  one authority, untrusted skills are denied by default, and a managed entry
+  enforces the check — needs ADR-010 as well.
 
 ## Consequences
 
@@ -125,7 +149,12 @@ reason. A test asserts that no blocked path can report otherwise.
 
 ## Verification
 
-`tests/test_skill_execution_authorization.py` (20 tests) exercises every deny
-reason, the exact-context positive path, the registry version pin, the
-no-borrowing rule and the invariant that no blocked decision is authorized. The
-module is pure and deterministic; tests pass `now` explicitly.
+`tests/test_skill_execution_authorization.py` (33 tests) exercises every deny
+reason, input validation, the inverted time window, forged verdicts, grants
+without provenance, delegation, the exact-context positive path, the registry
+version pin, the no-borrowing rule and the invariant that no blocked decision is
+authorized. The module is pure and deterministic; tests pass `now` explicitly.
+
+What the tests do **not** prove, and must not be read as proving: that a grant
+came from a real approval, or that two concurrent callers cannot both spend the
+same single-use grant. Both require a filesystem and are tested in ADR-010.
