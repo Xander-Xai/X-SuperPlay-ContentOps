@@ -8,7 +8,7 @@
 - `projects/easel-enhanced-golden/receipts/` in the current tree.
 - The same path in `origin/main` and in the `feat/content-router` PR #49 diff.
 - `research/providers/receipts/` and other tracked receipts for the same patterns.
-- Patterns: provider keys, bearer tokens, cookies, private keys, voice IDs, task
+- Patterns: provider keys, authorization tokens, cookies, private keys, voice IDs, task
   and trace IDs, file IDs, balances, emails, phone numbers.
 
 ## Findings
