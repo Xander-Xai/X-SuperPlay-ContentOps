@@ -112,6 +112,24 @@
   regression tests exists. Keep it, fail closed if absent, and require the owner
   to accept AGPL or fund a replacement.
 
+### Licence scope notes
+
+- **`beautiful-mermaid`** — the directory's `LICENSE` is MIT (Copyright Alex);
+  `package.json` says ISC. Both are permissive, but they are not the same
+  statement. Treat the LICENSE text as the file-level grant for the vendored
+  directory, preserve it verbatim, and ask upstream to reconcile the metadata.
+  Do not add an ISC claim or relicense the directory.
+- **`excalidraw-skill-pack`** — MIT LICENSE (Timur Isachenko) and `package.json`
+  MIT; keep the notice.
+- **`wemp-operator` / `z5-wechat-sop`** — MIT wrappers; no upstream source is
+  embedded. Keep the declared MIT notices.
+- **`gzh-design-skill`** — AGPL-3.0; see the boundary analysis above. It is a
+  separate invoked component, not linked into ContentOps Python; network-service
+  operation would trigger AGPL §13.
+- **`OWNER_ATTESTED`** — the repository's own notice is not independent
+  provenance. Those four components are on public hold until the owner provides
+  file-level evidence or a legal sign-off.
+
 ## Call-chain analysis — `RIGHTS_UNKNOWN`
 
 | Skill | Call site | If absent | Failure mode |
