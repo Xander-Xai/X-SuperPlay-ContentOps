@@ -149,6 +149,29 @@ projects/*/assets/captions/
 !projects/easel-enhanced-golden/golden-assets/voice/A-baseline-edge-tts.mp3
 !projects/easel-enhanced-golden/golden-assets/voice/B-minimax-speech-2.8-hd.wav
 
+# --- M5 media-use sample inputs (audit D-4, 2026-11-01) -----------------------
+#
+# The M5 sample shipped receipts for an image and a BGM that were never committed,
+# so a fresh checkout held hashes with nothing to check them against and
+# `python scripts/m5_production.py projects/m5-media-use` could not run at all.
+# The sample was accepted on historical evidence only. These two exact files close
+# that gap.
+#
+# Both are operator-owned, not third-party:
+#   support.png  the repository's own `01-easel-hero.png` screenshot, byte-identical;
+#                its committed import receipt already records this exact sha256, so
+#                tracking it validates the existing receipt instead of rewriting it.
+#   bed.mp3      a deterministic ffmpeg tone bed (see the provenance block in
+#                `projects/m5-media-use/assets/bed.rights.json`), regenerable with
+#                `ffmpeg -f lavfi -i sine=frequency=220:duration=20 ...`.
+#
+# This is a fixture exception, not a licence. `*.png`, `*.mp3` and everything else
+# stay ignored, no directory is negated, and only these two exact paths are.
+# `tests/test_m5_media_fixtures.py` asserts they are tracked, their bytes match
+# their receipts, and that no other image or audio in this project becomes tracked.
+!projects/m5-media-use/assets/support.png
+!projects/m5-media-use/assets/bed.mp3
+
 # Editor / OS
 .vscode/
 .idea/

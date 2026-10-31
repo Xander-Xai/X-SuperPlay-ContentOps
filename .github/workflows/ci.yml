@@ -215,6 +215,13 @@ jobs:
       - name: Run M5 media-use automatic sourcing regression tests
         run: python tests/test_m5_media_use_workflow.py
 
+      # The sample's committed inputs and their receipts. Pure repository state:
+      # no adapter, no runtime, no network. Asserts the image and BGM bytes match
+      # the receipts that describe them, every import has a tracked receipt, the
+      # rights records still pass the gate, and the fixture exception stays narrow.
+      - name: Run M5 media-use traceability tests
+        run: python tests/test_m5_media_traceability.py
+
       # Discovery and diagnosis only: these suites build temporary catalogs and
       # never download a runtime or execute a skill.
       - name: Run skill doctor regression tests
