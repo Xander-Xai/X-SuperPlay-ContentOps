@@ -1,55 +1,46 @@
 # gzh-thinktank — vendored 公众号 workflow
 
 This directory holds a **verbatim copy of the Future Intelligence WeChat Official
-Account workflow**, imported because its own repository is being retired.
+Account workflow**, imported from a checkout whose history diverged from its
+private remote.
 
 ## Provenance
 
 | | |
 |---|---|
-| Upstream repository | `https://github.com/yandexuanxuan/gzh-Future-Intelligence.git` |
-| Imported from | `D:\Projects\gzh_x未来智能` |
-| Commit | `93645f178418c1e0a03cbb3fc06a7f87ee11f631` (`fix: allow verified draft resubmission`) |
-| Git tree object | `7b75e4e840b29a18f5262c0e81e64c080c274c6a` |
+| Upstream repository | `https://github.com/Xander-Xai/gzh-Future-Intelligence` (**private, alive**) |
+| Remote main | `e9303d18066a4232838b9dafff6827f6b4e8adf1` — `fix: allow verified draft resubmission` |
+| Remote tree | `7b75e4e840b29a18f5262c0e81e64c080c274c6a` |
+| Imported from | `D:\Projects\gzh_x未来智能` (local checkout now absent) |
+| Imported commit | `93645f178418c1e0a03cbb3fc06a7f87ee11f631` (not present on the remote) |
+| Imported tree | `7b75e4e840b29a18f5262c0e81e64c080c274c6a` — identical to remote main |
 | Imported | 2026-10-30 |
 | Files / size | 667 / 8 MB |
 | Tree digest | `0b96d179a224f0b9668843fd78fcdcefb8f9a83d7918b7d8127fce5d6687919a` |
 
 The digest is SHA-256 over the sorted list of `relative/path\0file-sha256\n` for
 every file under the workflow root (`gzh_未来智能/`), with the path relative to that
-root. Each file's SHA-256 is taken over its content with CRLF folded to LF, so the
-pin is the same on a platform that rewrites line endings on checkout and one that
-does not; only content edits change it. `scripts/gzh_pin.py` recomputes it.
+root and sorted by the relative POSIX path string. Each file\'s SHA-256 is taken
+over its content with CRLF folded to LF, so the pin is the same on a platform that
+rewrites line endings on checkout and one that does not. `scripts/gzh_pin.py`
+recomputes it.
 
-The full original repository — including every commit the divergence left off
-GitHub — was preserved as a git bundle:
+### Provenance correction — 2026-10-31
 
-```
-D:\Archives\repos\gzh-thinktank\2026-10-30\gzh-thinktank.bundle
-sha256 fc6965c076af07d1e6842b06bb11afae760d4315d950545604a041a97e4fb4e7
-```
+An earlier version of this file said the GitHub remote had been deleted and that
+its URL returned 404. **That was wrong.** Verified against the live API:
 
-The upstream history **diverged** from GitHub origin (`origin/main` was
-`e9303d1`), so cloning upstream does not reproduce this copy.
+- `Xander-Xai/gzh-Future-Intelligence` exists, is **private**, and is **not archived**.
+- Its `main` is `e9303d1`, tree `7b75e4e8`, with five commits
+  (`bb52de1`, `5860343`, `96bfe41`, `901aeee`, `e9303d1`).
+- The imported commit `93645f1` is **not** on that remote, but its tree is
+  byte-identical to remote `main`. The commit identity was lost; the content was not.
+- The local checkout `D:\Projects\gzh_x未来智能` and the local bundle
+  `D:\Archives\repos\gzh-thinktank\2026-10-30\gzh-thinktank.bundle` are both
+  absent. The private remote is the recoverable source; this tree is the public copy.
 
-### The archive is retired
-
-The bundle, the original checkout and its GitHub remote were **deleted on
-2026-10-30** (verified: both paths absent, the repository URL returns 404). This
-directory is now the only copy, and the following are gone:
-
-- the original's Git history (four commits `bb52de1`, `5860343`, `00f8c98`,
-  `93645f1`) — the tree survives, the commits do not;
-- the twelve files this repository cannot track (ten golden fixtures, an icon, and
-  the npm lockfile);
-- `production/`, the account's article artifacts. The in-progress article
-  `THK-20260825-002-mcp-tool-governance-v2` was copied to
-  `projects/gzh-thinktank/` before retirement: its text and JSON are tracked there,
-  its 17 image assets are not (this repository ignores `*.png`).
-
-Nothing needed to *run* the workflow is in that list. `scripts/gzh_pin.py` records
-`BUNDLE_RETIRED = True`, so a missing bundle is expected rather than a failure; a
-bundle that is present still has to match its digest.
+Do not delete the remote to make this document's old claim true. The remote is the
+only recoverable Git history for the workflow.
 
 ## Rule: do not edit
 
@@ -68,7 +59,7 @@ copy and update the digest — the same discipline as the Easel runtime, whose
 | `production/` | 15 MB | the account's article artifacts, not the workflow |
 
 `node_modules` and `.venv` are restored with the skills' own install steps; the
-rest are in the bundle.
+rest remain in the private remote (and in any surviving local bundle).
 
 **One deliberate deviation:** the workflow's own `.gitignore` is not vendored. It
 ignores `.aws-article/`, `outputs/`, `reports/`, `skills/_archive/` and similar —
@@ -78,15 +69,15 @@ import has to be complete or it is not a copy.
 
 One file still cannot be tracked: `skills/beautiful-mermaid/package-lock.json` is
 excluded by a rule outside this repository's `.gitignore`. It is regenerable
-(`npm install` in that skill) and is present in the bundle.
+(`npm install` in that skill) and remains recoverable from the private remote.
 
 **Not carried at all:** that lockfile and ten golden-fixture PNGs under
 `skills/excalidraw-skill-pack/packages/shared/fixtures/golden/` plus
 `skills/obsidian/_icon.png`. This repository's `.gitignore` ignores `*.png`
 globally and its policy test refuses a new image negation without a Founder
-decision, so those files cannot be committed here. They are all in the bundle. The
-tree digest covers exactly what this repository can carry, so a fresh clone
-reproduces it.
+decision, so those files cannot be committed here. They remain in the private
+remote; the local bundle is absent. The tree digest covers exactly what this
+repository can carry, so a fresh clone reproduces it.
 
 ## Expected validator output
 
@@ -109,10 +100,10 @@ are the environment-stage tests, which need `.aws-article/config.yaml` — the
 account's local publish configuration. That file was **never in the original git
 either** (`git ls-files | grep aws-article` → 0; it is gitignored there).
 
-Measured, not assumed: a clean clone of the original bundle was run through the same
-suite and produced **the same five failures**. The vendored copy therefore behaves
-exactly like a fresh checkout of the original, and the failures are a property of the
-original, not of this import.
+Measured, not assumed: a clean clone of the original tree (from the bundle, before
+it was removed) was run through the same suite and produced **the same five
+failures**. The vendored copy therefore behaves exactly like a fresh checkout of
+the original, and the failures are a property of the original, not of this import.
 
 To use the workflow, supply `.aws-article/config.yaml` locally (slot 1, credentials
 outside both trees). It is gitignored here and must stay that way.

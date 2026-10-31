@@ -10,11 +10,12 @@ Supersedes the "keep it external" part of [ADR-010](ADR-010-gzh-integration.md).
 ADR-010 proposed keeping the WeChat Official Account workflow external and
 integrating through an adapter. Two facts invalidated that:
 
-1. The Founder intends to delete the local checkout **and possibly the GitHub
-   remote**, leaving this repository as the only surviving project.
+1. The local checkout was being retired. The GitHub remote is **not** deleted: it
+   is private, alive, and still the recoverable Git history.
 2. The checkout's history **diverged** from its remote (`origin/main` is `e9303d1`,
-   the checkout is `93645f1`), so its four commits exist on no remote. Cloning
-   upstream does not reproduce it.
+   the checkout is `93645f1`), and `93645f1` is not on the remote. The **tree** is
+   identical to remote `main` (`7b75e4e8`), so the content is recoverable even
+   though the imported commit identity is not.
 
 An external dependency that is scheduled to disappear is not a dependency; it is a
 gap. The product goal is also now explicit: this project should carry the workflow
@@ -54,14 +55,13 @@ source of those packs is 4 MB and is what was imported.
 
 ## Consequences
 
-- **The archive is retired.** The bundle, the original checkout and its GitHub remote
-  were deleted on 2026-10-30 (both paths absent, the URL returns 404), so
-  `vendor/gzh-thinktank/` is the only copy. Lost with them:
-  the original's four commits, the twelve files this repository cannot track, and
-  `production/`'s image assets (its text and JSON were copied to
-  `projects/gzh-thinktank/` first). `scripts/gzh_pin.py` sets
-  `BUNDLE_RETIRED = True`, so a missing bundle is expected; a present one must still
-  match its digest.
+- **The local archive is absent; the remote is alive.** The bundle and the local
+  checkout are gone, but `Xander-Xai/gzh-Future-Intelligence` is a private, live
+  repository whose `main` (`e9303d1`) has the same tree (`7b75e4e8`) as the
+  vendored copy. The imported commit `93645f1` is not on the remote, so its commit
+  identity is lost; its tree is not. `scripts/gzh_pin.py` sets
+  `BUNDLE_RETIRED = True` for the absent local bundle and records the live remote
+  separately. Do not delete that remote.
 - **The capability was measured, not assumed.** A clean clone of the original bundle
   and the vendored copy fail the *same* five of twenty-eight workflow-gate tests —
   the ones needing the never-versioned `.aws-article/config.yaml`. The import is
@@ -84,7 +84,8 @@ source of those packs is 4 MB and is what was imported.
 
 Deleting `vendor/gzh-thinktank/`, its `MANIFEST.md`, the pin block in
 `scripts/gzh_pin.py` and `tests/test_gzh_pin.py` restores the previous state. The
-bundle at `D:\Archives\repos\gzh-thinktank\2026-10-30\` is unaffected either way.
+private remote `Xander-Xai/gzh-Future-Intelligence` remains available; the local
+bundle at `D:\Archives\repos\gzh-thinktank\2026-10-30\` is absent.
 
 ## Open questions
 

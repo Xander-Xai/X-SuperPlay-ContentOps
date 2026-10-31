@@ -1115,15 +1115,15 @@ FAIL（`account_composition` 73/27/0 对 70/25/5），所以派生步骤以
 | X | — | 未开始：没有账号 DNA，也没有发布能力 |
 
 **公众号为什么改为入库而不是留外部。** 那个工作副本的历史与 GitHub origin **分叉**
-（`origin/main` 是 `e9303d1`，副本是 `93645f1`），而且副本（可能连远端）即将退役。
-一个注定会消失的外部依赖不是依赖，是缺口。导入保持逐字节、不修改；要变更就是重新
-导入并更新摘要。
+（`origin/main` 是 `e9303d1`，副本是 `93645f1`），且导入提交不在远端。私有远端仍然
+存在，其树与 vendored 树完全相同，因此内容仍可恢复；本地工作副本已不存在。导入保持
+逐字节、不修改；要变更就是重新导入并更新摘要。
 
 - 排除项：`node_modules`（32 MB）与 excalidraw 包里的 `.venv`（可重建）、
-  `.aws-article/config.yaml`（凭据）、账号的 `production/` 产物。完整原始仓库曾以
-  15 MB git bundle 形式校验留存，随后于 2026-10-30 与工作副本、远端一并退役
-  （两个路径均已不存在，仓库 URL 返回 404）。现在 `vendor/gzh-thinktank/` 是唯一
-  副本，`MANIFEST.md` 记录了退役的确切代价。
+  `.aws-article/config.yaml`（凭据）、账号的 `production/` 产物。本地 15 MB bundle 与
+  工作副本均已不存在。`Xander-Xai/gzh-Future-Intelligence` 是私有、仍在线的仓库，
+  `main`（`e9303d1`）的树（`7b75e4e8`）与 vendored 树相同；导入提交 `93645f1` 不在
+  远端。远端是可恢复的历史，`vendor/gzh-thinktank/` 是公开副本。
 - `scripts/gzh_pin.py` 按 667 个文件的内容摘要校验 vendored 树，并先把 CRLF 折成
   LF，使会在检出时改写行尾的平台无法改变结果。bundle 已退役；若仍存在，仍须与摘要
   一致。`tests/test_gzh_pin.py` 锁住拒绝行为。

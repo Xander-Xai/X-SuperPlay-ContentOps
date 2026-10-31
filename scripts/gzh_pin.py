@@ -42,16 +42,16 @@ ACCOUNT = {
     "contentops_account_slug": "x-superplay-future-intelligence",
 }
 
-UPSTREAM = "https://github.com/yandexuanxuan/gzh-Future-Intelligence.git"
+UPSTREAM = "https://github.com/Xander-Xai/gzh-Future-Intelligence.git"
 
 PIN = {
     "repo": UPSTREAM,
     "commit": "93645f178418c1e0a03cbb3fc06a7f87ee11f631",
+    "commit_subject": "fix: allow verified draft resubmission",
+    "remote_commit": "e9303d18066a4232838b9dafff6827f6b4e8adf1",
+    "remote_alive": True,
     "tree": "7b75e4e840b29a18f5262c0e81e64c080c274c6a",
     "tracked_files": 718,
-    "commit_subject": "fix: allow verified draft resubmission",
-    #: The remote this checkout diverged from. Recorded so nobody assumes that
-    #: cloning upstream reproduces this history.
     "diverged_from": {"ref": "origin/main", "commit": "e9303d18066a4232838b9dafff6827f6b4e8adf1"},
     "bundle": Path(r"D:\Archives\repos\gzh-thinktank\2026-10-30\gzh-thinktank.bundle"),
     "bundle_sha256": "fc6965c076af07d1e6842b06bb11afae760d4315d950545604a041a97e4fb4e7",
@@ -148,8 +148,8 @@ def _check(bundle: Path) -> List[Dict[str, Any]]:
         # Absence is then expected, not a failure -- but if a bundle is still
         # there, it has to be the one this pin describes.
         checks.append({"id": "bundle_retired", "ok": BUNDLE_RETIRED,
-                       "note": "the cold archive is retired; the vendored tree is the "
-                               "source of truth" if BUNDLE_RETIRED
+                       "note": "the local bundle is absent; the private remote is alive "
+                               "and its tree matches the vendored tree" if BUNDLE_RETIRED
                                else "no bundle and no retirement recorded"})
         return checks
     checks.append({"id": "bundle_present", "ok": True, "path": str(bundle)})
@@ -174,12 +174,14 @@ def _check_checkout(checkout: Path) -> List[Dict[str, Any]]:
         return [{"id": "checkout_is_repo", "ok": False, "path": str(checkout)}]
     checks.append({"id": "checkout_present", "ok": True, "path": str(checkout)})
     commit = (head.stdout or "").strip()
-    checks.append({"id": "commit", "ok": commit == PIN["commit"],
-                   "value": commit, "expected": PIN["commit"]})
-    tree = _git(checkout, "rev-parse", "HEAD^{tree}")
-    tree_id = (tree.stdout or "").strip()
-    checks.append({"id": "tree", "ok": tree_id == PIN["tree"],
-                   "value": tree_id, "expected": PIN["tree"]})
+    tree = (_git(checkout, "rev-parse", "HEAD^{tree}").stdout or "").strip()
+    accepted = commit == PIN["commit"] or (
+        commit == PIN["remote_commit"] and tree == PIN["tree"])
+    checks.append({"id": "commit", "ok": accepted,
+                   "value": commit,
+                   "expected": f"{PIN['commit']} or {PIN['remote_commit']}"})
+    checks.append({"id": "tree", "ok": tree == PIN["tree"],
+                   "value": tree, "expected": PIN["tree"]})
     listed = _git(checkout, "ls-files")
     count = len([line for line in (listed.stdout or "").splitlines() if line.strip()])
     checks.append({"id": "tracked_files", "ok": count == PIN["tracked_files"],
@@ -217,12 +219,13 @@ def main() -> int:
     if args.json:
         print(json.dumps(result, ensure_ascii=False, indent=2))
     else:
-        print(f"repository  {result['pin']['repo']}  (provenance, not a live clone)")
+        print(f"repository  {result['pin']['repo']}  (private, alive)")
+        print(f"remote      {result['pin']['remote_commit']}  (tree matches the imported tree)")
         print(f"upstream    {result['pin']['commit']}  ({result['pin']['commit_subject']})")
         print(f"            {result['pin']['tracked_files']} tracked files at that commit; "
               f"{VENDORED_FILES} vendored here")
-        if result["bundle"].endswith(".bundle") and not Path(result["bundle"]).is_file():
-            print("archive     retired — the vendored tree is the only copy")
+        if not Path(result["bundle"]).is_file():
+            print("archive     local bundle absent — the private remote is the recoverable source")
         else:
             print(f"bundle      {result['bundle']}")
         for check in result["checks"]:
@@ -230,11 +233,7 @@ def main() -> int:
         if result["failures"]:
             print()
             print("FAILED: " + ", ".join(result["failures"]))
-            if Path(result["bundle"]).is_file():
-                print("Restore with: git clone <bundle> D:\\Projects\\gzh-Future-Intelligence")
-            else:
-                print("The archive is retired; re-import the workflow and update the pin "
-                      "(see vendor/gzh-thinktank/MANIFEST.md).")
+            print("Restore with: git clone https://github.com/Xander-Xai/gzh-Future-Intelligence")
     return 0 if result["ok"] else 1
 
 
