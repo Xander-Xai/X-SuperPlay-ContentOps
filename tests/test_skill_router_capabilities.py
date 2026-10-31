@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import os
-import subprocess
 import sys
 import tempfile
 import unittest
@@ -15,6 +14,7 @@ for candidate in (ROOT / "scripts", ROOT / "src"):
         sys.path.insert(0, str(candidate))
 
 import skill_route as sr  # noqa: E402
+from process_utils import hidden_run, python_executable  # noqa: E402
 
 
 def _entry(**overrides):
@@ -221,18 +221,15 @@ class LegacyIndependenceTests(unittest.TestCase):
             "assert 'contentops' not in [m for m in sys.modules if m == 'contentops'];"
             "print(sr.REGISTRY_SCHEMA)"
         )
-        completed = subprocess.run([sys.executable, "-c", code], cwd=str(ROOT),
-                                   capture_output=True, text=True,
-                                   encoding="utf-8", errors="replace")
+        completed = hidden_run([python_executable(), "-c", code], cwd=str(ROOT))
         self.assertEqual(completed.returncode, 0, completed.stderr)
         self.assertIn(sr.REGISTRY_SCHEMA, completed.stdout)
 
 
 class CliTests(unittest.TestCase):
     def _run(self, *args: str):
-        return subprocess.run([sys.executable, "scripts/skill_route.py", *args],
-                              cwd=str(ROOT), capture_output=True, text=True,
-                              encoding="utf-8", errors="replace")
+        return hidden_run([python_executable(), "scripts/skill_route.py", *args],
+                          cwd=str(ROOT))
 
     def test_list_and_sources_exit_zero(self) -> None:
         self.assertEqual(self._run("--sources").returncode, 0)
