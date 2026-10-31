@@ -31,7 +31,7 @@ translation_status: synced
 | X | PR #50；仅人工发布的编辑包；未合并 |
 | MiniMax 媒体 | 语音、图片与 H3 视频已实现并做过真实调用；`PENDING_FOUNDER_REVIEW` |
 | 自动发布 | **不在范围内** |
-| 测试 | 见 [docs/CURRENT-STATE.md](docs/CURRENT-STATE.md) 与 `python scripts/run_tests.py` |
+| 测试 | 见 [docs/CURRENT-STATE.md](docs/CURRENT-STATE.md)；统一门禁用 `python scripts/dev_check.py` |
 | 生产就绪 | **否** —— 没有任何平台达到 `PRODUCTION_ACCEPTED` |
 
 ## 快速开始

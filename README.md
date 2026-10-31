@@ -23,7 +23,7 @@ Previous approach used 5 separate platform-specific repos that never produced st
 | X | PR #50; manual-only editorial package; not merged |
 | MiniMax media | Speech, image and H3 video implemented and live-tested; `PENDING_FOUNDER_REVIEW` |
 | Auto-publishing | **NOT** in scope |
-| Tests | See [docs/CURRENT-STATE.md](docs/CURRENT-STATE.md) and `python scripts/run_tests.py` |
+| Tests | See [docs/CURRENT-STATE.md](docs/CURRENT-STATE.md); run the unified gate with `python scripts/dev_check.py` |
 | Production ready | **false** — no platform is `PRODUCTION_ACCEPTED` |
 
 ## Quick Start
