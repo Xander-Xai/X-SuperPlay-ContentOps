@@ -111,11 +111,27 @@ DISCOVERED -> RESOLVABLE -> EXECUTION_REQUESTED -> AUTHORIZED -> EXECUTED
 ```
 
 A caller must present a grant bound to the exact skill version, account, pipeline,
-stage, operations, caller and budget, with an expiry and a revocation state. Every
+stage, operations, subject and budget, with an expiry and a revocation state. Every
 blocked path returns `execution_authorized: false`. The adapter's runtime lock
 verifier and the M5 `rights_reviewed` gate are unchanged and remain the authority
 for their own questions. See
 [ADR-009](adr/ADR-009-skill-execution-authorization.md).
+
+Where the grant comes from, and how it is spent, is ADR-010:
+
+| Piece | Where |
+|---|---|
+| grant record | `projects/<slug>/receipts/skill-grant.json` |
+| anchor | `receipts/human-review.json` with `decision: APPROVED`, matched by digest |
+| issuer allow-list | `CONTENTOPS_OWNER_IDENTITIES` (unset trusts nobody) |
+| atomic spend | `receipts/grants/<grant_id>/use-NNNN.json` created with `O_EXCL` |
+| managed entry | `python scripts/skill_execute.py <project> --operation status\|doctor` |
+| receipt | `receipts/executions/<grant_id>-use-NNNN.json` |
+
+`scripts/m5_production.py` does not import any of this, so the verified M5 chain
+keeps its existing trust boundary. Making authorization mandatory inside M5 is a
+separate Owner-approved migration. See
+[ADR-010](adr/ADR-010-trusted-grant-execution-gate.md).
 
 ## media-use
 

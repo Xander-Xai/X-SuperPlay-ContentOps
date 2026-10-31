@@ -55,6 +55,7 @@ translation_status: synced
 - [adr/ADR-007-m5-evidence-production-chain.md](adr/ADR-007-m5-evidence-production-chain.md)
 - [adr/ADR-008-media-use-adapter.md](adr/ADR-008-media-use-adapter.md)
 - [adr/ADR-009-skill-execution-authorization.md](adr/ADR-009-skill-execution-authorization.md)
+- [adr/ADR-010-trusted-grant-execution-gate.md](adr/ADR-010-trusted-grant-execution-gate.md)
 
 ## 事实优先级
 
