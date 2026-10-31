@@ -1,0 +1,26 @@
+{
+  "schema": "contentops.media-use-runtime-baseline/v1",
+  "package": "hyperframes",
+  "version": "0.8.222",
+  "integrity": "sha512-kTPOStlNXvbuZIsT9eHr8FlA9PK26cT/fXXZkdAZKiUIe3RElIolum+/FS/25YHBilobyPGGb78rRy+pDT73Iw==",
+  "dependency_lock_sha256": "2225ab6d1c22d19082c6b1985d23732f2ad7b9a9108cf080e5c405ef797b925e",
+  "package_tree_sha256": "be8e24dfe66e4ca296f8ad4ff440b63dfe039cf9527c589f21952dfe31c8dba9",
+  "entry": "node_modules/hyperframes/bin/hyperframes.mjs",
+  "verb_prefix": [
+    "media-use"
+  ],
+  "policy": {
+    "node_major_min": 22,
+    "lifecycle_scripts": "disabled",
+    "network_at_runtime": false,
+    "paid_provider": false,
+    "cross_project_reuse": false
+  },
+  "skill_source_reference": "f2358315e59731833334c5d881a7fb5543c22a97",
+  "approval": {
+    "status": "approved",
+    "approved_by": "Xander-Xai",
+    "approved_at": "2026-10-31",
+    "evidence": "Owner-authorized approval on 2026-10-31 for the reviewed offline-only hyperframes@0.8.222 runtime baseline. Evidence: pinned npm release SRI and committed dependency lock, isolated Linux no-egress real adopt/candidates/resolve, Windows local-only real CLI acceptance, runtime integrity and tamper-before-spawn tests, and passing PR #64 CI on bf010ef. Approval is limited to offline local asset operations; network access, paid providers, cross-project reuse, automatic publication, production readiness and source-media licensing are NOT authorized by this approval."
+  }
+}

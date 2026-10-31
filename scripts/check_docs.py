@@ -77,6 +77,7 @@ EXCLUDE_DIRS = {
     "01-Experiments",  # will be archived in Commit 7
     "02-Runtime",      # will be archived in Commit 7
     "projects",        # checked separately below
+    ".claude",         # local Claude state and worktrees
 }
 
 
@@ -225,7 +226,9 @@ def check_sensitive_strings():
             continue
         # Skip files in excluded directories
         parts = rel.split("/")
-        if any(ex in parts for ex in EXCLUDE_DIRS):
+        # Local worktrees are excluded from documentation traversal, but any
+        # tracked file under .claude must still receive sensitive-string checks.
+        if any(ex in parts for ex in EXCLUDE_DIRS if ex != ".claude"):
             continue
         if not path.exists():
             continue

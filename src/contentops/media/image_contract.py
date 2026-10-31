@@ -68,6 +68,15 @@ class AssetKind:
     GENERATED_IMAGE = "GENERATED_IMAGE"
     GENERATED_VIDEO = "GENERATED_VIDEO"
 
+    #: Third-party material ContentOps licensed but did not produce: a stock
+    #: photo, a brand icon, a licensed sound effect. It is neither a capture that
+    #: can witness a fact nor a model generation, and the existing kinds had no
+    #: honest slot for it. Registering a stock photo as ``REAL`` would make it
+    #: evidence-capable; registering it as ``GENERATED_IMAGE`` would claim a
+    #: model produced bytes it did not. This member says exactly what the asset
+    #: is, and ``EVIDENCE_CAPABLE`` deliberately excludes it.
+    LICENSED_EXTERNAL = "LICENSED_EXTERNAL"
+
     ALL = (
         REAL,
         SCREENSHOT,
@@ -75,6 +84,7 @@ class AssetKind:
         DIAGRAM,
         GENERATED_IMAGE,
         GENERATED_VIDEO,
+        LICENSED_EXTERNAL,
     )
 
     #: Kinds that are not synthetic and may therefore support a factual claim.

@@ -50,6 +50,7 @@ scripts/
 ├── doctor.py            ← Environment checker
 ├── bootstrap.ps1/.sh    ← Environment setup
 ├── new_project.py       ← Project scaffolding
+├── media_use_adapter.py ← media-use operator CLI (adopt/import/verify/demo)
 └── test_basic.py        ← Current test suite (9 tests)
 
 runtime/
@@ -97,6 +98,34 @@ Business Repo / Experiment / Research
          ↓
    PRODUCTION_READY (only with Founder approval)
 ```
+
+## media-use Integration (Issue #57)
+
+`media-use` is a skill in the upstream HyperFrames repository (Apache-2.0). It is
+consumed as a **pinned external dependency**, never copied into this repository
+(ADR-008).
+
+```
+src/contentops/media/media_use_adapter.py  ← only module that knows the skill exists
+scripts/media_use_adapter.py               ← operator CLI
+   status | doctor | candidates | resolve | adopt | ingest | import | verify | demo
+```
+
+Two contract additions make the mapping honest:
+
+- `AssetKind.LICENSED_EXTERNAL` — licensed third-party material. It is not a
+  capture and not a model generation, so it is excluded from both
+  `EVIDENCE_CAPABLE` and `GENERATED`.
+- `MediaModality.AUDIO` — background music and sound effects. It is not
+  narration, so it carries no `asset_kind` and can never be evidence.
+
+Imports become `contentops.media-import/v1` sidecars and enter the single
+`MediaManifest`. The skill's `.media/manifest.jsonl` is read only to look up a
+record; it is never a second asset list.
+
+Default posture is closed: no network, no paid provider, no cross-project reuse,
+no forced provider. The child runs with a project-local `HOME`, an allow-listed
+environment and an argument array through `scripts/process_utils.hidden_run`.
 
 ## Extension Priority
 
