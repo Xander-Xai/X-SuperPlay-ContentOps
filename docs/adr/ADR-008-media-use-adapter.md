@@ -298,3 +298,21 @@ re-implementation:
 | Runtime dependency | `runtime/media-use-runtime-baseline.json` (approved) + host `contentops.media-use-runtime-lock/v2` |
 | Authorization / cost | local-only; network, paid generation and cross-project reuse refused; `provider_call=false` |
 | Availability | `TRUSTED_RUNTIME` on this host; `BLOCKED` without a matching lock |
+
+## Media rights gate
+
+`rights_reviewed: true` alone is not evidence and is refused. Before any adapter
+call, `contentops.media.rights_gate` requires each request to carry a `rights`
+block plus a per-asset review record (`assets/<id>.rights.json`, schema
+`contentops.media-rights-review/v1`). The gate checks that:
+
+- the licence is a known **media** licence (a software licence such as Apache-2.0
+  or AGPL-3.0 cannot license media; non-commercial licences are refused);
+- a third-party asset has an `http(s)` source URL;
+- reviewer, date and attribution in the request match the record;
+- the record exists inside the project and is hashed into the receipt;
+- synthetic material is flagged and never evidence-capable.
+
+The gate is offline and cannot verify that the declared licence is the asset's
+actual licence; that stays a human decision. It is a policy table, not a second
+asset registry.

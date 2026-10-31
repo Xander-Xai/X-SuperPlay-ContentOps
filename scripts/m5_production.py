@@ -35,6 +35,7 @@ for candidate in (ROOT / "src", ROOT / "scripts"):
 from process_utils import hidden_run, python_executable  # noqa: E402
 
 from contentops.evidence import ClaimLedger, build_artifacts  # noqa: E402
+from contentops.media.rights_gate import RightsError, validate_request_rights  # noqa: E402
 
 RUN_SCHEMA = "contentops.m5-run/v1"
 SCRIPT_SCHEMA = "contentops.m5-script/v1"
@@ -168,27 +169,29 @@ def stage_media_use(project: Path, config: Dict[str, Any], *, adapter: Any = Non
             continue
         kind = str(request.get("kind") or "").strip()
         intent = str(request.get("intent") or "").strip()
-        license_name = str(request.get("license") or "").strip()
         if kind not in VISUAL_MEDIA_KINDS | AUDIO_MEDIA_KINDS:
             raise M5Blocked(
                 f"{asset_id}: media_use in M5 accepts image/icon/logo/bgm/sfx only"
             )
-        if not intent or not license_name or request.get("rights_reviewed") is not True:
-            raise M5Blocked(f"{asset_id}: intent, explicit license and rights_reviewed=true required")
+        if not intent:
+            raise M5Blocked(f"{asset_id}: intent is required")
+        try:
+            rights_info = validate_request_rights(request, project)
+        except RightsError as exc:
+            raise M5Blocked(f"{asset_id}: {exc}") from exc
+        license_name = rights_info["license_id"]
+        attribution = rights_info["attribution"]
         if kind == "bgm":
             if any(item[1] == "bgm" for item in todo):
                 raise M5Blocked("a project can declare at most one bgm request")
             volume = _media_volume(request, asset_id, 0.25)
-            todo.append((asset_id, kind, intent, license_name,
-                         str(request.get("attribution") or ""), volume, None))
+            todo.append((asset_id, kind, intent, rights_info, volume, None))
         elif kind == "sfx":
             volume = _media_volume(request, asset_id, 0.9)
-            todo.append((asset_id, kind, intent, license_name,
-                         str(request.get("attribution") or ""), volume,
+            todo.append((asset_id, kind, intent, rights_info, volume,
                          _media_sfx_at(request, asset_id)))
         else:
-            todo.append((asset_id, kind, intent, license_name,
-                         str(request.get("attribution") or ""), None, None))
+            todo.append((asset_id, kind, intent, rights_info, None, None))
 
     if todo and adapter is None:
         try:
@@ -211,7 +214,9 @@ def stage_media_use(project: Path, config: Dict[str, Any], *, adapter: Any = Non
 
     discovered: Dict[str, Dict[str, Any]] = {}
     audio: Dict[str, Any] = {"bgm": None, "sfx": []}
-    for asset_id, kind, intent, license_name, attribution, volume, at in todo:
+    for asset_id, kind, intent, rights_info, volume, at in todo:
+        license_name = rights_info["license_id"]
+        attribution = rights_info["attribution"]
         try:
             resolved = adapter.resolve(kind, intent, project_dir=project)
             if not resolved.importable:
@@ -248,6 +253,7 @@ def stage_media_use(project: Path, config: Dict[str, Any], *, adapter: Any = Non
                 "repo_path": repo_path, "sha256": imported.sha256,
                 "permission": "LICENSED", "evidence_capable": False,
                 "license": license_name, "attribution": attribution,
+                "rights": rights_info,
                 "media_use_asset_id": imported.asset_id,
                 "receipt_ref": imported.receipt_ref,
             }
@@ -256,6 +262,7 @@ def stage_media_use(project: Path, config: Dict[str, Any], *, adapter: Any = Non
                 "id": asset_id, "repo_path": repo_path,
                 "sha256": imported.sha256, "volume": volume,
                 "license": license_name, "attribution": attribution,
+                "rights": rights_info,
                 "media_use_asset_id": imported.asset_id,
                 "receipt_ref": imported.receipt_ref,
             }
@@ -264,6 +271,7 @@ def stage_media_use(project: Path, config: Dict[str, Any], *, adapter: Any = Non
                 "id": asset_id, "repo_path": repo_path,
                 "sha256": imported.sha256, "volume": volume, "at": at,
                 "license": license_name, "attribution": attribution,
+                "rights": rights_info,
                 "media_use_asset_id": imported.asset_id,
                 "receipt_ref": imported.receipt_ref,
             })
@@ -272,6 +280,7 @@ def stage_media_use(project: Path, config: Dict[str, Any], *, adapter: Any = Non
             "source": resolved.source, "sha256": imported.sha256,
             "path": "project://" + relative, "receipt_ref": imported.receipt_ref,
             "license": license_name, "attribution": attribution,
+            "rights": rights_info,
             "evidence_capable": False, "provider_call": False,
             **({"volume": volume} if volume is not None else {}),
             **({"at": at} if at is not None else {}),

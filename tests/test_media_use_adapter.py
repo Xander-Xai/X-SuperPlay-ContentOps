@@ -29,6 +29,7 @@ import os
 import shutil
 import subprocess
 import sys
+import unittest
 import tempfile
 import time
 from pathlib import Path
@@ -81,12 +82,12 @@ TESTS = []
 SKIPS = []
 
 
-def test(fn):
+def register(fn):
     TESTS.append(fn)
     return fn
 
 
-class SkipTest(Exception):
+class SkipTest(unittest.SkipTest):
     pass
 
 
@@ -218,7 +219,7 @@ def _expect(code: str, fn) -> MediaUseError:
 # ---------------------------------------------------------------------------
 
 
-@test
+@register
 def test_a_missing_skill_is_a_typed_refusal_not_a_crash():
     with tempfile.TemporaryDirectory() as raw:
         adapter = MediaUseAdapter(skill_dir=Path(raw) / "absent", timeout=5)
@@ -229,7 +230,7 @@ def test_a_missing_skill_is_a_typed_refusal_not_a_crash():
         _expect(CODE_SKILL_UNAVAILABLE, lambda: adapter.adopt(project_dir=Path(raw)))
 
 
-@test
+@register
 def test_status_records_the_pinned_upstream_provenance():
     with tempfile.TemporaryDirectory() as raw:
         status = MediaUseAdapter(skill_dir=Path(raw) / "absent", timeout=5).status()
@@ -239,7 +240,7 @@ def test_status_records_the_pinned_upstream_provenance():
         assert len(status.skill_commit) == 40
 
 
-@test
+@register
 def test_an_unsupported_type_is_refused_before_any_process_spawns():
     """``voice`` needs a paid provider. The adapter must not even look it up."""
     with tempfile.TemporaryDirectory() as raw:
@@ -250,7 +251,7 @@ def test_an_unsupported_type_is_refused_before_any_process_spawns():
         )
 
 
-@test
+@register
 def test_a_forced_provider_must_be_authorized():
     with tempfile.TemporaryDirectory() as raw:
         adapter = _adapter(Path(raw))
@@ -267,7 +268,7 @@ def test_a_forced_provider_must_be_authorized():
 # ---------------------------------------------------------------------------
 
 
-@test
+@register
 def test_import_requires_a_license():
     with tempfile.TemporaryDirectory() as raw:
         tmp = Path(raw)
@@ -282,7 +283,7 @@ def test_import_requires_a_license():
         )
 
 
-@test
+@register
 def test_import_refuses_a_path_that_escapes_the_project():
     with tempfile.TemporaryDirectory() as raw:
         tmp = Path(raw)
@@ -298,7 +299,7 @@ def test_import_refuses_a_path_that_escapes_the_project():
             )
 
 
-@test
+@register
 def test_import_writes_a_receipt_with_the_required_provenance_fields():
     with tempfile.TemporaryDirectory() as raw:
         tmp = Path(raw)
@@ -338,7 +339,7 @@ def test_import_writes_a_receipt_with_the_required_provenance_fields():
         assert media.logical_path.startswith("project://assets/")
 
 
-@test
+@register
 def test_the_same_bytes_import_to_the_same_asset_id():
     with tempfile.TemporaryDirectory() as raw:
         tmp = Path(raw)
@@ -359,7 +360,7 @@ def test_the_same_bytes_import_to_the_same_asset_id():
         assert first.envelope.fingerprint == second.envelope.fingerprint
 
 
-@test
+@register
 def test_source_uri_drops_userinfo_query_and_fragment():
     # Synthetic values only. The point is that no part of the capability in this
     # URL survives into a receipt that is meant to be public.
@@ -381,7 +382,7 @@ def test_source_uri_drops_userinfo_query_and_fragment():
             assert fragment not in receipt_text, fragment
 
 
-@test
+@register
 def test_source_uri_keeps_ipv6_host_and_port_without_userinfo():
     synthetic = "https://demo:fake-secret@[2001:db8::1]:8443/a.png?x=1#f"
     with tempfile.TemporaryDirectory() as raw:
@@ -398,7 +399,7 @@ def test_source_uri_keeps_ipv6_host_and_port_without_userinfo():
         assert receipt["source_uri"] == "https://[2001:db8::1]:8443/a.png"
 
 
-@test
+@register
 def test_source_uri_refuses_unsupported_scheme_hostless_and_bad_port():
     for synthetic in (
         "ftp://demo:fake-secret@example.invalid/photo.png",
@@ -421,7 +422,7 @@ def test_source_uri_refuses_unsupported_scheme_hostless_and_bad_port():
             assert not (project / "assets" / "pic.png.receipt.json").exists()
 
 
-@test
+@register
 def test_other_receipt_metadata_cannot_smuggle_url_credentials():
     synthetic = "https://demo:fake-secret@example.invalid/photo.png?sig=fake"
     with tempfile.TemporaryDirectory() as raw:
@@ -445,7 +446,7 @@ def test_other_receipt_metadata_cannot_smuggle_url_credentials():
         assert "example.invalid" in receipt_text
 
 
-@test
+@register
 def test_redact_text_strips_credentials_embedded_in_a_url():
     text = "fetch failed: https://demo:fake-secret@example.invalid/photo.png?sig=fake"
     cleaned = redact_text(text)
@@ -454,7 +455,7 @@ def test_redact_text_strips_credentials_embedded_in_a_url():
     assert "https://example.invalid/photo.png" in cleaned
 
 
-@test
+@register
 def test_a_licensed_import_is_never_evidence_capable_or_generated():
     with tempfile.TemporaryDirectory() as raw:
         tmp = Path(raw)
@@ -472,7 +473,7 @@ def test_a_licensed_import_is_never_evidence_capable_or_generated():
         assert AssetKind.LICENSED_EXTERNAL not in AssetKind.GENERATED
 
 
-@test
+@register
 def test_an_audio_import_has_no_visual_kind_and_is_never_evidence():
     with tempfile.TemporaryDirectory() as raw:
         tmp = Path(raw)
@@ -491,7 +492,7 @@ def test_an_audio_import_has_no_visual_kind_and_is_never_evidence():
         assert media.envelope.evidence_capable is False
 
 
-@test
+@register
 def test_verify_detects_a_changed_file_and_a_missing_receipt():
     with tempfile.TemporaryDirectory() as raw:
         tmp = Path(raw)
@@ -518,7 +519,7 @@ def test_verify_detects_a_changed_file_and_a_missing_receipt():
 # ---------------------------------------------------------------------------
 
 
-@test
+@register
 def test_every_import_gates_to_pending_human_review_not_ready():
     with tempfile.TemporaryDirectory() as raw:
         tmp = Path(raw)
@@ -546,7 +547,7 @@ def test_every_import_gates_to_pending_human_review_not_ready():
         assert all(d.state != "PRODUCTION_READY" for d in decisions)
 
 
-@test
+@register
 def test_a_manifest_with_a_duplicate_asset_id_is_refused():
     with tempfile.TemporaryDirectory() as raw:
         tmp = Path(raw)
@@ -567,7 +568,7 @@ def test_a_manifest_with_a_duplicate_asset_id_is_refused():
             raise AssertionError("a duplicate asset_id must be refused")
 
 
-@test
+@register
 def test_the_manifest_is_byte_stable_for_the_same_state():
     with tempfile.TemporaryDirectory() as raw:
         tmp = Path(raw)
@@ -600,7 +601,7 @@ def test_the_manifest_is_byte_stable_for_the_same_state():
 # ---------------------------------------------------------------------------
 
 
-@test
+@register
 def test_a_project_candidate_is_reused_before_the_network():
     with tempfile.TemporaryDirectory() as raw:
         tmp = Path(raw)
@@ -626,7 +627,7 @@ def test_a_project_candidate_is_reused_before_the_network():
         assert result.record["path"] == "assets/pic.png"
 
 
-@test
+@register
 def test_a_global_cache_row_is_hidden_without_cross_project_authorization():
     with tempfile.TemporaryDirectory() as raw:
         tmp = Path(raw)
@@ -648,7 +649,7 @@ def test_a_global_cache_row_is_hidden_without_cross_project_authorization():
         assert adapter.candidates("image", project_dir=project) == []
 
 
-@test
+@register
 def test_an_offline_resolve_with_no_source_is_needs_human_action():
     with tempfile.TemporaryDirectory() as raw:
         tmp = Path(raw)
@@ -664,7 +665,7 @@ def test_an_offline_resolve_with_no_source_is_needs_human_action():
         )
 
 
-@test
+@register
 def test_a_generated_resolution_is_not_importable():
     with tempfile.TemporaryDirectory() as raw:
         tmp = Path(raw)
@@ -684,7 +685,7 @@ def test_a_generated_resolution_is_not_importable():
         assert result.blocked_code == CODE_GENERATED_NOT_IMPORTABLE
 
 
-@test
+@register
 def test_a_shared_cache_hit_is_refused_without_cross_project_authorization():
     with tempfile.TemporaryDirectory() as raw:
         tmp = Path(raw)
@@ -700,7 +701,7 @@ def test_a_shared_cache_hit_is_refused_without_cross_project_authorization():
         )
 
 
-@test
+@register
 def test_cross_project_reuse_is_allowed_only_when_asked_for():
     with tempfile.TemporaryDirectory() as raw:
         tmp = Path(raw)
@@ -720,7 +721,7 @@ def test_cross_project_reuse_is_allowed_only_when_asked_for():
         assert result.cross_project is True
 
 
-@test
+@register
 def test_a_timeout_is_reported_as_a_timeout_not_a_hang():
     with tempfile.TemporaryDirectory() as raw:
         tmp = Path(raw)
@@ -741,7 +742,7 @@ def test_a_timeout_is_reported_as_a_timeout_not_a_hang():
         assert time.time() - started < 3.5, "the timeout must actually bound the wait"
 
 
-@test
+@register
 def test_adopt_ingest_and_verify_round_trip_through_the_cli():
     with tempfile.TemporaryDirectory() as raw:
         tmp = Path(raw)
@@ -787,7 +788,7 @@ def test_adopt_ingest_and_verify_round_trip_through_the_cli():
 # ---------------------------------------------------------------------------
 
 
-@test
+@register
 def test_the_child_is_argv_only_and_never_sees_a_credential():
     import contentops.media.media_use_adapter as module
 
@@ -827,7 +828,7 @@ def test_the_child_is_argv_only_and_never_sees_a_credential():
         assert not any("TOKEN" in key or "KEY" in key for key in env), env.keys()
 
 
-@test
+@register
 def test_local_import_rejects_bad_provenance_before_writing_receipt():
     import hashlib
     with tempfile.TemporaryDirectory() as raw:
@@ -850,7 +851,7 @@ def test_local_import_rejects_bad_provenance_before_writing_receipt():
         assert payload["upstream_commit"] is None
 
 
-@test
+@register
 def test_unverified_launcher_is_blocked_before_process_spawn():
     import contentops.media.media_use_adapter as module
     original = module.hidden_run
@@ -870,7 +871,7 @@ def test_unverified_launcher_is_blocked_before_process_spawn():
             module.hidden_run = original
 
 
-@test
+@register
 def test_network_authorization_never_starts_unclassified_resolver():
     from contentops.media.media_use_adapter import CODE_PAID_NOT_AUTHORIZED
 
@@ -951,7 +952,7 @@ def _fake_runtime(tmp: Path, *, version: str = "0.8.222") -> tuple:
     return root, lock_path, entry, dep, baseline_path
 
 
-@test
+@register
 def test_a_trusted_runtime_executes_the_locked_entry():
     import contentops.media.media_use_adapter as module
 
@@ -978,7 +979,7 @@ def test_a_trusted_runtime_executes_the_locked_entry():
         assert captured["cmd"][2:4] == ["media-use", "candidates"]
 
 
-@test
+@register
 def test_a_tampered_entry_is_refused_before_any_process_spawns():
     import contentops.media.media_use_adapter as module
 
@@ -1000,7 +1001,7 @@ def test_a_tampered_entry_is_refused_before_any_process_spawns():
             module.hidden_run = original
 
 
-@test
+@register
 def test_a_tampered_dependency_and_late_tamper_are_both_refused():
     import contentops.media.media_use_adapter as module
 
@@ -1020,7 +1021,7 @@ def test_a_tampered_dependency_and_late_tamper_are_both_refused():
             module.hidden_run = original
 
 
-@test
+@register
 def test_missing_and_mismatched_runtimes_are_reported_separately():
     with tempfile.TemporaryDirectory() as raw:
         tmp = Path(raw)
@@ -1044,7 +1045,7 @@ def test_missing_and_mismatched_runtimes_are_reported_separately():
         )
 
 
-@test
+@register
 def test_a_lock_and_runtime_tampered_together_still_mismatch_the_baseline():
     """Editing a file *and* its hash keeps the lock self-consistent.
 
@@ -1067,7 +1068,7 @@ def test_a_lock_and_runtime_tampered_together_still_mismatch_the_baseline():
         assert status.runtime_state == "BASELINE_MISMATCH"
 
 
-@test
+@register
 def test_a_lock_without_a_node_hash_is_not_trusted():
     with tempfile.TemporaryDirectory() as raw:
         tmp = Path(raw)
@@ -1080,7 +1081,7 @@ def test_a_lock_without_a_node_hash_is_not_trusted():
         assert status.runtime_state == "DEPENDENCY_UNVERIFIED"
 
 
-@test
+@register
 def test_a_system_node_substituted_for_the_locked_one_is_refused():
     with tempfile.TemporaryDirectory() as raw:
         tmp = Path(raw)
@@ -1095,7 +1096,7 @@ def test_a_system_node_substituted_for_the_locked_one_is_refused():
         assert status.runtime_state == "INTEGRITY_MISMATCH"
 
 
-@test
+@register
 def test_an_escaping_entry_or_file_path_is_refused():
     with tempfile.TemporaryDirectory() as raw:
         tmp = Path(raw)
@@ -1115,7 +1116,7 @@ def test_an_escaping_entry_or_file_path_is_refused():
         assert status.runtime_state == "INTEGRITY_MISMATCH"
 
 
-@test
+@register
 def test_a_symlinked_entry_pointing_outside_the_runtime_is_refused():
     with tempfile.TemporaryDirectory() as raw:
         tmp = Path(raw)
@@ -1132,7 +1133,7 @@ def test_a_symlinked_entry_pointing_outside_the_runtime_is_refused():
         assert status.runtime_state == "INTEGRITY_MISMATCH"
 
 
-@test
+@register
 def test_an_unlisted_executable_in_the_runtime_is_refused():
     with tempfile.TemporaryDirectory() as raw:
         tmp = Path(raw)
@@ -1145,7 +1146,7 @@ def test_an_unlisted_executable_in_the_runtime_is_refused():
         assert status.runtime_state == "INTEGRITY_MISMATCH"
 
 
-@test
+@register
 def test_an_unapproved_baseline_blocks_a_valid_lock():
     with tempfile.TemporaryDirectory() as raw:
         tmp = Path(raw)
@@ -1158,7 +1159,7 @@ def test_an_unapproved_baseline_blocks_a_valid_lock():
         assert status.runtime_state == "BASELINE_MISMATCH"
 
 
-@test
+@register
 def test_a_lock_from_a_different_baseline_is_refused():
     with tempfile.TemporaryDirectory() as raw:
         tmp = Path(raw)
@@ -1171,7 +1172,7 @@ def test_a_lock_from_a_different_baseline_is_refused():
         assert status.runtime_state == "BASELINE_MISMATCH"
 
 
-@test
+@register
 def test_a_trusted_runtime_serves_adopt_candidates_and_resolve():
     import contentops.media.media_use_adapter as module
 
@@ -1210,7 +1211,7 @@ def test_a_trusted_runtime_serves_adopt_candidates_and_resolve():
         assert all(call[0].endswith("node") for call in calls)
 
 
-@test
+@register
 def test_install_refuses_an_unapproved_baseline_before_touching_npm():
     import media_use_runtime
 
@@ -1237,7 +1238,7 @@ def test_install_refuses_an_unapproved_baseline_before_touching_npm():
         assert not (tmp / "rt").exists()
 
 
-@test
+@register
 def test_approve_requires_a_named_human_and_a_tree_digest():
     import media_use_runtime
 
@@ -1268,7 +1269,7 @@ def test_approve_requires_a_named_human_and_a_tree_digest():
         }
 
 
-@test
+@register
 def test_the_released_cli_reads_a_subcommand_not_the_legacy_flag():
     translate = MediaUseAdapter._cli_args
     assert translate(["--adopt", "--project", "p", "--json"]) == ["adopt", "--project", "p", "--json"]
@@ -1283,7 +1284,7 @@ def test_the_released_cli_reads_a_subcommand_not_the_legacy_flag():
     ]
 
 
-@test
+@register
 def test_redaction_removes_provider_credentials_from_messages():
     # The scheme word is assembled at runtime, the same way test_media_convergence
     # does it: a literal "Bearer <token>" in a tracked file is what the repository's
@@ -1300,7 +1301,7 @@ def test_redaction_removes_provider_credentials_from_messages():
 # ---------------------------------------------------------------------------
 
 
-@test
+@register
 def test_a_support_beat_prefers_real_material_over_licensed_external():
     planner = AssetPlanner()
     real = planner.plan(PlanRequest(beat_id="b1", role="background"))
@@ -1312,7 +1313,7 @@ def test_a_support_beat_prefers_real_material_over_licensed_external():
     assert chosen.evidence_use == EvidenceUse.VISUAL_SUPPORT
 
 
-@test
+@register
 def test_an_evidence_beat_never_accepts_licensed_external_or_generated():
     planner = AssetPlanner(options=[AssetKind.LICENSED_EXTERNAL, MINIMAX_IMAGE])
     try:
@@ -1323,7 +1324,7 @@ def test_an_evidence_beat_never_accepts_licensed_external_or_generated():
         raise AssertionError("a claim-bearing beat must refuse non-evidence options")
 
 
-@test
+@register
 def test_a_licensed_asset_cannot_be_registered_as_evidence():
     registry = AssetRegistry()
     try:
@@ -1339,7 +1340,7 @@ def test_a_licensed_asset_cannot_be_registered_as_evidence():
     raise AssertionError("LICENSED_EXTERNAL must never carry a factual claim")
 
 
-@test
+@register
 def test_storyboard_source_types_do_not_launder_provenance():
     from m45_media_integration import _storyboard_source_type
 
@@ -1363,7 +1364,7 @@ def test_storyboard_source_types_do_not_launder_provenance():
     )
 
 
-@test
+@register
 def test_the_existing_providers_and_the_easel_entry_point_still_import():
     import importlib
 

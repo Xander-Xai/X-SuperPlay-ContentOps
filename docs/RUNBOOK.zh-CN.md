@@ -84,10 +84,20 @@ media_use:
     - id: support_visual
       kind: image
       intent: local support image
-      license: OWNED
-      rights_reviewed: true
-      attribution: project owner
+      rights:
+        license_id: OWNED-BY-OPERATOR
+        source_url: OWNED
+        reviewed_by: <审查人>
+        reviewed_at: "2026-10-31"
+        review_evidence: assets/support.rights.json
+        attribution: project owner
+        synthetic: false
 ~~~
+
+只写 `rights_reviewed: true` 会被拒绝。每个请求都需要一份审查记录
+（`assets/<id>.rights.json`，schema 为 `contentops.media-rights-review/v1`），
+其许可证、来源 URL、审查人、日期与署名必须与请求完全一致。软件许可证与
+非商业许可证不能用于媒体素材；合成素材永不作为证据。
 
 把已核实权利的候选图片放入该项目 assets/，然后在
 script/script.json 对应镜头使用 asset_id=support_visual。
@@ -218,9 +228,9 @@ media_use:
   enabled: true
   mode: local-only
   requests:
-    - {id: hero, kind: image, intent: "...", license: OWNED-BY-OPERATOR, rights_reviewed: true}
-    - {id: bed, kind: bgm, intent: "...", license: OWNED-GENERATED-LOCAL, rights_reviewed: true, volume: 0.18}
-    - {id: click, kind: sfx, intent: "...", license: Pixabay-Content-License, rights_reviewed: true, at: 6.15, volume: 0.55}
+    - {id: hero, kind: image, intent: "...", rights: {license_id: OWNED-BY-OPERATOR, source_url: OWNED, reviewed_by: me, reviewed_at: "2026-10-31", review_evidence: assets/hero.rights.json, attribution: "owner capture", synthetic: false}}
+    - {id: bed, kind: bgm, intent: "...", volume: 0.18, rights: {license_id: OWNED-GENERATED-LOCAL, source_url: GENERATED, reviewed_by: me, reviewed_at: "2026-10-31", review_evidence: assets/bed.rights.json, attribution: "generated tone", synthetic: true}}
+    - {id: click, kind: sfx, intent: "...", at: 6.15, volume: 0.55, rights: {license_id: Pixabay-Content-License, source_url: "https://pixabay.com/sound-effects/", reviewed_by: me, reviewed_at: "2026-10-31", review_evidence: assets/click.rights.json, attribution: "Pixabay", synthetic: false}}
 ```
 
 ```powershell
