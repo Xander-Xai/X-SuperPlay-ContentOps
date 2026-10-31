@@ -1,6 +1,12 @@
 {
   "schema": "contentops.skill-registry/v1",
   "note": "Declared capabilities the router may hand to an already-approved adapter. A declaration is a pointer to existing, verified code. It is not a second skill engine, not a copy of any skill, and not an execution grant. Undeclared tracks (GZH vendor, X, XHS) are deliberately absent: they are rights-blocked or unmerged, so resolving them returns UNKNOWN_SKILL rather than a permissive answer.",
+  "scope_conventions": {
+    "accounts": "'*' matches any requested account for routing only. It is not permission to execute on, or across, accounts.",
+    "pipelines": "An explicit list. A requested pipeline outside the list is OUT_OF_SCOPE.",
+    "stages": "An explicit list. A requested stage outside the list is OUT_OF_SCOPE.",
+    "execution": "No scope value, including '*', ever authorizes execution. Resolution stays a pointer; the adapter and the M5 gate decide separately."
+  },
   "skills": [
     {
       "id": "media-use",
@@ -38,11 +44,11 @@
         "schema": "contentops.m5-media-use/v1"
       },
       "provider": {
-        "authorized": true,
+        "path_permitted": true,
         "network": false,
         "paid": false,
         "cross_project_reuse": false,
-        "note": "offline local-only; network, paid and cross-project reuse are closed before a child process is spawned"
+        "note": "path_permitted means this capability's provider path (offline, local-only) is permitted by declared policy. It is not an execution authorization and records no approver."
       },
       "runtime": {
         "dependency": "hyperframes@0.8.222",

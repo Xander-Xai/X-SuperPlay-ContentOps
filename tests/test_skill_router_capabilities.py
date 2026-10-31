@@ -28,7 +28,7 @@ def _entry(**overrides):
         "accounts": ["*"],
         "pipelines": ["M5"],
         "stages": ["media_use"],
-        "provider": {"authorized": True, "network": False, "paid": False,
+        "provider": {"path_permitted": True, "network": False, "paid": False,
                      "cross_project_reuse": False},
         "runtime": {},
         "verification": {"status": "VERIFIED"},
@@ -63,6 +63,9 @@ class MediaUseRegistrationTests(unittest.TestCase):
         self.assertFalse(entry["execution"]["authorizes_execution"])
         self.assertFalse(entry["provider"]["network"])
         self.assertFalse(entry["provider"]["paid"])
+        self.assertTrue(entry["provider"]["path_permitted"])
+        self.assertNotIn("authorized", entry["provider"],
+                         "the field must not read as an execution authorization")
 
     def test_the_declaration_points_at_code_that_exists(self) -> None:
         entry = sr.registry_entries()[0]
@@ -95,8 +98,8 @@ class ResolutionVerdictTests(unittest.TestCase):
                                        discovery_ready=True, runtime_ready=True)
         self.assertEqual(result["reason"], sr.REASON_UNVERIFIED_RIGHTS)
 
-    def test_an_unauthorized_provider_is_blocked(self) -> None:
-        registry = _registry(_entry(provider={"authorized": False, "network": False,
+    def test_an_unpermitted_provider_path_is_blocked(self) -> None:
+        registry = _registry(_entry(provider={"path_permitted": False, "network": False,
                                               "paid": False, "cross_project_reuse": False}))
         result = sr.resolve_capability("demo", registry=registry,
                                        discovery_ready=True, runtime_ready=True)
@@ -104,7 +107,7 @@ class ResolutionVerdictTests(unittest.TestCase):
 
     def test_a_declared_network_or_paid_path_is_blocked(self) -> None:
         for flag in ("network", "paid", "cross_project_reuse"):
-            provider = {"authorized": True, "network": False, "paid": False,
+            provider = {"path_permitted": True, "network": False, "paid": False,
                         "cross_project_reuse": False}
             provider[flag] = True
             result = sr.resolve_capability("demo", registry=_registry(_entry(provider=provider)),
@@ -161,6 +164,25 @@ class ScopeIsolationTests(unittest.TestCase):
                                         discovery_ready=True, runtime_ready=True)
         self.assertEqual(allowed["verdict"], sr.VERDICT_RESOLVABLE)
         blocked = sr.resolve_capability("media-use", pipeline="M4", stage="media_use",
+                                        discovery_ready=True, runtime_ready=True)
+        self.assertEqual(blocked["reason"], sr.REASON_OUT_OF_SCOPE)
+
+    def test_a_wildcard_account_matches_scope_but_never_authorizes_execution(self) -> None:
+        for account in ("douyin-1024", "future-intelligence", "anything-else"):
+            result = sr.resolve_capability("demo", account=account,
+                                           registry=_registry(_entry()),
+                                           discovery_ready=True, runtime_ready=True)
+            self.assertEqual(result["verdict"], sr.VERDICT_RESOLVABLE, account)
+            self.assertFalse(result["execution_authorized"], account)
+            self.assertEqual(result["capability"]["accounts"], ["*"])
+
+    def test_an_explicit_account_list_blocks_the_accounts_it_does_not_name(self) -> None:
+        registry = _registry(_entry(accounts=["douyin-1024"]))
+        allowed = sr.resolve_capability("demo", account="douyin-1024", registry=registry,
+                                        discovery_ready=True, runtime_ready=True)
+        self.assertEqual(allowed["verdict"], sr.VERDICT_RESOLVABLE)
+        blocked = sr.resolve_capability("demo", account="future-intelligence",
+                                        registry=registry,
                                         discovery_ready=True, runtime_ready=True)
         self.assertEqual(blocked["reason"], sr.REASON_OUT_OF_SCOPE)
 

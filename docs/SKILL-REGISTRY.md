@@ -35,6 +35,14 @@ Discovery alone never promotes a skill to executable. A declaration in the
 registry never grants execution either: the router's verdict is `RESOLVABLE`,
 and the returned record always carries `execution_authorized: false`.
 
+Two fields are easy to misread and are named accordingly:
+
+- `provider.path_permitted` means the capability's provider path is permitted by
+  declared policy. It is not named `authorized`, because that word would read as
+  an execution grant from the caller.
+- `accounts: ["*"]` is a routing wildcard. It matches any requested account; it
+  is not permission to execute on, or across, accounts.
+
 ## Catalog roots
 
 | Priority | Root | Track | Rights posture |
@@ -64,9 +72,9 @@ pointer table. Each entry records:
 | `canonical_path` | the repository code that owns the integration |
 | `license` | declared licence status and SPDX id; never a clearance |
 | `rights` | verification status, scope and evidence |
-| `accounts`, `pipelines`, `stages` | the scope this capability may serve |
+| `accounts`, `pipelines`, `stages` | the scope this capability may serve; `accounts: ["*"]` matches any requested account **for routing only** |
 | `contract` | input, output and receipt schema |
-| `provider` | authorization plus network, paid and cross-project-reuse flags |
+| `provider` | `path_permitted` plus the network, paid and cross-project-reuse flags; none of them is an execution authorization |
 | `runtime` | dependency, approved baseline, lock environment variable, verifier |
 | `verification` | status, scope and evidence |
 | `execution` | adapter and M5 stage; `authorizes_execution: false` |
@@ -82,10 +90,10 @@ Undeclared tracks are deliberately absent. Resolving one returns
 | more than one declaration matches | `DUPLICATE_AMBIGUITY` | BLOCKED |
 | requested account/pipeline/stage is not declared | `OUT_OF_SCOPE` | BLOCKED |
 | rights are not verified, or the licence is restricted | `UNVERIFIED_RIGHTS` | BLOCKED |
-| provider is unauthorized, or network/paid/reuse is declared | `UNAUTHORIZED_PROVIDER` | BLOCKED |
+| provider path is not permitted, or network/paid/reuse is declared | `UNAUTHORIZED_PROVIDER` | BLOCKED |
 | the skill directory is not installed | `SKILL_NOT_INSTALLED` | BLOCKED |
 | the approved baseline or runtime lock is absent | `MISSING_RUNTIME` | BLOCKED |
-| exactly one match, rights verified, provider authorized, runtime ready | `RESOLVABLE` | RESOLVABLE |
+| exactly one match, rights verified, provider path permitted, runtime ready | `RESOLVABLE` | RESOLVABLE |
 
 Order matters: ambiguity, scope, rights and provider are decided before runtime
 presence, so a blocked capability never looks runnable just because a runtime

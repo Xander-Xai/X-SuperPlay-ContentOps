@@ -35,6 +35,11 @@ translation_status: synced
 
 仅被发现绝不等于可执行。注册表里的声明同样不授予执行权：路由器的判定是 `RESOLVABLE`，返回记录永远带 `execution_authorized: false`。
 
+有两个字段容易被误读，因此按语义命名：
+
+- `provider.path_permitted` 表示该能力的 provider 路径被声明的策略允许。刻意不叫 `authorized`，因为那个词会被读成调用方已获执行授权。
+- `accounts: ["*"]` 是路由通配符：匹配任意请求的账号，不是在该账号上、也不是跨账号执行的许可。
+
 ## 目录根
 
 | 优先级 | 目录根 | 轨道 | 权利姿态 |
@@ -60,9 +65,9 @@ translation_status: synced
 | `canonical_path` | 拥有该集成的仓库代码 |
 | `license` | 已声明的许可证状态与 SPDX id；从不是权利清零 |
 | `rights` | 验证状态、范围与证据 |
-| `accounts`、`pipelines`、`stages` | 该能力的服务范围 |
+| `accounts`、`pipelines`、`stages` | 该能力的服务范围；`accounts: ["*"]` 仅表示路由匹配任意账号 |
 | `contract` | 输入、输出与回执 schema |
-| `provider` | 授权标记以及联网、付费、跨项目复用开关 |
+| `provider` | `path_permitted` 以及联网、付费、跨项目复用开关；其中任何一个都不是执行授权 |
 | `runtime` | 依赖、已批准基线、锁环境变量、校验器 |
 | `verification` | 状态、范围与证据 |
 | `execution` | 适配器与 M5 阶段；`authorizes_execution: false` |
@@ -77,10 +82,10 @@ translation_status: synced
 | 多个声明匹配 | `DUPLICATE_AMBIGUITY` | BLOCKED |
 | 请求的 account/pipeline/stage 未声明 | `OUT_OF_SCOPE` | BLOCKED |
 | 权利未验证，或许可证受限 | `UNVERIFIED_RIGHTS` | BLOCKED |
-| provider 未授权，或声明了联网/付费/复用 | `UNAUTHORIZED_PROVIDER` | BLOCKED |
+| provider 路径未被允许，或声明了联网/付费/复用 | `UNAUTHORIZED_PROVIDER` | BLOCKED |
 | Skill 目录未安装 | `SKILL_NOT_INSTALLED` | BLOCKED |
 | 已批准基线或运行时锁缺失 | `MISSING_RUNTIME` | BLOCKED |
-| 唯一匹配、权利已验证、provider 已授权、运行时就绪 | `RESOLVABLE` | RESOLVABLE |
+| 唯一匹配、权利已验证、provider 路径已允许、运行时就绪 | `RESOLVABLE` | RESOLVABLE |
 
 顺序是刻意的：歧义、范围、权利与 provider 先于运行时判定，因此一个被阻断的能力不会仅仅因为运行时恰好装着就显得可运行。Skill front matter 中的权限字段只被记录，从不被当作授权。
 

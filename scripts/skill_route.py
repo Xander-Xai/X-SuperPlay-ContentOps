@@ -524,9 +524,12 @@ def resolve_capability(name: str, *, account: Optional[str] = None,
         return verdict(VERDICT_BLOCKED, REASON_UNVERIFIED_RIGHTS, detail, entry)
 
     provider = entry.get("provider") or {}
-    if provider.get("authorized") is not True:
+    # ``path_permitted`` says the capability's provider path (offline,
+    # local-only) is permitted by declared policy. It is deliberately not named
+    # ``authorized``: that word would read as an execution grant from the caller.
+    if provider.get("path_permitted") is not True:
         return verdict(VERDICT_BLOCKED, REASON_UNAUTHORIZED_PROVIDER,
-                       "the provider path is not authorized by the declared capability", entry)
+                       "the provider path is not permitted by the declared capability", entry)
     if provider.get("network") or provider.get("paid") or provider.get("cross_project_reuse"):
         return verdict(VERDICT_BLOCKED, REASON_UNAUTHORIZED_PROVIDER,
                        "network, paid or cross-project reuse is declared and not authorized", entry)
@@ -550,7 +553,7 @@ def resolve_capability(name: str, *, account: Optional[str] = None,
             return result
 
     result = verdict(VERDICT_RESOLVABLE, REASON_RESOLVABLE,
-                     "exactly one declared local capability, rights verified, provider authorized",
+                     "exactly one declared local capability, rights verified, provider path permitted",
                      entry)
     result["runtime"] = runtime
     result["discovery"] = discovery
