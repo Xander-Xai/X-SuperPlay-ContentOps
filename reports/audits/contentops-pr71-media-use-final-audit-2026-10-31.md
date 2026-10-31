@@ -36,7 +36,7 @@ This report is added in a follow-up commit on the same PR.
 
 1. **P1 — host-specific absolute paths in receipts introduced by #68.**
    `projects/m5-easel-pin/receipts/{compose.json,m5-run.json,qc-report-m5-easel-pin.json,.md}`
-   contained `D:\Projects\...\.claude\worktrees\m5-production\...`.
+   contained a checkout-specific drive path under the operator's worktree directory.
    Fixed by re-running the legacy project through the sanitized pipeline:
    compose and `m5-run` now use `project://`, QC is `contentops.qc-canonical/v1`,
    and the upstream reference is `easel@v0.2.1:...`.
