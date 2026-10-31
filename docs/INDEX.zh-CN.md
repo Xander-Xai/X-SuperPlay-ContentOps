@@ -60,3 +60,4 @@ translation_status: synced
 
 - [AUDIT-REPORT.md](AUDIT-REPORT.md) — 仓库审计（2026-10-03）
 - [audits/windows-subprocess-audit.zh-CN.md](audits/windows-subprocess-audit.zh-CN.md) — Windows 控制台弹窗审计、每个子进程调用点的分类，以及统一进程层（Issue #16）
+- [../reports/audits/github-governance-2026-10-31.md](../reports/audits/github-governance-2026-10-31.md) — GitHub 治理执行：PR/Issue/Branch/CI/安全复核与 PR #48 合并（2026-10-31）
