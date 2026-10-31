@@ -24,7 +24,9 @@
 | Path | `.runtime/easel/` |
 | Acquisition | Release archive (GitHub tarball via `gh api`) |
 | Verified | 982/982 blob SHA-1 matched upstream tree |
-| Re-verified | 2026-10-03 via `scripts/verify_easel_runtime.py --resolve-tag` |
+| Re-verified | 2026-10-31 via `scripts/verify_easel_runtime.py` (982/982, 0 missing, 0 mismatch, 0 extra) |
+| Independent cross-check | 2026-10-31 against the official `v0.2.1` release archive: 982 files, 0 missing, 0 mismatch |
+| Local extras | `outputs/` and `__pycache__/` only; no tracked file differs from upstream |
 | Lock file | `runtime/easel.lock.json` |
 | Provenance | `runtime/easel-runtime.json` |
 
@@ -38,6 +40,27 @@
 | Voice quality | `edge_tts_fallback` — not production-grade |
 | Production ready | **false** — READY_FOR_HUMAN_REVIEW |
 | Subtitle workaround | `scripts/assemble_easel.py` — strips subtitle, runs upstream, burns separately (no upstream modification) |
+
+## M5 Evidence-First Production Chain (Issue #6) — IMPLEMENTED 2026-10-31
+
+| Property | Value |
+|---|---|
+| Entry | `python scripts/m5_production.py projects/<slug>` |
+| Evidence layer | `src/contentops/evidence/` — `SourceArtifact`, `ClaimLedger` |
+| Stages | sources → assets → claims → script → narration → subtitles → storyboard → compose → QC → review |
+| First run | `projects/m5-easel-pin` — 4 sources, 4 claims, 3 declared visuals, 7 lines |
+| Narration | Windows SAPI, offline, 45.1 s, `voice_quality: windows_sapi_offline` |
+| Subtitles | 7 cues burned from the narration timings, coverage 0.963 |
+| Composition | pinned Easel, 1080×1920 H.264 + AAC |
+| QC | PASS — 19 checks, real-source ratio 1.0 |
+| Production ready | **false** — `PENDING_FOUNDER_REVIEW`, scores null |
+| Tests | `tests/test_m5_evidence.py` — 18 offline tests |
+
+Composer defect fixed in the same change: ASS subtitle timestamps were written
+with three fractional digits, which libass reads as centiseconds, stretching
+every cue roughly tenfold and overlapping neighbours. `assemble_easel._srt_to_ass`
+now emits centiseconds; verified by rendering the cues on black and by diffing
+the burned band against the unburned render.
 
 ## Web Workbench
 
@@ -86,7 +109,7 @@
 ## Known Blockers
 
 1. Voice quality — edge-tts is mechanical, not production-grade. Primary motivation for MiniMax voice integration (M2).
-2. Web workbench — 6 doctor FAILs. Does not block video pipeline.
+2. Web workbench — 7 doctor FAILs (Web UI/API packages, frontend build, `.env` key, gateway). Clearing them needs network installs and a key; none is used by the compose path, which still runs.
 3. Gateway healthz — upstream hardcodes port 18789; easel profile uses 37289. Does not block video pipeline.
 4. Human Review — no `human-review.json` receipt for easel-review project.
 5. ~~Main branch unprotected~~ — **RESOLVED** (G0.6): main is now protected via GitHub branch protection.

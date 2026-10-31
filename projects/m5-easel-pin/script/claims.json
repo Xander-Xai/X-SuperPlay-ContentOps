@@ -1,0 +1,32 @@
+{
+  "schema": "contentops.claim-ledger/v1",
+  "claims": [
+    {
+      "id": "easel_pin",
+      "text": "Easel 运行时固定在 v0.2.1，提交为 3fe2d99。",
+      "artifacts": ["agents_pin", "easel_lock"],
+      "quotes": [
+        "Easel is pinned at v0.2.1 / commit `3fe2d99`",
+        "\"commit\": \"3fe2d9904c1619281ef57f81d9ee0b7854998399\""
+      ]
+    },
+    {
+      "id": "pin_verifiable",
+      "text": "本地运行时按内容哈希与上游固定提交逐文件比对，缺失、改动或多出的文件都会被指出。",
+      "artifacts": ["verifier"],
+      "quotes": ["MISSING / MISMATCH / EXTRA entries instead of a"]
+    },
+    {
+      "id": "no_auto_upgrade",
+      "text": "上游升级需要创始人批准，不允许自动升级。",
+      "artifacts": ["upstream_doc"],
+      "quotes": ["**No auto-upgrade.** Upstream upgrades require Founder approval."]
+    },
+    {
+      "id": "legacy_clone",
+      "text": "仓库根目录的遗留 Easel 克隆不是 v0.2.1，不能作为生产引擎。",
+      "artifacts": ["upstream_doc"],
+      "quotes": ["**Legacy clone** at `Easel/` (commit `4b9c03c`, NOT v0.2.1)"]
+    }
+  ]
+}

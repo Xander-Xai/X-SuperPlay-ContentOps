@@ -30,6 +30,9 @@ translation_status: synced
 | 路径 | ```.runtime/easel/``` |
 | 获取方式 | Release archive（GitHub tarball via ```gh api```） |
 | 验证 | 982/982 blob SHA-1 匹配上游 tree |
+| 复核 | 2026-10-31 通过 ```scripts/verify_easel_runtime.py```（982/982，缺失 0，不一致 0，多余 0） |
+| 独立交叉校验 | 2026-10-31 对照官方 ```v0.2.1``` Release 归档：982 个文件，缺失 0，不一致 0 |
+| 本地多出文件 | 仅 ```outputs/``` 与 ```__pycache__/```；没有任何受跟踪文件与上游不同 |
 | 锁文件 | ```runtime/easel.lock.json``` |
 | 来源记录 | ```runtime/easel-runtime.json``` |
 
@@ -43,6 +46,25 @@ translation_status: synced
 | 语音质量 | ```edge_tts_fallback``` — 非生产级 |
 | 生产就绪 | **否** — READY_FOR_HUMAN_REVIEW |
 | 字幕变通 | ```scripts/assemble_easel.py``` — 移除字幕，运行上游，单独烧录（不修改上游） |
+
+## M5 证据优先生产链（Issue #6）—— 已实现 2026-10-31
+
+| 属性 | 值 |
+|---|---|
+| 入口 | ```python scripts/m5_production.py projects/<slug>``` |
+| 证据层 | ```src/contentops/evidence/``` — ```SourceArtifact```、```ClaimLedger``` |
+| 阶段 | 来源 → 素材 → 声明 → 脚本 → 旁白 → 字幕 → 分镜 → 合成 → QC → 评审 |
+| 首次运行 | ```projects/m5-easel-pin``` — 4 个来源、4 条声明、3 个已声明素材、7 行文案 |
+| 旁白 | Windows SAPI，离线，45.1 秒，```voice_quality: windows_sapi_offline``` |
+| 字幕 | 7 条字幕按旁白时间轴烧录，覆盖率 0.963 |
+| 合成 | 钉版 Easel，1080×1920 H.264 + AAC |
+| QC | PASS — 19 项检查，真实来源占比 1.0 |
+| 生产就绪 | **否** — ```PENDING_FOUNDER_REVIEW```，评分为 null |
+| 测试 | ```tests/test_m5_evidence.py``` — 18 项离线测试 |
+
+同一次变更修复了合成器缺陷：ASS 字幕时间戳被写成三位小数，libass 按厘秒解析，
+导致每条字幕被拉长约十倍并相互重叠。```assemble_easel._srt_to_ass``` 现按厘秒输出；
+通过在纯黑画面上渲染字幕条、并与未烧录版本逐秒比对完成验证。
 
 ## MiniMax
 
@@ -71,7 +93,7 @@ translation_status: synced
 ## 已知阻碍
 
 1. 语音质量 — edge-tts 机械感重，非生产级。MiniMax 语音集成（M2）的主要动机。
-2. Web 工作台 — 6 项 doctor 失败。不阻塞视频流水线。
+2. Web 工作台 — 7 项 doctor 失败（Web UI/API 依赖包、前端构建、```.env``` 密钥、gateway）。清除它们需要联网安装和密钥；这些都不是合成路径所需，合成仍可运行。
 3. Gateway healthz — 上游硬编码端口 18789；easel profile 使用 37289。不阻塞视频流水线。
 4. 人工审查 — easel-review 项目无 ```human-review.json``` 凭证。
 5. ~~Main 分支未保护~~ — **已解决**（G0.6）：main 现已通过 GitHub 分支保护机制保护。

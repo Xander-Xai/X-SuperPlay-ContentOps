@@ -113,6 +113,25 @@ What it does:
 Voice: Windows SAPI (or silence). Marked `voice_quality: fallback`.
 This engine is **diagnostic only** — never reports `production_ready: true`.
 
+### Evidence-first chain (M5)
+
+```powershell
+python scripts\m5_production.py projects\m5-easel-pin
+```
+
+Runs sources → assets → claims → script → narration → subtitles → storyboard →
+compose → QC → review, writing a receipt per stage. It refuses (`exit 4`,
+`state: BLOCKED`) at the first stage that cannot be backed: a source outside the
+repo, an asset whose SHA-256 drifted, a claim whose quote is not verbatim in its
+source, an undeclared asset, or subtitle coverage below 0.8.
+
+`--skip-compose` stops after the storyboard (no ffmpeg, no Easel) and is what CI
+and a fast edit loop use.
+
+Narration is the offline Windows SAPI voice; no network TTS is called. The run
+always ends at `PENDING_FOUNDER_REVIEW` with `production_ready: false` — a green
+QC is not publishing permission (ADR-005).
+
 ## 6. Run QC
 
 ```powershell

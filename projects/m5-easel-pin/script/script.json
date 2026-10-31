@@ -1,0 +1,55 @@
+{
+  "schema": "contentops.m5-script/v1",
+  "language": "zh-CN",
+  "lines": [
+    {
+      "id": "l1",
+      "claim": "easel_pin",
+      "narration": "Easel 固定在 v0.2.1，提交是 3fe2d99。",
+      "caption": "Easel 钉在 v0.2.1",
+      "asset_id": "version_evidence"
+    },
+    {
+      "id": "l2",
+      "claim": "easel_pin",
+      "narration": "听起来像洁癖，其实是可复现的底线。",
+      "caption": "不是洁癖，是底线",
+      "asset_id": "version_evidence"
+    },
+    {
+      "id": "l3",
+      "claim": "pin_verifiable",
+      "narration": "本地运行时按内容哈希，和上游这个提交逐文件比对。",
+      "caption": "逐文件比对内容哈希",
+      "asset_id": "version_evidence"
+    },
+    {
+      "id": "l4",
+      "claim": "pin_verifiable",
+      "narration": "少一个文件、改一个字节、多放一个文件，都会直接报错。",
+      "caption": "缺、改、多都报错",
+      "asset_id": "skill_layers"
+    },
+    {
+      "id": "l5",
+      "claim": "no_auto_upgrade",
+      "narration": "文档写得很清楚：不许自动升级，升级必须创始人批准。",
+      "caption": "升级要创始人批准",
+      "asset_id": "skills_dir"
+    },
+    {
+      "id": "l6",
+      "claim": "legacy_clone",
+      "narration": "根目录那个旧的 Easel 克隆也不是 v0.2.1，不能当生产引擎。",
+      "caption": "旧克隆不是 v0.2.1",
+      "asset_id": "skills_dir"
+    },
+    {
+      "id": "l7",
+      "claim": null,
+      "narration": "所以钉版本不是慢，是不让漂移悄悄混进生产。",
+      "caption": "钉版本，防漂移",
+      "asset_id": "version_evidence"
+    }
+  ]
+}

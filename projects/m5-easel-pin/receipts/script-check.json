@@ -1,0 +1,12 @@
+{
+  "schema": "contentops.m5-script-check/v1",
+  "ok": true,
+  "lines": 7,
+  "claims_cited": [
+    "easel_pin",
+    "legacy_clone",
+    "no_auto_upgrade",
+    "pin_verifiable"
+  ],
+  "claims_unused": []
+}
