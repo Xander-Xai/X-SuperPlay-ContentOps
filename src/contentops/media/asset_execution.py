@@ -94,6 +94,7 @@ __all__ = [
     "OUTCOME_UNSUPPORTED",
     "AssetExecutionRouter",
     "ExecutionContext",
+    "import_fingerprint",
     "ExecutionResult",
     "RealAssetLocator",
 ]
@@ -126,7 +127,7 @@ IMPORT_SCHEMA = "contentops.media-import/v1"
 IMPORT_RECEIPT_SUFFIX = ".receipt.json"
 
 
-def _import_fingerprint(kind: str, digest: str) -> str:
+def import_fingerprint(kind: str, digest: str) -> str:
     """Stable identity for an adopted file: its kind and its content.
 
     Keyed on the digest, so re-importing the same bytes is the same import while a
@@ -395,7 +396,7 @@ class AssetExecutionRouter:
             "transport": "local_import",
             "transport_version": "1",
             "imported_kind": planned.kind,
-            "fingerprint": _import_fingerprint(planned.kind, digest),
+            "fingerprint": import_fingerprint(planned.kind, digest),
             "canonical_path": str(found),
             "output_sha256": digest,
             "bytes": found.stat().st_size,
@@ -431,7 +432,7 @@ class AssetExecutionRouter:
             path=str(found),
             sha256=digest,
             receipt_ref=receipt_path.name,
-            fingerprint=_import_fingerprint(planned.kind, digest),
+            fingerprint=import_fingerprint(planned.kind, digest),
             asset_kind=planned.kind,
             generated=record.generated,
             evidence_capable=record.evidence_capable,
@@ -483,7 +484,7 @@ class AssetExecutionRouter:
             "transport": "local_deterministic",
             "transport_version": "1",
             "imported_kind": AssetKind.DIAGRAM,
-            "fingerprint": _import_fingerprint(AssetKind.DIAGRAM, digest),
+            "fingerprint": import_fingerprint(AssetKind.DIAGRAM, digest),
             "canonical_path": str(rendered),
             "output_sha256": digest,
             "bytes": rendered.stat().st_size,
@@ -521,7 +522,7 @@ class AssetExecutionRouter:
                 path=str(rendered),
                 sha256=digest,
                 receipt_ref=receipt_path.name,
-                fingerprint=_import_fingerprint(AssetKind.DIAGRAM, digest),
+                fingerprint=import_fingerprint(AssetKind.DIAGRAM, digest),
                 asset_kind=AssetKind.DIAGRAM,
                 generated=record.generated,
                 evidence_capable=record.evidence_capable,

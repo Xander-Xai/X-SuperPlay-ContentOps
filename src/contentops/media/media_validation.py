@@ -328,6 +328,34 @@ class VideoValidationAdapter:
         return passed, failures, detail
 
 
+@dataclass
+class AudioValidationAdapter:
+    """Adapter for licensed background music and sound effects.
+
+    This modality exists because the repository gained a way to adopt non-speech
+    audio (see :mod:`contentops.media.media_use_adapter`), and the alternative —
+    filing a sound effect under ``SPEECH`` — would have implied a transcript,
+    pronunciation and a loudness contract that a BGM track does not have.
+
+    It accepts only the import schema. A catalog download or a local file was
+    produced by no provider call, so a provider schema would misstate its
+    origin, and there is no audio-generation receipt in this repository yet. The
+    import record carries ``output_sha256``, which is the digest checked here.
+    """
+
+    modality: str = MediaModality.AUDIO
+    accepted_schemas: Tuple[str, ...] = ("contentops.media-import/v1",)
+    digest_fields: Tuple[str, ...] = ("output_sha256",)
+    carries_provenance_flags: bool = True
+    registry_kind: Optional[str] = None
+
+    def check_technical(self, envelope: MediaAssetEnvelope, receipt: Dict[str, Any]) -> Tuple[bool, List[str], Dict[str, Any]]:
+        passed, failures, detail, _ = _technical_or_not_applicable(
+            receipt, self.modality
+        )
+        return passed, failures, detail
+
+
 #: One dispatch table, at a protocol boundary. This is the only place a modality
 #: name is turned into behaviour, which is what keeps the validator itself free of
 #: modality branches.
@@ -335,6 +363,7 @@ _DEFAULT_ADAPTERS = (
     SpeechValidationAdapter(),
     ImageValidationAdapter(),
     VideoValidationAdapter(),
+    AudioValidationAdapter(),
 )
 
 

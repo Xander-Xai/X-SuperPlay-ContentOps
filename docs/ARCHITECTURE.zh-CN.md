@@ -44,6 +44,25 @@ FFmpeg / 确定性工具
 = 渲染 / 媒体工具
 ```
 
+## media-use 集成（Issue #57）
+
+`media-use` 是上游 HyperFrames 仓库（Apache-2.0）中的技能。它以**固定版本的外部依赖**方式使用，不复制进本仓库（ADR-008）。
+
+```text
+src/contentops/media/media_use_adapter.py  ← 唯一知道该技能存在的模块
+scripts/media_use_adapter.py               ← 运维 CLI
+   status | doctor | candidates | resolve | adopt | ingest | import | verify | demo
+```
+
+两项契约扩展使映射保持诚实：
+
+- `AssetKind.LICENSED_EXTERNAL` —— 已授权的第三方素材。它既不是实拍捕获，也不是模型生成，因此同时排除在 `EVIDENCE_CAPABLE` 与 `GENERATED` 之外。
+- `MediaModality.AUDIO` —— 背景音乐与音效。它不是旁白，因此不带 `asset_kind`，也永远不能作为证据。
+
+导入结果写入 `contentops.media-import/v1` 回执，并进入唯一的 `MediaManifest`。技能的 `.media/manifest.jsonl` 只用于按记录 ID 查询，绝不构成第二套资产清单。
+
+默认全部关闭：无网络、无付费供应商、无跨项目复用、不强制指定供应商。子进程使用项目内 `HOME`、白名单环境变量，并通过 `scripts/process_utils.hidden_run` 以参数数组调用。
+
 ## 扩展策略
 
 ```text

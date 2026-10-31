@@ -25,6 +25,7 @@ translation_status: synced
 
 - [SOURCE-ARTIFACT-CONTRACT.md](SOURCE-ARTIFACT-CONTRACT.md)
 - [MEDIA-PROVIDER-CONTRACT.md](MEDIA-PROVIDER-CONTRACT.md)
+- [adr/ADR-008-media-use-adapter.md](adr/ADR-008-media-use-adapter.md) — HyperFrames `media-use` 集成：固定版本适配器，不复制上游
 - [CROSS-REPO-INTEGRATION.md](CROSS-REPO-INTEGRATION.md)
 
 ## 上游
@@ -41,6 +42,16 @@ translation_status: synced
 - [DEVELOPMENT-STANDARD.md](DEVELOPMENT-STANDARD.md) — 开发规则
 - [FILE-PLACEMENT-POLICY.md](FILE-PLACEMENT-POLICY.md) — 文件归属规则
 - [GLOSSARY.md](GLOSSARY.md) — 高频术语表
+
+## 决策
+
+- [adr/ADR-001-easel-runtime.md](adr/ADR-001-easel-runtime.md)
+- [adr/ADR-002-contentops-boundaries.md](adr/ADR-002-contentops-boundaries.md)
+- [adr/ADR-003-minimax-plan-provider.md](adr/ADR-003-minimax-plan-provider.md)
+- [adr/ADR-004-cross-repo-source-contract.md](adr/ADR-004-cross-repo-source-contract.md)
+- [adr/ADR-005-human-approval.md](adr/ADR-005-human-approval.md)
+- [adr/ADR-006-upstream-upgrade-policy.md](adr/ADR-006-upstream-upgrade-policy.md)
+- [adr/ADR-008-media-use-adapter.md](adr/ADR-008-media-use-adapter.md)
 
 ## 事实优先级
 

@@ -160,3 +160,35 @@ python scripts\test_basic.py
 9 tests covering: doctor execution, project creation idempotency, QC FAIL on
 missing video, blob SHA-1 verification, path exclusion symmetry, foreign
 remote rejection, archive provenance acceptance/rejection.
+
+## 10. media-use assets (optional)
+
+Requires the pinned skill at `~/.agents/skills/media-use` and Node ≥ 18. **No
+network, paid provider or cross-project reuse is authorized by default.**
+
+```powershell
+python scripts\media_use_adapter.py status
+python scripts\media_use_adapter.py doctor
+
+# Look, then resolve. A project candidate is reused before any provider.
+python scripts\media_use_adapter.py candidates --type image --project projects\<slug>
+python scripts\media_use_adapter.py resolve --type sfx --intent "soft transition" --project projects\<slug>
+
+# Register files already under <project>\assets, then import one by id.
+python scripts\media_use_adapter.py adopt --project projects\<slug>
+python scripts\media_use_adapter.py import --type image --record-id img_001 `
+  --license "CC-BY-4.0" --attribution "..." --project projects\<slug>
+
+python scripts\media_use_adapter.py verify --project projects\<slug> --path assets\pic.png
+
+# Offline end-to-end sample: fixtures + real screenshots + bundled SFX.
+python scripts\media_use_adapter.py demo --project projects\media-use-demo
+```
+
+Exit codes: `0` completed, `2` usage, `5` BLOCKED / a human decision is needed,
+`1` unexpected failure. Authorization flags (`--allow-network`,
+`--allow-paid --budget`, `--allow-cross-project`, `--allowed-provider`) are
+explicit and off by default.
+
+`import` refuses an empty `--license`. media-use records carry no licence field,
+so the licence is a human decision and is never defaulted.

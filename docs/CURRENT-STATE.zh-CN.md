@@ -462,3 +462,41 @@ QC 回执在被提交前会经过一道净化边界（`contentops.qc_canonical`�
 它**不**证明真实的 `SourceArtifact` 摄取、`Claim Ledger` 完整性、创始人批准、
 生产黄金样本，或三次连续生产构建。产出为 `production_ready=false` /
 `PENDING_FOUNDER_REVIEW`，且代码路径中没有任何分支能给出相反结论。
+
+## HyperFrames media-use 集成（Issue #57）—— 已实现 2026-10-31
+
+分支 `feat/57-media-use-adapter`。**零供应商调用，零网络调用。**
+
+| 项目 | 值 |
+|---|---|
+| 上游 | `heygen-com/hyperframes` @ `5e4f5aefb58a9996ea5920f008184e9789346871`（Apache-2.0） |
+| 技能提交 | `f2358315e59731833334c5d881a7fb5543c22a97`（`skills/media-use`） |
+| 适配器 | `src/contentops/media/media_use_adapter.py` —— 唯一知道该技能存在的模块 |
+| CLI | `scripts/media_use_adapter.py` —— `status/doctor/candidates/resolve/adopt/ingest/import/verify/demo` |
+| 新增类型 | `AssetKind.LICENSED_EXTERNAL`、`MediaModality.AUDIO` |
+| 回执 | `contentops.media-import/v1`，含 `output_sha256`、`fingerprint`、`generated`、`evidence_capable`、`production_ready`、`human_review`、`license` |
+| 证据边界 | 所有导入均为 `evidence_capable=false`；生成结果一律 `GENERATED_NOT_IMPORTABLE` |
+| 跨项目 | 未显式授权则阻断；子进程 `HOME` 固定在项目内 |
+| 测试 | 29 项适配器测试通过（23 项不依赖 Node，6 项依赖 Node）；97 项 M4.5 收敛测试通过 |
+
+### 离线端到端样本
+
+`python scripts/media_use_adapter.py demo`（退出码 `0`）产出
+`project://final/media-use-demo.mp4` —— 1080x1920，h264，30.0 秒，300,437 字节。
+
+| 事实 | 值 |
+|---|---|
+| Manifest | `receipts/media-manifest.json`，指纹 `2b01c1cb716723007527a422dff4810b16db1d9b090e61a5f2a5de578a5ba75d` |
+| 清单 | 7 个资产：2 张真实截图、2 张授权图片、1 个图标、1 段 BGM、1 段内置 SFX |
+| 时间线 | 2 个占位，均为 `SCREENSHOT`，`real_source_ratio` **1.0** |
+| 经 media-use 导入 | 5 条记录（4 个本地夹具标注 `OWNED-FIXTURE-DEMO`，1 段内置 SFX `Apache-2.0`） |
+| 门控 | 所有资产 `PENDING_HUMAN_REVIEW` |
+| 最终 QC | `overall: WARN`（无 FAIL），`currency: NON_CURRENT_DIAGNOSTIC` |
+| 供应商调用 | 语音 0 / 图像 0 / 视频 0 |
+| `production_ready` | `false` |
+
+两张真实截图来自 `projects/easel-review/sources/screenshots/`。图片与 BGM 夹具由 demo
+确定性生成，回执中已明确标注；它们**不是**第三方授权素材。当本地无候选且未授权网络时，
+图片解析会记录为 `NEEDS_HUMAN_ACTION` —— 不会为了"看起来完整"而下载或生成任何东西。
+
+该渲染只是技术集成样本：无音轨、无字幕、无创始人批准，`qc_video` 正是对这些点给出警告。
