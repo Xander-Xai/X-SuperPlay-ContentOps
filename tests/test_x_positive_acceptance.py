@@ -279,6 +279,22 @@ def test_url_syntax_is_not_a_publication_proof():
 
 
 @test
+def test_paths_cannot_escape_the_project_or_the_repository():
+    with tempfile.TemporaryDirectory() as temp:
+        project = _project(temp)
+        record = copy.deepcopy(_record())
+        record["image"] = {"path": "../outside.png"}
+        codes = _codes(record, project)
+        assert "IMAGE_PATH_ESCAPE" in codes, codes
+
+        record = copy.deepcopy(_record())
+        record["provenance"] = {"source": "../../outside.md"}
+        codes = _codes(record, project)
+        assert "PROVENANCE_PATH_ESCAPE" in codes, codes
+    print("[ok] 10b. image and provenance paths cannot escape their roots")
+
+
+@test
 def test_another_accounts_record_cannot_borrow_this_gate():
     with tempfile.TemporaryDirectory() as temp:
         project = _project(temp)

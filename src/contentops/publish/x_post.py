@@ -96,7 +96,13 @@ def _check_provenance(post: Dict[str, Any]) -> List[Issue]:
                       "where it came from cannot be checked against anything")]
     if source.lower().startswith(("http://", "https://")):
         return []
-    if not (REPO_ROOT / source).exists():
+    try:
+        candidate = (REPO_ROOT / source).resolve()
+        candidate.relative_to(REPO_ROOT.resolve())
+    except (OSError, ValueError):
+        return [Issue("PROVENANCE_PATH_ESCAPE",
+                      f"provenance source {source!r} leaves the repository")]
+    if not candidate.exists():
         return [Issue("PROVENANCE_SOURCE_ABSENT",
                       f"provenance source {source!r} is not a path in this tree")]
     return []
@@ -232,6 +238,13 @@ def _check_image(post: Dict[str, Any], account: Dict[str, Any],
     path = Path(str(image["path"]))
     if root is not None and not path.is_absolute():
         path = Path(root) / path
+    if root is not None:
+        try:
+            path.resolve().relative_to(Path(root).resolve())
+        except (OSError, ValueError):
+            return [Issue("IMAGE_PATH_ESCAPE",
+                          f"{image['path']!r} leaves the project directory; a card "
+                          "is evidence only when it belongs to this project")]
     suffix = path.suffix.lower().lstrip(".")
     if suffix == "svg":
         return [Issue("IMAGE_NOT_RASTER",
