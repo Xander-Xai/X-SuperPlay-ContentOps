@@ -49,6 +49,7 @@ Tier-1 docs have zh-CN mirrors with `.zh-CN.md` suffix. Run `python scripts/chec
 - [adr/ADR-004-cross-repo-source-contract.md](adr/ADR-004-cross-repo-source-contract.md)
 - [adr/ADR-005-human-approval.md](adr/ADR-005-human-approval.md)
 - [adr/ADR-006-upstream-upgrade-policy.md](adr/ADR-006-upstream-upgrade-policy.md)
+- [adr/ADR-007-m5-evidence-production-chain.md](adr/ADR-007-m5-evidence-production-chain.md)
 
 ## Agent Rules
 

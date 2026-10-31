@@ -1,0 +1,38 @@
+{
+  "schema": "contentops.m5-run/v1",
+  "project": "projects/m5-easel-pin",
+  "stages": {
+    "sources": {
+      "count": 4
+    },
+    "assets": {
+      "count": 3
+    },
+    "claims": {
+      "count": 4
+    },
+    "script": {
+      "lines": 7
+    },
+    "narration": {
+      "duration_s": 45.142,
+      "engine": "windows_sapi"
+    },
+    "subtitles": {
+      "cues": 7
+    },
+    "storyboard": {
+      "shots": 7
+    },
+    "compose": {
+      "state": "OK",
+      "video": "D:\\Projects\\X-SuperPlay-ContentOps\\.claude\\worktrees\\m5-production\\projects\\m5-easel-pin\\final\\m5-easel-pin.mp4"
+    },
+    "qc": {
+      "overall": "PASS",
+      "audio": true
+    }
+  },
+  "production_ready": false,
+  "human_review": "PENDING_FOUNDER_REVIEW"
+}

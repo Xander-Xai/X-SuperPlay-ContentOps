@@ -185,6 +185,15 @@ jobs:
       - name: Run receipt-secret tests
         run: python tests/test_receipt_secrets.py
 
+      # M5 evidence layer. Fully offline: temporary fixtures only, no ffmpeg, no
+      # provider. The decisive assertions are that an artifact with permission
+      # NONE cannot back a claim even when its quote matches, that a claim whose
+      # quote disappeared is reported instead of accepted, and that burned
+      # subtitle timestamps stay in ASS centiseconds (a 3-digit fraction silently
+      # stretched every cue by an order of magnitude).
+      - name: Run M5 evidence regression tests
+        run: python tests/test_m5_evidence.py
+
       - name: Enforce subprocess policy
         run: python scripts/check_subprocess_policy.py
 

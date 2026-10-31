@@ -54,6 +54,21 @@ python scripts\run_v1.py projects\my-video
 python scripts\qc_video.py projects\my-video
 ```
 
+## 5.1 证据优先生产链（M5）
+
+```powershell
+python scripts\m5_production.py projects\m5-easel-pin
+```
+
+来源 → 素材 → 声明 → 脚本 → 旁白 → 字幕 → 分镜 → 合成 → QC → 评审，每个阶段写一份凭证。
+任何阶段无法被证据支撑即拒绝（`exit 4`，`state: BLOCKED`）：来源在仓库外、素材 SHA-256 变化、
+声明的引文不在来源中逐字出现、素材未声明、字幕覆盖率低于 0.8。
+
+`--skip-compose` 在分镜后停止（不调用 ffmpeg、不调用 Easel）。
+
+旁白使用离线 Windows SAPI 语音，不调用任何联网 TTS。运行始终停在
+`PENDING_FOUNDER_REVIEW`，`production_ready: false` —— QC 通过不等于允许发布。
+
 ## 6. 开发门控
 
 ```bash

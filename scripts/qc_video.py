@@ -381,10 +381,28 @@ def qc(project: Path, target: str = "") -> dict:
         if d.exists():
             for pat in ("*.png", "*.jpg", "*.jpeg"):
                 real.extend(d.glob(pat))
+    # A project may cite tracked evidence owned by another project instead of
+    # copying it. Its declared manifest counts, but only for entries whose file
+    # exists and whose type is a real capture.
+    declared = 0
+    manifest = project / "sources" / "assets.json"
+    if manifest.is_file():
+        try:
+            for asset in (json.loads(manifest.read_text(encoding="utf-8")).get("assets") or []):
+                if str(asset.get("type") or "").lower() not in REAL_SOURCE_TYPES:
+                    continue
+                rel = asset.get("repo_path")
+                target = (ROOT / rel) if rel else (project / str(asset.get("path") or ""))
+                if rel or asset.get("path"):
+                    if target.is_file():
+                        declared += 1
+        except (OSError, ValueError):
+            declared = 0
     checks.append({
-        "id": "real_evidence_present", "ok": len(real) > 0,
-        "severity": "WARN" if len(real) == 0 else "PASS",
-        "value_count": len(real),
+        "id": "real_evidence_present", "ok": (len(real) + declared) > 0,
+        "severity": "WARN" if (len(real) + declared) == 0 else "PASS",
+        "value_count": len(real) + declared,
+        "from_manifest": declared,
     })
 
     # 12) voice provenance. Prefer the storyboard's recorded provider — it is

@@ -1,0 +1,7 @@
+{
+  "status": "OK",
+  "video": "D:\\Projects\\X-SuperPlay-ContentOps\\.claude\\worktrees\\m5-production\\projects\\m5-easel-pin\\final\\m5-easel-pin.mp4",
+  "subtitles_burned": true,
+  "upstream": "D:\\Projects\\X-SuperPlay-ContentOps\\.claude\\worktrees\\m5-production\\.runtime\\easel\\skills\\openclaw\\auto-short-video\\scripts\\assemble.py",
+  "upstream_intermediate": "D:\\Projects\\X-SuperPlay-ContentOps\\.claude\\worktrees\\m5-production\\.runtime\\easel\\outputs\\m5-easel-pin\\final.mp4"
+}

@@ -1,0 +1,45 @@
+{
+  "schema": "contentops.m5-assets/v1",
+  "policy": "Every visual used in a run is listed here with its hash, origin and usage scope. Nothing is used implicitly.",
+  "assets": [
+    {
+      "id": "version_evidence",
+      "sha256": "6f8603af5e83e48202d263c67da5fbd248d25cadf004365cdb67f8ed220c6d20",
+      "type": "REAL_SCREENSHOT",
+      "origin": "projects/easel-review/sources/screenshots/12-easel-version-evidence.png",
+      "captured_at": null,
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "explainer B-roll",
+      "restrictions": "shows the owner's own repository paths only",
+      "qc_status": "LEGIBLE",
+      "notes": "capture date was not recorded when it was taken; the output it shows was reproduced on 2026-10-31 by scripts/verify_easel_runtime.py (VERIFIED 982/982, upstream 3fe2d99)",
+      "repo_path": "projects/easel-review/sources/screenshots/12-easel-version-evidence.png"
+    },
+    {
+      "id": "skill_layers",
+      "sha256": "d7b01af2b2d3e2841f0948a284265496bd1b6fc4fe287dec81403c61145431f0",
+      "type": "REAL_SCREENSHOT",
+      "origin": "projects/easel-review/sources/screenshots/13-easel-skill-layers.png",
+      "captured_at": null,
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "explainer B-roll",
+      "restrictions": "none beyond repository paths",
+      "qc_status": "LEGIBLE",
+      "notes": "counts 114 SKILL.md files in the pinned runtime",
+      "repo_path": "projects/easel-review/sources/screenshots/13-easel-skill-layers.png"
+    },
+    {
+      "id": "skills_dir",
+      "sha256": "2d6fdabadff9dfc0e14c54b16e7583e3a00a9f94d777750cd1fd3654b7b6bbe0",
+      "type": "REAL_SCREENSHOT",
+      "origin": "projects/easel-review/sources/screenshots/14-easel-skills-dir.png",
+      "captured_at": null,
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "explainer B-roll",
+      "restrictions": "lists the pinned runtime's own directory names",
+      "qc_status": "LEGIBLE",
+      "notes": "shows the 114 skill directories present in the pinned runtime; readable on a phone screen",
+      "repo_path": "projects/easel-review/sources/screenshots/14-easel-skills-dir.png"
+    }
+  ]
+}
