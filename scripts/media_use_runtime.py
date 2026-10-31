@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Install, lock, verify and approve a HyperFrames media-use runtime.
 
-Four separate actions, on purpose:
+Five separate actions, on purpose:
 
-``install``  fetch the approved release and install its locked dependency tree
-``lock``     hash the installed tree into a machine-local runtime lock
-``verify``   re-check a lock against the committed baseline
-``approve``  flip the committed baseline's approval record (a human decision)
+``install``   fetch the approved release and install its locked dependency tree
+``lock``      hash the installed tree into a machine-local runtime lock
+``verify``    re-check a lock against the committed baseline
+``approve``   flip the committed baseline's approval record (a human decision)
+``selfcheck`` run local offline operations through the production adapter
 
 Generating a lock never approves anything, and approving never installs
 anything. A lock that does not derive from the approved baseline is refused.
