@@ -1,0 +1,46 @@
+{
+  "schema": "contentops.m5-run/v1",
+  "project": "projects/m5-media-use",
+  "stages": {
+    "sources": {
+      "count": 2
+    },
+    "media_use": {
+      "state": "OK",
+      "count": 3,
+      "bgm": true,
+      "sfx": 1
+    },
+    "assets": {
+      "count": 1
+    },
+    "claims": {
+      "count": 3
+    },
+    "script": {
+      "lines": 4
+    },
+    "narration": {
+      "duration_s": 25.058,
+      "engine": "windows_sapi"
+    },
+    "subtitles": {
+      "cues": 4
+    },
+    "storyboard": {
+      "shots": 4,
+      "bgm": true,
+      "sfx": 1
+    },
+    "compose": {
+      "state": "OK",
+      "video": "project://final/m5-media-use.mp4"
+    },
+    "qc": {
+      "overall": "WARN",
+      "audio": true
+    }
+  },
+  "production_ready": false,
+  "human_review": "PENDING_FOUNDER_REVIEW"
+}

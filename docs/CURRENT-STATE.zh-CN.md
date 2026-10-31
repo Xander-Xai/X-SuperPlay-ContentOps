@@ -529,7 +529,7 @@ QC 回执在被提交前会经过一道净化边界（`contentops.qc_canonical`�
 | Manifest | `receipts/media-manifest.json`，指纹 `2b01c1cb716723007527a422dff4810b16db1d9b090e61a5f2a5de578a5ba75d` |
 | 清单 | 7 个资产：2 张真实截图、2 张授权图片、1 个图标、1 段 BGM、1 段内置 SFX |
 | 时间线 | 2 个占位，均为 `SCREENSHOT`，`real_source_ratio` **1.0** |
-| 经 media-use 导入 | 5 条记录（4 个本地夹具标注 `OWNED-FIXTURE-DEMO`，1 段内置 SFX `Apache-2.0`） |
+| 经 media-use 导入 | 5 条记录（4 个本地夹具标注 `OWNED-FIXTURE-DEMO`，1 段内置 SFX `Pixabay-Content-License`） |
 | 门控 | 所有资产 `PENDING_HUMAN_REVIEW` |
 | 最终 QC | `overall: WARN`（无 FAIL），`currency: NON_CURRENT_DIAGNOSTIC` |
 | 供应商调用 | 语音 0 / 图像 0 / 视频 0 |
@@ -540,3 +540,32 @@ QC 回执在被提交前会经过一道净化边界（`contentops.qc_canonical`�
 图片解析会记录为 `NEEDS_HUMAN_ACTION` —— 不会为了"看起来完整"而下载或生成任何东西。
 
 该渲染只是技术集成样本：无音轨、无字幕、无创始人批准，`qc_video` 正是对这些点给出警告。
+
+## M5 media-use 自动化 —— INTEGRATION_VERIFIED 2026-10-31
+
+分支 `feat/57-media-use-m5-integration`（工作树），由 `main` 叠加 Draft PR #64、#68、#69。
+**零供应商调用、零网络。** 真实的 `scripts/m5_production.py` 入口在 Windows 上调用真实的
+`MediaUseAdapter`，运行时为已批准的 `hyperframes@0.8.222`。
+
+| 属性 | 值 |
+|---|---|
+| 入口 | `python scripts/m5_production.py projects/m5-media-use` |
+| 运行时 | 本机锁 `contentops.media-use-runtime-lock/v2`，状态 `TRUSTED_RUNTIME`，基线摘要匹配 |
+| 配置 | `projects/m5-media-use/project.yaml` → `media_use.requests`（image、bgm、sfx） |
+| 执行阶段 | sources → media_use → assets → claims → script → narration → subtitles → storyboard → Easel compose → QC → review |
+| 导入视觉 | `project://assets/support.png`，SHA-256 `85c4ab5c5368b1ab60a98854ee292529d6b7908be58acfccc1d5f4ed06cddb53`，`evidence_capable=false` |
+| 导入 BGM | 本地确定性音床，SHA-256 `1dcb9c7e3708cfc0cc68663642cc9d6b779ff7bd5812fdb6e31e4d74f5b4ee5e` |
+| 导入 SFX | 内置 `sfx_001`，Pixabay Content License，回执 `contentops.media-import/v1` |
+| 最终产物 | `projects/m5-media-use/final/m5-media-use.mp4` —— h264 1080x1920 + AAC 48 kHz 立体声，25.07 秒，505,448 字节，SHA-256 `d4915f45f98008e4adbaa52d29beb787ffc437d383f15415780830aeaf33d731` |
+| QC | `overall: WARN`，存在音频流，无 FAIL |
+| 人工审阅 | `PENDING_FOUNDER_REVIEW`；`production_ready: false` |
+| 合成证据 | 1 秒、2 秒、13 秒、14 秒的帧都能看到导入截图与对应烧录字幕 |
+| BGM 证据 | 行间停顿 11.70–12.20 秒：有 BGM 为 −60.9 dB，无 BGM 为 −91.0 dB（相差 30.1 dB） |
+| SFX 证据 | 6.15–6.28 秒：有 SFX 为 −33.4 dB，无 SFX 为 −60.8 dB（相差 27.4 dB） |
+| 旁白保留 | 三段渲染中同一语音窗口均为 −26.8 dB，说明两条音轨都没有替代旁白 |
+| 负向验收 | 11/11 正确阻断：缺失/错误锁、素材缺失、哈希不匹配、路径越界、导入文件缺失、网络、付费、未授权、重复 ID、旧项目行为不变 |
+| 提交的示例 | `projects/m5-media-use/`；媒体二进制与 `.media/` 仍被忽略，回执入库 |
+| 路由 | **BLOCKED** —— `main` 上没有 `scripts/skill_route.py`，路由工作仍停留在未合并的 `feat/content-router`。元数据记录在 ADR-008，未另建第二套路由器 |
+
+`INTEGRATION_VERIFIED` 只说明这台机器与这把锁。它不是 `MERGED_TO_MAIN`，也不代表
+导入素材、旁白或视频已获批发布。

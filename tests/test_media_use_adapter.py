@@ -770,7 +770,7 @@ def test_adopt_ingest_and_verify_round_trip_through_the_cli():
         adopted = adapter.adopt(project_dir=project)
         assert adopted[0]["id"] == "img_001"
         ingested = adapter.ingest(
-            "sfx", frozen, project_dir=project, license="Apache-2.0"
+            "sfx", frozen, project_dir=project, license="Pixabay-Content-License"
         )
         assert ingested["path"].endswith("chime.mp3")
         (project / "assets" / "pic.png").write_bytes(b"pic")

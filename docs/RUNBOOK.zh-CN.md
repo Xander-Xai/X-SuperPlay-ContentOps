@@ -209,6 +209,32 @@ python scripts\media_use_adapter.py status
 回退：保留旧的运行时目录与其锁，把环境变量指回旧锁，并验证它针对生成时的基线报告
 `TRUSTED_RUNTIME`。绝不要手工编辑锁或逐文件哈希。
 
+### M5 自动获取素材
+
+在 `projects/<slug>/project.yaml` 里声明一次，主入口就会自动解析，无需单独调用 media-use：
+
+```yaml
+media_use:
+  enabled: true
+  mode: local-only
+  requests:
+    - {id: hero, kind: image, intent: "...", license: OWNED-BY-OPERATOR, rights_reviewed: true}
+    - {id: bed, kind: bgm, intent: "...", license: OWNED-GENERATED-LOCAL, rights_reviewed: true, volume: 0.18}
+    - {id: click, kind: sfx, intent: "...", license: Pixabay-Content-License, rights_reviewed: true, at: 6.15, volume: 0.55}
+```
+
+```powershell
+$env:CONTENTOPS_MEDIA_USE_RUNTIME_LOCK = "<本机已验证的锁>"
+python scripts\m5_production.py projects\m5-media-use
+```
+
+`stage_media_use` 在素材门控之前执行 `adopt → resolve → import_record → verify`。
+视觉导入会进入 `sources/assets.json` 校验；BGM 与 SFX 写入 `script/storyboard.json`
+（`bgm`、`bgm_volume`、`sfx[].at`、`sfx[].volume`），由钉死的 Easel 合成器混在旁白之下。
+`at` 必须落在旁白时间轴内，重复的音效放置会被拒绝。不会调用任何供应商。
+运行时锁缺失或不匹配时，运行以退出码 `4` / `BLOCKED` 停止。`project.yaml`
+没有 `media_use` 块的项目行为完全不变。
+
 ### 隔离 Easel 演示不等于原始运行时
 
 media-use 演示通过另一套已验证的 Easel 运行时合成。演示成功与 QC `WARN` **不**表示

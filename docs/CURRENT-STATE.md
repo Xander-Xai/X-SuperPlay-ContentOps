@@ -415,7 +415,7 @@ egress; installation itself is a separate, reviewed preparation step.
 | Manifest | `receipts/media-manifest.json`, fingerprint `2b01c1cb716723007527a422dff4810b16db1d9b090e61a5f2a5de578a5ba75d` |
 | Inventory | 7 assets: 2 real screenshots, 2 licensed images, 1 icon, 1 BGM, 1 bundled SFX |
 | Timeline | 2 placements, both `SCREENSHOT`, `real_source_ratio` **1.0** |
-| Imported via media-use | 5 records (4 local fixtures labelled `OWNED-FIXTURE-DEMO`, 1 bundled SFX `Apache-2.0`) |
+| Imported via media-use | 5 records (4 local fixtures labelled `OWNED-FIXTURE-DEMO`, 1 bundled SFX `Pixabay-Content-License`) |
 | Gate | every asset `PENDING_HUMAN_REVIEW` |
 | Final QC | `overall: WARN` (no FAIL), `currency: NON_CURRENT_DIAGNOSTIC` |
 | Provider calls | speech 0 / image 0 / video 0 |
@@ -430,3 +430,34 @@ complete.
 
 The render is a technical integration sample. It has no audio track, no captions
 and no Founder approval, and `qc_video` warns about exactly that.
+
+## M5 media-use automation — INTEGRATION_VERIFIED 2026-10-31
+
+Branch `feat/57-media-use-m5-integration` (worktree), stacked from `main` plus
+Draft PRs #64, #68 and #69. **Zero provider calls; zero network.** The real
+`scripts/m5_production.py` entry ran the real `MediaUseAdapter` against the
+approved `hyperframes@0.8.222` runtime on Windows.
+
+| Property | Value |
+|---|---|
+| Entry point | `python scripts/m5_production.py projects/m5-media-use` |
+| Runtime | host lock `contentops.media-use-runtime-lock/v2`, state `TRUSTED_RUNTIME`, baseline digest matched |
+| Configuration | `projects/m5-media-use/project.yaml` → `media_use.requests` (image, bgm, sfx) |
+| Stages run | sources → media_use → assets → claims → script → narration → subtitles → storyboard → Easel compose → QC → review |
+| Imported visual | `project://assets/support.png`, SHA-256 `85c4ab5c5368b1ab60a98854ee292529d6b7908be58acfccc1d5f4ed06cddb53`, `evidence_capable=false` |
+| Imported BGM | local deterministic tone bed, SHA-256 `1dcb9c7e3708cfc0cc68663642cc9d6b779ff7bd5812fdb6e31e4d74f5b4ee5e` |
+| Imported SFX | bundled `sfx_001`, Pixabay Content License, receipt `contentops.media-import/v1` |
+| Final artifact | `projects/m5-media-use/final/m5-media-use.mp4` — h264 1080x1920 + AAC 48 kHz stereo, 25.07 s, 505,448 B, SHA-256 `d4915f45f98008e4adbaa52d29beb787ffc437d383f15415780830aeaf33d731` |
+| QC | `overall: WARN`, audio stream present, no FAIL |
+| Human review | `PENDING_FOUNDER_REVIEW`; `production_ready: false` |
+| Composition proof | frames at 1 s, 2 s, 13 s and 14 s show the imported screenshot with the expected burned captions |
+| BGM proof | inter-line pause 11.70–12.20 s: −60.9 dB with BGM vs −91.0 dB without (−30.1 dB difference) |
+| SFX proof | 6.15–6.28 s: −33.4 dB with SFX vs −60.8 dB without (−27.4 dB difference) |
+| Narration preservation | the same voice window measures −26.8 dB in all three renders, so neither track replaced the voice |
+| Negative acceptance | 11/11 blocked: missing/wrong lock, missing material, hash mismatch, path escape, missing import file, network, paid, unlicensed, duplicate id, legacy project unchanged |
+| Committed example | `projects/m5-media-use/`; media binaries and `.media/` stay gitignored, receipts are committed |
+| Routing | **BLOCKED** — `scripts/skill_route.py` is not on `main`; router work remains unmerged on `feat/content-router`. Metadata is recorded in ADR-008; no second router was built |
+
+`INTEGRATION_VERIFIED` is a statement about this machine and this lock. It is
+not `MERGED_TO_MAIN`, and it does not approve the imported material, the voice
+track or the video for publication.
