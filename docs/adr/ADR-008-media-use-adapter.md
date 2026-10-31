@@ -237,5 +237,51 @@ media-use's own `.media/manifest.jsonl` only to look up a record by id.
 - Network and paid paths stay blocked: the released resolver can fall back from
   retrieval to generation, and no enforceable spending ceiling has been verified.
 - Images and icons currently require a network provider; the only offline
-  third-party source is the bundled SFX library. The demo records the image
+  third-party source is the bundled SFX library, whose audio files ship under the
+  Pixabay Content License even though the skill's code is Apache-2.0. The demo records the image
   refusal rather than fabricating a download.
+
+## Capability map — upstream, adapter, and M5
+
+The four columns are separate claims. `A` is what the reviewed skill offers;
+`B` is what this adapter routes; `C` is what the M5 main entry calls without a
+manual media-use step; `D` records what is deliberately not wired.
+
+| Capability | A — upstream skill | B — adapter | C — M5 automation | D — status / reason |
+|---|---|---|---|---|
+| Image | `resolve --type image` | `resolve` → `import_record` → `verify` | `media_use.requests[kind=image]` → visual asset | **AUTO_VERIFIED** (offline project material) |
+| Icon | `resolve --type icon` | same | `kind=icon` | **AUTO_VERIFIED** |
+| Logo | `resolve --type logo` | same | `kind=logo` | **AUTO_VERIFIED** |
+| Brand kit | `resolve --type brand` | same | not routed | **ADAPTER_ONLY** — no M5 consumer yet |
+| BGM | `resolve --type bgm` (no bundled library) | same | `kind=bgm`, one per project, `volume` | **AUTO_VERIFIED** with a project-local file; no offline catalog |
+| SFX | `resolve --type sfx` (bundled, Pixabay) | same | `kind=sfx`, `at` + `volume` | **AUTO_VERIFIED** |
+| Voice / avatar | skill-side TTS exists | not routed | offline Windows SAPI narration | **NOT_APPLICABLE** — speech stays in ContentOps' provider layer |
+| Video | skill-side generation exists | not routed | M4 H3 path | **NOT_APPLICABLE** — credit-billed, own quota/evidence rules |
+| Transcript | skill-side transcription exists | not routed | subtitles come from the approved script | **NOT_APPLICABLE** — ASR is a detector (`asr_backcheck.py`), never an approver |
+| Cutout / background | skill-side processing exists | not routed | none | **NOT_WIRED** — no M5 consumer or output contract |
+| Colour grade / LUT | skill-side grade exists | deliberately refused | deterministic transform layer | **NOT_APPLICABLE** — not an asset import; would create a second transform path |
+| Audio mixing | not a media-use capability | n/a | pinned Easel assembler mixes narration + BGM + timed SFX | **AUTO_VERIFIED** |
+
+`AUTO_VERIFIED` means the real M5 entry ran the real adapter against the approved
+runtime and produced a playable artifact on 2026-10-31. It does not mean the
+material's licence or production readiness was approved; every import remains
+`evidence_capable=false`, `production_ready=false`, `PENDING_FOUNDER_REVIEW`.
+
+## Skill metadata for future routing
+
+The global skill router from Issue #57 is **not merged** (`scripts/skill_route.py`
+does not exist on `main`; the related work lives on the unmerged
+`feat/content-router` branch). No second router is introduced here. The metadata
+a router needs is recorded below so registration is a data change, not a
+re-implementation:
+
+| Field | Value |
+|---|---|
+| Name | `media-use` |
+| Version / execution baseline | `hyperframes@0.8.222` |
+| Source reference | `heygen-com/hyperframes` @ `5e4f5aefb58a9996ea5920f008184e9789346871`; skill commit `f2358315e59731833334c5d881a7fb5543c22a97` |
+| Applicable pipeline / stage | `m5_production.py` → `stage_media_use` (optional, before `stage_assets`) |
+| Capabilities / outputs | image, icon, logo, brand, bgm, sfx → frozen project-local file + `contentops.media-import/v1` receipt |
+| Runtime dependency | `runtime/media-use-runtime-baseline.json` (approved) + host `contentops.media-use-runtime-lock/v2` |
+| Authorization / cost | local-only; network, paid generation and cross-project reuse refused; `provider_call=false` |
+| Availability | `TRUSTED_RUNTIME` on this host; `BLOCKED` without a matching lock |

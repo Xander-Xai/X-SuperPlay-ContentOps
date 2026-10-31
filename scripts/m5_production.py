@@ -93,21 +93,48 @@ def stage_sources(project: Path, config: Dict[str, Any]) -> Dict[str, Any]:
 
 
 
+VISUAL_MEDIA_KINDS = {"image", "icon", "logo"}
+AUDIO_MEDIA_KINDS = {"bgm", "sfx"}
+
+
+def _media_volume(request: Dict[str, Any], asset_id: str, default: float) -> float:
+    raw = request.get("volume", default)
+    if isinstance(raw, bool) or not isinstance(raw, (int, float)):
+        raise M5Blocked(f"{asset_id}: volume must be a number between 0 and 1")
+    value = float(raw)
+    if not 0.0 < value <= 1.0:
+        raise M5Blocked(f"{asset_id}: volume must be greater than 0 and at most 1")
+    return value
+
+
+def _media_sfx_at(request: Dict[str, Any], asset_id: str) -> float:
+    raw = request.get("at")
+    if isinstance(raw, bool) or not isinstance(raw, (int, float)):
+        raise M5Blocked(f"{asset_id}: an sfx request needs a numeric 'at' placement in seconds")
+    value = float(raw)
+    if value < 0.0:
+        raise M5Blocked(f"{asset_id}: 'at' cannot be negative")
+    return value
+
+
 def stage_media_use(project: Path, config: Dict[str, Any], *, adapter: Any = None) -> Dict[str, Any]:
     """Resolve configured local media-use needs automatically before M5 asset validation.
 
     This is an optional material-source stage, NOT a second catalog or renderer.
-    Already-declared M5 assets take precedence. Missing licensed visual assets
-    are resolved by the approved MediaUseAdapter, imported with its sidecar,
-    verified and then offered to the existing M5 asset/storyboard path.
+    Already-declared M5 assets take precedence. Missing licensed visuals and
+    audio beds/effects are resolved by the approved MediaUseAdapter, imported
+    with their sidecars, verified, then offered to the existing M5 asset and
+    storyboard path. Visual imports stay ``evidence_capable=false``; audio is a
+    support track and never enters ``sources/assets.json``.
     """
+    disabled = {"state": "DISABLED", "assets": {}, "audio": {"bgm": None, "sfx": []}, "count": 0}
     settings = config.get("media_use")
     if settings is None or settings is False:
-        return {"state": "DISABLED", "assets": {}, "count": 0}
+        return disabled
     if not isinstance(settings, dict):
         raise M5Blocked("media_use must be a mapping")
     if settings.get("enabled") is not True:
-        return {"state": "DISABLED", "assets": {}, "count": 0}
+        return disabled
     if settings.get("mode", "local-only") != "local-only":
         raise M5Blocked("media_use only supports local-only mode; network/paid use is not authorized")
     if any(settings.get(key) for key in ("allow_network", "allow_paid", "allow_cross_project_reuse")):
@@ -132,16 +159,36 @@ def stage_media_use(project: Path, config: Dict[str, Any], *, adapter: Any = Non
             raise M5Blocked("media_use request ids must be nonempty and unique")
         seen.add(asset_id)
         if asset_id in existing:
+            if str(request.get("kind") or "").strip() in AUDIO_MEDIA_KINDS:
+                raise M5Blocked(
+                    f"{asset_id}: audio requests cannot be declared in "
+                    f"sources/assets.json; declare them under media_use.requests"
+                )
             results.append({"id": asset_id, "state": "REUSED_DECLARED", "provider_call": False})
             continue
         kind = str(request.get("kind") or "").strip()
         intent = str(request.get("intent") or "").strip()
         license_name = str(request.get("license") or "").strip()
-        if kind not in {"image", "icon", "logo"}:
-            raise M5Blocked(f"{asset_id}: only image/icon/logo may enter M5 visual placements")
+        if kind not in VISUAL_MEDIA_KINDS | AUDIO_MEDIA_KINDS:
+            raise M5Blocked(
+                f"{asset_id}: media_use in M5 accepts image/icon/logo/bgm/sfx only"
+            )
         if not intent or not license_name or request.get("rights_reviewed") is not True:
             raise M5Blocked(f"{asset_id}: intent, explicit license and rights_reviewed=true required")
-        todo.append((asset_id, kind, intent, license_name, str(request.get("attribution") or "")))
+        if kind == "bgm":
+            if any(item[1] == "bgm" for item in todo):
+                raise M5Blocked("a project can declare at most one bgm request")
+            volume = _media_volume(request, asset_id, 0.25)
+            todo.append((asset_id, kind, intent, license_name,
+                         str(request.get("attribution") or ""), volume, None))
+        elif kind == "sfx":
+            volume = _media_volume(request, asset_id, 0.9)
+            todo.append((asset_id, kind, intent, license_name,
+                         str(request.get("attribution") or ""), volume,
+                         _media_sfx_at(request, asset_id)))
+        else:
+            todo.append((asset_id, kind, intent, license_name,
+                         str(request.get("attribution") or ""), None, None))
 
     if todo and adapter is None:
         try:
@@ -163,7 +210,8 @@ def stage_media_use(project: Path, config: Dict[str, Any], *, adapter: Any = Non
             raise M5Blocked(f"media-use local adopt failed ({code}): {exc}") from exc
 
     discovered: Dict[str, Dict[str, Any]] = {}
-    for asset_id, kind, intent, license_name, attribution in todo:
+    audio: Dict[str, Any] = {"bgm": None, "sfx": []}
+    for asset_id, kind, intent, license_name, attribution, volume, at in todo:
         try:
             resolved = adapter.resolve(kind, intent, project_dir=project)
             if not resolved.importable:
@@ -194,26 +242,47 @@ def stage_media_use(project: Path, config: Dict[str, Any], *, adapter: Any = Non
             repo_path = resolved_path.relative_to(ROOT.resolve()).as_posix()
         except ValueError as exc:
             raise M5Blocked(f"{asset_id}: imported asset lies outside this repository") from exc
-        discovered[asset_id] = {
-            "id": asset_id, "type": "LICENSED_EXTERNAL",
-            "repo_path": repo_path, "sha256": imported.sha256,
-            "permission": "LICENSED", "evidence_capable": False,
-            "license": license_name, "attribution": attribution,
-            "media_use_asset_id": imported.asset_id,
-            "receipt_ref": imported.receipt_ref,
-        }
+        if kind in VISUAL_MEDIA_KINDS:
+            discovered[asset_id] = {
+                "id": asset_id, "type": "LICENSED_EXTERNAL",
+                "repo_path": repo_path, "sha256": imported.sha256,
+                "permission": "LICENSED", "evidence_capable": False,
+                "license": license_name, "attribution": attribution,
+                "media_use_asset_id": imported.asset_id,
+                "receipt_ref": imported.receipt_ref,
+            }
+        elif kind == "bgm":
+            audio["bgm"] = {
+                "id": asset_id, "repo_path": repo_path,
+                "sha256": imported.sha256, "volume": volume,
+                "license": license_name, "attribution": attribution,
+                "media_use_asset_id": imported.asset_id,
+                "receipt_ref": imported.receipt_ref,
+            }
+        else:
+            audio["sfx"].append({
+                "id": asset_id, "repo_path": repo_path,
+                "sha256": imported.sha256, "volume": volume, "at": at,
+                "license": license_name, "attribution": attribution,
+                "media_use_asset_id": imported.asset_id,
+                "receipt_ref": imported.receipt_ref,
+            })
         results.append({
             "id": asset_id, "state": "IMPORTED", "kind": kind,
             "source": resolved.source, "sha256": imported.sha256,
             "path": "project://" + relative, "receipt_ref": imported.receipt_ref,
+            "license": license_name, "attribution": attribution,
             "evidence_capable": False, "provider_call": False,
+            **({"volume": volume} if volume is not None else {}),
+            **({"at": at} if at is not None else {}),
         })
     _write_json(project / "receipts" / "media-use-stage.json", {
         "schema": "contentops.m5-media-use/v1", "mode": "local-only",
         "network": False, "paid": False, "cross_project": False,
         "results": results,
     })
-    return {"state": "OK", "assets": discovered, "count": len(discovered)}
+    return {"state": "OK", "assets": discovered, "audio": audio,
+            "count": len(discovered) + len(audio["sfx"]) + (1 if audio["bgm"] else 0)}
 
 def stage_assets(project: Path, extra_assets: Optional[Dict[str, Dict[str, Any]]] = None) -> Dict[str, Any]:
     """Check every declared visual against its recorded hash before it is used."""
@@ -464,7 +533,8 @@ def stage_subtitles(project: Path, script: Dict[str, Any], narration: Dict[str, 
 
 def stage_storyboard(project: Path, config: Dict[str, Any], script: Dict[str, Any],
                      narration: Dict[str, Any], subtitles: Dict[str, Any],
-                     assets: Dict[str, Any]) -> Dict[str, Any]:
+                     assets: Dict[str, Any],
+                     media_audio: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     shots = []
     project_rel = project.relative_to(ROOT).as_posix()
     for line, timing in zip(script["lines"], narration["lines"]):
@@ -491,22 +561,83 @@ def stage_storyboard(project: Path, config: Dict[str, Any], script: Dict[str, An
         "voice_provider": "windows-sapi/Huihui (offline)",
         "generated_visuals": {"count": 0, "policy": "real_assets_only"},
     }
+
+    # Audio supplied by the media_use stage is a support track mixed underneath
+    # the narration by the pinned Easel assembler. It is never a claim source and
+    # never replaces the voice track.
+    if media_audio:
+        bgm = media_audio.get("bgm")
+        if bgm:
+            if not (ROOT / bgm["repo_path"]).is_file():
+                raise M5Blocked(f"bgm file missing: {bgm['repo_path']}")
+            storyboard["bgm"] = bgm["repo_path"]
+            storyboard["bgm_volume"] = bgm["volume"]
+        total = float(narration.get("duration_s") or 0.0)
+        placements = []
+        for sfx in media_audio.get("sfx") or []:
+            if not (ROOT / sfx["repo_path"]).is_file():
+                raise M5Blocked(f"sfx file missing: {sfx['repo_path']}")
+            at = float(sfx["at"])
+            if total and at >= total:
+                raise M5Blocked(
+                    f"{sfx['id']}: sfx placement {at:.3f}s is at or beyond the "
+                    f"{total:.3f}s narration timeline"
+                )
+            entry = {"file": sfx["repo_path"], "at": at, "volume": sfx["volume"]}
+            if any(old["file"] == entry["file"] and old["at"] == entry["at"]
+                   for old in placements):
+                raise M5Blocked(f"{sfx['id']}: duplicate sfx placement")
+            placements.append(entry)
+        if placements:
+            storyboard["sfx"] = placements
+
     path = project / "script" / "storyboard.json"
     _write_json(path, storyboard)
     return {"storyboard": storyboard, "shots": len(shots), "path": path}
+
+
+def _logical_path(path: Any, project: Path) -> Optional[str]:
+    """Repo- or project-relative spelling for a receipt; never an absolute path."""
+    if not path:
+        return None
+    resolved = Path(str(path)).resolve()
+    for root, prefix in ((project.resolve(), "project://"), (ROOT.resolve(), "")):
+        try:
+            return prefix + resolved.relative_to(root).as_posix()
+        except ValueError:
+            continue
+    return None
 
 
 def stage_compose(project: Path, slug: str) -> Dict[str, Any]:
     import assemble_easel
 
     result = assemble_easel.run(project, out_name=slug)
-    _write_json(project / "receipts" / "compose.json", result)
+    try:
+        pin = json.loads((ROOT / "runtime" / "easel.lock.json").read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        pin = {}
+    stamp = pin.get("tag") or pin.get("commit") or "unrecorded"
+    receipt = {
+        "status": result.get("status"),
+        "video": _logical_path(result.get("video"), project),
+        "subtitles_burned": result.get("subtitles_burned"),
+        "upstream": f"easel@{stamp}:skills/openclaw/auto-short-video/scripts/assemble.py",
+    }
+    receipt = {key: value for key, value in receipt.items() if value is not None}
+    _write_json(project / "receipts" / "compose.json", receipt)
     if result.get("status") != "OK":
         raise M5Blocked(f"compose: {result.get('reason')}")
-    return result
+    return receipt
 
 
 def stage_qc(project: Path, slug: str) -> Dict[str, Any]:
+    from contentops.media.qc_canonical import (
+        CURRENCY_CURRENT,
+        canonical_qc_report,
+        render_canonical_qc_markdown,
+    )
+
     proc = hidden_run(
         [python_executable(), str(ROOT / "scripts" / "qc_video.py"), str(project),
          "--video", f"{slug}.mp4"],
@@ -525,11 +656,21 @@ def stage_qc(project: Path, slug: str) -> Dict[str, Any]:
         "audio_stream": has_audio,
         "overall_after_m5": "PASS" if report.get("overall") != "FAIL" and has_audio else "FAIL",
     }
-    report["m5_checks"] = extra
-    _write_json(report_path, report)
+    canonical = canonical_qc_report(
+        report, repo_root=ROOT, project_root=project,
+        graded_target=f"project://final/{slug}.mp4", currency=CURRENCY_CURRENT,
+    )
+    canonical["project"] = (
+        project.relative_to(ROOT).as_posix() if project.is_relative_to(ROOT) else "project://"
+    )
+    canonical["m5_checks"] = extra
+    _write_json(report_path, canonical)
+    (project / "receipts" / f"qc-report-{slug}.md").write_text(
+        render_canonical_qc_markdown(canonical, project_name=project.name), encoding="utf-8"
+    )
     if extra["overall_after_m5"] == "FAIL":
         raise M5Blocked("QC failed: " + json.dumps(extra))
-    return {"report": report, "video": str(video)}
+    return {"report": canonical, "video": str(video)}
 
 
 def _has_audio(video: Path) -> bool:
@@ -576,7 +717,10 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
     sources = stage_sources(project, config)
     stages["sources"] = {"count": sources["count"]}
     media = stage_media_use(project, config, adapter=media_adapter)
-    stages["media_use"] = {"state": media["state"], "count": media["count"]}
+    stages["media_use"] = {
+        "state": media["state"], "count": media["count"],
+        "bgm": bool(media["audio"]["bgm"]), "sfx": len(media["audio"]["sfx"]),
+    }
     assets = stage_assets(project, extra_assets=media["assets"])
     stages["assets"] = {"count": len(assets)}
     claims = stage_claims(project, sources["artifacts"])
@@ -587,8 +731,13 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
     stages["narration"] = {"duration_s": narration["duration_s"], "engine": narration["engine"]}
     subtitles = stage_subtitles(project, script["script"], narration)
     stages["subtitles"] = {"cues": subtitles["cues"]}
-    storyboard = stage_storyboard(project, config, script["script"], narration, subtitles, assets)
-    stages["storyboard"] = {"shots": storyboard["shots"]}
+    storyboard = stage_storyboard(project, config, script["script"], narration, subtitles,
+                                  assets, media_audio=media["audio"])
+    stages["storyboard"] = {
+        "shots": storyboard["shots"],
+        "bgm": "bgm" in storyboard["storyboard"],
+        "sfx": len(storyboard["storyboard"].get("sfx") or []),
+    }
 
     if skip_compose:
         stages["compose"] = {"state": "NOT_RUN"}

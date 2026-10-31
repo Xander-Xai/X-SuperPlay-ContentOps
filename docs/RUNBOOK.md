@@ -323,6 +323,35 @@ Rollback: keep the previous runtime directory and its lock. Point the environmen
 variable back and verify it reports `TRUSTED_RUNTIME` against the baseline it was
 produced from. Never hand-edit a lock or the per-file hashes.
 
+### Automatic media sourcing in M5
+
+Declare the needs once in `projects/<slug>/project.yaml`; the main entry then
+resolves them with no separate media-use invocation:
+
+```yaml
+media_use:
+  enabled: true
+  mode: local-only
+  requests:
+    - {id: hero, kind: image, intent: "...", license: OWNED-BY-OPERATOR, rights_reviewed: true}
+    - {id: bed, kind: bgm, intent: "...", license: OWNED-GENERATED-LOCAL, rights_reviewed: true, volume: 0.18}
+    - {id: click, kind: sfx, intent: "...", license: Pixabay-Content-License, rights_reviewed: true, at: 6.15, volume: 0.55}
+```
+
+```powershell
+$env:CONTENTOPS_MEDIA_USE_RUNTIME_LOCK = "<verified lock for this host>"
+python scripts\m5_production.py projects\m5-media-use
+```
+
+`stage_media_use` runs `adopt → resolve → import_record → verify` before the
+asset gate. Visual imports are checked against `sources/assets.json`; BGM and SFX
+are written to `script/storyboard.json` (`bgm`, `bgm_volume`, `sfx[].at`,
+`sfx[].volume`) and mixed under the narration by the pinned Easel assembler.
+`at` must fall inside the narration timeline, and a duplicate placement is
+refused. No provider is called. A missing or mismatched runtime lock stops the
+run with exit code `4` / `BLOCKED`. A project whose `project.yaml` has no
+`media_use` block keeps its previous behaviour exactly.
+
 ### Isolated Easel demo is not the original runtime
 
 The media-use demo composes through a separate, verified Easel runtime. A

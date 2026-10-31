@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import sys
 import tempfile
 from pathlib import Path
@@ -55,11 +56,25 @@ def project_and_config():
 class FakeMediaAdapter:
     """Only the adapter boundary is faked; the M5 stage implementation is real."""
 
+    PATHS = {
+        "image": "assets/support.png",
+        "icon": "assets/support.png",
+        "logo": "assets/support.png",
+        "bgm": "assets/bed.mp3",
+        "sfx": ".media/audio/sfx/sfx_001.mp3",
+    }
+
     def __init__(self, digest: str):
         self.digest = digest
         self.calls = []
         self.importable = True
         self.verified = True
+        self.sfx_override = None
+
+    def _path(self, kind):
+        if kind == "sfx" and self.sfx_override:
+            return self.sfx_override
+        return self.PATHS[kind]
 
     def adopt(self, *, project_dir):
         self.calls.append(("adopt", str(project_dir)))
@@ -67,17 +82,22 @@ class FakeMediaAdapter:
 
     def resolve(self, kind, intent, *, project_dir):
         self.calls.append(("resolve", kind, intent, str(project_dir)))
+        relative = self._path(kind)
+        file = Path(project_dir) / relative
+        digest = hashlib.sha256(file.read_bytes()).hexdigest() if file.is_file() else self.digest
         return SimpleNamespace(
             importable=self.importable, source="project-candidate",
-            record={"type": kind, "path": "assets/support.png", "sha256": self.digest},
+            record={"type": kind, "path": relative, "sha256": digest},
         )
 
     def import_record(self, record, *, project_dir, kind, license, attribution):
         self.calls.append(("import", kind, license))
+        relative = record["path"]
+        digest = hashlib.sha256((Path(project_dir) / relative).read_bytes()).hexdigest()
         return SimpleNamespace(
-            logical_path="project://assets/support.png",
-            asset_id="media-use-image-" + self.digest[:12],
-            sha256=self.digest, receipt_ref="support.png.media-use-receipt.json",
+            logical_path="project://" + relative,
+            asset_id="media-use-%s-%s" % (kind, digest[:12]),
+            sha256=digest, receipt_ref=relative.rsplit("/", 1)[-1] + ".receipt.json",
         )
 
     def verify(self, *, project_dir, relative_path, expected_sha256):
@@ -195,8 +215,8 @@ def build_automatically_uses_the_stage_without_a_manual_adapter_cli():
         m5._read_yaml = lambda path: config
         m5.stage_narration = lambda project, script: {"duration_s": 1, "engine": "fixture", "lines": []}
         m5.stage_subtitles = lambda project, script, narration: {"cues": 0}
-        m5.stage_storyboard = lambda project, config, script, narration, subtitles, assets: {
-            "shots": len(assets), "asset_ids": list(assets),
+        m5.stage_storyboard = lambda project, config, script, narration, subtitles, assets, media_audio=None: {
+            "shots": len(assets), "asset_ids": list(assets), "storyboard": {},
         }
         result = m5.build(project, skip_compose=True, media_adapter=adapter)
     finally:
@@ -206,6 +226,127 @@ def build_automatically_uses_the_stage_without_a_manual_adapter_cli():
     assert result["stages"]["storyboard"]["shots"] == 1
     assert [call[0] for call in adapter.calls] == ["adopt", "resolve", "import", "verify"]
     assert result["production_ready"] is False
+
+
+def audio_config():
+    """A project with one visual, one local BGM and one bundled SFX request."""
+    project, config, digest = project_and_config()
+    (project / "assets" / "bed.mp3").write_bytes(b"synthetic-bgm-fixture")
+    sfx = project / ".media" / "audio" / "sfx" / "sfx_001.mp3"
+    sfx.parent.mkdir(parents=True)
+    sfx.write_bytes(b"synthetic-sfx-fixture")
+    config["media_use"]["requests"] += [
+        {"id": "bed", "kind": "bgm", "intent": "calm bed",
+         "license": "OWNED-FIXTURE", "rights_reviewed": True, "volume": 0.2},
+        {"id": "click", "kind": "sfx", "intent": "soft click",
+         "license": "Pixabay-Content-License", "rights_reviewed": True,
+         "at": 1.5, "volume": 0.6},
+    ]
+    return project, config, digest
+
+
+def one_line_script():
+    return {"lines": [{"id": "s1", "asset_id": "support_visual",
+                       "narration": "synthetic narration", "caption": "example",
+                       "claim": None}]}
+
+
+@check
+def audio_is_imported_and_placed_without_becoming_a_visual_asset():
+    project, config, digest = audio_config()
+    adapter = FakeMediaAdapter(digest)
+    result = m5.stage_media_use(project, config, adapter=adapter)
+    assert set(result["assets"]) == {"support_visual"}
+    assert result["assets"]["support_visual"]["evidence_capable"] is False
+    assert result["audio"]["bgm"]["volume"] == 0.2
+    assert result["audio"]["sfx"][0]["at"] == 1.5
+    assert result["count"] == 3
+    narration = {"duration_s": 10.0, "lines": [{"start": 0.0, "duration": 10.0}]}
+    storyboard = m5.stage_storyboard(
+        project, config, one_line_script(), narration, {},
+        result["assets"], media_audio=result["audio"],
+    )["storyboard"]
+    assert storyboard["bgm"].endswith("assets/bed.mp3")
+    assert storyboard["bgm_volume"] == 0.2
+    assert storyboard["sfx"][0]["at"] == 1.5
+    receipt = json.loads((project / "receipts" / "media-use-stage.json").read_text(encoding="utf-8"))
+    assert {row["kind"] for row in receipt["results"]} == {"image", "bgm", "sfx"}
+
+
+@check
+def audio_placement_and_volume_are_validated_before_import():
+    for change in ({"at": None}, {"at": -1}, {"volume": 0}, {"volume": 1.5},
+                   {"volume": "loud"}):
+        project, config, digest = audio_config()
+        config["media_use"]["requests"][2].update(change)
+        adapter = FakeMediaAdapter(digest)
+        refused(lambda: m5.stage_media_use(project, config, adapter=adapter))
+        assert not adapter.calls
+
+
+@check
+def a_second_bgm_request_is_refused():
+    project, config, digest = audio_config()
+    config["media_use"]["requests"].append(dict(config["media_use"]["requests"][1]))
+    config["media_use"]["requests"][-1]["id"] = "bed_two"
+    refused(lambda: m5.stage_media_use(project, config, adapter=FakeMediaAdapter(digest)))
+
+
+@check
+def sfx_beyond_the_timeline_or_duplicated_is_refused():
+    project, config, digest = audio_config()
+    adapter = FakeMediaAdapter(digest)
+    result = m5.stage_media_use(project, config, adapter=adapter)
+    narration = {"duration_s": 1.0, "lines": [{"start": 0.0, "duration": 1.0}]}
+    refused(lambda: m5.stage_storyboard(
+        project, config, one_line_script(), narration, {},
+        result["assets"], media_audio=result["audio"]))
+    result["audio"]["sfx"].append(dict(result["audio"]["sfx"][0]))
+    refused(lambda: m5.stage_storyboard(
+        project, config, one_line_script(),
+        {"duration_s": 10.0, "lines": [{"start": 0.0, "duration": 10.0}]}, {},
+        result["assets"], media_audio=result["audio"]))
+
+
+@check
+def disabled_media_use_leaves_the_storyboard_audio_unchanged():
+    project, config, digest = audio_config()
+    result = m5.stage_media_use(project, {"media_use": {"enabled": False}},
+                                adapter=None)
+    assert result["audio"] == {"bgm": None, "sfx": []}
+    narration = {"duration_s": 10.0, "lines": [{"start": 0.0, "duration": 10.0}]}
+    storyboard = m5.stage_storyboard(
+        project, config, one_line_script(), narration, {},
+        {"support_visual": {"type": "REAL_SCREENSHOT",
+                            "repo_path": "projects/fixture/assets/support.png"}},
+        media_audio=result["audio"],
+    )["storyboard"]
+    assert "bgm" not in storyboard and "sfx" not in storyboard
+
+
+@check
+def an_audio_request_cannot_be_declared_in_the_visual_manifest():
+    project, config, digest = audio_config()
+    manifest = {"schema": "contentops.m5-assets/v1", "assets": [{
+        "id": "bed", "repo_path": "projects/fixture/assets/bed.mp3",
+        "sha256": digest, "type": "REAL_SCREENSHOT", "permission": "CREATED_BY_OWNER",
+    }]}
+    (project / "sources" / "assets.json").write_text(json.dumps(manifest), encoding="utf-8")
+    refused(lambda: m5.stage_media_use(project, config, adapter=FakeMediaAdapter(digest)))
+
+
+@check
+def committed_example_receipts_carry_no_machine_paths():
+    root = ROOT / "projects" / "m5-media-use"
+    skip = {".media", "final", "work", "assets"}
+    for path in root.rglob("*"):
+        if not path.is_file() or skip & set(path.relative_to(root).parts):
+            continue
+        if path.suffix not in {".json", ".yaml", ".md"}:
+            continue
+        text = path.read_text(encoding="utf-8")
+        machine = re.search(r"(?<![A-Za-z])[A-Za-z]:[\\/]|/c/Users|/d/Projects", text)
+        assert not machine, f"machine path {machine.group(0)!r} in {path}"
 
 
 def main():

@@ -1,0 +1,5 @@
+{
+  "schema": "contentops.m5-assets/v1",
+  "policy": "Every visual used in a run is listed here with its hash, origin and usage scope. Nothing is used implicitly. Assets supplied by the enabled media_use stage are added at run time from their import receipts.",
+  "assets": []
+}

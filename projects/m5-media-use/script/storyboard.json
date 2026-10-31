@@ -1,0 +1,64 @@
+{
+  "size": "1080x1920",
+  "image_motion": "static",
+  "pad_mode": "trim",
+  "shots": [
+    {
+      "image": "projects/m5-media-use/assets/support.png",
+      "caption": "不复制，不重写",
+      "motion": "static",
+      "source": "projects/m5-media-use/assets/support.png",
+      "source_type": "licensed_external",
+      "narration": "media-use 不是复制进来的代码，也不是重写的引擎。",
+      "duration_s": 6.04,
+      "claim": "adapter_choice"
+    },
+    {
+      "image": "projects/m5-media-use/assets/support.png",
+      "caption": "固定版本 + 薄适配器",
+      "motion": "static",
+      "source": "projects/m5-media-use/assets/support.png",
+      "source_type": "licensed_external",
+      "narration": "它是外部固定版本依赖，中间只隔一层薄适配器。",
+      "duration_s": 5.644,
+      "claim": "adapter_choice"
+    },
+    {
+      "image": "projects/m5-media-use/assets/support.png",
+      "caption": "锁指向基线，字节一致",
+      "motion": "static",
+      "source": "projects/m5-media-use/assets/support.png",
+      "source_type": "licensed_external",
+      "narration": "机器锁必须指向已批准的基线，每个字节都要对得上。",
+      "duration_s": 5.949,
+      "claim": "runtime_trust"
+    },
+    {
+      "image": "projects/m5-media-use/assets/support.png",
+      "caption": "只开离线本地素材",
+      "motion": "static",
+      "source": "projects/m5-media-use/assets/support.png",
+      "source_type": "licensed_external",
+      "narration": "这次批准只覆盖离线本地素材，网络和付费生成都没开。",
+      "duration_s": 6.585,
+      "claim": "offline_only"
+    }
+  ],
+  "narration": "projects/m5-media-use/assets/voice/narration.wav",
+  "subtitle": "projects/m5-media-use/assets/captions/default.srt",
+  "engine": "easel",
+  "voice_provider": "windows-sapi/Huihui (offline)",
+  "generated_visuals": {
+    "count": 0,
+    "policy": "real_assets_only"
+  },
+  "bgm": "projects/m5-media-use/assets/bed.mp3",
+  "bgm_volume": 0.18,
+  "sfx": [
+    {
+      "file": "projects/m5-media-use/.media/audio/sfx/sfx_001.mp3",
+      "at": 6.15,
+      "volume": 0.55
+    }
+  ]
+}

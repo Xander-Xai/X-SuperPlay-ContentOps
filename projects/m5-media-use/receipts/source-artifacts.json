@@ -1,0 +1,29 @@
+{
+  "schema": "contentops.m5-sources/v1",
+  "artifacts": [
+    {
+      "id": "adr_008",
+      "source_type": "repo_doc",
+      "title": "ADR-008 — media-use 作为固定版本适配器接入",
+      "path": "docs/adr/ADR-008-media-use-adapter.md",
+      "sha256": "e5b29ec41516cabbc9019935daf5cf5c8b850062b51e279a701e2eb1ffb402ce",
+      "bytes": 16987,
+      "permission": "CREATED_BY_OWNER",
+      "captured_at": "2026-10-31T10:25:14Z",
+      "evidence_capable": true,
+      "notes": ""
+    },
+    {
+      "id": "baseline",
+      "source_type": "lock_file",
+      "title": "runtime/media-use-runtime-baseline.json — 已批准的离线运行时基线",
+      "path": "runtime/media-use-runtime-baseline.json",
+      "sha256": "6cd2fdc2f183860b4101331fdd594de85bce0428e61ee307db0a7c1570207d1a",
+      "bytes": 1459,
+      "permission": "CREATED_BY_OWNER",
+      "captured_at": "2026-10-31T10:25:14Z",
+      "evidence_capable": true,
+      "notes": ""
+    }
+  ]
+}
