@@ -73,3 +73,4 @@ translation_status: synced
 - [audits/windows-subprocess-audit.zh-CN.md](audits/windows-subprocess-audit.zh-CN.md) — Windows 控制台弹窗审计、每个子进程调用点的分类，以及统一进程层（Issue #16）
 - [../reports/audits/github-governance-2026-10-31.md](../reports/audits/github-governance-2026-10-31.md) — GitHub 治理执行：PR/Issue/Branch/CI/安全复核与 PR #48 合并（2026-10-31）
 - [../reports/audits/contentops-phase2-security-and-unblock-2026-10-31.md](../reports/audits/contentops-phase2-security-and-unblock-2026-10-31.md) — 第二阶段安全、第三方版权与 PR 解锁审计（2026-10-31）
+- [../reports/audits/contentops-phase3-p0-convergence-2026-10-31.md](../reports/audits/contentops-phase3-p0-convergence-2026-10-31.md) — 第三阶段 P0 收敛与堆栈解锁（2026-10-31）
