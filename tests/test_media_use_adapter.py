@@ -63,6 +63,7 @@ from contentops.media.media_use_adapter import (  # noqa: E402
     CODE_PATH_ESCAPE,
     CODE_PROVIDER_NOT_AUTHORIZED,
     CODE_SKILL_UNAVAILABLE,
+    CODE_UNSAFE_SOURCE_URI,
     IMPORT_SCHEMA,
     MediaUseAdapter,
     MediaUseAuthorization,
@@ -156,9 +157,20 @@ class _FixtureAdapter(MediaUseAdapter):
     production dependency trust or demonstrate that the real CLI is usable.
     """
 
-    @staticmethod
-    def _require_trusted_runtime():
-        return None
+    def _require_trusted_runtime(self):
+        from contentops.media.media_use_adapter import MediaUseRuntime, STATE_TRUSTED_RUNTIME
+
+        return MediaUseRuntime(
+            state=STATE_TRUSTED_RUNTIME,
+            root=self.skill_dir,
+            entry=self.resolve_script,
+            node=Path(shutil.which("node") or "node"),
+            verb_prefix=(),
+        )
+
+    @classmethod
+    def _cli_args(cls, args):
+        return [str(arg) for arg in args]
 
     def require_available(self):
         return self.status()
@@ -344,6 +356,101 @@ def test_the_same_bytes_import_to_the_same_asset_id():
         assert first.asset_id == second.asset_id
         assert first.sha256 == second.sha256
         assert first.envelope.fingerprint == second.envelope.fingerprint
+
+
+@test
+def test_source_uri_drops_userinfo_query_and_fragment():
+    # Synthetic values only. The point is that no part of the capability in this
+    # URL survives into a receipt that is meant to be public.
+    synthetic = "https://demo:fake-secret@example.invalid/photo.png?sig=fake#frag"
+    with tempfile.TemporaryDirectory() as raw:
+        tmp = Path(raw)
+        project = _project(tmp)
+        _write(project / "assets" / "pic.png", b"png-bytes")
+        record = _record("assets/pic.png")
+        record["provenance"] = {"from": synthetic}
+        adapter = MediaUseAdapter(skill_dir=tmp / "absent", timeout=5)
+        media = adapter.import_record(
+            record, project_dir=project, kind="image", license="CC-BY-4.0"
+        )
+        receipt_text = Path(media.receipt_path).read_text(encoding="utf-8")
+        receipt = json.loads(receipt_text)
+        assert receipt["source_uri"] == "https://example.invalid/photo.png"
+        for fragment in ("fake-secret", "demo:", "sig=fake", "#frag"):
+            assert fragment not in receipt_text, fragment
+
+
+@test
+def test_source_uri_keeps_ipv6_host_and_port_without_userinfo():
+    synthetic = "https://demo:fake-secret@[2001:db8::1]:8443/a.png?x=1#f"
+    with tempfile.TemporaryDirectory() as raw:
+        tmp = Path(raw)
+        project = _project(tmp)
+        _write(project / "assets" / "pic.png", b"png-bytes")
+        record = _record("assets/pic.png")
+        record["provenance"] = {"from": synthetic}
+        adapter = MediaUseAdapter(skill_dir=tmp / "absent", timeout=5)
+        media = adapter.import_record(
+            record, project_dir=project, kind="image", license="L"
+        )
+        receipt = json.loads(Path(media.receipt_path).read_text(encoding="utf-8"))
+        assert receipt["source_uri"] == "https://[2001:db8::1]:8443/a.png"
+
+
+@test
+def test_source_uri_refuses_unsupported_scheme_hostless_and_bad_port():
+    for synthetic in (
+        "ftp://demo:fake-secret@example.invalid/photo.png",
+        "https:///photo.png",
+        "https://example.invalid:99999/photo.png",
+    ):
+        with tempfile.TemporaryDirectory() as raw:
+            tmp = Path(raw)
+            project = _project(tmp)
+            _write(project / "assets" / "pic.png", b"png-bytes")
+            record = _record("assets/pic.png")
+            record["provenance"] = {"from": synthetic}
+            adapter = MediaUseAdapter(skill_dir=tmp / "absent", timeout=5)
+            _expect(
+                CODE_UNSAFE_SOURCE_URI,
+                lambda: adapter.import_record(
+                    record, project_dir=project, kind="image", license="L"
+                ),
+            )
+            assert not (project / "assets" / "pic.png.receipt.json").exists()
+
+
+@test
+def test_other_receipt_metadata_cannot_smuggle_url_credentials():
+    synthetic = "https://demo:fake-secret@example.invalid/photo.png?sig=fake"
+    with tempfile.TemporaryDirectory() as raw:
+        tmp = Path(raw)
+        project = _project(tmp)
+        _write(project / "assets" / "pic.png", b"png-bytes")
+        record = _record("assets/pic.png")
+        record["source"] = synthetic
+        record["_source"] = synthetic
+        adapter = MediaUseAdapter(skill_dir=tmp / "absent", timeout=5)
+        media = adapter.import_record(
+            record,
+            project_dir=project,
+            kind="image",
+            license="L",
+            attribution="Photo from " + synthetic,
+        )
+        receipt_text = Path(media.receipt_path).read_text(encoding="utf-8")
+        for fragment in ("fake-secret", "demo:", "sig=fake"):
+            assert fragment not in receipt_text, fragment
+        assert "example.invalid" in receipt_text
+
+
+@test
+def test_redact_text_strips_credentials_embedded_in_a_url():
+    text = "fetch failed: https://demo:fake-secret@example.invalid/photo.png?sig=fake"
+    cleaned = redact_text(text)
+    assert "fake-secret" not in cleaned
+    assert "demo:" not in cleaned
+    assert "https://example.invalid/photo.png" in cleaned
 
 
 @test
@@ -778,6 +885,158 @@ def test_network_authorization_never_starts_unclassified_resolver():
             assert exc.code == CODE_PAID_NOT_AUTHORIZED
         else:
             raise AssertionError("unclassified network resolution was permitted")
+
+
+def _fake_runtime(tmp: Path, *, version: str = "0.8.222") -> tuple:
+    """A tiny stand-in tree plus a lock naming its bytes.
+
+    This exercises the verification logic. It is not evidence that the real
+    HyperFrames runtime works; that was exercised separately against the
+    published package.
+    """
+    import hashlib
+
+    root = tmp / "runtime"
+    pkg = root / "node_modules" / "hyperframes"
+    (pkg / "bin").mkdir(parents=True)
+    (pkg / "package.json").write_text(json.dumps({"name": "hyperframes", "version": version}), encoding="utf-8")
+    entry = pkg / "bin" / "hyperframes.mjs"
+    entry.write_text("console.log('{\"ok\":true}')\n", encoding="utf-8")
+    dep = pkg / "dist" / "cli.js"
+    dep.parent.mkdir()
+    dep.write_text("export const v = 1\n", encoding="utf-8")
+    node = tmp / "node"
+    node.write_text("fake-node", encoding="utf-8")
+
+    def sha(path: Path) -> str:
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+
+    lock = {
+        "schema": "contentops.media-use-runtime-lock/v1",
+        "root": str(root),
+        "entry": "node_modules/hyperframes/bin/hyperframes.mjs",
+        "node": str(node),
+        "node_sha256": sha(node),
+        "package": "hyperframes",
+        "version": version,
+        "verb_prefix": ["media-use"],
+        "files": {
+            "node_modules/hyperframes/bin/hyperframes.mjs": sha(entry),
+            "node_modules/hyperframes/dist/cli.js": sha(dep),
+            "node_modules/hyperframes/package.json": sha(pkg / "package.json"),
+        },
+    }
+    lock_path = tmp / "runtime-lock.json"
+    lock_path.write_text(json.dumps(lock), encoding="utf-8")
+    return root, lock_path, entry, dep
+
+
+@test
+def test_a_trusted_runtime_executes_the_locked_entry():
+    import contentops.media.media_use_adapter as module
+
+    with tempfile.TemporaryDirectory() as raw:
+        tmp = Path(raw)
+        _, lock_path, entry, _ = _fake_runtime(tmp)
+        adapter = MediaUseAdapter(runtime_lock=lock_path)
+        assert adapter.status().available is True
+        captured = {}
+
+        def recorder(cmd, **kwargs):
+            if list(cmd)[-1] == "--version":
+                return subprocess.CompletedProcess(cmd, 0, "v22.23.4\n", "")
+            captured["cmd"] = list(cmd)
+            return subprocess.CompletedProcess(cmd, 0, '{"ok":true,"candidates":[]}', "")
+
+        original = module.hidden_run
+        module.hidden_run = recorder
+        try:
+            adapter.candidates("image", project_dir=_project(tmp))
+        finally:
+            module.hidden_run = original
+        assert captured["cmd"][1] == str(entry)
+        assert captured["cmd"][2:4] == ["media-use", "candidates"]
+
+
+@test
+def test_a_tampered_entry_is_refused_before_any_process_spawns():
+    import contentops.media.media_use_adapter as module
+
+    with tempfile.TemporaryDirectory() as raw:
+        tmp = Path(raw)
+        _, lock_path, entry, _ = _fake_runtime(tmp)
+        entry.write_text("// rewritten\n", encoding="utf-8")
+        adapter = MediaUseAdapter(runtime_lock=lock_path)
+        assert adapter.status().available is False
+
+        def forbidden(*args, **kwargs):
+            raise AssertionError("tampered runtime reached subprocess")
+
+        original = module.hidden_run
+        module.hidden_run = forbidden
+        try:
+            _expect("INTEGRITY_MISMATCH", lambda: adapter.candidates("image", project_dir=_project(tmp)))
+        finally:
+            module.hidden_run = original
+
+
+@test
+def test_a_tampered_dependency_and_late_tamper_are_both_refused():
+    import contentops.media.media_use_adapter as module
+
+    with tempfile.TemporaryDirectory() as raw:
+        tmp = Path(raw)
+        _, lock_path, _, dep = _fake_runtime(tmp)
+        adapter = MediaUseAdapter(runtime_lock=lock_path)
+        assert adapter.status().available is True  # verified once
+        dep.write_text("export const v = 2\n", encoding="utf-8")  # changed afterwards
+        original = module.hidden_run
+        module.hidden_run = lambda *a, **k: (_ for _ in ()).throw(
+            AssertionError("tampered runtime reached subprocess")
+        )
+        try:
+            _expect("INTEGRITY_MISMATCH", lambda: adapter.candidates("image", project_dir=_project(tmp)))
+        finally:
+            module.hidden_run = original
+
+
+@test
+def test_missing_and_mismatched_runtimes_are_reported_separately():
+    with tempfile.TemporaryDirectory() as raw:
+        tmp = Path(raw)
+        project = _project(tmp)
+        assert MediaUseAdapter(runtime_lock=tmp / "absent.json").status().available is False
+        _expect(
+            "RUNTIME_MISSING",
+            lambda: MediaUseAdapter(runtime_lock=tmp / "absent.json").candidates(
+                "image", project_dir=project
+            ),
+        )
+        _, lock_path, _, _ = _fake_runtime(tmp)
+        lock = json.loads(lock_path.read_text(encoding="utf-8"))
+        lock["version"] = "0.8.999"
+        lock_path.write_text(json.dumps(lock), encoding="utf-8")
+        _expect(
+            "VERSION_MISMATCH",
+            lambda: MediaUseAdapter(runtime_lock=lock_path).candidates(
+                "image", project_dir=project
+            ),
+        )
+
+
+@test
+def test_the_released_cli_reads_a_subcommand_not_the_legacy_flag():
+    translate = MediaUseAdapter._cli_args
+    assert translate(["--adopt", "--project", "p", "--json"]) == ["adopt", "--project", "p", "--json"]
+    assert translate(["--type", "image", "--candidates", "--json"]) == [
+        "candidates", "--type", "image", "--json"
+    ]
+    assert translate(["--type", "sfx", "--intent", "x", "--json"]) == [
+        "resolve", "--type", "sfx", "--intent", "x", "--json"
+    ]
+    assert translate(["--type", "sfx", "--from", "a.mp3", "--json"]) == [
+        "from", "--type", "sfx", "--from", "a.mp3", "--json"
+    ]
 
 
 @test

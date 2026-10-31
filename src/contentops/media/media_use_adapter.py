@@ -100,7 +100,17 @@ __all__ = [
     "CODE_SKILL_UNAVAILABLE",
     "CODE_TIMEOUT",
     "CODE_UNSUPPORTED_TYPE",
+    "CODE_UNSAFE_SOURCE_URI",
     "DEFAULT_SKILL_DIR",
+    "ENV_RUNTIME_LOCK",
+    "RUNTIME_LOCK_SCHEMA",
+    "STATE_TRUSTED_RUNTIME",
+    "STATE_RUNTIME_MISSING",
+    "STATE_DEPENDENCY_UNVERIFIED",
+    "STATE_INTEGRITY_MISMATCH",
+    "STATE_VERSION_MISMATCH",
+    "MediaUseRuntime",
+    "verify_runtime_lock",
     "SKILL_COMMIT",
     "SUPPORTED_TYPES",
     "UPSTREAM_COMMIT",
@@ -133,6 +143,10 @@ SKILL_NAME = "media-use"
 DEFAULT_SKILL_DIR = Path.home() / ".agents" / "skills" / SKILL_NAME
 ENV_SKILL_DIR = "CONTENTOPS_MEDIA_USE_SKILL_DIR"
 ENV_NODE = "CONTENTOPS_NODE_BINARY"
+#: Path to a lock file produced by a reviewed installation. Without one, no
+#: external execution is allowed; the lock names the exact bytes that may run.
+ENV_RUNTIME_LOCK = "CONTENTOPS_MEDIA_USE_RUNTIME_LOCK"
+RUNTIME_LOCK_SCHEMA = "contentops.media-use-runtime-lock/v1"
 RESOLVE_RELATIVE = Path("scripts") / "resolve.mjs"
 # The official published HyperFrames CLI declares Node >=22. This is a
 # necessary prerequisite, not proof that the CLI dependency tree is trusted.
@@ -182,6 +196,16 @@ CODE_CLI_FAILED = "CLI_FAILED"
 CODE_TIMEOUT = "TIMEOUT"
 CODE_GENERATED_NOT_IMPORTABLE = "GENERATED_NOT_IMPORTABLE"
 CODE_NEEDS_HUMAN_ACTION = "NEEDS_HUMAN_ACTION"
+CODE_UNSAFE_SOURCE_URI = "UNSAFE_SOURCE_URI"
+
+# Trust states for an externally executed HyperFrames runtime. They are kept
+# apart because "not installed", "installed but unverifiable" and "verified but
+# modified" call for different human actions.
+STATE_TRUSTED_RUNTIME = "TRUSTED_RUNTIME"
+STATE_RUNTIME_MISSING = "RUNTIME_MISSING"
+STATE_DEPENDENCY_UNVERIFIED = "DEPENDENCY_UNVERIFIED"
+STATE_INTEGRITY_MISMATCH = "INTEGRITY_MISMATCH"
+STATE_VERSION_MISMATCH = "VERSION_MISMATCH"
 
 #: Environment variables the child is allowed to see. Provider keys, cookies,
 #: proxy credentials and agent tokens are deliberately absent: a closed paid
@@ -224,6 +248,29 @@ _SECRET_PATTERNS: Tuple[Tuple[re.Pattern, str], ...] = (
     (re.compile(r"(?i)(heygen[_-]?api[_-]?key)\s+\S+"), r"\1 ***REDACTED***"),
 )
 
+#: ``scheme://...`` tokens embedded in free text. Userinfo, query and fragment
+#: are capabilities, not references; they are removed wherever a URL appears in
+#: text that may reach a receipt or a log.
+_URL_TOKEN = re.compile(r"(?i)\b([a-z][a-z0-9+.\-]*://[^\s<>\"']+)")
+
+
+def _strip_url_capabilities(text: str) -> str:
+    def scrub(match: re.Match) -> str:
+        raw = match.group(1)
+        try:
+            parts = urlsplit(raw)
+            port = parts.port
+        except ValueError:
+            return raw
+        host = parts.hostname
+        if not host:
+            return raw
+        host_text = f"[{host}]" if ":" in host else host
+        netloc = f"{host_text}:{port}" if port is not None else host_text
+        return urlunsplit((parts.scheme.lower(), netloc, parts.path, "", ""))
+
+    return _URL_TOKEN.sub(scrub, text)
+
 
 def redact_text(value: str) -> str:
     """Remove credential-shaped substrings from child output.
@@ -232,7 +279,7 @@ def redact_text(value: str) -> str:
     echoes the header it rejected. This is a backstop, not a substitute for the
     allow-listed environment that keeps the credential out of the child.
     """
-    text = value or ""
+    text = _strip_url_capabilities(value or "")
     for pattern, replacement in _SECRET_PATTERNS:
         text = pattern.sub(replacement, text)
     return text
@@ -380,6 +427,149 @@ class MediaUseStatus:
             "skill_commit": self.skill_commit,
             "upstream_license": self.upstream_license,
         }
+
+
+@dataclass(frozen=True)
+class MediaUseRuntime:
+    """The verified result of checking one installed runtime against its lock.
+
+    ``files`` is every byte the executor may touch, keyed by runtime-relative
+    path. Verification re-hashes them before each execution, so a cached
+    ``available`` flag cannot stand in for a byte check that never happened.
+    """
+
+    state: str
+    root: Optional[Path] = None
+    entry: Optional[Path] = None
+    version: Optional[str] = None
+    node: Optional[Path] = None
+    verb_prefix: Tuple[str, ...] = ("media-use",)
+    file_count: int = 0
+    mismatched: Tuple[str, ...] = ()
+    missing: Tuple[str, ...] = ()
+    reasons: Tuple[str, ...] = ()
+
+    @property
+    def trusted(self) -> bool:
+        return self.state == STATE_TRUSTED_RUNTIME
+
+    def as_dict(self) -> Dict[str, Any]:
+        return {
+            "state": self.state,
+            "trusted": self.trusted,
+            "root": str(self.root) if self.root else None,
+            "entry": str(self.entry) if self.entry else None,
+            "version": self.version,
+            "node": str(self.node) if self.node else None,
+            "verb_prefix": list(self.verb_prefix),
+            "file_count": self.file_count,
+            "mismatched": list(self.mismatched),
+            "missing": list(self.missing),
+            "reasons": list(self.reasons),
+        }
+
+
+def verify_runtime_lock(lock_path: Optional[Path]) -> MediaUseRuntime:
+    """Re-hash a runtime against the reviewed lock that names its bytes.
+
+    No lock means no external execution: an installation nobody reviewed is not
+    a runtime, it is an unknown program. Every failure mode gets its own state,
+    because "reinstall it" and "something rewrote the entry point" are different
+    incidents.
+    """
+    if lock_path is None:
+        return MediaUseRuntime(
+            state=STATE_DEPENDENCY_UNVERIFIED,
+            reasons=(
+                "no runtime lock is configured; external media-use execution "
+                "requires a reviewed lock naming every executable file",
+            ),
+        )
+    lock_file = Path(lock_path).expanduser()
+    if not lock_file.is_file():
+        return MediaUseRuntime(
+            state=STATE_RUNTIME_MISSING,
+            reasons=(f"runtime lock not found: {lock_file}",),
+        )
+    try:
+        payload = json.loads(lock_file.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return MediaUseRuntime(
+            state=STATE_RUNTIME_MISSING,
+            reasons=(f"runtime lock is unreadable: {exc}",),
+        )
+    if not isinstance(payload, dict) or payload.get("schema") != RUNTIME_LOCK_SCHEMA:
+        return MediaUseRuntime(
+            state=STATE_DEPENDENCY_UNVERIFIED,
+            reasons=(f"runtime lock schema is not {RUNTIME_LOCK_SCHEMA}",),
+        )
+    raw_root = payload.get("root")
+    raw_entry = payload.get("entry")
+    files = payload.get("files")
+    if not isinstance(raw_root, str) or not isinstance(raw_entry, str) or not isinstance(files, dict):
+        return MediaUseRuntime(
+            state=STATE_DEPENDENCY_UNVERIFIED,
+            reasons=("runtime lock is missing root, entry or files",),
+        )
+
+    root = Path(raw_root).expanduser()
+    entry = root / raw_entry
+    version = str(payload.get("version") or "") or None
+    node = Path(payload["node"]).expanduser() if payload.get("node") else None
+    if not root.is_dir():
+        return MediaUseRuntime(
+            state=STATE_RUNTIME_MISSING, root=root, entry=entry, version=version,
+            reasons=(f"runtime root is missing: {root}",),
+        )
+    if not entry.is_file():
+        return MediaUseRuntime(
+            state=STATE_RUNTIME_MISSING, root=root, entry=entry, version=version,
+            reasons=(f"runtime entry is missing: {entry}",),
+        )
+
+    package_json = entry.parent.parent / "package.json"
+    if version and package_json.is_file():
+        try:
+            installed = json.loads(package_json.read_text(encoding="utf-8")).get("version")
+        except (OSError, json.JSONDecodeError):
+            installed = None
+        if installed and installed != version:
+            return MediaUseRuntime(
+                state=STATE_VERSION_MISMATCH, root=root, entry=entry,
+                version=installed, node=node, file_count=len(files),
+                reasons=(f"installed version {installed} != locked {version}",),
+            )
+
+    missing: List[str] = []
+    mismatched: List[str] = []
+    if node is not None and payload.get("node_sha256"):
+        if not node.is_file():
+            missing.append("node")
+        elif sha256_file(node) != payload["node_sha256"]:
+            mismatched.append("node")
+    for relative, expected in files.items():
+        target = root / relative
+        if not target.is_file():
+            missing.append(str(relative))
+            continue
+        if not isinstance(expected, str) or sha256_file(target) != expected:
+            mismatched.append(str(relative))
+
+    if mismatched or missing:
+        return MediaUseRuntime(
+            state=STATE_INTEGRITY_MISMATCH, root=root, entry=entry, version=version,
+            node=node, file_count=len(files), mismatched=tuple(mismatched[:20]),
+            missing=tuple(missing[:20]),
+            reasons=(
+                f"{len(mismatched)} file(s) do not match the lock and "
+                f"{len(missing)} are missing",
+            ),
+        )
+    return MediaUseRuntime(
+        state=STATE_TRUSTED_RUNTIME, root=root, entry=entry, version=version,
+        node=node, verb_prefix=tuple(payload.get("verb_prefix") or ["media-use"]),
+        file_count=len(files),
+    )
 
 
 @dataclass(frozen=True)
@@ -565,6 +755,7 @@ class MediaUseAdapter:
         timeout: float = 120.0,
         env: Optional[Mapping[str, str]] = None,
         which: Any = None,
+        runtime_lock: Optional[Path] = None,
     ) -> None:
         if not (1.0 <= float(timeout) <= 600.0):
             raise ValueError(
@@ -575,6 +766,8 @@ class MediaUseAdapter:
         override = skill_dir or os.environ.get(ENV_SKILL_DIR)
         self.skill_dir = Path(override).expanduser() if override else DEFAULT_SKILL_DIR
         self.node = node or os.environ.get(ENV_NODE) or None
+        lock_override = runtime_lock or os.environ.get(ENV_RUNTIME_LOCK)
+        self.runtime_lock = Path(lock_override).expanduser() if lock_override else None
         self._which = which or shutil.which
         self._env_override = dict(env or {})
         self._status: Optional[MediaUseStatus] = None
@@ -587,17 +780,18 @@ class MediaUseAdapter:
 
     def status(self, *, refresh: bool = False) -> MediaUseStatus:
         # Re-evaluate on each call; cached success must never hide a later change.
-        reasons: List[str] = [
-            "DEPENDENCY_UNVERIFIED: the launcher and complete CLI runtime are not verified"
-        ]
+        runtime = verify_runtime_lock(self.runtime_lock)
+        reasons: List[str] = []
+        if not runtime.trusted:
+            reasons.append(f"{runtime.state}: " + "; ".join(runtime.reasons or ["unverified"]))
         skill_present = (self.skill_dir / "SKILL.md").is_file()
         resolve_present = self.resolve_script.is_file()
-        if not skill_present:
+        if not skill_present and not runtime.trusted:
             reasons.append(
                 f"{self.skill_dir} does not contain SKILL.md; the media-use skill "
                 f"is not installed there"
             )
-        elif not resolve_present:
+        elif not resolve_present and not runtime.trusted:
             reasons.append(f"{self.resolve_script} is missing")
 
         node = self.node or self._which("node")
@@ -639,7 +833,7 @@ class MediaUseAdapter:
             ffmpeg_present=bool(self._which("ffmpeg")),
             ffprobe_present=bool(self._which("ffprobe")),
             resolve_sha256=resolve_sha256,
-            available=False,
+            available=runtime.trusted and node_ok,
             reasons=tuple(reasons),
         )
         return self._status
@@ -653,7 +847,7 @@ class MediaUseAdapter:
         elif not status.skill_present or not status.resolve_present:
             code = CODE_SKILL_UNAVAILABLE
         else:
-            code = "DEPENDENCY_UNVERIFIED"
+            code = status.reasons[0].split(":", 1)[0] if status.reasons else "DEPENDENCY_UNVERIFIED"
         raise MediaUseError(
             code,
             "media-use is unavailable: " + "; ".join(status.reasons or ["unknown reason"]),
@@ -691,14 +885,52 @@ class MediaUseAdapter:
             env["USERPROFILE"] = str(home)
         return env
 
-    @staticmethod
-    def _require_trusted_runtime() -> None:
-        # Launcher integrity alone cannot verify npx, Bun or the CLI dependency tree.
+    def _require_trusted_runtime(self) -> MediaUseRuntime:
+        """Re-verify the installed runtime before every execution.
+
+        The hash pass is the gate, not a cached boolean: a lock that matched at
+        import time must not keep authorising a tree that changed afterwards.
+        """
+        runtime = verify_runtime_lock(self.runtime_lock)
+        if runtime.trusted:
+            return runtime
         raise MediaUseError(
-            "DEPENDENCY_UNVERIFIED",
-            "media-use execution is blocked until the complete launcher and CLI "
-            "dependency tree can be verified without implicit installation",
+            runtime.state,
+            "media-use runtime is not trusted: "
+            + "; ".join(runtime.reasons or ["no reason recorded"]),
+            details=runtime.as_dict(),
         )
+
+    #: Verb flags the 0.8.x CLI takes as a subcommand rather than an option.
+    _VERB_FLAGS = {
+        "--doctor": "doctor",
+        "--candidates": "candidates",
+        "--adopt": "adopt",
+        "--stats": "stats",
+        "--analyze": "analyze",
+    }
+
+    @classmethod
+    def _cli_args(cls, args: Sequence[str]) -> List[str]:
+        """Translate the adapter's flag vocabulary into the CLI's subcommand form.
+
+        The released CLI reads ``media-use adopt --project ...``, not
+        ``--adopt``. Keeping the adapter's call sites unchanged means the
+        translation lives in exactly one place.
+        """
+        verb = "resolve"
+        rest: List[str] = []
+        for arg in args:
+            name = str(arg)
+            if name in cls._VERB_FLAGS:
+                verb = cls._VERB_FLAGS[name]
+                continue
+            if name == "--from":
+                verb = "from"
+                rest.append(name)
+                continue
+            rest.append(name)
+        return [verb, *rest]
 
     def _run(
         self,
@@ -708,14 +940,19 @@ class MediaUseAdapter:
         timeout: Optional[float] = None,
         home: Optional[Path] = None,
     ) -> MediaUseProcessResult:
-        if not (self.skill_dir / "SKILL.md").is_file() or not self.resolve_script.is_file():
-            raise MediaUseError(CODE_SKILL_UNAVAILABLE, "media-use skill or launcher is missing")
-        self._require_trusted_runtime()
-        status = self.require_available()
-        node = self.node or self._which("node")
+        # Availability answers "is anything here at all" with its own codes;
+        # trust answers "are these the bytes that may run". Both precede a spawn.
+        self.require_available()
+        runtime = self._require_trusted_runtime()
+        node = str(runtime.node) if runtime.node else (self.node or self._which("node"))
         if not node:
-            raise MediaUseError(CODE_NODE_UNAVAILABLE, "node disappeared after status")
-        command = [str(node), str(self.resolve_script), *[str(arg) for arg in args]]
+            raise MediaUseError(CODE_NODE_UNAVAILABLE, "no node binary is available for the runtime")
+        command = [
+            node,
+            str(runtime.entry),
+            *runtime.verb_prefix,
+            *self._cli_args(args),
+        ]
         try:
             proc = hidden_run(
                 command,
@@ -1174,7 +1411,10 @@ class MediaUseAdapter:
                 "by this import."
             ),
         }
-        write_sidecar(receipt_path, receipt)
+        # Every string that came from a record or an operator crosses the same
+        # boundary: a credential in a field other than source_uri must not reach
+        # the public receipt either.
+        write_sidecar(receipt_path, _redact_value(receipt))
 
         if registry is not None and modality in MediaModality.VISUAL:
             register_asset(
@@ -1370,6 +1610,40 @@ class MediaUseAdapter:
         return source or "media_use_record"
 
     @staticmethod
+    def _sanitize_source_url(text: str) -> str:
+        """Reduce a remote reference to scheme, host, port and path.
+
+        Userinfo, query and fragment are dropped: a signed catalog URL carries
+        access in its query string, and ``user:token@host`` carries it before the
+        host. The host is rebuilt from ``hostname``/``port`` rather than by
+        splitting ``netloc`` at ``@``, so IPv6 literals survive intact and a
+        malformed authority is refused instead of being half-parsed.
+        """
+        try:
+            parts = urlsplit(text)
+            port = parts.port
+        except ValueError as exc:
+            raise MediaUseError(
+                CODE_UNSAFE_SOURCE_URI,
+                "source provenance URL is malformed",
+            ) from exc
+        scheme = parts.scheme.lower()
+        if scheme not in {"http", "https"}:
+            raise MediaUseError(
+                CODE_UNSAFE_SOURCE_URI,
+                f"source provenance URL scheme is not http/https: {scheme!r}",
+            )
+        host = parts.hostname
+        if not host:
+            raise MediaUseError(
+                CODE_UNSAFE_SOURCE_URI,
+                "source provenance URL has no host",
+            )
+        host_text = f"[{host}]" if ":" in host else host
+        netloc = f"{host_text}:{port}" if port is not None else host_text
+        return urlunsplit((scheme, netloc, parts.path, "", ""))
+
+    @staticmethod
     def _safe_source_uri(record: Mapping[str, Any], project_root: Path) -> Optional[str]:
         raw = None
         provenance = record.get("provenance")
@@ -1377,12 +1651,14 @@ class MediaUseAdapter:
             raw = provenance.get("from")
         if not raw:
             return None
-        text = str(raw)
-        if text.lower().startswith(("http://", "https://")):
-            parts = urlsplit(text)
-            # A signed catalog URL carries access in its query string. Keep the
-            # reference, drop the capability.
-            return urlunsplit((parts.scheme, parts.netloc, parts.path, "", ""))
+        text = str(raw).strip()
+        if "://" in text:
+            return MediaUseAdapter._sanitize_source_url(text)
+        if text.startswith("//"):
+            raise MediaUseError(
+                CODE_UNSAFE_SOURCE_URI,
+                "source provenance URL is scheme-relative and cannot be verified",
+            )
         try:
             path = Path(text).expanduser().resolve()
         except (OSError, ValueError):
