@@ -54,42 +54,90 @@ Skill source reference (reviewed, not executed):
   such. The package was chosen because it is the artifact that can be pinned,
   mirrored and hashed end to end.
 
-## Runtime lock
+## Runtime trust is two layers
 
-`CONTENTOPS_MEDIA_USE_RUNTIME_LOCK` points at a JSON document
-(`contentops.media-use-runtime-lock/v1`) produced when an operator installs and
-reviews a runtime. It records the package name and version, the published
-integrity value, the node binary and its SHA-256, the entry point, the verb
-prefix, and the SHA-256 of every file in the tree.
+A machine lock on its own is writer-controlled: whoever can install a tree can
+also regenerate the hashes that describe it. Trust therefore needs a second,
+version-controlled layer that the operator does not produce at install time.
+
+| Layer | Committed? | Records | Who sets it |
+|---|---|---|---|
+| **Approved baseline** — `runtime/media-use-runtime-baseline.json` | yes | package, version, published integrity, dependency-lock digest, package-tree digest, entry, verb prefix, execution policy, approval record | a human, after reviewing evidence |
+| **Runtime lock** — `contentops.media-use-runtime-lock/v2`, named by `CONTENTOPS_MEDIA_USE_RUNTIME_LOCK` | no | absolute root, node binary and its SHA-256, entry, per-file SHA-256 for the whole tree, `baseline_sha256` | `scripts/media_use_runtime.py lock` |
+
+A lock is trusted only when it names the approved baseline by digest *and*
+every byte matches. Regenerating a lock never approves a release; approving
+never installs one. The baseline ships with `approval.status: "pending"` until
+a person runs `scripts/media_use_runtime.py approve --approved-by <name>`, so a
+fresh checkout refuses external execution by construction.
+
+The baseline also pins `package_tree_sha256`, a digest over the package's own
+678 files in sorted `path\\0sha256` form. Without it, editing a runtime file and
+its hash in the lock leaves both self-consistent; with it, that pair no longer
+matches what was approved.
 
 Verification states are distinct because they prompt different actions:
 
 | State | Meaning |
 |---|---|
-| `TRUSTED_RUNTIME` | every listed byte matches; execution allowed |
+| `TRUSTED_RUNTIME` | both layers agree and every listed byte matches; execution allowed |
 | `RUNTIME_MISSING` | lock or tree absent — install it |
-| `INTEGRITY_MISMATCH` | a file changed after review — do not run, investigate |
-| `VERSION_MISMATCH` | installed version differs from the locked one |
-| `DEPENDENCY_UNVERIFIED` | no lock configured; execution refused |
+| `INTEGRITY_MISMATCH` | a file changed, disappeared or was added after review — do not run, investigate |
+| `VERSION_MISMATCH` | installed version differs from the approved one |
+| `BASELINE_MISMATCH` | no approved baseline, or the lock was not produced from it, or the package tree differs |
+| `DEPENDENCY_UNVERIFIED` | no lock, no pinned node, or an unsupported lock schema; execution refused |
+
+Paths inside a lock are data from an untrusted source: absolute paths, `..`
+segments and symlinks that resolve outside the root are refused, and any
+regular file present in the tree but absent from the lock is an unlisted
+executable. A node binary is part of the trust decision — falling back to
+whatever `node` is on `PATH` would let the host decide what runs.
 
 The lock is machine-specific and is **not** committed: it names absolute paths
-and a node build for one host. What is committed is the schema, the verifier and
-its tests. The hash pass (about 0.6 s for 5 407 files on a local disk) runs
-before every spawn, so a stale `available=true` cannot authorise a tree that
-changed afterwards.
+and a node build for one host. What is committed is the baseline, the schema,
+the verifier, the install/lock/approve entry point and their tests. The hash
+pass (about 0.6 s for 5 407 files on a local disk) runs before every spawn, so a
+stale `available=true` cannot authorise a tree that changed afterwards.
+
+## Installing a runtime
+
+`scripts/media_use_runtime.py` has four separate commands:
+
+| Command | Network | Effect |
+|---|---|---|
+| `approve --approved-by NAME` | no | flips the baseline's approval record; refuses an unnamed approver or a missing tree digest |
+| `install` | yes | refuses an unapproved baseline, copies the committed `runtime/media-use-package-lock.json` (127 entries, digest `2225ab6d…`) and runs `npm ci --ignore-scripts`; fails if the installed version, lockfile digest or SRI differ from the approved values |
+| `lock` | no | hashes the tree into a v2 lock and verifies it against the baseline |
+| `selfcheck` | no | runs `adopt`/`candidates`/`resolve` through the production adapter against the trusted lock |
+
+Lifecycle scripts are disabled at install and audited afterwards; runtime
+network and paid providers stay off (`policy` in the baseline).
 
 ## Verified by execution, 2026-10-31
 
-Isolated WSL, network namespace with no egress (`unshare -Urn`, verified by a
-failing outbound probe), no credentials, no provider, no `npx`:
+**Linux** — isolated WSL, network namespace with no egress (`unshare -Urn`,
+outbound probe refused), no credentials, no provider, no `npx`. A temporary
+approved copy of the baseline was used so the committed one stays `pending`:
 
-| Command | Result |
+| Step | Result |
 |---|---|
-| `hyperframes media-use adopt --project … --json --local-only` | `ok:true`, `adopted:1`, exit 0 |
-| `hyperframes media-use candidates --type image … --local-only` | one project candidate, exit 0 |
-| `hyperframes media-use resolve --type sfx --local-only` | bundled `click-soft`, `.media/audio/sfx/sfx_001.mp3`, exit 0 |
-| adapter `candidates → resolve → import_record → verify` | `available:true`, import sidecar written, `verify.ok:true` |
+| `approve` → `lock` → `verify`, 5 397 files | `TRUSTED_RUNTIME`, package-tree digest reproduced |
+| `selfcheck` inside the namespace | `adopt` 1 asset, candidate `image_001`, bundled SFX `sfx_001` |
 | runtime file edited after review | `INTEGRITY_MISMATCH`, refused before any process start |
+| file hash and lock hash edited together | `BASELINE_MISMATCH` (package-tree digest differs) |
+
+**Windows 11** — Node v22.23.4 win-x64 from nodejs.org, zip SHA-256 equal to the
+official `SHASUMS256.txt` entry:
+
+| Step | Result |
+|---|---|
+| `install` (`npm ci` from the committed lock) | `INSTALLED`, lockfile digest `2225ab6d…`, SRI matched |
+| `lock` | `TRUSTED_RUNTIME`; package-tree digest `be8e24df…`, identical to the Linux pass |
+| real CLI through the adapter | `adopt` 1 asset, `image_001` candidate, bundled `sfx_001`, no network authorization |
+| isolated demo with real Easel compose | manifest 7 assets, storyboard 2 placements, `compose` OK (300 437-byte 1080×1920 sample), QC `WARN`, `production_ready:false` |
+
+The Windows run is local-only at the CLI; the namespace-level egress proof is
+the Linux run. Neither proves a provider call or a production pipeline.
 
 The import receipt records `upstream_provenance: UNVERIFIED` and no commit ID:
 a verified runtime proves *what executed*, never *where an asset came from*.

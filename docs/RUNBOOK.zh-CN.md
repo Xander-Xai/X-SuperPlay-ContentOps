@@ -96,17 +96,41 @@ python scripts\media_use_adapter.py demo --project projects\media-use-demo
 
 `import` 拒绝空 `--license`。media-use 记录本身没有许可证字段，因此许可证必须由人决定，不能被默认填充。
 
-### 运行时锁（任何外部调用前必需）
+### 运行时信任（任何外部调用前必需）
 
-在存在经过审核的锁之前，不会执行任何外部程序：
+必须同时具备两层，任一层都不能替代另一层：
+
+- `runtime/media-use-runtime-baseline.json` —— 提交到仓库、由人批准。出厂状态为
+  `approval.status: "pending"`，因此干净检出默认拒绝执行。
+- 本机生成的锁 —— 绝对路径、node 哈希、逐文件哈希 —— 由
+  `CONTENTOPS_MEDIA_USE_RUNTIME_LOCK` 指向，绝不提交。
+
+在一台机器上准备一次：
 
 ```powershell
-$env:CONTENTOPS_MEDIA_USE_RUNTIME_LOCK = "D:\path\to\runtime-lock.json"
+# 1. 人审查证据后批准已提交的基线
+python scripts\media_use_runtime.py approve --approved-by "Your Name"
+
+# 2. 安装已批准的发布（唯一需要联网的步骤）
+python scripts\media_use_runtime.py install --runtime-dir D:\Data\contentops-media-use --node D:\Toolchains\node\node.exe
+
+# 3. 生成机器锁，并与基线比对验证
+python scripts\media_use_runtime.py lock --runtime-dir D:\Data\contentops-media-use --node D:\Toolchains\node\node.exe --out D:\Data\contentops-media-use\runtime-lock.json
+
+# 4. 通过生产适配器执行本地、离线操作
+python scripts\media_use_runtime.py selfcheck --lock D:\Data\contentops-media-use\runtime-lock.json --project projects\demo
+```
+
+```powershell
+$env:CONTENTOPS_MEDIA_USE_RUNTIME_LOCK = "D:\Data\contentops-media-use\runtime-lock.json"
 python scripts\media_use_adapter.py status
 ```
 
+`install` 使用仓库内的 `runtime/media-use-package-lock.json` 执行
+`npm ci --ignore-scripts`；该文件的 SHA-256 必须等于基线的
+`dependency_lock_sha256`，依赖树不同即被拒绝。
+
 `status` 每次都会重新哈希整棵运行时树，并报告 `TRUSTED_RUNTIME`、
-`RUNTIME_MISSING`、`INTEGRITY_MISMATCH`、`VERSION_MISMATCH` 或
-`DEPENDENCY_UNVERIFIED` 之一。锁记录包版本、官方 integrity、node 二进制哈希、
-入口文件，以及每个文件的 SHA-256。锁与本机绑定，不提交到仓库。没有锁时，
-项目内本地导入仍然可用，但所有外部调用都会被拒绝。
+`RUNTIME_MISSING`、`INTEGRITY_MISMATCH`、`VERSION_MISMATCH`、
+`BASELINE_MISMATCH` 或 `DEPENDENCY_UNVERIFIED` 之一。重新生成锁永远不会批准发布。
+没有可信锁时，项目内本地导入仍然可用，但所有外部调用都会被拒绝。

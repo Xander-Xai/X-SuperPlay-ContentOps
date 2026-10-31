@@ -478,9 +478,11 @@ QC 回执在被提交前会经过一道净化边界（`contentops.qc_canonical`�
 | 回执 | `contentops.media-import/v1`，含 `output_sha256`、`fingerprint`、`generated`、`evidence_capable`、`production_ready`、`human_review`、`license` |
 | 证据边界 | 所有导入均为 `evidence_capable=false`；生成结果一律 `GENERATED_NOT_IMPORTABLE` |
 | 跨项目 | 未显式授权则阻断；子进程 `HOME` 固定在项目内 |
-| 运行时信任 | 外部执行必须提供 `CONTENTOPS_MEDIA_USE_RUNTIME_LOCK`；每次启动前重新哈希，锁与本机绑定，不提交到仓库 |
-| 已验证运行时 | `hyperframes@0.8.222`（与官方 SRI 一致）、Node v22.23.4、127 条依赖锁、5 407 个文件清单；在无出口的网络命名空间中执行 |
-| 测试 | 42 项适配器测试通过；97 项 M4.5 收敛测试通过 |
+| 运行时信任 | 两层：仓库内、由人批准的基线（`runtime/media-use-runtime-baseline.json`）与本机锁（`CONTENTOPS_MEDIA_USE_RUNTIME_LOCK`）。锁只有在以摘要指名已批准基线、且每个字节都匹配时才可信；基线出厂为 `pending`，因此干净检出拒绝执行 |
+| 已验证运行时 | `hyperframes@0.8.222`（与官方 SRI 一致）、官方 Node v22.23.4 Linux 与 win-x64（与 SHASUMS 一致）、127 条依赖锁。包树摘要 `be8e24df…` 在两个平台独立复现 |
+| 验收 | Linux：无出口命名空间内 `TRUSTED_RUNTIME`，通过适配器执行 `adopt`/`candidates`/`resolve`。Windows：`install` → `lock` → `TRUSTED_RUNTIME` → 真实 CLI。隔离目录内真实 Easel 合成：`compose` OK、QC `WARN`、`production_ready:false` |
+| 安装 / 生成锁入口 | `scripts/media_use_runtime.py` —— `approve`、`install`、`lock`、`verify`、`selfcheck`；批准与生成锁是两个独立动作 |
+| 测试 | 53 项适配器测试通过；97 项 M4.5 收敛测试通过 |
 | Pull Request | Draft [#64](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/64) |
 | Skill Router | 未重建；#49/#59 尚未合并。适配器暴露 `status/doctor/candidates/resolve/adopt`，供未来注册到现有发现机制 |
 

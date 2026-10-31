@@ -146,7 +146,12 @@ ENV_NODE = "CONTENTOPS_NODE_BINARY"
 #: Path to a lock file produced by a reviewed installation. Without one, no
 #: external execution is allowed; the lock names the exact bytes that may run.
 ENV_RUNTIME_LOCK = "CONTENTOPS_MEDIA_USE_RUNTIME_LOCK"
-RUNTIME_LOCK_SCHEMA = "contentops.media-use-runtime-lock/v1"
+RUNTIME_LOCK_SCHEMA = "contentops.media-use-runtime-lock/v2"
+BASELINE_SCHEMA = "contentops.media-use-runtime-baseline/v1"
+ENV_BASELINE = "CONTENTOPS_MEDIA_USE_BASELINE"
+DEFAULT_BASELINE = (
+    Path(__file__).resolve().parents[3] / "runtime" / "media-use-runtime-baseline.json"
+)
 RESOLVE_RELATIVE = Path("scripts") / "resolve.mjs"
 # The official published HyperFrames CLI declares Node >=22. This is a
 # necessary prerequisite, not proof that the CLI dependency tree is trusted.
@@ -206,6 +211,8 @@ STATE_RUNTIME_MISSING = "RUNTIME_MISSING"
 STATE_DEPENDENCY_UNVERIFIED = "DEPENDENCY_UNVERIFIED"
 STATE_INTEGRITY_MISMATCH = "INTEGRITY_MISMATCH"
 STATE_VERSION_MISMATCH = "VERSION_MISMATCH"
+#: The machine lock does not derive from the committed, approved baseline.
+STATE_BASELINE_MISMATCH = "BASELINE_MISMATCH"
 
 #: Environment variables the child is allowed to see. Provider keys, cookies,
 #: proxy credentials and agent tokens are deliberately absent: a closed paid
@@ -403,6 +410,7 @@ class MediaUseStatus:
     resolve_sha256: Optional[str]
     available: bool
     reasons: Tuple[str, ...] = ()
+    runtime_state: Optional[str] = None
     upstream_repository: str = UPSTREAM_REPOSITORY
     upstream_commit: str = UPSTREAM_COMMIT
     skill_commit: str = SKILL_COMMIT
@@ -421,6 +429,7 @@ class MediaUseStatus:
             "resolve_sha256": self.resolve_sha256,
             "available": self.available,
             "reasons": list(self.reasons),
+            "runtime_state": self.runtime_state,
             "upstream_repository": self.upstream_repository,
             "upstream_provenance": "UNVERIFIED",
             "upstream_commit": self.upstream_commit,
@@ -469,13 +478,78 @@ class MediaUseRuntime:
         }
 
 
-def verify_runtime_lock(lock_path: Optional[Path]) -> MediaUseRuntime:
-    """Re-hash a runtime against the reviewed lock that names its bytes.
+def _relative_within(root: Path, relative: Any) -> Optional[Path]:
+    """Resolve a lock-declared path, refusing escape and symlink tricks.
 
-    No lock means no external execution: an installation nobody reviewed is not
-    a runtime, it is an unknown program. Every failure mode gets its own state,
-    because "reinstall it" and "something rewrote the entry point" are different
-    incidents.
+    A lock is data. If it can name ``../../etc``, an absolute path or a symlink
+    that leaves the tree, then "verified" only means "the attacker kept their
+    own hashes consistent".
+    """
+    if not isinstance(relative, str) or not relative.strip():
+        return None
+    candidate = Path(relative)
+    if candidate.is_absolute() or relative.startswith(("\\", "/", "~")):
+        return None
+    if ".." in candidate.parts or ":" in candidate.parts[0]:
+        return None
+    target = root / candidate
+    try:
+        resolved = target.resolve(strict=False)
+        real_root = root.resolve()
+        if resolved != real_root and real_root not in resolved.parents:
+            return None
+    except (OSError, RuntimeError):
+        return None
+    return target
+
+
+def _tree_files(root: Path) -> Dict[str, Path]:
+    """Every regular file under a runtime root, by POSIX relative path."""
+    files: Dict[str, Path] = {}
+    for path in root.rglob("*"):
+        try:
+            if path.is_symlink():
+                continue
+            if not path.is_file():
+                continue
+        except OSError:
+            continue
+        files[path.relative_to(root).as_posix()] = path
+    return files
+
+
+def package_tree_digest(package: str, files: Mapping[str, Any]) -> Optional[str]:
+    """A digest over the package's own files, independent of the host tree.
+
+    Per-file hashes in a machine lock only prove the lock agrees with itself:
+    editing a file *and* its hash leaves both consistent. Pinning this digest
+    in the committed baseline closes that loop, because a lock regenerated from
+    a modified tree no longer matches what a human approved.
+    """
+    prefix = f"node_modules/{package}/"
+    rows = sorted(
+        (str(relative), str(digest))
+        for relative, digest in files.items()
+        if isinstance(relative, str) and relative.startswith(prefix) and isinstance(digest, str)
+    )
+    if not rows:
+        return None
+    accumulator = hashlib.sha256()
+    for relative, digest in rows:
+        accumulator.update(f"{relative}\x00{digest}\n".encode("utf-8"))
+    return accumulator.hexdigest()
+
+
+def verify_runtime_lock(
+    lock_path: Optional[Path], baseline_path: Optional[Path] = None
+) -> MediaUseRuntime:
+    """Re-hash a runtime against a reviewed lock *and* the approved baseline.
+
+    Two layers, on purpose. The committed baseline says which release is allowed
+    to run; the machine lock says which bytes are installed here. A lock alone
+    is writer-controlled, so on its own it could certify anything an operator
+    (or a compromised account) installed. Trust requires both: the lock must
+    name the approved baseline by digest, and every byte must match.
     """
     if lock_path is None:
         return MediaUseRuntime(
@@ -485,6 +559,7 @@ def verify_runtime_lock(lock_path: Optional[Path]) -> MediaUseRuntime:
                 "requires a reviewed lock naming every executable file",
             ),
         )
+
     lock_file = Path(lock_path).expanduser()
     if not lock_file.is_file():
         return MediaUseRuntime(
@@ -503,23 +578,102 @@ def verify_runtime_lock(lock_path: Optional[Path]) -> MediaUseRuntime:
             state=STATE_DEPENDENCY_UNVERIFIED,
             reasons=(f"runtime lock schema is not {RUNTIME_LOCK_SCHEMA}",),
         )
+
+    baseline_file = Path(baseline_path).expanduser() if baseline_path else DEFAULT_BASELINE
+    if not baseline_file.is_file():
+        return MediaUseRuntime(
+            state=STATE_BASELINE_MISMATCH,
+            reasons=(f"approved baseline not found: {baseline_file}",),
+        )
+    try:
+        baseline_bytes = baseline_file.read_bytes()
+        baseline = json.loads(baseline_bytes.decode("utf-8"))
+    except (OSError, ValueError) as exc:
+        return MediaUseRuntime(
+            state=STATE_BASELINE_MISMATCH,
+            reasons=(f"approved baseline is unreadable: {exc}",),
+        )
+    if not isinstance(baseline, dict) or baseline.get("schema") != BASELINE_SCHEMA:
+        return MediaUseRuntime(
+            state=STATE_BASELINE_MISMATCH,
+            reasons=(f"baseline schema is not {BASELINE_SCHEMA}",),
+        )
+    approval = baseline.get("approval") or {}
+    if not isinstance(approval, dict) or approval.get("status") != "approved":
+        return MediaUseRuntime(
+            state=STATE_BASELINE_MISMATCH,
+            reasons=("baseline is not approved",),
+        )
+    baseline_digest = hashlib.sha256(baseline_bytes).hexdigest()
+
+    if payload.get("baseline_sha256") != baseline_digest:
+        return MediaUseRuntime(
+            state=STATE_BASELINE_MISMATCH,
+            reasons=(
+                "the runtime lock was not produced from the approved baseline; "
+                "regenerating a lock does not approve a release",
+            ),
+        )
+    for field in ("package", "version", "integrity"):
+        if payload.get(field) != baseline.get(field):
+            return MediaUseRuntime(
+                state=STATE_VERSION_MISMATCH,
+                reasons=(f"{field} {payload.get(field)!r} != approved {baseline.get(field)!r}",),
+            )
+
+    approved_dependency_lock = baseline.get("dependency_lock_sha256")
+    if approved_dependency_lock:
+        installed = payload.get("installed") or {}
+        if not isinstance(installed, dict) or installed.get("package_lock_sha256") != approved_dependency_lock:
+            return MediaUseRuntime(
+                state=STATE_BASELINE_MISMATCH,
+                reasons=(
+                    "the installed dependency lock does not match the approved one; "
+                    "installing a different tree is not a new trust anchor",
+                ),
+            )
+
     raw_root = payload.get("root")
-    raw_entry = payload.get("entry")
     files = payload.get("files")
-    if not isinstance(raw_root, str) or not isinstance(raw_entry, str) or not isinstance(files, dict):
+    entry_name = payload.get("entry")
+    if not isinstance(raw_root, str) or not isinstance(files, dict) or not isinstance(entry_name, str):
         return MediaUseRuntime(
             state=STATE_DEPENDENCY_UNVERIFIED,
             reasons=("runtime lock is missing root, entry or files",),
         )
+    if payload.get("entry") != baseline.get("entry"):
+        return MediaUseRuntime(
+            state=STATE_BASELINE_MISMATCH,
+            reasons=("the lock's entry point differs from the approved baseline",),
+        )
+
+    approved_tree = baseline.get("package_tree_sha256")
+    if not isinstance(approved_tree, str) or not approved_tree.strip():
+        return MediaUseRuntime(
+            state=STATE_BASELINE_MISMATCH,
+            reasons=("the approved baseline declares no package tree digest",),
+        )
+    if package_tree_digest(str(payload.get("package") or ""), files) != approved_tree:
+        return MediaUseRuntime(
+            state=STATE_BASELINE_MISMATCH,
+            reasons=(
+                "the lock's package files do not match the approved tree digest; "
+                "a lock regenerated from a modified tree is not a new trust anchor",
+            ),
+        )
 
     root = Path(raw_root).expanduser()
-    entry = root / raw_entry
     version = str(payload.get("version") or "") or None
-    node = Path(payload["node"]).expanduser() if payload.get("node") else None
     if not root.is_dir():
         return MediaUseRuntime(
-            state=STATE_RUNTIME_MISSING, root=root, entry=entry, version=version,
+            state=STATE_RUNTIME_MISSING, root=root, version=version,
             reasons=(f"runtime root is missing: {root}",),
+        )
+    entry = _relative_within(root, entry_name)
+    if entry is None:
+        return MediaUseRuntime(
+            state=STATE_INTEGRITY_MISMATCH, root=root, version=version,
+            reasons=(f"entry path {entry_name!r} escapes the runtime root",),
         )
     if not entry.is_file():
         return MediaUseRuntime(
@@ -527,8 +681,24 @@ def verify_runtime_lock(lock_path: Optional[Path]) -> MediaUseRuntime:
             reasons=(f"runtime entry is missing: {entry}",),
         )
 
+    # A node binary is part of the trust decision, not an ambient dependency.
+    # Falling back to whatever is on PATH would let the host decide what runs.
+    raw_node = payload.get("node")
+    node_sha = payload.get("node_sha256")
+    if not isinstance(raw_node, str) or not isinstance(node_sha, str) or not node_sha.strip():
+        return MediaUseRuntime(
+            state=STATE_DEPENDENCY_UNVERIFIED, root=root, entry=entry, version=version,
+            reasons=("the lock records no pinned node binary and sha256",),
+        )
+    node = Path(raw_node).expanduser()
+    if not node.is_file():
+        return MediaUseRuntime(
+            state=STATE_RUNTIME_MISSING, root=root, entry=entry, version=version, node=node,
+            reasons=(f"locked node binary is missing: {node}",),
+        )
+
     package_json = entry.parent.parent / "package.json"
-    if version and package_json.is_file():
+    if package_json.is_file():
         try:
             installed = json.loads(package_json.read_text(encoding="utf-8")).get("version")
         except (OSError, json.JSONDecodeError):
@@ -542,27 +712,32 @@ def verify_runtime_lock(lock_path: Optional[Path]) -> MediaUseRuntime:
 
     missing: List[str] = []
     mismatched: List[str] = []
-    if node is not None and payload.get("node_sha256"):
-        if not node.is_file():
-            missing.append("node")
-        elif sha256_file(node) != payload["node_sha256"]:
-            mismatched.append("node")
+    if sha256_file(node) != node_sha:
+        mismatched.append("node")
     for relative, expected in files.items():
-        target = root / relative
+        target = _relative_within(root, relative)
+        if target is None:
+            mismatched.append(f"{relative} (escaping path)")
+            continue
         if not target.is_file():
             missing.append(str(relative))
             continue
         if not isinstance(expected, str) or sha256_file(target) != expected:
             mismatched.append(str(relative))
 
-    if mismatched or missing:
+    # Files present but not listed are executable surface nobody reviewed.
+    on_disk = _tree_files(root)
+    unexpected = sorted(set(on_disk) - set(files))
+
+    if mismatched or missing or unexpected:
         return MediaUseRuntime(
             state=STATE_INTEGRITY_MISMATCH, root=root, entry=entry, version=version,
-            node=node, file_count=len(files), mismatched=tuple(mismatched[:20]),
+            node=node, file_count=len(files),
+            mismatched=tuple(list(mismatched)[:20] + [f"+{p}" for p in unexpected[:20]]),
             missing=tuple(missing[:20]),
             reasons=(
-                f"{len(mismatched)} file(s) do not match the lock and "
-                f"{len(missing)} are missing",
+                f"{len(mismatched)} changed, {len(missing)} missing, "
+                f"{len(unexpected)} unlisted file(s) in the runtime",
             ),
         )
     return MediaUseRuntime(
@@ -756,6 +931,7 @@ class MediaUseAdapter:
         env: Optional[Mapping[str, str]] = None,
         which: Any = None,
         runtime_lock: Optional[Path] = None,
+        baseline: Optional[Path] = None,
     ) -> None:
         if not (1.0 <= float(timeout) <= 600.0):
             raise ValueError(
@@ -768,6 +944,8 @@ class MediaUseAdapter:
         self.node = node or os.environ.get(ENV_NODE) or None
         lock_override = runtime_lock or os.environ.get(ENV_RUNTIME_LOCK)
         self.runtime_lock = Path(lock_override).expanduser() if lock_override else None
+        baseline_override = baseline or os.environ.get(ENV_BASELINE)
+        self.baseline = Path(baseline_override).expanduser() if baseline_override else None
         self._which = which or shutil.which
         self._env_override = dict(env or {})
         self._status: Optional[MediaUseStatus] = None
@@ -780,7 +958,7 @@ class MediaUseAdapter:
 
     def status(self, *, refresh: bool = False) -> MediaUseStatus:
         # Re-evaluate on each call; cached success must never hide a later change.
-        runtime = verify_runtime_lock(self.runtime_lock)
+        runtime = verify_runtime_lock(self.runtime_lock, baseline_path=self.baseline)
         reasons: List[str] = []
         if not runtime.trusted:
             reasons.append(f"{runtime.state}: " + "; ".join(runtime.reasons or ["unverified"]))
@@ -846,6 +1024,7 @@ class MediaUseAdapter:
             resolve_sha256=resolve_sha256,
             available=runtime.trusted and node_ok,
             reasons=tuple(reasons),
+            runtime_state=runtime.state,
         )
         return self._status
 
@@ -857,7 +1036,7 @@ class MediaUseAdapter:
             # A configured lock is the reason execution is blocked. Reporting
             # SKILL_UNAVAILABLE here would hide an integrity mismatch behind a
             # directory that the lock was meant to replace.
-            runtime = verify_runtime_lock(self.runtime_lock)
+            runtime = verify_runtime_lock(self.runtime_lock, baseline_path=self.baseline)
             if runtime.trusted:
                 code = CODE_NODE_UNAVAILABLE if not status.node_present else (
                     status.reasons[0].split(":", 1)[0] if status.reasons else "DEPENDENCY_UNVERIFIED"
@@ -913,7 +1092,7 @@ class MediaUseAdapter:
         The hash pass is the gate, not a cached boolean: a lock that matched at
         import time must not keep authorising a tree that changed afterwards.
         """
-        runtime = verify_runtime_lock(self.runtime_lock)
+        runtime = verify_runtime_lock(self.runtime_lock, baseline_path=self.baseline)
         if runtime.trusted:
             return runtime
         raise MediaUseError(
@@ -971,7 +1150,11 @@ class MediaUseAdapter:
                 CODE_SKILL_UNAVAILABLE, "media-use skill is not installed at the configured path"
             )
         runtime = self._require_trusted_runtime()
-        node = str(runtime.node) if runtime.node else (self.node or self._which("node"))
+        if runtime.node is None:
+            raise MediaUseError(
+                STATE_DEPENDENCY_UNVERIFIED, "a trusted runtime must name its node binary"
+            )
+        node = str(runtime.node)
         if not node:
             raise MediaUseError(CODE_NODE_UNAVAILABLE, "no node binary is available for the runtime")
         command = [

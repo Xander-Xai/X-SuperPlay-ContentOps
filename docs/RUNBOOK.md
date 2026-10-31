@@ -193,18 +193,42 @@ explicit and off by default.
 `import` refuses an empty `--license`. media-use records carry no licence field,
 so the licence is a human decision and is never defaulted.
 
-### Runtime lock (required before any external call)
+### Runtime trust (required before any external call)
 
-Nothing is executed until a reviewed lock names every byte:
+Two layers are required, and neither replaces the other:
+
+- `runtime/media-use-runtime-baseline.json` — committed, human-approved. Ships
+  as `approval.status: "pending"`; a fresh checkout therefore refuses execution.
+- a machine lock produced here — host-specific paths, node hash, per-file hashes —
+  pointed at by `CONTENTOPS_MEDIA_USE_RUNTIME_LOCK`. Never committed.
+
+Prepare a host once:
 
 ```powershell
-$env:CONTENTOPS_MEDIA_USE_RUNTIME_LOCK = "D:\path\to\runtime-lock.json"
+# 1. a human approves the committed baseline after reviewing its evidence
+python scripts\media_use_runtime.py approve --approved-by "Your Name"
+
+# 2. install the approved release (the only step that needs the network)
+python scripts\media_use_runtime.py install --runtime-dir D:\Data\contentops-media-use --node D:\Toolchains\node\node.exe
+
+# 3. hash the tree into a machine lock and verify it against the baseline
+python scripts\media_use_runtime.py lock --runtime-dir D:\Data\contentops-media-use --node D:\Toolchains\node\node.exe --out D:\Data\contentops-media-use\runtime-lock.json
+
+# 4. run local, offline operations through the production adapter
+python scripts\media_use_runtime.py selfcheck --lock D:\Data\contentops-media-use\runtime-lock.json --project projects\demo
+```
+
+```powershell
+$env:CONTENTOPS_MEDIA_USE_RUNTIME_LOCK = "D:\Data\contentops-media-use\runtime-lock.json"
 python scripts\media_use_adapter.py status
 ```
 
+`install` copies the committed `runtime/media-use-package-lock.json` and runs
+`npm ci --ignore-scripts`; its SHA-256 must equal the baseline's
+`dependency_lock_sha256`, so a different dependency tree is refused.
+
 `status` re-hashes the tree on every call and reports one of `TRUSTED_RUNTIME`,
-`RUNTIME_MISSING`, `INTEGRITY_MISMATCH`, `VERSION_MISMATCH` or
-`DEPENDENCY_UNVERIFIED`. A lock records the package version, the published
-integrity value, the node binary hash, the entry point and a SHA-256 per file.
-It is host-specific and is not committed. Without it, local project imports still
-work and every external call is refused.
+`RUNTIME_MISSING`, `INTEGRITY_MISMATCH`, `VERSION_MISMATCH`,
+`BASELINE_MISMATCH` or `DEPENDENCY_UNVERIFIED`. Regenerating a lock never
+approves a release. Without a trusted lock, local project imports still work and
+every external call is refused.

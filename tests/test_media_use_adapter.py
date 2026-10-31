@@ -68,6 +68,7 @@ from contentops.media.media_use_adapter import (  # noqa: E402
     MediaUseAdapter,
     MediaUseAuthorization,
     MediaUseError,
+    package_tree_digest,
     redact_text,
 )
 from contentops.media.quality_gate import (  # noqa: E402
@@ -888,7 +889,7 @@ def test_network_authorization_never_starts_unclassified_resolver():
 
 
 def _fake_runtime(tmp: Path, *, version: str = "0.8.222") -> tuple:
-    """A tiny stand-in tree plus a lock naming its bytes.
+    """A tiny stand-in tree, an approved baseline and a lock naming its bytes.
 
     This exercises the verification logic. It is not evidence that the real
     HyperFrames runtime works; that was exercised separately against the
@@ -911,24 +912,43 @@ def _fake_runtime(tmp: Path, *, version: str = "0.8.222") -> tuple:
     def sha(path: Path) -> str:
         return hashlib.sha256(path.read_bytes()).hexdigest()
 
+    files = {
+        "node_modules/hyperframes/bin/hyperframes.mjs": sha(entry),
+        "node_modules/hyperframes/dist/cli.js": sha(dep),
+        "node_modules/hyperframes/package.json": sha(pkg / "package.json"),
+    }
+
+    baseline = {
+        "schema": "contentops.media-use-runtime-baseline/v1",
+        "package": "hyperframes",
+        "version": version,
+        "integrity": "sha512-fixture",
+        "dependency_lock_sha256": "0" * 64,
+        "package_tree_sha256": package_tree_digest("hyperframes", files),
+        "entry": "node_modules/hyperframes/bin/hyperframes.mjs",
+        "verb_prefix": ["media-use"],
+        "approval": {"status": "approved", "approved_by": "test-fixture", "approved_at": "2026-10-31"},
+    }
+    baseline_path = tmp / "baseline.json"
+    baseline_path.write_text(json.dumps(baseline), encoding="utf-8")
+
     lock = {
-        "schema": "contentops.media-use-runtime-lock/v1",
+        "schema": "contentops.media-use-runtime-lock/v2",
+        "baseline_sha256": sha(baseline_path),
         "root": str(root),
         "entry": "node_modules/hyperframes/bin/hyperframes.mjs",
         "node": str(node),
         "node_sha256": sha(node),
         "package": "hyperframes",
         "version": version,
+        "integrity": "sha512-fixture",
         "verb_prefix": ["media-use"],
-        "files": {
-            "node_modules/hyperframes/bin/hyperframes.mjs": sha(entry),
-            "node_modules/hyperframes/dist/cli.js": sha(dep),
-            "node_modules/hyperframes/package.json": sha(pkg / "package.json"),
-        },
+        "files": files,
+        "installed": {"package_lock_sha256": "0" * 64},
     }
     lock_path = tmp / "runtime-lock.json"
     lock_path.write_text(json.dumps(lock), encoding="utf-8")
-    return root, lock_path, entry, dep
+    return root, lock_path, entry, dep, baseline_path
 
 
 @test
@@ -937,8 +957,8 @@ def test_a_trusted_runtime_executes_the_locked_entry():
 
     with tempfile.TemporaryDirectory() as raw:
         tmp = Path(raw)
-        _, lock_path, entry, _ = _fake_runtime(tmp)
-        adapter = MediaUseAdapter(runtime_lock=lock_path)
+        _, lock_path, entry, _, baseline_path = _fake_runtime(tmp)
+        adapter = MediaUseAdapter(runtime_lock=lock_path, baseline=baseline_path)
         assert adapter.status().available is True
         captured = {}
 
@@ -964,9 +984,9 @@ def test_a_tampered_entry_is_refused_before_any_process_spawns():
 
     with tempfile.TemporaryDirectory() as raw:
         tmp = Path(raw)
-        _, lock_path, entry, _ = _fake_runtime(tmp)
+        _, lock_path, entry, _, baseline_path = _fake_runtime(tmp)
         entry.write_text("// rewritten\n", encoding="utf-8")
-        adapter = MediaUseAdapter(runtime_lock=lock_path)
+        adapter = MediaUseAdapter(runtime_lock=lock_path, baseline=baseline_path)
         assert adapter.status().available is False
 
         def forbidden(*args, **kwargs):
@@ -986,8 +1006,8 @@ def test_a_tampered_dependency_and_late_tamper_are_both_refused():
 
     with tempfile.TemporaryDirectory() as raw:
         tmp = Path(raw)
-        _, lock_path, _, dep = _fake_runtime(tmp)
-        adapter = MediaUseAdapter(runtime_lock=lock_path)
+        _, lock_path, _, dep, baseline_path = _fake_runtime(tmp)
+        adapter = MediaUseAdapter(runtime_lock=lock_path, baseline=baseline_path)
         assert adapter.status().available is True  # verified once
         dep.write_text("export const v = 2\n", encoding="utf-8")  # changed afterwards
         original = module.hidden_run
@@ -1012,16 +1032,240 @@ def test_missing_and_mismatched_runtimes_are_reported_separately():
                 "image", project_dir=project
             ),
         )
-        _, lock_path, _, _ = _fake_runtime(tmp)
+        _, lock_path, _, _, baseline_path = _fake_runtime(tmp)
         lock = json.loads(lock_path.read_text(encoding="utf-8"))
         lock["version"] = "0.8.999"
         lock_path.write_text(json.dumps(lock), encoding="utf-8")
         _expect(
             "VERSION_MISMATCH",
-            lambda: MediaUseAdapter(runtime_lock=lock_path).candidates(
+            lambda: MediaUseAdapter(runtime_lock=lock_path, baseline=baseline_path).candidates(
                 "image", project_dir=project
             ),
         )
+
+
+@test
+def test_a_lock_and_runtime_tampered_together_still_mismatch_the_baseline():
+    """Editing a file *and* its hash keeps the lock self-consistent.
+
+    Only the approved package-tree digest can notice, which is the point of
+    pinning it in the committed baseline rather than in the machine lock.
+    """
+    import hashlib
+
+    with tempfile.TemporaryDirectory() as raw:
+        tmp = Path(raw)
+        _, lock_path, _, dep, baseline_path = _fake_runtime(tmp)
+        dep.write_text("export const v = 0  // modified\n", encoding="utf-8")
+        lock = json.loads(lock_path.read_text(encoding="utf-8"))
+        lock["files"]["node_modules/hyperframes/dist/cli.js"] = hashlib.sha256(
+            dep.read_bytes()
+        ).hexdigest()
+        lock_path.write_text(json.dumps(lock), encoding="utf-8")
+        status = MediaUseAdapter(runtime_lock=lock_path, baseline=baseline_path).status()
+        assert status.available is False
+        assert status.runtime_state == "BASELINE_MISMATCH"
+
+
+@test
+def test_a_lock_without_a_node_hash_is_not_trusted():
+    with tempfile.TemporaryDirectory() as raw:
+        tmp = Path(raw)
+        _, lock_path, _, _, baseline_path = _fake_runtime(tmp)
+        lock = json.loads(lock_path.read_text(encoding="utf-8"))
+        lock.pop("node_sha256")
+        lock_path.write_text(json.dumps(lock), encoding="utf-8")
+        status = MediaUseAdapter(runtime_lock=lock_path, baseline=baseline_path).status()
+        assert status.available is False
+        assert status.runtime_state == "DEPENDENCY_UNVERIFIED"
+
+
+@test
+def test_a_system_node_substituted_for_the_locked_one_is_refused():
+    with tempfile.TemporaryDirectory() as raw:
+        tmp = Path(raw)
+        _, lock_path, _, _, baseline_path = _fake_runtime(tmp)
+        substitute = tmp / "system-node"
+        substitute.write_text("system-node", encoding="utf-8")
+        lock = json.loads(lock_path.read_text(encoding="utf-8"))
+        lock["node"] = str(substitute)
+        lock_path.write_text(json.dumps(lock), encoding="utf-8")
+        status = MediaUseAdapter(runtime_lock=lock_path, baseline=baseline_path).status()
+        assert status.available is False
+        assert status.runtime_state == "INTEGRITY_MISMATCH"
+
+
+@test
+def test_an_escaping_entry_or_file_path_is_refused():
+    with tempfile.TemporaryDirectory() as raw:
+        tmp = Path(raw)
+        _, lock_path, _, _, baseline_path = _fake_runtime(tmp)
+        original = json.loads(lock_path.read_text(encoding="utf-8"))
+
+        absolute = dict(original, entry="/etc/passwd")
+        lock_path.write_text(json.dumps(absolute), encoding="utf-8")
+        assert MediaUseAdapter(runtime_lock=lock_path, baseline=baseline_path).status().available is False
+
+        escaping = dict(original)
+        escaping["files"] = dict(original["files"])
+        escaping["files"]["../../outside.js"] = "0" * 64
+        lock_path.write_text(json.dumps(escaping), encoding="utf-8")
+        status = MediaUseAdapter(runtime_lock=lock_path, baseline=baseline_path).status()
+        assert status.available is False
+        assert status.runtime_state == "INTEGRITY_MISMATCH"
+
+
+@test
+def test_a_symlinked_entry_pointing_outside_the_runtime_is_refused():
+    with tempfile.TemporaryDirectory() as raw:
+        tmp = Path(raw)
+        _, lock_path, entry, _, baseline_path = _fake_runtime(tmp)
+        outside = tmp / "outside.mjs"
+        outside.write_text("console.log('outside')\n", encoding="utf-8")
+        entry.unlink()
+        try:
+            os.symlink(outside, entry)
+        except (OSError, NotImplementedError):
+            return  # host cannot create symlinks; the path is covered by _relative_within
+        status = MediaUseAdapter(runtime_lock=lock_path, baseline=baseline_path).status()
+        assert status.available is False
+        assert status.runtime_state == "INTEGRITY_MISMATCH"
+
+
+@test
+def test_an_unlisted_executable_in_the_runtime_is_refused():
+    with tempfile.TemporaryDirectory() as raw:
+        tmp = Path(raw)
+        _, lock_path, _, _, baseline_path = _fake_runtime(tmp)
+        (tmp / "runtime" / "node_modules" / "hyperframes" / "dist" / "extra.js").write_text(
+            "unreviewed\n", encoding="utf-8"
+        )
+        status = MediaUseAdapter(runtime_lock=lock_path, baseline=baseline_path).status()
+        assert status.available is False
+        assert status.runtime_state == "INTEGRITY_MISMATCH"
+
+
+@test
+def test_an_unapproved_baseline_blocks_a_valid_lock():
+    with tempfile.TemporaryDirectory() as raw:
+        tmp = Path(raw)
+        _, lock_path, _, _, baseline_path = _fake_runtime(tmp)
+        baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
+        baseline["approval"] = {"status": "pending", "approved_by": "", "approved_at": ""}
+        baseline_path.write_text(json.dumps(baseline), encoding="utf-8")
+        status = MediaUseAdapter(runtime_lock=lock_path, baseline=baseline_path).status()
+        assert status.available is False
+        assert status.runtime_state == "BASELINE_MISMATCH"
+
+
+@test
+def test_a_lock_from_a_different_baseline_is_refused():
+    with tempfile.TemporaryDirectory() as raw:
+        tmp = Path(raw)
+        _, lock_path, _, _, baseline_path = _fake_runtime(tmp)
+        baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
+        baseline["approval"]["approved_at"] = "2026-11-01"
+        baseline_path.write_text(json.dumps(baseline), encoding="utf-8")
+        status = MediaUseAdapter(runtime_lock=lock_path, baseline=baseline_path).status()
+        assert status.available is False
+        assert status.runtime_state == "BASELINE_MISMATCH"
+
+
+@test
+def test_a_trusted_runtime_serves_adopt_candidates_and_resolve():
+    import contentops.media.media_use_adapter as module
+
+    with tempfile.TemporaryDirectory() as raw:
+        tmp = Path(raw)
+        project = _project(tmp)
+        _, lock_path, entry, _, baseline_path = _fake_runtime(tmp)
+        adapter = MediaUseAdapter(runtime_lock=lock_path, baseline=baseline_path)
+        calls: List[List[str]] = []
+
+        def recorder(cmd, **kwargs):
+            if list(cmd)[-1] == "--version":
+                return subprocess.CompletedProcess(cmd, 0, "v22.23.4\n", "")
+            calls.append(list(cmd))
+            if "adopt" in cmd:
+                return subprocess.CompletedProcess(cmd, 0, '{"ok":true,"adopted":[]}', "")
+            if "candidates" in cmd:
+                return subprocess.CompletedProcess(cmd, 0, '{"ok":true,"candidates":[]}', "")
+            return subprocess.CompletedProcess(cmd, 0, '{"ok":true,"resolution":null}', "")
+
+        original = module.hidden_run
+        module.hidden_run = recorder
+        try:
+            adapter.adopt(project_dir=project)
+            adapter.candidates("image", project_dir=project)
+            adapter.resolve("sfx", "click", project_dir=project)
+        finally:
+            module.hidden_run = original
+
+        assert [call[1] for call in calls] == [str(entry)] * len(calls)
+        assert [call[2] for call in calls] == ["media-use"] * len(calls)
+        verbs = [call[3] for call in calls]
+        assert verbs[0] == "adopt"
+        assert "candidates" in verbs
+        assert verbs[-1] == "resolve"
+        assert all(call[0].endswith("node") for call in calls)
+
+
+@test
+def test_install_refuses_an_unapproved_baseline_before_touching_npm():
+    import media_use_runtime
+
+    with tempfile.TemporaryDirectory() as raw:
+        tmp = Path(raw)
+        _, _, _, _, baseline_path = _fake_runtime(tmp)
+        baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
+        baseline["approval"]["status"] = "pending"
+        baseline_path.write_text(json.dumps(baseline), encoding="utf-8")
+        code = media_use_runtime.main([
+            "install", "--runtime-dir", str(tmp / "rt"), "--node", str(tmp / "node"),
+            "--baseline", str(baseline_path),
+        ])
+        assert code == media_use_runtime.EXIT_BLOCKED
+        assert not (tmp / "rt").exists()
+
+        # Approved but with a dependency lock that is not the reviewed one.
+        baseline["approval"]["status"] = "approved"
+        baseline_path.write_text(json.dumps(baseline), encoding="utf-8")
+        assert media_use_runtime.main([
+            "install", "--runtime-dir", str(tmp / "rt"), "--node", str(tmp / "node"),
+            "--baseline", str(baseline_path),
+        ]) == media_use_runtime.EXIT_BLOCKED
+        assert not (tmp / "rt").exists()
+
+
+@test
+def test_approve_requires_a_named_human_and_a_tree_digest():
+    import media_use_runtime
+
+    with tempfile.TemporaryDirectory() as raw:
+        tmp = Path(raw)
+        _, _, _, _, baseline_path = _fake_runtime(tmp)
+        assert media_use_runtime.main(["approve", "--baseline", str(baseline_path)]) == (
+            media_use_runtime.EXIT_BLOCKED
+        )
+        baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
+        baseline["package_tree_sha256"] = ""
+        baseline["approval"] = {"status": "pending", "evidence": "reviewed"}
+        baseline_path.write_text(json.dumps(baseline), encoding="utf-8")
+        assert media_use_runtime.main([
+            "approve", "--baseline", str(baseline_path), "--approved-by", "someone",
+        ]) == media_use_runtime.EXIT_BLOCKED
+        # A tree digest plus a named approver is accepted and records both.
+        baseline["package_tree_sha256"] = "a" * 64
+        baseline_path.write_text(json.dumps(baseline), encoding="utf-8")
+        assert media_use_runtime.main([
+            "approve", "--baseline", str(baseline_path), "--approved-by", "someone",
+            "--approved-at", "2026-10-31",
+        ]) == media_use_runtime.EXIT_OK
+        approved = json.loads(baseline_path.read_text(encoding="utf-8"))["approval"]
+        assert approved == {
+            "status": "approved", "approved_by": "someone",
+            "approved_at": "2026-10-31", "evidence": "reviewed",
+        }
 
 
 @test
