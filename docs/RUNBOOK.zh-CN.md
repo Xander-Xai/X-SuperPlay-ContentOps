@@ -9,7 +9,7 @@ translation_status: synced
 [English](RUNBOOK.md) | [简体中文](RUNBOOK.zh-CN.md)
 
 > 真实可执行命令。从实际脚本行为推导，非假设。
-> 最后更新：2026-10-04
+> 最后更新：2026-10-31
 
 ## 0. 环境检查
 
@@ -74,7 +74,7 @@ python scripts/check_i18n.py
 
 ## 9. media-use 素材（可选）
 
-需要 `~/.agents/skills/media-use` 固定版本技能与 Node ≥ 18。**默认不授权网络、付费供应商或跨项目复用。**
+需要 `~/.agents/skills/media-use` 固定版本技能与 Node ≥ 22（HyperFrames 官方 CLI 下限）。**默认不授权网络、付费供应商、跨项目复用或自动发布。** 可信运行时只证明执行了什么，不授予任何发现素材的许可证。
 
 ```powershell
 python scripts\media_use_adapter.py status
@@ -100,10 +100,14 @@ python scripts\media_use_adapter.py demo --project projects\media-use-demo
 
 必须同时具备两层，任一层都不能替代另一层：
 
-- `runtime/media-use-runtime-baseline.json` —— 提交到仓库、由人批准。出厂状态为
-  `approval.status: "pending"`，因此干净检出默认拒绝执行。
-- 本机生成的锁 —— 绝对路径、node 哈希、逐文件哈希 —— 由
+- `runtime/media-use-runtime-baseline.json` —— 提交到仓库并由所有者批准
+  （2026-10-31，仅限离线范围）。批准是记录在文件里的人为决定；它不会安装运行时。
+- 本机生成的锁 —— 绝对路径、node 哈希、逐文件哈希，以及已批准基线的摘要 —— 由
   `CONTENTOPS_MEDIA_USE_RUNTIME_LOCK` 指向，绝不提交。
+
+干净检出的机器在生成机器锁之前仍拒绝执行。基线批准记录一旦变化，基线文件摘要也会
+变化，之前生成的锁将不再匹配：任何批准变更后都要重新生成锁。不要通过手工编辑锁来
+让它匹配新基线。
 
 在一台机器上准备一次：
 
@@ -134,3 +138,21 @@ python scripts\media_use_adapter.py status
 `RUNTIME_MISSING`、`INTEGRITY_MISMATCH`、`VERSION_MISMATCH`、
 `BASELINE_MISMATCH` 或 `DEPENDENCY_UNVERIFIED` 之一。重新生成锁永远不会批准发布。
 没有可信锁时，项目内本地导入仍然可用，但所有外部调用都会被拒绝。
+
+### 升级或回退 HyperFrames
+
+升级是显式、经过审核的变更；适配器从不自动更新。
+
+1. 更新 `runtime/media-use-runtime-baseline.json` 中的版本、官方 SRI、依赖锁摘要与包树摘要。
+2. 人工审查证据后运行 `python scripts\media_use_runtime.py approve --approved-by "<name>"`。
+3. 安装到**新的**运行时目录（不要覆盖可信目录），再执行 `lock` 与 `verify`。
+4. 离线运行 `selfcheck`，再运行 `tests/test_media_use_adapter.py` 与 `tests/test_media_convergence.py`。
+5. 将 `CONTENTOPS_MEDIA_USE_RUNTIME_LOCK` 指向新锁。
+
+回退：保留旧的运行时目录与其锁，把环境变量指回旧锁，并验证它针对生成时的基线报告
+`TRUSTED_RUNTIME`。绝不要手工编辑锁或逐文件哈希。
+
+### 隔离 Easel 演示不等于原始运行时
+
+media-use 演示通过另一套已验证的 Easel 运行时合成。演示成功与 QC `WARN` **不**表示
+原始 `.runtime/easel` 检出已健康或已恢复；那仍是一个独立的完整性问题是。

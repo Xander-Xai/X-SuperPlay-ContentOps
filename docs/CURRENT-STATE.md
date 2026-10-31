@@ -4,7 +4,7 @@
 
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
-> Last verified: 2026-10-04
+> Last verified: 2026-10-31
 
 ## Git
 
@@ -346,9 +346,9 @@ a public receipt may match the provider-key shape.
 
 ## HyperFrames media-use integration (Issue #57) — IMPLEMENTED 2026-10-31
 
-Branch `feat/57-media-use-adapter`. **Zero provider calls.** The verified runtime
-was exercised with no network egress; installation itself is a separate,
-reviewed preparation step.
+Re-verified after owner approval on 2026-10-31. Branch `feat/57-media-use-adapter`.
+**Zero provider calls.** The verified runtime was exercised with no network
+egress; installation itself is a separate, reviewed preparation step.
 
 | Property | Value |
 |---|---|
@@ -360,13 +360,27 @@ reviewed preparation step.
 | Receipt | `contentops.media-import/v1` with `output_sha256`, `fingerprint`, `generated`, `evidence_capable`, `production_ready`, `human_review`, `license` |
 | Evidence | every import is `evidence_capable=false`; generated resolutions are `GENERATED_NOT_IMPORTABLE` |
 | Cross-project | blocked unless `allow_cross_project_reuse`; child `HOME` is project-local |
-| Runtime trust | two layers: a committed, human-approved baseline (`runtime/media-use-runtime-baseline.json`) and a host-specific lock (`CONTENTOPS_MEDIA_USE_RUNTIME_LOCK`). A lock is trusted only if it names the approved baseline by digest and every byte matches; the baseline ships `pending`, so a fresh checkout refuses execution |
+| Runtime trust | two layers: a committed, owner-approved baseline (`runtime/media-use-runtime-baseline.json`, approved 2026-10-31 for offline-only scope) and a host-specific lock (`CONTENTOPS_MEDIA_USE_RUNTIME_LOCK`). A lock is trusted only if it names the approved baseline by digest and every byte matches. A fresh checkout still refuses execution until a machine lock is generated; approving the baseline does not install or trust a host runtime |
 | Verified runtime | `hyperframes@0.8.222` (published SRI matched), official Node v22.23.4 on Linux and win-x64 (SHASUMS match), 127-entry lockfile. Package-tree digest `be8e24df…` reproduced independently on both platforms |
 | Acceptance | Linux: `TRUSTED_RUNTIME` inside a no-egress namespace, `adopt`/`candidates`/`resolve` through the adapter. Windows: `install` → `lock` → `TRUSTED_RUNTIME` → real CLI. Isolated demo with real Easel compose: `compose` OK, QC `WARN`, `production_ready:false` |
 | Install / lock entry point | `scripts/media_use_runtime.py` — `approve`, `install`, `lock`, `verify`, `selfcheck`; approving and lock generation are separate actions |
-| Tests | 53 adapter tests PASS; 97 M4.5 convergence tests PASS |
+| Tests | 53 adapter tests PASS; 97 M4.5 convergence tests PASS (re-run 2026-10-31) |
 | Pull request | Draft [#64](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/64) |
 | Skill Router | Not rebuilt; #49/#59 remain unmerged. The adapter exposes `status/doctor/candidates/resolve/adopt` for future registration with the existing discovery mechanism |
+
+### What the approval does and does not authorize
+
+- The approved baseline authorizes **offline local asset operations** with the
+  pinned `hyperframes@0.8.222` runtime: `adopt`, `candidates` and local
+  `resolve`.
+- It does **not** authorize network providers, paid generation, cross-project
+  reuse, automatic publication, production delivery, or any source-media
+  licence. A trusted runtime proves *what executed*, never *where an asset came
+  from* or *what its licence is*.
+- Every imported asset still needs an explicit licence and stays
+  `evidence_capable=false`, `production_ready=false`, `human_review=PENDING`.
+- The isolated Easel demo ran against a separate verified runtime. It does
+  **not** mean the original `.runtime/easel` checkout is healthy or restored.
 
 ### Offline end-to-end sample
 

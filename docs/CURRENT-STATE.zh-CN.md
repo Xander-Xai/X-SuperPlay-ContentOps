@@ -10,7 +10,7 @@ translation_status: synced
 
 > 当前运行状态。仅经验证的事实。无展望，无过时声明。
 >
-> 最后验证：2026-10-04
+> 最后验证：2026-10-31
 
 ## Git
 
@@ -465,8 +465,8 @@ QC 回执在被提交前会经过一道净化边界（`contentops.qc_canonical`�
 
 ## HyperFrames media-use 集成（Issue #57）—— 已实现 2026-10-31
 
-分支 `feat/57-media-use-adapter`。**零供应商调用。** 已验证运行时是在无网络出口的
-环境下执行的；安装本身是独立、经过审核的准备步骤。
+所有者批准后于 2026-10-31 复验。分支 `feat/57-media-use-adapter`。**零供应商调用。**
+已验证运行时是在无网络出口的环境下执行的；安装本身是独立、经过审核的准备步骤。
 
 | 项目 | 值 |
 |---|---|
@@ -478,13 +478,24 @@ QC 回执在被提交前会经过一道净化边界（`contentops.qc_canonical`�
 | 回执 | `contentops.media-import/v1`，含 `output_sha256`、`fingerprint`、`generated`、`evidence_capable`、`production_ready`、`human_review`、`license` |
 | 证据边界 | 所有导入均为 `evidence_capable=false`；生成结果一律 `GENERATED_NOT_IMPORTABLE` |
 | 跨项目 | 未显式授权则阻断；子进程 `HOME` 固定在项目内 |
-| 运行时信任 | 两层：仓库内、由人批准的基线（`runtime/media-use-runtime-baseline.json`）与本机锁（`CONTENTOPS_MEDIA_USE_RUNTIME_LOCK`）。锁只有在以摘要指名已批准基线、且每个字节都匹配时才可信；基线出厂为 `pending`，因此干净检出拒绝执行 |
+| 运行时信任 | 两层：仓库内、由所有者批准的基线（`runtime/media-use-runtime-baseline.json`，2026-10-31 批准，仅限离线范围）与本机锁（`CONTENTOPS_MEDIA_USE_RUNTIME_LOCK`）。锁只有在以摘要指名已批准基线、且每个字节都匹配时才可信。干净检出在生成机器锁之前仍拒绝执行；批准基线不等于安装或信任某台主机的运行时 |
 | 已验证运行时 | `hyperframes@0.8.222`（与官方 SRI 一致）、官方 Node v22.23.4 Linux 与 win-x64（与 SHASUMS 一致）、127 条依赖锁。包树摘要 `be8e24df…` 在两个平台独立复现 |
 | 验收 | Linux：无出口命名空间内 `TRUSTED_RUNTIME`，通过适配器执行 `adopt`/`candidates`/`resolve`。Windows：`install` → `lock` → `TRUSTED_RUNTIME` → 真实 CLI。隔离目录内真实 Easel 合成：`compose` OK、QC `WARN`、`production_ready:false` |
 | 安装 / 生成锁入口 | `scripts/media_use_runtime.py` —— `approve`、`install`、`lock`、`verify`、`selfcheck`；批准与生成锁是两个独立动作 |
-| 测试 | 53 项适配器测试通过；97 项 M4.5 收敛测试通过 |
+| 测试 | 53 项适配器测试通过；97 项 M4.5 收敛测试通过（2026-10-31 重新运行） |
 | Pull Request | Draft [#64](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/64) |
 | Skill Router | 未重建；#49/#59 尚未合并。适配器暴露 `status/doctor/candidates/resolve/adopt`，供未来注册到现有发现机制 |
+
+### 批准覆盖与不覆盖的范围
+
+- 已批准基线授权使用固定版本 `hyperframes@0.8.222` 运行时执行**离线本地素材操作**：
+  `adopt`、`candidates` 与本地 `resolve`。
+- 它**不**授权网络供应商、付费生成、跨项目复用、自动发布、生产交付，也不授予任何
+  源素材许可证。可信运行时只证明*执行了什么*，从不证明*素材来自哪里*或*其许可证是什么*。
+- 每个导入素材仍需显式许可证，并保持 `evidence_capable=false`、
+  `production_ready=false`、`human_review=PENDING`。
+- 隔离 Easel 演示使用的是另一套已验证运行时。它**不**表示原始 `.runtime/easel`
+  已健康或已恢复。
 
 ### 离线端到端样本
 

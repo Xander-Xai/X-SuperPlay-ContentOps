@@ -3,7 +3,7 @@
 [English](RUNBOOK.md) | [简体中文](RUNBOOK.zh-CN.md)
 
 > Real executable commands. Derived from actual script behavior, not assumptions.
-> Last updated: 2026-10-03
+> Last updated: 2026-10-31
 
 ## 0. Environment check
 
@@ -163,8 +163,10 @@ remote rejection, archive provenance acceptance/rejection.
 
 ## 10. media-use assets (optional)
 
-Requires the pinned skill at `~/.agents/skills/media-use` and Node ≥ 18. **No
-network, paid provider or cross-project reuse is authorized by default.**
+Requires the pinned skill at `~/.agents/skills/media-use` and Node ≥ 22 (the
+official HyperFrames CLI floor). **No network, paid provider, cross-project
+reuse or automatic publication is authorized by default.** A trusted runtime
+proves what executed; it does not grant a licence for any discovered media.
 
 ```powershell
 python scripts\media_use_adapter.py status
@@ -197,10 +199,17 @@ so the licence is a human decision and is never defaulted.
 
 Two layers are required, and neither replaces the other:
 
-- `runtime/media-use-runtime-baseline.json` — committed, human-approved. Ships
-  as `approval.status: "pending"`; a fresh checkout therefore refuses execution.
-- a machine lock produced here — host-specific paths, node hash, per-file hashes —
-  pointed at by `CONTENTOPS_MEDIA_USE_RUNTIME_LOCK`. Never committed.
+- `runtime/media-use-runtime-baseline.json` — committed and owner-approved
+  (2026-10-31, offline-only scope). Approval is a human decision recorded in the
+  file; it does not install a runtime.
+- a machine lock produced here — host-specific paths, node hash, per-file hashes
+  and the approved baseline's digest — pointed at by
+  `CONTENTOPS_MEDIA_USE_RUNTIME_LOCK`. Never committed.
+
+A fresh checkout still refuses execution until a machine lock exists. When the
+baseline's approval record changes, the baseline file digest changes too, so a
+previously generated lock no longer matches: regenerate the lock after any
+approval change. Do not edit a lock to make it match a new baseline.
 
 Prepare a host once:
 
@@ -232,3 +241,27 @@ python scripts\media_use_adapter.py status
 `BASELINE_MISMATCH` or `DEPENDENCY_UNVERIFIED`. Regenerating a lock never
 approves a release. Without a trusted lock, local project imports still work and
 every external call is refused.
+
+### Upgrade or roll back HyperFrames
+
+Upgrading is an explicit, reviewed change; the adapter never auto-updates.
+
+1. Update `runtime/media-use-runtime-baseline.json` with the new version,
+   published SRI, dependency-lock digest and package-tree digest.
+2. A human reviews the evidence and runs
+   `python scripts\media_use_runtime.py approve --approved-by "<name>"`.
+3. Install into a **new** runtime directory (do not overwrite the trusted one),
+   then `lock` and `verify` it.
+4. Run `selfcheck` offline, then `tests/test_media_use_adapter.py` and
+   `tests/test_media_convergence.py`.
+5. Point `CONTENTOPS_MEDIA_USE_RUNTIME_LOCK` at the new lock.
+
+Rollback: keep the previous runtime directory and its lock. Point the environment
+variable back and verify it reports `TRUSTED_RUNTIME` against the baseline it was
+produced from. Never hand-edit a lock or the per-file hashes.
+
+### Isolated Easel demo is not the original runtime
+
+The media-use demo composes through a separate, verified Easel runtime. A
+successful demo and QC `WARN` do **not** mean the original `.runtime/easel`
+checkout is healthy or restored; that remains a separate integrity question.

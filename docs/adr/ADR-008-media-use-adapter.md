@@ -67,9 +67,11 @@ version-controlled layer that the operator does not produce at install time.
 
 A lock is trusted only when it names the approved baseline by digest *and*
 every byte matches. Regenerating a lock never approves a release; approving
-never installs one. The baseline ships with `approval.status: "pending"` until
-a person runs `scripts/media_use_runtime.py approve --approved-by <name>`, so a
-fresh checkout refuses external execution by construction.
+never installs one. The baseline was approved by the repository owner on
+2026-10-31 for offline-only scope, so a fresh checkout still refuses execution
+until a host-specific machine lock is generated. Because the approval record is
+part of the baseline file, any approval change changes the baseline digest and
+invalidates every existing lock.
 
 The baseline also pins `package_tree_sha256`, a digest over the package's own
 678 files in sorted `path\\0sha256` form. Without it, editing a runtime file and
@@ -101,13 +103,14 @@ stale `available=true` cannot authorise a tree that changed afterwards.
 
 ## Installing a runtime
 
-`scripts/media_use_runtime.py` has four separate commands:
+`scripts/media_use_runtime.py` has five separate commands:
 
 | Command | Network | Effect |
 |---|---|---|
 | `approve --approved-by NAME` | no | flips the baseline's approval record; refuses an unnamed approver or a missing tree digest |
 | `install` | yes | refuses an unapproved baseline, copies the committed `runtime/media-use-package-lock.json` (127 entries, digest `2225ab6d…`) and runs `npm ci --ignore-scripts`; fails if the installed version, lockfile digest or SRI differ from the approved values |
 | `lock` | no | hashes the tree into a v2 lock and verifies it against the baseline |
+| `verify` | no | re-checks an existing lock against the approved baseline without running anything |
 | `selfcheck` | no | runs `adopt`/`candidates`/`resolve` through the production adapter against the trusted lock |
 
 Lifecycle scripts are disabled at install and audited afterwards; runtime
@@ -116,8 +119,8 @@ network and paid providers stay off (`policy` in the baseline).
 ## Verified by execution, 2026-10-31
 
 **Linux** — isolated WSL, network namespace with no egress (`unshare -Urn`,
-outbound probe refused), no credentials, no provider, no `npx`. A temporary
-approved copy of the baseline was used so the committed one stays `pending`:
+outbound probe refused), no credentials, no provider, no `npx`. This pass used
+the committed, owner-approved baseline directly:
 
 | Step | Result |
 |---|---|
@@ -141,6 +144,35 @@ the Linux run. Neither proves a provider call or a production pipeline.
 
 The import receipt records `upstream_provenance: UNVERIFIED` and no commit ID:
 a verified runtime proves *what executed*, never *where an asset came from*.
+
+### Re-verified after owner approval (2026-10-31)
+
+Both machine locks were regenerated from the **committed approved baseline**
+(not a temporary copy) and re-verified:
+
+| Platform | Lock | Result |
+|---|---|---|
+| Linux (WSL) | 5 397 files, node v22.23.4 linux-x64 | `TRUSTED_RUNTIME`, package-tree digest `be8e24df…`; no-egress `selfcheck` returned `adopt` 1, candidate `image_001`, bundled `sfx_001` |
+| Windows 11 | 5 424 files, node v22.23.4 win-x64 | `TRUSTED_RUNTIME`, same package-tree digest; real `selfcheck` `adopt` 1, candidate `image_001`, bundled `sfx_001` |
+
+An 18-case adversarial pass against the real Windows lock and runtime refused
+every case: no lock, an old-baseline lock, an unapproved or modified baseline, a
+tampered runtime file, a tampered lock, a missing or replaced node hash, an
+unlisted runtime file and an escaping lock path. The valid lock still executed,
+and a refused import wrote no receipt.
+
+The Linux `selfcheck` ran against a byte-identical copy of the same tree on the
+WSL ext4 filesystem. A second full hash pass over the `/mnt/d` 9p mount took tens
+of minutes; the ext4 copy hashes in about 2 s and reproduces the same
+package-tree digest `be8e24df…`. The lock records that copy's paths — the digest,
+not the path, is what the baseline approves. Inside `unshare -Urn` only a down
+`lo` exists, `curl` fails and DNS does not resolve, so the check ran with no
+egress.
+
+The approval covers offline local operations only. Network, paid providers,
+cross-project reuse, publication and source-media licensing remain unauthorized.
+The isolated Easel demo proves the integration path, not the health of the
+original `.runtime/easel` checkout.
 
 ## Why not a fork or a reimplementation
 
@@ -195,6 +227,10 @@ media-use's own `.media/manifest.jsonl` only to look up a record by id.
 - Upgrading media-use is an explicit change: install the new version, regenerate
   the runtime lock, re-run `tests/test_media_use_adapter.py`, and repeat the
   isolated execution check. The adapter does not auto-update.
+- Rollback is the same path in reverse: keep the previous runtime directory and
+  lock, point `CONTENTOPS_MEDIA_USE_RUNTIME_LOCK` back, and verify
+  `TRUSTED_RUNTIME` against the baseline that produced it. Never edit a lock to
+  match a new baseline.
 - Execution is blocked until a lock exists for the host. Without
   `CONTENTOPS_MEDIA_USE_RUNTIME_LOCK` every external call reports
   `DEPENDENCY_UNVERIFIED`; local project imports keep working.

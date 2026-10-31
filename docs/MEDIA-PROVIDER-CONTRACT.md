@@ -1277,6 +1277,12 @@ a licensed stock photo as `REAL` would make it evidence-capable; registering it 
 declare it as `source_type: stock`, so the final QC's real-source ratio cannot
 borrow it.
 
+A trusted media-use runtime and an asset licence are two different facts. The
+runtime baseline and machine lock prove **which code executed**; they say nothing
+about **who licensed the bytes** that code returned. The skill is Apache-2.0, and
+that licence covers the software only — every adopted file still needs its own
+`license` value from a human.
+
 `MediaModality.AUDIO` exists because filing a sound effect under `SPEECH` would
 imply a transcript, a pronunciation policy and a loudness contract that a BGM
 track does not have. Audio carries no `asset_kind` and is never evidence, exactly
