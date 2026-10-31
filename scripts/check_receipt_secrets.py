@@ -56,10 +56,17 @@ REDACTED = {"", "<redacted>", "redacted", "null", "none", "***"}
 KEY_LIKE = re.compile(
     r"(sk-[A-Za-z0-9_-]{16,}|ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}"
     r"|AKIA[0-9A-Z]{16}|BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY)")
-# A URL that carries a credential: userinfo (scheme://user:pass@host) or a
-# signed/secret query parameter. Plain URLs are deliberately not matched.
+# A URL that carries a credential: userinfo with a password
+# (scheme://user:pass@host), a token used as the username (scheme://<token>@host,
+# gated on >=20 chars and a mixed letter/digit run so an e-mail user or a plain
+# host does not match), or a signed/secret query parameter. Plain URLs are
+# deliberately not matched.
+_URL_TOKEN_CHARS = r"[A-Za-z0-9._~%+\-]"
 URL_CREDENTIAL = re.compile(
     r"[A-Za-z][A-Za-z0-9+.\-]*://[^/\s:@]+:[^/\s@]+@"
+    r"|[A-Za-z][A-Za-z0-9+.\-]*://"
+    rf"(?={_URL_TOKEN_CHARS}{{20,}}@)(?={_URL_TOKEN_CHARS}*[0-9])"
+    rf"(?={_URL_TOKEN_CHARS}*[A-Za-z]){_URL_TOKEN_CHARS}{{20,}}@"
     r"|[?&](?:token|access_token|id_token|refresh_token|api_key|apikey|secret"
     r"|password|sig|signature|X-Amz-Signature|X-Amz-Credential"
     r"|X-Amz-Security-Token|AWSAccessKeyId|GoogleAccessId)=[^&\s\"']+",

@@ -300,6 +300,28 @@ class ReceiptSecretAdversarialTests(unittest.TestCase):
                 tracked = checker._tracked_receipts(root)
             self.assertEqual(tracked, [path])
 
+    def test_token_used_as_url_username_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            path = _receipt(
+                root, "tokuser.json",
+                {"source_url": "https://abcDEF1234567890xyzTOKEN42@example.com/a"})
+            found = checker.scan(root, paths=[path])
+            self.assertIn(
+                (path.relative_to(root).as_posix(), "<text>", "credential_value"), found)
+
+    def test_email_userinfo_and_email_query_are_not_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            for name, url in (
+                ("mailuser.json", "https://verylongemailaddressname@example.com/a"),
+                ("mailq.json", "https://example.com/x?email=a@b.com"),
+                ("shortuser.json", "https://user@example.com/a"),
+            ):
+                with self.subTest(url=url):
+                    path = _receipt(root, name, {"source_url": url})
+                    self.assertEqual(checker.scan(root, paths=[path]), [])
+
 
 if __name__ == "__main__":
     unittest.main()
