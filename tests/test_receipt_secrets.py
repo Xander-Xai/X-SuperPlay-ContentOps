@@ -4,6 +4,7 @@ import json
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -87,6 +88,45 @@ class ReceiptSecretScanTests(unittest.TestCase):
 
 
 class ReceiptSecretDiffTests(unittest.TestCase):
+    def test_invalid_explicit_base_does_not_fall_back(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            path, baseline = _repo(root, {"voice_id": "v1"})
+            _git(root, "update-ref", "refs/remotes/origin/main", "HEAD")
+            with self.assertRaises(checker.CheckError):
+                checker.check(root, baseline, paths=[path], base="missing-base-ref")
+
+    def test_invalid_environment_base_does_not_fall_back(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            path, baseline = _repo(root, {"voice_id": "v1"})
+            _git(root, "update-ref", "refs/remotes/origin/main", "HEAD")
+            with patch.dict("os.environ", {"CONTENTOPS_RECEIPT_BASE": "missing-base-ref"}):
+                with self.assertRaisesRegex(checker.CheckError, "BASE_REQUIRED"):
+                    checker.check(root, baseline, paths=[path])
+                self.assertTrue(checker.check(root, baseline, paths=[path], base="HEAD")["ok"])
+
+    def test_empty_explicit_base_and_non_commit_ref_are_refused(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            _repo(root, {"voice_id": "v1"})
+            _git(root, "update-ref", "refs/remotes/origin/main", "HEAD")
+            for ref in ("", "HEAD^{tree}", "HEAD^"):
+                with self.subTest(ref=ref), self.assertRaisesRegex(checker.CheckError, "BASE_REQUIRED"):
+                    checker._resolve_base(root, ref)
+
+    def test_changed_sensitive_fields_fail_independently(self) -> None:
+        for field, before, after in (("voice_id", "v1", "v2"),
+                                     ("cash_balance", "0.00", "9.99"),
+                                     ("payg_key_fingerprint", "2ac10c6e9029", "ffffffffffff")):
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as raw:
+                root = Path(raw)
+                path, baseline = _repo(root, {field: before})
+                _receipt(root, "a.json", {field: after})
+                result = checker.check(root, baseline, paths=[path], base="HEAD")
+                self.assertTrue(any(item["field"] == field and item["reason"] == "changed_value"
+                                    for item in result["new"]))
+
     def test_same_value_at_a_baselined_path_passes(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)

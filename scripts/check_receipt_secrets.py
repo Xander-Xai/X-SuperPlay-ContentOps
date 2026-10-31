@@ -223,11 +223,12 @@ def _baseline_payload(root: Path, paths: Optional[Iterable[Path]] = None) -> Dic
 
 
 def _resolve_base(root: Path, explicit: Optional[str]) -> str:
-    candidates = [explicit, os.environ.get("CONTENTOPS_RECEIPT_BASE"), "origin/main", "HEAD^"]
+    requested = explicit if explicit is not None else os.environ.get("CONTENTOPS_RECEIPT_BASE")
+    candidates = [requested] if requested is not None else ["origin/main", "HEAD^"]
     for candidate in candidates:
         if not candidate:
             continue
-        result = hidden_run(["git", "rev-parse", "--verify", candidate],
+        result = hidden_run(["git", "rev-parse", "--verify", f"{candidate}^{{commit}}"],
                             cwd=str(root), text=True, timeout=30)
         if result.returncode == 0:
             return candidate
