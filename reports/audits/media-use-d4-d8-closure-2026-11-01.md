@@ -1,7 +1,8 @@
 # media-use D-4 / D-8 closure and M5 re-adjudication — 2026-11-01
 
-> Closes the two blockers left open by
-> [`media-use-integration-acceptance-2026-11-01.md`](media-use-integration-acceptance-2026-11-01.md)
+> Closes the two blockers left open by the media-use integration acceptance
+> report (`reports/audits/media-use-integration-acceptance-2026-11-01.md`, carried
+> on the still-open PR [#86](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/86))
 > and re-adjudicates the M5 offline media integration.
 >
 > **ContentOps production release stays `BLOCKED`.** `production_ready` is still
