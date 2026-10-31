@@ -100,6 +100,23 @@ presence, so a blocked capability never looks runnable just because a runtime
 happens to be installed. A permission field in a skill's front matter is
 recorded, never treated as an authorization.
 
+## Execution authorization
+
+Resolution ends where authorization begins. `RESOLVABLE` means "hand this to an
+adapter", not "run it". The separate decision lives in ADR-009 and in
+`src/contentops/skills/authorization.py`:
+
+```
+DISCOVERED -> RESOLVABLE -> EXECUTION_REQUESTED -> AUTHORIZED -> EXECUTED
+```
+
+A caller must present a grant bound to the exact skill version, account, pipeline,
+stage, operations, caller and budget, with an expiry and a revocation state. Every
+blocked path returns `execution_authorized: false`. The adapter's runtime lock
+verifier and the M5 `rights_reviewed` gate are unchanged and remain the authority
+for their own questions. See
+[ADR-009](adr/ADR-009-skill-execution-authorization.md).
+
 ## media-use
 
 | Field | Value |

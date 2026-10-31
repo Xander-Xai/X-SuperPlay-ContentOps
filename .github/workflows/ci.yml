@@ -216,6 +216,10 @@ jobs:
       - name: Run skill router capability regression tests
         run: python tests/test_skill_router_capabilities.py
 
+      # Pure decision logic: no adapter, no runtime, no I/O.
+      - name: Run skill execution authorization regression tests
+        run: python tests/test_skill_execution_authorization.py
+
       - name: Enforce subprocess policy
         run: python scripts/check_subprocess_policy.py
 
