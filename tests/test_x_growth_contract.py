@@ -28,6 +28,10 @@ class XGrowthContractTests(unittest.TestCase):
         self.assertEqual(result["review_status"], "UNREVIEWED")
         self.assertEqual(result["provenance"]["source"], self.draft["source_url"])
         self.assertEqual(result["source_draft"], self.draft)
+        self.assertEqual(result["contract_completeness"], "PARTIAL_CONTRACT")
+        self.assertEqual(result["upstream_validator"], "NOT_APPLIED")
+        self.assertNotIn("image", result)
+        self.assertNotIn("alt_text", result)
 
     def test_does_not_mutate_input(self):
         original = copy.deepcopy(self.draft)

@@ -63,4 +63,6 @@ def map_draft_to_x_post(draft: dict[str, Any]) -> dict[str, Any]:
         "review_status": "UNREVIEWED",
         "provenance": {"source": source},
         "source_draft": deepcopy(draft),
+        "contract_completeness": "PARTIAL_CONTRACT",
+        "upstream_validator": "NOT_APPLIED",
     }

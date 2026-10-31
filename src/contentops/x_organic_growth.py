@@ -19,22 +19,31 @@ _EXPERIMENTS = {"ORIGINAL_VS_QUOTE", "MORNING_VS_EVENING", "HOOK_STYLE", "TOPIC_
                 "POST_FREQUENCY", "CONTENT_FORMAT", "ENGAGEMENT_QUALITY"}
 _SENSITIVE = re.compile(r"(?i)(api[_-]?key|access[_-]?token|password|secret|cookie|private[_-]?message|bearer\s+|github_pat_|ghp_|\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b)")
 _ACCOUNT = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$")
-_INJECTION = re.compile(r"(?i)(ignore\s+(all\s+)?(previous|prior)\s+instructions|system\s+prompt|忽略.{0,8}(指令|规则))")
+_INJECTION = re.compile(
+    r"(?i)(ignore\s+(all\s+)?(previous|prior)\s+instructions"
+    r"|disregard\s+(all\s+)?(previous|prior)\s+instructions"
+    r"|system\s+prompt|<\|?system\|?>|忽略.{0,8}(指令|规则))"
+)
+_MAX_DEPTH = 32
 
 
-def _injection(value):
+def _injection(value, depth=0):
+    if depth > _MAX_DEPTH:
+        return True
     if isinstance(value, dict):
-        return any(_injection(v) for v in value.values())
+        return any(_injection(v, depth + 1) for v in value.values())
     if isinstance(value, list):
-        return any(_injection(v) for v in value)
+        return any(_injection(v, depth + 1) for v in value)
     return isinstance(value, str) and bool(_INJECTION.search(value))
 
 
-def _unsafe(value):
+def _unsafe(value, depth=0):
+    if depth > _MAX_DEPTH:
+        return True
     if isinstance(value, dict):
-        return any(_SENSITIVE.search(str(k)) or _unsafe(v) for k, v in value.items())
+        return any(_SENSITIVE.search(str(k)) or _unsafe(v, depth + 1) for k, v in value.items())
     if isinstance(value, list):
-        return any(_unsafe(v) for v in value)
+        return any(_unsafe(v, depth + 1) for v in value)
     return isinstance(value, str) and bool(_SENSITIVE.search(value))
 
 
@@ -56,8 +65,9 @@ def _result(status, *reasons, **data):
 
 def _accounts_match(value, account):
     if isinstance(value, dict):
-        if "account_id" in value and value["account_id"] != account:
-            return False
+        for field in ("account_id", "account_handle"):
+            if field in value and value[field] != account:
+                return False
         return all(_accounts_match(v, account) for v in value.values())
     if isinstance(value, list):
         return all(_accounts_match(v, account) for v in value)
@@ -101,7 +111,8 @@ def process(request):
             draft = map_draft_to_x_post(request.get("draft"))
         except ContractError:
             return _result("BLOCKED", "INVALID_X_CONTRACT")
-        return _result("REVIEW_REQUIRED", draft=draft, integration="BLOCKED_UPSTREAM")
+        return _result("REVIEW_REQUIRED", draft=draft, integration="BLOCKED_UPSTREAM",
+                       contract_completeness="PARTIAL_CONTRACT")
     if operation == "engagement":
         candidate = request.get("candidate", {})
         if not isinstance(candidate, dict) or not _url(candidate.get("source_url")):
@@ -121,7 +132,9 @@ def process(request):
         ranked = []
         for item in candidates:
             scores = item.get("scores", {})
-            if not isinstance(scores, dict) or any(type(scores.get(k)) not in (int, float) or not 0 <= scores[k] <= 5 for k in _DIMENSIONS):
+            if not isinstance(scores, dict) or any(
+                    isinstance(scores.get(k), bool) or type(scores.get(k)) not in (int, float)
+                    or not math.isfinite(scores[k]) or not 0 <= scores[k] <= 5 for k in _DIMENSIONS):
                 return _result("BLOCKED", "MISSING_OR_INVALID_SCORES")
             score = sum(scores[k] for k in _DIMENSIONS[:5]) - sum(scores[k] for k in _DIMENSIONS[5:])
             ranked.append({"candidate": item, "score": score, "source_verification": "UNVERIFIED_REFERENCE"})

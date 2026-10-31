@@ -180,6 +180,17 @@ class GrowthMetricsTests(unittest.TestCase):
         result = build_weekly_report(self.request())
         self.assertEqual(result["report"]["publication_evidence"], "USER_REPORTED_UNVERIFIED")
 
+    def test_boolean_metric_is_not_a_number(self):
+        snapshots = self.request()["metric_snapshots_csv"].replace(",organic,100,", ",organic,true,")
+        result = build_weekly_report(self.request(metric_snapshots_csv=snapshots))
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertIn("INVALID_METRIC", result["reasons"])
+
+    def test_duplicate_content_ids_are_refused(self):
+        posts = self.request()["posts_csv"]
+        result = build_weekly_report(self.request(posts_csv=posts + "\n" + posts.splitlines()[-1], metric_snapshots_csv=""))
+        self.assertEqual(result["status"], "BLOCKED")
+
     def test_insufficient_comparison_propagates_to_report_status(self):
         records = [{"group": group, "value": 10, "metric": "impressions", "age_window": "T+24H", "observed_at": "2026-10-28T10:00:00Z", "source": "manual"} for group in ("A", "B")]
         result = build_weekly_report(self.request(comparison=records))

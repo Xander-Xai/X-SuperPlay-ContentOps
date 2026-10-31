@@ -46,6 +46,8 @@ def main():
     try:
         if not safe_input_path(args.input):
             raise ValueError("unsafe input path")
+        if args.input.stat().st_size > 1_048_576:
+            raise ValueError("input too large")
         raw = args.input.read_bytes()
         data = json.loads(raw.decode("utf-8"))
         result = process(data)

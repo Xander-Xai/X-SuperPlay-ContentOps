@@ -65,6 +65,8 @@ def _timestamp(value):
 def _number(value, *, integer=False):
     if value is None or value == "":
         return None
+    if isinstance(value, bool):
+        raise ValueError("INVALID_METRIC")
     try:
         number = int(value) if integer else float(value)
     except (TypeError, ValueError, OverflowError):
@@ -158,6 +160,9 @@ def build_weekly_report(request):
                 _in_week(published, start, end)
                 if not _status_url(row.get("x_post_url")):
                     raise ValueError("INVALID_POST_SOURCE")
+        seen_ids = [post.get("content_id") for post in posts]
+        if len(seen_ids) != len(set(seen_ids)):
+            raise ValueError("INVALID_POST_SOURCE")
         post_by_id = {post.get("content_id"): post for post in posts if post.get("account_handle") == account}
         all_post_ids = {post.get("content_id") for post in posts}
         for row in metrics:
