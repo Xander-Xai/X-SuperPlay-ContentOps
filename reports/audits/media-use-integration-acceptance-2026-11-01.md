@@ -168,7 +168,7 @@ audio     aac 25.058s
 | Question | Answer | Evidence |
 |---|---|---|
 | Image really imported? | **Yes** | `media-use-stage.json`: `support_visual` `IMPORTED`, sha `85c4ab5c…`, `receipt_ref support.png.receipt.json`, `provider_call=false` |
-| Image really in the video? | **Yes** | frame at 1.5 s is pixel-identical in content to `01-easel-hero.png` (title card "ZJU-REAL / Easel"), with burned subtitles over it |
+| Image really in the video? | **Yes** | the frame at 1.5 s shows the same title-card content as `01-easel-hero.png` ("ZJU-REAL / Easel"), scaled to 1080×1920 with burned subtitles over it; the shot's `image`/`source` fields point at `assets/support.png` |
 | BGM really mixed? | **Yes** | Goertzel magnitude at 220 Hz over 1.0–1.4 s: composed **64.75** vs narration **0.03** |
 | SFX really at 6.15 s? | **Yes** | composed 50 ms RMS rises 211 → 953 → 747 → 256 across 6.15–6.30, matching the SFX file's own 360 → 1787 → 1357 → 442 envelope; narration does not show that shape |
 | Narration intact? | **Yes** | 25.058 s SAPI track present in the mix; subtitles (4 cues) burned correctly |
