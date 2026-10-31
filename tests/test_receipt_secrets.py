@@ -210,5 +210,96 @@ class ReceiptSecretDiffTests(unittest.TestCase):
         self.assertEqual(data["schema"], checker.SCHEMA)
 
 
+class ReceiptSecretAdversarialTests(unittest.TestCase):
+    """Scenarios the phase-2 review requires beyond the original suite."""
+
+    def test_credential_in_url_userinfo_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            path = _receipt(root, "url.json",
+                            {"source_url": "https://user:s3cr3t@example.com/a/b"})
+            found = checker.scan(root, paths=[path])
+            self.assertIn(
+                (path.relative_to(root).as_posix(), "<text>", "credential_value"), found)
+
+    def test_signed_query_url_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            path = _receipt(root, "signed.json", {
+                "source_url": "https://b.example.com/x"
+                              "?X-Amz-Signature=abc&X-Amz-Credential=def"})
+            found = checker.scan(root, paths=[path])
+            self.assertIn(
+                (path.relative_to(root).as_posix(), "<text>", "credential_value"), found)
+
+    def test_a_plain_url_is_not_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            path = _receipt(root, "plain.json",
+                            {"source_url": "https://example.com/plain/path?page=2"})
+            self.assertEqual(checker.scan(root, paths=[path]), [])
+
+    def test_changed_array_element_path_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            path, baseline = _repo(root, {"attempts": [{"voice_id": "v1"}]})
+            _receipt(root, "a.json", {"attempts": [{"voice_id": "v2"}]})
+            result = checker.check(root, baseline, paths=[path], base="HEAD")
+            self.assertFalse(result["ok"])
+            self.assertTrue(any(item["reason"] == "changed_value" for item in result["new"]))
+
+    def test_multiple_receipt_files_changed_are_all_reported(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            _git(root, "init")
+            a = _receipt(root, "a.json", {"voice_id": "v1"})
+            b = _receipt(root, "b.json", {"task_id": "t1"})
+            baseline = root / BASELINE_REL
+            baseline.parent.mkdir(parents=True, exist_ok=True)
+            baseline.write_text(json.dumps(
+                checker._baseline_payload(root, paths=[a, b]), ensure_ascii=False),
+                encoding="utf-8")
+            _commit(root)
+            _receipt(root, "a.json", {"voice_id": "v2"})
+            _receipt(root, "b.json", {"task_id": "t2"})
+            result = checker.check(root, baseline, paths=[a, b], base="HEAD")
+            files = {item["file"] for item in result["new"]}
+            self.assertEqual(files, {a.relative_to(root).as_posix(),
+                                     b.relative_to(root).as_posix()})
+
+    def test_a_benign_new_field_passes(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            path, baseline = _repo(root, {"voice_id": "v1"})
+            _receipt(root, "a.json", {"voice_id": "v1", "note": "plain human text"})
+            result = checker.check(root, baseline, paths=[path], base="HEAD")
+            self.assertTrue(result["ok"], result)
+
+    def test_non_utf8_receipt_is_detected_not_crashed(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            path = root / "projects" / "demo" / "receipts" / "latin.json"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b'{"voice_id": "v1", "label": "\xe9t\xe9"}')
+            found = checker.scan(root, paths=[path])
+            self.assertIn(
+                (path.relative_to(root).as_posix(), "voice_id", "provider_id"), found)
+
+    def test_windows_style_paths_are_normalized(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            path = root / "projects" / "demo" / "receipts" / "a.json"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("{}", encoding="utf-8")
+
+            class _Result:
+                returncode = 0
+                stdout = b"projects\\demo\\receipts\\a.json\0"
+
+            with patch.object(checker, "hidden_run", return_value=_Result()):
+                tracked = checker._tracked_receipts(root)
+            self.assertEqual(tracked, [path])
+
+
 if __name__ == "__main__":
     unittest.main()

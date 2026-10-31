@@ -56,6 +56,14 @@ REDACTED = {"", "<redacted>", "redacted", "null", "none", "***"}
 KEY_LIKE = re.compile(
     r"(sk-[A-Za-z0-9_-]{16,}|ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}"
     r"|AKIA[0-9A-Z]{16}|BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY)")
+# A URL that carries a credential: userinfo (scheme://user:pass@host) or a
+# signed/secret query parameter. Plain URLs are deliberately not matched.
+URL_CREDENTIAL = re.compile(
+    r"[A-Za-z][A-Za-z0-9+.\-]*://[^/\s:@]+:[^/\s@]+@"
+    r"|[?&](?:token|access_token|id_token|refresh_token|api_key|apikey|secret"
+    r"|password|sig|signature|X-Amz-Signature|X-Amz-Credential"
+    r"|X-Amz-Security-Token|AWSAccessKeyId|GoogleAccessId)=[^&\s\"']+",
+    re.IGNORECASE)
 HEX64 = re.compile(r"^[0-9a-fA-F]{64}$")
 NUMERIC = re.compile(r"^-?\d+(\.\d+)?$")
 
@@ -128,7 +136,9 @@ def _canonical(value: Any) -> str:
 
 
 def _text_tokens(text: str) -> Set[str]:
-    return {match.group(0) for match in KEY_LIKE.finditer(text)}
+    tokens = {match.group(0) for match in KEY_LIKE.finditer(text)}
+    tokens.update(match.group(0) for match in URL_CREDENTIAL.finditer(text))
+    return tokens
 
 
 def _scan_values(root: Path, paths: Optional[Iterable[Path]] = None
