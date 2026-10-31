@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from contentops.publish import x_growth_bridge
+from contentops.publish.x_paths import ensure_inside, is_single_component, resolve_inside
 from contentops.publish.publisher import build_package
 from contentops.publish.x_post import post_verdict, validate_post
 from contentops.x_organic_growth import process as growth_process
@@ -38,15 +39,26 @@ def _envelope(status: str, **extra: Any) -> Dict[str, Any]:
 
 
 def _write_record(project: Path, record: Dict[str, Any]) -> Path:
+    content_id = str(record.get("content_id") or "")
+    if not is_single_component(content_id):
+        raise ValueError(
+            f"content_id {content_id!r} is not one safe file-name component")
     posts = project / "posts"
+    if posts.exists() and not ensure_inside(project, posts):
+        raise ValueError(f"{posts} resolves outside the project; refusing to write")
     posts.mkdir(parents=True, exist_ok=True)
-    path = posts / f"{record['content_id']}.json"
-    if path.exists():
+    if not ensure_inside(project, posts):
+        raise ValueError(f"{posts} resolves outside the project; refusing to write")
+    target = resolve_inside(posts, f"{content_id}.json")
+    if target is None or target.parent != posts.resolve():
+        raise ValueError(
+            f"content_id {content_id!r} does not resolve to a file directly under posts/")
+    if target.exists():
         raise FileExistsError(
-            f"{path} already exists; this pipeline will not overwrite a record")
-    path.write_text(json.dumps(record, indent=2, ensure_ascii=False) + "\n",
-                    encoding="utf-8")
-    return path
+            f"{target} already exists; this pipeline will not overwrite a record")
+    target.write_text(json.dumps(record, indent=2, ensure_ascii=False) + "\n",
+                      encoding="utf-8")
+    return target
 
 
 def run(project: Path, growth_request: Dict[str, Any], enrichment: Dict[str, Any],
@@ -95,7 +107,7 @@ def run(project: Path, growth_request: Dict[str, Any], enrichment: Dict[str, Any
 
     try:
         record_path = _write_record(project, record)
-    except FileExistsError as exc:
+    except (FileExistsError, ValueError) as exc:
         result["status"] = "EDITORIAL_BLOCKED"
         result["reasons"] = [str(exc)]
         del result["growth"]
@@ -111,6 +123,7 @@ def run(project: Path, growth_request: Dict[str, Any], enrichment: Dict[str, Any
         "package_path": package["receipt"],
         "package": package,
         "review_provenance": (record.get("enrichment") or {}).get("review_provenance"),
+        "review_trust": "NOT_VERIFIED",
     })
     del result["growth"]
 

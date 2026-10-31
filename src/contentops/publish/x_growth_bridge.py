@@ -21,8 +21,13 @@ from __future__ import annotations
 import json
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
+from contentops.publish.x_paths import (
+    is_single_component,
+    resolve_inside,
+    safe_relative,
+)
 from contentops.x_growth_contract import SUPPORTED_ACCOUNTS, X_POST_SCHEMA
 
 SCHEMA = "contentops.x-growth-bridge/v1"
@@ -42,26 +47,20 @@ class BridgeBlocked(ValueError):
         self.reasons = reasons
 
 
-def _safe_relative(value: Any) -> Optional[Path]:
-    """A project-relative path with no escape, or ``None``."""
-    if not isinstance(value, str) or not value.strip():
-        return None
-    path = Path(value.strip())
-    if path.is_absolute() or ".." in path.parts:
-        return None
-    return path
-
-
 def _review(project: Path, source: Any, account_slug: str) -> Dict[str, Any]:
-    relative = _safe_relative(source)
+    relative = safe_relative(source)
     if relative is None:
         raise BridgeBlocked(
             ["review_source must be a project-relative path; an inline review "
              "cannot be told apart from an agent-written one"])
-    path = project / relative
-    if not path.is_file():
-        raise BridgeBlocked([f"review_source {relative.as_posix()!r} is not a file"])
+    path = resolve_inside(project, relative.as_posix(), must_be_file=True)
+    if path is None:
+        raise BridgeBlocked(
+            [f"review_source {relative.as_posix()!r} is not a regular file inside "
+             "the project; links and escaping paths are refused"])
     try:
+        if path.stat().st_size > 1_048_576:
+            raise BridgeBlocked(["review_source is larger than 1 MiB"])
         review = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise BridgeBlocked([f"review_source is not readable JSON: {exc}"]) from exc
@@ -118,6 +117,12 @@ def enrich(partial: Dict[str, Any], enrichment: Dict[str, Any], project: Path,
     for key in REQUIRED_SCALARS:
         if not str(enrichment.get(key) or "").strip():
             reasons.append(f"enrichment has no {key!r}")
+
+    content_id = str(enrichment.get("content_id") or "").strip()
+    if content_id and not is_single_component(content_id):
+        reasons.append(
+            f"content_id {content_id!r} is not one safe file-name component; it "
+            "becomes a path under posts/ and may not contain separators or dots")
 
     grade = str(enrichment.get("proof_grade") or "")
     if grade and grade not in PROOF_GRADES:
@@ -188,11 +193,14 @@ def enrich(partial: Dict[str, Any], enrichment: Dict[str, Any], project: Path,
         red_team = [str(item or "") for item in (red_team or [])]
 
     image = enrichment.get("image")
-    image_path = _safe_relative(image.get("path") if isinstance(image, dict) else None)
+    image_value = image.get("path") if isinstance(image, dict) else None
+    image_path = safe_relative(image_value)
     if image_path is None:
         reasons.append("enrichment.image.path must be project-relative")
-    elif not (project / image_path).is_file():
-        reasons.append(f"image {image_path.as_posix()!r} is not in the project")
+    elif resolve_inside(project, image_path.as_posix(), must_be_file=True) is None:
+        reasons.append(
+            f"image {image_path.as_posix()!r} is not a regular file inside the "
+            "project; links and escaping paths are refused")
 
     review: Dict[str, Any] = {}
     if not str(enrichment.get("review_source") or "").strip():
@@ -232,6 +240,7 @@ def enrich(partial: Dict[str, Any], enrichment: Dict[str, Any], project: Path,
             "evidence_provenance": "USER_SUPPLIED_UNVERIFIED",
             "review_source": review["source"],
             "review_provenance": REVIEW_PROVENANCE,
+            "review_trust": "NOT_VERIFIED",
         },
     })
     return record

@@ -264,7 +264,7 @@ def test_a_missing_image_or_alt_is_refused_before_packaging():
         (project / "assets" / f"{CONTENT_ID}.png").unlink()
         result = _run(project)
         assert result["status"] == "ENRICHMENT_BLOCKED", result
-        assert any("not in the project" in reason for reason in result["reasons"])
+        assert any("not a regular file" in reason for reason in result["reasons"])
 
     with tempfile.TemporaryDirectory() as temp:
         project = _project(temp)

@@ -309,6 +309,12 @@ jobs:
       - name: Run X growth integration tests
         run: python tests/test_x_growth_integration.py
 
+      # Path hardening: ids, review files, images and provenance are all data a
+      # caller supplies. The suite proves traversal, backslash, drive, UNC and
+      # symlink spellings fail closed before anything is read or written.
+      - name: Run X path-safety tests
+        run: python tests/test_x_path_safety.py
+
       - name: Enforce subprocess policy
         run: python scripts/check_subprocess_policy.py
 
