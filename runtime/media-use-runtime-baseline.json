@@ -6,7 +6,9 @@
   "dependency_lock_sha256": "2225ab6d1c22d19082c6b1985d23732f2ad7b9a9108cf080e5c405ef797b925e",
   "package_tree_sha256": "be8e24dfe66e4ca296f8ad4ff440b63dfe039cf9527c589f21952dfe31c8dba9",
   "entry": "node_modules/hyperframes/bin/hyperframes.mjs",
-  "verb_prefix": ["media-use"],
+  "verb_prefix": [
+    "media-use"
+  ],
   "policy": {
     "node_major_min": 22,
     "lifecycle_scripts": "disabled",
@@ -16,9 +18,9 @@
   },
   "skill_source_reference": "f2358315e59731833334c5d881a7fb5543c22a97",
   "approval": {
-    "status": "pending",
-    "approved_by": "",
-    "approved_at": "",
-    "evidence": "Technical evidence exists (isolated WSL run with no network egress: adopt/candidates/resolve returned ok, exit 0; an edited runtime file was refused with INTEGRITY_MISMATCH before any process started). Release approval is a human action: run `python scripts/media_use_runtime.py approve --approved-by <name>` after review, then commit the change."
+    "status": "approved",
+    "approved_by": "Xander-Xai",
+    "approved_at": "2026-10-31",
+    "evidence": "Owner-authorized approval on 2026-10-31 for the reviewed offline-only hyperframes@0.8.222 runtime baseline. Evidence: pinned npm release SRI and committed dependency lock, isolated Linux no-egress real adopt/candidates/resolve, Windows local-only real CLI acceptance, runtime integrity and tamper-before-spawn tests, and passing PR #64 CI on bf010ef. Approval is limited to offline local asset operations; network access, paid providers, cross-project reuse, automatic publication, production readiness and source-media licensing are NOT authorized by this approval."
   }
 }
