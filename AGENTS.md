@@ -21,7 +21,7 @@ If not → don't do it now.
 6. **No auto-upgrade.** Upstream upgrades require Founder approval + regression suite.
 7. **FAIL is FAIL.** Never silently degrade to pass QC. Fallback marks `production_ready: false`.
 8. **Human Approval never bypassed.** Gates stop and emit `NEEDS_HUMAN_REVIEW`.
-9. **No direct push to main.** All changes via PR. `main` is unprotected but governance is by convention.
+9. **No direct push to main.** All changes via PR. `main` is **PROTECTED** (enabled 2026-10-31): required checks `Tests (ubuntu-latest)`, `Tests (windows-latest)`, `Repo policy checks`; PR required; no force push; no deletion; linear history. Required approval count is 0 while the owner works solo; raise it to 1 when a second reviewer exists.
 10. **Each change carries verification.** Run `doctor.py` and `qc_video.py` at minimum.
 
 ## 2. Extension Policy

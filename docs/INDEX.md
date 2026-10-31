@@ -62,6 +62,10 @@ Tier-1 docs have zh-CN mirrors with `.zh-CN.md` suffix. Run `python scripts/chec
 
 - [AUDIT-REPORT.md](AUDIT-REPORT.md) — Repository audit (2026-10-03)
 - [audits/windows-subprocess-audit.md](audits/windows-subprocess-audit.md) — Windows console popup audit, classification of every subprocess callsite, and the unified process layer (Issue #16)
+- [../reports/audits/github-governance-2026-10-31.md](../reports/audits/github-governance-2026-10-31.md) — GitHub governance execution: PR/Issue/Branch/CI/security review and the merge of PR #48 (2026-10-31)
+- [../reports/audits/contentops-phase2-security-and-unblock-2026-10-31.md](../reports/audits/contentops-phase2-security-and-unblock-2026-10-31.md) — Phase-2 security, third-party rights and PR-unblock audit (2026-10-31)
+- [../reports/audits/contentops-phase3-p0-convergence-2026-10-31.md](../reports/audits/contentops-phase3-p0-convergence-2026-10-31.md) — Phase-3 P0 convergence and stack unlock (2026-10-31)
+- [../reports/audits/contentops-phase4-delivery-unlock-2026-10-31.md](../reports/audits/contentops-phase4-delivery-unlock-2026-10-31.md) — Phase-4 delivery unlock: #62 merge prep, combined M5 acceptance, #49 order, Owner decisions (2026-10-31)
 
 ## Fact Priority
 
