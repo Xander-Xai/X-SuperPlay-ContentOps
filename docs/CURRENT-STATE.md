@@ -346,7 +346,9 @@ a public receipt may match the provider-key shape.
 
 ## HyperFrames media-use integration (Issue #57) — IMPLEMENTED 2026-10-31
 
-Branch `feat/57-media-use-adapter`. **Zero provider calls, zero network calls.**
+Branch `feat/57-media-use-adapter`. **Zero provider calls.** The verified runtime
+was exercised with no network egress; installation itself is a separate,
+reviewed preparation step.
 
 | Property | Value |
 |---|---|
@@ -358,8 +360,10 @@ Branch `feat/57-media-use-adapter`. **Zero provider calls, zero network calls.**
 | Receipt | `contentops.media-import/v1` with `output_sha256`, `fingerprint`, `generated`, `evidence_capable`, `production_ready`, `human_review`, `license` |
 | Evidence | every import is `evidence_capable=false`; generated resolutions are `GENERATED_NOT_IMPORTABLE` |
 | Cross-project | blocked unless `allow_cross_project_reuse`; child `HOME` is project-local |
-| Tests | 29 adapter tests PASS (23 node-independent, 6 node-backed); 97 M4.5 convergence tests PASS |
-| Pull request | Draft [#64](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/64); CI green on Linux, Windows pending at report time |
+| Runtime trust | external execution requires `CONTENTOPS_MEDIA_USE_RUNTIME_LOCK`; the lock is re-hashed before every spawn and is host-specific, so it is not committed |
+| Verified runtime | `hyperframes@0.8.222` (published SRI matched), Node v22.23.4, 127-entry lockfile, 5 407-file manifest; ran inside a no-egress namespace |
+| Tests | 42 adapter tests PASS; 97 M4.5 convergence tests PASS |
+| Pull request | Draft [#64](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/64) |
 | Skill Router | Not rebuilt; #49/#59 remain unmerged. The adapter exposes `status/doctor/candidates/resolve/adopt` for future registration with the existing discovery mechanism |
 
 ### Offline end-to-end sample

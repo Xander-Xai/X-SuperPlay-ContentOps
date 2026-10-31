@@ -465,7 +465,8 @@ QC 回执在被提交前会经过一道净化边界（`contentops.qc_canonical`�
 
 ## HyperFrames media-use 集成（Issue #57）—— 已实现 2026-10-31
 
-分支 `feat/57-media-use-adapter`。**零供应商调用，零网络调用。**
+分支 `feat/57-media-use-adapter`。**零供应商调用。** 已验证运行时是在无网络出口的
+环境下执行的；安装本身是独立、经过审核的准备步骤。
 
 | 项目 | 值 |
 |---|---|
@@ -477,8 +478,10 @@ QC 回执在被提交前会经过一道净化边界（`contentops.qc_canonical`�
 | 回执 | `contentops.media-import/v1`，含 `output_sha256`、`fingerprint`、`generated`、`evidence_capable`、`production_ready`、`human_review`、`license` |
 | 证据边界 | 所有导入均为 `evidence_capable=false`；生成结果一律 `GENERATED_NOT_IMPORTABLE` |
 | 跨项目 | 未显式授权则阻断；子进程 `HOME` 固定在项目内 |
-| 测试 | 29 项适配器测试通过（23 项不依赖 Node，6 项依赖 Node）；97 项 M4.5 收敛测试通过 |
-| Pull Request | Draft [#64](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/64)；Linux 与 Windows CI 均通过 |
+| 运行时信任 | 外部执行必须提供 `CONTENTOPS_MEDIA_USE_RUNTIME_LOCK`；每次启动前重新哈希，锁与本机绑定，不提交到仓库 |
+| 已验证运行时 | `hyperframes@0.8.222`（与官方 SRI 一致）、Node v22.23.4、127 条依赖锁、5 407 个文件清单；在无出口的网络命名空间中执行 |
+| 测试 | 42 项适配器测试通过；97 项 M4.5 收敛测试通过 |
+| Pull Request | Draft [#64](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/64) |
 | Skill Router | 未重建；#49/#59 尚未合并。适配器暴露 `status/doctor/candidates/resolve/adopt`，供未来注册到现有发现机制 |
 
 ### 离线端到端样本
