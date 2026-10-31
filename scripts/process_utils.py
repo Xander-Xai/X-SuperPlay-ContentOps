@@ -285,6 +285,39 @@ def _text_kwargs(text: bool, encoding: str, errors: str) -> Dict[str, Any]:
     return {"encoding": encoding, "errors": errors}
 
 
+def _stdin_can_be_inherited() -> bool:
+    """Whether the parent's stdin is a real handle a child can inherit.
+
+    A console-less parent can have CRT fd 0 while the underlying OS handle is
+    invalid. ``Popen`` then fails in ``DuplicateHandle`` with ``OSError(9)``.
+    Probe the exact operation before choosing inheritance; on failure the
+    caller uses ``DEVNULL``, which is a valid EOF rather than a crash.
+    """
+    if os.name != "nt":
+        return True
+    try:
+        import ctypes
+        import msvcrt
+        from ctypes import wintypes
+
+        handle = msvcrt.get_osfhandle(0)
+        if handle in (-1, -2):
+            return False
+        kernel32 = ctypes.windll.kernel32
+        duplicated = wintypes.HANDLE()
+        ok = kernel32.DuplicateHandle(
+            kernel32.GetCurrentProcess(), wintypes.HANDLE(handle),
+            kernel32.GetCurrentProcess(), ctypes.byref(duplicated),
+            0, True, 0x00000002,  # DUPLICATE_SAME_ACCESS
+        )
+        if not ok:
+            return False
+        kernel32.CloseHandle(duplicated)
+        return True
+    except (ImportError, OSError, ValueError):
+        return False
+
+
 def hidden_run(
     cmd: Sequence[str],
     *,
@@ -308,8 +341,9 @@ def hidden_run(
     pipeline.
 
     ``stdout``/``stderr``/``stdin`` may be file handles for streaming payloads
-    (for example piping a tarball straight to disk). Supplying any of them
-    implies ``capture_output=False``, because CPython rejects the combination.
+    (for example piping a tarball straight to disk). Supplying ``stdout`` or
+    ``stderr`` implies ``capture_output=False``; ``stdin`` may be supplied while
+    output is still captured.
 
     Set ``text=False`` for binary payloads such as ffmpeg ``rawvideo`` output.
 
@@ -323,7 +357,9 @@ def hidden_run(
         raise ValueError("hidden_run() requires a non-empty command")
 
     streams = {"stdin": stdin, "stdout": stdout, "stderr": stderr}
-    if any(v is not None for v in streams.values()):
+    # stdin is independent of output capture; only an explicit stdout/stderr
+    # conflicts with capture_output=True.
+    if stdout is not None or stderr is not None:
         capture_output = False
 
     run_kwargs: Dict[str, Any] = {
@@ -338,6 +374,11 @@ def hidden_run(
     if env is not None:
         run_kwargs["env"] = env
     run_kwargs.update(streams)
+    # Inherit stdin only when it is a real handle. A console-less parent has a
+    # CRT fd but an invalid OS handle; Popen then raises OSError(9). DEVNULL is
+    # a valid EOF and keeps output capture unchanged.
+    if stdin is None and not _stdin_can_be_inherited():
+        run_kwargs["stdin"] = subprocess.DEVNULL
     run_kwargs.update(_get_hidden_kwargs())
 
     return subprocess.run(list(cmd), **run_kwargs)
@@ -372,7 +413,8 @@ def hidden_popen(
 
     popen_kwargs: Dict[str, Any] = {
         "cwd": cwd,
-        "stdin": stdin,
+        "stdin": stdin if stdin is not None or _stdin_can_be_inherited()
+                 else subprocess.DEVNULL,
         "stdout": stdout,
         "stderr": stderr,
         "text": text,
@@ -463,19 +505,26 @@ def interactive_run_captured(
     if not cmd:
         raise ValueError("interactive_run_captured() requires a non-empty command")
 
-    return subprocess.run(
-        list(cmd),
-        cwd=cwd,
-        timeout=timeout,
-        env=env,
-        input=input_text,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=check,
+    kwargs: Dict[str, Any] = {
+        "cwd": cwd,
+        "timeout": timeout,
+        "env": env,
+        "capture_output": True,
+        "text": True,
+        "encoding": "utf-8",
+        "errors": "replace",
+        "check": check,
         # Window stays visible: no hidden kwargs by design.
-    )
+    }
+    if input_text is None:
+        # This helper is captured, not interactive. With no scripted input and
+        # an unusable parent stdin, inherit would raise OSError(9); DEVNULL is
+        # a valid EOF. A usable stdin is still inherited.
+        if not _stdin_can_be_inherited():
+            kwargs["stdin"] = subprocess.DEVNULL
+    else:
+        kwargs["input"] = input_text
+    return subprocess.run(list(cmd), **kwargs)
 
 
 def visible_console_popen(

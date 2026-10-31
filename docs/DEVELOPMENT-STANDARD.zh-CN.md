@@ -17,6 +17,20 @@ translation_status: synced
 3. 所有变更通过 PR
 4. ```python scripts/dev_check.py``` 必须通过
 
+## 特性分支 CI
+
+特性分支通过向自身分支推送运行检查，不通过把分支合入已授权的父分支来运行：
+
+```bash
+gh workflow run ci.yml --ref <branch>
+```
+
+`.github/workflows/ci.yml` 对 `feat/**`、`fix/**`、`chore/**`、`security/**`、
+`docs/**` 和 `ci/**` 的 push 运行完整检查，并支持手动触发。运行记录以分支 ref
+标识，不合入 `main`，也不把未授权的父分支合入 `main`，且不替代 PR 检查。
+如果分支上的工作流早于这些触发器，需要先合入一次当前 `main`（或触发器提交）
+才能手动运行。
+
 ## 双语文档规则
 
 - Tier-1 文档必须同时有英文和中文版本

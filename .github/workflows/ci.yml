@@ -2,9 +2,24 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      # Feature branches get the same checks without being merged into main or
+      # into an unauthorised parent branch. Dispatch covers a branch whose
+      # workflow predates these triggers.
+      - 'feat/**'
+      - 'fix/**'
+      - 'chore/**'
+      - 'security/**'
+      - 'docs/**'
+      - 'ci/**'
   pull_request:
     branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -492,6 +507,10 @@ jobs:
         run: python tests/test_run_tests.py
       - name: Check every test suite is wired into CI
         run: python scripts/run_tests.py --missing-from .github/workflows/ci.yml
+      # New raw provider IDs, balances and key fingerprints in tracked receipts
+      # must fail. Existing exposure is baselined by field path only.
+      - name: Run receipt-secret tests
+        run: python tests/test_receipt_secrets.py
 
       - name: Enforce subprocess policy
         run: python scripts/check_subprocess_policy.py
@@ -528,6 +547,8 @@ jobs:
           python-version: '3.11'
       - name: Repo policy check
         run: python scripts/check_repo_policy.py
+      - name: Receipt secret check
+        run: python scripts/check_receipt_secrets.py
       - name: Subprocess policy check
         run: python scripts/check_subprocess_policy.py
       - name: Docs consistency check
