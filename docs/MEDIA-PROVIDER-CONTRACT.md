@@ -1253,3 +1253,46 @@ It does **not** prove real `SourceArtifact` ingestion, `Claim Ledger`
 completeness, Founder approval, a production golden, or three consecutive
 production builds. The output is `production_ready=false` /
 `PENDING_FOUNDER_REVIEW`, and nothing in the code path can report otherwise.
+
+# M4.7 — licensed external material (Issue #57)
+
+The media-use adapter (ADR-008) can adopt material ContentOps licensed but did
+not produce. The converged layer gained exactly two members for it, and the
+evidence truth table did not move.
+
+| | value |
+|---|---|
+| `AssetKind` | `LICENSED_EXTERNAL` |
+| `MediaModality` | `IMAGE` / `VIDEO` (stock stills, brand icons) or `AUDIO` (BGM, SFX) |
+| `generated` | `false` — no model produced these bytes |
+| `evidence_capable` | `false` — a licence is not a witness |
+| `EVIDENCE_CAPABLE` | unchanged: `REAL`, `SCREENSHOT`, `SCREEN_RECORDING` |
+| `GENERATED` | unchanged; `LICENSED_EXTERNAL` is not in it either |
+| receipt schema | `contentops.media-import/v1`, digest field `output_sha256` |
+| required human field | `license` — no default, empty is refused |
+
+`LICENSED_EXTERNAL` exists because both neighbouring kinds would lie. Registering
+a licensed stock photo as `REAL` would make it evidence-capable; registering it as
+`GENERATED_IMAGE` would claim a model produced bytes it did not. Storyboards
+declare it as `source_type: stock`, so the final QC's real-source ratio cannot
+borrow it.
+
+`MediaModality.AUDIO` exists because filing a sound effect under `SPEECH` would
+imply a transcript, a pronunciation policy and a loudness contract that a BGM
+track does not have. Audio carries no `asset_kind` and is never evidence, exactly
+like speech — but for a different reason, so it is a different value.
+
+## One validator, four adapters
+
+```
+validate_media_asset(envelope, adapter)
+        |
+        +-- SpeechValidationAdapter     accepted: provider speech schemas
+        +-- ImageValidationAdapter      accepted: image receipt | import
+        +-- VideoValidationAdapter      accepted: video receipt | import
+        +-- AudioValidationAdapter      accepted: import only
+```
+
+`AudioValidationAdapter` accepts only the import schema. There is no audio
+generation receipt in this repository, so accepting a provider schema would
+misstate an asset's origin rather than validate it.
