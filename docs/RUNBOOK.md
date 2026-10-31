@@ -132,6 +132,50 @@ Narration is the offline Windows SAPI voice; no network TTS is called. The run
 always ends at `PENDING_FOUNDER_REVIEW` with `production_ready: false` — a green
 QC is not publishing permission (ADR-005).
 
+
+### Automatic media-use materials in M5 (offline only)
+
+When the approved PR #64 adapter is installed and a machine runtime lock is
+configured, the normal M5 command automatically invokes media-use between the
+sources and assets stages. Configure per-project material needs in project.yaml:
+
+~~~yaml
+media_use:
+  enabled: true
+  mode: local-only
+  requests:
+    - id: support_visual
+      kind: image
+      intent: local support image
+      license: OWNED
+      rights_reviewed: true
+      attribution: project owner
+~~~
+
+Place a rights-cleared candidate in the project's assets/ directory and refer
+to support_visual in script/script.json as the asset_id. Then run the normal
+command:
+
+~~~powershell
+python scripts\m5_production.py projects\my-video
+~~~
+
+No separate media_use_adapter.py command is needed. M5 automatically adopts
+project-local assets, resolves them offline via the approved adapter, imports
+them with provenance sidecars and verifies SHA-256 before passing them to
+existing M5 asset validation, storyboard, compose and QC. Already declared
+assets in sources/assets.json take precedence; unfulfilled needs block rather
+than silently accessing a network or paid provider.
+
+The stage creates receipts/media-use-stage.json plus the adapter's per-file
+import receipt. Licensed external visuals are visual support only and may
+not become factual evidence. This version supports image/icon/logo placement;
+bgm/sfx are refused until audio placement is wired to the existing timeline.
+Projects without media_use.enabled=true behave as before.
+
+Integration PR: stacked on M5 PR #68; actual external execution also requires
+PR #64. Hosted tests use synthetic fixtures and make no provider calls.
+
 ## 6. Run QC
 
 ```powershell

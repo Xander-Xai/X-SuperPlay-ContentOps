@@ -203,6 +203,11 @@ jobs:
       - name: Run M5 evidence regression tests
         run: python tests/test_m5_evidence.py
 
+      # Integration boundary only; no runtime download, no external CLI execution,
+      # and no network or provider calls on hosted CI runners.
+      - name: Run M5 media-use automatic sourcing regression tests
+        run: python tests/test_m5_media_use_workflow.py
+
       - name: Enforce subprocess policy
         run: python scripts/check_subprocess_policy.py
 

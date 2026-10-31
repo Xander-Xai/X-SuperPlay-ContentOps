@@ -69,6 +69,48 @@ python scripts\m5_production.py projects\m5-easel-pin
 旁白使用离线 Windows SAPI 语音，不调用任何联网 TTS。运行始终停在
 `PENDING_FOUNDER_REVIEW`，`production_ready: false` —— QC 通过不等于允许发布。
 
+
+### M5 自动调用 media-use 素材（仅离线）
+
+当 PR #64 的适配器已进入当前版本、本机已有批准后的运行时锁时，
+在项目 project.yaml 中声明素材需求。执行原来的 M5 命令时，
+系统会自动调用 media-use，而不需要单独运行适配器命令：
+
+~~~yaml
+media_use:
+  enabled: true
+  mode: local-only
+  requests:
+    - id: support_visual
+      kind: image
+      intent: local support image
+      license: OWNED
+      rights_reviewed: true
+      attribution: project owner
+~~~
+
+把已核实权利的候选图片放入该项目 assets/，然后在
+script/script.json 对应镜头使用 asset_id=support_visual。
+只执行正常的工作流：
+
+~~~powershell
+python scripts\m5_production.py projects\my-video
+~~~
+
+素材阶段会自动 adopt 本项目文件、通过批准的运行时离线 resolve、
+生成导入回执并核验 SHA-256，再交给原有素材校验、分镜、合成及 QC。
+已有 sources/assets.json 声明的素材优先。找不到素材则明确 BLOCKED，
+不擅自联网或调用付费服务。
+
+新增 receipts/media-use-stage.json 和每个文件的来源回执。
+导入的授权素材只用于视觉辅助，不自动变成事实证据。
+这一版支持 image/icon/logo 的自动画面接入；
+bgm/sfx 尚未接入已有音频时间轴，不声称已混音。
+未设置 media_use.enabled=true 的旧项目保持原行为。
+
+本接线 PR 叠加在 M5 PR #68 上，真实外部调用还需要 PR #64。
+CI 使用离线合成测试数据，不运行第三方 Provider。
+
 ## 6. 开发门控
 
 ```bash

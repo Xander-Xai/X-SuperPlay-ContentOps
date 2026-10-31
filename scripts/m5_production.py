@@ -92,7 +92,130 @@ def stage_sources(project: Path, config: Dict[str, Any]) -> Dict[str, Any]:
     return {"artifacts": artifacts, "count": len(artifacts)}
 
 
-def stage_assets(project: Path) -> Dict[str, Any]:
+
+def stage_media_use(project: Path, config: Dict[str, Any], *, adapter: Any = None) -> Dict[str, Any]:
+    """Resolve configured local media-use needs automatically before M5 asset validation.
+
+    This is an optional material-source stage, NOT a second catalog or renderer.
+    Already-declared M5 assets take precedence. Missing licensed visual assets
+    are resolved by the approved MediaUseAdapter, imported with its sidecar,
+    verified and then offered to the existing M5 asset/storyboard path.
+    """
+    settings = config.get("media_use")
+    if settings is None or settings is False:
+        return {"state": "DISABLED", "assets": {}, "count": 0}
+    if not isinstance(settings, dict):
+        raise M5Blocked("media_use must be a mapping")
+    if settings.get("enabled") is not True:
+        return {"state": "DISABLED", "assets": {}, "count": 0}
+    if settings.get("mode", "local-only") != "local-only":
+        raise M5Blocked("media_use only supports local-only mode; network/paid use is not authorized")
+    if any(settings.get(key) for key in ("allow_network", "allow_paid", "allow_cross_project_reuse")):
+        raise M5Blocked("media_use cannot enable network, paid, or cross-project reuse")
+    requests = settings.get("requests")
+    if not isinstance(requests, list) or not requests:
+        raise M5Blocked("media_use enabled requires nonempty requests")
+
+    declared_path = project / "sources" / "assets.json"
+    if not declared_path.is_file():
+        raise M5Blocked("sources/assets.json is required before media_use resolution")
+    declared = json.loads(declared_path.read_text(encoding="utf-8"))
+    existing = {str(item.get("id")) for item in declared.get("assets", [])}
+    seen = set()
+    todo = []
+    results: List[Dict[str, Any]] = []
+    for request in requests:
+        if not isinstance(request, dict):
+            raise M5Blocked("media_use request must be a mapping")
+        asset_id = str(request.get("id") or "").strip()
+        if not asset_id or asset_id in seen:
+            raise M5Blocked("media_use request ids must be nonempty and unique")
+        seen.add(asset_id)
+        if asset_id in existing:
+            results.append({"id": asset_id, "state": "REUSED_DECLARED", "provider_call": False})
+            continue
+        kind = str(request.get("kind") or "").strip()
+        intent = str(request.get("intent") or "").strip()
+        license_name = str(request.get("license") or "").strip()
+        if kind not in {"image", "icon", "logo"}:
+            raise M5Blocked(f"{asset_id}: only image/icon/logo may enter M5 visual placements")
+        if not intent or not license_name or request.get("rights_reviewed") is not True:
+            raise M5Blocked(f"{asset_id}: intent, explicit license and rights_reviewed=true required")
+        todo.append((asset_id, kind, intent, license_name, str(request.get("attribution") or "")))
+
+    if todo and adapter is None:
+        try:
+            from contentops.media.media_use_adapter import MediaUseAdapter
+        except ImportError as exc:
+            raise M5Blocked(
+                "media-use adapter is not installed; PR #64 must be integrated before "
+                "an enabled M5 media_use stage can run"
+            ) from exc
+        adapter = MediaUseAdapter()
+
+    # Index existing project-local files before choosing candidates. The same
+    # reviewed adapter does this offline; no manual media-use CLI pre-step needed.
+    if todo:
+        try:
+            adapter.adopt(project_dir=project)
+        except Exception as exc:
+            code = getattr(exc, "code", type(exc).__name__)
+            raise M5Blocked(f"media-use local adopt failed ({code}): {exc}") from exc
+
+    discovered: Dict[str, Dict[str, Any]] = {}
+    for asset_id, kind, intent, license_name, attribution in todo:
+        try:
+            resolved = adapter.resolve(kind, intent, project_dir=project)
+            if not resolved.importable:
+                raise M5Blocked(f"{asset_id}: media-use returned an unimportable asset")
+            imported = adapter.import_record(
+                resolved.record, project_dir=project, kind=kind,
+                license=license_name, attribution=attribution,
+            )
+            if not imported.logical_path.startswith("project://"):
+                raise M5Blocked(f"{asset_id}: media-use returned a non-project asset path")
+            relative = imported.logical_path[len("project://"):]
+            verification = adapter.verify(
+                project_dir=project, relative_path=relative,
+                expected_sha256=imported.sha256,
+            )
+            if not verification.ok:
+                raise M5Blocked(f"{asset_id}: media-use import receipt/hash verification failed")
+        except Exception as exc:
+            if isinstance(exc, M5Blocked):
+                raise
+            code = getattr(exc, "code", None)
+            if code:
+                raise M5Blocked(f"{asset_id}: media-use {code}: {exc}") from exc
+            raise
+
+        resolved_path = (project / relative).resolve()
+        try:
+            repo_path = resolved_path.relative_to(ROOT.resolve()).as_posix()
+        except ValueError as exc:
+            raise M5Blocked(f"{asset_id}: imported asset lies outside this repository") from exc
+        discovered[asset_id] = {
+            "id": asset_id, "type": "LICENSED_EXTERNAL",
+            "repo_path": repo_path, "sha256": imported.sha256,
+            "permission": "LICENSED", "evidence_capable": False,
+            "license": license_name, "attribution": attribution,
+            "media_use_asset_id": imported.asset_id,
+            "receipt_ref": imported.receipt_ref,
+        }
+        results.append({
+            "id": asset_id, "state": "IMPORTED", "kind": kind,
+            "source": resolved.source, "sha256": imported.sha256,
+            "path": "project://" + relative, "receipt_ref": imported.receipt_ref,
+            "evidence_capable": False, "provider_call": False,
+        })
+    _write_json(project / "receipts" / "media-use-stage.json", {
+        "schema": "contentops.m5-media-use/v1", "mode": "local-only",
+        "network": False, "paid": False, "cross_project": False,
+        "results": results,
+    })
+    return {"state": "OK", "assets": discovered, "count": len(discovered)}
+
+def stage_assets(project: Path, extra_assets: Optional[Dict[str, Dict[str, Any]]] = None) -> Dict[str, Any]:
     """Check every declared visual against its recorded hash before it is used."""
     manifest_path = project / "sources" / "assets.json"
     if not manifest_path.is_file():
@@ -100,7 +223,12 @@ def stage_assets(project: Path) -> Dict[str, Any]:
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     verified = {}
     problems = []
-    for asset in manifest.get("assets") or []:
+    generated = list((extra_assets or {}).values())
+    declared = list(manifest.get("assets") or [])
+    all_ids = [str(asset.get("id")) for asset in declared + generated]
+    if len(all_ids) != len(set(all_ids)):
+        raise M5Blocked("duplicate declared/media-use asset id")
+    for asset in declared + generated:
         path = (ROOT / asset["repo_path"]).resolve()
         try:
             path.relative_to(ROOT)
@@ -438,7 +566,7 @@ def stage_review(project: Path, slug: str, qc: Dict[str, Any]) -> Dict[str, Any]
     return payload
 
 
-def build(project: Path, *, skip_compose: bool = False) -> Dict[str, Any]:
+def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = None) -> Dict[str, Any]:
     if not project.is_dir():
         raise M5Blocked(f"project not found: {project}")
     config = _read_yaml(project / "project.yaml")
@@ -447,7 +575,9 @@ def build(project: Path, *, skip_compose: bool = False) -> Dict[str, Any]:
 
     sources = stage_sources(project, config)
     stages["sources"] = {"count": sources["count"]}
-    assets = stage_assets(project)
+    media = stage_media_use(project, config, adapter=media_adapter)
+    stages["media_use"] = {"state": media["state"], "count": media["count"]}
+    assets = stage_assets(project, extra_assets=media["assets"])
     stages["assets"] = {"count": len(assets)}
     claims = stage_claims(project, sources["artifacts"])
     stages["claims"] = {"count": claims["count"]}
