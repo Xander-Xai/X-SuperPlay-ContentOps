@@ -359,6 +359,8 @@ Branch `feat/57-media-use-adapter`. **Zero provider calls, zero network calls.**
 | Evidence | every import is `evidence_capable=false`; generated resolutions are `GENERATED_NOT_IMPORTABLE` |
 | Cross-project | blocked unless `allow_cross_project_reuse`; child `HOME` is project-local |
 | Tests | 29 adapter tests PASS (23 node-independent, 6 node-backed); 97 M4.5 convergence tests PASS |
+| Pull request | Draft [#64](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/64); CI green on Linux, Windows pending at report time |
+| Skill Router | Not rebuilt; #49/#59 remain unmerged. The adapter exposes `status/doctor/candidates/resolve/adopt` for future registration with the existing discovery mechanism |
 
 ### Offline end-to-end sample
 

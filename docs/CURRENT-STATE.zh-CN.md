@@ -478,6 +478,8 @@ QC 回执在被提交前会经过一道净化边界（`contentops.qc_canonical`�
 | 证据边界 | 所有导入均为 `evidence_capable=false`；生成结果一律 `GENERATED_NOT_IMPORTABLE` |
 | 跨项目 | 未显式授权则阻断；子进程 `HOME` 固定在项目内 |
 | 测试 | 29 项适配器测试通过（23 项不依赖 Node，6 项依赖 Node）；97 项 M4.5 收敛测试通过 |
+| Pull Request | Draft [#64](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/64)；Linux 与 Windows CI 均通过 |
+| Skill Router | 未重建；#49/#59 尚未合并。适配器暴露 `status/doctor/candidates/resolve/adopt`，供未来注册到现有发现机制 |
 
 ### 离线端到端样本
 
