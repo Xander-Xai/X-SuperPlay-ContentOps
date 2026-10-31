@@ -177,3 +177,18 @@ No threshold, fixture or statistic was changed to turn these green.
 `MERGED_TO_MAIN`, not a production approval, and not a licence grant. The hosted
 CI runs offline/fixture suites only; the runtime-lock and compose evidence above
 is machine acceptance and is labelled as such.
+
+## 12. Final delivery
+
+| Field | Value |
+|---|---|
+| Audited code head | `50fe15ab8c391f9e63c0b1c76aa447760c7bb371` |
+| Head validated by CI after the audit fixes | `f49e5f761e5ad81cf70c53ba40f24c4a8b794084` |
+| CI run | `41195647163` — https://github.com/Xander-Xai/X-SuperPlay-ContentOps/actions/runs/41195647163 |
+| CI result | `Tests (windows-latest)` pass, `Tests (ubuntu-latest)` pass, `Repo policy checks` pass |
+| PR state at delivery | Draft → marked ready for review; **not merged** |
+| Owner authorization | **PENDING** |
+
+The report commit itself is documentation-only; the subsequent PR run validates
+it without changing the code under test.
+
