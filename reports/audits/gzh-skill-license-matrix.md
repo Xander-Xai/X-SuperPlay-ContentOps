@@ -90,6 +90,18 @@
 | `OWNER_ATTESTED` | 4 |
 | `RIGHTS_UNKNOWN` | 10 |
 
+### Ownership evidence and asset scope
+
+- GitHub path history for `skills/gzh-article-writing/SKILL.md` returns commit
+  `901aeee`, author `yandexuanxuan` (now Xander-Xai), with no third-party marker.
+  The core GZH tree was added by the owner in the private repository. This is
+  authorship evidence, not a legal opinion; it is why the core skills are
+  `OWNED_AND_CLEARED` rather than `OWNER_ATTESTED`.
+- Skill assets: 3 SVG icons, no raster images, PDFs or Office files. Two icons
+  belong to owned skills; `wechat-viral-topic/_icon.svg` belongs to a
+  rights-unknown skill and is on hold with it. The 2 `.template`, 7 `.mustache`
+  and 5 `.html` files belong to the skills whose classification covers them.
+
 ## AGPL analysis — `gzh-design-skill`
 
 - **Licence:** AGPL-3.0; full text in `skills/gzh-design-skill/LICENSE`; copyright
