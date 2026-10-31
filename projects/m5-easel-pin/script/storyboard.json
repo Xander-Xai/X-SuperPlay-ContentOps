@@ -1,0 +1,85 @@
+{
+  "size": "1080x1920",
+  "image_motion": "static",
+  "pad_mode": "trim",
+  "shots": [
+    {
+      "image": "projects/easel-review/sources/screenshots/12-easel-version-evidence.png",
+      "caption": "Easel 钉在 v0.2.1",
+      "motion": "static",
+      "source": "projects/easel-review/sources/screenshots/12-easel-version-evidence.png",
+      "source_type": "real_screenshot",
+      "narration": "Easel 固定在 v0.2.1，提交是 3fe2d99。",
+      "duration_s": 5.83,
+      "claim": "easel_pin"
+    },
+    {
+      "image": "projects/easel-review/sources/screenshots/12-easel-version-evidence.png",
+      "caption": "不是洁癖，是底线",
+      "motion": "static",
+      "source": "projects/easel-review/sources/screenshots/12-easel-version-evidence.png",
+      "source_type": "real_screenshot",
+      "narration": "听起来像洁癖，其实是可复现的底线。",
+      "duration_s": 4.75,
+      "claim": "easel_pin"
+    },
+    {
+      "image": "projects/easel-review/sources/screenshots/12-easel-version-evidence.png",
+      "caption": "逐文件比对内容哈希",
+      "motion": "static",
+      "source": "projects/easel-review/sources/screenshots/12-easel-version-evidence.png",
+      "source_type": "real_screenshot",
+      "narration": "本地运行时按内容哈希，和上游这个提交逐文件比对。",
+      "duration_s": 6.095,
+      "claim": "pin_verifiable"
+    },
+    {
+      "image": "projects/easel-review/sources/screenshots/13-easel-skill-layers.png",
+      "caption": "缺、改、多都报错",
+      "motion": "static",
+      "source": "projects/easel-review/sources/screenshots/13-easel-skill-layers.png",
+      "source_type": "real_screenshot",
+      "narration": "少一个文件、改一个字节、多放一个文件，都会直接报错。",
+      "duration_s": 7.024,
+      "claim": "pin_verifiable"
+    },
+    {
+      "image": "projects/easel-review/sources/screenshots/14-easel-skills-dir.png",
+      "caption": "升级要创始人批准",
+      "motion": "static",
+      "source": "projects/easel-review/sources/screenshots/14-easel-skills-dir.png",
+      "source_type": "real_screenshot",
+      "narration": "文档写得很清楚：不许自动升级，升级必须创始人批准。",
+      "duration_s": 6.955,
+      "claim": "no_auto_upgrade"
+    },
+    {
+      "image": "projects/easel-review/sources/screenshots/14-easel-skills-dir.png",
+      "caption": "旧克隆不是 v0.2.1",
+      "motion": "static",
+      "source": "projects/easel-review/sources/screenshots/14-easel-skills-dir.png",
+      "source_type": "real_screenshot",
+      "narration": "根目录那个旧的 Easel 克隆也不是 v0.2.1，不能当生产引擎。",
+      "duration_s": 7.099,
+      "claim": "legacy_clone"
+    },
+    {
+      "image": "projects/easel-review/sources/screenshots/12-easel-version-evidence.png",
+      "caption": "钉版本，防漂移",
+      "motion": "static",
+      "source": "projects/easel-review/sources/screenshots/12-easel-version-evidence.png",
+      "source_type": "real_screenshot",
+      "narration": "所以钉版本不是慢，是不让漂移悄悄混进生产。",
+      "duration_s": 5.71,
+      "claim": null
+    }
+  ],
+  "narration": "projects/m5-easel-pin/assets/voice/narration.wav",
+  "subtitle": "projects/m5-easel-pin/assets/captions/default.srt",
+  "engine": "easel",
+  "voice_provider": "windows-sapi/Huihui (offline)",
+  "generated_visuals": {
+    "count": 0,
+    "policy": "real_assets_only"
+  }
+}
