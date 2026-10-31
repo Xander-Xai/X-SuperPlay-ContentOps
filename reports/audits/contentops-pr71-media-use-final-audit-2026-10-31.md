@@ -107,7 +107,7 @@ legacy project unchanged. The same controls were re-run after the audit fixes.
 | Sensitive filenames tracked (`.env`, `auth.json`, keys, cookies) | 0 |
 | `.verify-tmp/`, `.local/`, `diagnostics/`, `outputs/` tracked | 0 |
 | Private host/user paths in PR files | 0 (only the test's own detection regex) |
-| `Bearer` history hits | 4 commits; non-credential test/header fixtures, remediated by `f426c47` (“assemble the bearer fixture at runtime”) |
+| Authorization-header history hits | 4 commits; non-credential test/header fixtures, remediated by `f426c47` |
 
 No live credential was found. No history rewrite was performed.
 
