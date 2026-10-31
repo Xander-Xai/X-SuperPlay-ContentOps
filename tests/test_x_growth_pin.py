@@ -162,6 +162,41 @@ def test_the_vendored_suite_flag_reports_pass_and_failure():
     print("[ok] 10. --suite passes a green tree and reports a red one with its output")
 
 
+@test
+def test_the_digest_uses_a_case_sensitive_posix_order():
+    """The same bytes must hash the same way on Windows and on Ubuntu.
+
+    `sorted(Path)` compares case-insensitively on Windows and case-sensitively
+    on POSIX, so `README.md` and `assets/` swap places and the two platforms
+    disagree on a digest of identical content. Pinning the order explicitly is
+    what makes the value portable.
+    """
+    import hashlib
+
+    with tempfile.TemporaryDirectory() as temp:
+        root = _fixture(
+            Path(temp),
+            {
+                "README.md": b"readme\n",
+                "CHANGELOG.md": b"changes\n",
+                "assets/a.svg": b"<svg/>\n",
+                "docs/b.md": b"doc\n",
+            },
+        )
+        canonical = ["CHANGELOG.md", "README.md", "assets/a.svg", "docs/b.md"]
+        order = [p.relative_to(root).as_posix() for p in pin._vendored_files(root, frozenset())]
+        assert order == canonical, order
+
+        expected = hashlib.sha256()
+        for rel in canonical:
+            body = hashlib.sha256((root / rel).read_bytes()).hexdigest()
+            expected.update(rel.encode("utf-8") + b"\0" + body.encode("ascii") + b"\n")
+        count, _, digest = pin.vendored_digest(root, frozenset())
+    assert count == 4
+    assert digest == expected.hexdigest(), "the digest did not follow the canonical order"
+    print("[ok] 11. the digest orders files by case-sensitive POSIX path")
+
+
 def main() -> int:
     failures = []
     for fn in TESTS:

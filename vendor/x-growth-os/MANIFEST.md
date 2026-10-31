@@ -58,7 +58,14 @@ __pycache__ and *.pyc:
     relative/posix/path \0 sha256(file bytes) \n
 ```
 
-Pinned value: `4a99c01ebb6515ebce9d861e7b2d8b0dd1dd43abfcdef43ad1a1afbf620a0674`
+"sorted order" means the relative POSIX path sorted as a **case-sensitive
+string**, not as a `Path`. Windows compares paths case-insensitively, so
+`README.md` and `assets/` swap places between platforms and the same 64 files
+hash to two different values. The pin now sorts by the path string, which is
+identical on Windows and Ubuntu. The value below was recomputed under that
+ordering; file count (64) and byte count (345,872) did not change.
+
+Pinned value: `f2394b2be0a522a17068e67e513b9bc4665d1ed47dd22e3aab43957575a972ac`
 
 ```powershell
 python scripts/x_growth_pin.py            # 0 only when files, bytes and digest agree

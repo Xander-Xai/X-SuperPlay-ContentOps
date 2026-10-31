@@ -61,7 +61,11 @@ VENDORED = ROOT / "vendor" / "x-growth-os"
 MANIFEST_NAME = "MANIFEST.md"
 VENDORED_FILES = PIN["tracked_files"]
 VENDORED_BYTES = PIN["total_bytes"]
-VENDORED_DIGEST = "4a99c01ebb6515ebce9d861e7b2d8b0dd1dd43abfcdef43ad1a1afbf620a0674"
+#: Digest of the canonical (case-sensitive POSIX path) ordering below. The
+#: previous value was produced by Windows' case-insensitive Path ordering, so
+#: the same bytes hashed differently on Ubuntu; the tree is unchanged (64 files,
+#: 345 872 bytes on both platforms) and the ordering is now platform-neutral.
+VENDORED_DIGEST = "f2394b2be0a522a17068e67e513b9bc4665d1ed47dd22e3aab43957575a972ac"
 
 #: A name that looks like it carries a secret is refused outright. The source
 #: repository had none at import; this keeps a later import from slipping one in.
@@ -84,7 +88,14 @@ def _sha256(path: Path) -> str:
 
 def _vendored_files(root: Path, exclude: frozenset[str]) -> List[Path]:
     files = []
-    for path in sorted(root.rglob("*")):
+    # Sort by the relative POSIX path string, not by Path objects: Windows
+    # compares paths case-insensitively and POSIX does not, so `README.md`
+    # sorts before `assets/` on one platform and after it on the other. The
+    # same bytes then hash in two orders and produce two digests. This is the
+    # same defect the 公众号 pin already fixes.
+    for path in sorted(
+        root.rglob("*"), key=lambda item: item.relative_to(root).as_posix()
+    ):
         if not path.is_file():
             continue
         rel = path.relative_to(root)
