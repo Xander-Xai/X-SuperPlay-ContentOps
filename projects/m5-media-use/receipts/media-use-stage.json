@@ -14,7 +14,7 @@
       "path": "project://assets/support.png",
       "receipt_ref": "support.png.receipt.json",
       "license": "OWNED-BY-OPERATOR",
-      "attribution": "Owner-captured screenshot of the pinned Easel runtime",
+      "attribution": "Repository-classified CREATED_BY_OWNER screenshot of the pinned Easel runtime; no separate capture receipt",
       "rights": {
         "schema": "contentops.media-rights/v1",
         "license_id": "OWNED-BY-OPERATOR",
@@ -23,8 +23,8 @@
         "reviewed_by": "Xander-Xai",
         "reviewed_at": "2026-10-31",
         "review_evidence": "assets/support.rights.json",
-        "review_evidence_sha256": "c0d08c41449058463d424290e0a05f92b31be1326b0858ba36fe5b9a277a39d0",
-        "attribution": "Owner-captured screenshot of the pinned Easel runtime",
+        "review_evidence_sha256": "6191657e8ef3d9a1b15e3589f88c10339a262d68250a10fae13caf9615d70c03",
+        "attribution": "Repository-classified CREATED_BY_OWNER screenshot of the pinned Easel runtime; no separate capture receipt",
         "synthetic": false,
         "third_party": false,
         "evidence_capable": false

@@ -267,6 +267,19 @@ runtime and produced a playable artifact on 2026-10-31. It does not mean the
 material's licence or production readiness was approved; every import remains
 `evidence_capable=false`, `production_ready=false`, `PENDING_FOUNDER_REVIEW`.
 
+### Audio controls the current contract can and cannot express
+
+The pinned Easel storyboard contract accepts `bgm`, `bgm_volume`,
+`sfx[].at` and `sfx[].volume`. M5 passes those fields through and applies its own
+defaults only when absent; the defaults mirror upstream (0.25 for BGM, 0.9 for
+SFX), so the existing policy is not changed silently.
+
+Per-track **fade in/out** has no field in that contract. It is **not wired**, and
+implementing it would need either a derived-audio transform with its own receipt
+or an upstream patch, neither of which belongs in this integration. The sample
+project's BGM file carries fades baked into the generated asset; that is a
+property of the file, not of the mixer.
+
 ## Skill metadata for future routing
 
 The global skill router from Issue #57 is **not merged** (`scripts/skill_route.py`

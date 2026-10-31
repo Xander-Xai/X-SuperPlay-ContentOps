@@ -87,17 +87,17 @@ media_use:
       rights:
         license_id: OWNED-BY-OPERATOR
         source_url: OWNED
-        reviewed_by: <审查人>
+        reviewed_by: <reviewer>
         reviewed_at: "2026-10-31"
         review_evidence: assets/support.rights.json
         attribution: project owner
         synthetic: false
 ~~~
 
-只写 `rights_reviewed: true` 会被拒绝。每个请求都需要一份审查记录
-（`assets/<id>.rights.json`，schema 为 `contentops.media-rights-review/v1`），
-其许可证、来源 URL、审查人、日期与署名必须与请求完全一致。软件许可证与
-非商业许可证不能用于媒体素材；合成素材永不作为证据。
+单独的 `rights_reviewed: true` 会被拒绝。每个请求必须附带复核记录
+（`assets/<id>.rights.json`，schema `contentops.media-rights-review/v1`），
+其许可证、来源 URL、复核人、日期与署名必须与请求完全一致。
+软件许可证与非商业许可证不能用于媒体；合成素材永远不能作为证据。
 
 把已核实权利的候选图片放入该项目 assets/，然后在
 script/script.json 对应镜头使用 asset_id=support_visual。
@@ -114,8 +114,8 @@ python scripts\m5_production.py projects\my-video
 
 新增 receipts/media-use-stage.json 和每个文件的来源回执。
 导入的授权素材只用于视觉辅助，不自动变成事实证据。
-这一版支持 image/icon/logo 的自动画面接入；
-bgm/sfx 尚未接入已有音频时间轴，不声称已混音。
+这一版支持 image/icon/logo 的自动画面接入，以及 BGM/SFX 辅助音轨；
+音频不进入事实证据。
 未设置 media_use.enabled=true 的旧项目保持原行为。
 
 本接线 PR 叠加在 M5 PR #68 上，真实外部调用还需要 PR #64。

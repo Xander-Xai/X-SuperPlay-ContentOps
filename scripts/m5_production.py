@@ -214,6 +214,7 @@ def stage_media_use(project: Path, config: Dict[str, Any], *, adapter: Any = Non
 
     discovered: Dict[str, Dict[str, Any]] = {}
     audio: Dict[str, Any] = {"bgm": None, "sfx": []}
+    imported_ids: Dict[str, str] = {}
     for asset_id, kind, intent, rights_info, volume, at in todo:
         license_name = rights_info["license_id"]
         attribution = rights_info["attribution"]
@@ -225,6 +226,13 @@ def stage_media_use(project: Path, config: Dict[str, Any], *, adapter: Any = Non
                 resolved.record, project_dir=project, kind=kind,
                 license=license_name, attribution=attribution,
             )
+            if imported.asset_id in imported_ids:
+                raise M5Blocked(
+                    f"{asset_id}: the same media-use asset was already imported as "
+                    f"{imported_ids[imported.asset_id]}; declare one request and "
+                    f"reuse its id"
+                )
+            imported_ids[imported.asset_id] = asset_id
             if not imported.logical_path.startswith("project://"):
                 raise M5Blocked(f"{asset_id}: media-use returned a non-project asset path")
             relative = imported.logical_path[len("project://"):]

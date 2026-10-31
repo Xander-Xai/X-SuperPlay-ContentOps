@@ -433,8 +433,9 @@ and no Founder approval, and `qc_video` warns about exactly that.
 
 ## M5 media-use automation — INTEGRATION_VERIFIED 2026-10-31
 
-Branch `feat/57-media-use-m5-integration` (worktree), stacked from `main` plus
-Draft PRs #64, #68 and #69. **Zero provider calls; zero network.** The real
+Merged to `main` through [#71](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/71).
+The rights-gate follow-up is [#76](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/76).
+**Zero provider calls; zero network.** The real
 `scripts/m5_production.py` entry ran the real `MediaUseAdapter` against the
 approved `hyperframes@0.8.222` runtime on Windows.
 
@@ -454,8 +455,11 @@ approved `hyperframes@0.8.222` runtime on Windows.
 | BGM proof | inter-line pause 11.70–12.20 s: −60.9 dB with BGM vs −91.0 dB without (−30.1 dB difference) |
 | SFX proof | 6.15–6.28 s: −33.4 dB with SFX vs −60.8 dB without (−27.4 dB difference) |
 | Narration preservation | the same voice window measures −26.8 dB in all three renders, so neither track replaced the voice |
+| Audio controls | volume, placement and mix verified; per-track fade is **not expressible** in the pinned Easel contract (sample bed has fades baked into the file) |
 | Negative acceptance | 11/11 blocked: missing/wrong lock, missing material, hash mismatch, path escape, missing import file, network, paid, unlicensed, duplicate id, legacy project unchanged |
+| Rights gate | `src/contentops/media/rights_gate.py` refuses a bare `rights_reviewed` flag; each request needs a matching `assets/<id>.rights.json` review record. Unknown, software and non-commercial licences are refused; synthetic assets are never evidence |
 | Committed example | `projects/m5-media-use/`; media binaries and `.media/` stay gitignored, receipts are committed |
+| Pull request | Merged [#71](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/71); rights-gate follow-up [#76](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/76) |
 | Routing | **BLOCKED** — `scripts/skill_route.py` is not on `main`; router work remains unmerged on `feat/content-router`. Metadata is recorded in ADR-008; no second router was built |
 
 `INTEGRATION_VERIFIED` is a statement about this machine and this lock. It is

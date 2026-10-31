@@ -180,8 +180,8 @@ than silently accessing a network or paid provider.
 
 The stage creates receipts/media-use-stage.json plus the adapter's per-file
 import receipt. Licensed external visuals are visual support only and may
-not become factual evidence. This version supports image/icon/logo placement;
-bgm/sfx are refused until audio placement is wired to the existing timeline.
+not become factual evidence. This version supports image/icon/logo placement and
+BGM/SFX support tracks; audio never becomes evidence.
 Projects without media_use.enabled=true behave as before.
 
 Integration PR: stacked on M5 PR #68; actual external execution also requires

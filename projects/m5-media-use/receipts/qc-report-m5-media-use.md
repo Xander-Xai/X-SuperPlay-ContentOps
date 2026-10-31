@@ -3,7 +3,7 @@
 **Currency**: `CURRENT`
 **Graded target**: `project://final/m5-media-use.mp4`
 **Overall**: `WARN`
-**Checked at**: 2026-10-31T12:06:46Z
+**Checked at**: 2026-10-31T12:20:51Z
 
 **Paths**: logical references (project://, repo://); no absolute paths
 

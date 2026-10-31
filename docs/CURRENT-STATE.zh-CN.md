@@ -543,7 +543,8 @@ QC 回执在被提交前会经过一道净化边界（`contentops.qc_canonical`�
 
 ## M5 media-use 自动化 —— INTEGRATION_VERIFIED 2026-10-31
 
-分支 `feat/57-media-use-m5-integration`（工作树），由 `main` 叠加 Draft PR #64、#68、#69。
+已通过 [#71](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/71) 合并到 `main`。
+权利门禁后续为 [#76](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/76)。
 **零供应商调用、零网络。** 真实的 `scripts/m5_production.py` 入口在 Windows 上调用真实的
 `MediaUseAdapter`，运行时为已批准的 `hyperframes@0.8.222`。
 
@@ -563,8 +564,11 @@ QC 回执在被提交前会经过一道净化边界（`contentops.qc_canonical`�
 | BGM 证据 | 行间停顿 11.70–12.20 秒：有 BGM 为 −60.9 dB，无 BGM 为 −91.0 dB（相差 30.1 dB） |
 | SFX 证据 | 6.15–6.28 秒：有 SFX 为 −33.4 dB，无 SFX 为 −60.8 dB（相差 27.4 dB） |
 | 旁白保留 | 三段渲染中同一语音窗口均为 −26.8 dB，说明两条音轨都没有替代旁白 |
+| 音频控制 | 音量、放置与混音已验证；逐轨淡入淡出在钉死的 Easel 合约中**无法表达**（示例音床把淡入淡出烘焙进了文件） |
 | 负向验收 | 11/11 正确阻断：缺失/错误锁、素材缺失、哈希不匹配、路径越界、导入文件缺失、网络、付费、未授权、重复 ID、旧项目行为不变 |
+| 权利门禁 | `src/contentops/media/rights_gate.py` 拒绝裸 `rights_reviewed`；每个请求必须匹配 `assets/<id>.rights.json` 复核记录。未知、软件与非商业许可证一律拒绝；合成素材永远不能作为证据 |
 | 提交的示例 | `projects/m5-media-use/`；媒体二进制与 `.media/` 仍被忽略，回执入库 |
+| Pull Request | 已合并 [#71](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/71)；权利门禁后续 [#76](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/76) |
 | 路由 | **BLOCKED** —— `main` 上没有 `scripts/skill_route.py`，路由工作仍停留在未合并的 `feat/content-router`。元数据记录在 ADR-008，未另建第二套路由器 |
 
 `INTEGRATION_VERIFIED` 只说明这台机器与这把锁。它不是 `MERGED_TO_MAIN`，也不代表

@@ -44,7 +44,7 @@ media_use:
         reviewed_by: Xander-Xai
         reviewed_at: "2026-10-31"
         review_evidence: assets/support.rights.json
-        attribution: "Owner-captured screenshot of the pinned Easel runtime"
+        attribution: "Repository-classified CREATED_BY_OWNER screenshot of the pinned Easel runtime; no separate capture receipt"
         synthetic: false
     - id: bed
       kind: bgm

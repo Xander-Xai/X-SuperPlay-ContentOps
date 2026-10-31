@@ -3,7 +3,7 @@
 **Currency**: `CURRENT`
 **Graded target**: `project://final/m5-easel-pin.mp4`
 **Overall**: `PASS`
-**Checked at**: 2026-10-31T11:46:36Z
+**Checked at**: 2026-10-31T12:21:54Z
 
 **Paths**: logical references (project://, repo://); no absolute paths
 
