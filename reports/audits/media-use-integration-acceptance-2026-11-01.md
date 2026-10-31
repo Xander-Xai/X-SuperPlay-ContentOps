@@ -275,6 +275,11 @@ Mocking caveat: `test_m5_media_use_workflow.py` drives the stage with a
 | Code commit | `310686025da1874738bb0a75ca5657e41474a329` |
 | Report commit (substantive HEAD) | `9e2905179e1fc770c9ae45094de391a7fdfeb552` |
 | Exact-HEAD CI | [run 41228296380](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/actions/runs/41228296380) on `9e29051` — **success**; `Repo policy checks`, `Tests (ubuntu-latest)`, `Tests (windows-latest)` all green |
+| Exact-HEAD CI, current HEAD | [run 41228680309](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/actions/runs/41228680309) on `602f0b5` — **success**; same three checks green |
+
+Documentation-only commits after `602f0b5` may move HEAD again; the PR's check
+rollup is authoritative for the merge decision, and every commit cited here was
+green on its own SHA.
 | Files changed | `.github/workflows/ci.yml`, `scripts/media_use_adapter.py`, `scripts/skill_execute.py`, `src/contentops/skills/execution_gate.py`, `tests/test_execution_gate.py`, `tests/test_m5_media_use_workflow.py`, `tests/test_skill_execute_status.py`, `tests/test_media_use_ingest_rights.py` (new), and this report |
 | Merge | **Not performed.** Branch protection requires 3 checks on the exact HEAD; owner decision required. |
 
