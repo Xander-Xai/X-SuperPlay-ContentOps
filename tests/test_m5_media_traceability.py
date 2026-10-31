@@ -55,9 +55,28 @@ def _tracked(rel: str) -> bool:
     return out.returncode == 0
 
 
-def _requests() -> dict:
-    config = m5._read_yaml(PROJECT / "project.yaml")
-    return {item["id"]: item for item in config["media_use"]["requests"]}
+def _stage_rows() -> dict:
+    """The stage's own normalised result per asset id.
+
+    Reading `project.yaml` would need PyYAML, which the CI images do not install.
+    The stage receipt is produced from that file, is tracked, and already carries
+    the rights block each request resolved to, so the chain is still exercised
+    end to end without adding a dependency.
+    """
+    stage = json.loads((RECEIPTS / "media-use-stage.json").read_text(encoding="utf-8"))
+    return {row["id"]: row for row in stage["results"]}
+
+
+#: Keys `validate_request_rights` reads from a rights claim.
+_CLAIM_KEYS = {
+    "schema", "license_id", "source_url", "reviewed_by", "reviewed_at",
+    "review_evidence", "attribution", "synthetic", "rights_reviewed",
+}
+
+
+def _request_for(row: dict) -> dict:
+    rights = {key: value for key, value in row["rights"].items() if key in _CLAIM_KEYS}
+    return {"license": row["license"], "rights": rights}
 
 
 class FixtureTests(unittest.TestCase):
@@ -99,15 +118,18 @@ class FixtureTests(unittest.TestCase):
 class RightsTests(unittest.TestCase):
     def test_every_request_proves_its_rights(self):
         """Each declared need must survive the same gate the stage runs."""
-        for asset_id, request in _requests().items():
+        rows = _stage_rows()
+        self.assertEqual(sorted(rows), ["bed", "click_accent", "support_visual"])
+        for asset_id, row in rows.items():
             with self.subTest(asset=asset_id):
+                request = _request_for(row)
                 record = rights_gate.validate_request_rights(request, PROJECT)
-                self.assertEqual(record["license_id"], request["rights"]["license_id"])
+                self.assertEqual(record["license_id"], row["rights"]["license_id"])
                 self.assertFalse(record["evidence_capable"],
                                  "media can never back a factual claim")
 
     def test_a_bare_confirmation_cannot_stand_in_for_rights(self):
-        request = dict(_requests()["support_visual"])
+        request = _request_for(_stage_rows()["support_visual"])
         request.pop("rights", None)
         request["rights_reviewed"] = True
         with self.assertRaises(rights_gate.RightsError):
