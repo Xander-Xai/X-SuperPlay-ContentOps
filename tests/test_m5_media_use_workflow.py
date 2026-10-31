@@ -441,16 +441,17 @@ def an_audio_request_cannot_be_declared_in_the_visual_manifest():
 
 @check
 def committed_example_receipts_carry_no_machine_paths():
-    root = ROOT / "projects" / "m5-media-use"
     skip = {".media", "final", "work", "assets"}
-    for path in root.rglob("*"):
-        if not path.is_file() or skip & set(path.relative_to(root).parts):
-            continue
-        if path.suffix not in {".json", ".yaml", ".md"}:
-            continue
-        text = path.read_text(encoding="utf-8")
-        machine = re.search(r"(?<![A-Za-z])[A-Za-z]:[\\/]|/c/Users|/d/Projects", text)
-        assert not machine, f"machine path {machine.group(0)!r} in {path}"
+    for name in ("m5-media-use", "m5-easel-pin"):
+        root = ROOT / "projects" / name
+        for path in root.rglob("*"):
+            if not path.is_file() or skip & set(path.relative_to(root).parts):
+                continue
+            if path.suffix not in {".json", ".yaml", ".md"}:
+                continue
+            text = path.read_text(encoding="utf-8")
+            machine = re.search(r"(?<![A-Za-z])[A-Za-z]:[\\/]|/c/Users|/d/Projects", text)
+            assert not machine, f"machine path {machine.group(0)!r} in {path}"
 
 
 def main():

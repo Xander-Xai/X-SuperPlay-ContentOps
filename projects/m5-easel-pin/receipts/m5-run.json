@@ -5,6 +5,12 @@
     "sources": {
       "count": 4
     },
+    "media_use": {
+      "state": "DISABLED",
+      "count": 0,
+      "bgm": false,
+      "sfx": 0
+    },
     "assets": {
       "count": 3
     },
@@ -22,11 +28,13 @@
       "cues": 7
     },
     "storyboard": {
-      "shots": 7
+      "shots": 7,
+      "bgm": false,
+      "sfx": 0
     },
     "compose": {
       "state": "OK",
-      "video": "D:\\Projects\\X-SuperPlay-ContentOps\\.claude\\worktrees\\m5-production\\projects\\m5-easel-pin\\final\\m5-easel-pin.mp4"
+      "video": "project://final/m5-easel-pin.mp4"
     },
     "qc": {
       "overall": "PASS",

@@ -632,6 +632,7 @@ def stage_compose(project: Path, slug: str) -> Dict[str, Any]:
         "video": _logical_path(result.get("video"), project),
         "subtitles_burned": result.get("subtitles_burned"),
         "upstream": f"easel@{stamp}:skills/openclaw/auto-short-video/scripts/assemble.py",
+        "reason": result.get("reason"),
     }
     receipt = {key: value for key, value in receipt.items() if value is not None}
     _write_json(project / "receipts" / "compose.json", receipt)
