@@ -520,6 +520,8 @@ def _print_issues(issues: List[Issue]) -> None:
 
 
 def main(argv: Optional[List[str]] = None) -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(
         description="Scaffold, grade, package and record an X post. Never publishes.")
     parser.add_argument("project", help="X project directory, e.g. projects/x-growth-en")
