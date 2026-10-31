@@ -37,6 +37,7 @@
 - [DEVELOPMENT-STANDARD.md](DEVELOPMENT-STANDARD.md) — Development rules
 - [FILE-PLACEMENT-POLICY.md](FILE-PLACEMENT-POLICY.md) — Where files belong
 - [GLOSSARY.md](GLOSSARY.md) — High-frequency terminology
+- [SKILL-REGISTRY.md](SKILL-REGISTRY.md) — Skill discovery, declared capabilities, resolution verdicts and the doctor
 
 ## Bilingual Policy
 

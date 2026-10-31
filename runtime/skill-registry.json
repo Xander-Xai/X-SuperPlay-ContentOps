@@ -1,0 +1,73 @@
+{
+  "schema": "contentops.skill-registry/v1",
+  "note": "Declared capabilities the router may hand to an already-approved adapter. A declaration is a pointer to existing, verified code. It is not a second skill engine, not a copy of any skill, and not an execution grant. Undeclared tracks (GZH vendor, X, XHS) are deliberately absent: they are rights-blocked or unmerged, so resolving them returns UNKNOWN_SKILL rather than a permissive answer.",
+  "scope_conventions": {
+    "accounts": "'*' matches any requested account for routing only. It is not permission to execute on, or across, accounts.",
+    "pipelines": "An explicit list. A requested pipeline outside the list is OUT_OF_SCOPE.",
+    "stages": "An explicit list. A requested stage outside the list is OUT_OF_SCOPE.",
+    "execution": "No scope value, including '*', ever authorizes execution. Resolution stays a pointer; the adapter and the M5 gate decide separately."
+  },
+  "skills": [
+    {
+      "id": "media-use",
+      "name": "media-use",
+      "summary": "Agent Media OS adapter used by the M5 media_use stage for local-only BGM/SFX/image sourcing.",
+      "discovery": {
+        "root": "shared",
+        "dir": "media-use"
+      },
+      "source": {
+        "publisher": "HyperFrames",
+        "upstream": "hyperframes",
+        "version": "0.8.222",
+        "source_commit": "f2358315e59731833334c5d881a7fb5543c22a97",
+        "baseline": "runtime/media-use-runtime-baseline.json"
+      },
+      "canonical_path": "src/contentops/media/media_use_adapter.py",
+      "license": {
+        "status": "declared",
+        "spdx": "Apache-2.0",
+        "note": "HyperFrames code is Apache-2.0. Bundled SFX carry the Pixabay Content License. A licence declaration is not commercial clearance for any individual asset."
+      },
+      "rights": {
+        "status": "verified",
+        "verified": true,
+        "scope": "local execution of the approved adapter and its runtime baseline only; per-asset rights stay enforced by the adapter's rights_reviewed gate; no commercial publication clearance is granted",
+        "evidence": "reports/audits/contentops-pr71-media-use-final-audit-2026-10-31.md"
+      },
+      "accounts": ["*"],
+      "pipelines": ["M5"],
+      "stages": ["media_use"],
+      "contract": {
+        "input": "project.yaml media_use.requests (id, kind, intent, license, attribution, rights_reviewed) plus sources/assets.json",
+        "output": "receipts/media-use-stage.json, storyboard audio fields (bgm/sfx) and asset manifest entries",
+        "schema": "contentops.m5-media-use/v1"
+      },
+      "provider": {
+        "path_permitted": true,
+        "network": false,
+        "paid": false,
+        "cross_project_reuse": false,
+        "note": "path_permitted means this capability's provider path (offline, local-only) is permitted by declared policy. It is not an execution authorization and records no approver."
+      },
+      "runtime": {
+        "dependency": "hyperframes@0.8.222",
+        "baseline": "runtime/media-use-runtime-baseline.json",
+        "lock_env": "CONTENTOPS_MEDIA_USE_RUNTIME_LOCK",
+        "verifier": "src/contentops/media/media_use_adapter.py:verify_runtime_lock",
+        "note": "the router asserts presence only; the adapter re-verifies integrity against the approved baseline at execution"
+      },
+      "verification": {
+        "status": "VERIFIED",
+        "scope": "offline local-only, single host, integration acceptance",
+        "evidence": "reports/audits/contentops-pr71-media-use-final-audit-2026-10-31.md",
+        "evidence_commit": "6c81675cf1f27e8ab1c3beaa476f4c3426a6c794"
+      },
+      "execution": {
+        "adapter": "src/contentops/media/media_use_adapter.py",
+        "m5_stage": "media_use",
+        "authorizes_execution": false
+      }
+    }
+  ]
+}

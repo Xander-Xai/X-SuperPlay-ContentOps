@@ -506,7 +506,7 @@ QC 回执在被提交前会经过一道净化边界（`contentops.qc_canonical`�
 | 安装 / 生成锁入口 | `scripts/media_use_runtime.py` —— `approve`、`install`、`lock`、`verify`、`selfcheck`；批准与生成锁是两个独立动作 |
 | 测试 | 53 项适配器测试通过；97 项 M4.5 收敛测试通过（2026-10-31 重新运行） |
 | Pull Request | Draft [#64](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/64) |
-| Skill Router | 未重建；#49/#59 尚未合并。适配器暴露 `status/doctor/candidates/resolve/adopt`，供未来注册到现有发现机制 |
+| Skill Router | **已通过 [#77](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/77) 合并** —— `scripts/skill_route.py` 与 `runtime/skill-registry.json` 已将 `media-use` 注册为声明能力。#49 仍未合并；#59 已因被 #77 替代而关闭。适配器仍暴露 `status/doctor/candidates/resolve/adopt`；注册表是路由指针 |
 
 ### 批准覆盖与不覆盖的范围
 
@@ -569,7 +569,34 @@ QC 回执在被提交前会经过一道净化边界（`contentops.qc_canonical`�
 | 权利门禁 | `src/contentops/media/rights_gate.py` 拒绝裸 `rights_reviewed`；每个请求必须匹配 `assets/<id>.rights.json` 复核记录。未知、软件与非商业许可证一律拒绝；合成素材永远不能作为证据 |
 | 提交的示例 | `projects/m5-media-use/`；媒体二进制与 `.media/` 仍被忽略，回执入库 |
 | Pull Request | 已合并 [#71](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/71)；权利门禁后续 [#76](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/76) |
-| 路由 | **BLOCKED** —— `main` 上没有 `scripts/skill_route.py`，路由工作仍停留在未合并的 `feat/content-router`。元数据记录在 ADR-008，未另建第二套路由器 |
+| 路由 | **已通过 [#77](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/77) 合并** —— `scripts/skill_route.py` 与 `runtime/skill-registry.json` 已在 `main`；见下文「Skill 发现与解析」 |
 
 `INTEGRATION_VERIFIED` 只说明这台机器与这把锁。它不是 `MERGED_TO_MAIN`，也不代表
 导入素材、旁白或视频已获批发布。
+
+## Skill 发现与解析（Issue #57）—— 已合并 2026-10-31
+
+已通过 [#77](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/77) 合并到 `main`。
+路由器与注册表已在 `main` 上运行；本节记录它们做什么、还有哪些仍被阻断。
+
+| 属性 | 值 |
+|---|---|
+| 入口 | `python scripts/skill_route.py`（仅标准库；不起子进程、不联网） |
+| 发现 | `--sources`、`--list`、`--match`、`--resolve`，覆盖 Easel 目录根与共享 Skill 库 |
+| Doctor | `--doctor` —— 目录根、重名、权限声明、权利、越界与悬空路径 |
+| 已声明能力 | `runtime/skill-registry.json`，schema `contentops.skill-registry/v1` |
+| 已注册能力 | 仅 `media-use`，指向已合并的适配器、运行时基线、锁校验器与 M5 `media_use` 阶段 |
+| 解析判定 | `RESOLVABLE`，或以 `UNKNOWN_SKILL`、`DUPLICATE_AMBIGUITY`、`OUT_OF_SCOPE`、`UNVERIFIED_RIGHTS`、`UNAUTHORIZED_PROVIDER`、`SKILL_NOT_INSTALLED`、`MISSING_RUNTIME` 阻断 |
+| 执行授权 | 路由器**从不授予**；每条记录都带 `execution_authorized: false` |
+| 有本机运行时锁时的 media-use | `RESOLVABLE`（已在本机对照 `runtime/media-use-runtime-baseline.json` 验证） |
+| 无锁时的 media-use | `BLOCKED / MISSING_RUNTIME`（干净检出的默认结果） |
+| 旧版 M5 | 未改变 —— `scripts/m5_production.py` 不导入路由器，并有测试断言 |
+| VIDEO 轨 | 仅发现，直到本机存在目录根 |
+| GZH 轨 | `BLOCKED` —— vendor 第三方轨，权利未验证，`vendor/` 已 gitignore |
+| X 轨 | `BLOCKED` —— 平台轨未合并（`feat/47-x-platform-track`，PR #50） |
+| XHS 轨 | `BLOCKED` —— 迁移未合并且处于权利审查；无目录根 |
+| 测试 | `tests/test_skill_doctor.py`、`tests/test_skill_router_capabilities.py`，均已注册进 CI |
+| Pull Request | 已合并 [#77](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/77) |
+
+路由器不建第二套 Skill Engine，也不复制任何第三方 Skill。声明只是指向本仓库已拥有的代码；
+适配器、运行时锁校验器与 M5 门禁各自保留最终权威。

@@ -389,7 +389,7 @@ egress; installation itself is a separate, reviewed preparation step.
 | Install / lock entry point | `scripts/media_use_runtime.py` — `approve`, `install`, `lock`, `verify`, `selfcheck`; approving and lock generation are separate actions |
 | Tests | 53 adapter tests PASS; 97 M4.5 convergence tests PASS (re-run 2026-10-31) |
 | Pull request | Draft [#64](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/64) |
-| Skill Router | Not rebuilt; #49/#59 remain unmerged. The adapter exposes `status/doctor/candidates/resolve/adopt` for future registration with the existing discovery mechanism |
+| Skill Router | **Merged via [#77](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/77)** — `scripts/skill_route.py` and `runtime/skill-registry.json` register `media-use` as a declared capability. #49 remains unmerged; #59 was closed as superseded by #77. The adapter still exposes `status/doctor/candidates/resolve/adopt`; the registry is the routing pointer |
 
 ### What the approval does and does not authorize
 
@@ -460,8 +460,37 @@ approved `hyperframes@0.8.222` runtime on Windows.
 | Rights gate | `src/contentops/media/rights_gate.py` refuses a bare `rights_reviewed` flag; each request needs a matching `assets/<id>.rights.json` review record. Unknown, software and non-commercial licences are refused; synthetic assets are never evidence |
 | Committed example | `projects/m5-media-use/`; media binaries and `.media/` stay gitignored, receipts are committed |
 | Pull request | Merged [#71](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/71); rights-gate follow-up [#76](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/76) |
-| Routing | **BLOCKED** — `scripts/skill_route.py` is not on `main`; router work remains unmerged on `feat/content-router`. Metadata is recorded in ADR-008; no second router was built |
+| Routing | **MERGED via [#77](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/77)** — `scripts/skill_route.py` and `runtime/skill-registry.json` are on `main`; see *Skill discovery and resolution* below |
 
 `INTEGRATION_VERIFIED` is a statement about this machine and this lock. It is
 not `MERGED_TO_MAIN`, and it does not approve the imported material, the voice
 track or the video for publication.
+
+## Skill discovery and resolution (Issue #57) — MERGED 2026-10-31
+
+Merged to `main` through [#77](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/77).
+The router and registry run on `main` today; this section records what they do
+and what remains blocked.
+
+| Property | Value |
+|---|---|
+| Entry point | `python scripts/skill_route.py` (stdlib only; no process, no network) |
+| Discovery | `--sources`, `--list`, `--match`, `--resolve` over the Easel roots and the shared skill store |
+| Doctor | `--doctor` — roots, duplicates, permission declarations, rights, unsafe and dangling paths |
+| Declared capabilities | `runtime/skill-registry.json`, schema `contentops.skill-registry/v1` |
+| Registered capability | `media-use` only, pointing at the merged adapter, runtime baseline, lock verifier and M5 `media_use` stage |
+| Resolution verdicts | `RESOLVABLE`, or `BLOCKED` with `UNKNOWN_SKILL`, `DUPLICATE_AMBIGUITY`, `OUT_OF_SCOPE`, `UNVERIFIED_RIGHTS`, `UNAUTHORIZED_PROVIDER`, `SKILL_NOT_INSTALLED`, `MISSING_RUNTIME` |
+| Execution authorization | **never granted** by the router; every record carries `execution_authorized: false` |
+| media-use with a host runtime lock | `RESOLVABLE` (verified on this host against `runtime/media-use-runtime-baseline.json`) |
+| media-use without a lock | `BLOCKED / MISSING_RUNTIME` (the default on a clean checkout) |
+| Legacy M5 | unchanged — `scripts/m5_production.py` does not import the router; a test asserts it |
+| VIDEO track | discovery-only until a catalog root exists on the host |
+| GZH track | `BLOCKED` — vendored third-party track, rights unverified, `vendor/` is gitignored |
+| X track | `BLOCKED` — platform track unmerged (`feat/47-x-platform-track`, PR #50) |
+| XHS track | `BLOCKED` — migration unmerged and under rights review; no catalog root |
+| Tests | `tests/test_skill_doctor.py`, `tests/test_skill_router_capabilities.py`; both registered in CI |
+| Pull request | Merged [#77](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/77) |
+
+The router adds no second skill engine and copies no third-party skill. A
+declaration is a pointer to code this repository already owns; the adapter, the
+runtime lock verifier and the M5 gate keep their own authority.

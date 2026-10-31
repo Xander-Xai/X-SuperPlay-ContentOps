@@ -280,13 +280,14 @@ or an upstream patch, neither of which belongs in this integration. The sample
 project's BGM file carries fades baked into the generated asset; that is a
 property of the file, not of the mixer.
 
-## Skill metadata for future routing
+## Skill metadata and routing registration
 
-The global skill router from Issue #57 is **not merged** (`scripts/skill_route.py`
-does not exist on `main`; the related work lives on the unmerged
-`feat/content-router` branch). No second router is introduced here. The metadata
-a router needs is recorded below so registration is a data change, not a
-re-implementation:
+The global skill router from Issue #57 is **merged** through
+[#77](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/77).
+`scripts/skill_route.py` and `runtime/skill-registry.json` are on `main`, and
+`media-use` is registered as the only declared capability. No second router is
+introduced here. The metadata below remains the human-readable declaration; the
+registry is the routing pointer, and neither grants execution:
 
 | Field | Value |
 |---|---|
