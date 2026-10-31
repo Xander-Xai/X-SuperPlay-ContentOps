@@ -456,6 +456,7 @@ approved `hyperframes@0.8.222` runtime on Windows.
 | Narration preservation | the same voice window measures −26.8 dB in all three renders, so neither track replaced the voice |
 | Negative acceptance | 11/11 blocked: missing/wrong lock, missing material, hash mismatch, path escape, missing import file, network, paid, unlicensed, duplicate id, legacy project unchanged |
 | Committed example | `projects/m5-media-use/`; media binaries and `.media/` stay gitignored, receipts are committed |
+| Pull request | Draft [#71](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/71) |
 | Routing | **BLOCKED** — `scripts/skill_route.py` is not on `main`; router work remains unmerged on `feat/content-router`. Metadata is recorded in ADR-008; no second router was built |
 
 `INTEGRATION_VERIFIED` is a statement about this machine and this lock. It is

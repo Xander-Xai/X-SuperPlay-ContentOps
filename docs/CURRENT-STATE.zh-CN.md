@@ -565,6 +565,7 @@ QC 回执在被提交前会经过一道净化边界（`contentops.qc_canonical`�
 | 旁白保留 | 三段渲染中同一语音窗口均为 −26.8 dB，说明两条音轨都没有替代旁白 |
 | 负向验收 | 11/11 正确阻断：缺失/错误锁、素材缺失、哈希不匹配、路径越界、导入文件缺失、网络、付费、未授权、重复 ID、旧项目行为不变 |
 | 提交的示例 | `projects/m5-media-use/`；媒体二进制与 `.media/` 仍被忽略，回执入库 |
+| Pull Request | Draft [#71](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/71) |
 | 路由 | **BLOCKED** —— `main` 上没有 `scripts/skill_route.py`，路由工作仍停留在未合并的 `feat/content-router`。元数据记录在 ADR-008，未另建第二套路由器 |
 
 `INTEGRATION_VERIFIED` 只说明这台机器与这把锁。它不是 `MERGED_TO_MAIN`，也不代表

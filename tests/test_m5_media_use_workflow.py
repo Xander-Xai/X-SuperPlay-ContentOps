@@ -189,12 +189,12 @@ def unimportable_and_tampered_bytes_block():
 
 
 @check
-def duplicate_ids_or_unsupported_audio_refuse():
+def duplicate_ids_or_unsupported_kind_refuse():
     project, config, digest = project_and_config()
     config["media_use"]["requests"].append(dict(config["media_use"]["requests"][0]))
     refused(lambda: m5.stage_media_use(project, config, adapter=FakeMediaAdapter(digest)))
     project, config, digest = project_and_config()
-    config["media_use"]["requests"][0]["kind"] = "sfx"
+    config["media_use"]["requests"][0]["kind"] = "voice"
     refused(lambda: m5.stage_media_use(project, config, adapter=FakeMediaAdapter(digest)))
 
 
