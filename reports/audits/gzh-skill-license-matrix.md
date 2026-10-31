@@ -92,10 +92,11 @@
 
 ### Ownership evidence and asset scope
 
-- GitHub path history for `skills/gzh-article-writing/SKILL.md` returns commit
-  `901aeee`, author `yandexuanxuan` (now Xander-Xai), with no third-party marker.
-  The core GZH tree was added by the owner in the private repository. This is
-  authorship evidence, not a legal opinion; it is why the core skills are
+- All five remote commits (`bb52de1`, `5860343`, `96bfe41`, `901aeee`,
+  `e9303d1`) are authored by `yandexuanxuan` (now Xander-Xai). A sampled core
+  path, `skills/gzh-article-writing/SKILL.md`, resolves to `901aeee` with no
+  third-party marker. This is authorship evidence in the owner's private
+  repository, not a legal opinion; it is why the core skills are
   `OWNED_AND_CLEARED` rather than `OWNER_ATTESTED`.
 - Skill assets: 3 SVG icons, no raster images, PDFs or Office files. Two icons
   belong to owned skills; `wechat-viral-topic/_icon.svg` belongs to a
