@@ -14,9 +14,14 @@ vocabulary must name those verbs and their effects first.
 Usage
 -----
 ```
-python scripts/skill_execute.py projects/m5-media-use --operation status
-python scripts/skill_execute.py projects/m5-media-use --operation doctor --json
+set CONTENTOPS_OWNER_IDENTITIES=owner
+set CONTENTOPS_EXECUTION_SUBJECT=owner
+python scripts/skill_execute.py projects/m5-media-use --account douyin-1024 --operation status
+python scripts/skill_execute.py projects/m5-media-use --account douyin-1024 --operation doctor --json
 ```
+
+The identity is declared by the environment, not authenticated. Unset variables
+mean nothing runs.
 """
 
 from __future__ import annotations
@@ -41,11 +46,23 @@ from contentops.skills.execution_gate import execute  # noqa: E402
 SKILL_ID = "media-use"
 ALLOWED_OPERATIONS = ("status", "doctor")
 OWNER_ENV = "CONTENTOPS_OWNER_IDENTITIES"
+SUBJECT_ENV = "CONTENTOPS_EXECUTION_SUBJECT"
 
 
 def _owner_identities() -> list[str]:
+    """Configured issuers. Unset means nobody is trusted. Not authentication."""
     raw = os.environ.get(OWNER_ENV, "")
     return [item.strip() for item in raw.split(",") if item.strip()]
+
+
+def _execution_subject() -> str:
+    """The host-declared executing identity.
+
+    This is a label declared by the environment, not an authenticated identity.
+    It exists so a caller cannot simply type ``--subject someone-else``; it does
+    not prove who is running the command. ADR-010 states the limit.
+    """
+    return os.environ.get(SUBJECT_ENV, "").strip()
 
 
 def _operation_executor(operation: str):
@@ -69,10 +86,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("project", help="project directory under projects/")
     parser.add_argument("--operation", default="status", choices=ALLOWED_OPERATIONS)
-    parser.add_argument("--account", default="*")
+    parser.add_argument("--account", required=True,
+                        help="one concrete business account; a wildcard is refused")
     parser.add_argument("--pipeline", default="M5")
     parser.add_argument("--stage", default="media_use")
-    parser.add_argument("--subject", default="owner")
     parser.add_argument("--request-id", default="")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
@@ -81,12 +98,15 @@ def main() -> int:
     if not project.is_dir():
         print(f"project not found: {project}", file=sys.stderr)
         return 2
+    if args.account.strip() in ("", "*"):
+        print("--account must name one concrete account; a wildcard would widen "
+              "the approval to accounts nobody approved", file=sys.stderr)
+        return 2
 
     entry = next((item for item in skill_route.registry_entries()
                   if item.get("id") == SKILL_ID), None)
-    account = None if args.account == "*" else args.account
     verdict = skill_route.resolve_capability(
-        SKILL_ID, account=account, pipeline=args.pipeline, stage=args.stage)
+        SKILL_ID, account=args.account, pipeline=args.pipeline, stage=args.stage)
     request_id = args.request_id or f"{project.name}-{args.operation}"
 
     result = execute(
@@ -98,7 +118,7 @@ def main() -> int:
             pipeline=args.pipeline,
             stage=args.stage,
             operations=(args.operation,),
-            subject=args.subject,
+            subject=_execution_subject(),
         ),
         verdict=verdict,
         registry_entry=entry,

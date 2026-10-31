@@ -121,12 +121,21 @@ Where the grant comes from, and how it is spent, is ADR-010:
 
 | Piece | Where |
 |---|---|
-| grant record | `projects/<slug>/receipts/skill-grant.json` |
-| anchor | `receipts/human-review.json` with `decision: APPROVED`, matched by digest |
+| approval record | `projects/<slug>/receipts/skill-execution-approval.json`, `purpose: skill_execution` |
+| optional evidence | `receipts/human-review.json`, digest-checked but never authorizing |
 | issuer allow-list | `CONTENTOPS_OWNER_IDENTITIES` (unset trusts nobody) |
-| atomic spend | `receipts/grants/<grant_id>/use-NNNN.json` created with `O_EXCL` |
-| managed entry | `python scripts/skill_execute.py <project> --operation status\|doctor` |
-| receipt | `receipts/executions/<grant_id>-use-NNNN.json` |
+| executing subject | `CONTENTOPS_EXECUTION_SUBJECT` (a declared label, not authentication) |
+| atomic spend | `receipts/grants/<approval_id>/use-NNNN.json` created with `O_EXCL` |
+| request dedupe | `receipts/grants/<approval_id>/request-<hash>.json` created with `O_EXCL` |
+| managed entry | `python scripts/skill_execute.py <project> --account <one> --operation status\|doctor` |
+| receipt | `receipts/executions/<approval_id>-use-NNNN.json`, exclusive, sanitized |
+
+A video review (`human-review.json`) is **not** an execution approval and cannot be
+upgraded into one. Every scope field is read from the single approval record, so
+there is no derived copy to drift. `approval_id` must be one safe path component;
+traversal, symlink escapes and Windows device names are refused, not sanitised.
+Consumption is atomic on one local filesystem; a spent use is permanent.
+
 
 `scripts/m5_production.py` does not import any of this, so the verified M5 chain
 keeps its existing trust boundary. Making authorization mandatory inside M5 is a
