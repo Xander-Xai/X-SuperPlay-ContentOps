@@ -2,6 +2,35 @@
 
 > This is an observed **GitHub remote** snapshot, not a claim about local Windows worktrees. Do not promote a status without fresh verification. This register tracks #7, #47, #51, #52 and #53.
 
+## Latest verified update — 2026-10-31 (supersedes older snapshot below)
+
+**These are the latest remote checks, not statements about unpushed local assets.**
+
+| PR | Current head | Status | Exact-head CI |
+|---|---|---|---|
+| [#49](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/49) | `f401f69` | Open, Ready for Review, MERGEABLE | **3/3 SUCCESS**: Ubuntu / Windows / Repo policy |
+| [#50](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/50) | `5210b88` | Open, Draft, MERGEABLE; conflicts resolved | **0 check runs**; base remains `feat/content-router` |
+| [#55](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/55) | `ceb4897` | Open, Ready for Review, MERGEABLE | **3/3 SUCCESS**: Ubuntu / Windows / Repo policy |
+| [#48](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/48) | `0169fb0` | Open, independent owner review | prior green run |
+| [#54](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/54) | this branch | Draft governance register | new-head check pending |
+
+- The three closed-PR legacy remote branches (`feat/34-payg-native-first-activation`, `feat/34-narration-v2-spoken-script-ab`, `feat/34-narration-v3-creator-director`) have **now been deleted remotely** after preserving their head SHAs. Do not try to prune their local worktrees without a separate local state audit.
+- `feat/xhs-fa-migration` is still **local-only** at owner-reported `261fd3e` (clean-clone tested at `0b58303`); remote push was blocked by the local session's permission classifier, not a network or GitHub error.
+- **Public/private rights gate:** the destination ContentOps is PUBLIC; source `xhs-FA` is PRIVATE. Owner reports 34/45 bundled Skills lacking explicit license; the source core's Apache-2.0 declaration does not automatically license third-party assets. Per-component provenance and redistribution authorization must be audited **before any public push**. See [#11](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/issues/11) and [#51](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/issues/51).
+- The GitHub `/rulesets` endpoint returned `[]` and branch listing returned `protected=false`. The connected GitHub integration was **denied** access to the branch-protection endpoint (403), so an owner-side branch-protection check remains necessary. Owner's local report says there are no main protection rules. See [#52](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/issues/52).
+- No PR merged, no platform published, no original `xhs-FA` repo archived/deleted in this update.
+- #49 and #55 have green CI but **zero submitted PR reviews** as last checked; release still requires applicable human/safety review. #50 remains Draft with no checks.
+
+### Safe next operations
+
+1. Owner: verify rights for all bundled XHS Skills and any media before public push; never treat a permission-classifier denial as proof of GitHub connectivity failure.
+2. Owner: enable main branch protection/ruleset in Settings requiring PR reviews and the three exact check names, after confirming visibility and available plan permissions.
+3. Review small #55 first, then recheck #49 against updated main; review large #49 before merge. Do not bypass the owner approval decision.
+4. Preserve #50 until the parent is merged and the child diff / checks are independently verified.
+5. XHS PR should remain Draft and blocked pending permissions, licensing, real-work approval and clean-clone evidence.
+
+---
+
 ## Operating rules
 - One maintained ContentOps repository is the goal. Platform-specific workflows remain distinct, behind adapters and source pins.
 - A PR with failed or unexecuted checks is not merge-ready. A local green run does not replace required remote checks.
