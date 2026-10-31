@@ -223,6 +223,20 @@ New regression coverage added by this PR:
 - the gitignore exception stays narrow: narration, renders and `sfx_001.mp3`
   remain ignored, and no other media in the sample is tracked.
 
+Two failures that only appeared on CI were found and fixed here, not suppressed:
+
+1. the existing Golden voice suite pins the audio allowlist to exactly its two
+   experiment files, so the new `bed.mp3` exception broke it. The entry is now
+   named in `OTHER_AUDIO_EXCEPTIONS`; the count assertion stays exact and any
+   unlisted audio exception still fails;
+2. the new suite parsed `project.yaml` through `m5._read_yaml`, which raises when
+   PyYAML is missing — and the CI images do not install it. The rights blocks now
+   come from the tracked stage receipt, so no dependency was added.
+
+After the second fix, every CI-registered command (36 of them) was run locally in
+an environment where importing `yaml` raises, to reproduce the runner environment
+rather than trusting a green local run.
+
 ## G. Verdict
 
 ```text
@@ -257,4 +271,10 @@ state, and no gate was bypassed to change it.
 | PR | [#89](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/89) |
 | Base | `main` @ `459abb4815b163bc7c53c937c523f6190164b25c` |
 | Branch | `fix/57-m5-media-fixtures` |
+| Code + fixture commit (what §D cloned) | `6e7d09a` |
+| Exact-HEAD CI at the time of writing | [run 41238067149](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/actions/runs/41238067149) on `82d12c6` — **success**; `Repo policy checks`, `Tests (ubuntu-latest)`, `Tests (windows-latest)` all green |
 | Merge | **Not performed.** Owner decision. |
+
+Documentation-only commits after `82d12c6` may move HEAD; the PR's check rollup is
+authoritative for the merge decision, and every commit cited here was green on its
+own SHA.
