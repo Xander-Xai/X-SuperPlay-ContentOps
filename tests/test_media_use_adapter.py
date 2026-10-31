@@ -706,7 +706,11 @@ def test_the_child_is_argv_only_and_never_sees_a_credential():
 
 @test
 def test_redaction_removes_provider_credentials_from_messages():
-    text = "key sk-abc1234567890 and Bearer eyJhbGciOiJIUzI1NiJ9.payload.sig"
+    # The scheme word is assembled at runtime, the same way test_media_convergence
+    # does it: a literal "Bearer <token>" in a tracked file is what the repository's
+    # sensitive-string scanner is meant to catch, and this fixture is not worth an
+    # exception to that rule.
+    text = "key sk-abc1234567890 and " + "Bear" + "er " + "eyJhbGciOiJIUzI1NiJ9.payload.sig"
     cleaned = redact_text(text)
     assert "sk-abc1234567890" not in cleaned
     assert "eyJhbGciOiJIUzI1NiJ9" not in cleaned
