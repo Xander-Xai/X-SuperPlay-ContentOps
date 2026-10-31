@@ -794,27 +794,38 @@ class MediaUseAdapter:
         elif not resolve_present and not runtime.trusted:
             reasons.append(f"{self.resolve_script} is missing")
 
-        node = self.node or self._which("node")
-        node_present = bool(node)
-        node_ok = node_present
-        node_version: Optional[str] = None
-        if not node_present:
-            reasons.append("node is not on PATH; resolve.mjs cannot run")
+        node: Optional[str]
+        if runtime.trusted:
+            # The lock hashed the node bytes, so a system node is irrelevant and
+            # its version cannot be probed without running unverified software.
+            node = str(runtime.node) if runtime.node else (self.node or self._which("node"))
+            node_present = bool(node)
+            node_ok = node_present
+            node_version: Optional[str] = None
+            if not node_present:
+                reasons.append("the trusted runtime names no node binary")
         else:
-            try:
-                proc = hidden_run(
-                    [node, "--version"], timeout=10, check=False, env=self._child_env()
-                )
-                node_version = (proc.stdout or "").strip() or None
-            except Exception:
-                node_version = None
-            parsed = _version_tuple(node_version)
-            if parsed is None or parsed[0] < MIN_NODE_MAJOR:
-                reasons.append(
-                    f"node {node_version or 'unknown'} does not satisfy the "
-                    f"media-use floor v{MIN_NODE_MAJOR}.0.0"
-                )
-                node_ok = False
+            node = self.node or self._which("node")
+            node_present = bool(node)
+            node_ok = node_present
+            node_version = None
+            if not node_present:
+                reasons.append("node is not on PATH; resolve.mjs cannot run")
+            else:
+                try:
+                    proc = hidden_run(
+                        [node, "--version"], timeout=10, check=False, env=self._child_env()
+                    )
+                    node_version = (proc.stdout or "").strip() or None
+                except Exception:
+                    node_version = None
+                parsed = _version_tuple(node_version)
+                if parsed is None or parsed[0] < MIN_NODE_MAJOR:
+                    reasons.append(
+                        f"node {node_version or 'unknown'} does not satisfy the "
+                        f"media-use floor v{MIN_NODE_MAJOR}.0.0"
+                    )
+                    node_ok = False
 
         resolve_sha256 = None
         if resolve_present:
@@ -842,7 +853,18 @@ class MediaUseAdapter:
         status = self.status()
         if status.available:
             return status
-        if not status.node_present:
+        if self.runtime_lock is not None:
+            # A configured lock is the reason execution is blocked. Reporting
+            # SKILL_UNAVAILABLE here would hide an integrity mismatch behind a
+            # directory that the lock was meant to replace.
+            runtime = verify_runtime_lock(self.runtime_lock)
+            if runtime.trusted:
+                code = CODE_NODE_UNAVAILABLE if not status.node_present else (
+                    status.reasons[0].split(":", 1)[0] if status.reasons else "DEPENDENCY_UNVERIFIED"
+                )
+            else:
+                code = runtime.state
+        elif not status.node_present:
             code = CODE_NODE_UNAVAILABLE
         elif not status.skill_present or not status.resolve_present:
             code = CODE_SKILL_UNAVAILABLE
