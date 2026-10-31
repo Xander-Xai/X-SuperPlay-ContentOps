@@ -38,6 +38,23 @@ main (canonical)
 
 Branch naming: `feat/<issue>-...`, `fix/<issue>-...`, `test/<issue>-...`, `chore/<issue>-...`, etc.
 
+### Feature-branch CI
+
+A feature branch is checked by a `push` to its own branch, not by merging it
+into an authorised parent. `.github/workflows/ci.yml` runs on `feat/**`,
+`fix/**`, `chore/**`, `security/**`, `docs/**` and `ci/**`, and can be started
+manually with:
+
+```bash
+gh workflow run ci.yml --ref <branch>
+```
+
+The run is identified by the branch ref in the Actions log. It does not merge
+the branch into `main`, does not merge an unauthorised parent into `main`, and
+does not replace the PR check. A branch whose workflow predates these triggers
+needs one merge of current `main` (or the trigger commit) before it can be
+dispatched.
+
 ## Commit Rules
 
 Prefix: `feat:`, `fix:`, `test:`, `docs:`, `refactor:`, `chore:`, `research:`
