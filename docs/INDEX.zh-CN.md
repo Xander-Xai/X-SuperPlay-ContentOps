@@ -42,6 +42,7 @@ translation_status: synced
 - [DEVELOPMENT-STANDARD.md](DEVELOPMENT-STANDARD.md) — 开发规则
 - [FILE-PLACEMENT-POLICY.md](FILE-PLACEMENT-POLICY.md) — 文件归属规则
 - [GLOSSARY.md](GLOSSARY.md) — 高频术语表
+- [SKILL-REGISTRY.zh-CN.md](SKILL-REGISTRY.zh-CN.md) — Skill 发现、已声明能力、解析判定与 Doctor
 
 ## 决策
 

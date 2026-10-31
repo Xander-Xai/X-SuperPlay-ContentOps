@@ -1,0 +1,132 @@
+# Skill Registry and Doctor
+
+[English](SKILL-REGISTRY.md) | [简体中文](SKILL-REGISTRY.zh-CN.md)
+
+> One resolver, three questions: what exists, which copy wins, and what may it
+> be handed to. The router never executes a skill.
+
+## Entry point
+
+`scripts/skill_route.py` is the only resolver. It is stdlib-only, reads front
+matter and declared data, and never spawns a process or opens a network
+connection.
+
+| Command | Answer |
+|---|---|
+| `python scripts/skill_route.py --sources` | every declared catalog root, its rights posture, present or absent |
+| `python scripts/skill_route.py --list` | every deduplicated skill |
+| `python scripts/skill_route.py --match "<deliverable>"` | ranked candidates |
+| `python scripts/skill_route.py --resolve <name>` | every exact copy, or a capability verdict |
+| `python scripts/skill_route.py --capabilities` | every declared capability and its verdict |
+| `python scripts/skill_route.py --doctor` | roots, duplicates, permissions, rights and unsafe paths |
+
+Add `--json` for a machine-readable record. `--resolve` accepts `--account`,
+`--pipeline` and `--stage` to scope a capability resolution.
+
+## Two questions that must not be merged
+
+| Question | Layer | Who answers |
+|---|---|---|
+| What exists on this host? | discovery | `skill_route.py --list/--sources/--match` |
+| May this be handed to an adapter? | resolution | `skill_route.py --resolve`, against `runtime/skill-registry.json` |
+| May it actually run? | execution | the adapter, the runtime lock verifier and the M5 gate |
+
+Discovery alone never promotes a skill to executable. A declaration in the
+registry never grants execution either: the router's verdict is `RESOLVABLE`,
+and the returned record always carries `execution_authorized: false`.
+
+## Catalog roots
+
+| Priority | Root | Track | Rights posture |
+|---:|---|---|---|
+| 1 | `.runtime/easel/skills/openclaw` | pinned Easel runtime | external-pinned |
+| 2 | `Easel/skills/openclaw` | working Easel checkout | external-checkout |
+| 3 | `vendor/gzh-thinktank/gzh_未来智能/skills` | locally vendored 公众号 | unverified-vendor |
+| — | `~/.agents/skills` | shared store, resolved separately | operator-controlled |
+
+A name in more than one root is indexed once, from the earliest root. The later
+copy is reported as `shadowed`; `--doctor` counts every collision.
+
+`vendor/` is gitignored. Third-party vendor material is a local operator
+resource, never a redistribution grant, and must not enter the public
+repository.
+
+## Declared capabilities
+
+`runtime/skill-registry.json` (schema `contentops.skill-registry/v1`) is a
+pointer table. Each entry records:
+
+| Field | Meaning |
+|---|---|
+| `id`, `name` | the exact identifiers `--resolve` matches |
+| `discovery` | where the skill directory is expected (`shared` or `catalog`) |
+| `source` | publisher, upstream package, version, source commit |
+| `canonical_path` | the repository code that owns the integration |
+| `license` | declared licence status and SPDX id; never a clearance |
+| `rights` | verification status, scope and evidence |
+| `accounts`, `pipelines`, `stages` | the scope this capability may serve |
+| `contract` | input, output and receipt schema |
+| `provider` | authorization plus network, paid and cross-project-reuse flags |
+| `runtime` | dependency, approved baseline, lock environment variable, verifier |
+| `verification` | status, scope and evidence |
+| `execution` | adapter and M5 stage; `authorizes_execution: false` |
+
+Undeclared tracks are deliberately absent. Resolving one returns
+`UNKNOWN_SKILL`, which is the honest answer, not a gap to paper over.
+
+## Resolution rules
+
+| Condition | Reason code | Verdict |
+|---|---|---|
+| no declaration matches the exact name | `UNKNOWN_SKILL` | BLOCKED |
+| more than one declaration matches | `DUPLICATE_AMBIGUITY` | BLOCKED |
+| requested account/pipeline/stage is not declared | `OUT_OF_SCOPE` | BLOCKED |
+| rights are not verified, or the licence is restricted | `UNVERIFIED_RIGHTS` | BLOCKED |
+| provider is unauthorized, or network/paid/reuse is declared | `UNAUTHORIZED_PROVIDER` | BLOCKED |
+| the skill directory is not installed | `SKILL_NOT_INSTALLED` | BLOCKED |
+| the approved baseline or runtime lock is absent | `MISSING_RUNTIME` | BLOCKED |
+| exactly one match, rights verified, provider authorized, runtime ready | `RESOLVABLE` | RESOLVABLE |
+
+Order matters: ambiguity, scope, rights and provider are decided before runtime
+presence, so a blocked capability never looks runnable just because a runtime
+happens to be installed. A permission field in a skill's front matter is
+recorded, never treated as an authorization.
+
+## media-use
+
+| Field | Value |
+|---|---|
+| id | `media-use` |
+| source | `hyperframes@0.8.222`, commit `f2358315e59731833334c5d881a7fb5543c22a97` |
+| canonical path | `src/contentops/media/media_use_adapter.py` |
+| scope | accounts `*`, pipeline `M5`, stage `media_use` |
+| runtime | approved baseline `runtime/media-use-runtime-baseline.json`, lock env `CONTENTOPS_MEDIA_USE_RUNTIME_LOCK` |
+| verification | `VERIFIED`, offline local-only, integration acceptance |
+| evidence | `reports/audits/contentops-pr71-media-use-final-audit-2026-10-31.md` |
+
+The registration reuses the merged adapter, runtime baseline, lock verifier and
+M5 `media_use` stage. It adds no second manifest and changes no accepted
+media-use behaviour. The handoff is declared only:
+
+```
+Skill Discovery -> Skill Resolution -> Permission Gate -> Existing Adapter -> M5
+```
+
+`scripts/m5_production.py` does not import the router. Legacy M5 runs with no
+router installed, and a test asserts that independence.
+
+## Track status
+
+| Track | Status | Why |
+|---|---|---|
+| VIDEO (Easel) | discovery-only until a catalog root exists on the host | no vendor content in the public repository |
+| GZH | BLOCKED | vendored third-party track, rights unverified, not redistributed |
+| X | BLOCKED | platform track is unmerged (`feat/47-x-platform-track`, PR #50) |
+| XHS | BLOCKED | migration is unmerged and under rights review; no catalog root |
+
+## Boundary
+
+`--doctor` reports structure, licences, permission declarations and unsafe
+paths. It does not clear rights, does not grant permission and does not
+authorize execution. Issue #57 stays open until execution authorization is a
+separate, reviewed decision.
