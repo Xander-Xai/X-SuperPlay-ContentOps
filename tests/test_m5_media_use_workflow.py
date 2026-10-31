@@ -61,6 +61,10 @@ class FakeMediaAdapter:
         self.importable = True
         self.verified = True
 
+    def adopt(self, *, project_dir):
+        self.calls.append(("adopt", str(project_dir)))
+        return [{"type": "image", "path": "assets/support.png"}]
+
     def resolve(self, kind, intent, *, project_dir):
         self.calls.append(("resolve", kind, intent, str(project_dir)))
         return SimpleNamespace(
@@ -103,7 +107,7 @@ def successful_stage_resolves_imports_verifies_and_feeds_assets():
     project, config, digest = project_and_config()
     adapter = FakeMediaAdapter(digest)
     result = m5.stage_media_use(project, config, adapter=adapter)
-    assert [call[0] for call in adapter.calls] == ["resolve", "import", "verify"]
+    assert [call[0] for call in adapter.calls] == ["adopt", "resolve", "import", "verify"]
     assert result["state"] == "OK" and result["count"] == 1
     assets = m5.stage_assets(project, extra_assets=result["assets"])
     assert assets["support_visual"]["verified_sha256"] == digest
@@ -200,7 +204,7 @@ def build_automatically_uses_the_stage_without_a_manual_adapter_cli():
     assert result["stages"]["media_use"]["state"] == "OK"
     assert result["stages"]["assets"]["count"] == 1
     assert result["stages"]["storyboard"]["shots"] == 1
-    assert [call[0] for call in adapter.calls] == ["resolve", "import", "verify"]
+    assert [call[0] for call in adapter.calls] == ["adopt", "resolve", "import", "verify"]
     assert result["production_ready"] is False
 
 
