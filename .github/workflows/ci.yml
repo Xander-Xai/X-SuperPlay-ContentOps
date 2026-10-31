@@ -2,9 +2,24 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      # Feature branches get the same checks without being merged into main or
+      # into an unauthorised parent branch. Dispatch covers a branch whose
+      # workflow predates these triggers.
+      - 'feat/**'
+      - 'fix/**'
+      - 'chore/**'
+      - 'security/**'
+      - 'docs/**'
+      - 'ci/**'
   pull_request:
     branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
