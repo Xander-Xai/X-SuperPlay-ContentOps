@@ -1,12 +1,12 @@
 # X-SuperPlay-ContentOps
 
-> Evidence-first video ContentOps runtime for Xander-Xai multi-repo content production.
+> Evidence-first, multi-platform content operations runtime for Xander-Xai.
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
 ## What
 
-A unified runtime that converts real business work (GitHub repos, experiments, research) into high-quality, traceable, publishable video content.
+A unified runtime that converts real business work (GitHub repos, experiments, research) into traceable video, 公众号 articles, 小红书 image-text notes and X posts, each through its own production gate.
 
 ## Why
 
@@ -17,15 +17,14 @@ Previous approach used 5 separate platform-specific repos that never produced st
 | Item | Status |
 |---|---|
 | Easel runtime | Pinned v0.2.1 (commit `3fe2d99`, 982 blobs verified) |
-| Production engine | Easel `assemble.py` (upstream, unmodified) |
-| Production voice | edge-tts via Easel `tts.py` (zh-CN-YunxiNeural) |
-| Voice quality | `edge_tts_fallback` — awaiting MiniMax upgrade (M2) |
-| Diagnostic engine | ffmpeg-only fallback (never production) |
-| MiniMax integration | NOT_IMPLEMENTED (capability spike pending, Issue #4) |
-| Auto-publishing | NOT in scope |
-| Golden samples | 1 (`projects/easel-review/`) |
-| Tests | 9 passing |
-| Production ready | **false** — READY_FOR_HUMAN_REVIEW |
+| Video pipeline | Implemented; producers and QC exist; `production_ready: false`; human review pending |
+| 公众号 (WeChat article) | Vendored ten-stage workflow; stops at a WeChat draft; rights audit open (#56) |
+| 小红书 image-text | Eight-step workflow on `feat/xhs-fa-migration`; not merged; manual upload only |
+| X | PR #50; manual-only editorial package; not merged |
+| MiniMax media | Speech, image and H3 video implemented and live-tested; `PENDING_FOUNDER_REVIEW` |
+| Auto-publishing | **NOT** in scope |
+| Tests | See [docs/CURRENT-STATE.md](docs/CURRENT-STATE.md) and `python scripts/run_tests.py` |
+| Production ready | **false** — no platform is `PRODUCTION_ACCEPTED` |
 
 ## Quick Start
 
@@ -50,10 +49,16 @@ python3 scripts/qc_video.py projects/my-video
 ## Architecture Summary
 
 ```
-Source → Script → Storyboard → Voice → Compose → QC → Human Review → final.mp4
+Route (HOTSPOT_DISCOVERY / USER_TOPIC)
+  -> Account DNA -> Content format -> Brief -> platform gate -> human review
+     ├ Video        -> cut plan -> capture -> compose -> QC -> final.mp4
+     ├ 公众号        -> ten vendored stages -> WeChat draft
+     ├ 小红书图文    -> eight gates -> manual upload package
+     └ X            -> editorial package -> manual publish
 ```
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for full system boundaries.
+No route publishes by itself. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and
+[docs/CURRENT-STATE.md](docs/CURRENT-STATE.md) for the current boundaries.
 
 ## Canonical Documentation
 
@@ -85,8 +90,8 @@ See [docs/UPSTREAM-EASEL.md](docs/UPSTREAM-EASEL.md) for full policy.
 ## Governance
 
 - **NO DIRECT PUSH TO MAIN** — all changes via PR
-- `main` is **PROTECTED**: required status checks + PR + no force push + no deletion + linear history
-- Active branch: `chore/g06-compatibility-operations`
+- `main` is **PROTECTED** (enabled 2026-10-31): required checks `Tests (ubuntu-latest)`, `Tests (windows-latest)`, `Repo policy checks`; PR required; no force push; no deletion; linear history
+- A solo owner cannot self-approve, so the required approval count is 0; raise it to 1 when a second reviewer is available
 - See [GitHub Issues](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/issues) for milestone tracking
 
 ## Extension Policy
@@ -99,9 +104,9 @@ Fork is last resort. Current state: no fork, no upstream modification.
 
 ## Non-goals (current phase)
 
-- Auto-publishing to any platform
+- Autonomous platform publishing
 - Comment scraping / ROI agent
-- Digital human / AI short drama
+- Autonomous digital-human product / AI short drama
 - Metrics scraping / winner learning
 - n8n / OpenClaw total orchestration
 
