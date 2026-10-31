@@ -208,6 +208,14 @@ jobs:
       - name: Run M5 media-use automatic sourcing regression tests
         run: python tests/test_m5_media_use_workflow.py
 
+      # Discovery and diagnosis only: these suites build temporary catalogs and
+      # never download a runtime or execute a skill.
+      - name: Run skill doctor regression tests
+        run: python tests/test_skill_doctor.py
+
+      - name: Run skill router capability regression tests
+        run: python tests/test_skill_router_capabilities.py
+
       - name: Enforce subprocess policy
         run: python scripts/check_subprocess_policy.py
 

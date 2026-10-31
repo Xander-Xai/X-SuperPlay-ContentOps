@@ -458,8 +458,37 @@ approved `hyperframes@0.8.222` runtime on Windows.
 | Negative acceptance | 11/11 blocked: missing/wrong lock, missing material, hash mismatch, path escape, missing import file, network, paid, unlicensed, duplicate id, legacy project unchanged |
 | Committed example | `projects/m5-media-use/`; media binaries and `.media/` stay gitignored, receipts are committed |
 | Pull request | Draft [#71](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/71) |
-| Routing | **BLOCKED** — `scripts/skill_route.py` is not on `main`; router work remains unmerged on `feat/content-router`. Metadata is recorded in ADR-008; no second router was built |
+| Routing | **branch only, not on `main`** — `scripts/skill_route.py` and the declared-capability registry are in a separate PR; see *Skill discovery and resolution* below |
 
 `INTEGRATION_VERIFIED` is a statement about this machine and this lock. It is
 not `MERGED_TO_MAIN`, and it does not approve the imported material, the voice
 track or the video for publication.
+
+## Skill discovery and resolution (Issue #57) — PARTIAL, branch only 2026-10-31
+
+Branch `feat/57-skill-router-integration`. **Not merged.** Nothing in this
+section runs on `main` today; it records what the branch does and what remains
+blocked.
+
+| Property | Value |
+|---|---|
+| Entry point | `python scripts/skill_route.py` (stdlib only; no process, no network) |
+| Discovery | `--sources`, `--list`, `--match`, `--resolve` over the Easel roots and the shared skill store |
+| Doctor | `--doctor` — roots, duplicates, permission declarations, rights, unsafe and dangling paths |
+| Declared capabilities | `runtime/skill-registry.json`, schema `contentops.skill-registry/v1` |
+| Registered capability | `media-use` only, pointing at the merged adapter, runtime baseline, lock verifier and M5 `media_use` stage |
+| Resolution verdicts | `RESOLVABLE`, or `BLOCKED` with `UNKNOWN_SKILL`, `DUPLICATE_AMBIGUITY`, `OUT_OF_SCOPE`, `UNVERIFIED_RIGHTS`, `UNAUTHORIZED_PROVIDER`, `SKILL_NOT_INSTALLED`, `MISSING_RUNTIME` |
+| Execution authorization | **never granted** by the router; every record carries `execution_authorized: false` |
+| media-use with a host runtime lock | `RESOLVABLE` (verified on this host against `runtime/media-use-runtime-baseline.json`) |
+| media-use without a lock | `BLOCKED / MISSING_RUNTIME` (the default on a clean checkout) |
+| Legacy M5 | unchanged — `scripts/m5_production.py` does not import the router; a test asserts it |
+| VIDEO track | discovery-only until a catalog root exists on the host |
+| GZH track | `BLOCKED` — vendored third-party track, rights unverified, `vendor/` is gitignored |
+| X track | `BLOCKED` — platform track unmerged (`feat/47-x-platform-track`, PR #50) |
+| XHS track | `BLOCKED` — migration unmerged and under rights review; no catalog root |
+| Tests | `tests/test_skill_doctor.py`, `tests/test_skill_router_capabilities.py`; both registered in CI |
+| Pull request | Draft, branch `feat/57-skill-router-integration` |
+
+The router adds no second skill engine and copies no third-party skill. A
+declaration is a pointer to code this repository already owns; the adapter, the
+runtime lock verifier and the M5 gate keep their own authority.
