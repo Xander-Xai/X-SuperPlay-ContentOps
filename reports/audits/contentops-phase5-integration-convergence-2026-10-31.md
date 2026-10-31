@@ -333,3 +333,25 @@ PR49_MERGEABLE                = NO (CONFLICTING)          BLOCKED
 - Route A and the audio extraction are local simulations, not pushes or merges.
 - #62 was updated and CI-verified, but not promoted and its HOLD was not lifted.
 - The PAYG key was not rotated; a green guard is not rotation.
+
+---
+
+## 11. State change during this round (post-analysis snapshot)
+
+At 2026-10-31T11:22Z, while this report was being delivered, another actor
+**promoted #71 out of Draft** and advanced its head from `4dbad69` to `8f23149`.
+This round did not touch #71. Recorded here so the audit stays accurate:
+
+| Fact | Value |
+|---|---|
+| #71 state | **Ready for review** (no longer Draft), `CONFLICTING / DIRTY` |
+| New head | `8f23149` — "merge: bring current main into the media-use integration (#71)" |
+| Added commits | `0ac3346` receipt sanitization + audit gaps, `3fb9983` worktree-path redaction, `f49e5f7` Windows `dev_check` readability, `a819f3c` final audited SHA, plus a PR-71 audit report |
+| Conflict with `main` `07ea5c1` | only `docs/INDEX.md` and `docs/INDEX.zh-CN.md` |
+
+The overlap matrix and both route simulations above were computed at `4dbad69`;
+their conclusions hold. If the Owner keeps Route A, the new audit fixes
+(`0ac3346`, `3fb9983`, `f49e5f7`, `a819f3c`) must be carried into the audio
+increment. If the Owner prefers a single delivery, #71 at `8f23149` is now the
+closer candidate; its only merge conflict is the two index files. In both cases
+the Owner decision and merge remain unauthorized actions for this agent.
