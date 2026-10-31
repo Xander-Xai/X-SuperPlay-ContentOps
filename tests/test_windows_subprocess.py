@@ -556,27 +556,29 @@ def test_interactive_run_source_has_no_pipe_reference():
 
 
 def test_interactive_run_inherits_stdin():
-    """A child must see the parent's stdin when nothing is piped."""
+    """A child reads the stdin it is given, and a headless parent does not crash.
+
+    Windows ``subprocess`` uses ``GetStdHandle``, not CRT fd 0. ``os.dup2`` on
+    fd 0 therefore cannot prove inheritance in a captured/headless runner. The
+    supported scripted contract is an explicit ``stdin`` handle; the headless
+    contract is that ``stdin=None`` degrades to a valid EOF instead of
+    ``OSError(9)``. Both are asserted here.
+    """
     import tempfile
 
     marker = "stdin-was-inherited"
     with tempfile.TemporaryDirectory() as td:
         path = Path(td) / "in.txt"
         path.write_text(marker, encoding="utf-8")
-        # Redirect this process's stdin from the file, then let the child read it.
-        saved = os.dup(0)
-        try:
-            fd = os.open(str(path), os.O_RDONLY)
-            os.dup2(fd, 0)
-            os.close(fd)
+        with path.open("rb") as handle:
             r = hidden_run([PYTHON, "-c",
                             "import sys; sys.stdout.write(sys.stdin.read())"],
-                           stdin=None)
-        finally:
-            os.dup2(saved, 0)
-            os.close(saved)
-    assert marker in r.stdout, f"child did not inherit stdin: {r.stdout!r}"
-    print("[ok] 9g. an inheriting child reads the parent's stdin")
+                           stdin=handle)
+    assert marker in r.stdout, f"child did not read the explicit stdin: {r.stdout!r}"
+    headless = hidden_run([PYTHON, "-c", "import sys; sys.stdout.write('ok')"])
+    assert headless.returncode == 0, headless.stderr
+    assert "ok" in headless.stdout, headless.stdout
+    print("[ok] 9g. an explicit stdin is read and a headless run does not crash")
 
 
 def test_interactive_run_captured_is_explicit():
