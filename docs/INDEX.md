@@ -67,8 +67,9 @@ Tier-1 docs have zh-CN mirrors with `.zh-CN.md` suffix. Run `python scripts/chec
 - [../reports/audits/github-governance-2026-10-31.md](../reports/audits/github-governance-2026-10-31.md) — GitHub governance execution: PR/Issue/Branch/CI/security review and the merge of PR #48 (2026-10-31)
 - [../reports/audits/contentops-phase2-security-and-unblock-2026-10-31.md](../reports/audits/contentops-phase2-security-and-unblock-2026-10-31.md) — Phase-2 security, third-party rights and PR-unblock audit (2026-10-31)
 - [../reports/audits/contentops-phase3-p0-convergence-2026-10-31.md](../reports/audits/contentops-phase3-p0-convergence-2026-10-31.md) — Phase-3 P0 convergence and stack unlock (2026-10-31)
-- [../reports/audits/contentops-phase4-delivery-unlock-2026-10-31.md](../reports/audits/contentops-phase4-delivery-unlock-2026-10-31.md) — Phase-4 delivery unlock: #62 merge prep, combined M5 acceptance, #49 order, Owner decisions (2026-10-31)
 - [../reports/audits/contentops-pr71-media-use-final-audit-2026-10-31.md](../reports/audits/contentops-pr71-media-use-final-audit-2026-10-31.md) — PR #71 media-use integration: security, licence, code, E2E and merge-gate audit (2026-10-31)
+- [../reports/audits/contentops-phase4-delivery-unlock-2026-10-31.md](../reports/audits/contentops-phase4-delivery-unlock-2026-10-31.md) — Phase-4 delivery unlock: #62 merge prep, combined M5 acceptance, #49 order, Owner decisions (2026-10-31)
+- [../reports/audits/contentops-phase5-integration-convergence-2026-10-31.md](../reports/audits/contentops-phase5-integration-convergence-2026-10-31.md) — Phase-5 integration convergence: #71 overlap, recommended route, rights gate, #62 re-review (2026-10-31)
 
 ## Fact Priority
 
