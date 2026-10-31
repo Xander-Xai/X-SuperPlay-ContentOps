@@ -76,8 +76,18 @@ def _accounts_match(value, account):
 
 def process(request):
     """Process untrusted local data; never treat a reference as verified evidence."""
+    result = _process(request)
+    if isinstance(result, dict):
+        fixture = request.get("fixture") is True if isinstance(request, dict) else False
+        result.setdefault("data_kind", "FIXTURE" if fixture else "USER_SUPPLIED_UNVERIFIED")
+    return result
+
+
+def _process(request):
     if not isinstance(request, dict):
         return _result("BLOCKED", "INVALID_REQUEST")
+    if type(request.get("fixture", False)) is not bool:
+        return _result("BLOCKED", "FIXTURE_FLAG_REQUIRED")
     if _unsafe(request):
         return _result("BLOCKED", "SENSITIVE_INPUT")
     if _injection(request):
