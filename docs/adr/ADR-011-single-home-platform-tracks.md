@@ -14,7 +14,8 @@ integrating through an adapter. Two facts invalidated that:
    is private, alive, and still the recoverable Git history.
 2. The checkout's history **diverged** from its remote (`origin/main` is `e9303d1`,
    the checkout is `93645f1`), and `93645f1` is not on the remote. The **tree** is
-   identical to remote `main` (`7b75e4e8`), so the content is recoverable even
+   identical to remote `main`’s full tree object (`7b75e4e8`); the vendored copy is a
+   filtered subset, so its subtree hash differs. The content is recoverable even
    though the imported commit identity is not.
 
 An external dependency that is scheduled to disappear is not a dependency; it is a
@@ -57,7 +58,7 @@ source of those packs is 4 MB and is what was imported.
 
 - **The local archive is absent; the remote is alive.** The bundle and the local
   checkout are gone, but `Xander-Xai/gzh-Future-Intelligence` is a private, live
-  repository whose `main` (`e9303d1`) has the same tree (`7b75e4e8`) as the
+  repository whose `main` (`e9303d1`) has the same full tree object (`7b75e4e8`) as the
   vendored copy. The imported commit `93645f1` is not on the remote, so its commit
   identity is lost; its tree is not. `scripts/gzh_pin.py` sets
   `BUNDLE_RETIRED = True` for the absent local bundle and records the live remote

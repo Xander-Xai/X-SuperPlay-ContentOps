@@ -1157,14 +1157,14 @@ of one track plus an external dependency that was about to disappear.
 **Why the 公众号 workflow is vendored rather than external.** Its checkout's history
 diverged from GitHub origin (`origin/main` was `e9303d1`, the checkout `93645f1`) and
 the imported commit is not on the remote. The private remote is alive and its tree
-is identical to the vendored tree, so the content is recoverable; the local checkout
+is the same full tree object as the imported commit; the vendored copy is a filtered subset, so its subtree hash differs. The content is recoverable; the local checkout
 is gone. The import is verbatim and unmodified; a change means a new import with a
 new digest.
 
 - Excluded: `node_modules` (32 MB) and the excalidraw pack's `.venv` (regenerable),
   `.aws-article/config.yaml` (credentials), and the account's `production/` artifacts.
   The local 15 MB bundle and checkout are absent. `Xander-Xai/gzh-Future-Intelligence`
-  is private, alive, and has the same tree (`7b75e4e8`) at `main` (`e9303d1`); the
+  is private, alive, and has the same full tree object (`7b75e4e8`) at `main` (`e9303d1`) as the imported commit; the vendored copy is filtered. The
   imported commit `93645f1` is not on the remote. The remote is the recoverable
   history; `vendor/gzh-thinktank/` is the public copy.
 - `scripts/gzh_pin.py` verifies the vendored tree by a content digest over 667

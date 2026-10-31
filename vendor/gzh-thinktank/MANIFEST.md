@@ -13,7 +13,7 @@ private remote.
 | Remote tree | `7b75e4e840b29a18f5262c0e81e64c080c274c6a` |
 | Imported from | `D:\Projects\gzh_x未来智能` (local checkout now absent) |
 | Imported commit | `93645f178418c1e0a03cbb3fc06a7f87ee11f631` (not present on the remote) |
-| Imported tree | `7b75e4e840b29a18f5262c0e81e64c080c274c6a` — identical to remote main |
+| Imported tree | `7b75e4e840b29a18f5262c0e81e64c080c274c6a` — same full tree object as remote main; the vendored copy is a filtered subset |
 | Imported | 2026-10-30 |
 | Files / size | 667 / 8 MB |
 | Tree digest | `0b96d179a224f0b9668843fd78fcdcefb8f9a83d7918b7d8127fce5d6687919a` |
@@ -33,8 +33,12 @@ its URL returned 404. **That was wrong.** Verified against the live API:
 - `Xander-Xai/gzh-Future-Intelligence` exists, is **private**, and is **not archived**.
 - Its `main` is `e9303d1`, tree `7b75e4e8`, with five commits
   (`bb52de1`, `5860343`, `96bfe41`, `901aeee`, `e9303d1`).
-- The imported commit `93645f1` is **not** on that remote, but its tree is
-  byte-identical to remote `main`. The commit identity was lost; the content was not.
+- The imported commit `93645f1` is **not** on that remote, but its **full tree object**
+  is byte-identical to remote `main` (`7b75e4e8`). The commit identity was lost; the
+  content was not. The vendored root is a filtered copy: its Git subtree hash in
+  ContentOps is `4b284a4c…`, not `7b75e4e8`, because this repository excludes files
+  and normalizes line endings. The SHA-256 content pin, not a Git tree hash,
+  identifies the vendored subset.
 - The local checkout `D:\Projects\gzh_x未来智能` and the local bundle
   `D:\Archives\repos\gzh-thinktank\2026-10-30\gzh-thinktank.bundle` are both
   absent. The private remote is the recoverable source; this tree is the public copy.
