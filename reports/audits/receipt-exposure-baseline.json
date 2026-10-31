@@ -1,0 +1,93 @@
+{
+  "schema": "contentops.receipt-exposure-baseline/v1",
+  "note": "Field paths only. No values, no field contents.",
+  "files": {
+    "projects/easel-enhanced-golden/receipts/founder-voice-activation-diagnosis.json": [
+      "EXISTING_VOICE_STATUS.voice_id::provider_id"
+    ],
+    "projects/easel-enhanced-golden/receipts/founder-voice-activation-history.json": [
+      "attempts[0].money_before.cash_balance::balance",
+      "attempts[0].money_before.credit_balance::balance",
+      "attempts[0].money_before.voucher_balance::balance",
+      "attempts[1].money_after.cash_balance::balance",
+      "attempts[1].money_after.credit_balance::balance",
+      "attempts[1].money_after.voucher_balance::balance",
+      "attempts[1].money_before.cash_balance::balance",
+      "attempts[1].money_before.credit_balance::balance",
+      "attempts[1].money_before.voucher_balance::balance",
+      "attempts[2].money_before.cash_balance::balance",
+      "attempts[2].money_before.credit_balance::balance",
+      "attempts[2].money_before.voucher_balance::balance",
+      "attempts[3].money_after.cash_balance::balance",
+      "attempts[3].money_after.credit_balance::balance",
+      "attempts[3].money_after.voucher_balance::balance",
+      "attempts[3].money_before.cash_balance::balance",
+      "attempts[3].money_before.credit_balance::balance",
+      "attempts[3].money_before.voucher_balance::balance",
+      "attempts[4].money_before.cash_balance::balance",
+      "attempts[4].money_before.credit_balance::balance",
+      "attempts[4].money_before.voucher_balance::balance"
+    ],
+    "projects/easel-enhanced-golden/receipts/founder-voice-activation-receipt.json": [
+      "money_baseline.cash_balance::balance",
+      "money_baseline.credit_balance::balance",
+      "money_baseline.voucher_balance::balance",
+      "money_before_this_invocation.balances.cash_balance::balance",
+      "money_before_this_invocation.balances.credit_balance::balance",
+      "money_before_this_invocation.balances.voucher_balance::balance",
+      "money_post_activation.balances.cash_balance::balance",
+      "money_post_activation.balances.credit_balance::balance",
+      "money_post_activation.balances.voucher_balance::balance",
+      "money_pre_activation.balances.cash_balance::balance",
+      "money_pre_activation.balances.credit_balance::balance",
+      "money_pre_activation.balances.voucher_balance::balance"
+    ],
+    "projects/easel-enhanced-golden/receipts/founder-voice-cash-activation-receipt.json": [
+      "money_before.balances.cash_balance::balance",
+      "money_before.balances.credit_balance::balance",
+      "money_before.balances.voucher_balance::balance",
+      "payg_key_fingerprint::key_fingerprint",
+      "verdict.evidence.cash_balance::balance",
+      "verdict.evidence.credit_balance::balance",
+      "verdict.evidence.payg_key_fingerprint::key_fingerprint",
+      "verdict.evidence.voucher_balance::balance",
+      "voice_id::provider_id"
+    ],
+    "projects/easel-enhanced-golden/receipts/founder-voice-route-receipt.json": [
+      "cash_balance::balance",
+      "measured.balances.cash_balance::balance",
+      "measured.balances.credit_balance::balance",
+      "measured.balances.voucher_balance::balance",
+      "measured.cash_balance::balance",
+      "measured.credit_balance::balance",
+      "measured.voucher_balance::balance",
+      "voucher_activation.evidence.cash_balance::balance",
+      "voucher_activation.evidence.credit_balance::balance",
+      "voucher_activation.evidence.voucher_balance::balance"
+    ],
+    "projects/easel-enhanced-golden/receipts/founder-voice-subscription-activation-receipt.json": [
+      "after.balances.cash_balance::balance",
+      "after.balances.credit_balance::balance",
+      "after.balances.voucher_balance::balance",
+      "before.balances.cash_balance::balance",
+      "before.balances.credit_balance::balance",
+      "before.balances.voucher_balance::balance",
+      "voice_id::provider_id"
+    ],
+    "projects/easel-enhanced-golden/receipts/founder-voucher-account-terms.json": [
+      "live_measurement_supersedes_one_claim.balances_after_the_refusal.cash_balance::balance",
+      "live_measurement_supersedes_one_claim.balances_after_the_refusal.credit_balance::balance",
+      "live_measurement_supersedes_one_claim.balances_after_the_refusal.voucher_balance::balance",
+      "live_measurement_supersedes_one_claim.balances_at_the_moment_of_refusal.cash_balance::balance",
+      "live_measurement_supersedes_one_claim.balances_at_the_moment_of_refusal.credit_balance::balance",
+      "live_measurement_supersedes_one_claim.balances_at_the_moment_of_refusal.voucher_balance::balance"
+    ],
+    "research/providers/receipts/minimax-mplan-explore-capability-2026-10-04.sanitized.json": [
+      "billing_preflight.credit_pack_balance::balance",
+      "billing_preflight.payg_balance::balance",
+      "billing_preflight.voucher_balance::balance",
+      "tested_generations[0].voice_id::provider_id",
+      "tested_generations[1].voice_id::provider_id"
+    ]
+  }
+}
