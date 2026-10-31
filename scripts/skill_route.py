@@ -214,6 +214,67 @@ def _all_skill_entries() -> List[Dict[str, Any]]:
     return entries
 
 
+
+def _archived_entries() -> List[Dict[str, Any]]:
+    """Archived skills under ``_archive/`` are provenance, never dispatchable."""
+    entries: List[Dict[str, Any]] = []
+    for root in CATALOG_ROOTS:
+        if not root.is_dir():
+            continue
+        label = _catalog_label(root)
+        for skill_md in sorted(root.glob("_archive/*/SKILL.md")):
+            text = skill_md.read_text(encoding="utf-8", errors="replace")
+            meta = _front_matter(text)
+            entries.append({
+                "name": meta.get("name") or skill_md.parent.name,
+                "dir_name": skill_md.parent.name,
+                "description": meta.get("description", ""),
+                "source": label,
+                "path": _display(skill_md),
+                "resolved": str(skill_md.resolve()),
+                "root": str(root.resolve()),
+                "meta": meta,
+                "text": text,
+            })
+    return entries
+
+
+def _license_status(entry: Dict[str, Any]) -> Tuple[str, str, Optional[str]]:
+    """(status, declared licence, licence file) for one skill.
+
+    ``restricted`` means a copyleft/proprietary licence is present. ``declared``
+    means a licence string exists. ``declared_file`` means only a LICENSE file
+    exists. ``unknown`` means no evidence. None of these authorizes execution.
+    """
+    meta = entry["meta"]
+    declared = str(meta.get("license") or meta.get("licence") or "").strip()
+    parent = Path(entry["resolved"]).parent
+    license_file = None
+    for name in ("LICENSE", "LICENSE.md", "COPYING"):
+        candidate = parent / name
+        if candidate.is_file():
+            license_file = candidate
+            break
+    file_text = ""
+    if license_file is not None:
+        file_text = license_file.read_text(encoding="utf-8", errors="replace")[:800]
+    lowered = f"{declared} {file_text}".casefold()
+    if "agpl" in lowered or "gnu affero" in lowered or "gpl" in lowered:
+        return "restricted", declared or "LICENSE file", str(license_file) if license_file else None
+    if declared:
+        return "declared", declared, str(license_file) if license_file else None
+    if license_file is not None:
+        return "declared_file", "LICENSE file", str(license_file)
+    return "unknown", "", None
+
+
+def _hints(text: str) -> Tuple[bool, bool]:
+    credential = bool(re.search(
+        r"(?i)(api[_-]?key|access[_-]?token|auth[_-]?token|secret|mcporter|"
+        r"requires\s*:|bins\s*:|mcp)", text))
+    paid = bool(re.search(r"(?i)(paid|subscription|billing|pricing|price|quota|credit pack)", text))
+    return credential, paid
+
 def resolve_skill(name: str) -> List[Dict[str, Any]]:
     """Every exact occurrence of ``name``, in catalog priority order.
 
@@ -233,6 +294,26 @@ def resolve_skill(name: str) -> List[Dict[str, Any]]:
 def doctor() -> Dict[str, Any]:
     """Structural health of the catalogs. Read-only; no skill is executed."""
     entries = _all_skill_entries()
+    archived_entries = _archived_entries()
+    rights_unknown: List[str] = []
+    restricted: List[str] = []
+    declared_licences: List[str] = []
+    credential_hints: List[str] = []
+    paid_hints: List[str] = []
+    for entry in entries:
+        status, licence, license_file = _license_status(entry)
+        if status == "restricted":
+            restricted.append(entry["name"])
+        elif status in {"declared", "declared_file"}:
+            declared_licences.append(entry["name"])
+        else:
+            rights_unknown.append(entry["name"])
+        text = Path(entry["resolved"]).read_text(encoding="utf-8", errors="replace")
+        credential, paid = _hints(text)
+        if credential:
+            credential_hints.append(entry["name"])
+        if paid:
+            paid_hints.append(entry["name"])
     by_name: Dict[str, List[Dict[str, Any]]] = {}
     for entry in entries:
         by_name.setdefault(entry["name"], []).append(entry)
@@ -301,6 +382,21 @@ def doctor() -> Dict[str, Any]:
         },
         "unsafe_paths": unsafe,
         "dangling_links": dangling,
+        "rights": {
+            "declared": len(declared_licences),
+            "declared_names": declared_licences,
+            "unknown": rights_unknown,
+            "restricted": restricted,
+        },
+        "archived": [entry["name"] for entry in archived_entries],
+        "credential_hints": credential_hints,
+        "paid_hints": paid_hints,
+        "execution": {
+            "authorized": False,
+            "scope": "diagnosis_only",
+            "remaining_gate": "#57",
+            "reason": "directory discovery and diagnosis never authorize execution",
+        },
         "warnings": [warning for warning in (
             "no catalog or shared skill was found" if not entries else "",
             "the shared skill store is absent on this checkout" if not shared_present else "",
@@ -369,7 +465,14 @@ def main() -> int:
                   f"/{report['permission_declarations']['total']} declare a permission field")
             print(f"unsafe paths     {len(report['unsafe_paths'])}")
             print(f"dangling links   {len(report['dangling_links'])}")
-            print("OK" if report["ok"] else "FAILED")
+            print(f"rights declared  {report['rights']['declared']} declared, "
+                  f"{len(report['rights']['unknown'])} unknown, "
+                  f"{len(report['rights']['restricted'])} restricted")
+            print(f"archived         {len(report['archived'])} (never dispatched)")
+            print(f"credential hints {len(report['credential_hints'])}")
+            print(f"paid hints       {len(report['paid_hints'])}")
+            print("execution        NOT AUTHORIZED — diagnosis only; gate remains #57")
+            print("DIAGNOSIS OK" if report["ok"] else "DIAGNOSIS FAILED")
         return 0 if report["ok"] else 1
 
     if args.resolve:
