@@ -66,6 +66,7 @@ def run(project: Path, growth_request: Dict[str, Any], enrichment: Dict[str, Any
         weekly_request: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Run every offline stage and stop at the first refusal."""
     project = Path(project)
+    project_root = project.resolve()
     if not project.is_dir():
         return _envelope("GROWTH_BLOCKED", reasons=[f"{project} is not a directory"])
     expected = str(account.get("slug") or "")
@@ -119,7 +120,7 @@ def run(project: Path, growth_request: Dict[str, Any], enrichment: Dict[str, Any
     result.update({
         "status": package["status"],
         "verdict": verdict,
-        "record_path": record_path.relative_to(project).as_posix(),
+        "record_path": record_path.relative_to(project_root).as_posix(),
         "package_path": package["receipt"],
         "package": package,
         "review_provenance": (record.get("enrichment") or {}).get("review_provenance"),
