@@ -89,6 +89,16 @@ translation_status: synced
 
 顺序是刻意的：歧义、范围、权利与 provider 先于运行时判定，因此一个被阻断的能力不会仅仅因为运行时恰好装着就显得可运行。Skill front matter 中的权限字段只被记录，从不被当作授权。
 
+## 执行授权
+
+解析到此为止，授权从这里开始。`RESOLVABLE` 只表示「可以交给适配器」，不表示「可以运行」。独立的授权决策见 ADR-009 与 `src/contentops/skills/authorization.py`：
+
+```
+DISCOVERED -> RESOLVABLE -> EXECUTION_REQUESTED -> AUTHORIZED -> EXECUTED
+```
+
+调用方必须出示一份与精确的 Skill 版本、账号、流水线、阶段、操作、调用者与预算绑定的授权，并带有效期与撤销状态。任何被阻断的路径都返回 `execution_authorized: false`。适配器的运行时锁校验器与 M5 的 `rights_reviewed` 门禁保持不变，仍是各自问题的权威。见 [ADR-009](adr/ADR-009-skill-execution-authorization.md)。
+
 ## media-use
 
 | 字段 | 值 |
