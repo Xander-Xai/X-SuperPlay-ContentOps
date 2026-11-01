@@ -1,0 +1,150 @@
+{
+  "schema": "contentops.content-skill-status/v1",
+  "note": "Installed content skills that reference code this repository does not carry on the current branch. A reference listed here is a fact about this checkout, not a licence to run anything. Every absent path an installed SKILL.md names must appear here; scripts/check_skill_references.py fails when a skill names a path that is unrecorded, and fails when a recorded path has since appeared (the layer merged and this record is stale). A skill may be declared in runtime/skill-registry.json only after its code exists on the integration branch.",
+  "verified_on": "2026-11-01",
+  "verified_branch": "fix/57-m5-media-fixtures",
+  "store": "shared",
+  "store_env": "CONTENTOPS_SKILL_STORE",
+  "skills": [
+    {
+      "id": "x-superplay-broll-production",
+      "file": "x-superplay-broll-production/SKILL.md",
+      "state": "UNMERGED",
+      "layer": "content-router",
+      "carried_by": "feat/content-router",
+      "references": [
+        {
+          "path": "scripts/workflow_gate.py",
+          "carried_by": "feat/content-router",
+          "note": "stage gate the skill calls for every check"
+        },
+        {
+          "path": "scripts/workflow_docs.py",
+          "carried_by": "feat/content-router",
+          "note": "document-only checks for source candidates and the rights ledger"
+        },
+        {
+          "path": "scripts/check_account_dna.py",
+          "carried_by": "feat/content-router",
+          "note": "resolves keyword origins against the account DNA"
+        },
+        {
+          "path": "src/contentops/workflow/sources.py",
+          "carried_by": "feat/content-router",
+          "note": "validator for the candidate record contract"
+        },
+        {
+          "path": "src/contentops/media/claim_coverage.py",
+          "carried_by": "feat/content-router",
+          "note": "per-claim evidence coverage gate"
+        },
+        {
+          "path": "scripts/material_candidates.py",
+          "carried_by": null,
+          "note": "absent on every branch inspected; the skill states the command does not exist here"
+        },
+        {
+          "path": "scripts/broll_plan.py",
+          "carried_by": null,
+          "note": "absent on every branch inspected; the skill states there is no broll_plan.py in this repository"
+        },
+        {
+          "path": "scripts/broll_execute.py",
+          "carried_by": null,
+          "note": "absent on every branch inspected"
+        }
+      ]
+    },
+    {
+      "id": "x-superplay-capture-plan",
+      "file": "x-superplay-capture-plan/SKILL.md",
+      "state": "UNMERGED",
+      "layer": "content-router",
+      "carried_by": "feat/content-router",
+      "references": [
+        {
+          "path": "src/contentops/workflow/capture_plan.py",
+          "carried_by": "feat/content-router",
+          "note": "planner and validator"
+        },
+        {
+          "path": "scripts/recording_plan.py",
+          "carried_by": "feat/content-router",
+          "note": "operator CLI"
+        }
+      ]
+    },
+    {
+      "id": "x-superplay-source-research",
+      "file": "x-superplay-source-research/SKILL.md",
+      "state": "UNMERGED",
+      "layer": "content-router",
+      "carried_by": "feat/content-router",
+      "references": [
+        {
+          "path": "scripts/workflow_gate.py",
+          "carried_by": "feat/content-router",
+          "note": "assets-stage gate"
+        },
+        {
+          "path": "src/contentops/workflow/sources.py",
+          "carried_by": "feat/content-router",
+          "note": "candidate record validator"
+        },
+        {
+          "path": "scripts/material_candidates.py",
+          "carried_by": null,
+          "note": "absent on every branch inspected; the upstream workspace command does not exist here"
+        }
+      ]
+    },
+    {
+      "id": "x-superplay-design-direction",
+      "file": "x-superplay-design-direction/SKILL.md",
+      "state": "UNMERGED",
+      "layer": "content-router",
+      "carried_by": "feat/content-router",
+      "references": [
+        {
+          "path": "scripts/workflow_gate.py",
+          "carried_by": "feat/content-router",
+          "note": "design-step gate"
+        },
+        {
+          "path": "scripts/design_router.py",
+          "carried_by": null,
+          "note": "absent on every branch inspected, including feat/content-router; the skill's own adaptation note says it was not copied"
+        }
+      ]
+    },
+    {
+      "id": "x-superplay-copy-orchestrator",
+      "file": "x-superplay-copy-orchestrator/SKILL.md",
+      "state": "UNMERGED",
+      "layer": "content-router",
+      "carried_by": "feat/content-router",
+      "references": [
+        {
+          "path": "src/contentops/workflow/audience.py",
+          "carried_by": "feat/content-router",
+          "note": "audience insight stage"
+        },
+        {
+          "path": "src/contentops/workflow/duration.py",
+          "carried_by": "feat/content-router",
+          "note": "duration router stage"
+        },
+        {
+          "path": "src/contentops/quality/script_rhythm.py",
+          "carried_by": "feat/content-router",
+          "note": "deterministic rhythm checks"
+        },
+        {
+          "path": "scripts/copy_strategy.py",
+          "carried_by": null,
+          "note": "absent on every branch inspected"
+        }
+      ]
+    }
+  ]
+}
