@@ -39,10 +39,44 @@ the **M5 sample reproducibility fix**, the **documentation convergence** and the
 - Ignored `.local/` (per-host scratch, router DB, gh device-id) — not source,
   not evidence.
 
-Not done: no PR was merged, no issue was closed, no worktree was removed. Each
-is listed as a decision below.
+The items below were then **executed** in the same pass at Owner approval. See
+§2b for the result; §3–§6 are the pre-execution triage and stay as the record of
+what was decided and why.
 
-## 3. Pull requests (9 open)
+## 2b. Execution results (same day, Owner-approved)
+
+**Merged to `main` (squash, in order):** #86 → #89 → #87 → #88 → #62 → #90.
+- #89 `ci.yml` conflicted with #86; resolved keeping **both** step sets (ingest
+  rights + M5 traceability + skill references).
+- #88 was stacked on #87; rebased its three own commits onto the new `main`
+  (dropping the duplicated #87 commits), then landed.
+- #90's proposed `ADR-011` collided with the number reserved by the unmerged
+  content-router branch; renumbered to **ADR-013** (file, both INDEX files and
+  the convergence report link updated) before merge.
+
+**Worktrees:** 35 entries → **12** (the primary checkout plus 11). Removed 23
+clean worktrees whose branch content was on `main` or whose PR had merged, and a
+standalone 497 MB `m5-clean-clone-20261101`. The 11 that remain hold an open PR
+(#49/#50/#58), unmerged work, or uncommitted changes.
+
+**Local branches:** down to **24**. Deleted every local branch that was
+patch-equivalent to `main`, or whose PR was merged, and that was not checked out
+or an open-PR head. Branches kept: open-PR heads (#49/#50/#58), unmerged work
+(`feat/xhs-fa-migration`, route stacks), and branches whose PRs were closed, not
+merged (`feat/57-media-use-adapter`, `feat/6-m5-production-e2e`,
+`fix/media-use-rights-gate-2026-10-31`).
+
+**Issues:** 16 open → **8**. Closed #82 (delivered by #83), #34 and #23 (execution
+verified, completed), #61 (delivered by #62), #85 (delivered by #87/#88), and
+#5/#19/#29 (administrative `not planned` by Owner decision, comment states the
+voice **human review is not approved** and `production_ready` stays `false`).
+#6 was restated (M5 chain exists; the "3 real E2E videos" acceptance is not met)
+and kept open.
+
+No test suite was re-run for this pass; the merges were gated only by the
+required CI checks on each PR.
+
+## 3. Pull requests (9 at triage; 6 landed, see §2b)
 
 | PR | Draft | Base | Merge state | Size | Recommendation |
 |---|---|---|---|---|---|
@@ -61,7 +95,7 @@ squash + auto-delete (repo setting). `main` requires strict checks, so every
 BEHIND branch must be updated to current `main` before it can merge, which
 re-runs CI.
 
-## 4. Issues (16 open)
+## 4. Issues (16 at triage; 8 closed, see §2b)
 
 | Issue | Title (short) | State | Recommendation |
 |---|---|---|---|
@@ -104,26 +138,29 @@ per-item):
 | **Keep — open PR head** | `pr49-prep` (#49), `phase2-pr49` (#49), `x-track` (#50), `gzh-provenance` (#58), `receipt-baseline` (#62), `contentops-x-decouple` (#87), `contentops-x-integration` (#88) | Deleting the worktree would strand an open PR. |
 | **Keep — unmerged / dirty** | `story-studio-episode` (**dirty**), `skills-doctor`, `skills-doctor-cr`, `pr49-ci`, `win-subprocess-cr`, `phase3-gzh`, `phase4-combined`, `phase6`/`phase5` route stacks, `agent-a05…` (**dirty**, 2 files) | Carries unmerged work or uncommitted changes; content not provably on `main`. |
 
-## 6. Decisions pending (Owner)
+## 6. Decisions (put to the Owner; all resolved — see §2b)
 
-1. **Merge order §3** — approve landing #86 → #89 → #87 → #88 → #62 → #90.
-2. **Close #82** as completed; restate or close the stale milestone issues
-   (#5, #6, #19, #23, #29, #34); decide #11 (license).
-3. **Worktree removal** — approve the "Disposable now" and "Redundant" classes
-   in §5 by category, and name any "Keep" item you want removed. Removal is
-   `git worktree remove <path>`; a clean worktree refuses to lose uncommitted
-   work.
+1. **Merge order §3** — approved and executed: #86 → #89 → #87 → #88 → #62 → #90.
+2. **Issues** — approved and executed: #82, #34, #23, #61, #85 closed as
+   delivered; #5, #19, #29 closed administratively (`not planned`) with the
+   human-review state recorded honestly; #6 restated and kept. #11 (license)
+   remains an open Owner business decision, not touched.
+3. **Worktree removal** — approved and executed for the "Disposable now" and
+   "Redundant" classes; the "Keep" classes (open PRs, unmerged, dirty) were not
+   touched.
 
 ## 7. Statement of effect
 
 - **No secret** was read, copied or committed.
 - Files moved: none. Files deleted: none.
-- Branches deleted: **4 local branches** (§2), all patch-equivalent on `main`,
-  reflog-recoverable.
-- Worktrees removed: **none** — proposed only, awaiting approval.
-- PRs merged: none — proposed only. Issues closed: none — proposed only.
-- Disk recovered: 0 bytes so far; the "Disposable + Redundant" classes in §5
-  would recover roughly 700 MB if approved.
+- Local branches deleted: every branch that was patch-equivalent on `main` or
+  whose PR was merged (24 branches remain). Reflog-recoverable.
+- Worktrees removed: **23**, all clean; plus a standalone 497 MB clone.
+  Twelve worktree entries remain (primary + 11), holding open PRs, unmerged
+  work, or uncommitted changes.
+- PRs merged: **6** (#86, #89, #87, #88, #62, #90). Issues closed: **8**
+  (#82, #34, #23, #61, #85, #5, #19, #29); #6 restated.
+- Disk recovered: roughly 750–800 MB (23 worktrees + the 497 MB clone).
 
 ## 8. Commands to reproduce
 

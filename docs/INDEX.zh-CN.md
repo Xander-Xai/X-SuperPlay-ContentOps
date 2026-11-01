@@ -59,6 +59,7 @@ translation_status: synced
 - [adr/ADR-009-skill-execution-authorization.md](adr/ADR-009-skill-execution-authorization.md)
 - [adr/ADR-010-trusted-grant-execution-gate.md](adr/ADR-010-trusted-grant-execution-gate.md)
 - [adr/ADR-012-convergence-decisions.md](adr/ADR-012-convergence-decisions.md) —— 收敛决策 D1–D6（2026-11-01）。ADR-011 由未合并的 `feat/content-router` 分支预留
+- [adr/ADR-013-media-use-mutating-authorization-proposal.md](adr/ADR-013-media-use-mutating-authorization-proposal.md) — **仅提案**：写操作授权与幂等性（不修改执行权限）
 
 ## 事实优先级
 
@@ -82,6 +83,7 @@ translation_status: synced
 - [../reports/audits/contentops-phase2-security-and-unblock-2026-10-31.md](../reports/audits/contentops-phase2-security-and-unblock-2026-10-31.md) — 第二阶段安全、第三方版权与 PR 解锁审计（2026-10-31）
 - [../reports/audits/contentops-phase3-p0-convergence-2026-10-31.md](../reports/audits/contentops-phase3-p0-convergence-2026-10-31.md) — 第三阶段 P0 收敛与堆栈解锁（2026-10-31）
 - [../reports/audits/contentops-pr71-media-use-final-audit-2026-10-31.md](../reports/audits/contentops-pr71-media-use-final-audit-2026-10-31.md) — PR #71 media-use 集成：安全、版权、代码、端到端与合并门禁审计（2026-10-31）
+- [../reports/audits/media-use-premerge-convergence-2026-11-01.md](../reports/audits/media-use-premerge-convergence-2026-11-01.md) — PR #86/#89 合并前状态、集成门禁及发布边界
 - [../reports/audits/contentops-phase4-delivery-unlock-2026-10-31.md](../reports/audits/contentops-phase4-delivery-unlock-2026-10-31.md) — 第四阶段交付解锁：#62 合并准备、M5 联合验收、#49 顺序与 Owner 决策（2026-10-31）
 - [../reports/audits/contentops-phase5-integration-convergence-2026-10-31.md](../reports/audits/contentops-phase5-integration-convergence-2026-10-31.md) — 第五阶段集成收敛：#71 重叠矩阵、推荐路线、素材授权门禁与 #62 复核（2026-10-31）
 - [../reports/audits/worktree-and-branch-audit-2026-11-01.md](../reports/audits/worktree-and-branch-audit-2026-11-01.md) — worktree 与分支清单、分类与清理顺序（2026-11-01）
