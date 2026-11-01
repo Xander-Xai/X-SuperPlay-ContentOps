@@ -153,14 +153,17 @@ content-router 层：
 
 | 被引用的代码 | 本分支存在？ | `feat/content-router`（PR #49）存在？ |
 |---|---|---|
-| `scripts/workflow_gate.py` | 否 | 是 |
+| `scripts/workflow_gate.py` | **是**（切片 S1） | 是 |
+| `src/contentops/workflow/{contract,gate,validators}.py` | **是**（S1；`validators.py` 在 S2 前为空壳） | 是 |
 | `scripts/workflow_docs.py` | 否 | 是 |
 | `scripts/recording_plan.py` | 否 | 是 |
-| `src/contentops/workflow/*` | 否 | 是 |
+| `src/contentops/workflow/{sources,capture_plan,audience,duration}.py` | 否 | 是 |
 | `scripts/design_router.py` | 否 | **否** |
 
-前四项只等合并。`design_router.py` 被 `x-superplay-design-direction` 引用，
-但在 2026-11-01 检查过的任何分支上都不存在，因此该 Skill 除合并外还需要修改。
+确定性的门（`workflow_gate.py` 与 contract/gate 内核）已在**切片 S1** 落地。
+其余 content-router 路径——编辑类校验器、来源/拍摄规划器、账号配置——属于后续
+切片（S2+）。`design_router.py` 被 `x-superplay-design-direction` 引用，但在
+2026-11-01 检查过的任何分支上都不存在，因此该 Skill 除合并外还需要修改。
 
 只有当声明的指针指向集成分支上真实存在的代码时，才能添加声明。声明一个指向未合并
 分支的指针，会让 `RESOLVABLE` 变成假话，而这正是本注册表要防止的失败。在此之前，

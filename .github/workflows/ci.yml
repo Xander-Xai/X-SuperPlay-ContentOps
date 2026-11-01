@@ -240,6 +240,14 @@ jobs:
       - name: Run skill reference integrity tests
         run: python tests/test_skill_references.py
 
+      # Slice S1 of the content router: the deterministic workflow contract and
+      # stage gate. Both suites are self-contained (contract/gate only).
+      - name: Run workflow contract tests
+        run: python tests/test_workflow_contract.py
+
+      - name: Run workflow stage-gate tests
+        run: python tests/test_workflow_gate.py
+
       - name: Run skill router capability regression tests
         run: python tests/test_skill_router_capabilities.py
 
