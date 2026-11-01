@@ -90,20 +90,31 @@ asserted by `tests/test_motion_build_reliability.py`.
 
 ## 4. Reproduction plan for the existing 25 s sample
 
-Goal: prove the sample is reproducible from the branch *before* deciding whether
-its code is good enough to become the production path.
+**Step 0 is already verified.** The local working-tree render and the stranded
+branch's committed receipt describe the same bytes:
+
+| Source | SHA-256 |
+|---|---|
+| `projects/easel-fi-audio-first/receipts/build-easel.json` → `output.sha256` | `d6c0795e51e4ed62400c6937d6c05e01d3b9134df1c1b2cfb54d80962b8f1bee` |
+| `projects/easel-fi-audio-first/final/easel.mp4` on this host | `d6c0795e51e4ed62400c6937d6c05e01d3b9134df1c1b2cfb54d80962b8f1bee` |
+
+They match exactly. So the sample is not folklore: the artifact on disk **is**
+the one the receipt bounds, and the receipt also binds its narration
+(`531e2c08…cdf1`, 25.000313 s), its captions (`62f0617f…eae`) and all six motion
+inputs by digest.
+
+What remains is the stronger claim — that the build reproduces those bytes from
+source. That needs the drivers lifted and run:
 
 1. Lift §2.1–2.3 onto the remediation branch.
-2. Confirm `projects/easel-fi-audio-first/receipts/build-easel.json` records the
-   output hash; re-derive the SHA of the local `final/easel.mp4` and compare.
-3. Re-run the build with `--engine` pointed at the local `huashu-art-motion`.
-4. Compare: duration (25.0 s), resolution (1080×1920), near-static ratio (0.0 %),
-   audio mean/max dB.
-5. Record the result in a new receipt. **A re-run must not overwrite the
-   historical receipt** — the repo's append-only rule applies.
+2. Re-run the build with `--engine` pointed at the local `huashu-art-motion`.
+3. Compare: duration (25.0 s), resolution (1080×1920), near-static ratio (0.0 %),
+   audio mean/max dB, and the output SHA-256 against `d6c0795e…`.
+4. Record the result in a **new** receipt. A re-run must not overwrite
+   `build-easel.json` — the repo's append-only rule applies.
 
-If step 3 needs a provider call, it stops: the sample's narration already exists
-as a receipt-bound WAV, and re-synthesis is not authorised.
+If step 2 needs a provider call, it stops: the narration already exists as a
+receipt-bound WAV, and re-synthesis is not authorised.
 
 ---
 
