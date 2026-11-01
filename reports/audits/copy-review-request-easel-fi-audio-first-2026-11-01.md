@@ -4,9 +4,14 @@ Date: 2026-11-01
 
 **This is a request for review, not a review.** No decision has been made, no `script-review.json` exists, and nothing here may be treated as approval.
 
-`copy_sha256`: `0c074805efbcdbfecd4324c115ab1240abb34bace76cf5cb2184d30121235b92`
+`copy_sha256`: `a8ad8d7cc0384d78a1b6feea0a8bc0fe98ecea4a2968639104984114fba23915`
 
-Approving this exact fingerprint would let the compose stage run. Any edit to the narration, the beats, the claim map or the declared asset digests produces a different fingerprint and requires a new review.
+Approving this exact fingerprint would let the compose stage run. Any edit to the narration, the beats, the claim map, the cut plan or the declared asset digests produces a different fingerprint and requires a new review.
+
+**What the fingerprint binds.** Source inputs: `script/master.md`, `script/*.srt`, `script/lines.json`, `script/script.json`, `script/claims.json`, `script/claim-map.json`, `script/assets.json`, `script/cut-plan.json`, `motion/timeline.json`, and a field subset of `script/storyboard.json`. Not bound, because the pipeline writes them: `script/narration.txt`, `receipts/voice-lines.json`, and the storyboard's own `narration` / `subtitle` / `runtime` keys. Hashing those would expire the review on every rebuild.
+
+**Review status: NOT APPROVED.** This sample is not approved and is not scheduled for approval. Three statements in the copy are recorded below as corrections owed before any approval.
+
 
 ## The copy, as scripted
 
@@ -82,3 +87,17 @@ Approving this exact fingerprint would let the compose stage run. Any edit to th
 
 - Technical QC on the 2026-10-28 build was `PASS` (18 checks). That is not a review of the words.
 
+
+## Corrections owed before any approval
+
+Recorded from the Owner's review on 2026-11-01. These do not invalidate the
+motion work; they make the copy unapprovable until resolved.
+
+| Beat | Finding | What is needed |
+|---|---|---|
+| `P-01-HOOK` — 「口播四十四秒，画面不能停四十四秒。」 | a 44 s figure appears in a 25 s sample with no statement of what 44 s measures | name the object the 44 s refers to |
+| `P-04-ROOTCAUSE` — 「旧门禁放过了静态停留，现在换成实测。」 | the old-gate defect is confirmed, but this does not establish that a production dynamic-quality gate is shipped | separate the capability that exists from the gate that is still planned |
+| `P-05-RESULT` — 「重建后最长冻结一点八秒，质检通过。」 | the linked `easel-1024-proof` QC receipt could not be read from the current remote, and the figure is not this 25 s sample's measurement | verify the original receipt and state which object was measured |
+
+Until these are resolved, the state stays `BLOCKED_COPY_REVIEW`. No approval was
+recorded, and none should be inferred from this document.

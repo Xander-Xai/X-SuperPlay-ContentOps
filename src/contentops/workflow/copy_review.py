@@ -52,6 +52,25 @@ COPY_FIELDS = ("unit", "narration", "caption", "claim", "image", "video",
 #: ``project://`` reference would otherwise leave a review looking current.
 ASSET_MAP = Path("script") / "assets.json"
 
+#: Files under ``script/`` that decide what the film says, in what order, and
+#: what it claims. Notes, briefs and generated text (``narration.txt``,
+#: ``*-output.txt``) are deliberately absent: they do not change the copy, and
+#: hashing them would expire a review over an unrelated edit.
+SOURCE_FILES = ("master.md", "lines.json", "script.json", "claims.json",
+                "claim-map.json", "assets.json", "cut-plan.json")
+
+#: Committed inputs outside ``script/``. ``motion/timeline.json`` carries shot
+#: order and segment durations, so a hand edit to it changes the film without
+#: touching a word. It is written by ``build_motion_film`` from measured
+#: narration durations, so on a project that runs that driver the regenerated
+#: content is a function of the narration already bound above — the hash does not
+#: move. If it ever gains a timestamp, this entry is the thing to revisit.
+SOURCE_PATHS = (Path("motion") / "timeline.json",)
+
+#: Build products. Never hashed: they derive from the sources above, and hashing
+#: them would expire a review on every rebuild.
+GENERATED_PATHS = (Path("receipts") / "voice-lines.json",)
+
 
 class CopyReviewRequired(Exception):
     """Raised by :func:`require_approved` when the pipeline must not continue."""
@@ -74,14 +93,17 @@ def copy_fingerprint(project: Path) -> str:
     """A digest of what the copy *says*, stable across builds."""
     script = project / "script"
     parts: List[bytes] = []
-    master = script / "master.md"
-    parts.append(b"master\0" + (master.read_bytes() if master.is_file() else b""))
-    for caption in sorted(script.glob("*.srt")):
-        parts.append(b"srt\0" + caption.name.encode("utf-8") + b"\0" + caption.read_bytes())
-    for name in ("lines.json", "claim-map.json", "assets.json"):
+    for name in SOURCE_FILES:
         source = script / name
         if source.is_file():
-            parts.append(name.encode("utf-8") + b"\0" + source.read_bytes())
+            parts.append(b"script\0" + name.encode("utf-8") + b"\0" + source.read_bytes())
+    for caption in sorted(script.glob("*.srt")):
+        parts.append(b"srt\0" + caption.name.encode("utf-8") + b"\0" + caption.read_bytes())
+    for relative in SOURCE_PATHS:
+        source = project / relative
+        if source.is_file():
+            parts.append(b"source\0" + relative.as_posix().encode("utf-8") + b"\0"
+                         + source.read_bytes())
     board = script / "storyboard.json"
     shots: List[Dict[str, Any]] = []
     if board.is_file():

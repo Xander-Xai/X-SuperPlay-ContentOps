@@ -38,6 +38,25 @@ def _project(temp: Path) -> Path:
     (script / "claim-map.json").write_text(
         json.dumps({"claims": [{"id": "C1", "source": "A-ONE"}]}, ensure_ascii=False),
         encoding="utf-8")
+    (script / "cut-plan.json").write_text(
+        json.dumps({"schema": "contentops.cut-plan/v1",
+                    "placements": [{"id": "P-01", "asset_id": "A-ONE"}]},
+                   ensure_ascii=False), encoding="utf-8")
+    (script / "script.json").write_text(
+        json.dumps({"schema": "contentops.m5-script/v1",
+                    "lines": [{"id": "s1", "narration": "第一句"}]},
+                   ensure_ascii=False), encoding="utf-8")
+    # Generated text: the pipeline writes it, so it must not be bound.
+    (script / "narration.txt").write_text("第一句\n", encoding="utf-8")
+    (temp / "motion").mkdir()
+    (temp / "motion" / "timeline.json").write_text(
+        json.dumps({"segments": [{"clip": "p00", "duration": 5.0}]}, ensure_ascii=False),
+        encoding="utf-8")
+    (temp / "receipts").mkdir()
+    # Generated per-line timings: derived from the narration, never hashed.
+    (temp / "receipts" / "voice-lines.json").write_text(
+        json.dumps({"lines": [{"line": 0, "duration_s": 5.0}]}, ensure_ascii=False),
+        encoding="utf-8")
     media = temp / "work" / "motion"
     media.mkdir(parents=True)
     clip = media / "beat-00.mp4"
@@ -182,6 +201,63 @@ def test_declared_assets_are_part_of_the_fingerprint():
         assert copy_review.copy_fingerprint(project) != before
 
 
+def test_editing_the_cut_plan_invalidates_the_review():
+    """The cut plan decides shot order and placement; it is source, not output."""
+    with tempfile.TemporaryDirectory() as temp:
+        project = _project(Path(temp))
+        _approve(project)
+        (project / "script" / "cut-plan.json").write_text(
+            json.dumps({"schema": "contentops.cut-plan/v1",
+                        "placements": [{"id": "P-01", "asset_id": "A-ONE"},
+                                       {"id": "P-02", "asset_id": "A-ONE"}]},
+                       ensure_ascii=False), encoding="utf-8")
+        assert copy_review.status(project)["state"] == "STALE"
+
+
+def test_editing_the_m5_script_invalidates_the_review():
+    with tempfile.TemporaryDirectory() as temp:
+        project = _project(Path(temp))
+        _approve(project)
+        (project / "script" / "script.json").write_text(
+            json.dumps({"schema": "contentops.m5-script/v1",
+                        "lines": [{"id": "s1", "narration": "换了台词"}]},
+                       ensure_ascii=False), encoding="utf-8")
+        assert copy_review.status(project)["state"] == "STALE"
+
+
+def test_editing_the_motion_timeline_invalidates_the_review():
+    """Segment order and duration live outside script/, but change the film."""
+    with tempfile.TemporaryDirectory() as temp:
+        project = _project(Path(temp))
+        _approve(project)
+        (project / "motion" / "timeline.json").write_text(
+            json.dumps({"segments": [{"clip": "p00", "duration": 7.5}]},
+                       ensure_ascii=False), encoding="utf-8")
+        assert copy_review.status(project)["state"] == "STALE"
+
+
+def test_generated_narration_text_does_not_invalidate_the_review():
+    """The pipeline writes narration.txt; rewriting it must not expire a review."""
+    with tempfile.TemporaryDirectory() as temp:
+        project = _project(Path(temp))
+        _approve(project)
+        (project / "script" / "narration.txt").write_text("第一句\n（重写）\n", encoding="utf-8")
+        gate = copy_review.status(project)
+        assert gate["state"] == "APPROVED", gate
+
+
+def test_generated_voice_timings_do_not_invalidate_the_review():
+    """Per-line timings are derived from the narration, not an authored input."""
+    with tempfile.TemporaryDirectory() as temp:
+        project = _project(Path(temp))
+        _approve(project)
+        (project / "receipts" / "voice-lines.json").write_text(
+            json.dumps({"lines": [{"line": 0, "duration_s": 4.2}]},
+                       ensure_ascii=False), encoding="utf-8")
+        gate = copy_review.status(project)
+        assert gate["state"] == "APPROVED", gate
+
+
 def main() -> int:
     tests = (test_swapping_the_video_invalidates_the_review,
              test_changing_the_caption_invalidates_the_review,
@@ -191,7 +267,12 @@ def main() -> int:
              test_missing_review_blocks,
              test_a_stale_sha_blocks,
              test_build_metadata_does_not_invalidate_the_review,
-             test_declared_assets_are_part_of_the_fingerprint)
+             test_declared_assets_are_part_of_the_fingerprint,
+             test_editing_the_cut_plan_invalidates_the_review,
+             test_editing_the_m5_script_invalidates_the_review,
+             test_editing_the_motion_timeline_invalidates_the_review,
+             test_generated_narration_text_does_not_invalidate_the_review,
+             test_generated_voice_timings_do_not_invalidate_the_review)
     for test in tests:
         test()
         print(f"[ok] {test.__name__}")
