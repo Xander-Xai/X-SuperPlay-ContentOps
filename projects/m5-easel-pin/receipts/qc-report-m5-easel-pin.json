@@ -1,0 +1,154 @@
+{
+  "schema": "contentops.qc-canonical/v1",
+  "currency": "CURRENT",
+  "project": "projects/m5-easel-pin",
+  "graded_target": "project://final/m5-easel-pin.mp4",
+  "overall": "PASS",
+  "checked_at": "2026-10-31T12:21:54Z",
+  "checks": [
+    {
+      "id": "_video",
+      "ok": true,
+      "severity": "INFO",
+      "path": "project://final/m5-easel-pin.mp4"
+    },
+    {
+      "id": "file_size",
+      "ok": true,
+      "severity": "PASS",
+      "value_bytes": 1098055,
+      "min_bytes": 102400
+    },
+    {
+      "id": "ffprobe_parse",
+      "ok": true,
+      "severity": "PASS"
+    },
+    {
+      "id": "resolution",
+      "ok": true,
+      "severity": "PASS",
+      "value": "1080x1920",
+      "expected": "1080x1920"
+    },
+    {
+      "id": "aspect_ratio_9_16",
+      "ok": true,
+      "severity": "PASS",
+      "value": "1080:1920"
+    },
+    {
+      "id": "duration_range",
+      "ok": true,
+      "severity": "PASS",
+      "value_sec": 45.14,
+      "expected_range_sec": [
+        30.0,
+        120.0
+      ]
+    },
+    {
+      "id": "video_codec_h264",
+      "ok": true,
+      "severity": "PASS",
+      "value": "h264"
+    },
+    {
+      "id": "audio_present",
+      "ok": true,
+      "severity": "PASS"
+    },
+    {
+      "id": "audio_codec_aac",
+      "ok": true,
+      "severity": "PASS",
+      "value": "aac"
+    },
+    {
+      "id": "project_yaml",
+      "ok": true,
+      "severity": "PASS"
+    },
+    {
+      "id": "source_refs_recorded",
+      "ok": true,
+      "severity": "PASS",
+      "value_count": 4
+    },
+    {
+      "id": "caption_srt_present",
+      "ok": true,
+      "severity": "PASS",
+      "path": "project://assets/captions/default.srt"
+    },
+    {
+      "id": "script_exists",
+      "ok": true,
+      "severity": "PASS",
+      "path": "project://script/master.md"
+    },
+    {
+      "id": "storyboard_exists",
+      "ok": true,
+      "severity": "PASS",
+      "shot_count": 7
+    },
+    {
+      "id": "real_source_ratio",
+      "ok": true,
+      "severity": "PASS",
+      "value": 1.0,
+      "min": 0.7,
+      "real_shots": 7,
+      "generated_shots": 0,
+      "note": "AI-generated key visuals must not be the majority"
+    },
+    {
+      "id": "source_provenance_complete",
+      "ok": true,
+      "severity": "PASS",
+      "missing_shot_indices": []
+    },
+    {
+      "id": "engine_recorded",
+      "ok": true,
+      "severity": "PASS",
+      "value": "easel"
+    },
+    {
+      "id": "voice_not_silence",
+      "ok": true,
+      "severity": "PASS",
+      "max_volume_db": "-3.7 dB",
+      "mean_volume_db": "-27.8 dB"
+    },
+    {
+      "id": "subtitle_burned_or_track",
+      "ok": true,
+      "severity": "PASS",
+      "method": "burned_in_scan",
+      "note": "max bright-pixel ratio across 6 samples = 0.01092"
+    },
+    {
+      "id": "real_evidence_present",
+      "ok": true,
+      "severity": "PASS",
+      "value_count": 3,
+      "from_manifest": 3
+    },
+    {
+      "id": "voice_quality_declared",
+      "ok": true,
+      "severity": "INFO",
+      "voice_provider": "windows-sapi/Huihui (offline)",
+      "voice_quality": "fallback",
+      "production_quality_warning": true,
+      "note": "mechanical/fallback voice keeps the render at READY_FOR_HUMAN_REVIEW; only a human can accept it as production (V1 spec §11)"
+    }
+  ],
+  "path_policy": "logical references (project://, repo://); no absolute paths",
+  "m5_checks": {
+    "audio_stream": true,
+    "overall_after_m5": "PASS"
+  }
+}

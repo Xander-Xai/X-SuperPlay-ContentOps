@@ -10,16 +10,32 @@ translation_status: synced
 
 > 当前运行状态。仅经验证的事实。无展望，无过时声明。
 >
-> 最后验证：2026-10-04
+> 最后验证：2026-11-01，分支 `fix/57-m5-media-fixtures`（PR #89）。
+> “分层状态”表之后的小节是历史里程碑记录，说明某项能力当时如何被证明，
+> 不代表当前状态。
+
+## 分层状态（2026-11-01）
+
+| 层 | 状态 |
+|---|---|
+| M5 证据链、媒体合约、QC、media-use 适配器、Skill 路由/授权 | 本分支已实现 |
+| 内容路由、账号 DNA、工作流门禁、Brief/脚本/设计阶段 | **未合并**（`feat/content-router`，PR #49） |
+| 小红书 / X / 公众号轨道 | **未合并 / 权利受阻** |
+| MiniMax 语音、图片、H3 视频 | 已实现；已验证子集见下文 |
+| 生产就绪 | 所有轨道均为 **否** |
 
 ## Git
 
 | 属性 | 值 |
 |---|---|
-| 默认分支 | ```main```（唯一持久分支） |
+| 默认分支 | ```main``` —— 受保护 |
+| 本分支 | ```fix/57-m5-media-fixtures```，领先 ```main``` 17 个提交，开放 PR #89 |
 | Main 保护 | **已保护** — 必需状态检查 + PR + 禁止 force push + 禁止删除 + 线性历史 |
-| 必需检查 | ```Tests (ubuntu-latest)``, ```Tests (windows-latest)``, ```Repo policy checks``` |
+| 必需检查 | ```Tests (ubuntu-latest)```、```Tests (windows-latest)```、```Repo policy checks``` |
 | 分支策略 | Issue 作用域短生命周期分支，Squash 合并，合并后自动删除 |
+| 当前分支现实 | 本地存在 30+ 分支与 worktree；只有 ```main``` 是持久分支。未合并的工作不属于当前系统 |
+| ```main``` 实际包含什么 | 截至 **第四阶段交付解锁**（PR #72）。media-use 集成、权利门禁、Skill 路由与 Skill 执行授权栈（PR #71、#74–#81、#84）**只存在于 ```fix/57-m5-media-fixtures```**，从未进入 ```main``` |
+| 后果 | ```main``` 受保护但已陈旧。第一步是让 PR #89 与本次工作落地，而不是在其上继续叠加新功能 |
 
 ## Easel 运行时
 
@@ -30,19 +46,48 @@ translation_status: synced
 | 路径 | ```.runtime/easel/``` |
 | 获取方式 | Release archive（GitHub tarball via ```gh api```） |
 | 验证 | 982/982 blob SHA-1 匹配上游 tree |
+| 复核 | 2026-10-31 通过 ```scripts/verify_easel_runtime.py```（982/982，缺失 0，不一致 0，多余 0） |
+| 独立交叉校验 | 2026-10-31 对照官方 ```v0.2.1``` Release 归档：982 个文件，缺失 0，不一致 0 |
+| 本地多出文件 | 仅 ```outputs/``` 与 ```__pycache__/```；没有任何受跟踪文件与上游不同 |
 | 锁文件 | ```runtime/easel.lock.json``` |
 | 来源记录 | ```runtime/easel-runtime.json``` |
+| 上游稳定版 | v0.3.0（2026-10-12）—— **未采用**：158 个提交，Skill 从 ```skills/openclaw/``` 迁至 ```skills/builtin/```，```assemble.py``` 变更，且上游强制替换过该 tag |
 
 ## 流水线
 
+两个入口共享固定版本的 Easel 合成器。两者都不发布。
+
+| 属性 | `run_v1.py`（V1） | `m5_production.py`（M5） |
+|---|---|---|
+| 输入 | 人工编写的 `storyboard.json` + `master.md` | `project.yaml` 的 `source_refs` + 声明 |
+| 旁白 | edge-tts（`zh-CN-YunxiNeural`） | Windows SAPI，离线 |
+| 语音质量 | `edge_tts_fallback` —— 非生产级 | `windows_sapi_offline` —— 非生产级 |
+| 证据层 | 无 | `SourceArtifact` + `ClaimLedger` |
+| 合成 | 通过 `assemble_easel.run` 调用固定版本 Easel `assemble.py` | 同上 |
+| 字幕处理 | `assemble_easel` 移除后运行上游，再单独烧录 | 按旁白时间轴烧录 |
+| 生产就绪 | **否** | **否** —— `PENDING_FOUNDER_REVIEW` |
+
+诊断引擎：`python scripts/run_v1.py <project> --engine fallback`
+（仅 ffmpeg，永不生产，永不报告 `production_ready: true`）。
+
+## M5 证据优先生产链（Issue #6）—— 已实现 2026-10-31
+
 | 属性 | 值 |
 |---|---|
-| 生产引擎 | ```easel```（Easel ```auto-short-video/assemble.py```） |
-| 诊断引擎 | ```fallback```（仅 ffmpeg，非生产） |
-| 生产语音 | edge-tts via Easel ```tts.py```（zh-CN-YunxiNeural） |
-| 语音质量 | ```edge_tts_fallback``` — 非生产级 |
-| 生产就绪 | **否** — READY_FOR_HUMAN_REVIEW |
-| 字幕变通 | ```scripts/assemble_easel.py``` — 移除字幕，运行上游，单独烧录（不修改上游） |
+| 入口 | ```python scripts/m5_production.py projects/<slug>``` |
+| 证据层 | ```src/contentops/evidence/``` — ```SourceArtifact```、```ClaimLedger``` |
+| 阶段 | 来源 → 素材 → 声明 → 脚本 → 旁白 → 字幕 → 分镜 → 合成 → QC → 评审 |
+| 首次运行 | ```projects/m5-easel-pin``` — 4 个来源、4 条声明、3 个已声明素材、7 行文案 |
+| 旁白 | Windows SAPI，离线，45.1 秒，```voice_quality: windows_sapi_offline``` |
+| 字幕 | 7 条字幕按旁白时间轴烧录，覆盖率 0.963 |
+| 合成 | 钉版 Easel，1080×1920 H.264 + AAC |
+| QC | PASS — 19 项检查，真实来源占比 1.0 |
+| 生产就绪 | **否** — ```PENDING_FOUNDER_REVIEW```，评分为 null |
+| 测试 | ```tests/test_m5_evidence.py``` — 18 项离线测试 |
+
+同一次变更修复了合成器缺陷：ASS 字幕时间戳被写成三位小数，libass 按厘秒解析，
+导致每条字幕被拉长约十倍并相互重叠。```assemble_easel._srt_to_ass``` 现按厘秒输出；
+通过在纯黑画面上渲染字幕条、并与未烧录版本逐秒比对完成验证。
 
 ## MiniMax
 
@@ -68,13 +113,41 @@ translation_status: synced
 | H3 时长 | 整数枚举 4-15（H3）、5-15（H3 Max）；测试最短 4 秒 / 5 秒 |
 | 证据 | `research/providers/minimax-mplan-explore-capability.md`、`research/providers/minimax-voice-clone-entitlement.md` |
 
+## 测试
+
+| 套件组 | 文件 | 数量 |
+|---|---|---|
+| 脚本冒烟 | ```scripts/test_basic.py``` | 10 |
+| 媒体 / 供应商（离线 fixture） | 语音、图片、H3、收敛、media-use 适配器 | 432 个 ```test_*``` 函数 |
+| M5 证据 + media-use 可追溯性 | ```test_m5_evidence.py```、```test_m5_*``` | 18 + 列表驱动套件 |
+| Golden / 可复现性 | A/B 变体、语音资产、锁定输入 | 47 |
+| Skill / 授权 | 路由、doctor、执行门禁、授权来源 | 列表驱动套件 |
+| Skill 引用完整性 | `tests/test_skill_references.py` | 6 |
+| Windows | 子进程、路径 | 53 |
+| 策略 / 密钥 | gitignore、本地批准、凭证密钥 | 19 + 列表驱动套件 |
+| **合计** | **31 个套件** | **704 个顶层 ```test_*``` 函数 + 列表驱动与 unittest 套件** |
+
+```python scripts/dev_check.py``` 运行本地门禁。CI 为每个套件设置具名步骤；没有 CI
+步骤的套件不会运行，一次绿色运行也不等于所有套件都通过。CI 会安装 ```ffmpeg```
+与 ```Pillow```；需要它们但缺失的测试会报告 skip。
+
+完整清单见 [TEST-PLAN.md](TEST-PLAN.md)。
+
 ## 已知阻碍
 
-1. 语音质量 — edge-tts 机械感重，非生产级。MiniMax 语音集成（M2）的主要动机。
-2. Web 工作台 — 6 项 doctor 失败。不阻塞视频流水线。
-3. Gateway healthz — 上游硬编码端口 18789；easel profile 使用 37289。不阻塞视频流水线。
-4. 人工审查 — easel-review 项目无 ```human-review.json``` 凭证。
-5. ~~Main 分支未保护~~ — **已解决**（G0.6）：main 现已通过 GitHub 分支保护机制保护。
+1. 语音质量 — edge-tts 机械感重，Windows SAPI 离线且平直；两者都非生产级。MiniMax
+   语音已实现但未批准。
+2. 人工审查 — 没有任何项目完成 ```human-review.json```，所有结果停留在
+   ```PENDING_FOUNDER_REVIEW```。
+3. media-use 运行时锁 — 干净检出（以及本机当前）判定为
+   ```BLOCKED / MISSING_RUNTIME```。已批准基线存在，但必须先为本机生成并信任锁。
+4. 未合并的内容层 — 账号路由、工作流门禁、Brief/脚本/设计阶段、小红书、X、公众号
+   都不在本分支。它们是五个 ```x-superplay-*``` Skill 的前置条件，不是当前可用能力。
+5. 文档收敛 — 本文档于 2026-11-01 重构；PRD、DEVELOPMENT-PLAN、TEST-PLAN 在同一次
+   变更中更新。剩余需求见
+   [CONVERGENCE-REQUIREMENTS-2026-11-01.md](CONVERGENCE-REQUIREMENTS-2026-11-01.md)。
+6. 上游固定版本 — Easel v0.3.0 与 HyperFrames 0.8.225 已发布但未采用；决策见收敛需求文档。
+7. ~~Main 分支未保护~~ — **已解决**（G0.6）。
 
 ## M3 图片生成（Issue #20）—— 已验证 2026-10-04
 
@@ -462,3 +535,119 @@ QC 回执在被提交前会经过一道净化边界（`contentops.qc_canonical`�
 它**不**证明真实的 `SourceArtifact` 摄取、`Claim Ledger` 完整性、创始人批准、
 生产黄金样本，或三次连续生产构建。产出为 `production_ready=false` /
 `PENDING_FOUNDER_REVIEW`，且代码路径中没有任何分支能给出相反结论。
+
+## HyperFrames media-use 集成（Issue #57）—— 已实现 2026-10-31
+
+所有者批准后于 2026-10-31 复验。分支 `feat/57-media-use-adapter`。**零供应商调用。**
+已验证运行时是在无网络出口的环境下执行的；安装本身是独立、经过审核的准备步骤。
+
+| 项目 | 值 |
+|---|---|
+| 上游 | `heygen-com/hyperframes` @ `5e4f5aefb58a9996ea5920f008184e9789346871`（Apache-2.0） |
+| 技能提交 | `f2358315e59731833334c5d881a7fb5543c22a97`（`skills/media-use`） |
+| 适配器 | `src/contentops/media/media_use_adapter.py` —— 唯一知道该技能存在的模块 |
+| CLI | `scripts/media_use_adapter.py` —— `status/doctor/candidates/resolve/adopt/ingest/import/verify/demo` |
+| 新增类型 | `AssetKind.LICENSED_EXTERNAL`、`MediaModality.AUDIO` |
+| 回执 | `contentops.media-import/v1`，含 `output_sha256`、`fingerprint`、`generated`、`evidence_capable`、`production_ready`、`human_review`、`license` |
+| 证据边界 | 所有导入均为 `evidence_capable=false`；生成结果一律 `GENERATED_NOT_IMPORTABLE` |
+| 跨项目 | 未显式授权则阻断；子进程 `HOME` 固定在项目内 |
+| 运行时信任 | 两层：仓库内、由所有者批准的基线（`runtime/media-use-runtime-baseline.json`，2026-10-31 批准，仅限离线范围）与本机锁（`CONTENTOPS_MEDIA_USE_RUNTIME_LOCK`）。锁只有在以摘要指名已批准基线、且每个字节都匹配时才可信。干净检出在生成机器锁之前仍拒绝执行；批准基线不等于安装或信任某台主机的运行时 |
+| 已验证运行时 | `hyperframes@0.8.222`（与官方 SRI 一致）、官方 Node v22.23.4 Linux 与 win-x64（与 SHASUMS 一致）、127 条依赖锁。包树摘要 `be8e24df…` 在两个平台独立复现 |
+| 验收 | Linux：无出口命名空间内 `TRUSTED_RUNTIME`，通过适配器执行 `adopt`/`candidates`/`resolve`。Windows：`install` → `lock` → `TRUSTED_RUNTIME` → 真实 CLI。隔离目录内真实 Easel 合成：`compose` OK、QC `WARN`、`production_ready:false` |
+| 安装 / 生成锁入口 | `scripts/media_use_runtime.py` —— `approve`、`install`、`lock`、`verify`、`selfcheck`；批准与生成锁是两个独立动作 |
+| 测试 | 53 项适配器测试通过；97 项 M4.5 收敛测试通过（2026-10-31 重新运行） |
+| Pull Request | Draft [#64](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/64) |
+| Skill Router | **已通过 [#77](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/77) 合并** —— `scripts/skill_route.py` 与 `runtime/skill-registry.json` 已将 `media-use` 注册为声明能力。#49 仍未合并；#59 已因被 #77 替代而关闭。适配器仍暴露 `status/doctor/candidates/resolve/adopt`；注册表是路由指针 |
+
+### 批准覆盖与不覆盖的范围
+
+- 已批准基线授权使用固定版本 `hyperframes@0.8.222` 运行时执行**离线本地素材操作**：
+  `adopt`、`candidates` 与本地 `resolve`。
+- 它**不**授权网络供应商、付费生成、跨项目复用、自动发布、生产交付，也不授予任何
+  源素材许可证。可信运行时只证明*执行了什么*，从不证明*素材来自哪里*或*其许可证是什么*。
+- 每个导入素材仍需显式许可证，并保持 `evidence_capable=false`、
+  `production_ready=false`、`human_review=PENDING`。
+- 隔离 Easel 演示使用的是另一套已验证运行时。它**不**表示原始 `.runtime/easel`
+  已健康或已恢复。
+
+### 离线端到端样本
+
+`python scripts/media_use_adapter.py demo`（退出码 `0`）产出
+`project://final/media-use-demo.mp4` —— 1080x1920，h264，30.0 秒，300,437 字节。
+
+| 事实 | 值 |
+|---|---|
+| Manifest | `receipts/media-manifest.json`，指纹 `2b01c1cb716723007527a422dff4810b16db1d9b090e61a5f2a5de578a5ba75d` |
+| 清单 | 7 个资产：2 张真实截图、2 张授权图片、1 个图标、1 段 BGM、1 段内置 SFX |
+| 时间线 | 2 个占位，均为 `SCREENSHOT`，`real_source_ratio` **1.0** |
+| 经 media-use 导入 | 5 条记录（4 个本地夹具标注 `OWNED-FIXTURE-DEMO`，1 段内置 SFX `Pixabay-Content-License`） |
+| 门控 | 所有资产 `PENDING_HUMAN_REVIEW` |
+| 最终 QC | `overall: WARN`（无 FAIL），`currency: NON_CURRENT_DIAGNOSTIC` |
+| 供应商调用 | 语音 0 / 图像 0 / 视频 0 |
+| `production_ready` | `false` |
+
+两张真实截图来自 `projects/easel-review/sources/screenshots/`。图片与 BGM 夹具由 demo
+确定性生成，回执中已明确标注；它们**不是**第三方授权素材。当本地无候选且未授权网络时，
+图片解析会记录为 `NEEDS_HUMAN_ACTION` —— 不会为了"看起来完整"而下载或生成任何东西。
+
+该渲染只是技术集成样本：无音轨、无字幕、无创始人批准，`qc_video` 正是对这些点给出警告。
+
+## M5 media-use 自动化 —— INTEGRATION_VERIFIED 2026-10-31
+
+已通过 [#71](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/71) 合并到 `main`。
+权利门禁后续为 [#76](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/76)。
+**零供应商调用、零网络。** 真实的 `scripts/m5_production.py` 入口在 Windows 上调用真实的
+`MediaUseAdapter`，运行时为已批准的 `hyperframes@0.8.222`。
+
+| 属性 | 值 |
+|---|---|
+| 入口 | `python scripts/m5_production.py projects/m5-media-use` |
+| 运行时 | 本机锁 `contentops.media-use-runtime-lock/v2`，状态 `TRUSTED_RUNTIME`，基线摘要匹配 |
+| 配置 | `projects/m5-media-use/project.yaml` → `media_use.requests`（image、bgm、sfx） |
+| 执行阶段 | sources → media_use → assets → claims → script → narration → subtitles → storyboard → Easel compose → QC → review |
+| 导入视觉 | `project://assets/support.png`，SHA-256 `85c4ab5c5368b1ab60a98854ee292529d6b7908be58acfccc1d5f4ed06cddb53`，`evidence_capable=false` |
+| 导入 BGM | 本地确定性音床，SHA-256 `1dcb9c7e3708cfc0cc68663642cc9d6b779ff7bd5812fdb6e31e4d74f5b4ee5e` |
+| 导入 SFX | 内置 `sfx_001`，Pixabay Content License，回执 `contentops.media-import/v1` |
+| 最终产物 | `projects/m5-media-use/final/m5-media-use.mp4` —— h264 1080x1920 + AAC 48 kHz 立体声，25.07 秒，505,448 字节，SHA-256 `d4915f45f98008e4adbaa52d29beb787ffc437d383f15415780830aeaf33d731` |
+| QC | `overall: WARN`，存在音频流，无 FAIL |
+| 人工审阅 | `PENDING_FOUNDER_REVIEW`；`production_ready: false` |
+| 合成证据 | 1 秒、2 秒、13 秒、14 秒的帧都能看到导入截图与对应烧录字幕 |
+| BGM 证据 | 行间停顿 11.70–12.20 秒：有 BGM 为 −60.9 dB，无 BGM 为 −91.0 dB（相差 30.1 dB） |
+| SFX 证据 | 6.15–6.28 秒：有 SFX 为 −33.4 dB，无 SFX 为 −60.8 dB（相差 27.4 dB） |
+| 旁白保留 | 三段渲染中同一语音窗口均为 −26.8 dB，说明两条音轨都没有替代旁白 |
+| 音频控制 | 音量、放置与混音已验证；逐轨淡入淡出在钉死的 Easel 合约中**无法表达**（示例音床把淡入淡出烘焙进了文件） |
+| 负向验收 | 11/11 正确阻断：缺失/错误锁、素材缺失、哈希不匹配、路径越界、导入文件缺失、网络、付费、未授权、重复 ID、旧项目行为不变 |
+| 权利门禁 | `src/contentops/media/rights_gate.py` 拒绝裸 `rights_reviewed`；每个请求必须匹配 `assets/<id>.rights.json` 复核记录。未知、软件与非商业许可证一律拒绝；合成素材永远不能作为证据 |
+| 提交的示例 | `projects/m5-media-use/`；媒体二进制与 `.media/` 仍被忽略，回执入库 |
+| Pull Request | 已合并 [#71](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/71)；权利门禁后续 [#76](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/76) |
+| 路由 | **已通过 [#77](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/77) 合并** —— `scripts/skill_route.py` 与 `runtime/skill-registry.json` 已在 `main`；见下文「Skill 发现与解析」 |
+
+`INTEGRATION_VERIFIED` 只说明这台机器与这把锁。它不是 `MERGED_TO_MAIN`，也不代表
+导入素材、旁白或视频已获批发布。
+
+## Skill 发现与解析（Issue #57）—— 已合并 2026-10-31
+
+已通过 [#77](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/77) 合并到 `main`。
+路由器与注册表已在 `main` 上运行；本节记录它们做什么、还有哪些仍被阻断。
+
+| 属性 | 值 |
+|---|---|
+| 入口 | `python scripts/skill_route.py`（仅标准库；不起子进程、不联网） |
+| 发现 | `--sources`、`--list`、`--match`、`--resolve`，覆盖仓库自有、Easel 目录根与共享 Skill 库 |
+| Doctor | `--doctor` —— 目录根、重名、权限声明、权利、越界与悬空路径 |
+| 已声明能力 | `runtime/skill-registry.json`，schema `contentops.skill-registry/v1` |
+| 已注册能力 | 仅 `media-use`，指向已合并的适配器、运行时基线、锁校验器与 M5 `media_use` 阶段 |
+| 解析判定 | `RESOLVABLE`，或以 `UNKNOWN_SKILL`、`DUPLICATE_AMBIGUITY`、`OUT_OF_SCOPE`、`UNVERIFIED_RIGHTS`、`UNAUTHORIZED_PROVIDER`、`SKILL_NOT_INSTALLED`、`MISSING_RUNTIME` 阻断 |
+| 执行授权 | 路由器**从不授予**；每条记录都带 `execution_authorized: false` |
+| 有本机运行时锁时的 media-use | `RESOLVABLE`（已在本机对照 `runtime/media-use-runtime-baseline.json` 验证） |
+| 无锁时的 media-use | `BLOCKED / MISSING_RUNTIME`（干净检出的默认结果） |
+| 旧版 M5 | 未改变 —— `scripts/m5_production.py` 不导入路由器，并有测试断言 |
+| VIDEO 轨 | 仅发现，直到本机存在目录根 |
+| GZH 轨 | `BLOCKED` —— vendor 第三方轨，权利未验证，`vendor/` 已 gitignore |
+| X 轨 | `BLOCKED` —— 平台轨未合并（`feat/47-x-platform-track`，PR #50） |
+| XHS 轨 | `BLOCKED` —— 迁移未合并且处于权利审查；无目录根 |
+| 测试 | `tests/test_skill_doctor.py`、`tests/test_skill_router_capabilities.py`，均已注册进 CI |
+| Pull Request | 已合并 [#77](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/77) |
+
+路由器不建第二套 Skill Engine，也不复制任何第三方 Skill。声明只是指向本仓库已拥有的代码；
+适配器、运行时锁校验器与 M5 门禁各自保留最终权威。

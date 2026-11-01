@@ -1,0 +1,6 @@
+{
+  "status": "OK",
+  "video": "project://final/m5-easel-pin.mp4",
+  "subtitles_burned": true,
+  "upstream": "easel@v0.2.1:skills/openclaw/auto-short-video/scripts/assemble.py"
+}

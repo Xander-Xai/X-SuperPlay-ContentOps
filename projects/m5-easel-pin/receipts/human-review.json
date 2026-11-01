@@ -1,0 +1,17 @@
+{
+  "project": "projects/m5-easel-pin",
+  "video": "projects/m5-easel-pin/final/m5-easel-pin.mp4",
+  "engine": "easel",
+  "voice_quality": "windows_sapi_offline",
+  "production_ready": false,
+  "state": "PENDING_FOUNDER_REVIEW",
+  "auto_qc_result": "PASS",
+  "auto_qc_checks": 21,
+  "auto_qc_fails": [],
+  "auto_qc_warns": [],
+  "reviewer": null,
+  "reviewed_at": null,
+  "scores": null,
+  "decision": null,
+  "note": "scores are null until a human fills them; this file is not an approval"
+}

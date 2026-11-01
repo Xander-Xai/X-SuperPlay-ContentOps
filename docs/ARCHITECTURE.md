@@ -3,10 +3,11 @@
 [English](ARCHITECTURE.md) | [简体中文](ARCHITECTURE.zh-CN.md)
 
 > What the system is. Where the boundaries are. How components call each other.
+> Describes `fix/57-m5-media-fixtures` (2026-11-01), not a future branch.
 
 ## System Boundaries
 
-```
+```text
 X-SuperPlay-OPC-Blueprint
 = Business Source of Truth (separate repo)
     │
@@ -15,88 +16,175 @@ X-SuperPlay-OPC-Blueprint
 X-SuperPlay-ContentOps  ← THIS REPO
 = Executable Content Production Runtime
     │
-    ├── SourceArtifact ingestion
-    ├── Evidence + Claim binding
-    ├── Content Brief → Master Script → Storyboard
-    ├── Asset planning (real first, generated second)
-    ├── Media generation (MiniMax subscription, when implemented)
-    ├── Voice synthesis
-    ├── Video composition (Easel assemble.py)
-    ├── Automated QC
-    ├── Human Review gate
-    └── Receipts (full provenance)
+    ├── SourceArtifact ingestion          (implemented, M5)
+    ├── Evidence + Claim binding          (implemented, M5)
+    ├── Script → Storyboard                (implemented, M5 / V1)
+    ├── Asset planning + media-use         (implemented, M4.5 / M5)
+    ├── Media generation (MiniMax)         (implemented, verified subsets)
+    ├── Voice synthesis                    (edge-tts, Windows SAPI)
+    ├── Video composition (Easel adapter)  (implemented)
+    ├── Automated QC                       (implemented)
+    ├── Human Review gate                  (implemented, never auto-approved)
+    └── Receipts (full provenance)         (implemented)
     │
     ▼
 Easel v0.2.1 (pinned upstream)
 = Content Workflow / Skill Engine
     ├── tts.py (edge-tts wrapper)
     ├── auto-short-video/scripts/assemble.py
-    └── 114 Skills (discover/plan/produce/publish/attribute)
+    └── 114 Skills
     │
     ▼
 FFmpeg / deterministic tools
 = Rendering / Media Utilities
 ```
 
+## Branch Layers
+
+The repository is mid-convergence. A component is only "part of the system" if it
+is on this branch.
+
+| Layer | Where it lives | Status on this branch |
+|---|---|---|
+| M5 evidence chain, media, QC, skill router/authorization | this branch | implemented |
+| Account-aware content router, workflow gates, brief/script/design stages | `feat/content-router` (PR #49) | **unmerged** |
+| XHS eight-step workflow | `feat/xhs-fa-migration` | **unmerged** |
+| X editorial package | `feat/47-x-platform-track` / `feat/85-x-editorial-decoupled` | **unmerged** |
+| GZH ten-stage vendored workflow | local `vendor/` + `fix/56-gzh-provenance` | **unmerged / rights-blocked** |
+
+[CONVERGENCE-REQUIREMENTS-2026-11-01.md](CONVERGENCE-REQUIREMENTS-2026-11-01.md)
+defines the merge order. A skill that references an unmerged layer is declared
+as such in [SKILL-REGISTRY.md](SKILL-REGISTRY.md); it is not presented as
+runnable here.
+
 ## Component Map
 
-```
+```text
 scripts/
-├── run_v1.py            ← Pipeline orchestrator (easel + fallback engines)
-├── assemble_easel.py    ← Easel orchestration adapter (Windows subtitle workaround)
-├── qc_video.py          ← Automated QC gate (technical + evidence-first)
-├── resolve_easel.py    ← Single runtime resolver (rejects unpinned/foreign)
-├── verify_easel_runtime.py ← Content hash verification
-├── doctor.py            ← Environment checker
-├── bootstrap.ps1/.sh    ← Environment setup
-├── new_project.py       ← Project scaffolding
-└── test_basic.py        ← Current test suite (9 tests)
+├── run_v1.py             ← V1 orchestrator (easel + fallback engines)
+├── m5_production.py      ← Evidence-first chain (sources → … → review)
+├── assemble_easel.py     ← Easel orchestration adapter (Windows subtitle workaround)
+├── qc_video.py           ← Automated technical + evidence QC
+├── resolve_easel.py      ← Single runtime resolver
+├── verify_easel_runtime.py ← Content-hash verification
+├── doctor.py             ← Environment checker
+├── process_utils.py      ← Hidden-window subprocess layer
+├── media_use_adapter.py  ← media-use operator CLI
+├── media_use_runtime.py  ← approved baseline / install / lock / verify
+├── skill_route.py        ← discovery + rights-aware resolution (no execution)
+├── skill_execute.py      ← managed execution through a trusted grant
+├── dev_check.py          ← unified local gate
+└── test_basic.py         ← script-level smoke suite
+
+src/contentops/
+├── evidence/             ← SourceArtifact, ClaimLedger
+├── media/                ← contracts, billing, providers, manifest, validation,
+│                           transform, QC canonicalization, rights gate, media-use
+├── skills/               ← authorization, execution gate, grant source
+└── golden/               ← Golden identity, evidence locks, review, A/B variants
 
 runtime/
-├── easel.lock.json      ← Canonical Easel pin (machine-readable)
-└── easel-runtime.json   ← Provenance record
+├── easel.lock.json               ← canonical Easel pin
+├── easel-runtime.json            ← provenance record
+├── media-use-runtime-baseline.json
+├── media-use-package-lock.json
+└── skill-registry.json           ← declared capabilities (media-use only)
 
 projects/<slug>/
-├── project.yaml         ← Project metadata
-├── sources/             ← Real evidence (screenshots, diagrams, docs)
-├── script/              ← Master script + storyboard
-├── assets/              ← Voice, captions, generated assets
-├── work/                ← Intermediate renders (gitignored)
-├── final/               ← Output MP4s (gitignored)
-└── receipts/            ← Build, QC, runtime, human review receipts
-
-templates/               ← Project and video templates
+├── project.yaml          ← metadata + source_refs + media_use requests
+├── sources/              ← real evidence
+├── script/               ← master script, storyboard, claims
+├── assets/               ← voice, captions, imported/generated assets
+├── work/                 ← intermediate renders (gitignored)
+├── final/                ← output MP4s (gitignored)
+└── receipts/             ← build, QC, runtime, human-review receipts
 ```
+
+The `src/contentops/{workflow,routing,platforms,quality,script,hotspots,optimization}`
+directories exist only as empty `__pycache__` remnants on this branch. Their code
+is on `feat/content-router`; do not treat the directories as implemented modules.
 
 ## Pipeline Flow
 
+### V1 (storyboard-driven)
+
 ```
-Business Repo / Experiment / Research
-         ↓
-   SourceArtifact (planned: RepoSourceAdapter)
-         ↓
-   Evidence + Claim Ledger (planned)
-         ↓
-   Content Brief → Master Script
-         ↓
-   Storyboard (per-shot: purpose, narration, source, provenance)
-         ↓
-   Asset Plan (real first, generated second)
-         ↓
-   Voice synthesis (current: edge-tts → planned: MiniMax subscription)
-         ↓
-   Easel auto-short-video/assemble.py (upstream, unmodified)
-         ↓
-   FFmpeg subtitle burn (Windows path workaround)
-         ↓
-   final.mp4
-         ↓
-   Automated QC (scripts/qc_video.py)
-         ↓
-   Human Review gate (100-point scorecard)
-         ↓
-   PRODUCTION_READY (only with Founder approval)
+projects/<slug>/script/{master.md,storyboard.json}
+  → resolve pinned Easel
+  → voice (edge-tts via Easel tts.py)
+  → Easel assemble.py
+  → subtitle burn (assemble_easel adapter)
+  → final/easel.mp4
+  → qc_video
 ```
+
+### M5 (evidence-first)
+
+```
+project.yaml source_refs
+  → SourceArtifact (permission-gated)
+  → ClaimLedger (quotes verified)
+  → media_use stage (optional, local-only)
+  → script → narration → subtitles → storyboard
+  → MediaManifest (assets inventory + timeline)
+  → pinned Easel compose
+  → qc_video → human review
+```
+
+Both paths end at `PENDING_FOUNDER_REVIEW` with `production_ready: false`.
+
+## Media Convergence
+
+One `MediaManifest` is the sole asset list. `assets` is the inventory (it may hold
+a source and its derived transform); `timeline` selects exactly one active asset
+per placement. Composition reads the timeline, never the inventory.
+
+All paths are logical (`project://`, `repo://`) and resolved at use. Absolute
+host paths are refused in committed manifests and receipts. QC receipts are
+canonicalized (`contentops.qc-canonical/v1`) with an explicit `currency` and
+`graded_target`.
+
+## media-use Integration (Issue #57)
+
+`media-use` is a skill in the upstream HyperFrames repository (Apache-2.0). It is
+consumed as a **pinned external dependency**, never copied into this repository
+(ADR-008).
+
+```
+src/contentops/media/media_use_adapter.py  ← only module that knows the skill exists
+scripts/media_use_adapter.py               ← operator CLI
+   status | doctor | candidates | resolve | adopt | ingest | import | verify | demo
+```
+
+Two contract additions make the mapping honest:
+
+- `AssetKind.LICENSED_EXTERNAL` — licensed third-party material. It is not a
+  capture and not a model generation, so it is excluded from both
+  `EVIDENCE_CAPABLE` and `GENERATED`.
+- `MediaModality.AUDIO` — background music and sound effects. It is not
+  narration, so it carries no `asset_kind` and can never be evidence.
+
+Imports become `contentops.media-import/v1` sidecars and enter the single
+`MediaManifest`. The skill's `.media/manifest.jsonl` is read only to look up a
+record; it is never a second asset list.
+
+Default posture is closed: no network, no paid provider, no cross-project reuse,
+no forced provider. A trusted host lock must name the approved baseline; a clean
+checkout is `BLOCKED / MISSING_RUNTIME` by design.
+
+## Skill Routing and Execution
+
+Three questions stay separate:
+
+| Question | Layer | Who answers |
+|---|---|---|
+| What exists on this host? | discovery | `skill_route.py --list/--sources/--match` |
+| May this be handed to an adapter? | resolution | `skill_route.py --resolve` + `runtime/skill-registry.json` |
+| May it actually run? | execution | the adapter, runtime lock verifier, grant gate |
+
+The router never authorizes execution. Every record carries
+`execution_authorized: false`. A declaration points at code on this branch; a
+skill whose code is unmerged is not declared.
 
 ## Extension Priority
 
@@ -108,12 +196,13 @@ UPSTREAM PATCH → modify Easel source (requires patch file + tests)
 FORK        → last resort only
 ```
 
-Current: No fork. No upstream modification. `assemble_easel.py` is an ADAPTER (orchestration workaround, not source edit).
+Current: no fork. No upstream modification. `assemble_easel.py` is an ADAPTER
+(orchestration workaround, not a source edit).
 
 ## What ContentOps Does NOT Own
 
 - Business judgment (stays in OPC Blueprint)
 - Commercial facts (stays in OPC)
 - Platform publishing (stays manual, human-gated)
-- Metrics scraping (not yet implemented)
+- Metrics scraping (not implemented)
 - Auto-publishing (explicitly out of scope)

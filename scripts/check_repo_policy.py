@@ -9,6 +9,7 @@ Checks:
   5. New research files have canonical: false header
   6. New canonical docs appear in docs/INDEX.md
   7. No private provider task state tracked
+  8. Every tests/test_*.py suite is wired into the CI workflow
 
 Exit 0 = pass, exit 1 = fail.
 """
@@ -217,6 +218,34 @@ def check_index_tracking():
     return failures
 
 
+def check_test_suites_registered_in_ci():
+    """Every suite under tests/ must be wired into the CI workflow.
+
+    A suite that is not named in ``.github/workflows/ci.yml`` never runs, and a
+    green CI run is then not evidence that it passed. That gap is invisible by
+    construction: the file looks complete from the outside. Two milestone
+    suites were merged unwired once, so the gap is checked, not remembered.
+    """
+    failures = []
+    workflow = ROOT / ".github" / "workflows" / "ci.yml"
+    if not workflow.exists():
+        return ["MISSING: .github/workflows/ci.yml — cannot verify CI wiring"]
+
+    text = workflow.read_text(encoding="utf-8", errors="ignore")
+    tests_dir = ROOT / "tests"
+    if not tests_dir.is_dir():
+        return []
+
+    for suite in sorted(tests_dir.glob("test_*.py")):
+        rel = f"tests/{suite.name}"
+        if rel not in text:
+            failures.append(
+                f"TEST SUITE NOT IN CI: {rel} — add a named step to "
+                f".github/workflows/ci.yml or the suite never runs"
+            )
+    return failures
+
+
 def main():
     all_failures = []
     checks = [
@@ -228,6 +257,7 @@ def main():
         ("no_c0_chars", check_no_c0_control_chars),
         ("index_tracking", check_index_tracking),
         ("no_tracked_task_state", check_no_tracked_task_state),
+        ("test_suites_in_ci", check_test_suites_registered_in_ci),
     ]
     for name, fn in checks:
         failures = fn()

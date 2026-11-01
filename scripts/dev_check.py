@@ -6,10 +6,11 @@ Runs before every commit / PR.
 Order:
   1. repo_policy_check
   2. subprocess_policy_check
-  3. check_docs
-  4. check_i18n
-  5. test_basic
-  6. git diff --check (whitespace)
+  3. skill_reference_check
+  4. check_docs
+  5. check_i18n
+  6. test_basic
+  7. git diff --check (whitespace)
 
 All must pass. All checks are read-only and deterministic.
 
@@ -25,6 +26,13 @@ from pathlib import Path
 from process_utils import hidden_run, python_executable
 
 ROOT = Path(__file__).resolve().parents[1]
+
+# A failing check must be readable, not a UnicodeEncodeError on a Windows console.
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except (AttributeError, ValueError):
+    pass
 
 
 def run_check(name: str, cmd: list[str]) -> bool:
@@ -48,6 +56,7 @@ def main():
     checks = [
         ("repo_policy", [py, "scripts/check_repo_policy.py"]) if not args.quick else None,
         ("subprocess_policy", [py, "scripts/check_subprocess_policy.py"]),
+        ("skill_references", [py, "scripts/check_skill_references.py"]),
         ("docs_check",  [py, "scripts/check_docs.py"]),
         ("i18n_check",  [py, "scripts/check_i18n.py"]),
         ("basic_tests", [py, "scripts/test_basic.py"]),

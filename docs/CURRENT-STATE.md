@@ -4,16 +4,32 @@
 
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
-> Last verified: 2026-10-04
+> Last verified: 2026-11-01 on `fix/57-m5-media-fixtures` (PR #89).
+> Sections below the "Layer status" table are historical milestone records;
+> they describe how a capability was proven, not what is current.
+
+## Layer status (2026-11-01)
+
+| Layer | Status |
+|---|---|
+| M5 evidence chain, media contracts, QC, media-use adapter, skill router/authorization | implemented on this branch |
+| Content router, account DNA, workflow gates, brief/script/design stages | **unmerged** (`feat/content-router`, PR #49) |
+| XHS / X / GZH tracks | **unmerged / rights-blocked** |
+| MiniMax speech, image, H3 video | implemented; verified subsets recorded below |
+| Production ready | **false** for every track |
 
 ## Git
 
 | Property | Value |
 |---|---|
-| Default branch | `main` (only persistent branch) |
+| Default branch | `main` — protected |
+| This branch | `fix/57-m5-media-fixtures`, 17 commits ahead of `main`, open PR #89 |
 | Main protection | **PROTECTED** — required status checks + PR + no force push + no deletion + linear history |
 | Required checks | `Tests (ubuntu-latest)`, `Tests (windows-latest)`, `Repo policy checks` |
 | Branch strategy | Issue-scoped short-lived branches, squash merge, auto-delete on merge |
+| Current branch reality | 30+ local branches and worktrees exist; only `main` is persistent. Unmerged work is not part of the system |
+| What `main` actually contains | Up to **phase-4 delivery unlock** (PR #72). The media-use integration, rights gate, skill router and skill-execution authorization stack (PRs #71, #74–#81, #84) exists **only on `fix/57-m5-media-fixtures`** and has never reached `main` |
+| Consequence | `main` is protected but stale. The first integration step is to land PR #89 and this work, not to add new features on top |
 
 ## Easel Runtime
 
@@ -24,28 +40,63 @@
 | Path | `.runtime/easel/` |
 | Acquisition | Release archive (GitHub tarball via `gh api`) |
 | Verified | 982/982 blob SHA-1 matched upstream tree |
-| Re-verified | 2026-10-03 via `scripts/verify_easel_runtime.py --resolve-tag` |
+| Re-verified | 2026-10-31 via `scripts/verify_easel_runtime.py` (982/982, 0 missing, 0 mismatch, 0 extra) |
+| Independent cross-check | 2026-10-31 against the official `v0.2.1` release archive: 982 files, 0 missing, 0 mismatch |
+| Local extras | `outputs/` and `__pycache__/` only; no tracked file differs from upstream |
 | Lock file | `runtime/easel.lock.json` |
 | Provenance | `runtime/easel-runtime.json` |
+| Upstream stable | v0.3.0 (2026-10-12) — **not adopted**: 158 commits, skills moved from `skills/openclaw/` to `skills/builtin/`, `assemble.py` changed, and the tag was force-replaced upstream |
 
 ## Pipeline
 
+Two entry points share the pinned Easel composer. Neither publishes.
+
+| Property | `run_v1.py` (V1) | `m5_production.py` (M5) |
+|---|---|---|
+| Input | authored `storyboard.json` + `master.md` | `project.yaml` `source_refs` + claims |
+| Narration | edge-tts (`zh-CN-YunxiNeural`) | Windows SAPI, offline |
+| Voice quality | `edge_tts_fallback` — not production-grade | `windows_sapi_offline` — not production-grade |
+| Evidence layer | none | `SourceArtifact` + `ClaimLedger` |
+| Composition | pinned Easel `assemble.py` via `assemble_easel.run` | same |
+| Subtitle handling | `assemble_easel` strips, runs upstream, burns separately | burned from narration timings |
+| Production ready | **false** | **false** — `PENDING_FOUNDER_REVIEW` |
+
+Diagnostic engine: `python scripts/run_v1.py <project> --engine fallback`
+(ffmpeg-only, never production, never reports `production_ready: true`).
+
+## M5 Evidence-First Production Chain (Issue #6) — IMPLEMENTED 2026-10-31
+
 | Property | Value |
 |---|---|
-| Production engine | `easel` (Easel `auto-short-video/assemble.py`) |
-| Diagnostic engine | `fallback` (ffmpeg-only, never production) |
-| Production voice | edge-tts via Easel `tts.py` (zh-CN-YunxiNeural) |
-| Voice quality | `edge_tts_fallback` — not production-grade |
-| Production ready | **false** — READY_FOR_HUMAN_REVIEW |
-| Subtitle workaround | `scripts/assemble_easel.py` — strips subtitle, runs upstream, burns separately (no upstream modification) |
+| Entry | `python scripts/m5_production.py projects/<slug>` |
+| Evidence layer | `src/contentops/evidence/` — `SourceArtifact`, `ClaimLedger` |
+| Stages | sources → assets → claims → script → narration → subtitles → storyboard → compose → QC → review |
+| First run | `projects/m5-easel-pin` — 4 sources, 4 claims, 3 declared visuals, 7 lines |
+| Narration | Windows SAPI, offline, 45.1 s, `voice_quality: windows_sapi_offline` |
+| Subtitles | 7 cues burned from the narration timings, coverage 0.963 |
+| Composition | pinned Easel, 1080×1920 H.264 + AAC |
+| QC | PASS — 19 checks, real-source ratio 1.0 |
+| Production ready | **false** — `PENDING_FOUNDER_REVIEW`, scores null |
+| Tests | `tests/test_m5_evidence.py` — 18 offline tests |
+
+Composer defect fixed in the same change: ASS subtitle timestamps were written
+with three fractional digits, which libass reads as centiseconds, stretching
+every cue roughly tenfold and overlapping neighbours. `assemble_easel._srt_to_ass`
+now emits centiseconds; verified by rendering the cues on black and by diffing
+the burned band against the unburned render.
 
 ## Web Workbench
 
 | Property | Value |
 |---|---|
-| Status | **NOT VERIFIED** |
-| Doctor FAILs | 6 (fastapi, uvicorn, sse_starlette, multipart, web frontend build, .env API Key) |
-| Impact | Does NOT block video pipeline (TTS + assemble use stdlib-only path) |
+| Status | **NOT VERIFIED / not a current doctor check** |
+| Current doctor | 7 checks (python, node, ffmpeg, ffprobe, git, easel_checkout, repo_layout) — all OK on 2026-11-01 |
+| Impact | Does NOT block the video pipeline (TTS + compose use the stdlib path) |
+
+The earlier "6/7 doctor FAILs" list described a doctor version that checked Web
+UI packages and a frontend build. The current `doctor.py` does not run those
+checks, so that claim is retired rather than repeated. Web workbench readiness is
+unverified, not failed.
 
 ## MiniMax
 
@@ -76,20 +127,51 @@
 | Sample | Source | Status |
 |---|---|---|
 | `projects/easel-review/` | Easel v0.2.1 runtime evaluation | 1 successful build, QC PASS, awaiting human review |
+| `projects/m5-media-use/` | M5 evidence chain with the media-use sample | final MP4, QC WARN, `PENDING_FOUNDER_REVIEW` |
+| `projects/m5-easel-pin/` | First M5 evidence-chain run | QC PASS (19 checks), real-source ratio 1.0 |
+| `projects/m45-technical-integration/` | M4.5 media convergence | QC WARN, zero provider calls |
 
 ## Tests
 
-| Suite | Status |
-|---|---|
-| `scripts/test_basic.py` (9 tests) | All PASS |
+| Suite group | Files | Count |
+|---|---|---|
+| Script smoke | `scripts/test_basic.py` | 10 |
+| Media / provider (offline fixtures) | speech, image, H3, convergence, media-use adapter | 432 `test_*` functions |
+| M5 evidence + media-use traceability | `test_m5_evidence.py`, `test_m5_*` | 18 + list-driven suites |
+| Golden / reproducibility | A/B variants, voice assets, locked inputs | 47 |
+| Skill / authorization | router, doctor, execution gate, grants | list-driven suites |
+| Skill reference integrity | `tests/test_skill_references.py` | 6 |
+| Windows | subprocess, paths | 53 |
+| Policy / secrets | gitignore, local-approval, receipt secrets | 19 + list-driven suites |
+| **Total** | **31 suites** | **704 top-level `test_*` functions + list-driven and unittest suites** |
+
+`python scripts/dev_check.py` runs the local gate. CI enumerates every suite as a
+named step; a suite without a CI step does not run, and one green run is not
+evidence that every suite passed. `ffmpeg` and `Pillow` are installed in CI;
+suites that need them report skips when absent.
+
+See [TEST-PLAN.md](TEST-PLAN.md) for the full inventory.
 
 ## Known Blockers
 
-1. Voice quality — edge-tts is mechanical, not production-grade. Primary motivation for MiniMax voice integration (M2).
-2. Web workbench — 6 doctor FAILs. Does not block video pipeline.
-3. Gateway healthz — upstream hardcodes port 18789; easel profile uses 37289. Does not block video pipeline.
-4. Human Review — no `human-review.json` receipt for easel-review project.
-5. ~~Main branch unprotected~~ — **RESOLVED** (G0.6): main is now protected via GitHub branch protection.
+1. Voice quality — edge-tts is mechanical and Windows SAPI is offline-flat.
+   Neither is production-grade. MiniMax speech is implemented but unapproved.
+2. Human Review — no completed `human-review.json` for any project.
+   Every result stays `PENDING_FOUNDER_REVIEW`.
+3. media-use runtime lock — a clean checkout (and this host today) resolves
+   `BLOCKED / MISSING_RUNTIME`. The approved baseline exists; a host lock must be
+   generated and trusted before the adapter can run.
+4. Unmerged content layer — account routing, workflow gates, brief/script/design
+   stages, XHS, X and GZH are not on this branch. They are prerequisites for the
+   five `x-superplay-*` skills, not available capabilities.
+5. Documentation convergence — this document was restructured on 2026-11-01;
+   PRD, DEVELOPMENT-PLAN and TEST-PLAN were updated in the same pass. The
+   remaining requirements are in
+   [CONVERGENCE-REQUIREMENTS-2026-11-01.md](CONVERGENCE-REQUIREMENTS-2026-11-01.md).
+6. Upstream pins — Easel v0.3.0 and HyperFrames 0.8.225 are available and not
+   adopted. See the convergence requirements for the decision.
+7. ~~Main branch unprotected~~ — **RESOLVED** (G0.6): main is protected via
+   GitHub branch protection.
 
 
 ## M3 Image Generation (Issue #20) — VERIFIED 2026-10-04
@@ -343,3 +425,132 @@ Three real bugs in the new code, all found by tests rather than review:
 Plus one validation gap: a key-shaped value was only refused in a known field
 list, so it could be smuggled through a new field. Now no string value anywhere in
 a public receipt may match the provider-key shape.
+
+## HyperFrames media-use integration (Issue #57) — IMPLEMENTED 2026-10-31
+
+Re-verified after owner approval on 2026-10-31. Branch `feat/57-media-use-adapter`.
+**Zero provider calls.** The verified runtime was exercised with no network
+egress; installation itself is a separate, reviewed preparation step.
+
+| Property | Value |
+|---|---|
+| Upstream | `heygen-com/hyperframes` @ `5e4f5aefb58a9996ea5920f008184e9789346871` (Apache-2.0) |
+| Skill commit | `f2358315e59731833334c5d881a7fb5543c22a97` (`skills/media-use`) |
+| Adapter | `src/contentops/media/media_use_adapter.py` — the only module that knows the skill exists |
+| CLI | `scripts/media_use_adapter.py` — `status/doctor/candidates/resolve/adopt/ingest/import/verify/demo` |
+| New kinds | `AssetKind.LICENSED_EXTERNAL`, `MediaModality.AUDIO` |
+| Receipt | `contentops.media-import/v1` with `output_sha256`, `fingerprint`, `generated`, `evidence_capable`, `production_ready`, `human_review`, `license` |
+| Evidence | every import is `evidence_capable=false`; generated resolutions are `GENERATED_NOT_IMPORTABLE` |
+| Cross-project | blocked unless `allow_cross_project_reuse`; child `HOME` is project-local |
+| Runtime trust | two layers: a committed, owner-approved baseline (`runtime/media-use-runtime-baseline.json`, approved 2026-10-31 for offline-only scope) and a host-specific lock (`CONTENTOPS_MEDIA_USE_RUNTIME_LOCK`). A lock is trusted only if it names the approved baseline by digest and every byte matches. A fresh checkout still refuses execution until a machine lock is generated; approving the baseline does not install or trust a host runtime |
+| Verified runtime | `hyperframes@0.8.222` (published SRI matched), official Node v22.23.4 on Linux and win-x64 (SHASUMS match), 127-entry lockfile. Package-tree digest `be8e24df…` reproduced independently on both platforms |
+| Acceptance | Linux: `TRUSTED_RUNTIME` inside a no-egress namespace, `adopt`/`candidates`/`resolve` through the adapter. Windows: `install` → `lock` → `TRUSTED_RUNTIME` → real CLI. Isolated demo with real Easel compose: `compose` OK, QC `WARN`, `production_ready:false` |
+| Install / lock entry point | `scripts/media_use_runtime.py` — `approve`, `install`, `lock`, `verify`, `selfcheck`; approving and lock generation are separate actions |
+| Tests | 53 adapter tests PASS; 97 M4.5 convergence tests PASS (re-run 2026-10-31) |
+| Pull request | Draft [#64](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/64) |
+| Skill Router | **Merged via [#77](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/77)** — `scripts/skill_route.py` and `runtime/skill-registry.json` register `media-use` as a declared capability. #49 remains unmerged; #59 was closed as superseded by #77. The adapter still exposes `status/doctor/candidates/resolve/adopt`; the registry is the routing pointer |
+
+### What the approval does and does not authorize
+
+- The approved baseline authorizes **offline local asset operations** with the
+  pinned `hyperframes@0.8.222` runtime: `adopt`, `candidates` and local
+  `resolve`.
+- It does **not** authorize network providers, paid generation, cross-project
+  reuse, automatic publication, production delivery, or any source-media
+  licence. A trusted runtime proves *what executed*, never *where an asset came
+  from* or *what its licence is*.
+- Every imported asset still needs an explicit licence and stays
+  `evidence_capable=false`, `production_ready=false`, `human_review=PENDING`.
+- The isolated Easel demo ran against a separate verified runtime. It does
+  **not** mean the original `.runtime/easel` checkout is healthy or restored.
+
+### Offline end-to-end sample
+
+`python scripts/media_use_adapter.py demo` (exit `0`) produced
+`project://final/media-use-demo.mp4` — 1080x1920, h264, 30.0 s, 300,437 bytes.
+
+| Fact | Value |
+|---|---|
+| Manifest | `receipts/media-manifest.json`, fingerprint `2b01c1cb716723007527a422dff4810b16db1d9b090e61a5f2a5de578a5ba75d` |
+| Inventory | 7 assets: 2 real screenshots, 2 licensed images, 1 icon, 1 BGM, 1 bundled SFX |
+| Timeline | 2 placements, both `SCREENSHOT`, `real_source_ratio` **1.0** |
+| Imported via media-use | 5 records (4 local fixtures labelled `OWNED-FIXTURE-DEMO`, 1 bundled SFX `Pixabay-Content-License`) |
+| Gate | every asset `PENDING_HUMAN_REVIEW` |
+| Final QC | `overall: WARN` (no FAIL), `currency: NON_CURRENT_DIAGNOSTIC` |
+| Provider calls | speech 0 / image 0 / video 0 |
+| `production_ready` | `false` |
+
+The two real screenshots come from `projects/easel-review/sources/screenshots/`.
+The image/BGM fixtures are deterministic placeholders generated by the demo and
+labelled as such in their receipts; they are **not** third-party licensed media.
+An image resolve with no local candidate and no network authorization is recorded
+as `NEEDS_HUMAN_ACTION` — nothing is downloaded or generated to make the demo look
+complete.
+
+The render is a technical integration sample. It has no audio track, no captions
+and no Founder approval, and `qc_video` warns about exactly that.
+
+## M5 media-use automation — INTEGRATION_VERIFIED 2026-10-31
+
+Merged to `main` through [#71](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/71).
+The rights-gate follow-up is [#76](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/76).
+**Zero provider calls; zero network.** The real
+`scripts/m5_production.py` entry ran the real `MediaUseAdapter` against the
+approved `hyperframes@0.8.222` runtime on Windows.
+
+| Property | Value |
+|---|---|
+| Entry point | `python scripts/m5_production.py projects/m5-media-use` |
+| Runtime | host lock `contentops.media-use-runtime-lock/v2`, state `TRUSTED_RUNTIME`, baseline digest matched |
+| Configuration | `projects/m5-media-use/project.yaml` → `media_use.requests` (image, bgm, sfx) |
+| Stages run | sources → media_use → assets → claims → script → narration → subtitles → storyboard → Easel compose → QC → review |
+| Imported visual | `project://assets/support.png`, SHA-256 `85c4ab5c5368b1ab60a98854ee292529d6b7908be58acfccc1d5f4ed06cddb53`, `evidence_capable=false` |
+| Imported BGM | local deterministic tone bed, SHA-256 `1dcb9c7e3708cfc0cc68663642cc9d6b779ff7bd5812fdb6e31e4d74f5b4ee5e` |
+| Imported SFX | bundled `sfx_001`, Pixabay Content License, receipt `contentops.media-import/v1` |
+| Final artifact | `projects/m5-media-use/final/m5-media-use.mp4` — h264 1080x1920 + AAC 48 kHz stereo, 25.07 s, 505,448 B, SHA-256 `d4915f45f98008e4adbaa52d29beb787ffc437d383f15415780830aeaf33d731` |
+| QC | `overall: WARN`, audio stream present, no FAIL |
+| Human review | `PENDING_FOUNDER_REVIEW`; `production_ready: false` |
+| Composition proof | frames at 1 s, 2 s, 13 s and 14 s show the imported screenshot with the expected burned captions |
+| BGM proof | inter-line pause 11.70–12.20 s: −60.9 dB with BGM vs −91.0 dB without (−30.1 dB difference) |
+| SFX proof | 6.15–6.28 s: −33.4 dB with SFX vs −60.8 dB without (−27.4 dB difference) |
+| Narration preservation | the same voice window measures −26.8 dB in all three renders, so neither track replaced the voice |
+| Audio controls | volume, placement and mix verified; per-track fade is **not expressible** in the pinned Easel contract (sample bed has fades baked into the file) |
+| Negative acceptance | 11/11 blocked: missing/wrong lock, missing material, hash mismatch, path escape, missing import file, network, paid, unlicensed, duplicate id, legacy project unchanged |
+| Rights gate | `src/contentops/media/rights_gate.py` refuses a bare `rights_reviewed` flag; each request needs a matching `assets/<id>.rights.json` review record. Unknown, software and non-commercial licences are refused; synthetic assets are never evidence |
+| Committed example | `projects/m5-media-use/`; media binaries and `.media/` stay gitignored, receipts are committed |
+| Pull request | Merged [#71](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/71); rights-gate follow-up [#76](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/76) |
+| Routing | **MERGED via [#77](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/77)** — `scripts/skill_route.py` and `runtime/skill-registry.json` are on `main`; see *Skill discovery and resolution* below |
+
+`INTEGRATION_VERIFIED` is a statement about this machine and this lock. It is
+not `MERGED_TO_MAIN`, and it does not approve the imported material, the voice
+track or the video for publication.
+
+## Skill discovery and resolution (Issue #57) — MERGED 2026-10-31
+
+Merged to `main` through [#77](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/77).
+The router and registry run on `main` today; this section records what they do
+and what remains blocked.
+
+| Property | Value |
+|---|---|
+| Entry point | `python scripts/skill_route.py` (stdlib only; no process, no network) |
+| Discovery | `--sources`, `--list`, `--match`, `--resolve` over repo-owned, Easel and shared skill roots |
+| Doctor | `--doctor` — roots, duplicates, permission declarations, rights, unsafe and dangling paths |
+| Declared capabilities | `runtime/skill-registry.json`, schema `contentops.skill-registry/v1` |
+| Registered capability | `media-use` only, pointing at the merged adapter, runtime baseline, lock verifier and M5 `media_use` stage |
+| Resolution verdicts | `RESOLVABLE`, or `BLOCKED` with `UNKNOWN_SKILL`, `DUPLICATE_AMBIGUITY`, `OUT_OF_SCOPE`, `UNVERIFIED_RIGHTS`, `UNAUTHORIZED_PROVIDER`, `SKILL_NOT_INSTALLED`, `MISSING_RUNTIME` |
+| Execution authorization | **never granted** by the router; every record carries `execution_authorized: false` |
+| media-use with a host runtime lock | `RESOLVABLE` (verified on this host against `runtime/media-use-runtime-baseline.json`) |
+| media-use without a lock | `BLOCKED / MISSING_RUNTIME` (the default on a clean checkout) |
+| Verdict on this host (2026-11-01) | `BLOCKED / MISSING_RUNTIME` — `CONTENTOPS_MEDIA_USE_RUNTIME_LOCK` is not set here, so the adapter is not executable on this machine |
+| Legacy M5 | unchanged — `scripts/m5_production.py` does not import the router; a test asserts it |
+| VIDEO track | discovery-only until a catalog root exists on the host |
+| GZH track | `BLOCKED` — vendored third-party track, rights unverified, `vendor/` is gitignored |
+| X track | `BLOCKED` — platform track unmerged (`feat/47-x-platform-track`, PR #50) |
+| XHS track | `BLOCKED` — migration unmerged and under rights review; no catalog root |
+| Tests | `tests/test_skill_doctor.py`, `tests/test_skill_router_capabilities.py`; both registered in CI |
+| Pull request | Merged [#77](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/77) |
+
+The router adds no second skill engine and copies no third-party skill. A
+declaration is a pointer to code this repository already owns; the adapter, the
+runtime lock verifier and the M5 gate keep their own authority.

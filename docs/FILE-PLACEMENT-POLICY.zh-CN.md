@@ -28,13 +28,23 @@ translation_status: synced
 
 仅已废弃的历史资料。每个文件必须有 ```status: superseded``` 头。
 
+## skills/
+
+仓库自有 Skill 指令及其参考资料、模板放在 `skills/<name>/`。第三方 vendor 内容、
+凭证、生成产物和运行时状态不得放在此处。可发现不代表权利已获核验或执行已获授权。
+
 ## scripts/
 
 CLI 工具、运维脚本、验证、构建编排。
 
+新增校验脚本（例如 ```check_skill_references.py```）属于此处。
+
 ## runtime/
 
 仅机器可读的固定版本和来源记录。
+
+```runtime/skill-registry.json``` 是能力声明指针表；
+```runtime/content-skill-status.json``` 记录已安装 Skill 引用的、当前分支并不存在的代码。
 
 ## tests/
 

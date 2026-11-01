@@ -29,6 +29,7 @@ translation_status: synced
 | 锁文件 | ```runtime/easel.lock.json``` |
 | 本地路径 | ```.runtime/easel/```（gitignored） |
 | 验证 | 982/982 blob SHA-1 匹配 |
+| 上游稳定版 | v0.3.0（2026-10-12）—— **未采用**（见下文 *v0.3.0 差异*） |
 
 ## 规则
 
@@ -54,8 +55,30 @@ translation_status: synced
 | 上游 | ContentOps | 决策 |
 |---|---|---|
 | Easel v0.2.1 | 固定 | 生产 |
+| Easel v0.3.0 | 已发布，未采用 | **高**风险差异 —— 见下文（ADR-012 D3） |
 | Easel main | 监控 | 不消费为生产 |
 | 下一个 release | 待定 | 兼容门控 |
+
+## v0.3.0 差异（2026-11-01 实测）
+
+| 属性 | 值 |
+|---|---|
+| 发布日期 | 2026-10-12 |
+| 与当前固定版本的距离 | 158 个提交、300 个文件变更 |
+| 对本仓库是否破坏性 | **是** |
+| 决策 | 不采用（ADR-012 D3） |
+
+三个事实决定了它：
+
+1. **Skill 路径迁移。** 全部 Skill 从 `skills/openclaw/` 迁到 `skills/builtin/`，
+   `auto-short-video/scripts/assemble.py` 也已变更。Skill 路由器的第一个目录根是
+   `.runtime/easel/skills/openclaw`，目录根随版本变化。
+2. **tag 被强制替换。** 上游先发布 v0.3.0，随后在保持版本号不变的前提下替换了它。
+   可被替换的 tag 不是固定版本。未来采用时必须记录**内容摘要**，而不只是 tag。
+3. **影响面大。** 该版本加入多 Agent 执行引擎（OpenClaw / Codex / OpenCode / ACP /
+   仅聊天），并改动安装、登录与产物处理——影响面远大于补丁版本。
+
+将来采用时，走完整升级门禁，并使用按摘要固定的 Release 归档。
 
 ## 升级门控
 

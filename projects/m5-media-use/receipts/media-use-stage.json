@@ -1,0 +1,93 @@
+{
+  "schema": "contentops.m5-media-use/v1",
+  "mode": "local-only",
+  "network": false,
+  "paid": false,
+  "cross_project": false,
+  "results": [
+    {
+      "id": "support_visual",
+      "state": "IMPORTED",
+      "kind": "image",
+      "source": "project-candidate",
+      "sha256": "85c4ab5c5368b1ab60a98854ee292529d6b7908be58acfccc1d5f4ed06cddb53",
+      "path": "project://assets/support.png",
+      "receipt_ref": "receipts/media-use/support.png.receipt.json",
+      "license": "OWNED-BY-OPERATOR",
+      "attribution": "Repository-classified CREATED_BY_OWNER screenshot of the pinned Easel runtime; no separate capture receipt",
+      "rights": {
+        "schema": "contentops.media-rights/v1",
+        "license_id": "OWNED-BY-OPERATOR",
+        "license_note": "captured or authored by the operator; ownership still needs a review record",
+        "source_url": "OWNED",
+        "reviewed_by": "Xander-Xai",
+        "reviewed_at": "2026-10-31",
+        "review_evidence": "assets/support.rights.json",
+        "review_evidence_sha256": "6191657e8ef3d9a1b15e3589f88c10339a262d68250a10fae13caf9615d70c03",
+        "attribution": "Repository-classified CREATED_BY_OWNER screenshot of the pinned Easel runtime; no separate capture receipt",
+        "synthetic": false,
+        "third_party": false,
+        "evidence_capable": false
+      },
+      "evidence_capable": false,
+      "provider_call": false
+    },
+    {
+      "id": "bed",
+      "state": "IMPORTED",
+      "kind": "bgm",
+      "source": "project-candidate",
+      "sha256": "17fe7d27d2db3be9dfedb69298e19c32ac3923df15a89169a70ade770c36a8bd",
+      "path": "project://assets/bed.mp3",
+      "receipt_ref": "receipts/media-use/bed.mp3.receipt.json",
+      "license": "OWNED-GENERATED-LOCAL",
+      "attribution": "Deterministic ffmpeg tone bed generated for this verification; not catalog music",
+      "rights": {
+        "schema": "contentops.media-rights/v1",
+        "license_id": "OWNED-GENERATED-LOCAL",
+        "license_note": "generated deterministically on this machine; never evidence",
+        "source_url": "GENERATED",
+        "reviewed_by": "Xander-Xai",
+        "reviewed_at": "2026-10-31",
+        "review_evidence": "assets/bed.rights.json",
+        "review_evidence_sha256": "b8a9898fb911c67481431b905c4c42c9a1d24b88ab650e94335c5e7950085fdb",
+        "attribution": "Deterministic ffmpeg tone bed generated for this verification; not catalog music",
+        "synthetic": true,
+        "third_party": false,
+        "evidence_capable": false
+      },
+      "evidence_capable": false,
+      "provider_call": false,
+      "volume": 0.18
+    },
+    {
+      "id": "click_accent",
+      "state": "IMPORTED",
+      "kind": "sfx",
+      "source": "project-candidate",
+      "sha256": "075e17bdac5c13662a1c9530050e0046f81d4138e00eb3bf30427a7b4404103d",
+      "path": "project://.media/audio/sfx/sfx_001.mp3",
+      "receipt_ref": "receipts/media-use/sfx_001.mp3.receipt.json",
+      "license": "Pixabay-Content-License",
+      "attribution": "Bundled media-use SFX (Pixabay Content License)",
+      "rights": {
+        "schema": "contentops.media-rights/v1",
+        "license_id": "Pixabay-Content-License",
+        "license_note": "free commercial use; no standalone redistribution; attribution appreciated",
+        "source_url": "https://pixabay.com/sound-effects/",
+        "reviewed_by": "Xander-Xai",
+        "reviewed_at": "2026-10-31",
+        "review_evidence": "assets/click_accent.rights.json",
+        "review_evidence_sha256": "be0bbb8619c9a5a8a571c344c195cd645ecdd50eb4b1b98e36510d9ba2959d8d",
+        "attribution": "Bundled media-use SFX (Pixabay Content License)",
+        "synthetic": false,
+        "third_party": true,
+        "evidence_capable": false
+      },
+      "evidence_capable": false,
+      "provider_call": false,
+      "volume": 0.55,
+      "at": 6.15
+    }
+  ]
+}

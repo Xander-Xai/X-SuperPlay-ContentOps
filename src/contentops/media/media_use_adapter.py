@@ -1,0 +1,1891 @@
+"""Adapter for the HyperFrames ``media-use`` skill.
+
+What this module is
+-------------------
+A version-pinned **adapter**, not a fork and not a copy. The skill lives outside
+this repository (discovered at ``~/.agents/skills/media-use`` by default), and
+this module is the only ContentOps code that invokes it:
+
+```
+node <skill>/scripts/resolve.mjs --type ... --project ... --json
+```
+
+The adapter exists to answer three questions the skill cannot answer for us:
+
+1. **May this run at all?** Every network, provider and paid path is closed by
+   default. A closed path raises :class:`MediaUseError` with a code, before a
+   child process is spawned.
+2. **What did it actually produce?** The CLI's JSON is parsed, then the file it
+   names is resolved *inside the project directory*, hashed, and recorded in a
+   ``contentops.media-import/v1`` receipt. A path outside the project is refused.
+3. **What may the bytes be used for?** Catalog images and audio are
+   ``LICENSED_EXTERNAL`` (or ``AUDIO`` with no asset kind). They are never
+   evidence-capable, regardless of how convincing a stock photo looks. That is
+   enforced by the existing :class:`~contentops.media.image_contract.AssetRegistry`,
+   not restated here.
+
+Trust boundary
+--------------
+The skill's documentation and output are **untrusted external input**. The
+adapter never lets them choose a ContentOps policy: type support, path
+containment, license requirements and evidence capability are decided here. In
+particular the skill records no license field, so an import without an explicit
+license is refused rather than defaulted to something convenient.
+
+What is deliberately *not* implemented
+--------------------------------------
+``voice``, ``video``, ``grade``, ``lut`` and ``recipe`` are not routed. Speech
+belongs to ContentOps' own provider layer (MiniMax / edge-tts), video generation
+is the M4 H3 path, and grading is a deterministic transform with its own
+receipts. Routing them here would create a second, weaker provenance path. They
+are reported as :data:`CODE_UNSUPPORTED_TYPE`, not silently ignored.
+
+Windows
+-------
+Every child process goes through :func:`scripts.process_utils.hidden_run`, with
+an argument array and no ``shell=True``. The environment is allow-listed, so a
+provider key that happens to be exported in the parent shell is not handed to
+the skill.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import re
+import shutil
+import sys
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
+from urllib.parse import urlsplit, urlunsplit
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts"))
+
+from process_utils import hidden_run  # noqa: E402
+
+from contentops.media.asset_execution import (  # noqa: E402
+    IMPORT_RECEIPT_SUFFIX,
+    import_fingerprint,
+)
+from contentops.media.fingerprint import sha256_file  # noqa: E402
+from contentops.media.image_contract import (  # noqa: E402
+    AssetKind,
+    AssetRegistry,
+    EvidenceUse,
+    register_asset,
+)
+from contentops.media.media_envelope import (  # noqa: E402
+    HUMAN_REVIEW_PENDING,
+    TECHNICAL_NOT_RUN,
+    MediaAssetEnvelope,
+    MediaModality,
+)
+from contentops.media.media_validation import IMPORT_SCHEMA  # noqa: E402
+from contentops.media.transport import write_sidecar  # noqa: E402
+
+__all__ = [
+    "CODE_CLI_FAILED",
+    "CODE_CROSS_PROJECT_NOT_AUTHORIZED",
+    "CODE_GENERATED_NOT_IMPORTABLE",
+    "CODE_HASH_MISMATCH",
+    "CODE_LICENSE_MISSING",
+    "CODE_NEEDS_HUMAN_ACTION",
+    "CODE_NETWORK_NOT_AUTHORIZED",
+    "CODE_NODE_UNAVAILABLE",
+    "CODE_PATH_ESCAPE",
+    "CODE_PAID_NOT_AUTHORIZED",
+    "CODE_PROVIDER_NOT_AUTHORIZED",
+    "CODE_SKILL_UNAVAILABLE",
+    "CODE_TIMEOUT",
+    "CODE_UNSUPPORTED_TYPE",
+    "CODE_UNSAFE_SOURCE_URI",
+    "DEFAULT_SKILL_DIR",
+    "ENV_RUNTIME_LOCK",
+    "RUNTIME_LOCK_SCHEMA",
+    "STATE_TRUSTED_RUNTIME",
+    "STATE_RUNTIME_MISSING",
+    "STATE_DEPENDENCY_UNVERIFIED",
+    "STATE_INTEGRITY_MISMATCH",
+    "STATE_VERSION_MISMATCH",
+    "MediaUseRuntime",
+    "verify_runtime_lock",
+    "SKILL_COMMIT",
+    "SUPPORTED_TYPES",
+    "UPSTREAM_COMMIT",
+    "UPSTREAM_LICENSE",
+    "UPSTREAM_REPOSITORY",
+    "ImportedMedia",
+    "MediaUseAdapter",
+    "MediaUseAuthorization",
+    "MediaUseCandidate",
+    "MediaUseDoctor",
+    "MediaUseError",
+    "MediaUseProcessResult",
+    "MediaUseResolution",
+    "MediaUseStatus",
+    "MediaUseVerification",
+    "redact_text",
+]
+
+# --- upstream provenance ---------------------------------------------------
+UPSTREAM_REPOSITORY = "https://github.com/heygen-com/hyperframes"
+#: Repository HEAD when this adapter was written. Recorded, not fetched: a
+#: receipt that re-resolved ``main`` at read time would name a different code
+#: than the one that produced the bytes.
+UPSTREAM_COMMIT = "5e4f5aefb58a9996ea5920f008184e9789346871"
+#: Last commit that touched ``skills/media-use`` at audit time.
+SKILL_COMMIT = "f2358315e59731833334c5d881a7fb5543c22a97"
+UPSTREAM_LICENSE = "Apache-2.0"
+
+SKILL_NAME = "media-use"
+DEFAULT_SKILL_DIR = Path.home() / ".agents" / "skills" / SKILL_NAME
+ENV_SKILL_DIR = "CONTENTOPS_MEDIA_USE_SKILL_DIR"
+ENV_NODE = "CONTENTOPS_NODE_BINARY"
+#: Path to a lock file produced by a reviewed installation. Without one, no
+#: external execution is allowed; the lock names the exact bytes that may run.
+ENV_RUNTIME_LOCK = "CONTENTOPS_MEDIA_USE_RUNTIME_LOCK"
+RUNTIME_LOCK_SCHEMA = "contentops.media-use-runtime-lock/v2"
+BASELINE_SCHEMA = "contentops.media-use-runtime-baseline/v1"
+ENV_BASELINE = "CONTENTOPS_MEDIA_USE_BASELINE"
+DEFAULT_BASELINE = (
+    Path(__file__).resolve().parents[3] / "runtime" / "media-use-runtime-baseline.json"
+)
+RESOLVE_RELATIVE = Path("scripts") / "resolve.mjs"
+# The official published HyperFrames CLI declares Node >=22. This is a
+# necessary prerequisite, not proof that the CLI dependency tree is trusted.
+MIN_NODE_MAJOR = 22
+
+#: Types this adapter routes. Everything else is refused with a reason.
+SUPPORTED_TYPES: Tuple[str, ...] = ("image", "icon", "logo", "brand", "bgm", "sfx")
+
+#: Why the un-routed types are un-routed. Kept as data so the refusal message
+#: and the capability matrix cannot drift apart.
+UNSUPPORTED_TYPE_REASONS: Dict[str, str] = {
+    "voice": (
+        "speech is owned by ContentOps' provider layer (MiniMax / edge-tts). "
+        "Routing it through media-use would create a second TTS path with no "
+        "billing guard and no pronunciation lexicon."
+    ),
+    "video": (
+        "generated video is the M4 H3 path, which has its own quota, receipt and "
+        "evidence rules. media-use video is credit-billed and is not wired here."
+    ),
+    "grade": (
+        "grading is a deterministic local transform with its own receipt schema; "
+        "it is not an asset import."
+    ),
+    "lut": (
+        "LUTs are deterministic colour data consumed by the transform layer, not "
+        "a media asset with an evidence role."
+    ),
+    "recipe": (
+        "recipes are workflow bundles, not media, and have no place in a media "
+        "manifest."
+    ),
+}
+
+# Refusal codes. Stable strings, because tests and receipts key on them.
+CODE_SKILL_UNAVAILABLE = "SKILL_UNAVAILABLE"
+CODE_NODE_UNAVAILABLE = "NODE_UNAVAILABLE"
+CODE_UNSUPPORTED_TYPE = "UNSUPPORTED_TYPE"
+CODE_PROVIDER_NOT_AUTHORIZED = "PROVIDER_NOT_AUTHORIZED"
+CODE_NETWORK_NOT_AUTHORIZED = "NETWORK_NOT_AUTHORIZED"
+CODE_PAID_NOT_AUTHORIZED = "PAID_NOT_AUTHORIZED"
+CODE_CROSS_PROJECT_NOT_AUTHORIZED = "CROSS_PROJECT_NOT_AUTHORIZED"
+CODE_LICENSE_MISSING = "LICENSE_MISSING"
+CODE_PATH_ESCAPE = "PATH_ESCAPE"
+CODE_HASH_MISMATCH = "HASH_MISMATCH"
+CODE_CLI_FAILED = "CLI_FAILED"
+CODE_TIMEOUT = "TIMEOUT"
+CODE_GENERATED_NOT_IMPORTABLE = "GENERATED_NOT_IMPORTABLE"
+CODE_NEEDS_HUMAN_ACTION = "NEEDS_HUMAN_ACTION"
+CODE_UNSAFE_SOURCE_URI = "UNSAFE_SOURCE_URI"
+
+# Trust states for an externally executed HyperFrames runtime. They are kept
+# apart because "not installed", "installed but unverifiable" and "verified but
+# modified" call for different human actions.
+STATE_TRUSTED_RUNTIME = "TRUSTED_RUNTIME"
+STATE_RUNTIME_MISSING = "RUNTIME_MISSING"
+STATE_DEPENDENCY_UNVERIFIED = "DEPENDENCY_UNVERIFIED"
+STATE_INTEGRITY_MISMATCH = "INTEGRITY_MISMATCH"
+STATE_VERSION_MISMATCH = "VERSION_MISMATCH"
+#: The machine lock does not derive from the committed, approved baseline.
+STATE_BASELINE_MISMATCH = "BASELINE_MISMATCH"
+
+#: Environment variables the child is allowed to see. Provider keys, cookies,
+#: proxy credentials and agent tokens are deliberately absent: a closed paid
+#: path must not be re-opened by something exported in the parent shell.
+_ENV_ALLOWLIST: Tuple[str, ...] = (
+    "PATH",
+    "PATHEXT",
+    "SystemRoot",
+    "SYSTEMROOT",
+    "WINDIR",
+    "COMSPEC",
+    "TEMP",
+    "TMP",
+    "HOME",
+    "USERPROFILE",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "APPDATA",
+    "LOCALAPPDATA",
+    "PROGRAMDATA",
+    "PROGRAMFILES",
+    "PROGRAMFILES(X86)",
+    "NUMBER_OF_PROCESSORS",
+    "PROCESSOR_ARCHITECTURE",
+    "OS",
+    "USERNAME",
+    "LANG",
+    "LC_ALL",
+    "NODE_PATH",
+    "HTTP_PROXY",
+    "HTTPS_PROXY",
+    "NO_PROXY",
+    "ALL_PROXY",
+)
+
+_SECRET_PATTERNS: Tuple[Tuple[re.Pattern, str], ...] = (
+    (re.compile(r"(?i)([A-Za-z0-9_]*(?:api[_-]?key|token|secret|password)[A-Za-z0-9_]*)\s*[:=]\s*\S+"), r"\1=***REDACTED***"),
+    (re.compile(r"(?i)(bearer)\s+[A-Za-z0-9._\-]{8,}"), r"\1 ***REDACTED***"),
+    (re.compile(r"sk-[A-Za-z0-9_\-]{8,}"), "***REDACTED***"),
+    (re.compile(r"(?i)(heygen[_-]?api[_-]?key)\s+\S+"), r"\1 ***REDACTED***"),
+)
+
+#: ``scheme://...`` tokens embedded in free text. Userinfo, query and fragment
+#: are capabilities, not references; they are removed wherever a URL appears in
+#: text that may reach a receipt or a log.
+_URL_TOKEN = re.compile(r"(?i)\b([a-z][a-z0-9+.\-]*://[^\s<>\"']+)")
+
+
+def _strip_url_capabilities(text: str) -> str:
+    def scrub(match: re.Match) -> str:
+        raw = match.group(1)
+        try:
+            parts = urlsplit(raw)
+            port = parts.port
+        except ValueError:
+            return raw
+        host = parts.hostname
+        if not host:
+            return raw
+        host_text = f"[{host}]" if ":" in host else host
+        netloc = f"{host_text}:{port}" if port is not None else host_text
+        return urlunsplit((parts.scheme.lower(), netloc, parts.path, "", ""))
+
+    return _URL_TOKEN.sub(scrub, text)
+
+
+def redact_text(value: str) -> str:
+    """Remove credential-shaped substrings from child output.
+
+    Best-effort by design: the receipts are public and a provider refusal often
+    echoes the header it rejected. This is a backstop, not a substitute for the
+    allow-listed environment that keeps the credential out of the child.
+    """
+    text = _strip_url_capabilities(value or "")
+    for pattern, replacement in _SECRET_PATTERNS:
+        text = pattern.sub(replacement, text)
+    return text
+
+
+def _version_tuple(value: Optional[str]) -> Optional[Tuple[int, int, int]]:
+    if not value:
+        return None
+    match = re.search(r"(\d+)\.(\d+)\.(\d+)", value)
+    if not match:
+        return None
+    return int(match.group(1)), int(match.group(2)), int(match.group(3))
+
+
+def _redact_value(value: Any) -> Any:
+    if isinstance(value, str):
+        return redact_text(value)
+    if isinstance(value, dict):
+        return {key: _redact_value(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_redact_value(item) for item in value]
+    return value
+
+
+class MediaUseError(RuntimeError):
+    """A refused or failed media-use operation.
+
+    ``code`` is the machine-readable reason. Callers branch on it; the message is
+    for a human and is already redacted.
+    """
+
+    def __init__(
+        self,
+        code: str,
+        message: str,
+        *,
+        details: Optional[Mapping[str, Any]] = None,
+    ) -> None:
+        super().__init__(message)
+        self.code = code
+        self.details = dict(details or {})
+
+    def as_dict(self) -> Dict[str, Any]:
+        return {
+            "ok": False,
+            "code": self.code,
+            "message": redact_text(str(self)),
+            "details": _redact_value(self.details),
+        }
+
+
+@dataclass(frozen=True)
+class MediaUseAuthorization:
+    """What a caller has explicitly allowed this run to do.
+
+    Every field defaults to ``False``. There is no "development mode" that opens
+    them together, because the one time that flag ships enabled is the time a
+    stock search becomes a charge or another project's asset appears in a video.
+    """
+
+    allow_network: bool = False
+    allow_paid: bool = False
+    #: Required whenever ``allow_paid`` is true. A truthy boolean with no budget
+    #: is not authorization; it is a hope.
+    paid_budget: Optional[str] = None
+    allow_cross_project_reuse: bool = False
+    allowed_providers: Tuple[str, ...] = ()
+
+    def require_network(self) -> None:
+        if not self.allow_network:
+            raise MediaUseError(
+                CODE_NETWORK_NOT_AUTHORIZED,
+                "this run may use the local project and cache only; network "
+                "providers were not authorized. Pass allow_network=True after a "
+                "human decision, or keep working offline.",
+            )
+
+    def require_paid(self) -> None:
+        if not self.allow_paid:
+            raise MediaUseError(
+                CODE_PAID_NOT_AUTHORIZED,
+                "this run may not spend money. Paid generation requires explicit "
+                "Founder authorization and a budget, neither of which is present.",
+            )
+        if not (self.paid_budget or "").strip():
+            raise MediaUseError(
+                CODE_PAID_NOT_AUTHORIZED,
+                "allow_paid=True was supplied without paid_budget. A paid run must "
+                "state the ceiling it is authorized to spend.",
+            )
+
+    def require_cross_project(self) -> None:
+        if not self.allow_cross_project_reuse:
+            raise MediaUseError(
+                CODE_CROSS_PROJECT_NOT_AUTHORIZED,
+                "reuse from the shared cache is cross-project reuse and was not "
+                "authorized. A project may use its own assets by default; another "
+                "project's material needs an explicit decision.",
+            )
+
+    def require_provider(self, provider: str) -> None:
+        if provider not in self.allowed_providers:
+            raise MediaUseError(
+                CODE_PROVIDER_NOT_AUTHORIZED,
+                f"provider {provider!r} is not in the authorized provider list "
+                f"({', '.join(self.allowed_providers) or 'empty'}). Forcing a "
+                f"provider is a routing decision a human must make.",
+            )
+
+
+@dataclass(frozen=True)
+class MediaUseStatus:
+    skill_dir: Optional[str]
+    skill_present: bool
+    resolve_present: bool
+    node_present: bool
+    node_version: Optional[str]
+    heygen_present: bool
+    ffmpeg_present: bool
+    ffprobe_present: bool
+    resolve_sha256: Optional[str]
+    available: bool
+    reasons: Tuple[str, ...] = ()
+    runtime_state: Optional[str] = None
+    upstream_repository: str = UPSTREAM_REPOSITORY
+    upstream_commit: str = UPSTREAM_COMMIT
+    skill_commit: str = SKILL_COMMIT
+    upstream_license: str = UPSTREAM_LICENSE
+
+    def as_dict(self) -> Dict[str, Any]:
+        return {
+            "skill_dir": self.skill_dir,
+            "skill_present": self.skill_present,
+            "resolve_present": self.resolve_present,
+            "node_present": self.node_present,
+            "node_version": self.node_version,
+            "heygen_present": self.heygen_present,
+            "ffmpeg_present": self.ffmpeg_present,
+            "ffprobe_present": self.ffprobe_present,
+            "resolve_sha256": self.resolve_sha256,
+            "available": self.available,
+            "reasons": list(self.reasons),
+            "runtime_state": self.runtime_state,
+            "upstream_repository": self.upstream_repository,
+            "upstream_provenance": "UNVERIFIED",
+            "upstream_commit": self.upstream_commit,
+            "skill_commit": self.skill_commit,
+            "upstream_license": self.upstream_license,
+        }
+
+
+@dataclass(frozen=True)
+class MediaUseRuntime:
+    """The verified result of checking one installed runtime against its lock.
+
+    ``files`` is every byte the executor may touch, keyed by runtime-relative
+    path. Verification re-hashes them before each execution, so a cached
+    ``available`` flag cannot stand in for a byte check that never happened.
+    """
+
+    state: str
+    root: Optional[Path] = None
+    entry: Optional[Path] = None
+    version: Optional[str] = None
+    node: Optional[Path] = None
+    verb_prefix: Tuple[str, ...] = ("media-use",)
+    file_count: int = 0
+    mismatched: Tuple[str, ...] = ()
+    missing: Tuple[str, ...] = ()
+    reasons: Tuple[str, ...] = ()
+
+    @property
+    def trusted(self) -> bool:
+        return self.state == STATE_TRUSTED_RUNTIME
+
+    def as_dict(self) -> Dict[str, Any]:
+        return {
+            "state": self.state,
+            "trusted": self.trusted,
+            "root": str(self.root) if self.root else None,
+            "entry": str(self.entry) if self.entry else None,
+            "version": self.version,
+            "node": str(self.node) if self.node else None,
+            "verb_prefix": list(self.verb_prefix),
+            "file_count": self.file_count,
+            "mismatched": list(self.mismatched),
+            "missing": list(self.missing),
+            "reasons": list(self.reasons),
+        }
+
+
+def _relative_within(root: Path, relative: Any) -> Optional[Path]:
+    """Resolve a lock-declared path, refusing escape and symlink tricks.
+
+    A lock is data. If it can name ``../../etc``, an absolute path or a symlink
+    that leaves the tree, then "verified" only means "the attacker kept their
+    own hashes consistent".
+    """
+    if not isinstance(relative, str) or not relative.strip():
+        return None
+    candidate = Path(relative)
+    if candidate.is_absolute() or relative.startswith(("\\", "/", "~")):
+        return None
+    if ".." in candidate.parts or ":" in candidate.parts[0]:
+        return None
+    target = root / candidate
+    try:
+        resolved = target.resolve(strict=False)
+        real_root = root.resolve()
+        if resolved != real_root and real_root not in resolved.parents:
+            return None
+    except (OSError, RuntimeError):
+        return None
+    return target
+
+
+def _tree_files(root: Path) -> Dict[str, Path]:
+    """Every regular file under a runtime root, by POSIX relative path."""
+    files: Dict[str, Path] = {}
+    for path in root.rglob("*"):
+        try:
+            if path.is_symlink():
+                continue
+            if not path.is_file():
+                continue
+        except OSError:
+            continue
+        files[path.relative_to(root).as_posix()] = path
+    return files
+
+
+def package_tree_digest(package: str, files: Mapping[str, Any]) -> Optional[str]:
+    """A digest over the package's own files, independent of the host tree.
+
+    Per-file hashes in a machine lock only prove the lock agrees with itself:
+    editing a file *and* its hash leaves both consistent. Pinning this digest
+    in the committed baseline closes that loop, because a lock regenerated from
+    a modified tree no longer matches what a human approved.
+    """
+    prefix = f"node_modules/{package}/"
+    rows = sorted(
+        (str(relative), str(digest))
+        for relative, digest in files.items()
+        if isinstance(relative, str) and relative.startswith(prefix) and isinstance(digest, str)
+    )
+    if not rows:
+        return None
+    accumulator = hashlib.sha256()
+    for relative, digest in rows:
+        accumulator.update(f"{relative}\x00{digest}\n".encode("utf-8"))
+    return accumulator.hexdigest()
+
+
+def verify_runtime_lock(
+    lock_path: Optional[Path], baseline_path: Optional[Path] = None
+) -> MediaUseRuntime:
+    """Re-hash a runtime against a reviewed lock *and* the approved baseline.
+
+    Two layers, on purpose. The committed baseline says which release is allowed
+    to run; the machine lock says which bytes are installed here. A lock alone
+    is writer-controlled, so on its own it could certify anything an operator
+    (or a compromised account) installed. Trust requires both: the lock must
+    name the approved baseline by digest, and every byte must match.
+    """
+    if lock_path is None:
+        return MediaUseRuntime(
+            state=STATE_DEPENDENCY_UNVERIFIED,
+            reasons=(
+                "no runtime lock is configured; external media-use execution "
+                "requires a reviewed lock naming every executable file",
+            ),
+        )
+
+    lock_file = Path(lock_path).expanduser()
+    if not lock_file.is_file():
+        return MediaUseRuntime(
+            state=STATE_RUNTIME_MISSING,
+            reasons=(f"runtime lock not found: {lock_file}",),
+        )
+    try:
+        payload = json.loads(lock_file.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return MediaUseRuntime(
+            state=STATE_RUNTIME_MISSING,
+            reasons=(f"runtime lock is unreadable: {exc}",),
+        )
+    if not isinstance(payload, dict) or payload.get("schema") != RUNTIME_LOCK_SCHEMA:
+        return MediaUseRuntime(
+            state=STATE_DEPENDENCY_UNVERIFIED,
+            reasons=(f"runtime lock schema is not {RUNTIME_LOCK_SCHEMA}",),
+        )
+
+    baseline_file = Path(baseline_path).expanduser() if baseline_path else DEFAULT_BASELINE
+    if not baseline_file.is_file():
+        return MediaUseRuntime(
+            state=STATE_BASELINE_MISMATCH,
+            reasons=(f"approved baseline not found: {baseline_file}",),
+        )
+    try:
+        baseline_bytes = baseline_file.read_bytes()
+        baseline = json.loads(baseline_bytes.decode("utf-8"))
+    except (OSError, ValueError) as exc:
+        return MediaUseRuntime(
+            state=STATE_BASELINE_MISMATCH,
+            reasons=(f"approved baseline is unreadable: {exc}",),
+        )
+    if not isinstance(baseline, dict) or baseline.get("schema") != BASELINE_SCHEMA:
+        return MediaUseRuntime(
+            state=STATE_BASELINE_MISMATCH,
+            reasons=(f"baseline schema is not {BASELINE_SCHEMA}",),
+        )
+    approval = baseline.get("approval") or {}
+    if not isinstance(approval, dict) or approval.get("status") != "approved":
+        return MediaUseRuntime(
+            state=STATE_BASELINE_MISMATCH,
+            reasons=("baseline is not approved",),
+        )
+    baseline_digest = hashlib.sha256(baseline_bytes).hexdigest()
+
+    if payload.get("baseline_sha256") != baseline_digest:
+        return MediaUseRuntime(
+            state=STATE_BASELINE_MISMATCH,
+            reasons=(
+                "the runtime lock was not produced from the approved baseline; "
+                "regenerating a lock does not approve a release",
+            ),
+        )
+    for field in ("package", "version", "integrity"):
+        if payload.get(field) != baseline.get(field):
+            return MediaUseRuntime(
+                state=STATE_VERSION_MISMATCH,
+                reasons=(f"{field} {payload.get(field)!r} != approved {baseline.get(field)!r}",),
+            )
+
+    approved_dependency_lock = baseline.get("dependency_lock_sha256")
+    if approved_dependency_lock:
+        installed = payload.get("installed") or {}
+        if not isinstance(installed, dict) or installed.get("package_lock_sha256") != approved_dependency_lock:
+            return MediaUseRuntime(
+                state=STATE_BASELINE_MISMATCH,
+                reasons=(
+                    "the installed dependency lock does not match the approved one; "
+                    "installing a different tree is not a new trust anchor",
+                ),
+            )
+
+    raw_root = payload.get("root")
+    files = payload.get("files")
+    entry_name = payload.get("entry")
+    if not isinstance(raw_root, str) or not isinstance(files, dict) or not isinstance(entry_name, str):
+        return MediaUseRuntime(
+            state=STATE_DEPENDENCY_UNVERIFIED,
+            reasons=("runtime lock is missing root, entry or files",),
+        )
+    if payload.get("entry") != baseline.get("entry"):
+        return MediaUseRuntime(
+            state=STATE_BASELINE_MISMATCH,
+            reasons=("the lock's entry point differs from the approved baseline",),
+        )
+
+    approved_tree = baseline.get("package_tree_sha256")
+    if not isinstance(approved_tree, str) or not approved_tree.strip():
+        return MediaUseRuntime(
+            state=STATE_BASELINE_MISMATCH,
+            reasons=("the approved baseline declares no package tree digest",),
+        )
+    if package_tree_digest(str(payload.get("package") or ""), files) != approved_tree:
+        return MediaUseRuntime(
+            state=STATE_BASELINE_MISMATCH,
+            reasons=(
+                "the lock's package files do not match the approved tree digest; "
+                "a lock regenerated from a modified tree is not a new trust anchor",
+            ),
+        )
+
+    root = Path(raw_root).expanduser()
+    version = str(payload.get("version") or "") or None
+    if not root.is_dir():
+        return MediaUseRuntime(
+            state=STATE_RUNTIME_MISSING, root=root, version=version,
+            reasons=(f"runtime root is missing: {root}",),
+        )
+    entry = _relative_within(root, entry_name)
+    if entry is None:
+        return MediaUseRuntime(
+            state=STATE_INTEGRITY_MISMATCH, root=root, version=version,
+            reasons=(f"entry path {entry_name!r} escapes the runtime root",),
+        )
+    if not entry.is_file():
+        return MediaUseRuntime(
+            state=STATE_RUNTIME_MISSING, root=root, entry=entry, version=version,
+            reasons=(f"runtime entry is missing: {entry}",),
+        )
+
+    # A node binary is part of the trust decision, not an ambient dependency.
+    # Falling back to whatever is on PATH would let the host decide what runs.
+    raw_node = payload.get("node")
+    node_sha = payload.get("node_sha256")
+    if not isinstance(raw_node, str) or not isinstance(node_sha, str) or not node_sha.strip():
+        return MediaUseRuntime(
+            state=STATE_DEPENDENCY_UNVERIFIED, root=root, entry=entry, version=version,
+            reasons=("the lock records no pinned node binary and sha256",),
+        )
+    node = Path(raw_node).expanduser()
+    if not node.is_file():
+        return MediaUseRuntime(
+            state=STATE_RUNTIME_MISSING, root=root, entry=entry, version=version, node=node,
+            reasons=(f"locked node binary is missing: {node}",),
+        )
+
+    package_json = entry.parent.parent / "package.json"
+    if package_json.is_file():
+        try:
+            installed = json.loads(package_json.read_text(encoding="utf-8")).get("version")
+        except (OSError, json.JSONDecodeError):
+            installed = None
+        if installed and installed != version:
+            return MediaUseRuntime(
+                state=STATE_VERSION_MISMATCH, root=root, entry=entry,
+                version=installed, node=node, file_count=len(files),
+                reasons=(f"installed version {installed} != locked {version}",),
+            )
+
+    missing: List[str] = []
+    mismatched: List[str] = []
+    if sha256_file(node) != node_sha:
+        mismatched.append("node")
+    for relative, expected in files.items():
+        target = _relative_within(root, relative)
+        if target is None:
+            mismatched.append(f"{relative} (escaping path)")
+            continue
+        if not target.is_file():
+            missing.append(str(relative))
+            continue
+        if not isinstance(expected, str) or sha256_file(target) != expected:
+            mismatched.append(str(relative))
+
+    # Files present but not listed are executable surface nobody reviewed.
+    on_disk = _tree_files(root)
+    unexpected = sorted(set(on_disk) - set(files))
+
+    if mismatched or missing or unexpected:
+        return MediaUseRuntime(
+            state=STATE_INTEGRITY_MISMATCH, root=root, entry=entry, version=version,
+            node=node, file_count=len(files),
+            mismatched=tuple(list(mismatched)[:20] + [f"+{p}" for p in unexpected[:20]]),
+            missing=tuple(missing[:20]),
+            reasons=(
+                f"{len(mismatched)} changed, {len(missing)} missing, "
+                f"{len(unexpected)} unlisted file(s) in the runtime",
+            ),
+        )
+    return MediaUseRuntime(
+        state=STATE_TRUSTED_RUNTIME, root=root, entry=entry, version=version,
+        node=node, verb_prefix=tuple(payload.get("verb_prefix") or ["media-use"]),
+        file_count=len(files),
+    )
+
+
+@dataclass(frozen=True)
+class MediaUseProcessResult:
+    command: Tuple[str, ...]
+    returncode: int
+    stdout: str
+    stderr: str
+    timed_out: bool = False
+
+    def as_dict(self) -> Dict[str, Any]:
+        return {
+            "command": list(self.command),
+            "returncode": self.returncode,
+            "stdout": self.stdout,
+            "stderr": self.stderr,
+            "timed_out": self.timed_out,
+        }
+
+
+@dataclass(frozen=True)
+class MediaUseCandidate:
+    id: str
+    type: str
+    scope: str
+    description: str
+    prompt: Optional[str] = None
+    provider: Optional[str] = None
+    duration: Optional[float] = None
+    width: Optional[int] = None
+    height: Optional[int] = None
+    sha: Optional[str] = None
+    path: Optional[str] = None
+    score: int = 0
+
+    @classmethod
+    def from_payload(cls, payload: Mapping[str, Any]) -> "MediaUseCandidate":
+        return cls(
+            id=str(payload.get("id") or ""),
+            type=str(payload.get("type") or ""),
+            scope=str(payload.get("scope") or ""),
+            description=str(payload.get("description") or ""),
+            prompt=payload.get("prompt"),
+            provider=payload.get("provider"),
+            duration=payload.get("duration"),
+            width=payload.get("width"),
+            height=payload.get("height"),
+            sha=payload.get("sha"),
+            path=payload.get("path"),
+            score=int(payload.get("score") or 0),
+        )
+
+    def as_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "type": self.type,
+            "scope": self.scope,
+            "description": self.description,
+            "prompt": self.prompt,
+            "provider": self.provider,
+            "duration": self.duration,
+            "width": self.width,
+            "height": self.height,
+            "sha": self.sha,
+            "path": self.path,
+            "score": self.score,
+        }
+
+
+@dataclass(frozen=True)
+class MediaUseDoctor:
+    ok: bool
+    checks: Tuple[Dict[str, Any], ...]
+    needs_human_action: Tuple[Dict[str, Any], ...]
+    status: MediaUseStatus
+
+    def as_dict(self) -> Dict[str, Any]:
+        return {
+            "ok": self.ok,
+            "checks": list(self.checks),
+            "needs_human_action": list(self.needs_human_action),
+            "status": self.status.as_dict(),
+        }
+
+
+@dataclass(frozen=True)
+class MediaUseResolution:
+    kind: str
+    intent: str
+    source: str
+    record: Dict[str, Any]
+    importable: bool
+    cross_project: bool = False
+    blocked_code: Optional[str] = None
+    blocked_reason: Optional[str] = None
+
+    def as_dict(self) -> Dict[str, Any]:
+        return {
+            "kind": self.kind,
+            "intent": self.intent,
+            "source": self.source,
+            "record": _redact_value(dict(self.record)),
+            "importable": self.importable,
+            "cross_project": self.cross_project,
+            "blocked_code": self.blocked_code,
+            "blocked_reason": self.blocked_reason,
+        }
+
+
+@dataclass(frozen=True)
+class ImportedMedia:
+    """One catalog/adopted file registered with a ContentOps provenance receipt."""
+
+    asset_id: str
+    modality: str
+    asset_kind: Optional[str]
+    path: str
+    logical_path: str
+    sha256: str
+    receipt_path: str
+    receipt_ref: str
+    license: str
+    attribution: str
+    source_type: str
+    reuse_source: str
+    envelope: MediaAssetEnvelope
+    cross_project: bool = False
+
+    def as_dict(self) -> Dict[str, Any]:
+        return {
+            "asset_id": self.asset_id,
+            "modality": self.modality,
+            "asset_kind": self.asset_kind,
+            "path": self.path,
+            "logical_path": self.logical_path,
+            "sha256": self.sha256,
+            "receipt_path": self.receipt_path,
+            "receipt_ref": self.receipt_ref,
+            "license": self.license,
+            "attribution": self.attribution,
+            "source_type": self.source_type,
+            "reuse_source": self.reuse_source,
+            "cross_project": self.cross_project,
+            "envelope": self.envelope.as_dict(),
+        }
+
+
+@dataclass(frozen=True)
+class MediaUseVerification:
+    path: str
+    exists: bool
+    digest_matches: bool
+    receipt_present: bool
+    schema: Optional[str]
+    license: Optional[str]
+    failures: Tuple[str, ...] = ()
+
+    @property
+    def ok(self) -> bool:
+        return self.exists and self.digest_matches and self.receipt_present and not self.failures
+
+    def as_dict(self) -> Dict[str, Any]:
+        return {
+            "ok": self.ok,
+            "path": self.path,
+            "exists": self.exists,
+            "digest_matches": self.digest_matches,
+            "receipt_present": self.receipt_present,
+            "schema": self.schema,
+            "license": self.license,
+            "failures": list(self.failures),
+        }
+
+
+class MediaUseAdapter:
+    """Thin, fail-closed wrapper around the pinned media-use CLI."""
+
+    def __init__(
+        self,
+        skill_dir: Optional[Path] = None,
+        node: Optional[str] = None,
+        *,
+        timeout: float = 120.0,
+        env: Optional[Mapping[str, str]] = None,
+        which: Any = None,
+        runtime_lock: Optional[Path] = None,
+        baseline: Optional[Path] = None,
+    ) -> None:
+        if not (1.0 <= float(timeout) <= 600.0):
+            raise ValueError(
+                f"timeout must be between 1 and 600 seconds, got {timeout!r}. An "
+                f"unbounded wait is how a pipeline hangs instead of reporting."
+            )
+        self.timeout = float(timeout)
+        override = skill_dir or os.environ.get(ENV_SKILL_DIR)
+        self.skill_dir = Path(override).expanduser() if override else DEFAULT_SKILL_DIR
+        self.node = node or os.environ.get(ENV_NODE) or None
+        lock_override = runtime_lock or os.environ.get(ENV_RUNTIME_LOCK)
+        self.runtime_lock = Path(lock_override).expanduser() if lock_override else None
+        baseline_override = baseline or os.environ.get(ENV_BASELINE)
+        self.baseline = Path(baseline_override).expanduser() if baseline_override else None
+        self._which = which or shutil.which
+        self._env_override = dict(env or {})
+        self._status: Optional[MediaUseStatus] = None
+
+    # -- discovery ---------------------------------------------------------
+
+    @property
+    def resolve_script(self) -> Path:
+        return self.skill_dir / RESOLVE_RELATIVE
+
+    def status(self, *, refresh: bool = False) -> MediaUseStatus:
+        # Re-evaluate on each call; cached success must never hide a later change.
+        runtime = verify_runtime_lock(self.runtime_lock, baseline_path=self.baseline)
+        reasons: List[str] = []
+        if not runtime.trusted:
+            reasons.append(f"{runtime.state}: " + "; ".join(runtime.reasons or ["unverified"]))
+        skill_present = (self.skill_dir / "SKILL.md").is_file()
+        resolve_present = self.resolve_script.is_file()
+        if not skill_present and not runtime.trusted:
+            reasons.append(
+                f"{self.skill_dir} does not contain SKILL.md; the media-use skill "
+                f"is not installed there"
+            )
+        elif not resolve_present and not runtime.trusted:
+            reasons.append(f"{self.resolve_script} is missing")
+
+        node: Optional[str]
+        if runtime.trusted:
+            # The lock hashed the node bytes, so a system node is irrelevant and
+            # its version cannot be probed without running unverified software.
+            node = str(runtime.node) if runtime.node else (self.node or self._which("node"))
+            node_present = bool(node)
+            node_ok = node_present
+            node_version: Optional[str] = None
+            if not node_present:
+                reasons.append("the trusted runtime names no node binary")
+        else:
+            node = self.node or self._which("node")
+            node_present = bool(node)
+            node_ok = node_present
+            node_version = None
+            if not node_present:
+                reasons.append("node is not on PATH; resolve.mjs cannot run")
+            else:
+                try:
+                    proc = hidden_run(
+                        [node, "--version"], timeout=10, check=False, env=self._child_env()
+                    )
+                    node_version = (proc.stdout or "").strip() or None
+                except Exception:
+                    node_version = None
+                parsed = _version_tuple(node_version)
+                if parsed is None or parsed[0] < MIN_NODE_MAJOR:
+                    reasons.append(
+                        f"node {node_version or 'unknown'} does not satisfy the "
+                        f"media-use floor v{MIN_NODE_MAJOR}.0.0"
+                    )
+                    node_ok = False
+
+        resolve_sha256 = None
+        if resolve_present:
+            try:
+                resolve_sha256 = sha256_file(self.resolve_script)
+            except OSError:
+                reasons.append(f"{self.resolve_script} could not be read for hashing")
+
+        self._status = MediaUseStatus(
+            skill_dir=str(self.skill_dir),
+            skill_present=skill_present,
+            resolve_present=resolve_present,
+            node_present=node_present,
+            node_version=node_version,
+            heygen_present=bool(self._which("heygen")),
+            ffmpeg_present=bool(self._which("ffmpeg")),
+            ffprobe_present=bool(self._which("ffprobe")),
+            resolve_sha256=resolve_sha256,
+            available=runtime.trusted and node_ok,
+            reasons=tuple(reasons),
+            runtime_state=runtime.state,
+        )
+        return self._status
+
+    def require_available(self) -> MediaUseStatus:
+        status = self.status()
+        if status.available:
+            return status
+        if self.runtime_lock is not None:
+            # A configured lock is the reason execution is blocked. Reporting
+            # SKILL_UNAVAILABLE here would hide an integrity mismatch behind a
+            # directory that the lock was meant to replace.
+            runtime = verify_runtime_lock(self.runtime_lock, baseline_path=self.baseline)
+            if runtime.trusted:
+                code = CODE_NODE_UNAVAILABLE if not status.node_present else (
+                    status.reasons[0].split(":", 1)[0] if status.reasons else "DEPENDENCY_UNVERIFIED"
+                )
+            else:
+                code = runtime.state
+        elif not status.node_present:
+            code = CODE_NODE_UNAVAILABLE
+        elif not status.skill_present or not status.resolve_present:
+            code = CODE_SKILL_UNAVAILABLE
+        else:
+            code = status.reasons[0].split(":", 1)[0] if status.reasons else "DEPENDENCY_UNVERIFIED"
+        raise MediaUseError(
+            code,
+            "media-use is unavailable: " + "; ".join(status.reasons or ["unknown reason"]),
+            details=status.as_dict(),
+        )
+
+    # -- child process -----------------------------------------------------
+
+    @staticmethod
+    def _sandbox_home(project_dir: Path) -> Path:
+        """A project-local HOME, so the skill's global cache cannot leak across projects.
+
+        ``media-use`` keeps a shared cache at ``~/.media``. With the real HOME a
+        resolve may silently reuse another project's asset, and an ingest writes
+        outside the repository. Pointing HOME/USERPROFILE at a directory inside
+        ``<project>/.media`` makes the cache project-scoped and contains the side
+        effect. Cross-project reuse is then only reachable by explicitly opting
+        back into the real HOME.
+        """
+        home = Path(project_dir).expanduser().resolve() / ".media" / ".home"
+        home.mkdir(parents=True, exist_ok=True)
+        return home
+
+    def _child_env(self, *, home: Optional[Path] = None) -> Dict[str, str]:
+        env = {
+            key: os.environ[key]
+            for key in _ENV_ALLOWLIST
+            if key in os.environ and os.environ[key]
+        }
+        env.update({k: v for k, v in self._env_override.items() if v})
+        if home is not None:
+            # Both spellings, because Node's os.homedir() reads USERPROFILE on
+            # Windows and HOME elsewhere.
+            env["HOME"] = str(home)
+            env["USERPROFILE"] = str(home)
+        return env
+
+    def _require_trusted_runtime(self) -> MediaUseRuntime:
+        """Re-verify the installed runtime before every execution.
+
+        The hash pass is the gate, not a cached boolean: a lock that matched at
+        import time must not keep authorising a tree that changed afterwards.
+        """
+        runtime = verify_runtime_lock(self.runtime_lock, baseline_path=self.baseline)
+        if runtime.trusted:
+            return runtime
+        raise MediaUseError(
+            runtime.state,
+            "media-use runtime is not trusted: "
+            + "; ".join(runtime.reasons or ["no reason recorded"]),
+            details=runtime.as_dict(),
+        )
+
+    #: Verb flags the 0.8.x CLI takes as a subcommand rather than an option.
+    _VERB_FLAGS = {
+        "--doctor": "doctor",
+        "--candidates": "candidates",
+        "--adopt": "adopt",
+        "--stats": "stats",
+        "--analyze": "analyze",
+    }
+
+    @classmethod
+    def _cli_args(cls, args: Sequence[str]) -> List[str]:
+        """Translate the adapter's flag vocabulary into the CLI's subcommand form.
+
+        The released CLI reads ``media-use adopt --project ...``, not
+        ``--adopt``. Keeping the adapter's call sites unchanged means the
+        translation lives in exactly one place.
+        """
+        verb = "resolve"
+        rest: List[str] = []
+        for arg in args:
+            name = str(arg)
+            if name in cls._VERB_FLAGS:
+                verb = cls._VERB_FLAGS[name]
+                continue
+            if name == "--from":
+                verb = "from"
+                rest.append(name)
+                continue
+            rest.append(name)
+        return [verb, *rest]
+
+    def _run(
+        self,
+        args: Sequence[str],
+        *,
+        cwd: Optional[Path] = None,
+        timeout: Optional[float] = None,
+        home: Optional[Path] = None,
+    ) -> MediaUseProcessResult:
+        # A missing skill is the first thing to report when no runtime is
+        # configured at all. A configured lock speaks for itself: its own state
+        # (missing / mismatched / version drift) is the useful diagnosis. Either
+        # way this is a cheap existence check, not a second full hash pass.
+        if self.runtime_lock is None and not (self.skill_dir / "SKILL.md").is_file():
+            raise MediaUseError(
+                CODE_SKILL_UNAVAILABLE, "media-use skill is not installed at the configured path"
+            )
+        runtime = self._require_trusted_runtime()
+        if runtime.node is None:
+            raise MediaUseError(
+                STATE_DEPENDENCY_UNVERIFIED, "a trusted runtime must name its node binary"
+            )
+        node = str(runtime.node)
+        if not node:
+            raise MediaUseError(CODE_NODE_UNAVAILABLE, "no node binary is available for the runtime")
+        command = [
+            node,
+            str(runtime.entry),
+            *runtime.verb_prefix,
+            *self._cli_args(args),
+        ]
+        try:
+            proc = hidden_run(
+                command,
+                cwd=str(cwd) if cwd else None,
+                timeout=timeout or self.timeout,
+                check=False,
+                env=self._child_env(home=home),
+            )
+        except Exception as exc:  # subprocess.TimeoutExpired and OSError both land here
+            reason = "timed out" if "Timeout" in type(exc).__name__ else "could not start"
+            raise MediaUseError(
+                CODE_TIMEOUT if "Timeout" in type(exc).__name__ else CODE_NODE_UNAVAILABLE,
+                f"media-use CLI {reason} after {timeout or self.timeout}s: {exc}",
+                details={"command": command},
+            ) from exc
+        return MediaUseProcessResult(
+            command=tuple(command),
+            returncode=int(proc.returncode),
+            stdout=redact_text(proc.stdout or ""),
+            stderr=redact_text(proc.stderr or ""),
+            timed_out=False,
+        )
+
+    def _run_json(
+        self,
+        args: Sequence[str],
+        *,
+        cwd: Optional[Path] = None,
+        timeout: Optional[float] = None,
+        home: Optional[Path] = None,
+        allow_failure_payload: bool = False,
+    ) -> Dict[str, Any]:
+        result = self._run(args, cwd=cwd, timeout=timeout, home=home)
+        payload: Any = None
+        if result.stdout.strip():
+            try:
+                payload = json.loads(result.stdout)
+            except json.JSONDecodeError:
+                payload = None
+        if not isinstance(payload, dict):
+            raise MediaUseError(
+                CODE_CLI_FAILED,
+                f"media-use CLI did not return a JSON object (exit {result.returncode})",
+                details=result.as_dict(),
+            )
+        if result.returncode != 0 and not allow_failure_payload:
+            message = payload.get("error") or result.stderr.strip() or "no error text"
+            raise MediaUseError(
+                CODE_CLI_FAILED,
+                f"media-use CLI failed (exit {result.returncode}): {message}",
+                details=result.as_dict(),
+            )
+        if payload.get("ok") is False and not allow_failure_payload:
+            raise MediaUseError(
+                CODE_CLI_FAILED,
+                f"media-use CLI reported failure: {payload.get('error') or 'no error text'}",
+                details=result.as_dict(),
+            )
+        return payload
+
+    # -- read-only operations ---------------------------------------------
+
+    def doctor(self) -> MediaUseDoctor:
+        """Probe local dependencies. Read-only, but it may touch the network.
+
+        The CLI's own doctor exits non-zero when a check fails (``heygen`` is
+        absent here), yet still prints the full JSON. That is a *diagnosis*, not a
+        failed operation, so the payload is parsed either way and the failed
+        checks are surfaced as human actions.
+        """
+        self.require_available()
+        payload = self._run_json(
+            ["--doctor", "--json"],
+            timeout=min(self.timeout, 120.0),
+            allow_failure_payload=True,
+        )
+        checks = tuple(
+            dict(check) for check in (payload.get("checks") or []) if isinstance(check, dict)
+        )
+        human = tuple(check for check in checks if not check.get("ok") and check.get("fix"))
+        return MediaUseDoctor(
+            ok=bool(payload.get("ok")),
+            checks=checks,
+            needs_human_action=human,
+            status=self.status(),
+        )
+
+    def candidates(
+        self,
+        kind: str,
+        *,
+        project_dir: Path,
+        intent: str = "",
+        consult_global_cache: bool = False,
+    ) -> List[MediaUseCandidate]:
+        """List reusable assets. No download, no provider call, no mutation.
+
+        Global-cache rows are omitted unless ``consult_global_cache`` is true.
+        They are another project's material; listing them is not harmful, but
+        returning them from a call that later imports one is how unapproved
+        cross-project reuse happens.
+        """
+        self._require_supported(kind)
+        args = [
+            "--type",
+            kind,
+            "--candidates",
+            "--project",
+            str(Path(project_dir)),
+            "--json",
+            "--local-only",
+        ]
+        if intent.strip():
+            args.extend(["--intent", intent])
+        # When global rows are not wanted, give the child a project-local HOME so
+        # the shared ~/.media cache is not even visible. The filter below stays as
+        # a second guard for a CLI that reports a global scope anyway.
+        home = None if consult_global_cache else self._sandbox_home(project_dir)
+        payload = self._run_json(args, home=home)
+        candidates: List[MediaUseCandidate] = []
+        for item in payload.get("candidates") or []:
+            if not isinstance(item, dict):
+                continue
+            # The CLI treats icon and image as interchangeable for entity hits.
+            # A caller asking for `image` must not receive `icon` rows silently.
+            if item.get("type") != kind:
+                continue
+            if item.get("scope") == "global" and not consult_global_cache:
+                continue
+            candidates.append(MediaUseCandidate.from_payload(item))
+        return candidates
+
+    # -- resolve / adopt / ingest -----------------------------------------
+
+    def resolve(
+        self,
+        kind: str,
+        intent: str,
+        *,
+        project_dir: Path,
+        authorization: Optional[MediaUseAuthorization] = None,
+        provider: Optional[str] = None,
+    ) -> MediaUseResolution:
+        """Resolve a need, reusing project material before touching a provider.
+
+        Precedence, and the reason for it:
+
+        1. an exact-type **project** candidate — already inside this project;
+        2. a **shared-cache** hit, only with ``allow_cross_project_reuse``;
+        3. a **network** search/generation, only with ``allow_network``.
+
+        With no authorization the call returns a structured
+        ``NEEDS_HUMAN_ACTION`` result rather than spawning a process that would
+        either fail confusingly or reach a provider.
+        """
+        self._require_supported(kind)
+        auth = authorization or MediaUseAuthorization()
+        # The upstream resolver can fall back from retrieval to generation and
+        # provides no verified enforceable spending ceiling. An authorization
+        # flag or a budget string cannot make that safe. Refuse before invoking
+        # even the candidate subprocess; callers can request offline reuse instead.
+        if auth.allow_network or auth.allow_paid:
+            raise MediaUseError(
+                CODE_PAID_NOT_AUTHORIZED,
+                "network resolution is blocked: upstream cost classification and "
+                "a binding budget limit have not been verified",
+            )
+        if provider:
+            auth.require_provider(provider)
+
+        project_candidates = self.candidates(
+            kind, project_dir=project_dir, intent=intent, consult_global_cache=False
+        )
+        if project_candidates:
+            top = project_candidates[0]
+            record = dict(top.as_dict())
+            record["_source"] = "project-candidate"
+            return MediaUseResolution(
+                kind=kind,
+                intent=intent,
+                source="project-candidate",
+                record=record,
+                importable=True,
+            )
+
+        if not auth.allow_network:
+            # Offline. The child gets a project-local HOME, so the shared ~/.media
+            # cache is not visible unless cross-project reuse was authorized.
+            # ``--local-only`` still allows the skill's bundled providers (for
+            # example bundled SFX) and the project's own manifest to answer the
+            # need without a socket.
+            home = (
+                None
+                if auth.allow_cross_project_reuse
+                else self._sandbox_home(project_dir)
+            )
+            args = [
+                "--type",
+                kind,
+                "--intent",
+                intent,
+                "--project",
+                str(Path(project_dir)),
+                "--json",
+                "--local-only",
+            ]
+            if provider:
+                args.extend(["--provider", provider])
+            try:
+                payload = self._run_json(args, home=home)
+            except MediaUseError as exc:
+                if exc.code != CODE_CLI_FAILED:
+                    raise
+                raise MediaUseError(
+                    CODE_NEEDS_HUMAN_ACTION,
+                    f"no offline {kind} source could satisfy {intent!r}. Network "
+                    f"search was not authorized, so nothing was downloaded or "
+                    f"generated. Add an asset to the project, or authorize a "
+                    f"network lookup.",
+                    details={"kind": kind, "intent": intent, "cli": exc.details},
+                ) from exc
+            source = str(payload.get("_source") or "")
+            cross_project = source in {"reused", "reused-explicit", "cached"} or (
+                payload.get("scope") == "global"
+            )
+            if cross_project and not auth.allow_cross_project_reuse:
+                raise MediaUseError(
+                    CODE_CROSS_PROJECT_NOT_AUTHORIZED,
+                    "media-use returned a shared-cache asset, which is "
+                    "cross-project reuse. It was not authorized for this run.",
+                    details={"kind": kind, "source": source},
+                )
+            if source == "generated":
+                return self._generated_resolution(kind, intent, payload)
+            return MediaUseResolution(
+                kind=kind,
+                intent=intent,
+                source=source or "resolved-local",
+                record=payload,
+                importable=True,
+                cross_project=cross_project,
+            )
+
+        auth.require_network()
+        args = [
+            "--type",
+            kind,
+            "--intent",
+            intent,
+            "--project",
+            str(Path(project_dir)),
+            "--json",
+        ]
+        if provider:
+            args.extend(["--provider", provider])
+        payload = self._run_json(args)
+        source = str(payload.get("_source") or "")
+        cross_project = source in {"reused", "reused-explicit", "cached"}
+        if cross_project and not auth.allow_cross_project_reuse:
+            raise MediaUseError(
+                CODE_CROSS_PROJECT_NOT_AUTHORIZED,
+                "media-use returned a shared-cache asset, which is cross-project "
+                "reuse. It was not authorized for this run.",
+                details={"kind": kind, "source": source},
+            )
+        if source == "generated":
+            return self._generated_resolution(kind, intent, payload)
+        return MediaUseResolution(
+            kind=kind,
+            intent=intent,
+            source=source or "resolved",
+            record=payload,
+            importable=True,
+            cross_project=cross_project,
+        )
+
+    @staticmethod
+    def _generated_resolution(
+        kind: str, intent: str, payload: Dict[str, Any]
+    ) -> MediaUseResolution:
+        return MediaUseResolution(
+            kind=kind,
+            intent=intent,
+            source="generated",
+            record=payload,
+            importable=False,
+            blocked_code=CODE_GENERATED_NOT_IMPORTABLE,
+            blocked_reason=(
+                "media-use generated these bytes. A generated asset is not a "
+                "licensed external asset, and importing it as one would misstate "
+                "its origin."
+            ),
+        )
+
+    def adopt(self, *, project_dir: Path) -> List[Dict[str, Any]]:
+        """Register files already under ``<project>/assets`` in the skill manifest."""
+        payload = self._run_json(
+            ["--adopt", "--project", str(Path(project_dir)), "--json"],
+            home=self._sandbox_home(project_dir),
+        )
+        return [dict(item) for item in (payload.get("assets") or []) if isinstance(item, dict)]
+
+    def ingest(
+        self,
+        kind: str,
+        source: Path,
+        *,
+        project_dir: Path,
+        license: str,
+        attribution: str = "",
+    ) -> Dict[str, Any]:
+        """Freeze a local file into the project through the skill.
+
+        Only a local path is accepted here. A URL would need
+        ``allow_network`` and would make the receipt's ``source_uri`` a remote
+        reference this adapter cannot verify; the URL path exists in the CLI but
+        is not opened by this adapter in v1.
+
+        The license is required **before** the file is copied. Importing first and
+        asking later is how an unlicensed asset ends up in a render.
+        """
+        self._require_supported(kind)
+        self._require_license(license)
+        source_path = Path(source).expanduser()
+        if not source_path.is_file():
+            raise MediaUseError(
+                CODE_CLI_FAILED,
+                f"ingest source is not a local file: {source_path}",
+                details={"source": str(source_path)},
+            )
+        if source_path.stat().st_size == 0:
+            raise MediaUseError(
+                CODE_CLI_FAILED,
+                f"refusing to ingest a 0-byte file: {source_path}",
+                details={"source": str(source_path)},
+            )
+        payload = self._run_json(
+            [
+                "--type",
+                kind,
+                "--from",
+                str(source_path.resolve()),
+                "--project",
+                str(Path(project_dir)),
+                "--json",
+            ],
+            # Contained HOME: the skill's best-effort global cache write lands
+            # inside this project, not in the operator's shared cache.
+            home=self._sandbox_home(project_dir),
+        )
+        return payload
+
+    # -- provenance --------------------------------------------------------
+
+    def import_record(
+        self,
+        record: Mapping[str, Any],
+        *,
+        project_dir: Path,
+        kind: str,
+        license: str,
+        attribution: str = "",
+        role: str = "visual_support",
+        placement_id: Optional[str] = None,
+        registry: Optional[AssetRegistry] = None,
+        asset_id_prefix: str = "media-use",
+        cross_project: bool = False,
+    ) -> ImportedMedia:
+        """Turn one media-use record into a registered ContentOps asset.
+
+        The file, not the record, is the source of truth: its path is resolved
+        inside the project, its bytes are hashed, and that digest is what the
+        receipt carries. A record that names a path outside the project is
+        refused.
+        """
+        self._require_supported(kind)
+        self._require_license(license)
+        record_kind = record.get("type")
+        if record_kind and record_kind != kind:
+            raise MediaUseError(CODE_CLI_FAILED, "record type does not match requested kind")
+        if record.get("generated") is True or record.get("source") == "generated" or record.get("_source") == "generated":
+            raise MediaUseError(CODE_GENERATED_NOT_IMPORTABLE, "generated material cannot be imported as licensed external media")
+        project_root = Path(project_dir).expanduser().resolve()
+        relative = record.get("path")
+        if not isinstance(relative, str) or not relative.strip():
+            raise MediaUseError(
+                CODE_CLI_FAILED,
+                "media-use record carries no path; there is nothing to import",
+                details={"record": dict(record)},
+            )
+        full_path = self._contained_path(project_root, relative)
+        if not full_path.is_file():
+            raise MediaUseError(
+                CODE_CLI_FAILED,
+                f"media-use record names a file that does not exist: {relative}",
+                details={"record": dict(record)},
+            )
+
+        digest = sha256_file(full_path)
+        declared_digest = record.get("sha256") or record.get("sha")
+        if declared_digest and (not isinstance(declared_digest, str) or declared_digest.lower() != digest):
+            raise MediaUseError(CODE_HASH_MISMATCH, "recorded digest does not match the local file")
+        asset_id = f"{asset_id_prefix}-{kind}-{digest[:12]}"
+        modality, asset_kind = self._modality_for(kind)
+        # A project under this repository must still read as project:// so the
+        # manifest is portable between checkouts and never carries a drive
+        # letter.
+        logical_path = "project://" + full_path.relative_to(project_root).as_posix()
+
+        source_type = self._source_type(record)
+        reuse_source = str(record.get("_source") or record.get("source") or source_type)
+        source_uri = self._safe_source_uri(record, project_root)
+        receipt_path = full_path.with_name(full_path.name + IMPORT_RECEIPT_SUFFIX)
+        receipt_ref = receipt_path.name
+        fingerprint = import_fingerprint(kind, digest)
+
+        receipt: Dict[str, Any] = {
+            "schema": IMPORT_SCHEMA,
+            "record_type": "media_import",
+            "provider": "hyperframes_media_use",
+            "product": "hyperframes",
+            "upstream_repository": UPSTREAM_REPOSITORY,
+            "upstream_commit": None,
+            "skill_commit": None,
+            "upstream_provenance": "UNVERIFIED",
+            "expected_upstream_commit": UPSTREAM_COMMIT,
+            "expected_skill_commit": SKILL_COMMIT,
+            "upstream_license": UPSTREAM_LICENSE,
+            "transport": "media_use_resolve",
+            "transport_version": "1",
+            "asset_id": asset_id,
+            "modality": modality,
+            "imported_kind": asset_kind or kind,
+            "media_use_id": record.get("id"),
+            "media_use_type": record.get("type") or kind,
+            "source_type": source_type,
+            "source_uri": source_uri,
+            "original_asset_path": self._safe_original_path(record, project_root),
+            "project_relative_path": full_path.relative_to(project_root).as_posix(),
+            "output_sha256": digest,
+            "bytes": full_path.stat().st_size,
+            "fingerprint": fingerprint,
+            "license": license.strip(),
+            "attribution": attribution.strip(),
+            "generated": False,
+            "evidence_capable": False,
+            "reuse_source": reuse_source,
+            "cross_project_reuse": bool(cross_project),
+            "provider_call": False,
+            "production_ready": False,
+            "human_review": HUMAN_REVIEW_PENDING,
+            "note": (
+                "External material imported from a local record; upstream "
+                "execution provenance has not been verified. It supports a video "
+                "evidence_capable is false by construction. No provider was called "
+                "by this import."
+            ),
+        }
+        # Every string that came from a record or an operator crosses the same
+        # boundary: a credential in a field other than source_uri must not reach
+        # the public receipt either.
+        write_sidecar(receipt_path, _redact_value(receipt))
+
+        if registry is not None and modality in MediaModality.VISUAL:
+            register_asset(
+                registry,
+                asset_id=asset_id,
+                kind=AssetKind.LICENSED_EXTERNAL,
+                path=str(full_path),
+                evidence_use=EvidenceUse.VISUAL_SUPPORT,
+                sha256=digest,
+                receipt_ref=receipt_ref,
+                notes={"role": role, "license": license.strip()},
+            )
+
+        envelope = MediaAssetEnvelope(
+            asset_id=asset_id,
+            modality=modality,
+            placement_id=placement_id,
+            path=logical_path,
+            sha256=digest,
+            receipt_ref=receipt_ref,
+            fingerprint=fingerprint,
+            asset_kind=asset_kind,
+            generated=False,
+            evidence_capable=False,
+            evidence_use=EvidenceUse.VISUAL_SUPPORT,
+            claim_refs=[],
+            technical_status=TECHNICAL_NOT_RUN,
+            human_review=HUMAN_REVIEW_PENDING,
+            production_ready=False,
+        )
+        return ImportedMedia(
+            asset_id=asset_id,
+            modality=modality,
+            asset_kind=asset_kind,
+            path=str(full_path),
+            logical_path=logical_path,
+            sha256=digest,
+            receipt_path=str(receipt_path),
+            receipt_ref=receipt_ref,
+            license=license.strip(),
+            attribution=attribution.strip(),
+            source_type=source_type,
+            reuse_source=reuse_source,
+            envelope=envelope,
+            cross_project=cross_project,
+        )
+
+    def verify(
+        self,
+        *,
+        project_dir: Path,
+        relative_path: str,
+        expected_sha256: Optional[str] = None,
+    ) -> MediaUseVerification:
+        """Check a recorded file still exists, hashes the same, and keeps a receipt."""
+        project_root = Path(project_dir).expanduser().resolve()
+        full_path = self._contained_path(project_root, relative_path)
+        failures: List[str] = []
+        exists = full_path.is_file()
+        digest_matches = False
+        receipt_present = False
+        schema: Optional[str] = None
+        license: Optional[str] = None
+        if exists:
+            observed = sha256_file(full_path)
+            receipt_path = full_path.with_name(full_path.name + IMPORT_RECEIPT_SUFFIX)
+            receipt_present = receipt_path.is_file()
+            recorded: Optional[str] = None
+            if receipt_present:
+                try:
+                    payload = json.loads(receipt_path.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError) as exc:
+                    failures.append(f"receipt is unreadable: {exc}")
+                    payload = {}
+                if isinstance(payload, dict):
+                    schema = payload.get("schema")
+                    license = payload.get("license")
+                    value = payload.get("output_sha256")
+                    recorded = value if isinstance(value, str) and value.strip() else None
+                    if schema != IMPORT_SCHEMA:
+                        failures.append(
+                            f"receipt schema {schema!r} is not {IMPORT_SCHEMA!r}"
+                        )
+                    if not (license or "").strip():
+                        failures.append("receipt carries no license")
+            else:
+                failures.append("receipt sidecar is missing")
+
+            # The receipt's own digest is the default expectation. Without it
+            # "verify" would only ever confirm that *some* file exists at the
+            # path, which is the failure a receipt is supposed to prevent.
+            expected = expected_sha256 or recorded
+            if not expected:
+                failures.append(
+                    "receipt records no output_sha256 and no expected digest was "
+                    "supplied; there is nothing to verify against"
+                )
+            else:
+                digest_matches = observed == expected
+                if not digest_matches:
+                    failures.append(
+                        f"expected sha256 {expected} but observed {observed}"
+                    )
+        else:
+            failures.append(f"asset file does not exist: {full_path}")
+        return MediaUseVerification(
+            path=str(full_path),
+            exists=exists,
+            digest_matches=digest_matches,
+            receipt_present=receipt_present,
+            schema=schema,
+            license=license,
+            failures=tuple(failures),
+        )
+
+    # -- helpers -----------------------------------------------------------
+
+    @staticmethod
+    def _modality_for(kind: str) -> Tuple[str, Optional[str]]:
+        if kind in ("image", "icon", "logo", "brand"):
+            return MediaModality.IMAGE, AssetKind.LICENSED_EXTERNAL
+        if kind in ("bgm", "sfx"):
+            return MediaModality.AUDIO, None
+        raise MediaUseError(
+            CODE_UNSUPPORTED_TYPE,
+            f"{kind!r} has no ContentOps modality mapping. "
+            + UNSUPPORTED_TYPE_REASONS.get(kind, ""),
+        )
+
+    @staticmethod
+    def _require_supported(kind: str) -> None:
+        if kind in SUPPORTED_TYPES:
+            return
+        reason = UNSUPPORTED_TYPE_REASONS.get(kind)
+        if reason:
+            raise MediaUseError(CODE_UNSUPPORTED_TYPE, f"{kind!r} is not routed: {reason}")
+        raise MediaUseError(
+            CODE_UNSUPPORTED_TYPE,
+            f"unknown media-use type {kind!r}; supported: {', '.join(SUPPORTED_TYPES)}",
+        )
+
+    @staticmethod
+    def _require_license(license: str) -> None:
+        if not (license or "").strip():
+            raise MediaUseError(
+                CODE_LICENSE_MISSING,
+                "this import has no license. media-use does not record one, so the "
+                "caller must state it explicitly. An unlicensed asset is refused "
+                "rather than defaulted to something convenient.",
+            )
+
+    @staticmethod
+    def _contained_path(project_root: Path, relative: str) -> Path:
+        candidate = Path(relative)
+        if candidate.is_absolute() or relative.startswith(("\\\\", "//")):
+            raise MediaUseError(
+                CODE_PATH_ESCAPE,
+                f"media-use named an absolute path ({relative!r}); assets must be "
+                f"project-relative",
+            )
+        if ".." in candidate.parts:
+            raise MediaUseError(
+                CODE_PATH_ESCAPE,
+                f"media-use named a path containing '..' ({relative!r})",
+            )
+        full = (project_root / candidate).resolve()
+        if full != project_root and project_root not in full.parents:
+            raise MediaUseError(
+                CODE_PATH_ESCAPE,
+                f"{relative!r} resolves outside the project directory",
+            )
+        return full
+
+    @staticmethod
+    def _repo_root() -> Path:
+        return Path(__file__).resolve().parents[3]
+
+    @staticmethod
+    def _source_type(record: Mapping[str, Any]) -> str:
+        source = str(record.get("source") or "")
+        if source == "existing":
+            return "project_existing"
+        if source == "ingested":
+            return "local_file"
+        if record.get("scope") == "project" or record.get("_source") == "project-candidate":
+            return "project_existing"
+        if record.get("_source") in {"reused", "reused-explicit", "cached"} or record.get(
+            "scope"
+        ) == "global":
+            return "shared_cache"
+        if str(record.get("provider") or "").startswith("heygen"):
+            return "catalog"
+        return source or "media_use_record"
+
+    @staticmethod
+    def _sanitize_source_url(text: str) -> str:
+        """Reduce a remote reference to scheme, host, port and path.
+
+        Userinfo, query and fragment are dropped: a signed catalog URL carries
+        access in its query string, and ``user:token@host`` carries it before the
+        host. The host is rebuilt from ``hostname``/``port`` rather than by
+        splitting ``netloc`` at ``@``, so IPv6 literals survive intact and a
+        malformed authority is refused instead of being half-parsed.
+        """
+        try:
+            parts = urlsplit(text)
+            port = parts.port
+        except ValueError as exc:
+            raise MediaUseError(
+                CODE_UNSAFE_SOURCE_URI,
+                "source provenance URL is malformed",
+            ) from exc
+        scheme = parts.scheme.lower()
+        if scheme not in {"http", "https"}:
+            raise MediaUseError(
+                CODE_UNSAFE_SOURCE_URI,
+                f"source provenance URL scheme is not http/https: {scheme!r}",
+            )
+        host = parts.hostname
+        if not host:
+            raise MediaUseError(
+                CODE_UNSAFE_SOURCE_URI,
+                "source provenance URL has no host",
+            )
+        host_text = f"[{host}]" if ":" in host else host
+        netloc = f"{host_text}:{port}" if port is not None else host_text
+        return urlunsplit((scheme, netloc, parts.path, "", ""))
+
+    @staticmethod
+    def _safe_source_uri(record: Mapping[str, Any], project_root: Path) -> Optional[str]:
+        raw = None
+        provenance = record.get("provenance")
+        if isinstance(provenance, dict):
+            raw = provenance.get("from")
+        if not raw:
+            return None
+        text = str(raw).strip()
+        if "://" in text:
+            return MediaUseAdapter._sanitize_source_url(text)
+        if text.startswith("//"):
+            raise MediaUseError(
+                CODE_UNSAFE_SOURCE_URI,
+                "source provenance URL is scheme-relative and cannot be verified",
+            )
+        try:
+            path = Path(text).expanduser().resolve()
+        except (OSError, ValueError):
+            return None
+        try:
+            return path.relative_to(project_root).as_posix()
+        except ValueError:
+            # Outside the project: keep only the basename, so a receipt does not
+            # publish a machine-local path.
+            return path.name
+
+    @staticmethod
+    def _safe_original_path(record: Mapping[str, Any], project_root: Path) -> Optional[str]:
+        raw = record.get("path")
+        if not isinstance(raw, str) or not raw.strip():
+            return None
+        candidate = Path(raw)
+        if candidate.is_absolute():
+            return candidate.name
+        return candidate.as_posix()

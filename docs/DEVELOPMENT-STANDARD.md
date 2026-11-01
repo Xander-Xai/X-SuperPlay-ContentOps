@@ -97,9 +97,12 @@ No receipt = task not done.
 ## Testing Requirements
 
 - `python scripts/dev_check.py` before every PR
-- `python scripts/test_basic.py` — current test suite (9 tests)
+- `python scripts/test_basic.py` — script-level suite (10 tests)
 - `python scripts/check_docs.py` — doc consistency
 - `python scripts/check_repo_policy.py` — file placement + security
+- `python scripts/check_skill_references.py` — installed skills vs code on this branch
+- `python scripts/check_i18n.py` — bilingual structural consistency
+- A new `tests/test_*.py` must also be added to `.github/workflows/ci.yml`
 - Windows-specific tests for path handling
 
 ## Documentation Update Matrix

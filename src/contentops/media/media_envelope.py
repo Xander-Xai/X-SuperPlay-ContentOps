@@ -70,8 +70,13 @@ class MediaModality:
     SPEECH = "SPEECH"
     IMAGE = "IMAGE"
     VIDEO = "VIDEO"
+    #: Non-speech audio: licensed background music and sound effects. It is not
+    #: narration (no transcript, no pronunciation policy, no loudness contract
+    #: owned by the speech path) and it is not visual, so it carries no
+    #: ``AssetKind`` and can never be evidence-capable.
+    AUDIO = "AUDIO"
 
-    ALL: Tuple[str, ...] = (SPEECH, IMAGE, VIDEO)
+    ALL: Tuple[str, ...] = (SPEECH, IMAGE, VIDEO, AUDIO)
 
     #: Modalities whose assets are visual and therefore participate in the
     #: ``AssetKind`` evidence boundary. Speech is excluded, and that exclusion is
@@ -83,6 +88,7 @@ class MediaModality:
         SPEECH: "narration",
         IMAGE: "still image",
         VIDEO: "video",
+        AUDIO: "audio",
     }
 
     @staticmethod

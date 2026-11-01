@@ -1,0 +1,53 @@
+{
+  "schema": "contentops.m5-sources/v1",
+  "artifacts": [
+    {
+      "id": "agents_pin",
+      "source_type": "repo_doc",
+      "title": "AGENTS.md — 上游修改禁令与 Easel 固定版本",
+      "path": "AGENTS.md",
+      "sha256": "92787a9aa9aa9930633ce63a5d6f1e2b5cfd13565da3bc4c318d40fda3aa5a1f",
+      "bytes": 4627,
+      "permission": "CREATED_BY_OWNER",
+      "captured_at": "2026-10-31T12:21:15Z",
+      "evidence_capable": true,
+      "notes": "仓库自身规则；同一提交内可复核"
+    },
+    {
+      "id": "easel_lock",
+      "source_type": "lock_file",
+      "title": "runtime/easel.lock.json",
+      "path": "runtime/easel.lock.json",
+      "sha256": "fe755726d22ee04d3f4900da4b3b45571ad00d800f7923596b9a76390aa73ade",
+      "bytes": 234,
+      "permission": "CREATED_BY_OWNER",
+      "captured_at": "2026-10-31T12:21:15Z",
+      "evidence_capable": true,
+      "notes": ""
+    },
+    {
+      "id": "verifier",
+      "source_type": "source_code",
+      "title": "scripts/verify_easel_runtime.py — 内容哈希校验器",
+      "path": "scripts/verify_easel_runtime.py",
+      "sha256": "d88fda391ef83a9125ca8413a4239719fc1d6aa67370dd814de72877b7049e16",
+      "bytes": 7967,
+      "permission": "CREATED_BY_OWNER",
+      "captured_at": "2026-10-31T12:21:15Z",
+      "evidence_capable": true,
+      "notes": ""
+    },
+    {
+      "id": "upstream_doc",
+      "source_type": "repo_doc",
+      "title": "docs/UPSTREAM-EASEL.md — 升级与遗留克隆",
+      "path": "docs/UPSTREAM-EASEL.md",
+      "sha256": "3bcd1818cd236de030f0e065bc249d9d901d4f15faa21942651d8465640a21a0",
+      "bytes": 3841,
+      "permission": "CREATED_BY_OWNER",
+      "captured_at": "2026-10-31T12:21:15Z",
+      "evidence_capable": true,
+      "notes": ""
+    }
+  ]
+}
