@@ -34,6 +34,7 @@ translation_status: synced
 
 ## 里程碑计划
 
+- [CONVERGENCE-REQUIREMENTS-2026-11-01.md](CONVERGENCE-REQUIREMENTS-2026-11-01.md) — 文档 / Skill / 分支 / 上游固定版本收敛 —— **进行中**
 - [M4-H3-PLAN.md](M4-H3-PLAN.md) — M4 MiniMax H3 视频（Issue #22）—— **已实现**
 - [M4.5-MEDIA-CONVERGENCE-PLAN.md](M4.5-MEDIA-CONVERGENCE-PLAN.md) — M4.5 媒体收敛（Issue #27）—— **已实现**
 
@@ -42,7 +43,7 @@ translation_status: synced
 - [DEVELOPMENT-STANDARD.md](DEVELOPMENT-STANDARD.md) — 开发规则
 - [FILE-PLACEMENT-POLICY.md](FILE-PLACEMENT-POLICY.md) — 文件归属规则
 - [GLOSSARY.md](GLOSSARY.md) — 高频术语表
-- [SKILL-REGISTRY.zh-CN.md](SKILL-REGISTRY.zh-CN.md) — Skill 发现、已声明能力、解析判定与 Doctor
+- [SKILL-REGISTRY.md](SKILL-REGISTRY.md) — Skill 发现、已声明能力、解析判定与 Doctor
 
 ## 决策
 
@@ -53,10 +54,12 @@ translation_status: synced
 - [adr/ADR-005-human-approval.md](adr/ADR-005-human-approval.md)
 - [adr/ADR-006-upstream-upgrade-policy.md](adr/ADR-006-upstream-upgrade-policy.md)
 - [adr/ADR-007-m5-evidence-production-chain.md](adr/ADR-007-m5-evidence-production-chain.md)
+- [adr/ADR-007-minimax-speech-transport.md](adr/ADR-007-minimax-speech-transport.md) — 与 M5 ADR 编号冲突；两份记录都存在
 - [adr/ADR-008-media-use-adapter.md](adr/ADR-008-media-use-adapter.md)
 - [adr/ADR-009-skill-execution-authorization.md](adr/ADR-009-skill-execution-authorization.md)
 - [adr/ADR-010-trusted-grant-execution-gate.md](adr/ADR-010-trusted-grant-execution-gate.md)
-- [adr/ADR-011-media-use-mutating-authorization-proposal.md](adr/ADR-011-media-use-mutating-authorization-proposal.md) — **仅提案**：写操作授权与幂等性（不修改执行权限）
+- [adr/ADR-012-convergence-decisions.md](adr/ADR-012-convergence-decisions.md) —— 收敛决策 D1–D6（2026-11-01）。ADR-011 由未合并的 `feat/content-router` 分支预留
+- [adr/ADR-013-media-use-mutating-authorization-proposal.md](adr/ADR-013-media-use-mutating-authorization-proposal.md) — **仅提案**：写操作授权与幂等性（不修改执行权限）
 
 ## 事实优先级
 
@@ -83,3 +86,4 @@ translation_status: synced
 - [../reports/audits/media-use-premerge-convergence-2026-11-01.md](../reports/audits/media-use-premerge-convergence-2026-11-01.md) — PR #86/#89 合并前状态、集成门禁及发布边界
 - [../reports/audits/contentops-phase4-delivery-unlock-2026-10-31.md](../reports/audits/contentops-phase4-delivery-unlock-2026-10-31.md) — 第四阶段交付解锁：#62 合并准备、M5 联合验收、#49 顺序与 Owner 决策（2026-10-31）
 - [../reports/audits/contentops-phase5-integration-convergence-2026-10-31.md](../reports/audits/contentops-phase5-integration-convergence-2026-10-31.md) — 第五阶段集成收敛：#71 重叠矩阵、推荐路线、素材授权门禁与 #62 复核（2026-10-31）
+- [../reports/audits/worktree-and-branch-audit-2026-11-01.md](../reports/audits/worktree-and-branch-audit-2026-11-01.md) — worktree 与分支清单、分类与清理顺序（2026-11-01）

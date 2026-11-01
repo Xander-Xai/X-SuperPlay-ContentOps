@@ -69,6 +69,15 @@ SRT_ALLOWLIST: List[str] = [
     "projects/easel-enhanced-golden/evidence/captions/easel.srt",
 ]
 
+#: M5 media-use sample inputs (audit D-4). Operator-owned, exact paths, added after
+#: the six evidence screenshots above and kept in their own list so the screenshot
+#: allowlist stays exactly six. ``tests/test_m5_media_traceability.py`` checks their
+#: bytes against their receipts; this file only guards the ignore rules.
+M5_FIXTURES: List[str] = [
+    "projects/m5-media-use/assets/support.png",
+    "projects/m5-media-use/assets/bed.mp3",
+]
+
 #: Must stay ignored. The historical caption in particular: rewriting the past is not
 #: how a baseline becomes reproducible, so the experiment copied the bytes instead.
 MUST_STAY_IGNORED_SRT: List[str] = [
@@ -188,11 +197,18 @@ def test_the_negations_come_after_the_rule_they_negate():
     """Ordering is the whole mechanism, and it is invisible in a file listing."""
     text = GITIGNORE.read_text(encoding="utf-8")
     png_rule = text.index("*.png")
+    mp3_rule = text.index("*.mp3")
     for rel in ALLOWLIST:
         position = text.index(f"!{rel}")
         assert position > png_rule, (
             f"!{rel} appears before the *.png rule. gitignore is last-match-wins, so "
             f"an earlier negation has no effect and the file stays ignored."
+        )
+    for rel in M5_FIXTURES:
+        position = text.index(f"!{rel}")
+        rule = mp3_rule if rel.endswith(".mp3") else png_rule
+        assert position > rule, (
+            f"!{rel} appears before the rule it negates, so it has no effect."
         )
     print("[ok] 6. every negation is positioned after the rule it negates")
 
@@ -204,12 +220,12 @@ def test_the_allowlist_has_no_duplicates_or_stray_entries():
         if line.strip().startswith("!") and line.strip().endswith(".png")
     ]
     assert len(lines) == len(set(lines)), f"duplicate png negations: {lines}"
-    stray = sorted(set(lines) - {f"!{rel}" for rel in ALLOWLIST})
+    stray = sorted(set(lines) - {f"!{rel}" for rel in ALLOWLIST + M5_FIXTURES})
     assert not stray, (
-        f"unexpected png negation(s) beyond the six approved files: {stray}. Any new "
+        f"unexpected png negation(s) beyond the approved files: {stray}. Any new "
         f"entry needs the same sensitive-data review and Founder decision."
     )
-    print("[ok] 7. the png allowlist is exactly six entries, no duplicates")
+    print("[ok] 7. the png allowlist is exactly the approved entries, no duplicates")
 
 
 @test
@@ -305,6 +321,28 @@ def test_the_locked_caption_is_byte_identical_to_the_historical_one():
     assert hashlib.sha256(canonical.read_bytes()).hexdigest() == \
         hashlib.sha256(historical.read_bytes()).hexdigest()
     print("[ok] 13. the canonical caption is byte-identical to the historical caption")
+
+
+@test
+def test_the_m5_sample_fixtures_are_trackable_and_stay_narrow():
+    """D-4: the M5 sample needs its image and BGM in a clone, and nothing else."""
+    for rel in M5_FIXTURES:
+        assert not ignored(rel), f"{rel} is still ignored by the rules"
+        assert tracked(rel), f"{rel} is not tracked; the exception exists but nothing was added"
+        assert (ROOT / rel).is_file(), f"{rel} does not exist on disk"
+    still_ignored = [
+        "projects/m5-media-use/assets/other.png",
+        "projects/m5-media-use/assets/bed-2.mp3",
+        "projects/m5-media-use/assets/voice/narration.wav",
+        "projects/m5-media-use/.media/audio/sfx/sfx_001.mp3",
+        "projects/m5-media-use/final/m5-media-use.mp4",
+    ]
+    wrong = [rel for rel in still_ignored if not ignored(rel)]
+    assert not wrong, (
+        f"these must stay ignored, not become fixtures: {wrong}. Only the two exact "
+        f"owned inputs are exceptions; renders, narration and third-party audio are not."
+    )
+    print(f"[ok] 14. the M5 sample tracks exactly {len(M5_FIXTURES)} owned inputs")
 
 
 def main() -> int:

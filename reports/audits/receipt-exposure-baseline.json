@@ -1,6 +1,6 @@
 {
-  "schema": "contentops.receipt-exposure-baseline/v1",
-  "note": "Field paths only. No values, no field contents.",
+  "schema": "contentops.receipt-exposure-baseline/v2",
+  "note": "Field paths only. Values are compared against the trusted base; no value or value hash is stored.",
   "files": {
     "projects/easel-enhanced-golden/receipts/founder-voice-activation-diagnosis.json": [
       "EXISTING_VOICE_STATUS.voice_id::provider_id"

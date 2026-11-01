@@ -12,27 +12,47 @@ translation_status: synced
 
 ## 是什么
 
-一个统一的运行时，将真实的业务工作（GitHub 仓库、实验、研究）转化为可追溯的视频、
-公众号文章、小红书图文和 X 帖子；每种内容走自己的生产门禁。
+一个统一的运行时，将真实的业务工作（GitHub 仓库、实验、研究）转化为可追溯的视频；
+公众号文章、小红书图文和 X 帖子是后续轨道，各自走自己的生产门禁。
+
+本分支同时承载文档与代码的对齐需求：
+[docs/CONVERGENCE-REQUIREMENTS-2026-11-01.md](docs/CONVERGENCE-REQUIREMENTS-2026-11-01.md)。
 
 ## 为什么
 
-此前使用 5 个独立平台仓库，从未产出稳定结果。ContentOps 将生产整合到一个运行时中，
+此前使用 5 个独立平台仓库，从未产出稳定结果。ContentOps 将视频生产整合到一个运行时中，
 并保留诚实、不可绕过的人工审核与质量门禁。
 
 ## 当前状态
 
-| 项目 | 状态 |
-|---|---|
-| Easel 运行时 | 固定 v0.2.1（commit `3fe2d99`，982 blobs 验证通过） |
-| 视频流水线 | 已实现生产者与 QC；`production_ready: false`；等待人工审核 |
-| 公众号 | vendored 十阶段工作流；停在公众号草稿；许可审计未完成（#56） |
-| 小红书图文 | `feat/xhs-fa-migration` 上的八步工作流；未合并；仅人工上传 |
-| X | PR #50；仅人工发布的编辑包；未合并 |
-| MiniMax 媒体 | 语音、图片与 H3 视频已实现并做过真实调用；`PENDING_FOUNDER_REVIEW` |
-| 自动发布 | **不在范围内** |
-| 测试 | 见 [docs/CURRENT-STATE.md](docs/CURRENT-STATE.md)；统一门禁用 `python scripts/dev_check.py` |
-| 生产就绪 | **否** —— 没有任何平台达到 `PRODUCTION_ACCEPTED` |
+下表区分**本分支已存在**与**仅存在于未合并分支**。一条轨道不会因为草稿分支写了它就算完成。
+
+| 项目 | 所在层 | 状态 |
+|---|---|---|
+| Easel 运行时 | 本分支 | 固定 v0.2.1（commit `3fe2d99`，982 blobs 验证通过）。上游稳定版为 v0.3.0 —— 未采用 |
+| 视频流水线（`run_v1.py`） | 本分支 | 已实现（`easel` + 诊断用 `fallback`）；`production_ready: false` |
+| M5 证据优先链（`m5_production.py`） | 本分支 | 已在 `projects/m5-media-use` 上完成集成验证；`production_ready: false`、`PENDING_FOUNDER_REVIEW` |
+| media-use 适配器（HyperFrames） | 本分支 | 已实现；仅本地、零联网/零付费。需要主机运行时锁 —— 默认判定为 `BLOCKED / MISSING_RUNTIME` |
+| MiniMax 媒体 | 本分支 | 语音、图片、H3 视频已实现；已验证子集见 CURRENT-STATE；`PENDING_FOUNDER_REVIEW` |
+| Skill 路由 / 执行授权 | 本分支 | 已实现；仅 `media-use` 是已声明能力；路由器从不授予执行权 |
+| 内容路由、账号 DNA、工作流门禁 | **未合并** | `feat/content-router`（PR #49，草稿）—— 不在本分支 |
+| 公众号 | **未合并 / 本地 vendor** | vendored 十阶段工作流；许可审计未完成（#56） |
+| 小红书图文 | **未合并** | `feat/xhs-fa-migration`；仅人工上传 |
+| X | **未合并** | PR #50 / PR #87 —— 仅人工发布的编辑包 |
+| 自动发布 | — | **不在范围内** |
+| 测试 | 本分支 | 31 个套件；见 [docs/TEST-PLAN.md](docs/TEST-PLAN.md)；统一门禁 `python scripts/dev_check.py` |
+| 生产就绪 | — | **否** —— 没有任何轨道达到 `PRODUCTION_ACCEPTED` |
+
+### 分支现实
+
+`main` 是受保护的集成分支，但它**已经陈旧**：它停在第四阶段交付解锁（PR #72）。
+media-use 集成、权利门禁、Skill 路由与 Skill 执行授权栈（PR #71、#74–#81、#84）
+只存在于 `fix/57-m5-media-fixtures`，该分支领先 `main` 17 个提交，本身也是开放的
+PR（#89）。
+
+本 README 描述的正是该分支。未合并的层在上表明确标注，而不是当作已工作的功能来
+描述。把这一栈落到 `main` 上是第一个集成步骤；详见
+[docs/CONVERGENCE-REQUIREMENTS-2026-11-01.md](docs/CONVERGENCE-REQUIREMENTS-2026-11-01.md)。
 
 ## 快速开始
 
@@ -40,8 +60,10 @@ translation_status: synced
 
 ```powershell
 python scripts\doctor.py
+python scripts\dev_check.py
 python scripts\new_project.py --slug my-video --title "My Video"
 python scripts\run_v1.py   projects\my-video
+python scripts\m5_production.py projects\m5-media-use
 python scripts\qc_video.py projects\my-video
 ```
 
@@ -49,23 +71,37 @@ python scripts\qc_video.py projects\my-video
 
 ```bash
 python3 scripts/doctor.py
+python3 scripts/dev_check.py
 python3 scripts/new_project.py --slug my-video --title "My Video"
 python3 scripts/run_v1.py   projects/my-video
+python3 scripts/m5_production.py projects/m5-media-use
 python3 scripts/qc_video.py projects/my-video
 ```
 
 ## 架构概要
 
+本分支实际运行的链：
+
 ```text
-路线（HOTSPOT_DISCOVERY / USER_TOPIC）
-  -> 账号 DNA -> 内容格式 -> Brief -> 平台门禁 -> 人工审核
-     ├ 视频        -> 分镜规划 -> 采集 -> 合成 -> QC -> final.mp4
-     ├ 公众号        -> vendored 十阶段 -> 公众号草稿
-     ├ 小红书图文    -> 八步门禁 -> 人工上传说明包
-     └ X            -> 编辑包 -> 人工发布
+project.yaml source_refs
+  -> SourceArtifact（权限感知）
+  -> ClaimLedger（引文校验的声明）
+  -> 脚本 + 分镜
+  -> MediaManifest（资产清单 + 时间线）
+  -> 旁白 / 字幕
+  -> 固定版本 Easel 合成（assemble_easel 适配器）
+  -> qc_video
+  -> 人工审核门禁
 ```
 
-没有任何路线会自动发布。详见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) 与
+两个入口共享同一引擎：`run_v1.py`（分镜驱动、edge-tts）与 `m5_production.py`
+（证据优先、本地旁白）。两者都不发布，也都不会报告生产就绪。
+
+账号感知的内容路由（`HOTSPOT_DISCOVERY` / `USER_TOPIC` → 账号 DNA → Brief）
+**不在本分支**。它是 [docs/CONVERGENCE-REQUIREMENTS-2026-11-01.md](docs/CONVERGENCE-REQUIREMENTS-2026-11-01.md)
+与 PR #49 的主题。
+
+系统边界详见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) 与
 [docs/CURRENT-STATE.md](docs/CURRENT-STATE.md)。
 
 ## 规范文档
@@ -77,10 +113,26 @@ python3 scripts/qc_video.py projects/my-video
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 系统边界 |
 | [docs/PRD.md](docs/PRD.md) | 产品需求 |
 | [docs/RUNBOOK.md](docs/RUNBOOK.md) | 真实可执行命令 |
-| [docs/DEVELOPMENT-PLAN.md](docs/DEVELOPMENT-PLAN.md) | M0-M6 里程碑 |
+| [docs/DEVELOPMENT-PLAN.md](docs/DEVELOPMENT-PLAN.md) | 里程碑与状态 |
 | [docs/QUALITY-STANDARD.md](docs/QUALITY-STANDARD.md) | 质量门控 |
+| [docs/TEST-PLAN.md](docs/TEST-PLAN.md) | 测试清单与 CI 接线 |
+| [docs/CONVERGENCE-REQUIREMENTS-2026-11-01.md](docs/CONVERGENCE-REQUIREMENTS-2026-11-01.md) | 当前收敛计划 |
 | [docs/UPSTREAM-EASEL.md](docs/UPSTREAM-EASEL.md) | Easel 固定版本策略 |
 | [AGENTS.md](AGENTS.md) | AI Agent 执行纪律 |
+
+## Easel 固定版本
+
+| 属性 | 值 |
+|---|---|
+| 仓库 | https://github.com/ZJU-REAL/Easel |
+| Tag | v0.2.1 |
+| Commit | `3fe2d9904c1619281ef57f81d9ee0b7854998399` |
+| 本地路径 | `.runtime/easel/` |
+| 锁文件 | `runtime/easel.lock.json` |
+| 上游稳定版 | v0.3.0（未采用；Skill 路径已迁至 `skills/builtin/`） |
+| 升级 | 需要 Founder 批准 + 回归套件 |
+
+完整策略见 [docs/UPSTREAM-EASEL.md](docs/UPSTREAM-EASEL.md)。
 
 ## 治理
 

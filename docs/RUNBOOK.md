@@ -228,12 +228,32 @@ If `qc_video.py` returns `FAIL`:
 ## 9. Test suite
 
 ```powershell
-python scripts\test_basic.py
+python scripts\dev_check.py          # the gate: repo policy, subprocess policy,
+                                    # skill references, docs, i18n, smoke tests, whitespace
+python scripts\test_basic.py        # script-level smoke suite on its own
+python tests\test_m5_evidence.py    # one suite
 ```
 
-9 tests covering: doctor execution, project creation idempotency, QC FAIL on
-missing video, blob SHA-1 verification, path exclusion symmetry, foreign
+The smoke suite covers: doctor execution, project creation idempotency, QC FAIL
+on missing video, blob SHA-1 verification, path exclusion symmetry, foreign
 remote rejection, archive provenance acceptance/rejection.
+
+## 10. Skill reference integrity
+
+```powershell
+python scripts\check_skill_references.py
+python scripts\check_skill_references.py --json
+```
+
+Five installed content skills name code that lives on an unmerged branch.
+`runtime/content-skill-status.json` records every such path, and this check
+fails when the record stops matching this checkout: an unrecorded dangling
+reference, a recorded reference that has landed, or a skill marked merged whose
+code is missing. On a host without the shared skill store (CI) the reference
+scan is skipped and only the record-versus-branch checks run.
+
+A failure here means the record needs updating — and, when a layer has landed,
+that the capability may now be declared in `runtime/skill-registry.json`.
 
 ## 10. media-use assets (optional)
 

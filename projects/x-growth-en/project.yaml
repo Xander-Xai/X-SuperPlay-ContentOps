@@ -1,0 +1,14 @@
+slug: x-growth-en
+account_slug: x-superplay-english
+title: "X · SuperPlay English — the editorial track"
+account: "X · SuperPlay English"
+role: Grow
+platforms: [x]
+language: en
+format: 1600x900
+status: DRAFT
+gate: scripts/x_post.py
+publication_mode: MANUAL_ONLY
+vendor: vendor/x-growth-os
+notes: "Text track: one post record per intended post, graded by scripts/x_post.py. No film, no render, no API. A post is published when a person posts it and records the real status URL -- not when this repository says so."
+why_no_quality_gate: "check_script_quality.is_gated keys on 'quality_gate: enforced', and SQ01-SQ07 are video-script rules (silent gaps, layouts, presenter continuity). The X gate is scripts/x_post.py."

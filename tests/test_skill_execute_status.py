@@ -43,6 +43,30 @@ class SkillExecuteStatusContractTests(unittest.TestCase):
         self.assertIn("status", result["receipt"])
         self.assertEqual(result["receipt"]["status"]["available"], False)
 
+    def test_doctor_health_is_reported_apart_from_the_operation_running(self):
+        """A negative diagnosis is a successful diagnosis, not a failed run."""
+        for health in (True, False):
+            with self.subTest(health=health):
+                doctor = SimpleNamespace(
+                    ok=health,
+                    as_dict=lambda: {"ok": health, "checks": [], "status": {"available": True}},
+                )
+                with mock.patch.object(skill_execute, "MediaUseAdapter") as adapter_cls:
+                    adapter_cls.return_value.doctor.return_value = doctor
+                    result = skill_execute._operation_executor("doctor")("doctor", None)
+                self.assertTrue(result["ok"], "doctor ran; that is the operation succeeding")
+                self.assertEqual(result["health"], health,
+                                 "the adapter's own verdict travels separately")
+
+    def test_status_reports_the_same_verdict_for_ok_and_health(self):
+        for available in (True, False):
+            with self.subTest(available=available):
+                with mock.patch.object(skill_execute, "MediaUseAdapter") as adapter_cls:
+                    adapter_cls.return_value.status.return_value = self._status(available)
+                    result = skill_execute._operation_executor("status")("status", None)
+                self.assertEqual(result["ok"], available)
+                self.assertEqual(result["health"], available)
+
 
 if __name__ == "__main__":
     unittest.main()

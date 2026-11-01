@@ -215,10 +215,30 @@ jobs:
       - name: Run M5 media-use automatic sourcing regression tests
         run: python tests/test_m5_media_use_workflow.py
 
+      # The sample's committed inputs and their receipts. Pure repository state:
+      # no adapter, no runtime, no network. Asserts the image and BGM bytes match
+      # the receipts that describe them, every import has a tracked receipt, the
+      # rights records still pass the gate, and the fixture exception stays narrow.
+      - name: Run M5 media-use traceability tests
+        run: python tests/test_m5_media_traceability.py
+
+      # The direct ``ingest`` verb copies a file into the project exactly like
+      # ``import`` does, so it must apply the same rights policy. The adapter is
+      # mocked: this asserts which decision the CLI takes, not how the skill runs.
+      - name: Run media-use ingest rights regression tests
+        run: python tests/test_media_use_ingest_rights.py
+
       # Discovery and diagnosis only: these suites build temporary catalogs and
       # never download a runtime or execute a skill.
       - name: Run skill doctor regression tests
         run: python tests/test_skill_doctor.py
+
+      # The installed content skills name code that lives on an unmerged
+      # branch. This suite keeps the record of that honest: an unrecorded
+      # dangling reference and a recorded reference that has landed are both
+      # failures.
+      - name: Run skill reference integrity tests
+        run: python tests/test_skill_references.py
 
       - name: Run skill router capability regression tests
         run: python tests/test_skill_router_capabilities.py
@@ -249,6 +269,52 @@ jobs:
       - name: Run execution gate regression tests
         run: python tests/test_execution_gate.py
 
+      # The X editorial track without the vendor bundle. Offline only: no X API,
+      # no browser, no vendor tree. The account suite validates the DNA document;
+      # the project suite validates the CSV contract and account resolution; the
+      # gate suite drives a real record through draft, refusal and manual package;
+      # the handoff suite proves a PARTIAL_CONTRACT record is refused by name.
+      - name: Run X account DNA regression tests
+        run: python tests/test_x_account.py
+
+      - name: Run X project contract regression tests
+        run: python tests/test_x_project.py
+
+      - name: Run X post gate regression tests
+        run: python tests/test_x_post.py
+
+      - name: Run X contract-handoff regression tests
+        run: python tests/test_x_contract_handoff.py
+
+      # The positive path: a complete synthetic record reaches a manual publish
+      # package, and every bypass attempt (review_status, ready_for_publish, URL
+      # syntax, another account's slug) is refused.
+      - name: Run X positive acceptance tests
+        run: python tests/test_x_positive_acceptance.py
+
+      # The growth skill imported from #83. Offline only: fixtures, no X access.
+      - name: Run X growth contract tests
+        run: python tests/test_x_growth_contract.py
+
+      - name: Run X growth engagement tests
+        run: python tests/test_x_growth_engagement.py
+
+      - name: Run X growth metrics tests
+        run: python tests/test_x_growth_metrics.py
+
+      - name: Run X organic growth operator tests
+        run: python tests/test_x_organic_growth.py
+
+      # The end-to-end chain: growth -> enrichment -> gate -> manual package.
+      - name: Run X growth integration tests
+        run: python tests/test_x_growth_integration.py
+
+      # Path hardening: ids, review files, images and provenance are all data a
+      # caller supplies. The suite proves traversal, backslash, drive, UNC and
+      # symlink spellings fail closed before anything is read or written.
+      - name: Run X path-safety tests
+        run: python tests/test_x_path_safety.py
+
       - name: Enforce subprocess policy
         run: python scripts/check_subprocess_policy.py
 
@@ -267,6 +333,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # The receipt check compares values against the trusted base commit,
+          # so the history it needs has to be present.
+          fetch-depth: 0
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -274,9 +344,21 @@ jobs:
       - name: Repo policy check
         run: python scripts/check_repo_policy.py
       - name: Receipt secret check
-        run: python scripts/check_receipt_secrets.py
+        shell: bash
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          base="$PR_BASE"
+          if [ -z "$base" ]; then base="$PUSH_BEFORE"; fi
+          if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
+            base="origin/main"
+          fi
+          python scripts/check_receipt_secrets.py --base "$base"
       - name: Subprocess policy check
         run: python scripts/check_subprocess_policy.py
+      - name: Skill reference check
+        run: python scripts/check_skill_references.py
       - name: Docs consistency check
         run: python scripts/check_docs.py
       - name: i18n consistency check

@@ -1,4 +1,4 @@
-# ADR-011: Proposed managed authorization for mutating `media-use` operations
+# ADR-013: Proposed managed authorization for mutating `media-use` operations
 
 Status: **Proposed — design only; NOT APPROVED for implementation or execution**
 Date: 2026-11-01

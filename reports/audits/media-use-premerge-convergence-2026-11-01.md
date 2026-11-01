@@ -57,6 +57,6 @@ The phrase "clean clone reproducible" is conditional on supplying the separately
 
 ## Next design-only item
 
-Write access for `resolve`, `adopt`, `ingest`, `import` is **outside** the managed read-only gate. The design-only [ADR-011](../../docs/adr/ADR-011-media-use-mutating-authorization-proposal.md) is `Proposed`, not approved. No verbs are added, M5 is not migrated, and neither paid/network usage nor publication is authorized.
+Write access for `resolve`, `adopt`, `ingest`, `import` is **outside** the managed read-only gate. The design-only [ADR-013](../../docs/adr/ADR-013-media-use-mutating-authorization-proposal.md) is `Proposed`, not approved. No verbs are added, M5 is not migrated, and neither paid/network usage nor publication is authorized.
 
 **Issue #57 remains OPEN.** Its cross-platform Skill registry/governance criteria exceed the media-use acceptance scope.

@@ -4,16 +4,32 @@
 
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
-> Last verified: 2026-10-31
+> Last verified: 2026-11-01 on `fix/57-m5-media-fixtures` (PR #89).
+> Sections below the "Layer status" table are historical milestone records;
+> they describe how a capability was proven, not what is current.
+
+## Layer status (2026-11-01)
+
+| Layer | Status |
+|---|---|
+| M5 evidence chain, media contracts, QC, media-use adapter, skill router/authorization | implemented on this branch |
+| Content router, account DNA, workflow gates, brief/script/design stages | **unmerged** (`feat/content-router`, PR #49) |
+| XHS / X / GZH tracks | **unmerged / rights-blocked** |
+| MiniMax speech, image, H3 video | implemented; verified subsets recorded below |
+| Production ready | **false** for every track |
 
 ## Git
 
 | Property | Value |
 |---|---|
-| Default branch | `main` (only persistent branch) |
+| Default branch | `main` — protected |
+| This branch | `fix/57-m5-media-fixtures`, 17 commits ahead of `main`, open PR #89 |
 | Main protection | **PROTECTED** — required status checks + PR + no force push + no deletion + linear history |
 | Required checks | `Tests (ubuntu-latest)`, `Tests (windows-latest)`, `Repo policy checks` |
 | Branch strategy | Issue-scoped short-lived branches, squash merge, auto-delete on merge |
+| Current branch reality | 30+ local branches and worktrees exist; only `main` is persistent. Unmerged work is not part of the system |
+| What `main` actually contains | Up to **phase-4 delivery unlock** (PR #72). The media-use integration, rights gate, skill router and skill-execution authorization stack (PRs #71, #74–#81, #84) exists **only on `fix/57-m5-media-fixtures`** and has never reached `main` |
+| Consequence | `main` is protected but stale. The first integration step is to land PR #89 and this work, not to add new features on top |
 
 ## Easel Runtime
 
@@ -29,17 +45,24 @@
 | Local extras | `outputs/` and `__pycache__/` only; no tracked file differs from upstream |
 | Lock file | `runtime/easel.lock.json` |
 | Provenance | `runtime/easel-runtime.json` |
+| Upstream stable | v0.3.0 (2026-10-12) — **not adopted**: 158 commits, skills moved from `skills/openclaw/` to `skills/builtin/`, `assemble.py` changed, and the tag was force-replaced upstream |
 
 ## Pipeline
 
-| Property | Value |
-|---|---|
-| Production engine | `easel` (Easel `auto-short-video/assemble.py`) |
-| Diagnostic engine | `fallback` (ffmpeg-only, never production) |
-| Production voice | edge-tts via Easel `tts.py` (zh-CN-YunxiNeural) |
-| Voice quality | `edge_tts_fallback` — not production-grade |
-| Production ready | **false** — READY_FOR_HUMAN_REVIEW |
-| Subtitle workaround | `scripts/assemble_easel.py` — strips subtitle, runs upstream, burns separately (no upstream modification) |
+Two entry points share the pinned Easel composer. Neither publishes.
+
+| Property | `run_v1.py` (V1) | `m5_production.py` (M5) |
+|---|---|---|
+| Input | authored `storyboard.json` + `master.md` | `project.yaml` `source_refs` + claims |
+| Narration | edge-tts (`zh-CN-YunxiNeural`) | Windows SAPI, offline |
+| Voice quality | `edge_tts_fallback` — not production-grade | `windows_sapi_offline` — not production-grade |
+| Evidence layer | none | `SourceArtifact` + `ClaimLedger` |
+| Composition | pinned Easel `assemble.py` via `assemble_easel.run` | same |
+| Subtitle handling | `assemble_easel` strips, runs upstream, burns separately | burned from narration timings |
+| Production ready | **false** | **false** — `PENDING_FOUNDER_REVIEW` |
+
+Diagnostic engine: `python scripts/run_v1.py <project> --engine fallback`
+(ffmpeg-only, never production, never reports `production_ready: true`).
 
 ## M5 Evidence-First Production Chain (Issue #6) — IMPLEMENTED 2026-10-31
 
@@ -66,9 +89,14 @@ the burned band against the unburned render.
 
 | Property | Value |
 |---|---|
-| Status | **NOT VERIFIED** |
-| Doctor FAILs | 6 (fastapi, uvicorn, sse_starlette, multipart, web frontend build, .env API Key) |
-| Impact | Does NOT block video pipeline (TTS + assemble use stdlib-only path) |
+| Status | **NOT VERIFIED / not a current doctor check** |
+| Current doctor | 7 checks (python, node, ffmpeg, ffprobe, git, easel_checkout, repo_layout) — all OK on 2026-11-01 |
+| Impact | Does NOT block the video pipeline (TTS + compose use the stdlib path) |
+
+The earlier "6/7 doctor FAILs" list described a doctor version that checked Web
+UI packages and a frontend build. The current `doctor.py` does not run those
+checks, so that claim is retired rather than repeated. Web workbench readiness is
+unverified, not failed.
 
 ## MiniMax
 
@@ -99,20 +127,51 @@ the burned band against the unburned render.
 | Sample | Source | Status |
 |---|---|---|
 | `projects/easel-review/` | Easel v0.2.1 runtime evaluation | 1 successful build, QC PASS, awaiting human review |
+| `projects/m5-media-use/` | M5 evidence chain with the media-use sample | final MP4, QC WARN, `PENDING_FOUNDER_REVIEW` |
+| `projects/m5-easel-pin/` | First M5 evidence-chain run | QC PASS (19 checks), real-source ratio 1.0 |
+| `projects/m45-technical-integration/` | M4.5 media convergence | QC WARN, zero provider calls |
 
 ## Tests
 
-| Suite | Status |
-|---|---|
-| `scripts/test_basic.py` (9 tests) | All PASS |
+| Suite group | Files | Count |
+|---|---|---|
+| Script smoke | `scripts/test_basic.py` | 10 |
+| Media / provider (offline fixtures) | speech, image, H3, convergence, media-use adapter | 432 `test_*` functions |
+| M5 evidence + media-use traceability | `test_m5_evidence.py`, `test_m5_*` | 18 + list-driven suites |
+| Golden / reproducibility | A/B variants, voice assets, locked inputs | 47 |
+| Skill / authorization | router, doctor, execution gate, grants | list-driven suites |
+| Skill reference integrity | `tests/test_skill_references.py` | 6 |
+| Windows | subprocess, paths | 53 |
+| Policy / secrets | gitignore, local-approval, receipt secrets | 19 + list-driven suites |
+| **Total** | **31 suites** | **704 top-level `test_*` functions + list-driven and unittest suites** |
+
+`python scripts/dev_check.py` runs the local gate. CI enumerates every suite as a
+named step; a suite without a CI step does not run, and one green run is not
+evidence that every suite passed. `ffmpeg` and `Pillow` are installed in CI;
+suites that need them report skips when absent.
+
+See [TEST-PLAN.md](TEST-PLAN.md) for the full inventory.
 
 ## Known Blockers
 
-1. Voice quality — edge-tts is mechanical, not production-grade. Primary motivation for MiniMax voice integration (M2).
-2. Web workbench — 7 doctor FAILs (Web UI/API packages, frontend build, `.env` key, gateway). Clearing them needs network installs and a key; none is used by the compose path, which still runs.
-3. Gateway healthz — upstream hardcodes port 18789; easel profile uses 37289. Does not block video pipeline.
-4. Human Review — no `human-review.json` receipt for easel-review project.
-5. ~~Main branch unprotected~~ — **RESOLVED** (G0.6): main is now protected via GitHub branch protection.
+1. Voice quality — edge-tts is mechanical and Windows SAPI is offline-flat.
+   Neither is production-grade. MiniMax speech is implemented but unapproved.
+2. Human Review — no completed `human-review.json` for any project.
+   Every result stays `PENDING_FOUNDER_REVIEW`.
+3. media-use runtime lock — a clean checkout (and this host today) resolves
+   `BLOCKED / MISSING_RUNTIME`. The approved baseline exists; a host lock must be
+   generated and trusted before the adapter can run.
+4. Unmerged content layer — account routing, workflow gates, brief/script/design
+   stages, XHS, X and GZH are not on this branch. They are prerequisites for the
+   five `x-superplay-*` skills, not available capabilities.
+5. Documentation convergence — this document was restructured on 2026-11-01;
+   PRD, DEVELOPMENT-PLAN and TEST-PLAN were updated in the same pass. The
+   remaining requirements are in
+   [CONVERGENCE-REQUIREMENTS-2026-11-01.md](CONVERGENCE-REQUIREMENTS-2026-11-01.md).
+6. Upstream pins — Easel v0.3.0 and HyperFrames 0.8.225 are available and not
+   adopted. See the convergence requirements for the decision.
+7. ~~Main branch unprotected~~ — **RESOLVED** (G0.6): main is protected via
+   GitHub branch protection.
 
 
 ## M3 Image Generation (Issue #20) — VERIFIED 2026-10-04
@@ -483,6 +542,7 @@ and what remains blocked.
 | Execution authorization | **never granted** by the router; every record carries `execution_authorized: false` |
 | media-use with a host runtime lock | `RESOLVABLE` (verified on this host against `runtime/media-use-runtime-baseline.json`) |
 | media-use without a lock | `BLOCKED / MISSING_RUNTIME` (the default on a clean checkout) |
+| Verdict on this host (2026-11-01) | `BLOCKED / MISSING_RUNTIME` — `CONTENTOPS_MEDIA_USE_RUNTIME_LOCK` is not set here, so the adapter is not executable on this machine |
 | Legacy M5 | unchanged — `scripts/m5_production.py` does not import the router; a test asserts it |
 | VIDEO track | discovery-only until a catalog root exists on the host |
 | GZH track | `BLOCKED` — vendored third-party track, rights unverified, `vendor/` is gitignored |
