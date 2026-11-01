@@ -23,13 +23,11 @@ python scripts/skill_route.py --resolve media-use --pipeline M5
 python scripts/skill_route.py --doctor
 ```
 
-Catalog resolution, in priority order: the pinned Easel runtime
-(``.runtime/easel/skills/openclaw``), the working Easel checkout
-(``Easel/skills/openclaw``), then the locally vendored 公众号 track
-(``vendor/gzh-thinktank/.../skills``). A name that appears in more than one root
-is indexed once, from the earliest root. Every root is gitignored or absent on a
-clean checkout, so the helper reports a clear error rather than an empty success
-when none is present.
+Catalog resolution, in priority order: the repository-owned ``skills`` root,
+the pinned Easel runtime (``.runtime/easel/skills/openclaw``), the working Easel
+checkout (``Easel/skills/openclaw``), then the locally vendored 公众号 track
+(``vendor/gzh-thinktank/.../skills``). A name in more than one root is indexed
+once, from the earliest root; later copies are reported as shadowed.
 
 Two separate questions
 ----------------------
@@ -56,13 +54,14 @@ from typing import Any, Dict, List, Optional, Tuple
 ROOT = Path(__file__).resolve().parents[1]
 
 CATALOG_ROOTS: Tuple[Path, ...] = (
+    ROOT / "skills",
     ROOT / ".runtime" / "easel" / "skills" / "openclaw",
     ROOT / "Easel" / "skills" / "openclaw",
     ROOT / "vendor" / "gzh-thinktank" / "gzh_未来智能" / "skills",
 )
 
-#: Read order is priority order: the pinned runtime shadows the working
-#: checkout, and both shadow a vendored track, so a name is indexed once.
+#: Read order is priority order: repo-owned, pinned runtime, working checkout,
+#: then vendored track. Each shadowed copy is reported.
 CATALOG_LABELS: Dict[str, str] = {
     ".runtime": "easel-pinned",
     "Easel": "easel-checkout",
@@ -73,6 +72,7 @@ CATALOG_LABELS: Dict[str, str] = {
 #: a redistribution grant, so it is reported as unverified and stays outside
 #: the public repository (``vendor/`` is gitignored).
 CATALOG_RIGHTS: Dict[str, str] = {
+    "repo-owned": "repo-owned-unverified",
     "easel-pinned": "external-pinned",
     "easel-checkout": "external-checkout",
     "gzh": "unverified-vendor",
@@ -133,6 +133,8 @@ def _front_matter(text: str) -> Dict[str, str]:
 
 
 def _catalog_label(root: Path) -> str:
+    if root == ROOT / "skills":
+        return "repo-owned"
     for part in root.parts:
         if part in CATALOG_LABELS:
             return CATALOG_LABELS[part]

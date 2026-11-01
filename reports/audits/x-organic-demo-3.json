@@ -1,0 +1,82 @@
+{
+  "schema": "contentops.x-growth-metrics/v1",
+  "status": "INSUFFICIENT_DATA",
+  "reasons": [],
+  "network_used": false,
+  "external_action": "none",
+  "execution_authorized": false,
+  "requires_human_review": true,
+  "report": {
+    "account_id": "fixture-account",
+    "week_start": "2026-10-26",
+    "week_end": "2026-11-01",
+    "data_kind": "FIXTURE",
+    "original_post_count": 1,
+    "publication_evidence": "USER_REPORTED_UNVERIFIED",
+    "manual_reply_count": 1,
+    "outbound_manual_reply_count": 1,
+    "qualified_manual_reply_count": 1,
+    "inbound_qualified_responses": {
+      "T+24H": 2
+    },
+    "follower_net": 8,
+    "follower_net_source": "x-account-snapshots.csv",
+    "work_hours": 1.5,
+    "feedback": [
+      "Synthetic example: a reader requested a clearer example."
+    ],
+    "top_content": {
+      "T+24H": {
+        "metrics": {
+          "engagements": [
+            {
+              "content_id": "p1",
+              "value": 10.0,
+              "source": "x-metric-snapshots.csv"
+            }
+          ],
+          "impressions": [
+            {
+              "content_id": "p1",
+              "value": 100.0,
+              "source": "x-metric-snapshots.csv"
+            }
+          ]
+        }
+      }
+    },
+    "failures": [
+      "Synthetic example: a planned image did not pass human review."
+    ],
+    "comparison": {
+      "status": "INSUFFICIENT_DATA",
+      "groups": {
+        "A": {
+          "n": 1,
+          "mean": 100.0
+        },
+        "B": {
+          "n": 1,
+          "mean": 120.0
+        }
+      },
+      "metric": "impressions",
+      "age_window": "T+24H",
+      "interpretation": "Descriptive observational comparison only; association is not causation. Five per group is an operational minimum, not statistical proof."
+    },
+    "next_experiment": "Compare two evidence-first hooks at the same post age.",
+    "stop_condition": "Stop if a draft needs unsupported claims or private data.",
+    "limitations": [
+      "COMPARISON_INSUFFICIENT"
+    ]
+  },
+  "note": "Descriptive records only. Account follower changes are not attributed to individual posts; review sources and next steps manually.",
+  "receipt": {
+    "schema": "contentops.x-organic-growth-receipt/v1",
+    "input_sha256": "40a38ecb0a1a0c9aea7dd3eb0491bcdb5439b77a320e98c36799cf895a76298f",
+    "status": "INSUFFICIENT_DATA",
+    "external_action": "none",
+    "network_used": false,
+    "human_review_required": true
+  }
+}

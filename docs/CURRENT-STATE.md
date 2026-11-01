@@ -475,7 +475,7 @@ and what remains blocked.
 | Property | Value |
 |---|---|
 | Entry point | `python scripts/skill_route.py` (stdlib only; no process, no network) |
-| Discovery | `--sources`, `--list`, `--match`, `--resolve` over the Easel roots and the shared skill store |
+| Discovery | `--sources`, `--list`, `--match`, `--resolve` over repo-owned, Easel and shared skill roots |
 | Doctor | `--doctor` — roots, duplicates, permission declarations, rights, unsafe and dangling paths |
 | Declared capabilities | `runtime/skill-registry.json`, schema `contentops.skill-registry/v1` |
 | Registered capability | `media-use` only, pointing at the merged adapter, runtime baseline, lock verifier and M5 `media_use` stage |
