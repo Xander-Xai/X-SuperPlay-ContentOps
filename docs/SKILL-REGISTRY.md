@@ -185,18 +185,23 @@ runnable. Their bodies reference the account-aware content-router layer:
 | Referenced code | Exists on this branch? | Exists on `feat/content-router` (PR #49)? |
 |---|---|---|
 | `scripts/workflow_gate.py` | **yes** (slice S1) | yes |
-| `src/contentops/workflow/{contract,gate,validators}.py` | **yes** (S1; `validators.py` is an empty seam until S2) | yes |
-| `scripts/workflow_docs.py` | no | yes |
-| `scripts/recording_plan.py` | no | yes |
-| `src/contentops/workflow/{sources,capture_plan,audience,duration}.py` | no | yes |
+| `src/contentops/workflow/{contract,gate}.py` | **yes** (S1) | yes |
+| `src/contentops/workflow/validators.py` | **partial** (S1 seam → S2 wires the `assets` validator) | yes |
+| `src/contentops/workflow/sources.py` | **yes** (slice S2) | yes |
+| `src/contentops/workflow/capture_plan.py` | no (S3, with account config) | yes |
+| `scripts/recording_plan.py` | no (S3 — needs account config) | yes |
+| `scripts/workflow_docs.py` | no (S3/S4 — imports S3/S4 trees) | yes |
+| `src/contentops/workflow/{audience,duration}.py` | no | yes |
 | `scripts/design_router.py` | no | **no** |
 
 The deterministic gate (`workflow_gate.py` + the contract/gate core) landed in
-**slice S1**. The other content-router paths — the editorial validators, the
-source/capture planners, the account configuration — are later slices (S2+).
-`design_router.py` is referenced by `x-superplay-design-direction` and does not
-exist on any branch inspected on 2026-11-01, so that skill needs an edit as well
-as a merge.
+**slice S1**; the source-candidate contract and its validators landed in
+**slice S2**. The capture plan, `recording_plan.py` and `workflow_docs.py` — and
+the account configuration they read — are **S3**: `recording_plan.py` needs
+`config/accounts/<slug>.json`, which carries business strategy and stays off the
+public repository until that exposure is reviewed. `design_router.py` is
+referenced by `x-superplay-design-direction` and does not exist on any branch
+inspected on 2026-11-01, so that skill needs an edit as well as a merge.
 
 A declaration may be added only after the code it points at exists on the
 integration branch. Declaring a pointer to an unmerged branch would make

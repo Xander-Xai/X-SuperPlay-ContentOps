@@ -110,10 +110,11 @@ def cmd_check(args: argparse.Namespace) -> int:
     validators = validators_for(args.stage)
     result = check_stage(project, document, args.stage, validators=validators)
     if not validators:
-        # S1 lands the structural gate only. Say so, rather than let a green
-        # check read as an editorial pass that never ran.
+        # Stages whose editorial validators are still in a later slice run the
+        # structural half only. Say so, rather than let a green check read as an
+        # editorial pass that never ran.
         result["warnings"].append(
-            "editorial validators not yet wired (S2); structural checks only")
+            "no editorial validators wired for this stage yet; structural checks only")
     save_workflow(_workflow_path(project), document)
     if args.json:
         print(json.dumps(result, ensure_ascii=False, indent=2))

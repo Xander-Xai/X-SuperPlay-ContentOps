@@ -248,6 +248,12 @@ jobs:
       - name: Run workflow stage-gate tests
         run: python tests/test_workflow_gate.py
 
+      # Slice S2 of the content router: the source-candidate contract (stdlib
+      # only) and the validators it wires into the gate. The capture plan needs
+      # account config and lands in S3.
+      - name: Run source candidate tests
+        run: python tests/test_source_candidates.py
+
       - name: Run skill router capability regression tests
         run: python tests/test_skill_router_capabilities.py
 
