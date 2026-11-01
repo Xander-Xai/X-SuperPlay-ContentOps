@@ -47,13 +47,17 @@ Two fields are easy to misread and are named accordingly:
 
 | Priority | Root | Track | Rights posture |
 |---:|---|---|---|
-| 1 | `.runtime/easel/skills/openclaw` | pinned Easel runtime | external-pinned |
-| 2 | `Easel/skills/openclaw` | working Easel checkout | external-checkout |
-| 3 | `vendor/gzh-thinktank/gzh_未来智能/skills` | locally vendored 公众号 | unverified-vendor |
+| 1 | `skills` | repository-owned definitions | repo-owned-unverified |
+| 2 | `.runtime/easel/skills/openclaw` | pinned Easel runtime | external-pinned |
+| 3 | `Easel/skills/openclaw` | working Easel checkout | external-checkout |
+| 4 | `vendor/gzh-thinktank/gzh_未来智能/skills` | locally vendored 公众号 | unverified-vendor |
 | — | `~/.agents/skills` | shared store, resolved separately | operator-controlled |
 
 A name in more than one root is indexed once, from the earliest root. The later
-copy is reported as `shadowed`; `--doctor` counts every collision.
+copy is reported as `shadowed`; `--doctor` counts every collision. For a name
+not declared in the registry, `--resolve` lists discovered copies rather than
+issuing a capability verdict; `resolve_capability` returns `UNKNOWN_SKILL`.
+Neither form grants execution authorization.
 
 `vendor/` is gitignored. Third-party vendor material is a local operator
 resource, never a redistribution grant, and must not enter the public

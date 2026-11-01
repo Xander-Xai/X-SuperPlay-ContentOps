@@ -1,0 +1,33 @@
+{
+  "schema": "contentops.x-organic-growth/v1",
+  "status": "REVIEW_REQUIRED",
+  "reasons": [],
+  "network_used": false,
+  "external_action": "none",
+  "execution_authorized": false,
+  "requires_human_review": true,
+  "content": {
+    "type": "ORIGINAL_POST",
+    "topic": "Skill discovery is distinct from execution authorization",
+    "audience": "agent-tool builders",
+    "problem": "Tool discovery can be confused with permission to execute",
+    "hook": "Finding a skill is not the same as authorizing it.",
+    "thesis": "Separate discovery, capability resolution, and execution approval.",
+    "body": "A skill router can tell you what exists without granting the right to run it. Keep discovery and execution authorization separate, then verify the actual gate.",
+    "visual": "Human-created diagram of three distinct decisions; do not present it as a screenshot.",
+    "alt": "Three boxes labeled discovery, resolution and execution approval.",
+    "discussion_question": "Where do your own agent workflows enforce this boundary?",
+    "risk": "Verify the PR and current implementation before using; source analysis is not a firsthand test."
+  },
+  "source_url": "https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/77",
+  "source_verification": "UNVERIFIED_REFERENCE",
+  "editorial_gate": "NOT_AVAILABLE_ON_MAIN",
+  "receipt": {
+    "schema": "contentops.x-organic-growth-receipt/v1",
+    "input_sha256": "3aa609457a4f21873add97bb3c91109177d4087c9c90edc67434e4814d6cb1d7",
+    "status": "REVIEW_REQUIRED",
+    "external_action": "none",
+    "network_used": false,
+    "human_review_required": true
+  }
+}

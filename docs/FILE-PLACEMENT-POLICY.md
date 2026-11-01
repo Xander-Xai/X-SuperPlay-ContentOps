@@ -75,6 +75,13 @@ superseded_by: <path>
 historical_context: <brief note>
 ```
 
+## skills/
+
+Repository-owned skill instructions and their supporting references and templates
+live under `skills/<name>/`. Third-party vendor material, credentials, generated
+outputs, and runtime state do not belong here. Discovery does not grant rights or
+execution authorization.
+
 ## scripts/
 
 CLI tools, ops scripts, verification, build orchestration.

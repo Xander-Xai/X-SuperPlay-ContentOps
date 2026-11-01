@@ -633,7 +633,7 @@ QC 回执在被提交前会经过一道净化边界（`contentops.qc_canonical`�
 | 属性 | 值 |
 |---|---|
 | 入口 | `python scripts/skill_route.py`（仅标准库；不起子进程、不联网） |
-| 发现 | `--sources`、`--list`、`--match`、`--resolve`，覆盖 Easel 目录根与共享 Skill 库 |
+| 发现 | `--sources`、`--list`、`--match`、`--resolve`，覆盖仓库自有、Easel 目录根与共享 Skill 库 |
 | Doctor | `--doctor` —— 目录根、重名、权限声明、权利、越界与悬空路径 |
 | 已声明能力 | `runtime/skill-registry.json`，schema `contentops.skill-registry/v1` |
 | 已注册能力 | 仅 `media-use`，指向已合并的适配器、运行时基线、锁校验器与 M5 `media_use` 阶段 |
