@@ -235,6 +235,17 @@ def load_platforms(root: Path, *, accounts: Optional[Dict[str, AccountIdentity]]
                 f"{platform_id}.strategy_platform is empty; every local entry must name "
                 f"the strategy platform it belongs to, so a split entry cannot become "
                 f"a second platform")
+        evidence = tuple(str(value) for value in item.get("evidence") or [])
+        if status != "PLANNED" and not evidence:
+            raise RegistryError(
+                "PLATFORM_EVIDENCE_MISSING",
+                f"{platform_id} claims {status} with no evidence; a status is a claim "
+                f"about evidence, not a value an editor may raise by hand")
+        if status == "PRODUCTION_ACCEPTED" and not any(
+                path.startswith("projects/") for path in evidence):
+            raise RegistryError(
+                "PLATFORM_EVIDENCE_MISSING",
+                f"{platform_id} claims PRODUCTION_ACCEPTED without a projects/ receipt")
         platforms[platform_id] = PlatformEntry(
             platform_id=platform_id,
             strategy_platform=strategy_platform,
@@ -247,7 +258,7 @@ def load_platforms(root: Path, *, accounts: Optional[Dict[str, AccountIdentity]]
             metrics=metrics,
             status=status,
             owner=str(item.get("owner") or ""),
-            evidence=tuple(str(value) for value in item.get("evidence") or []),
+            evidence=evidence,
             not_claimed=str(item.get("not_claimed") or ""),
         )
         if not platforms[platform_id].pipeline:

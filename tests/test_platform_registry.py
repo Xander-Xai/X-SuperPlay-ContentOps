@@ -139,6 +139,30 @@ def test_strategy_platform_is_required():
     _expect("PLATFORM_FIELD_INVALID", lambda: load_platforms(tmp))
 
 
+def test_status_cannot_be_raised_without_evidence():
+    def promote_without_evidence(payload):
+        for row in payload["platforms"]:
+            if row["platform_id"] == "douyin":
+                row["status"] = "INTEGRATED"
+                row["accounts"] = ["x-superplay-english"]
+                row["publish_mode"] = "MANUAL_ONLY"
+                row["evidence"] = []
+
+    tmp = _temp_registry(promote_without_evidence)
+    _expect("PLATFORM_EVIDENCE_MISSING", lambda: load_platforms(tmp))
+
+
+def test_production_acceptance_requires_a_project_receipt():
+    def accept_without_receipt(payload):
+        for row in payload["platforms"]:
+            if row["platform_id"] == "x":
+                row["status"] = "PRODUCTION_ACCEPTED"
+                row["evidence"] = ["tests/test_x_post.py"]
+
+    tmp = _temp_registry(accept_without_receipt)
+    _expect("PLATFORM_EVIDENCE_MISSING", lambda: load_platforms(tmp))
+
+
 def test_unknown_account_is_refused():
     def add_unknown(payload):
         for row in payload["platforms"]:
@@ -175,6 +199,8 @@ def main() -> int:
         test_planned_format_is_not_available,
         test_accounts_referenced_exist,
         test_strategy_platform_is_required,
+        test_status_cannot_be_raised_without_evidence,
+        test_production_acceptance_requires_a_project_receipt,
         test_unknown_account_is_refused,
         test_registry_carries_no_private_repository_fields,
         test_registry_names_no_private_account_identity,

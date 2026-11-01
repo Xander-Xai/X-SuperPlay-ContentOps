@@ -8,5 +8,11 @@
   "has_git_metadata": true,
   "verified": true,
   "verification_method": "git_head",
-  "verified_at": "2026-11-01"
+  "verified_at": "2026-11-01",
+  "content_verified": true,
+  "content_verification_method": "blob_sha1_tree_compare",
+  "content_verified_files": 982,
+  "content_verified_commit": "3fe2d9904c1619281ef57f81d9ee0b7854998399",
+  "content_verified_at": "2026-11-01",
+  "commit_matches_pin": true
 }

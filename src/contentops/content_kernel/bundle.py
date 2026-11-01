@@ -11,6 +11,9 @@ human-gated step with its own receipt.
 
 The invariants here are the template's own, restated so that a consumer that skips
 Strategy's documentation still fails closed.
+
+Handoff is JSON by default. YAML needs PyYAML, which CI does not install; without
+it the loader refuses with BUNDLE_NEEDS_PYYAML rather than reading partially.
 """
 
 from __future__ import annotations

@@ -40,10 +40,18 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--json", action="store_true")
     sub = parser.add_subparsers(dest="command", required=True)
-    sub.add_parser("list", help="list platforms")
-    sub.add_parser("accounts", help="list account identities")
-    sub.add_parser("check", help="validate both registries")
-    resolve = sub.add_parser("resolve", help="resolve an account identifier")
+
+    def _sub(name: str, help_text: str):
+        # Accept --json on either side of the subcommand. SUPPRESS keeps the
+        # subparser from overwriting a --json given before the subcommand.
+        child = sub.add_parser(name, help=help_text)
+        child.add_argument("--json", action="store_true", default=argparse.SUPPRESS)
+        return child
+
+    _sub("list", "list platforms")
+    _sub("accounts", "list account identities")
+    _sub("check", "validate both registries")
+    resolve = _sub("resolve", "resolve an account identifier")
     resolve.add_argument("--account", required=True)
     args = parser.parse_args()
 

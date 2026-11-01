@@ -46,6 +46,23 @@ published.
 A Bundle is a plan. `bundle_is_not_published_content` is one of its own
 invariants and this repository enforces it rather than restating it as intent.
 
+### Handoff format
+
+This repository consumes **JSON** by default. Strategy's template is YAML, and
+YAML requires PyYAML, which CI does not install. Two honest options: export the
+Bundle as JSON before handoff, or install PyYAML locally and pass the `.yaml`.
+Without either, the loader returns `BUNDLE_NEEDS_PYYAML` — an explicit refusal,
+not a silent partial read. A YAML Bundle is not directly consumable on a clean
+checkout.
+
+### What a passing check does not prove
+
+`content_bundle.py check` is structural. `PASS` means the record is well formed
+and its own invariants are asserted. It does **not** verify that `claim_refs`
+resolve to a `ClaimLedger`, that permissions and source evidence were reviewed,
+or that the content is publishable. Those belong to the evidence and rights
+layers. Neither a Bundle `PASS` nor a QC `PASS` is a publication approval.
+
 ## Rules
 
 - New repo: add to `config/repos.yaml`, no custom code
