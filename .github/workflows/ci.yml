@@ -196,6 +196,15 @@ jobs:
       - name: Run Windows path tests
         run: python tests/test_windows_paths.py
 
+      # A rendered clip must not be reused on unverifiable cache provenance, and
+      # a compose envelope must be success JSON bound to the file it names.
+      - name: Run motion build reliability tests
+        run: python tests/test_motion_build_reliability.py
+
+      # Timeline contract, presenter text and review-bundle hash drift.
+      - name: Run code-animation consistency tests
+        run: python tests/test_code_animation_consistency.py
+
       # New raw provider IDs, balances and key fingerprints in tracked receipts
       # must fail. Existing exposure is baselined by field path only.
       - name: Run receipt-secret tests

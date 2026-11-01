@@ -1,0 +1,172 @@
+{
+  "schema": "contentops.audio-first-lines/v1",
+  "package_id": "easel-fi-audio-first",
+  "evidence_mode": "EXPLANATORY",
+  "manual_recording": "FORBIDDEN",
+  "composition": [
+    {
+      "role": "vector_animation",
+      "pct": 70
+    },
+    {
+      "role": "code_snapshot",
+      "pct": 25
+    },
+    {
+      "role": "metric_chart",
+      "pct": 5
+    }
+  ],
+  "beats": [
+    {
+      "placement_id": "P-01-HOOK",
+      "claim_id": "C-FI-01",
+      "text": "口播四十四秒，画面不能停四十四秒。",
+      "semantic_progress": "the window and the picture are two different lengths",
+      "views": [
+        {
+          "asset_id": "A-MOTION-LEN",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920
+          },
+          "source_time_range": "00:00.000-00:02.500",
+          "semantic_progress": "the narration length draws to 44 s"
+        },
+        {
+          "asset_id": "A-MOTION-LEN",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920
+          },
+          "source_time_range": "00:02.500-00:05.000",
+          "semantic_progress": "22 view cells pop in under it"
+        }
+      ]
+    },
+    {
+      "placement_id": "P-02-TRADEOFF",
+      "claim_id": "C-FI-02",
+      "text": "画面按语义换，不按口播时长。",
+      "semantic_progress": "the tradeoff moves from duration to view changes",
+      "views": [
+        {
+          "asset_id": "A-MOTION-SWAP",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920
+          },
+          "source_time_range": "00:00.000-00:02.500",
+          "semantic_progress": "the placement and its first view"
+        },
+        {
+          "asset_id": "A-MOTION-SWAP",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920
+          },
+          "source_time_range": "00:02.500-00:05.000",
+          "semantic_progress": "V2 and V3 take over by meaning"
+        }
+      ]
+    },
+    {
+      "placement_id": "P-03-ARCH",
+      "claim_id": "C-FI-03",
+      "text": "一个口播窗口，拆成多个取证视图。",
+      "semantic_progress": "the placement and its views",
+      "views": [
+        {
+          "asset_id": "A-MOTION-FLOW",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920
+          },
+          "source_time_range": "00:00.000-00:02.500",
+          "semantic_progress": "placement, views and the gate assemble"
+        },
+        {
+          "asset_id": "A-MOTION-FLOW",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920
+          },
+          "source_time_range": "00:02.500-00:05.000",
+          "semantic_progress": "the packet travels the chain"
+        }
+      ]
+    },
+    {
+      "placement_id": "P-04-ROOTCAUSE",
+      "claim_id": "C-FI-04",
+      "text": "旧门禁放过了静态停留，现在换成实测。",
+      "semantic_progress": "the old gate trusted a declaration",
+      "views": [
+        {
+          "asset_id": "A-MOTION-CODE",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920
+          },
+          "source_time_range": "00:00.000-00:02.500",
+          "semantic_progress": "the code panel reveals"
+        },
+        {
+          "asset_id": "A-MOTION-CODE",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920
+          },
+          "source_time_range": "00:02.500-00:05.000",
+          "semantic_progress": "the sweep lands on the measured check"
+        }
+      ]
+    },
+    {
+      "placement_id": "P-05-VERIFY",
+      "claim_id": "C-FI-05",
+      "text": "重建后最长冻结一点八秒，质检通过。",
+      "semantic_progress": "the measured result and the verdict",
+      "views": [
+        {
+          "asset_id": "A-MOTION-METRIC",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920
+          },
+          "source_time_range": "00:00.000-00:02.500",
+          "semantic_progress": "1.80 s counts up against the limit"
+        },
+        {
+          "asset_id": "A-MOTION-RESULT",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920
+          },
+          "source_time_range": "00:00.000-00:02.500",
+          "semantic_progress": "the same numbers as a chain"
+        }
+      ]
+    }
+  ]
+}

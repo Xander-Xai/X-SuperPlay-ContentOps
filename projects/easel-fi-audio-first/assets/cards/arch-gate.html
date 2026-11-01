@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<style>
+ *{margin:0;padding:0;box-sizing:border-box}
+ html,body{width:1080px;height:1920px}
+ body{background:#0F1117;color:#F5F7FA;font-family:"Noto Sans CJK SC","Microsoft YaHei",sans-serif}
+ .card{width:1080px;height:1920px;padding:96px 80px 400px;display:flex;flex-direction:column}
+ .kicker{font-size:26px;letter-spacing:.16em;color:#8B95A5}
+ .rule{height:2px;background:#38BDF8;margin-top:32px}
+ h1{font-size:96px;line-height:1.22;font-weight:300;margin-top:120px;letter-spacing:-.02em}
+ .diagram{margin-top:130px}
+ .gate{display:flex;align-items:center;justify-content:space-between;background:#161A22;border:1px solid #2A3240;border-radius:10px;padding:38px 34px;margin-bottom:26px}
+ .gate .name{font-family:"Cascadia Mono",monospace;font-size:34px}
+ .gate .why{font-size:26px;color:#8B95A5;margin-top:10px}
+ .ok{color:#38BDF8;font-size:44px}
+ .result{margin-top:40px;border:1px solid #38BDF8;border-radius:10px;padding:38px;text-align:center;color:#38BDF8;font-size:48px;letter-spacing:.12em}
+ .spacer{flex:1}
+ .footer{font-size:24px;color:#8B95A5;letter-spacing:.08em}
+</style></head><body><div class="card">
+ <div class="kicker">EASEL · 工程拆解</div><div class="rule"></div>
+ <h1>两道门：<br>声明 + 实测。</h1>
+ <div class="diagram">
+   <div class="gate"><div><div class="name">views_declared</div><div class="why">超上限的静态 placement 必须声明视图</div></div><div class="ok">✓</div></div>
+   <div class="gate"><div><div class="name">static_hold_within_limit</div><div class="why">实测冻结 run 不得超过声明停留</div></div><div class="ok">✓</div></div>
+   <div class="result">QC PASS</div>
+ </div>
+ <div class="spacer"></div>
+ <div class="footer">src/contentops/media/cut_qc.py</div>
+</div></body></html>

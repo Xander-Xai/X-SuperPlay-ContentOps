@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="zh-CN" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Noto Sans CJK SC"; src: local("Noto Sans CJK SC"); }
+      @font-face { font-family: "Cascadia Mono"; src: local("Cascadia Mono"); }
+      @font-face { font-family: "Microsoft YaHei"; src: local("Microsoft YaHei"); }
+      :root {
+        --base: #0f1117; --surface: #161a22; --ink: #f5f7fa;
+        --muted: #8b95a5; --accent: #38bdf8; --line: #2a3240;
+        --sans: "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+        --mono: "Cascadia Mono", monospace;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--base); }
+      #root { position: relative; width: 1080px; height: 1920px; background: var(--base); color: var(--ink); overflow: hidden; }
+      #scene { position: absolute; inset: 0; width: 1080px; height: 1920px; transform-origin: 50% 42%; }
+      #grain { position: absolute; inset: 0; pointer-events: none; z-index: 50; opacity: .05;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>"); }
+      .topline { position: absolute; left: 86px; right: 86px; top: 96px; display: flex;
+        justify-content: space-between; font-family: var(--mono); font-size: 28px;
+        letter-spacing: .18em; color: var(--muted); }
+      .topline .tag { color: var(--accent); }
+      .topline span { white-space: nowrap; }
+      #rule { position: absolute; left: 86px; top: 150px; width: 908px; height: 2px;
+        background: var(--accent); transform-origin: left center; }
+      h1 { position: absolute; left: 86px; top: 210px; width: 908px; font-family: var(--sans);
+        font-size: 84px; line-height: 1.22; font-weight: 300; letter-spacing: -.02em; opacity: 0; }
+      #place { position: absolute; left: 86px; top: 520px; width: 908px; background: var(--surface);
+        border: 1px solid var(--line); border-radius: 12px; padding: 30px 34px;
+        display: flex; justify-content: space-between; align-items: baseline; opacity: 0; }
+      #place .k { font-family: var(--mono); font-size: 28px; letter-spacing: .1em; color: var(--muted); }
+      #place .v { font-family: var(--sans); font-size: 44px; font-weight: 300; }
+      #row { position: absolute; left: 86px; top: 700px; width: 908px; display: flex; gap: 18px; }
+      .view { flex: 1; background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+        padding: 30px 18px; text-align: center; opacity: 0; }
+      .view b { display: block; font-family: var(--sans); font-size: 36px; font-weight: 500; color: var(--muted); }
+      .view span { display: block; font-family: var(--mono); font-size: 28px; color: var(--muted); margin-top: 10px; }
+      #progress { position: absolute; left: 86px; top: 930px; width: 908px; height: 6px;
+        background: var(--surface); border-radius: 3px; overflow: hidden; }
+      #progressFill { width: 100%; height: 100%; background: var(--accent); transform-origin: left center; }
+      #caption { position: absolute; left: 86px; top: 1000px; font-family: var(--sans);
+        font-size: 44px; font-weight: 300; opacity: 0; }
+      #caption b { color: var(--accent); font-weight: 400; }
+      #note { position: absolute; left: 86px; top: 1100px; font-family: var(--sans);
+        font-size: 36px; line-height: 1.5; color: var(--muted); opacity: 0; }
+      #foot { position: absolute; left: 86px; right: 86px; top: 1390px;
+        display: flex; justify-content: space-between; border-top: 1px solid var(--line);
+        padding-top: 16px; font-family: var(--mono); font-size: 28px;
+        letter-spacing: .1em; color: var(--muted); opacity: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="5"
+         data-width="1080" data-height="1920">
+      <div id="grain"></div>
+      <div id="scene">
+      <div id="topline" class="topline clip" data-start="0" data-duration="5" data-track-index="0">
+        <span class="tag">[ SEMANTIC SWITCH ]</span><span>VIEWS</span>
+      </div>
+      <div id="rule" class="clip" data-start="0" data-duration="5" data-track-index="0"></div>
+      <h1 id="head" class="clip" data-start="0" data-duration="5" data-track-index="1">画面按语义换。</h1>
+      <div id="place" class="clip" data-start="0" data-duration="5" data-track-index="2">
+        <span class="k">PLACEMENT · 口播窗口</span><span class="v">5.0 s</span>
+      </div>
+      <div id="row" class="clip" data-start="0" data-duration="5" data-track-index="3">
+        <div class="view" id="v1"><b>V1</b><span>上下文</span></div>
+        <div class="view" id="v2"><b>V2</b><span>关键行</span></div>
+        <div class="view" id="v3"><b>V3</b><span>结果</span></div>
+      </div>
+      <div id="progress" class="clip" data-start="0" data-duration="5" data-track-index="4">
+        <div id="progressFill"></div>
+      </div>
+      <div id="caption" class="clip" data-start="0" data-duration="5" data-track-index="5">
+        当前视图：<b id="current">V1 上下文</b>
+      </div>
+      <div id="note" class="clip" data-start="0" data-duration="5" data-track-index="6">
+        切换点由语义决定，不由秒数凑。
+      </div>
+      <div id="foot" class="clip" data-start="0" data-duration="5" data-track-index="7">
+        <span>src/contentops/media/cut_plan.py</span><span>02 / 03</span>
+      </div>
+      </div>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#scene", { scale: 1 }, { scale: 1.035, duration: 5, ease: "none" }, 0);
+      const current = document.querySelector("#current");
+      const activateAt = (sel, label, at) => {
+        const el = document.querySelector(sel);
+        tl.to(el, { borderColor: "#38bdf8", backgroundColor: "#1c2230", duration: .25 }, at);
+        tl.to(el.querySelector("b"), { color: "#f5f7fa", duration: .2 }, at);
+        tl.call(() => { current.textContent = label; }, null, at);
+      };
+      const dimAt = (sel, at) => {
+        const el = document.querySelector(sel);
+        tl.to(el, { borderColor: "#2a3240", backgroundColor: "#161a22", duration: .25 }, at);
+        tl.to(el.querySelector("b"), { color: "#8b95a5", duration: .2 }, at);
+      };
+
+      tl.fromTo("#rule", { scaleX: 0 }, { scaleX: 1, duration: .45, ease: "power3.out" }, .05);
+      tl.fromTo("#head", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: .4, ease: "power3.out" }, .25);
+      tl.fromTo("#place", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: .4, ease: "power3.out" }, .6);
+      tl.fromTo(".view", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: .32,
+        ease: "power3.out", stagger: .12 }, .85);
+      tl.fromTo("#progressFill", { scaleX: 0 }, { scaleX: 1, duration: 3.6, ease: "none" }, 1.0);
+      tl.fromTo("#caption", { opacity: 0 }, { opacity: 1, duration: .3, ease: "power2.out" }, 1.0);
+      activateAt("#v1", "V1 上下文", 1.0);
+      dimAt("#v1", 2.1);
+      activateAt("#v2", "V2 关键行", 2.1);
+      dimAt("#v2", 3.3);
+      activateAt("#v3", "V3 结果", 3.3);
+      tl.fromTo("#note", { opacity: 0 }, { opacity: 1, duration: .35, ease: "power2.out" }, 3.5);
+      tl.fromTo("#foot", { opacity: 0 }, { opacity: 1, duration: .3, ease: "power2.out" }, 3.65);
+
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

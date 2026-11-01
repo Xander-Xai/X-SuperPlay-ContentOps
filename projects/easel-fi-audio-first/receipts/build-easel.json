@@ -1,0 +1,255 @@
+{
+  "schema": "contentops.evidence-build/v1",
+  "built_at": "2026-10-28T05:42:36Z",
+  "package_id": "easel-fi-audio-first",
+  "target": {
+    "width": 1080,
+    "height": 1920,
+    "duration_ms_range": [
+      24500,
+      25500
+    ],
+    "caption_safe_area": {
+      "x": 54,
+      "y": 1480,
+      "width": 972,
+      "height": 360
+    },
+    "min_reading_hold_ms": 2500,
+    "max_visual_hold_ms": 3000,
+    "min_visual_hold_ms": 2000,
+    "evidence_mode": "EXPLANATORY",
+    "manual_recording": "FORBIDDEN",
+    "composition": [
+      {
+        "role": "vector_animation",
+        "pct": 70
+      },
+      {
+        "role": "code_snapshot",
+        "pct": 25
+      },
+      {
+        "role": "metric_chart",
+        "pct": 5
+      }
+    ]
+  },
+  "skill_route": {
+    "name": "auto-short-video",
+    "script": ".runtime/easel/skills/openclaw/auto-short-video/scripts/assemble.py",
+    "why": "owns storyboard composition; ContentOps only prepares evidence-bounded clips, narration and captions"
+  },
+  "claim_map_fingerprint": "539c27b9dd7edb67004f33b259e50e9af08db31fa877cd709fd2960232b121ff",
+  "cut_plan_fingerprint": "80e4de5707193269c04abe40c5e888d97e3dc250cc97203a840cc9c63b86269b",
+  "assets": {
+    "A-MOTION-LEN": {
+      "kind": "motion",
+      "sha256": "ee5f3aba2f07de7c133afeaf9bd07d615fb05d362b0dfb1271e3adf40d97e828"
+    },
+    "A-MOTION-SWAP": {
+      "kind": "motion",
+      "sha256": "341898cfa2bcc1e7baca53806d41ca7914ec86e926943e14d21eb6e13325b1f9"
+    },
+    "A-MOTION-FLOW": {
+      "kind": "motion",
+      "sha256": "b42ed2194fb999d5dfa409beb3ec82a6f21eaf12410159053722d6404db1fdf9"
+    },
+    "A-MOTION-CODE": {
+      "kind": "motion",
+      "sha256": "ec992e64a058b96aa39b59048765e56c7d64dac1c81a4187441fd19bbc0fdfe8"
+    },
+    "A-MOTION-METRIC": {
+      "kind": "motion",
+      "sha256": "9670b1c5180246e7b3d41c8b1ebfa87eb5e7489b12ded0a99424fd3a177a0cf1"
+    },
+    "A-MOTION-RESULT": {
+      "kind": "motion",
+      "sha256": "bc57bae456d260bd5802a31206cc4c2939fdbb322a5e072f05d969aaf1540add"
+    }
+  },
+  "narration": {
+    "path": "project://work/narration.wav",
+    "sha256": "531e2c081dc0342524fd705e456ae521e66071296272003600808e89a5bcdfd1",
+    "duration_s": 25.000313
+  },
+  "captions": {
+    "path": "project://assets/captions/cut.srt",
+    "sha256": "62f0617f02f615adadb4912e0150c76d2c8243efe776a755b8657eff33d31eae",
+    "cues": [
+      {
+        "start_ms": 0,
+        "end_ms": 3239,
+        "text": "口播四十四秒，画面不能停四十四秒。",
+        "claim_id": "C-FI-01"
+      },
+      {
+        "start_ms": 5000,
+        "end_ms": 7891,
+        "text": "画面按语义换，不按口播时长。",
+        "claim_id": "C-FI-02"
+      },
+      {
+        "start_ms": 10000,
+        "end_ms": 13146,
+        "text": "一个口播窗口，拆成多个取证视图。",
+        "claim_id": "C-FI-03"
+      },
+      {
+        "start_ms": 15000,
+        "end_ms": 18274,
+        "text": "旧门禁放过了静态停留，现在换成实测。",
+        "claim_id": "C-FI-04"
+      },
+      {
+        "start_ms": 20000,
+        "end_ms": 23576,
+        "text": "重建后最长冻结一点八秒，质检通过。",
+        "claim_id": "C-FI-05"
+      }
+    ],
+    "style_source": "config/accounts/x-superplay-future-intelligence.json",
+    "style": {
+      "Outline": "0",
+      "Shadow": "0",
+      "BorderStyle": "1",
+      "PrimaryColour": "&H00FFFFFF"
+    },
+    "font_size_px": 47,
+    "margin_v_px": 120
+  },
+  "placements": [
+    {
+      "placement_id": "P-01-HOOK",
+      "window_s": 5.0,
+      "speech_s": 3.239,
+      "lines": [
+        {
+          "claim_id": "C-FI-01",
+          "text": "口播四十四秒，画面不能停四十四秒。",
+          "duration_s": 3.239,
+          "cached": true
+        }
+      ],
+      "views": [
+        {
+          "shot_id": "P-01-HOOK-V1",
+          "duration_s": 2.5
+        },
+        {
+          "shot_id": "P-01-HOOK-V2",
+          "duration_s": 2.5
+        }
+      ]
+    },
+    {
+      "placement_id": "P-02-TRADEOFF",
+      "window_s": 5.0,
+      "speech_s": 2.891,
+      "lines": [
+        {
+          "claim_id": "C-FI-02",
+          "text": "画面按语义换，不按口播时长。",
+          "duration_s": 2.891,
+          "cached": true
+        }
+      ],
+      "views": [
+        {
+          "shot_id": "P-02-TRADEOFF-V1",
+          "duration_s": 2.5
+        },
+        {
+          "shot_id": "P-02-TRADEOFF-V2",
+          "duration_s": 2.5
+        }
+      ]
+    },
+    {
+      "placement_id": "P-03-ARCH",
+      "window_s": 5.0,
+      "speech_s": 3.146,
+      "lines": [
+        {
+          "claim_id": "C-FI-03",
+          "text": "一个口播窗口，拆成多个取证视图。",
+          "duration_s": 3.146,
+          "cached": true
+        }
+      ],
+      "views": [
+        {
+          "shot_id": "P-03-ARCH-V1",
+          "duration_s": 2.5
+        },
+        {
+          "shot_id": "P-03-ARCH-V2",
+          "duration_s": 2.5
+        }
+      ]
+    },
+    {
+      "placement_id": "P-04-ROOTCAUSE",
+      "window_s": 5.0,
+      "speech_s": 3.274,
+      "lines": [
+        {
+          "claim_id": "C-FI-04",
+          "text": "旧门禁放过了静态停留，现在换成实测。",
+          "duration_s": 3.274,
+          "cached": true
+        }
+      ],
+      "views": [
+        {
+          "shot_id": "P-04-ROOTCAUSE-V1",
+          "duration_s": 2.5
+        },
+        {
+          "shot_id": "P-04-ROOTCAUSE-V2",
+          "duration_s": 2.5
+        }
+      ]
+    },
+    {
+      "placement_id": "P-05-VERIFY",
+      "window_s": 5.0,
+      "speech_s": 3.576,
+      "lines": [
+        {
+          "claim_id": "C-FI-05",
+          "text": "重建后最长冻结一点八秒，质检通过。",
+          "duration_s": 3.576,
+          "cached": true
+        }
+      ],
+      "views": [
+        {
+          "shot_id": "P-05-VERIFY-V1",
+          "duration_s": 2.5
+        },
+        {
+          "shot_id": "P-05-VERIFY-V2",
+          "duration_s": 2.5
+        }
+      ]
+    }
+  ],
+  "output": {
+    "path": "project://final/easel.mp4",
+    "sha256": "d6c0795e51e4ed62400c6937d6c05e01d3b9134df1c1b2cfb54d80962b8f1bee",
+    "duration_s": 25.0
+  },
+  "voice_quality": "minimax_mplan_subscription",
+  "voice_provider": "miniMax/speech-2.8-hd",
+  "bgm": {
+    "role": "optional_bgm",
+    "status": "OMITTED_BY_POLICY",
+    "reason": "DASHSCOPE_API_KEY unavailable; video_ops loudness regression prohibited"
+  },
+  "generated_media_used": false,
+  "h3_experiment": "NOT_RUN",
+  "h3_reason": "zero-generated core; the decision belongs to human playback review",
+  "production_ready": false,
+  "human_review": "PENDING_FOUNDER_REVIEW"
+}
