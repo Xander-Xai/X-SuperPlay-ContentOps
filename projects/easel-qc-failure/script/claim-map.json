@@ -7,6 +7,8 @@
     {
       "id": "C1",
       "spoken_as": "这条视频，二十一项检查全过。",
+      "beat": 1,
+      "time": "0-5 s",
       "statement": "The rejected cut passed 21 automated checks with 0 fail and 0 warn.",
       "source": "projects/easel-review/receipts/human-review.json",
       "source_sha256": "908b57f2d304e20ada6ffd8bdccb1e2b2484683e197a5482745243a32320cac2",
@@ -30,6 +32,8 @@
     {
       "id": "C2a",
       "spoken_as": "它六十二秒，六个镜头。",
+      "beat": 2,
+      "time": "5-15 s",
       "statement": "The graded artifact is 62.0 s, 1080x1920, six shots, all with motion: static.",
       "source": "projects/easel-review/final/easel.mp4",
       "source_sha256": "e3b029ef4fc033f9164cd84344d8fd834c6fcc78e932566835248307cc0e882f",
@@ -47,6 +51,8 @@
     {
       "id": "C2b",
       "spoken_as": "实测六十二秒里，六十秒是静止的。",
+      "beat": 2,
+      "time": "5-15 s",
       "statement": "At least 60.10 s of the 62.0 s (>=96.9%) is near-static. freezedetect reports 12 completed freeze runs; a 13th freeze starts at 60.5 s and reaches EOF without a freeze_duration line.",
       "source": "projects/easel-review/final/easel.mp4",
       "source_sha256": "e3b029ef4fc033f9164cd84344d8fd834c6fcc78e932566835248307cc0e882f",
@@ -68,6 +74,8 @@
     {
       "id": "C3",
       "spoken_as": "没有一项在问：画面到底动没动。",
+      "beat": 3,
+      "time": "15-27 s",
       "statement": "scripts/qc_video.py contains no freeze or motion measurement.",
       "source": "scripts/qc_video.py",
       "source_sha256": "22e6704c6d4246dd786132ee0aba01f76088b02046abfb69bd252caec3848644",
@@ -80,6 +88,8 @@
     {
       "id": "C4",
       "spoken_as": "六个动效工程一直在仓库里，重新渲出来，和原片几乎看不出差别。",
+      "beat": 4,
+      "time": "27-40 s",
       "statement": "Six HyperFrames compositions re-render from source with visual equivalence to the committed clips.",
       "source": "reports/audits/motion-replay-evidence-2026-11-01.md",
       "source_sha256": "3301c0e0baec0c1e56219c2dbe9629b1c70e947d86971013ebfb4f60700d142a",
@@ -103,6 +113,8 @@
     {
       "id": "C5",
       "spoken_as": "是我们把质检通过，当成了可以发布。",
+      "beat": 5,
+      "time": "40-50 s",
       "statement": "The Founder rejected the cut on picture, motion, style and voice, while automated QC passed.",
       "source": "projects/easel-review/receipts/human-review.json",
       "source_sha256": "908b57f2d304e20ada6ffd8bdccb1e2b2484683e197a5482745243a32320cac2",
@@ -120,6 +132,8 @@
     {
       "id": "C6",
       "spoken_as": "你觉得，AI 视频最容易露馅的，是画面还是配音？",
+      "beat": 6,
+      "time": "50-55 s",
       "statement": "A question to the audience. Not a factual claim.",
       "verified_status": "NOT_A_CLAIM",
       "usage_scope": "interaction prompt only"

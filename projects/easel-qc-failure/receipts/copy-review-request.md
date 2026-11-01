@@ -7,11 +7,12 @@
 没有 `receipts/script-review.json`，也没有任何人工决策被记录。本文档不构成批准，
 也不应被当作批准引用。
 
-`copy_sha256`: `41bf6c545a0b5abf3d57f92d8034bb46187bcf1b65c826b24b07b5790934e5ea`
+`copy_sha256`: `4e0d7084a342fe169dd887c5c89bd7e4ba836dee7662674ee71b6200e61dd7b7`
 
 指纹覆盖：`script/master.md`、`script/claim-map.json`、`script/*.srt`、
-`script/assets.json`（若有）、`motion/timeline.json`（若有）。任何一处改动都会
-使指纹变化，需要重新审核。
+`script/{lines,script,claims,cut-plan,assets}.json`（存在时）、
+`motion/timeline.json`（存在时），以及 `script/storyboard.json` 存在时的 copy 字段。
+任何一处改动都会使指纹变化，需要重新审核。
 
 ---
 
