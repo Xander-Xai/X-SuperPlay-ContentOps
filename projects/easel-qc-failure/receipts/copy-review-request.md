@@ -7,7 +7,7 @@
 没有 `receipts/script-review.json`，也没有任何人工决策被记录。本文档不构成批准，
 也不应被当作批准引用。
 
-`copy_sha256`: `7c7a1379a2298d443628ab4d03cfa1d5ae3af891842019e17c530bf04ef81bad`
+`copy_sha256`: `52d721cc1a45b77ab44eb01f5916b4d44d6749fba8f0bfcbc5f142669d4285d2`
 
 指纹覆盖：`script/master.md`、`script/claim-map.json`、`script/*.srt`、
 `script/{lines,script,claims,cut-plan,assets}.json`（存在时）、

@@ -12,6 +12,11 @@
       "statement": "The rejected cut passed 21 automated checks with 0 fail and 0 warn.",
       "source": "projects/easel-review/receipts/human-review.json",
       "source_sha256": "908b57f2d304e20ada6ffd8bdccb1e2b2484683e197a5482745243a32320cac2",
+      "supporting": {
+        "path": "projects/easel-review/receipts/qc-report-easel.json",
+        "sha256": "ce94f18a80a25543977dd95ba92ab6a5df2e7c1fc74e15afad3fe4d87f6675dc",
+        "note": "the per-check severities: 19 PASS, 2 INFO, 0 FAIL, 0 WARN"
+      },
       "fields": {
         "auto_qc_checks": 21,
         "auto_qc_fails": 0,
