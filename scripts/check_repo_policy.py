@@ -75,6 +75,45 @@ def check_no_tracked_task_state():
     return failures
 
 
+#: Directory names that hold per-host runtime state. The leading dot keeps them out
+#: of a normal source layout, but nothing stops `git add -A` from staging them.
+LOCAL_STATE_DIRS = (".openclaw", ".hyperframes")
+
+
+def is_local_agent_state(path):
+    """Whether a repo-relative path sits inside a per-host runtime-state directory.
+
+    Pure, so the rule can be tested without staging anything. Matches at any depth,
+    because these directories are created beside a project rather than at a fixed
+    level, and ``Path.parts`` already splits both separators on this host.
+    """
+    return any(part in LOCAL_STATE_DIRS for part in Path(path).parts)
+
+
+def check_no_tracked_agent_state():
+    """No agent session or render state may ever be tracked.
+
+    ``.openclaw/`` holds live OpenClaw agent state -- SQLite databases, their WAL/SHM
+    sidecars, a quarantine database and prompt scratch files. ``.hyperframes/`` holds
+    per-composition render bookkeeping. Neither is source, evidence or a receipt: both
+    are a running tool's memory on disk, and the SQLite sidecars are only coherent
+    alongside the database they belong to.
+
+    Both are already ignored. This is the second line for the same reason as
+    ``task-state/``: ``.gitignore`` cannot stop ``git add -f``, and a force-added
+    database would publish one operator's agent session history into permanent,
+    public history.
+    """
+    failures = []
+    for path in _git_files():
+        if is_local_agent_state(path):
+            failures.append(
+                f"tracked local agent state: {path} -- session and render state must "
+                f"never be committed; untrack it and let `.gitignore` keep it out"
+            )
+    return failures
+
+
 def check_root_files():
     failures = []
     root_files = {p.name for p in ROOT.iterdir() if p.is_file() and not p.name.startswith('.')}
@@ -257,6 +296,7 @@ def main():
         ("no_c0_chars", check_no_c0_control_chars),
         ("index_tracking", check_index_tracking),
         ("no_tracked_task_state", check_no_tracked_task_state),
+        ("no_tracked_agent_state", check_no_tracked_agent_state),
         ("test_suites_in_ci", check_test_suites_registered_in_ci),
     ]
     for name, fn in checks:
