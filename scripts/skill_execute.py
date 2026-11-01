@@ -70,10 +70,16 @@ def _operation_executor(operation: str):
         adapter = MediaUseAdapter()
         if operation == "status":
             status = adapter.status(refresh=True)
-            return {"ok": bool(status.available), "receipt": status.as_dict()}
+            # ``ok`` says the requested judgement resolved; ``health`` is the
+            # adapter's own verdict. For status the two coincide.
+            return {"ok": bool(status.available), "health": bool(status.available),
+                    "receipt": status.as_dict()}
         if operation == "doctor":
             doctor = adapter.doctor()
-            return {"ok": True, "receipt": doctor.as_dict()}
+            # A negative diagnosis is still a successful diagnosis: ``ok`` stays
+            # true and the health verdict travels in its own field, so a reader
+            # cannot mistake "doctor ran" for "every check passed".
+            return {"ok": True, "health": bool(doctor.ok), "receipt": doctor.as_dict()}
         return {"ok": False, "error": f"unsupported operation {operation!r}"}
 
     return run

@@ -138,11 +138,40 @@ Skill Discovery -> Skill Resolution -> Permission Gate -> Existing Adapter -> M5
 
 `scripts/m5_production.py` 不导入路由器。旧版 M5 在没有路由器时可独立运行，并由测试断言这一独立性。
 
+## 内容生产 Skill（未声明）
+
+共享库中为 X•超玩1024 工作流安装了五个 Skill：
+
+- `x-superplay-copy-orchestrator`
+- `x-superplay-source-research`
+- `x-superplay-capture-plan`
+- `x-superplay-broll-production`
+- `x-superplay-design-direction`
+
+它们**不是已声明能力**，路由器也不把它们当作可运行。其正文引用账号感知的
+content-router 层：
+
+| 被引用的代码 | 本分支存在？ | `feat/content-router`（PR #49）存在？ |
+|---|---|---|
+| `scripts/workflow_gate.py` | 否 | 是 |
+| `scripts/workflow_docs.py` | 否 | 是 |
+| `scripts/recording_plan.py` | 否 | 是 |
+| `src/contentops/workflow/*` | 否 | 是 |
+| `scripts/design_router.py` | 否 | **否** |
+
+前四项只等合并。`design_router.py` 被 `x-superplay-design-direction` 引用，
+但在 2026-11-01 检查过的任何分支上都不存在，因此该 Skill 除合并外还需要修改。
+
+只有当声明的指针指向集成分支上真实存在的代码时，才能添加声明。声明一个指向未合并
+分支的指针，会让 `RESOLVABLE` 变成假话，而这正是本注册表要防止的失败。在此之前，
+这些 Skill 可被发现，但解析受阻。
+
 ## 轨道状态
 
 | 轨道 | 状态 | 原因 |
 |---|---|---|
 | VIDEO（Easel） | 仅发现，直到本机存在目录根 | 公开仓库不含 vendor 内容 |
+| 内容生产（`x-superplay-*`） | 共享库中可发现，**未声明** | 代码在未合并的 `feat/content-router` 分支；`design_router.py` 在那里也不存在 |
 | GZH | BLOCKED | vendor 的第三方轨，权利未验证，不再分发 |
 | X | BLOCKED | 平台轨未合并（`feat/47-x-platform-track`，PR #50） |
 | XHS | BLOCKED | 迁移未合并且处于权利审查中；无目录根 |

@@ -15,6 +15,7 @@ for item in (ROOT / "src", ROOT / "scripts"):
         sys.path.insert(0, str(item))
 
 import m5_production as m5  # noqa: E402
+from contentops.media import rights_gate  # noqa: E402
 
 TESTS = []
 
@@ -204,6 +205,32 @@ def a_bare_rights_reviewed_flag_is_not_evidence():
     adapter = FakeMediaAdapter(digest)
     refused(lambda: m5.stage_media_use(project, config, adapter=adapter))
     assert not adapter.calls
+
+
+@check
+def a_rights_record_cannot_escape_the_project():
+    """The review sidecar is resolved against the project, not the filesystem."""
+    project, config, digest = project_and_config()
+    outside = project.parent / "outside-rights.json"
+    outside.write_text(json.dumps({
+        "schema": "contentops.media-rights-review/v1",
+        "license_id": "CC-BY-4.0",
+        "source_url": "https://example.com/x",
+        "reviewed_by": "fixture-reviewer",
+        "reviewed_at": "2026-10-31",
+        "attribution": "outside",
+        "synthetic": False,
+    }), encoding="utf-8")
+    rights = dict(config["media_use"]["requests"][0]["rights"])
+    rights.update({"license_id": "CC-BY-4.0", "source_url": "https://example.com/x",
+                   "review_evidence": f"../{outside.name}"})
+    try:
+        rights_gate.validate_request_rights(
+            {"license": "CC-BY-4.0", "rights": rights}, project)
+    except rights_gate.RightsError as exc:
+        assert "outside the project" in str(exc), str(exc)
+    else:
+        raise AssertionError("a review record outside the project was accepted")
 
 
 @check

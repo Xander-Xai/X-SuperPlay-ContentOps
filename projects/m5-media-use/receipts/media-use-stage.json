@@ -12,7 +12,7 @@
       "source": "project-candidate",
       "sha256": "85c4ab5c5368b1ab60a98854ee292529d6b7908be58acfccc1d5f4ed06cddb53",
       "path": "project://assets/support.png",
-      "receipt_ref": "support.png.receipt.json",
+      "receipt_ref": "receipts/media-use/support.png.receipt.json",
       "license": "OWNED-BY-OPERATOR",
       "attribution": "Repository-classified CREATED_BY_OWNER screenshot of the pinned Easel runtime; no separate capture receipt",
       "rights": {
@@ -37,9 +37,9 @@
       "state": "IMPORTED",
       "kind": "bgm",
       "source": "project-candidate",
-      "sha256": "1dcb9c7e3708cfc0cc68663642cc9d6b779ff7bd5812fdb6e31e4d74f5b4ee5e",
+      "sha256": "17fe7d27d2db3be9dfedb69298e19c32ac3923df15a89169a70ade770c36a8bd",
       "path": "project://assets/bed.mp3",
-      "receipt_ref": "bed.mp3.receipt.json",
+      "receipt_ref": "receipts/media-use/bed.mp3.receipt.json",
       "license": "OWNED-GENERATED-LOCAL",
       "attribution": "Deterministic ffmpeg tone bed generated for this verification; not catalog music",
       "rights": {
@@ -67,7 +67,7 @@
       "source": "project-candidate",
       "sha256": "075e17bdac5c13662a1c9530050e0046f81d4138e00eb3bf30427a7b4404103d",
       "path": "project://.media/audio/sfx/sfx_001.mp3",
-      "receipt_ref": "sfx_001.mp3.receipt.json",
+      "receipt_ref": "receipts/media-use/sfx_001.mp3.receipt.json",
       "license": "Pixabay-Content-License",
       "attribution": "Bundled media-use SFX (Pixabay Content License)",
       "rights": {

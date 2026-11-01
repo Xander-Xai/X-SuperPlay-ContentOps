@@ -215,6 +215,9 @@ def execute(request: ExecutionRequest, *,
         execution = {
             "state": STATE_EXECUTED if outcome.get("ok") else "FAILED",
             "operation": request.operations[0],
+            # ``state`` records whether the operation resolved; ``health`` is the
+            # adapter's own verdict and can be false on a successful diagnosis.
+            "health": outcome.get("health"),
             "adapter_receipt": outcome.get("receipt"),
             "error": outcome.get("error"),
         }
@@ -222,6 +225,7 @@ def execute(request: ExecutionRequest, *,
         execution = {
             "state": "FAILED",
             "operation": request.operations[0],
+            "health": None,
             "adapter_receipt": None,
             "error": f"{type(exc).__name__}: {exc}",
         }

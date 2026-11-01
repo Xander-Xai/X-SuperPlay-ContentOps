@@ -22,7 +22,7 @@ If not → don't do it now.
 7. **FAIL is FAIL.** Never silently degrade to pass QC. Fallback marks `production_ready: false`.
 8. **Human Approval never bypassed.** Gates stop and emit `NEEDS_HUMAN_REVIEW`.
 9. **No direct push to main.** All changes via PR. `main` is **PROTECTED** (enabled 2026-10-31): required checks `Tests (ubuntu-latest)`, `Tests (windows-latest)`, `Repo policy checks`; PR required; no force push; no deletion; linear history. Required approval count is 0 while the owner works solo; raise it to 1 when a second reviewer exists.
-10. **Each change carries verification.** Run `doctor.py` and `qc_video.py` at minimum.
+10. **Each change carries verification.** Run `doctor.py` and `qc_video.py` at minimum, plus `python scripts/dev_check.py` before every commit.
 
 ## 2. Extension Policy
 
@@ -101,6 +101,7 @@ No receipt = task not done.
 | How to run | [docs/RUNBOOK.md](docs/RUNBOOK.md) |
 | What we're building | [docs/PRD.md](docs/PRD.md) |
 | Quality gates | [docs/QUALITY-STANDARD.md](docs/QUALITY-STANDARD.md) |
+| Current convergence plan | [docs/CONVERGENCE-REQUIREMENTS-2026-11-01.md](docs/CONVERGENCE-REQUIREMENTS-2026-11-01.md) |
 | Easel pin policy | [docs/UPSTREAM-EASEL.md](docs/UPSTREAM-EASEL.md) |
 | Decisions | [docs/adr/](docs/adr/) |
 | Research | [research/README.md](research/README.md) |
