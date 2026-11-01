@@ -336,7 +336,7 @@ def build_automatically_uses_the_stage_without_a_manual_adapter_cli():
     originals = (m5._read_yaml, m5.stage_narration, m5.stage_subtitles, m5.stage_storyboard)
     try:
         m5._read_yaml = lambda path: config
-        m5.stage_narration = lambda project, script: {"duration_s": 1, "engine": "fixture", "lines": []}
+        m5.stage_narration = lambda project, script, **kwargs: {"duration_s": 1, "engine": "fixture", "lines": []}
         m5.stage_subtitles = lambda project, script, narration: {"cues": 0}
         m5.stage_storyboard = lambda project, config, script, narration, subtitles, assets, media_audio=None: {
             "shots": len(assets), "asset_ids": list(assets), "storyboard": {},

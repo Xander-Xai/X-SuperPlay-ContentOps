@@ -37,8 +37,20 @@ STATUSES = ("APPROVED", "CHANGES_REQUESTED")
 #: ``function`` and ``dna_role`` are here because the replication and composition
 #: gates read them: without them, a shot could be relabelled from a recording to
 #: an abstraction after approval and no review would be stale.
-COPY_FIELDS = ("unit", "narration", "image", "source_type", "duration",
-               "designed_card", "placement", "function", "dna_role")
+#:
+#: ``video``, ``caption``, ``claim`` and ``source`` were added on 2026-11-01. They
+#: were absent while the repository already supported video shots, which meant a
+#: reviewed storyboard could have its clip, its caption, its claim binding or its
+#: provenance swapped and still carry the old ``APPROVED``. The fingerprint covers
+#: what the copy *claims and shows*, not only what it narrates.
+COPY_FIELDS = ("unit", "narration", "caption", "claim", "image", "video",
+               "source", "source_type", "duration", "designed_card",
+               "placement", "function", "dna_role")
+
+#: Declared asset digests live here. They are part of the fingerprint because a
+#: path alone does not identify a file: replacing the bytes behind an unchanged
+#: ``project://`` reference would otherwise leave a review looking current.
+ASSET_MAP = Path("script") / "assets.json"
 
 
 class CopyReviewRequired(Exception):
@@ -66,7 +78,7 @@ def copy_fingerprint(project: Path) -> str:
     parts.append(b"master\0" + (master.read_bytes() if master.is_file() else b""))
     for caption in sorted(script.glob("*.srt")):
         parts.append(b"srt\0" + caption.name.encode("utf-8") + b"\0" + caption.read_bytes())
-    for name in ("lines.json", "claim-map.json"):
+    for name in ("lines.json", "claim-map.json", "assets.json"):
         source = script / name
         if source.is_file():
             parts.append(name.encode("utf-8") + b"\0" + source.read_bytes())
@@ -84,6 +96,60 @@ def copy_fingerprint(project: Path) -> str:
     return _sha(b"\n".join(parts))
 
 
+def _declared_assets(project: Path) -> Dict[str, Any]:
+    path = project / ASSET_MAP
+    if not path.is_file():
+        return {}
+    try:
+        document = json.loads(path.read_text(encoding="utf-8"))
+    except ValueError:
+        return {}
+    assets = document.get("assets")
+    return assets if isinstance(assets, dict) else {}
+
+
+def _resolve(project: Path, reference: Any) -> Optional[Path]:
+    if not isinstance(reference, str) or not reference.startswith("project://"):
+        return None
+    return (project / reference[len("project://"):]).resolve()
+
+
+def asset_integrity(project: Path) -> List[Dict[str, str]]:
+    """Declared asset digests against the bytes on disk.
+
+    Only files that exist are compared. A clean checkout intentionally carries no
+    media, and a missing file is a composition problem rather than a review
+    problem, so the two are reported separately instead of being folded together.
+    """
+    drift: List[Dict[str, str]] = []
+    for asset_id, record in sorted(_declared_assets(project).items()):
+        if not isinstance(record, dict):
+            continue
+        declared = record.get("sha256")
+        path = _resolve(project, record.get("path"))
+        if not declared or path is None or not path.is_file():
+            continue
+        actual = _sha(path.read_bytes())
+        if actual != declared:
+            drift.append({"asset_id": asset_id, "path": str(record.get("path")),
+                          "declared_sha256": declared, "actual_sha256": actual})
+    return drift
+
+
+def missing_assets(project: Path) -> List[Dict[str, str]]:
+    """Declared assets whose file is absent. Composition must refuse these."""
+    absent: List[Dict[str, str]] = []
+    for asset_id, record in sorted(_declared_assets(project).items()):
+        if not isinstance(record, dict):
+            continue
+        path = _resolve(project, record.get("path"))
+        if path is None:
+            continue
+        if not path.is_file():
+            absent.append({"asset_id": asset_id, "path": str(record.get("path"))})
+    return absent
+
+
 def load(project: Path) -> Optional[Dict[str, Any]]:
     path = project / RECORD
     if not path.is_file():
@@ -98,26 +164,36 @@ def status(project: Path) -> Dict[str, Any]:
     """Everything a caller needs to explain the gate, without raising."""
     fingerprint = copy_fingerprint(project)
     record = load(project)
+    drift = asset_integrity(project)
     if record is None:
         return {"schema": GATE_SCHEMA, "ok": False, "state": "NOT_REVIEWED",
-                "copy_sha256": fingerprint, "remedy": _remedy(project),
+                "copy_sha256": fingerprint, "asset_drift": drift,
+                "remedy": _remedy(project),
                 "detail": "no receipts/script-review.json"}
     if record.get("status") not in STATUSES:
         return {"schema": GATE_SCHEMA, "ok": False, "state": "NOT_REVIEWED",
-                "copy_sha256": fingerprint, "remedy": _remedy(project),
+                "copy_sha256": fingerprint, "asset_drift": drift,
+                "remedy": _remedy(project),
                 "detail": f"unrecognised status {record.get('status')!r}"}
     if record.get("copy_sha256") != fingerprint:
         return {"schema": GATE_SCHEMA, "ok": False, "state": "STALE",
                 "copy_sha256": fingerprint, "reviewed_sha256": record.get("copy_sha256"),
-                "remedy": _remedy(project),
+                "asset_drift": drift, "remedy": _remedy(project),
                 "detail": "the copy changed after it was reviewed"}
     if record["status"] != "APPROVED":
         return {"schema": GATE_SCHEMA, "ok": False, "state": "CHANGES_REQUESTED",
                 "copy_sha256": fingerprint, "reviewer": record.get("reviewer"),
-                "opinion": record.get("opinion"), "remedy": _remedy(project),
+                "opinion": record.get("opinion"), "asset_drift": drift,
+                "remedy": _remedy(project),
                 "detail": "the reviewer asked for changes"}
+    if drift:
+        return {"schema": GATE_SCHEMA, "ok": False, "state": "ASSET_DRIFT",
+                "copy_sha256": fingerprint, "reviewer": record.get("reviewer"),
+                "asset_drift": drift, "remedy": _remedy(project),
+                "detail": "declared asset digests no longer match the files on disk"}
     return {"schema": GATE_SCHEMA, "ok": True, "state": "APPROVED",
-            "copy_sha256": fingerprint, "reviewer": record.get("reviewer"),
+            "copy_sha256": fingerprint, "asset_drift": [],
+            "reviewer": record.get("reviewer"),
             "opinion": record.get("opinion"), "reviewed_at": record.get("reviewed_at")}
 
 
