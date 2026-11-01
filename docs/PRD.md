@@ -62,6 +62,10 @@ These hold for the dual-track scope in §5 as well. Adding a graphic line does n
 - n8n / OpenClaw total orchestration
 - Database / complex FastAPI
 
+A platform row in `config/registry/platforms.json` is **not** integration, and a
+Content Bundle is **not** publication. Adding either reopens none of the above
+(ADR-015).
+
 ## 7. Current Baseline
 
 Verified 2026-11-01 on `main` (PR #89):
@@ -133,6 +137,11 @@ See [MEDIA-PROVIDER-CONTRACT.md](MEDIA-PROVIDER-CONTRACT.md).
 - Extension priority: ADAPTER > EXTENSION > CUSTOM SKILL > PATCH > FORK
 - No upstream source modification
 - Upgrade requires Founder approval + regression suite
+- **Executed surface today: two files** — `auto-short-video/scripts/assemble.py`
+  and `tts.py` (V1 only). The upstream skills, agent, workbench and browser
+  publishing are available upstream and are **not** integrated here. Adopting
+  any of them is a separate decision requiring ADR-002 to be superseded
+  (ADR-015 D1)
 
 ## 15. Quality Standard
 

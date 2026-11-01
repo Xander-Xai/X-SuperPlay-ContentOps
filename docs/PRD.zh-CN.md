@@ -59,6 +59,9 @@ Founder（Xander-Xai）— 需要从真实工作产出高质量视频，最少�
 - n8n / OpenClaw 全编排
 - 数据库 / 复杂 FastAPI
 
+```config/registry/platforms.json``` 里的一行**不是**集成，Content Bundle 也**不是**发布。
+新增其中任何一项都不重新开启上述任何非目标（ADR-015）。
+
 ## 7. 当前基线
 
 2026-11-01 在 ```main``` 上验证（PR #89）：
@@ -131,6 +134,9 @@ TECHNICAL_QC → CONTENT_QC → FACT_QC → HUMAN_REVIEW → PRODUCTION_READY。
 - 扩展优先级：ADAPTER > EXTENSION > CUSTOM SKILL > PATCH > FORK
 - 不修改上游源码
 - 升级需要 Founder 批准 + 回归套件
+- **当前实际执行面：两个文件** —— ```auto-short-video/scripts/assemble.py```
+  与 ```tts.py```（仅 V1）。上游的 Skill、Agent、工作台与浏览器发布在**本仓库未接入**。
+  采用其中任何一项都是独立决策，且需要取代 ADR-002（ADR-015 D1）
 
 ## 15. 质量标准
 

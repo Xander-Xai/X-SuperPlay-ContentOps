@@ -125,6 +125,29 @@ src/
         └── test_duration_policy.py  # test-only video duration rule
 ```
 
+Other packages follow the same rule — provider code, contracts and gates live
+here, never in `scripts/`. Two are load-bearing for platform work:
+`src/contentops/platforms/` (the registry loader) and
+`src/contentops/content_kernel/` (the Content Bundle consumption contract).
+Neither renders, publishes or spends.
+
+## config/
+
+Machine-readable configuration that is not a pin and not a secret:
+
+```
+config/
+├── accounts/<slug>.json      # account DNA; business strategy stays off this public repo
+└── registry/
+    ├── platforms.json        # contentops.platform-registry/v1 — local integration state
+    └── accounts.json         # contentops.account-registry/v1 — public account identities only
+```
+
+`config/registry/` is the only platform registry. A second registry in another
+directory or format is a defect, not an alternative. Only account
+configurations already tracked here may be named; a private account's DNA is
+absent, not replaced by a placeholder identity.
+
 ## runtime/
 
 Machine-readable pins and provenance only:
