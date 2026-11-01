@@ -100,6 +100,15 @@ No review record was fabricated, and the gate was not bypassed. Recomposing the
 film therefore requires a real human copy review first — an Owner decision, not
 an agent one.
 
+**State: `BLOCKED_COPY_REVIEW`.**
+
+Since 2026-11-01 the fingerprint also covers `video`, `caption`, `claim` and
+`source` plus the declared asset digests, so an approval of this sample would
+bind the clips as well as the words. A review request — the full copy, the beats
+and the `copy_sha256` — is at
+`reports/audits/copy-review-request-easel-fi-audio-first-2026-11-01.md`. It is a
+request, not a decision.
+
 Consequence: the film's byte reproduction is **unproven**, and will remain
 unproven until a copy review exists. The render layer is proven.
 

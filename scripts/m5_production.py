@@ -535,23 +535,87 @@ def _concat_with_pauses(wavs: List[Path], out_path: Path, work: Path) -> List[Di
     return timings
 
 
-def stage_narration(project: Path, script: Dict[str, Any]) -> Dict[str, Any]:
+def _text_sha(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def stage_narration(project: Path, script: Dict[str, Any], *, provider: str = "sapi",
+                    narration_audio: Optional[Path] = None,
+                    narration_receipt: Optional[Path] = None) -> Dict[str, Any]:
+    """Produce the voice track from an explicitly chosen source.
+
+    ``sapi``     the offline Windows voice — a compatibility and diagnostic path;
+    ``existing`` an audio file plus the receipt that binds it to this script;
+    anything else is BLOCKED. A provider this build cannot reach must fail, not
+    fall back to SAPI or edge-tts.
+    """
+    if provider not in ("sapi", "existing"):
+        raise M5Blocked(
+            f"narration provider {provider!r} is not reachable in this build; "
+            f"refusing to fall back to the offline SAPI voice")
+
+    text = "\n".join(line["narration"] for line in script["lines"])
+    text_sha = _text_sha(text)
+    target = project / "assets" / "voice" / "narration.wav"
+    target.parent.mkdir(parents=True, exist_ok=True)
+
+    if provider == "existing":
+        audio = Path(narration_audio) if narration_audio else None
+        if audio is None or not audio.is_file():
+            raise M5Blocked("provider 'existing' needs --narration-audio <file>")
+        receipt_path = Path(narration_receipt) if narration_receipt else None
+        if receipt_path is None or not receipt_path.is_file():
+            raise M5Blocked(
+                "provider 'existing' needs --narration-receipt: a path alone does not "
+                "prove which text was spoken")
+        try:
+            previous = json.loads(receipt_path.read_text(encoding="utf-8"))
+        except ValueError as exc:
+            raise M5Blocked(f"narration receipt is not readable JSON: {exc}")
+        if previous.get("text_sha256") != text_sha:
+            raise M5Blocked(
+                "the narration receipt is not bound to the current script text — the "
+                "audio speaks a different script")
+        lines = previous.get("lines")
+        if not isinstance(lines, list) or len(lines) != len(script["lines"]):
+            raise M5Blocked(
+                "the narration receipt carries no usable per-line timings; subtitles "
+                "cannot be aligned to this audio")
+        shutil.copyfile(audio, target)
+        payload = {
+            "schema": "contentops.m5-narration/v1",
+            "engine": previous.get("engine", "existing"),
+            "voice_provider": "existing",
+            "voice": previous.get("voice"),
+            "network": False,
+            "cost": 0,
+            "audio": target.relative_to(project).as_posix(),
+            "sha256": _sha256(target),
+            "text_sha256": text_sha,
+            "duration_s": round(_duration(target), 3),
+            "lines": lines,
+            "quality_note": "reused narration bound to this script by its receipt",
+            "source_receipt": receipt_path.as_posix(),
+        }
+        _write_json(project / "receipts" / "narration.json", payload)
+        return payload
+
     work = project / "work" / "narration"
     if work.is_dir():
         shutil.rmtree(work)
     wavs = _synthesize_windows(script["lines"], work)
-    narration = project / "assets" / "voice" / "narration.wav"
-    narration.parent.mkdir(parents=True, exist_ok=True)
-    timings = _concat_with_pauses(wavs, narration, work)
+    timings = _concat_with_pauses(wavs, target, work)
     payload = {
         "schema": "contentops.m5-narration/v1",
         "engine": "windows_sapi",
+        "voice_provider": "sapi",
         "voice": "Microsoft Huihui Desktop (zh-CN)",
         "network": False,
         "cost": 0,
-        "audio": narration.relative_to(project).as_posix(),
-        "sha256": _sha256(narration),
-        "duration_s": round(_duration(narration), 3),
+        "audio": target.relative_to(project).as_posix(),
+        "sha256": _sha256(target),
+        "text_sha256": text_sha,
+        "duration_s": round(_duration(target), 3),
         "lines": timings,
         "quality_note": "local SAPI voice; robotic, not a production-grade voice track",
     }
@@ -596,20 +660,15 @@ def stage_storyboard(project: Path, config: Dict[str, Any], script: Dict[str, An
                      narration: Dict[str, Any], subtitles: Dict[str, Any],
                      assets: Dict[str, Any],
                      media_audio: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    shots = []
-    project_rel = project.relative_to(ROOT).as_posix()
-    for line, timing in zip(script["lines"], narration["lines"]):
-        repo_asset = assets[line["asset_id"]]["repo_path"]
-        shots.append({
-            "image": repo_asset,
-            "caption": line["caption"],
-            "motion": "static",
-            "source": repo_asset,
-            "source_type": assets[line["asset_id"]]["type"].lower(),
-            "narration": line["narration"],
-            "duration_s": timing["duration"],
-            "claim": line.get("claim"),
-        })
+    from contentops.media.storyboard_adapter import (
+        StoryboardContractError, build_shots,
+    )
+    try:
+        shots = build_shots(lines=script["lines"],
+                            narration_lines=narration["lines"],
+                            assets=assets, repo_root=ROOT)
+    except StoryboardContractError as exc:
+        raise M5Blocked(f"storyboard contract: {exc}")
     target = (config.get("target") or {}).get("resolution", "1080x1920")
     storyboard = {
         "size": target,
@@ -619,7 +678,8 @@ def stage_storyboard(project: Path, config: Dict[str, Any], script: Dict[str, An
         "narration": f"{project.relative_to(ROOT).as_posix()}/assets/voice/narration.wav",
         "subtitle": f"{project.relative_to(ROOT).as_posix()}/assets/captions/default.srt",
         "engine": "easel",
-        "voice_provider": "windows-sapi/Huihui (offline)",
+        "voice_provider": (f"{narration.get('voice_provider', narration.get('engine', 'unknown'))}"
+                           f"/{narration.get('voice') or 'unspecified'}"),
         "generated_visuals": {"count": 0, "policy": "real_assets_only"},
     }
 
@@ -769,7 +829,10 @@ def stage_review(project: Path, slug: str, qc: Dict[str, Any]) -> Dict[str, Any]
     return payload
 
 
-def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = None) -> Dict[str, Any]:
+def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = None,
+          narration_provider: Optional[str] = None,
+          narration_audio: Optional[Path] = None,
+          narration_receipt: Optional[Path] = None) -> Dict[str, Any]:
     if not project.is_dir():
         raise M5Blocked(f"project not found: {project}")
     config = _read_yaml(project / "project.yaml")
@@ -789,8 +852,15 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
     stages["claims"] = {"count": claims["count"]}
     script = stage_script(project, claims["ledger"], assets)
     stages["script"] = {"lines": script["lines"]}
-    narration = stage_narration(project, script["script"])
-    stages["narration"] = {"duration_s": narration["duration_s"], "engine": narration["engine"]}
+    provider = (narration_provider
+                or (config.get("narration") or {}).get("provider")
+                or "sapi")
+    narration = stage_narration(project, script["script"], provider=provider,
+                                narration_audio=narration_audio,
+                                narration_receipt=narration_receipt)
+    stages["narration"] = {"duration_s": narration["duration_s"],
+                           "engine": narration["engine"],
+                           "provider": narration.get("voice_provider", provider)}
     subtitles = stage_subtitles(project, script["script"], narration)
     stages["subtitles"] = {"cues": subtitles["cues"]}
     storyboard = stage_storyboard(project, config, script["script"], narration, subtitles,
@@ -832,13 +902,28 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("project", help="project directory, e.g. projects/m5-easel-pin")
     parser.add_argument("--skip-compose", action="store_true")
+    parser.add_argument("--narration-provider", default=None,
+                        choices=("sapi", "existing"),
+                        help="sapi = offline Windows voice (compatibility/diagnostic); "
+                             "existing = reuse audio bound to this script by a receipt. "
+                             "Any other provider is refused, never silently replaced")
+    parser.add_argument("--narration-audio", default=None,
+                        help="with --narration-provider existing: the audio file to reuse")
+    parser.add_argument("--narration-receipt", default=None,
+                        help="with --narration-provider existing: a prior narration.json "
+                             "carrying text_sha256 and per-line timings")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
     project = Path(args.project)
     if not project.is_absolute():
         project = (ROOT / project).resolve()
     try:
-        run = build(project, skip_compose=args.skip_compose)
+        run = build(project, skip_compose=args.skip_compose,
+                    narration_provider=args.narration_provider,
+                    narration_audio=(Path(args.narration_audio)
+                                     if args.narration_audio else None),
+                    narration_receipt=(Path(args.narration_receipt)
+                                       if args.narration_receipt else None))
     except M5Blocked as exc:
         result = {"ok": False, "state": "BLOCKED", "reason": str(exc)}
         print(json.dumps(result, ensure_ascii=False, indent=2))
