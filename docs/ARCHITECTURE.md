@@ -41,7 +41,9 @@ FFmpeg / deterministic tools
 
 ## Production Lines
 
-Two lines share everything upstream of the render step and split at it.
+Two lines share the evidence and review machinery, then diverge into their own
+production flow. They diverge before the render step: a video script and a graphic
+outline are already different objects.
 
 ```text
                shared
@@ -98,10 +100,10 @@ is on `main`.
 |---|---|---|
 | M5 evidence chain, media, QC, skill router/authorization | `main` (PR #89) | implemented |
 | X post gate, growth→editorial gate | `main` (PRs #87, #88) | implemented |
-| Account-aware content router, workflow gates, brief/script/design stages | `feat/content-router` (PR #49) | **unmerged** |
+| Account-aware content router, workflow gates, brief/script/design stages | `main` (S1 #93, S2 #95) + Issue #94 for S3–S4 | **partial** — the account/brief front-end and stage gate are on `main`; remaining stages are sliced |
 | XHS eight-step workflow | `feat/xhs-fa-migration` | **unmerged** |
-| X platform track (migrated records, prompt references, table gate) | `feat/47-x-platform-track` (PR #50) | **unmerged** |
-| GZH ten-stage vendored workflow | local `vendor/` + `fix/56-gzh-provenance` (PR #58) | **unmerged / rights-blocked** |
+| X platform track (migrated records, prompt references, table gate) | Issue #47 (PR #50 closed as superseded) | **unmerged** |
+| GZH ten-stage vendored workflow | local `vendor/` + Issue #56 | **unmerged / rights-blocked** |
 
 [CONVERGENCE-REQUIREMENTS-2026-11-01.md](CONVERGENCE-REQUIREMENTS-2026-11-01.md)
 defines the merge order. A skill that references an unmerged layer is declared

@@ -30,17 +30,19 @@ Founder (Xander-Xai) — needs high-quality video from real work with minimum ma
 ## 5. Product Goal
 
 A content production system any Xander-Xai business repo can call to turn real work into
-traceable, platform-ready content — through **two production lines that share everything
-before the render step**:
+traceable, platform-ready content — through **two production lines that share the
+evidence and review machinery, then diverge into their own production flow**:
 
 | Line | Produces | Targets |
 |---|---|---|
 | **Video** | MP4, cover, title, description, tags | 抖音, 视频号, B站 |
 | **Graphic** | Markdown / HTML, image set, preview | X, 小红书, 公众号, 知乎 |
 
-Shared upstream of both lines: account positioning, topic selection, `SourceArtifact`
-evidence, `ClaimLedger` claims, rights check, and the human review gate. What splits is
-the render step — video needs voice, storyboard and composition; a graphic post does not.
+Both lines share: account positioning, topic selection, `SourceArtifact` evidence,
+`ClaimLedger` claims, the rights check, and the same review principles. They diverge
+earlier than the render step — a video script and a graphic outline are already different
+objects, and a video needs voice, storyboard and composition while a post does not.
+Review principles are shared; **each line's artifact is approved separately**.
 
 Content form and delivery target are separate axes. 小红书 and X can carry video; B站 can
 carry graphic posts. Lines are split by **content form** for the first phase; platform

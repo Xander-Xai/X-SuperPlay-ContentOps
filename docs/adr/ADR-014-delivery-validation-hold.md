@@ -9,10 +9,16 @@
 
 An adversarial review of 2026-11-01 checked a third-party proposal to rebuild
 the repository as an eight-module "Creator OS" on Easel v0.3.0. The review's
-decisive finding was not about Easel. It was this: on `main` at `c4b8a33` the
-repository holds **22 rendered MP4s under `projects/*/final/`** and **zero
-publication artifacts** — no delivery package, no platform URL, no approved
-`human-review.json`. Every `production_ready` value is `false`.
+decisive finding was not about Easel. It was this: the **local workspace** holds
+22 rendered MP4s under `projects/*/final/`, while the **repository** tracks
+exactly one (`projects/easel-review/final/final.mp4` — the gitignore exception),
+and neither holds a single publication artifact: no delivery package, no platform
+URL, no approved `human-review.json`. Every `production_ready` value is `false`.
+
+The two counts are recorded separately on purpose. A tracked MP4 is evidence the
+pipeline ran; a local MP4 is a candidate that has not been reviewed, delivered or
+published. Neither number is a publication count, and neither may be reported as
+one.
 
 The proposal's phases, and several earlier plans, would each be marked
 "complete" without changing that number. The repository's own
