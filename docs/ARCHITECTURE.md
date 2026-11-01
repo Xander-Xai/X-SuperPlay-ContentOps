@@ -39,6 +39,56 @@ FFmpeg / deterministic tools
 = Rendering / Media Utilities
 ```
 
+## Production Lines
+
+Two lines share everything upstream of the render step and split at it.
+
+```text
+               shared
+    account positioning → topic → Brief
+                  │
+        SourceArtifact + ClaimLedger          (permission-aware evidence)
+                  │
+            rights check (Rights Gate)
+                  │
+        ┌─────────┴─────────┐
+        │                   │
+   VIDEO LINE          GRAPHIC LINE
+   script              outline / draft
+   storyboard          platform adapt
+   voice / subtitles   images / cards
+   compose (Easel)     layout (HTML/MD)
+   video QC            graphic QC
+        │                   │
+        └─────────┬─────────┘
+                  │
+          human review gate
+                  │
+        delivery package + receipt
+                  │
+     ┌────────────┴────────────┐
+  抖音 · 视频号 · B站        X · 小红书 · 公众号 · 知乎
+                  │
+        owner publishes by hand
+                  │
+        owner records the URL
+```
+
+Rules:
+
+1. **One evidence layer.** Both lines read the same `SourceArtifact` and `ClaimLedger`.
+   A corrected claim invalidates both lines' outputs, not just one.
+2. **The video line is `contentops.copy-to-video/v1`.** Its stages (`script → audio →
+   storyboard → assets → compose → quality`) are video-specific on purpose and are not
+   renamed to look general.
+3. **The graphic line does not reuse those stages.** Audio and storyboard have no meaning
+   for an article. It defines its own shorter stage list and reuses the gate's existing
+   checks — ordering, fingerprint invalidation, human approval — rather than forking them.
+4. **Platform adapters are delivery, not production.** A platform never gets its own
+   production engine. See §What ContentOps Does NOT Own.
+5. **Shared engine extraction is earned, not assumed.** A common abstraction over the two
+   lines is justified only when real duplicated code exists in both.
+
 ## Branch Layers
 
 The repository is mid-convergence. A component is only "part of the system" if it
