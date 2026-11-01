@@ -1,0 +1,61 @@
+id: easel-qc-failure
+title: "21 项质检测试全绿，我为什么还是拒绝发布这条 AI 视频？"
+created_at: "2026-11-02T00:00:00Z"
+
+# SCRIPT_REVIEW: copy and evidence only. No media has been produced, no provider
+# has been called, and nothing here is approved.
+status: SCRIPT_REVIEW
+
+source_refs:
+  - id: rejection-receipt
+    type: receipt
+    title: "Founder rejection of the easel-review cut"
+    path: "projects/easel-review/receipts/human-review.json"
+    note: "REJECTED_FOUNDER; binds the judged artifact by sha256 e3b029ef…"
+  - id: rejected-video
+    type: local_artifact
+    title: "The rejected 62 s cut"
+    path: "projects/easel-review/final/easel.mp4"
+    note: "gitignored local artifact, bound by sha256 e3b029ef…, 1868184 B"
+  - id: rejected-storyboard
+    type: authored_input
+    title: "The storyboard that produced the rejected cut"
+    path: "projects/easel-review/script/storyboard.json"
+    note: "six shots, all motion: static, all real screenshots"
+  - id: qc-implementation
+    type: source_code
+    title: "scripts/qc_video.py"
+    path: "scripts/qc_video.py"
+    note: "the 21 checks live here; no freeze or motion measurement exists in it"
+  - id: motion-replay
+    type: receipt
+    title: "Motion replay evidence, 2026-11-01"
+    path: "reports/audits/motion-replay-evidence-2026-11-01.md"
+    note: "six compositions re-rendered, SSIM 0.9945-0.9954"
+
+content_type: engineering_retro
+
+target:
+  platform_primary: douyin
+  aspect_ratio: "9:16"
+  resolution: "1080x1920"
+  duration_target_sec: 55
+
+evidence_policy:
+  real_assets_first: true
+  ai_visuals_allowed: auxiliary_only
+  fabricated_claims: forbidden
+
+# R4-B is not authorized. No narration provider is chosen, and no new MiniMax
+# request may be made without a separate Owner authorization.
+voice_provider: "undecided — no provider authorized for production yet"
+voice_quality: "undecided"
+
+engine: easel
+
+outputs:
+  script: "projects/easel-qc-failure/script/master.md"
+  claim_map: "projects/easel-qc-failure/script/claim-map.json"
+  brief: "projects/easel-qc-failure/script/script-brief.md"
+  storyboard_plan: "projects/easel-qc-failure/script/storyboard-plan.md"
+  review_request: "projects/easel-qc-failure/receipts/copy-review-request.md"
