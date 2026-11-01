@@ -1,0 +1,19 @@
+slug: easel-fi-audio-first
+account_slug: x-superplay-future-intelligence
+title: "Easel 工程拆解：口播窗口不等于画面停留"
+account: "X超玩·未来智能"
+role: Build
+platforms: [douyin, bilibili]
+format: 1080x1920
+duration_sec: 25.0
+status: AUDIO_FIRST_P0
+voice_provider: "miniMax/speech-2.8-hd"
+voice_quality: minimax_mplan_subscription
+cover_html: assets/covers/cover.html
+cover_png: assets/covers/cover.png
+cover_width: 1080
+cover_height: 1440
+cover_platform: douyin
+cover_title_claim: C-FI-COVER
+notes: "20-30s P0 loop: audio-first planning, zero manual recording, vector/code/metric visuals."
+design_deviation: "The account template targets 90-120s. This is the blueprint's explicit 20-30s P0 loop, not a finished episode; the measured length is in receipts/audio-first-plan.json."

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<style>
+ *{margin:0;padding:0;box-sizing:border-box}
+ html,body{width:1080px;height:1920px}
+ body{background:#0F1117;color:#F5F7FA;font-family:"Noto Sans CJK SC","Microsoft YaHei",sans-serif}
+ .card{width:1080px;height:1920px;padding:96px 80px 400px;display:flex;flex-direction:column}
+ .kicker{font-size:26px;letter-spacing:.16em;color:#8B95A5}
+ .rule{height:2px;background:#38BDF8;margin-top:32px}
+ h1{font-size:96px;line-height:1.22;font-weight:300;margin-top:120px;letter-spacing:-.02em}
+ .sub{font-size:40px;color:#8B95A5;line-height:1.5;margin-top:40px}
+ .diagram{margin-top:120px}
+ .box{background:#161A22;border:1px solid #2A3240;border-radius:10px;padding:32px}
+ .box .t{font-size:30px;color:#8B95A5}
+ .box .n{font-size:44px;margin-top:10px}
+ .views{display:flex;gap:20px;margin-top:32px}
+ .view{flex:1;background:#1C2230;border:1px solid #38BDF8;border-radius:8px;padding:28px 20px;text-align:center}
+ .view b{display:block;font-size:34px;font-weight:500}
+ .view span{display:block;font-size:24px;color:#8B95A5;margin-top:8px}
+ .arrow{text-align:center;color:#38BDF8;font-size:40px;margin:22px 0}
+ .spacer{flex:1}
+ .footer{font-size:24px;color:#8B95A5;letter-spacing:.08em}
+</style></head><body><div class="card">
+ <div class="kicker">EASEL · 工程拆解</div><div class="rule"></div>
+ <h1>一个窗口，<br>拆成多个视图。</h1>
+ <p class="sub">口播是一段，画面按语义切。</p>
+ <div class="diagram">
+   <div class="box"><div class="t">PLACEMENT · 口播窗口</div><div class="n">6.0 s</div></div>
+   <div class="arrow">↓</div>
+   <div class="views">
+     <div class="view"><b>V1</b><span>上下文 2.0s</span></div>
+     <div class="view"><b>V2</b><span>关键行 2.0s</span></div>
+     <div class="view"><b>V3</b><span>结果 2.0s</span></div>
+   </div>
+ </div>
+ <div class="spacer"></div>
+ <div class="footer">src/contentops/media/cut_plan.py</div>
+</div></body></html>

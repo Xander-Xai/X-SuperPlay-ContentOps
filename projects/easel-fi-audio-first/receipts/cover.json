@@ -1,0 +1,20 @@
+{
+  "schema": "contentops.cover-receipt/v1",
+  "platform": "douyin",
+  "width": 1080,
+  "height": 1440,
+  "claim_id": "C-FI-COVER",
+  "claim_text": "口播四十四秒",
+  "source": "citation_cover",
+  "source_note": "built from the tracked document; no raw capture frame was used because no capture is publishable yet",
+  "html": {
+    "path": "project://assets/covers/cover.html",
+    "sha256": "16ac66a7cbf46baa33e534178bf166f45ebcf9beb0a5ac36559f36c428a78f89"
+  },
+  "png": {
+    "path": "project://assets/covers/cover.png",
+    "sha256": "272557811292e9852db447982ead2f438db888baea23ccf51d05e0e9350866b7"
+  },
+  "audit": "✅ PASS  cover.png  (1080x1440)\n  纵向跨度 88% | 底部死空白 5% | 最大空白带 13% | 4带密度 [0.29, 0.38, 0.29, 0.12]",
+  "built_at": "2026-10-28T05:42:38Z"
+}

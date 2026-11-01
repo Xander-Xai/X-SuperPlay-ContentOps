@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<style>
+ *{margin:0;padding:0;box-sizing:border-box}
+ html,body{width:1080px;height:1440px}
+ body{background:#0F1117;color:#F5F7FA;font-family:"Noto Sans CJK SC","Microsoft YaHei",sans-serif}
+ .card{width:1080px;height:1440px;padding:88px 80px 72px;display:flex;flex-direction:column}
+ .kicker{font-size:26px;letter-spacing:.16em;color:#8B95A5}
+ .rule{height:2px;background:#38BDF8;margin-top:32px}
+ h1{font-size:132px;line-height:1.12;font-weight:300;letter-spacing:-.03em;margin-top:110px;white-space:nowrap}
+ .signal{height:14px;background:#38BDF8;margin-top:64px}
+ .sub{font-size:48px;line-height:1.4;color:#8B95A5;margin-top:52px}
+ .ticks{display:flex;gap:6px;margin-top:64px}
+ .tick{flex:1;height:52px;background:rgba(56,189,248,.28);border-radius:4px}
+ .tick.on{background:#38BDF8}
+ .ledger{margin-top:56px;border-top:1px solid rgba(139,149,165,.25)}
+ .ledger div{font-size:30px;line-height:1.45;padding:18px 0;border-bottom:1px solid rgba(139,149,165,.25);color:#8B95A5}
+ .note{margin-top:56px;border:1px solid rgba(56,189,248,.45);border-radius:10px;padding:30px 32px;font-size:36px;line-height:1.5;color:#F5F7FA}
+ .spacer{flex:1}
+ .footer{display:flex;justify-content:space-between;font-size:24px;color:#8B95A5}
+ .mark{letter-spacing:.18em}
+</style></head><body><div class="card">
+ <div class="kicker">EASEL · 工程拆解</div><div class="rule"></div>
+ <h1>口播四十四秒</h1>
+ <div class="signal"></div>
+ <p class="sub">画面不能停四十四秒</p>
+ <div class="ticks">
+   <div class="tick on"></div><div class="tick on"></div><div class="tick on"></div><div class="tick on"></div><div class="tick on"></div><div class="tick on"></div>
+   <div class="tick on"></div><div class="tick on"></div><div class="tick on"></div><div class="tick on"></div><div class="tick on"></div><div class="tick on"></div>
+   <div class="tick on"></div><div class="tick on"></div><div class="tick on"></div><div class="tick on"></div><div class="tick on"></div><div class="tick on"></div>
+   <div class="tick on"></div><div class="tick on"></div><div class="tick on"></div><div class="tick on"></div>
+ </div>
+ <div class="ledger">
+   <div>一个口播窗口，拆成多个取证视图。</div>
+   <div>最长冻结 1.80 s，上限 2.20 s。</div>
+ </div>
+ <div class="note">旧门禁放过静态停留 → 现在按实测判定。</div>
+ <div class="spacer"></div>
+ <div class="footer"><div>docs/CURRENT-STATE.md<br>2026-10-27</div><div class="mark">X 超玩 · 未来智能</div></div>
+</div></body></html>
