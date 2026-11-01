@@ -283,10 +283,16 @@ def cmd_adopt(args: argparse.Namespace) -> int:
 
 
 def cmd_ingest(args: argparse.Namespace) -> int:
+    project_dir = _project(args)
+    # Same policy as ``import``: copying a file into the project is a direct
+    # material import, so choosing this verb must not be a way around the gate.
+    _import_rights(project_dir, args.license or "",
+                   getattr(args, "rights_review", "") or "",
+                   args.attribution or "", False)
     record = _adapter(args).ingest(
         args.type,
         Path(args.source).expanduser(),
-        project_dir=_project(args),
+        project_dir=project_dir,
         license=args.license,
         attribution=args.attribution or "",
     )
@@ -915,6 +921,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--source", required=True)
     p.add_argument("--license", required=True)
     p.add_argument("--attribution", default="")
+    p.add_argument("--rights-review", default="",
+                   help="project-relative assets/<id>.rights.json for third-party ingest")
     p.set_defaults(func=cmd_ingest)
 
     p = sub.add_parser("import", help="turn a media-use record into a ContentOps asset")

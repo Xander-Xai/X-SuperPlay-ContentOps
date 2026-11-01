@@ -52,16 +52,18 @@ def request(**overrides) -> auth.ExecutionRequest:
 
 
 class _Recorder:
-    def __init__(self, ok: bool = True, error: str = None) -> None:
+    def __init__(self, ok: bool = True, error: str = None, health: bool = None) -> None:
         self.calls: list[str] = []
         self._ok = ok
         self._error = error
+        self._health = health
 
     def __call__(self, operation: str, req: auth.ExecutionRequest) -> dict:
         self.calls.append(operation)
         if self._error is not None:
             raise RuntimeError(self._error)
-        return {"ok": self._ok, "receipt": {"schema": "contentops.media-use-doctor/v1"}}
+        return {"ok": self._ok, "health": self._health,
+                "receipt": {"schema": "contentops.media-use-doctor/v1"}}
 
 
 def run(project: Path, *, req=None, verdict=None, registry=None, executor=None,
@@ -241,6 +243,21 @@ class ConsumptionTests(unittest.TestCase):
         self.assertEqual(failed.execution["state"], "FAILED")
         self.assertFalse(failed.executed)
         self.assertEqual(second.decision.reason, "USES_EXHAUSTED")
+
+    def test_execution_records_health_apart_from_whether_it_ran(self) -> None:
+        """A successful operation can still report an unhealthy adapter."""
+        with tempfile.TemporaryDirectory() as raw:
+            project = _project(Path(raw))
+            result = run(project, executor=_Recorder(ok=True, health=False))
+        self.assertEqual(result.execution["state"], auth.STATE_EXECUTED)
+        self.assertIs(result.execution["health"], False)
+
+    def test_a_failed_execution_records_no_health_claim(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            project = _project(Path(raw))
+            result = run(project, executor=_Recorder(ok=False, health=None))
+        self.assertEqual(result.execution["state"], "FAILED")
+        self.assertIsNone(result.execution["health"])
 
     def test_a_revocation_written_mid_flight_is_detected(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
