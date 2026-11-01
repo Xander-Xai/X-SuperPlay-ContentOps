@@ -10,19 +10,21 @@ translation_status: synced
 
 > 当前运行状态。仅经验证的事实。无展望，无过时声明。
 >
-> 最后验证：2026-11-01，```feat/100-easel-first-platform-registry```
-> （从 PR #97 时的 ```main``` 分出）。以下事实描述本分支；未合并层已标注。
+> 最后验证：2026-11-02，```feat/106-easel-host-dual-line```
+> （基于 PR #101，并已合并 ```main```）。以下事实描述本分支；未合并层已标注。
 > “分层状态”表之后的小节是历史里程碑记录，说明某项能力当时如何被证明，
 > 不代表当前状态。
 
-## 分层状态（2026-11-01）
+## 分层状态（2026-11-02）
 
 | 层 | 状态 |
 |---|---|
-| M5 证据链、媒体合约、QC、media-use 适配器、Skill 路由/授权 | 本分支已实现 |
-| 平台注册表（`config/registry/platforms.json`、`src/contentops/platforms/`） | 本分支已实现；10 条记录，1 条 `INTEGRATED`（`x`），9 条 `PLANNED` |
-| Content Bundle 消费契约（`src/contentops/content_kernel/`） | 本分支已实现；仅校验 |
-| 内容路由、账号 DNA、工作流门禁、Brief/脚本/设计阶段 | **未合并**（`feat/content-router`，PR #49） |
+| M5 证据链、媒体合约、QC、media-use 适配器、Skill 路由/授权 | 已实现 |
+| 平台注册表（`config/registry/platforms.json`、`src/contentops/platforms/`） | PR #101 已实现；9 个 Strategy 平台对应 10 条本地记录，1 条 `INTEGRATED`（`x`），9 条 `PLANNED` |
+| Content Bundle 消费 + 双形式 handoff（`src/contentops/content_kernel/`） | 离线已实现；VIDEO 与 GRAPHIC_TEXT 计划，未发布 |
+| Easel 宿主门禁（`src/contentops/easel/`、`scripts/easel_host.py`） | 离线已实现；本机 `HOST_BLOCKED`（缺 FastAPI/uvicorn），写操作拒绝 |
+| 图文人工包（`src/contentops/graphic/`、`scripts/graphic_package.py`） | 离线已实现；停在 `AWAITING_MANUAL_REVIEW`；尚无已交付包 |
+| 内容路由、账号 DNA、工作流门禁、Brief/脚本/设计阶段 | **部分**（S1/S2 已在 `main`；S3–S4 待做） |
 | 小红书 / X / 公众号轨道 | **未合并 / 权利受阻** |
 | MiniMax 语音、图片、H3 视频 | 已实现；已验证子集见下文 |
 | 生产就绪 | 所有轨道均为 **否** |
@@ -33,13 +35,13 @@ translation_status: synced
 | 属性 | 值 |
 |---|---|
 | 默认分支 | ```main``` —— 受保护 |
-| 本分支 | ```main``` —— 唯一的持久分支（2026-11-01 核验） |
+| 本分支 | `feat/106-easel-host-dual-line` —— 基于 PR #101，未合并 |
 | Main 保护 | **已保护** — 必需状态检查 + PR + 禁止 force push + 禁止删除 + 线性历史 |
 | 必需检查 | ```Tests (ubuntu-latest)```、```Tests (windows-latest)```、```Repo policy checks``` |
 | 分支策略 | Issue 作用域短生命周期分支，Squash 合并，合并后自动删除 |
-| 当前分支现实 | 本地存在 24 个分支与 4 个 worktree（2026-11-01 实测）；只有 ```main``` 是持久分支。未合并的工作不属于当前系统 |
-| ```main``` 实际包含什么 | M5 media-use 集成、权利门禁、Skill 路由与 Skill 执行授权（PR #89），以及 X 发帖门禁与 growth→编辑门禁（PR #87、#88）。```main``` 已不再停在第四阶段（PR #72），```fix/57-m5-media-fixtures``` 已合并并删除 |
-| 后果 | 文档描述的是 ```main```。草稿 PR #49（内容路由）、#50（X 平台轨道）、#58（公众号溯源）已**因被切片流程取代而关闭**（见 Issue #94）；#62（receipt 基线）与 #90（media-use 合并前 ADR）已**合并**。当前没有开放 PR（2026-11-01 核验） |
+| 当前分支现实 | 只有 ```main``` 是持久分支。本分支、PR #101/#105 等未合并工作不属于当前系统 |
+| ```main``` 实际包含什么 | M5 media-use 集成、权利门禁、Skill 路由与 Skill 执行授权（PR #89），以及 X 发帖门禁与 growth→编辑门禁（PR #87、#88） |
+| 后果 | 文档描述本分支并单独标注 ```main```。PR #101（平台注册表/Bundle）与 #105（R4-A 文案审核）仍开放；本分支复用 #101，不把任何一方当作已批准 |
 
 ## Easel 运行时
 
@@ -58,6 +60,36 @@ translation_status: synced
 | 锁文件 | ```runtime/easel.lock.json``` |
 | 来源记录 | ```runtime/easel-runtime.json``` |
 | 上游稳定版 | v0.3.0（2026-10-12）—— **未采用**：158 个提交，Skill 从 ```skills/openclaw/``` 迁至 ```skills/builtin/```，```assemble.py``` 变更，且上游强制替换过该 tag |
+
+## Easel 宿主（2026-11-02）
+
+Owner 已决定把完整 Easel 系统作为生产底座（ADR-016）。本节只记录实际运行过的内容；
+工作台/Agent 面尚未成为已验证集成。
+
+| 属性 | 值 |
+|---|---|
+| 入口 | `scripts/easel_host.py status` / `serve` |
+| 本机 `status` 结果 | `HOST_BLOCKED` — `HOST_DEPENDENCY_MISSING:fastapi`、`HOST_DEPENDENCY_MISSING:uvicorn` |
+| 报告的固定版本 | v0.2.1 / `3fe2d99` |
+| 监听 | 仅 `127.0.0.1` |
+| 方法 | `GET`、`HEAD`、`OPTIONS` |
+| 写操作 | 在到达上游前拒绝：发布、登录、凭据、设置、环境安装、删除 |
+| 门禁测试 | `python tests/test_easel_host_guard.py` — 9/9 |
+| 宿主权限 | 不拥有批准、发布、Provider 花费或账号 |
+| 未做的事 | 未安装依赖、未读取凭据/profile、未登录账号、未启动宿主进程、未发布 |
+
+## Bundle 与双线 handoff（2026-11-02）
+
+| 属性 | 值 |
+|---|---|
+| 入口 | `scripts/bundle_handoff.py`、`src/contentops/content_kernel/handoff.py` |
+| 形式 | `VIDEO`（`contentops.copy-to-video/v1`）、`GRAPHIC_TEXT`（`contentops.copy-to-graphic/v1`） |
+| 测试 | `tests/test_bundle_two_formats.py` 10/10；`tests/test_graphic_workflow.py` 12/12；`tests/test_m5_bundle_handoff.py` 3/3 |
+| 视频接线 | `project.yaml` 的 `content_bundle` → `stage_bundle` 在 sources 之前写 `receipts/bundle-handoff-video.json` |
+| 图文包 | `scripts/graphic_package.py` 写 `receipts/graphic-package.json` + `graphic-preview.md`，状态 `AWAITING_MANUAL_REVIEW` |
+| 真实双线样例 | `projects/bundle-dual-line/` —— 同一 Bundle 产出 `bundle-dual-line-video` MP4（21.63 s，1080x1920，h264+AAC，QC `WARN`，`PENDING_FOUNDER_REVIEW`）与 `bundle-dual-line-graphic` 人工包（`AWAITING_MANUAL_REVIEW`） |
+| 样例 Provider/网络 | 无；Windows SAPI 旁白 + 固定 Easel 合成；图文包未渲染、未建草稿 |
+| 发布 | 未实现；每个 handoff/包都携带 `publish_authorized: false` |
 
 ## 流水线
 
@@ -154,6 +186,8 @@ translation_status: synced
    [CONVERGENCE-REQUIREMENTS-2026-11-01.md](CONVERGENCE-REQUIREMENTS-2026-11-01.md)。
 6. 上游固定版本 — Easel v0.3.0 与 HyperFrames 0.8.225 已发布但未采用；决策见收敛需求文档。
 7. ~~Main 分支未保护~~ — **已解决**（G0.6）。
+8. Easel 宿主 — 本机因缺少 FastAPI/uvicorn 处于 `HOST_BLOCKED`。安装依赖、使用真实账号
+   或启动宿主，都需要在宿主安全审查后另行批准（ADR-016）。宿主运行不等于发布授权。
 
 ## M3 图片生成（Issue #20）—— 已验证 2026-10-04
 

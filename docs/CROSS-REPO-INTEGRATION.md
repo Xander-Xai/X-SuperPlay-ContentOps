@@ -55,6 +55,26 @@ Without either, the loader returns `BUNDLE_NEEDS_PYYAML` — an explicit refusal
 not a silent partial read. A YAML Bundle is not directly consumable on a clean
 checkout.
 
+### Two production handoffs
+
+A valid Bundle can enter either line. The handoff is a hash-bound plan, not a
+rendered work:
+
+```bash
+python scripts/bundle_handoff.py path/to/content-bundle.json \
+  --account explorer --format VIDEO --project-slug my-video \
+  --source-map SRC-20261102-001=SRC-RUNTIME-001
+
+python scripts/bundle_handoff.py path/to/content-bundle.json \
+  --account explorer --format GRAPHIC_TEXT --project-slug my-article \
+  --platform wechat_article
+```
+
+The Strategy `source_id` and the ContentOps `SourceArtifact.id` are **not assumed
+equal**. `--source-map` records the human-verified mapping explicitly; a missing
+mapping blocks the handoff. Both forms carry the same `bundle_sha256`, keep
+`publish_authorized: false`, and keep separate review state.
+
 ### What a passing check does not prove
 
 `content_bundle.py check` is structural. `PASS` means the record is well formed

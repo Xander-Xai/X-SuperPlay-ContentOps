@@ -68,13 +68,21 @@ Content Bundle is **not** publication. Adding either reopens none of the above
 
 ## 7. Current Baseline
 
-Verified 2026-11-01 on `main` (PR #89):
+Verified 2026-11-02 on `feat/106-easel-host-dual-line` (stacked on PR #101):
 
 - Easel v0.2.1 pinned, content-verified (982/982 blobs). Upstream v0.3.0 is
   available but not adopted (skill paths moved; see UPSTREAM-EASEL).
+- The Owner adopted the full Easel system as the production base (ADR-016).
+  The host is served only through a loopback, read-only guard; on this machine
+  it reports `HOST_BLOCKED` because FastAPI/uvicorn are absent. No host process,
+  account or credential was used.
 - Two implemented paths: `run_v1.py` (storyboard-driven, edge-tts) and
   `m5_production.py` (evidence-first, local narration). Both compose through the
-  pinned Easel adapter.
+  pinned Easel adapter. `project.yaml` may bind a Content Bundle; the video run
+  writes `receipts/bundle-handoff-video.json` before sources.
+- Graphic line: `contentops.copy-to-graphic/v1` and
+  `scripts/graphic_package.py` produce a manual package that stops at
+  `AWAITING_MANUAL_REVIEW`. It is not an HTML renderer or a platform publisher.
 - Media layer implemented: MiniMax speech/image/H3, media convergence, media-use
   adapter, billing/quota gates, rights gate.
 - Every suite under `tests/test_*.py` is wired into CI. The count is not asserted

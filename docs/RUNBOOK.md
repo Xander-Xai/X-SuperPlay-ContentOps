@@ -187,6 +187,64 @@ Projects without media_use.enabled=true behave as before.
 Integration PR: stacked on M5 PR #68; actual external execution also requires
 PR #64. Hosted tests use synthetic fixtures and make no provider calls.
 
+## 5.1 Bundle handoff and dual lines
+
+Optional: bind a project to a Strategy Content Bundle in `project.yaml`:
+
+```yaml
+content_bundle:
+  path: bundle.json          # relative to the project, or to the repo root
+  account: explorer          # explorer | thinktank
+  platform: x                # optional delivery placeholder
+  source_map:
+    SRC-20261102-001: SRC-RUNTIME-001
+```
+
+The M5 run writes `receipts/bundle-handoff-video.json` before the sources stage.
+A missing/mismatched source map blocks the run; a `PLANNED` platform records a
+delivery blocker but does not block video production.
+
+Standalone handoff (no production, no publication):
+
+```powershell
+python scripts\bundle_handoff.py projects\my-video\bundle.json `
+  --account explorer --format VIDEO --project-slug my-video `
+  --source-map SRC-20261102-001=SRC-RUNTIME-001 --out-project projects\my-video
+
+python scripts\bundle_handoff.py projects\my-video\bundle.json `
+  --account explorer --format GRAPHIC_TEXT --project-slug my-article `
+  --platform wechat_article --out-project projects\my-article
+```
+
+## 5.2 Graphic manual package
+
+The graphic line produces a reviewable package, not a platform draft:
+
+```powershell
+python scripts\graphic_package.py `
+  --project projects\my-article `
+  --handoff projects\my-article\receipts\bundle-handoff-graphic_text.json `
+  --input projects\my-article\graphic-input.json
+```
+
+It writes `receipts/graphic-package.json` and `receipts/graphic-preview.md`
+with `status: AWAITING_MANUAL_REVIEW` and `publish_authorized: false`. Every
+image needs ALT text and a reviewed rights block; a missing right, a path
+escape or an undecodable image blocks the package.
+
+## 5.3 Guarded Easel host
+
+Status only; it does not start a server or install dependencies:
+
+```powershell
+python scripts\easel_host.py status
+```
+
+`HOST_BLOCKED` is the expected result until FastAPI/uvicorn are present and a
+host-security review is recorded. `serve` binds `127.0.0.1` and denies every
+mutation; do **not** run upstream `easel web` or `web/app.py` directly. See
+ADR-016.
+
 ## 6. Run QC
 
 ```powershell

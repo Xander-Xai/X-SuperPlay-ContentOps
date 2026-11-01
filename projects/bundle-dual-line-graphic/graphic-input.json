@@ -1,0 +1,21 @@
+{
+  "title": "接管 Easel 宿主，先接管它的边界",
+  "platform_id": "wechat_article",
+  "draft": "draft.md",
+  "images": [
+    {
+      "asset_id": "version_evidence",
+      "path": "repo://projects/easel-review/sources/screenshots/12-easel-version-evidence.png",
+      "alt": "Easel v0.2.1 版本证据截图",
+      "rights": {
+        "license_id": "OWNED-BY-OPERATOR",
+        "review_evidence": "assets/version-evidence.rights.json",
+        "source_url": "repo://X-SuperPlay-ContentOps#easel-version-evidence",
+        "reviewed_by": "Xander",
+        "reviewed_at": "2026-11-02",
+        "attribution": "",
+        "synthetic": false
+      }
+    }
+  ]
+}

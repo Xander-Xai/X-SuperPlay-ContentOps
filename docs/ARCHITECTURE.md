@@ -3,7 +3,8 @@
 [English](ARCHITECTURE.md) | [简体中文](ARCHITECTURE.zh-CN.md)
 
 > What the system is. Where the boundaries are. How components call each other.
-> Describes `main` (2026-11-01, after PR #89 merged), not a future branch.
+> Describes the target architecture after the 2026-11-02 host decision, and
+> marks what is verified today. A target section is not a running capability.
 
 ## System Boundaries
 
@@ -28,19 +29,46 @@ X-SuperPlay-ContentOps  ← THIS REPO
     └── Receipts (full provenance)         (implemented)
     │
     ▼
-Easel v0.2.1 (pinned upstream, read-only)
-= Content Workflow / Skill Engine
-    ├── EXECUTED HERE (two files only)
+Easel v0.2.1 (pinned upstream, guarded)
+= Content Production Host (target base, ADR-016)
+    ├── EXECUTED HERE TODAY
     │   ├── auto-short-video/scripts/assemble.py   ← composition
     │   └── tts.py                                 ← V1 narration only; M5 uses Windows SAPI
-    └── NOT EXECUTED HERE
-        └── 114 upstream skills, the OpenClaw agent, the web workbench,
-            profiles/, outputs/ and browser publishing
+    └── TARGET HOST SURFACE, NOT YET RUNNING
+        └── agent, web workbench, 114 skills, profiles/, outputs/ and publishing
+    │
+    ▼
+src/contentops/easel/
+= Deny-by-default host boundary
+    ├── loopback-only bind (127.0.0.1)
+    ├── read-only allowlist
+    └── HOST_BLOCKED until runtime and dependencies are reviewed
     │
     ▼
 FFmpeg / deterministic tools
 = Rendering / Media Utilities
 ```
+
+## Host Adoption (ADR-016)
+
+The Owner decided on 2026-11-02 to adopt the full Easel system as the
+production base, superseding ADR-015 D1. The verified runtime today is still
+the pinned v0.2.1 checkout; the workbench/agent surface is **target**, not a
+running integration.
+
+| Fact | State |
+|---|---|
+| Pinned upstream | v0.2.1, commit `3fe2d99`, read-only |
+| Host entry point | `scripts/easel_host.py` only |
+| Bind | `127.0.0.1`; upstream `0.0.0.0` is not used |
+| Methods | `GET`, `HEAD`, `OPTIONS` only |
+| Mutations | denied before upstream (publish, login, credentials, settings, env install, delete) |
+| Current host status | `HOST_BLOCKED` on this machine until FastAPI/uvicorn are present and a host-security review is recorded |
+| What the host does not carry | approval, publication authority, provider spend, account access |
+
+The guard is a policy boundary, not an OS sandbox. A host that is merely
+running is not evidence that a content package is approved. See
+[ADR-016](adr/ADR-016-easel-host-adoption.md).
 
 ## Production Lines
 
@@ -87,12 +115,19 @@ Rules:
    storyboard → assets → compose → quality`) are video-specific on purpose and are not
    renamed to look general.
 3. **The graphic line does not reuse those stages.** Audio and storyboard have no meaning
-   for an article. It defines its own shorter stage list and reuses the gate's existing
-   checks — ordering, fingerprint invalidation, human approval — rather than forking them.
+   for an article. It runs `contentops.copy-to-graphic/v1`
+   (`brief → outline → draft → images → layout → quality → delivery`) and reuses the
+   gate's ordering, fingerprint invalidation and human approval rather than forking them.
+   Its current product is a **manual package** (`scripts/graphic_package.py`) that stops
+   at `AWAITING_MANUAL_REVIEW`; it is not an HTML renderer or a WeChat publisher.
 4. **Platform adapters are delivery, not production.** A platform never gets its own
    production engine. See §What ContentOps Does NOT Own.
 5. **Shared engine extraction is earned, not assumed.** A common abstraction over the two
    lines is justified only when real duplicated code exists in both.
+6. **One Bundle, two handoffs, no shared approval.** `src/contentops/content_kernel/handoff.py`
+   validates a Strategy Bundle and writes a form-specific handoff. Both handoffs carry the
+   same `bundle_sha256` and source mapping; neither carries `publish_authorized: true`, and
+   the graphic package never inherits the video's review.
 
 ## Branch Layers
 
@@ -104,6 +139,8 @@ is on `main`.
 | M5 evidence chain, media, QC, skill router/authorization | `main` (PR #89) | implemented |
 | X post gate, growth→editorial gate | `main` (PRs #87, #88) | implemented |
 | Account-aware content router, workflow gates, brief/script/design stages | `main` (S1 #93, S2 #95) + Issue #94 for S3–S4 | **partial** — the account/brief front-end and stage gate are on `main`; remaining stages are sliced |
+| Platform registry + Content Bundle intake | PR #101 / Issue #100 | **pending review**; reused, not duplicated |
+| Easel host guard, Bundle handoff, graphic package | Issue #106 (this branch) | **implemented offline**; host `HOST_BLOCKED` until dependencies and security review |
 | XHS eight-step workflow | `feat/xhs-fa-migration` | **unmerged** |
 | X platform track (migrated records, prompt references, table gate) | Issue #47 (PR #50 closed as superseded) | **unmerged** |
 | GZH ten-stage vendored workflow | local `vendor/` + Issue #56 | **unmerged / rights-blocked** |
@@ -119,6 +156,9 @@ runnable here.
 scripts/
 ├── run_v1.py             ← V1 orchestrator (easel + fallback engines)
 ├── m5_production.py      ← Evidence-first chain (sources → … → review)
+├── bundle_handoff.py     ← Bundle → VIDEO / GRAPHIC_TEXT plan
+├── graphic_package.py    ← Manual graphic package (stops at review)
+├── easel_host.py         ← Guarded host status / loopback serve
 ├── assemble_easel.py     ← Easel orchestration adapter (Windows subtitle workaround)
 ├── qc_video.py           ← Automated technical + evidence QC
 ├── resolve_easel.py      ← Single runtime resolver
@@ -134,6 +174,11 @@ scripts/
 
 src/contentops/
 ├── evidence/             ← SourceArtifact, ClaimLedger
+├── content_kernel/       ← Bundle validation + form-specific handoff
+├── easel/                ← Host guard + loopback lifecycle (no upstream copy)
+├── graphic/              ← Manual graphic package + rights-bound images
+├── platforms/            ← The one machine-readable platform registry
+├── workflow/             ← Video + graphic ordered stages and human gate
 ├── media/                ← contracts, billing, providers, manifest, validation,
 │                           transform, QC canonicalization, rights gate, media-use
 ├── skills/               ← authorization, execution gate, grant source
@@ -156,9 +201,11 @@ projects/<slug>/
 └── receipts/             ← build, QC, runtime, human-review receipts
 ```
 
-The `src/contentops/{workflow,routing,platforms,quality,script,hotspots,optimization}`
-directories exist only as empty `__pycache__` remnants on this branch. Their code
-is on `feat/content-router`; do not treat the directories as implemented modules.
+`workflow/` contains the merged S1/S2 contract and gate, plus this branch's
+graphic contract. `platforms/` and `content_kernel/` exist through PR #101 and
+are reused here, not duplicated. `routing/`, `quality/`, `script/`,
+`hotspots/` and `optimization/` remain incomplete slices from Issue #94; a
+directory existing is not proof that its stages are wired.
 
 ## Pipeline Flow
 

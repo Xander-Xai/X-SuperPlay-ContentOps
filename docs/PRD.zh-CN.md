@@ -64,12 +64,18 @@ Founder（Xander-Xai）— 需要从真实工作产出高质量视频，最少�
 
 ## 7. 当前基线
 
-2026-11-01 在 ```main``` 上验证（PR #89）：
+2026-11-02 在 `feat/106-easel-host-dual-line` 上验证（基于 PR #101）：
 
 - Easel v0.2.1 固定并内容校验（982/982 blobs）。上游 v0.3.0 可用但未采用
   （Skill 路径迁移；见 UPSTREAM-EASEL）。
+- Owner 已把完整 Easel 系统定为生产底座（ADR-016）。宿主只能通过回环、只读门禁启动；
+  本机因缺少 FastAPI/uvicorn 报告 `HOST_BLOCKED`。未启动宿主进程，未使用账号或凭据。
 - 两条已实现路径：`run_v1.py`（分镜驱动、edge-tts）与 `m5_production.py`
   （证据优先、本地旁白）。两者都通过固定版本 Easel 适配器合成。
+  `project.yaml` 可绑定 Content Bundle；视频运行会在 sources 之前写
+  `receipts/bundle-handoff-video.json`。
+- 图文线：`contentops.copy-to-graphic/v1` 与 `scripts/graphic_package.py`
+  产出停在 `AWAITING_MANUAL_REVIEW` 的人工包；它不是 HTML 渲染器或平台发布器。
 - 媒体层已实现：MiniMax 语音/图片/H3、媒体收敛、media-use 适配器、计费/配额门禁、
   权利门禁。
 - `tests/test_*.py` 下的每个套件都接入了 CI。此处不声明数量；

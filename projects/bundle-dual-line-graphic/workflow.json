@@ -1,0 +1,79 @@
+{
+  "schema": "contentops.workflow/v1",
+  "contract": "contentops.copy-to-graphic/v1",
+  "slug": "bundle-dual-line-graphic",
+  "account": "explorer",
+  "created_at": "2026-11-01T18:23:33Z",
+  "stages": [
+    {
+      "id": "brief",
+      "status": "pending",
+      "artifact": "00_brief/brief.json",
+      "approval": null,
+      "check": null,
+      "stale": false,
+      "stale_reason": "",
+      "notes": ""
+    },
+    {
+      "id": "outline",
+      "status": "pending",
+      "artifact": "01_outline/outline.json",
+      "approval": null,
+      "check": null,
+      "stale": false,
+      "stale_reason": "",
+      "notes": ""
+    },
+    {
+      "id": "draft",
+      "status": "pending",
+      "artifact": "02_draft/draft.md",
+      "approval": null,
+      "check": null,
+      "stale": false,
+      "stale_reason": "",
+      "notes": ""
+    },
+    {
+      "id": "images",
+      "status": "pending",
+      "artifact": "03_images/image-ledger.json",
+      "approval": null,
+      "check": null,
+      "stale": false,
+      "stale_reason": "",
+      "notes": ""
+    },
+    {
+      "id": "layout",
+      "status": "pending",
+      "artifact": "04_layout/layout.json",
+      "approval": null,
+      "check": null,
+      "stale": false,
+      "stale_reason": "",
+      "notes": ""
+    },
+    {
+      "id": "quality",
+      "status": "pending",
+      "artifact": "05_quality/graphic-qc.json",
+      "approval": null,
+      "check": null,
+      "stale": false,
+      "stale_reason": "",
+      "notes": ""
+    },
+    {
+      "id": "delivery",
+      "status": "pending",
+      "artifact": "06_delivery/delivery-manifest.json",
+      "approval": null,
+      "check": null,
+      "stale": false,
+      "stale_reason": "",
+      "notes": ""
+    }
+  ]
+}

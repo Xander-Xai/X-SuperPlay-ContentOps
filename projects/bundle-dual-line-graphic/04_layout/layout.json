@@ -1,0 +1,7 @@
+{
+  "schema": "contentops.graphic-layout/v1",
+  "preview": "receipts/graphic-preview.md",
+  "image_order": [
+    "version_evidence"
+  ]
+}

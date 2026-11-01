@@ -66,6 +66,12 @@ M4/M4.5 套件曾因此被合并且未接线。
 | M5 证据 | `tests/test_m5_evidence.py` | 18 | 是 |
 | M5 media-use 工作流 | `tests/test_m5_media_use_workflow.py` | 列表驱动 | 是 |
 | M5 媒体可追溯性 | `tests/test_m5_media_traceability.py` | 列表驱动 | 是 |
+| 平台注册表 | `tests/test_platform_registry.py` | 18 | 是 |
+| Content Bundle 契约 | `tests/test_content_bundle_contract.py` | 13 | 是 |
+| Easel 宿主门禁 | `tests/test_easel_host_guard.py` | 9 | 是 |
+| Bundle 双形式 handoff | `tests/test_bundle_two_formats.py` | 10 | 是 |
+| 图文工作流 | `tests/test_graphic_workflow.py` | 12 | 是 |
+| M5 Bundle handoff | `tests/test_m5_bundle_handoff.py` | 3 | 是 |
 | Skill doctor | `tests/test_skill_doctor.py` | 列表驱动 | 是 |
 | Skill 引用完整性 | `tests/test_skill_references.py` | 6 | 是 |
 | Skill 路由能力 | `tests/test_skill_router_capabilities.py` | 列表驱动 | 是 |

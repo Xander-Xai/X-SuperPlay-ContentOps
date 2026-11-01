@@ -1,0 +1,54 @@
+{
+  "schema": "contentops.m5-run/v1",
+  "project": "projects/bundle-dual-line-video",
+  "stages": {
+    "bundle": {
+      "state": "READY_FOR_PRODUCTION",
+      "bundle_id": "CB-20261102-001",
+      "bundle_sha256": "4836a1bfa3b1a3faaaec22486d9ae6804ccb7a56e498c0d0b86c0dffd60920c0",
+      "handoff": "receipts/bundle-handoff-video.json",
+      "blockers": []
+    },
+    "sources": {
+      "count": 1
+    },
+    "media_use": {
+      "state": "DISABLED",
+      "count": 0,
+      "bgm": false,
+      "sfx": 0
+    },
+    "assets": {
+      "count": 4
+    },
+    "claims": {
+      "count": 1
+    },
+    "script": {
+      "lines": 4
+    },
+    "narration": {
+      "duration_s": 22.443,
+      "engine": "windows_sapi",
+      "provider": "sapi"
+    },
+    "subtitles": {
+      "cues": 4
+    },
+    "storyboard": {
+      "shots": 4,
+      "bgm": false,
+      "sfx": 0
+    },
+    "compose": {
+      "state": "OK",
+      "video": "project://final/bundle-dual-line-video.mp4"
+    },
+    "qc": {
+      "overall": "WARN",
+      "audio": true
+    }
+  },
+  "production_ready": false,
+  "human_review": "PENDING_FOUNDER_REVIEW"
+}

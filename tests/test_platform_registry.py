@@ -186,6 +186,26 @@ def test_registry_names_no_private_account_identity():
         "only the account configuration tracked in this public repository may be named")
 
 
+def test_easel_coverage_is_recorded_as_an_upstream_declaration():
+    platforms = load_platforms(ROOT)
+    declared = {entry.strategy_platform for entry in platforms.values()
+                if entry.easel_status == "UPSTREAM_DECLARED"}
+    assert declared == {
+        "douyin", "xiaohongshu", "bilibili", "wechat_channels",
+        "wechat_official_account", "zhihu",
+    }
+    absent = {entry.strategy_platform for entry in platforms.values()
+              if entry.easel_status == "ABSENT"}
+    assert absent == {"csdn", "youtube", "x"}
+
+
+def test_no_platform_claims_a_verified_host_capability_yet():
+    for entry in load_platforms(ROOT).values():
+        assert entry.easel_verified_here is False, entry.platform_id
+        for path in entry.easel_evidence:
+            assert path.startswith("skills/openclaw/"), (entry.platform_id, path)
+
+
 def main() -> int:
     tests = (
         test_registries_agree,
@@ -204,6 +224,8 @@ def main() -> int:
         test_unknown_account_is_refused,
         test_registry_carries_no_private_repository_fields,
         test_registry_names_no_private_account_identity,
+        test_easel_coverage_is_recorded_as_an_upstream_declaration,
+        test_no_platform_claims_a_verified_host_capability_yet,
     )
     failures = []
     for fn in tests:

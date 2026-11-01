@@ -23,18 +23,18 @@ publication authority.
 
 ## Nine platforms
 
-| Platform | Local entry | Pipeline | Local status | Evidence here | Blocker |
+| Platform | Local entry | Pipeline | Local status | Easel capability | Blocker |
 |---|---|---|---|---|---|
-| 抖音 douyin | `douyin` | `VIDEO` | `PLANNED` | — | `PLATFORM_CODE_ABSENT`, `ACCOUNT_NOT_PUBLIC` |
-| 小红书 xiaohongshu (video) | `xiaohongshu_video` | `VIDEO` | `PLANNED` | — | `PLATFORM_CODE_ABSENT`, `ACCOUNT_NOT_PUBLIC`, `RIGHTS_UNRESOLVED` |
-| 小红书 xiaohongshu (image) | `xiaohongshu_image` | `XHS_EDITORIAL` | `PLANNED` | — | `PLATFORM_CODE_ABSENT`, `ACCOUNT_NOT_PUBLIC`, `RIGHTS_UNRESOLVED` |
-| B站 bilibili | `bilibili` | `VIDEO` | `PLANNED` | — | `PLATFORM_CODE_ABSENT`, `ACCOUNT_NOT_PUBLIC` |
-| 视频号 wechat_channels | `shipinhao` | `VIDEO` | `PLANNED` | — | `PLATFORM_CODE_ABSENT`, `ACCOUNT_NOT_PUBLIC` |
-| 公众号 wechat_official_account | `wechat_article` | `GZH_EDITORIAL` | `PLANNED` | — | `PLATFORM_CODE_ABSENT`, `ACCOUNT_NOT_PUBLIC`, `RIGHTS_UNRESOLVED` |
-| 知乎 zhihu | `zhihu` | `ARTICLE_EDITORIAL` | `PLANNED` | — | `PLATFORM_CODE_ABSENT`, `ACCOUNT_NOT_PUBLIC` |
-| CSDN | `csdn` | `ARTICLE_EDITORIAL` | `PLANNED` | — | `PLATFORM_CODE_ABSENT`, `ACCOUNT_NOT_PUBLIC`, `EASEL_CAPABILITY_ABSENT` |
-| YouTube | `youtube` | `VIDEO` | `PLANNED` | — | `PLATFORM_CODE_ABSENT`, `ACCOUNT_NOT_PUBLIC`, `EASEL_CAPABILITY_ABSENT` |
-| X | `x` | `X_EDITORIAL` | `INTEGRATED` | `src/contentops/publish/publisher.py`, `tests/test_x_post.py` | — |
+| 抖音 douyin | `douyin` | `VIDEO` | `PLANNED` | `UPSTREAM_DECLARED` | `PLATFORM_CODE_ABSENT`, `ACCOUNT_NOT_PUBLIC` |
+| 小红书 xiaohongshu (video) | `xiaohongshu_video` | `VIDEO` | `PLANNED` | `UPSTREAM_DECLARED` | `PLATFORM_CODE_ABSENT`, `ACCOUNT_NOT_PUBLIC`, `RIGHTS_UNRESOLVED` |
+| 小红书 xiaohongshu (image) | `xiaohongshu_image` | `XHS_EDITORIAL` | `PLANNED` | `UPSTREAM_DECLARED` | `PLATFORM_CODE_ABSENT`, `ACCOUNT_NOT_PUBLIC`, `RIGHTS_UNRESOLVED` |
+| B站 bilibili | `bilibili` | `VIDEO` | `PLANNED` | `UPSTREAM_DECLARED` | `PLATFORM_CODE_ABSENT`, `ACCOUNT_NOT_PUBLIC` |
+| 视频号 wechat_channels | `shipinhao` | `VIDEO` | `PLANNED` | `UPSTREAM_DECLARED` | `PLATFORM_CODE_ABSENT`, `ACCOUNT_NOT_PUBLIC` |
+| 公众号 wechat_official_account | `wechat_article` | `GZH_EDITORIAL` | `PLANNED` | `UPSTREAM_DECLARED` | `PLATFORM_CODE_ABSENT`, `ACCOUNT_NOT_PUBLIC`, `RIGHTS_UNRESOLVED` |
+| 知乎 zhihu | `zhihu` | `ARTICLE_EDITORIAL` | `PLANNED` | `UPSTREAM_DECLARED` | `PLATFORM_CODE_ABSENT`, `ACCOUNT_NOT_PUBLIC` |
+| CSDN | `csdn` | `ARTICLE_EDITORIAL` | `PLANNED` | `ABSENT` | `PLATFORM_CODE_ABSENT`, `ACCOUNT_NOT_PUBLIC`, `EASEL_CAPABILITY_ABSENT` |
+| YouTube | `youtube` | `VIDEO` | `PLANNED` | `ABSENT` | `PLATFORM_CODE_ABSENT`, `ACCOUNT_NOT_PUBLIC`, `EASEL_CAPABILITY_ABSENT` |
+| X | `x` | `X_EDITORIAL` | `INTEGRATED` | `ABSENT` | — |
 
 `x` is the only non-`PLANNED` row, and it is deliberately narrow: the X post
 gate packages a post and stops at `AWAITING_MANUAL_PUBLISH`. There is no branch
@@ -60,8 +60,9 @@ would force a false one. GitHub's role is recorded here instead.
 
 Easel v0.2.1 (pinned, `3fe2d99`) names login, adaptation and publishing support
 for seven platforms. That is an upstream statement, not a verified capability
-here — this repository executes two upstream files, neither of which is a
-platform adapter.
+here. Each registry row now records the binding as `easel_capability`:
+`UPSTREAM_DECLARED` with the upstream skill path, or `ABSENT`. No row is
+`verified_here: true`; the host itself is guarded and currently `HOST_BLOCKED`.
 
 | Coverage | Platforms |
 |---|---|
@@ -71,7 +72,9 @@ platform adapter.
 
 Six of nine platforms are named upstream. That is a fact about Easel, never a
 limit on the nine-platform scope: CSDN, YouTube and X are native ContentOps
-work, not gaps to be explained away.
+work, not gaps to be explained away. ADR-016 makes Easel the production base,
+but an upstream declaration still does not raise a local platform above
+`PLANNED`.
 
 ## Regenerate and check
 

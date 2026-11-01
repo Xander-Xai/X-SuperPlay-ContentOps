@@ -292,6 +292,22 @@ jobs:
       - name: Run content bundle contract tests
         run: python tests/test_content_bundle_contract.py
 
+      # The pinned Easel host is wrapped by a deny-by-default guard. These suites
+      # prove the guard refuses publish/credentials before upstream, and that one
+      # Bundle can produce independent video and graphic handoffs without
+      # transferring approval between them.
+      - name: Run Easel host guard tests
+        run: python tests/test_easel_host_guard.py
+
+      - name: Run Bundle two-format handoff tests
+        run: python tests/test_bundle_two_formats.py
+
+      - name: Run graphic workflow tests
+        run: python tests/test_graphic_workflow.py
+
+      - name: Run M5 Bundle handoff tests
+        run: python tests/test_m5_bundle_handoff.py
+
       - name: Run X organic growth offline contract tests
         run: python tests/test_x_organic_growth.py
 

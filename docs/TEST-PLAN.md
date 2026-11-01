@@ -63,6 +63,12 @@ checks differently.
 | M5 evidence | `tests/test_m5_evidence.py` | 18 | yes |
 | M5 media-use workflow | `tests/test_m5_media_use_workflow.py` | list-driven | yes |
 | M5 media traceability | `tests/test_m5_media_traceability.py` | list-driven | yes |
+| Platform registry | `tests/test_platform_registry.py` | 18 | yes |
+| Content Bundle contract | `tests/test_content_bundle_contract.py` | 13 | yes |
+| Easel host guard | `tests/test_easel_host_guard.py` | 9 | yes |
+| Bundle two-format handoff | `tests/test_bundle_two_formats.py` | 10 | yes |
+| Graphic workflow | `tests/test_graphic_workflow.py` | 12 | yes |
+| M5 Bundle handoff | `tests/test_m5_bundle_handoff.py` | 3 | yes |
 | Skill doctor | `tests/test_skill_doctor.py` | list-driven | yes |
 | Skill reference integrity | `tests/test_skill_references.py` | 6 | yes |
 | Skill router capabilities | `tests/test_skill_router_capabilities.py` | list-driven | yes |

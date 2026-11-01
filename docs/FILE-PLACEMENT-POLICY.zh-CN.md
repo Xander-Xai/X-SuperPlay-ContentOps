@@ -38,6 +38,9 @@ translation_status: synced
 CLI 工具、运维脚本、验证、构建编排。
 
 新增校验脚本（例如 ```check_skill_references.py```）属于此处。
+宿主与双线入口也属于此处：`easel_host.py`（受门禁保护的宿主状态/回环启动）、
+`bundle_handoff.py`（Bundle → VIDEO / GRAPHIC_TEXT 计划）、
+`graphic_package.py`（人工图文包，停在审核）。
 
 ## config/
 
@@ -57,9 +60,11 @@ config/
 ## src/
 
 核心业务逻辑。provider 代码、契约与门禁放在这里，不放 `scripts/`。
-与平台工作直接相关的两个包：```src/contentops/platforms/```（注册表 loader）
-与 ```src/contentops/content_kernel/```（Content Bundle 消费契约）。
-两者都不渲染、不发布、不花钱。
+与平台工作直接相关的四个包：```src/contentops/platforms/```（注册表 loader）、
+```src/contentops/content_kernel/```（Bundle 校验与形式 handoff）、
+```src/contentops/easel/```（宿主门禁与回环生命周期，不复制上游）、
+```src/contentops/graphic/```（人工图文包与权利绑定图片校验）。
+它们都不渲染、不发布、不花钱。
 
 ## runtime/
 

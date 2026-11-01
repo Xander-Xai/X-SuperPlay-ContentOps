@@ -4,21 +4,23 @@
 
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
-> Last verified: 2026-11-01 on `feat/100-easel-first-platform-registry`
-> (branched from `main` at PR #97). Facts below describe this branch; unmerged
-> layers are labelled as such.
+> Last verified: 2026-11-02 on `feat/106-easel-host-dual-line`
+> (stacked on PR #101 and merged with `main`). Facts below describe this branch;
+> unmerged layers are labelled as such.
 > Sections below the "Layer status" table are historical milestone records;
 > they describe how a capability was proven, not what is current.
 
-## Layer status (2026-11-01)
+## Layer status (2026-11-02)
 
 | Layer | Status |
 |---|---|
-| M5 evidence chain, media contracts, QC, media-use adapter, skill router/authorization | implemented on this branch |
-| Platform registry (`config/registry/platforms.json`, `src/contentops/platforms/`) | implemented on this branch; 10 entries, one `INTEGRATED` (`x`), nine `PLANNED` |
-| Content Bundle consumption contract (`src/contentops/content_kernel/`) | implemented on this branch; validation only |
-| Content router, account DNA, workflow gates, brief/script/design stages | **unmerged** (`feat/content-router`, PR #49) |
-| XHS / X / GZH tracks | **unmerged / rights-blocked** |
+| M5 evidence chain, media contracts, QC, media-use adapter, skill router/authorization | implemented |
+| Platform registry (`config/registry/platforms.json`, `src/contentops/platforms/`) | implemented on PR #101; 10 local entries for 9 Strategy platforms, one `INTEGRATED` (`x`), nine `PLANNED` |
+| Content Bundle consumption + two-format handoff (`src/contentops/content_kernel/`) | implemented offline; VIDEO and GRAPHIC_TEXT plans, no publication |
+| Easel host guard (`src/contentops/easel/`, `scripts/easel_host.py`) | implemented offline; `HOST_BLOCKED` on this machine (FastAPI/uvicorn absent), mutations denied |
+| Graphic manual package (`src/contentops/graphic/`, `scripts/graphic_package.py`) | implemented offline; stops at `AWAITING_MANUAL_REVIEW`; no delivered package yet |
+| Content router, account DNA, brief/script/design stages | **partial** (S1/S2 on `main`; S3–S4 pending) |
+| XHS / X / GZH platform tracks | **unmerged / rights-blocked** |
 | MiniMax speech, image, H3 video | implemented; verified subsets recorded below |
 | Production ready | **false** for every track |
 | Publication count | **0** — no delivery package has a real platform URL |
@@ -28,13 +30,13 @@
 | Property | Value |
 |---|---|
 | Default branch | `main` — protected |
-| This branch | `main` — the only persistent branch (verified 2026-11-01) |
+| This branch | `feat/106-easel-host-dual-line` — stacked on PR #101, not merged |
 | Main protection | **PROTECTED** — required status checks + PR + no force push + no deletion + linear history |
 | Required checks | `Tests (ubuntu-latest)`, `Tests (windows-latest)`, `Repo policy checks` |
 | Branch strategy | Issue-scoped short-lived branches, squash merge, auto-delete on merge |
-| Current branch reality | 24 local branches and 4 worktrees exist (measured 2026-11-01); only `main` is persistent. Unmerged work is not part of the system |
-| What `main` actually contains | The M5 media-use integration, rights gate, skill router and skill-execution authorization (PR #89), plus the X post gate and growth→editorial gate (PRs #87, #88). `main` no longer stops at phase-4 (PR #72), and `fix/57-m5-media-fixtures` was merged and deleted |
-| Consequence | Docs describe `main`. Draft PRs #49 (content router), #50 (X platform track) and #58 (GZH provenance) are **closed as superseded** by the slice process in Issue #94; #62 (receipt baseline) and #90 (media-use pre-merge ADR) are **merged**. No PR is open (verified 2026-11-01) |
+| Current branch reality | Only `main` is persistent. Unmerged work, including this branch and PR #101/#105, is not part of the system |
+| What `main` actually contains | The M5 media-use integration, rights gate, skill router and skill-execution authorization (PR #89), plus the X post gate and growth→editorial gate (PRs #87, #88) |
+| Consequence | Docs describe this branch and label `main` separately. PR #101 (platform registry/Bundle) and #105 (R4-A copy review) are open; this branch reuses #101 and does not treat either as approved |
 
 ## Easel Runtime
 
@@ -53,6 +55,37 @@
 | Lock file | `runtime/easel.lock.json` |
 | Provenance | `runtime/easel-runtime.json` |
 | Upstream stable | v0.3.0 (2026-10-12) — **not adopted**: 158 commits, skills moved from `skills/openclaw/` to `skills/builtin/`, `assemble.py` changed, and the tag was force-replaced upstream |
+
+## Easel Host (2026-11-02)
+
+The Owner adopted the full Easel system as the production base (ADR-016). This
+section records only what was actually run; the workbench/agent surface is not
+a verified integration yet.
+
+| Property | Value |
+|---|---|
+| Entry point | `scripts/easel_host.py status` / `serve` |
+| `status` result on this machine | `HOST_BLOCKED` — `HOST_DEPENDENCY_MISSING:fastapi`, `HOST_DEPENDENCY_MISSING:uvicorn` |
+| Pin reported | v0.2.1 / `3fe2d99` |
+| Bind | `127.0.0.1` only |
+| Methods | `GET`, `HEAD`, `OPTIONS` |
+| Mutations | denied before upstream: publish, login, credentials, settings, env install, delete |
+| Guard tests | `python tests/test_easel_host_guard.py` — 9/9 |
+| Host authority | none over approval, publication, provider spend or accounts |
+| What was not done | no dependency install, no credential/profile read, no account login, no host process started, no publication |
+
+## Bundle and Dual-Line Handoff (2026-11-02)
+
+| Property | Value |
+|---|---|
+| Handoff entry | `scripts/bundle_handoff.py`, `src/contentops/content_kernel/handoff.py` |
+| Formats | `VIDEO` (`contentops.copy-to-video/v1`), `GRAPHIC_TEXT` (`contentops.copy-to-graphic/v1`) |
+| Tests | `tests/test_bundle_two_formats.py` 10/10; `tests/test_graphic_workflow.py` 12/12; `tests/test_m5_bundle_handoff.py` 3/3 |
+| Video wiring | `project.yaml` `content_bundle` → `stage_bundle` writes `receipts/bundle-handoff-video.json` before sources |
+| Graphic package | `scripts/graphic_package.py` writes `receipts/graphic-package.json` + `graphic-preview.md`, status `AWAITING_MANUAL_REVIEW` |
+| Real dual-line sample | `projects/bundle-dual-line/` — one Bundle, `bundle-dual-line-video` MP4 (21.63 s, 1080x1920, h264+AAC, QC `WARN`, `PENDING_FOUNDER_REVIEW`) and `bundle-dual-line-graphic` manual package (`AWAITING_MANUAL_REVIEW`) |
+| Sample provider/network | none; Windows SAPI narration + pinned Easel compose; graphic package made no render or draft |
+| Publication | not implemented; every handoff/package carries `publish_authorized: false` |
 
 ## Pipeline
 
@@ -137,6 +170,7 @@ unverified, not failed.
 | `projects/m5-media-use/` | M5 evidence chain with the media-use sample | final MP4, QC WARN, `PENDING_FOUNDER_REVIEW` |
 | `projects/m5-easel-pin/` | First M5 evidence-chain run | QC PASS (19 checks), real-source ratio 1.0 |
 | `projects/m45-technical-integration/` | M4.5 media convergence | QC WARN, zero provider calls |
+| `projects/bundle-dual-line/` | One Content Bundle, two independent outputs | video 21.63 s QC WARN / `PENDING_FOUNDER_REVIEW`; graphic `AWAITING_MANUAL_REVIEW`; 0 publications |
 
 ## Tests
 
@@ -179,6 +213,10 @@ See [TEST-PLAN.md](TEST-PLAN.md) for the full inventory.
    adopted. See the convergence requirements for the decision.
 7. ~~Main branch unprotected~~ — **RESOLVED** (G0.6): main is protected via
    GitHub branch protection.
+8. Easel host — `HOST_BLOCKED` on this machine because FastAPI/uvicorn are absent.
+   Installing them, using a real account or starting a host requires a separate
+   approval after a host-security review (ADR-016). A running host is not a
+   publication authorization.
 
 
 ## M3 Image Generation (Issue #20) — VERIFIED 2026-10-04

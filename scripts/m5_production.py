@@ -35,6 +35,13 @@ for candidate in (ROOT / "src", ROOT / "scripts"):
 from process_utils import hidden_run, python_executable  # noqa: E402
 
 from contentops.evidence import ClaimLedger, build_artifacts  # noqa: E402
+from contentops.content_kernel.handoff import (  # noqa: E402
+    VIDEO,
+    HandoffError,
+    build_handoff,
+    load_bundle_for_handoff,
+    write_handoff,
+)
 from contentops.media.rights_gate import (  # noqa: E402
     RightsError,
     validate_declared_asset,
@@ -114,6 +121,51 @@ def _duration(path: Path) -> float:
 
 
 # --- stages -----------------------------------------------------------------
+
+
+def stage_bundle(project: Path, config: Dict[str, Any]) -> Dict[str, Any]:
+    """Bind this project to a Strategy Content Bundle before any media work.
+
+    Optional: a project without ``content_bundle`` keeps the historical path.
+    When configured, an invalid Bundle or source mapping blocks the run rather
+    than producing media that cannot be traced back to the Bundle.
+    """
+    declared = config.get("content_bundle")
+    if declared is None:
+        return {"state": "NOT_CONFIGURED"}
+    if not isinstance(declared, dict):
+        raise M5Blocked("content_bundle must be a mapping")
+    path = declared.get("path")
+    account = declared.get("account")
+    source_map = declared.get("source_map")
+    if not path or not account or not isinstance(source_map, dict) or not source_map:
+        raise M5Blocked("content_bundle requires path, account and source_map")
+
+    bundle_path = Path(str(path))
+    if not bundle_path.is_absolute():
+        local = (project / bundle_path).resolve()
+        bundle_path = local if local.is_file() else (ROOT / bundle_path).resolve()
+    try:
+        bundle = load_bundle_for_handoff(bundle_path)
+        handoff = build_handoff(
+            bundle, str(account), VIDEO,
+            project_slug=project.name,
+            source_map={str(key): str(value) for key, value in source_map.items()},
+            platform_id=declared.get("platform"),
+            registry_root=ROOT,
+            host_capability=str(declared.get("host_capability") or "UNVERIFIED"),
+        )
+        written = write_handoff(project, handoff)
+    except HandoffError as exc:
+        raise M5Blocked(f"{exc.code}: {exc.detail}") from None
+
+    return {
+        "state": handoff["state"],
+        "bundle_id": handoff["bundle_id"],
+        "bundle_sha256": handoff["bundle_sha256"],
+        "handoff": written.relative_to(project).as_posix(),
+        "blockers": handoff["blockers"],
+    }
 
 
 def stage_sources(project: Path, config: Dict[str, Any]) -> Dict[str, Any]:
@@ -839,6 +891,9 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
     slug = config.get("id") or project.name
     stages: Dict[str, Any] = {}
 
+    bundle = stage_bundle(project, config)
+    if bundle["state"] != "NOT_CONFIGURED":
+        stages["bundle"] = bundle
     sources = stage_sources(project, config)
     stages["sources"] = {"count": sources["count"]}
     media = stage_media_use(project, config, adapter=media_adapter)

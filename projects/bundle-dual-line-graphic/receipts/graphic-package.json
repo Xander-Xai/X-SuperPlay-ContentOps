@@ -1,0 +1,63 @@
+{
+  "schema": "contentops.graphic-package/v1",
+  "bundle_id": "CB-20261102-001",
+  "bundle_sha256": "4836a1bfa3b1a3faaaec22486d9ae6804ccb7a56e498c0d0b86c0dffd60920c0",
+  "account": "explorer",
+  "handoff_sha256": "7c2cf4d762aca730f4b104535e2bace3cb850b505242d6ef80835303283326a4",
+  "title": "接管 Easel 宿主，先接管它的边界",
+  "platform": {
+    "platform_id": "wechat_article",
+    "strategy_platform": "wechat_official_account",
+    "pipeline": "GZH_EDITORIAL",
+    "status": "PLANNED",
+    "delivery": "PLACEHOLDER"
+  },
+  "draft": {
+    "path": "draft.md",
+    "scope": "project",
+    "sha256": "c670aca6a90a92d77f3a5a81b036df93b4b5c3c4a4eb6ae2134398dc2f7ec24e",
+    "bytes": 613
+  },
+  "images": [
+    {
+      "asset_id": "version_evidence",
+      "path": "repo://projects/easel-review/sources/screenshots/12-easel-version-evidence.png",
+      "scope": "repo",
+      "sha256": "6f8603af5e83e48202d263c67da5fbd248d25cadf004365cdb67f8ed220c6d20",
+      "bytes": 119169,
+      "facts": {
+        "format": "png",
+        "width": 1080,
+        "height": 1920
+      },
+      "alt": "Easel v0.2.1 版本证据截图",
+      "rights": {
+        "schema": "contentops.media-rights/v1",
+        "license_id": "OWNED-BY-OPERATOR",
+        "license_note": "captured or authored by the operator; ownership still needs a review record",
+        "source_url": "repo://X-SuperPlay-ContentOps#easel-version-evidence",
+        "reviewed_by": "Xander",
+        "reviewed_at": "2026-11-02",
+        "review_evidence": "assets/version-evidence.rights.json",
+        "review_evidence_sha256": "70d889043c776e468caacada8e660edfcf34e6920bf9802eddd362ed72f93d55",
+        "attribution": "",
+        "synthetic": false,
+        "third_party": false,
+        "evidence_capable": false
+      }
+    }
+  ],
+  "aigc_provenance": {
+    "required": true,
+    "disclosure_review_status": "pending"
+  },
+  "blockers": [
+    "HOST_CAPABILITY_UNVERIFIED",
+    "PLATFORM_PLACEHOLDER"
+  ],
+  "status": "AWAITING_MANUAL_REVIEW",
+  "human_review": "NOT_STARTED",
+  "production_ready": false,
+  "publish_authorized": false,
+  "note": "Manual package only. No platform draft, HTML render or publication was performed."
+}

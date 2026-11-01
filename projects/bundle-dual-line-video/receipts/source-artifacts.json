@@ -1,0 +1,17 @@
+{
+  "schema": "contentops.m5-sources/v1",
+  "artifacts": [
+    {
+      "id": "adr016",
+      "source_type": "repo_doc",
+      "title": "ADR-016 — Easel host adoption",
+      "path": "docs/adr/ADR-016-easel-host-adoption.md",
+      "sha256": "23af384ccf09d64a492d9f6dc2204297ff1958b946bbfee506e2ef1a951c5a9c",
+      "bytes": 7383,
+      "permission": "CREATED_BY_OWNER",
+      "captured_at": "2026-11-01T18:16:48Z",
+      "evidence_capable": true,
+      "notes": ""
+    }
+  ]
+}

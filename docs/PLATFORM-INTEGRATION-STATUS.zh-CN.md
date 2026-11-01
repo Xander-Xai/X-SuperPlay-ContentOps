@@ -28,18 +28,18 @@ translation_status: synced
 
 ## 九个平台
 
-| 平台 | 本地条目 | 流水线 | 本地状态 | 本分支证据 | 阻断原因 |
+| 平台 | 本地条目 | 流水线 | 本地状态 | Easel 能力 | 阻断原因 |
 |---|---|---|---|---|---|
-| 抖音 | `douyin` | `VIDEO` | `PLANNED` | — | `PLATFORM_CODE_ABSENT`、`ACCOUNT_NOT_PUBLIC` |
-| 小红书（视频） | `xiaohongshu_video` | `VIDEO` | `PLANNED` | — | `PLATFORM_CODE_ABSENT`、`ACCOUNT_NOT_PUBLIC`、`RIGHTS_UNRESOLVED` |
-| 小红书（图文） | `xiaohongshu_image` | `XHS_EDITORIAL` | `PLANNED` | — | `PLATFORM_CODE_ABSENT`、`ACCOUNT_NOT_PUBLIC`、`RIGHTS_UNRESOLVED` |
-| B站 | `bilibili` | `VIDEO` | `PLANNED` | — | `PLATFORM_CODE_ABSENT`、`ACCOUNT_NOT_PUBLIC` |
-| 视频号 | `shipinhao` | `VIDEO` | `PLANNED` | — | `PLATFORM_CODE_ABSENT`、`ACCOUNT_NOT_PUBLIC` |
-| 公众号 | `wechat_article` | `GZH_EDITORIAL` | `PLANNED` | — | `PLATFORM_CODE_ABSENT`、`ACCOUNT_NOT_PUBLIC`、`RIGHTS_UNRESOLVED` |
-| 知乎 | `zhihu` | `ARTICLE_EDITORIAL` | `PLANNED` | — | `PLATFORM_CODE_ABSENT`、`ACCOUNT_NOT_PUBLIC` |
-| CSDN | `csdn` | `ARTICLE_EDITORIAL` | `PLANNED` | — | `PLATFORM_CODE_ABSENT`、`ACCOUNT_NOT_PUBLIC`、`EASEL_CAPABILITY_ABSENT` |
-| YouTube | `youtube` | `VIDEO` | `PLANNED` | — | `PLATFORM_CODE_ABSENT`、`ACCOUNT_NOT_PUBLIC`、`EASEL_CAPABILITY_ABSENT` |
-| X | `x` | `X_EDITORIAL` | `INTEGRATED` | `src/contentops/publish/publisher.py`、`tests/test_x_post.py` | — |
+| 抖音 | `douyin` | `VIDEO` | `PLANNED` | `UPSTREAM_DECLARED` | `PLATFORM_CODE_ABSENT`、`ACCOUNT_NOT_PUBLIC` |
+| 小红书（视频） | `xiaohongshu_video` | `VIDEO` | `PLANNED` | `UPSTREAM_DECLARED` | `PLATFORM_CODE_ABSENT`、`ACCOUNT_NOT_PUBLIC`、`RIGHTS_UNRESOLVED` |
+| 小红书（图文） | `xiaohongshu_image` | `XHS_EDITORIAL` | `PLANNED` | `UPSTREAM_DECLARED` | `PLATFORM_CODE_ABSENT`、`ACCOUNT_NOT_PUBLIC`、`RIGHTS_UNRESOLVED` |
+| B站 | `bilibili` | `VIDEO` | `PLANNED` | `UPSTREAM_DECLARED` | `PLATFORM_CODE_ABSENT`、`ACCOUNT_NOT_PUBLIC` |
+| 视频号 | `shipinhao` | `VIDEO` | `PLANNED` | `UPSTREAM_DECLARED` | `PLATFORM_CODE_ABSENT`、`ACCOUNT_NOT_PUBLIC` |
+| 公众号 | `wechat_article` | `GZH_EDITORIAL` | `PLANNED` | `UPSTREAM_DECLARED` | `PLATFORM_CODE_ABSENT`、`ACCOUNT_NOT_PUBLIC`、`RIGHTS_UNRESOLVED` |
+| 知乎 | `zhihu` | `ARTICLE_EDITORIAL` | `PLANNED` | `UPSTREAM_DECLARED` | `PLATFORM_CODE_ABSENT`、`ACCOUNT_NOT_PUBLIC` |
+| CSDN | `csdn` | `ARTICLE_EDITORIAL` | `PLANNED` | `ABSENT` | `PLATFORM_CODE_ABSENT`、`ACCOUNT_NOT_PUBLIC`、`EASEL_CAPABILITY_ABSENT` |
+| YouTube | `youtube` | `VIDEO` | `PLANNED` | `ABSENT` | `PLATFORM_CODE_ABSENT`、`ACCOUNT_NOT_PUBLIC`、`EASEL_CAPABILITY_ABSENT` |
+| X | `x` | `X_EDITORIAL` | `INTEGRATED` | `ABSENT` | — |
 
 `x` 是唯一非 `PLANNED` 的行，而且范围很窄：X 发帖闸门只打包并停在
 `AWAITING_MANUAL_PUBLISH`。没有任何分支返回 `PUBLISHED`，`PublishMode.API` 直接抛出，
@@ -61,7 +61,9 @@ loader 要求三者都有值，写一行就等于强行填假值。GitHub 的角
 ## Easel 上游覆盖
 
 Easel v0.2.1（已锁定，`3fe2d99`）声明支持七个平台的登录、适配与发布。
-那是上游的陈述，不是本仓库已验证的能力——本仓库只执行两个上游文件，且都不是平台适配器。
+那是上游的陈述，不是本仓库已验证的能力。每条注册表记录现在携带
+`easel_capability`：`UPSTREAM_DECLARED` 并给出上游 Skill 路径，或 `ABSENT`。
+没有任何一行为 `verified_here: true`；宿主本身受门禁保护，当前为 `HOST_BLOCKED`。
 
 | 覆盖情况 | 平台 |
 |---|---|

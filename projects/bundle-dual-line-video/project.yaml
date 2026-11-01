@@ -1,0 +1,36 @@
+id: bundle-dual-line-video
+title: "宿主接管不等于发布授权"
+created_at: "2026-11-02T00:00:00Z"
+
+source_refs:
+  - id: adr016
+    type: repo_doc
+    title: "ADR-016 — Easel host adoption"
+    path: "docs/adr/ADR-016-easel-host-adoption.md"
+    permission: CREATED_BY_OWNER
+
+content_bundle:
+  path: projects/bundle-dual-line/bundle.json
+  account: explorer
+  source_map:
+    SRC-20261102-001: adr016
+
+content_type: tech_review
+topic_cluster: "easel-host"
+
+target:
+  platform_primary: douyin
+  aspect_ratio: "9:16"
+  resolution: "1080x1920"
+  duration_target_sec: 20
+
+evidence_policy:
+  real_assets_first: true
+  ai_visuals_allowed: auxiliary_only
+  fabricated_claims: forbidden
+
+status: initialized
+
+outputs:
+  final_video: ""
+  qc_report: ""

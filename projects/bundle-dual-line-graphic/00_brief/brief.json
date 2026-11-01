@@ -1,0 +1,13 @@
+{
+  "schema": "contentops.graphic-brief/v1",
+  "bundle_id": "CB-20261102-001",
+  "bundle_sha256": "4836a1bfa3b1a3faaaec22486d9ae6804ccb7a56e498c0d0b86c0dffd60920c0",
+  "title": "接管 Easel 宿主，先接管它的边界",
+  "platform": {
+    "platform_id": "wechat_article",
+    "strategy_platform": "wechat_official_account",
+    "pipeline": "GZH_EDITORIAL",
+    "status": "PLANNED",
+    "delivery": "PLACEHOLDER"
+  }
+}
