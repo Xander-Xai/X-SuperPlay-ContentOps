@@ -154,15 +154,20 @@ content-router 层：
 | 被引用的代码 | 本分支存在？ | `feat/content-router`（PR #49）存在？ |
 |---|---|---|
 | `scripts/workflow_gate.py` | **是**（切片 S1） | 是 |
-| `src/contentops/workflow/{contract,gate,validators}.py` | **是**（S1；`validators.py` 在 S2 前为空壳） | 是 |
-| `scripts/workflow_docs.py` | 否 | 是 |
-| `scripts/recording_plan.py` | 否 | 是 |
-| `src/contentops/workflow/{sources,capture_plan,audience,duration}.py` | 否 | 是 |
+| `src/contentops/workflow/{contract,gate}.py` | **是**（S1） | 是 |
+| `src/contentops/workflow/validators.py` | **部分**（S1 为空壳 → S2 接入 `assets` 校验器） | 是 |
+| `src/contentops/workflow/sources.py` | **是**（切片 S2） | 是 |
+| `src/contentops/workflow/capture_plan.py` | 否（S3，随账号配置） | 是 |
+| `scripts/recording_plan.py` | 否（S3——需要账号配置） | 是 |
+| `scripts/workflow_docs.py` | 否（S3/S4——它 import S3/S4 的模块） | 是 |
+| `src/contentops/workflow/{audience,duration}.py` | 否 | 是 |
 | `scripts/design_router.py` | 否 | **否** |
 
-确定性的门（`workflow_gate.py` 与 contract/gate 内核）已在**切片 S1** 落地。
-其余 content-router 路径——编辑类校验器、来源/拍摄规划器、账号配置——属于后续
-切片（S2+）。`design_router.py` 被 `x-superplay-design-direction` 引用，但在
+确定性的门（`workflow_gate.py` 与 contract/gate 内核）已在**切片 S1** 落地；
+来源候选契约及其校验器在**切片 S2** 落地。拍摄契约、`recording_plan.py`、
+`workflow_docs.py` 以及它们读取的账号配置属于 **S3**：`recording_plan.py`
+需要 `config/accounts/<slug>.json`，其中含商业策略，在该暴露经过评审前不进入
+公开仓库。`design_router.py` 被 `x-superplay-design-direction` 引用，但在
 2026-11-01 检查过的任何分支上都不存在，因此该 Skill 除合并外还需要修改。
 
 只有当声明的指针指向集成分支上真实存在的代码时，才能添加声明。声明一个指向未合并

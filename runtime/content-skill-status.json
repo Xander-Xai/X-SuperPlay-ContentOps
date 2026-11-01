@@ -24,11 +24,6 @@
           "note": "resolves keyword origins against the account DNA"
         },
         {
-          "path": "src/contentops/workflow/sources.py",
-          "carried_by": "feat/content-router",
-          "note": "validator for the candidate record contract"
-        },
-        {
           "path": "src/contentops/media/claim_coverage.py",
           "carried_by": "feat/content-router",
           "note": "per-claim evidence coverage gate"
@@ -76,11 +71,6 @@
       "layer": "content-router",
       "carried_by": "feat/content-router",
       "references": [
-        {
-          "path": "src/contentops/workflow/sources.py",
-          "carried_by": "feat/content-router",
-          "note": "candidate record validator"
-        },
         {
           "path": "scripts/material_candidates.py",
           "carried_by": null,

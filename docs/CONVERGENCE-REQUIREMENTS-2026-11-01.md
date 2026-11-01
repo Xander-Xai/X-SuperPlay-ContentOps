@@ -311,8 +311,19 @@ gh pr create --base main --title "feat: land the workflow stage gate (S1)" --bod
 > as-is: `validators.py` imports 16 modules that are whole new trees (S2–S4).
 > S1 therefore lands the contract/gate core, the CLI, and an **empty
 > `validators.py` seam** whose `validators_for` returns `[]` until S2; `check`
-> reports "editorial validators not yet wired (S2)". S2 replaces
+> reports no editorial validators are wired for unwired stages. S2 replaces
 > `validators.py` wholesale.
+>
+> **S2 deviation (executed 2026-11-01).** S2 lands only
+> `src/contentops/workflow/sources.py` and wires the source-candidate validators
+> into `validators.py` for the `assets` stage. `capture_plan.py`,
+> `recording_plan.py` and `test_capture_plan.py` are **deferred to S3**:
+> `recording_plan.py` reads `config/accounts/<slug>.json` (business strategy that
+> stays off the public repository until that exposure is reviewed), and
+> `test_capture_plan.py` drives that CLI, so it cannot pass without the config.
+> `scripts/workflow_docs.py` is also deferred — it imports
+> `contentops.quality.naturalness` and `contentops.workflow.human_forecast`
+> (S3/S4 trees).
 
 S1 lands the deterministic stage gate only. Each slice updates
 `runtime/content-skill-status.json` in the same PR, because the skill reference
