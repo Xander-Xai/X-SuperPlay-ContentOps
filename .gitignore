@@ -259,3 +259,12 @@ task-state/
 # sample is a private input, and the receipts that DO get committed carry only hashes
 # and measurements.
 assert/
+
+# Local agent scratch state (`local_only`).
+#
+# Bench scripts, a router SQLite database, a gh device-id and probe files. None of
+# it is source, evidence or a receipt; it is per-host working state. It is ignored
+# as a whole rather than named file by file, because a `.local/` entry is a new
+# local tool by definition and naming each file is a maintenance debt that fails
+# silently (the file appears in `git status` and someone commits it).
+.local/

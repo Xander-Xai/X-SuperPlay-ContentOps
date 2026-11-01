@@ -28,9 +28,10 @@
 
 ## Milestone plans
 
+- [CONVERGENCE-REQUIREMENTS-2026-11-01.md](CONVERGENCE-REQUIREMENTS-2026-11-01.md) — docs / skills / branch / upstream-pin convergence — **active**
 - [M4-H3-PLAN.md](M4-H3-PLAN.md) — M4 MiniMax H3 video (Issue #22) — **implemented**
 - [M4.5-MEDIA-CONVERGENCE-PLAN.md](M4.5-MEDIA-CONVERGENCE-PLAN.md) — M4.5 media convergence (Issue #27) — **implemented**
-- [ENHANCED-GOLDEN-PLAN.md](ENHANCED-GOLDEN-PLAN.md) — Enhanced Golden A/B/C/D — **next executable phase**
+- [ENHANCED-GOLDEN-PLAN.md](ENHANCED-GOLDEN-PLAN.md) — Enhanced Golden A/B/C/D — **next executable phase after convergence**
 
 ## Governance
 
@@ -52,8 +53,11 @@ Tier-1 docs have zh-CN mirrors with `.zh-CN.md` suffix. Run `python scripts/chec
 - [adr/ADR-005-human-approval.md](adr/ADR-005-human-approval.md)
 - [adr/ADR-006-upstream-upgrade-policy.md](adr/ADR-006-upstream-upgrade-policy.md)
 - [adr/ADR-007-m5-evidence-production-chain.md](adr/ADR-007-m5-evidence-production-chain.md)
+- [adr/ADR-007-minimax-speech-transport.md](adr/ADR-007-minimax-speech-transport.md) — numbering collision with the M5 ADR; both records exist
+- [adr/ADR-008-media-use-adapter.md](adr/ADR-008-media-use-adapter.md)
 - [adr/ADR-009-skill-execution-authorization.md](adr/ADR-009-skill-execution-authorization.md)
 - [adr/ADR-010-trusted-grant-execution-gate.md](adr/ADR-010-trusted-grant-execution-gate.md)
+- [adr/ADR-012-convergence-decisions.md](adr/ADR-012-convergence-decisions.md) — convergence decisions D1–D6 (2026-11-01). ADR-011 is reserved by the unmerged `feat/content-router` branch
 
 ## Agent Rules
 
@@ -73,6 +77,7 @@ Tier-1 docs have zh-CN mirrors with `.zh-CN.md` suffix. Run `python scripts/chec
 - [../reports/audits/contentops-pr71-media-use-final-audit-2026-10-31.md](../reports/audits/contentops-pr71-media-use-final-audit-2026-10-31.md) — PR #71 media-use integration: security, licence, code, E2E and merge-gate audit (2026-10-31)
 - [../reports/audits/contentops-phase4-delivery-unlock-2026-10-31.md](../reports/audits/contentops-phase4-delivery-unlock-2026-10-31.md) — Phase-4 delivery unlock: #62 merge prep, combined M5 acceptance, #49 order, Owner decisions (2026-10-31)
 - [../reports/audits/contentops-phase5-integration-convergence-2026-10-31.md](../reports/audits/contentops-phase5-integration-convergence-2026-10-31.md) — Phase-5 integration convergence: #71 overlap, recommended route, rights gate, #62 re-review (2026-10-31)
+- [../reports/audits/worktree-and-branch-audit-2026-11-01.md](../reports/audits/worktree-and-branch-audit-2026-11-01.md) — worktree and branch inventory, classification and cleanup order (2026-11-01)
 
 ## Fact Priority
 

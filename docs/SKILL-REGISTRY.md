@@ -165,11 +165,48 @@ Skill Discovery -> Skill Resolution -> Permission Gate -> Existing Adapter -> M5
 `scripts/m5_production.py` does not import the router. Legacy M5 runs with no
 router installed, and a test asserts that independence.
 
+## Content-production skills (not declared)
+
+Five skills are installed in the shared store for the X•超玩1024 workflow:
+
+- `x-superplay-copy-orchestrator`
+- `x-superplay-source-research`
+- `x-superplay-capture-plan`
+- `x-superplay-broll-production`
+- `x-superplay-design-direction`
+
+They are **not declared capabilities**, and the router does not treat them as
+runnable. Their bodies reference the account-aware content-router layer:
+
+| Referenced code | Exists on this branch? | Exists on `feat/content-router` (PR #49)? |
+|---|---|---|
+| `scripts/workflow_gate.py` | no | yes |
+| `scripts/workflow_docs.py` | no | yes |
+| `scripts/recording_plan.py` | no | yes |
+| `src/contentops/workflow/*` | no | yes |
+| `scripts/design_router.py` | no | **no** |
+
+The first four are blocked only on the merge. `design_router.py` is referenced by
+`x-superplay-design-direction` and does not exist on any branch inspected on
+2026-11-01, so that skill needs an edit as well as a merge.
+
+A declaration may be added only after the code it points at exists on the
+integration branch. Declaring a pointer to an unmerged branch would make
+`RESOLVABLE` a false statement, which is the failure this registry exists to
+prevent. Until then the skills are discovery-visible and resolution-blocked.
+
+The record of what these skills actually reference lives in
+`runtime/content-skill-status.json`, and
+`python scripts/check_skill_references.py` fails when that record stops
+matching this checkout: an unrecorded dangling reference, a recorded reference
+that has landed, or a skill marked merged whose code is missing.
+
 ## Track status
 
 | Track | Status | Why |
 |---|---|---|
 | VIDEO (Easel) | discovery-only until a catalog root exists on the host | no vendor content in the public repository |
+| Content production (`x-superplay-*`) | discovered in the shared store, **not declared** | their code lives on the unmerged `feat/content-router` branch; `design_router.py` is absent there too |
 | GZH | BLOCKED | vendored third-party track, rights unverified, not redistributed |
 | X | BLOCKED | platform track is unmerged (`feat/47-x-platform-track`, PR #50) |
 | XHS | BLOCKED | migration is unmerged and under rights review; no catalog root |

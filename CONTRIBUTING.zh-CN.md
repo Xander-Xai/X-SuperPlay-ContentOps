@@ -50,7 +50,13 @@ research: 调查或实验
 python scripts/dev_check.py
 ```
 
-所有检查必须通过。无例外。
+所有检查必须通过。无例外。门禁覆盖仓库策略、子进程策略、Skill 引用完整性、文档、
+双语一致性、脚本级冒烟套件与空格检查。
+
+门禁现在会替你强制两条规则：
+
+- 新增的 ```tests/test_*.py``` 必须写进 ```.github/workflows/ci.yml```，否则它永远不会运行。
+- 引用本分支没有的代码的 Skill，必须登记在 ```runtime/content-skill-status.json```。
 
 ## 文件放置
 

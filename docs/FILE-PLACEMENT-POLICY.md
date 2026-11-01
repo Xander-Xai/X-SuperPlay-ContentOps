@@ -92,10 +92,11 @@ scripts/
 ├── check_i18n.py       # bilingual consistency checker
 ├── check_docs.py       # doc consistency
 ├── check_repo_policy.py # file placement + security
+├── check_skill_references.py # installed skills vs code on this branch
 ├── dev_check.py        # unified developer gate
 ├── new_project.py
 ├── bootstrap.ps1 / bootstrap.sh
-└── test_basic.py       # current test suite
+└── test_basic.py       # script-level suite
 ```
 
 ## `src/`
@@ -124,7 +125,9 @@ Machine-readable pins and provenance only:
 ```
 runtime/
 ├── easel.lock.json       # canonical Easel pin
-└── easel-runtime.json    # provenance record
+├── easel-runtime.json    # provenance record
+├── skill-registry.json   # declared capabilities (pointer table)
+└── content-skill-status.json # installed skills vs the code on this branch
 ```
 
 Forbidden in `runtime/`:

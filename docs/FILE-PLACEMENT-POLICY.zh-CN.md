@@ -32,9 +32,14 @@ translation_status: synced
 
 CLI 工具、运维脚本、验证、构建编排。
 
+新增校验脚本（例如 ```check_skill_references.py```）属于此处。
+
 ## runtime/
 
 仅机器可读的固定版本和来源记录。
+
+```runtime/skill-registry.json``` 是能力声明指针表；
+```runtime/content-skill-status.json``` 记录已安装 Skill 引用的、当前分支并不存在的代码。
 
 ## tests/
 

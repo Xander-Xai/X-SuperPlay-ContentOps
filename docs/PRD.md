@@ -41,26 +41,36 @@ A unified ContentOps Runtime that any Xander-Xai business repo can call to produ
 
 ## 7. Current Baseline
 
-- Easel v0.2.1 pinned, content-verified (982/982 blobs)
-- Pipeline: Source → Script → Storyboard → Voice → Compose → QC → MP4
-- 1 golden sample (easel-review) with real receipts
-- Voice: edge-tts (fallback quality, not production-grade)
-- 9 tests passing, 0 published videos
+Verified 2026-11-01 on `fix/57-m5-media-fixtures`:
+
+- Easel v0.2.1 pinned, content-verified (982/982 blobs). Upstream v0.3.0 is
+  available but not adopted (skill paths moved; see UPSTREAM-EASEL).
+- Two implemented paths: `run_v1.py` (storyboard-driven, edge-tts) and
+  `m5_production.py` (evidence-first, local narration). Both compose through the
+  pinned Easel adapter.
+- Media layer implemented: MiniMax speech/image/H3, media convergence, media-use
+  adapter, billing/quota gates, rights gate.
+- 31 test suites (704 top-level `test_*` functions plus list-driven and
+  unittest-style suites).
+- Account-aware content router, account DNA, workflow gates, XHS, X and GZH are
+  **unmerged** (PR #49 and other branches).
+- Voice: edge-tts (V1) and Windows SAPI (M5); neither is production-grade.
+- 0 published videos; every result is `PENDING_FOUNDER_REVIEW`.
 
 ## 8. Functional Requirements
 
-| ID | Requirement |
-|---|---|
-| FR-1 | Ingest SourceArtifact from any Xander-Xai business repo |
-| FR-2 | Generate master script from evidence (LLM drafts, evidence verifies) |
-| FR-3 | Produce structured storyboard with per-shot provenance |
-| FR-4 | Generate voice via MiniMax subscription (fallback: edge-tts) |
-| FR-5 | Generate images via MiniMax subscription (when needed) |
-| FR-6 | Generate video clips via MiniMax subscription (quota-limited) |
-| FR-7 | Compose final video via Easel assemble.py (unchanged upstream) |
-| FR-8 | Run automated QC (technical + content + factual) |
-| FR-9 | Gate on human review (100-point scorecard) |
-| FR-10 | Emit complete receipts for every run |
+| ID | Requirement | Status on this branch |
+|---|---|---|
+| FR-1 | Ingest SourceArtifact from any Xander-Xai business repo | **partial** — M5 ingests repo docs/locks; cross-repo adapter unmerged |
+| FR-2 | Generate master script from evidence (LLM drafts, evidence verifies) | **implemented** for the M5 fixture path; authoring remains editorial |
+| FR-3 | Produce structured storyboard with per-shot provenance | **implemented** |
+| FR-4 | Generate voice via MiniMax subscription (fallback: edge-tts) | **implemented**, `PENDING_FOUNDER_REVIEW` |
+| FR-5 | Generate images via MiniMax subscription | **implemented**, `PENDING_FOUNDER_REVIEW` |
+| FR-6 | Generate video clips via MiniMax subscription (quota-limited) | **implemented** (H3 subsets verified), `PENDING_FOUNDER_REVIEW` |
+| FR-7 | Compose final video via Easel assemble.py (unchanged upstream) | **implemented** through the adapter |
+| FR-8 | Run automated QC (technical + content + factual) | **implemented** technical/evidence; content/fact remain human |
+| FR-9 | Gate on human review (100-point scorecard) | **implemented as a gate; never satisfied yet** |
+| FR-10 | Emit complete receipts for every run | **implemented** |
 
 ## 9. Non-functional Requirements
 

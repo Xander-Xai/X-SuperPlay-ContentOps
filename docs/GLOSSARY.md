@@ -20,4 +20,11 @@
 | SourceArtifact | A structured input from a real business source (repo, experiment, research) |
 | ContentRun | A single execution of the video production pipeline for a project |
 | Adapter | A pattern that wraps upstream Easel behavior without modifying upstream code |
-| dev_check | The unified developer gate: `python scripts/dev_check.py` — runs repo policy, docs, i18n, tests, whitespace |
+| dev_check | The unified developer gate: `python scripts/dev_check.py` — runs repo policy, subprocess policy, skill references, docs, i18n, tests, whitespace |
+| Branch layer | A body of work that exists on one branch only. Named in the docs so a feature on a draft branch is never described as available |
+| Integration branch | The branch that carries the merged stack. While `main` is behind it, `main` is not the truth about what runs |
+| Content-router slice | One reviewable slice (S1–S4) of the account-aware content router, merged separately with its own tests |
+| Skill reference integrity | The rule that an installed skill may only name code this branch has. Enforced by `scripts/check_skill_references.py` against `runtime/content-skill-status.json` |
+| RECORD_STALE | The check's failure code for a recorded skill reference that now exists: the layer landed and the record was not updated |
+| Declared capability | An entry in `runtime/skill-registry.json` pointing at code on the integration branch. A declaration never grants execution |
+| Content-skill status record | `runtime/content-skill-status.json` — the list of paths the installed content skills name that this branch does not have |

@@ -25,6 +25,7 @@ not consumed as production runtime.
 | Local path | `.runtime/easel/` (gitignored) |
 | Acquisition | Release archive (GitHub tarball via `gh api`) |
 | Verification | 982/982 blob SHA-1 matched upstream tree |
+| Upstream stable | v0.3.0 (2026-10-12) — **not adopted** (see *v0.3.0 delta* below) |
 
 ## Rules
 
@@ -88,10 +89,36 @@ Any step FAIL → keep old pin.
 | Upstream | ContentOps | Decision |
 |---|---|---|
 | Easel v0.2.1 | pinned | production |
+| Easel v0.3.0 | available, not adopted | **HIGH** risk delta — see below (ADR-012 D3) |
 | Easel main | monitored | no production consumption |
 | next release | pending | compatibility gate |
 
 Dynamic SHAs are not duplicated here. Real-time values come from `runtime/easel.lock.json` and the watch script output.
+
+## v0.3.0 delta (measured 2026-11-01)
+
+| Property | Value |
+|---|---|
+| Released | 2026-10-12 |
+| Distance from the pin | 158 commits, 300 changed files |
+| Breaking for this repository | **yes** |
+| Decision | not adopted (ADR-012 D3) |
+
+Three facts decide it:
+
+1. **Skill paths moved.** Every skill moved from `skills/openclaw/` to
+   `skills/builtin/`, and `auto-short-video/scripts/assemble.py` changed. The
+   skill router's first catalog root is `.runtime/easel/skills/openclaw`, so the
+   catalog root changes with the version.
+2. **The tag was force-replaced.** Upstream published v0.3.0, then replaced it
+   while keeping the version number. A tag that can be replaced is not a pin.
+   Any future adoption must record a **content digest**, not only a tag.
+3. **The scope is large.** The release adds a multi-agent execution engine
+   (OpenClaw / Codex / OpenCode / ACP / chat-only) and changes install,
+   login and artifact handling — a wider blast radius than a patch release.
+
+Adoption, when it happens, runs the full upgrade gate above plus a digest
+pinned release archive.
 
 ## Upstream Watch
 

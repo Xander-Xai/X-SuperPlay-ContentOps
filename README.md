@@ -6,25 +6,52 @@
 
 ## What
 
-A unified runtime that converts real business work (GitHub repos, experiments, research) into traceable video, 公众号 articles, 小红书 image-text notes and X posts, each through its own production gate.
+A unified runtime that converts real business work (GitHub repos, experiments,
+research) into traceable video and, eventually, 公众号 articles, 小红书
+image-text notes and X posts — each through its own production gate.
+
+This branch also carries the convergence requirements that reconcile the
+documents with the code: [docs/CONVERGENCE-REQUIREMENTS-2026-11-01.md](docs/CONVERGENCE-REQUIREMENTS-2026-11-01.md).
 
 ## Why
 
-Previous approach used 5 separate platform-specific repos that never produced stable output. ContentOps consolidates production into one runtime with honest quality gates.
+Previous work used 5 separate platform-specific repos that never produced stable
+output. ContentOps consolidates video production into one runtime with honest,
+non-bypassable quality and human-review gates.
 
 ## Current Status
 
-| Item | Status |
-|---|---|
-| Easel runtime | Pinned v0.2.1 (commit `3fe2d99`, 982 blobs verified) |
-| Video pipeline | Implemented; producers and QC exist; `production_ready: false`; human review pending |
-| 公众号 (WeChat article) | Vendored ten-stage workflow; stops at a WeChat draft; rights audit open (#56) |
-| 小红书 image-text | Eight-step workflow on `feat/xhs-fa-migration`; not merged; manual upload only |
-| X | PR #50; manual-only editorial package; not merged |
-| MiniMax media | Speech, image and H3 video implemented and live-tested; `PENDING_FOUNDER_REVIEW` |
-| Auto-publishing | **NOT** in scope |
-| Tests | See [docs/CURRENT-STATE.md](docs/CURRENT-STATE.md); run the unified gate with `python scripts/dev_check.py` |
-| Production ready | **false** — no platform is `PRODUCTION_ACCEPTED` |
+The table separates what is on **this branch** from what exists only on an
+**unmerged branch**. A track is not "done" because a draft branch describes it.
+
+| Item | Layer | Status |
+|---|---|---|
+| Easel runtime | this branch | Pinned v0.2.1 (commit `3fe2d99`, 982 blobs verified). Upstream stable is v0.3.0 — not adopted |
+| Video pipeline (`run_v1.py`) | this branch | Implemented (`easel` + diagnostic `fallback`); `production_ready: false` |
+| M5 evidence-first chain (`m5_production.py`) | this branch | Implemented and integration-verified on `projects/m5-media-use`; `production_ready: false`, `PENDING_FOUNDER_REVIEW` |
+| Media-use adapter (HyperFrames) | this branch | Implemented; local-only, zero network/paid calls. Needs a host runtime lock — default verdict is `BLOCKED / MISSING_RUNTIME` |
+| MiniMax media | this branch | Speech, image and H3 video implemented; verified subsets are listed in CURRENT-STATE; `PENDING_FOUNDER_REVIEW` |
+| Skill routing / execution authorization | this branch | Implemented; only `media-use` is a declared capability; the router never authorizes execution |
+| Content router, account DNA, workflow gates | **unmerged** | `feat/content-router` (PR #49, draft) — not on this branch |
+| 公众号 (WeChat article) | **unmerged / local vendor** | Ten-stage vendored workflow; rights audit open (#56) |
+| 小红书 image-text | **unmerged** | `feat/xhs-fa-migration`; manual upload only |
+| X | **unmerged** | PR #50 / PR #87 — manual-only editorial package |
+| Auto-publishing | — | **Not in scope** |
+| Tests | this branch | 31 suites; see [docs/TEST-PLAN.md](docs/TEST-PLAN.md); unified gate `python scripts/dev_check.py` |
+| Production ready | — | **false** — no track is `PRODUCTION_ACCEPTED` |
+
+### Branch reality
+
+`main` is the protected integration branch, but it is **stale**: it stops at
+phase-4 delivery unlock (PR #72). The media-use integration, rights gate, skill
+router and skill-execution authorization stack (PRs #71, #74–#81, #84) exists
+only on `fix/57-m5-media-fixtures`, which is 17 commits ahead of `main` and is
+itself an open PR (#89).
+
+This README describes that branch. The unmerged layers are named above rather
+than described as working features. Landing the stack on `main` is the first
+integration step; see
+[docs/CONVERGENCE-REQUIREMENTS-2026-11-01.md](docs/CONVERGENCE-REQUIREMENTS-2026-11-01.md).
 
 ## Quick Start
 
@@ -32,8 +59,10 @@ Previous approach used 5 separate platform-specific repos that never produced st
 
 ```powershell
 python scripts\doctor.py
+python scripts\dev_check.py
 python scripts\new_project.py --slug my-video --title "My Video"
 python scripts\run_v1.py   projects\my-video
+python scripts\m5_production.py projects\m5-media-use
 python scripts\qc_video.py projects\my-video
 ```
 
@@ -41,23 +70,39 @@ python scripts\qc_video.py projects\my-video
 
 ```bash
 python3 scripts/doctor.py
+python3 scripts/dev_check.py
 python3 scripts/new_project.py --slug my-video --title "My Video"
 python3 scripts/run_v1.py   projects/my-video
+python3 scripts/m5_production.py projects/m5-media-use
 python3 scripts/qc_video.py projects/my-video
 ```
 
 ## Architecture Summary
 
-```
-Route (HOTSPOT_DISCOVERY / USER_TOPIC)
-  -> Account DNA -> Content format -> Brief -> platform gate -> human review
-     ├ Video        -> cut plan -> capture -> compose -> QC -> final.mp4
-     ├ 公众号        -> ten vendored stages -> WeChat draft
-     ├ 小红书图文    -> eight gates -> manual upload package
-     └ X            -> editorial package -> manual publish
+What runs on this branch:
+
+```text
+project.yaml source_refs
+  -> SourceArtifact (permission-aware)
+  -> ClaimLedger (quote-verified claims)
+  -> script + storyboard
+  -> MediaManifest (assets inventory + timeline)
+  -> narration / subtitles
+  -> pinned Easel compose (assemble_easel adapter)
+  -> qc_video
+  -> human review gate
 ```
 
-No route publishes by itself. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and
+Two entry points share that engine: `run_v1.py` (storyboard-driven, edge-tts)
+and `m5_production.py` (evidence-first, local narration). Neither publishes and
+neither reports production-ready.
+
+The account-aware content router (`HOTSPOT_DISCOVERY` / `USER_TOPIC` → Account
+DNA → Brief) is **not on this branch**. It is the subject of
+[docs/CONVERGENCE-REQUIREMENTS-2026-11-01.md](docs/CONVERGENCE-REQUIREMENTS-2026-11-01.md)
+and PR #49.
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and
 [docs/CURRENT-STATE.md](docs/CURRENT-STATE.md) for the current boundaries.
 
 ## Canonical Documentation
@@ -69,8 +114,10 @@ No route publishes by itself. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) a
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System boundaries |
 | [docs/PRD.md](docs/PRD.md) | Product requirements |
 | [docs/RUNBOOK.md](docs/RUNBOOK.md) | Real executable commands |
-| [docs/DEVELOPMENT-PLAN.md](docs/DEVELOPMENT-PLAN.md) | M0–M6 milestones |
+| [docs/DEVELOPMENT-PLAN.md](docs/DEVELOPMENT-PLAN.md) | Milestones and status |
 | [docs/QUALITY-STANDARD.md](docs/QUALITY-STANDARD.md) | Quality gates |
+| [docs/TEST-PLAN.md](docs/TEST-PLAN.md) | Test inventory and CI wiring |
+| [docs/CONVERGENCE-REQUIREMENTS-2026-11-01.md](docs/CONVERGENCE-REQUIREMENTS-2026-11-01.md) | Current convergence plan |
 | [docs/UPSTREAM-EASEL.md](docs/UPSTREAM-EASEL.md) | Easel pin policy |
 | [AGENTS.md](AGENTS.md) | AI agent execution discipline |
 
@@ -83,6 +130,7 @@ No route publishes by itself. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) a
 | Commit | `3fe2d9904c1619281ef57f81d9ee0b7854998399` |
 | Local path | `.runtime/easel/` |
 | Lock file | `runtime/easel.lock.json` |
+| Upstream stable | v0.3.0 (not adopted; skill paths moved to `skills/builtin/`) |
 | Upgrade | Requires Founder approval + regression suite |
 
 See [docs/UPSTREAM-EASEL.md](docs/UPSTREAM-EASEL.md) for full policy.
@@ -119,7 +167,6 @@ Evidence before Claim.    Contract before Integration.
 Quota before Generation.  Quality before Scale.
 Runtime Reality before Documentation.
 ```
-
 
 ## Portfolio responsibility boundary (2026-10-30)
 
