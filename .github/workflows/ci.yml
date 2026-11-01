@@ -308,6 +308,9 @@ jobs:
       - name: Run M5 Bundle handoff tests
         run: python tests/test_m5_bundle_handoff.py
 
+      - name: Run coding-agent driver tests
+        run: python tests/test_agent_driver.py
+
       - name: Run X organic growth offline contract tests
         run: python tests/test_x_organic_growth.py
 

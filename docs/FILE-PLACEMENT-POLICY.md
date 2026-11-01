@@ -93,6 +93,7 @@ scripts/
 ├── bundle_handoff.py   # Bundle → VIDEO / GRAPHIC_TEXT plan
 ├── graphic_package.py  # manual graphic package (stops at review)
 ├── easel_host.py       # guarded Easel host status / loopback serve
+├── agent_drive.py      # coding-agent step plan and guarded executor
 ├── qc_video.py         # automated QC
 ├── doctor.py            # environment checker
 ├── resolve_easel.py    # runtime resolver
@@ -133,9 +134,10 @@ Other packages follow the same rule — provider code, contracts and gates live
 here, never in `scripts/`. Four are load-bearing for platform work:
 `src/contentops/platforms/` (the registry loader),
 `src/contentops/content_kernel/` (Bundle validation and form-specific handoff),
-`src/contentops/easel/` (the host guard and loopback lifecycle; no upstream
-copy), and `src/contentops/graphic/` (the manual graphic package and its
-rights-bound image checks). None of them publishes, renders or spends.
+`src/contentops/easel/` (the host guard and loopback lifecycle, plus the
+coding-agent driver; no upstream copy), and `src/contentops/graphic/` (the manual
+graphic package and its rights-bound image checks). None of them publishes,
+renders or spends.
 
 ## config/
 

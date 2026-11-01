@@ -128,6 +128,10 @@ Rules:
    validates a Strategy Bundle and writes a form-specific handoff. Both handoffs carry the
    same `bundle_sha256` and source mapping; neither carries `publish_authorized: true`, and
    the graphic package never inherits the video's review.
+7. **A coding agent drives through a plan, not a shell.** `src/contentops/easel/driver.py`
+   exposes an ordered step list with fixed argv, `READ` / `PRODUCE` / `HUMAN_ONLY`
+   authorities, and a receipt per execution. There is no publish, credential or install
+   step, and `human-review` is refused when a driver asks for it (ADR-017).
 
 ## Branch Layers
 
@@ -175,7 +179,7 @@ scripts/
 src/contentops/
 ├── evidence/             ← SourceArtifact, ClaimLedger
 ├── content_kernel/       ← Bundle validation + form-specific handoff
-├── easel/                ← Host guard + loopback lifecycle (no upstream copy)
+├── easel/                ← Host guard, loopback lifecycle, coding-agent driver
 ├── graphic/              ← Manual graphic package + rights-bound images
 ├── platforms/            ← The one machine-readable platform registry
 ├── workflow/             ← Video + graphic ordered stages and human gate

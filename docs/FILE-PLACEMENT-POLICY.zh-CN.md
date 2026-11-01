@@ -40,7 +40,8 @@ CLI 工具、运维脚本、验证、构建编排。
 新增校验脚本（例如 ```check_skill_references.py```）属于此处。
 宿主与双线入口也属于此处：`easel_host.py`（受门禁保护的宿主状态/回环启动）、
 `bundle_handoff.py`（Bundle → VIDEO / GRAPHIC_TEXT 计划）、
-`graphic_package.py`（人工图文包，停在审核）。
+`graphic_package.py`（人工图文包，停在审核）、
+`agent_drive.py`（coding agent 的步骤计划与受控执行器）。
 
 ## config/
 

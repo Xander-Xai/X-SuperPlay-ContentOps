@@ -80,6 +80,19 @@ Owner 已决定把完整 Easel 系统作为生产底座（ADR-016）。本节只
 | 宿主权限 | 不拥有批准、发布、Provider 花费或账号 |
 | 未做的事 | 未安装依赖、未读取凭据/profile、未登录账号、未启动宿主进程、未发布 |
 
+## coding agent 驱动（2026-11-02）
+
+| 属性 | 值 |
+|---|---|
+| 入口 | `scripts/agent_drive.py status` / `plan` / `run` |
+| 本机宿主 | `claude`、`codex`、`opencode` —— 均存在（ADR-017） |
+| VIDEO 步骤 | `host-status` → `produce-video` → `qc-video` → `human-review`（`HUMAN_ONLY`） |
+| GRAPHIC_TEXT 步骤 | `host-status` → `produce-graphic` → `human-review`（`HUMAN_ONLY`） |
+| 权限 | 无发布、凭据、安装或批准步骤；驱动方请求 `human-review` 会被拒绝 |
+| 执行 | argv 固定，必须显式 `--execute`；每次执行写 `receipts/agent-driver-<step>.json` |
+| 宿主依赖 | 无 —— `host-status` 是只读步骤，不是依赖 |
+| 测试 | `python tests/test_agent_driver.py` —— 12/12 |
+
 ## Bundle 与双线 handoff（2026-11-02）
 
 | 属性 | 值 |

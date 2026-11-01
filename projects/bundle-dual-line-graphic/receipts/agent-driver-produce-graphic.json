@@ -1,0 +1,25 @@
+{
+  "schema": "contentops.agent-driver-receipt/v1",
+  "step": "produce-graphic",
+  "project": "projects/bundle-dual-line-graphic",
+  "argv": [
+    "python",
+    "scripts/graphic_package.py",
+    "--project",
+    "projects/bundle-dual-line-graphic",
+    "--handoff",
+    "projects/bundle-dual-line-graphic/receipts/bundle-handoff-graphic_text.json",
+    "--input",
+    "projects/bundle-dual-line-graphic/graphic-input.json"
+  ],
+  "cwd": ".",
+  "executed": true,
+  "returncode": 0,
+  "status": "OK",
+  "started_at": "2026-11-01T19:27:48Z",
+  "finished_at": "2026-11-01T19:27:48Z",
+  "stdout_tail": "package    <repo>/projects/bundle-dual-line-graphic/receipts/graphic-package.json\npreview    <repo>/projects/bundle-dual-line-graphic/receipts/graphic-preview.md\nstatus     AWAITING_MANUAL_REVIEW\npublish    False\nblockers   HOST_CAPABILITY_UNVERIFIED, PLATFORM_PLACEHOLDER",
+  "stderr_tail": "",
+  "production_ready": false,
+  "publish_authorized": false
+}

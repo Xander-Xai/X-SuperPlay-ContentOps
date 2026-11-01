@@ -259,6 +259,27 @@ host-security review is recorded. `serve` binds `127.0.0.1`, denies every
 mutation, and closes websocket scopes before upstream; do **not** run upstream
 `easel web` or `web/app.py` directly. See ADR-016.
 
+## 5.4 Coding-agent driver
+
+A coding agent (Claude Code, Codex CLI, OpenCode) can drive the pipeline without
+the web host. It asks for a plan, runs one step, and reads the receipt:
+
+```powershell
+python scripts\agent_drive.py status
+python scripts\agent_drive.py plan --project projects\my-video --json
+python scripts\agent_drive.py run --project projects\my-video --step produce-video --execute
+```
+
+The plan fixes the argv; the agent picks a step id, never a command. `run`
+without `--execute` only prints what it would run. Every execution writes
+`receipts/agent-driver-<step>.json` with the return code, bounded output and
+`publish_authorized: false`.
+
+`human-review` is listed with `authority: HUMAN_ONLY` and is refused if a driver
+tries to run it. There is no publish, credential or install step at all. The
+driver does not need FastAPI, uvicorn or a running host; `host-status` is a read
+step only so the agent can report the host state.
+
 ## 6. Run QC
 
 ```powershell

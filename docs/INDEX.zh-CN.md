@@ -64,6 +64,7 @@ translation_status: synced
 - [adr/ADR-014-delivery-validation-hold.md](adr/ADR-014-delivery-validation-hold.md) —— P2 扩展暂停七天（2026-11-01 → 2026-11-07），以完成第一次真实交付；已追加 Owner 限域授权（平台注册表）
 - [adr/ADR-015-platform-placeholders-and-content-bundle.md](adr/ADR-015-platform-placeholders-and-content-bundle.md) —— 九平台占位、单一注册表复用、Content Bundle 消费契约与 Easel 能力边界；D1 已被 ADR-016 取代
 - [adr/ADR-016-easel-host-adoption.md](adr/ADR-016-easel-host-adoption.md) —— Owner 采用固定版本 Easel 宿主，回环/只读门禁与双线 handoff
+- [adr/ADR-017-coding-agent-driver.md](adr/ADR-017-coding-agent-driver.md) —— coding agent 通过固定步骤计划成为受支持的驱动方，不获得发布或批准权限
 
 ## 事实优先级
 

@@ -186,6 +186,25 @@ python scripts\easel_host.py status --verify-bytes
 `serve` 只监听 `127.0.0.1`、拒绝所有写操作，并在到达上游前关闭 websocket
 scope；**不要**直接运行上游 `easel web` 或 `web/app.py`。见 ADR-016。
 
+## 5.5 coding agent 驱动
+
+coding agent（Claude Code、Codex CLI、OpenCode）无需 Web 宿主即可驱动流水线：
+先取计划，再执行一步，然后读取回执。
+
+```powershell
+python scripts\agent_drive.py status
+python scripts\agent_drive.py plan --project projects\my-video --json
+python scripts\agent_drive.py run --project projects\my-video --step produce-video --execute
+```
+
+计划固定 argv，agent 只能选步骤 id，不能给命令。`run` 不带 `--execute` 时只打印
+将要执行的命令。每次执行都会写 `receipts/agent-driver-<step>.json`，包含返回码、
+截断输出与 `publish_authorized: false`。
+
+`human-review` 标注为 `authority: HUMAN_ONLY`，驱动方尝试执行会被拒绝。计划中
+不存在发布、凭据或安装步骤。该驱动不需要 FastAPI、uvicorn 或运行中的宿主；
+`host-status` 只是让 agent 能报告宿主状态的只读步骤。
+
 ## 6. 开发门控
 
 ```bash

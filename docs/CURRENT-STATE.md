@@ -76,6 +76,19 @@ a verified integration yet.
 | Host authority | none over approval, publication, provider spend or accounts |
 | What was not done | no dependency install, no credential/profile read, no account login, no host process started, no publication |
 
+## Coding-Agent Driver (2026-11-02)
+
+| Property | Value |
+|---|---|
+| Entry | `scripts/agent_drive.py status` / `plan` / `run` |
+| Hosts on this machine | `claude`, `codex`, `opencode` — all present (ADR-017) |
+| VIDEO steps | `host-status` → `produce-video` → `qc-video` → `human-review` (`HUMAN_ONLY`) |
+| GRAPHIC_TEXT steps | `host-status` → `produce-graphic` → `human-review` (`HUMAN_ONLY`) |
+| Authority | no publish, credential, install or approval step; a driver asking for `human-review` is refused |
+| Execution | fixed argv, `--execute` required; every run writes `receipts/agent-driver-<step>.json` |
+| Host requirement | none — `host-status` is a read step, not a dependency |
+| Tests | `python tests/test_agent_driver.py` — 12/12 |
+
 ## Bundle and Dual-Line Handoff (2026-11-02)
 
 | Property | Value |

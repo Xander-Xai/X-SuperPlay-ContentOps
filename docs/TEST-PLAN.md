@@ -69,6 +69,7 @@ checks differently.
 | Bundle two-format handoff | `tests/test_bundle_two_formats.py` | 14 | yes |
 | Graphic workflow | `tests/test_graphic_workflow.py` | 14 | yes |
 | M5 Bundle handoff | `tests/test_m5_bundle_handoff.py` | 5 | yes |
+| Coding-agent driver | `tests/test_agent_driver.py` | 12 | yes |
 | Skill doctor | `tests/test_skill_doctor.py` | list-driven | yes |
 | Skill reference integrity | `tests/test_skill_references.py` | 6 | yes |
 | Skill router capabilities | `tests/test_skill_router_capabilities.py` | list-driven | yes |

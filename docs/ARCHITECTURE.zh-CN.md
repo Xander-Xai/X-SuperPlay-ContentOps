@@ -128,6 +128,10 @@ Owner 于 2026-11-02 决定把完整 Easel 系统作为生产底座，取代 ADR
    `src/contentops/content_kernel/handoff.py` 校验 Strategy Bundle 并写出对应形式的
    handoff。两者携带相同 `bundle_sha256` 与来源映射；都不携带
    `publish_authorized: true`，图文包也不会继承视频审核。
+7. **coding agent 通过计划驱动，而不是通过 shell。**
+   `src/contentops/easel/driver.py` 给出固定 argv 的有序步骤、`READ` / `PRODUCE` /
+   `HUMAN_ONLY` 三种权限，以及每次执行的回执。计划中不存在发布、凭据或安装步骤；
+   驱动方请求 `human-review` 会被拒绝（ADR-017）。
 
 ## 分支层
 
@@ -174,7 +178,7 @@ scripts/
 src/contentops/
 ├── evidence/             ← SourceArtifact、ClaimLedger
 ├── content_kernel/       ← Bundle 校验 + 形式 handoff
-├── easel/                ← 宿主门禁 + 回环生命周期（不复制上游）
+├── easel/                ← 宿主门禁、回环生命周期与 coding agent 驱动
 ├── graphic/              ← 人工图文包 + 权利绑定图片
 ├── platforms/            ← 唯一机器可读平台注册表
 ├── workflow/             ← 视频/图文有序阶段与人工门禁
