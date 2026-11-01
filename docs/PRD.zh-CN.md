@@ -62,6 +62,27 @@ Founder（Xander-Xai）— 需要从真实工作产出高质量视频，最少�
 ```config/registry/platforms.json``` 里的一行**不是**集成，Content Bundle 也**不是**发布。
 新增其中任何一项都不重新开启上述任何非目标（ADR-015）。
 
+### 6.1 人工交付收据（尚未实现）
+
+由人发布、由人记录。下面的形状是先占位，代码尚未产出；任何字段都不得推断或
+默认为 0：
+
+```json
+{
+  "schema": "contentops.manual-delivery/v1",
+  "bundle_id": "CB-YYYYMMDD-NNN",
+  "platform_id": "douyin",
+  "url": null,
+  "published_at": null,
+  "recorded_by": null,
+  "checkpoints": {"T+2H": "unknown", "T+24H": "unknown",
+                  "T+72H": "unknown", "T+7D": "unknown"}
+}
+```
+
+缺失的度量写作 `"unknown"`，绝不写 `0`。只有 URL 而没有记录人，不构成交付记录。
+这是占位，不是发布能力。
+
 ## 7. 当前基线
 
 2026-11-02 在 `feat/106-easel-host-dual-line` 上验证（基于 PR #101）：

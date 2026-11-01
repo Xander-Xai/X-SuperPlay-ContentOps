@@ -152,8 +152,17 @@ class GuardMiddleware:
         self.policy = policy or HostPolicy()
 
     async def __call__(self, scope, receive, send):
-        if scope.get("type") != "http":
+        scope_type = scope.get("type")
+        if scope_type == "lifespan":
             await self.app(scope, receive, send)
+            return
+        if scope_type == "websocket":
+            # No websocket route is authorised, now or after an upstream change.
+            # Closing here keeps the guard the single policy point instead of
+            # forwarding a scope it never inspected.
+            await send({"type": "websocket.close", "code": 1008})
+            return
+        if scope_type != "http":
             return
 
         method = str(scope.get("method") or "").upper()

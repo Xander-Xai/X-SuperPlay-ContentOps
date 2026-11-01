@@ -204,6 +204,13 @@ The M5 run writes `receipts/bundle-handoff-video.json` before the sources stage.
 A missing/mismatched source map blocks the run; a `PLANNED` platform records a
 delivery blocker but does not block video production.
 
+Every handoff records the Bundle's logical path, scope and SHA-256, and both
+line builders re-check it: a handoff whose Bundle changed is refused with
+`BUNDLE_CHANGED`, and a handoff that names no Bundle is refused with
+`HANDOFF_UNBOUND`. Rebuild the handoff after editing a Bundle. The Bundle must
+live inside the project or the repository, so a file copied from a Strategy
+checkout is recorded by a relative path, never an absolute one.
+
 Standalone handoff (no production, no publication):
 
 ```powershell
@@ -238,12 +245,19 @@ Status only; it does not start a server or install dependencies:
 
 ```powershell
 python scripts\easel_host.py status
+python scripts\easel_host.py status --verify-bytes
 ```
 
+`--verify-bytes` adds the content comparison: it hashes the runtime tree the way
+git does and compares it with the pinned commit through `gh`. It needs network
+and `gh`; without them the result is `HOST_BYTES_UNVERIFIED`, which is not a
+pass. `serve` always performs this comparison, so an offline or modified tree
+cannot start.
+
 `HOST_BLOCKED` is the expected result until FastAPI/uvicorn are present and a
-host-security review is recorded. `serve` binds `127.0.0.1` and denies every
-mutation; do **not** run upstream `easel web` or `web/app.py` directly. See
-ADR-016.
+host-security review is recorded. `serve` binds `127.0.0.1`, denies every
+mutation, and closes websocket scopes before upstream; do **not** run upstream
+`easel web` or `web/app.py` directly. See ADR-016.
 
 ## 6. Run QC
 

@@ -54,6 +54,10 @@ The host may be served only through `src/contentops/easel/`:
 - no mutation, publish, login, credential, environment-install, settings-write,
   delete or session-write route reachable;
 - loopback `Host`/`Origin` checks and no wildcard CORS response;
+- non-HTTP scopes denied: `lifespan` passes, websockets are closed before
+  upstream, unknown scope types are not forwarded;
+- the runtime tree is byte-verified against the pinned commit before `serve`;
+  an offline or unverifiable tree is `HOST_BYTES_UNVERIFIED`, not a pass;
 - `HOST_BLOCKED` when the runtime, pin or dependencies are absent.
 
 `scripts/easel_host.py` is the only entry point. Running upstream `easel web`
@@ -96,6 +100,13 @@ Changing shared evidence invalidates both lines. Neither line inherits the
 other's approval, and the graphic line does not claim an HTML renderer, a
 WeChat draft or a platform publication.
 
+Enforcement: a handoff records the Bundle's logical path and digest; the graphic
+package builder re-reads the Bundle and refuses a stale handoff
+(`BUNDLE_CHANGED`, `HANDOFF_UNBOUND`); the video review records the digest and a
+changed Bundle revokes a written review (`review_revoked_reason`). A digest that
+is recorded but never re-checked is not an invariant, so neither line keeps one
+unexamined.
+
 ### D6 — Staged authorization
 
 This ADR authorizes code, offline tests, documentation and a guarded host
@@ -128,13 +139,16 @@ after this ADR's security acceptance. `HOST_BLOCKED` is the honest default.
 ## Acceptance
 
 - `python tests/test_easel_host_guard.py` passes and denies publish,
-  credential, settings, environment, delete and unknown routes before upstream.
+  credential, settings, environment, delete and unknown routes before upstream,
+  closes websocket scopes, and refuses an unverified runtime tree.
 - `python scripts/easel_host.py status` reports `HOST_BLOCKED` when the pinned
-  runtime or dependencies are absent.
+  runtime or dependencies are absent; `--verify-bytes` reports the content
+  comparison, and `serve` always performs it.
 - One valid Bundle produces separate VIDEO and GRAPHIC_TEXT handoffs; neither
-  carries publish authorization.
-- `python tests/test_graphic_workflow.py` passes with rights, path and image
-  refusals, and the graphic contract cannot borrow video stage names.
+  carries publish authorization, both name their Bundle bytes, and a handoff
+  whose Bundle changed is refused.
+- `python tests/test_graphic_workflow.py` passes with rights, path, stale-handoff
+  and image refusals, and the graphic contract cannot borrow video stage names.
 - `python scripts/dev_check.py` and CI pass; documentation states what has
   actually run.
 

@@ -19,12 +19,14 @@ from .handoff import (  # noqa: F401
     FORMATS,
     GRAPHIC_TEXT,
     HANDOFF_SCHEMA,
+    HOST_CAPABILITIES,
     VIDEO,
     HandoffError,
     build_handoff,
     bundle_digest,
     handoff_filename,
     load_bundle_for_handoff,
+    verify_bundle_unchanged,
     write_handoff,
 )
 
@@ -35,6 +37,7 @@ __all__ = [
     "FORMATS",
     "GRAPHIC_TEXT",
     "HANDOFF_SCHEMA",
+    "HOST_CAPABILITIES",
     "PRODUCTION_LANES",
     "VIDEO",
     "BundleError",
@@ -46,5 +49,6 @@ __all__ = [
     "load_bundle",
     "load_bundle_for_handoff",
     "validate_bundle",
+    "verify_bundle_unchanged",
     "write_handoff",
 ]

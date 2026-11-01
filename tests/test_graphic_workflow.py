@@ -282,6 +282,44 @@ def test_repo_path_cannot_escape_the_repository():
                 "alt": "escape", "rights": {}}]), ROOT, ROOT))
 
 
+def _bound_handoff(project: Path, bundle: dict) -> tuple[Path, Path]:
+    from contentops.content_kernel import bundle_digest
+
+    bundle_path = project / "bundle.json"
+    bundle_path.write_text(json.dumps(bundle), encoding="utf-8")
+    payload = json.loads(_handoff(project).read_text(encoding="utf-8"))
+    payload.update({
+        "bundle_sha256": bundle_digest(bundle),
+        "bundle_path": "bundle.json",
+        "bundle_scope": "project",
+    })
+    path = project / "bound-handoff.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    return path, bundle_path
+
+
+def test_a_stale_handoff_is_refused_by_the_package_step():
+    with tempfile.TemporaryDirectory() as tmp:
+        project = _project(Path(tmp))
+        bundle = {"bundle_id": "CB-1", "source": {"source_id": "SRC-1"}}
+        handoff, bundle_path = _bound_handoff(project, bundle)
+        build_package(project, handoff, _input(project), bundle_root=project)
+
+        bundle["source"]["topic_thesis"] = "Changed after the package was built."
+        bundle_path.write_text(json.dumps(bundle), encoding="utf-8")
+        _raises("BUNDLE_CHANGED",
+                lambda: build_package(project, handoff, _input(project),
+                                      bundle_root=project))
+
+
+def test_an_unbound_handoff_is_refused_when_a_bundle_root_is_given():
+    with tempfile.TemporaryDirectory() as tmp:
+        project = _project(Path(tmp))
+        _raises("HANDOFF_UNBOUND",
+                lambda: build_package(project, _handoff(project), _input(project),
+                                      bundle_root=project))
+
+
 TESTS = [value for name, value in sorted(globals().items())
          if name.startswith("test_") and callable(value)]
 

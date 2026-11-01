@@ -35,7 +35,8 @@ def main() -> int:
 
     try:
         package = build_package(Path(args.project), Path(args.handoff),
-                                Path(args.input), Path(args.registry_root), ROOT)
+                                Path(args.input), Path(args.registry_root), ROOT,
+                                bundle_root=ROOT)
         paths = write_package(Path(args.project), package, ROOT)
     except GraphicPackageError as exc:
         print(json.dumps({"ok": False, "state": "BLOCKED",

@@ -71,10 +71,12 @@ Owner 已决定把完整 Easel 系统作为生产底座（ADR-016）。本节只
 | 入口 | `scripts/easel_host.py status` / `serve` |
 | 本机 `status` 结果 | `HOST_BLOCKED` — `HOST_DEPENDENCY_MISSING:fastapi`、`HOST_DEPENDENCY_MISSING:uvicorn` |
 | 报告的固定版本 | v0.2.1 / `3fe2d99` |
+| 运行时字节 | `status --verify-bytes` → `VERIFIED`，982/982 blob（2026-11-02 实测）；`serve` 总是执行该比对 |
 | 监听 | 仅 `127.0.0.1` |
 | 方法 | `GET`、`HEAD`、`OPTIONS` |
+| Scope | `lifespan` 放行；websocket scope 在到达上游前关闭 |
 | 写操作 | 在到达上游前拒绝：发布、登录、凭据、设置、环境安装、删除 |
-| 门禁测试 | `python tests/test_easel_host_guard.py` — 9/9 |
+| 门禁测试 | `python tests/test_easel_host_guard.py` — 13/13 |
 | 宿主权限 | 不拥有批准、发布、Provider 花费或账号 |
 | 未做的事 | 未安装依赖、未读取凭据/profile、未登录账号、未启动宿主进程、未发布 |
 
@@ -84,10 +86,13 @@ Owner 已决定把完整 Easel 系统作为生产底座（ADR-016）。本节只
 |---|---|
 | 入口 | `scripts/bundle_handoff.py`、`src/contentops/content_kernel/handoff.py` |
 | 形式 | `VIDEO`（`contentops.copy-to-video/v1`）、`GRAPHIC_TEXT`（`contentops.copy-to-graphic/v1`） |
-| 测试 | `tests/test_bundle_two_formats.py` 10/10；`tests/test_graphic_workflow.py` 12/12；`tests/test_m5_bundle_handoff.py` 3/3 |
+| 测试 | `tests/test_bundle_two_formats.py` 14/14；`tests/test_graphic_workflow.py` 14/14；`tests/test_m5_bundle_handoff.py` 5/5 |
+| Bundle 绑定 | 每个 handoff 记录 `bundle_path`、`bundle_scope` 与 `bundle_sha256`；两条线的构建步骤重新读取 Bundle，`BUNDLE_CHANGED` / `HANDOFF_UNBOUND` 拒绝 |
+| 审核绑定 | 视频 `human-review.json` 记录 Bundle 摘要；Bundle 变更会以 `review_revoked_reason: BUNDLE_CHANGED` 撤销已写审核 |
+| 宿主能力 | handoff 只接受 `UNVERIFIED`；调用方不能用字符串自我提升 |
 | 视频接线 | `project.yaml` 的 `content_bundle` → `stage_bundle` 在 sources 之前写 `receipts/bundle-handoff-video.json` |
 | 图文包 | `scripts/graphic_package.py` 写 `receipts/graphic-package.json` + `graphic-preview.md`，状态 `AWAITING_MANUAL_REVIEW` |
-| 真实双线样例 | `projects/bundle-dual-line/` —— 同一 Bundle 产出 `bundle-dual-line-video` MP4（21.63 s，1080x1920，h264+AAC，QC `WARN`，`PENDING_FOUNDER_REVIEW`）与 `bundle-dual-line-graphic` 人工包（`AWAITING_MANUAL_REVIEW`） |
+| 真实双线样例 | `projects/bundle-dual-line/` —— 同一 Bundle 产出 `bundle-dual-line-video` MP4（22.47 s，1080x1920，h264+AAC，QC `WARN`，`PENDING_FOUNDER_REVIEW`）与 `bundle-dual-line-graphic` 人工包（`AWAITING_MANUAL_REVIEW`） |
 | 样例 Provider/网络 | 无；Windows SAPI 旁白 + 固定 Easel 合成；图文包未渲染、未建草稿 |
 | 发布 | 未实现；每个 handoff/包都携带 `publish_authorized: false` |
 

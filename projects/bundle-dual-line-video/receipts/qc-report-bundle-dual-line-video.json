@@ -4,7 +4,7 @@
   "project": "projects/bundle-dual-line-video",
   "graded_target": "project://final/bundle-dual-line-video.mp4",
   "overall": "WARN",
-  "checked_at": "2026-11-01T18:17:02Z",
+  "checked_at": "2026-11-01T19:13:00Z",
   "checks": [
     {
       "id": "_video",
@@ -16,7 +16,7 @@
       "id": "file_size",
       "ok": true,
       "severity": "PASS",
-      "value_bytes": 557425,
+      "value_bytes": 563107,
       "min_bytes": 102400
     },
     {
@@ -41,7 +41,7 @@
       "id": "duration_range",
       "ok": false,
       "severity": "WARN",
-      "value_sec": 21.63,
+      "value_sec": 22.47,
       "expected_range_sec": [
         30.0,
         120.0
@@ -120,7 +120,7 @@
       "ok": true,
       "severity": "PASS",
       "max_volume_db": "-3.8 dB",
-      "mean_volume_db": "-27.2 dB"
+      "mean_volume_db": "-27.4 dB"
     },
     {
       "id": "subtitle_burned_or_track",

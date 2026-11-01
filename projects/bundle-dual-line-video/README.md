@@ -9,7 +9,7 @@ wrote `receipts/bundle-handoff-video.json` before the sources stage.
 | Source mapping | `SRC-20261102-001 -> adr016` |
 | Narration | Windows SAPI, 22.443 s (offline, not production-grade voice) |
 | Composition | pinned Easel v0.2.1 via `assemble_easel.run` |
-| Output | `project://final/bundle-dual-line-video.mp4` — 21.63 s, 1080x1920, h264 + AAC |
+| Output | `project://final/bundle-dual-line-video.mp4` — 22.47 s, 1080x1920, h264 + AAC |
 | QC | `WARN` (duration range only), no FAIL |
 | Human review | `PENDING_FOUNDER_REVIEW` |
 | `production_ready` | `false` |

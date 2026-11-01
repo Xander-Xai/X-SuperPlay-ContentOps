@@ -3,6 +3,8 @@
   "video": "projects/bundle-dual-line-video/final/bundle-dual-line-video.mp4",
   "engine": "easel",
   "voice_quality": "windows_sapi_offline",
+  "bundle_id": "CB-20261102-001",
+  "bundle_sha256": "4836a1bfa3b1a3faaaec22486d9ae6804ccb7a56e498c0d0b86c0dffd60920c0",
   "production_ready": false,
   "state": "PENDING_FOUNDER_REVIEW",
   "auto_qc_result": "WARN",

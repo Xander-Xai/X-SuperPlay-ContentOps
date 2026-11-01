@@ -15,7 +15,12 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from contentops.content_kernel.handoff import GRAPHIC_TEXT, HANDOFF_SCHEMA
+from contentops.content_kernel.handoff import (
+    GRAPHIC_TEXT,
+    HANDOFF_SCHEMA,
+    HandoffError,
+    verify_bundle_unchanged,
+)
 from contentops.media.rights_gate import RightsError, validate_request_rights
 from contentops.publish.x_image import UndecodableImage, image_facts
 from contentops.workflow.contract import (
@@ -163,11 +168,19 @@ def _images(project: Path, raw: Any, repo_root: Optional[Path] = None) -> List[D
 
 def build_package(project_dir: Path, handoff_path: Path, input_path: Path,
                   registry_root: Optional[Path] = None,
-                  repo_root: Optional[Path] = None) -> Dict[str, Any]:
+                  repo_root: Optional[Path] = None,
+                  bundle_root: Optional[Path] = None) -> Dict[str, Any]:
     project = Path(project_dir).resolve()
     if not project.is_dir():
         raise GraphicPackageError("PROJECT_MISSING", project.as_posix())
     handoff = _load_handoff(Path(handoff_path))
+    if bundle_root is not None:
+        # The digest in a handoff is only a claim until the Bundle is re-read.
+        # A stale handoff must not be able to produce a package.
+        try:
+            verify_bundle_unchanged(handoff, repo_root=bundle_root, project_dir=project)
+        except HandoffError as exc:
+            raise GraphicPackageError(exc.code, exc.detail) from None
     try:
         data = json.loads(Path(input_path).read_text(encoding="utf-8"))
     except (OSError, ValueError) as exc:
@@ -202,6 +215,8 @@ def build_package(project_dir: Path, handoff_path: Path, input_path: Path,
         "schema": PACKAGE_SCHEMA,
         "bundle_id": handoff.get("bundle_id"),
         "bundle_sha256": handoff.get("bundle_sha256"),
+        "bundle_path": handoff.get("bundle_path"),
+        "bundle_scope": handoff.get("bundle_scope"),
         "account": handoff.get("account"),
         "handoff_sha256": hashlib.sha256(
             Path(handoff_path).read_bytes()).hexdigest(),

@@ -9,8 +9,10 @@ Run: python tests/test_bundle_two_formats.py
 
 from __future__ import annotations
 
+import atexit
 import copy
 import json
+import shutil
 import sys
 import tempfile
 from pathlib import Path
@@ -120,18 +122,23 @@ def _raises(code, fn):
     raise AssertionError(f"expected HandoffError {code}")
 
 
+_FIXTURE = Path(tempfile.mkdtemp(prefix="contentops-bundle-"))
+_BUNDLE_FILE = _FIXTURE / "bundle.json"
+_BUNDLE_FILE.write_text(json.dumps(_bundle()), encoding="utf-8")
+atexit.register(lambda: shutil.rmtree(_FIXTURE, ignore_errors=True))
+
+
+def _handoff(bundle=None, account="explorer", fmt=VIDEO, **kwargs):
+    kwargs.setdefault("project_slug", "p")
+    kwargs.setdefault("source_map", {"SRC-20261102-001": "SRC-1"})
+    return build_handoff(bundle if bundle is not None else _bundle(), account, fmt,
+                         bundle_path=_BUNDLE_FILE, project_dir=_FIXTURE, **kwargs)
+
+
 def test_one_bundle_builds_two_independent_handoffs():
     bundle = _bundle()
-    video = build_handoff(
-        bundle, "explorer", VIDEO,
-        project_slug="bundle-video",
-        source_map={"SRC-20261102-001": "SRC-RUNTIME-001"},
-    )
-    graphic = build_handoff(
-        bundle, "thinktank", GRAPHIC_TEXT,
-        project_slug="bundle-graphic",
-        source_map={"SRC-20261102-001": "SRC-RUNTIME-001"},
-    )
+    video = _handoff(bundle, "explorer", VIDEO, project_slug="bundle-video")
+    graphic = _handoff(bundle, "thinktank", GRAPHIC_TEXT, project_slug="bundle-graphic")
     assert video["bundle_sha256"] == graphic["bundle_sha256"] == bundle_digest(bundle)
     assert video["state"] == "READY_FOR_PRODUCTION"
     assert graphic["state"] == "READY_FOR_MANUAL_PACKAGE"
@@ -143,50 +150,78 @@ def test_one_bundle_builds_two_independent_handoffs():
     assert graphic["production_ready"] is False
 
 
+def test_handoff_names_the_bundle_bytes_it_was_built_from():
+    handoff = _handoff()
+    assert handoff["bundle_path"] == "bundle.json"
+    assert handoff["bundle_scope"] == "project"
+    assert handoff["bundle_sha256"] == bundle_digest(_bundle())
+    assert not Path(handoff["bundle_path"]).is_absolute()
+    assert ".." not in handoff["bundle_path"].split("/")
+
+
+def test_a_handoff_whose_bundle_changed_is_refused():
+    from contentops.content_kernel import verify_bundle_unchanged
+
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp) / "bundle.json"
+        bundle = _bundle()
+        path.write_text(json.dumps(bundle), encoding="utf-8")
+        handoff = build_handoff(
+            bundle, "explorer", VIDEO, project_slug="p",
+            source_map={"SRC-20261102-001": "SRC-1"},
+            bundle_path=path, project_dir=Path(tmp))
+        verify_bundle_unchanged(handoff, project_dir=Path(tmp))  # unchanged is fine
+
+        bundle["source"]["topic_thesis"] = "A different thesis after production."
+        path.write_text(json.dumps(bundle), encoding="utf-8")
+        _raises("BUNDLE_CHANGED",
+                lambda: verify_bundle_unchanged(handoff, project_dir=Path(tmp)))
+
+
+def test_a_mutated_bundle_dict_cannot_be_bound_to_a_file():
+    bundle = _bundle()
+    bundle["source"]["topic_thesis"] = "Mutated after the file was written."
+    _raises("BUNDLE_CHANGED", lambda: _handoff(bundle))
+
+
+def test_handoff_cannot_self_assert_a_host_capability():
+    _raises("HOST_CAPABILITY_UNSUPPORTED",
+            lambda: _handoff(host_capability="VERIFIED"))
+
+
 def test_unknown_account_is_refused():
-    _raises("ACCOUNT_TREATMENT_MISSING", lambda: build_handoff(
-        _bundle(), "different-account", VIDEO,
-        project_slug="p", source_map={"SRC-20261102-001": "SRC-1"}))
+    _raises("ACCOUNT_TREATMENT_MISSING", lambda: _handoff(
+        account="different-account"))
 
 
 def test_source_mapping_must_name_the_bundle_source():
-    _raises("SOURCE_MAP_INCOMPLETE", lambda: build_handoff(
-        _bundle(), "explorer", VIDEO,
-        project_slug="p", source_map={"SRC-OTHER": "SRC-1"}))
+    _raises("SOURCE_MAP_INCOMPLETE", lambda: _handoff(
+        source_map={"SRC-OTHER": "SRC-1"}))
 
 
 def test_source_mapping_cannot_be_a_path():
-    _raises("SOURCE_MAP_INVALID", lambda: build_handoff(
-        _bundle(), "explorer", VIDEO,
-        project_slug="p", source_map={"SRC-20261102-001": "../../etc/passwd"}))
+    _raises("SOURCE_MAP_INVALID", lambda: _handoff(
+        source_map={"SRC-20261102-001": "../../etc/passwd"}))
 
 
 def test_project_slug_cannot_escape():
-    _raises("PROJECT_SLUG_INVALID", lambda: build_handoff(
-        _bundle(), "explorer", VIDEO,
-        project_slug="../escape", source_map={"SRC-20261102-001": "SRC-1"}))
+    _raises("PROJECT_SLUG_INVALID", lambda: _handoff(project_slug="../escape"))
 
 
 def test_broken_bundle_invariant_is_refused():
     bundle = copy.deepcopy(_bundle())
     bundle["invariants"]["bundle_is_not_published_content"] = False
-    _raises("BUNDLE_INVALID", lambda: build_handoff(
-        bundle, "explorer", VIDEO,
-        project_slug="p", source_map={"SRC-20261102-001": "SRC-1"}))
+    _raises("BUNDLE_INVALID", lambda: _handoff(bundle))
 
 
 def test_video_bundle_cannot_target_an_editorial_platform():
-    _raises("PLATFORM_FORMAT_MISMATCH", lambda: build_handoff(
-        _bundle(), "explorer", VIDEO,
-        project_slug="p", source_map={"SRC-20261102-001": "SRC-1"},
-        platform_id="wechat_article", registry_root=ROOT))
+    _raises("PLATFORM_FORMAT_MISMATCH", lambda: _handoff(
+        fmt=VIDEO, platform_id="wechat_article", registry_root=ROOT))
 
 
 def test_planned_graphic_platform_is_a_named_blocker_not_an_execution():
-    handoff = build_handoff(
-        _bundle(), "explorer", GRAPHIC_TEXT,
-        project_slug="p", source_map={"SRC-20261102-001": "SRC-1"},
-        platform_id="wechat_article", registry_root=ROOT)
+    handoff = _handoff(fmt=GRAPHIC_TEXT, platform_id="wechat_article",
+                       registry_root=ROOT)
     assert handoff["state"] == "READY_FOR_MANUAL_PACKAGE"
     assert "PLATFORM_PLACEHOLDER" in handoff["blockers"]
     assert handoff["platform"]["status"] == "PLANNED"
@@ -194,19 +229,14 @@ def test_planned_graphic_platform_is_a_named_blocker_not_an_execution():
 
 
 def test_integrated_platform_still_stops_at_manual_package():
-    handoff = build_handoff(
-        _bundle(), "explorer", GRAPHIC_TEXT,
-        project_slug="p", source_map={"SRC-20261102-001": "SRC-1"},
-        platform_id="x", registry_root=ROOT)
+    handoff = _handoff(fmt=GRAPHIC_TEXT, platform_id="x", registry_root=ROOT)
     assert handoff["platform"]["status"] == "INTEGRATED"
     assert handoff["platform"]["delivery"] == "MANUAL_PACKAGE_ONLY"
     assert handoff["publish_authorized"] is False
 
 
 def test_handoff_writes_only_inside_the_project_receipts():
-    handoff = build_handoff(
-        _bundle(), "explorer", VIDEO,
-        project_slug="p", source_map={"SRC-20261102-001": "SRC-1"})
+    handoff = _handoff()
     with tempfile.TemporaryDirectory() as tmp:
         project = Path(tmp)
         target = write_handoff(project, handoff)

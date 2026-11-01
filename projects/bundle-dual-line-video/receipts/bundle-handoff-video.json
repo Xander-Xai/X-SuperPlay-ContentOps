@@ -2,6 +2,8 @@
   "schema": "contentops.bundle-handoff/v1",
   "bundle_id": "CB-20261102-001",
   "bundle_sha256": "4836a1bfa3b1a3faaaec22486d9ae6804ccb7a56e498c0d0b86c0dffd60920c0",
+  "bundle_path": "projects/bundle-dual-line/bundle.json",
+  "bundle_scope": "repo",
   "source_id": "SRC-20261102-001",
   "source_map": {
     "SRC-20261102-001": "adr016"
@@ -19,6 +21,6 @@
   "production_ready": false,
   "human_review": "NOT_STARTED",
   "publish_authorized": false,
-  "created_at": "2026-11-01T18:16:48Z",
+  "created_at": "2026-11-01T19:12:27Z",
   "note": "A handoff is a plan. It is not a produced work, a review or a publication."
 }

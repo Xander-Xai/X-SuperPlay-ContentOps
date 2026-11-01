@@ -66,6 +66,28 @@ A platform row in `config/registry/platforms.json` is **not** integration, and a
 Content Bundle is **not** publication. Adding either reopens none of the above
 (ADR-015).
 
+### 6.1 Manual delivery receipt (not implemented)
+
+A human publishes and a human records the result. The shape below is reserved so
+that later work has a place to write into; no code emits it yet, and no field may
+be inferred or defaulted to zero:
+
+```json
+{
+  "schema": "contentops.manual-delivery/v1",
+  "bundle_id": "CB-YYYYMMDD-NNN",
+  "platform_id": "douyin",
+  "url": null,
+  "published_at": null,
+  "recorded_by": null,
+  "checkpoints": {"T+2H": "unknown", "T+24H": "unknown",
+                  "T+72H": "unknown", "T+7D": "unknown"}
+}
+```
+
+A missing measurement is `"unknown"`, never `0`. A URL without a named recorder
+is not a delivery record. This is a placeholder, not a publishing capability.
+
 ## 7. Current Baseline
 
 Verified 2026-11-02 on `feat/106-easel-host-dual-line` (stacked on PR #101):

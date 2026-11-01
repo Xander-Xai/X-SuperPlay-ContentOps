@@ -134,6 +134,73 @@ def test_guard_marks_response_as_host_guarded():
     assert headers["cache-control"] == "no-store"
 
 
+def test_websocket_is_closed_before_upstream():
+    app = FakeApp()
+    guard = GuardMiddleware(app, HostPolicy())
+    sent: list = []
+
+    async def send(message):
+        sent.append(message)
+
+    async def receive():
+        return {"type": "websocket.connect"}
+
+    scope = {
+        "type": "websocket",
+        "path": "/api/publish/douyin",
+        "headers": [(b"host", b"evil.example")],
+    }
+    asyncio.run(guard(scope, receive, send))
+    assert app.calls == [], "a websocket must never reach the upstream app"
+    assert sent == [{"type": "websocket.close", "code": 1008}]
+
+
+def test_unknown_scope_is_not_forwarded():
+    app = FakeApp()
+    guard = GuardMiddleware(app, HostPolicy())
+    asyncio.run(guard({"type": "something-new", "path": "/"}, None, None))
+    assert app.calls == []
+
+
+def _fake_root(tmp: Path) -> Path:
+    (tmp / ".runtime" / "easel" / "web").mkdir(parents=True)
+    (tmp / ".runtime" / "easel" / "easel").mkdir(parents=True)
+    (tmp / ".runtime" / "easel" / "web" / "app.py").write_text("app = None\n", encoding="utf-8")
+    (tmp / ".runtime" / "easel" / "easel" / "cli.py").write_text("", encoding="utf-8")
+    (tmp / "runtime").mkdir()
+    (tmp / "runtime" / "easel.lock.json").write_text(
+        json.dumps({"tag": "v0.2.1", "commit": "3fe2d99"}), encoding="utf-8")
+    return tmp
+
+
+class FakeVerifier:
+    def __init__(self, status: str) -> None:
+        self.status = status
+
+    def verify(self, runtime_dir):
+        return {"status": self.status, "matched": 982, "reason": "fake"}
+
+
+def test_a_mismatched_runtime_blocks_the_host():
+    with tempfile.TemporaryDirectory() as tmp:
+        root = _fake_root(Path(tmp))
+        blocked = host_status(root, verify_bytes=True, verifier=FakeVerifier("MISMATCH"))
+        trusted = host_status(root, verify_bytes=True, verifier=FakeVerifier("VERIFIED"))
+        unchecked = host_status(root)
+    assert blocked["state"] == "HOST_BLOCKED"
+    assert "HOST_BYTES_MISMATCH" in blocked["blockers"]
+    assert blocked["bytes"]["state"] == "MISMATCH"
+    assert not any(item.startswith("HOST_BYTES_") for item in trusted["blockers"])
+    assert unchecked["bytes"]["state"] == "NOT_CHECKED"
+
+
+def test_an_unreachable_verifier_is_not_a_pass():
+    with tempfile.TemporaryDirectory() as tmp:
+        root = _fake_root(Path(tmp))
+        status = host_status(root, verify_bytes=True, verifier=FakeVerifier("UNVERIFIED"))
+    assert "HOST_BYTES_UNVERIFIED" in status["blockers"]
+
+
 def test_host_status_blocks_a_missing_runtime():
     with tempfile.TemporaryDirectory() as tmp:
         status = host_status(Path(tmp))

@@ -5,7 +5,7 @@ draft, HTML render or publication.
 
 | File | Meaning |
 |---|---|
-| `receipts/bundle-handoff-graphic_text.json` | the hash-bound handoff |
+| `receipts/bundle-handoff-graphic_text.json` | the hash-bound handoff, naming the Bundle path and digest it was built from |
 | `receipts/graphic-package.json` | draft, image facts, rights record, blockers, review state |
 | `receipts/graphic-preview.md` | human-readable preview |
 | `workflow.json` | `contentops.copy-to-graphic/v1`; every stage still `pending` |

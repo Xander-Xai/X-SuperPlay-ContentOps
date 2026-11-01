@@ -28,6 +28,9 @@ READY_VIDEO = "READY_FOR_PRODUCTION"
 READY_GRAPHIC = "READY_FOR_MANUAL_PACKAGE"
 SLUG = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,80}$")
 IDENTIFIER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,120}$")
+#: A host capability is either unproven or proven by a separate approval. This
+#: module accepts only the first, so a caller cannot promote itself with a string.
+HOST_CAPABILITIES = ("UNVERIFIED",)
 
 
 class HandoffError(ValueError):
@@ -82,6 +85,85 @@ def _identifier_ok(value: str) -> bool:
     return bool(IDENTIFIER.match(value))
 
 
+def _bind_bundle(bundle: Dict[str, Any], path: Any, repo_root: Optional[Path],
+                 project_dir: Optional[Path]) -> Tuple[str, str]:
+    """Record where the Bundle bytes live, and prove they are the bytes read.
+
+    Only a logical, scope-tagged path is stored: a receipt must never carry an
+    absolute host path. The digest is recomputed from the file, so a caller that
+    loaded and then mutated a dict cannot bind it.
+    """
+    if path is None:
+        raise HandoffError("BUNDLE_PATH_REQUIRED",
+                           "a handoff must name the Bundle file it was built from")
+    candidate = Path(path)
+    if not candidate.is_absolute():
+        for base in (project_dir, repo_root):
+            if base is not None and (Path(base) / candidate).is_file():
+                candidate = Path(base) / candidate
+                break
+    candidate = candidate.resolve()
+
+    scope = ""
+    relative = ""
+    for name, base in (("repo", repo_root), ("project", project_dir)):
+        if base is None:
+            continue
+        try:
+            relative = candidate.relative_to(Path(base).resolve()).as_posix()
+            scope = name
+            break
+        except ValueError:
+            continue
+    if not scope:
+        raise HandoffError("BUNDLE_PATH_INVALID",
+                           "the Bundle must live inside the project or the repository")
+
+    try:
+        current = load_bundle(candidate)
+    except BundleError as exc:
+        raise HandoffError("BUNDLE_MISSING", f"{relative}: {exc.detail}") from None
+    if bundle_digest(current) != bundle_digest(bundle):
+        raise HandoffError("BUNDLE_CHANGED",
+                           "the Bundle file changed after it was read; rebuild the handoff")
+    return relative, scope
+
+
+def verify_bundle_unchanged(handoff: Dict[str, Any], *,
+                            repo_root: Optional[Path] = None,
+                            project_dir: Optional[Path] = None) -> Dict[str, Any]:
+    """Re-read the Bundle a handoff names and refuse if its bytes moved.
+
+    The digest recorded in a handoff is only useful if something checks it. This
+    is that check: a handoff whose Bundle changed is stale, and a stale handoff
+    must not produce a package or an approval.
+    """
+    relative = handoff.get("bundle_path")
+    scope = handoff.get("bundle_scope")
+    if not isinstance(relative, str) or not relative or scope not in ("repo", "project"):
+        raise HandoffError("HANDOFF_UNBOUND",
+                           "the handoff does not name the Bundle bytes it was built from")
+    if relative.startswith("/") or ".." in relative.split("/"):
+        raise HandoffError("BUNDLE_PATH_INVALID", f"{relative!r} must be a safe relative path")
+    base = repo_root if scope == "repo" else project_dir
+    if base is None:
+        raise HandoffError("BUNDLE_PATH_INVALID",
+                           f"cannot resolve a {scope}-scoped Bundle without its root")
+    path = (Path(base) / relative).resolve()
+    root = Path(base).resolve()
+    if root not in path.parents:
+        raise HandoffError("BUNDLE_PATH_INVALID", f"{relative!r} resolves outside {scope} root")
+    try:
+        bundle = load_bundle(path)
+    except BundleError as exc:
+        raise HandoffError("BUNDLE_MISSING", f"{relative}: {exc.detail}") from None
+    if bundle_digest(bundle) != handoff.get("bundle_sha256"):
+        raise HandoffError("BUNDLE_CHANGED",
+                           f"{relative} changed after this handoff was written; "
+                           "rebuild the handoff before producing anything")
+    return bundle
+
+
 def _platform(registry_root: Optional[Path], platform_id: Optional[str],
               content_format: str) -> Optional[Dict[str, Any]]:
     if not platform_id:
@@ -123,6 +205,9 @@ def build_handoff(
     *,
     project_slug: str,
     source_map: Dict[str, str],
+    bundle_path: Path,
+    repo_root: Optional[Path] = None,
+    project_dir: Optional[Path] = None,
     platform_id: Optional[str] = None,
     registry_root: Optional[Path] = None,
     host_capability: str = "UNVERIFIED",
@@ -133,6 +218,12 @@ def build_handoff(
         raise HandoffError("BUNDLE_INVALID", "; ".join(failures))
     if content_format not in FORMATS:
         raise HandoffError("FORMAT_UNKNOWN", f"{content_format!r} is not one of {list(FORMATS)}")
+    if host_capability not in HOST_CAPABILITIES:
+        raise HandoffError(
+            "HOST_CAPABILITY_UNSUPPORTED",
+            f"{host_capability!r} is a self-assertion; only {list(HOST_CAPABILITIES)} "
+            "is accepted until a separate host verification is recorded",
+        )
     treatments = bundle.get("account_treatments") or {}
     treatment = treatments.get(account)
     if not isinstance(treatment, dict):
@@ -145,6 +236,7 @@ def build_handoff(
         raise HandoffError("SOURCE_MAP_INCOMPLETE",
                            f"source_map must include the Bundle source {source_id!r}")
     slug = _safe_slug(project_slug)
+    bundle_relative, bundle_scope = _bind_bundle(bundle, bundle_path, repo_root, project_dir)
     platform = _platform(registry_root, platform_id, content_format)
 
     blockers: List[str] = []
@@ -158,6 +250,8 @@ def build_handoff(
         "schema": HANDOFF_SCHEMA,
         "bundle_id": bundle.get("bundle_id"),
         "bundle_sha256": bundle_digest(bundle),
+        "bundle_path": bundle_relative,
+        "bundle_scope": bundle_scope,
         "source_id": source_id,
         "source_map": {key: mapping[key] for key in sorted(mapping)},
         "account": account,

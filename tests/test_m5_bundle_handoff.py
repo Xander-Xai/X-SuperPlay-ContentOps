@@ -114,6 +114,8 @@ def test_valid_bundle_writes_a_video_handoff():
         saved = json.loads((project / stage["handoff"]).read_text(encoding="utf-8"))
         assert saved["content_format"] == "VIDEO"
         assert saved["source_map"] == {"SRC-20261102-002": "SRC-RUNTIME-002"}
+        assert saved["bundle_path"] == "bundle.json"
+        assert saved["bundle_scope"] == "project"
         assert saved["publish_authorized"] is False
 
 
@@ -133,6 +135,49 @@ def test_broken_source_mapping_blocks_video():
             assert "SOURCE_MAP_INCOMPLETE" in str(exc)
         else:
             raise AssertionError("a wrong source map must block the video run")
+
+
+def test_a_bundle_change_revokes_the_existing_review():
+    with tempfile.TemporaryDirectory(dir=ROOT / "projects") as tmp:
+        project = Path(tmp)
+        (project / "receipts").mkdir()
+        (project / "receipts" / "human-review.json").write_text(json.dumps({
+            "project": "p",
+            "reviewer": "Xander",
+            "reviewed_at": "2026-11-02",
+            "decision": "SHIP",
+            "bundle_sha256": "a" * 64,
+        }), encoding="utf-8")
+        review = m5_production.stage_review(
+            project, "bundle-video",
+            {"report": {"overall": "WARN", "checks": []}},
+            bundle={"bundle_id": "CB-1", "bundle_sha256": "b" * 64},
+        )
+        saved = json.loads((project / "receipts" / "human-review.json")
+                           .read_text(encoding="utf-8"))
+    assert review["state"] == "PENDING_FOUNDER_REVIEW"
+    assert review["production_ready"] is False
+    assert review["review_revoked_reason"] == "BUNDLE_CHANGED"
+    assert review["revoked_review"]["reviewer"] == "Xander"
+    assert saved["reviewer"] is None
+
+
+def test_an_unchanged_bundle_keeps_no_revocation_marker():
+    with tempfile.TemporaryDirectory(dir=ROOT / "projects") as tmp:
+        project = Path(tmp)
+        (project / "receipts").mkdir()
+        same = "c" * 64
+        (project / "receipts" / "human-review.json").write_text(json.dumps({
+            "project": "p", "reviewer": "Xander", "decision": "SHIP",
+            "bundle_sha256": same,
+        }), encoding="utf-8")
+        review = m5_production.stage_review(
+            project, "bundle-video",
+            {"report": {"overall": "WARN", "checks": []}},
+            bundle={"bundle_id": "CB-1", "bundle_sha256": same},
+        )
+    assert "review_revoked_reason" not in review
+    assert review["bundle_sha256"] == same
 
 
 TESTS = [value for name, value in sorted(globals().items())

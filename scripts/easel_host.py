@@ -29,12 +29,15 @@ def main() -> int:
     sub = parser.add_subparsers(dest="command", required=True)
     status = sub.add_parser("status", help="report whether the pinned host can be served")
     status.add_argument("--json", action="store_true")
+    status.add_argument("--verify-bytes", action="store_true",
+                        help="also compare the runtime tree with the pinned upstream commit "
+                             "(needs gh and network; serve always does this)")
     run = sub.add_parser("serve", help="serve the guarded host on 127.0.0.1")
     run.add_argument("--port", type=int, default=DEFAULT_PORT)
     args = parser.parse_args()
 
     if args.command == "status":
-        payload = host_status(ROOT)
+        payload = host_status(ROOT, verify_bytes=args.verify_bytes)
         print(json.dumps(payload, ensure_ascii=False, indent=2))
         return 0 if payload["state"] == "HOST_READY" else 4
 

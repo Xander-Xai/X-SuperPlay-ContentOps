@@ -2,8 +2,10 @@
   "schema": "contentops.graphic-package/v1",
   "bundle_id": "CB-20261102-001",
   "bundle_sha256": "4836a1bfa3b1a3faaaec22486d9ae6804ccb7a56e498c0d0b86c0dffd60920c0",
+  "bundle_path": "projects/bundle-dual-line/bundle.json",
+  "bundle_scope": "repo",
   "account": "explorer",
-  "handoff_sha256": "7c2cf4d762aca730f4b104535e2bace3cb850b505242d6ef80835303283326a4",
+  "handoff_sha256": "713b1ebf4eec908a8183aa87d7b645a003dcade61c32fc94e8ffa15119175405",
   "title": "接管 Easel 宿主，先接管它的边界",
   "platform": {
     "platform_id": "wechat_article",

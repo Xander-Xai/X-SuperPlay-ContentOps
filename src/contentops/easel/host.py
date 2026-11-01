@@ -44,7 +44,53 @@ def _pin(root: Path) -> Dict[str, Any]:
     return payload if isinstance(payload, dict) else {}
 
 
-def host_status(root: Path) -> Dict[str, Any]:
+def _load_verifier(root: Path):
+    """Import the pinned-runtime verifier without making it a package dependency."""
+    root = Path(root).resolve()
+    script = root / "scripts" / "verify_easel_runtime.py"
+    if not script.is_file():
+        raise HostError("HOST_VERIFIER_MISSING", script.as_posix())
+    scripts_dir = str(script.parent)
+    if scripts_dir not in sys.path:
+        sys.path.insert(0, scripts_dir)
+    spec = importlib.util.spec_from_file_location("contentops_pinned_runtime_verifier", script)
+    if spec is None or spec.loader is None:
+        raise HostError("HOST_VERIFIER_UNLOADABLE", script.as_posix())
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def verify_runtime_bytes(root: Path, verifier: Any = None) -> Dict[str, Any]:
+    """Compare the local runtime tree with upstream at the pinned commit.
+
+    A presence check is not identity: only a byte comparison says the code about
+    to be imported is the code the lock names. ``UNVERIFIABLE`` (offline, no
+    ``gh``) is not a pass.
+    """
+    root = Path(root)
+    try:
+        module = verifier or _load_verifier(root)
+    except Exception as exc:  # noqa: BLE001 - a missing verifier blocks the host
+        return {"state": "UNVERIFIABLE", "detail": f"{type(exc).__name__}: {exc}"}
+    try:
+        result = module.verify(root / ".runtime" / "easel")
+    except Exception as exc:  # noqa: BLE001 - never turn a crash into a pass
+        return {"state": "UNVERIFIABLE", "detail": f"{type(exc).__name__}: {exc}"}
+    state = str(result.get("status") or "UNVERIFIED")
+    payload = {
+        "state": state,
+        "matched": result.get("matched"),
+        "expected_commit": result.get("expected_commit"),
+        "detail": result.get("reason") or "",
+    }
+    if state == "VERIFIED":
+        payload["detail"] = ""
+    return payload
+
+
+def host_status(root: Path, *, verify_bytes: bool = False,
+                verifier: Any = None) -> Dict[str, Any]:
     """Report whether the pinned host can be served, without starting it."""
     root = Path(root)
     blockers = []
@@ -59,11 +105,18 @@ def host_status(root: Path) -> Dict[str, Any]:
         if importlib.util.find_spec(module) is None:
             blockers.append(f"HOST_DEPENDENCY_MISSING:{module}")
 
+    bytes_result: Dict[str, Any] = {"state": "NOT_CHECKED"}
+    if verify_bytes and (root / HOST_APP).is_file():
+        bytes_result = verify_runtime_bytes(root, verifier)
+        if bytes_result["state"] != "VERIFIED":
+            blockers.append(f"HOST_BYTES_{bytes_result['state']}")
+
     return {
         "schema": "contentops.easel-host/v1",
         "state": "HOST_BLOCKED" if blockers else "HOST_READY",
         "blockers": blockers,
         "pin": {"tag": lock.get("tag"), "commit": lock.get("commit")},
+        "bytes": bytes_result,
         "app": (root / HOST_APP).relative_to(root).as_posix() if (root / HOST_APP).is_file() else HOST_APP.as_posix(),
         "bind_host": BIND_HOST,
         "default_port": DEFAULT_PORT,
@@ -97,9 +150,10 @@ def load_upstream_app(root: Path):
     return app
 
 
-def serve(root: Path, port: int = DEFAULT_PORT, policy: Optional[HostPolicy] = None) -> None:
+def serve(root: Path, port: int = DEFAULT_PORT, policy: Optional[HostPolicy] = None,
+          verifier: Any = None) -> None:
     """Serve the guarded host on loopback. This function blocks."""
-    status = host_status(root)
+    status = host_status(root, verify_bytes=True, verifier=verifier)
     if status["state"] != "HOST_READY":
         raise HostError("HOST_BLOCKED", ", ".join(status["blockers"]))
     if not isinstance(port, int) or not 1 <= port <= 65535:

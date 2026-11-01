@@ -137,6 +137,11 @@ content_bundle:
 M5 会在 sources 阶段之前写 `receipts/bundle-handoff-video.json`。来源映射缺失或
 不匹配会阻断运行；`PLANNED` 平台只记录交付阻断，不阻断视频生产。
 
+每个 handoff 都记录 Bundle 的逻辑路径、作用域与 SHA-256，两条线的构建步骤都会
+重新核对：Bundle 已变更时以 `BUNDLE_CHANGED` 拒绝，未记录 Bundle 时以
+`HANDOFF_UNBOUND` 拒绝。改动 Bundle 后必须重建 handoff。Bundle 必须位于项目或
+仓库之内，因此从 Strategy 检出复制来的文件以相对路径记录，绝不写绝对路径。
+
 单独生成 handoff（不生产、不发布）：
 
 ```powershell
@@ -170,11 +175,16 @@ python scripts\graphic_package.py `
 
 ```powershell
 python scripts\easel_host.py status
+python scripts\easel_host.py status --verify-bytes
 ```
 
+`--verify-bytes` 增加内容比对：按 git 方式对运行时树做哈希，并通过 `gh` 与锁定
+提交比较。它需要网络与 `gh`；两者缺失时结果为 `HOST_BYTES_UNVERIFIED`，这不是
+通过。`serve` 总是执行该比对，因此离线或已被修改的树无法启动。
+
 在 FastAPI/uvicorn 存在且宿主安全审查记录之前，`HOST_BLOCKED` 是预期结果。
-`serve` 只监听 `127.0.0.1` 并拒绝所有写操作；**不要**直接运行上游 `easel web`
-或 `web/app.py`。见 ADR-016。
+`serve` 只监听 `127.0.0.1`、拒绝所有写操作，并在到达上游前关闭 websocket
+scope；**不要**直接运行上游 `easel web` 或 `web/app.py`。见 ADR-016。
 
 ## 6. 开发门控
 

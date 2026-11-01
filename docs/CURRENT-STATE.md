@@ -67,10 +67,12 @@ a verified integration yet.
 | Entry point | `scripts/easel_host.py status` / `serve` |
 | `status` result on this machine | `HOST_BLOCKED` — `HOST_DEPENDENCY_MISSING:fastapi`, `HOST_DEPENDENCY_MISSING:uvicorn` |
 | Pin reported | v0.2.1 / `3fe2d99` |
+| Runtime bytes | `status --verify-bytes` → `VERIFIED`, 982/982 blobs (run 2026-11-02); `serve` always performs this comparison |
 | Bind | `127.0.0.1` only |
 | Methods | `GET`, `HEAD`, `OPTIONS` |
+| Scopes | `lifespan` passes; websocket scopes are closed before upstream |
 | Mutations | denied before upstream: publish, login, credentials, settings, env install, delete |
-| Guard tests | `python tests/test_easel_host_guard.py` — 9/9 |
+| Guard tests | `python tests/test_easel_host_guard.py` — 13/13 |
 | Host authority | none over approval, publication, provider spend or accounts |
 | What was not done | no dependency install, no credential/profile read, no account login, no host process started, no publication |
 
@@ -80,10 +82,13 @@ a verified integration yet.
 |---|---|
 | Handoff entry | `scripts/bundle_handoff.py`, `src/contentops/content_kernel/handoff.py` |
 | Formats | `VIDEO` (`contentops.copy-to-video/v1`), `GRAPHIC_TEXT` (`contentops.copy-to-graphic/v1`) |
-| Tests | `tests/test_bundle_two_formats.py` 10/10; `tests/test_graphic_workflow.py` 12/12; `tests/test_m5_bundle_handoff.py` 3/3 |
+| Tests | `tests/test_bundle_two_formats.py` 14/14; `tests/test_graphic_workflow.py` 14/14; `tests/test_m5_bundle_handoff.py` 5/5 |
+| Bundle binding | every handoff records `bundle_path`, `bundle_scope` and `bundle_sha256`; both builders re-read the Bundle and refuse `BUNDLE_CHANGED` / `HANDOFF_UNBOUND` |
+| Review binding | video `human-review.json` records the Bundle digest; a changed Bundle revokes a written review with `review_revoked_reason: BUNDLE_CHANGED` |
+| Host capability | handoffs accept only `UNVERIFIED`; a caller cannot promote itself with a string |
 | Video wiring | `project.yaml` `content_bundle` → `stage_bundle` writes `receipts/bundle-handoff-video.json` before sources |
 | Graphic package | `scripts/graphic_package.py` writes `receipts/graphic-package.json` + `graphic-preview.md`, status `AWAITING_MANUAL_REVIEW` |
-| Real dual-line sample | `projects/bundle-dual-line/` — one Bundle, `bundle-dual-line-video` MP4 (21.63 s, 1080x1920, h264+AAC, QC `WARN`, `PENDING_FOUNDER_REVIEW`) and `bundle-dual-line-graphic` manual package (`AWAITING_MANUAL_REVIEW`) |
+| Real dual-line sample | `projects/bundle-dual-line/` — one Bundle, `bundle-dual-line-video` MP4 (22.47 s, 1080x1920, h264+AAC, QC `WARN`, `PENDING_FOUNDER_REVIEW`) and `bundle-dual-line-graphic` manual package (`AWAITING_MANUAL_REVIEW`) |
 | Sample provider/network | none; Windows SAPI narration + pinned Easel compose; graphic package made no render or draft |
 | Publication | not implemented; every handoff/package carries `publish_authorized: false` |
 
@@ -170,7 +175,7 @@ unverified, not failed.
 | `projects/m5-media-use/` | M5 evidence chain with the media-use sample | final MP4, QC WARN, `PENDING_FOUNDER_REVIEW` |
 | `projects/m5-easel-pin/` | First M5 evidence-chain run | QC PASS (19 checks), real-source ratio 1.0 |
 | `projects/m45-technical-integration/` | M4.5 media convergence | QC WARN, zero provider calls |
-| `projects/bundle-dual-line/` | One Content Bundle, two independent outputs | video 21.63 s QC WARN / `PENDING_FOUNDER_REVIEW`; graphic `AWAITING_MANUAL_REVIEW`; 0 publications |
+| `projects/bundle-dual-line/` | One Content Bundle, two independent outputs | video 22.47 s QC WARN / `PENDING_FOUNDER_REVIEW`; graphic `AWAITING_MANUAL_REVIEW`; 0 publications |
 
 ## Tests
 
