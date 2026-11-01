@@ -60,6 +60,7 @@ translation_status: synced
 - [adr/ADR-010-trusted-grant-execution-gate.md](adr/ADR-010-trusted-grant-execution-gate.md)
 - [adr/ADR-012-convergence-decisions.md](adr/ADR-012-convergence-decisions.md) —— 收敛决策 D1–D6（2026-11-01）。ADR-011 由未合并的 `feat/content-router` 分支预留
 - [adr/ADR-013-media-use-mutating-authorization-proposal.md](adr/ADR-013-media-use-mutating-authorization-proposal.md) — **仅提案**：写操作授权与幂等性（不修改执行权限）
+- [adr/ADR-014-delivery-validation-hold.md](adr/ADR-014-delivery-validation-hold.md) —— P2 扩展暂停七天（2026-11-01 → 2026-11-07），以完成第一次真实交付
 
 ## 事实优先级
 

@@ -21,6 +21,7 @@ Founder (Xander-Xai) — needs high-quality video from real work with minimum ma
 ## 4. Jobs-to-be-Done
 
 - Convert any business repo's work into a publishable video
+- Convert the same work into a publishable graphic post without redoing the evidence work
 - Use MiniMax subscription for voice/image/video generation (when verified)
 - Maintain evidence-first integrity (no fabricated claims)
 - Produce complete receipts for audit
@@ -28,9 +29,31 @@ Founder (Xander-Xai) — needs high-quality video from real work with minimum ma
 
 ## 5. Product Goal
 
-A unified ContentOps Runtime that any Xander-Xai business repo can call to produce high-quality, traceable, publishable video.
+A content production system any Xander-Xai business repo can call to turn real work into
+traceable, platform-ready content — through **two production lines that share the
+evidence and review machinery, then diverge into their own production flow**:
+
+| Line | Produces | Targets |
+|---|---|---|
+| **Video** | MP4, cover, title, description, tags | 抖音, 视频号, B站 |
+| **Graphic** | Markdown / HTML, image set, preview | X, 小红书, 公众号, 知乎 |
+
+Both lines share: account positioning, topic selection, `SourceArtifact` evidence,
+`ClaimLedger` claims, the rights check, and the same review principles. They diverge
+earlier than the render step — a video script and a graphic outline are already different
+objects, and a video needs voice, storyboard and composition while a post does not.
+Review principles are shared; **each line's artifact is approved separately**.
+
+Content form and delivery target are separate axes. 小红书 and X can carry video; B站 can
+carry graphic posts. Lines are split by **content form** for the first phase; platform
+adapters stay reusable across forms. Do not split the repository by platform.
+
+**Every platform delivery is manual.** The system stops at a reviewable delivery package
+and a receipt; a human publishes and a human records the URL. See §6.
 
 ## 6. Non-goals (current phase)
+
+These hold for the dual-track scope in §5 as well. Adding a graphic line does not reopen them.
 
 - Auto-publishing to any platform
 - Comment scraping / ROI agent
@@ -50,10 +73,11 @@ Verified 2026-11-01 on `main` (PR #89):
   pinned Easel adapter.
 - Media layer implemented: MiniMax speech/image/H3, media convergence, media-use
   adapter, billing/quota gates, rights gate.
-- 31 test suites (704 top-level `test_*` functions plus list-driven and
-  unittest-style suites).
-- Account-aware content router, account DNA, workflow gates, XHS, X and GZH are
-  **unmerged** (PR #49 and other branches).
+- Every suite under `tests/test_*.py` is wired into CI. The count is not asserted
+  here; read it with `git ls-files 'tests/test_*.py' | wc -l`.
+- Account-aware content router: slices S1 (#93, workflow stage gate) and S2 (#95,
+  source-candidate contract) are on `main`; S3–S4 remain open in Issue #94. XHS and
+  GZH remain unmerged and rights-blocked.
 - Voice: edge-tts (V1) and Windows SAPI (M5); neither is production-grade.
 - 0 published videos; every result is `PENDING_FOUNDER_REVIEW`.
 

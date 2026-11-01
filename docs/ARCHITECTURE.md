@@ -39,6 +39,58 @@ FFmpeg / deterministic tools
 = Rendering / Media Utilities
 ```
 
+## Production Lines
+
+Two lines share the evidence and review machinery, then diverge into their own
+production flow. They diverge before the render step: a video script and a graphic
+outline are already different objects.
+
+```text
+               shared
+    account positioning → topic → Brief
+                  │
+        SourceArtifact + ClaimLedger          (permission-aware evidence)
+                  │
+            rights check (Rights Gate)
+                  │
+        ┌─────────┴─────────┐
+        │                   │
+   VIDEO LINE          GRAPHIC LINE
+   script              outline / draft
+   storyboard          platform adapt
+   voice / subtitles   images / cards
+   compose (Easel)     layout (HTML/MD)
+   video QC            graphic QC
+        │                   │
+        └─────────┬─────────┘
+                  │
+          human review gate
+                  │
+        delivery package + receipt
+                  │
+     ┌────────────┴────────────┐
+  抖音 · 视频号 · B站        X · 小红书 · 公众号 · 知乎
+                  │
+        owner publishes by hand
+                  │
+        owner records the URL
+```
+
+Rules:
+
+1. **One evidence layer.** Both lines read the same `SourceArtifact` and `ClaimLedger`.
+   A corrected claim invalidates both lines' outputs, not just one.
+2. **The video line is `contentops.copy-to-video/v1`.** Its stages (`script → audio →
+   storyboard → assets → compose → quality`) are video-specific on purpose and are not
+   renamed to look general.
+3. **The graphic line does not reuse those stages.** Audio and storyboard have no meaning
+   for an article. It defines its own shorter stage list and reuses the gate's existing
+   checks — ordering, fingerprint invalidation, human approval — rather than forking them.
+4. **Platform adapters are delivery, not production.** A platform never gets its own
+   production engine. See §What ContentOps Does NOT Own.
+5. **Shared engine extraction is earned, not assumed.** A common abstraction over the two
+   lines is justified only when real duplicated code exists in both.
+
 ## Branch Layers
 
 The repository is mid-convergence. A component is only "part of the system" if it
@@ -48,10 +100,10 @@ is on `main`.
 |---|---|---|
 | M5 evidence chain, media, QC, skill router/authorization | `main` (PR #89) | implemented |
 | X post gate, growth→editorial gate | `main` (PRs #87, #88) | implemented |
-| Account-aware content router, workflow gates, brief/script/design stages | `feat/content-router` (PR #49) | **unmerged** |
+| Account-aware content router, workflow gates, brief/script/design stages | `main` (S1 #93, S2 #95) + Issue #94 for S3–S4 | **partial** — the account/brief front-end and stage gate are on `main`; remaining stages are sliced |
 | XHS eight-step workflow | `feat/xhs-fa-migration` | **unmerged** |
-| X platform track (migrated records, prompt references, table gate) | `feat/47-x-platform-track` (PR #50) | **unmerged** |
-| GZH ten-stage vendored workflow | local `vendor/` + `fix/56-gzh-provenance` (PR #58) | **unmerged / rights-blocked** |
+| X platform track (migrated records, prompt references, table gate) | Issue #47 (PR #50 closed as superseded) | **unmerged** |
+| GZH ten-stage vendored workflow | local `vendor/` + Issue #56 | **unmerged / rights-blocked** |
 
 [CONVERGENCE-REQUIREMENTS-2026-11-01.md](CONVERGENCE-REQUIREMENTS-2026-11-01.md)
 defines the merge order. A skill that references an unmerged layer is declared

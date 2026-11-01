@@ -35,12 +35,12 @@ translation_status: synced
 | media-use 适配器（HyperFrames） | `main` | 已实现；仅本地、零联网/零付费。需要主机运行时锁 —— 默认判定为 `BLOCKED / MISSING_RUNTIME` |
 | MiniMax 媒体 | `main` | 语音、图片、H3 视频已实现；已验证子集见 CURRENT-STATE；`PENDING_FOUNDER_REVIEW` |
 | Skill 路由 / 执行授权 | `main` | 已实现；仅 `media-use` 是已声明能力；路由器从不授予执行权 |
-| 内容路由、账号 DNA、工作流门禁 | **未合并** | `feat/content-router`（PR #49，草稿）—— 不在 `main` |
-| 公众号 | **未合并 / 本地 vendor** | vendored 十阶段工作流；溯源/权利修复为 PR #58（#56） |
+| 内容路由、账号 DNA、工作流门禁 | **部分** | S1（#93，阶段门禁）与 S2（#95，素材候选契约）已在 `main`；S3–S4 在 Issue #94 中开放 |
+| 公众号 | **未合并 / 本地 vendor** | vendored 十阶段工作流；溯源/权利审查在 Issue #56 中开放 |
 | 小红书图文 | **未合并** | `feat/xhs-fa-migration`；仅人工上传 |
-| X | **部分** | 发帖门禁与 growth→编辑门禁已在 `main`（PR #87、#88）；迁移后的平台轨道仍为 PR #50 |
+| X | **部分** | 发帖门禁与 growth→编辑门禁已在 `main`（PR #87、#88）；平台轨道的其余部分在 Issue #47 中跟踪 |
 | 自动发布 | — | **不在范围内** |
-| 测试 | `main` | 31 个套件；见 [docs/TEST-PLAN.md](docs/TEST-PLAN.md)；统一门禁 `python scripts/dev_check.py` |
+| 测试 | `main` | `tests/test_*.py` 下每个套件都接入 CI；此处不声明数量；见 [docs/TEST-PLAN.md](docs/TEST-PLAN.md)；统一门禁 `python scripts/dev_check.py` |
 | 生产就绪 | — | **否** —— 没有任何轨道达到 `PRODUCTION_ACCEPTED` |
 
 ### 分支现实
@@ -49,9 +49,10 @@ translation_status: synced
 已作为 PR #89 合入，随后是 PR #87 与 PR #88。原集成分支
 `fix/57-m5-media-fixtures` 已合并，远端分支已删除。
 
-仍**不在** `main` 上的内容见上表，并由这些开放 PR 跟踪：内容路由（#49）、X 平台
-轨道（#50）、公众号溯源修复（#58）、receipt 基线修复（#62）、media-use 合并前
-ADR（#90）。
+仍**不在** `main` 上的内容见上表。曾经跟踪它们的草稿 PR 已按 Issue #94 的切片流程
+以「被取代」关闭：内容路由（#49）、X 平台轨道（#50）、公众号溯源修复（#58）。
+receipt 基线修复（#62）与 media-use 合并前 ADR（#90）已合并。
+截至 2026-11-01，没有开放 PR。
 
 文档描述的是 `main`。未合并的层明确标注为未合并，而不是当作已工作的功能来
 描述；详见

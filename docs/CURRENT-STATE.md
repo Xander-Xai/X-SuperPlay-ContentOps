@@ -23,13 +23,13 @@
 | Property | Value |
 |---|---|
 | Default branch | `main` — protected |
-| This branch | `docs/7-sync-main-state` — documentation only, branched from `main` after PR #89 merged |
+| This branch | `main` — the only persistent branch (verified 2026-11-01) |
 | Main protection | **PROTECTED** — required status checks + PR + no force push + no deletion + linear history |
 | Required checks | `Tests (ubuntu-latest)`, `Tests (windows-latest)`, `Repo policy checks` |
 | Branch strategy | Issue-scoped short-lived branches, squash merge, auto-delete on merge |
-| Current branch reality | 30+ local branches and worktrees exist; only `main` is persistent. Unmerged work is not part of the system |
+| Current branch reality | 24 local branches and 4 worktrees exist (measured 2026-11-01); only `main` is persistent. Unmerged work is not part of the system |
 | What `main` actually contains | The M5 media-use integration, rights gate, skill router and skill-execution authorization (PR #89), plus the X post gate and growth→editorial gate (PRs #87, #88). `main` no longer stops at phase-4 (PR #72), and `fix/57-m5-media-fixtures` was merged and deleted |
-| Consequence | Docs describe `main`. The layers still absent are named as unmerged and tracked by open PRs: content router (#49), X platform track (#50), GZH provenance (#58), receipt baseline (#62), media-use pre-merge ADR (#90) |
+| Consequence | Docs describe `main`. Draft PRs #49 (content router), #50 (X platform track) and #58 (GZH provenance) are **closed as superseded** by the slice process in Issue #94; #62 (receipt baseline) and #90 (media-use pre-merge ADR) are **merged**. No PR is open (verified 2026-11-01) |
 
 ## Easel Runtime
 
@@ -143,7 +143,7 @@ unverified, not failed.
 | Skill reference integrity | `tests/test_skill_references.py` | 6 |
 | Windows | subprocess, paths | 53 |
 | Policy / secrets | gitignore, local-approval, receipt secrets | 19 + list-driven suites |
-| **Total** | **31 suites** | **704 top-level `test_*` functions + list-driven and unittest suites** |
+| **Total** | **not asserted in this document** | Suite count is read at check time: `git ls-files 'tests/test_*.py' \| wc -l` |
 
 `python scripts/dev_check.py` runs the local gate. CI enumerates every suite as a
 named step; a suite without a CI step does not run, and one green run is not

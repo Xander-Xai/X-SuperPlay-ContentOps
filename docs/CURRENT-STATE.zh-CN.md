@@ -29,13 +29,13 @@ translation_status: synced
 | 属性 | 值 |
 |---|---|
 | 默认分支 | ```main``` —— 受保护 |
-| 本分支 | ```docs/7-sync-main-state``` —— 仅文档，在 PR #89 合并后从 ```main``` 切出 |
+| 本分支 | ```main``` —— 唯一的持久分支（2026-11-01 核验） |
 | Main 保护 | **已保护** — 必需状态检查 + PR + 禁止 force push + 禁止删除 + 线性历史 |
 | 必需检查 | ```Tests (ubuntu-latest)```、```Tests (windows-latest)```、```Repo policy checks``` |
 | 分支策略 | Issue 作用域短生命周期分支，Squash 合并，合并后自动删除 |
-| 当前分支现实 | 本地存在 30+ 分支与 worktree；只有 ```main``` 是持久分支。未合并的工作不属于当前系统 |
+| 当前分支现实 | 本地存在 24 个分支与 4 个 worktree（2026-11-01 实测）；只有 ```main``` 是持久分支。未合并的工作不属于当前系统 |
 | ```main``` 实际包含什么 | M5 media-use 集成、权利门禁、Skill 路由与 Skill 执行授权（PR #89），以及 X 发帖门禁与 growth→编辑门禁（PR #87、#88）。```main``` 已不再停在第四阶段（PR #72），```fix/57-m5-media-fixtures``` 已合并并删除 |
-| 后果 | 文档描述的是 ```main```。仍缺失的层明确标注为未合并，并由开放 PR 跟踪：内容路由（#49）、X 平台轨道（#50）、公众号溯源（#58）、receipt 基线（#62）、media-use 合并前 ADR（#90） |
+| 后果 | 文档描述的是 ```main```。草稿 PR #49（内容路由）、#50（X 平台轨道）、#58（公众号溯源）已**因被切片流程取代而关闭**（见 Issue #94）；#62（receipt 基线）与 #90（media-use 合并前 ADR）已**合并**。当前没有开放 PR（2026-11-01 核验） |
 
 ## Easel 运行时
 
@@ -125,7 +125,7 @@ translation_status: synced
 | Skill 引用完整性 | `tests/test_skill_references.py` | 6 |
 | Windows | 子进程、路径 | 53 |
 | 策略 / 密钥 | gitignore、本地批准、凭证密钥 | 19 + 列表驱动套件 |
-| **合计** | **31 个套件** | **704 个顶层 ```test_*``` 函数 + 列表驱动与 unittest 套件** |
+| **合计** | **本文档不声明数量** | 套件数量在检查时读取：`git ls-files 'tests/test_*.py' \| wc -l` |
 
 ```python scripts/dev_check.py``` 运行本地门禁。CI 为每个套件设置具名步骤；没有 CI
 步骤的套件不会运行，一次绿色运行也不等于所有套件都通过。CI 会安装 ```ffmpeg```
