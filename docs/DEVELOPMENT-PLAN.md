@@ -4,7 +4,7 @@
 
 > Milestone-based execution. Every milestone has an exit criterion.
 >
-> Status verified: 2026-11-01 on `fix/57-m5-media-fixtures`.
+> Status verified: 2026-11-01 on `main` (PR #89).
 
 ## Status legend
 

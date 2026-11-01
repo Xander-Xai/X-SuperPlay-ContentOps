@@ -10,7 +10,7 @@ translation_status: synced
 
 > 测试策略、真实套件清单，以及 CI 接线。
 >
-> 最后验证：2026-11-01，分支 `fix/57-m5-media-fixtures`。
+> 最后验证：2026-11-01，```main```（PR #89）。
 
 ## 测试如何运行
 

@@ -8,6 +8,14 @@
 > Owner: Xander-Xai. Author: Claude Code (audit run, 2026-11-01).
 > This document does not change production behaviour by itself.
 
+> **Execution status (2026-11-01, after the merge).** Steps 1, 1b and 2 of the
+> §7 runbook are done. PR #89 merged the integration stack into `main`;
+> `fix/57-m5-media-fixtures` and its remote branch are gone. The five content
+> skills carry a status banner, and `scripts/check_skill_references.py` — with
+> the capture-group defect fixed — is wired into `dev_check.py` and CI. The
+> analysis below is the state at decision time and is not rewritten. Steps 3–5
+> remain open.
+
 ## 1. Executive summary
 
 The repository can produce video, but it cannot currently describe itself

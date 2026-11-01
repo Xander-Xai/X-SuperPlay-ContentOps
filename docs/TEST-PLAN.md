@@ -4,7 +4,7 @@
 
 > Test strategy, the real suite inventory, and how CI is wired.
 >
-> Last verified: 2026-11-01 on `fix/57-m5-media-fixtures`.
+> Last verified: 2026-11-01 on `main` (PR #89).
 
 ## How tests run
 

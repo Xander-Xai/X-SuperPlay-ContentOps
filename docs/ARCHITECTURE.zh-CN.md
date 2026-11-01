@@ -9,7 +9,7 @@ translation_status: synced
 [English](ARCHITECTURE.md) | [简体中文](ARCHITECTURE.zh-CN.md)
 
 > 系统是什么。边界在哪里。组件如何调用。
-> 描述 `fix/57-m5-media-fixtures`（2026-11-01），不是未来分支。
+> 描述 `main`（2026-11-01，PR #89 合并后），不是未来分支。
 
 ## 系统边界
 
@@ -47,20 +47,21 @@ FFmpeg / 确定性工具
 
 ## 分支层
 
-仓库正处于收敛过程中。一个组件只有在本分支上才算“系统的一部分”。
+仓库正处于收敛过程中。一个组件只有在 ```main``` 上才算“系统的一部分”。
 
-| 层 | 所在位置 | 本分支状态 |
+| 层 | 所在位置 | ```main``` 状态 |
 |---|---|---|
-| M5 证据链、媒体、QC、Skill 路由/授权 | 本分支 | 已实现 |
+| M5 证据链、媒体、QC、Skill 路由/授权 | ```main```（PR #89） | 已实现 |
+| X 发帖门禁、growth→编辑门禁 | ```main```（PR #87、#88） | 已实现 |
 | 账号感知内容路由、工作流门禁、Brief/脚本/设计阶段 | `feat/content-router`（PR #49） | **未合并** |
 | 小红书八步工作流 | `feat/xhs-fa-migration` | **未合并** |
-| X 编辑包 | `feat/47-x-platform-track` / `feat/85-x-editorial-decoupled` | **未合并** |
-| 公众号十阶段 vendored 工作流 | 本地 `vendor/` + `fix/56-gzh-provenance` | **未合并 / 权利受阻** |
+| X 平台轨道（迁移记录、提示词引用、表格门禁） | `feat/47-x-platform-track`（PR #50） | **未合并** |
+| 公众号十阶段 vendored 工作流 | 本地 `vendor/` + `fix/56-gzh-provenance`（PR #58） | **未合并 / 权利受阻** |
 
 合并顺序见
 [CONVERGENCE-REQUIREMENTS-2026-11-01.md](CONVERGENCE-REQUIREMENTS-2026-11-01.md)。
 引用未合并层的 Skill 在 [SKILL-REGISTRY.md](SKILL-REGISTRY.md) 中如实声明，
-不会在本分支被描述为可运行。
+不会在 ```main``` 上被描述为可运行。
 
 ## 组件图
 

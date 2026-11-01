@@ -21,36 +21,38 @@ non-bypassable quality and human-review gates.
 
 ## Current Status
 
-The table separates what is on **this branch** from what exists only on an
+The table separates what is on **`main`** from what exists only on an
 **unmerged branch**. A track is not "done" because a draft branch describes it.
 
 | Item | Layer | Status |
 |---|---|---|
-| Easel runtime | this branch | Pinned v0.2.1 (commit `3fe2d99`, 982 blobs verified). Upstream stable is v0.3.0 — not adopted |
-| Video pipeline (`run_v1.py`) | this branch | Implemented (`easel` + diagnostic `fallback`); `production_ready: false` |
-| M5 evidence-first chain (`m5_production.py`) | this branch | Implemented and integration-verified on `projects/m5-media-use`; `production_ready: false`, `PENDING_FOUNDER_REVIEW` |
-| Media-use adapter (HyperFrames) | this branch | Implemented; local-only, zero network/paid calls. Needs a host runtime lock — default verdict is `BLOCKED / MISSING_RUNTIME` |
-| MiniMax media | this branch | Speech, image and H3 video implemented; verified subsets are listed in CURRENT-STATE; `PENDING_FOUNDER_REVIEW` |
-| Skill routing / execution authorization | this branch | Implemented; only `media-use` is a declared capability; the router never authorizes execution |
-| Content router, account DNA, workflow gates | **unmerged** | `feat/content-router` (PR #49, draft) — not on this branch |
-| 公众号 (WeChat article) | **unmerged / local vendor** | Ten-stage vendored workflow; rights audit open (#56) |
+| Easel runtime | `main` | Pinned v0.2.1 (commit `3fe2d99`, 982 blobs verified). Upstream stable is v0.3.0 — not adopted |
+| Video pipeline (`run_v1.py`) | `main` | Implemented (`easel` + diagnostic `fallback`); `production_ready: false` |
+| M5 evidence-first chain (`m5_production.py`) | `main` | Implemented and integration-verified on `projects/m5-media-use`; `production_ready: false`, `PENDING_FOUNDER_REVIEW` |
+| Media-use adapter (HyperFrames) | `main` | Implemented; local-only, zero network/paid calls. Needs a host runtime lock — default verdict is `BLOCKED / MISSING_RUNTIME` |
+| MiniMax media | `main` | Speech, image and H3 video implemented; verified subsets are listed in CURRENT-STATE; `PENDING_FOUNDER_REVIEW` |
+| Skill routing / execution authorization | `main` | Implemented; only `media-use` is a declared capability; the router never authorizes execution |
+| Content router, account DNA, workflow gates | **unmerged** | `feat/content-router` (PR #49, draft) — not on `main` |
+| 公众号 (WeChat article) | **unmerged / local vendor** | Ten-stage vendored workflow; provenance/rights fix is PR #58 (#56) |
 | 小红书 image-text | **unmerged** | `feat/xhs-fa-migration`; manual upload only |
-| X | **unmerged** | PR #50 / PR #87 — manual-only editorial package |
+| X | **partial** | Post gate and growth→editorial gate are on `main` (PRs #87, #88); the migrated platform track is still PR #50 |
 | Auto-publishing | — | **Not in scope** |
-| Tests | this branch | 31 suites; see [docs/TEST-PLAN.md](docs/TEST-PLAN.md); unified gate `python scripts/dev_check.py` |
+| Tests | `main` | 31 suites; see [docs/TEST-PLAN.md](docs/TEST-PLAN.md); unified gate `python scripts/dev_check.py` |
 | Production ready | — | **false** — no track is `PRODUCTION_ACCEPTED` |
 
 ### Branch reality
 
-`main` is the protected integration branch, but it is **stale**: it stops at
-phase-4 delivery unlock (PR #72). The media-use integration, rights gate, skill
-router and skill-execution authorization stack (PRs #71, #74–#81, #84) exists
-only on `fix/57-m5-media-fixtures`, which is 17 commits ahead of `main` and is
-itself an open PR (#89).
+`main` now carries the integration stack: the media-use adapter, rights gate,
+skill router and skill-execution authorization landed as PR #89, followed by
+PRs #87 and #88. The former integration branch `fix/57-m5-media-fixtures` was
+merged and its remote branch deleted.
 
-This README describes that branch. The unmerged layers are named above rather
-than described as working features. Landing the stack on `main` is the first
-integration step; see
+What is still **not** on `main` is named in the table above and tracked by open
+PRs: the content router (#49), the X platform track (#50), the GZH provenance
+fix (#58), the receipt-baseline fix (#62) and the media-use pre-merge ADR (#90).
+
+The docs describe `main`. An unmerged layer is named as unmerged rather than
+described as a working feature; see
 [docs/CONVERGENCE-REQUIREMENTS-2026-11-01.md](docs/CONVERGENCE-REQUIREMENTS-2026-11-01.md).
 
 ## Quick Start

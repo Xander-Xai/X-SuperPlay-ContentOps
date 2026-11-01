@@ -41,7 +41,7 @@ A unified ContentOps Runtime that any Xander-Xai business repo can call to produ
 
 ## 7. Current Baseline
 
-Verified 2026-11-01 on `fix/57-m5-media-fixtures`:
+Verified 2026-11-01 on `main` (PR #89):
 
 - Easel v0.2.1 pinned, content-verified (982/982 blobs). Upstream v0.3.0 is
   available but not adopted (skill paths moved; see UPSTREAM-EASEL).
