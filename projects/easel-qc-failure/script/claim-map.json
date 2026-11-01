@@ -14,12 +14,18 @@
         "auto_qc_checks": 21,
         "auto_qc_fails": 0,
         "auto_qc_warns": 0,
-        "auto_qc_result": "PASS"
+        "auto_qc_result": "PASS",
+        "severity_split": {
+          "PASS": 19,
+          "INFO": 2,
+          "FAIL": 0,
+          "WARN": 0
+        }
       },
       "verified_status": "VERIFIED",
       "measured_at": "2026-11-02",
       "usage_scope": "technical checks only, for this one run",
-      "caveat": "Does not mean visual, aesthetic, voice-naturalness or factual quality passed. Those are the reasons it was rejected."
+      "caveat": "Does not mean visual, aesthetic, voice-naturalness or factual quality passed. Those are the reasons it was rejected. The receipt records 21 entries, of which 19 are PASS and 2 are INFO (the video header and the voice-quality declaration, which itself carries production_quality_warning=true). '21' is the receipt's auto_qc_checks field, not the number of checks in qc_video.py, which has 22 conditional checks.append sites. The two numbers must not be quoted as the same measurement."
     },
     {
       "id": "C2a",
@@ -41,21 +47,23 @@
     {
       "id": "C2b",
       "spoken_as": "实测六十二秒里，六十秒是静止的。",
-      "statement": "60.10 s of the 62.0 s (96.9%) is near-static, across 12 freeze runs.",
+      "statement": "At least 60.10 s of the 62.0 s (>=96.9%) is near-static. freezedetect reports 12 completed freeze runs; a 13th freeze starts at 60.5 s and reaches EOF without a freeze_duration line.",
       "source": "projects/easel-review/final/easel.mp4",
       "source_sha256": "e3b029ef4fc033f9164cd84344d8fd834c6fcc78e932566835248307cc0e882f",
       "verified_status": "MEASURED",
       "measured_at": "2026-11-02",
-      "method": "ffmpeg -vf freezedetect=n=0.001:d=0.4",
+      "method": "ffmpeg -i projects/easel-review/final/easel.mp4 -vf freezedetect=n=0.001:d=0.4 -f null -",
       "measurements": {
-        "freeze_runs": 12,
+        "freeze_runs_completed": 12,
         "total_frozen_s": 60.10,
         "duration_s": 62.0,
         "ratio": 0.969,
-        "longest_run_s": 10.33
+        "longest_run_s": 10.33,
+        "trailing_freeze_start_s": 60.5,
+        "trailing_note": "The 13th freeze begins at 60.5 s and is interrupted by EOF, so freezedetect emits no freeze_duration for it. 60.10 s is the sum of the 12 completed runs and is therefore a lower bound on near-static time. The narration rounds down to 'sixty seconds' and must never be stated as an upper bound or as an exact total."
       },
       "usage_scope": "this 62 s artifact, under these exact freeze parameters",
-      "caveat": "Must not be generalised to other Easel videos, to this repository, or to AI video in general. The number depends on the freezedetect thresholds."
+      "caveat": "Must not be generalised to other Easel videos, to this repository, or to AI video in general. The number depends on the freezedetect thresholds, and the reported 96.9% excludes the final freeze run that ends at EOF."
     },
     {
       "id": "C3",
@@ -65,9 +73,9 @@
       "source_sha256": "22e6704c6d4246dd786132ee0aba01f76088b02046abfb69bd252caec3848644",
       "verified_status": "VERIFIED",
       "measured_at": "2026-11-02",
-      "method": "grep for freezedetect / freeze / motion returns 0 matches; the 24 check ids are existence, size, ffprobe, resolution, aspect, duration, codec, audio, project.yaml, source_refs, captions, script, storyboard, real-source ratio, provenance, engine, silence, subtitle burn, real evidence, voice quality",
+      "method": "grep -Ei 'freezedetect|freeze|motion|ssim|psnr' scripts/qc_video.py returns 0 matches. The file has 22 checks.append sites, several of them conditional; the recorded run's receipt has 21 entries (19 PASS, 2 INFO). The checks cover existence, size, ffprobe parse, resolution, aspect, duration, codec, audio presence and codec, project.yaml, source refs, captions, script, storyboard, real-source ratio, provenance, engine, silence, subtitle burn, real evidence and voice-quality declaration. None measures inter-frame motion, held composition time, on-screen text height, black-area share or safe areas.",
       "usage_scope": "states what the current implementation measures, not what all QC could measure",
-      "caveat": "Saying 'no check measures motion' is about this file today. It is not a claim that motion cannot be measured."
+      "caveat": "Saying 'no check measures motion' is about this file today. It is not a claim that motion cannot be measured, and the 22 append sites are not the same count as the receipt's 21 entries."
     },
     {
       "id": "C4",

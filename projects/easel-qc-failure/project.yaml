@@ -26,7 +26,7 @@ source_refs:
     type: source_code
     title: "scripts/qc_video.py"
     path: "scripts/qc_video.py"
-    note: "the 21 checks live here; no freeze or motion measurement exists in it"
+    note: "the recorded run's 21 receipt entries come from this file (22 conditional checks.append sites); no freeze, motion, SSIM or PSNR measurement exists in it"
   - id: motion-replay
     type: receipt
     title: "Motion replay evidence, 2026-11-01"

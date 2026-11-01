@@ -7,7 +7,7 @@
 没有 `receipts/script-review.json`，也没有任何人工决策被记录。本文档不构成批准，
 也不应被当作批准引用。
 
-`copy_sha256`: `a8d6e44114ccd21352e22e6ce0b8e118fd3284e0c2fe307cb4d9bf7557c41d53`
+`copy_sha256`: `41bf6c545a0b5abf3d57f92d8034bb46187bcf1b65c826b24b07b5790934e5ea`
 
 指纹覆盖：`script/master.md`、`script/claim-map.json`、`script/*.srt`、
 `script/assets.json`（若有）、`motion/timeline.json`（若有）。任何一处改动都会
@@ -21,10 +21,10 @@
 
 | 主张 | 状态 | 请确认 |
 |---|---|---|
-| 21 项技术检查全过，0 fail 0 warn | VERIFIED | 是否同意只按"当次技术检查"表述，不延伸到审美/口播/准确性 |
+| 21 条技术检查记录：19 PASS + 2 INFO，0 FAIL 0 WARN（`auto_qc_result: PASS`） | VERIFIED | 是否同意只按"当次技术检查"表述，不延伸到审美/口播/准确性，也不说成"21 个 PASS" |
 | 62.0 s、6 个镜头、全部 static | MEASURED | 同意 |
-| 60.10 s / 62.0 s = 96.9% 近静止（12 段） | MEASURED，今日重测 | 是否同意限定为"本条视频 + 这组 freezedetect 参数" |
-| `qc_video.py` 中 motion/freeze 匹配数为 0 | VERIFIED | 同意 |
+| 60.10 s / 62.0 s = 96.9% 近静止（12 个已完成段；第 13 段自 60.5 s 至 EOF，故 96.9% 为下界） | MEASURED，今日重测 | 是否同意限定为"本条视频 + 这组 freezedetect 参数"，并保留"下界"表述 |
+| `qc_video.py` 中 motion/freeze/ssim/psnr 匹配数为 0；该文件有 22 个条件性 append 点，与收据 21 条不是同一计数 | VERIFIED | 同意 |
 | 六个动效工程重渲 SSIM 0.9945–0.9954 | MEASURED，2026-11-01 | 是否同意成片只说"几乎看不出差别"，不出数值、不说"完全一样" |
 
 ### 2. 叙事是否可信
