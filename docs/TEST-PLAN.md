@@ -31,9 +31,11 @@ evidence. The M4/M4.5 suites were merged unwired once for exactly this reason.
 
 ## Current inventory
 
-31 suites. `grep -c '^def test_'` counts 704 top-level `test_*` functions; the
-list-driven and unittest-style suites define their checks differently, so the
-function count is a floor rather than a total.
+The inventory is **not asserted in this document**. The authoritative list is
+`git ls-files 'tests/test_*.py'`, and a suite counts only when
+`.github/workflows/ci.yml` names it. Function counts inside a suite are a floor
+rather than a total, because list-driven and unittest-style suites define their
+checks differently.
 
 | Suite | File | Count | CI |
 |---|---|---|---|

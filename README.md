@@ -32,12 +32,12 @@ The table separates what is on **`main`** from what exists only on an
 | Media-use adapter (HyperFrames) | `main` | Implemented; local-only, zero network/paid calls. Needs a host runtime lock — default verdict is `BLOCKED / MISSING_RUNTIME` |
 | MiniMax media | `main` | Speech, image and H3 video implemented; verified subsets are listed in CURRENT-STATE; `PENDING_FOUNDER_REVIEW` |
 | Skill routing / execution authorization | `main` | Implemented; only `media-use` is a declared capability; the router never authorizes execution |
-| Content router, account DNA, workflow gates | **unmerged** | `feat/content-router` (PR #49, draft) — not on `main` |
-| 公众号 (WeChat article) | **unmerged / local vendor** | Ten-stage vendored workflow; provenance/rights fix is PR #58 (#56) |
+| Content router, account DNA, workflow gates | **partial** | S1 (#93, stage gate) and S2 (#95, source-candidate contract) are on `main`; S3–S4 are open in Issue #94 |
+| 公众号 (WeChat article) | **unmerged / local vendor** | Ten-stage vendored workflow; provenance/rights review is open in Issue #56 |
 | 小红书 image-text | **unmerged** | `feat/xhs-fa-migration`; manual upload only |
-| X | **partial** | Post gate and growth→editorial gate are on `main` (PRs #87, #88); the migrated platform track is still PR #50 |
+| X | **partial** | Post gate and growth→editorial gate are on `main` (PRs #87, #88); the rest of the platform track is tracked in Issue #47 |
 | Auto-publishing | — | **Not in scope** |
-| Tests | `main` | 31 suites; see [docs/TEST-PLAN.md](docs/TEST-PLAN.md); unified gate `python scripts/dev_check.py` |
+| Tests | `main` | Every suite under `tests/test_*.py` is wired into CI; count is not asserted here — see [docs/TEST-PLAN.md](docs/TEST-PLAN.md); unified gate `python scripts/dev_check.py` |
 | Production ready | — | **false** — no track is `PRODUCTION_ACCEPTED` |
 
 ### Branch reality
@@ -47,9 +47,11 @@ skill router and skill-execution authorization landed as PR #89, followed by
 PRs #87 and #88. The former integration branch `fix/57-m5-media-fixtures` was
 merged and its remote branch deleted.
 
-What is still **not** on `main` is named in the table above and tracked by open
-PRs: the content router (#49), the X platform track (#50), the GZH provenance
-fix (#58), the receipt-baseline fix (#62) and the media-use pre-merge ADR (#90).
+What is still **not** on `main` is named in the table above. The draft PRs that once
+tracked it were closed as superseded by the slice process in Issue #94: the content
+router (#49), the X platform track (#50) and the GZH provenance fix (#58). The
+receipt-baseline fix (#62) and the media-use pre-merge ADR (#90) are merged. No PR is
+open as of 2026-11-01.
 
 The docs describe `main`. An unmerged layer is named as unmerged rather than
 described as a working feature; see
