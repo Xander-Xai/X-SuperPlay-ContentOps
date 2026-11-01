@@ -44,12 +44,13 @@ translation_status: synced
 
 | 优先级 | 目录根 | 轨道 | 权利姿态 |
 |---:|---|---|---|
-| 1 | `.runtime/easel/skills/openclaw` | 固定版本 Easel 运行时 | external-pinned |
-| 2 | `Easel/skills/openclaw` | 工作用 Easel 检出 | external-checkout |
-| 3 | `vendor/gzh-thinktank/gzh_未来智能/skills` | 本地 vendor 的公众号轨 | unverified-vendor |
+| 1 | `skills` | 仓库自有定义 | repo-owned-unverified |
+| 2 | `.runtime/easel/skills/openclaw` | 固定版本 Easel 运行时 | external-pinned |
+| 3 | `Easel/skills/openclaw` | 工作用 Easel 检出 | external-checkout |
+| 4 | `vendor/gzh-thinktank/gzh_未来智能/skills` | 本地 vendor 的公众号轨 | unverified-vendor |
 | — | `~/.agents/skills` | 共享库，单独解析 | 由操作者掌控 |
 
-同名出现在多个根时只索引一次，取最早的根；后出现的副本作为 `shadowed` 报告，`--doctor` 统计每一处冲突。
+同名出现在多个根时只索引一次，取最早的根；后出现的副本作为 `shadowed` 报告，`--doctor` 统计每一处冲突。未在注册表声明的名称使用 `--resolve` 时仅列出发现的副本，不给出能力判定；`resolve_capability` 返回 `UNKNOWN_SKILL`。两者均不授予执行权。
 
 `vendor/` 已被 gitignore。第三方 vendor 材料是本地操作资源，不是再分发授权，不得进入公开仓库。
 

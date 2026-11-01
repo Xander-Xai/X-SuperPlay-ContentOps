@@ -1,0 +1,77 @@
+{
+  "fixture": true,
+  "cases": [
+    {
+      "name": "missing_link",
+      "status": "BLOCKED",
+      "reasons": [
+        "MISSING_SOURCE_URL"
+      ],
+      "execution_authorized": false
+    },
+    {
+      "name": "forged_publication",
+      "status": "BLOCKED",
+      "reasons": [
+        "PUBLICATION_UNVERIFIED"
+      ],
+      "execution_authorized": false
+    },
+    {
+      "name": "duplicate_reply",
+      "status": "BLOCKED",
+      "reasons": [
+        "DUPLICATE_REPLY"
+      ],
+      "execution_authorized": false
+    },
+    {
+      "name": "cross_account",
+      "status": "BLOCKED",
+      "reasons": [
+        "ACCOUNT_MISMATCH"
+      ],
+      "execution_authorized": false
+    },
+    {
+      "name": "auto_publish",
+      "status": "BLOCKED",
+      "reasons": [
+        "AUTOMATED_ACTION_NOT_AVAILABLE"
+      ],
+      "execution_authorized": false
+    },
+    {
+      "name": "auto_reply",
+      "status": "BLOCKED",
+      "reasons": [
+        "AUTOMATED_ACTION_NOT_AVAILABLE"
+      ],
+      "execution_authorized": false
+    },
+    {
+      "name": "secret",
+      "status": "BLOCKED",
+      "reasons": [
+        "SENSITIVE_INPUT"
+      ],
+      "execution_authorized": false
+    },
+    {
+      "name": "injection",
+      "status": "BLOCKED",
+      "reasons": [
+        "UNTRUSTED_INSTRUCTION"
+      ],
+      "execution_authorized": false
+    },
+    {
+      "name": "fixture_as_observed",
+      "status": "BLOCKED",
+      "reasons": [
+        "FIXTURE_ORIGIN_MISMATCH"
+      ],
+      "execution_authorized": false
+    }
+  ]
+}

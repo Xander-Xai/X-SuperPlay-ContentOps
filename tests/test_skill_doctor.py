@@ -31,6 +31,20 @@ def _write_skill(root: Path, rel: str, name: str, *, license: str = "",
 
 
 class SkillDoctorTests(unittest.TestCase):
+    def test_repo_owned_catalog_is_declared_first(self) -> None:
+        self.assertEqual(sr.CATALOG_ROOTS[0], ROOT / "skills")
+        self.assertEqual(sr._catalog_label(sr.CATALOG_ROOTS[0]), "repo-owned")
+        self.assertEqual(sr.CATALOG_RIGHTS["repo-owned"], "repo-owned-unverified")
+
+    def test_repo_owned_skill_discovery_does_not_authorize_execution(self) -> None:
+        name = "x-organic-growth-operator"
+        self.assertTrue(any(item["name"] == name and item["source"] == "repo-owned"
+                            for item in sr.catalog()[0]))
+        verdict = sr.resolve_capability(name)
+        self.assertEqual(verdict["verdict"], "BLOCKED")
+        self.assertEqual(verdict["reason"], "UNKNOWN_SKILL")
+        self.assertFalse(verdict["execution_authorized"])
+
     def test_doctor_on_this_checkout_is_honest_about_what_exists(self) -> None:
         report = sr.doctor()
         self.assertEqual(report["schema"], "contentops.skill-doctor/v1")
