@@ -10,7 +10,7 @@ translation_status: synced
 
 > 当前运行状态。仅经验证的事实。无展望，无过时声明。
 >
-> 最后验证：2026-11-01，分支 `fix/57-m5-media-fixtures`（PR #89）。
+> 最后验证：2026-11-01，```main```（PR #89）。
 > “分层状态”表之后的小节是历史里程碑记录，说明某项能力当时如何被证明，
 > 不代表当前状态。
 
@@ -29,13 +29,13 @@ translation_status: synced
 | 属性 | 值 |
 |---|---|
 | 默认分支 | ```main``` —— 受保护 |
-| 本分支 | ```fix/57-m5-media-fixtures```，领先 ```main``` 17 个提交，开放 PR #89 |
+| 本分支 | ```docs/7-sync-main-state``` —— 仅文档，在 PR #89 合并后从 ```main``` 切出 |
 | Main 保护 | **已保护** — 必需状态检查 + PR + 禁止 force push + 禁止删除 + 线性历史 |
 | 必需检查 | ```Tests (ubuntu-latest)```、```Tests (windows-latest)```、```Repo policy checks``` |
 | 分支策略 | Issue 作用域短生命周期分支，Squash 合并，合并后自动删除 |
 | 当前分支现实 | 本地存在 30+ 分支与 worktree；只有 ```main``` 是持久分支。未合并的工作不属于当前系统 |
-| ```main``` 实际包含什么 | 截至 **第四阶段交付解锁**（PR #72）。media-use 集成、权利门禁、Skill 路由与 Skill 执行授权栈（PR #71、#74–#81、#84）**只存在于 ```fix/57-m5-media-fixtures```**，从未进入 ```main``` |
-| 后果 | ```main``` 受保护但已陈旧。第一步是让 PR #89 与本次工作落地，而不是在其上继续叠加新功能 |
+| ```main``` 实际包含什么 | M5 media-use 集成、权利门禁、Skill 路由与 Skill 执行授权（PR #89），以及 X 发帖门禁与 growth→编辑门禁（PR #87、#88）。```main``` 已不再停在第四阶段（PR #72），```fix/57-m5-media-fixtures``` 已合并并删除 |
+| 后果 | 文档描述的是 ```main```。仍缺失的层明确标注为未合并，并由开放 PR 跟踪：内容路由（#49）、X 平台轨道（#50）、公众号溯源（#58）、receipt 基线（#62）、media-use 合并前 ADR（#90） |
 
 ## Easel 运行时
 

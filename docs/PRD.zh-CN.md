@@ -47,7 +47,7 @@ Founder（Xander-Xai）— 需要从真实工作产出高质量视频，最少�
 
 ## 7. 当前基线
 
-2026-11-01 在 `fix/57-m5-media-fixtures` 上验证：
+2026-11-01 在 ```main``` 上验证（PR #89）：
 
 - Easel v0.2.1 固定并内容校验（982/982 blobs）。上游 v0.3.0 可用但未采用
   （Skill 路径迁移；见 UPSTREAM-EASEL）。

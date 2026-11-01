@@ -10,7 +10,7 @@ translation_status: synced
 
 > 基于里程碑执行。每个里程碑都有退出标准。
 >
-> 状态验证：2026-11-01，分支 `fix/57-m5-media-fixtures`。
+> 状态验证：2026-11-01，```main```（PR #89）。
 
 ## 状态标记
 

@@ -4,7 +4,7 @@
 
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
-> Last verified: 2026-11-01 on `fix/57-m5-media-fixtures` (PR #89).
+> Last verified: 2026-11-01 on `main` (PR #89).
 > Sections below the "Layer status" table are historical milestone records;
 > they describe how a capability was proven, not what is current.
 
@@ -23,13 +23,13 @@
 | Property | Value |
 |---|---|
 | Default branch | `main` — protected |
-| This branch | `fix/57-m5-media-fixtures`, 17 commits ahead of `main`, open PR #89 |
+| This branch | `docs/7-sync-main-state` — documentation only, branched from `main` after PR #89 merged |
 | Main protection | **PROTECTED** — required status checks + PR + no force push + no deletion + linear history |
 | Required checks | `Tests (ubuntu-latest)`, `Tests (windows-latest)`, `Repo policy checks` |
 | Branch strategy | Issue-scoped short-lived branches, squash merge, auto-delete on merge |
 | Current branch reality | 30+ local branches and worktrees exist; only `main` is persistent. Unmerged work is not part of the system |
-| What `main` actually contains | Up to **phase-4 delivery unlock** (PR #72). The media-use integration, rights gate, skill router and skill-execution authorization stack (PRs #71, #74–#81, #84) exists **only on `fix/57-m5-media-fixtures`** and has never reached `main` |
-| Consequence | `main` is protected but stale. The first integration step is to land PR #89 and this work, not to add new features on top |
+| What `main` actually contains | The M5 media-use integration, rights gate, skill router and skill-execution authorization (PR #89), plus the X post gate and growth→editorial gate (PRs #87, #88). `main` no longer stops at phase-4 (PR #72), and `fix/57-m5-media-fixtures` was merged and deleted |
+| Consequence | Docs describe `main`. The layers still absent are named as unmerged and tracked by open PRs: content router (#49), X platform track (#50), GZH provenance (#58), receipt baseline (#62), media-use pre-merge ADR (#90) |
 
 ## Easel Runtime
 

@@ -25,33 +25,36 @@ translation_status: synced
 
 ## 当前状态
 
-下表区分**本分支已存在**与**仅存在于未合并分支**。一条轨道不会因为草稿分支写了它就算完成。
+下表区分**`main` 上已存在**与**仅存在于未合并分支**。一条轨道不会因为草稿分支写了它就算完成。
 
 | 项目 | 所在层 | 状态 |
 |---|---|---|
-| Easel 运行时 | 本分支 | 固定 v0.2.1（commit `3fe2d99`，982 blobs 验证通过）。上游稳定版为 v0.3.0 —— 未采用 |
-| 视频流水线（`run_v1.py`） | 本分支 | 已实现（`easel` + 诊断用 `fallback`）；`production_ready: false` |
-| M5 证据优先链（`m5_production.py`） | 本分支 | 已在 `projects/m5-media-use` 上完成集成验证；`production_ready: false`、`PENDING_FOUNDER_REVIEW` |
-| media-use 适配器（HyperFrames） | 本分支 | 已实现；仅本地、零联网/零付费。需要主机运行时锁 —— 默认判定为 `BLOCKED / MISSING_RUNTIME` |
-| MiniMax 媒体 | 本分支 | 语音、图片、H3 视频已实现；已验证子集见 CURRENT-STATE；`PENDING_FOUNDER_REVIEW` |
-| Skill 路由 / 执行授权 | 本分支 | 已实现；仅 `media-use` 是已声明能力；路由器从不授予执行权 |
-| 内容路由、账号 DNA、工作流门禁 | **未合并** | `feat/content-router`（PR #49，草稿）—— 不在本分支 |
-| 公众号 | **未合并 / 本地 vendor** | vendored 十阶段工作流；许可审计未完成（#56） |
+| Easel 运行时 | `main` | 固定 v0.2.1（commit `3fe2d99`，982 blobs 验证通过）。上游稳定版为 v0.3.0 —— 未采用 |
+| 视频流水线（`run_v1.py`） | `main` | 已实现（`easel` + 诊断用 `fallback`）；`production_ready: false` |
+| M5 证据优先链（`m5_production.py`） | `main` | 已在 `projects/m5-media-use` 上完成集成验证；`production_ready: false`、`PENDING_FOUNDER_REVIEW` |
+| media-use 适配器（HyperFrames） | `main` | 已实现；仅本地、零联网/零付费。需要主机运行时锁 —— 默认判定为 `BLOCKED / MISSING_RUNTIME` |
+| MiniMax 媒体 | `main` | 语音、图片、H3 视频已实现；已验证子集见 CURRENT-STATE；`PENDING_FOUNDER_REVIEW` |
+| Skill 路由 / 执行授权 | `main` | 已实现；仅 `media-use` 是已声明能力；路由器从不授予执行权 |
+| 内容路由、账号 DNA、工作流门禁 | **未合并** | `feat/content-router`（PR #49，草稿）—— 不在 `main` |
+| 公众号 | **未合并 / 本地 vendor** | vendored 十阶段工作流；溯源/权利修复为 PR #58（#56） |
 | 小红书图文 | **未合并** | `feat/xhs-fa-migration`；仅人工上传 |
-| X | **未合并** | PR #50 / PR #87 —— 仅人工发布的编辑包 |
+| X | **部分** | 发帖门禁与 growth→编辑门禁已在 `main`（PR #87、#88）；迁移后的平台轨道仍为 PR #50 |
 | 自动发布 | — | **不在范围内** |
-| 测试 | 本分支 | 31 个套件；见 [docs/TEST-PLAN.md](docs/TEST-PLAN.md)；统一门禁 `python scripts/dev_check.py` |
+| 测试 | `main` | 31 个套件；见 [docs/TEST-PLAN.md](docs/TEST-PLAN.md)；统一门禁 `python scripts/dev_check.py` |
 | 生产就绪 | — | **否** —— 没有任何轨道达到 `PRODUCTION_ACCEPTED` |
 
 ### 分支现实
 
-`main` 是受保护的集成分支，但它**已经陈旧**：它停在第四阶段交付解锁（PR #72）。
-media-use 集成、权利门禁、Skill 路由与 Skill 执行授权栈（PR #71、#74–#81、#84）
-只存在于 `fix/57-m5-media-fixtures`，该分支领先 `main` 17 个提交，本身也是开放的
-PR（#89）。
+`main` 现已承载集成栈：media-use 适配器、权利门禁、Skill 路由与 Skill 执行授权
+已作为 PR #89 合入，随后是 PR #87 与 PR #88。原集成分支
+`fix/57-m5-media-fixtures` 已合并，远端分支已删除。
 
-本 README 描述的正是该分支。未合并的层在上表明确标注，而不是当作已工作的功能来
-描述。把这一栈落到 `main` 上是第一个集成步骤；详见
+仍**不在** `main` 上的内容见上表，并由这些开放 PR 跟踪：内容路由（#49）、X 平台
+轨道（#50）、公众号溯源修复（#58）、receipt 基线修复（#62）、media-use 合并前
+ADR（#90）。
+
+文档描述的是 `main`。未合并的层明确标注为未合并，而不是当作已工作的功能来
+描述；详见
 [docs/CONVERGENCE-REQUIREMENTS-2026-11-01.md](docs/CONVERGENCE-REQUIREMENTS-2026-11-01.md)。
 
 ## 快速开始

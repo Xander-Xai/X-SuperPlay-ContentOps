@@ -3,7 +3,7 @@
 [English](ARCHITECTURE.md) | [简体中文](ARCHITECTURE.zh-CN.md)
 
 > What the system is. Where the boundaries are. How components call each other.
-> Describes `fix/57-m5-media-fixtures` (2026-11-01), not a future branch.
+> Describes `main` (2026-11-01, after PR #89 merged), not a future branch.
 
 ## System Boundaries
 
@@ -42,15 +42,16 @@ FFmpeg / deterministic tools
 ## Branch Layers
 
 The repository is mid-convergence. A component is only "part of the system" if it
-is on this branch.
+is on `main`.
 
-| Layer | Where it lives | Status on this branch |
+| Layer | Where it lives | Status on `main` |
 |---|---|---|
-| M5 evidence chain, media, QC, skill router/authorization | this branch | implemented |
+| M5 evidence chain, media, QC, skill router/authorization | `main` (PR #89) | implemented |
+| X post gate, growth→editorial gate | `main` (PRs #87, #88) | implemented |
 | Account-aware content router, workflow gates, brief/script/design stages | `feat/content-router` (PR #49) | **unmerged** |
 | XHS eight-step workflow | `feat/xhs-fa-migration` | **unmerged** |
-| X editorial package | `feat/47-x-platform-track` / `feat/85-x-editorial-decoupled` | **unmerged** |
-| GZH ten-stage vendored workflow | local `vendor/` + `fix/56-gzh-provenance` | **unmerged / rights-blocked** |
+| X platform track (migrated records, prompt references, table gate) | `feat/47-x-platform-track` (PR #50) | **unmerged** |
+| GZH ten-stage vendored workflow | local `vendor/` + `fix/56-gzh-provenance` (PR #58) | **unmerged / rights-blocked** |
 
 [CONVERGENCE-REQUIREMENTS-2026-11-01.md](CONVERGENCE-REQUIREMENTS-2026-11-01.md)
 defines the merge order. A skill that references an unmerged layer is declared
