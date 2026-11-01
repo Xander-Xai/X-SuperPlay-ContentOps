@@ -184,15 +184,19 @@ runnable. Their bodies reference the account-aware content-router layer:
 
 | Referenced code | Exists on this branch? | Exists on `feat/content-router` (PR #49)? |
 |---|---|---|
-| `scripts/workflow_gate.py` | no | yes |
+| `scripts/workflow_gate.py` | **yes** (slice S1) | yes |
+| `src/contentops/workflow/{contract,gate,validators}.py` | **yes** (S1; `validators.py` is an empty seam until S2) | yes |
 | `scripts/workflow_docs.py` | no | yes |
 | `scripts/recording_plan.py` | no | yes |
-| `src/contentops/workflow/*` | no | yes |
+| `src/contentops/workflow/{sources,capture_plan,audience,duration}.py` | no | yes |
 | `scripts/design_router.py` | no | **no** |
 
-The first four are blocked only on the merge. `design_router.py` is referenced by
-`x-superplay-design-direction` and does not exist on any branch inspected on
-2026-11-01, so that skill needs an edit as well as a merge.
+The deterministic gate (`workflow_gate.py` + the contract/gate core) landed in
+**slice S1**. The other content-router paths — the editorial validators, the
+source/capture planners, the account configuration — are later slices (S2+).
+`design_router.py` is referenced by `x-superplay-design-direction` and does not
+exist on any branch inspected on 2026-11-01, so that skill needs an edit as well
+as a merge.
 
 A declaration may be added only after the code it points at exists on the
 integration branch. Declaring a pointer to an unmerged branch would make

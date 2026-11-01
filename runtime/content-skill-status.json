@@ -2,7 +2,7 @@
   "schema": "contentops.content-skill-status/v1",
   "note": "Installed content skills that reference code this repository does not carry on the current branch. A reference listed here is a fact about this checkout, not a licence to run anything. Every absent path an installed SKILL.md names must appear here; scripts/check_skill_references.py fails when a skill names a path that is unrecorded, and fails when a recorded path has since appeared (the layer merged and this record is stale). A skill may be declared in runtime/skill-registry.json only after its code exists on the integration branch.",
   "verified_on": "2026-11-01",
-  "verified_branch": "fix/57-m5-media-fixtures",
+  "verified_branch": "main",
   "store": "shared",
   "store_env": "CONTENTOPS_SKILL_STORE",
   "skills": [
@@ -13,11 +13,6 @@
       "layer": "content-router",
       "carried_by": "feat/content-router",
       "references": [
-        {
-          "path": "scripts/workflow_gate.py",
-          "carried_by": "feat/content-router",
-          "note": "stage gate the skill calls for every check"
-        },
         {
           "path": "scripts/workflow_docs.py",
           "carried_by": "feat/content-router",
@@ -82,11 +77,6 @@
       "carried_by": "feat/content-router",
       "references": [
         {
-          "path": "scripts/workflow_gate.py",
-          "carried_by": "feat/content-router",
-          "note": "assets-stage gate"
-        },
-        {
           "path": "src/contentops/workflow/sources.py",
           "carried_by": "feat/content-router",
           "note": "candidate record validator"
@@ -105,11 +95,6 @@
       "layer": "content-router",
       "carried_by": "feat/content-router",
       "references": [
-        {
-          "path": "scripts/workflow_gate.py",
-          "carried_by": "feat/content-router",
-          "note": "design-step gate"
-        },
         {
           "path": "scripts/design_router.py",
           "carried_by": null,

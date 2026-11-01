@@ -286,16 +286,33 @@ CI is green.
 
 ```bash
 git fetch origin
-git switch -c feat/57-content-router-s1 origin/feat/content-router
-git checkout main -- scripts/workflow_gate.py scripts/workflow_docs.py \
-    src/contentops/workflow/ tests/test_workflow_gate.py
-# keep only the files S1 needs; update runtime/content-skill-status.json in the same PR
+git switch -c feat/57-content-router-s1 origin/main
+# Branch from main; take only the self-contained S1 files from the router branch.
+git checkout origin/feat/content-router -- \
+    scripts/workflow_gate.py \
+    src/contentops/workflow/__init__.py src/contentops/workflow/contract.py \
+    src/contentops/workflow/gate.py \
+    tests/test_workflow_contract.py tests/test_workflow_gate.py
+# Do NOT copy src/contentops/workflow/ wholesale: validators.py imports the
+# evidence/media/quality trees (S2+) and scripts/workflow_docs.py / sources.py /
+# capture_plan.py are S2. Landing them here would make content-skill-status.json
+# stale for paths that are not ready.
+# Write a placeholder validators.py (validators_for -> []) for S1; S2 replaces it.
+# Then update runtime/content-skill-status.json (drop the workflow_gate.py refs)
+# and wire both suites into .github/workflows/ci.yml, in the same PR.
 python scripts/check_skill_references.py
 python scripts/dev_check.py
-git commit -m "feat: land the workflow stage gate from the content router" -m "Refs #57"
+git commit -m "feat: land the workflow stage gate (S1)" -m "Refs #57"
 git push origin feat/57-content-router-s1
 gh pr create --base main --title "feat: land the workflow stage gate (S1)" --body "..."
 ```
+
+> Executed 2026-11-01. The literal S1 file list in ADR-012 D1 could not land
+> as-is: `validators.py` imports 16 modules that are whole new trees (S2–S4).
+> S1 therefore lands the contract/gate core, the CLI, and an **empty
+> `validators.py` seam** whose `validators_for` returns `[]` until S2; `check`
+> reports "editorial validators not yet wired (S2)". S2 replaces
+> `validators.py` wholesale.
 
 S1 lands the deterministic stage gate only. Each slice updates
 `runtime/content-skill-status.json` in the same PR, because the skill reference
