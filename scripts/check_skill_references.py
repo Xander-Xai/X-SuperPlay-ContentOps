@@ -66,10 +66,17 @@ def store_root() -> Path | None:
 
 
 def referenced_paths(text: str) -> set[str]:
-    """Repository-relative paths a skill document names."""
+    """Repository-relative paths a skill document names.
+
+    Trailing sentence punctuation is stripped: "…/sources.py," and
+    "…/sources.py." both name the same file, and a trailing dot would otherwise
+    be read as part of the filename and reported as missing.
+    """
     found = set()
     for match in PATH_RE.findall(text):
-        found.add(match.replace("\\", "/"))
+        path = match.replace("\\", "/").rstrip("./")
+        if path.count("/") >= 1 and path.split("/", 1)[1]:
+            found.add(path)
     return found
 
 

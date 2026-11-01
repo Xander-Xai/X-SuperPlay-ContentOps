@@ -68,6 +68,56 @@ class SkillReferenceStatusTests(unittest.TestCase):
                 )
 
 
+class SkillReferenceParsingTests(unittest.TestCase):
+    def test_a_windows_command_line_yields_the_whole_path(self) -> None:
+        """Regression: capturing only the root made every scan a vacuous pass.
+
+        With the root as the capture group, findall() returned "scripts", and
+        `(ROOT / "scripts").exists()` is always true, so every reference was
+        skipped and the check could never fail.
+        """
+        named = csr.referenced_paths(
+            "python scripts\\workflow_gate.py check --project <package> --stage assets\n"
+        )
+        self.assertEqual(named, {"scripts/workflow_gate.py"})
+
+    def test_trailing_sentence_punctuation_is_not_part_of_the_path(self) -> None:
+        named = csr.referenced_paths("See src/contentops/workflow/sources.py, which validates it.")
+        self.assertIn("src/contentops/workflow/sources.py", named)
+
+    def test_package_layout_paths_are_ignored(self) -> None:
+        """01_research/ and 04_video/ belong to a content package, not this repo."""
+        named = csr.referenced_paths(
+            "Read 01_research/claims.json and 04_video/storyboard.csv before sourcing.\n"
+        )
+        self.assertEqual(named, set())
+
+    def test_an_existing_path_is_not_a_failure(self) -> None:
+        """asset_planner.py exists here, so naming it is honest, not a defect."""
+        with tempfile.TemporaryDirectory() as raw:
+            repo = Path(raw)
+            (repo / "src" / "contentops" / "media").mkdir(parents=True)
+            (repo / "src" / "contentops" / "media" / "asset_planner.py").write_text(
+                "# real\n", encoding="utf-8"
+            )
+            store = Path(raw) / "store"
+            (store / "demo-skill").mkdir(parents=True)
+            (store / "demo-skill" / "SKILL.md").write_text(
+                "Use `src/contentops/media/asset_planner.py` today.\n", encoding="utf-8"
+            )
+            status = _status(skills=[
+                {
+                    "id": "demo-skill",
+                    "file": "demo-skill/SKILL.md",
+                    "state": "UNMERGED",
+                    "references": [],
+                }
+            ])
+            with mock.patch.object(csr, "ROOT", repo):
+                failures, _ = csr.check(status, store)
+        self.assertEqual(failures, [])
+
+
 class SkillReferenceCheckTests(unittest.TestCase):
     def test_undocumented_reference_is_a_failure(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
