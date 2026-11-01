@@ -24,6 +24,7 @@ honestly, and `publisher.PublishMode.API` raises rather than pretending.
 from contentops.publish import (  # noqa: F401
     publisher,
     x_account,
+    x_growth_bridge,
     x_editorial,
     x_image,
     x_prompts,
