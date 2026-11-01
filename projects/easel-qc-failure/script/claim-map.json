@@ -2,7 +2,7 @@
   "schema": "contentops.claim-map/v1",
   "package_id": "easel-qc-failure",
   "generated_at": "2026-11-02",
-  "note": "Every claim carries its source and hash. A claim whose status is not VERIFIED or MEASURED may not appear in the narration. No number here comes from a document alone; each was re-derived on main at 97a02f6.",
+  "note": "Every claim carries its source and hash. A claim whose status is not VERIFIED or MEASURED may not appear in the narration. No number here comes from a document alone; each was re-derived on 2026-11-02 from the artifact or receipt named in the claim, and the source hashes below bind the exact bytes that were read.",
   "claims": [
     {
       "id": "C1",
