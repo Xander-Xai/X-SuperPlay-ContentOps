@@ -127,6 +127,23 @@ CI 使用离线合成测试数据，不运行第三方 Provider。
 python scripts/dev_check.py
 ```
 
+依次运行：仓库策略 → 子进程策略 → Skill 引用 → 文档 → i18n → 冒烟测试 → 空格检查。
+
+## 6.1 Skill 引用完整性
+
+```bash
+python scripts/check_skill_references.py
+python scripts/check_skill_references.py --json
+```
+
+五个已安装的内容 Skill 引用了未合并分支上的代码。`runtime/content-skill-status.json`
+记录了每一条这样的路径；当记录与当前检出不一致时检查失败：未记录的悬空引用、
+已经落地（记录过时）的引用，或标记为已合并却缺少代码的 Skill。没有共享 Skill 库
+的主机（CI）会跳过引用扫描，只运行“记录与分支”的一致性检查。
+
+这里失败意味着记录需要更新——当某一层落地后，也意味着该能力现在可以在
+`runtime/skill-registry.json` 中声明。
+
 ## 7. Easel 上游监控
 
 ```bash

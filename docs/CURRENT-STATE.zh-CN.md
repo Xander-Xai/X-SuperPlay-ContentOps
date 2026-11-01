@@ -10,16 +10,32 @@ translation_status: synced
 
 > 当前运行状态。仅经验证的事实。无展望，无过时声明。
 >
-> 最后验证：2026-10-31
+> 最后验证：2026-11-01，分支 `fix/57-m5-media-fixtures`（PR #89）。
+> “分层状态”表之后的小节是历史里程碑记录，说明某项能力当时如何被证明，
+> 不代表当前状态。
+
+## 分层状态（2026-11-01）
+
+| 层 | 状态 |
+|---|---|
+| M5 证据链、媒体合约、QC、media-use 适配器、Skill 路由/授权 | 本分支已实现 |
+| 内容路由、账号 DNA、工作流门禁、Brief/脚本/设计阶段 | **未合并**（`feat/content-router`，PR #49） |
+| 小红书 / X / 公众号轨道 | **未合并 / 权利受阻** |
+| MiniMax 语音、图片、H3 视频 | 已实现；已验证子集见下文 |
+| 生产就绪 | 所有轨道均为 **否** |
 
 ## Git
 
 | 属性 | 值 |
 |---|---|
-| 默认分支 | ```main```（唯一持久分支） |
+| 默认分支 | ```main``` —— 受保护 |
+| 本分支 | ```fix/57-m5-media-fixtures```，领先 ```main``` 17 个提交，开放 PR #89 |
 | Main 保护 | **已保护** — 必需状态检查 + PR + 禁止 force push + 禁止删除 + 线性历史 |
-| 必需检查 | ```Tests (ubuntu-latest)``, ```Tests (windows-latest)``, ```Repo policy checks``` |
+| 必需检查 | ```Tests (ubuntu-latest)```、```Tests (windows-latest)```、```Repo policy checks``` |
 | 分支策略 | Issue 作用域短生命周期分支，Squash 合并，合并后自动删除 |
+| 当前分支现实 | 本地存在 30+ 分支与 worktree；只有 ```main``` 是持久分支。未合并的工作不属于当前系统 |
+| ```main``` 实际包含什么 | 截至 **第四阶段交付解锁**（PR #72）。media-use 集成、权利门禁、Skill 路由与 Skill 执行授权栈（PR #71、#74–#81、#84）**只存在于 ```fix/57-m5-media-fixtures```**，从未进入 ```main``` |
+| 后果 | ```main``` 受保护但已陈旧。第一步是让 PR #89 与本次工作落地，而不是在其上继续叠加新功能 |
 
 ## Easel 运行时
 
@@ -35,17 +51,24 @@ translation_status: synced
 | 本地多出文件 | 仅 ```outputs/``` 与 ```__pycache__/```；没有任何受跟踪文件与上游不同 |
 | 锁文件 | ```runtime/easel.lock.json``` |
 | 来源记录 | ```runtime/easel-runtime.json``` |
+| 上游稳定版 | v0.3.0（2026-10-12）—— **未采用**：158 个提交，Skill 从 ```skills/openclaw/``` 迁至 ```skills/builtin/```，```assemble.py``` 变更，且上游强制替换过该 tag |
 
 ## 流水线
 
-| 属性 | 值 |
-|---|---|
-| 生产引擎 | ```easel```（Easel ```auto-short-video/assemble.py```） |
-| 诊断引擎 | ```fallback```（仅 ffmpeg，非生产） |
-| 生产语音 | edge-tts via Easel ```tts.py```（zh-CN-YunxiNeural） |
-| 语音质量 | ```edge_tts_fallback``` — 非生产级 |
-| 生产就绪 | **否** — READY_FOR_HUMAN_REVIEW |
-| 字幕变通 | ```scripts/assemble_easel.py``` — 移除字幕，运行上游，单独烧录（不修改上游） |
+两个入口共享固定版本的 Easel 合成器。两者都不发布。
+
+| 属性 | `run_v1.py`（V1） | `m5_production.py`（M5） |
+|---|---|---|
+| 输入 | 人工编写的 `storyboard.json` + `master.md` | `project.yaml` 的 `source_refs` + 声明 |
+| 旁白 | edge-tts（`zh-CN-YunxiNeural`） | Windows SAPI，离线 |
+| 语音质量 | `edge_tts_fallback` —— 非生产级 | `windows_sapi_offline` —— 非生产级 |
+| 证据层 | 无 | `SourceArtifact` + `ClaimLedger` |
+| 合成 | 通过 `assemble_easel.run` 调用固定版本 Easel `assemble.py` | 同上 |
+| 字幕处理 | `assemble_easel` 移除后运行上游，再单独烧录 | 按旁白时间轴烧录 |
+| 生产就绪 | **否** | **否** —— `PENDING_FOUNDER_REVIEW` |
+
+诊断引擎：`python scripts/run_v1.py <project> --engine fallback`
+（仅 ffmpeg，永不生产，永不报告 `production_ready: true`）。
 
 ## M5 证据优先生产链（Issue #6）—— 已实现 2026-10-31
 
@@ -90,13 +113,41 @@ translation_status: synced
 | H3 时长 | 整数枚举 4-15（H3）、5-15（H3 Max）；测试最短 4 秒 / 5 秒 |
 | 证据 | `research/providers/minimax-mplan-explore-capability.md`、`research/providers/minimax-voice-clone-entitlement.md` |
 
+## 测试
+
+| 套件组 | 文件 | 数量 |
+|---|---|---|
+| 脚本冒烟 | ```scripts/test_basic.py``` | 10 |
+| 媒体 / 供应商（离线 fixture） | 语音、图片、H3、收敛、media-use 适配器 | 432 个 ```test_*``` 函数 |
+| M5 证据 + media-use 可追溯性 | ```test_m5_evidence.py```、```test_m5_*``` | 18 + 列表驱动套件 |
+| Golden / 可复现性 | A/B 变体、语音资产、锁定输入 | 47 |
+| Skill / 授权 | 路由、doctor、执行门禁、授权来源 | 列表驱动套件 |
+| Skill 引用完整性 | `tests/test_skill_references.py` | 6 |
+| Windows | 子进程、路径 | 53 |
+| 策略 / 密钥 | gitignore、本地批准、凭证密钥 | 19 + 列表驱动套件 |
+| **合计** | **31 个套件** | **704 个顶层 ```test_*``` 函数 + 列表驱动与 unittest 套件** |
+
+```python scripts/dev_check.py``` 运行本地门禁。CI 为每个套件设置具名步骤；没有 CI
+步骤的套件不会运行，一次绿色运行也不等于所有套件都通过。CI 会安装 ```ffmpeg```
+与 ```Pillow```；需要它们但缺失的测试会报告 skip。
+
+完整清单见 [TEST-PLAN.md](TEST-PLAN.md)。
+
 ## 已知阻碍
 
-1. 语音质量 — edge-tts 机械感重，非生产级。MiniMax 语音集成（M2）的主要动机。
-2. Web 工作台 — 7 项 doctor 失败（Web UI/API 依赖包、前端构建、```.env``` 密钥、gateway）。清除它们需要联网安装和密钥；这些都不是合成路径所需，合成仍可运行。
-3. Gateway healthz — 上游硬编码端口 18789；easel profile 使用 37289。不阻塞视频流水线。
-4. 人工审查 — easel-review 项目无 ```human-review.json``` 凭证。
-5. ~~Main 分支未保护~~ — **已解决**（G0.6）：main 现已通过 GitHub 分支保护机制保护。
+1. 语音质量 — edge-tts 机械感重，Windows SAPI 离线且平直；两者都非生产级。MiniMax
+   语音已实现但未批准。
+2. 人工审查 — 没有任何项目完成 ```human-review.json```，所有结果停留在
+   ```PENDING_FOUNDER_REVIEW```。
+3. media-use 运行时锁 — 干净检出（以及本机当前）判定为
+   ```BLOCKED / MISSING_RUNTIME```。已批准基线存在，但必须先为本机生成并信任锁。
+4. 未合并的内容层 — 账号路由、工作流门禁、Brief/脚本/设计阶段、小红书、X、公众号
+   都不在本分支。它们是五个 ```x-superplay-*``` Skill 的前置条件，不是当前可用能力。
+5. 文档收敛 — 本文档于 2026-11-01 重构；PRD、DEVELOPMENT-PLAN、TEST-PLAN 在同一次
+   变更中更新。剩余需求见
+   [CONVERGENCE-REQUIREMENTS-2026-11-01.md](CONVERGENCE-REQUIREMENTS-2026-11-01.md)。
+6. 上游固定版本 — Easel v0.3.0 与 HyperFrames 0.8.225 已发布但未采用；决策见收敛需求文档。
+7. ~~Main 分支未保护~~ — **已解决**（G0.6）。
 
 ## M3 图片生成（Issue #20）—— 已验证 2026-10-04
 

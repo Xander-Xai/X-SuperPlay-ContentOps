@@ -215,6 +215,13 @@ jobs:
       - name: Run M5 media-use automatic sourcing regression tests
         run: python tests/test_m5_media_use_workflow.py
 
+      # The sample's committed inputs and their receipts. Pure repository state:
+      # no adapter, no runtime, no network. Asserts the image and BGM bytes match
+      # the receipts that describe them, every import has a tracked receipt, the
+      # rights records still pass the gate, and the fixture exception stays narrow.
+      - name: Run M5 media-use traceability tests
+        run: python tests/test_m5_media_traceability.py
+
       # The direct ``ingest`` verb copies a file into the project exactly like
       # ``import`` does, so it must apply the same rights policy. The adapter is
       # mocked: this asserts which decision the CLI takes, not how the skill runs.
@@ -225,6 +232,13 @@ jobs:
       # never download a runtime or execute a skill.
       - name: Run skill doctor regression tests
         run: python tests/test_skill_doctor.py
+
+      # The installed content skills name code that lives on an unmerged
+      # branch. This suite keeps the record of that honest: an unrecorded
+      # dangling reference and a recorded reference that has landed are both
+      # failures.
+      - name: Run skill reference integrity tests
+        run: python tests/test_skill_references.py
 
       - name: Run skill router capability regression tests
         run: python tests/test_skill_router_capabilities.py
@@ -283,6 +297,8 @@ jobs:
         run: python scripts/check_receipt_secrets.py
       - name: Subprocess policy check
         run: python scripts/check_subprocess_policy.py
+      - name: Skill reference check
+        run: python scripts/check_skill_references.py
       - name: Docs consistency check
         run: python scripts/check_docs.py
       - name: i18n consistency check

@@ -3,14 +3,14 @@
 **Currency**: `CURRENT`
 **Graded target**: `project://final/m5-media-use.mp4`
 **Overall**: `WARN`
-**Checked at**: 2026-10-31T12:20:51Z
+**Checked at**: 2026-10-31T19:45:35Z
 
 **Paths**: logical references (project://, repo://); no absolute paths
 
 | Check | Status | Severity | Detail |
 |---|---|---|---|
 | _video | OK | INFO | path=project://final/m5-media-use.mp4 |
-| file_size | OK | PASS | value_bytes=505448, min_bytes=102400 |
+| file_size | OK | PASS | value_bytes=516163, min_bytes=102400 |
 | ffprobe_parse | OK | PASS |  |
 | resolution | OK | PASS | value=1080x1920, expected=1080x1920 |
 | aspect_ratio_9_16 | OK | PASS | value=1080:1920 |
@@ -26,7 +26,7 @@
 | real_source_ratio | FAIL | WARN | value=0.0, min=0.7, real_shots=0, generated_shots=0, note=AI-generated key visuals must not be the majority |
 | source_provenance_complete | OK | PASS |  |
 | engine_recorded | OK | PASS | value=easel |
-| voice_not_silence | OK | PASS | max_volume_db=-3.6 dB, mean_volume_db=-28.3 dB |
+| voice_not_silence | OK | PASS | max_volume_db=-3.5 dB, mean_volume_db=-28.3 dB |
 | subtitle_burned_or_track | OK | PASS | method=burned_in_scan, note=max bright-pixel ratio across 6 samples = 0.01159 |
 | real_evidence_present | FAIL | WARN | value_count=0, from_manifest=0 |
 | voice_quality_declared | OK | INFO | voice_provider=windows-sapi/Huihui (offline), voice_quality=fallback, production_quality_warning=True, note=mechanical/fallback voice keeps the render at READY_FOR_HUMAN_REVIEW; only a human can accept it as production (V1 spec §11) |

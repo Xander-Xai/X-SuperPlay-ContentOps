@@ -54,7 +54,16 @@ Run the developer gate:
 python scripts/dev_check.py
 ```
 
-All checks must pass. No exceptions.
+All checks must pass. No exceptions. The gate covers repo policy, subprocess
+policy, skill-reference integrity, documentation, bilingual consistency, the
+script-level smoke suite and whitespace.
+
+Two rules that the gate now enforces for you:
+
+- A new `tests/test_*.py` file must be named in `.github/workflows/ci.yml`, or
+  it never runs.
+- A skill that names code this branch does not have must be recorded in
+  `runtime/content-skill-status.json`.
 
 ## File Placement
 

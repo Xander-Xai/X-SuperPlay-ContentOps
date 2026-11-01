@@ -67,6 +67,12 @@ CANONICAL: List[tuple] = [
 CANONICAL_RECEIPT = f"{VOICE}/B-minimax-speech-2.8-hd.receipt.json"
 PROVENANCE_INDEX = f"{VOICE}/GOLDEN-VOICE-ASSETS.json"
 
+#: Audio exceptions that exist for a different reason and are not part of this
+#: experiment: the M5 media-use sample's operator-owned tone bed (audit D-4).
+#: They are enumerated here so the count assertion below stays exact: adding any
+#: other audio exception still fails.
+OTHER_AUDIO_EXCEPTIONS: List[str] = ["projects/m5-media-use/assets/bed.mp3"]
+
 #: Everything that must stay ignored. Rendered output is here on purpose: fixed
 #: experiment inputs are tracked, renders are reproducible from them.
 MUST_STAY_IGNORED: List[str] = [
@@ -227,15 +233,19 @@ def test_the_audio_allowlist_is_exactly_two():
 
     A third ``!*.wav``-adjacent exception would be easy to add and would read as
     housekeeping. Pinning the count means the next one has to be argued for.
+    Audio exceptions belonging to other work are enumerated explicitly in
+    ``OTHER_AUDIO_EXCEPTIONS``, so any *unlisted* one still fails here.
     """
     exceptions = [r for r in ignore_rules() if r.startswith("!") and r.endswith((".wav", ".mp3"))]
-    expected = sorted("!" + rel for rel, _ in CANONICAL)
+    expected = sorted(["!" + rel for rel, _ in CANONICAL]
+                      + ["!" + rel for rel in OTHER_AUDIO_EXCEPTIONS])
     assert sorted(exceptions) == expected, (
-        "the exact Golden audio allowlist is not exactly the two approved files.\n"
+        "the exact Golden audio allowlist is not exactly the approved files.\n"
         f"  found:    {sorted(exceptions)}\n"
         f"  expected: {expected}"
     )
-    print(f"[ok] 7. the exact Golden audio allowlist is exactly {len(CANONICAL)} paths")
+    print(f"[ok] 7. the exact Golden audio allowlist is exactly {len(CANONICAL)} paths "
+          f"(+{len(OTHER_AUDIO_EXCEPTIONS)} from other work)")
 
 
 @test

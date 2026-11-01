@@ -63,6 +63,35 @@ def _write_json(path: Path, payload: Dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+#: Where a media-use import receipt is mirrored so a clone can read it.
+TRACKED_RECEIPT_DIR = Path("receipts") / "media-use"
+
+
+def _mirror_import_receipt(project: Path, imported: Any) -> str:
+    """Copy an adapter import receipt to a repository-tracked path.
+
+    The adapter writes each receipt beside the asset it describes. For audio the
+    skill resolves from the pinned runtime, that is ``.media/``, which this
+    repository ignores — so the receipt carrying the licence and attribution could
+    not be checked from a clone. The mirror keeps the same bytes (the adapter
+    redacts them before writing) under ``receipts/media-use/``. The original stays
+    where it is, so ``.media/manifest.jsonl`` and the adapter's own lookup are not
+    disturbed, and nothing here is a second registry: these are the same receipts
+    at a path this repository tracks.
+    """
+    source = getattr(imported, "receipt_path", None)
+    reference = str(getattr(imported, "receipt_ref", "") or "")
+    if not source:
+        return reference
+    source = Path(str(source))
+    if not source.is_file():
+        return reference
+    directory = Path(project) / TRACKED_RECEIPT_DIR
+    directory.mkdir(parents=True, exist_ok=True)
+    (directory / source.name).write_bytes(source.read_bytes())
+    return (TRACKED_RECEIPT_DIR / source.name).as_posix()
+
+
 def _read_yaml(path: Path) -> Dict[str, Any]:
     """Read the small subset of YAML these projects use, without a dependency."""
     try:
@@ -251,6 +280,7 @@ def stage_media_use(project: Path, config: Dict[str, Any], *, adapter: Any = Non
             )
             if not verification.ok:
                 raise M5Blocked(f"{asset_id}: media-use import receipt/hash verification failed")
+            receipt_ref = _mirror_import_receipt(project, imported)
         except Exception as exc:
             if isinstance(exc, M5Blocked):
                 raise
@@ -272,7 +302,7 @@ def stage_media_use(project: Path, config: Dict[str, Any], *, adapter: Any = Non
                 "license": license_name, "attribution": attribution,
                 "rights": rights_info,
                 "media_use_asset_id": imported.asset_id,
-                "receipt_ref": imported.receipt_ref,
+                "receipt_ref": receipt_ref,
             }
         elif kind == "bgm":
             audio["bgm"] = {
@@ -281,7 +311,7 @@ def stage_media_use(project: Path, config: Dict[str, Any], *, adapter: Any = Non
                 "license": license_name, "attribution": attribution,
                 "rights": rights_info,
                 "media_use_asset_id": imported.asset_id,
-                "receipt_ref": imported.receipt_ref,
+                "receipt_ref": receipt_ref,
             }
         else:
             audio["sfx"].append({
@@ -290,12 +320,12 @@ def stage_media_use(project: Path, config: Dict[str, Any], *, adapter: Any = Non
                 "license": license_name, "attribution": attribution,
                 "rights": rights_info,
                 "media_use_asset_id": imported.asset_id,
-                "receipt_ref": imported.receipt_ref,
+                "receipt_ref": receipt_ref,
             })
         results.append({
             "id": asset_id, "state": "IMPORTED", "kind": kind,
             "source": resolved.source, "sha256": imported.sha256,
-            "path": "project://" + relative, "receipt_ref": imported.receipt_ref,
+            "path": "project://" + relative, "receipt_ref": receipt_ref,
             "license": license_name, "attribution": attribution,
             "rights": rights_info,
             "evidence_capable": False, "provider_call": False,
