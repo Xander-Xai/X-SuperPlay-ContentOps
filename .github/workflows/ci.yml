@@ -333,6 +333,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # The receipt check compares values against the trusted base commit,
+          # so the history it needs has to be present.
+          fetch-depth: 0
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -340,7 +344,17 @@ jobs:
       - name: Repo policy check
         run: python scripts/check_repo_policy.py
       - name: Receipt secret check
-        run: python scripts/check_receipt_secrets.py
+        shell: bash
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          base="$PR_BASE"
+          if [ -z "$base" ]; then base="$PUSH_BEFORE"; fi
+          if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
+            base="origin/main"
+          fi
+          python scripts/check_receipt_secrets.py --base "$base"
       - name: Subprocess policy check
         run: python scripts/check_subprocess_policy.py
       - name: Skill reference check
