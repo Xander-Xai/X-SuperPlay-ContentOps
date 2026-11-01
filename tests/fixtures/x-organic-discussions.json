@@ -1,0 +1,14 @@
+{
+  "account_id": "fixture-account",
+  "language": "en",
+  "privacy": "public",
+  "operation": "discover",
+  "fixture": true,
+  "candidates": [
+    {"source_url":"https://x.com/fixture_a/status/10001","author":"fictional A","text":"How do you verify an agent's tool access?","scores":{"topic_relevance":5,"audience_fit":5,"incremental_value":5,"evidence_quality":4,"discussion_potential":5,"duplication_risk":0,"compliance_risk":0},"drafts":["A useful distinction is discovery versus permission: seeing a tool does not authorize running it.","One practical check is to bind a grant to the exact operation and account."],"limitation":"Synthetic example; not an observed post."},
+    {"source_url":"https://x.com/fixture_b/status/10002","author":"fictional B","text":"What should a release receipt record?","scores":{"topic_relevance":5,"audience_fit":4,"incremental_value":4,"evidence_quality":3,"discussion_potential":4,"duplication_risk":0,"compliance_risk":0},"drafts":["A receipt can distinguish the requested action from the one actually performed.","Recording limitations alongside the result makes later review easier."],"limitation":"Synthetic example; not an observed post."},
+    {"source_url":"https://x.com/fixture_c/status/10003","author":"fictional C","text":"Are tests enough for release?","scores":{"topic_relevance":4,"audience_fit":4,"incremental_value":3,"evidence_quality":3,"discussion_potential":3,"duplication_risk":1,"compliance_risk":0},"drafts":["Tests are evidence about their scope, not proof that every real-world case works.","A useful release note names what the tests did not cover."],"limitation":"Synthetic example; not an observed post."},
+    {"source_url":"https://x.com/fixture_d/status/10004","author":"fictional D","text":"Is every AI workflow autonomous?","scores":{"topic_relevance":3,"audience_fit":3,"incremental_value":2,"evidence_quality":2,"discussion_potential":2,"duplication_risk":1,"compliance_risk":0},"drafts":["Human review can be part of the workflow rather than a failure of automation.","The important question is which specific step is allowed to act."],"limitation":"Synthetic example; not an observed post."},
+    {"source_url":"https://x.com/fixture_e/status/10005","author":"fictional E","text":"What is your favourite colour?","scores":{"topic_relevance":0,"audience_fit":1,"incremental_value":0,"evidence_quality":0,"discussion_potential":1,"duplication_risk":2,"compliance_risk":0},"drafts":[],"limitation":"Synthetic and unrelated; do not reply."}
+  ]
+}

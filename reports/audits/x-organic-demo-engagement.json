@@ -1,0 +1,56 @@
+{
+  "schema": "contentops.x-organic-growth/v1",
+  "status": "REVIEW_REQUIRED",
+  "reasons": [],
+  "network_used": false,
+  "external_action": "none",
+  "execution_authorized": false,
+  "requires_human_review": true,
+  "brief": {
+    "status": "REVIEW_REQUIRED",
+    "source_excerpt": "How can teams verify agent permissions?",
+    "audience_supplied": "agent builders",
+    "context_supplied": "Fictional example about tool access and permission boundaries.",
+    "interpretation": "No semantic inference performed; an agent or human must identify the claim and audience fit.",
+    "participation_decision": "HUMAN_REVIEW_REQUIRED",
+    "evidence": [
+      {
+        "url": "https://github.com/Xander-Xai/X-SuperPlay-ContentOps/blob/4b2091fab00288fbd77d3a87c152a9acb9b8e425/docs/SKILL-REGISTRY.md",
+        "quote": "Discovery alone never promotes a skill to executable.",
+        "verification": "USER_SUPPLIED_UNVERIFIED"
+      }
+    ],
+    "writing_angles": [
+      {
+        "purpose": "concrete evidence",
+        "instruction": "Add a relevant, independently verified fact; omit claims not supported by the supplied source."
+      },
+      {
+        "purpose": "limitation or alternative",
+        "instruction": "Offer a contextual limitation or thoughtful question; do not invent a counterexample."
+      }
+    ],
+    "draft_generation": "AGENT_REQUIRED",
+    "drafts_supplied": [
+      "For agent permissions, one useful distinction is whether a tool is visible versus whether a specific action is authorized.",
+      "How do you verify that an agent permission applies to the exact operation, account, and expiration window?"
+    ],
+    "warnings": [],
+    "review_checklist": [
+      "Confirm source and context",
+      "Check audience fit and incremental value",
+      "Verify each claim and source",
+      "Check relevance, originality, privacy and platform rules",
+      "A human decides whether and how to reply"
+    ],
+    "limitations": "Lexical warnings are incomplete and do not determine relevance, truth or originality."
+  },
+  "receipt": {
+    "schema": "contentops.x-organic-growth-receipt/v1",
+    "input_sha256": "ff8cb3bfb78d80070d5720213a92e42d753f0a628649ce7ee6a6cbd368787488",
+    "status": "REVIEW_REQUIRED",
+    "external_action": "none",
+    "network_used": false,
+    "human_review_required": true
+  }
+}

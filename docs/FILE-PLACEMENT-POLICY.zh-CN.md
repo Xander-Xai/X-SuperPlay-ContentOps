@@ -28,6 +28,11 @@ translation_status: synced
 
 仅已废弃的历史资料。每个文件必须有 ```status: superseded``` 头。
 
+## skills/
+
+仓库自有 Skill 指令及其参考资料、模板放在 `skills/<name>/`。第三方 vendor 内容、
+凭证、生成产物和运行时状态不得放在此处。可发现不代表权利已获核验或执行已获授权。
+
 ## scripts/
 
 CLI 工具、运维脚本、验证、构建编排。
