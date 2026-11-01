@@ -345,6 +345,81 @@ def test_the_m5_sample_fixtures_are_trackable_and_stay_narrow():
     print(f"[ok] 14. the M5 sample tracks exactly {len(M5_FIXTURES)} owned inputs")
 
 
+# --- local agent / render state (Issue #98) --------------------------------
+
+#: Representative paths observed in the operator's working tree on 2026-11-01.
+#: None of them is source, evidence or a receipt: they are a running tool's memory
+#: on disk, and the SQLite sidecars are only coherent with the database beside them.
+LOCAL_STATE = [
+    "projects/x-superplay-1024/.openclaw/state/state/openclaw.sqlite",
+    "projects/x-superplay-1024/.openclaw/state/state/openclaw.sqlite-wal",
+    "projects/x-superplay-1024/.openclaw/state/state/openclaw.sqlite-shm",
+    "projects/x-superplay-1024/.openclaw/state/state/openclaw-quarantine.sqlite",
+    "projects/x-superplay-1024/.openclaw/state/prompt-captions.md",
+    "projects/easel-fi-audio-first/motion/arch-flow/.hyperframes/video-state.json",
+    "projects/easel-fi-audio-first/motion/arch-flow/.hyperframes/history-id",
+    "projects/easel-fi-audio-first/motion/arch-flow/.hyperframes/artifacts/checks/a.json",
+]
+
+#: Hand-made creative source that sits next to that state. It must stay visible:
+#: ignoring it would make `git status` green by hiding real work.
+NOT_STATE = (
+    "projects/gzh-thinktank/active/THK-20260825-002-mcp-tool-governance-v2"
+    "/imgs/diagram-sources/cover-overlay.svg"
+)
+
+
+@test
+def test_local_agent_and_render_state_are_ignored():
+    leaked = [rel for rel in LOCAL_STATE if not ignored(rel)]
+    assert not leaked, (
+        f"agent session and render state must never be committable: {leaked}. "
+        f"A single `git add -A` would otherwise publish SQLite session databases "
+        f"into a public repository."
+    )
+    print(f"[ok] 15. all {len(LOCAL_STATE)} local agent/render state files are ignored")
+
+
+@test
+def test_creative_source_beside_the_state_stays_visible():
+    assert not ignored(NOT_STATE), (
+        f"{NOT_STATE} is hand-made source, not run state; the agent-state rules must "
+        f"not sweep it up to make `git status` look clean"
+    )
+    print("[ok] 16. cover-overlay.svg is untouched by the agent-state rules")
+
+
+@test
+def test_the_policy_predicate_refuses_agent_state_and_allows_source():
+    from check_repo_policy import is_local_agent_state
+
+    allowed_through = [rel for rel in LOCAL_STATE if not is_local_agent_state(rel)]
+    assert not allowed_through, (
+        f"the policy predicate must refuse every local-state path, because "
+        f"`.gitignore` cannot stop `git add -f`: {allowed_through}"
+    )
+    assert not is_local_agent_state(NOT_STATE), f"{NOT_STATE} is source, not run state"
+    for ordinary in (
+        "scripts/check_repo_policy.py",
+        "src/contentops/publish/x_post.py",
+        "projects/m5-media-use/project.yaml",
+    ):
+        assert not is_local_agent_state(ordinary), f"{ordinary} is not run state"
+    print("[ok] 17. the policy predicate refuses agent state and allows source")
+
+
+@test
+def test_no_agent_state_is_tracked_right_now():
+    from check_repo_policy import check_no_tracked_agent_state
+
+    failures = check_no_tracked_agent_state()
+    assert failures == [], (
+        "no agent session or render state may be tracked; a force-add has slipped in: "
+        + "; ".join(failures)
+    )
+    print("[ok] 18. no agent session or render state is currently tracked")
+
+
 def main() -> int:
     failures = []
     for fn in TESTS:
