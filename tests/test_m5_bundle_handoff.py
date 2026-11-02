@@ -119,6 +119,43 @@ def test_valid_bundle_writes_a_video_handoff():
         assert saved["publish_authorized"] is False
 
 
+def test_handoff_path_survives_a_windows_short_path_alias():
+    """The caller may pass the project path spelled with an 8.3 alias.
+
+    On a GitHub Windows runner the temp dir arrives as
+    ``C:\\Users\\RUNNER~1\\...`` while ``write_handoff`` resolves it to
+    ``C:\\Users\\runneradmin\\...``. A raw ``relative_to`` raises ValueError
+    because the two spellings differ. The stage must normalize both sides.
+    """
+    if sys.platform != "win32":
+        return  # 8.3 aliases are a Windows spelling difference; elsewhere identical
+
+    import ctypes
+
+    with tempfile.TemporaryDirectory() as tmp:
+        project = _project(Path(tmp))
+        short_buffer = ctypes.create_unicode_buffer(4096)
+        if ctypes.windll.kernel32.GetShortPathNameW(str(project), short_buffer,
+                                                    len(short_buffer)) == 0:
+            return  # short names disabled on this volume; the alias test cannot run
+        aliased = Path(short_buffer.value)
+        if aliased == project.resolve():
+            return  # this spelling matches the long form; nothing to distinguish
+
+        stage = m5_production.stage_bundle(aliased, {
+            "id": "bundle-video",
+            "content_bundle": {
+                "path": "bundle.json",
+                "account": "explorer",
+                "source_map": {"SRC-20261102-002": "SRC-RUNTIME-002"},
+            },
+        })
+        assert stage["state"] == "READY_FOR_PRODUCTION"
+        assert stage["handoff"] == "receipts/bundle-handoff-video.json"
+        saved = json.loads((project / stage["handoff"]).read_text(encoding="utf-8"))
+        assert saved["content_format"] == "VIDEO"
+
+
 def test_broken_source_mapping_blocks_video():
     with tempfile.TemporaryDirectory() as tmp:
         project = _project(Path(tmp))
