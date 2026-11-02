@@ -120,12 +120,15 @@ def test_valid_bundle_writes_a_video_handoff():
 
 
 def test_handoff_path_survives_a_windows_short_path_alias():
-    """The caller may pass the project path spelled with an 8.3 alias.
+    """The caller may pass a project path living under an 8.3-aliased parent.
 
-    On a GitHub Windows runner the temp dir arrives as
+    On a GitHub Windows runner the temp dir's parent chain arrives as
     ``C:\\Users\\RUNNER~1\\...`` while ``write_handoff`` resolves it to
     ``C:\\Users\\runneradmin\\...``. A raw ``relative_to`` raises ValueError
-    because the two spellings differ. The stage must normalize both sides.
+    because the two spellings differ. The stage must resolve both sides.
+
+    The alias is applied to the *parent* directory: 8.3 applies to directory
+    components, and the project slug itself must stay a plain name.
     """
     if sys.platform != "win32":
         return  # 8.3 aliases are a Windows spelling difference; elsewhere identical
@@ -134,12 +137,15 @@ def test_handoff_path_survives_a_windows_short_path_alias():
 
     with tempfile.TemporaryDirectory() as tmp:
         project = _project(Path(tmp))
+        parent = project.parent
         short_buffer = ctypes.create_unicode_buffer(4096)
-        if ctypes.windll.kernel32.GetShortPathNameW(str(project), short_buffer,
+        if ctypes.windll.kernel32.GetShortPathNameW(str(parent), short_buffer,
                                                     len(short_buffer)) == 0:
             return  # short names disabled on this volume; the alias test cannot run
-        aliased = Path(short_buffer.value)
-        if aliased == project.resolve():
+        aliased_parent = Path(short_buffer.value)
+        aliased = aliased_parent / project.name
+        if aliased.resolve() == project.resolve() and \
+                str(aliased) == str(project.resolve()):
             return  # this spelling matches the long form; nothing to distinguish
 
         stage = m5_production.stage_bundle(aliased, {

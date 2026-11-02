@@ -422,6 +422,18 @@ jobs:
           if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
             base="origin/main"
           fi
+          # A force-push makes github.event.before name a removed commit. The
+          # comparison still has a trusted base: walk back to a reachable
+          # ancestor before giving up, never widening the trusted set.
+          for _ in 1 2 3 4 5; do
+            if git rev-parse --verify --quiet "$base^{commit}" >/dev/null 2>&1; then
+              break
+            fi
+            parent="$(git rev-parse --verify --quiet "$base^" 2>/dev/null || true)"
+            if [ -z "$parent" ]; then break; fi
+            echo "base $base unreachable; stepping to parent $parent"
+            base="$parent"
+          done
           python scripts/check_receipt_secrets.py --base "$base"
       - name: Subprocess policy check
         run: python scripts/check_subprocess_policy.py

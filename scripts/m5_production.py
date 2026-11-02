@@ -164,10 +164,12 @@ def stage_bundle(project: Path, config: Dict[str, Any]) -> Dict[str, Any]:
 
     # write_handoff resolves the project dir, and on Windows an 8.3 alias
     # (C:\Users\RUNNER~1\...) expands there while the caller's `project` keeps
-    # the short spelling; a raw relative_to would raise ValueError. Both sides
-    # are normalized before comparing (same policy as contentops.media_paths).
-    handoff_receipt = Path(os.path.normpath(str(written))).relative_to(
-        Path(os.path.normpath(str(project)))).as_posix()
+    # the short spelling; a raw relative_to raises ValueError. os.path.normpath
+    # does not expand such aliases (it is lexical only), so both sides are
+    # resolved before comparing — the same policy contentops.media_paths
+    # documents for runner temp directories.
+    handoff_receipt = written.resolve().relative_to(
+        Path(project).resolve()).as_posix()
     return {
         "state": handoff["state"],
         "bundle_id": handoff["bundle_id"],
