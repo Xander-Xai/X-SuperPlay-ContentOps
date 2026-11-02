@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<style>
+ *{margin:0;padding:0;box-sizing:border-box}
+ html,body{width:1080px;height:1920px}
+ body{background:#0F1117;color:#F5F7FA;font-family:"Noto Sans CJK SC","Microsoft YaHei",sans-serif}
+ .card{width:1080px;height:1920px;padding:96px 80px 400px;display:flex;flex-direction:column}
+ .kicker{font-size:26px;letter-spacing:.12em;color:#8B95A5}
+ .rule{height:2px;background:#38BDF8;margin-top:32px}
+ h1{font-size:84px;line-height:1.2;font-weight:300;margin-top:96px;letter-spacing:-.02em}
+ .file{font-family:"Cascadia Mono",monospace;font-size:26px;color:#8B95A5;margin-top:24px}
+ pre{background:#272822;border:1px solid #3A3A32;border-radius:10px;padding:44px 40px;margin-top:64px;
+     font-family:"Cascadia Mono",monospace;font-size:27px;line-height:1.62;color:#F8F8F2;white-space:pre-wrap}
+ .kw{color:#F92672}.fn{color:#A6E22E}.str{color:#E6DB74}.cm{color:#75715E}.hl{background:#3B3A2E;color:#38BDF8}
+ .spacer{flex:1}
+ .footer{font-size:24px;color:#8B95A5;letter-spacing:.08em}
+</style></head><body><div class="card">
+ <div class="kicker">STATIC CODE SNAPSHOT</div><div class="rule"></div>
+ <h1>旧门禁放过了<br>静态停留。</h1>
+ <div class="file">src/contentops/media/cut_qc.py</div>
+<pre><span class="cm"># 结构：超上限的静态 placement 必须声明视图</span>
+<span class="hl">undeclared = [p.placement_id for p in cut_plan.placements
+              if p.end_ms - p.start_ms &gt; max_hold_ms
+              and not p.shots]</span>
+<span class="fn">_check</span>(<span class="str">"views_declared"</span>, <span class="kw">not</span> undeclared)
+
+<span class="cm"># 实测：冻结 run 不得超过声明停留</span>
+<span class="hl">freeze_limit = max_hold_ms / 1000.0 + 0.2
+longest = measured.longest_freeze_run_s</span>
+<span class="fn">_check</span>(<span class="str">"static_hold_within_limit"</span>,
+       longest <span class="kw">is</span> <span class="kw">None</span> <span class="kw">or</span> longest &lt;= freeze_limit)</pre>
+ <div class="spacer"></div>
+ <div class="footer">关键行节选，非整屏 IDE</div>
+</div></body></html>

@@ -4,7 +4,7 @@
   "engine": "easel",
   "voice_quality": "edge_tts_fallback",
   "production_ready": false,
-  "state": "PENDING_FOUNDER_REVIEW",
+  "state": "REJECTED_FOUNDER",
   "auto_qc_result": "PASS",
   "auto_qc_checks": 21,
   "auto_qc_fails": 0,
@@ -18,11 +18,40 @@
     "all_qc_pass": true,
     "note": "3 consecutive builds all OK, all QC PASS. Occasional edge-tts network timeout is a known external dependency issue."
   },
-  "reviewer": null,
-  "reviewed_at": null,
+  "reviewer": "Founder",
+  "reviewed_at": "2026-11-01",
   "scores": null,
-  "hard_fail": null,
-  "decision": "PENDING_FOUNDER_REVIEW",
+  "hard_fail": [
+    "voice severely mechanical/unintelligible",
+    "screenshots unreadable at phone scale"
+  ],
+  "decision": "REJECTED_FOUNDER",
+  "rejection": {
+    "state_token": "REJECTED_FOUNDER",
+    "token_source": "src/contentops/media/media_envelope.py:131 HUMAN_REVIEW_REJECTED",
+    "requested_alias": "REJECTED_BY_FOUNDER (the 2026-11-01 review brief's wording; mapped to the canonical token)",
+    "graded_artifact": "projects/easel-review/final/easel.mp4",
+    "graded_artifact_sha256": "e3b029ef4fc033f9164cd84344d8fd834c6fcc78e932566835248307cc0e882f",
+    "not_the_tracked_file": "projects/easel-review/final/final.mp4 (552315 B, 40.0 s, sha256 e2f185e43d55b1998c596c47c0f0fc163d36d2fa5068795ad95ee3656e875373) is a different, older render and is not the rejected object.",
+    "measured": {
+      "duration_s": 62.0,
+      "resolution": "1080x1920",
+      "bytes": 1868184,
+      "shots": 6,
+      "shot_motion": "all static",
+      "shot_source": "projects/easel-review/script/storyboard.json",
+      "voice_quality": "edge_tts_fallback",
+      "auto_qc": "PASS (21 checks, 0 fails, 0 warns)"
+    },
+    "founder_reasons": [
+      "画面不符合发布标准",
+      "动效不足：整片为终端截图与黑底，镜头之间缺少视觉差异",
+      "风格不符合成熟科技短视频的信息设计",
+      "音质不符合发布标准"
+    ],
+    "provenance": "Owner review instruction delivered to the coding agent 2026-11-01. Qualitative rejection; no numeric scorecard was given, so scores stay null.",
+    "advantage_of_auto_qc": "This artifact passed 21/21 automated checks. The rejection is aesthetic and voice-quality, which the automated gate does not measure. That gap is the finding, not a QC defect."
+  },
   "scorecard": {
     "hook": 15,
     "information_density": 15,

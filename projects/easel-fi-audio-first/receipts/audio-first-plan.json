@@ -1,0 +1,84 @@
+{
+  "schema": "contentops.audio-first-plan/v1",
+  "built_at": "2026-10-28T00:57:48Z",
+  "package_id": "easel-fi-audio-first",
+  "method": "audio-first: synthesise, measure, then size the windows",
+  "voice_provider": "miniMax/speech-2.8-hd",
+  "voice_quality": "minimax_mplan_subscription",
+  "voice": "speech-2.8-hd",
+  "rules": {
+    "max_visual_hold_ms": 3000,
+    "min_reading_hold_ms": 2500,
+    "tail_ms": 400
+  },
+  "beats": [
+    {
+      "placement_id": "P-01-HOOK",
+      "claim_id": "C-FI-01",
+      "text": "口播四十四秒，画面不能停四十四秒。",
+      "speech_s": 3.239,
+      "window_s": 5.0,
+      "views": [
+        "P-01-HOOK-V1",
+        "P-01-HOOK-V2"
+      ],
+      "cached": true,
+      "provider_receipt": "project://assets/voice/tts/5398aad3806c065e.provider.json"
+    },
+    {
+      "placement_id": "P-02-TRADEOFF",
+      "claim_id": "C-FI-02",
+      "text": "画面按语义换，不按口播时长。",
+      "speech_s": 2.891,
+      "window_s": 5.0,
+      "views": [
+        "P-02-TRADEOFF-V1",
+        "P-02-TRADEOFF-V2"
+      ],
+      "cached": true,
+      "provider_receipt": "project://assets/voice/tts/e87abe1ce64a7bf9.provider.json"
+    },
+    {
+      "placement_id": "P-03-ARCH",
+      "claim_id": "C-FI-03",
+      "text": "一个口播窗口，拆成多个取证视图。",
+      "speech_s": 3.146,
+      "window_s": 5.0,
+      "views": [
+        "P-03-ARCH-V1",
+        "P-03-ARCH-V2"
+      ],
+      "cached": true,
+      "provider_receipt": "project://assets/voice/tts/269aabe4cac2aa6c.provider.json"
+    },
+    {
+      "placement_id": "P-04-ROOTCAUSE",
+      "claim_id": "C-FI-04",
+      "text": "旧门禁放过了静态停留，现在换成实测。",
+      "speech_s": 3.274,
+      "window_s": 5.0,
+      "views": [
+        "P-04-ROOTCAUSE-V1",
+        "P-04-ROOTCAUSE-V2"
+      ],
+      "cached": true,
+      "provider_receipt": "project://assets/voice/tts/299234634d8baf61.provider.json"
+    },
+    {
+      "placement_id": "P-05-VERIFY",
+      "claim_id": "C-FI-05",
+      "text": "重建后最长冻结一点八秒，质检通过。",
+      "speech_s": 3.576,
+      "window_s": 5.0,
+      "views": [
+        "P-05-VERIFY-V1",
+        "P-05-VERIFY-V2"
+      ],
+      "cached": true,
+      "provider_receipt": "project://assets/voice/tts/0f4776bbc0bd4844.provider.json"
+    }
+  ],
+  "total_s": 25.0,
+  "production_ready": false,
+  "human_review": "PENDING_FOUNDER_REVIEW"
+}

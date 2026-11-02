@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="zh-CN" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --base: #0f1117; --surface: #161a22; --ink: #f5f7fa;
+        --muted: #8b95a5; --accent: #38bdf8; --line: #2a3240;
+        --sans: "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+        --mono: "Cascadia Mono", "Noto Sans Mono CJK SC", monospace;
+      }
+      @font-face { font-family: "Noto Sans CJK SC"; src: local("Noto Sans CJK SC"); }
+      @font-face { font-family: "Cascadia Mono"; src: local("Cascadia Mono"); }
+      @font-face { font-family: "Noto Sans Mono CJK SC"; src: local("Noto Sans Mono CJK SC"); }
+      @font-face { font-family: "Microsoft YaHei"; src: local("Microsoft YaHei"); }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--base); }
+      #root { position: relative; width: 1080px; height: 1920px; background: var(--base); color: var(--ink); overflow: hidden; }
+      #scene { position: absolute; inset: 0; width: 1080px; height: 1920px; transform-origin: 50% 42%; }
+      #grain { position: absolute; inset: 0; pointer-events: none; z-index: 50; opacity: .05;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>"); }
+      .topline { position: absolute; left: 86px; right: 86px; top: 96px; display: flex;
+        justify-content: space-between; font-family: var(--mono); font-size: 28px;
+        letter-spacing: .18em; color: var(--muted); }
+      .topline .tag { color: var(--accent); }
+      #rule { position: absolute; left: 86px; top: 150px; width: 908px; height: 2px;
+        background: var(--accent); transform-origin: left center; }
+      h1 { position: absolute; left: 86px; top: 210px; width: 908px; font-family: var(--sans);
+        font-size: 88px; line-height: 1.22; font-weight: 300; letter-spacing: -.02em; }
+      h1 span { display: block; opacity: 0; }
+      .node { position: absolute; left: 86px; width: 908px; background: var(--surface);
+        border: 1px solid var(--line); border-radius: 12px; padding: 30px 34px;
+        display: flex; align-items: baseline; justify-content: space-between; opacity: 0; }
+      .node .k { font-family: var(--mono); font-size: 28px; letter-spacing: .12em; color: var(--muted); }
+      .node .v { font-family: var(--sans); font-size: 44px; font-weight: 300; }
+      #na { top: 620px; }
+      #nc { top: 1120px; }
+      .views { position: absolute; left: 86px; top: 820px; width: 908px; display: flex; gap: 18px; }
+      .view { flex: 1; background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+        padding: 26px 18px; text-align: center; opacity: 0; }
+      .view b { display: block; font-family: var(--sans); font-size: 34px; font-weight: 500; }
+      .view span { display: block; font-family: var(--mono); font-size: 28px; color: var(--muted); margin-top: 8px; }
+      .arrow { position: absolute; left: 540px; width: 2px; background: var(--accent);
+        transform-origin: top center; transform: scaleY(0); }
+      #a1 { top: 795px; height: 42px; }
+      #a2 { top: 1060px; height: 42px; }
+      .arrow::after { content: ""; position: absolute; left: -7px; bottom: -9px;
+        border-left: 8px solid transparent; border-right: 8px solid transparent;
+        border-top: 11px solid var(--accent); }
+      #dot { position: absolute; left: 532px; top: 660px; width: 16px; height: 16px;
+        border-radius: 50%; background: var(--accent); opacity: 0;
+        box-shadow: 0 0 22px rgba(56,189,248,.85); }
+      #metric { position: absolute; left: 86px; top: 1300px; display: flex; gap: 44px;
+        font-family: var(--mono); font-size: 28px; letter-spacing: .08em; color: var(--muted); }
+      #metric b { color: var(--ink); font-weight: 400; font-size: 30px; }
+      #foot { position: absolute; left: 86px; right: 86px; top: 1390px;
+        display: flex; justify-content: space-between; border-top: 1px solid var(--line);
+        padding-top: 16px; font-family: var(--mono); font-size: 28px;
+        letter-spacing: .1em; color: var(--muted); opacity: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="5"
+         data-width="1080" data-height="1920">
+      <div id="grain"></div>
+      <div id="scene">
+      <div id="topline" class="topline clip" data-start="0" data-duration="5" data-track-index="0">
+        <span class="tag">[ 未来智能 · 工程 ]</span><span>VIEW PIPELINE</span>
+      </div>
+      <div id="rule" class="clip" data-start="0" data-duration="5" data-track-index="0"></div>
+      <h1 id="head" class="clip" data-start="0" data-duration="5" data-track-index="1">
+        <span>口播一段，</span><span>画面分切。</span>
+      </h1>
+      <div id="na" class="node clip" data-start="0" data-duration="5" data-track-index="2">
+        <span class="k">PLACEMENT · 口播窗口</span><span class="v">6.0 s</span>
+      </div>
+      <div id="a1" class="arrow clip" data-start="0" data-duration="5" data-track-index="3"></div>
+      <div id="viewsRow" class="views">
+        <div class="view clip" id="v1" data-start="0" data-duration="5" data-track-index="4"><b>V1</b><span>上下文 2.0s</span></div>
+        <div class="view clip" id="v2" data-start="0" data-duration="5" data-track-index="4"><b>V2</b><span>关键行 2.0s</span></div>
+        <div class="view clip" id="v3" data-start="0" data-duration="5" data-track-index="4"><b>V3</b><span>结果 2.0s</span></div>
+      </div>
+      <div id="a2" class="arrow clip" data-start="0" data-duration="5" data-track-index="3"></div>
+      <div id="nc" class="node clip" data-start="0" data-duration="5" data-track-index="5">
+        <span class="k">QC GATE · 实测门禁</span><span class="v">PASS</span>
+      </div>
+      <div id="dot" class="clip" data-start="0" data-duration="5" data-track-index="6"></div>
+      <div id="metric" class="clip" data-start="0" data-duration="5" data-track-index="7">
+        <span>VIEWS <b id="views">0</b></span>
+        <span>FREEZE <b id="freeze">0.00</b> s</span>
+      </div>
+      <div id="foot" class="clip" data-start="0" data-duration="5" data-track-index="8">
+        <span>docs/CURRENT-STATE.md</span><span>01 / 03</span>
+      </div>
+      </div>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      const views = { v: 0 }, freeze = { v: 0 };
+      const viewsEl = document.querySelector("#views");
+      const freezeEl = document.querySelector("#freeze");
+
+      tl.fromTo("#rule", { scaleX: 0 }, { scaleX: 1, duration: .45, ease: "power3.out" }, .05);
+      tl.to("#head span:nth-child(1)", { opacity: 1, y: 0, duration: .38, ease: "power3.out" }, .25);
+      tl.to("#head span:nth-child(2)", { opacity: 1, y: 0, duration: .38, ease: "power3.out" }, .45);
+      tl.fromTo("#na", { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: .4, ease: "power3.out" }, .75);
+      tl.fromTo("#a1", { scaleY: 0 }, { scaleY: 1, duration: .25, ease: "power2.out" }, 1.05);
+      tl.fromTo("#v1", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: .32, ease: "power3.out" }, 1.18);
+      tl.fromTo("#v2", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: .32, ease: "power3.out" }, 1.36);
+      tl.fromTo("#v3", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: .32, ease: "power3.out" }, 1.54);
+      tl.fromTo("#a2", { scaleY: 0 }, { scaleY: 1, duration: .25, ease: "power2.out" }, 1.82);
+      tl.fromTo("#nc", { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: .4, ease: "power3.out" }, 1.95);
+      tl.fromTo("#foot", { opacity: 0 }, { opacity: 1, duration: .3, ease: "power2.out" }, 2.25);
+      tl.to(views, { v: 22, duration: 1.0, ease: "power2.out",
+        onUpdate: () => { viewsEl.textContent = Math.round(views.v); } }, 2.35);
+      tl.to(freeze, { v: 1.8, duration: 1.0, ease: "power2.out",
+        onUpdate: () => { freezeEl.textContent = freeze.v.toFixed(2); } }, 2.35);
+      tl.fromTo("#dot", { opacity: 0, y: 0 }, { opacity: 1, duration: .15 }, 2.8);
+      tl.to("#dot", { y: 500, duration: .7, ease: "power1.inOut", repeat: 2,
+        onRepeat: () => { gsap.set("#dot", { y: 0 }); } }, 2.8);
+      tl.to("#dot", { opacity: 0, duration: .15 }, 4.75);
+      tl.to("#v2", { borderColor: "#38bdf8", duration: .25 }, 3.0)
+        .to("#v2", { borderColor: "#2a3240", duration: .25 }, 3.45)
+        .to("#nc", { borderColor: "#38bdf8", duration: .25 }, 3.55)
+        .to("#nc", { borderColor: "#2a3240", duration: .25 }, 4.0);
+      tl.fromTo("#scene", { scale: 1 }, { scale: 1.035, duration: 5, ease: "none" }, 0);
+      tl.to(["#na", "#v1", "#v3"], { opacity: .45, duration: .3 }, 3.0)
+        .to(["#na", "#v1", "#v3"], { opacity: 1, duration: .3 }, 3.45);
+
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

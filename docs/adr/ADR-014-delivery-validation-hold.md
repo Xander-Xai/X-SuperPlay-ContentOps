@@ -104,3 +104,51 @@ and it is not being executed this week.
   whether or not that decision is made.
 - Any extension of the hold is a new Owner decision recorded here, not an
   implied continuation.
+
+## Owner limited-scope authorization #2 (2026-11-01) — video quality remediation
+
+Recorded here because a hold may only be narrowed by an Owner decision, never by
+a new ADR written by the agent that wants to proceed.
+
+Source: the Owner's scoped correction-and-execution directive delivered to the
+coding agent on 2026-11-01, following the Founder rejection of
+`projects/easel-review/final/easel.mp4` (62.0 s, 1080x1920, SHA-256
+`e3b029ef4fc033f9164cd84344d8fd834c6fcc78e932566835248307cc0e882f`).
+
+### Authorized inside the hold window, and nothing else
+
+1. **Historical capability recovery and minimal Motion integration** — limited to
+   the capabilities named in the audit's remediation plan: the Motion drivers
+   stranded on `fix/49-skill-route-ci`, a single entry-point correction in each
+   production path, an optional narration-provider path, the visual quality gate,
+   and one remediation sample. No second compositor, no new platform module.
+2. **One read-only voice list/status check.** No clone, no first activation, no
+   TTS synthesis, no top-up, no paid retry. An unsafe or exposed credential
+   leaves the check `BLOCKED`; it does not authorise a workaround.
+3. **`projects/easel-fi-audio-first` approved for intake** as a governed
+   technical sample. This is not production readiness and not publication.
+4. **`huashu-art-motion` approved for controlled capability registration**,
+   subject to real source, licence, Windows patch, runtime and per-asset rights
+   verification. Registration grants no execution authority.
+
+### Not authorized
+
+New MiniMax generation requests, paid digital-human experiments, publication, and
+merging any pull request.
+
+### Acceptance for this exception
+
+- the rejected video has a non-overwritable receipt bound to its SHA-256;
+- the existing 25 s Motion sample is reproduced under governance, not rebuilt;
+- narration can enter the video chain only within the authorisation above;
+- a new sample carries real dynamic narrative rather than stills switching;
+- fact, rights, technical and visual gates pass;
+- the Founder watches the new cut and decides.
+
+Everything else in this ADR remains in force, including the 2026-11-08 re-review.
+
+### Merge coordination
+
+This section was written on a branch cut from `origin/main`. PR #101 adds a
+different section to this same file. When the two meet, **keep both sections**;
+neither one supersedes the other, and dropping either loses an Owner decision.

@@ -23,6 +23,7 @@ NEEDS_HUMAN_REVIEW
 """
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -35,6 +36,7 @@ from datetime import datetime, timezone
 from process_utils import hidden_run, python_executable
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
 
 # Fallback / test fixture only. The production path reads script/master.md.
 DEFAULT_SCRIPT_LINES = [
@@ -260,8 +262,25 @@ def resolve_production_runtime() -> dict:
     return resolve_easel(live=False)
 
 
-def run_easel(project: Path) -> dict:
-    """Production path: Easel TTS + upstream assemble.py."""
+def _text_sha(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def run_easel(project: Path, voice_provider: str = "edge",
+              narration: "Path | None" = None,
+              narration_receipt: "Path | None" = None) -> dict:
+    """Production path: a declared narration source + upstream assemble.py.
+
+    ``voice_provider`` is explicit and never degrades silently:
+
+    - ``edge``      upstream edge-tts, the historical compatibility path;
+    - ``existing``  a narration file that already exists, bound to the current
+                    script text by a provider receipt;
+    - anything else is BLOCKED. A named provider this build cannot reach must
+                    fail rather than quietly fall back to edge-tts.
+    """
+    from contentops.workflow import copy_review
+
     shots = parse_script_shots(project)
     if not shots:
         return {"status": "BLOCKED", "engine": "easel",
@@ -270,18 +289,25 @@ def run_easel(project: Path) -> dict:
     if not script_exists(project):
         return {"status": "BLOCKED", "engine": "easel",
                 "reason": "script/master.md missing — production requires a project-authored script"}
-    runtime = resolve_production_runtime()
-    if runtime["status"] != "OK":
-        return {"status": "BLOCKED", "engine": "easel",
-                "reason": "Easel runtime not usable: "
-                          + "; ".join(runtime.get("reasons", ["unknown"])),
-                "remedy": runtime.get("remedy")}
-    easel_dir = Path(runtime["easel_dir"])
+
+    # A human read of the copy is a precondition of producing audio, not only of
+    # publishing it. The fingerprint covers video, caption, claim and source, and
+    # the declared asset digests, so a swapped clip cannot inherit an old approval.
+    try:
+        copy_review.require_approved(project)
+    except copy_review.CopyReviewRequired as exc:
+        return {"status": "BLOCKED", "engine": "easel", "stage": "copy_review",
+                "reason": exc.reason, "remedy": exc.remedy}
+
+    if voice_provider not in ("edge", "existing"):
+        return {"status": "BLOCKED", "engine": "easel", "stage": "narration",
+                "reason": (f"voice provider {voice_provider!r} is not reachable in this "
+                           f"build; refusing to fall back to edge-tts")}
 
     script_dir = project / "script"
     narration_txt = script_dir / "narration.txt"
-    narration_txt.write_text(
-        "\n".join(s.get("narration", "") for s in shots) + "\n", encoding="utf-8")
+    narration_text = "\n".join(s.get("narration", "") for s in shots) + "\n"
+    narration_txt.write_text(narration_text, encoding="utf-8")
 
     # Per-shot narration timing comes from one continuous read, so cue times
     # land on the voice track instead of drifting per shot.
@@ -289,17 +315,65 @@ def run_easel(project: Path) -> dict:
     narration_srt = project / "assets" / "captions" / "easel.srt"
     narration_mp3.parent.mkdir(parents=True, exist_ok=True)
     narration_srt.parent.mkdir(parents=True, exist_ok=True)
-    tts_script = easel_dir / "skills" / "shared" / "scripts" / "tts.py"
-    env = dict(os.environ, PYTHONUTF8="1", PYTHONIOENCODING="utf-8")
-    r = hidden_run(
-        [python_executable(), str(tts_script), "speak", "-f", str(narration_txt),
-         "-o", str(narration_mp3), "-v", "zh-CN-YunxiNeural",
-         "--engine", "edge", "--subtitle", str(narration_srt)],
-        env=env, timeout=600, cwd=str(easel_dir),
-    )
-    if r.returncode != 0 or not narration_mp3.exists():
-        return {"status": "BLOCKED", "engine": "easel", "stage": "tts",
-                "reason": ((r.stdout or "") + (r.stderr or ""))[-600:]}
+
+    runtime = None
+    if voice_provider == "existing":
+        source = Path(narration) if narration else None
+        if source is None or not source.is_file():
+            return {"status": "BLOCKED", "engine": "easel", "stage": "narration",
+                    "reason": "voice provider 'existing' needs --narration <file>"}
+        receipt_path = Path(narration_receipt) if narration_receipt else None
+        if receipt_path is None or not receipt_path.is_file():
+            return {"status": "BLOCKED", "engine": "easel", "stage": "narration",
+                    "reason": ("an existing narration needs --narration-receipt: "
+                               "a path alone does not prove which text was spoken")}
+        try:
+            receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        except ValueError as exc:
+            return {"status": "BLOCKED", "engine": "easel", "stage": "narration",
+                    "reason": f"narration receipt is not readable JSON: {exc}"}
+        bound = receipt.get("spoken_text_sha256") or receipt.get("display_text_sha256")
+        if bound != _text_sha(narration_text):
+            return {"status": "BLOCKED", "engine": "easel", "stage": "narration",
+                    "reason": ("the narration receipt is not bound to the current script "
+                               "text — the audio speaks a different script")}
+        captions = sorted(script_dir.glob("*.srt"))
+        if len(captions) != 1:
+            return {"status": "BLOCKED", "engine": "easel", "stage": "narration",
+                    "reason": (f"existing narration needs exactly one caption in script/, "
+                               f"found {len(captions)}")}
+        narration_mp3 = narration_mp3.with_suffix(source.suffix or ".wav")
+        shutil.copyfile(source, narration_mp3)
+        shutil.copyfile(captions[0], narration_srt)
+        voice_note = f"existing:{receipt.get('model', 'unknown')}"
+    else:
+        runtime = resolve_production_runtime()
+        if runtime["status"] != "OK":
+            return {"status": "BLOCKED", "engine": "easel",
+                    "reason": "Easel runtime not usable: "
+                              + "; ".join(runtime.get("reasons", ["unknown"])),
+                    "remedy": runtime.get("remedy")}
+        easel_dir = Path(runtime["easel_dir"])
+        tts_script = easel_dir / "skills" / "shared" / "scripts" / "tts.py"
+        env = dict(os.environ, PYTHONUTF8="1", PYTHONIOENCODING="utf-8")
+        r = hidden_run(
+            [python_executable(), str(tts_script), "speak", "-f", str(narration_txt),
+             "-o", str(narration_mp3), "-v", "zh-CN-YunxiNeural",
+             "--engine", "edge", "--subtitle", str(narration_srt)],
+            env=env, timeout=600, cwd=str(easel_dir),
+        )
+        if r.returncode != 0 or not narration_mp3.exists():
+            return {"status": "BLOCKED", "engine": "easel", "stage": "tts",
+                    "reason": ((r.stdout or "") + (r.stderr or ""))[-600:]}
+        voice_note = "easel/tts-voiceover (edge-tts, zh-CN-YunxiNeural)"
+
+    if runtime is None:
+        runtime = resolve_production_runtime()
+        if runtime["status"] != "OK":
+            return {"status": "BLOCKED", "engine": "easel",
+                    "reason": "Easel runtime not usable: "
+                              + "; ".join(runtime.get("reasons", ["unknown"])),
+                    "remedy": runtime.get("remedy")}
 
     sb = json.loads((script_dir / "storyboard.json").read_text(encoding="utf-8"))
     # Store project-relative paths so the committed storyboard stays portable.
@@ -320,8 +394,11 @@ def run_easel(project: Path) -> dict:
     from assemble_easel import run as assemble_run  # noqa: E402
     res = assemble_run(project, out_name="easel")
     res["engine"] = "easel"
-    res["voice_provider"] = "easel/tts-voiceover (edge-tts, zh-CN-YunxiNeural)"
-    res["voice_quality"] = "edge_tts_fallback"  # upstream's no-key engine; human review decides
+    res["voice_provider"] = voice_note
+    if voice_note.startswith("existing:"):
+        res["voice_quality"] = "external_existing_audio"
+    else:
+        res["voice_quality"] = "edge_tts_fallback"  # upstream's no-key engine; human review decides
     res["production_quality_warning"] = True
     res["production_ready"] = False             # §11: never auto-claim PRODUCTION_READY
     res["state"] = "READY_FOR_HUMAN_REVIEW"
@@ -336,14 +413,17 @@ def run_easel(project: Path) -> dict:
     return res
 
 
-def run(project: Path, voice_provider: str = "", engine: str = "easel") -> dict:
+def run(project: Path, voice_provider: str = "", engine: str = "easel",
+        narration: "Path | None" = None,
+        narration_receipt: "Path | None" = None) -> dict:
     project = project.resolve()
     project_yaml = project / "project.yaml"
     if not project_yaml.exists():
         return {"status": "BLOCKED", "reason": f"project.yaml missing at {project_yaml}"}
 
     if engine == "easel":
-        return run_easel(project)
+        return run_easel(project, voice_provider=voice_provider or "edge",
+                         narration=narration, narration_receipt=narration_receipt)
 
     cfg = parse_yaml(project_yaml)
     work = project / "work"
@@ -517,14 +597,26 @@ def main() -> int:
     p.add_argument("project", help="path to project dir, e.g. projects/easel-review")
     p.add_argument("--engine", choices=("easel", "fallback"), default="easel",
                    help="easel = production (default); fallback = diagnostic ffmpeg-only render")
-    p.add_argument("--voice-provider", default="")
+    p.add_argument("--voice-provider", default="edge",
+                   choices=("edge", "existing"),
+                   help="edge = upstream edge-tts (compatibility path); "
+                        "existing = a narration file bound to this script by a receipt. "
+                        "Any other provider is refused rather than silently downgraded")
+    p.add_argument("--narration", default=None,
+                   help="with --voice-provider existing: the audio file to reuse")
+    p.add_argument("--narration-receipt", default=None,
+                   help="with --voice-provider existing: the provider receipt that binds "
+                        "that audio to the current script text")
     args = p.parse_args()
 
     project = Path(args.project)
     if not project.is_absolute():
         project = (ROOT / args.project).resolve()
 
-    result = run(project, voice_provider=args.voice_provider, engine=args.engine)
+    result = run(project, voice_provider=args.voice_provider, engine=args.engine,
+                 narration=Path(args.narration) if args.narration else None,
+                 narration_receipt=(Path(args.narration_receipt)
+                                    if args.narration_receipt else None))
     try:
         receipt = write_build_receipt(project, result)
         result = {"build_receipt": str(receipt), **result}

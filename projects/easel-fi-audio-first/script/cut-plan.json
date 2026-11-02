@@ -1,0 +1,344 @@
+{
+  "schema": "contentops.cut-plan/v1",
+  "package_id": "easel-fi-audio-first",
+  "target": {
+    "width": 1080,
+    "height": 1920,
+    "duration_ms_range": [
+      24500,
+      25500
+    ],
+    "caption_safe_area": {
+      "x": 54,
+      "y": 1480,
+      "width": 972,
+      "height": 360
+    },
+    "min_reading_hold_ms": 2500,
+    "max_visual_hold_ms": 3000,
+    "min_visual_hold_ms": 2000,
+    "evidence_mode": "EXPLANATORY",
+    "manual_recording": "FORBIDDEN",
+    "composition": [
+      {
+        "role": "vector_animation",
+        "pct": 70
+      },
+      {
+        "role": "code_snapshot",
+        "pct": 25
+      },
+      {
+        "role": "metric_chart",
+        "pct": 5
+      }
+    ]
+  },
+  "placements": [
+    {
+      "placement_id": "P-01-HOOK",
+      "start_ms": 0,
+      "end_ms": 5000,
+      "asset_id": "A-MOTION-LEN",
+      "source_time_range": "00:00.000-00:02.500",
+      "crop": {
+        "x": 0,
+        "y": 0,
+        "width": 1080,
+        "height": 1920,
+        "source_width": 1080,
+        "source_height": 1920
+      },
+      "reading_class": "reading",
+      "semantic_progress": "the window and the picture are two different lengths",
+      "claim_ids": [
+        "C-FI-01"
+      ],
+      "caption_cue_ids": [],
+      "claim_bearing": true,
+      "context_first": false,
+      "context_placement_id": null,
+      "transition": "cut",
+      "shots": [
+        {
+          "shot_id": "P-01-HOOK-V1",
+          "start_ms": 0,
+          "end_ms": 2500,
+          "source_time_range": "00:00.000-00:02.500",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920,
+            "source_width": 1080,
+            "source_height": 1920
+          },
+          "semantic_progress": "the narration length draws to 44 s",
+          "context_shot_id": null,
+          "asset_id": "A-MOTION-LEN"
+        },
+        {
+          "shot_id": "P-01-HOOK-V2",
+          "start_ms": 2500,
+          "end_ms": 5000,
+          "source_time_range": "00:02.500-00:05.000",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920,
+            "source_width": 1080,
+            "source_height": 1920
+          },
+          "semantic_progress": "22 view cells pop in under it",
+          "context_shot_id": null,
+          "asset_id": "A-MOTION-LEN"
+        }
+      ]
+    },
+    {
+      "placement_id": "P-02-TRADEOFF",
+      "start_ms": 5000,
+      "end_ms": 10000,
+      "asset_id": "A-MOTION-SWAP",
+      "source_time_range": "00:00.000-00:02.500",
+      "crop": {
+        "x": 0,
+        "y": 0,
+        "width": 1080,
+        "height": 1920,
+        "source_width": 1080,
+        "source_height": 1920
+      },
+      "reading_class": "reading",
+      "semantic_progress": "the tradeoff moves from duration to view changes",
+      "claim_ids": [
+        "C-FI-02"
+      ],
+      "caption_cue_ids": [],
+      "claim_bearing": true,
+      "context_first": false,
+      "context_placement_id": null,
+      "transition": "cut",
+      "shots": [
+        {
+          "shot_id": "P-02-TRADEOFF-V1",
+          "start_ms": 5000,
+          "end_ms": 7500,
+          "source_time_range": "00:00.000-00:02.500",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920,
+            "source_width": 1080,
+            "source_height": 1920
+          },
+          "semantic_progress": "the placement and its first view",
+          "context_shot_id": null,
+          "asset_id": "A-MOTION-SWAP"
+        },
+        {
+          "shot_id": "P-02-TRADEOFF-V2",
+          "start_ms": 7500,
+          "end_ms": 10000,
+          "source_time_range": "00:02.500-00:05.000",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920,
+            "source_width": 1080,
+            "source_height": 1920
+          },
+          "semantic_progress": "V2 and V3 take over by meaning",
+          "context_shot_id": null,
+          "asset_id": "A-MOTION-SWAP"
+        }
+      ]
+    },
+    {
+      "placement_id": "P-03-ARCH",
+      "start_ms": 10000,
+      "end_ms": 15000,
+      "asset_id": "A-MOTION-FLOW",
+      "source_time_range": "00:00.000-00:02.500",
+      "crop": {
+        "x": 0,
+        "y": 0,
+        "width": 1080,
+        "height": 1920,
+        "source_width": 1080,
+        "source_height": 1920
+      },
+      "reading_class": "reading",
+      "semantic_progress": "the placement and its views",
+      "claim_ids": [
+        "C-FI-03"
+      ],
+      "caption_cue_ids": [],
+      "claim_bearing": true,
+      "context_first": false,
+      "context_placement_id": null,
+      "transition": "cut",
+      "shots": [
+        {
+          "shot_id": "P-03-ARCH-V1",
+          "start_ms": 10000,
+          "end_ms": 12500,
+          "source_time_range": "00:00.000-00:02.500",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920,
+            "source_width": 1080,
+            "source_height": 1920
+          },
+          "semantic_progress": "placement, views and the gate assemble",
+          "context_shot_id": null,
+          "asset_id": "A-MOTION-FLOW"
+        },
+        {
+          "shot_id": "P-03-ARCH-V2",
+          "start_ms": 12500,
+          "end_ms": 15000,
+          "source_time_range": "00:02.500-00:05.000",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920,
+            "source_width": 1080,
+            "source_height": 1920
+          },
+          "semantic_progress": "the packet travels the chain",
+          "context_shot_id": null,
+          "asset_id": "A-MOTION-FLOW"
+        }
+      ]
+    },
+    {
+      "placement_id": "P-04-ROOTCAUSE",
+      "start_ms": 15000,
+      "end_ms": 20000,
+      "asset_id": "A-MOTION-CODE",
+      "source_time_range": "00:00.000-00:02.500",
+      "crop": {
+        "x": 0,
+        "y": 0,
+        "width": 1080,
+        "height": 1920,
+        "source_width": 1080,
+        "source_height": 1920
+      },
+      "reading_class": "reading",
+      "semantic_progress": "the old gate trusted a declaration",
+      "claim_ids": [
+        "C-FI-04"
+      ],
+      "caption_cue_ids": [],
+      "claim_bearing": true,
+      "context_first": false,
+      "context_placement_id": null,
+      "transition": "cut",
+      "shots": [
+        {
+          "shot_id": "P-04-ROOTCAUSE-V1",
+          "start_ms": 15000,
+          "end_ms": 17500,
+          "source_time_range": "00:00.000-00:02.500",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920,
+            "source_width": 1080,
+            "source_height": 1920
+          },
+          "semantic_progress": "the code panel reveals",
+          "context_shot_id": null,
+          "asset_id": "A-MOTION-CODE"
+        },
+        {
+          "shot_id": "P-04-ROOTCAUSE-V2",
+          "start_ms": 17500,
+          "end_ms": 20000,
+          "source_time_range": "00:02.500-00:05.000",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920,
+            "source_width": 1080,
+            "source_height": 1920
+          },
+          "semantic_progress": "the sweep lands on the measured check",
+          "context_shot_id": null,
+          "asset_id": "A-MOTION-CODE"
+        }
+      ]
+    },
+    {
+      "placement_id": "P-05-VERIFY",
+      "start_ms": 20000,
+      "end_ms": 25000,
+      "asset_id": "A-MOTION-METRIC",
+      "source_time_range": "00:00.000-00:02.500",
+      "crop": {
+        "x": 0,
+        "y": 0,
+        "width": 1080,
+        "height": 1920,
+        "source_width": 1080,
+        "source_height": 1920
+      },
+      "reading_class": "reading",
+      "semantic_progress": "the measured result and the verdict",
+      "claim_ids": [
+        "C-FI-05"
+      ],
+      "caption_cue_ids": [],
+      "claim_bearing": true,
+      "context_first": false,
+      "context_placement_id": null,
+      "transition": "cut",
+      "shots": [
+        {
+          "shot_id": "P-05-VERIFY-V1",
+          "start_ms": 20000,
+          "end_ms": 22500,
+          "source_time_range": "00:00.000-00:02.500",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920,
+            "source_width": 1080,
+            "source_height": 1920
+          },
+          "semantic_progress": "1.80 s counts up against the limit",
+          "context_shot_id": null,
+          "asset_id": "A-MOTION-METRIC"
+        },
+        {
+          "shot_id": "P-05-VERIFY-V2",
+          "start_ms": 22500,
+          "end_ms": 25000,
+          "source_time_range": "00:00.000-00:02.500",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "width": 1080,
+            "height": 1920,
+            "source_width": 1080,
+            "source_height": 1920
+          },
+          "semantic_progress": "the same numbers as a chain",
+          "context_shot_id": null,
+          "asset_id": "A-MOTION-RESULT"
+        }
+      ]
+    }
+  ]
+}

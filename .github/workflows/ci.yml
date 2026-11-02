@@ -196,6 +196,30 @@ jobs:
       - name: Run Windows path tests
         run: python tests/test_windows_paths.py
 
+      # A rendered clip must not be reused on unverifiable cache provenance, and
+      # a compose envelope must be success JSON bound to the file it names.
+      - name: Run motion build reliability tests
+        run: python tests/test_motion_build_reliability.py
+
+      # Timeline contract, presenter text and review-bundle hash drift.
+      - name: Run code-animation consistency tests
+        run: python tests/test_code_animation_consistency.py
+
+      # Swapping a clip, a caption, a claim or a source must invalidate an
+      # approval; replacing bytes behind an unchanged path must be asset drift.
+      - name: Run copy-review integrity tests
+        run: python tests/test_copy_review_integrity.py
+
+      # The copy gate must precede audio, and a named provider must never be
+      # replaced by edge-tts.
+      - name: Run V1 narration-source tests
+        run: python tests/test_v1_narration_source.py
+
+      # A clip must reach M5's storyboard, and an unavailable narration source
+      # must fail rather than fall back to SAPI.
+      - name: Run M5 motion-integration tests
+        run: python tests/test_m5_motion_integration.py
+
       # New raw provider IDs, balances and key fingerprints in tracked receipts
       # must fail. Existing exposure is baselined by field path only.
       - name: Run receipt-secret tests
