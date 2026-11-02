@@ -281,6 +281,17 @@ jobs:
       - name: Run skill router capability regression tests
         run: python tests/test_skill_router_capabilities.py
 
+      # Platform registry: data only. Proves the nine strategy platforms are
+      # all mapped, that a split entry still belongs to one strategy platform,
+      # and that a placeholder never implies code, publication or metrics.
+      - name: Run platform registry tests
+        run: python tests/test_platform_registry.py
+
+      # Content Bundle consumption contract: Strategy owns the template, this
+      # suite only proves a consumer refuses an incomplete or unsafe record.
+      - name: Run content bundle contract tests
+        run: python tests/test_content_bundle_contract.py
+
       - name: Run X organic growth offline contract tests
         run: python tests/test_x_organic_growth.py
 
