@@ -129,6 +129,59 @@ def _steps(project: str, fmt: str) -> List[Step]:
     return steps
 
 
+def _receipt_path(root: Path, project_rel: str, receipt: str) -> Path:
+    """A step receipt lives under the *project* directory, not the repo root.
+
+    ``_steps`` records repo-style paths such as ``receipts/m5-run.json``; every
+    real receipt is written under ``<repo>/<project>/receipts/``. Resolving the
+    receipt against the repo root made ``ready`` permanently false for every
+    step and produced wrong plan states.
+    """
+    return Path(root).resolve() / project_rel / receipt
+
+
+def _receipt_is_valid(path: Path) -> bool:
+    """A receipt file must say `status: OK` to count as evidence of completion.
+
+    Merely existing is not completion: a failed step also writes its receipt.
+    The schema stability of the receipt fields is the driver's own, so the
+    load is trusted to be JSON here; a corrupt file reads as incomplete.
+    """
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    if not isinstance(data, dict):
+        return False
+    return data.get("status") == "OK" \
+        and data.get("executed") is True \
+        and data.get("production_ready") is False
+
+
+def _requirements_met(plan: Dict[str, Any], step: Dict[str, Any], *,
+                      root: Path) -> Tuple[bool, str]:
+    """A step may only run after every step it requires has completed.
+
+    Completion is judged by that predecessor's *own driver receipt* being a
+    recorded OK, not by its step output, and never by the presence of this
+    step's own receipts. The receipt lives under the predecessor's project.
+    """
+    if not step.get("requires"):
+        return True, ""
+    project_rel = plan["project"]
+    for required_id in step["requires"]:
+        required = next((item for item in plan["steps"] if item["id"] == required_id), None)
+        if required is None:
+            return False, f"required step {required_id!r} is not in the plan"
+        if required["authority"] == AUTHORITY_HUMAN:
+            return False, f"required step {required_id!r} is human-only"
+        receipt_rel = f"receipts/agent-driver-{required_id}.json"
+        receipt = _receipt_path(root, project_rel, receipt_rel)
+        if not _receipt_is_valid(receipt):
+            return False, f"required step {required_id!r} has no validated OK receipt"
+    return True, ""
+
+
 def detect_format(project: Path) -> str:
     if (project / "project.yaml").is_file():
         return "VIDEO"
@@ -165,8 +218,10 @@ def build_plan(project: Path, root: Path) -> Dict[str, Any]:
             runnable, ready = False, False
         else:
             runnable = True
-            ready = all((Path(root) / receipt).is_file() for receipt in step.receipts) \
-                if step.receipts else True
+            # A step's own receipts describe whether its *work* already
+            # exists. They live under the project, not the repo root.
+            ready = all(_receipt_path(Path(root), relative, receipt).is_file()
+                        for receipt in step.receipts) if step.receipts else True
         described.append({
             "id": step.id,
             "label": step.label,
@@ -224,6 +279,10 @@ def run_step(project: Path, step_id: str, *, root: Path,
     if not step["runnable"]:
         raise DriverError("HUMAN_REQUIRED",
                           f"{step_id} is a human decision; a driver cannot perform it")
+    root_resolved = Path(root).resolve()
+    met, reason = _requirements_met(plan, step, root=root_resolved)
+    if not met and execute:
+        raise DriverError("PREREQUISITE_MISSING", reason)
     if not execute:
         return {"executed": False, "step": step["id"], "argv": step["argv"],
                 "cwd": plan["project"]}

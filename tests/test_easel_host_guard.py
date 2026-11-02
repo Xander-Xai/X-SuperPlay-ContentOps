@@ -73,6 +73,15 @@ def test_loopback_read_is_forwarded():
     assert app.calls == [("GET", "/api/status")]
 
 
+def test_static_ui_shell_is_still_served():
+    """The workbench UI shell stays readable — the audit is about resources."""
+    for path in ("/", "/onepage", "/favicon.ico", "/api/status",
+                 "/static/app.js", "/assets/logo.svg"):
+        status, body, _, app = _run("GET", path)
+        assert status == 200, path
+        assert body == b"upstream", path
+
+
 def test_publish_is_denied_before_upstream():
     status, body, _, app = _run("POST", "/api/publish/douyin")
     assert status == 403
@@ -100,6 +109,71 @@ def test_unknown_read_route_is_denied():
     assert status == 403
     assert app.calls == []
     assert json.loads(body)["error"] == "HOST_ROUTE_DENIED"
+
+
+def test_workbench_resource_reads_stay_closed_until_audited():
+    """File and resource reads are disabled pending a per-resource audit.
+
+    The upstream readers verify path containment, not secrecy: ``outputs/``
+    also holds ``_login``/``_sessions``/``_debug`` and similar system state.
+    Instead of allowing a prefix and blacklisting the bad subtrees, the guard
+    keeps every resource-reading prefix closed until each is audited.
+    """
+    for path in (
+        "/api/outputs",
+        "/api/output/anything.txt",
+        "/api/media/logo.png",
+        "/api/skills",  # exact route = fine, but /api/skill/x is the reader
+        "/api/personas",
+        "/api/persona/explorer",
+        "/api/persona/explorer/files",
+    ):
+        assert path == "/api/skills" or True  # documentation clarity only
+    for path in (
+        "/api/outputs",
+        "/api/output/anything.txt",
+        "/api/output/_login/session.json",
+        "/api/output/_sessions/latest.json",
+        "/api/output/_debug/trace.log",
+        "/api/output/_publish/state.json",
+        "/api/output/_profile_build/job.json",
+        "/api/output/analytics/week.csv",
+        "/api/media/logo.png",
+        "/api/skill/screen-reader",
+        "/api/persona/explorer",
+        "/api/persona/explorer/files",
+    ):
+        status, body, _, app = _run("GET", path)
+        assert status == 403, f"{path} must stay closed"
+        assert app.calls == [], f"{path} reached upstream"
+        assert json.loads(body)["error"] == "HOST_RESOURCE_AUDIT_REQUIRED", path
+
+
+def test_system_directory_segments_are_refused_on_any_allowed_route():
+    """Even the open static prefixes must not serve a system directory."""
+    for path in (
+        "/static/_login/session.json",
+        "/assets/_sessions/latest.json",
+        "/static/_debug/trace.log",
+        "/static/analytics/week.csv",
+    ):
+        status, body, _, app = _run("GET", path)
+        assert status == 403, path
+        assert app.calls == [], path
+        assert json.loads(body)["error"] == "HOST_SYSTEM_DIR_DENIED"
+
+
+def test_encoded_and_mixed_case_system_dirs_are_refused():
+    """Redundant decoding survivors are judged on their final spelling."""
+    for path in (
+        "/api/output/%5Flogin/x",
+        "/api/output/_%6Cogin/x",  # lowercase-encoded hand-swap guard
+        "/static/_LOGIN/session.json",
+        "/api/output/_Sessions/latest.json",
+    ):
+        status, body, _, app = _run("GET", path)
+        assert status == 403, path
+        assert app.calls == [], path
 
 
 def test_path_traversal_is_denied():

@@ -25,17 +25,27 @@ SAFE_EXACT = frozenset({
     "/onepage",
     "/favicon.ico",
     "/api/status",
-    "/api/personas",
     "/api/skills",
-    "/api/outputs",
 })
+#: Workbench reads that may return *content* through this guard. Until every
+#: upstream reader at each prefix has been audited for what it can serve, file
+#: reads stay closed (see SYSTEM_DIR_SEGMENTS below); the safest workbench
+#: surface kept open is the static UI shell.
 SAFE_PREFIXES = (
     "/static/",
     "/assets/",
+)
+#: Prefixes that name upstream *resources* (files, persona bodies, skill
+#: payloads). These stay disabled until a per-resource audit authorises them:
+#: the upstream readers validate containment, not secrecy, and the outputs
+#: tree holds system directories this repository must never expose.
+SAFE_RESOURCE_PREFIXES_DISABLED = (
     "/api/skill/",
     "/api/persona/",
     "/api/output/",
     "/api/media/",
+    "/api/outputs",
+    "/api/personas",
 )
 #: Routes that must never be reachable through this guard, even if a future
 #: release adds a read method or a prefix accidentally overlaps a safe one.
@@ -53,6 +63,21 @@ ALWAYS_DENIED_PREFIXES = (
 )
 PATH_ESCAPE = re.compile(r"(^|/)\.\.?(/|$)")
 HOST_RE = re.compile(r"^(127\.0\.0\.1|localhost|\[::1\])(?::\d{1,5})?$", re.IGNORECASE)
+
+#: Path segments that name Easel's own system directories under ``outputs/``.
+#: The upstream reading endpoints (``_safe_output_path``) only verify
+#: containment inside ``outputs/`` — they do not exclude these — so a decoded
+#: path through any file read route must never carry one. Applied to every
+#: segment, so traversal-spelled or redundantly encoded variants are caught
+#: just the same; ``_normalise_path`` has already collapsed escape attempts.
+SYSTEM_DIR_SEGMENTS = frozenset({
+    "_login",
+    "_sessions",
+    "_debug",
+    "_publish",
+    "_profile_build",
+    "analytics",
+})
 
 
 class HostGuardError(ValueError):
@@ -84,6 +109,15 @@ class HostPolicy:
         for prefix in ALWAYS_DENIED_PREFIXES:
             if path.startswith(prefix):
                 return False, "HOST_ROUTE_DENIED"
+        for prefix in SAFE_RESOURCE_PREFIXES_DISABLED:
+            # Exact paths ("/api/outputs", "/api/personas") and everything
+            # under the slash-terminated ones. A denial here names the audit
+            # gate, not a guess about what the reader would have done.
+            if path == prefix or (prefix.endswith("/") and path.startswith(prefix)) \
+                    or path.startswith(prefix + "/"):
+                return False, "HOST_RESOURCE_AUDIT_REQUIRED"
+        if any(segment.lower() in SYSTEM_DIR_SEGMENTS for segment in path.split("/")):
+            return False, "HOST_SYSTEM_DIR_DENIED"
         if path in SAFE_EXACT:
             return True, ""
         if any(path.startswith(prefix) for prefix in SAFE_PREFIXES):
