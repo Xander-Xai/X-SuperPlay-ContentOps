@@ -126,7 +126,74 @@ def test_next_step_skips_reads_and_completed_receipts():
             assert step["ready"] is False
 
 
-def test_receipt_output_is_scrubbed_of_host_paths():
+def test_stage_artifact_receipts_are_graded_by_their_own_schema():
+    """`ready` grades a step's *artifact* receipt, not just its existence.
+
+    The three real terminal states this repository produces are the m5-run
+    chain, the canonical QC report and the manual graphic package; each says
+    completion differently, and an unrecognised schema fails closed. This is
+    the review's "receipts use different schemas" finding, closed at the
+    judgement layer.
+    """
+    cases = [
+        # m5-run: stages recorded, human review pending, NOT production-ready
+        ({"schema": "contentops.m5-run/v1", "stages": {"n": {}},
+          "human_review": "PENDING_FOUNDER_REVIEW", "production_ready": False},
+         True),
+        ({"schema": "contentops.m5-run/v1", "stages": {"n": {}},
+          "human_review": "PENDING_FOUNDER_REVIEW", "production_ready": True},
+         False, "m5 run must not claim production readiness"),
+        ({"schema": "contentops.qc-canonical/v1", "overall": "WARN",
+          "currency": "CURRENT"}, True),
+        ({"schema": "contentops.qc-canonical/v1", "overall": "FAIL",
+          "currency": "CURRENT"}, False),
+        ({"schema": "contentops.qc-canonical/v1", "overall": "PASS",
+          "currency": "NON_CURRENT_DIAGNOSTIC"}, False),
+        ({"schema": "contentops.graphic-package/v1",
+          "status": "AWAITING_MANUAL_REVIEW"}, True),
+        ({"schema": "contentops.graphic-package/v1", "status": "SHIPPED"},
+         False),
+        ({"schema": "made-up/v1"}, False, "unknown schema fails closed"),
+        ("{not json", False),
+    ]
+    with tempfile.TemporaryDirectory() as tmp:
+        for i, case in enumerate(cases):
+            payload = case[0]
+            expected = case[1]
+            path = Path(tmp) / f"artifact-{i}.json"
+            path.write_text(payload if isinstance(payload, str)
+                            else json.dumps(payload), encoding="utf-8")
+            result = driver._artifact_receipt_ok(path)
+            assert result == expected, f"case {i}: {payload}"
+
+
+def test_ready_and_precondition_both_grade_by_kind_not_existence():
+    """One entry point grades driver receipts and stage artifacts; both the
+    plan (`ready`) and the runtime precondition flow through it."""
+    with tempfile.TemporaryDirectory(dir=ROOT / "projects") as tmp:
+        project = _make_video_project(Path(tmp))
+        plan = driver.build_plan(project, ROOT)
+        project_rel = plan["project"]
+        (project / "receipts").mkdir(exist_ok=True)
+        # driver-receipt path: wrong project is not completion...
+        _write_ok_receipt(project, "projects/other-project", "produce-video")
+        _raises("PREREQUISITE_MISSING",
+                lambda: driver.run_step(project, "qc-video", root=ROOT, execute=True))
+        # ...and the same receipt blocks `ready` identically.
+        plan = driver.build_plan(project, ROOT)
+        qc = next(s for s in plan["steps"] if s["id"] == "qc-video")
+        produce_ready = next(s for s in plan["steps"] if s["id"] == "produce-video")
+        # produce-video's own artifacts (m5-run/handoff) are absent: not ready.
+        assert produce_ready["ready"] is False
+        # A real m5-style stage artifact does NOT satisfy the production
+        # step's `ready` on its own — the step names BOTH artifact receipts.
+        (project / "receipts" / "bundle-handoff-video.json").write_text(
+            json.dumps({"schema": "contentops.bundle-handoff/v1",
+                        "state": "READY_FOR_PRODUCTION"}), encoding="utf-8")
+        plan = driver.build_plan(project, ROOT)
+        produce_ready = next(s for s in plan["steps"] if s["id"] == "produce-video")
+        assert produce_ready["ready"] is False, \
+            "a handoff alone is not the step's completion"
     text = f"wrote {ROOT}/projects/x and {Path(ROOT).as_posix()}/y"
     scrubbed = driver._scrub(text, ROOT)
     assert str(ROOT) not in scrubbed

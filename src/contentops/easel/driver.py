@@ -187,6 +187,24 @@ def _receipt_is_valid(path: Path, *, project: Optional[str] = None,
     return True
 
 
+def _artifact_receipt_ok(path: Path, *, project: Optional[str] = None) -> bool:
+    """Grade a receipt path by its kind: driver receipt or stage artifact.
+
+    ``ready`` and the runtime precondition share this single entry so the two
+    judgements cannot drift apart. The filename shape decides the kind: the
+    driver writes ``agent-driver-<step>.json`` itself; anything else is a
+    stage artifact the step's pipeline produced.
+    """
+    if path.name.startswith("agent-driver-"):
+        # The driver's own receipt is graded by its bindings; the step id is
+        # encoded in the filename and re-checked inside the file, and the
+        # project binding comes from the caller so a receipt copied from
+        # another project cannot pass for this one.
+        step_id = path.name[len("agent-driver-"):-len(".json")]
+        return _receipt_is_valid(path, project=project, step_id=step_id)
+    return _artifact_is_complete(path, project=project)
+
+
 def _requirements_met(plan: Dict[str, Any], step: Dict[str, Any], *,
                       root: Path) -> Tuple[bool, str]:
     """A step may only run after every step it requires has completed.
@@ -207,9 +225,59 @@ def _requirements_met(plan: Dict[str, Any], step: Dict[str, Any], *,
             return False, f"required step {required_id!r} is human-only"
         receipt_rel = f"receipts/agent-driver-{required_id}.json"
         receipt = _receipt_path(root, project_rel, receipt_rel)
-        if not _receipt_is_valid(receipt, project=project_rel, step_id=required_id):
+        if not _artifact_receipt_ok(receipt, project=project_rel):
             return False, f"required step {required_id!r} has no validated OK receipt"
     return True, ""
+
+
+#: Stage-artifact receipts a step may name, with the field each schema uses
+#: to say whether the work exists and passed. A driver does not deep-validate
+#: another stage's contract — the owning stage's tests do — it only refuses
+#: to read an artifact as complete when the artifact itself refuses to be
+#: graded, or grades itself below its own pass mark.
+_STAGE_ARTIFACT_SCHEMA = "contentops.agent-driver-receipt/v1"  # not a stage schema
+
+
+def _artifact_is_complete(path: Path, *, project: Optional[str] = None) -> bool:
+    """Whether a *stage artifact* receipt (m5-run, qc, graphic package)
+    records that its stage produced a graded result.
+
+    Distinct from :func:`_receipt_is_valid`, which judges the driver's own
+    run receipts. Both are needed because ``ready`` may name either kind:
+    a driver receipt says "the driver executed this step", an artifact
+    receipt says "the step's pipeline artifact exists and carries a
+    verdict". The stage-verdict field names, per schema:
+
+    - ``contentops.m5-run/v1``: ``production_ready`` is false until a human
+      writes the review, so completion here means the run recorded its
+      stages and human_review is a pending state, not an error path;
+    - ``contentops.qc-canonical/v1``: ``overall`` in PASS/WARN and
+      ``currency == CURRENT``;
+    - ``contentops.graphic-package/v1``: status ``AWAITING_MANUAL_REVIEW``
+      (its designed terminal state).
+    """
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    if not isinstance(data, dict):
+        return False
+    schema = data.get("schema")
+    if project is not None and data.get("project") not in (project, None):
+        return False
+    if schema == "contentops.m5-run/v1":
+        return isinstance(data.get("stages"), dict) and bool(data["stages"]) \
+            and data.get("human_review") in ("PENDING_FOUNDER_REVIEW",
+                                             "NOT_STARTED", "REVOKED") \
+            and data.get("production_ready") is False
+    if schema == "contentops.qc-canonical/v1":
+        return data.get("overall") in ("PASS", "WARN") \
+            and data.get("currency") == "CURRENT"
+    if schema == "contentops.graphic-package/v1":
+        return data.get("status") == "AWAITING_MANUAL_REVIEW"
+    # An unrecognised stage schema is not evidence of completion — fail
+    # closed rather than grading an artifact by JSON existence alone.
+    return False
 
 
 def detect_format(project: Path) -> str:
@@ -251,11 +319,12 @@ def build_plan(project: Path, root: Path) -> Dict[str, Any]:
             # A step's own receipts describe whether its *work* already
             # exists, under the project and with the same validity binds the
             # runtime precondition check applies. A FAILED receipt is not
-            # readiness.
+            # readiness. A step may name its own driver receipt or a stage
+            # artifact receipt; each is graded by its own kind of evidence.
             if step.receipts:
-                ready = all(
-                    _receipt_is_valid(_receipt_path(Path(root), relative, receipt))
-                    for receipt in step.receipts)
+                ready = all(_artifact_receipt_ok(_receipt_path(Path(root), relative, receipt),
+                                                 project=relative)
+                            for receipt in step.receipts)
             else:
                 ready = True
         described.append({
