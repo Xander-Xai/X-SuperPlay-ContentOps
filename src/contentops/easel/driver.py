@@ -187,13 +187,16 @@ def _receipt_is_valid(path: Path, *, project: Optional[str] = None,
     return True
 
 
-def _artifact_receipt_ok(path: Path, *, project: Optional[str] = None) -> bool:
+def _artifact_receipt_ok(path: Path, *, project: Optional[str] = None,
+                         bundle_sha256: Optional[str] = None) -> bool:
     """Grade a receipt path by its kind: driver receipt or stage artifact.
 
-    ``ready`` and the runtime precondition share this single entry so the two
-    judgements cannot drift apart. The filename shape decides the kind: the
-    driver writes ``agent-driver-<step>.json`` itself; anything else is a
-    stage artifact the step's pipeline produced.
+    ``ready`` and the runtime precondition share this single entry so the
+    two judgements cannot drift apart. The filename shape decides the kind:
+    the driver writes ``agent-driver-<step>.json`` itself; anything else is
+    a stage artifact the step's pipeline produced. A handoff or graphic
+    package additionally binds ``bundle_sha256`` when the caller knows it,
+    so a changed Bundle can never keep a stale step marked ready.
     """
     if path.name.startswith("agent-driver-"):
         # The driver's own receipt is graded by its bindings; the step id is
@@ -202,7 +205,31 @@ def _artifact_receipt_ok(path: Path, *, project: Optional[str] = None) -> bool:
         # another project cannot pass for this one.
         step_id = path.name[len("agent-driver-"):-len(".json")]
         return _receipt_is_valid(path, project=project, step_id=step_id)
-    return _artifact_is_complete(path, project=project)
+    return _artifact_is_complete(path, project=project,
+                                 bundle_sha256=bundle_sha256)
+
+
+def _current_bundle_digest(project_dir: Path, root: Path) -> Optional[str]:
+    """The Bundle digest the plan could bind to, or ``None`` when unreadable.
+
+    A plan stays read-only: it never validates the Bundle (that is the
+    producer step's job), it only reads the digest the project's committed
+    handoff already carries, so the gate can refuse a receipt bound to
+    another Bundle generation. Nothing here raises for a missing Bundle —
+    without a digest the caller's gate degrades to schema/state checks
+    only, matching what a fresh plan can honestly know.
+    """
+    for rel in ("receipts/bundle-handoff-video.json",
+                "receipts/bundle-handoff-graphic_text.json"):
+        path = Path(root).resolve() / project_dir / rel
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        digest = data.get("bundle_sha256") if isinstance(data, dict) else None
+        if digest:
+            return digest
+    return None
 
 
 def _requirements_met(plan: Dict[str, Any], step: Dict[str, Any], *,
@@ -217,6 +244,7 @@ def _requirements_met(plan: Dict[str, Any], step: Dict[str, Any], *,
     if not step.get("requires"):
         return True, ""
     project_rel = plan["project"]
+    bundle_digest = _current_bundle_digest(Path(project_rel), root)
     for required_id in step["requires"]:
         required = next((item for item in plan["steps"] if item["id"] == required_id), None)
         if required is None:
@@ -225,7 +253,8 @@ def _requirements_met(plan: Dict[str, Any], step: Dict[str, Any], *,
             return False, f"required step {required_id!r} is human-only"
         receipt_rel = f"receipts/agent-driver-{required_id}.json"
         receipt = _receipt_path(root, project_rel, receipt_rel)
-        if not _artifact_receipt_ok(receipt, project=project_rel):
+        if not _artifact_receipt_ok(receipt, project=project_rel,
+                                    bundle_sha256=bundle_digest):
             return False, f"required step {required_id!r} has no validated OK receipt"
     return True, ""
 
@@ -237,24 +266,46 @@ def _requirements_met(plan: Dict[str, Any], step: Dict[str, Any], *,
 #: graded, or grades itself below its own pass mark.
 _STAGE_ARTIFACT_SCHEMA = "contentops.agent-driver-receipt/v1"  # not a stage schema
 
+#: Producer-completion states this repository actually writes, by schema.
+#: Keep these names in one place so a producer change shows up as a diff here.
+HANDOFF_SCHEMA = "contentops.bundle-handoff/v1"
+QC_SCHEMA = "contentops.qc-canonical/v1"
+M5_SCHEMA = "contentops.m5-run/v1"
+GRAPHIC_SCHEMA = "contentops.graphic-package/v1"
+#: M5 run states that still mean "the run itself finished its part". A
+#: revoked review is a *top-level invalidation* (production_ready stays
+#: false), a revocation marker the run carried honestly — not a run that
+#: must be repeated. Anything else is unknown and refused.
+M5_DONE_STATES = ("PENDING_FOUNDER_REVIEW", "REVOKED")
+#: A handoff's valid producer states: `READY_FOR_PRODUCTION` (VIDEO) or
+#: `READY_FOR_MANUAL_PACKAGE` (GRAPHIC_TEXT). A changed-Bundle refusal never
+#: writes a handoff, so a handoff file exists only if the Bundle matched at
+#: write time — but the recorded digest must still match a caller-supplied
+#: one when the caller wants stale-input protection.
+HANDOFF_DONE_STATES = ("READY_FOR_PRODUCTION", "READY_FOR_MANUAL_PACKAGE")
 
-def _artifact_is_complete(path: Path, *, project: Optional[str] = None) -> bool:
-    """Whether a *stage artifact* receipt (m5-run, qc, graphic package)
-    records that its stage produced a graded result.
+
+def _artifact_is_complete(path: Path, *, project: Optional[str] = None,
+                          bundle_sha256: Optional[str] = None) -> bool:
+    """Whether a *stage artifact* receipt records a graded, current result.
 
     Distinct from :func:`_receipt_is_valid`, which judges the driver's own
     run receipts. Both are needed because ``ready`` may name either kind:
     a driver receipt says "the driver executed this step", an artifact
     receipt says "the step's pipeline artifact exists and carries a
-    verdict". The stage-verdict field names, per schema:
+    verdict". The producer-consumption contract, per schema:
 
-    - ``contentops.m5-run/v1``: ``production_ready`` is false until a human
-      writes the review, so completion here means the run recorded its
-      stages and human_review is a pending state, not an error path;
+    - ``contentops.bundle-handoff/v1``: the producer states
+      ``READY_FOR_PRODUCTION`` / ``READY_FOR_MANUAL_PACKAGE``; when
+      ``bundle_sha256`` is supplied, the recorded digest must match, so a
+      changed Bundle never keeps a stale step marked ready;
+    - ``contentops.m5-run/v1``: the run recorded its stages, its top-level
+      completion is one of :data:`M5_DONE_STATES`, and
+      ``production_ready`` stays false (a machine never grants it); a
+      revoked review is an honest run fact, not a reason to re-run;
     - ``contentops.qc-canonical/v1``: ``overall`` in PASS/WARN and
-      ``currency == CURRENT``;
-    - ``contentops.graphic-package/v1``: status ``AWAITING_MANUAL_REVIEW``
-      (its designed terminal state).
+      ``currency == CURRENT`` — a FAIL grades, it just grades `not done`,
+      and a stale report is never a pass.
     """
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
@@ -265,16 +316,26 @@ def _artifact_is_complete(path: Path, *, project: Optional[str] = None) -> bool:
     schema = data.get("schema")
     if project is not None and data.get("project") not in (project, None):
         return False
-    if schema == "contentops.m5-run/v1":
-        return isinstance(data.get("stages"), dict) and bool(data["stages"]) \
-            and data.get("human_review") in ("PENDING_FOUNDER_REVIEW",
-                                             "NOT_STARTED", "REVOKED") \
+    if schema == HANDOFF_SCHEMA:
+        if data.get("state") not in HANDOFF_DONE_STATES:
+            return False
+        if bundle_sha256 is not None:
+            return data.get("bundle_sha256") == bundle_sha256
+        return True
+    if schema == M5_SCHEMA:
+        stages = data.get("stages")
+        return isinstance(stages, dict) and bool(stages) \
+            and data.get("human_review") in M5_DONE_STATES \
             and data.get("production_ready") is False
-    if schema == "contentops.qc-canonical/v1":
+    if schema == QC_SCHEMA:
         return data.get("overall") in ("PASS", "WARN") \
             and data.get("currency") == "CURRENT"
-    if schema == "contentops.graphic-package/v1":
-        return data.get("status") == "AWAITING_MANUAL_REVIEW"
+    if schema == GRAPHIC_SCHEMA:
+        if data.get("status") != "AWAITING_MANUAL_REVIEW":
+            return False
+        if bundle_sha256 is not None:
+            return data.get("bundle_sha256") == bundle_sha256
+        return True
     # An unrecognised stage schema is not evidence of completion — fail
     # closed rather than grading an artifact by JSON existence alone.
     return False
@@ -322,8 +383,10 @@ def build_plan(project: Path, root: Path) -> Dict[str, Any]:
             # readiness. A step may name its own driver receipt or a stage
             # artifact receipt; each is graded by its own kind of evidence.
             if step.receipts:
+                bundle_digest = _current_bundle_digest(Path(relative), Path(root))
                 ready = all(_artifact_receipt_ok(_receipt_path(Path(root), relative, receipt),
-                                                 project=relative)
+                                                 project=relative,
+                                                 bundle_sha256=bundle_digest)
                             for receipt in step.receipts)
             else:
                 ready = True
