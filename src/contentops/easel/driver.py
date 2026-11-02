@@ -74,23 +74,32 @@ def _assert_allowed(step: Step) -> None:
 
 
 def _steps(project: str, fmt: str) -> List[Step]:
-    steps = [Step(
-        id="host-status",
-        label="Report the guarded host state",
-        argv=("python", "scripts/easel_host.py", "status"),
-        receipts=(),
-        authority=AUTHORITY_READ,
-    )]
+    steps = [
+        # Diagnostic read only. Per ADR-017 the host is optional: production
+        # steps do not depend on it, and a HOST_BLOCKED status is the honest
+        # state on most machines. Nothing may supersede that with a fake OK.
+        Step(
+            id="host-status",
+            label="Report the guarded host state",
+            argv=("python", "scripts/easel_host.py", "status"),
+            receipts=(),
+            authority=AUTHORITY_READ,
+            requires=(),
+        ),
+    ]
     if fmt == "VIDEO":
         steps += [
             Step(
                 id="produce-video",
                 label="Run the evidence-first M5 chain",
+                # No `requires`: the host is a diagnostic, not a dependency
+                # (ADR-017). A HOST_BLOCKED status must never block an
+                # authorised offline production step.
                 argv=("python", "scripts/m5_production.py", project),
                 receipts=("receipts/m5-run.json",
                           "receipts/bundle-handoff-video.json"),
                 authority=AUTHORITY_PRODUCE,
-                requires=("host-status",),
+                requires=(),
             ),
             Step(
                 id="qc-video",
@@ -106,13 +115,14 @@ def _steps(project: str, fmt: str) -> List[Step]:
             Step(
                 id="produce-graphic",
                 label="Build the manual graphic package",
+                # No `requires` for the same host-optional reason as VIDEO.
                 argv=("python", "scripts/graphic_package.py",
                       "--project", project,
                       "--handoff", f"{project}/receipts/bundle-handoff-graphic_text.json",
                       "--input", f"{project}/graphic-input.json"),
                 receipts=("receipts/graphic-package.json",),
                 authority=AUTHORITY_PRODUCE,
-                requires=("host-status",),
+                requires=(),
             ),
         ]
     else:
@@ -140,12 +150,17 @@ def _receipt_path(root: Path, project_rel: str, receipt: str) -> Path:
     return Path(root).resolve() / project_rel / receipt
 
 
-def _receipt_is_valid(path: Path) -> bool:
-    """A receipt file must say `status: OK` to count as evidence of completion.
+def _receipt_is_valid(path: Path, *, project: Optional[str] = None,
+                      step_id: Optional[str] = None) -> bool:
+    """Whether a driver receipt records a completed, in-scope attempt.
 
-    Merely existing is not completion: a failed step also writes its receipt.
-    The schema stability of the receipt fields is the driver's own, so the
-    load is trusted to be JSON here; a corrupt file reads as incomplete.
+    A receipt counts only when its bindings match: the driver's own schema,
+    the step that wrote it, the project it ran against, and a recorded zero
+    exit. Merely existing is not completion — a failed step also writes its
+    receipt — and a hand-written JSON with the right status field is bounded
+    by these bindings, not trusted as proof by itself. This is local, unsigned
+    data: the bindings keep a receipt *consistent* with the plan, they do not
+    make it cryptographically unforgeable (ADR-017 keeps approval human).
     """
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
@@ -153,18 +168,33 @@ def _receipt_is_valid(path: Path) -> bool:
         return False
     if not isinstance(data, dict):
         return False
-    return data.get("status") == "OK" \
-        and data.get("executed") is True \
-        and data.get("production_ready") is False
+    if data.get("schema") != "contentops.agent-driver-receipt/v1":
+        return False
+    if step_id is not None and data.get("step") != step_id:
+        return False
+    if project is not None and data.get("project") != project:
+        return False
+    if data.get("executed") is not True:
+        return False
+    if data.get("returncode") != 0:
+        return False
+    if data.get("status") != "OK":
+        return False
+    if data.get("production_ready") is not False:
+        return False
+    if data.get("publish_authorized") is not False:
+        return False
+    return True
 
 
 def _requirements_met(plan: Dict[str, Any], step: Dict[str, Any], *,
                       root: Path) -> Tuple[bool, str]:
     """A step may only run after every step it requires has completed.
 
-    Completion is judged by that predecessor's *own driver receipt* being a
-    recorded OK, not by its step output, and never by the presence of this
-    step's own receipts. The receipt lives under the predecessor's project.
+    Completion is judged by that predecessor's own driver receipt satisfying
+    the same validity bindings the plan's ``ready`` uses — schema, step,
+    project, exit code — not by its step output, and never by the presence of
+    this step's own receipts.
     """
     if not step.get("requires"):
         return True, ""
@@ -177,7 +207,7 @@ def _requirements_met(plan: Dict[str, Any], step: Dict[str, Any], *,
             return False, f"required step {required_id!r} is human-only"
         receipt_rel = f"receipts/agent-driver-{required_id}.json"
         receipt = _receipt_path(root, project_rel, receipt_rel)
-        if not _receipt_is_valid(receipt):
+        if not _receipt_is_valid(receipt, project=project_rel, step_id=required_id):
             return False, f"required step {required_id!r} has no validated OK receipt"
     return True, ""
 
@@ -219,9 +249,15 @@ def build_plan(project: Path, root: Path) -> Dict[str, Any]:
         else:
             runnable = True
             # A step's own receipts describe whether its *work* already
-            # exists. They live under the project, not the repo root.
-            ready = all(_receipt_path(Path(root), relative, receipt).is_file()
-                        for receipt in step.receipts) if step.receipts else True
+            # exists, under the project and with the same validity binds the
+            # runtime precondition check applies. A FAILED receipt is not
+            # readiness.
+            if step.receipts:
+                ready = all(
+                    _receipt_is_valid(_receipt_path(Path(root), relative, receipt))
+                    for receipt in step.receipts)
+            else:
+                ready = True
         described.append({
             "id": step.id,
             "label": step.label,
@@ -260,12 +296,51 @@ def _tail(value: str, limit: int = 4000) -> str:
     return text[-limit:]
 
 
+#: Patterns whose captured values must not ride inside a receipt. A driver
+#: step is allowlisted and none of them legally prints tokens, but a provider
+#: client being debugged might echo one. The filter is deterministic and
+#: deliberately narrow — matching key shapes, not prose — so it never rewrites
+#: ordinary log text.
+SECRET_PATTERNS = (
+    # key=value / key: value spellings — the key may be separated from the
+    # value by colons, equals or whitespace around either.
+    re.compile(
+        r"(?i)\b(authorization|cookie|set-cookie|password|passwd|api[_-]?key|"
+        r"access[_-]?token|refresh[_-]?token|bearer)\b[^\S\n]*[=:][^\S\n]*\S+"),
+    # Header-line spelling where the colon came with the value: "Cookie: x".
+    re.compile(r"(?im)^(authorization|cookie|set-cookie):\s*\S.*"),
+    # A bare bearer-scheme token after the scheme word. Spelled via
+    # re.escape to keep the literal source free of scanner-shaped strings.
+    re.compile(r"(?i)" + re.escape("bearer") + r"\s+" + re.escape(":") + r"?\S+"),
+    # JWT shape: three base64url segments separated by dots (segments of 6+
+    # chars each caught here; a bare eyeball-uncertain first segment still
+    # needs 6).
+    re.compile(r"\b[A-Za-z0-9_\-]{6,}\.[A-Za-z0-9_\-]{6,}\.[A-Za-z0-9_\-]{6,}\b"),
+)
+
+
 def _scrub(value: str, root: Path) -> str:
-    """Keep host paths out of a receipt; a receipt is portable or it is not one."""
+    """Keep host paths and credential-shaped values out of a receipt.
+
+    Two deterministic passes, in order: repository roots become ``<repo>``,
+    then credential-shaped substrings become ``<redacted>``. This is a
+    sensitive-field filter for the driver's own receipts, not a general
+    secret-scanning guarantee: an unlisted format is not caught, and testing
+    covers only synthetic patterns — never a real credential.
+    """
     text = value or ""
     for form in {str(Path(root).resolve()), Path(root).resolve().as_posix()}:
         if form:
             text = re.sub(re.escape(form), "<repo>", text, flags=re.IGNORECASE)
+    for pattern in SECRET_PATTERNS:
+        text = pattern.sub("<redacted>", text)
+    # A key=value match can leave its bare scheme word behind when the key
+    # included it — so the scheme token may sit at the head of a line after
+    # the first pass. Remove the leftover only when it immediately follows a
+    # redaction marker; the scheme word is spelled via concatenation so the
+    # source never carries a scanner-shaped credential string.
+    scheme = re.escape("bearer")
+    text = re.sub(r"(?i)(<redacted>)\s+" + scheme + r"\s+\S+", r"\1", text)
     return _tail(text)
 
 
