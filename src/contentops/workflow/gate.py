@@ -30,7 +30,7 @@ from .contract import (
     input_fingerprint,
     is_current,
     reconcile,
-    stage_by_id,
+    stage_for,
 )
 
 Validator = Callable[[Path], Iterable[str]]
@@ -43,7 +43,7 @@ def _now() -> str:
 
 
 def _stage(document: Dict[str, Any], stage_id: str) -> Dict[str, Any]:
-    stage_by_id(stage_id)
+    stage_for(document, stage_id)
     for item in document.get("stages", []):
         if item.get("id") == stage_id:
             return item
@@ -78,7 +78,7 @@ def check_stage(project: Path,
                 stage_id: str,
                 validators: Optional[Sequence[Validator]] = None) -> Dict[str, Any]:
     """Run the deterministic half of the gate. Mutates ``document`` in place."""
-    stage = stage_by_id(stage_id)
+    stage = stage_for(document, stage_id)
     item = _stage(document, stage_id)
     reconcile(project, document)
 
@@ -173,7 +173,7 @@ def approve_stage(project: Path,
         raise WorkflowError("INPUTS_CHANGED",
                             f"{stage_id} upstream changed after the check; check again")
 
-    stage = stage_by_id(stage_id)
+    stage = stage_for(document, stage_id)
     for dependency in stage.requires:
         ok, reason = is_current(project, document, dependency)
         if not ok:

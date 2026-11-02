@@ -37,6 +37,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 CONTRACT_ID = "contentops.copy-to-video/v1"
+GRAPHIC_CONTRACT_ID = "contentops.copy-to-graphic/v1"
 WORKFLOW_SCHEMA = "contentops.workflow/v1"
 WORKFLOW_FILE = "workflow.json"
 
@@ -79,15 +80,57 @@ STAGES: Tuple[Stage, ...] = (
 )
 
 STAGE_IDS: Tuple[str, ...] = tuple(stage.id for stage in STAGES)
+
+#: A graphic/text package is a different produced object, so it gets its own
+#: ordered stages. Audio and storyboard have no meaning for an article; reusing
+#: the video names would make the state look shared when it is not.
+GRAPHIC_STAGES: Tuple[Stage, ...] = (
+    Stage("brief", "Brief", "00_brief/brief.json"),
+    Stage("outline", "Outline", "01_outline/outline.json", ("brief",)),
+    Stage("draft", "Draft", "02_draft/draft.md", ("outline",)),
+    Stage("images", "Images", "03_images/image-ledger.json", ("draft",)),
+    Stage("layout", "Layout", "04_layout/layout.json", ("images",)),
+    Stage("quality", "Graphic QC", "05_quality/graphic-qc.json", ("layout",)),
+    Stage("delivery", "Delivery", "06_delivery/delivery-manifest.json", ("quality",)),
+)
+
+CONTRACTS: Dict[str, Tuple[Stage, ...]] = {
+    CONTRACT_ID: STAGES,
+    GRAPHIC_CONTRACT_ID: GRAPHIC_STAGES,
+}
 _BY_ID: Dict[str, Stage] = {stage.id: stage for stage in STAGES}
+_GRAPHIC_BY_ID: Dict[str, Stage] = {stage.id: stage for stage in GRAPHIC_STAGES}
 
 
-def stage_by_id(stage_id: str) -> Stage:
-    stage = _BY_ID.get(stage_id)
-    if stage is None:
-        raise WorkflowError("UNKNOWN_STAGE",
-                            f"unknown stage {stage_id!r}; known: {', '.join(STAGE_IDS)}")
-    return stage
+def stages_for_contract(contract: str) -> Tuple[Stage, ...]:
+    stages = CONTRACTS.get(contract)
+    if stages is None:
+        raise WorkflowError("UNSUPPORTED_CONTRACT",
+                            f"unknown contract {contract!r}; known: {', '.join(CONTRACTS)}")
+    return stages
+
+
+def stage_by_id(stage_id: str, contract: str = CONTRACT_ID) -> Stage:
+    stages = stages_for_contract(contract)
+    for stage in stages:
+        if stage.id == stage_id:
+            return stage
+    raise WorkflowError("UNKNOWN_STAGE",
+                        f"unknown stage {stage_id!r} in {contract}; "
+                        f"known: {', '.join(item.id for item in stages)}")
+
+
+def _contract(document: Dict[str, Any]) -> str:
+    contract = document.get("contract")
+    if contract not in CONTRACTS:
+        raise WorkflowError("UNSUPPORTED_CONTRACT",
+                            f"unknown contract {contract!r}; known: {', '.join(CONTRACTS)}")
+    return contract
+
+
+def stage_for(document: Dict[str, Any], stage_id: str) -> Stage:
+    """Resolve a stage using the contract the document actually declares."""
+    return stage_by_id(stage_id, _contract(document))
 
 
 def _now() -> str:
@@ -116,9 +159,7 @@ def new_workflow(slug: str, account: str = "", contract: str = CONTRACT_ID) -> D
     """A fresh workflow document. Every stage starts `pending`, never approved."""
     if not isinstance(slug, str) or not slug.strip():
         raise WorkflowError("MISSING_FIELD", "slug must be a non-empty string")
-    if contract != CONTRACT_ID:
-        raise WorkflowError("UNSUPPORTED_CONTRACT",
-                            f"this repository runs {CONTRACT_ID}, not {contract!r}")
+    stages = stages_for_contract(contract)
     return {
         "schema": WORKFLOW_SCHEMA,
         "contract": contract,
@@ -136,7 +177,7 @@ def new_workflow(slug: str, account: str = "", contract: str = CONTRACT_ID) -> D
                 "stale_reason": "",
                 "notes": "",
             }
-            for stage in STAGES
+            for stage in stages
         ],
     }
 
@@ -148,16 +189,19 @@ def validate_workflow(document: Any) -> Dict[str, Any]:
     if document.get("schema") != WORKFLOW_SCHEMA:
         raise WorkflowError("UNSUPPORTED_SCHEMA",
                             f"expected {WORKFLOW_SCHEMA!r}, got {document.get('schema')!r}")
-    if document.get("contract") != CONTRACT_ID:
+    if document.get("contract") not in CONTRACTS:
         raise WorkflowError("UNSUPPORTED_CONTRACT",
-                            f"expected {CONTRACT_ID!r}, got {document.get('contract')!r}")
-    stages = document.get("stages")
-    if not isinstance(stages, list):
+                            f"expected one of {', '.join(CONTRACTS)}, "
+                            f"got {document.get('contract')!r}")
+    stages = stages_for_contract(document["contract"])
+    stage_ids = [stage.id for stage in stages]
+    declared = document.get("stages")
+    if not isinstance(declared, list):
         raise WorkflowError("MISSING_FIELD", "stages must be a list")
-    if [item.get("id") for item in stages if isinstance(item, dict)] != list(STAGE_IDS):
+    if [item.get("id") for item in declared if isinstance(item, dict)] != stage_ids:
         raise WorkflowError("STAGE_ORDER",
                             "stages must be exactly the contract stages in contract order")
-    for item in stages:
+    for item in declared:
         status = item.get("status")
         if status not in STAGE_STATUSES:
             raise WorkflowError("INVALID_STATUS",
@@ -210,7 +254,7 @@ def save_workflow(path: Path, document: Dict[str, Any]) -> None:
 
 
 def _stage(document: Dict[str, Any], stage_id: str) -> Dict[str, Any]:
-    stage_by_id(stage_id)
+    stage_for(document, stage_id)
     for item in document.get("stages", []):
         if item.get("id") == stage_id:
             return item
@@ -220,7 +264,7 @@ def _stage(document: Dict[str, Any], stage_id: str) -> Dict[str, Any]:
 def artifact_path(project: Path, document: Dict[str, Any], stage_id: str) -> Path:
     """Resolve a stage artifact. A stage may override the default path."""
     item = _stage(document, stage_id)
-    relative = item.get("artifact") or stage_by_id(stage_id).artifact
+    relative = item.get("artifact") or stage_for(document, stage_id).artifact
     path = (Path(project) / relative).resolve()
     root = Path(project).resolve()
     if root not in path.parents and path != root:
@@ -243,7 +287,7 @@ def input_fingerprint(project: Path, document: Dict[str, Any], stage_id: str) ->
     re-approving an unchanged file must not churn every downstream fingerprint.
     Freshness of the upstream *approval* is enforced by :func:`is_current`.
     """
-    stage = stage_by_id(stage_id)
+    stage = stage_for(document, stage_id)
     payload = {}
     for dependency in stage.requires:
         payload[dependency] = artifact_sha256(project, document, dependency)
@@ -253,7 +297,7 @@ def input_fingerprint(project: Path, document: Dict[str, Any], stage_id: str) ->
 def is_current(project: Path, document: Dict[str, Any],
                stage_id: str, _seen: Optional[Iterable[str]] = None) -> Tuple[bool, str]:
     """Whether an approval still applies to the bytes and upstream it named."""
-    stage = stage_by_id(stage_id)
+    stage = stage_for(document, stage_id)
     item = _stage(document, stage_id)
     status = item.get("status")
     if status != "approved":
@@ -288,7 +332,7 @@ def reconcile(project: Path, document: Dict[str, Any]) -> List[Dict[str, Any]]:
     next `check` is what changes the status.
     """
     changes: List[Dict[str, Any]] = []
-    for stage in STAGES:
+    for stage in stages_for_contract(_contract(document)):
         item = _stage(document, stage.id)
         was_stale = bool(item.get("stale"))
         if item.get("status") == "approved":
@@ -314,10 +358,10 @@ def policy_lock(document: Dict[str, Any]) -> Dict[str, Any]:
     payload = [
         {"id": stage.id, "artifact": stage.artifact, "requires": list(stage.requires),
          "override": _stage(document, stage.id).get("artifact")}
-        for stage in STAGES
+        for stage in stages_for_contract(_contract(document))
     ]
     return {
         "contract": document.get("contract"),
-        "stage_count": len(STAGES),
+        "stage_count": len(payload),
         "stages_sha256": _sha_bytes(_canonical(payload).encode("utf-8")),
     }

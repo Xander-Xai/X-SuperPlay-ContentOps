@@ -60,8 +60,10 @@ Tier-1 docs have zh-CN mirrors with `.zh-CN.md` suffix. Run `python scripts/chec
 - [adr/ADR-010-trusted-grant-execution-gate.md](adr/ADR-010-trusted-grant-execution-gate.md)
 - [adr/ADR-012-convergence-decisions.md](adr/ADR-012-convergence-decisions.md) — convergence decisions D1–D6 (2026-11-01). ADR-011 is reserved by the unmerged `feat/content-router` branch
 - [adr/ADR-013-media-use-mutating-authorization-proposal.md](adr/ADR-013-media-use-mutating-authorization-proposal.md) — **Proposed only**: write-verb authorization and idempotency (no execution change)
-- [adr/ADR-014-delivery-validation-hold.md](adr/ADR-014-delivery-validation-hold.md) — seven-day hold on P2 expansion (2026-11-01 → 2026-11-07) so a first real delivery lands; amended with the Owner's limited-scope platform-registry authorization
-- [adr/ADR-015-platform-placeholders-and-content-bundle.md](adr/ADR-015-platform-placeholders-and-content-bundle.md) — nine-platform placeholders, one reused registry, Content Bundle consumption and the Easel capability boundary
+- [adr/ADR-014-delivery-validation-hold.md](adr/ADR-014-delivery-validation-hold.md) — seven-day hold on P2 expansion (2026-11-01 → 2026-11-07) so a first real delivery lands
+- [adr/ADR-015-platform-placeholders-and-content-bundle.md](adr/ADR-015-platform-placeholders-and-content-bundle.md) — nine-platform placeholders, one reused registry, Content Bundle consumption and the Easel capability boundary; D1 superseded by ADR-016
+- [adr/ADR-016-easel-host-adoption.md](adr/ADR-016-easel-host-adoption.md) — Owner adopts the pinned Easel host, guarded loopback/read-only, and the two-line handoff
+- [adr/ADR-017-coding-agent-driver.md](adr/ADR-017-coding-agent-driver.md) — a coding agent is a supported driver through a fixed step plan, with no new publication or approval authority
 
 ## Agent Rules
 

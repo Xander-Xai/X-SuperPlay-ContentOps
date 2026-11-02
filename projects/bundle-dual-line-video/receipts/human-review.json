@@ -1,0 +1,21 @@
+{
+  "project": "projects/bundle-dual-line-video",
+  "video": "projects/bundle-dual-line-video/final/bundle-dual-line-video.mp4",
+  "engine": "easel",
+  "voice_quality": "windows_sapi_offline",
+  "bundle_id": "CB-20261102-001",
+  "bundle_sha256": "4836a1bfa3b1a3faaaec22486d9ae6804ccb7a56e498c0d0b86c0dffd60920c0",
+  "production_ready": false,
+  "state": "PENDING_FOUNDER_REVIEW",
+  "auto_qc_result": "WARN",
+  "auto_qc_checks": 21,
+  "auto_qc_fails": [],
+  "auto_qc_warns": [
+    "duration_range"
+  ],
+  "reviewer": null,
+  "reviewed_at": null,
+  "scores": null,
+  "decision": null,
+  "note": "scores are null until a human fills them; this file is not an approval"
+}

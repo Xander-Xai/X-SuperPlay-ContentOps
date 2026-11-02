@@ -44,6 +44,7 @@ PUBLISH_MODES: Tuple[str, ...] = (
     "DRAFT_ONLY",
 )
 METRIC_MODES: Tuple[str, ...] = ("NONE", "MANUAL_RECORD", "API")
+EASEL_STATUSES: Tuple[str, ...] = ("UPSTREAM_DECLARED", "ABSENT")
 
 
 class RegistryError(Exception):
@@ -85,6 +86,9 @@ class PlatformEntry:
     owner: str
     evidence: Tuple[str, ...]
     not_claimed: str = ""
+    easel_status: str = "ABSENT"
+    easel_evidence: Tuple[str, ...] = ()
+    easel_verified_here: bool = False
 
     def allows(self, account_slug: str) -> bool:
         return account_slug in self.accounts
@@ -104,6 +108,11 @@ class PlatformEntry:
             "owner": self.owner,
             "evidence": list(self.evidence),
             "not_claimed": self.not_claimed,
+            "easel_capability": {
+                "status": self.easel_status,
+                "evidence": list(self.easel_evidence),
+                "verified_here": self.easel_verified_here,
+            },
         }
 
 
@@ -246,6 +255,24 @@ def load_platforms(root: Path, *, accounts: Optional[Dict[str, AccountIdentity]]
             raise RegistryError(
                 "PLATFORM_EVIDENCE_MISSING",
                 f"{platform_id} claims PRODUCTION_ACCEPTED without a projects/ receipt")
+        easel = item.get("easel_capability") or {}
+        if not isinstance(easel, dict):
+            raise RegistryError("PLATFORM_FIELD_INVALID",
+                                f"{platform_id}.easel_capability must be an object")
+        easel_status = str(easel.get("status") or "ABSENT")
+        if easel_status not in EASEL_STATUSES:
+            raise RegistryError("PLATFORM_FIELD_INVALID",
+                                f"{platform_id}.easel_capability.status={easel_status!r}")
+        easel_evidence = tuple(str(value) for value in easel.get("evidence") or [])
+        easel_verified = bool(easel.get("verified_here", False))
+        if easel_status == "UPSTREAM_DECLARED" and not easel_evidence:
+            raise RegistryError("PLATFORM_EVIDENCE_MISSING",
+                                f"{platform_id} declares an upstream Easel capability "
+                                f"without naming the upstream skill")
+        if easel_verified and status == "PLANNED":
+            raise RegistryError("PLATFORM_LIFECYCLE_INCONSISTENT",
+                                f"{platform_id} claims a verified host capability while "
+                                f"the platform itself is PLANNED")
         platforms[platform_id] = PlatformEntry(
             platform_id=platform_id,
             strategy_platform=strategy_platform,
@@ -260,6 +287,9 @@ def load_platforms(root: Path, *, accounts: Optional[Dict[str, AccountIdentity]]
             owner=str(item.get("owner") or ""),
             evidence=evidence,
             not_claimed=str(item.get("not_claimed") or ""),
+            easel_status=easel_status,
+            easel_evidence=easel_evidence,
+            easel_verified_here=easel_verified,
         )
         if not platforms[platform_id].pipeline:
             raise RegistryError("PLATFORM_FIELD_INVALID",

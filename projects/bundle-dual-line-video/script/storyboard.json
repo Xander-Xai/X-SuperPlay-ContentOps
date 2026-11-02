@@ -1,0 +1,63 @@
+{
+  "size": "1080x1920",
+  "image_motion": "static",
+  "pad_mode": "trim",
+  "shots": [
+    {
+      "shot_id": "version_evidence",
+      "caption": "接管不等于裸跑",
+      "narration": "接管宿主，不等于把上游直接跑起来。",
+      "claim": "host_guard",
+      "source": "projects/easel-review/sources/screenshots/12-easel-version-evidence.png",
+      "source_type": "real_screenshot",
+      "duration": 4.675,
+      "duration_s": 4.675,
+      "image": "projects/easel-review/sources/screenshots/12-easel-version-evidence.png",
+      "motion": "static"
+    },
+    {
+      "shot_id": "skill_layers",
+      "caption": "只能走受保护入口",
+      "narration": "宿主只能通过受门禁保护的入口启动。",
+      "claim": "host_guard",
+      "source": "projects/easel-review/sources/screenshots/13-easel-skill-layers.png",
+      "source_type": "real_screenshot",
+      "duration": 4.385,
+      "duration_s": 4.385,
+      "image": "projects/easel-review/sources/screenshots/13-easel-skill-layers.png",
+      "motion": "static"
+    },
+    {
+      "shot_id": "skills_dir",
+      "caption": "写操作默认拒绝",
+      "narration": "发布、登录、凭据和设置写入，全部在到达上游前拒绝。",
+      "claim": "host_guard",
+      "source": "projects/easel-review/sources/screenshots/14-easel-skills-dir.png",
+      "source_type": "real_screenshot",
+      "duration": 7.019,
+      "duration_s": 7.019,
+      "image": "projects/easel-review/sources/screenshots/14-easel-skills-dir.png",
+      "motion": "static"
+    },
+    {
+      "shot_id": "doctor",
+      "caption": "运行不等于发布",
+      "narration": "宿主在运行，也不代表这条内容已经获准发布。",
+      "claim": null,
+      "source": "projects/easel-review/sources/screenshots/10-easel-doctor.png",
+      "source_type": "real_screenshot",
+      "duration": 6.364,
+      "duration_s": 6.364,
+      "image": "projects/easel-review/sources/screenshots/10-easel-doctor.png",
+      "motion": "static"
+    }
+  ],
+  "narration": "projects/bundle-dual-line-video/assets/voice/narration.wav",
+  "subtitle": "projects/bundle-dual-line-video/assets/captions/default.srt",
+  "engine": "easel",
+  "voice_provider": "sapi/Microsoft Huihui Desktop (zh-CN)",
+  "generated_visuals": {
+    "count": 0,
+    "policy": "real_assets_only"
+  }
+}

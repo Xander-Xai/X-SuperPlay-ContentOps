@@ -66,15 +66,45 @@ A platform row in `config/registry/platforms.json` is **not** integration, and a
 Content Bundle is **not** publication. Adding either reopens none of the above
 (ADR-015).
 
+### 6.1 Manual delivery receipt (not implemented)
+
+A human publishes and a human records the result. The shape below is reserved so
+that later work has a place to write into; no code emits it yet, and no field may
+be inferred or defaulted to zero:
+
+```json
+{
+  "schema": "contentops.manual-delivery/v1",
+  "bundle_id": "CB-YYYYMMDD-NNN",
+  "platform_id": "douyin",
+  "url": null,
+  "published_at": null,
+  "recorded_by": null,
+  "checkpoints": {"T+2H": "unknown", "T+24H": "unknown",
+                  "T+72H": "unknown", "T+7D": "unknown"}
+}
+```
+
+A missing measurement is `"unknown"`, never `0`. A URL without a named recorder
+is not a delivery record. This is a placeholder, not a publishing capability.
+
 ## 7. Current Baseline
 
-Verified 2026-11-01 on `main` (PR #89):
+Verified 2026-11-02 on `feat/106-easel-host-dual-line` (stacked on PR #101):
 
 - Easel v0.2.1 pinned, content-verified (982/982 blobs). Upstream v0.3.0 is
   available but not adopted (skill paths moved; see UPSTREAM-EASEL).
+- The Owner adopted the full Easel system as the production base (ADR-016).
+  The host is served only through a loopback, read-only guard; on this machine
+  it reports `HOST_BLOCKED` because FastAPI/uvicorn are absent. No host process,
+  account or credential was used.
 - Two implemented paths: `run_v1.py` (storyboard-driven, edge-tts) and
   `m5_production.py` (evidence-first, local narration). Both compose through the
-  pinned Easel adapter.
+  pinned Easel adapter. `project.yaml` may bind a Content Bundle; the video run
+  writes `receipts/bundle-handoff-video.json` before sources.
+- Graphic line: `contentops.copy-to-graphic/v1` and
+  `scripts/graphic_package.py` produce a manual package that stops at
+  `AWAITING_MANUAL_REVIEW`. It is not an HTML renderer or a platform publisher.
 - Media layer implemented: MiniMax speech/image/H3, media convergence, media-use
   adapter, billing/quota gates, rights gate.
 - Every suite under `tests/test_*.py` is wired into CI. The count is not asserted

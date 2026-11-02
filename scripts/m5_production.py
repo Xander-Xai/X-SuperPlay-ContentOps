@@ -35,6 +35,13 @@ for candidate in (ROOT / "src", ROOT / "scripts"):
 from process_utils import hidden_run, python_executable  # noqa: E402
 
 from contentops.evidence import ClaimLedger, build_artifacts  # noqa: E402
+from contentops.content_kernel.handoff import (  # noqa: E402
+    VIDEO,
+    HandoffError,
+    build_handoff,
+    load_bundle_for_handoff,
+    write_handoff,
+)
 from contentops.media.rights_gate import (  # noqa: E402
     RightsError,
     validate_declared_asset,
@@ -114,6 +121,62 @@ def _duration(path: Path) -> float:
 
 
 # --- stages -----------------------------------------------------------------
+
+
+def stage_bundle(project: Path, config: Dict[str, Any]) -> Dict[str, Any]:
+    """Bind this project to a Strategy Content Bundle before any media work.
+
+    Optional: a project without ``content_bundle`` keeps the historical path.
+    When configured, an invalid Bundle or source mapping blocks the run rather
+    than producing media that cannot be traced back to the Bundle.
+    """
+    declared = config.get("content_bundle")
+    if declared is None:
+        return {"state": "NOT_CONFIGURED"}
+    if not isinstance(declared, dict):
+        raise M5Blocked("content_bundle must be a mapping")
+    path = declared.get("path")
+    account = declared.get("account")
+    source_map = declared.get("source_map")
+    if not path or not account or not isinstance(source_map, dict) or not source_map:
+        raise M5Blocked("content_bundle requires path, account and source_map")
+
+    bundle_path = Path(str(path))
+    if not bundle_path.is_absolute():
+        local = (project / bundle_path).resolve()
+        bundle_path = local if local.is_file() else (ROOT / bundle_path).resolve()
+    try:
+        bundle = load_bundle_for_handoff(bundle_path)
+        handoff = build_handoff(
+            bundle, str(account), VIDEO,
+            project_slug=project.name,
+            source_map={str(key): str(value) for key, value in source_map.items()},
+            bundle_path=bundle_path,
+            repo_root=ROOT,
+            project_dir=project,
+            platform_id=declared.get("platform"),
+            registry_root=ROOT,
+            host_capability=str(declared.get("host_capability") or "UNVERIFIED"),
+        )
+        written = write_handoff(project, handoff)
+    except HandoffError as exc:
+        raise M5Blocked(f"{exc.code}: {exc.detail}") from None
+
+    # write_handoff resolves the project dir, and on Windows an 8.3 alias
+    # (C:\Users\RUNNER~1\...) expands there while the caller's `project` keeps
+    # the short spelling; a raw relative_to raises ValueError. os.path.normpath
+    # does not expand such aliases (it is lexical only), so both sides are
+    # resolved before comparing — the same policy contentops.media_paths
+    # documents for runner temp directories.
+    handoff_receipt = written.resolve().relative_to(
+        Path(project).resolve()).as_posix()
+    return {
+        "state": handoff["state"],
+        "bundle_id": handoff["bundle_id"],
+        "bundle_sha256": handoff["bundle_sha256"],
+        "handoff": handoff_receipt,
+        "blockers": handoff["blockers"],
+    }
 
 
 def stage_sources(project: Path, config: Dict[str, Any]) -> Dict[str, Any]:
@@ -656,6 +719,29 @@ def stage_subtitles(project: Path, script: Dict[str, Any], narration: Dict[str, 
     return payload
 
 
+def _align_shots_to_narration(shots: List[Dict[str, Any]],
+                              narration_lines: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Make the visual timeline cover the spoken one, gaps included.
+
+    Per-line durations alone omit the pauses between lines, so the rendered
+    video ends before the audio does and the last words are cut. Extending the
+    final shot by the uncovered remainder keeps the picture on screen for the
+    whole narration without moving any earlier cut.
+    """
+    if not shots or not narration_lines:
+        return shots
+    timeline_end = max(
+        float(line.get("start") or 0.0) + float(line.get("duration") or 0.0)
+        for line in narration_lines
+    )
+    covered = sum(float(shot.get("duration") or 0.0) for shot in shots)
+    if timeline_end > covered + 0.001:
+        extended = round(float(shots[-1]["duration"]) + (timeline_end - covered), 3)
+        shots[-1]["duration"] = extended
+        shots[-1]["duration_s"] = extended
+    return shots
+
+
 def stage_storyboard(project: Path, config: Dict[str, Any], script: Dict[str, Any],
                      narration: Dict[str, Any], subtitles: Dict[str, Any],
                      assets: Dict[str, Any],
@@ -669,6 +755,7 @@ def stage_storyboard(project: Path, config: Dict[str, Any], script: Dict[str, An
                             assets=assets, repo_root=ROOT)
     except StoryboardContractError as exc:
         raise M5Blocked(f"storyboard contract: {exc}")
+    shots = _align_shots_to_narration(shots, narration["lines"])
     target = (config.get("target") or {}).get("resolution", "1080x1920")
     storyboard = {
         "size": target,
@@ -804,15 +891,38 @@ def _has_audio(video: Path) -> bool:
     return "audio" in (proc.stdout or "")
 
 
-def stage_review(project: Path, slug: str, qc: Dict[str, Any]) -> Dict[str, Any]:
+def _read_json_or_none(path: Path) -> Optional[Dict[str, Any]]:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return value if isinstance(value, dict) else None
+
+
+def stage_review(project: Path, slug: str, qc: Dict[str, Any],
+                 bundle: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     report = qc["report"]
     fails = [c["id"] for c in report.get("checks", []) if c.get("severity") == "FAIL"]
     warns = [c["id"] for c in report.get("checks", []) if c.get("severity") == "WARN"]
+    bundle_id = (bundle or {}).get("bundle_id")
+    bundle_sha = (bundle or {}).get("bundle_sha256")
+
+    # A review is bound to the Bundle bytes it saw. If those bytes moved, the
+    # old review is revoked rather than left standing next to fresh evidence.
+    previous = _read_json_or_none(project / "receipts" / "human-review.json")
+    revoked = None
+    if previous and bundle_sha is not None:
+        reviewed = previous.get("reviewer") or previous.get("decision")
+        if reviewed and previous.get("bundle_sha256") != bundle_sha:
+            revoked = previous
+
     payload = {
         "project": project.relative_to(ROOT).as_posix(),
         "video": f"{project.relative_to(ROOT).as_posix()}/final/{slug}.mp4",
         "engine": "easel",
         "voice_quality": "windows_sapi_offline",
+        "bundle_id": bundle_id,
+        "bundle_sha256": bundle_sha,
         "production_ready": False,
         "state": "PENDING_FOUNDER_REVIEW",
         "auto_qc_result": report.get("overall"),
@@ -825,6 +935,12 @@ def stage_review(project: Path, slug: str, qc: Dict[str, Any]) -> Dict[str, Any]
         "decision": None,
         "note": "scores are null until a human fills them; this file is not an approval",
     }
+    if revoked:
+        payload["review_revoked_reason"] = "BUNDLE_CHANGED"
+        payload["revoked_review"] = {
+            key: revoked.get(key)
+            for key in ("reviewer", "reviewed_at", "decision", "bundle_sha256")
+        }
     _write_json(project / "receipts" / "human-review.json", payload)
     return payload
 
@@ -839,6 +955,9 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
     slug = config.get("id") or project.name
     stages: Dict[str, Any] = {}
 
+    bundle = stage_bundle(project, config)
+    if bundle["state"] != "NOT_CONFIGURED":
+        stages["bundle"] = bundle
     sources = stage_sources(project, config)
     stages["sources"] = {"count": sources["count"]}
     media = stage_media_use(project, config, adapter=media_adapter)
@@ -881,7 +1000,7 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
         qc = stage_qc(project, slug)
         stages["qc"] = {"overall": qc["report"].get("overall"),
                         "audio": qc["report"]["m5_checks"]["audio_stream"]}
-        review = stage_review(project, slug, qc)
+        review = stage_review(project, slug, qc, bundle=stages.get("bundle"))
 
     run = {
         "schema": RUN_SCHEMA,

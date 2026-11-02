@@ -1,0 +1,10 @@
+{
+  "schema": "contentops.media-rights-review/v1",
+  "license_id": "OWNED-BY-OPERATOR",
+  "source_url": "repo://X-SuperPlay-ContentOps#easel-version-evidence",
+  "reviewed_by": "Xander",
+  "reviewed_at": "2026-11-02",
+  "attribution": "",
+  "synthetic": false,
+  "note": "Repository-owned screenshot from projects/easel-review; reused as a manual-package illustration, never as a generated substitute."
+}
