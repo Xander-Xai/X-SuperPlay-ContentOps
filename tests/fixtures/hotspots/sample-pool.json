@@ -1,0 +1,133 @@
+{
+  "github-search": [
+    {
+      "title": "langchain-ai/langgraph",
+      "url": "https://github.com/langchain-ai/langgraph",
+      "snippet": "Build resilient language agents as graphs: state, checkpoints, human in the loop.",
+      "published_at": "NOW-3h",
+      "metrics": {"stars": 42000}
+    },
+    {
+      "title": "unrelated/dataframe-toolkit",
+      "url": "https://github.com/unrelated/dataframe-toolkit",
+      "snippet": "A fast dataframe library for tabular data.",
+      "published_at": "NOW-5h"
+    }
+  ],
+  "github-trending": [
+    {
+      "title": "langchain-ai/langgraph",
+      "url": "https://github.com/langchain-ai/langgraph",
+      "snippet": "Build resilient language agents as graphs.",
+      "published_at": "NOW-3h"
+    },
+    {
+      "title": "newmodel/open-weights-70b",
+      "url": "https://github.com/newmodel/open-weights-70b",
+      "snippet": "A new open source AI model release with a long context window.",
+      "published_at": "NOW-8h"
+    }
+  ],
+  "juejin-hot": [
+    {
+      "title": "用 LangGraph 做多步骤工作流，失败重试怎么设计",
+      "url": "https://juejin.cn/post/1",
+      "snippet": "把一个真实职业任务拆成工作流节点，讲清楚人工瓶颈在哪。",
+      "published_at": "NOW-6h"
+    },
+    {
+      "title": "今天菜价怎么样",
+      "url": "https://juejin.cn/post/2",
+      "snippet": "和 AI 无关的一篇生活随笔。",
+      "published_at": "NOW-4h"
+    }
+  ],
+  "v2ex-hot": [
+    {
+      "title": "独立开发者用 AI 做小工具，真实职业任务怎么自动化",
+      "url": "https://v2ex.com/t/1",
+      "snippet": "一个独立开发者的付费产品复盘。",
+      "published_at": "NOW-10h"
+    }
+  ],
+  "36kr-hot": [
+    {
+      "title": "AI 数字产品变现观察：谁在付费",
+      "url": "https://36kr.com/p/1",
+      "snippet": "一份关于 AI 产品付费信号的行业报道。",
+      "published_at": "NOW-12h"
+    }
+  ],
+  "producthunt": [
+    {
+      "title": "AgentBoard — test your agent before you ship it",
+      "url": "https://producthunt.com/posts/agentboard",
+      "snippet": "An evaluation harness for AI agents.",
+      "published_at": "NOW-20h"
+    }
+  ],
+  "hacker-news": [
+    {
+      "title": "Show HN: an open source RAG evaluation harness",
+      "url": "https://news.ycombinator.com/item?id=1",
+      "snippet": "A tool for evaluating retrieval pipelines.",
+      "published_at": "NOW-30h"
+    }
+  ],
+  "zhihu-hot": [
+    {
+      "title": "如何评估一个 RAG 系统的召回质量",
+      "url": "https://zhihu.com/question/1",
+      "snippet": "关于 Evaluation 的工程问题。",
+      "published_at": "NOW-15h"
+    }
+  ],
+  "weibo-hot": [
+    {
+      "title": "新玩法：AI 帮你把旧照片修成新风格",
+      "url": "https://weibo.com/1",
+      "snippet": "一个普通用户分享的新玩法。",
+      "published_at": "NOW-2h"
+    }
+  ],
+  "ithome": [
+    {
+      "title": "新模型发布：上下文窗口提升到 1M",
+      "url": "https://ithome.com/0/1/1.htm",
+      "snippet": "一款新硬件与新模型的发布消息。",
+      "published_at": "NOW-40h"
+    }
+  ],
+  "bilibili-hot": [
+    {
+      "title": "AI 娱乐向内容盘点",
+      "url": "https://bilibili.com/video/1",
+      "snippet": "和实测无关的娱乐内容。",
+      "published_at": "NOW-1h"
+    }
+  ],
+  "baidu-hot": [
+    {
+      "title": "今日热点新闻汇总",
+      "url": "https://baidu.com/1",
+      "snippet": "纯新闻搬运。",
+      "published_at": "NOW-1h"
+    }
+  ],
+  "solidot": [
+    {
+      "title": "某开源项目发布新版本",
+      "url": "https://solidot.org/story/1",
+      "snippet": "一条纯资讯。",
+      "published_at": "NOW-9h"
+    }
+  ],
+  "trendradar-sqlite": [
+    {
+      "title": "本地 TrendRadar 条目：LangGraph 工作流",
+      "url": "https://example.invalid/trend/1",
+      "snippet": "来自本地数据库的一条记录。",
+      "published_at": "NOW-7h"
+    }
+  ]
+}

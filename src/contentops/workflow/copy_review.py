@@ -229,6 +229,31 @@ def require_approved(project: Path) -> Dict[str, Any]:
         gate.get("remedy", ""))
 
 
+def is_brief_driven(project: Path) -> bool:
+    """Whether the project entered through the content router.
+
+    A router project carries ``00_brief/brief.json``. The flag exists because
+    the router chain has a copy that only exists after the brief bridge has
+    written ``script/script.json`` and ``script/claims.json``: the review must
+    cover those files, so the gate belongs after the conversion and before
+    narration, not at the draft.
+    """
+    return (Path(project) / "00_brief" / "brief.json").is_file()
+
+
+def require_if_brief_driven(project: Path) -> Optional[Dict[str, Any]]:
+    """Enforce copy review for router projects; leave legacy projects alone.
+
+    Historical M5 samples were produced before this gate existed and carry no
+    router brief. Silently exempting them forever would be a hole, so the
+    exemption is keyed to the absence of the brief, which a router project
+    always has.
+    """
+    if not is_brief_driven(project):
+        return None
+    return require_approved(project)
+
+
 def decide(project: Path, *, status_value: str, reviewer: str, opinion: str,
            reviewed_at: str) -> Dict[str, Any]:
     """Write a review record bound to the current copy fingerprint."""

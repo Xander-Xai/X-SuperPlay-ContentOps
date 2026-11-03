@@ -1,8 +1,8 @@
 {
   "schema": "contentops.content-skill-status/v1",
   "note": "Installed content skills that reference code this repository does not carry on the current branch. A reference listed here is a fact about this checkout, not a licence to run anything. Every absent path an installed SKILL.md names must appear here; scripts/check_skill_references.py fails when a skill names a path that is unrecorded, and fails when a recorded path has since appeared (the layer merged and this record is stale). A skill may be declared in runtime/skill-registry.json only after its code exists on the integration branch.",
-  "verified_on": "2026-11-01",
-  "verified_branch": "main",
+  "verified_on": "2026-11-04",
+  "verified_branch": "feat/112-content-router-input",
   "store": "shared",
   "store_env": "CONTENTOPS_SKILL_STORE",
   "skills": [
@@ -19,16 +19,6 @@
           "note": "document-only checks for source candidates and the rights ledger"
         },
         {
-          "path": "scripts/check_account_dna.py",
-          "carried_by": "feat/content-router",
-          "note": "resolves keyword origins against the account DNA"
-        },
-        {
-          "path": "src/contentops/media/claim_coverage.py",
-          "carried_by": "feat/content-router",
-          "note": "per-claim evidence coverage gate"
-        },
-        {
           "path": "scripts/material_candidates.py",
           "carried_by": null,
           "note": "absent on every branch inspected; the skill states the command does not exist here"
@@ -43,7 +33,8 @@
           "carried_by": null,
           "note": "absent on every branch inspected"
         }
-      ]
+      ],
+      "note": "Two paths this skill names now exist on the integration branch; the remaining absent paths are recorded below. It is not declared: declaring it needs a registry entry and an audit."
     },
     {
       "id": "x-superplay-capture-plan",
@@ -51,18 +42,8 @@
       "state": "UNMERGED",
       "layer": "content-router",
       "carried_by": "feat/content-router",
-      "references": [
-        {
-          "path": "src/contentops/workflow/capture_plan.py",
-          "carried_by": "feat/content-router",
-          "note": "planner and validator"
-        },
-        {
-          "path": "scripts/recording_plan.py",
-          "carried_by": "feat/content-router",
-          "note": "operator CLI"
-        }
-      ]
+      "references": [],
+      "note": "The planner and its CLI now exist on feat/112-content-router-input. The record keeps state UNMERGED until the branch is merged to main; it is not declared in the registry by this change."
     },
     {
       "id": "x-superplay-source-research",

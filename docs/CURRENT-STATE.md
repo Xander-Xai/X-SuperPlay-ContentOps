@@ -4,8 +4,8 @@
 
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
-> Last verified: 2026-11-02 on `feat/106-easel-host-dual-line`
-> (stacked on PR #101 and merged with `main`). Facts below describe this branch;
+> Last verified: 2026-11-04 on `feat/112-content-router-input`
+> (stacked on `main` at `aee3fd4`). Facts below describe this branch;
 > unmerged layers are labelled as such.
 > Sections below the "Layer status" table are historical milestone records;
 > they describe how a capability was proven, not what is current.
@@ -19,7 +19,7 @@
 | Content Bundle consumption + two-format handoff (`src/contentops/content_kernel/`) | implemented offline; VIDEO and GRAPHIC_TEXT plans, no publication |
 | Easel host guard (`src/contentops/easel/`, `scripts/easel_host.py`) | implemented offline; `HOST_BLOCKED` on this machine (FastAPI/uvicorn absent), mutations denied |
 | Graphic manual package (`src/contentops/graphic/`, `scripts/graphic_package.py`) | implemented offline; stops at `AWAITING_MANUAL_REVIEW`; no delivered package yet |
-| Content router, account DNA, brief/script/design stages | **partial** (S1/S2 on `main`; S3–S4 pending) |
+| Content router, account DNA, brief/script/design stages | **S1/S2 on `main`; S3/S4 implemented on `feat/112-content-router-input` (not merged)** |
 | XHS / X / GZH platform tracks | **unmerged / rights-blocked** |
 | MiniMax speech, image, H3 video | implemented; verified subsets recorded below |
 | Production ready | **false** for every track |
@@ -88,6 +88,22 @@ a verified integration yet.
 | Execution | fixed argv, `--execute` required; every run writes `receipts/agent-driver-<step>.json` |
 | Host requirement | none — `host-status` is a read step, not a dependency |
 | Tests | `python tests/test_agent_driver.py` — 12/12 |
+
+## Content Router and Brief Bridge (2026-11-04)
+
+| Property | Value |
+|---|---|
+| Entrances | `HOTSPOT_DISCOVERY` (the account DNA plans and ranks the sources) or `USER_TOPIC` (the user's topic is never replaced); entry `scripts/router_e2e.py` |
+| Sources | GitHub search is the only server-side query; 13 list-only sources (GitHub Trending, 知乎, 微博, 掘金, V2EX, 36氪, Hacker News, Product Hunt, IT之家, 抖音, 哔哩哔哩, 百度, Solidot) are read and filtered locally; a local TrendRadar database is read-only. A source not on the account's allowlist is never contacted |
+| Account DNA | `config/accounts/x-superplay-1024.json` and `x-superplay-future-intelligence.json`; every keyword cites the DNA field it came from, and `scripts/check_account_dna.py` fails a citation that does not resolve |
+| Choice | a candidate list is a proposal; the state machine has no edge from `CANDIDATES_READY` to a brief without a person (`select` → `approve`) |
+| Draft | `scripts/brief_script.py` writes `script/lines.json`, `claim-map.json`, `storyboard.json`, `master.md` from collected, hashed material only; a thin pack is `DRAFT_CONTENT_INSUFFICIENT`, never padded |
+| Bridge | `scripts/brief_to_m5.py` converts the approved draft into `script/script.json`, `script/claims.json` and `sources/source-refs.json`; every placement needs a registered asset, every factual claim needs a stated permission and a quote that occurs in the saved document |
+| Copy gate | M5 refuses a brief-driven project (`00_brief/brief.json`) whose final copy is unreviewed or stale; a legacy sample without a brief keeps its historical path |
+| Schedule | `scripts/router_schedule.py run` / `status`; `scripts/router_observe.py --report --days 7` |
+| Tests | `test_content_router.py` (61), `test_hotspot_sources.py` (51), `test_account_dna.py` (23 on a clean checkout), `test_account_discovery.py` (23), `test_script_draft.py` (13), `test_source_quality.py` (16), `test_account_route.py` (12), `test_brief_to_m5.py` (10) |
+| Authority | none over publication, provider spend, approval or credentials; the tests contact no live source |
+| Not done | not merged; no real A/B sample, no capture, no narration, no render |
 
 ## Bundle and Dual-Line Handoff (2026-11-02)
 
