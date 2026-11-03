@@ -90,3 +90,4 @@ translation_status: synced
 - [../reports/audits/contentops-phase4-delivery-unlock-2026-10-31.md](../reports/audits/contentops-phase4-delivery-unlock-2026-10-31.md) — 第四阶段交付解锁：#62 合并准备、M5 联合验收、#49 顺序与 Owner 决策（2026-10-31）
 - [../reports/audits/contentops-phase5-integration-convergence-2026-10-31.md](../reports/audits/contentops-phase5-integration-convergence-2026-10-31.md) — 第五阶段集成收敛：#71 重叠矩阵、推荐路线、素材授权门禁与 #62 复核（2026-10-31）
 - [../reports/audits/worktree-and-branch-audit-2026-11-01.md](../reports/audits/worktree-and-branch-audit-2026-11-01.md) — worktree 与分支清单、分类与清理顺序（2026-11-01）
+- [../reports/audits/github-governance-2026-11-03.md](../reports/audits/github-governance-2026-11-03.md) — PR、Issue 与分支治理；删除候选等待 Owner 点名授权（2026-11-03）
