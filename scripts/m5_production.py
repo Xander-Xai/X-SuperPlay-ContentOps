@@ -47,6 +47,7 @@ from contentops.media.rights_gate import (  # noqa: E402
     validate_declared_asset,
     validate_request_rights,
 )
+from contentops.workflow import copy_review  # noqa: E402
 
 RUN_SCHEMA = "contentops.m5-run/v1"
 SCRIPT_SCHEMA = "contentops.m5-script/v1"
@@ -179,8 +180,32 @@ def stage_bundle(project: Path, config: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+SOURCE_REFS_SCHEMA = "contentops.m5-source-refs/v1"
+
+
+def _declared_source_refs(project: Path, config: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """``project.yaml`` refs plus the refs the brief bridge wrote.
+
+    The bridge cannot edit YAML safely, so it writes the evidence it converted
+    to ``sources/source-refs.json``. Both lists are one contract: the ids must
+    still be unique, which ``build_artifacts`` enforces.
+    """
+    refs = list(config.get("source_refs") or [])
+    sidecar = project / "sources" / "source-refs.json"
+    if sidecar.is_file():
+        document = json.loads(sidecar.read_text(encoding="utf-8"))
+        if document.get("schema") != SOURCE_REFS_SCHEMA:
+            raise M5Blocked(
+                f"sources/source-refs.json schema is not {SOURCE_REFS_SCHEMA}")
+        extra = document.get("refs")
+        if not isinstance(extra, list):
+            raise M5Blocked("sources/source-refs.json refs must be a list")
+        refs.extend(extra)
+    return refs
+
+
 def stage_sources(project: Path, config: Dict[str, Any]) -> Dict[str, Any]:
-    artifacts = build_artifacts(config.get("source_refs") or [], repo_root=ROOT)
+    artifacts = build_artifacts(_declared_source_refs(project, config), repo_root=ROOT)
     payload = {
         "schema": "contentops.m5-sources/v1",
         "artifacts": [a.as_dict() for a in artifacts.values()],
@@ -954,6 +979,16 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
     config = _read_yaml(project / "project.yaml")
     slug = config.get("id") or project.name
     stages: Dict[str, Any] = {}
+
+    # A router project's copy is final only after the brief bridge writes
+    # script.json and claims.json, so its review has to cover those files.
+    # The gate therefore sits before narration, not at the draft. A project
+    # with no 00_brief/brief.json is a legacy sample and is not retroactively
+    # blocked; see copy_review.require_if_brief_driven.
+    try:
+        copy_review.require_if_brief_driven(project)
+    except copy_review.CopyReviewRequired as exc:
+        raise M5Blocked(f"copy review: {exc}") from None
 
     bundle = stage_bundle(project, config)
     if bundle["state"] != "NOT_CONFIGURED":
