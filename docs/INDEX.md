@@ -69,6 +69,7 @@ Tier-1 docs have zh-CN mirrors with `.zh-CN.md` suffix. Run `python scripts/chec
 - [adr/ADR-016-easel-host-adoption.md](adr/ADR-016-easel-host-adoption.md) — Owner adopts the pinned Easel host, guarded loopback/read-only, and the two-line handoff
 - [adr/ADR-017-coding-agent-driver.md](adr/ADR-017-coding-agent-driver.md) — a coding agent is a supported driver through a fixed step plan, with no new publication or approval authority
 - [adr/ADR-018-governance-closeout-scope.md](adr/ADR-018-governance-closeout-scope.md) — Apache-2.0 license, descoped unfinished tracks, manual X authority, artifact-based upstream watch and the zero-backlog target
+- [adr/ADR-019-receipt-history-exposure.md](adr/ADR-019-receipt-history-exposure.md) — rotate the PAYG key, accept the already-public balances/voice IDs/fingerprints, and keep guarding new receipts
 
 ## Agent Rules
 
