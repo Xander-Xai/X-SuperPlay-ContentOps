@@ -83,6 +83,7 @@ Tier-1 docs have zh-CN mirrors with `.zh-CN.md` suffix. Run `python scripts/chec
 - [../reports/audits/contentops-phase4-delivery-unlock-2026-10-31.md](../reports/audits/contentops-phase4-delivery-unlock-2026-10-31.md) — Phase-4 delivery unlock: #62 merge prep, combined M5 acceptance, #49 order, Owner decisions (2026-10-31)
 - [../reports/audits/contentops-phase5-integration-convergence-2026-10-31.md](../reports/audits/contentops-phase5-integration-convergence-2026-10-31.md) — Phase-5 integration convergence: #71 overlap, recommended route, rights gate, #62 re-review (2026-10-31)
 - [../reports/audits/worktree-and-branch-audit-2026-11-01.md](../reports/audits/worktree-and-branch-audit-2026-11-01.md) — worktree and branch inventory, classification and cleanup order (2026-11-01)
+- [../reports/audits/github-governance-2026-11-03.md](../reports/audits/github-governance-2026-11-03.md) — PR, issue and branch governance pass; delete candidates awaiting named Owner approval (2026-11-03)
 
 ## Fact Priority
 
