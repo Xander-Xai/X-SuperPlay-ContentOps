@@ -85,7 +85,14 @@ def test_every_account_declares_exactly_one_known_schema():
         kind = account_kind(dna)
         assert kind != "unknown", f"{path.name} declares an unowned schema {dna.get('schema')!r}"
         kinds[path.name] = kind
-    assert kinds == {"x-superplay-english.json": "x"}, kinds
+    # The X account is the only one this suite owns. The two video accounts
+    # (the router's account DNA) are classified here, not validated; their own
+    # suite is tests/test_account_dna.py.
+    assert kinds == {
+        "x-superplay-1024.json": "video",
+        "x-superplay-english.json": "x",
+        "x-superplay-future-intelligence.json": "video",
+    }, kinds
     print("[ok] 1. every account declares exactly one known schema")
 
 
@@ -100,7 +107,9 @@ def test_an_unowned_schema_is_unknown_not_guessed():
 
 @test
 def test_the_video_readers_never_see_the_x_account():
-    assert list(video_accounts(root=ROOT)) == []
+    seen = {path.name for path, _ in video_accounts(root=ROOT)}
+    assert "x-superplay-english.json" not in seen, seen
+    assert seen == {"x-superplay-1024.json", "x-superplay-future-intelligence.json"}, seen
     print("[ok] 3. no video reader sees the X account")
 
 
