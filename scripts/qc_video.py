@@ -29,6 +29,12 @@ for _candidate in (ROOT / "src", ROOT / "scripts"):
     if str(_candidate) not in sys.path:
         sys.path.insert(0, str(_candidate))
 
+from contentops.media.real_source_duration import (  # noqa: E402
+    BLOCKED as RSD_BLOCKED,
+    PASS as RSD_PASS,
+    check as check_real_source_duration,
+)
+
 MIN_FILE_BYTES = 100 * 1024  # 100 KB
 MIN_DURATION = 30.0
 MAX_DURATION = 120.0
@@ -39,6 +45,32 @@ MIN_REAL_SOURCE_RATIO = 0.70
 
 REAL_SOURCE_TYPES = {"real_screenshot", "real_recording", "diagram", "real_document"}
 GENERATED_SOURCE_TYPES = {"generated", "ai_generated", "stock", "title_card"}
+
+
+def _account_slug(project: Path) -> str:
+    """The account a project declares, or ``""`` when it declares none.
+
+    The measured duration gate is a hard failure for an A/B project and a
+    warning for the historical samples, so this value decides a severity. A
+    missing YAML parser must not silently turn the gate into a pass, so there is
+    a single-line fallback for the one scalar this needs.
+    """
+    path = Path(project) / "project.yaml"
+    if not path.is_file():
+        return ""
+    try:
+        import yaml  # type: ignore
+
+        document = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        return str(document.get("account_slug") or "").strip()
+    except ImportError:
+        pass
+    except ValueError:
+        return ""
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        if line.strip().startswith("account_slug:"):
+            return line.split(":", 1)[1].strip().strip('"').strip("'")
+    return ""
 
 
 def audio_is_not_silence(path: Path) -> dict:
@@ -340,7 +372,38 @@ def qc(project: Path, target: str = "") -> dict:
         "value": round(ratio, 3),
         "min": MIN_REAL_SOURCE_RATIO,
         "real_shots": real_n, "generated_shots": gen_n,
-        "note": "AI-generated key visuals must not be the majority",
+        "note": "historical shot-count diagnostic, kept for comparison; the gate is "
+                "real_source_duration_ratio",
+    })
+
+    # The measured gate. Shot count can pass while one long diagram fills the
+    # cut, so the ratio is over visible seconds of the rendered file. It is a
+    # hard failure for a project that declares an account (A/B) and a warning
+    # for the historical samples, which predate the rule and are not re-graded
+    # retroactively.
+    measured = check_real_source_duration(project, output_duration_s=duration)
+    required = bool(_account_slug(project))
+    if measured["state"] == RSD_PASS:
+        severity = "PASS"
+    elif required:
+        severity = "FAIL"
+    else:
+        severity = "WARN"
+    checks.append({
+        "id": "real_source_duration_ratio",
+        "ok": measured["state"] == RSD_PASS,
+        "severity": severity,
+        "state": measured["state"],
+        "required": required,
+        "value": measured.get("real_source_duration_ratio"),
+        "min": measured.get("min"),
+        "real_seconds": measured.get("real_seconds"),
+        "required_seconds": measured.get("required_seconds"),
+        "undeclared_tail_s": measured.get("undeclared_tail_s"),
+        "code": measured.get("code"),
+        "detail": measured.get("detail"),
+        "note": "real visible seconds / measured output seconds; diagrams, cards, "
+                "generated and motion visuals do not count",
     })
 
     missing_prov = [i for i, s in enumerate(shots)
