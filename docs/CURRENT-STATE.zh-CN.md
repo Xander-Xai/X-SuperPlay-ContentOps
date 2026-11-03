@@ -107,7 +107,21 @@ Owner 已决定把完整 Easel 系统作为生产底座（ADR-016）。本节只
 | 调度 | `scripts/router_schedule.py run` / `status`；`scripts/router_observe.py --report --days 7` |
 | 测试 | `test_content_router.py`（61）、`test_hotspot_sources.py`（51）、`test_account_dna.py`（干净检出下 23）、`test_account_discovery.py`（23）、`test_script_draft.py`（13）、`test_source_quality.py`（16）、`test_account_route.py`（12）、`test_brief_to_m5.py`（10） |
 | 权限 | 对发布、provider 花费、批准或凭据均无权限；测试不联系任何真实来源 |
-| 未完成 | 尚未合并；没有真实 A/B 样片、没有采集、没有旁白、没有渲染 |
+| 未完成 | 没有真实 A/B 样片、没有采集、没有旁白、没有渲染（该层本身已在 #114 合并） |
+
+## 实测真实素材时长门（2026-11-04）
+
+| 属性 | 值 |
+|---|---|
+| 入口 | `qc_video.py` → `src/contentops/media/real_source_duration.py` |
+| 测量 | 真实可见秒数的并集 / 渲染文件的实际时长；每个镜头的区间就是它自己的时长，重叠区间只计一次 |
+| 计入真实 | 录制、截图、文档、日志及 `claim_coverage.CAPTURE_SPELLINGS` 中的其他采集写法 |
+| 不计入 | 图解、标题卡、生成图片/视频、动效渲染、图库素材，以及任何未知类型 |
+| 拒绝 | 缺少成片时长、镜头时长、镜头来源或真实镜头的权利记录时为 `BLOCKED`，绝不静默从分母中排除 |
+| 严重度 | 声明了 `account_slug` 的项目（A/B）为 `FAIL`；早于该规则的历史样例为 `WARN` |
+| 历史项 | 镜头数 `real_source_ratio` 仅保留为诊断 |
+| 测试 | `python tests/test_real_source_duration.py` —— 13 项 |
+| 未完成 | 还没有真实 A/B 成片可测；样例分镜没有逐镜头时长，按设计报告 `BLOCKED`/`WARN` |
 
 ## Bundle 与双线 handoff（2026-11-02）
 

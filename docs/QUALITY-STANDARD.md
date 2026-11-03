@@ -100,7 +100,12 @@ by `tests/test_minimax_speech.py`. No provider request is made in CI.
 
 ## Evidence-First Policy
 
-- Real source ratio ≥ 70% (automated check in qc_video.py)
+- Real **visible seconds** ≥ 70% of the rendered file (`real_source_duration_ratio`,
+  automated in `qc_video.py`; overlapping intervals count once, and diagrams,
+  cards, generated visuals and motion renders do not count)
+- The legacy shot-count ratio (`real_source_ratio`) is kept as a diagnostic only
+- An unknown `source_type` counts as non-real; a missing duration, source or
+  rights record is `BLOCKED`, never silently excluded from the denominator
 - AI-generated visuals must not be the majority
 - Each shot carries `source_type` and `source` provenance
 

@@ -234,6 +234,12 @@ jobs:
       - name: Run M5 evidence regression tests
         run: python tests/test_m5_evidence.py
 
+      # The measured real-source gate: seconds of actual material over the
+      # rendered file's duration, with overlap unioned and diagrams, cards,
+      # generated and motion visuals excluded. Fixture-driven; no render.
+      - name: Run real-source duration gate tests
+        run: python tests/test_real_source_duration.py
+
       # Integration boundary only; no runtime download, no external CLI execution,
       # and no network or provider calls on hosted CI runners.
       - name: Run M5 media-use automatic sourcing regression tests

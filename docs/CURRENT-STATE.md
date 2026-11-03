@@ -103,7 +103,21 @@ a verified integration yet.
 | Schedule | `scripts/router_schedule.py run` / `status`; `scripts/router_observe.py --report --days 7` |
 | Tests | `test_content_router.py` (61), `test_hotspot_sources.py` (51), `test_account_dna.py` (23 on a clean checkout), `test_account_discovery.py` (23), `test_script_draft.py` (13), `test_source_quality.py` (16), `test_account_route.py` (12), `test_brief_to_m5.py` (10) |
 | Authority | none over publication, provider spend, approval or credentials; the tests contact no live source |
-| Not done | not merged; no real A/B sample, no capture, no narration, no render |
+| Not done | no real A/B sample, no capture, no narration, no render (the layer itself merged in #114) |
+
+## Measured Real-Source Gate (2026-11-04)
+
+| Property | Value |
+|---|---|
+| Entry | `qc_video.py` → `src/contentops/media/real_source_duration.py` |
+| Measurement | union of real visible seconds / measured duration of the rendered file; a shot's interval is its own duration and overlapping intervals are counted once |
+| Counts as real | recording, screenshot, document, log and the other capture spellings in `claim_coverage.CAPTURE_SPELLINGS` |
+| Does not count | diagrams, cards, generated images/videos, motion renders, stock, and any unknown kind |
+| Refusals | `BLOCKED` when the output duration, a shot duration, a shot source, or a real shot's rights record is missing — never silently excluded from the denominator |
+| Severity | `FAIL` for a project declaring `account_slug` (A/B); `WARN` for historical samples that predate the rule |
+| Legacy | the shot-count `real_source_ratio` is kept as a diagnostic only |
+| Tests | `python tests/test_real_source_duration.py` — 13 |
+| Not done | no real A/B cut has been measured; the sample storyboards predate per-shot durations and report `BLOCKED`/`WARN` by design |
 
 ## Bundle and Dual-Line Handoff (2026-11-02)
 
