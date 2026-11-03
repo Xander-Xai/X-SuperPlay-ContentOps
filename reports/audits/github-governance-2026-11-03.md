@@ -45,20 +45,23 @@ Open Issues: #6, #7, #11, #15, #47, #51, #56, #57, #94, #100, #106.
 
 No PR was merged, closed, retargeted or marked ready.
 
-### 3.1 Contract gap found in #108 (not fixed here)
+### 3.1 Contract gap found in #108 — fixed in `101d992`
 
-`src/contentops/easel/driver.py` declares the `qc-video` step receipt as
+`src/contentops/easel/driver.py` declared the `qc-video` step receipt as
 `receipts/qc-report.json`. `scripts/qc_video.py` computes
 `target_name = final.stem` and writes `receipts/qc-report-<target_name>.json`
 (for example `qc-report-easel.json` or `qc-report-final.json`). The declared
-literal is therefore never produced and the step cannot reach completion from
-a real run.
+literal was therefore never produced and the step could not reach completion
+from a real run.
 
-A local, uncommitted edit changes the declaration to
-`receipts/qc-report*.json`. It was **not** committed to #108 during this pass
-because #108 is under final review and the change alters a completion contract.
-It is recorded on the PR and must be reviewed and committed before a merge
-verdict.
+The declaration is now `receipts/qc-report*.json`, and a new
+`_step_receipts_ok` helper resolves the pattern at plan time: every literal
+receipt must grade as complete, and a pattern requires at least one matching
+artifact that grades as complete. A matching but ungraded file, or a `FAIL`
+report, is still not completion. Tests pin the suffix behaviour and the
+fail-closed cases; driver suite 27/27, `dev_check.py` green. Committed to
+`feat/106-easel-host` (PR #108) as `101d992`; the PR remains Draft pending the
+Owner's merge verdict.
 
 ## 4. Issue governance
 
@@ -68,14 +71,14 @@ verdict.
 | #57 Skill discovery | **closed** | router, doctor and tests are on `main` via #77; PR #59 was closed as superseded. Rights follow-ups remain #51/#56/#11 |
 | #100 Platform placeholders | comment only, kept open | PR #101 merged, but ADR-015 D-3/D-4 and X execution authority are still Owner decisions |
 | #94 Content-router slices | comment only, kept open | ADR-014 hold runs to 2026-11-07; S3/S4 not started |
-| #106 Easel host adoption | comment only, kept open | blocked on #108's Owner verdict; the qc-report gap was recorded |
+| #106 Easel host adoption | comment only, kept open | blocked on #108's Owner verdict; the qc-report gap was found here and fixed in `101d992` |
 | #6, #7, #11, #15, #51, #56 | unchanged | real unfinished work, rights decisions or the automated upstream watch |
 
 No issue was closed without a comment naming what is and is not resolved.
 
 ## 5. Branch governance
 
-### 5.1 Remote branches (14)
+### 5.1 Remote branches (14 at audit time; 7 deleted by the end of the pass)
 
 | Branch | Verdict | Reason |
 |---|---|---|
@@ -86,20 +89,21 @@ No issue was closed without a comment naming what is and is not resolved.
 | `docs/x-rewards-90d-20261103` | keep | PR #109 head |
 | `feat/content-router` | keep | retained source for #94 by decision |
 | `fix/56-gzh-provenance` | keep | evidence/source for open #56 |
-| `chore/skills-doctor-cr` | **delete candidate** | PR #59 closed as superseded; doctor is on `main` |
-| `feat/47-x-platform-track` | **delete candidate** | PR #50 closed as superseded; issue #47 closed in this pass |
-| `feat/57-media-use-adapter` | **delete candidate** | PR #64 closed; media-use merged via #71/#77 |
-| `feat/6-m5-production-e2e` | **delete candidate** | PR #68 closed; M5 merged via #71 |
-| `feat/m5-media-use-auto-assets` | **delete candidate** | PR #69 closed; merged via #71 |
-| `fix/media-use-rights-gate-2026-10-31` | **delete candidate** | PR #73 closed; rights gate merged via #76 |
-| `phase6/route-a-stack` | **delete candidate** | PR #76 merged; squash merge left the branch behind |
+| `chore/skills-doctor-cr` | **deleted** | PR #59 closed as superseded; doctor is on `main` |
+| `feat/47-x-platform-track` | **deleted** | PR #50 closed as superseded; issue #47 closed in this pass |
+| `feat/57-media-use-adapter` | **deleted** | PR #64 closed; media-use merged via #71/#77 |
+| `feat/6-m5-production-e2e` | **deleted** | PR #68 closed; M5 merged via #71 |
+| `feat/m5-media-use-auto-assets` | **deleted** | PR #69 closed; merged via #71 |
+| `fix/media-use-rights-gate-2026-10-31` | **deleted** | PR #73 closed; rights gate merged via #76 |
+| `phase6/route-a-stack` | **deleted** | PR #76 merged; squash merge left the branch behind |
 
-The seven delete candidates were **not deleted**. The permission layer requires
-the Owner to name them (see §8).
+All seven were deleted on 2026-11-03 after the Owner authorized the named list.
+Deletion is a ref operation, not a filesystem cleanup.
 
-### 5.2 Local branches (32)
+### 5.2 Local branches (32 at audit time; 8 deleted by the end of the pass)
 
-Verified merged/superseded and proposed for deletion (not executed):
+Deleted on 2026-11-03 after the same approval (`git branch -D`, because squash
+merge makes `-d` refuse these):
 
 `feat/100-easel-first-platform-registry` (#101 merged),
 `fix/53-windows-subprocess-stdin-cr` (#55 merged),
@@ -148,15 +152,16 @@ removal candidates, but removal is a separate per-item approval.
 | Issue #57 closed with evidence comment | done |
 | Comments on #100, #94, #106 | done |
 | Comment on PR #108 (qc-report gap) | done |
+| qc-report gap fix | committed to `feat/106-easel-host` as `101d992`; driver suite 27/27, `dev_check.py` green |
 | Files moved | **none** |
 | Files deleted | **none** |
-| Branches deleted (local or remote) | **none** — blocked pending named approval |
+| Branches deleted | **7 remote + 8 local**, after the Owner authorized the named list |
 | Worktrees removed | **none** |
 | PRs merged | **none** |
 
-## 8. Awaiting explicit Owner approval
+## 8. Executed after Owner approval
 
-Remote branches (seven, exact names):
+The Owner authorized the named list on 2026-11-03. Remote branches (seven):
 
 ```
 chore/skills-doctor-cr
@@ -168,7 +173,7 @@ fix/media-use-rights-gate-2026-10-31
 phase6/route-a-stack
 ```
 
-Local branches (eight, exact names):
+Local branches (eight):
 
 ```
 feat/100-easel-first-platform-registry
@@ -181,8 +186,8 @@ feat/6-m5-production-e2e
 fix/media-use-rights-gate-2026-10-31
 ```
 
-No deletion is reversible on GitHub without restoring the ref. Approve by
-naming the list; do not treat this report as approval.
+All fifteen were deleted. Branches checked out in worktrees were excluded, and
+the retained list in §5.2 was not touched.
 
 ## 9. Uncommitted local work found (left untouched)
 
@@ -192,7 +197,7 @@ discarded.
 | Group | Files | Note |
 |---|---|---|
 | Tier-1 doc convergence | `AGENTS.md`, `CLAUDE.md`, `README.md`, `README.zh-CN.md`, `docs/DEVELOPMENT-PLAN.md`, `docs/DEVELOPMENT-PLAN.zh-CN.md`, `docs/INDEX.md`, `docs/INDEX.zh-CN.md`, `docs/TEST-PLAN.md`, `docs/TEST-PLAN.zh-CN.md` | describes the #106 stack; belongs in a docs PR, not in #107's 5-file diff |
-| Driver fix | `src/contentops/easel/driver.py` | the `qc-report*.json` gap in §3.1 |
+| Driver fix | `src/contentops/easel/driver.py` | superseded by the committed fix in §3.1 (`101d992`); the local edit was left untouched |
 | New plan | `docs/VIDEO-WORKFLOW-OPTIMIZATION-PLAN.md` | indexed by the dirty `docs/INDEX.md`; implementation pending |
 | Research/draft | `docs/motion-asset-handoff-draft.md`, `docs/motion-source-rights-ledger-20261102.md`, `MotionClone-ContentOps-双账号复刻最终方案.md` | content/research work, separate from #106 |
 | Untracked project tree | `projects/gzh-thinktank/` (≈14 MB) | not a Git repository; contains GZH working data and binary images. Protected by #56/#51 rights work. It should **not** be committed; placement decision pending |
@@ -218,10 +223,11 @@ discarded.
 
 ## 12. Open Owner decisions
 
-1. Name the remote and local branches to delete (§8).
+1. ~~Name the remote and local branches to delete~~ — authorized and executed
+   (§8).
 2. Decide whether the uncommitted doc convergence becomes its own PR stacked
-   on #107, and whether the `driver.py` qc-report fix goes into #108 before its
-   verdict.
+   on #107. The `driver.py` qc-report fix is already committed to #108 as
+   `101d992`; the local edit is now redundant.
 3. Supply the `SECURITY_APPROVED / APPROVE_FOR_MERGE` verdict for #108 (or a
    scoped rejection), which unblocks #107 and #106.
 4. Decide the placement of `projects/gzh-thinktank/` and whether the untracked
