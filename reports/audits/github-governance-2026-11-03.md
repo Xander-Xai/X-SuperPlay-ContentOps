@@ -1,9 +1,9 @@
 # GitHub Governance Pass — 2026-11-03
 
 > Scope: PRs, Issues and Branches in `Xander-Xai/X-SuperPlay-ContentOps`.
-> Read-only audit plus the actions recorded in §7. Destructive branch actions
-> were **not** performed: the permission layer required the Owner to name the
-> specific remote branches. See §8 for the exact list awaiting approval.
+> Read-only audit first, then the actions recorded in §7. Destructive actions
+> were held until the Owner named the specific branches; after that explicit
+> approval the listed branches and clean worktrees were removed (§8).
 >
 > Method limits: branch "merged" status is taken from **GitHub PR state**, not
 > from Git ancestry. This repository squash-merges, so a branch whose PR merged
@@ -16,7 +16,7 @@
 | Pull requests | all 4 open, all recently merged/closed (40) | none |
 | Issues | all 9 open, all recently closed (60) | none |
 | Branches | 32 local refs, 14 remote refs | files, worktree contents |
-| Worktrees | inventory and dirty count | no worktree removed |
+| Worktrees | inventory and dirty count; 5 clean ones removed after approval | dirty worktrees left in place |
 | Disk | `D:` free/used | per-file accounting |
 | Hosts | Claude Code | Codex / OpenCode hooks not exercised |
 
@@ -100,31 +100,40 @@ No issue was closed without a comment naming what is and is not resolved.
 All seven were deleted on 2026-11-03 after the Owner authorized the named list.
 Deletion is a ref operation, not a filesystem cleanup.
 
-### 5.2 Local branches (32 at audit time; 8 deleted by the end of the pass)
+### 5.2 Local branches (32 at audit time; 21 deleted by the end of the pass)
 
 Deleted on 2026-11-03 after the same approval (`git branch -D`, because squash
 merge makes `-d` refuse these):
 
-`feat/100-easel-first-platform-registry` (#101 merged),
+First batch — `feat/100-easel-first-platform-registry` (#101 merged),
 `fix/53-windows-subprocess-stdin-cr` (#55 merged),
 `phase6/route-a-stack` (#76 merged),
 `chore/skills-doctor`, `chore/skills-doctor-cr` (#59 closed/superseded),
 `feat/57-media-use-adapter`, `feat/6-m5-production-e2e`,
 `fix/media-use-rights-gate-2026-10-31` (closed/superseded).
 
+Second batch, after the clean worktrees were removed and the branch state was
+re-verified — `feat/motion-recovery` (#103 merged),
+`feat/r3-motion-integration` (#104 merged),
+`fix/98-ignore-agent-state` (#99 merged),
+`fix/49-skill-route-ci` (#49 stack, superseded),
+`phase2/pr62` (#62 merged), `phase2/pr64` (#64 closed/superseded),
+`phase4/combined`, `phase5/m71-main`, `phase5/route-a`,
+`phase5/route-a-audio`, `rehearsal-108` (old merged/rehearsal stacks),
+`phase2/pr49` (#49 closed; `feat/content-router` is the retained source),
+`phase3/gzh` (byte-identical tip to `fix/56-gzh-provenance`).
+
 Retained deliberately:
 
 | Branch | Reason |
 |---|---|
-| `feat/content-router` | only source for #94 |
+| `feat/content-router` | only source for #94; local and remote now in sync |
 | `feat/xhs-fa-migration` | local-only work for #51; must not be pushed before the rights gate |
-| `fix/56-gzh-provenance`, `phase3/gzh` | evidence for open #56 |
+| `fix/56-gzh-provenance` | evidence for open #56; fast-forwarded to its remote |
 | `backup-dual-line-20261102` | deliberate backup of the dual-line layer |
-| `phase2/pr49`, `phase2/pr62`, `phase2/pr64` | historical stack snapshots; review-required, not proven redundant |
-| `phase4/combined`, `phase5/*`, `rehearsal-108` | old slice/rehearsal stacks; review-required |
 | Branches checked out in worktrees | cannot be deleted while the worktree exists |
 
-## 6. Worktrees (9) — protected, none removed
+## 6. Worktrees (9 at audit time; 5 removed, 4 remain)
 
 | Path | Branch | Size | Dirty |
 |---|---|---|---|
@@ -133,14 +142,14 @@ Retained deliberately:
 | `.claude/worktrees/agent-a05b8f460dac8dc34` | `worktree-agent-a05b8f460dac8dc34` | 11 MB | 2 |
 | `.claude/worktrees/story-studio-episode` | `feat/47-story-studio-episode` | 95 MB | 3 |
 | `.claude/worktrees/x-track` | `feat/47-x-platform-track` | 28 MB | 3 |
-| `D:/Temp/.../motion-recovery-2026-11-01/r2` | `feat/motion-recovery` | 13 MB | 0 |
-| `D:/Temp/.../motion-recovery-2026-11-01/r3` | `feat/r3-motion-integration` | 14 MB | 0 |
-| `D:/Temp/.../motion-recovery-2026-11-01/wt` | `fix/49-skill-route-ci` | 35 MB | 0 |
-| `D:/Temp/.../pr99-merge-2026-11-02` | `fix/98-ignore-agent-state` | 13 MB | 0 |
 
-Worktrees are protected by the filesystem policy. The three clean ones under
-`D:/Temp` belong to **merged** PRs (#103, #104, #99) and are the safest future
-removal candidates, but removal is a separate per-item approval.
+Removed on 2026-11-03 (all clean, `git status --porcelain` empty):
+the PR #108 fix worktree (our own scratch), `motion-recovery-2026-11-01/r2`
+(13 MB), `.../r3` (14 MB), `.../wt` (35 MB), `pr99-merge-2026-11-02`
+(13 MB). Their branches were deleted in the second batch.
+
+The five remaining worktrees are protected by the filesystem policy; the four
+non-main ones are dirty and were not touched.
 
 ## 7. Actions actually performed
 
@@ -153,10 +162,11 @@ removal candidates, but removal is a separate per-item approval.
 | Comments on #100, #94, #106 | done |
 | Comment on PR #108 (qc-report gap) | done |
 | qc-report gap fix | committed to `feat/106-easel-host` as `101d992`; driver suite 27/27, `dev_check.py` green |
+| Sync pass | `git fetch --all --prune`; `main` fast-forwarded; `docs/r4a-script-and-evidence` and `fix/56-gzh-provenance` fast-forwarded to their remotes; `feat/content-router` pushed `f401f69` → `5eb0bd4`; dual-line upstream corrected to its own remote |
 | Files moved | **none** |
 | Files deleted | **none** |
-| Branches deleted | **7 remote + 8 local**, after the Owner authorized the named list |
-| Worktrees removed | **none** |
+| Branches deleted | **7 remote + 21 local**, after the Owner authorized the named list |
+| Worktrees removed | **5** (clean: our scratch worktree plus four under `D:/Temp`) |
 | PRs merged | **none** |
 
 ## 8. Executed after Owner approval
@@ -173,7 +183,7 @@ fix/media-use-rights-gate-2026-10-31
 phase6/route-a-stack
 ```
 
-Local branches (eight):
+Local branches (eight, first batch):
 
 ```
 feat/100-easel-first-platform-registry
@@ -188,6 +198,13 @@ fix/media-use-rights-gate-2026-10-31
 
 All fifteen were deleted. Branches checked out in worktrees were excluded, and
 the retained list in §5.2 was not touched.
+
+Second batch, after the worktrees were removed and the state re-verified:
+`feat/motion-recovery`, `feat/r3-motion-integration`,
+`fix/98-ignore-agent-state`, `fix/49-skill-route-ci`, `phase2/pr49`,
+`phase2/pr62`, `phase2/pr64`, `phase4/combined`, `phase5/m71-main`,
+`phase5/route-a`, `phase5/route-a-audio`, `rehearsal-108`, `phase3/gzh`
+(13 more local branches). Total local deletions: **21**.
 
 ## 9. Uncommitted local work found (left untouched)
 
@@ -209,8 +226,9 @@ discarded.
 | `D:` size | 782 GB |
 | Used | 605 GB |
 | Free | 177 GB (78% used) |
-| Recoverable by approved branch deletion | 0 bytes |
-| Recoverable by worktree removal | ≈226 MB (8 worktrees, all protected) |
+| Recoverable by approved branch deletion | 0 bytes (refs only) |
+| Recovered by worktree removal | ≈75 MB measured in four `D:/Temp` worktrees, plus our own scratch worktree (not measured) |
+| Remaining recoverable by further worktree removal | ≈151 MB (4 worktrees, all dirty/protected) |
 
 ## 11. Host integration status
 
@@ -233,4 +251,6 @@ discarded.
 4. Decide the placement of `projects/gzh-thinktank/` and whether the untracked
    motion documents are ready for a PR.
 5. #105 remains open for the four content decisions listed in its body; it is
-   now current with `main`.
+   current with `main` and its remote head.
+6. Decide whether to merge this governance report PR (#110); it is CLEAN with
+   all required checks green.
