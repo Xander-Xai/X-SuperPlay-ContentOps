@@ -25,6 +25,7 @@ translation_status: synced
 
 - [SOURCE-ARTIFACT-CONTRACT.md](SOURCE-ARTIFACT-CONTRACT.md)
 - [MEDIA-PROVIDER-CONTRACT.md](MEDIA-PROVIDER-CONTRACT.md)
+- [PLATFORM-INTEGRATION-STATUS.md](PLATFORM-INTEGRATION-STATUS.md) —— 本分支在各平台实际能做什么；GitHub 作为证据基础设施；Easel 覆盖范围
 - [adr/ADR-008-media-use-adapter.md](adr/ADR-008-media-use-adapter.md) — HyperFrames `media-use` 集成：固定版本适配器，不复制上游
 - [CROSS-REPO-INTEGRATION.md](CROSS-REPO-INTEGRATION.md)
 
@@ -60,7 +61,8 @@ translation_status: synced
 - [adr/ADR-010-trusted-grant-execution-gate.md](adr/ADR-010-trusted-grant-execution-gate.md)
 - [adr/ADR-012-convergence-decisions.md](adr/ADR-012-convergence-decisions.md) —— 收敛决策 D1–D6（2026-11-01）。ADR-011 由未合并的 `feat/content-router` 分支预留
 - [adr/ADR-013-media-use-mutating-authorization-proposal.md](adr/ADR-013-media-use-mutating-authorization-proposal.md) — **仅提案**：写操作授权与幂等性（不修改执行权限）
-- [adr/ADR-014-delivery-validation-hold.md](adr/ADR-014-delivery-validation-hold.md) —— P2 扩展暂停七天（2026-11-01 → 2026-11-07），以完成第一次真实交付
+- [adr/ADR-014-delivery-validation-hold.md](adr/ADR-014-delivery-validation-hold.md) —— P2 扩展暂停七天（2026-11-01 → 2026-11-07），以完成第一次真实交付；已追加 Owner 限域授权（平台注册表）
+- [adr/ADR-015-platform-placeholders-and-content-bundle.md](adr/ADR-015-platform-placeholders-and-content-bundle.md) —— 九平台占位、单一注册表复用、Content Bundle 消费契约与 Easel 能力边界
 
 ## 事实优先级
 

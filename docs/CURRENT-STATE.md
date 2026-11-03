@@ -4,7 +4,9 @@
 
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
-> Last verified: 2026-11-01 on `main` (PR #89).
+> Last verified: 2026-11-01 on `feat/100-easel-first-platform-registry`
+> (branched from `main` at PR #97). Facts below describe this branch; unmerged
+> layers are labelled as such.
 > Sections below the "Layer status" table are historical milestone records;
 > they describe how a capability was proven, not what is current.
 
@@ -13,10 +15,13 @@
 | Layer | Status |
 |---|---|
 | M5 evidence chain, media contracts, QC, media-use adapter, skill router/authorization | implemented on this branch |
+| Platform registry (`config/registry/platforms.json`, `src/contentops/platforms/`) | implemented on this branch; 10 entries, one `INTEGRATED` (`x`), nine `PLANNED` |
+| Content Bundle consumption contract (`src/contentops/content_kernel/`) | implemented on this branch; validation only |
 | Content router, account DNA, workflow gates, brief/script/design stages | **unmerged** (`feat/content-router`, PR #49) |
 | XHS / X / GZH tracks | **unmerged / rights-blocked** |
 | MiniMax speech, image, H3 video | implemented; verified subsets recorded below |
 | Production ready | **false** for every track |
+| Publication count | **0** — no delivery package has a real platform URL |
 
 ## Git
 
@@ -38,9 +43,11 @@
 | Version | v0.2.1 |
 | Commit | `3fe2d9904c1619281ef57f81d9ee0b7854998399` |
 | Path | `.runtime/easel/` |
-| Acquisition | Release archive (GitHub tarball via `gh api`) |
-| Verified | 982/982 blob SHA-1 matched upstream tree |
-| Re-verified | 2026-10-31 via `scripts/verify_easel_runtime.py` (982/982, 0 missing, 0 mismatch, 0 extra) |
+| Acquisition | Git clone of the pinned tag, checked out with `core.autocrlf=false` and `core.eol=lf` |
+| Verified | 982/982 blob SHA-1 matched upstream tree (`scripts/verify_easel_runtime.py`) |
+| Re-verified | 2026-11-01 on this branch: 982 files, 0 missing, 0 mismatch, 0 extra |
+| Line endings | A Windows checkout with `core.autocrlf=true` yields **847 blob mismatches** while `resolve_easel.py --offline` still reports `OK`, because that command proves git HEAD, not content. Verify content before trusting the runtime |
+| Executed surface | `skills/openclaw/auto-short-video/scripts/assemble.py` (composition) and `skills/shared/scripts/tts.py` (V1 narration only; M5 uses Windows SAPI) |
 | Independent cross-check | 2026-10-31 against the official `v0.2.1` release archive: 982 files, 0 missing, 0 mismatch |
 | Local extras | `outputs/` and `__pycache__/` only; no tracked file differs from upstream |
 | Lock file | `runtime/easel.lock.json` |

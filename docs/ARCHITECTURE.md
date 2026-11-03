@@ -28,11 +28,14 @@ X-SuperPlay-ContentOps  ← THIS REPO
     └── Receipts (full provenance)         (implemented)
     │
     ▼
-Easel v0.2.1 (pinned upstream)
+Easel v0.2.1 (pinned upstream, read-only)
 = Content Workflow / Skill Engine
-    ├── tts.py (edge-tts wrapper)
-    ├── auto-short-video/scripts/assemble.py
-    └── 114 Skills
+    ├── EXECUTED HERE (two files only)
+    │   ├── auto-short-video/scripts/assemble.py   ← composition
+    │   └── tts.py                                 ← V1 narration only; M5 uses Windows SAPI
+    └── NOT EXECUTED HERE
+        └── 114 upstream skills, the OpenClaw agent, the web workbench,
+            profiles/, outputs/ and browser publishing
     │
     ▼
 FFmpeg / deterministic tools
@@ -224,6 +227,42 @@ record; it is never a second asset list.
 Default posture is closed: no network, no paid provider, no cross-project reuse,
 no forced provider. A trusted host lock must name the approved baseline; a clean
 checkout is `BLOCKED / MISSING_RUNTIME` by design.
+
+## Platform Registry and Content Bundle
+
+Two contracts sit between production and delivery. Neither renders, publishes or
+spends (ADR-015).
+
+```
+config/registry/platforms.json              ← contentops.platform-registry/v1 (data)
+src/contentops/platforms/registry.py        ← the only loader and validator
+scripts/platforms.py                        ← list | accounts | resolve | check
+docs/PLATFORM-INTEGRATION-STATUS.md         ← human-readable mirror, same PR
+
+Strategy Content Bundle (YAML, Strategy-owned)
+src/contentops/content_kernel/bundle.py     ← consumption-side validation only
+scripts/content_bundle.py                   ← check | summary
+```
+
+**The platform registry describes this branch, not the portfolio.** A row says
+what code exists here, what it can produce, and what blocks it. `PLANNED` means
+no platform code; `INTEGRATED` means code plus offline tests; a non-`PLANNED`
+row must carry evidence. Status is a claim about evidence and is never upgraded
+because an account exists, a render passed, or a configuration was written.
+GitHub is proof infrastructure and is documented instead of registered, because
+it has no pipeline, account or publish target to declare.
+
+**The Content Bundle is a plan.** Strategy owns the template, the thesis, the
+account treatments, the production lane (`baseline | enhanced | experimental`)
+and the execution-profile hint (`default | strict_evidence`). ContentOps checks
+that a Bundle is intact before consuming it: identity shape, claim binding for
+`direct_evidence`, the four fail-closed invariants, and credential-shaped
+fields. It never re-derives a thesis or turns a Bundle into published content.
+
+Ownership across repositories is unchanged: Strategy decides what, ContentOps
+owns execution evidence and receipts, platform execution repositories keep their
+production authority until a separate approved migration, and commercial truth
+stays in OPC.
 
 ## Skill Routing and Execution
 

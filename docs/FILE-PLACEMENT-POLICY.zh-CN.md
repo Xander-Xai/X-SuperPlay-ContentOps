@@ -39,6 +39,28 @@ CLI 工具、运维脚本、验证、构建编排。
 
 新增校验脚本（例如 ```check_skill_references.py```）属于此处。
 
+## config/
+
+机器可读、既不是固定版本也不是密钥的配置：
+
+```
+config/
+├── accounts/<slug>.json      # 账号 DNA；商业策略不进入本公开仓库
+└── registry/
+    ├── platforms.json        # contentops.platform-registry/v1 —— 本地集成状态
+    └── accounts.json         # contentops.account-registry/v1 —— 仅公开账号身份
+```
+
+```config/registry/``` 是唯一的平台注册表。换目录或换格式再建一套是缺陷，不是备选方案。
+只允许登记本仓库已跟踪的账号配置；私有账号的 DNA 就是不出现，不使用占位身份替代。
+
+## src/
+
+核心业务逻辑。provider 代码、契约与门禁放在这里，不放 `scripts/`。
+与平台工作直接相关的两个包：```src/contentops/platforms/```（注册表 loader）
+与 ```src/contentops/content_kernel/```（Content Bundle 消费契约）。
+两者都不渲染、不发布、不花钱。
+
 ## runtime/
 
 仅机器可读的固定版本和来源记录。

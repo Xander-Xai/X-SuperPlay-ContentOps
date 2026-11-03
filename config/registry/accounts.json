@@ -1,0 +1,20 @@
+{
+  "schema": "contentops.account-registry/v1",
+  "note": "Public registry. Only accounts whose configuration is already tracked in this public repository are listed. Accounts whose DNA lives outside this repository are deliberately absent; their platform bindings are not recorded here.",
+  "accounts": [
+    {
+      "account_slug": "x-superplay-english",
+      "internal_ids": [
+        "x-superplay-english"
+      ],
+      "display_name": "X · SuperPlay English",
+      "aliases": [],
+      "role": "english",
+      "dna": "config/accounts/x-superplay-english.json",
+      "platform_accounts": {
+        "x": "x-superplay-english"
+      },
+      "note": "Text account (contentops.x-account/v1). The only account configuration tracked in this public repository."
+    }
+  ]
+}

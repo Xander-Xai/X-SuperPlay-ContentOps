@@ -10,7 +10,8 @@ translation_status: synced
 
 > 当前运行状态。仅经验证的事实。无展望，无过时声明。
 >
-> 最后验证：2026-11-01，```main```（PR #89）。
+> 最后验证：2026-11-01，```feat/100-easel-first-platform-registry```
+> （从 PR #97 时的 ```main``` 分出）。以下事实描述本分支；未合并层已标注。
 > “分层状态”表之后的小节是历史里程碑记录，说明某项能力当时如何被证明，
 > 不代表当前状态。
 
@@ -19,10 +20,13 @@ translation_status: synced
 | 层 | 状态 |
 |---|---|
 | M5 证据链、媒体合约、QC、media-use 适配器、Skill 路由/授权 | 本分支已实现 |
+| 平台注册表（`config/registry/platforms.json`、`src/contentops/platforms/`） | 本分支已实现；10 条记录，1 条 `INTEGRATED`（`x`），9 条 `PLANNED` |
+| Content Bundle 消费契约（`src/contentops/content_kernel/`） | 本分支已实现；仅校验 |
 | 内容路由、账号 DNA、工作流门禁、Brief/脚本/设计阶段 | **未合并**（`feat/content-router`，PR #49） |
 | 小红书 / X / 公众号轨道 | **未合并 / 权利受阻** |
 | MiniMax 语音、图片、H3 视频 | 已实现；已验证子集见下文 |
 | 生产就绪 | 所有轨道均为 **否** |
+| 发布计数 | **0** —— 没有任何交付包持有真实平台 URL |
 
 ## Git
 
@@ -44,9 +48,11 @@ translation_status: synced
 | 版本 | v0.2.1 |
 | Commit | ```3fe2d9904c1619281ef57f81d9ee0b7854998399``` |
 | 路径 | ```.runtime/easel/``` |
-| 获取方式 | Release archive（GitHub tarball via ```gh api```） |
-| 验证 | 982/982 blob SHA-1 匹配上游 tree |
-| 复核 | 2026-10-31 通过 ```scripts/verify_easel_runtime.py```（982/982，缺失 0，不一致 0，多余 0） |
+| 获取方式 | Git clone 固定 tag，并以 ```core.autocrlf=false```、```core.eol=lf``` 检出 |
+| 验证 | 982/982 blob SHA-1 匹配上游 tree（```scripts/verify_easel_runtime.py```） |
+| 复核 | 2026-11-01 在本分支：982 个文件，缺失 0，不一致 0，多余 0 |
+| 换行风险 | Windows 默认 ```core.autocrlf=true``` 的检出会产生 **847 个 blob 不一致**，而 ```resolve_easel.py --offline``` 仍报 ```OK```（它只证明 git HEAD，不证明内容）。必须先验证内容再信任运行时 |
+| 实际执行面 | ```skills/openclaw/auto-short-video/scripts/assemble.py```（合成）与 ```skills/shared/scripts/tts.py```（仅 V1 旁白；M5 用 Windows SAPI） |
 | 独立交叉校验 | 2026-10-31 对照官方 ```v0.2.1``` Release 归档：982 个文件，缺失 0，不一致 0 |
 | 本地多出文件 | 仅 ```outputs/``` 与 ```__pycache__/```；没有任何受跟踪文件与上游不同 |
 | 锁文件 | ```runtime/easel.lock.json``` |

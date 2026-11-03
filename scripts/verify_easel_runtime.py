@@ -20,6 +20,7 @@ import hashlib
 import json
 import shutil
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 from process_utils import hidden_run
@@ -171,6 +172,32 @@ def verify(runtime_dir: Path = RUNTIME, repo: str = REPO,
     return result
 
 
+def record_content_verification(result: dict) -> bool:
+    """Merge a content proof into the provenance file.
+
+    Provenance written by acquisition can only prove a commit (git HEAD) or an
+    archive. Recording the blob comparison separately keeps "the tree is what we
+    pinned" distinguishable from "HEAD says so".
+    """
+    provenance = ROOT / "runtime" / "easel-runtime.json"
+    try:
+        data = (json.loads(provenance.read_text(encoding="utf-8"))
+                if provenance.is_file() else {})
+    except (OSError, json.JSONDecodeError):
+        return False
+    data.update({
+        "content_verified": True,
+        "content_verification_method": result.get("method"),
+        "content_verified_files": result.get("matched"),
+        "content_verified_commit": result.get("expected_commit"),
+        "content_verified_at": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+    })
+    provenance.parent.mkdir(parents=True, exist_ok=True)
+    provenance.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n",
+                          encoding="utf-8")
+    return True
+
+
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--runtime", default=str(RUNTIME))
@@ -179,6 +206,8 @@ def main() -> int:
     p.add_argument("--resolve-tag", action="store_true",
                    help="confirm --commit is the commit the pinned tag points at")
     p.add_argument("--json", action="store_true")
+    p.add_argument("--record", action="store_true",
+                   help="merge a VERIFIED content result into runtime/easel-runtime.json")
     args = p.parse_args()
 
     res = verify(Path(args.runtime), args.repo, args.commit)
@@ -194,6 +223,11 @@ def main() -> int:
                                  f"but the pin expects {args.commit}")
         except RuntimeError as e:
             res["tag_resolve_error"] = str(e)
+
+    if args.record and res["status"] == "VERIFIED":
+        recorded = record_content_verification(res)
+        if recorded:
+            res["recorded_to"] = "runtime/easel-runtime.json"
 
     print(json.dumps(res, indent=2, ensure_ascii=False))
     if res["status"] == "VERIFIED":

@@ -34,11 +34,14 @@ X-SuperPlay-ContentOps  ← 本仓库
     └── 凭证（完整来源链）            （已实现）
     │
     ▼
-Easel v0.2.1（固定上游）
+Easel v0.2.1（固定上游，只读）
 = 内容工作流 / 技能引擎
-    ├── tts.py（edge-tts 封装）
-    ├── auto-short-video/scripts/assemble.py
-    └── 114 个 Skill
+    ├── 本仓库实际执行（仅两个文件）
+    │   ├── auto-short-video/scripts/assemble.py   ← 合成
+    │   └── tts.py                                 ← 仅 V1 旁白；M5 用 Windows SAPI
+    └── 本仓库未执行
+        └── 114 个上游 Skill、OpenClaw Agent、Web 工作台、
+            profiles/、outputs/ 与浏览器发布
     │
     ▼
 FFmpeg / 确定性工具
@@ -221,6 +224,34 @@ scripts/media_use_adapter.py               ← 运维 CLI
 
 默认全部关闭：无网络、无付费供应商、无跨项目复用、不强制指定供应商。可信主机锁
 必须引用已批准的基线；干净检出默认是 `BLOCKED / MISSING_RUNTIME`。
+
+## 平台注册表与 Content Bundle
+
+生产与交付之间有两份契约。两者都不渲染、不发布、不花钱（ADR-015）。
+
+```
+config/registry/platforms.json              ← contentops.platform-registry/v1（数据）
+src/contentops/platforms/registry.py        ← 唯一的 loader 与校验器
+scripts/platforms.py                        ← list | accounts | resolve | check
+docs/PLATFORM-INTEGRATION-STATUS.md         ← 人读镜像，同一 PR 更新
+
+Strategy Content Bundle（YAML，Strategy 拥有）
+src/contentops/content_kernel/bundle.py     ← 仅做消费侧校验
+scripts/content_bundle.py                   ← check | summary
+```
+
+**平台注册表描述的是本分支，不是组合策略。** 一行说明这里有什么代码、能产出什么、被什么阻断。
+`PLANNED` 表示没有平台代码；`INTEGRATED` 表示有代码且离线测试通过；非 `PLANNED` 行必须带证据。
+状态是对证据的主张，不会因为账号存在、渲染通过或配置写好而升级。
+GitHub 是证据基础设施，用文档记录而不登记为行，因为它没有可声明的流水线、账号或发布目标。
+
+**Content Bundle 是计划。** Strategy 拥有模板、选题、账号处理、制作等级
+（`baseline | enhanced | experimental`）与执行档位提示（`default | strict_evidence`）。
+ContentOps 只在消费前检查 Bundle 是否完整：标识形状、`direct_evidence` 的声明绑定、
+四条失败即关闭的不变式，以及形似凭据的字段。它不会重新推导选题，也不会把 Bundle 变成已发布内容。
+
+跨仓所有权不变：Strategy 决定做什么，ContentOps 拥有执行证据与回执，平台执行仓库在
+另一次经批准的迁移之前保留其生产权威，商业事实留在 OPC。
 
 ## Skill 路由与执行
 

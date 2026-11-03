@@ -127,8 +127,16 @@ def _check_candidate(easel_dir: Path, label: str, pin: dict,
         if not _usable(easel_dir):
             return {**base, "ok": False,
                     "reason": "pinned commit but required pipeline scripts missing"}
+        prov = _provenance(root)
+        content_proved = bool(prov.get("content_verified")) and \
+            prov.get("content_verified_commit") == pin["commit"]
         return {**base, "ok": True, "acquisition": "git_checkout",
-                "commit": head, "verification": "git_head"}
+                "commit": head, "verification": "git_head",
+                "content_verified": content_proved,
+                "note": ("git HEAD matches the pin; content was also verified by blob "
+                         "comparison" if content_proved
+                         else "git HEAD matches the pin; content is not verified — "
+                              "run verify_easel_runtime.py --record")}
 
     # No .git: release-archive layout. Identity comes from content, not metadata.
     if not _looks_like_easel(easel_dir):
@@ -151,10 +159,14 @@ def _check_candidate(easel_dir: Path, label: str, pin: dict,
         # UNVERIFIED (offline / no gh): fall through to recorded provenance.
 
     prov = _provenance(root)
-    if (prov.get("verified") and prov.get("expected_commit") == pin["commit"]
+    recorded = (prov.get("content_verified") or prov.get("commit_matches_pin")
+                or prov.get("verified"))
+    if (recorded and prov.get("expected_commit") == pin["commit"]
             and prov.get("acquisition")):
+        proof = "content" if prov.get("content_verified") else "commit"
         return {**base, "ok": True, "acquisition": prov.get("acquisition", "release_archive"),
                 "commit": pin["commit"], "verification": "recorded",
+                "provenance_proves": proof,
                 "verified_at": prov.get("verified_at", "?"),
                 "note": "offline: trusting recorded provenance; run doctor online to re-verify"}
     return {**base, "ok": False,
@@ -187,7 +199,8 @@ def resolve_easel(root: Path = ROOT, live: bool = True) -> dict:
                 "commit": rec["commit"],
                 "tag": pin["tag"],
                 "verification": rec["verification"],
-                **{k: rec[k] for k in ("verified_blobs", "verified_at", "note") if k in rec},
+                **{k: rec[k] for k in ("verified_blobs", "verified_at", "note",
+                                       "content_verified") if k in rec},
             }
         if path.exists():
             reasons.append(f"{path.name}: {rec.get('reason', '?')}")
@@ -293,8 +306,10 @@ def bootstrap(root: Path = ROOT) -> dict:
                 "acquisition": res["acquisition"],
                 "installed_at": ".runtime/easel",
                 "has_git_metadata": (runtime_dir / ".git").exists(),
-                "verified": True,
+                "commit_matches_pin": True,
+                "content_verified": bool(res.get("verified_blobs")),
                 "verification_method": "git_head" if res["acquisition"] == "git_clone" else "blob_sha1_tree_compare",
+                "verified": bool(res.get("verified_blobs")),
                 "verified_at": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
             }
             if res.get("verified_blobs"):

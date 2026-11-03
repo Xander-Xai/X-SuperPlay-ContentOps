@@ -56,6 +56,35 @@ standing rules are `Adopt before Build`, `Ship before Automate`,
   permanently, and does not authorise deleting branches, worktrees or projects.
 - It does not change any contract. `contentops.copy-to-video/v1` keeps its name.
 
+### Owner limited-scope authorization (2026-11-01)
+
+Recorded here, in this ADR, because a hold may only be narrowed by an Owner
+decision — never by a new ADR written by the agent that wants to proceed.
+Source: the Owner's instruction to the coding agent on 2026-11-01, issued after
+an adversarial review of a second Easel-first proposal.
+
+The following work is authorized **inside the hold window**, and nothing else:
+
+1. Reuse and extend the existing `contentops.platform-registry/v1`
+   (`config/registry/platforms.json`, `src/contentops/platforms/registry.py`,
+   `scripts/platforms.py`) so all nine Strategy platforms plus GitHub are
+   represented, with truthful `PLANNED`/`INTEGRATED` states and named blockers.
+2. Record the target architecture boundary and the Easel positioning in
+   [ADR-015](ADR-015-platform-placeholders-and-content-bundle.md).
+3. Add the minimal Content Bundle consumption contract
+   (`src/contentops/content_kernel/bundle.py`) that validates a Strategy
+   Bundle before use.
+
+Still suspended during the window: new platform production workflows, an Easel
+upgrade, gateway/Web UI/FastAPI/database/queue, automatic publishing or
+commenting, bulk graphic-line development, authority migration, and unrelated
+module expansion.
+
+This authorization does **not** retire the delivery requirement below. The week
+must still end with a real delivery acceptance or a recorded blocker. A
+placeholder registry is explicitly **not** delivery, and completing it must not
+be reported as completing the hold.
+
 ## Why an explicit hold rather than a silent reorder
 
 A silent reorder reads as drift to the next agent or contributor, and the

@@ -1,0 +1,188 @@
+{
+  "schema": "contentops.platform-registry/v1",
+  "note": "Status is a claim about evidence, not configuration: PLANNED means no platform code on this branch, INTEGRATED means code plus offline tests, TESTED means a real local run. A row never implies publication, account access or metric ingestion. GitHub is proof infrastructure, not a publish target, and is documented instead of registered.",
+  "status_values": [
+    "PLANNED",
+    "INTEGRATED",
+    "TESTED",
+    "PILOT_READY",
+    "PRODUCTION_ACCEPTED"
+  ],
+  "platforms": [
+    {
+      "platform_id": "douyin",
+      "strategy_platform": "douyin",
+      "content_types": [
+        "VIDEO"
+      ],
+      "pipeline": "VIDEO",
+      "accounts": [],
+      "draft_support": "NONE",
+      "publish_mode": "NOT_IMPLEMENTED",
+      "manual_review": true,
+      "metrics": "NONE",
+      "status": "PLANNED",
+      "owner": "",
+      "evidence": [],
+      "not_claimed": "BLOCKED: PLATFORM_CODE_ABSENT — no platform-specific production code exists on this branch; BLOCKED: ACCOUNT_NOT_PUBLIC — the account DNA is not tracked in this public repository"
+    },
+    {
+      "platform_id": "bilibili",
+      "strategy_platform": "bilibili",
+      "content_types": [
+        "VIDEO"
+      ],
+      "pipeline": "VIDEO",
+      "accounts": [],
+      "draft_support": "NONE",
+      "publish_mode": "NOT_IMPLEMENTED",
+      "manual_review": true,
+      "metrics": "NONE",
+      "status": "PLANNED",
+      "owner": "",
+      "evidence": [],
+      "not_claimed": "BLOCKED: PLATFORM_CODE_ABSENT — no platform-specific production code exists on this branch; BLOCKED: ACCOUNT_NOT_PUBLIC — the account DNA is not tracked in this public repository"
+    },
+    {
+      "platform_id": "xiaohongshu_video",
+      "strategy_platform": "xiaohongshu",
+      "content_types": [
+        "VIDEO"
+      ],
+      "pipeline": "VIDEO",
+      "accounts": [],
+      "draft_support": "NONE",
+      "publish_mode": "NOT_IMPLEMENTED",
+      "manual_review": true,
+      "metrics": "NONE",
+      "status": "PLANNED",
+      "owner": "",
+      "evidence": [],
+      "not_claimed": "BLOCKED: PLATFORM_CODE_ABSENT — no platform-specific production code exists on this branch; BLOCKED: ACCOUNT_NOT_PUBLIC — the account DNA is not tracked in this public repository; BLOCKED: RIGHTS_UNRESOLVED — vendored workflow rights are not cleared for this branch"
+    },
+    {
+      "platform_id": "xiaohongshu_image",
+      "strategy_platform": "xiaohongshu",
+      "content_types": [
+        "XHS_EDITORIAL"
+      ],
+      "pipeline": "XHS_EDITORIAL",
+      "accounts": [],
+      "draft_support": "NONE",
+      "publish_mode": "NOT_IMPLEMENTED",
+      "manual_review": true,
+      "metrics": "NONE",
+      "status": "PLANNED",
+      "owner": "",
+      "evidence": [],
+      "not_claimed": "BLOCKED: PLATFORM_CODE_ABSENT — no platform-specific production code exists on this branch; BLOCKED: ACCOUNT_NOT_PUBLIC — the account DNA is not tracked in this public repository; BLOCKED: RIGHTS_UNRESOLVED — vendored workflow rights are not cleared for this branch"
+    },
+    {
+      "platform_id": "shipinhao",
+      "strategy_platform": "wechat_channels",
+      "content_types": [
+        "VIDEO"
+      ],
+      "pipeline": "VIDEO",
+      "accounts": [],
+      "draft_support": "NONE",
+      "publish_mode": "NOT_IMPLEMENTED",
+      "manual_review": true,
+      "metrics": "NONE",
+      "status": "PLANNED",
+      "owner": "",
+      "evidence": [],
+      "not_claimed": "BLOCKED: PLATFORM_CODE_ABSENT — no platform-specific production code exists on this branch; BLOCKED: ACCOUNT_NOT_PUBLIC — the account DNA is not tracked in this public repository"
+    },
+    {
+      "platform_id": "wechat_article",
+      "strategy_platform": "wechat_official_account",
+      "content_types": [
+        "GZH_EDITORIAL"
+      ],
+      "pipeline": "GZH_EDITORIAL",
+      "accounts": [],
+      "draft_support": "NONE",
+      "publish_mode": "NOT_IMPLEMENTED",
+      "manual_review": true,
+      "metrics": "NONE",
+      "status": "PLANNED",
+      "owner": "",
+      "evidence": [],
+      "not_claimed": "BLOCKED: PLATFORM_CODE_ABSENT — no platform-specific production code exists on this branch; BLOCKED: ACCOUNT_NOT_PUBLIC — the account DNA is not tracked in this public repository; BLOCKED: RIGHTS_UNRESOLVED — vendored workflow rights are not cleared for this branch"
+    },
+    {
+      "platform_id": "x",
+      "strategy_platform": "x",
+      "content_types": [
+        "X_EDITORIAL"
+      ],
+      "pipeline": "X_EDITORIAL",
+      "accounts": [
+        "x-superplay-english"
+      ],
+      "draft_support": "NONE",
+      "publish_mode": "MANUAL_ONLY",
+      "manual_review": true,
+      "metrics": "NONE",
+      "status": "INTEGRATED",
+      "owner": "src/contentops/publish/, scripts/x_post.py",
+      "evidence": [
+        "src/contentops/publish/publisher.py",
+        "tests/test_x_post.py"
+      ],
+      "not_claimed": "Manual-only offline gate. publisher.py has no branch that returns PUBLISHED and PublishMode.API raises; no platform draft, no API publication and no metric ingestion exists. This row is ContentOps's own X gate, not a claim of execution authority for any other X repository."
+    },
+    {
+      "platform_id": "zhihu",
+      "strategy_platform": "zhihu",
+      "content_types": [
+        "ARTICLE_EDITORIAL"
+      ],
+      "pipeline": "ARTICLE_EDITORIAL",
+      "accounts": [],
+      "draft_support": "NONE",
+      "publish_mode": "NOT_IMPLEMENTED",
+      "manual_review": true,
+      "metrics": "NONE",
+      "status": "PLANNED",
+      "owner": "",
+      "evidence": [],
+      "not_claimed": "BLOCKED: PLATFORM_CODE_ABSENT — no platform-specific production code exists on this branch; BLOCKED: ACCOUNT_NOT_PUBLIC — the account DNA is not tracked in this public repository"
+    },
+    {
+      "platform_id": "csdn",
+      "strategy_platform": "csdn",
+      "content_types": [
+        "ARTICLE_EDITORIAL"
+      ],
+      "pipeline": "ARTICLE_EDITORIAL",
+      "accounts": [],
+      "draft_support": "NONE",
+      "publish_mode": "NOT_IMPLEMENTED",
+      "manual_review": true,
+      "metrics": "NONE",
+      "status": "PLANNED",
+      "owner": "",
+      "evidence": [],
+      "not_claimed": "BLOCKED: PLATFORM_CODE_ABSENT — no platform-specific production code exists on this branch; BLOCKED: ACCOUNT_NOT_PUBLIC — the account DNA is not tracked in this public repository; NOT COVERED: EASEL_CAPABILITY_ABSENT — upstream Easel names no capability for this platform"
+    },
+    {
+      "platform_id": "youtube",
+      "strategy_platform": "youtube",
+      "content_types": [
+        "VIDEO"
+      ],
+      "pipeline": "VIDEO",
+      "accounts": [],
+      "draft_support": "NONE",
+      "publish_mode": "NOT_IMPLEMENTED",
+      "manual_review": true,
+      "metrics": "NONE",
+      "status": "PLANNED",
+      "owner": "",
+      "evidence": [],
+      "not_claimed": "BLOCKED: PLATFORM_CODE_ABSENT — no platform-specific production code exists on this branch; BLOCKED: ACCOUNT_NOT_PUBLIC — the account DNA is not tracked in this public repository; NOT COVERED: EASEL_CAPABILITY_ABSENT — upstream Easel names no capability for this platform"
+    }
+  ]
+}
