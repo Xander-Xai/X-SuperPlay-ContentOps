@@ -117,13 +117,19 @@ def test_no_step_argv_carries_a_forbidden_capability():
 
 
 def test_next_step_skips_reads_and_completed_receipts():
-    plan = driver.build_plan(VIDEO_PROJECT, ROOT)
-    upcoming = driver.next_step(plan)
-    assert upcoming is not None
-    assert upcoming["receipts"], "the next step must produce a receipt to gate progress"
-    for step in plan["steps"]:
-        if step["authority"] == "HUMAN_ONLY":
-            assert step["ready"] is False
+    # A completed sample project (as ``bundle-dual-line-video`` is today) can
+    # legitimately have no next step; the intent here is the skip behaviour,
+    # so use a fresh project where only the read step is complete.
+    with tempfile.TemporaryDirectory(dir=ROOT / "projects") as tmp:
+        project = _make_video_project(Path(tmp))
+        plan = driver.build_plan(project, ROOT)
+        upcoming = driver.next_step(plan)
+        assert upcoming is not None
+        assert upcoming["id"] == "produce-video"
+        assert upcoming["receipts"], "the next step must produce a receipt to gate progress"
+        for step in plan["steps"]:
+            if step["authority"] == "HUMAN_ONLY":
+                assert step["ready"] is False
 
 
 def test_stage_artifact_receipts_are_graded_by_their_own_schema():
@@ -540,7 +546,7 @@ def test_a_real_ok_receipt_from_a_real_run_enables_the_dependent_step():
 def test_ready_and_precondition_use_the_same_success_judgement():
     """The plan's ``ready`` and the runtime precondition bind the same fields.
 
-    ``qc-video``'s own receipts are ``receipts/qc-report.json`` (a stage
+    ``qc-video``'s own receipts are ``receipts/qc-report*.json`` (a stage
     artifact, not a driver receipt); its dependency is judged from
     ``produce-video``'s driver receipt. Both must distinguish a real OK from
     a file that merely exists or is bound elsewhere.
@@ -554,7 +560,7 @@ def test_ready_and_precondition_use_the_same_success_judgement():
         qc = next(s for s in plan["steps"] if s["id"] == "qc-video")
         assert qc["ready"] is False
         # ...and a stale/wrongly-bound artifact receipt does not make it ready.
-        (project / "receipts" / "qc-report.json").write_text('{"stale": true}', encoding="utf-8")
+        (project / "receipts" / "qc-report-easel.json").write_text('{"stale": true}', encoding="utf-8")
         plan = driver.build_plan(project, ROOT)
         qc = next(s for s in plan["steps"] if s["id"] == "qc-video")
         # ready for qc-video is bound to artifacts; the driver-receipt side of
@@ -564,6 +570,40 @@ def test_ready_and_precondition_use_the_same_success_judgement():
         _write_ok_receipt(project, "projects/other-project", "produce-video")
         _raises("PREREQUISITE_MISSING",
                 lambda: driver.run_step(project, "qc-video", root=ROOT, execute=True))
+
+
+def test_a_suffixed_qc_report_is_what_completes_the_qc_step():
+    """qc_video writes ``qc-report-<graded-name>.json``, so readiness is a pattern.
+
+    A fixed ``qc-report.json`` declaration never matched a real run. The
+    declaration is now a glob, and at least one matching report must grade
+    itself complete: a matching file that cannot be graded, or a FAIL, is
+    still not completion.
+    """
+    with tempfile.TemporaryDirectory(dir=ROOT / "projects") as tmp:
+        project = _make_video_project(Path(tmp))
+        receipts = project / "receipts"
+        receipts.mkdir(exist_ok=True)
+
+        def qc_ready() -> bool:
+            plan = driver.build_plan(project, ROOT)
+            return next(s for s in plan["steps"] if s["id"] == "qc-video")["ready"]
+
+        assert qc_ready() is False, "no report exists yet"
+        (receipts / "qc-report-easel.json").write_text('{"stale": true}', encoding="utf-8")
+        assert qc_ready() is False, "a matching but ungraded file is not completion"
+        (receipts / "qc-report-easel.json").write_text(json.dumps({
+            "schema": "contentops.qc-canonical/v1",
+            "overall": "FAIL",
+            "currency": "CURRENT",
+        }), encoding="utf-8")
+        assert qc_ready() is False, "a FAIL report is a verdict, not completion"
+        (receipts / "qc-report-easel.json").write_text(json.dumps({
+            "schema": "contentops.qc-canonical/v1",
+            "overall": "WARN",
+            "currency": "CURRENT",
+        }), encoding="utf-8")
+        assert qc_ready() is True, "a current WARN report completes the step"
 
 
 def _test_a_human_step_is_never_runnable_goes_here():
