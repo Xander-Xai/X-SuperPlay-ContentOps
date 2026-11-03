@@ -105,7 +105,11 @@ def _steps(project: str, fmt: str) -> List[Step]:
                 id="qc-video",
                 label="Run QC on the rendered video",
                 argv=("python", "scripts/qc_video.py", project),
-                receipts=("receipts/qc-report.json",),
+                # qc_video names its report after the graded render
+                # (qc-report-easel.json, qc-report-final.json, ...), so the
+                # declaration is a pattern resolved at plan time rather than
+                # one literal path.
+                receipts=("receipts/qc-report*.json",),
                 authority=AUTHORITY_READ,
                 requires=("produce-video",),
             ),
@@ -148,6 +152,31 @@ def _receipt_path(root: Path, project_rel: str, receipt: str) -> Path:
     step and produced wrong plan states.
     """
     return Path(root).resolve() / project_rel / receipt
+
+
+def _step_receipts_ok(root: Path, project_rel: str,
+                      receipts: Tuple[str, ...], *,
+                      bundle_sha256: Optional[str] = None) -> bool:
+    """Whether every receipt a step declares exists and grades as complete.
+
+    A declaration may be a glob (``receipts/qc-report*.json``) when the
+    producer derives its filename from the graded render; then at least one
+    matching artifact must grade as complete, and a matching file that cannot
+    be graded is still not completion. Literal declarations keep one-file
+    semantics. This only reads declared paths and grants no authority.
+    """
+    for receipt in receipts:
+        path = _receipt_path(root, project_rel, receipt)
+        if any(ch in receipt for ch in "*?["):
+            matches = sorted(path.parent.glob(path.name))
+            if not any(_artifact_receipt_ok(match, project=project_rel,
+                                            bundle_sha256=bundle_sha256)
+                       for match in matches):
+                return False
+        elif not _artifact_receipt_ok(path, project=project_rel,
+                                      bundle_sha256=bundle_sha256):
+            return False
+    return True
 
 
 def _receipt_is_valid(path: Path, *, project: Optional[str] = None,
@@ -384,10 +413,8 @@ def build_plan(project: Path, root: Path) -> Dict[str, Any]:
             # artifact receipt; each is graded by its own kind of evidence.
             if step.receipts:
                 bundle_digest = _current_bundle_digest(Path(relative), Path(root))
-                ready = all(_artifact_receipt_ok(_receipt_path(Path(root), relative, receipt),
-                                                 project=relative,
-                                                 bundle_sha256=bundle_digest)
-                            for receipt in step.receipts)
+                ready = _step_receipts_ok(Path(root), relative, step.receipts,
+                                          bundle_sha256=bundle_digest)
             else:
                 ready = True
         described.append({
