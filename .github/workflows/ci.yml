@@ -292,6 +292,25 @@ jobs:
       - name: Run content bundle contract tests
         run: python tests/test_content_bundle_contract.py
 
+      # The pinned Easel host is wrapped by a deny-by-default guard. These suites
+      # prove the guard refuses publish/credentials before upstream, and that one
+      # Bundle can produce independent video and graphic handoffs without
+      # transferring approval between them.
+      - name: Run Easel host guard tests
+        run: python tests/test_easel_host_guard.py
+
+      - name: Run Bundle two-format handoff tests
+        run: python tests/test_bundle_two_formats.py
+
+      - name: Run graphic workflow tests
+        run: python tests/test_graphic_workflow.py
+
+      - name: Run M5 Bundle handoff tests
+        run: python tests/test_m5_bundle_handoff.py
+
+      - name: Run coding-agent driver tests
+        run: python tests/test_agent_driver.py
+
       - name: Run X organic growth offline contract tests
         run: python tests/test_x_organic_growth.py
 
@@ -403,6 +422,27 @@ jobs:
           if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
             base="origin/main"
           fi
+          # A force-push or rebase makes github.event.before name a removed
+          # commit, and a heavily rewritten history can leave even its parents
+          # unreachable. The comparison falls back to origin/main — the same
+          # trusted base an empty event value already uses — so the check still
+          # runs against a real baseline instead of refusing.
+          for _ in 1 2 3 4 5; do
+            if git rev-parse --verify --quiet "$base^{commit}" >/dev/null 2>&1; then
+              break
+            fi
+            parent="$(git rev-parse --verify --quiet "$base^" 2>/dev/null || true)"
+            if [ -z "$parent" ]; then
+              base="origin/main"
+              break
+            fi
+            echo "base $base unreachable; stepping to parent $parent"
+            base="$parent"
+          done
+          if ! git rev-parse --verify --quiet "$base^{commit}" >/dev/null 2>&1; then
+            base="origin/main"
+          fi
+          echo "receipt-secret base: $base"
           python scripts/check_receipt_secrets.py --base "$base"
       - name: Subprocess policy check
         run: python scripts/check_subprocess_policy.py

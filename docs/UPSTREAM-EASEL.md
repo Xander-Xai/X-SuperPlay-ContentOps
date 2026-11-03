@@ -80,9 +80,9 @@ Any step FAIL → keep old pin.
 | Windows subprocess | High | Windows CI/local |
 | model registry | Medium | provider contract |
 | doctor | Medium | doctor regression |
-| gateway | Low/Medium currently | gateway tests |
-| publishing | Low currently | later M5/M6 |
-| Web Workbench | Low currently | no upgrade blocker |
+| gateway | Medium (target host) | gateway tests; never run direct |
+| publishing | Medium (target host), execution denied | guard tests |
+| Web Workbench | Medium (target host), read-only guard | host guard tests; no direct `0.0.0.0` |
 
 ## Upstream Delta Ledger
 
@@ -119,6 +119,15 @@ Three facts decide it:
 
 Adoption, when it happens, runs the full upgrade gate above plus a digest
 pinned release archive.
+
+## Host adoption (ADR-016, 2026-11-02)
+
+The Owner adopted the full Easel system as the production base. That changes
+the **target** surface, not the pin: v0.2.1 stays read-only and no v0.3.0
+upgrade is authorized. The host is served only through
+`src/contentops/easel/` on loopback with a read-only allowlist; the upstream
+`0.0.0.0`/`CORS *` entry point is never executed directly. A capability being
+present upstream is still not evidence that this repository verified it.
 
 ## Upstream Watch
 
