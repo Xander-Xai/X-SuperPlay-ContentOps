@@ -40,6 +40,10 @@ The table separates what is on **`main`** from what exists only on an
 | Tests | `main` | Every suite under `tests/test_*.py` is wired into CI; count is not asserted here — see [docs/TEST-PLAN.md](docs/TEST-PLAN.md); unified gate `python scripts/dev_check.py` |
 | Production ready | — | **false** — no track is `PRODUCTION_ACCEPTED` |
 
+### X Original Content Rewards — proposed growth experiment
+
+The [X project](projects/x-growth-en/README.md) now includes a [90-day evidence-first growth plan](projects/x-growth-en/original-content-rewards-90d.md) and blank eligibility/weekly-review templates. This is **documentation and manual measurement only**. The existing X post/editorial gates remain the executable authority; no automated X metric access, posting, payout eligibility, or publication is claimed. The older private `X-SuperPlay-X-Growth-OS` is a retirement/migration source, not a second execution owner.
+
 ### Branch reality
 
 `main` now carries the integration stack: the media-use adapter, rights gate,

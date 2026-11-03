@@ -43,6 +43,10 @@ translation_status: synced
 | 测试 | `main` | `tests/test_*.py` 下每个套件都接入 CI；此处不声明数量；见 [docs/TEST-PLAN.md](docs/TEST-PLAN.md)；统一门禁 `python scripts/dev_check.py` |
 | 生产就绪 | — | **否** —— 没有任何轨道达到 `PRODUCTION_ACCEPTED` |
 
+### X 原创内容奖励——拟定增长实验
+
+[X 项目入口](projects/x-growth-en/README.md) 已加入 [90 天证据驱动增长方案](projects/x-growth-en/original-content-rewards-90d.md) 和空白资格/周复盘模板。这些是**文档与人工数据记录**，不是自动采集、自动发布、收益资格或实际发表的证明。现有 X 内容与图片审核门禁仍是执行依据；原私有 `X-SuperPlay-X-Growth-OS` 仅作为待下线的历史迁移来源，不再作为独立执行权威。
+
 ### 分支现实
 
 `main` 现已承载集成栈：media-use 适配器、权利门禁、Skill 路由与 Skill 执行授权
