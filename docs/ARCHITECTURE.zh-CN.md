@@ -9,7 +9,8 @@ translation_status: synced
 [English](ARCHITECTURE.md) | [简体中文](ARCHITECTURE.zh-CN.md)
 
 > 系统是什么。边界在哪里。组件如何调用。
-> 描述 `main`（2026-11-01，PR #89 合并后），不是未来分支。
+> 描述 2026-11-02 宿主决策后的目标架构，并标明今天已验证的部分。
+> 目标章节不等于已运行能力。
 
 ## 系统边界
 
@@ -34,19 +35,43 @@ X-SuperPlay-ContentOps  ← 本仓库
     └── 凭证（完整来源链）            （已实现）
     │
     ▼
-Easel v0.2.1（固定上游，只读）
-= 内容工作流 / 技能引擎
-    ├── 本仓库实际执行（仅两个文件）
+Easel v0.2.1（固定上游，受门禁保护）
+= 内容生产宿主（目标底座，ADR-016）
+    ├── 今天实际执行
     │   ├── auto-short-video/scripts/assemble.py   ← 合成
     │   └── tts.py                                 ← 仅 V1 旁白；M5 用 Windows SAPI
-    └── 本仓库未执行
-        └── 114 个上游 Skill、OpenClaw Agent、Web 工作台、
-            profiles/、outputs/ 与浏览器发布
+    └── 目标宿主面，尚未运行
+        └── Agent、Web 工作台、114 个 Skill、profiles/、outputs/ 与发布
+    │
+    ▼
+src/contentops/easel/
+= 默认拒绝的宿主边界
+    ├── 仅监听回环（127.0.0.1）
+    ├── 只读白名单
+    └── 运行时或依赖未审查时保持 HOST_BLOCKED
     │
     ▼
 FFmpeg / 确定性工具
 = 渲染 / 媒体工具
 ```
+
+## 宿主接管（ADR-016）
+
+Owner 于 2026-11-02 决定把完整 Easel 系统作为生产底座，取代 ADR-015 D1。
+今天已验证的运行时仍是固定的 v0.2.1；工作台/Agent 面是**目标**，不是已接通能力。
+
+| 事实 | 状态 |
+|---|---|
+| 固定上游 | v0.2.1，commit `3fe2d99`，只读 |
+| 宿主入口 | 只有 `scripts/easel_host.py` |
+| 监听 | `127.0.0.1`；不使用上游的 `0.0.0.0` |
+| 方法 | 仅 `GET`、`HEAD`、`OPTIONS` |
+| 写操作 | 在到达上游前拒绝（发布、登录、凭据、设置、环境安装、删除） |
+| 当前宿主状态 | 本机在 FastAPI/uvicorn 存在且宿主安全审查记录前为 `HOST_BLOCKED` |
+| 宿主不携带 | 批准、发布授权、Provider 花费、账号访问 |
+
+门禁是策略边界，不是操作系统沙箱。宿主正在运行，并不等于某个内容包已获批准。
+见 [ADR-016](adr/ADR-016-easel-host-adoption.md)。
 
 ## 生产线
 
@@ -90,12 +115,23 @@ FFmpeg / 确定性工具
    一条声明被修正时，两条产线的产物都要失效，而不是只失效一条。
 2. **视频产线就是 `contentops.copy-to-video/v1`。** 它的阶段（`script → audio →
    storyboard → assets → compose → quality`）是视频专用的，且**不为了看起来通用而改名**。
-3. **图文产线不复用这些阶段。** 配音和分镜对一篇文章没有意义。它定义自己更短的
-   阶段列表，并复用门禁已有的检查——顺序、指纹失效、人工批准——而不是另造一套。
+3. **图文产线不复用这些阶段。** 配音和分镜对一篇文章没有意义。它运行
+   `contentops.copy-to-graphic/v1`（`brief → outline → draft → images → layout →
+   quality → delivery`），并复用门禁的顺序、指纹失效与人工批准，而不是另造一套。
+   当前产物是 `scripts/graphic_package.py` 生成的**人工包**，停在
+   `AWAITING_MANUAL_REVIEW`；它不是 HTML 渲染器，也不是公众号发布器。
 4. **平台适配器是交付，不是生产。** 任何平台都不拥有自己的生产引擎。
    见 §ContentOps 不拥有。
 5. **共享引擎的抽象是挣来的，不是假设的。** 只有当两条产线真的出现重复代码时，
    才提取公共抽象。
+6. **一个 Bundle、两个 handoff、不共享批准。**
+   `src/contentops/content_kernel/handoff.py` 校验 Strategy Bundle 并写出对应形式的
+   handoff。两者携带相同 `bundle_sha256` 与来源映射；都不携带
+   `publish_authorized: true`，图文包也不会继承视频审核。
+7. **coding agent 通过计划驱动，而不是通过 shell。**
+   `src/contentops/easel/driver.py` 给出固定 argv 的有序步骤、`READ` / `PRODUCE` /
+   `HUMAN_ONLY` 三种权限，以及每次执行的回执。计划中不存在发布、凭据或安装步骤；
+   驱动方请求 `human-review` 会被拒绝（ADR-017）。
 
 ## 分支层
 
@@ -106,6 +142,8 @@ FFmpeg / 确定性工具
 | M5 证据链、媒体、QC、Skill 路由/授权 | ```main```（PR #89） | 已实现 |
 | X 发帖门禁、growth→编辑门禁 | ```main```（PR #87、#88） | 已实现 |
 | 账号感知内容路由、工作流门禁、Brief/脚本/设计阶段 | `main`（S1 #93、S2 #95）+ Issue #94 承载 S3–S4 | **部分** — 账号/Brief 前端与阶段门禁已在 `main`；其余阶段按切片推进 |
+| 平台注册表 + Content Bundle 消费 | PR #101 / Issue #100 | **待审**；复用，不重复造 |
+| Easel 宿主门禁、Bundle handoff、图文包 | Issue #106（本分支） | **离线已实现**；依赖与安全审查前宿主保持 `HOST_BLOCKED` |
 | 小红书八步工作流 | `feat/xhs-fa-migration` | **未合并** |
 | X 平台轨道（迁移记录、提示词引用、表格门禁） | Issue #47（PR #50 已因被取代关闭） | **未合并** |
 | 公众号十阶段 vendored 工作流 | 本地 `vendor/` + Issue #56 | **未合并 / 权利受阻** |
@@ -121,6 +159,9 @@ FFmpeg / 确定性工具
 scripts/
 ├── run_v1.py             ← V1 编排（easel + fallback 引擎）
 ├── m5_production.py      ← 证据优先链（来源 → … → 评审）
+├── bundle_handoff.py     ← Bundle → VIDEO / GRAPHIC_TEXT 计划
+├── graphic_package.py    ← 人工图文包（停在审核）
+├── easel_host.py         ← 受门禁保护的宿主状态 / 回环启动
 ├── assemble_easel.py     ← Easel 编排适配器（Windows 字幕变通）
 ├── qc_video.py           ← 自动技术与证据 QC
 ├── resolve_easel.py      ← 唯一运行时解析器
@@ -136,6 +177,11 @@ scripts/
 
 src/contentops/
 ├── evidence/             ← SourceArtifact、ClaimLedger
+├── content_kernel/       ← Bundle 校验 + 形式 handoff
+├── easel/                ← 宿主门禁、回环生命周期与 coding agent 驱动
+├── graphic/              ← 人工图文包 + 权利绑定图片
+├── platforms/            ← 唯一机器可读平台注册表
+├── workflow/             ← 视频/图文有序阶段与人工门禁
 ├── media/                ← 合约、计费、供应商、清单、校验、
 │                           变换、QC 规范化、权利门禁、media-use
 ├── skills/               ← 授权、执行门禁、授权来源
@@ -158,9 +204,10 @@ projects/<slug>/
 └── receipts/             ← 构建、QC、运行时、人工审核凭证
 ```
 
-`src/contentops/{workflow,routing,platforms,quality,script,hotspots,optimization}`
-在本分支只是空的 `__pycache__` 残留目录。其代码在 `feat/content-router` 上；
-不要把这些目录当作已实现模块。
+`workflow/` 包含已合并的 S1/S2 合约与门禁，以及本分支的图文合约。
+`platforms/` 和 `content_kernel/` 来自 PR #101，本分支复用而不重复。
+`routing/`、`quality/`、`script/`、`hotspots/`、`optimization/` 仍是 Issue #94
+的未完成切片；目录存在不等于其阶段已接通。
 
 ## 流水线
 

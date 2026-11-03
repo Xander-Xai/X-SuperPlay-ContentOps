@@ -121,6 +121,90 @@ python scripts\m5_production.py projects\my-video
 本接线 PR 叠加在 M5 PR #68 上，真实外部调用还需要 PR #64。
 CI 使用离线合成测试数据，不运行第三方 Provider。
 
+## 5.2 Bundle handoff 与双线
+
+可在 `project.yaml` 中可选地绑定 Strategy Content Bundle：
+
+```yaml
+content_bundle:
+  path: bundle.json          # 相对项目目录或仓库根
+  account: explorer          # explorer | thinktank
+  platform: x                # 可选的交付占位
+  source_map:
+    SRC-20261102-001: SRC-RUNTIME-001
+```
+
+M5 会在 sources 阶段之前写 `receipts/bundle-handoff-video.json`。来源映射缺失或
+不匹配会阻断运行；`PLANNED` 平台只记录交付阻断，不阻断视频生产。
+
+每个 handoff 都记录 Bundle 的逻辑路径、作用域与 SHA-256，两条线的构建步骤都会
+重新核对：Bundle 已变更时以 `BUNDLE_CHANGED` 拒绝，未记录 Bundle 时以
+`HANDOFF_UNBOUND` 拒绝。改动 Bundle 后必须重建 handoff。Bundle 必须位于项目或
+仓库之内，因此从 Strategy 检出复制来的文件以相对路径记录，绝不写绝对路径。
+
+单独生成 handoff（不生产、不发布）：
+
+```powershell
+python scripts\bundle_handoff.py projects\my-video\bundle.json `
+  --account explorer --format VIDEO --project-slug my-video `
+  --source-map SRC-20261102-001=SRC-RUNTIME-001 --out-project projects\my-video
+
+python scripts\bundle_handoff.py projects\my-video\bundle.json `
+  --account explorer --format GRAPHIC_TEXT --project-slug my-article `
+  --platform wechat_article --out-project projects\my-article
+```
+
+## 5.3 图文人工包
+
+图文线产出可审核的包，而不是平台草稿：
+
+```powershell
+python scripts\graphic_package.py `
+  --project projects\my-article `
+  --handoff projects\my-article\receipts\bundle-handoff-graphic_text.json `
+  --input projects\my-article\graphic-input.json
+```
+
+写入 `receipts/graphic-package.json` 与 `receipts/graphic-preview.md`，
+状态 `AWAITING_MANUAL_REVIEW`、`publish_authorized: false`。每张图都需要 ALT
+与已审核权利块；缺失权利、路径逃逸或不可解码图片都会阻断。
+
+## 5.4 受门禁保护的 Easel 宿主
+
+仅查看状态；不启动服务、不安装依赖：
+
+```powershell
+python scripts\easel_host.py status
+python scripts\easel_host.py status --verify-bytes
+```
+
+`--verify-bytes` 增加内容比对：按 git 方式对运行时树做哈希，并通过 `gh` 与锁定
+提交比较。它需要网络与 `gh`；两者缺失时结果为 `HOST_BYTES_UNVERIFIED`，这不是
+通过。`serve` 总是执行该比对，因此离线或已被修改的树无法启动。
+
+在 FastAPI/uvicorn 存在且宿主安全审查记录之前，`HOST_BLOCKED` 是预期结果。
+`serve` 只监听 `127.0.0.1`、拒绝所有写操作，并在到达上游前关闭 websocket
+scope；**不要**直接运行上游 `easel web` 或 `web/app.py`。见 ADR-016。
+
+## 5.5 coding agent 驱动
+
+coding agent（Claude Code、Codex CLI、OpenCode）无需 Web 宿主即可驱动流水线：
+先取计划，再执行一步，然后读取回执。
+
+```powershell
+python scripts\agent_drive.py status
+python scripts\agent_drive.py plan --project projects\my-video --json
+python scripts\agent_drive.py run --project projects\my-video --step produce-video --execute
+```
+
+计划固定 argv，agent 只能选步骤 id，不能给命令。`run` 不带 `--execute` 时只打印
+将要执行的命令。每次执行都会写 `receipts/agent-driver-<step>.json`，包含返回码、
+截断输出与 `publish_authorized: false`。
+
+`human-review` 标注为 `authority: HUMAN_ONLY`，驱动方尝试执行会被拒绝。计划中
+不存在发布、凭据或安装步骤。该驱动不需要 FastAPI、uvicorn 或运行中的宿主；
+`host-status` 只是让 agent 能报告宿主状态的只读步骤。
+
 ## 6. 开发门控
 
 ```bash

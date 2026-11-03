@@ -1,0 +1,32 @@
+{
+  "schema": "contentops.graphic-images/v1",
+  "images": [
+    {
+      "asset_id": "version_evidence",
+      "path": "repo://projects/easel-review/sources/screenshots/12-easel-version-evidence.png",
+      "scope": "repo",
+      "sha256": "6f8603af5e83e48202d263c67da5fbd248d25cadf004365cdb67f8ed220c6d20",
+      "bytes": 119169,
+      "facts": {
+        "format": "png",
+        "width": 1080,
+        "height": 1920
+      },
+      "alt": "Easel v0.2.1 版本证据截图",
+      "rights": {
+        "schema": "contentops.media-rights/v1",
+        "license_id": "OWNED-BY-OPERATOR",
+        "license_note": "captured or authored by the operator; ownership still needs a review record",
+        "source_url": "repo://X-SuperPlay-ContentOps#easel-version-evidence",
+        "reviewed_by": "Xander",
+        "reviewed_at": "2026-11-02",
+        "review_evidence": "assets/version-evidence.rights.json",
+        "review_evidence_sha256": "70d889043c776e468caacada8e660edfcf34e6920bf9802eddd362ed72f93d55",
+        "attribution": "",
+        "synthetic": false,
+        "third_party": false,
+        "evidence_capable": false
+      }
+    }
+  ]
+}

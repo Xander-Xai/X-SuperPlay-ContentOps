@@ -1,0 +1,11 @@
+{
+  "schema": "contentops.claim-ledger/v1",
+  "claims": [
+    {
+      "id": "host_guard",
+      "text": "接管 Easel 宿主后，宿主只能通过受门禁保护的入口启动。",
+      "artifacts": ["adr016"],
+      "quotes": ["The host may be served only through `src/contentops/easel/`:"]
+    }
+  ]
+}

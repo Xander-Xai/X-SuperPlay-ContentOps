@@ -12,6 +12,11 @@
     {
       "platform_id": "douyin",
       "strategy_platform": "douyin",
+      "easel_capability": {
+        "status": "UPSTREAM_DECLARED",
+        "evidence": ["skills/openclaw/skill-douyin-upload/SKILL.md"],
+        "verified_here": false
+      },
       "content_types": [
         "VIDEO"
       ],
@@ -29,6 +34,11 @@
     {
       "platform_id": "bilibili",
       "strategy_platform": "bilibili",
+      "easel_capability": {
+        "status": "UPSTREAM_DECLARED",
+        "evidence": ["skills/openclaw/skill-bilibili-upload/SKILL.md"],
+        "verified_here": false
+      },
       "content_types": [
         "VIDEO"
       ],
@@ -46,6 +56,11 @@
     {
       "platform_id": "xiaohongshu_video",
       "strategy_platform": "xiaohongshu",
+      "easel_capability": {
+        "status": "UPSTREAM_DECLARED",
+        "evidence": ["skills/openclaw/skill-xhs-publisher/SKILL.md"],
+        "verified_here": false
+      },
       "content_types": [
         "VIDEO"
       ],
@@ -63,6 +78,14 @@
     {
       "platform_id": "xiaohongshu_image",
       "strategy_platform": "xiaohongshu",
+      "easel_capability": {
+        "status": "UPSTREAM_DECLARED",
+        "evidence": [
+          "skills/openclaw/card-xiaohongshu/SKILL.md",
+          "skills/openclaw/skill-xhs-publisher/SKILL.md"
+        ],
+        "verified_here": false
+      },
       "content_types": [
         "XHS_EDITORIAL"
       ],
@@ -80,6 +103,11 @@
     {
       "platform_id": "shipinhao",
       "strategy_platform": "wechat_channels",
+      "easel_capability": {
+        "status": "UPSTREAM_DECLARED",
+        "evidence": ["skills/openclaw/skill-channels-upload/SKILL.md"],
+        "verified_here": false
+      },
       "content_types": [
         "VIDEO"
       ],
@@ -97,6 +125,14 @@
     {
       "platform_id": "wechat_article",
       "strategy_platform": "wechat_official_account",
+      "easel_capability": {
+        "status": "UPSTREAM_DECLARED",
+        "evidence": [
+          "skills/openclaw/skill-wechat-publisher/SKILL.md",
+          "skills/openclaw/gzh-design/SKILL.md"
+        ],
+        "verified_here": false
+      },
       "content_types": [
         "GZH_EDITORIAL"
       ],
@@ -114,6 +150,11 @@
     {
       "platform_id": "x",
       "strategy_platform": "x",
+      "easel_capability": {
+        "status": "ABSENT",
+        "evidence": [],
+        "verified_here": false
+      },
       "content_types": [
         "X_EDITORIAL"
       ],
@@ -136,6 +177,14 @@
     {
       "platform_id": "zhihu",
       "strategy_platform": "zhihu",
+      "easel_capability": {
+        "status": "UPSTREAM_DECLARED",
+        "evidence": [
+          "skills/openclaw/skill-zhihu-publisher/SKILL.md",
+          "skills/openclaw/skill-zhihu-answer/SKILL.md"
+        ],
+        "verified_here": false
+      },
       "content_types": [
         "ARTICLE_EDITORIAL"
       ],
@@ -153,6 +202,11 @@
     {
       "platform_id": "csdn",
       "strategy_platform": "csdn",
+      "easel_capability": {
+        "status": "ABSENT",
+        "evidence": [],
+        "verified_here": false
+      },
       "content_types": [
         "ARTICLE_EDITORIAL"
       ],
@@ -170,6 +224,11 @@
     {
       "platform_id": "youtube",
       "strategy_platform": "youtube",
+      "easel_capability": {
+        "status": "ABSENT",
+        "evidence": [],
+        "verified_here": false
+      },
       "content_types": [
         "VIDEO"
       ],

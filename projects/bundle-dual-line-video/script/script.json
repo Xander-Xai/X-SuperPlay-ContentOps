@@ -1,0 +1,33 @@
+{
+  "schema": "contentops.m5-script/v1",
+  "language": "zh-CN",
+  "lines": [
+    {
+      "id": "l1",
+      "claim": "host_guard",
+      "narration": "接管宿主，不等于把上游直接跑起来。",
+      "caption": "接管不等于裸跑",
+      "asset_id": "version_evidence"    },
+    {
+      "id": "l2",
+      "claim": "host_guard",
+      "narration": "宿主只能通过受门禁保护的入口启动。",
+      "caption": "只能走受保护入口",
+      "asset_id": "skill_layers"
+    },
+    {
+      "id": "l3",
+      "claim": "host_guard",
+      "narration": "发布、登录、凭据和设置写入，全部在到达上游前拒绝。",
+      "caption": "写操作默认拒绝",
+      "asset_id": "skills_dir"
+    },
+    {
+      "id": "l4",
+      "claim": null,
+      "narration": "宿主在运行，也不代表这条内容已经获准发布。",
+      "caption": "运行不等于发布",
+      "asset_id": "doctor"
+    }
+  ]
+}
