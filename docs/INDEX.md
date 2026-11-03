@@ -92,6 +92,7 @@ Tier-1 docs have zh-CN mirrors with `.zh-CN.md` suffix. Run `python scripts/chec
 - [../reports/audits/worktree-and-branch-audit-2026-11-01.md](../reports/audits/worktree-and-branch-audit-2026-11-01.md) — worktree and branch inventory, classification and cleanup order (2026-11-01)
 - [../reports/audits/github-governance-2026-11-03.md](../reports/audits/github-governance-2026-11-03.md) — PR, issue and branch governance pass; delete candidates awaiting named Owner approval (2026-11-03)
 - [../reports/audits/github-governance-closeout-2026-11-04.md](../reports/audits/github-governance-closeout-2026-11-04.md) — zero-backlog closeout: license, descoped tracks, archived branches and final verification (2026-11-04)
+- [../reports/audits/rights-audit-2026-11-04.md](../reports/audits/rights-audit-2026-11-04.md) — GZH/XHS license matrices and public receipt exposure; decisions still required (2026-11-04)
 
 ## Fact Priority
 
