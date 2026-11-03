@@ -70,6 +70,7 @@ translation_status: synced
 - [adr/ADR-016-easel-host-adoption.md](adr/ADR-016-easel-host-adoption.md) —— Owner 采用固定版本 Easel 宿主，回环/只读门禁与双线 handoff
 - [adr/ADR-017-coding-agent-driver.md](adr/ADR-017-coding-agent-driver.md) —— coding agent 通过固定步骤计划成为受支持的驱动方，不获得发布或批准权限
 - [adr/ADR-018-governance-closeout-scope.md](adr/ADR-018-governance-closeout-scope.md) —— Apache-2.0 许可、未完成轨道 descope、X 权限保持人工、上游 watch 改为产物、零积压目标
+- [adr/ADR-019-receipt-history-exposure.md](adr/ADR-019-receipt-history-exposure.md) —— 轮换 PAYG key、接受已公开的余额/voice_id/fingerprint,并继续拦截新 receipt
 
 ## 事实优先级
 
