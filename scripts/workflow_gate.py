@@ -25,6 +25,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from contentops.workflow import (  # noqa: E402
     CONTRACT_ID,
+    GRAPHIC_CONTRACT_ID,
     WorkflowError,
     approve_stage,
     check_stage,
@@ -89,10 +90,11 @@ def cmd_init(args: argparse.Namespace) -> int:
     if target.exists() and not args.replace:
         print(f"refusing to overwrite {target}; pass --replace to recreate", file=sys.stderr)
         return 1
-    document = new_workflow(args.slug or project.name, args.account or "", CONTRACT_ID)
+    document = new_workflow(args.slug or project.name, args.account or "", args.contract)
     save_workflow(target, document)
-    print(f"created {target}")
-    print(f"next: python scripts/workflow_gate.py check --project {project} --stage brief")
+    print(f"created {target} ({args.contract})")
+    first = document["stages"][0]["id"]
+    print(f"next: python scripts/workflow_gate.py check --project {project} --stage {first}")
     return 0
 
 
@@ -167,6 +169,8 @@ def build_parser() -> argparse.ArgumentParser:
     init.add_argument("--project", required=True)
     init.add_argument("--slug", default="")
     init.add_argument("--account", default="")
+    init.add_argument("--contract", default=CONTRACT_ID,
+                      choices=(CONTRACT_ID, GRAPHIC_CONTRACT_ID))
     init.add_argument("--replace", action="store_true")
     init.set_defaults(func=cmd_init)
 
@@ -202,9 +206,9 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     print(
-        "note: the ordered production contract is declared but not wired into any "
-        "producer; the enforced human gate is the copy review "
-        "(python scripts/copy_review.py <project>).",
+        "note: the graphic contract's artifacts are materialised by "
+        "scripts/graphic_package.py; the video contract is still not wired into a "
+        "single producer. Approval is always manual.",
         file=sys.stderr,
     )
     try:

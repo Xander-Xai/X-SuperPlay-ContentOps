@@ -357,6 +357,24 @@ def test_ass_timestamps_are_centiseconds_and_match_the_srt() -> None:
     print("[ok] 18. ASS timestamps are centiseconds and round-trip the SRT times")
 
 
+def test_storyboard_timeline_covers_the_pauses_between_lines() -> None:
+    shots = [{"duration": 4.0, "duration_s": 4.0},
+             {"duration": 5.0, "duration_s": 5.0}]
+    lines = [{"start": 0.0, "duration": 4.0},
+             {"start": 4.5, "duration": 5.0}]
+    m5_production._align_shots_to_narration(shots, lines)
+    assert sum(shot["duration"] for shot in shots) == 9.5
+    assert shots[-1]["duration"] == 5.5
+    assert shots[0]["duration"] == 4.0, "an earlier cut must not move"
+    print("[ok] 19. the visual timeline covers inter-line pauses")
+
+    unchanged = [{"duration": 4.0, "duration_s": 4.0},
+                 {"duration": 5.0, "duration_s": 5.0}]
+    m5_production._align_shots_to_narration(
+        unchanged, [{"start": 0.0, "duration": 4.0}, {"start": 4.0, "duration": 5.0}])
+    assert unchanged[-1]["duration"] == 5.0
+
+
 TESTS = [
     test_artifact_hashes_bytes_and_records_permission,
     test_permission_none_is_not_evidence_capable,
@@ -376,6 +394,7 @@ TESTS = [
     test_stage_script_refuses_duplicate_ids_and_empty_narration,
     test_stage_subtitles_refuses_poor_coverage,
     test_ass_timestamps_are_centiseconds_and_match_the_srt,
+    test_storyboard_timeline_covers_the_pauses_between_lines,
 ]
 
 

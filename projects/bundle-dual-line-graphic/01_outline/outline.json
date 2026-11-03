@@ -1,0 +1,8 @@
+{
+  "schema": "contentops.graphic-outline/v1",
+  "headings": [
+    "# 接管 Easel 宿主，先接管它的边界",
+    "## 这次只证明边界，不证明发布"
+  ],
+  "source_draft_sha256": "c670aca6a90a92d77f3a5a81b036df93b4b5c3c4a4eb6ae2134398dc2f7ec24e"
+}

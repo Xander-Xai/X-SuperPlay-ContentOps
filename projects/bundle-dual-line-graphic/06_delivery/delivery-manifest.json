@@ -1,0 +1,8 @@
+{
+  "schema": "contentops.graphic-delivery/v1",
+  "package": "receipts/graphic-package.json",
+  "preview": "receipts/graphic-preview.md",
+  "status": "AWAITING_MANUAL_REVIEW",
+  "publish_authorized": false,
+  "production_ready": false
+}

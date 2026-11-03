@@ -2,6 +2,8 @@
 
 from .contract import (
     CONTRACT_ID,
+    GRAPHIC_CONTRACT_ID,
+    GRAPHIC_STAGES,
     STAGES,
     STAGE_STATUSES,
     STAGE_IDS,
@@ -18,12 +20,16 @@ from .contract import (
     reconcile,
     save_workflow,
     stage_by_id,
+    stage_for,
+    stages_for_contract,
     validate_workflow,
 )
 from .gate import approve_stage, check_stage, current_stage
 
 __all__ = [
     "CONTRACT_ID",
+    "GRAPHIC_CONTRACT_ID",
+    "GRAPHIC_STAGES",
     "STAGES",
     "STAGE_STATUSES",
     "STAGE_IDS",
@@ -43,5 +49,7 @@ __all__ = [
     "reconcile",
     "save_workflow",
     "stage_by_id",
+    "stage_for",
+    "stages_for_contract",
     "validate_workflow",
 ]

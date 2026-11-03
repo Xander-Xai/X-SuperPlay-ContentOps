@@ -47,8 +47,9 @@ translation_status: synced
 | Windows subprocess | 高 | Windows CI/本地 |
 | model registry | 中 | Provider 合约 |
 | doctor | 中 | doctor 回归 |
-| gateway | 低/中 | gateway 测试 |
-| publishing | 低 | 后续 M5/M6 |
+| gateway | 中（目标宿主） | gateway 测试；禁止直接运行 |
+| publishing | 中（目标宿主），执行仍拒绝 | 门禁测试 |
+| Web Workbench | 中（目标宿主），只读门禁 | 宿主门禁测试；禁止直接 `0.0.0.0` |
 
 ## 上游 Delta 台账
 
@@ -105,6 +106,13 @@ Founder 批准
 ```
 
 任何步骤失败 → 保持旧版本。
+
+## 宿主接管（ADR-016，2026-11-02）
+
+Owner 已把完整 Easel 系统定为生产底座。这改变了**目标**面，但不改变固定版本：
+v0.2.1 仍只读，未授权升级 v0.3.0。宿主只能通过 `src/contentops/easel/`
+在回环地址上以只读白名单启动；上游 `0.0.0.0`/`CORS *` 入口不会被直接执行。
+上游存在某项能力，仍不等于本仓库已验证它。
 
 ## 上游监控
 

@@ -1,6 +1,6 @@
 # ADR-015: Platform placeholders, Content Bundle consumption and the Easel boundary
 
-Status: **Accepted — Owner authorization, 2026-11-01**
+Status: **Accepted — Owner authorization, 2026-11-01**; **D1 superseded by [ADR-016](ADR-016-easel-host-adoption.md) on 2026-11-02**
 Date: 2026-11-01
 Issue: #100
 Related: [ADR-002](ADR-002-contentops-boundaries.md), [ADR-006](ADR-006-upstream-upgrade-policy.md), [ADR-012](ADR-012-convergence-decisions.md), [ADR-014](ADR-014-delivery-validation-hold.md)
@@ -41,6 +41,9 @@ inside ADR-014, not as a replacement for it.
 ## Decision
 
 ### D1 — Easel is the priority-reuse capability system, not the runtime base
+
+> **Superseded 2026-11-02 by ADR-016.** The Owner chose full Easel host
+> adoption. This section is retained as history; D2-D8 remain in force.
 
 Easel stays the first place to look for a capability, and its integration is
 expected to grow beyond composition over time. This ADR does **not** fix Easel

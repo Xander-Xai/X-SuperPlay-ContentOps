@@ -147,6 +147,26 @@ merging any pull request.
 
 Everything else in this ADR remains in force, including the 2026-11-08 re-review.
 
+### Owner limited-scope authorization #3 (2026-11-02) — guarded Easel host
+
+Recorded here because a hold may only be narrowed by an Owner decision.
+
+Source: the Owner's 2026-11-02 directive to adopt the full Easel system as the
+production base, recorded in [ADR-016](ADR-016-easel-host-adoption.md).
+
+Authorized inside the hold window, and nothing else:
+
+1. Architecture records that supersede ADR-015 D1.
+2. A loopback-only, deny-by-default guard around the pinned Easel ASGI host,
+   plus offline tests and a status command.
+3. A Bundle-to-video and Bundle-to-graphic handoff, and a manual graphic
+   package that stops at human review.
+
+Not authorized: installing host dependencies, reading credentials or profiles,
+connecting accounts, platform drafts, publishing, provider spend, an Easel
+upgrade, or merging any pull request. `HOST_BLOCKED` remains the default until
+a real host-security review and separate approval.
+
 ### Merge coordination
 
 This section was written on a branch cut from `origin/main`. PR #101 adds a

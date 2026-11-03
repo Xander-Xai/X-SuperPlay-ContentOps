@@ -25,6 +25,9 @@ from pathlib import Path
 from process_utils import hidden_run
 
 ROOT = Path(__file__).resolve().parents[1]
+for _candidate in (ROOT / "src", ROOT / "scripts"):
+    if str(_candidate) not in sys.path:
+        sys.path.insert(0, str(_candidate))
 
 MIN_FILE_BYTES = 100 * 1024  # 100 KB
 MIN_DURATION = 30.0
@@ -457,6 +460,24 @@ def _emit(project: Path, checks: list[dict], target_name: str = "") -> dict:
         "overall": overall,
         "checks": [{k: v for k, v in c.items() if not k.startswith("_")} for c in checks],
     }
+
+    # Canonical receipt (contentops.qc-canonical/v1): the runtime result is
+    # preserved verbatim inside the canonical envelope — sanitizing paths
+    # must never change a verdict. The driver's completion gate consumes the
+    # canonical schema, so the producing step and its consumer share one
+    # contract instead of two vocabularies for the same verdict.
+    from contentops.media.qc_canonical import canonical_qc_report
+
+    graded_video = target_name if "." in target_name else f"{target_name}.mp4"
+    canonical = canonical_qc_report(
+        out,
+        repo_root=ROOT,
+        project_root=project,
+        graded_target=f"project://final/{graded_video}",
+    )
+    canonical["project"] = str(project.relative_to(ROOT))
+    out = canonical
+
     suffix = f"-{target_name}" if target_name else ""
     json_path = project / "receipts" / f"qc-report{suffix}.json"
     md_path = project / "receipts" / f"qc-report{suffix}.md"

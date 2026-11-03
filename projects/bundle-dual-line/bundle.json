@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "record_type": "content_bundle",
+  "bundle_id": "CB-20261102-001",
+  "created_at": "2026-11-02T00:00:00Z",
+  "status": "draft",
+  "source": {
+    "source_id": "SRC-20261102-001",
+    "source_refs": ["repo://X-SuperPlay-ContentOps/docs/adr/ADR-016-easel-host-adoption.md"],
+    "topic_thesis": "Adopting the Easel host only counts if the host is guarded and a running host is not an approval.",
+    "claim_refs": ["host_guard"],
+    "permission_refs": ["CREATED_BY_OWNER"],
+    "proof_level": "direct"
+  },
+  "account_treatments": {
+    "explorer": {
+      "strategy_account": "X超玩•1024",
+      "role": "Explore",
+      "narrative_angle": "What the host can do versus what it is allowed to do.",
+      "key_claims": ["host_guard"],
+      "cta_intent": "discuss",
+      "production_lane": "baseline",
+      "execution_profile_hint": "default"
+    },
+    "thinktank": {
+      "strategy_account": "X超玩•未来智能",
+      "role": "Build",
+      "narrative_angle": "How the host boundary is implemented and tested.",
+      "key_claims": ["host_guard"],
+      "cta_intent": "reproduce",
+      "production_lane": "baseline",
+      "execution_profile_hint": "default"
+    }
+  },
+  "asset_requirements": [
+    {
+      "requirement_id": "AR-001",
+      "claim_refs": ["host_guard"],
+      "capability": "real_capture",
+      "evidence_role": "direct_evidence",
+      "required": true,
+      "account_scope": ["explorer"],
+      "platform_scope": [],
+      "acceptance": "A real screenshot showing the pinned runtime and its skill directory.",
+      "fallback_capabilities": []
+    }
+  ],
+  "assets": {
+    "real_evidence_refs": ["repo://projects/easel-review/sources/screenshots/12-easel-version-evidence.png"],
+    "reusable_asset_refs": [],
+    "generated_asset_refs": [],
+    "manual_premium_asset_refs": [],
+    "canonical_master_refs": []
+  },
+  "aigc_provenance": {
+    "required": true,
+    "asset_manifest_refs": [],
+    "disclosure_review_status": "pending"
+  },
+  "content_experiments": {"refs": []},
+  "platform_adapters": {"refs": []},
+  "execution_pointers": [],
+  "metric_and_signal_pointers": {
+    "metric_snapshot_refs": [],
+    "market_signal_refs": [],
+    "review_refs": []
+  },
+  "invariants": {
+    "production_lane_is_strategy_capacity_routing": true,
+    "execution_profile_hint_is_not_child_runtime_contract": true,
+    "asset_requirement_precedes_provider_resolution": true,
+    "asset_requirement_claim_binding_required_for_direct_evidence": true,
+    "downstream_records_should_preserve_bundle_id": true,
+    "source_is_not_validated_demand": true,
+    "bundle_is_not_published_content": true,
+    "generated_media_is_not_direct_evidence": true,
+    "platform_adaptation_must_not_change_facts": true,
+    "credentials_must_not_cross_repository_boundaries": true,
+    "business_source_of_truth": "Xander-Xai/X-SuperPlay-OPC-Blueprint",
+    "implementation_source_of_truth": "Xander-Xai/X-SuperPlay-Strategy"
+  }
+}

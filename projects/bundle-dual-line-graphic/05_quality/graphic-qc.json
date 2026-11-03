@@ -1,0 +1,27 @@
+{
+  "schema": "contentops.graphic-qc/v1",
+  "overall": "PASS",
+  "checks": [
+    {
+      "id": "draft_nonempty",
+      "ok": true
+    },
+    {
+      "id": "image_present",
+      "ok": true
+    },
+    {
+      "id": "image_alt_present",
+      "ok": true
+    },
+    {
+      "id": "image_rights_present",
+      "ok": true
+    }
+  ],
+  "blockers": [
+    "HOST_CAPABILITY_UNVERIFIED",
+    "PLATFORM_PLACEHOLDER"
+  ],
+  "human_review": "NOT_STARTED"
+}
