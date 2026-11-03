@@ -99,3 +99,4 @@ translation_status: synced
 - [../reports/audits/worktree-and-branch-audit-2026-11-01.md](../reports/audits/worktree-and-branch-audit-2026-11-01.md) — worktree 与分支清单、分类与清理顺序（2026-11-01）
 - [../reports/audits/github-governance-2026-11-03.md](../reports/audits/github-governance-2026-11-03.md) — PR、Issue 与分支治理；删除候选等待 Owner 点名授权（2026-11-03）
 - [../reports/audits/github-governance-closeout-2026-11-04.md](../reports/audits/github-governance-closeout-2026-11-04.md) — 零积压收尾：许可、descope 轨道、归档分支与最终验证（2026-11-04）
+- [../reports/audits/rights-audit-2026-11-04.md](../reports/audits/rights-audit-2026-11-04.md) — GZH/XHS 许可矩阵与公开 receipt 暴露；仍需决策（2026-11-04）
