@@ -43,6 +43,7 @@
 - [FILE-PLACEMENT-POLICY.md](FILE-PLACEMENT-POLICY.md) — Where files belong
 - [GLOSSARY.md](GLOSSARY.md) — High-frequency terminology
 - [SKILL-REGISTRY.md](SKILL-REGISTRY.md) — Skill discovery, declared capabilities, resolution verdicts and the doctor
+- [DEFERRED-WORK.md](DEFERRED-WORK.md) — descoped work, archive locations and reopening conditions
 
 ## Bilingual Policy
 
@@ -67,6 +68,7 @@ Tier-1 docs have zh-CN mirrors with `.zh-CN.md` suffix. Run `python scripts/chec
 - [adr/ADR-015-platform-placeholders-and-content-bundle.md](adr/ADR-015-platform-placeholders-and-content-bundle.md) — nine-platform placeholders, one reused registry, Content Bundle consumption and the Easel capability boundary; D1 superseded by ADR-016
 - [adr/ADR-016-easel-host-adoption.md](adr/ADR-016-easel-host-adoption.md) — Owner adopts the pinned Easel host, guarded loopback/read-only, and the two-line handoff
 - [adr/ADR-017-coding-agent-driver.md](adr/ADR-017-coding-agent-driver.md) — a coding agent is a supported driver through a fixed step plan, with no new publication or approval authority
+- [adr/ADR-018-governance-closeout-scope.md](adr/ADR-018-governance-closeout-scope.md) — Apache-2.0 license, descoped unfinished tracks, manual X authority, artifact-based upstream watch and the zero-backlog target
 
 ## Agent Rules
 
@@ -89,6 +91,8 @@ Tier-1 docs have zh-CN mirrors with `.zh-CN.md` suffix. Run `python scripts/chec
 - [../reports/audits/contentops-phase5-integration-convergence-2026-10-31.md](../reports/audits/contentops-phase5-integration-convergence-2026-10-31.md) — Phase-5 integration convergence: #71 overlap, recommended route, rights gate, #62 re-review (2026-10-31)
 - [../reports/audits/worktree-and-branch-audit-2026-11-01.md](../reports/audits/worktree-and-branch-audit-2026-11-01.md) — worktree and branch inventory, classification and cleanup order (2026-11-01)
 - [../reports/audits/github-governance-2026-11-03.md](../reports/audits/github-governance-2026-11-03.md) — PR, issue and branch governance pass; delete candidates awaiting named Owner approval (2026-11-03)
+- [../reports/audits/github-governance-closeout-2026-11-04.md](../reports/audits/github-governance-closeout-2026-11-04.md) — zero-backlog closeout: license, descoped tracks, archived branches and final verification (2026-11-04)
+- [../reports/audits/rights-audit-2026-11-04.md](../reports/audits/rights-audit-2026-11-04.md) — GZH/XHS license matrices and public receipt exposure; decisions still required (2026-11-04)
 
 ## Fact Priority
 

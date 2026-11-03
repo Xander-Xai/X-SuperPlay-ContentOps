@@ -48,6 +48,7 @@ translation_status: synced
 - [FILE-PLACEMENT-POLICY.md](FILE-PLACEMENT-POLICY.md) — 文件归属规则
 - [GLOSSARY.md](GLOSSARY.md) — 高频术语表
 - [SKILL-REGISTRY.md](SKILL-REGISTRY.md) — Skill 发现、已声明能力、解析判定与 Doctor
+- [DEFERRED-WORK.md](DEFERRED-WORK.md) — 已 descope 工作、归档位置与重开条件
 
 ## 决策
 
@@ -68,6 +69,7 @@ translation_status: synced
 - [adr/ADR-015-platform-placeholders-and-content-bundle.md](adr/ADR-015-platform-placeholders-and-content-bundle.md) —— 九平台占位、单一注册表复用、Content Bundle 消费契约与 Easel 能力边界；D1 已被 ADR-016 取代
 - [adr/ADR-016-easel-host-adoption.md](adr/ADR-016-easel-host-adoption.md) —— Owner 采用固定版本 Easel 宿主，回环/只读门禁与双线 handoff
 - [adr/ADR-017-coding-agent-driver.md](adr/ADR-017-coding-agent-driver.md) —— coding agent 通过固定步骤计划成为受支持的驱动方，不获得发布或批准权限
+- [adr/ADR-018-governance-closeout-scope.md](adr/ADR-018-governance-closeout-scope.md) —— Apache-2.0 许可、未完成轨道 descope、X 权限保持人工、上游 watch 改为产物、零积压目标
 
 ## 事实优先级
 
@@ -96,3 +98,5 @@ translation_status: synced
 - [../reports/audits/contentops-phase5-integration-convergence-2026-10-31.md](../reports/audits/contentops-phase5-integration-convergence-2026-10-31.md) — 第五阶段集成收敛：#71 重叠矩阵、推荐路线、素材授权门禁与 #62 复核（2026-10-31）
 - [../reports/audits/worktree-and-branch-audit-2026-11-01.md](../reports/audits/worktree-and-branch-audit-2026-11-01.md) — worktree 与分支清单、分类与清理顺序（2026-11-01）
 - [../reports/audits/github-governance-2026-11-03.md](../reports/audits/github-governance-2026-11-03.md) — PR、Issue 与分支治理；删除候选等待 Owner 点名授权（2026-11-03）
+- [../reports/audits/github-governance-closeout-2026-11-04.md](../reports/audits/github-governance-closeout-2026-11-04.md) — 零积压收尾：许可、descope 轨道、归档分支与最终验证（2026-11-04）
+- [../reports/audits/rights-audit-2026-11-04.md](../reports/audits/rights-audit-2026-11-04.md) — GZH/XHS 许可矩阵与公开 receipt 暴露；仍需决策（2026-11-04）

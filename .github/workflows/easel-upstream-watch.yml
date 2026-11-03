@@ -6,14 +6,16 @@ on:
   workflow_dispatch:
     inputs:
       force_notify:
-        description: Force update rolling issue even if no change detected
+        description: Write the report even if no upstream change is detected
         required: false
         default: "false"
         type: boolean
 
+# ADR-018 D4: the watch reports through the job summary and a workflow
+# artifact. It must not create or update an issue, and it never commits to the
+# repository (main is protected and PRs must not be opened by automation).
 permissions:
   contents: read
-  issues: write
 
 jobs:
   check-upstream:
@@ -22,7 +24,6 @@ jobs:
     outputs:
       action_needed: ${{ steps.watch.outputs.action_needed }}
       recommendation: ${{ steps.watch.outputs.recommendation }}
-      issue_number: ${{ steps.find_issue.outputs.issue_number }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,47 +38,27 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Write report
-          python scripts/check_easel_upstream.py > /tmp/watch_report.json
-          # Check exit code (0=NO_ACTION, 1=WATCH/EVALUATE)
+          python scripts/check_easel_upstream.py > "$RUNNER_TEMP/watch_report.json"
           if python scripts/check_easel_upstream.py --quiet; then
-            echo "action_needed=false" >> $GITHUB_OUTPUT
-            echo "recommendation=NO_ACTION" >> $GITHUB_OUTPUT
+            echo "action_needed=false" >> "$GITHUB_OUTPUT"
+            echo "recommendation=NO_ACTION" >> "$GITHUB_OUTPUT"
           else
-            echo "action_needed=true" >> $GITHUB_OUTPUT
-            echo "recommendation=WATCH_OR_UPDATE" >> $GITHUB_OUTPUT
+            echo "action_needed=true" >> "$GITHUB_OUTPUT"
+            echo "recommendation=WATCH_OR_UPDATE" >> "$GITHUB_OUTPUT"
           fi
-          cat /tmp/watch_report.json
+          cat "$RUNNER_TEMP/watch_report.json"
 
-      - name: Find or create rolling upstream issue
-        id: find_issue
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          ISSUE_NUMBER=$(gh issue list --label "upstream:easel" --state open --limit 1 --json number --jq "[.[]] | .[0].number" 2>/dev/null || echo "")
-          if [ -z "$ISSUE_NUMBER" ]; then
-            ISSUE_NUMBER=$(gh api "repos/${{ github.repository }}/issues" \
-              --method POST \
-              -f title="[UPSTREAM] Easel compatibility watch" \
-              -f body="Rolling issue tracking Easel upstream compatibility." \
-              -f 'labels[]=upstream:easel' \
-              -f 'labels[]=area:easel' \
-              --jq '.number')
-          fi
-          echo "issue_number=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
-          echo "Found/created issue #$ISSUE_NUMBER"
-
-      - name: Update rolling issue on change
+      - name: Write watch report
         if: ${{ steps.watch.outputs.action_needed == 'true' || inputs.force_notify }}
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REC: ${{ steps.watch.outputs.recommendation }}
           RUN_ID: ${{ github.run_id }}
         run: |
-          ISSUE_NUMBER="${{ steps.find_issue.outputs.issue_number }}"
+          mkdir -p "$RUNNER_TEMP/easel-watch"
+          cp "$RUNNER_TEMP/watch_report.json" "$RUNNER_TEMP/easel-watch/easel-watch-latest.json"
           python - << 'PYEOF_INNER'
           import os
-          report = open("/tmp/watch_report.json").read()
+          report = open(os.path.join(os.environ["RUNNER_TEMP"], "watch_report.json"), encoding="utf-8").read()
           rec = os.environ.get("REC", "UNKNOWN")
           run_id = os.environ.get("RUN_ID", "unknown")
           lines = [
@@ -99,18 +80,27 @@ jobs:
               "",
               "- Watch schedule: daily via GitHub Actions",
               "- Watcher role: DETECT > CLASSIFY > REPORT (never auto-upgrades)",
+              "- Report location: workflow summary and the `easel-upstream-watch-<run_id>` artifact",
               "- Upgrade gate: see docs/UPSTREAM-EASEL.md",
-              "",
-              "Refs #13",
-              "Refs #7",
           ]
-          with open("/tmp/issue_body.txt", "w", encoding="utf-8") as f:
-              f.write(chr(10).join(lines))
+          body = chr(10).join(lines)
+          out = os.path.join(os.environ["RUNNER_TEMP"], "easel-watch", "easel-watch-latest.md")
+          with open(out, "w", encoding="utf-8") as f:
+              f.write(body)
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
+              f.write(body + chr(10))
           PYEOF_INNER
-          gh api repos/${{ github.repository }}/issues/$ISSUE_NUMBER --method PATCH -F body=@/tmp/issue_body.txt --silent
-          echo "Updated issue #$ISSUE_NUMBER"
+
+      - name: Upload watch report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: easel-upstream-watch-${{ github.run_id }}
+          path: ${{ runner.temp }}/easel-watch
+          retention-days: 90
+          if-no-files-found: warn
 
       - name: No action needed
         if: ${{ steps.watch.outputs.action_needed != 'true' && !inputs.force_notify }}
         run: |
-          echo "No upstream change detected. Rolling issue not updated."
+          echo "No upstream change detected. No report written."
