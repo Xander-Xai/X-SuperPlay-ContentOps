@@ -10,8 +10,8 @@ translation_status: synced
 
 > 当前运行状态。仅经验证的事实。无展望，无过时声明。
 >
-> 最后验证：2026-11-02，```feat/106-easel-host-dual-line```
-> （基于 PR #101，并已合并 ```main```）。以下事实描述本分支；未合并层已标注。
+> 最后验证：2026-11-04，```feat/112-content-router-input```
+> （基于 ```main``` 的 `aee3fd4`）。以下事实描述本分支；未合并层已标注。
 > “分层状态”表之后的小节是历史里程碑记录，说明某项能力当时如何被证明，
 > 不代表当前状态。
 
@@ -24,7 +24,7 @@ translation_status: synced
 | Content Bundle 消费 + 双形式 handoff（`src/contentops/content_kernel/`） | 离线已实现；VIDEO 与 GRAPHIC_TEXT 计划，未发布 |
 | Easel 宿主门禁（`src/contentops/easel/`、`scripts/easel_host.py`） | 离线已实现；本机 `HOST_BLOCKED`（缺 FastAPI/uvicorn），写操作拒绝 |
 | 图文人工包（`src/contentops/graphic/`、`scripts/graphic_package.py`） | 离线已实现；停在 `AWAITING_MANUAL_REVIEW`；尚无已交付包 |
-| 内容路由、账号 DNA、工作流门禁、Brief/脚本/设计阶段 | **部分**（S1/S2 已在 `main`；S3–S4 待做） |
+| 内容路由、账号 DNA、工作流门禁、Brief/脚本/设计阶段 | **S1/S2 已在 `main`；S3/S4 已在 `feat/112-content-router-input` 实现（未合并）** |
 | 小红书 / X / 公众号轨道 | **未合并 / 权利受阻** |
 | MiniMax 语音、图片、H3 视频 | 已实现；已验证子集见下文 |
 | 生产就绪 | 所有轨道均为 **否** |
@@ -92,6 +92,22 @@ Owner 已决定把完整 Easel 系统作为生产底座（ADR-016）。本节只
 | 执行 | argv 固定，必须显式 `--execute`；每次执行写 `receipts/agent-driver-<step>.json` |
 | 宿主依赖 | 无 —— `host-status` 是只读步骤，不是依赖 |
 | 测试 | `python tests/test_agent_driver.py` —— 12/12 |
+
+## 内容路由与 brief 桥接（2026-11-04）
+
+| 属性 | 值 |
+|---|---|
+| 入口 | `HOTSPOT_DISCOVERY`（账号 DNA 规划并排序来源）或 `USER_TOPIC`（用户给的主题不会被替换）；入口 `scripts/router_e2e.py` |
+| 来源 | 只有 GitHub search 是服务端查询；13 个列表型来源（GitHub Trending、知乎、微博、掘金、V2EX、36氪、Hacker News、Product Hunt、IT之家、抖音、哔哩哔哩、百度、Solidot）在本地读取后过滤；本地 TrendRadar 数据库只读。不在账号 allowlist 上的来源不会被联系 |
+| 账号 DNA | `config/accounts/x-superplay-1024.json` 与 `x-superplay-future-intelligence.json`；每个关键词都注明取自 DNA 的哪个字段，`scripts/check_account_dna.py` 会让无法解析的引用失败 |
+| 选题 | 候选列表只是提案；状态机没有从 `CANDIDATES_READY` 绕过人直接出 brief 的边（`select` → `approve`） |
+| 草稿 | `scripts/brief_script.py` 只从已采集、已哈希的材料写 `script/lines.json`、`claim-map.json`、`storyboard.json`、`master.md`；材料不足是 `DRAFT_CONTENT_INSUFFICIENT`，绝不用转场填充 |
+| 桥接 | `scripts/brief_to_m5.py` 把已批准草稿转成 `script/script.json`、`script/claims.json` 与 `sources/source-refs.json`；每个 placement 必须有已登记素材，每条事实 claim 必须有明确权限，且引文必须真的出现在已保存文档中 |
+| 文案门 | M5 拒绝 final copy 未审或已失效的 brief 驱动项目（`00_brief/brief.json`）；没有 brief 的历史样例保持原路径 |
+| 调度 | `scripts/router_schedule.py run` / `status`；`scripts/router_observe.py --report --days 7` |
+| 测试 | `test_content_router.py`（61）、`test_hotspot_sources.py`（51）、`test_account_dna.py`（干净检出下 23）、`test_account_discovery.py`（23）、`test_script_draft.py`（13）、`test_source_quality.py`（16）、`test_account_route.py`（12）、`test_brief_to_m5.py`（10） |
+| 权限 | 对发布、provider 花费、批准或凭据均无权限；测试不联系任何真实来源 |
+| 未完成 | 尚未合并；没有真实 A/B 样片、没有采集、没有旁白、没有渲染 |
 
 ## Bundle 与双线 handoff（2026-11-02）
 

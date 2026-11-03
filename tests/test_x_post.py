@@ -701,7 +701,7 @@ def test_the_cli_refuses_an_unknown_account_and_a_missing_one():
         unknown = Path(temp) / "unknown"
         unknown.mkdir()
         (unknown / "project.yaml").write_text(
-            "slug: u\naccount_slug: x-superplay-1024\n", encoding="utf-8")
+            "slug: u\naccount_slug: x-superplay-no-such-account\n", encoding="utf-8")
         refused = _run([str(unknown), "--check", "--id", "x"])
         assert refused.returncode == 1, refused.stdout
         assert "ACCOUNT_DNA_MISSING" in (refused.stdout + refused.stderr)

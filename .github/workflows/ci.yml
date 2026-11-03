@@ -278,6 +278,35 @@ jobs:
       - name: Run source candidate tests
         run: python tests/test_source_candidates.py
 
+      # Slices S3/S4 of the content router: the account DNA that declares the
+      # sources and the pipeline, the hot-list sources, the router's two
+      # entrances (hot-spot discovery and user topic), the draft stage and the
+      # bridge that hands an approved draft to M5. Fixture-driven: no network,
+      # no provider, no publication.
+      - name: Run account DNA tests
+        run: python tests/test_account_dna.py
+
+      - name: Run account discovery tests
+        run: python tests/test_account_discovery.py
+
+      - name: Run hotspot source tests
+        run: python tests/test_hotspot_sources.py
+
+      - name: Run source quality tests
+        run: python tests/test_source_quality.py
+
+      - name: Run content router tests
+        run: python tests/test_content_router.py
+
+      - name: Run script draft tests
+        run: python tests/test_script_draft.py
+
+      - name: Run account route tests
+        run: python tests/test_account_route.py
+
+      - name: Run brief-to-M5 bridge tests
+        run: python tests/test_brief_to_m5.py
+
       - name: Run skill router capability regression tests
         run: python tests/test_skill_router_capabilities.py
 
