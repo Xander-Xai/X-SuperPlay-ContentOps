@@ -1,0 +1,21 @@
+{
+  "tool": "trendradar",
+  "repo": "https://github.com/sansan0/TrendRadar.git",
+  "tag": "v6.11.0",
+  "commit": "ceabb027fe9bbdafec59dbbfa12cb46c2ba256ce",
+  "checked_in_at": "2026-11-04",
+  "local_path": ".runtime/trendradar/v6.11.0",
+  "has_git_metadata": true,
+  "source_tree_verified": "2026-11-04",
+  "source_verification_method": "diff_against_shallow_clone_of_tag",
+  "local_config_delta": {
+    "file": "config/config.yaml",
+    "description": "notification.enabled, ai_analysis.enabled, ai_translation.enabled and report html set to false upstream-vs-local; the deployment runs as a pure API-free crawl feeding the ContentOps hotspots adapter",
+    "backup": "config/config.yaml.orig"
+  },
+  "consumed_by": [
+    "src/contentops/hotspots/adapters.py (TrendRadarSqliteAdapter, read-only)",
+    "scripts/router_schedule.py (_crawl drives python -m trendradar)"
+  ],
+  "notes": "Do NOT auto-upgrade. The adapter was written against the v6.11.0 SQLite schema; re-verify before any adoption of a newer tag."
+}

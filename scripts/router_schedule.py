@@ -54,7 +54,7 @@ from contentops.routing.router import ContentRouter  # noqa: E402
 from process_utils import hidden_run  # noqa: E402
 
 ACCOUNTS = ("x-superplay-1024", "x-superplay-future-intelligence")
-DEFAULT_TRENDRADAR_HOME = Path(r"D:\Software\sansan0\TrendRadar\v6.11.0")
+DEFAULT_TRENDRADAR_HOME = ROOT / ".runtime" / "trendradar" / "v6.11.0"
 TASK_NAME = "ContentOps-Router-Observe"
 EXIT_OK = 0
 EXIT_LOCKED = 3
