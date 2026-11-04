@@ -284,6 +284,12 @@ jobs:
       - name: Run source candidate tests
         run: python tests/test_source_candidates.py
 
+      # S4 stage policies: audience, duration, copy strategy, local platform
+      # limits, manual delivery manifest and visual routing. Stdlib only; no
+      # renderer, provider or platform call.
+      - name: Run S4 stage-policy tests
+        run: python tests/test_s4_stages.py
+
       # Slices S3/S4 of the content router: the account DNA that declares the
       # sources and the pipeline, the hot-list sources, the router's two
       # entrances (hot-spot discovery and user topic), the draft stage and the
