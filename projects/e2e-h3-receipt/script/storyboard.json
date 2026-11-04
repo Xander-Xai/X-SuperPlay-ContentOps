@@ -1,0 +1,51 @@
+{
+  "size": "1080x1920",
+  "image_motion": "static",
+  "pad_mode": "trim",
+  "shots": [
+    {
+      "shot_id": "version_evidence",
+      "caption": "公开 API，不是 CLI",
+      "narration": "H3 走的是官方文档的公开 API v2，不是官方 CLI，也不是旧版 v1 接口。",
+      "claim": "h3_transport",
+      "source": "projects/easel-review/sources/screenshots/12-easel-version-evidence.png",
+      "source_type": "real_screenshot",
+      "duration": 9.059,
+      "duration_s": 9.059,
+      "image": "projects/easel-review/sources/screenshots/12-easel-version-evidence.png",
+      "motion": "static"
+    },
+    {
+      "shot_id": "skill_layers",
+      "caption": "4 秒 / 768P / I2VA",
+      "narration": "这次请求是 4 秒、768P 的 I2VA 参考图任务，只创建了一次任务。",
+      "claim": "h3_request",
+      "source": "projects/easel-review/sources/screenshots/13-easel-skill-layers.png",
+      "source_type": "real_screenshot",
+      "duration": 7.989,
+      "duration_s": 7.989,
+      "image": "projects/easel-review/sources/screenshots/13-easel-skill-layers.png",
+      "motion": "static"
+    },
+    {
+      "shot_id": "skills_dir",
+      "caption": "不 vendored，只证明这一次",
+      "narration": "提示词仓库没有被 vendored 进来，所以回执只证明这一次调用，不证明能力已经稳定，只记录这一次的输入和输出，并附上回执。",
+      "claim": "h3_not_vendored",
+      "source": "projects/easel-review/sources/screenshots/14-easel-skills-dir.png",
+      "source_type": "real_screenshot",
+      "duration": 14.31,
+      "duration_s": 14.31,
+      "image": "projects/easel-review/sources/screenshots/14-easel-skills-dir.png",
+      "motion": "static"
+    }
+  ],
+  "narration": "projects/e2e-h3-receipt/assets/voice/narration.wav",
+  "subtitle": "projects/e2e-h3-receipt/assets/captions/default.srt",
+  "engine": "easel",
+  "voice_provider": "sapi/Microsoft Huihui Desktop (zh-CN)",
+  "generated_visuals": {
+    "count": 0,
+    "policy": "real_assets_only"
+  }
+}

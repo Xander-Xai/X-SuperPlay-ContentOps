@@ -1,0 +1,27 @@
+{
+  "schema": "contentops.m5-script/v1",
+  "language": "zh-CN",
+  "lines": [
+    {
+      "id": "l1",
+      "claim": "h3_transport",
+      "narration": "H3 走的是官方文档的公开 API v2，不是官方 CLI，也不是旧版 v1 接口。",
+      "caption": "公开 API，不是 CLI",
+      "asset_id": "version_evidence"
+    },
+    {
+      "id": "l2",
+      "claim": "h3_request",
+      "narration": "这次请求是 4 秒、768P 的 I2VA 参考图任务，只创建了一次任务。",
+      "caption": "4 秒 / 768P / I2VA",
+      "asset_id": "skill_layers"
+    },
+    {
+      "id": "l3",
+      "claim": "h3_not_vendored",
+      "narration": "提示词仓库没有被 vendored 进来，所以回执只证明这一次调用，不证明能力已经稳定，只记录这一次的输入和输出，并附上回执。",
+      "caption": "不 vendored，只证明这一次",
+      "asset_id": "skills_dir"
+    }
+  ]
+}

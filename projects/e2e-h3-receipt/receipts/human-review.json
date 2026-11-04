@@ -1,0 +1,19 @@
+{
+  "project": "projects/e2e-h3-receipt",
+  "video": "projects/e2e-h3-receipt/final/e2e-h3-receipt.mp4",
+  "engine": "easel",
+  "voice_quality": "windows_sapi_offline",
+  "bundle_id": null,
+  "bundle_sha256": null,
+  "production_ready": false,
+  "state": "PENDING_FOUNDER_REVIEW",
+  "auto_qc_result": "PASS",
+  "auto_qc_checks": 22,
+  "auto_qc_fails": [],
+  "auto_qc_warns": [],
+  "reviewer": null,
+  "reviewed_at": null,
+  "scores": null,
+  "decision": null,
+  "note": "scores are null until a human fills them; this file is not an approval"
+}

@@ -1,0 +1,29 @@
+{
+  "schema": "contentops.m5-sources/v1",
+  "artifacts": [
+    {
+      "id": "h3_receipt",
+      "source_type": "experiment_receipt",
+      "title": "minimax-h3-i2va-reference-2026-10-05.sanitized.json — 真实 H3 I2VA 回执",
+      "path": "research/providers/receipts/minimax-h3-i2va-reference-2026-10-05.sanitized.json",
+      "sha256": "1fe23545156bd1cd4cc6e62f9a28109946eb879385a03e887012e090e4860b08",
+      "bytes": 9456,
+      "permission": "CREATED_BY_OWNER",
+      "captured_at": "2026-11-04T01:36:27Z",
+      "evidence_capable": true,
+      "notes": ""
+    },
+    {
+      "id": "h3_report",
+      "source_type": "research_report",
+      "title": "minimax-h3-official-reality.md — 官方 API 与仓库边界",
+      "path": "research/providers/minimax-h3-official-reality.md",
+      "sha256": "3030a5db6fe51e9f3251bf4cca387dffb5430ce73b02b63d01e5fc3ca173ed08",
+      "bytes": 9627,
+      "permission": "CREATED_BY_OWNER",
+      "captured_at": "2026-11-04T01:36:27Z",
+      "evidence_capable": true,
+      "notes": ""
+    }
+  ]
+}

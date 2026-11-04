@@ -1,0 +1,27 @@
+{
+  "schema": "contentops.m5-script/v1",
+  "language": "zh-CN",
+  "lines": [
+    {
+      "id": "l1",
+      "claim": "voice_refused",
+      "narration": "这次 voice clone 请求只发了一次，被 2061 拒绝，没有自动重试。",
+      "caption": "一次请求，2061 拒绝",
+      "asset_id": "version_evidence"
+    },
+    {
+      "id": "l2",
+      "claim": "plan_coverage",
+      "narration": "2061 是套餐覆盖问题，不是权限或验证问题，也不是账号被封。",
+      "caption": "套餐覆盖，不是权限",
+      "asset_id": "skill_layers"
+    },
+    {
+      "id": "l3",
+      "claim": "no_rights_sample",
+      "narration": "当前没有权利清晰的人声样本，所以没有自动重试，也没有把原始 voice_id 写进回执，后续要重新走一次人工授权，并附上回执。",
+      "caption": "没有清权样本，不重试",
+      "asset_id": "skills_dir"
+    }
+  ]
+}
