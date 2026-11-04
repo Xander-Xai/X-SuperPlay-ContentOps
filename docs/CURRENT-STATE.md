@@ -56,6 +56,24 @@
 | Provenance | `runtime/easel-runtime.json` |
 | Upstream stable | v0.3.0 (2026-10-12) — **not adopted**: 158 commits, skills moved from `skills/openclaw/` to `skills/builtin/`, `assemble.py` changed, and the tag was force-replaced upstream |
 
+## TrendRadar Runtime (2026-11-04)
+
+| Property | Value |
+|---|---|
+| Version | v6.11.0 |
+| Commit | `ceabb027fe9bbdafec59dbbfa12cb46c2ba256ce` |
+| Repo | `https://github.com/sansan0/TrendRadar` |
+| Path | `.runtime/trendradar/v6.11.0/` (gitignored, outside the repository) |
+| Acquisition | git clone with full `.git` metadata, checked out on the pinned tag |
+| Verified | 2026-11-04: the source tree was diffed against a fresh shallow clone of tag `v6.11.0` — identical except the local config delta below |
+| Local config delta | `config/config.yaml`: notification, AI analysis, AI translation and HTML report all off (`config.yaml.orig` kept); the deployment runs as a pure API-free crawl whose output feeds the hotspots adapter |
+| Consumed by | `src/contentops/hotspots/adapters.py` (`TrendRadarSqliteAdapter`, read-only) and `scripts/router_schedule.py` (drives `python -m trendradar` through the vendored `.venv`) |
+| Run verified | 2026-11-04: one real crawl from the new home exited 0 in 70.8 s and wrote `output/news/2026-11-04.db` (255 rows); the adapter reads it |
+| Lock file | `runtime/trendradar.lock.json` |
+| Known defect | TrendRadar's own CLI crashes on a GBK console when it prints emoji; `router_schedule._crawl` always injects `PYTHONUTF8=1`, so the scheduled path is unaffected |
+| Upgrade stance | do NOT auto-upgrade (pin note); the SQLite adapter was written against the v6.11.0 schema — re-verify before adopting a newer tag |
+| Merged in | PR #129 |
+
 ## Easel Host (2026-11-02)
 
 The Owner adopted the full Easel system as the production base (ADR-016). This
@@ -102,7 +120,7 @@ a verified integration yet.
 | Draft | `scripts/brief_script.py` writes `script/lines.json`, `claim-map.json`, `storyboard.json`, `master.md` from collected, hashed material only; a thin pack is `DRAFT_CONTENT_INSUFFICIENT`, never padded |
 | Bridge | `scripts/brief_to_m5.py` converts the approved draft into `script/script.json`, `script/claims.json` and `sources/source-refs.json`; every placement needs a registered asset, every factual claim needs a stated permission and a quote that occurs in the saved document |
 | Copy gate | M5 refuses a brief-driven project (`00_brief/brief.json`) whose final copy is unreviewed or stale; a legacy sample without a brief keeps its historical path |
-| Schedule | `scripts/router_schedule.py run` / `status`; `scripts/router_observe.py --report --days 7` |
+| Schedule | `scripts/router_schedule.py run` / `status`; `scripts/router_observe.py --report --days 7`; the crawl home defaults to the pinned TrendRadar runtime (`.runtime/trendradar/v6.11.0/`), overridable by `TRENDRADAR_HOME` or `--trendradar-db` |
 | Tests | `test_content_router.py` (61), `test_hotspot_sources.py` (51), `test_account_dna.py` (23 on a clean checkout), `test_account_discovery.py` (23), `test_script_draft.py` (13), `test_source_quality.py` (16), `test_account_route.py` (12), `test_brief_to_m5.py` (10) |
 | Authority | none over publication, provider spend, approval or credentials; the tests contact no live source |
 | Not done | no real A/B sample, no capture, no narration, no render (the layer itself merged in #114) |

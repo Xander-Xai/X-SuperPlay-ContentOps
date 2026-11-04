@@ -61,6 +61,24 @@ translation_status: synced
 | 来源记录 | ```runtime/easel-runtime.json``` |
 | 上游稳定版 | v0.3.0（2026-10-12）—— **未采用**：158 个提交，Skill 从 ```skills/openclaw/``` 迁至 ```skills/builtin/```，```assemble.py``` 变更，且上游强制替换过该 tag |
 
+## TrendRadar 运行时（2026-11-04）
+
+| 属性 | 值 |
+|---|---|
+| 版本 | v6.11.0 |
+| Commit | `ceabb027fe9bbdafec59dbbfa12cb46c2ba256ce` |
+| 仓库 | `https://github.com/sansan0/TrendRadar` |
+| 路径 | `.runtime/trendradar/v6.11.0/`（被 gitignore，位于仓库之外） |
+| 获取方式 | git clone，保留完整 `.git` 元数据，检出固定 tag |
+| 验证 | 2026-11-04：源码树与 tag `v6.11.0` 的新 shallow clone 逐字节 diff —— 除下方本地 config 差异外完全一致 |
+| 本地 config 差异 | `config/config.yaml`：通知、AI 分析、AI 翻译、HTML 报告全部关闭（保留 `config.yaml.orig`）；该部署只做无 API 的纯抓取，产出供 hotspots adapter 读取 |
+| 消费方 | `src/contentops/hotspots/adapters.py`（`TrendRadarSqliteAdapter`，只读）与 `scripts/router_schedule.py`（通过自带 `.venv` 驱动 `python -m trendradar`） |
+| 运行验证 | 2026-11-04：从新位置真实爬取一次，exit 0，70.8 s，写出 `output/news/2026-11-04.db`（255 行），adapter 读取正常 |
+| 锁文件 | `runtime/trendradar.lock.json` |
+| 已知缺陷 | TrendRadar 自身 CLI 在 GBK 控制台打印 emoji 时会崩溃；`router_schedule._crawl` 始终注入 `PYTHONUTF8=1`，调度路径不受影响 |
+| 升级口径 | 不要自动升级（pin 注记）；SQLite adapter 是按 v6.11.0 的 schema 写的 —— 采用新 tag 前必须重新验证 |
+| 合入于 | PR #129 |
+
 ## Easel 宿主（2026-11-02）
 
 Owner 已决定把完整 Easel 系统作为生产底座（ADR-016）。本节只记录实际运行过的内容；
@@ -106,7 +124,7 @@ Owner 已决定把完整 Easel 系统作为生产底座（ADR-016）。本节只
 | 草稿 | `scripts/brief_script.py` 只从已采集、已哈希的材料写 `script/lines.json`、`claim-map.json`、`storyboard.json`、`master.md`；材料不足是 `DRAFT_CONTENT_INSUFFICIENT`，绝不用转场填充 |
 | 桥接 | `scripts/brief_to_m5.py` 把已批准草稿转成 `script/script.json`、`script/claims.json` 与 `sources/source-refs.json`；每个 placement 必须有已登记素材，每条事实 claim 必须有明确权限，且引文必须真的出现在已保存文档中 |
 | 文案门 | M5 拒绝 final copy 未审或已失效的 brief 驱动项目（`00_brief/brief.json`）；没有 brief 的历史样例保持原路径 |
-| 调度 | `scripts/router_schedule.py run` / `status`；`scripts/router_observe.py --report --days 7` |
+| 调度 | `scripts/router_schedule.py run` / `status`；`scripts/router_observe.py --report --days 7`；抓取目录默认指向已固定的 TrendRadar 运行时（`.runtime/trendradar/v6.11.0/`），可用 `TRENDRADAR_HOME` 或 `--trendradar-db` 覆盖 |
 | 测试 | `test_content_router.py`（61）、`test_hotspot_sources.py`（51）、`test_account_dna.py`（干净检出下 23）、`test_account_discovery.py`（23）、`test_script_draft.py`（13）、`test_source_quality.py`（16）、`test_account_route.py`（12）、`test_brief_to_m5.py`（10） |
 | 权限 | 对发布、provider 花费、批准或凭据均无权限；测试不联系任何真实来源 |
 | 未完成 | 没有真实 A/B 样片、没有采集、没有旁白、没有渲染（该层本身已在 #114 合并） |

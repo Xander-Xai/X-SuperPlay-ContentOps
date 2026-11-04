@@ -30,6 +30,7 @@
 ## Upstream
 
 - [UPSTREAM-EASEL.md](UPSTREAM-EASEL.md) — Easel pin policy, upgrade process, compatibility matrix
+- TrendRadar pin: `runtime/trendradar.lock.json` (v6.11.0, commit `ceabb027`), vendored at `.runtime/trendradar/v6.11.0/`, recorded in `docs/CURRENT-STATE.md` — no dedicated policy doc yet
 
 ## Milestone plans
 
