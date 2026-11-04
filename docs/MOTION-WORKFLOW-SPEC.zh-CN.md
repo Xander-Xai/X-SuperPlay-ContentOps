@@ -31,13 +31,14 @@ translation_status: synced
 | S4 阶段策略 | `src/contentops/workflow/{audience,duration,copy_strategy,platform,delivery,visual_route}.py` | 受众/时长/策略/平台限制、人工交付清单与视觉路由;不授予发布权 |
 | 图文工作流适配器 | `src/contentops/gzh/runtime.py`、`src/contentops/xhs/runtime.py`、`scripts/graphic_workflow.py` | 定位/哈希校验/描述本地安装的 GZH 或 XHS 工作流;GRAPHIC_TEXT 人工包表面;不执行、不拟稿、不发布 |
 
-### 图文工作流(GZH / XHS)
+### 图文与编辑部工作流(GZH / XHS / X)
 
-GZH 与 XHS 工作流由操作者安装在公开仓库之外,仓库不 vendored 它们。
-`scripts/graphic_workflow.py` 是唯一入口(`status`、`verify`、`plan`,
-`--workflow gzh|xhs`):校验锁中的字节与身份,然后描述操作者步骤。它绝不执行
-工作流步骤、不启动 Easel host、不拟稿、不发布。GRAPHIC_TEXT 表面是人工包,
-停在 `AWAITING_MANUAL_REVIEW`。
+GZH 与 XHS 工作流由操作者安装在公开仓库之外,仓库不 vendored 它们。X 是本仓库
+自己的、仅人工的编辑部门禁。`scripts/graphic_workflow.py` 是唯一入口
+(`status`、`verify`、`plan`,`--workflow gzh|xhs|x`):校验工作区或锁,然后描述
+操作者步骤。它绝不执行工作流步骤、不调用平台 API、不启动 Easel host、不拟稿、
+不发布。GZH/XHS 使用 GRAPHIC_TEXT 人工包,停在 `AWAITING_MANUAL_REVIEW`;X 使用
+人工发帖包。
 
 权利:XHS 根目录为 Apache-2.0,但有一个 AGPL-3.0 skill 必须排除;GZH 的 50 个
 skill 中有 45 个无许可,在清权前只允许本地内部使用。通过校验不等于再分发许可。
@@ -46,6 +47,8 @@ skill 中有 45 个无许可,在清权前只允许本地内部使用。通过校
 
 ```bash
 python scripts/check_motion_sample.py <sample.mp4> [--sha256 <hex>]
+python scripts/graphic_workflow.py status --workflow gzh|xhs|x
+python scripts/graphic_workflow.py plan   --workflow x --json
 python tests/test_motion_sample.py
 python tests/test_motion_handoff.py
 python tests/test_real_source_duration.py

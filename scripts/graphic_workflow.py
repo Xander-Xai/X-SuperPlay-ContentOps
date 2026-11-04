@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
-"""One entry point for the GZH and XHS graphic workflows: locate, verify, describe.
+"""One entry point for the GZH, XHS and X editorial workflows: verify and describe.
 
 Usage:
     python scripts/graphic_workflow.py status --workflow gzh
     python scripts/graphic_workflow.py status --workflow xhs
     python scripts/graphic_workflow.py verify --workflow xhs --root D:/Software/XHS/xhs_未来智能
-    python scripts/graphic_workflow.py plan --workflow gzh --json
+    python scripts/graphic_workflow.py plan --workflow x --json
 
-Both workflows are installed by the operator outside this repository and are
-never copied into it. This command reads a verified root, verifies every locked
-byte, and prints the operator operations. It never executes a workflow step,
-starts the Easel host, drafts, or publishes.
+GZH and XHS are installed by the operator outside this repository and are never
+copied into it; X is this repository's own manual-only editorial gate. The
+command verifies the workspace and prints the operator operations. It never
+executes a workflow step, calls a platform API, starts the Easel host, drafts,
+or publishes.
+
+For ``x``, ``--root`` means the repository root (default: this checkout) and
+``--account`` / ``--project`` override the default account and project paths.
 
 Exit codes: 0 = verified/plan printed, 4 = BLOCKED.
 """
@@ -31,6 +35,8 @@ def _module(workflow: str):
         from contentops.gzh import runtime as module
     elif workflow == "xhs":
         from contentops.xhs import runtime as module
+    elif workflow == "x":
+        from contentops.x import runtime as module
     else:  # pragma: no cover - argparse restricts the value
         raise SystemExit(f"unknown workflow {workflow!r}")
     return module
@@ -39,21 +45,39 @@ def _module(workflow: str):
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("command", choices=("status", "verify", "plan"))
-    parser.add_argument("--workflow", choices=("gzh", "xhs"), required=True)
+    parser.add_argument("--workflow", choices=("gzh", "xhs", "x"), required=True)
     parser.add_argument("--root", default=None,
-                        help="workflow root (default: CONTENTOPS_GZH_ROOT / CONTENTOPS_XHS_ROOT)")
+                        help="workflow root for gzh/xhs, or the repository root for x")
     parser.add_argument("--lock", default=None,
                         help="trusted lock (default: runtime/<workflow>-runtime.lock.json)")
+    parser.add_argument("--account", default=None, help="x only: account JSON path")
+    parser.add_argument("--project", default=None, help="x only: project directory")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
 
     module = _module(args.workflow)
-    blocked = module.GzhBlocked if args.workflow == "gzh" else module.XhsBlocked
+    if args.workflow == "gzh":
+        blocked = module.GzhBlocked
+    elif args.workflow == "xhs":
+        blocked = module.XhsBlocked
+    else:
+        blocked = module.XBlocked
+
     lock_path = Path(args.lock) if args.lock else None
     root = Path(args.root) if args.root else None
 
     try:
-        if args.command == "status":
+        if args.workflow == "x":
+            repo_root = root or ROOT
+            account = Path(args.account) if args.account else None
+            project = Path(args.project) if args.project else None
+            if args.command == "status":
+                result = module.status(repo_root=repo_root, account=account, project=project)
+            elif args.command == "verify":
+                result = module.verify(repo_root=repo_root, account=account, project=project)
+            else:
+                result = module.plan(repo_root=repo_root, account=account, project=project)
+        elif args.command == "status":
             result = module.status(root, lock_path=lock_path, repo_root=ROOT)
         elif args.command == "verify":
             result = module.verify(module.locate_root(root, repo_root=ROOT),
