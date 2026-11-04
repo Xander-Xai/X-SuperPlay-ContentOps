@@ -36,6 +36,7 @@ translation_status: synced
 ## 上游
 
 - [UPSTREAM-EASEL.md](UPSTREAM-EASEL.md) — Easel 固定版本策略
+- TrendRadar 固定版本：`runtime/trendradar.lock.json`（v6.11.0，commit `ceabb027`），位于 `.runtime/trendradar/v6.11.0/`，记录在 `docs/CURRENT-STATE.md` —— 暂无独立策略文档
 
 ## 里程碑计划
 
