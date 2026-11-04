@@ -14,17 +14,16 @@ Related: [ADR-006](adr/ADR-006-upstream-upgrade-policy.md), [ADR-015](adr/ADR-01
 
 ## Branch and evidence status
 
-This document describes the **pinned runtime plus this branch**, not `main`.
+This document describes the **pinned runtime plus `main`**.
 
-| Fact | Value (verified 2026-11-02) |
+| Fact | Value (verified 2026-11-04) |
 |---|---|
-| Current branch | `feat/106-easel-host-dual-line` |
-| `main` | `357a84e` — does **not** contain ADR-016, `config/registry/platforms.json`, `src/contentops/content_kernel/` or `src/contentops/graphic/` |
-| PR #101 | **OPEN**, not merged; carries the platform registry and Bundle code this branch reuses |
+| Current branch | `main` at `218c91d` |
+| `main` | contains ADR-016, `config/registry/platforms.json`, `src/contentops/content_kernel/` and `src/contentops/graphic/` |
+| PR #101 | **merged** 2026-11-02 (`92c41f4`); it carries the platform registry and Bundle code this document inventories |
 | ADR-016 approval | The ADR records `Accepted — Owner authorization, 2026-11-02` (commit `8cc4c07`). That is the approval evidence in this repository; no separate approval artifact is linked here. If one is required, it is an open Owner decision. |
 
-A capability described as present is present in `.runtime/easel/` and on this
-branch. It is not a statement about `main`.
+A capability described as present is present in `.runtime/easel/` and on `main`.
 
 ## Why this file exists
 

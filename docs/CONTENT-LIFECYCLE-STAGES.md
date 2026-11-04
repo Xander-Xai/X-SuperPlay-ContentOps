@@ -6,7 +6,7 @@
 > A stage may have no executable code. It then stays a **placeholder** and must
 > not emit a success receipt, a publication record or a metric.
 
-Status: reference — 2026-11-02
+Status: reference — 2026-11-04
 Related: [ARCHITECTURE.md](ARCHITECTURE.md), [PRD.md](PRD.md),
 [ADR-015](adr/ADR-015-platform-placeholders-and-content-bundle.md),
 [ADR-016](adr/ADR-016-easel-host-adoption.md),
@@ -15,11 +15,10 @@ Related: [ARCHITECTURE.md](ARCHITECTURE.md), [PRD.md](PRD.md),
 
 ## Branch status (read this first)
 
-Every `implemented` in the table below means **on this branch**
-(`feat/106-easel-host-dual-line`), not on `main`. `main` (`357a84e`) does not
-contain: ADR-016, `config/registry/platforms.json`, `src/contentops/content_kernel/`
-or `src/contentops/graphic/`. Those land through PR #101 and this branch's PR,
-both **still OPEN** — anything merged later changes the table.
+Every `implemented` in the table below means **on `main`** (`218c91d`), not on a
+parallel branch. The router, platform registry, Bundle kernel and graphic package
+landed through PRs #101, #114 and #118. Rights, not code, is what blocks the
+platform tracks: every XHS/X/GZH adapter on `main` verifies and never executes.
 
 ## Position
 
@@ -50,14 +49,14 @@ one's status.
 
 | Stage | Input | Output | Owner | Status | Adapter / code | Receipt | Blocker |
 |---|---|---|---|---|---|---|---|
-| `DISCOVERY` | Strategy direction, trends | topic candidates | Strategy + ContentOps | `unmerged` | routing/hotspots slices on `feat/content-router` | none | no code on this branch |
-| `RESEARCH` | topic, sources | `SourceArtifact` set | ContentOps | `partial` | M5 `src/contentops/evidence/`; `x-superplay-source-research` unmerged | source records | router front-end unmerged |
-| `BRIEF` | topic, audience | brief | ContentOps | `partial` | graphic contract `brief` stage; router `workflow/brief.py` unmerged | stage artifact | two implementations not yet unified |
-| `CONTENT_BUNDLE` | Strategy Bundle | validated Bundle + digest | Strategy owns; ContentOps consumes | `implemented` (this branch; registry+kernel land via PR #101) | `src/contentops/content_kernel/bundle.py`, `scripts/content_bundle.py` | validation result / handoff | Bundle is a plan, never a publication; PR #101 unmerged |
+| `DISCOVERY` | Strategy direction, trends | topic candidates | Strategy + ContentOps | `implemented` | `src/contentops/routing/` (`user_topic_route`, `hotspot_route`), `src/contentops/hotspots/` | route result | hot-list collection needs network and credentials; offline runs are `BLOCKED` |
+| `RESEARCH` | topic, sources | `SourceArtifact` set | ContentOps | `partial` | M5 `src/contentops/evidence/`; `x-superplay-source-research` is not declared on `main` | source records | source research still starts from manual `SourceArtifact` input |
+| `BRIEF` | topic, audience | brief | ContentOps | `implemented` | router `src/contentops/routing/brief.py`; graphic contract `brief` stage | `BRIEF_READY` result | an automation approval is refused by the brief→M5 bridge; a human must approve |
+| `CONTENT_BUNDLE` | Strategy Bundle | validated Bundle + digest | Strategy owns; ContentOps consumes | `implemented` (on `main`; PR #101) | `src/contentops/content_kernel/bundle.py`, `scripts/content_bundle.py` | validation result / handoff | Bundle is a plan, never a publication |
 | `PRODUCTION` (VIDEO) | Bundle, claims | video master | ContentOps | `implemented` | M5 `scripts/m5_production.py`, `run_v1.py`, `assemble_easel.py` | `build-*.json`, `runtime-receipt.md` | voice quality; human review pending |
 | `PRODUCTION` (GRAPHIC_TEXT) | Bundle, images | manual package | ContentOps | `implemented` | `src/contentops/graphic/package.py`, `scripts/graphic_package.py` | `graphic-package.json` | terminal `AWAITING_MANUAL_REVIEW` |
 | `QUALITY_REVIEW` | produced artifacts | QC + human verdict | ContentOps + human | `implemented` | `scripts/qc_video.py`, `qc_visual.py`, `src/contentops/media/quality_gate.py`, `workflow/gate.py` | `qc-report.json`, `human-review.json` | human review never auto-approved |
-| `PLATFORM_PACKAGING` | reviewed package | platform draft | ContentOps | `partial` | X manual gate only (`src/contentops/publish/`) | X package receipt | 8 of 9 platforms `PLANNED` |
+| `PLATFORM_PACKAGING` | reviewed package | platform draft | ContentOps | `partial` | X manual gate only (`src/contentops/publish/`) | X package receipt | 9 of 10 registry rows remain `PLANNED`; X is the sole `INTEGRATED` row |
 | `PUBLISH_HANDOFF` | draft | real URL + delivery receipt | human | `partial` | manual only; `x_post.py --mark-published` records a URL a person already has (as `REPORTED_PUBLISHED`) | `AWAITING_MANUAL_PUBLISH` / `REPORTED_PUBLISHED` | no automatic publication; no external verification path yet |
 | `METRICS_COLLECTION` | delivery receipt | metric snapshot | ContentOps | `planned` | none | none | `metrics: NONE`; not implemented |
 | `ANALYSIS` | metric snapshots | findings | ContentOps | `partial` | X organic-growth advisory (`x_organic_growth.py`), offline | advisory JSON | general analysis not implemented |

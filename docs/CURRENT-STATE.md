@@ -4,23 +4,24 @@
 
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
-> Last verified: 2026-11-04 on `feat/112-content-router-input`
-> (stacked on `main` at `aee3fd4`). Facts below describe this branch;
-> unmerged layers are labelled as such.
+> Last verified: 2026-11-04 on `main` at `218c91d` (PR #130).
+> Facts below describe `main`; deferred or rights-blocked work is labelled as such.
 > Sections below the "Layer status" table are historical milestone records;
 > they describe how a capability was proven, not what is current.
 
-## Layer status (2026-11-02)
+## Layer status (2026-11-04)
 
 | Layer | Status |
 |---|---|
 | M5 evidence chain, media contracts, QC, media-use adapter, skill router/authorization | implemented |
-| Platform registry (`config/registry/platforms.json`, `src/contentops/platforms/`) | implemented on PR #101; 10 local entries for 9 Strategy platforms, one `INTEGRATED` (`x`), nine `PLANNED` |
+| Platform registry (`config/registry/platforms.json`, `src/contentops/platforms/`) | implemented on `main` (PR #101); 10 local entries for 9 Strategy platforms, one `INTEGRATED` (`x`), nine `PLANNED` |
 | Content Bundle consumption + two-format handoff (`src/contentops/content_kernel/`) | implemented offline; VIDEO and GRAPHIC_TEXT plans, no publication |
-| Easel host guard (`src/contentops/easel/`, `scripts/easel_host.py`) | implemented offline; `HOST_BLOCKED` on this machine (FastAPI/uvicorn absent), mutations denied |
+| Easel host guard (`src/contentops/easel/`, `scripts/easel_host.py`) | implemented offline (PR #108); `HOST_BLOCKED` on this machine (FastAPI/uvicorn absent), mutations denied |
 | Graphic manual package (`src/contentops/graphic/`, `scripts/graphic_package.py`) | implemented offline; stops at `AWAITING_MANUAL_REVIEW`; no delivered package yet |
-| Content router, account DNA, brief/script/design stages | **S1/S2 on `main`; S3/S4 implemented on `feat/112-content-router-input` (not merged)** |
-| XHS / X / GZH platform tracks | **unmerged / rights-blocked** |
+| Content router, account DNA, brief/script/design stages | S1–S4 on `main` (PRs #114, #118); brief→M5 bridge merged, still gate-bound to a human-approved brief |
+| XHS / X / GZH platform tracks | adapters merged that verify but never execute (PRs #121, #125, #127); rights unresolved; no execution or publication |
+| Motion workflow (sample gate, handoff, spec) | implemented on `main` (PRs #122–#124) |
+| M5 E2E runs | three real-source runs on `main` (#117, #119), all `PENDING_FOUNDER_REVIEW` |
 | MiniMax speech, image, H3 video | implemented; verified subsets recorded below |
 | Production ready | **false** for every track |
 | Publication count | **0** — no delivery package has a real platform URL |
@@ -30,13 +31,14 @@
 | Property | Value |
 |---|---|
 | Default branch | `main` — protected |
-| This branch | `feat/106-easel-host-dual-line` — stacked on PR #101, not merged |
-| Main protection | **PROTECTED** — required status checks + PR + no force push + no deletion + linear history |
+| `main` | `218c91d` |
+| Open pull requests at verification | none before PR #131 was opened for this reconciliation |
+| Branches at verification | local and remote both carry `main` only; no non-`main` branch exists |
+| Main protection | **PROTECTED** — required status checks + PR + no force push + no deletion + linear history (admin enforcement off) |
 | Required checks | `Tests (ubuntu-latest)`, `Tests (windows-latest)`, `Repo policy checks` |
 | Branch strategy | Issue-scoped short-lived branches, squash merge, auto-delete on merge |
-| Current branch reality | Only `main` is persistent. Unmerged work, including this branch and PR #101/#105, is not part of the system |
-| What `main` actually contains | The M5 media-use integration, rights gate, skill router and skill-execution authorization (PR #89), plus the X post gate and growth→editorial gate (PRs #87, #88) |
-| Consequence | Docs describe this branch and label `main` separately. PR #101 (platform registry/Bundle) and #105 (R4-A copy review) are open; this branch reuses #101 and does not treat either as approved |
+| Recent merges | #129/#130 TrendRadar runtime tier; #127 X editorial workflow; #125 GZH/XHS graphic adapters; #121 GZH adapter; #118 S4 stages; #117/#119 M5 E2E runs |
+| Consequence | `main` is the only persistent branch; descoped work lives in [DEFERRED-WORK.md](DEFERRED-WORK.md) and open questions stay on their issues |
 
 ## Easel Runtime
 
@@ -284,9 +286,9 @@ See [TEST-PLAN.md](TEST-PLAN.md) for the full inventory.
 3. media-use runtime lock — a clean checkout (and this host today) resolves
    `BLOCKED / MISSING_RUNTIME`. The approved baseline exists; a host lock must be
    generated and trusted before the adapter can run.
-4. Unmerged content layer — account routing, workflow gates, brief/script/design
-   stages, XHS, X and GZH are not on this branch. They are prerequisites for the
-   five `x-superplay-*` skills, not available capabilities.
+4. Rights — the XHS, X and GZH adapters on `main` verify but never execute.
+   The vendored trees are not redistributed, and rights clearance (Issues #51,
+   #56) is the remaining blocker rather than missing code.
 5. Documentation convergence — this document was restructured on 2026-11-01;
    PRD, DEVELOPMENT-PLAN and TEST-PLAN were updated in the same pass. The
    remaining requirements are in
@@ -673,8 +675,8 @@ and what remains blocked.
 | Legacy M5 | unchanged — `scripts/m5_production.py` does not import the router; a test asserts it |
 | VIDEO track | discovery-only until a catalog root exists on the host |
 | GZH track | `BLOCKED` — vendored third-party track, rights unverified, `vendor/` is gitignored |
-| X track | `BLOCKED` — platform track unmerged (`feat/47-x-platform-track`, PR #50) |
-| XHS track | `BLOCKED` — migration unmerged and under rights review; no catalog root |
+| X track | `BLOCKED` — verify-only adapter on `main` (PR #127); rights and publication stay manual |
+| XHS track | `BLOCKED` — verify-only adapter on `main` (PR #125); rights review open as Issue #51 |
 | Tests | `tests/test_skill_doctor.py`, `tests/test_skill_router_capabilities.py`; both registered in CI |
 | Pull request | Merged [#77](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/77) |
 

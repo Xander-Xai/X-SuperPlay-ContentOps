@@ -141,12 +141,12 @@ Owner 于 2026-11-02 决定把完整 Easel 系统作为生产底座，取代 ADR
 |---|---|---|
 | M5 证据链、媒体、QC、Skill 路由/授权 | ```main```（PR #89） | 已实现 |
 | X 发帖门禁、growth→编辑门禁 | ```main```（PR #87、#88） | 已实现 |
-| 账号感知内容路由、工作流门禁、Brief/脚本/设计阶段 | `main`（S1 #93、S2 #95）+ Issue #94 承载 S3–S4 | **部分** — 账号/Brief 前端与阶段门禁已在 `main`；其余阶段按切片推进 |
-| 平台注册表 + Content Bundle 消费 | PR #101 / Issue #100 | **待审**；复用，不重复造 |
-| Easel 宿主门禁、Bundle handoff、图文包 | Issue #106（本分支） | **离线已实现**；依赖与安全审查前宿主保持 `HOST_BLOCKED` |
-| 小红书八步工作流 | `feat/xhs-fa-migration` | **未合并** |
-| X 平台轨道（迁移记录、提示词引用、表格门禁） | Issue #47（PR #50 已因被取代关闭） | **未合并** |
-| 公众号十阶段 vendored 工作流 | 本地 `vendor/` + Issue #56 | **未合并 / 权利受阻** |
+| 账号感知内容路由、工作流门禁、Brief/脚本/设计阶段 | `main`（S1 #93、S2 #95、路由 #114、S4 #118） | **已实现** —— brief→M5 桥仍绑定人工批准的 brief |
+| 平台注册表 + Content Bundle 消费 | `main`（PR #101） | **已实现**；一个注册表、一个 Bundle 消费方 |
+| Easel 宿主门禁、Bundle handoff、图文包 | `main`（PR #107、#108） | **离线已实现**；依赖与安全审查前宿主保持 `HOST_BLOCKED` |
+| 小红书八步工作流 | `main` 上的只校验适配器（PR #125） | **只校验**；权利未解决，不执行 |
+| X 平台轨道（迁移记录、提示词引用、表格门禁） | `main`（PR #127） | **已实现**；发布仍为人工 |
+| 公众号十阶段 vendored 工作流 | `main` 上的只校验适配器（PR #121） | **只校验 / 权利受阻**；vendored 树不在本仓库分发 |
 
 合并顺序见
 [CONVERGENCE-REQUIREMENTS-2026-11-01.md](CONVERGENCE-REQUIREMENTS-2026-11-01.md)。
@@ -204,10 +204,9 @@ projects/<slug>/
 └── receipts/             ← 构建、QC、运行时、人工审核凭证
 ```
 
-`workflow/` 包含已合并的 S1/S2 合约与门禁，以及本分支的图文合约。
-`platforms/` 和 `content_kernel/` 来自 PR #101，本分支复用而不重复。
-`routing/`、`quality/`、`script/`、`hotspots/`、`optimization/` 仍是 Issue #94
-的未完成切片；目录存在不等于其阶段已接通。
+`workflow/` 包含已合并的 S1/S2 合约与门禁，以及图文合约。
+`platforms/`、`content_kernel/`、`routing/` 与 `graphic/` 已通过 PR #101、#114、#118
+进入 ```main```。目录存在不等于其阶段已接通。
 
 ## 流水线
 
@@ -287,7 +286,7 @@ src/contentops/content_kernel/bundle.py     ← 仅做消费侧校验
 scripts/content_bundle.py                   ← check | summary
 ```
 
-**平台注册表描述的是本分支，不是组合策略。** 一行说明这里有什么代码、能产出什么、被什么阻断。
+**平台注册表描述的是 ```main```，不是组合策略。** 一行说明这里有什么代码、能产出什么、被什么阻断。
 `PLANNED` 表示没有平台代码；`INTEGRATED` 表示有代码且离线测试通过；非 `PLANNED` 行必须带证据。
 状态是对证据的主张，不会因为账号存在、渲染通过或配置写好而升级。
 GitHub 是证据基础设施，用文档记录而不登记为行，因为它没有可声明的流水线、账号或发布目标。
@@ -311,7 +310,7 @@ ContentOps 只在消费前检查 Bundle 是否完整：标识形状、`direct_ev
 | 真的可以执行吗？ | 执行 | 适配器、运行时锁校验器、授权门禁 |
 
 路由器从不授予执行权。每条记录都带 `execution_authorized: false`。声明必须指向
-本分支上存在的代码；代码未合并的 Skill 不会被声明。
+```main``` 上存在的代码；代码未合并的 Skill 不会被声明。
 
 ## 扩展策略
 

@@ -27,6 +27,7 @@ translation_status: synced
 | 已有内容 | `main` 上的 M5 证据链;始终以 `PENDING_FOUNDER_REVIEW`、`production_ready: false` 结束 |
 | 归档 | `branches/main.bundle`(关闭时快照) |
 | 重开条件 | 有明确交付窗口并选定真实来源时,开新 Issue 并引用此条 |
+| 状态 2026-11-04(closeout 后) | **实际已重开。** `main` 已提交三次真实来源运行(PR #117、#119);每次均通过自动与视觉 QC,并停在 `PENDING_FOUNDER_REVIEW`。Issue #6 保持开放,等待 Founder 对三个成片 MP4 的人工评审;除此之外工程验收已完成 |
 
 ### D-2 — Issue #51:XHS 迁移
 
@@ -36,6 +37,7 @@ translation_status: synced
 | 已有内容 | 仅本地的 `feat/xhs-fa-migration`,从未推送;报告 30 个权利未知 Skill |
 | 归档 | `branches/feat_xhs-fa-migration.bundle` |
 | 重开条件 | 存在逐 Skill 权利清单,且 Owner 授权公开推送 |
+| 状态 2026-11-04(closeout 后) | **实际已重开。** 归档树已完成审计(报告见 PR #112):vendor 根为 Apache-2.0,覆盖 40 个 Skill;5 个声明 MIT,1 个带 MIT `LICENSE`,1 个为 AGPL-3.0。Issue #51 保持开放,等待剔除 AGPL 后的权利已清子集;`main` 不分发任何内容 |
 
 ### D-3 — Issue #56:GZH 权利审计
 
@@ -45,15 +47,17 @@ translation_status: synced
 | 已有内容 | `main` 中 **0** 个 GZH 文件,无 `vendor/gzh-thinktank/`;该树只存在于分支和本地工作目录 |
 | 归档 | `branches/fix_56-gzh-provenance.bundle`、`untracked/gzh-thinktank.tar.gz` |
 | 重开条件 | 再次提出 GZH 轨道时;审计必须从归档树开始,不能凭记忆 |
+| 状态 2026-11-04(closeout 后) | **实际已重开。** 归档树已完成审计(报告见 PR #112):50 个 `SKILL.md` 中 45 个既无许可声明也无许可文件,3 个声明 MIT,1 个带 MIT `LICENSE`,1 个为 AGPL-3.0。Issue #56 保持开放,等待逐个清理、替换或永久排除;`main` 仍为 0 个 GZH 文件 |
 
 ### D-4 — Issue #94:content-router S3–S4
 
 | 字段 | 值 |
 |---|---|
 | 未完成内容 | capture plan、账号配置、brief/script/design/optimisation 阶段 |
-| 已有内容 | S1(#93)与 S2(#95)已在 `main` |
+| 已有内容 | S1(#93)、S2(#95)与路由器(#114)已在 `main`;S4 阶段策略已作为 PR #118 合并 |
 | 归档 | `branches/feat_content-router.bundle` |
 | 重开条件 | ADR-014 交付 hold 产生首个真实交付,且该交付确实需要某个阶段 |
+| 状态 2026-11-04(closeout 后) | **closeout 后已交付。** PR #118 合并了 S4 阶段策略与设计路由。Issue #94 已关闭;此条仅为归档 bundle 保留 |
 
 ### D-5 — motion-study 导入(未合并功能)
 
