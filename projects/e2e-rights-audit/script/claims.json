@@ -1,0 +1,35 @@
+{
+  "schema": "contentops.claim-ledger/v1",
+  "claims": [
+    {
+      "id": "gzh_unlicensed",
+      "text": "50 个 GZH Skill 中有 45 个既没有许可声明，也没有 LICENSE 文件。",
+      "artifacts": [
+        "rights_audit"
+      ],
+      "quotes": [
+        "45 of 50 bundled skills have no demonstrable license."
+      ]
+    },
+    {
+      "id": "xhs_correction",
+      "text": "此前“34/45 无许可”的说法不准确：XHS 根目录是 Apache-2.0，覆盖了 40 个 Skill。",
+      "artifacts": [
+        "rights_audit"
+      ],
+      "quotes": [
+        "the earlier \"34/45 skills without an explicit license\" claim"
+      ]
+    },
+    {
+      "id": "no_raw_key",
+      "text": "公开 receipt 里没有发现裸 key、JWT、私钥或云凭证。",
+      "artifacts": [
+        "rights_audit"
+      ],
+      "quotes": [
+        "| Raw key, JWT, private-key or cloud-credential patterns | **0** |"
+      ]
+    }
+  ]
+}

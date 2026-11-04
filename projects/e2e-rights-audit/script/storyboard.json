@@ -1,0 +1,51 @@
+{
+  "size": "1080x1920",
+  "image_motion": "static",
+  "pad_mode": "trim",
+  "shots": [
+    {
+      "shot_id": "version_evidence",
+      "caption": "45/50 无许可",
+      "narration": "50 个 GZH Skill 里，有 45 个既没有许可声明，也没有 LICENSE 文件。权利没清之前，不进入生产。",
+      "claim": "gzh_unlicensed",
+      "source": "projects/easel-review/sources/screenshots/12-easel-version-evidence.png",
+      "source_type": "real_screenshot",
+      "duration": 11.675,
+      "duration_s": 11.675,
+      "image": "projects/easel-review/sources/screenshots/12-easel-version-evidence.png",
+      "motion": "static"
+    },
+    {
+      "shot_id": "skill_layers",
+      "caption": "先纠正判断",
+      "narration": "小红书这边先前的判断也说错了：根目录是 Apache-2.0，覆盖 40 个 Skill。",
+      "claim": "xhs_correction",
+      "source": "projects/easel-review/sources/screenshots/13-easel-skill-layers.png",
+      "source_type": "real_screenshot",
+      "duration": 8.575,
+      "duration_s": 8.575,
+      "image": "projects/easel-review/sources/screenshots/13-easel-skill-layers.png",
+      "motion": "static"
+    },
+    {
+      "shot_id": "skills_dir",
+      "caption": "暴露的是数据",
+      "narration": "公开 receipt 里没有裸 key，但有余额、voice_id 和 fingerprint，所以先轮换、再继续脱敏。",
+      "claim": "no_raw_key",
+      "source": "projects/easel-review/sources/screenshots/14-easel-skills-dir.png",
+      "source_type": "real_screenshot",
+      "duration": 11.083,
+      "duration_s": 11.083,
+      "image": "projects/easel-review/sources/screenshots/14-easel-skills-dir.png",
+      "motion": "static"
+    }
+  ],
+  "narration": "projects/e2e-rights-audit/assets/voice/narration.wav",
+  "subtitle": "projects/e2e-rights-audit/assets/captions/default.srt",
+  "engine": "easel",
+  "voice_provider": "sapi/Microsoft Huihui Desktop (zh-CN)",
+  "generated_visuals": {
+    "count": 0,
+    "policy": "real_assets_only"
+  }
+}
