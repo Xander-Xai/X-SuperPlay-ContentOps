@@ -246,6 +246,13 @@ jobs:
       - name: Run motion sample gate tests
         run: python tests/test_motion_sample.py
 
+      # External motion handoff contract: logical project path, digest-bound
+      # MP4, pinned MotionClone/0.8.33 pair, project hashes, short source
+      # window, internal rights scope and all authority flags false. A record
+      # never enters the M5 timeline or grants publication by itself.
+      - name: Run motion handoff contract tests
+        run: python tests/test_motion_handoff.py
+
       # Integration boundary only; no runtime download, no external CLI execution,
       # and no network or provider calls on hosted CI runners.
       - name: Run M5 media-use automatic sourcing regression tests
