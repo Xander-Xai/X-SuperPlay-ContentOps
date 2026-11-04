@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<title>质检全过，为什么还是被毙了</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --paper:#fafaf8; --ink:#0a0a0a; --muted:#737373;
+    --line:#d8d8d4; --accent:#002FA7;
+    --sans:"Noto Sans CJK SC","Microsoft YaHei",sans-serif;
+    --mono:"Cascadia Mono","Consolas",monospace;
+  }
+  html,body{background:var(--paper)}
+  body{font-family:var(--sans);-webkit-font-smoothing:antialiased}
+  .card{
+    width:1080px;height:1440px;padding:72px 72px 0;
+    background:var(--paper);color:var(--ink);
+    display:flex;flex-direction:column;overflow:hidden;
+    border-bottom:8px solid #e6e6e2;
+  }
+  .kicker{font-family:var(--mono);font-size:22px;letter-spacing:.2em;
+    color:var(--muted);text-transform:uppercase;display:flex;justify-content:space-between}
+  .rule{height:2px;width:120px;background:var(--accent);margin-top:20px}
+  h1{font-weight:200;line-height:1.2;letter-spacing:-.01em}
+  .h-lg{font-size:92px;margin-top:92px}
+  .h-md{font-size:76px;margin-top:76px}
+  .sub{font-size:32px;line-height:1.65;color:#3f3f3f;margin-top:44px;max-width:900px}
+  .panel{margin-top:84px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+    padding:44px 0 40px;display:flex;flex-direction:column;justify-content:space-between;height:500px}
+  .big{font-family:var(--mono);font-size:168px;font-weight:200;letter-spacing:-.03em;line-height:1}
+  .big small{font-size:56px;color:var(--muted);letter-spacing:0}
+  .panel p{font-size:30px;line-height:1.55;color:#3f3f3f;max-width:880px}
+  .shots{display:flex;gap:12px}
+  .shot{flex:1;height:64px;background:#161a22;border-radius:4px;
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:20px;color:#8b95a5;letter-spacing:.06em}
+  .ledger{flex:1;display:flex;flex-direction:column;justify-content:space-between;
+    margin-top:56px;padding-bottom:8px}
+  .row{display:flex;justify-content:space-between;align-items:flex-start;
+    padding:20px 0;border-top:1px solid var(--line);gap:32px}
+  .row:last-child{border-bottom:1px solid var(--line)}
+  .row .k{font-size:36px;line-height:1.3;font-weight:400}
+  .row .k em{font-style:normal;color:var(--accent)}
+  .row .k small{display:block;font-size:25px;font-weight:400;line-height:1.5;
+    color:var(--muted);margin-top:8px;letter-spacing:.01em}
+  .row .v{font-family:var(--mono);font-size:26px;color:var(--muted);letter-spacing:.03em;
+    white-space:nowrap;padding-top:4px}
+  .cta{margin-top:28px;border-top:2px solid var(--accent);padding-top:26px}
+  .cta b{display:block;font-size:36px;font-weight:500;line-height:1.4}
+  .cta span{display:block;font-family:var(--mono);font-size:24px;color:var(--muted);
+    letter-spacing:.06em;margin-top:12px}
+  .foot{margin-top:auto;padding:26px 0 46px;border-top:1px solid var(--line);
+    font-family:var(--mono);font-size:21px;line-height:1.55;color:var(--muted);
+    letter-spacing:.05em}
+  .foot .src{display:block}
+  .foot .meta{display:flex;justify-content:space-between;margin-top:14px;color:#8a8a86}
+</style></head>
+<body>
+
+<!-- 01 封面 -->
+<section class="card" id="c1">
+  <div class="kicker"><span>X·超玩 1024 · 内容工程</span><span>01 / 04</span></div>
+  <div class="rule"></div>
+  <h1 class="h-lg">质检全过，<br>为什么还是被毙了</h1>
+  <p class="sub">21 项自动检查全绿，创始人看了半分钟就否了。<br>问题不在工具，在"工具能测什么"。</p>
+  <div class="panel">
+    <div class="big">96.9<small>%</small></div>
+    <p>那条 62 秒成片里，近静止时长占 60.1 秒，分 12 段冻结。自动 QC 对这一项没有意见。</p>
+    <div class="shots">
+      <div class="shot">S1</div><div class="shot">S2</div><div class="shot">S3</div>
+      <div class="shot">S4</div><div class="shot">S5</div><div class="shot">S6</div>
+    </div>
+  </div>
+  <div class="foot">
+    <span class="src">来源：projects/easel-review/receipts/human-review.json</span>
+    <span class="meta"><span>6 镜头 / 6 static</span><span>X·超玩</span></span>
+  </div>
+</section>
+
+<!-- 02 事件账本 -->
+<section class="card" id="c2">
+  <div class="kicker"><span>事实 · 01</span><span>02 / 04</span></div>
+  <div class="rule"></div>
+  <h1 class="h-md">那次到底<br>发生了什么</h1>
+  <div class="ledger">
+    <div class="row"><span class="k">自动 QC<small>21 项检查，0 FAIL、0 WARN —— 文件合格</small></span><span class="v">21 项</span></div>
+    <div class="row"><span class="k">人审结论<small>创始人看完直接否，理由没写进分数</small></span><span class="v">REJECTED</span></div>
+    <div class="row"><span class="k">成片规格<small>62.0 秒，1080×1920，6 个镜头</small></span><span class="v">62.0s</span></div>
+    <div class="row"><span class="k">镜头运动<small>6 个镜头全部 static，整片没有位移</small></span><span class="v">6/6</span></div>
+    <div class="row"><span class="k">近静止时长<small>60.1 秒 / 62.0 秒，占比约 96.9%</small></span><span class="v">96.9%</span></div>
+    <div class="row"><span class="k">冻结段数<small>分 12 段冻结，最长一段 10.33 秒</small></span><span class="v">12 段</span></div>
+  </div>
+  <div class="foot">
+    <span class="src">来源：human-review.json、video-quality-failure-audit-2026-11-01.md</span>
+    <span class="meta"><span>全部为回执记录值</span><span>X·超玩</span></span>
+  </div>
+</section>
+
+<!-- 03 能力边界 -->
+<section class="card" id="c3">
+  <div class="kicker"><span>拆解 · 02</span><span>03 / 04</span></div>
+  <div class="rule"></div>
+  <h1 class="h-md">自动 QC<br>测不了什么</h1>
+  <div class="ledger">
+    <div class="row"><span class="k">能测 · 容器与规格<small>分辨率、时长、编码、音轨是否存在</small></span><span class="v">PASS</span></div>
+    <div class="row"><span class="k">能测 · 字幕与音量<small>字幕是否烧录、人声是否静音</small></span><span class="v">PASS</span></div>
+    <div class="row"><span class="k">能测 · 真实素材占比<small>可见真源秒数 ≥ 70% 才算过</small></span><span class="v">≥ 70%</span></div>
+    <div class="row"><span class="k">测不了 · <em>声音像不像人</em><small>机械感只有耳朵能判，分数由人给</small></span><span class="v">人审</span></div>
+    <div class="row"><span class="k">测不了 · <em>画面是否像成品</em><small>审美、节奏、信息设计都是人的判断</small></span><span class="v">人审</span></div>
+    <div class="row"><span class="k">测不了 · <em>值不值得发</em><small>后果由发布者承担，工具不能替你决定</small></span><span class="v">人审</span></div>
+  </div>
+  <div class="foot">
+    <span class="src">来源：docs/QUALITY-STANDARD.md、src/contentops/media/video_contract.py</span>
+    <span class="meta"><span>人审字段初始值均为 null</span><span>X·超玩</span></span>
+  </div>
+</section>
+
+<!-- 04 收尾 -->
+<section class="card" id="c4">
+  <div class="kicker"><span>可执行 · 03</span><span>04 / 04</span></div>
+  <div class="rule"></div>
+  <h1 class="h-md">把测不了的，<br>变成人审清单</h1>
+  <div class="ledger">
+    <div class="row"><span class="k">先看片，再看回执<small>自动化证明文件合格，不证明内容合格</small></span><span class="v">01</span></div>
+    <div class="row"><span class="k">只问三个问题<small>读得清、有变化、愿意发</small></span><span class="v">02</span></div>
+    <div class="row"><span class="k">技术 PASS ≠ 可发布<small>21 项全绿也照样被否过</small></span><span class="v">03</span></div>
+    <div class="row"><span class="k">发布授权要人签<small>具名、可追溯、可以拒绝</small></span><span class="v">04</span></div>
+  </div>
+  <div class="cta">
+    <b>三个问题：手机上读得清吗、画面有变化吗、我愿意发吗。</b>
+    <span>分数由人填；没人签字，production_ready 恒为 false</span>
+  </div>
+  <div class="foot">
+    <span class="src">来源：docs/adr/ADR-005-human-approval.md、QUALITY-STANDARD.md</span>
+    <span class="meta"><span>收藏这张卡，下次别再被"全绿"骗了</span><span>X·超玩 1024</span></span>
+  </div>
+</section>
+
+</body></html>

@@ -1,0 +1,63 @@
+{
+  "title": "质检全过，为什么还是被毙了",
+  "platform_id": "xiaohongshu_image",
+  "draft": "draft.md",
+  "images": [
+    {
+      "asset_id": "card_01_cover",
+      "path": "assets/cards/card_1.png",
+      "alt": "封面卡：大字标题『质检全过，为什么还是被毙了』，下方标注 96.9% 的近静止占比，以及并排的六个镜头方块 S1 到 S6。",
+      "rights": {
+        "license_id": "OWNED-GENERATED-LOCAL",
+        "review_evidence": "assets/rights/card-1.rights.json",
+        "source_url": "repo://X-SuperPlay-ContentOps/projects/xhs-qc-gap/assets/cards/cards.html",
+        "reviewed_by": "agent:contentops-pr1 (pending operator countersign)",
+        "reviewed_at": "2026-11-05",
+        "attribution": "",
+        "synthetic": false
+      }
+    },
+    {
+      "asset_id": "card_02_facts",
+      "path": "assets/cards/card_2.png",
+      "alt": "事实卡：六行账本，逐条列出自动 QC 全过、人审结论被拒、成片 62 秒、六个镜头全为 static、近静止 96.9%、冻结 12 段。",
+      "rights": {
+        "license_id": "OWNED-GENERATED-LOCAL",
+        "review_evidence": "assets/rights/card-2.rights.json",
+        "source_url": "repo://X-SuperPlay-ContentOps/projects/xhs-qc-gap/assets/cards/cards.html",
+        "reviewed_by": "agent:contentops-pr1 (pending operator countersign)",
+        "reviewed_at": "2026-11-05",
+        "attribution": "",
+        "synthetic": false
+      }
+    },
+    {
+      "asset_id": "card_03_boundary",
+      "path": "assets/cards/card_3.png",
+      "alt": "拆解卡：左侧列出自动 QC 能测的三项（容器规格、字幕音量、真实素材占比），右侧三条蓝色强调的是测不了的三项（声音是否像人、画面是否像成品、值不值得发）。",
+      "rights": {
+        "license_id": "OWNED-GENERATED-LOCAL",
+        "review_evidence": "assets/rights/card-3.rights.json",
+        "source_url": "repo://X-SuperPlay-ContentOps/projects/xhs-qc-gap/assets/cards/cards.html",
+        "reviewed_by": "agent:contentops-pr1 (pending operator countersign)",
+        "reviewed_at": "2026-11-05",
+        "attribution": "",
+        "synthetic": false
+      }
+    },
+    {
+      "asset_id": "card_04_checklist",
+      "path": "assets/cards/card_4.png",
+      "alt": "收尾卡：四条人审清单（先看片再看回执、只问三个问题、技术通过不等于可发布、发布授权要人签），底部一行行动号召。",
+      "rights": {
+        "license_id": "OWNED-GENERATED-LOCAL",
+        "review_evidence": "assets/rights/card-4.rights.json",
+        "source_url": "repo://X-SuperPlay-ContentOps/projects/xhs-qc-gap/assets/cards/cards.html",
+        "reviewed_by": "agent:contentops-pr1 (pending operator countersign)",
+        "reviewed_at": "2026-11-05",
+        "attribution": "",
+        "synthetic": false
+      }
+    }
+  ]
+}

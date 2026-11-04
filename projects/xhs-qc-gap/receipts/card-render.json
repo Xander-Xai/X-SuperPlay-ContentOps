@@ -1,0 +1,107 @@
+{
+  "schema": "contentops.card-render/v1",
+  "project": "xhs-qc-gap",
+  "html": {
+    "path": "project://assets/cards/cards.html",
+    "sha256": "5ab6f43d6d2304fb8872aa46ef975e0df65d9971820bf8c502e3c68153e2310a"
+  },
+  "spec": {
+    "width": 1080,
+    "height": 1440,
+    "scale": 1,
+    "selector": ".card"
+  },
+  "tools": {
+    "renderer": "repo-relative runtime tool; see runtime/easel.lock.json",
+    "renderer_file": "render_card.py",
+    "auditor_file": "card_audit.py",
+    "interpreter": "python"
+  },
+  "cards": [
+    {
+      "path": "card_1.png",
+      "sha256": "2719b02dfd02cca7e216cefa5b7677d681db9ed3a7084d9095505893720f154d",
+      "bytes": 111251,
+      "size": "1080x1440",
+      "pass": true,
+      "span": 0.906,
+      "bottom_dead": 0.043,
+      "max_gap": 0.131,
+      "fill": 0.375,
+      "bands": [
+        0.37,
+        0.35,
+        0.55,
+        0.24
+      ],
+      "problems": []
+    },
+    {
+      "path": "card_2.png",
+      "sha256": "e90327570849eee7cfe9cd39ea25d0a0e49fa9e6e18f05670eb6ade4e740d60e",
+      "bytes": 119231,
+      "size": "1080x1440",
+      "pass": true,
+      "span": 0.905,
+      "bottom_dead": 0.043,
+      "max_gap": 0.078,
+      "fill": 0.39,
+      "bands": [
+        0.42,
+        0.36,
+        0.43,
+        0.35
+      ],
+      "problems": []
+    },
+    {
+      "path": "card_3.png",
+      "sha256": "5390b53f879627b8c6a4761a7bb91f274743abe9a19c6bac377d024c1cb3c59f",
+      "bytes": 134970,
+      "size": "1080x1440",
+      "pass": true,
+      "span": 0.906,
+      "bottom_dead": 0.043,
+      "max_gap": 0.078,
+      "fill": 0.39,
+      "bands": [
+        0.42,
+        0.36,
+        0.43,
+        0.35
+      ],
+      "problems": []
+    },
+    {
+      "path": "card_4.png",
+      "sha256": "48ebd14e8456729c461a9bde6d3770725f7a4fa4dba7db0a3e2a848cfda1914d",
+      "bytes": 120648,
+      "size": "1080x1440",
+      "pass": true,
+      "span": 0.906,
+      "bottom_dead": 0.043,
+      "max_gap": 0.078,
+      "fill": 0.349,
+      "bands": [
+        0.43,
+        0.34,
+        0.3,
+        0.33
+      ],
+      "problems": []
+    }
+  ],
+  "card_count": 4,
+  "ignored_existing": [],
+  "audit_status": "PASS",
+  "status": "AWAITING_MANUAL_REVIEW",
+  "production_ready": false,
+  "publish_authorized": false,
+  "human_review": "NOT_STARTED",
+  "cannot": [
+    "a density PASS is not a readability judgement, a fact check or an approval",
+    "these cards are illustration, never evidence for any claim",
+    "this receipt grants no publication authority for any platform"
+  ],
+  "render_fingerprint": "3a4de65c8485971b25d4201e67c422f969a7f716fd807eddf278225270330d19"
+}

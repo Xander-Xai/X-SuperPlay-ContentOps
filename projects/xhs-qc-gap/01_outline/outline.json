@@ -1,0 +1,10 @@
+{
+  "schema": "contentops.graphic-outline/v1",
+  "headings": [
+    "## 账本一：那次到底发生了什么",
+    "## 账本二：自动 QC 能测什么、测不了什么",
+    "## 收尾：把\"测不了的\"变成人审清单",
+    "## 说明"
+  ],
+  "source_draft_sha256": "b5b77055ba11b4a8e31c68a60f23e947d13f354603bda047d074a6d9898a68d0"
+}

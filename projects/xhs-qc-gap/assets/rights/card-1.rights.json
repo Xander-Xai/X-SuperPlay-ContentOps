@@ -1,0 +1,10 @@
+{
+  "schema": "contentops.media-rights-review/v1",
+  "license_id": "OWNED-GENERATED-LOCAL",
+  "source_url": "repo://X-SuperPlay-ContentOps/projects/xhs-qc-gap/assets/cards/cards.html",
+  "reviewed_by": "agent:contentops-pr1 (pending operator countersign)",
+  "reviewed_at": "2026-11-05",
+  "attribution": "",
+  "synthetic": false,
+  "note": "card_1 由本仓自有 HTML 经 Easel render_card.py 确定性渲染，无第三方素材、无 AI 生图。该记录是代理的事实认定，尚待运营者会签；会签前不得发布。"
+}

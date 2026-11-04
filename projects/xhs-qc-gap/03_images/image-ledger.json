@@ -1,0 +1,113 @@
+{
+  "schema": "contentops.graphic-images/v1",
+  "images": [
+    {
+      "asset_id": "card_01_cover",
+      "path": "assets/cards/card_1.png",
+      "scope": "project",
+      "sha256": "2719b02dfd02cca7e216cefa5b7677d681db9ed3a7084d9095505893720f154d",
+      "bytes": 111251,
+      "facts": {
+        "format": "png",
+        "width": 1080,
+        "height": 1440
+      },
+      "alt": "封面卡：大字标题『质检全过，为什么还是被毙了』，下方标注 96.9% 的近静止占比，以及并排的六个镜头方块 S1 到 S6。",
+      "rights": {
+        "schema": "contentops.media-rights/v1",
+        "license_id": "OWNED-GENERATED-LOCAL",
+        "license_note": "generated deterministically on this machine; never evidence",
+        "source_url": "repo://X-SuperPlay-ContentOps/projects/xhs-qc-gap/assets/cards/cards.html",
+        "reviewed_by": "agent:contentops-pr1 (pending operator countersign)",
+        "reviewed_at": "2026-11-05",
+        "review_evidence": "assets/rights/card-1.rights.json",
+        "review_evidence_sha256": "f9dbd6928ef89271d500a39ae879fa5fc59111afb465057ddf828c066474df46",
+        "attribution": "",
+        "synthetic": false,
+        "third_party": false,
+        "evidence_capable": false
+      }
+    },
+    {
+      "asset_id": "card_02_facts",
+      "path": "assets/cards/card_2.png",
+      "scope": "project",
+      "sha256": "e90327570849eee7cfe9cd39ea25d0a0e49fa9e6e18f05670eb6ade4e740d60e",
+      "bytes": 119231,
+      "facts": {
+        "format": "png",
+        "width": 1080,
+        "height": 1440
+      },
+      "alt": "事实卡：六行账本，逐条列出自动 QC 全过、人审结论被拒、成片 62 秒、六个镜头全为 static、近静止 96.9%、冻结 12 段。",
+      "rights": {
+        "schema": "contentops.media-rights/v1",
+        "license_id": "OWNED-GENERATED-LOCAL",
+        "license_note": "generated deterministically on this machine; never evidence",
+        "source_url": "repo://X-SuperPlay-ContentOps/projects/xhs-qc-gap/assets/cards/cards.html",
+        "reviewed_by": "agent:contentops-pr1 (pending operator countersign)",
+        "reviewed_at": "2026-11-05",
+        "review_evidence": "assets/rights/card-2.rights.json",
+        "review_evidence_sha256": "fb8a5e677acd7cc4d06f3b902850921cadd2a8fcae27bc141504c4e45f7c236e",
+        "attribution": "",
+        "synthetic": false,
+        "third_party": false,
+        "evidence_capable": false
+      }
+    },
+    {
+      "asset_id": "card_03_boundary",
+      "path": "assets/cards/card_3.png",
+      "scope": "project",
+      "sha256": "5390b53f879627b8c6a4761a7bb91f274743abe9a19c6bac377d024c1cb3c59f",
+      "bytes": 134970,
+      "facts": {
+        "format": "png",
+        "width": 1080,
+        "height": 1440
+      },
+      "alt": "拆解卡：左侧列出自动 QC 能测的三项（容器规格、字幕音量、真实素材占比），右侧三条蓝色强调的是测不了的三项（声音是否像人、画面是否像成品、值不值得发）。",
+      "rights": {
+        "schema": "contentops.media-rights/v1",
+        "license_id": "OWNED-GENERATED-LOCAL",
+        "license_note": "generated deterministically on this machine; never evidence",
+        "source_url": "repo://X-SuperPlay-ContentOps/projects/xhs-qc-gap/assets/cards/cards.html",
+        "reviewed_by": "agent:contentops-pr1 (pending operator countersign)",
+        "reviewed_at": "2026-11-05",
+        "review_evidence": "assets/rights/card-3.rights.json",
+        "review_evidence_sha256": "b3b4102f0578c74bb61d4d93acf3524e569daad3a6ae80ed1110a7cdba019648",
+        "attribution": "",
+        "synthetic": false,
+        "third_party": false,
+        "evidence_capable": false
+      }
+    },
+    {
+      "asset_id": "card_04_checklist",
+      "path": "assets/cards/card_4.png",
+      "scope": "project",
+      "sha256": "48ebd14e8456729c461a9bde6d3770725f7a4fa4dba7db0a3e2a848cfda1914d",
+      "bytes": 120648,
+      "facts": {
+        "format": "png",
+        "width": 1080,
+        "height": 1440
+      },
+      "alt": "收尾卡：四条人审清单（先看片再看回执、只问三个问题、技术通过不等于可发布、发布授权要人签），底部一行行动号召。",
+      "rights": {
+        "schema": "contentops.media-rights/v1",
+        "license_id": "OWNED-GENERATED-LOCAL",
+        "license_note": "generated deterministically on this machine; never evidence",
+        "source_url": "repo://X-SuperPlay-ContentOps/projects/xhs-qc-gap/assets/cards/cards.html",
+        "reviewed_by": "agent:contentops-pr1 (pending operator countersign)",
+        "reviewed_at": "2026-11-05",
+        "review_evidence": "assets/rights/card-4.rights.json",
+        "review_evidence_sha256": "f16b6e751ca9208a2e58e3134c62165a9eed8550f22f8340d4ae7c8c29437ea4",
+        "attribution": "",
+        "synthetic": false,
+        "third_party": false,
+        "evidence_capable": false
+      }
+    }
+  ]
+}

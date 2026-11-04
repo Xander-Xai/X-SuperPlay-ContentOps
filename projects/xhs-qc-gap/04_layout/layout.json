@@ -1,0 +1,10 @@
+{
+  "schema": "contentops.graphic-layout/v1",
+  "preview": "receipts/graphic-preview.md",
+  "image_order": [
+    "card_01_cover",
+    "card_02_facts",
+    "card_03_boundary",
+    "card_04_checklist"
+  ]
+}

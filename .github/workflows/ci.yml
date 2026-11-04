@@ -210,6 +210,14 @@ jobs:
       - name: Run copy-review integrity tests
         run: python tests/test_copy_review_integrity.py
 
+      # Card render orchestration: an empty selector is not a success, a silent
+      # audit is not a pass, a pre-existing image is reported and never deleted,
+      # and no density PASS may set production_ready or publish_authorized. The
+      # live render step skips itself when the pinned runtime or Playwright is
+      # absent; its [skip]/[live] line is printed so a skip is not read as coverage.
+      - name: Run card render orchestration tests
+        run: python tests/test_render_cards.py
+
       # The copy gate must precede audio, and a named provider must never be
       # replaced by edge-tts.
       - name: Run V1 narration-source tests

@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "record_type": "content_bundle",
+  "bundle_id": "CB-20261105-001",
+  "created_at": "2026-11-05T00:00:00Z",
+  "status": "draft",
+  "source": {
+    "source_id": "SRC-20261105-001",
+    "source_refs": [
+      "repo://X-SuperPlay-ContentOps/projects/easel-review/receipts/human-review.json",
+      "repo://X-SuperPlay-ContentOps/reports/audits/video-quality-failure-audit-2026-11-01.md"
+    ],
+    "topic_thesis": "自动 QC 全过不等于可发布：技术门禁证明文件合格，人审才决定内容是否值得发。",
+    "claim_refs": ["qc_pass_but_rejected", "auto_qc_boundary"],
+    "permission_refs": ["CREATED_BY_OWNER"],
+    "proof_level": "direct"
+  },
+  "account_treatments": {
+    "explorer": {
+      "strategy_account": "X超玩•1024",
+      "role": "Explore",
+      "narrative_angle": "用一次真实被拒的成片，讲清自动质检的能力边界。",
+      "key_claims": ["qc_pass_but_rejected", "auto_qc_boundary"],
+      "cta_intent": "save",
+      "production_lane": "baseline",
+      "execution_profile_hint": "strict_evidence"
+    },
+    "thinktank": {
+      "strategy_account": "X超玩•未来智能",
+      "role": "Build",
+      "narrative_angle": "从门禁实现角度解释为什么 production_ready 恒为 false。",
+      "key_claims": ["auto_qc_boundary"],
+      "cta_intent": "reproduce",
+      "production_lane": "baseline",
+      "execution_profile_hint": "strict_evidence"
+    }
+  },
+  "asset_requirements": [
+    {
+      "requirement_id": "AR-001",
+      "claim_refs": [],
+      "capability": "reusable_asset",
+      "evidence_role": "illustration",
+      "required": true,
+      "account_scope": ["explorer"],
+      "platform_scope": ["xiaohongshu_image"],
+      "acceptance": "3-5 张 1080x1440 确定性渲染卡片，文字走 HTML/CSS 排版，card_audit 全部 PASS。卡片是说明性视觉，不作为任何事实主张的证据。",
+      "fallback_capabilities": []
+    }
+  ],
+  "assets": {
+    "real_evidence_refs": [
+      "repo://projects/easel-review/receipts/human-review.json",
+      "repo://reports/audits/video-quality-failure-audit-2026-11-01.md"
+    ],
+    "reusable_asset_refs": [],
+    "generated_asset_refs": [],
+    "manual_premium_asset_refs": [],
+    "canonical_master_refs": []
+  },
+  "aigc_provenance": {
+    "required": false,
+    "asset_manifest_refs": [],
+    "disclosure_review_status": "not_applicable_no_generated_media"
+  },
+  "content_experiments": {"refs": []},
+  "platform_adapters": {"refs": []},
+  "execution_pointers": [],
+  "metric_and_signal_pointers": {
+    "metric_snapshot_refs": [],
+    "market_signal_refs": [],
+    "review_refs": []
+  },
+  "invariants": {
+    "production_lane_is_strategy_capacity_routing": true,
+    "execution_profile_hint_is_not_child_runtime_contract": true,
+    "asset_requirement_precedes_provider_resolution": true,
+    "asset_requirement_claim_binding_required_for_direct_evidence": true,
+    "downstream_records_should_preserve_bundle_id": true,
+    "source_is_not_validated_demand": true,
+    "bundle_is_not_published_content": true,
+    "generated_media_is_not_direct_evidence": true,
+    "platform_adaptation_must_not_change_facts": true,
+    "credentials_must_not_cross_repository_boundaries": true,
+    "business_source_of_truth": "Xander-Xai/X-SuperPlay-OPC-Blueprint",
+    "implementation_source_of_truth": "Xander-Xai/X-SuperPlay-Strategy"
+  }
+}

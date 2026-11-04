@@ -1,0 +1,13 @@
+{
+  "schema": "contentops.graphic-brief/v1",
+  "bundle_id": "CB-20261105-001",
+  "bundle_sha256": "faf2bd11430681c51f42682cbc0fdb879502f80e26df3c770afd6fd55c8e84ef",
+  "title": "质检全过，为什么还是被毙了",
+  "platform": {
+    "platform_id": "xiaohongshu_image",
+    "strategy_platform": "xiaohongshu",
+    "pipeline": "XHS_EDITORIAL",
+    "status": "PLANNED",
+    "delivery": "PLACEHOLDER"
+  }
+}
