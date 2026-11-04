@@ -142,12 +142,12 @@ is on `main`.
 |---|---|---|
 | M5 evidence chain, media, QC, skill router/authorization | `main` (PR #89) | implemented |
 | X post gate, growth→editorial gate | `main` (PRs #87, #88) | implemented |
-| Account-aware content router, workflow gates, brief/script/design stages | `main` (S1 #93, S2 #95) + Issue #94 for S3–S4 | **partial** — the account/brief front-end and stage gate are on `main`; remaining stages are sliced |
-| Platform registry + Content Bundle intake | PR #101 / Issue #100 | **pending review**; reused, not duplicated |
-| Easel host guard, Bundle handoff, graphic package | Issue #106 (this branch) | **implemented offline**; host `HOST_BLOCKED` until dependencies and security review |
-| XHS eight-step workflow | `feat/xhs-fa-migration` | **unmerged** |
-| X platform track (migrated records, prompt references, table gate) | Issue #47 (PR #50 closed as superseded) | **unmerged** |
-| GZH ten-stage vendored workflow | local `vendor/` + Issue #56 | **unmerged / rights-blocked** |
+| Account-aware content router, workflow gates, brief/script/design stages | `main` (S1 #93, S2 #95, router #114, S4 #118) | **implemented** — brief→M5 bridge is gate-bound to a human-approved brief |
+| Platform registry + Content Bundle intake | `main` (PR #101) | **implemented**; one registry, one Bundle consumer |
+| Easel host guard, Bundle handoff, graphic package | `main` (PRs #107, #108) | **implemented offline**; host `HOST_BLOCKED` until dependencies and security review |
+| XHS eight-step workflow | `main` verify-only adapter (PR #125) | **verify-only**; rights unresolved, no execution |
+| X platform track (migrated records, prompt references, table gate) | `main` (PR #127) | **implemented**; publication stays manual |
+| GZH ten-stage vendored workflow | `main` verify-only adapter (PR #121) | **verify-only / rights-blocked**; the vendored tree is not redistributed |
 
 [CONVERGENCE-REQUIREMENTS-2026-11-01.md](CONVERGENCE-REQUIREMENTS-2026-11-01.md)
 defines the merge order. A skill that references an unmerged layer is declared
@@ -205,11 +205,10 @@ projects/<slug>/
 └── receipts/             ← build, QC, runtime, human-review receipts
 ```
 
-`workflow/` contains the merged S1/S2 contract and gate, plus this branch's
-graphic contract. `platforms/` and `content_kernel/` exist through PR #101 and
-are reused here, not duplicated. `routing/`, `quality/`, `script/`,
-`hotspots/` and `optimization/` remain incomplete slices from Issue #94; a
-directory existing is not proof that its stages are wired.
+`workflow/` contains the merged S1/S2 contract and gate plus the graphic
+contract. `platforms/`, `content_kernel/`, `routing/` and `graphic/` are on
+`main` through PRs #101, #114 and #118. A directory existing is not proof that
+its stages are wired.
 
 ## Pipeline Flow
 
@@ -295,7 +294,7 @@ src/contentops/content_kernel/bundle.py     ← consumption-side validation only
 scripts/content_bundle.py                   ← check | summary
 ```
 
-**The platform registry describes this branch, not the portfolio.** A row says
+**The platform registry describes `main`, not the portfolio.** A row says
 what code exists here, what it can produce, and what blocks it. `PLANNED` means
 no platform code; `INTEGRATED` means code plus offline tests; a non-`PLANNED`
 row must carry evidence. Status is a claim about evidence and is never upgraded
@@ -326,8 +325,8 @@ Three questions stay separate:
 | May it actually run? | execution | the adapter, runtime lock verifier, grant gate |
 
 The router never authorizes execution. Every record carries
-`execution_authorized: false`. A declaration points at code on this branch; a
-skill whose code is unmerged is not declared.
+`execution_authorized: false`. A declaration points at code on `main`; a
+skill whose code is not merged is not declared.
 
 ## Extension Priority
 

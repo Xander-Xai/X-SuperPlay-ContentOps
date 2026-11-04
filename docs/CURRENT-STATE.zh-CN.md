@@ -10,22 +10,24 @@ translation_status: synced
 
 > 当前运行状态。仅经验证的事实。无展望，无过时声明。
 >
-> 最后验证：2026-11-04，```feat/112-content-router-input```
-> （基于 ```main``` 的 `aee3fd4`）。以下事实描述本分支；未合并层已标注。
+> 最后验证：2026-11-04，```main``` 的 `218c91d`（PR #130）。
+> 以下事实描述 ```main```；已推迟或权利受阻的工作会明确标注。
 > “分层状态”表之后的小节是历史里程碑记录，说明某项能力当时如何被证明，
 > 不代表当前状态。
 
-## 分层状态（2026-11-02）
+## 分层状态（2026-11-04）
 
 | 层 | 状态 |
 |---|---|
 | M5 证据链、媒体合约、QC、media-use 适配器、Skill 路由/授权 | 已实现 |
-| 平台注册表（`config/registry/platforms.json`、`src/contentops/platforms/`） | PR #101 已实现；9 个 Strategy 平台对应 10 条本地记录，1 条 `INTEGRATED`（`x`），9 条 `PLANNED` |
+| 平台注册表（`config/registry/platforms.json`、`src/contentops/platforms/`） | ```main``` 已实现（PR #101）；9 个 Strategy 平台对应 10 条本地记录，1 条 `INTEGRATED`（`x`），9 条 `PLANNED` |
 | Content Bundle 消费 + 双形式 handoff（`src/contentops/content_kernel/`） | 离线已实现；VIDEO 与 GRAPHIC_TEXT 计划，未发布 |
-| Easel 宿主门禁（`src/contentops/easel/`、`scripts/easel_host.py`） | 离线已实现；本机 `HOST_BLOCKED`（缺 FastAPI/uvicorn），写操作拒绝 |
+| Easel 宿主门禁（`src/contentops/easel/`、`scripts/easel_host.py`） | 离线已实现（PR #108）；本机 `HOST_BLOCKED`（缺 FastAPI/uvicorn），写操作拒绝 |
 | 图文人工包（`src/contentops/graphic/`、`scripts/graphic_package.py`） | 离线已实现；停在 `AWAITING_MANUAL_REVIEW`；尚无已交付包 |
-| 内容路由、账号 DNA、工作流门禁、Brief/脚本/设计阶段 | **S1/S2 已在 `main`；S3/S4 已在 `feat/112-content-router-input` 实现（未合并）** |
-| 小红书 / X / 公众号轨道 | **未合并 / 权利受阻** |
+| 内容路由、账号 DNA、工作流门禁、Brief/脚本/设计阶段 | S1–S4 已在 ```main```（PR #114、#118）；brief→M5 桥已合并，但仍绑定人工批准的 brief |
+| 小红书 / X / 公众号轨道 | 已合并的适配器只校验、不执行（PR #121、#125、#127）；权利未解决；无执行、无发布 |
+| Motion 工作流（样片门禁、交接、规范） | ```main``` 已实现（PR #122–#124） |
+| M5 端到端运行 | ```main``` 上三次真实来源运行（#117、#119），全部 `PENDING_FOUNDER_REVIEW` |
 | MiniMax 语音、图片、H3 视频 | 已实现；已验证子集见下文 |
 | 生产就绪 | 所有轨道均为 **否** |
 | 发布计数 | **0** —— 没有任何交付包持有真实平台 URL |
@@ -35,13 +37,14 @@ translation_status: synced
 | 属性 | 值 |
 |---|---|
 | 默认分支 | ```main``` —— 受保护 |
-| 本分支 | `feat/106-easel-host-dual-line` —— 基于 PR #101，未合并 |
-| Main 保护 | **已保护** — 必需状态检查 + PR + 禁止 force push + 禁止删除 + 线性历史 |
+| ```main``` | `218c91d` |
+| 开放 PR | 无 |
+| 验证时的分支 | 本地与远程都只有 ```main```；不存在非 ```main``` 分支 |
+| Main 保护 | **已保护** — 必需状态检查 + PR + 禁止 force push + 禁止删除 + 线性历史（管理员不强制） |
 | 必需检查 | ```Tests (ubuntu-latest)```、```Tests (windows-latest)```、```Repo policy checks``` |
 | 分支策略 | Issue 作用域短生命周期分支，Squash 合并，合并后自动删除 |
-| 当前分支现实 | 只有 ```main``` 是持久分支。本分支、PR #101/#105 等未合并工作不属于当前系统 |
-| ```main``` 实际包含什么 | M5 media-use 集成、权利门禁、Skill 路由与 Skill 执行授权（PR #89），以及 X 发帖门禁与 growth→编辑门禁（PR #87、#88） |
-| 后果 | 文档描述本分支并单独标注 ```main```。PR #101（平台注册表/Bundle）与 #105（R4-A 文案审核）仍开放；本分支复用 #101，不把任何一方当作已批准 |
+| 近期合并 | #129/#130 TrendRadar 运行时层级；#127 X 编辑工作流；#125 GZH/XHS 图文适配器；#121 GZH 适配器；#118 S4 阶段；#117/#119 M5 端到端运行 |
+| 后果 | ```main``` 是唯一持久分支；已 descope 的工作记录在 [DEFERRED-WORK.zh-CN.md](DEFERRED-WORK.zh-CN.md)，未决问题留在对应 Issue |
 
 ## Easel 运行时
 
@@ -52,7 +55,7 @@ translation_status: synced
 | 路径 | ```.runtime/easel/``` |
 | 获取方式 | Git clone 固定 tag，并以 ```core.autocrlf=false```、```core.eol=lf``` 检出 |
 | 验证 | 982/982 blob SHA-1 匹配上游 tree（```scripts/verify_easel_runtime.py```） |
-| 复核 | 2026-11-01 在本分支：982 个文件，缺失 0，不一致 0，多余 0 |
+| 复核 | 2026-11-01：982 个文件，缺失 0，不一致 0，多余 0 |
 | 换行风险 | Windows 默认 ```core.autocrlf=true``` 的检出会产生 **847 个 blob 不一致**，而 ```resolve_easel.py --offline``` 仍报 ```OK```（它只证明 git HEAD，不证明内容）。必须先验证内容再信任运行时 |
 | 实际执行面 | ```skills/openclaw/auto-short-video/scripts/assemble.py```（合成）与 ```skills/shared/scripts/tts.py```（仅 V1 旁白；M5 用 Windows SAPI） |
 | 独立交叉校验 | 2026-10-31 对照官方 ```v0.2.1``` Release 归档：982 个文件，缺失 0，不一致 0 |
@@ -261,8 +264,8 @@ Owner 已决定把完整 Easel 系统作为生产底座（ADR-016）。本节只
    ```PENDING_FOUNDER_REVIEW```。
 3. media-use 运行时锁 — 干净检出（以及本机当前）判定为
    ```BLOCKED / MISSING_RUNTIME```。已批准基线存在，但必须先为本机生成并信任锁。
-4. 未合并的内容层 — 账号路由、工作流门禁、Brief/脚本/设计阶段、小红书、X、公众号
-   都不在本分支。它们是五个 ```x-superplay-*``` Skill 的前置条件，不是当前可用能力。
+4. 权利 — ```main``` 上的小红书、X、公众号适配器只校验、从不执行。vendored 树不在本仓库
+   分发，剩余阻断是权利清理（Issue #51、#56），不是缺少代码。
 5. 文档收敛 — 本文档于 2026-11-01 重构；PRD、DEVELOPMENT-PLAN、TEST-PLAN 在同一次
    变更中更新。剩余需求见
    [CONVERGENCE-REQUIREMENTS-2026-11-01.md](CONVERGENCE-REQUIREMENTS-2026-11-01.md)。
@@ -766,8 +769,8 @@ QC 回执在被提交前会经过一道净化边界（`contentops.qc_canonical`�
 | 旧版 M5 | 未改变 —— `scripts/m5_production.py` 不导入路由器，并有测试断言 |
 | VIDEO 轨 | 仅发现，直到本机存在目录根 |
 | GZH 轨 | `BLOCKED` —— vendor 第三方轨，权利未验证，`vendor/` 已 gitignore |
-| X 轨 | `BLOCKED` —— 平台轨未合并（`feat/47-x-platform-track`，PR #50） |
-| XHS 轨 | `BLOCKED` —— 迁移未合并且处于权利审查；无目录根 |
+| X 轨 | `BLOCKED` —— ```main``` 上的只校验适配器（PR #127）；权利与发布仍为人工 |
+| XHS 轨 | `BLOCKED` —— ```main``` 上的只校验适配器（PR #125）；权利审查开放于 Issue #51 |
 | 测试 | `tests/test_skill_doctor.py`、`tests/test_skill_router_capabilities.py`，均已注册进 CI |
 | Pull Request | 已合并 [#77](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/pull/77) |
 
