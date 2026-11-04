@@ -246,6 +246,13 @@ jobs:
       - name: Run motion sample gate tests
         run: python tests/test_motion_sample.py
 
+      # The GZH runtime adapter locates and verifies a locally installed
+      # workflow and describes its operations. It never executes, drafts or
+      # publishes, and the vendored tree stays outside the public repository
+      # (Issue #56). Synthetic roots only.
+      - name: Run GZH runtime adapter tests
+        run: python tests/test_gzh_runtime.py
+
       # Integration boundary only; no runtime download, no external CLI execution,
       # and no network or provider calls on hosted CI runners.
       - name: Run M5 media-use automatic sourcing regression tests
