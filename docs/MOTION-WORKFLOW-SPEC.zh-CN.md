@@ -29,6 +29,18 @@ translation_status: synced
 | Driver QC 绑定 | `src/contentops/easel/driver.py` | `receipts/qc-report*.json` 在计划期由 `_step_receipts_ok` 解析;匹配但未评分或 `FAIL` 不算完成 |
 | Router → brief → M5 | `src/contentops/routing/`、`src/contentops/script/`、`scripts/content_route.py`、`scripts/brief_to_m5.py`、`scripts/m5_production.py` | 账号 DNA → 候选 → 已批准 brief → `script/script.json` + claims + source refs;`copy_review.require_if_brief_driven` 拦截未审文案 |
 | S4 阶段策略 | `src/contentops/workflow/{audience,duration,copy_strategy,platform,delivery,visual_route}.py` | 受众/时长/策略/平台限制、人工交付清单与视觉路由;不授予发布权 |
+| 图文工作流适配器 | `src/contentops/gzh/runtime.py`、`src/contentops/xhs/runtime.py`、`scripts/graphic_workflow.py` | 定位/哈希校验/描述本地安装的 GZH 或 XHS 工作流;GRAPHIC_TEXT 人工包表面;不执行、不拟稿、不发布 |
+
+### 图文工作流(GZH / XHS)
+
+GZH 与 XHS 工作流由操作者安装在公开仓库之外,仓库不 vendored 它们。
+`scripts/graphic_workflow.py` 是唯一入口(`status`、`verify`、`plan`,
+`--workflow gzh|xhs`):校验锁中的字节与身份,然后描述操作者步骤。它绝不执行
+工作流步骤、不启动 Easel host、不拟稿、不发布。GRAPHIC_TEXT 表面是人工包,
+停在 `AWAITING_MANUAL_REVIEW`。
+
+权利:XHS 根目录为 Apache-2.0,但有一个 AGPL-3.0 skill 必须排除;GZH 的 50 个
+skill 中有 45 个无许可,在清权前只允许本地内部使用。通过校验不等于再分发许可。
 
 ## 3. 命令
 
