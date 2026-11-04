@@ -38,7 +38,7 @@ translation_status: synced
 |---|---|
 | 默认分支 | ```main``` —— 受保护 |
 | ```main``` | `218c91d` |
-| 开放 PR | 无 |
+| 验证时开放 PR | 本次治理 PR #131 创建前为 0 |
 | 验证时的分支 | 本地与远程都只有 ```main```；不存在非 ```main``` 分支 |
 | Main 保护 | **已保护** — 必需状态检查 + PR + 禁止 force push + 禁止删除 + 线性历史（管理员不强制） |
 | 必需检查 | ```Tests (ubuntu-latest)```、```Tests (windows-latest)```、```Repo policy checks``` |

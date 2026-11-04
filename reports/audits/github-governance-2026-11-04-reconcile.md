@@ -9,7 +9,7 @@
 | Item | Value |
 |---|---|
 | `main` | `218c91d` (PR #130) |
-| Open pull requests | 0 |
+| Open pull requests before this reconciliation PR was opened | 0 |
 | Branches | local and remote: `main` only |
 | Worktrees | the primary worktree only |
 | CI on `main` | success (last 8 runs; one earlier run cancelled, then re-run green) |

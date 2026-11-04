@@ -56,7 +56,7 @@ one's status.
 | `PRODUCTION` (VIDEO) | Bundle, claims | video master | ContentOps | `implemented` | M5 `scripts/m5_production.py`, `run_v1.py`, `assemble_easel.py` | `build-*.json`, `runtime-receipt.md` | voice quality; human review pending |
 | `PRODUCTION` (GRAPHIC_TEXT) | Bundle, images | manual package | ContentOps | `implemented` | `src/contentops/graphic/package.py`, `scripts/graphic_package.py` | `graphic-package.json` | terminal `AWAITING_MANUAL_REVIEW` |
 | `QUALITY_REVIEW` | produced artifacts | QC + human verdict | ContentOps + human | `implemented` | `scripts/qc_video.py`, `qc_visual.py`, `src/contentops/media/quality_gate.py`, `workflow/gate.py` | `qc-report.json`, `human-review.json` | human review never auto-approved |
-| `PLATFORM_PACKAGING` | reviewed package | platform draft | ContentOps | `partial` | X manual gate only (`src/contentops/publish/`) | X package receipt | 8 of 9 platforms `PLANNED` |
+| `PLATFORM_PACKAGING` | reviewed package | platform draft | ContentOps | `partial` | X manual gate only (`src/contentops/publish/`) | X package receipt | 9 of 10 registry rows remain `PLANNED`; X is the sole `INTEGRATED` row |
 | `PUBLISH_HANDOFF` | draft | real URL + delivery receipt | human | `partial` | manual only; `x_post.py --mark-published` records a URL a person already has (as `REPORTED_PUBLISHED`) | `AWAITING_MANUAL_PUBLISH` / `REPORTED_PUBLISHED` | no automatic publication; no external verification path yet |
 | `METRICS_COLLECTION` | delivery receipt | metric snapshot | ContentOps | `planned` | none | none | `metrics: NONE`; not implemented |
 | `ANALYSIS` | metric snapshots | findings | ContentOps | `partial` | X organic-growth advisory (`x_organic_growth.py`), offline | advisory JSON | general analysis not implemented |

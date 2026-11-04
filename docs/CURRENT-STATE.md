@@ -32,7 +32,7 @@
 |---|---|
 | Default branch | `main` — protected |
 | `main` | `218c91d` |
-| Open pull requests | none |
+| Open pull requests at verification | none before PR #131 was opened for this reconciliation |
 | Branches at verification | local and remote both carry `main` only; no non-`main` branch exists |
 | Main protection | **PROTECTED** — required status checks + PR + no force push + no deletion + linear history (admin enforcement off) |
 | Required checks | `Tests (ubuntu-latest)`, `Tests (windows-latest)`, `Repo policy checks` |
