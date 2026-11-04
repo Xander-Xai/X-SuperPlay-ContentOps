@@ -163,10 +163,20 @@ def test_stage_artifact_receipts_are_graded_by_their_own_schema():
         ("{not json", False),
     ]
     with tempfile.TemporaryDirectory() as tmp:
+        (Path(tmp) / "final").mkdir()
+        (Path(tmp) / "final" / "demo.mp4").write_bytes(b"render")
+        (Path(tmp) / "receipts").mkdir()
         for i, case in enumerate(cases):
             payload = case[0]
             expected = case[1]
-            path = Path(tmp) / f"artifact-{i}.json"
+            filename = f"artifact-{i}.json"
+            directory = Path(tmp)
+            if isinstance(payload, dict) and payload.get("schema") == "contentops.qc-canonical/v1":
+                # A QC report is bound to the render its filename names.
+                filename = "qc-report-demo.json"
+                directory = Path(tmp) / "receipts"
+                payload = {**payload, "graded_target": "project://final/demo.mp4"}
+            path = directory / filename
             path.write_text(payload if isinstance(payload, str)
                             else json.dumps(payload), encoding="utf-8")
             result = driver._artifact_receipt_ok(path)
@@ -546,7 +556,7 @@ def test_a_real_ok_receipt_from_a_real_run_enables_the_dependent_step():
 def test_ready_and_precondition_use_the_same_success_judgement():
     """The plan's ``ready`` and the runtime precondition bind the same fields.
 
-    ``qc-video``'s own receipts are ``receipts/qc-report*.json`` (a stage
+    ``qc-video``'s own receipt is ``receipts/qc-report-<slug>.json`` (a stage
     artifact, not a driver receipt); its dependency is judged from
     ``produce-video``'s driver receipt. Both must distinguish a real OK from
     a file that merely exists or is bound elsewhere.
@@ -560,7 +570,8 @@ def test_ready_and_precondition_use_the_same_success_judgement():
         qc = next(s for s in plan["steps"] if s["id"] == "qc-video")
         assert qc["ready"] is False
         # ...and a stale/wrongly-bound artifact receipt does not make it ready.
-        (project / "receipts" / "qc-report-easel.json").write_text('{"stale": true}', encoding="utf-8")
+        (project / "receipts" / "qc-report-driver-precond.json").write_text(
+            '{"stale": true}', encoding="utf-8")
         plan = driver.build_plan(project, ROOT)
         qc = next(s for s in plan["steps"] if s["id"] == "qc-video")
         # ready for qc-video is bound to artifacts; the driver-receipt side of
@@ -573,37 +584,87 @@ def test_ready_and_precondition_use_the_same_success_judgement():
 
 
 def test_a_suffixed_qc_report_is_what_completes_the_qc_step():
-    """qc_video writes ``qc-report-<graded-name>.json``, so readiness is a pattern.
+    """QC must grade the render its own filename names, and say so.
 
-    A fixed ``qc-report.json`` declaration never matched a real run. The
-    declaration is now a glob, and at least one matching report must grade
-    itself complete: a matching file that cannot be graded, or a FAIL, is
-    still not completion.
+    ``qc_video --video <slug>.mp4`` writes ``qc-report-<slug>.json`` with
+    ``graded_target: project://final/<slug>.mp4``. Readiness requires that
+    exact binding: a matching file that cannot be graded, a FAIL, a stale
+    report, or a PASS for another render are all not completion.
     """
     with tempfile.TemporaryDirectory(dir=ROOT / "projects") as tmp:
         project = _make_video_project(Path(tmp))
         receipts = project / "receipts"
         receipts.mkdir(exist_ok=True)
+        report = receipts / "qc-report-driver-precond.json"
+        (project / "final").mkdir(exist_ok=True)
+        (project / "final" / "driver-precond.mp4").write_bytes(b"render")
 
         def qc_ready() -> bool:
             plan = driver.build_plan(project, ROOT)
             return next(s for s in plan["steps"] if s["id"] == "qc-video")["ready"]
 
         assert qc_ready() is False, "no report exists yet"
-        (receipts / "qc-report-easel.json").write_text('{"stale": true}', encoding="utf-8")
+        report.write_text('{"stale": true}', encoding="utf-8")
         assert qc_ready() is False, "a matching but ungraded file is not completion"
-        (receipts / "qc-report-easel.json").write_text(json.dumps({
+        report.write_text(json.dumps({
             "schema": "contentops.qc-canonical/v1",
             "overall": "FAIL",
             "currency": "CURRENT",
+            "graded_target": "project://final/driver-precond.mp4",
         }), encoding="utf-8")
         assert qc_ready() is False, "a FAIL report is a verdict, not completion"
-        (receipts / "qc-report-easel.json").write_text(json.dumps({
+        report.write_text(json.dumps({
+            "schema": "contentops.qc-canonical/v1",
+            "overall": "WARN",
+            "currency": "CURRENT",
+            "graded_target": "project://final/another-render.mp4",
+        }), encoding="utf-8")
+        assert qc_ready() is False, "a PASS for another render is not this render"
+        report.write_text(json.dumps({
             "schema": "contentops.qc-canonical/v1",
             "overall": "WARN",
             "currency": "CURRENT",
         }), encoding="utf-8")
-        assert qc_ready() is True, "a current WARN report completes the step"
+        assert qc_ready() is False, "a report with no graded_target binds nothing"
+        report.write_text(json.dumps({
+            "schema": "contentops.qc-canonical/v1",
+            "overall": "WARN",
+            "currency": "CURRENT",
+            "graded_target": "project://final/driver-precond.mp4",
+        }), encoding="utf-8")
+        assert qc_ready() is True, "a current WARN report bound to this render completes"
+
+
+def test_the_qc_step_names_the_exact_render_and_its_own_report():
+    with tempfile.TemporaryDirectory(dir=ROOT / "projects") as tmp:
+        project = _make_video_project(Path(tmp))
+        plan = driver.build_plan(project, ROOT)
+        qc = next(s for s in plan["steps"] if s["id"] == "qc-video")
+        joined = " ".join(qc["argv"])
+        assert "--video" in qc["argv"], qc["argv"]
+        assert "driver-precond.mp4" in joined, joined
+        assert qc["receipts"] == ["receipts/qc-report-driver-precond.json"], qc["receipts"]
+
+
+def test_a_windows_style_project_path_in_a_receipt_still_binds():
+    with tempfile.TemporaryDirectory(dir=ROOT / "projects") as tmp:
+        project = _make_video_project(Path(tmp))
+        receipts = project / "receipts"
+        receipts.mkdir(exist_ok=True)
+        (project / "final").mkdir(exist_ok=True)
+        (project / "final" / "driver-precond.mp4").write_bytes(b"render")
+        plan = driver.build_plan(project, ROOT)
+        project_rel = plan["project"]
+        (receipts / "qc-report-driver-precond.json").write_text(json.dumps({
+            "schema": "contentops.qc-canonical/v1",
+            "project": project_rel.replace("/", "\\"),
+            "overall": "WARN",
+            "currency": "CURRENT",
+            "graded_target": "project://final/driver-precond.mp4",
+        }), encoding="utf-8")
+        plan = driver.build_plan(project, ROOT)
+        qc = next(s for s in plan["steps"] if s["id"] == "qc-video")
+        assert qc["ready"] is True, "a Windows path separator is not a different project"
 
 
 def _test_a_human_step_is_never_runnable_goes_here():
