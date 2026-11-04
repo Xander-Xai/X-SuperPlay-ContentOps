@@ -26,6 +26,21 @@
 | Driver QC binding | `src/contentops/easel/driver.py` | `receipts/qc-report*.json` is resolved at plan time via `_step_receipts_ok`; a matching but ungraded or `FAIL` report is not completion |
 | Router → brief → M5 | `src/contentops/routing/`, `src/contentops/script/`, `scripts/content_route.py`, `scripts/brief_to_m5.py`, `scripts/m5_production.py` | account DNA → candidate → approved brief → `script/script.json` + claims + source refs; `copy_review.require_if_brief_driven` blocks an unreviewed brief |
 | S4 stage policies | `src/contentops/workflow/{audience,duration,copy_strategy,platform,delivery,visual_route}.py` | audience/duration/strategy/platform limits, manual delivery manifest and visual routing; no publication authority |
+| Graphic workflow adapters | `src/contentops/gzh/runtime.py`, `src/contentops/xhs/runtime.py`, `scripts/graphic_workflow.py` | locate/hash-verify/describe a locally installed GZH or XHS workflow; GRAPHIC_TEXT manual package surface; no execution, draft or publication |
+
+### Graphic workflows (GZH / XHS)
+
+The GZH and XHS workflows are installed by the operator outside the public
+repository and are never vendored. `scripts/graphic_workflow.py` is the single
+entry point (`status`, `verify`, `plan` for `--workflow gzh|xhs`): it verifies
+the lock's bytes and identity, then describes the operator operations. It never
+executes a workflow step, starts the Easel host, drafts or publishes. The
+GRAPHIC_TEXT surface is the manual package, which stops at
+`AWAITING_MANUAL_REVIEW`.
+
+Rights: XHS root is Apache-2.0 with one AGPL-3.0 skill that must stay excluded;
+GZH has 45 of 50 skills unlicensed, so it remains local internal use only until
+cleared. A verified runtime is not a redistribution licence.
 
 ## 3. Commands
 
