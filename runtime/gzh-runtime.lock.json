@@ -1,0 +1,30 @@
+{
+  "schema": "contentops.gzh-runtime-lock/v1",
+  "tool": "gzh-thinktank",
+  "source": {
+    "recorded_from": "vendor/gzh-thinktank/gzh_未来智能 (feat/content-router)",
+    "note": "Hashes only. The workflow bytes are not redistributed by this repository (Issue #56); the operator installs the tree outside the repository."
+  },
+  "identity": {
+    "workflow_id": "gzh-thinktank",
+    "account_id": "thinktank",
+    "content_medium": "wechat_article"
+  },
+  "rights": {
+    "status": "UNRESOLVED",
+    "note": "Issue #56: per-component redistribution rights are not cleared. Local internal use only; no public derivative.",
+    "evidence": [
+      "https://github.com/Xander-Xai/X-SuperPlay-ContentOps/issues/56"
+    ]
+  },
+  "files": [
+    {
+      "path": "workflow-identity.yaml",
+      "sha256": "d325660dfed454cec4699d4464a9e64f9cf4436e26df9b361275243098a376c1"
+    },
+    {
+      "path": "workspace-contract.yaml",
+      "sha256": "8455ff531e21ab67af77c870fca4684d7fba1e6a6ae090795f98adda8dbacc04"
+    }
+  ]
+}

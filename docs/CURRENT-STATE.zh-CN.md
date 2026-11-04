@@ -123,6 +123,20 @@ Owner 已决定把完整 Easel 系统作为生产底座（ADR-016）。本节只
 | 测试 | `python tests/test_real_source_duration.py` —— 13 项 |
 | 未完成 | 还没有真实 A/B 成片可测；样例分镜没有逐镜头时长，按设计报告 `BLOCKED`/`WARN` |
 
+## 公众号工作流适配器（2026-11-04）
+
+| 属性 | 值 |
+|---|---|
+| 入口 | `python scripts/gzh_runtime.py status` / `verify` / `plan`；包 `src/contentops/gzh/` |
+| 运行时 | 安装在本仓库之外的公众号工作流根目录，由 `CONTENTOPS_GZH_ROOT` 或 `--root` 指定 |
+| 信任 | `runtime/gzh-runtime.lock.json` 记录身份（`gzh-thinktank` / `thinktank` / `wechat_article`）、合同文件哈希与权利状态；每个记录字节都会重新哈希校验 |
+| 拒绝 | `MISSING_RUNTIME`、`LOCK_MISSING`、`ROOT_INSIDE_REPO`、`HASH_DRIFT`、`IDENTITY_MISMATCH`、`LOCK_PATH_ILLEGAL`、`CONTRACT_INCOMPLETE` |
+| 权限 | 无：`execution_authorized` 与 `publish_authorized` 恒为 false；`plan` 只描述操作，从不执行 |
+| 权利 | `UNRESOLVED`（Issue #56）：vendor 树不在此仓库再分发；即使文件全部校验通过，`production_ready` 仍为 false |
+| 注册表 | `wechat_official_account` 保持 `PLANNED`：没有草稿、发布路径或真实本地运行 |
+| 测试 | `python tests/test_gzh_runtime.py` —— 12 项，基于合成根目录 |
+| 未完成 | 尚未生产任何公众号文章；没有草稿、发布、指标或真实工作区运行 |
+
 ## Bundle 与双线 handoff（2026-11-02）
 
 | 属性 | 值 |
