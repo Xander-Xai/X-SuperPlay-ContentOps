@@ -138,8 +138,13 @@ def locate_root(root: Optional[Path] = None, *, repo_root: Optional[Path] = None
         raise GzhBlocked("MISSING_RUNTIME", f"{resolved.as_posix()} is not a directory")
     boundary = (Path(repo_root) if repo_root else _repo_root()).resolve()
     try:
-        resolved.relative_to(boundary)
+        relative = resolved.relative_to(boundary)
     except ValueError:
+        return resolved
+    # The project-local .runtime/ tree is gitignored and is the approved
+    # operator install location. Any other in-repo path would put the workflow
+    # into the public repository, so it stays refused.
+    if relative.parts and relative.parts[0] == ".runtime":
         return resolved
     raise GzhBlocked(
         "ROOT_INSIDE_REPO",

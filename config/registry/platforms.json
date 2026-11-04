@@ -104,7 +104,7 @@
       "status": "PLANNED",
       "owner": "",
       "evidence": [],
-      "not_claimed": "VERIFY_ONLY adapter: locates, hash-verifies and describes a locally installed workflow; it does not execute, draft or publish. Rights unresolved: GZH 45/50 skills unlicensed; XHS excludes one AGPL skill. No platform API, draft or metric ingestion exists.",
+      "not_claimed": "BLOCKED: RIGHTS_UNRESOLVED — the root is Apache-2.0 but one bundled skill is AGPL-3.0 and must stay excluded. VERIFY_ONLY adapter locates, hash-verifies and describes a locally installed workflow; it does not execute, draft or publish. No platform API, draft or metric ingestion exists.",
       "adapter": {
         "module": "src/contentops/xhs/runtime.py",
         "lock": "runtime/xhs-runtime.lock.json",
@@ -164,7 +164,7 @@
       "status": "PLANNED",
       "owner": "",
       "evidence": [],
-      "not_claimed": "VERIFY_ONLY adapter: locates, hash-verifies and describes a locally installed workflow; it does not execute, draft or publish. Rights unresolved: GZH 45/50 skills unlicensed; XHS excludes one AGPL skill. No platform API, draft or metric ingestion exists.",
+      "not_claimed": "BLOCKED: RIGHTS_UNRESOLVED — 45 of 50 bundled skills have no license. VERIFY_ONLY adapter locates, hash-verifies and describes a locally installed workflow; it does not execute, draft or publish. No platform API, draft or metric ingestion exists.",
       "adapter": {
         "module": "src/contentops/gzh/runtime.py",
         "lock": "runtime/gzh-runtime.lock.json",

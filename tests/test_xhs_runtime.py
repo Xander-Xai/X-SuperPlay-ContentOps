@@ -40,7 +40,7 @@ def _fixture(tmp: str):
         "tool": "xhs-fa",
         "identity": {
             "workflow_id": "xhs-fa",
-            "account_id": "future-intelligence",
+            "account_id": "thinktank",
             "content_medium": "xiaohongshu_image",
         },
         "rights": {
@@ -103,6 +103,15 @@ def test_a_root_inside_the_public_repository_is_refused():
         inside = repo / "vendor-xhs"
         inside.mkdir()
         _raises("ROOT_INSIDE_REPO", lambda: runtime.locate_root(inside, repo_root=repo))
+
+
+def test_a_root_under_the_gitignored_runtime_tree_is_allowed():
+    with tempfile.TemporaryDirectory() as tmp:
+        root, repo, lock, _ = _fixture(tmp)
+        target = repo / ".runtime" / "workflows" / "xhs"
+        target.parent.mkdir(parents=True)
+        root.rename(target)
+        assert runtime.locate_root(target, repo_root=repo) == target.resolve()
 
 
 def test_a_lock_path_escape_is_refused():

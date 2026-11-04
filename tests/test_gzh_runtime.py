@@ -156,6 +156,20 @@ def test_a_root_inside_the_repository_is_refused():
 
 
 @test
+def test_a_root_under_the_gitignored_runtime_tree_is_allowed():
+    with tempfile.TemporaryDirectory() as temp:
+        boundary = Path(temp) / "repo"
+        boundary.mkdir()
+        root = boundary / ".runtime" / "workflows" / "gzh"
+        root.mkdir(parents=True)
+        (root / "workflow-identity.yaml").write_text(IDENTITY, encoding="utf-8")
+        (root / "workspace-contract.yaml").write_text(CONTRACT, encoding="utf-8")
+        result = status(root, lock_path=_lock(root), repo_root=boundary)
+        assert result["state"] == VERIFIED, result
+        print("[ok] 5. a gitignored .runtime root is allowed")
+
+
+@test
 def test_a_missing_lock_is_blocked():
     with tempfile.TemporaryDirectory() as temp:
         root = _root(temp)
