@@ -240,6 +240,12 @@ jobs:
       - name: Run real-source duration gate tests
         run: python tests/test_real_source_duration.py
 
+      # The short motion-sample technical gate: 4-8 s, silent, 1080x1920,
+      # H.264/yuv420p, CFR 30, digest-bound. It stops at PENDING_FOUNDER_REVIEW
+      # and has no approval or publish switch. Fixture-driven; no render.
+      - name: Run motion sample gate tests
+        run: python tests/test_motion_sample.py
+
       # Integration boundary only; no runtime download, no external CLI execution,
       # and no network or provider calls on hosted CI runners.
       - name: Run M5 media-use automatic sourcing regression tests
