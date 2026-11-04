@@ -87,7 +87,9 @@ a verified integration yet.
 | Authority | no publish, credential, install or approval step; a driver asking for `human-review` is refused |
 | Execution | fixed argv, `--execute` required; every run writes `receipts/agent-driver-<step>.json` |
 | Host requirement | none — `host-status` is a read step, not a dependency |
-| Tests | `python tests/test_agent_driver.py` — 12/12 |
+| QC binding | `qc-video` runs `qc_video.py --video <slug>.mp4` and requires `receipts/qc-report-<slug>.json`; that report must declare `graded_target: project://final/<slug>.mp4` and the render must still exist |
+| QC verdict | a `FAIL`, a non-current report, a report for another render, or a report whose render is gone never completes the step |
+| Tests | `python tests/test_agent_driver.py` — 29/29 |
 
 ## Content Router and Brief Bridge (2026-11-04)
 

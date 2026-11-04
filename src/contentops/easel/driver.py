@@ -73,6 +73,23 @@ def _assert_allowed(step: Step) -> None:
                 f"{step.id} contains {token!r}; the driver has no such authority")
 
 
+def _project_slug(project_dir: Path) -> str:
+    """The name M5 uses for this project's render.
+
+    M5 composes ``final/<id>.mp4`` where ``id`` comes from ``project.yaml`` and
+    falls back to the directory name. QC must grade that exact file, so the
+    driver resolves the same value instead of assuming the directory name.
+    """
+    yaml_path = Path(project_dir) / "project.yaml"
+    if yaml_path.is_file():
+        for line in yaml_path.read_text(encoding="utf-8", errors="replace").splitlines():
+            if line.strip().startswith("id:"):
+                value = line.split(":", 1)[1].strip().strip('"').strip("'")
+                if value:
+                    return value
+    return Path(project_dir).name
+
+
 def _steps(project: str, fmt: str) -> List[Step]:
     steps = [
         # Diagnostic read only. Per ADR-017 the host is optional: production
@@ -88,6 +105,7 @@ def _steps(project: str, fmt: str) -> List[Step]:
         ),
     ]
     if fmt == "VIDEO":
+        slug = _project_slug(Path(project))
         steps += [
             Step(
                 id="produce-video",
@@ -104,12 +122,16 @@ def _steps(project: str, fmt: str) -> List[Step]:
             Step(
                 id="qc-video",
                 label="Run QC on the rendered video",
-                argv=("python", "scripts/qc_video.py", project),
-                # qc_video names its report after the graded render
-                # (qc-report-easel.json, qc-report-final.json, ...), so the
-                # declaration is a pattern resolved at plan time rather than
-                # one literal path.
-                receipts=("receipts/qc-report*.json",),
+                # Name the exact render M5 wrote. Without --video, qc_video
+                # falls back to easel.mp4/final.mp4 and can grade a different
+                # file than the one this step produced.
+                argv=("python", "scripts/qc_video.py", project,
+                      "--video", f"{slug}.mp4"),
+                # qc_video names its report after the graded render, so with
+                # an explicit --video the path is deterministic. A glob here
+                # would let an older report for another render satisfy the
+                # step.
+                receipts=(f"receipts/qc-report-{slug}.json",),
                 authority=AUTHORITY_READ,
                 requires=("produce-video",),
             ),
@@ -314,6 +336,26 @@ M5_DONE_STATES = ("PENDING_FOUNDER_REVIEW", "REVOKED")
 HANDOFF_DONE_STATES = ("READY_FOR_PRODUCTION", "READY_FOR_MANUAL_PACKAGE")
 
 
+def _qc_target_matches(path: Path, graded_target: Any) -> bool:
+    """Whether a QC report grades the render its own filename names.
+
+    ``qc_video --video <slug>.mp4`` writes ``qc-report-<slug>.json`` with
+    ``graded_target: project://final/<slug>.mp4``. Requiring both to agree
+    stops an older PASS for a different render from completing this step.
+    An unsuffixed ``qc-report.json`` binds no target and is not accepted.
+    """
+    name = path.name
+    if not (name.startswith("qc-report-") and name.endswith(".json")):
+        return False
+    slug = name[len("qc-report-"):-len(".json")]
+    if str(graded_target or "") != f"project://final/{slug}.mp4":
+        return False
+    # A report for a render that is no longer on disk grades nothing. The
+    # canonical report carries no bytes hash, so existence is the strongest
+    # current-input fact available here without re-running the render.
+    return (path.parent.parent / "final" / f"{slug}.mp4").is_file()
+
+
 def _artifact_is_complete(path: Path, *, project: Optional[str] = None,
                           bundle_sha256: Optional[str] = None) -> bool:
     """Whether a *stage artifact* receipt records a graded, current result.
@@ -343,8 +385,10 @@ def _artifact_is_complete(path: Path, *, project: Optional[str] = None,
     if not isinstance(data, dict):
         return False
     schema = data.get("schema")
-    if project is not None and data.get("project") not in (project, None):
-        return False
+    if project is not None:
+        recorded = str(data.get("project") or "").replace("\\", "/")
+        if recorded and recorded != project:
+            return False
     if schema == HANDOFF_SCHEMA:
         if data.get("state") not in HANDOFF_DONE_STATES:
             return False
@@ -357,8 +401,11 @@ def _artifact_is_complete(path: Path, *, project: Optional[str] = None,
             and data.get("human_review") in M5_DONE_STATES \
             and data.get("production_ready") is False
     if schema == QC_SCHEMA:
-        return data.get("overall") in ("PASS", "WARN") \
-            and data.get("currency") == "CURRENT"
+        if data.get("overall") not in ("PASS", "WARN"):
+            return False
+        if data.get("currency") != "CURRENT":
+            return False
+        return _qc_target_matches(path, data.get("graded_target"))
     if schema == GRAPHIC_SCHEMA:
         if data.get("status") != "AWAITING_MANUAL_REVIEW":
             return False
