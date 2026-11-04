@@ -14,7 +14,9 @@
       "strategy_platform": "douyin",
       "easel_capability": {
         "status": "UPSTREAM_DECLARED",
-        "evidence": ["skills/openclaw/skill-douyin-upload/SKILL.md"],
+        "evidence": [
+          "skills/openclaw/skill-douyin-upload/SKILL.md"
+        ],
         "verified_here": false
       },
       "content_types": [
@@ -36,7 +38,9 @@
       "strategy_platform": "bilibili",
       "easel_capability": {
         "status": "UPSTREAM_DECLARED",
-        "evidence": ["skills/openclaw/skill-bilibili-upload/SKILL.md"],
+        "evidence": [
+          "skills/openclaw/skill-bilibili-upload/SKILL.md"
+        ],
         "verified_here": false
       },
       "content_types": [
@@ -58,7 +62,9 @@
       "strategy_platform": "xiaohongshu",
       "easel_capability": {
         "status": "UPSTREAM_DECLARED",
-        "evidence": ["skills/openclaw/skill-xhs-publisher/SKILL.md"],
+        "evidence": [
+          "skills/openclaw/skill-xhs-publisher/SKILL.md"
+        ],
         "verified_here": false
       },
       "content_types": [
@@ -98,14 +104,27 @@
       "status": "PLANNED",
       "owner": "",
       "evidence": [],
-      "not_claimed": "BLOCKED: PLATFORM_CODE_ABSENT — no platform-specific production code exists on this branch; BLOCKED: ACCOUNT_NOT_PUBLIC — the account DNA is not tracked in this public repository; BLOCKED: RIGHTS_UNRESOLVED — vendored workflow rights are not cleared for this branch"
+      "not_claimed": "VERIFY_ONLY adapter: locates, hash-verifies and describes a locally installed workflow; it does not execute, draft or publish. Rights unresolved: GZH 45/50 skills unlicensed; XHS excludes one AGPL skill. No platform API, draft or metric ingestion exists.",
+      "adapter": {
+        "module": "src/contentops/xhs/runtime.py",
+        "lock": "runtime/xhs-runtime.lock.json",
+        "entry": "python scripts/graphic_workflow.py status --workflow xhs",
+        "state": "VERIFY_ONLY",
+        "tests": [
+          "tests/test_xhs_runtime.py"
+        ],
+        "execution_authorized": false,
+        "publish_authorized": false
+      }
     },
     {
       "platform_id": "shipinhao",
       "strategy_platform": "wechat_channels",
       "easel_capability": {
         "status": "UPSTREAM_DECLARED",
-        "evidence": ["skills/openclaw/skill-channels-upload/SKILL.md"],
+        "evidence": [
+          "skills/openclaw/skill-channels-upload/SKILL.md"
+        ],
         "verified_here": false
       },
       "content_types": [
@@ -145,7 +164,18 @@
       "status": "PLANNED",
       "owner": "",
       "evidence": [],
-      "not_claimed": "BLOCKED: PLATFORM_CODE_ABSENT — no platform-specific production code exists on this branch; BLOCKED: ACCOUNT_NOT_PUBLIC — the account DNA is not tracked in this public repository; BLOCKED: RIGHTS_UNRESOLVED — vendored workflow rights are not cleared for this branch"
+      "not_claimed": "VERIFY_ONLY adapter: locates, hash-verifies and describes a locally installed workflow; it does not execute, draft or publish. Rights unresolved: GZH 45/50 skills unlicensed; XHS excludes one AGPL skill. No platform API, draft or metric ingestion exists.",
+      "adapter": {
+        "module": "src/contentops/gzh/runtime.py",
+        "lock": "runtime/gzh-runtime.lock.json",
+        "entry": "python scripts/graphic_workflow.py status --workflow gzh",
+        "state": "VERIFY_ONLY",
+        "tests": [
+          "tests/test_gzh_runtime.py"
+        ],
+        "execution_authorized": false,
+        "publish_authorized": false
+      }
     },
     {
       "platform_id": "x",
@@ -172,7 +202,17 @@
         "src/contentops/publish/publisher.py",
         "tests/test_x_post.py"
       ],
-      "not_claimed": "Manual-only offline gate. publisher.py has no branch that returns PUBLISHED and PublishMode.API raises; no platform draft, no API publication and no metric ingestion exists. This row is ContentOps's own X gate, not a claim of execution authority for any other X repository."
+      "not_claimed": "Manual-only offline gate. publisher.py has no branch that returns PUBLISHED and PublishMode.API raises; no platform draft, no API publication and no metric ingestion exists. This row is ContentOps's own X gate, not a claim of execution authority for any other X repository. The adapter verifies the local manual-only gate; it never calls the X API or reads a credential.",
+      "adapter": {
+        "module": "src/contentops/x/runtime.py",
+        "entry": "python scripts/graphic_workflow.py status --workflow x",
+        "state": "MANUAL_PACKAGE",
+        "tests": [
+          "tests/test_x_runtime.py"
+        ],
+        "execution_authorized": false,
+        "publish_authorized": false
+      }
     },
     {
       "platform_id": "zhihu",

@@ -266,6 +266,12 @@ jobs:
       - name: Run XHS runtime adapter tests
         run: python tests/test_xhs_runtime.py
 
+      # The X editorial adapter: verify the local manual-only account, project
+      # and gate code. Never calls the X API, reads a credential, drafts or
+      # publishes.
+      - name: Run X editorial adapter tests
+        run: python tests/test_x_runtime.py
+
       # Integration boundary only; no runtime download, no external CLI execution,
       # and no network or provider calls on hosted CI runners.
       - name: Run M5 media-use automatic sourcing regression tests

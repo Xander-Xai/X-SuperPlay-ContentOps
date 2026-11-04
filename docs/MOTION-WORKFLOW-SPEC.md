@@ -28,15 +28,16 @@
 | S4 stage policies | `src/contentops/workflow/{audience,duration,copy_strategy,platform,delivery,visual_route}.py` | audience/duration/strategy/platform limits, manual delivery manifest and visual routing; no publication authority |
 | Graphic workflow adapters | `src/contentops/gzh/runtime.py`, `src/contentops/xhs/runtime.py`, `scripts/graphic_workflow.py` | locate/hash-verify/describe a locally installed GZH or XHS workflow; GRAPHIC_TEXT manual package surface; no execution, draft or publication |
 
-### Graphic workflows (GZH / XHS)
+### Graphic and editorial workflows (GZH / XHS / X)
 
 The GZH and XHS workflows are installed by the operator outside the public
-repository and are never vendored. `scripts/graphic_workflow.py` is the single
-entry point (`status`, `verify`, `plan` for `--workflow gzh|xhs`): it verifies
-the lock's bytes and identity, then describes the operator operations. It never
-executes a workflow step, starts the Easel host, drafts or publishes. The
-GRAPHIC_TEXT surface is the manual package, which stops at
-`AWAITING_MANUAL_REVIEW`.
+repository and are never vendored. X is this repository's own manual-only
+editorial gate. `scripts/graphic_workflow.py` is the single entry point
+(`status`, `verify`, `plan` for `--workflow gzh|xhs|x`): it verifies the
+workspace or lock, then describes the operator operations. It never executes a
+workflow step, calls a platform API, starts the Easel host, drafts or publishes.
+GZH/XHS use the GRAPHIC_TEXT manual package, which stops at
+`AWAITING_MANUAL_REVIEW`; X uses the manual post package.
 
 Rights: XHS root is Apache-2.0 with one AGPL-3.0 skill that must stay excluded;
 GZH has 45 of 50 skills unlicensed, so it remains local internal use only until
@@ -46,6 +47,8 @@ cleared. A verified runtime is not a redistribution licence.
 
 ```bash
 python scripts/check_motion_sample.py <sample.mp4> [--sha256 <hex>]
+python scripts/graphic_workflow.py status --workflow gzh|xhs|x
+python scripts/graphic_workflow.py plan   --workflow x --json
 python tests/test_motion_sample.py
 python tests/test_motion_handoff.py
 python tests/test_real_source_duration.py
