@@ -1,0 +1,41 @@
+id: e2e-rights-audit
+title: "为什么权利审计必须先于内容生产"
+created_at: "2026-11-04T00:00:00Z"
+
+source_refs:
+  - id: rights_audit
+    type: repo_doc
+    title: "reports/audits/rights-audit-2026-11-04.md — GZH/XHS 许可矩阵与 receipt 暴露"
+    path: "reports/audits/rights-audit-2026-11-04.md"
+    permission: CREATED_BY_OWNER
+    notes: "同一仓库、同一提交内可复核"
+  - id: adr_019
+    type: repo_doc
+    title: "docs/adr/ADR-019-receipt-history-exposure.md — 轮换 + 接受"
+    path: "docs/adr/ADR-019-receipt-history-exposure.md"
+    permission: CREATED_BY_OWNER
+  - id: deferred
+    type: repo_doc
+    title: "docs/DEFERRED-WORK.md — 未完成工作的归档与重开条件"
+    path: "docs/DEFERRED-WORK.md"
+    permission: CREATED_BY_OWNER
+
+content_type: tech_review
+topic_cluster: "rights-and-evidence"
+
+target:
+  platform_primary: douyin
+  aspect_ratio: "9:16"
+  resolution: "1080x1920"
+  duration_target_sec: 40
+
+evidence_policy:
+  real_assets_first: true
+  ai_visuals_allowed: auxiliary_only
+  fabricated_claims: forbidden
+
+status: initialized
+
+outputs:
+  final_video: ""
+  qc_report: ""

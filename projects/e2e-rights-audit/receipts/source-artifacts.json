@@ -1,0 +1,41 @@
+{
+  "schema": "contentops.m5-sources/v1",
+  "artifacts": [
+    {
+      "id": "rights_audit",
+      "source_type": "repo_doc",
+      "title": "reports/audits/rights-audit-2026-11-04.md — GZH/XHS 许可矩阵与 receipt 暴露",
+      "path": "reports/audits/rights-audit-2026-11-04.md",
+      "sha256": "fec2dce3577797280adb2b1fc5698f4fd02b8237ee48e3c6a7ea447ade4b2e0c",
+      "bytes": 5051,
+      "permission": "CREATED_BY_OWNER",
+      "captured_at": "2026-11-04T01:10:16Z",
+      "evidence_capable": true,
+      "notes": "同一仓库、同一提交内可复核"
+    },
+    {
+      "id": "adr_019",
+      "source_type": "repo_doc",
+      "title": "docs/adr/ADR-019-receipt-history-exposure.md — 轮换 + 接受",
+      "path": "docs/adr/ADR-019-receipt-history-exposure.md",
+      "sha256": "417362233234910c804013e3edd4f6cb73956764ea8aa57ceb764838193f8222",
+      "bytes": 2511,
+      "permission": "CREATED_BY_OWNER",
+      "captured_at": "2026-11-04T01:10:16Z",
+      "evidence_capable": true,
+      "notes": ""
+    },
+    {
+      "id": "deferred",
+      "source_type": "repo_doc",
+      "title": "docs/DEFERRED-WORK.md — 未完成工作的归档与重开条件",
+      "path": "docs/DEFERRED-WORK.md",
+      "sha256": "709cf40c330aa77d09ddb8404f67a3f68909d73ca55e2b8912143ee57052fd34",
+      "bytes": 3666,
+      "permission": "CREATED_BY_OWNER",
+      "captured_at": "2026-11-04T01:10:16Z",
+      "evidence_capable": true,
+      "notes": ""
+    }
+  ]
+}
