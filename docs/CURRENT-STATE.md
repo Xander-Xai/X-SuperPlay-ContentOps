@@ -119,6 +119,20 @@ a verified integration yet.
 | Tests | `python tests/test_real_source_duration.py` — 13 |
 | Not done | no real A/B cut has been measured; the sample storyboards predate per-shot durations and report `BLOCKED`/`WARN` by design |
 
+## GZH Workflow Adapter (2026-11-04)
+
+| Property | Value |
+|---|---|
+| Entry | `python scripts/gzh_runtime.py status` / `verify` / `plan`; package `src/contentops/gzh/` |
+| Runtime | a locally installed GZH workflow root, outside this repository, named by `CONTENTOPS_GZH_ROOT` or `--root` |
+| Trust | `runtime/gzh-runtime.lock.json` records the identity (`gzh-thinktank` / `thinktank` / `wechat_article`), the contract-file hashes and the rights status; every recorded byte is re-hashed |
+| Refusals | `MISSING_RUNTIME`, `LOCK_MISSING`, `ROOT_INSIDE_REPO`, `HASH_DRIFT`, `IDENTITY_MISMATCH`, `LOCK_PATH_ILLEGAL`, `CONTRACT_INCOMPLETE` |
+| Authority | none: `execution_authorized` and `publish_authorized` are always false; `plan` describes the operator operations and never runs them |
+| Rights | `UNRESOLVED` (Issue #56): the vendored tree is not redistributed here, and `production_ready` stays false even when every file verifies |
+| Registry | `wechat_official_account` remains `PLANNED`: there is no draft, publish path or real local run |
+| Tests | `python tests/test_gzh_runtime.py` — 12 on synthetic roots |
+| Not done | no GZH article has been produced; no draft, publish, metrics or real workspace run |
+
 ## Bundle and Dual-Line Handoff (2026-11-02)
 
 | Property | Value |
