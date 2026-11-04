@@ -91,7 +91,9 @@ Owner 已决定把完整 Easel 系统作为生产底座（ADR-016）。本节只
 | 权限 | 无发布、凭据、安装或批准步骤；驱动方请求 `human-review` 会被拒绝 |
 | 执行 | argv 固定，必须显式 `--execute`；每次执行写 `receipts/agent-driver-<step>.json` |
 | 宿主依赖 | 无 —— `host-status` 是只读步骤，不是依赖 |
-| 测试 | `python tests/test_agent_driver.py` —— 12/12 |
+| QC 绑定 | `qc-video` 执行 `qc_video.py --video <slug>.mp4`，并要求 `receipts/qc-report-<slug>.json`；该回执必须声明 `graded_target: project://final/<slug>.mp4`，且成片仍然存在 |
+| QC 判定 | `FAIL`、非当前回执、针对另一个成片的回执、成片已不存在的回执，都不能算完成 |
+| 测试 | `python tests/test_agent_driver.py` —— 29/29 |
 
 ## 内容路由与 brief 桥接（2026-11-04）
 
