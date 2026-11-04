@@ -1,0 +1,11 @@
+{
+  "schema": "contentops.m5-script-check/v1",
+  "ok": true,
+  "lines": 3,
+  "claims_cited": [
+    "no_rights_sample",
+    "plan_coverage",
+    "voice_refused"
+  ],
+  "claims_unused": []
+}

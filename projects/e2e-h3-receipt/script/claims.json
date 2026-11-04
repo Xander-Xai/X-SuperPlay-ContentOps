@@ -1,0 +1,23 @@
+{
+  "schema": "contentops.claim-ledger/v1",
+  "claims": [
+    {
+      "id": "h3_transport",
+      "text": "H3 走的是官方文档的公开 API v2，不是官方 CLI。",
+      "artifacts": ["h3_receipt"],
+      "quotes": ["\"kind\": \"documented_public_api\""]
+    },
+    {
+      "id": "h3_request",
+      "text": "这次请求是 4 秒、768P 的 I2VA 参考图任务。",
+      "artifacts": ["h3_receipt"],
+      "quotes": ["\"mode\": \"I2VA\"", "\"requested_duration_s\": 4"]
+    },
+    {
+      "id": "h3_not_vendored",
+      "text": "H3 的提示词仓库没有被 vendored 进本仓库。",
+      "artifacts": ["h3_report"],
+      "quotes": ["The repository is **not vendored**."]
+    }
+  ]
+}

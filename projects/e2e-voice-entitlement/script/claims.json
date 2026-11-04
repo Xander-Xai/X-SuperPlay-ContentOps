@@ -1,0 +1,23 @@
+{
+  "schema": "contentops.claim-ledger/v1",
+  "claims": [
+    {
+      "id": "voice_refused",
+      "text": "这次 voice clone 请求只发了一次，被 2061 拒绝。",
+      "artifacts": ["voice_report"],
+      "quotes": ["| `POST /v1/voice_clone` | **1, refused** — `base_resp.status_code = 2061` |"]
+    },
+    {
+      "id": "plan_coverage",
+      "text": "2061 是套餐覆盖问题，不是权限或验证问题。",
+      "artifacts": ["voice_report"],
+      "quotes": ["2061 is a **plan-coverage** refusal, not a verification or permission one."]
+    },
+    {
+      "id": "no_rights_sample",
+      "text": "当前没有权利清晰的人声样本，所以没有自动重试。",
+      "artifacts": ["voice_report"],
+      "quotes": ["no rights-cleared voice sample"]
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+id: e2e-voice-entitlement
+title: "声音克隆被 2061 拒绝，到底说明了什么"
+created_at: "2026-11-04T00:00:00Z"
+
+source_refs:
+  - id: voice_report
+    type: research_report
+    title: "minimax-voice-clone-entitlement.md — 套餐覆盖与权利边界"
+    path: "research/providers/minimax-voice-clone-entitlement.md"
+    permission: CREATED_BY_OWNER
+
+content_type: tech_review
+topic_cluster: "provider-evidence"
+
+target:
+  platform_primary: douyin
+  aspect_ratio: "9:16"
+  resolution: "1080x1920"
+  duration_target_sec: 30
+
+evidence_policy:
+  real_assets_first: true
+  ai_visuals_allowed: auxiliary_only
+  fabricated_claims: forbidden
+
+status: initialized

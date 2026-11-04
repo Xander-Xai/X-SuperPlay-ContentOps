@@ -1,0 +1,31 @@
+id: e2e-h3-receipt
+title: "一条 H3 参考图生成回执到底证明了什么"
+created_at: "2026-11-04T00:00:00Z"
+
+source_refs:
+  - id: h3_receipt
+    type: experiment_receipt
+    title: "minimax-h3-i2va-reference-2026-10-05.sanitized.json — 真实 H3 I2VA 回执"
+    path: "research/providers/receipts/minimax-h3-i2va-reference-2026-10-05.sanitized.json"
+    permission: CREATED_BY_OWNER
+  - id: h3_report
+    type: research_report
+    title: "minimax-h3-official-reality.md — 官方 API 与仓库边界"
+    path: "research/providers/minimax-h3-official-reality.md"
+    permission: CREATED_BY_OWNER
+
+content_type: tech_review
+topic_cluster: "provider-evidence"
+
+target:
+  platform_primary: douyin
+  aspect_ratio: "9:16"
+  resolution: "1080x1920"
+  duration_target_sec: 30
+
+evidence_policy:
+  real_assets_first: true
+  ai_visuals_allowed: auxiliary_only
+  fabricated_claims: forbidden
+
+status: initialized

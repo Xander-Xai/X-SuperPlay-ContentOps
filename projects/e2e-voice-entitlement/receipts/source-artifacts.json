@@ -1,0 +1,17 @@
+{
+  "schema": "contentops.m5-sources/v1",
+  "artifacts": [
+    {
+      "id": "voice_report",
+      "source_type": "research_report",
+      "title": "minimax-voice-clone-entitlement.md — 套餐覆盖与权利边界",
+      "path": "research/providers/minimax-voice-clone-entitlement.md",
+      "sha256": "7e3708c92dccd00edeb206e4e245a444ab1d3247232a4b7e5155fa01be761466",
+      "bytes": 13166,
+      "permission": "CREATED_BY_OWNER",
+      "captured_at": "2026-11-04T01:36:45Z",
+      "evidence_capable": true,
+      "notes": ""
+    }
+  ]
+}

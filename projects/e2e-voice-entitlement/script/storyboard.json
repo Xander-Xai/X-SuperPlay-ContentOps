@@ -1,0 +1,51 @@
+{
+  "size": "1080x1920",
+  "image_motion": "static",
+  "pad_mode": "trim",
+  "shots": [
+    {
+      "shot_id": "version_evidence",
+      "caption": "一次请求，2061 拒绝",
+      "narration": "这次 voice clone 请求只发了一次，被 2061 拒绝，没有自动重试。",
+      "claim": "voice_refused",
+      "source": "projects/easel-review/sources/screenshots/12-easel-version-evidence.png",
+      "source_type": "real_screenshot",
+      "duration": 7.51,
+      "duration_s": 7.51,
+      "image": "projects/easel-review/sources/screenshots/12-easel-version-evidence.png",
+      "motion": "static"
+    },
+    {
+      "shot_id": "skill_layers",
+      "caption": "套餐覆盖，不是权限",
+      "narration": "2061 是套餐覆盖问题，不是权限或验证问题，也不是账号被封。",
+      "claim": "plan_coverage",
+      "source": "projects/easel-review/sources/screenshots/13-easel-skill-layers.png",
+      "source_type": "real_screenshot",
+      "duration": 7.915,
+      "duration_s": 7.915,
+      "image": "projects/easel-review/sources/screenshots/13-easel-skill-layers.png",
+      "motion": "static"
+    },
+    {
+      "shot_id": "skills_dir",
+      "caption": "没有清权样本，不重试",
+      "narration": "当前没有权利清晰的人声样本，所以没有自动重试，也没有把原始 voice_id 写进回执，后续要重新走一次人工授权，并附上回执。",
+      "claim": "no_rights_sample",
+      "source": "projects/easel-review/sources/screenshots/14-easel-skills-dir.png",
+      "source_type": "real_screenshot",
+      "duration": 15.724,
+      "duration_s": 15.724,
+      "image": "projects/easel-review/sources/screenshots/14-easel-skills-dir.png",
+      "motion": "static"
+    }
+  ],
+  "narration": "projects/e2e-voice-entitlement/assets/voice/narration.wav",
+  "subtitle": "projects/e2e-voice-entitlement/assets/captions/default.srt",
+  "engine": "easel",
+  "voice_provider": "sapi/Microsoft Huihui Desktop (zh-CN)",
+  "generated_visuals": {
+    "count": 0,
+    "policy": "real_assets_only"
+  }
+}

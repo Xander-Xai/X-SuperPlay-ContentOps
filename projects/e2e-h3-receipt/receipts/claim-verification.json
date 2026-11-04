@@ -1,0 +1,6 @@
+{
+  "schema": "contentops.claim-verification/v1",
+  "ok": true,
+  "problems": [],
+  "claims": 3
+}
