@@ -234,6 +234,13 @@ def import_local_assets(source_dir: Path, project_dir: Path, *, repo_root: Path)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n",
                       encoding="utf-8")
+    imported_rows = [row for row in rows
+                     if isinstance(row, dict)
+                     and row.get("permission") == "USER_PROVIDED_LOCAL"]
+    for row in imported_rows:
+        if not is_valid_local_preview_asset(row, project, root):
+            raise LocalAssetError(
+                f"imported asset {row.get('id')} is missing, changed, or lacks a valid receipt")
     return receipt
 
 

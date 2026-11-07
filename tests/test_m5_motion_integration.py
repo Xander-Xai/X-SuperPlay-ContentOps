@@ -101,29 +101,54 @@ def test_explicit_user_media_is_preview_only_and_hash_bound():
         source.mkdir()
         (source / "provided.png").write_bytes(png)
 
+        with mock.patch.object(produce_video, "ROOT", repo):
+            digest_before_import = produce_video._input_digest(project, assets_dir=source)
         receipt = local_assets.import_local_assets(source, project, repo_root=repo)
         assert receipt["usage_scope"] == "LOCAL_PREVIEW_ONLY"
         assert receipt["distribution_authorized"] is False
         assert receipt["evidence_capable"] is False
         repeated = local_assets.import_local_assets(source, project, repo_root=repo)
         assert len(repeated["assets"]) == 1
+        with mock.patch.object(produce_video, "ROOT", repo):
+            assert produce_video._input_digest(project, assets_dir=source) == digest_before_import
         asset = json.loads((project / "sources" / "assets.json").read_text(
             encoding="utf-8"))["assets"][0]
         assert local_assets.is_valid_local_preview_asset(asset, project, repo)
 
         # The normal M5 asset stage may use the visual in a local preview, while
         # leaving its rights and claim-evidence status unchanged.
-        with mock.patch.object(m5_production, "ROOT", repo):
+        stage_root = Path(str(repo).swapcase()) if sys.platform == "win32" else repo
+        with mock.patch.object(m5_production, "ROOT", stage_root):
             verified = m5_production.stage_assets(project)
             assert verified[asset["id"]]["verified_sha256"] == asset["sha256"]
             imported_path = repo / asset["repo_path"]
             imported_path.write_bytes(png + b"tampered")
+            try:
+                local_assets.import_local_assets(source, project, repo_root=repo)
+            except local_assets.LocalAssetError as exc:
+                assert "changed" in str(exc)
+            else:
+                raise AssertionError("changed imported bytes must prevent stale-cache reuse")
             try:
                 m5_production.stage_assets(project)
             except m5_production.M5Blocked as exc:
                 assert "sha256" in str(exc)
             else:
                 raise AssertionError("changed local media must fail the hash check")
+
+
+def test_unified_producer_passes_selected_media_into_m5():
+    with tempfile.TemporaryDirectory() as temp:
+        assets_dir = Path(temp)
+        expected = {"state": "QC_PASSED", "project": "projects/demo",
+                    "video": "project://final/demo.mp4", "elapsed_seconds": 0,
+                    "human_review": "PENDING_FOUNDER_REVIEW"}
+        with (mock.patch.object(sys, "argv", [
+                  "produce_video.py", "--project", "projects/demo", "--assets",
+                  str(assets_dir), "--json"]),
+              mock.patch.object(produce_video, "produce", return_value=expected) as run):
+            assert produce_video.main() == 0
+            assert run.call_args.kwargs["assets_dir"] == assets_dir.resolve()
 
 
 def test_the_composer_key_and_the_receipt_key_agree():
@@ -693,6 +718,7 @@ def main() -> int:
              test_a_video_asset_reaches_the_storyboard_as_a_clip,
              test_a_still_asset_is_not_labelled_a_clip,
              test_explicit_user_media_is_preview_only_and_hash_bound,
+             test_unified_producer_passes_selected_media_into_m5,
              test_the_composer_key_and_the_receipt_key_agree,
              test_a_missing_asset_stops_the_build,
              test_a_non_positive_duration_stops_the_build,

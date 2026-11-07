@@ -57,8 +57,53 @@ def _hash_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _input_digest(project: Path) -> str:
+def _input_digest(project: Path, *, assets_dir: Path | None = None) -> str:
     """Hash declared production inputs, including local files named by assets."""
+    local_source_ids: set[str] = set()
+    source_files: list[tuple[str, str]] = []
+    normalized_assets_manifest: bytes | None = None
+    assets_path = project / "sources" / "assets.json"
+    if assets_dir is not None:
+        for source in sorted(Path(assets_dir).expanduser().rglob("*"),
+                             key=lambda p: p.as_posix().casefold()):
+            if (not source.is_file() or source.is_symlink()
+                    or source.suffix.casefold() not in {
+                        ".png", ".jpg", ".jpeg", ".webp", ".mp4", ".mov",
+                        ".webm", ".mkv", ".m4v",
+                    }):
+                continue
+            source_hash = _hash_file(source)
+            source_relative = source.relative_to(assets_dir).as_posix()
+            source_files.append((source_relative, source_hash))
+            local_source_ids.add(f"user-{source_hash[:16]}")
+        try:
+            manifest = json.loads(assets_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            manifest = {
+                "schema": "contentops.m5-assets/v1",
+                "policy": "User-provided media is local-preview-only until separately rights-cleared.",
+                "assets": [],
+            }
+        if not isinstance(manifest, dict):
+            manifest = {
+                "schema": "contentops.m5-assets/v1",
+                "policy": "User-provided media is local-preview-only until separately rights-cleared.",
+                "assets": [],
+            }
+        rows = manifest.get("assets") if isinstance(manifest, dict) else None
+        if not isinstance(rows, list):
+            rows = []
+        manifest["assets"] = [
+            row for row in rows
+            if not (isinstance(row, dict)
+                    and row.get("permission") == "USER_PROVIDED_LOCAL"
+                    and (row.get("id") in local_source_ids
+                         or row.get("derived_from_asset_id") in local_source_ids))
+        ]
+        normalized_assets_manifest = (
+            json.dumps(manifest, ensure_ascii=False, sort_keys=True,
+                       separators=(",", ":")) + "\n"
+        ).encode("utf-8")
     candidates = [
         project / "project.yaml",
         project / "script" / "script.json",
@@ -67,13 +112,17 @@ def _input_digest(project: Path) -> str:
         project / "sources" / "source-refs.json",
         ROOT / "runtime" / "easel.lock.json",
     ]
-    assets_path = project / "sources" / "assets.json"
     if assets_path.is_file():
         try:
             assets = json.loads(assets_path.read_text(encoding="utf-8")).get("assets", [])
         except (OSError, ValueError, TypeError):
             assets = []
         for asset in assets:
+            if (assets_dir is not None and isinstance(asset, dict)
+                    and asset.get("permission") == "USER_PROVIDED_LOCAL"
+                    and (asset.get("id") in local_source_ids
+                         or asset.get("derived_from_asset_id") in local_source_ids)):
+                continue
             reference = asset.get("repo_path") if isinstance(asset, dict) else None
             if reference:
                 candidate = (ROOT / str(reference)).resolve()
@@ -107,9 +156,21 @@ def _input_digest(project: Path) -> str:
         digest.update(relative.encode("utf-8"))
         digest.update(b"\0")
         if path.is_file():
-            digest.update(_hash_file(path).encode("ascii"))
+            if path.resolve() == assets_path.resolve() and normalized_assets_manifest is not None:
+                digest.update(hashlib.sha256(normalized_assets_manifest).hexdigest().encode("ascii"))
+            else:
+                digest.update(_hash_file(path).encode("ascii"))
         else:
-            digest.update(b"MISSING")
+            if path == assets_path and normalized_assets_manifest is not None:
+                digest.update(hashlib.sha256(normalized_assets_manifest).hexdigest().encode("ascii"))
+            else:
+                digest.update(b"MISSING")
+        digest.update(b"\n")
+    for relative, source_hash in source_files:
+        digest.update(b"USER_ASSET\0")
+        digest.update(relative.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(source_hash.encode("ascii"))
         digest.update(b"\n")
     return digest.hexdigest()
 
@@ -155,7 +216,8 @@ def _run_summary(receipt: dict[str, Any]) -> dict[str, Any]:
     ) if key in receipt}
 
 
-def produce(project: Path, *, force: bool = False, mode: str = "AUTO") -> dict[str, Any]:
+def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
+            assets_dir: Path | None = None) -> dict[str, Any]:
     mode = mode.upper()
     if mode not in {"AUTO", "REVIEW", "STRICT"}:
         raise ValueError("mode must be AUTO, REVIEW, or STRICT")
@@ -165,7 +227,13 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO") -> dict[s
     project_relative = _relative_to_root(project)
     if not project.is_dir() or project_relative is None:
         raise ValueError("--project must be an existing project inside this repository")
-    digest = _input_digest(project)
+    if assets_dir is not None:
+        from contentops.media.local_assets import LocalAssetError, import_local_assets
+        try:
+            import_local_assets(assets_dir, project, repo_root=ROOT)
+        except LocalAssetError as exc:
+            raise m5_production.M5Blocked(f"user asset import: {exc}") from None
+    digest = _input_digest(project, assets_dir=assets_dir)
     receipt_path = project / "receipts" / RECEIPT
     previous: dict[str, Any] = {}
     if receipt_path.is_file():
@@ -229,7 +297,10 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO") -> dict[s
                 m5_production.copy_review.require_approved(project)
             except m5_production.copy_review.CopyReviewRequired as exc:
                 raise m5_production.M5Blocked(f"copy review: {exc}") from None
-        m5_run = m5_production.build(project, require_copy_review=(mode != "AUTO"))
+        build_options = {"require_copy_review": mode != "AUTO"}
+        if assets_dir is not None:
+            build_options["assets_dir"] = assets_dir
+        m5_run = m5_production.build(project, **build_options)
         receipt["m5_stages"] = m5_run.get("stages", {})
         receipt["stage_timings_seconds"] = m5_run.get("stage_timings_seconds", {})
         receipt["human_review"] = m5_run.get("human_review", "PENDING_FOUNDER_REVIEW")
@@ -282,10 +353,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--mode", default="AUTO", choices=("AUTO", "REVIEW", "STRICT"),
                         help="AUTO runs authorized M5 stages; REVIEW/STRICT also require a recorded copy approval")
     parser.add_argument("--force", action="store_true", help="rerun even when the same inputs already passed QC")
+    parser.add_argument("--assets", default=None,
+                        help="explicit local image/video folder; imported media is local-preview-only")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
     try:
-        result = produce(Path(args.project), force=args.force, mode=args.mode)
+        result = produce(Path(args.project), force=args.force, mode=args.mode,
+                         assets_dir=(Path(args.assets).expanduser().resolve()
+                                     if args.assets else None))
     except (ValueError, m5_production.M5Blocked) as exc:
         print(json.dumps({"state": "BLOCKED", "reason": str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 4

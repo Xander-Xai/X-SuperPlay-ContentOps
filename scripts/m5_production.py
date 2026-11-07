@@ -444,10 +444,11 @@ def stage_assets(project: Path, extra_assets: Optional[Dict[str, Dict[str, Any]]
     all_ids = [str(asset.get("id")) for asset in declared + generated]
     if len(all_ids) != len(set(all_ids)):
         raise M5Blocked("duplicate declared/media-use asset id")
+    root = ROOT.resolve()
     for asset in declared + generated:
-        path = (ROOT / asset["repo_path"]).resolve()
+        path = (root / asset["repo_path"]).resolve()
         try:
-            path.relative_to(ROOT)
+            path.relative_to(root)
         except ValueError:
             problems.append(f"{asset['id']}: path escapes the repository: {asset['repo_path']}")
             continue
