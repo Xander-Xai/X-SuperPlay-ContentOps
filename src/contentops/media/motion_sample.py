@@ -1,6 +1,6 @@
 """Technical gate for a short motion sample: checked, never approved.
 
-A motion sample is a 4–8 s, silent 1080×1920 clip used for internal review. It
+A motion sample is a 2–8 s, silent 1080×1920 clip used for internal review. It
 is not a finished video and it is not a publication candidate. The gate checks
 the *file* — dimensions, codec, pixel format, constant frame timing, audio
 absence, duration and digest — and stops at ``PENDING_FOUNDER_REVIEW``. A
@@ -24,7 +24,7 @@ from typing import Any, Dict, List, Optional
 
 SCHEMA = "contentops.motion-sample-check/v1"
 
-SAMPLE_MIN_S = 4.0
+SAMPLE_MIN_S = 2.0
 SAMPLE_MAX_S = 8.0
 TARGET_WIDTH = 1080
 TARGET_HEIGHT = 1920

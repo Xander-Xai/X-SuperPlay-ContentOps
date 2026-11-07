@@ -77,15 +77,24 @@ def test_audio_is_blocked():
         _blocked(motion_sample.check_motion_sample(path, probe=_probe(has_audio=True)), "SAMPLE_AUDIO_PRESENT")
 
 
-def test_duration_outside_four_to_eight_seconds_is_blocked():
+def test_duration_outside_two_to_eight_seconds_is_blocked():
     with tempfile.TemporaryDirectory() as tmp:
         path = _sample(tmp)
-        for duration in (3.9, 8.1):
+        for duration in (1.9, 8.1):
             _blocked(
                 motion_sample.check_motion_sample(
                     path, probe=_probe(duration_s=duration, frame_timestamps=_timestamps(duration))),
                 "SAMPLE_DURATION",
             )
+
+
+def test_two_second_motion_clip_passes_the_duration_check():
+    with tempfile.TemporaryDirectory() as tmp:
+        path = _sample(tmp)
+        result = motion_sample.check_motion_sample(
+            path, probe=_probe(duration_s=2.0, frame_timestamps=_timestamps(2.0)))
+    assert result["state"] == "TECHNICALLY_CHECKED"
+    assert result["duration_s"] == 2.0
 
 
 def test_hash_mismatch_is_blocked():
