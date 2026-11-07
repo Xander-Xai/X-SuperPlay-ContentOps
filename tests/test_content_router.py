@@ -534,12 +534,26 @@ def test_both_routes_reach_the_same_project_creation():
 
 def test_the_topic_route_can_fetch_evidence_from_query_accepting_sources_only():
     with tempfile.TemporaryDirectory() as tmp:
-        router = _router(_sandbox(tmp), adapters=_fixture_adapter())
+        fixture = _fixture_adapter()
+        queries = []
+
+        class CaptureAdapter:
+            def fetch(self, source, *, limit, timeout=12.0, query=None):
+                queries.append(query)
+                return fixture.fetch(source, limit=limit, timeout=timeout, query=query)
+
+        router = _router(_sandbox(tmp), adapters={"github-search": CaptureAdapter()})
         result = router.start(ACCOUNT_BUILD, "USER_TOPIC",
-                              UserTopicInput(topic="LangGraph 的状态管理怎么设计"),
+                              UserTopicInput(topic="RAG混合检索的完整工作原理"),
                               fetch_evidence=True)
         detail = result.detail["intent"]["route_context"]["detail"]
         assert detail["fetched_evidence"]
+        assert len(queries) == 1
+        assert queries[0].startswith("RAG混合检索的完整工作原理")
+        assert queries[0].count(" OR ") <= 5  # GitHub accepts at most six terms.
+        assert "RAG" in queries[0]
+        assert "Project" not in queries[0] and "Testing" not in queries[0]
+        assert len(queries[0]) <= 220
         # A hot list is never consulted for a topic the owner named.
         assert all(item["source_id"] == "github-search"
                    for item in detail["fetched_evidence"])

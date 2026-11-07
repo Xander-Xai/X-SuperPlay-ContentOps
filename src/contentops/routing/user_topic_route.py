@@ -132,6 +132,7 @@ def collect_evidence(profile: AccountProfile, payload: UserTopicInput, *,
     different hat, and the two routes are supposed to stay distinguishable.
     """
     from ..hotspots.adapters import adapter_for
+    from ..hotspots.query_planner import MAX_QUERY_CHARS, MAX_QUERY_TERMS
 
     query = payload.topic.strip()
     if not query:
@@ -140,11 +141,6 @@ def collect_evidence(profile: AccountProfile, payload: UserTopicInput, *,
         [keyword.term for keyword in profile.keywords_positive if keyword.language == "en"]
         + [keyword.term for keyword in profile.keywords_positive if keyword.language == "zh"]
     ))
-    if terms:
-        # The topic and the account's terms are alternatives, not a
-        # conjunction: a repository about any one of them is evidence for the
-        # topic the owner named.
-        query = " OR ".join([query] + terms[:8])
     results: List[FetchResult] = []
     for source_id, source in sorted(SOURCES.items()):
         if source.query_mode != NATIVE_SEARCH:
@@ -153,13 +149,49 @@ def collect_evidence(profile: AccountProfile, payload: UserTopicInput, *,
             continue
         if source_id in (profile.source_blocklist or ()):
             continue
+        # The topic and the account's terms are alternatives, not a
+        # conjunction: a repository about any one of them is evidence for the
+        # topic the owner named. Keep the user's topic first, then the most
+        # relevant declared terms, while honoring each source's query limit.
+        # GitHub Search rejects long OR expressions with HTTP 422; the topic
+        # route used to bypass the bounded query planner and send every account
+        # keyword, making real topic evidence collection fail at the source.
+        topic_folded = query.casefold()
+        # Discovery keywords are broad account vocabulary, not evidence that
+        # an unrelated repository is about this episode. Only add declared
+        # terms actually present in the user's topic; otherwise a query like
+        # "RAG ... OR Project OR Testing" returns generic project noise.
+        matching_terms = [term for term in terms if term.casefold() in topic_folded]
+        cap = source.max_query_terms or MAX_QUERY_TERMS
+        chosen = [query]
+        chosen_folded = {term.casefold() for term in chosen}
+        for term in matching_terms:
+            if len(chosen) >= cap:
+                break
+            if term.casefold() in chosen_folded:
+                continue
+            candidate = chosen + [term]
+            expression = " OR ".join(candidate)
+            if len(expression) > MAX_QUERY_CHARS:
+                continue
+            chosen.append(term)
+            chosen_folded.add(term.casefold())
+            if len(chosen) >= cap:
+                break
+        query_for_source = " OR ".join(chosen)
+        if len(query_for_source) > MAX_QUERY_CHARS:
+            # Preserve the user's exact input; omit account alternatives when
+            # the topic itself is already longer than the upstream limit. The
+            # full topic remains in the intent and the actual sent query is
+            # recorded on the FetchResult.
+            query_for_source = query[:MAX_QUERY_CHARS]
         adapter = None
         if adapters is not None:
             adapter = adapters.get(source_id)
         if adapter is None:
             adapter = adapter_for(source)
         results.append(adapter.fetch(source, limit=per_source_limit,
-                                     timeout=timeout, query=query))
+                                     timeout=timeout, query=query_for_source))
     return results
 
 
