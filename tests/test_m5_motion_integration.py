@@ -240,6 +240,7 @@ def test_producer_reuses_current_qc_pass_without_rebuilding():
         produce_video.ROOT = root
         produce_video.m5_production.build = fake_build
         try:
+            assert produce_video._relative_to_root(project) == Path("projects/demo-project")
             first = produce_video.produce(project)
             second = produce_video.produce(project)
             assert first["state"] == "QC_PASSED" and first["reused"] is False

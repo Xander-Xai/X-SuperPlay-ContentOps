@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import sys
 import time
 import uuid
@@ -31,6 +32,17 @@ for item in (ROOT / "src", ROOT / "scripts"):
 import m5_production  # noqa: E402
 
 RECEIPT = "produce-video.json"
+
+
+def _relative_to_root(path: Path) -> Path | None:
+    """Return a root-relative path with Windows case normalization."""
+    try:
+        relative = Path(os.path.relpath(path, ROOT.resolve()))
+    except ValueError:
+        return None
+    if relative.is_absolute() or relative == Path("..") or relative.parts[:1] == ("..",):
+        return None
+    return relative
 
 
 def _now() -> str:
@@ -65,7 +77,7 @@ def _input_digest(project: Path) -> str:
             reference = asset.get("repo_path") if isinstance(asset, dict) else None
             if reference:
                 candidate = (ROOT / str(reference)).resolve()
-                if candidate.is_relative_to(ROOT.resolve()):
+                if _relative_to_root(candidate) is not None:
                     candidates.append(candidate)
     project_yaml = project / "project.yaml"
     if project_yaml.is_file():
@@ -84,11 +96,14 @@ def _input_digest(project: Path) -> str:
             if not isinstance(ref, dict) or not ref.get("path"):
                 continue
             candidate = (ROOT / str(ref["path"])).resolve()
-            if candidate.is_relative_to(ROOT.resolve()):
+            if _relative_to_root(candidate) is not None:
                 candidates.append(candidate)
     digest = hashlib.sha256()
     for path in sorted(set(candidates), key=lambda p: p.as_posix()):
-        relative = path.resolve().relative_to(ROOT.resolve()).as_posix()
+        root_relative = _relative_to_root(path.resolve())
+        if root_relative is None:
+            continue
+        relative = root_relative.as_posix()
         digest.update(relative.encode("utf-8"))
         digest.update(b"\0")
         if path.is_file():
@@ -131,7 +146,8 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO") -> dict[s
     if not project.is_absolute():
         project = ROOT / project
     project = project.resolve()
-    if not project.is_dir() or not project.is_relative_to(ROOT.resolve()):
+    project_relative = _relative_to_root(project)
+    if not project.is_dir() or project_relative is None:
         raise ValueError("--project must be an existing project inside this repository")
     digest = _input_digest(project)
     if not force and mode == "AUTO":
@@ -152,7 +168,7 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO") -> dict[s
         "schema": "contentops.produce-video/v1",
         "run_id": run_id,
         "task_id": digest[:16],
-        "project": project.relative_to(ROOT).as_posix(),
+        "project": project_relative.as_posix(),
         "input_sha256": digest,
         "mode": mode,
         "state": "RUNNING",
