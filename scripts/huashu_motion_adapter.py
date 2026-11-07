@@ -260,10 +260,7 @@ def _register(project: Path, account: str, asset_id: str, placement_id: str,
         "source_refs": _sha(project / "sources" / "source-refs.json"),
         "spec": _sha(spec_path),
     }
-    fingerprint = hashlib.sha256(json.dumps(
-        {"inputs": inputs, "runtime": runtime, "placement_id": placement_id},
-        ensure_ascii=False, sort_keys=True, separators=(",", ":")
-    ).encode("utf-8")).hexdigest()
+    fingerprint = _motion_fingerprint(inputs, runtime, placement_id)
     rel_output = output.relative_to(ROOT).as_posix()
     receipt_path = project / "receipts" / f"huashu-{asset_id}.json"
     sidecar = output.with_suffix(output.suffix + ".receipt.json")
@@ -380,6 +377,70 @@ def _register(project: Path, account: str, asset_id: str, placement_id: str,
     return receipt
 
 
+def _motion_fingerprint(inputs: Dict[str, str], runtime: Dict[str, Any],
+                        placement_id: str) -> str:
+    payload = {"inputs": inputs, "runtime": runtime,
+               "placement_id": placement_id}
+    return hashlib.sha256(json.dumps(
+        payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")).hexdigest()
+
+
+def _cached_render(project: Path, asset_id: str, placement_id: str,
+                   spec_arg: str, runtime: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Return a prior motion receipt only when its exact inputs and output match.
+
+    This is called inside the managed execution callback, after the usual grant
+    check. Reuse therefore avoids an unnecessary render without bypassing the
+    account-scoped execution authorization.
+    """
+    spec_path, _spec = _validate_spec(project, spec_arg)
+    script = _read_json(project / "script" / "script.json")
+    claims = _read_json(project / "script" / "claims.json")
+    line = next((row for row in script.get("lines", [])
+                 if row.get("id") == placement_id), None)
+    if not line or line.get("asset_id") != asset_id:
+        return None
+    claim = next((row for row in claims.get("claims", [])
+                  if row.get("id") == line.get("claim")), None)
+    if not claim or not claim.get("artifacts"):
+        return None
+    refs_path = project / "sources" / "source-refs.json"
+    if not refs_path.is_file():
+        return None
+    inputs = {
+        "script": _sha(project / "script" / "script.json"),
+        "claims": _sha(project / "script" / "claims.json"),
+        "source_refs": _sha(refs_path),
+        "spec": _sha(spec_path),
+    }
+    fingerprint = _motion_fingerprint(inputs, runtime, placement_id)
+    receipt_path = project / "receipts" / f"huashu-{asset_id}.json"
+    if not receipt_path.is_file():
+        return None
+    try:
+        receipt = _read_json(receipt_path)
+    except (OSError, ValueError, json.JSONDecodeError):
+        return None
+    output = project / "assets" / "generated" / "huashu" / f"{asset_id}.mp4"
+    technical = receipt.get("technical_qc") or {}
+    expected_repo_path = output.relative_to(ROOT).as_posix()
+    if (receipt.get("schema") != "contentops.video-receipt/v1"
+            or receipt.get("fingerprint") != fingerprint
+            or receipt.get("input_sha256") != inputs
+            or receipt.get("runtime") != runtime
+            or receipt.get("placement_id") != placement_id
+            or receipt.get("asset_id") != asset_id
+            or receipt.get("output", {}).get("repo_path") != expected_repo_path
+            or not output.is_file()
+            or receipt.get("output", {}).get("output_sha256") != _sha(output)
+            or technical.get("approved") is not True):
+        return None
+    return {"receipt": receipt, "spec_path": spec_path, "spec": _spec,
+            "output": output, "line": line, "claim": claim,
+            "technical": technical}
+
+
 def _render(project: Path, account: str, spec_arg: str, placement_id: str,
             asset_id: str, runtime: Dict[str, Any]) -> Dict[str, Any]:
     if not ASSET_ID_RE.fullmatch(asset_id):
@@ -491,6 +552,21 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     def run(operation: str, _request: ExecutionRequest) -> Dict[str, Any]:
         try:
+            cached = _cached_render(project, args.asset_id, args.placement_id,
+                                    args.spec, status["runtime"])
+            if cached:
+                rendered = _register(
+                    project, account, args.asset_id, args.placement_id,
+                    cached["line"], cached["claim"], cached["spec_path"],
+                    cached["spec"], cached["output"], status["runtime"],
+                    cached["technical"])
+                rendered["reused_render"] = True
+                _write_json(project / "receipts" / f"huashu-{args.asset_id}.json",
+                            rendered)
+                _write_json(cached["output"].with_suffix(
+                    cached["output"].suffix + ".receipt.json"), rendered)
+                return {"ok": True, "state": "EXECUTED", "reused": True,
+                        "receipt": rendered}
             rendered = _render(project, account, args.spec, args.placement_id,
                                args.asset_id, status["runtime"])
             return {"ok": True, "state": "EXECUTED", "receipt": rendered}

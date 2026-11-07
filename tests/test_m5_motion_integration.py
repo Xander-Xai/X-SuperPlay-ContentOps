@@ -24,6 +24,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 import m5_production  # noqa: E402
 import produce_video  # noqa: E402
+import huashu_motion_adapter  # noqa: E402
 from contentops.media import storyboard_adapter as adapter  # noqa: E402
 
 
@@ -365,6 +366,58 @@ def test_motion_stage_refuses_an_unmapped_plan_before_rendering():
             raise AssertionError("an unmapped animation must not run")
 
 
+def test_huashu_render_cache_requires_matching_inputs_and_output_hash():
+    verify_root = ROOT / ".verify-tmp"
+    verify_root.mkdir(exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=verify_root) as temp:
+        project = Path(temp)
+        for relative, payload in {
+            "script/script.json": {"lines": [{"id": "P-01", "asset_id": "A1",
+                                                "claim": "C-01"}]},
+            "script/claims.json": {"claims": [{"id": "C-01", "artifacts": ["E-01"]}]},
+            "sources/source-refs.json": {"refs": [{"id": "E-01"}]},
+            "motion.json": {"duration": 4, "width": 1080, "height": 1920,
+                             "fps": 30, "cues": [{"start": 0, "end": 4}]},
+        }.items():
+            path = project / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(payload), encoding="utf-8")
+        output = project / "assets" / "generated" / "huashu" / "A1.mp4"
+        output.parent.mkdir(parents=True)
+        output.write_bytes(b"verified motion output")
+        spec_path = project / "motion.json"
+        runtime = {"skill_id": "huashu-art-motion", "version": "1.2.0"}
+        inputs = {
+            "script": huashu_motion_adapter._sha(project / "script/script.json"),
+            "claims": huashu_motion_adapter._sha(project / "script/claims.json"),
+            "source_refs": huashu_motion_adapter._sha(project / "sources/source-refs.json"),
+            "spec": huashu_motion_adapter._sha(spec_path),
+        }
+        digest = huashu_motion_adapter._sha(output)
+        receipt = {
+            "schema": "contentops.video-receipt/v1",
+            "asset_id": "A1", "placement_id": "P-01",
+            "runtime": runtime, "input_sha256": inputs,
+            "fingerprint": huashu_motion_adapter._motion_fingerprint(
+                inputs, runtime, "P-01"),
+            "output": {"repo_path": output.relative_to(ROOT).as_posix(),
+                       "output_sha256": digest},
+            "technical_qc": {"approved": True, "black_frame_segments": []},
+        }
+        receipt_path = project / "receipts" / "huashu-A1.json"
+        receipt_path.parent.mkdir(parents=True)
+        receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
+
+        cached = huashu_motion_adapter._cached_render(
+            project, "A1", "P-01", "motion.json", runtime)
+        assert cached is not None
+        assert cached["output"] == output
+
+        output.write_bytes(b"changed output")
+        assert huashu_motion_adapter._cached_render(
+            project, "A1", "P-01", "motion.json", runtime) is None
+
+
 def main() -> int:
     tests = (test_a_video_asset_reaches_the_storyboard_as_a_clip,
              test_a_still_asset_is_not_labelled_a_clip,
@@ -381,7 +434,8 @@ def main() -> int:
              test_producer_reuses_current_qc_pass_without_rebuilding,
              test_producer_review_mode_keeps_the_human_copy_gate,
              test_configured_motion_runs_each_placement_through_managed_adapter,
-             test_motion_stage_refuses_an_unmapped_plan_before_rendering)
+             test_motion_stage_refuses_an_unmapped_plan_before_rendering,
+             test_huashu_render_cache_requires_matching_inputs_and_output_hash)
     for test in tests:
         test()
         print(f"[ok] {test.__name__}")
