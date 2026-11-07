@@ -974,7 +974,8 @@ def stage_review(project: Path, slug: str, qc: Dict[str, Any],
 def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = None,
           narration_provider: Optional[str] = None,
           narration_audio: Optional[Path] = None,
-          narration_receipt: Optional[Path] = None) -> Dict[str, Any]:
+          narration_receipt: Optional[Path] = None,
+           require_copy_review: bool = True) -> Dict[str, Any]:
     if not project.is_dir():
         raise M5Blocked(f"project not found: {project}")
     config = _read_yaml(project / "project.yaml")
@@ -994,10 +995,14 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
     # The gate therefore sits before narration, not at the draft. A project
     # with no 00_brief/brief.json is a legacy sample and is not retroactively
     # blocked; see copy_review.require_if_brief_driven.
-    try:
-        copy_review.require_if_brief_driven(project)
-    except copy_review.CopyReviewRequired as exc:
-        raise M5Blocked(f"copy review: {exc}") from None
+    # In AUTO, draft video rendering can proceed without a separate manual
+    # copy sign-off. Source/claim/asset checks still run; final publishing
+    # remains separately subject to human review.
+    if require_copy_review:
+        try:
+            copy_review.require_if_brief_driven(project)
+        except copy_review.CopyReviewRequired as exc:
+            raise M5Blocked(f"copy review: {exc}") from None
 
     bundle = run_stage("bundle", stage_bundle, project, config)
     if bundle["state"] != "NOT_CONFIGURED":
@@ -1054,6 +1059,7 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
         "stages": stages,
         "stage_timings_seconds": timings,
         "production_ready": False,
+        "copy_review_required_for_render": require_copy_review,
         "human_review": "PENDING_FOUNDER_REVIEW" if review else "NOT_RUN",
     }
     _write_json(project / "receipts" / "m5-run.json", run)
