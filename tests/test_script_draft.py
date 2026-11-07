@@ -31,8 +31,9 @@ from contentops.hotspots.adapters import FixtureAdapter  # noqa: E402
 from contentops.hotspots.storage import RouterStore  # noqa: E402
 from contentops.routing.router import ContentRouter  # noqa: E402
 from contentops.routing.user_topic_route import UserTopicInput  # noqa: E402
+from contentops.routing.account_profile import load_profile  # noqa: E402
 from contentops.script import ScriptBlocked, build, check, write  # noqa: E402
-from contentops.script.draft import line_seconds, topic_provenance  # noqa: E402
+from contentops.script.draft import _master, line_seconds, topic_provenance  # noqa: E402
 from contentops.script.evidence import PACK_SCHEMA  # noqa: E402
 
 ACCOUNT_BUILD = "x-superplay-future-intelligence"
@@ -75,12 +76,13 @@ def _router(root: Path) -> ContentRouter:
                          quality_fetcher=_Quality())
 
 
-def _approved_topic(root: Path, slug: str = "script-topic") -> Path:
+def _approved_topic(root: Path, slug: str = "script-topic",
+                    account_id: str = ACCOUNT_BUILD) -> Path:
     router = _router(root)
-    run = router.start(ACCOUNT_BUILD, "USER_TOPIC",
+    run = router.start(account_id, "USER_TOPIC",
                        UserTopicInput(topic=TOPIC,
                                       urls=["https://github.com/langchain-ai/langgraph"]))
-    router.approve(ACCOUNT_BUILD, run.run_id, reviewer="Founder", confirmed=True,
+    router.approve(account_id, run.run_id, reviewer="Founder", confirmed=True,
                    project_slug=slug)
     return root / "projects" / slug
 
@@ -172,6 +174,30 @@ def test_real_material_becomes_substantive_spoken_lines():
             assert claim["support_status"] == "SUPPORTED"
             assert claim["source_refs"][0].startswith("https://")
         assert any("checkpointer" in line for line in spoken)
+        assert "原始出处: [docs page 1](<https://docs.example.test/page-1>)" in draft.master
+        assert "此账号禁止人工录屏" in draft.master
+
+
+def test_1024_copy_includes_recordly_source_capture_guidance():
+    with tempfile.TemporaryDirectory() as tmp:
+        root = _sandbox(tmp)
+        profile = load_profile(root, ACCOUNT_EXPLORE)
+        source_url = "https://docs.example.test/page-1"
+        claim = {"claim_id": "C-02", "kind": "source",
+                 "provenance": "verified_factual_claim", "support_status": "SUPPORTED",
+                 "source_refs": [source_url], "text": "来源支持的事实"}
+        report = {"topic_provenance": "user_supplied_topic",
+                  "evidence": {"items": 1, "characters": 180,
+                               "sources": [{"evidence_id": "EV-01",
+                                            "title": "docs page 1", "url": source_url}]},
+                  "storyboard": {"duration_s": 50}}
+        storyboard = {"shots": [{"claim_id": "C-02", "needs_capture": True}]}
+        master = _master(profile, {"intent": {"topic": TOPIC}, "brief_id": "BR-1"},
+                         [{"placement_id": "P-02", "claim_id": "C-02",
+                           "text": "来源支持的事实"}], [claim], report, storyboard)
+        assert "原始出处: [docs page 1](<https://docs.example.test/page-1>)" in master
+        assert "Recordly取材: 打开此链接并保留地址栏/页面标题" in master
+        assert "最终竖屏裁切正文区域" in master
 
 
 def test_every_fact_is_bound_to_a_document_that_matches_its_digest():

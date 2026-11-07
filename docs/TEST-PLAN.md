@@ -2,43 +2,59 @@
 
 [English](TEST-PLAN.md) | [简体中文](TEST-PLAN.zh-CN.md)
 
-> Test strategy, the real suite inventory, and how CI is wired.
+> Authoritative local verification strategy, suite inventory and CI wiring.
 >
-> Last verified: 2026-11-01 on `main` (PR #89).
+> Last verified: 2026-11-06 on `fix/6-brief-copy-review`.
 
-## How tests run
+## Risk-based local verification
 
-There is **no pytest**. Each suite is a standalone script that builds a `TESTS`
-list and runs it from `main()`:
+Choose checks from the behavior and risk affected, not the number of files changed. Prefer static inspection first and the smallest directly relevant existing suite. A test not run is **not** a pass. Do not add tests merely because a task has no directly applicable test; add the smallest regression test only when coverage is demonstrably insufficient and behavior warrants it.
+
+| Level | Scope | Local verification |
+|---|---|---|
+| **L0 — docs/non-behavioral** | Copy, Markdown, comments, non-behavioral explanations | No business unit, integration or E2E tests. Run only directly relevant docs/link/consistency checks; run `check_i18n.py` when bilingual mirrors change. No `doctor.py`, `qc_video.py` or full `dev_check.py`. |
+| **L1 — local low-risk code** | Local bug fix/config logic without public-contract change | Static analysis first; at most one directly relevant existing suite when applicable. If none applies, report the static verification performed and the uncovered runtime behavior. No automatic full suite. |
+| **L2 — ordinary feature** | New ordinary interface/component, business logic, non-critical media behavior, Bundle/Router/workflow-local changes | Run relevant existing suites, ordinarily 1–3 targeted test commands. Add only the necessary contract check for a cross-module contract. Do not expand to unrelated areas. |
+| **L3 — high-risk** | Human approval/execution authorization; provider billing, quota or live calls; media rights/evidence; credentials/access; CI/security gates/public contracts; pinned Easel runtime/upgrades; data corruption, duplicate spend or publication | Run the unit, contract, integration and regression checks needed to cover the affected risk. Preserve fail-closed gates and human approval. Real paid calls, external writes, renders or human review require their separate authorization. The ordinary test budget does not waive a required safety check. |
+
+### Local commands are conditional
+
+- `python scripts/doctor.py`: environment dependencies, runtime, installation or deployment state only.
+- `python scripts/qc_video.py <project>`: actual video artifact or video-QC behavior only; do not run as a generic code check.
+- `python scripts/test_basic.py`: relevant script entry point or basic behavior only.
+- `python scripts/dev_check.py`: complete local gate when preparing a PR; run once for that purpose, not after every small edit.
+- `python scripts/dev_check.py --quick` skips **only** repository policy. It still runs subprocess policy, skill references, docs, i18n, `test_basic.py` and `git diff --check`; it is not a targeted or lightweight relevant-tests mode.
+- Run `python scripts/check_repo_policy.py` when repository placement/security policy or CI suite wiring is affected.
+
+## Budget, retries and stop conditions
+
+Plan ordinary development verification to consume roughly 20–30% of task effort; this is a planning guideline, not a safety cap. L0 runs no business tests; L1 ordinarily runs at most one targeted test command; L2 ordinarily runs at most three relevant test commands. L3 is determined by affected risk.
+
+Do not repeat a passed command unless subsequent changes could affect its result. On failure, diagnose first and rerun only checks affected by the repair; no blind retries. Do not expand the test matrix without evidence of a gap. If additional verification exceeds the ordinary budget, state the concrete risk it addresses.
+
+Stop when the request is implemented, required directly relevant checks pass, no blocking defect is known, and no critical risk remains. Do not follow a pass with autonomous test expansion, unrelated refactoring or another broad review. Report unrun tests as unrun, never as passing.
+
+## Local work vs PR/CI
+
+Daily local work uses the L0–L3 selection above. Preparing a PR retains the complete existing local gate (`python scripts/dev_check.py`) and the relevant business regression checks. GitHub Actions remains the authoritative full suite: Ubuntu and Windows test jobs plus repo-policy checks, including receipt-secret checks. Do not disable, remove, weaken or bypass CI, required checks, branch protection or safety gates. A successful local targeted run does not imply the full CI matrix passed.
+
+## How suites run and are wired
+
+There is **no pytest**. Each suite is a standalone script, for example:
 
 ```bash
 python tests/test_m5_evidence.py
 python tests/test_media_convergence.py
 ```
 
-Run the local gate before a commit:
-
-```bash
-python scripts/dev_check.py
-```
-
-It runs, in order: repo policy → subprocess policy → skill references → docs →
-i18n → `scripts/test_basic.py` → `git diff --check`.
-
-CI enumerates every suite as a named step. **A new `tests/test_*.py` that is not
-added to `.github/workflows/ci.yml` never runs**, and a green CI run is then not
-evidence. The M4/M4.5 suites were merged unwired once for exactly this reason.
+The authoritative current suite list is `git ls-files 'tests/test_*.py'`; a suite counts as CI-covered only when `.github/workflows/ci.yml` names it. CI enumerates suites explicitly. `check_repo_policy.check_test_suites_registered_in_ci` catches an unwired suite.
 
 ## Current inventory
 
-The inventory is **not asserted in this document**. The authoritative list is
-`git ls-files 'tests/test_*.py'`, and a suite counts only when
-`.github/workflows/ci.yml` names it. Function counts inside a suite are a floor
-rather than a total, because list-driven and unittest-style suites define their
-checks differently.
+Function counts inside a suite are floors, not totals, because list-driven and unittest-style suites define checks differently.
 
 | Suite | File | Count | CI |
-|---|---|---|---|
+|---|---|---:|---|
 | Script smoke | `scripts/test_basic.py` | 10 | yes |
 | Windows subprocess | `tests/test_windows_subprocess.py` | 47 | yes |
 | Windows paths | `tests/test_windows_paths.py` | 6 | yes |
@@ -78,38 +94,16 @@ checks differently.
 | Trusted grant source | `tests/test_trusted_grant_source.py` | list-driven | yes |
 | Execution gate | `tests/test_execution_gate.py` | list-driven | yes |
 
-Also in CI: `scripts/check_subprocess_policy.py`, `scripts/check_docs.py`,
-`scripts/check_i18n.py`, `scripts/check_repo_policy.py`,
-`scripts/check_receipt_secrets.py`, `scripts/check_skill_references.py`.
-
-### The media suites never contact a provider
-
-Provider suites drive `tests/fixtures/fake_mmx_cli.py` (and `fake_h3_api.py`) and
-inject fake billing transports. CI needs no MiniMax account and spends no quota.
-Tests that need `ffmpeg` or `Pillow` report `[skip]` when the tool is absent; CI
-installs both and prints an availability line so a skipped suite cannot look
-green by accident.
-
-## CI checks
-
-| Job | Contents |
-|---|---|
-| `Tests (ubuntu-latest)` | every suite above + policy/docs/i18n/whitespace |
-| `Tests (windows-latest)` | same matrix |
-| `Repo policy checks` | file placement, receipt secrets, subprocess policy, docs, i18n |
+The CI workflow also runs policy, docs, i18n, whitespace, subprocess and receipt-secret checks. Media provider suites use fake transports; they do not call a provider. Suites that require `ffmpeg`, `Pillow`, media-use runtime or ignored artifacts may skip locally; inspect availability/skip output. CI installs `Pillow` and ffmpeg and reports availability.
 
 ## Adding a suite
 
-1. Write `tests/test_<area>.py` with a `TESTS` list and a `main()`.
+1. Add `tests/test_<area>.py` only when a demonstrated coverage gap justifies it; use the repository's standalone-script pattern.
 2. Add a named step to `.github/workflows/ci.yml`.
-3. Add the row to this table and to `docs/CURRENT-STATE.md`.
-4. Run `python scripts/dev_check.py` and the new suite locally.
-
-Step 2 is enforced: `check_repo_policy.check_test_suites_registered_in_ci` fails
-when a `tests/test_*.py` file is not named in the workflow.
+3. Update this inventory and `docs/CURRENT-STATE.md` when its verified facts change.
+4. Run the new suite and full PR gate when preparing the PR, not after every intermediate edit.
 
 ## Planned
 
-- Contract tests for cross-repo `SourceArtifact` adapters (needs the unmerged
-  content-router layer).
+- Contract tests for cross-repo `SourceArtifact` adapters (needs the unmerged content-router layer).
 - E2E tests for 3 different sources → 3 final MP4s → QC → human review (M6).

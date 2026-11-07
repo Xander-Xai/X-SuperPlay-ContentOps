@@ -281,8 +281,9 @@ See [TEST-PLAN.md](TEST-PLAN.md) for the full inventory.
 
 1. Voice quality — edge-tts is mechanical and Windows SAPI is offline-flat.
    Neither is production-grade. MiniMax speech is implemented but unapproved.
-2. Human Review — no completed `human-review.json` for any project.
-   Every result stays `PENDING_FOUNDER_REVIEW`.
+2. Human Review — no project has an approved `human-review.json`. The tracked
+   `projects/easel-review/receipts/human-review.json` records
+   `REJECTED_FOUNDER`; other production runs remain `PENDING_FOUNDER_REVIEW`.
 3. media-use runtime lock — a clean checkout (and this host today) resolves
    `BLOCKED / MISSING_RUNTIME`. The approved baseline exists; a host lock must be
    generated and trusted before the adapter can run.

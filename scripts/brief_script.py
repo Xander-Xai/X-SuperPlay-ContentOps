@@ -78,7 +78,8 @@ def main(argv=None) -> int:
                    "claims": draft.report["claims"],
                    "storyboard": draft.report["storyboard"],
                    "check": verdict,
-                   "next": "run scripts/copy_review.py <project> --approve --reviewer <name>"}
+                   "next": "run scripts/copy_review.py <project> --approve --reviewer <name> "
+                           "--opinion \"<what you decided>\" --confirm"}
         code = 0 if verdict.get("ok") else BLOCKED_EXIT
 
     if args.json:

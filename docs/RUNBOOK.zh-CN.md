@@ -205,6 +205,22 @@ python scripts\agent_drive.py run --project projects\my-video --step produce-vid
 不存在发布、凭据或安装步骤。该驱动不需要 FastAPI、uvicorn 或运行中的宿主；
 `host-status` 只是让 agent 能报告宿主状态的只读步骤。
 
+## 5.6 Brief 文案人工审核
+
+Brief-to-M5 桥接写入最终脚本与分镜后，先检查或记录人工文案审核，再运行 M5：
+
+```powershell
+python scripts\copy_review.py projects\my-episode --check
+python scripts\copy_review.py projects\my-episode --approve `
+  --reviewer "审核人姓名" --opinion "已审核最终旁白" --confirm
+python scripts\copy_review.py projects\my-episode --request-changes `
+  --reviewer "审核人姓名" --opinion "补充缺失的来源引用" --confirm
+```
+
+审核决定必须填写审核人、书面意见并显式传入 `--confirm`。收据绑定当前文案指纹；
+修改脚本、字幕、声明、分镜或已登记资产后，旧批准会过期。该命令只记录审核决定，
+不会修改文案、运行 M5 或发布内容。
+
 ## 6. 开发门控
 
 ```bash

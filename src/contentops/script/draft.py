@@ -285,7 +285,7 @@ def build(project: Path, *, root: Optional[Path] = None,
     return Draft(project=str(project), brief_id=str(brief.get("brief_id") or ""),
                  account_id=account_id, lines=lines_doc, claim_map=claim_map,
                  storyboard=storyboard,
-                 master=_master(profile, brief, beats, claims, report),
+                 master=_master(profile, brief, beats, claims, report, storyboard),
                  report=report)
 
 
@@ -440,8 +440,12 @@ def _storyboard(profile: AccountProfile, beats: List[Dict[str, Any]],
 
 
 def _master(profile: AccountProfile, brief: Dict[str, Any], beats: List[Dict[str, Any]],
-            claims: List[Dict[str, Any]], report: Dict[str, Any]) -> str:
+            claims: List[Dict[str, Any]], report: Dict[str, Any],
+            storyboard: Dict[str, Any]) -> str:
     by_id = {claim["claim_id"]: claim for claim in claims}
+    sources_by_url = {item["url"]: item for item in report["evidence"].get("sources", [])
+                      if item.get("url")}
+    shots_by_claim = {shot.get("claim_id"): shot for shot in storyboard.get("shots", [])}
     lines = [
         f"# {brief.get('intent', {}).get('topic') or 'script draft'}",
         "",
@@ -466,7 +470,20 @@ def _master(profile: AccountProfile, brief: Dict[str, Any], beats: List[Dict[str
         lines.append("")
         lines.append(f"- claim: `{claim['claim_id']}` · {claim['support_status']}")
         for ref in claim.get("source_refs") or []:
-            lines.append(f"- source: {ref}")
+            source = sources_by_url.get(ref, {})
+            title = str(source.get("title") or ref).replace("]", r"\]")
+            evidence_id = source.get("evidence_id")
+            evidence_label = f" · `{evidence_id}`" if evidence_id else ""
+            lines.append(f"- 原始出处: [{title}](<{ref}>){evidence_label}")
+            shot = shots_by_claim.get(claim["claim_id"], {})
+            if shot.get("needs_capture") and profile.manual_recording == "ALLOWED_CROPPED":
+                lines.append("- Recordly取材: 打开此链接并保留地址栏/页面标题，录到与本句对应的原文段落；"
+                             "先展示来源，再聚焦关键段落，最终竖屏裁切正文区域并确保文字可读。")
+            elif profile.manual_recording == "FORBIDDEN":
+                lines.append("- 画面建议: 此账号禁止人工录屏；用动画解释本句，来源链接供审核核对。")
+            else:
+                lines.append("- 画面建议: 以该来源中支撑本句的段落或操作结果为主画面；"
+                             "录制前确认该账号允许此类素材。")
         if claim.get("limitation"):
             lines.append(f"- limit: {claim['limitation']}")
         lines.append("")

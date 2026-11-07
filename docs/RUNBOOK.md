@@ -280,6 +280,24 @@ tries to run it. There is no publish, credential or install step at all. The
 driver does not need FastAPI, uvicorn or a running host; `host-status` is a read
 step only so the agent can report the host state.
 
+## 5.5 Brief-driven copy review
+
+After the Brief-to-M5 bridge has written the final script and storyboard, check
+or record the human copy review before running M5:
+
+```powershell
+python scripts\copy_review.py projects\my-episode --check
+python scripts\copy_review.py projects\my-episode --approve `
+  --reviewer "Your Name" --opinion "Reviewed the final narration" --confirm
+python scripts\copy_review.py projects\my-episode --request-changes `
+  --reviewer "Your Name" --opinion "Add the missing source citation" --confirm
+```
+
+A decision requires a named reviewer, written rationale and `--confirm`. The
+receipt is bound to the current copy fingerprint; editing the script, captions,
+claims, storyboard or declared assets makes an earlier approval stale. This
+command records a decision only: it does not edit copy, run M5 or publish.
+
 ## 6. Run QC
 
 ```powershell

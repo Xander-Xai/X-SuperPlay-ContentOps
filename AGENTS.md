@@ -22,7 +22,7 @@ If not → don't do it now.
 7. **FAIL is FAIL.** Never silently degrade to pass QC. Fallback marks `production_ready: false`.
 8. **Human Approval never bypassed.** Gates stop and emit `NEEDS_HUMAN_REVIEW`.
 9. **No direct push to main.** All changes via PR. `main` is **PROTECTED** (enabled 2026-10-31): required checks `Tests (ubuntu-latest)`, `Tests (windows-latest)`, `Repo policy checks`; PR required; no force push; no deletion; linear history. Required approval count is 0 while the owner works solo; raise it to 1 when a second reviewer exists.
-10. **Each change carries verification.** Run `doctor.py` and `qc_video.py` at minimum, plus `python scripts/dev_check.py` before every commit.
+10. **Each change carries risk-appropriate verification.** Use the L0–L3 policy in `docs/TEST-PLAN.md`; do not run unrelated checks. `doctor.py` is for environment/runtime/install/deployment changes, and `qc_video.py` is for actual video artifacts or video-QC behavior. Run `python scripts/dev_check.py` once as the complete local gate when preparing a PR, not after every small edit. `--quick` only skips the repository policy check; it is not a targeted test mode.
 
 ## 2. Extension Policy
 
@@ -120,4 +120,5 @@ No receipt = task not done.
 - Message prefix: `feat:` / `fix:` / `docs:` / `chore:` / `test:` / `refactor:`
 - Reference Issue numbers: `Refs #N`
 - No mega-commits. One logical change per commit.
-- Run tests before committing: `python scripts/test_basic.py`
+- Run the checks required by the change's risk level in `docs/TEST-PLAN.md`; do not turn this into a repeated full suite after each small edit.
+- New `tests/test_*.py` suites must be wired into `.github/workflows/ci.yml`.
