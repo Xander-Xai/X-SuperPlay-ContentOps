@@ -62,21 +62,46 @@ def _validate_image(path: Path) -> None:
         raise LocalAssetError(f"file extension does not match a supported image: {path.name}")
 
 
-def _video_duration(path: Path) -> float:
+def _video_info(path: Path) -> Dict[str, Any]:
     # Imported lazily so a still-image folder needs no external media tools.
     from process_utils import hidden_run
 
     result = hidden_run([
-        "ffprobe", "-v", "error", "-show_entries", "format=duration",
-        "-of", "default=nw=1:nk=1", str(path),
+        "ffprobe", "-v", "error", "-show_entries",
+        "format=duration:stream=codec_type,codec_name,width,height,avg_frame_rate",
+        "-of", "json", str(path),
     ], timeout=60)
     try:
-        duration = float((result.stdout or "").strip())
-    except ValueError:
-        duration = 0.0
+        probe = json.loads(result.stdout or "{}")
+        duration = float((probe.get("format") or {}).get("duration") or 0)
+    except (TypeError, ValueError):
+        probe, duration = {}, 0.0
     if result.returncode or duration <= 0:
         raise LocalAssetError(f"could not measure source video {path.name}")
-    return duration
+    streams = probe.get("streams") or []
+    video = next((row for row in streams
+                  if isinstance(row, dict) and row.get("codec_type") == "video"), {})
+    audio = next((row for row in streams
+                  if isinstance(row, dict) and row.get("codec_type") == "audio"), None)
+    rate = str(video.get("avg_frame_rate") or "")
+    try:
+        numerator, denominator = rate.split("/", 1)
+        fps = round(float(numerator) / float(denominator), 3)
+    except (ValueError, ZeroDivisionError):
+        fps = None
+    return {
+        "duration_s": round(duration, 3),
+        "video_codec": str(video.get("codec_name") or "unknown"),
+        "width": int(video.get("width") or 0),
+        "height": int(video.get("height") or 0),
+        "frames_per_second": fps,
+        "audio_present": audio is not None,
+    }
+
+
+def _video_duration(path: Path) -> float:
+    """Compatibility helper for callers that only need the timeline length."""
+    return float(_video_info(path)["duration_s"])
 
 
 def _extract_frame(video: Path, timestamp: float, output: Path) -> None:
@@ -94,12 +119,70 @@ def _extract_frame(video: Path, timestamp: float, output: Path) -> None:
         raise LocalAssetError(f"could not extract a frame from {video.name}")
 
 
+def _contact_sheet(project: Path, repo_root: Path,
+                   rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Make a local visual index of imported stills and extracted video frames."""
+    try:
+        from PIL import Image, ImageDraw, ImageFont
+    except ImportError:
+        return {"state": "UNAVAILABLE", "reason": "Pillow is not installed"}
+    candidates = [row for row in rows
+                  if isinstance(row, dict)
+                  and row.get("permission") == "USER_PROVIDED_LOCAL"
+                  and row.get("type") == "USER_PROVIDED_IMAGE"
+                  and row.get("repo_path")]
+    if not candidates:
+        return {"state": "NOT_NEEDED", "items": 0}
+    candidates = candidates[:24]
+    cell_w, cell_h, label_h, columns = 320, 220, 34, 3
+    font = ImageFont.load_default()
+    sheet = Image.new("RGB", (cell_w * columns,
+                              (cell_h + label_h) * ((len(candidates) + columns - 1) // columns)),
+                      (18, 22, 30))
+    draw = ImageDraw.Draw(sheet)
+    mapping = []
+    for index, row in enumerate(candidates):
+        source = (repo_root / str(row["repo_path"])).resolve()
+        try:
+            source.relative_to(project)
+        except ValueError:
+            continue
+        try:
+            with Image.open(source) as image:
+                image = image.convert("RGB")
+                image.thumbnail((cell_w - 12, cell_h - 12))
+                col, line = index % columns, index // columns
+                x = col * cell_w + (cell_w - image.width) // 2
+                y = line * (cell_h + label_h) + (cell_h - image.height) // 2
+                sheet.paste(image, (x, y))
+                label = str(row.get("id") or "")
+                draw.text((col * cell_w + 6, line * (cell_h + label_h) + cell_h),
+                          label[:54], font=font, fill=(230, 235, 242))
+                mapping.append({"asset_id": row.get("id"), "cell": index + 1})
+        except (OSError, ValueError):
+            continue
+    if not mapping:
+        return {"state": "FAILED", "reason": "no imported preview image could be read"}
+    target = project / "receipts" / "user-assets-contact-sheet.jpg"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        target.resolve(strict=False).relative_to(project)
+    except ValueError:
+        raise LocalAssetError("contact sheet destination resolves outside the project") from None
+    if target.is_symlink():
+        raise LocalAssetError("refusing symlinked contact sheet destination")
+    sheet.save(target, format="JPEG", quality=88, optimize=True)
+    return {"state": "READY", "path": target.relative_to(repo_root).as_posix(),
+            "items": len(mapping), "asset_cells": mapping}
+
+
 def import_local_assets(source_dir: Path, project_dir: Path, *, repo_root: Path) -> Dict[str, Any]:
     """Copy explicit user media into one project and record preview-only scope.
 
-    Videos are retained as user-provided video and receive one representative
-    frame for screenshot-led motion planning. Unsupported files are ignored;
-    directories with no supported media fail clearly.
+    Videos are retained and receive start, middle, and end representative
+    frames plus format metadata. A local contact sheet indexes all selected
+    stills and extracted frames. Unsupported files are ignored; directories
+    with no supported media fail clearly.
     """
     source = Path(source_dir).expanduser().resolve()
     project = Path(project_dir).resolve()
@@ -190,22 +273,32 @@ def import_local_assets(source_dir: Path, project_dir: Path, *, repo_root: Path)
                          "repo_path": copied["repo_path"], "type": asset_type,
                          "source_name": path.name, "source_bytes": path.stat().st_size})
         if asset_type == "USER_PROVIDED_VIDEO":
-            duration = _video_duration(path)
-            frame_id = f"user-frame-{digest[:16]}"
-            frame_path = target_dir / "frames" / f"{digest[:12]}-frame.png"
-            _extract_frame(path, min(duration * 0.25, max(0.1, duration - 0.05)), frame_path)
-            frame_bytes = frame_path.stat().st_size
-            frame_row = copy_asset(frame_path, asset_id=frame_id,
-                                   asset_type="USER_PROVIDED_IMAGE", origin_id=base_id)
-            frame_path.unlink(missing_ok=True)
-            rows.append(frame_row)
-            ids.add(frame_id)
-            receipts.append({"id": frame_id, "sha256": frame_row["sha256"],
-                             "repo_path": frame_row["repo_path"],
-                             "type": frame_row["type"], "derived_from_asset_id": base_id,
-                             "source_bytes": frame_bytes,
-                             "extraction_timestamp_s": round(min(
-                                 duration * 0.25, max(0.1, duration - 0.05)), 3)})
+            summary = _video_info(path)
+            video_receipt = receipts[-1]
+            video_receipt["video_summary"] = summary
+            duration = float(summary["duration_s"])
+            samples = []
+            fps = float(summary.get("frames_per_second") or 0)
+            end_limit = max(0.0, duration - (2.0 / fps if fps > 0 else 0.25))
+            for label, fraction in (("start", 0.05), ("middle", 0.5), ("end", 0.95)):
+                timestamp = round(max(0.0, min(duration * fraction, end_limit)), 3)
+                frame_id = f"user-frame-{digest[:12]}-{label}"
+                frame_path = target_dir / "frames" / f"{digest[:12]}-{label}.png"
+                _extract_frame(path, timestamp, frame_path)
+                frame_bytes = frame_path.stat().st_size
+                frame_row = copy_asset(frame_path, asset_id=frame_id,
+                                       asset_type="USER_PROVIDED_IMAGE", origin_id=base_id)
+                frame_row["source_name"] = path.name
+                rows.append(frame_row)
+                ids.add(frame_id)
+                samples.append({"id": frame_id, "timestamp_s": timestamp})
+                receipts.append({"id": frame_id, "sha256": frame_row["sha256"],
+                                 "repo_path": frame_row["repo_path"],
+                                 "type": frame_row["type"], "derived_from_asset_id": base_id,
+                                 "source_name": path.name, "source_bytes": frame_bytes,
+                                 "extraction_timestamp_s": timestamp})
+                frame_path.unlink(missing_ok=True)
+            video_receipt["video_summary"]["sample_frames"] = samples
 
     manifest["assets"] = rows
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
@@ -232,6 +325,7 @@ def import_local_assets(source_dir: Path, project_dir: Path, *, repo_root: Path)
     }
     target = project / RECEIPT
     target.parent.mkdir(parents=True, exist_ok=True)
+    receipt["contact_sheet"] = _contact_sheet(project, root, rows)
     target.write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n",
                       encoding="utf-8")
     imported_rows = [row for row in rows

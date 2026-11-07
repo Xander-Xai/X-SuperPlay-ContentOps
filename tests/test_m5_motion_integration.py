@@ -137,6 +137,40 @@ def test_explicit_user_media_is_preview_only_and_hash_bound():
                 raise AssertionError("changed local media must fail the hash check")
 
 
+def test_user_video_import_records_metadata_and_three_review_frames():
+    from process_utils import hidden_run
+
+    with tempfile.TemporaryDirectory() as temp:
+        base = Path(temp)
+        repo = base / "repo"
+        project = repo / "projects" / "video-preview"
+        source = base / "selected-media"
+        source.mkdir()
+        video = source / "sample.mp4"
+        generated = hidden_run([
+            "ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+            "-f", "lavfi", "-i", "testsrc=size=96x160:rate=8:duration=2",
+            "-pix_fmt", "yuv420p", str(video),
+        ], timeout=60)
+        assert generated.returncode == 0 and video.is_file()
+
+        receipt = local_assets.import_local_assets(source, project, repo_root=repo)
+        imported = {row["id"]: row for row in receipt["assets"]}
+        parent = next(row for row in imported.values()
+                      if row.get("type") == "USER_PROVIDED_VIDEO")
+        summary = parent["video_summary"]
+        assert summary["duration_s"] == 2.0
+        assert summary["video_codec"] == "h264"
+        assert summary["width"] == 96 and summary["height"] == 160
+        samples = summary["sample_frames"]
+        assert [row["timestamp_s"] for row in samples] == [0.1, 1.0, 1.75]
+        assert all(row["id"] in imported for row in samples)
+        assert receipt["contact_sheet"]["state"] == "READY"
+        assert receipt["contact_sheet"]["items"] == 3
+        assert receipt["distribution_authorized"] is False
+        assert receipt["evidence_capable"] is False
+
+
 def test_unified_producer_passes_selected_media_into_m5():
     with tempfile.TemporaryDirectory() as temp:
         assets_dir = Path(temp)
@@ -789,6 +823,7 @@ def main() -> int:
              test_a_video_asset_reaches_the_storyboard_as_a_clip,
              test_a_still_asset_is_not_labelled_a_clip,
              test_explicit_user_media_is_preview_only_and_hash_bound,
+             test_user_video_import_records_metadata_and_three_review_frames,
              test_unified_producer_passes_selected_media_into_m5,
              test_the_composer_key_and_the_receipt_key_agree,
              test_a_missing_asset_stops_the_build,
@@ -820,3 +855,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
