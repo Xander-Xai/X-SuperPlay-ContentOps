@@ -24,6 +24,7 @@ import json
 import os
 import shutil
 import sys
+import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -979,6 +980,14 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
     config = _read_yaml(project / "project.yaml")
     slug = config.get("id") or project.name
     stages: Dict[str, Any] = {}
+    timings: Dict[str, float] = {}
+
+    def run_stage(name: str, function, *args, **kwargs):
+        started = time.monotonic()
+        try:
+            return function(*args, **kwargs)
+        finally:
+            timings[name] = round(time.monotonic() - started, 3)
 
     # A router project's copy is final only after the brief bridge writes
     # script.json and claims.json, so its review has to cover those files.
@@ -990,35 +999,36 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
     except copy_review.CopyReviewRequired as exc:
         raise M5Blocked(f"copy review: {exc}") from None
 
-    bundle = stage_bundle(project, config)
+    bundle = run_stage("bundle", stage_bundle, project, config)
     if bundle["state"] != "NOT_CONFIGURED":
         stages["bundle"] = bundle
-    sources = stage_sources(project, config)
+    sources = run_stage("sources", stage_sources, project, config)
     stages["sources"] = {"count": sources["count"]}
-    media = stage_media_use(project, config, adapter=media_adapter)
+    media = run_stage("media_use", stage_media_use, project, config, adapter=media_adapter)
     stages["media_use"] = {
         "state": media["state"], "count": media["count"],
         "bgm": bool(media["audio"]["bgm"]), "sfx": len(media["audio"]["sfx"]),
     }
-    assets = stage_assets(project, extra_assets=media["assets"])
+    assets = run_stage("assets", stage_assets, project, extra_assets=media["assets"])
     stages["assets"] = {"count": len(assets)}
-    claims = stage_claims(project, sources["artifacts"])
+    claims = run_stage("claims", stage_claims, project, sources["artifacts"])
     stages["claims"] = {"count": claims["count"]}
-    script = stage_script(project, claims["ledger"], assets)
+    script = run_stage("script", stage_script, project, claims["ledger"], assets)
     stages["script"] = {"lines": script["lines"]}
     provider = (narration_provider
                 or (config.get("narration") or {}).get("provider")
                 or "sapi")
-    narration = stage_narration(project, script["script"], provider=provider,
-                                narration_audio=narration_audio,
-                                narration_receipt=narration_receipt)
+    narration = run_stage("narration", stage_narration, project, script["script"],
+                          provider=provider, narration_audio=narration_audio,
+                          narration_receipt=narration_receipt)
     stages["narration"] = {"duration_s": narration["duration_s"],
                            "engine": narration["engine"],
                            "provider": narration.get("voice_provider", provider)}
-    subtitles = stage_subtitles(project, script["script"], narration)
+    subtitles = run_stage("subtitles", stage_subtitles, project, script["script"], narration)
     stages["subtitles"] = {"cues": subtitles["cues"]}
-    storyboard = stage_storyboard(project, config, script["script"], narration, subtitles,
-                                  assets, media_audio=media["audio"])
+    storyboard = run_stage("storyboard", stage_storyboard, project, config,
+                            script["script"], narration, subtitles, assets,
+                            media_audio=media["audio"])
     stages["storyboard"] = {
         "shots": storyboard["shots"],
         "bgm": "bgm" in storyboard["storyboard"],
@@ -1030,17 +1040,19 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
         stages["qc"] = {"state": "NOT_RUN"}
         review = None
     else:
-        compose = stage_compose(project, slug)
+        compose = run_stage("compose", stage_compose, project, slug)
         stages["compose"] = {"state": "OK", "video": compose.get("video")}
-        qc = stage_qc(project, slug)
+        qc = run_stage("qc", stage_qc, project, slug)
         stages["qc"] = {"overall": qc["report"].get("overall"),
                         "audio": qc["report"]["m5_checks"]["audio_stream"]}
-        review = stage_review(project, slug, qc, bundle=stages.get("bundle"))
+        review = run_stage("human_review_package", stage_review, project, slug, qc,
+                           bundle=stages.get("bundle"))
 
     run = {
         "schema": RUN_SCHEMA,
         "project": project.relative_to(ROOT).as_posix() if project.is_relative_to(ROOT) else str(project),
         "stages": stages,
+        "stage_timings_seconds": timings,
         "production_ready": False,
         "human_review": "PENDING_FOUNDER_REVIEW" if review else "NOT_RUN",
     }
