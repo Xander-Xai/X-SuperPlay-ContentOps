@@ -26,7 +26,7 @@ import m5_production  # noqa: E402
 import produce_video  # noqa: E402
 import huashu_motion_adapter  # noqa: E402
 from contentops.media import storyboard_adapter as adapter  # noqa: E402
-from contentops.media import motion_planner  # noqa: E402
+from contentops.media import motion_planner, visual_gate  # noqa: E402
 
 
 def _sha(text: str) -> str:
@@ -48,6 +48,24 @@ def _lines():
 
 def _timings(seconds=5.0):
     return [{"duration": seconds}]
+
+
+def test_visual_gate_states_are_fail_closed_and_never_approve_publication():
+    passed = visual_gate.evaluate_film_gate(
+        {"gate_light": "green", "verdict": "green", "fast_ratio": 0.08}, 0)
+    assert passed["state"] == "PASS"
+    assert passed["metrics"]["fast_ratio"] == 0.08
+    assert passed["production_ready"] is False
+    assert passed["publish_authorized"] is False
+    assert passed["human_review"] == "PENDING_FOUNDER_REVIEW"
+    assert visual_gate.evaluate_film_gate(
+        {"gate_light": "yellow", "verdict": "yellow"}, 0)["state"] == "WARN"
+    assert visual_gate.evaluate_film_gate(
+        {"gate_light": "red", "verdict": "red"}, 2)["state"] == "FAIL"
+    assert visual_gate.evaluate_film_gate(
+        {"gate_light": "green", "verdict": "green"}, 2)["state"] == "BLOCKED"
+    assert visual_gate.evaluate_film_gate(
+        {"gate_light": "green", "verdict": "yellow"}, 0)["state"] == "BLOCKED"
 
 
 def test_a_video_asset_reaches_the_storyboard_as_a_clip():
@@ -240,7 +258,15 @@ def test_producer_reuses_current_qc_pass_without_rebuilding():
             (target / "receipts").mkdir(exist_ok=True)
             (target / "receipts" / "qc-report-demo-project.json").write_text(
                 json.dumps(report), encoding="utf-8")
-            return {"stages": {"compose": {"state": "OK"}, "qc": {"overall": "PASS"}},
+            contact_sheet = target / "receipts" / "visual-contact-sheet.png"
+            contact_sheet.write_bytes(b"contact sheet fixture")
+            (target / "receipts" / "visual-gate.json").write_text(json.dumps({
+                "state": "PASS", "video_sha256": produce_video._hash_file(
+                    target / "final" / "demo-project.mp4"),
+                "contact_sheet": "project://receipts/visual-contact-sheet.png",
+            }), encoding="utf-8")
+            return {"stages": {"compose": {"state": "OK"}, "qc": {"overall": "PASS"},
+                               "visual_qc": {"state": "PASS"}},
                     "human_review": "PENDING_FOUNDER_REVIEW"}
 
         produce_video.ROOT = Path(str(root).swapcase()) if sys.platform == "win32" else root
@@ -254,6 +280,7 @@ def test_producer_reuses_current_qc_pass_without_rebuilding():
             assert second["state"] == "QC_PASSED" and second["reused"] is True
             assert second["resumed_from_run_id"] == first["run_id"]
             assert second["rendered"] is True and second["technical_qc"] == "PASS"
+            assert second["visual_qc"] == "PASS"
             assert second["production_ready"] is False and second["published"] is False
             assert len(second["runs"]) == 2
             assert second["runs"][0]["run_id"] == first["run_id"]
@@ -552,7 +579,8 @@ def test_m5_auto_selects_future_profile_motion_after_measured_narration():
 
 
 def main() -> int:
-    tests = (test_a_video_asset_reaches_the_storyboard_as_a_clip,
+    tests = (test_visual_gate_states_are_fail_closed_and_never_approve_publication,
+             test_a_video_asset_reaches_the_storyboard_as_a_clip,
              test_a_still_asset_is_not_labelled_a_clip,
              test_the_composer_key_and_the_receipt_key_agree,
              test_a_missing_asset_stops_the_build,

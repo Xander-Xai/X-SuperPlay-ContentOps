@@ -126,16 +126,25 @@ def _reusable(project: Path, digest: str) -> dict[str, Any] | None:
         return None
     video = project / "final" / f"{project.name}.mp4"
     report_path = project / "receipts" / f"qc-report-{project.name}.json"
-    if not video.is_file() or not report_path.is_file():
+    visual_path = project / "receipts" / "visual-gate.json"
+    if not video.is_file() or not report_path.is_file() or not visual_path.is_file():
         return None
     try:
         report = json.loads(report_path.read_text(encoding="utf-8"))
+        visual = json.loads(visual_path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return None
+    contact_sheet_ref = visual.get("contact_sheet")
+    contact_sheet = project / "receipts" / "visual-contact-sheet.png"
     if (report.get("overall") != "PASS"
             or report.get("graded_target") != f"project://final/{project.name}.mp4"
-            or receipt.get("video_sha256") != _hash_file(video)):
+            or receipt.get("video_sha256") != _hash_file(video)
+            or visual.get("video_sha256") != _hash_file(video)
+            or visual.get("state") not in {"PASS", "WARN"}
+            or contact_sheet_ref != "project://receipts/visual-contact-sheet.png"
+            or not contact_sheet.is_file()):
         return None
+    receipt["visual_qc"] = visual.get("state")
     return receipt
 
 
@@ -179,6 +188,7 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO") -> dict[s
                       "run_id": str(uuid.uuid4()), "started_at": _now(),
                       "finished_at": _now(), "elapsed_seconds": 0.0,
                       "rendered": True, "technical_qc": "PASS",
+                      "visual_qc": prior.get("visual_qc"),
                       "production_ready": False, "published": False}
             history.append(_run_summary(reused))
             reused["runs"] = history
@@ -235,10 +245,24 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO") -> dict[s
         receipt.update({"state": "QC_PASSED", "video": f"project://final/{project.name}.mp4",
                         "video_sha256": _hash_file(video), "qc_receipt": report_path.name,
                         "rendered": True, "technical_qc": "PASS",
+                        "visual_qc": (m5_run.get("stages", {}).get("visual_qc", {})
+                                      .get("state", "NOT_RUN")),
                         "production_ready": False})
     except m5_production.M5Blocked as exc:
         receipt.update({"state": "BLOCKED", "failure_type": type(exc).__name__,
                         "failure_reason": str(exc)[:1000]})
+        video = project / "final" / f"{project.name}.mp4"
+        visual_path = project / "receipts" / "visual-gate.json"
+        if video.is_file():
+            receipt["video_sha256"] = _hash_file(video)
+            receipt["rendered"] = True
+        if visual_path.is_file():
+            try:
+                visual = json.loads(visual_path.read_text(encoding="utf-8"))
+                receipt["visual_qc"] = visual.get("state", "BLOCKED")
+                receipt["visual_qc_receipt"] = visual_path.name
+            except (OSError, ValueError):
+                pass
         raise
     except Exception as exc:
         receipt.update({"state": "FAILED", "failure_type": type(exc).__name__,
