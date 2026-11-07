@@ -205,6 +205,7 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO") -> dict[s
         "external_cost": 0,
         "external_cost_reason": "M5 accepts only local SAPI or receipt-bound existing narration in this entry; no paid provider is called",
         "human_review": "PENDING_FOUNDER_REVIEW",
+        "copy_review_required_for_render": mode != "AUTO",
         "published": False,
     }
     output = project / "receipts" / RECEIPT
@@ -216,7 +217,7 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO") -> dict[s
                 m5_production.copy_review.require_approved(project)
             except m5_production.copy_review.CopyReviewRequired as exc:
                 raise m5_production.M5Blocked(f"copy review: {exc}") from None
-        m5_run = m5_production.build(project)
+        m5_run = m5_production.build(project, require_copy_review=(mode != "AUTO"))
         receipt["m5_stages"] = m5_run.get("stages", {})
         receipt["stage_timings_seconds"] = m5_run.get("stage_timings_seconds", {})
         receipt["human_review"] = m5_run.get("human_review", "PENDING_FOUNDER_REVIEW")
