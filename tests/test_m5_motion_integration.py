@@ -167,6 +167,7 @@ def test_user_video_import_records_metadata_and_three_review_frames():
         assert all(row["id"] in imported for row in samples)
         assert receipt["contact_sheet"]["state"] == "READY"
         assert receipt["contact_sheet"]["items"] == 3
+        assert "@" in receipt["contact_sheet"]["asset_cells"][0]["label"]
         assert receipt["distribution_authorized"] is False
         assert receipt["evidence_capable"] is False
 
@@ -855,4 +856,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

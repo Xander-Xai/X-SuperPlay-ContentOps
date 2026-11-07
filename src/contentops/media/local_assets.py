@@ -99,11 +99,6 @@ def _video_info(path: Path) -> Dict[str, Any]:
     }
 
 
-def _video_duration(path: Path) -> float:
-    """Compatibility helper for callers that only need the timeline length."""
-    return float(_video_info(path)["duration_s"])
-
-
 def _extract_frame(video: Path, timestamp: float, output: Path) -> None:
     from process_utils import hidden_run
 
@@ -155,10 +150,15 @@ def _contact_sheet(project: Path, repo_root: Path,
                 x = col * cell_w + (cell_w - image.width) // 2
                 y = line * (cell_h + label_h) + (cell_h - image.height) // 2
                 sheet.paste(image, (x, y))
-                label = str(row.get("id") or "")
+                label = Path(str(row.get("source_name") or row.get("id") or "asset")).stem
+                timestamp = row.get("preview_timestamp_s")
+                if timestamp is not None:
+                    label += f" @ {float(timestamp):.2f}s"
+                label = label.encode("ascii", "replace").decode("ascii")[:42]
                 draw.text((col * cell_w + 6, line * (cell_h + label_h) + cell_h),
-                          label[:54], font=font, fill=(230, 235, 242))
-                mapping.append({"asset_id": row.get("id"), "cell": index + 1})
+                          label, font=font, fill=(230, 235, 242))
+                mapping.append({"asset_id": row.get("id"), "cell": index + 1,
+                                "label": label})
         except (OSError, ValueError):
             continue
     if not mapping:
@@ -289,6 +289,7 @@ def import_local_assets(source_dir: Path, project_dir: Path, *, repo_root: Path)
                 frame_row = copy_asset(frame_path, asset_id=frame_id,
                                        asset_type="USER_PROVIDED_IMAGE", origin_id=base_id)
                 frame_row["source_name"] = path.name
+                frame_row["preview_timestamp_s"] = timestamp
                 rows.append(frame_row)
                 ids.add(frame_id)
                 samples.append({"id": frame_id, "timestamp_s": timestamp})
