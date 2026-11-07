@@ -85,6 +85,33 @@ def _cues(text: str, kind: str, source_image: str | None,
             cues.append({"at": 1.7, "kind": "point", "text": _short_label(text, 18)})
         return cues
 
+    if grammar == "t1_3b1b" and kind == "retrieval" and re.search(r"\bRRF\b", text, re.I):
+        # RRF has a specific, sourced mathematical mechanism. Make the rank
+        # contribution itself transform into the sum instead of reusing the
+        # generic two-retriever sequence and leaving the key idea implicit.
+        return [
+            {"at": 0.0, "kind": "equation", "text": "rankᵢ(d)"},
+            {"at": 1.05, "kind": "equation", "text": "1 / (k + rankᵢ(d))"},
+            {"at": 2.1, "kind": "equation",
+             "text": "score(d) = Σᵢ 1 / (k + rankᵢ(d))"},
+            {"at": 3.1, "kind": "point", "text": "按名次累加倒数贡献"},
+            {"at": 3.85, "kind": "highlight", "data": {"target": "equation"}},
+        ]
+
+    if (grammar == "t1_3b1b" and kind == "retrieval"
+            and re.search(r"原始分|score scale|raw score", text, re.I)):
+        # This line explains why rank fusion is used. Show that the method
+        # transforms incomparable source scores into per-list ranks before
+        # calculating one fused score; do not draw a neural-network icon.
+        return [
+            {"at": 0.0, "kind": "equation", "text": "BM25 原始分"},
+            {"at": 1.05, "kind": "equation", "text": "向量相似度"},
+            {"at": 2.1, "kind": "equation",
+             "text": "1/(k+rank₁(d)) + 1/(k+rank₂(d))"},
+            {"at": 3.1, "kind": "point", "text": "按排名融合，不直接比原始分"},
+            {"at": 3.85, "kind": "highlight", "data": {"target": "equation"}},
+        ]
+
     if grammar == "t1_3b1b" and kind == "retrieval":
         # Start with the retrieval object, then transform it through the two
         # branches and their merge. Do not open with a title or a bullet list.
@@ -268,7 +295,7 @@ def build_auto_plan(*, project: Path, account_id: str,
         })
     plan = {"schema": "contentops.motion-shot-plan/v1", "account_id": account_id,
             "profile_version": account_dna.get("version"), "input_sha256": fingerprint,
-            "compiler": "contentops.motion_planner/v2",
+            "compiler": "contentops.motion_planner/v3",
             "compiler_sha256": planner_sha256, "shots": shots}
     plan_path = auto_dir / f"shot-plan-{fingerprint[:12]}.json"
     if not plan_path.exists():

@@ -482,7 +482,7 @@ def test_future_intelligence_auto_plan_uses_account_palette_and_rag_grammar():
             "Query → 词项", "Query → 语义 候选",
             "词项 + 语义 → 融合候选", "两路候选完成融合"]
         assert spec["cues"][0]["at"] == 0
-        assert result["plan"]["compiler"] == "contentops.motion_planner/v2"
+        assert result["plan"]["compiler"] == "contentops.motion_planner/v3"
         assert result["plan"]["compiler_sha256"] == motion_planner._file_sha(
             Path(motion_planner.__file__).resolve())
         assert max(cue["at"] for cue in spec["cues"]) < spec["duration"]
@@ -499,6 +499,58 @@ def test_future_intelligence_auto_plan_uses_account_palette_and_rag_grammar():
         assert revised["path"] != result["path"]
         assert revised["path"].is_file() and result["path"].is_file()
         assert len(list((project / "motion" / "auto").glob("shot-plan-*.json"))) == 2
+
+
+def test_future_intelligence_auto_plan_explains_rrf_with_rank_contributions():
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        dna = json.loads((ROOT / "config" / "accounts" /
+                          "x-superplay-future-intelligence.json").read_text(encoding="utf-8"))
+        result = motion_planner.build_auto_plan(
+            project=project, account_id="x-superplay-future-intelligence",
+            account_dna=dna,
+            script={"lines": [{"id": "P-01", "asset_id": "source-01",
+                               "claim": "C-01",
+                               "narration": "RRF 按各结果列表名次累加倒数分。"}]},
+            narration={"lines": [{"start": 0.0, "duration": 4.5}]},
+            source_assets={},
+        )
+        spec = json.loads((project / result["plan"]["shots"][0]["spec"])
+                          .read_text(encoding="utf-8"))
+        equations = [cue["text"] for cue in spec["cues"]
+                     if cue["kind"] == "equation"]
+        assert equations == [
+            "rankᵢ(d)",
+            "1 / (k + rankᵢ(d))",
+            "score(d) = Σᵢ 1 / (k + rankᵢ(d))",
+        ]
+        assert spec["cues"][-1] == {
+            "at": 3.85, "kind": "highlight", "data": {"target": "equation"}}
+
+
+def test_future_intelligence_auto_plan_does_not_compare_raw_retrieval_scores():
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        dna = json.loads((ROOT / "config" / "accounts" /
+                          "x-superplay-future-intelligence.json").read_text(encoding="utf-8"))
+        result = motion_planner.build_auto_plan(
+            project=project, account_id="x-superplay-future-intelligence",
+            account_dna=dna,
+            script={"lines": [{"id": "P-01", "asset_id": "source-01",
+                               "claim": "C-01",
+                               "narration": "融合排名，避免直接比较不同原始分数。"}]},
+            narration={"lines": [{"start": 0.0, "duration": 4.5}]},
+            source_assets={},
+        )
+        spec = json.loads((project / result["plan"]["shots"][0]["spec"])
+                          .read_text(encoding="utf-8"))
+        equations = [cue["text"] for cue in spec["cues"]
+                     if cue["kind"] == "equation"]
+        assert equations == [
+            "BM25 原始分",
+            "向量相似度",
+            "1/(k+rank₁(d)) + 1/(k+rank₂(d))",
+        ]
 
 
 def test_1024_auto_plan_requires_and_carries_real_source_stills():
@@ -616,6 +668,8 @@ def main() -> int:
              test_motion_stage_refuses_an_unmapped_plan_before_rendering,
              test_huashu_render_cache_requires_matching_inputs_and_output_hash,
              test_future_intelligence_auto_plan_uses_account_palette_and_rag_grammar,
+             test_future_intelligence_auto_plan_explains_rrf_with_rank_contributions,
+             test_future_intelligence_auto_plan_does_not_compare_raw_retrieval_scores,
              test_1024_auto_plan_requires_and_carries_real_source_stills,
              test_m5_auto_selects_future_profile_motion_after_measured_narration)
     for test in tests:
