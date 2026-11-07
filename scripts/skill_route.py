@@ -392,10 +392,12 @@ def _discovery_state(entry: Dict[str, Any]) -> Dict[str, Any]:
                 path = candidate / directory
                 break
         if path is None:
-            path = CATALOG_ROOTS[0] / directory
+            path = CATALOG_ROOTS[0] / directory if CATALOG_ROOTS else None
     else:
         path = SHARED_SKILL_ROOT / directory
-    return {"root": root, "dir": directory, "path": str(path), "installed": path.is_dir()}
+    return {"root": root, "dir": directory,
+            "path": str(path) if path is not None else "",
+            "installed": bool(path and path.is_dir())}
 
 
 def _runtime_state(entry: Dict[str, Any]) -> Dict[str, Any]:

@@ -190,7 +190,9 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO") -> dict[s
     receipt: dict[str, Any] = {
         "schema": "contentops.produce-video/v1",
         "run_id": run_id,
-        "task_id": digest[:16],
+        # The receipt scanner permits a task identifier only when it is a
+        # one-way content digest; short digest prefixes look like provider IDs.
+        "task_id": digest,
         "project": project_relative.as_posix(),
         "input_sha256": digest,
         "runs": history,
