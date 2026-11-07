@@ -496,19 +496,72 @@ def stage_claims(project: Path, artifacts: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], *,
-                 require_copy_review: bool) -> Dict[str, Any]:
-    """Render explicitly configured Huashua clips through its managed gate.
+                 require_copy_review: bool,
+                 narration: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Render account-profile or explicitly planned Huashua clips via its grant.
 
-    The project opts in with ``motion.backend: huashu-art-motion`` and a
-    project-relative ``motion.shot_plan`` JSON file. Every shot consumes one
-    use of the existing skill grant; this stage never creates or widens it.
+    An M5 video account with a Huashua profile receives an automatic plan when
+    no hand-authored plan is present. Unsupported content or missing source
+    anchors stop before execution. The managed adapter remains the only render
+    path and this stage never creates or widens its execution grant.
     """
     motion = config.get("motion") or {}
-    if not isinstance(motion, dict) or motion.get("backend") != "huashu-art-motion":
+    if not isinstance(motion, dict):
+        motion = {}
+    account_id = str(config.get("account_slug") or config.get("account_id") or "")
+    dna_path = ROOT / "config" / "accounts" / f"{account_id}.json" if account_id else None
+    account_dna = None
+    if dna_path and dna_path.is_file():
+        try:
+            account_dna = json.loads(dna_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            raise M5Blocked(f"account DNA is invalid: {account_id}") from None
+    if not motion.get("backend") and account_dna:
+        visual = account_dna.get("visual") or {}
+        profile = visual.get("motion", {}).get("motion_profile") or visual.get("motion_profile")
+        if ((account_dna.get("pipeline") or "M5") == "M5"
+                and isinstance(profile, dict)
+                and profile.get("backend") == "huashu-art-motion"):
+            motion = {**motion, "backend": "huashu-art-motion", "auto_profile": True}
+    if motion.get("backend") != "huashu-art-motion":
         return {"state": "NOT_CONFIGURED", "shots": 0}
     plan_arg = str(motion.get("shot_plan") or "").strip()
     if not plan_arg:
-        raise M5Blocked("motion.shot_plan is required for huashu-art-motion")
+        if not account_id or not account_dna or not narration:
+            raise M5Blocked("automatic Huashua motion needs account DNA and measured narration")
+        from contentops.media.motion_planner import MotionPlanError, build_auto_plan
+        try:
+            claim_doc = json.loads((project / "script" / "claims.json")
+                                   .read_text(encoding="utf-8"))
+            refs_doc = json.loads((project / "sources" / "source-refs.json")
+                                  .read_text(encoding="utf-8"))
+            claims_by_id = {str(row.get("id")): row
+                            for row in (claim_doc.get("claims") or [])}
+            refs_by_id = {str(row.get("id")): row
+                          for row in (refs_doc.get("refs") or [])}
+            plan_script = {**script, "lines": []}
+            for original in script.get("lines") or []:
+                line = dict(original)
+                claim = claims_by_id.get(str(line.get("claim"))) or {}
+                artifacts = [refs_by_id.get(str(ref), {})
+                             for ref in (claim.get("artifacts") or [])]
+                line["source_refs"] = [str(item.get("url") or item.get("path") or "")
+                                       for item in artifacts
+                                       if item.get("url") or item.get("path")]
+                plan_script["lines"].append(line)
+            generated = build_auto_plan(
+                project=project, account_id=account_id, account_dna=account_dna,
+                script=plan_script, narration=narration,
+                source_assets={str(item.get("id")): item
+                               for item in (json.loads((project / "sources" / "assets.json")
+                                                       .read_text(encoding="utf-8"))
+                                            .get("assets") or [])},
+            )
+        except (OSError, ValueError, MotionPlanError) as exc:
+            raise M5Blocked(f"automatic Huashua shot plan: {exc}") from None
+        plan_arg = generated["path"].relative_to(project).as_posix()
+        motion = {**motion, "shot_plan": plan_arg,
+                  "plan_sha256": generated["input_sha256"], "auto_profile": True}
     plan_path = (project / plan_arg).resolve()
     try:
         plan_path.relative_to(project.resolve())
@@ -578,6 +631,12 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
                       (proc.stderr or proc.stdout or "adapter returned no execution receipt"))
             raise M5Blocked(f"Huashua motion blocked for {placement_id}: {str(detail)[-700:]}")
         results.append({"placement_id": placement_id, "asset_id": asset_id,
+                        "source_asset_id": shot.get("source_asset_id", line.get("asset_id")),
+                        "content_point": shot.get("content_point", line.get("narration")),
+                        "motion_syntax": shot.get("motion_syntax", "explicit-shot-plan"),
+                        "duration_s": shot.get("duration_s"),
+                        "source_refs": shot.get("source_refs", []),
+                        "visual_match": shot.get("visual_match", "PENDING_FRAME_REVIEW"),
                         "execution_receipt": result.get("receipt"),
                         "adapter_receipt": execution.get("adapter_receipt")})
     payload = {"schema": "contentops.m5-motion-stage/v1", "backend": "huashu-art-motion",
@@ -1154,10 +1213,6 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
     claims = run_stage("claims", stage_claims, project, sources["artifacts"])
     stages["claims"] = {"count": claims["count"]}
     script_payload = _load_script(project)
-    motion = run_stage("motion", stage_motion, project, config, script_payload,
-                       require_copy_review=require_copy_review)
-    if motion["state"] != "NOT_CONFIGURED":
-        stages["motion"] = motion
     assets = run_stage("assets", stage_assets, project, extra_assets=media["assets"])
     stages["assets"] = {"count": len(assets)}
     script = run_stage("script", stage_script, project, claims["ledger"], assets)
@@ -1171,6 +1226,13 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
     stages["narration"] = {"duration_s": narration["duration_s"],
                            "engine": narration["engine"],
                            "provider": narration.get("voice_provider", provider)}
+    motion = run_stage("motion", stage_motion, project, config, script["script"],
+                       require_copy_review=require_copy_review, narration=narration)
+    if motion["state"] != "NOT_CONFIGURED":
+        stages["motion"] = motion
+        assets = run_stage("motion_assets", stage_assets, project,
+                           extra_assets=media["assets"])
+        stages["assets"] = {"count": len(assets)}
     subtitles = run_stage("subtitles", stage_subtitles, project, script["script"], narration)
     stages["subtitles"] = {"cues": subtitles["cues"]}
     storyboard = run_stage("storyboard", stage_storyboard, project, config,

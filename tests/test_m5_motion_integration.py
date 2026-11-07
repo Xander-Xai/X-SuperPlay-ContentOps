@@ -26,6 +26,7 @@ import m5_production  # noqa: E402
 import produce_video  # noqa: E402
 import huashu_motion_adapter  # noqa: E402
 from contentops.media import storyboard_adapter as adapter  # noqa: E402
+from contentops.media import motion_planner  # noqa: E402
 
 
 def _sha(text: str) -> str:
@@ -426,6 +427,124 @@ def test_huashu_render_cache_requires_matching_inputs_and_output_hash():
             project, "A1", "P-01", "motion.json", runtime) is None
 
 
+def test_future_intelligence_auto_plan_uses_account_palette_and_rag_grammar():
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        dna = json.loads((ROOT / "config" / "accounts" /
+                          "x-superplay-future-intelligence.json").read_text(encoding="utf-8"))
+        result = motion_planner.build_auto_plan(
+            project=project, account_id="x-superplay-future-intelligence",
+            account_dna=dna,
+            script={"lines": [{"id": "P-01", "asset_id": "source-01",
+                               "claim": "C-01",
+                               "narration": "混合检索并行找词项和语义候选。"}]},
+            narration={"lines": [{"start": 0.0, "duration": 4.5}]},
+            source_assets={},
+        )
+        shot = result["plan"]["shots"][0]
+        spec = json.loads((project / shot["spec"]).read_text(encoding="utf-8"))
+        assert shot["semantic_class"] == "retrieval"
+        assert shot["motion_syntax"] == "y3_whiteboard"
+        assert shot["source_asset_id"] == "source-01"
+        assert spec["duration"] == 4.5
+        assert spec["theme"] == dna["visual"]["motion"]["motion_profile"]["palette"]
+        assert [cue.get("text") for cue in spec["cues"]] == [
+            "词项召回", "语义召回", "候选进入融合"]
+
+
+def test_1024_auto_plan_requires_and_carries_real_source_stills():
+    with tempfile.TemporaryDirectory(dir=ROOT / ".verify-tmp") as temp:
+        project = Path(temp)
+        source = project / "assets" / "terminal.png"
+        source.parent.mkdir(parents=True)
+        # The planner only localizes an existing source path; it does not claim
+        # this minimal fixture passed visual or rights acceptance.
+        source.write_bytes(b"test image placeholder")
+        dna = json.loads((ROOT / "config" / "accounts" /
+                          "x-superplay-1024.json").read_text(encoding="utf-8"))
+        source_id = "evidence-01"
+        result = motion_planner.build_auto_plan(
+            project=project, account_id="x-superplay-1024", account_dna=dna,
+            script={"lines": [{"id": "P-01", "asset_id": source_id,
+                               "narration": "这段代码调用 MCP 工具接口。"}]},
+            narration={"lines": [{"start": 0.0, "duration": 3.0}]},
+            source_assets={source_id: {"id": source_id, "type": "REAL_SCREENSHOT",
+                                       "repo_path": source.relative_to(ROOT).as_posix()}},
+        )
+        shot = result["plan"]["shots"][0]
+        spec = json.loads((project / shot["spec"]).read_text(encoding="utf-8"))
+        assert shot["source_asset_id"] == source_id
+        assert spec["cues"][0]["kind"] == "image"
+        assert spec["cues"][0]["image"]
+        digest = huashu_motion_adapter._sha(source)
+        assert spec["contentops_source"]["sha256"] == digest
+        manifest = project / "sources" / "assets.json"
+        manifest.parent.mkdir(parents=True, exist_ok=True)
+        manifest.write_text(json.dumps({"assets": [{
+            "id": source_id, "type": "REAL_SCREENSHOT", "repo_path": source.relative_to(ROOT).as_posix(),
+            "sha256": digest, "permission": "CREATED_BY_OWNER", "usage_scope": "test fixture only"}]}),
+            encoding="utf-8")
+        validated_path, validated_spec = huashu_motion_adapter._validate_spec(project, shot["spec"])
+        assert validated_path.is_file() and validated_spec["contentops_source"]["asset_id"] == source_id
+        source.write_bytes(b"changed screenshot bytes")
+        try:
+            huashu_motion_adapter._validate_spec(project, shot["spec"])
+        except ValueError as exc:
+            assert "hash does not match" in str(exc)
+        else:
+            raise AssertionError("changed source image bytes must invalidate the motion spec")
+
+
+def test_m5_auto_selects_future_profile_motion_after_measured_narration():
+    with tempfile.TemporaryDirectory(dir=ROOT / ".verify-tmp") as temp:
+        project = Path(temp)
+        for relative, payload in {
+            "sources/assets.json": {"assets": [{"id": "source-01",
+                                                    "repo_path": "projects/source.png",
+                                                    "type": "SCREENSHOT"}]},
+            "sources/source-refs.json": {"refs": [{"id": "E-01",
+                                                      "url": "https://docs.example.test/rag"}]},
+            "script/script.json": {"lines": [{"id": "P-01", "asset_id": "source-01",
+                                                "claim": "C-01",
+                                                "narration": "混合检索并行找词项和语义候选。"}]},
+            "script/claims.json": {"claims": [{"id": "C-01", "artifacts": ["E-01"]}]},
+        }.items():
+            path = project / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(payload), encoding="utf-8")
+        old_run = m5_production.hidden_run
+        commands = []
+
+        def fake_run(command, **_options):
+            commands.append(command)
+            payload = {"execution": {"state": "EXECUTED",
+                                     "adapter_receipt": {"asset_id": "huashu-P-01"}},
+                       "receipt": "receipts/executions/test.json"}
+            return SimpleNamespace(returncode=0, stdout=json.dumps(payload), stderr="")
+
+        m5_production.hidden_run = fake_run
+        try:
+            result = m5_production.stage_motion(
+                project,
+                {"account_slug": "x-superplay-future-intelligence"},
+                {"lines": [{"id": "P-01", "asset_id": "source-01", "claim": "C-01",
+                            "narration": "混合检索并行找词项和语义候选。"}]},
+                require_copy_review=False,
+                narration={"lines": [{"start": 0.0, "duration": 4.5}]},
+            )
+        finally:
+            m5_production.hidden_run = old_run
+        plan_path = project / "motion" / "auto" / "shot-plan.json"
+        plan = json.loads(plan_path.read_text(encoding="utf-8"))
+        receipt = json.loads((project / "receipts" / "motion-stage.json")
+                             .read_text(encoding="utf-8"))
+        assert result["backend"] == "huashu-art-motion"
+        assert plan["account_id"] == "x-superplay-future-intelligence"
+        assert plan["shots"][0]["source_refs"] == ["https://docs.example.test/rag"]
+        assert receipt["shots"][0]["content_point"] == "混合检索并行找词项和语义候选。"
+        assert commands[0][commands[0].index("--asset-id") + 1] == "huashu-P-01"
+
+
 def main() -> int:
     tests = (test_a_video_asset_reaches_the_storyboard_as_a_clip,
              test_a_still_asset_is_not_labelled_a_clip,
@@ -443,7 +562,10 @@ def main() -> int:
              test_producer_review_mode_keeps_the_human_copy_gate,
              test_configured_motion_runs_each_placement_through_managed_adapter,
              test_motion_stage_refuses_an_unmapped_plan_before_rendering,
-             test_huashu_render_cache_requires_matching_inputs_and_output_hash)
+             test_huashu_render_cache_requires_matching_inputs_and_output_hash,
+             test_future_intelligence_auto_plan_uses_account_palette_and_rag_grammar,
+             test_1024_auto_plan_requires_and_carries_real_source_stills,
+             test_m5_auto_selects_future_profile_motion_after_measured_narration)
     for test in tests:
         test()
         print(f"[ok] {test.__name__}")

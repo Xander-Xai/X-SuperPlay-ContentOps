@@ -183,24 +183,70 @@ def _validate_spec(project: Path, value: str) -> tuple[Path, Dict[str, Any]]:
     if not candidate.is_file():
         raise ValueError(f"SPEC_MISSING:{candidate.relative_to(project).as_posix()}")
     spec = _read_json(candidate)
-    if not (4.0 <= float(spec.get("duration") or 0.0) <= 8.0):
-        raise ValueError("SPEC_DURATION: internal motion clips must be 4-8 seconds")
+    if not (2.0 <= float(spec.get("duration") or 0.0) <= 8.0):
+        raise ValueError("SPEC_DURATION: motion clips must be 2-8 seconds")
     if (spec.get("width"), spec.get("height"), spec.get("fps")) != (1080, 1920, 30):
         raise ValueError("SPEC_FORMAT: expected 1080x1920 at 30 fps")
     if not isinstance(spec.get("cues"), list) or not spec["cues"]:
         raise ValueError("SPEC_CUES: at least one animation cue is required")
-    # The first adapter version renders code-only scenes. Input images, frames,
-    # and character assets need their own rights records and are rejected here.
-    def check_local_assets(value: Any) -> None:
+    # Permit one registered still image as evidence-led visual support. The
+    # image must resolve to the exact asset path and bytes recorded in the M5
+    # manifest; frame sequences, remote URLs, data URLs and character packs
+    # remain outside this adapter's approved source-media contract.
+    source = spec.get("contentops_source")
+    images = [cue.get("image") for cue in spec.get("cues", [])
+              if isinstance(cue, dict) and cue.get("image")]
+    if images:
+        if len(images) != 1 or not isinstance(source, dict):
+            raise ValueError("SPEC_SOURCE_MEDIA: one image requires a registered contentops_source anchor")
+        asset_id = str(source.get("asset_id") or "")
+        expected_sha = str(source.get("sha256") or "")
+        if not asset_id or not re.fullmatch(r"[0-9a-f]{64}", expected_sha):
+            raise ValueError("SPEC_SOURCE_MEDIA: asset_id and sha256 are required")
+        manifest_path = project / "sources" / "assets.json"
+        if not manifest_path.is_file():
+            raise ValueError("SPEC_SOURCE_MEDIA: sources/assets.json is missing")
+        manifest = _read_json(manifest_path)
+        row = next((item for item in manifest.get("assets", [])
+                    if str(item.get("id")) == asset_id), None)
+        if not row or str(row.get("type") or "").upper() not in ("REAL_SCREENSHOT", "SCREENSHOT"):
+            raise ValueError("SPEC_SOURCE_MEDIA: anchor is not a registered real screenshot")
+        if str(row.get("permission") or "").upper() not in ("CREATED_BY_OWNER", "USER_PROVIDED"):
+            raise ValueError("SPEC_SOURCE_MEDIA: screenshot permission is not recorded")
+        if not str(row.get("usage_scope") or "").strip():
+            raise ValueError("SPEC_SOURCE_MEDIA: screenshot usage_scope is missing")
+        repo_path = str(row.get("repo_path") or "")
+        if not repo_path:
+            raise ValueError("SPEC_SOURCE_MEDIA: screenshot repo_path is missing")
+        registered = (ROOT / repo_path).resolve()
+        image_path = (candidate.parent / str(images[0])).resolve()
+        try:
+            image_path.relative_to(ROOT.resolve())
+        except ValueError:
+            raise ValueError("SPEC_SOURCE_MEDIA: image path escapes the repository") from None
+        if image_path != registered:
+            raise ValueError("SPEC_SOURCE_MEDIA: cue image does not match the registered asset path")
+        if not image_path.is_file():
+            raise ValueError("SPEC_SOURCE_MEDIA: registered screenshot is missing")
+        actual_sha = _sha(image_path)
+        if actual_sha != expected_sha or actual_sha != str(row.get("sha256") or ""):
+            raise ValueError("SPEC_SOURCE_MEDIA: screenshot hash does not match its manifest and spec")
+
+    def check_unsupported_media(value: Any) -> None:
         if isinstance(value, dict):
             for key, child in value.items():
-                if key in ("image", "frames", "character") and child:
+                if key == "image" and child:
+                    # Only cue.image was accepted above. Any other image key
+                    # (e.g. grammar data.image) needs a distinct rights contract.
+                    if value not in spec.get("cues", []):
+                        raise ValueError("SPEC_EXTERNAL_MEDIA: image requires a separate rights-reviewed asset handoff")
+                elif key in ("frames", "character") and child:
                     raise ValueError(f"SPEC_EXTERNAL_MEDIA: {key} requires a separate rights-reviewed asset handoff")
-                check_local_assets(child)
+                check_unsupported_media(child)
         elif isinstance(value, list):
             for child in value:
-                check_local_assets(child)
-    check_local_assets(spec)
+                check_unsupported_media(child)
+    check_unsupported_media(spec)
     return candidate, spec
 
 
