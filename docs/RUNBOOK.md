@@ -141,7 +141,9 @@ python scripts\m5_production.py projects\my-video --assets D:\media\selected-for
 
 M5 copies supported files into `assets/imported/user/`, records their hashes in
 `sources/assets.json`, and writes `receipts/user-assets-import.json`. Video
-imports also retain the source clip and record one extracted still. These assets
+imports retain the source clip, record its codec, duration, dimensions, frame
+rate and audio presence, and extract start, middle and end review frames. The
+receipt also points to `receipts/user-assets-contact-sheet.jpg`. These assets
 are `USER_PROVIDED_LOCAL` with `LOCAL_PREVIEW_ONLY` scope: selection does not
 grant distribution rights or make an asset factual evidence. Use a separate
 rights review before distribution, and keep factual claims bound to their

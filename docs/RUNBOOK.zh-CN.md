@@ -69,6 +69,21 @@ python scripts\m5_production.py projects\m5-easel-pin
 旁白使用离线 Windows SAPI 语音，不调用任何联网 TTS。运行始终停在
 `PENDING_FOUNDER_REVIEW`，`production_ready: false` —— QC 通过不等于允许发布。
 
+### M5 本地用户素材预览
+
+为现有项目显式导入图片或视频素材：
+
+```powershell
+python scripts\m5_production.py projects\my-video --assets D:\media\selected-for-preview
+```
+
+M5 将支持的文件复制到 `assets/imported/user/`，把 SHA-256 写入
+`sources/assets.json`，并生成 `receipts/user-assets-import.json`。视频保留原片，记录
+编码、时长、分辨率、帧率和音轨信息，抽取起始、中段、末段三帧，并生成
+`receipts/user-assets-contact-sheet.jpg`。所有导入素材仍为
+`USER_PROVIDED_LOCAL` / `LOCAL_PREVIEW_ONLY`：导入不授予分发权，也不能作为事实证据。
+发布前须单独核查权利；事实声明仍须绑定独立来源。此选项不修改脚本素材 ID，亦不批准发布。
+
 
 ### M5 自动调用 media-use 素材（仅离线）
 
