@@ -215,7 +215,7 @@ def test_existing_narration_that_matches_is_reused_without_a_provider_call():
 
 def test_producer_reuses_current_qc_pass_without_rebuilding():
     with tempfile.TemporaryDirectory() as temp:
-        root = Path(temp)
+        root = Path(temp).resolve()
         project = root / "projects" / "demo-project"
         (project / "script").mkdir(parents=True)
         (project / "sources").mkdir()
@@ -237,7 +237,7 @@ def test_producer_reuses_current_qc_pass_without_rebuilding():
             return {"stages": {"compose": {"state": "OK"}, "qc": {"overall": "PASS"}},
                     "human_review": "PENDING_FOUNDER_REVIEW"}
 
-        produce_video.ROOT = root
+        produce_video.ROOT = Path(str(root).swapcase()) if sys.platform == "win32" else root
         produce_video.m5_production.build = fake_build
         try:
             assert produce_video._relative_to_root(project) == Path("projects/demo-project")
@@ -248,6 +248,10 @@ def test_producer_reuses_current_qc_pass_without_rebuilding():
             assert second["resumed_from_run_id"] == first["run_id"]
             assert second["rendered"] is True and second["technical_qc"] == "PASS"
             assert second["production_ready"] is False and second["published"] is False
+            assert len(second["runs"]) == 2
+            assert second["runs"][0]["run_id"] == first["run_id"]
+            assert second["runs"][0]["elapsed_seconds"] == first["elapsed_seconds"]
+            assert second["runs"][1]["reused"] is True
             assert len(calls) == 1
             assert second["human_review"] == "PENDING_FOUNDER_REVIEW"
         finally:
@@ -257,7 +261,7 @@ def test_producer_reuses_current_qc_pass_without_rebuilding():
 
 def test_producer_review_mode_keeps_the_human_copy_gate():
     with tempfile.TemporaryDirectory() as temp:
-        root = Path(temp)
+        root = Path(temp).resolve()
         project = root / "projects" / "demo-project"
         (project / "script").mkdir(parents=True)
         (project / "sources").mkdir()

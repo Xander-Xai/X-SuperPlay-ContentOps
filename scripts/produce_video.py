@@ -139,6 +139,13 @@ def _reusable(project: Path, digest: str) -> dict[str, Any] | None:
     return receipt
 
 
+def _run_summary(receipt: dict[str, Any]) -> dict[str, Any]:
+    return {key: receipt.get(key) for key in (
+        "run_id", "task_id", "state", "started_at", "finished_at",
+        "elapsed_seconds", "reused", "video_sha256", "stage_timings_seconds",
+    ) if key in receipt}
+
+
 def produce(project: Path, *, force: bool = False, mode: str = "AUTO") -> dict[str, Any]:
     mode = mode.upper()
     if mode not in {"AUTO", "REVIEW", "STRICT"}:
@@ -150,6 +157,20 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO") -> dict[s
     if not project.is_dir() or project_relative is None:
         raise ValueError("--project must be an existing project inside this repository")
     digest = _input_digest(project)
+    receipt_path = project / "receipts" / RECEIPT
+    previous: dict[str, Any] = {}
+    if receipt_path.is_file():
+        try:
+            loaded = json.loads(receipt_path.read_text(encoding="utf-8"))
+            if isinstance(loaded, dict):
+                previous = loaded
+        except (OSError, ValueError):
+            pass
+    history = list(previous.get("runs") or [])
+    previous_run_id = previous.get("run_id")
+    if previous_run_id and not any(item.get("run_id") == previous_run_id for item in history
+                                   if isinstance(item, dict)):
+        history.append(_run_summary(previous))
     if not force and mode == "AUTO":
         prior = _reusable(project, digest)
         if prior:
@@ -159,8 +180,10 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO") -> dict[s
                       "finished_at": _now(), "elapsed_seconds": 0.0,
                       "rendered": True, "technical_qc": "PASS",
                       "production_ready": False, "published": False}
-            (project / "receipts" / RECEIPT).write_text(
-                json.dumps(reused, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            history.append(_run_summary(reused))
+            reused["runs"] = history
+            receipt_path.write_text(json.dumps(reused, ensure_ascii=False, indent=2) + "\n",
+                                    encoding="utf-8")
             return reused
 
     run_id, started, start = str(uuid.uuid4()), _now(), time.monotonic()
@@ -170,6 +193,7 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO") -> dict[s
         "task_id": digest[:16],
         "project": project_relative.as_posix(),
         "input_sha256": digest,
+        "runs": history,
         "mode": mode,
         "state": "RUNNING",
         "started_at": started,
@@ -220,6 +244,7 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO") -> dict[s
     finally:
         receipt["finished_at"] = _now()
         receipt["elapsed_seconds"] = round(time.monotonic() - start, 3)
+        receipt["runs"].append(_run_summary(receipt))
         output.write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return receipt
 
