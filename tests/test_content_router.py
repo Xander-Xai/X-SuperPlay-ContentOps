@@ -532,9 +532,17 @@ def test_both_routes_reach_the_same_project_creation():
             assert f"account_slug: {account}" in yaml_text
 
 
-def test_the_topic_route_can_fetch_evidence_from_query_accepting_sources_only():
+def test_the_topic_route_searches_candidates_without_promoting_them_to_evidence():
     with tempfile.TemporaryDirectory() as tmp:
         fixture = _fixture_adapter()
+        fixture.fixtures["github-search"] = [
+            {"title": "example/rag-hybrid-search",
+             "url": "https://github.com/example/rag-hybrid-search",
+             "snippet": "A hybrid RAG retrieval demonstration."},
+            {"title": "example/rage-ui",
+             "url": "https://github.com/example/rage-ui",
+             "snippet": "A game interface project."},
+        ]
         queries = []
 
         class CaptureAdapter:
@@ -547,7 +555,7 @@ def test_the_topic_route_can_fetch_evidence_from_query_accepting_sources_only():
                               UserTopicInput(topic="RAG混合检索的完整工作原理"),
                               fetch_evidence=True)
         detail = result.detail["intent"]["route_context"]["detail"]
-        assert detail["fetched_evidence"]
+        assert detail["discovered_candidates"]
         assert len(queries) == 1
         assert queries[0].startswith("RAG混合检索的完整工作原理")
         assert queries[0].count(" OR ") <= 5  # GitHub accepts at most six terms.
@@ -556,8 +564,15 @@ def test_the_topic_route_can_fetch_evidence_from_query_accepting_sources_only():
         assert len(queries[0]) <= 220
         # A hot list is never consulted for a topic the owner named.
         assert all(item["source_id"] == "github-search"
-                   for item in detail["fetched_evidence"])
-        assert result.detail["intent"]["evidence"]
+                   for item in detail["discovered_candidates"])
+        assert len(detail["discovered_candidates"]) == 1
+        assert detail["discovered_candidates"][0]["title"] == "example/rag-hybrid-search"
+        assert result.detail["intent"]["evidence"] == [], \
+            "repository search metadata is a discovery lead, not claim evidence"
+        assert result.detail["intent"]["evidence_status"] == "verification_required"
+        brief = router.read_brief(result.run_id)
+        assert brief["candidate"]["trust_level"] == "LOW"
+        assert brief["forecast_verdict"] == "BLOCKED"
 
 
 def test_a_waiting_run_can_be_resumed_with_the_exception_approved():

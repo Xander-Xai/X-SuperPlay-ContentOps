@@ -33,6 +33,7 @@ engine with a different name.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -103,6 +104,29 @@ def validate_references(urls: List[str]) -> List[str]:
     return failures
 
 
+def _topic_search_terms(topic: str, account_terms: List[str]) -> List[str]:
+    """Words a result must contain to count as a topic-matched search lead.
+
+    GitHub sorts by recency and can return substring-like matches, so a query
+    for ``RAG`` may include ``rage`` repositories. Account vocabulary helps
+    only when the user actually named that term in the topic.
+    """
+    lexical = re.findall(r"[A-Za-z][A-Za-z0-9_.+-]*", topic)
+    declared = [term for term in account_terms if term.casefold() in topic.casefold()]
+    return list(dict.fromkeys(
+        term for term in lexical + declared if len(term.strip("._+-")) >= 3
+    ))
+
+
+def _matches_topic_terms(item: RawItem, terms: List[str]) -> bool:
+    """Use token boundaries for Latin terms; do not accept ``RAG`` in ``rage``."""
+    searchable = f"{item.title} {item.snippet}"
+    return any(re.search(
+        rf"(?<![A-Za-z0-9]){re.escape(term)}(?![A-Za-z0-9])",
+        searchable, flags=re.IGNORECASE,
+    ) for term in terms)
+
+
 def evaluate(profile: AccountProfile, payload: UserTopicInput) -> Dict[str, Any]:
     """The alignment judgement for a user topic.
 
@@ -121,15 +145,17 @@ def evaluate(profile: AccountProfile, payload: UserTopicInput) -> Dict[str, Any]
     return result
 
 
-def collect_evidence(profile: AccountProfile, payload: UserTopicInput, *,
-                     adapters: Optional[Dict[str, Any]] = None,
-                     timeout: float = 12.0,
-                     per_source_limit: int = 10) -> List[FetchResult]:
-    """Optional evidence, from query-accepting sources only.
+def search_candidates(profile: AccountProfile, payload: UserTopicInput, *,
+                      adapters: Optional[Dict[str, Any]] = None,
+                      timeout: float = 12.0,
+                      per_source_limit: int = 10) -> List[FetchResult]:
+    """Search for topic-specific leads, from query-accepting sources only.
 
     A list-only source is never contacted here. Reading somebody else's hot
     list because the user named a topic would be the hot-list route wearing a
     different hat, and the two routes are supposed to stay distinguishable.
+    Returned repository titles and descriptions are discovery candidates, not
+    saved source artifacts and not claim evidence.
     """
     from ..hotspots.adapters import adapter_for
     from ..hotspots.query_planner import MAX_QUERY_CHARS, MAX_QUERY_TERMS
@@ -141,6 +167,7 @@ def collect_evidence(profile: AccountProfile, payload: UserTopicInput, *,
         [keyword.term for keyword in profile.keywords_positive if keyword.language == "en"]
         + [keyword.term for keyword in profile.keywords_positive if keyword.language == "zh"]
     ))
+    search_terms = _topic_search_terms(query, terms)
     results: List[FetchResult] = []
     for source_id, source in sorted(SOURCES.items()):
         if source.query_mode != NATIVE_SEARCH:
@@ -190,13 +217,17 @@ def collect_evidence(profile: AccountProfile, payload: UserTopicInput, *,
             adapter = adapters.get(source_id)
         if adapter is None:
             adapter = adapter_for(source)
-        results.append(adapter.fetch(source, limit=per_source_limit,
-                                     timeout=timeout, query=query_for_source))
+        fetched = adapter.fetch(source, limit=per_source_limit,
+                                timeout=timeout, query=query_for_source)
+        if fetched.ok and search_terms:
+            fetched.items = [item for item in fetched.items
+                             if _matches_topic_terms(item, search_terms)]
+        results.append(fetched)
     return results
 
 
-def evidence_items(results: List[FetchResult]) -> List[Dict[str, Any]]:
-    """The successful evidence results, in the shape an intent carries."""
+def discovery_candidates(results: List[FetchResult]) -> List[Dict[str, Any]]:
+    """Repository search metadata; this is discovery, not claim evidence."""
     items: List[Dict[str, Any]] = []
     for result in results:
         if not result.ok:
