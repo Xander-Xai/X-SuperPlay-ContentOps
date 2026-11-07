@@ -111,7 +111,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         _emit(payload, args.json)
         return 1
 
-    payload = {"project": project.relative_to(ROOT).as_posix(), "action": action,
+    # Resolve ROOT too: Windows may return a long-name project path while the
+    # caller supplied the same temp directory through its 8.3 short alias.
+    payload = {"project": project.relative_to(ROOT.resolve()).as_posix(), "action": action,
                "state": gate["state"], "ok": gate["ok"], "gate": gate}
     _emit(payload, args.json)
     if has_decision:
