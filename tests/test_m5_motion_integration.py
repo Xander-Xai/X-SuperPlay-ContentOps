@@ -308,7 +308,14 @@ def test_producer_reuses_current_qc_pass_without_rebuilding():
         (project / "project.yaml").write_text("id: demo-project\nsource_refs: []\n", encoding="utf-8")
         (project / "script" / "script.json").write_text("{}", encoding="utf-8")
         (project / "script" / "claims.json").write_text("{}", encoding="utf-8")
-        (project / "sources" / "assets.json").write_text('{"assets": []}', encoding="utf-8")
+        (project / "sources" / "assets.json").write_text(
+            '{"schema":"contentops.m5-assets/v1","assets": []}', encoding="utf-8")
+        assets_dir = root / "selected-media"
+        assets_dir.mkdir()
+        (assets_dir / "selected.png").write_bytes(bytes.fromhex(
+            "89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c489"
+            "0000000b49444154789c636000020000050001a5f645400000000049454e44ae426082"
+        ))
         old_root, old_build = produce_video.ROOT, produce_video.m5_production.build
         calls = []
 
@@ -317,6 +324,7 @@ def test_producer_reuses_current_qc_pass_without_rebuilding():
         def fake_build(target, **options):
             calls.append(target)
             build_options.append(options)
+            local_assets.import_local_assets(options["assets_dir"], target, repo_root=root)
             (target / "final").mkdir(parents=True, exist_ok=True)
             (target / "final" / "demo-project.mp4").write_bytes(b"rendered bytes")
             report = {"overall": "PASS", "graded_target": "project://final/demo-project.mp4"}
@@ -338,9 +346,10 @@ def test_producer_reuses_current_qc_pass_without_rebuilding():
         produce_video.m5_production.build = fake_build
         try:
             assert produce_video._relative_to_root(project) == Path("projects/demo-project")
-            first = produce_video.produce(project)
-            second = produce_video.produce(project)
-            assert build_options == [{"require_copy_review": False}]
+            first = produce_video.produce(project, assets_dir=assets_dir)
+            second = produce_video.produce(project, assets_dir=assets_dir)
+            assert build_options == [{"require_copy_review": False,
+                                      "assets_dir": assets_dir.resolve()}]
             assert first["state"] == "QC_PASSED" and first["reused"] is False
             assert second["state"] == "QC_PASSED" and second["reused"] is True
             assert second["resumed_from_run_id"] == first["run_id"]
