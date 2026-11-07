@@ -477,11 +477,28 @@ def test_future_intelligence_auto_plan_uses_account_palette_and_rag_grammar():
         assert spec["theme"] == dna["visual"]["motion"]["motion_profile"]["palette"]
         assert spec["grammar"] == "t1_3b1b"
         assert [cue["kind"] for cue in spec["cues"]] == [
-            "title", "point", "point", "point", "highlight"]
+            "equation", "equation", "equation", "point", "highlight"]
         assert [cue.get("text") for cue in spec["cues"][:4]] == [
-            motion_planner._short_label("混合检索并行找词项和语义候选。", 12),
-            "词项召回", "语义召回", "候选融合"]
+            "Query → 词项", "Query → 语义 候选",
+            "词项 + 语义 → 融合候选", "两路候选完成融合"]
+        assert spec["cues"][0]["at"] == 0
+        assert result["plan"]["compiler"] == "contentops.motion_planner/v2"
+        assert result["plan"]["compiler_sha256"] == motion_planner._file_sha(
+            Path(motion_planner.__file__).resolve())
         assert max(cue["at"] for cue in spec["cues"]) < spec["duration"]
+
+        revised = motion_planner.build_auto_plan(
+            project=project, account_id="x-superplay-future-intelligence",
+            account_dna=dna,
+            script={"lines": [{"id": "P-01", "asset_id": "source-01",
+                               "claim": "C-01",
+                               "narration": "混合检索并行找词项和语义候选，再进行重排。"}]},
+            narration={"lines": [{"start": 0.0, "duration": 4.5}]},
+            source_assets={},
+        )
+        assert revised["path"] != result["path"]
+        assert revised["path"].is_file() and result["path"].is_file()
+        assert len(list((project / "motion" / "auto").glob("shot-plan-*.json"))) == 2
 
 
 def test_1024_auto_plan_requires_and_carries_real_source_stills():
@@ -567,8 +584,9 @@ def test_m5_auto_selects_future_profile_motion_after_measured_narration():
             )
         finally:
             m5_production.hidden_run = old_run
-        plan_path = project / "motion" / "auto" / "shot-plan.json"
-        plan = json.loads(plan_path.read_text(encoding="utf-8"))
+        plan_paths = list((project / "motion" / "auto").glob("shot-plan-*.json"))
+        assert len(plan_paths) == 1
+        plan = json.loads(plan_paths[0].read_text(encoding="utf-8"))
         receipt = json.loads((project / "receipts" / "motion-stage.json")
                              .read_text(encoding="utf-8"))
         assert result["backend"] == "huashu-art-motion"

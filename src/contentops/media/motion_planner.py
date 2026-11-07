@@ -75,29 +75,39 @@ def _cues(text: str, kind: str, source_image: str | None,
              "data": {"icon": icon_name or "screen"}},
         ]
         if kind == "retrieval":
-            cues.append({"at": 1.7, "kind": "draw", "text": "候选进入融合",
-                         "data": {"icon": "network"}})
+            cues.extend([
+                {"at": 1.45, "kind": "draw", "text": "语义召回",
+                 "data": {"icon": "target"}},
+                {"at": 2.25, "kind": "draw", "text": "候选汇合",
+                 "data": {"icon": "stack"}},
+            ])
         else:
             cues.append({"at": 1.7, "kind": "point", "text": _short_label(text, 18)})
         return cues
 
     if grammar == "t1_3b1b" and kind == "retrieval":
-        # The Future Intelligence profile can derive retrieval as a sequence of
-        # progressively written concepts. These labels describe stages in the
-        # supplied narration; no score, ranking formula or benchmark is invented.
+        # Start with the retrieval object, then transform it through the two
+        # branches and their merge. Do not open with a title or a bullet list.
+        # The labels are generic process stages, not a claim that a particular
+        # ranking formula, score or benchmark was used.
+        lexical = "BM25" if re.search(r"\bBM25\b", text, re.I) else "词项"
+        semantic = "向量" if "向量" in text else "语义"
+        final_text = "候选进入重排" if re.search(r"重排|rerank", text, re.I) \
+            else "两路候选完成融合"
         return [
-            {"at": 0.0, "kind": "title", "text": _short_label(text, 12)},
-            {"at": 0.65, "kind": "point", "text": "词项召回"},
-            {"at": 1.35, "kind": "point", "text": "语义召回"},
-            {"at": 2.05, "kind": "point", "text": "候选融合"},
-            {"at": 2.75, "kind": "highlight", "data": {"index": 2}},
+            {"at": 0.0, "kind": "equation", "text": f"Query → {lexical}"},
+            {"at": 1.05, "kind": "equation", "text": f"Query → {semantic} 候选"},
+            {"at": 2.1, "kind": "equation",
+             "text": f"{lexical} + {semantic} → 融合候选"},
+            {"at": 3.1, "kind": "point", "text": final_text},
+            {"at": 3.85, "kind": "highlight", "data": {"target": "equation"}},
         ]
 
     if kind == "retrieval":
         return [
             {"at": 0.0, "kind": "draw", "text": "词项召回", "data": {"icon": "doc"}},
-            {"at": 0.7, "kind": "draw", "text": "语义召回", "data": {"icon": "network"}},
-            {"at": 1.55, "kind": "draw", "text": "候选进入融合", "data": {"icon": "network"}},
+            {"at": 0.7, "kind": "draw", "text": "语义召回", "data": {"icon": "target"}},
+            {"at": 1.55, "kind": "draw", "text": "候选汇合", "data": {"icon": "stack"}},
         ]
     if kind == "agent":
         return [
@@ -157,8 +167,10 @@ def build_auto_plan(*, project: Path, account_id: str,
     timings = narration.get("lines") or []
     if not lines or len(lines) != len(timings):
         raise MotionPlanError("AUTO_MOTION_TIMELINE_MISMATCH: narration timing must cover each line")
+    planner_sha256 = _file_sha(Path(__file__).resolve())
     identity = {"account": account_id, "profile": profile, "script": script,
-                "narration": narration, "assets": source_assets}
+                "narration": narration, "assets": source_assets,
+                "planner_sha256": planner_sha256}
     fingerprint = _sha(identity)
     auto_dir = project / "motion" / "auto"
     specs_dir = auto_dir / "specs"
@@ -228,7 +240,7 @@ def build_auto_plan(*, project: Path, account_id: str,
             # when the real screenshot changes at the same path.
             spec["contentops_source"] = {"asset_id": source_asset_id,
                                          "sha256": source_image_sha256}
-        spec_path = specs_dir / f"{placement}.json"
+        spec_path = specs_dir / f"{placement}-{_sha(spec)[:12]}.json"
         if spec_path.exists():
             try:
                 old = json.loads(spec_path.read_text(encoding="utf-8"))
@@ -256,18 +268,10 @@ def build_auto_plan(*, project: Path, account_id: str,
         })
     plan = {"schema": "contentops.motion-shot-plan/v1", "account_id": account_id,
             "profile_version": account_dna.get("version"), "input_sha256": fingerprint,
-            "compiler": "contentops.motion_planner/v1", "shots": shots}
-    plan_path = auto_dir / "shot-plan.json"
-    if plan_path.exists():
-        try:
-            old_plan = json.loads(plan_path.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            raise MotionPlanError("AUTO_MOTION_STALE_PLAN: generated plan is unreadable") from None
-        if old_plan != plan:
-            raise MotionPlanError(
-                "AUTO_MOTION_STALE_PLAN: generated plan differs from current inputs; "
-                "review it before regenerating")
-    else:
+            "compiler": "contentops.motion_planner/v2",
+            "compiler_sha256": planner_sha256, "shots": shots}
+    plan_path = auto_dir / f"shot-plan-{fingerprint[:12]}.json"
+    if not plan_path.exists():
         plan_path.write_text(json.dumps(plan, ensure_ascii=False, indent=2) + "\n",
                              encoding="utf-8")
     return {"path": plan_path, "plan": plan, "input_sha256": fingerprint}
