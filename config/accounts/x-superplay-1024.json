@@ -352,13 +352,6 @@
       "script": "video-shotcraft/SKILL.md",
       "path_base": "shared",
       "why": "the compositor-neutral shot recipe vocabulary; re-express in HyperFrames, never run its Remotion assets"
-    },
-    {
-      "step": "motion_visual_support",
-      "skill": "x-superplay-huashu-motion",
-      "script": "skills/x-superplay-huashu-motion/SKILL.md",
-      "path_base": "repo",
-      "why": "local Huashu Art Motion animation through the ContentOps adapter; generated clips are visual support only and never source evidence"
     }
   ],
   "platforms": [
