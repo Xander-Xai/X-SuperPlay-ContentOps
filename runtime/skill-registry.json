@@ -68,6 +68,66 @@
         "m5_stage": "media_use",
         "authorizes_execution": false
       }
+    },
+    {
+      "id": "x-superplay-huashu-motion",
+      "name": "x-superplay-huashu-motion",
+      "summary": "Account-scoped local adapter for explanatory animation rendered by the installed Huashu Art Motion Skill.",
+      "discovery": {
+        "root": "catalog",
+        "dir": "x-superplay-huashu-motion"
+      },
+      "source": {
+        "publisher": "X-SuperPlay ContentOps",
+        "upstream": "alchaincyf/huashu-art-motion",
+        "version": "0.1.0",
+        "runtime_skill": "huashu-art-motion",
+        "runtime_skill_version": "1.2.0"
+      },
+      "canonical_path": "scripts/huashu_motion_adapter.py",
+      "license": {
+        "status": "declared",
+        "spdx": "MIT",
+        "note": "Adapter uses Huashu Art Motion code only. Demo characters and bundled demonstration images are excluded; any additional input media must pass the existing per-asset rights gate."
+      },
+      "rights": {
+        "status": "verified",
+        "verified": true,
+        "scope": "local code-generated explanatory visual support only; no Huashu demonstration characters, demo footage, unlicensed images, public reuse or publication clearance",
+        "evidence": "https://github.com/alchaincyf/huashu-art-motion/blob/main/LICENSE"
+      },
+      "accounts": [
+        "x-superplay-1024",
+        "x-superplay-future-intelligence"
+      ],
+      "pipelines": [
+        "M5"
+      ],
+      "stages": [
+        "motion"
+      ],
+      "contract": {
+        "input": "approved project script/claims, source asset map, explicit placement, and local JSON clip spec",
+        "output": "assets/generated/huashu/<asset>.mp4, receipts/huashu-<asset>.json, work/m45/huashu-media-manifest.json, and visual-support asset registry entries",
+        "schema": "contentops.huashu-motion-receipt/v1"
+      },
+      "provider": {
+        "path_permitted": true,
+        "network": false,
+        "paid": false,
+        "cross_project_reuse": false,
+        "note": "Local rendering only; routing is not an execution grant."
+      },
+      "verification": {
+        "status": "WINDOWS_SMOKE_PASS",
+        "scope": "local Windows renderer smoke only; account production remains unverified",
+        "evidence": ".verify-tmp/user-request-20261108/huashu-smoke/receipt.json"
+      },
+      "execution": {
+        "adapter": "scripts/huashu_motion_adapter.py",
+        "m5_stage": "motion",
+        "authorizes_execution": false
+      }
     }
   ]
 }

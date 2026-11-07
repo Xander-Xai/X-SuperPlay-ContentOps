@@ -495,6 +495,96 @@ def stage_claims(project: Path, artifacts: Dict[str, Any]) -> Dict[str, Any]:
     return {"ledger": ledger, "count": len(ledger.claims)}
 
 
+def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], *,
+                 require_copy_review: bool) -> Dict[str, Any]:
+    """Render explicitly configured Huashua clips through its managed gate.
+
+    The project opts in with ``motion.backend: huashu-art-motion`` and a
+    project-relative ``motion.shot_plan`` JSON file. Every shot consumes one
+    use of the existing skill grant; this stage never creates or widens it.
+    """
+    motion = config.get("motion") or {}
+    if not isinstance(motion, dict) or motion.get("backend") != "huashu-art-motion":
+        return {"state": "NOT_CONFIGURED", "shots": 0}
+    plan_arg = str(motion.get("shot_plan") or "").strip()
+    if not plan_arg:
+        raise M5Blocked("motion.shot_plan is required for huashu-art-motion")
+    plan_path = (project / plan_arg).resolve()
+    try:
+        plan_path.relative_to(project.resolve())
+    except ValueError:
+        raise M5Blocked("motion.shot_plan must stay inside the project") from None
+    if not plan_path.is_file():
+        raise M5Blocked(f"motion shot plan is missing: {plan_arg}")
+    try:
+        plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise M5Blocked(f"motion shot plan is invalid: {exc}") from None
+    shots = plan.get("shots") if isinstance(plan, dict) else None
+    if not isinstance(shots, list) or not shots:
+        raise M5Blocked("motion shot plan must contain a non-empty shots list")
+    script_assets = project / "script" / "assets.json"
+    if not script_assets.exists():
+        # This is an adapter-maintained output map, not an approval record.
+        # M5 owns its empty initialization so callers need not hand-author it.
+        _write_json(script_assets, {"schema": "contentops.m5-script-assets/v1",
+                                    "assets": {}})
+    else:
+        try:
+            mapped = json.loads(script_assets.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            raise M5Blocked(f"script asset map is invalid: {exc}") from None
+        if not isinstance(mapped, dict) or not isinstance(mapped.get("assets"), dict):
+            raise M5Blocked("script/assets.json must contain an assets object")
+    lines = script.get("lines") or []
+    line_by_id = {str(row.get("id")): row for row in lines}
+    if len(shots) != len(lines):
+        raise M5Blocked("motion shot count must match M5 script line count")
+    seen_placements = set()
+    adapter = ROOT / "scripts" / "huashu_motion_adapter.py"
+    results = []
+    mode = "REVIEW" if require_copy_review else "AUTO"
+    for shot in shots:
+        if not isinstance(shot, dict):
+            raise M5Blocked("motion shot entries must be objects")
+        placement_id = str(shot.get("placement_id") or shot.get("id") or "")
+        asset_id = str(shot.get("asset_id") or placement_id)
+        spec = str(shot.get("spec") or "").strip()
+        if not placement_id or placement_id not in line_by_id:
+            raise M5Blocked(f"motion placement does not map to an M5 line: {placement_id!r}")
+        if placement_id in seen_placements:
+            raise M5Blocked(f"duplicate motion placement: {placement_id}")
+        seen_placements.add(placement_id)
+        line = line_by_id[placement_id]
+        if line.get("asset_id") != asset_id:
+            raise M5Blocked(f"{placement_id}: motion asset_id must match script line asset_id")
+        if not spec:
+            raise M5Blocked(f"{placement_id}: motion shot plan has no spec path")
+        command = [python_executable(), str(adapter), str(project), "--render",
+                   "--mode", mode, "--spec", spec, "--placement-id", placement_id,
+                   "--asset-id", asset_id, "--json"]
+        proc = hidden_run(command, timeout=3600, cwd=str(ROOT),
+                          env=dict(os.environ, PYTHONUTF8="1", PYTHONIOENCODING="utf-8"))
+        try:
+            result = json.loads(proc.stdout or "{}")
+        except ValueError:
+            result = {}
+        execution = result.get("execution") or {}
+        if proc.returncode != 0 or execution.get("state") != "EXECUTED":
+            detail = (execution.get("error") or
+                      (result.get("decision") or {}).get("detail") or
+                      (proc.stderr or proc.stdout or "adapter returned no execution receipt"))
+            raise M5Blocked(f"Huashua motion blocked for {placement_id}: {str(detail)[-700:]}")
+        results.append({"placement_id": placement_id, "asset_id": asset_id,
+                        "execution_receipt": result.get("receipt"),
+                        "adapter_receipt": execution.get("adapter_receipt")})
+    payload = {"schema": "contentops.m5-motion-stage/v1", "backend": "huashu-art-motion",
+               "mode": mode, "state": "OK", "shots": results,
+               "production_ready": False}
+    _write_json(project / "receipts" / "motion-stage.json", payload)
+    return {"state": "OK", "backend": "huashu-art-motion", "shots": len(results)}
+
+
 def _load_script(project: Path) -> Dict[str, Any]:
     path = project / "script" / "script.json"
     payload = json.loads(path.read_text(encoding="utf-8"))
@@ -1014,10 +1104,15 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
         "state": media["state"], "count": media["count"],
         "bgm": bool(media["audio"]["bgm"]), "sfx": len(media["audio"]["sfx"]),
     }
-    assets = run_stage("assets", stage_assets, project, extra_assets=media["assets"])
-    stages["assets"] = {"count": len(assets)}
     claims = run_stage("claims", stage_claims, project, sources["artifacts"])
     stages["claims"] = {"count": claims["count"]}
+    script_payload = _load_script(project)
+    motion = run_stage("motion", stage_motion, project, config, script_payload,
+                       require_copy_review=require_copy_review)
+    if motion["state"] != "NOT_CONFIGURED":
+        stages["motion"] = motion
+    assets = run_stage("assets", stage_assets, project, extra_assets=media["assets"])
+    stages["assets"] = {"count": len(assets)}
     script = run_stage("script", stage_script, project, claims["ledger"], assets)
     stages["script"] = {"lines": script["lines"]}
     provider = (narration_provider

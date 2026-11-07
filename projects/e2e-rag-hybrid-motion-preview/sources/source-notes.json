@@ -1,0 +1,22 @@
+{
+  "schema": "contentops.source-notes/v1",
+  "note": "Sources support narration text only; the generated animation is explanatory visual support, not evidence.",
+  "sources": [
+    {
+      "id": "elastic-hybrid-search",
+      "url": "https://www.elastic.co/docs/solutions/search/hybrid-search",
+      "supports": "Hybrid search combines full-text and vector search in one request and returns a ranked list.",
+      "retrieved": "2026-11-08"
+    },
+    {
+      "id": "elastic-rrf",
+      "url": "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/reciprocal-rank-fusion",
+      "supports": "RRF combines result lists by adding reciprocal contributions based on each document rank.",
+      "retrieved": "2026-11-08"
+    }
+  ],
+  "provider_calls": 0,
+  "external_cost": 0,
+  "production_ready": false,
+  "publish_authorized": false
+}

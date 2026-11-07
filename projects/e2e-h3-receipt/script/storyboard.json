@@ -4,7 +4,8 @@
   "pad_mode": "trim",
   "shots": [
     {
-      "shot_id": "version_evidence",
+      "shot_id": "version_evidence__001",
+      "asset_id": "version_evidence",
       "caption": "公开 API，不是 CLI",
       "narration": "H3 走的是官方文档的公开 API v2，不是官方 CLI，也不是旧版 v1 接口。",
       "claim": "h3_transport",
@@ -16,7 +17,8 @@
       "motion": "static"
     },
     {
-      "shot_id": "skill_layers",
+      "shot_id": "skill_layers__002",
+      "asset_id": "skill_layers",
       "caption": "4 秒 / 768P / I2VA",
       "narration": "这次请求是 4 秒、768P 的 I2VA 参考图任务，只创建了一次任务。",
       "claim": "h3_request",
@@ -28,7 +30,8 @@
       "motion": "static"
     },
     {
-      "shot_id": "skills_dir",
+      "shot_id": "skills_dir__003",
+      "asset_id": "skills_dir",
       "caption": "不 vendored，只证明这一次",
       "narration": "提示词仓库没有被 vendored 进来，所以回执只证明这一次调用，不证明能力已经稳定，只记录这一次的输入和输出，并附上回执。",
       "claim": "h3_not_vendored",

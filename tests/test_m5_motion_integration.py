@@ -14,6 +14,7 @@ import hashlib
 import json
 import sys
 import tempfile
+from types import SimpleNamespace
 import wave
 from pathlib import Path
 
@@ -226,8 +227,11 @@ def test_producer_reuses_current_qc_pass_without_rebuilding():
         old_root, old_build = produce_video.ROOT, produce_video.m5_production.build
         calls = []
 
-        def fake_build(target):
+        build_options = []
+
+        def fake_build(target, **options):
             calls.append(target)
+            build_options.append(options)
             (target / "final").mkdir(parents=True, exist_ok=True)
             (target / "final" / "demo-project.mp4").write_bytes(b"rendered bytes")
             report = {"overall": "PASS", "graded_target": "project://final/demo-project.mp4"}
@@ -243,6 +247,7 @@ def test_producer_reuses_current_qc_pass_without_rebuilding():
             assert produce_video._relative_to_root(project) == Path("projects/demo-project")
             first = produce_video.produce(project)
             second = produce_video.produce(project)
+            assert build_options == [{"require_copy_review": False}]
             assert first["state"] == "QC_PASSED" and first["reused"] is False
             assert second["state"] == "QC_PASSED" and second["reused"] is True
             assert second["resumed_from_run_id"] == first["run_id"]
@@ -280,7 +285,7 @@ def test_producer_review_mode_keeps_the_human_copy_gate():
             raise produce_video.m5_production.copy_review.CopyReviewRequired(
                 "NOT_REVIEWED", "approve copy")
 
-        def unexpected_build(_project):
+        def unexpected_build(_project, **_options):
             calls.append("build")
             raise AssertionError("render must not proceed before explicit review")
 
@@ -303,6 +308,63 @@ def test_producer_review_mode_keeps_the_human_copy_gate():
             produce_video.m5_production.build = old_build
 
 
+def test_configured_motion_runs_each_placement_through_managed_adapter():
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        plan = {"shots": [
+            {"id": "line-1", "asset_id": "A1", "spec": "motion/one.json"},
+            {"id": "line-2", "asset_id": "A2", "spec": "motion/two.json"},
+        ]}
+        plan_path = project / "motion" / "plan.json"
+        plan_path.parent.mkdir()
+        plan_path.write_text(json.dumps(plan), encoding="utf-8")
+        commands = []
+        old_run = m5_production.hidden_run
+
+        def fake_run(command, **_options):
+            commands.append(command)
+            payload = {"execution": {"state": "EXECUTED",
+                                     "adapter_receipt": {"asset_id": "ok"}},
+                       "receipt": "receipts/executions/test.json"}
+            return SimpleNamespace(returncode=0, stdout=json.dumps(payload), stderr="")
+
+        m5_production.hidden_run = fake_run
+        try:
+            result = m5_production.stage_motion(
+                project, {"motion": {"backend": "huashu-art-motion",
+                                     "shot_plan": "motion/plan.json"}},
+                {"lines": [{"id": "line-1", "asset_id": "A1"},
+                           {"id": "line-2", "asset_id": "A2"}]},
+                require_copy_review=False)
+            assert result == {"state": "OK", "backend": "huashu-art-motion", "shots": 2}
+            assert len(commands) == 2
+            assert all("--mode" in command and command[command.index("--mode") + 1] == "AUTO"
+                       for command in commands)
+            receipt = json.loads((project / "receipts" / "motion-stage.json").read_text())
+            assert [row["placement_id"] for row in receipt["shots"]] == ["line-1", "line-2"]
+        finally:
+            m5_production.hidden_run = old_run
+
+
+def test_motion_stage_refuses_an_unmapped_plan_before_rendering():
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        plan_path = project / "plan.json"
+        plan_path.write_text(json.dumps({"shots": [
+            {"id": "other", "asset_id": "A1", "spec": "one.json"}]}),
+            encoding="utf-8")
+        try:
+            m5_production.stage_motion(
+                project, {"motion": {"backend": "huashu-art-motion",
+                                     "shot_plan": "plan.json"}},
+                {"lines": [{"id": "line-1", "asset_id": "A1"}]},
+                require_copy_review=False)
+        except m5_production.M5Blocked as exc:
+            assert "does not map" in str(exc)
+        else:
+            raise AssertionError("an unmapped animation must not run")
+
+
 def main() -> int:
     tests = (test_a_video_asset_reaches_the_storyboard_as_a_clip,
              test_a_still_asset_is_not_labelled_a_clip,
@@ -317,7 +379,9 @@ def main() -> int:
              test_existing_narration_without_line_timings_is_refused,
              test_existing_narration_that_matches_is_reused_without_a_provider_call,
              test_producer_reuses_current_qc_pass_without_rebuilding,
-             test_producer_review_mode_keeps_the_human_copy_gate)
+             test_producer_review_mode_keeps_the_human_copy_gate,
+             test_configured_motion_runs_each_placement_through_managed_adapter,
+             test_motion_stage_refuses_an_unmapped_plan_before_rendering)
     for test in tests:
         test()
         print(f"[ok] {test.__name__}")

@@ -19,7 +19,8 @@ This module measures the visible timeline instead:
   Padding or trimming at composition time changes what is visible, and a
   denominator that ignores that would be a different video's ratio.
 
-The gate is ``real_source_duration_ratio >= 0.70`` for the two accounts. A
+The default gate is ``real_source_duration_ratio >= 0.70`` for evidence-led
+accounts; an explanatory account can configure a lower floor. A
 missing interval, a missing source permission or a missing active-asset mapping
 is ``BLOCKED`` — never silently excluded from the denominator. An unknown kind
 is counted as non-real, because "unknown" is not evidence.
@@ -150,6 +151,7 @@ def measure(
     output_duration_s: float,
     assets: Optional[Dict[str, Any]] = None,
     require_permission: bool = True,
+    min_ratio: float = MIN_REAL_DURATION_RATIO,
 ) -> Dict[str, Any]:
     """Measure the real-source share of a cut described by a storyboard.
 
@@ -162,6 +164,9 @@ def measure(
         return _blocked("OUTPUT_DURATION_MISSING",
                         "the rendered file's duration was not measured, so there is "
                         "no denominator")
+    if (not isinstance(min_ratio, (int, float)) or isinstance(min_ratio, bool)
+            or not 0.0 <= min_ratio <= 1.0):
+        return _blocked("MIN_RATIO_INVALID", "minimum real-source ratio must be from 0 to 1")
 
     shots = storyboard.get("shots") if isinstance(storyboard, dict) else None
     if not isinstance(shots, list) or not shots:
@@ -227,19 +232,20 @@ def measure(
     declared_seconds = _union_seconds((iv.start, iv.end) for iv in intervals)
     ratio = round(real_seconds / output_duration_s, 4)
     undeclared_tail = round(max(0.0, output_duration_s - declared_seconds), 3)
-    ratio_ok = ratio + EPSILON >= MIN_REAL_DURATION_RATIO
+    minimum = float(min_ratio)
+    ratio_ok = ratio + EPSILON >= minimum
 
     return {
         "schema": SCHEMA,
         "state": PASS if ratio_ok else FAIL,
         "ok": ratio_ok,
         "real_source_duration_ratio": ratio,
-        "min": MIN_REAL_DURATION_RATIO,
+        "min": minimum,
         "real_seconds": real_seconds,
         "declared_seconds": declared_seconds,
         "output_duration_s": round(float(output_duration_s), 3),
         "undeclared_tail_s": undeclared_tail,
-        "required_seconds": round(MIN_REAL_DURATION_RATIO * float(output_duration_s), 3),
+        "required_seconds": round(minimum * float(output_duration_s), 3),
         "intervals": [interval.as_dict() for interval in intervals],
         "note": "unknown kinds and undeclared time count as non-real; overlapping "
                 "intervals are counted once; the denominator is the rendered file",
@@ -270,6 +276,7 @@ def check(
     *,
     output_duration_s: float,
     repo_root: Optional[Path] = None,
+    min_ratio: float = MIN_REAL_DURATION_RATIO,
 ) -> Dict[str, Any]:
     """Read the project's storyboard and assets, then measure."""
     project = Path(project)
@@ -289,4 +296,5 @@ def check(
             assets = json.loads(manifest_path.read_text(encoding="utf-8"))
         except (OSError, ValueError) as exc:
             return _blocked("ASSETS_INVALID", f"{manifest_path.as_posix()}: {exc}")
-    return measure(storyboard, output_duration_s=output_duration_s, assets=assets)
+    return measure(storyboard, output_duration_s=output_duration_s, assets=assets,
+                   min_ratio=min_ratio)

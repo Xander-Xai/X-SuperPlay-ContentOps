@@ -1,0 +1,245 @@
+{
+  "schema": "contentops.motion-preview-run/v1",
+  "run_id": "e2e-rag-hybrid-motion-preview-5524e843540f",
+  "started_at": "2026-11-07T18:46:02+00:00",
+  "elapsed_seconds": 37.792,
+  "engine": "huashu-art-motion",
+  "runtime": {
+    "skill_id": "huashu-art-motion",
+    "version": "1.2.0",
+    "skill_md_sha256": "865b63a648247f922e6dfaa4fcd8521aa10b80dd1924e99a8799713d05c40e4f",
+    "renderer_sha256": "1cc29a3fa6200265fe6fc9071a54bff13f60d92abcd83f78e50cb1ce78280b35",
+    "renderer": "shared-skill/scripts/engine/render.py",
+    "wrapper": "scripts/huashu_render.py"
+  },
+  "shot_renders": [
+    {
+      "shot_id": "rag-hybrid-01",
+      "backend": "huashu-art-motion",
+      "grammar": "y3_whiteboard",
+      "spec": "motion/shots/rag-hybrid-01.json",
+      "spec_sha256": "042cc95a3958f72e9724e62c740a883b9f71293087b8ba7bd0cc50635e180503",
+      "output": "assets/generated/huashu/rag-hybrid-01.mp4",
+      "output_sha256": "c9c2c7660ac1c9ccfda3574335da3d934efd0c90fe7a30abd6b3b93c75603897",
+      "duration_s": 4.22,
+      "render_seconds": 10.291,
+      "source_refs": [
+        "elastic-hybrid-search",
+        "elastic-rrf"
+      ],
+      "attempts": [
+        {
+          "attempt": 1,
+          "elapsed_s": 10.291,
+          "exit_code": 0
+        }
+      ],
+      "narration_line_id": "rag-hybrid-01",
+      "content_point": "两路检索分别召回候选"
+    },
+    {
+      "shot_id": "rag-hybrid-02",
+      "backend": "huashu-art-motion",
+      "grammar": "t1_3b1b",
+      "spec": "motion/shots/rag-hybrid-02.json",
+      "spec_sha256": "e04c7128f530670ba74f32a44251a4a2907de624fb5a259998512ff3499446f7",
+      "output": "assets/generated/huashu/rag-hybrid-02.mp4",
+      "output_sha256": "ae630ddd5841d10c6fc338c229e5ff326c135cffd7e4eefb081d0b964dee92fa",
+      "duration_s": 4.785,
+      "render_seconds": 10.238,
+      "source_refs": [
+        "elastic-rrf"
+      ],
+      "attempts": [
+        {
+          "attempt": 1,
+          "elapsed_s": 10.238,
+          "exit_code": 0
+        }
+      ],
+      "narration_line_id": "rag-hybrid-02",
+      "content_point": "RRF 根据排名位置累计倒数分"
+    },
+    {
+      "shot_id": "rag-hybrid-03",
+      "backend": "huashu-art-motion",
+      "grammar": "y3_whiteboard",
+      "spec": "motion/shots/rag-hybrid-03.json",
+      "spec_sha256": "873bc877d2e111d8090ac126963bb39dd7fe6766fa8f904c7445873ffdb5b17d",
+      "output": "assets/generated/huashu/rag-hybrid-03.mp4",
+      "output_sha256": "16918e0bf880c6d6f33d764124c31c61ec9ff1c5cf260c6ac55dd3fba4633200",
+      "duration_s": 5.264,
+      "render_seconds": 12.89,
+      "source_refs": [
+        "elastic-rrf"
+      ],
+      "attempts": [
+        {
+          "attempt": 1,
+          "elapsed_s": 12.89,
+          "exit_code": 0
+        }
+      ],
+      "narration_line_id": "rag-hybrid-03",
+      "content_point": "融合排名以消除原始分数尺度差异"
+    }
+  ],
+  "narration": {
+    "engine": "windows_sapi",
+    "provider": "sapi",
+    "network": false,
+    "cost": 0,
+    "duration_s": 14.268,
+    "lines": [
+      {
+        "start": 0.0,
+        "duration": 4.22
+      },
+      {
+        "start": 4.5,
+        "duration": 4.505
+      },
+      {
+        "start": 9.284,
+        "duration": 4.984
+      }
+    ]
+  },
+  "subtitles": {
+    "schema": "contentops.m5-subtitles/v1",
+    "path": "assets/captions/default.srt",
+    "cues": 3,
+    "coverage_ratio": 0.961,
+    "audio_duration_s": 14.268
+  },
+  "composer": {
+    "name": "ffmpeg",
+    "seconds": 2.274
+  },
+  "output": {
+    "path": "project://final/preview-rag-hybrid.mp4",
+    "sha256": "d96ae1215f020c91a1c691736937321e1264c58a4c9b90ce1b95cae2000971dd",
+    "bytes": 750777
+  },
+  "technical_qc": {
+    "overall": "WARN",
+    "checks": [
+      {
+        "id": "_video",
+        "severity": "INFO",
+        "ok": true
+      },
+      {
+        "id": "file_size",
+        "severity": "PASS",
+        "ok": true
+      },
+      {
+        "id": "ffprobe_parse",
+        "severity": "PASS",
+        "ok": true
+      },
+      {
+        "id": "resolution",
+        "severity": "PASS",
+        "ok": true
+      },
+      {
+        "id": "aspect_ratio_9_16",
+        "severity": "PASS",
+        "ok": true
+      },
+      {
+        "id": "duration_range",
+        "severity": "WARN",
+        "ok": false
+      },
+      {
+        "id": "video_codec_h264",
+        "severity": "PASS",
+        "ok": true
+      },
+      {
+        "id": "audio_present",
+        "severity": "PASS",
+        "ok": true
+      },
+      {
+        "id": "audio_codec_aac",
+        "severity": "PASS",
+        "ok": true
+      },
+      {
+        "id": "project_yaml",
+        "severity": "PASS",
+        "ok": true
+      },
+      {
+        "id": "source_refs_recorded",
+        "severity": "PASS",
+        "ok": true
+      },
+      {
+        "id": "caption_srt_present",
+        "severity": "PASS",
+        "ok": true
+      },
+      {
+        "id": "script_exists",
+        "severity": "PASS",
+        "ok": true
+      },
+      {
+        "id": "storyboard_exists",
+        "severity": "PASS",
+        "ok": true
+      },
+      {
+        "id": "real_source_ratio",
+        "severity": "PASS",
+        "ok": true
+      },
+      {
+        "id": "real_source_duration_ratio",
+        "severity": "PASS",
+        "ok": true
+      },
+      {
+        "id": "source_provenance_complete",
+        "severity": "PASS",
+        "ok": true
+      },
+      {
+        "id": "engine_recorded",
+        "severity": "PASS",
+        "ok": true
+      },
+      {
+        "id": "voice_not_silence",
+        "severity": "PASS",
+        "ok": true
+      },
+      {
+        "id": "subtitle_burned_or_track",
+        "severity": "PASS",
+        "ok": true
+      },
+      {
+        "id": "real_evidence_present",
+        "severity": "WARN",
+        "ok": false
+      },
+      {
+        "id": "voice_quality_declared",
+        "severity": "INFO",
+        "ok": true
+      }
+    ]
+  },
+  "visual_qc": "REVIEW_REQUIRED_WITH_DOCUMENTED_ISSUES",
+  "external_provider_calls": 0,
+  "external_cost": 0,
+  "human_review": "PENDING_FOUNDER_REVIEW",
+  "production_ready": false,
+  "publish_authorized": false
+}

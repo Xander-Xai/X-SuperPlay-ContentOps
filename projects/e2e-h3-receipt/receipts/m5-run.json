@@ -11,10 +11,10 @@
       "bgm": false,
       "sfx": 0
     },
-    "assets": {
+    "claims": {
       "count": 3
     },
-    "claims": {
+    "assets": {
       "count": 3
     },
     "script": {
@@ -42,6 +42,22 @@
       "audio": true
     }
   },
+  "stage_timings_seconds": {
+    "bundle": 0.0,
+    "sources": 0.004,
+    "media_use": 0.0,
+    "claims": 0.004,
+    "motion": 0.0,
+    "assets": 0.004,
+    "script": 0.001,
+    "narration": 1.457,
+    "subtitles": 0.001,
+    "storyboard": 0.001,
+    "compose": 12.327,
+    "qc": 2.264,
+    "human_review_package": 0.001
+  },
   "production_ready": false,
+  "copy_review_required_for_render": false,
   "human_review": "PENDING_FOUNDER_REVIEW"
 }

@@ -73,6 +73,24 @@ def _account_slug(project: Path) -> str:
     return ""
 
 
+def _real_source_floor(project: Path) -> tuple[float, str]:
+    """Use the account's evidence mode; only evidence-led accounts need capture time."""
+    slug = _account_slug(project)
+    if not slug:
+        return MIN_REAL_SOURCE_RATIO, "UNRESOLVED"
+    path = ROOT / "config" / "accounts" / f"{slug}.json"
+    try:
+        profile = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return MIN_REAL_SOURCE_RATIO, "UNRESOLVED"
+    mode = str((profile.get("evidence") or {}).get("mode") or "").upper()
+    if mode == "EXPLANATORY":
+        return 0.0, mode
+    if mode == "EVIDENCE_LED":
+        return MIN_REAL_SOURCE_RATIO, mode
+    return MIN_REAL_SOURCE_RATIO, mode or "UNRESOLVED"
+
+
 def audio_is_not_silence(path: Path) -> dict:
     """Measure loudness so a silent track can't pass as 'has voice'."""
     r = hidden_run(
@@ -362,15 +380,17 @@ def qc(project: Path, target: str = "") -> dict:
     })
 
     shots = sb.get("shots", []) or []
+    real_floor, evidence_mode = _real_source_floor(project)
     real_n = sum(1 for s in shots if s.get("source_type") in REAL_SOURCE_TYPES)
     gen_n = sum(1 for s in shots if s.get("source_type") in GENERATED_SOURCE_TYPES)
     declared_n = real_n + gen_n
     ratio = (real_n / declared_n) if declared_n else 0.0
     checks.append({
-        "id": "real_source_ratio", "ok": ratio >= MIN_REAL_SOURCE_RATIO,
-        "severity": "WARN" if ratio < MIN_REAL_SOURCE_RATIO else "PASS",
+        "id": "real_source_ratio", "ok": ratio >= real_floor,
+        "severity": "WARN" if ratio < real_floor else "PASS",
         "value": round(ratio, 3),
-        "min": MIN_REAL_SOURCE_RATIO,
+        "min": real_floor,
+        "evidence_mode": evidence_mode,
         "real_shots": real_n, "generated_shots": gen_n,
         "note": "historical shot-count diagnostic, kept for comparison; the gate is "
                 "real_source_duration_ratio",
@@ -381,8 +401,9 @@ def qc(project: Path, target: str = "") -> dict:
     # hard failure for a project that declares an account (A/B) and a warning
     # for the historical samples, which predate the rule and are not re-graded
     # retroactively.
-    measured = check_real_source_duration(project, output_duration_s=duration)
-    required = bool(_account_slug(project))
+    measured = check_real_source_duration(project, output_duration_s=duration,
+                                          min_ratio=real_floor)
+    required = evidence_mode in {"EXPLANATORY", "EVIDENCE_LED"}
     if measured["state"] == RSD_PASS:
         severity = "PASS"
     elif required:
@@ -402,8 +423,8 @@ def qc(project: Path, target: str = "") -> dict:
         "undeclared_tail_s": measured.get("undeclared_tail_s"),
         "code": measured.get("code"),
         "detail": measured.get("detail"),
-        "note": "real visible seconds / measured output seconds; diagrams, cards, "
-                "generated and motion visuals do not count",
+        "note": ("real visible seconds / measured output seconds; diagrams, cards, "
+                 "generated and motion visuals do not count as evidence"),
     })
 
     missing_prov = [i for i, s in enumerate(shots)

@@ -1,0 +1,107 @@
+{
+  "schema": "contentops.huashu-motion-receipt/v1",
+  "project": "projects/easel-fi-audio-first",
+  "created_at": "2026-11-07T18:20:11Z",
+  "account_id": "x-superplay-future-intelligence",
+  "state": "BLOCKED",
+  "problems": [
+    "INPUT_MISSING:script/script.json",
+    "INPUT_MISSING:script/claims.json",
+    "INPUT_MISSING:sources/source-refs.json",
+    "INPUT_MISSING:sources/assets.json",
+    "COPY_REVIEW_NOT_REVIEWED",
+    "EXECUTION_NO_GRANT_RECORD: skill-execution-approval.json is absent"
+  ],
+  "copy_review": {
+    "schema": "contentops.copy-gate/v1",
+    "ok": false,
+    "state": "NOT_REVIEWED",
+    "copy_sha256": "a8ad8d7cc0384d78a1b6feea0a8bc0fe98ecea4a2968639104984114fba23915",
+    "asset_drift": [],
+    "remedy": "python scripts/copy_review.py D:/Projects/X-SuperPlay-ContentOps/projects/easel-fi-audio-first --approve --reviewer <name> --opinion \"<what you decided>\" --confirm",
+    "detail": "no receipts/script-review.json"
+  },
+  "skill_route": {
+    "name": "x-superplay-huashu-motion",
+    "verdict": "RESOLVABLE",
+    "reason": "RESOLVABLE",
+    "detail": "exactly one declared local capability, rights verified, provider path permitted",
+    "execution_authorized": false,
+    "capability": {
+      "id": "x-superplay-huashu-motion",
+      "name": "x-superplay-huashu-motion",
+      "canonical_path": "scripts/huashu_motion_adapter.py",
+      "source": {
+        "publisher": "X-SuperPlay ContentOps",
+        "upstream": "alchaincyf/huashu-art-motion",
+        "version": "0.1.0",
+        "runtime_skill": "huashu-art-motion",
+        "runtime_skill_version": "1.2.0"
+      },
+      "license": {
+        "status": "declared",
+        "spdx": "MIT",
+        "note": "Adapter uses Huashu Art Motion code only. Demo characters and bundled demonstration images are excluded; any additional input media must pass the existing per-asset rights gate."
+      },
+      "rights": {
+        "status": "verified",
+        "verified": true,
+        "scope": "local code-generated explanatory visual support only; no Huashu demonstration characters, demo footage, unlicensed images, public reuse or publication clearance",
+        "evidence": "https://github.com/alchaincyf/huashu-art-motion/blob/main/LICENSE"
+      },
+      "accounts": [
+        "x-superplay-1024",
+        "x-superplay-future-intelligence"
+      ],
+      "pipelines": [
+        "M5"
+      ],
+      "stages": [
+        "motion"
+      ],
+      "provider": {
+        "path_permitted": true,
+        "network": false,
+        "paid": false,
+        "cross_project_reuse": false,
+        "note": "Local rendering only; routing is not an execution grant."
+      },
+      "verification": {
+        "status": "WINDOWS_SMOKE_PASS",
+        "scope": "local Windows renderer smoke only; account production remains unverified",
+        "evidence": ".verify-tmp/user-request-20261108/huashu-smoke/receipt.json"
+      },
+      "execution": {
+        "adapter": "scripts/huashu_motion_adapter.py",
+        "m5_stage": "motion",
+        "authorizes_execution": false
+      }
+    },
+    "runtime": {
+      "required": false,
+      "state": "NOT_REQUIRED",
+      "reasons": []
+    },
+    "discovery": {
+      "root": "catalog",
+      "dir": "x-superplay-huashu-motion",
+      "path": "D:\\Projects\\X-SuperPlay-ContentOps\\skills\\x-superplay-huashu-motion",
+      "installed": true
+    },
+    "handoff": {
+      "adapter": "scripts/huashu_motion_adapter.py",
+      "m5_stage": "motion",
+      "note": "the adapter and the M5 stage apply their own gates; this verdict is not an execution grant"
+    }
+  },
+  "runtime": {
+    "skill_id": "huashu-art-motion",
+    "version": "1.2.0",
+    "skill_md_sha256": "865b63a648247f922e6dfaa4fcd8521aa10b80dd1924e99a8799713d05c40e4f",
+    "renderer_sha256": "1cc29a3fa6200265fe6fc9071a54bff13f60d92abcd83f78e50cb1ce78280b35",
+    "renderer": "shared-skill/scripts/engine/render.py",
+    "wrapper": "scripts/huashu_render.py"
+  },
+  "production_ready": false,
+  "publish_authorized": false
+}

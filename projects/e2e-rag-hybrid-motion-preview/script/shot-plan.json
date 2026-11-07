@@ -1,0 +1,54 @@
+{
+  "schema": "contentops.motion-shot-plan/v1",
+  "account_id": "x-superplay-future-intelligence",
+  "topic": "RAG 混合检索与 Reciprocal Rank Fusion",
+  "language": "zh-CN",
+  "shots": [
+    {
+      "id": "rag-hybrid-01",
+      "narration": "混合检索并行找词项和语义候选。",
+      "content_point": "两路检索分别召回候选",
+      "motion_syntax": "y3_whiteboard document and network drawing with connective arrow",
+      "source_refs": [
+        "elastic-hybrid-search",
+        "elastic-rrf"
+      ],
+      "backend": "huashu-art-motion",
+      "render_path": "assets/generated/huashu/rag-hybrid-01.mp4",
+      "duration_s": 4.5,
+      "timeline_start_s": 0.0,
+      "narration_duration_s": 4.22,
+      "visual_match": "PENDING_FRAME_REVIEW"
+    },
+    {
+      "id": "rag-hybrid-02",
+      "narration": "RRF 按各结果列表名次累加倒数分。",
+      "content_point": "RRF 根据排名位置累计倒数分",
+      "motion_syntax": "t1_3b1b handwritten equation and transformed explanation",
+      "source_refs": [
+        "elastic-rrf"
+      ],
+      "backend": "huashu-art-motion",
+      "render_path": "assets/generated/huashu/rag-hybrid-02.mp4",
+      "duration_s": 4.785,
+      "timeline_start_s": 4.5,
+      "narration_duration_s": 4.505,
+      "visual_match": "PENDING_FRAME_REVIEW"
+    },
+    {
+      "id": "rag-hybrid-03",
+      "narration": "融合排名，避免直接比较不同原始分数。",
+      "content_point": "融合排名以消除原始分数尺度差异",
+      "motion_syntax": "y3_whiteboard ranking network draw and point emphasis",
+      "source_refs": [
+        "elastic-rrf"
+      ],
+      "backend": "huashu-art-motion",
+      "render_path": "assets/generated/huashu/rag-hybrid-03.mp4",
+      "duration_s": 4.984,
+      "timeline_start_s": 9.285,
+      "narration_duration_s": 4.984,
+      "visual_match": "PENDING_FRAME_REVIEW"
+    }
+  ]
+}

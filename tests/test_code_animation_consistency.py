@@ -9,9 +9,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
+sys.path.insert(0, str(ROOT / "src"))
 
 import build_code_animation_sample as builder  # noqa: E402
 import package_code_animation_sample as packager  # noqa: E402
+import huashu_render  # noqa: E402
+from contentops.media.huashu_runtime import find_runtime, runtime_candidates  # noqa: E402
 
 
 @contextmanager
@@ -143,13 +146,43 @@ def test_review_bundle_rejects_presenter_media_hash_drift():
             raise AssertionError("presenter media hash drift entered the review bundle")
 
 
+def test_huashu_wrapper_only_handles_the_root_favicon_request():
+    assert huashu_render.is_favicon_request("/favicon.ico")
+    assert huashu_render.is_favicon_request("/favicon.ico?cache=1")
+    assert not huashu_render.is_favicon_request("/assets/favicon.ico")
+    assert not huashu_render.is_favicon_request("/missing-image.png")
+    assert huashu_render.exit_code_from_system_exit(None) == 0
+    assert huashu_render.exit_code_from_system_exit(3) == 3
+    assert huashu_render.exit_code_from_system_exit("renderer rejected the scene") == 1
+
+
+def test_huashu_runtime_is_configurable_and_discovered_without_machine_path():
+    with tempfile.TemporaryDirectory() as temp:
+        root = Path(temp)
+        local = root / ".runtime" / "huashu-art-motion"
+        (local / "scripts" / "engine").mkdir(parents=True)
+        (local / "SKILL.md").write_text("runtime", encoding="utf-8")
+        (local / "scripts" / "engine" / "render.py").write_text("", encoding="utf-8")
+        assert find_runtime(root, environ={}, home=root / "home") == local
+        explicit = root / "explicit"
+        assert runtime_candidates(root, environ={"HUASHU_ART_MOTION_ROOT": str(explicit)}) == [explicit]
+        try:
+            find_runtime(root, environ={"HUASHU_ART_MOTION_ROOT": str(explicit)}, home=root / "home")
+        except FileNotFoundError as exc:
+            assert "configured HUASHU_ART_MOTION_ROOT is invalid" in str(exc)
+        else:
+            raise AssertionError("an invalid explicit runtime path must not silently fall back")
+
+
 def main() -> int:
     tests = [test_motion_voice_and_timeline_match_approved_script_srt,
              test_motion_gate_rejects_voice_or_timeline_drift_from_approved_srt,
              test_presenter_text_must_match_contract_and_approved_srt,
              test_presenter_replaces_first_voice_line_without_duplicate,
              test_review_bundle_binds_timeline_contract_and_presenter_media_hashes,
-             test_review_bundle_rejects_presenter_media_hash_drift]
+             test_review_bundle_rejects_presenter_media_hash_drift,
+             test_huashu_wrapper_only_handles_the_root_favicon_request,
+             test_huashu_runtime_is_configurable_and_discovered_without_machine_path]
     for test in tests:
         test()
         print(f"[ok] {test.__name__}")

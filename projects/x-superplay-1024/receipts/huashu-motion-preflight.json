@@ -1,0 +1,39 @@
+{
+  "schema": "contentops.huashu-motion-receipt/v1",
+  "project": "projects/x-superplay-1024",
+  "created_at": "2026-11-07T16:52:42Z",
+  "account_id": null,
+  "state": "BLOCKED",
+  "problems": [
+    "ACCOUNT_SLUG_MISSING: project.yaml is missing; refusing to infer account from directory name",
+    "INPUT_MISSING:script/script.json",
+    "INPUT_MISSING:script/claims.json",
+    "INPUT_MISSING:script/assets.json",
+    "INPUT_MISSING:sources/source-refs.json",
+    "INPUT_MISSING:sources/assets.json",
+    "COPY_REVIEW_NOT_REVIEWED"
+  ],
+  "copy_review": {
+    "schema": "contentops.copy-gate/v1",
+    "ok": false,
+    "state": "NOT_REVIEWED",
+    "copy_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "asset_drift": [],
+    "remedy": "python scripts/copy_review.py D:/Projects/X-SuperPlay-ContentOps/projects/x-superplay-1024 --approve --reviewer <name> --opinion \"<what you decided>\" --confirm",
+    "detail": "no receipts/script-review.json"
+  },
+  "skill_route": {
+    "verdict": "BLOCKED",
+    "reason": "ACCOUNT_SLUG_MISSING"
+  },
+  "runtime": {
+    "skill_id": "huashu-art-motion",
+    "version": "1.2.0",
+    "skill_md_sha256": "865b63a648247f922e6dfaa4fcd8521aa10b80dd1924e99a8799713d05c40e4f",
+    "renderer_sha256": "1cc29a3fa6200265fe6fc9071a54bff13f60d92abcd83f78e50cb1ce78280b35",
+    "renderer": "shared-skill/scripts/engine/render.py",
+    "wrapper": "scripts/huashu_render.py"
+  },
+  "production_ready": false,
+  "publish_authorized": false
+}

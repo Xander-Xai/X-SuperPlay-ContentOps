@@ -1,0 +1,49 @@
+{
+  "grammar": "y3_whiteboard",
+  "duration": 5.264,
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": {
+    "name": "chalk",
+    "bg": "#0F1117",
+    "surface": "#161A22",
+    "ink": "#F5F7FA",
+    "sub": "#8B95A5",
+    "accent": "#38BDF8",
+    "accent2": "#8B95A5"
+  },
+  "cues": [
+    {
+      "at": 0.1,
+      "kind": "title",
+      "text": "融合排名"
+    },
+    {
+      "at": 0.9,
+      "kind": "draw",
+      "text": "合并两路候选",
+      "data": {
+        "icon": "network"
+      }
+    },
+    {
+      "at": 2.6,
+      "kind": "point",
+      "text": "融合排名结果"
+    },
+    {
+      "at": 3.8,
+      "kind": "point",
+      "text": "避开原始分值尺度差异"
+    },
+    {
+      "at": 4.7,
+      "kind": "highlight",
+      "data": {
+        "target": "point",
+        "index": 1
+      }
+    }
+  ]
+}

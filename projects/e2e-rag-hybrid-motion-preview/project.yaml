@@ -1,0 +1,8 @@
+id: e2e-rag-hybrid-motion-preview
+title: "RAG 混合检索如何合并候选"
+account_slug: x-superplay-future-intelligence
+status: visual-preview-only
+evidence_policy:
+  generated_visuals_are_claim_evidence: false
+  production_ready: false
+  publish_authorized: false

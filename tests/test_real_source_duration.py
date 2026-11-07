@@ -78,6 +78,21 @@ def test_a_ninety_five_second_cut_needs_sixty_six_and_a_half_seconds_of_material
 
 
 @test
+def test_explanatory_motion_can_be_primary_without_claiming_to_be_evidence():
+    shots = [_shot("m1", 10.0, "generated_video", "projects/x/motion.mp4")]
+    result = measure({"shots": shots}, output_duration_s=10.0,
+                     assets=_assets("projects/x/motion.mp4"), min_ratio=0.0)
+    assert result["state"] == PASS, result
+    assert result["real_source_duration_ratio"] == 0.0
+    assert result["min"] == 0.0
+    # It still blocks when provenance is absent, even with a zero real-capture floor.
+    missing = measure({"shots": [_shot("m1", 10.0, "generated_video", "")]},
+                      output_duration_s=10.0, min_ratio=0.0)
+    assert missing["state"] == BLOCKED and missing["code"] == "SOURCE_MISSING", missing
+    print("[ok] explanatory visuals may dominate; source traceability is still required")
+
+
+@test
 def test_a_hundred_and_ten_second_cut_needs_seventy_seven_seconds():
     shots = [_shot(f"r{i}", 1.0, "real_recording") for i in range(77)]
     shots.append(_shot("d1", 33.0, "diagram", "projects/x/d.png"))
