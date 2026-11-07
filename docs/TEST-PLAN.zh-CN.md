@@ -83,6 +83,7 @@ python tests/test_media_convergence.py
 | 源证据 gitignore | `tests/test_gitignore_evidence_policy.py` | 14 | 是 |
 | 本地审批 gitignore | `tests/test_local_approval_gitignore.py` | 5 | 是 |
 | M5 证据 | `tests/test_m5_evidence.py` | 19 | 是 |
+| GitHub 仓库来源适配器 | `tests/test_repo_source_adapter.py` | 3 | 是 |
 | M5 media-use 工作流 | `tests/test_m5_media_use_workflow.py` | 列表驱动 | 是 |
 | M5 媒体可追溯性 | `tests/test_m5_media_traceability.py` | 列表驱动 | 是 |
 | 平台注册表 | `tests/test_platform_registry.py` | 18 | 是 |

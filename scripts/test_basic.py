@@ -101,7 +101,7 @@ def _fake_easel_tree(base: Path) -> Path:
     return easel
 
 
-def test_check_docs_ignores_local_claude_worktrees_but_detects_real_broken_links():
+def test_check_docs_ignores_local_worktrees_and_scratch_but_detects_real_broken_links():
     sys.path.insert(0, str(ROOT / "scripts"))
     import check_docs
 
@@ -114,6 +114,9 @@ def test_check_docs_ignores_local_claude_worktrees_but_detects_real_broken_links
         worktree = fake_root / ".claude" / "worktrees" / "local"
         worktree.mkdir(parents=True)
         (worktree / "AGENTS.md").write_text("[local](missing.md)\n", encoding="utf-8")
+        scratch = fake_root / ".verify-tmp" / "repo-snapshot"
+        scratch.mkdir(parents=True)
+        (scratch / "README.md").write_text("[upstream](missing.md)\n", encoding="utf-8")
         (fake_root / "docs").mkdir()
         real_doc = fake_root / "docs" / "real.md"
         real_doc.write_text("[broken](missing.md)\n", encoding="utf-8")
@@ -136,7 +139,7 @@ def test_check_docs_ignores_local_claude_worktrees_but_detects_real_broken_links
         failure.replace("\\", "/") == "BROKEN LINK: docs/real.md -> missing.md"
         for failure in failures
     ), failures
-    print("[ok] check_docs isolates local worktrees and detects real broken links")
+    print("[ok] check_docs isolates local worktrees/scratch and detects real broken links")
 
 
 def test_verify_blob_sha1_matches_git():
@@ -212,7 +215,7 @@ if __name__ == "__main__":
     for fn in (test_doctor_runs, test_doctor_json,
                test_new_project_creates_and_refuses_overwrite,
                test_qc_on_missing_final_returns_fail,
-               test_check_docs_ignores_local_claude_worktrees_but_detects_real_broken_links,
+               test_check_docs_ignores_local_worktrees_and_scratch_but_detects_real_broken_links,
                test_verify_blob_sha1_matches_git,
                test_verify_generated_exclusion,
                test_resolver_rejects_foreign_remote,

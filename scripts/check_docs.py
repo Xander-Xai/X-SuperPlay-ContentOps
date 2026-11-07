@@ -69,6 +69,7 @@ EXCLUDE_DIRS = {
     ".venv",           # Python venvs
     "__pycache__",
     ".git",
+    ".verify-tmp",      # gitignored task/test scratch; its copied docs are not repo docs
     ".workbuddy",
     "diagnostics",
     "runtime-config-backups",

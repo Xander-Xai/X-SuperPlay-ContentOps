@@ -77,6 +77,7 @@ Function counts inside a suite are floors, not totals, because list-driven and u
 | Source-evidence gitignore | `tests/test_gitignore_evidence_policy.py` | 14 | yes |
 | Local-approval gitignore | `tests/test_local_approval_gitignore.py` | 5 | yes |
 | M5 evidence | `tests/test_m5_evidence.py` | 19 | yes |
+| GitHub repository source adapter | `tests/test_repo_source_adapter.py` | 3 | yes |
 | M5 media-use workflow | `tests/test_m5_media_use_workflow.py` | list-driven | yes |
 | M5 media traceability | `tests/test_m5_media_traceability.py` | list-driven | yes |
 | Platform registry | `tests/test_platform_registry.py` | 18 | yes |
