@@ -67,6 +67,13 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _payload_sha256(value: Dict[str, Any]) -> str:
+    """Stable digest for the in-memory script passed between M5 stages."""
+    payload = json.dumps(value, ensure_ascii=False, sort_keys=True,
+                         separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
 def _write_json(path: Path, payload: Dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -530,6 +537,14 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
                 and profile.get("backend") == "huashu-art-motion"):
             motion = {**motion, "backend": "huashu-art-motion", "auto_profile": True}
     if motion.get("backend") != "huashu-art-motion":
+        _write_json(project / "receipts" / "motion-stage.json", {
+            "schema": "contentops.m5-motion-stage/v1",
+            "backend": None,
+            "state": "NOT_CONFIGURED",
+            "script_sha256": _payload_sha256(script),
+            "shots": [],
+            "production_ready": False,
+        })
         return {"state": "NOT_CONFIGURED", "shots": 0}
     plan_arg = str(motion.get("shot_plan") or "").strip()
     if not plan_arg:
@@ -646,7 +661,8 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
                         "execution_receipt": result.get("receipt"),
                         "adapter_receipt": execution.get("adapter_receipt")})
     payload = {"schema": "contentops.m5-motion-stage/v1", "backend": "huashu-art-motion",
-               "mode": mode, "state": "OK", "shots": results,
+               "mode": mode, "state": "OK",
+               "script_sha256": _payload_sha256(script), "shots": results,
                "production_ready": False}
     _write_json(project / "receipts" / "motion-stage.json", payload)
     return {"state": "OK", "backend": "huashu-art-motion", "shots": len(results)}
@@ -935,17 +951,24 @@ def stage_storyboard(project: Path, config: Dict[str, Any], script: Dict[str, An
     motion_assets = {}
     motion_receipt = project / "receipts" / "motion-stage.json"
     motion_configured = (config.get("motion") or {}).get("backend") == "huashu-art-motion"
-    if motion_configured and motion_receipt.is_file():
+    if motion_configured and not motion_receipt.is_file():
+        raise M5Blocked("motion backend was requested but no motion-stage receipt was written")
+    if motion_receipt.is_file():
         try:
             motion_data = json.loads(motion_receipt.read_text(encoding="utf-8"))
         except (OSError, ValueError) as exc:
             raise M5Blocked(f"motion stage receipt is invalid: {exc}") from None
         if motion_data.get("state") == "OK":
-            motion_assets = {
-                str(row.get("placement_id")): str(row.get("asset_id"))
-                for row in motion_data.get("shots", [])
-                if row.get("placement_id") and row.get("asset_id")
-            }
+            expected_script_sha = _payload_sha256(script)
+            if motion_data.get("script_sha256") != expected_script_sha:
+                if motion_configured:
+                    raise M5Blocked("motion-stage receipt does not match the current M5 script")
+            else:
+                motion_assets = {
+                    str(row.get("placement_id")): str(row.get("asset_id"))
+                    for row in motion_data.get("shots", [])
+                    if row.get("placement_id") and row.get("asset_id")
+                }
     storyboard_lines = []
     for original in script["lines"]:
         line = dict(original)

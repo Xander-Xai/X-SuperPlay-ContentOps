@@ -722,6 +722,68 @@ def test_m5_auto_selects_future_profile_motion_after_measured_narration():
         assert commands[0][commands[0].index("--asset-id") + 1] == "huashu-P-01"
 
 
+def test_auto_profile_motion_receipt_replaces_the_still_on_the_m5_timeline():
+    with tempfile.TemporaryDirectory(dir=ROOT / ".verify-tmp") as temp:
+        project = Path(temp)
+        source = project / "assets" / "source.png"
+        clip = project / "assets" / "generated" / "huashu" / "huashu-P-01.mp4"
+        source.parent.mkdir(parents=True)
+        clip.parent.mkdir(parents=True)
+        source.write_bytes(b"registered user source still")
+        clip.write_bytes(b"generated Huashu motion clip")
+        script = {"schema": m5_production.SCRIPT_SCHEMA, "lines": [{
+            "id": "P-01", "asset_id": "source-01", "claim": "C-01",
+            "narration": "先召回，再融合候选。", "caption": "两路召回",
+        }]}
+        script_path = project / "script" / "script.json"
+        script_path.parent.mkdir(parents=True)
+        script_path.write_text(json.dumps(script, ensure_ascii=False), encoding="utf-8")
+        motion_receipt = {
+            "schema": "contentops.m5-motion-stage/v1", "backend": "huashu-art-motion",
+            "state": "OK", "script_sha256": m5_production._payload_sha256(script),
+            "shots": [{"placement_id": "P-01", "asset_id": "huashu-P-01"}],
+        }
+        (project / "receipts" / "motion-stage.json").parent.mkdir(parents=True)
+        (project / "receipts" / "motion-stage.json").write_text(
+            json.dumps(motion_receipt), encoding="utf-8")
+        assets = {
+            "source-01": {"id": "source-01", "type": "REAL_SCREENSHOT",
+                          "repo_path": source.relative_to(ROOT).as_posix()},
+            "huashu-P-01": {"id": "huashu-P-01", "type": "GENERATED_VIDEO",
+                            "repo_path": clip.relative_to(ROOT).as_posix(),
+                            "generated": True},
+        }
+        narration = {"lines": [{"start": 0.0, "duration": 4.0}],
+                     "duration_s": 4.0, "voice_provider": "existing"}
+
+        result = m5_production.stage_storyboard(
+            project, {"target": {"resolution": "1080x1920"}}, script,
+            narration, {}, assets)
+        shot = result["storyboard"]["shots"][0]
+        assert shot["video"] == clip.relative_to(ROOT).as_posix()
+        assert result["storyboard"]["generated_visuals"]["asset_ids"] == ["huashu-P-01"]
+
+        # A stale successful receipt is ignored in an automatic account profile,
+        # and a specifically requested backend fails closed on the same mismatch.
+        changed_script = json.loads(json.dumps(script))
+        changed_script["lines"][0]["narration"] = "重排候选并输出结果。"
+        script_path.write_text(json.dumps(changed_script, ensure_ascii=False), encoding="utf-8")
+        fallback = m5_production.stage_storyboard(
+            project, {"target": {"resolution": "1080x1920"}}, changed_script,
+            narration, {}, assets)
+        fallback_shot = fallback["storyboard"]["shots"][0]
+        assert "video" not in fallback_shot
+        assert fallback_shot["image"] == source.relative_to(ROOT).as_posix()
+        try:
+            m5_production.stage_storyboard(
+                project, {"motion": {"backend": "huashu-art-motion"}},
+                changed_script, narration, {}, assets)
+        except m5_production.M5Blocked as exc:
+            assert "does not match" in str(exc)
+        else:
+            raise AssertionError("an explicit backend must reject a stale motion receipt")
+
+
 def main() -> int:
     tests = (test_visual_gate_states_are_fail_closed_and_never_approve_publication,
              test_a_video_asset_reaches_the_storyboard_as_a_clip,
@@ -747,7 +809,8 @@ def main() -> int:
              test_future_intelligence_auto_plan_explains_rrf_with_rank_contributions,
              test_future_intelligence_auto_plan_does_not_compare_raw_retrieval_scores,
              test_1024_auto_plan_requires_and_carries_real_source_stills,
-             test_m5_auto_selects_future_profile_motion_after_measured_narration)
+             test_m5_auto_selects_future_profile_motion_after_measured_narration,
+             test_auto_profile_motion_receipt_replaces_the_still_on_the_m5_timeline)
     for test in tests:
         test()
         print(f"[ok] {test.__name__}")
