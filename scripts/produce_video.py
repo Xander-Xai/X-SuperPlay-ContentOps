@@ -2,9 +2,10 @@
 """Run one prepared M5 video project through compose and technical QC.
 
 This is the single execution entry for a project whose account, evidence,
-script, claims and licensed assets are already present. It delegates all
-production work to the existing M5 pipeline and pinned Easel renderer. It does
-not approve copy or publish. A matching QC-passed run is reused by input digest.
+script and claims are already present. ``--assets`` can import an explicitly
+selected local image/video folder for preview. It delegates production to the
+existing M5 pipeline and pinned Easel renderer. It does not approve copy or
+publish. A matching QC-passed run is reused by input digest.
 
 Usage:
     python scripts/produce_video.py --project projects/my-project
