@@ -22,6 +22,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 sys.path.insert(0, str(ROOT / "src"))
 
 import m5_production  # noqa: E402
+import produce_video  # noqa: E402
 from contentops.media import storyboard_adapter as adapter  # noqa: E402
 
 
@@ -110,17 +111,16 @@ def test_misaligned_lines_and_timings_stop_the_build():
             raise AssertionError("an unaligned timeline must be refused")
 
 
-def test_the_same_asset_placed_twice_stops_the_build():
+def test_the_same_asset_can_support_multiple_timeline_placements():
     with tempfile.TemporaryDirectory() as temp:
         project = Path(temp)
         lines = _lines() + _lines()
-        try:
-            adapter.build_shots(lines=lines, narration_lines=_timings() + _timings(),
-                                assets=_assets(project), repo_root=project)
-        except adapter.StoryboardContractError as exc:
-            assert "placed twice" in str(exc), exc
-        else:
-            raise AssertionError("a duplicated placement must be refused")
+        shots = adapter.build_shots(lines=lines, narration_lines=_timings() + _timings(),
+                                    assets=_assets(project), repo_root=project)
+        assert len(shots) == 2
+        assert [shot["asset_id"] for shot in shots] == ["A1", "A1"]
+        assert shots[0]["source"] == shots[1]["source"]
+        assert shots[0]["shot_id"] != shots[1]["shot_id"]
 
 
 def _script():
@@ -213,6 +213,92 @@ def test_existing_narration_that_matches_is_reused_without_a_provider_call():
         assert payload["duration_s"] > 0
 
 
+def test_producer_reuses_current_qc_pass_without_rebuilding():
+    with tempfile.TemporaryDirectory() as temp:
+        root = Path(temp)
+        project = root / "projects" / "demo-project"
+        (project / "script").mkdir(parents=True)
+        (project / "sources").mkdir()
+        (project / "project.yaml").write_text("id: demo-project\nsource_refs: []\n", encoding="utf-8")
+        (project / "script" / "script.json").write_text("{}", encoding="utf-8")
+        (project / "script" / "claims.json").write_text("{}", encoding="utf-8")
+        (project / "sources" / "assets.json").write_text('{"assets": []}', encoding="utf-8")
+        old_root, old_build = produce_video.ROOT, produce_video.m5_production.build
+        calls = []
+
+        def fake_build(target):
+            calls.append(target)
+            (target / "final").mkdir(parents=True, exist_ok=True)
+            (target / "final" / "demo-project.mp4").write_bytes(b"rendered bytes")
+            report = {"overall": "PASS", "graded_target": "project://final/demo-project.mp4"}
+            (target / "receipts").mkdir(exist_ok=True)
+            (target / "receipts" / "qc-report-demo-project.json").write_text(
+                json.dumps(report), encoding="utf-8")
+            return {"stages": {"compose": {"state": "OK"}, "qc": {"overall": "PASS"}},
+                    "human_review": "PENDING_FOUNDER_REVIEW"}
+
+        produce_video.ROOT = root
+        produce_video.m5_production.build = fake_build
+        try:
+            assert produce_video._relative_to_root(project) == Path("projects/demo-project")
+            first = produce_video.produce(project)
+            second = produce_video.produce(project)
+            assert first["state"] == "QC_PASSED" and first["reused"] is False
+            assert second["state"] == "QC_PASSED" and second["reused"] is True
+            assert second["resumed_from_run_id"] == first["run_id"]
+            assert second["rendered"] is True and second["technical_qc"] == "PASS"
+            assert second["production_ready"] is False and second["published"] is False
+            assert len(calls) == 1
+            assert second["human_review"] == "PENDING_FOUNDER_REVIEW"
+        finally:
+            produce_video.ROOT = old_root
+            produce_video.m5_production.build = old_build
+
+
+def test_producer_review_mode_keeps_the_human_copy_gate():
+    with tempfile.TemporaryDirectory() as temp:
+        root = Path(temp)
+        project = root / "projects" / "demo-project"
+        (project / "script").mkdir(parents=True)
+        (project / "sources").mkdir()
+        (project / "project.yaml").write_text("id: demo-project\nsource_refs: []\n", encoding="utf-8")
+        (project / "script" / "script.json").write_text("{}", encoding="utf-8")
+        (project / "script" / "claims.json").write_text("{}", encoding="utf-8")
+        (project / "sources" / "assets.json").write_text('{"assets": []}', encoding="utf-8")
+        old_root, old_check, old_build = (
+            produce_video.ROOT,
+            produce_video.m5_production.copy_review.require_approved,
+            produce_video.m5_production.build,
+        )
+        calls = []
+
+        def refuse_review(_project):
+            raise produce_video.m5_production.copy_review.CopyReviewRequired(
+                "NOT_REVIEWED", "approve copy")
+
+        def unexpected_build(_project):
+            calls.append("build")
+            raise AssertionError("render must not proceed before explicit review")
+
+        produce_video.ROOT = root
+        produce_video.m5_production.copy_review.require_approved = refuse_review
+        produce_video.m5_production.build = unexpected_build
+        try:
+            try:
+                produce_video.produce(project, mode="REVIEW")
+            except produce_video.m5_production.M5Blocked as exc:
+                assert "NOT_REVIEWED" in str(exc)
+            else:
+                raise AssertionError("REVIEW mode must require a recorded approval")
+            saved = json.loads((project / "receipts" / "produce-video.json").read_text(encoding="utf-8"))
+            assert saved["state"] == "BLOCKED"
+            assert calls == []
+        finally:
+            produce_video.ROOT = old_root
+            produce_video.m5_production.copy_review.require_approved = old_check
+            produce_video.m5_production.build = old_build
+
+
 def main() -> int:
     tests = (test_a_video_asset_reaches_the_storyboard_as_a_clip,
              test_a_still_asset_is_not_labelled_a_clip,
@@ -220,12 +306,14 @@ def main() -> int:
              test_a_missing_asset_stops_the_build,
              test_a_non_positive_duration_stops_the_build,
              test_misaligned_lines_and_timings_stop_the_build,
-             test_the_same_asset_placed_twice_stops_the_build,
+             test_the_same_asset_can_support_multiple_timeline_placements,
              test_an_unreachable_narration_provider_is_refused,
              test_existing_narration_without_a_receipt_is_refused,
              test_existing_narration_bound_to_another_script_is_refused,
              test_existing_narration_without_line_timings_is_refused,
-             test_existing_narration_that_matches_is_reused_without_a_provider_call)
+             test_existing_narration_that_matches_is_reused_without_a_provider_call,
+             test_producer_reuses_current_qc_pass_without_rebuilding,
+             test_producer_review_mode_keeps_the_human_copy_gate)
     for test in tests:
         test()
         print(f"[ok] {test.__name__}")

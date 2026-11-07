@@ -67,7 +67,6 @@ def build_shots(*,
             f"narration timings — the timeline is not aligned")
 
     shots: List[Dict[str, Any]] = []
-    seen: set[str] = set()
     for index, (line, timing) in enumerate(zip(lines, narration_lines)):
         asset_id = line.get("asset_id")
         if not asset_id:
@@ -75,12 +74,6 @@ def build_shots(*,
         if asset_id not in assets:
             raise StoryboardContractError(
                 f"line {index} references unknown asset {asset_id!r}")
-        if asset_id in seen:
-            raise StoryboardContractError(
-                f"asset {asset_id!r} is placed twice; the timeline needs one active "
-                f"asset per placement")
-        seen.add(asset_id)
-
         asset = assets[asset_id]
         reference = asset.get("repo_path")
         if not reference:
@@ -96,7 +89,11 @@ def build_shots(*,
             raise StoryboardContractError(
                 f"asset {asset_id!r} is declared as a clip but missing on disk: {reference}")
         shot: Dict[str, Any] = {
-            "shot_id": asset_id,
+            # Asset identity describes the reusable source file; placement
+            # identity describes this line on the timeline. A source can
+            # legitimately support several lines, so keep the ids distinct.
+            "shot_id": f"{asset_id}__{index + 1:03d}",
+            "asset_id": asset_id,
             "caption": line.get("caption"),
             "narration": line.get("narration"),
             "claim": line.get("claim"),
