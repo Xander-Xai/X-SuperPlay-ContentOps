@@ -40,6 +40,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from ..routing import handoff
 from ..evidence.source_artifact import EVIDENCE_CAPABLE_PERMISSIONS
+from ..media.local_assets import is_valid_local_preview_asset
 
 SCHEMA = "contentops.brief-m5-bridge/v1"
 REFS_SCHEMA = "contentops.m5-source-refs/v1"
@@ -289,9 +290,15 @@ def build(project: Path, *, repo_root: Optional[Path] = None) -> Dict[str, Any]:
                 missing_assets.append(f"{asset_id}: file missing: {repo_path}")
             elif asset.get("sha256") and _sha256(target) != str(asset.get("sha256")):
                 missing_assets.append(f"{asset_id}: sha256 differs from the manifest")
-            if asset.get("permission") not in EVIDENCE_CAPABLE_PERMISSIONS:
+            # Visual rights and claim evidence are separate contracts. A user
+            # media import may appear in a local preview when its import receipt
+            # binds the bytes and explicitly withholds distribution rights. It
+            # still cannot enter the claim ledger above.
+            local_preview = is_valid_local_preview_asset(asset, project, root)
+            if (asset.get("permission") not in
+                    {"OWNED", "CREATED_BY_OWNER", "LICENSED"} and not local_preview):
                 missing_assets.append(
-                    f"{asset_id}: permission {asset.get('permission')!r} is not usable")
+                    f"{asset_id}: permission {asset.get('permission')!r} is not usable for visual preview")
         claim = claim_by_id.get(str(beat.get("claim_id") or ""))
         claim_id = str(claim.get("claim_id")) if claim else ""
         m5_lines.append({

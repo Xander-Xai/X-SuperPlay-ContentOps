@@ -209,9 +209,17 @@ def _validate_spec(project: Path, value: str) -> tuple[Path, Dict[str, Any]]:
         manifest = _read_json(manifest_path)
         row = next((item for item in manifest.get("assets", [])
                     if str(item.get("id")) == asset_id), None)
-        if not row or str(row.get("type") or "").upper() not in ("REAL_SCREENSHOT", "SCREENSHOT"):
-            raise ValueError("SPEC_SOURCE_MEDIA: anchor is not a registered real screenshot")
-        if str(row.get("permission") or "").upper() not in ("CREATED_BY_OWNER", "USER_PROVIDED"):
+        from contentops.media.local_assets import is_valid_local_preview_asset
+        local_preview = bool(row and str(row.get("type") or "").upper()
+                             == "USER_PROVIDED_IMAGE"
+                             and is_valid_local_preview_asset(row, project, ROOT))
+        if not row:
+            raise ValueError("SPEC_SOURCE_MEDIA: anchor is not a registered real screenshot or imported user image")
+        if (str(row.get("type") or "").upper() not in ("REAL_SCREENSHOT", "SCREENSHOT")
+                and not local_preview):
+            raise ValueError("SPEC_SOURCE_MEDIA: anchor is not a registered real screenshot or imported user image")
+        if (str(row.get("permission") or "").upper() not in ("CREATED_BY_OWNER", "USER_PROVIDED")
+                and not local_preview):
             raise ValueError("SPEC_SOURCE_MEDIA: screenshot permission is not recorded")
         if not str(row.get("usage_scope") or "").strip():
             raise ValueError("SPEC_SOURCE_MEDIA: screenshot usage_scope is missing")

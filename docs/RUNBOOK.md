@@ -132,6 +132,22 @@ Narration is the offline Windows SAPI voice; no network TTS is called. The run
 always ends at `PENDING_FOUNDER_REVIEW` with `production_ready: false` — a green
 QC is not publishing permission (ADR-005).
 
+To explicitly import a local folder of images or videos for a preview, pass
+`--assets`:
+
+~~~powershell
+python scripts\m5_production.py projects\my-video --assets D:\media\selected-for-preview
+~~~
+
+M5 copies supported files into `assets/imported/user/`, records their hashes in
+`sources/assets.json`, and writes `receipts/user-assets-import.json`. Video
+imports also retain the source clip and record one extracted still. These assets
+are `USER_PROVIDED_LOCAL` with `LOCAL_PREVIEW_ONLY` scope: selection does not
+grant distribution rights or make an asset factual evidence. Use a separate
+rights review before distribution, and keep factual claims bound to their
+independent source artifacts. The option imports media; it does not rewrite
+script asset IDs or approve publication.
+
 
 ### Automatic media-use materials in M5 (offline only)
 

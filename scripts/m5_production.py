@@ -431,6 +431,8 @@ def stage_media_use(project: Path, config: Dict[str, Any], *, adapter: Any = Non
 
 def stage_assets(project: Path, extra_assets: Optional[Dict[str, Dict[str, Any]]] = None) -> Dict[str, Any]:
     """Check every declared visual against its recorded hash before it is used."""
+    from contentops.media.local_assets import is_valid_local_preview_asset
+
     manifest_path = project / "sources" / "assets.json"
     if not manifest_path.is_file():
         raise M5Blocked("sources/assets.json is missing")
@@ -456,14 +458,17 @@ def stage_assets(project: Path, extra_assets: Optional[Dict[str, Dict[str, Any]]
         if actual != asset.get("sha256"):
             problems.append(f"{asset['id']}: sha256 {actual[:12]} != recorded {str(asset.get('sha256'))[:12]}")
             continue
-        if asset.get("permission") not in {"OWNED", "CREATED_BY_OWNER", "LICENSED"}:
+        local_preview = is_valid_local_preview_asset(asset, project, ROOT)
+        if (asset.get("permission") not in {"OWNED", "CREATED_BY_OWNER", "LICENSED"}
+                and not local_preview):
             problems.append(f"{asset['id']}: permission {asset.get('permission')} is not usable")
             continue
-        try:
-            validate_declared_asset(asset, project)
-        except RightsError as exc:
-            problems.append(f"{asset['id']}: {exc}")
-            continue
+        if not local_preview:
+            try:
+                validate_declared_asset(asset, project)
+            except RightsError as exc:
+                problems.append(f"{asset['id']}: {exc}")
+                continue
         verified[asset["id"]] = {**asset, "verified_sha256": actual}
     payload = {
         "schema": "contentops.m5-assets-check/v1",
@@ -1291,11 +1296,10 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
           narration_provider: Optional[str] = None,
           narration_audio: Optional[Path] = None,
           narration_receipt: Optional[Path] = None,
+          assets_dir: Optional[Path] = None,
            require_copy_review: bool = True) -> Dict[str, Any]:
     if not project.is_dir():
         raise M5Blocked(f"project not found: {project}")
-    config = _read_yaml(project / "project.yaml")
-    slug = config.get("id") or project.name
     stages: Dict[str, Any] = {}
     timings: Dict[str, float] = {}
 
@@ -1305,6 +1309,24 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
             return function(*args, **kwargs)
         finally:
             timings[name] = round(time.monotonic() - started, 3)
+
+    if assets_dir is not None:
+        from contentops.media.local_assets import LocalAssetError, import_local_assets
+        try:
+            imported = run_stage("user_assets", import_local_assets, assets_dir,
+                                 project, repo_root=ROOT)
+        except LocalAssetError as exc:
+            raise M5Blocked(f"user asset import: {exc}") from None
+        stages["user_assets"] = {
+            "state": "IMPORTED_LOCAL_PREVIEW_ONLY",
+            "count": len(imported["assets"]),
+            "receipt": "receipts/user-assets-import.json",
+            "distribution_authorized": False,
+            "evidence_capable": False,
+        }
+
+    config = _read_yaml(project / "project.yaml")
+    slug = config.get("id") or project.name
 
     # A router project's copy is final only after the brief bridge writes
     # script.json and claims.json, so its review has to cover those files.
@@ -1414,6 +1436,9 @@ def main() -> int:
     parser.add_argument("--narration-receipt", default=None,
                         help="with --narration-provider existing: a prior narration.json "
                              "carrying text_sha256 and per-line timings")
+    parser.add_argument("--assets", default=None,
+                        help="explicit user-selected image/video folder; imported files are "
+                             "local-preview-only and do not grant distribution or evidence rights")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
     project = Path(args.project)
@@ -1425,7 +1450,9 @@ def main() -> int:
                     narration_audio=(Path(args.narration_audio)
                                      if args.narration_audio else None),
                     narration_receipt=(Path(args.narration_receipt)
-                                       if args.narration_receipt else None))
+                                       if args.narration_receipt else None),
+                    assets_dir=(Path(args.assets).expanduser().resolve()
+                                if args.assets else None))
     except M5Blocked as exc:
         result = {"ok": False, "state": "BLOCKED", "reason": str(exc)}
         print(json.dumps(result, ensure_ascii=False, indent=2))

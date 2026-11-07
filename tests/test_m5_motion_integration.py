@@ -15,6 +15,7 @@ import json
 import sys
 import tempfile
 from types import SimpleNamespace
+from unittest import mock
 import wave
 from pathlib import Path
 
@@ -26,7 +27,7 @@ import m5_production  # noqa: E402
 import produce_video  # noqa: E402
 import huashu_motion_adapter  # noqa: E402
 from contentops.media import storyboard_adapter as adapter  # noqa: E402
-from contentops.media import motion_planner, visual_gate  # noqa: E402
+from contentops.media import local_assets, motion_planner, visual_gate  # noqa: E402
 
 
 def _sha(text: str) -> str:
@@ -84,6 +85,45 @@ def test_a_still_asset_is_not_labelled_a_clip():
                                     assets=_assets(project, video=False), repo_root=project)
         assert "video" not in shots[0]
         assert shots[0]["image"] == "work/media/beat-00.png"
+
+
+def test_explicit_user_media_is_preview_only_and_hash_bound():
+    # A valid 1x1 PNG, selected from a separate source folder.
+    png = bytes.fromhex(
+        "89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c489"
+        "0000000b49444154789c636000020000050001a5f645400000000049454e44ae426082"
+    )
+    with tempfile.TemporaryDirectory() as temp:
+        base = Path(temp)
+        repo = base / "repo"
+        project = repo / "projects" / "preview-only"
+        source = base / "selected-media"
+        source.mkdir()
+        (source / "provided.png").write_bytes(png)
+
+        receipt = local_assets.import_local_assets(source, project, repo_root=repo)
+        assert receipt["usage_scope"] == "LOCAL_PREVIEW_ONLY"
+        assert receipt["distribution_authorized"] is False
+        assert receipt["evidence_capable"] is False
+        repeated = local_assets.import_local_assets(source, project, repo_root=repo)
+        assert len(repeated["assets"]) == 1
+        asset = json.loads((project / "sources" / "assets.json").read_text(
+            encoding="utf-8"))["assets"][0]
+        assert local_assets.is_valid_local_preview_asset(asset, project, repo)
+
+        # The normal M5 asset stage may use the visual in a local preview, while
+        # leaving its rights and claim-evidence status unchanged.
+        with mock.patch.object(m5_production, "ROOT", repo):
+            verified = m5_production.stage_assets(project)
+            assert verified[asset["id"]]["verified_sha256"] == asset["sha256"]
+            imported_path = repo / asset["repo_path"]
+            imported_path.write_bytes(png + b"tampered")
+            try:
+                m5_production.stage_assets(project)
+            except m5_production.M5Blocked as exc:
+                assert "sha256" in str(exc)
+            else:
+                raise AssertionError("changed local media must fail the hash check")
 
 
 def test_the_composer_key_and_the_receipt_key_agree():
@@ -652,6 +692,7 @@ def main() -> int:
     tests = (test_visual_gate_states_are_fail_closed_and_never_approve_publication,
              test_a_video_asset_reaches_the_storyboard_as_a_clip,
              test_a_still_asset_is_not_labelled_a_clip,
+             test_explicit_user_media_is_preview_only_and_hash_bound,
              test_the_composer_key_and_the_receipt_key_agree,
              test_a_missing_asset_stops_the_build,
              test_a_non_positive_duration_stops_the_build,
