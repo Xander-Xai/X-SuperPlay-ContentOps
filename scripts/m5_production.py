@@ -873,6 +873,16 @@ def stage_storyboard(project: Path, config: Dict[str, Any], script: Dict[str, An
         raise M5Blocked(f"storyboard contract: {exc}")
     shots = _align_shots_to_narration(shots, narration["lines"])
     target = (config.get("target") or {}).get("resolution", "1080x1920")
+    generated_visual_ids = sorted({
+        str(line.get("asset_id"))
+        for line in script.get("lines", [])
+        if line.get("asset_id")
+        and line.get("asset_id") in assets
+        and (
+            bool(assets[line["asset_id"]].get("generated"))
+            or str(assets[line["asset_id"]].get("type") or "").lower().startswith("generated_")
+        )
+    })
     storyboard = {
         "size": target,
         "image_motion": "static",
@@ -883,7 +893,12 @@ def stage_storyboard(project: Path, config: Dict[str, Any], script: Dict[str, An
         "engine": "easel",
         "voice_provider": (f"{narration.get('voice_provider', narration.get('engine', 'unknown'))}"
                            f"/{narration.get('voice') or 'unspecified'}"),
-        "generated_visuals": {"count": 0, "policy": "real_assets_only"},
+        "generated_visuals": {
+            "count": len(generated_visual_ids),
+            "asset_ids": generated_visual_ids,
+            "policy": ("visual_support_not_claim_evidence" if generated_visual_ids
+                       else "real_assets_only"),
+        },
     }
 
     # Audio supplied by the media_use stage is a support track mixed underneath

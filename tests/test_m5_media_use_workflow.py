@@ -456,6 +456,32 @@ def disabled_media_use_leaves_the_storyboard_audio_unchanged():
 
 
 @check
+def storyboard_receipt_counts_referenced_generated_visuals():
+    project, config, _digest = project_and_config()
+    clip = project / "assets" / "generated-clip.mp4"
+    clip.write_bytes(b"synthetic offline video fixture")
+    asset = {
+        "type": "generated_video",
+        "repo_path": clip.relative_to(ROOT).as_posix(),
+        "generated": True,
+        "evidence_use": "VISUAL_SUPPORT",
+    }
+    narration = {"duration_s": 2.0,
+                 "lines": [{"start": 0.0, "duration": 2.0}]}
+    storyboard = m5.stage_storyboard(
+        project, config,
+        {"lines": [{"id": "s1", "asset_id": "generated_clip",
+                    "narration": "test", "caption": "test", "claim": None}]},
+        narration, {}, {"generated_clip": asset},
+    )["storyboard"]
+    assert storyboard["generated_visuals"] == {
+        "count": 1,
+        "asset_ids": ["generated_clip"],
+        "policy": "visual_support_not_claim_evidence",
+    }
+
+
+@check
 def an_audio_request_cannot_be_declared_in_the_visual_manifest():
     project, config, digest = audio_config()
     manifest = {"schema": "contentops.m5-assets/v1", "assets": [{
