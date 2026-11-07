@@ -136,6 +136,21 @@ def build_artifacts(
             permission=str(ref["permission"]),
             notes=str(ref.get("notes") or ""),
         )
+        expected_sha256 = ref.get("sha256")
+        if expected_sha256 is not None and str(expected_sha256).lower() != artifact.sha256:
+            raise SourceArtifactError(
+                f"{artifact.id}: source bytes differ from the declared sha256"
+            )
+        expected_bytes = ref.get("bytes")
+        if expected_bytes is not None:
+            try:
+                size_matches = int(expected_bytes) == artifact.bytes
+            except (TypeError, ValueError):
+                size_matches = False
+            if not size_matches:
+                raise SourceArtifactError(
+                    f"{artifact.id}: source size differs from the declared byte count"
+                )
         if artifact.id in artifacts:
             raise SourceArtifactError(f"duplicate source id: {artifact.id}")
         artifacts[artifact.id] = artifact

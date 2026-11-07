@@ -234,6 +234,12 @@ jobs:
       - name: Run M5 evidence regression tests
         run: python tests/test_m5_evidence.py
 
+      # GitHub repository snapshots are pinned to an immutable commit, bounded
+      # to selected UTF-8 text, and never become claim-capable without a
+      # recognized SPDX licence. The transport is mocked; CI makes no request.
+      - name: Run GitHub repository source adapter tests
+        run: python tests/test_repo_source_adapter.py
+
       # The measured real-source gate: seconds of actual material over the
       # rendered file's duration, with overlap unioned and diagrams, cards,
       # generated and motion visuals excluded. Fixture-driven; no render.
