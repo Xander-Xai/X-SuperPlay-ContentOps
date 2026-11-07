@@ -444,12 +444,17 @@ def test_future_intelligence_auto_plan_uses_account_palette_and_rag_grammar():
         shot = result["plan"]["shots"][0]
         spec = json.loads((project / shot["spec"]).read_text(encoding="utf-8"))
         assert shot["semantic_class"] == "retrieval"
-        assert shot["motion_syntax"] == "y3_whiteboard"
+        assert shot["motion_syntax"] == "t1_3b1b"
         assert shot["source_asset_id"] == "source-01"
         assert spec["duration"] == 4.5
         assert spec["theme"] == dna["visual"]["motion"]["motion_profile"]["palette"]
-        assert [cue.get("text") for cue in spec["cues"]] == [
-            "词项召回", "语义召回", "候选进入融合"]
+        assert spec["grammar"] == "t1_3b1b"
+        assert [cue["kind"] for cue in spec["cues"]] == [
+            "title", "point", "point", "point", "highlight"]
+        assert [cue.get("text") for cue in spec["cues"][:4]] == [
+            motion_planner._short_label("混合检索并行找词项和语义候选。", 12),
+            "词项召回", "语义召回", "候选融合"]
+        assert max(cue["at"] for cue in spec["cues"]) < spec["duration"]
 
 
 def test_1024_auto_plan_requires_and_carries_real_source_stills():
@@ -474,6 +479,7 @@ def test_1024_auto_plan_requires_and_carries_real_source_stills():
         shot = result["plan"]["shots"][0]
         spec = json.loads((project / shot["spec"]).read_text(encoding="utf-8"))
         assert shot["source_asset_id"] == source_id
+        assert shot["motion_syntax"] == "y3_whiteboard"
         assert spec["cues"][0]["kind"] == "image"
         assert spec["cues"][0]["image"]
         digest = huashu_motion_adapter._sha(source)

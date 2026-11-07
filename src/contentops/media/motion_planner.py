@@ -64,7 +64,8 @@ def _short_label(text: str, limit: int = 12) -> str:
     return value[:limit] if value else "机制步骤"
 
 
-def _cues(text: str, kind: str, source_image: str | None) -> List[Dict[str, Any]]:
+def _cues(text: str, kind: str, source_image: str | None,
+          grammar: str) -> List[Dict[str, Any]]:
     """Build two or three semantic beats from the script line, not a title card."""
     if source_image:
         icon_name = next((value for pattern, value in ICON_BY_TOPIC if pattern.search(text)), None)
@@ -79,6 +80,18 @@ def _cues(text: str, kind: str, source_image: str | None) -> List[Dict[str, Any]
         else:
             cues.append({"at": 1.7, "kind": "point", "text": _short_label(text, 18)})
         return cues
+
+    if grammar == "t1_3b1b" and kind == "retrieval":
+        # The Future Intelligence profile can derive retrieval as a sequence of
+        # progressively written concepts. These labels describe stages in the
+        # supplied narration; no score, ranking formula or benchmark is invented.
+        return [
+            {"at": 0.0, "kind": "title", "text": _short_label(text, 12)},
+            {"at": 0.65, "kind": "point", "text": "词项召回"},
+            {"at": 1.35, "kind": "point", "text": "语义召回"},
+            {"at": 2.05, "kind": "point", "text": "候选融合"},
+            {"at": 2.75, "kind": "highlight", "data": {"index": 2}},
+        ]
 
     if kind == "retrieval":
         return [
@@ -196,11 +209,18 @@ def build_auto_plan(*, project: Path, account_id: str,
             source_image = Path(os.path.relpath(absolute, spec_probe.parent)).as_posix()
             source_image_sha256 = _file_sha(absolute)
 
-        cues = _cues(text, kind, source_image)
+        # Keep the 1024 account evidence-led with its screenshot plus annotated
+        # whiteboard flow. Future Intelligence uses the 3b1b-style progressive
+        # derivation for retrieval explanations when the account allows it.
+        grammar = ("t1_3b1b" if account_id == "x-superplay-future-intelligence"
+                   and kind == "retrieval" and "t1_3b1b" in allowed
+                   else "y3_whiteboard")
+        cues = _cues(text, kind, source_image, grammar)
         # Cue timestamps must remain inside this exact measured narration clip.
-        scale = min(1.0, duration / 2.3)
+        latest_cue = max(float(cue["at"]) for cue in cues)
+        scale = min(1.0, max(0.0, duration - 0.1) / latest_cue) if latest_cue else 1.0
         cues = [{**cue, "at": round(float(cue["at"]) * scale, 3)} for cue in cues]
-        spec = {"grammar": "y3_whiteboard", "duration": duration, "fps": 30,
+        spec = {"grammar": grammar, "duration": duration, "fps": 30,
                 "width": 1080, "height": 1920, "theme": palette, "cues": cues}
         if source_image_sha256:
             # The upstream renderer ignores this adapter namespace. Including
@@ -227,7 +247,7 @@ def build_auto_plan(*, project: Path, account_id: str,
             "source_asset_id": source_asset_id,
             "content_point": text,
             "semantic_class": kind,
-            "motion_syntax": "y3_whiteboard",
+            "motion_syntax": grammar,
             "backend": "huashu-art-motion",
             "spec": spec_path.relative_to(project).as_posix(),
             "duration_s": duration,
