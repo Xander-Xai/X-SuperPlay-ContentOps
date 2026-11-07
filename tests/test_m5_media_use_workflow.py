@@ -499,16 +499,15 @@ def storyboard_prefers_motion_visual_without_replacing_source_asset():
     }
     narration = {"duration_s": 2.0,
                  "lines": [{"start": 0.0, "duration": 2.0}]}
+    script = {"lines": [{"id": "s1", "asset_id": "support_visual",
+                         "narration": "test", "caption": "test", "claim": "C-01"}]}
     (project / "receipts").mkdir(exist_ok=True)
     (project / "receipts" / "motion-stage.json").write_text(json.dumps({
-        "state": "OK", "shots": [{"placement_id": "s1", "asset_id": "motion_visual"}],
+        "state": "OK", "script_sha256": m5._payload_sha256(script),
+        "shots": [{"placement_id": "s1", "asset_id": "motion_visual"}],
     }), encoding="utf-8")
     storyboard = m5.stage_storyboard(
-        project, config,
-        {"lines": [{"id": "s1", "asset_id": "support_visual",
-                    "narration": "test",
-                    "caption": "test", "claim": "C-01"}]},
-        narration, {}, assets,
+        project, config, script, narration, {}, assets,
     )["storyboard"]
     assert storyboard["shots"][0]["asset_id"] == "motion_visual"
     assert storyboard["shots"][0]["video"] == assets["motion_visual"]["repo_path"]
@@ -518,18 +517,18 @@ def storyboard_prefers_motion_visual_without_replacing_source_asset():
 @check
 def storyboard_blocks_when_motion_receipt_asset_is_missing():
     project, config, _digest = project_and_config()
+    script = {"lines": [{"id": "s1", "asset_id": "support_visual",
+                         "narration": "test", "caption": "test", "claim": None}]}
     (project / "receipts").mkdir(exist_ok=True)
     (project / "receipts" / "motion-stage.json").write_text(json.dumps({
-        "state": "OK", "shots": [{"placement_id": "s1", "asset_id": "missing_motion"}],
+        "state": "OK", "script_sha256": m5._payload_sha256(script),
+        "shots": [{"placement_id": "s1", "asset_id": "missing_motion"}],
     }), encoding="utf-8")
     config["motion"] = {"backend": "huashu-art-motion"}
     narration = {"duration_s": 1.0, "lines": [{"start": 0.0, "duration": 1.0}]}
     try:
         m5.stage_storyboard(
-            project, config,
-            {"lines": [{"id": "s1", "asset_id": "support_visual",
-                        "narration": "test", "caption": "test", "claim": None}]},
-            narration, {}, {"support_visual": {
+            project, config, script, narration, {}, {"support_visual": {
                 "type": "REAL_SCREENSHOT",
                 "repo_path": (project / "assets" / "support.png").relative_to(ROOT).as_posix(),
             }},
