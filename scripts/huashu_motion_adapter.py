@@ -399,7 +399,8 @@ def _cached_render(project: Path, asset_id: str, placement_id: str,
     claims = _read_json(project / "script" / "claims.json")
     line = next((row for row in script.get("lines", [])
                  if row.get("id") == placement_id), None)
-    if not line or line.get("asset_id") != asset_id:
+    if not line or (line.get("motion_asset_id")
+                    and line.get("motion_asset_id") != asset_id):
         return None
     claim = next((row for row in claims.get("claims", [])
                   if row.get("id") == line.get("claim")), None)
@@ -452,8 +453,8 @@ def _render(project: Path, account: str, spec_arg: str, placement_id: str,
     line = next((row for row in lines if row.get("id") == placement_id), None)
     if line is None:
         raise ValueError(f"PLACEMENT_MISSING:{placement_id}")
-    if line.get("asset_id") != asset_id:
-        raise ValueError("ASSET_ID_MISMATCH: script line must declare the same asset_id")
+    if line.get("motion_asset_id") and line.get("motion_asset_id") != asset_id:
+        raise ValueError("ASSET_ID_MISMATCH: script line declares another motion asset_id")
     claims = claim_doc.get("claims") or []
     claim = next((row for row in claims if row.get("id") == line.get("claim")), None)
     if not claim:

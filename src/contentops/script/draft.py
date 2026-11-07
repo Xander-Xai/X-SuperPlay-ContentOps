@@ -155,6 +155,14 @@ def _role_for(profile: AccountProfile, kind: str) -> str:
     segments = _composition(profile)
     if not segments:
         return "vector_animation"
+    # EXPLANATORY accounts keep source verification in the claim/evidence
+    # ledger. Their visual may explain a supported fact without pretending to
+    # be the source itself. In particular, future-intelligence forbids manual
+    # recording and declares vector animation as its primary composition; do
+    # not route its factual lines into a capture task just because their claims
+    # are evidence-backed.
+    if profile.evidence_mode == "EXPLANATORY":
+        return str(segments[0]["role"])
     if kind == "source" or kind == "verified_factual_claim":
         for segment in segments:
             if str(segment["role"]) in CAPTURE_ROLES:

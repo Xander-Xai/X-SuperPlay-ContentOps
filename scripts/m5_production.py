@@ -556,8 +556,10 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
             raise M5Blocked(f"duplicate motion placement: {placement_id}")
         seen_placements.add(placement_id)
         line = line_by_id[placement_id]
-        if line.get("asset_id") != asset_id:
-            raise M5Blocked(f"{placement_id}: motion asset_id must match script line asset_id")
+        source_asset_id = str(line.get("asset_id") or "")
+        if not source_asset_id or (line.get("motion_asset_id")
+                                   and line.get("motion_asset_id") != asset_id):
+            raise M5Blocked(f"{placement_id}: motion asset_id must map to its script line")
         if not spec:
             raise M5Blocked(f"{placement_id}: motion shot plan has no spec path")
         command = [python_executable(), str(adapter), str(project), "--render",
@@ -865,8 +867,38 @@ def stage_storyboard(project: Path, config: Dict[str, Any], script: Dict[str, An
     from contentops.media.storyboard_adapter import (
         StoryboardContractError, build_shots,
     )
+    motion_assets = {}
+    motion_receipt = project / "receipts" / "motion-stage.json"
+    motion_configured = (config.get("motion") or {}).get("backend") == "huashu-art-motion"
+    if motion_configured and motion_receipt.is_file():
+        try:
+            motion_data = json.loads(motion_receipt.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            raise M5Blocked(f"motion stage receipt is invalid: {exc}") from None
+        if motion_data.get("state") == "OK":
+            motion_assets = {
+                str(row.get("placement_id")): str(row.get("asset_id"))
+                for row in motion_data.get("shots", [])
+                if row.get("placement_id") and row.get("asset_id")
+            }
+    storyboard_lines = []
+    for original in script["lines"]:
+        line = dict(original)
+        motion_id = str(motion_assets.get(str(line.get("id")))
+                        or line.get("motion_asset_id") or "")
+        if motion_id:
+            motion_asset = assets.get(motion_id)
+            if not motion_asset:
+                raise M5Blocked(
+                    f"{line.get('id')}: motion asset {motion_id!r} is not registered")
+            if not (motion_asset.get("generated")
+                    or str(motion_asset.get("type") or "").lower().startswith("generated_")):
+                raise M5Blocked(
+                    f"{line.get('id')}: motion asset {motion_id!r} is not generated visual support")
+            line["asset_id"] = motion_id
+        storyboard_lines.append(line)
     try:
-        shots = build_shots(lines=script["lines"],
+        shots = build_shots(lines=storyboard_lines,
                             narration_lines=narration["lines"],
                             assets=assets, repo_root=ROOT)
     except StoryboardContractError as exc:
@@ -875,7 +907,7 @@ def stage_storyboard(project: Path, config: Dict[str, Any], script: Dict[str, An
     target = (config.get("target") or {}).get("resolution", "1080x1920")
     generated_visual_ids = sorted({
         str(line.get("asset_id"))
-        for line in script.get("lines", [])
+        for line in storyboard_lines
         if line.get("asset_id")
         and line.get("asset_id") in assets
         and (

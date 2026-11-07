@@ -33,7 +33,9 @@ from contentops.routing.router import ContentRouter  # noqa: E402
 from contentops.routing.user_topic_route import UserTopicInput  # noqa: E402
 from contentops.routing.account_profile import load_profile  # noqa: E402
 from contentops.script import ScriptBlocked, build, check, write  # noqa: E402
-from contentops.script.draft import _master, line_seconds, topic_provenance  # noqa: E402
+from contentops.script.draft import (
+    _master, _role_for, _storyboard, line_seconds, topic_provenance,
+)  # noqa: E402
 from contentops.script.evidence import PACK_SCHEMA  # noqa: E402
 
 ACCOUNT_BUILD = "x-superplay-future-intelligence"
@@ -170,6 +172,11 @@ def test_real_material_becomes_substantive_spoken_lines():
         assert len(spoken) >= 6
         factual = [claim for claim in draft.report["claims"] if claim["kind"] == "source"]
         assert len(factual) >= 4
+        factual_shots = [shot for shot in draft.storyboard["shots"]
+                         if shot["function"] == "source"]
+        assert factual_shots
+        assert all(shot["dna_role"] == "vector_animation"
+                   and not shot["needs_capture"] for shot in factual_shots)
         for claim in factual:
             assert claim["support_status"] == "SUPPORTED"
             assert claim["source_refs"][0].startswith("https://")
@@ -182,6 +189,7 @@ def test_1024_copy_includes_recordly_source_capture_guidance():
     with tempfile.TemporaryDirectory() as tmp:
         root = _sandbox(tmp)
         profile = load_profile(root, ACCOUNT_EXPLORE)
+        assert _role_for(profile, "source") == "screen_recording_evidence"
         source_url = "https://docs.example.test/page-1"
         claim = {"claim_id": "C-02", "kind": "source",
                  "provenance": "verified_factual_claim", "support_status": "SUPPORTED",
@@ -272,10 +280,20 @@ def test_too_little_material_for_the_window_is_refused_not_stretched():
 def test_one_capture_per_source_not_one_per_sentence():
     with tempfile.TemporaryDirectory() as tmp:
         root = _sandbox(tmp)
-        project = _approved_topic(root)
-        _pack(project, items=3, chars=600, same_url=True)
-        draft = build(project, root=root)
-        captures = [shot for shot in draft.storyboard["shots"] if shot["needs_capture"]]
+        profile = load_profile(root, ACCOUNT_EXPLORE)
+        source_url = "https://docs.example.test/page-1"
+        claims = [
+            {"claim_id": f"C-{index}", "kind": "source",
+             "source_refs": [source_url]}
+            for index in (1, 2, 3)
+        ]
+        beats = [
+            {"placement_id": f"P-{index}", "claim_id": f"C-{index}",
+             "text": f"来源事实 {index}"}
+            for index in (1, 2, 3)
+        ]
+        storyboard = _storyboard(profile, beats, claims)
+        captures = [shot for shot in storyboard["shots"] if shot["needs_capture"]]
         assert len(captures) == 1
         assert captures[0]["capture_task"]
 

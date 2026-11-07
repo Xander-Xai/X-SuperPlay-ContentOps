@@ -482,6 +482,65 @@ def storyboard_receipt_counts_referenced_generated_visuals():
 
 
 @check
+def storyboard_prefers_motion_visual_without_replacing_source_asset():
+    project, config, _digest = project_and_config()
+    config["motion"] = {"backend": "huashu-art-motion"}
+    clip = project / "assets" / "motion-support.mp4"
+    clip.write_bytes(b"synthetic offline motion fixture")
+    assets = {
+        "support_visual": {
+            "type": "REAL_SCREENSHOT",
+            "repo_path": (project / "assets" / "support.png").relative_to(ROOT).as_posix(),
+        },
+        "motion_visual": {
+            "type": "generated_video", "generated": True,
+            "repo_path": clip.relative_to(ROOT).as_posix(),
+        },
+    }
+    narration = {"duration_s": 2.0,
+                 "lines": [{"start": 0.0, "duration": 2.0}]}
+    (project / "receipts").mkdir(exist_ok=True)
+    (project / "receipts" / "motion-stage.json").write_text(json.dumps({
+        "state": "OK", "shots": [{"placement_id": "s1", "asset_id": "motion_visual"}],
+    }), encoding="utf-8")
+    storyboard = m5.stage_storyboard(
+        project, config,
+        {"lines": [{"id": "s1", "asset_id": "support_visual",
+                    "narration": "test",
+                    "caption": "test", "claim": "C-01"}]},
+        narration, {}, assets,
+    )["storyboard"]
+    assert storyboard["shots"][0]["asset_id"] == "motion_visual"
+    assert storyboard["shots"][0]["video"] == assets["motion_visual"]["repo_path"]
+    assert storyboard["generated_visuals"]["asset_ids"] == ["motion_visual"]
+
+
+@check
+def storyboard_blocks_when_motion_receipt_asset_is_missing():
+    project, config, _digest = project_and_config()
+    (project / "receipts").mkdir(exist_ok=True)
+    (project / "receipts" / "motion-stage.json").write_text(json.dumps({
+        "state": "OK", "shots": [{"placement_id": "s1", "asset_id": "missing_motion"}],
+    }), encoding="utf-8")
+    config["motion"] = {"backend": "huashu-art-motion"}
+    narration = {"duration_s": 1.0, "lines": [{"start": 0.0, "duration": 1.0}]}
+    try:
+        m5.stage_storyboard(
+            project, config,
+            {"lines": [{"id": "s1", "asset_id": "support_visual",
+                        "narration": "test", "caption": "test", "claim": None}]},
+            narration, {}, {"support_visual": {
+                "type": "REAL_SCREENSHOT",
+                "repo_path": (project / "assets" / "support.png").relative_to(ROOT).as_posix(),
+            }},
+        )
+    except m5.M5Blocked as exc:
+        assert "is not registered" in str(exc)
+    else:
+        raise AssertionError("a missing configured motion asset must fail the storyboard stage")
+
+
+@check
 def an_audio_request_cannot_be_declared_in_the_visual_manifest():
     project, config, digest = audio_config()
     manifest = {"schema": "contentops.m5-assets/v1", "assets": [{

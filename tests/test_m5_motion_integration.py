@@ -313,12 +313,17 @@ def test_configured_motion_runs_each_placement_through_managed_adapter():
     with tempfile.TemporaryDirectory() as temp:
         project = Path(temp)
         plan = {"shots": [
-            {"id": "line-1", "asset_id": "A1", "spec": "motion/one.json"},
-            {"id": "line-2", "asset_id": "A2", "spec": "motion/two.json"},
+            {"id": "line-1", "asset_id": "motion-A1", "spec": "motion/one.json"},
+            {"id": "line-2", "asset_id": "motion-A2", "spec": "motion/two.json"},
         ]}
         plan_path = project / "motion" / "plan.json"
         plan_path.parent.mkdir()
         plan_path.write_text(json.dumps(plan), encoding="utf-8")
+        script_path = project / "script" / "script.json"
+        script_path.parent.mkdir()
+        original_script = {"lines": [{"id": "line-1", "asset_id": "A1"},
+                                      {"id": "line-2", "asset_id": "A2"}]}
+        script_path.write_text(json.dumps(original_script), encoding="utf-8")
         commands = []
         old_run = m5_production.hidden_run
 
@@ -343,6 +348,9 @@ def test_configured_motion_runs_each_placement_through_managed_adapter():
                        for command in commands)
             receipt = json.loads((project / "receipts" / "motion-stage.json").read_text())
             assert [row["placement_id"] for row in receipt["shots"]] == ["line-1", "line-2"]
+            assert json.loads(script_path.read_text()) == original_script
+            assert [command[command.index("--asset-id") + 1] for command in commands] == [
+                "motion-A1", "motion-A2"]
         finally:
             m5_production.hidden_run = old_run
 
