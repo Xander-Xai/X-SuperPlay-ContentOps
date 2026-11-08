@@ -637,6 +637,53 @@ def test_future_intelligence_auto_plan_explains_rrf_with_rank_contributions():
             "at": 3.85, "kind": "highlight", "data": {"target": "equation"}}
 
 
+def test_future_intelligence_auto_plan_derives_agent_flow_from_named_terms():
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        dna = json.loads((ROOT / "config" / "accounts" /
+                          "x-superplay-future-intelligence.json").read_text(encoding="utf-8"))
+        result = motion_planner.build_auto_plan(
+            project=project, account_id="x-superplay-future-intelligence",
+            account_dna=dna,
+            script={"lines": [{"id": "P-01", "asset_id": "source-01",
+                               "claim": "C-01",
+                               "narration": "Agent 工具调用后，结果写入状态并支持任务恢复。"}]},
+            narration={"lines": [{"start": 0.0, "duration": 5.0}]},
+            source_assets={},
+        )
+        spec = json.loads((project / result["plan"]["shots"][0]["spec"])
+                          .read_text(encoding="utf-8"))
+        assert spec["grammar"] == "t1_3b1b"
+        assert [cue.get("text") for cue in spec["cues"][:-1]] == [
+            "Agent → 工具", "工具 → 结果", "结果 → 状态", "状态 → 恢复"]
+        assert spec["cues"][-1]["kind"] == "highlight"
+        assert max(cue["at"] for cue in spec["cues"]) < spec["duration"]
+
+
+def test_future_intelligence_auto_plan_derives_protocol_flow_from_named_terms():
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        dna = json.loads((ROOT / "config" / "accounts" /
+                          "x-superplay-future-intelligence.json").read_text(encoding="utf-8"))
+        result = motion_planner.build_auto_plan(
+            project=project, account_id="x-superplay-future-intelligence",
+            account_dna=dna,
+            script={"lines": [{"id": "P-01", "asset_id": "source-01",
+                               "claim": "C-01",
+                               "narration": "MCP 协议中客户端向服务端发起工具调用，再接收结果。"}]},
+            narration={"lines": [{"start": 0.0, "duration": 5.0}]},
+            source_assets={},
+        )
+        spec = json.loads((project / result["plan"]["shots"][0]["spec"])
+                          .read_text(encoding="utf-8"))
+        assert spec["grammar"] == "t1_3b1b"
+        assert [cue.get("text") for cue in spec["cues"][:-1]] == [
+            "MCP → 协议", "协议 → Client", "Client → Server", "Server → 工具",
+            "工具 → 结果"]
+        assert spec["cues"][-1]["kind"] == "highlight"
+        assert max(cue["at"] for cue in spec["cues"]) < spec["duration"]
+
+
 def test_future_intelligence_auto_plan_does_not_compare_raw_retrieval_scores():
     with tempfile.TemporaryDirectory() as temp:
         project = Path(temp)

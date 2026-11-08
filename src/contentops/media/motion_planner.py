@@ -85,6 +85,38 @@ def _cues(text: str, kind: str, source_image: str | None,
             cues.append({"at": 1.7, "kind": "point", "text": _short_label(text, 18)})
         return cues
 
+    if grammar == "t1_3b1b" and kind in {"agent", "protocol"}:
+        # Draw the relationships named in this line as a progressive derivation.
+        # Do not add a generic architecture diagram: each node below must occur
+        # in the narration, so an illustrative animation cannot quietly assert
+        # a tool, state, or protocol boundary the source did not name.
+        vocabulary = (
+            (r"智能体|\bagent\b", "Agent"),
+            (r"客户端|\bclient\b", "Client"),
+            (r"mcp", "MCP"),
+            (r"协议", "协议"),
+            (r"状态|\bstate\b", "状态"),
+            (r"工具调用|调用工具|工具|\btool(?:\s+call)?\b", "工具"),
+            (r"服务端|\bserver\b", "Server"),
+            (r"结果|\bresult\b", "结果"),
+            (r"恢复|\bresume\b", "恢复"),
+        )
+        found = []
+        for pattern, label in vocabulary:
+            match = re.search(pattern, text, re.I)
+            if match:
+                found.append((match.start(), label))
+        found.sort()
+        terms = list(dict.fromkeys(label for _, label in found))
+        if len(terms) >= 2:
+            pairs = list(zip(terms, terms[1:]))
+            cues = [{"at": round(index * 1.0, 2), "kind": "equation",
+                     "text": f"{left} → {right}"}
+                    for index, (left, right) in enumerate(pairs)]
+            cues.append({"at": round(len(pairs) * 1.0, 2), "kind": "highlight",
+                         "data": {"target": "equation"}})
+            return cues
+
     if grammar == "t1_3b1b" and kind == "retrieval" and re.search(r"\bRRF\b", text, re.I):
         # RRF has a specific, sourced mathematical mechanism. Make the rank
         # contribution itself transform into the sum instead of reusing the
@@ -249,10 +281,11 @@ def build_auto_plan(*, project: Path, account_id: str,
             source_image_sha256 = _file_sha(absolute)
 
         # Keep the 1024 account evidence-led with its screenshot plus annotated
-        # whiteboard flow. Future Intelligence uses the 3b1b-style progressive
-        # derivation for retrieval explanations when the account allows it.
+        # whiteboard flow. Future Intelligence uses progressive derivations for
+        # retrieval, agent-flow and protocol-boundary explanations when allowed.
         grammar = ("t1_3b1b" if account_id == "x-superplay-future-intelligence"
-                   and kind == "retrieval" and "t1_3b1b" in allowed
+                   and kind in {"retrieval", "agent", "protocol"}
+                   and "t1_3b1b" in allowed
                    else "y3_whiteboard")
         cues = _cues(text, kind, source_image, grammar)
         # Cue timestamps must remain inside this exact measured narration clip.
