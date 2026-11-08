@@ -508,6 +508,25 @@ def stage_claims(project: Path, artifacts: Dict[str, Any]) -> Dict[str, Any]:
     return {"ledger": ledger, "count": len(ledger.claims)}
 
 
+def _source_snapshot_for_refs(refs: List[Dict[str, Any]],
+                             source_assets: List[Dict[str, Any]]) -> Optional[str]:
+    """Return the source snapshot whose exact source document backs a claim."""
+    snapshots = [item for item in source_assets
+                 if str(item.get("type") or "").upper() == "CODE_SNAPSHOT"]
+    for ref in refs:
+        ref_path = str(ref.get("path") or "").replace("\\", "/")
+        marker = "/sources/"
+        source_suffix = ref_path.split(marker, 1)[1] if marker in ref_path else ""
+        if not source_suffix:
+            continue
+        matching = next((item for item in snapshots
+                         if str(item.get("source_document") or "")
+                         .replace("\\", "/").endswith(source_suffix)), None)
+        if matching and matching.get("id"):
+            return str(matching["id"])
+    return None
+
+
 def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], *,
                  require_copy_review: bool,
                  narration: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -556,10 +575,13 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
                                    .read_text(encoding="utf-8"))
             refs_doc = json.loads((project / "sources" / "source-refs.json")
                                   .read_text(encoding="utf-8"))
+            source_doc = json.loads((project / "sources" / "assets.json")
+                                    .read_text(encoding="utf-8"))
             claims_by_id = {str(row.get("id")): row
                             for row in (claim_doc.get("claims") or [])}
             refs_by_id = {str(row.get("id")): row
                           for row in (refs_doc.get("refs") or [])}
+            source_assets = source_doc.get("assets") or []
             plan_script = {**script, "lines": []}
             for original in script.get("lines") or []:
                 line = dict(original)
@@ -569,14 +591,16 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
                 line["source_refs"] = [str(item.get("url") or item.get("path") or "")
                                        for item in artifacts
                                        if item.get("url") or item.get("path")]
+                # Legacy script lines often all point to anchor-01, which
+                # repeats the wrong file for engine/retriever claims.
+                snapshot_id = _source_snapshot_for_refs(artifacts, source_assets)
+                if snapshot_id:
+                    line["asset_id"] = snapshot_id
                 plan_script["lines"].append(line)
             generated = build_auto_plan(
                 project=project, account_id=account_id, account_dna=account_dna,
                 script=plan_script, narration=narration,
-                source_assets={str(item.get("id")): item
-                               for item in (json.loads((project / "sources" / "assets.json")
-                                                       .read_text(encoding="utf-8"))
-                                            .get("assets") or [])},
+                source_assets={str(item.get("id")): item for item in source_assets},
             )
         except (OSError, ValueError, MotionPlanError) as exc:
             raise M5Blocked(f"automatic Huashua shot plan: {exc}") from None

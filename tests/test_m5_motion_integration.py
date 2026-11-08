@@ -1040,6 +1040,123 @@ def test_1024_uses_ocr_matched_screenshot_region_for_camera_motion():
             "data": {"rect": [0.11, 0.22, 0.31, 0.06]}}
 
 
+def test_code_snapshot_uses_its_ocr_region_instead_of_a_generic_icon():
+    png = bytes.fromhex(
+        "89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c489"
+        "0000000b49444154789c636000020000050001a5f645400000000049454e44ae426082"
+    )
+    with tempfile.TemporaryDirectory(dir=ROOT / ".verify-tmp") as temp:
+        project = Path(temp)
+        source = project / "assets" / "source-anchor.png"
+        source.parent.mkdir(parents=True)
+        source.write_bytes(png)
+        dna = json.loads((ROOT / "config" / "accounts" /
+                          "x-superplay-future-intelligence.json").read_text(encoding="utf-8"))
+        result = motion_planner.build_auto_plan(
+            project=project, account_id="x-superplay-future-intelligence", account_dna=dna,
+            script={"lines": [{"id": "P-01", "asset_id": "source-01",
+                               "narration": "Configuration settings for"}]},
+            narration={"lines": [{"start": 0.0, "duration": 3.0}]},
+            source_assets={"source-01": {
+                "id": "source-01", "type": "CODE_SNAPSHOT",
+                "repo_path": source.relative_to(ROOT).as_posix(),
+                "ocr_regions": [
+                    {"text": "Configuration settings for", "confidence": 0.96,
+                     "rect": [0.1, 0.15, 0.7, 0.04]},
+                    {"text": "Master configuration for", "confidence": 0.94,
+                     "rect": [0.1, 0.28, 0.7, 0.04]},
+                ],
+            }},
+        )
+        shot = result["plan"]["shots"][0]
+        spec = json.loads((project / shot["spec"]).read_text(encoding="utf-8"))
+        assert shot["motion_syntax"] == "t2_keynote_ui"
+        assert len(shot["ocr_targets"]) == 1
+        assert shot["ocr_targets"][0]["rect"] == [0.1, 0.15, 0.7, 0.04]
+        assert spec["cues"][0]["kind"] == "image"
+        assert spec["cues"][1]["kind"] == "highlight"
+
+
+def test_code_snapshot_without_ocr_uses_progressive_image_motion_without_highlight():
+    png = bytes.fromhex(
+        "89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c489"
+        "0000000b49444154789c636000020000050001a5f645400000000049454e44ae426082"
+    )
+    with tempfile.TemporaryDirectory(dir=ROOT / ".verify-tmp") as temp:
+        project = Path(temp)
+        source = project / "assets" / "source-anchor.png"
+        source.parent.mkdir(parents=True)
+        source.write_bytes(png)
+        dna = json.loads((ROOT / "config" / "accounts" /
+                          "x-superplay-future-intelligence.json").read_text(encoding="utf-8"))
+        result = motion_planner.build_auto_plan(
+            project=project, account_id="x-superplay-future-intelligence", account_dna=dna,
+            script={"lines": [{"id": "P-01", "asset_id": "source-01",
+                               "narration": "A line with no source OCR match"}]},
+            narration={"lines": [{"start": 0.0, "duration": 3.0}]},
+            source_assets={"source-01": {
+                "id": "source-01", "type": "CODE_SNAPSHOT",
+                "repo_path": source.relative_to(ROOT).as_posix(),
+            }},
+        )
+        shot = result["plan"]["shots"][0]
+        spec = json.loads((project / shot["spec"]).read_text(encoding="utf-8"))
+        assert shot["motion_syntax"] == "y3_whiteboard"
+        assert spec["cues"][0]["kind"] == "image"
+        assert any(cue["kind"] in {"draw", "point"} for cue in spec["cues"])
+        assert not any(cue["kind"] == "highlight" for cue in spec["cues"])
+
+
+def test_code_snapshot_uses_each_ocr_camera_target_only_once():
+    png = bytes.fromhex(
+        "89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c489"
+        "0000000b49444154789c636000020000050001a5f645400000000049454e44ae426082"
+    )
+    with tempfile.TemporaryDirectory(dir=ROOT / ".verify-tmp") as temp:
+        project = Path(temp)
+        source = project / "assets" / "source-anchor.png"
+        source.parent.mkdir(parents=True)
+        source.write_bytes(png)
+        dna = json.loads((ROOT / "config" / "accounts" /
+                          "x-superplay-future-intelligence.json").read_text(encoding="utf-8"))
+        lines = [
+            {"id": f"P-{index:02d}", "asset_id": "source-01",
+             "narration": "Configuration settings for"}
+            for index in range(1, 4)
+        ]
+        result = motion_planner.build_auto_plan(
+            project=project, account_id="x-superplay-future-intelligence", account_dna=dna,
+            script={"lines": lines},
+            narration={"lines": [{"start": i * 3.0, "duration": 2.8}
+                                  for i in range(3)]},
+            source_assets={"source-01": {
+                "id": "source-01", "type": "CODE_SNAPSHOT",
+                "repo_path": source.relative_to(ROOT).as_posix(),
+                "ocr_regions": [
+                    {"text": "Configuration settings", "confidence": 0.96,
+                     "rect": [0.1, 0.15, 0.7, 0.04]},
+                    {"text": "Configuration settings", "confidence": 0.95,
+                     "rect": [0.1, 0.28, 0.7, 0.04]},
+                ],
+            }},
+        )
+        grammars = [shot["motion_syntax"] for shot in result["plan"]["shots"]]
+        assert grammars == ["t2_keynote_ui", "t2_keynote_ui", "y3_whiteboard"]
+
+
+def test_motion_plan_uses_the_code_snapshot_for_the_claimed_source_file():
+    refs = [{"path": "projects/demo/sources/research-candidates/files/src/engine.py"}]
+    assets = [
+        {"id": "source-anchor-01", "type": "CODE_SNAPSHOT",
+         "source_document": "sources/research-candidates/files/src/config.py"},
+        {"id": "source-anchor-02", "type": "CODE_SNAPSHOT",
+         "source_document": "sources/research-candidates/files/src/engine.py"},
+        {"id": "generated-video", "type": "GENERATED_VIDEO",
+         "source_document": "sources/research-candidates/files/src/engine.py"},
+    ]
+    assert m5_production._source_snapshot_for_refs(refs, assets) == "source-anchor-02"
+
+
 def test_local_asset_ocr_boxes_are_normalized_and_clamped():
     regions = raw_video_inputs._normalized_ocr_regions(
         [[[ [110, 220], [420, 220], [420, 340], [110, 340]],
@@ -1217,6 +1334,10 @@ def main() -> int:
              test_auto_plan_pads_sub_two_second_narration_with_a_visual_hold,
              test_1024_auto_plan_requires_and_carries_real_source_stills,
              test_1024_uses_ocr_matched_screenshot_region_for_camera_motion,
+             test_code_snapshot_uses_its_ocr_region_instead_of_a_generic_icon,
+             test_code_snapshot_without_ocr_uses_progressive_image_motion_without_highlight,
+             test_code_snapshot_uses_each_ocr_camera_target_only_once,
+             test_motion_plan_uses_the_code_snapshot_for_the_claimed_source_file,
              test_local_asset_ocr_boxes_are_normalized_and_clamped,
              test_source_snapshot_selects_verbatim_claim_relevant_lines,
              test_m5_auto_selects_future_profile_motion_after_measured_narration,

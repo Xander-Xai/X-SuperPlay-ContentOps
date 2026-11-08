@@ -11,12 +11,51 @@ import hashlib
 import json
 import os
 import re
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Sequence
 
 
 class MotionPlanError(ValueError):
     """The account or narration cannot be rendered without guessing visuals."""
+
+
+@lru_cache(maxsize=16)
+def _read_local_ocr(path: str, modified_ns: int, size: int) -> tuple[dict, ...]:
+    """OCR a local source image once per exact file version."""
+    del modified_ns, size  # cache-key inputs invalidate stale OCR after edits
+    try:
+        from PIL import Image
+        from rapidocr_onnxruntime import RapidOCR
+        image_path = Path(path)
+        width, height = Image.open(image_path).size
+        result, _elapsed = RapidOCR()(str(image_path))
+    except Exception:  # noqa: BLE001 - unavailable OCR keeps source shot unsupported
+        return ()
+    if width <= 0 or height <= 0:
+        return ()
+    regions = []
+    for row in result or []:
+        if len(row) < 3 or not str(row[1]).strip():
+            continue
+        try:
+            points = [(float(point[0]), float(point[1])) for point in row[0]]
+            confidence = float(row[2])
+        except (TypeError, ValueError, IndexError):
+            continue
+        if not points:
+            continue
+        left = max(0.0, min(x for x, _ in points) / width)
+        top = max(0.0, min(y for _, y in points) / height)
+        right = min(1.0, max(x for x, _ in points) / width)
+        bottom = min(1.0, max(y for _, y in points) / height)
+        if right <= left or bottom <= top:
+            continue
+        regions.append({"text": str(row[1]).strip(),
+                        "confidence": round(max(0.0, min(1.0, confidence)), 4),
+                        "rect": [round(left, 6), round(top, 6),
+                                 round(right - left, 6), round(bottom - top, 6)]})
+    return tuple(regions)
 
 
 VIDEO_ACCOUNTS = {"x-superplay-1024", "x-superplay-future-intelligence"}
@@ -66,14 +105,17 @@ def _short_label(text: str, limit: int = 12) -> str:
 
 def _motion_terms(text: str) -> set[str]:
     terms = {token.casefold() for token in re.findall(r"[a-z0-9]+", text, re.I)}
+    terms.difference_update({"a", "an", "and", "for", "in", "of", "on", "the", "to", "with"})
     for phrase in re.findall(r"[\u3400-\u9fff]+", text):
         terms.update(phrase[index:index + 2] for index in range(len(phrase) - 1))
     return terms
 
 
-def _matching_ocr_regions(text: str, source: Mapping[str, Any]) -> List[Dict[str, Any]]:
+def _matching_ocr_regions(text: str, source: Mapping[str, Any],
+                          excluded_rects: set[str] | None = None) -> List[Dict[str, Any]]:
     narration_terms = _motion_terms(text)
     ranked = []
+    excluded_rects = excluded_rects or set()
     for region in source.get("ocr_regions") or []:
         if not isinstance(region, dict):
             continue
@@ -89,14 +131,19 @@ def _matching_ocr_regions(text: str, source: Mapping[str, Any]) -> List[Dict[str
         if (confidence < 0.5 or left < 0 or top < 0 or width <= 0 or height <= 0
                 or left + width > 1.000001 or top + height > 1.000001):
             continue
-        overlap = narration_terms & _motion_terms(region_text)
-        if len(overlap) < 2:
+        rect_key = json.dumps([round(left, 6), round(top, 6), round(width, 6),
+                               round(height, 6)], separators=(",", ":"))
+        if rect_key in excluded_rects:
             continue
+        overlap = narration_terms & _motion_terms(region_text)
         ranked.append(({**region, "rect": [round(left, 6), round(top, 6),
                                              round(width, 6), round(height, 6)],
                         "matched_terms": sorted(overlap)},
                        len(overlap), confidence))
     ranked.sort(key=lambda item: (-item[1], -item[2], item[0]["text"]))
+    # Require two content terms before targeting a screenshot region. A
+    # one-word match is too broad for code and UI text and can overuse push-ins.
+    ranked = [item for item in ranked if item[1] >= 2]
     return [item[0] for item in ranked[:2]]
 
 
@@ -282,6 +329,7 @@ def build_auto_plan(*, project: Path, account_id: str,
     specs_dir = auto_dir / "specs"
     specs_dir.mkdir(parents=True, exist_ok=True)
     shots = []
+    camera_targeted_regions: Dict[str, set[str]] = {}
     for index, (line, timing) in enumerate(zip(lines, timings)):
         placement = str(line.get("id") or "")
         if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,50}", placement):
@@ -312,7 +360,8 @@ def build_auto_plan(*, project: Path, account_id: str,
 
         source_image = None
         source_image_sha256 = None
-        if account_id == "x-superplay-1024":
+        code_snapshot = str((source or {}).get("type") or "").upper() == "CODE_SNAPSHOT"
+        if account_id == "x-superplay-1024" or code_snapshot:
             if not source:
                 raise MotionPlanError(f"AUTO_MOTION_SOURCE_MISSING: {placement} has no registered evidence asset")
             source_path = str(source.get("repo_path") or "")
@@ -342,14 +391,37 @@ def build_auto_plan(*, project: Path, account_id: str,
         # use the existing source-anchored whiteboard treatment. Future
         # Intelligence uses progressive derivations for retrieval, agent-flow
         # and protocol-boundary explanations when allowed.
-        source_regions = (_matching_ocr_regions(text, source)
-                          if account_id == "x-superplay-1024" and source else [])
-        grammar = ("t2_keynote_ui" if account_id == "x-superplay-1024"
-                   and source_regions and "t2_keynote_ui" in allowed
+        if source_image and source and not source.get("ocr_regions"):
+            image_path = Path(source_path)
+            if not image_path.is_absolute():
+                image_path = project.resolve().parents[1] / image_path
+            try:
+                stat = image_path.stat()
+                ocr_regions = _read_local_ocr(str(image_path.resolve()),
+                                              stat.st_mtime_ns, stat.st_size)
+                source = {**source, "ocr_regions": list(ocr_regions)}
+            except OSError:
+                pass
+        used_rects = camera_targeted_regions.setdefault(source_asset_id, set())
+        source_regions = (_matching_ocr_regions(text, source, used_rects)
+                          if source_image and source else [])
+        if code_snapshot:
+            source_regions = source_regions[:1]
+        # Source snapshots must stay visible even when OCR cannot map a line
+        # to a precise highlight. Use t2 only for OCR-backed camera targets;
+        # a target rectangle is used once per source image. Otherwise use the
+        # image-capable whiteboard grammar for progressive explanation.
+        grammar = ("t2_keynote_ui" if source_regions
+                   and "t2_keynote_ui" in allowed
+                   else "y3_whiteboard" if code_snapshot
+                   and "y3_whiteboard" in allowed
                    else "t1_3b1b" if account_id == "x-superplay-future-intelligence"
                    and kind in {"retrieval", "agent", "protocol"}
                    and "t1_3b1b" in allowed
                    else "y3_whiteboard")
+        if grammar == "t2_keynote_ui":
+            used_rects.update(json.dumps(region["rect"], separators=(",", ":"))
+                              for region in source_regions)
         cues = _cues(text, kind, source_image, grammar, source_regions)
         # Cue timestamps must remain inside this exact measured narration clip.
         latest_cue = max(float(cue["at"]) for cue in cues)
