@@ -25,7 +25,7 @@ ICON_BY_TOPIC = (
     (re.compile(r"rag|检索|召回|retriev|rank|排序|融合|rrf", re.I), "network"),
     (re.compile(r"agent|智能体|状态|工具调用|tool call", re.I), "person"),
     (re.compile(r"mcp|协议|接口|api|服务端|client|server", re.I), "screen"),
-    (re.compile(r"代码|code|仓库|github|实现|函数|配置", re.I), "screen"),
+    (re.compile(r"源码|代码|code|仓库|github|实现|函数|配置", re.I), "screen"),
     (re.compile(r"数据|指标|数值|增长|性能|延迟|吞吐|metric", re.I), "chart"),
 )
 
@@ -52,7 +52,7 @@ def _topic_kind(text: str) -> str:
         return "agent"
     if re.search(r"mcp|协议|接口|api|服务端|client|server", folded):
         return "protocol"
-    if re.search(r"代码|code|仓库|github|实现|函数|配置", folded):
+    if re.search(r"源码|代码|code|仓库|github|实现|函数|配置", folded):
         return "code"
     if re.search(r"数据|指标|数值|增长|性能|延迟|吞吐|metric", folded):
         return "metric"
@@ -242,19 +242,23 @@ def build_auto_plan(*, project: Path, account_id: str,
         source_asset_id = str(line.get("asset_id") or "")
         text = str(line.get("narration") or line.get("caption") or "").strip()
         duration = float(timing.get("duration") or 0)
+        source = source_assets.get(source_asset_id)
         if not placement or not source_asset_id or not text:
             raise MotionPlanError("AUTO_MOTION_LINE_INVALID: each line needs id, source asset and narration")
-        if not 2.0 <= duration <= 8.0:
+        if not 0.0 < duration <= 8.0:
             raise MotionPlanError(
                 f"AUTO_MOTION_DURATION_UNSUPPORTED: {placement} is {duration:.2f}s; "
-                "split or combine script lines to keep a shot between 2 and 8 seconds")
+                "a narrated shot must be positive and no longer than 8 seconds")
+        render_duration = max(2.0, duration)
+        hold_padding = round(render_duration - duration, 3)
         kind = _topic_kind(text)
+        if kind == "unsupported" and str((source or {}).get("type") or "").upper() == "CODE_SNAPSHOT":
+            kind = "code"
         if kind == "unsupported":
             raise MotionPlanError(f"AUTO_MOTION_UNSUPPORTED: no semantic visual grammar matched {placement}")
 
         source_image = None
         source_image_sha256 = None
-        source = source_assets.get(source_asset_id)
         if account_id == "x-superplay-1024":
             if not source:
                 raise MotionPlanError(f"AUTO_MOTION_SOURCE_MISSING: {placement} has no registered evidence asset")
@@ -290,10 +294,15 @@ def build_auto_plan(*, project: Path, account_id: str,
         cues = _cues(text, kind, source_image, grammar)
         # Cue timestamps must remain inside this exact measured narration clip.
         latest_cue = max(float(cue["at"]) for cue in cues)
-        scale = min(1.0, max(0.0, duration - 0.1) / latest_cue) if latest_cue else 1.0
+        scale = min(1.0, max(0.0, render_duration - 0.1) / latest_cue) if latest_cue else 1.0
         cues = [{**cue, "at": round(float(cue["at"]) * scale, 3)} for cue in cues]
-        spec = {"grammar": grammar, "duration": duration, "fps": 30,
+        spec = {"grammar": grammar, "duration": render_duration, "fps": 30,
                 "width": 1080, "height": 1920, "theme": palette, "cues": cues}
+        if hold_padding:
+            spec["contentops_timing"] = {
+                "narration_duration_s": duration,
+                "visual_hold_padding_s": hold_padding,
+            }
         if source_image_sha256:
             # The upstream renderer ignores this adapter namespace. Including
             # the file hash in the spec makes the existing per-shot cache miss

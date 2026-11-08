@@ -162,9 +162,20 @@ def _clean(text: str) -> str:
     body = re.sub(r"\A\s*---\n.*?\n---\s*\n", "", body, flags=re.DOTALL)
     body = re.sub(r"\{/\*.*?\*/\}", " ", body, flags=re.DOTALL)
     body = re.sub(r"<!--.*?-->", " ", body, flags=re.DOTALL)
+    # Badge and decorative image alt text is not prose or evidence. In
+    # particular, a README's "License" badge is not a license assertion.
+    body = re.sub(r"^.*(?:!\[|<img\b).*$", " ", body,
+                  flags=re.MULTILINE | re.IGNORECASE)
+    body = re.sub(r"!\[[^\]]*\]\([^)]*\)", " ", body)
+    # GitHub READMEs often use raw HTML for logos and line breaks around
+    # badges. Remove the image element itself before markdown links are
+    # normalised, or the image URL can leak into a spoken claim.
+    body = re.sub(r"<img\b[^>]*>", " ", body, flags=re.IGNORECASE)
+    body = re.sub(r"<br\s*/?>", " ", body, flags=re.IGNORECASE)
     body = re.sub(r"```.*?```", " ", body, flags=re.DOTALL)
     body = re.sub(r"^\s{0,3}#{1,6}\s*", "", body, flags=re.MULTILINE)
     body = re.sub(r"^\s*[-*+]\s+", "", body, flags=re.MULTILINE)
+    body = re.sub(r"^\s*>\s?", "", body, flags=re.MULTILINE)
     body = re.sub(r"[*_`]{1,3}", "", body)
     body = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", body)
     return body

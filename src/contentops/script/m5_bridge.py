@@ -41,6 +41,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from ..routing import handoff
 from ..evidence.source_artifact import EVIDENCE_CAPABLE_PERMISSIONS
+from ..evidence.text_matching import quote_occurs
 from ..media.local_assets import is_valid_local_preview_asset
 
 SCHEMA = "contentops.brief-m5-bridge/v1"
@@ -244,7 +245,8 @@ def build(project: Path, *, repo_root: Optional[Path] = None,
                     f"{evidence_id}: {repo_path} is not readable text, so the quote "
                     f"cannot be verified")
             sentence = str(claim.get("text") or "")
-            if text is not None and sentence and sentence not in text:
+            quote_found = quote_occurs(sentence, text or "", repo_path)
+            if text is not None and sentence and not quote_found:
                 blockers.append(
                     f"{claim_id}: the narration text does not occur verbatim in "
                     f"{repo_path}; a claim without a verifiable quote is an assertion")

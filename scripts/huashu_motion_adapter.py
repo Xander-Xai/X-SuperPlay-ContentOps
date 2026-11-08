@@ -215,9 +215,11 @@ def _validate_spec(project: Path, value: str) -> tuple[Path, Dict[str, Any]]:
                              and is_valid_local_preview_asset(row, project, ROOT))
         if not row:
             raise ValueError("SPEC_SOURCE_MEDIA: anchor is not a registered real screenshot or imported user image")
-        if (str(row.get("type") or "").upper() not in ("REAL_SCREENSHOT", "SCREENSHOT")
+        if (str(row.get("type") or "").upper() not in
+                ("REAL_SCREENSHOT", "SCREENSHOT", "CODE_SNAPSHOT")
                 and not local_preview):
-            raise ValueError("SPEC_SOURCE_MEDIA: anchor is not a registered real screenshot or imported user image")
+            raise ValueError("SPEC_SOURCE_MEDIA: anchor is not a registered source screenshot, "
+                             "code snapshot, or imported user image")
         if (str(row.get("permission") or "").upper() not in ("CREATED_BY_OWNER", "USER_PROVIDED")
                 and not local_preview):
             raise ValueError("SPEC_SOURCE_MEDIA: screenshot permission is not recorded")

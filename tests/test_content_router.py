@@ -1065,6 +1065,22 @@ def test_a_project_whose_brief_changed_after_approval_is_refused():
         assert verdict["reason"] == "APPROVAL_STALE"
 
 
+def test_changing_the_source_scope_invalidates_a_brief_approval():
+    from contentops.routing import handoff
+    with tempfile.TemporaryDirectory() as tmp:
+        root = _sandbox(tmp)
+        router = _router(root, adapters=_fixture_adapter())
+        _approved_run(router, ACCOUNT_BUILD, slug="handoff-source-scope-tampered")
+        project = root / "projects" / "handoff-source-scope-tampered"
+        path = project / "00_brief" / "brief.json"
+        package = json.loads(path.read_text(encoding="utf-8"))
+        package["source_scope"] = "repository_code_analysis"
+        path.write_text(json.dumps(package, ensure_ascii=False), encoding="utf-8")
+        verdict = handoff.check(handoff.read_brief(project))
+        assert verdict["ok"] is False
+        assert verdict["reason"] == "APPROVAL_STALE"
+
+
 def test_a_project_with_no_brief_cannot_hand_off():
     from contentops.routing import handoff
     with tempfile.TemporaryDirectory() as tmp:

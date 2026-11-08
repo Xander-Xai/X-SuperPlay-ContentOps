@@ -1,0 +1,599 @@
+#!/usr/bin/env python3
+"""Materialize a source-bound draft project from a topic and GitHub source.
+
+This module wires the existing Content Router, repository snapshot adapter,
+evidence pack, script bridge, and M5 input contracts. It does not approve the
+brief, copy, skill execution, or publication. Motion rendering remains subject
+to the managed Huashu grant in the normal M5 stage.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import re
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+ROOT = Path(__file__).resolve().parents[1]
+for path in (ROOT / "src", ROOT / "scripts"):
+    if str(path) not in sys.path:
+        sys.path.insert(0, str(path))
+
+from contentops.evidence.repo_source import RepoSourceAdapter, RepoSourceError  # noqa: E402
+from contentops.routing import ContentRouter, RoutingError, UserTopicInput  # noqa: E402
+from contentops.routing import brief as brief_module  # noqa: E402
+from contentops.routing.models import digest  # noqa: E402
+from new_project import create_project  # noqa: E402
+
+RECEIPT = Path("receipts") / "raw-inputs.json"
+EVIDENCE_PACK = Path("00_brief") / "evidence-pack.json"
+GITHUB_REPO = re.compile(r"^https://github\.com/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)/?$", re.I)
+SUPPORTED_TEXT = {".md", ".txt", ".py", ".json", ".yaml", ".yml", ".toml"}
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace(
+        "+00:00", "Z")
+
+
+def _sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _safe_slug(account: str, topic: str, source_url: str) -> str:
+    topic_part = re.sub(r"[^a-z0-9]+", "-", topic.casefold()).strip("-")[:28]
+    if not topic_part:
+        match = GITHUB_REPO.fullmatch(source_url)
+        topic_part = (match.group(2).removesuffix(".git") if match else "source")[:28]
+    identity = hashlib.sha256(
+        f"{account}\n{topic}\n{source_url}\n{_now()}".encode("utf-8")).hexdigest()[:8]
+    return f"raw-{topic_part or 'episode'}-{identity}"
+
+
+def _repo_candidates(result: Any) -> list[str]:
+    intent = (result.detail.get("intent") or {}) if isinstance(result.detail, dict) else {}
+    route_context = intent.get("route_context") or {}
+    detail = route_context.get("detail") or {}
+    candidates = detail.get("discovered_candidates") or []
+    urls: list[str] = []
+    for candidate in candidates:
+        url = str(candidate.get("url") or "").rstrip("/")
+        if GITHUB_REPO.fullmatch(url) and url.casefold() not in {
+                item.casefold() for item in urls}:
+            urls.append(url)
+    return urls
+
+
+def _evidence_items(project: Path, snapshot: Any) -> tuple[list[dict[str, Any]], dict[str, dict[str, Any]]]:
+    items: list[dict[str, Any]] = []
+    authority: dict[str, dict[str, Any]] = {}
+    for row in snapshot.files:
+        source_path = str(row.get("path") or "")
+        absolute = ROOT / source_path
+        suffix = absolute.suffix.casefold()
+        name = absolute.name.casefold()
+        if (suffix not in SUPPORTED_TEXT
+                or name.startswith(("license", "copying"))
+                or not absolute.is_file()):
+            continue
+        try:
+            content = absolute.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
+        excerpt = content[:1800]
+        if len(excerpt) < 80:
+            continue
+        relative_to_project = absolute.resolve().relative_to(project.resolve()).as_posix()
+        evidence_id = f"EV-{len(items) + 1:02d}"
+        items.append({
+            "evidence_id": evidence_id,
+            "kind": "repository_source",
+            "title": str(row.get("title") or absolute.name),
+            "url": str(row.get("source_url") or snapshot.source_url),
+            "excerpt": excerpt,
+            "document": relative_to_project,
+            "sha256": str(row.get("sha256") or _sha(absolute)),
+            "retrieved_at": _now(),
+            "note": (f"Pinned at {snapshot.commit}; SPDX {snapshot.spdx_license}; "
+                     "repository bytes retained verbatim."),
+        })
+        authority[evidence_id] = {
+            "permission": snapshot.license_permission,
+            "title": str(row.get("title") or absolute.name),
+            "source_url": str(row.get("source_url") or snapshot.source_url),
+            "repository": snapshot.repository,
+            "commit": snapshot.commit,
+            "spdx_license": snapshot.spdx_license,
+            "document": relative_to_project,
+            "sha256": str(row.get("sha256") or _sha(absolute)),
+        }
+    return items, authority
+
+
+def _bind_repository_analysis_scope(package: dict[str, Any], *, commit: str,
+                                    evidence_items: int) -> None:
+    """Limit this brief to inspectable source claims, not runtime claims.
+
+    A licensed, pinned source snapshot can support what files declare. It
+    cannot support performance, successful execution, or test-result claims.
+    Those still require an actual recording/capture in a separate episode.
+    """
+    forecast = package.get("forecast")
+    rows = forecast.get("evidence") if isinstance(forecast, dict) else None
+    if not isinstance(rows, list):
+        raise ValueError("the raw repository brief has no forecast evidence list")
+    source_evidence = next((row for row in rows
+                            if isinstance(row, dict)
+                            and row.get("kind") == "authoritative_source"), None)
+    if not source_evidence:
+        raise ValueError("the raw repository brief has no authoritative-source forecast row")
+    source_evidence.update(required=True, owner="automated", available=True)
+    source_snapshot = next((row for row in rows
+                            if isinstance(row, dict)
+                            and row.get("kind") == "code_snapshot"), None)
+    if source_snapshot is None:
+        rows.append({"kind": "code_snapshot", "required": True,
+                     "owner": "automated", "available": evidence_items > 0})
+    else:
+        source_snapshot.update(required=True, owner="automated",
+                               available=evidence_items > 0)
+    for row in rows:
+        if isinstance(row, dict) and row.get("kind") in (
+                "screen_recording", "terminal_capture"):
+            row["required"] = False
+    forecast["assessment_basis"] = (
+        f"This episode is limited to implementation details visible in the licensed "
+        f"repository snapshot at {commit}. It makes no runtime, test, or performance "
+        "claim; those require a real terminal capture or recording.")
+    forecast["failure_plan"] = "change_claim"
+    forecast.pop("degrade_note", None)
+    package["source_scope"] = "repository_code_analysis"
+    from contentops.workflow.human_forecast import forecast_verdict
+    package["forecast_verdict"] = forecast_verdict(forecast)
+
+
+def bind_existing_source_scope(project: Path) -> bool:
+    """Re-validate and bind the scope for a previously fetched raw project."""
+    project = Path(project).resolve()
+    receipt_path = project / RECEIPT
+    if not receipt_path.is_file():
+        return False
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    if receipt.get("state") not in ("SOURCE_SNAPSHOT_READY", "M5_INPUTS_PREPARED"):
+        return False
+    source = receipt.get("source") or {}
+    commit = str(source.get("commit") or "")
+    if not commit or source.get("permission") != "LICENSED":
+        raise ValueError("raw source receipt lacks a licensed pinned commit")
+    authority_path = project / "00_brief" / "source-authority.json"
+    authority = json.loads(authority_path.read_text(encoding="utf-8"))
+    if authority.get("commit") != commit or authority.get("spdx_license") != source.get("spdx_license"):
+        raise ValueError("raw source authority does not match its receipt")
+    permitted = [row for row in (authority.get("permissions") or {}).values()
+                 if isinstance(row, dict) and row.get("permission") == "LICENSED"
+                 and row.get("commit") == commit]
+    if len(permitted) < 3:
+        raise ValueError("raw source authority has fewer than three licensed documents")
+    for row in permitted:
+        path = (project / str(row.get("document") or "")).resolve()
+        try:
+            path.relative_to(project)
+        except ValueError:
+            raise ValueError("raw source authority points outside its project") from None
+        if not path.is_file() or _sha(path) != row.get("sha256"):
+            raise ValueError("raw source bytes no longer match their authority receipt")
+
+    evidence_items: list[dict[str, Any]] = []
+    permissions = authority.get("permissions") or {}
+    for evidence_id, row in sorted(permissions.items()):
+        if row not in permitted:
+            continue
+        path = project / str(row["document"])
+        excerpt = path.read_text(encoding="utf-8")[:1800]
+        if len(excerpt.strip()) < 80:
+            continue
+        evidence_items.append({
+            "evidence_id": evidence_id,
+            "kind": "repository_source",
+            "title": str(row.get("title") or path.name),
+            "url": str(row.get("source_url") or source.get("source_url") or ""),
+            "excerpt": excerpt,
+            "document": str(row["document"]),
+            "sha256": str(row["sha256"]),
+            "retrieved_at": str(receipt.get("created_at") or _now()),
+            "note": (f"Pinned at {commit}; SPDX {source.get('spdx_license')}; "
+                     "repository bytes retained verbatim."),
+        })
+    if len(evidence_items) < 3:
+        raise ValueError("raw source snapshot has fewer than three usable evidence files")
+    pack = {"schema": "contentops.evidence-pack/v1",
+            "topic": str(receipt.get("topic") or ""), "items": evidence_items}
+    pack_path = project / EVIDENCE_PACK
+    pack_path.write_text(json.dumps(pack, ensure_ascii=False, indent=2) + "\n",
+                         encoding="utf-8")
+    pack_digest = _sha(pack_path)
+
+    brief_path = project / "00_brief" / "brief.json"
+    package = json.loads(brief_path.read_text(encoding="utf-8"))
+    _bind_repository_analysis_scope(package, commit=commit,
+                                    evidence_items=len(evidence_items))
+    package["source_pack_sha256"] = pack_digest
+    selected = {
+        "source_url": str(source.get("source_url") or ""),
+        "repository": str(source.get("repository") or ""),
+        "commit": commit,
+        "spdx_license": str(source.get("spdx_license") or ""),
+        "discovery_is_not_evidence": True,
+    }
+    package["selected_research_source"] = selected
+    package.pop("brief_id", None)
+    package["brief_id"] = "BRIEF-" + digest(package)[:16].upper()
+    failures = brief_module.validate_brief_package(package)
+    if failures:
+        raise ValueError("raw brief failed validation after source binding: "
+                         + "; ".join(failures[:5]))
+    brief_module.write_brief_package(project, package)
+    receipt["source_scope"] = "repository_code_analysis"
+    receipt["runtime_claims_allowed"] = False
+    receipt["source"]["evidence_items"] = len(evidence_items)
+    receipt["source_pack_sha256"] = pack_digest
+    receipt_path.write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n",
+                            encoding="utf-8")
+    return True
+
+
+def prepare_raw_project(*, account: str, topic: str = "",
+                        source_urls: list[str] | None = None) -> Path:
+    """Create a fresh pending-preview project from a topic and a licensed repo.
+
+    With no URL, the Content Router discovers a GitHub repository from the
+    account's allowlisted native-search sources. Search results are only leads;
+    the selected repository is fetched and pinned before its files become
+    evidence. Unlicensed or non-GitHub candidates stop this route.
+    """
+    urls = list(source_urls or [])
+    if len(urls) > 1:
+        raise ValueError("one --source-url is currently supported per production run")
+    if urls and not GITHUB_REPO.fullmatch(urls[0].rstrip("/")):
+        raise ValueError("--source-url must be https://github.com/<owner>/<repo>")
+    if not topic.strip() and not urls:
+        raise ValueError("raw production needs --topic or --source-url")
+    if not topic.strip():
+        topic = f"GitHub 仓库 {GITHUB_REPO.fullmatch(urls[0].rstrip('/')).group(2)} 的技术实现"
+
+    router = ContentRouter(ROOT)
+    result = router.start(
+        account, "USER_TOPIC",
+        UserTopicInput(topic=topic, urls=urls),
+        fetch_evidence=not bool(urls),
+    )
+    if not result.ok:
+        raise RoutingError("RAW_TOPIC_REJECTED", str(result.detail.get("message") or
+                                                       result.detail.get("alignment") or
+                                                       result.state))
+    if urls:
+        candidates = [urls[0].rstrip("/")]
+    else:
+        candidates = _repo_candidates(result)
+        if not candidates:
+            raise RoutingError(
+                "RAW_RESEARCH_SOURCE_MISSING",
+                "the account's allowed topic search returned no GitHub repository to pin; "
+                "supply a licensed --source-url")
+    selected_url = candidates[0]
+
+    package = router.read_brief(result.run_id)
+    if not package:
+        raise RoutingError("RAW_BRIEF_MISSING", "the Content Router did not write a brief")
+
+    project = create_project(ROOT, _safe_slug(account, topic, selected_url),
+                             title=topic, account_slug=account)
+    receipt_path = project / RECEIPT
+    try:
+        failures: list[str] = []
+        snapshot = None
+        for candidate_index, candidate_url in enumerate(candidates, start=1):
+            snapshots = (project / "sources" / "repo-snapshot" if len(candidates) == 1
+                         else project / "sources" / "research-candidates"
+                         / f"candidate-{candidate_index:02d}")
+            try:
+                candidate_snapshot = RepoSourceAdapter().fetch(
+                    candidate_url, output_dir=snapshots, repo_root=ROOT)
+            except RepoSourceError as exc:
+                failures.append(f"{candidate_url}: {exc}")
+                continue
+            if candidate_snapshot.license_permission != "LICENSED":
+                failures.append(
+                    f"{candidate_url}: SPDX {candidate_snapshot.spdx_license or 'unknown'} "
+                    "does not permit automatic factual-claim evidence")
+                continue
+            candidate_items, candidate_authority = _evidence_items(project, candidate_snapshot)
+            if len(candidate_items) < 3:
+                failures.append(
+                    f"{candidate_url}: only {len(candidate_items)} usable source documents; "
+                    "at least 3 are required")
+                continue
+            selected_url, snapshot = candidate_url, candidate_snapshot
+            items, authority = candidate_items, candidate_authority
+            break
+        if snapshot is None:
+            raise RepoSourceError(
+                "no discovered repository had a recognized license and fetchable source: "
+                + "; ".join(failures[:6]))
+        _bind_repository_analysis_scope(package, commit=snapshot.commit,
+                                        evidence_items=len(items))
+
+        intent = package.get("intent") or {}
+        intent["source_artifact_refs"] = [snapshot.source_url]
+        package["intent"] = intent
+        package["selected_research_source"] = {
+            "source_url": snapshot.source_url,
+            "repository": snapshot.repository,
+            "commit": snapshot.commit,
+            "spdx_license": snapshot.spdx_license,
+            "discovery_is_not_evidence": True,
+        }
+        package.pop("brief_id", None)
+        package["brief_id"] = "BRIEF-" + digest(package)[:16].upper()
+        failures = brief_module.validate_brief_package(package)
+        if failures:
+            raise RoutingError("RAW_BRIEF_INVALID", "; ".join(failures[:5]))
+        brief_module.write_brief_package(project, package)
+
+        evidence_pack = {
+            "schema": "contentops.evidence-pack/v1",
+            "topic": topic,
+            "items": items,
+        }
+        (project / EVIDENCE_PACK).write_text(
+            json.dumps(evidence_pack, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8")
+        package["source_pack_sha256"] = _sha(project / EVIDENCE_PACK)
+        package.pop("brief_id", None)
+        package["brief_id"] = "BRIEF-" + digest(package)[:16].upper()
+        failures = brief_module.validate_brief_package(package)
+        if failures:
+            raise RoutingError("RAW_BRIEF_INVALID", "; ".join(failures[:5]))
+        brief_module.write_brief_package(project, package)
+        (project / "00_brief" / "source-authority.json").write_text(
+            json.dumps({"schema": "contentops.source-authority/v1",
+                        "source_url": snapshot.source_url,
+                        "repository": snapshot.repository,
+                        "commit": snapshot.commit,
+                        "spdx_license": snapshot.spdx_license,
+                        "permissions": authority},
+                       ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        assets_path = project / "sources" / "assets.json"
+        assets_path.write_text(json.dumps({"schema": "contentops.m5-assets/v1",
+                                           "assets": []},
+                                          ensure_ascii=False, indent=2) + "\n",
+                               encoding="utf-8")
+        payload = {
+            "schema": "contentops.raw-inputs/v1",
+            "state": "SOURCE_SNAPSHOT_READY",
+            "created_at": _now(),
+            "project": project.relative_to(ROOT).as_posix(),
+            "account_id": account,
+            "topic": topic,
+            "route_run_id": result.run_id,
+            "brief_id": package.get("brief_id"),
+            "brief_approval": "PENDING",
+            "preview_only": True,
+            "source": {
+                "repository": snapshot.repository,
+                "source_url": snapshot.source_url,
+                "commit": snapshot.commit,
+                "spdx_license": snapshot.spdx_license,
+                "permission": snapshot.license_permission,
+                "manifest": snapshot.manifest_path,
+                "files": len(snapshot.files),
+                "evidence_items": len(items),
+            },
+            "production_ready": False,
+            "publish_authorized": False,
+        }
+        receipt_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+                                encoding="utf-8")
+    except Exception as exc:
+        payload = {
+            "schema": "contentops.raw-inputs/v1",
+            "state": "BLOCKED",
+            "created_at": _now(),
+            "project": project.relative_to(ROOT).as_posix(),
+            "account_id": account,
+            "topic": topic,
+            "route_run_id": result.run_id,
+            "selected_source_url": selected_url,
+            "failure_type": type(exc).__name__,
+            "failure_reason": str(exc)[:1000],
+            "production_ready": False,
+            "publish_authorized": False,
+        }
+        receipt_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+                                encoding="utf-8")
+        raise
+    return project
+
+
+def prepare_m5_contracts(project: Path) -> dict[str, Any]:
+    """Bind pending draft claims to source permissions and motion anchors.
+
+    The anchor images are deterministic presentations of source text or the
+    exact draft line. The Huashu motion stage must replace them before M5 can
+    compose a final video; an anchor image is never a fallback render.
+    """
+    from PIL import Image, ImageDraw, ImageFont
+
+    project = Path(project).resolve()
+    root_relative = project.relative_to(ROOT).as_posix()
+    authority_path = project / "00_brief" / "source-authority.json"
+    lines_path = project / "script" / "lines.json"
+    claims_path = project / "script" / "claim-map.json"
+    authority = json.loads(authority_path.read_text(encoding="utf-8"))
+    lines_doc = json.loads(lines_path.read_text(encoding="utf-8"))
+    claims_doc = json.loads(claims_path.read_text(encoding="utf-8"))
+    raw_receipt_path = project / RECEIPT
+    raw_receipt = json.loads(raw_receipt_path.read_text(encoding="utf-8"))
+    account_id = str(raw_receipt.get("account_id") or "")
+    dna_path = ROOT / "config" / "accounts" / f"{account_id}.json"
+    dna = json.loads(dna_path.read_text(encoding="utf-8"))
+    profile = ((dna.get("visual") or {}).get("motion") or {}).get("motion_profile") or \
+        (dna.get("visual") or {}).get("motion_profile") or {}
+    palette = profile.get("palette") or {
+        "bg": "#0F1117", "surface": "#161A22", "ink": "#F5F7FA",
+        "sub": "#8B95A5", "accent": "#38BDF8", "accent2": "#F07167",
+    }
+
+    def font(size: int, *, mono: bool = False):
+        candidates = ([
+            Path("C:/Windows/Fonts/consola.ttf"),
+            Path("C:/Windows/Fonts/lucon.ttf"),
+            Path("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf"),
+            Path("/usr/share/fonts/truetype/liberation2/LiberationMono-Regular.ttf"),
+        ] if mono else [
+            Path("C:/Windows/Fonts/msyh.ttc"),
+            Path("C:/Windows/Fonts/segoeui.ttf"),
+            Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
+            Path("/usr/share/fonts/truetype/wqy/wqy-microhei.ttc"),
+        ])
+        for candidate in candidates:
+            if candidate.is_file():
+                try:
+                    return ImageFont.truetype(str(candidate), size=size)
+                except OSError:
+                    continue
+        return ImageFont.load_default()
+
+    title_font, body_font, code_font = font(36), font(30), font(25, mono=True)
+    evidence_by_path: dict[str, dict[str, Any]] = {}
+    source_permissions: dict[str, dict[str, Any]] = {}
+    for claim in claims_doc.get("claims") or []:
+        for evidence in claim.get("evidence") or []:
+            evidence_id = str(evidence.get("evidence_id") or "")
+            logical = str(evidence.get("logical_path") or "")
+            if logical.startswith("project://"):
+                relative = logical[len("project://"):].lstrip("/")
+            else:
+                continue
+            origin = next((row for row in (authority.get("permissions") or {}).values()
+                           if row.get("document") == relative), None)
+            if not origin or origin.get("permission") != "LICENSED":
+                raise ValueError(f"no licensed source authority for {relative}")
+            source_permissions[evidence_id] = {
+                "permission": "LICENSED",
+                "title": origin["title"],
+                "note": (f"SPDX {origin['spdx_license']}; repository "
+                         f"{origin['repository']} pinned at {origin['commit']}; "
+                         f"source {origin['source_url']}"),
+            }
+            evidence_by_path[relative] = origin
+    if not source_permissions:
+        raise ValueError("the source-bound draft contains no licensed factual evidence")
+
+    (project / "00_brief" / "source-permissions.json").write_text(
+        json.dumps({"schema": "contentops.source-permissions/v1",
+                    "permissions": source_permissions}, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8")
+
+    entries: list[dict[str, Any]] = []
+    image_by_source: dict[str, str] = {}
+    generated_dir = project / "assets" / "generated" / "source-anchors"
+    generated_dir.mkdir(parents=True, exist_ok=True)
+    for index, (relative, origin) in enumerate(sorted(evidence_by_path.items()), start=1):
+        source = project / relative
+        if not source.is_file() or _sha(source) != origin["sha256"]:
+            raise ValueError(f"source anchor bytes changed: {relative}")
+        lines = source.read_text(encoding="utf-8").splitlines()
+        filename = source.name
+        asset_id = f"source-anchor-{index:02d}"
+        target = generated_dir / f"{asset_id}.png"
+        image = Image.new("RGB", (1080, 1920), str(palette.get("bg") or "#0F1117"))
+        draw = ImageDraw.Draw(image)
+        draw.rounded_rectangle((48, 54, 1032, 1866), radius=32,
+                               fill=str(palette.get("surface") or "#161A22"))
+        draw.text((92, 96), "PINNED SOURCE SNAPSHOT", font=title_font,
+                  fill=str(palette.get("accent") or "#38BDF8"))
+        draw.text((92, 160), f"{origin['repository']} · {origin['commit'][:12]}",
+                  font=body_font, fill=str(palette.get("ink") or "#F5F7FA"))
+        draw.text((92, 210), filename, font=code_font,
+                  fill=str(palette.get("sub") or "#8B95A5"))
+        y = 278
+        shown = lines[:42]
+        for line_number, source_line in enumerate(shown, start=1):
+            line = source_line.expandtabs(4)
+            if len(line) > 70:
+                line = line[:67] + "…"
+            draw.text((92, y), f"{line_number:03d}  {line}", font=code_font,
+                      fill=str(palette.get("ink") or "#F5F7FA"))
+            y += 34
+        draw.line((92, 1770, 988, 1770), fill=str(palette.get("accent") or "#38BDF8"), width=2)
+        draw.text((92, 1790), "SOURCE TEXT · NOT A LIVE RUNTIME RESULT", font=font(21, mono=True),
+                  fill=str(palette.get("sub") or "#8B95A5"))
+        image.save(target, format="PNG", optimize=True)
+        asset_path = target.relative_to(ROOT).as_posix()
+        entries.append({
+            "id": asset_id,
+            "type": "CODE_SNAPSHOT",
+            "repo_path": asset_path,
+            "sha256": _sha(target),
+            "permission": "CREATED_BY_OWNER",
+            "usage_scope": "VISUAL_SUPPORT_ONLY",
+            "origin": "Deterministic rendering of pinned repository source bytes",
+            "source_url": origin["source_url"],
+            "source_commit": origin["commit"],
+            "source_spdx_license": origin["spdx_license"],
+            "source_document": relative,
+            "source_document_sha256": origin["sha256"],
+            "evidence_capable": False,
+        })
+        image_by_source[relative] = asset_id
+
+    claim_path_by_id: dict[str, str] = {}
+    for claim in claims_doc.get("claims") or []:
+        evidence = claim.get("evidence") or []
+        for item in evidence:
+            logical = str(item.get("logical_path") or "")
+            if logical.startswith("project://"):
+                claim_path_by_id[str(claim.get("claim_id") or "")] = \
+                    logical[len("project://"):].lstrip("/")
+                break
+    fallback_asset = next(iter(image_by_source.values()))
+    mapping: dict[str, str] = {}
+    for beat in lines_doc.get("beats") or []:
+        placement = str(beat.get("placement_id") or "")
+        claim_id = str(beat.get("claim_id") or "")
+        relative = claim_path_by_id.get(claim_id, "")
+        mapping[placement] = image_by_source.get(relative, fallback_asset)
+    if not mapping or len(mapping) != len(lines_doc.get("beats") or []):
+        raise ValueError("not every generated narration beat has a visual source anchor")
+
+    assets_path = project / "sources" / "assets.json"
+    existing = json.loads(assets_path.read_text(encoding="utf-8"))
+    current = [row for row in existing.get("assets", [])
+               if isinstance(row, dict) and row.get("permission") == "USER_PROVIDED_LOCAL"]
+    existing["assets"] = current + entries
+    assets_path.write_text(json.dumps(existing, ensure_ascii=False, indent=2) + "\n",
+                           encoding="utf-8")
+    (project / "script" / "asset-map.json").write_text(
+        json.dumps({"schema": "contentops.asset-map/v1", "mapping": mapping},
+                   ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    raw_receipt = json.loads(raw_receipt_path.read_text(encoding="utf-8"))
+    raw_receipt.update({
+        "state": "M5_INPUTS_PREPARED",
+        "source_permissions": len(source_permissions),
+        "visual_anchor_assets": len(entries),
+        "visual_anchor_policy": "motion backend must replace anchors; no static fallback",
+        "placements": len(mapping),
+        "production_ready": False,
+        "publish_authorized": False,
+    })
+    raw_receipt_path.write_text(json.dumps(raw_receipt, ensure_ascii=False, indent=2) + "\n",
+                                encoding="utf-8")
+    return {"state": "M5_INPUTS_PREPARED", "source_permissions": len(source_permissions),
+            "visual_anchor_assets": len(entries), "placements": len(mapping)}
+
+
+__all__ = ["prepare_m5_contracts", "prepare_raw_project"]

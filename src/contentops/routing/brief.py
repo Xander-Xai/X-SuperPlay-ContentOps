@@ -329,6 +329,9 @@ def content_digest(package: Dict[str, Any]) -> str:
         "topic_origin": context.get("topic_origin"),
         "candidate": package.get("candidate"),
         "forecast": package.get("forecast"),
+        "source_scope": package.get("source_scope"),
+        "selected_research_source": package.get("selected_research_source"),
+        "source_pack_sha256": package.get("source_pack_sha256"),
     })
 
 

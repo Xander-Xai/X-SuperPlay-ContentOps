@@ -684,6 +684,27 @@ def test_future_intelligence_auto_plan_derives_protocol_flow_from_named_terms():
         assert max(cue["at"] for cue in spec["cues"]) < spec["duration"]
 
 
+def test_auto_plan_pads_sub_two_second_narration_with_a_visual_hold():
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        dna = json.loads((ROOT / "config" / "accounts" /
+                          "x-superplay-future-intelligence.json").read_text(encoding="utf-8"))
+        result = motion_planner.build_auto_plan(
+            project=project, account_id="x-superplay-future-intelligence",
+            account_dna=dna,
+            script={"lines": [{"id": "P-01", "asset_id": "source-01",
+                               "narration": "RAG 短句。"}]},
+            narration={"lines": [{"start": 0.0, "duration": 1.83}]},
+            source_assets={},
+        )
+        shot = result["plan"]["shots"][0]
+        spec = json.loads((project / shot["spec"]).read_text(encoding="utf-8"))
+        assert shot["duration_s"] == 1.83
+        assert spec["duration"] == 2.0
+        assert spec["contentops_timing"] == {
+            "narration_duration_s": 1.83, "visual_hold_padding_s": 0.17}
+
+
 def test_future_intelligence_auto_plan_does_not_compare_raw_retrieval_scores():
     with tempfile.TemporaryDirectory() as temp:
         project = Path(temp)
@@ -891,6 +912,7 @@ def main() -> int:
              test_future_intelligence_auto_plan_uses_account_palette_and_rag_grammar,
              test_future_intelligence_auto_plan_explains_rrf_with_rank_contributions,
              test_future_intelligence_auto_plan_does_not_compare_raw_retrieval_scores,
+             test_auto_plan_pads_sub_two_second_narration_with_a_visual_hold,
              test_1024_auto_plan_requires_and_carries_real_source_stills,
              test_m5_auto_selects_future_profile_motion_after_measured_narration,
              test_auto_profile_motion_receipt_replaces_the_still_on_the_m5_timeline)

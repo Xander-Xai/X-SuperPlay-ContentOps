@@ -33,10 +33,22 @@ from contentops.routing.router import ContentRouter  # noqa: E402
 from contentops.routing.user_topic_route import UserTopicInput  # noqa: E402
 from contentops.routing.account_profile import load_profile  # noqa: E402
 from contentops.script import ScriptBlocked, build, check, write  # noqa: E402
+from contentops.script.evidence import _clean  # noqa: E402
 from contentops.script.draft import (
-    _master, _role_for, _storyboard, line_seconds, topic_provenance,
+    _master, _role_for, _split_quote_for_motion, _storyboard, line_seconds,
+    topic_provenance,
 )  # noqa: E402
 from contentops.script.evidence import PACK_SCHEMA  # noqa: E402
+
+
+def test_markdown_badges_do_not_become_spoken_evidence() -> None:
+    cleaned = _clean(
+        "![License: MIT](https://img.shields.io/badge/license-MIT-blue)\n"
+        "<br>\n<p align=\"center\"><img src=\"https://badges.example/x.svg\" /></p>\n"
+        "Actual project description.")
+    assert "License: MIT" not in cleaned
+    assert "badges.example" not in cleaned
+    assert "Actual project description." in cleaned
 
 ACCOUNT_BUILD = "x-superplay-future-intelligence"
 ACCOUNT_EXPLORE = "x-superplay-1024"
@@ -228,6 +240,52 @@ def test_1024_copy_includes_recordly_source_capture_guidance():
         assert "原始出处: [docs page 1](<https://docs.example.test/page-1>)" in master
         assert "Recordly取材: 打开此链接并保留地址栏/页面标题" in master
         assert "最终竖屏裁切正文区域" in master
+
+
+def test_1024_repository_analysis_uses_code_snapshot_without_claiming_a_recording():
+    with tempfile.TemporaryDirectory() as tmp:
+        root = _sandbox(tmp)
+        profile = load_profile(root, ACCOUNT_EXPLORE)
+        assert _role_for(profile, "source",
+                         source_scope="repository_code_analysis") == "code_snapshot"
+        assert _role_for(profile, "editorial_transition",
+                         source_scope="repository_code_analysis") == "vector_animation"
+        claims = [{"claim_id": "C-02", "kind": "source",
+                   "source_refs": ["https://github.com/example/repo"]}]
+        beats = [{"placement_id": "P-02", "claim_id": "C-02",
+                  "text": "代码中声明的实现细节"}]
+        shot = _storyboard(profile, beats, claims,
+                           source_scope="repository_code_analysis")["shots"][0]
+        board = _storyboard(profile, beats, claims,
+                            source_scope="repository_code_analysis")
+        assert board["engine"] == "source-led"
+        assert shot["dna_role"] == "code_snapshot"
+        assert shot["needs_capture"] is False
+        assert shot["evidence_source"] == "https://github.com/example/repo"
+        master = _master(
+            profile,
+            {"source_scope": "repository_code_analysis",
+             "intent": {"topic": "repo source review"}, "brief_id": "BR-1"},
+            beats,
+            [{"claim_id": "C-02", "kind": "source", "provenance": "verified_factual_claim",
+              "support_status": "SUPPORTED", "source_refs": ["https://github.com/example/repo"]}],
+            {"topic_provenance": "user_supplied_topic",
+             "evidence": {"items": 1, "characters": 100,
+                          "sources": [{"evidence_id": "EV-01", "title": "repo README",
+                                       "url": "https://github.com/example/repo"}]},
+             "storyboard": {"duration_s": 50}},
+            board,
+        )
+        assert "不描述运行、测试、性能或效果结果" in master
+
+
+def test_long_english_source_quotes_split_at_verbatim_word_boundaries():
+    quote = ("This branch also carries the convergence requirements that reconcile "
+             "the documents with the code.")
+    pieces = _split_quote_for_motion(quote, english_wps=0.8)
+    assert len(pieces) > 1
+    assert " ".join(pieces) == quote
+    assert all(len(piece.split()) <= 4 for piece in pieces)
 
 
 def test_every_fact_is_bound_to_a_document_that_matches_its_digest():

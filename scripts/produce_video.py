@@ -13,6 +13,10 @@ Usage:
     python scripts/produce_video.py --project projects/my-project
     python scripts/produce_video.py --project projects/my-project --mode REVIEW
     python scripts/produce_video.py --project projects/my-project --force
+    python scripts/produce_video.py --account x-superplay-future-intelligence \
+        --topic "RAG 混合检索的工作原理" --mode AUTO
+    python scripts/produce_video.py --account x-superplay-1024 \
+        --source-url https://github.com/Xander-Xai/X-SuperPlay-ContentOps --mode AUTO
 """
 from __future__ import annotations
 
@@ -35,6 +39,7 @@ for item in (ROOT / "src", ROOT / "scripts"):
 import m5_production  # noqa: E402
 
 RECEIPT = "produce-video.json"
+RAW_DRAFT_VERSION = "raw-draft-v5"
 
 
 def _relative_to_root(path: Path) -> Path | None:
@@ -249,19 +254,46 @@ def _prepare_brief_inputs(project: Path, *, mode: str) -> dict[str, Any] | None:
     from contentops.script.m5_bridge import BridgeBlocked, build as build_bridge, write as write_bridge
 
     preview = mode == "AUTO"
+    raw_receipt = project / "receipts" / "raw-inputs.json"
+    if raw_receipt.is_file():
+        import raw_video_inputs
+        raw_video_inputs.bind_existing_source_scope(project)
     draft_lines = project / "script" / "lines.json"
     draft_claims = project / "script" / "claim-map.json"
+    raw_receipt = project / "receipts" / "raw-inputs.json"
+    draft_pack_marker = project / "script" / "source-pack.sha256"
+    current_pack = project / "00_brief" / "evidence-pack.json"
+    refresh_raw_draft = bool(
+        raw_receipt.is_file() and current_pack.is_file()
+        and (not draft_pack_marker.is_file()
+             or draft_pack_marker.read_text(encoding="utf-8").strip()
+             != (hashlib.sha256(current_pack.read_bytes()).hexdigest()
+                 + " " + RAW_DRAFT_VERSION))
+        and not (project / "script" / "script.json").is_file()
+        and not (project / "script" / "claims.json").is_file()
+    )
     if draft_lines.is_file() != draft_claims.is_file():
         raise m5_production.M5Blocked(
             "brief preparation: script/lines.json and script/claim-map.json must either "
             "both exist or both be absent; existing partial draft was left untouched")
     written: list[str] = []
     try:
-        if not draft_lines.is_file():
+        if not draft_lines.is_file() or refresh_raw_draft:
             draft = build_draft(project, root=ROOT,
                                 allow_unapproved_preview=preview)
             written.extend(path.relative_to(project).as_posix()
                            for path in write_draft(draft).values())
+            if raw_receipt.is_file() and current_pack.is_file():
+                draft_pack_marker.write_text(
+                    hashlib.sha256(current_pack.read_bytes()).hexdigest()
+                    + " " + RAW_DRAFT_VERSION + "\n",
+                    encoding="utf-8")
+        if raw_receipt.is_file() and (refresh_raw_draft
+                                      or not (project / "script" / "asset-map.json").is_file()):
+            import raw_video_inputs
+            raw_video_inputs.prepare_m5_contracts(project)
+            written.extend(("00_brief/source-permissions.json", "sources/assets.json",
+                            "script/asset-map.json"))
         converted = build_bridge(project, repo_root=ROOT,
                                  allow_unapproved_preview=preview)
         written.extend(path.relative_to(project).as_posix()
@@ -468,8 +500,14 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--project", required=True,
-                        help="project under projects/; AUTO can prepare missing Brief-driven script/M5 inputs")
+    parser.add_argument("--project", default="",
+                        help="existing project under projects/; AUTO can prepare missing Brief-driven script/M5 inputs")
+    parser.add_argument("--account", default="",
+                        help="account DNA for a raw --topic/--source-url production")
+    parser.add_argument("--topic", default="",
+                        help="new topic; AUTO searches account-allowlisted sources when --source-url is absent")
+    parser.add_argument("--source-url", action="append", default=[],
+                        help="licensed public GitHub repository to pin as source evidence")
     parser.add_argument("--mode", default="AUTO", choices=("AUTO", "REVIEW", "STRICT"),
                         help="AUTO runs authorized M5 stages; REVIEW/STRICT also require a recorded copy approval")
     parser.add_argument("--force", action="store_true", help="rerun even when the same inputs already passed QC")
@@ -478,7 +516,20 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
     try:
-        result = produce(Path(args.project), force=args.force, mode=args.mode,
+        if args.project:
+            if args.topic or args.source_url or args.account:
+                parser.error("--project cannot be combined with --account, --topic, or --source-url")
+            project_path = Path(args.project)
+        else:
+            if not args.account or (not args.topic and not args.source_url):
+                parser.error("raw production needs --account and at least one of --topic or --source-url")
+            import raw_video_inputs
+            try:
+                project_path = raw_video_inputs.prepare_raw_project(
+                    account=args.account, topic=args.topic, source_urls=args.source_url)
+            except raw_video_inputs.RoutingError as exc:
+                raise ValueError(str(exc)) from None
+        result = produce(project_path, force=args.force, mode=args.mode,
                          assets_dir=(Path(args.assets).expanduser().resolve()
                                      if args.assets else None))
     except (ValueError, m5_production.M5Blocked) as exc:
