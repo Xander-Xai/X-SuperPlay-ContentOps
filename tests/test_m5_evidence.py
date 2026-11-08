@@ -364,9 +364,9 @@ def test_storyboard_timeline_covers_the_pauses_between_lines() -> None:
              {"start": 4.5, "duration": 5.0}]
     m5_production._align_shots_to_narration(shots, lines)
     assert sum(shot["duration"] for shot in shots) == 9.5
-    assert shots[-1]["duration"] == 5.5
-    assert shots[0]["duration"] == 4.0, "an earlier cut must not move"
-    print("[ok] 19. the visual timeline covers inter-line pauses")
+    assert shots[0]["duration"] == 4.5, "first line owns its following pause"
+    assert shots[-1]["duration"] == 5.0, "the final motion clip is not overextended"
+    print("[ok] 19. each shot owns only its following inter-line pause")
 
     unchanged = [{"duration": 4.0, "duration_s": 4.0},
                  {"duration": 5.0, "duration_s": 5.0}]
