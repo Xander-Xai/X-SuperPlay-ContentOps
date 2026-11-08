@@ -11,6 +11,7 @@ The failure this prevents, twice over:
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import sys
 import tempfile
@@ -26,6 +27,7 @@ sys.path.insert(0, str(ROOT / "src"))
 import m5_production  # noqa: E402
 import produce_video  # noqa: E402
 import huashu_motion_adapter  # noqa: E402
+import raw_video_inputs  # noqa: E402
 from contentops.media import storyboard_adapter as adapter  # noqa: E402
 from contentops.media import local_assets, motion_planner, visual_gate  # noqa: E402
 
@@ -51,6 +53,30 @@ def _timings(seconds=5.0):
     return [{"duration": seconds}]
 
 
+def _huashu_project():
+    temporary = tempfile.TemporaryDirectory(dir=ROOT / "projects",
+                                             prefix="test-huashu-local-")
+    project = Path(temporary.name)
+    (project / "project.yaml").write_text(
+        "id: local-motion-test\naccount_slug: x-superplay-future-intelligence\n",
+        encoding="utf-8")
+    for relative, payload in {
+        "script/script.json": {"lines": [{"id": "P-01", "asset_id": "source-01",
+                                             "claim": "C-01", "narration": "RAG 检索机制"}]},
+        "script/claims.json": {"claims": [{"id": "C-01", "artifacts": ["E-01"]}]},
+        "script/assets.json": {"assets": {}},
+        "sources/source-refs.json": {"refs": [{"id": "E-01", "path": "README.md"}]},
+        "sources/assets.json": {"assets": []},
+        "motion/auto/shot.json": {"grammar": "y3_whiteboard", "duration": 3.0,
+                                  "fps": 30, "width": 1080, "height": 1920,
+                                  "cues": [{"at": 0.0, "kind": "draw", "text": "RAG"}]},
+    }.items():
+        path = project / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    return temporary, project
+
+
 def test_visual_gate_states_are_fail_closed_and_never_approve_publication():
     passed = visual_gate.evaluate_film_gate(
         {"gate_light": "green", "verdict": "green", "fast_ratio": 0.08}, 0)
@@ -67,6 +93,198 @@ def test_visual_gate_states_are_fail_closed_and_never_approve_publication():
         {"gate_light": "green", "verdict": "green"}, 2)["state"] == "BLOCKED"
     assert visual_gate.evaluate_film_gate(
         {"gate_light": "green", "verdict": "yellow"}, 0)["state"] == "BLOCKED"
+
+
+def test_huashu_preflight_auto_and_review_allow_local_preview_without_grant():
+    temporary, project = _huashu_project()
+    route = {"verdict": "RESOLVABLE", "reason": "RESOLVABLE",
+             "execution_authorized": False,
+             "capability": {"provider": {"path_permitted": True,
+                                             "network": False, "paid": False,
+                                             "cross_project_reuse": False}}}
+    runtime = {"skill_id": "huashu-art-motion", "version": "1.2.0"}
+    try:
+        with mock.patch.object(huashu_motion_adapter.skill_route,
+                               "resolve_capability", return_value=route), \
+                mock.patch.object(huashu_motion_adapter, "_runtime", return_value=runtime):
+            for mode in ("AUTO", "REVIEW"):
+                capture = io.StringIO()
+                with mock.patch("sys.stdout", capture):
+                    code = huashu_motion_adapter.main([
+                        str(project), "--preflight", "--mode", mode, "--json"])
+                payload = json.loads(capture.getvalue())
+                assert code == 0 and payload["state"] == "READY"
+                assert payload["execution_policy"] == {
+                    "state": "LOCAL_ONLY_PERMITTED", "project_grant_required": False,
+                    "network": False, "paid": False, "publication": False,
+                    "technical_preview_requires_copy_review": False}
+                assert payload["copy_review"].get("state") != "APPROVED"
+            capture = io.StringIO()
+            with mock.patch("sys.stdout", capture):
+                code = huashu_motion_adapter.main([
+                    str(project), "--preflight", "--mode", "STRICT", "--json"])
+            strict_payload = json.loads(capture.getvalue())
+            assert code != 0 and strict_payload["state"] == "BLOCKED"
+            assert any(item.startswith("COPY_REVIEW_")
+                       for item in strict_payload["problems"])
+    finally:
+        temporary.cleanup()
+
+
+def test_huashu_local_effect_policy_does_not_authorize_paid_or_publish_effects():
+    registry = json.loads((ROOT / "runtime" / "skill-registry.json").read_text(
+        encoding="utf-8"))
+    entry = next(row for row in registry["skills"]
+                 if row.get("id") == "x-superplay-huashu-motion")
+    provider = entry["provider"]
+    execution = entry["execution"]
+    assert provider["path_permitted"] is True
+    assert provider["network"] is False
+    assert provider["paid"] is False
+    assert provider["cross_project_reuse"] is False
+    assert execution["authorizes_execution"] is False
+    assert execution["project_grant_required"] is False
+    assert "publication clearance" in entry["rights"]["scope"]
+
+
+def test_huashu_auto_local_render_runs_repeated_shots_without_grant():
+    temporary, project = _huashu_project()
+    route = {"verdict": "RESOLVABLE", "reason": "RESOLVABLE",
+             "execution_authorized": False, "capability": {}}
+    runtime = {"skill_id": "huashu-art-motion", "version": "1.2.0"}
+    try:
+        with mock.patch.object(huashu_motion_adapter.skill_route,
+                               "resolve_capability", return_value=route), \
+                mock.patch.object(huashu_motion_adapter, "_runtime", return_value=runtime), \
+                mock.patch.object(huashu_motion_adapter, "_render",
+                                  side_effect=[{"asset_id": "huashu-P-01"},
+                                               {"asset_id": "huashu-P-02"},
+                                               {"asset_id": "huashu-P-03"}]) as render:
+            results = []
+            for index in range(1, 4):
+                capture = io.StringIO()
+                with mock.patch("sys.stdout", capture):
+                    code = huashu_motion_adapter.main([
+                        str(project), "--render", "--mode", "AUTO",
+                        "--spec", "motion/auto/shot.json",
+                        "--placement-id", f"P-0{index}",
+                        "--asset-id", f"huashu-P-0{index}", "--json"])
+                assert code == 0, capture.getvalue()
+                results.append(json.loads(capture.getvalue()))
+        assert render.call_count == 3
+        assert [item["execution"]["state"] for item in results] == [
+            "EXECUTED", "EXECUTED", "EXECUTED"]
+        for item in results:
+            assert item["decision"]["state"] == "NOT_REQUIRED_LOCAL_ONLY"
+            assert item["decision"]["execution_authorized"] is False
+            assert item["production_ready"] is False
+            assert item["publish_authorized"] is False
+        assert not (project / "receipts" / "skill-execution-approval.json").exists()
+        assert not (project / "receipts" / "grants").exists()
+    finally:
+        temporary.cleanup()
+
+
+def test_huashu_valid_cached_render_is_reused_without_renderer_call():
+    temporary, project = _huashu_project()
+    route = {"verdict": "RESOLVABLE", "reason": "RESOLVABLE",
+             "execution_authorized": False, "capability": {}}
+    runtime = {"skill_id": "huashu-art-motion", "version": "1.2.0"}
+    cached_output = project / "assets" / "generated" / "huashu" / "huashu-P-01.mp4"
+    cached_output.parent.mkdir(parents=True)
+    cached = {"line": {"id": "P-01"}, "claim": {"id": "C-01"},
+              "spec_path": project / "motion" / "auto" / "shot.json",
+              "spec": {"duration": 3}, "output": cached_output,
+              "technical": {"approved": True}}
+    try:
+        with mock.patch.object(huashu_motion_adapter.skill_route,
+                               "resolve_capability", return_value=route), \
+                mock.patch.object(huashu_motion_adapter, "_runtime", return_value=runtime), \
+                mock.patch.object(huashu_motion_adapter, "_cached_render",
+                                  return_value=cached), \
+                mock.patch.object(huashu_motion_adapter, "_register",
+                                  return_value={"asset_id": "huashu-P-01"}), \
+                mock.patch.object(huashu_motion_adapter, "_render") as render:
+            capture = io.StringIO()
+            with mock.patch("sys.stdout", capture):
+                code = huashu_motion_adapter.main([
+                    str(project), "--render", "--mode", "AUTO",
+                    "--spec", "motion/auto/shot.json",
+                    "--placement-id", "P-01", "--asset-id", "huashu-P-01", "--json"])
+        payload = json.loads(capture.getvalue())
+        assert code == 0
+        assert payload["execution"]["state"] == "REUSED"
+        assert payload["execution"]["reused"] is True
+        render.assert_not_called()
+        assert not (project / "receipts" / "grants").exists()
+    finally:
+        temporary.cleanup()
+
+
+def test_huashu_accepts_only_exact_nonfactual_editorial_transitions_without_claims():
+    with tempfile.TemporaryDirectory(dir=ROOT / ".verify-tmp") as temp:
+        project = Path(temp)
+        line = {"id": "P-01", "narration": "这期只看仓库源码。", "claim": None}
+        (project / "script").mkdir()
+        (project / "script" / "lines.json").write_text(json.dumps({"beats": [{
+            "placement_id": "P-01", "claim_id": "C-01"}]}), encoding="utf-8")
+        claim = {"claim_id": "C-01", "text": "这期只看仓库源码。",
+                 "kind": "editorial_transition", "assertion_about": "none",
+                 "evidence": []}
+        map_path = project / "script" / "claim-map.json"
+        map_path.write_text(json.dumps({"claims": [claim]}, ensure_ascii=False),
+                            encoding="utf-8")
+        editorial = huashu_motion_adapter._editorial_transition(project, line, "P-01")
+        assert editorial == {"id": "C-01", "text": "这期只看仓库源码。",
+                             "artifacts": [], "editorial_only": True}
+        claim["kind"] = "source"
+        map_path.write_text(json.dumps({"claims": [claim]}, ensure_ascii=False),
+                            encoding="utf-8")
+        assert huashu_motion_adapter._editorial_transition(project, line, "P-01") is None
+        claim["kind"] = "editorial_transition"
+        claim["evidence"] = [{"evidence_id": "E-01"}]
+        map_path.write_text(json.dumps({"claims": [claim]}, ensure_ascii=False),
+                            encoding="utf-8")
+        assert huashu_motion_adapter._editorial_transition(project, line, "P-01") is None
+
+
+def test_huashu_source_cta_requires_all_prior_claims_in_verified_inventory():
+    with tempfile.TemporaryDirectory(dir=ROOT / ".verify-tmp") as temp:
+        project = Path(temp)
+        (project / "script").mkdir()
+        (project / "receipts").mkdir()
+        line = {"id": "P-02", "narration": "以上内容都能在文末的来源里逐条核对。",
+                "claim": None}
+        beats = [{"placement_id": "P-01", "claim_id": "C-01"},
+                 {"placement_id": "P-02", "claim_id": "C-02"}]
+        claims = [
+            {"claim_id": "C-01", "text": "源码功能", "kind": "source",
+             "evidence": [{"evidence_id": "E-01", "sha256": "abc123"}]},
+            {"claim_id": "C-02", "text": line["narration"], "kind": "cta",
+             "assertion_about": "none", "evidence": []},
+        ]
+        (project / "script" / "lines.json").write_text(
+            json.dumps({"beats": beats}, ensure_ascii=False), encoding="utf-8")
+        (project / "script" / "claim-map.json").write_text(
+            json.dumps({"claims": claims}, ensure_ascii=False), encoding="utf-8")
+        inventory_path = project / "receipts" / "source-artifacts.json"
+        inventory_path.write_text(json.dumps({"artifacts": [
+            {"id": "E-01", "sha256": "abc123", "permission": "LICENSED"}]}),
+            encoding="utf-8")
+        result = huashu_motion_adapter._editorial_transition(project, line, "P-02")
+        assert result == {"id": "C-02", "text": line["narration"],
+                          "artifacts": ["E-01"], "editorial_only": False,
+                          "claim_basis": "source_referential_cta"}
+        inventory_path.write_text(json.dumps({"artifacts": []}), encoding="utf-8")
+        assert huashu_motion_adapter._editorial_transition(project, line, "P-02") is None
+
+
+def test_storyboard_preserves_each_narration_pause_inside_its_own_shot():
+    shots = [{"duration": 2.0, "duration_s": 2.0} for _ in range(2)]
+    timings = [{"start": 0.0, "duration": 1.8},
+               {"start": 2.3, "duration": 1.7}]
+    aligned = m5_production._align_shots_to_narration(shots, timings)
+    assert [shot["duration_s"] for shot in aligned] == [2.3, 1.7]
 
 
 def test_a_video_asset_reaches_the_storyboard_as_a_clip():
@@ -406,7 +624,7 @@ def test_producer_reuses_current_qc_pass_without_rebuilding():
             produce_video.m5_production.build = old_build
 
 
-def test_producer_review_mode_keeps_the_human_copy_gate():
+def test_producer_review_mode_renders_local_draft_for_review():
     with tempfile.TemporaryDirectory() as temp:
         root = Path(temp).resolve()
         project = root / "projects" / "demo-project"
@@ -427,30 +645,37 @@ def test_producer_review_mode_keeps_the_human_copy_gate():
             raise produce_video.m5_production.copy_review.CopyReviewRequired(
                 "NOT_REVIEWED", "approve copy")
 
-        def unexpected_build(_project, **_options):
-            calls.append("build")
-            raise AssertionError("render must not proceed before explicit review")
+        def local_build(target, **options):
+            calls.append(options)
+            video = target / "final" / f"{target.name}.mp4"
+            video.parent.mkdir(parents=True, exist_ok=True)
+            video.write_bytes(b"local draft video")
+            report = target / "receipts" / f"qc-report-{target.name}.json"
+            report.parent.mkdir(parents=True, exist_ok=True)
+            report.write_text(json.dumps({
+                "graded_target": f"project://final/{target.name}.mp4",
+                "overall": "PASS"}), encoding="utf-8")
+            return {"stages": {"visual_qc": {"state": "PASS"}},
+                    "stage_timings_seconds": {"motion": 1.0},
+                    "human_review": "PENDING_FOUNDER_REVIEW"}
 
         produce_video.ROOT = root
         produce_video.m5_production.copy_review.require_approved = refuse_review
-        produce_video.m5_production.build = unexpected_build
+        produce_video.m5_production.build = local_build
         try:
-            try:
-                produce_video.produce(project, mode="REVIEW")
-            except produce_video.m5_production.M5Blocked as exc:
-                assert "NOT_REVIEWED" in str(exc)
-            else:
-                raise AssertionError("REVIEW mode must require a recorded approval")
+            result = produce_video.produce(project, mode="REVIEW")
             saved = json.loads((project / "receipts" / "produce-video.json").read_text(encoding="utf-8"))
-            assert saved["state"] == "BLOCKED"
-            assert calls == []
+            assert result["state"] == "QC_PASSED"
+            assert saved["copy_review_required_for_render"] is False
+            assert saved["human_review"] == "PENDING_FOUNDER_REVIEW"
+            assert calls == [{"require_copy_review": False}]
         finally:
             produce_video.ROOT = old_root
             produce_video.m5_production.copy_review.require_approved = old_check
             produce_video.m5_production.build = old_build
 
 
-def test_configured_motion_runs_each_placement_through_managed_adapter():
+def test_local_motion_runs_each_placement_and_accepts_cache_reuse():
     with tempfile.TemporaryDirectory() as temp:
         project = Path(temp)
         plan = {"shots": [
@@ -470,7 +695,8 @@ def test_configured_motion_runs_each_placement_through_managed_adapter():
 
         def fake_run(command, **_options):
             commands.append(command)
-            payload = {"execution": {"state": "EXECUTED",
+            payload = {"execution": {"state": "EXECUTED" if len(commands) == 1 else "REUSED",
+                                     "reused": len(commands) > 1,
                                      "adapter_receipt": {"asset_id": "ok"}},
                        "receipt": "receipts/executions/test.json"}
             return SimpleNamespace(returncode=0, stdout=json.dumps(payload), stderr="")
@@ -489,6 +715,9 @@ def test_configured_motion_runs_each_placement_through_managed_adapter():
                        for command in commands)
             receipt = json.loads((project / "receipts" / "motion-stage.json").read_text())
             assert [row["placement_id"] for row in receipt["shots"]] == ["line-1", "line-2"]
+            assert [row["execution_state"] for row in receipt["shots"]] == [
+                "EXECUTED", "REUSED"]
+            assert [row["reused_render"] for row in receipt["shots"]] == [False, True]
             assert json.loads(script_path.read_text()) == original_script
             assert [command[command.index("--asset-id") + 1] for command in commands] == [
                 "motion-A1", "motion-A2"]
@@ -595,7 +824,7 @@ def test_future_intelligence_auto_plan_uses_account_palette_and_rag_grammar():
             "Query → 词项", "Query → 语义 候选",
             "词项 + 语义 → 融合候选", "两路候选完成融合"]
         assert spec["cues"][0]["at"] == 0
-        assert result["plan"]["compiler"] == "contentops.motion_planner/v3"
+        assert result["plan"]["compiler"] == "contentops.motion_planner/v4"
         assert result["plan"]["compiler_sha256"] == motion_planner._file_sha(
             Path(motion_planner.__file__).resolve())
         assert max(cue["at"] for cue in spec["cues"]) < spec["duration"]
@@ -778,6 +1007,67 @@ def test_1024_auto_plan_requires_and_carries_real_source_stills():
             raise AssertionError("changed source image bytes must invalidate the motion spec")
 
 
+def test_1024_uses_ocr_matched_screenshot_region_for_camera_motion():
+    with tempfile.TemporaryDirectory(dir=ROOT / ".verify-tmp") as temp:
+        project = Path(temp)
+        source = project / "assets" / "terminal.png"
+        source.parent.mkdir(parents=True)
+        source.write_bytes(b"registered screenshot bytes")
+        dna = json.loads((ROOT / "config" / "accounts" /
+                          "x-superplay-1024.json").read_text(encoding="utf-8"))
+        result = motion_planner.build_auto_plan(
+            project=project, account_id="x-superplay-1024", account_dna=dna,
+            script={"lines": [{"id": "P-01", "asset_id": "evidence-01",
+                               "narration": "MCP 工具调用完成后返回真实结果。"}]},
+            narration={"lines": [{"start": 0.0, "duration": 3.5}]},
+            source_assets={"evidence-01": {
+                "id": "evidence-01", "type": "USER_PROVIDED_IMAGE",
+                "repo_path": source.relative_to(ROOT).as_posix(),
+                "ocr_regions": [{"text": "MCP 工具调用", "confidence": 0.94,
+                                 "rect": [0.11, 0.22, 0.31, 0.06]}],
+            }},
+        )
+        shot = result["plan"]["shots"][0]
+        spec = json.loads((project / shot["spec"]).read_text(encoding="utf-8"))
+        assert shot["motion_syntax"] == "t2_keynote_ui"
+        assert shot["ocr_targets"] == [{"text": "MCP 工具调用", "confidence": 0.94,
+                                        "rect": [0.11, 0.22, 0.31, 0.06],
+                                        "matched_terms": ["mcp", "具调", "工具", "调用"]}]
+        assert spec["grammar"] == "t2_keynote_ui"
+        assert spec["cues"][0]["kind"] == "image" and spec["cues"][0]["image"]
+        assert spec["cues"][1] == {
+            "at": 0.8, "kind": "highlight",
+            "data": {"rect": [0.11, 0.22, 0.31, 0.06]}}
+
+
+def test_local_asset_ocr_boxes_are_normalized_and_clamped():
+    regions = raw_video_inputs._normalized_ocr_regions(
+        [[[ [110, 220], [420, 220], [420, 340], [110, 340]],
+          "MCP 工具调用", "0.94"],
+         [[[1070, 1900], [1120, 1900], [1120, 1940], [1070, 1940]],
+          "edge", 0.8],
+         [[], "bad score", "oops"]],
+        1080, 1920)
+    assert regions == [
+        {"text": "MCP 工具调用", "confidence": 0.94,
+         "rect": [0.101852, 0.114583, 0.287037, 0.0625]},
+        {"text": "edge", "confidence": 0.8,
+         "rect": [0.990741, 0.989583, 0.009259, 0.010417]},
+    ]
+    assert raw_video_inputs._normalized_ocr_regions([], 0, 1920) == []
+
+
+def test_source_snapshot_selects_verbatim_claim_relevant_lines():
+    shown = raw_video_inputs._topical_source_lines(
+        ["header", "unrelated setup", "cache = None", "other", "def hybrid_retrieval():",
+         "    bm25 = retrieve_terms()", "    vector = retrieve_semantic()", "return results"],
+        ["hybrid retrieval combines bm25 and semantic vector candidates"], limit=5)
+    assert [line for _, line in shown] == [
+        "def hybrid_retrieval():", "    bm25 = retrieve_terms()",
+        "    vector = retrieve_semantic()", "return results"]
+    assert [number for number, _ in shown] == [5, 6, 7, 8]
+
+
 def test_m5_auto_selects_future_profile_motion_after_measured_narration():
     with tempfile.TemporaryDirectory(dir=ROOT / ".verify-tmp") as temp:
         project = Path(temp)
@@ -893,6 +1183,13 @@ def test_auto_profile_motion_receipt_replaces_the_still_on_the_m5_timeline():
 
 def main() -> int:
     tests = (test_visual_gate_states_are_fail_closed_and_never_approve_publication,
+             test_huashu_preflight_auto_and_review_allow_local_preview_without_grant,
+             test_huashu_local_effect_policy_does_not_authorize_paid_or_publish_effects,
+             test_huashu_auto_local_render_runs_repeated_shots_without_grant,
+             test_huashu_valid_cached_render_is_reused_without_renderer_call,
+             test_huashu_accepts_only_exact_nonfactual_editorial_transitions_without_claims,
+             test_huashu_source_cta_requires_all_prior_claims_in_verified_inventory,
+             test_storyboard_preserves_each_narration_pause_inside_its_own_shot,
              test_a_video_asset_reaches_the_storyboard_as_a_clip,
              test_a_still_asset_is_not_labelled_a_clip,
              test_runtime_release_facts_use_the_source_image_motion_grammar,
@@ -910,8 +1207,8 @@ def main() -> int:
              test_existing_narration_without_line_timings_is_refused,
              test_existing_narration_that_matches_is_reused_without_a_provider_call,
              test_producer_reuses_current_qc_pass_without_rebuilding,
-             test_producer_review_mode_keeps_the_human_copy_gate,
-             test_configured_motion_runs_each_placement_through_managed_adapter,
+             test_producer_review_mode_renders_local_draft_for_review,
+             test_local_motion_runs_each_placement_and_accepts_cache_reuse,
              test_motion_stage_refuses_an_unmapped_plan_before_rendering,
              test_huashu_render_cache_requires_matching_inputs_and_output_hash,
              test_future_intelligence_auto_plan_uses_account_palette_and_rag_grammar,
@@ -919,6 +1216,9 @@ def main() -> int:
              test_future_intelligence_auto_plan_does_not_compare_raw_retrieval_scores,
              test_auto_plan_pads_sub_two_second_narration_with_a_visual_hold,
              test_1024_auto_plan_requires_and_carries_real_source_stills,
+             test_1024_uses_ocr_matched_screenshot_region_for_camera_motion,
+             test_local_asset_ocr_boxes_are_normalized_and_clamped,
+             test_source_snapshot_selects_verbatim_claim_relevant_lines,
              test_m5_auto_selects_future_profile_motion_after_measured_narration,
              test_auto_profile_motion_receipt_replaces_the_still_on_the_m5_timeline)
     for test in tests:

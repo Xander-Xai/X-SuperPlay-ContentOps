@@ -98,6 +98,14 @@ project.yaml source_refs
   → narration / subtitles → pinned Easel compose → qc_video → human review
 ```
 
+Huashu Art Motion is a project-local, non-paid draft renderer. `AUTO` runs it
+without a project execution-grant receipt; `REVIEW` can render the local draft
+for inspection as well. The adapter still checks the declared account route,
+pinned installed runtime, project-contained spec paths, registered asset bytes
+and rights. Its output stays visual support with `production_ready=false` and
+`publish_authorized=false`. Paid providers, network access and publication use
+their separate authorization and budget gates.
+
 `scripts/m5_production.py` is the evidence-first entry (`sources → media_use → assets → claims → script → narration → subtitles → storyboard → compose → QC → review`). It always ends `PENDING_FOUNDER_REVIEW` with `production_ready: false`.
 
 Composition must reuse the pinned Easel through `scripts/assemble_easel.py` (`assemble_easel.run`). Do not add a second compositor.

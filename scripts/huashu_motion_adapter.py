@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Account-scoped Huashu Art Motion adapter for visual-support clips.
+"""Account-scoped adapter for local Huashu Art Motion visual-support clips.
 
-Rendering is guarded by the ContentOps skill grant and current Copy Review.
-The output is registered as GENERATED_VIDEO / VISUAL_SUPPORT only; the clip can
-never support or replace a factual claim. This adapter does not run M5 or Easel.
-After the new asset is fingerprinted, a human must review the updated copy/map
-before the normal M5 -> Easel entry point can continue.
+The verified local, non-paid renderer can create a draft without a project
+execution grant or copy approval. The output remains GENERATED_VIDEO /
+VISUAL_SUPPORT only, cannot support or replace a factual claim, and does not
+authorize publication. Paid providers, network calls and publication remain
+outside this adapter and their own authorization boundaries.
 """
 from __future__ import annotations
 
@@ -36,9 +36,6 @@ from contentops.media.media_envelope import (  # noqa: E402
 from contentops.media.motion_sample import check_motion_sample  # noqa: E402
 from contentops.media.huashu_runtime import find_runtime  # noqa: E402
 from contentops.media.quality_gate import AssetQualityGate, build_manifest  # noqa: E402
-from contentops.skills.authorization import ExecutionRequest, evaluate  # noqa: E402
-from contentops.skills.execution_gate import execute  # noqa: E402
-from contentops.skills.grant_source import GrantSourceError, load_grant  # noqa: E402
 from contentops.workflow import copy_review  # noqa: E402
 
 SKILL_ID = "x-superplay-huashu-motion"
@@ -46,8 +43,6 @@ SKILL_VERSION = "0.1.0"
 UPSTREAM_SKILL = "huashu-art-motion"
 UPSTREAM_VERSION = "1.2.0"
 ACCOUNTS = ("x-superplay-1024", "x-superplay-future-intelligence")
-OWNER_ENV = "CONTENTOPS_OWNER_IDENTITIES"
-SUBJECT_ENV = "CONTENTOPS_EXECUTION_SUBJECT"
 SCHEMA = "contentops.huashu-motion-receipt/v1"
 ASSET_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$")
 
@@ -120,8 +115,7 @@ def _runtime() -> Dict[str, Any]:
             "wrapper": "scripts/huashu_render.py"}
 
 
-def _preflight(project: Path, *, require_copy_review: bool = True,
-              check_execution: bool = True) -> Dict[str, Any]:
+def _preflight(project: Path, *, mode: str = "AUTO") -> Dict[str, Any]:
     problems: List[str] = []
     account: Optional[str] = None
     try:
@@ -137,34 +131,25 @@ def _preflight(project: Path, *, require_copy_review: bool = True,
             problems.append(f"INPUT_MISSING:{relative}")
 
     review = copy_review.status(project)
-    if require_copy_review and review.get("state") != "APPROVED":
+    if mode == "STRICT" and review.get("state") != "APPROVED":
         problems.append(f"COPY_REVIEW_{review.get('state', 'UNKNOWN')}")
 
     route: Dict[str, Any] = {"verdict": "BLOCKED", "reason": "ACCOUNT_SLUG_MISSING"}
     if account:
         route = skill_route.resolve_capability(
             SKILL_ID, account=account, pipeline="M5", stage="motion")
-        if check_execution and route.get("verdict") != "RESOLVABLE":
+        if route.get("verdict") != "RESOLVABLE":
             problems.append(f"SKILL_ROUTE_{route.get('reason', 'BLOCKED')}")
     runtime = _runtime()
-    if account and check_execution:
-        entry = next((item for item in skill_route.registry_entries()
-                      if item.get("id") == SKILL_ID), None)
-        request = ExecutionRequest(
-            request_id=f"{project.name}-huashu-preflight", skill_id=SKILL_ID,
-            skill_version=SKILL_VERSION, account=account, pipeline="M5",
-            stage="motion", operations=("render",), subject=_subject())
-        try:
-            grant = load_grant(project, owner_identities=_owners())
-        except GrantSourceError as exc:
-            problems.append(f"EXECUTION_{exc.code}: {exc.detail}")
-        else:
-            decision = evaluate(request, verdict=route, registry_entry=entry, grant=grant)
-            if decision.state != "AUTHORIZED":
-                problems.append(f"EXECUTION_{decision.reason}: {decision.detail}")
     return {"account_id": account, "state": "BLOCKED" if problems else "READY",
             "problems": problems, "copy_review": review,
-            "skill_route": route, "runtime": runtime}
+            "skill_route": route, "runtime": runtime,
+            "execution_policy": {
+                "state": "LOCAL_ONLY_PERMITTED",
+                "project_grant_required": False,
+                "network": False, "paid": False, "publication": False,
+                "technical_preview_requires_copy_review": False,
+            }}
 
 
 def _read_json(path: Path) -> Dict[str, Any]:
@@ -294,8 +279,11 @@ def _technical_check(path: Path) -> Dict[str, Any]:
     decode = hidden_run(["ffmpeg", "-v", "error", "-i", str(path), "-f", "null", "-"], timeout=600)
     if decode.returncode != 0 or (decode.stderr or "").strip():
         raise ValueError(f"FULL_DECODE_FAILED:{(decode.stderr or '')[-800:]}")
+    # Account palettes use #0F1117 as a valid dark slate. pix_th=0.10 labels
+    # that designed background as black for almost the whole frame; 0.04 still
+    # catches true zero-level black frames without rejecting the approved palette.
     black = hidden_run(["ffmpeg", "-hide_banner", "-i", str(path), "-vf",
-                        "blackdetect=d=0.033:pix_th=0.10", "-an", "-f", "null", "-"],
+                        "blackdetect=d=0.033:pix_th=0.04", "-an", "-f", "null", "-"],
                        timeout=600)
     segments = [line.strip() for line in (black.stderr or "").splitlines()
                 if "black_start:" in line]
@@ -332,11 +320,15 @@ def _register(project: Path, account: str, asset_id: str, placement_id: str,
         "account_id": account,
         "placement_id": placement_id,
         "asset_id": asset_id,
-        "claim_id": line.get("claim"),
+        "claim_id": claim.get("id"),
+        "claim_basis": claim.get("claim_basis") or (
+            "editorial_transition_no_factual_assertion"
+            if claim.get("editorial_only") else "source_backed_factual_claim"),
         "claim_text_sha256": hashlib.sha256(
             str(claim.get("text") or "").encode("utf-8")).hexdigest(),
         "input_sha256": inputs,
         "fingerprint": fingerprint,
+        "output_sha256": digest,
         "command": [python_executable(), "scripts/huashu_render.py", "--spec",
                     spec_path.relative_to(project).as_posix(), "--out",
                     output.relative_to(project).as_posix()],
@@ -442,13 +434,70 @@ def _motion_fingerprint(inputs: Dict[str, str], runtime: Dict[str, Any],
     ).encode("utf-8")).hexdigest()
 
 
+def _editorial_transition(project: Path, line: Dict[str, Any],
+                         placement_id: str) -> Optional[Dict[str, Any]]:
+    """Resolve literal non-factual copy with independently checked backing."""
+    if line.get("claim") is not None:
+        return None
+    try:
+        line_doc = _read_json(project / "script" / "lines.json")
+        map_doc = _read_json(project / "script" / "claim-map.json")
+    except (OSError, ValueError):
+        return None
+    beat = next((row for row in line_doc.get("beats", [])
+                 if row.get("placement_id") == placement_id), None)
+    if not beat or not beat.get("claim_id"):
+        return None
+    claim = next((row for row in map_doc.get("claims", [])
+                  if row.get("claim_id") == beat.get("claim_id")), None)
+    if (not claim or claim.get("kind") not in ("editorial_transition", "cta")
+            or claim.get("assertion_about") != "none"
+            or str(claim.get("text") or "").strip()
+            != str(line.get("narration") or "").strip()):
+        return None
+    if claim.get("kind") == "editorial_transition":
+        if claim.get("evidence"):
+            return None
+        return {"id": str(claim["claim_id"]), "text": str(claim["text"]),
+                "artifacts": [], "editorial_only": True}
+
+    # A source-reference CTA is non-factual only if all preceding factual beats
+    # resolve to source artifacts present in the project's verified inventory.
+    beats = line_doc.get("beats", [])
+    beat_index = next(i for i, row in enumerate(beats)
+                      if row.get("placement_id") == placement_id)
+    prior_claim_ids = {row.get("claim_id") for row in beats[:beat_index]
+                       if row.get("claim_id")}
+    prior_claims = [row for row in map_doc.get("claims", [])
+                    if row.get("claim_id") in prior_claim_ids
+                    and row.get("assertion_about") != "none"]
+    if not prior_claims or any(not row.get("evidence") for row in prior_claims):
+        return None
+    refs = {str(ref.get("evidence_id")) for row in prior_claims
+            for ref in row.get("evidence", []) if ref.get("evidence_id")}
+    try:
+        inventory = _read_json(project / "receipts" / "source-artifacts.json")
+    except (OSError, ValueError):
+        return None
+    inventory_hashes = {str(row.get("sha256"))
+                        for row in inventory.get("artifacts", [])
+                        if row.get("sha256")
+                        and row.get("permission") in ("LICENSED", "PUBLISHABLE")}
+    evidence_hashes = {str(ref.get("sha256")) for row in prior_claims
+                       for ref in row.get("evidence", []) if ref.get("evidence_id")}
+    if not refs or not evidence_hashes or not evidence_hashes.issubset(inventory_hashes):
+        return None
+    return {"id": str(claim["claim_id"]), "text": str(claim["text"]),
+            "artifacts": sorted(refs), "editorial_only": False,
+            "claim_basis": "source_referential_cta"}
+
+
 def _cached_render(project: Path, asset_id: str, placement_id: str,
                    spec_arg: str, runtime: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     """Return a prior motion receipt only when its exact inputs and output match.
 
-    This is called inside the managed execution callback, after the usual grant
-    check. Reuse therefore avoids an unnecessary render without bypassing the
-    account-scoped execution authorization.
+    Reuse requires matching script, claims, source refs, spec, runtime and output
+    hashes plus a passing technical QC receipt. It performs no external action.
     """
     spec_path, _spec = _validate_spec(project, spec_arg)
     script = _read_json(project / "script" / "script.json")
@@ -460,7 +509,10 @@ def _cached_render(project: Path, asset_id: str, placement_id: str,
         return None
     claim = next((row for row in claims.get("claims", [])
                   if row.get("id") == line.get("claim")), None)
-    if not claim or not claim.get("artifacts"):
+    if not claim:
+        claim = _editorial_transition(project, line, placement_id)
+    if not claim or (not claim.get("artifacts")
+                     and not claim.get("editorial_only")):
         return None
     refs_path = project / "sources" / "source-refs.json"
     if not refs_path.is_file():
@@ -514,8 +566,10 @@ def _render(project: Path, account: str, spec_arg: str, placement_id: str,
     claims = claim_doc.get("claims") or []
     claim = next((row for row in claims if row.get("id") == line.get("claim")), None)
     if not claim:
-        raise ValueError("CLAIM_MISSING: placement has no matching claim ledger entry")
-    if not claim.get("artifacts"):
+        claim = _editorial_transition(project, line, placement_id)
+    if not claim:
+        raise ValueError("CLAIM_MISSING: placement has no matching factual or editorial record")
+    if not claim.get("artifacts") and not claim.get("editorial_only"):
         raise ValueError("SOURCE_LINEAGE_MISSING: claim has no source artifact references")
     project_assets = _read_json(project / "sources" / "assets.json")
     target = next((row for row in project_assets.get("assets", [])
@@ -555,15 +609,6 @@ def _render(project: Path, account: str, spec_arg: str, placement_id: str,
     return receipt
 
 
-def _owners() -> List[str]:
-    return [part.strip() for part in os.environ.get(OWNER_ENV, "").split(",")
-            if part.strip()]
-
-
-def _subject() -> str:
-    return os.environ.get(SUBJECT_ENV, "").strip()
-
-
 def main(argv: Optional[Sequence[str]] = None) -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
@@ -578,17 +623,13 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("--asset-id", help="asset id already used by the M5 script line")
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--mode", choices=("AUTO", "REVIEW", "STRICT"), default="AUTO",
-                        help="AUTO renders a draft with review pending; REVIEW/STRICT require copy approval")
+                        help="render a local draft; all modes keep publication and content review separate")
     args = parser.parse_args(argv)
 
     project = _project_path(args.project)
     receipt_path = project / "receipts" / "huashu-motion-preflight.json"
     try:
-        status = _preflight(
-            project, require_copy_review=(args.mode != "AUTO"),
-            # The managed execution gate below is the sole grant evaluation for
-            # a render. Preflight still resolves the registered skill route.
-            check_execution=args.preflight)
+        status = _preflight(project, mode=args.mode)
     except (OSError, ValueError) as exc:
         status = {"state": "BLOCKED", "problems": [str(exc)], "account_id": None,
                   "runtime": None}
@@ -603,45 +644,52 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     if not (args.spec and args.placement_id and args.asset_id):
         parser.error("--render requires --spec, --placement-id and --asset-id")
     account = status["account_id"]
-    entry = next((item for item in skill_route.registry_entries()
-                  if item.get("id") == SKILL_ID), None)
-    verdict = status["skill_route"]
-
-    def run(operation: str, _request: ExecutionRequest) -> Dict[str, Any]:
-        try:
-            cached = _cached_render(project, args.asset_id, args.placement_id,
-                                    args.spec, status["runtime"])
-            if cached:
-                rendered = _register(
-                    project, account, args.asset_id, args.placement_id,
-                    cached["line"], cached["claim"], cached["spec_path"],
-                    cached["spec"], cached["output"], status["runtime"],
-                    cached["technical"])
-                rendered["reused_render"] = True
-                _write_json(project / "receipts" / f"huashu-{args.asset_id}.json",
-                            rendered)
-                _write_json(cached["output"].with_suffix(
-                    cached["output"].suffix + ".receipt.json"), rendered)
-                return {"ok": True, "state": "EXECUTED", "reused": True,
-                        "receipt": rendered}
+    try:
+        cached = _cached_render(project, args.asset_id, args.placement_id,
+                                args.spec, status["runtime"])
+        if cached:
+            rendered = _register(
+                project, account, args.asset_id, args.placement_id,
+                cached["line"], cached["claim"], cached["spec_path"],
+                cached["spec"], cached["output"], status["runtime"],
+                cached["technical"])
+            rendered["reused_render"] = True
+            _write_json(project / "receipts" / f"huashu-{args.asset_id}.json",
+                        rendered)
+            _write_json(cached["output"].with_suffix(
+                cached["output"].suffix + ".receipt.json"), rendered)
+            execution_state = "REUSED"
+        else:
             rendered = _render(project, account, args.spec, args.placement_id,
                                args.asset_id, status["runtime"])
-            return {"ok": True, "state": "EXECUTED", "receipt": rendered}
-        except (OSError, ValueError, KeyError) as exc:
-            return {"ok": False, "state": "BLOCKED", "error": str(exc)}
-
-    result = execute(
-        ExecutionRequest(
-            request_id=f"{project.name}-huashu-{args.asset_id}",
-            skill_id=SKILL_ID, skill_version=SKILL_VERSION, account=account,
-            pipeline="M5", stage="motion", operations=("render",), subject=_subject()),
-        verdict=verdict, registry_entry=entry, project_dir=project,
-        owner_identities=_owners(), executor=run)
-    payload = result.as_dict()
-    payload["production_ready"] = False
-    payload["publish_authorized"] = False
+            execution_state = "EXECUTED"
+    except (OSError, ValueError, KeyError) as exc:
+        payload = {
+            "schema": SCHEMA, "project": project.relative_to(ROOT).as_posix(),
+            "decision": {"state": "NOT_REQUIRED_LOCAL_ONLY",
+                         "execution_authorized": False},
+            "execution": {"state": "FAILED", "operation": "render",
+                          "external_effect": False, "error": str(exc)},
+            "production_ready": False, "publish_authorized": False,
+        }
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        return 1
+    payload = {
+        "schema": SCHEMA,
+        "project": project.relative_to(ROOT).as_posix(),
+        "account_id": account,
+        "decision": {"state": "NOT_REQUIRED_LOCAL_ONLY",
+                     "reason": "no network, paid or publication effect",
+                     "execution_authorized": False},
+        "execution": {"state": execution_state, "operation": "render",
+                      "external_effect": False, "reused": execution_state == "REUSED",
+                      "adapter_receipt": rendered},
+        "receipt": f"project://receipts/huashu-{args.asset_id}.json",
+        "production_ready": False,
+        "publish_authorized": False,
+    }
     print(json.dumps(payload, ensure_ascii=False, indent=2))
-    return 0 if result.executed else 1
+    return 0
 
 
 if __name__ == "__main__":

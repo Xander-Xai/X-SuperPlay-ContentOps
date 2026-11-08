@@ -64,9 +64,56 @@ def _short_label(text: str, limit: int = 12) -> str:
     return value[:limit] if value else "机制步骤"
 
 
+def _motion_terms(text: str) -> set[str]:
+    terms = {token.casefold() for token in re.findall(r"[a-z0-9]+", text, re.I)}
+    for phrase in re.findall(r"[\u3400-\u9fff]+", text):
+        terms.update(phrase[index:index + 2] for index in range(len(phrase) - 1))
+    return terms
+
+
+def _matching_ocr_regions(text: str, source: Mapping[str, Any]) -> List[Dict[str, Any]]:
+    narration_terms = _motion_terms(text)
+    ranked = []
+    for region in source.get("ocr_regions") or []:
+        if not isinstance(region, dict):
+            continue
+        region_text = str(region.get("text") or "").strip()
+        rect = region.get("rect")
+        if not region_text or not isinstance(rect, list) or len(rect) != 4:
+            continue
+        try:
+            left, top, width, height = [float(value) for value in rect]
+            confidence = float(region.get("confidence") or 0)
+        except (TypeError, ValueError):
+            continue
+        if (confidence < 0.5 or left < 0 or top < 0 or width <= 0 or height <= 0
+                or left + width > 1.000001 or top + height > 1.000001):
+            continue
+        overlap = narration_terms & _motion_terms(region_text)
+        if len(overlap) < 2:
+            continue
+        ranked.append(({**region, "rect": [round(left, 6), round(top, 6),
+                                             round(width, 6), round(height, 6)],
+                        "matched_terms": sorted(overlap)},
+                       len(overlap), confidence))
+    ranked.sort(key=lambda item: (-item[1], -item[2], item[0]["text"]))
+    return [item[0] for item in ranked[:2]]
+
+
 def _cues(text: str, kind: str, source_image: str | None,
-          grammar: str) -> List[Dict[str, Any]]:
+          grammar: str, source_regions: Sequence[Mapping[str, Any]] = ()) -> List[Dict[str, Any]]:
     """Build two or three semantic beats from the script line, not a title card."""
+    if grammar == "t2_keynote_ui" and source_image and source_regions:
+        cues: List[Dict[str, Any]] = [
+            {"at": 0.0, "kind": "image", "image": source_image},
+        ]
+        for index, region in enumerate(source_regions):
+            cues.append({
+                "at": 0.8 + index * 1.0,
+                "kind": "highlight",
+                "data": {"rect": list(region["rect"])},
+            })
+        return cues
     if source_image:
         icon_name = next((value for pattern, value in ICON_BY_TOPIC if pattern.search(text)), None)
         cues: List[Dict[str, Any]] = [
@@ -235,13 +282,19 @@ def build_auto_plan(*, project: Path, account_id: str,
     specs_dir = auto_dir / "specs"
     specs_dir.mkdir(parents=True, exist_ok=True)
     shots = []
-    for line, timing in zip(lines, timings):
+    for index, (line, timing) in enumerate(zip(lines, timings)):
         placement = str(line.get("id") or "")
         if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,50}", placement):
             raise MotionPlanError(f"AUTO_MOTION_PLACEMENT_INVALID: {placement!r}")
         source_asset_id = str(line.get("asset_id") or "")
         text = str(line.get("narration") or line.get("caption") or "").strip()
-        duration = float(timing.get("duration") or 0)
+        speech_duration = float(timing.get("duration") or 0)
+        start = float(timing.get("start") or 0)
+        if index + 1 < len(timings):
+            next_start = float(timings[index + 1].get("start") or 0)
+            duration = next_start - start
+        else:
+            duration = speech_duration
         source = source_assets.get(source_asset_id)
         if not placement or not source_asset_id or not text:
             raise MotionPlanError("AUTO_MOTION_LINE_INVALID: each line needs id, source asset and narration")
@@ -250,7 +303,7 @@ def build_auto_plan(*, project: Path, account_id: str,
                 f"AUTO_MOTION_DURATION_UNSUPPORTED: {placement} is {duration:.2f}s; "
                 "a narrated shot must be positive and no longer than 8 seconds")
         render_duration = max(2.0, duration)
-        hold_padding = round(render_duration - duration, 3)
+        hold_padding = round(render_duration - speech_duration, 3)
         kind = _topic_kind(text)
         if kind == "unsupported" and str((source or {}).get("type") or "").upper() == "CODE_SNAPSHOT":
             kind = "code"
@@ -284,14 +337,20 @@ def build_auto_plan(*, project: Path, account_id: str,
             source_image = Path(os.path.relpath(absolute, spec_probe.parent)).as_posix()
             source_image_sha256 = _file_sha(absolute)
 
-        # Keep the 1024 account evidence-led with its screenshot plus annotated
-        # whiteboard flow. Future Intelligence uses progressive derivations for
-        # retrieval, agent-flow and protocol-boundary explanations when allowed.
-        grammar = ("t1_3b1b" if account_id == "x-superplay-future-intelligence"
+        # Keep the 1024 account evidence-led. When OCR identifies a matching
+        # phrase, move the camera to that exact screenshot region; otherwise
+        # use the existing source-anchored whiteboard treatment. Future
+        # Intelligence uses progressive derivations for retrieval, agent-flow
+        # and protocol-boundary explanations when allowed.
+        source_regions = (_matching_ocr_regions(text, source)
+                          if account_id == "x-superplay-1024" and source else [])
+        grammar = ("t2_keynote_ui" if account_id == "x-superplay-1024"
+                   and source_regions and "t2_keynote_ui" in allowed
+                   else "t1_3b1b" if account_id == "x-superplay-future-intelligence"
                    and kind in {"retrieval", "agent", "protocol"}
                    and "t1_3b1b" in allowed
                    else "y3_whiteboard")
-        cues = _cues(text, kind, source_image, grammar)
+        cues = _cues(text, kind, source_image, grammar, source_regions)
         # Cue timestamps must remain inside this exact measured narration clip.
         latest_cue = max(float(cue["at"]) for cue in cues)
         scale = min(1.0, max(0.0, render_duration - 0.1) / latest_cue) if latest_cue else 1.0
@@ -300,7 +359,7 @@ def build_auto_plan(*, project: Path, account_id: str,
                 "width": 1080, "height": 1920, "theme": palette, "cues": cues}
         if hold_padding:
             spec["contentops_timing"] = {
-                "narration_duration_s": duration,
+                "narration_duration_s": speech_duration,
                 "visual_hold_padding_s": hold_padding,
             }
         if source_image_sha256:
@@ -333,11 +392,12 @@ def build_auto_plan(*, project: Path, account_id: str,
             "spec": spec_path.relative_to(project).as_posix(),
             "duration_s": duration,
             "source_refs": [str(ref) for ref in line.get("source_refs", [])],
+            "ocr_targets": source_regions,
             "visual_match": "PENDING_FRAME_REVIEW",
         })
     plan = {"schema": "contentops.motion-shot-plan/v1", "account_id": account_id,
             "profile_version": account_dna.get("version"), "input_sha256": fingerprint,
-            "compiler": "contentops.motion_planner/v3",
+            "compiler": "contentops.motion_planner/v4",
             "compiler_sha256": planner_sha256, "shots": shots}
     plan_path = auto_dir / f"shot-plan-{fingerprint[:12]}.json"
     if not plan_path.exists():

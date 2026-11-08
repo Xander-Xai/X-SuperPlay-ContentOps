@@ -116,7 +116,7 @@
         "network": false,
         "paid": false,
         "cross_project_reuse": false,
-        "note": "Local rendering only; routing is not an execution grant."
+        "note": "Local rendering only; the adapter permits this non-paid local effect without a project grant. No network, paid, cross-project or publication effect is authorized."
       },
       "verification": {
         "status": "WINDOWS_SMOKE_PASS",
@@ -126,7 +126,9 @@
       "execution": {
         "adapter": "scripts/huashu_motion_adapter.py",
         "m5_stage": "motion",
-        "authorizes_execution": false
+        "authorizes_execution": false,
+        "project_grant_required": false,
+        "local_effect_policy": "LOCAL_ONLY_NO_NETWORK_NO_PAID_NO_PUBLICATION"
       }
     }
   ]

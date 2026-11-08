@@ -274,7 +274,10 @@ def _prepare_brief_inputs(project: Path, *, mode: str,
     from contentops.script import ScriptBlocked, build as build_draft, write as write_draft
     from contentops.script.m5_bridge import BridgeBlocked, build as build_bridge, write as write_bridge
 
-    preview = mode == "AUTO"
+    # REVIEW is a request to inspect a locally rendered draft. It therefore
+    # must allow the draft to be assembled; STRICT remains the explicit
+    # pre-render copy approval mode. Publication always stays separate.
+    preview = mode in {"AUTO", "REVIEW"}
     raw_receipt = project / "receipts" / "raw-inputs.json"
     if raw_receipt.is_file():
         import raw_video_inputs
@@ -367,7 +370,7 @@ def _record_brief_preparation_failure(project: Path, mode: str,
         "external_cost": 0,
         "external_cost_reason": "brief preparation stopped before provider calls",
         "human_review": "PENDING_FOUNDER_REVIEW",
-        "copy_review_required_for_render": mode != "AUTO",
+        "copy_review_required_for_render": mode == "STRICT",
         "brief_preparation": {"state": "BLOCKED",
                               "failure_reason": str(error)[:1000]},
         "failure_type": type(error).__name__,
@@ -456,7 +459,7 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
         "external_cost": 0,
         "external_cost_reason": "M5 accepts only local SAPI or receipt-bound existing narration in this entry; no paid provider is called",
         "human_review": "PENDING_FOUNDER_REVIEW",
-        "copy_review_required_for_render": mode != "AUTO",
+        "copy_review_required_for_render": mode == "STRICT",
         "brief_preparation": brief_preparation,
         "published": False,
     }
@@ -464,12 +467,12 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     try:
-        if mode in {"REVIEW", "STRICT"}:
+        if mode == "STRICT":
             try:
                 m5_production.copy_review.require_approved(project)
             except m5_production.copy_review.CopyReviewRequired as exc:
                 raise m5_production.M5Blocked(f"copy review: {exc}") from None
-        build_options = {"require_copy_review": mode != "AUTO"}
+        build_options = {"require_copy_review": mode == "STRICT"}
         if assets_dir is not None:
             build_options["assets_dir"] = assets_dir
         m5_run = m5_production.build(project, **build_options)
@@ -530,7 +533,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--source-url", action="append", default=[],
                         help="licensed public GitHub repository to pin as source evidence")
     parser.add_argument("--mode", default="AUTO", choices=("AUTO", "REVIEW", "STRICT"),
-                        help="AUTO runs authorized M5 stages; REVIEW/STRICT also require a recorded copy approval")
+                        help="AUTO renders automatically; REVIEW renders a draft for review; STRICT requires copy approval first")
     parser.add_argument("--force", action="store_true", help="rerun even when the same inputs already passed QC")
     parser.add_argument("--assets", default=None,
                         help="explicit local image/video folder; imported media is local-preview-only")

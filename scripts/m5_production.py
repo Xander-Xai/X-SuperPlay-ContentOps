@@ -511,12 +511,12 @@ def stage_claims(project: Path, artifacts: Dict[str, Any]) -> Dict[str, Any]:
 def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], *,
                  require_copy_review: bool,
                  narration: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """Render account-profile or explicitly planned Huashua clips via its grant.
+    """Render account-profile or explicitly planned local Huashua clips.
 
     An M5 video account with a Huashua profile receives an automatic plan when
     no hand-authored plan is present. Unsupported content or missing source
     anchors stop before execution. The managed adapter remains the only render
-    path and this stage never creates or widens its execution grant.
+    path; this local, non-paid action does not use a project execution grant.
     """
     motion = config.get("motion") or {}
     if not isinstance(motion, dict):
@@ -646,7 +646,7 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
         except ValueError:
             result = {}
         execution = result.get("execution") or {}
-        if proc.returncode != 0 or execution.get("state") != "EXECUTED":
+        if proc.returncode != 0 or execution.get("state") not in ("EXECUTED", "REUSED"):
             detail = (execution.get("error") or
                       (result.get("decision") or {}).get("detail") or
                       (proc.stderr or proc.stdout or "adapter returned no execution receipt"))
@@ -655,6 +655,8 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
                         "source_asset_id": shot.get("source_asset_id", line.get("asset_id")),
                         "content_point": shot.get("content_point", line.get("narration")),
                         "motion_syntax": shot.get("motion_syntax", "explicit-shot-plan"),
+                        "execution_state": execution.get("state"),
+                        "reused_render": execution.get("reused") is True,
                         "duration_s": shot.get("duration_s"),
                         "source_refs": shot.get("source_refs", []),
                         "visual_match": shot.get("visual_match", "PENDING_FRAME_REVIEW"),
@@ -920,24 +922,27 @@ def stage_subtitles(project: Path, script: Dict[str, Any], narration: Dict[str, 
 
 def _align_shots_to_narration(shots: List[Dict[str, Any]],
                               narration_lines: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Make the visual timeline cover the spoken one, gaps included.
+    """Align each cut to measured speech starts, keeping natural pauses local.
 
-    Per-line durations alone omit the pauses between lines, so the rendered
-    video ends before the audio does and the last words are cut. Extending the
-    final shot by the uncovered remainder keeps the picture on screen for the
-    whole narration without moving any earlier cut.
+    Adding all inter-line pauses to the final clip can make a real motion clip
+    much shorter than its requested duration. Each shot now carries only the
+    pause immediately following its own line; the last shot ends at the final
+    measured speech boundary.
     """
     if not shots or not narration_lines:
         return shots
-    timeline_end = max(
-        float(line.get("start") or 0.0) + float(line.get("duration") or 0.0)
-        for line in narration_lines
-    )
-    covered = sum(float(shot.get("duration") or 0.0) for shot in shots)
-    if timeline_end > covered + 0.001:
-        extended = round(float(shots[-1]["duration"]) + (timeline_end - covered), 3)
-        shots[-1]["duration"] = extended
-        shots[-1]["duration_s"] = extended
+    if len(shots) != len(narration_lines):
+        raise M5Blocked("storyboard shots do not match measured narration lines")
+    for index, (shot, line) in enumerate(zip(shots, narration_lines)):
+        start = float(line.get("start") or 0.0)
+        if index + 1 < len(narration_lines):
+            duration = float(narration_lines[index + 1].get("start") or 0.0) - start
+        else:
+            duration = float(line.get("duration") or 0.0)
+        if duration <= 0:
+            raise M5Blocked(f"narration line {index + 1} has a non-positive timeline span")
+        shot["duration"] = round(duration, 3)
+        shot["duration_s"] = round(duration, 3)
     return shots
 
 

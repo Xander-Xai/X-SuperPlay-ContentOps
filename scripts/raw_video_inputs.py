@@ -142,6 +142,59 @@ def _asset_match_score(narration: str, recognized_text: str) -> float:
     return len(overlap) / len(beat_terms)
 
 
+def _normalized_ocr_regions(result: Any, width: int, height: int) -> list[dict[str, Any]]:
+    """Keep OCR text and normalized boxes so motion can target real UI details."""
+    if width <= 0 or height <= 0:
+        return []
+    regions = []
+    for row in result or []:
+        if len(row) < 3 or not str(row[1]).strip():
+            continue
+        try:
+            points = [(float(point[0]), float(point[1])) for point in row[0]]
+            confidence = float(row[2])
+        except (TypeError, ValueError, IndexError):
+            continue
+        if not points:
+            continue
+        left = max(0.0, min(x for x, _ in points) / width)
+        top = max(0.0, min(y for _, y in points) / height)
+        right = max(0.0, min(1.0, max(x for x, _ in points) / width))
+        bottom = max(0.0, min(1.0, max(y for _, y in points) / height))
+        if right <= left or bottom <= top:
+            continue
+        regions.append({
+            "text": str(row[1]).strip(),
+            "confidence": round(max(0.0, min(1.0, confidence)), 4),
+            "rect": [round(left, 6), round(top, 6),
+                     round(right - left, 6), round(bottom - top, 6)],
+        })
+    return regions
+
+
+def _topical_source_lines(lines: list[str], queries: list[str], limit: int = 42
+                         ) -> list[tuple[int, str]]:
+    """Select verbatim source lines that visibly support the related claims."""
+    query_terms = set().union(*(_visual_terms(value) for value in queries)) if queries else set()
+    ranked = []
+    for index, line in enumerate(lines):
+        overlap = query_terms & _visual_terms(line)
+        if overlap:
+            ranked.append((len(overlap), index))
+    selected: set[int] = set()
+    for _, index in sorted(ranked, key=lambda item: (-item[0], item[1])):
+        for candidate in (index - 1, index, index + 1):
+            if 0 <= candidate < len(lines):
+                selected.add(candidate)
+                if len(selected) >= limit:
+                    break
+        if len(selected) >= limit:
+            break
+    if not selected:
+        selected.update(range(min(limit, len(lines))))
+    return [(index + 1, lines[index]) for index in sorted(selected)][:limit]
+
+
 def _now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace(
         "+00:00", "Z")
@@ -585,6 +638,7 @@ def prepare_m5_contracts(project: Path) -> dict[str, Any]:
     title_font, body_font, code_font = font(36), font(30), font(25, mono=True)
     evidence_by_path: dict[str, dict[str, Any]] = {}
     source_permissions: dict[str, dict[str, Any]] = {}
+    source_visual_queries: dict[str, list[str]] = {}
     for claim in claims_doc.get("claims") or []:
         for evidence in claim.get("evidence") or []:
             evidence_id = str(evidence.get("evidence_id") or "")
@@ -597,6 +651,11 @@ def prepare_m5_contracts(project: Path) -> dict[str, Any]:
                            if row.get("document") == relative), None)
             if not origin or origin.get("permission") != "LICENSED":
                 raise ValueError(f"no licensed source authority for {relative}")
+            source_visual_queries.setdefault(relative, []).extend(
+                [str(claim.get("text") or "")]
+                + [str(item.get("text") or "")
+                   for item in (claim.get("appearances") or [])
+                   if isinstance(item, dict)])
             source_permissions[evidence_id] = {
                 "permission": "LICENSED",
                 "title": origin["title"],
@@ -636,8 +695,8 @@ def prepare_m5_contracts(project: Path) -> dict[str, Any]:
         draw.text((92, 210), filename, font=code_font,
                   fill=str(palette.get("sub") or "#8B95A5"))
         y = 278
-        shown = lines[:42]
-        for line_number, source_line in enumerate(shown, start=1):
+        shown = _topical_source_lines(lines, source_visual_queries.get(relative, []))
+        for line_number, source_line in shown:
             line = source_line.expandtabs(4)
             if len(line) > 70:
                 line = line[:67] + "…"
@@ -674,6 +733,7 @@ def prepare_m5_contracts(project: Path) -> dict[str, Any]:
                    and row.get("type") == "USER_PROVIDED_IMAGE"]
     ocr_rows: list[dict[str, Any]] = []
     asset_text: dict[str, str] = {}
+    asset_regions: dict[str, list[dict[str, Any]]] = {}
     ocr_engine_name = "rapidocr_onnxruntime"
     if user_assets:
         try:
@@ -687,12 +747,19 @@ def prepare_m5_contracts(project: Path) -> dict[str, Any]:
                 result, _ = ocr(str(asset_path))
                 recognized = " ".join(str(row[1]) for row in (result or [])
                                        if len(row) > 1 and str(row[1]).strip())
+                from PIL import Image
+                with Image.open(asset_path) as opened:
+                    image_width, image_height = opened.size
+                regions = _normalized_ocr_regions(result, image_width, image_height)
                 asset_id = str(asset.get("id") or "")
                 asset_text[asset_id] = recognized
+                asset_regions[asset_id] = regions
                 ocr_rows.append({"asset_id": asset_id,
                                  "source_name": str(asset.get("source_name") or ""),
                                  "sha256": str(asset.get("sha256") or ""),
-                                 "recognized_text": recognized})
+                                 "image_size": [image_width, image_height],
+                                 "recognized_text": recognized,
+                                 "regions": regions})
         except ImportError:
             ocr_engine_name = "unavailable"
         except Exception as exc:
@@ -737,6 +804,10 @@ def prepare_m5_contracts(project: Path) -> dict[str, Any]:
 
     current = [row for row in existing.get("assets", [])
                if isinstance(row, dict) and row.get("permission") == "USER_PROVIDED_LOCAL"]
+    for asset in current:
+        asset_id = str(asset.get("id") or "")
+        if asset_id in asset_regions:
+            asset["ocr_regions"] = asset_regions[asset_id]
     existing["assets"] = current + entries
     assets_path.write_text(json.dumps(existing, ensure_ascii=False, indent=2) + "\n",
                            encoding="utf-8")
