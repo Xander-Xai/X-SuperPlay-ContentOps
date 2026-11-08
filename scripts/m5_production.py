@@ -618,6 +618,38 @@ def _source_snapshot_for_refs(refs: List[Dict[str, Any]],
     return None
 
 
+def _ocr_local_asset_for_placement(project: Path, placement_id: str,
+                                   source_assets: List[Dict[str, Any]]) -> Optional[str]:
+    """Return a registered local screenshot only when OCR matched this beat.
+
+    ``prepare_m5_contracts`` writes both the per-placement asset map and the
+    OCR match receipt. Requiring both keeps a stale or hand-edited mapping from
+    replacing the source artifact used to verify the claim.
+    """
+    semantic_path = project / "receipts" / "local-asset-semantic-map.json"
+    asset_map_path = project / "script" / "asset-map.json"
+    try:
+        semantic = json.loads(semantic_path.read_text(encoding="utf-8"))
+        asset_map = json.loads(asset_map_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if (semantic.get("state") != "OCR_MATCHED"
+            or asset_map.get("schema") != "contentops.asset-map/v1"):
+        return None
+    mapped_id = str((asset_map.get("mapping") or {}).get(placement_id) or "")
+    matched = any(str(row.get("placement_id") or "") == placement_id
+                  and str(row.get("asset_id") or "") == mapped_id
+                  for row in semantic.get("matches") or [] if isinstance(row, dict))
+    if not mapped_id or not matched:
+        return None
+    asset = next((row for row in source_assets
+                  if isinstance(row, dict) and str(row.get("id") or "") == mapped_id), None)
+    if (not asset or asset.get("permission") != "USER_PROVIDED_LOCAL"
+            or str(asset.get("type") or "").upper() != "USER_PROVIDED_IMAGE"):
+        return None
+    return mapped_id
+
+
 def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], *,
                  require_copy_review: bool,
                  narration: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -691,8 +723,14 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
                                        if item.get("url") or item.get("path")]
                 # Legacy script lines often all point to anchor-01, which
                 # repeats the wrong file for engine/retriever claims.
-                snapshot_id = _source_snapshot_for_refs(artifacts, source_assets)
-                if snapshot_id:
+                placement = str(line.get("id") or "")
+                ocr_asset_id = _ocr_local_asset_for_placement(
+                    project, placement, source_assets)
+                snapshot_id = (None if ocr_asset_id else
+                               _source_snapshot_for_refs(artifacts, source_assets))
+                if ocr_asset_id:
+                    line["asset_id"] = ocr_asset_id
+                elif snapshot_id:
                     line["asset_id"] = snapshot_id
                 plan_script["lines"].append(line)
             generated = build_auto_plan(

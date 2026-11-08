@@ -113,6 +113,34 @@ def test_source_refs_mirrored_in_yaml_and_sidecar_are_deduplicated(tmp_path):
         assert "conflicting duplicate source id" in str(exc)
     else:
         raise AssertionError("conflicting evidence declarations must fail closed")
+
+
+def test_c_motion_preserves_only_ocr_matched_local_screenshots(tmp_path):
+    placement = "P-08"
+    asset_id = "user-evidence-1"
+    for relative, payload in {
+        "receipts/local-asset-semantic-map.json": {
+            "state": "OCR_MATCHED",
+            "matches": [{"placement_id": placement, "asset_id": asset_id}],
+        },
+        "script/asset-map.json": {
+            "schema": "contentops.asset-map/v1",
+            "mapping": {placement: asset_id},
+        },
+    }.items():
+        path = tmp_path / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(payload), encoding="utf-8")
+    screenshot = {"id": asset_id, "type": "USER_PROVIDED_IMAGE",
+                  "permission": "USER_PROVIDED_LOCAL"}
+    assert m5_production._ocr_local_asset_for_placement(
+        tmp_path, placement, [screenshot]) == asset_id
+
+    # A user asset without the OCR receipt cannot override claim-bound source.
+    (tmp_path / "receipts" / "local-asset-semantic-map.json").write_text(
+        json.dumps({"state": "OCR_MATCHED", "matches": []}), encoding="utf-8")
+    assert m5_production._ocr_local_asset_for_placement(
+        tmp_path, placement, [screenshot]) is None
     assert visual_gate.evaluate_film_gate(
         {"gate_light": "green", "verdict": "green"}, 2)["state"] == "BLOCKED"
     assert visual_gate.evaluate_film_gate(
@@ -1170,6 +1198,37 @@ def test_huashu_motion_auto_film_uses_readable_lines_from_registered_source():
         assert "bm25 = self.bm25_index.score(query)" in html_text
         assert "RANKING SCHEMATIC · NO MEASURED SCORES" in html_text
         assert "核心步骤" not in html_text
+        assert "background-size:72px 72px" in html_text
+        assert "rgba(16,18,22,.86)" in html_text
+        assert "font-size:42px" in html_text
+
+
+def test_huashu_code_motion_keeps_source_in_safe_frame_and_uses_account_art_direction():
+    import huashu_motion_backend
+
+    with tempfile.TemporaryDirectory(dir=ROOT / ".verify-tmp") as temp:
+        project = Path(temp)
+        document = project / "sources" / "architecture.md"
+        document.parent.mkdir(parents=True)
+        document.write_text("## Flow\nsource -> retrieval -> answer\n", encoding="utf-8")
+        (project / "sources" / "assets.json").write_text(json.dumps({"assets": [{
+            "id": "source-01", "type": "CODE_SNAPSHOT",
+            "repo_path": document.relative_to(ROOT).as_posix(),
+            "source_document": "sources/architecture.md",
+        }]}), encoding="utf-8")
+        dna = json.loads((ROOT / "config" / "accounts" /
+                          "x-superplay-future-intelligence.json").read_text(encoding="utf-8"))
+        shot = {"placement_id": "P-03", "source_asset_id": "source-01",
+                "content_point": "RAG 组件如何配合？", "semantic_class": "code"}
+        runtime = ROOT / ".verify-tmp" / "huashu-motion-runtime"
+        with mock.patch.object(huashu_motion_backend, "resolve_runtime", return_value=runtime):
+            film_rel = huashu_motion_backend.author_auto_film(
+                project, shot, {"id": "P-03", "caption": "RAG 组件"}, dna, 3.0)
+        html_text = (project / film_rel / "index.html").read_text(encoding="utf-8")
+        assert "rgba(139,149,165,.055)" in html_text
+        assert "background-color:rgba(16,18,22,.86)" in html_text
+        assert "x:-250" not in html_text and "x:250" not in html_text
+        assert "font-size:58px" in html_text
 
 
 def test_future_intelligence_auto_plan_explains_rrf_with_rank_contributions():

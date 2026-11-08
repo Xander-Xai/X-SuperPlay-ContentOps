@@ -148,27 +148,35 @@ def author_auto_film(project: Path, shot: Dict[str, Any], line: Dict[str, Any],
                    if str(row.get("id")) == source_id), None)
     source_path: Optional[Path] = None
     source_text_path: Optional[Path] = None
-    if source and str(source.get("type") or "").upper() == "CODE_SNAPSHOT":
+    source_type = str((source or {}).get("type") or "").upper()
+    if source and source_type in {"CODE_SNAPSHOT", "USER_PROVIDED_IMAGE"}:
         candidate = (ROOT / str(source.get("repo_path") or "")).resolve()
         try:
             candidate.relative_to(ROOT.resolve())
         except ValueError:
             raise BackendError("automatic Huashu Motion source escapes the repository") from None
         if candidate.is_file():
+            declared_sha = str(source.get("sha256") or "")
+            if declared_sha and _sha(candidate) != declared_sha:
+                raise BackendError("automatic Huashu Motion source image hash changed")
             source_path = candidate
-        document = (project / str(source.get("source_document") or "")).resolve()
-        try:
-            document.relative_to(project)
-        except ValueError:
-            raise BackendError("automatic Huashu Motion source document escapes the project") from None
-        if document.is_file():
-            source_text_path = document
+        elif source_type == "USER_PROVIDED_IMAGE":
+            raise BackendError("registered local screenshot is missing")
+        if source_type == "CODE_SNAPSHOT":
+            document = (project / str(source.get("source_document") or "")).resolve()
+            try:
+                document.relative_to(project)
+            except ValueError:
+                raise BackendError("automatic Huashu Motion source document escapes the project") from None
+            if document.is_file():
+                source_text_path = document
 
     fingerprint = hashlib.sha256(json.dumps({
         "shot": shot, "line": line, "duration_s": round(float(duration_s), 4),
         "palette": palette, "source_sha256": _sha(source_path) if source_path else None,
         "source_text_sha256": _sha(source_text_path) if source_text_path else None,
         "runtime_version": _json(runtime / "package.json").get("version"),
+        "scene_template_version": "account-art-direction-v2",
     }, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
     film = project / "motion" / "huashu-motion" / "auto" / f"{placement}-{fingerprint[:10]}"
     vendor = film / "vendor"
@@ -352,12 +360,12 @@ def author_auto_film(project: Path, shot: Dict[str, Any], line: Dict[str, Any],
                 f".fromTo('.row-0',{{x:-90,opacity:.75}},{{x:0,opacity:1,duration:.28}},.12)"
                 ".fromTo('.code-row:not(.row-0)',{x:90,opacity:.65},{x:0,opacity:1,duration:.25,stagger:.08},.22)"
                 f".to('.code',{{y:{pan},duration:{max(.7,duration_s*.42):.3f},ease:'power3.inOut'}},.48)"
-                f".to('.editor',{{x:{-250 if center % 2 else 250},y:-42,duration:{min(.45,duration_s*.22):.3f},ease:'power2.inOut'}},.62)"
+                f".to('.editor',{{y:-26,scale:1.018,duration:{min(.45,duration_s*.22):.3f},ease:'power2.inOut'}},.62)"
                 f".to('.row-{active}',{{backgroundColor:'{palette['accent']}',borderColor:'{palette['accent']}',scale:1.025,duration:.30}},.78)"
                 f".to('.row-{active} code,.row-{active} i',{{color:'{palette['bg']}',duration:.16}},.82)"
                 f".to('.row-{active}',{{backgroundColor:'{palette['surface']}',scale:1,duration:.28}},{max(1.35,duration_s*.68):.3f})"
                 f".to('.row-{active} code,.row-{active} i',{{color:'{palette['ink']}',duration:.16}},{max(1.38,duration_s*.70):.3f})"
-                f".to('.editor',{{x:{160 if center % 2 else -160},y:-115,duration:{min(.45,duration_s*.20):.3f},ease:'power2.inOut'}},{max(1.15,duration_s*.59):.3f});"
+                f".to('.editor',{{y:-4,scale:1,duration:{min(.45,duration_s*.20):.3f},ease:'power2.inOut'}},{max(1.15,duration_s*.59):.3f});"
             )
         material_lines.append(f"- Source excerpt comes from `{source.get('source_document')}`; source SHA-256 `{_sha(source_text_path)}`.")
         if source_path:
@@ -365,9 +373,46 @@ def author_auto_film(project: Path, shot: Dict[str, Any], line: Dict[str, Any],
             shutil.copy2(source_path, assets_dir / "source.png")
     elif source_path:
         shutil.copy2(source_path, assets_dir / "source.png")
-        image_markup = '<img class="source" src="assets/source.png" alt="pinned source screenshot">'
-        image_animation = "tl.fromTo('.source',{scale:1.08,opacity:.45},{scale:1,opacity:1,duration:.52});"
+        if source_type == "USER_PROVIDED_IMAGE":
+            focus_markup = ""
+            focus_animation = ""
+            targets = shot.get("ocr_targets") or []
+            rect = targets[0].get("rect") if targets and isinstance(targets[0], dict) else None
+            if isinstance(rect, list) and len(rect) == 4:
+                try:
+                    from PIL import Image
+                    with Image.open(source_path) as original:
+                        image_w, image_h = original.size
+                    scale = min(1000 / image_w, 1250 / image_h)
+                    drawn_w, drawn_h = image_w * scale, image_h * scale
+                    offset_x, offset_y = (1000 - drawn_w) / 2, (1250 - drawn_h) / 2
+                    left, top, width, height = (float(value) for value in rect)
+                    box = (offset_x + left * drawn_w, offset_y + top * drawn_h,
+                           width * drawn_w, height * drawn_h)
+                    focus_markup = (
+                        '<div class="ocr-focus" style="left:%.1fpx;top:%.1fpx;'
+                        'width:%.1fpx;height:%.1fpx"></div>' % box
+                    )
+                    focus_animation = (
+                        "tl.fromTo('.ocr-focus',{scale:.92,opacity:0},{scale:1,opacity:1,duration:.32},.62);"
+                    )
+                except (OSError, TypeError, ValueError):
+                    focus_markup = ""
+                    focus_animation = ""
+            image_markup = (
+                '<div class="source-stage"><img class="source-evidence" src="assets/source.png" '
+                'alt="user-provided source screenshot">' + focus_markup + '</div>'
+            )
+            image_animation = (
+                "tl.fromTo('.source-stage',{x:45,opacity:.55},{x:0,opacity:1,duration:.36});"
+                + focus_animation
+            )
+        else:
+            image_markup = '<img class="source" src="assets/source.png" alt="pinned source screenshot">'
+            image_animation = "tl.fromTo('.source',{scale:1.08,opacity:.45},{scale:1,opacity:1,duration:.52});"
         material_lines.append(f"- `assets/source.png`: registered source image; SHA-256 `{_sha(source_path)}`.")
+        if source_type == "USER_PROVIDED_IMAGE":
+            material_lines.append("- Screenshot remains fully visible; the cyan focus box comes from this placement's OCR target.")
     else:
         label = html.escape(str(line.get("caption") or line.get("narration") or
                                 shot.get("content_point") or "").strip()[:62])
@@ -384,7 +429,9 @@ def author_auto_film(project: Path, shot: Dict[str, Any], line: Dict[str, Any],
             ".fromTo('.stage-rail b',{scaleX:0},{scaleX:1,duration:.35,stagger:.28},.6)"
             ".fromTo('.diagram-note',{opacity:.75},{opacity:1,duration:.25},1.8);"
         )
-    scene_title = html.escape(str(shot.get("content_point") or line.get("caption") or "").strip()[:64])
+    raw_title = str(shot.get("content_point") or line.get("caption") or "").strip()[:64]
+    scene_title = html.escape(raw_title)
+    title_px = 58 if len(raw_title) <= 14 else 49 if len(raw_title) <= 19 else 42
     evidence_label = html.escape(Path(str(source.get("source_document") or "source")).name
                                  if source else "EXPLANATORY MOTION")
     colors = {key: str(palette[key]) for key in ("bg", "surface", "ink", "sub", "accent", "accent2")}
@@ -396,7 +443,7 @@ def author_auto_film(project: Path, shot: Dict[str, Any], line: Dict[str, Any],
 body{{font-family:"Noto Sans SC",sans-serif;background:{colors['bg']};color:{colors['ink']}}}
 #film{{position:relative;width:1080px;height:1920px;overflow:hidden;background:{colors['bg']}}}
 .eyebrow{{position:absolute;left:72px;top:112px;color:{colors['sub']};font:22px ui-monospace,monospace;letter-spacing:2px}}
-h1{{position:absolute;left:68px;right:68px;top:230px;margin:0;font-size:58px;line-height:1.16}}
+h1{{position:absolute;left:68px;right:68px;top:230px;margin:0;font-size:{title_px}px;line-height:1.20;max-height:190px;overflow:hidden;letter-spacing:-.02em}}
 .editor{{position:absolute;left:48px;right:48px;top:390px;height:1340px;background:{colors['bg']};border:2px solid {colors['surface']};border-radius:24px;overflow:hidden;box-shadow:0 34px 90px #0008}}
 .editor-bar{{height:78px;background:{colors['surface']};display:flex;align-items:center;gap:10px;padding:0 28px;color:{colors['sub']};font:19px ui-monospace,monospace;letter-spacing:1px}}
 .editor-bar b{{width:12px;height:12px;border-radius:50%;background:{colors['sub']};opacity:.6}}.editor-bar b:first-child{{background:{colors['accent']}}}.editor-bar b:nth-child(2){{background:{colors['sub']}}}.editor-bar b:nth-child(3){{background:{colors['sub']}}}.editor-bar span{{margin-left:18px}}
@@ -469,6 +516,9 @@ h1{{position:absolute;left:68px;right:68px;top:230px;margin:0;font-size:58px;lin
 .hybrid-merge{{position:absolute;left:195px;right:195px;top:1090px;padding:24px;text-align:center;background:{colors['surface']};border:2px solid {colors['accent']};font:800 32px/1.35 ui-monospace,monospace;box-shadow:0 24px 70px #0008}}
 .kind-hybrid .source-code{{top:1420px;min-height:280px}}
 .source{{position:absolute;left:0;top:410px;width:100%;height:1250px;object-fit:cover;object-position:center;transform-origin:center}}
+.source-stage{{position:absolute;left:40px;top:410px;width:1000px;height:1250px;overflow:hidden;background:{colors['surface']};border:2px solid {colors['surface']};display:flex;align-items:center;justify-content:center}}
+.source-stage img{{width:100%;height:100%;object-fit:contain;transform-origin:center}}
+.ocr-focus{{position:absolute;border:6px solid {colors['accent']};box-shadow:0 0 0 9999px #0F111766,0 0 26px {colors['accent']};border-radius:8px;pointer-events:none;transform-origin:center}}
 .hero-label{{position:absolute;left:72px;right:72px;top:400px;font-size:54px;font-weight:700;line-height:1.2}}
 .stage-rail{{position:absolute;left:160px;right:160px;top:690px;display:flex;align-items:center;justify-content:space-between;color:{colors['accent']};font:700 26px ui-monospace,monospace}}
 .stage-rail b{{height:4px;flex:1;background:{colors['surface']};transform-origin:left;margin:0 20px}}
@@ -477,6 +527,32 @@ h1{{position:absolute;left:68px;right:68px;top:230px;margin:0;font-size:58px;lin
 .first{{top:0}}.second{{top:220px;border-color:{colors['accent2']}}}.third{{top:440px;border-color:{colors['accent']}}}
 .diagram-note{{position:absolute;left:72px;bottom:130px;color:{colors['sub']};font:18px ui-monospace,monospace;letter-spacing:1px}}
 .footer{{position:absolute;left:72px;bottom:118px;color:{colors['sub']};font:20px ui-monospace,monospace;letter-spacing:1px}}
+/* Account-DNA art direction: ink-black canvas, quiet technical geometry,
+   translucent charcoal surfaces and cyan only for the current focal event. */
+#film{{isolation:isolate;background-color:{colors['bg']};background-image:
+  linear-gradient(90deg,transparent 0,transparent 71px,rgba(139,149,165,.055) 72px,transparent 73px),
+  linear-gradient(0deg,transparent 0,transparent 71px,rgba(139,149,165,.045) 72px,transparent 73px);
+  background-size:72px 72px}}
+#film::before{{content:"";position:absolute;z-index:-1;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at 52% 46%,rgba(56,189,248,.055),transparent 58%);
+  opacity:.62}}
+.editor,.query-node,.lane,.document-sheet,.chunk-card,.rank-column,.rank-item,
+.rrf-equation,.rerank-stack,.cross-encoder,.ordered-output,.cache-query,.cache-gate,
+.cache-branch,.guardrail-bar,.orbit-node,.hybrid-query,.hybrid-lane,.hybrid-merge,
+.node,.source-code{{background-color:rgba(16,18,22,.86);border-color:rgba(139,149,165,.24)}}
+.editor{{left:72px;right:72px;width:auto;border-radius:10px 10px 18px 18px;box-shadow:0 28px 70px #0009}}
+.editor-bar{{background:rgba(22,26,34,.58);border-bottom:1px solid rgba(139,149,165,.20)}}
+.code-row{{background:rgba(22,26,34,.34);border-bottom:1px solid rgba(139,149,165,.08);border-radius:0;margin-bottom:5px}}
+.code-row i{{font-size:20px;min-width:64px}}
+.code-row code{{font-size:28px;line-height:1.32}}
+.source-stage{{background:{colors['bg']};border:1px solid rgba(139,149,165,.35);border-radius:12px;box-shadow:0 24px 68px #0009}}
+.source-stage img{{border-radius:10px}}
+.lane,.hybrid-lane,.rank-column,.cache-branch,.orbit-node,.node{{box-shadow:none;border-radius:4px 12px 12px 4px}}
+.query-node,.hybrid-query,.rrf-equation,.cross-encoder,.ordered-output,.cache-query,.cache-gate,.hybrid-merge{{border-radius:10px;background:rgba(16,18,22,.92)}}
+.candidate,.candidate-card,.document-lines .source-line{{background:rgba(10,11,13,.72);border-radius:4px}}
+.source-code,.guardrail-bar,.diagram-note{{background:rgba(16,18,22,.65)}}
+.retrieval-scene::after{{content:"";position:absolute;left:72px;right:72px;top:355px;height:1px;background:linear-gradient(90deg,transparent,rgba(139,149,165,.28),transparent);pointer-events:none}}
+.editor-foot,.diagram-note,.footer{{font-size:16px;letter-spacing:.08em}}
 </style></head><body><main id="film" data-composition-id="film" data-width="1080" data-height="1920">
 <div class="eyebrow">{evidence_label}　·　{placement}</div><h1>{scene_title}</h1>{image_markup}
 <div class="footer">CONTENTOPS / MOTION</div></main>
