@@ -73,22 +73,50 @@ def _account_slug(project: Path) -> str:
     return ""
 
 
-def _real_source_floor(project: Path) -> tuple[float, str]:
-    """Use the account's evidence mode; only evidence-led accounts need capture time."""
+def _real_source_floor(project: Path) -> tuple[float, str, str]:
+    """Resolve a capture-time floor from both account DNA and video format.
+
+    Capture-heavy formats (recording walkthroughs and evidence demonstrations)
+    retain the 70% floor. Technical explainers, code walkthroughs, product
+    launches and motion explainers may use verified documents/code/claims as
+    their evidence while motion carries the visual story. Claim verification is
+    independent and still applies to every format.
+    """
     slug = _account_slug(project)
+    content_type = ""
+    project_yaml = Path(project) / "project.yaml"
+    if project_yaml.is_file():
+        try:
+            import yaml  # type: ignore
+            config = yaml.safe_load(project_yaml.read_text(encoding="utf-8")) or {}
+            content_type = str(config.get("content_type") or "").strip().lower()
+        except (ImportError, ValueError):
+            for line in project_yaml.read_text(encoding="utf-8", errors="replace").splitlines():
+                if line.strip().startswith("content_type:"):
+                    content_type = line.split(":", 1)[1].strip().strip("\"'").lower()
+                    break
+    capture_formats = {"recorded_demo", "screen_recording", "evidence_demo", "field_capture"}
+    explanatory_formats = {
+        "technical_explainer", "tech_review", "code_walkthrough",
+        "product_launch", "motion_explainer",
+    }
+    if content_type in capture_formats:
+        return MIN_REAL_SOURCE_RATIO, "EVIDENCE_LED", content_type
+    if content_type in explanatory_formats:
+        return 0.0, "EXPLANATORY", content_type
     if not slug:
-        return MIN_REAL_SOURCE_RATIO, "UNRESOLVED"
+        return MIN_REAL_SOURCE_RATIO, "UNRESOLVED", content_type
     path = ROOT / "config" / "accounts" / f"{slug}.json"
     try:
         profile = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
-        return MIN_REAL_SOURCE_RATIO, "UNRESOLVED"
+        return MIN_REAL_SOURCE_RATIO, "UNRESOLVED", content_type
     mode = str((profile.get("evidence") or {}).get("mode") or "").upper()
     if mode == "EXPLANATORY":
-        return 0.0, mode
+        return 0.0, mode, content_type
     if mode == "EVIDENCE_LED":
-        return MIN_REAL_SOURCE_RATIO, mode
-    return MIN_REAL_SOURCE_RATIO, mode or "UNRESOLVED"
+        return MIN_REAL_SOURCE_RATIO, mode, content_type
+    return MIN_REAL_SOURCE_RATIO, mode or "UNRESOLVED", content_type
 
 
 def audio_is_not_silence(path: Path) -> dict:
@@ -380,7 +408,7 @@ def qc(project: Path, target: str = "") -> dict:
     })
 
     shots = sb.get("shots", []) or []
-    real_floor, evidence_mode = _real_source_floor(project)
+    real_floor, evidence_mode, content_type = _real_source_floor(project)
     real_n = sum(1 for s in shots if s.get("source_type") in REAL_SOURCE_TYPES)
     gen_n = sum(1 for s in shots if s.get("source_type") in GENERATED_SOURCE_TYPES)
     declared_n = real_n + gen_n
@@ -391,6 +419,7 @@ def qc(project: Path, target: str = "") -> dict:
         "value": round(ratio, 3),
         "min": real_floor,
         "evidence_mode": evidence_mode,
+        "content_type": content_type or "UNDECLARED",
         "real_shots": real_n, "generated_shots": gen_n,
         "note": "historical shot-count diagnostic, kept for comparison; the gate is "
                 "real_source_duration_ratio",
@@ -423,8 +452,8 @@ def qc(project: Path, target: str = "") -> dict:
         "undeclared_tail_s": measured.get("undeclared_tail_s"),
         "code": measured.get("code"),
         "detail": measured.get("detail"),
-        "note": ("real visible seconds / measured output seconds; diagrams, cards, "
-                 "generated and motion visuals do not count as evidence"),
+        "note": ("capture duration is format-specific; verified claims and source "
+                 "provenance remain separately required"),
     })
 
     missing_prov = [i for i, s in enumerate(shots)

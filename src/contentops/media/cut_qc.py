@@ -102,6 +102,31 @@ def account_dna_for(project: Path) -> Optional[Dict[str, Any]]:
     return document if isinstance(document, dict) else None
 
 
+def _content_type_for(project: Path) -> str:
+    """Read the episode format without importing account policy into project files."""
+    path = Path(project) / "project.yaml"
+    if not path.is_file():
+        return ""
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        if line.strip().startswith("content_type:"):
+            return line.split(":", 1)[1].strip().strip("\"'").lower()
+    return ""
+
+
+def _effective_evidence_mode(mode: str, content_type: str) -> str:
+    """Keep capture floors for recording formats and claim gates for explainers."""
+    if content_type in {
+        "recorded_demo", "screen_recording", "evidence_demo", "field_capture",
+    }:
+        return "EVIDENCE_LED"
+    if content_type in {
+        "technical_explainer", "tech_review", "code_walkthrough",
+        "product_launch", "motion_explainer",
+    }:
+        return "CLAIM_LED"
+    return mode
+
+
 def _views(placement) -> List[Tuple[str, int, int]]:
     """Every (asset, start, end) that actually reaches the screen.
 
@@ -294,6 +319,11 @@ def qc_cut(project: Path, video: Optional[Path] = None) -> Dict[str, Any]:
 
     shares = source_shares(cut_plan, assets)
     mode = target.get("evidence_mode", "EVIDENCE_LED")
+    content_type = _content_type_for(project)
+    # Explainers use verified sources and per-claim coverage to establish truth;
+    # the generated motion may carry most of the visual duration. Capture-led
+    # demonstrations retain the account's whole-film recording floor.
+    mode = _effective_evidence_mode(mode, content_type)
     policy = evidence_mode_policy(mode)
     if policy["require_claim_coverage"]:
         # Claim-led: the whole-film share is advisory, because the per-claim
