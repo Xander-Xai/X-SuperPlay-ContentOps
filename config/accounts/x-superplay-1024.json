@@ -211,6 +211,16 @@
     ]
   },
   "audio": {
+    "digital_presenter": {
+      "enabled": true,
+      "provider": "minimax-h3",
+      "asset_dir": "assert",
+      "scope": "intro_and_outro_only",
+      "intro_line": "本期用真实代码验证一个问题。",
+      "outro_line": "先看真实结果，再决定要不要用。",
+      "requires_explicit_quota_budget": true,
+      "native_audio_from_registered_voice_reference": true
+    },
     "voice": {
       "persona": "28-35 岁中低音，略带沙哑磁性，冷静理性，不带情绪煽动",
       "provider_hint": "minimax_m_plan/speech-2.8-hd"

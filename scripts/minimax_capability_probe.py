@@ -250,7 +250,7 @@ def summarise_quota(quota: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def preflight(cfg: Dict[str, Any], cred: Dict[str, Any]) -> Dict[str, Any]:
+def preflight(cfg: Dict[str, Any], cred: Dict[str, Any], *, modality: str = "video") -> Dict[str, Any]:
     """Fail-closed billing gate. Returns a verdict plus its reasons."""
     reasons: List[str] = []
     base_url = str(cfg.get("base_url") or "")
@@ -264,25 +264,13 @@ def preflight(cfg: Dict[str, Any], cred: Dict[str, Any]) -> Dict[str, Any]:
         )
 
     guard = BillingGuard(base_url=base_url, credential=key)
-    guard_result = guard.evaluate()
+    guard_result = guard.evaluate(modality=modality)
     bal = guard_result.balances or {"error": "no_request"}
-    cash = _num(bal.get("cash_balance"))
-    credit = _num(bal.get("credit_balance"))
-    voucher = _num(bal.get("voucher_balance"))
-    owed = _num(bal.get("owed_amount"))
-
-    if credit is None:
-        reasons.append("Credit Pack balance unreadable; fallback cannot be excluded")
-    elif credit != 0:
-        reasons.append(f"Credit Pack balance is {credit}, so overspend could draw on it")
-    if cash is None:
-        reasons.append("pay-as-you-go cash balance unreadable")
-    elif cash != 0:
-        reasons.append(f"pay-as-you-go cash balance is {cash}")
-    if voucher not in (None, 0):
-        reasons.append(f"voucher balance is {voucher}")
-    if owed not in (None, 0):
-        reasons.append(f"outstanding amount owed is {owed}")
+    # The shared guard applies the Subscription-Key deduction chain: included
+    # plan usage, then Credit Packs, with arrears checked separately. Cash and
+    # voucher balances remain visible as out-of-chain observations but must not
+    # be converted into extra blockers here.
+    reasons.extend(guard_result.reasons)
 
     q = summarise_quota(plan_quota(base_url, key)) if base_url and key else {}
     if guard_result.quota is not None:
@@ -862,7 +850,9 @@ def main() -> int:
 
     cfg = cli_config()
     cred = read_credential()
-    gate = preflight(cfg, cred)
+    mode = ("speech" if args.speech else "image" if args.image
+            else "video" if args.video else None)
+    gate = preflight(cfg, cred, modality=mode or "video")
 
     result: Dict[str, Any] = {
         "probe": "RESEARCH PROBE ONLY -- NOT A PRODUCTION PROVIDER",
@@ -887,8 +877,6 @@ def main() -> int:
         "billing_preflight": gate,
     }
 
-    mode = ("speech" if args.speech else "image" if args.image
-            else "video" if args.video else None)
     if mode:
         result["probe_result"] = probe_media(
             mode, gate, Path(args.out_dir), args.confirm_h3_unverified,

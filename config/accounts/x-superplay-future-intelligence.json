@@ -219,6 +219,16 @@
     ]
   },
   "audio": {
+    "digital_presenter": {
+      "enabled": true,
+      "provider": "minimax-h3",
+      "asset_dir": "assert",
+      "scope": "intro_and_outro_only",
+      "intro_line": "RAG检索到了文档，为什么还会答错？",
+      "outro_line": "记住，检索召回和最终排序是两回事。",
+      "requires_explicit_quota_budget": true,
+      "native_audio_from_registered_voice_reference": true
+    },
     "voice": {
       "persona": "28-35 岁中低音，冷静理性，偏严谨工程师口吻",
       "provider_hint": "minimax_m_plan/speech-2.8-hd"

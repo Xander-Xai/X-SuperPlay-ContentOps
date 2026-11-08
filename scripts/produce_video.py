@@ -459,6 +459,18 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
     project_relative = _relative_to_root(project)
     if not project.is_dir() or project_relative is None:
         raise ValueError("--project must be an existing project inside this repository")
+    try:
+        project_config = m5_production._read_yaml(project / "project.yaml")
+    except Exception:
+        project_config = {}
+    avatar_profile = m5_production._load_digital_presenter_profile(project_config)
+    if avatar_profile:
+        avatar_provider = avatar_provider or avatar_profile.get("provider")
+        avatar_assets_dir = avatar_assets_dir or (
+            ROOT / str(avatar_profile.get("asset_dir") or "assert")
+        ).resolve()
+        avatar_intro_line = avatar_intro_line or avatar_profile.get("intro_line")
+        avatar_outro_line = avatar_outro_line or avatar_profile.get("outro_line")
     if assets_dir is not None:
         from contentops.media.local_assets import LocalAssetError, import_local_assets
         try:

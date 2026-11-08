@@ -66,6 +66,19 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _select_motion_backend(shot: Dict[str, Any], default: Optional[str]) -> Optional[str]:
+    """Resolve per-shot MotionBackend without silently changing an explicit request."""
+    selected = shot.get("motion_backend") or shot.get("backend") or default
+    if selected is None:
+        return None
+    selected = str(selected).strip().lower()
+    aliases = {"art-motion": "huashu-art-motion", "motion": "huashu-motion"}
+    selected = aliases.get(selected, selected)
+    if selected not in {"huashu-art-motion", "huashu-motion"}:
+        raise M5Blocked(f"unsupported motion backend {selected!r}")
+    return selected
+
+
 def _payload_sha256(value: Dict[str, Any]) -> str:
     """Stable digest for the in-memory script passed between M5 stages."""
     payload = json.dumps(value, ensure_ascii=False, sort_keys=True,
@@ -114,6 +127,21 @@ def _read_yaml(path: Path) -> Dict[str, Any]:
     except ImportError:
         raise M5Blocked("PyYAML is required to read project.yaml")
     return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+
+
+def _load_digital_presenter_profile(project_config: Dict[str, Any]) -> Dict[str, Any]:
+    """Load the enabled account avatar defaults without reading private media."""
+    account_slug = str(project_config.get("account_slug") or project_config.get("account_id") or "")
+    if not account_slug:
+        return {}
+    path = ROOT / "config" / "accounts" / f"{account_slug}.json"
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    audio = payload.get("audio") if isinstance(payload, dict) else None
+    profile = audio.get("digital_presenter") if isinstance(audio, dict) else None
+    return profile if isinstance(profile, dict) and profile.get("enabled") is True else {}
 
 
 def _duration(path: Path) -> float:
@@ -569,7 +597,14 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
                 and isinstance(profile, dict)
                 and profile.get("backend") == "huashu-art-motion"):
             motion = {**motion, "backend": "huashu-art-motion", "auto_profile": True}
-    if motion.get("backend") != "huashu-art-motion":
+    default_backend = motion.get("backend")
+    if default_backend not in (None, "huashu-art-motion", "huashu-motion", "art-motion", "motion"):
+        raise M5Blocked(f"unsupported motion backend {default_backend!r}")
+    if default_backend in ("art-motion", "motion"):
+        default_backend = {"art-motion": "huashu-art-motion", "motion": "huashu-motion"}[default_backend]
+    if not default_backend:
+        default_backend = None
+    if default_backend is None:
         _write_json(project / "receipts" / "motion-stage.json", {
             "schema": "contentops.m5-motion-stage/v1",
             "backend": None,
@@ -581,6 +616,11 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
         return {"state": "NOT_CONFIGURED", "shots": 0}
     plan_arg = str(motion.get("shot_plan") or "").strip()
     if not plan_arg:
+        if default_backend == "huashu-motion":
+            raise M5Blocked(
+                "Huashu Motion needs a project-local authored film in motion/huashu-motion/; "
+                "automatic shot planning is currently available for Huashu Art Motion"
+            )
         if not account_id or not account_dna or not narration:
             raise M5Blocked("automatic Huashua motion needs account DNA and measured narration")
         from contentops.media.motion_planner import MotionPlanError, build_auto_plan
@@ -654,8 +694,14 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
         raise M5Blocked("motion shot count must match M5 script line count")
     seen_placements = set()
     adapter = ROOT / "scripts" / "huashu_motion_adapter.py"
+    motion_adapter = ROOT / "scripts" / "huashu_motion_backend.py"
     results = []
     mode = "REVIEW" if require_copy_review else "AUTO"
+    narration_timings = {
+        str(row.get("line_id")): row
+        for row in (narration or {}).get("lines", [])
+        if row.get("line_id") is not None
+    }
     for shot in shots:
         if not isinstance(shot, dict):
             raise M5Blocked("motion shot entries must be objects")
@@ -668,15 +714,25 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
             raise M5Blocked(f"duplicate motion placement: {placement_id}")
         seen_placements.add(placement_id)
         line = line_by_id[placement_id]
+        shot_backend = _select_motion_backend(shot, default_backend)
         source_asset_id = str(line.get("asset_id") or "")
         if not source_asset_id or (line.get("motion_asset_id")
                                    and line.get("motion_asset_id") != asset_id):
             raise M5Blocked(f"{placement_id}: motion asset_id must map to its script line")
         if not spec:
             raise M5Blocked(f"{placement_id}: motion shot plan has no spec path")
-        command = [python_executable(), str(adapter), str(project), "--render",
-                   "--mode", mode, "--spec", spec, "--placement-id", placement_id,
-                   "--asset-id", asset_id, "--json"]
+        if shot_backend == "huashu-motion":
+            command = [python_executable(), str(motion_adapter), str(project),
+                       "--film", spec, "--placement-id", placement_id,
+                       "--asset-id", asset_id, "--account-id", account_id]
+            timing = narration_timings.get(placement_id) or {}
+            expected_duration = timing.get("duration")
+            if expected_duration:
+                command.extend(["--expected-duration", str(expected_duration)])
+        else:
+            command = [python_executable(), str(adapter), str(project), "--render",
+                       "--mode", mode, "--spec", spec, "--placement-id", placement_id,
+                       "--asset-id", asset_id, "--json"]
         proc = hidden_run(command, timeout=3600, cwd=str(ROOT),
                           env=dict(os.environ, PYTHONUTF8="1", PYTHONIOENCODING="utf-8"))
         try:
@@ -692,6 +748,7 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
         results.append({"placement_id": placement_id, "asset_id": asset_id,
                         "source_asset_id": shot.get("source_asset_id", line.get("asset_id")),
                         "content_point": shot.get("content_point", line.get("narration")),
+                        "backend": shot_backend,
                         "motion_syntax": shot.get("motion_syntax", "explicit-shot-plan"),
                         "execution_state": execution.get("state"),
                         "reused_render": execution.get("reused") is True,
@@ -700,12 +757,14 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
                         "visual_match": shot.get("visual_match", "PENDING_FRAME_REVIEW"),
                         "execution_receipt": result.get("receipt"),
                         "adapter_receipt": execution.get("adapter_receipt")})
-    payload = {"schema": "contentops.m5-motion-stage/v1", "backend": "huashu-art-motion",
+    backends = sorted({str(row.get("backend")) for row in results})
+    payload = {"schema": "contentops.m5-motion-stage/v1",
+               "backend": backends[0] if len(backends) == 1 else "hybrid",
                "mode": mode, "state": "OK",
                "script_sha256": _payload_sha256(script), "shots": results,
                "production_ready": False}
     _write_json(project / "receipts" / "motion-stage.json", payload)
-    return {"state": "OK", "backend": "huashu-art-motion", "shots": len(results)}
+    return {"state": "OK", "backend": payload["backend"], "shots": len(results)}
 
 
 def _load_script(project: Path) -> Dict[str, Any]:
@@ -1532,6 +1591,68 @@ def _compose_avatar_bookends(project: Path, slug: str, avatar: Dict[str, Any],
     return result
 
 
+def _compose_partial_avatar_preview(project: Path, slug: str, avatar: Dict[str, Any],
+                                   main_video: Path, output_video: Path) -> Dict[str, Any]:
+    """Keep an available H3 bookend reviewable without presenting it as complete."""
+    if not main_video.is_file() or output_video.resolve() == main_video.resolve():
+        raise M5Blocked("partial avatar preview needs a distinct output path and a main video")
+    segments = []
+    for name in ("intro", "outro"):
+        row = avatar.get(name)
+        candidate = row.get("video") if isinstance(row, dict) else None
+        if candidate is not None:
+            candidate = Path(candidate)
+            if not candidate.is_file():
+                raise M5Blocked(f"partial avatar preview {name} clip is missing")
+            segments.append((name, candidate))
+    if not segments:
+        raise M5Blocked("partial avatar preview has no generated H3 clip to review")
+
+    ordered = []
+    if any(name == "intro" for name, _ in segments):
+        ordered.extend([("intro", dict(segments)["intro"]), ("main", main_video)])
+    else:
+        ordered.append(("main", main_video))
+    if any(name == "outro" for name, _ in segments):
+        ordered.append(("outro", dict(segments)["outro"]))
+    output_video.parent.mkdir(parents=True, exist_ok=True)
+    staged = output_video.with_name(output_video.stem + ".partial.tmp.mp4")
+    inputs = []
+    filters = []
+    concat_labels = []
+    for idx, (name, path) in enumerate(ordered):
+        inputs.extend(["-i", str(path)])
+        filters.extend([
+            f"[{idx}:v]fps=30,scale=1080:1920:force_original_aspect_ratio=decrease,"
+            f"pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1,format=yuv420p[v{idx}];",
+            f"[{idx}:a]aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo[a{idx}];",
+        ])
+        concat_labels.extend([f"[v{idx}]", f"[a{idx}]"])
+    filters.append(
+        "".join(concat_labels) + f"concat=n={len(ordered)}:v=1:a=1[outv][outa]"
+    )
+    proc = hidden_run(
+        ["ffmpeg", "-y", *inputs, "-filter_complex", "".join(filters),
+         "-map", "[outv]", "-map", "[outa]", "-c:v", "libx264", "-preset", "medium",
+         "-crf", "18", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k",
+         "-movflags", "+faststart", str(staged)], cwd=str(ROOT), timeout=900,
+    )
+    if proc.returncode != 0 or not staged.is_file():
+        raise M5Blocked(f"partial avatar preview concat failed: {(proc.stderr or '')[-500:]}")
+    staged.replace(output_video)
+    result = {
+        "state": "PARTIAL_PREVIEW", "video": _logical_path(output_video, project),
+        "segments": [name for name, _ in ordered],
+        "video_sha256": _sha256(output_video), "production_ready": False,
+        "publish_authorized": False,
+    }
+    receipt_path = project / "receipts" / "avatar-bookends.json"
+    receipt = _read_json_or_none(receipt_path) or {}
+    receipt["partial_preview"] = result
+    _write_json(receipt_path, receipt)
+    return result
+
+
 def stage_qc(project: Path, slug: str) -> Dict[str, Any]:
     from contentops.media.qc_canonical import (
         CURRENCY_CURRENT,
@@ -1803,6 +1924,12 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
 
     config = _read_yaml(project / "project.yaml")
     slug = config.get("id") or project.name
+    avatar_profile = _load_digital_presenter_profile(config)
+    if avatar_profile:
+        avatar_provider = avatar_provider or avatar_profile.get("provider")
+        avatar_assets_dir = avatar_assets_dir or (
+            ROOT / str(avatar_profile.get("asset_dir") or "assert")
+        ).resolve()
 
     # A router project's copy is final only after the brief bridge writes
     # script.json and claims.json, so its review has to cover those files.
@@ -1871,11 +1998,26 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
         if avatar_provider != "minimax-h3":
             stages["avatar"] = {"state": "BLOCKED", "reason": f"unsupported avatar provider {avatar_provider!r}"}
         elif not avatar_quota_budget and not (avatar_intro_video and avatar_outro_video):
-            stages["avatar"] = {"state": "BLOCKED", "reason": "MiniMax H3 requires an explicit subscription quota budget"}
+            reason = "MiniMax H3 requires an explicit subscription quota budget"
+            avatar = {
+                "state": "BLOCKED", "provider": "minimax-h3",
+                "asset_root": _logical_path(avatar_assets_dir or (ROOT / "assert"), project),
+                "blocked_reason": reason, "production_ready": False,
+                "publish_authorized": False,
+            }
+            _write_json(project / "receipts" / "avatar-bookends.json", avatar)
+            stages["avatar"] = {
+                "state": "BLOCKED", "provider": "minimax-h3",
+                "reason": reason, "receipt": "receipts/avatar-bookends.json",
+            }
         else:
             asset_root = (avatar_assets_dir or (ROOT / "assert")).resolve()
-            intro_line = avatar_intro_line or "本期我们来拆解一个关键问题。"
-            outro_line = avatar_outro_line or "记住，检索召回和最终排序是两回事。关注我，继续拆解 AI 技术。"
+            intro_line = avatar_intro_line or str(
+                avatar_profile.get("intro_line") or "本期我们来拆解一个关键问题。"
+            )
+            outro_line = avatar_outro_line or str(
+                avatar_profile.get("outro_line") or "关注我，继续拆解 AI 技术。"
+            )
             try:
                 avatar = run_stage("avatar", stage_avatar, project, slug,
                                    asset_root=asset_root,

@@ -27,6 +27,7 @@ sys.path.insert(0, str(ROOT / "src"))
 import m5_production  # noqa: E402
 import produce_video  # noqa: E402
 import huashu_motion_adapter  # noqa: E402
+import huashu_motion_backend  # noqa: E402
 import raw_video_inputs  # noqa: E402
 from contentops.media import storyboard_adapter as adapter  # noqa: E402
 from contentops.media import local_assets, motion_planner, visual_gate  # noqa: E402
@@ -481,6 +482,91 @@ def test_minimax_narration_requires_an_explicit_voice_and_never_uses_sapi():
             raise AssertionError("MiniMax must require an explicit voice; no SAPI fallback is allowed")
 
 
+def test_motion_backend_selection_is_per_shot_and_fail_closed():
+    assert m5_production._select_motion_backend({}, "huashu-art-motion") == "huashu-art-motion"
+    assert m5_production._select_motion_backend(
+        {"motion_backend": "huashu-motion"}, "huashu-art-motion") == "huashu-motion"
+    assert m5_production._select_motion_backend(
+        {"backend": "art-motion"}, "huashu-motion") == "huashu-art-motion"
+    try:
+        m5_production._select_motion_backend({"backend": "other"}, "huashu-art-motion")
+    except m5_production.M5Blocked as exc:
+        assert "unsupported motion backend" in str(exc)
+    else:
+        raise AssertionError("unknown motion backends must not be silently routed")
+
+
+def test_video_account_dna_enables_h3_bookends_with_explicit_budget_policy():
+    future = m5_production._load_digital_presenter_profile(
+        {"account_slug": "x-superplay-future-intelligence"})
+    account_1024 = m5_production._load_digital_presenter_profile(
+        {"account_slug": "x-superplay-1024"})
+    english = m5_production._load_digital_presenter_profile(
+        {"account_slug": "x-superplay-english"})
+    assert future["provider"] == account_1024["provider"] == "minimax-h3"
+    assert future["asset_dir"] == account_1024["asset_dir"] == "assert"
+    assert future["scope"] == account_1024["scope"] == "intro_and_outro_only"
+    assert future["requires_explicit_quota_budget"] is True
+    assert account_1024["requires_explicit_quota_budget"] is True
+    assert english == {}, "the English account must keep its own existing format"
+
+
+def test_m5_motion_stage_dispatches_explicit_huashu_motion_shots():
+    with tempfile.TemporaryDirectory(dir=ROOT / ".verify-tmp") as temp:
+        project = Path(temp)
+        for folder in ("script", "sources", "receipts"):
+            (project / folder).mkdir(parents=True, exist_ok=True)
+        (project / "script" / "assets.json").write_text(
+            json.dumps({"schema": "contentops.m5-script-assets/v1", "assets": {}}),
+            encoding="utf-8")
+        plan_path = project / "motion" / "shot-plan.json"
+        plan_path.parent.mkdir(parents=True)
+        plan_path.write_text(json.dumps({"shots": [{
+            "placement_id": "P-01", "asset_id": "HM-PROBE-01",
+            "source_asset_id": "SRC-01", "spec": "motion/huashu-motion/shot-01",
+            "motion_backend": "huashu-motion", "duration_s": 5.166,
+        }]}), encoding="utf-8")
+        script = {"lines": [{"id": "P-01", "asset_id": "SRC-01",
+                             "motion_asset_id": "HM-PROBE-01",
+                             "narration": "逐步展示检索流程。"}]}
+        response = {"execution": {"state": "EXECUTED", "reused": False,
+                                   "adapter_receipt": {"engine": "huashu-motion"}},
+                    "receipt": "project://receipts/huashu-motion-HM-PROBE-01.json"}
+        fake = SimpleNamespace(returncode=0,
+                               stdout=json.dumps(response, ensure_ascii=False), stderr="")
+        with mock.patch.object(m5_production, "hidden_run", return_value=fake) as run:
+            result = m5_production.stage_motion(
+                project,
+                {"id": "probe", "account_slug": "x-superplay-future-intelligence",
+                 "motion": {"backend": "huashu-art-motion", "shot_plan": "motion/shot-plan.json"}},
+                script, require_copy_review=False,
+                narration={"lines": [{"line_id": "P-01", "duration": 5.166}]})
+        assert result == {"state": "OK", "backend": "huashu-motion", "shots": 1}
+        command = run.call_args.args[0]
+        assert command[1].endswith("huashu_motion_backend.py")
+        assert command[command.index("--film") + 1] == "motion/huashu-motion/shot-01"
+        assert command[command.index("--expected-duration") + 1] == "5.166"
+        saved = json.loads((project / "receipts" / "motion-stage.json").read_text(encoding="utf-8"))
+        assert saved["shots"][0]["backend"] == "huashu-motion"
+
+
+def test_huashu_motion_film_path_must_remain_project_local():
+    with tempfile.TemporaryDirectory(dir=ROOT / ".verify-tmp") as temp:
+        project = Path(temp) / "project"
+        film = project / "motion" / "huashu-motion" / "shot-01"
+        (film / "vendor").mkdir(parents=True)
+        (film / "index.html").write_text("<html></html>", encoding="utf-8")
+        (film / "vendor" / "gsap.min.js").write_text("", encoding="utf-8")
+        assert huashu_motion_backend.resolve_motion_project(
+            project, "motion/huashu-motion/shot-01") == film.resolve()
+        try:
+            huashu_motion_backend.resolve_motion_project(project, "../../outside")
+        except huashu_motion_backend.BackendError as exc:
+            assert "must stay under" in str(exc)
+        else:
+            raise AssertionError("a motion film outside the project must be refused")
+
+
 def test_h3_avatar_bookends_reuse_only_hash_bound_subscription_outputs():
     with tempfile.TemporaryDirectory(dir=ROOT / ".verify-tmp") as temp:
         root = Path(temp)
@@ -567,6 +653,39 @@ def test_avatar_bookend_composition_preserves_the_main_only_render():
         assert result["state"] == "COMPOSED"
         filt = calls[0][calls[0].index("-filter_complex") + 1]
         assert "concat=n=3:v=1:a=1" in filt
+
+
+def test_partial_avatar_preview_keeps_only_the_successful_clip_and_main_video():
+    with tempfile.TemporaryDirectory(dir=ROOT / ".verify-tmp") as temp:
+        project = Path(temp)
+        (project / "receipts").mkdir()
+        final = project / "final"
+        final.mkdir()
+        main = final / "main.mp4"
+        main.write_bytes(b"existing main video")
+        intro = project / "intro.mp4"
+        intro.write_bytes(b"successful H3 intro")
+        output = final / "partial-preview.mp4"
+        commands = []
+
+        def fake_ffmpeg(command, **_kwargs):
+            commands.append(command)
+            Path(command[-1]).write_bytes(b"composed partial preview")
+            return SimpleNamespace(returncode=0, stderr="")
+
+        with mock.patch.object(m5_production, "hidden_run", side_effect=fake_ffmpeg):
+            result = m5_production._compose_partial_avatar_preview(
+                project, "demo", {"state": "PARTIAL", "intro": {"video": intro},
+                                   "outro": None}, main, output)
+        assert result["state"] == "PARTIAL_PREVIEW"
+        assert result["segments"] == ["intro", "main"]
+        assert result["production_ready"] is False
+        assert main.read_bytes() == b"existing main video"
+        assert output.read_bytes() == b"composed partial preview"
+        filt = commands[0][commands[0].index("-filter_complex") + 1]
+        assert "concat=n=2:v=1:a=1" in filt
+        saved = json.loads((project / "receipts" / "avatar-bookends.json").read_text())
+        assert saved["partial_preview"]["state"] == "PARTIAL_PREVIEW"
 
 
 def test_existing_narration_without_a_receipt_is_refused():
@@ -1407,8 +1526,13 @@ def main() -> int:
              test_misaligned_lines_and_timings_stop_the_build,
              test_the_same_asset_can_support_multiple_timeline_placements,
              test_minimax_narration_requires_an_explicit_voice_and_never_uses_sapi,
+             test_video_account_dna_enables_h3_bookends_with_explicit_budget_policy,
+             test_motion_backend_selection_is_per_shot_and_fail_closed,
+             test_m5_motion_stage_dispatches_explicit_huashu_motion_shots,
+             test_huashu_motion_film_path_must_remain_project_local,
              test_h3_avatar_bookends_reuse_only_hash_bound_subscription_outputs,
              test_avatar_bookend_composition_preserves_the_main_only_render,
+             test_partial_avatar_preview_keeps_only_the_successful_clip_and_main_video,
              test_existing_narration_without_a_receipt_is_refused,
              test_existing_narration_bound_to_another_script_is_refused,
              test_existing_narration_without_line_timings_is_refused,
