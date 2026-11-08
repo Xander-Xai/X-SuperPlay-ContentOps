@@ -148,6 +148,28 @@ def test_a_link_without_material_does_not_become_a_script():
             raise AssertionError("a brief with no collected material must not draft")
 
 
+def test_an_unapproved_brief_can_generate_only_an_explicit_local_preview_draft():
+    with tempfile.TemporaryDirectory() as tmp:
+        root = _sandbox(tmp)
+        project = _approved_topic(root)
+        brief_path = project / "00_brief" / "brief.json"
+        brief = json.loads(brief_path.read_text(encoding="utf-8"))
+        brief["intent"]["approval_status"] = "pending"
+        (brief["intent"].get("route_context") or {}).get("detail", {}).pop("approval", None)
+        brief_path.write_text(json.dumps(brief, ensure_ascii=False, indent=2) + "\n",
+                              encoding="utf-8")
+        _pack(project)
+        try:
+            build(project, root=root)
+        except ScriptBlocked as exc:
+            assert exc.code == "NOT_APPROVED"
+        else:
+            raise AssertionError("default script drafting must keep the approval gate")
+        draft = build(project, root=root, allow_unapproved_preview=True)
+        assert draft.report["gates"]["brief_approval"] == "not approved; local draft preview only"
+        assert draft.report["gates"]["copy_review"] == "pending before publication; local preview only"
+
+
 def test_a_thin_pack_is_refused_with_the_gap_named():
     with tempfile.TemporaryDirectory() as tmp:
         root = _sandbox(tmp)

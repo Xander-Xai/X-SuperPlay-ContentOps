@@ -1006,6 +1006,27 @@ def test_an_approved_project_hands_off_to_its_pipeline():
         assert path.is_file()
 
 
+def test_an_unapproved_brief_can_only_handoff_for_local_preview_when_opted_in():
+    from contentops.routing import handoff
+    with tempfile.TemporaryDirectory() as tmp:
+        root = _sandbox(tmp)
+        router = _router(root, adapters=_fixture_adapter())
+        _approved_run(router, ACCOUNT_BUILD, slug="handoff-preview")
+        project = root / "projects" / "handoff-preview"
+        package = handoff.read_brief(project)
+        package["intent"]["approval_status"] = "pending"
+        package["intent"]["route_context"]["detail"].pop("approval", None)
+        assert handoff.check(package)["reason"] == "NOT_APPROVED"
+        verdict = handoff.check(package, allow_unapproved_preview=True)
+        assert verdict["ok"] is True, verdict
+        assert verdict["reason"] == "PREVIEW_ONLY"
+        assert verdict["preview_only"] is True
+        package["forecast_verdict"] = "DEGRADED"
+        verdict = handoff.check(package, allow_unapproved_preview=True)
+        assert verdict["ok"] is False
+        assert verdict["reason"] == "EVIDENCE_REQUIRED"
+
+
 def test_a_degraded_forecast_blocks_the_handoff():
     from contentops.routing import handoff
     with tempfile.TemporaryDirectory() as tmp:
@@ -1128,6 +1149,10 @@ def test_an_automation_approval_cannot_be_handed_to_the_pipeline():
         verdict = handoff.check(handoff.read_brief(project))
         assert verdict["ok"] is False
         assert verdict["reason"] == "AUTOMATION_APPROVAL"
+        preview_verdict = handoff.check(
+            handoff.read_brief(project), allow_unapproved_preview=True)
+        assert preview_verdict["ok"] is False
+        assert preview_verdict["reason"] == "AUTOMATION_APPROVAL"
 
 
 def test_a_human_approval_records_that_it_was_not_a_sandbox():

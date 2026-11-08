@@ -1,4 +1,4 @@
-"""Hand an approved brief to the pipeline that will produce the episode.
+"""Hand a source-bound brief to the pipeline that will produce the episode.
 
 Why this exists
 ---------------
@@ -15,7 +15,8 @@ This module is that check, and the smallest honest adapter between the two:
   nobody has, rather than letting the pipeline discover that after paying for
   narration;
 - it writes ``00_brief/handoff.json`` — what the next stage reads — and says
-  in that record which gates are still ahead of it.
+  in that record which gates are still ahead of it. An explicit local-preview
+  handoff may carry an unapproved brief, but never records it as approved.
 
 What it does not do
 -------------------
@@ -84,28 +85,42 @@ def approval_of(package: Dict[str, Any]) -> Dict[str, Any]:
         "approval") or {}
 
 
-def check(package: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+def check(package: Optional[Dict[str, Any]], *,
+          allow_unapproved_preview: bool = False) -> Dict[str, Any]:
     """Everything that must hold before the pipeline may start.
 
     Returns ``{"ok": bool, "reason": str, "detail": str}`` plus the facts the
-    handoff record needs. A missing or changed approval is a refusal; a
-    degraded forecast is a refusal too, because "the evidence is not there" is
-    a decision for a person, not a detail to discover mid-production.
+    handoff record needs. A missing or changed approval is a refusal unless
+    the caller explicitly requests a local preview. A degraded forecast is
+    always refused because required evidence is still missing.
     """
     if package is None:
         return {"ok": False, "reason": "BRIEF_MISSING",
                 "detail": "the project has no 00_brief/brief.json"}
     intent = package.get("intent") or {}
     approval = approval_of(package)
+    intent_status = str(intent.get("approval_status") or "")
+    current = content_digest(package)
     if not approval:
-        return {"ok": False, "reason": "NOT_APPROVED",
-                "detail": "the brief carries no approval record"}
+        if not (allow_unapproved_preview and intent_status in {"draft", "pending"}):
+            return {"ok": False, "reason": "NOT_APPROVED",
+                    "detail": "the brief carries no approval record"}
+        if str(package.get("forecast_verdict")) == "DEGRADED":
+            return {"ok": False, "reason": "EVIDENCE_REQUIRED",
+                    "detail": "the evidence forecast is DEGRADED: the episode needs a "
+                              "capture this brief has not produced, and the affected "
+                              "claim must be narrowed before preview rendering",
+                    "content_digest": current}
+        return {"ok": True, "reason": "PREVIEW_ONLY",
+                "detail": "the brief is unapproved; this handoff is limited to a local "
+                          "draft preview and grants no copy or publication approval",
+                "content_digest": current, "approval_status": intent_status,
+                "preview_only": True}
     approved_digest = str(approval.get("content_digest") or "")
     if not approved_digest:
         return {"ok": False, "reason": "APPROVAL_UNBOUND",
                 "detail": "the approval records no content digest, so it cannot be "
                           "tied to what was reviewed"}
-    current = content_digest(package)
     if current != approved_digest:
         return {"ok": False, "reason": "APPROVAL_STALE",
                 "detail": f"the brief changed after approval (approved "
@@ -160,8 +175,8 @@ def handoff_record(project: Path, package: Dict[str, Any],
         # The gates that are still ahead. This record is the start of the
         # pipeline, not a permission slip through it.
         "still_gated_by": [
-            "copy review (receipts/script-review.json) before any narration is "
-            "synthesised",
+            "copy review before publication; local AUTO previews may be rendered "
+            "while the review is pending",
             "the account's own evidence policy at capture time",
         ],
     }

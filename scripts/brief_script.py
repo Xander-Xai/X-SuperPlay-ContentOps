@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Turn an approved brief into copy and a storyboard — and stop.
+"""Turn a source-bound brief into copy and a storyboard — and stop.
 
 Usage:
     python scripts/brief_script.py projects/my-episode
+    python scripts/brief_script.py projects/my-episode --unapproved-preview
     python scripts/brief_script.py projects/my-episode --dry-run
     python scripts/brief_script.py projects/my-episode --check
     python scripts/brief_script.py projects/my-episode --json
@@ -14,7 +15,8 @@ readable copy). It also writes ``00_brief/script-report.json``: the mapping from
 each claim to its source, which is what a reviewer checks.
 
 It writes no captions, synthesises no narration, renders nothing and publishes
-nothing. The copy review is still the gate before any of that.
+nothing. ``--unapproved-preview`` allows draft preparation for local AUTO
+preview only; it grants no copy or publication approval.
 
 Exit codes: 0 the draft was written (or is valid, with --check); 4 the brief
 cannot become a script and the reason is printed.
@@ -43,6 +45,8 @@ def main(argv=None) -> int:
                         help="validate a draft already on disk; write nothing")
     parser.add_argument("--evidence", default=None,
                         help="evidence pack (default: 00_brief/evidence-pack.json)")
+    parser.add_argument("--unapproved-preview", action="store_true",
+                        help="allow an unapproved brief for local draft preview only; grants no copy or publication approval")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
     if hasattr(sys.stdout, "reconfigure"):
@@ -58,7 +62,8 @@ def main(argv=None) -> int:
         code = 0 if verdict["ok"] else BLOCKED_EXIT
     else:
         try:
-            draft = build(project, pack_path=Path(args.evidence) if args.evidence else None)
+            draft = build(project, pack_path=Path(args.evidence) if args.evidence else None,
+                          allow_unapproved_preview=args.unapproved_preview)
         except ScriptBlocked as exc:
             payload = {"status": "BLOCKED", "code": exc.code, "detail": exc.detail,
                        "project": str(project)}

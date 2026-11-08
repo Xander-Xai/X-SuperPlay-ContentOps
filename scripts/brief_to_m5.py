@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Convert an approved brief's draft into the M5 production contract.
+"""Convert a brief's source-bound draft into the M5 production contract.
 
 Usage:
     python scripts/brief_to_m5.py projects/my-episode
+    python scripts/brief_to_m5.py projects/my-episode --unapproved-preview
     python scripts/brief_to_m5.py projects/my-episode --dry-run
     python scripts/brief_to_m5.py projects/my-episode --check
     python scripts/brief_to_m5.py projects/my-episode --json
@@ -14,7 +15,8 @@ already be approved, every placement must have an asset, and every factual
 claim must carry an evidence item whose permission and quote verify.
 
 Exit codes: 0 converted (or --check found the files current); 4 the draft
-cannot reach M5 and the blockers are printed.
+cannot reach M5 and the blockers are printed. ``--unapproved-preview`` only
+prepares local preview input; it does not create a brief or copy approval.
 """
 
 from __future__ import annotations
@@ -38,13 +40,16 @@ def main(argv=None) -> int:
     parser.add_argument("--dry-run", action="store_true", help="convert but write nothing")
     parser.add_argument("--check", action="store_true",
                         help="validate the files already on disk; write nothing")
+    parser.add_argument("--unapproved-preview", action="store_true",
+                        help="allow an unapproved brief for local draft preview only; grants no copy or publication approval")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
 
     project = Path(args.project)
     try:
         if args.check:
-            result = check(project, repo_root=ROOT)
+            result = check(project, repo_root=ROOT,
+                           allow_unapproved_preview=args.unapproved_preview)
             if not result["ok"]:
                 if args.json:
                     print(json.dumps(result, ensure_ascii=False, indent=2))
@@ -59,7 +64,8 @@ def main(argv=None) -> int:
                        f"{result['counts']['claims']} claims")
             return 0
 
-        result = build(project, repo_root=ROOT)
+        result = build(project, repo_root=ROOT,
+                       allow_unapproved_preview=args.unapproved_preview)
         written = {} if args.dry_run else write(result, project)
         payload = {
             "state": "DRY_RUN" if args.dry_run else "CONVERTED_FOR_M5",

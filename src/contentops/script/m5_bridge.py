@@ -1,4 +1,4 @@
-"""Turn an approved brief's draft into the contract the M5 chain reads.
+"""Turn a source-bound draft into the contract the M5 chain reads.
 
 Why this exists
 ---------------
@@ -17,18 +17,19 @@ This module is that adapter and nothing more. It converts, it does not invent:
 - every line must name a registered visual asset, because M5 composes from the
   asset inventory and a missing picture is a blocker, not a blank frame.
 
-What a person still supplies
+What must still be resolved
 ----------------------------
 ``script/asset-map.json`` maps each placement to a registered asset id, and
 ``00_brief/source-permissions.json`` states the permission for each evidence
 item. The bridge refuses with the exact missing entries rather than guessing a
 licence or a picture. That is the same rule the rest of the repository follows:
-a named gap is honest; a default is a fabrication.
+a named gap is honest; a default is a fabrication. An explicit unapproved
+preview conversion does not set copy or publication approval.
 
-The copy review gate is not enforced here, because the review has to cover the
-copy this bridge produces: the order is draft → convert → review → M5. The M5
-entry refuses a brief-driven project whose final copy is unreviewed or stale,
-so a conversion can never become narration on its own.
+Copy review is not enforced here because the review has to cover the copy this
+bridge produces. REVIEW and STRICT enforce it at production; AUTO can render a
+local draft preview while review remains pending. Publication review remains
+separate, and conversion never approves the copy.
 """
 
 from __future__ import annotations
@@ -156,14 +157,16 @@ def _asset_map(project: Path) -> Dict[str, str]:
     return {str(key): str(value) for key, value in mapping.items()}
 
 
-def build(project: Path, *, repo_root: Optional[Path] = None) -> Dict[str, Any]:
+def build(project: Path, *, repo_root: Optional[Path] = None,
+          allow_unapproved_preview: bool = False) -> Dict[str, Any]:
     """Convert the draft; return what was written. Raises BridgeBlocked."""
     project = Path(project)
     root = Path(repo_root) if repo_root else _repo_root()
     project_rel = _project_relative(project, root)
 
     brief = handoff.read_brief(project)
-    verdict = handoff.check(brief)
+    verdict = handoff.check(brief,
+                            allow_unapproved_preview=allow_unapproved_preview)
     if not verdict["ok"]:
         raise BridgeBlocked(verdict["reason"], verdict["detail"])
 
@@ -331,6 +334,7 @@ def build(project: Path, *, repo_root: Optional[Path] = None) -> Dict[str, Any]:
         "project": project_rel,
         "brief_id": str((brief or {}).get("brief_id") or ""),
         "content_digest": verdict.get("content_digest"),
+        "preview_only": bool(verdict.get("preview_only")),
         "script": script,
         "claims": ledger,
         "source_refs": {"schema": REFS_SCHEMA, "refs": refs},
@@ -360,9 +364,13 @@ def write(result: Dict[str, Any], project: Path) -> Dict[str, Path]:
         "project": result["project"],
         "brief_id": result["brief_id"],
         "content_digest": result["content_digest"],
+        "preview_only": bool(result.get("preview_only")),
         "counts": result["counts"],
-        "note": "The M5 chain still ends at PENDING_FOUNDER_REVIEW; this conversion "
-                "grants no approval and publishes nothing.",
+        "note": ("The brief is unapproved. This conversion only prepares a local "
+                 "draft preview; it grants no copy or publication approval."
+                 if result.get("preview_only") else
+                 "The M5 chain still ends at PENDING_FOUNDER_REVIEW; this conversion "
+                 "grants no approval and publishes nothing."),
     }
     path = project / RECEIPT_FILE
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -372,10 +380,12 @@ def write(result: Dict[str, Any], project: Path) -> Dict[str, Path]:
     return written
 
 
-def check(project: Path, *, repo_root: Optional[Path] = None) -> Dict[str, Any]:
+def check(project: Path, *, repo_root: Optional[Path] = None,
+          allow_unapproved_preview: bool = False) -> Dict[str, Any]:
     """Whether the files on disk still match what the bridge would write."""
     project = Path(project)
-    result = build(project, repo_root=repo_root)
+    result = build(project, repo_root=repo_root,
+                   allow_unapproved_preview=allow_unapproved_preview)
     problems: List[str] = []
     for relative, expected in (("script/script.json", result["script"]),
                                ("script/claims.json", result["claims"]),

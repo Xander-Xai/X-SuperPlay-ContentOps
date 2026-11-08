@@ -181,11 +181,13 @@ def topic_provenance(brief: Dict[str, Any]) -> str:
 
 
 def build(project: Path, *, root: Optional[Path] = None,
-          pack_path: Optional[Path] = None) -> Draft:
+          pack_path: Optional[Path] = None,
+          allow_unapproved_preview: bool = False) -> Draft:
     """Build the draft in memory. Nothing is written."""
     project = Path(project)
     brief = handoff.read_brief(project)
-    verdict = handoff.check(brief)
+    verdict = handoff.check(brief,
+                            allow_unapproved_preview=allow_unapproved_preview)
     if not verdict["ok"]:
         code = "EVIDENCE_REQUIRED" if verdict["reason"] == "EVIDENCE_REQUIRED" \
             else verdict["reason"]
@@ -287,7 +289,11 @@ def build(project: Path, *, root: Optional[Path] = None,
                        "needs_capture": sum(1 for shot in storyboard["shots"]
                                             if shot["needs_capture"]),
                        "length_note": length_note},
-        "gates": {"copy_review": "required before any narration is synthesised",
+        "gates": {"brief_approval": ("not approved; local draft preview only"
+                                      if verdict.get("preview_only") else "approved"),
+                  "copy_review": ("pending before publication; local preview only"
+                                  if verdict.get("preview_only") else
+                                  "required before any narration is synthesised"),
                   "evidence": "every spoken fact is bound to a collected, hashed document"},
     }
     return Draft(project=str(project), brief_id=str(brief.get("brief_id") or ""),

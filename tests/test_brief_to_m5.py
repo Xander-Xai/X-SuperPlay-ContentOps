@@ -208,6 +208,25 @@ def test_an_unapproved_brief_is_refused_before_anything_is_written():
 
 
 @test
+def test_unapproved_preview_conversion_is_explicit_and_does_not_claim_approval():
+    with tempfile.TemporaryDirectory() as temp:
+        root, project = _project(temp, approved=False, reviewed=False)
+        result = build(project, repo_root=root, allow_unapproved_preview=True)
+        assert result["preview_only"] is True
+        receipt_path = write(result, project)["receipts/brief-to-m5.json"]
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        assert receipt["preview_only"] is True
+        assert "unapproved" in receipt["note"]
+        try:
+            copy_review.require_if_brief_driven(project)
+        except copy_review.CopyReviewRequired as blocked:
+            assert "NOT_REVIEWED" in str(blocked), blocked
+        else:
+            raise AssertionError("preview conversion must not approve the copy")
+        print("[ok] an unapproved brief converts only for local preview")
+
+
+@test
 def test_an_unreviewed_copy_is_refused_at_the_m5_gate():
     with tempfile.TemporaryDirectory() as temp:
         root, project = _project(temp, reviewed=False)
