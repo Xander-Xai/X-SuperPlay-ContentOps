@@ -239,7 +239,8 @@
     },
     "voice": {
       "persona": "28-35 岁中低音，略带沙哑磁性，冷静理性，不带情绪煽动",
-      "provider_hint": "minimax_m_plan/speech-2.8-hd"
+      "provider_hint": "minimax_m_plan/speech-2.8-hd",
+      "voice_alias": "founder_primary_v1"
     },
     "bgm": {
       "style": "低音量暗氛围电子乐，无鼓点，无跳跃节奏",

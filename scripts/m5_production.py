@@ -145,6 +145,38 @@ def _load_digital_presenter_profile(project_config: Dict[str, Any]) -> Dict[str,
     return profile if isinstance(profile, dict) and profile.get("enabled") is True else {}
 
 
+def _load_narration_profile(project_config: Dict[str, Any]) -> Dict[str, Any]:
+    """Read the account's declared voice route and alias for M5 defaults."""
+    account_slug = str(project_config.get("account_slug") or project_config.get("account_id") or "")
+    if not account_slug:
+        return {}
+    path = ROOT / "config" / "accounts" / f"{account_slug}.json"
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    audio = payload.get("audio") if isinstance(payload, dict) else None
+    voice = audio.get("voice") if isinstance(audio, dict) else None
+    return voice if isinstance(voice, dict) else {}
+
+
+def _resolve_narration_defaults(project_config: Dict[str, Any]) -> Dict[str, Optional[str]]:
+    """Translate account DNA provider hints into the normal M5 provider contract."""
+    voice = _load_narration_profile(project_config)
+    hint = str(voice.get("provider_hint") or "").strip()
+    if not hint:
+        return {"provider": None, "voice": None, "model": None}
+    provider, _, model = hint.partition("/")
+    provider = provider.strip().casefold()
+    if provider in {"minimax_m_plan", "minimax", "minimax-speech"}:
+        return {
+            "provider": "minimax",
+            "voice": str(voice.get("voice_alias") or "founder_primary_v1"),
+            "model": model.strip() or "speech-2.8-hd",
+        }
+    return {"provider": provider, "voice": None, "model": model.strip() or None}
+
+
 def _duration(path: Path) -> float:
     proc = hidden_run(
         ["ffprobe", "-v", "error", "-show_entries", "format=duration",
@@ -1459,7 +1491,7 @@ def _run_h3_avatar_clip(project: Path, *, shot_id: str, line: str, role: str,
                    f"{('concluding' if role == 'outro' else 'welcoming')} nod while speaking "
                    "the exact line in clear Mandarin. No on-screen text, subtitles, logos "
                    "or extra people."),
-        "camera": "slowly pushes in" if role == "intro" else "slowly pulls back",
+        "camera": "Static Shot",
         "sound": "Natural clean Mandarin speech matching the provided voice reference, synchronized to the visible speaker. No music or other voices.",
         "visual_style": "Natural live-action presenter, realistic skin and eye movement, editorial technology channel, soft cinematic key light",
         "reference_assets": ["the authorized male presenter portrait", "the authorized Mandarin voice sample"],
@@ -2043,9 +2075,13 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
     stages["assets"] = {"count": len(assets)}
     script = run_stage("script", stage_script, project, claims["ledger"], assets)
     stages["script"] = {"lines": script["lines"]}
+    narration_defaults = _resolve_narration_defaults(config)
     provider = (narration_provider
                 or (config.get("narration") or {}).get("provider")
+                or narration_defaults.get("provider")
                 or "sapi")
+    narration_voice = narration_voice or narration_defaults.get("voice")
+    narration_model = narration_model or narration_defaults.get("model") or "speech-2.8-hd"
     narration = run_stage("narration", stage_narration, project, script["script"],
                           provider=provider, narration_audio=narration_audio,
                           narration_receipt=narration_receipt,

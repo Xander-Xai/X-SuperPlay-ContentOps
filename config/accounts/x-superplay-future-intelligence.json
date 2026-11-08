@@ -248,7 +248,8 @@
     },
     "voice": {
       "persona": "28-35 岁中低音，冷静理性，偏严谨工程师口吻",
-      "provider_hint": "minimax_m_plan/speech-2.8-hd"
+      "provider_hint": "minimax_m_plan/speech-2.8-hd",
+      "voice_alias": "founder_primary_v1"
     },
     "bgm": {
       "style": "极低音量氛围电子，不能抢人声",

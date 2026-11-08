@@ -469,6 +469,10 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
         project_config = m5_production._read_yaml(project / "project.yaml")
     except Exception:
         project_config = {}
+    narration_profile = m5_production._resolve_narration_defaults(project_config)
+    narration_provider = narration_provider or narration_profile.get("provider")
+    narration_voice = narration_voice or narration_profile.get("voice")
+    narration_model = narration_profile.get("model") or narration_model
     avatar_profile = m5_production._load_digital_presenter_profile(project_config)
     if avatar_profile:
         avatar_provider = avatar_provider or avatar_profile.get("provider")
