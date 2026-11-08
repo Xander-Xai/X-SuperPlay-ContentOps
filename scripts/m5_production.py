@@ -21,6 +21,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shutil
 import sys
 import time
@@ -1526,13 +1527,55 @@ def stage_avatar(project: Path, slug: str, *, asset_root: Path,
             reused_any = True
 
         missing = [role for role in ("intro", "outro") if role not in outputs]
-        if missing and not quota_budget:
-            raise M5Blocked("MiniMax H3 generation requires an explicit subscription quota budget")
+        task_budget_pp: Optional[float] = None
+        if missing:
+            match = re.fullmatch(r"\s*(\d+(?:\.\d+)?)\s*pp\s*", quota_budget or "", re.IGNORECASE)
+            if match is None:
+                raise M5Blocked(
+                    "MiniMax H3 requires a task-level weekly quota budget in percentage points, "
+                    "for example 14pp for two clips"
+                )
+            task_budget_pp = float(match.group(1))
+            required_pp = 7.0 * len(missing)
+            if task_budget_pp + 1e-9 < required_pp:
+                raise M5Blocked(
+                    f"H3 task budget {task_budget_pp:g}pp is below the estimated "
+                    f"{required_pp:g}pp needed for {len(missing)} missing clip(s); "
+                    "no H3 request was sent"
+                )
+            outputs["task_quota_budget_pp"] = task_budget_pp
+            outputs["estimated_quota_required_pp"] = required_pp
+        quota_used_pp = 0.0
         for role in missing:
+            remaining_pp = (task_budget_pp - quota_used_pp
+                            if task_budget_pp is not None else 0.0)
+            if remaining_pp + 1e-9 < 7.0:
+                raise M5Blocked(
+                    "observed H3 quota use left less than the 7pp clip estimate; "
+                    "remaining bookend generation was stopped"
+                )
             outputs[role] = _run_h3_avatar_clip(
                 project, shot_id=f"{slug}-avatar-{role}",
                 line=intro_line if role == "intro" else outro_line, role=role,
-                image=image, voice_reference=voice, quota_budget=quota_budget or "")
+                image=image, voice_reference=voice,
+                quota_budget=(f"7pp maximum for this H3 clip; task total "
+                              f"{task_budget_pp:g}pp, remaining before this clip "
+                              f"{remaining_pp:g}pp; included subscription only"))
+            clip = outputs[role]
+            before, after = clip.get("weekly_before"), clip.get("weekly_after")
+            if isinstance(before, (int, float)) and isinstance(after, (int, float)):
+                observed_pp = max(0.0, float(before) - float(after))
+                quota_used_pp += observed_pp
+                if observed_pp > remaining_pp + 1e-9:
+                    raise M5Blocked(
+                        f"H3 provider reported {observed_pp:g}pp use above the "
+                        f"remaining task budget {remaining_pp:g}pp; no further clip was requested"
+                    )
+            else:
+                # Without provider quota receipts the next billable clip cannot
+                # be safely bounded against the task total.
+                quota_used_pp += 7.0
+                outputs["quota_usage_estimated"] = True
         if reused_any:
             outputs["reused_provider_outputs"] = True
         outputs["state"] = "READY"

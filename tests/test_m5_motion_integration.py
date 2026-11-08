@@ -605,6 +605,14 @@ def test_h3_avatar_bookends_reuse_only_hash_bound_subscription_outputs():
                 json.dumps(payload), encoding="utf-8")
             clips.append(clip)
 
+        with mock.patch.object(m5_production, "_run_h3_avatar_clip") as generate:
+            undersized_budget = m5_production.stage_avatar(
+                project, "demo", asset_root=assets, quota_budget="7pp",
+                intro_line="开场", outro_line="结尾")
+        assert undersized_budget["state"] == "PARTIAL"
+        assert "no H3 request was sent" in undersized_budget["blocked_reason"]
+        generate.assert_not_called()
+
         result = m5_production.stage_avatar(
             project, "demo", asset_root=assets, quota_budget=None,
             intro_line="开场", outro_line="结尾",
