@@ -305,15 +305,17 @@ def build_auto_plan(*, project: Path, account_id: str,
         raise MotionPlanError("AUTO_MOTION_DNA_MISMATCH: profile slug does not match project")
     visual = account_dna.get("visual") or {}
     profile = visual.get("motion", {}).get("motion_profile") or visual.get("motion_profile")
-    if not isinstance(profile, dict) or profile.get("backend") != "huashu-art-motion":
+    if (not isinstance(profile, dict)
+            or profile.get("backend") not in {"huashu-art-motion", "huashu-motion"}):
         raise MotionPlanError("AUTO_MOTION_PROFILE_MISSING: account DNA has no Huashu profile")
+    profile_backend = str(profile.get("backend"))
     palette = profile.get("palette") or {}
     required_colors = ("bg", "surface", "ink", "sub", "accent", "accent2")
     if any(not re.fullmatch(r"#[0-9a-fA-F]{6}", str(palette.get(key) or ""))
            for key in required_colors):
         raise MotionPlanError("AUTO_MOTION_PALETTE_INVALID: expected all six hex colors")
     allowed = set(profile.get("grammars") or [])
-    if "y3_whiteboard" not in allowed:
+    if profile_backend == "huashu-art-motion" and "y3_whiteboard" not in allowed:
         raise MotionPlanError("AUTO_MOTION_GRAMMAR_UNAVAILABLE: y3_whiteboard is not allowed")
 
     lines = script.get("lines") or []
@@ -460,7 +462,7 @@ def build_auto_plan(*, project: Path, account_id: str,
             "content_point": text,
             "semantic_class": kind,
             "motion_syntax": grammar,
-            "backend": "huashu-art-motion",
+            "backend": profile_backend,
             "spec": spec_path.relative_to(project).as_posix(),
             "duration_s": duration,
             "source_refs": [str(ref) for ref in line.get("source_refs", [])],

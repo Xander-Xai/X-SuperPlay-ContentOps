@@ -663,6 +663,7 @@ def test_avatar_bookend_composition_preserves_the_main_only_render():
         final.mkdir()
         video = final / "demo.mp4"
         video.write_bytes(b"main-only")
+        (final / "demo-main-only.mp4").write_bytes(b"stale-body-from-prior-run")
         intro, outro = project / "intro.mp4", project / "outro.mp4"
         intro.write_bytes(b"intro")
         outro.write_bytes(b"outro")
@@ -1079,6 +1080,74 @@ def test_future_intelligence_auto_plan_uses_account_palette_and_rag_grammar():
         assert len(list((project / "motion" / "auto").glob("shot-plan-*.json"))) == 2
 
 
+def test_huashu_motion_auto_film_keeps_a_local_source_screenshot():
+    import huashu_motion_backend
+
+    with tempfile.TemporaryDirectory(dir=ROOT / ".verify-tmp") as temp:
+        project = Path(temp)
+        source = project / "source.png"
+        source.write_bytes(b"registered source image bytes")
+        assets_path = project / "sources" / "assets.json"
+        assets_path.parent.mkdir(parents=True)
+        assets_path.write_text(json.dumps({"assets": [{
+            "id": "source-01", "type": "CODE_SNAPSHOT",
+            "repo_path": source.relative_to(ROOT).as_posix(),
+            "source_document": "src/retriever.py",
+        }]}), encoding="utf-8")
+        dna = json.loads((ROOT / "config" / "accounts" /
+                          "x-superplay-future-intelligence.json").read_text(encoding="utf-8"))
+        shot = {"placement_id": "P-01", "source_asset_id": "source-01",
+                "content_point": "Query expansion", "semantic_class": "code"}
+        line = {"id": "P-01", "caption": "Query expansion"}
+        runtime = ROOT / ".verify-tmp" / "huashu-motion-runtime"
+        with mock.patch.object(huashu_motion_backend, "resolve_runtime", return_value=runtime):
+            film_rel = huashu_motion_backend.author_auto_film(project, shot, line, dna, 3.0)
+        film = project / film_rel
+        assert (film / "assets" / "source.png").read_bytes() == source.read_bytes()
+        assert "assets/source.png" in (film / "index.html").read_text(encoding="utf-8")
+        assert (film / "vendor" / "gsap.min.js").is_file()
+
+
+def test_huashu_motion_auto_film_uses_readable_lines_from_registered_source():
+    import huashu_motion_backend
+
+    with tempfile.TemporaryDirectory(dir=ROOT / ".verify-tmp") as temp:
+        project = Path(temp)
+        source = project / "source.png"
+        source.write_bytes(b"registered source image bytes")
+        document = project / "sources" / "retriever.py"
+        document.parent.mkdir(parents=True)
+        document.write_text(
+            "class Retriever:\n"
+            "    def expand_query(self, query):\n"
+            "        return QueryExpander.expand(query)\n"
+            "    def retrieve(self, query):\n"
+            "        bm25 = self.bm25_index.score(query)\n"
+            "        dense = self.vector_index.search(query)\n"
+            "        return reciprocal_rank_fusion(bm25, dense)\n",
+            encoding="utf-8",
+        )
+        (project / "sources" / "assets.json").write_text(json.dumps({"assets": [{
+            "id": "source-01", "type": "CODE_SNAPSHOT",
+            "repo_path": source.relative_to(ROOT).as_posix(),
+            "source_document": "sources/retriever.py",
+        }]}), encoding="utf-8")
+        dna = json.loads((ROOT / "config" / "accounts" /
+                          "x-superplay-future-intelligence.json").read_text(encoding="utf-8"))
+        shot = {"placement_id": "P-02", "source_asset_id": "source-01",
+                "content_point": "BM25 dense retrieval and RRF fusion", "semantic_class": "retrieval"}
+        line = {"id": "P-02", "caption": "BM25 dense retrieval and RRF fusion"}
+        runtime = ROOT / ".verify-tmp" / "huashu-motion-runtime"
+        with mock.patch.object(huashu_motion_backend, "resolve_runtime", return_value=runtime):
+            film_rel = huashu_motion_backend.author_auto_film(project, shot, line, dna, 3.0)
+        html_path = project / film_rel / "index.html"
+        html_text = html_path.read_text(encoding="utf-8")
+        assert "bm25 = self.bm25_index.score(query)" in html_text
+        assert "reciprocal_rank_fusion(bm25, dense)" in html_text
+        assert "SOURCE EXCERPT · NOT A LIVE EXECUTION" in html_text
+        assert "核心步骤" not in html_text
+
+
 def test_future_intelligence_auto_plan_explains_rrf_with_rank_contributions():
     with tempfile.TemporaryDirectory() as temp:
         project = Path(temp)
@@ -1422,6 +1491,8 @@ def test_source_snapshot_selects_verbatim_claim_relevant_lines():
 
 
 def test_m5_auto_selects_future_profile_motion_after_measured_narration():
+    import huashu_motion_backend
+
     with tempfile.TemporaryDirectory(dir=ROOT / ".verify-tmp") as temp:
         project = Path(temp)
         for relative, payload in {
@@ -1449,7 +1520,13 @@ def test_m5_auto_selects_future_profile_motion_after_measured_narration():
             return SimpleNamespace(returncode=0, stdout=json.dumps(payload), stderr="")
 
         m5_production.hidden_run = fake_run
+        film_mock = None
         try:
+            film_mock = mock.patch.object(
+                huashu_motion_backend, "author_auto_film",
+                return_value="motion/huashu-motion/auto/P-01-test",
+            )
+            film_mock.start()
             result = m5_production.stage_motion(
                 project,
                 {"account_slug": "x-superplay-future-intelligence"},
@@ -1460,16 +1537,18 @@ def test_m5_auto_selects_future_profile_motion_after_measured_narration():
             )
         finally:
             m5_production.hidden_run = old_run
-        plan_paths = list((project / "motion" / "auto").glob("shot-plan-*.json"))
+            if film_mock:
+                film_mock.stop()
+        plan_paths = list((project / "motion" / "auto").glob("huashu-motion-shot-plan-*.json"))
         assert len(plan_paths) == 1
         plan = json.loads(plan_paths[0].read_text(encoding="utf-8"))
         receipt = json.loads((project / "receipts" / "motion-stage.json")
                              .read_text(encoding="utf-8"))
-        assert result["backend"] == "huashu-art-motion"
+        assert result["backend"] == "huashu-motion"
         assert plan["account_id"] == "x-superplay-future-intelligence"
         assert plan["shots"][0]["source_refs"] == ["https://docs.example.test/rag"]
         assert receipt["shots"][0]["content_point"] == "混合检索并行找词项和语义候选。"
-        assert commands[0][commands[0].index("--asset-id") + 1] == "huashu-P-01"
+        assert commands[0][commands[0].index("--asset-id") + 1] == "huashu-motion-P-01"
 
 
 def test_auto_profile_motion_receipt_replaces_the_still_on_the_m5_timeline():

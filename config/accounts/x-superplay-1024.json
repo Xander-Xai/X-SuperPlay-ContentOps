@@ -128,11 +128,27 @@
         "flashy_transition"
       ],
       "motion_profile": {
-        "backend": "huashu-art-motion",
-        "grammars": ["t2_keynote_ui", "y3_whiteboard", "t3_finance_chart"],
-        "palette": {"bg": "#0F1117", "surface": "#161A22", "ink": "#F5F7FA", "sub": "#8B95A5", "accent": "#38BDF8", "accent2": "#8B95A5"},
+        "backend": "huashu-motion",
+        "grammars": [
+          "t2_keynote_ui",
+          "y3_whiteboard",
+          "t3_finance_chart"
+        ],
+        "palette": {
+          "bg": "#0F1117",
+          "surface": "#161A22",
+          "ink": "#F5F7FA",
+          "sub": "#8B95A5",
+          "accent": "#38BDF8",
+          "accent2": "#8B95A5"
+        },
         "direction": "result-first; use real terminal, code, and measured output as evidence, then animate focus, comparisons, and process explanations",
-        "rules": ["animation is visual support and never replaces source evidence", "show failure then repair then verified result", "vary framing and motion by beat", "use #F07167 only while a real failure is visible"]
+        "rules": [
+          "animation is visual support and never replaces source evidence",
+          "show failure then repair then verified result",
+          "vary framing and motion by beat",
+          "use #F07167 only while a real failure is visible"
+        ]
       }
     },
     "caption_style": {

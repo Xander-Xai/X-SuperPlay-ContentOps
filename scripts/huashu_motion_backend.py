@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import html
 import json
 import os
 import re
@@ -114,6 +115,189 @@ def _film_hash(project_dir: Path) -> str:
         digest.update(path.relative_to(project_dir).as_posix().encode("utf-8"))
         digest.update(bytes.fromhex(_sha(path)))
     return digest.hexdigest()
+
+
+def author_auto_film(project: Path, shot: Dict[str, Any], line: Dict[str, Any],
+                     account_dna: Dict[str, Any], duration_s: float) -> str:
+    """Author an editable Huashu Motion scene for a planned M5 placement.
+
+    Code shots show a readable excerpt taken from the registered source file,
+    then animate the relevant lines. This avoids shrinking a whole source
+    screenshot into a slide. Any diagram is labeled as explanatory and never
+    claims to be a runtime result.
+    """
+    project = project.resolve()
+    if not project.is_relative_to(ROOT.resolve()):
+        raise BackendError("M5 project must be inside the repository")
+    if not 0.5 <= float(duration_s) <= 8.0:
+        raise BackendError(f"automatic Huashu Motion duration is unsupported: {duration_s}")
+    runtime = resolve_runtime()
+    placement = str(shot.get("placement_id") or "")
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,50}", placement):
+        raise BackendError("automatic Huashu Motion placement id is invalid")
+    profile = ((account_dna.get("visual") or {}).get("motion") or {}).get("motion_profile") or {}
+    palette = profile.get("palette") or {}
+    for key in ("bg", "surface", "ink", "sub", "accent", "accent2"):
+        if not re.fullmatch(r"#[0-9a-fA-F]{6}", str(palette.get(key) or "")):
+            raise BackendError(f"account motion palette is missing a valid {key}")
+
+    source = None
+    source_id = str(shot.get("source_asset_id") or "")
+    assets_doc = _json(project / "sources" / "assets.json")
+    source = next((row for row in assets_doc.get("assets", [])
+                   if str(row.get("id")) == source_id), None)
+    source_path: Optional[Path] = None
+    source_text_path: Optional[Path] = None
+    if source and str(source.get("type") or "").upper() == "CODE_SNAPSHOT":
+        candidate = (ROOT / str(source.get("repo_path") or "")).resolve()
+        try:
+            candidate.relative_to(ROOT.resolve())
+        except ValueError:
+            raise BackendError("automatic Huashu Motion source escapes the repository") from None
+        if candidate.is_file():
+            source_path = candidate
+        document = (project / str(source.get("source_document") or "")).resolve()
+        try:
+            document.relative_to(project)
+        except ValueError:
+            raise BackendError("automatic Huashu Motion source document escapes the project") from None
+        if document.is_file():
+            source_text_path = document
+
+    fingerprint = hashlib.sha256(json.dumps({
+        "shot": shot, "line": line, "duration_s": round(float(duration_s), 4),
+        "palette": palette, "source_sha256": _sha(source_path) if source_path else None,
+        "source_text_sha256": _sha(source_text_path) if source_text_path else None,
+        "runtime_version": _json(runtime / "package.json").get("version"),
+    }, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
+    film = project / "motion" / "huashu-motion" / "auto" / f"{placement}-{fingerprint[:10]}"
+    vendor = film / "vendor"
+    assets_dir = film / "assets"
+    (assets_dir / "fonts").mkdir(parents=True, exist_ok=True)
+    vendor.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(runtime / "templates" / "blank" / "vendor" / "gsap.min.js",
+                 vendor / "gsap.min.js")
+    shutil.copy2(runtime / "templates" / "blank" / "vendor" / "GSAP-LICENSE.html",
+                 vendor / "GSAP-LICENSE.html")
+    for font in ("NotoSansSC-500.woff", "NotoSansSC-700.woff", "OFL.txt"):
+        shutil.copy2(runtime / "fonts" / font, assets_dir / "fonts" / font)
+    image_markup = ""
+    image_animation = ""
+    material_lines = ["# Film materials", "", "- GSAP and Noto Sans SC are bundled local rendering dependencies."]
+    if source_text_path:
+        raw_lines = source_text_path.read_text(encoding="utf-8", errors="replace").splitlines()
+        terms = re.findall(r"[a-zA-Z_][a-zA-Z_0-9]{2,}",
+                           f"{shot.get('content_point', '')} {line.get('caption', '')} {line.get('narration', '')}")
+        ignored = {"the", "and", "with", "for", "from", "this", "that", "into", "code", "real"}
+        terms = [term.casefold() for term in terms if term.casefold() not in ignored]
+        scored = []
+        for idx, raw in enumerate(raw_lines):
+            lowered = raw.casefold()
+            code_line = raw.strip()
+            if (not code_line or code_line.startswith(("#", "\"\"\"", "'''", "import ", "from ", "class "))):
+                continue
+            score = sum(1 for term in terms if term in lowered)
+            if raw.strip() and score:
+                scored.append((score, idx))
+        center = max(scored, default=(0, min(15, max(0, len(raw_lines) - 1))))[1]
+        picked = sorted({idx for idx in range(max(0, center - 5), min(len(raw_lines), center + 6))
+                         if raw_lines[idx].strip()})[:9]
+        if not picked:
+            picked = [idx for idx, raw in enumerate(raw_lines) if raw.strip()][:9]
+        rows = []
+        active = min(2, max(0, len(picked) - 1))
+        for row_index, idx in enumerate(picked):
+            excerpt = html.escape(raw_lines[idx].expandtabs(4).rstrip()[:96])
+            rows.append(f'<div class="code-row row-{row_index}"><i>{idx + 1:04d}</i><code>{excerpt}</code></div>')
+        filename = html.escape(Path(str(source.get("source_document") or "source.py")).name)
+        ribbon_by_kind = {
+            "retrieval": ("QUERY", "RECALL", "FUSION", "RERANK"),
+            "agent": ("INPUT", "STATE", "ACTION", "OUTPUT"),
+            "protocol": ("CALL", "SERVER", "RESPONSE"),
+            "code": ("SOURCE", "LOGIC", "RESULT"),
+        }
+        ribbon_labels = ribbon_by_kind.get(str(shot.get("semantic_class") or "code"),
+                                           ("SOURCE", "DETAIL", "RESULT"))
+        ribbon_markup = "<i>→</i>".join(f"<span>{html.escape(value)}</span>"
+                                           for value in ribbon_labels)
+        image_markup = (
+            '<section class="editor"><div class="editor-bar"><b></b><b></b><b></b>'
+            f'<span>{filename} · PINNED SOURCE</span></div><div class="code">{"".join(rows)}</div>'
+            '<div class="editor-foot">SOURCE EXCERPT · NOT A LIVE EXECUTION</div></section>'
+            f'<div class="stage-ribbon">{ribbon_markup}</div>'
+        )
+        image_animation = (
+            "tl.fromTo('.editor',{y:90,opacity:0},{y:0,opacity:1,duration:.42})"
+            f".fromTo('.row-0',{{x:-90,opacity:0}},{{x:0,opacity:1,duration:.3}},.4)"
+            ".fromTo('.code-row:not(.row-0)',{x:90,opacity:0},{x:0,opacity:1,duration:.26,stagger:.14},.55)"
+            f".to('.row-{active}',{{backgroundColor:'#182B38',borderColor:'{palette['accent']}',duration:.25}},1.1)"
+            ".fromTo('.stage-ribbon span,.stage-ribbon i',{y:30,opacity:0},{y:0,opacity:1,duration:.22,stagger:.1},1.45);"
+        )
+        material_lines.append(f"- Source excerpt comes from `{source.get('source_document')}`; source SHA-256 `{_sha(source_text_path)}`.")
+        if source_path:
+            material_lines.append(f"- The registered source screenshot is retained in `assets/source.png`; SHA-256 `{_sha(source_path)}`.")
+            shutil.copy2(source_path, assets_dir / "source.png")
+    elif source_path:
+        shutil.copy2(source_path, assets_dir / "source.png")
+        image_markup = '<img class="source" src="assets/source.png" alt="pinned source screenshot">'
+        image_animation = "tl.fromTo('.source',{scale:1.08,opacity:.45},{scale:1,opacity:1,duration:.52});"
+        material_lines.append(f"- `assets/source.png`: registered source image; SHA-256 `{_sha(source_path)}`.")
+    else:
+        label = html.escape(str(line.get("caption") or line.get("narration") or
+                                shot.get("content_point") or "").strip()[:62])
+        image_markup = (
+            f'<div class="hero-label">{label}</div>'
+            '<div class="stage-rail"><span>01</span><b></b><span>02</span><b></b><span>03</span></div>'
+            '<div class="flow"><div class="node first">INPUT</div>'
+            '<div class="node second">TRANSFORM</div><div class="node third">OUTPUT</div></div>'
+            '<div class="diagram-note">EXPLANATORY FLOW · NO MEASURED RESULT</div>'
+        )
+        image_animation = (
+            "tl.fromTo('.hero-label',{x:-120,opacity:0},{x:0,opacity:1,duration:.35})"
+            ".fromTo('.node',{y:90,opacity:0},{y:0,opacity:1,duration:.35,stagger:.3},.35)"
+            ".fromTo('.stage-rail b',{scaleX:0},{scaleX:1,duration:.35,stagger:.28},.6)"
+            ".fromTo('.diagram-note',{opacity:0},{opacity:1,duration:.25},1.8);"
+        )
+    scene_title = html.escape(str(shot.get("content_point") or line.get("caption") or "").strip()[:64])
+    evidence_label = html.escape(Path(str(source.get("source_document") or "source")).name
+                                 if source else "EXPLANATORY MOTION")
+    colors = {key: str(palette[key]) for key in ("bg", "surface", "ink", "sub", "accent", "accent2")}
+    page = f'''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><title>{placement}</title>
+<script src="vendor/gsap.min.js"></script><style>
+@font-face{{font-family:"Noto Sans SC";src:url("assets/fonts/NotoSansSC-500.woff");font-weight:400 600}}
+@font-face{{font-family:"Noto Sans SC";src:url("assets/fonts/NotoSansSC-700.woff");font-weight:700 900}}
+*{{box-sizing:border-box}}html,body{{margin:0;width:100%;height:100%;overflow:hidden}}
+body{{font-family:"Noto Sans SC",sans-serif;background:{colors['bg']};color:{colors['ink']}}}
+#film{{position:relative;width:1080px;height:1920px;overflow:hidden;background:{colors['bg']}}}
+.eyebrow{{position:absolute;left:72px;top:112px;color:{colors['sub']};font:22px ui-monospace,monospace;letter-spacing:2px}}
+h1{{position:absolute;left:68px;right:68px;top:230px;margin:0;font-size:58px;line-height:1.16}}
+.editor{{position:absolute;left:30px;right:30px;top:410px;height:1250px;background:#11161E;border:1px solid {colors['surface']};overflow:hidden}}
+.editor-bar{{height:78px;background:{colors['surface']};display:flex;align-items:center;gap:10px;padding:0 28px;color:{colors['sub']};font:19px ui-monospace,monospace;letter-spacing:1px}}
+.editor-bar b{{width:12px;height:12px;border-radius:50%;background:{colors['sub']};opacity:.6}}.editor-bar b:first-child{{background:#F07167}}.editor-bar b:nth-child(2){{background:#F2A93B}}.editor-bar b:nth-child(3){{background:{colors['accent']}}}.editor-bar span{{margin-left:18px}}
+.code{{padding:34px 28px}}.code-row{{display:flex;align-items:flex-start;min-height:88px;padding:18px 16px;border-left:5px solid transparent;border-bottom:1px solid #242B35;background:#141A23;margin-bottom:7px}}
+.code-row i{{font:22px ui-monospace,monospace;color:{colors['sub']};font-style:normal;min-width:80px}}.code-row code{{font:24px/1.4 ui-monospace,monospace;color:#E8EDF3;overflow:hidden;overflow-wrap:anywhere}}
+.editor-foot{{position:absolute;left:28px;right:28px;bottom:22px;color:{colors['sub']};font:17px ui-monospace,monospace;letter-spacing:1px}}
+.source{{position:absolute;left:0;top:410px;width:100%;height:1250px;object-fit:cover;object-position:center;transform-origin:center}}
+.hero-label{{position:absolute;left:72px;right:72px;top:400px;font-size:54px;font-weight:700;line-height:1.2}}
+.stage-rail{{position:absolute;left:160px;right:160px;top:690px;display:flex;align-items:center;justify-content:space-between;color:{colors['accent']};font:700 26px ui-monospace,monospace}}
+.stage-rail b{{height:4px;flex:1;background:{colors['surface']};transform-origin:left;margin:0 20px}}
+.flow{{position:absolute;left:0;right:0;top:800px;height:680px}}
+.node{{position:absolute;left:90px;right:90px;height:170px;padding:34px 40px;background:{colors['surface']};border-left:8px solid {colors['accent']};font:700 42px ui-monospace,monospace;display:flex;align-items:center;letter-spacing:2px}}
+.first{{top:0}}.second{{top:220px;border-color:{colors['accent2']}}}.third{{top:440px;border-color:{colors['accent']}}}
+.diagram-note{{position:absolute;left:72px;bottom:130px;color:{colors['sub']};font:18px ui-monospace,monospace;letter-spacing:1px}}
+.footer{{position:absolute;left:72px;bottom:118px;color:{colors['sub']};font:20px ui-monospace,monospace;letter-spacing:1px}}
+</style></head><body><main id="film" data-composition-id="film" data-width="1080" data-height="1920">
+<div class="eyebrow">{evidence_label}　·　{placement}</div><h1>{scene_title}</h1>{image_markup}
+<div class="footer">CONTENTOPS / MOTION</div></main>
+<script>window.__timelines=window.__timelines||{{}};const tl=gsap.timeline({{paused:true,defaults:{{ease:"power2.out"}}}});
+tl.fromTo('.eyebrow',{{x:-45,opacity:0}},{{x:0,opacity:1,duration:.32}}).fromTo('h1',{{y:45,opacity:0}},{{y:0,opacity:1,duration:.42}},.12);
+{image_animation}tl.to({{}},{{duration:Math.max(0,{float(duration_s):.4f}-tl.duration())}},tl.duration());window.__timelines['film']=tl;</script></body></html>'''
+    film.mkdir(parents=True, exist_ok=True)
+    (film / "index.html").write_text(page, encoding="utf-8")
+    if not source_text_path and not source_path:
+        material_lines.append("- Diagram is explanatory motion based only on the source-backed narration; it contains no measured values.")
+    (film / "materials.md").write_text("\n".join(material_lines) + "\n", encoding="utf-8")
+    return film.relative_to(project).as_posix()
 
 
 def _probe(path: Path) -> Dict[str, Any]:

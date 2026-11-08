@@ -117,11 +117,28 @@
         "comic_effect"
       ],
       "motion_profile": {
-        "backend": "huashu-art-motion",
-        "grammars": ["t1_3b1b", "y3_whiteboard", "t2_keynote_ui", "t3_finance_chart"],
-        "palette": {"bg": "#0F1117", "surface": "#161A22", "ink": "#F5F7FA", "sub": "#8B95A5", "accent": "#38BDF8", "accent2": "#8B95A5"},
+        "backend": "huashu-motion",
+        "grammars": [
+          "t1_3b1b",
+          "y3_whiteboard",
+          "t2_keynote_ui",
+          "t3_finance_chart"
+        ],
+        "palette": {
+          "bg": "#0F1117",
+          "surface": "#161A22",
+          "ink": "#F5F7FA",
+          "sub": "#8B95A5",
+          "accent": "#38BDF8",
+          "accent2": "#8B95A5"
+        },
         "direction": "explain real mechanisms with evolving diagrams, retrieval flows, state transitions, code focus, and evidence-backed metrics",
-        "rules": ["vector animation may be the primary visual when it explains a sourced concept", "do not require a minimum real-recording duration", "keep one visual language across neighboring shots", "do not invent benchmark values or system behavior"]
+        "rules": [
+          "vector animation may be the primary visual when it explains a sourced concept",
+          "do not require a minimum real-recording duration",
+          "keep one visual language across neighboring shots",
+          "do not invent benchmark values or system behavior"
+        ]
       }
     },
     "caption_style": {

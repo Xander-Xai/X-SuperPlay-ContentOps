@@ -596,8 +596,8 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
         profile = visual.get("motion", {}).get("motion_profile") or visual.get("motion_profile")
         if ((account_dna.get("pipeline") or "M5") == "M5"
                 and isinstance(profile, dict)
-                and profile.get("backend") == "huashu-art-motion"):
-            motion = {**motion, "backend": "huashu-art-motion", "auto_profile": True}
+                and profile.get("backend") in {"huashu-art-motion", "huashu-motion"}):
+            motion = {**motion, "backend": profile["backend"], "auto_profile": True}
     default_backend = motion.get("backend")
     if default_backend not in (None, "huashu-art-motion", "huashu-motion", "art-motion", "motion"):
         raise M5Blocked(f"unsupported motion backend {default_backend!r}")
@@ -617,11 +617,6 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
         return {"state": "NOT_CONFIGURED", "shots": 0}
     plan_arg = str(motion.get("shot_plan") or "").strip()
     if not plan_arg:
-        if default_backend == "huashu-motion":
-            raise M5Blocked(
-                "Huashu Motion needs a project-local authored film in motion/huashu-motion/; "
-                "automatic shot planning is currently available for Huashu Art Motion"
-            )
         if not account_id or not account_dna or not narration:
             raise M5Blocked("automatic Huashua motion needs account DNA and measured narration")
         from contentops.media.motion_planner import MotionPlanError, build_auto_plan
@@ -657,7 +652,42 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
                 script=plan_script, narration=narration,
                 source_assets={str(item.get("id")): item for item in source_assets},
             )
-        except (OSError, ValueError, MotionPlanError) as exc:
+            if default_backend == "huashu-motion":
+                from huashu_motion_backend import BackendError, author_auto_film
+                lines_by_id = {str(row.get("id")): row for row in plan_script.get("lines") or []}
+                narration_lines = narration.get("lines") or []
+                timings_by_id = {str(row.get("line_id")): row
+                                 for row in narration_lines if row.get("line_id")}
+                timings_by_placement = {
+                    str(line_row.get("id")): narration_lines[index]
+                    for index, line_row in enumerate(plan_script.get("lines") or [])
+                    if index < len(narration_lines)
+                }
+                auto_plan = dict(generated["plan"])
+                auto_plan["backend"] = "huashu-motion"
+                for shot in auto_plan.get("shots") or []:
+                    placement = str(shot.get("placement_id") or "")
+                    line = lines_by_id.get(placement)
+                    timing = timings_by_id.get(placement) or timings_by_placement.get(placement) or {}
+                    if not line or not timing.get("duration"):
+                        raise M5Blocked(
+                            f"{placement}: Huashu Motion needs a measured narration duration"
+                        )
+                    shot["asset_id"] = f"huashu-motion-{placement}"
+                    shot["backend"] = "huashu-motion"
+                    render_duration = float(shot.get("duration_s") or timing["duration"])
+                    shot["spec"] = author_auto_film(
+                        project, shot, line, account_dna, render_duration
+                    )
+                auto_path = project / "motion" / "auto" / (
+                    f"huashu-motion-shot-plan-{generated['input_sha256'][:12]}.json"
+                )
+                auto_path.write_text(
+                    json.dumps(auto_plan, ensure_ascii=False, indent=2) + "\n",
+                    encoding="utf-8",
+                )
+                generated = {**generated, "path": auto_path, "plan": auto_plan}
+        except (OSError, ValueError, RuntimeError, MotionPlanError) as exc:
             raise M5Blocked(f"automatic Huashua shot plan: {exc}") from None
         plan_arg = generated["path"].relative_to(project).as_posix()
         motion = {**motion, "shot_plan": plan_arg,
@@ -1247,7 +1277,9 @@ def stage_storyboard(project: Path, config: Dict[str, Any], script: Dict[str, An
     )
     motion_assets = {}
     motion_receipt = project / "receipts" / "motion-stage.json"
-    motion_configured = (config.get("motion") or {}).get("backend") == "huashu-art-motion"
+    motion_configured = (config.get("motion") or {}).get("backend") in {
+        "huashu-art-motion", "huashu-motion", "art-motion", "motion",
+    }
     if motion_configured and not motion_receipt.is_file():
         raise M5Blocked("motion backend was requested but no motion-stage receipt was written")
     if motion_receipt.is_file():
@@ -1598,8 +1630,12 @@ def _compose_avatar_bookends(project: Path, slug: str, avatar: Dict[str, Any],
     if not intro.is_file() or not outro.is_file() or not video.is_file():
         raise M5Blocked("avatar bookend or composed M5 video disappeared before assembly")
     base_copy = video.with_name(f"{slug}-main-only.mp4")
-    if not base_copy.exists():
-        shutil.copy2(video, base_copy)
+    # M5 has just rendered a fresh body, which may contain repaired shots.
+    # Reusing an older main-only file here silently discarded those changes
+    # when bookends were concatenated around a stale body.
+    staged_base = base_copy.with_name(f"{base_copy.stem}.tmp{base_copy.suffix}")
+    shutil.copy2(video, staged_base)
+    staged_base.replace(base_copy)
     staged = video.with_name(f"{slug}.avatar.tmp.mp4")
     filter_complex = (
         "[0:v]fps=30,scale=1080:1920:force_original_aspect_ratio=decrease,"

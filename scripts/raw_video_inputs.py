@@ -635,7 +635,7 @@ def prepare_m5_contracts(project: Path) -> dict[str, Any]:
                     continue
         return ImageFont.load_default()
 
-    title_font, body_font, code_font = font(36), font(30), font(25, mono=True)
+    title_font, body_font, code_font = font(36), font(30), font(20, mono=True)
     evidence_by_path: dict[str, dict[str, Any]] = {}
     source_permissions: dict[str, dict[str, Any]] = {}
     source_visual_queries: dict[str, list[str]] = {}
@@ -702,7 +702,7 @@ def prepare_m5_contracts(project: Path) -> dict[str, Any]:
                 line = line[:67] + "…"
             draw.text((92, y), f"{line_number:03d}  {line}", font=code_font,
                       fill=str(palette.get("ink") or "#F5F7FA"))
-            y += 34
+            y += 31
         draw.line((92, 1770, 988, 1770), fill=str(palette.get("accent") or "#38BDF8"), width=2)
         draw.text((92, 1790), "SOURCE TEXT · NOT A LIVE RUNTIME RESULT", font=font(21, mono=True),
                   fill=str(palette.get("sub") or "#8B95A5"))
