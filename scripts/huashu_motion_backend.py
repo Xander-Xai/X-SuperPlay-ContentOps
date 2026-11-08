@@ -210,29 +210,64 @@ def author_auto_film(project: Path, shot: Dict[str, Any], line: Dict[str, Any],
             excerpt = html.escape(raw_lines[idx].expandtabs(4).rstrip()[:96])
             rows.append(f'<div class="code-row row-{row_index}"><i>{idx + 1:04d}</i><code>{excerpt}</code></div>')
         filename = html.escape(Path(str(source.get("source_document") or "source.py")).name)
-        ribbon_by_kind = {
-            "retrieval": ("QUERY", "RECALL", "FUSION", "RERANK"),
-            "agent": ("INPUT", "STATE", "ACTION", "OUTPUT"),
-            "protocol": ("CALL", "SERVER", "RESPONSE"),
-            "code": ("SOURCE", "LOGIC", "RESULT"),
-        }
-        ribbon_labels = ribbon_by_kind.get(str(shot.get("semantic_class") or "code"),
-                                           ("SOURCE", "DETAIL", "RESULT"))
-        ribbon_markup = "<i>→</i>".join(f"<span>{html.escape(value)}</span>"
-                                           for value in ribbon_labels)
-        image_markup = (
-            '<section class="editor"><div class="editor-bar"><b></b><b></b><b></b>'
-            f'<span>{filename} · PINNED SOURCE</span></div><div class="code">{"".join(rows)}</div>'
-            '<div class="editor-foot">SOURCE EXCERPT · NOT A LIVE EXECUTION</div></section>'
-            f'<div class="stage-ribbon">{ribbon_markup}</div>'
-        )
-        image_animation = (
-            "tl.fromTo('.editor',{y:90,opacity:0},{y:0,opacity:1,duration:.42})"
-            f".fromTo('.row-0',{{x:-90,opacity:0}},{{x:0,opacity:1,duration:.3}},.4)"
-            ".fromTo('.code-row:not(.row-0)',{x:90,opacity:0},{x:0,opacity:1,duration:.26,stagger:.14},.55)"
-            f".to('.row-{active}',{{backgroundColor:'#182B38',borderColor:'{palette['accent']}',duration:.25}},1.1)"
-            ".fromTo('.stage-ribbon span,.stage-ribbon i',{y:30,opacity:0},{y:0,opacity:1,duration:.22,stagger:.1},1.45);"
-        )
+        semantic_class = str(shot.get("semantic_class") or "code")
+        if semantic_class == "retrieval":
+            point = f"{shot.get('content_point', '')} {line.get('caption', '')} {line.get('narration', '')}".casefold()
+            if "cache" in point:
+                stages = ("QUERY", "SEMANTIC CACHE", "HYBRID RETRIEVAL", "GUARDRAILS")
+            elif "chunk" in point:
+                stages = ("DOCUMENT", "CHUNKING", "BM25 + DENSE", "CANDIDATES")
+            elif "rerank" in point or "rrf" in point or "fusion" in point:
+                stages = ("BM25 + DENSE", "RRF FUSION", "CROSS-RERANK", "RANKED LIST")
+            else:
+                stages = ("QUERY", "BM25 · TERMS", "DENSE · MEANING", "FUSION + RERANK")
+            relevant = [idx for _, idx in sorted(scored, key=lambda pair: (-pair[0], pair[1]))[:3]]
+            relevant.sort()
+            excerpt = "<br>".join(
+                html.escape(raw_lines[idx].expandtabs(4).rstrip()[:86]) for idx in relevant
+            ) if relevant else ""
+            image_markup = (
+                '<section class="retrieval-scene">'
+                '<div class="query-node"><small>USER QUERY</small><b>one question</b></div>'
+                '<svg class="routes" viewBox="0 0 1080 1920" aria-hidden="true">'
+                '<path class="route route-a" d="M540 430 C540 545 275 525 275 665"/>'
+                '<path class="route route-b" d="M540 430 C540 545 805 525 805 665"/>'
+                '<path class="route route-merge-a" d="M275 1010 C275 1160 540 1080 540 1215"/>'
+                '<path class="route route-merge-b" d="M805 1010 C805 1160 540 1080 540 1215"/></svg>'
+                f'<div class="lane lane-a"><small>LEXICAL RETRIEVAL</small><b>{html.escape(stages[1])}</b>'
+                '<div class="candidate c-a1">candidate passage</div><div class="candidate c-a2">term match</div></div>'
+                f'<div class="lane lane-b"><small>SEMANTIC RETRIEVAL</small><b>{html.escape(stages[2])}</b>'
+                '<div class="candidate c-b1">candidate passage</div><div class="candidate c-b2">context match</div></div>'
+                f'<div class="fusion-node">{html.escape(stages[3])}</div>'
+                f'<div class="source-code"><small>{filename} · SOURCE EXCERPT</small><code>{excerpt}</code></div>'
+                '<div class="diagram-note">MECHANISM SCHEMATIC · NOT A RUNTIME RESULT</div></section>'
+            )
+            image_animation = (
+                "tl.fromTo('.query-node',{y:-130,opacity:0},{y:0,opacity:1,duration:.25})"
+                ".fromTo('.route',{strokeDashoffset:900,opacity:.15},{strokeDashoffset:0,opacity:.78,duration:.34},.25)"
+                ".fromTo('.lane-a',{x:-430,opacity:0},{x:0,opacity:1,duration:.24},.48)"
+                ".fromTo('.lane-b',{x:430,opacity:0},{x:0,opacity:1,duration:.24},.48)"
+                ".fromTo('.candidate',{x:-360,opacity:0},{x:0,opacity:1,duration:.22,stagger:.12},.78)"
+                ".fromTo('.fusion-node',{y:260,scale:.8,opacity:0},{y:0,scale:1,opacity:1,duration:.26},1.25)"
+                ".fromTo('.source-code',{y:90,opacity:0},{y:0,opacity:1,duration:.24},1.75);"
+            )
+            material_lines.append(
+                f"- Diagram stages are explanatory labels drawn from the narration and source excerpt in `{source.get('source_document')}`; candidate tiles are schematic, not retrieved records."
+            )
+        else:
+            image_markup = (
+                '<section class="editor"><div class="editor-bar"><b></b><b></b><b></b>'
+                f'<span>{filename} · PINNED SOURCE</span></div><div class="code">{"".join(rows)}</div>'
+                '<div class="editor-foot">SOURCE EXCERPT · NOT A LIVE EXECUTION</div></section>'
+            )
+            pan = -340 if center % 2 else 340
+            image_animation = (
+                "tl.fromTo('.editor',{y:90,opacity:0},{y:0,opacity:1,duration:.34})"
+                f".fromTo('.row-0',{{x:-110,opacity:0}},{{x:0,opacity:1,duration:.22}},.24)"
+                ".fromTo('.code-row:not(.row-0)',{x:110,opacity:0},{x:0,opacity:1,duration:.2,stagger:.1},.34)"
+                f".to('.code',{{y:{pan},duration:.24,ease:'power3.inOut'}},1.25)"
+                f".to('.row-{active}',{{backgroundColor:'#182B38',borderColor:'{palette['accent']}',duration:.16}},1.5);"
+            )
         material_lines.append(f"- Source excerpt comes from `{source.get('source_document')}`; source SHA-256 `{_sha(source_text_path)}`.")
         if source_path:
             material_lines.append(f"- The registered source screenshot is retained in `assets/source.png`; SHA-256 `{_sha(source_path)}`.")
@@ -277,6 +312,21 @@ h1{{position:absolute;left:68px;right:68px;top:230px;margin:0;font-size:58px;lin
 .code{{padding:34px 28px}}.code-row{{display:flex;align-items:flex-start;min-height:88px;padding:18px 16px;border-left:5px solid transparent;border-bottom:1px solid #242B35;background:#141A23;margin-bottom:7px}}
 .code-row i{{font:22px ui-monospace,monospace;color:{colors['sub']};font-style:normal;min-width:80px}}.code-row code{{font:24px/1.4 ui-monospace,monospace;color:#E8EDF3;overflow:hidden;overflow-wrap:anywhere}}
 .editor-foot{{position:absolute;left:28px;right:28px;bottom:22px;color:{colors['sub']};font:17px ui-monospace,monospace;letter-spacing:1px}}
+.retrieval-scene{{position:absolute;inset:0}}
+.query-node{{position:absolute;z-index:2;left:250px;right:250px;top:385px;height:210px;padding:28px 36px;background:{colors['surface']};border:1px solid #2B3542;border-top:6px solid {colors['accent']};display:flex;flex-direction:column;justify-content:center;gap:14px;text-align:center}}
+.query-node small,.lane small,.source-code small{{font:18px ui-monospace,monospace;letter-spacing:2px;color:{colors['sub']}}}.query-node b{{font-size:42px}}
+.routes{{position:absolute;z-index:0;inset:0;width:1080px;height:1920px;overflow:visible}}
+.route{{fill:none;stroke:{colors['accent']};stroke-width:6;stroke-linecap:round;stroke-dasharray:900;stroke-dashoffset:0;opacity:.72}}
+.route-b,.route-merge-b{{stroke:{colors['accent2']}}}
+.lane{{position:absolute;z-index:1;top:680px;width:444px;height:405px;padding:28px;background:#141A23;border:1px solid #2B3542}}
+.lane-a{{left:42px;border-top:7px solid {colors['accent']}}}.lane-b{{right:42px;border-top:7px solid {colors['accent2']}}}
+.lane b{{display:block;margin-top:18px;font-size:34px;line-height:1.15;color:{colors['ink']}}}
+.candidate{{position:absolute;left:26px;right:26px;height:62px;padding:16px 20px;background:#1B2430;border-left:5px solid {colors['accent']};color:#DCE5EF;font:20px ui-monospace,monospace}}
+.lane-b .candidate{{border-color:{colors['accent2']}}}.c-a1,.c-b1{{top:195px}}.c-a2,.c-b2{{top:276px}}
+.fusion-node{{position:absolute;z-index:2;left:108px;right:108px;top:1200px;height:150px;display:flex;align-items:center;justify-content:center;background:{colors['surface']};border:2px solid {colors['accent']};font-size:40px;font-weight:700;letter-spacing:1px}}
+.source-code{{position:absolute;left:64px;right:64px;top:1455px;min-height:195px;padding:22px 26px;background:#11161E;border-left:6px solid {colors['accent']};display:flex;flex-direction:column;gap:15px}}
+.source-code code{{font:21px/1.35 ui-monospace,monospace;color:#E5EAF0;overflow-wrap:anywhere}}
+.diagram-note{{position:absolute;left:72px;bottom:108px;color:{colors['sub']};font:17px ui-monospace,monospace;letter-spacing:1px}}
 .source{{position:absolute;left:0;top:410px;width:100%;height:1250px;object-fit:cover;object-position:center;transform-origin:center}}
 .hero-label{{position:absolute;left:72px;right:72px;top:400px;font-size:54px;font-weight:700;line-height:1.2}}
 .stage-rail{{position:absolute;left:160px;right:160px;top:690px;display:flex;align-items:center;justify-content:space-between;color:{colors['accent']};font:700 26px ui-monospace,monospace}}

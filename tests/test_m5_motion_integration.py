@@ -1144,7 +1144,8 @@ def test_huashu_motion_auto_film_uses_readable_lines_from_registered_source():
         html_text = html_path.read_text(encoding="utf-8")
         assert "bm25 = self.bm25_index.score(query)" in html_text
         assert "reciprocal_rank_fusion(bm25, dense)" in html_text
-        assert "SOURCE EXCERPT · NOT A LIVE EXECUTION" in html_text
+        assert "bm25 = self.bm25_index.score(query)" in html_text
+        assert "MECHANISM SCHEMATIC · NOT A RUNTIME RESULT" in html_text
         assert "核心步骤" not in html_text
 
 
