@@ -615,6 +615,20 @@ def test_h3_avatar_bookends_reuse_only_hash_bound_subscription_outputs():
         assert saved["intro"]["video"].endswith("intro.mp4")
         assert saved.get("production_ready") is not True
 
+        generated = project / "new-outro.mp4"
+        generated.write_bytes(b"new H3 outro")
+        with mock.patch.object(m5_production, "_run_h3_avatar_clip", return_value={
+                "video": generated, "receipt": generated.with_name(generated.name + ".receipt.json"),
+                "sha256": m5_production._sha256(generated), "reused": False,
+                "duration_s": 4.4}) as generate:
+            hybrid = m5_production.stage_avatar(
+                project, "demo", asset_root=assets, quota_budget="7pp",
+                intro_line="开场", outro_line="结尾", intro_video=clips[0])
+        assert hybrid["state"] == "READY"
+        assert hybrid["intro"]["reused"] and not hybrid["outro"]["reused"]
+        generate.assert_called_once()
+        assert generate.call_args.kwargs["role"] == "outro"
+
         receipt_path = clips[1].with_name(clips[1].name + ".receipt.json")
         receipt = json.loads(receipt_path.read_text())
         receipt["payg_allowed"] = True

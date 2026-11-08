@@ -67,6 +67,8 @@ def _hash_file(path: Path) -> str:
 
 def _input_digest(project: Path, *, assets_dir: Path | None = None,
                   narration_provider: str | None = None,
+                  narration_audio: Path | None = None,
+                  narration_receipt: Path | None = None,
                   narration_voice: str | None = None,
                   narration_model: str | None = None,
                   temporary_narration_voice: bool = False,
@@ -200,6 +202,8 @@ def _input_digest(project: Path, *, assets_dir: Path | None = None,
         digest.update(b"\n")
     runtime_options = {
         "narration_provider": narration_provider,
+        "narration_audio_sha256": _hash_file(narration_audio) if narration_audio and narration_audio.is_file() else None,
+        "narration_receipt_sha256": _hash_file(narration_receipt) if narration_receipt and narration_receipt.is_file() else None,
         "narration_voice": narration_voice,
         "narration_model": narration_model,
         "temporary_narration_voice": bool(temporary_narration_voice),
@@ -439,6 +443,8 @@ def _record_brief_preparation_failure(project: Path, mode: str,
 def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
             assets_dir: Path | None = None,
             narration_provider: str | None = None,
+            narration_audio: Path | None = None,
+            narration_receipt: Path | None = None,
             narration_voice: str | None = None,
             narration_model: str = "speech-2.8-hd",
             temporary_narration_voice: bool = False,
@@ -490,6 +496,8 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
     digest = _input_digest(
         project, assets_dir=assets_dir,
         narration_provider=narration_provider,
+        narration_audio=narration_audio,
+        narration_receipt=narration_receipt,
         narration_voice=narration_voice,
         narration_model=narration_model,
         temporary_narration_voice=temporary_narration_voice,
@@ -568,9 +576,12 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
                 raise m5_production.M5Blocked(f"copy review: {exc}") from None
         build_options = {"require_copy_review": mode == "STRICT"}
         if (narration_provider is not None or narration_voice is not None
+                or narration_audio is not None or narration_receipt is not None
                 or temporary_narration_voice or cost_budget_cny != 0.0):
             build_options.update({
                 "narration_provider": narration_provider,
+                "narration_audio": narration_audio,
+                "narration_receipt": narration_receipt,
                 "narration_voice": narration_voice,
                 "narration_model": narration_model,
                 "temporary_voice": temporary_narration_voice,
@@ -653,6 +664,10 @@ def main(argv: list[str] | None = None) -> int:
                         help="explicit local image/video folder; imported media is local-preview-only")
     parser.add_argument("--narration-provider", choices=("sapi", "existing", "minimax"),
                         default=None, help="M5 narration provider; MiniMax never silently falls back")
+    parser.add_argument("--narration-audio", default=None,
+                        help="audio file for receipt-bound existing narration")
+    parser.add_argument("--narration-receipt", default=None,
+                        help="narration receipt binding an existing audio file to the current script")
     parser.add_argument("--narration-voice", default=None,
                         help="MiniMax voice ID; ordinary system voices require the temporary flag")
     parser.add_argument("--narration-model", default="speech-2.8-hd")
@@ -692,6 +707,10 @@ def main(argv: list[str] | None = None) -> int:
                          assets_dir=(Path(args.assets).expanduser().resolve()
                                      if args.assets else None),
                          narration_provider=args.narration_provider,
+                         narration_audio=(Path(args.narration_audio).expanduser().resolve()
+                                          if args.narration_audio else None),
+                         narration_receipt=(Path(args.narration_receipt).expanduser().resolve()
+                                            if args.narration_receipt else None),
                          narration_voice=args.narration_voice,
                          narration_model=args.narration_model,
                          temporary_narration_voice=args.temporary_narration_voice,

@@ -1135,7 +1135,8 @@ def stage_narration(project: Path, script: Dict[str, Any], *, provider: str = "s
             raise M5Blocked(
                 "the narration receipt carries no usable per-line timings; subtitles "
                 "cannot be aligned to this audio")
-        shutil.copyfile(audio, target)
+        if audio.resolve() != target.resolve():
+            shutil.copyfile(audio, target)
         payload = {
             "schema": "contentops.m5-narration/v1",
             "engine": previous.get("engine", "existing"),
@@ -1496,43 +1497,44 @@ def stage_avatar(project: Path, slug: str, *, asset_root: Path,
         _write_json(project / "receipts" / "avatar-bookends.json", payload)
 
     try:
-        if bool(intro_video) != bool(outro_video):
-            raise M5Blocked("reusing H3 bookends requires both intro and outro clips")
-        if intro_video and outro_video:
-            reused = []
-            for role, candidate in (("intro", intro_video), ("outro", outro_video)):
-                receipt_path = candidate.with_name(candidate.name + ".receipt.json")
-                try:
-                    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
-                except (OSError, ValueError):
-                    raise M5Blocked(f"H3 {role} reuse requires its provider receipt") from None
-                if (not candidate.is_file() or receipt.get("provider") != "minimax_m_plan"
-                        or receipt.get("model") != "MiniMax-H3"
-                        or receipt.get("credential_class") != "SUBSCRIPTION"
-                        or receipt.get("payg_allowed") is not False
-                        or receipt.get("output_sha256") != _sha256(candidate)
-                        or not receipt.get("audio_stream_present")):
-                    raise M5Blocked(f"H3 {role} reuse failed provider, audio, or hash validation")
-                expected_refs = {_sha256(image), _sha256(voice)}
-                if not expected_refs.issubset(set(receipt.get("reference_asset_sha256") or [])):
-                    raise M5Blocked(f"H3 {role} receipt does not match the registered avatar and voice reference")
-                reused.append({"video": candidate.resolve(), "receipt": receipt_path.resolve(),
-                               "sha256": receipt["output_sha256"], "reused": True,
-                               "duration_s": receipt.get("actual_duration_s"),
-                               "weekly_before": (receipt.get("quota_before") or {}).get("weekly_remaining_percent"),
-                               "weekly_after": (receipt.get("quota_after") or {}).get("weekly_remaining_percent")})
-            outputs["intro"], outputs["outro"] = reused
-            outputs["state"] = "READY"
+        expected_refs = {_sha256(image), _sha256(voice)}
+        reused_any = False
+        for role, candidate in (("intro", intro_video), ("outro", outro_video)):
+            if candidate is None:
+                continue
+            receipt_path = candidate.with_name(candidate.name + ".receipt.json")
+            try:
+                receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                raise M5Blocked(f"H3 {role} reuse requires its provider receipt") from None
+            if (not candidate.is_file() or receipt.get("provider") != "minimax_m_plan"
+                    or receipt.get("model") != "MiniMax-H3"
+                    or receipt.get("credential_class") != "SUBSCRIPTION"
+                    or receipt.get("payg_allowed") is not False
+                    or receipt.get("output_sha256") != _sha256(candidate)
+                    or not receipt.get("audio_stream_present")):
+                raise M5Blocked(f"H3 {role} reuse failed provider, audio, or hash validation")
+            if not expected_refs.issubset(set(receipt.get("reference_asset_sha256") or [])):
+                raise M5Blocked(f"H3 {role} receipt does not match the registered avatar and voice reference")
+            outputs[role] = {
+                "video": candidate.resolve(), "receipt": receipt_path.resolve(),
+                "sha256": receipt["output_sha256"], "reused": True,
+                "duration_s": receipt.get("actual_duration_s"),
+                "weekly_before": (receipt.get("quota_before") or {}).get("weekly_remaining_percent"),
+                "weekly_after": (receipt.get("quota_after") or {}).get("weekly_remaining_percent"),
+            }
+            reused_any = True
+
+        missing = [role for role in ("intro", "outro") if role not in outputs]
+        if missing and not quota_budget:
+            raise M5Blocked("MiniMax H3 generation requires an explicit subscription quota budget")
+        for role in missing:
+            outputs[role] = _run_h3_avatar_clip(
+                project, shot_id=f"{slug}-avatar-{role}",
+                line=intro_line if role == "intro" else outro_line, role=role,
+                image=image, voice_reference=voice, quota_budget=quota_budget or "")
+        if reused_any:
             outputs["reused_provider_outputs"] = True
-        else:
-            if not quota_budget:
-                raise M5Blocked("MiniMax H3 generation requires an explicit subscription quota budget")
-            outputs["intro"] = _run_h3_avatar_clip(
-                project, shot_id=f"{slug}-avatar-intro", line=intro_line, role="intro",
-                image=image, voice_reference=voice, quota_budget=quota_budget)
-            outputs["outro"] = _run_h3_avatar_clip(
-                project, shot_id=f"{slug}-avatar-outro", line=outro_line, role="outro",
-                image=image, voice_reference=voice, quota_budget=quota_budget)
         outputs["state"] = "READY"
     except M5Blocked as exc:
         outputs["state"] = "PARTIAL"

@@ -43,6 +43,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from contentops.media.billing_guard import BillingGuard  # noqa: E402
 from contentops.media.contract import BillingBlocked  # noqa: E402
+from contentops.media.attempts import AttemptRecordError  # noqa: E402
 from contentops.media.credentials import (  # noqa: E402
     CredentialBindingError,
     resolve_credential,
@@ -225,6 +226,18 @@ def main() -> int:
                           "reasons": [str(transport_error)],
                           "create_count": provider.create_count,
                           "note": "resume by re-running; the same task is polled"},
+                         indent=2, ensure_ascii=False))
+        return 1
+    except AttemptRecordError:
+        # A provider task may already exist and its raw id is held in private
+        # task-state. Do not print a traceback or create a replacement task;
+        # the next invocation must resume that same task.
+        print(json.dumps({"status": "RECOVERABLE",
+                          "verdict": "ATTEMPT_RECORD_WRITE_REFUSED",
+                          "reasons": ["The provider task exists, but its public attempt record could not be saved safely. "
+                                      "Private recovery state is retained; rerun to resume the same task."],
+                          "create_count": provider.create_count,
+                          "task_created": provider.create_count > 0},
                          indent=2, ensure_ascii=False))
         return 1
     except RuntimeError as failed:
