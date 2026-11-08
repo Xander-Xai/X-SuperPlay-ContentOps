@@ -18,11 +18,11 @@
     "palette": {
       "base": "#0F1117",
       "accent": "#38BDF8",
-      "ink": "#F5F7FA",
-      "muted": "#8B95A5",
-      "surface": "#161A22",
-      "code_theme": "monokai-dark",
-      "problem": "#F07167"
+      "ink": "#18232B",
+      "muted": "#5C6970",
+      "surface": "#FFFFFF",
+      "code_theme": "github-light",
+      "problem": "#C84D42"
     },
     "forbidden_effects": [
       "bounce",
@@ -128,20 +128,26 @@
         "flashy_transition"
       ],
       "motion_profile": {
-        "backend": "huashu-motion",
+        "backend": "huashu-art-motion",
         "grammars": [
           "t2_keynote_ui",
           "y3_whiteboard",
           "t3_finance_chart"
         ],
         "palette": {
-          "bg": "#0F1117",
-          "surface": "#161A22",
-          "ink": "#F5F7FA",
-          "sub": "#8B95A5",
-          "accent": "#38BDF8",
-          "accent2": "#8B95A5"
+          "bg": "#F4F2ED",
+          "surface": "#FFFFFF",
+          "ink": "#18232B",
+          "sub": "#5C6970",
+          "accent": "#087FA6",
+          "accent2": "#C4DCE3"
         },
+        "recommended_variant": "warm-editorial",
+        "style_variants": {
+          "warm-editorial": {"bg": "#F4F2ED", "surface": "#FFFFFF", "ink": "#18232B", "sub": "#5C6970", "accent": "#087FA6", "accent2": "#C4DCE3"},
+          "cool-white": {"bg": "#F8FAFB", "surface": "#FFFFFF", "ink": "#16222B", "sub": "#63737A", "accent": "#067F9F", "accent2": "#BCD4DC"}
+        },
+        "scene_templates": {"proof": "evidence-frame", "demo": "ui-spotlight", "explain": "editorial-diagram", "context": "supportive-still", "transition": "section-marker"},
         "direction": "result-first; use real terminal, code, and measured output as evidence, then animate focus, comparisons, and process explanations",
         "rules": [
           "animation is visual support and never replaces source evidence",
@@ -154,7 +160,7 @@
     "caption_style": {
       "font": "Noto Sans CJK SC",
       "size_px": 47,
-      "primary": "#F5F7FA",
+      "primary": "#18232B",
       "highlight": "#38BDF8",
       "outline": "none",
       "shadow": "none",
@@ -162,7 +168,7 @@
       "highlight_markup": "<hl>术语</hl>",
       "highlight_rendering": "DECLARED_NOT_RENDERED",
       "highlight_note": "The burn path applies one uniform style per cue. Per-cue highlight needs an ASS cue writer, which no shipped step owns yet; until one does, a marked cue renders in the base colour.",
-      "burn_style": "Fontsize=7,MarginV=18,Outline=0,Shadow=0,BorderStyle=1,PrimaryColour=&H00FFFFFF,Alignment=2",
+      "burn_style": "Fontsize=7,MarginV=18,Outline=0,Shadow=0,BorderStyle=1,PrimaryColour=&H002B2318,Alignment=2",
       "safe_zone": {
         "margin_v_px": 120,
         "side_margin_ratio": 0.07

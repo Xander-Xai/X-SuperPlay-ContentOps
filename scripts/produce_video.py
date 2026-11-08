@@ -79,7 +79,8 @@ def _input_digest(project: Path, *, assets_dir: Path | None = None,
                   avatar_intro_line: str | None = None,
                   avatar_outro_line: str | None = None,
                   avatar_intro_video: Path | None = None,
-                  avatar_outro_video: Path | None = None) -> str:
+                  avatar_outro_video: Path | None = None,
+                  rerender_shots: tuple[str, ...] = ()) -> str:
     """Hash declared production inputs, including local files named by assets."""
     local_source_ids: set[str] = set()
     source_files: list[tuple[str, str]] = []
@@ -214,6 +215,7 @@ def _input_digest(project: Path, *, assets_dir: Path | None = None,
         "avatar_outro_line": avatar_outro_line,
         "avatar_intro_video_sha256": _hash_file(avatar_intro_video) if avatar_intro_video and avatar_intro_video.is_file() else None,
         "avatar_outro_video_sha256": _hash_file(avatar_outro_video) if avatar_outro_video and avatar_outro_video.is_file() else None,
+        "rerender_shots": sorted(set(rerender_shots)),
     }
     digest.update(b"PRODUCTION_OPTIONS\0")
     digest.update(json.dumps(runtime_options, sort_keys=True, separators=(",", ":"))
@@ -247,7 +249,7 @@ def _input_digest(project: Path, *, assets_dir: Path | None = None,
     return digest.hexdigest()
 
 
-def _reusable(project: Path, digest: str) -> dict[str, Any] | None:
+def _reusable(project: Path, digest: str, *, require_avatar: bool = False) -> dict[str, Any] | None:
     receipt_path = project / "receipts" / RECEIPT
     if not receipt_path.is_file():
         return None
@@ -277,6 +279,15 @@ def _reusable(project: Path, digest: str) -> dict[str, Any] | None:
             or contact_sheet_ref != "project://receipts/visual-contact-sheet.png"
             or not contact_sheet.is_file()):
         return None
+    if require_avatar:
+        avatar_path = project / "receipts" / "avatar-bookends.json"
+        try:
+            avatar = json.loads(avatar_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return None
+        if (avatar.get("state") != "READY"
+                or (avatar.get("composite") or {}).get("state") != "COMPOSED"):
+            return None
     receipt["visual_qc"] = visual.get("state")
     return receipt
 
@@ -286,6 +297,106 @@ def _run_summary(receipt: dict[str, Any]) -> dict[str, Any]:
         "run_id", "task_id", "state", "started_at", "finished_at",
         "elapsed_seconds", "reused", "video_sha256", "stage_timings_seconds",
     ) if key in receipt}
+
+
+def _provider_usage(project: Path, *, run_state: str,
+                    requested_narration_provider: str | None,
+                    requested_avatar_provider: str | None) -> dict[str, Any]:
+    """Count only provider work proven by this run's local receipts.
+
+    Missing or partial receipts remain unknown instead of being reported as
+    zero. Weekly quota points are retained as quota units and never converted
+    into cash.
+    """
+    calls = 0
+    cache_hits = 0
+    failures: int | None = 0
+    exact = True
+    cash_known = True
+    quota_used_pp: float | None = 0.0
+    source_receipts: list[str] = []
+    narration_path = project / "receipts" / "narration.json"
+    try:
+        narration = json.loads(narration_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        narration = {}
+    is_minimax_narration = (requested_narration_provider == "minimax"
+                            or (requested_narration_provider is None
+                                and narration.get("engine") == "minimax_speech"
+                                and narration.get("network") is True))
+    if is_minimax_narration:
+        rows = narration.get("line_receipts")
+        if narration.get("network") is True and isinstance(rows, list):
+            source_receipts.append("receipts/narration.json")
+            for row in rows:
+                if not isinstance(row, dict):
+                    exact = False
+                    continue
+                if row.get("reused") is True:
+                    cache_hits += 1
+                else:
+                    calls += 1
+                provider_receipt = row.get("provider_receipt") or {}
+                verdict = str(provider_receipt.get("billing_guard_verdict") or "")
+                if verdict not in {"SAFE_INCLUDED_PLAN", "CACHE_ONLY_NO_NEW_AUTHORIZATION"}:
+                    cash_known = False
+            if len(rows) != len((narration.get("lines") or [])):
+                exact = False
+        elif run_state in {"QC_PASSED", "BLOCKED"}:
+            exact = False
+            failures = None
+        else:
+            exact = False
+            failures = None
+    elif requested_narration_provider == "existing" or not narration.get("network"):
+        # The selected provider is a receipt-bound local audio reuse path.
+        pass
+
+    avatar_path = project / "receipts" / "avatar-bookends.json"
+    if requested_avatar_provider == "minimax-h3":
+        try:
+            avatar = json.loads(avatar_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            avatar = {}
+        if avatar:
+            source_receipts.append("receipts/avatar-bookends.json")
+            for role in ("intro", "outro"):
+                row = avatar.get(role)
+                if not isinstance(row, dict):
+                    continue
+                if row.get("reused") is True:
+                    cache_hits += 1
+                elif row.get("video"):
+                    calls += 1
+                    cash_known = False
+                    quota_before = row.get("weekly_before")
+                    quota_after = row.get("weekly_after")
+                    if isinstance(quota_before, (int, float)) and isinstance(quota_after, (int, float)):
+                        quota_used_pp += max(0.0, float(quota_before) - float(quota_after))
+                    else:
+                        quota_used_pp = None
+            if avatar.get("state") == "PARTIAL" and not avatar.get("generation_skipped"):
+                exact = False
+                failures = None
+        elif run_state not in {"BLOCKED"}:
+            exact = False
+            failures = None
+
+    if not exact and run_state not in {"QC_PASSED"}:
+        failures = None
+    reported_calls: int | None = calls if exact else None
+    cash_cost: int | str = (0 if cash_known and exact else "unknown")
+    return {
+        "provider_calls": reported_calls,
+        "provider_cache_hits": cache_hits,
+        "provider_failures": failures,
+        "cash_cost_cny": cash_cost,
+        "cash_cost_reason": ("provider receipts show included-plan/local reuse only"
+                             if cash_cost == 0 else "provider cost is not established by receipts"),
+        "weekly_quota_used_pp": quota_used_pp,
+        "counts_exact": exact,
+        "source_receipts": source_receipts,
+    }
 
 
 def _prepare_brief_inputs(project: Path, *, mode: str,
@@ -450,12 +561,14 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
             temporary_narration_voice: bool = False,
             cost_budget_cny: float = 0.0,
             avatar_provider: str | None = None,
+            avatar_generation_choice: str | None = None,
             avatar_assets_dir: Path | None = None,
             avatar_quota_budget: str | None = None,
             avatar_intro_line: str | None = None,
             avatar_outro_line: str | None = None,
             avatar_intro_video: Path | None = None,
-            avatar_outro_video: Path | None = None) -> dict[str, Any]:
+            avatar_outro_video: Path | None = None,
+            rerender_shots: tuple[str, ...] = ()) -> dict[str, Any]:
     mode = mode.upper()
     if mode not in {"AUTO", "REVIEW", "STRICT"}:
         raise ValueError("mode must be AUTO, REVIEW, or STRICT")
@@ -481,6 +594,8 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
         ).resolve()
         avatar_intro_line = avatar_intro_line or avatar_profile.get("intro_line")
         avatar_outro_line = avatar_outro_line or avatar_profile.get("outro_line")
+    if avatar_intro_video is not None or avatar_outro_video is not None:
+        avatar_provider = avatar_provider or "minimax-h3"
     if assets_dir is not None:
         from contentops.media.local_assets import LocalAssetError, import_local_assets
         try:
@@ -513,6 +628,7 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
         avatar_outro_line=avatar_outro_line,
         avatar_intro_video=avatar_intro_video,
         avatar_outro_video=avatar_outro_video,
+        rerender_shots=rerender_shots,
     )
     receipt_path = project / "receipts" / RECEIPT
     previous: dict[str, Any] = {}
@@ -528,8 +644,9 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
     if previous_run_id and not any(item.get("run_id") == previous_run_id for item in history
                                    if isinstance(item, dict)):
         history.append(_run_summary(previous))
-    if not force and mode == "AUTO":
-        prior = _reusable(project, digest)
+    if (not force and not rerender_shots and mode == "AUTO"
+            and avatar_generation_choice != "no"):
+        prior = _reusable(project, digest, require_avatar=avatar_provider == "minimax-h3")
         if prior:
             reused = {**prior, "state": "QC_PASSED", "reused": True,
                       "resumed_from_run_id": prior.get("run_id"),
@@ -545,6 +662,24 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
             return reused
 
     run_id, started, start = str(uuid.uuid4()), _now(), time.monotonic()
+    avatar_confirmation = None
+    avatar_generation_confirmed = False
+    if avatar_provider == "minimax-h3":
+        avatar_confirmation = m5_production.confirm_avatar_generation(
+            project, provider=avatar_provider,
+            quota_budget=avatar_quota_budget, run_id=run_id,
+            reusable_clips=(bool(avatar_intro_video and avatar_outro_video)
+                            or m5_production.has_reusable_avatar_pair(
+                                project, avatar_assets_dir or (ROOT / "assert"))),
+            human_choice=avatar_generation_choice,
+        )
+        avatar_generation_confirmed = (
+            avatar_confirmation.get("decision") == "CONFIRMED"
+        )
+        if not avatar_generation_confirmed:
+            avatar_provider = None
+            avatar_intro_video = None
+            avatar_outro_video = None
     receipt: dict[str, Any] = {
         "schema": "contentops.produce-video/v1",
         "run_id": run_id,
@@ -563,7 +698,8 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
         "production_ready": False,
         "external_provider_calls": 0,
         "external_cost": 0,
-        "external_cost_reason": "M5 accepts only local SAPI or receipt-bound existing narration in this entry; no paid provider is called",
+        "external_cost_reason": "finalized from provider receipts after the run",
+        "avatar_generation_consent": avatar_confirmation,
         "human_review": "PENDING_FOUNDER_REVIEW",
         "copy_review_required_for_render": mode == "STRICT",
         "brief_preparation": brief_preparation,
@@ -579,6 +715,8 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
             except m5_production.copy_review.CopyReviewRequired as exc:
                 raise m5_production.M5Blocked(f"copy review: {exc}") from None
         build_options = {"require_copy_review": mode == "STRICT"}
+        if avatar_confirmation is not None:
+            build_options["avatar_use_decision"] = avatar_generation_confirmed
         if (narration_provider is not None or narration_voice is not None
                 or narration_audio is not None or narration_receipt is not None
                 or temporary_narration_voice or cost_budget_cny != 0.0):
@@ -601,7 +739,11 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
                 "avatar_outro_line": avatar_outro_line,
                 "avatar_intro_video": avatar_intro_video,
                 "avatar_outro_video": avatar_outro_video,
+                "avatar_generation_confirmed": avatar_generation_confirmed,
+                "avatar_confirmation": avatar_confirmation,
             })
+        if rerender_shots:
+            build_options["rerender_shots"] = tuple(dict.fromkeys(rerender_shots))
         if assets_dir is not None:
             build_options["assets_dir"] = assets_dir
         m5_run = m5_production.build(project, **build_options)
@@ -646,6 +788,17 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
     finally:
         receipt["finished_at"] = _now()
         receipt["elapsed_seconds"] = round(time.monotonic() - start, 3)
+        provider_usage = _provider_usage(
+            project, run_state=str(receipt.get("state") or "FAILED"),
+            requested_narration_provider=narration_provider,
+            requested_avatar_provider=("minimax-h3" if avatar_confirmation is not None else None),
+        )
+        receipt["provider_usage"] = provider_usage
+        receipt["external_provider_calls"] = provider_usage["provider_calls"]
+        receipt["external_provider_cache_hits"] = provider_usage["provider_cache_hits"]
+        receipt["provider_failures"] = provider_usage["provider_failures"]
+        receipt["external_cost"] = provider_usage["cash_cost_cny"]
+        receipt["external_cost_reason"] = provider_usage["cash_cost_reason"]
         receipt["runs"].append(_run_summary(receipt))
         output.write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return receipt
@@ -664,6 +817,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--mode", default="AUTO", choices=("AUTO", "REVIEW", "STRICT"),
                         help="AUTO renders automatically; REVIEW renders a draft for review; STRICT requires copy approval first")
     parser.add_argument("--force", action="store_true", help="rerun even when the same inputs already passed QC")
+    parser.add_argument("--rerender-shot", action="append", default=[], metavar="PLACEMENT_ID",
+                        help="re-render only this motion placement; all other valid shot renders stay cached, then recompose and QC")
     parser.add_argument("--assets", default=None,
                         help="explicit local image/video folder; imported media is local-preview-only")
     parser.add_argument("--narration-provider", choices=("sapi", "existing", "minimax"),
@@ -681,6 +836,8 @@ def main(argv: list[str] | None = None) -> int:
                         help="task-level CNY cost ceiling; MiniMax M5 currently allows included-plan calls only")
     parser.add_argument("--avatar-provider", choices=("minimax-h3",), default=None,
                         help="generate and place MiniMax H3 presenter intro and outro")
+    parser.add_argument("--avatar-generation-choice", choices=("ask", "no"), default="ask",
+                        help="default asks a human whether to use H3; no skips avatars for this run")
     parser.add_argument("--avatar-assets-dir", default=None,
                         help="local-only directory with registered portrait and voice reference; defaults to assert/")
     parser.add_argument("--avatar-quota-budget", default=None,
@@ -708,6 +865,9 @@ def main(argv: list[str] | None = None) -> int:
             except raw_video_inputs.RoutingError as exc:
                 raise ValueError(str(exc)) from None
         result = produce(project_path, force=args.force, mode=args.mode,
+                         rerender_shots=tuple(args.rerender_shot),
+                         avatar_generation_choice=(None if args.avatar_generation_choice == "ask"
+                                                   else args.avatar_generation_choice),
                          assets_dir=(Path(args.assets).expanduser().resolve()
                                      if args.assets else None),
                          narration_provider=args.narration_provider,
