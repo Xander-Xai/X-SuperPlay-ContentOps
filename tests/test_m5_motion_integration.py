@@ -407,16 +407,24 @@ def test_reused_asset_needs_distinct_explanatory_variations_within_a_segment():
         assert len(adapter.build_shots(**options)) == 2
 
 
-def test_visual_qc_flags_adjacent_duplicate_assets_and_allows_distinct_purposes():
+def test_visual_qc_flags_adjacent_duplicate_assets_and_requires_visual_evidence():
     rows = [
         {"shot_id": "S1", "asset_id": "A1", "frame_dhash": "0123456789abcdef"},
         {"shot_id": "S2", "asset_id": "A1", "frame_dhash": "0123456789abcdef"},
     ]
     issues = qc_visual._shot_reuse_issues(rows)
     assert issues[0]["state"] == "FAIL"
+    # Rewriting the explanation is not a visual change.
     rows[0]["variation"] = "overview of configuration structure"
     rows[1]["variation"] = "detail of semantic cache settings"
-    assert qc_visual._shot_reuse_issues(rows)[0]["state"] == "ALLOWED_WITH_DISTINCT_PURPOSE"
+    assert qc_visual._shot_reuse_issues(rows)[0]["state"] == "FAIL"
+    rows[0]["source_asset_id"] = "source-anchor-01"
+    rows[1]["source_asset_id"] = "cache-region-02"
+    rows[1]["content_hamming_delta"] = 22
+    rows[1]["content_mae"] = 11.09
+    released = qc_visual._shot_reuse_issues(rows)[0]
+    assert released["state"] == "ALLOWED_WITH_VERIFIED_VISUAL_EVIDENCE"
+    assert "distinct_source_asset_id" in released["evidence_basis"]
     assert qc_visual.hamming_distance("0000000000000000", "0000000000000007") == 3
 
 
@@ -1941,7 +1949,7 @@ def main() -> int:
              test_one_measured_narration_segment_can_cover_multiple_visual_shots,
              test_proof_visual_shot_requires_an_evidence_reference,
              test_reused_asset_needs_distinct_explanatory_variations_within_a_segment,
-             test_visual_qc_flags_adjacent_duplicate_assets_and_allows_distinct_purposes,
+             test_visual_qc_flags_adjacent_duplicate_assets_and_requires_visual_evidence,
              test_a_video_asset_reaches_the_storyboard_as_a_clip,
              test_a_still_asset_is_not_labelled_a_clip,
              test_runtime_release_facts_use_the_source_image_motion_grammar,

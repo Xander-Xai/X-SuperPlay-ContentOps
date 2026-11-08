@@ -166,8 +166,130 @@ def hamming_distance(left: str | None, right: str | None) -> int | None:
         return None
 
 
+# The near-duplicate screen is unchanged (3/64 dHash bits). The new release
+# evidence below only makes the decision stricter; it never relaxes this gate.
+NEAR_DUPLICATE_DHASH_MAX = 3
+MIN_CONTENT_HASH_DELTA = 12      # /240 content-band dHash bits
+MIN_CONTENT_MAE = 4.0            # mean absolute grayscale delta in content band
+CONTENT_BAND_TOP = 0.10
+CONTENT_BAND_BOTTOM = 0.82
+
+
+def content_region_delta(left: Path, right: Path) -> tuple[int | None, float | None]:
+    """Measure real frame content change, excluding title and caption bands.
+
+    A changed subtitle, a highlight box or a zoom on the same screenshot must
+    not be mistaken for new visual content, so only the content band is used.
+    """
+    try:
+        from PIL import Image, ImageChops, ImageStat
+        with Image.open(left) as a_raw, Image.open(right) as b_raw:
+            a, b = a_raw.convert("L"), b_raw.convert("L")
+            width, height = a.size
+            box = (0, int(height * CONTENT_BAND_TOP), width,
+                   int(height * CONTENT_BAND_BOTTOM))
+            a, b = a.crop(box), b.crop(box)
+            small_a = list(a.resize((16, 16)).getdata())
+            small_b = list(b.resize((16, 16)).getdata())
+            bits_a = [1 if small_a[y * 16 + x] > small_a[y * 16 + x + 1] else 0
+                      for y in range(16) for x in range(15)]
+            bits_b = [1 if small_b[y * 16 + x] > small_b[y * 16 + x + 1] else 0
+                      for y in range(16) for x in range(15)]
+            delta = sum(x != y for x, y in zip(bits_a, bits_b))
+            mae = round(ImageStat.Stat(ImageChops.difference(a, b)).mean[0], 2)
+            return delta, mae
+    except (OSError, ImportError, ValueError):
+        return None, None
+
+
+def source_asset_ids(receipts: Path) -> dict[str, str]:
+    """Read the renderer-recorded source asset for each placement.
+
+    motion-stage.json is written by the renderer, not by copy text, so editing
+    a ``variation`` string cannot change this evidence.
+    """
+    path = receipts / "motion-stage.json"
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    result = {}
+    for row in data.get("shots") or []:
+        if not isinstance(row, dict):
+            continue
+        placement, anchor = row.get("placement_id"), row.get("source_asset_id")
+        if isinstance(placement, str) and isinstance(anchor, str) and anchor:
+            result[placement] = anchor
+    return result
+
+
+def source_asset_for(shot: dict, shot_id: str, anchors: dict[str, str]) -> str | None:
+    """Resolve legacy placement ids (e.g. huashu-P-02 -> P-02) as well."""
+    for key in (shot.get("placement_id"), shot_id, shot.get("asset_id")):
+        if isinstance(key, str) and key in anchors:
+            return anchors[key]
+    asset = shot.get("asset_id")
+    if isinstance(asset, str) and asset.startswith("huashu-") \
+            and asset[len("huashu-"):] in anchors:
+        return anchors[asset[len("huashu-"):]]
+    return None
+
+
+def structured_region(shot: dict) -> tuple | None:
+    """Accept only numeric crop/ocr regions; prose is never visual evidence."""
+    raw = shot.get("crop") or shot.get("ocr_region")
+    if isinstance(raw, (list, tuple)) and len(raw) == 4 \
+            and all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in raw):
+        return tuple(round(float(v), 4) for v in raw)
+    if isinstance(raw, dict) and all(
+            k in raw and isinstance(raw[k], (int, float)) and not isinstance(raw[k], bool)
+            for k in ("x", "y", "w", "h")):
+        return tuple(round(float(raw[k]), 4) for k in ("x", "y", "w", "h"))
+    return None
+
+
+def _reuse_evidence(previous: dict, current: dict) -> tuple[bool, list[str], list[str]]:
+    """Release a repeated placement only on verifiable visual evidence."""
+    prev_anchor = previous.get("source_asset_id")
+    cur_anchor = current.get("source_asset_id")
+    same_anchor = bool(prev_anchor and cur_anchor and prev_anchor == cur_anchor)
+    region_changed = bool(previous.get("crop_region") and current.get("crop_region")
+                          and previous["crop_region"] != current["crop_region"])
+    delta = current.get("content_hamming_delta")
+    mae = current.get("content_mae")
+    measured_change = (isinstance(delta, int) and not isinstance(delta, bool)
+                       and delta >= MIN_CONTENT_HASH_DELTA
+                       and isinstance(mae, (int, float)) and not isinstance(mae, bool)
+                       and mae >= MIN_CONTENT_MAE)
+    basis: list[str] = []
+    gaps: list[str] = []
+    if prev_anchor and cur_anchor and prev_anchor != cur_anchor:
+        basis.append("distinct_source_asset_id")
+    elif same_anchor:
+        gaps.append("same_source_asset_id")
+    else:
+        gaps.append("source_asset_id_unavailable")
+    if region_changed:
+        basis.append("structured_crop_or_ocr_region")
+    if measured_change:
+        basis.append("measured_frame_content_change")
+    else:
+        gaps.append("no_measured_frame_content_change")
+    if previous.get("evidence_ref") and current.get("evidence_ref") \
+            and previous["evidence_ref"] != current["evidence_ref"]:
+        basis.append("distinct_evidence_ref")
+    # A prose ``variation`` difference is recorded for review but is never
+    # sufficient. Same-anchor reuse additionally needs a real structured
+    # crop/OCR focus change, not an animation or a rewritten caption.
+    allowed = measured_change and (
+        (bool(prev_anchor) and bool(cur_anchor) and not same_anchor)
+        or region_changed
+    )
+    return bool(allowed), basis, gaps
+
+
 def _shot_reuse_issues(rows: list[dict]) -> list[dict]:
-    """Flag adjacent repeated assets/frames unless each use has a distinct purpose."""
+    """Flag adjacent repeated assets/frames unless visual change is verifiable."""
     issues = []
     for previous, current in zip(rows, rows[1:]):
         same_source = bool(
@@ -175,25 +297,34 @@ def _shot_reuse_issues(rows: list[dict]) -> list[dict]:
             or (previous.get("source_sha256")
                 and previous.get("source_sha256") == current.get("source_sha256"))
         )
+        prev_anchor = previous.get("source_asset_id")
+        cur_anchor = current.get("source_asset_id")
+        same_anchor = bool(prev_anchor and cur_anchor and prev_anchor == cur_anchor)
         distance = hamming_distance(previous.get("frame_dhash"), current.get("frame_dhash"))
-        similar_frame = distance is not None and distance <= 3
-        if not (same_source or similar_frame):
+        similar_frame = distance is not None and distance <= NEAR_DUPLICATE_DHASH_MAX
+        if not (same_source or same_anchor or similar_frame):
             continue
-        previous_variation = str(previous.get("variation") or "").strip()
-        current_variation = str(current.get("variation") or "").strip()
-        has_distinct_purpose = bool(previous_variation and current_variation
-                                    and previous_variation != current_variation)
+        allowed, basis, gaps = _reuse_evidence(previous, current)
         issue = {
-            "type": "REPEATED_SOURCE_WITHOUT_PURPOSE" if same_source else "NEAR_DUPLICATE_FRAME",
+            "type": "REPEATED_SOURCE_WITHOUT_PURPOSE" if (same_source or same_anchor)
+                    else "NEAR_DUPLICATE_FRAME",
             "start_s": current.get("start_s"),
             "end_s": current.get("end_s"),
             "shot_id": current.get("shot_id"),
             "previous_shot_id": previous.get("shot_id"),
             "asset_id": current.get("asset_id"),
             "previous_asset_id": previous.get("asset_id"),
+            "source_asset_id": cur_anchor,
+            "previous_source_asset_id": prev_anchor,
             "frame_hamming_distance": distance,
-            "state": "ALLOWED_WITH_DISTINCT_PURPOSE" if has_distinct_purpose else "FAIL",
-            "variation": current_variation or None,
+            "content_hamming_delta": current.get("content_hamming_delta"),
+            "content_mae": current.get("content_mae"),
+            "crop_region": current.get("crop_region"),
+            "previous_crop_region": previous.get("crop_region"),
+            "evidence_basis": basis,
+            "evidence_gaps": gaps,
+            "state": "ALLOWED_WITH_VERIFIED_VISUAL_EVIDENCE" if allowed else "FAIL",
+            "variation": str(current.get("variation") or "").strip() or None,
         }
         issues.append(issue)
     return issues
@@ -213,6 +344,8 @@ def _shot_contact(project: Path, video: Path, storyboard_path: Path,
     frames = []
     cursor = 0.0
     receipts.mkdir(parents=True, exist_ok=True)
+    anchors = source_asset_ids(receipts)
+    previous_frame: Path | None = None
     with tempfile.TemporaryDirectory() as temp:
         temp_path = Path(temp)
         for index, shot in enumerate(shots):
@@ -247,16 +380,24 @@ def _shot_contact(project: Path, video: Path, storyboard_path: Path,
                     for block in iter(lambda: handle.read(1 << 20), b""):
                         digest.update(block)
                 source_digest = digest.hexdigest()
+            shot_id = shot.get("shot_id") or f"shot-{index + 1:03d}"
+            content_delta, content_mae = (None, None)
+            if extracted and previous_frame is not None:
+                content_delta, content_mae = content_region_delta(previous_frame, frame)
             row = {
-                "shot_id": shot.get("shot_id") or f"shot-{index + 1:03d}",
+                "shot_id": shot_id,
                 "segment_id": shot.get("segment_id"),
                 "start_s": round(start, 3), "end_s": round(end, 3),
                 "asset_id": shot.get("asset_id"),
+                "source_asset_id": source_asset_for(shot, shot_id, anchors),
                 "visual_role": shot.get("visual_role"),
                 "evidence_ref": shot.get("evidence_ref"),
                 "variation": shot.get("variation"),
+                "crop_region": structured_region(shot),
                 "source_sha256": source_digest,
                 "frame_dhash": difference_hash(frame) if extracted else None,
+                "content_hamming_delta": content_delta,
+                "content_mae": content_mae,
                 "frame_extracted": bool(extracted),
             }
             rows.append(row)
@@ -264,6 +405,7 @@ def _shot_contact(project: Path, video: Path, storyboard_path: Path,
                 named = receipts / f"shot-contact-{index + 1:03d}.png"
                 named.write_bytes(frame.read_bytes())
                 frames.append(named)
+                previous_frame = frame
             cursor = end
     issues = _shot_reuse_issues(rows)
     unresolved = [issue for issue in issues if issue["state"] == "FAIL"]
