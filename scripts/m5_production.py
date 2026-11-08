@@ -6,11 +6,10 @@ The chain is deliberately narrow and refuses rather than improvises:
     sources → claims → script → narration → subtitles → storyboard → compose → QC → visual QC → review
 
 Facts come from `project.yaml` source refs and are verified against quotes in
-`script/claims.json`. Narration is synthesized locally (Windows SAPI) only:
-network TTS is not authorized, and a silent video is not accepted as narration.
-Everything else reuses the existing pipeline — MediaManifest-era storyboard
-contract, the pinned Easel composer, `qc_video.py` — so this adds an evidence
-layer, not a second media engine.
+`script/claims.json`. Narration can use the existing MiniMax M Plan Speech
+Provider, receipt-bound audio, or explicitly selected offline SAPI diagnostics.
+MiniMax is never replaced by SAPI after a failure. Everything else reuses the
+existing MediaManifest-era storyboard contract, pinned Easel composer and QC.
 
 Nothing here approves a video. The run always ends at
 `PENDING_FOUNDER_REVIEW` with `production_ready: false`.
@@ -127,6 +126,21 @@ def _duration(path: Path) -> float:
         return float((proc.stdout or "").strip())
     except ValueError:
         raise M5Blocked(f"cannot measure duration of {path}")
+
+
+def _audio_sample_rate(path: Path) -> int:
+    proc = hidden_run(
+        ["ffprobe", "-v", "error", "-select_streams", "a:0",
+         "-show_entries", "stream=sample_rate", "-of", "default=nw=1:nk=1", str(path)],
+        timeout=60,
+    )
+    try:
+        rate = int((proc.stdout or "").strip())
+    except ValueError:
+        rate = 0
+    if rate <= 0:
+        raise M5Blocked(f"cannot read audio sample rate of {path}")
+    return rate
 
 
 # --- stages -----------------------------------------------------------------
@@ -790,11 +804,14 @@ def _synthesize_windows(lines: List[Dict[str, Any]], out_dir: Path) -> List[Path
 
 def _concat_with_pauses(wavs: List[Path], out_path: Path, work: Path) -> List[Dict[str, float]]:
     """Join the lines with short pauses and return each line's start/duration."""
+    if not wavs:
+        raise M5Blocked("narration produced no line audio")
+    sample_rate = _audio_sample_rate(wavs[0])
     silence = work / "silence.wav"
     if not silence.is_file():
         proc = hidden_run(
             ["ffmpeg", "-y", "-f", "lavfi", "-i",
-             "anullsrc=r=24000:cl=mono", "-t", str(SILENCE_SECONDS),
+             f"anullsrc=r={sample_rate}:cl=mono", "-t", str(SILENCE_SECONDS),
              "-c:a", "pcm_s16le", str(silence)],
             timeout=120,
         )
@@ -829,15 +846,21 @@ def _text_sha(text: str) -> str:
 
 def stage_narration(project: Path, script: Dict[str, Any], *, provider: str = "sapi",
                     narration_audio: Optional[Path] = None,
-                    narration_receipt: Optional[Path] = None) -> Dict[str, Any]:
+                    narration_receipt: Optional[Path] = None,
+                    narration_voice: Optional[str] = None,
+                    narration_model: Optional[str] = None,
+                    temporary_voice: bool = False,
+                    cost_budget_cny: float = 0.0) -> Dict[str, Any]:
     """Produce the voice track from an explicitly chosen source.
 
     ``sapi``     the offline Windows voice — a compatibility and diagnostic path;
     ``existing`` an audio file plus the receipt that binds it to this script;
-    anything else is BLOCKED. A provider this build cannot reach must fail, not
-    fall back to SAPI or edge-tts.
+    ``minimax`` uses the existing M Plan Speech Provider once per line. The
+    ordinary system voice path is accepted only when explicitly marked as a
+    temporary audition; it is never labelled as a clone or final voice.
+    Anything else is BLOCKED, never silently replaced with SAPI.
     """
-    if provider not in ("sapi", "existing"):
+    if provider not in ("sapi", "existing", "minimax"):
         raise M5Blocked(
             f"narration provider {provider!r} is not reachable in this build; "
             f"refusing to fall back to the offline SAPI voice")
@@ -846,6 +869,190 @@ def stage_narration(project: Path, script: Dict[str, Any], *, provider: str = "s
     text_sha = _text_sha(text)
     target = project / "assets" / "voice" / "narration.wav"
     target.parent.mkdir(parents=True, exist_ok=True)
+
+    if provider == "minimax":
+        from decimal import Decimal, InvalidOperation
+        from datetime import datetime, timezone
+        from contentops.media.contract import SpeechRequest
+        from contentops.media.credentials import resolve_credential
+        from contentops.media.minimax_speech import (
+            MiniMaxMPlanProvider, receipt_to_dict, resolve_cli,
+        )
+        from synthesize_narration import build_guard
+
+        if not isinstance(script.get("lines"), list) or not script["lines"]:
+            raise M5Blocked("MiniMax narration needs at least one script line")
+        try:
+            budget = Decimal(str(cost_budget_cny))
+        except (InvalidOperation, ValueError):
+            raise M5Blocked("cost budget must be a non-negative CNY amount") from None
+        if budget < 0:
+            raise M5Blocked("cost budget must be a non-negative CNY amount")
+        voice = (narration_voice or "").strip()
+        if not voice:
+            raise M5Blocked(
+                "MiniMax requires an explicit --narration-voice; choose the verified "
+                "clone ID or opt into a named temporary system voice"
+            )
+        if voice == "founder_primary_v1" and temporary_voice:
+            raise M5Blocked("founder_primary_v1 cannot be labelled as a temporary system voice")
+        if not temporary_voice and voice != "founder_primary_v1":
+            raise M5Blocked(
+                "a non-clone MiniMax voice requires --temporary-narration-voice; "
+                "ordinary voices are auditions, not production clones"
+            )
+        resolved = resolve_credential()
+        guard = build_guard(resolved)
+        clone_inventory = None
+        if voice == "founder_primary_v1":
+            from contentops.media.minimax_voice_clone import MiniMaxVoiceCloneProvider
+            from synthesize_narration import resolve_base_url
+            try:
+                clone_provider = MiniMaxVoiceCloneProvider(
+                    credential=resolved, base_url=resolve_base_url())
+                entries = clone_provider.list_cloned_voices()
+            except Exception as exc:  # noqa: BLE001
+                raise M5Blocked(
+                    f"could not verify current founder_primary_v1 clone inventory "
+                    f"({type(exc).__name__}); no synthesis was attempted"
+                ) from None
+            entry = next((item for item in entries
+                          if str(item.get("voice_id") or item.get("id") or "") == voice), None)
+            if entry is None:
+                raise M5Blocked(
+                    "founder_primary_v1 is absent from the current MiniMax clone inventory; "
+                    "no historical clone receipt is treated as current"
+                )
+            created = entry.get("created_time")
+            try:
+                numeric = float(created)
+                if numeric > 10_000_000_000:
+                    numeric /= 1000
+                created_at = datetime.fromtimestamp(numeric, tz=timezone.utc)
+            except (TypeError, ValueError, OSError):
+                try:
+                    created_at = datetime.fromisoformat(str(created).replace("Z", "+00:00"))
+                    if created_at.tzinfo is None:
+                        created_at = created_at.replace(tzinfo=timezone.utc)
+                except (TypeError, ValueError):
+                    raise M5Blocked(
+                        "MiniMax clone inventory has no readable creation time for "
+                        "founder_primary_v1; refusing a potentially expired voice"
+                    ) from None
+            age_seconds = (datetime.now(timezone.utc) - created_at).total_seconds()
+            if age_seconds > 7 * 24 * 3600:
+                raise M5Blocked(
+                    "founder_primary_v1 is older than the documented 7-day active-use window; "
+                    "no synthesis was attempted"
+                )
+            state = str(entry.get("status") or entry.get("state") or "").casefold()
+            if state in {"inactive", "expired", "deleted", "disabled", "failed"}:
+                raise M5Blocked(
+                    f"founder_primary_v1 inventory status is {state}; no synthesis was attempted"
+                )
+            clone_inventory = {
+                "voice": voice, "created_time": created_at.isoformat(),
+                "age_seconds": int(max(0, age_seconds)),
+                "inventory_status": state or "listed",
+                "callability": "not_proven_until_a_real_tts_call",
+            }
+        work = project / "work" / "minimax-narration"
+        work.mkdir(parents=True, exist_ok=True)
+        speech = MiniMaxMPlanProvider(
+            guard=guard,
+            work_dir=work,
+            cli=resolve_cli(),
+            model=narration_model or "speech-2.8-hd",
+            transport_credential=resolved,
+        )
+        wavs: List[Path] = []
+        line_receipts: List[Dict[str, Any]] = []
+        reused_count = 0
+        billing_verdicts: List[str] = []
+        for index, line in enumerate(script["lines"], start=1):
+            request = SpeechRequest(
+                display_text=str(line["narration"]),
+                voice=voice,
+                language="en" if any(ord(c) < 128 for c in str(line["narration"]))
+                and not any("\u4e00" <= c <= "\u9fff" for c in str(line["narration"]))
+                else "zh",
+                model=narration_model or "speech-2.8-hd",
+            )
+            try:
+                outcome = speech.synthesize_speech(request)
+            except Exception as exc:  # noqa: BLE001
+                raise M5Blocked(
+                    f"MiniMax narration line {index} failed ({type(exc).__name__}): "
+                    f"{str(exc)[:320]}"
+                ) from None
+            if not outcome.asset.normalized_path:
+                raise M5Blocked(f"MiniMax narration line {index} has no normalized WAV")
+            audio = Path(outcome.asset.normalized_path)
+            if not audio.is_file() or _duration(audio) <= 0:
+                raise M5Blocked(f"MiniMax narration line {index} is not playable audio")
+            wavs.append(audio)
+            reused_count += int(outcome.reused)
+            line_receipts.append({
+                "line_id": line.get("id"),
+                "audio_sha256": outcome.asset.normalized_sha256,
+                "audio_duration_s": round(float(outcome.asset.duration_s or _duration(audio)), 3),
+                "voice": outcome.asset.voice,
+                "model": outcome.asset.model,
+                "reused": outcome.reused,
+                "provider_receipt": receipt_to_dict(outcome.receipt),
+            })
+            billing_verdicts.append(str(outcome.receipt.billing_guard_verdict))
+        timings = _concat_with_pauses(wavs, target, work)
+        text_sha = _text_sha(text)
+        payload = {
+            "schema": "contentops.m5-narration/v1",
+            "engine": "minimax_speech",
+            "voice_provider": "minimax_temporary_system_voice" if temporary_voice
+            else "minimax_cloned_voice",
+            "voice": voice,
+            "voice_alias": "founder_primary_v1" if voice == "founder_primary_v1" else None,
+            "temporary_audition_only": bool(temporary_voice),
+            "model": narration_model or "speech-2.8-hd",
+            "network": True,
+            "cost": 0,
+            "cost_currency": "CNY",
+            "cost_budget_cny": str(budget),
+            "billing_guard_verdict": (
+                "CACHE_ONLY_NO_NEW_AUTHORIZATION" if reused_count == len(wavs)
+                else "SAFE_INCLUDED_PLAN" if all(v == "SAFE_INCLUDED_PLAN" for v in billing_verdicts)
+                else "MIXED_CACHED_AND_GENERATED"),
+            "credential_class": resolved.credential_class,
+            "credential_source": resolved.source,
+            "audio": target.relative_to(project).as_posix(),
+            "sha256": _sha256(target),
+            "text_sha256": text_sha,
+            "duration_s": round(_duration(target), 3),
+            "lines": [
+                {**timing, **{"line_id": script["lines"][i].get("id")}}
+                for i, timing in enumerate(timings)
+            ],
+            "line_receipts": line_receipts,
+            "cache": {"line_count": len(wavs), "reused_line_count": reused_count},
+            "clone_inventory": clone_inventory,
+            "production_ready": False,
+            "quality_note": "ordinary voice audition only; no clone identity or production quality is claimed"
+            if temporary_voice else "cloned voice receipt bound per narration line",
+        }
+        _write_json(project / "receipts" / "minimax-speech.json", {
+            "schema": "contentops.m5-minimax-speech/v1",
+            "voice": voice, "model": payload["model"],
+            "temporary_audition_only": bool(temporary_voice),
+            "credential_class": resolved.credential_class,
+            "billing_guard_verdict": payload["billing_guard_verdict"],
+            "line_receipts": line_receipts,
+            "cache": payload["cache"],
+            "audio_sha256": payload["sha256"],
+            "text_sha256": text_sha,
+            "cost_cny": 0,
+            "cost_budget_cny": str(budget),
+        })
+        _write_json(project / "receipts" / "narration.json", payload)
+        return payload
 
     if provider == "existing":
         audio = Path(narration_audio) if narration_audio else None
@@ -1100,6 +1307,10 @@ def _logical_path(path: Any, project: Path) -> Optional[str]:
 def stage_compose(project: Path, slug: str) -> Dict[str, Any]:
     import assemble_easel
 
+    previous_video = project / "final" / f"{slug}.mp4"
+    preserved_previous = project / "final" / f"{slug}-before-avatar-refresh.mp4"
+    if previous_video.is_file() and not preserved_previous.exists():
+        shutil.copy2(previous_video, preserved_previous)
     result = assemble_easel.run(project, out_name=slug)
     try:
         pin = json.loads((ROOT / "runtime" / "easel.lock.json").read_text(encoding="utf-8"))
@@ -1118,6 +1329,207 @@ def stage_compose(project: Path, slug: str) -> Dict[str, Any]:
     if result.get("status") != "OK":
         raise M5Blocked(f"compose: {result.get('reason')}")
     return receipt
+
+
+def _registered_asset_path(asset_root: Path, manifest: Dict[str, Any], asset_id: str) -> Path:
+    """Resolve a local-only asset by its registered hash, tolerating renamed files."""
+    row = next((item for item in manifest.get("assets", [])
+                if isinstance(item, dict) and item.get("asset_id") == asset_id), None)
+    if row is None or not row.get("sha256"):
+        raise M5Blocked(f"digital avatar asset {asset_id!r} is not registered")
+    expected = str(row["sha256"]).casefold()
+    declared = asset_root / str(row.get("relative_path") or "")
+    candidates = [declared] if declared.is_file() else []
+    if not candidates:
+        candidates = [p for p in asset_root.rglob("*")
+                      if p.is_file() and not p.is_symlink()]
+    for candidate in candidates:
+        if _sha256(candidate).casefold() == expected:
+            return candidate.resolve()
+    raise M5Blocked(f"digital avatar asset {asset_id!r} is missing or its hash changed")
+
+
+def _run_h3_avatar_clip(project: Path, *, shot_id: str, line: str, role: str,
+                        image: Path, voice_reference: Path, quota_budget: str) -> Dict[str, Any]:
+    """Call the existing H3 provider CLI and require a real generated receipt."""
+    shot = {
+        "shot_id": shot_id,
+        "purpose": f"Digital presenter {role} for a local video preview",
+        "duration": 4,
+        "aspect_ratio": "9:16",
+        "mode": "Ref2VA",
+        "subject": ("The same male presenter shown in reference image 1, maintaining his "
+                    "facial identity, proportions, hair and clothing. He speaks one exact "
+                    f"short Mandarin line: {line}"),
+        "environment": "A restrained technology creator studio with warm practical lighting and a softly blurred bookshelf background.",
+        "action": ("He looks into the camera, blinks naturally, gives one subtle "
+                   f"{('concluding' if role == 'outro' else 'welcoming')} nod while speaking "
+                   "the exact line in clear Mandarin. No on-screen text, subtitles, logos "
+                   "or extra people."),
+        "camera": "slowly pushes in" if role == "intro" else "slowly pulls back",
+        "sound": "Natural clean Mandarin speech matching the provided voice reference, synchronized to the visible speaker. No music or other voices.",
+        "visual_style": "Natural live-action presenter, realistic skin and eye movement, editorial technology channel, soft cinematic key light",
+        "reference_assets": ["the authorized male presenter portrait", "the authorized Mandarin voice sample"],
+    }
+    work_dir = project / "h3-avatar"
+    work_dir.mkdir(parents=True, exist_ok=True)
+    shot_file = work_dir / f"{shot_id}.json"
+    _write_json(shot_file, shot)
+    proc = hidden_run(
+        [python_executable(), str(ROOT / "scripts" / "generate_h3_shot.py"),
+         "--shot-file", str(shot_file), "--out-dir", str(work_dir),
+         "--shot-id", shot_id, "--mode", "Ref2VA", "--duration", "4",
+         "--ratio", "9:16", "--reference-image", str(image),
+         "--reference-audio", str(voice_reference), "--quota-budget", quota_budget,
+         "--test-objective", f"Generate {role} avatar with registered local references for this production."],
+        cwd=str(ROOT), timeout=1800,
+    )
+    try:
+        payload = json.loads(proc.stdout or "{}")
+    except ValueError:
+        payload = {}
+    if proc.returncode != 0 or payload.get("status") != "OK":
+        reasons = payload.get("reasons") or payload.get("billing_reasons") or []
+        detail = "; ".join(str(item) for item in reasons) or (proc.stderr or proc.stdout or "H3 generation failed")
+        raise M5Blocked(f"MiniMax H3 {role} failed: {detail[-600:]}")
+    video = Path(str(payload.get("canonical_path") or ""))
+    if not video.is_absolute():
+        video = ROOT / video
+    receipt_path = video.with_name(video.name + ".receipt.json")
+    if not video.is_file() or not receipt_path.is_file() or not payload.get("task_created"):
+        raise M5Blocked(f"MiniMax H3 {role} returned without a generated video and provider receipt")
+    return {"video": video, "receipt": receipt_path, "sha256": _sha256(video),
+            "reused": bool(payload.get("reused")),
+            "duration_s": payload.get("actual_duration_s"),
+            "weekly_before": (payload.get("quota_before") or {}).get("weekly_remaining_percent"),
+            "weekly_after": (payload.get("quota_after") or {}).get("weekly_remaining_percent")}
+
+
+def stage_avatar(project: Path, slug: str, *, asset_root: Path,
+                 quota_budget: Optional[str], intro_line: str, outro_line: str,
+                 intro_video: Optional[Path] = None,
+                 outro_video: Optional[Path] = None) -> Dict[str, Any]:
+    """Generate/cache H3 bookends from registered local assets; leave a preview on partial failure."""
+    manifest_path = asset_root / "asset-manifest.json"
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise M5Blocked(f"digital avatar asset manifest unavailable: {exc}") from None
+    if manifest.get("local_only") is not True or manifest.get("do_not_commit_media") is not True:
+        raise M5Blocked("digital avatar assets must be explicitly registered as local-only")
+    image = _registered_asset_path(asset_root, manifest, manifest.get("primary", {}).get("presenter_reference", ""))
+    voice = _registered_asset_path(asset_root, manifest, manifest.get("primary", {}).get("voice_reference", ""))
+    outputs: Dict[str, Any] = {"state": "GENERATING", "provider": "minimax-h3",
+                               "asset_root": _logical_path(asset_root, project),
+                               "image_sha256": _sha256(image), "voice_reference_sha256": _sha256(voice),
+                               "audio_mode": "H3 native audio generated from a registered voice reference; not external TTS audio-driven lipsync"}
+    _write_json(project / "receipts" / "avatar-bookends.json", outputs)
+
+    def save_receipt() -> None:
+        payload = dict(outputs)
+        for name in ("intro", "outro"):
+            clip = payload.get(name)
+            if isinstance(clip, dict):
+                clip = dict(clip)
+                clip["video"] = _logical_path(clip.get("video"), project)
+                clip["receipt"] = _logical_path(clip.get("receipt"), project)
+                payload[name] = clip
+        _write_json(project / "receipts" / "avatar-bookends.json", payload)
+
+    try:
+        if bool(intro_video) != bool(outro_video):
+            raise M5Blocked("reusing H3 bookends requires both intro and outro clips")
+        if intro_video and outro_video:
+            reused = []
+            for role, candidate in (("intro", intro_video), ("outro", outro_video)):
+                receipt_path = candidate.with_name(candidate.name + ".receipt.json")
+                try:
+                    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+                except (OSError, ValueError):
+                    raise M5Blocked(f"H3 {role} reuse requires its provider receipt") from None
+                if (not candidate.is_file() or receipt.get("provider") != "minimax_m_plan"
+                        or receipt.get("model") != "MiniMax-H3"
+                        or receipt.get("credential_class") != "SUBSCRIPTION"
+                        or receipt.get("payg_allowed") is not False
+                        or receipt.get("output_sha256") != _sha256(candidate)
+                        or not receipt.get("audio_stream_present")):
+                    raise M5Blocked(f"H3 {role} reuse failed provider, audio, or hash validation")
+                expected_refs = {_sha256(image), _sha256(voice)}
+                if not expected_refs.issubset(set(receipt.get("reference_asset_sha256") or [])):
+                    raise M5Blocked(f"H3 {role} receipt does not match the registered avatar and voice reference")
+                reused.append({"video": candidate.resolve(), "receipt": receipt_path.resolve(),
+                               "sha256": receipt["output_sha256"], "reused": True,
+                               "duration_s": receipt.get("actual_duration_s"),
+                               "weekly_before": (receipt.get("quota_before") or {}).get("weekly_remaining_percent"),
+                               "weekly_after": (receipt.get("quota_after") or {}).get("weekly_remaining_percent")})
+            outputs["intro"], outputs["outro"] = reused
+            outputs["state"] = "READY"
+            outputs["reused_provider_outputs"] = True
+        else:
+            if not quota_budget:
+                raise M5Blocked("MiniMax H3 generation requires an explicit subscription quota budget")
+            outputs["intro"] = _run_h3_avatar_clip(
+                project, shot_id=f"{slug}-avatar-intro", line=intro_line, role="intro",
+                image=image, voice_reference=voice, quota_budget=quota_budget)
+            outputs["outro"] = _run_h3_avatar_clip(
+                project, shot_id=f"{slug}-avatar-outro", line=outro_line, role="outro",
+                image=image, voice_reference=voice, quota_budget=quota_budget)
+        outputs["state"] = "READY"
+    except M5Blocked as exc:
+        outputs["state"] = "PARTIAL"
+        outputs["blocked_reason"] = str(exc)
+        outputs["production_ready"] = False
+        save_receipt()
+        return outputs
+    save_receipt()
+    return outputs
+
+
+def _compose_avatar_bookends(project: Path, slug: str, avatar: Dict[str, Any],
+                             video: Path) -> Dict[str, Any]:
+    """Place H3's native-audio intro/outro around the M5 render."""
+    if avatar.get("state") != "READY":
+        return {"state": avatar.get("state", "NOT_CONFIGURED")}
+    intro, outro = avatar["intro"]["video"], avatar["outro"]["video"]
+    if not intro.is_file() or not outro.is_file() or not video.is_file():
+        raise M5Blocked("avatar bookend or composed M5 video disappeared before assembly")
+    base_copy = video.with_name(f"{slug}-main-only.mp4")
+    if not base_copy.exists():
+        shutil.copy2(video, base_copy)
+    staged = video.with_name(f"{slug}.avatar.tmp.mp4")
+    filter_complex = (
+        "[0:v]fps=30,scale=1080:1920:force_original_aspect_ratio=decrease,"
+        "pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1,format=yuv420p[v0];"
+        "[1:v]fps=30,scale=1080:1920:force_original_aspect_ratio=decrease,"
+        "pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1,format=yuv420p[v1];"
+        "[2:v]fps=30,scale=1080:1920:force_original_aspect_ratio=decrease,"
+        "pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1,format=yuv420p[v2];"
+        "[0:a]aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo[a0];"
+        "[1:a]aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo[a1];"
+        "[2:a]aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo[a2];"
+        "[v0][a0][v1][a1][v2][a2]concat=n=3:v=1:a=1[outv][outa]"
+    )
+    proc = hidden_run(
+        ["ffmpeg", "-y", "-i", str(intro), "-i", str(base_copy), "-i", str(outro),
+         "-filter_complex", filter_complex, "-map", "[outv]", "-map", "[outa]",
+         "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p",
+         "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", str(staged)],
+        cwd=str(ROOT), timeout=900,
+    )
+    if proc.returncode != 0 or not staged.is_file():
+        raise M5Blocked(f"avatar bookend concat failed: {(proc.stderr or '')[-500:]}")
+    staged.replace(video)
+    result = {"state": "COMPOSED", "video": _logical_path(video, project),
+              "main_only": _logical_path(base_copy, project),
+              "intro_duration_s": avatar["intro"].get("duration_s"),
+              "outro_duration_s": avatar["outro"].get("duration_s"),
+              "video_sha256": _sha256(video), "audio": "H3 native intro and outro audio; M5 audio in the middle",
+              "production_ready": False, "publish_authorized": False}
+    avatar_receipt_path = project / "receipts" / "avatar-bookends.json"
+    avatar_receipt = _read_json_or_none(avatar_receipt_path) or {}
+    avatar_receipt["composite"] = result
+    _write_json(avatar_receipt_path, avatar_receipt)
+    return result
 
 
 def stage_qc(project: Path, slug: str) -> Dict[str, Any]:
@@ -1349,7 +1761,18 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
           narration_provider: Optional[str] = None,
           narration_audio: Optional[Path] = None,
           narration_receipt: Optional[Path] = None,
+          narration_voice: Optional[str] = None,
+          narration_model: Optional[str] = None,
+          temporary_voice: bool = False,
+          cost_budget_cny: float = 0.0,
           assets_dir: Optional[Path] = None,
+          avatar_provider: Optional[str] = None,
+          avatar_assets_dir: Optional[Path] = None,
+          avatar_quota_budget: Optional[str] = None,
+          avatar_intro_line: Optional[str] = None,
+          avatar_outro_line: Optional[str] = None,
+          avatar_intro_video: Optional[Path] = None,
+          avatar_outro_video: Optional[Path] = None,
            require_copy_review: bool = True) -> Dict[str, Any]:
     if not project.is_dir():
         raise M5Blocked(f"project not found: {project}")
@@ -1417,7 +1840,11 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
                 or "sapi")
     narration = run_stage("narration", stage_narration, project, script["script"],
                           provider=provider, narration_audio=narration_audio,
-                          narration_receipt=narration_receipt)
+                          narration_receipt=narration_receipt,
+                          narration_voice=narration_voice,
+                          narration_model=narration_model,
+                          temporary_voice=temporary_voice,
+                          cost_budget_cny=cost_budget_cny)
     stages["narration"] = {"duration_s": narration["duration_s"],
                            "engine": narration["engine"],
                            "provider": narration.get("voice_provider", provider)}
@@ -1439,12 +1866,52 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
         "sfx": len(storyboard["storyboard"].get("sfx") or []),
     }
 
+    avatar = None
+    if avatar_provider:
+        if avatar_provider != "minimax-h3":
+            stages["avatar"] = {"state": "BLOCKED", "reason": f"unsupported avatar provider {avatar_provider!r}"}
+        elif not avatar_quota_budget and not (avatar_intro_video and avatar_outro_video):
+            stages["avatar"] = {"state": "BLOCKED", "reason": "MiniMax H3 requires an explicit subscription quota budget"}
+        else:
+            asset_root = (avatar_assets_dir or (ROOT / "assert")).resolve()
+            intro_line = avatar_intro_line or "本期我们来拆解一个关键问题。"
+            outro_line = avatar_outro_line or "记住，检索召回和最终排序是两回事。关注我，继续拆解 AI 技术。"
+            try:
+                avatar = run_stage("avatar", stage_avatar, project, slug,
+                                   asset_root=asset_root,
+                                   quota_budget=avatar_quota_budget,
+                                   intro_line=intro_line, outro_line=outro_line,
+                                   intro_video=avatar_intro_video,
+                                   outro_video=avatar_outro_video)
+            except M5Blocked as exc:
+                avatar = {"state": "BLOCKED", "blocked_reason": str(exc),
+                          "production_ready": False}
+                _write_json(project / "receipts" / "avatar-bookends.json", avatar)
+            stages["avatar"] = {
+                "state": avatar.get("state"), "provider": avatar.get("provider", avatar_provider),
+                "receipt": "receipts/avatar-bookends.json",
+                "audio_mode": avatar.get("audio_mode"),
+                "blocked_reason": avatar.get("blocked_reason"),
+            }
+
     if skip_compose:
         stages["compose"] = {"state": "NOT_RUN"}
         stages["qc"] = {"state": "NOT_RUN"}
         review = None
     else:
         compose = run_stage("compose", stage_compose, project, slug)
+        if avatar is not None and avatar.get("state") == "READY":
+            try:
+                composed_avatar = run_stage(_compose_avatar_bookends.__name__,
+                                            _compose_avatar_bookends, project, slug, avatar,
+                                            project / "final" / f"{slug}.mp4")
+                stages["avatar_compose"] = composed_avatar
+            except M5Blocked as exc:
+                stages["avatar_compose"] = {"state": "BLOCKED", "reason": str(exc),
+                                             "production_ready": False}
+                avatar_receipt = _read_json_or_none(project / "receipts" / "avatar-bookends.json") or {}
+                avatar_receipt["compose_blocked_reason"] = str(exc)
+                _write_json(project / "receipts" / "avatar-bookends.json", avatar_receipt)
         stages["compose"] = {"state": "OK", "video": compose.get("video")}
         qc = run_stage("qc", stage_qc, project, slug)
         stages["qc"] = {"overall": qc["report"].get("overall"),
@@ -1480,15 +1947,37 @@ def main() -> int:
     parser.add_argument("project", help="project directory, e.g. projects/m5-easel-pin")
     parser.add_argument("--skip-compose", action="store_true")
     parser.add_argument("--narration-provider", default=None,
-                        choices=("sapi", "existing"),
+                        choices=("sapi", "existing", "minimax"),
                         help="sapi = offline Windows voice (compatibility/diagnostic); "
-                             "existing = reuse audio bound to this script by a receipt. "
+                             "existing = reuse audio bound to this script by a receipt; "
+                             "minimax = official M Plan Speech Provider, with an explicit voice ID. "
                              "Any other provider is refused, never silently replaced")
     parser.add_argument("--narration-audio", default=None,
                         help="with --narration-provider existing: the audio file to reuse")
     parser.add_argument("--narration-receipt", default=None,
                         help="with --narration-provider existing: a prior narration.json "
                              "carrying text_sha256 and per-line timings")
+    parser.add_argument("--narration-voice", default=None,
+                        help="MiniMax voice ID; use founder_primary_v1 only after current availability is verified")
+    parser.add_argument("--narration-model", default="speech-2.8-hd")
+    parser.add_argument("--temporary-narration-voice", action="store_true",
+                        help="label a named ordinary MiniMax system voice as an audition, never as the clone")
+    parser.add_argument("--cost-budget-cny", type=float, default=0.0,
+                        help="task-level CNY ceiling; current M5 MiniMax path allows included-plan-only calls")
+    parser.add_argument("--avatar-provider", choices=("minimax-h3",), default=None,
+                        help="optional registered-asset MiniMax H3 intro/outro generation")
+    parser.add_argument("--avatar-assets-dir", default=None,
+                        help="local-only asset root containing asset-manifest.json; defaults to ./assert")
+    parser.add_argument("--avatar-quota-budget", default=None,
+                        help="explicit included-subscription weekly quota budget for H3 tasks")
+    parser.add_argument("--avatar-intro-line", default=None,
+                        help="short Mandarin digital presenter intro line")
+    parser.add_argument("--avatar-outro-line", default=None,
+                        help="short Mandarin digital presenter outro line")
+    parser.add_argument("--avatar-intro-video", default=None,
+                        help="reuse a real H3 intro MP4 only with its adjacent provider receipt")
+    parser.add_argument("--avatar-outro-video", default=None,
+                        help="reuse a real H3 outro MP4 only with its adjacent provider receipt")
     parser.add_argument("--assets", default=None,
                         help="explicit user-selected image/video folder; imported files are "
                              "local-preview-only and do not grant distribution or evidence rights")
@@ -1504,8 +1993,22 @@ def main() -> int:
                                      if args.narration_audio else None),
                     narration_receipt=(Path(args.narration_receipt)
                                        if args.narration_receipt else None),
+                    narration_voice=args.narration_voice,
+                    narration_model=args.narration_model,
+                    temporary_voice=args.temporary_narration_voice,
+                    cost_budget_cny=args.cost_budget_cny,
                     assets_dir=(Path(args.assets).expanduser().resolve()
-                                if args.assets else None))
+                                if args.assets else None),
+                    avatar_provider=args.avatar_provider,
+                    avatar_assets_dir=(Path(args.avatar_assets_dir).expanduser().resolve()
+                                       if args.avatar_assets_dir else None),
+                    avatar_quota_budget=args.avatar_quota_budget,
+                    avatar_intro_line=args.avatar_intro_line,
+                    avatar_outro_line=args.avatar_outro_line,
+                    avatar_intro_video=(Path(args.avatar_intro_video).expanduser().resolve()
+                                        if args.avatar_intro_video else None),
+                    avatar_outro_video=(Path(args.avatar_outro_video).expanduser().resolve()
+                                        if args.avatar_outro_video else None))
     except M5Blocked as exc:
         result = {"ok": False, "state": "BLOCKED", "reason": str(exc)}
         print(json.dumps(result, ensure_ascii=False, indent=2))

@@ -470,15 +470,103 @@ def _script():
     return {"lines": _lines()}
 
 
-def test_an_unreachable_narration_provider_is_refused():
+def test_minimax_narration_requires_an_explicit_voice_and_never_uses_sapi():
     with tempfile.TemporaryDirectory() as temp:
         project = Path(temp)
         try:
             m5_production.stage_narration(project, _script(), provider="minimax")
         except m5_production.M5Blocked as exc:
-            assert "refusing to fall back" in str(exc), exc
+            assert "explicit --narration-voice" in str(exc), exc
         else:
-            raise AssertionError("an unavailable provider must not silently use SAPI")
+            raise AssertionError("MiniMax must require an explicit voice; no SAPI fallback is allowed")
+
+
+def test_h3_avatar_bookends_reuse_only_hash_bound_subscription_outputs():
+    with tempfile.TemporaryDirectory(dir=ROOT / ".verify-tmp") as temp:
+        root = Path(temp)
+        project = root / "project"
+        assets = root / "assert"
+        project.mkdir()
+        assets.mkdir()
+        portrait, voice = assets / "portrait.png", assets / "voice.wav"
+        portrait.write_bytes(b"registered portrait")
+        voice.write_bytes(b"registered voice reference")
+        manifest = {
+            "local_only": True, "do_not_commit_media": True,
+            "primary": {"presenter_reference": "portrait", "voice_reference": "voice"},
+            "assets": [
+                {"asset_id": "portrait", "relative_path": "renamed.png",
+                 "sha256": m5_production._sha256(portrait)},
+                {"asset_id": "voice", "relative_path": "moved.wav",
+                 "sha256": m5_production._sha256(voice)},
+            ],
+        }
+        (assets / "asset-manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+        references = [m5_production._sha256(portrait), m5_production._sha256(voice)]
+        clips = []
+        for role in ("intro", "outro"):
+            clip = project / f"{role}.mp4"
+            clip.write_bytes(f"{role} generated video".encode())
+            payload = {
+                "provider": "minimax_m_plan", "model": "MiniMax-H3",
+                "credential_class": "SUBSCRIPTION", "payg_allowed": False,
+                "output_sha256": m5_production._sha256(clip),
+                "audio_stream_present": True,
+                "reference_asset_sha256": references,
+                "actual_duration_s": 4.4,
+            }
+            clip.with_name(clip.name + ".receipt.json").write_text(
+                json.dumps(payload), encoding="utf-8")
+            clips.append(clip)
+
+        result = m5_production.stage_avatar(
+            project, "demo", asset_root=assets, quota_budget=None,
+            intro_line="开场", outro_line="结尾",
+            intro_video=clips[0], outro_video=clips[1])
+        assert result["state"] == "READY"
+        assert result["intro"]["reused"] and result["outro"]["reused"]
+        saved = json.loads((project / "receipts" / "avatar-bookends.json").read_text())
+        assert saved["intro"]["video"].endswith("intro.mp4")
+        assert saved.get("production_ready") is not True
+
+        receipt_path = clips[1].with_name(clips[1].name + ".receipt.json")
+        receipt = json.loads(receipt_path.read_text())
+        receipt["payg_allowed"] = True
+        receipt_path.write_text(json.dumps(receipt))
+        rejected = m5_production.stage_avatar(
+            project, "demo", asset_root=assets, quota_budget=None,
+            intro_line="开场", outro_line="结尾",
+            intro_video=clips[0], outro_video=clips[1])
+        assert rejected["state"] == "PARTIAL"
+        assert "provider, audio, or hash" in rejected["blocked_reason"]
+
+
+def test_avatar_bookend_composition_preserves_the_main_only_render():
+    with tempfile.TemporaryDirectory(dir=ROOT / ".verify-tmp") as temp:
+        project = Path(temp)
+        final = project / "final"
+        final.mkdir()
+        video = final / "demo.mp4"
+        video.write_bytes(b"main-only")
+        intro, outro = project / "intro.mp4", project / "outro.mp4"
+        intro.write_bytes(b"intro")
+        outro.write_bytes(b"outro")
+        avatar = {"state": "READY", "intro": {"video": intro, "duration_s": 4.4},
+                  "outro": {"video": outro, "duration_s": 4.4}}
+        calls = []
+
+        def fake_ffmpeg(command, **_kwargs):
+            calls.append(command)
+            Path(command[-1]).write_bytes(b"combined")
+            return SimpleNamespace(returncode=0, stderr="")
+
+        with mock.patch.object(m5_production, "hidden_run", side_effect=fake_ffmpeg):
+            result = m5_production._compose_avatar_bookends(project, "demo", avatar, video)
+        assert video.read_bytes() == b"combined"
+        assert (final / "demo-main-only.mp4").read_bytes() == b"main-only"
+        assert result["state"] == "COMPOSED"
+        filt = calls[0][calls[0].index("-filter_complex") + 1]
+        assert "concat=n=3:v=1:a=1" in filt
 
 
 def test_existing_narration_without_a_receipt_is_refused():
@@ -1318,7 +1406,9 @@ def main() -> int:
              test_a_non_positive_duration_stops_the_build,
              test_misaligned_lines_and_timings_stop_the_build,
              test_the_same_asset_can_support_multiple_timeline_placements,
-             test_an_unreachable_narration_provider_is_refused,
+             test_minimax_narration_requires_an_explicit_voice_and_never_uses_sapi,
+             test_h3_avatar_bookends_reuse_only_hash_bound_subscription_outputs,
+             test_avatar_bookend_composition_preserves_the_main_only_render,
              test_existing_narration_without_a_receipt_is_refused,
              test_existing_narration_bound_to_another_script_is_refused,
              test_existing_narration_without_line_timings_is_refused,

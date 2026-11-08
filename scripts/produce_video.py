@@ -65,7 +65,19 @@ def _hash_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _input_digest(project: Path, *, assets_dir: Path | None = None) -> str:
+def _input_digest(project: Path, *, assets_dir: Path | None = None,
+                  narration_provider: str | None = None,
+                  narration_voice: str | None = None,
+                  narration_model: str | None = None,
+                  temporary_narration_voice: bool = False,
+                  cost_budget_cny: float = 0.0,
+                  avatar_provider: str | None = None,
+                  avatar_assets_dir: Path | None = None,
+                  avatar_quota_budget: str | None = None,
+                  avatar_intro_line: str | None = None,
+                  avatar_outro_line: str | None = None,
+                  avatar_intro_video: Path | None = None,
+                  avatar_outro_video: Path | None = None) -> str:
     """Hash declared production inputs, including local files named by assets."""
     local_source_ids: set[str] = set()
     source_files: list[tuple[str, str]] = []
@@ -186,6 +198,48 @@ def _input_digest(project: Path, *, assets_dir: Path | None = None) -> str:
         digest.update(b"\0")
         digest.update(source_hash.encode("ascii"))
         digest.update(b"\n")
+    runtime_options = {
+        "narration_provider": narration_provider,
+        "narration_voice": narration_voice,
+        "narration_model": narration_model,
+        "temporary_narration_voice": bool(temporary_narration_voice),
+        "cost_budget_cny": str(cost_budget_cny),
+        "avatar_provider": avatar_provider,
+        "avatar_quota_budget": avatar_quota_budget,
+        "avatar_intro_line": avatar_intro_line,
+        "avatar_outro_line": avatar_outro_line,
+        "avatar_intro_video_sha256": _hash_file(avatar_intro_video) if avatar_intro_video and avatar_intro_video.is_file() else None,
+        "avatar_outro_video_sha256": _hash_file(avatar_outro_video) if avatar_outro_video and avatar_outro_video.is_file() else None,
+    }
+    digest.update(b"PRODUCTION_OPTIONS\0")
+    digest.update(json.dumps(runtime_options, sort_keys=True, separators=(",", ":"))
+                  .encode("utf-8"))
+    if avatar_assets_dir is not None:
+        manifest_path = avatar_assets_dir.expanduser().resolve() / "asset-manifest.json"
+        digest.update(b"AVATAR_ASSETS\0")
+        digest.update(_hash_file(manifest_path).encode("ascii") if manifest_path.is_file() else b"MISSING")
+        if manifest_path.is_file():
+            try:
+                manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+                asset_ids = {manifest.get("primary", {}).get("presenter_reference"),
+                             manifest.get("primary", {}).get("voice_reference")}
+                rows = [row for row in manifest.get("assets", [])
+                        if isinstance(row, dict) and row.get("asset_id") in asset_ids]
+                for row in rows:
+                    expected = str(row.get("sha256") or "").casefold()
+                    selected = None
+                    declared = manifest_path.parent / str(row.get("relative_path") or "")
+                    for candidate in ([declared] if declared.is_file() else
+                                      manifest_path.parent.rglob("*")):
+                        if candidate.is_file() and not candidate.is_symlink() and _hash_file(candidate).casefold() == expected:
+                            selected = candidate
+                            break
+                    digest.update(str(row.get("asset_id")).encode("utf-8"))
+                    digest.update(b"\0")
+                    digest.update((_hash_file(selected).encode("ascii") if selected else b"MISSING"))
+                    digest.update(b"\n")
+            except (OSError, ValueError, TypeError):
+                digest.update(b"AVATAR_REFERENCE_HASHES_UNREADABLE")
     return digest.hexdigest()
 
 
@@ -383,7 +437,19 @@ def _record_brief_preparation_failure(project: Path, mode: str,
 
 
 def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
-            assets_dir: Path | None = None) -> dict[str, Any]:
+            assets_dir: Path | None = None,
+            narration_provider: str | None = None,
+            narration_voice: str | None = None,
+            narration_model: str = "speech-2.8-hd",
+            temporary_narration_voice: bool = False,
+            cost_budget_cny: float = 0.0,
+            avatar_provider: str | None = None,
+            avatar_assets_dir: Path | None = None,
+            avatar_quota_budget: str | None = None,
+            avatar_intro_line: str | None = None,
+            avatar_outro_line: str | None = None,
+            avatar_intro_video: Path | None = None,
+            avatar_outro_video: Path | None = None) -> dict[str, Any]:
     mode = mode.upper()
     if mode not in {"AUTO", "REVIEW", "STRICT"}:
         raise ValueError("mode must be AUTO, REVIEW, or STRICT")
@@ -399,6 +465,8 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
             import_local_assets(assets_dir, project, repo_root=ROOT)
         except LocalAssetError as exc:
             raise m5_production.M5Blocked(f"user asset import: {exc}") from None
+    if (avatar_provider or avatar_intro_video or avatar_outro_video) and avatar_assets_dir is None:
+        avatar_assets_dir = ROOT / "assert"
     prepare_started_at, prepare_started_clock = _now(), time.monotonic()
     try:
         brief_preparation = _prepare_brief_inputs(
@@ -407,7 +475,21 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
         _record_brief_preparation_failure(project, mode, exc,
                                           prepare_started_at, prepare_started_clock)
         raise
-    digest = _input_digest(project, assets_dir=assets_dir)
+    digest = _input_digest(
+        project, assets_dir=assets_dir,
+        narration_provider=narration_provider,
+        narration_voice=narration_voice,
+        narration_model=narration_model,
+        temporary_narration_voice=temporary_narration_voice,
+        cost_budget_cny=cost_budget_cny,
+        avatar_provider=avatar_provider,
+        avatar_assets_dir=avatar_assets_dir,
+        avatar_quota_budget=avatar_quota_budget,
+        avatar_intro_line=avatar_intro_line,
+        avatar_outro_line=avatar_outro_line,
+        avatar_intro_video=avatar_intro_video,
+        avatar_outro_video=avatar_outro_video,
+    )
     receipt_path = project / "receipts" / RECEIPT
     previous: dict[str, Any] = {}
     if receipt_path.is_file():
@@ -473,6 +555,26 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
             except m5_production.copy_review.CopyReviewRequired as exc:
                 raise m5_production.M5Blocked(f"copy review: {exc}") from None
         build_options = {"require_copy_review": mode == "STRICT"}
+        if (narration_provider is not None or narration_voice is not None
+                or temporary_narration_voice or cost_budget_cny != 0.0):
+            build_options.update({
+                "narration_provider": narration_provider,
+                "narration_voice": narration_voice,
+                "narration_model": narration_model,
+                "temporary_voice": temporary_narration_voice,
+                "cost_budget_cny": cost_budget_cny,
+            })
+        if (avatar_provider is not None or avatar_intro_video is not None
+                or avatar_outro_video is not None):
+            build_options.update({
+                "avatar_provider": avatar_provider or "minimax-h3",
+                "avatar_assets_dir": avatar_assets_dir,
+                "avatar_quota_budget": avatar_quota_budget,
+                "avatar_intro_line": avatar_intro_line,
+                "avatar_outro_line": avatar_outro_line,
+                "avatar_intro_video": avatar_intro_video,
+                "avatar_outro_video": avatar_outro_video,
+            })
         if assets_dir is not None:
             build_options["assets_dir"] = assets_dir
         m5_run = m5_production.build(project, **build_options)
@@ -537,6 +639,27 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--force", action="store_true", help="rerun even when the same inputs already passed QC")
     parser.add_argument("--assets", default=None,
                         help="explicit local image/video folder; imported media is local-preview-only")
+    parser.add_argument("--narration-provider", choices=("sapi", "existing", "minimax"),
+                        default=None, help="M5 narration provider; MiniMax never silently falls back")
+    parser.add_argument("--narration-voice", default=None,
+                        help="MiniMax voice ID; ordinary system voices require the temporary flag")
+    parser.add_argument("--narration-model", default="speech-2.8-hd")
+    parser.add_argument("--temporary-narration-voice", action="store_true",
+                        help="mark a normal MiniMax voice as an audition only, not a clone")
+    parser.add_argument("--cost-budget-cny", type=float, default=0.0,
+                        help="task-level CNY cost ceiling; MiniMax M5 currently allows included-plan calls only")
+    parser.add_argument("--avatar-provider", choices=("minimax-h3",), default=None,
+                        help="generate and place MiniMax H3 presenter intro and outro")
+    parser.add_argument("--avatar-assets-dir", default=None,
+                        help="local-only directory with registered portrait and voice reference; defaults to assert/")
+    parser.add_argument("--avatar-quota-budget", default=None,
+                        help="explicit included-subscription weekly quota budget for H3 tasks")
+    parser.add_argument("--avatar-intro-line", default=None)
+    parser.add_argument("--avatar-outro-line", default=None)
+    parser.add_argument("--avatar-intro-video", default=None,
+                        help="reuse an H3 intro MP4 with its provider receipt")
+    parser.add_argument("--avatar-outro-video", default=None,
+                        help="reuse an H3 outro MP4 with its provider receipt")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
     try:
@@ -555,7 +678,22 @@ def main(argv: list[str] | None = None) -> int:
                 raise ValueError(str(exc)) from None
         result = produce(project_path, force=args.force, mode=args.mode,
                          assets_dir=(Path(args.assets).expanduser().resolve()
-                                     if args.assets else None))
+                                     if args.assets else None),
+                         narration_provider=args.narration_provider,
+                         narration_voice=args.narration_voice,
+                         narration_model=args.narration_model,
+                         temporary_narration_voice=args.temporary_narration_voice,
+                         cost_budget_cny=args.cost_budget_cny,
+                         avatar_provider=args.avatar_provider,
+                         avatar_assets_dir=(Path(args.avatar_assets_dir).expanduser().resolve()
+                                            if args.avatar_assets_dir else None),
+                         avatar_quota_budget=args.avatar_quota_budget,
+                         avatar_intro_line=args.avatar_intro_line,
+                         avatar_outro_line=args.avatar_outro_line,
+                         avatar_intro_video=(Path(args.avatar_intro_video).expanduser().resolve()
+                                             if args.avatar_intro_video else None),
+                         avatar_outro_video=(Path(args.avatar_outro_video).expanduser().resolve()
+                                             if args.avatar_outro_video else None))
     except (ValueError, m5_production.M5Blocked) as exc:
         print(json.dumps({"state": "BLOCKED", "reason": str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 4
