@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-"""Run one prepared M5 video project through compose and technical QC.
+"""Run one M5 video project through source-bound preparation, compose and QC.
 
-This is the single execution entry for a project whose account, evidence,
-script and claims are already present. ``--assets`` can import an explicitly
-selected local image/video folder for preview. It delegates production to the
-existing M5 pipeline and pinned Easel renderer. It does not approve copy or
-publish. A matching QC-passed run is reused by input digest.
+For a brief-driven AUTO project, missing script and M5 input contracts are
+drafted from its collected evidence pack and bridged when the required source
+permissions and placement-to-asset map are present. Existing M5 scripts are
+left untouched. ``--assets`` imports an explicitly selected local image/video
+folder for preview. Production delegates to the existing M5 pipeline and
+pinned Easel renderer. It does not approve copy or publish. A matching QC-
+passed run is reused by input digest.
 
 Usage:
     python scripts/produce_video.py --project projects/my-project
@@ -107,6 +109,12 @@ def _input_digest(project: Path, *, assets_dir: Path | None = None) -> str:
         ).encode("utf-8")
     candidates = [
         project / "project.yaml",
+        project / "00_brief" / "brief.json",
+        project / "00_brief" / "evidence-pack.json",
+        project / "00_brief" / "source-permissions.json",
+        project / "script" / "lines.json",
+        project / "script" / "claim-map.json",
+        project / "script" / "asset-map.json",
         project / "script" / "script.json",
         project / "script" / "claims.json",
         project / "sources" / "assets.json",
@@ -217,6 +225,108 @@ def _run_summary(receipt: dict[str, Any]) -> dict[str, Any]:
     ) if key in receipt}
 
 
+def _prepare_brief_inputs(project: Path, *, mode: str) -> dict[str, Any] | None:
+    """Draft and bridge a brief-driven AUTO project when M5 input is absent.
+
+    This only runs when the project has a brief and neither M5 contract file is
+    present. Existing M5 scripts are never rewritten by this preparation path.
+    Rights, source quotes and placement-to-asset mappings remain enforced by
+    the existing draft and bridge validators.
+    """
+    brief = project / "00_brief" / "brief.json"
+    if not brief.is_file():
+        return None
+    m5_script = project / "script" / "script.json"
+    m5_claims = project / "script" / "claims.json"
+    if m5_script.is_file() or m5_claims.is_file():
+        if m5_script.is_file() and m5_claims.is_file():
+            return {"state": "EXISTING_M5_INPUT", "written": []}
+        raise m5_production.M5Blocked(
+            "brief preparation: script/script.json and script/claims.json must either "
+            "both exist or both be absent; existing partial M5 input was left untouched")
+
+    from contentops.script import ScriptBlocked, build as build_draft, write as write_draft
+    from contentops.script.m5_bridge import BridgeBlocked, build as build_bridge, write as write_bridge
+
+    preview = mode == "AUTO"
+    draft_lines = project / "script" / "lines.json"
+    draft_claims = project / "script" / "claim-map.json"
+    if draft_lines.is_file() != draft_claims.is_file():
+        raise m5_production.M5Blocked(
+            "brief preparation: script/lines.json and script/claim-map.json must either "
+            "both exist or both be absent; existing partial draft was left untouched")
+    written: list[str] = []
+    try:
+        if not draft_lines.is_file():
+            draft = build_draft(project, root=ROOT,
+                                allow_unapproved_preview=preview)
+            written.extend(path.relative_to(project).as_posix()
+                           for path in write_draft(draft).values())
+        converted = build_bridge(project, repo_root=ROOT,
+                                 allow_unapproved_preview=preview)
+        written.extend(path.relative_to(project).as_posix()
+                       for path in write_bridge(converted, project).values())
+    except (ScriptBlocked, BridgeBlocked) as exc:
+        code = getattr(exc, "code", type(exc).__name__)
+        detail = getattr(exc, "detail", str(exc))
+        blockers = getattr(exc, "blockers", [])
+        suffix = "; ".join(str(item) for item in blockers[:6])
+        raise m5_production.M5Blocked(
+            f"brief preparation [{code}]: {detail}"
+            + (f"; {suffix}" if suffix else "")) from None
+    return {"state": "PREPARED_FOR_LOCAL_PREVIEW" if preview else "PREPARED",
+            "preview_only": bool(converted.get("preview_only")),
+            "written": written,
+            "lines": converted.get("counts", {}).get("lines", 0),
+            "claims": converted.get("counts", {}).get("claims", 0)}
+
+
+def _record_brief_preparation_failure(project: Path, mode: str,
+                                      error: m5_production.M5Blocked,
+                                      started_at: str, started_clock: float) -> None:
+    """Keep a failed AUTO preparation attempt in the normal run receipt."""
+    receipt_path = project / "receipts" / RECEIPT
+    previous: dict[str, Any] = {}
+    if receipt_path.is_file():
+        try:
+            value = json.loads(receipt_path.read_text(encoding="utf-8"))
+            if isinstance(value, dict):
+                previous = value
+        except (OSError, ValueError):
+            pass
+    history = list(previous.get("runs") or [])
+    prior_run_id = previous.get("run_id")
+    if prior_run_id and not any(item.get("run_id") == prior_run_id for item in history
+                                if isinstance(item, dict)):
+        history.append(_run_summary(previous))
+    finished = _now()
+    elapsed = round(time.monotonic() - started_clock, 3)
+    digest = _input_digest(project)
+    failure = {
+        "schema": "contentops.produce-video/v1",
+        "run_id": str(uuid.uuid4()), "task_id": digest,
+        "project": (_relative_to_root(project).as_posix()
+                    if _relative_to_root(project) else str(project)),
+        "input_sha256": digest, "runs": history, "mode": mode,
+        "state": "BLOCKED", "started_at": started_at,
+        "finished_at": finished, "elapsed_seconds": elapsed,
+        "reused": False, "rendered": False, "technical_qc": "NOT_RUN",
+        "production_ready": False, "external_provider_calls": 0,
+        "external_cost": 0,
+        "external_cost_reason": "brief preparation stopped before provider calls",
+        "human_review": "PENDING_FOUNDER_REVIEW",
+        "copy_review_required_for_render": mode != "AUTO",
+        "brief_preparation": {"state": "BLOCKED",
+                              "failure_reason": str(error)[:1000]},
+        "failure_type": type(error).__name__,
+        "failure_reason": str(error)[:1000], "published": False,
+    }
+    failure["runs"].append(_run_summary(failure))
+    receipt_path.parent.mkdir(parents=True, exist_ok=True)
+    receipt_path.write_text(json.dumps(failure, ensure_ascii=False, indent=2) + "\n",
+                             encoding="utf-8")
+
+
 def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
             assets_dir: Path | None = None) -> dict[str, Any]:
     mode = mode.upper()
@@ -234,6 +344,13 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
             import_local_assets(assets_dir, project, repo_root=ROOT)
         except LocalAssetError as exc:
             raise m5_production.M5Blocked(f"user asset import: {exc}") from None
+    prepare_started_at, prepare_started_clock = _now(), time.monotonic()
+    try:
+        brief_preparation = _prepare_brief_inputs(project, mode=mode)
+    except m5_production.M5Blocked as exc:
+        _record_brief_preparation_failure(project, mode, exc,
+                                          prepare_started_at, prepare_started_clock)
+        raise
     digest = _input_digest(project, assets_dir=assets_dir)
     receipt_path = project / "receipts" / RECEIPT
     previous: dict[str, Any] = {}
@@ -287,6 +404,7 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
         "external_cost_reason": "M5 accepts only local SAPI or receipt-bound existing narration in this entry; no paid provider is called",
         "human_review": "PENDING_FOUNDER_REVIEW",
         "copy_review_required_for_render": mode != "AUTO",
+        "brief_preparation": brief_preparation,
         "published": False,
     }
     output = project / "receipts" / RECEIPT
@@ -350,7 +468,8 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--project", required=True, help="prepared project directory under projects/")
+    parser.add_argument("--project", required=True,
+                        help="project under projects/; AUTO can prepare missing Brief-driven script/M5 inputs")
     parser.add_argument("--mode", default="AUTO", choices=("AUTO", "REVIEW", "STRICT"),
                         help="AUTO runs authorized M5 stages; REVIEW/STRICT also require a recorded copy approval")
     parser.add_argument("--force", action="store_true", help="rerun even when the same inputs already passed QC")
