@@ -298,8 +298,9 @@ def _register(project: Path, account: str, asset_id: str, placement_id: str,
               spec: Dict[str, Any], output: Path, runtime: Dict[str, Any],
               technical: Dict[str, Any]) -> Dict[str, Any]:
     digest = _sha(output)
+    script_doc = _read_json(project / "script" / "script.json")
     inputs = {
-        "script": _sha(project / "script" / "script.json"),
+        "script": _placement_script_sha(script_doc, placement_id),
         "claims": _sha(project / "script" / "claims.json"),
         "source_refs": _sha(project / "sources" / "source-refs.json"),
         "spec": _sha(spec_path),
@@ -434,6 +435,39 @@ def _motion_fingerprint(inputs: Dict[str, str], runtime: Dict[str, Any],
     ).encode("utf-8")).hexdigest()
 
 
+def _placement_line(script: Dict[str, Any], placement_id: str) -> Optional[Dict[str, Any]]:
+    """Resolve a visual placement back to its semantic narration segment."""
+    lines = script.get("lines") or []
+    direct = next((row for row in lines if row.get("id") == placement_id), None)
+    if direct is not None:
+        return dict(direct)
+    visual = next((row for row in script.get("visual_shots") or []
+                   if str(row.get("shot_id") or row.get("placement_id") or "")
+                   == placement_id), None)
+    if visual is None:
+        return None
+    segment_id = str(visual.get("segment_id") or "")
+    semantic = next((row for row in lines if str(row.get("id") or "") == segment_id), None)
+    if semantic is None:
+        return None
+    return {**semantic, **visual, "id": placement_id, "segment_id": segment_id}
+
+
+def _placement_script_sha(script: Dict[str, Any], placement_id: str) -> str:
+    """Hash only fields that affect this silent motion placement.
+
+    Easel handles captions separately, so caption edits can reuse Huashu clips.
+    Narration, claim, source, role, focus, and timing remain part of this key.
+    """
+    line = _placement_line(script, placement_id)
+    if line is None:
+        raise ValueError(f"PLACEMENT_MISSING:{placement_id}")
+    dependency = {key: value for key, value in line.items() if key != "caption"}
+    return hashlib.sha256(json.dumps(
+        dependency, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")).hexdigest()
+
+
 def _editorial_transition(project: Path, line: Dict[str, Any],
                          placement_id: str) -> Optional[Dict[str, Any]]:
     """Resolve literal non-factual copy with independently checked backing."""
@@ -502,8 +536,7 @@ def _cached_render(project: Path, asset_id: str, placement_id: str,
     spec_path, _spec = _validate_spec(project, spec_arg)
     script = _read_json(project / "script" / "script.json")
     claims = _read_json(project / "script" / "claims.json")
-    line = next((row for row in script.get("lines", [])
-                 if row.get("id") == placement_id), None)
+    line = _placement_line(script, placement_id)
     if not line or (line.get("motion_asset_id")
                     and line.get("motion_asset_id") != asset_id):
         return None
@@ -517,13 +550,13 @@ def _cached_render(project: Path, asset_id: str, placement_id: str,
     refs_path = project / "sources" / "source-refs.json"
     if not refs_path.is_file():
         return None
+    script_sha = _placement_script_sha(script, placement_id)
     inputs = {
-        "script": _sha(project / "script" / "script.json"),
+        "script": script_sha,
         "claims": _sha(project / "script" / "claims.json"),
         "source_refs": _sha(refs_path),
         "spec": _sha(spec_path),
     }
-    fingerprint = _motion_fingerprint(inputs, runtime, placement_id)
     receipt_path = project / "receipts" / f"huashu-{asset_id}.json"
     if not receipt_path.is_file():
         return None
@@ -531,12 +564,38 @@ def _cached_render(project: Path, asset_id: str, placement_id: str,
         receipt = _read_json(receipt_path)
     except (OSError, ValueError, json.JSONDecodeError):
         return None
+    receipt_inputs = receipt.get("input_sha256") or {}
+    current_fingerprint = _motion_fingerprint(inputs, runtime, placement_id)
+    dependencies_match = (
+        receipt.get("fingerprint") == current_fingerprint
+        and receipt_inputs == inputs
+    )
+    if not dependencies_match:
+        # Legacy receipts hashed the entire script, including captions that
+        # Easel burns later. Reuse them only when an exact old script snapshot
+        # proves this placement's visual inputs are byte-equivalent.
+        prior_script_sha = str(receipt_inputs.get("script") or "")
+        prior_script = (project / "work" / "script-snapshots"
+                        / f"{prior_script_sha}.json")
+        try:
+            prior_document = _read_json(prior_script)
+            prior_matches = (
+                prior_script.is_file()
+                and _sha(prior_script) == prior_script_sha
+                and _placement_script_sha(prior_document, placement_id) == script_sha
+                and all(receipt_inputs.get(key) == inputs.get(key)
+                        for key in ("claims", "source_refs", "spec"))
+                and receipt.get("fingerprint")
+                == _motion_fingerprint(receipt_inputs, runtime, placement_id)
+            )
+        except (OSError, ValueError, json.JSONDecodeError):
+            prior_matches = False
+        if not prior_matches:
+            return None
     output = project / "assets" / "generated" / "huashu" / f"{asset_id}.mp4"
     technical = receipt.get("technical_qc") or {}
     expected_repo_path = output.relative_to(ROOT).as_posix()
     if (receipt.get("schema") != "contentops.video-receipt/v1"
-            or receipt.get("fingerprint") != fingerprint
-            or receipt.get("input_sha256") != inputs
             or receipt.get("runtime") != runtime
             or receipt.get("placement_id") != placement_id
             or receipt.get("asset_id") != asset_id
@@ -557,8 +616,7 @@ def _render(project: Path, account: str, spec_arg: str, placement_id: str,
     spec_path, spec = _validate_spec(project, spec_arg)
     script_doc = _read_json(project / "script" / "script.json")
     claim_doc = _read_json(project / "script" / "claims.json")
-    lines = script_doc.get("lines") or []
-    line = next((row for row in lines if row.get("id") == placement_id), None)
+    line = _placement_line(script_doc, placement_id)
     if line is None:
         raise ValueError(f"PLACEMENT_MISSING:{placement_id}")
     if line.get("motion_asset_id") and line.get("motion_asset_id") != asset_id:
@@ -622,6 +680,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("--placement-id", help="M5 script line id for this animation")
     parser.add_argument("--asset-id", help="asset id already used by the M5 script line")
     parser.add_argument("--json", action="store_true")
+    parser.add_argument("--force-render", action="store_true",
+                        help="skip the verified shot cache and re-render this placement only")
     parser.add_argument("--mode", choices=("AUTO", "REVIEW", "STRICT"), default="AUTO",
                         help="render a local draft; all modes keep publication and content review separate")
     args = parser.parse_args(argv)
@@ -645,8 +705,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         parser.error("--render requires --spec, --placement-id and --asset-id")
     account = status["account_id"]
     try:
-        cached = _cached_render(project, args.asset_id, args.placement_id,
-                                args.spec, status["runtime"])
+        cached = (None if args.force_render else
+                  _cached_render(project, args.asset_id, args.placement_id,
+                                 args.spec, status["runtime"]))
         if cached:
             rendered = _register(
                 project, account, args.asset_id, args.placement_id,

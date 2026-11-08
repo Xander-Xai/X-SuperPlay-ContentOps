@@ -15,6 +15,7 @@ Usage:
 """
 
 import argparse
+import hashlib
 import json
 import sys
 import tempfile
@@ -28,6 +29,78 @@ ROOT = Path(__file__).resolve().parents[1]
 SAMPLE_FRACTIONS = [0.05, 0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95]
 THUMB_W = 320
 THUMB_H = 569  # 9:16
+
+# TECHNICAL_PASS means only "the media decodes and its A/V parameters are sane".
+# Editorial checks (real_evidence_present, real_source_ratio, duration_range,
+# voice_quality_declared ...) live in canonical QC's ``overall`` but must never
+# downgrade or upgrade this technical verdict.
+TECHNICAL_CHECK_IDS = (
+    "file_size",
+    "ffprobe_parse",
+    "resolution",
+    "aspect_ratio_9_16",
+    "video_codec_h264",
+    "audio_present",
+    "audio_codec_aac",
+    "voice_not_silence",
+)
+
+
+def file_sha256(path: Path) -> str | None:
+    """Bind the QC receipt to the exact bytes it graded."""
+    if not path.is_file():
+        return None
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1 << 20), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def technical_state(canonical_qc: dict) -> str:
+    """Derive the technical layer from media checks, not from QC ``overall``.
+
+    A content-evidence WARN (e.g. ``real_evidence_present``) leaves ``overall``
+    at WARN even when every decodability check passed. Reporting that file as
+    TECHNICAL_PENDING would be wrong; reporting it as editorial approval would
+    be dishonest. Missing checks stay PENDING, never a silent pass.
+    """
+    rows = canonical_qc.get("checks") or []
+    by_id = {row.get("id"): row for row in rows if isinstance(row, dict)}
+    if not by_id:
+        return "TECHNICAL_PENDING"
+    failed = [cid for cid in TECHNICAL_CHECK_IDS
+              if cid in by_id and by_id[cid].get("ok") is not True]
+    missing = [cid for cid in TECHNICAL_CHECK_IDS if cid not in by_id]
+    if failed:
+        return "TECHNICAL_FAIL"
+    if missing:
+        return "TECHNICAL_PENDING"
+    return "TECHNICAL_PASS"
+
+
+def human_review_states(project: Path) -> tuple[str, str]:
+    """CONTENT/PUBLICATION layers come only from a real, complete human review.
+
+    An absent, unsigned, unscored or non-approving human-review.json can never
+    become PUBLISH_APPROVED, no matter how many technical/visual checks passed.
+    """
+    path = project / "receipts" / "human-review.json"
+    try:
+        review = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return "CONTENT_REVIEW_PENDING", "PENDING_HUMAN_APPROVAL"
+    approved = (
+        isinstance(review, dict)
+        and review.get("decision") == "APPROVED"
+        and review.get("production_ready") is True
+        and bool(review.get("reviewer"))
+        and bool(review.get("reviewed_at"))
+        and review.get("scores") is not None
+    )
+    if not approved:
+        return "CONTENT_REVIEW_PENDING", "PENDING_HUMAN_APPROVAL"
+    return "CONTENT_REVIEWED", "PUBLISH_APPROVED"
 
 
 def ffprobe_duration(path: Path) -> float:
@@ -63,6 +136,150 @@ def check_black_frame(png_path: Path) -> dict:
     dark = sum(1 for b in data if b < 16)
     ratio = dark / len(data)
     return {"is_black": ratio > 0.95, "dark_ratio": round(ratio, 4)}
+
+
+def difference_hash(png_path: Path) -> str | None:
+    """Return a 64-bit difference hash for repeat-frame screening."""
+    try:
+        from PIL import Image
+        with Image.open(png_path) as source:
+            pixels = list(source.convert("L").resize((9, 8)).getdata())
+    except (OSError, ImportError):
+        return None
+    bits = []
+    for row in range(8):
+        offset = row * 9
+        bits.extend(1 if pixels[offset + column] > pixels[offset + column + 1] else 0
+                    for column in range(8))
+    value = 0
+    for bit in bits:
+        value = (value << 1) | bit
+    return f"{value:016x}"
+
+
+def hamming_distance(left: str | None, right: str | None) -> int | None:
+    if not left or not right:
+        return None
+    try:
+        return (int(left, 16) ^ int(right, 16)).bit_count()
+    except ValueError:
+        return None
+
+
+def _shot_reuse_issues(rows: list[dict]) -> list[dict]:
+    """Flag adjacent repeated assets/frames unless each use has a distinct purpose."""
+    issues = []
+    for previous, current in zip(rows, rows[1:]):
+        same_source = bool(
+            (previous.get("asset_id") and previous.get("asset_id") == current.get("asset_id"))
+            or (previous.get("source_sha256")
+                and previous.get("source_sha256") == current.get("source_sha256"))
+        )
+        distance = hamming_distance(previous.get("frame_dhash"), current.get("frame_dhash"))
+        similar_frame = distance is not None and distance <= 3
+        if not (same_source or similar_frame):
+            continue
+        previous_variation = str(previous.get("variation") or "").strip()
+        current_variation = str(current.get("variation") or "").strip()
+        has_distinct_purpose = bool(previous_variation and current_variation
+                                    and previous_variation != current_variation)
+        issue = {
+            "type": "REPEATED_SOURCE_WITHOUT_PURPOSE" if same_source else "NEAR_DUPLICATE_FRAME",
+            "start_s": current.get("start_s"),
+            "end_s": current.get("end_s"),
+            "shot_id": current.get("shot_id"),
+            "previous_shot_id": previous.get("shot_id"),
+            "asset_id": current.get("asset_id"),
+            "previous_asset_id": previous.get("asset_id"),
+            "frame_hamming_distance": distance,
+            "state": "ALLOWED_WITH_DISTINCT_PURPOSE" if has_distinct_purpose else "FAIL",
+            "variation": current_variation or None,
+        }
+        issues.append(issue)
+    return issues
+
+
+def _shot_contact(project: Path, video: Path, storyboard_path: Path,
+                  receipts: Path) -> dict:
+    """Sample one frame per storyboard placement and diagnose adjacent reuse."""
+    try:
+        storyboard = json.loads(storyboard_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {"state": "UNAVAILABLE", "reason": "storyboard is unreadable", "shots": []}
+    shots = storyboard.get("shots")
+    if not isinstance(shots, list) or not shots:
+        return {"state": "UNAVAILABLE", "reason": "storyboard has no shots", "shots": []}
+    rows = []
+    frames = []
+    cursor = 0.0
+    receipts.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory() as temp:
+        temp_path = Path(temp)
+        for index, shot in enumerate(shots):
+            if not isinstance(shot, dict):
+                continue
+            try:
+                duration = float(shot.get("duration_s") or shot.get("duration") or 0)
+            except (TypeError, ValueError):
+                duration = 0.0
+            try:
+                start = float(shot.get("start", cursor))
+            except (TypeError, ValueError):
+                start = cursor
+            try:
+                end = float(shot.get("end", start + duration))
+            except (TypeError, ValueError):
+                end = start + duration
+            if end <= start:
+                end = start + duration
+            sample_at = start + max(0.01, end - start) / 2
+            frame = temp_path / f"shot-{index:03d}.png"
+            extracted = extract_frame(video, sample_at, frame)
+            source_ref = str(shot.get("source") or shot.get("image") or shot.get("video") or "")
+            if source_ref.startswith("project://"):
+                source_path = project / source_ref[len("project://"):]
+            else:
+                source_path = ROOT / source_ref
+            source_digest = None
+            if source_path.is_file():
+                digest = hashlib.sha256()
+                with source_path.open("rb") as handle:
+                    for block in iter(lambda: handle.read(1 << 20), b""):
+                        digest.update(block)
+                source_digest = digest.hexdigest()
+            row = {
+                "shot_id": shot.get("shot_id") or f"shot-{index + 1:03d}",
+                "segment_id": shot.get("segment_id"),
+                "start_s": round(start, 3), "end_s": round(end, 3),
+                "asset_id": shot.get("asset_id"),
+                "visual_role": shot.get("visual_role"),
+                "evidence_ref": shot.get("evidence_ref"),
+                "variation": shot.get("variation"),
+                "source_sha256": source_digest,
+                "frame_dhash": difference_hash(frame) if extracted else None,
+                "frame_extracted": bool(extracted),
+            }
+            rows.append(row)
+            if extracted:
+                named = receipts / f"shot-contact-{index + 1:03d}.png"
+                named.write_bytes(frame.read_bytes())
+                frames.append(named)
+            cursor = end
+    issues = _shot_reuse_issues(rows)
+    unresolved = [issue for issue in issues if issue["state"] == "FAIL"]
+    missing_metadata = [row for row in rows if not row.get("visual_role")
+                        or (row.get("visual_role") == "proof" and not row.get("evidence_ref"))]
+    contact = receipts / "visual-shot-contact-sheet.png"
+    sheet_written = build_contact_sheet(frames, contact) if frames else False
+    return {
+        "state": "VISUAL_FAIL" if unresolved or missing_metadata else "VISUAL_PASS",
+        "shot_count": len(rows),
+        "sampled_frames": len(frames),
+        "contact_sheet": contact.relative_to(project).as_posix() if sheet_written else None,
+        "issues": issues,
+        "missing_role_or_evidence_metadata": [row["shot_id"] for row in missing_metadata],
+        "shots": rows,
+    }
 
 
 def build_contact_sheet(frames: list[Path], out_png: Path) -> bool:
@@ -128,6 +345,7 @@ def qc_visual(project: Path, target: str = "") -> dict:
     result = {
         "project": str(project),
         "video": str(video),
+        "video_sha256": file_sha256(video),
         "checked_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "frames": [],
     }
@@ -191,10 +409,37 @@ def qc_visual(project: Path, target: str = "") -> dict:
         "extraction_failures": extract_fail,
     }
 
+    storyboard_path = project / "script" / "storyboard.json"
+    shot_content = (_shot_contact(project, video, storyboard_path, receipts)
+                    if storyboard_path.is_file()
+                    else {"state": "UNAVAILABLE", "reason": "storyboard not found"})
+    result["shot_content_qc"] = shot_content
     if black_count > 2 or extract_fail > 3:
         result["status"] = "WARN"
+    elif shot_content.get("state") == "VISUAL_FAIL":
+        result["status"] = "FAIL"
     else:
         result["status"] = "PASS"
+
+    canonical_qc = receipts / f"qc-report-{project.name}.json"
+    try:
+        canonical = json.loads(canonical_qc.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        canonical = {}
+    technical = technical_state(canonical)
+    content, publication = human_review_states(project)
+    result["quality_states"] = {
+        "technical": technical,
+        "visual": shot_content.get("state", "VISUAL_PENDING"),
+        "content": content,
+        "publication": publication,
+    }
+    result["quality_state_basis"] = {
+        "technical_check_ids": list(TECHNICAL_CHECK_IDS),
+        "technical_source": "canonical qc-report checks (media decodability only; not overall)",
+        "publication_source": "receipts/human-review.json (real reviewer, timestamp, scores and APPROVED required)",
+        "canonical_qc_overall": canonical.get("overall"),
+    }
 
     # Write JSON receipt
     out_json = receipts / "visual-qc.json"

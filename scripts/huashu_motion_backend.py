@@ -136,7 +136,10 @@ def author_auto_film(project: Path, shot: Dict[str, Any], line: Dict[str, Any],
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,50}", placement):
         raise BackendError("automatic Huashu Motion placement id is invalid")
     profile = ((account_dna.get("visual") or {}).get("motion") or {}).get("motion_profile") or {}
-    palette = profile.get("palette") or {}
+    style_variant = str(shot.get("style_variant") or profile.get("recommended_variant") or "")
+    palette = (shot.get("theme") or
+               (profile.get("style_variants") or {}).get(style_variant) or
+               profile.get("palette") or {})
     for key in ("bg", "surface", "ink", "sub", "accent", "accent2"):
         if not re.fullmatch(r"#[0-9a-fA-F]{6}", str(palette.get(key) or "")):
             raise BackendError(f"account motion palette is missing a valid {key}")
@@ -176,7 +179,7 @@ def author_auto_film(project: Path, shot: Dict[str, Any], line: Dict[str, Any],
         "palette": palette, "source_sha256": _sha(source_path) if source_path else None,
         "source_text_sha256": _sha(source_text_path) if source_text_path else None,
         "runtime_version": _json(runtime / "package.json").get("version"),
-        "scene_template_version": "account-art-direction-v2",
+        "scene_template_version": "account-art-direction-v3",
     }, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
     film = project / "motion" / "huashu-motion" / "auto" / f"{placement}-{fingerprint[:10]}"
     vendor = film / "vendor"
@@ -191,6 +194,10 @@ def author_auto_film(project: Path, shot: Dict[str, Any], line: Dict[str, Any],
         shutil.copy2(runtime / "fonts" / font, assets_dir / "fonts" / font)
     image_markup = ""
     image_animation = ""
+    visual_role = str(shot.get("visual_role") or line.get("visual_role") or "explain")
+    scene_template = str(shot.get("scene_template") or
+                         (profile.get("scene_templates") or {}).get(visual_role) or
+                         "editorial-diagram")
     material_lines = ["# Film materials", "", "- GSAP and Noto Sans SC are bundled local rendering dependencies."]
     if source_text_path:
         raw_lines = source_text_path.read_text(encoding="utf-8", errors="replace").splitlines()
@@ -527,33 +534,29 @@ h1{{position:absolute;left:68px;right:68px;top:230px;margin:0;font-size:{title_p
 .first{{top:0}}.second{{top:220px;border-color:{colors['accent2']}}}.third{{top:440px;border-color:{colors['accent']}}}
 .diagram-note{{position:absolute;left:72px;bottom:130px;color:{colors['sub']};font:18px ui-monospace,monospace;letter-spacing:1px}}
 .footer{{position:absolute;left:72px;bottom:118px;color:{colors['sub']};font:20px ui-monospace,monospace;letter-spacing:1px}}
-/* Account-DNA art direction: ink-black canvas, quiet technical geometry,
-   translucent charcoal surfaces and cyan only for the current focal event. */
-#film{{isolation:isolate;background-color:{colors['bg']};background-image:
-  linear-gradient(90deg,transparent 0,transparent 71px,rgba(139,149,165,.055) 72px,transparent 73px),
-  linear-gradient(0deg,transparent 0,transparent 71px,rgba(139,149,165,.045) 72px,transparent 73px);
-  background-size:72px 72px}}
-#film::before{{content:"";position:absolute;z-index:-1;inset:0;pointer-events:none;
-  background:radial-gradient(ellipse at 52% 46%,rgba(56,189,248,.055),transparent 58%);
-  opacity:.62}}
+/* Account-DNA art direction: use the exact brand ink and surface colors.
+   No decorative blue-gray grid, glow or gradient backgrounds. */
+#film{{isolation:isolate;background-color:{colors['bg']}}}
 .editor,.query-node,.lane,.document-sheet,.chunk-card,.rank-column,.rank-item,
 .rrf-equation,.rerank-stack,.cross-encoder,.ordered-output,.cache-query,.cache-gate,
 .cache-branch,.guardrail-bar,.orbit-node,.hybrid-query,.hybrid-lane,.hybrid-merge,
-.node,.source-code{{background-color:rgba(16,18,22,.86);border-color:rgba(139,149,165,.24)}}
+.node,.source-code{{background-color:{colors['surface']};border-color:{colors['sub']}}}
 .editor{{left:72px;right:72px;width:auto;border-radius:10px 10px 18px 18px;box-shadow:0 28px 70px #0009}}
-.editor-bar{{background:rgba(22,26,34,.58);border-bottom:1px solid rgba(139,149,165,.20)}}
-.code-row{{background:rgba(22,26,34,.34);border-bottom:1px solid rgba(139,149,165,.08);border-radius:0;margin-bottom:5px}}
+.editor-bar{{background:{colors['surface']};border-bottom:1px solid {colors['sub']}}}
+.code-row{{background:{colors['surface']};border-bottom:1px solid {colors['bg']};border-radius:0;margin-bottom:5px}}
 .code-row i{{font-size:20px;min-width:64px}}
 .code-row code{{font-size:28px;line-height:1.32}}
-.source-stage{{background:{colors['bg']};border:1px solid rgba(139,149,165,.35);border-radius:12px;box-shadow:0 24px 68px #0009}}
+.source-stage{{background:{colors['surface']};border:1px solid {colors['sub']};border-radius:12px;box-shadow:0 24px 68px #0009}}
 .source-stage img{{border-radius:10px}}
 .lane,.hybrid-lane,.rank-column,.cache-branch,.orbit-node,.node{{box-shadow:none;border-radius:4px 12px 12px 4px}}
-.query-node,.hybrid-query,.rrf-equation,.cross-encoder,.ordered-output,.cache-query,.cache-gate,.hybrid-merge{{border-radius:10px;background:rgba(16,18,22,.92)}}
-.candidate,.candidate-card,.document-lines .source-line{{background:rgba(10,11,13,.72);border-radius:4px}}
-.source-code,.guardrail-bar,.diagram-note{{background:rgba(16,18,22,.65)}}
-.retrieval-scene::after{{content:"";position:absolute;left:72px;right:72px;top:355px;height:1px;background:linear-gradient(90deg,transparent,rgba(139,149,165,.28),transparent);pointer-events:none}}
+.query-node,.hybrid-query,.rrf-equation,.cross-encoder,.ordered-output,.cache-query,.cache-gate,.hybrid-merge{{border-radius:10px;background:{colors['surface']}}}
+.candidate,.candidate-card,.document-lines .source-line{{background:{colors['bg']};border-radius:4px}}
+.source-code,.guardrail-bar,.diagram-note{{background:{colors['surface']}}}
 .editor-foot,.diagram-note,.footer{{font-size:16px;letter-spacing:.08em}}
-</style></head><body><main id="film" data-composition-id="film" data-width="1080" data-height="1920">
+.scene-proof .source-stage{{border-width:3px;border-color:{colors['accent']}}}
+.scene-demo .editor,.scene-demo .source-stage{{border-top:5px solid {colors['accent']}}}
+.scene-explain .query-node,.scene-explain .hybrid-merge{{border-radius:18px}}
+</style></head><body><main id="film" class="scene-{html.escape(visual_role)}" data-scene-role="{html.escape(visual_role)}" data-scene-template="{html.escape(scene_template)}" data-style-variant="{html.escape(style_variant)}" data-composition-id="film" data-width="1080" data-height="1920">
 <div class="eyebrow">{evidence_label}　·　{placement}</div><h1>{scene_title}</h1>{image_markup}
 <div class="footer">CONTENTOPS / MOTION</div></main>
 <script>window.__timelines=window.__timelines||{{}};const tl=gsap.timeline({{paused:true,defaults:{{ease:"power2.out"}}}});
@@ -599,7 +602,8 @@ def _probe(path: Path) -> Dict[str, Any]:
 
 
 def render(project: Path, film_arg: str, asset_id: str, placement_id: str,
-           account_id: str = "", expected_duration_s: Optional[float] = None) -> Dict[str, Any]:
+           account_id: str = "", expected_duration_s: Optional[float] = None,
+           force_render: bool = False) -> Dict[str, Any]:
     project = project.resolve()
     if not project.is_relative_to((ROOT / "projects").resolve()):
         raise BackendError("M5 project must be inside projects/")
@@ -610,8 +614,11 @@ def render(project: Path, film_arg: str, asset_id: str, placement_id: str,
     claims = _json(project / "script" / "claims.json")
     sources = _json(project / "sources" / "source-refs.json")
     line = next((row for row in script.get("lines", []) if str(row.get("id")) == placement_id), None)
+    if line is None:
+        line = next((row for row in script.get("visual_shots", [])
+                     if str(row.get("shot_id") or row.get("placement_id")) == placement_id), None)
     if not line:
-        raise BackendError(f"placement {placement_id!r} is not present in script.json")
+        raise BackendError(f"placement {placement_id!r} is not present in script.json visual plan")
     inputs = {
         "script_sha256": _sha(project / "script" / "script.json"),
         "claims_sha256": _sha(project / "script" / "claims.json"),
@@ -625,7 +632,7 @@ def render(project: Path, film_arg: str, asset_id: str, placement_id: str,
     output = project / "assets" / "generated" / "huashu-motion" / f"{asset_id}.mp4"
     receipt_path = project / "receipts" / f"huashu-motion-{asset_id}.json"
     previous = None
-    if output.is_file() and receipt_path.is_file():
+    if not force_render and output.is_file() and receipt_path.is_file():
         try:
             prior = _json(receipt_path)
             if (prior.get("fingerprint") == fingerprint
@@ -725,13 +732,15 @@ def main(argv=None) -> int:
     parser.add_argument("--placement-id", required=True)
     parser.add_argument("--account-id", default="")
     parser.add_argument("--expected-duration", type=float)
+    parser.add_argument("--force-render", action="store_true",
+                        help="skip the verified shot cache and re-render this placement only")
     args = parser.parse_args(argv)
     project = Path(args.project)
     if not project.is_absolute():
         project = ROOT / project
     try:
         result = render(project, args.film, args.asset_id, args.placement_id,
-                        args.account_id, args.expected_duration)
+                        args.account_id, args.expected_duration, args.force_render)
         public_result = {**result, "output": str(result["output"]),
                          "receipt": str(result["receipt"])}
         print(json.dumps({"execution": {"state": result["state"],

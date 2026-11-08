@@ -652,7 +652,8 @@ def _ocr_local_asset_for_placement(project: Path, placement_id: str,
 
 def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], *,
                  require_copy_review: bool,
-                 narration: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+                 narration: Optional[Dict[str, Any]] = None,
+                 rerender_shots: Optional[tuple[str, ...]] = None) -> Dict[str, Any]:
     """Render account-profile or explicitly planned local Huashua clips.
 
     An M5 video account with a Huashua profile receives an automatic plan when
@@ -686,6 +687,8 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
     if not default_backend:
         default_backend = None
     if default_backend is None:
+        if rerender_shots:
+            raise M5Blocked("cannot re-render a motion placement: no Huashu backend is configured")
         _write_json(project / "receipts" / "motion-stage.json", {
             "schema": "contentops.m5-motion-stage/v1",
             "backend": None,
@@ -712,9 +715,32 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
             refs_by_id = {str(row.get("id")): row
                           for row in (refs_doc.get("refs") or [])}
             source_assets = source_doc.get("assets") or []
-            plan_script = {**script, "lines": []}
-            for original in script.get("lines") or []:
-                line = dict(original)
+            semantic_lines = script.get("lines") or []
+            lines_by_segment = {str(row.get("id") or ""): dict(row)
+                                for row in semantic_lines}
+            visual_plan = script.get("visual_shots")
+            if visual_plan is None:
+                planning_rows = [
+                    {"shot_id": str(row.get("id") or ""),
+                     "segment_id": str(row.get("id") or ""),
+                     "asset_id": row.get("asset_id"),
+                     "visual_role": row.get("visual_role"),
+                     "evidence_ref": row.get("evidence_ref")}
+                    for row in semantic_lines
+                ]
+            else:
+                planning_rows = list(visual_plan)
+            enriched_visuals = []
+            for visual_row in planning_rows:
+                segment_id = str(visual_row.get("segment_id") or "")
+                original = lines_by_segment.get(segment_id)
+                if original is None:
+                    raise M5Blocked(
+                        f"visual shot references unknown narration segment {segment_id!r}")
+                placement = str(visual_row.get("shot_id") or visual_row.get("placement_id") or "")
+                line = {**original, **visual_row, "id": placement,
+                        "asset_id": visual_row.get("asset_id") or original.get("asset_id"),
+                        "segment_id": segment_id}
                 claim = claims_by_id.get(str(line.get("claim"))) or {}
                 artifacts = [refs_by_id.get(str(ref), {})
                              for ref in (claim.get("artifacts") or [])]
@@ -723,16 +749,38 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
                                        if item.get("url") or item.get("path")]
                 # Legacy script lines often all point to anchor-01, which
                 # repeats the wrong file for engine/retriever claims.
-                placement = str(line.get("id") or "")
                 ocr_asset_id = _ocr_local_asset_for_placement(
                     project, placement, source_assets)
                 snapshot_id = (None if ocr_asset_id else
                                _source_snapshot_for_refs(artifacts, source_assets))
-                if ocr_asset_id:
+                requested_asset_id = str(visual_row.get("asset_id") or "")
+                requested_asset = next((item for item in source_assets
+                                        if str(item.get("id") or "") == requested_asset_id), None)
+                requested_matches_claim = bool(
+                    requested_asset
+                    and str(requested_asset.get("type") or "").upper() == "CODE_SNAPSHOT"
+                    and requested_asset.get("evidence_capable") is False
+                    and any(str(requested_asset.get("source_document_sha256") or "").lower()
+                            == str(artifact.get("sha256") or "").lower()
+                            for artifact in artifacts)
+                )
+                if requested_matches_claim:
+                    line["asset_id"] = requested_asset_id
+                elif ocr_asset_id:
                     line["asset_id"] = ocr_asset_id
                 elif snapshot_id:
                     line["asset_id"] = snapshot_id
-                plan_script["lines"].append(line)
+                enriched_visuals.append({
+                    **visual_row,
+                    "shot_id": placement,
+                    "segment_id": segment_id,
+                    "asset_id": line["asset_id"],
+                    "source_refs": line["source_refs"],
+                })
+            # Keep narration semantic: the planner itself splits each measured
+            # segment span across its visual placements using duration_weight.
+            plan_script = {**script, "lines": semantic_lines,
+                           "visual_shots": enriched_visuals}
             generated = build_auto_plan(
                 project=project, account_id=account_id, account_dna=account_dna,
                 script=plan_script, narration=narration,
@@ -740,7 +788,18 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
             )
             if default_backend == "huashu-motion":
                 from huashu_motion_backend import BackendError, author_auto_film
-                lines_by_id = {str(row.get("id")): row for row in plan_script.get("lines") or []}
+                lines_by_id = {}
+                semantic_by_id = {str(row.get("id") or ""): row
+                                  for row in plan_script.get("lines") or []}
+                for visual_row in plan_script.get("visual_shots") or []:
+                    placement = str(visual_row.get("shot_id") or "")
+                    segment_id = str(visual_row.get("segment_id") or "")
+                    semantic = semantic_by_id.get(segment_id)
+                    if placement and semantic:
+                        lines_by_id[placement] = {
+                            **semantic, **visual_row, "id": placement,
+                            "segment_id": segment_id,
+                        }
                 narration_lines = narration.get("lines") or []
                 timings_by_id = {str(row.get("line_id")): row
                                  for row in narration_lines if row.get("line_id")}
@@ -768,13 +827,14 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
                     placement = str(shot.get("placement_id") or "")
                     line = lines_by_id.get(placement)
                     timing = timings_by_id.get(placement) or timings_by_placement.get(placement) or {}
-                    if not line or not timing.get("duration"):
+                    if not line or not (timing.get("duration") or shot.get("duration_s")):
                         raise M5Blocked(
                             f"{placement}: Huashu Motion needs a measured narration duration"
                         )
                     shot["asset_id"] = f"huashu-motion-{placement}"
                     shot["backend"] = "huashu-motion"
-                    render_duration = float(slots_by_placement.get(placement)
+                    render_duration = float(shot.get("duration_s")
+                                            or slots_by_placement.get(placement)
                                             or timing["duration"])
                     shot["duration_s"] = render_duration
                     shot["spec"] = author_auto_film(
@@ -820,10 +880,37 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
             raise M5Blocked(f"script asset map is invalid: {exc}") from None
         if not isinstance(mapped, dict) or not isinstance(mapped.get("assets"), dict):
             raise M5Blocked("script/assets.json must contain an assets object")
-    lines = script.get("lines") or []
-    line_by_id = {str(row.get("id")): row for row in lines}
-    if len(shots) != len(lines):
-        raise M5Blocked("motion shot count must match M5 script line count")
+    semantic_lines = script.get("lines") or []
+    lines_by_segment = {str(row.get("id") or ""): dict(row) for row in semantic_lines}
+    visual_plan = script.get("visual_shots")
+    if visual_plan is None:
+        line_by_id = {str(row.get("id")): row for row in semantic_lines}
+    else:
+        line_by_id = {}
+        for visual_row in visual_plan:
+            segment_id = str(visual_row.get("segment_id") or "")
+            original = lines_by_segment.get(segment_id)
+            placement_id = str(visual_row.get("shot_id") or visual_row.get("placement_id") or "")
+            if not original or not placement_id:
+                raise M5Blocked("motion visual shot must map to a segment and shot_id")
+            if placement_id in line_by_id:
+                raise M5Blocked(f"duplicate motion placement: {placement_id}")
+            line_by_id[placement_id] = {
+                **original, **visual_row, "id": placement_id,
+                "segment_id": segment_id,
+                "asset_id": visual_row.get("asset_id") or original.get("asset_id"),
+            }
+    if len(shots) != len(line_by_id):
+        raise M5Blocked("motion shot count must match the planned visual placements")
+    rerender_set = {str(value).strip() for value in (rerender_shots or ()) if str(value).strip()}
+    planned_placements = {
+        str(row.get("placement_id") or row.get("id") or "")
+        for row in shots if isinstance(row, dict)
+    }
+    unknown_rerenders = sorted(rerender_set - planned_placements)
+    if unknown_rerenders:
+        raise M5Blocked("unknown motion placement requested for re-render: "
+                        + ", ".join(unknown_rerenders))
     seen_placements = set()
     adapter = ROOT / "scripts" / "huashu_motion_adapter.py"
     motion_adapter = ROOT / "scripts" / "huashu_motion_backend.py"
@@ -860,10 +947,10 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
         seen_placements.add(placement_id)
         line = line_by_id[placement_id]
         shot_backend = _select_motion_backend(shot, default_backend)
-        source_asset_id = str(line.get("asset_id") or "")
+        source_asset_id = str(shot.get("source_asset_id") or line.get("asset_id") or "")
         if not source_asset_id or (line.get("motion_asset_id")
                                    and line.get("motion_asset_id") != asset_id):
-            raise M5Blocked(f"{placement_id}: motion asset_id must map to its script line")
+            raise M5Blocked(f"{placement_id}: motion asset_id must map to its visual shot")
         if not spec:
             raise M5Blocked(f"{placement_id}: motion shot plan has no spec path")
         if shot_backend == "huashu-motion":
@@ -871,13 +958,18 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
                        "--film", spec, "--placement-id", placement_id,
                        "--asset-id", asset_id, "--account-id", account_id]
             timing = narration_timings.get(placement_id) or {}
-            expected_duration = narration_slots.get(placement_id) or timing.get("duration")
+            expected_duration = (narration_slots.get(placement_id)
+                                 or timing.get("duration") or shot.get("duration_s"))
             if expected_duration:
                 command.extend(["--expected-duration", str(expected_duration)])
+            if placement_id in rerender_set:
+                command.append("--force-render")
         else:
             command = [python_executable(), str(adapter), str(project), "--render",
                        "--mode", mode, "--spec", spec, "--placement-id", placement_id,
                        "--asset-id", asset_id, "--json"]
+            if placement_id in rerender_set:
+                command.append("--force-render")
         proc = hidden_run(command, timeout=3600, cwd=str(ROOT),
                           env=dict(os.environ, PYTHONUTF8="1", PYTHONIOENCODING="utf-8"))
         try:
@@ -892,6 +984,9 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
             raise M5Blocked(f"Huashua motion blocked for {placement_id}: {str(detail)[-700:]}")
         results.append({"placement_id": placement_id, "asset_id": asset_id,
                         "source_asset_id": shot.get("source_asset_id", line.get("asset_id")),
+                        "segment_id": shot.get("segment_id", line.get("segment_id") or placement_id),
+                        "visual_role": shot.get("visual_role", line.get("visual_role") or "explain"),
+                        "evidence_ref": shot.get("evidence_ref", line.get("evidence_ref")),
                         "content_point": shot.get("content_point", line.get("narration")),
                         "backend": shot_backend,
                         "motion_syntax": shot.get("motion_syntax", "explicit-shot-plan"),
@@ -907,6 +1002,7 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
                "backend": backends[0] if len(backends) == 1 else "hybrid",
                "mode": mode, "state": "OK",
                "script_sha256": _payload_sha256(script), "shots": results,
+               "forced_rerender_placements": sorted(rerender_set),
                "production_ready": False}
     _write_json(project / "receipts" / "motion-stage.json", payload)
     return {"state": "OK", "backend": payload["backend"], "shots": len(results)}
@@ -1270,6 +1366,10 @@ def stage_narration(project: Path, script: Dict[str, Any], *, provider: str = "s
             previous = json.loads(receipt_path.read_text(encoding="utf-8"))
         except ValueError as exc:
             raise M5Blocked(f"narration receipt is not readable JSON: {exc}")
+        declared_audio_sha = str(previous.get("sha256") or "").lower()
+        if declared_audio_sha and _sha256(audio).lower() != declared_audio_sha:
+            raise M5Blocked(
+                "the supplied audio bytes do not match the narration receipt sha256")
         if previous.get("text_sha256") != text_sha:
             raise M5Blocked(
                 "the narration receipt is not bound to the current script text — the "
@@ -1357,27 +1457,71 @@ def stage_subtitles(project: Path, script: Dict[str, Any], narration: Dict[str, 
 
 def _align_shots_to_narration(shots: List[Dict[str, Any]],
                               narration_lines: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Align each cut to measured speech starts, keeping natural pauses local.
+    """Align visual placements to the measured narration timeline.
 
-    Adding all inter-line pauses to the final clip can make a real motion clip
-    much shorter than its requested duration. Each shot now carries only the
-    pause immediately following its own line; the last shot ends at the final
-    measured speech boundary.
+    A semantic narration line can now own multiple visual shots. Their weights
+    only divide that line's measured span; they never alter the speech text or
+    audio. Legacy one-shot-per-line storyboards retain the same conversion.
     """
     if not shots or not narration_lines:
         return shots
-    if len(shots) != len(narration_lines):
+    segment_ids = [str(line.get("line_id") or line.get("segment_id") or "")
+                   for line in narration_lines]
+    has_segment_ids = any(shot.get("segment_id") for shot in shots)
+    if has_segment_ids and any(not value for value in segment_ids):
+        ordered_segments = list(dict.fromkeys(str(shot.get("segment_id") or "")
+                                              for shot in shots))
+        if (any(not value for value in segment_ids)
+                and all(not value for value in segment_ids)
+                and len(ordered_segments) == len(narration_lines)):
+            # Historical narration receipts may omit line_id. Their order is
+            # still deterministic, so align the explicitly grouped storyboard
+            # segments in order when the counts agree.
+            segment_ids = ordered_segments
+        else:
+            raise M5Blocked("measured narration lines need line_id to align multi-shot segments")
+    if not has_segment_ids and len(shots) != len(narration_lines):
         raise M5Blocked("storyboard shots do not match measured narration lines")
-    for index, (shot, line) in enumerate(zip(shots, narration_lines)):
+
+    grouped: Dict[str, List[Dict[str, Any]]] = {}
+    if has_segment_ids:
+        for shot in shots:
+            segment_id = str(shot.get("segment_id") or "")
+            if segment_id not in segment_ids:
+                raise M5Blocked(f"storyboard references unknown narration segment {segment_id!r}")
+            grouped.setdefault(segment_id, []).append(shot)
+    for index, line in enumerate(narration_lines):
+        segment_id = segment_ids[index]
+        rows = grouped.get(segment_id, []) if has_segment_ids else [shots[index]]
+        if not rows:
+            raise M5Blocked(f"narration segment {segment_id or index + 1!r} has no visual shot")
         start = float(line.get("start") or 0.0)
         if index + 1 < len(narration_lines):
-            duration = float(narration_lines[index + 1].get("start") or 0.0) - start
+            end = float(narration_lines[index + 1].get("start") or 0.0)
         else:
-            duration = float(line.get("duration") or 0.0)
-        if duration <= 0:
+            end = start + float(line.get("duration") or 0.0)
+        span = end - start
+        if span <= 0:
             raise M5Blocked(f"narration line {index + 1} has a non-positive timeline span")
-        shot["duration"] = round(duration, 3)
-        shot["duration_s"] = round(duration, 3)
+        weights = []
+        for shot in rows:
+            try:
+                weight = float(shot.get("duration_weight") or shot.get("duration") or 1.0)
+            except (TypeError, ValueError):
+                weight = 0.0
+            if weight <= 0:
+                raise M5Blocked(f"shot {shot.get('shot_id')!r} has a non-positive timeline weight")
+            weights.append(weight)
+        cursor = start
+        for row_index, (shot, weight) in enumerate(zip(rows, weights)):
+            shot_end = end if row_index == len(rows) - 1 else cursor + span * weight / sum(weights)
+            duration = shot_end - cursor
+            shot["segment_id"] = segment_id or str(line.get("line_id") or index + 1)
+            shot["start"] = round(cursor, 3)
+            shot["end"] = round(shot_end, 3)
+            shot["duration"] = round(duration, 3)
+            shot["duration_s"] = round(duration, 3)
+            cursor = shot_end
     return shots
 
 
@@ -1427,23 +1571,40 @@ def stage_storyboard(project: Path, config: Dict[str, Any], script: Dict[str, An
                     f"{line.get('id')}: motion asset {motion_id!r} is not generated visual support")
             line["asset_id"] = motion_id
         storyboard_lines.append(line)
+    storyboard_visuals = None
+    if script.get("visual_shots") is not None:
+        storyboard_visuals = []
+        for original in script.get("visual_shots") or []:
+            row = dict(original)
+            placement_id = str(row.get("shot_id") or row.get("placement_id") or "")
+            motion_id = str(motion_assets.get(placement_id)
+                            or row.get("motion_asset_id") or row.get("asset_id") or "")
+            if motion_id:
+                motion_asset = assets.get(motion_id)
+                if not motion_asset:
+                    raise M5Blocked(
+                        f"{placement_id}: visual asset {motion_id!r} is not registered")
+                if (motion_assets.get(placement_id)
+                        and not (motion_asset.get("generated")
+                                 or str(motion_asset.get("type") or "").lower().startswith("generated_"))):
+                    raise M5Blocked(
+                        f"{placement_id}: motion asset {motion_id!r} is not generated visual support")
+                row["asset_id"] = motion_id
+            storyboard_visuals.append(row)
     try:
         shots = build_shots(lines=storyboard_lines,
                             narration_lines=narration["lines"],
-                            assets=assets, repo_root=ROOT)
+                            assets=assets, repo_root=ROOT,
+                            visual_shots=storyboard_visuals)
     except StoryboardContractError as exc:
         raise M5Blocked(f"storyboard contract: {exc}")
     shots = _align_shots_to_narration(shots, narration["lines"])
     target = (config.get("target") or {}).get("resolution", "1080x1920")
     generated_visual_ids = sorted({
-        str(line.get("asset_id"))
-        for line in storyboard_lines
-        if line.get("asset_id")
-        and line.get("asset_id") in assets
-        and (
-            bool(assets[line["asset_id"]].get("generated"))
-            or str(assets[line["asset_id"]].get("type") or "").lower().startswith("generated_")
-        )
+        str(shot.get("asset_id")) for shot in shots
+        if shot.get("asset_id") in assets
+        and (bool(assets[shot["asset_id"]].get("generated"))
+             or str(assets[shot["asset_id"]].get("type") or "").lower().startswith("generated_"))
     })
     storyboard = {
         "size": target,
@@ -1556,7 +1717,8 @@ def _registered_asset_path(asset_root: Path, manifest: Dict[str, Any], asset_id:
 
 
 def _run_h3_avatar_clip(project: Path, *, shot_id: str, line: str, role: str,
-                        image: Path, voice_reference: Path, quota_budget: str) -> Dict[str, Any]:
+                        image: Path, voice_reference: Path, quota_budget: str,
+                        consent_receipt: Path) -> Dict[str, Any]:
     """Call the existing H3 provider CLI and require a real generated receipt."""
     shot = {
         "shot_id": shot_id,
@@ -1587,6 +1749,7 @@ def _run_h3_avatar_clip(project: Path, *, shot_id: str, line: str, role: str,
          "--shot-id", shot_id, "--mode", "Ref2VA", "--duration", "4",
          "--ratio", "9:16", "--reference-image", str(image),
          "--reference-audio", str(voice_reference), "--quota-budget", quota_budget,
+         "--human-confirmation-receipt", str(consent_receipt),
          "--test-objective", f"Generate {role} avatar with registered local references for this production."],
         cwd=str(ROOT), timeout=1800,
     )
@@ -1611,10 +1774,123 @@ def _run_h3_avatar_clip(project: Path, *, shot_id: str, line: str, role: str,
             "weekly_after": (payload.get("quota_after") or {}).get("weekly_remaining_percent")}
 
 
+def confirm_avatar_generation(project: Path, *, provider: Optional[str],
+                              quota_budget: Optional[str], run_id: str,
+                              reusable_clips: bool = False,
+                              human_choice: Optional[str] = None) -> Dict[str, Any]:
+    """Ask a human whether this run may use MiniMax H3 avatar clips.
+
+    A non-interactive caller fails closed. Existing receipt-bound clips may be
+    reused without spending quota, but no avatar is used unless the operator
+    answered yes. Missing clips additionally require a task-level quota budget.
+    """
+    from datetime import datetime, timezone
+    if provider != "minimax-h3":
+        decision, origin = "NOT_REQUESTED", "provider_not_selected"
+        reason = "MiniMax H3 was not requested"
+    elif human_choice and human_choice.casefold() in {"no", "n"}:
+        decision, origin = "DECLINED", "explicit_human_choice"
+        reason = "operator declined MiniMax H3 for this video"
+    elif not sys.stdin.isatty():
+        decision, origin = "NOT_CONFIRMED", "non_interactive_caller"
+        reason = "interactive human choice is required before MiniMax H3 can be used"
+    else:
+        try:
+            answer = input(
+                f"本次视频是否使用 MiniMax H3 数字人片头/片尾？预算上限 {quota_budget or '未配置'}，"
+                "仅使用 SUBSCRIPTION 额度；缺少可复用片段时，只有配置预算后才会生成。"
+                "输入 y 确认使用，其它输入跳过："
+            ).strip().casefold()
+        except EOFError:
+            decision, origin = "NOT_CONFIRMED", "stdin_unavailable"
+            reason = "no human answer was available; H3 generation was skipped"
+        else:
+            decision = "CONFIRMED" if answer in {"y", "yes"} else "DECLINED"
+            origin = "interactive_terminal"
+            if decision == "CONFIRMED" and not quota_budget and not reusable_clips:
+                decision = "NOT_CONFIRMED"
+                origin = "quota_budget_missing"
+                reason = "operator selected H3, but new generation needs a task-level subscription quota budget"
+            else:
+                reason = ("operator confirmed this run's H3 generation budget"
+                          if decision == "CONFIRMED"
+                          else "operator declined this run's H3 generation")
+    resolved_project = project.resolve()
+    try:
+        logical_project = resolved_project.relative_to(ROOT.resolve()).as_posix()
+    except ValueError:
+        logical_project = project.name
+    payload = {
+        "schema": "contentops.avatar-generation-consent/v1",
+        "project": logical_project,
+        "run_id": run_id,
+        "provider": provider,
+        "decision": decision,
+        "origin": origin,
+        "quota_budget": quota_budget,
+        "quota_policy": "SUBSCRIPTION only; PAYG, credit packs and vouchers disabled",
+        "recorded_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+        "reason": reason,
+        "human_confirmation": decision == "CONFIRMED",
+    }
+    if provider == "minimax-h3":
+        _write_json(project / "receipts" / "avatar-generation-consent.json", payload)
+    return payload
+
+
+def _cached_avatar_video_path(project: Path, role: str,
+                             expected_refs: set[str],
+                             previous: Optional[Dict[str, Any]] = None) -> Optional[Path]:
+    """Resolve a prior H3 bookend only when its adjacent receipt still verifies."""
+    previous = previous if previous is not None else (
+        _read_json_or_none(project / "receipts" / "avatar-bookends.json") or {})
+    row = previous.get(role)
+    if not isinstance(row, dict):
+        return None
+    reference = str(row.get("video") or "")
+    if reference.startswith("project://"):
+        candidate = (project / reference[len("project://"):]).resolve()
+    else:
+        return None
+    try:
+        candidate.relative_to(project.resolve())
+        receipt = json.loads(candidate.with_name(candidate.name + ".receipt.json")
+                             .read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if (not candidate.is_file()
+            or receipt.get("provider") != "minimax_m_plan"
+            or receipt.get("model") != "MiniMax-H3"
+            or receipt.get("credential_class") != "SUBSCRIPTION"
+            or receipt.get("payg_allowed") is not False
+            or receipt.get("output_sha256") != _sha256(candidate)
+            or not receipt.get("audio_stream_present")
+            or not expected_refs.issubset(set(receipt.get("reference_asset_sha256") or []))):
+        return None
+    return candidate
+
+
+def has_reusable_avatar_pair(project: Path, asset_root: Path) -> bool:
+    """Whether both prior bookends remain bound to today's registered identity."""
+    try:
+        manifest = json.loads((asset_root / "asset-manifest.json").read_text(encoding="utf-8"))
+        image = _registered_asset_path(
+            asset_root, manifest, manifest.get("primary", {}).get("presenter_reference", ""))
+        voice = _registered_asset_path(
+            asset_root, manifest, manifest.get("primary", {}).get("voice_reference", ""))
+        refs = {_sha256(image), _sha256(voice)}
+    except (OSError, ValueError, M5Blocked, AttributeError):
+        return False
+    return all(_cached_avatar_video_path(project, role, refs) is not None
+               for role in ("intro", "outro"))
+
+
 def stage_avatar(project: Path, slug: str, *, asset_root: Path,
                  quota_budget: Optional[str], intro_line: str, outro_line: str,
                  intro_video: Optional[Path] = None,
-                 outro_video: Optional[Path] = None) -> Dict[str, Any]:
+                 outro_video: Optional[Path] = None,
+                 generation_confirmed: bool = False,
+                 confirmation: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Generate/cache H3 bookends from registered local assets; leave a preview on partial failure."""
     manifest_path = asset_root / "asset-manifest.json"
     try:
@@ -1628,7 +1904,12 @@ def stage_avatar(project: Path, slug: str, *, asset_root: Path,
     outputs: Dict[str, Any] = {"state": "GENERATING", "provider": "minimax-h3",
                                "asset_root": _logical_path(asset_root, project),
                                "image_sha256": _sha256(image), "voice_reference_sha256": _sha256(voice),
-                               "audio_mode": "H3 native audio generated from a registered voice reference; not external TTS audio-driven lipsync"}
+                               "audio_mode": "H3 native audio generated from a registered voice reference; not external TTS audio-driven lipsync",
+                               "generation_confirmation": confirmation or {
+                                   "decision": "NOT_CONFIRMED",
+                                   "human_confirmation": False,
+                               }}
+    previous_bookends = _read_json_or_none(project / "receipts" / "avatar-bookends.json") or {}
     _write_json(project / "receipts" / "avatar-bookends.json", outputs)
 
     def save_receipt() -> None:
@@ -1646,6 +1927,9 @@ def stage_avatar(project: Path, slug: str, *, asset_root: Path,
         expected_refs = {_sha256(image), _sha256(voice)}
         reused_any = False
         for role, candidate in (("intro", intro_video), ("outro", outro_video)):
+            if candidate is None:
+                candidate = _cached_avatar_video_path(
+                    project, role, expected_refs, previous=previous_bookends)
             if candidate is None:
                 continue
             receipt_path = candidate.with_name(candidate.name + ".receipt.json")
@@ -1672,6 +1956,33 @@ def stage_avatar(project: Path, slug: str, *, asset_root: Path,
             reused_any = True
 
         missing = [role for role in ("intro", "outro") if role not in outputs]
+        if missing and not generation_confirmed:
+            outputs.update({
+                "state": "PARTIAL",
+                "missing_roles": missing,
+                "generation_skipped": True,
+                "blocked_reason": "new MiniMax H3 clips require an interactive human confirmation for this run",
+                "production_ready": False,
+                "publish_authorized": False,
+            })
+            save_receipt()
+            return outputs
+        consent_path = project / "receipts" / "avatar-generation-consent.json"
+        try:
+            consent_doc = json.loads(consent_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            consent_doc = {}
+        if missing and (consent_doc.get("decision") != "CONFIRMED"
+                        or consent_doc.get("human_confirmation") is not True
+                        or (confirmation or {}).get("run_id") != consent_doc.get("run_id")):
+            outputs.update({
+                "state": "PARTIAL", "missing_roles": missing,
+                "generation_skipped": True,
+                "blocked_reason": "no valid interactive human consent receipt is bound to this run",
+                "production_ready": False, "publish_authorized": False,
+            })
+            save_receipt()
+            return outputs
         task_budget_pp: Optional[float] = None
         if missing:
             match = re.fullmatch(r"\s*(\d+(?:\.\d+)?)\s*pp\s*", quota_budget or "", re.IGNORECASE)
@@ -1705,7 +2016,8 @@ def stage_avatar(project: Path, slug: str, *, asset_root: Path,
                 image=image, voice_reference=voice,
                 quota_budget=(f"7pp maximum for this H3 clip; task total "
                               f"{task_budget_pp:g}pp, remaining before this clip "
-                              f"{remaining_pp:g}pp; included subscription only"))
+                              f"{remaining_pp:g}pp; included subscription only"),
+                consent_receipt=consent_path)
             clip = outputs[role]
             before, after = clip.get("weekly_before"), clip.get("weekly_after")
             if isinstance(before, (int, float)) and isinstance(after, (int, float)):
@@ -2043,11 +2355,16 @@ def stage_review(project: Path, slug: str, qc: Dict[str, Any],
         if reviewed and previous.get("bundle_sha256") != bundle_sha:
             revoked = previous
 
+    voice_check = next((check for check in report.get("checks", [])
+                        if check.get("id") == "voice_quality_declared"), {})
+    voice_quality = (voice_check.get("voice_quality")
+                     or voice_check.get("voice_provider") or "unknown")
+
     payload = {
         "project": project.relative_to(ROOT).as_posix(),
         "video": f"{project.relative_to(ROOT).as_posix()}/final/{slug}.mp4",
         "engine": "easel",
-        "voice_quality": "windows_sapi_offline",
+        "voice_quality": voice_quality,
         "bundle_id": bundle_id,
         "bundle_sha256": bundle_sha,
         "production_ready": False,
@@ -2088,6 +2405,10 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
           avatar_outro_line: Optional[str] = None,
           avatar_intro_video: Optional[Path] = None,
           avatar_outro_video: Optional[Path] = None,
+          avatar_generation_confirmed: Optional[bool] = None,
+          avatar_confirmation: Optional[Dict[str, Any]] = None,
+          avatar_use_decision: Optional[bool] = None,
+          rerender_shots: Optional[tuple[str, ...]] = None,
            require_copy_review: bool = True) -> Dict[str, Any]:
     if not project.is_dir():
         raise M5Blocked(f"project not found: {project}")
@@ -2119,11 +2440,29 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
     config = _read_yaml(project / "project.yaml")
     slug = config.get("id") or project.name
     avatar_profile = _load_digital_presenter_profile(config)
-    if avatar_profile:
+    if avatar_profile and avatar_use_decision is not False:
         avatar_provider = avatar_provider or avatar_profile.get("provider")
         avatar_assets_dir = avatar_assets_dir or (
             ROOT / str(avatar_profile.get("asset_dir") or "assert")
         ).resolve()
+    if avatar_provider == "minimax-h3":
+        reusable_pair_supplied = bool(avatar_intro_video and avatar_outro_video) or has_reusable_avatar_pair(
+            project, avatar_assets_dir or (ROOT / "assert"))
+        if avatar_generation_confirmed is None:
+            avatar_confirmation = confirm_avatar_generation(
+                project, provider=avatar_provider, quota_budget=avatar_quota_budget,
+                run_id=f"m5-{int(time.time())}", reusable_clips=reusable_pair_supplied)
+            avatar_generation_confirmed = avatar_confirmation.get("decision") == "CONFIRMED"
+        elif avatar_confirmation is None:
+            avatar_confirmation = {
+                "decision": "CONFIRMED" if avatar_generation_confirmed else "NOT_CONFIRMED",
+                "human_confirmation": bool(avatar_generation_confirmed),
+                "origin": "caller",
+            }
+        if not avatar_generation_confirmed:
+            # An unanswered/declined choice disables avatar insertion too;
+            # receipt-bound cached clips are not used without human selection.
+            avatar_provider = None
 
     # A router project's copy is final only after the brief bridge writes
     # script.json and claims.json, so its review has to cover those files.
@@ -2174,7 +2513,8 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
                            "engine": narration["engine"],
                            "provider": narration.get("voice_provider", provider)}
     motion = run_stage("motion", stage_motion, project, config, script["script"],
-                       require_copy_review=require_copy_review, narration=narration)
+                       require_copy_review=require_copy_review, narration=narration,
+                       rerender_shots=rerender_shots)
     if motion["state"] != "NOT_CONFIGURED":
         stages["motion"] = motion
         assets = run_stage("motion_assets", stage_assets, project,
@@ -2222,7 +2562,9 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
                                    quota_budget=avatar_quota_budget,
                                    intro_line=intro_line, outro_line=outro_line,
                                    intro_video=avatar_intro_video,
-                                   outro_video=avatar_outro_video)
+                                   outro_video=avatar_outro_video,
+                                   generation_confirmed=bool(avatar_generation_confirmed),
+                                   confirmation=avatar_confirmation)
             except M5Blocked as exc:
                 avatar = {"state": "BLOCKED", "blocked_reason": str(exc),
                           "production_ready": False}
@@ -2337,6 +2679,8 @@ def main() -> int:
                         help="reuse a real H3 intro MP4 only with its adjacent provider receipt")
     parser.add_argument("--avatar-outro-video", default=None,
                         help="reuse a real H3 outro MP4 only with its adjacent provider receipt")
+    parser.add_argument("--rerender-shot", action="append", default=[], metavar="PLACEMENT_ID",
+                        help="force only selected Huashu placement renders; other shots use their verified cache")
     parser.add_argument("--assets", default=None,
                         help="explicit user-selected image/video folder; imported files are "
                              "local-preview-only and do not grant distribution or evidence rights")
@@ -2367,7 +2711,8 @@ def main() -> int:
                     avatar_intro_video=(Path(args.avatar_intro_video).expanduser().resolve()
                                         if args.avatar_intro_video else None),
                     avatar_outro_video=(Path(args.avatar_outro_video).expanduser().resolve()
-                                        if args.avatar_outro_video else None))
+                                        if args.avatar_outro_video else None),
+                    rerender_shots=tuple(args.rerender_shot))
     except M5Blocked as exc:
         result = {"ok": False, "state": "BLOCKED", "reason": str(exc)}
         print(json.dumps(result, ensure_ascii=False, indent=2))

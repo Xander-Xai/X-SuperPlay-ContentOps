@@ -149,33 +149,14 @@ def line_seconds(text: str, *, english_wps: Optional[float] = None) -> float:
 
 
 def _split_quote_for_motion(text: str, *, english_wps: Optional[float] = None) -> List[str]:
-    """Split an overlong verbatim quote at word boundaries for shot timing."""
-    words = str(text or "").split()
-    if not words:
-        return []
-    # The local SAPI English voice speaks materially slower than the planning
-    # estimate. Short word chunks keep measured narration inside the Huashu
-    # backend's 2–8 second shot window without slowing or truncating audio.
-    max_words = 3 if language_of(text) == "en" else 48
-    pieces: List[str] = []
-    current: List[str] = []
-    for position, word in enumerate(words):
-        candidate = " ".join(current + [word])
-        one_word_remainder = len(words) - position == 1
-        if current and (line_seconds(candidate, english_wps=english_wps) > MAX_AUTO_SHOT_SECONDS
-                        or (len(current) >= max_words and not one_word_remainder)):
-            pieces.append(" ".join(current))
-            current = [word]
-        else:
-            current.append(word)
-    if current:
-        pieces.append(" ".join(current))
-    if (len(pieces) > 1
-            and line_seconds(pieces[-1], english_wps=english_wps) < 2.0
-            and line_seconds(pieces[-2] + " " + pieces[-1],
-                             english_wps=english_wps) <= MAX_AUTO_SHOT_SECONDS):
-        pieces[-2:] = [pieces[-2] + " " + pieces[-1]]
-    return pieces
+    """Keep a source sentence intact; visual timing is planned separately.
+
+    ``english_wps`` remains accepted for compatibility with older callers, but
+    narration wording must not be split to satisfy a renderer's shot window.
+    """
+    del english_wps
+    value = str(text or "").strip()
+    return [value] if value else []
 
 
 def _composition(profile: AccountProfile) -> List[Dict[str, Any]]:

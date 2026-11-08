@@ -310,6 +310,10 @@ def build_auto_plan(*, project: Path, account_id: str,
         raise MotionPlanError("AUTO_MOTION_PROFILE_MISSING: account DNA has no Huashu profile")
     profile_backend = str(profile.get("backend"))
     palette = profile.get("palette") or {}
+    style_variants = profile.get("style_variants") or {}
+    default_variant = str(profile.get("recommended_variant") or "")
+    if default_variant and default_variant in style_variants:
+        palette = style_variants[default_variant]
     required_colors = ("bg", "surface", "ink", "sub", "accent", "accent2")
     if any(not re.fullmatch(r"#[0-9a-fA-F]{6}", str(palette.get(key) or ""))
            for key in required_colors):
@@ -318,10 +322,71 @@ def build_auto_plan(*, project: Path, account_id: str,
     if profile_backend == "huashu-art-motion" and "y3_whiteboard" not in allowed:
         raise MotionPlanError("AUTO_MOTION_GRAMMAR_UNAVAILABLE: y3_whiteboard is not allowed")
 
-    lines = script.get("lines") or []
-    timings = narration.get("lines") or []
-    if not lines or len(lines) != len(timings):
+    semantic_lines = script.get("lines") or []
+    semantic_timings = narration.get("lines") or []
+    if not semantic_lines or len(semantic_lines) != len(semantic_timings):
         raise MotionPlanError("AUTO_MOTION_TIMELINE_MISMATCH: narration timing must cover each line")
+    lines: List[Dict[str, Any]] = []
+    timings: List[Dict[str, Any]] = []
+    explicit_visuals = script.get("visual_shots")
+    if explicit_visuals is None:
+        lines = [dict(line) for line in semantic_lines]
+        timings = [dict(row) for row in semantic_timings]
+    else:
+        by_segment: Dict[str, List[Dict[str, Any]]] = {}
+        for row in explicit_visuals:
+            if not isinstance(row, dict):
+                raise MotionPlanError("AUTO_MOTION_VISUAL_SHOT_INVALID: each shot must be an object")
+            segment_id = str(row.get("segment_id") or "").strip()
+            if not segment_id:
+                raise MotionPlanError("AUTO_MOTION_VISUAL_SHOT_INVALID: segment_id is required")
+            by_segment.setdefault(segment_id, []).append(row)
+        line_ids = [str(line.get("id") or "") for line in semantic_lines]
+        if set(by_segment) != set(line_ids):
+            raise MotionPlanError(
+                "AUTO_MOTION_VISUAL_SHOT_MISMATCH: every semantic line needs a visual plan")
+        for index, (semantic, timing) in enumerate(zip(semantic_lines, semantic_timings)):
+            segment_id = line_ids[index]
+            rows = by_segment[segment_id]
+            start = float(timing.get("start") or 0.0)
+            if index + 1 < len(semantic_timings):
+                end = float(semantic_timings[index + 1].get("start") or 0.0)
+            else:
+                end = start + float(timing.get("duration") or 0.0)
+            span = end - start
+            if span <= 0:
+                raise MotionPlanError(
+                    f"AUTO_MOTION_TIMELINE_MISMATCH: segment {segment_id} has no positive span")
+            weights = []
+            for row in rows:
+                try:
+                    weight = float(row.get("duration_weight", 1.0))
+                except (TypeError, ValueError):
+                    weight = 0.0
+                if weight <= 0:
+                    raise MotionPlanError(
+                        f"AUTO_MOTION_VISUAL_SHOT_INVALID: {row.get('shot_id')!r} has no positive weight")
+                weights.append(weight)
+            cursor = start
+            for row_index, (row, weight) in enumerate(zip(rows, weights)):
+                placement = str(row.get("shot_id") or row.get("placement_id") or "").strip()
+                asset_id = str(row.get("asset_id") or semantic.get("asset_id") or "").strip()
+                visual_role = str(row.get("visual_role") or "explain").strip().lower()
+                if visual_role not in {"proof", "demo", "explain", "context", "transition"}:
+                    raise MotionPlanError(
+                        f"AUTO_MOTION_VISUAL_SHOT_INVALID: {placement!r} has invalid visual_role")
+                if visual_role == "proof" and not row.get("evidence_ref"):
+                    raise MotionPlanError(
+                        f"AUTO_MOTION_VISUAL_SHOT_INVALID: proof shot {placement!r} needs evidence_ref")
+                if not placement or not asset_id:
+                    raise MotionPlanError(
+                        "AUTO_MOTION_VISUAL_SHOT_INVALID: shot_id and asset_id are required")
+                shot_end = end if row_index == len(rows) - 1 else cursor + span * weight / sum(weights)
+                lines.append({**semantic, **row, "id": placement, "asset_id": asset_id,
+                              "segment_id": segment_id, "visual_role": visual_role})
+                timings.append({"line_id": placement, "start": cursor,
+                                "duration": shot_end - cursor})
+                cursor = shot_end
     planner_sha256 = _file_sha(Path(__file__).resolve())
     identity = {"account": account_id, "profile": profile, "script": script,
                 "narration": narration, "assets": source_assets,
@@ -337,7 +402,14 @@ def build_auto_plan(*, project: Path, account_id: str,
         if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,50}", placement):
             raise MotionPlanError(f"AUTO_MOTION_PLACEMENT_INVALID: {placement!r}")
         source_asset_id = str(line.get("asset_id") or "")
-        text = str(line.get("narration") or line.get("caption") or "").strip()
+        text = str(line.get("visual_focus") or line.get("narration")
+                   or line.get("caption") or "").strip()
+        style_variant = str(line.get("style_variant") or default_variant)
+        shot_palette = style_variants.get(style_variant, palette)
+        if any(not re.fullmatch(r"#[0-9a-fA-F]{6}", str(shot_palette.get(key) or ""))
+               for key in required_colors):
+            raise MotionPlanError(
+                f"AUTO_MOTION_PALETTE_INVALID: style variant {style_variant!r} is incomplete")
         speech_duration = float(timing.get("duration") or 0)
         start = float(timing.get("start") or 0)
         if index + 1 < len(timings):
@@ -388,11 +460,10 @@ def build_auto_plan(*, project: Path, account_id: str,
             source_image = Path(os.path.relpath(absolute, spec_probe.parent)).as_posix()
             source_image_sha256 = _file_sha(absolute)
 
-        # Keep the 1024 account evidence-led. When OCR identifies a matching
-        # phrase, move the camera to that exact screenshot region; otherwise
-        # use the existing source-anchored whiteboard treatment. Future
-        # Intelligence uses progressive derivations for retrieval, agent-flow
-        # and protocol-boundary explanations when allowed.
+        # A real screenshot is the main picture whenever one exists. OCR is
+        # used to focus on the spoken detail; without a match, keep the full
+        # source visible and add only a small semantic annotation. Whiteboard
+        # and 3b1b grammars are for explanations that have no source image.
         if source_image and source and not source.get("ocr_regions"):
             image_path = Path(source_path)
             if not image_path.is_absolute():
@@ -413,7 +484,7 @@ def build_auto_plan(*, project: Path, account_id: str,
         # to a precise highlight. Use t2 only for OCR-backed camera targets;
         # a target rectangle is used once per source image. Otherwise use the
         # image-capable whiteboard grammar for progressive explanation.
-        grammar = ("t2_keynote_ui" if source_regions
+        grammar = ("t2_keynote_ui" if source_image
                    and "t2_keynote_ui" in allowed
                    else "y3_whiteboard" if code_snapshot
                    and "y3_whiteboard" in allowed
@@ -429,8 +500,27 @@ def build_auto_plan(*, project: Path, account_id: str,
         latest_cue = max(float(cue["at"]) for cue in cues)
         scale = min(1.0, max(0.0, render_duration - 0.1) / latest_cue) if latest_cue else 1.0
         cues = [{**cue, "at": round(float(cue["at"]) * scale, 3)} for cue in cues]
+        visual_role = str(line.get("visual_role") or "").strip().lower()
+        if visual_role not in {"proof", "demo", "explain", "context", "transition"}:
+            # Source-backed factual lines are visibly marked as proof of the
+            # source artifact. Generated illustrations stay explanatory and
+            # are never upgraded to execution evidence.
+            visual_role = ("proof" if source and line.get("claim")
+                           and str(source.get("type") or "").upper()
+                           not in {"GENERATED_IMAGE", "GENERATED_VIDEO", "STOCK"}
+                           else "explain")
+        evidence_ref = line.get("evidence_ref") or (
+            (line.get("claim") or source_asset_id) if visual_role == "proof" else None)
+        scene_template = str((profile.get("scene_templates") or {}).get(visual_role)
+                             or "editorial-diagram")
         spec = {"grammar": grammar, "duration": render_duration, "fps": 30,
-                "width": 1080, "height": 1920, "theme": palette, "cues": cues}
+                "width": 1080, "height": 1920, "theme": shot_palette,
+                "cues": cues,
+                "contentops_scene": {"segment_id": str(line.get("segment_id") or placement),
+                                     "visual_role": visual_role,
+                                     "template": scene_template,
+                                     "evidence_ref": evidence_ref,
+                                     "style_variant": style_variant}}
         if hold_padding:
             spec["contentops_timing"] = {
                 "narration_duration_s": speech_duration,
@@ -442,6 +532,13 @@ def build_auto_plan(*, project: Path, account_id: str,
             # when the real screenshot changes at the same path.
             spec["contentops_source"] = {"asset_id": source_asset_id,
                                          "sha256": source_image_sha256}
+        repeated_source = sum(1 for previous in shots
+                              if previous.get("source_asset_id") == source_asset_id) > 0
+        reuse_reason = None
+        if repeated_source:
+            reuse_reason = ("same source with a distinct OCR focus region"
+                            if source_regions else
+                            "same source reused without a distinct focus; visual review required")
         spec_path = specs_dir / f"{placement}-{_sha(spec)[:12]}.json"
         if spec_path.exists():
             try:
@@ -458,7 +555,13 @@ def build_auto_plan(*, project: Path, account_id: str,
         shots.append({
             "placement_id": placement,
             "asset_id": f"huashu-{placement}",
+            "segment_id": str(line.get("segment_id") or placement),
             "source_asset_id": source_asset_id,
+            "visual_role": visual_role,
+            "evidence_ref": evidence_ref,
+            "scene_template": scene_template,
+            "style_variant": style_variant,
+            "reuse_reason": reuse_reason,
             "content_point": text,
             "semantic_class": kind,
             "motion_syntax": grammar,
@@ -471,7 +574,7 @@ def build_auto_plan(*, project: Path, account_id: str,
         })
     plan = {"schema": "contentops.motion-shot-plan/v1", "account_id": account_id,
             "profile_version": account_dna.get("version"), "input_sha256": fingerprint,
-            "compiler": "contentops.motion_planner/v4",
+            "compiler": "contentops.motion_planner/v5",
             "compiler_sha256": planner_sha256, "shots": shots}
     plan_path = auto_dir / f"shot-plan-{fingerprint[:12]}.json"
     if not plan_path.exists():
