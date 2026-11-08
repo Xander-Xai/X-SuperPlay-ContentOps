@@ -94,7 +94,24 @@ def build_contact_sheet(frames: list[Path], out_png: Path) -> bool:
          str(out_png)],
         timeout=120,
     )
-    return r.returncode == 0 and out_png.exists()
+    if r.returncode == 0 and out_png.exists() and out_png.stat().st_size > 0:
+        return True
+
+    # Some Windows ffmpeg builds reject the xstack filter's `|` layout
+    # separators when passed through CreateProcess. PIL keeps the same sampled
+    # frames and dimensions without making contact-sheet production a gate.
+    try:
+        from PIL import Image
+        sheet = Image.new("RGB", (sheet_w, sheet_h), (15, 17, 23))
+        for index, frame in enumerate(frames):
+            with Image.open(frame) as source:
+                thumb = source.convert("RGB").resize((THUMB_W, THUMB_H))
+            sheet.paste(thumb, ((index % cols) * THUMB_W,
+                                (index // cols) * THUMB_H))
+        sheet.save(out_png, format="PNG", optimize=True)
+        return out_png.is_file() and out_png.stat().st_size > 0
+    except (OSError, ImportError):
+        return False
 
 
 def qc_visual(project: Path, target: str = "") -> dict:

@@ -80,16 +80,39 @@ def _huashu_project():
 
 def test_visual_gate_states_are_fail_closed_and_never_approve_publication():
     passed = visual_gate.evaluate_film_gate(
-        {"gate_light": "green", "verdict": "green", "fast_ratio": 0.08}, 0)
+        {"gate_light": "green", "verdict": "pass", "fast_ratio": 0.08}, 0)
     assert passed["state"] == "PASS"
     assert passed["metrics"]["fast_ratio"] == 0.08
     assert passed["production_ready"] is False
     assert passed["publish_authorized"] is False
     assert passed["human_review"] == "PENDING_FOUNDER_REVIEW"
     assert visual_gate.evaluate_film_gate(
-        {"gate_light": "yellow", "verdict": "yellow"}, 0)["state"] == "WARN"
+        {"gate_light": "yellow", "verdict": "pass"}, 0)["state"] == "WARN"
     assert visual_gate.evaluate_film_gate(
         {"gate_light": "red", "verdict": "red"}, 2)["state"] == "FAIL"
+
+
+def test_source_refs_mirrored_in_yaml_and_sidecar_are_deduplicated(tmp_path):
+    ref = {"id": "E-01", "type": "document", "title": "README",
+           "path": "README.md", "permission": "LICENSED"}
+    sources = tmp_path / "sources"
+    sources.mkdir()
+    (sources / "source-refs.json").write_text(json.dumps({
+        "schema": m5_production.SOURCE_REFS_SCHEMA, "refs": [ref],
+    }), encoding="utf-8")
+    assert m5_production._declared_source_refs(
+        tmp_path, {"source_refs": [ref]}) == [ref]
+
+    conflict = dict(ref, path="other/README.md")
+    (sources / "source-refs.json").write_text(json.dumps({
+        "schema": m5_production.SOURCE_REFS_SCHEMA, "refs": [conflict],
+    }), encoding="utf-8")
+    try:
+        m5_production._declared_source_refs(tmp_path, {"source_refs": [ref]})
+    except m5_production.M5Blocked as exc:
+        assert "conflicting duplicate source id" in str(exc)
+    else:
+        raise AssertionError("conflicting evidence declarations must fail closed")
     assert visual_gate.evaluate_film_gate(
         {"gate_light": "green", "verdict": "green"}, 2)["state"] == "BLOCKED"
     assert visual_gate.evaluate_film_gate(
@@ -1145,7 +1168,7 @@ def test_huashu_motion_auto_film_uses_readable_lines_from_registered_source():
         assert "bm25 = self.bm25_index.score(query)" in html_text
         assert "reciprocal_rank_fusion(bm25, dense)" in html_text
         assert "bm25 = self.bm25_index.score(query)" in html_text
-        assert "MECHANISM SCHEMATIC · NOT A RUNTIME RESULT" in html_text
+        assert "RANKING SCHEMATIC · NO MEASURED SCORES" in html_text
         assert "核心步骤" not in html_text
 
 

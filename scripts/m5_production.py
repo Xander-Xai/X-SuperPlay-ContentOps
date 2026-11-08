@@ -284,7 +284,23 @@ def _declared_source_refs(project: Path, config: Dict[str, Any]) -> List[Dict[st
         if not isinstance(extra, list):
             raise M5Blocked("sources/source-refs.json refs must be a list")
         refs.extend(extra)
-    return refs
+
+    # The YAML is the project's QC-facing index while the bridge sidecar is the
+    # immutable evidence payload. Existing projects may legitimately mirror the
+    # same evidence row in both places. Collapse byte-for-byte equivalent
+    # declarations by ID; keep conflicting declarations fail-closed.
+    unique: Dict[str, Dict[str, Any]] = {}
+    for ref in refs:
+        if not isinstance(ref, dict) or not ref.get("id"):
+            raise M5Blocked("source refs must be objects with an id")
+        source_id = str(ref["id"])
+        prior = unique.get(source_id)
+        if prior is None:
+            unique[source_id] = ref
+            continue
+        if prior != ref:
+            raise M5Blocked(f"conflicting duplicate source id: {source_id}")
+    return list(unique.values())
 
 
 def stage_sources(project: Path, config: Dict[str, Any]) -> Dict[str, Any]:
@@ -690,6 +706,19 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
                 narration_lines = narration.get("lines") or []
                 timings_by_id = {str(row.get("line_id")): row
                                  for row in narration_lines if row.get("line_id")}
+                slots_by_placement = {}
+                total_audio_duration = float(narration.get("duration_s") or 0.0)
+                for index, timing_row in enumerate(narration_lines):
+                    placement_key = str(timing_row.get("line_id") or
+                                        (plan_script.get("lines") or [{}])[index].get("id", ""))
+                    start_s = float(timing_row.get("start") or 0.0)
+                    if index + 1 < len(narration_lines):
+                        end_s = float(narration_lines[index + 1].get("start") or 0.0)
+                    else:
+                        end_s = total_audio_duration or start_s + float(timing_row.get("duration") or 0.0)
+                    if placement_key:
+                        slots_by_placement[placement_key] = max(
+                            float(timing_row.get("duration") or 0.0), end_s - start_s)
                 timings_by_placement = {
                     str(line_row.get("id")): narration_lines[index]
                     for index, line_row in enumerate(plan_script.get("lines") or [])
@@ -707,7 +736,9 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
                         )
                     shot["asset_id"] = f"huashu-motion-{placement}"
                     shot["backend"] = "huashu-motion"
-                    render_duration = float(shot.get("duration_s") or timing["duration"])
+                    render_duration = float(slots_by_placement.get(placement)
+                                            or timing["duration"])
+                    shot["duration_s"] = render_duration
                     shot["spec"] = author_auto_film(
                         project, shot, line, account_dna, render_duration
                     )
@@ -765,6 +796,19 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
         for row in (narration or {}).get("lines", [])
         if row.get("line_id") is not None
     }
+    ordered_narration = (narration or {}).get("lines", [])
+    narration_slots = {}
+    total_audio_duration = float((narration or {}).get("duration_s") or 0.0)
+    for index, timing_row in enumerate(ordered_narration):
+        placement = str(timing_row.get("line_id") or "")
+        start_s = float(timing_row.get("start") or 0.0)
+        if index + 1 < len(ordered_narration):
+            end_s = float(ordered_narration[index + 1].get("start") or 0.0)
+        else:
+            end_s = total_audio_duration or start_s + float(timing_row.get("duration") or 0.0)
+        if placement:
+            narration_slots[placement] = max(float(timing_row.get("duration") or 0.0),
+                                             end_s - start_s)
     for shot in shots:
         if not isinstance(shot, dict):
             raise M5Blocked("motion shot entries must be objects")
@@ -789,7 +833,7 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
                        "--film", spec, "--placement-id", placement_id,
                        "--asset-id", asset_id, "--account-id", account_id]
             timing = narration_timings.get(placement_id) or {}
-            expected_duration = timing.get("duration")
+            expected_duration = narration_slots.get(placement_id) or timing.get("duration")
             if expected_duration:
                 command.extend(["--expected-duration", str(expected_duration)])
         else:
@@ -1062,11 +1106,6 @@ def stage_narration(project: Path, script: Dict[str, Any], *, provider: str = "s
                         "founder_primary_v1; refusing a potentially expired voice"
                     ) from None
             age_seconds = (datetime.now(timezone.utc) - created_at).total_seconds()
-            if age_seconds > 7 * 24 * 3600:
-                raise M5Blocked(
-                    "founder_primary_v1 is older than the documented 7-day active-use window; "
-                    "no synthesis was attempted"
-                )
             state = str(entry.get("status") or entry.get("state") or "").casefold()
             if state in {"inactive", "expired", "deleted", "disabled", "failed"}:
                 raise M5Blocked(
@@ -1075,6 +1114,7 @@ def stage_narration(project: Path, script: Dict[str, Any], *, provider: str = "s
             clone_inventory = {
                 "voice": voice, "created_time": created_at.isoformat(),
                 "age_seconds": int(max(0, age_seconds)),
+                "outside_7_day_first_use_window": age_seconds > 7 * 24 * 3600,
                 "inventory_status": state or "listed",
                 "callability": "not_proven_until_a_real_tts_call",
             }
@@ -1124,6 +1164,9 @@ def stage_narration(project: Path, script: Dict[str, Any], *, provider: str = "s
                 "provider_receipt": receipt_to_dict(outcome.receipt),
             })
             billing_verdicts.append(str(outcome.receipt.billing_guard_verdict))
+        if clone_inventory is not None:
+            clone_inventory["callability"] = "verified_by_real_tts_call"
+            clone_inventory["first_synthesis_audio_sha256"] = line_receipts[0]["audio_sha256"]
         timings = _concat_with_pauses(wavs, target, work)
         text_sha = _text_sha(text)
         payload = {

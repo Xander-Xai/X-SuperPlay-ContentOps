@@ -21,6 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import media_use_adapter as cli  # noqa: E402
+from contentops.media.rights_gate import validate_declared_asset  # noqa: E402
 
 
 def _cli_args(project: Path, license_name: str, rights_review: str = "") -> list[str]:
@@ -70,6 +71,30 @@ class IngestRightsPolicyTests(unittest.TestCase):
         dests = {action.dest for action in ingest._actions}
         self.assertIn("rights_review", dests,
                       "ingest must accept --rights-review like import does")
+
+    def test_claim_verification_source_document_is_not_media_use(self):
+        result = validate_declared_asset({
+            "id": "source-config",
+            "type": "REAL_DOCUMENT",
+            "permission": "LICENSED",
+            "usage_scope": "CLAIM_VERIFICATION_ONLY",
+            "evidence_use": "CLAIM_VERIFICATION",
+            "evidence_capable": True,
+            "source_spdx_license": "MIT",
+        }, self.project)
+        self.assertTrue(result["evidence_only"])
+        self.assertFalse(result["media_use_authorized"])
+
+    def test_media_asset_cannot_use_evidence_only_exemption(self):
+        with self.assertRaisesRegex(ValueError, "rights block"):
+            validate_declared_asset({
+                "id": "source-screenshot",
+                "type": "REAL_SCREENSHOT",
+                "permission": "LICENSED",
+                "usage_scope": "CLAIM_VERIFICATION_ONLY",
+                "evidence_use": "CLAIM_VERIFICATION",
+                "evidence_capable": True,
+            }, self.project)
 
 
 if __name__ == "__main__":

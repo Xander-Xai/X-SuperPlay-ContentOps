@@ -17,9 +17,12 @@ def evaluate_film_gate(payload: Mapping[str, Any], exit_code: int) -> Dict[str, 
     verdict = str(payload.get("verdict") or "").lower()
     if gate_light == "red" or verdict == "red":
         state = "FAIL"
-    elif exit_code == 0 and gate_light == "green" and verdict == "green":
+    # Huashu Art Motion's film_gate uses verdict="pass" for both green and
+    # yellow lights; the light carries the severity. Keep accepting the older
+    # green/yellow verdict form for existing fixtures and receipts.
+    elif exit_code == 0 and gate_light == "green" and verdict in {"green", "pass"}:
         state = "PASS"
-    elif exit_code == 0 and gate_light == "yellow" and verdict == "yellow":
+    elif exit_code == 0 and gate_light == "yellow" and verdict in {"yellow", "pass"}:
         state = "WARN"
     else:
         state = "BLOCKED"
