@@ -69,6 +69,7 @@ def main(argv=None) -> int:
         written = {} if args.dry_run else write(result, project)
         payload = {
             "state": "DRY_RUN" if args.dry_run else "CONVERTED_FOR_M5",
+            "preview_only": bool(result.get("preview_only")),
             **result["counts"],
             "written": sorted(written),
         }

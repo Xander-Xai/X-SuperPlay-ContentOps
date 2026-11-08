@@ -80,6 +80,8 @@ def main(argv=None) -> int:
         payload = {"status": "DRAFTED" if verdict.get("ok") else "DRAFT_INVALID",
                    "project": str(project), "account_id": draft.account_id,
                    "brief_id": draft.brief_id, "written": written,
+                   "preview_only": bool(draft.report["gates"].get("brief_approval")
+                                        != "approved"),
                    "claims": draft.report["claims"],
                    "storyboard": draft.report["storyboard"],
                    "check": verdict,
