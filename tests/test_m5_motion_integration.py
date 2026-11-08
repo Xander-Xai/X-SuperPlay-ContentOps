@@ -87,6 +87,10 @@ def test_a_still_asset_is_not_labelled_a_clip():
         assert shots[0]["image"] == "work/media/beat-00.png"
 
 
+def test_runtime_release_facts_use_the_source_image_motion_grammar():
+    assert motion_planner._topic_kind("The verified runtime is pinned to v0.2.1") == "code"
+
+
 def test_explicit_user_media_is_preview_only_and_hash_bound():
     # A valid 1x1 PNG, selected from a separate source folder.
     png = bytes.fromhex(
@@ -891,6 +895,7 @@ def main() -> int:
     tests = (test_visual_gate_states_are_fail_closed_and_never_approve_publication,
              test_a_video_asset_reaches_the_storyboard_as_a_clip,
              test_a_still_asset_is_not_labelled_a_clip,
+             test_runtime_release_facts_use_the_source_image_motion_grammar,
              test_explicit_user_media_is_preview_only_and_hash_bound,
              test_user_video_import_records_metadata_and_three_review_frames,
              test_unified_producer_passes_selected_media_into_m5,

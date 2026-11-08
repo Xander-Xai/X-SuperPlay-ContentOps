@@ -39,7 +39,7 @@ for item in (ROOT / "src", ROOT / "scripts"):
 import m5_production  # noqa: E402
 
 RECEIPT = "produce-video.json"
-RAW_DRAFT_VERSION = "raw-draft-v5"
+RAW_DRAFT_VERSION = "raw-draft-v7"
 
 
 def _relative_to_root(path: Path) -> Path | None:
@@ -230,7 +230,8 @@ def _run_summary(receipt: dict[str, Any]) -> dict[str, Any]:
     ) if key in receipt}
 
 
-def _prepare_brief_inputs(project: Path, *, mode: str) -> dict[str, Any] | None:
+def _prepare_brief_inputs(project: Path, *, mode: str,
+                          refresh_local_assets: bool = False) -> dict[str, Any] | None:
     """Draft and bridge a brief-driven AUTO project when M5 input is absent.
 
     This only runs when the project has a brief and neither M5 contract file is
@@ -243,12 +244,32 @@ def _prepare_brief_inputs(project: Path, *, mode: str) -> dict[str, Any] | None:
         return None
     m5_script = project / "script" / "script.json"
     m5_claims = project / "script" / "claims.json"
+    raw_receipt = project / "receipts" / "raw-inputs.json"
+    draft_marker = project / "script" / "source-pack.sha256"
+    current_pack = project / "00_brief" / "evidence-pack.json"
+    expected_marker = (hashlib.sha256(current_pack.read_bytes()).hexdigest()
+                       + " " + RAW_DRAFT_VERSION) if current_pack.is_file() else ""
+    raw_draft_stale = bool(raw_receipt.is_file() and expected_marker and (
+        not draft_marker.is_file()
+        or draft_marker.read_text(encoding="utf-8").strip() != expected_marker
+        or refresh_local_assets))
     if m5_script.is_file() or m5_claims.is_file():
-        if m5_script.is_file() and m5_claims.is_file():
+        if m5_script.is_file() and m5_claims.is_file() and not raw_draft_stale:
             return {"state": "EXISTING_M5_INPUT", "written": []}
-        raise m5_production.M5Blocked(
-            "brief preparation: script/script.json and script/claims.json must either "
-            "both exist or both be absent; existing partial M5 input was left untouched")
+        if not (m5_script.is_file() and m5_claims.is_file() and raw_draft_stale):
+            raise m5_production.M5Blocked(
+                "brief preparation: script/script.json and script/claims.json must either "
+                "both exist or both be absent; existing partial M5 input was left untouched")
+        review_path = project / "receipts" / "script-review.json"
+        if review_path.is_file():
+            try:
+                review = json.loads(review_path.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                review = {}
+            if review.get("status") == "APPROVED":
+                raise m5_production.M5Blocked(
+                    "brief preparation: the existing raw draft has an approval receipt; "
+                    "create a new run to revise it")
 
     from contentops.script import ScriptBlocked, build as build_draft, write as write_draft
     from contentops.script.m5_bridge import BridgeBlocked, build as build_bridge, write as write_bridge
@@ -268,9 +289,8 @@ def _prepare_brief_inputs(project: Path, *, mode: str) -> dict[str, Any] | None:
         and (not draft_pack_marker.is_file()
              or draft_pack_marker.read_text(encoding="utf-8").strip()
              != (hashlib.sha256(current_pack.read_bytes()).hexdigest()
-                 + " " + RAW_DRAFT_VERSION))
-        and not (project / "script" / "script.json").is_file()
-        and not (project / "script" / "claims.json").is_file()
+                 + " " + RAW_DRAFT_VERSION)
+             or refresh_local_assets)
     )
     if draft_lines.is_file() != draft_claims.is_file():
         raise m5_production.M5Blocked(
@@ -378,7 +398,8 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
             raise m5_production.M5Blocked(f"user asset import: {exc}") from None
     prepare_started_at, prepare_started_clock = _now(), time.monotonic()
     try:
-        brief_preparation = _prepare_brief_inputs(project, mode=mode)
+        brief_preparation = _prepare_brief_inputs(
+            project, mode=mode, refresh_local_assets=assets_dir is not None)
     except m5_production.M5Blocked as exc:
         _record_brief_preparation_failure(project, mode, exc,
                                           prepare_started_at, prepare_started_clock)

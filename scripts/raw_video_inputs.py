@@ -32,6 +32,115 @@ EVIDENCE_PACK = Path("00_brief") / "evidence-pack.json"
 GITHUB_REPO = re.compile(r"^https://github\.com/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)/?$", re.I)
 SUPPORTED_TEXT = {".md", ".txt", ".py", ".json", ".yaml", ".yml", ".toml"}
 
+# The topic router can return a useful repository lead while the README itself
+# is hundreds of lines long. Keep the source bytes intact, but select literal
+# topical passages for the draft evidence pack instead of blindly taking the
+# file preamble. These common Chinese technical phrases also appear in English
+# source repositories.
+_TOPIC_TRANSLATIONS = {
+    "混合检索": ("hybrid search", "hybrid retrieval", "hybrid",
+                "bm25 and tf-idf", "bm25 + tf-idf"),
+    "检索增强生成": ("retrieval augmented generation", "retrieval-augmented generation"),
+    "检索": ("retrieval", "retriever", "search"),
+    "向量": ("vector", "embedding"),
+    "分块": ("chunk", "chunking", "split"),
+    "重排": ("rerank", "reranking", "re-rank"),
+    "工作原理": ("how it works", "architecture", "pipeline", "mechanism"),
+}
+_PASSAGE_SPLIT = re.compile(r"\n\s*\n")
+_LATIN_TERM = re.compile(r"[a-z][a-z0-9_+#.-]{1,}", re.I)
+
+
+def _topical_excerpt(content: str, topic: str, *, max_chars: int = 1800) -> tuple[str, float]:
+    """Return verbatim, highest-relevance passage blocks and their score."""
+    terms = {term.casefold() for term in _LATIN_TERM.findall(topic)}
+    phrases: set[str] = set()
+    specific_phrases: set[str] = set()
+    required_groups: list[tuple[str, ...]] = []
+    for chinese, translations in _TOPIC_TRANSLATIONS.items():
+        if chinese in topic:
+            lowered_translations = tuple(term.casefold() for term in translations)
+            phrases.update(lowered_translations)
+            if chinese != "工作原理":
+                required_groups.append(lowered_translations)
+            if chinese not in {"检索", "工作原理"}:
+                specific_phrases.update(lowered_translations)
+    if not terms and not phrases:
+        return "", 0.0
+
+    ranked: list[tuple[float, int, str]] = []
+    for index, block in enumerate(_PASSAGE_SPLIT.split(content)):
+        block = block.strip()
+        if len(block) < 24:
+            continue
+        lowered = block.casefold()
+        term_hits = sum(1 for term in terms if re.search(
+            rf"(?<![a-z0-9]){re.escape(term)}(?![a-z0-9])", lowered))
+        phrase_hits = sum(1 for phrase in phrases if phrase in lowered)
+        specific_hits = sum(1 for phrase in specific_phrases if phrase in lowered)
+        # Exact topic terms carry more weight than broad translated concepts.
+        score = term_hits * 2.0 + phrase_hits
+        # Generic matches such as "search" should not pull unrelated API tables,
+        # release metadata, or documentation setup into the script evidence.
+        if score and (term_hits or specific_hits):
+            ranked.append((score, index, block))
+    ranked.sort(key=lambda item: (-item[0], item[1]))
+    selected: list[tuple[int, str]] = []
+    size = 0
+    for _, index, block in ranked:
+        if size + len(block) > max_chars:
+            continue
+        selected.append((index, block))
+        size += len(block) + 2
+    excerpt = "\n\n".join(block for _, block in sorted(selected))
+    excerpt_lowered = excerpt.casefold()
+    # A repository mention of the acronym or a broad word such as "search" is
+    # not enough to establish relevance. Require a topic term and each specific
+    # Chinese technical concept to be represented in the selected passages.
+    if terms and not any(re.search(
+            rf"(?<![a-z0-9]){re.escape(term)}(?![a-z0-9])", excerpt_lowered)
+            for term in terms):
+        return "", 0.0
+    if any(not any(phrase in excerpt_lowered for phrase in group)
+           for group in required_groups):
+        return "", 0.0
+    relevance = sum(score for score, index, _ in ranked
+                    if any(index == picked_index for picked_index, _ in selected))
+    # Avoid passing a lone keyword mention as substantive evidence.
+    return (excerpt, relevance) if len(excerpt) >= 80 else ("", 0.0)
+
+
+_MATCH_STOP_WORDS = {"the", "and", "for", "with", "from", "this", "that",
+                     "into", "your", "how", "what", "when", "where", "then",
+                     "about", "source", "repository", "project", "version",
+                     "on", "to", "as", "is", "was", "are", "were", "of",
+                     "in", "at", "by", "not", "but", "or", "it", "its",
+                     "still", "today", "then", "than", "also", "only"}
+
+
+def _visual_terms(text: str) -> set[str]:
+    compounds = [match.casefold().lstrip("v") for match in
+                 re.findall(r"\bv?\d+(?:[._/-]\d+)+\b", text, flags=re.I)]
+    without_compounds = re.sub(r"\bv?\d+(?:[._/-]\d+)+\b", " ", text, flags=re.I)
+    terms = {token.casefold() for token in _LATIN_TERM.findall(without_compounds)
+             if token.casefold() not in _MATCH_STOP_WORDS}
+    cjk = re.findall(r"[\u3400-\u9fff]+", text)
+    for phrase in cjk:
+        terms.update(phrase[index:index + 2] for index in range(len(phrase) - 1))
+    terms.update(compounds)
+    terms.update(re.findall(r"\b\d{2,}\b", without_compounds))
+    return terms
+
+
+def _asset_match_score(narration: str, recognized_text: str) -> float:
+    """Score OCR text against a beat; filenames are intentionally excluded."""
+    beat_terms = _visual_terms(narration)
+    image_terms = _visual_terms(recognized_text)
+    if not beat_terms or not image_terms:
+        return 0.0
+    overlap = beat_terms & image_terms
+    return len(overlap) / len(beat_terms)
+
 
 def _now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace(
@@ -66,10 +175,13 @@ def _repo_candidates(result: Any) -> list[str]:
     return urls
 
 
-def _evidence_items(project: Path, snapshot: Any) -> tuple[list[dict[str, Any]], dict[str, dict[str, Any]]]:
+def _evidence_items(project: Path, snapshot: Any, topic: str) -> tuple[list[dict[str, Any]], dict[str, dict[str, Any]]]:
     items: list[dict[str, Any]] = []
     authority: dict[str, dict[str, Any]] = {}
-    for row in snapshot.files:
+    rows = sorted(snapshot.files, key=lambda row: (
+        Path(str(row.get("path") or "")).name.casefold() not in {"readme.md", "readme.txt"},
+        str(row.get("path") or "").casefold()))
+    for row in rows:
         source_path = str(row.get("path") or "")
         absolute = ROOT / source_path
         suffix = absolute.suffix.casefold()
@@ -82,7 +194,7 @@ def _evidence_items(project: Path, snapshot: Any) -> tuple[list[dict[str, Any]],
             content = absolute.read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError):
             continue
-        excerpt = content[:1800]
+        excerpt, relevance = _topical_excerpt(content, topic)
         if len(excerpt) < 80:
             continue
         relative_to_project = absolute.resolve().relative_to(project.resolve()).as_posix()
@@ -93,6 +205,7 @@ def _evidence_items(project: Path, snapshot: Any) -> tuple[list[dict[str, Any]],
             "title": str(row.get("title") or absolute.name),
             "url": str(row.get("source_url") or snapshot.source_url),
             "excerpt": excerpt,
+            "topic_relevance": relevance,
             "document": relative_to_project,
             "sha256": str(row.get("sha256") or _sha(absolute)),
             "retrieved_at": _now(),
@@ -191,7 +304,8 @@ def bind_existing_source_scope(project: Path) -> bool:
         if row not in permitted:
             continue
         path = project / str(row["document"])
-        excerpt = path.read_text(encoding="utf-8")[:1800]
+        excerpt, relevance = _topical_excerpt(
+            path.read_text(encoding="utf-8"), str(receipt.get("topic") or ""))
         if len(excerpt.strip()) < 80:
             continue
         evidence_items.append({
@@ -200,6 +314,7 @@ def bind_existing_source_scope(project: Path) -> bool:
             "title": str(row.get("title") or path.name),
             "url": str(row.get("source_url") or source.get("source_url") or ""),
             "excerpt": excerpt,
+            "topic_relevance": relevance,
             "document": str(row["document"]),
             "sha256": str(row["sha256"]),
             "retrieved_at": str(receipt.get("created_at") or _now()),
@@ -207,7 +322,7 @@ def bind_existing_source_scope(project: Path) -> bool:
                      "repository bytes retained verbatim."),
         })
     if len(evidence_items) < 3:
-        raise ValueError("raw source snapshot has fewer than three usable evidence files")
+        raise ValueError("raw source snapshot has fewer than three topic-relevant documents")
     pack = {"schema": "contentops.evidence-pack/v1",
             "topic": str(receipt.get("topic") or ""), "items": evidence_items}
     pack_path = project / EVIDENCE_PACK
@@ -309,11 +424,12 @@ def prepare_raw_project(*, account: str, topic: str = "",
                     f"{candidate_url}: SPDX {candidate_snapshot.spdx_license or 'unknown'} "
                     "does not permit automatic factual-claim evidence")
                 continue
-            candidate_items, candidate_authority = _evidence_items(project, candidate_snapshot)
+            candidate_items, candidate_authority = _evidence_items(
+                project, candidate_snapshot, topic)
             if len(candidate_items) < 3:
                 failures.append(
-                    f"{candidate_url}: only {len(candidate_items)} usable source documents; "
-                    "at least 3 are required")
+                    f"{candidate_url}: only {len(candidate_items)} topic-relevant documents; "
+                    "the script contract needs at least three")
                 continue
             selected_url, snapshot = candidate_url, candidate_snapshot
             items, authority = candidate_items, candidate_authority
@@ -550,6 +666,38 @@ def prepare_m5_contracts(project: Path) -> dict[str, Any]:
         })
         image_by_source[relative] = asset_id
 
+    assets_path = project / "sources" / "assets.json"
+    existing = json.loads(assets_path.read_text(encoding="utf-8"))
+    user_assets = [row for row in existing.get("assets", [])
+                   if isinstance(row, dict)
+                   and row.get("permission") == "USER_PROVIDED_LOCAL"
+                   and row.get("type") == "USER_PROVIDED_IMAGE"]
+    ocr_rows: list[dict[str, Any]] = []
+    asset_text: dict[str, str] = {}
+    ocr_engine_name = "rapidocr_onnxruntime"
+    if user_assets:
+        try:
+            from rapidocr_onnxruntime import RapidOCR
+            from contentops.media.local_assets import is_valid_local_preview_asset
+            ocr = RapidOCR()
+            for asset in user_assets:
+                if not is_valid_local_preview_asset(asset, project, ROOT):
+                    raise ValueError(f"local asset receipt/hash failed: {asset.get('id')}")
+                asset_path = (ROOT / str(asset.get("repo_path") or "")).resolve()
+                result, _ = ocr(str(asset_path))
+                recognized = " ".join(str(row[1]) for row in (result or [])
+                                       if len(row) > 1 and str(row[1]).strip())
+                asset_id = str(asset.get("id") or "")
+                asset_text[asset_id] = recognized
+                ocr_rows.append({"asset_id": asset_id,
+                                 "source_name": str(asset.get("source_name") or ""),
+                                 "sha256": str(asset.get("sha256") or ""),
+                                 "recognized_text": recognized})
+        except ImportError:
+            ocr_engine_name = "unavailable"
+        except Exception as exc:
+            raise ValueError(f"local asset OCR failed: {type(exc).__name__}: {exc}") from None
+
     claim_path_by_id: dict[str, str] = {}
     for claim in claims_doc.get("claims") or []:
         evidence = claim.get("evidence") or []
@@ -561,16 +709,32 @@ def prepare_m5_contracts(project: Path) -> dict[str, Any]:
                 break
     fallback_asset = next(iter(image_by_source.values()))
     mapping: dict[str, str] = {}
+    local_matches: list[dict[str, Any]] = []
     for beat in lines_doc.get("beats") or []:
         placement = str(beat.get("placement_id") or "")
         claim_id = str(beat.get("claim_id") or "")
         relative = claim_path_by_id.get(claim_id, "")
-        mapping[placement] = image_by_source.get(relative, fallback_asset)
+        narration = str(beat.get("text") or "")
+        ranked_local = sorted(
+            ((_asset_match_score(narration,
+                                 asset_text.get(str(asset.get("id") or ""), "")),
+              asset) for asset in user_assets),
+            key=lambda item: (-item[0], str(item[1].get("id") or "")))
+        matched_terms = (_visual_terms(narration)
+                         & _visual_terms(asset_text.get(str(ranked_local[0][1].get("id") or ""), ""))) \
+            if ranked_local else set()
+        if ranked_local and ranked_local[0][0] >= 0.4 and len(matched_terms) >= 2:
+            score, asset = ranked_local[0]
+            mapping[placement] = str(asset["id"])
+            local_matches.append({"placement_id": placement, "asset_id": str(asset["id"]),
+                                  "score": round(score, 4),
+                                  "matched_terms": sorted(matched_terms),
+                                  "ocr_text": asset_text.get(str(asset["id"]), "")})
+        else:
+            mapping[placement] = image_by_source.get(relative, fallback_asset)
     if not mapping or len(mapping) != len(lines_doc.get("beats") or []):
         raise ValueError("not every generated narration beat has a visual source anchor")
 
-    assets_path = project / "sources" / "assets.json"
-    existing = json.loads(assets_path.read_text(encoding="utf-8"))
     current = [row for row in existing.get("assets", [])
                if isinstance(row, dict) and row.get("permission") == "USER_PROVIDED_LOCAL"]
     existing["assets"] = current + entries
@@ -579,6 +743,15 @@ def prepare_m5_contracts(project: Path) -> dict[str, Any]:
     (project / "script" / "asset-map.json").write_text(
         json.dumps({"schema": "contentops.asset-map/v1", "mapping": mapping},
                    ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    if user_assets:
+        (project / "receipts" / "local-asset-semantic-map.json").write_text(
+            json.dumps({"schema": "contentops.local-asset-semantic-map/v1",
+                        "state": "OCR_MATCHED" if ocr_engine_name != "unavailable"
+                        else "OCR_UNAVAILABLE",
+                        "ocr_engine": ocr_engine_name, "assets": ocr_rows,
+                        "matches": local_matches,
+                        "local_only": True}, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8")
 
     raw_receipt = json.loads(raw_receipt_path.read_text(encoding="utf-8"))
     raw_receipt.update({
@@ -586,6 +759,7 @@ def prepare_m5_contracts(project: Path) -> dict[str, Any]:
         "source_permissions": len(source_permissions),
         "visual_anchor_assets": len(entries),
         "visual_anchor_policy": "motion backend must replace anchors; no static fallback",
+        "local_visual_matches": len(local_matches),
         "placements": len(mapping),
         "production_ready": False,
         "publish_authorized": False,

@@ -52,7 +52,7 @@ def _topic_kind(text: str) -> str:
         return "agent"
     if re.search(r"mcp|协议|接口|api|服务端|client|server", folded):
         return "protocol"
-    if re.search(r"源码|代码|code|仓库|github|实现|函数|配置", folded):
+    if re.search(r"源码|代码|code|仓库|github|实现|函数|配置|easel|runtime|release|version|pinned|verified|checkout", folded):
         return "code"
     if re.search(r"数据|指标|数值|增长|性能|延迟|吞吐|metric", folded):
         return "metric"
