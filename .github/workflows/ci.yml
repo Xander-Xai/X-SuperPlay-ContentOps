@@ -220,6 +220,24 @@ jobs:
       - name: Run M5 motion-integration tests
         run: python tests/test_m5_motion_integration.py
 
+      # External B-roll discovery. Both suites are entirely offline: provider
+      # responses, DNS answers and loudness measurements are injected. The
+      # decisive assertions are that no request happens without an explicit
+      # grant, a missing key stays a non-fatal local-only state, 429 carries
+      # Retry-After without resubmitting, search responses cache for 24h, a
+      # private DNS answer is refused, and registration never fabricates a
+      # human rights review. No CI job has a Pexels or Pixabay credential.
+      - name: Run stock-media offline tests
+        run: python tests/test_stock_media.py
+
+      - name: Run BGM planner offline tests
+        run: python tests/test_bgm_planner.py
+
+      # QC layering: a content-evidence WARN must not downgrade decodable media,
+      # and no technical/visual PASS may fabricate a human publication approval.
+      - name: Run visual-QC quality-state tests
+        run: python tests/test_visual_qc_states.py
+
       # New raw provider IDs, balances and key fingerprints in tracked receipts
       # must fail. Existing exposure is baselined by field path only.
       - name: Run receipt-secret tests

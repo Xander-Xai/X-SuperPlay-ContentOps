@@ -26,6 +26,8 @@ sys.path.insert(0, str(ROOT / "src"))
 
 import m5_production  # noqa: E402
 import produce_video  # noqa: E402
+import generate_h3_shot  # noqa: E402
+import qc_visual  # noqa: E402
 import huashu_motion_adapter  # noqa: E402
 import huashu_motion_backend  # noqa: E402
 import raw_video_inputs  # noqa: E402
@@ -339,6 +341,85 @@ def test_storyboard_preserves_each_narration_pause_inside_its_own_shot():
     assert [shot["duration_s"] for shot in aligned] == [2.3, 1.7]
 
 
+def test_one_measured_narration_segment_can_cover_multiple_visual_shots():
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        assets = _assets(project, video=False)
+        (project / "work" / "media" / "detail.png").write_bytes(b"detail")
+        assets["A2"] = {"repo_path": "work/media/detail.png", "type": "screenshot"}
+        lines = [{"id": "P-01", "asset_id": "A1", "caption": "Complete sentence",
+                  "narration": "A complete semantic sentence.", "claim": "C-01"}]
+        timings = [{"line_id": "P-01", "start": 0.0, "duration": 8.0}]
+        visuals = [
+            {"shot_id": "P-01-proof", "segment_id": "P-01", "asset_id": "A1",
+             "visual_role": "proof", "evidence_ref": "E-01"},
+            {"shot_id": "P-01-explain", "segment_id": "P-01", "asset_id": "A2",
+             "visual_role": "explain", "evidence_ref": "E-01"},
+        ]
+        shots = adapter.build_shots(lines=lines, narration_lines=timings,
+                                    assets=assets, repo_root=project,
+                                    visual_shots=visuals)
+        aligned = m5_production._align_shots_to_narration(shots, timings)
+        assert [shot["shot_id"] for shot in aligned] == ["P-01-proof", "P-01-explain"]
+        assert [(shot["start"], shot["end"]) for shot in aligned] == [(0.0, 4.0), (4.0, 8.0)]
+        assert all(shot["segment_id"] == "P-01" for shot in aligned)
+        assert aligned[0]["narration"] == lines[0]["narration"]
+        assert aligned[1]["narration"] == ""
+
+
+def test_proof_visual_shot_requires_an_evidence_reference():
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        try:
+            adapter.build_shots(
+                lines=[{"id": "P-01", "asset_id": "A1", "narration": "proof"}],
+                narration_lines=[{"line_id": "P-01", "start": 0, "duration": 4}],
+                assets=_assets(project, video=False), repo_root=project,
+                visual_shots=[{"shot_id": "P-01-proof", "segment_id": "P-01",
+                               "asset_id": "A1", "visual_role": "proof"}])
+        except adapter.StoryboardContractError as exc:
+            assert "needs evidence_ref" in str(exc)
+        else:
+            raise AssertionError("proof visuals need a traceable evidence reference")
+
+
+def test_reused_asset_needs_distinct_explanatory_variations_within_a_segment():
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        visuals = [
+            {"shot_id": "P-01-top", "segment_id": "P-01", "asset_id": "A1",
+             "visual_role": "explain", "evidence_ref": "E-01"},
+            {"shot_id": "P-01-detail", "segment_id": "P-01", "asset_id": "A1",
+             "visual_role": "explain", "evidence_ref": "E-01"},
+        ]
+        options = {"lines": [{"id": "P-01", "asset_id": "A1", "narration": "explain"}],
+                   "narration_lines": [{"line_id": "P-01", "start": 0, "duration": 4}],
+                   "assets": _assets(project, video=False), "repo_root": project,
+                   "visual_shots": visuals}
+        try:
+            adapter.build_shots(**options)
+        except adapter.StoryboardContractError as exc:
+            assert "distinct variation reasons" in str(exc)
+        else:
+            raise AssertionError("an identical screenshot cannot be duplicated without a new purpose")
+        visuals[0]["variation"] = "overview crop of config class"
+        visuals[1]["variation"] = "detail crop of cache thresholds"
+        assert len(adapter.build_shots(**options)) == 2
+
+
+def test_visual_qc_flags_adjacent_duplicate_assets_and_allows_distinct_purposes():
+    rows = [
+        {"shot_id": "S1", "asset_id": "A1", "frame_dhash": "0123456789abcdef"},
+        {"shot_id": "S2", "asset_id": "A1", "frame_dhash": "0123456789abcdef"},
+    ]
+    issues = qc_visual._shot_reuse_issues(rows)
+    assert issues[0]["state"] == "FAIL"
+    rows[0]["variation"] = "overview of configuration structure"
+    rows[1]["variation"] = "detail of semantic cache settings"
+    assert qc_visual._shot_reuse_issues(rows)[0]["state"] == "ALLOWED_WITH_DISTINCT_PURPOSE"
+    assert qc_visual.hamming_distance("0000000000000000", "0000000000000007") == 3
+
+
 def test_a_video_asset_reaches_the_storyboard_as_a_clip():
     with tempfile.TemporaryDirectory() as temp:
         project = Path(temp)
@@ -640,6 +721,14 @@ def test_h3_avatar_bookends_reuse_only_hash_bound_subscription_outputs():
         }
         (assets / "asset-manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
         references = [m5_production._sha256(portrait), m5_production._sha256(voice)]
+        consent_path = project / "receipts" / "avatar-generation-consent.json"
+        consent_path.parent.mkdir(parents=True, exist_ok=True)
+        consent_path.write_text(json.dumps({
+            "schema": "contentops.avatar-generation-consent/v1",
+            "provider": "minimax-h3", "decision": "CONFIRMED",
+            "human_confirmation": True, "run_id": "run-budget",
+            "quota_budget": "7pp",
+        }), encoding="utf-8")
         clips = []
         for role in ("intro", "outro"):
             clip = project / f"{role}.mp4"
@@ -659,21 +748,42 @@ def test_h3_avatar_bookends_reuse_only_hash_bound_subscription_outputs():
         with mock.patch.object(m5_production, "_run_h3_avatar_clip") as generate:
             undersized_budget = m5_production.stage_avatar(
                 project, "demo", asset_root=assets, quota_budget="7pp",
-                intro_line="开场", outro_line="结尾")
+                intro_line="开场", outro_line="结尾",
+                generation_confirmed=True,
+                confirmation={"decision": "CONFIRMED", "run_id": "run-budget",
+                              "human_confirmation": True})
         assert undersized_budget["state"] == "PARTIAL"
         assert "no H3 request was sent" in undersized_budget["blocked_reason"]
         generate.assert_not_called()
 
+        with mock.patch.object(m5_production, "_run_h3_avatar_clip") as generate:
+            declined = m5_production.stage_avatar(
+                project, "demo", asset_root=assets, quota_budget="14pp",
+                intro_line="开场", outro_line="结尾")
+        assert declined["state"] == "PARTIAL"
+        assert declined["generation_skipped"] is True
+        assert declined["missing_roles"] == ["intro", "outro"]
+        generate.assert_not_called()
+
+        (project / "receipts" / "avatar-bookends.json").write_text(json.dumps({
+            "state": "READY",
+            "intro": {"video": "project://intro.mp4"},
+            "outro": {"video": "project://outro.mp4"},
+        }), encoding="utf-8")
+        assert m5_production.has_reusable_avatar_pair(project, assets)
         result = m5_production.stage_avatar(
             project, "demo", asset_root=assets, quota_budget=None,
-            intro_line="开场", outro_line="结尾",
-            intro_video=clips[0], outro_video=clips[1])
+            intro_line="开场", outro_line="结尾")
         assert result["state"] == "READY"
         assert result["intro"]["reused"] and result["outro"]["reused"]
         saved = json.loads((project / "receipts" / "avatar-bookends.json").read_text())
         assert saved["intro"]["video"].endswith("intro.mp4")
         assert saved.get("production_ready") is not True
 
+        (project / "receipts" / "avatar-bookends.json").write_text(json.dumps({
+            "state": "PARTIAL",
+            "intro": {"video": "project://intro.mp4"},
+        }), encoding="utf-8")
         partial_without_budget = m5_production.stage_avatar(
             project, "demo", asset_root=assets, quota_budget=None,
             intro_line="开场", outro_line="结尾", intro_video=clips[0])
@@ -687,9 +797,18 @@ def test_h3_avatar_bookends_reuse_only_hash_bound_subscription_outputs():
                 "video": generated, "receipt": generated.with_name(generated.name + ".receipt.json"),
                 "sha256": m5_production._sha256(generated), "reused": False,
                 "duration_s": 4.4}) as generate:
+            consent_path.write_text(json.dumps({
+                "schema": "contentops.avatar-generation-consent/v1",
+                "provider": "minimax-h3", "decision": "CONFIRMED",
+                "human_confirmation": True, "run_id": "run-hybrid",
+                "quota_budget": "7pp",
+            }), encoding="utf-8")
             hybrid = m5_production.stage_avatar(
                 project, "demo", asset_root=assets, quota_budget="7pp",
-                intro_line="开场", outro_line="结尾", intro_video=clips[0])
+                intro_line="开场", outro_line="结尾", intro_video=clips[0],
+                generation_confirmed=True,
+                confirmation={"decision": "CONFIRMED", "origin": "interactive_terminal",
+                              "human_confirmation": True, "run_id": "run-hybrid"})
         assert hybrid["state"] == "READY"
         assert hybrid["intro"]["reused"] and not hybrid["outro"]["reused"]
         generate.assert_called_once()
@@ -705,6 +824,43 @@ def test_h3_avatar_bookends_reuse_only_hash_bound_subscription_outputs():
             intro_video=clips[0], outro_video=clips[1])
         assert rejected["state"] == "PARTIAL"
         assert "provider, audio, or hash" in rejected["blocked_reason"]
+
+
+def test_avatar_generation_requires_interactive_human_consent():
+    with tempfile.TemporaryDirectory(dir=ROOT / ".verify-tmp") as temp:
+        project = Path(temp) / "project"
+        project.mkdir()
+        with mock.patch.object(m5_production.sys.stdin, "isatty", return_value=False):
+            receipt = m5_production.confirm_avatar_generation(
+                project, provider="minimax-h3", quota_budget="14pp", run_id="run-test")
+        assert receipt["decision"] == "NOT_CONFIRMED"
+        assert receipt["origin"] == "non_interactive_caller"
+        assert receipt["human_confirmation"] is False
+        saved = json.loads((project / "receipts" / "avatar-generation-consent.json").read_text())
+        assert saved == receipt
+
+        with mock.patch.object(m5_production.sys.stdin, "isatty", return_value=True), \
+                mock.patch("builtins.input", side_effect=EOFError):
+            unavailable_answer = m5_production.confirm_avatar_generation(
+                project, provider="minimax-h3", quota_budget="14pp", run_id="run-eof")
+        assert unavailable_answer["decision"] == "NOT_CONFIRMED"
+        assert unavailable_answer["origin"] == "stdin_unavailable"
+        assert unavailable_answer["human_confirmation"] is False
+
+        declined_use = m5_production.confirm_avatar_generation(
+            project, provider="minimax-h3", quota_budget=None, run_id="run-decline",
+            reusable_clips=True, human_choice="no")
+        assert declined_use["decision"] == "DECLINED"
+        assert declined_use["origin"] == "explicit_human_choice"
+        assert declined_use["human_confirmation"] is False
+
+        args = SimpleNamespace(human_confirmation_receipt="", quota_budget="7pp",
+                               out_dir=str(project / "h3"))
+        with mock.patch.object(generate_h3_shot.sys.stdin, "isatty", return_value=False):
+            allowed, direct_receipt, reason = generate_h3_shot._human_confirmation(args)
+        assert allowed is False
+        assert direct_receipt is None
+        assert "interactive human confirmation" in reason
 
 
 def test_avatar_bookend_composition_preserves_the_main_only_render():
@@ -996,21 +1152,73 @@ def test_local_motion_runs_each_placement_and_accepts_cache_reuse():
                                      "shot_plan": "motion/plan.json"}},
                 {"lines": [{"id": "line-1", "asset_id": "A1"},
                            {"id": "line-2", "asset_id": "A2"}]},
-                require_copy_review=False)
+                require_copy_review=False, rerender_shots=("line-1",))
             assert result == {"state": "OK", "backend": "huashu-art-motion", "shots": 2}
             assert len(commands) == 2
             assert all("--mode" in command and command[command.index("--mode") + 1] == "AUTO"
                        for command in commands)
+            assert "--force-render" in commands[0]
+            assert "--force-render" not in commands[1]
             receipt = json.loads((project / "receipts" / "motion-stage.json").read_text())
             assert [row["placement_id"] for row in receipt["shots"]] == ["line-1", "line-2"]
             assert [row["execution_state"] for row in receipt["shots"]] == [
                 "EXECUTED", "REUSED"]
             assert [row["reused_render"] for row in receipt["shots"]] == [False, True]
+            assert receipt["forced_rerender_placements"] == ["line-1"]
             assert json.loads(script_path.read_text()) == original_script
             assert [command[command.index("--asset-id") + 1] for command in commands] == [
                 "motion-A1", "motion-A2"]
         finally:
             m5_production.hidden_run = old_run
+
+
+def test_shot_rerender_request_has_a_distinct_production_digest():
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        whole_run = produce_video._input_digest(project)
+        targeted = produce_video._input_digest(project, rerender_shots=("line-2",))
+        reordered = produce_video._input_digest(
+            project, rerender_shots=("line-2", "line-1", "line-2"))
+        assert targeted != whole_run
+        assert reordered == produce_video._input_digest(
+            project, rerender_shots=("line-1", "line-2"))
+
+
+def test_provider_usage_counts_receipted_calls_and_keeps_quota_out_of_cash_cost():
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        receipts = project / "receipts"
+        receipts.mkdir()
+        (receipts / "narration.json").write_text(json.dumps({
+            "engine": "minimax_speech", "network": True,
+            "lines": [{}, {}],
+            "line_receipts": [
+                {"reused": False, "provider_receipt": {
+                    "billing_guard_verdict": "SAFE_INCLUDED_PLAN"}},
+                {"reused": True, "provider_receipt": {
+                    "billing_guard_verdict": "CACHE_ONLY_NO_NEW_AUTHORIZATION"}},
+            ],
+        }), encoding="utf-8")
+        usage = produce_video._provider_usage(
+            project, run_state="QC_PASSED", requested_narration_provider="minimax",
+            requested_avatar_provider=None)
+        assert usage["provider_calls"] == 1
+        assert usage["provider_cache_hits"] == 1
+        assert usage["cash_cost_cny"] == 0
+
+        (receipts / "avatar-bookends.json").write_text(json.dumps({
+            "state": "READY", "provider": "minimax-h3",
+            "intro": {"video": "project://h3-avatar/intro.mp4", "reused": False,
+                      "weekly_before": 70.0, "weekly_after": 63.0},
+            "outro": {"video": "project://h3-avatar/outro.mp4", "reused": True},
+        }), encoding="utf-8")
+        usage = produce_video._provider_usage(
+            project, run_state="QC_PASSED", requested_narration_provider="existing",
+            requested_avatar_provider="minimax-h3")
+        assert usage["provider_calls"] == 1
+        assert usage["provider_cache_hits"] == 1
+        assert usage["weekly_quota_used_pp"] == 7.0
+        assert usage["cash_cost_cny"] == "unknown"
 
 
 def test_motion_stage_refuses_an_unmapped_plan_before_rendering():
@@ -1054,7 +1262,9 @@ def test_huashu_render_cache_requires_matching_inputs_and_output_hash():
         spec_path = project / "motion.json"
         runtime = {"skill_id": "huashu-art-motion", "version": "1.2.0"}
         inputs = {
-            "script": huashu_motion_adapter._sha(project / "script/script.json"),
+            "script": huashu_motion_adapter._placement_script_sha(
+                json.loads((project / "script/script.json").read_text(encoding="utf-8")),
+                "P-01"),
             "claims": huashu_motion_adapter._sha(project / "script/claims.json"),
             "source_refs": huashu_motion_adapter._sha(project / "sources/source-refs.json"),
             "spec": huashu_motion_adapter._sha(spec_path),
@@ -1112,7 +1322,7 @@ def test_future_intelligence_auto_plan_uses_account_palette_and_rag_grammar():
             "Query → 词项", "Query → 语义 候选",
             "词项 + 语义 → 融合候选", "两路候选完成融合"]
         assert spec["cues"][0]["at"] == 0
-        assert result["plan"]["compiler"] == "contentops.motion_planner/v4"
+        assert result["plan"]["compiler"] == "contentops.motion_planner/v5"
         assert result["plan"]["compiler_sha256"] == motion_planner._file_sha(
             Path(motion_planner.__file__).resolve())
         assert max(cue["at"] for cue in spec["cues"]) < spec["duration"]
@@ -1129,6 +1339,37 @@ def test_future_intelligence_auto_plan_uses_account_palette_and_rag_grammar():
         assert revised["path"] != result["path"]
         assert revised["path"].is_file() and result["path"].is_file()
         assert len(list((project / "motion" / "auto").glob("shot-plan-*.json"))) == 2
+
+
+def test_motion_plan_splits_a_semantic_segment_by_visual_weights():
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        dna = json.loads((ROOT / "config" / "accounts" /
+                          "x-superplay-future-intelligence.json").read_text(encoding="utf-8"))
+        result = motion_planner.build_auto_plan(
+            project=project, account_id="x-superplay-future-intelligence",
+            account_dna=dna,
+            script={
+                "lines": [{"id": "SEG-01", "asset_id": "source-01", "claim": "C-01",
+                           "narration": "混合检索并行找候选，再进行名次融合。"}],
+                "visual_shots": [
+                    {"shot_id": "SEG-01-a", "segment_id": "SEG-01",
+                     "asset_id": "source-01", "visual_role": "explain",
+                     "duration_weight": 1},
+                    {"shot_id": "SEG-01-b", "segment_id": "SEG-01",
+                     "asset_id": "source-02", "visual_role": "explain",
+                     "duration_weight": 1},
+                ],
+            },
+            narration={"lines": [{"line_id": "SEG-01", "start": 0.0, "duration": 8.0}]},
+            source_assets={},
+        )
+        shots = result["plan"]["shots"]
+        assert [shot["placement_id"] for shot in shots] == ["SEG-01-a", "SEG-01-b"]
+        assert all(shot["segment_id"] == "SEG-01" for shot in shots)
+        assert [shot["duration_s"] for shot in shots] == [4.0, 4.0]
+        assert [json.loads((project / shot["spec"]).read_text(encoding="utf-8"))["duration"]
+                for shot in shots] == [4.0, 4.0]
 
 
 def test_huashu_motion_auto_film_keeps_a_local_source_screenshot():
@@ -1198,8 +1439,8 @@ def test_huashu_motion_auto_film_uses_readable_lines_from_registered_source():
         assert "bm25 = self.bm25_index.score(query)" in html_text
         assert "RANKING SCHEMATIC · NO MEASURED SCORES" in html_text
         assert "核心步骤" not in html_text
-        assert "background-size:72px 72px" in html_text
-        assert "rgba(16,18,22,.86)" in html_text
+        assert "background-size:72px 72px" not in html_text
+        assert "background-color:#F9FBFA" in html_text
         assert "font-size:42px" in html_text
 
 
@@ -1225,8 +1466,8 @@ def test_huashu_code_motion_keeps_source_in_safe_frame_and_uses_account_art_dire
             film_rel = huashu_motion_backend.author_auto_film(
                 project, shot, {"id": "P-03", "caption": "RAG 组件"}, dna, 3.0)
         html_text = (project / film_rel / "index.html").read_text(encoding="utf-8")
-        assert "rgba(139,149,165,.055)" in html_text
-        assert "background-color:rgba(16,18,22,.86)" in html_text
+        assert "background-size:72px 72px" not in html_text
+        assert "data-scene-role=\"explain\"" in html_text
         assert "x:-250" not in html_text and "x:250" not in html_text
         assert "font-size:58px" in html_text
 
@@ -1373,7 +1614,7 @@ def test_1024_auto_plan_requires_and_carries_real_source_stills():
         shot = result["plan"]["shots"][0]
         spec = json.loads((project / shot["spec"]).read_text(encoding="utf-8"))
         assert shot["source_asset_id"] == source_id
-        assert shot["motion_syntax"] == "y3_whiteboard"
+        assert shot["motion_syntax"] == "t2_keynote_ui"
         assert spec["cues"][0]["kind"] == "image"
         assert spec["cues"][0]["image"]
         digest = huashu_motion_adapter._sha(source)
@@ -1465,7 +1706,7 @@ def test_code_snapshot_uses_its_ocr_region_instead_of_a_generic_icon():
         assert spec["cues"][1]["kind"] == "highlight"
 
 
-def test_code_snapshot_without_ocr_uses_progressive_image_motion_without_highlight():
+def test_code_snapshot_without_ocr_keeps_the_source_as_the_main_visual():
     png = bytes.fromhex(
         "89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c489"
         "0000000b49444154789c636000020000050001a5f645400000000049454e44ae426082"
@@ -1489,7 +1730,7 @@ def test_code_snapshot_without_ocr_uses_progressive_image_motion_without_highlig
         )
         shot = result["plan"]["shots"][0]
         spec = json.loads((project / shot["spec"]).read_text(encoding="utf-8"))
-        assert shot["motion_syntax"] == "y3_whiteboard"
+        assert shot["motion_syntax"] == "t2_keynote_ui"
         assert spec["cues"][0]["kind"] == "image"
         assert any(cue["kind"] in {"draw", "point"} for cue in spec["cues"])
         assert not any(cue["kind"] == "highlight" for cue in spec["cues"])
@@ -1529,7 +1770,7 @@ def test_code_snapshot_uses_each_ocr_camera_target_only_once():
             }},
         )
         grammars = [shot["motion_syntax"] for shot in result["plan"]["shots"]]
-        assert grammars == ["t2_keynote_ui", "t2_keynote_ui", "y3_whiteboard"]
+        assert grammars == ["t2_keynote_ui", "t2_keynote_ui", "t2_keynote_ui"]
 
 
 def test_motion_plan_uses_the_code_snapshot_for_the_claimed_source_file():
@@ -1574,8 +1815,6 @@ def test_source_snapshot_selects_verbatim_claim_relevant_lines():
 
 
 def test_m5_auto_selects_future_profile_motion_after_measured_narration():
-    import huashu_motion_backend
-
     with tempfile.TemporaryDirectory(dir=ROOT / ".verify-tmp") as temp:
         project = Path(temp)
         for relative, payload in {
@@ -1603,13 +1842,7 @@ def test_m5_auto_selects_future_profile_motion_after_measured_narration():
             return SimpleNamespace(returncode=0, stdout=json.dumps(payload), stderr="")
 
         m5_production.hidden_run = fake_run
-        film_mock = None
         try:
-            film_mock = mock.patch.object(
-                huashu_motion_backend, "author_auto_film",
-                return_value="motion/huashu-motion/auto/P-01-test",
-            )
-            film_mock.start()
             result = m5_production.stage_motion(
                 project,
                 {"account_slug": "x-superplay-future-intelligence"},
@@ -1620,18 +1853,18 @@ def test_m5_auto_selects_future_profile_motion_after_measured_narration():
             )
         finally:
             m5_production.hidden_run = old_run
-            if film_mock:
-                film_mock.stop()
-        plan_paths = list((project / "motion" / "auto").glob("huashu-motion-shot-plan-*.json"))
+        plan_paths = list((project / "motion" / "auto").glob("shot-plan-*.json"))
         assert len(plan_paths) == 1
         plan = json.loads(plan_paths[0].read_text(encoding="utf-8"))
         receipt = json.loads((project / "receipts" / "motion-stage.json")
                              .read_text(encoding="utf-8"))
-        assert result["backend"] == "huashu-motion"
+        assert result["backend"] == "huashu-art-motion"
         assert plan["account_id"] == "x-superplay-future-intelligence"
         assert plan["shots"][0]["source_refs"] == ["https://docs.example.test/rag"]
         assert receipt["shots"][0]["content_point"] == "混合检索并行找词项和语义候选。"
-        assert commands[0][commands[0].index("--asset-id") + 1] == "huashu-motion-P-01"
+        assert commands[0][commands[0].index("--asset-id") + 1] == "huashu-P-01"
+        assert "huashu_motion_adapter.py" in commands[0][1]
+        assert plan["shots"][0]["backend"] == "huashu-art-motion"
 
 
 def test_auto_profile_motion_receipt_replaces_the_still_on_the_m5_timeline():
@@ -1705,6 +1938,10 @@ def main() -> int:
              test_huashu_accepts_only_exact_nonfactual_editorial_transitions_without_claims,
              test_huashu_source_cta_requires_all_prior_claims_in_verified_inventory,
              test_storyboard_preserves_each_narration_pause_inside_its_own_shot,
+             test_one_measured_narration_segment_can_cover_multiple_visual_shots,
+             test_proof_visual_shot_requires_an_evidence_reference,
+             test_reused_asset_needs_distinct_explanatory_variations_within_a_segment,
+             test_visual_qc_flags_adjacent_duplicate_assets_and_allows_distinct_purposes,
              test_a_video_asset_reaches_the_storyboard_as_a_clip,
              test_a_still_asset_is_not_labelled_a_clip,
              test_runtime_release_facts_use_the_source_image_motion_grammar,
@@ -1730,17 +1967,19 @@ def main() -> int:
              test_existing_narration_that_matches_is_reused_without_a_provider_call,
              test_producer_reuses_current_qc_pass_without_rebuilding,
              test_producer_review_mode_renders_local_draft_for_review,
+             test_provider_usage_counts_receipted_calls_and_keeps_quota_out_of_cash_cost,
              test_local_motion_runs_each_placement_and_accepts_cache_reuse,
              test_motion_stage_refuses_an_unmapped_plan_before_rendering,
              test_huashu_render_cache_requires_matching_inputs_and_output_hash,
              test_future_intelligence_auto_plan_uses_account_palette_and_rag_grammar,
+             test_motion_plan_splits_a_semantic_segment_by_visual_weights,
              test_future_intelligence_auto_plan_explains_rrf_with_rank_contributions,
              test_future_intelligence_auto_plan_does_not_compare_raw_retrieval_scores,
              test_auto_plan_pads_sub_two_second_narration_with_a_visual_hold,
              test_1024_auto_plan_requires_and_carries_real_source_stills,
              test_1024_uses_ocr_matched_screenshot_region_for_camera_motion,
              test_code_snapshot_uses_its_ocr_region_instead_of_a_generic_icon,
-             test_code_snapshot_without_ocr_uses_progressive_image_motion_without_highlight,
+             test_code_snapshot_without_ocr_keeps_the_source_as_the_main_visual,
              test_code_snapshot_uses_each_ocr_camera_target_only_once,
              test_motion_plan_uses_the_code_snapshot_for_the_claimed_source_file,
              test_local_asset_ocr_boxes_are_normalized_and_clamped,

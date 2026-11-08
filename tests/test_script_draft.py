@@ -310,13 +310,11 @@ def test_1024_repository_analysis_uses_code_snapshot_without_claiming_a_recordin
         assert "不描述运行、测试、性能或效果结果" in master
 
 
-def test_long_english_source_quotes_split_at_verbatim_word_boundaries():
+def test_long_english_source_quote_remains_one_complete_semantic_unit():
     quote = ("This branch also carries the convergence requirements that reconcile "
              "the documents with the code.")
     pieces = _split_quote_for_motion(quote, english_wps=0.8)
-    assert len(pieces) > 1
-    assert " ".join(pieces) == quote
-    assert all(len(piece.split()) <= 4 for piece in pieces)
+    assert pieces == [quote]
 
 
 def test_every_fact_is_bound_to_a_document_that_matches_its_digest():
