@@ -2042,7 +2042,7 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
     if avatar_provider:
         if avatar_provider != "minimax-h3":
             stages["avatar"] = {"state": "BLOCKED", "reason": f"unsupported avatar provider {avatar_provider!r}"}
-        elif not avatar_quota_budget and not (avatar_intro_video and avatar_outro_video):
+        elif not avatar_quota_budget and not (avatar_intro_video or avatar_outro_video):
             reason = "MiniMax H3 requires an explicit subscription quota budget"
             avatar = {
                 "state": "BLOCKED", "provider": "minimax-h3",
@@ -2099,6 +2099,25 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
                 avatar_receipt = _read_json_or_none(project / "receipts" / "avatar-bookends.json") or {}
                 avatar_receipt["compose_blocked_reason"] = str(exc)
                 _write_json(project / "receipts" / "avatar-bookends.json", avatar_receipt)
+        elif avatar is not None and avatar.get("state") == "PARTIAL":
+            available_clips = any(
+                isinstance(avatar.get(name), dict) and avatar[name].get("video")
+                for name in ("intro", "outro")
+            )
+            if available_clips:
+                try:
+                    preview = run_stage(
+                        _compose_partial_avatar_preview.__name__,
+                        _compose_partial_avatar_preview, project, slug, avatar,
+                        project / "final" / f"{slug}.mp4",
+                        project / "final" / f"{slug}-avatar-preview.mp4",
+                    )
+                    stages["avatar_preview"] = preview
+                except M5Blocked as exc:
+                    stages["avatar_preview"] = {
+                        "state": "BLOCKED", "reason": str(exc),
+                        "production_ready": False,
+                    }
         stages["compose"] = {"state": "OK", "video": compose.get("video")}
         qc = run_stage("qc", stage_qc, project, slug)
         stages["qc"] = {"overall": qc["report"].get("overall"),

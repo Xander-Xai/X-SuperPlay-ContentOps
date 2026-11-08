@@ -623,6 +623,13 @@ def test_h3_avatar_bookends_reuse_only_hash_bound_subscription_outputs():
         assert saved["intro"]["video"].endswith("intro.mp4")
         assert saved.get("production_ready") is not True
 
+        partial_without_budget = m5_production.stage_avatar(
+            project, "demo", asset_root=assets, quota_budget=None,
+            intro_line="开场", outro_line="结尾", intro_video=clips[0])
+        assert partial_without_budget["state"] == "PARTIAL"
+        assert partial_without_budget["intro"]["reused"]
+        assert partial_without_budget.get("outro") is None
+
         generated = project / "new-outro.mp4"
         generated.write_bytes(b"new H3 outro")
         with mock.patch.object(m5_production, "_run_h3_avatar_clip", return_value={
