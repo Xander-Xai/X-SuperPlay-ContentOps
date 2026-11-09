@@ -412,6 +412,14 @@ jobs:
       - name: Run platform registry tests
         run: python tests/test_platform_registry.py
 
+      # Delivery is refused until every condition holds, and publishing never is.
+      # Against the registry as it ships, all ten platforms are refused: none has
+      # verified delivery capability. These cases also prove the gate is not a
+      # deadlock — a capable row reaches its draft boundary — and that a draft
+      # cannot assert its own publish authorization.
+      - name: Run platform delivery gate tests
+        run: python tests/test_delivery_gate.py
+
       # Content Bundle consumption contract: Strategy owns the template, this
       # suite only proves a consumer refuses an incomplete or unsafe record.
       - name: Run content bundle contract tests
