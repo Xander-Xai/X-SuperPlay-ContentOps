@@ -129,12 +129,23 @@ def _dirty_entries(repo_root: Path) -> Optional[List[str]]:
     if result is None or result.returncode != 0:
         return None
     entries: List[str] = []
+    expect_orig = False
     for chunk in result.stdout.split("\0"):
-        if not chunk.strip():
+        if not chunk:
             continue
-        # Porcelain -z puts the status in the first two columns; a rename adds a
-        # second path in the following chunk, which is reported as its own entry.
+        if expect_orig:
+            # A staged rename/copy (status R/C) records its original path in a
+            # chunk of its own, with no two-letter status prefix. Stripping
+            # three characters here would corrupt the reported path (e.g.
+            # "projects/x" -> "jects/x"), so the original path is taken whole.
+            entries.append(chunk)
+            expect_orig = False
+            continue
+        # Porcelain -z puts the status in the first two columns of a chunk;
+        # a rename adds a second path chunk, which is handled above.
+        status = chunk[:2]
         entries.append(chunk[3:] if len(chunk) > 3 else chunk.strip())
+        expect_orig = "R" in status or "C" in status
     return entries
 
 

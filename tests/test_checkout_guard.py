@@ -315,6 +315,34 @@ def test_the_untracked_project_check_fails_on_a_new_directory():
     print("[ok] 6. the read-only check fails only on a new untracked project")
 
 
+@test
+def test_a_staged_rename_reports_both_paths_undamaged():
+    """Git splits a staged rename into "R  new\\0old" -- the second chunk has
+    no status prefix, so a naive [3:] slice corrupts the reported old path."""
+    with tempfile.TemporaryDirectory() as tmp:
+        reset_cache()
+        repo = _make_repo(Path(tmp))
+        receipt = repo / "projects" / "demo" / "receipts" / "qc-report.json"
+        receipt.parent.mkdir(parents=True)
+        receipt.write_text("{}\n", encoding="utf-8")
+        _git(repo, "add", "-A")
+        _git(repo, "-c", "user.email=t@example.invalid", "-c", "user.name=test",
+             "commit", "-q", "-m", "receipt")
+        renamed = receipt.with_name("qc-report-final.json")
+        receipt.rename(renamed)
+        _git(repo, "add", "-A")
+        state = checkout_state(repo / "projects" / "demo", repo_root=repo)
+        assert state["allowed"] is False, state
+        assert state["reason"] == "DIRTY_MAIN_CHECKOUT", state
+        paths = state["dirty_paths"]
+        assert f"projects/demo/receipts/{renamed.name}" in paths, paths
+        assert f"projects/demo/receipts/{receipt.name}" in paths, (
+            f"rename original path must be intact, got {paths}")
+        assert not any(p.startswith("jects/") for p in paths), (
+            f"[3:] slice leaked into a rename's original path: {paths}")
+    print("[ok] 7. a staged rename reports both paths undamaged")
+
+
 def main() -> int:
     failures = []
     for fn in TESTS:
