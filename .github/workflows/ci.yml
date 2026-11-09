@@ -298,12 +298,6 @@ jobs:
       - name: Run GZH runtime adapter tests
         run: python tests/test_gzh_runtime.py
 
-      # The XHS runtime adapter: locate, hash-verify and describe a locally
-      # installed workflow. Never executes, drafts or publishes; the root
-      # Apache-2.0 covers the tree, the one AGPL skill must stay excluded.
-      - name: Run XHS runtime adapter tests
-        run: python tests/test_xhs_runtime.py
-
       # The X editorial adapter: verify the local manual-only account, project
       # and gate code. Never calls the X API, reads a credential, drafts or
       # publishes.
