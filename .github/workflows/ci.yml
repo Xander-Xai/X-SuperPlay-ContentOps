@@ -420,6 +420,14 @@ jobs:
       - name: Run platform delivery gate tests
         run: python tests/test_delivery_gate.py
 
+      # Manual metrics import. Offline by construction: the suite asserts the
+      # module opens no socket and imports no HTTP client. The decisive cases are
+      # that a missing field, a bad hash and a non-numeric metric are refused with
+      # every reason named, that metrics are never zero-filled, and that the review
+      # receipt cannot modify the script, the QC verdict or production_ready.
+      - name: Run manual metrics review tests
+        run: python tests/test_manual_metrics.py
+
       # Content Bundle consumption contract: Strategy owns the template, this
       # suite only proves a consumer refuses an incomplete or unsafe record.
       - name: Run content bundle contract tests
