@@ -1,0 +1,32 @@
+# Untracked experiment directories already present under projects/ when the rule
+# landed (2026-11-09). Only removals are welcome here.
+#
+# This is a grandfather list, not a licence. A directory belongs in it because
+# deleting it is the Founder's decision, not because it is acceptable. A new
+# line means a new experiment leaked out of projects/_local/ and the check must
+# fail instead.
+#
+# Enforced by scripts/check_untracked_projects.py (CI: Repo policy checks).
+#
+# 18 directories, all with no tracked file of their own: raw-source extraction
+# scratch (raw-*), the account experiments (acct-*), the motion probes and the
+# RAG preview. None is a production project; none has a committed receipt.
+
+projects/acct-1024-evidence-led-20261109
+projects/acct-fi-explanatory-20261109
+projects/huashu-motion-p01-20261106
+projects/huashu-motion-windows-probe-20261108
+projects/m5-minimax-voice-activation-20261108
+projects/rag-semantic-preview-20261109
+projects/raw-easel-v0-2-1-84368487
+projects/raw-github-x-superplay-contentop-18bc8007
+projects/raw-github-x-superplay-contentop-50d7dc7e
+projects/raw-github-x-superplay-contentop-f98d0bd7
+projects/raw-rag-03f56733
+projects/raw-rag-074ee151
+projects/raw-rag-64e3e9dd
+projects/raw-rag-98ff47e2
+projects/raw-rag-993b351f
+projects/raw-rag-cd0e980e
+projects/raw-rag-cd0e980e-reframed-20261109
+projects/raw-rag-d84efd00

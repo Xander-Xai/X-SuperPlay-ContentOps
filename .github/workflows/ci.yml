@@ -273,6 +273,11 @@ jobs:
       - name: Run QC verdict tests
         run: python tests/test_qc_verdict.py
 
+      # Production entries refuse to write into a dirty main checkout, except
+      # under projects/_local/. Fixture repos only; nothing is rendered.
+      - name: Run checkout guard tests
+        run: python tests/test_checkout_guard.py
+
       # The short motion-sample technical gate: 4-8 s, silent, 1080x1920,
       # H.264/yuv420p, CFR 30, digest-bound. It stops at PENDING_FOUNDER_REVIEW
       # and has no approval or publish switch. Fixture-driven; no render.
@@ -533,6 +538,10 @@ jobs:
           python-version: '3.11'
       - name: Repo policy check
         run: python scripts/check_repo_policy.py
+      # Read-only. Fails when a new untracked experiment directory appears under
+      # projects/ outside the baselined list and outside projects/_local/.
+      - name: Untracked project check
+        run: python scripts/check_untracked_projects.py
       - name: Receipt secret check
         shell: bash
         env:
