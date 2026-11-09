@@ -40,7 +40,7 @@ def _local_source(project: Path, relative_path: str) -> tuple[Path, str]:
     root = project.resolve(strict=True)
     if not isinstance(relative_path, str) or not relative_path.strip():
         raise SceneAnalysisError("SOURCE_PATH_REQUIRED")
-    candidate = (root / relative_path).resolve(strict=True)
+    candidate = (root / relative_path).resolve(strict=False)
     try:
         rel = candidate.relative_to(root)
     except ValueError as exc:
