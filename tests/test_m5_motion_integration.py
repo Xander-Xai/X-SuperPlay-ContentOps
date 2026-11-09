@@ -21,6 +21,11 @@ import wave
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+# Several tests place their tempdirs under ROOT/.verify-tmp. That directory is
+# gitignored, so a clean CI checkout does not have it -- create it before the
+# first TemporaryDirectory(dir=...) call, or the module dies at import time and
+# takes all 56 tests down with it.
+(ROOT / ".verify-tmp").mkdir(parents=True, exist_ok=True)
 sys.path.insert(0, str(ROOT / "scripts"))
 sys.path.insert(0, str(ROOT / "src"))
 
