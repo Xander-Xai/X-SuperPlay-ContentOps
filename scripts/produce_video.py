@@ -274,10 +274,16 @@ def _qc_verdict(project: Path, report: dict, video: Path) -> dict:
             and embedded.get("overall") == report.get("overall")):
         return embedded
     from contentops.media.qc_verdict import adjudicate
+    # M5 records the measured audio presence on the receipt. Trust that record
+    # rather than probing again: a receipt is about the file that was graded, and
+    # re-probing a different byte range is how a verdict drifts from its evidence.
+    recorded_audio = (report.get("m5_checks") or {}).get("audio_stream")
+    audio_present = (recorded_audio if isinstance(recorded_audio, bool)
+                     else m5_production._has_audio(video))
     return adjudicate(
         report,
         account_bound=_account_bound(project),
-        audio_present=m5_production._has_audio(video),
+        audio_present=audio_present,
     ).as_dict()
 
 

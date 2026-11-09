@@ -1036,7 +1036,10 @@ def test_producer_reuses_current_qc_pass_without_rebuilding():
             local_assets.import_local_assets(options["assets_dir"], target, repo_root=root)
             (target / "final").mkdir(parents=True, exist_ok=True)
             (target / "final" / "demo-project.mp4").write_bytes(b"rendered bytes")
-            report = {"overall": "PASS", "graded_target": "project://final/demo-project.mp4"}
+            report = {"overall": "PASS", "graded_target": "project://final/demo-project.mp4",
+                      # A real M5 receipt carries the measured audio presence; the
+                      # verdict inheritance path reads it instead of re-probing.
+                      "m5_checks": {"audio_stream": True}}
             (target / "receipts").mkdir(exist_ok=True)
             (target / "receipts" / "qc-report-demo-project.json").write_text(
                 json.dumps(report), encoding="utf-8")
@@ -1106,7 +1109,9 @@ def test_producer_review_mode_renders_local_draft_for_review():
             report.parent.mkdir(parents=True, exist_ok=True)
             report.write_text(json.dumps({
                 "graded_target": f"project://final/{target.name}.mp4",
-                "overall": "PASS"}), encoding="utf-8")
+                "overall": "PASS",
+                # A real M5 receipt records the measured audio presence.
+                "m5_checks": {"audio_stream": True}}), encoding="utf-8")
             return {"stages": {"visual_qc": {"state": "PASS"}},
                     "stage_timings_seconds": {"motion": 1.0},
                     "human_review": "PENDING_FOUNDER_REVIEW"}
