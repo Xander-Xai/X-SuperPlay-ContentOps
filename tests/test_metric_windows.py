@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import csv
 import json
-import subprocess
 import sys
 import tempfile
 from datetime import datetime, timezone
@@ -19,6 +18,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT / "scripts"))
+
+from process_utils import hidden_run, python_executable  # noqa: E402
 
 from contentops.publish.metric_windows import (  # noqa: E402
     DUE_MISSING,
@@ -168,19 +170,19 @@ def test_cli_strict_fails_on_due_missing_windows(tmp_root: Path) -> None:
             "impressions", "engagements", "qualified_signal_count"])
         writer.writeheader()
         writer.writerow(_row())
-    strict = subprocess.run(
-        [sys.executable, str(ROOT / "scripts" / "metric_window_audit.py"),
+    strict = hidden_run(
+        [python_executable(), str(ROOT / "scripts" / "metric_window_audit.py"),
          "--posts-csv", str(posts), "--snapshots-csv", str(snapshots),
          "--now", "2026-11-09T12:00:00Z", "--strict"],
-        capture_output=True, text=True)
+        cwd=str(ROOT), timeout=300)
     assert strict.returncode == 1, (strict.returncode, strict.stderr)
     assert "DUE_MISSING" in strict.stderr
 
-    parsed = subprocess.run(
-        [sys.executable, str(ROOT / "scripts" / "metric_window_audit.py"),
+    parsed = hidden_run(
+        [python_executable(), str(ROOT / "scripts" / "metric_window_audit.py"),
          "--posts-csv", str(posts), "--snapshots-csv", str(snapshots),
          "--now", "2026-11-09T12:00:00Z", "--json"],
-        capture_output=True, text=True)
+        cwd=str(ROOT), timeout=300)
     assert parsed.returncode == 0, parsed.stderr
     report = json.loads(parsed.stdout)
     assert report["summary"]["windows"]["T+24H"][OBSERVED] == 1

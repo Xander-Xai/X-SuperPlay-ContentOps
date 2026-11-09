@@ -11,7 +11,6 @@ Run: python tests/test_publish_backfill.py
 from __future__ import annotations
 
 import json
-import subprocess
 import sys
 import tempfile
 from datetime import datetime, timezone
@@ -19,6 +18,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT / "scripts"))
+
+from process_utils import hidden_run, python_executable  # noqa: E402
 
 from contentops.publish.backfill import (  # noqa: E402
     STATUS_RECORDED,
@@ -243,21 +245,21 @@ def test_cli_records_and_lists(tmp_root: Path) -> None:
     project = tmp_root / "project"
     (project / "receipts").mkdir(parents=True)
     record_cmd = [
-        sys.executable, str(ROOT / "scripts" / "publish_backfill.py"),
+        python_executable(), str(ROOT / "scripts" / "publish_backfill.py"),
         "--record", "--project", str(project),
         "--platform", "gzh", "--id", "20261109-003",
         "--url", "https://mp.weixin.qq.com/s/abcDEF123_-",
         "--published-at", PAST, "--confirmed-by", "founder",
     ]
-    done = subprocess.run(record_cmd, capture_output=True, text=True)
+    done = hidden_run(record_cmd, cwd=str(ROOT), timeout=300)
     assert done.returncode == 0, done.stderr
-    list_cmd = [sys.executable, str(ROOT / "scripts" / "publish_backfill.py"),
+    list_cmd = [python_executable(), str(ROOT / "scripts" / "publish_backfill.py"),
                 "--list", "--project", str(project)]
-    done = subprocess.run(list_cmd, capture_output=True, text=True)
+    done = hidden_run(list_cmd, cwd=str(ROOT), timeout=300)
     assert done.returncode == 0, done.stderr
     assert "gzh 20261109-003 PUBLISHED_RECORDED" in done.stdout
     # the same record command again is a duplicate: exit 1 with the code on stderr
-    done = subprocess.run(record_cmd, capture_output=True, text=True)
+    done = hidden_run(record_cmd, cwd=str(ROOT), timeout=300)
     assert done.returncode == 1, (done.returncode, done.stderr)
     assert "BACKFILL_DUPLICATE" in done.stderr
 

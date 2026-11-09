@@ -11,7 +11,6 @@ Run: python tests/test_platform_status_sync.py
 from __future__ import annotations
 
 import json
-import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -19,6 +18,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "scripts"))
+
+from process_utils import hidden_run, python_executable  # noqa: E402
 
 import check_platform_status_sync as sync  # noqa: E402
 
@@ -97,10 +98,10 @@ def test_mirror_drift_is_detected_and_strict_fails(tmp_root: Path) -> None:
     assert report["mirror_matches_strategy"] is False
     assert any(row["platform"] == "bilibili" and row["strategy"] == "Derived"
                for row in report["mirror_drift"])
-    done = subprocess.run(
-        [sys.executable, str(ROOT / "scripts" / "check_platform_status_sync.py"),
+    done = hidden_run(
+        [python_executable(), str(ROOT / "scripts" / "check_platform_status_sync.py"),
          "--strategy-root", str(strategy_root), "--strict", "--json"],
-        capture_output=True, text=True)
+        cwd=str(ROOT), timeout=300)
     assert done.returncode == 1, done.stderr
     assert json.loads(done.stdout)["mirror_matches_strategy"] is False
 
@@ -136,10 +137,10 @@ def test_cli_passes_on_consistent_mirror() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         strategy_root = _write_strategy_root(
             tmp, FIXTURE_MATRIX.read_text(encoding="utf-8"))
-        done = subprocess.run(
-            [sys.executable, str(ROOT / "scripts" / "check_platform_status_sync.py"),
+        done = hidden_run(
+            [python_executable(), str(ROOT / "scripts" / "check_platform_status_sync.py"),
              "--strategy-root", str(strategy_root)],
-            capture_output=True, text=True)
+            cwd=str(ROOT), timeout=300)
     assert done.returncode == 0, done.stderr
     assert "mirror matches Strategy: True" in done.stdout
 
