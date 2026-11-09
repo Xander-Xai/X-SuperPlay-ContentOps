@@ -77,15 +77,34 @@ projects/my-video/
     storyboard.json  ← per-shot structure with provenance
 ```
 
-## 5. Run V1 pipeline
-
-### Production engine (Easel)
+## 5. Produce a reviewable video
 
 ```powershell
-python scripts\run_v1.py projects\my-video
+python scripts\produce_video.py projects\my-video
 ```
 
-What it does:
+This is **the only entry point that may carry a video into human review**. It runs
+the M5 evidence chain, writes the canonical QC receipt, and inherits the single
+verdict produced by `contentops.media.qc_verdict.adjudicate`. `production_ready`
+stays false until founder review, and nothing on this path publishes.
+
+An account-bound project (`account_slug` in `project.yaml`) cannot reach review
+without ASR evidence: a `SKIPPED` backcheck blocks before compose rather than
+being recorded as "no problem found".
+
+### Diagnostic render (run_v1.py) — not a production path
+
+Both `run_v1.py` engines render for inspection. Every receipt they write states
+`production_ready: false`, `publish_authorized: false`,
+`entry_point_role: DIAGNOSTIC_ONLY` and `eligible_for_human_review: false`.
+Account-bound projects are refused outright: use `produce_video.py` instead.
+
+```powershell
+python scripts\run_v1.py projects\my-video                  # upstream Easel render
+python scripts\run_v1.py projects\my-video --engine fallback # ffmpeg-only render
+```
+
+What the Easel engine does:
 1. Reads `script/storyboard.json` (requires authored storyboard, not built-in lines)
 2. Reads `script/master.md` (requires authored script)
 3. Resolves pinned Easel runtime via `resolve_easel.py`
@@ -97,13 +116,7 @@ What it does:
 
 Voice: **edge-tts** (free, no-key, no emotion engine). Marked `edge_tts_fallback`.
 
-### Diagnostic engine (fallback)
-
-```powershell
-python scripts\run_v1.py projects\my-video --engine fallback
-```
-
-What it does:
+What the fallback engine does:
 1. Uses built-in `DEFAULT_SCRIPT_LINES` (test fixture only)
 2. Renders voice via Windows SAPI → espeak → silence
 3. Composes 6 shots with ffmpeg
@@ -111,7 +124,6 @@ What it does:
 5. Writes `receipts/build-fallback.json`
 
 Voice: Windows SAPI (or silence). Marked `voice_quality: fallback`.
-This engine is **diagnostic only** — never reports `production_ready: true`.
 
 ### Evidence-first chain (M5)
 

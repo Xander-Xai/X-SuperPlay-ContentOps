@@ -238,6 +238,12 @@ jobs:
       - name: Run visual-QC quality-state tests
         run: python tests/test_visual_qc_states.py
 
+      # Two video entry points, one that may reach review. These cases prove an
+      # account-bound project cannot be rendered through the diagnostic door from
+      # either engine, and that no receipt from run_v1 still claims reviewability.
+      - name: Run video entry-point boundary tests
+        run: python tests/test_entry_point_boundary.py
+
       # One receipt, one verdict. M5 used to turn any non-FAIL into PASS while the
       # outer entry point demanded PASS, so a WARN render passed inside and failed
       # outside. These cases pin the single rule, the account-bound WARN block, the

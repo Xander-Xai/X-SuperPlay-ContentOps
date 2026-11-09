@@ -30,7 +30,8 @@ translation_status: synced
 | 项目 | 所在层 | 状态 |
 |---|---|---|
 | Easel 运行时 | `main` | 固定 v0.2.1（commit `3fe2d99`，982 blobs 验证通过）。上游稳定版为 v0.3.0 —— 未采用 |
-| 视频流水线（`run_v1.py`） | `main` | 已实现（`easel` + 诊断用 `fallback`）；`production_ready: false` |
+| 视频入口（`produce_video.py`） | `main` | 唯一通向人工评审的路径；继承唯一 QC 裁决；`production_ready: false` |
+| 诊断渲染器（`run_v1.py`） | `main` | 仅供查看；账号绑定项目一律拒绝；`eligible_for_human_review: false` |
 | M5 证据优先链（`m5_production.py`） | `main` | 已在 `projects/m5-media-use` 上完成集成验证；`production_ready: false`、`PENDING_FOUNDER_REVIEW` |
 | media-use 适配器（HyperFrames） | `main` | 已实现；仅本地、零联网/零付费。需要主机运行时锁 —— 默认判定为 `BLOCKED / MISSING_RUNTIME` |
 | MiniMax 媒体 | `main` | 语音、图片、H3 视频已实现；已验证子集见 CURRENT-STATE；`PENDING_FOUNDER_REVIEW` |
@@ -63,7 +64,7 @@ translation_status: synced
 python scripts\doctor.py
 python scripts\dev_check.py
 python scripts\new_project.py --slug my-video --title "My Video"
-python scripts\run_v1.py   projects\my-video
+python scripts\produce_video.py projects\my-video
 python scripts\m5_production.py projects\m5-media-use
 python scripts\qc_video.py projects\my-video
 ```
@@ -74,7 +75,7 @@ python scripts\qc_video.py projects\my-video
 python3 scripts/doctor.py
 python3 scripts/dev_check.py
 python3 scripts/new_project.py --slug my-video --title "My Video"
-python3 scripts/run_v1.py   projects/my-video
+python3 scripts/produce_video.py projects/my-video
 python3 scripts/m5_production.py projects/m5-media-use
 python3 scripts/qc_video.py projects/my-video
 ```
@@ -95,8 +96,9 @@ project.yaml source_refs
   -> 人工审核门禁
 ```
 
-两个入口共享同一引擎：`run_v1.py`（分镜驱动、edge-tts）与 `m5_production.py`
-（证据优先、本地旁白）。两者都不发布，也都不会报告生产就绪。
+`produce_video.py` 是唯一可把视频带入人工评审的入口：它驱动 M5 证据链并继承
+唯一 QC 裁决。`m5_production.py` 拥有该证据链，`run_v1.py` 仅做诊断渲染并拒绝
+账号绑定项目。三者都不发布，也都不会报告生产就绪。
 
 账号感知的内容路由（`HOTSPOT_DISCOVERY` / `USER_TOPIC` → 账号 DNA → Brief）已在
 `main` 实现（PR #114）。`router_e2e.py` 是验收脚本，不是生产操作入口。基于 Brief 的

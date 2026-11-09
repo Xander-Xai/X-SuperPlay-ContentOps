@@ -42,10 +42,29 @@ python scripts/verify_easel_runtime.py --resolve-tag
 python scripts\new_project.py --slug my-video --title "My Video Title"
 ```
 
-## 4. 运行生产流水线
+## 4. 产出可评审视频
 
 ```powershell
-python scripts\run_v1.py projects\my-video
+python scripts\produce_video.py projects\my-video
+```
+
+这是**唯一可把视频带入人工评审的入口**。它运行 M5 证据链、写出规范 QC 收据，
+并继承 `contentops.media.qc_verdict.adjudicate` 给出的唯一裁决。在创始人评审前
+`production_ready` 保持 false，该路径不做任何发布。
+
+账号绑定项目（`project.yaml` 含 `account_slug`）在缺少 ASR 证据时无法进入评审：
+`SKIPPED` 会在合成前阻断，而不是被记成"未发现问题"。
+
+### 4.1 诊断渲染（run_v1.py）—— 非生产路径
+
+`run_v1.py` 的两个引擎都只用于查看效果。其收据统一写明
+`production_ready: false`、`publish_authorized: false`、
+`entry_point_role: DIAGNOSTIC_ONLY`、`eligible_for_human_review: false`。
+账号绑定项目一律拒绝，请改用 `produce_video.py`。
+
+```powershell
+python scripts\run_v1.py projects\my-video                  # 上游 Easel 渲染
+python scripts\run_v1.py projects\my-video --engine fallback # 仅 ffmpeg 渲染
 ```
 
 ## 5. QC

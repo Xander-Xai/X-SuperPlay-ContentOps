@@ -158,7 +158,8 @@ runnable here.
 
 ```text
 scripts/
-├── run_v1.py             ← V1 orchestrator (easel + fallback engines)
+├── produce_video.py      ← the only video entry point that may reach human review
+├── run_v1.py             ← diagnostic renderer (refused for account-bound projects)
 ├── m5_production.py      ← Evidence-first chain (sources → … → review)
 ├── bundle_handoff.py     ← Bundle → VIDEO / GRAPHIC_TEXT plan
 ├── graphic_package.py    ← Manual graphic package (stops at review)

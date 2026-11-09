@@ -27,7 +27,8 @@ The table separates what is on **`main`** from what exists only on an
 | Item | Layer | Status |
 |---|---|---|
 | Easel runtime | `main` | Pinned v0.2.1 (commit `3fe2d99`, 982 blobs verified). Upstream stable is v0.3.0 — not adopted |
-| Video pipeline (`run_v1.py`) | `main` | Implemented (`easel` + diagnostic `fallback`); `production_ready: false` |
+| Video entry point (`produce_video.py`) | `main` | The only path to human review; inherits one QC verdict; `production_ready: false` |
+| Diagnostic renderer (`run_v1.py`) | `main` | Inspection only; refuses account-bound projects; `eligible_for_human_review: false` |
 | M5 evidence-first chain (`m5_production.py`) | `main` | Implemented and integration-verified on `projects/m5-media-use`; `production_ready: false`, `PENDING_FOUNDER_REVIEW` |
 | Media-use adapter (HyperFrames) | `main` | Implemented; local-only, zero network/paid calls. Needs a host runtime lock — default verdict is `BLOCKED / MISSING_RUNTIME` |
 | MiniMax media | `main` | Speech, image and H3 video implemented; verified subsets are listed in CURRENT-STATE; `PENDING_FOUNDER_REVIEW` |
@@ -61,7 +62,7 @@ for dated evidence and [docs/DEFERRED-WORK.md](docs/DEFERRED-WORK.md) for open w
 python scripts\doctor.py
 python scripts\dev_check.py
 python scripts\new_project.py --slug my-video --title "My Video"
-python scripts\run_v1.py   projects\my-video
+python scripts\produce_video.py projects\my-video
 python scripts\m5_production.py projects\m5-media-use
 python scripts\qc_video.py projects\my-video
 ```
@@ -72,7 +73,7 @@ python scripts\qc_video.py projects\my-video
 python3 scripts/doctor.py
 python3 scripts/dev_check.py
 python3 scripts/new_project.py --slug my-video --title "My Video"
-python3 scripts/run_v1.py   projects/my-video
+python3 scripts/produce_video.py projects/my-video
 python3 scripts/m5_production.py projects/m5-media-use
 python3 scripts/qc_video.py projects/my-video
 ```
@@ -93,9 +94,11 @@ project.yaml source_refs
   -> human review gate
 ```
 
-Two entry points share that engine: `run_v1.py` (storyboard-driven, edge-tts)
-and `m5_production.py` (evidence-first, local narration). Neither publishes and
-neither reports production-ready.
+`produce_video.py` is the only entry point that may carry a video into human
+review: it drives the M5 evidence chain and inherits a single QC verdict.
+`m5_production.py` owns that chain, and `run_v1.py` renders diagnostically — it
+refuses account-bound projects. None of them publishes, and none reports
+production-ready.
 
 The account-aware content router (`HOTSPOT_DISCOVERY` / `USER_TOPIC` → Account
 DNA → Brief) is implemented on `main` (PR #114). The separate `router_e2e.py`

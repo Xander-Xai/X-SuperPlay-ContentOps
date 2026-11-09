@@ -157,7 +157,8 @@ Owner 于 2026-11-02 决定把完整 Easel 系统作为生产底座，取代 ADR
 
 ```text
 scripts/
-├── run_v1.py             ← V1 编排（easel + fallback 引擎）
+├── produce_video.py      ← 唯一可进入人工评审的视频入口
+├── run_v1.py             ← 诊断渲染（账号绑定项目一律拒绝）
 ├── m5_production.py      ← 证据优先链（来源 → … → 评审）
 ├── bundle_handoff.py     ← Bundle → VIDEO / GRAPHIC_TEXT 计划
 ├── graphic_package.py    ← 人工图文包（停在审核）

@@ -1,25 +1,38 @@
 #!/usr/bin/env python3
-"""Compose a V1 evidence-first short video from real source assets.
+"""Render a diagnostic video from real source assets. NOT a production entry point.
+
+The only video entry point that may reach human review is
+``scripts/produce_video.py``. This script exists so the pipeline can be exercised
+and inspected — on a machine without Easel, during a regression hunt, or when a
+founder wants to see what the evidence looks like before committing to a render.
+It is never described as, and never labels its output as, a publishable product.
 
 Two engines, selected with --engine:
 
-    easel     (default) Production path. Reads script/master.md + storyboard.json
-              from the project, synthesises narration through upstream Easel
-              (tts-voiceover) and composites through upstream Easel
-              (auto-short-video/assemble.py).
+    easel     (default) Renders through upstream Easel (tts-voiceover) and
+              composites through upstream Easel (auto-short-video/assemble.py).
+              Convenient, but still diagnostic: no claim of readiness.
 
-    fallback  Diagnostic renderer. Deterministic, ffmpeg-only, no upstream
-              dependency. Kept so the pipeline can be exercised when Easel is
-              unavailable — NOT a production path, and its output is always
-              labelled fallback in the receipt.
+    fallback  Deterministic, ffmpeg-only, no upstream dependency. Its output is
+              always labelled fallback and it writes ``final/fallback.mp4`` rather
+              than ``final.mp4`` so it cannot be mistaken for a delivery render.
 
-Production never reads DEFAULT_SCRIPT_LINES; that list only feeds the fallback
-demo path and tests. A real project must carry script/master.md.
+Every receipt from this script states::
+
+    production_ready: false
+    publish_authorized: false
+    entry_point_role: DIAGNOSTIC_ONLY
+    eligible_for_human_review: false
+
+Account-bound projects are refused outright. A project that publishes under a
+real account must go through ``produce_video.py``, because that path owns the
+evidence chain, the QC verdict and the review package. Letting a diagnostic
+render slip into an account workflow is how an unverified video acquires an
+audience.
 
 NEEDS_HUMAN_REVIEW
     The pipeline is designed so that if any gate fails, it exits non-zero and writes
     the partial artifacts plus an explicit reason. It will not silently degrade.
-    A fallback render never reports PRODUCTION_READY.
 """
 
 import argparse
@@ -37,6 +50,11 @@ from process_utils import hidden_run, python_executable
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
+
+#: Every receipt this script writes carries this role.
+ENTRY_POINT_ROLE = "DIAGNOSTIC_ONLY"
+#: The only entry point allowed to produce a reviewable video.
+PRODUCTION_ENTRY_POINT = "scripts/produce_video.py"
 
 # Fallback / test fixture only. The production path reads script/master.md.
 DEFAULT_SCRIPT_LINES = [
@@ -400,8 +418,15 @@ def run_easel(project: Path, voice_provider: str = "edge",
     else:
         res["voice_quality"] = "edge_tts_fallback"  # upstream's no-key engine; human review decides
     res["production_quality_warning"] = True
-    res["production_ready"] = False             # §11: never auto-claim PRODUCTION_READY
-    res["state"] = "READY_FOR_HUMAN_REVIEW"
+    # This entry point is a diagnostic. It renders so a human can look at
+    # something; it does not produce reviewable, publishable video. The label is
+    # carried in the receipt so no downstream reader has to infer it from a path.
+    res["production_ready"] = False
+    res["publish_authorized"] = False
+    res["entry_point"] = "run_v1.py"
+    res["entry_point_role"] = ENTRY_POINT_ROLE
+    res["eligible_for_human_review"] = False
+    res["state"] = "DIAGNOSTIC_ONLY"
     res["runtime"] = sb["runtime"]
     generated = sum(1 for s in shots
                     if s.get("source_type") in ("generated", "ai_generated", "stock", "title_card"))
@@ -420,6 +445,28 @@ def run(project: Path, voice_provider: str = "", engine: str = "easel",
     project_yaml = project / "project.yaml"
     if not project_yaml.exists():
         return {"status": "BLOCKED", "reason": f"project.yaml missing at {project_yaml}"}
+
+    # An account-bound project must not be rendered by the diagnostic path. The
+    # gate is here rather than in the CLI so a direct import cannot skip it.
+    try:
+        declared = parse_yaml(project_yaml)
+    except Exception:  # noqa: BLE001 - an unreadable config cannot prove the project is free of an account
+        declared = {}
+    account = str(declared.get("account_slug") or declared.get("account_id") or "").strip()
+    if account:
+        return {
+            "status": "BLOCKED",
+            "entry_point": "run_v1.py",
+            "entry_point_role": ENTRY_POINT_ROLE,
+            "production_ready": False,
+            "publish_authorized": False,
+            "eligible_for_human_review": False,
+            "state": "DIAGNOSTIC_ONLY",
+            "reason": (
+                f"project is bound to account {account!r}; a diagnostic render cannot "
+                f"enter an account workflow — use {PRODUCTION_ENTRY_POINT}"
+            ),
+        }
 
     if engine == "easel":
         return run_easel(project, voice_provider=voice_provider or "edge",
@@ -555,8 +602,12 @@ def run(project: Path, voice_provider: str = "", engine: str = "easel",
     return {
         "status": "OK",
         "engine": "fallback",
+        "entry_point": "run_v1.py",
+        "entry_point_role": ENTRY_POINT_ROLE,
+        "eligible_for_human_review": False,
         "production_ready": False,
-        "state": "READY_FOR_HUMAN_REVIEW",
+        "publish_authorized": False,
+        "state": "DIAGNOSTIC_ONLY",
         "note": "fallback render — diagnostic only, not a production pass",
         "final_video": str(final_mp4),
         "duration_sec": duration,
@@ -593,10 +644,15 @@ def write_build_receipt(project: Path, result: dict) -> Path:
 
 
 def main() -> int:
-    p = argparse.ArgumentParser()
+    p = argparse.ArgumentParser(
+        description="DIAGNOSTIC video renderer. Not a production entry point: "
+                    f"reviewable video comes from {PRODUCTION_ENTRY_POINT}. "
+                    "Every receipt states production_ready=false.",
+        epilog="Account-bound projects are refused here by design.")
     p.add_argument("project", help="path to project dir, e.g. projects/easel-review")
     p.add_argument("--engine", choices=("easel", "fallback"), default="easel",
-                   help="easel = production (default); fallback = diagnostic ffmpeg-only render")
+                   help="easel = upstream Easel render; fallback = ffmpeg-only render. "
+                        "Both are diagnostic and neither claims readiness")
     p.add_argument("--voice-provider", default="edge",
                    choices=("edge", "existing"),
                    help="edge = upstream edge-tts (compatibility path); "

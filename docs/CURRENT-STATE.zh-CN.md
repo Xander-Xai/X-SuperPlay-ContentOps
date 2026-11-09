@@ -178,17 +178,19 @@ Owner 已决定把完整 Easel 系统作为生产底座（ADR-016）。本节只
 
 ## 流水线
 
-两个入口共享固定版本的 Easel 合成器。两者都不发布。
+`scripts/produce_video.py` 是唯一可把视频带入人工评审的入口。它调用 M5 证据链，
+并继承唯一的 QC 裁决。`run_v1.py` 是诊断渲染器：账号绑定项目一律拒绝，其收据
+统一标注 `entry_point_role: DIAGNOSTIC_ONLY` 与 `eligible_for_human_review: false`。
 
-| 属性 | `run_v1.py`（V1） | `m5_production.py`（M5） |
-|---|---|---|
-| 输入 | 人工编写的 `storyboard.json` + `master.md` | `project.yaml` 的 `source_refs` + 声明 |
-| 旁白 | edge-tts（`zh-CN-YunxiNeural`） | Windows SAPI，离线 |
-| 语音质量 | `edge_tts_fallback` —— 非生产级 | `windows_sapi_offline` —— 非生产级 |
-| 证据层 | 无 | `SourceArtifact` + `ClaimLedger` |
-| 合成 | 通过 `assemble_easel.run` 调用固定版本 Easel `assemble.py` | 同上 |
-| 字幕处理 | `assemble_easel` 移除后运行上游，再单独烧录 | 按旁白时间轴烧录 |
-| 生产就绪 | **否** | **否** —— `PENDING_FOUNDER_REVIEW` |
+| 属性 | `run_v1.py`（诊断） | `m5_production.py`（证据链） | `produce_video.py`（入口） |
+|---|---|---|---|
+| 职责 | 供人工查看的渲染 | 拥有证据链；不复制第二套编排 | 唯一通向人工评审的路径 |
+| 输入 | 人工编写的 `storyboard.json` + `master.md`，或内置夹具 | `project.yaml` 的 `source_refs` + 声明 | `project.yaml`，驱动 M5 |
+| 证据层 | 无 | `SourceArtifact` + `ClaimLedger` | 继承 M5 |
+| 合成 | 固定版本 Easel `assemble.py` | 同上 | 同上 |
+| QC | 不产出 | 规范收据 + 唯一裁决 | 继承该裁决，绝不重算 |
+| 账号绑定项目 | **拒绝** | 不适用 | 必须 |
+| 生产就绪 | **否** | **否** | **否**，直到创始人评审 |
 
 诊断引擎：`python scripts/run_v1.py <project> --engine fallback`
 （仅 ffmpeg，永不生产，永不报告 `production_ready: true`）。

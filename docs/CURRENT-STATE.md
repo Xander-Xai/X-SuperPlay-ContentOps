@@ -173,17 +173,21 @@ a verified integration yet.
 
 ## Pipeline
 
-Two entry points share the pinned Easel composer. Neither publishes.
+`scripts/produce_video.py` is the only entry point that may carry a video into
+human review. It calls the M5 evidence chain and inherits the single QC verdict.
+`run_v1.py` is a diagnostic renderer: it is refused outright for account-bound
+projects, and every receipt it writes states `entry_point_role: DIAGNOSTIC_ONLY`
+with `eligible_for_human_review: false`.
 
-| Property | `run_v1.py` (V1) | `m5_production.py` (M5) |
-|---|---|---|
-| Input | authored `storyboard.json` + `master.md` | `project.yaml` `source_refs` + claims |
-| Narration | edge-tts (`zh-CN-YunxiNeural`) | Windows SAPI, offline |
-| Voice quality | `edge_tts_fallback` — not production-grade | `windows_sapi_offline` — not production-grade |
-| Evidence layer | none | `SourceArtifact` + `ClaimLedger` |
-| Composition | pinned Easel `assemble.py` via `assemble_easel.run` | same |
-| Subtitle handling | `assemble_easel` strips, runs upstream, burns separately | burned from narration timings |
-| Production ready | **false** | **false** — `PENDING_FOUNDER_REVIEW` |
+| Property | `run_v1.py` (diagnostic) | `m5_production.py` (chain) | `produce_video.py` (entry) |
+|---|---|---|---|
+| Role | render for inspection | owns the evidence chain; no second orchestration | only path to human review |
+| Input | authored `storyboard.json` + `master.md`, or built-in fixture | `project.yaml` `source_refs` + claims | `project.yaml`, drives M5 |
+| Evidence layer | none | `SourceArtifact` + `ClaimLedger` | inherits M5 |
+| Composition | pinned Easel `assemble.py` | same | same |
+| QC | not produced | canonical receipt + one verdict | inherits the verdict, never recomputes |
+| Account-bound project | **refused** | n/a | required |
+| Production ready | **false** | **false** | **false** until founder review |
 
 Diagnostic engine: `python scripts/run_v1.py <project> --engine fallback`
 (ffmpeg-only, never production, never reports `production_ready: true`).
