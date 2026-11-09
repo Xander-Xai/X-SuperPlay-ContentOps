@@ -33,13 +33,13 @@ import unicodedata
 from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts"))
 
 from process_utils import hidden_run  # noqa: E402
 
-__all__ = ["AsrResult", "backcheck_speech", "token_overlap"]
+__all__ = ["AsrResult", "backcheck_speech", "compare_transcript", "token_overlap"]
 
 _LATIN_TOKEN_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.+\-]*")
 _CJK_RE = re.compile(r"[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]")
@@ -173,16 +173,31 @@ class AsrResult:
     missing: List[str] = field(default_factory=list)
     duplicated: List[str] = field(default_factory=list)  # units in excess
     detail: Optional[str] = None
+    #: Which transcriber produced the transcript. Recorded so a receipt says how
+    #: the evidence was obtained instead of leaving it to a reader to guess.
+    provider: Optional[str] = None
+    model: Optional[str] = None
+    #: What the provider actually returned. A text-only response records
+    #: ``timestamps: false``; that is a capability statement, not a failure.
+    capabilities: Dict[str, Any] = field(default_factory=dict)
 
     @property
     def detected_problem(self) -> bool:
         return self.status == "DETECTED_PROBLEM"
+
+    @property
+    def unavailable(self) -> bool:
+        """No evidence was obtained. Never equivalent to a pass."""
+        return self.status == "SKIPPED"
 
     def as_dict(self) -> Dict[str, Any]:
         return {
             "status": self.status,
             "role": "DETECTOR_ONLY",
             "can_approve_quality": False,
+            "provider": self.provider,
+            "model": self.model,
+            "capabilities": self.capabilities,
             "transcript": self.transcript,
             "coverage": self.coverage,
             "issues": self.issues,
@@ -192,37 +207,29 @@ class AsrResult:
         }
 
 
-def backcheck_speech(
-    audio_path: Path,
+def compare_transcript(
     expected_spoken_text: str,
+    transcript: str,
     *,
-    cli: Optional[str] = None,
     coverage_floor: float = 0.85,
+    provider: Optional[str] = None,
+    model: Optional[str] = None,
+    capabilities: Optional[Dict[str, Any]] = None,
 ) -> AsrResult:
-    """Transcribe and compare. Unavailable tooling yields SKIPPED, never PASS."""
-    executable = cli or shutil.which("mmx")
-    if not executable:
-        return AsrResult(status="SKIPPED", detail="official MiniMax CLI not on PATH")
+    """Compare a transcript against the spoken text. Provider-agnostic.
 
-    result = hidden_run(
-        [executable, "speech", "transcribe",
-         "--file", str(audio_path),
-         "--output", "json", "--quiet", "--non-interactive"],
-        timeout=300,
-    )
-    if result.returncode != 0:
+    This is the whole judgement, in one place, so that swapping the transcriber
+    cannot change the verdict. A provider adapter is responsible for bytes and
+    response shape; it must not re-implement coverage.
+    """
+    if not (transcript or "").strip():
         return AsrResult(
             status="SKIPPED",
-            detail=(result.stderr or "")[-300:],
+            provider=provider,
+            model=model,
+            capabilities=dict(capabilities or {}),
+            detail="empty transcript",
         )
-    try:
-        payload = json.loads(result.stdout or "{}")
-    except json.JSONDecodeError as exc:
-        return AsrResult(status="SKIPPED", detail=f"unparsable ASR output: {exc}")
-
-    transcript = payload.get("text") or ""
-    if not transcript:
-        return AsrResult(status="SKIPPED", detail="empty transcript")
 
     coverage = token_overlap(expected_spoken_text, transcript)
     diff = _multiplicity(expected_spoken_text, transcript)
@@ -248,4 +255,82 @@ def backcheck_speech(
         issues=issues,
         missing=missing[:20],
         duplicated=excess[:20],
+        provider=provider,
+        model=model,
+        capabilities=dict(capabilities or {}),
+    )
+
+
+def backcheck_speech(
+    audio_path: Path,
+    expected_spoken_text: str,
+    *,
+    cli: Optional[str] = None,
+    coverage_floor: float = 0.85,
+    transcriber: Optional[Callable[[Path], Any]] = None,
+    provider: Optional[str] = None,
+) -> AsrResult:
+    """Transcribe and compare. Unavailable tooling yields SKIPPED, never PASS.
+
+    Two transports are supported and they share every line of judgement:
+
+    ``transcriber``  a callable returning an object with ``text`` (and optionally
+                     ``model`` / ``capabilities``), such as
+                     :func:`contentops.media.asr_siliconflow.transcribe`.
+    ``cli``          the official MiniMax CLI, used when no transcriber is given.
+
+    A transcriber that raises is mapped to ``SKIPPED`` and its error kind is kept
+    in ``detail``. Missing evidence must stay distinguishable from clean evidence.
+    """
+    if transcriber is not None:
+        try:
+            produced = transcriber(Path(audio_path))
+        except Exception as exc:  # noqa: BLE001 - every failure becomes SKIPPED
+            kind = getattr(exc, "kind", type(exc).__name__)
+            return AsrResult(
+                status="SKIPPED",
+                provider=provider,
+                detail=f"{kind}: {str(exc)[:300]}",
+            )
+        return compare_transcript(
+            expected_spoken_text,
+            str(getattr(produced, "text", "") or ""),
+            coverage_floor=coverage_floor,
+            provider=provider,
+            model=getattr(produced, "model", None),
+            capabilities=getattr(produced, "capabilities", None),
+        )
+
+    executable = cli or shutil.which("mmx")
+    if not executable:
+        return AsrResult(status="SKIPPED", detail="official MiniMax CLI not on PATH")
+
+    result = hidden_run(
+        [executable, "speech", "transcribe",
+         "--file", str(audio_path),
+         "--output", "json", "--quiet", "--non-interactive"],
+        timeout=300,
+    )
+    if result.returncode != 0:
+        return AsrResult(
+            status="SKIPPED",
+            provider=provider or "minimax-cli",
+            detail=(result.stderr or "")[-300:],
+        )
+    try:
+        payload = json.loads(result.stdout or "{}")
+    except json.JSONDecodeError as exc:
+        return AsrResult(
+            status="SKIPPED", provider=provider or "minimax-cli",
+            detail=f"unparsable ASR output: {exc}",
+        )
+
+    return compare_transcript(
+        expected_spoken_text,
+        payload.get("text") or "",
+        coverage_floor=coverage_floor,
+        provider=provider or "minimax-cli",
+        model=payload.get("model"),
+        capabilities={"text": True, "timestamps": bool(payload.get("segments")),
+                      "language": payload.get("language") is not None},
     )

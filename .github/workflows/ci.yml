@@ -238,6 +238,20 @@ jobs:
       - name: Run visual-QC quality-state tests
         run: python tests/test_visual_qc_states.py
 
+      # ASR backcheck transport. Every case drives a fake opener and a fake key,
+      # so CI opens no socket and spends no quota. The decisive assertions are
+      # that a missing credential, an outage and a textless body all become
+      # SKIPPED rather than a pass, that a credential error is never retried, and
+      # that an echoing server cannot put the key into a receipt.
+      - name: Run ASR transport regression tests
+        run: python tests/test_asr_siliconflow.py
+
+      # The M5 gate that consumes it: no transcript on an account-bound project
+      # blocks before compose, a detected problem still reaches human review, and
+      # no ASR outcome can set production_ready or publish_authorized.
+      - name: Run M5 ASR gate tests
+        run: python tests/test_m5_asr_gate.py
+
       # New raw provider IDs, balances and key fingerprints in tracked receipts
       # must fail. Existing exposure is baselined by field path only.
       - name: Run receipt-secret tests

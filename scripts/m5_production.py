@@ -1430,6 +1430,94 @@ def _srt_time(seconds: float) -> str:
     return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
 
 
+def _declared_account(config: Dict[str, Any]) -> str:
+    return str(config.get("account_slug") or config.get("account_id") or "").strip()
+
+
+def stage_asr_backcheck(project: Path, config: Dict[str, Any],
+                        script: Dict[str, Any],
+                        narration: Dict[str, Any], *,
+                        transcriber: Optional[Any] = None) -> Dict[str, Any]:
+    """Transcribe the narration and compare it with the spoken script.
+
+    This is a **detector**, and the one place where the workflow decides what to
+    do with an inconclusive detector. Three outcomes, deliberately asymmetric:
+
+    ``NO_PROBLEM_DETECTED``  the transcript covers the script. Nothing is
+                             approved and nothing becomes publishable.
+    ``DETECTED_PROBLEM``     the audio may say something else. That is exactly
+                             what human review is for, so it proceeds and the
+                             receipt states the finding.
+    ``SKIPPED``              no evidence was obtained. An account-bound project
+                             cannot be reviewed on missing evidence, so it blocks
+                             here — before compose, to avoid rendering a video
+                             that cannot be reviewed.
+
+    The comparison target is the spoken narration, never the on-screen subtitle
+    text: the lexicon rewrites how a token is pronounced, so a subtitle-shaped
+    expectation would report a false problem on a correct reading.
+    """
+    from contentops.media.asr_backcheck import backcheck_speech
+
+    runner = transcriber
+    if runner is None:
+        from contentops.media.asr_siliconflow import transcribe
+        runner = lambda path: transcribe(path)  # noqa: E731 - one-line binding
+
+    audio = Path(narration.get("audio") or "assets/voice/narration.wav")
+    if not audio.is_absolute():
+        audio = project / audio
+    if not audio.is_file():
+        raise M5Blocked(f"ASR backcheck needs the narration track: {audio}")
+
+    expected = "\n".join(str(line.get("narration") or "")
+                         for line in (script.get("lines") or []))
+    if not expected.strip():
+        raise M5Blocked("ASR backcheck has no spoken script to compare against")
+
+    result = backcheck_speech(
+        audio, expected,
+        transcriber=runner,
+        provider="siliconflow",
+    )
+
+    account = _declared_account(config)
+    blocked = bool(account) and result.status == "SKIPPED"
+
+    receipt = {
+        "schema": "contentops.asr-backcheck/v1",
+        "provider": result.provider,
+        "model": result.model,
+        "capabilities": result.capabilities or {"text": False},
+        "role": "DETECTOR_ONLY",
+        "can_approve_quality": False,
+        "audio": f"project://{audio.relative_to(project).as_posix()}",
+        "audio_sha256": _sha256(audio),
+        "audio_bytes": audio.stat().st_size,
+        "expected_sha256": _text_sha(expected),
+        "status": result.status,
+        "coverage": result.coverage,
+        "issues": result.issues,
+        "missing": result.missing,
+        "excess": result.duplicated,
+        "detail": result.detail,
+        "account_bound": bool(account),
+        "blocks_human_review": blocked,
+        "production_ready": False,
+        "publish_authorized": False,
+    }
+    _write_json(project / "receipts" / "asr-backcheck.json", receipt)
+
+    if blocked:
+        raise M5Blocked(
+            "ASR backcheck produced no usable evidence "
+            f"({result.detail or 'unknown reason'}); an account-bound project "
+            "cannot enter human review without it. Set SILICONFLOW_API_KEY and "
+            "re-run, or treat this render as diagnostic only."
+        )
+    return receipt
+
+
 def stage_subtitles(project: Path, script: Dict[str, Any], narration: Dict[str, Any]) -> Dict[str, Any]:
     lines = script["lines"]
     cues = []
@@ -2512,6 +2600,13 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
     stages["narration"] = {"duration_s": narration["duration_s"],
                            "engine": narration["engine"],
                            "provider": narration.get("voice_provider", provider)}
+    asr = run_stage("asr_backcheck", stage_asr_backcheck, project, config,
+                    script["script"], narration)
+    stages["asr_backcheck"] = {
+        "status": asr["status"], "provider": asr["provider"], "model": asr["model"],
+        "coverage": asr["coverage"], "blocks_human_review": asr["blocks_human_review"],
+        "receipt": "receipts/asr-backcheck.json",
+    }
     motion = run_stage("motion", stage_motion, project, config, script["script"],
                        require_copy_review=require_copy_review, narration=narration,
                        rerender_shots=rerender_shots)
