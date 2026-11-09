@@ -233,6 +233,13 @@ def test_argv_is_a_list_so_a_hashtag_cannot_become_a_comment() -> None:
     assert all(isinstance(item, str) for item in argv)
 
 
+def test_headed_flag_is_reachable_without_a_headless_shell() -> None:
+    base = dict(executable="sau", account="a", video="v.mp4",
+                metadata={"title": "t", "desc": "d", "tags_rendered": "a,b"})
+    assert "--headed" not in video_delivery.build_command("douyin", **base)
+    assert video_delivery.build_command("douyin", headed=True, **base)[-1] == "--headed"
+
+
 # -------------------------------------------------------------- authorization
 
 

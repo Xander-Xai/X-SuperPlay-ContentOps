@@ -413,6 +413,7 @@ def dispatch(project_dir: Path, package: dict[str, Any], args: argparse.Namespac
             thumbnails=package.get("thumbnails") or {},
             supplied_args=supplied,
             draft=bool(args.draft),
+            headed=bool(args.headed),
         )
         decision = video_delivery.authorize(
             pid,
@@ -575,6 +576,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--grant", default="", help="operator grant json path")
     parser.add_argument("--execute", action="store_true", help="actually run the uploader")
     parser.add_argument("--draft", action="store_true", help="use --draft where supported")
+    parser.add_argument("--headed", action="store_true",
+                        help="run the uploader with a visible browser (no headless-shell needed)")
     parser.add_argument("--timeout", type=int, default=1800)
     args = parser.parse_args(argv)
 

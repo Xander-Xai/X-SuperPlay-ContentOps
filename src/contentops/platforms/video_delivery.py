@@ -166,11 +166,17 @@ def build_command(
     thumbnails: dict[str, str] | None = None,
     supplied_args: dict[str, str] | None = None,
     draft: bool = False,
+    headed: bool = False,
 ) -> list[str]:
     """Build the uploader argv for one platform.
 
     Returned as a list, never a shell string: a hashtag must not be able to
     become a comment and a title must not be able to become a command.
+
+    ``headed`` selects the visible browser. The uploader defaults to headless,
+    which needs Chrome's headless-shell build; the full Chromium build is what a
+    login session and a first real upload actually exercise, so both are
+    reachable instead of only the one whose binary happens to be installed.
     """
     row = video_specs.spec(platform_id)
     up = video_specs.uploader(platform_id)
@@ -192,6 +198,8 @@ def build_command(
 
     if draft and row.get("supports_draft"):
         argv.append("--draft")
+    if headed:
+        argv.append("--headed")
 
     return argv
 
