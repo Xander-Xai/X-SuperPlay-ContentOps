@@ -1,0 +1,15 @@
+# Untracked experiment directories already present under projects/ when the rule
+# landed (2026-11-09). Only removals are welcome here.
+#
+# This is a grandfather list, not a licence. A directory belongs in it because
+# deleting it is the Founder's decision, not because it is acceptable. A new
+# line means a new experiment leaked out of projects/_local/ and the check must
+# fail instead.
+#
+# Enforced by scripts/check_untracked_projects.py (CI: Repo policy checks).
+#
+# History: the rule landed with 18 grandfathered directories (raw-source
+# extraction scratch, account experiments, motion probes, RAG preview). All 18
+# were moved into projects/_local/ the same day with the Founder's approval, so
+# the list is empty. From here on, every new untracked projects/<name>/ is a
+# regression and must fail the check.

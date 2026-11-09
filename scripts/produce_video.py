@@ -551,6 +551,17 @@ def _record_brief_preparation_failure(project: Path, mode: str,
                              encoding="utf-8")
 
 
+def _guard_checkout(project: Path) -> dict[str, Any]:
+    """Refuse to write into a dirty main checkout; projects/_local/ is exempt.
+
+    The decision is taken once per process and cached by the guard, because this
+    entry writes its own receipt before delegating to M5.
+    """
+    from contentops.media.checkout_guard import ensure_writable_checkout
+
+    return ensure_writable_checkout(project, repo_root=ROOT)
+
+
 def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
             assets_dir: Path | None = None,
             narration_provider: str | None = None,
@@ -578,6 +589,9 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
     project_relative = _relative_to_root(project)
     if not project.is_dir() or project_relative is None:
         raise ValueError("--project must be an existing project inside this repository")
+    # Stop before the first receipt is written. A dirty main checkout is the
+    # reason earlier receipts were overwritten by the next experiment.
+    _guard_checkout(project)
     try:
         project_config = m5_production._read_yaml(project / "project.yaml")
     except Exception:
@@ -903,6 +917,13 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps({"state": "BLOCKED", "reason": str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 4
     except Exception as exc:
+        from contentops.media.checkout_guard import DirtyCheckoutError
+
+        if isinstance(exc, DirtyCheckoutError):
+            print(json.dumps({"state": "BLOCKED", "reason": str(exc),
+                              "reason_code": exc.state.get("reason")},
+                             ensure_ascii=False), file=sys.stderr)
+            return 4
         print(json.dumps({"state": "FAILED", "failure_type": type(exc).__name__,
                           "reason": str(exc)[:1000]}, ensure_ascii=False), file=sys.stderr)
         return 1

@@ -1058,6 +1058,12 @@ def test_producer_reuses_current_qc_pass_without_rebuilding():
 
         produce_video.ROOT = Path(str(root).swapcase()) if sys.platform == "win32" else root
         produce_video.m5_production.build = fake_build
+        # The stub above writes bytes, not an MP4, so a real probe would report no
+        # audio stream and the shared QC verdict would block the run. Audio is M5's
+        # question, not this test's (it pins reuse, not the verdict), so it is
+        # answered here instead of weakening the rule.
+        old_has_audio = produce_video.m5_production._has_audio
+        produce_video.m5_production._has_audio = lambda _path: True
         try:
             assert produce_video._relative_to_root(project) == Path("projects/demo-project")
             first = produce_video.produce(project, assets_dir=assets_dir)
@@ -1079,6 +1085,8 @@ def test_producer_reuses_current_qc_pass_without_rebuilding():
         finally:
             produce_video.ROOT = old_root
             produce_video.m5_production.build = old_build
+            produce_video.m5_production._has_audio = old_has_audio
+
 
 
 def test_producer_review_mode_renders_local_draft_for_review():
@@ -1119,6 +1127,10 @@ def test_producer_review_mode_renders_local_draft_for_review():
         produce_video.ROOT = root
         produce_video.m5_production.copy_review.require_approved = refuse_review
         produce_video.m5_production.build = local_build
+        # Same reason as the reuse test above: local_build writes bytes, so the
+        # real probe would report no audio and the shared verdict would block.
+        old_has_audio = produce_video.m5_production._has_audio
+        produce_video.m5_production._has_audio = lambda _path: True
         try:
             result = produce_video.produce(project, mode="REVIEW")
             saved = json.loads((project / "receipts" / "produce-video.json").read_text(encoding="utf-8"))
@@ -1130,6 +1142,8 @@ def test_producer_review_mode_renders_local_draft_for_review():
             produce_video.ROOT = old_root
             produce_video.m5_production.copy_review.require_approved = old_check
             produce_video.m5_production.build = old_build
+            produce_video.m5_production._has_audio = old_has_audio
+
 
 
 def test_local_motion_runs_each_placement_and_accepts_cache_reuse():

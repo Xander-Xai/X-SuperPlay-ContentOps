@@ -2406,6 +2406,13 @@ def stage_review(project: Path, slug: str, qc: Dict[str, Any],
     return payload
 
 
+def _guard_checkout(project: Path) -> Dict[str, Any]:
+    """Refuse to write into a dirty main checkout; projects/_local/ is exempt."""
+    from contentops.media.checkout_guard import ensure_writable_checkout
+
+    return ensure_writable_checkout(project, repo_root=ROOT)
+
+
 def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = None,
           narration_provider: Optional[str] = None,
           narration_audio: Optional[Path] = None,
@@ -2429,6 +2436,9 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
            require_copy_review: bool = True) -> Dict[str, Any]:
     if not project.is_dir():
         raise M5Blocked(f"project not found: {project}")
+    # Same rule as produce_video: no stage of this run may write into a main
+    # checkout that already holds unreviewed work.
+    _guard_checkout(project)
     stages: Dict[str, Any] = {}
     timings: Dict[str, float] = {}
 
@@ -2661,6 +2671,7 @@ def main() -> int:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     except (AttributeError, ValueError):
         pass
+    from contentops.media.checkout_guard import DirtyCheckoutError
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("project", help="project directory, e.g. projects/m5-easel-pin")
     parser.add_argument("--skip-compose", action="store_true")
@@ -2732,6 +2743,11 @@ def main() -> int:
                     rerender_shots=tuple(args.rerender_shot))
     except M5Blocked as exc:
         result = {"ok": False, "state": "BLOCKED", "reason": str(exc)}
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 4
+    except DirtyCheckoutError as exc:
+        result = {"ok": False, "state": "BLOCKED", "reason": str(exc),
+                  "reason_code": exc.state.get("reason")}
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 4
     if args.json:

@@ -278,6 +278,11 @@ jobs:
       - name: Run QC verdict tests
         run: python tests/test_qc_verdict.py
 
+      # Production entries refuse to write into a dirty main checkout, except
+      # under projects/_local/. Fixture repos only; nothing is rendered.
+      - name: Run checkout guard tests
+        run: python tests/test_checkout_guard.py
+
       # The short motion-sample technical gate: 4-8 s, silent, 1080x1920,
       # H.264/yuv420p, CFR 30, digest-bound. It stops at PENDING_FOUNDER_REVIEW
       # and has no approval or publish switch. Fixture-driven; no render.
@@ -409,6 +414,31 @@ jobs:
       - name: Run graphic delivery gate tests
         run: python tests/test_delivery_gate.py
 
+      # WeChat draft channel: shaping, credential preflight and the read-back
+      # check. Offline only — no token, no upload, no credential.
+      - name: Run WeChat draft tests
+        run: python tests/test_wechat_draft.py
+
+      # Manual metrics import. Offline by construction: the suite asserts the
+      # module opens no socket and imports no HTTP client. The decisive cases are
+      # that a missing field, a bad hash and a non-numeric metric are refused with
+      # every reason named, that metrics are never zero-filled, and that the review
+      # receipt cannot modify the script, the QC verdict or production_ready.
+      - name: Run manual metrics review tests
+        run: python tests/test_manual_metrics.py
+
+      # Bilibili public metrics: DNA gate, BV resolution chain, counter shaping
+      # and receipts. Offline — the transport (bilibili-api-python) is imported
+      # only under --execute, and a CLI BV is stamped TRANSPORT_SMOKE so a pipe
+      # check can never be read as account performance.
+      - name: Run bilibili metrics tests
+        run: python tests/test_bilibili_metrics.py
+
+      # WeChat data cube channel: official range ceilings, credential preflight
+      # that never echoes a value, and receipts that never modify the artefact.
+      - name: Run wechat metrics tests
+        run: python tests/test_wechat_metrics.py
+
       # Content Bundle consumption contract: Strategy owns the template, this
       # suite only proves a consumer refuses an incomplete or unsafe record.
       - name: Run content bundle contract tests
@@ -539,6 +569,10 @@ jobs:
           python-version: '3.11'
       - name: Repo policy check
         run: python scripts/check_repo_policy.py
+      # Read-only. Fails when a new untracked experiment directory appears under
+      # projects/ outside the baselined list and outside projects/_local/.
+      - name: Untracked project check
+        run: python scripts/check_untracked_projects.py
       - name: Receipt secret check
         shell: bash
         env:

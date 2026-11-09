@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
-"""One entry point for the GZH, XHS and X editorial workflows: verify and describe.
+"""One entry point for the GZH and X editorial workflows: verify and describe.
 
 Usage:
     python scripts/graphic_workflow.py status --workflow gzh
-    python scripts/graphic_workflow.py status --workflow xhs
-    python scripts/graphic_workflow.py verify --workflow xhs --root D:/Software/XHS/xhs_未来智能
     python scripts/graphic_workflow.py plan --workflow x --json
 
-GZH and XHS are installed by the operator outside this repository and are never
+GZH is installed by the operator outside this repository and is never
 copied into it; X is this repository's own manual-only editorial gate. The
 command verifies the workspace and prints the operator operations. It never
 executes a workflow step, calls a platform API, starts the Easel host, drafts,
 or publishes.
+
+The XHS (Xiaohongshu) graphic workflow was removed on 2026-11-09 by operator
+instruction: the whole Xiaohongshu platform belongs to the VIDEO line, so no
+graphic workflow, adapter or lock remains in the repository.
 
 For ``x``, ``--root`` means the repository root (default: this checkout) and
 ``--account`` / ``--project`` override the default account and project paths.
@@ -33,8 +35,6 @@ sys.path.insert(0, str(ROOT / "src"))
 def _module(workflow: str):
     if workflow == "gzh":
         from contentops.gzh import runtime as module
-    elif workflow == "xhs":
-        from contentops.xhs import runtime as module
     elif workflow == "x":
         from contentops.x import runtime as module
     else:  # pragma: no cover - argparse restricts the value
@@ -45,9 +45,9 @@ def _module(workflow: str):
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("command", choices=("status", "verify", "plan"))
-    parser.add_argument("--workflow", choices=("gzh", "xhs", "x"), required=True)
+    parser.add_argument("--workflow", choices=("gzh", "x"), required=True)
     parser.add_argument("--root", default=None,
-                        help="workflow root for gzh/xhs, or the repository root for x")
+                        help="workflow root for gzh, or the repository root for x")
     parser.add_argument("--lock", default=None,
                         help="trusted lock (default: runtime/<workflow>-runtime.lock.json)")
     parser.add_argument("--account", default=None, help="x only: account JSON path")
@@ -58,8 +58,6 @@ def main(argv=None) -> int:
     module = _module(args.workflow)
     if args.workflow == "gzh":
         blocked = module.GzhBlocked
-    elif args.workflow == "xhs":
-        blocked = module.XhsBlocked
     else:
         blocked = module.XBlocked
 
