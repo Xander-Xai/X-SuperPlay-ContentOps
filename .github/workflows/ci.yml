@@ -230,6 +230,9 @@ jobs:
       - name: Run stock-media offline tests
         run: python tests/test_stock_media.py
 
+      - name: Run PySceneDetect adapter offline tests
+        run: python tests/test_scene_analysis.py
+
       - name: Run BGM planner offline tests
         run: python tests/test_bgm_planner.py
 
