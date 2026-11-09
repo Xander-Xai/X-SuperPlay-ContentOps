@@ -422,6 +422,18 @@ jobs:
       - name: Run manual metrics review tests
         run: python tests/test_manual_metrics.py
 
+      # Bilibili public metrics: DNA gate, BV resolution chain, counter shaping
+      # and receipts. Offline — the transport (bilibili-api-python) is imported
+      # only under --execute, and a CLI BV is stamped TRANSPORT_SMOKE so a pipe
+      # check can never be read as account performance.
+      - name: Run bilibili metrics tests
+        run: python tests/test_bilibili_metrics.py
+
+      # WeChat data cube channel: official range ceilings, credential preflight
+      # that never echoes a value, and receipts that never modify the artefact.
+      - name: Run wechat metrics tests
+        run: python tests/test_wechat_metrics.py
+
       # Content Bundle consumption contract: Strategy owns the template, this
       # suite only proves a consumer refuses an incomplete or unsafe record.
       - name: Run content bundle contract tests
