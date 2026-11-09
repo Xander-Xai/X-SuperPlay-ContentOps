@@ -44,7 +44,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install test dependencies
-        run: python -m pip install --quiet --upgrade pip Pillow
+        # PyYAML is not part of the runner image, and both platform spec tables
+        # (graphic-platforms.yaml, video-platforms.yaml) are read through it. The
+        # suites that consume them fail loudly rather than skipping, so it has to
+        # be installed here or the coverage looks larger than it is.
+        run: python -m pip install --quiet --upgrade pip Pillow PyYAML
 
       # ffmpeg was absent on both runners, and the M4 H3 suite plus the M4.5
       # transform tests need it. Installing it here is what turns those skips into
@@ -74,7 +78,7 @@ jobs:
       # itself looks green while testing nothing, which is how the M3 suite lost
       # half its coverage on a runner without ffmpeg before this step existed.
       - name: Report test dependency availability
-        run: python -c "import shutil,sys; print('ffmpeg:', bool(shutil.which('ffmpeg'))); print('ffprobe:', bool(shutil.which('ffprobe'))); import PIL; print('Pillow:', PIL.__version__)"
+        run: python -c "import shutil,sys; print('ffmpeg:', bool(shutil.which('ffmpeg'))); print('ffprobe:', bool(shutil.which('ffprobe'))); import PIL; print('Pillow:', PIL.__version__); import yaml; print('PyYAML:', yaml.__version__)"
 
       - name: Run basic tests
         run: python scripts/test_basic.py
