@@ -755,13 +755,23 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
         if not video.is_file() or not report_path.is_file():
             raise m5_production.M5Blocked("M5 returned without a final video and QC receipt")
         report = json.loads(report_path.read_text(encoding="utf-8"))
-        if report.get("graded_target") != f"project://final/{project.name}.mp4":
-            raise m5_production.M5Blocked("QC receipt does not grade the produced render")
-        if report.get("overall") != "PASS":
-            raise m5_production.M5Blocked(f"technical QC did not pass ({report.get('overall')})")
-        receipt.update({"state": "QC_PASSED", "video": f"project://final/{project.name}.mp4",
+        from contentops.media.qc_verdict import judge_technical_qc, project_is_account_bound
+        graded_target = f"project://final/{project.name}.mp4"
+        decision = judge_technical_qc(
+            report, has_audio=m5_production._has_audio(video),
+            account_bound=project_is_account_bound(project),
+            graded_target=graded_target,
+        )
+        if decision["blocked"]:
+            raise m5_production.M5Blocked(
+                f"technical QC did not pass ({decision['overall']}: {decision['reason']})"
+            )
+        technical_qc = "PASS" if decision["overall"] == "PASS" else "WARN"
+        state = "QC_PASSED" if technical_qc == "PASS" else "QC_WARN_HISTORICAL"
+        receipt.update({"state": state, "video": graded_target,
                         "video_sha256": _hash_file(video), "qc_receipt": report_path.name,
-                        "rendered": True, "technical_qc": "PASS",
+                        "rendered": True, "technical_qc": technical_qc,
+                        "historical_qc_exception": decision["historical_exception"],
                         "visual_qc": (m5_run.get("stages", {}).get("visual_qc", {})
                                       .get("state", "NOT_RUN")),
                         "production_ready": False})

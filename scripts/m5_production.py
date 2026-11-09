@@ -2165,6 +2165,7 @@ def stage_qc(project: Path, slug: str) -> Dict[str, Any]:
         canonical_qc_report,
         render_canonical_qc_markdown,
     )
+    from contentops.media.qc_verdict import judge_technical_qc, project_is_account_bound
 
     proc = hidden_run(
         [python_executable(), str(ROOT / "scripts" / "qc_video.py"), str(project),
@@ -2179,25 +2180,41 @@ def stage_qc(project: Path, slug: str) -> Dict[str, Any]:
         raise M5Blocked(f"qc produced no report: {(proc.stderr or proc.stdout)[-300:]}")
     report = json.loads(report_path.read_text(encoding="utf-8"))
     video = project / "final" / f"{slug}.mp4"
+    graded_target = f"project://final/{slug}.mp4"
     has_audio = _has_audio(video)
-    extra = {
-        "audio_stream": has_audio,
-        "overall_after_m5": "PASS" if report.get("overall") != "FAIL" and has_audio else "FAIL",
-    }
     canonical = canonical_qc_report(
         report, repo_root=ROOT, project_root=project,
-        graded_target=f"project://final/{slug}.mp4", currency=CURRENCY_CURRENT,
+        graded_target=graded_target, currency=CURRENCY_CURRENT,
     )
     canonical["project"] = (
         project.relative_to(ROOT).as_posix() if project.is_relative_to(ROOT) else "project://"
     )
-    canonical["m5_checks"] = extra
+    judged = dict(canonical)
+    declared = report.get("graded_target")
+    if declared not in (None, "", graded_target):
+        judged["graded_target"] = declared
+    decision = judge_technical_qc(
+        judged, has_audio=has_audio,
+        account_bound=project_is_account_bound(project),
+        graded_target=graded_target,
+    )
+    canonical["m5_checks"] = {
+        "audio_stream": has_audio,
+        "overall": decision["overall"],
+        "blocked": decision["blocked"],
+        "reason": decision["reason"],
+        "historical_exception": decision["historical_exception"],
+        "production_ready": False,
+        "publish_authorized": False,
+    }
+    canonical["production_ready"] = False
+    canonical["publish_authorized"] = False
     _write_json(report_path, canonical)
     (project / "receipts" / f"qc-report-{slug}.md").write_text(
         render_canonical_qc_markdown(canonical, project_name=project.name), encoding="utf-8"
     )
-    if extra["overall_after_m5"] == "FAIL":
-        raise M5Blocked("QC failed: " + json.dumps(extra))
+    if decision["blocked"]:
+        raise M5Blocked("QC failed: " + json.dumps(canonical["m5_checks"]))
     return {"report": canonical, "video": str(video)}
 
 
