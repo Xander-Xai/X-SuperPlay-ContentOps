@@ -136,13 +136,13 @@ def test_transport_module_stays_lazy_about_bilibili_api() -> None:
 def test_cli_plan_runs_offline_and_blocks_without_a_bv() -> None:
     import argparse
     import json as json_mod
-    import subprocess
+
+    from process_utils import hidden_run
 
     script_path = ROOT / "scripts" / "bilibili_metrics.py"
-    proc = subprocess.run(
+    proc = hidden_run(
         [sys.executable, str(script_path), "plan", "--account",
          str(ROOT / "config" / "accounts" / "x-superplay-1024.json")],
-        capture_output=True, text=True,
     )
     assert proc.returncode == 4, proc.stdout + proc.stderr
     payload = json_mod.loads(proc.stdout)
@@ -152,14 +152,14 @@ def test_cli_plan_runs_offline_and_blocks_without_a_bv() -> None:
 
 def test_cli_plan_with_explicit_bv_is_a_smoke_plan() -> None:
     import json as json_mod
-    import subprocess
+
+    from process_utils import hidden_run
 
     script_path = ROOT / "scripts" / "bilibili_metrics.py"
-    proc = subprocess.run(
+    proc = hidden_run(
         [sys.executable, str(script_path), "plan", "--account",
          str(ROOT / "config" / "accounts" / "x-superplay-future-intelligence.json"),
          "--bvid", "BV1GJ411x7h7"],
-        capture_output=True, text=True,
     )
     assert proc.returncode == 0, proc.stdout + proc.stderr
     payload = json_mod.loads(proc.stdout)
