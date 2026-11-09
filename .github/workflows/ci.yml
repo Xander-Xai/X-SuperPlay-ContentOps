@@ -238,6 +238,14 @@ jobs:
       - name: Run visual-QC quality-state tests
         run: python tests/test_visual_qc_states.py
 
+      # One receipt, one verdict. M5 used to turn any non-FAIL into PASS while the
+      # outer entry point demanded PASS, so a WARN render passed inside and failed
+      # outside. These cases pin the single rule, the account-bound WARN block, the
+      # tolerated-unbound-WARN carve-out, fail-closed handling of an unreadable
+      # overall, and that a tolerated WARN is never reused as QC-passed.
+      - name: Run QC verdict convergence tests
+        run: python tests/test_qc_verdict.py
+
       # ASR backcheck transport. Every case drives a fake opener and a fake key,
       # so CI opens no socket and spends no quota. The decisive assertions are
       # that a missing credential, an outage and a textless body all become

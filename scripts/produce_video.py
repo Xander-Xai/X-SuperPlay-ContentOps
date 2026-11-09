@@ -249,6 +249,38 @@ def _input_digest(project: Path, *, assets_dir: Path | None = None,
     return digest.hexdigest()
 
 
+def _account_bound(project: Path) -> bool:
+    """Whether this project publishes under a real account."""
+    config_path = project / "project.yaml"
+    if not config_path.is_file():
+        return False
+    try:
+        config = m5_production._read_yaml(config_path)
+    except Exception:  # noqa: BLE001 - unreadable config is treated as unbound
+        return False
+    return bool(str(config.get("account_slug") or config.get("account_id") or "").strip())
+
+
+def _qc_verdict(project: Path, report: dict, video: Path) -> dict:
+    """The one verdict for this receipt.
+
+    M5 embeds its decision in the canonical receipt. That decision is *inherited*
+    rather than recomputed, so the two entry points cannot reach opposite
+    conclusions about the same file. A receipt predating the verdict is
+    re-adjudicated with the very function M5 uses — never with a second rule.
+    """
+    embedded = ((report.get("m5_checks") or {}).get("verdict") or {})
+    if (embedded.get("decision") in {"PROCEED", "BLOCK"}
+            and embedded.get("overall") == report.get("overall")):
+        return embedded
+    from contentops.media.qc_verdict import adjudicate
+    return adjudicate(
+        report,
+        account_bound=_account_bound(project),
+        audio_present=m5_production._has_audio(video),
+    ).as_dict()
+
+
 def _reusable(project: Path, digest: str, *, require_avatar: bool = False) -> dict[str, Any] | None:
     receipt_path = project / "receipts" / RECEIPT
     if not receipt_path.is_file():
@@ -271,7 +303,9 @@ def _reusable(project: Path, digest: str, *, require_avatar: bool = False) -> di
         return None
     contact_sheet_ref = visual.get("contact_sheet")
     contact_sheet = project / "receipts" / "visual-contact-sheet.png"
-    if (report.get("overall") != "PASS"
+    verdict = _qc_verdict(project, report, video)
+    if (verdict["decision"] != "PROCEED"
+            or verdict.get("legacy_warn_tolerated")
             or report.get("graded_target") != f"project://final/{project.name}.mp4"
             or receipt.get("video_sha256") != _hash_file(video)
             or visual.get("video_sha256") != _hash_file(video)
@@ -757,8 +791,12 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
         report = json.loads(report_path.read_text(encoding="utf-8"))
         if report.get("graded_target") != f"project://final/{project.name}.mp4":
             raise m5_production.M5Blocked("QC receipt does not grade the produced render")
-        if report.get("overall") != "PASS":
-            raise m5_production.M5Blocked(f"technical QC did not pass ({report.get('overall')})")
+        verdict = _qc_verdict(project, report, video)
+        if verdict["decision"] != "PROCEED":
+            raise m5_production.M5Blocked(
+                "technical QC blocked "
+                f"({verdict.get('overall')}): " + "; ".join(verdict.get("reasons") or []))
+        receipt["qc_verdict"] = verdict
         receipt.update({"state": "QC_PASSED", "video": f"project://final/{project.name}.mp4",
                         "video_sha256": _hash_file(video), "qc_receipt": report_path.name,
                         "rendered": True, "technical_qc": "PASS",

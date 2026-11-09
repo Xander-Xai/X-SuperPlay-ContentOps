@@ -2247,12 +2247,14 @@ def _compose_partial_avatar_preview(project: Path, slug: str, avatar: Dict[str, 
     return result
 
 
-def stage_qc(project: Path, slug: str) -> Dict[str, Any]:
+def stage_qc(project: Path, slug: str, *,
+             project_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     from contentops.media.qc_canonical import (
         CURRENCY_CURRENT,
         canonical_qc_report,
         render_canonical_qc_markdown,
     )
+    from contentops.media.qc_verdict import adjudicate
 
     proc = hidden_run(
         [python_executable(), str(ROOT / "scripts" / "qc_video.py"), str(project),
@@ -2268,10 +2270,6 @@ def stage_qc(project: Path, slug: str) -> Dict[str, Any]:
     report = json.loads(report_path.read_text(encoding="utf-8"))
     video = project / "final" / f"{slug}.mp4"
     has_audio = _has_audio(video)
-    extra = {
-        "audio_stream": has_audio,
-        "overall_after_m5": "PASS" if report.get("overall") != "FAIL" and has_audio else "FAIL",
-    }
     canonical = canonical_qc_report(
         report, repo_root=ROOT, project_root=project,
         graded_target=f"project://final/{slug}.mp4", currency=CURRENCY_CURRENT,
@@ -2279,14 +2277,31 @@ def stage_qc(project: Path, slug: str) -> Dict[str, Any]:
     canonical["project"] = (
         project.relative_to(ROOT).as_posix() if project.is_relative_to(ROOT) else "project://"
     )
-    canonical["m5_checks"] = extra
+    # The canonical overall stays exactly what qc_video said. The verdict below is
+    # a separate field answering a separate question, so a reader can see both the
+    # measurement and the decision made from it.
+    config = project_config
+    if config is None:
+        try:
+            config = _read_yaml(project / "project.yaml")
+        except (OSError, M5Blocked):
+            config = {}
+    verdict = adjudicate(
+        canonical,
+        account_bound=bool(_declared_account(config or {})),
+        audio_present=has_audio,
+    )
+    canonical["m5_checks"] = {
+        "audio_stream": has_audio,
+        "verdict": verdict.as_dict(),
+    }
     _write_json(report_path, canonical)
     (project / "receipts" / f"qc-report-{slug}.md").write_text(
         render_canonical_qc_markdown(canonical, project_name=project.name), encoding="utf-8"
     )
-    if extra["overall_after_m5"] == "FAIL":
-        raise M5Blocked("QC failed: " + json.dumps(extra))
-    return {"report": canonical, "video": str(video)}
+    if verdict.blocked:
+        raise M5Blocked("QC BLOCKED: " + json.dumps(verdict.as_dict()))
+    return {"report": canonical, "video": str(video), "verdict": verdict}
 
 
 def stage_visual_qc(project: Path, slug: str) -> Dict[str, Any]:
@@ -2709,9 +2724,10 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
                         "production_ready": False,
                     }
         stages["compose"] = {"state": "OK", "video": compose.get("video")}
-        qc = run_stage("qc", stage_qc, project, slug)
+        qc = run_stage("qc", stage_qc, project, slug, project_config=config)
         stages["qc"] = {"overall": qc["report"].get("overall"),
-                        "audio": qc["report"]["m5_checks"]["audio_stream"]}
+                        "audio": qc["report"]["m5_checks"]["audio_stream"],
+                        "verdict": qc["report"]["m5_checks"]["verdict"]["decision"]}
         visual = run_stage("visual_qc", stage_visual_qc, project, slug)
         stages["visual_qc"] = {
             "state": visual["state"], "gate_light": visual.get("gate_light"),
