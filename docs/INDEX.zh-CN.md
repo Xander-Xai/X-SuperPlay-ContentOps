@@ -6,6 +6,8 @@ translation_status: synced
 
 # 文档索引
 
+> 2026-11-09 架构重构审查（未合并分支）：[完整架构审计与分阶段改造](CONTENTOPS-ARCHITECTURE-REFACTOR-2026-11-09.zh-CN.md)。试验能力不得视作 main 已完成或已发布。
+
 [English](INDEX.md) | [简体中文](INDEX.zh-CN.md)
 
 > 单一导航中心。一个事实，一个归属。其他文档链接，不复制。
