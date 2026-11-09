@@ -347,6 +347,9 @@ def build_automatically_uses_the_stage_without_a_manual_adapter_cli():
     assert result["stages"]["media_use"]["state"] == "OK"
     assert result["stages"]["assets"]["count"] == 1
     assert result["stages"]["storyboard"]["shots"] == 1
+    # No render means nothing can enter review, so the ASR backcheck is NOT_RUN —
+    # recorded, never faked as a pass.
+    assert result["stages"]["asr_backcheck"]["status"] == "NOT_RUN"
     assert [call[0] for call in adapter.calls] == ["adopt", "resolve", "import", "verify"]
     assert result["production_ready"] is False
 

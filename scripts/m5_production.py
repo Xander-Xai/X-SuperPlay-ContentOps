@@ -2615,13 +2615,21 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
     stages["narration"] = {"duration_s": narration["duration_s"],
                            "engine": narration["engine"],
                            "provider": narration.get("voice_provider", provider)}
-    asr = run_stage("asr_backcheck", stage_asr_backcheck, project, config,
-                    script["script"], narration)
-    stages["asr_backcheck"] = {
-        "status": asr["status"], "provider": asr["provider"], "model": asr["model"],
-        "coverage": asr["coverage"], "blocks_human_review": asr["blocks_human_review"],
-        "receipt": "receipts/asr-backcheck.json",
-    }
+    # ASR verifies the narration that will actually be heard. When compose is
+    # skipped there is no render and nothing can enter review, so the backcheck is
+    # not run and not faked: it is recorded as NOT_RUN, which is not a pass.
+    if not skip_compose:
+        asr = run_stage("asr_backcheck", stage_asr_backcheck, project, config,
+                        script["script"], narration)
+        stages["asr_backcheck"] = {
+            "status": asr["status"], "provider": asr["provider"], "model": asr["model"],
+            "coverage": asr["coverage"], "blocks_human_review": asr["blocks_human_review"],
+            "receipt": "receipts/asr-backcheck.json",
+        }
+    else:
+        stages["asr_backcheck"] = {
+            "status": "NOT_RUN", "reason": "compose skipped", "blocks_human_review": False,
+        }
     motion = run_stage("motion", stage_motion, project, config, script["script"],
                        require_copy_review=require_copy_review, narration=narration,
                        rerender_shots=rerender_shots)
