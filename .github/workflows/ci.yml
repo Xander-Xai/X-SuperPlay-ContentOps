@@ -404,6 +404,11 @@ jobs:
       - name: Run graphic delivery gate tests
         run: python tests/test_delivery_gate.py
 
+      # WeChat draft channel: shaping, credential preflight and the read-back
+      # check. Offline only — no token, no upload, no credential.
+      - name: Run WeChat draft tests
+        run: python tests/test_wechat_draft.py
+
       # Content Bundle consumption contract: Strategy owns the template, this
       # suite only proves a consumer refuses an incomplete or unsafe record.
       - name: Run content bundle contract tests
