@@ -71,11 +71,11 @@ def test_every_strategy_platform_is_represented():
     assert mapped == STRATEGY_PLATFORMS, f"missing {STRATEGY_PLATFORMS - mapped}, extra {mapped - STRATEGY_PLATFORMS}"
 
 
-def test_xiaohongshu_split_maps_to_one_strategy_platform():
+def test_xiaohongshu_is_video_only():
     platforms = load_platforms(ROOT)
     xhs = [e for e in platforms.values() if e.strategy_platform == "xiaohongshu"]
-    assert len(xhs) == 2, f"expected video and image entries, got {len(xhs)}"
-    assert {e.pipeline for e in xhs} == {"VIDEO", "XHS_EDITORIAL"}
+    assert len(xhs) == 1, f"expected a single video entry, got {len(xhs)}"
+    assert {e.pipeline for e in xhs} == {"VIDEO"}
 
 
 def test_platform_ids_are_unique():
@@ -210,7 +210,7 @@ def main() -> int:
     tests = (
         test_registries_agree,
         test_every_strategy_platform_is_represented,
-        test_xiaohongshu_split_maps_to_one_strategy_platform,
+        test_xiaohongshu_is_video_only,
         test_platform_ids_are_unique,
         test_github_is_documented_not_registered,
         test_only_x_is_integrated_and_it_carries_evidence,

@@ -31,7 +31,6 @@ DEFAULT_CONSTRAINTS: Dict[str, Dict[str, Any]] = {
     "douyin": {"aspect_ratio": "9:16", "max_duration_s": 180, "caption_max_chars": 80},
     "xiaohongshu": {"aspect_ratio": "3:4", "max_duration_s": 300, "caption_max_chars": 1000},
     "xiaohongshu_video": {"aspect_ratio": "3:4", "max_duration_s": 300, "caption_max_chars": 1000},
-    "xiaohongshu_image": {"aspect_ratio": "3:4", "max_duration_s": 300, "caption_max_chars": 1000},
     "bilibili": {"aspect_ratio": "16:9", "max_duration_s": 600, "caption_max_chars": 200},
     "wechat_channels": {"aspect_ratio": "9:16", "max_duration_s": 180, "caption_max_chars": 80},
     "shipinhao": {"aspect_ratio": "9:16", "max_duration_s": 180, "caption_max_chars": 80},
@@ -44,8 +43,10 @@ DEFAULT_CONSTRAINTS: Dict[str, Dict[str, Any]] = {
 }
 
 #: Registry rows use split ids for a platform with two content forms.
+#: Xiaohongshu is video-only since 2026-11-09 (operator instruction); the
+#: graphic row and its workflow were removed from the repository.
 REGISTRY_ALIASES = {
-    "xiaohongshu": ("xiaohongshu_video", "xiaohongshu_image"),
+    "xiaohongshu": ("xiaohongshu_video",),
     "wechat_channels": ("shipinhao",),
     "wechat_official_account": ("wechat_article",),
 }
