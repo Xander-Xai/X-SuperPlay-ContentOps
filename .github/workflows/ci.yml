@@ -13,6 +13,7 @@ on:
       - 'security/**'
       - 'docs/**'
       - 'ci/**'
+      - 'refactor/**'
   pull_request:
     branches: [main]
   workflow_dispatch:
