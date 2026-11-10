@@ -1,0 +1,110 @@
+{
+  "_provenance": {
+    "source": "Xander-Xai/X-SuperPlay-Strategy 90-Templates/content-bundle.yaml @ main 97c2c57",
+    "frozen_at": "2026-11-09",
+    "purpose": "Cross-repo contract fixture: the Strategy template's exact key structure, filled with a minimal legal sample. If Strategy changes the template's shape, tests/test_bundle_template_fixture.py fails here first, before any handoff breaks at runtime. ContentOps consumes Bundles as JSON natively; this fixture is the JSON rendering of that YAML template.",
+    "update_rule": "Re-derive this file from the Strategy template by hand, verify against the template, and update _provenance.source in the same commit. Never edit keys here to make a failing consumer pass."
+  },
+  "schema_version": 1,
+  "record_type": "content_bundle",
+  "bundle_id": "CB-20261109-001",
+  "created_at": "2026-11-09T09:00:00+08:00",
+  "status": "draft",
+  "source": {
+    "source_id": "SRC-20261109-001",
+    "source_refs": [
+      "repo://X-SuperPlay-ContentOps/docs/CURRENT-STATE.zh-CN.md"
+    ],
+    "topic_thesis": "Publish receipts bind URLs, times, versions and confirmer, or the publish count is not evidence",
+    "claim_refs": [
+      "CLM-20261109-001"
+    ],
+    "permission_refs": [],
+    "proof_level": "documented"
+  },
+  "account_treatments": {
+    "explorer": {
+      "strategy_account": "X超玩•1024",
+      "role": "Explore",
+      "narrative_angle": "the audit that catches a broken data loop",
+      "key_claims": [
+        "CLM-20261109-001"
+      ],
+      "cta_intent": "submit_a_real_problem",
+      "production_lane": "baseline",
+      "execution_profile_hint": "default"
+    },
+    "thinktank": {
+      "strategy_account": "X超玩•未来智能",
+      "role": "Build",
+      "narrative_angle": "the receipt schema that makes publish counts auditable",
+      "key_claims": [
+        "CLM-20261109-001"
+      ],
+      "cta_intent": "request_reference_implementation",
+      "production_lane": "baseline",
+      "execution_profile_hint": "default"
+    }
+  },
+  "asset_requirements": [
+    {
+      "requirement_id": "AR-001",
+      "claim_refs": [
+        "CLM-20261109-001"
+      ],
+      "capability": "real_capture",
+      "evidence_role": "direct_evidence",
+      "required": true,
+      "account_scope": [],
+      "platform_scope": [],
+      "acceptance": "a terminal capture of the audit command refusing a due-missing window",
+      "fallback_capabilities": []
+    }
+  ],
+  "assets": {
+    "real_evidence_refs": [],
+    "reusable_asset_refs": [],
+    "generated_asset_refs": [],
+    "manual_premium_asset_refs": [],
+    "canonical_master_refs": []
+  },
+  "aigc_provenance": {
+    "required": true,
+    "asset_manifest_refs": [],
+    "disclosure_review_status": "pending"
+  },
+  "content_experiments": {
+    "refs": []
+  },
+  "platform_adapters": {
+    "refs": []
+  },
+  "execution_pointers": [
+    {
+      "platform": null,
+      "repo": null,
+      "production_id": null,
+      "production_status": null,
+      "publication_receipt_ref": null
+    }
+  ],
+  "metric_and_signal_pointers": {
+    "metric_snapshot_refs": [],
+    "market_signal_refs": [],
+    "review_refs": []
+  },
+  "invariants": {
+    "production_lane_is_strategy_capacity_routing": true,
+    "execution_profile_hint_is_not_child_runtime_contract": true,
+    "asset_requirement_precedes_provider_resolution": true,
+    "asset_requirement_claim_binding_required_for_direct_evidence": true,
+    "downstream_records_should_preserve_bundle_id": true,
+    "source_is_not_validated_demand": true,
+    "bundle_is_not_published_content": true,
+    "generated_media_is_not_direct_evidence": true,
+    "platform_adaptation_must_not_change_facts": true,
+    "credentials_must_not_cross_repository_boundaries": true,
+    "business_source_of_truth": "Xander-Xai/X-SuperPlay-OPC-Blueprint",
+    "implementation_source_of_truth": "Xander-Xai/X-SuperPlay-Strategy"
+  }
+}

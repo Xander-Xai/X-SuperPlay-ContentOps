@@ -83,6 +83,15 @@ jobs:
       - name: Run basic tests
         run: python scripts/test_basic.py
 
+      # D7 governance guardrails: branch registry validation and PR size metrics.
+      # Both are offline and spawn no child processes. The size check is
+      # report-only here; --strict (threshold enforcement) needs an Owner decision.
+      - name: Check branch registry
+        run: python scripts/check_branch_registry.py
+
+      - name: Run governance guardrail tests
+        run: python tests/test_governance_checks.py
+
       # The media suites never make a provider request: they drive
       # tests/fixtures/fake_mmx_cli.py and inject a fake billing transport, so CI
       # needs no MiniMax account and spends no quota.
@@ -523,6 +532,26 @@ jobs:
       # symlink spellings fail closed before anything is read or written.
       - name: Run X path-safety tests
         run: python tests/test_x_path_safety.py
+
+      # P0 loop hardening: publication backfill receipts (URL/handle/time/
+      # version/confirmer bindings, readback state machine). Fully offline.
+      - name: Run publish backfill tests
+        run: python tests/test_publish_backfill.py
+
+      # Metric window audit: T+24H/72H/7D coverage, zero-vs-missing split,
+      # strict mode. Reads fixture CSVs only; nothing is fetched.
+      - name: Run metric window audit tests
+        run: python tests/test_metric_windows.py
+
+      # Strategy-vs-ContentOps platform status reconciliation. The fixture
+      # matrix stands in for the sibling Strategy checkout.
+      - name: Run platform status sync tests
+        run: python tests/test_platform_status_sync.py
+
+      # Cross-repo contract: the fixture frozen from Strategy's Bundle
+      # template must keep passing the consumer contract.
+      - name: Run bundle template fixture tests
+        run: python tests/test_bundle_template_fixture.py
 
       - name: Enforce subprocess policy
         run: python scripts/check_subprocess_policy.py
