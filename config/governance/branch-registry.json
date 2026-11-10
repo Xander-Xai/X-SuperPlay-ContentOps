@@ -17,6 +17,14 @@
       "purpose": "protected default branch",
       "status": "persistent",
       "expires": null
+    },
+    {
+      "name": "refactor/motion-planner-stages",
+      "pr": 142,
+      "created": "2026-11-10",
+      "purpose": "source-anchor motion regions (drift slice B)",
+      "status": "open",
+      "expires": "2026-12-10"
     }
   ]
 }
