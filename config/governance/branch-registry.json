@@ -17,6 +17,14 @@
       "purpose": "protected default branch",
       "status": "persistent",
       "expires": null
+    },
+    {
+      "name": "fix/demote-run-v1-easel",
+      "pr": 143,
+      "created": "2026-11-10",
+      "purpose": "run_v1 easel-engine BLOCKED gate (drift slice C)",
+      "status": "open",
+      "expires": "2026-12-10"
     }
   ]
 }
