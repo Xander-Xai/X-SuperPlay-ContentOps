@@ -155,6 +155,36 @@ def test_plan_refuses_a_legacy_card_input_schema():
         _expect_error(lambda: plan(project, runtime_root=runtime), "ARTICLE_INPUT_SCHEMA_MISMATCH")
 
 
+def test_plan_refuses_an_unknown_input_schema():
+    with tempfile.TemporaryDirectory() as d:
+        runtime = _fake_runtime(Path(d))
+        project = _project(Path(d))
+        (project / "article-input.json").write_text(
+            json.dumps({"schema": "contentops.unknown/v9"}), encoding="utf-8")
+        _expect_error(lambda: plan(project, runtime_root=runtime), "ARTICLE_INPUT_SCHEMA_MISMATCH")
+
+
+def test_plan_refuses_a_missing_cover():
+    with tempfile.TemporaryDirectory() as d:
+        runtime = _fake_runtime(Path(d))
+        project = _project(Path(d))
+        (project / "article-input.json").write_text(json.dumps({
+            "schema": INPUT_SCHEMA,
+            "cover": {"path": "assets/images/missing.png"},
+        }), encoding="utf-8")
+        _expect_error(lambda: plan(project, runtime_root=runtime), "ARTICLE_COVER_MISSING")
+
+
+def test_plan_accepts_a_valid_relative_image():
+    with tempfile.TemporaryDirectory() as d:
+        runtime = _fake_runtime(Path(d))
+        project = _project(Path(d))
+        p = plan(project, runtime_root=runtime)
+        assert len(p.images) == 1
+        assert p.images[0]["path"] == "project://assets/images/figure0.png"
+        assert len(p.images[0]["sha256"]) == 64
+
+
 def test_plan_refuses_a_remote_image():
     with tempfile.TemporaryDirectory() as d:
         runtime = _fake_runtime(Path(d))
