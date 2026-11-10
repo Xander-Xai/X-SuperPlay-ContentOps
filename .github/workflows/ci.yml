@@ -49,7 +49,12 @@ jobs:
         # (graphic-platforms.yaml, video-platforms.yaml) are read through it. The
         # suites that consume them fail loudly rather than skipping, so it has to
         # be installed here or the coverage looks larger than it is.
-        run: python -m pip install --quiet --upgrade pip Pillow PyYAML
+        #
+        # pyJianYingDraft is pinned and Apache-2.0. The 剪映 handoff suite builds a
+        # real draft from a fixture project, so the library has to be present at
+        # exactly this version: the draft format is the contract, and the module
+        # refuses any other version instead of writing a draft nobody can open.
+        run: python -m pip install --quiet --upgrade pip Pillow PyYAML pyJianYingDraft==0.3.1
 
       # ffmpeg was absent on both runners, and the M4 H3 suite plus the M4.5
       # transform tests need it. Installing it here is what turns those skips into
@@ -525,6 +530,11 @@ jobs:
       - name: Run X path-safety tests
         run: python tests/test_x_path_safety.py
 
+      # The 剪映 handoff: a draft written from the accepted MediaManifest timeline
+      # and subtitle cues, inside the project, with no export path at all. Fixture
+      # project, real pinned library, JianYing never launched.
+      - name: Run 剪映 handoff tests
+        run: python tests/test_jianying_handoff.py
       # P0 loop hardening: publication backfill receipts (URL/handle/time/
       # version/confirmer bindings, readback state machine). Fully offline.
       - name: Run publish backfill tests
