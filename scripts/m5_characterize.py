@@ -59,25 +59,25 @@ _RE_ALL_PASSED = re.compile(r"^All (\d+) [\w -]*tests? passed", re.MULTILINE)
 
 def parse_suite_output(text: str) -> dict:
     """Extract (total, passed, failed, dialect) from a suite's summary output."""
-    total = passed = None
-    dialect = None
+    # Dialect 1: unittest ("Ran 14 tests" + a bare OK line).
     m = _RE_UNITTEST.search(text)
     if m:
-        dialect = "unittest"
         total = int(m.group(1))
         passed = total if _RE_UNITTEST_OK.search(text) else 0
-    if total is None:
-        m = _RE_CUSTOM.search(text) or _RE_PASSED.search(text) or _RE_ALL_PASSED.search(text)
-        if m:
-            dialect = "custom"
-            total = int(m.group(2))
-            passed = int(m.group(1))
-            failed = total - passed
-            return {"total": total, "passed": passed, "failed": failed, "dialect": dialect}
-    if total is None:
-        return {"total": None, "passed": None, "failed": None, "dialect": None}
-    failed = total - passed
-    return {"total": total, "passed": passed, "failed": failed, "dialect": dialect}
+        return {"total": total, "passed": passed, "failed": total - passed,
+                "dialect": "unittest"}
+    # Dialect 2: custom runner counting both sides ("18/18 ok", "Passed 29/30 ...").
+    m = _RE_CUSTOM.search(text) or _RE_PASSED.search(text)
+    if m:
+        total, passed = int(m.group(2)), int(m.group(1))
+        return {"total": total, "passed": passed, "failed": total - passed,
+                "dialect": "custom"}
+    # Dialect 3: prose totals ("All 19 M5 evidence tests passed.").
+    m = _RE_ALL_PASSED.search(text)
+    if m:
+        total = int(m.group(1))
+        return {"total": total, "passed": total, "failed": 0, "dialect": "prose"}
+    return {"total": None, "passed": None, "failed": None, "dialect": None}
 
 
 def run_suite(suite: str, python: str = sys.executable, timeout: int = 600) -> dict:
