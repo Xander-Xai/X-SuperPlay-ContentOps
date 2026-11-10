@@ -19,10 +19,10 @@
       "expires": null
     },
     {
-      "name": "feat/wcs-browser-bridge",
-      "pr": 144,
+      "name": "feat/platform-route-display",
+      "pr": 141,
       "created": "2026-11-10",
-      "purpose": "wechatsync browser bridge for graphic delivery (drift slice D / A5)",
+      "purpose": "platform workflow routes + route display CLI (drift slice A)",
       "status": "open",
       "expires": "2026-12-10"
     }
