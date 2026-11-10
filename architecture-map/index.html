@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Architecture Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#0f1218; --panel:#11151c; --card:#1a1f29; --brd:#2b3242; --ink:#e7eaf0;
+    --mut:#5a626f; --mut2:#c4cad4; --line:#1d232e; }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#0d1016;color:var(--ink);
+    font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  #app{position:fixed;inset:0;background:var(--bg);overflow:hidden}
+
+  /* canvas dot-grid */
+  #viewport{position:absolute;top:56px;left:0;right:0;bottom:0;overflow:hidden;cursor:grab;
+    background-image:radial-gradient(#1a2030 1px,transparent 1px);background-size:26px 26px;background-position:-13px -13px}
+  #viewport.drag{cursor:grabbing}
+  #stage{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+  #edges{position:absolute;left:0;top:0;overflow:visible;pointer-events:none}
+  #nodes{position:absolute;left:0;top:0}
+
+  /* top bar */
+  #topbar{position:absolute;top:0;left:0;right:0;height:56px;display:flex;align-items:center;
+    justify-content:space-between;padding:0 18px;border-bottom:1px solid var(--line);background:var(--panel);z-index:6}
+  #topbar .brand{display:flex;align-items:center;gap:11px}
+  #topbar .logo{width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,#5b9bff,#b88bff);
+    box-shadow:0 0 14px rgba(124,140,255,.4)}
+  #topbar .pname{font-weight:600;font-size:14px;color:var(--ink)}
+  #topbar .psub{font:500 13px "IBM Plex Mono",monospace;color:var(--mut)}
+  #topbar .tools{display:flex;align-items:center;gap:7px}
+  #search{width:190px;background:#171c25;border:1px solid #262d3a;border-radius:8px;padding:6px 10px;
+    color:var(--ink);font:500 12px "IBM Plex Sans",sans-serif;outline:none}
+  #search::placeholder{color:var(--mut)}
+  #search:focus{border-color:#3a4456}
+  .card.hit{border-color:#5b9bff;box-shadow:0 0 0 1px rgba(91,155,255,.5),0 2px 10px rgba(0,0,0,.4)}
+  #topbar .zoom{display:flex;gap:1px;background:#171c25;border:1px solid #262d3a;border-radius:8px;padding:2px}
+  #topbar .zoom button,#topbar .btn{background:transparent;color:var(--mut2);border:0;border-radius:6px;
+    padding:5px 9px;font:600 12px "IBM Plex Mono",monospace;cursor:pointer}
+  #topbar .zoom button:hover,#topbar .btn:hover{background:#222a38;color:#fff}
+  #topbar .btn{border:1px solid #262d3a}
+
+  /* node card */
+  .card{position:absolute;width:224px;background:var(--card);border:1px solid var(--brd);border-radius:13px;
+    padding:13px 14px 14px;box-shadow:0 2px 8px rgba(0,0,0,.35);cursor:pointer;
+    transition:border-color .12s,box-shadow .12s,transform .12s,opacity .12s}
+  .card:hover{border-color:#3a4456;transform:translateY(-1px)}
+  .card.sel{box-shadow:0 8px 26px rgba(0,0,0,.55)}
+  .card.dim{opacity:.38}
+  .card.proposed{border-style:dashed}
+  .card .accent{position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:0 3px 3px 0}
+  .chead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px;padding-left:8px}
+  .sub{display:flex;align-items:center;gap:7px;min-width:0}
+  .sub .dot{width:8px;height:8px;border-radius:50%;flex:none}
+  .sub .subname{font:600 10px "IBM Plex Mono",monospace;letter-spacing:.06em;text-transform:uppercase;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .status{display:flex;align-items:center;gap:4px;padding:2px 7px;border-radius:999px;flex:none;
+    font:600 9px "IBM Plex Mono",monospace;letter-spacing:.05em;text-transform:uppercase}
+  .status .sdot{width:5px;height:5px;border-radius:50%;background:currentColor}
+  .s-shipped{background:rgba(79,208,138,.13);border:1px solid rgba(79,208,138,.32);color:#6fe0a2}
+  .s-planned{background:rgba(122,162,214,.14);border:1px solid rgba(122,162,214,.34);color:#9fc1e8}
+  .s-proposed{background:rgba(230,184,90,.13);border:1px solid rgba(230,184,90,.34);color:#e6b85a}
+  .s-parked{background:rgba(139,147,167,.13);border:1px solid rgba(139,147,167,.30);color:#aab2c5}
+  .s-removable{background:rgba(255,107,107,.14);border:1px solid rgba(255,107,107,.42);color:#ff9090}
+  /* removable overlay (architecture-cleanup) — hidden until toggled on */
+  .rm-pill{display:none;margin-top:9px;margin-left:8px}
+  body.show-removable .rm-pill{display:inline-flex}
+  body.show-removable .card.removable{border-color:#ff6b6b;
+    box-shadow:0 0 0 1px rgba(255,107,107,.5),0 2px 10px rgba(0,0,0,.4)}
+  body.show-removable #edges path.link.rm{stroke:#ff6b6b !important;stroke-dasharray:3 4}
+  .btn.on{background:rgba(255,107,107,.16);border-color:rgba(255,107,107,.5);color:#ff9090}
+  .p-rm{margin-top:13px;padding:10px 12px;border-radius:9px;background:rgba(255,107,107,.08);
+    border:1px solid rgba(255,107,107,.28)}
+  .p-rm .p-h{margin:0 0 6px;color:#ff9090}
+  .p-rm .rm-meta{font:600 10px "IBM Plex Mono",monospace;color:#ffb0b0;margin-bottom:5px}
+  .p-rm .rm-ev{font-size:12px;color:#e9c8c8;line-height:1.45}
+  /* proposal overlay (architecture-improve) — emphasis hidden until toggled on */
+  .pr-pill{display:none;margin-top:9px;margin-left:8px}
+  body.show-proposals .pr-pill{display:inline-flex}
+  body.show-proposals .card.proposal{border-color:#e6b85a;
+    box-shadow:0 0 0 1px rgba(230,184,90,.5),0 2px 10px rgba(0,0,0,.4)}
+  .btn.pr-on{background:rgba(230,184,90,.16);border-color:rgba(230,184,90,.5);color:#e6b85a}
+  .p-pr{margin-top:13px;padding:10px 12px;border-radius:9px;background:rgba(230,184,90,.08);
+    border:1px solid rgba(230,184,90,.28)}
+  .p-pr .p-h{margin:0 0 6px;color:#e6b85a}
+  .p-pr .pr-meta{font:600 10px "IBM Plex Mono",monospace;color:#f0cd86;margin-bottom:6px}
+  .p-pr .pr-field{font-size:12px;color:#e9dcc2;line-height:1.45;margin-bottom:5px}
+  .p-pr .pr-field b{color:#f0cd86;font-weight:600}
+  .title{padding-left:8px;font-weight:600;font-size:13.5px;color:var(--ink);line-height:1.32}
+  .tech{padding-left:8px;margin-top:3px;font:500 10.5px "IBM Plex Mono",monospace;color:var(--mut);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .motor{display:flex;align-items:center;gap:6px;margin-top:10px;padding-left:8px;
+    font:600 10px "IBM Plex Mono",monospace;letter-spacing:.02em;color:var(--mut2)}
+  .motor .micon{font-size:12px;line-height:1}
+
+  /* detail / legend panel */
+  #panel{position:absolute;top:72px;right:16px;width:304px;max-height:calc(100% - 96px);overflow:auto;
+    background:rgba(17,21,28,.97);border:1px solid #232a36;border-radius:14px;padding:16px 16px 18px;
+    box-shadow:0 24px 64px rgba(0,0,0,.55);backdrop-filter:blur(8px);z-index:5}
+  .p-eyebrow{font:600 10px "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+  .p-title{font-weight:600;font-size:16px;margin:7px 0 2px;line-height:1.3}
+  .p-tech{font:500 11px "IBM Plex Mono",monospace;color:var(--mut);margin-bottom:10px}
+  .p-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+  .p-motor{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:999px;
+    background:#1b212c;border:1px solid #2b3242;font:600 10px "IBM Plex Mono",monospace;color:var(--mut2)}
+  .io{margin-top:11px;padding:9px 11px;border-radius:9px;background:#141922;border-left:3px solid #3a4051}
+  .io.in{border-left-color:#5ad6a8}.io.do{border-left-color:#e6c35a}.io.out{border-left-color:#5b9bff}
+  .io .io-h{display:block;font:600 9.5px "IBM Plex Mono",monospace;letter-spacing:.05em;text-transform:uppercase;
+    margin-bottom:3px;color:#aeb6c6}
+  .io p{margin:0;font-size:12.5px;line-height:1.45;color:var(--ink)}
+  .p-files{margin-top:12px;font:500 11px "IBM Plex Mono",monospace;color:#7fa8d8;white-space:pre-wrap;word-break:break-all}
+  .p-notes{margin-top:10px;font-size:12px;color:#9aa3b5}
+  .p-h{font:600 10px "IBM Plex Mono",monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--mut);
+    margin:16px 0 8px}
+  .leg{display:flex;align-items:center;gap:9px;margin:5px 0;font-size:12.5px;color:#cdd3e0}
+  .leg.sub-row{cursor:pointer;border-radius:7px;padding:3px 7px;margin:2px -7px}
+  .leg.sub-row:hover{background:#1b212c}
+  .leg.sub-row.active{background:#1b212c;outline:1px solid #3a4456}
+  .leg .sw{width:10px;height:10px;border-radius:3px;flex:none}
+  .leg .lmut{color:var(--mut);font-size:11px}
+  .leg .ico{width:18px;text-align:center}
+  .p-hint{margin-top:14px;font-size:11.5px;line-height:1.5;color:var(--mut)}
+
+  /* subsystem group containers */
+  #groups{position:absolute;left:0;top:0}
+  .grp{position:absolute;border-radius:16px;pointer-events:none}
+  .grp-h{position:absolute;top:-14px;left:14px;display:inline-flex;align-items:center;gap:7px;
+    padding:5px 12px;border-radius:999px;background:var(--panel);border:1px solid var(--brd);
+    font:600 10.5px "IBM Plex Mono",monospace;letter-spacing:.06em;text-transform:uppercase;
+    white-space:nowrap;pointer-events:auto;cursor:pointer}
+  .grp-h:hover{background:#1b212c}
+  .grp-h .dot{width:8px;height:8px;border-radius:50%;flex:none}
+  .grp-h .cnt{color:var(--mut)}
+
+  /* edges */
+  #edges path.link{fill:none;stroke-width:1.6;opacity:.85;transition:opacity .12s,stroke-width .12s}
+  #edges path.link.faint{opacity:.16}
+  #edges path.link.hot{stroke-width:2.4;opacity:1}
+  #edges .elabel{font:600 9px "IBM Plex Mono",monospace;fill:#aeb6c6}
+  #edges .elabel rect{fill:#0f1218;stroke:#262d3a;stroke-width:1}
+  #edges .elabwrap{opacity:0;transition:opacity .12s}
+  #edges .elabwrap.show{opacity:1}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <div class="brand">
+      <div class="logo"></div>
+      <span class="pname" id="pname">Architecture Map</span>
+      <span class="psub">/ architecture</span>
+    </div>
+    <div class="tools">
+      <input id="search" type="search" placeholder="Search nodes…" autocomplete="off" />
+      <button class="btn" id="rmToggle" hidden></button>
+      <button class="btn" id="prToggle" hidden></button>
+      <button class="btn" id="fit">Fit</button>
+      <div class="zoom"><button id="zout">−</button><button id="zin">+</button></div>
+    </div>
+  </div>
+  <div id="viewport">
+    <div id="stage">
+      <div id="groups"></div>
+      <svg id="edges"><defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="context-stroke"></path>
+        </marker>
+      </defs></svg>
+      <div id="nodes"></div>
+    </div>
+  </div>
+  <div id="panel"></div>
+</div>
+
+<script src="elk.bundled.js"></script>
+<script src="map.js"></script>
+<script>
+const D = window.MAP_DATA;
+// Friendly empty-state if the viewer is opened without a map.js next to it
+// (e.g. previewing the bare skill assets) — beats a raw "D.subsystems of undefined" crash.
+if (!D) {
+  document.getElementById("app").innerHTML =
+    '<div style="display:grid;place-items:center;height:100%;text-align:center;padding:40px;'
+    + 'color:#5a626f;font:500 14px \'IBM Plex Mono\',monospace;line-height:1.7">'
+    + 'No map data loaded.<br>This viewer needs a <code>map.js</code> beside it '
+    + '(<code>window.MAP_DATA = {…}</code>).<br>Preview the bare viewer with '
+    + '<code>cp sample-map.js map.js</code>.</div>';
+  throw new Error("architecture-map: window.MAP_DATA missing");
+}
+const SVGNS = "http://www.w3.org/2000/svg";
+const esc = s => String(s ?? "").replace(/[&<>]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;" }[c]));
+const CARD_W = 224;
+
+// ---- engines (the "motor") — generic category keys + optional engineLabel ----
+// keep in sync with references/map-schema.md (single source of truth for the enum)
+const ENGINES = {
+  browser:{icon:"🖥️",label:"Browser · JavaScript"}, server:{icon:"🐍",label:"Server / Backend"},
+  llm:{icon:"🧠",label:"LLM / AI model"}, image:{icon:"🎨",label:"Image model"},
+  video:{icon:"🎬",label:"Video model"}, db:{icon:"🗄️",label:"Database"},
+  auth:{icon:"🔐",label:"Auth"}, storage:{icon:"📦",label:"Object storage"},
+  queue:{icon:"📤",label:"Queue / Scheduler"}, host:{icon:"☁️",label:"Hosting / Platform"},
+  web:{icon:"🌐",label:"External site / API"}, disk:{icon:"💾",label:"Local disk / file"},
+  cache:{icon:"⚡",label:"Cache"}, other:{icon:"⚙️",label:"Other"}
+};
+const engineOf = k => ENGINES[k] || ENGINES.other;
+const engLabel = n => (n.engineLabel && String(n.engineLabel).trim()) || engineOf(n.engine).label;
+
+const subOf = id => D.subsystems.find(s => s.id === id) || {};
+const colorOf = id => subOf(id).color || "#8b93a7";
+const subShort = id => { const l = subOf(id).label || id;
+  return l.split(/[—–\-·|(]/)[0].trim().split(/\s+/).slice(0,3).join(" "); };
+// keep in sync with references/map-schema.md (status enum)
+const statusClass = s => ["shipped","planned","proposed","parked"].includes(s) ? "s-"+s : "s-parked";
+
+// ---- removable overlay (architecture-cleanup) ----
+const RM_CAT = {1:"dead function",2:"unused endpoint",3:"stale data-stream",4:"unreferenced file/module",
+  5:"stale config/flag",6:"unbuilt proposed-node",7:"duplicate/superseded"};
+const RM_TIER = {"sure":"🔴 sure","check-yourself":"🟡 check yourself"};
+const rmTierIcon = t => (RM_TIER[t]||"").split(" ")[0] || "🔴";
+const rmLabel = r => `${RM_TIER[r.tier]||r.tier} · ${RM_CAT[r.category]||("category "+r.category)}`;
+function rmBlast(b){ if(!b||(!(b.edges||[]).length && !(b.nodes||[]).length)) return "";
+  const ns = (b.nodes||[]).join(", "), ec = (b.edges||[]).length;
+  return `<div class="rm-ev" style="margin-top:6px">💥 breaks: ${esc(ns)||"—"}${ec?` · ${ec} edge${ec>1?"s":""}`:""}</div>`; }
+
+// ---- proposal overlay (architecture-improve) ----
+// priority band from the effort/impact pair (Q1: bands, no numeric score)
+const prBand = p => {
+  if (p.impact === "high" && p.effort === "S") return "⚡ quick win";
+  if (p.impact === "high") return "🎯 big bet";
+  if (p.impact === "low" && p.effort === "L") return "⛔ skip";
+  return "🧹 fill-in";
+};
+const prLens = l => l === "pipeline" ? "🔀 pipeline" : "🏗️ structure";
+
+// ---- build node index + drop dangling edges ----
+const nodeById = new Map(D.nodes.map(n => [n.id, n]));
+const edges = D.edges.filter(e => nodeById.has(e.from) && nodeById.has(e.to));
+const dropped = D.edges.length - edges.length;
+if (dropped) console.warn(`architecture-map: ${dropped} edge(s) skipped (endpoint not in nodes)`);
+
+document.getElementById("pname").textContent = D.project || "Architecture Map";
+document.title = (D.project || "Architecture") + " — map";
+
+// ---- render cards (also used to measure heights before layout) ----
+const nodesLayer = document.getElementById("nodes");
+const edgesSvg = document.getElementById("edges");
+const cardEls = new Map();
+
+function cardHTML(n){
+  const col = colorOf(n.subsystem), e = engineOf(n.engine);
+  return `<span class="accent" style="background:${esc(col)}"></span>
+    <div class="chead">
+      <div class="sub"><span class="dot" style="background:${esc(col)}"></span>
+        <span class="subname" style="color:${esc(col)}">${esc(subShort(n.subsystem))}</span></div>
+      <span class="status ${statusClass(n.status)}"><span class="sdot"></span>${esc(n.status||"")}</span>
+    </div>
+    <div class="title">${esc(n.label)}</div>
+    ${n.tech ? `<div class="tech">${esc(n.tech)}</div>` : ""}
+    <div class="motor"><span class="micon">${e.icon}</span><span>${esc(engLabel(n))}</span></div>
+    ${n.removable ? `<div class="rm-pill status s-removable"><span class="sdot"></span>removable · ${rmTierIcon(n.removable.tier)}</div>` : ""}
+    ${n.proposal ? `<div class="pr-pill status s-proposed"><span class="sdot"></span>${prBand(n.proposal)} · ${esc(n.proposal.effort)}</div>` : ""}`;
+}
+for (const n of D.nodes){
+  const el = document.createElement("div");
+  el.className = "card" + (n.proposed ? " proposed" : "") + (n.removable ? " removable" : "") + (n.proposal ? " proposal" : "");
+  el.dataset.id = n.id;
+  el.style.left = "0px"; el.style.top = "0px";
+  el.innerHTML = cardHTML(n);
+  el.addEventListener("click", ev => { ev.stopPropagation(); select(n.id); });
+  nodesLayer.appendChild(el);
+  cardEls.set(n.id, el);
+}
+
+// ---- layout (ELK, hierarchical: one compound group per subsystem) then position ----
+const groupsLayer = document.getElementById("groups");
+function renderGroups(groups){
+  groupsLayer.innerHTML = "";
+  for (const g of groups){
+    const col = colorOf(g.id);
+    const el = document.createElement("div");
+    el.className = "grp";
+    el.style.cssText = `left:${g.x}px;top:${g.y}px;width:${g.w}px;height:${g.h}px;`
+      + `background:color-mix(in srgb, ${col} 5%, transparent);`
+      + `border:1px solid color-mix(in srgb, ${col} 30%, transparent)`;
+    el.innerHTML = `<div class="grp-h"><span class="dot" style="background:${esc(col)}"></span>`
+      + `<span style="color:${esc(col)}">${esc(subShort(g.id))}</span>`
+      + `<span class="cnt">${D.nodes.filter(n => n.subsystem === g.id).length}</span></div>`;
+    el.querySelector(".grp-h").addEventListener("click", ev => { ev.stopPropagation(); spotlightSub(g.id); });
+    groupsLayer.appendChild(el);
+  }
+}
+async function layout(){
+  const sizes = new Map();
+  for (const n of D.nodes){ const el = cardEls.get(n.id); sizes.set(n.id, { w: CARD_W, h: Math.max(64, el.offsetHeight) }); }
+  // group nodes by subsystem (declaration order; unknown subsystems appended)
+  const bySub = new Map(D.subsystems.map(s => [s.id, []]));
+  for (const n of D.nodes){ if (!bySub.has(n.subsystem)) bySub.set(n.subsystem, []); bySub.get(n.subsystem).push(n); }
+  let pos = null, routes = null, groups = [];
+  try {
+    const elk = new ELK();
+    const PAD = { t:46, l:18, b:18, r:18 };
+    // phase 1: lay out each subsystem's nodes on their own (vertical flow inside the group).
+    // (a single hierarchical ELK pass with INCLUDE_CHILDREN interleaves layers across
+    // groups, producing overlapping group boxes — hence two phases)
+    const inner = new Map(); // sid -> { w, h, pos: Map(nodeId -> {x,y}) }
+    for (const [sid, ns] of bySub){
+      if (!ns.length) continue;
+      const idset = new Set(ns.map(n => n.id));
+      const intra = edges.filter(e => idset.has(e.from) && idset.has(e.to));
+      if (!intra.length){
+        // no internal flow — plain vertical stack (up to 10 per column)
+        const perCol = 10, p = new Map(); let w = 0, h = 0;
+        ns.forEach((n, i) => { const c = Math.floor(i/perCol), x = c*(CARD_W+22);
+          const col = i % perCol; const above = ns.slice(c*perCol, c*perCol+col);
+          const y = above.reduce((a,m) => a + sizes.get(m.id).h + 22, 0);
+          p.set(n.id, { x, y }); w = Math.max(w, x+CARD_W); h = Math.max(h, y+sizes.get(n.id).h); });
+        inner.set(sid, { w: w+PAD.l+PAD.r, h: h+PAD.t+PAD.b, pos: p });
+        continue;
+      }
+      const res = await elk.layout({ id:"g",
+        layoutOptions:{ "elk.algorithm":"layered", "elk.direction":"DOWN",
+          "elk.spacing.nodeNode":"22", "elk.layered.spacing.nodeNodeBetweenLayers":"34",
+          "elk.aspectRatio":"0.7", "elk.separateConnectedComponents":"true" },
+        children: ns.map(n => ({ id:n.id, width:sizes.get(n.id).w, height:sizes.get(n.id).h })),
+        edges: intra.map((e,i) => ({ id:"i"+i, sources:[e.from], targets:[e.to] })) });
+      inner.set(sid, { w: res.width+PAD.l+PAD.r, h: res.height+PAD.t+PAD.b,
+        pos: new Map(res.children.map(c => [c.id, { x:c.x, y:c.y }])) });
+    }
+    // phase 2: lay out the groups as super-nodes, condensed inter-group edges drive order
+    const seen = new Set(); const ge = [];
+    for (const e of edges){
+      const a = nodeById.get(e.from).subsystem, b = nodeById.get(e.to).subsystem;
+      if (a === b || !inner.has(a) || !inner.has(b)) continue;
+      const k = a+"→"+b; if (seen.has(k)) continue; seen.add(k);
+      ge.push({ id:"ge"+ge.length, sources:["grp_"+a], targets:["grp_"+b] });
+    }
+    const top = await elk.layout({ id:"root",
+      layoutOptions:{ "elk.algorithm":"layered", "elk.direction":"RIGHT",
+        "elk.spacing.nodeNode":"56", "elk.layered.spacing.nodeNodeBetweenLayers":"120" },
+      children: [...inner.keys()].map(sid => ({ id:"grp_"+sid, width:inner.get(sid).w, height:inner.get(sid).h })),
+      edges: ge });
+    pos = new Map();
+    for (const c of top.children){
+      const sid = c.id.slice(4), inn = inner.get(sid);
+      groups.push({ id:sid, x:c.x, y:c.y, w:c.width, h:c.height });
+      inn.pos.forEach((p, nid) => pos.set(nid, { x: c.x+PAD.l+p.x, y: c.y+PAD.t+p.y }));
+    }
+    routes = "manual"; // computed below, once card sizes are attached to pos
+  } catch(err){
+    console.warn("ELK unavailable — grouped column fallback", err);
+    pos = new Map(); routes = null; groups = []; let gx = 0;
+    for (const [sid, ns] of bySub){ if (!ns.length) continue;
+      let gy = 46;
+      ns.forEach(n => { pos.set(n.id, { x: gx+18, y: gy }); gy += sizes.get(n.id).h + 26; });
+      groups.push({ id: sid, x: gx, y: 0, w: CARD_W+36, h: gy - 26 + 18 });
+      gx += CARD_W + 36 + 64; }
+  }
+  renderGroups(groups);
+  for (const n of D.nodes){ const p = pos.get(n.id), el = cardEls.get(n.id);
+    el.style.left = p.x+"px"; el.style.top = p.y+"px"; const s = sizes.get(n.id);
+    p.w = s.w; p.h = s.h; }
+  // manual orthogonal routes: intra-group = bottom→top, inter-group = right→left.
+  // backward edges (target behind source) fall through to the bezier in drawEdges.
+  if (routes === "manual"){
+    routes = new Map();
+    edges.forEach((e, i) => {
+      const a = pos.get(e.from), b = pos.get(e.to);
+      const lane = ((i % 7) - 3) * 5;   // stagger parallel edges so they don't stack
+      if (nodeById.get(e.from).subsystem === nodeById.get(e.to).subsystem){
+        const sx = a.x+a.w/2+lane, sy = a.y+a.h, tx = b.x+b.w/2+lane, ty = b.y;
+        if (ty > sy + 12){ const my = (sy+ty)/2;
+          routes.set("e"+i, [{x:sx,y:sy},{x:sx,y:my},{x:tx,y:my},{x:tx,y:ty}]); }
+      } else {
+        const sx = a.x+a.w, sy = a.y+a.h/2, tx = b.x, ty = b.y+b.h/2;
+        if (tx > sx + 24){ const mx = (sx+tx)/2+lane;
+          routes.set("e"+i, [{x:sx,y:sy},{x:mx,y:sy},{x:mx,y:ty},{x:tx,y:ty}]); }
+      }
+    });
+  }
+  drawEdges(pos, routes);
+  fit();
+}
+
+// ---- edges: ELK orthogonal routes (rounded corners), bezier fallback ----
+const edgeEls = [];
+function orthoPath(pts){
+  const r = 8;
+  let d = `M${pts[0].x},${pts[0].y}`;
+  for (let i = 1; i < pts.length - 1; i++){
+    const p = pts[i-1], c = pts[i], n = pts[i+1];
+    const d1 = Math.hypot(c.x-p.x, c.y-p.y), d2 = Math.hypot(n.x-c.x, n.y-c.y);
+    if (!d1 || !d2){ continue; }
+    const r1 = Math.min(r, d1/2), r2 = Math.min(r, d2/2);
+    const a = { x: c.x-(c.x-p.x)/d1*r1, y: c.y-(c.y-p.y)/d1*r1 };
+    const b = { x: c.x+(n.x-c.x)/d2*r2, y: c.y+(n.y-c.y)/d2*r2 };
+    d += ` L${a.x},${a.y} Q${c.x},${c.y} ${b.x},${b.y}`;
+  }
+  d += ` L${pts[pts.length-1].x},${pts[pts.length-1].y}`;
+  return d;
+}
+function drawEdges(pos, routes){
+  // clear (keep defs)
+  [...edgesSvg.querySelectorAll(".link,.elabwrap")].forEach(n => n.remove());
+  edgeEls.length = 0;
+  edges.forEach((e, i) => {
+    const path = document.createElementNS(SVGNS, "path");
+    const pts = routes && routes.get("e"+i);
+    if (pts && pts.length >= 2){
+      path.setAttribute("d", orthoPath(pts));
+    } else {
+      const a = pos.get(e.from), b = pos.get(e.to);
+      const sx = a.x + a.w, sy = a.y + a.h/2, tx = b.x, ty = b.y + b.h/2;
+      const c = Math.max(40, Math.abs(tx - sx) * 0.45);
+      path.setAttribute("d", `M${sx},${sy} C${sx+c},${sy} ${tx-c},${ty} ${tx},${ty}`);
+    }
+    path.setAttribute("class", "link" + (e.removable ? " rm" : ""));
+    const col = e.proposed ? "#e6b85a" : colorOf(e.from);
+    path.setAttribute("stroke", col);
+    if (e.proposed) path.setAttribute("stroke-dasharray", "5 5");
+    path.setAttribute("marker-end", "url(#arrow)");
+    edgesSvg.appendChild(path);
+    // label (hidden until an endpoint is selected) — anchored to the path midpoint
+    let labwrap = null;
+    if (e.data){
+      labwrap = document.createElementNS(SVGNS, "g"); labwrap.setAttribute("class","elabwrap");
+      const mid = path.getPointAtLength(path.getTotalLength() / 2);
+      const rect = document.createElementNS(SVGNS, "rect"); rect.setAttribute("rx","4");
+      const text = document.createElementNS(SVGNS, "text"); text.setAttribute("class","elabel");
+      text.setAttribute("text-anchor","middle"); text.setAttribute("dominant-baseline","middle");
+      text.setAttribute("x", mid.x); text.setAttribute("y", mid.y); text.textContent = e.data;
+      labwrap.appendChild(rect); labwrap.appendChild(text); edgesSvg.appendChild(labwrap);
+      // size bg rect to text
+      const bb = text.getBBox();
+      rect.setAttribute("x", bb.x-5); rect.setAttribute("y", bb.y-2);
+      rect.setAttribute("width", bb.width+10); rect.setAttribute("height", bb.height+4);
+    }
+    edgeEls.push({ e, path, labwrap });
+  });
+}
+
+// ---- selection / highlight ----
+const searchEl = document.getElementById("search");
+let selected = null;
+let spot = null; // spotlighted subsystem id (legend click)
+function select(id){
+  selected = id;
+  // one focus mode at a time: selecting clears spotlight + search highlights
+  spot = null;
+  if (searchEl.value) searchEl.value = "";
+  cardEls.forEach(el => el.classList.remove("hit"));
+  cardEls.forEach((el,nid) => { el.classList.toggle("sel", nid===id);
+    el.classList.toggle("dim", !!id && nid!==id && !isNeighbor(id,nid)); });
+  for (const {e,path,labwrap} of edgeEls){
+    const on = id && (e.from===id || e.to===id);
+    path.classList.toggle("hot", !!on);
+    path.classList.toggle("faint", !!id && !on);
+    if (labwrap) labwrap.classList.toggle("show", !!on);
+  }
+  panel(id);
+}
+function isNeighbor(id,other){ return edges.some(e => (e.from===id&&e.to===other)||(e.to===id&&e.from===other)); }
+
+// ---- panel: detail or legend ----
+const panelEl = document.getElementById("panel");
+function statusPill(s){ return `<span class="status ${statusClass(s)}"><span class="sdot"></span>${esc(s||"")}</span>`; }
+function motorChip(n){ const e = engineOf(n.engine);
+  return `<span class="p-motor"><span class="micon">${e.icon}</span>${esc(engLabel(n))}</span>`; }
+function io(cls,head,body){ return body ? `<div class="io ${cls}"><span class="io-h">${head}</span><p>${esc(body)}</p></div>` : ""; }
+
+function panel(id){
+  if (!id){ legend(); return; }
+  const n = nodeById.get(id);
+  panelEl.innerHTML = `<div class="p-eyebrow">Selected node</div>
+    <div class="p-title">${esc(n.label)}</div>
+    ${n.tech ? `<div class="p-tech">${esc(n.tech)}</div>` : ""}
+    <div class="p-row">${statusPill(n.status)} ${motorChip(n)}</div>
+    ${(n.input||n.processing||n.output)
+      ? io("in","📥 Receives",n.input)+io("do","⚙️ Does",n.processing)+io("out","📤 Sends on",n.output)
+      : (n.role ? `<p class="p-notes">${esc(n.role)}</p>` : "")}
+    ${n.notes ? `<div class="p-notes">📝 ${esc(n.notes)}</div>` : ""}
+    ${(n.files&&n.files.length) ? `<div class="p-files">${esc(n.files.join("\n"))}</div>` : ""}
+    ${n.removable ? `<div class="p-rm"><div class="p-h">Removable</div>
+      <div class="rm-meta">${esc(rmLabel(n.removable))}</div>
+      <div class="rm-ev">${esc(n.removable.evidence||"")}</div>${rmBlast(n.removable.blastRadius)}</div>` : ""}
+    ${n.proposal ? `<div class="p-pr"><div class="p-h">Proposal</div>
+      <div class="pr-meta">${prBand(n.proposal)} · ${prLens(n.proposal.lens)} · effort ${esc(n.proposal.effort)} · impact ${esc(n.proposal.impact)}</div>
+      <div class="pr-field"><b>Problem:</b> ${esc(n.proposal.problem||"")}</div>
+      <div class="pr-field"><b>Change:</b> ${esc(n.proposal.change||"")}</div>
+      <div class="pr-field"><b>Trade-off:</b> ${esc(n.proposal.tradeoff||"")}</div></div>` : ""}`;
+}
+const STATUS_LEGEND = [
+  ["shipped","built and live"], ["planned","decided, not built yet"],
+  ["proposed","idea / suggestion (dashed card)"], ["parked","on hold"]
+];
+function legend(){
+  const usedEng = []; const seen = new Set();
+  for (const n of D.nodes){ const l = engLabel(n); if (seen.has(l)) continue; seen.add(l);
+    usedEng.push({ icon: engineOf(n.engine).icon, label: l }); }
+  const usedStatus = new Set(D.nodes.map(n => ["shipped","planned","proposed","parked"].includes(n.status) ? n.status : "parked"));
+  panelEl.innerHTML = `<div class="p-eyebrow">${esc(D.project||"project")} · architecture</div>
+    <div class="p-h">How to read this map</div>
+    <div class="p-hint" style="margin-top:0">Each card is one part of the system. Colours group cards into areas; arrows show data flowing between them. Click a card to see what it receives, does, and sends on.</div>
+    <div class="p-h">Areas · click to spotlight</div>
+    ${D.subsystems.map(s => `<div class="leg sub-row${spot===s.id?" active":""}" data-sub="${esc(s.id)}"><span class="sw" style="background:${esc(s.color)}"></span>
+       <span>${esc(subShort(s.id))}</span><span class="lmut">${esc(s.label).replace(esc(subShort(s.id)),"").replace(/^[\\s—–\\-·|]+/,"")||""}</span></div>`).join("")}
+    <div class="p-h">Status</div>
+    ${STATUS_LEGEND.filter(([s]) => usedStatus.has(s)).map(([s,txt]) =>
+      `<div class="leg">${statusPill(s)}<span class="lmut">${txt}</span></div>`).join("")}
+    <div class="p-h">Powered by</div>
+    ${usedEng.map(u => `<div class="leg"><span class="ico">${u.icon}</span>${esc(u.label)}</div>`).join("")}
+    <div class="p-hint">Drag = pan · scroll = zoom · search finds a part by name.</div>`;
+  panelEl.querySelectorAll("[data-sub]").forEach(el => el.onclick = () => spotlightSub(el.dataset.sub));
+}
+
+// ---- subsystem spotlight (legend click) ----
+function spotlightSub(id){
+  spot = (spot === id) ? null : id;          // click again to clear
+  selected = null;
+  if (searchEl.value) searchEl.value = "";
+  cardEls.forEach((el,nid) => { const n = nodeById.get(nid);
+    el.classList.remove("sel","hit");
+    el.classList.toggle("dim", !!spot && n.subsystem !== spot); });
+  for (const {e,path,labwrap} of edgeEls){
+    const on = !spot || nodeById.get(e.from).subsystem === spot || nodeById.get(e.to).subsystem === spot;
+    path.classList.toggle("faint", !on); path.classList.remove("hot");
+    if (labwrap) labwrap.classList.remove("show");
+  }
+  legend();
+}
+
+// ---- search: filter while typing, Enter jumps to first hit ----
+let searchHits = [];
+function applySearch(q){
+  q = q.trim().toLowerCase();
+  spot = null; selected = null; searchHits = [];
+  if (!q){ cardEls.forEach(el => el.classList.remove("hit","dim","sel"));
+    for (const {path,labwrap} of edgeEls){ path.classList.remove("faint","hot"); if (labwrap) labwrap.classList.remove("show"); }
+    legend(); return; }
+  cardEls.forEach((el,nid) => { const n = nodeById.get(nid);
+    const hit = `${n.label} ${n.tech||""} ${n.role||""} ${subShort(n.subsystem)}`.toLowerCase().includes(q);
+    el.classList.remove("sel"); el.classList.toggle("hit", hit); el.classList.toggle("dim", !hit);
+    if (hit) searchHits.push(nid); });
+  for (const {path,labwrap} of edgeEls){ path.classList.add("faint"); path.classList.remove("hot");
+    if (labwrap) labwrap.classList.remove("show"); }
+  legend(); // selection/spotlight cleared above — refresh panel so it doesn't show stale node detail
+}
+function centerOn(id){
+  const el = cardEls.get(id);
+  const x = parseFloat(el.style.left) + el.offsetWidth/2, y = parseFloat(el.style.top) + el.offsetHeight/2;
+  k = Math.max(k, 0.85);
+  panX = viewport.clientWidth/2 - x*k; panY = viewport.clientHeight/2 - y*k; apply();
+}
+searchEl.addEventListener("input", () => applySearch(searchEl.value));
+searchEl.addEventListener("keydown", ev => {
+  if (ev.key === "Enter" && searchHits.length){ const id = searchHits[0]; select(id); centerOn(id); searchEl.blur(); }
+  if (ev.key === "Escape"){ searchEl.value = ""; applySearch(""); searchEl.blur(); }
+});
+
+// ---- pan / zoom ----
+const stage = document.getElementById("stage");
+const viewport = document.getElementById("viewport");
+let panX = 0, panY = 0, k = 1;
+function apply(){ stage.style.transform = `translate(${panX}px,${panY}px) scale(${k})`; }
+function bbox(){ let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
+  const grow = el => { const x=parseFloat(el.style.left), y=parseFloat(el.style.top);
+    x0=Math.min(x0,x); y0=Math.min(y0,y); x1=Math.max(x1,x+el.offsetWidth); y1=Math.max(y1,y+el.offsetHeight); };
+  cardEls.forEach(grow);
+  groupsLayer.querySelectorAll(".grp").forEach(el => { grow(el);
+    y0=Math.min(y0, parseFloat(el.style.top)-14); }); // group header pill sits 14px above the box
+  return {x0,y0,x1,y1,w:x1-x0,h:y1-y0}; }
+function fit(){ const b=bbox(); if(!isFinite(b.w)) return;
+  const pw=336; // legend/detail panel overlays the right edge — keep the map clear of it
+  const vw=viewport.clientWidth-pw-60, vh=viewport.clientHeight-80;
+  k=Math.min(1.1, Math.min(vw/b.w, vh/b.h));
+  panX = (viewport.clientWidth - pw - b.w*k)/2 - b.x0*k;
+  panY = (viewport.clientHeight - b.h*k)/2 - b.y0*k; apply(); }
+
+viewport.addEventListener("wheel", ev => { ev.preventDefault();
+  const r=viewport.getBoundingClientRect(), mx=ev.clientX-r.left, my=ev.clientY-r.top;
+  const f=Math.exp(-ev.deltaY*0.0015), nk=Math.min(2.4, Math.max(0.15, k*f));
+  panX = mx - (mx-panX)*(nk/k); panY = my - (my-panY)*(nk/k); k=nk; apply(); }, {passive:false});
+let drag=null;
+viewport.addEventListener("pointerdown", ev => { if(ev.target.closest(".card")) return;
+  drag={x:ev.clientX,y:ev.clientY,px:panX,py:panY}; viewport.classList.add("drag");
+  if(ev.target===viewport||ev.target===stage||ev.target===edgesSvg) select(null); });
+window.addEventListener("pointermove", ev => { if(!drag) return;
+  panX=drag.px+(ev.clientX-drag.x); panY=drag.py+(ev.clientY-drag.y); apply(); });
+window.addEventListener("pointerup", () => { drag=null; viewport.classList.remove("drag"); });
+document.getElementById("fit").onclick = fit;
+const zoomBtn = f => { const cx=viewport.clientWidth/2, cy=viewport.clientHeight/2, nk=Math.min(2.4,Math.max(0.15,k*f));
+  panX=cx-(cx-panX)*(nk/k); panY=cy-(cy-panY)*(nk/k); k=nk; apply(); };
+document.getElementById("zin").onclick = () => zoomBtn(1.2);
+document.getElementById("zout").onclick = () => zoomBtn(1/1.2);
+
+// ---- removable overlay toggle (architecture-cleanup) ----
+const rmBtn = document.getElementById("rmToggle");
+const rmCount = D.nodes.filter(n => n.removable).length + (D.edges||[]).filter(e => e.removable).length;
+if (rmCount){
+  rmBtn.hidden = false;
+  rmBtn.textContent = `🔴 Removable (${rmCount})`;
+  const setRm = on => { document.body.classList.toggle("show-removable", on); rmBtn.classList.toggle("on", on); };
+  setRm(true); // default on so cleanup findings are visible the moment the map opens
+  rmBtn.onclick = () => setRm(!document.body.classList.contains("show-removable"));
+}
+
+// ---- proposal overlay toggle (architecture-improve) ----
+const prBtn = document.getElementById("prToggle");
+const prCount = D.nodes.filter(n => n.proposal).length;
+if (prCount){
+  prBtn.hidden = false;
+  prBtn.textContent = `💡 Proposals (${prCount})`;
+  const setPr = on => { document.body.classList.toggle("show-proposals", on); prBtn.classList.toggle("pr-on", on); };
+  setPr(true); // default on so improve proposals are visible the moment the map opens
+  prBtn.onclick = () => setPr(!document.body.classList.contains("show-proposals"));
+}
+
+legend();
+layout();
+window.__archMap = { select, fit, get k(){return k} };
+</script>
+</body>
+</html>

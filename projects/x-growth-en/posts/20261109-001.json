@@ -1,0 +1,65 @@
+{
+  "schema": "contentops.x-post/v1",
+  "content_id": "20261109-001",
+  "account_slug": "x-superplay-english",
+  "mode": "source_analysis",
+  "topic": "verification before completion in agent workflows",
+  "sources": [
+    "https://github.com/vllm-project/vllm"
+  ],
+  "audience_job": "Ship an LLM feature without claiming it works before a reproducible run",
+  "proof_grade": "P0",
+  "unique_artifact_ref": "repo://config/registry/platforms.json",
+  "experiment_variable": "verification gate",
+  "label": "SOURCE_ANALYSIS",
+  "theses": [
+    {
+      "thesis": "Throughput gains shift the bottleneck from generation to verification",
+      "evidence": "PagedAttention raises batch throughput by reusing KV cache blocks",
+      "counterexample": "A benchmark with no correctness assertion reports only tokens per second",
+      "reader_action": "Add an output assertion to the serving benchmark before quoting speed"
+    },
+    {
+      "thesis": "A completion claim is stronger than a rendering claim only when it has a receipt",
+      "evidence": "The workflow records gate history and publish receipts instead of status words",
+      "counterexample": "A dashboard marked green by a fallback that never called the provider",
+      "reader_action": "Require a command output file for every stage marked advanced"
+    },
+    {
+      "thesis": "Agent pipelines need refusal states more than optimistic defaults",
+      "evidence": "The X gate refuses packaging until a human review exists",
+      "counterexample": "An orchestrator that silently degrades a failed check to a pass",
+      "reader_action": "Name the blocker in the receipt and stop the chain instead of guessing"
+    }
+  ],
+  "red_team": [
+    "Throughput was measured on a different GPU and batch size, so the ratio does not transfer to this host.",
+    "A fast wrong answer can be caught by sampling, but sampling is not a proof of correctness.",
+    "The receipt proves a command ran; it does not prove a person approved the claim."
+  ],
+  "post_copy": {
+    "parts": [
+      "vLLM makes token serving fast. Speed changes the cost of a mistake, not the need to catch it. The gate is the receipt: run the command, read the output, then say done. https://github.com/vllm-project/vllm"
+    ]
+  },
+  "image_brief": "A dark card pairing throughput with the need for verification receipts",
+  "image": {
+    "path": "assets/cards/20261109-001.png"
+  },
+  "image_status": "generated",
+  "alt_text": "A dark blue card states that fast token serving does not prove a correct answer, and asks for a reproducible receipt.",
+  "prompt_ref": "post_brief",
+  "provenance": null,
+  "source_category": "official_repository",
+  "source_angles": [
+    "throughput versus correctness",
+    "receipt-backed completion",
+    "fail-closed gates"
+  ],
+  "review": null,
+  "status": "draft",
+  "status_url": null,
+  "scheduled_for": null,
+  "metrics": null,
+  "notes": "Prepared by WorkBuddy integration run on 2026-11-09. Human review deliberately not recorded: the gate forbids an assistant from approving copy."
+}

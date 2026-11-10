@@ -1,0 +1,57 @@
+{
+  "schema": "contentops.x-post-gate/v1",
+  "action": "new",
+  "content_id": "20261109-001",
+  "created_at": "2026-11-08T22:32:29Z",
+  "post": "posts/20261109-001.json",
+  "csv": "templates/posts.csv",
+  "verdict": "BLOCKED",
+  "prompt_ref": "post_brief",
+  "prompt_source": "config/accounts/prompts/x-superplay-english.prompt.md",
+  "prompt_requirements": [],
+  "outstanding": [
+    {
+      "code": "COPY_EMPTY",
+      "detail": "the record has no post copy to publish"
+    },
+    {
+      "code": "ALT_MISSING",
+      "detail": "the record has no ALT text; a card nobody can describe is a card screen readers cannot carry"
+    },
+    {
+      "code": "IMAGE_ABSENT",
+      "detail": "the record names no image; a post without its 1600x900 card is not ready"
+    },
+    {
+      "code": "THESES_INSUFFICIENT",
+      "detail": "the record carries 0 thesis candidate(s); the gate requires 3"
+    },
+    {
+      "code": "RECOVERY_FIELD_MISSING",
+      "detail": "the record has no 'audience_job'"
+    },
+    {
+      "code": "RECOVERY_FIELD_MISSING",
+      "detail": "the record has no 'unique_artifact_ref'"
+    },
+    {
+      "code": "RECOVERY_FIELD_MISSING",
+      "detail": "the record has no 'experiment_variable'"
+    },
+    {
+      "code": "REVIEW_MISSING",
+      "detail": "no human review is recorded; an assistant may prepare one and may not approve it"
+    },
+    {
+      "code": "RECOVERY_FIELD_MISSING",
+      "detail": "proof_grade is P0 but label is ''; a post with no firsthand artifact must carry 'SOURCE_ANALYSIS'"
+    },
+    {
+      "code": "THESES_INSUFFICIENT",
+      "detail": "the record answers 0 red-team question(s); the gate requires 3"
+    }
+  ],
+  "cannot": [
+    "nothing was posted, rendered or scored; every field below empty is a person's to fill"
+  ]
+}
