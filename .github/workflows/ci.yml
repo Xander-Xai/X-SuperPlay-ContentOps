@@ -79,6 +79,15 @@ jobs:
       - name: Run basic tests
         run: python scripts/test_basic.py
 
+      # D7 governance guardrails: branch registry validation and PR size metrics.
+      # Both are offline and spawn no child processes. The size check is
+      # report-only here; --strict (threshold enforcement) needs an Owner decision.
+      - name: Check branch registry
+        run: python scripts/check_branch_registry.py
+
+      - name: Run governance guardrail tests
+        run: python tests/test_governance_checks.py
+
       # The media suites never make a provider request: they drive
       # tests/fixtures/fake_mmx_cli.py and inject a fake billing transport, so CI
       # needs no MiniMax account and spends no quota.
