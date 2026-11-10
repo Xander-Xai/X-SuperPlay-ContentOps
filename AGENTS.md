@@ -143,7 +143,15 @@ surviving pr2 worktree are the standing examples.
 - Registering a branch in `config/governance/branch-registry.json`? Run
   `python scripts/check_branch_registry.py --today <date>` locally BEFORE
   committing: non-persistent entries require a non-null `expires` (the
-  #148 first-attempt CI failure came exactly from skipping this).
+  #148 first-attempt CI failure came exactly from skipping this). `expires`
+  is a **review date, not a deletion deadline**. `status=merged` past that
+  date is reported as `RETIRE DUE` (report-only, never a CI failure) and
+  `status=archived` is a deliberate permanent snapshot exempt from
+  `max_age_days`; active statuses past their review date still fail as
+  `EXPIRED`. Once a month, remove merged entries whose remote branch no
+  longer exists in a governance PR — Git history keeps the audit trail.
+  Also validate a future `--today` date, not just today's, so a calendar
+  time-bomb cannot reach CI unnoticed.
 - New test suites: besides the ci.yml wiring rule above, verify the suite
   actually runs (`python tests/<suite>.py` exits 0 locally) — CI green on a
   suite that was never executed locally is not evidence of anything.
