@@ -7,8 +7,9 @@
 > with three required checks, linear history, no force push and no deletion.
 > `/rulesets` is still `[]` (protection uses the classic branch-protection API,
 > not rulesets). The current, re-verified state lives in
-> [`docs/CURRENT-STATE.md`](../CURRENT-STATE.md) §Git and in
-> [`reports/governance-snapshot-2026-11-10.html`](../../reports/governance-snapshot-2026-11-10.html).
+> [`docs/CURRENT-STATE.md`](../CURRENT-STATE.md) §Git. The detailed governance
+> snapshot is a local-only artifact (`reports/governance-snapshot-2026-11-10.html`),
+> intentionally not tracked in this repository.
 > The entire 2026-10-31 text is retained below unchanged for traceability.
 
 ## Current state — 2026-11-10 (replaces §§1–5 below)
