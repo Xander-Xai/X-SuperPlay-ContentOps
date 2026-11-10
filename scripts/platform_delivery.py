@@ -32,6 +32,8 @@ for candidate in (ROOT / "src", ROOT / "scripts"):
     if str(candidate) not in sys.path:
         sys.path.insert(0, str(candidate))
 
+from process_utils import hidden_run  # noqa: E402
+
 from contentops.platforms import multichannel as mc  # noqa: E402
 from contentops.platforms import graphic_specs  # noqa: E402
 from contentops.platforms.registry import validate_registry  # noqa: E402
@@ -253,7 +255,7 @@ def cmd_self_test(args: argparse.Namespace) -> int:
     cli_ok = CLI_ENTRY.is_file()
     record("external_cli_installed", cli_ok, str(CLI_ENTRY) if cli_ok else "missing")
     if cli_ok:
-        help_proc = subprocess.run(["node", str(CLI_ENTRY), "--help"], capture_output=True,
+        help_proc = hidden_run(["node", str(CLI_ENTRY), "--help"], capture_output=True,
                                    text=True, encoding="utf-8", errors="replace", timeout=30)
         record("external_cli_help", help_proc.returncode == 0 and "sync" in help_proc.stdout,
                help_proc.stdout.splitlines()[0] if help_proc.stdout else "empty")
@@ -447,7 +449,7 @@ def cmd_dispatch(args: argparse.Namespace) -> int:
     if args.dry_run:
         cmd.append("--dry-run")
     try:
-        proc = subprocess.run(cmd, cwd=str(RUNTIME_TOOLS), capture_output=True,
+        proc = hidden_run(cmd, cwd=str(RUNTIME_TOOLS), capture_output=True,
                               text=True, encoding="utf-8", errors="replace", timeout=int(args.timeout))
     except subprocess.TimeoutExpired:
         _emit({
@@ -513,7 +515,7 @@ def cmd_status(args: argparse.Namespace) -> int:
                ("XHS_EDITORIAL", "GZH_EDITORIAL", "X_EDITORIAL", "ARTICLE_EDITORIAL")]
     workflows: dict[str, Any] = {}
     for wf in ("gzh", "xhs", "x"):
-        proc = subprocess.run([sys.executable, str(ROOT / "scripts" / "graphic_workflow.py"),
+        proc = hidden_run([sys.executable, str(ROOT / "scripts" / "graphic_workflow.py"),
                                "status", "--workflow", wf, "--json"],
                               cwd=str(ROOT), capture_output=True, text=True,
                               encoding="utf-8", errors="replace", timeout=60)
@@ -597,7 +599,7 @@ def cmd_auth(args: argparse.Namespace) -> int:
             continue
         cmd = ["node", str(CLI_ENTRY), "--timeout", str(args.timeout), "auth", adapter_id]
         try:
-            proc = subprocess.run(cmd, cwd=str(RUNTIME_TOOLS), capture_output=True,
+            proc = hidden_run(cmd, cwd=str(RUNTIME_TOOLS), capture_output=True,
                                   text=True, encoding="utf-8", errors="replace",
                                   input="N\n", timeout=int(args.timeout) // 1000 + 20)
         except subprocess.TimeoutExpired:

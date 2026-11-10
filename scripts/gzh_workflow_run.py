@@ -23,6 +23,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from process_utils import hidden_run  # noqa: E402
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -37,7 +39,7 @@ def _configure_stdio() -> None:
 
 
 def _run(python: str, script: Path, args: list[str], cwd: Path, env: dict[str, str]) -> dict[str, Any]:
-    completed = subprocess.run(
+    completed = hidden_run(
         [python, str(script), *args],
         cwd=str(cwd), env=env, capture_output=True, text=True,
         encoding="utf-8", errors="replace", timeout=300,
@@ -109,7 +111,7 @@ def main() -> int:
     }
     wechat_env_path = Path(args.wechat_env).expanduser().resolve() if args.wechat_env else None
     if wechat_env_path and wechat_env_path.is_file():
-        probe_proc = subprocess.run(
+        probe_proc = hidden_run(
             [python, str(PROJECT_ROOT / "scripts" / "gzh_wechat_sdk_adapter.py"),
              "probe", "--env", str(wechat_env_path)],
             cwd=str(PROJECT_ROOT), env=env, capture_output=True,
@@ -130,7 +132,7 @@ def main() -> int:
                 "--stage", "draft_submitted", "--all"]
     if args.content_env:
         gate_cmd += ["--env", str(Path(args.content_env).expanduser().resolve())]
-    completed = subprocess.run(gate_cmd, cwd=str(workflow), env=env, capture_output=True,
+    completed = hidden_run(gate_cmd, cwd=str(workflow), env=env, capture_output=True,
                                text=True, encoding="utf-8", errors="replace", timeout=600)
     gate_text = (completed.stdout or "") + (completed.stderr or "")
     gates = _gate_summary(gate_text)
