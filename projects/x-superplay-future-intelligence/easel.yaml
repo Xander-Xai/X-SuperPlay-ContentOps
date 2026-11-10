@@ -16,13 +16,13 @@ fonts:
   display: Noto Serif SC
   mono: Cascadia Mono
 colors:
-  base: "#0F1117"
-  accent: "#38BDF8"
-  ink: "#F5F7FA"
-  muted: "#8B95A5"
-  surface: "#161A22"
-  problem: "#F07167"
-  code_theme: monokai-dark
+  base: "#E9EDEF"
+  accent: "#157F8B"
+  ink: "#202B31"
+  muted: "#65747A"
+  surface: "#F9FBFA"
+  problem: "#BD5149"
+  code_theme: "github-light"
 captions:
   font: Noto Sans CJK SC
   size_px: 47
@@ -31,7 +31,7 @@ captions:
   highlight: "#38BDF8"
   outline: none
   shadow: none
-  burn_style: Fontsize=7,MarginV=18,Outline=0,Shadow=0,BorderStyle=1,PrimaryColour=&H00FFFFFF,Alignment=2
+  burn_style: "Fontsize=7,MarginV=18,Outline=0,Shadow=0,BorderStyle=1,PrimaryColour=&H00312B20,Alignment=2"
   safe_zone:
     margin_v_px: 120
     side_margin_ratio: 0.07

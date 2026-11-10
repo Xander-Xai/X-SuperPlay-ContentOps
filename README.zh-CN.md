@@ -35,10 +35,10 @@ translation_status: synced
 | media-use 适配器（HyperFrames） | `main` | 已实现；仅本地、零联网/零付费。需要主机运行时锁 —— 默认判定为 `BLOCKED / MISSING_RUNTIME` |
 | MiniMax 媒体 | `main` | 语音、图片、H3 视频已实现；已验证子集见 CURRENT-STATE；`PENDING_FOUNDER_REVIEW` |
 | Skill 路由 / 执行授权 | `main` | 已实现；仅 `media-use` 是已声明能力；路由器从不授予执行权 |
-| 内容路由、账号 DNA、工作流门禁 | **部分** | S1（#93，阶段门禁）与 S2（#95，素材候选契约）已在 `main`；S3–S4 在 Issue #94 中开放 |
-| 公众号 | **未合并 / 本地 vendor** | vendored 十阶段工作流；溯源/权利审查在 Issue #56 中开放 |
-| 小红书图文 | **未合并** | `feat/xhs-fa-migration`；仅人工上传 |
-| X | **部分** | 发帖门禁与 growth→编辑门禁已在 `main`（PR #87、#88）；平台轨道的其余部分在 Issue #47 中跟踪 |
+| 内容路由、账号 DNA、工作流门禁 | `main` | 已通过 PR #114、#118 合入；热点和主动主题入口均可生成 Brief，但审批及后续文案审核仍受门禁约束 |
+| 公众号 | `main` 只读校验适配器 | 仅支持 `status` / `verify` / `plan`；Issue #56 的第三方权利仍未解决，不能生产或发布 |
+| 小红书图文 | `main` 只读校验适配器 | 仅支持 `status` / `verify` / `plan`；Issue #51 的权利及迁移验收仍开放，不能生产或发布 |
+| X | `main` 人工编辑轨道 | 已有编辑门禁、人工发布包、URL 记录及离线指标分析；不调用发布 API，也不自动采集指标 |
 | 自动发布 | — | **不在范围内** |
 | 测试 | `main` | `tests/test_*.py` 下每个套件都接入 CI；此处不声明数量；见 [docs/TEST-PLAN.md](docs/TEST-PLAN.md)；统一门禁 `python scripts/dev_check.py` |
 | 生产就绪 | — | **否** —— 没有任何轨道达到 `PRODUCTION_ACCEPTED` |
@@ -47,20 +47,13 @@ translation_status: synced
 
 [X 项目入口](projects/x-growth-en/README.md) 已加入 [90 天证据驱动增长方案](projects/x-growth-en/original-content-rewards-90d.md) 和空白资格/周复盘模板。这些是**文档与人工数据记录**，不是自动采集、自动发布、收益资格或实际发表的证明。现有 X 内容与图片审核门禁仍是执行依据；原私有 `X-SuperPlay-X-Growth-OS` 仅作为待下线的历史迁移来源，不再作为独立执行权威。
 
-### 分支现实
+### 分支现状
 
-`main` 现已承载集成栈：media-use 适配器、权利门禁、Skill 路由与 Skill 执行授权
-已作为 PR #89 合入，随后是 PR #87 与 PR #88。原集成分支
-`fix/57-m5-media-fixtures` 已合并，远端分支已删除。
-
-仍**不在** `main` 上的内容见上表。曾经跟踪它们的草稿 PR 已按 Issue #94 的切片流程
-以「被取代」关闭：内容路由（#49）、X 平台轨道（#50）、公众号溯源修复（#58）。
-receipt 基线修复（#62）与 media-use 合并前 ADR（#90）已合并。
-截至 2026-11-01，没有开放 PR。
-
-文档描述的是 `main`。未合并的层明确标注为未合并，而不是当作已工作的功能来
-描述；详见
-[docs/CONVERGENCE-REQUIREMENTS-2026-11-01.md](docs/CONVERGENCE-REQUIREMENTS-2026-11-01.md)。
+本文描述当前 `main` 上的能力，而非早期功能分支的状态。内容路由与 Brief
+桥接已在 `main`（PR #114、#118）；X、XHS、GZH 适配器也已合入，但执行边界
+不同，见上表。GZH 和 XHS 仍仅可校验，权利及验收尚未解决。带日期的证据见
+[docs/CURRENT-STATE.md](docs/CURRENT-STATE.md)，未完成事项见
+[docs/DEFERRED-WORK.md](docs/DEFERRED-WORK.md)。
 
 ## 快速开始
 
@@ -105,9 +98,11 @@ project.yaml source_refs
 两个入口共享同一引擎：`run_v1.py`（分镜驱动、edge-tts）与 `m5_production.py`
 （证据优先、本地旁白）。两者都不发布，也都不会报告生产就绪。
 
-账号感知的内容路由（`HOTSPOT_DISCOVERY` / `USER_TOPIC` → 账号 DNA → Brief）
-**不在本分支**。它是 [docs/CONVERGENCE-REQUIREMENTS-2026-11-01.md](docs/CONVERGENCE-REQUIREMENTS-2026-11-01.md)
-与 PR #49 的主题。
+账号感知的内容路由（`HOTSPOT_DISCOVERY` / `USER_TOPIC` → 账号 DNA → Brief）已在
+`main` 实现（PR #114）。`router_e2e.py` 是验收脚本，不是生产操作入口。基于 Brief 的
+项目仍必须通过文案审核后才能渲染。当前范围及限制见
+[docs/CURRENT-STATE.md](docs/CURRENT-STATE.md) 与
+[docs/CONTENT-LIFECYCLE-STAGES.md](docs/CONTENT-LIFECYCLE-STAGES.md)。
 
 系统边界详见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) 与
 [docs/CURRENT-STATE.md](docs/CURRENT-STATE.md)。

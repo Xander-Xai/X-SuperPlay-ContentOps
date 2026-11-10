@@ -81,14 +81,17 @@ PROVENANCE = (
 #: English in words per second; both are stated so the arithmetic is checkable.
 SPEAK_RATE_ZH = 4.5
 SPEAK_RATE_EN = 2.6
+RAW_SAPI_EN_WPS = 0.8
 PAUSE_S = 0.5
 #: A shot that shows a real artifact needs time to be read, whatever the line.
 CAPTURE_FLOOR_S = 5.0
 #: How many quotes one episode may carry before it is a different video.
 MAX_QUOTES = 16
+MAX_AUTO_SHOT_SECONDS = 7.5
 
 CAPTURE_ROLES = ("screen_recording_evidence", "code_snapshot",
                  "ui_screenshot", "terminal_capture")
+RECORDING_ROLES = ("screen_recording_evidence", "ui_screenshot", "terminal_capture")
 
 
 class ScriptBlocked(Exception):
@@ -132,7 +135,7 @@ def language_of(text: str) -> str:
     return "zh" if cjk and cjk / max(letters, 1) > 0.3 else "en"
 
 
-def line_seconds(text: str) -> float:
+def line_seconds(text: str, *, english_wps: Optional[float] = None) -> float:
     """How long a line takes to say, from its own length."""
     cleaned = " ".join(str(text or "").split())
     if not cleaned:
@@ -141,8 +144,19 @@ def line_seconds(text: str) -> float:
     if cjk and cjk / max(len(cleaned), 1) > 0.2:
         seconds = cjk / SPEAK_RATE_ZH + (len(cleaned) - cjk) / (SPEAK_RATE_EN * 5)
     else:
-        seconds = len(cleaned.split()) / SPEAK_RATE_EN
+        seconds = len(cleaned.split()) / (english_wps or SPEAK_RATE_EN)
     return round(seconds + PAUSE_S, 1)
+
+
+def _split_quote_for_motion(text: str, *, english_wps: Optional[float] = None) -> List[str]:
+    """Keep a source sentence intact; visual timing is planned separately.
+
+    ``english_wps`` remains accepted for compatibility with older callers, but
+    narration wording must not be split to satisfy a renderer's shot window.
+    """
+    del english_wps
+    value = str(text or "").strip()
+    return [value] if value else []
 
 
 def _composition(profile: AccountProfile) -> List[Dict[str, Any]]:
@@ -151,10 +165,25 @@ def _composition(profile: AccountProfile) -> List[Dict[str, Any]]:
     return [dict(segment) for segment in segments if segment.get("role")]
 
 
-def _role_for(profile: AccountProfile, kind: str) -> str:
+def _role_for(profile: AccountProfile, kind: str, *, source_scope: str = "") -> str:
     segments = _composition(profile)
     if not segments:
         return "vector_animation"
+    # A pinned repository walkthrough can show source code as the source
+    # artifact. This does not establish that the code ran; runtime claims still
+    # need an actual terminal capture or recording.
+    if source_scope == "repository_code_analysis" and kind == "source":
+        return "code_snapshot"
+    if source_scope == "repository_code_analysis" and kind == "editorial_transition":
+        return "vector_animation"
+    # EXPLANATORY accounts keep source verification in the claim/evidence
+    # ledger. Their visual may explain a supported fact without pretending to
+    # be the source itself. In particular, future-intelligence forbids manual
+    # recording and declares vector animation as its primary composition; do
+    # not route its factual lines into a capture task just because their claims
+    # are evidence-backed.
+    if profile.evidence_mode == "EXPLANATORY":
+        return str(segments[0]["role"])
     if kind == "source" or kind == "verified_factual_claim":
         for segment in segments:
             if str(segment["role"]) in CAPTURE_ROLES:
@@ -173,11 +202,13 @@ def topic_provenance(brief: Dict[str, Any]) -> str:
 
 
 def build(project: Path, *, root: Optional[Path] = None,
-          pack_path: Optional[Path] = None) -> Draft:
+          pack_path: Optional[Path] = None,
+          allow_unapproved_preview: bool = False) -> Draft:
     """Build the draft in memory. Nothing is written."""
     project = Path(project)
     brief = handoff.read_brief(project)
-    verdict = handoff.check(brief)
+    verdict = handoff.check(brief,
+                            allow_unapproved_preview=allow_unapproved_preview)
     if not verdict["ok"]:
         code = "EVIDENCE_REQUIRED" if verdict["reason"] == "EVIDENCE_REQUIRED" \
             else verdict["reason"]
@@ -210,10 +241,18 @@ def build(project: Path, *, root: Optional[Path] = None,
 
     topic = " ".join(str(intent.get("topic") or "").split())
     provenance = topic_provenance(brief)
+    source_scope = str(brief.get("source_scope") or "")
+    opening_override = None
+    if source_scope == "repository_code_analysis":
+        opening_override = "这期只看仓库源码。"
+    english_wps = RAW_SAPI_EN_WPS if source_scope == "repository_code_analysis" else None
     claims, beats = _claims_and_beats(profile, topic, provenance, pack,
                                       target_seconds=float(profile.target_duration_s[0])
-                                      if profile.target_duration_s else 0.0)
-    storyboard = _storyboard(profile, beats, claims)
+                                      if profile.target_duration_s else 0.0,
+                                      opening_override=opening_override,
+                                      english_wps=english_wps)
+    storyboard = _storyboard(profile, beats, claims, source_scope=source_scope,
+                             english_wps=english_wps)
     seconds = sum(shot["duration"] for shot in storyboard["shots"])
     low, high = (profile.target_duration_s or (0.0, 0.0))
     length_note = ""
@@ -279,13 +318,17 @@ def build(project: Path, *, root: Optional[Path] = None,
                        "needs_capture": sum(1 for shot in storyboard["shots"]
                                             if shot["needs_capture"]),
                        "length_note": length_note},
-        "gates": {"copy_review": "required before any narration is synthesised",
+        "gates": {"brief_approval": ("not approved; local draft preview only"
+                                      if verdict.get("preview_only") else "approved"),
+                  "copy_review": ("pending before publication; local preview only"
+                                  if verdict.get("preview_only") else
+                                  "required before any narration is synthesised"),
                   "evidence": "every spoken fact is bound to a collected, hashed document"},
     }
     return Draft(project=str(project), brief_id=str(brief.get("brief_id") or ""),
                  account_id=account_id, lines=lines_doc, claim_map=claim_map,
                  storyboard=storyboard,
-                 master=_master(profile, brief, beats, claims, report),
+                 master=_master(profile, brief, beats, claims, report, storyboard),
                  report=report)
 
 
@@ -319,7 +362,9 @@ def _bind_documents(project: Path, pack: EvidencePack) -> None:
 
 
 def _claims_and_beats(profile: AccountProfile, topic: str, provenance: str,
-                      pack: EvidencePack, *, target_seconds: float = 0.0
+                      pack: EvidencePack, *, target_seconds: float = 0.0,
+                      opening_override: Optional[str] = None,
+                      english_wps: Optional[float] = None
                       ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     claims: List[Dict[str, Any]] = []
     beats: List[Dict[str, Any]] = []
@@ -356,7 +401,9 @@ def _claims_and_beats(profile: AccountProfile, topic: str, provenance: str,
     # The opening names the subject and says where it came from. A topic the
     # user supplied is stated as theirs; only a title that came from a source
     # is called a source's title.
-    if provenance == "user_supplied_topic":
+    if opening_override:
+        opening = opening_override
+    elif provenance == "user_supplied_topic":
         opening = f"这一期讲你提的问题：{topic}。"
     else:
         opening = f"这一期讲这条来源标题里的问题：{topic}。"
@@ -366,26 +413,31 @@ def _claims_and_beats(profile: AccountProfile, topic: str, provenance: str,
     # Quote material until the account's window is plausibly filled, and stop
     # when the pack runs out. Nothing is stretched: if the material ends before
     # the window does, the caller is told the episode is too thin.
-    spoken = line_seconds(opening)
+    spoken = line_seconds(opening, english_wps=english_wps)
     index = 1
+    quote_count = 0
     for item, sentence in quotes(pack):
-        if index > MAX_QUOTES:
+        if quote_count >= MAX_QUOTES:
             break
         if target_seconds and spoken >= target_seconds * 0.95:
             break
-        claim_id = f"C-{index + 1:02d}"
-        add(claim_id, sentence, "source", "verified_factual_claim",
-            evidence=[{
-                "evidence_id": f"E-{claim_id}-01",
-                "kind": "document",
-                "sha256": item.sha256,
-                "logical_path": item.document,
-                "permission_scope": "publishable",
-            }],
-            source_refs=[item.url],
-            progress=f"quoted from {_host(item.url)}")
-        spoken += line_seconds(sentence)
-        index += 1
+        quote_count += 1
+        for piece in _split_quote_for_motion(sentence, english_wps=english_wps):
+            if target_seconds and spoken >= target_seconds * 0.95:
+                break
+            claim_id = f"C-{index + 1:02d}"
+            add(claim_id, piece, "source", "verified_factual_claim",
+                evidence=[{
+                    "evidence_id": f"E-{claim_id}-01",
+                    "kind": "document",
+                    "sha256": item.sha256,
+                    "logical_path": item.document,
+                    "permission_scope": "publishable",
+                }],
+                source_refs=[item.url],
+                progress=f"quoted from {_host(item.url)}")
+            spoken += line_seconds(piece, english_wps=english_wps)
+            index += 1
 
     cta_index = len(claims) + 1
     add(f"C-{cta_index:02d}", "以上内容都能在文末的来源里逐条核对。",
@@ -394,7 +446,8 @@ def _claims_and_beats(profile: AccountProfile, topic: str, provenance: str,
 
 
 def _storyboard(profile: AccountProfile, beats: List[Dict[str, Any]],
-                claims: List[Dict[str, Any]]) -> Dict[str, Any]:
+                claims: List[Dict[str, Any]], *, source_scope: str = "",
+                english_wps: Optional[float] = None) -> Dict[str, Any]:
     by_id = {claim["claim_id"]: claim for claim in claims}
     shots: List[Dict[str, Any]] = []
     # One capture per source, not one per sentence: an operator captures the
@@ -402,13 +455,13 @@ def _storyboard(profile: AccountProfile, beats: List[Dict[str, Any]],
     captured: set = set()
     for index, beat in enumerate(beats):
         claim = by_id[beat["claim_id"]]
-        role = _role_for(profile, claim["kind"])
+        role = _role_for(profile, claim["kind"], source_scope=source_scope)
         language = language_of(beat["text"])
         source_key = (claim.get("source_refs") or [None])[0]
-        needs_capture = role in CAPTURE_ROLES and source_key not in captured
+        needs_capture = role in RECORDING_ROLES and source_key not in captured
         if needs_capture:
             captured.add(source_key)
-        spoken = line_seconds(beat["text"])
+        spoken = line_seconds(beat["text"], english_wps=english_wps)
         duration = round(max(spoken, CAPTURE_FLOOR_S) if needs_capture else spoken, 1)
         source = (claim.get("source_refs") or [None])[0]
         shots.append({
@@ -435,13 +488,18 @@ def _storyboard(profile: AccountProfile, beats: List[Dict[str, Any]],
             "claim_id": beat["claim_id"],
             "evidence_source": source,
         })
+    engine = "source-led" if source_scope == "repository_code_analysis" else "capture-first"
     return {"schema": "contentops.storyboard/v1", "size": {"width": 1080, "height": 1920},
-            "engine": "capture-first", "shots": shots}
+            "engine": engine, "shots": shots}
 
 
 def _master(profile: AccountProfile, brief: Dict[str, Any], beats: List[Dict[str, Any]],
-            claims: List[Dict[str, Any]], report: Dict[str, Any]) -> str:
+            claims: List[Dict[str, Any]], report: Dict[str, Any],
+            storyboard: Dict[str, Any]) -> str:
     by_id = {claim["claim_id"]: claim for claim in claims}
+    sources_by_url = {item["url"]: item for item in report["evidence"].get("sources", [])
+                      if item.get("url")}
+    shots_by_claim = {shot.get("claim_id"): shot for shot in storyboard.get("shots", [])}
     lines = [
         f"# {brief.get('intent', {}).get('topic') or 'script draft'}",
         "",
@@ -466,7 +524,22 @@ def _master(profile: AccountProfile, brief: Dict[str, Any], beats: List[Dict[str
         lines.append("")
         lines.append(f"- claim: `{claim['claim_id']}` · {claim['support_status']}")
         for ref in claim.get("source_refs") or []:
-            lines.append(f"- source: {ref}")
+            source = sources_by_url.get(ref, {})
+            title = str(source.get("title") or ref).replace("]", r"\]")
+            evidence_id = source.get("evidence_id")
+            evidence_label = f" · `{evidence_id}`" if evidence_id else ""
+            lines.append(f"- 原始出处: [{title}](<{ref}>){evidence_label}")
+            shot = shots_by_claim.get(claim["claim_id"], {})
+            if brief.get("source_scope") == "repository_code_analysis":
+                lines.append("- 画面建议: 展示此固定提交中的真实源码；只解读可见源码，不描述运行、测试、性能或效果结果。")
+            elif shot.get("needs_capture") and profile.manual_recording == "ALLOWED_CROPPED":
+                lines.append("- Recordly取材: 打开此链接并保留地址栏/页面标题，录到与本句对应的原文段落；"
+                             "先展示来源，再聚焦关键段落，最终竖屏裁切正文区域并确保文字可读。")
+            elif profile.manual_recording == "FORBIDDEN":
+                lines.append("- 画面建议: 此账号禁止人工录屏；用动画解释本句，来源链接供审核核对。")
+            else:
+                lines.append("- 画面建议: 以该来源中支撑本句的段落或操作结果为主画面；"
+                             "录制前确认该账号允许此类素材。")
         if claim.get("limitation"):
             lines.append(f"- limit: {claim['limitation']}")
         lines.append("")

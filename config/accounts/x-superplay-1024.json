@@ -18,11 +18,11 @@
     "palette": {
       "base": "#0F1117",
       "accent": "#38BDF8",
-      "ink": "#F5F7FA",
-      "muted": "#8B95A5",
-      "surface": "#161A22",
-      "code_theme": "monokai-dark",
-      "problem": "#F07167"
+      "ink": "#18232B",
+      "muted": "#5C6970",
+      "surface": "#FFFFFF",
+      "code_theme": "github-light",
+      "problem": "#C84D42"
     },
     "forbidden_effects": [
       "bounce",
@@ -126,12 +126,41 @@
         "shake",
         "sticker",
         "flashy_transition"
-      ]
+      ],
+      "motion_profile": {
+        "backend": "huashu-art-motion",
+        "grammars": [
+          "t2_keynote_ui",
+          "y3_whiteboard",
+          "t3_finance_chart"
+        ],
+        "palette": {
+          "bg": "#F4F2ED",
+          "surface": "#FFFFFF",
+          "ink": "#18232B",
+          "sub": "#5C6970",
+          "accent": "#087FA6",
+          "accent2": "#C4DCE3"
+        },
+        "recommended_variant": "warm-editorial",
+        "style_variants": {
+          "warm-editorial": {"bg": "#F4F2ED", "surface": "#FFFFFF", "ink": "#18232B", "sub": "#5C6970", "accent": "#087FA6", "accent2": "#C4DCE3"},
+          "cool-white": {"bg": "#F8FAFB", "surface": "#FFFFFF", "ink": "#16222B", "sub": "#63737A", "accent": "#067F9F", "accent2": "#BCD4DC"}
+        },
+        "scene_templates": {"proof": "evidence-frame", "demo": "ui-spotlight", "explain": "editorial-diagram", "context": "supportive-still", "transition": "section-marker"},
+        "direction": "result-first; use real terminal, code, and measured output as evidence, then animate focus, comparisons, and process explanations",
+        "rules": [
+          "animation is visual support and never replaces source evidence",
+          "show failure then repair then verified result",
+          "vary framing and motion by beat",
+          "use #F07167 only while a real failure is visible"
+        ]
+      }
     },
     "caption_style": {
       "font": "Noto Sans CJK SC",
       "size_px": 47,
-      "primary": "#F5F7FA",
+      "primary": "#18232B",
       "highlight": "#38BDF8",
       "outline": "none",
       "shadow": "none",
@@ -139,7 +168,7 @@
       "highlight_markup": "<hl>术语</hl>",
       "highlight_rendering": "DECLARED_NOT_RENDERED",
       "highlight_note": "The burn path applies one uniform style per cue. Per-cue highlight needs an ASS cue writer, which no shipped step owns yet; until one does, a marked cue renders in the base colour.",
-      "burn_style": "Fontsize=7,MarginV=18,Outline=0,Shadow=0,BorderStyle=1,PrimaryColour=&H00FFFFFF,Alignment=2",
+      "burn_style": "Fontsize=7,MarginV=18,Outline=0,Shadow=0,BorderStyle=1,PrimaryColour=&H002B2318,Alignment=2",
       "safe_zone": {
         "margin_v_px": 120,
         "side_margin_ratio": 0.07
@@ -204,9 +233,20 @@
     ]
   },
   "audio": {
+    "digital_presenter": {
+      "enabled": true,
+      "provider": "minimax-h3",
+      "asset_dir": "assert",
+      "scope": "intro_and_outro_only",
+      "intro_line": "本期用真实代码验证一个问题。",
+      "outro_line": "先看真实结果，再决定要不要用。",
+      "requires_explicit_quota_budget": true,
+      "native_audio_from_registered_voice_reference": true
+    },
     "voice": {
       "persona": "28-35 岁中低音，略带沙哑磁性，冷静理性，不带情绪煽动",
-      "provider_hint": "minimax_m_plan/speech-2.8-hd"
+      "provider_hint": "minimax_m_plan/speech-2.8-hd",
+      "voice_alias": "founder_primary_v1"
     },
     "bgm": {
       "style": "低音量暗氛围电子乐，无鼓点，无跳跃节奏",

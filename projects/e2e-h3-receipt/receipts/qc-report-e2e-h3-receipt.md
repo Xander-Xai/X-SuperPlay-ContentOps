@@ -3,7 +3,7 @@
 **Currency**: `CURRENT`
 **Graded target**: `project://final/e2e-h3-receipt.mp4`
 **Overall**: `PASS`
-**Checked at**: 2026-11-04T01:36:44Z
+**Checked at**: 2026-11-07T18:54:40Z
 
 **Paths**: logical references (project://, repo://); no absolute paths
 
@@ -23,8 +23,8 @@
 | caption_srt_present | OK | PASS | path=project://assets/captions/default.srt |
 | script_exists | OK | PASS | path=project://script/master.md |
 | storyboard_exists | OK | PASS | shot_count=3 |
-| real_source_ratio | OK | PASS | value=1.0, min=0.7, real_shots=3, generated_shots=0, note=historical shot-count diagnostic, kept for comparison; the gate is real_source_duration_ratio |
-| real_source_duration_ratio | OK | PASS | state=PASS, required=False, value=0.9997, min=0.7, real_seconds=31.358, required_seconds=21.957, undeclared_tail_s=0.009, note=real visible seconds / measured output seconds; diagrams, cards, generated and motion visuals do not count |
+| real_source_ratio | OK | PASS | value=1.0, min=0.7, evidence_mode=UNRESOLVED, real_shots=3, generated_shots=0, note=historical shot-count diagnostic, kept for comparison; the gate is real_source_duration_ratio |
+| real_source_duration_ratio | OK | PASS | state=PASS, required=False, value=0.9997, min=0.7, real_seconds=31.358, required_seconds=21.957, undeclared_tail_s=0.009, note=real visible seconds / measured output seconds; diagrams, cards, generated and motion visuals do not count as evidence |
 | source_provenance_complete | OK | PASS |  |
 | engine_recorded | OK | PASS | value=easel |
 | voice_not_silence | OK | PASS | max_volume_db=-4.1 dB, mean_volume_db=-27.8 dB |

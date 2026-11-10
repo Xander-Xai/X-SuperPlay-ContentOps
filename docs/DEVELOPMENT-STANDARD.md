@@ -94,16 +94,22 @@ projects/<slug>/receipts/
 
 No receipt = task not done.
 
-## Testing Requirements
+## Verification
 
-- `python scripts/dev_check.py` before every PR
-- `python scripts/test_basic.py` — script-level suite (10 tests)
-- `python scripts/check_docs.py` — doc consistency
-- `python scripts/check_repo_policy.py` — file placement + security
-- `python scripts/check_skill_references.py` — installed skills vs code on this branch
-- `python scripts/check_i18n.py` — bilingual structural consistency
-- A new `tests/test_*.py` must also be added to `.github/workflows/ci.yml`
-- Windows-specific tests for path handling
+Use the authoritative risk-based local policy in [TEST-PLAN.md](TEST-PLAN.md). Select checks by affected behavior and risk, not by changed-file count.
+
+- L0 documentation/non-behavioral changes: no business tests; run only relevant docs/link checks and i18n when bilingual mirrors change.
+- L1 local low-risk code: static analysis first and ordinarily at most one relevant existing test suite.
+- L2 ordinary behavior changes: relevant tests, ordinarily 1–3 targeted commands; add a cross-module contract check only when affected.
+- L3 high-risk behavior: all unit/contract/integration/regression checks needed for the risk. Budget does not waive safety verification.
+- Run `doctor.py` only for environment/runtime/install/deployment changes; `qc_video.py` only for actual video artifacts or QC behavior; `test_basic.py` only for a relevant script entry/basic behavior.
+- `python scripts/dev_check.py` is the full local gate when preparing a PR, not a per-edit requirement. `--quick` only skips repo policy and still runs other gates plus `test_basic.py`; it is not targeted testing.
+- Do not rerun unchanged passing checks, blindly retry failures, or expand coverage without evidence. Diagnose failures and rerun only affected checks. Stop when required verification passes and no blocking defect or critical risk remains.
+- Report checks not run as not run, never as passed.
+
+PR preparation retains the complete local gate and relevant business regression tests. GitHub CI retains all suites on Ubuntu and Windows and repo-policy checks. Never weaken or bypass CI, branch protection or security gates.
+
+A new `tests/test_*.py` must also be added to `.github/workflows/ci.yml`. Windows-specific tests remain required when Windows path behavior is changed.
 
 ## Documentation Update Matrix
 

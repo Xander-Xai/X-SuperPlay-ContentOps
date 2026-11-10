@@ -114,12 +114,24 @@ adapter", not "run it". The separate decision lives in ADR-009 and in
 DISCOVERED -> RESOLVABLE -> EXECUTION_REQUESTED -> AUTHORIZED -> EXECUTED
 ```
 
-A caller must present a grant bound to the exact skill version, account, pipeline,
-stage, operations, subject and budget, with an expiry and a revocation state. Every
+Operations that have external, paid or otherwise grant-managed effects must
+present a grant bound to the exact skill version, account, pipeline, stage,
+operations, subject and budget, with an expiry and revocation state. Every
 blocked path returns `execution_authorized: false`. The adapter's runtime lock
-verifier and the M5 `rights_reviewed` gate are unchanged and remain the authority
-for their own questions. See
+verifier and the M5 `rights_reviewed` gate remain the authority for their own
+questions. See
 [ADR-009](adr/ADR-009-skill-execution-authorization.md).
+
+### Explicit local-only Huashu policy
+
+`x-superplay-huashu-motion` is an exception to project-level grants because its
+registered effect is a pinned, project-local render with `network=false` and
+`paid=false`. `scripts/huashu_motion_adapter.py` checks the account route,
+installed runtime, project-contained spec, source registration and asset rights,
+then writes a draft. It does not call the generic execution gate or consume a
+grant. AUTO and REVIEW may render that draft; STRICT may still require copy
+approval. The output never authorizes paid calls, network access, cross-project
+reuse or publication and remains `production_ready=false`.
 
 Where the grant comes from, and how it is spent, is ADR-010:
 
@@ -141,9 +153,8 @@ traversal, symlink escapes and Windows device names are refused, not sanitised.
 Consumption is atomic on one local filesystem; a spent use is permanent.
 
 
-`scripts/m5_production.py` does not import any of this, so the verified M5 chain
-keeps its existing trust boundary. Making authorization mandatory inside M5 is a
-separate Owner-approved migration. See
+The generic grant system remains in place for operations that need it. M5's
+Huashu local-render path does not depend on a project execution grant. See
 [ADR-010](adr/ADR-010-trusted-grant-execution-gate.md).
 
 ## media-use

@@ -17,7 +17,7 @@ SCHEMA = "contentops.evidence-feasibility/v1"
 
 EVIDENCE_KINDS = (
     "screen_recording", "terminal_capture", "real_screenshot", "real_document",
-    "measurement", "authoritative_source", "none",
+    "measurement", "authoritative_source", "code_snapshot", "none",
 )
 OWNERS = ("human", "automated")
 FAILURE_PLANS = ("change_topic", "change_claim", "stop", "degrade_and_declare")

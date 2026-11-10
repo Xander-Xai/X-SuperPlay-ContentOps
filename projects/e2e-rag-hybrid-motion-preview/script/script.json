@@ -1,0 +1,8 @@
+{
+  "schema": "contentops.m5-script/v1",
+  "lines": [
+    {"id": "rag-hybrid-01", "narration": "混合检索并行找词项和语义候选。", "caption": "词项与语义，两路召回", "claim": "hybrid-retrievers", "asset_id": "rag-hybrid-01"},
+    {"id": "rag-hybrid-02", "narration": "RRF 按各结果列表名次累加倒数分。", "caption": "RRF 按名次累加倒数分", "claim": "rrf-rank-formula", "asset_id": "rag-hybrid-02"},
+    {"id": "rag-hybrid-03", "narration": "融合排名，避免直接比较不同原始分数。", "caption": "融合排名，避开原始分值差异", "claim": "rrf-rank-formula", "asset_id": "rag-hybrid-03"}
+  ]
+}

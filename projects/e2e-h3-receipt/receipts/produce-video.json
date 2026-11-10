@@ -1,0 +1,108 @@
+{
+  "schema": "contentops.produce-video/v1",
+  "run_id": "65d67fff-bca2-4f58-a1c4-9f9de16ecccc",
+  "task_id": "b5060be4312ffb846ec80aa408d66a7e89bc4dbdc5d760c2e0792cc946181381",
+  "project": "projects/e2e-h3-receipt",
+  "input_sha256": "b5060be4312ffb846ec80aa408d66a7e89bc4dbdc5d760c2e0792cc946181381",
+  "runs": [
+    {
+      "run_id": "65d67fff-bca2-4f58-a1c4-9f9de16ecccc",
+      "task_id": "b5060be4312ffb846ec80aa408d66a7e89bc4dbdc5d760c2e0792cc946181381",
+      "state": "QC_PASSED",
+      "started_at": "2026-11-07T18:54:24Z",
+      "finished_at": "2026-11-07T18:54:41Z",
+      "elapsed_seconds": 16.067,
+      "reused": false,
+      "video_sha256": "ffd6f6bd6456aaee07953536f2299d85b08d8e86779ad9d641d2f9a77eb84da4",
+      "stage_timings_seconds": {
+        "bundle": 0.0,
+        "sources": 0.004,
+        "media_use": 0.0,
+        "claims": 0.004,
+        "motion": 0.0,
+        "assets": 0.004,
+        "script": 0.001,
+        "narration": 1.457,
+        "subtitles": 0.001,
+        "storyboard": 0.001,
+        "compose": 12.327,
+        "qc": 2.264,
+        "human_review_package": 0.001
+      }
+    }
+  ],
+  "mode": "AUTO",
+  "state": "QC_PASSED",
+  "started_at": "2026-11-07T18:54:24Z",
+  "reused": false,
+  "rendered": true,
+  "technical_qc": "PASS",
+  "production_ready": false,
+  "external_provider_calls": 0,
+  "external_cost": 0,
+  "external_cost_reason": "M5 accepts only local SAPI or receipt-bound existing narration in this entry; no paid provider is called",
+  "human_review": "PENDING_FOUNDER_REVIEW",
+  "copy_review_required_for_render": false,
+  "published": false,
+  "m5_stages": {
+    "sources": {
+      "count": 2
+    },
+    "media_use": {
+      "state": "DISABLED",
+      "count": 0,
+      "bgm": false,
+      "sfx": 0
+    },
+    "claims": {
+      "count": 3
+    },
+    "assets": {
+      "count": 3
+    },
+    "script": {
+      "lines": 3
+    },
+    "narration": {
+      "duration_s": 31.358,
+      "engine": "windows_sapi",
+      "provider": "sapi"
+    },
+    "subtitles": {
+      "cues": 3
+    },
+    "storyboard": {
+      "shots": 3,
+      "bgm": false,
+      "sfx": 0
+    },
+    "compose": {
+      "state": "OK",
+      "video": "project://final/e2e-h3-receipt.mp4"
+    },
+    "qc": {
+      "overall": "PASS",
+      "audio": true
+    }
+  },
+  "stage_timings_seconds": {
+    "bundle": 0.0,
+    "sources": 0.004,
+    "media_use": 0.0,
+    "claims": 0.004,
+    "motion": 0.0,
+    "assets": 0.004,
+    "script": 0.001,
+    "narration": 1.457,
+    "subtitles": 0.001,
+    "storyboard": 0.001,
+    "compose": 12.327,
+    "qc": 2.264,
+    "human_review_package": 0.001
+  },
+  "video": "project://final/e2e-h3-receipt.mp4",
+  "video_sha256": "ffd6f6bd6456aaee07953536f2299d85b08d8e86779ad9d641d2f9a77eb84da4",
+  "qc_receipt": "qc-report-e2e-h3-receipt.json",
+  "finished_at": "2026-11-07T18:54:41Z",
+  "elapsed_seconds": 16.067
+}

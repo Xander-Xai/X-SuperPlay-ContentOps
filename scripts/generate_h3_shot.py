@@ -32,9 +32,13 @@ ordered Ref2VA sections) is part of the request. See
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
+import re
 import sys
+import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -43,6 +47,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from contentops.media.billing_guard import BillingGuard  # noqa: E402
 from contentops.media.contract import BillingBlocked  # noqa: E402
+from contentops.media.attempts import AttemptRecordError  # noqa: E402
 from contentops.media.credentials import (  # noqa: E402
     CredentialBindingError,
     resolve_credential,
@@ -61,6 +66,58 @@ from contentops.media.video_validation import RequestRejected  # noqa: E402
 #: Optional override for the billing API base, so a test can point the gate at a
 #: local stub instead of contacting the provider. Production leaves it unset.
 BASE_URL_ENV_VAR = "CONTENTOPS_MINIMAX_BASE_URL"
+CONSENT_SCHEMA = "contentops.avatar-generation-consent/v1"
+
+
+def _human_confirmation(args: argparse.Namespace) -> tuple[bool, dict[str, object] | None, str]:
+    """Fail closed for non-interactive H3 creation unless M5 carries consent."""
+    if not str(args.quota_budget or "").strip():
+        return False, None, "an explicit subscription quota budget is required before H3 generation"
+    if args.human_confirmation_receipt:
+        path = Path(args.human_confirmation_receipt).expanduser().resolve()
+        try:
+            receipt = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return False, None, "human confirmation receipt is unreadable"
+        if (not isinstance(receipt, dict)
+                or receipt.get("schema") != CONSENT_SCHEMA
+                or receipt.get("provider") != "minimax-h3"
+                or receipt.get("decision") != "CONFIRMED"
+                or receipt.get("human_confirmation") is not True
+                or not receipt.get("run_id")):
+            return False, None, "human confirmation receipt does not authorize this H3 run"
+        budget = str(receipt.get("quota_budget") or "")
+        task_total = re.search(r"task total\s+(\d+(?:\.\d+)?)pp", args.quota_budget, re.IGNORECASE)
+        if task_total and budget.casefold() != f"{task_total.group(1)}pp".casefold():
+            return False, None, "H3 clip quota exceeds the human-confirmed task budget"
+        return True, {"receipt_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                      "run_id": receipt["run_id"], "origin": receipt.get("origin")}, ""
+
+    if not sys.stdin.isatty():
+        return False, None, "interactive human confirmation is required before MiniMax H3 generation"
+    print(f"MiniMax H3 将创建一个付费额度任务。本次额度预算：{args.quota_budget}。")
+    try:
+        answer = input("确认本次生成数字人镜头？输入 y 确认，其它输入取消：[y/N] ").strip().casefold()
+    except EOFError:
+        return False, None, "interactive human confirmation could not be read"
+    if answer not in {"y", "yes"}:
+        return False, None, "operator declined this H3 generation"
+    root = Path(args.out_dir).expanduser().resolve()
+    root.mkdir(parents=True, exist_ok=True)
+    receipt = {
+        "schema": CONSENT_SCHEMA, "provider": "minimax-h3",
+        "decision": "CONFIRMED", "origin": "interactive_terminal",
+        "run_id": str(uuid.uuid4()), "quota_budget": args.quota_budget,
+        "quota_policy": "SUBSCRIPTION only; PAYG, credit packs and vouchers disabled",
+        "recorded_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+        "reason": "operator confirmed this H3 generation budget",
+        "human_confirmation": True,
+    }
+    receipt_path = root / "human-generation-consent.json"
+    receipt_path.write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n",
+                            encoding="utf-8")
+    return True, {"receipt_sha256": hashlib.sha256(receipt_path.read_bytes()).hexdigest(),
+                  "run_id": receipt["run_id"], "origin": receipt["origin"]}, ""
 
 
 def resolve_base_url() -> str:
@@ -115,6 +172,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--quota-budget", default="",
                         help="explicit budget for the run, e.g. '7pp'. Mandatory: "
                              "video is the most expensive call ContentOps makes.")
+    parser.add_argument("--human-confirmation-receipt", default="",
+                        help="M5 receipt from the interactive task-level avatar confirmation gate")
     parser.add_argument("--test-objective", default="",
                         help="what this generation is meant to prove. Mandatory.")
     parser.add_argument("--health", action="store_true")
@@ -170,6 +229,13 @@ def main() -> int:
         print(json.dumps({"health": provider.health(),
                           "capabilities": provider.capabilities()}, indent=2))
         return 0
+
+    confirmed, confirmation, confirmation_error = _human_confirmation(args)
+    if not confirmed:
+        print(json.dumps({"status": "BLOCKED", "verdict": "HUMAN_CONFIRMATION_REQUIRED",
+                          "reasons": [confirmation_error], "task_created": False,
+                          "billing_call": False}, indent=2, ensure_ascii=False))
+        return 7
 
     compiler = H3PromptCompiler()
     try:
@@ -227,6 +293,18 @@ def main() -> int:
                           "note": "resume by re-running; the same task is polled"},
                          indent=2, ensure_ascii=False))
         return 1
+    except AttemptRecordError:
+        # A provider task may already exist and its raw id is held in private
+        # task-state. Do not print a traceback or create a replacement task;
+        # the next invocation must resume that same task.
+        print(json.dumps({"status": "RECOVERABLE",
+                          "verdict": "ATTEMPT_RECORD_WRITE_REFUSED",
+                          "reasons": ["The provider task exists, but its public attempt record could not be saved safely. "
+                                      "Private recovery state is retained; rerun to resume the same task."],
+                          "create_count": provider.create_count,
+                          "task_created": provider.create_count > 0},
+                         indent=2, ensure_ascii=False))
+        return 1
     except RuntimeError as failed:
         print(json.dumps({"status": "FAILED", "reasons": [str(failed)],
                           "create_count": provider.create_count}, indent=2,
@@ -237,6 +315,7 @@ def main() -> int:
     payload["status"] = "OK"
     payload["reused"] = outcome.reused
     payload["create_count"] = provider.create_count
+    payload["human_confirmation"] = confirmation
     payload["prompt_sections"] = compiled.sections
     payload["prompt_alignment_instruction"] = compiled.alignment_instruction
     payload["asset_record"] = {

@@ -375,9 +375,10 @@ def build_parser() -> argparse.ArgumentParser:
                        help="write the search plan and stop")
     start.add_argument("--accept-off-profile", action="store_true",
                        help="approve an off-profile topic explicitly")
-    start.add_argument("--fetch-evidence", action="store_true",
-                       help="for --mode topic, also look for supporting material "
-                            "in the sources that accept a query")
+    start.add_argument("--fetch-evidence", "--search-candidates",
+                       dest="fetch_evidence", action="store_true",
+                       help="for --mode topic, search query sources for candidate "
+                            "leads; results are not claim evidence until saved and verified")
     start.add_argument("--note", default="", help="why an exception was approved")
     start.add_argument("--by", default="", help="who made the choice")
     start.set_defaults(func=cmd_start)

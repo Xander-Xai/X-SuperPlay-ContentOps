@@ -846,15 +846,13 @@ class ContentRouter:
         fetched: List[Dict[str, Any]] = []
         fetch_failures: List[Dict[str, Any]] = []
         if fetch_evidence:
-            for outcome in user_topic_route.collect_evidence(
+            for outcome in user_topic_route.search_candidates(
                     profile, payload, adapters=self.adapters,
                     timeout=self.timeout):
                 if outcome.ok:
-                    fetched.extend(user_topic_route.evidence_items([outcome]))
+                    fetched.extend(user_topic_route.discovery_candidates([outcome]))
                 else:
                     fetch_failures.append(outcome.to_dict())
-        if fetched:
-            verification = "primary_artifact"
 
         positioning = alignment["alignment"]
         decision = "EXPERIMENT" if positioning == "OFF_POSITIONING" else "ACCEPT"
@@ -904,12 +902,15 @@ class ContentRouter:
                         "local_references": user_topic_route.local_reference_records(payload),
                         "reference_ids": refs,
                         "relevance": scoring,
-                        "fetched_evidence": fetched,
+                        "discovered_candidates": fetched,
                         "fetch_failures": fetch_failures},
             ),
             profile=profile.summary(),
+            # Search results are repository discovery leads. They do not
+            # become claim evidence until a source document is fetched,
+            # hashed, permissioned, and bound to an exact claim.
             evidence=[{"kind": "user_reference", "url": url, "status": "supplied"}
-                      for url in payload.urls] + fetched,
+                      for url in payload.urls],
             profile_alignment=alignment,
         )
         package = brief_module.build_brief_package(

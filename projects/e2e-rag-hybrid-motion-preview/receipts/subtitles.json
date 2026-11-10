@@ -1,0 +1,7 @@
+{
+  "schema": "contentops.m5-subtitles/v1",
+  "path": "assets/captions/default.srt",
+  "cues": 3,
+  "coverage_ratio": 0.961,
+  "audio_duration_s": 14.268
+}

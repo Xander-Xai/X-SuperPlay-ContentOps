@@ -114,7 +114,19 @@ PIPELINES: Dict[str, Tuple[Dict[str, str], ...]] = {
 
 #: Legitimate variants of a pipeline, never the default.
 ALTERNATIVES: Dict[str, Tuple[Dict[str, str], ...]] = {
+    "EVIDENCE_LED": (
+        {
+            "step": "motion_visual_support",
+            "command": "python scripts/huashu_motion_adapter.py {project} --preflight",
+            "why": "Huashu animation is optional explanatory B-roll only; it never replaces Recordly evidence or counts toward visible-source time",
+        },
+    ),
     "EXPLANATORY": (
+        {
+            "step": "motion_visual_support",
+            "command": "python scripts/huashu_motion_adapter.py {project} --preflight",
+            "why": "Huashu animation fills only an explicitly mapped visual-support placement; the adapter keeps Copy Review and M5 gates",
+        },
         {
             "step": "motion",
             "command": "python scripts/build_motion_film.py {project}",

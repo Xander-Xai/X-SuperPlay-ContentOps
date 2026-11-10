@@ -132,6 +132,24 @@ Narration is the offline Windows SAPI voice; no network TTS is called. The run
 always ends at `PENDING_FOUNDER_REVIEW` with `production_ready: false` — a green
 QC is not publishing permission (ADR-005).
 
+To explicitly import a local folder of images or videos for a preview, pass
+`--assets`:
+
+~~~powershell
+python scripts\m5_production.py projects\my-video --assets D:\media\selected-for-preview
+~~~
+
+M5 copies supported files into `assets/imported/user/`, records their hashes in
+`sources/assets.json`, and writes `receipts/user-assets-import.json`. Video
+imports retain the source clip, record its codec, duration, dimensions, frame
+rate and audio presence, and extract start, middle and end review frames. The
+receipt also points to `receipts/user-assets-contact-sheet.jpg`. These assets
+are `USER_PROVIDED_LOCAL` with `LOCAL_PREVIEW_ONLY` scope: selection does not
+grant distribution rights or make an asset factual evidence. Use a separate
+rights review before distribution, and keep factual claims bound to their
+independent source artifacts. The option imports media; it does not rewrite
+script asset IDs or approve publication.
+
 
 ### Automatic media-use materials in M5 (offline only)
 
@@ -279,6 +297,24 @@ without `--execute` only prints what it would run. Every execution writes
 tries to run it. There is no publish, credential or install step at all. The
 driver does not need FastAPI, uvicorn or a running host; `host-status` is a read
 step only so the agent can report the host state.
+
+## 5.5 Brief-driven copy review
+
+After the Brief-to-M5 bridge has written the final script and storyboard, check
+or record the human copy review before running M5:
+
+```powershell
+python scripts\copy_review.py projects\my-episode --check
+python scripts\copy_review.py projects\my-episode --approve `
+  --reviewer "Your Name" --opinion "Reviewed the final narration" --confirm
+python scripts\copy_review.py projects\my-episode --request-changes `
+  --reviewer "Your Name" --opinion "Add the missing source citation" --confirm
+```
+
+A decision requires a named reviewer, written rationale and `--confirm`. The
+receipt is bound to the current copy fingerprint; editing the script, captions,
+claims, storyboard or declared assets makes an earlier approval stale. This
+command records a decision only: it does not edit copy, run M5 or publish.
 
 ## 6. Run QC
 

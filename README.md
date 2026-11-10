@@ -32,10 +32,10 @@ The table separates what is on **`main`** from what exists only on an
 | Media-use adapter (HyperFrames) | `main` | Implemented; local-only, zero network/paid calls. Needs a host runtime lock — default verdict is `BLOCKED / MISSING_RUNTIME` |
 | MiniMax media | `main` | Speech, image and H3 video implemented; verified subsets are listed in CURRENT-STATE; `PENDING_FOUNDER_REVIEW` |
 | Skill routing / execution authorization | `main` | Implemented; only `media-use` is a declared capability; the router never authorizes execution |
-| Content router, account DNA, workflow gates | **partial** | S1 (#93, stage gate) and S2 (#95, source-candidate contract) are on `main`; S3–S4 are open in Issue #94 |
-| 公众号 (WeChat article) | **unmerged / local vendor** | Ten-stage vendored workflow; provenance/rights review is open in Issue #56 |
-| 小红书 image-text | **unmerged** | `feat/xhs-fa-migration`; manual upload only |
-| X | **partial** | Post gate and growth→editorial gate are on `main` (PRs #87, #88); the rest of the platform track is tracked in Issue #47 |
+| Content router, account DNA, workflow gates | `main` | Implemented through PRs #114 and #118; hotspot and user-topic routes produce briefs, while approval and downstream copy review remain gated |
+| 公众号 (WeChat article) | `main` verify-only adapter | `status` / `verify` / `plan` only; third-party rights remain unresolved in Issue #56; no production or publication |
+| 小红书 image-text | `main` verify-only adapter | `status` / `verify` / `plan` only; rights and migration acceptance remain open in Issue #51; no production or publication |
+| X | `main` manual-only editorial track | Editorial gate, manual package, URL recording and offline metric analysis exist; no API publication or automatic metric collection |
 | Auto-publishing | — | **Not in scope** |
 | Tests | `main` | Every suite under `tests/test_*.py` is wired into CI; count is not asserted here — see [docs/TEST-PLAN.md](docs/TEST-PLAN.md); unified gate `python scripts/dev_check.py` |
 | Production ready | — | **false** — no track is `PRODUCTION_ACCEPTED` |
@@ -46,20 +46,12 @@ The [X project](projects/x-growth-en/README.md) now includes a [90-day evidence-
 
 ### Branch reality
 
-`main` now carries the integration stack: the media-use adapter, rights gate,
-skill router and skill-execution authorization landed as PR #89, followed by
-PRs #87 and #88. The former integration branch `fix/57-m5-media-fixtures` was
-merged and its remote branch deleted.
-
-What is still **not** on `main` is named in the table above. The draft PRs that once
-tracked it were closed as superseded by the slice process in Issue #94: the content
-router (#49), the X platform track (#50) and the GZH provenance fix (#58). The
-receipt-baseline fix (#62) and the media-use pre-merge ADR (#90) are merged. No PR is
-open as of 2026-11-01.
-
-The docs describe `main`. An unmerged layer is named as unmerged rather than
-described as a working feature; see
-[docs/CONVERGENCE-REQUIREMENTS-2026-11-01.md](docs/CONVERGENCE-REQUIREMENTS-2026-11-01.md).
+This README describes the repository's current `main` capabilities, not the status
+of an earlier feature branch. The content router and brief bridge are on `main`
+(PRs #114 and #118); X, XHS and GZH adapters are also on `main` but have different
+execution boundaries, as listed above. GZH and XHS remain verify-only while rights
+and acceptance are unresolved. See [docs/CURRENT-STATE.md](docs/CURRENT-STATE.md)
+for dated evidence and [docs/DEFERRED-WORK.md](docs/DEFERRED-WORK.md) for open work.
 
 ## Quick Start
 
@@ -106,9 +98,12 @@ and `m5_production.py` (evidence-first, local narration). Neither publishes and
 neither reports production-ready.
 
 The account-aware content router (`HOTSPOT_DISCOVERY` / `USER_TOPIC` → Account
-DNA → Brief) is **not on this branch**. It is the subject of
-[docs/CONVERGENCE-REQUIREMENTS-2026-11-01.md](docs/CONVERGENCE-REQUIREMENTS-2026-11-01.md)
-and PR #49.
+DNA → Brief) is implemented on `main` (PR #114). The separate `router_e2e.py`
+command is an acceptance harness, not the production operator entry. Copy review
+remains a required gate before a brief-driven project can render. See
+[docs/CURRENT-STATE.md](docs/CURRENT-STATE.md) and
+[docs/CONTENT-LIFECYCLE-STAGES.md](docs/CONTENT-LIFECYCLE-STAGES.md) for current
+scope and limits.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and
 [docs/CURRENT-STATE.md](docs/CURRENT-STATE.md) for the current boundaries.

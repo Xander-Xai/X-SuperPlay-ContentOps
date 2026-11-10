@@ -1,0 +1,17 @@
+{
+  "schema": "contentops.storyboard/v1",
+  "size": "1080x1920",
+  "image_motion": "embedded_animation",
+  "pad_mode": "trim",
+  "engine": "huashu-art-motion clips + ffmpeg concat/mux",
+  "voice_provider": "windows_sapi/Microsoft Huihui Desktop (zh-CN)",
+  "voice_quality": "mechanical_local_preview",
+  "narration": "projects/e2e-rag-hybrid-motion-preview/assets/voice/narration.wav",
+  "subtitle": "projects/e2e-rag-hybrid-motion-preview/assets/captions/default.srt",
+  "generated_visuals": {"count": 3, "policy": "VISUAL_SUPPORT_ONLY"},
+  "shots": [
+    {"shot_id": "rag-hybrid-01", "asset_id": "rag-hybrid-01", "source": "projects/e2e-rag-hybrid-motion-preview/assets/generated/huashu/rag-hybrid-01.mp4", "source_type": "generated_video", "video": "projects/e2e-rag-hybrid-motion-preview/assets/generated/huashu/rag-hybrid-01.mp4", "image": "projects/e2e-rag-hybrid-motion-preview/assets/generated/huashu/rag-hybrid-01.mp4", "caption": "词项与语义，两路召回", "narration": "混合检索并行找词项和语义候选。", "claim": "hybrid-retrievers", "duration": 4.5, "duration_s": 4.5},
+    {"shot_id": "rag-hybrid-02", "asset_id": "rag-hybrid-02", "source": "projects/e2e-rag-hybrid-motion-preview/assets/generated/huashu/rag-hybrid-02.mp4", "source_type": "generated_video", "video": "projects/e2e-rag-hybrid-motion-preview/assets/generated/huashu/rag-hybrid-02.mp4", "image": "projects/e2e-rag-hybrid-motion-preview/assets/generated/huashu/rag-hybrid-02.mp4", "caption": "RRF 按名次累加倒数分", "narration": "RRF 按各结果列表名次累加倒数分。", "claim": "rrf-rank-formula", "duration": 4.785, "duration_s": 4.785},
+    {"shot_id": "rag-hybrid-03", "asset_id": "rag-hybrid-03", "source": "projects/e2e-rag-hybrid-motion-preview/assets/generated/huashu/rag-hybrid-03.mp4", "source_type": "generated_video", "video": "projects/e2e-rag-hybrid-motion-preview/assets/generated/huashu/rag-hybrid-03.mp4", "image": "projects/e2e-rag-hybrid-motion-preview/assets/generated/huashu/rag-hybrid-03.mp4", "caption": "融合排名，避开原始分值差异", "narration": "融合排名，避免直接比较不同原始分数。", "claim": "rrf-rank-formula", "duration": 4.984, "duration_s": 4.984}
+  ]
+}

@@ -19,6 +19,7 @@ from .source_artifact import (  # noqa: F401
     SourceArtifactError,
     build_artifacts,
 )
+from .repo_source import RepoSnapshot, RepoSourceAdapter, RepoSourceError  # noqa: F401
 
 __all__ = [
     "ARTIFACT_SCHEMA",
@@ -29,5 +30,8 @@ __all__ = [
     "ClaimLedgerError",
     "SourceArtifact",
     "SourceArtifactError",
+    "RepoSnapshot",
+    "RepoSourceAdapter",
+    "RepoSourceError",
     "build_artifacts",
 ]

@@ -4,7 +4,7 @@
   "project": "projects/e2e-h3-receipt",
   "graded_target": "project://final/e2e-h3-receipt.mp4",
   "overall": "PASS",
-  "checked_at": "2026-11-04T01:36:44Z",
+  "checked_at": "2026-11-07T18:54:40Z",
   "checks": [
     {
       "id": "_video",
@@ -99,6 +99,7 @@
       "severity": "PASS",
       "value": 1.0,
       "min": 0.7,
+      "evidence_mode": "UNRESOLVED",
       "real_shots": 3,
       "generated_shots": 0,
       "note": "historical shot-count diagnostic, kept for comparison; the gate is real_source_duration_ratio"
@@ -116,7 +117,7 @@
       "undeclared_tail_s": 0.009,
       "code": null,
       "detail": null,
-      "note": "real visible seconds / measured output seconds; diagrams, cards, generated and motion visuals do not count"
+      "note": "real visible seconds / measured output seconds; diagrams, cards, generated and motion visuals do not count as evidence"
     },
     {
       "id": "source_provenance_complete",

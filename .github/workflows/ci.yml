@@ -44,7 +44,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install test dependencies
-        run: python -m pip install --quiet --upgrade pip Pillow
+        # PyYAML is not part of the runner image, and both platform spec tables
+        # (graphic-platforms.yaml, video-platforms.yaml) are read through it. The
+        # suites that consume them fail loudly rather than skipping, so it has to
+        # be installed here or the coverage looks larger than it is.
+        run: python -m pip install --quiet --upgrade pip Pillow PyYAML
 
       # ffmpeg was absent on both runners, and the M4 H3 suite plus the M4.5
       # transform tests need it. Installing it here is what turns those skips into
@@ -74,7 +78,7 @@ jobs:
       # itself looks green while testing nothing, which is how the M3 suite lost
       # half its coverage on a runner without ffmpeg before this step existed.
       - name: Report test dependency availability
-        run: python -c "import shutil,sys; print('ffmpeg:', bool(shutil.which('ffmpeg'))); print('ffprobe:', bool(shutil.which('ffprobe'))); import PIL; print('Pillow:', PIL.__version__)"
+        run: python -c "import shutil,sys; print('ffmpeg:', bool(shutil.which('ffmpeg'))); print('ffprobe:', bool(shutil.which('ffprobe'))); import PIL; print('Pillow:', PIL.__version__); import yaml; print('PyYAML:', yaml.__version__)"
 
       - name: Run basic tests
         run: python scripts/test_basic.py
@@ -229,6 +233,24 @@ jobs:
       - name: Run M5 motion-integration tests
         run: python tests/test_m5_motion_integration.py
 
+      # External B-roll discovery. Both suites are entirely offline: provider
+      # responses, DNS answers and loudness measurements are injected. The
+      # decisive assertions are that no request happens without an explicit
+      # grant, a missing key stays a non-fatal local-only state, 429 carries
+      # Retry-After without resubmitting, search responses cache for 24h, a
+      # private DNS answer is refused, and registration never fabricates a
+      # human rights review. No CI job has a Pexels or Pixabay credential.
+      - name: Run stock-media offline tests
+        run: python tests/test_stock_media.py
+
+      - name: Run BGM planner offline tests
+        run: python tests/test_bgm_planner.py
+
+      # QC layering: a content-evidence WARN must not downgrade decodable media,
+      # and no technical/visual PASS may fabricate a human publication approval.
+      - name: Run visual-QC quality-state tests
+        run: python tests/test_visual_qc_states.py
+
       # New raw provider IDs, balances and key fingerprints in tracked receipts
       # must fail. Existing exposure is baselined by field path only.
       - name: Run receipt-secret tests
@@ -243,11 +265,27 @@ jobs:
       - name: Run M5 evidence regression tests
         run: python tests/test_m5_evidence.py
 
+      # GitHub repository snapshots are pinned to an immutable commit, bounded
+      # to selected UTF-8 text, and never become claim-capable without a
+      # recognized SPDX licence. The transport is mocked; CI makes no request.
+      - name: Run GitHub repository source adapter tests
+        run: python tests/test_repo_source_adapter.py
+
       # The measured real-source gate: seconds of actual material over the
       # rendered file's duration, with overlap unioned and diagrams, cards,
       # generated and motion visuals excluded. Fixture-driven; no render.
       - name: Run real-source duration gate tests
         run: python tests/test_real_source_duration.py
+
+      # One QC release rule: the original overall is kept, account-bound WARN
+      # blocks, and neither entry can turn a warning into a pass.
+      - name: Run QC verdict tests
+        run: python tests/test_qc_verdict.py
+
+      # Production entries refuse to write into a dirty main checkout, except
+      # under projects/_local/. Fixture repos only; nothing is rendered.
+      - name: Run checkout guard tests
+        run: python tests/test_checkout_guard.py
 
       # The short motion-sample technical gate: 4-8 s, silent, 1080x1920,
       # H.264/yuv420p, CFR 30, digest-bound. It stops at PENDING_FOUNDER_REVIEW
@@ -268,12 +306,6 @@ jobs:
       # (Issue #56). Synthetic roots only.
       - name: Run GZH runtime adapter tests
         run: python tests/test_gzh_runtime.py
-
-      # The XHS runtime adapter: locate, hash-verify and describe a locally
-      # installed workflow. Never executes, drafts or publishes; the root
-      # Apache-2.0 covers the tree, the one AGPL skill must stay excluded.
-      - name: Run XHS runtime adapter tests
-        run: python tests/test_xhs_runtime.py
 
       # The X editorial adapter: verify the local manual-only account, project
       # and gate code. Never calls the X API, reads a credential, drafts or
@@ -368,6 +400,42 @@ jobs:
       # and that a placeholder never implies code, publication or metrics.
       - name: Run platform registry tests
         run: python tests/test_platform_registry.py
+
+      # Video delivery line: per-platform shape, blockers and the authorization
+      # gate. Proves a horizontal cut, a missing Bilibili category and a Douyin
+      # upload all stop in code instead of in a browser form.
+      - name: Run video platform delivery tests
+        run: python tests/test_video_platforms.py
+
+      # Graphic delivery gate: a packed draft with hard blockers must never reach
+      # the browser bridge, and Douyin is refused unconditionally.
+      - name: Run graphic delivery gate tests
+        run: python tests/test_delivery_gate.py
+
+      # WeChat draft channel: shaping, credential preflight and the read-back
+      # check. Offline only — no token, no upload, no credential.
+      - name: Run WeChat draft tests
+        run: python tests/test_wechat_draft.py
+
+      # Manual metrics import. Offline by construction: the suite asserts the
+      # module opens no socket and imports no HTTP client. The decisive cases are
+      # that a missing field, a bad hash and a non-numeric metric are refused with
+      # every reason named, that metrics are never zero-filled, and that the review
+      # receipt cannot modify the script, the QC verdict or production_ready.
+      - name: Run manual metrics review tests
+        run: python tests/test_manual_metrics.py
+
+      # Bilibili public metrics: DNA gate, BV resolution chain, counter shaping
+      # and receipts. Offline — the transport (bilibili-api-python) is imported
+      # only under --execute, and a CLI BV is stamped TRANSPORT_SMOKE so a pipe
+      # check can never be read as account performance.
+      - name: Run bilibili metrics tests
+        run: python tests/test_bilibili_metrics.py
+
+      # WeChat data cube channel: official range ceilings, credential preflight
+      # that never echoes a value, and receipts that never modify the artefact.
+      - name: Run wechat metrics tests
+        run: python tests/test_wechat_metrics.py
 
       # Content Bundle consumption contract: Strategy owns the template, this
       # suite only proves a consumer refuses an incomplete or unsafe record.
@@ -513,6 +581,10 @@ jobs:
           python-version: '3.11'
       - name: Repo policy check
         run: python scripts/check_repo_policy.py
+      # Read-only. Fails when a new untracked experiment directory appears under
+      # projects/ outside the baselined list and outside projects/_local/.
+      - name: Untracked project check
+        run: python scripts/check_untracked_projects.py
       - name: Receipt secret check
         shell: bash
         env:

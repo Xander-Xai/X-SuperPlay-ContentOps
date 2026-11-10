@@ -1,0 +1,56 @@
+{
+  "grammar": "y3_whiteboard",
+  "duration": 4.22,
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": {
+    "name": "chalk",
+    "bg": "#0F1117",
+    "surface": "#161A22",
+    "ink": "#F5F7FA",
+    "sub": "#8B95A5",
+    "accent": "#38BDF8",
+    "accent2": "#8B95A5"
+  },
+  "cues": [
+    {
+      "at": 0.1,
+      "kind": "title",
+      "text": "召回分两路"
+    },
+    {
+      "at": 0.7,
+      "kind": "draw",
+      "text": "关键词检索",
+      "data": {
+        "icon": "doc"
+      }
+    },
+    {
+      "at": 1.4,
+      "kind": "point",
+      "text": "匹配原文词项"
+    },
+    {
+      "at": 2.6,
+      "kind": "draw",
+      "text": "向量检索",
+      "data": {
+        "icon": "network"
+      }
+    },
+    {
+      "at": 3.7,
+      "kind": "point",
+      "text": "找语义相近内容"
+    },
+    {
+      "at": 4.1,
+      "kind": "highlight",
+      "data": {
+        "target": "draw"
+      }
+    }
+  ]
+}

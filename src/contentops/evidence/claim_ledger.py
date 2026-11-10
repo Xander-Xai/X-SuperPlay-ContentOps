@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Sequence
 
 from .source_artifact import SourceArtifact
+from .text_matching import quote_occurs
 
 CLAIM_SCHEMA = "contentops.claim-ledger/v1"
 
@@ -110,7 +111,8 @@ class ClaimLedger:
                         f"{artifact.permission} and cannot back a claim"
                     )
                 text = artifact.text(repo_root)
-                matching = [q for q in claim.quotes if text is not None and q in text]
+                matching = [q for q in claim.quotes
+                            if quote_occurs(q, text or "", artifact.path)]
                 if matching:
                     quoted = True
             if not quoted:

@@ -279,4 +279,4 @@ def decide(project: Path, *, status_value: str, reviewer: str, opinion: str,
 
 def _remedy(project: Path) -> str:
     return (f"python scripts/copy_review.py {project.as_posix()} "
-            f"--approve --reviewer <name> --opinion \"<what you decided>\"")
+            "--approve --reviewer <name> --opinion \"<what you decided>\" --confirm")

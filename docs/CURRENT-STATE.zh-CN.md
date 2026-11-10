@@ -260,8 +260,9 @@ Owner 已决定把完整 Easel 系统作为生产底座（ADR-016）。本节只
 
 1. 语音质量 — edge-tts 机械感重，Windows SAPI 离线且平直；两者都非生产级。MiniMax
    语音已实现但未批准。
-2. 人工审查 — 没有任何项目完成 ```human-review.json```，所有结果停留在
-   ```PENDING_FOUNDER_REVIEW```。
+2. 人工审查 — 没有任何项目获得批准的 `human-review.json`。已跟踪的
+   `projects/easel-review/receipts/human-review.json` 记录为 `REJECTED_FOUNDER`；
+   其他生产运行仍为 `PENDING_FOUNDER_REVIEW`。
 3. media-use 运行时锁 — 干净检出（以及本机当前）判定为
    ```BLOCKED / MISSING_RUNTIME```。已批准基线存在，但必须先为本机生成并信任锁。
 4. 权利 — ```main``` 上的小红书、X、公众号适配器只校验、从不执行。vendored 树不在本仓库

@@ -141,11 +141,28 @@ def quotes(pack: EvidencePack, *, per_item: Optional[int] = None,
     """
     chosen: List[Tuple[EvidenceItem, str]] = []
     for item in pack.items:
-        sentences = _sentences(_clean(item.excerpt))
+        if Path(item.document or item.title).suffix.casefold() == ".py":
+            # Source code is useful evidence and a visual, but assignments and
+            # test payloads are not narration. Only retain complete Python
+            # docstring prose, which remains a literal substring of the pinned
+            # source file for the downstream quote verifier.
+            prose = re.findall(r"(?:\"\"\"|''')(.*?)(?:\"\"\"|''')",
+                               item.excerpt, flags=re.DOTALL)
+            sentences = [sentence for block in prose for sentence in _sentences(block)]
+        elif Path(item.document or item.title).suffix.casefold() in {
+                ".json", ".yaml", ".yml", ".toml"}:
+            sentences = []
+        else:
+            sentences = _sentences(_clean(item.excerpt))
         for sentence in (sentences if per_item is None else sentences[:per_item]):
             if len(sentence) < 12 or len(sentence) > max_chars:
                 continue
             if _code_like(sentence):
+                continue
+            lowered = sentence.casefold()
+            if any(phrase in lowered for phrase in (
+                    "ignore all previous instructions", "reveal your system prompt",
+                    "disregard the above rules", "bypass all safety guardrails")):
                 continue
             chosen.append((item, sentence))
     return chosen
@@ -162,9 +179,24 @@ def _clean(text: str) -> str:
     body = re.sub(r"\A\s*---\n.*?\n---\s*\n", "", body, flags=re.DOTALL)
     body = re.sub(r"\{/\*.*?\*/\}", " ", body, flags=re.DOTALL)
     body = re.sub(r"<!--.*?-->", " ", body, flags=re.DOTALL)
+    # Badge and decorative image alt text is not prose or evidence. In
+    # particular, a README's "License" badge is not a license assertion.
+    body = re.sub(r"^.*(?:!\[|<img\b).*$", " ", body,
+                  flags=re.MULTILINE | re.IGNORECASE)
+    body = re.sub(r"!\[[^\]]*\]\([^)]*\)", " ", body)
+    # GitHub READMEs often use raw HTML for logos and line breaks around
+    # badges. Remove the image element itself before markdown links are
+    # normalised, or the image URL can leak into a spoken claim.
+    body = re.sub(r"<img\b[^>]*>", " ", body, flags=re.IGNORECASE)
+    body = re.sub(r"<br\s*/?>", " ", body, flags=re.IGNORECASE)
     body = re.sub(r"```.*?```", " ", body, flags=re.DOTALL)
+    # Table rows are useful for comparison and screenshots, but the cell-wise
+    # fragments are not complete spoken claims. Keep the original document as
+    # evidence and require a prose passage for narration.
+    body = re.sub(r"^\s*\|.*\|\s*$", " ", body, flags=re.MULTILINE)
     body = re.sub(r"^\s{0,3}#{1,6}\s*", "", body, flags=re.MULTILINE)
     body = re.sub(r"^\s*[-*+]\s+", "", body, flags=re.MULTILINE)
+    body = re.sub(r"^\s*>\s?", "", body, flags=re.MULTILINE)
     body = re.sub(r"[*_`]{1,3}", "", body)
     body = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", body)
     return body

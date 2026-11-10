@@ -98,7 +98,11 @@ translation_status: synced
 DISCOVERED -> RESOLVABLE -> EXECUTION_REQUESTED -> AUTHORIZED -> EXECUTED
 ```
 
-调用方必须出示一份与精确的 Skill 版本、账号、流水线、阶段、操作、执行主体与预算绑定的授权，并带有效期与撤销状态。任何被阻断的路径都返回 `execution_authorized: false`。适配器的运行时锁校验器与 M5 的 `rights_reviewed` 门禁保持不变，仍是各自问题的权威。见 [ADR-009](adr/ADR-009-skill-execution-authorization.md)。
+涉及外部、付费或其他受授权管理效果的操作，调用方必须出示一份与精确的 Skill 版本、账号、流水线、阶段、操作、执行主体与预算绑定的授权，并带有效期与撤销状态。任何被阻断的路径都返回 `execution_authorized: false`。适配器的运行时锁校验器与 M5 的 `rights_reviewed` 门禁保持不变，仍是各自问题的权威。见 [ADR-009](adr/ADR-009-skill-execution-authorization.md)。
+
+### 明确的 Huashu 本地效果策略
+
+`x-superplay-huashu-motion` 是项目级 Grant 的例外，因为注册效果是固定运行时上的项目内本地渲染，`network=false` 且 `paid=false`。`scripts/huashu_motion_adapter.py` 仍会检查账号路由、已安装运行时、项目内 spec 路径、来源登记和素材权利，然后生成草稿；它不调用通用执行授权门，也不消耗 Grant。AUTO 和 REVIEW 可渲染草稿；STRICT 仍可要求文案审批。该输出不授权付费调用、网络访问、跨项目复用或发布，且保持 `production_ready=false`。
 
 授权从何而来、如何被消耗，见 ADR-010：
 
@@ -116,7 +120,7 @@ DISCOVERED -> RESOLVABLE -> EXECUTION_REQUESTED -> AUTHORIZED -> EXECUTED
 视频审核（`human-review.json`）**不是**执行批准，也不能被升级为执行批准。所有范围字段都从这一份批准记录读取，不存在会漂移的派生副本。`approval_id` 必须是单一安全路径分量；路径穿越、符号链接逃逸与 Windows 设备名一律拒绝，而不是清洗。消耗在单机本地文件系统上原子；已消耗的额度不可恢复。
 
 
-`scripts/m5_production.py` 不导入上述任何模块，已验证的 M5 链路保持既有信任边界。要让 M5 强制依赖授权，需要另行取得 Owner 批准的迁移决策。见 [ADR-010](adr/ADR-010-trusted-grant-execution-gate.md)。
+通用 Grant 系统仍用于需要它的操作。M5 的 Huashu 本地渲染路径不依赖项目级执行授权。见 [ADR-010](adr/ADR-010-trusted-grant-execution-gate.md)。
 
 ## media-use
 

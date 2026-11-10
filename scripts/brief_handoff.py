@@ -82,11 +82,14 @@ def main(argv=None) -> int:
         script = handoff.script_state(project)
         outcome["script_ready"] = script["ready"]
         outcome["script_problems"] = script["problems"]
+        review_command = (
+            "python scripts/copy_review.py <project> --approve --reviewer <name> "
+            "--opinion \"<what you decided>\" --confirm")
         outcome["next"] = (
-            "run scripts/copy_review.py before any narration is synthesised"
+            f"{review_command} before any narration is synthesised"
             if script["ready"] else
             "write script/lines.json and script/assets.json, then run "
-            "scripts/copy_review.py before any narration is synthesised")
+            f"{review_command} before any narration is synthesised")
 
     if args.json:
         print(json.dumps(outcome, ensure_ascii=False, indent=2))

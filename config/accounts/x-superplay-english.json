@@ -138,6 +138,13 @@
     "owner": "card-quote",
     "rule": "The image must carry this post's exact claim, not a generic tech motif. Deterministic HTML -> PNG for anything with text or numbers, so labels stay legible at ~400px width. A conceptual illustration is allowed and must not pose as a benchmark, a real screenshot or a measured effect. If the image is absent, mismatched or unreadable, the post stays draft and is not recommended for publishing.",
     "authority": "vendor/x-growth-os/docs/POST-IMAGE-DELIVERY-GATE.md"
+    ,"video_motion": {
+      "enabled_only_when_requested": true,
+      "backend": "huashu-art-motion",
+      "grammars": ["t2_keynote_ui", "y3_whiteboard", "t1_3b1b"],
+      "language": "requested language, otherwise English",
+      "rules": ["preserve the English account palette and typography", "leave existing PNG/JPEG image production unchanged", "never turn a post-image request into a video request"]
+    }
   },
 
   "publication": {

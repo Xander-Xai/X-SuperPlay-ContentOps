@@ -69,6 +69,21 @@ python scripts\m5_production.py projects\m5-easel-pin
 旁白使用离线 Windows SAPI 语音，不调用任何联网 TTS。运行始终停在
 `PENDING_FOUNDER_REVIEW`，`production_ready: false` —— QC 通过不等于允许发布。
 
+### M5 本地用户素材预览
+
+为现有项目显式导入图片或视频素材：
+
+```powershell
+python scripts\m5_production.py projects\my-video --assets D:\media\selected-for-preview
+```
+
+M5 将支持的文件复制到 `assets/imported/user/`，把 SHA-256 写入
+`sources/assets.json`，并生成 `receipts/user-assets-import.json`。视频保留原片，记录
+编码、时长、分辨率、帧率和音轨信息，抽取起始、中段、末段三帧，并生成
+`receipts/user-assets-contact-sheet.jpg`。所有导入素材仍为
+`USER_PROVIDED_LOCAL` / `LOCAL_PREVIEW_ONLY`：导入不授予分发权，也不能作为事实证据。
+发布前须单独核查权利；事实声明仍须绑定独立来源。此选项不修改脚本素材 ID，亦不批准发布。
+
 
 ### M5 自动调用 media-use 素材（仅离线）
 
@@ -204,6 +219,22 @@ python scripts\agent_drive.py run --project projects\my-video --step produce-vid
 `human-review` 标注为 `authority: HUMAN_ONLY`，驱动方尝试执行会被拒绝。计划中
 不存在发布、凭据或安装步骤。该驱动不需要 FastAPI、uvicorn 或运行中的宿主；
 `host-status` 只是让 agent 能报告宿主状态的只读步骤。
+
+## 5.6 Brief 文案人工审核
+
+Brief-to-M5 桥接写入最终脚本与分镜后，先检查或记录人工文案审核，再运行 M5：
+
+```powershell
+python scripts\copy_review.py projects\my-episode --check
+python scripts\copy_review.py projects\my-episode --approve `
+  --reviewer "审核人姓名" --opinion "已审核最终旁白" --confirm
+python scripts\copy_review.py projects\my-episode --request-changes `
+  --reviewer "审核人姓名" --opinion "补充缺失的来源引用" --confirm
+```
+
+审核决定必须填写审核人、书面意见并显式传入 `--confirm`。收据绑定当前文案指纹；
+修改脚本、字幕、声明、分镜或已登记资产后，旧批准会过期。该命令只记录审核决定，
+不会修改文案、运行 M5 或发布内容。
 
 ## 6. 开发门控
 

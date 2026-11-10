@@ -9,7 +9,10 @@ were absent from ``COPY_FIELDS``.
 """
 from __future__ import annotations
 
+import contextlib
 import hashlib
+import importlib.util
+import io
 import json
 import sys
 import tempfile
@@ -155,6 +158,7 @@ def test_missing_review_blocks():
         gate = copy_review.status(project)
         assert gate["state"] == "NOT_REVIEWED"
         assert gate["ok"] is False
+        assert "--confirm" in gate["remedy"]
         try:
             copy_review.require_approved(project)
         except copy_review.CopyReviewRequired:
@@ -258,6 +262,129 @@ def test_generated_voice_timings_do_not_invalidate_the_review():
         assert gate["state"] == "APPROVED", gate
 
 
+def _copy_review_cli():
+    path = ROOT / "scripts" / "copy_review.py"
+    spec = importlib.util.spec_from_file_location("copy_review_cli", path)
+    if spec is None or spec.loader is None:
+        raise AssertionError(f"could not load CLI from {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _cli_project(root: Path) -> Path:
+    project = root / "projects" / "copy-review-cli-test"
+    project.mkdir(parents=True)
+    (project / "script").mkdir()
+    (project / "script" / "master.md").write_text("# Reviewed copy\n", encoding="utf-8")
+    return project
+
+
+def test_copy_review_cli_check_is_read_only_and_fails_closed():
+    cli = _copy_review_cli()
+    with tempfile.TemporaryDirectory() as temp:
+        root = Path(temp)
+        project = _cli_project(root)
+        cli.ROOT = root
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            result = cli.main([str(project), "--check", "--json"])
+        payload = json.loads(out.getvalue())
+        assert result == 1
+        assert payload["state"] == "NOT_REVIEWED"
+        assert not (project / "receipts" / "script-review.json").exists()
+
+
+def test_copy_review_cli_requires_explicit_confirmation_for_decisions():
+    cli = _copy_review_cli()
+    with tempfile.TemporaryDirectory() as temp:
+        root = Path(temp)
+        project = _cli_project(root)
+        cli.ROOT = root
+        out = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
+                cli.main([str(project), "--approve", "--reviewer", "Founder",
+                          "--opinion", "Reviewed copy"])
+        except SystemExit as exc:
+            assert exc.code == 2
+        else:
+            raise AssertionError("a decision without --confirm must be refused")
+        assert not (project / "receipts" / "script-review.json").exists()
+
+
+def test_copy_review_cli_records_a_confirmed_approval_bound_to_current_copy():
+    cli = _copy_review_cli()
+    with tempfile.TemporaryDirectory() as temp:
+        root = Path(temp)
+        project = _cli_project(root)
+        cli.ROOT = root
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            result = cli.main([str(project), "--approve", "--reviewer", "Founder",
+                               "--opinion", "Reviewed final narration", "--confirm", "--json"])
+        payload = json.loads(out.getvalue())
+        record = json.loads((project / "receipts" / "script-review.json").read_text(
+            encoding="utf-8"))
+        assert result == 0
+        assert payload["gate"]["state"] == "APPROVED"
+        assert record["reviewer"] == "Founder"
+        assert record["opinion"] == "Reviewed final narration"
+        assert record["copy_sha256"] == copy_review.copy_fingerprint(project)
+
+
+def test_copy_review_cli_records_changes_requested_without_approving():
+    cli = _copy_review_cli()
+    with tempfile.TemporaryDirectory() as temp:
+        root = Path(temp)
+        project = _cli_project(root)
+        cli.ROOT = root
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            result = cli.main([str(project), "--request-changes", "--reviewer", "Founder",
+                               "--opinion", "Add a source citation", "--confirm", "--json"])
+        payload = json.loads(out.getvalue())
+        record = json.loads((project / "receipts" / "script-review.json").read_text(
+            encoding="utf-8"))
+        assert result == 0
+        assert record["status"] == "CHANGES_REQUESTED"
+        assert payload["gate"]["state"] == "CHANGES_REQUESTED"
+        assert payload["gate"]["ok"] is False
+
+
+def test_copy_review_cli_refuses_projects_outside_the_repository_projects_root():
+    cli = _copy_review_cli()
+    with tempfile.TemporaryDirectory() as temp:
+        root = Path(temp) / "repo"
+        root.mkdir()
+        project = Path(temp) / "outside"
+        project.mkdir()
+        cli.ROOT = root
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
+            result = cli.main([str(project), "--json"])
+        payload = json.loads(out.getvalue())
+        assert result == 1
+        assert payload["state"] == "BLOCKED"
+        assert payload["code"] == "PROJECT_OUTSIDE_REPO"
+
+
+def test_copy_review_cli_refuses_nested_paths_inside_a_project():
+    cli = _copy_review_cli()
+    with tempfile.TemporaryDirectory() as temp:
+        root = Path(temp) / "repo"
+        nested = root / "projects" / "group" / "nested"
+        nested.mkdir(parents=True)
+        cli.ROOT = root
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
+            result = cli.main([str(nested), "--json"])
+        payload = json.loads(out.getvalue())
+        assert result == 1
+        assert payload["state"] == "BLOCKED"
+        assert payload["code"] == "PROJECT_INVALID"
+
+
 def main() -> int:
     tests = (test_swapping_the_video_invalidates_the_review,
              test_changing_the_caption_invalidates_the_review,
@@ -272,7 +399,13 @@ def main() -> int:
              test_editing_the_m5_script_invalidates_the_review,
              test_editing_the_motion_timeline_invalidates_the_review,
              test_generated_narration_text_does_not_invalidate_the_review,
-             test_generated_voice_timings_do_not_invalidate_the_review)
+             test_generated_voice_timings_do_not_invalidate_the_review,
+             test_copy_review_cli_check_is_read_only_and_fails_closed,
+             test_copy_review_cli_requires_explicit_confirmation_for_decisions,
+             test_copy_review_cli_records_a_confirmed_approval_bound_to_current_copy,
+             test_copy_review_cli_records_changes_requested_without_approving,
+             test_copy_review_cli_refuses_projects_outside_the_repository_projects_root,
+             test_copy_review_cli_refuses_nested_paths_inside_a_project)
     for test in tests:
         test()
         print(f"[ok] {test.__name__}")

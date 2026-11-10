@@ -112,26 +112,29 @@ A profile is not a medium, and a medium is not a profile. `XHS_EDITORIAL` and
    the X gate is their packaging stage. There is no `copy-to-x` contract and no
    third production engine.
 
-## Not implemented
+## Remaining placeholders and non-implemented capabilities
 
-Stated explicitly so it is not read as progress:
+This section describes gaps on `main` as of 2026-11-04. The router, brief,
+script, hotspot and optimization code is present; it is not an unmerged layer.
 
-- cross-stage metrics collection and a real metric snapshot;
-- a general analysis stage and a written learning-feedback loop;
-- a platform adapter for any of the eight non-`x` platforms;
-- the content router, brief, script, hotspots and optimization stages on this
-  branch (they live on `feat/content-router`);
-- the five `x-superplay-*` skills, which are declared `UNMERGED` in
-  `runtime/content-skill-status.json`.
+- Cross-stage metric collection and a real metric snapshot are not implemented.
+  X has an offline analyzer for manually supplied snapshots, not a platform
+  collector or a Strategy feedback loop.
+- A general analysis stage and written learning-feedback loop are not
+  implemented.
+- The X adapter is manual-only. GZH and XHS adapters on `main` verify and
+  describe external workspaces; they do not execute production or publishing.
+  Other platform rows remain placeholders in the single platform registry.
+- The five `x-superplay-*` skills are not declared as executable capabilities.
+  `runtime/content-skill-status.json` records missing referenced paths; this is
+  separate from the merged router and stage code.
 
 ## Next actions
 
-1. Land PR-A: this branch's contract docs together with PR #101 (platform
-   registry / Bundle), reviewed against the same baseline and merged in the
-   agreed order — they are a code + docs pair, not alternatives.
-2. Run one read-only Easel capability bridge end to end (see
-   [EASEL-CAPABILITY-INVENTORY.md](EASEL-CAPABILITY-INVENTORY.md)).
-3. Implement one platform adapter behind the contract in
-   [PLATFORM-ADAPTER-CONTRACT.md](PLATFORM-ADAPTER-CONTRACT.md), offline first.
-4. Only after a real delivery (ADR-014) add metrics collection and a feedback
-   loop to Strategy.
+1. The main-branch Brief-to-M5 path still needs a human copy-review command. A
+   fingerprint-bound CLI implementation and regression tests are present in the
+   current convergence branch, but are not yet part of `main`.
+2. Complete the first real manual delivery, including a verifiable URL and
+   manually sourced metric snapshot, before expanding platform automation.
+3. Resolve GZH/XHS rights and acceptance independently; a successful workspace
+   verification does not grant execution or publication authority.

@@ -236,6 +236,21 @@ def validate_declared_asset(asset: Dict[str, Any], project_dir: Path) -> Dict[st
     ``LICENSED`` entry cannot reach production with only a permission label.
     """
     permission = _text(asset.get("permission"))
+    # A pinned source document may be registered as factual evidence without
+    # being requested, edited, or placed in the rendered video. A software
+    # licence cannot clear media use, so keep this narrowly scoped evidence
+    # role out of the media-rights gate; the source-artifact receipt separately
+    # verifies its path, bytes, and provenance.
+    if (str(asset.get("type") or "").upper() == "REAL_DOCUMENT"
+            and str(asset.get("evidence_use") or "").upper() == "CLAIM_VERIFICATION"
+            and str(asset.get("usage_scope") or "").upper() == "CLAIM_VERIFICATION_ONLY"
+            and asset.get("evidence_capable") is True):
+        return {
+            "schema": RIGHTS_CLAIM_SCHEMA,
+            "evidence_only": True,
+            "source_spdx_license": _text(asset.get("source_spdx_license")),
+            "media_use_authorized": False,
+        }
     rights = asset.get("rights")
     if isinstance(rights, dict) and rights:
         request = {"license": _text(asset.get("license")), "rights": rights}

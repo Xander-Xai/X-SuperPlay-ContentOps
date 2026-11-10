@@ -1,0 +1,14 @@
+{
+  "grammar": "t1_3b1b",
+  "duration": 4.785,
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": {"name": "ink", "bg": "#0F1117", "surface": "#161A22", "ink": "#F5F7FA", "sub": "#8B95A5", "accent": "#38BDF8", "accent2": "#8B95A5"},
+  "cues": [
+    {"at": 0.1, "kind": "title", "text": "RRF 按名次融合"},
+    {"at": 1.2, "kind": "equation", "text": "score = Σ 1 / (k + rank)"},
+    {"at": 2.8, "kind": "point", "text": "每路按名次算倒数"},
+    {"at": 3.8, "kind": "point", "text": "再累加成综合分"}
+  ]
+}

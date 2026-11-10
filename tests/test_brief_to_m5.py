@@ -19,6 +19,7 @@ import shutil
 import sys
 import tempfile
 from pathlib import Path
+from unittest import mock
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -37,6 +38,8 @@ from contentops.script.m5_bridge import (  # noqa: E402
     write,
 )
 from contentops.workflow import copy_review  # noqa: E402
+sys.path.insert(0, str(ROOT / "scripts"))
+import produce_video  # noqa: E402
 
 TESTS = []
 QUOTE = "Checkpointers save graph state between steps."
@@ -205,6 +208,60 @@ def test_an_unapproved_brief_is_refused_before_anything_is_written():
         _blocked(project, root, "NOT_APPROVED")
         assert not (project / "script" / "script.json").exists()
         print("[ok] an unapproved brief is refused")
+
+
+@test
+def test_unapproved_preview_conversion_is_explicit_and_does_not_claim_approval():
+    with tempfile.TemporaryDirectory() as temp:
+        root, project = _project(temp, approved=False, reviewed=False)
+        result = build(project, repo_root=root, allow_unapproved_preview=True)
+        assert result["preview_only"] is True
+        receipt_path = write(result, project)["receipts/brief-to-m5.json"]
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        assert receipt["preview_only"] is True
+        assert "unapproved" in receipt["note"]
+        try:
+            copy_review.require_if_brief_driven(project)
+        except copy_review.CopyReviewRequired as blocked:
+            assert "NOT_REVIEWED" in str(blocked), blocked
+        else:
+            raise AssertionError("preview conversion must not approve the copy")
+        print("[ok] an unapproved brief converts only for local preview")
+
+
+@test
+def test_auto_producer_prepares_missing_m5_input_from_source_bound_brief():
+    with tempfile.TemporaryDirectory() as temp:
+        root, project = _project(temp, approved=False, reviewed=False)
+        with mock.patch.object(produce_video, "ROOT", root):
+            prepared = produce_video._prepare_brief_inputs(project, mode="AUTO")
+        assert prepared["state"] == "PREPARED_FOR_LOCAL_PREVIEW"
+        assert prepared["preview_only"] is True
+        assert (project / "script" / "script.json").is_file()
+        assert (project / "script" / "claims.json").is_file()
+        assert copy_review.status(project)["state"] == "NOT_REVIEWED"
+        print("[ok] AUTO prepares source-bound M5 input without approving copy")
+
+
+@test
+def test_auto_producer_records_a_brief_preparation_blocker():
+    with tempfile.TemporaryDirectory() as temp:
+        root, project = _project(temp, approved=False, reviewed=False)
+        (project / ASSET_MAP_FILE).unlink()
+        with mock.patch.object(produce_video, "ROOT", root):
+            try:
+                produce_video.produce(project, mode="AUTO")
+            except produce_video.m5_production.M5Blocked as blocked:
+                assert "ASSET_MAP_MISSING" in str(blocked)
+            else:
+                raise AssertionError("an unmapped visual placement must stay blocked")
+        receipt = json.loads((project / "receipts" / "produce-video.json")
+                             .read_text(encoding="utf-8"))
+        assert receipt["state"] == "BLOCKED"
+        assert receipt["rendered"] is False
+        assert receipt["production_ready"] is False
+        assert receipt["brief_preparation"]["state"] == "BLOCKED"
+        print("[ok] AUTO records evidence and asset-map blockers before rendering")
 
 
 @test

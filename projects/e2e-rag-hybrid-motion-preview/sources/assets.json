@@ -1,0 +1,29 @@
+{
+  "schema": "contentops.m5-assets/v1",
+  "assets": [
+    {
+      "id": "rag-hybrid-01",
+      "type": "generated_video",
+      "repo_path": "projects/e2e-rag-hybrid-motion-preview/assets/generated/huashu/rag-hybrid-01.mp4",
+      "evidence_capable": false,
+      "evidence_use": "VISUAL_SUPPORT",
+      "sha256": "c9c2c7660ac1c9ccfda3574335da3d934efd0c90fe7a30abd6b3b93c75603897"
+    },
+    {
+      "id": "rag-hybrid-02",
+      "type": "generated_video",
+      "repo_path": "projects/e2e-rag-hybrid-motion-preview/assets/generated/huashu/rag-hybrid-02.mp4",
+      "evidence_capable": false,
+      "evidence_use": "VISUAL_SUPPORT",
+      "sha256": "ae630ddd5841d10c6fc338c229e5ff326c135cffd7e4eefb081d0b964dee92fa"
+    },
+    {
+      "id": "rag-hybrid-03",
+      "type": "generated_video",
+      "repo_path": "projects/e2e-rag-hybrid-motion-preview/assets/generated/huashu/rag-hybrid-03.mp4",
+      "evidence_capable": false,
+      "evidence_use": "VISUAL_SUPPORT",
+      "sha256": "16918e0bf880c6d6f33d764124c31c61ec9ff1c5cf260c6ac55dd3fba4633200"
+    }
+  ]
+}

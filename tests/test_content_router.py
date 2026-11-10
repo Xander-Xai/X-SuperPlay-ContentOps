@@ -532,18 +532,47 @@ def test_both_routes_reach_the_same_project_creation():
             assert f"account_slug: {account}" in yaml_text
 
 
-def test_the_topic_route_can_fetch_evidence_from_query_accepting_sources_only():
+def test_the_topic_route_searches_candidates_without_promoting_them_to_evidence():
     with tempfile.TemporaryDirectory() as tmp:
-        router = _router(_sandbox(tmp), adapters=_fixture_adapter())
+        fixture = _fixture_adapter()
+        fixture.fixtures["github-search"] = [
+            {"title": "example/rag-hybrid-search",
+             "url": "https://github.com/example/rag-hybrid-search",
+             "snippet": "A hybrid RAG retrieval demonstration."},
+            {"title": "example/rage-ui",
+             "url": "https://github.com/example/rage-ui",
+             "snippet": "A game interface project."},
+        ]
+        queries = []
+
+        class CaptureAdapter:
+            def fetch(self, source, *, limit, timeout=12.0, query=None):
+                queries.append(query)
+                return fixture.fetch(source, limit=limit, timeout=timeout, query=query)
+
+        router = _router(_sandbox(tmp), adapters={"github-search": CaptureAdapter()})
         result = router.start(ACCOUNT_BUILD, "USER_TOPIC",
-                              UserTopicInput(topic="LangGraph 的状态管理怎么设计"),
+                              UserTopicInput(topic="RAG混合检索的完整工作原理"),
                               fetch_evidence=True)
         detail = result.detail["intent"]["route_context"]["detail"]
-        assert detail["fetched_evidence"]
+        assert detail["discovered_candidates"]
+        assert len(queries) == 1
+        assert queries[0].startswith("RAG混合检索的完整工作原理")
+        assert queries[0].count(" OR ") <= 5  # GitHub accepts at most six terms.
+        assert "RAG" in queries[0]
+        assert "Project" not in queries[0] and "Testing" not in queries[0]
+        assert len(queries[0]) <= 220
         # A hot list is never consulted for a topic the owner named.
         assert all(item["source_id"] == "github-search"
-                   for item in detail["fetched_evidence"])
-        assert result.detail["intent"]["evidence"]
+                   for item in detail["discovered_candidates"])
+        assert len(detail["discovered_candidates"]) == 1
+        assert detail["discovered_candidates"][0]["title"] == "example/rag-hybrid-search"
+        assert result.detail["intent"]["evidence"] == [], \
+            "repository search metadata is a discovery lead, not claim evidence"
+        assert result.detail["intent"]["evidence_status"] == "verification_required"
+        brief = router.read_brief(result.run_id)
+        assert brief["candidate"]["trust_level"] == "LOW"
+        assert brief["forecast_verdict"] == "BLOCKED"
 
 
 def test_a_waiting_run_can_be_resumed_with_the_exception_approved():
@@ -977,6 +1006,27 @@ def test_an_approved_project_hands_off_to_its_pipeline():
         assert path.is_file()
 
 
+def test_an_unapproved_brief_can_only_handoff_for_local_preview_when_opted_in():
+    from contentops.routing import handoff
+    with tempfile.TemporaryDirectory() as tmp:
+        root = _sandbox(tmp)
+        router = _router(root, adapters=_fixture_adapter())
+        _approved_run(router, ACCOUNT_BUILD, slug="handoff-preview")
+        project = root / "projects" / "handoff-preview"
+        package = handoff.read_brief(project)
+        package["intent"]["approval_status"] = "pending"
+        package["intent"]["route_context"]["detail"].pop("approval", None)
+        assert handoff.check(package)["reason"] == "NOT_APPROVED"
+        verdict = handoff.check(package, allow_unapproved_preview=True)
+        assert verdict["ok"] is True, verdict
+        assert verdict["reason"] == "PREVIEW_ONLY"
+        assert verdict["preview_only"] is True
+        package["forecast_verdict"] = "DEGRADED"
+        verdict = handoff.check(package, allow_unapproved_preview=True)
+        assert verdict["ok"] is False
+        assert verdict["reason"] == "EVIDENCE_REQUIRED"
+
+
 def test_a_degraded_forecast_blocks_the_handoff():
     from contentops.routing import handoff
     with tempfile.TemporaryDirectory() as tmp:
@@ -1009,6 +1059,22 @@ def test_a_project_whose_brief_changed_after_approval_is_refused():
         path = project / "00_brief" / "brief.json"
         package = json.loads(path.read_text(encoding="utf-8"))
         package["intent"]["topic"] = "被改过的主题"
+        path.write_text(json.dumps(package, ensure_ascii=False), encoding="utf-8")
+        verdict = handoff.check(handoff.read_brief(project))
+        assert verdict["ok"] is False
+        assert verdict["reason"] == "APPROVAL_STALE"
+
+
+def test_changing_the_source_scope_invalidates_a_brief_approval():
+    from contentops.routing import handoff
+    with tempfile.TemporaryDirectory() as tmp:
+        root = _sandbox(tmp)
+        router = _router(root, adapters=_fixture_adapter())
+        _approved_run(router, ACCOUNT_BUILD, slug="handoff-source-scope-tampered")
+        project = root / "projects" / "handoff-source-scope-tampered"
+        path = project / "00_brief" / "brief.json"
+        package = json.loads(path.read_text(encoding="utf-8"))
+        package["source_scope"] = "repository_code_analysis"
         path.write_text(json.dumps(package, ensure_ascii=False), encoding="utf-8")
         verdict = handoff.check(handoff.read_brief(project))
         assert verdict["ok"] is False
@@ -1099,6 +1165,10 @@ def test_an_automation_approval_cannot_be_handed_to_the_pipeline():
         verdict = handoff.check(handoff.read_brief(project))
         assert verdict["ok"] is False
         assert verdict["reason"] == "AUTOMATION_APPROVAL"
+        preview_verdict = handoff.check(
+            handoff.read_brief(project), allow_unapproved_preview=True)
+        assert preview_verdict["ok"] is False
+        assert preview_verdict["reason"] == "AUTOMATION_APPROVAL"
 
 
 def test_a_human_approval_records_that_it_was_not_a_sandbox():

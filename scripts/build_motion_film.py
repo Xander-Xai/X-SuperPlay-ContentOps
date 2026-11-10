@@ -44,7 +44,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 from process_utils import hidden_run, python_executable  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_ENGINE = r"C:\Users\Administrator\.agents\skills\huashu-art-motion\scripts\engine\render.py"
+DEFAULT_ENGINE = str(ROOT / "scripts" / "huashu_render.py")
 PAD_S = 0.4
 
 

@@ -1,0 +1,236 @@
+# Graphic/text delivery platform specifications.
+#
+# WHY THIS FILE EXISTS
+# --------------------
+# Before this file the GRAPHIC_TEXT line had exactly four platforms hard-coded
+# in src/contentops/platforms/multichannel.py and four invented limit tuples in
+# PLATFORM_RULES. That is not a platform matrix, it is four guesses. This file
+# is the single source of truth for "which graphic platforms do we deliver to,
+# what are their shapes, and through which channel".
+#
+# PROVENANCE
+# ----------
+# Limit values are engineering figures with an explicit `basis` field. They are
+# NOT a platform SLA and NOT a compliance claim:
+#   official    - stated by the platform itself in help centre / API docs
+#   third_party - taken from an open-source project's platform matrix
+#   project     - this repository's own editorial convention
+# A `basis` of third_party means "another team measured it against a live
+# editor at some point". Treat it as a shaping hint, never as a legal limit.
+#
+#   third_party source: veeicwgy/ip-publisher @ 2121445098d46cfa2947e3088f84b1255fa8fa13
+#                       config/platforms.yaml  (MIT)
+#   channel names     : wechatsync/Wechatsync @ v2 (6589 stars), CLI 1.1.0
+#                       `wechatsync platforms` adapter ids
+#
+# REGISTRY BOUNDARY
+# -----------------
+# `registry_row: true` means the platform also exists in
+# config/registry/platforms.json. `registry_row: false` means it is a delivery
+# channel only: this file may describe it, but it must never be used to add a
+# registry row or to upgrade any row's status. Status stays a claim about
+# evidence, not about configuration.
+
+schema: contentops.graphic-platforms/v1
+
+# Two limit tiers, because one number cannot carry both meanings:
+#   hard - exceeding this is a blocker; the platform will truncate or reject
+#   soft - exceeding this is a warning; the draft is valid but off-convention
+limits_policy:
+  hard_exceeded: blocker
+  soft_exceeded: warning
+
+platforms:
+  - platform_id: wechat_article
+    display_name: 微信公众号
+    registry_row: true
+    strategy_platform: wechat_official_account
+    pipeline: GZH_EDITORIAL
+    production_line: GRAPHIC_TEXT
+    native_format: html
+    title_max_hard: 64
+    title_max_hard_basis: official
+    title_max_soft: 25
+    title_max_soft_basis: project
+    body_max_hard: 20000
+    body_max_hard_basis: third_party
+    body_max_soft: 20000
+    summary_max: 120
+    needs_cover: true
+    cover_ratio: "2.35:1"
+    recommended_tags: 0
+    channels:
+      - id: wechatpy:draft
+        kind: api
+        requires: [WECHAT_1_APPID, WECHAT_1_APPSECRET, ip_whitelist]
+        draft_only: true
+        note: material.add → draft.add → draft.get 回读；不群发
+      - id: wechatsync:weixin
+        kind: browser_bridge
+        requires: [chrome_extension, WECHATSYNC_TOKEN, platform_login]
+        draft_only: true
+
+  - platform_id: zhihu
+    display_name: 知乎
+    registry_row: true
+    strategy_platform: zhihu
+    pipeline: ARTICLE_EDITORIAL
+    production_line: TEXT_EDITORIAL
+    native_format: markdown
+    title_max_hard: 100
+    title_max_hard_basis: third_party
+    title_max_soft: 60
+    title_max_soft_basis: project
+    body_max_hard: 100000
+    body_max_hard_basis: third_party
+    body_max_soft: 5000
+    summary_max: 120
+    needs_cover: true
+    cover_ratio: "16:9"
+    recommended_tags: 5
+    channels:
+      - id: wechatsync:zhihu
+        kind: browser_bridge
+        requires: [chrome_extension, WECHATSYNC_TOKEN, platform_login]
+        draft_only: true
+    note: 无官方写接口；社区逆向方案违反 ToS 且易失效，因此只保留已登录态桥
+
+  - platform_id: csdn
+    display_name: CSDN
+    registry_row: true
+    strategy_platform: csdn
+    pipeline: ARTICLE_EDITORIAL
+    production_line: TEXT_EDITORIAL
+    native_format: markdown
+    title_max_hard: 100
+    title_max_hard_basis: third_party
+    title_max_soft: 60
+    title_max_soft_basis: project
+    body_max_hard: 100000
+    body_max_hard_basis: third_party
+    body_max_soft: 10000
+    summary_max: 120
+    needs_cover: true
+    cover_ratio: "16:9"
+    recommended_tags: 6
+    channels:
+      - id: wechatsync:csdn
+        kind: browser_bridge
+        requires: [chrome_extension, WECHATSYNC_TOKEN, platform_login]
+        draft_only: true
+    note: 适合教程与排障长文；代码块需保留语言标记
+
+  - platform_id: x
+    display_name: X
+    registry_row: true
+    strategy_platform: x
+    pipeline: X_EDITORIAL
+    production_line: TEXT_EDITORIAL
+    native_format: text
+    title_max_hard: 0
+    title_max_hard_basis: official
+    title_max_soft: 0
+    body_max_hard: 280
+    body_max_hard_basis: official
+    body_max_soft: 280
+    summary_max: 0
+    needs_cover: false
+    cover_ratio: "16:9"
+    recommended_tags: 0
+    channels:
+      - id: tweepy:api-v2
+        kind: api
+        requires: [X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, X_ACCESS_TOKEN_SECRET]
+        draft_only: false
+        note: 无草稿态；publish_mode 仍为 MANUAL_ONLY，API 分支需另行授权
+      - id: wechatsync:x
+        kind: browser_bridge
+        requires: [chrome_extension, WECHATSYNC_TOKEN, platform_login]
+        draft_only: true
+    note: 280 是加权字符（CJK 计 2），不是 len()
+
+  - platform_id: juejin
+    display_name: 掘金
+    registry_row: false
+    strategy_platform: juejin
+    pipeline: ARTICLE_EDITORIAL
+    production_line: TEXT_EDITORIAL
+    native_format: markdown
+    title_max_hard: 100
+    title_max_hard_basis: third_party
+    title_max_soft: 50
+    title_max_soft_basis: project
+    body_max_hard: 100000
+    body_max_hard_basis: third_party
+    body_max_soft: 10000
+    summary_max: 100
+    needs_cover: true
+    cover_ratio: "16:9"
+    recommended_tags: 5
+    channels:
+      - id: wechatsync:juejin
+        kind: browser_bridge
+        requires: [chrome_extension, WECHATSYNC_TOKEN, platform_login]
+        draft_only: true
+    note: 开发者向；分类与标签是必填项才能发
+
+  - platform_id: toutiao
+    display_name: 头条号
+    registry_row: false
+    strategy_platform: toutiao
+    pipeline: ARTICLE_EDITORIAL
+    production_line: TEXT_EDITORIAL
+    native_format: html
+    title_max_hard: 30
+    title_max_hard_basis: third_party
+    title_max_soft: 24
+    title_max_soft_basis: project
+    body_max_hard: 50000
+    body_max_hard_basis: third_party
+    body_max_soft: 5000
+    summary_max: 100
+    needs_cover: true
+    cover_ratio: "16:9"
+    recommended_tags: 5
+    channels:
+      - id: wechatsync:toutiao
+        kind: browser_bridge
+        requires: [chrome_extension, WECHATSYNC_TOKEN, platform_login]
+        draft_only: true
+    note: 标题卡 30 字；正文偏好短段 + 小标题
+
+  - platform_id: weibo
+    display_name: 微博
+    registry_row: false
+    strategy_platform: weibo
+    pipeline: ARTICLE_EDITORIAL
+    production_line: TEXT_EDITORIAL
+    native_format: text
+    title_max_hard: 0
+    title_max_hard_basis: official
+    title_max_soft: 0
+    body_max_hard: 2000
+    body_max_hard_basis: official
+    body_max_soft: 140
+    summary_max: 70
+    needs_cover: false
+    cover_ratio: "none"
+    recommended_tags: 2
+    channels:
+      - id: wechatsync:weibo
+        kind: browser_bridge
+        requires: [chrome_extension, WECHATSYNC_TOKEN, platform_login]
+        draft_only: true
+    note: 承担摘要导流，不承担完整长文
+
+# Deliberately excluded from the GRAPHIC_TEXT line.
+# Operator instruction 2026-11-09: the whole Xiaohongshu platform belongs to the
+# VIDEO line. Wechatsync exposes a `xiaohongshu` adapter, but using it here would
+# contradict the operator's classification, so it stays out.
+# Operator instruction 2026-11-09 (later the same day, upgraded): the in-repo
+# Xiaohongshu graphic workflow (src/contentops/xhs/, its lock and tests, the
+# registry row and the graphic_workflow entry point) was removed entirely.
+excluded:
+  - platform_id: xiaohongshu_image
+    reason: operator_instruction_2026-11-09_video_line_workflow_removed
+    available_channel: wechatsync:xiaohongshu

@@ -33,7 +33,7 @@ python scripts/doctor.py [--json]
 python scripts/verify_easel_runtime.py --resolve-tag
 python scripts/resolve_easel.py --bootstrap   # or --offline
 
-# Unified developer gate (run before every commit)
+# Unified developer gate (full gate for PR preparation; see risk-based policy below)
 python scripts/dev_check.py
 python scripts/dev_check.py --quick           # skip repo policy check
 
@@ -58,11 +58,15 @@ python tests/test_m5_evidence.py              # one suite
 
 `python scripts/dev_check.py` runs: repo policy → subprocess policy → skill references → docs check → i18n check → `test_basic.py` → `git diff --check`. CI additionally runs `check_receipt_secrets.py` and every `tests/test_*.py` suite.
 
+# Verification policy
+
+Use the minimum sufficient, risk-based verification in `docs/TEST-PLAN.md` (L0–L3). Analyze the affected behavior first; do not run an unsupported full test matrix or repeat an unchanged passing command. Report unrun checks honestly. `doctor.py` is for environment/runtime/install/deployment changes; `qc_video.py` is for actual video artifact or QC behavior; `test_basic.py` is for relevant script entry/basic behavior. Run the complete `python scripts/dev_check.py` once when preparing a PR, not after every small change. Its `--quick` mode skips only repository policy and still runs subprocess policy, skill references, docs, i18n, `test_basic.py`, and `git diff --check`; it is not a targeted-test mode. Preserve required checks by risk level and all CI/security gates.
+
 ### Testing
 
-There is **no pytest**. Each suite is a standalone script that builds a `TESTS` list and runs it from `main()`; run it directly with `python tests/test_<name>.py`. There is no per-function selector — run the whole suite, or temporarily narrow its `TESTS` list.
+There is **no pytest**. Each suite is a standalone script that builds a `TESTS` list and runs it from `main()`; run the directly relevant suite as `python tests/test_<name>.py`. There is no per-function selector — run the suite as a whole when applicable.
 
-Every suite is enumerated explicitly in `.github/workflows/ci.yml`. **Adding `tests/test_x.py` without adding a CI step means it never runs**, and a green CI run is then not evidence. `check_repo_policy.py` now fails when a suite is not named in the workflow, so the omission is caught locally instead of in review.
+Every suite is enumerated explicitly in `.github/workflows/ci.yml`. **Adding `tests/test_x.py` without adding a CI step means it never runs**, and a green CI run is then not evidence. `check_repo_policy.py` fails when a suite is not named in the workflow.
 
 CI installs `Pillow` and ffmpeg; everything else is stdlib. Some suites SKIP when ffmpeg, Pillow, the media-use runtime, or gitignored artifacts are absent — a green run can hide skipped coverage, so check the reported availability line rather than assuming it passed.
 
@@ -93,6 +97,14 @@ project.yaml source_refs
   → MediaManifest (assets inventory + timeline)
   → narration / subtitles → pinned Easel compose → qc_video → human review
 ```
+
+Huashu Art Motion is a project-local, non-paid draft renderer. `AUTO` runs it
+without a project execution-grant receipt; `REVIEW` can render the local draft
+for inspection as well. The adapter still checks the declared account route,
+pinned installed runtime, project-contained spec paths, registered asset bytes
+and rights. Its output stays visual support with `production_ready=false` and
+`publish_authorized=false`. Paid providers, network access and publication use
+their separate authorization and budget gates.
 
 `scripts/m5_production.py` is the evidence-first entry (`sources → media_use → assets → claims → script → narration → subtitles → storyboard → compose → QC → review`). It always ends `PENDING_FOUNDER_REVIEW` with `production_ready: false`.
 
@@ -132,7 +144,7 @@ These require reading multiple files to learn and are enforced in code or tests:
 - Do not modify `.runtime/easel/` (or the local `Easel/` clone)
 - Do not commit local/private provider research (`docs/ai-provider-selection.md`, `.verify-tmp/`, `.private/`, `assert/`, `vendor/`, etc.)
 - Do not add a dependency without answering: why is stdlib insufficient?
-- Do not skip tests, and do not add a test suite without wiring it into `.github/workflows/ci.yml`
+- Do not skip tests required by the change's risk level in `docs/TEST-PLAN.md`; report unrun checks honestly, and do not add a suite without wiring it into `.github/workflows/ci.yml`.
 - Do not mark human review as approved automatically
 - Do not create files outside of their canonical directory (see `docs/FILE-PLACEMENT-POLICY.md`)
 
@@ -179,7 +191,7 @@ Tier-1 docs require both English and Chinese versions:
 - Modifying a Tier-1 English doc requires updating the zh-CN mirror in the same PR.
 - Modifying a zh-CN mirror to change facts (not pure translation) requires updating the English canonical too.
 - zh-CN mirrors must include YAML front matter: `translation_of`, `language: zh-CN`, `translation_status: synced`.
-- Run `python scripts/check_i18n.py` before every commit.
+- Run `python scripts/check_i18n.py` when bilingual documentation changes and as part of the full PR gate; structural consistency is not a per-commit requirement for unrelated changes.
 - Machine checks structural synchronization, not translation quality.
 
 ## Windows Subprocess Policy
