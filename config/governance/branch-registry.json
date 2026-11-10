@@ -19,10 +19,10 @@
       "expires": null
     },
     {
-      "name": "fix/demote-run-v1-easel",
-      "pr": 143,
+      "name": "feat/platform-route-display",
+      "pr": 141,
       "created": "2026-11-10",
-      "purpose": "run_v1 easel-engine BLOCKED gate (drift slice C)",
+      "purpose": "platform workflow routes + route display CLI (drift slice A)",
       "status": "open",
       "expires": "2026-12-10"
     }
