@@ -1,6 +1,6 @@
 {
   "schema": "contentops.branch-registry/v1",
-  "verified_at": "2026-11-10T16:57:02+08:00",
+  "verified_at": "2026-11-10T20:55:00+08:00",
   "policy": {
     "persistent": [
       "main"
@@ -25,6 +25,46 @@
       "purpose": "platform workflow routes + route display CLI (drift slice A)",
       "status": "open",
       "expires": "2026-12-10"
+    },
+    {
+      "name": "refactor/motion-planner-stages",
+      "pr": 142,
+      "created": "2026-11-10",
+      "purpose": "source-anchor motion regions + excerpt naming (drift slice B)",
+      "status": "merged",
+      "expires": null
+    },
+    {
+      "name": "fix/demote-run-v1-easel",
+      "pr": 143,
+      "created": "2026-11-10",
+      "purpose": "run_v1 easel-engine BLOCKED gate (drift slice C)",
+      "status": "merged",
+      "expires": null
+    },
+    {
+      "name": "feat/wcs-browser-bridge",
+      "pr": 144,
+      "created": "2026-11-10",
+      "purpose": "wechatsync browser bridge for graphic delivery (drift slice D)",
+      "status": "merged",
+      "expires": null
+    },
+    {
+      "name": "feat/gzh-sdk-adapter",
+      "pr": 145,
+      "created": "2026-11-10",
+      "purpose": "GZH SDK adapter + delivery authz gate (drift slice E)",
+      "status": "merged",
+      "expires": null
+    },
+    {
+      "name": "chore/drift-artifacts-20261110",
+      "pr": 146,
+      "created": "2026-11-10",
+      "purpose": "receipts + x-growth posts + architecture audit artifacts (drift slice F)",
+      "status": "merged",
+      "expires": null
     }
   ]
 }
