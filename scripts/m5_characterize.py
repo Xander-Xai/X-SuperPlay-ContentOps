@@ -25,12 +25,14 @@ from __future__ import annotations
 import argparse
 import json
 import re
-import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+
+from process_utils import hidden_run  # noqa: E402
 
 # The M5 offline suites, in ci.yml order. A suite listed here and wired in CI
 # (check_repo_policy enforces the wiring) is part of the behavioural contract
@@ -82,9 +84,9 @@ def parse_suite_output(text: str) -> dict:
 
 def run_suite(suite: str, python: str = sys.executable, timeout: int = 600) -> dict:
     """Run one suite and return its characterization record."""
-    proc = subprocess.run(
-        [python, suite], cwd=str(ROOT), capture_output=True, text=True,
-        timeout=timeout, encoding="utf-8", errors="replace",
+    proc = hidden_run(
+        [python, suite], cwd=str(ROOT), timeout=timeout,
+        encoding="utf-8", errors="replace",
     )
     text = (proc.stdout or "") + (proc.stderr or "")
     parsed = parse_suite_output(text)
@@ -101,8 +103,8 @@ def run_suite(suite: str, python: str = sys.executable, timeout: int = 600) -> d
 
 def characterize(out_dir: Path, python: str = sys.executable) -> dict:
     """Run every M5 suite and write the baseline receipt (json + md)."""
-    commit = subprocess.run(
-        ["git", "rev-parse", "HEAD"], cwd=str(ROOT), capture_output=True, text=True
+    commit = hidden_run(
+        ["git", "rev-parse", "HEAD"], cwd=str(ROOT), timeout=30
     ).stdout.strip()
     records = []
     for suite in M5_SUITES:
