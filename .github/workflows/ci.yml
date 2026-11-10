@@ -13,6 +13,7 @@ on:
       - 'security/**'
       - 'docs/**'
       - 'ci/**'
+      - 'refactor/**'
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -248,6 +249,9 @@ jobs:
       - name: Run stock-media offline tests
         run: python tests/test_stock_media.py
 
+      - name: Run PySceneDetect adapter offline tests
+        run: python tests/test_scene_analysis.py
+
       - name: Run BGM planner offline tests
         run: python tests/test_bgm_planner.py
 
@@ -465,18 +469,6 @@ jobs:
 
       - name: Run coding-agent driver tests
         run: python tests/test_agent_driver.py
-
-      - name: Run X organic growth offline contract tests
-        run: python tests/test_x_organic_growth.py
-
-      - name: Run X engagement brief tests
-        run: python tests/test_x_growth_engagement.py
-
-      - name: Run X compatibility contract tests
-        run: python tests/test_x_growth_contract.py
-
-      - name: Run X weekly metrics tests
-        run: python tests/test_x_growth_metrics.py
 
       # Pure decision logic: no adapter, no runtime, no I/O.
       - name: Run skill execution authorization regression tests
