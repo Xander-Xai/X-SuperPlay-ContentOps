@@ -33,6 +33,7 @@ from contentops.platforms.registry import (  # noqa: E402
     resolve_account,
     summarise,
     validate_registry,
+    workflow_routes,
 )
 
 
@@ -51,6 +52,8 @@ def main() -> int:
     _sub("list", "list platforms")
     _sub("accounts", "list account identities")
     _sub("check", "validate both registries")
+    route = _sub("route", "show the tracked command for a platform, without running it")
+    route.add_argument("--platform", default="")
     resolve = _sub("resolve", "resolve an account identifier")
     resolve.add_argument("--account", required=True)
     args = parser.parse_args()
@@ -121,6 +124,17 @@ def main() -> int:
             else:
                 print("OK: account and platform registries agree")
             return 0 if not failures else 1
+        elif args.command == "route":
+            payload = workflow_routes(ROOT, args.platform)
+            if args.json:
+                print(json.dumps(payload, ensure_ascii=False, indent=2))
+            else:
+                for item in payload:
+                    mark = "connected" if item["connected"] else "not-connected"
+                    print(f"{item['platform_id']:<22} {mark:<14} {item['publish_mode']}")
+                    for command in item["commands"]:
+                        print(f"  {command['script']}  {command['effect']}")
+                    print("  publish_authorized=false production_ready=false skill_declared=false")
     except RegistryError as exc:
         print(f"BLOCKED {exc.code}: {exc.detail}", file=sys.stderr)
         return 1

@@ -1,6 +1,6 @@
 {
   "schema": "contentops.platform-registry/v1",
-  "note": "Status is a claim about evidence, not configuration: PLANNED means no platform code on this branch, INTEGRATED means code plus offline tests, TESTED means a real local run. A row never implies publication, account access or metric ingestion. GitHub is proof infrastructure, not a publish target, and is documented instead of registered.",
+  "note": "Status is a claim about evidence, not configuration: PLANNED means no bound public account and no publication authority, even when a tracked transport exists. INTEGRATED means code plus offline tests and a named account. TESTED means a real local run. A row never implies publication or production_ready. GitHub is proof infrastructure, not a publish target, and is documented instead of registered.",
   "status_values": [
     "PLANNED",
     "INTEGRATED",
@@ -29,9 +29,12 @@
       "manual_review": true,
       "metrics": "NONE",
       "status": "PLANNED",
-      "owner": "",
-      "evidence": [],
-      "not_claimed": "BLOCKED: PLATFORM_CODE_ABSENT — no platform-specific production code exists on this branch; BLOCKED: ACCOUNT_NOT_PUBLIC — the account DNA is not tracked in this public repository"
+      "owner": "scripts/video_deliver.py",
+      "evidence": [
+        "scripts/video_deliver.py",
+        "config/platforms/video-platforms.yaml"
+      ],
+      "not_claimed": "BLOCKED: ACCOUNT_NOT_PUBLIC — status stays PLANNED because no public account is bound. A finished film is handed to scripts/video_deliver.py. The uploader does not run without an operator grant, and Douyin still needs its policy acknowledgement. production_ready stays false."
     },
     {
       "platform_id": "bilibili",
@@ -51,11 +54,14 @@
       "draft_support": "NONE",
       "publish_mode": "NOT_IMPLEMENTED",
       "manual_review": true,
-      "metrics": "NONE",
+      "metrics": "API",
       "status": "PLANNED",
-      "owner": "",
-      "evidence": [],
-      "not_claimed": "BLOCKED: PLATFORM_CODE_ABSENT — no platform-specific production code exists on this branch; BLOCKED: ACCOUNT_NOT_PUBLIC — the account DNA is not tracked in this public repository"
+      "owner": "scripts/bilibili_metrics.py",
+      "evidence": [
+        "scripts/bilibili_metrics.py",
+        "tests/test_bilibili_metrics.py"
+      ],
+      "not_claimed": "BLOCKED: ACCOUNT_NOT_PUBLIC — status stays PLANNED because no public account is bound. scripts/bilibili_metrics.py can --execute and read public counters into a receipt. It does not upload, mass-send, set production_ready, or declare a bilibili skill. BLOCKED: PUBLISH_NOT_IMPLEMENTED — video publication code is absent."
     },
     {
       "platform_id": "xiaohongshu_video",
@@ -77,9 +83,12 @@
       "manual_review": true,
       "metrics": "NONE",
       "status": "PLANNED",
-      "owner": "",
-      "evidence": [],
-      "not_claimed": "BLOCKED: PLATFORM_CODE_ABSENT — no platform-specific production code exists on this branch; BLOCKED: ACCOUNT_NOT_PUBLIC — the account DNA is not tracked in this public repository; BLOCKED: RIGHTS_UNRESOLVED — vendored workflow rights are not cleared for this branch"
+      "owner": "scripts/video_deliver.py",
+      "evidence": [
+        "scripts/video_deliver.py",
+        "config/platforms/video-platforms.yaml"
+      ],
+      "not_claimed": "BLOCKED: ACCOUNT_NOT_PUBLIC — status stays PLANNED because no public account is bound. A finished film is handed to scripts/video_deliver.py for xiaohongshu_video. The uploader does not run without an operator grant, and a tool exit is not a published claim. production_ready stays false. BLOCKED: RIGHTS_UNRESOLVED — the vendored skill is not cleared."
     },
     {
       "platform_id": "shipinhao",
@@ -101,9 +110,12 @@
       "manual_review": true,
       "metrics": "NONE",
       "status": "PLANNED",
-      "owner": "",
-      "evidence": [],
-      "not_claimed": "BLOCKED: PLATFORM_CODE_ABSENT — no platform-specific production code exists on this branch; BLOCKED: ACCOUNT_NOT_PUBLIC — the account DNA is not tracked in this public repository"
+      "owner": "scripts/video_deliver.py",
+      "evidence": [
+        "scripts/video_deliver.py",
+        "config/platforms/video-platforms.yaml"
+      ],
+      "not_claimed": "BLOCKED: ACCOUNT_NOT_PUBLIC — status stays PLANNED because no public account is bound. A finished film is handed to scripts/video_deliver.py. The uploader does not run without an operator grant. production_ready stays false."
     },
     {
       "platform_id": "wechat_article",
@@ -122,13 +134,18 @@
       "pipeline": "GZH_EDITORIAL",
       "accounts": [],
       "draft_support": "NONE",
-      "publish_mode": "NOT_IMPLEMENTED",
+      "publish_mode": "DRAFT_ONLY",
       "manual_review": true,
-      "metrics": "NONE",
+      "metrics": "API",
       "status": "PLANNED",
-      "owner": "",
-      "evidence": [],
-      "not_claimed": "BLOCKED: RIGHTS_UNRESOLVED — 45 of 50 bundled skills have no license. VERIFY_ONLY adapter locates, hash-verifies and describes a locally installed workflow; it does not execute, draft or publish. No platform API, draft or metric ingestion exists.",
+      "owner": "scripts/wechat_draft.py, scripts/wechat_metrics.py",
+      "evidence": [
+        "scripts/wechat_draft.py",
+        "scripts/wechat_metrics.py",
+        "tests/test_wechat_draft.py",
+        "tests/test_wechat_metrics.py"
+      ],
+      "not_claimed": "BLOCKED: ACCOUNT_NOT_PUBLIC — status stays PLANNED because no public account is bound. scripts/wechat_draft.py can --execute and stop at a draft. scripts/wechat_metrics.py can --execute and read the data cube into a receipt. Neither mass-sends, sets production_ready, nor declares a GZH skill. The VERIFY_ONLY adapter still only locates and describes. BLOCKED: RIGHTS_UNRESOLVED — bundled workflow rights are not cleared.",
       "adapter": {
         "module": "src/contentops/gzh/runtime.py",
         "lock": "runtime/gzh-runtime.lock.json",
@@ -243,9 +260,12 @@
       "manual_review": true,
       "metrics": "NONE",
       "status": "PLANNED",
-      "owner": "",
-      "evidence": [],
-      "not_claimed": "BLOCKED: PLATFORM_CODE_ABSENT — no platform-specific production code exists on this branch; BLOCKED: ACCOUNT_NOT_PUBLIC — the account DNA is not tracked in this public repository; NOT COVERED: EASEL_CAPABILITY_ABSENT — upstream Easel names no capability for this platform"
+      "owner": "scripts/video_deliver.py",
+      "evidence": [
+        "scripts/video_deliver.py",
+        "config/platforms/video-platforms.yaml"
+      ],
+      "not_claimed": "BLOCKED: ACCOUNT_NOT_PUBLIC — status stays PLANNED because no public account is bound. A finished film is handed to scripts/video_deliver.py. The uploader does not run without an operator grant. production_ready stays false. NOT COVERED: EASEL_CAPABILITY_ABSENT — upstream Easel names no capability for this platform."
     }
   ]
 }

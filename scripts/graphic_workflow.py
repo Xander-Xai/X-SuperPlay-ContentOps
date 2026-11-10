@@ -31,6 +31,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+from contentops.platforms.registry import workflow_routes  # noqa: E402
+
+_ROUTE = {"gzh": "wechat_article", "x": "x"}
+
 
 def _module(workflow: str):
     if workflow == "gzh":
@@ -45,15 +49,65 @@ def _module(workflow: str):
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("command", choices=("status", "verify", "plan"))
-    parser.add_argument("--workflow", choices=("gzh", "x"), required=True)
+    parser.add_argument("--workflow", choices=("gzh", "x", "video"), required=True)
     parser.add_argument("--root", default=None,
                         help="workflow root for gzh, or the repository root for x")
     parser.add_argument("--lock", default=None,
                         help="trusted lock (default: runtime/<workflow>-runtime.lock.json)")
     parser.add_argument("--account", default=None, help="x only: account JSON path")
-    parser.add_argument("--project", default=None, help="x only: project directory")
+    parser.add_argument("--project", default=None, help="project directory for x, or the finished film for video handoff")
+    parser.add_argument("--handoff", action="store_true",
+                        help="video only: pack the finished film and build the Xiaohongshu argv. Does not run the uploader.")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
+
+    if args.workflow == "video":
+        routes = [
+            item for item in workflow_routes(ROOT)
+            if item["platform_id"] in {
+                "douyin", "bilibili", "xiaohongshu_video", "shipinhao", "youtube",
+            }
+        ]
+        result = {
+            "schema": "contentops.video-workflow-status/v1",
+            "state": "DESCRIBE_ONLY",
+            "routes": routes,
+            "publish_authorized": False,
+            "production_ready": False,
+            "skill_declared": False,
+        }
+        if args.handoff:
+            if not args.project:
+                result["state"] = "BLOCKED"
+                result["code"] = "PROJECT_REQUIRED"
+                result["detail"] = "小红书投递需要已完成的项目目录"
+                print(json.dumps(result, ensure_ascii=False, indent=2) if args.json else result)
+                return 4
+            import importlib.util
+            spec = importlib.util.spec_from_file_location(
+                "video_deliver", ROOT / "scripts" / "video_deliver.py")
+            deliver = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(deliver)
+            video_ids = [
+                item["platform_id"] for item in routes
+                if any(command["script"] == "scripts/video_deliver.py" for command in item["commands"])
+            ]
+            joined = ",".join(video_ids)
+            pack_code = deliver.main(["pack", "--project", args.project, "--platforms", joined])
+            dispatch_code = deliver.main([
+                "dispatch", "--project", args.project, "--platforms", joined,
+            ])
+            result["handoff"] = {
+                "platform_ids": video_ids,
+                "pack_exit": pack_code,
+                "dispatch_exit": dispatch_code,
+                "execute": False,
+                "publish_authorized": False,
+                "production_ready": False,
+            }
+            result["state"] = "HANDOFF_READY" if pack_code == 0 else "BLOCKED"
+        print(json.dumps(result, ensure_ascii=False, indent=2) if args.json else result)
+        return 0 if result["state"] != "BLOCKED" else 4
 
     module = _module(args.workflow)
     if args.workflow == "gzh":
@@ -84,6 +138,12 @@ def main(argv=None) -> int:
             result = module.plan(root, lock_path=lock_path, repo_root=ROOT)
     except blocked as exc:
         result = {"state": "BLOCKED", "code": exc.code, "detail": exc.detail}
+
+    route = workflow_routes(ROOT, _ROUTE[args.workflow])[0]
+    result = dict(result)
+    result["transport_route"] = route
+    result["publish_authorized"] = False
+    result["production_ready"] = False
 
     print(json.dumps(result, ensure_ascii=False, indent=2) if args.json else result)
     return 0 if result.get("state") != "BLOCKED" else 4
