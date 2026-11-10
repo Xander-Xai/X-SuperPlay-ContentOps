@@ -33,28 +33,27 @@
 > longer the current state. The rest of this document still describes the
 > 2026-11-04 `main`.
 
-### Git — verified 2026-11-10 (governance reconciliation, updated after #134)
+### Git — verified 2026-11-10 (governance execution round 2, after #132 / #135 / #133)
 
 | Property | Verified value |
 |---|---|
-| Default branch | `main` — protected @ `44665ab1` (PR #137, squash-merged 2026-11-10); previously `f7cb2328` (#136), `0baecfa8` (#134) and `545b64c` (#131) |
-| Open PRs | 3 drafts: #132 (`feat/automatic-video-production` → `main`), #133 (`refactor/architecture-adapters-20261109` → `feat/automatic-video-production`), #135 (`feat/jianying-draft-handoff` → `feat/automatic-video-production`). **#134, #136 and #137 are MERGED** |
-| Open issues | 4: #6, #7, #51, #56 — #51 / #56 are **OPEN / DEFERRED**, not delivered |
-| Remote branches | 4: `main` + 3 non-`main`, each carrying unmerged commits. `fix/p0-publish-loop-hardening-20261109`, `feat/huashu-motion-easel-adapter` and `docs/governance-state-20261110` were **auto-deleted** after their PRs merged (`delete_branch_on_merge: true`); no branch was removed manually. All 4 are registered in `config/governance/branch-registry.json` |
-| Branch protection | required checks `Tests (ubuntu-latest)`, `Tests (windows-latest)`, `Repo policy checks`; PR required (0 approvals); linear history; no force push; no deletion; `enforce_admins: false`; `/rulesets` = `[]` |
+| Default branch | `main` — protected @ `b6a61536` (PR #133, squash-merged 2026-11-10); previously `87142441` (#135), `60006bc7` (#132), `26618086` (#138), `44665ab1` (#137) |
+| Open PRs | **0**. Squash-merged 2026-11-10: #138 (`2661808`), #132 (`60006bc`, Owner human visual review PASS), #135 (`8714244`), #133 (`b6a6153`). The two stacked PRs (#135, #133) were **re-landed from `main`** before merge: main was merged into each branch (fast-forward push, no force), collapsing the diff back to the true delta (4 files / +898−1 and 7 files / +502−12) |
+| Open issues | 3: #7, #51, #56 — #51 / #56 are **OPEN / DEFERRED**, not delivered. **#6 CLOSED** (Founder review PASS on the three real-source MP4s; D-1 resolved) |
+| Remote branches | 1: `main` only. `chore/governance-guardrails-20261110`, `feat/automatic-video-production`, `feat/jianying-draft-handoff` and `refactor/architecture-adapters-20261109` were **auto-deleted** after their PRs merged (`delete_branch_on_merge: true`); no branch was removed manually |
+| Branch protection | required checks `Tests (ubuntu-latest)`, `Tests (windows-latest)`, `Repo policy checks`; PR required (0 approvals); linear history; no force push; no deletion; **`enforce_admins: true` (enabled 2026-11-10, Owner-authorized)**; `/rulesets` = `[]` |
 | Merge policy | squash only; `delete_branch_on_merge: true` |
 | Local worktrees | 9 (including 2 detached `D:/Temp/ci-m5*`) — audited only, none removed |
-| Descoped work | [DEFERRED-WORK.md](DEFERRED-WORK.md) D-1…D-6. ADR-018 D5's "zero open PR / zero open issue / only `main`" was the **2026-11-04 closeout state**, not a standing ban |
+| Descoped work | [DEFERRED-WORK.md](DEFERRED-WORK.md) D-2…D-6 unchanged; **D-1 resolved** by the #6 closure above |
 
-`main` remains the only *persistent* branch: the three others are work-scoped and
-short-lived, two of them stacked on #132. The 12:30 reconciliation performed no
-merge; the Owner-authorized executions squash-merged **#134** (`0baecfa8`) and
-then the review-only Huashu handoff layer **#136** (`f7cb2328`) into `main`, each
-after exact-head 3/3 checks and an update-branch where `strict: true` required
-it. **No issue was closed, no branch was manually deleted, no worktree was
-removed.** Per-item evidence: `reports/governance-snapshot-2026-11-10.html`,
-`reports/governance-execution-2026-11-10.html` and
-`reports/governance-execution-2-2026-11-10.html`.
+`main` remains the only *persistent* branch — the registry
+(`config/governance/branch-registry.json`) now lists exactly that state. The
+Owner-authorized execution round (2026-11-10 ~16:00–16:59 +08:00) merged
+#138 → #132 → #135 → #133 in that order, each after exact-head 3/3 required
+checks (update-branch / re-land + fresh CI where `strict: true` required it),
+and enabled admin enforcement on the protection rule. **No branch was manually
+deleted, no worktree was removed, no issue was closed except #6 with an
+evidence comment.**
 
 
 `scripts/check_branch_registry.py` validates the branch registry offline;
@@ -63,7 +62,12 @@ stream (report-only until an Owner enables `--strict`). Both are wired into
 CI and covered by `tests/test_governance_checks.py`. The `main` SHA above
 remains a verified time-point snapshot, not a generated field.
 
-### CI coverage note — stacked PRs (institutional exception)
+### CI coverage note — stacked PRs (institutional exception, now historical)
+
+**Historical (2026-11-10):** the stacked PRs described here (#133, #135) were
+re-landed from `main` and merged the same day, so the exception below no longer
+applies to any open PR. Retained because the standing policy decision remains
+in force.
 
 `main`'s `.github/workflows/ci.yml` uses `pull_request.branches: [main]`, so a
 PR whose **base is not `main`** (#133, #135) gets no PR-triggered required checks
