@@ -17,6 +17,14 @@
       "purpose": "protected default branch",
       "status": "persistent",
       "expires": null
+    },
+    {
+      "name": "chore/drift-artifacts-20261110",
+      "pr": 146,
+      "created": "2026-11-10",
+      "purpose": "receipts + x-growth posts + architecture audit artifacts (drift slice F)",
+      "status": "open",
+      "expires": "2026-12-10"
     }
   ]
 }
