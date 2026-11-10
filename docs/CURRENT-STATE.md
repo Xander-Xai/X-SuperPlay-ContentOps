@@ -28,6 +28,56 @@
 
 ## Git
 
+> **Git state is re-verified below at 2026-11-10.** The table at the end of this
+> section is the 2026-11-04 verification snapshot, kept as history; it is no
+> longer the current state. The rest of this document still describes the
+> 2026-11-04 `main`.
+
+### Git — verified 2026-11-10 (governance reconciliation, updated after #134)
+
+| Property | Verified value |
+|---|---|
+| Default branch | `main` — protected @ `f7cb2328` (PR #136, squash-merged 2026-11-10); previously `0baecfa8` (PR #134) and `545b64c` (PR #131) |
+| Open PRs | 3 drafts: #132 (`feat/automatic-video-production` → `main`), #133 (`refactor/architecture-adapters-20261109` → `feat/automatic-video-production`), #135 (`feat/jianying-draft-handoff` → `feat/automatic-video-production`). **#134 and #136 are MERGED** |
+| Open issues | 4: #6, #7, #51, #56 — #51 / #56 are **OPEN / DEFERRED**, not delivered |
+| Remote branches | 4: `main` + 3 non-`main`, each carrying unmerged commits. `fix/p0-publish-loop-hardening-20261109` and `feat/huashu-motion-easel-adapter` were **auto-deleted** after their PRs merged (`delete_branch_on_merge: true`); no branch was removed manually |
+| Branch protection | required checks `Tests (ubuntu-latest)`, `Tests (windows-latest)`, `Repo policy checks`; PR required (0 approvals); linear history; no force push; no deletion; `enforce_admins: false`; `/rulesets` = `[]` |
+| Merge policy | squash only; `delete_branch_on_merge: true` |
+| Local worktrees | 9 (including 2 detached `D:/Temp/ci-m5*`) — audited only, none removed |
+| Descoped work | [DEFERRED-WORK.md](DEFERRED-WORK.md) D-1…D-6. ADR-018 D5's "zero open PR / zero open issue / only `main`" was the **2026-11-04 closeout state**, not a standing ban |
+
+`main` remains the only *persistent* branch: the three others are work-scoped and
+short-lived, two of them stacked on #132. The 12:30 reconciliation performed no
+merge; the Owner-authorized executions squash-merged **#134** (`0baecfa8`) and
+then the review-only Huashu handoff layer **#136** (`f7cb2328`) into `main`, each
+after exact-head 3/3 checks and an update-branch where `strict: true` required
+it. **No issue was closed, no branch was manually deleted, no worktree was
+removed.** Per-item evidence: `reports/governance-snapshot-2026-11-10.html`,
+`reports/governance-execution-2026-11-10.html` and
+`reports/governance-execution-2-2026-11-10.html`.
+
+### CI coverage note — stacked PRs (institutional exception)
+
+`main`'s `.github/workflows/ci.yml` uses `pull_request.branches: [main]`, so a
+PR whose **base is not `main`** (#133, #135) gets no PR-triggered required checks
+from `main`'s workflow. Their "3/3 green" is a **head push run**, not a current
+PR check; a same-named job passing on a stacked PR is **not** evidence that
+`main`'s protected checks are satisfied. `main`'s push filters also omit
+`refactor/**` — #133 carries its own `refactor/**` trigger, which produced its run.
+
+**Decision: do not widen `pull_request.branches` with `feat/**`.** That field
+filters base branches; adding it would legitimise feature branches as persistent
+baselines. Stacked PRs are a temporary, explicitly registered exception and must
+be re-landed from `main`. Every new `tests/test_*.py` must still be registered in
+`ci.yml` (`check_repo_policy.check_test_suites_registered_in_ci`). Verified at
+`main f7cb2328`: `git merge-tree --write-tree` is clean for #132 (2 behind / 75
+ahead), and #134 / #132 add 4 and 12 differently named CI steps with no
+collision. #136's review-only handoff layer is now on `main`; #132 does not yet
+contain any of its three files, so wiring the render layer to it is a separate,
+human-gated change.
+
+### Git — state at the 2026-11-04 verification (historical, superseded above)
+
 | Property | Value |
 |---|---|
 | Default branch | `main` — protected |
@@ -281,8 +331,9 @@ See [TEST-PLAN.md](TEST-PLAN.md) for the full inventory.
 
 1. Voice quality — edge-tts is mechanical and Windows SAPI is offline-flat.
    Neither is production-grade. MiniMax speech is implemented but unapproved.
-2. Human Review — no completed `human-review.json` for any project.
-   Every result stays `PENDING_FOUNDER_REVIEW`.
+2. Human Review — no project has an approved `human-review.json`. The tracked
+   `projects/easel-review/receipts/human-review.json` records
+   `REJECTED_FOUNDER`; other production runs remain `PENDING_FOUNDER_REVIEW`.
 3. media-use runtime lock — a clean checkout (and this host today) resolves
    `BLOCKED / MISSING_RUNTIME`. The approved baseline exists; a host lock must be
    generated and trusted before the adapter can run.
