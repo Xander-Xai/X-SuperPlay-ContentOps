@@ -20,6 +20,7 @@ from .registry import (  # noqa: F401
     resolve_account,
     summarise,
     validate_registry,
+    workflow_routes,
 )
 
 __all__ = [
@@ -37,4 +38,5 @@ __all__ = [
     "resolve_account",
     "summarise",
     "validate_registry",
+    "workflow_routes",
 ]

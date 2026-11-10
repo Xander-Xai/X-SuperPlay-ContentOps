@@ -17,6 +17,14 @@
       "purpose": "protected default branch",
       "status": "persistent",
       "expires": null
+    },
+    {
+      "name": "feat/platform-route-display",
+      "pr": 141,
+      "created": "2026-11-10",
+      "purpose": "platform workflow routes + route display CLI (drift slice A)",
+      "status": "open",
+      "expires": "2026-12-10"
     }
   ]
 }
