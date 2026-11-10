@@ -17,6 +17,14 @@
       "purpose": "protected default branch",
       "status": "persistent",
       "expires": null
+    },
+    {
+      "name": "feat/wcs-browser-bridge",
+      "pr": 144,
+      "created": "2026-11-10",
+      "purpose": "wechatsync browser bridge for graphic delivery (drift slice D / A5)",
+      "status": "open",
+      "expires": "2026-12-10"
     }
   ]
 }
