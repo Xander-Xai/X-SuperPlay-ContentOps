@@ -23,7 +23,8 @@
 - [EASEL-CAPABILITY-INVENTORY.md](EASEL-CAPABILITY-INVENTORY.md) — Upstream-declared vs integrated vs executable vs production-allowed Easel capabilities
 - [PLATFORM-ADAPTER-CONTRACT.md](PLATFORM-ADAPTER-CONTRACT.md) — Delivery-layer adapter interface; no second registry, no second production engine
 - [CONTENT-LIFECYCLE-STAGES.md](CONTENT-LIFECYCLE-STAGES.md) — Ordered lifecycle stages, owners, current state and receipts
-- [MOTION-WORKFLOW-SPEC.md](MOTION-WORKFLOW-SPEC.md) — Dual-account video workflow contracts: sample gate, motion handoff, real-source duration, router → M5
+- [MOTION-WORKFLOW-SPEC.md](MOTION-WORKFLOW-SPEC.md) — Dual-account video workflow contracts: sample gate, motion handoff, real-source duration, router → M5, the two Huashu engines and the prepared sample
+- [governance/HUASHU-EXECUTION-AUTHORIZATION-REQUEST.md](governance/HUASHU-EXECUTION-AUTHORIZATION-REQUEST.md) — Owner execution-authorization request for the two Huashu engines; a request, not an authorization
 - [adr/ADR-008-media-use-adapter.md](adr/ADR-008-media-use-adapter.md) — HyperFrames `media-use` integration: pinned adapter, not a fork
 - [CROSS-REPO-INTEGRATION.md](CROSS-REPO-INTEGRATION.md) — RepoSourceAdapter, repo registry
 

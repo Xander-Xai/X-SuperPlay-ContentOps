@@ -282,9 +282,10 @@
     },
     {
       "step": "architecture_animation",
-      "skill": "infographic",
-      "script": "skills/openclaw/infographic/scripts/gif_chart.py",
-      "why": "owns the vector chain and metric visuals; hand-rolled ffmpeg chains are not allowed"
+      "skill": "contentops-native-motion",
+      "script": "scripts/native_motion_preview.py",
+      "path_base": "repo",
+      "why": "owns original explanatory architecture and execution-state animation; generated visuals are mechanism diagrams only, never real operation evidence or manual screen recordings"
     },
     {
       "step": "card_design",

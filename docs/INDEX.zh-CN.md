@@ -29,7 +29,8 @@ translation_status: synced
 - [EASEL-CAPABILITY-INVENTORY.md](EASEL-CAPABILITY-INVENTORY.md) —— Easel 能力盘点：上游已声明 / 已接入 / 已执行 / 允许生产
 - [PLATFORM-ADAPTER-CONTRACT.md](PLATFORM-ADAPTER-CONTRACT.md) —— 交付层适配器接口；不建第二套注册表，不建第二套生产引擎
 - [CONTENT-LIFECYCLE-STAGES.md](CONTENT-LIFECYCLE-STAGES.md) —— 有序生命周期阶段、归属、当前状态与回执
-- [MOTION-WORKFLOW-SPEC.md](MOTION-WORKFLOW-SPEC.md) —— 双账号视频工作流契约：样片门、动效交接、真实素材时长、路由 → M5
+- [MOTION-WORKFLOW-SPEC.md](MOTION-WORKFLOW-SPEC.md) —— 双账号视频工作流契约：样片门、动效交接、真实素材时长、路由 → M5、两个 Huashu 引擎与已准备好的样片
+- [governance/HUASHU-EXECUTION-AUTHORIZATION-REQUEST.md](governance/HUASHU-EXECUTION-AUTHORIZATION-REQUEST.md) —— 两个 Huashu 引擎的 Owner 执行授权申请；是申请，不是授权
 - [adr/ADR-008-media-use-adapter.md](adr/ADR-008-media-use-adapter.md) — HyperFrames `media-use` 集成：固定版本适配器，不复制上游
 - [CROSS-REPO-INTEGRATION.md](CROSS-REPO-INTEGRATION.md)
 

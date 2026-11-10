@@ -1,0 +1,82 @@
+{
+  "schema": "contentops.claim-ledger/v1",
+  "claims": [
+    {
+      "id": "CL-01",
+      "text": "在这套 Huashu 适配器里，固定运行时通过核验只会得到 RESOLVABLE；解析结果仍明确标记 execution_authorized=false。",
+      "artifacts": ["huashu-execution-code"],
+      "quotes": ["\"verdict\": \"RESOLVABLE\" if trusted else \"UNRESOLVED\",", "\"execution_authorized\": False,"],
+      "locator": "src/contentops/skills/huashu_execution.py:121-142"
+    },
+    {
+      "id": "CL-02",
+      "text": "受管 Huashu 请求每次只带一个操作；同时请求多个操作会被阻止。",
+      "artifacts": ["huashu-execution-code"],
+      "quotes": ["if len(request.operations) != 1:"],
+      "locator": "src/contentops/skills/huashu_execution.py:247-253"
+    },
+    {
+      "id": "CL-03",
+      "text": "授权请求对象分别记录 request ID、技能及版本、账号、流水线、阶段、操作、执行主体和单位数。",
+      "artifacts": ["authorization-code"],
+      "quotes": ["request_id: str", "skill_id: str", "skill_version: str", "account: str", "pipeline: str", "stage: str", "operations: Tuple[str, ...]", "subject: str", "units: int = 1"],
+      "locator": "src/contentops/skills/authorization.py:120-140"
+    },
+    {
+      "id": "CL-04",
+      "text": "项目本地批准记录必须使用技能执行批准 schema 和 purpose；代码还会核对签发者是否属于配置的 Owner 身份集合。",
+      "artifacts": ["grant-source-code"],
+      "quotes": ["if payload.get(\"schema\") != APPROVAL_SCHEMA:", "if payload.get(\"purpose\") != REQUIRED_PURPOSE:", "if not _owner_allowed(issuer, owner_identities):"],
+      "locator": "src/contentops/skills/grant_source.py:151-174"
+    },
+    {
+      "id": "CL-05",
+      "text": "批准记录必须绑定具体账号、技能和版本，并声明有效期及总使用次数；账号不能用通配符。",
+      "artifacts": ["grant-source-code"],
+      "quotes": ["if account == \"*\":", "skill_version=_text(\"skill_version\"),", "expires_at=_text(\"expires_at\"),", "max_uses=_count(\"max_uses\", 1),"],
+      "locator": "src/contentops/skills/grant_source.py:198-236"
+    },
+    {
+      "id": "CL-06",
+      "text": "Huashu 执行顺序先核对运行时，再在授权额度消耗前运行本地 runner preflight；实际 executor 内还会再次核对运行时。",
+      "artifacts": ["huashu-execution-code"],
+      "quotes": ["runtime = huashu_motion.verify_runtime(", "if callable(preflight):", "preflight(operation, request)", "if runtime.get(\"status\") != \"TRUSTED_RUNTIME\":"],
+      "locator": "src/contentops/skills/huashu_execution.py:185-222,231-287"
+    },
+    {
+      "id": "CL-07",
+      "text": "本次会话的只读 runtime-status 输出显示 Huashu Motion v0.3.1 和固定 commit，状态为 TRUSTED_RUNTIME，但 execution_authorized 为 false。",
+      "artifacts": ["current-runtime-status-observation"],
+      "quotes": ["\"status\": \"TRUSTED_RUNTIME\"", "\"version\": \"0.3.1\"", "\"execution_authorized\": false"],
+      "locator": "projects/x-superplay-future-intelligence-motion-20261107/work/runtime-status-current-20261107.json#/result"
+    },
+    {
+      "id": "CL-08",
+      "text": "保存的 2026-11-07 复制 CLI 观察记录因正式 skill-execution-approval.json 缺失而返回 BLOCKED / NO_TRUSTED_GRANT，执行状态为 NOT_EXECUTED，receipt 为 null；这不是本会话新执行或上游结果。",
+      "artifacts": ["no-grant-observation"],
+      "quotes": ["\"reason\": \"NO_TRUSTED_GRANT\"", "\"state\": \"NOT_EXECUTED\"", "\"receipt\": null"],
+      "locator": "projects/x-superplay-future-intelligence-motion-20261107/work/gate-attempt-observation.json"
+    },
+    {
+      "id": "CL-09",
+      "text": "受管执行测试套件本次 23/23 通过；测试文件声明使用临时 fake runtime 和注入 runner，并且不渲染。",
+      "artifacts": ["gate-test-result", "gate-test-source"],
+      "quotes": ["\"passed\": 23, \"total\": 23, \"status\": \"PASS\"", "Nothing here renders. The upstream invocation is an injected mock runner"],
+      "locator": "projects/x-superplay-future-intelligence-motion-20261107/work/huashu-gate-test-run.json; tests/test_huashu_execution_gate.py:1-9"
+    },
+    {
+      "id": "CL-10",
+      "text": "既有 P01 Manifest Bridge 回执把样片标成 TECHNICAL_SAMPLE_ONLY；它有一个 4 秒 generated fixture placement，production_ready=false、publish_authorized=false、QC 为 WARN。",
+      "artifacts": ["p01-manifest-bridge-receipt", "p01-qc-receipt"],
+      "quotes": ["\"technical_sample_status\": \"TECHNICAL_SAMPLE_ONLY\"", "\"duration\": 4.0", "\"generated\": true", "\"production_ready\": false", "\"publish_authorized\": false", "\"overall\": \"WARN\""],
+      "locator": "projects/huashu-p01-bridge-technical-20261107/receipts/m5-manifest-bridge.json; projects/huashu-p01-bridge-technical-20261107/receipts/qc-report-huashu-p01-bridge-technical-20261107.json"
+    },
+    {
+      "id": "CL-11",
+      "text": "Gate 的真实顺序是读取 Grant、评估请求、临执行前重读 Grant、消费一次额度，再调用 executor；它不是仅凭注册状态直接运行。",
+      "artifacts": ["execution-gate-code"],
+      "quotes": ["grant = load_grant(project, owner_identities=owner_identities)", "decision = evaluate(request, verdict=verdict, registry_entry=registry_entry,", "fresh = load_grant(project, owner_identities=owner_identities)", "spent = consume(project, grant=grant, request_id=request.request_id, now=moment)", "outcome = executor(request.operations[0], request)"],
+      "locator": "src/contentops/skills/execution_gate.py:174-214"
+    }
+  ]
+}

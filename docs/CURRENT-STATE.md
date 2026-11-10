@@ -21,6 +21,7 @@
 | Content router, account DNA, brief/script/design stages | S1–S4 on `main` (PRs #114, #118); brief→M5 bridge merged, still gate-bound to a human-approved brief |
 | XHS / X / GZH platform tracks | adapters merged that verify but never execute (PRs #121, #125, #127); rights unresolved; no execution or publication |
 | Motion workflow (sample gate, handoff, spec) | implemented on `main` (PRs #122–#124) |
+| Huashu dual-engine motion integration | implemented on `feat/m45-m5-timeline-bridge`, **not on `main`**; both engines stay `BLOCKED / NOT_EXECUTED`, no runtime installed, no render, no approval record |
 | M5 E2E runs | three real-source runs on `main` (#117, #119), all `PENDING_FOUNDER_REVIEW` |
 | MiniMax speech, image, H3 video | implemented; verified subsets recorded below |
 | Production ready | **false** for every track |
@@ -75,6 +76,29 @@
 | Known defect | TrendRadar's own CLI crashes on a GBK console when it prints emoji; `router_schedule._crawl` always injects `PYTHONUTF8=1`, so the scheduled path is unaffected |
 | Upgrade stance | do NOT auto-upgrade (pin note); the SQLite adapter was written against the v6.11.0 schema — re-verify before adopting a newer tag |
 | Merged in | PR #129 |
+
+## Huashu Motion Integration (branch `feat/m45-m5-timeline-bridge`, unmerged)
+
+This section describes work that is **not on `main`**. Nothing below has been
+merged, no engine has been executed, and no approval record exists.
+
+| Property | Value |
+|---|---|
+| Engines | `huashu-motion` (upstream `alchaincyf/huashu-motion`) and `huashu-art-motion` (upstream `alchaincyf/huashu-art-motion`), integrated as clip producers; Easel stays the only compositor |
+| Huashu Motion pin | v0.3.1 at `52467f99c602b76ba86d511d37acdfe93fa1e16e`; entrypoint `skills/huashu-motion/bin/om`, dispatcher `cli/om.js`; lock `runtime/huashu-motion.lock.json`; `execution_authorized: false` |
+| Upstream contract | Read from pinned `skills/huashu-motion/references/contract.md`, `cli/om.js`, `runtime/om.js`, and README: native root `data-composition-id` / `data-width` / `data-height`, paused GSAP timeline at `window.__timelines[composition-id]`, `scene:<id>` labels, and `data-om-id` pointable regions; `data-composition-variables` applies when editable values are used. The sample HTML is CSS-keyframe-only and explicitly **NOT_HUASHU_MOTION_COMPATIBLE**; no `om` command is authorized for it. |
+| Audio evidence | `om render --silent` suppresses the no-soundtrack warning only; absence of an audio stream must be verified with ffprobe on the rendered or AudioPolicy-derived file |
+| Runtime on this machine | **absent** — `D:/Toolchains/huashu-motion/0.3.1` and `D:/Toolchains/huashu-art-motion/1.2.0` do not exist, so no version check is reached and no version match or mismatch may be claimed |
+| Confounder removed | the Art Motion verifier used to report one `RUNTIME_FILES_MISSING_OR_ESCAPED` for a missing root, a missing file and an escaped path; it now reports each separately (`RUNTIME_ROOT_MISSING`, `ENTRYPOINT_MISSING`, `ENTRYPOINT_ESCAPED_RUNTIME_ROOT`, `LICENSE_MISSING`, `CLIP_SCHEMA_MISSING`, `FONT_REGISTRY_MISSING`, `CJK_FONT_MISSING`, `CJK_FONT_UNREGISTERED`, `COMMIT_MISMATCH`, `UPSTREAM_MISMATCH`, `DIRTY_RUNTIME`, …) |
+| Shared record | `contentops.huashu-motion-asset/v1` for both engines: `engine/version/commit/spec_sha256/asset_hashes/clip_path/clip_sha256/duration/resolution/fps/audio_policy/rights/review_status`; always `generated=true`, `evidence_capable=false`, `production_ready=false`; `KEEP` is refused |
+| Clip gate | one gate for both engines (`check_motion_clip`): silent, 1080×1920, H.264/yuv420p, constant 30 fps verified from frame timestamps, digest-bound. The 4–8 s sample window is unchanged; the per-beat window is a separate parameter |
+| Claim boundary | Generated visuals remain non-evidence; they may supplement a factual line only when its separate ClaimLedger evidence is verified. Generated asset `claim_refs` / `evidence_use: EVIDENCE` are rejected |
+| Rights / fixtures | Manifest-driven real composition blocks generated motion with unresolved or missing rights review. Fixture receipts are permitted only in a project declaring `fixture: true`; no fixture or QC pass grants production or publish authority |
+| M4.5 path | a checked clip becomes a `contentops.video-receipt/v1` source receipt and an audio-free derived clip; only the derived clip may be activated on the timeline; a missing clip, a digest mismatch or changed bytes are refused |
+| Managed execution | `src/contentops/skills/huashu_execution.py`: runtime first, then the approval, then the decision, then a re-read, then one consumed use, then the executor; an unusable runtime is blocked **without** spending a use; the upstream invocation is injected — no module builds an `om` command line |
+| Sample | `projects/huashu-motion-sample` is a 21 s design with a 4.0 s first-shot Art Motion candidate and five 3.4 s beats. The 4–8 s sample gate is unchanged; the other beats use the ordinary per-clip gate. The CSS-only Huashu Motion HTML remains explicitly **NOT_HUASHU_MOTION_COMPATIBLE**. No real frame rendered; `RENDER_NOT_VERIFIED` |
+| Authorization request | `docs/governance/HUASHU-EXECUTION-AUTHORIZATION-REQUEST.md` — a request, not an authorization |
+| Not done | no runtime installed or downloaded, no `om` invoked, no browser driven, no frame rendered, no approval record authored, no publication, no upstream CLI modified, no paid call |
 
 ## Easel Host (2026-11-02)
 
@@ -203,11 +227,30 @@ Diagnostic engine: `python scripts/run_v1.py <project> --engine fallback`
 | Production ready | **false** — `PENDING_FOUNDER_REVIEW`, scores null |
 | Tests | `tests/test_m5_evidence.py` — 18 offline tests |
 
+## M4.5 → M5 Timeline Bridge (branch verification, 2026-11-06)
+
+The explicit `--media-manifest` mode is implemented on `feat/m45-m5-timeline-bridge`; omitting the option preserves the legacy M5 path. Script lines map one-to-one to active timeline placements by `placement_id`; the bridge revalidates hashes, receipts, gate state, lineage, containment and actual audio streams before using the active clips. It does not use `sources/assets.json` as a fallback in Manifest mode.
+
+An offline fixture project completed the M5 → pinned Easel → MP4 → QC → pending-review chain. The local deterministic fixture is labelled `FIXTURE`, not a real H3 artifact. The render proves the offline contract only; QC is `WARN` for zero real-source duration and evidence, and human review remains pending. No paid/provider calls were made. This branch-specific result is not merged into `main`.
+
+| Artifact | Logical path | SHA-256 / status |
+|---|---|---|
+| Manifest | `receipts/media-manifest.json` | `904ce38b408d76348209cf874da4fcaaf78356f3f0d1eb14f2876c53ee1a3949` |
+| Storyboard | `script/storyboard.json` | `eaf3b4ddf84a9cb0575ec16122d6e4f9291cd17989c647bc35d2d58d74c79007` |
+| MP4 | `final/m5-manifest-bridge-e2e-20261106.mp4` | `bbcba7f02ec7433000fa56f3a57924cf5a38daa3b7993352d5ac094ce03ba349`; full decode passed |
+| QC | `receipts/qc-report-m5-manifest-bridge-e2e-20261106.json` | `7caaa8d0d0ec4c693921566ccac4014cd5f4edc8a7421488acc871a5f2c9dfa9`; `WARN`, no FAIL |
+| Human-review receipt | `receipts/human-review.json` | `fd61bcf81e9a3217f3092977097cc8e9a12ba9942d8ab064be0b942650b859fe`; scores null, pending |
+| Bridge receipt | `receipts/m5-manifest-bridge.json` | records the manifest fingerprint, mappings, storyboard/output/QC hashes, and pending review |
+
 Composer defect fixed in the same change: ASS subtitle timestamps were written
 with three fractional digits, which libass reads as centiseconds, stretching
 every cue roughly tenfold and overlapping neighbours. `assemble_easel._srt_to_ass`
 now emits centiseconds; verified by rendering the cues on black and by diffing
 the burned band against the unburned render.
+
+### Motion renderer boundary (branch-local, 2026-11-06)
+
+`scripts/build_motion_film.py` now resolves `huashu-art-motion` through the exact v1.2.0 / `8f0a349a18b4bdf802b8d58715a2259c3e1ce709` baseline instead of a user-specific absolute path. No verified runtime is available at the configured path, and ADR-014 grants registration but not execution; the CLI smoke check returned `BLOCKED` before writing project outputs. No Huashu renderer or `huashu-motion` CLI ran, and no Motion Style Pilot clip or visual review was produced. The offline resolver tests do not prove rendering.
 
 ## Web Workbench
 

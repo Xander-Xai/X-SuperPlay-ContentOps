@@ -1,0 +1,37 @@
+{
+  "size": "1080x1920",
+  "image_motion": "static",
+  "pad_mode": "trim",
+  "shots": [
+    {
+      "shot_id": "p6-native-motion",
+      "video": "projects/x-superplay-1024-motion-20261107/assets/processed/p6-native-motion-preview-mute.mp4",
+      "image": "projects/x-superplay-1024-motion-20261107/assets/processed/p6-native-motion-preview-mute.mp4",
+      "source": "projects/x-superplay-1024-motion-20261107/assets/processed/p6-native-motion-preview-mute.mp4",
+      "source_type": "generated",
+      "motion": "static",
+      "duration": 6.0,
+      "duration_s": 6.0,
+      "audio_mode": "dub",
+      "audio_policy": "MUTE",
+      "caption": "TECHNICAL_SAMPLE_ONLY",
+      "media_provenance": {
+        "asset_id": "native-motion-preview-mute",
+        "placement_id": "p6-native-motion",
+        "sha256": "d5157bf901a640296108009a927357f3871a21666372ee9e59c52ff766842461",
+        "receipt_ref": "p6-native-motion-preview.mp4.receipt.json",
+        "transform_receipt_ref": "p6-native-motion-preview-mute.mp4.transform.json",
+        "source_asset_ref": "project://assets/processed/p6-native-motion-preview-mute.mp4",
+        "generated": true,
+        "evidence_capable": false,
+        "evidence_use": "VISUAL_SUPPORT"
+      }
+    }
+  ],
+  "engine": "easel",
+  "media_manifest_fingerprint": "c3b1971c1bf8f2b15126b670907b0bb349b30dca4bea8f78e068e73ab4cce1ed",
+  "media_manifest_sha256": "507a30eaad7892984b67ca11b65923b90907d8d54fe65a45f825591e24233934",
+  "technical_sample_status": "TECHNICAL_SAMPLE_ONLY",
+  "production_ready": false,
+  "publish_authorized": false
+}

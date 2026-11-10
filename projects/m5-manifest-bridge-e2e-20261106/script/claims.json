@@ -1,0 +1,11 @@
+{
+  "schema": "contentops.claim-ledger/v1",
+  "claims": [
+    {
+      "id": "fixture-no-provider",
+      "text": "本地 fixture 完成本次桥接，未调用 Provider。",
+      "artifacts": ["fixture-note"],
+      "quotes": ["本地 fixture 完成本次桥接，未调用 Provider。"]
+    }
+  ]
+}

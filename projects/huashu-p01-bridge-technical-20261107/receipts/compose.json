@@ -1,0 +1,6 @@
+{
+  "status": "OK",
+  "video": "project://final/huashu-p01-bridge-technical-20261107.mp4",
+  "subtitles_burned": true,
+  "upstream": "easel@v0.2.1:skills/openclaw/auto-short-video/scripts/assemble.py"
+}

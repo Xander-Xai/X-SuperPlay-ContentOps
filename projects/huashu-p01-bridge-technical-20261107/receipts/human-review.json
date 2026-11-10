@@ -1,0 +1,25 @@
+{
+  "project": "projects/huashu-p01-bridge-technical-20261107",
+  "video": "projects/huashu-p01-bridge-technical-20261107/final/huashu-p01-bridge-technical-20261107.mp4",
+  "engine": "easel",
+  "voice_quality": "windows_sapi_offline",
+  "bundle_id": null,
+  "bundle_sha256": null,
+  "production_ready": false,
+  "state": "PENDING_FOUNDER_REVIEW",
+  "auto_qc_result": "WARN",
+  "auto_qc_checks": 22,
+  "auto_qc_fails": [],
+  "auto_qc_warns": [
+    "duration_range",
+    "source_refs_recorded",
+    "real_source_ratio",
+    "real_source_duration_ratio",
+    "real_evidence_present"
+  ],
+  "reviewer": null,
+  "reviewed_at": null,
+  "scores": null,
+  "decision": null,
+  "note": "scores are null until a human fills them; this file is not an approval"
+}

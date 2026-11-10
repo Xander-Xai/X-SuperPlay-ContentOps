@@ -43,6 +43,8 @@ for candidate in (ROOT / "src", ROOT / "scripts"):
     if str(candidate) not in sys.path:
         sys.path.insert(0, str(candidate))
 
+from skill_route import SHARED_SKILL_ROOT, _front_matter  # noqa: E402
+
 SCHEMA = "contentops.account-route/v1"
 
 #: Which producers an evidence mode implies.
@@ -133,6 +135,21 @@ class RouteBlocked(Exception):
         super().__init__(detail)
         self.code = code
         self.detail = detail
+
+
+def require_skill_available(route: Dict[str, Any], step: str) -> Dict[str, Any]:
+    """Fail closed when a caller explicitly requests an unavailable optional skill."""
+    entry = next((item for item in route.get("skills", [])
+                  if item.get("step") == step), None)
+    if entry is None:
+        raise RouteBlocked("SKILL_NOT_ROUTED", f"step {step!r} is not in this account route")
+    if entry.get("optional") and entry.get("availability") != "AVAILABLE":
+        raise RouteBlocked(
+            "OPTIONAL_CAPABILITY_UNAVAILABLE",
+            f"optional skill {entry.get('skill')!r} for step {step!r} is unavailable; "
+            "no adapter may be invoked",
+        )
+    return entry
 
 
 #: The vendored WeChat workflow. It has no ContentOps account DNA, so its chain is
@@ -254,7 +271,12 @@ def route_for(dna: Dict[str, Any]) -> Dict[str, Any]:
         "alternatives": [dict(step) for step in ALTERNATIVES.get(mode, ())],
         "skills": [
             {"step": entry.get("step"), "skill": entry.get("skill"),
-             "script": entry.get("script")}
+             "script": entry.get("script"),
+             "optional": (entry.get("optional") is True
+                          and entry.get("step") == "broll_finder"
+                          and entry.get("skill") == "find-broll"
+                          and entry.get("path_base") == "shared"),
+             "path_base": entry.get("path_base", "catalog")}
             for entry in dna.get("skill_route") or []
         ],
     }
@@ -270,6 +292,22 @@ def resolve(project: Path) -> Dict[str, Any]:
             f"{Path(project) / 'project.yaml'} declares no account_slug, so no "
             "pipeline can be chosen; guessing one would be inventing the account")
     route = route_for(load_dna(slug))
+    for skill in route["skills"]:
+        if skill.get("optional") and skill.get("path_base") == "shared":
+            skill_dir = SHARED_SKILL_ROOT / str(skill["skill"])
+            skill_file = skill_dir / "SKILL.md"
+            try:
+                skill_dir.resolve().relative_to(SHARED_SKILL_ROOT.resolve())
+                installed = skill_file.is_file()
+            except ValueError:
+                installed = False
+            if installed:
+                metadata = _front_matter(skill_file.read_text(
+                    encoding="utf-8", errors="replace"))
+                installed = (metadata.get("name") or skill_dir.name) == skill["skill"]
+            skill["availability"] = (
+                "AVAILABLE" if installed else "OPTIONAL_CAPABILITY_UNAVAILABLE"
+            )
     project_text = str(Path(project).as_posix())
     for group in ("pipeline", "alternatives"):
         for step in route[group]:
@@ -291,6 +329,12 @@ def _warnings(route: Dict[str, Any], project: Path) -> List[str]:
         warnings.append(
             "manual recording is FORBIDDEN for this account; a capture step is not "
             "part of its pipeline")
+    for skill in route.get("skills", []):
+        if skill.get("availability") == "OPTIONAL_CAPABILITY_UNAVAILABLE":
+            warnings.append(
+                f"optional {skill.get('step')} capability is unavailable "
+                f"({skill.get('skill')}); manual/source-research paths remain separate"
+            )
     for step in route["pipeline"]:
         executable = step["command"].split()
         if len(executable) > 1 and executable[0].startswith("python"):
@@ -340,7 +384,8 @@ def _print_route(route: Dict[str, Any]) -> None:
         print()
         print("creative owners (from the account DNA's skill_route):")
         for entry in route["skills"]:
-            print(f"  {str(entry['step']):<22} {entry['skill']}")
+            suffix = f" [{entry['availability']}]" if entry.get("availability") else ""
+            print(f"  {str(entry['step']):<22} {entry['skill']}{suffix}")
     if route["warnings"]:
         print()
         print("warnings:")

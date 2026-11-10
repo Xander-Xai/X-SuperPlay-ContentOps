@@ -1,0 +1,40 @@
+{
+  "schema": "contentops.visual-rough-cut/v1",
+  "project": "x-superplay-future-intelligence-motion-20261107",
+  "output": "project://final/x-superplay-future-intelligence-100s-visual-rough-cut.mp4",
+  "output_sha256": "ec024a053c60897385915a82c6fc3dba0ee00236858215d63d1da50e709248d1",
+  "output_bytes": 1291113,
+  "probe": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "codec_type": "video",
+        "width": 1080,
+        "height": 1920,
+        "pix_fmt": "yuv420p",
+        "r_frame_rate": "30/1",
+        "avg_frame_rate": "30/1",
+        "nb_frames": "3000"
+      }
+    ],
+    "format": {
+      "duration": "100.000000"
+    }
+  },
+  "full_decode": "PASS",
+  "storyboard": "project://script/visual-rough-cut-storyboard.json",
+  "storyboard_sha256": "264533cfe3247022551deb549bfdb4afae2b4d40aeac294f7b5fbd3daf29913d",
+  "shots": 10,
+  "target_duration_sec": 100,
+  "narration": "NONE",
+  "copy_review": "PENDING_OWNER",
+  "technical_sample_status": "VISUAL_ROUGH_CUT_ONLY",
+  "generated_cards": 9,
+  "native_motion_clip": "project://assets/generated/p6-native-motion-preview.mp4",
+  "source_footage_seconds": 0,
+  "production_ready": false,
+  "publish_authorized": false,
+  "human_review": "PENDING_OWNER"
+}

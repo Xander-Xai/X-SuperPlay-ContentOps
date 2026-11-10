@@ -74,14 +74,9 @@
           "path": "src/contentops/quality/script_rhythm.py",
           "carried_by": "feat/content-router",
           "note": "deterministic rhythm checks"
-        },
-        {
-          "path": "scripts/copy_strategy.py",
-          "carried_by": null,
-          "note": "absent on every branch inspected"
         }
       ],
-      "note": "audience.py and duration.py now exist on this branch (S4 stage policy); the skill is not declared by this change."
+      "note": "scripts/copy_strategy.py is now present on this branch as a thin CLI over the existing copy_strategy module; this skill remains UNMERGED and undeclared until the content-router layer is merged and audited."
     }
   ]
 }

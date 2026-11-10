@@ -1,0 +1,15 @@
+{
+  "schema": "contentops.huashu-art-motion-baseline/v1",
+  "capability": "huashu-art-motion",
+  "repository": "https://github.com/alchaincyf/huashu-art-motion.git",
+  "version": "1.2.0",
+  "commit": "8f0a349a18b4bdf802b8d58715a2259c3e1ce709",
+  "entrypoint": "scripts/engine/render.py",
+  "clip_schema": "scripts/engine/clip_schema.json",
+  "font_registry": "scripts/engine/lib/fonts/index.json",
+  "cjk_font": "scripts/engine/lib/fonts/NotoSerifJP-600.woff",
+  "license": "MIT",
+  "execution_authorized": false,
+  "authorization_record": null,
+  "note": "ADR-014 grants controlled capability registration only; it explicitly grants no execution authority."
+}

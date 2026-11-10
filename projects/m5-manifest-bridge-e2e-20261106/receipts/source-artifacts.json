@@ -1,0 +1,17 @@
+{
+  "schema": "contentops.m5-sources/v1",
+  "artifacts": [
+    {
+      "id": "fixture-note",
+      "source_type": "local_fixture_note",
+      "title": "离线桥接 fixture 声明",
+      "path": "projects/m5-manifest-bridge-e2e-20261106/sources/fixture-note.md",
+      "sha256": "2cbe59ad18f60224df266bbad8b526ac837ba40ddf3575bc4ef0acd58359119e",
+      "bytes": 258,
+      "permission": "CREATED_BY_OWNER",
+      "captured_at": "2026-11-05T18:19:55Z",
+      "evidence_capable": true,
+      "notes": ""
+    }
+  ]
+}

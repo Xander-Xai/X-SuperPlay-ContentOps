@@ -27,6 +27,7 @@ translation_status: synced
 | 内容路由、账号 DNA、工作流门禁、Brief/脚本/设计阶段 | S1–S4 已在 ```main```（PR #114、#118）；brief→M5 桥已合并，但仍绑定人工批准的 brief |
 | 小红书 / X / 公众号轨道 | 已合并的适配器只校验、不执行（PR #121、#125、#127）；权利未解决；无执行、无发布 |
 | Motion 工作流（样片门禁、交接、规范） | ```main``` 已实现（PR #122–#124） |
+| Huashu 双动效引擎接入 | 在 ```feat/m45-m5-timeline-bridge``` 上实现，**尚未进 ```main```**；两个引擎保持 `BLOCKED / NOT_EXECUTED`，没有安装运行时、没有渲染、没有批准记录 |
 | M5 端到端运行 | ```main``` 上三次真实来源运行（#117、#119），全部 `PENDING_FOUNDER_REVIEW` |
 | MiniMax 语音、图片、H3 视频 | 已实现；已验证子集见下文 |
 | 生产就绪 | 所有轨道均为 **否** |
@@ -211,6 +212,48 @@ Owner 已决定把完整 Easel 系统作为生产底座（ADR-016）。本节只
 同一次变更修复了合成器缺陷：ASS 字幕时间戳被写成三位小数，libass 按厘秒解析，
 导致每条字幕被拉长约十倍并相互重叠。```assemble_easel._srt_to_ass``` 现按厘秒输出；
 通过在纯黑画面上渲染字幕条、并与未烧录版本逐秒比对完成验证。
+
+## M4.5 → M5 时间线桥接（分支验证，2026-11-06）
+
+显式的 ```--media-manifest``` 模式已在 ```feat/m45-m5-timeline-bridge``` 实现；不传该参数时仍保留旧版 M5 路径。脚本行通过 ```placement_id``` 与活动时间线占位一对一映射；桥接在使用活动镜头前重新验证哈希、回执、门禁状态、血缘、路径包含范围和实际音轨。Manifest 模式不会回退使用 ```sources/assets.json```。
+
+一个离线夹具项目完整跑通 M5 → 固定版本 Easel → MP4 → QC → 待人工评审链路。本地确定性夹具明确标记为 ```FIXTURE```，不是真实 H3 产物。该渲染只证明离线合约；由于真实素材时长与证据均为零，QC 为 ```WARN```，人工评审仍待完成。没有付费或供应商调用。此分支结果尚未合并到 ```main```。
+
+| 产物 | 逻辑路径 | SHA-256 / 状态 |
+|---|---|---|
+| Manifest | ```receipts/media-manifest.json``` | ```904ce38b408d76348209cf874da4fcaaf78356f3f0d1eb14f2876c53ee1a3949``` |
+| Storyboard | ```script/storyboard.json``` | ```eaf3b4ddf84a9cb0575ec16122d6e4f9291cd17989c647bc35d2d58d74c79007``` |
+| MP4 | ```final/m5-manifest-bridge-e2e-20261106.mp4``` | ```bbcba7f02ec7433000fa56f3a57924cf5a38daa3b7993352d5ac094ce03ba349```；完整解码通过 |
+| QC | ```receipts/qc-report-m5-manifest-bridge-e2e-20261106.json``` | ```7caaa8d0d0ec4c693921566ccac4014cd5f4edc8a7421488acc871a5f2c9dfa9```；```WARN```，无 FAIL |
+| 人工评审回执 | ```receipts/human-review.json``` | ```fd61bcf81e9a3217f3092977097cc8e9a12ba9942d8ab064be0b942650b859fe```；评分为空，待审核 |
+| 桥接回执 | ```receipts/m5-manifest-bridge.json``` | 记录 Manifest 指纹、映射、Storyboard/输出/QC 哈希及待审核状态 |
+
+### Motion 渲染器边界（分支状态，2026-11-06）
+
+```scripts/build_motion_film.py``` 现通过精确的 huashu-art-motion v1.2.0 / ```8f0a349a18b4bdf802b8d58715a2259c3e1ce709``` 基线解析运行时，不再使用绑定到个人主机的绝对路径。配置路径下没有可验证的运行时；ADR-014 只授予能力注册、不授予执行权限。CLI 冒烟检查在写入项目产物前返回 ```BLOCKED```。本次没有运行 Huashu 渲染器或 ```huashu-motion``` CLI，也没有生成 Motion Style Pilot 片段或完成视觉评审。离线解析器测试不能证明渲染成功。
+
+校验器现在会报出具体原因，而不是一个笼统错误：运行时根缺失、入口缺失、入口越界、许可证缺失、片段 schema 缺失、字体登记缺失、中文字体缺失、字体未登记、基线不符、commit 不符、上游不符、工作树不干净，各自独立。在本机上配置根目录不存在，因此入口与许可证同时缺失，版本核对走不到。
+
+### Huashu 双动效引擎接入（分支状态，2026-11-06）
+
+本节描述的工作**尚未进 ```main```**，且没有执行过任何引擎、没有任何批准记录。
+
+| 属性 | 值 |
+|---|---|
+| 两个引擎 | `huashu-motion`（上游 `alchaincyf/huashu-motion`）与 `huashu-art-motion`（上游 `alchaincyf/huashu-art-motion`），都作为**片段生产者**接入；Easel 仍是唯一合成器 |
+| Huashu Motion 固定版本 | v0.3.1 @ `52467f99c602b76ba86d511d37acdfe93fa1e16e`；入口 `skills/huashu-motion/bin/om`，调度器 `cli/om.js`；锁文件 `runtime/huashu-motion.lock.json`；`execution_authorized: false` |
+| 上游契约 | 已核对固定版 `skills/huashu-motion/references/contract.md`、`cli/om.js`、`runtime/om.js` 与 README：原生 root 必须有 `data-composition-id` / `data-width` / `data-height`，paused GSAP timeline 注册在 `window.__timelines[composition-id]`，场景标签为 `scene:<id>`，`data-om-id` 标记可指向区域；只有使用可编辑值时才需声明 `data-composition-variables`。样片 HTML 仅有 CSS keyframes，已明确标为 **NOT_HUASHU_MOTION_COMPATIBLE**；未授权对它运行 `om`。 |
+| 音轨证据 | `om render --silent` 只抑制“无配乐”警告；必须用 ffprobe 检查渲染文件或 AudioPolicy 派生文件是否真的没有音轨 |
+| 本机运行时 | **不存在** —— `D:/Toolchains/huashu-motion/0.3.1` 与 `D:/Toolchains/huashu-art-motion/1.2.0` 都不存在，因此版本核对走不到，不能声称版本匹配或不匹配 |
+| 统一记录 | `contentops.huashu-motion-asset/v1`，两个引擎共用：`engine/version/commit/spec_sha256/asset_hashes/clip_path/clip_sha256/duration/resolution/fps/audio_policy/rights/review_status`；始终 `generated=true`、`evidence_capable=false`、`production_ready=false`；`KEEP` 一律拒绝 |
+| 片段技术门 | 两个引擎共用一道门（`check_motion_clip`）：静音、1080×1920、H.264/yuv420p、由帧时间戳验证恒定 30 fps、哈希绑定。4–8 秒样片窗口未改；逐镜窗口是另一个参数 |
+| 事实主张边界 | 生成画面始终不是证据；只有独立 ClaimLedger 已验证事实来源时，它才可作为补充视觉。生成资产设置 `claim_refs` 或 `evidence_use: EVIDENCE` 会被拒绝 |
+| 权利 / 夹具 | manifest 驱动的真实合成会阻断权利未解决或缺少审查证据的生成动效。Fixture 回执只有在项目声明 `fixture: true` 时才可使用；夹具或 QC 通过都不授予生产/发布权限 |
+| M4.5 通路 | 通过校验的片段变成 `contentops.video-receipt/v1` 源回执与无音轨派生片段；只有派生片段可以被激活到时间线；片段缺失、哈希不符、字节被改一律拒绝 |
+| 受管执行 | `src/contentops/skills/huashu_execution.py`：先校验运行时，再读批准，再判定，再重读，再消费一次使用额度，最后执行；运行时不可用时直接拒绝且**不**消耗额度；上游调用是注入的，模块不拼接任何 `om` 命令行 |
+| 样片 | `projects/huashu-motion-sample` 是 21 秒设计，首镜 Art Motion 候选 4.0 秒，其余五镜各 3.4 秒。4–8 秒样片门保持不变，其余镜头走普通片段门。仅 CSS 的 Huashu Motion HTML 明确标为 **NOT_HUASHU_MOTION_COMPATIBLE**。未渲染真实帧，状态 `RENDER_NOT_VERIFIED` |
+| 授权申请 | `docs/governance/HUASHU-EXECUTION-AUTHORIZATION-REQUEST.md` —— 是申请，不是授权 |
+| 未做的事 | 未安装或下载运行时、未调用 `om`、未驱动浏览器、未渲染任何一帧、未编写批准记录、未发布、未修改上游 CLI、未调用任何付费接口 |
 
 ## MiniMax
 

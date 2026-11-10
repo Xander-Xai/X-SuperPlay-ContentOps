@@ -1,0 +1,56 @@
+{
+  "schema": "contentops.huashu-motion-lock/v1",
+  "capability": "huashu-motion",
+  "repository": "https://github.com/alchaincyf/huashu-motion",
+  "version": "0.3.1",
+  "commit": "52467f99c602b76ba86d511d37acdfe93fa1e16e",
+  "entrypoint": "skills/huashu-motion/bin/om",
+  "dispatcher": "cli/om.js",
+  "package_root": ".",
+  "runtime_root": "D:/Toolchains/huashu-motion/0.3.1",
+  "execution": "EXTERNAL_MANAGED_AUTHORIZATION_REQUIRED",
+  "execution_authorized": false,
+  "role": "MOTION_CLIP_PRODUCER_NOT_FINAL_COMPOSITOR",
+  "license": {
+    "project_code": "MIT",
+    "project_code_evidence": "README.md at the pinned commit: '代码和文档：MIT'",
+    "third_party": [
+      "GSAP (GSAP Standard License)",
+      "bundled fonts (SIL OFL 1.1, fonts/LICENSES.md)",
+      "real-instrument samples (CC0 / CC-BY, downloaded on demand by `om samples build`, not redistributed)"
+    ],
+    "third_party_evidence": "README.md acknowledgements and licence section at the pinned commit; see THIRD_PARTY.md upstream",
+    "excluded_without_separate_permission": [
+      "the '豆子花叔' character artwork in runtime/clip/lib/toon.js and its likeness in the storytime template and the showcase film — the author's cartoon likeness, demo-only, not covered by MIT for other uses"
+    ]
+  },
+  "runtime_requirements": {
+    "node": ">=22",
+    "browser": "Chrome, Chromium, or Edge (the local browser drives render, still and check)",
+    "ffmpeg": "required for video export",
+    "windows_status": "UPSTREAM_NOT_VERIFIED; README states '目前只在macOS上实测过' (tested on macOS only)",
+    "doctor": "`om doctor` reports Node, FFmpeg + ffprobe + encoders (libx264, prores_ks, libvpx-vp9, libopus) and Chrome"
+  },
+  "operations": ["om check", "om still", "om render", "om qa"],
+  "operation_contracts": {
+    "check": "om check [dir] [--samples n] [--source] [--json] — structure, scripts, files, motion rules, then sampled frames; exit code 1 when any finding is error-level",
+    "still": "om still <page.html|dir> [--at 0,2.5] [--out file] — a PNG of any page at the given times",
+    "render": "om render [dir] [--format mp4|mov|webm|gif] [--fps 30] [--out file] [--workers n] [--video extract|seek] [--frames jpg|png] [--blur n] [--silent] [--transparent] — exports into <dir>/out/",
+    "qa": "om qa [dir|video] [--loop] — single-frame pops, dead time, hard cuts, motion curve, loop seam over the newest render or a given video"
+  },
+  "project_shape": {
+    "film": "one index.html; every frame is produced by code and time (GSAP, Canvas, Three.js, SVG); no video-generation model is called",
+    "runtime_state": ".om/ (inbox.jsonl, look/, snapshots/)",
+    "render_output": "out/",
+    "runtime_helper": "vendor/om.js (OM.clock / OM.region / OM.cue) is copied by `om new`",
+    "regions": "`data-om-id=\"...\"` marks a region; `OM.region(\"id\")` addresses it",
+    "scaffold": "`om new <dir> [--template t]` copies templates/<t>; `om fork <dir> <newdir> --size 1080x1920` re-lays a project out for portrait",
+    "variables": "`om scan` returns variables, objects and scenes; `om set key=value` rewrites variable defaults inside index.html"
+  },
+  "output_notes": [
+    "a render of 4 s or longer carries an upstream 'Made with huashu-motion' credit line in the last 1.2 s unless the film opts out",
+    "`om render` warns about a missing soundtrack unless `om sound` was run or `--silent` was passed; a silent clip is what the ContentOps motion gate requires",
+    "narration via `om voice` uses macOS system voices; on Windows a narration track must be supplied with `--audio <file>`"
+  ],
+  "notes": "Pin verified from the official v0.3.1 release and tag; the CLI contract above was read from cli/om.js and README.md at that commit. This record does not authorize installation, execution, source-media rights, publication, or final composition."
+}

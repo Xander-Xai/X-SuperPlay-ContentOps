@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -19,7 +20,6 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from check_account_dna import (  # noqa: E402
     REQUIRED_PROMPT_FIELDS,
-    _catalog_roots,
     check_account,
 )
 from contentops.media.claim_coverage import (  # noqa: E402
@@ -37,6 +37,20 @@ BRAND_ACCENT = "#38bdf8"
 
 def _dna(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def test_account_checker_dispatches_the_v1_text_account_to_its_own_contract():
+    text_account = _dna(ACCOUNTS / "x-superplay-english.json")
+    failures = check_account(text_account, ROOT)
+    assert failures == [], failures
+
+
+def test_account_checker_rejects_unowned_schema_explicitly():
+    failures = check_account({"slug": "unknown", "schema": "contentops.account-dna/v1"}, ROOT)
+    assert len(failures) == 1, failures
+    assert "unsupported account schema" in failures[0], failures
+    assert "contentops.account-dna/v1" in failures[0], failures
+
 
 
 def test_both_accounts_declare_the_v2_schema():
@@ -296,78 +310,169 @@ HOST_LOCAL_WARNINGS = (CATALOG_ABSENT, SHARED_STORE_ABSENT,
 
 
 def test_the_dna_checker_passes_on_the_shipped_accounts():
+    # Account-content validation is independent of a machine's external stores;
+    # route membership is tested separately with hermetic roots below.
+    import check_account_dna
+    from unittest import mock
+
     for path in (EXPLORE, BUILD):
         warnings: list = []
-        failures = check_account(_dna(path), ROOT, warnings)
+        with mock.patch.object(check_account_dna, "_check_skill_route", return_value=[]):
+            failures = check_account(_dna(path), ROOT, warnings)
         assert failures == [], failures
-        # A clean checkout has no catalog (both roots are gitignored) and no
-        # shared store (it lives in the user's home), so the membership half
-        # reports that it could not run. That is the expected state in CI, not
-        # a defect in the shipped DNA.
         unexpected = [w for w in warnings
                       if not any(marker in w for marker in HOST_LOCAL_WARNINGS)]
         assert unexpected == [], unexpected
 
 
-def _mutated(dna: dict, step: str, **changes) -> dict:
-    clone = json.loads(json.dumps(dna))
-    entry = next(item for item in clone["skill_route"] if item["step"] == step)
-    entry.update(changes)
-    return clone
+def _isolated_route_check(route, catalog_roots=(), shared_root=None):
+    from unittest import mock
+    import check_account_dna
+
+    warnings: list = []
+    with mock.patch.object(check_account_dna, "CATALOG_ROOTS", tuple(catalog_roots)), \
+         mock.patch.object(check_account_dna, "SHARED_SKILL_ROOT", shared_root or ROOT / "absent-store"):
+        failures = check_account_dna._check_skill_route(route, ROOT, warnings)
+    return failures, warnings
+
+
+def _route_entry(step, skill, script, path_base="shared", **extra):
+    return {"step": step, "skill": skill, "script": script,
+            "path_base": path_base, **extra}
 
 
 def test_a_route_entry_naming_an_unknown_skill_fails():
-    """The gap this closes: the DNA read as sound while pointing at nothing."""
-    if not _easel_catalog_present():
-        print("Easel catalog absent on this checkout; skipping membership assertion")
-        return
-    dna = _mutated(_dna(EXPLORE), "script", skill="video-script-that-does-not-exist")
-    warnings: list = []
-    failures = check_account(dna, ROOT, warnings)
+    """An unknown catalog entry fails with isolated roots, independent of Easel install."""
+    with tempfile.TemporaryDirectory() as temp:
+        catalog_root = Path(temp) / "runtime" / "skills" / "openclaw"
+        catalog_root.mkdir(parents=True)
+        failures, warnings = _isolated_route_check([
+            _route_entry("script", "missing-skill", "skills/openclaw/missing-skill/SKILL.md",
+                         path_base="catalog")
+        ], catalog_roots=(catalog_root,))
     assert len(failures) == 1, failures
-    assert "'script'" in failures[0], failures[0]
-    assert "video-script-that-does-not-exist" in failures[0], failures[0]
+    assert "script" in failures[0] and "missing-skill" in failures[0], failures[0]
     assert "not present under any catalog root" in failures[0], failures[0]
-    assert any("could not be determined" in w for w in warnings), warnings
-    assert all(w.startswith("[x-superplay-1024]") for w in warnings), \
-        "a warning must name the account it belongs to"
 
 
 def test_a_repo_relative_script_must_exist():
-    dna = _mutated(_dna(EXPLORE), "qc", script="scripts/no_such_script.py")
-    failures = check_account(dna, ROOT)
+    failures, _ = _isolated_route_check([
+        _route_entry("qc", "qc_video", "scripts/no_such_script.py", path_base="repo")
+    ])
     assert len(failures) == 1, failures
     assert "scripts/no_such_script.py" in failures[0], failures[0]
     assert "repository root" in failures[0], failures[0]
 
 
-def _easel_catalog_present() -> bool:
-    import check_account_dna
-    return any(root.name == "openclaw" and root.is_dir()
-               for root in check_account_dna.CATALOG_ROOTS)
+
+
 
 
 def test_an_undeclared_path_base_is_not_silently_assumed():
-    """Dropping qc's path_base must fail loudly instead of falling back."""
-    if not _easel_catalog_present():
-        # The gzh vendor is a catalog root too, but the route this mutates is
-        # an Easel entry. Without Easel, base resolution is unverifiable.
-        print("Easel catalog absent on this checkout; skipping base-resolution assertion")
-        return
-    dna = _mutated(_dna(EXPLORE), "qc")
-    entry = next(item for item in dna["skill_route"] if item["step"] == "qc")
-    entry.pop("path_base")
-    warnings: list = []
-    failures = check_account(dna, ROOT, warnings)
-    assert failures, "an undeclared repo entry must not pass as catalog-relative"
-    assert any("could not be determined" in w for w in warnings), warnings
+    """Unknown membership remains a failure with all fixture roots present."""
+    with tempfile.TemporaryDirectory() as temp:
+        catalog_root = Path(temp) / "runtime" / "skills" / "openclaw"
+        catalog_root.mkdir(parents=True)
+        entry = _route_entry("qc", "qc_video", "skills/openclaw/qc_video/SKILL.md",
+                             path_base="catalog")
+        entry.pop("path_base")
+        failures, warnings = _isolated_route_check([entry], catalog_roots=(catalog_root,))
+    assert failures, "an undeclared base must not make an unknown route pass"
+    assert any("could not be determined" in warning for warning in warnings), warnings
+
+
+def test_shared_store_complete_and_missing_optional_skill_are_isolated():
+    with tempfile.TemporaryDirectory() as temp:
+        shared = Path(temp) / "shared"
+        for name in ("source-research", "find-broll"):
+            skill = shared / name
+            skill.mkdir(parents=True)
+            (skill / "SKILL.md").write_text(
+                f"---\nname: {name}\n---\n", encoding="utf-8")
+        complete = [_route_entry("source_research", "source-research",
+                                 "source-research/SKILL.md"),
+                    _route_entry("broll_finder", "find-broll",
+                                 "find-broll/SKILL.md", optional=True)]
+        failures, warnings = _isolated_route_check(complete, shared_root=shared)
+        assert failures == [], failures
+        assert not any("OPTIONAL_CAPABILITY_UNAVAILABLE" in warning for warning in warnings)
+
+        (shared / "find-broll" / "SKILL.md").unlink()
+        (shared / "find-broll").rmdir()
+        failures, warnings = _isolated_route_check(complete, shared_root=shared)
+        assert failures == [], failures
+        assert any("OPTIONAL_CAPABILITY_UNAVAILABLE" in warning for warning in warnings)
+
+
+def test_required_shared_skill_missing_fails_and_optional_metadata_must_be_boolean():
+    with tempfile.TemporaryDirectory() as temp:
+        shared = Path(temp) / "shared"
+        shared.mkdir()
+        failures, _ = _isolated_route_check([
+            _route_entry("source_research", "source-research",
+                         "source-research/SKILL.md")
+        ], shared_root=shared)
+        assert len(failures) == 1 and "source-research" in failures[0], failures
+
+        failures, _ = _isolated_route_check([
+            _route_entry("broll_finder", "find-broll", "find-broll/SKILL.md",
+                         optional="yes")
+        ], shared_root=shared)
+        assert any("optional 'yes'" in failure for failure in failures), failures
+
+        failures, _ = _isolated_route_check([
+            _route_entry("source_research", "source-research",
+                         "source-research/SKILL.md", optional=True)
+        ], shared_root=shared)
+        assert any("not approved for optional resolution" in failure
+                   for failure in failures), failures
+
+
+def test_optional_skill_with_wrong_identity_or_script_still_fails():
+    with tempfile.TemporaryDirectory() as temp:
+        shared = Path(temp) / "shared"
+        skill = shared / "find-broll"
+        skill.mkdir(parents=True)
+        skill_md = skill / "SKILL.md"
+        skill_md.write_text("---\nname: another-skill\n---\n", encoding="utf-8")
+        route = [_route_entry("broll_finder", "find-broll", "find-broll/SKILL.md",
+                              optional=True)]
+        failures, _ = _isolated_route_check(route, shared_root=shared)
+        assert any("declares name 'another-skill'" in failure for failure in failures), failures
+
+        skill_md.write_text("---\nname: find-broll\n---\n", encoding="utf-8")
+        failures, _ = _isolated_route_check(
+            [_route_entry("broll_finder", "find-broll", "missing-script.py",
+                          optional=True)], shared_root=shared)
+        assert any("missing-script.py" in failure for failure in failures), failures
+
+        failures, _ = _isolated_route_check(
+            [_route_entry("broll_finder", "find-broll", "../escape.py",
+                          optional=True)], shared_root=shared)
+        assert any("resolves outside the shared skill store" in failure
+                   for failure in failures), failures
+
+
+def test_repo_owned_skill_does_not_trigger_external_catalog_warning():
+    with tempfile.TemporaryDirectory() as temp:
+        external = Path(temp) / "runtime" / "skills" / "openclaw"
+        external.mkdir(parents=True)
+        failures, warnings = _isolated_route_check([
+            _route_entry("motion", "contentops-native-motion",
+                         "scripts/native_motion_preview.py", path_base="repo")
+        ], catalog_roots=(ROOT / "skills", external))
+    assert failures == [], failures
+    assert not any("also in the catalog" in warning for warning in warnings), warnings
 
 
 def test_the_route_declares_repo_only_where_it_must():
     # Steps whose owner is a repository script, not a catalog skill. ``captions``
     # belongs here because the actual burn lives in scripts/assemble_easel.py;
     # the upstream auto-subtitle skill is never called by this pipeline.
-    repo_expected = {"captions", "qc"}
+    repo_expected = {
+        EXPLORE: {"motion", "captions", "qc"},
+        BUILD: {"architecture_animation", "captions", "qc"},
+    }
     shared_expected = {
         EXPLORE: {"copy_orchestration", "visual_direction", "broll_plan", "shot_vocabulary",
                   "source_research", "broll_finder", "capture_plan"},
@@ -378,37 +483,38 @@ def test_the_route_declares_repo_only_where_it_must():
     for path in (EXPLORE, BUILD):
         route = _dna(path)["skill_route"]
         repo = [item["step"] for item in route if item.get("path_base", "catalog") == "repo"]
-        assert repo == ["captions", "qc"], (path, repo)
+        assert repo == [item["step"] for item in route
+                        if item["step"] in repo_expected[path]], (path, repo)
+        assert {item["step"] for item in route
+                if item.get("path_base", "catalog") == "repo"} == repo_expected[path], (path, repo)
         shared = {item["step"] for item in route if item.get("path_base") == "shared"}
         assert shared == shared_expected[path], (path, shared)
         for item in route:
-            if item["step"] not in repo_expected and item["step"] not in shared:
+            if item["step"] not in repo_expected[path] and item["step"] not in shared:
                 assert "path_base" not in item, (path, item["step"], item.get("path_base"))
 
 
 def test_a_shared_route_naming_an_unknown_skill_fails():
-    from check_account_dna import SHARED_SKILL_ROOT
-    if not SHARED_SKILL_ROOT.is_dir():
-        print("shared store absent on this checkout; skipping the unknown-skill check")
-        return
-    dna = _mutated(_dna(EXPLORE), "visual_direction", skill="no-such-shared-skill")
-    failures = check_account(dna, ROOT)
+    with tempfile.TemporaryDirectory() as temp:
+        shared = Path(temp) / "shared"
+        shared.mkdir()
+        failures, _ = _isolated_route_check([
+            _route_entry("visual_direction", "no-such-shared-skill",
+                         "no-such-shared-skill/SKILL.md")
+        ], shared_root=shared)
     assert len(failures) == 1, failures
     assert "shared skill store" in failures[0], failures[0]
 
 
 def test_an_absent_shared_store_is_a_warning_not_a_failure():
-    """A CI runner has no ~/.agents/skills; that is unverified, not invalid."""
-    from unittest import mock
-
-    import check_account_dna
-
-    dna = _dna(EXPLORE)
-    with mock.patch.object(check_account_dna, "SHARED_SKILL_ROOT",
-                           ROOT / "no-such-store"), \
-         mock.patch.object(check_account_dna, "shared_skill", lambda name: None):
-        failures = check_account_dna.check_account(dna, ROOT)
+    optional = _route_entry("broll_finder", "find-broll", "find-broll/SKILL.md",
+                            optional=True)
+    missing = Path(tempfile.gettempdir()) / "not-a-real-account-shared-store"
+    failures, warnings = _isolated_route_check([optional], shared_root=missing)
     assert failures == [], failures
+    assert any("OPTIONAL_CAPABILITY_UNAVAILABLE" in warning for warning in warnings), warnings
+    assert any("shared skill store" in warning and "absent" in warning
+               for warning in warnings), warnings
 
 
 def test_the_variant_pipeline_reads_the_caption_style_from_the_dna():
@@ -426,9 +532,50 @@ def test_the_variant_pipeline_reads_the_caption_style_from_the_dna():
         assert str(style.get("highlight") or "").lower() == BRAND_ACCENT, path.name
 
 
+def test_checker_cli_reports_mixed_schema_and_unknown_schema_states():
+    import contextlib
+    import io
+    import check_account_dna
+    from unittest import mock
+
+    with tempfile.TemporaryDirectory() as temp:
+        account_dir = Path(temp) / "accounts"
+        account_dir.mkdir()
+        text_path = account_dir / "x-superplay-english.json"
+        text_path.write_text((ACCOUNTS / "x-superplay-english.json").read_text(
+            encoding="utf-8"), encoding="utf-8")
+        unknown_path = account_dir / "future.json"
+        unknown_path.write_text(json.dumps({"schema": "contentops.future/v9",
+                                            "slug": "future"}), encoding="utf-8")
+        output = io.StringIO()
+        with mock.patch.object(check_account_dna, "ACCOUNTS", account_dir):
+            with mock.patch.object(sys, "argv", ["check_account_dna.py", "--json"]):
+                with contextlib.redirect_stdout(output):
+                    exit_code = check_account_dna.main()
+        report = json.loads(output.getvalue())
+        assert exit_code == 1, report
+        assert report["schemas"]["x"]["status"] == "PASS", report
+        assert report["schemas"]["unknown"]["status"] == "UNSUPPORTED", report
+        assert any("unsupported account schema 'contentops.future/v9'" in failure
+                   for failure in report["failures"]), report
+
+        output = io.StringIO()
+        with mock.patch.object(check_account_dna, "ACCOUNTS", account_dir):
+            with mock.patch.object(
+                    sys, "argv", ["check_account_dna.py", "--schema", "video", "--json"]):
+                with contextlib.redirect_stdout(output):
+                    exit_code = check_account_dna.main()
+        report = json.loads(output.getvalue())
+        assert exit_code == 1, "unknown schemas still fail a targeted video check"
+        assert report["schemas"]["x"]["status"] == "NOT_REQUESTED", report
+        assert report["schemas"]["unknown"]["status"] == "UNSUPPORTED", report
+
+
 def main() -> int:
     failures = []
     tests = (
+        test_account_checker_dispatches_the_v1_text_account_to_its_own_contract,
+        test_account_checker_rejects_unowned_schema_explicitly,
         test_both_accounts_declare_the_v2_schema,
         test_one_brand_base_serves_both_accounts,
         test_the_accent_has_exactly_one_owner,
@@ -462,10 +609,15 @@ def main() -> int:
         test_a_route_entry_naming_an_unknown_skill_fails,
         test_a_repo_relative_script_must_exist,
         test_an_undeclared_path_base_is_not_silently_assumed,
+        test_shared_store_complete_and_missing_optional_skill_are_isolated,
+        test_required_shared_skill_missing_fails_and_optional_metadata_must_be_boolean,
+        test_optional_skill_with_wrong_identity_or_script_still_fails,
+        test_repo_owned_skill_does_not_trigger_external_catalog_warning,
         test_the_route_declares_repo_only_where_it_must,
         test_a_shared_route_naming_an_unknown_skill_fails,
         test_an_absent_shared_store_is_a_warning_not_a_failure,
         test_the_variant_pipeline_reads_the_caption_style_from_the_dna,
+        test_checker_cli_reports_mixed_schema_and_unknown_schema_states,
     )
     for fn in tests:
         try:

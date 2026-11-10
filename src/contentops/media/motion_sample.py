@@ -19,6 +19,7 @@ usable, faithful and worth keeping is a human decision recorded separately.
 from __future__ import annotations
 
 import hashlib
+import math
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -83,41 +84,66 @@ def check_motion_sample(path: Path, *, probe: Dict[str, Any],
     ``probe`` is the ffprobe-derived mapping the CLI builds. It may instead be
     ``{"error": "FFPROBE_UNAVAILABLE", ...}``, which is BLOCKED, not a pass.
     """
+    return check_motion_clip(
+        path,
+        probe=probe,
+        expected_sha256=expected_sha256,
+        min_duration_s=SAMPLE_MIN_S,
+        max_duration_s=SAMPLE_MAX_S,
+        reason_prefix="SAMPLE",
+    )
+
+
+def check_motion_clip(path: Path, *, probe: Dict[str, Any],
+                      expected_sha256: Optional[str] = None,
+                      min_duration_s: float = 0.0,
+                      max_duration_s: float = SAMPLE_MAX_S,
+                      reason_prefix: str = "CLIP") -> Dict[str, Any]:
+    """Check one motion clip with the same technical rules as a sample.
+
+    A review sample is 4–8 s; a film beat is whatever the narration line
+    measured, so the duration window is a parameter here and the sample window
+    stays where it was. Dimensions, codec, pixel format, silent audio, constant
+    30 fps frame timing and the frame count are identical in both cases, so a
+    clip can never be technically weaker than a sample.
+    """
     sample = Path(path)
     if not sample.is_file():
-        return _blocked("SAMPLE_MISSING", str(sample))
+        return _blocked(f"{reason_prefix}_MISSING", str(sample))
     try:
         digest = hashlib.sha256(sample.read_bytes()).hexdigest()
     except OSError as exc:
-        return _blocked("SAMPLE_READ", str(exc))
+        return _blocked(f"{reason_prefix}_READ", str(exc))
     if expected_sha256 and digest != str(expected_sha256).lower():
-        return _blocked("SAMPLE_HASH_MISMATCH", "the file digest does not match the expected digest", digest)
+        return _blocked(f"{reason_prefix}_HASH_MISMATCH", "the file digest does not match the expected digest", digest)
     if not isinstance(probe, dict):
-        return _blocked("SAMPLE_PROBE", "the probe must be a mapping", digest)
+        return _blocked(f"{reason_prefix}_PROBE", "the probe must be a mapping", digest)
     if probe.get("error"):
         return _blocked(str(probe["error"]), str(probe.get("detail") or ""), digest)
 
     if probe.get("width") != TARGET_WIDTH or probe.get("height") != TARGET_HEIGHT:
         return _blocked(
-            "SAMPLE_DIMENSIONS",
+            f"{reason_prefix}_DIMENSIONS",
             f"{probe.get('width')}x{probe.get('height')} is not {TARGET_WIDTH}x{TARGET_HEIGHT}",
             digest,
         )
     if str(probe.get("codec_name") or "").lower() not in _VIDEO_CODECS:
-        return _blocked("SAMPLE_CODEC", f"{probe.get('codec_name')!r} is not H.264", digest)
+        return _blocked(f"{reason_prefix}_CODEC", f"{probe.get('codec_name')!r} is not H.264", digest)
     if str(probe.get("pix_fmt") or "").lower() != "yuv420p":
-        return _blocked("SAMPLE_PIX_FMT", f"{probe.get('pix_fmt')!r} is not yuv420p", digest)
+        return _blocked(f"{reason_prefix}_PIX_FMT", f"{probe.get('pix_fmt')!r} is not yuv420p", digest)
     if bool(probe.get("has_audio")):
-        return _blocked("SAMPLE_AUDIO_PRESENT", "a motion sample must be silent", digest)
+        return _blocked(f"{reason_prefix}_AUDIO_PRESENT", "a motion sample must be silent", digest)
 
     try:
         duration = float(probe.get("duration_s"))
     except (TypeError, ValueError):
-        return _blocked("SAMPLE_DURATION", "duration is not numeric", digest)
-    if not (SAMPLE_MIN_S <= duration <= SAMPLE_MAX_S):
+        return _blocked(f"{reason_prefix}_DURATION", "duration is not numeric", digest)
+    if not math.isfinite(duration):
+        return _blocked(f"{reason_prefix}_DURATION", "duration is not finite", digest)
+    if not (min_duration_s <= duration <= max_duration_s):
         return _blocked(
-            "SAMPLE_DURATION",
-            f"{duration:.3f}s is outside {SAMPLE_MIN_S:.0f}-{SAMPLE_MAX_S:.0f}s",
+            f"{reason_prefix}_DURATION",
+            f"{duration:.3f}s is outside {min_duration_s:.0f}-{max_duration_s:.0f}s",
             digest,
         )
 
@@ -125,7 +151,7 @@ def check_motion_sample(path: Path, *, probe: Dict[str, Any],
     real = _fps(probe.get("r_frame_rate"))
     if average is None or real is None or abs(average - TARGET_FPS) > 0.001 or abs(real - TARGET_FPS) > 0.001:
         return _blocked(
-            "SAMPLE_FPS",
+            f"{reason_prefix}_FPS",
             f"avg={probe.get('avg_frame_rate')!r} r={probe.get('r_frame_rate')!r}; expected {TARGET_FPS:.0f}/1",
             digest,
         )
@@ -133,22 +159,24 @@ def check_motion_sample(path: Path, *, probe: Dict[str, Any],
     stamps = probe.get("frame_timestamps")
     if not isinstance(stamps, list) or not stamps:
         return _blocked(
-            "SAMPLE_FRAME_TIMING_UNVERIFIED",
+            f"{reason_prefix}_FRAME_TIMING_UNVERIFIED",
             "frame timestamps are required; avg_frame_rate == r_frame_rate is not proof of CFR",
             digest,
         )
     try:
         stamps = [float(value) for value in stamps]
     except (TypeError, ValueError):
-        return _blocked("SAMPLE_FRAME_TIMING", "frame timestamps must be numeric", digest)
+        return _blocked(f"{reason_prefix}_FRAME_TIMING", "frame timestamps must be numeric", digest)
+    if any(not math.isfinite(value) for value in stamps):
+        return _blocked(f"{reason_prefix}_FRAME_TIMING", "frame timestamps must be finite", digest)
     timing_problem = _constant_frame_timing(stamps)
     if timing_problem:
-        return _blocked("SAMPLE_FRAME_TIMING", timing_problem, digest)
+        return _blocked(f"{reason_prefix}_FRAME_TIMING", timing_problem, digest)
 
     expected_frames = int(round(duration * TARGET_FPS))
     if abs(len(stamps) - expected_frames) > 1:
         return _blocked(
-            "SAMPLE_FRAME_COUNT",
+            f"{reason_prefix}_FRAME_COUNT",
             f"{len(stamps)} frames for {duration:.3f}s at {TARGET_FPS:.0f} fps (expected {expected_frames})",
             digest,
         )

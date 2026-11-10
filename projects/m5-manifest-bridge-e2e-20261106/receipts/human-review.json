@@ -1,0 +1,23 @@
+{
+  "project": "projects/m5-manifest-bridge-e2e-20261106",
+  "video": "projects/m5-manifest-bridge-e2e-20261106/final/m5-manifest-bridge-e2e-20261106.mp4",
+  "engine": "easel",
+  "voice_quality": "windows_sapi_offline",
+  "bundle_id": null,
+  "bundle_sha256": null,
+  "production_ready": false,
+  "state": "PENDING_FOUNDER_REVIEW",
+  "auto_qc_result": "WARN",
+  "auto_qc_checks": 22,
+  "auto_qc_fails": [],
+  "auto_qc_warns": [
+    "real_source_ratio",
+    "real_source_duration_ratio",
+    "real_evidence_present"
+  ],
+  "reviewer": null,
+  "reviewed_at": null,
+  "scores": null,
+  "decision": null,
+  "note": "scores are null until a human fills them; this file is not an approval"
+}

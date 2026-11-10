@@ -1,0 +1,36 @@
+{
+  "schema": "contentops.m5-manifest-bridge/v1",
+  "status": "OK",
+  "mode": "MANIFEST_DRIVEN",
+  "manifest": "projects/huashu-p01-bridge-technical-20261107/receipts/media-manifest.json",
+  "manifest_sha256": "406f71323d9dcf4f7e7e9a273882995bc80cb30f63187de97b2175158b32412c",
+  "manifest_fingerprint": "49ee8ad7d918ada017305f687166f660b05c56f2c476687a63bdf3dec9ee8ece",
+  "provider_calls": 0,
+  "placements": [
+    {
+      "line_id": "l1",
+      "placement_id": "P-01",
+      "active_asset_id": "p01-huashu-source-mute",
+      "asset_sha256": "d9ec425f15aaa7165116f26cc43c8efdfb9cdbc622f3a652e361f6e4160e367b",
+      "asset_path": "projects/huashu-p01-bridge-technical-20261107/assets/processed/p01-huashu-mute.mp4",
+      "start": 0.0,
+      "duration": 4.0,
+      "generated": true,
+      "evidence_capable": false,
+      "fixture": true,
+      "audio_policy": "MUTE",
+      "audio_present": false
+    }
+  ],
+  "technical_sample_status": "TECHNICAL_SAMPLE_ONLY",
+  "publish_authorized": false,
+  "production_ready": false,
+  "human_review": "PENDING_FOUNDER_REVIEW",
+  "storyboard_sha256": "8f631a7ab2d80e5f761f13f0e23f5577563510a539ddf3410d61c5f3ae073527",
+  "storyboard": "project://script/storyboard.json",
+  "output_video": "project://final/huashu-p01-bridge-technical-20261107.mp4",
+  "output_video_sha256": "b6ad4ade16a4ab9f5bfa898b960d13a3008a2186d4a2ca150fdd868a4bf5a5c4",
+  "qc_report": "project://receipts/qc-report-huashu-p01-bridge-technical-20261107.json",
+  "qc_report_sha256": "2567fd8521efcbb131522df7f2bb78413b89101c8411bdad1f77ca83f429e7dc",
+  "qc_overall": "WARN"
+}

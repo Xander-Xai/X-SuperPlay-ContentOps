@@ -1,0 +1,37 @@
+{
+  "size": "1080x1920",
+  "image_motion": "static",
+  "pad_mode": "trim",
+  "shots": [
+    {
+      "shot_id": "p6-native-motion",
+      "video": "projects/x-superplay-future-intelligence-motion-20261107/assets/processed/p6-native-motion-preview-mute.mp4",
+      "image": "projects/x-superplay-future-intelligence-motion-20261107/assets/processed/p6-native-motion-preview-mute.mp4",
+      "source": "projects/x-superplay-future-intelligence-motion-20261107/assets/processed/p6-native-motion-preview-mute.mp4",
+      "source_type": "generated",
+      "motion": "static",
+      "duration": 8.0,
+      "duration_s": 8.0,
+      "audio_mode": "dub",
+      "audio_policy": "MUTE",
+      "caption": "TECHNICAL_SAMPLE_ONLY",
+      "media_provenance": {
+        "asset_id": "native-motion-preview-mute",
+        "placement_id": "p6-native-motion",
+        "sha256": "7598515a21bd9461bf1e53c1bb75848c375edd46325c786f15fba40ee654ac05",
+        "receipt_ref": "p6-native-motion-preview.mp4.receipt.json",
+        "transform_receipt_ref": "p6-native-motion-preview-mute.mp4.transform.json",
+        "source_asset_ref": "project://assets/processed/p6-native-motion-preview-mute.mp4",
+        "generated": true,
+        "evidence_capable": false,
+        "evidence_use": "VISUAL_SUPPORT"
+      }
+    }
+  ],
+  "engine": "easel",
+  "media_manifest_fingerprint": "3ee73efc6b4e1c0944e7400acec22f3d28a97d5b8b7ff04ef968d064caae2b46",
+  "media_manifest_sha256": "125bda3140d9dd6168a5e52cbda780753eff7c42ab85204575a8ab72db147dbb",
+  "technical_sample_status": "TECHNICAL_SAMPLE_ONLY",
+  "production_ready": false,
+  "publish_authorized": false
+}

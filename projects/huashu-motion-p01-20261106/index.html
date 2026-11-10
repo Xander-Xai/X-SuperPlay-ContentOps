@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="zh-CN" data-composition-variables='[
+  {"id":"headline","type":"string","label":"主标题","default":"意图，生长为协作"},
+  {"id":"subhead","type":"string","label":"说明","default":"一个目标，展开成一组分工明确的智能体"},
+  {"id":"accent","type":"color","label":"强调色","default":"#a83d26"},
+  {"id":"hold","type":"number","label":"结尾停留","default":0.85,"min":0.1,"max":2,"step":0.05,"group":"节奏"}
+]' data-om-signature="bottom-left">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1080, initial-scale=1">
+  <title>Agent Network</title>
+  <script src="vendor/gsap.min.js"></script>
+  <script src="vendor/om.js"></script>
+  <style id="om-fonts">
+    @font-face { font-family: "Noto Sans SC"; src: url("assets/fonts/NotoSansSC-500.woff") format("woff"); font-weight: 500; font-style: normal; }
+    @font-face { font-family: "Noto Sans SC"; src: url("assets/fonts/NotoSansSC-900.woff") format("woff"); font-weight: 900; font-style: normal; }
+  </style>
+  <style>
+    :root {
+      --paper: #f3efe7;
+      --ink: #211f1b;
+      --muted: #5d574e;
+      --accent: #a83d26;
+      --line: #777064;
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+    body { background: var(--paper); }
+    #film {
+      position: relative; width: 1080px; height: 1920px; overflow: hidden;
+      color: var(--ink); background:
+        radial-gradient(ellipse 620px 700px at 50% 50%, #fffdf8 0%, #f7f3eb 58%, transparent 100%),
+        var(--paper);
+      font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; font-weight: 500;
+    }
+    .camera { position: absolute; inset: 0; transform: translate3d(0, 42px, 0) scale(.94); transform-origin: 50% 48%; }
+    .grain { position: absolute; inset: 0; pointer-events: none; opacity: .22; background-image: radial-gradient(#5b5040 0.65px, transparent 0.75px); background-size: 9px 9px; mix-blend-mode: multiply; }
+    .eyebrow { position: absolute; top: 176px; left: 112px; display: flex; align-items: center; gap: 18px; color: var(--accent); font-size: 22px; letter-spacing: 5px; transform: translateX(-18px); }
+    .eyebrow::before { content: ""; width: 34px; height: 2px; background: currentColor; }
+    .headline { position: absolute; top: 232px; left: 108px; width: 870px; margin: 0; font-size: 78px; line-height: 1.2; letter-spacing: -2px; font-weight: 900; transform: translateY(22px); }
+    .subhead { position: absolute; top: 344px; left: 114px; color: var(--muted); font-size: 29px; letter-spacing: 1px; transform: translateY(12px); }
+    .diagram { position: absolute; inset: 0; transform: scale(.86); transform-origin: 50% 50%; }
+    .network { position: absolute; inset: 0; width: 1080px; height: 1920px; overflow: visible; }
+    .orbit { fill: none; stroke: #bdb6a9; stroke-width: 1.5; stroke-dasharray: 2 12; opacity: .72; transform-box: fill-box; transform-origin: center; }
+    .orbit-inner { fill: none; stroke: #d9d3c8; stroke-width: 1.2; }
+    .branch { fill: none; stroke: var(--line); stroke-width: 2.2; stroke-linecap: round; opacity: .78; }
+    .branch-core { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round; opacity: .68; }
+    .node { opacity: 0; }
+    #node-plan { opacity: 1; }
+    .node-ring { fill: #f9f6ef; stroke: #38352f; stroke-width: 2.2; }
+    .node-halo { fill: none; stroke: #8e877b; stroke-width: 1.4; }
+    .node-dot { fill: var(--accent); }
+    .node-label { fill: var(--ink); font: 900 30px "Noto Sans SC", "Microsoft YaHei", sans-serif; text-anchor: middle; dominant-baseline: middle; }
+    .node-index { fill: #5c554b; font: 500 17px "Noto Sans SC", "Microsoft YaHei", sans-serif; text-anchor: middle; letter-spacing: 2px; }
+    .core { opacity: 1; }
+    .core-disc { fill: var(--ink); }
+    .core-orbit { fill: none; stroke: var(--accent); stroke-width: 2; }
+    .core-label { fill: #f6f1e8; font: 900 36px "Noto Sans SC", "Microsoft YaHei", sans-serif; text-anchor: middle; dominant-baseline: middle; }
+    .core-small { fill: #d3cbbd; font: 500 15px "Noto Sans SC", "Microsoft YaHei", sans-serif; text-anchor: middle; letter-spacing: 3px; }
+    .caption { position: absolute; top: 1470px; left: 0; width: 100%; text-align: center; color: #625d54; font-size: 25px; letter-spacing: 3px; opacity: 0; }
+    .caption em { color: var(--accent); font-style: normal; }
+    .signal { position: absolute; z-index: 2; left: 581px; top: 923px; width: 18px; height: 18px; border: 3px solid var(--paper); border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 9px #a83d2633; opacity: 0; }
+    .pulse-ring { position: absolute; z-index: 0; left: 300px; top: 725px; width: 480px; height: 480px; border: 2px solid var(--accent); border-radius: 50%; opacity: 0; transform: scale(.72); transform-origin: center; pointer-events: none; }
+    .foot-rule { position: absolute; top: 1542px; left: 460px; width: 160px; height: 1px; background: #c7c0b4; transform: scaleX(0); transform-origin: center; }
+  </style>
+</head>
+<body>
+  <main id="film" data-composition-id="agent-network-p01" data-width="1080" data-height="1920" data-duration="4" data-om-id="composition">
+    <div class="camera" id="camera">
+      <div class="eyebrow" data-om-id="eyebrow">AI AGENT SYSTEM</div>
+      <h1 class="headline" id="headline" data-om-id="headline" data-om-var="headline">意图，生长为协作</h1>
+      <div class="subhead" id="subhead" data-om-id="subhead" data-var-text="subhead">一个目标，展开成一组分工明确的智能体</div>
+
+      <div class="diagram" id="diagram" data-om-id="agent-network">
+      <div class="pulse-ring" id="pulse-one" aria-hidden="true"></div>
+      <div class="pulse-ring" id="pulse-two" aria-hidden="true"></div>
+      <svg class="network" viewBox="0 0 1080 1920" role="img" aria-label="一个中心意图节点展开为六个协作智能体">
+        <defs>
+          <radialGradient id="soft-halo">
+            <stop offset="0" stop-color="#a83d26" stop-opacity=".11" />
+            <stop offset="1" stop-color="#a83d26" stop-opacity="0" />
+          </radialGradient>
+        </defs>
+        <circle cx="540" cy="965" r="420" fill="url(#soft-halo)" />
+        <circle class="orbit-inner" cx="540" cy="965" r="208" />
+        <circle class="orbit" cx="540" cy="965" r="332" />
+
+        <g data-om-id="connectors" aria-label="连接路径">
+          <path class="branch branch-core" id="link-plan" d="M540 910 C540 825 540 760 540 676" />
+          <path class="branch" id="link-search" d="M590 932 C660 884 715 842 769 806" />
+          <path class="branch" id="link-build" d="M590 994 C660 1037 716 1073 769 1102" />
+          <path class="branch" id="link-check" d="M540 1020 C540 1103 540 1161 540 1241" />
+          <path class="branch" id="link-memory" d="M490 994 C418 1038 362 1075 311 1102" />
+          <path class="branch" id="link-orchestrate" d="M490 932 C418 884 363 843 311 806" />
+        </g>
+        <g class="core" id="core" data-om-id="intent-node">
+          <circle class="core-orbit" cx="540" cy="965" r="104" />
+          <circle class="core-disc" cx="540" cy="965" r="82" />
+          <circle cx="540" cy="905" r="4" fill="#d87553" />
+          <text class="core-label" x="540" y="963">意图</text>
+          <text class="core-small" x="540" y="1000">ONE GOAL</text>
+        </g>
+
+        <g class="node" id="node-plan" data-om-id="agent-planning">
+          <circle class="node-halo" cx="540" cy="620" r="79" />
+          <circle class="node-ring" cx="540" cy="620" r="66" />
+          <circle class="node-dot" cx="540" cy="576" r="4" />
+          <text class="node-label" x="540" y="626">规划</text>
+          <text class="node-index" x="540" y="711">01 / PLAN</text>
+        </g>
+        <g class="node" id="node-search" data-om-id="agent-retrieval">
+          <circle class="node-halo" cx="815" cy="780" r="79" />
+          <circle class="node-ring" cx="815" cy="780" r="66" />
+          <circle class="node-dot" cx="853" cy="758" r="4" />
+          <text class="node-label" x="815" y="786">检索</text>
+          <text class="node-index" x="815" y="871">02 / FIND</text>
+        </g>
+        <g class="node" id="node-build" data-om-id="agent-execution">
+          <circle class="node-halo" cx="815" cy="1110" r="79" />
+          <circle class="node-ring" cx="815" cy="1110" r="66" />
+          <circle class="node-dot" cx="853" cy="1088" r="4" />
+          <text class="node-label" x="815" y="1116">执行</text>
+          <text class="node-index" x="815" y="1201">03 / ACT</text>
+        </g>
+        <g class="node" id="node-check" data-om-id="agent-verification">
+          <circle class="node-halo" cx="540" cy="1270" r="79" />
+          <circle class="node-ring" cx="540" cy="1270" r="66" />
+          <circle class="node-dot" cx="540" cy="1226" r="4" />
+          <text class="node-label" x="540" y="1276">校验</text>
+          <text class="node-index" x="540" y="1361">04 / CHECK</text>
+        </g>
+        <g class="node" id="node-memory" data-om-id="agent-memory">
+          <circle class="node-halo" cx="265" cy="1110" r="79" />
+          <circle class="node-ring" cx="265" cy="1110" r="66" />
+          <circle class="node-dot" cx="227" cy="1088" r="4" />
+          <text class="node-label" x="265" y="1116">记忆</text>
+          <text class="node-index" x="265" y="1201">05 / KEEP</text>
+        </g>
+        <g class="node" id="node-orchestrate" data-om-id="agent-coordination">
+          <circle class="node-halo" cx="265" cy="780" r="79" />
+          <circle class="node-ring" cx="265" cy="780" r="66" />
+          <circle class="node-dot" cx="227" cy="758" r="4" />
+          <text class="node-label" x="265" y="786">编排</text>
+          <text class="node-index" x="265" y="871">06 / ROUTE</text>
+        </g>
+      </svg>
+
+      <div class="signal" id="signal" data-om-id="handoff-signal" aria-hidden="true"></div>
+      </div>
+      <div class="caption" id="caption" data-om-id="caption">分工向外展开，结果回到 <em>同一目标</em></div>
+      <div class="foot-rule" id="foot-rule" aria-hidden="true"></div>
+    </div>
+    <div class="grain" aria-hidden="true"></div>
+  </main>
+
+  <script>
+    const V = OM.vars();
+    if (V.headline) document.getElementById('headline').textContent = V.headline;
+    if (V.subhead) document.getElementById('subhead').textContent = V.subhead;
+    if (V.accent) document.documentElement.style.setProperty('--accent', V.accent);
+
+    const branches = [...document.querySelectorAll('.branch')];
+    branches.forEach((path) => {
+      const length = path.getTotalLength();
+      gsap.set(path, { strokeDasharray: length, strokeDashoffset: length, opacity: 0.78 });
+    });
+    const planPath = document.getElementById('link-plan');
+    gsap.set(planPath, { strokeDashoffset: planPath.getTotalLength() * 0.46 });
+
+    const tl = gsap.timeline({ paused: true, defaults: { ease: 'power3.out' } });
+    tl.addLabel('scene:intent', 0)
+      .to('#camera', { y: 0, scale: 1, duration: 2.65, ease: 'expo.out' }, 0)
+      .to('#diagram', { scale: 1.08, duration: 2.7, ease: 'expo.out' }, 0)
+      .to('.eyebrow', { x: 0, duration: 0.45 }, 0)
+      .to('.headline', { y: 0, duration: 0.62, ease: 'power3.out' }, 0.04)
+      .to('.subhead', { y: 0, duration: 0.5 }, 0.22)
+      // The intent and planning nodes are present from the first frame; only the link grows.
+      .to('#link-plan', { strokeDashoffset: 0, duration: 0.8, ease: 'power2.inOut' }, 0)
+      .to('.core-orbit', { opacity: 0.28, duration: 0.4, ease: 'sine.inOut', yoyo: true, repeat: 3 }, 0.8)
+      .to('.orbit', { strokeDashoffset: -200, duration: 4, ease: 'none' }, 0);
+
+    tl.to('#signal', { opacity: 1, x: 179, y: -126, duration: 0.72, ease: 'power2.inOut' }, 1.72)
+      .to('#signal', { x: 0, y: 0, duration: 0.72, ease: 'power2.inOut' }, 2.65)
+      .to('#signal', { opacity: 0, duration: 0.18, ease: 'power1.out' }, 3.45);
+
+    tl.fromTo('#pulse-one', { opacity: 0.34, scale: 0.72 }, { opacity: 0, scale: 1.18, duration: 1.12, ease: 'power2.out', immediateRender: false }, 1.04)
+      .fromTo('#pulse-two', { opacity: 0.34, scale: 0.72 }, { opacity: 0, scale: 1.18, duration: 1.12, ease: 'power2.out', immediateRender: false }, 2.1);
+
+    tl.addLabel('scene:expand', 0.58);
+    const branchesByNode = [
+      ['#link-search', '#node-search'],
+      ['#link-build', '#node-build'],
+      ['#link-check', '#node-check'],
+      ['#link-memory', '#node-memory'],
+      ['#link-orchestrate', '#node-orchestrate'],
+    ];
+    branchesByNode.forEach(([path, node], index) => {
+      const at = 0.58 + index * 0.15;
+      tl.to(path, { strokeDashoffset: 0, duration: 0.7, ease: 'power2.inOut' }, at)
+        .to(node, { opacity: 1, duration: 0.48, ease: 'power1.out' }, at + 0.34);
+    });
+
+    tl.addLabel('scene:collaborate', 2.18)
+      .to('.branch-core', { opacity: 0.8, duration: 0.35 }, 2.2)
+      .to('#caption', { opacity: 1, y: -7, duration: 0.55 }, 2.35)
+      .to('#foot-rule', { scaleX: 1, duration: 0.52, ease: 'power2.inOut' }, 2.58)
+      .to({}, { duration: Number(V.hold) || 0.85 }, 3.15);
+
+    tl.addLabel('scene:hold', 3.15);
+    window.__timelines['agent-network-p01'] = tl;
+  </script>
+</body>
+</html>

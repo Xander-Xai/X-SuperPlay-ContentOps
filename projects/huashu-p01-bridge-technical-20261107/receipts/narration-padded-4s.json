@@ -1,0 +1,18 @@
+{
+  "schema": "contentops.m5-narration/v1",
+  "engine": "windows_sapi",
+  "voice_provider": "sapi",
+  "voice": "Microsoft Huihui Desktop (zh-CN)",
+  "network": false,
+  "cost": 0,
+  "text_sha256": "4e1fab2106393cca00991d9c904c84f7459862a2b99fa3b39bc1b5ac009b9269",
+  "duration_s": 4.0,
+  "lines": [
+    {
+      "start": 0.0,
+      "duration": 4.0
+    }
+  ],
+  "quality_note": "Existing locally synthesized SAPI narration padded with silence to preserve the full four-second P01 technical clip; not production-grade.",
+  "source_receipt": "project://receipts/narration.json"
+}

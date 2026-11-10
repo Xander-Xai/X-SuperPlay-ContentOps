@@ -1,0 +1,43 @@
+id: huashu-motion-sample
+title: "Huashu 双动效引擎 21 秒动效样片（未渲染）"
+created_at: "2026-11-06T00:00:00Z"
+
+source_refs:
+  - id: sample-design-note
+    type: local_fixture_note
+    title: "样片设计声明：原创抽象 AI Agent 工作流，无真实截图"
+    path: "projects/huashu-motion-sample/sources/sample-design-note.md"
+    permission: CREATED_BY_OWNER
+
+content_type: technical_demonstration
+
+target:
+  platform_primary: douyin
+  aspect_ratio: "9:16"
+  resolution: "1080x1920"
+  duration_target_sec: 21
+
+evidence_policy:
+  real_assets_first: false
+  ai_visuals_allowed: auxiliary_only
+  fabricated_claims: forbidden
+
+narration:
+  provider: none
+  note: "本样片无口播；画面为纯代码动效，音频轨在 M4.5 侧由 REPLACE 策略处理。"
+
+engines:
+  huashu-motion:
+    version: "0.3.1"
+    commit: "52467f99c602b76ba86d511d37acdfe93fa1e16e"
+    lock: "runtime/huashu-motion.lock.json"
+    draft: "projects/huashu-motion-sample/huashu-motion/index.html"
+    rendered: false
+  huashu-art-motion:
+    version: "1.2.0"
+    commit: "8f0a349a18b4bdf802b8d58715a2259c3e1ce709"
+    lock: "runtime/huashu-art-motion-baseline.json"
+    specs: "projects/huashu-motion-sample/motion/specs"
+    rendered: false
+
+status: RENDER_NOT_VERIFIED

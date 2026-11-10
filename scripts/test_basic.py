@@ -44,6 +44,24 @@ def test_doctor_json():
     print("[ok] doctor.py --json parses")
 
 
+def test_doctor_repo_layout_does_not_require_unused_outputs_directory():
+    import doctor
+
+    with tempfile.TemporaryDirectory() as temp:
+        root = Path(temp)
+        for dirname in ("scripts", "templates", "projects", "runtime", "docs"):
+            (root / dirname).mkdir()
+        previous_root = doctor.ROOT
+        doctor.ROOT = root
+        try:
+            result = doctor._check_repo_layout()
+        finally:
+            doctor.ROOT = previous_root
+    assert result["ok"] is True, result
+    assert "outputs" not in result["missing"]
+    print("[ok] doctor does not require the unused repository outputs directory")
+
+
 def test_new_project_creates_and_refuses_overwrite():
     slug = "tmp-test-slug"
     cmd1 = ["scripts/new_project.py", "--slug", slug, "--title", "Tmp Test"]
@@ -210,6 +228,7 @@ def test_resolver_blocks_archive_without_provenance():
 if __name__ == "__main__":
     failures = []
     for fn in (test_doctor_runs, test_doctor_json,
+               test_doctor_repo_layout_does_not_require_unused_outputs_directory,
                test_new_project_creates_and_refuses_overwrite,
                test_qc_on_missing_final_returns_fail,
                test_check_docs_ignores_local_claude_worktrees_but_detects_real_broken_links,

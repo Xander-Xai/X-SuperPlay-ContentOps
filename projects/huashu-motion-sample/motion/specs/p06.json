@@ -1,0 +1,20 @@
+{
+  "grammar": "y3_whiteboard",
+  "duration": 3.4,
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": "ink",
+  "cues": [
+    {
+      "at": 0.0,
+      "text": "闭环",
+      "sub": "回流线收成一个环",
+      "image": "assets/motion/paper-texture.svg"
+    },
+    {
+      "at": 1.5,
+      "sub": "环转半圈，中心落下一枚印章"
+    }
+  ]
+}

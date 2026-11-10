@@ -1,0 +1,235 @@
+<!doctype html>
+<!--
+  Huashu Motion project draft — 抽象 AI Agent 工作流（21 秒竖屏）
+
+  状态：NOT_HUASHU_MOTION_COMPATIBLE / RENDER_NOT_VERIFIED
+  本文件没有渲染过任何一帧，也不是可执行的 Huashu Motion 工程；不得把它传给 om。
+
+  按固定上游 commit 52467f99c602b76ba86d511d37acdfe93fa1e16e 的
+  skills/huashu-motion/references/contract.md 静态核对后，本文件缺少：
+    - data-composition-id / data-width / data-height 原生 composition root；
+    - 注册到 window.__timelines[composition-id] 的 paused GSAP timeline；
+    - scene:<id> 时间轴 labels；
+    - vendor/om.js runtime；本稿没有使用可编辑变量，因此也没有声明 data-composition-variables。
+
+  data-om-id 只提供可指向的区域，不代表 scene、时间轴或可寻址渲染兼容。
+  CSS keyframes 不能替代官方暂停时间轴；因此确定性逐帧寻址未获证明。
+  本文件保留为视觉概念草稿。正式试片前必须按 pinned contract 重写并通过
+  授权后的真实 om check；静态 HTML 不得宣称兼容。
+
+  字体：中文用 Noto Serif JP（上游 fonts/ 内置，27 款开源字体）。
+  本稿不内嵌字体文件；实际工程的字体来源和许可仍须复核。
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1080, height=1920, initial-scale=1">
+<title>一个意图 — 抽象 AI Agent 工作流（草稿）</title>
+<style>
+  :root {
+    --paper: #F4F1EA;
+    --ink: #1D1B18;
+    --ink-soft: #4A463F;
+    --accent: #C8552B;
+    --accent-soft: #E8B87A;
+    --scene-dur: 21s;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: #000;
+    font-family: "Noto Serif JP", "Songti SC", serif;
+    color: var(--ink);
+  }
+  .stage {
+    position: relative; width: 1080px; height: 1920px; overflow: hidden;
+    background: var(--paper);
+    background-image:
+      radial-gradient(circle at 12% 14%, rgba(29,27,24,.045) 0 3px, transparent 4px),
+      radial-gradient(circle at 47% 26%, rgba(29,27,24,.035) 0 2px, transparent 3px),
+      radial-gradient(circle at 78% 19%, rgba(29,27,24,.04) 0 4px, transparent 5px),
+      radial-gradient(circle at 22% 48%, rgba(29,27,24,.03) 0 2px, transparent 3px),
+      radial-gradient(circle at 71% 41%, rgba(29,27,24,.035) 0 3px, transparent 4px),
+      radial-gradient(circle at 86% 66%, rgba(29,27,24,.03) 0 4px, transparent 5px),
+      radial-gradient(circle at 15% 79%, rgba(29,27,24,.04) 0 3px, transparent 4px),
+      radial-gradient(circle at 55% 87%, rgba(29,27,24,.03) 0 2px, transparent 3px);
+  }
+  .scene {
+    position: absolute; inset: 0; opacity: 0;
+    animation: scene var(--scene-dur) linear both;
+  }
+  .scene:nth-of-type(1) { animation-delay: 0s; }
+  .scene:nth-of-type(2) { animation-delay: 3.5s; }
+  .scene:nth-of-type(3) { animation-delay: 7s; }
+  .scene:nth-of-type(4) { animation-delay: 10.5s; }
+  .scene:nth-of-type(5) { animation-delay: 14s; }
+  .scene:nth-of-type(6) { animation-delay: 17.5s; }
+  @keyframes scene {
+    0% { opacity: 0; } 3% { opacity: 1; } 93% { opacity: 1; } 100% { opacity: 0; }
+  }
+  .caption {
+    position: absolute; left: 0; right: 0; top: 1180px; text-align: center;
+  }
+  .caption .line {
+    display: block; font-size: 76px; letter-spacing: .12em; color: var(--ink);
+    animation: rise 1.2s cubic-bezier(.22,.61,.36,1) both;
+  }
+  .caption .sub {
+    display: block; margin-top: 34px; font-size: 40px; letter-spacing: .06em;
+    color: var(--ink-soft); animation: rise 1.2s .35s cubic-bezier(.22,.61,.36,1) both;
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(38px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .node { position: absolute; border-radius: 50%; background: var(--ink); }
+  .ring { position: absolute; border-radius: 50%; border: 6px solid var(--ink); }
+  .line { position: absolute; height: 6px; background: var(--ink); transform-origin: left center; }
+  .gate { position: absolute; width: 26px; height: 210px; background: var(--accent); }
+  .dot { position: absolute; width: 34px; height: 34px; border-radius: 50%; background: var(--accent); }
+
+  /* p01 一个意图：球裂成六个节点 */
+  .p01-ball { left: 390px; top: 640px; width: 300px; height: 300px; background: var(--ink-soft);
+    animation: split 3.5s cubic-bezier(.3,.7,.4,1) both; }
+  @keyframes split {
+    0% { transform: scale(1); border-radius: 50%; }
+    55% { transform: scale(1.22); border-radius: 42%; opacity: .9; }
+    100% { transform: scale(.05); opacity: 0; }
+  }
+  .p01-node { width: 92px; height: 92px; opacity: 0; background: var(--ink);
+    animation: appear 3.5s cubic-bezier(.22,.61,.36,1) both; }
+  .p01-node:nth-of-type(1) { left: 250px; top: 520px; }
+  .p01-node:nth-of-type(2) { left: 420px; top: 480px; }
+  .p01-node:nth-of-type(3) { left: 590px; top: 470px; }
+  .p01-node:nth-of-type(4) { left: 760px; top: 520px; }
+  .p01-node:nth-of-type(5) { left: 330px; top: 760px; }
+  .p01-node:nth-of-type(6) { left: 660px; top: 760px; }
+  @keyframes appear {
+    0%, 45% { opacity: 0; transform: scale(.2); }
+    70% { opacity: 1; transform: scale(1.12); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  /* p02 拆成步骤：一条链，光点传递 */
+  .p02-chain { left: 180px; top: 700px; width: 720px; height: 8px; background: var(--ink); }
+  .p02-node { width: 74px; height: 74px; top: 664px; background: var(--ink); opacity: .28; }
+  .p02-node:nth-of-type(1) { left: 180px; } .p02-node:nth-of-type(2) { left: 340px; }
+  .p02-node:nth-of-type(3) { left: 500px; } .p02-node:nth-of-type(4) { left: 660px; }
+  .p02-node:nth-of-type(5) { left: 820px; } .p02-node:nth-of-type(6) { left: 860px; display: none; }
+  .p02-dot { left: 180px; top: 686px; animation: travel 3.5s cubic-bezier(.4,.1,.3,1) both; }
+  @keyframes travel {
+    0% { transform: translateX(0); opacity: 0; }
+    15% { opacity: 1; }
+    85% { opacity: 1; }
+    100% { transform: translateX(700px); opacity: 0; }
+  }
+
+  /* p03 逐步校验：三道闸依次落下 */
+  .p03-chain { left: 160px; top: 700px; width: 760px; height: 8px; background: var(--ink); }
+  .p03-gate { top: 596px; transform: translateY(-230px); animation: drop 3.5s cubic-bezier(.3,.8,.3,1) both; }
+  .p03-gate:nth-of-type(1) { left: 320px; animation-delay: .3s; }
+  .p03-gate:nth-of-type(2) { left: 520px; animation-delay: .9s; }
+  .p03-gate:nth-of-type(3) { left: 720px; animation-delay: 1.5s; }
+  @keyframes drop {
+    0%, 100% { transform: translateY(-230px); }
+    18%, 88% { transform: translateY(0); }
+  }
+
+  /* p04 并行执行：一分为三（唯一一次快推） */
+  .p04-stem { left: 200px; top: 700px; width: 340px; height: 10px; background: var(--ink); }
+  .p04-branch { left: 540px; top: 695px; width: 320px; height: 8px; background: var(--ink);
+    transform-origin: left center; }
+  .p04-branch:nth-of-type(1) { transform: rotate(-26deg); }
+  .p04-branch:nth-of-type(2) { transform: rotate(0deg); }
+  .p04-branch:nth-of-type(3) { transform: rotate(26deg); }
+  .p04-dot { left: 520px; top: 682px; animation: split-fast 3.5s cubic-bezier(.2,.9,.25,1) both; }
+  @keyframes split-fast {
+    0% { transform: translate(0,0) scale(1); opacity: 0; }
+    12% { opacity: 1; }
+    30% { transform: translate(60px,-160px) scale(1.25); opacity: 1; }
+    85% { transform: translate(300px,-160px) scale(1); opacity: 1; }
+    100% { transform: translate(300px,-160px) scale(.2); opacity: 0; }
+  }
+
+  /* p05 结果回流：三支收成一条 */
+  .p05-branch { left: 300px; top: 560px; width: 420px; height: 7px; background: var(--ink-soft);
+    transform-origin: right center; }
+  .p05-branch:nth-of-type(1) { transform: rotate(20deg); }
+  .p05-branch:nth-of-type(2) { transform: rotate(0deg); }
+  .p05-branch:nth-of-type(3) { transform: rotate(-20deg); }
+  .p05-target { left: 700px; top: 880px; width: 90px; height: 90px; border-radius: 50%;
+    background: var(--accent-soft); }
+  .p05-dot { left: 700px; top: 890px; animation: converge 3.5s cubic-bezier(.35,.05,.2,1) both; }
+  @keyframes converge {
+    0% { transform: translate(-260px,-190px); opacity: 0; }
+    20% { opacity: 1; }
+    80% { transform: translate(0,0); opacity: 1; }
+    100% { transform: translate(0,0); opacity: 0; }
+  }
+
+  /* p06 闭环：环转半圈，中心落一枚印章 */
+  .p06-ring { left: 330px; top: 560px; width: 420px; height: 420px; border-color: var(--ink);
+    animation: spin 3.5s cubic-bezier(.3,.7,.4,1) both; }
+  @keyframes spin {
+    0% { transform: rotate(0deg) scale(.6); opacity: 0; }
+    25% { opacity: 1; }
+    100% { transform: rotate(180deg) scale(1); opacity: 1; }
+  }
+  .p06-stamp { left: 505px; top: 735px; width: 70px; height: 70px; border-radius: 8px;
+    background: var(--accent); transform: scale(2.4); opacity: 0;
+    animation: stamp 3.5s cubic-bezier(.2,.9,.3,1) both; }
+  @keyframes stamp {
+    0%, 55% { transform: scale(2.4); opacity: 0; }
+    75% { transform: scale(.94); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+</style>
+</head>
+<body>
+<div class="stage" data-om-id="film-stage">
+
+  <section class="scene" data-om-id="p01-intent">
+    <div class="node p01-ball"></div>
+    <div class="node p01-node"></div><div class="node p01-node"></div>
+    <div class="node p01-node"></div><div class="node p01-node"></div>
+    <div class="node p01-node"></div><div class="node p01-node"></div>
+    <div class="caption"><span class="line">一个意图</span><span class="sub">先有一个还没拆开的问题</span></div>
+  </section>
+
+  <section class="scene" data-om-id="p02-decompose">
+    <div class="line p02-chain"></div>
+    <div class="node p02-node"></div><div class="node p02-node"></div>
+    <div class="node p02-node"></div><div class="node p02-node"></div>
+    <div class="node p02-node"></div>
+    <div class="dot p02-dot"></div>
+    <div class="caption"><span class="line">拆成步骤</span><span class="sub">六个节点排成一条链</span></div>
+  </section>
+
+  <section class="scene" data-om-id="p03-gates">
+    <div class="line p03-chain"></div>
+    <div class="gate p03-gate"></div><div class="gate p03-gate"></div><div class="gate p03-gate"></div>
+    <div class="caption"><span class="line">逐步校验</span><span class="sub">三道闸依次落下，链停住</span></div>
+  </section>
+
+  <section class="scene" data-om-id="p04-parallel">
+    <div class="line p04-stem"></div>
+    <div class="line p04-branch"></div><div class="line p04-branch"></div><div class="line p04-branch"></div>
+    <div class="dot p04-dot"></div>
+    <div class="caption"><span class="line">并行执行</span><span class="sub">一条箭头分成三支</span></div>
+  </section>
+
+  <section class="scene" data-om-id="p05-reflow">
+    <div class="line p05-branch"></div><div class="line p05-branch"></div><div class="line p05-branch"></div>
+    <div class="node p05-target"></div>
+    <div class="dot p05-dot"></div>
+    <div class="caption"><span class="line">结果回流</span><span class="sub">三支并行线汇成一条回流线</span></div>
+  </section>
+
+  <section class="scene" data-om-id="p06-loop">
+    <div class="ring p06-ring"></div>
+    <div class="node p06-stamp"></div>
+    <div class="caption"><span class="line">闭环</span><span class="sub">环转半圈，中心落下一枚印章</span></div>
+  </section>
+
+</div>
+</body>
+</html>

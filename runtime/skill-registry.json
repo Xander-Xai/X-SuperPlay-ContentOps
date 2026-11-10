@@ -68,6 +68,130 @@
         "m5_stage": "media_use",
         "authorizes_execution": false
       }
+    },
+    {
+      "id": "contentops-native-motion",
+      "name": "contentops-native-motion",
+      "summary": "Original, deterministic local explanatory animation clips for the two X-SuperPlay video accounts; no GSAP, no network, and never a compositor.",
+      "discovery": {
+        "root": "catalog",
+        "dir": "contentops-native-motion"
+      },
+      "source": {
+        "publisher": "X-SuperPlay ContentOps",
+        "upstream": null,
+        "version": "0.1.0",
+        "source_commit": null,
+        "source_path": "scripts/native_motion_preview.py",
+        "dependencies": [
+          {"name": "Python", "version": "3.13.15", "license": "PSF-2.0"},
+          {"name": "Pillow", "version": "12.3.0", "license": "MIT-CMU"},
+          {"name": "FFmpeg", "version": "8.1.1", "license": "GPL-3.0-or-later", "distribution": "existing local binary only; not redistributed"}
+        ]
+      },
+      "canonical_path": "scripts/native_motion_preview.py",
+      "license": {
+        "status": "local-only-declared",
+        "spdx": null,
+        "note": "Original repo-local renderer; this declaration is limited to the explicitly requested local internal preview. No repo-wide source license or public redistribution permission is asserted. External tools retain their own licenses."
+      },
+      "rights": {
+        "status": "verified",
+        "verified": true,
+        "scope": "the two named project-local internal previews only; original explanatory visuals; generated output is not evidence; no public distribution or publication",
+        "evidence": "P6 user work order explicitly authorizes free local original animation production and internal preview; project claims and source media remain governed by their existing review states"
+      },
+      "accounts": ["x-superplay-future-intelligence", "x-superplay-1024"],
+      "pipelines": ["M5"],
+      "stages": ["motion"],
+      "contract": {
+        "input": "one allowlisted project slug plus that project's existing account profile; no arbitrary command or external asset input",
+        "output": "project-local silent MP4 plus SHA-256 receipt",
+        "schema": "contentops.native-motion-preview/v1",
+        "limits": "1080x1920, 30 fps, 4-8 seconds, generated=true, evidence_capable=false"
+      },
+      "provider": {
+        "path_permitted": true,
+        "network": false,
+        "paid": false,
+        "cross_project_reuse": false,
+        "note": "local rendering only; user task authorization does not become an execution grant or publication permission"
+      },
+      "runtime": {},
+      "verification": {
+        "status": "VERIFIED",
+        "scope": "exact dependency versions recorded above; two account profiles; one local internal preview per project",
+        "evidence": "tests/test_skill_router_capabilities.py and per-project p6-native-motion-preview.json receipt"
+      },
+      "execution": {
+        "adapter": "scripts/native_motion_preview.py",
+        "m5_stage": "motion",
+        "authorizes_execution": false
+      }
+    },
+    {
+      "id": "huashu-motion",
+      "name": "huashu-motion",
+      "summary": "Optional pinned Huashu Motion 0.3.1 clip-producer path; not selected for P6 until the GSAP offline-rendering scope is clarified and a separate Owner Grant exists.",
+      "discovery": {
+        "root": "toolchain",
+        "dir": "skills/huashu-motion",
+        "path": "D:/Toolchains/huashu-motion/0.3.1/skills/huashu-motion"
+      },
+      "source": {
+        "publisher": "Huashu Motion",
+        "upstream": "alchaincyf/huashu-motion",
+        "version": "0.3.1",
+        "source_commit": "52467f99c602b76ba86d511d37acdfe93fa1e16e",
+        "baseline": "runtime/huashu-motion.lock.json",
+        "dependencies": [
+          {"name": "GSAP", "version": "3.14.2", "license": "GSAP Standard License", "status": "LICENSE_REVIEW_REQUIRED"}
+        ]
+      },
+      "canonical_path": "src/contentops/skills/huashu_execution.py",
+      "license": {
+        "status": "LICENSE_REVIEW_REQUIRED",
+        "spdx": null,
+        "note": "LICENSE_REVIEW_REQUIRED: The MIT Huashu source does not settle the separate bundled GSAP license. GSAP Standard License covers permitted use on websites/web applications/digital interfaces; it does not expressly address this offline video-rendering path. Only this GSAP-dependent path is held."
+      },
+      "rights": {
+        "status": "unverified",
+        "verified": false,
+        "scope": "The offline video-rendering use of bundled GSAP is not yet confirmed by the rights holder.",
+        "evidence": "Official license: https://gsap.com/standard-license; pinned third-party inventory: https://github.com/alchaincyf/huashu-motion/blob/52467f99c602b76ba86d511d37acdfe93fa1e16e/THIRD_PARTY.md"
+      },
+      "accounts": ["x-superplay-future-intelligence", "x-superplay-1024"],
+      "pipelines": ["M5"],
+      "stages": ["motion"],
+      "contract": {
+        "input": "Huashu-native HTML composition plus one approved single-operation request",
+        "output": "silent checked motion MP4, output receipt, then an M4.5-derived asset",
+        "schema": "contentops.huashu-motion-asset/v1",
+        "limitations": "No public reuse clearance; execution requires the existing per-project Owner Grant."
+      },
+      "provider": {
+        "path_permitted": true,
+        "network": false,
+        "paid": false,
+        "cross_project_reuse": false,
+        "note": "No provider call is involved; the unverified GSAP license blocks resolution for this specific renderer."
+      },
+      "runtime": {
+        "dependency": "Huashu Motion 0.3.1 / GSAP 3.14.2",
+        "baseline": "runtime/huashu-motion.lock.json",
+        "verifier": "src/contentops/media/huashu_motion.py:verify_runtime",
+        "note": "Fresh runtime status was TRUSTED_RUNTIME; execution_authorized remained false. Runtime integrity does not resolve GSAP rights or issue a Grant."
+      },
+      "verification": {
+        "status": "LICENSE_REVIEW_REQUIRED",
+        "scope": "The pinned runtime integrity was checked read-only; no motion operation was run.",
+        "evidence": "Current-session runtime-status output in P6 work record; official GSAP license and pinned THIRD_PARTY inventory above."
+      },
+      "execution": {
+        "adapter": "src/contentops/skills/huashu_execution.py",
+        "m5_stage": "motion",
+        "authorizes_execution": false
+      }
     }
   ]
 }

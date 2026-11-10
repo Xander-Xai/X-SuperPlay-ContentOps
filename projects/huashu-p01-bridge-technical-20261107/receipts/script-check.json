@@ -1,0 +1,7 @@
+{
+  "schema": "contentops.m5-script-check/v1",
+  "ok": true,
+  "lines": 1,
+  "claims_cited": [],
+  "claims_unused": []
+}

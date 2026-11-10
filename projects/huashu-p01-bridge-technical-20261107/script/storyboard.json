@@ -1,0 +1,46 @@
+{
+  "size": "1080x1920",
+  "image_motion": "static",
+  "pad_mode": "trim",
+  "shots": [
+    {
+      "shot_id": "P-01",
+      "image": "projects/huashu-p01-bridge-technical-20261107/assets/processed/p01-huashu-mute.mp4",
+      "motion": "static",
+      "duration": 4.0,
+      "duration_s": 4.0,
+      "source": "projects/huashu-p01-bridge-technical-20261107/assets/processed/p01-huashu-mute.mp4",
+      "source_type": "fixture",
+      "caption": "P01 技术桥接样片",
+      "narration": "P01 技术验收。",
+      "claim": null,
+      "media_provenance": {
+        "asset_id": "p01-huashu-source-mute",
+        "placement_id": "P-01",
+        "sha256": "d9ec425f15aaa7165116f26cc43c8efdfb9cdbc622f3a652e361f6e4160e367b",
+        "receipt_ref": "p01-huashu.mp4.receipt.json",
+        "transform_receipt_ref": "p01-huashu-mute.mp4.transform.json",
+        "generated": true,
+        "evidence_capable": false,
+        "evidence_use": "VISUAL_SUPPORT",
+        "fixture": true
+      },
+      "video": "projects/huashu-p01-bridge-technical-20261107/assets/processed/p01-huashu-mute.mp4",
+      "audio_policy": "MUTE",
+      "audio_mode": "dub"
+    }
+  ],
+  "narration": "projects/huashu-p01-bridge-technical-20261107/assets/voice/narration.wav",
+  "subtitle": "projects/huashu-p01-bridge-technical-20261107/assets/captions/default.srt",
+  "engine": "easel",
+  "voice_provider": "existing/Microsoft Huihui Desktop (zh-CN)",
+  "media_manifest_fingerprint": "49ee8ad7d918ada017305f687166f660b05c56f2c476687a63bdf3dec9ee8ece",
+  "media_manifest_sha256": "406f71323d9dcf4f7e7e9a273882995bc80cb30f63187de97b2175158b32412c",
+  "audio_postconditions": [
+    "p01-huashu-source-mute: AudioPolicy MUTE, derived asset, so it carries no audio stream"
+  ],
+  "generated_visuals": {
+    "count": 1,
+    "policy": "support_only_never_evidence"
+  }
+}

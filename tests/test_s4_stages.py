@@ -19,6 +19,7 @@ from contentops.workflow import audience, copy_strategy, delivery, duration, pla
 from contentops.workflow.contract import WorkflowError  # noqa: E402
 
 import design_router  # noqa: E402
+import copy_strategy as copy_strategy_cli  # noqa: E402
 import workflow_docs  # noqa: E402
 
 
@@ -61,6 +62,14 @@ def test_copy_strategy_never_concludes_before_verification():
     assert copy_strategy.choose_strategy("USER_TOPIC", "verified")["strategy"] == "evidence_walkthrough"
     _raises("COPY_ROUTE_UNKNOWN", lambda: copy_strategy.choose_strategy("SOMEWHERE", "verified"))
     _raises("COPY_EVIDENCE_UNKNOWN", lambda: copy_strategy.choose_strategy("USER_TOPIC", "probably"))
+
+
+def test_copy_strategy_cli_delegates_and_remains_pending_owner_review():
+    record = copy_strategy_cli.build_strategy_record(
+        route_mode="USER_TOPIC", evidence_status="verified", has_real_material=False)
+    assert record["strategy"] == "evidence_walkthrough"
+    assert record["production_ready"] is False
+    assert record["review_status"] == "PENDING_OWNER_REVIEW"
 
 
 def test_platform_constraints_are_local_and_refuse_mismatch():

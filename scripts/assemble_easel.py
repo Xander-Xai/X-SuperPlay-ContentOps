@@ -167,9 +167,14 @@ def _srt_to_ass(srt_path: Path, ass_path: Path, w: int, h: int,
     ass_path.write_text(head + body, encoding="utf-8")
 
 
-def run(project: Path, out_name: str = "easel") -> dict:
+def run(project: Path, out_name: str = "easel", *, storyboard_path: Path | None = None) -> dict:
     project = project.resolve()
-    storyboard = project / "script" / "storyboard.json"
+    storyboard = Path(storyboard_path).resolve() if storyboard_path else project / "script" / "storyboard.json"
+    if storyboard_path:
+        try:
+            storyboard.relative_to(project)
+        except ValueError:
+            return {"status": "BLOCKED", "reason": "storyboard must be inside the project"}
     if not storyboard.exists():
         return {"status": "BLOCKED", "reason": f"storyboard missing: {storyboard}"}
     try:
@@ -182,16 +187,12 @@ def run(project: Path, out_name: str = "easel") -> dict:
     size = sb.get("size", "1080x1920")
     w, h = (int(x) for x in size.split("x"))
 
-    # Upstream requires the output to live under outputs/<topic>/; keep it there,
-    # then copy into the project so the project owns its deliverable.
-    # assemble.py is <easel>/skills/openclaw/auto-short-video/scripts/assemble.py
-    easel_dir = upstream_assemble.parents[4]
-    topic_out = easel_dir / "outputs" / project.name
-    topic_out.mkdir(parents=True, exist_ok=True)
-    upstream_out = topic_out / "final.mp4"
-
-    with tempfile.TemporaryDirectory() as td:
+    # Keep all intermediates in this invocation's private temporary directory.
+    # The pinned Easel checkout is read-only; upstream accepts the explicit output
+    # path and does not require a write under its own outputs/ tree.
+    with tempfile.TemporaryDirectory(prefix="contentops-easel-") as td:
         tmp_sb = Path(td) / "storyboard.json"
+        upstream_out = Path(td) / "easel-intermediate.mp4"
         # Strip BOTH the explicit subtitle and the per-shot captions: upstream
         # falls back to auto-generating a subtitle from `caption`
         # (assemble.py: `elif any(s.get("caption")...)`), which would re-enter the

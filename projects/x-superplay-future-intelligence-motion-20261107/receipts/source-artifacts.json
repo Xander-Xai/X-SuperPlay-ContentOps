@@ -1,0 +1,161 @@
+{
+  "schema": "contentops.m5-sources/v1",
+  "artifacts": [
+    {
+      "id": "authorization-code",
+      "source_type": "local_code",
+      "title": "ExecutionRequest scope contract",
+      "path": "src/contentops/skills/authorization.py",
+      "sha256": "2965e710b4842df48468926c0f34248ccb61c6629dc0b98e569e5d91813e8f3f",
+      "bytes": 14390,
+      "permission": "OWNED",
+      "captured_at": "2026-11-07T07:53:38Z",
+      "evidence_capable": true,
+      "notes": "Local project source; exact quotes only, not a claim that all Agent systems use this design."
+    },
+    {
+      "id": "execution-gate-code",
+      "source_type": "local_code",
+      "title": "Managed execution gate",
+      "path": "src/contentops/skills/execution_gate.py",
+      "sha256": "4b72e79ee686496803f611dd0f779f745d008a6c84c13e640dccc805c3d808b8",
+      "bytes": 10838,
+      "permission": "OWNED",
+      "captured_at": "2026-11-07T07:53:38Z",
+      "evidence_capable": true,
+      "notes": ""
+    },
+    {
+      "id": "grant-source-code",
+      "source_type": "local_code",
+      "title": "Project-local approval loading and use consumption",
+      "path": "src/contentops/skills/grant_source.py",
+      "sha256": "49580dc80b6f3adecee9d0fd997b676a32d3ceeb89984e6464a58a15a3f9fa9b",
+      "bytes": 14032,
+      "permission": "OWNED",
+      "captured_at": "2026-11-07T07:53:38Z",
+      "evidence_capable": true,
+      "notes": ""
+    },
+    {
+      "id": "huashu-execution-code",
+      "source_type": "local_code",
+      "title": "Huashu runtime resolution and managed execution adapter",
+      "path": "src/contentops/skills/huashu_execution.py",
+      "sha256": "cd23f1852c58e0cbbbd83b3c4ceb684b6668001bcd7b5aaceb6832f28e5fa882",
+      "bytes": 12596,
+      "permission": "OWNED",
+      "captured_at": "2026-11-07T07:53:38Z",
+      "evidence_capable": true,
+      "notes": ""
+    },
+    {
+      "id": "fixed-runner-code",
+      "source_type": "local_code",
+      "title": "Constrained local video runner",
+      "path": "scripts/contentops_video_local.py",
+      "sha256": "4a7ff9285b04dbcf7253b8977cdd1ebc8bd81a5d3c1dac515e98e790820882d3",
+      "bytes": 23277,
+      "permission": "OWNED",
+      "captured_at": "2026-11-07T07:53:38Z",
+      "evidence_capable": true,
+      "notes": ""
+    },
+    {
+      "id": "gate-test-source",
+      "source_type": "test_source",
+      "title": "Offline Huashu execution gate test suite",
+      "path": "tests/test_huashu_execution_gate.py",
+      "sha256": "9f3ba5c8f944144a6bd738af9e41cf9fea199b57cab7e9878f3b73075839ec17",
+      "bytes": 23450,
+      "permission": "OWNED",
+      "captured_at": "2026-11-07T07:53:38Z",
+      "evidence_capable": true,
+      "notes": "The suite uses a fake runtime and injected runner; it does not render."
+    },
+    {
+      "id": "gate-test-result",
+      "source_type": "command_observation",
+      "title": "Focused execution gate test run summary",
+      "path": "projects/x-superplay-future-intelligence-motion-20261107/work/huashu-gate-test-run.json",
+      "sha256": "446939eb6325bf9771848d0cf953ec960dfc2d89f7f50fe90f3a22b01c9e8628",
+      "bytes": 544,
+      "permission": "OWNED",
+      "captured_at": "2026-11-07T07:53:38Z",
+      "evidence_capable": true,
+      "notes": ""
+    },
+    {
+      "id": "runtime-status-observation",
+      "source_type": "command_observation",
+      "title": "Huashu Motion runtime status CLI output",
+      "path": "projects/x-superplay-future-intelligence-motion-20261107/work/runtime-status-p4.json",
+      "sha256": "3ec2749402a34364b3ffca7f9dd2730cae295d68e382487612bb4a61563dc0b1",
+      "bytes": 628,
+      "permission": "OWNED",
+      "captured_at": "2026-11-07T07:53:38Z",
+      "evidence_capable": true,
+      "notes": ""
+    },
+    {
+      "id": "current-runtime-status-observation",
+      "source_type": "command_observation",
+      "title": "Current-session Huashu Motion runtime status CLI output",
+      "path": "projects/x-superplay-future-intelligence-motion-20261107/work/runtime-status-current-20261107.json",
+      "sha256": "a000300b86fcdca6cf7974f88e079aae1f1446cc41a87017f3925917c61f4e1c",
+      "bytes": 749,
+      "permission": "OWNED",
+      "captured_at": "2026-11-07T07:53:38Z",
+      "evidence_capable": true,
+      "notes": "Actual read-only CLI output observed in this session; copied observation, not an execution receipt."
+    },
+    {
+      "id": "no-grant-observation",
+      "source_type": "command_observation",
+      "title": "No-trusted-grant CLI refusal output",
+      "path": "projects/x-superplay-future-intelligence-motion-20261107/work/gate-attempt-observation.json",
+      "sha256": "2820775bdb8be1f5bfb04cbc401b45b78468c280b2dc9e9680986e14c080636f",
+      "bytes": 1011,
+      "permission": "OWNED",
+      "captured_at": "2026-11-07T07:53:38Z",
+      "evidence_capable": true,
+      "notes": ""
+    },
+    {
+      "id": "account-dna-source",
+      "source_type": "account_configuration",
+      "title": "Future Intelligence account audience and brand DNA",
+      "path": "config/accounts/x-superplay-future-intelligence.json",
+      "sha256": "9d4dd2b6e9742d4e32187ec9cd674bfb604814405e2e772853e62792f4797769",
+      "bytes": 32719,
+      "permission": "OWNED",
+      "captured_at": "2026-11-07T07:53:38Z",
+      "evidence_capable": true,
+      "notes": "Declared account positioning; not audience survey evidence."
+    },
+    {
+      "id": "p01-manifest-bridge-receipt",
+      "source_type": "execution_receipt",
+      "title": "P01 technical sample M5 manifest bridge receipt",
+      "path": "projects/huashu-p01-bridge-technical-20261107/receipts/m5-manifest-bridge.json",
+      "sha256": "973fed0c3654ac8aaef2ac7cdb8e0a8ff3c4cd26371ea415cf50c8a3422e3f21",
+      "bytes": 1625,
+      "permission": "OWNED",
+      "captured_at": "2026-11-07T07:53:38Z",
+      "evidence_capable": true,
+      "notes": "Historical technical bridge only; generated visual is not evidence and managed Huashu provenance is not established."
+    },
+    {
+      "id": "p01-qc-receipt",
+      "source_type": "execution_receipt",
+      "title": "P01 technical sample QC receipt",
+      "path": "projects/huashu-p01-bridge-technical-20261107/receipts/qc-report-huashu-p01-bridge-technical-20261107.json",
+      "sha256": "2567fd8521efcbb131522df7f2bb78413b89101c8411bdad1f77ca83f429e7dc",
+      "bytes": 4139,
+      "permission": "OWNED",
+      "captured_at": "2026-11-07T07:53:38Z",
+      "evidence_capable": true,
+      "notes": "QC WARN; not a production approval."
+    }
+  ]
+}

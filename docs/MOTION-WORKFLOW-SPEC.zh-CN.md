@@ -25,11 +25,15 @@ translation_status: synced
 |---|---|---|
 | 动效样片门 | `src/contentops/media/motion_sample.py`、`scripts/check_motion_sample.py` | 4–8 秒、静音、1080×1920、H.264/yuv420p、**由帧时间戳验证 CFR 30**、SHA-256 绑定;`TECHNICALLY_CHECKED` 仍是 `PENDING_FOUNDER_REVIEW` |
 | 动效交接 | `src/contentops/media/motion_handoff.py` | 仅 `project://`、哈希绑定的 MP4、MotionClone 2.0.0 / HyperFrames 0.8.33、工程哈希、源窗口 ≤8 秒、仅内部权利、所有权限标志为 false |
-| 真实素材时长 | `src/contentops/media/real_source_duration.py`、`scripts/qc_video.py` | 成片可见秒数中 ≥70% 为真实拍摄;图解、卡片、生成与动效不计,重叠只算一次 |
+| 真实素材时长 | `src/contentops/media/real_source_duration.py`、`scripts/qc_video.py` | 按账号 DNA 的证据模式执行：`EVIDENCE_LED` 保留真实可见时长 ≥70% 门禁；`EXPLANATORY` 不以该全片比例为门禁。来源、权利、时长或账号策略缺失仍会阻断；证据与声明仍独立验证。生成与动效画面永不计作真实捕获。 |
 | Driver QC 绑定 | `src/contentops/easel/driver.py` | `receipts/qc-report*.json` 在计划期由 `_step_receipts_ok` 解析;匹配但未评分或 `FAIL` 不算完成 |
 | Router → brief → M5 | `src/contentops/routing/`、`src/contentops/script/`、`scripts/content_route.py`、`scripts/brief_to_m5.py`、`scripts/m5_production.py` | 账号 DNA → 候选 → 已批准 brief → `script/script.json` + claims + source refs;`copy_review.require_if_brief_driven` 拦截未审文案 |
 | S4 阶段策略 | `src/contentops/workflow/{audience,duration,copy_strategy,platform,delivery,visual_route}.py` | 受众/时长/策略/平台限制、人工交付清单与视觉路由;不授予发布权 |
 | 图文工作流适配器 | `src/contentops/gzh/runtime.py`、`src/contentops/xhs/runtime.py`、`scripts/graphic_workflow.py` | 定位/哈希校验/描述本地安装的 GZH 或 XHS 工作流;GRAPHIC_TEXT 人工包表面;不执行、不拟稿、不发布 |
+| Huashu Motion 适配层 | `src/contentops/media/huashu_motion.py`、`scripts/huashu_motion_adapter.py`、`runtime/huashu-motion.lock.json` | 校验固定版 v0.3.1 运行时,用上游自己的语法描述 `om check`/`om still`/`om render`/`om qa`,写「已阻止/未执行」回执;从不拼接 `om` 命令行,也从不启动引擎 |
+| Huashu 动效统一记录 | `src/contentops/media/huashu_motion.py`(`contentops.huashu-motion-asset/v1`) | 两个引擎共用一份记录:`engine/version/commit/spec_sha256/asset_hashes/clip_path/clip_sha256/duration/resolution/fps/audio_policy/rights/review_status`,始终 `generated=true`、`evidence_capable=false`、`production_ready=false` |
+| Huashu 动效 → M4.5 | `src/contentops/media/motion_manifest.py`、`src/contentops/media/manifest_m5_bridge.py` | 通过校验的片段变成源回执 + 无音轨派生片段 + 唯一活动时间线 placement;片段缺失、哈希不符、字节被改或 `KEEP` 策略一律拒绝 |
+| Huashu 受管执行 | `src/contentops/skills/huashu_execution.py`、`scripts/huashu_execute.py` | 先校验运行时,再读批准,再判定,再重读,再消费一次使用额度,最后执行;运行时不可用时直接拒绝且不消耗额度;上游调用是注入的,不是拼接出来的 |
 
 ### 图文与编辑部工作流(GZH / XHS / X)
 
@@ -59,10 +63,61 @@ python scripts/brief_to_m5.py --check projects/<slug>
 python scripts/m5_production.py projects/<slug>
 python scripts/qc_video.py projects/<slug> --video <slug>.mp4
 python scripts/qc_visual.py projects/<slug> --video <slug>.mp4
+
+python scripts/huashu_motion_adapter.py status
+python scripts/huashu_motion_adapter.py plan render
+python scripts/huashu_motion_adapter.py request render --project projects/huashu-motion-sample
+python scripts/huashu_execute.py check projects/huashu-motion-sample --operation render --account x-superplay-1024
+python tests/test_huashu_motion_sample.py
+python tests/test_huashu_motion_manifest.py
+python tests/test_huashu_execution_gate.py
 ```
 
 动效交接**故意没有 CLI**:它是调用方在把资产放上唯一活动时间线之前验证的契约。
 通过验证的记录不会自动进入 M5。
+
+## 3.1 两个 Huashu 引擎
+
+`huashu-motion`(上游 `alchaincyf/huashu-motion`)与 `huashu-art-motion`(上游
+`alchaincyf/huashu-art-motion`)是两个独立程序、两个独立运行时。ContentOps 把它们
+作为**片段生产者**接入,而不是第二套合成器:Easel 仍然是唯一合成器。
+
+接入保证:
+
+- 每个引擎一份运行时固定记录,放在 `runtime/`,核对版本、commit、Git remote、干净
+  工作树、入口与许可证。文件缺失、路径越界、版本漂移、工作树不干净是四种不同
+  的判定。
+- 两个引擎共用一份资产记录(`contentops.huashu-motion-asset/v1`),消费方读时长或
+  摘要时不必按引擎分支。
+- 两个引擎共用一道技术门(`check_motion_clip`):静音、1080×1920、H.264/yuv420p、
+  由帧时间戳验证恒定 30 fps、哈希绑定。技术通过仍然是 `PENDING_FOUNDER_REVIEW`。
+- 进入 M4.5 只有一条路:通过校验的片段变成源回执和无音轨派生片段,只有派生片段
+  可以被激活到时间线上。
+- 生成动效保持 `generated=true`、`evidence_capable=false`。只有当独立的 `ClaimLedger` 已验证事实主张时，生成画面才可以作为该事实句的补充视觉；素材本身不得有 `claim_refs`、`evidence_use: EVIDENCE` 或证据能力标志。M5 会拒绝这些相互矛盾的声明。
+- 真实 manifest 驱动的 M5 合成会拒绝来源回执中权利未解决或信息不全的生成动效。Fixture 资产只有在项目明确标记 `fixture: true` 时才能通过；回执仍只属于测试夹具，不授予发布或生产就绪状态。
+
+它不做的事:不启动 `om`,不拼接上游命令行,不安装运行时,不合成。真实渲染需要 Owner
+的批准记录;申请见 `docs/governance/HUASHU-EXECUTION-AUTHORIZATION-REQUEST.md`。
+
+固定版本 `skills/huashu-motion/references/contract.md` 要求 composition root 声明
+`data-composition-id`、`data-width` 和 `data-height`；暂停的 GSAP 时间轴注册在
+`window.__timelines[composition-id]`；场景标签使用 `scene:<id>`。`data-om-id` 只标记
+可指向区域。当前 CSS keyframes 草稿缺少这些原生结构，已明确标为
+`NOT_HUASHU_MOTION_COMPATIBLE`；不得对其运行任何 `om` 命令。固定版合约/运行时要求
+时间驱动渲染具确定性，但草稿没有已注册的暂停时间轴，因而无法提供该行为。`om render
+--silent` 只抑制“无配乐”警告，不能证明导出文件没有音轨；渲染或执行现有
+`AudioPolicy` 转换后，必须用 ffprobe 检查实际音轨。
+
+### 已准备好的样片
+
+`projects/huashu-motion-sample` 是一支 21 秒样片的**设计**,不是成片:分镜与节奏
+表、一份统一视觉规范、六份 Art Motion 片段 Spec、Huashu Motion HTML 概念草稿,以及
+M4.5 素材映射。第一镜 Art Motion Spec 为 4.0 秒,其余五镜各 3.4 秒。这样准备了
+4–8 秒首个 motion-sample 候选,没有改动 `motion_sample.py`;其余镜头走普通片段门,
+不走样片门。Huashu Motion HTML 在按原生契约重写前仍不兼容。没有渲染任何一帧,
+状态仍是 `RENDER_NOT_VERIFIED`。题材是原创抽象 AI Agent 工作流,不使用真实截图或
+第三方素材。
+
 
 ## 4. Always / Ask / Never
 

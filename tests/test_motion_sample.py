@@ -135,6 +135,55 @@ def test_ffprobe_unavailable_is_blocked_not_passed():
         )
 
 
+def test_the_clip_gate_applies_the_same_rules_with_a_wider_duration_window():
+    with tempfile.TemporaryDirectory() as tmp:
+        path = _sample(tmp)
+        duration = 2.5
+        clip = motion_sample.check_motion_clip(
+            path, probe=_probe(duration_s=duration, frame_timestamps=_timestamps(duration)),
+            min_duration_s=0.0, max_duration_s=8.0, reason_prefix="CLIP",
+        )
+        assert clip["state"] == "TECHNICALLY_CHECKED", clip
+        assert clip["duration_s"] == 2.5
+        _blocked(
+            motion_sample.check_motion_sample(
+                path, probe=_probe(duration_s=duration, frame_timestamps=_timestamps(duration)),
+            ),
+            "SAMPLE_DURATION",
+        )
+
+
+def test_the_clip_gate_still_refuses_everything_the_sample_gate_refuses():
+    with tempfile.TemporaryDirectory() as tmp:
+        path = _sample(tmp)
+        _blocked(
+            motion_sample.check_motion_clip(path, probe=_probe(width=720)),
+            "CLIP_DIMENSIONS",
+        )
+        _blocked(
+            motion_sample.check_motion_clip(path, probe=_probe(has_audio=True)),
+            "CLIP_AUDIO_PRESENT",
+        )
+        _blocked(
+            motion_sample.check_motion_clip(path, probe=_probe(), expected_sha256="0" * 64),
+            "CLIP_HASH_MISMATCH",
+        )
+        _blocked(
+            motion_sample.check_motion_clip(path, probe=_probe(frame_timestamps=[])),
+            "CLIP_FRAME_TIMING_UNVERIFIED",
+        )
+        _blocked(
+            motion_sample.check_motion_clip(Path(tmp) / "nope.mp4", probe=_probe()),
+            "CLIP_MISSING",
+        )
+        stamps = _timestamps(6.0)
+        stamps[90] += 0.2
+        _blocked(
+            motion_sample.check_motion_clip(path, probe=_probe(frame_timestamps=stamps)),
+            "CLIP_FRAME_TIMING",
+        )
+
+
 def test_the_result_carries_no_self_approval_switch():
     with tempfile.TemporaryDirectory() as tmp:
         path = _sample(tmp)

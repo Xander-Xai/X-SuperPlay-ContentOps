@@ -235,6 +235,70 @@ def test_a_directory_without_the_registry_is_not_treated_as_a_wechat_workspace()
     print("[ok] 11. only a registered workspace is routed as 公众号")
 
 
+@test
+def test_optional_broll_is_reported_unavailable_and_explicit_request_is_blocked():
+    from unittest import mock
+
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        (project / "project.yaml").write_text(
+            f"slug: x\naccount_slug: {EVIDENCE_ACCOUNT}\n", encoding="utf-8")
+        with mock.patch.object(ar, "SHARED_SKILL_ROOT", project / "missing-shared-store"):
+            route = ar.resolve(project)
+            broll = next(item for item in route["skills"]
+                         if item["step"] == "broll_finder")
+            assert broll["availability"] == "OPTIONAL_CAPABILITY_UNAVAILABLE", broll
+            try:
+                ar.require_skill_available(route, "broll_finder")
+            except ar.RouteBlocked as blocked:
+                assert blocked.code == "OPTIONAL_CAPABILITY_UNAVAILABLE", blocked.code
+            else:
+                raise AssertionError("an explicit unavailable B-roll request was not blocked")
+    print("[ok] optional B-roll absence is visible and explicit use is blocked")
+
+
+@test
+def test_optional_broll_is_available_only_when_its_shared_skill_exists():
+    from unittest import mock
+
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        shared = project / "shared"
+        skill = shared / "find-broll"
+        skill.mkdir(parents=True)
+        (skill / "SKILL.md").write_text(
+            "---\nname: find-broll\n---\n", encoding="utf-8")
+        (project / "project.yaml").write_text(
+            f"slug: x\naccount_slug: {EVIDENCE_ACCOUNT}\n", encoding="utf-8")
+        with mock.patch.object(ar, "SHARED_SKILL_ROOT", shared):
+            route = ar.resolve(project)
+        broll = next(item for item in route["skills"] if item["step"] == "broll_finder")
+        assert broll["availability"] == "AVAILABLE", broll
+        (skill / "SKILL.md").write_text(
+            "---\nname: unrelated-skill\n---\n", encoding="utf-8")
+        with mock.patch.object(ar, "SHARED_SKILL_ROOT", shared):
+            unavailable = ar.resolve(project)
+        broll = next(item for item in unavailable["skills"] if item["step"] == "broll_finder")
+        assert broll["availability"] == "OPTIONAL_CAPABILITY_UNAVAILABLE", broll
+    print("[ok] optional B-roll availability requires the exact shared skill")
+
+
+@test
+def test_no_other_optional_missing_skill_becomes_executable():
+    from unittest import mock
+
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        (project / "project.yaml").write_text(
+            f"slug: x\naccount_slug: {EVIDENCE_ACCOUNT}\n", encoding="utf-8")
+        with mock.patch.object(ar, "SHARED_SKILL_ROOT", project / "missing"):
+            route = ar.resolve(project)
+            required = next(item for item in route["skills"]
+                            if item["step"] == "source_research")
+            assert "availability" not in required, required
+    print("[ok] unmarked skills are not silently optional")
+
+
 def main() -> int:
     failures = []
     for fn in TESTS:

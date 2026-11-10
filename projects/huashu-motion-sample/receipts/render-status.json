@@ -1,0 +1,21 @@
+{
+  "schema": "contentops.motion-render-status/v1",
+  "sample_id": "huashu-motion-sample",
+  "status": "RENDER_NOT_VERIFIED",
+  "rendered": false,
+  "clips": [],
+  "reason": "No engine has been executed. The Huashu Motion runtime is not installed on this machine and the Art Motion runtime root does not exist, so there is nothing to render from. Execution additionally requires the Owner's explicit authorization.",
+  "blockers": [
+    {"engine": "huashu-motion", "reason": "RUNTIME_ROOT_MISSING", "runtime_root": "D:/Toolchains/huashu-motion/0.3.1"},
+    {"engine": "huashu-art-motion", "reason": "RUNTIME_ROOT_MISSING", "runtime_root": "D:/Toolchains/huashu-art-motion/1.2.0"},
+    {"engine": "huashu-motion", "reason": "PROJECT_NOT_CONTRACT_COMPATIBLE", "detail": "the HTML draft lacks the native composition root, paused GSAP timeline registration and scene labels"},
+    {"engine": "both", "reason": "RIGHTS_UNRESOLVED", "detail": "real M5 composition is blocked until a reviewed rights record exists; fixture-only outputs are isolated"},
+    {"engine": "both", "reason": "RUNNER_NOT_CONFIGURED", "detail": "no trusted production runner is installed or configured; the injected recorder exists only in tests"},
+    {"engine": "both", "reason": "EXECUTION_NOT_AUTHORIZED", "detail": "no Owner approval record or validated project grant exists"}
+  ],
+  "authorization_request": "docs/governance/HUASHU-EXECUTION-AUTHORIZATION-REQUEST.md",
+  "production_ready": false,
+  "human_review": "PENDING_FOUNDER_REVIEW",
+  "publish_authorized": false,
+  "note": "This is a design record, not a delivery record. Until a real render exists and a human signs the review receipt, the sample is not a film."
+}

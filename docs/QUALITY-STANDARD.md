@@ -100,13 +100,13 @@ by `tests/test_minimax_speech.py`. No provider request is made in CI.
 
 ## Evidence-First Policy
 
-- Real **visible seconds** ≥ 70% of the rendered file (`real_source_duration_ratio`,
-  automated in `qc_video.py`; overlapping intervals count once, and diagrams,
-  cards, generated visuals and motion renders do not count)
+- Apply the account DNA's `evidence.mode` to the visible-duration measurement: `EVIDENCE_LED` requires real **visible seconds** ≥ 70% of the rendered file; `EXPLANATORY` does not gate on that global ratio. The measurement still counts only actual real captures (overlapping intervals once); diagrams, cards, generated visuals and motion renders never count as real.
+- A missing or invalid account policy fails closed. Missing duration, source or rights data is `BLOCKED` and remains a hard failure for account projects; an account mode cannot waive it.
+- The ratio is a mix diagnostic, not claim verification. Source permission, rights, SourceArtifact/ClaimLedger verification, generated-asset boundaries and human review remain independent requirements; generated visuals never become evidence.
+- AI-generated imagery must not displace real-source and evidence requirements or be presented as real capture.
 - The legacy shot-count ratio (`real_source_ratio`) is kept as a diagnostic only
 - An unknown `source_type` counts as non-real; a missing duration, source or
   rights record is `BLOCKED`, never silently excluded from the denominator
-- AI-generated visuals must not be the majority
 - Each shot carries `source_type` and `source` provenance
 
 ## Human Review (100-point scorecard)

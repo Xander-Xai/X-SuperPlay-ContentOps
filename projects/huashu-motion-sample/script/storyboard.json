@@ -1,0 +1,123 @@
+{
+  "schema": "contentops.motion-storyboard/v1",
+  "sample_id": "huashu-motion-sample",
+  "topic": "原创抽象 AI Agent 工作流：意图 → 拆解 → 校验 → 并行 → 回流 → 闭环",
+  "render_status": "RENDER_NOT_VERIFIED",
+  "render_status_reason": "本样片没有任何真实渲染；两个引擎的运行时都未安装，执行也未获授权。",
+  "total_duration_s": 21.0,
+  "fps": 30,
+  "resolution": "1080x1920",
+  "narration": null,
+  "audio_policy": "REPLACE",
+  "evidence_policy": {
+    "real_assets_used": false,
+    "generated_visuals": "VISUAL_SUPPORT_ONLY",
+    "evidence_capable": false,
+    "note": "画面全部由代码绘制的抽象几何形状构成，没有任何真实截图；因此只能作为讲解辅助，不能承载事实主张。"
+  },
+  "rhythm": {
+    "beats": [
+      {"at_s": 0.0, "type": "hook", "note": "3 秒内给出钩子：一个完整的意图球裂成六个节点。"},
+      {"at_s": 7.0, "type": "constraint", "note": "三道校验闸依次落下，节奏收紧，画面停住让观众读字。"},
+      {"at_s": 10.5, "type": "burst", "note": "全片唯一一次快推重音：一条箭头分流成三支并行。"},
+      {"at_s": 14.0, "type": "settle", "note": "三支汇成一条回流线，镜头拉远交代全貌。"},
+      {"at_s": 17.5, "type": "close", "note": "回流线收成闭环，中心落一枚印章，动作收束而不是落一张字卡。"}
+    ],
+    "camera_sequence": ["缓推", "横移", "停", "快推", "拉远", "缓推"],
+    "max_consecutive_pushes": 1,
+    "text_led_shot_ratio": 0.1667,
+    "note": "文字主导的镜头 1/6（p03 停住读字），低于 30% 的上限；相邻两镜换构图不换画风。"
+  },
+  "shots": [
+    {
+      "placement_id": "p01",
+      "index": 1,
+      "time_in_s": 0.0,
+      "duration_s": 4.0,
+      "time_out_s": 4.0,
+      "subject": "一个未拆解的意图球",
+      "action": "缓慢裂开成六个节点",
+      "camera": "缓推",
+      "screen_text": "一个意图",
+      "approach": "主形体占画面高度约六成；纸纹底色上只有这一个物和它的分裂。",
+      "art_motion": {"grammar": "y3_whiteboard", "theme": "ink", "spec": "motion/specs/p01.json"},
+      "huashu_motion": {"scene": "p01-intent", "in_s": 0.0, "out_s": 4.0},
+      "audio_policy": "REPLACE"
+    },
+    {
+      "placement_id": "p02",
+      "index": 2,
+      "time_in_s": 4.0,
+      "duration_s": 3.4,
+      "time_out_s": 7.4,
+      "subject": "六个节点排成的一条链",
+      "action": "依次点亮，光点从左向右传递",
+      "camera": "横移",
+      "screen_text": "拆成步骤",
+      "approach": "构图从居中改为横向长链，背景纹样随之偏移；视线跟着光点走。",
+      "art_motion": {"grammar": "y3_whiteboard", "theme": "ink", "spec": "motion/specs/p02.json"},
+      "huashu_motion": {"scene": "p02-decompose", "in_s": 4.0, "out_s": 7.4},
+      "audio_policy": "REPLACE"
+    },
+    {
+      "placement_id": "p03",
+      "index": 3,
+      "time_in_s": 7.4,
+      "duration_s": 3.4,
+      "time_out_s": 10.8,
+      "subject": "一条撞上三道校验闸的链",
+      "action": "闸门逐个落下，链停住",
+      "camera": "停",
+      "screen_text": "逐步校验",
+      "approach": "镜头停住让观众读字；画面只动闸门，链本身不动。",
+      "art_motion": {"grammar": "y3_whiteboard", "theme": "ink", "spec": "motion/specs/p03.json"},
+      "huashu_motion": {"scene": "p03-gates", "in_s": 7.4, "out_s": 10.8},
+      "audio_policy": "REPLACE"
+    },
+    {
+      "placement_id": "p04",
+      "index": 4,
+      "time_in_s": 10.8,
+      "duration_s": 3.4,
+      "time_out_s": 14.2,
+      "subject": "一条箭头分流成三支",
+      "action": "三支同时向前推进",
+      "camera": "快推",
+      "screen_text": "并行执行",
+      "approach": "全片唯一一次快推重音，给在“分流”这个揭晓上；画面三等分。",
+      "art_motion": {"grammar": "t2_keynote_ui", "theme": "ink", "spec": "motion/specs/p04.json"},
+      "huashu_motion": {"scene": "p04-parallel", "in_s": 10.8, "out_s": 14.2},
+      "audio_policy": "REPLACE"
+    },
+    {
+      "placement_id": "p05",
+      "index": 5,
+      "time_in_s": 14.2,
+      "duration_s": 3.4,
+      "time_out_s": 17.6,
+      "subject": "三支并行线",
+      "action": "汇成一条回流线",
+      "camera": "拉远",
+      "screen_text": "结果回流",
+      "approach": "镜头拉远交代全貌，回流线把三条支线收成一条。",
+      "art_motion": {"grammar": "y3_whiteboard", "theme": "ink", "spec": "motion/specs/p05.json"},
+      "huashu_motion": {"scene": "p05-reflow", "in_s": 14.2, "out_s": 17.6},
+      "audio_policy": "REPLACE"
+    },
+    {
+      "placement_id": "p06",
+      "index": 6,
+      "time_in_s": 17.6,
+      "duration_s": 3.4,
+      "time_out_s": 21.0,
+      "subject": "收成闭环的回流线",
+      "action": "闭环旋转，中心落下一枚印章",
+      "camera": "缓推",
+      "screen_text": "闭环",
+      "approach": "落在主角的一个动作上（印章落下），不落一张居中字卡。",
+      "art_motion": {"grammar": "y3_whiteboard", "theme": "ink", "spec": "motion/specs/p06.json"},
+      "huashu_motion": {"scene": "p06-loop", "in_s": 17.6, "out_s": 21.0},
+      "audio_policy": "REPLACE"
+    }
+  ]
+}

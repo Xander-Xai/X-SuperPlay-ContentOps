@@ -1,0 +1,83 @@
+{
+  "schema": "contentops.media-manifest/v1",
+  "notes": {
+    "fixture": false,
+    "technical_sample_status": "NOT_A_FIXTURE",
+    "production_ready": false,
+    "publish_authorized": false,
+    "source_clip_sha256": "bf59b466c2da80e0d3389913d0a7c57518f2b338a4da5cda1a8c2655212c20e0"
+  },
+  "narration": {
+    "required": true,
+    "reason": "M5 narration is independently muxed"
+  },
+  "scheduling": {},
+  "audio_postconditions": [
+    "native-motion-preview-mute: AudioPolicy MUTE, derived asset, so it carries no audio stream"
+  ],
+  "timeline": [
+    {
+      "placement_id": "p6-native-motion",
+      "active_asset_id": "native-motion-preview-mute",
+      "selection_reason": "AudioPolicy MUTE derived asset selected",
+      "superseded_asset_ids": [
+        "native-motion-preview"
+      ]
+    }
+  ],
+  "counts": {
+    "assets": 2,
+    "placements": 1,
+    "by_modality": {
+      "VIDEO": 2
+    },
+    "by_gate_state": {
+      "native-motion-preview": "PENDING_HUMAN_REVIEW",
+      "native-motion-preview-mute": "PENDING_HUMAN_REVIEW"
+    }
+  },
+  "assets": [
+    {
+      "asset_id": "native-motion-preview",
+      "modality": "VIDEO",
+      "placement_id": "p6-native-motion",
+      "path": "project://assets/generated/p6-native-motion-preview.mp4",
+      "sha256": "bf59b466c2da80e0d3389913d0a7c57518f2b338a4da5cda1a8c2655212c20e0",
+      "receipt_ref": "p6-native-motion-preview.mp4.receipt.json",
+      "fingerprint": "4d046f150edca5e2aee4c78163eaa40bd066f29efbb7d325bfb0e13437685279",
+      "asset_kind": "GENERATED_VIDEO",
+      "generated": true,
+      "evidence_capable": false,
+      "evidence_use": "VISUAL_SUPPORT",
+      "claim_refs": [],
+      "technical_status": "PASS_TECHNICAL",
+      "human_review": "PENDING_FOUNDER_REVIEW",
+      "production_ready": false,
+      "audio_policy": null,
+      "fallback": {},
+      "derived_from": null,
+      "transform_receipt_ref": null
+    },
+    {
+      "asset_id": "native-motion-preview-mute",
+      "modality": "VIDEO",
+      "placement_id": "p6-native-motion",
+      "path": "project://assets/processed/p6-native-motion-preview-mute.mp4",
+      "sha256": "d5157bf901a640296108009a927357f3871a21666372ee9e59c52ff766842461",
+      "receipt_ref": "p6-native-motion-preview.mp4.receipt.json",
+      "fingerprint": "4d046f150edca5e2aee4c78163eaa40bd066f29efbb7d325bfb0e13437685279",
+      "asset_kind": "GENERATED_VIDEO",
+      "generated": true,
+      "evidence_capable": false,
+      "evidence_use": "VISUAL_SUPPORT",
+      "claim_refs": [],
+      "technical_status": "PASS_TECHNICAL",
+      "human_review": "PENDING_FOUNDER_REVIEW",
+      "production_ready": false,
+      "audio_policy": "MUTE",
+      "fallback": {},
+      "derived_from": "native-motion-preview",
+      "transform_receipt_ref": "p6-native-motion-preview-mute.mp4.transform.json"
+    }
+  ]
+}

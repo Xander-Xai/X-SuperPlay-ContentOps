@@ -1,0 +1,20 @@
+{
+  "grammar": "t2_keynote_ui",
+  "duration": 3.4,
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": "ink",
+  "cues": [
+    {
+      "at": 0.0,
+      "text": "并行执行",
+      "sub": "一条箭头分成三支",
+      "image": "assets/motion/paper-texture.svg"
+    },
+    {
+      "at": 0.9,
+      "sub": "三支同时推进，这是全片唯一一次快推"
+    }
+  ]
+}

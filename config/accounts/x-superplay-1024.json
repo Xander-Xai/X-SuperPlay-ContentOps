@@ -273,9 +273,10 @@
     },
     {
       "step": "motion",
-      "skill": "slideshow-video",
-      "script": "skills/openclaw/slideshow-video",
-      "why": "owns the vector data-flow animation; a bare ffmpeg chain is not allowed"
+      "skill": "contentops-native-motion",
+      "script": "scripts/native_motion_preview.py",
+      "path_base": "repo",
+      "why": "owns original auxiliary process diagrams; never substitutes for Owner-recorded Easel footage or the measured current-source gate"
     },
     {
       "step": "captions",
@@ -334,10 +335,12 @@
     },
     {
       "step": "broll_finder",
-      "skill": "b-roll-finder",
-      "script": "b-roll-finder/SKILL.md",
+      "skill": "find-broll",
+      "script": "find-broll/SKILL.md",
       "path_base": "shared",
-      "why": "owns how a beat is classified, which sources are in scope, and where the cutaway lands relative to the spoken word"
+      "optional": true,
+      "upstream_repository": "https://github.com/louisedesadeleer/b-roll-finder",
+      "why": "optional automated B-roll discovery; source research and Owner-operated Recordly capture remain the default, and this Skill does not execute Huashu or clear media rights"
     },
     {
       "step": "shot_vocabulary",

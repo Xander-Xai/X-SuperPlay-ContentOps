@@ -1,0 +1,20 @@
+{
+  "schema": "contentops.m5-narration/v1",
+  "engine": "windows_sapi",
+  "voice_provider": "existing",
+  "voice": "Microsoft Huihui Desktop (zh-CN)",
+  "network": false,
+  "cost": 0,
+  "audio": "assets/voice/narration.wav",
+  "sha256": "294ee018168f9b440f2791a72114fc340f9ceac64e0a00674cdc67f6926d5f52",
+  "text_sha256": "4e1fab2106393cca00991d9c904c84f7459862a2b99fa3b39bc1b5ac009b9269",
+  "duration_s": 4.0,
+  "lines": [
+    {
+      "start": 0.0,
+      "duration": 4.0
+    }
+  ],
+  "quality_note": "reused narration bound to this script by its receipt",
+  "source_receipt": "projects/huashu-p01-bridge-technical-20261107/receipts/narration-padded-4s.json"
+}

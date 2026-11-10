@@ -1,0 +1,20 @@
+{
+  "grammar": "y3_whiteboard",
+  "duration": 3.4,
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": "ink",
+  "cues": [
+    {
+      "at": 0.0,
+      "text": "逐步校验",
+      "sub": "链撞上第一道闸",
+      "image": "assets/motion/paper-texture.svg"
+    },
+    {
+      "at": 1.2,
+      "sub": "三道闸依次落下，链停住"
+    }
+  ]
+}

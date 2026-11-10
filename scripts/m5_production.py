@@ -47,6 +47,12 @@ from contentops.media.rights_gate import (  # noqa: E402
     validate_declared_asset,
     validate_request_rights,
 )
+from contentops.media.manifest_m5_bridge import (  # noqa: E402
+    ManifestBridgeError,
+    build_m5_storyboard,
+    map_script_to_active_assets,
+    validate_manifest_file,
+)
 from contentops.workflow import copy_review  # noqa: E402
 
 RUN_SCHEMA = "contentops.m5-run/v1"
@@ -502,7 +508,25 @@ def _load_script(project: Path) -> Dict[str, Any]:
     return payload
 
 
-def stage_script(project: Path, ledger: ClaimLedger, assets: Dict[str, Any]) -> Dict[str, Any]:
+def _generated_visual_claim_conflict(asset: Dict[str, Any]) -> bool:
+    """Whether a generated visual incorrectly asserts that it is evidence.
+
+    A generated image/video can be a supplementary visual on a factual line when
+    ClaimLedger independently validates that line's cited source. The visual
+    itself must remain generated, evidence-incapable, and unbound to claim_refs.
+    """
+    if asset.get("generated") is not True:
+        return False
+    claim_refs = asset.get("claim_refs") or []
+    return (
+        asset.get("evidence_capable") is True
+        or str(asset.get("evidence_use") or "").upper() == "EVIDENCE"
+        or bool(claim_refs)
+    )
+
+
+def stage_script(project: Path, ledger: ClaimLedger, assets: Dict[str, Any], *,
+                 manifest_assets_by_line: Optional[Dict[str, Dict[str, Any]]] = None) -> Dict[str, Any]:
     script = _load_script(project)
     ids = [line["id"] for line in script["lines"]]
     if len(ids) != len(set(ids)):
@@ -515,12 +539,28 @@ def stage_script(project: Path, ledger: ClaimLedger, assets: Dict[str, Any]) -> 
     unused = ledger.require_used(cited)
     if unused:
         raise M5Blocked(f"claims never appear in the script: {unused}")
+    resolved_assets: Dict[str, Dict[str, Any]] = {}
     for line in script["lines"]:
-        asset = assets.get(line.get("asset_id"))
-        if asset is None:
-            raise M5Blocked(f"{line['id']}: asset_id {line.get('asset_id')!r} is not in sources/assets.json")
-        if not (ROOT / asset["repo_path"]).is_file():
+        if manifest_assets_by_line is not None:
+            asset = manifest_assets_by_line.get(line["id"])
+            if asset is None:
+                raise M5Blocked(f"{line['id']}: no validated manifest placement mapping")
+            if _generated_visual_claim_conflict(asset):
+                raise M5Blocked(
+                    f"{line['id']}: generated visual cannot carry claim evidence; "
+                    "use an independently verified ClaimLedger source and keep the "
+                    "visual as VISUAL_SUPPORT"
+                )
+        else:
+            asset = assets.get(line.get("asset_id"))
+            if asset is None:
+                raise M5Blocked(f"{line['id']}: asset_id {line.get('asset_id')!r} is not in sources/assets.json")
+        asset_path = Path(str(asset["repo_path"]))
+        if not asset_path.is_absolute():
+            asset_path = ROOT / asset_path
+        if not asset_path.is_file():
             raise M5Blocked(f"{line['id']}: asset missing: {asset['repo_path']}")
+        resolved_assets[line["id"]] = asset
         if not str(line.get("narration") or "").strip():
             raise M5Blocked(f"{line['id']}: narration is empty")
     payload = {
@@ -537,7 +577,7 @@ def stage_script(project: Path, ledger: ClaimLedger, assets: Dict[str, Any]) -> 
     for line in script["lines"]:
         rows.append(
             f"| {line['id']} | {line['narration']} | {line['caption']} | "
-            f"{line.get('claim') or '—'} | {assets[line['asset_id']]['repo_path']} |"
+            f"{line.get('claim') or '—'} | {resolved_assets[line['id']]['repo_path']} |"
         )
     master.write_text(
         f"# {project.name} — 脚本文本\n\n"
@@ -970,10 +1010,50 @@ def stage_review(project: Path, slug: str, qc: Dict[str, Any],
     return payload
 
 
+def _assert_manifest_motion_rights_resolved(
+    validated: Any, project: Path, config: Dict[str, Any]
+) -> None:
+    """Block real composition when an active generated clip lacks reviewed rights.
+
+    Fixture-marked assets remain usable only inside a project explicitly marked
+    ``fixture: true``. A real generated clip must carry a structured, verifiable
+    rights review on its source receipt; ``UNRESOLVED`` or a missing record is
+    never production-ready.
+    """
+    fixture_project = config.get("fixture") is True
+    for envelope in validated.manifest.timeline_assets():
+        if envelope.asset_id in validated.fixture_assets:
+            if fixture_project:
+                continue
+            raise M5Blocked(
+                f"{envelope.asset_id}: fixture assets cannot enter a non-fixture project"
+            )
+        if not envelope.generated:
+            continue
+        source_id = envelope.derived_from or envelope.asset_id
+        receipt_path = validated.receipt_paths.get(source_id)
+        if receipt_path is None:
+            raise M5Blocked(f"{source_id}: rights are unresolved; source receipt is missing")
+        try:
+            source_receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            raise M5Blocked(f"{source_id}: rights are unresolved; source receipt is unreadable") from exc
+        rights = source_receipt.get("rights")
+        if not isinstance(rights, dict):
+            raise M5Blocked(f"{source_id}: rights are unresolved; a reviewed rights record is required")
+        try:
+            validate_request_rights(
+                {"license": rights.get("license_id"), "rights": rights}, Path(project)
+            )
+        except RightsError as exc:
+            raise M5Blocked(f"{source_id}: rights are unresolved: {exc}") from exc
+
+
 def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = None,
           narration_provider: Optional[str] = None,
           narration_audio: Optional[Path] = None,
-          narration_receipt: Optional[Path] = None) -> Dict[str, Any]:
+          narration_receipt: Optional[Path] = None,
+          media_manifest: Optional[Path] = None) -> Dict[str, Any]:
     if not project.is_dir():
         raise M5Blocked(f"project not found: {project}")
     config = _read_yaml(project / "project.yaml")
@@ -990,21 +1070,104 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
     except copy_review.CopyReviewRequired as exc:
         raise M5Blocked(f"copy review: {exc}") from None
 
+    validated_manifest = None
+    manifest_assets_by_line: Optional[Dict[str, Dict[str, Any]]] = None
+    if media_manifest is not None:
+        from contentops.media.media_paths import sanitize_embedded_paths
+
+        manifest_path = Path(media_manifest)
+        if not manifest_path.is_absolute():
+            manifest_path = ROOT / manifest_path
+        try:
+            validated_manifest = validate_manifest_file(
+                manifest_path, repo_root=ROOT, project_root=project
+            )
+            script_input = _load_script(project)
+            mapped = map_script_to_active_assets(
+                validated_manifest.manifest, script_input["lines"]
+            )
+            manifest_assets_by_line = {}
+            for line, envelope in mapped:
+                if _generated_visual_claim_conflict({
+                    "generated": envelope.generated,
+                    "evidence_capable": envelope.evidence_capable,
+                    "evidence_use": envelope.evidence_use,
+                    "claim_refs": envelope.claim_refs,
+                }):
+                    raise ManifestBridgeError(
+                        f"{line['id']}: generated visual cannot carry claim evidence"
+                    )
+                try:
+                    relative = validated_manifest.asset_paths[envelope.asset_id].resolve().relative_to(
+                        ROOT.resolve()
+                    ).as_posix()
+                except ValueError as exc:
+                    raise ManifestBridgeError(
+                        f"{envelope.asset_id}: Easel assets must lie inside the repository"
+                    ) from exc
+                manifest_assets_by_line[line["id"]] = {
+                    "asset_id": envelope.asset_id,
+                    "repo_path": relative,
+                    "sha256": envelope.sha256,
+                    "generated": envelope.generated,
+                    "evidence_capable": envelope.evidence_capable,
+                    "evidence_use": envelope.evidence_use,
+                    "claim_refs": list(envelope.claim_refs),
+                    "placement_id": envelope.placement_id,
+                }
+        except (ManifestBridgeError, M5Blocked) as exc:
+            reason = sanitize_embedded_paths(
+                str(exc), repo_root=ROOT, project_root=project
+            )
+            blocked = {
+                "schema": "contentops.m5-manifest-bridge/v1",
+                "status": "BLOCKED",
+                "mode": "MANIFEST_DRIVEN",
+                "provider_calls": 0,
+                "reason": reason,
+                "production_ready": False,
+                "human_review": "PENDING_FOUNDER_REVIEW",
+            }
+            _write_json(project / "receipts" / "m5-manifest-bridge.json", blocked)
+            raise M5Blocked(f"manifest bridge: {reason}") from None
+
+    if validated_manifest is not None and not skip_compose:
+        _assert_manifest_motion_rights_resolved(validated_manifest, project, config)
+
     bundle = stage_bundle(project, config)
     if bundle["state"] != "NOT_CONFIGURED":
         stages["bundle"] = bundle
     sources = stage_sources(project, config)
     stages["sources"] = {"count": sources["count"]}
-    media = stage_media_use(project, config, adapter=media_adapter)
+    if validated_manifest is not None:
+        media_settings = config.get("media_use")
+        if isinstance(media_settings, dict) and media_settings.get("enabled") is True:
+            raise M5Blocked(
+                "Manifest-driven M5 cannot invoke media-use; add prevalidated assets to the manifest explicitly"
+            )
+        media = {"state": "DISABLED_MANIFEST_MODE", "assets": {},
+                 "audio": {"bgm": None, "sfx": []}, "count": 0}
+        assets: Dict[str, Any] = {}
+        stages["manifest"] = {
+            "path": _logical_path(validated_manifest.manifest_path, project),
+            "sha256": validated_manifest.manifest_sha256,
+            "fingerprint": validated_manifest.fingerprint,
+        }
+    else:
+        media = stage_media_use(project, config, adapter=media_adapter)
+        assets = stage_assets(project, extra_assets=media["assets"])
     stages["media_use"] = {
         "state": media["state"], "count": media["count"],
         "bgm": bool(media["audio"]["bgm"]), "sfx": len(media["audio"]["sfx"]),
     }
-    assets = stage_assets(project, extra_assets=media["assets"])
-    stages["assets"] = {"count": len(assets)}
+    if validated_manifest is None:
+        stages["assets"] = {"count": len(assets)}
     claims = stage_claims(project, sources["artifacts"])
     stages["claims"] = {"count": claims["count"]}
-    script = stage_script(project, claims["ledger"], assets)
+    script = stage_script(
+        project, claims["ledger"], assets,
+        manifest_assets_by_line=manifest_assets_by_line,
+    )
     stages["script"] = {"lines": script["lines"]}
     provider = (narration_provider
                 or (config.get("narration") or {}).get("provider")
@@ -1017,8 +1180,54 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
                            "provider": narration.get("voice_provider", provider)}
     subtitles = stage_subtitles(project, script["script"], narration)
     stages["subtitles"] = {"cues": subtitles["cues"]}
-    storyboard = stage_storyboard(project, config, script["script"], narration, subtitles,
-                                  assets, media_audio=media["audio"])
+    if validated_manifest is not None:
+        try:
+            storyboard_payload, bridge_receipt = build_m5_storyboard(
+                validated_manifest,
+                script["script"]["lines"],
+                narration["lines"],
+                narration_duration_s=narration["duration_s"],
+                narration_path=project / narration["audio"],
+                subtitle_path=project / subtitles["path"],
+                project_root=project,
+                repo_root=ROOT,
+                size=(config.get("target") or {}).get("resolution", "1080x1920"),
+                voice_provider=(f"{narration.get('voice_provider', narration.get('engine', 'unknown'))}"
+                               f"/{narration.get('voice') or 'unspecified'}"),
+            )
+        except ManifestBridgeError as exc:
+            from contentops.media.media_paths import sanitize_embedded_paths
+            reason = sanitize_embedded_paths(str(exc), repo_root=ROOT, project_root=project)
+            bridge_receipt = {
+                "schema": "contentops.m5-manifest-bridge/v1",
+                "status": "BLOCKED",
+                "mode": "MANIFEST_DRIVEN",
+                "manifest_sha256": validated_manifest.manifest_sha256,
+                "manifest_fingerprint": validated_manifest.fingerprint,
+                "provider_calls": 0,
+                "reason": reason,
+                "production_ready": False,
+                "human_review": "PENDING_FOUNDER_REVIEW",
+            }
+            _write_json(project / "receipts" / "m5-manifest-bridge.json", bridge_receipt)
+            raise M5Blocked(f"manifest bridge: {reason}") from None
+        storyboard_path = project / "script" / "storyboard.json"
+        _write_json(storyboard_path, storyboard_payload)
+        bridge_receipt["storyboard_sha256"] = _sha256(storyboard_path)
+        bridge_receipt["storyboard"] = _logical_path(storyboard_path, project)
+        _write_json(project / "receipts" / "m5-manifest-bridge.json", bridge_receipt)
+        storyboard = {"storyboard": storyboard_payload, "shots": len(storyboard_payload["shots"]),
+                      "path": storyboard_path}
+        stages["manifest_bridge"] = {
+            "status": bridge_receipt["status"],
+            "placements": len(bridge_receipt["placements"]),
+            "manifest_fingerprint": bridge_receipt["manifest_fingerprint"],
+        }
+    else:
+        storyboard = stage_storyboard(
+            project, config, script["script"], narration, subtitles,
+            assets, media_audio=media["audio"],
+        )
     stages["storyboard"] = {
         "shots": storyboard["shots"],
         "bgm": "bgm" in storyboard["storyboard"],
@@ -1035,6 +1244,19 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
         qc = stage_qc(project, slug)
         stages["qc"] = {"overall": qc["report"].get("overall"),
                         "audio": qc["report"]["m5_checks"]["audio_stream"]}
+        if validated_manifest is not None:
+            bridge_path = project / "receipts" / "m5-manifest-bridge.json"
+            bridge_receipt = _read_json_or_none(bridge_path) or {}
+            video_path = project / "final" / f"{slug}.mp4"
+            qc_path = project / "receipts" / f"qc-report-{slug}.json"
+            bridge_receipt.update({
+                "output_video": f"project://final/{slug}.mp4",
+                "output_video_sha256": _sha256(video_path),
+                "qc_report": f"project://receipts/{qc_path.name}",
+                "qc_report_sha256": _sha256(qc_path),
+                "qc_overall": qc["report"].get("overall"),
+            })
+            _write_json(bridge_path, bridge_receipt)
         review = stage_review(project, slug, qc, bundle=stages.get("bundle"))
 
     run = {
@@ -1066,6 +1288,9 @@ def main() -> int:
     parser.add_argument("--narration-receipt", default=None,
                         help="with --narration-provider existing: a prior narration.json "
                              "carrying text_sha256 and per-line timings")
+    parser.add_argument("--media-manifest", default=None,
+                        help="explicit validated M4.5 media-manifest/v1; enables Manifest-driven M5 "
+                             "with script lines mapped by placement_id; never falls back to sources/assets.json")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
     project = Path(args.project)
@@ -1077,8 +1302,24 @@ def main() -> int:
                     narration_audio=(Path(args.narration_audio)
                                      if args.narration_audio else None),
                     narration_receipt=(Path(args.narration_receipt)
-                                       if args.narration_receipt else None))
+                                       if args.narration_receipt else None),
+                    media_manifest=(Path(args.media_manifest)
+                                    if args.media_manifest else None))
     except M5Blocked as exc:
+        if args.media_manifest:
+            bridge_path = project / "receipts" / "m5-manifest-bridge.json"
+            if not bridge_path.is_file():
+                from contentops.media.media_paths import sanitize_embedded_paths
+                reason = sanitize_embedded_paths(str(exc), repo_root=ROOT, project_root=project)
+                _write_json(bridge_path, {
+                    "schema": "contentops.m5-manifest-bridge/v1",
+                    "status": "BLOCKED",
+                    "mode": "MANIFEST_DRIVEN",
+                    "provider_calls": 0,
+                    "reason": reason,
+                    "production_ready": False,
+                    "human_review": "PENDING_FOUNDER_REVIEW",
+                })
         result = {"ok": False, "state": "BLOCKED", "reason": str(exc)}
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 4

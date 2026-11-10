@@ -1,0 +1,13 @@
+{
+  "schema": "contentops.m5-script/v1",
+  "language": "zh-CN",
+  "lines": [
+    {
+      "id": "l1",
+      "claim": null,
+      "narration": "P01 技术验收。",
+      "caption": "P01 技术桥接样片",
+      "placement_id": "P-01"
+    }
+  ]
+}

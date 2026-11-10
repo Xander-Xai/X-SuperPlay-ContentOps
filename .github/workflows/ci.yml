@@ -220,6 +220,11 @@ jobs:
       - name: Run M5 motion-integration tests
         run: python tests/test_m5_motion_integration.py
 
+      # Explicit M4.5 Timeline → M5/Easel adapter. Temporary generated fixtures
+      # only; no network, provider calls, or paid quota.
+      - name: Run M5 manifest bridge tests
+        run: python tests/test_m5_manifest_bridge.py
+
       # New raw provider IDs, balances and key fingerprints in tracked receipts
       # must fail. Existing exposure is baselined by field path only.
       - name: Run receipt-secret tests
@@ -252,6 +257,30 @@ jobs:
       # never enters the M5 timeline or grants publication by itself.
       - name: Run motion handoff contract tests
         run: python tests/test_motion_handoff.py
+
+      # The two Huashu engines into one shared motion record and then into the
+      # M4.5 manifest, the active timeline and the M5 storyboard. Offline: the
+      # clip bytes are local fixtures and the ffprobe facts are injected. The
+      # suite skips the transform chain when ffmpeg is absent rather than
+      # pretending a file was verified.
+      - name: Run Huashu motion manifest integration tests
+        run: python tests/test_huashu_motion_manifest.py
+
+      # The managed execution gate for the pinned Huashu Motion engine. No
+      # approval record, an approval for another skill, an approval that does
+      # not name the operation, an unknown issuer and an unusable runtime all
+      # leave the injected runner uncalled; only a matching approval plus a
+      # verified runtime calls it, and the module contains no code that builds
+      # an upstream command line.
+      - name: Run Huashu motion execution gate tests
+        run: python tests/test_huashu_execution_gate.py
+
+      # The prepared 15-25 s motion sample: storyboard, shot rhythm, the unified
+      # visual spec, the Huashu Motion project draft, the Art Motion specs and
+      # the M4.5 asset mapping. Design files only; nothing is rendered, so the
+      # sample is and stays RENDER_NOT_VERIFIED.
+      - name: Run Huashu motion sample design tests
+        run: python tests/test_huashu_motion_sample.py
 
       # The GZH runtime adapter locates and verifies a locally installed
       # workflow and describes its operations. It never executes, drafts or
@@ -353,6 +382,12 @@ jobs:
 
       - name: Run skill router capability regression tests
         run: python tests/test_skill_router_capabilities.py
+
+      # Original motion-frame generation and local toolchain profile contract.
+      # Unit tests never spawn ffmpeg or create output assets.
+      - name: Run native motion preview tests
+        run: python tests/test_native_motion_preview.py
+
 
       # Platform registry: data only. Proves the nine strategy platforms are
       # all mapped, that a split entry still belongs to one strategy platform,

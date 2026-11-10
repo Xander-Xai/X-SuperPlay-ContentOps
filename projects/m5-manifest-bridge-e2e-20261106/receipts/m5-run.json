@@ -1,0 +1,54 @@
+{
+  "schema": "contentops.m5-run/v1",
+  "project": "projects/m5-manifest-bridge-e2e-20261106",
+  "stages": {
+    "sources": {
+      "count": 1
+    },
+    "manifest": {
+      "path": "project://receipts/media-manifest.json",
+      "sha256": "904ce38b408d76348209cf874da4fcaaf78356f3f0d1eb14f2876c53ee1a3949",
+      "fingerprint": "986661c06e7352b515485b91443a551ab733af1ce6b36443d71c1133a072b0fd"
+    },
+    "media_use": {
+      "state": "DISABLED_MANIFEST_MODE",
+      "count": 0,
+      "bgm": false,
+      "sfx": 0
+    },
+    "claims": {
+      "count": 1
+    },
+    "script": {
+      "lines": 7
+    },
+    "narration": {
+      "duration_s": 37.411,
+      "engine": "windows_sapi",
+      "provider": "sapi"
+    },
+    "subtitles": {
+      "cues": 7
+    },
+    "manifest_bridge": {
+      "status": "OK",
+      "placements": 7,
+      "manifest_fingerprint": "986661c06e7352b515485b91443a551ab733af1ce6b36443d71c1133a072b0fd"
+    },
+    "storyboard": {
+      "shots": 7,
+      "bgm": false,
+      "sfx": 0
+    },
+    "compose": {
+      "state": "OK",
+      "video": "project://final/m5-manifest-bridge-e2e-20261106.mp4"
+    },
+    "qc": {
+      "overall": "WARN",
+      "audio": true
+    }
+  },
+  "production_ready": false,
+  "human_review": "PENDING_FOUNDER_REVIEW"
+}

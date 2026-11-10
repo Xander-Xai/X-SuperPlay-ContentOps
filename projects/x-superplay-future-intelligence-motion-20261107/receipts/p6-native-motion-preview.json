@@ -1,0 +1,194 @@
+{
+  "schema": "contentops.native-motion-preview/v1",
+  "project": "x-superplay-future-intelligence-motion-20261107",
+  "account": "x-superplay-future-intelligence",
+  "version": "0.1.0",
+  "renderer": {
+    "source": "scripts/native_motion_preview.py",
+    "source_sha256": "fd6ebd4bb9d6913c93b94f9a6312dea11ff21a3cbd8a3a2c5cdf4db46e333e8d",
+    "dependencies": {
+      "python": {
+        "version": "3.13.15",
+        "license": "PSF-2.0"
+      },
+      "pillow": {
+        "version": "12.3.0",
+        "license": "MIT-CMU"
+      },
+      "ffmpeg": {
+        "version": "8.1.1-essentials_build-www.gyan.dev",
+        "license": "GPL-3.0-or-later",
+        "binary": "C:\\Users\\Administrator\\AppData\\Local\\Microsoft\\WinGet\\Links\\ffmpeg.EXE",
+        "redistributed": false
+      }
+    }
+  },
+  "spec_sha256": "e7df8fc3d06ce5c1e922302cb4aca924b041cf412fcfb062b0c5fdc27d06c5f3",
+  "input_profile": {
+    "schema": "contentops.native-motion-preview/v1",
+    "project": "x-superplay-future-intelligence-motion-20261107",
+    "account": "x-superplay-future-intelligence",
+    "version": "0.1.0",
+    "resolution": "1080x1920",
+    "fps": 30,
+    "duration_s": 8.0,
+    "palette": {
+      "base": "#0F1117",
+      "accent": "#38BDF8",
+      "ink": "#F5F7FA",
+      "muted": "#8B95A5",
+      "surface": "#161A22",
+      "line": "#344151",
+      "warn": "#F07167",
+      "ok": "#58D6A0"
+    },
+    "story_beats": [
+      "found_but_not_authorized",
+      "request_grant_gate_runner",
+      "blocked_vs_theoretical_authorized_executed"
+    ],
+    "visual_purpose": "Mechanism illustration for this repository's Huashu adapter; no execution result is depicted.",
+    "claims_current_result": false,
+    "generated": true,
+    "evidence_capable": false
+  },
+  "output": {
+    "path": "project://assets/generated/p6-native-motion-preview.mp4",
+    "sha256": "67dfc6991f7a81ce067485ab5fae828493d1b8b91d8fbb734ba4694dde8be1b8",
+    "duration_s": 8.0,
+    "resolution": "1080x1920",
+    "fps": 30,
+    "frames": 240,
+    "technical_state": "TECHNICALLY_CHECKED",
+    "generated": true,
+    "evidence_capable": false,
+    "snapshots": [
+      {
+        "path": "project://assets/generated/p6-native-motion-preview-frame-01.png",
+        "sha256": "1677a5a6d1b1ef2b44460e2dee85d51954e90b20398e62e89526993b7ccf4a24",
+        "time_s": 0.7,
+        "generated": true,
+        "evidence_capable": false
+      },
+      {
+        "path": "project://assets/generated/p6-native-motion-preview-frame-02.png",
+        "sha256": "b736b939bdc09cc0f625b981495872729b08d61b9c144095843134f61ace9624",
+        "time_s": 4.0,
+        "generated": true,
+        "evidence_capable": false
+      },
+      {
+        "path": "project://assets/generated/p6-native-motion-preview-frame-03.png",
+        "sha256": "542c30f869814aa5af2816028812fdc0ff49851d1cb7bfa4ed332fbef59bbf31",
+        "time_s": 7.3,
+        "generated": true,
+        "evidence_capable": false
+      }
+    ]
+  },
+  "media_check": {
+    "schema": "contentops.motion-sample-check/v1",
+    "state": "TECHNICALLY_CHECKED",
+    "review_state": "PENDING_FOUNDER_REVIEW",
+    "path": "D:\\Temp\\AI-Agents\\claude\\minimax-video-provider\\projects\\x-superplay-future-intelligence-motion-20261107\\assets\\generated\\p6-native-motion-preview.mp4",
+    "sha256": "67dfc6991f7a81ce067485ab5fae828493d1b8b91d8fbb734ba4694dde8be1b8",
+    "duration_s": 8.0,
+    "width": 1080,
+    "height": 1920,
+    "fps": 30.0,
+    "frame_count": 240,
+    "audio": false,
+    "generated": true,
+    "evidence_capable": false,
+    "production_ready": false,
+    "publish_authorized": false,
+    "note": "technical check only; G6 and usability remain a human decision"
+  },
+  "rights": {
+    "scope": "P6-requested internal review only",
+    "third_party_assets": "NONE",
+    "external_licenses": [
+      "Python PSF-2.0",
+      "Pillow MIT-CMU",
+      "FFmpeg GPL-3.0-or-later local binary"
+    ],
+    "ffmpeg_redistributed": false,
+    "public_use_cleared": false
+  },
+  "route": {
+    "schema": "contentops.motion-route-result/v1",
+    "selected_skill": "contentops-native-motion",
+    "version": "0.1.0",
+    "dependencies": {
+      "python": {
+        "version": "3.13.15",
+        "license": "PSF-2.0"
+      },
+      "pillow": {
+        "version": "12.3.0",
+        "license": "MIT-CMU"
+      },
+      "ffmpeg": {
+        "version": "8.1.1-essentials_build-www.gyan.dev",
+        "license": "GPL-3.0-or-later",
+        "binary": "C:\\Users\\Administrator\\AppData\\Local\\Microsoft\\WinGet\\Links\\ffmpeg.EXE",
+        "redistributed": false
+      }
+    },
+    "installed": true,
+    "license_status": "LOCAL_ONLY_DECLARED",
+    "input_contract": "allowlisted project slug and checked-in account profile; no external inputs",
+    "output_contract": "silent generated MP4 plus digest-bound technical-check receipt",
+    "contentops_execution_authorized": false,
+    "contentops_grant_present": false,
+    "user_task_scope_authorized": true,
+    "execution_state": "EXECUTED_LOCAL_RENDER",
+    "pipeline_state": "M4_5_BLOCKED_AT_NATIVE_RECORD_SCHEMA",
+    "pipeline_blocker": "First M4.5 registration attempt rejected the genuine contentops.native-motion-preview/v1 receipt; existing register_motion_clip accepts only contentops.huashu-motion-asset/v1. No receipts were written and M5/Easel was not attempted.",
+    "account": "x-superplay-future-intelligence",
+    "project": "x-superplay-future-intelligence-motion-20261107",
+    "created_at": "2026-11-07T10:13:14+00:00",
+    "output": {
+      "path": "project://assets/generated/p6-native-motion-preview.mp4",
+      "sha256": "67dfc6991f7a81ce067485ab5fae828493d1b8b91d8fbb734ba4694dde8be1b8",
+      "duration_s": 8.0,
+      "resolution": "1080x1920",
+      "fps": 30,
+      "frames": 240,
+      "technical_state": "TECHNICALLY_CHECKED",
+      "generated": true,
+      "evidence_capable": false,
+      "snapshots": [
+        {
+          "path": "project://assets/generated/p6-native-motion-preview-frame-01.png",
+          "sha256": "1677a5a6d1b1ef2b44460e2dee85d51954e90b20398e62e89526993b7ccf4a24",
+          "time_s": 0.7,
+          "generated": true,
+          "evidence_capable": false
+        },
+        {
+          "path": "project://assets/generated/p6-native-motion-preview-frame-02.png",
+          "sha256": "b736b939bdc09cc0f625b981495872729b08d61b9c144095843134f61ace9624",
+          "time_s": 4.0,
+          "generated": true,
+          "evidence_capable": false
+        },
+        {
+          "path": "project://assets/generated/p6-native-motion-preview-frame-03.png",
+          "sha256": "542c30f869814aa5af2816028812fdc0ff49851d1cb7bfa4ed332fbef59bbf31",
+          "time_s": 7.3,
+          "generated": true,
+          "evidence_capable": false
+        }
+      ]
+    },
+    "execution_authorized": false,
+    "production_ready": false,
+    "publish_authorized": false
+  },
+  "execution_authorized": false,
+  "contentops_grant_present": false,
+  "production_ready": false,
+  "publish_authorized": false,
+  "created_at": "2026-11-07T10:13:14+00:00"
+}

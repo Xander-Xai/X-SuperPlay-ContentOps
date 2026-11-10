@@ -1,0 +1,84 @@
+{
+  "schema": "contentops.media-manifest/v1",
+  "notes": {
+    "fixture": true,
+    "fixture_notice": "TECHNICAL_SAMPLE_ONLY; authentic existing P01 clip, byte-identical; not a generated substitute.",
+    "source_clip_sha256": "411d764843d73d038a800ae4e48a1bafe8b22c214f95ece124aabe6daf84d882",
+    "production_ready": false,
+    "publish_authorized": false,
+    "human_review": "PENDING_FOUNDER_REVIEW"
+  },
+  "narration": {
+    "required": true,
+    "reason": "M5 narration is independently muxed; source clip policy is MUTE"
+  },
+  "scheduling": {},
+  "audio_postconditions": [
+    "p01-huashu-source-mute: AudioPolicy MUTE, derived asset, so it carries no audio stream"
+  ],
+  "timeline": [
+    {
+      "placement_id": "P-01",
+      "active_asset_id": "p01-huashu-source-mute",
+      "selection_reason": "MUTE-derived active clip; same P01 input bytes as verified source",
+      "superseded_asset_ids": [
+        "p01-huashu-source"
+      ]
+    }
+  ],
+  "counts": {
+    "assets": 2,
+    "placements": 1,
+    "by_modality": {
+      "VIDEO": 2
+    },
+    "by_gate_state": {
+      "p01-huashu-source": "PENDING_HUMAN_REVIEW",
+      "p01-huashu-source-mute": "PENDING_HUMAN_REVIEW"
+    }
+  },
+  "assets": [
+    {
+      "asset_id": "p01-huashu-source",
+      "modality": "VIDEO",
+      "placement_id": "P-01",
+      "path": "project://assets/generated/p01-huashu.mp4",
+      "sha256": "411d764843d73d038a800ae4e48a1bafe8b22c214f95ece124aabe6daf84d882",
+      "receipt_ref": "p01-huashu.mp4.receipt.json",
+      "fingerprint": "4f456c00d7c6ac46c4f72524287062d6a93cb36c2170594c7bf09e2f27e02f6c",
+      "asset_kind": "GENERATED_VIDEO",
+      "generated": true,
+      "evidence_capable": false,
+      "evidence_use": "VISUAL_SUPPORT",
+      "claim_refs": [],
+      "technical_status": "PASS_TECHNICAL",
+      "human_review": "PENDING_FOUNDER_REVIEW",
+      "production_ready": false,
+      "audio_policy": null,
+      "fallback": {},
+      "derived_from": null,
+      "transform_receipt_ref": null
+    },
+    {
+      "asset_id": "p01-huashu-source-mute",
+      "modality": "VIDEO",
+      "placement_id": "P-01",
+      "path": "project://assets/processed/p01-huashu-mute.mp4",
+      "sha256": "d9ec425f15aaa7165116f26cc43c8efdfb9cdbc622f3a652e361f6e4160e367b",
+      "receipt_ref": "p01-huashu.mp4.receipt.json",
+      "fingerprint": "4f456c00d7c6ac46c4f72524287062d6a93cb36c2170594c7bf09e2f27e02f6c",
+      "asset_kind": "GENERATED_VIDEO",
+      "generated": true,
+      "evidence_capable": false,
+      "evidence_use": "VISUAL_SUPPORT",
+      "claim_refs": [],
+      "technical_status": "PASS_TECHNICAL",
+      "human_review": "PENDING_FOUNDER_REVIEW",
+      "production_ready": false,
+      "audio_policy": "MUTE",
+      "fallback": {},
+      "derived_from": "p01-huashu-source",
+      "transform_receipt_ref": "p01-huashu-mute.mp4.transform.json"
+    }
+  ]
+}

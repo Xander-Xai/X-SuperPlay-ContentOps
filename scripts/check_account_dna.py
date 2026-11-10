@@ -64,8 +64,6 @@ from skill_route import (
     CATALOG_ROOTS,
     SHARED_SKILL_ROOT,
     _front_matter,
-    catalog,
-    shared_skill,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -74,6 +72,8 @@ ACCOUNTS = ROOT / "config" / "accounts"
 sys.path.insert(0, str(ROOT / "src"))
 # The mode table and the composition rule live beside the QC that enforces
 # them, so the DNA check cannot hold a second, drifting copy.
+from contentops.accounts import VIDEO, X, UNKNOWN, account_kind  # noqa: E402
+from contentops.publish.x_account import check_x_account  # noqa: E402
 from contentops.media.claim_coverage import (  # noqa: E402
     EVIDENCE_MODES,
     composition_policy_errors,
@@ -132,16 +132,22 @@ def check_account(
     root: Path,
     warnings: Optional[List[str]] = None,
 ) -> List[str]:
-    """Every failure for one account DNA. Empty list means the file is sound.
+    """Dispatch one document to its owned schema validator; refuse unknown schemas."""
+    kind = account_kind(dna)
+    if kind == X:
+        return check_x_account(dna, root, warnings)
+    if kind == UNKNOWN:
+        slug = str(dna.get("slug") or "<no slug>")
+        return [f"[{slug}] unsupported account schema {dna.get('schema')!r}"]
+    return _check_video_account(dna, root, warnings)
 
-    ``warnings`` is an optional sink for non-fatal findings that the caller
-    should surface but must not fail on. It is a list the caller owns, so the
-    return type stays a plain list of failures.
 
-    Warnings reach the caller prefixed with the account slug, the same way
-    failures are. A warning that does not name its account is useless when the
-    check runs over both accounts and prints one flat list.
-    """
+def _check_video_account(
+    dna: Dict[str, Any],
+    root: Path,
+    warnings: Optional[List[str]] = None,
+) -> List[str]:
+    """Apply the video-only DNA contract to a v2 account."""
     failures: List[str] = []
     warnings = warnings if warnings is not None else []
     local_warnings: List[str] = []
@@ -387,7 +393,7 @@ def check_account(
     render = dna.get("render") or {}
     if render.get("engine") != "easel":
         failures.append(f"render.engine is {render.get('engine')!r}, expected 'easel'")
-    easel_yaml = ROOT / "projects" / slug / "easel.yaml"
+    easel_yaml = Path(root) / "projects" / slug / "easel.yaml"
     if not easel_yaml.is_file():
         failures.append(f"missing generated config {easel_yaml.relative_to(ROOT).as_posix()}")
     else:
@@ -621,7 +627,10 @@ def _check_skill_route(
     """
     failures: List[str] = []
     roots = _catalog_roots()
-    catalog_names = {item["name"] for item in catalog()[0]}
+    external_catalog_roots = [
+        candidate for candidate in CATALOG_ROOTS
+        if candidate != root / "skills" and candidate.is_dir()
+    ]
     if not roots:
         warnings.append(
             "no skill catalog root is present on this checkout; skill membership "
@@ -643,6 +652,20 @@ def _check_skill_route(
 
         declared = "path_base" in entry
         base = entry.get("path_base", DEFAULT_PATH_BASE)
+        optional = entry.get("optional", False)
+        if not isinstance(optional, bool):
+            failures.append(
+                f"skill_route entry {step!r} has optional {optional!r}; expected a boolean"
+            )
+            optional = False
+        if optional and base != "shared":
+            failures.append(
+                f"skill_route entry {step!r} marks a non-shared capability optional"
+            )
+        if optional and (step, skill) != ("broll_finder", "find-broll"):
+            failures.append(
+                f"skill_route entry {step!r} is not approved for optional resolution"
+            )
         if base not in PATH_BASES:
             failures.append(
                 f"skill_route entry {step!r} has path_base {base!r}, "
@@ -670,7 +693,7 @@ def _check_skill_route(
                 failures.append(
                     f"skill_route entry {step!r} names skill {skill!r}, which is "
                     f"not present under any catalog root "
-                    f"({', '.join(r.relative_to(root).as_posix() for r in roots)})"
+                    f"({', '.join(r.as_posix() for r in roots)})"
                 )
                 if not declared:
                     warnings.append(
@@ -716,22 +739,44 @@ def _check_skill_route(
                     f"skill_route entry {step!r} script {script!r} does not exist "
                     f"relative to the repository root"
                 )
-            if declared and skill in catalog_names:
+            if declared and any(
+                (catalog_root / skill / "SKILL.md").is_file()
+                for catalog_root in external_catalog_roots
+            ):
                 warnings.append(
                     f"skill_route entry {step!r} uses path_base 'repo' but "
                     f"skill {skill!r} is also in the catalog; confirm the base"
                 )
         else:  # shared
             if not shared_present:
-                # Same rule as an absent catalog root: the store is host-local
-                # (a CI runner has no ~/.agents/skills), so its absence is a
-                # warning about what was not verified, not a DNA failure.
+                if optional:
+                    warnings.append(
+                        f"skill_route entry {step!r} skill {skill!r}: "
+                        "OPTIONAL_CAPABILITY_UNAVAILABLE (shared store absent; "
+                        "availability cannot be verified)"
+                    )
+                # The shared store is host-local; required shared routes are not
+                # marked broken until we can distinguish absence from bad metadata.
                 continue
-            skill_dir = shared_skill(skill)
-            if skill_dir is None:
+            skill_dir = SHARED_SKILL_ROOT / skill
+            if not skill_dir.is_dir() or not (skill_dir / "SKILL.md").is_file():
+                if optional:
+                    warnings.append(
+                        f"skill_route entry {step!r} skill {skill!r}: "
+                        "OPTIONAL_CAPABILITY_UNAVAILABLE"
+                    )
+                    continue
                 failures.append(
-                    f"skill_route entry {step!r} names skill {skill!r}, which is "
-                    f"not present in the shared skill store {SHARED_SKILL_ROOT}"
+                    f"skill_route entry {step!r} names skill {skill!r}, which "
+                    f"is not present in the shared skill store {SHARED_SKILL_ROOT}"
+                )
+                continue
+            try:
+                skill_dir.resolve().relative_to(SHARED_SKILL_ROOT.resolve())
+            except ValueError:
+                failures.append(
+                    f"skill_route entry {step!r} names skill {skill!r}, which "
+                    "resolves outside the shared skill store"
                 )
                 continue
             meta = _front_matter(
@@ -748,13 +793,13 @@ def _check_skill_route(
             except ValueError:
                 failures.append(
                     f"skill_route entry {step!r} script {script!r} resolves "
-                    f"outside the shared skill store"
+                    "outside the shared skill store"
                 )
                 continue
             if not script_path.exists():
                 failures.append(
                     f"skill_route entry {step!r} script {script!r} does not exist "
-                    f"relative to the shared skill store"
+                    "relative to the shared skill store"
                 )
     return failures
 
@@ -784,6 +829,10 @@ def _check_prompt(dna: Dict[str, Any], palette: Dict[str, Any], root: Path) -> L
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--json", action="store_true")
+    parser.add_argument(
+        "--schema", choices=("all", "video", "x"), default="all",
+        help="validate every supported schema, or only video / X accounts",
+    )
     args = parser.parse_args()
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
@@ -796,18 +845,69 @@ def main() -> int:
     failures: List[str] = []
     warnings: List[str] = []
     checked: List[str] = []
+    counts = {VIDEO: 0, X: 0, UNKNOWN: 0}
+    schema_failures = {VIDEO: 0, X: 0, UNKNOWN: 0}
+    requested_kind = {"video": VIDEO, "x": X}.get(args.schema)
+
     for path in paths:
-        dna = json.loads(path.read_text(encoding="utf-8"))
-        checked.append(str(dna.get("slug") or path.stem))
-        failures.extend(check_account(dna, ROOT, warnings))
+        slug = path.stem
+        try:
+            dna = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            failures.append(f"[{slug}] cannot read account JSON: {exc}")
+            schema_failures[UNKNOWN] += 1
+            counts[UNKNOWN] += 1
+            continue
+        if not isinstance(dna, dict):
+            failures.append(f"[{slug}] account document must be a JSON object")
+            schema_failures[UNKNOWN] += 1
+            counts[UNKNOWN] += 1
+            continue
+
+        kind = account_kind(dna)
+        counts[kind] += 1
+        account_slug = str(dna.get("slug") or path.stem)
+        if kind == UNKNOWN:
+            checked.append(account_slug)
+            failures.append(
+                f"[{account_slug}] unsupported account schema {dna.get('schema')!r}"
+            )
+            schema_failures[UNKNOWN] += 1
+            continue
+        if requested_kind is not None and kind != requested_kind:
+            continue
+
+        checked.append(account_slug)
+        current_failures = check_account(dna, ROOT, warnings)
+        failures.extend(current_failures)
+        if current_failures:
+            schema_failures[kind] += 1
 
     # The catalog-absent warning is raised once per account; report it once.
     warnings = list(dict.fromkeys(warnings))
+    schemas = {}
+    for kind, label in ((VIDEO, "video"), (X, "x"), (UNKNOWN, "unknown")):
+        if kind == UNKNOWN:
+            status = "UNSUPPORTED" if counts[kind] else "NOT_PRESENT"
+        elif requested_kind is not None and kind != requested_kind:
+            status = "NOT_REQUESTED"
+        elif counts[kind] == 0:
+            status = "NOT_PRESENT"
+        else:
+            status = "FAIL" if schema_failures[kind] else "PASS"
+        schemas[label] = {
+            "schema": {VIDEO: "contentops.account-dna/v2",
+                       X: "contentops.x-account/v1",
+                       UNKNOWN: "unknown"}[kind],
+            "count": counts[kind],
+            "status": status,
+        }
 
     if args.json:
         print(json.dumps({
             "schema": "contentops.account-dna-check/v1",
             "accounts": checked,
+            "schemas": schemas,
             "overall": "FAIL" if failures else "PASS",
             "failures": failures,
             "warnings": warnings,
@@ -820,10 +920,16 @@ def main() -> int:
             print(f"  [FAIL] {failure}")
         for warning in warnings:
             print(f"  [WARN] {warning}")
+        print("Schema status: " + ", ".join(
+            f"{name}={value['status']} ({value['count']})"
+            for name, value in schemas.items()))
         print(f"\n{len(failures)} account DNA failure(s)")
         return 1
     for warning in warnings:
         print(f"  [WARN] {warning}")
+    print("Schema status: " + ", ".join(
+        f"{name}={value['status']} ({value['count']})"
+        for name, value in schemas.items()))
     print(f"[account_dna] PASS ({len(checked)} accounts: {', '.join(checked)})")
     return 0
 

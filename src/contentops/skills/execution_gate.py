@@ -251,6 +251,7 @@ def execute(request: ExecutionRequest, *,
                           "stage": request.stage, "operations": list(request.operations)},
                 "decision": decision.as_dict(),
                 "execution": execution,
+                "consumed_use": spent["use"],
                 "consumed_at": spent["consumed_at"],
             })
             # Exclusive create: an existing receipt is never overwritten.

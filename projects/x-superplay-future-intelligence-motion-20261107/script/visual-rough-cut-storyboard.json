@@ -1,0 +1,176 @@
+{
+  "size": "1080x1920",
+  "image_motion": "static",
+  "pad_mode": "trim",
+  "shots": [
+    {
+      "shot_id": "S01",
+      "video": "projects/x-superplay-future-intelligence-motion-20261107/assets/generated/p6-native-motion-preview.mp4",
+      "image": "projects/x-superplay-future-intelligence-motion-20261107/assets/generated/p6-native-motion-preview.mp4",
+      "source": "projects/x-superplay-future-intelligence-motion-20261107/assets/generated/p6-native-motion-preview.mp4",
+      "source_type": "generated",
+      "duration": 7.0,
+      "duration_s": 7.0,
+      "motion": "static",
+      "audio_mode": "dub",
+      "caption": "在这套 Huashu 适配器里，运行时可信，为什么 Agent 仍然不能执行？",
+      "media_provenance": {
+        "asset_id": "native-motion-preview",
+        "sha256": "67dfc6991f7a81ce067485ab5fae828493d1b8b91d8fbb734ba4694dde8be1b8",
+        "generated": true,
+        "evidence_capable": false,
+        "use": "visual support only"
+      }
+    },
+    {
+      "shot_id": "S02",
+      "image": "projects/x-superplay-future-intelligence-motion-20261107/assets/generated/rough-cut-cards/s02-draft-card.png",
+      "source": "projects/x-superplay-future-intelligence-motion-20261107/assets/generated/rough-cut-cards/s02-draft-card.png",
+      "source_type": "generated",
+      "duration": 9.0,
+      "duration_s": 9.0,
+      "motion": "static",
+      "caption": "只读检查返回 TRUSTED_RUNTIME、v0.3.1 和固定 commit；这不代表具体操作获准。",
+      "claim": "CL-07",
+      "media_provenance": {
+        "generated": true,
+        "evidence_capable": false,
+        "status": "DRAFT_VISUAL_SUPPORT_ONLY"
+      }
+    },
+    {
+      "shot_id": "S03",
+      "image": "projects/x-superplay-future-intelligence-motion-20261107/assets/generated/rough-cut-cards/s03-draft-card.png",
+      "source": "projects/x-superplay-future-intelligence-motion-20261107/assets/generated/rough-cut-cards/s03-draft-card.png",
+      "source_type": "generated",
+      "duration": 10.0,
+      "duration_s": 10.0,
+      "motion": "static",
+      "caption": "解析只说明能力可定位：这里是 RESOLVABLE，execution_authorized 仍为 false；找得到，不等于能执行。",
+      "claim": "CL-01",
+      "media_provenance": {
+        "generated": true,
+        "evidence_capable": false,
+        "status": "DRAFT_VISUAL_SUPPORT_ONLY"
+      }
+    },
+    {
+      "shot_id": "S04",
+      "image": "projects/x-superplay-future-intelligence-motion-20261107/assets/generated/rough-cut-cards/s04-draft-card.png",
+      "source": "projects/x-superplay-future-intelligence-motion-20261107/assets/generated/rough-cut-cards/s04-draft-card.png",
+      "source_type": "generated",
+      "duration": 11.0,
+      "duration_s": 11.0,
+      "motion": "static",
+      "caption": "请求会记录账号、流水线、阶段、技能版本、执行主体和 request ID；受管 Huashu adapter 每次只允许一个操作。",
+      "claim": "CL-02, CL-03",
+      "media_provenance": {
+        "generated": true,
+        "evidence_capable": false,
+        "status": "DRAFT_VISUAL_SUPPORT_ONLY"
+      }
+    },
+    {
+      "shot_id": "S05",
+      "image": "projects/x-superplay-future-intelligence-motion-20261107/assets/generated/rough-cut-cards/s05-draft-card.png",
+      "source": "projects/x-superplay-future-intelligence-motion-20261107/assets/generated/rough-cut-cards/s05-draft-card.png",
+      "source_type": "generated",
+      "duration": 11.0,
+      "duration_s": 11.0,
+      "motion": "static",
+      "caption": "Grant 绑定账号、技能版本、有效期和额度；issuer 要匹配本机 Owner 名单，但这不是身份认证，账号不能写星号。",
+      "claim": "CL-04, CL-05",
+      "media_provenance": {
+        "generated": true,
+        "evidence_capable": false,
+        "status": "DRAFT_VISUAL_SUPPORT_ONLY"
+      }
+    },
+    {
+      "shot_id": "S06",
+      "image": "projects/x-superplay-future-intelligence-motion-20261107/assets/generated/rough-cut-cards/s06-draft-card.png",
+      "source": "projects/x-superplay-future-intelligence-motion-20261107/assets/generated/rough-cut-cards/s06-draft-card.png",
+      "source_type": "generated",
+      "duration": 11.0,
+      "duration_s": 11.0,
+      "motion": "static",
+      "caption": "门禁先加载 Grant、评估请求，再重读批准；确认没变化、没撤销后，才消费一次额度。单个请求只允许一个操作。",
+      "claim": "CL-11, CL-02",
+      "media_provenance": {
+        "generated": true,
+        "evidence_capable": false,
+        "status": "DRAFT_VISUAL_SUPPORT_ONLY"
+      }
+    },
+    {
+      "shot_id": "S07",
+      "image": "projects/x-superplay-future-intelligence-motion-20261107/assets/generated/rough-cut-cards/s07-draft-card.png",
+      "source": "projects/x-superplay-future-intelligence-motion-20261107/assets/generated/rough-cut-cards/s07-draft-card.png",
+      "source_type": "generated",
+      "duration": 10.0,
+      "duration_s": 10.0,
+      "motion": "static",
+      "caption": "在这套 Huashu 执行路径里，额度消耗前会先做本地 runner 预检；executor 内还会复核 runtime。后续执行失败仍可能已消费额度。",
+      "claim": "CL-06, CL-11",
+      "media_provenance": {
+        "generated": true,
+        "evidence_capable": false,
+        "status": "DRAFT_VISUAL_SUPPORT_ONLY"
+      }
+    },
+    {
+      "shot_id": "S08",
+      "image": "projects/x-superplay-future-intelligence-motion-20261107/assets/generated/rough-cut-cards/s08-draft-card.png",
+      "source": "projects/x-superplay-future-intelligence-motion-20261107/assets/generated/rough-cut-cards/s08-draft-card.png",
+      "source_type": "generated",
+      "duration": 11.0,
+      "duration_s": 11.0,
+      "motion": "static",
+      "caption": "11 月 7 日那次 motion-check 记录显示：正式 Grant 缺失，门禁返回 BLOCKED / NO_TRUSTED_GRANT，执行未开始、回执为空。",
+      "claim": "CL-08",
+      "media_provenance": {
+        "generated": true,
+        "evidence_capable": false,
+        "status": "DRAFT_VISUAL_SUPPORT_ONLY"
+      }
+    },
+    {
+      "shot_id": "S09",
+      "image": "projects/x-superplay-future-intelligence-motion-20261107/assets/generated/rough-cut-cards/s09-draft-card.png",
+      "source": "projects/x-superplay-future-intelligence-motion-20261107/assets/generated/rough-cut-cards/s09-draft-card.png",
+      "source_type": "generated",
+      "duration": 10.0,
+      "duration_s": 10.0,
+      "motion": "static",
+      "caption": "测试记录是 23/23 PASS；源码写明用 fake runtime 和 mock Runner，不渲染。这不是 Huashu 实跑。",
+      "claim": "CL-09",
+      "media_provenance": {
+        "generated": true,
+        "evidence_capable": false,
+        "status": "DRAFT_VISUAL_SUPPORT_ONLY"
+      }
+    },
+    {
+      "shot_id": "S10",
+      "image": "projects/x-superplay-future-intelligence-motion-20261107/assets/generated/rough-cut-cards/s10-draft-card.png",
+      "source": "projects/x-superplay-future-intelligence-motion-20261107/assets/generated/rough-cut-cards/s10-draft-card.png",
+      "source_type": "generated",
+      "duration": 10.0,
+      "duration_s": 10.0,
+      "motion": "static",
+      "caption": "P01 回执记 4 秒 generated fixture、provider_calls=0、QC WARN；它不证明受管 Huashu 实跑。",
+      "claim": "CL-10",
+      "media_provenance": {
+        "generated": true,
+        "evidence_capable": false,
+        "status": "DRAFT_VISUAL_SUPPORT_ONLY"
+      }
+    }
+  ],
+  "engine": "easel",
+  "technical_sample_status": "VISUAL_ROUGH_CUT_ONLY",
+  "copy_review": "PENDING_OWNER",
+  "narration": "",
+  "production_ready": false,
+  "publish_authorized": false
+}

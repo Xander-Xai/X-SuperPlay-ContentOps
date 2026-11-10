@@ -383,7 +383,9 @@ def _discovery_state(entry: Dict[str, Any]) -> Dict[str, Any]:
     discovery = entry.get("discovery") or {}
     root = discovery.get("root") or "shared"
     directory = discovery.get("dir") or entry.get("id") or ""
-    if root == "shared":
+    if root == "toolchain":
+        path = Path(str(discovery.get("path") or ""))
+    elif root == "shared":
         path = SHARED_SKILL_ROOT / directory
     elif root == "catalog":
         path = None
@@ -497,6 +499,9 @@ def resolve_capability(name: str, *, account: Optional[str] = None,
                 "provider": entry.get("provider"),
                 "verification": entry.get("verification"),
                 "execution": entry.get("execution"),
+                "contract": entry.get("contract"),
+                "runtime": entry.get("runtime") or {},
+                "verification": entry.get("verification"),
             }
         return payload
 

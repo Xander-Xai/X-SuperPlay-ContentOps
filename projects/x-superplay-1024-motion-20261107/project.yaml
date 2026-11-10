@@ -1,0 +1,31 @@
+id: x-superplay-1024-motion-20261107
+account_slug: x-superplay-1024
+title: "1024 Motion production project"
+created_at: "2026-11-06T19:32:57Z"
+
+source_refs: []
+
+content_type: tech_review
+topic_cluster: ""
+
+target:
+  platform_primary: douyin
+  aspect_ratio: "9:16"
+  resolution: "1080x1920"
+  duration_target_sec: 50
+
+evidence_policy:
+  real_assets_first: true
+  ai_visuals_allowed: auxiliary_only
+  fabricated_claims: forbidden
+
+# Enforced by scripts/check_script_quality.py before any render. A project that
+# does not declare this is not gated, which is how the pre-gate projects stay
+# out of the way while every new one is checked.
+quality_gate: enforced
+
+status: initialized
+
+outputs:
+  final_video: ""
+  qc_report: ""

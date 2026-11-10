@@ -9,13 +9,15 @@ translation_status: synced
 [English](RUNBOOK.md) | [简体中文](RUNBOOK.zh-CN.md)
 
 > 真实可执行命令。从实际脚本行为推导，非假设。
-> 最后更新：2026-10-31
+> 最后更新：2026-11-06
 
 ## 0. 环境检查
 
 ```powershell
 python scripts/doctor.py
 ```
+
+仓库布局检查覆盖必需的源码、运行时与文档目录；生成视频位于项目目录或本次调用的临时目录，不要求仓库根目录存在 ```outputs/```。
 
 ## 1. 引导（首次或清理后）
 
@@ -120,6 +122,61 @@ python scripts\m5_production.py projects\my-video
 
 本接线 PR 叠加在 M5 PR #68 上，真实外部调用还需要 PR #64。
 CI 使用离线合成测试数据，不运行第三方 Provider。
+
+### Motion 渲染器执行暂停
+
+`scripts/build_motion_film.py` 不再使用与主机绑定的共享 skill 绝对路径。运行时基线固定 `huashu-art-motion` v1.2.0、commit `8f0a349a18b4bdf802b8d58715a2259c3e1ce709`；唯一接受的位置是 `D:\Toolchains\huashu-art-motion\1.2.0`，解析器会检查官方 Git remote、精确 HEAD、干净工作树、入口文件与许可证。`--runtime-root` 用于指定该配置运行时；旧 `--engine` 参数不能替换其他渲染器。
+
+基线明确记录 `execution_authorized: false`。ADR-014 只允许受控能力注册，**不授予执行权限**，而且该渲染器尚未接入受管执行门。因此即使之后安装匹配的检出，当前构建命令仍会返回 `BLOCKED`。不得安装或运行渲染器来绕过此暂停。本次接入没有安装或调用 Huashu Motion CLI、模型、浏览器或渲染器。
+
+校验器现在会报出具体原因，而不是一个笼统错误。`RUNTIME_ROOT_MISSING`、`ENTRYPOINT_MISSING`、`ENTRYPOINT_ESCAPED_RUNTIME_ROOT`、`LICENSE_MISSING`、`LICENSE_ESCAPED_RUNTIME_ROOT`、`CLIP_SCHEMA_MISSING`、`FONT_REGISTRY_MISSING`、`CJK_FONT_MISSING`、`FONT_REGISTRY_INVALID`、`CJK_FONT_UNREGISTERED`、`BASELINE_MISMATCH`、`COMMIT_MISMATCH`、`UPSTREAM_MISMATCH`、`DIRTY_RUNTIME` 各自独立。在本机上，配置根目录不存在，因此入口文件和许可证同时缺失，版本核对根本走不到。
+
+### Huashu Motion 适配层（只描述与校验，绝不执行）
+
+```bash
+# 核对固定运行时的身份，不运行 om。
+python scripts/huashu_motion_adapter.py status
+
+# 描述一个上游操作，不调用它。
+python scripts/huashu_motion_adapter.py plan render
+
+# 为一个操作写一份「已阻止 / 未执行」回执。
+python scripts/huashu_motion_adapter.py request render --project projects/huashu-motion-sample
+```
+
+固定版本记录在 `runtime/huashu-motion.lock.json`：`huashu-motion` v0.3.1、commit `52467f99c602b76ba86d511d37acdfe93fa1e16e`、入口 `skills/huashu-motion/bin/om`、调度器 `cli/om.js`、运行时根目录 `D:/Toolchains/huashu-motion/0.3.1`。该锁记录了从固定 commit 核实的上游 `om check` / `om still` / `om render` / `om qa` 语法和许可证。`om render --silent` 只会抑制缺少配乐的警告，不能证明导出文件没有音轨。实际渲染后以及执行 `AudioPolicy` 转换后，都必须用 ffprobe 检查音轨。
+
+`status` 返回 `TRUSTED_RUNTIME` 或一个 `BLOCKED` 原因，绝不启动 `om`。`request` 写出 `receipts/huashu-motion-<operation>.json`，其中 `execution_status: NOT_EXECUTED`、`runner_invoked: false`。
+
+固定版 `skills/huashu-motion/references/contract.md` 要求 composition root 声明 `data-composition-id`、`data-width`、`data-height`；paused GSAP timeline 注册到 `window.__timelines[composition-id]`；scene label 使用 `scene:<id>`。`data-om-id` 只标记可指向区域。当前 CSS keyframes 草稿缺少这些结构，已明确标为 `NOT_HUASHU_MOTION_COMPATIBLE`；不得对它运行 `om`。`om render --silent` 不能替代 ffprobe 的实际音轨证据。
+
+### 两个 Huashu 引擎的受管执行
+
+`src/contentops/skills/huashu_execution.py` 按 ADR-010 要求的顺序，把一个上游操作绑定到一份批准：先核对运行时，再读批准记录，再做判定，再重读一次，再消费一次使用额度，然后执行，然后写回执。
+
+```bash
+# 运行时不可用时，在批准记录被读取之前就拒绝。
+# 该检查不消费任何使用额度，也不启动任何进程。
+python scripts/huashu_execute.py check projects/huashu-motion-sample \
+    --operation render --account x-superplay-1024
+```
+
+项目里没有 `receipts/skill-execution-approval.json` 时，门返回 `BLOCKED`，执行器一次都不会被调用。运行时不可用时同样返回 `BLOCKED`，而且**不会消费掉一次已批准的使用额度**。本模块不含任何拼接 `om` 命令行的代码：上游调用是注入进来的，缺注入时直接拒绝，而不是替它编一条命令。
+
+真实渲染的授权申请见 `docs/governance/HUASHU-EXECUTION-AUTHORIZATION-REQUEST.md`。那是申请，不是授权；在 Owner 签署之前，两个引擎都保持 `BLOCKED / NOT_EXECUTED`。
+
+### 已准备好的动效样片
+
+`projects/huashu-motion-sample` 存放的是一支 21 秒样片的**设计**：分镜与节奏表、统一视觉规范、六份 Art Motion 片段 Spec、Huashu Motion HTML 概念草稿，以及 M4.5 素材映射。第一镜 Art Motion 为 4.0 秒，后五镜各 3.4 秒；这准备了一个 4–8 秒样片候选，没有放宽固定的 `motion_sample.py` 门，其余镜头走普通片段门。Huashu Motion HTML 在按原生契约重写前仍不兼容。没有渲染任何一帧，因此状态仍是 `RENDER_NOT_VERIFIED`，不是成片。离线验收用例：
+
+Manifest 驱动的 M5 会在真实合成前检查生成动效权利。`UNRESOLVED` 或缺少审查材料会阻断；只有回执标记为 fixture 且 `project.yaml` 明确设为 `fixture: true` 时，夹具资产才可用于隔离测试。Fixture 运行不是生产证据，也不是发布批准。`--skip-compose` 只代表准备/预检，不代表权利已清或可发布。
+
+```bash
+python tests/test_huashu_motion_sample.py
+python tests/test_huashu_motion_manifest.py
+python tests/test_huashu_execution_gate.py
+```
+
 
 ## 5.2 Bundle handoff 与双线
 

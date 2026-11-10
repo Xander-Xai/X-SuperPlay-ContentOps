@@ -34,8 +34,11 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
+import re
 import sys
+import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -44,8 +47,337 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 from process_utils import hidden_run, python_executable  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_ENGINE = r"C:\Users\Administrator\.agents\skills\huashu-art-motion\scripts\engine\render.py"
+ART_MOTION_REPOSITORY = "https://github.com/alchaincyf/huashu-art-motion"
+ART_MOTION_VERSION = "1.2.0"
+ART_MOTION_COMMIT = "8f0a349a18b4bdf802b8d58715a2259c3e1ce709"
+ART_MOTION_ENTRYPOINT = "scripts/engine/render.py"
+ART_MOTION_BASELINE = ROOT / "runtime" / "huashu-art-motion-baseline.json"
+DEFAULT_ART_MOTION_RUNTIME = Path("D:/Toolchains/huashu-art-motion/1.2.0")
 PAD_S = 0.4
+
+
+class MotionExecutionBlocked(SystemExit):
+    """The external renderer was refused before any project mutation or render."""
+
+
+def _normalized_repository(value: str) -> str:
+    value = (value or "").strip().removesuffix(".git").rstrip("/").lower()
+    if value.startswith("git@github.com:"):
+        value = "https://github.com/" + value.split(":", 1)[1].removesuffix(".git")
+    elif value.startswith("ssh://git@github.com/"):
+        value = "https://github.com/" + value.split("github.com/", 1)[1].removesuffix(".git")
+    return value
+
+
+def _default_git_probe(root: Path, *args: str) -> tuple[int, str]:
+    proc = hidden_run(["git", "-C", str(root), *args], timeout=30)
+    return proc.returncode, (proc.stdout or "").strip()
+
+
+def verify_art_motion_runtime(runtime_root: Path, *, lock: dict | None = None,
+                              lock_path: Path = ART_MOTION_BASELINE,
+                              git_probe=None) -> dict:
+    """Verify a clean checkout against the exact reviewed art-motion baseline.
+
+    This verifies bytes' provenance only. Execution authority is checked separately;
+    the current ADR permits registration but explicitly does not permit execution.
+    """
+    if lock is None:
+        try:
+            lock = json.loads(lock_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            return {"status": "BLOCKED", "reason": f"BASELINE_UNAVAILABLE: {exc}"}
+
+    expected = {
+        "schema": "contentops.huashu-art-motion-baseline/v1",
+        "capability": "huashu-art-motion",
+        "repository": f"{ART_MOTION_REPOSITORY}.git",
+        "version": ART_MOTION_VERSION,
+        "commit": ART_MOTION_COMMIT,
+        "entrypoint": ART_MOTION_ENTRYPOINT,
+        "clip_schema": "scripts/engine/clip_schema.json",
+        "font_registry": "scripts/engine/lib/fonts/index.json",
+        "cjk_font": "scripts/engine/lib/fonts/NotoSerifJP-600.woff",
+    }
+    if not isinstance(lock, dict) or any(lock.get(key) != value for key, value in expected.items()):
+        return {"status": "BLOCKED", "reason": "BASELINE_MISMATCH"}
+
+    root = Path(runtime_root).resolve()
+    if not root.is_dir():
+        return {"status": "BLOCKED", "reason": "RUNTIME_ROOT_MISSING",
+                "runtime_root": root}
+
+    engine_candidate = root / ART_MOTION_ENTRYPOINT
+    engine = engine_candidate.resolve()
+    if not engine.is_relative_to(root):
+        return {"status": "BLOCKED", "reason": "ENTRYPOINT_ESCAPED_RUNTIME_ROOT",
+                "runtime_root": root, "entrypoint": engine}
+    if not engine.is_file():
+        return {"status": "BLOCKED", "reason": "ENTRYPOINT_MISSING",
+                "runtime_root": root, "entrypoint": engine}
+
+    license_candidate = root / "LICENSE"
+    license_path = license_candidate.resolve()
+    if not license_path.is_relative_to(root):
+        return {"status": "BLOCKED", "reason": "LICENSE_ESCAPED_RUNTIME_ROOT",
+                "runtime_root": root, "license": license_path}
+    if not license_path.is_file():
+        return {"status": "BLOCKED", "reason": "LICENSE_MISSING",
+                "runtime_root": root, "license": license_path}
+
+    required_files = {
+        "CLIP_SCHEMA_MISSING": lock["clip_schema"],
+        "FONT_REGISTRY_MISSING": lock["font_registry"],
+        "CJK_FONT_MISSING": lock["cjk_font"],
+    }
+    resolved_required: dict[str, Path] = {}
+    for reason, relative in required_files.items():
+        candidate = (root / relative).resolve()
+        if not candidate.is_relative_to(root):
+            return {"status": "BLOCKED", "reason": f"{reason.replace('_MISSING', '')}_ESCAPED_RUNTIME_ROOT",
+                    "runtime_root": root, "path": candidate}
+        if not candidate.is_file():
+            return {"status": "BLOCKED", "reason": reason,
+                    "runtime_root": root, "path": candidate}
+        resolved_required[reason] = candidate
+    try:
+        font_index = json.loads(resolved_required["FONT_REGISTRY_MISSING"].read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        return {"status": "BLOCKED", "reason": "FONT_REGISTRY_INVALID", "detail": str(exc)}
+    if not isinstance(font_index, list) or not any(
+        isinstance(row, list) and len(row) >= 2
+        and row[0] == Path(lock["cjk_font"]).name and row[1] == ART_MOTION_FONT_FAMILY
+        for row in font_index
+    ):
+        return {"status": "BLOCKED", "reason": "CJK_FONT_UNREGISTERED"}
+
+    probe = git_probe or _default_git_probe
+    checks = (
+        (("rev-parse", "HEAD"), ART_MOTION_COMMIT, "COMMIT_MISMATCH"),
+        (("remote", "get-url", "origin"), ART_MOTION_REPOSITORY, "UPSTREAM_MISMATCH"),
+        (("status", "--porcelain", "--untracked-files=all"), "", "DIRTY_RUNTIME"),
+    )
+    for command, expected_value, reason in checks:
+        try:
+            result = probe(root, *command)
+            code, actual = result if isinstance(result, tuple) else (result.returncode, result.stdout)
+        except Exception as exc:
+            return {"status": "BLOCKED", "reason": f"GIT_VERIFICATION_FAILED: {exc}"}
+        actual = (actual or "").strip()
+        if code != 0:
+            return {"status": "BLOCKED", "reason": f"GIT_VERIFICATION_FAILED: {' '.join(command)}"}
+        if command[0] == "remote":
+            valid = _normalized_repository(actual) == _normalized_repository(expected_value)
+        else:
+            valid = actual == expected_value
+        if not valid:
+            return {"status": "BLOCKED", "reason": reason}
+    return {"status": "TRUSTED_RUNTIME", "version": ART_MOTION_VERSION,
+            "commit": ART_MOTION_COMMIT, "engine": engine,
+            "font_family": ART_MOTION_FONT_FAMILY,
+            "font_review_status": "CJK_GLYPH_VISUAL_REVIEW_REQUIRED"}
+
+
+ART_MOTION_GRAMMARS = {
+    "t1_3b1b", "t2_keynote_ui", "t3_finance_chart", "y1_kurzgesagt",
+    "y2_vox", "y3_whiteboard", "y4_storytime", "y5_kinetic_type",
+}
+ART_MOTION_THEMES = {"paper", "poster", "ink", "navy", "bauhaus", "snow", "wood", "chalk"}
+ART_MOTION_CJK_FONT = "NotoSerifJP-600.woff"
+ART_MOTION_FONT_FAMILY = "Noto Serif JP"
+_CJK = re.compile(r"[㐀-鿿]")
+
+
+def validate_art_motion_spec(spec_path: Path, *, project_root: Path,
+                             runtime_root: Path, render_duration_s: float,
+                             font_family: str = ART_MOTION_FONT_FAMILY) -> dict:
+    """Validate the pinned parameterized-clip contract and bind every local input.
+
+    The upstream spec stays unchanged. The returned binding is suitable for the
+    operation receipt and records the exact source spec/assets/font before render.
+    """
+    project = Path(project_root).resolve()
+    spec_file = Path(spec_path).resolve()
+    runtime = Path(runtime_root).resolve()
+    if not spec_file.is_relative_to(project) or not spec_file.is_file():
+        raise ValueError("spec path is missing or escapes the project")
+    try:
+        spec = json.loads(spec_file.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise ValueError(f"spec is not readable UTF-8 JSON: {exc}") from exc
+    if not isinstance(spec, dict) or spec.get("grammar") not in ART_MOTION_GRAMMARS:
+        raise ValueError("spec grammar is missing or not supported by the pinned clip schema")
+    try:
+        duration = float(spec.get("duration"))
+        render_duration = float(render_duration_s)
+        fps = float(spec.get("fps"))
+    except (TypeError, ValueError) as exc:
+        raise ValueError("spec duration, fps, and render duration must be numeric") from exc
+    if not all(math.isfinite(value) for value in (duration, render_duration, fps)):
+        raise ValueError("spec timing must be finite")
+    if not (0.0 < render_duration <= 8.0) or duration <= 0 or duration > 8.0:
+        raise ValueError("each motion clip and its rendered duration must fit the 8s clip contract")
+    if fps != 30 or spec.get("fps") != 30:
+        raise ValueError("motion clips must use the pinned 30 fps sample contract")
+    if spec.get("width") != 1080 or spec.get("height") != 1920:
+        raise ValueError("motion clips must be portrait 1080x1920")
+    if spec.get("theme") not in ART_MOTION_THEMES:
+        raise ValueError("spec must name one supported Art Motion theme")
+    cues = spec.get("cues")
+    if not isinstance(cues, list) or not cues:
+        raise ValueError("parameterized motion spec must contain cues")
+    has_cjk = False
+    asset_refs: set[str] = set()
+    for cue in cues:
+        if not isinstance(cue, dict):
+            raise ValueError("spec cues must be objects")
+        try:
+            at = float(cue.get("at"))
+        except (TypeError, ValueError) as exc:
+            raise ValueError("each cue needs a numeric at value") from exc
+        if not math.isfinite(at) or at < 0 or at >= duration:
+            raise ValueError("cue time must be finite and inside the source spec duration")
+        for key in ("text", "sub"):
+            text = cue.get(key)
+            if text is not None and not isinstance(text, str):
+                raise ValueError(f"cue {key} must be text")
+            has_cjk = has_cjk or bool(_CJK.search(text or ""))
+        for key in ("image", "frames"):
+            value = cue.get(key)
+            candidates = value if isinstance(value, list) else [value]
+            for ref in candidates:
+                if isinstance(ref, str):
+                    asset_refs.add(ref)
+    if has_cjk and font_family != ART_MOTION_FONT_FAMILY:
+        raise ValueError("Chinese copy requires the pinned Noto Serif JP font contract")
+    font_file = (runtime / "scripts" / "engine" / "lib" / "fonts" / ART_MOTION_CJK_FONT).resolve()
+    if not font_file.is_relative_to(runtime) or not font_file.is_file():
+        raise ValueError("CJK font file is missing or escapes the pinned Art Motion runtime")
+    registry = runtime / "scripts" / "engine" / "lib" / "fonts" / "index.json"
+    try:
+        font_index = json.loads(registry.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise ValueError(f"pinned font registry is unavailable: {exc}") from exc
+    if not isinstance(font_index, list) or not any(
+        isinstance(row, list) and len(row) >= 2
+        and row[0] == ART_MOTION_CJK_FONT and row[1] == ART_MOTION_FONT_FAMILY
+        for row in font_index
+    ):
+        raise ValueError("selected font is not listed in the pinned runtime font registry")
+
+    assets: dict[str, str] = {}
+    for ref in sorted(asset_refs):
+        candidate_ref = Path(ref)
+        if candidate_ref.is_absolute() or "\\" in ref or ":" in ref or ".." in candidate_ref.parts:
+            raise ValueError(f"spec input path is not project-relative: {ref}")
+        asset = project.joinpath(*candidate_ref.parts).resolve()
+        if not asset.is_relative_to(project) or not asset.is_file():
+            raise ValueError(f"spec input is missing or escapes the project: {ref}")
+        assets[ref] = hashlib.sha256(asset.read_bytes()).hexdigest()
+    return {
+        "schema": "contentops.huashu-art-motion-render-binding/v1",
+        "spec_path": spec_file.relative_to(project).as_posix(),
+        "spec_sha256": hashlib.sha256(spec_file.read_bytes()).hexdigest(),
+        "input_asset_hashes": assets,
+        "font_family": font_family,
+        "font_file_sha256": hashlib.sha256(font_file.read_bytes()).hexdigest(),
+        "font_review_status": "CJK_GLYPH_VISUAL_REVIEW_REQUIRED" if has_cjk else "BUNDLED_FONT_VERIFIED",
+        "duration_s": render_duration,
+        "resolution": "1080x1920",
+        "fps": 30,
+        "audio_policy": "REPLACE",
+        "generated": True,
+        "evidence_capable": False,
+        "production_ready": False,
+        "human_review": "PENDING_FOUNDER_REVIEW",
+    }
+
+
+def validate_art_motion_output(path: Path, *, project_root: Path,
+                               expected_sha256: str, probe: dict,
+                               render_binding: dict) -> dict:
+    """Check the real bytes against the canonical silent-motion clip gate.
+
+    The result is the shared Huashu motion record, so an Art Motion clip and a
+    huashu-motion clip reach M4.5 through one vocabulary.
+    """
+    from contentops.media import huashu_motion
+    from contentops.media.motion_sample import check_motion_clip
+
+    root = Path(project_root).resolve()
+    output = Path(path).resolve()
+    if not output.is_relative_to(root) or not output.is_file():
+        raise ValueError("Art Motion output is missing or escapes the project")
+    result = check_motion_clip(
+        output, probe=probe, expected_sha256=expected_sha256,
+        min_duration_s=0.0, max_duration_s=8.0, reason_prefix="CLIP",
+    )
+    if result.get("state") != "TECHNICALLY_CHECKED":
+        raise ValueError(result.get("reason", "Art Motion output failed sample validation"))
+    if render_binding.get("schema") != "contentops.huashu-art-motion-render-binding/v1":
+        raise ValueError("output has no verified render binding")
+    return huashu_motion.build_output_record(
+        engine=huashu_motion.ENGINE_ART_MOTION,
+        spec_sha256=render_binding["spec_sha256"],
+        clip_path="project://" + output.relative_to(root).as_posix(),
+        clip_sha256=result["sha256"],
+        duration=result["duration_s"],
+        resolution=f"{result['width']}x{result['height']}",
+        fps=result["fps"],
+        audio_policy="REPLACE",
+        input_asset_hashes=render_binding["input_asset_hashes"],
+        extra={
+            "font_family": render_binding["font_family"],
+            "font_review_status": render_binding["font_review_status"],
+        },
+    )
+
+
+def make_art_motion_envelope(record: dict, *, asset_id: str, placement_id: str,
+                             receipt_ref: str, derived_from: str,
+                             transform_receipt_ref: str):
+    """Convert only a checked, transformed Art Motion output into the shared index."""
+    from contentops.media.huashu_motion import make_envelope
+
+    return make_envelope(
+        record, asset_id=asset_id, placement_id=placement_id,
+        receipt_ref=receipt_ref, derived_from=derived_from,
+        transform_receipt_ref=transform_receipt_ref,
+    )
+
+
+def art_motion_execution_blocker(lock: dict) -> str:
+    """Registration and a baseline boolean are not execution grants.
+
+    This adapter is not yet wired to the managed execution gate, and the current
+    ADR grants no execution authority. Refuse even if a local file is edited to
+    claim authorization; only a future gate integration may enable execution.
+    """
+    if lock.get("execution_authorized") is not True:
+        return "EXECUTION_NOT_AUTHORIZED"
+    return "MANAGED_EXECUTION_GATE_REQUIRED"
+
+
+def resolve_art_motion_engine(runtime_root: Path, *, engine_override: str | None = None) -> Path:
+    """Fail closed unless path, upstream bytes and explicit execution authority agree."""
+    root = Path(runtime_root).resolve()
+    allowed = {DEFAULT_ART_MOTION_RUNTIME.resolve()}
+    if root not in allowed:
+        raise MotionExecutionBlocked(f"BLOCKED: unsupported art-motion runtime location: {root}")
+    try:
+        lock = json.loads(ART_MOTION_BASELINE.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise MotionExecutionBlocked(f"BLOCKED: art-motion baseline unavailable: {exc}")
+    verified = verify_art_motion_runtime(root, lock=lock)
+    if verified["status"] != "TRUSTED_RUNTIME":
+        raise MotionExecutionBlocked(f"BLOCKED: huashu-art-motion {verified.get('reason', 'unverified')}")
+    blocker = art_motion_execution_blocker(lock)
+    if blocker:
+        raise MotionExecutionBlocked(f"BLOCKED: {blocker}; ADR-014 registration is not execution authority")
+    engine = verified["engine"]
+    if engine_override and Path(engine_override).resolve() != engine:
+        raise MotionExecutionBlocked("BLOCKED: --engine must resolve to the pinned runtime entrypoint")
+    return engine
 
 
 def _log(stage: str, message: str) -> None:
@@ -192,8 +524,9 @@ def _qc_outcome(proc) -> str:
     return report.get("overall") if report.get("overall") in {"PASS", "WARN"} else "FAIL"
 
 
-def build(project: Path, *, speed: float, engine: Path, pad: float,
-          skip_render: bool = False) -> dict:
+def build(project: Path, *, speed: float, runtime_root: Path, pad: float,
+          engine_override: str | None = None, skip_render: bool = False) -> dict:
+    engine = resolve_art_motion_engine(runtime_root, engine_override=engine_override)
     import split_narration_lines as splitter
     from contentops.workflow import copy_review
 
@@ -265,23 +598,71 @@ def build(project: Path, *, speed: float, engine: Path, pad: float,
 
     clips = project / "work" / "clips"
     clips.mkdir(parents=True, exist_ok=True)
+    render_bindings: dict[int, dict] = {}
     for row, spec in zip(document["lines"], specs):
         duration = round(float(row["duration_s"]) + pad, 3)
+        binding = validate_art_motion_spec(
+            spec, project_root=project, runtime_root=runtime_root,
+            render_duration_s=duration,
+        )
+        render_bindings[int(row["line"])] = binding
+        out = clips / f"p{row['line']:02d}.mp4"
+        if out.exists():
+            raise MotionExecutionBlocked(f"BLOCKED: refusing to overwrite existing motion output: {out}")
         data = json.loads(spec.read_text(encoding="utf-8"))
         data["duration"] = duration
-        spec.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        out = clips / f"p{row['line']:02d}.mp4"
-        # The external renderer's transitive dependencies are not declared by
-        # this project, so matching the spec and entrypoint cannot prove a hit.
-        # Render again even when --skip-render was requested rather than reusing
-        # an output whose inputs cannot be verified.
-        if skip_render:
-            _log("render", f"{spec.stem}: cache unverified; rendering again")
-        _log("render", f"{spec.stem} ({duration}s)")
-        proc = hidden_run([python_executable(), str(engine), "--spec", str(spec), "--out", str(out)],
-                          timeout=1800, env=dict(os.environ, PYTHONUTF8="1", PYTHONIOENCODING="utf-8"))
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", suffix=".json", prefix=f".{spec.stem}.render-",
+            dir=spec.parent, delete=False,
+        ) as temp_spec_file:
+            json.dump(data, temp_spec_file, ensure_ascii=False, indent=2)
+            temp_spec_file.write("\\n")
+            render_spec = Path(temp_spec_file.name)
+        binding["render_spec_sha256"] = hashlib.sha256(render_spec.read_bytes()).hexdigest()
+        try:
+            if skip_render:
+                _log("render", f"{spec.stem}: cache unverified; rendering again")
+            _log("render", f"{spec.stem} ({duration}s)")
+            proc = hidden_run(
+                [python_executable(), str(engine), "--spec", str(render_spec), "--out", str(out)],
+                timeout=1800, env=dict(os.environ, PYTHONUTF8="1", PYTHONIOENCODING="utf-8"),
+            )
+        finally:
+            render_spec.unlink(missing_ok=True)
         if proc.returncode != 0 or not out.is_file():
             raise SystemExit(f"render failed for {spec.stem}: {(proc.stderr or '')[-400:]}")
+        from check_motion_sample import _probe
+        binding_after = validate_art_motion_spec(
+            spec, project_root=project, runtime_root=runtime_root,
+            render_duration_s=duration,
+        )
+        for key in ("spec_sha256", "input_asset_hashes", "font_file_sha256"):
+            if binding_after.get(key) != binding.get(key):
+                raise MotionExecutionBlocked(f"BLOCKED: {spec.name} {key} changed during render")
+        clip_record = validate_art_motion_output(
+            out, project_root=project,
+            expected_sha256=hashlib.sha256(out.read_bytes()).hexdigest(),
+            probe=_probe(out), render_binding=binding,
+        )
+        clip_receipt = project / "receipts" / f"art-motion-output-p{row['line']:02d}.json"
+        if clip_receipt.exists():
+            raise MotionExecutionBlocked(f"BLOCKED: refusing to overwrite existing output receipt: {clip_receipt}")
+        clip_receipt.parent.mkdir(parents=True, exist_ok=True)
+        clip_receipt.write_text(
+            json.dumps(clip_record, ensure_ascii=False, indent=2) + "\\n", encoding="utf-8"
+        )
+        receipt.setdefault("motion_outputs", []).append({
+            "path": f"project://{out.relative_to(project).as_posix()}",
+            "sha256": clip_record["clip_sha256"],
+            "spec_sha256": clip_record["spec_sha256"],
+            "asset_hashes": clip_record["asset_hashes"],
+            "duration": clip_record["duration"],
+            "resolution": clip_record["resolution"],
+            "fps": clip_record["fps"],
+            "audio_policy": clip_record["audio_policy"],
+            "rights": clip_record["rights"],
+            "review_status": clip_record["review_status"],
+        })
 
     # Probe before compose: a half-written MP4 fails later with an empty ffmpeg
     # error, and the shot it names is the symptom rather than the cause.
@@ -352,7 +733,11 @@ def main() -> int:
     parser.add_argument("project")
     parser.add_argument("--speed", type=float, default=1.0,
                         help="atempo factor applied to the recorded narration before splitting")
-    parser.add_argument("--engine", default=os.environ.get("HUASHU_ENGINE", DEFAULT_ENGINE))
+    parser.add_argument("--runtime-root", default=os.environ.get(
+        "CONTENTOPS_HUASHU_ART_MOTION_ROOT", str(DEFAULT_ART_MOTION_RUNTIME)),
+        help="approved Huashu art-motion checkout root (default: D:/Toolchains/huashu-art-motion/1.2.0)")
+    parser.add_argument("--engine", default=None,
+                        help="legacy alias; must equal the pinned runtime entrypoint")
     parser.add_argument("--pad", type=float, default=PAD_S,
                         help="extra seconds rendered per clip so trim always has headroom")
     parser.add_argument("--skip-render", action="store_true",
@@ -363,12 +748,13 @@ def main() -> int:
     if not project.is_absolute():
         project = ROOT / project
     project = project.resolve()
-    engine = Path(args.engine)
-    if not engine.is_file():
-        raise SystemExit(f"motion engine not found: {engine} (set HUASHU_ENGINE)")
-
-    receipt = build(project, speed=args.speed, engine=engine, pad=args.pad,
-                    skip_render=args.skip_render)
+    runtime_root = Path(args.runtime_root)
+    try:
+        receipt = build(project, speed=args.speed, runtime_root=runtime_root, pad=args.pad,
+                        engine_override=args.engine, skip_render=args.skip_render)
+    except MotionExecutionBlocked as exc:
+        print(json.dumps({"status": "BLOCKED", "reason": str(exc)}, ensure_ascii=False))
+        return 5
     print(json.dumps({"status": "BLOCKED" if receipt.get("overall") == "FAIL" else "OK",
                       "overall": receipt.get("overall"),
                       "receipt": "receipts/motion-build.json"}, ensure_ascii=False))

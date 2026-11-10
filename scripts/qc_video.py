@@ -18,6 +18,7 @@ Status: PASS / WARN / FAIL. FAIL -> final is not production-ready.
 
 import argparse
 import json
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -29,6 +30,7 @@ for _candidate in (ROOT / "src", ROOT / "scripts"):
     if str(_candidate) not in sys.path:
         sys.path.insert(0, str(_candidate))
 
+from contentops.media.claim_coverage import evidence_mode_policy  # noqa: E402
 from contentops.media.real_source_duration import (  # noqa: E402
     BLOCKED as RSD_BLOCKED,
     PASS as RSD_PASS,
@@ -50,10 +52,9 @@ GENERATED_SOURCE_TYPES = {"generated", "ai_generated", "stock", "title_card"}
 def _account_slug(project: Path) -> str:
     """The account a project declares, or ``""`` when it declares none.
 
-    The measured duration gate is a hard failure for an A/B project and a
-    warning for the historical samples, so this value decides a severity. A
-    missing YAML parser must not silently turn the gate into a pass, so there is
-    a single-line fallback for the one scalar this needs.
+    This selects the account DNA used to interpret the duration-ratio severity.
+    A missing YAML parser must not silently turn a declared account into a
+    pass, so there is a single-line fallback for the one scalar this needs.
     """
     path = Path(project) / "project.yaml"
     if not path.is_file():
@@ -65,12 +66,86 @@ def _account_slug(project: Path) -> str:
         return str(document.get("account_slug") or "").strip()
     except ImportError:
         pass
+    except yaml.YAMLError:
+        return "<invalid-project-yaml>"
     except ValueError:
-        return ""
+        return "<invalid-project-yaml>"
     for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
         if line.strip().startswith("account_slug:"):
             return line.split(":", 1)[1].strip().strip('"').strip("'")
     return ""
+
+
+def real_source_duration_gate(project: Path, measured: dict) -> dict:
+    """Apply the duration-ratio severity declared by this project's account DNA.
+
+    The measurement itself remains unchanged and counts only verified real
+    visible seconds. EXPLANATORY changes only whether that whole-film ratio is
+    a gate; it does not waive claim, source, rights, or recording checks.
+    """
+    account = _account_slug(project)
+    state = measured.get("state", RSD_BLOCKED)
+    passed = state == RSD_PASS
+    details = {
+        "state": state,
+        "value": measured.get("real_source_duration_ratio"),
+        "min": measured.get("min"),
+        "real_seconds": measured.get("real_seconds"),
+        "required_seconds": measured.get("required_seconds"),
+        "undeclared_tail_s": measured.get("undeclared_tail_s"),
+        "code": measured.get("code"),
+        "detail": measured.get("detail"),
+    }
+    if not account:
+        return {
+            "id": "real_source_duration_ratio", "ok": passed,
+            "severity": "PASS" if passed else "WARN", "required": False,
+            **details,
+            "note": "legacy project without account DNA; ratio is diagnostic",
+        }
+
+    # Restrict the lookup to a single account JSON filename under the canonical
+    # directory. An untrusted project.yaml cannot escape it via account_slug.
+    if not re.fullmatch(r"[a-z0-9][a-z0-9-]*", account):
+        mode_error = f"invalid account slug {account!r}"
+    else:
+        dna_path = ROOT / "config" / "accounts" / f"{account}.json"
+        try:
+            dna_path.resolve().relative_to((ROOT / "config" / "accounts").resolve())
+            dna = json.loads(dna_path.read_text(encoding="utf-8"))
+            mode = dna.get("evidence", {}).get("mode")
+            policy = evidence_mode_policy(mode)
+            mode_error = ""
+        except (OSError, ValueError, AttributeError, TypeError) as exc:
+            policy = None
+            mode_error = f"account evidence policy unavailable: {exc}"
+
+    if mode_error:
+        return {
+            "id": "real_source_duration_ratio", "ok": False,
+            "severity": "FAIL", "required": True, **details,
+            "detail": mode_error,
+            "note": "account policy is missing or invalid; refusing to infer a mode",
+        }
+
+    severity = policy["ratio_severity"]
+    required = severity == "FAIL"
+    blocked = state == RSD_BLOCKED
+    ok = passed or (severity == "INFO" and not blocked)
+    if passed:
+        severity = "PASS"
+    elif blocked:
+        # Account mode can waive the global ratio floor, never missing source,
+        # rights, timeline, or duration data needed to compute it safely.
+        severity = "FAIL"
+    return {
+        "id": "real_source_duration_ratio", "ok": ok,
+        "severity": severity,
+        "required": required, **details,
+        "evidence_mode": mode,
+        "note": "real visible seconds / measured output seconds; diagrams, cards, "
+                "generated and motion visuals do not count",
+    }
 
 
 def audio_is_not_silence(path: Path) -> dict:
@@ -376,35 +451,12 @@ def qc(project: Path, target: str = "") -> dict:
                 "real_source_duration_ratio",
     })
 
-    # The measured gate. Shot count can pass while one long diagram fills the
-    # cut, so the ratio is over visible seconds of the rendered file. It is a
-    # hard failure for a project that declares an account (A/B) and a warning
-    # for the historical samples, which predate the rule and are not re-graded
-    # retroactively.
+    # The visible-duration ratio is interpreted by the account's declared
+    # evidence mode. It remains a hard 70% floor for EVIDENCE_LED; EXPLANATORY
+    # projects keep the measurement for transparency but do not fail solely on
+    # the ratio. Other source, rights, recording, and claim checks stay separate.
     measured = check_real_source_duration(project, output_duration_s=duration)
-    required = bool(_account_slug(project))
-    if measured["state"] == RSD_PASS:
-        severity = "PASS"
-    elif required:
-        severity = "FAIL"
-    else:
-        severity = "WARN"
-    checks.append({
-        "id": "real_source_duration_ratio",
-        "ok": measured["state"] == RSD_PASS,
-        "severity": severity,
-        "state": measured["state"],
-        "required": required,
-        "value": measured.get("real_source_duration_ratio"),
-        "min": measured.get("min"),
-        "real_seconds": measured.get("real_seconds"),
-        "required_seconds": measured.get("required_seconds"),
-        "undeclared_tail_s": measured.get("undeclared_tail_s"),
-        "code": measured.get("code"),
-        "detail": measured.get("detail"),
-        "note": "real visible seconds / measured output seconds; diagrams, cards, "
-                "generated and motion visuals do not count",
-    })
+    checks.append(real_source_duration_gate(project, measured))
 
     missing_prov = [i for i, s in enumerate(shots)
                     if not s.get("source") or not s.get("source_type")]

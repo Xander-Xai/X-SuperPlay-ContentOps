@@ -152,7 +152,6 @@ def _check_repo_layout() -> dict:
         ROOT / "scripts",
         ROOT / "templates",
         ROOT / "projects",
-        ROOT / "outputs",
         ROOT / "runtime",
         ROOT / "docs",
     ]

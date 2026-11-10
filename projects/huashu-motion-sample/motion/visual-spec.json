@@ -1,0 +1,72 @@
+{
+  "schema": "contentops.motion-visual-spec/v1",
+  "sample_id": "huashu-motion-sample",
+  "render_status": "RENDER_NOT_VERIFIED",
+  "art_direction": "一张纸上画出来的流程：纸纹底、墨线、几何节点。全片只有这一种画风，六个镜头不换风格。",
+  "theme": "ink",
+  "palette": {
+    "paper": "#F4F1EA",
+    "ink": "#1D1B18",
+    "ink_soft": "#4A463F",
+    "accent": "#C8552B",
+    "accent_soft": "#E8B87A",
+    "rules": [
+      "全片只用这 5 个颜色，不引入新色。",
+      "不使用蓝紫渐变、深紫星空底或霓虹青紫。",
+      "背景纸纹在相邻两镜之间做轻微位移，不换底色。"
+    ]
+  },
+  "typography": {
+    "cjk_family": "Noto Serif JP",
+    "cjk_source": "the pinned Art Motion runtime font registry (runtime/huashu-art-motion-baseline.json → cjk_font)",
+    "font_review_status": "CJK_GLYPH_VISUAL_REVIEW_REQUIRED",
+    "font_review_note": "中文字形必须目检；技术上装上了不等于字好看。",
+    "screen_text_px": 76,
+    "max_screen_text_chars": 8,
+    "screen_text_placement": "画面下三分之一，但不低于字幕安全区上沿"
+  },
+  "frame": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "safe_area_top_px": 220,
+    "safe_area_bottom_px": 320,
+    "rule": "屏上字与主形体都在安全区内；字幕带由 M5 的字幕阶段占用下方 320 px。"
+  },
+  "motion_rules": {
+    "camera": {
+      "allowed": ["停", "缓推", "拉远", "横移", "快推", "砸入", "切"],
+      "fast_camera_for_emphasis_only": ["快推", "砸入"],
+      "max_consecutive_pushes": 1,
+      "rule": "画面自身在动时镜头停住；观众读字时镜头停住；推进之后必须拉出、横移或切景别。"
+    },
+    "easing": "推进用缓入缓出；重音用短促的收势；禁止线性匀速连推。",
+    "clip_limit_s": 8.0,
+    "clip_limit_reason": "两个引擎的动效片段都按 ≤8 s 契约进入 M4.5。"
+  },
+  "audio_policy": {
+    "policy": "REPLACE",
+    "reason": "动效片段只有在 ffprobe 确认无音轨后才能进入 M4.5；口播由 M5 单独混音。--silent 不是音轨不存在的证据。",
+    "upstream_note": "om render --silent suppresses the missing-soundtrack warning; it does not prove audio-stream absence. Verify with ffprobe after render and again after AudioPolicy."
+  },
+  "engines": {
+    "huashu-art-motion": {
+      "role": "每镜一个参数化片段（motion/specs/pNN.json）",
+      "grammars": ["y3_whiteboard", "t2_keynote_ui"],
+      "grammar_rule": "全片最多两种片段语法。",
+      "theme_value": "ink",
+      "cjk_copy": true
+    },
+    "huashu-motion": {
+      "role": "一支代码驱动的网页影片（huashu-motion/index.html）",
+      "shape": "upstream 的原生形态是「一支片子就是一个 index.html」；本样片另备按镜拆成 6 个 ≤8 s 项目的集成路径。",
+      "cjk_copy": true
+    }
+  },
+  "asset_rules": {
+    "real_material": "无。本样片不使用任何真实截图、实拍或第三方素材。",
+    "generated_visuals": "VISUAL_SUPPORT_ONLY",
+    "evidence_capable": false,
+    "publication": "禁止；发布需要另外的显式授权。"
+  }
+}

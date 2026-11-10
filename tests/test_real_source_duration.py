@@ -30,6 +30,8 @@ from contentops.media.real_source_duration import (  # noqa: E402
     check,
     measure,
 )
+sys.path.insert(0, str(ROOT / "scripts"))
+from qc_video import real_source_duration_gate  # noqa: E402
 
 TESTS = []
 
@@ -213,7 +215,64 @@ def test_check_reads_the_project_and_blocks_a_missing_storyboard():
 
 
 @test
-def test_the_threshold_is_the_documented_seventy_percent():
+def test_qc_duration_gate_uses_the_accounts_declared_evidence_mode():
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        (project / "project.yaml").write_text(
+            "account_slug: x-superplay-1024\n", encoding="utf-8")
+        below_floor = {"state": FAIL, "real_source_duration_ratio": 0.69,
+                       "min": 0.70}
+        result = real_source_duration_gate(project, below_floor)
+        assert result["severity"] == "FAIL", result
+        assert result["required"] is True, result
+        at_floor = {"state": PASS, "real_source_duration_ratio": 0.70,
+                    "min": 0.70}
+        result = real_source_duration_gate(project, at_floor)
+        assert result["severity"] == "PASS", result
+        assert result["ok"] is True, result
+
+        (project / "project.yaml").write_text(
+            "account_slug: x-superplay-future-intelligence\n", encoding="utf-8")
+        result = real_source_duration_gate(project, below_floor)
+        assert result["severity"] == "INFO", result
+        assert result["ok"] is True, result
+        assert result["required"] is False, result
+        assert result["state"] == FAIL, result
+
+        blocked = {"state": BLOCKED, "code": "SOURCE_PERMISSION_MISSING",
+                   "detail": "missing license record"}
+        result = real_source_duration_gate(project, blocked)
+        assert result["severity"] == "FAIL", result
+        assert result["ok"] is False, result
+        print("[ok] QC retains 1024 floor and exempts explanatory ratio only")
+
+
+@test
+def test_qc_duration_gate_fails_closed_for_unknown_account_or_evidence_mode():
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        (project / "project.yaml").write_text(
+            "account_slug: not-a-real-account\n", encoding="utf-8")
+        result = real_source_duration_gate(
+            project, {"state": PASS, "real_source_duration_ratio": 1.0})
+        assert result["severity"] == "FAIL", result
+        assert result["ok"] is False, result
+
+        (project / "project.yaml").write_text("account_slug: [\n", encoding="utf-8")
+        result = real_source_duration_gate(
+            project, {"state": PASS, "real_source_duration_ratio": 1.0})
+        assert result["severity"] == "FAIL", result
+        assert result["ok"] is False, result
+        print("[ok] unknown or malformed account config fails closed")
+
+        (project / "project.yaml").write_text("account_slug: \n", encoding="utf-8")
+        result = real_source_duration_gate(
+            project, {"state": FAIL, "real_source_duration_ratio": 0.0})
+        assert result["severity"] == "WARN", result
+        assert result["required"] is False, result
+        print("[ok] unknown account blocks and legacy projects keep warning")
+
+
     assert MIN_REAL_DURATION_RATIO == 0.70
     print("[ok] 13. the floor is 0.70")
 

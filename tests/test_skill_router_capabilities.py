@@ -43,12 +43,68 @@ def _registry(*entries):
     return {"schema": sr.REGISTRY_SCHEMA, "skills": list(entries)}
 
 
+class NativeMotionRegistrationTests(unittest.TestCase):
+    def test_native_motion_is_registered_for_both_accounts_and_only_motion_stage(self) -> None:
+        entry = next(row for row in sr.registry_entries()
+                     if row["id"] == "contentops-native-motion")
+        self.assertEqual(set(entry["accounts"]), {
+            "x-superplay-future-intelligence", "x-superplay-1024"})
+        self.assertEqual(entry["pipelines"], ["M5"])
+        self.assertEqual(entry["stages"], ["motion"])
+        self.assertEqual(entry["source"]["version"], "0.1.0")
+        dependencies = entry["source"]["dependencies"]
+        self.assertEqual([(item["name"], item["version"]) for item in dependencies], [
+            ("Python", "3.13.15"), ("Pillow", "12.3.0"), ("FFmpeg", "8.1.1")])
+        self.assertEqual(entry["license"]["status"], "local-only-declared")
+        self.assertIn("output", entry["contract"])
+        self.assertFalse(entry["execution"]["authorizes_execution"])
+
+    def test_native_motion_resolves_per_account_without_granting_execution(self) -> None:
+        for account in ("x-superplay-future-intelligence", "x-superplay-1024"):
+            result = sr.resolve_capability("contentops-native-motion", account=account,
+                                           pipeline="M5", stage="motion")
+            self.assertEqual(result["verdict"], sr.VERDICT_RESOLVABLE, result)
+            self.assertFalse(result["execution_authorized"])
+            self.assertEqual(result["capability"]["source"]["version"], "0.1.0")
+            self.assertEqual(result["capability"]["contract"]["output"],
+                             "project-local silent MP4 plus SHA-256 receipt")
+
+    def test_toolchain_discovery_uses_the_declared_external_runtime_path(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            skill_dir = Path(raw) / "skills" / "huashu-motion"
+            skill_dir.mkdir(parents=True)
+            entry = {
+                "id": "huashu-motion",
+                "discovery": {"root": "toolchain", "dir": "skills/huashu-motion",
+                             "path": str(skill_dir)},
+            }
+            state = sr._discovery_state(entry)
+        self.assertTrue(state["installed"])
+        self.assertEqual(state["path"], str(skill_dir))
+
+    def test_native_motion_does_not_cross_account_scope(self) -> None:
+        result = sr.resolve_capability("contentops-native-motion",
+                                       account="unrelated-account",
+                                       pipeline="M5", stage="motion")
+        self.assertEqual(result["reason"], sr.REASON_OUT_OF_SCOPE)
+        self.assertFalse(result["execution_authorized"])
+
+    def test_huashu_motion_is_blocked_only_for_unresolved_license_rights(self) -> None:
+        result = sr.resolve_capability("huashu-motion",
+                                       account="x-superplay-future-intelligence",
+                                       pipeline="M5", stage="motion")
+        self.assertEqual(result["reason"], sr.REASON_UNVERIFIED_RIGHTS)
+        self.assertIn("offline video", result["detail"])
+        self.assertFalse(result["execution_authorized"])
+
+
 class MediaUseRegistrationTests(unittest.TestCase):
     def test_media_use_is_declared_in_the_committed_registry(self) -> None:
         data = sr.load_registry()
         self.assertTrue(data["readable"], data)
         entries = sr.registry_entries(data)
-        self.assertEqual([entry["id"] for entry in entries], ["media-use"])
+        self.assertEqual([entry["id"] for entry in entries],
+                         ["media-use", "contentops-native-motion", "huashu-motion"])
 
     def test_the_declaration_records_every_required_field(self) -> None:
         entry = sr.registry_entries()[0]
@@ -72,6 +128,24 @@ class MediaUseRegistrationTests(unittest.TestCase):
         self.assertTrue((ROOT / entry["canonical_path"]).is_file())
         self.assertTrue((ROOT / entry["runtime"]["baseline"]).is_file())
         self.assertTrue((ROOT / entry["rights"]["evidence"]).is_file())
+
+
+    def test_native_motion_points_at_the_repository_owned_skill(self) -> None:
+        entry = next(row for row in sr.registry_entries()
+                     if row["id"] == "contentops-native-motion")
+        self.assertTrue((ROOT / entry["canonical_path"]).is_file())
+        skill_path = ROOT / "skills" / "contentops-native-motion" / "SKILL.md"
+        self.assertTrue(skill_path.is_file())
+        discovery = sr._discovery_state(entry)
+        self.assertTrue(discovery["installed"], discovery)
+        self.assertEqual(discovery["root"], "catalog")
+
+    def test_huashu_motion_dependency_remains_outside_native_route(self) -> None:
+        entry = next(row for row in sr.registry_entries()
+                     if row["id"] == "contentops-native-motion")
+        dependencies = {row["name"] for row in entry["source"]["dependencies"]}
+        self.assertNotIn("huashu-motion", dependencies)
+        self.assertNotIn("GSAP", dependencies)
 
 
 class ResolutionVerdictTests(unittest.TestCase):
@@ -272,10 +346,13 @@ class CliTests(unittest.TestCase):
         self.assertEqual(json.loads(completed.stdout)["copies"], [])
 
     def test_doctor_is_machine_readable(self) -> None:
-        report = sr.doctor()
-        self.assertEqual(report["capabilities"]["total"], 1)
-        # A resolvable count of 1 is only honest when a runtime lock exists.
-        if report["capabilities"]["resolvable"]:
+        report = sr.capabilities_report()
+        self.assertEqual(report["total"], 3)
+        entries = {entry["name"]: entry for entry in report["entries"]}
+        self.assertEqual(entries["contentops-native-motion"]["verdict"],
+                         sr.VERDICT_RESOLVABLE)
+        self.assertFalse(entries["contentops-native-motion"]["execution_authorized"])
+        if entries["media-use"]["verdict"] == sr.VERDICT_RESOLVABLE:
             self.assertTrue(os.environ.get("CONTENTOPS_MEDIA_USE_RUNTIME_LOCK"))
 
 

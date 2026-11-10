@@ -1,0 +1,27 @@
+{
+  "schema": "contentops.skill-execution-approval/v1",
+  "purpose": "skill_execution",
+  "status": "DRAFT_NOT_AUTHORIZATION",
+  "approval_id": "",
+  "issuer": "",
+  "subject": "",
+  "skill_id": "huashu-motion",
+  "skill_version": "0.3.1",
+  "account": "x-superplay-1024",
+  "pipeline": "M5",
+  "stage": "motion",
+  "operations": ["check", "still", "render", "qa"],
+  "issued_at": "",
+  "expires_at": "",
+  "max_units": 1,
+  "max_uses": 24,
+  "revoked": false,
+  "revoked_reason": null,
+  "evidence": null,
+  "draft_project_scope": "projects/x-superplay-1024-motion-20261107",
+  "draft_runtime_pin": {
+    "version": "0.3.1",
+    "commit": "52467f99c602b76ba86d511d37acdfe93fa1e16e"
+  },
+  "draft_note": "Unsigned proposal only; Owner may reduce or reject. Proposed maximum is 24 total operations over seven days from Owner issuance, shared across check/still/render/qa (not 24 per operation). One request still carries one operation. Each failed operation after use consumption may spend a use. Fill real issuer, execution subject, approval ID, issued_at and expires_at only by the Owner after deciding this exact scope; never copy to the canonical path before Owner approval."
+}

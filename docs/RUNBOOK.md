@@ -3,7 +3,7 @@
 [English](RUNBOOK.md) | [简体中文](RUNBOOK.zh-CN.md)
 
 > Real executable commands. Derived from actual script behavior, not assumptions.
-> Last updated: 2026-10-31
+> Last updated: 2026-11-06
 
 ## 0. Environment check
 
@@ -11,7 +11,7 @@
 python scripts/doctor.py
 ```
 
-Checks: Python ≥3.10, Node ≥22, FFmpeg, ffprobe, git, Easel checkout (v0.2.1), repo layout.
+Checks: Python ≥3.10, Node ≥22, FFmpeg, ffprobe, git, Easel checkout (v0.2.1), repo layout. The repository-layout check covers required source/runtime/docs directories; generated renders are project- or invocation-scoped and do not require a repository-root `outputs/` directory.
 
 Expected: all OK. If Easel checkout fails, run bootstrap (§1).
 
@@ -187,7 +187,62 @@ Projects without media_use.enabled=true behave as before.
 Integration PR: stacked on M5 PR #68; actual external execution also requires
 PR #64. Hosted tests use synthetic fixtures and make no provider calls.
 
-## 5.1 Bundle handoff and dual lines
+### Motion renderer execution hold
+
+`scripts/build_motion_film.py` does not use the host-specific shared skill path. Its runtime baseline pins `huashu-art-motion` v1.2.0 at commit `8f0a349a18b4bdf802b8d58715a2259c3e1ce709`; the only accepted runtime location is `D:\Toolchains\huashu-art-motion\1.2.0`, and the resolver checks the official Git remote, exact HEAD, clean tree, entrypoint and licence. `--runtime-root` selects that configured checkout; the legacy `--engine` option cannot substitute another renderer.
+
+The baseline records `execution_authorized: false`. ADR-014 permits controlled capability registration, **not execution**, and no managed execution-gate integration exists for this renderer. Therefore the build command currently exits `BLOCKED` even if a matching checkout is later installed. Do not install or run the renderer to bypass this hold. No Huashu Motion CLI, model, browser or renderer was installed or invoked as part of this integration.
+
+The verifier now names the individual reason instead of one conflated error. `RUNTIME_ROOT_MISSING`, `ENTRYPOINT_MISSING`, `ENTRYPOINT_ESCAPED_RUNTIME_ROOT`, `LICENSE_MISSING`, `LICENSE_ESCAPED_RUNTIME_ROOT`, `CLIP_SCHEMA_MISSING`, `FONT_REGISTRY_MISSING`, `CJK_FONT_MISSING`, `FONT_REGISTRY_INVALID`, `CJK_FONT_UNREGISTERED`, `BASELINE_MISMATCH`, `COMMIT_MISMATCH`, `UPSTREAM_MISMATCH` and `DIRTY_RUNTIME` are distinct outcomes. On this machine the configured root does not exist, so the entrypoint and the licence are both absent and the version check is never reached.
+
+### Huashu Motion adapter (describes and verifies; never executes)
+
+```bash
+# Verify the pinned runtime identity without running om.
+python scripts/huashu_motion_adapter.py status
+
+# Describe one upstream operation without invoking it.
+python scripts/huashu_motion_adapter.py plan render
+
+# Write a blocked / not-executed receipt for one operation.
+python scripts/huashu_motion_adapter.py request render --project projects/huashu-motion-sample
+```
+
+The pin is `runtime/huashu-motion.lock.json`: `huashu-motion` v0.3.1 at commit `52467f99c602b76ba86d511d37acdfe93fa1e16e`, entrypoint `skills/huashu-motion/bin/om`, dispatcher `cli/om.js`, runtime root `D:/Toolchains/huashu-motion/0.3.1`. The lock records the upstream `om check` / `om still` / `om render` / `om qa` syntax read from the pinned commit and the licence terms. `om render --silent` suppresses the missing-soundtrack warning; it is not proof that the resulting file has no audio stream. Verify actual stream absence with ffprobe, including after an `AudioPolicy` transform.
+
+`status` returns `TRUSTED_RUNTIME` or a `BLOCKED` reason; it never starts `om`. `request` writes `receipts/huashu-motion-<operation>.json` with `execution_status: NOT_EXECUTED` and `runner_invoked: false`.
+
+The pinned `skills/huashu-motion/references/contract.md` requires a composition root with `data-composition-id`, `data-width`, and `data-height`, a paused GSAP timeline registered at `window.__timelines[composition-id]`, and `scene:<id>` labels. `data-om-id` only marks pointable regions. The current CSS-keyframe draft lacks these structures and is explicitly `NOT_HUASHU_MOTION_COMPATIBLE`; do not run `om` against it. `om render --silent` cannot replace ffprobe evidence of audio absence.
+
+### Managed execution for the Huashu engines
+
+`src/contentops/skills/huashu_execution.py` binds one upstream operation to one approval, in the order ADR-010 requires: runtime first, then the approval record, then the decision, then a re-read, then one consumed use, then the executor, then the receipt.
+
+```bash
+# The check refuses before the approval is even loaded when the runtime is absent.
+# It consumes no approval use and starts no process.
+python scripts/huashu_execute.py check projects/huashu-motion-sample \
+    --operation render --account x-superplay-1024
+```
+
+Without `receipts/skill-execution-approval.json` in the project the gate returns `BLOCKED` and the executor is never called. With an unusable runtime it returns `BLOCKED` **without spending an approved use**. The module contains no code that builds an `om` command line: the upstream invocation is injected, and a missing injection is refused rather than replaced.
+
+The authorization request for a real render is `docs/governance/HUASHU-EXECUTION-AUTHORIZATION-REQUEST.md`. It is a request, not an authorization; until the Owner signs it, both engines stay `BLOCKED / NOT_EXECUTED`.
+
+### The prepared motion sample
+
+`projects/huashu-motion-sample` holds a 21 s sample **design**: storyboard and shot rhythm, one unified visual spec, six Art Motion clip specs, a Huashu Motion HTML concept draft, and the M4.5 asset mapping. The first Art Motion shot is 4.0 s, followed by five 3.4 s beats. This prepares a 4–8 s sample candidate without widening the fixed `motion_sample.py` gate; the remaining beats use the ordinary clip gate. The Huashu Motion HTML is not contract-compatible until rewritten. No frame has been rendered, so the sample is `RENDER_NOT_VERIFIED` and is not a film. Its acceptance cases are offline:
+
+Manifest-driven M5 checks generated motion rights before real composition. `UNRESOLVED` or missing review evidence blocks; fixture assets are accepted only when both the receipt marks them as fixtures and `project.yaml` explicitly sets `fixture: true`. A fixture run is not production evidence or publish approval. Using `--skip-compose` is preparation only, not a rights clearance or release.
+
+```bash
+python tests/test_huashu_motion_sample.py
+python tests/test_huashu_motion_manifest.py
+python tests/test_huashu_execution_gate.py
+```
+
+
+## 5.2 Bundle handoff and dual lines
 
 Optional: bind a project to a Strategy Content Bundle in `project.yaml`:
 

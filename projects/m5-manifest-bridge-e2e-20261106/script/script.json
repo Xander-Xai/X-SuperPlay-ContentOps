@@ -1,0 +1,55 @@
+{
+  "schema": "contentops.m5-script/v1",
+  "language": "zh-CN",
+  "lines": [
+    {
+      "id": "l1",
+      "claim": null,
+      "narration": "离线桥接样片，不代表真实 H3 视频生成。",
+      "caption": "离线验收样片",
+      "placement_id": "P-01"
+    },
+    {
+      "id": "l2",
+      "claim": null,
+      "narration": "镜头按 placement id 显式映射到时间线。",
+      "caption": "Placement 显式映射",
+      "placement_id": "P-02"
+    },
+    {
+      "id": "l3",
+      "claim": null,
+      "narration": "被替换的原始音轨保留记录，但不会合成。",
+      "caption": "源素材保留，不参与合成",
+      "placement_id": "P-03"
+    },
+    {
+      "id": "l4",
+      "claim": "fixture-no-provider",
+      "narration": "本地 fixture 完成本次桥接，未调用 Provider。",
+      "caption": "零付费 Provider 调用",
+      "placement_id": "P-04"
+    },
+    {
+      "id": "l5",
+      "claim": null,
+      "narration": "generated 来源标记保留，视觉只作辅助。",
+      "caption": "生成视觉仅作辅助",
+      "placement_id": "P-05"
+    },
+    {
+      "id": "l6",
+      "claim": null,
+      "narration": "旁白字幕由 M5 对齐，再交给固定 Easel。",
+      "caption": "M5 → 固定 Easel",
+      "placement_id": "P-06"
+    },
+    {
+      "id": "l7",
+      "claim": null,
+      "narration": "技术 QC 通过也不等于批准发布，仍待人工审片。",
+      "caption": "人工审片仍待完成",
+      "placement_id": "P-07"
+    }
+  ]
+}

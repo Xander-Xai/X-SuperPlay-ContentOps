@@ -1,0 +1,82 @@
+{
+  "schema": "contentops.huashu-motion-project-draft/v1",
+  "sample_id": "huashu-motion-sample",
+  "engine": "huashu-motion",
+  "version": "0.3.1",
+  "commit": "52467f99c602b76ba86d511d37acdfe93fa1e16e",
+  "lock": "runtime/huashu-motion.lock.json",
+  "render_status": "RENDER_NOT_VERIFIED",
+  "compatibility_status": "NOT_COMPATIBLE",
+  "contract_source": "skills/huashu-motion/references/contract.md at commit 52467f99c602b76ba86d511d37acdfe93fa1e16e",
+  "contract_status": "READ_STATIC_CONTRACT",
+  "compatibility_findings": [
+    "Missing native composition root attributes: data-composition-id, data-width, and data-height.",
+    "No paused GSAP timeline is registered at window.__timelines[composition-id].",
+    "No scene:<id> timeline labels are declared; data-om-id alone marks pointable regions, not scenes or a seekable composition.",
+    "The draft uses CSS keyframes instead of the documented paused, seek-driven GSAP timeline, so deterministic frame seeking is unproven.",
+    "The draft does not include vendor/om.js. It hard-codes copy and uses no composition variables; variable declarations apply when editable variables are used."
+  ],
+  "draft_file": "projects/huashu-motion-sample/huashu-motion/index.html",
+  "upstream_shape": {
+    "film": "one index.html",
+    "runtime_state": ".om/",
+    "render_output": "out/",
+    "runtime_helper": "vendor/om.js (written by `om new`; not vendored into this repository)",
+    "regions": "data-om-id=\"...\""
+  },
+  "integration_paths": [
+    {
+      "id": "per-shot-projects",
+      "status": "BLOCKED",
+      "why": "The current HTML draft does not implement the pinned native composition contract; a <=8 s project alone does not make it renderable.",
+      "steps": [
+        "om new huashu-motion/shots/pNN --template <t>",
+        "om fork huashu-motion/shots/pNN huashu-motion/shots/pNN-portrait --size 1080x1920 (or author the portrait frame directly)",
+        "replace the scaffolded index.html only after implementing the pinned composition root and timeline; first-shot window is 4.0 s",
+        "om check huashu-motion/shots/pNN --samples 24 --json",
+        "om render huashu-motion/shots/pNN --format mp4 --fps 30 --silent --out huashu-motion/shots/pNN/out/pNN.mp4",
+        "om qa huashu-motion/shots/pNN/out/pNN.mp4"
+      ],
+      "note": "Every one of these commands needs the Owner's execution authorization. None has been run."
+    },
+    {
+      "id": "whole-film-then-cut",
+      "status": "BLOCKED",
+      "why": "The 21 s CSS-only draft is not a compatible Huashu Motion project; no whole-film render or subsequent cut is prepared.",
+      "extra_step": "The cut is a local ffmpeg step. Each cut clip is checked again; a clip that fails the gate does not enter M4.5.",
+      "cost": "One render instead of six, but the cut points are a new place where the timeline can drift.",
+      "note": "Also unauthorized; also unrendered."
+    }
+  ],
+  "upstream_commands_verbatim": {
+    "check": "om check [dir] [--samples n] [--source] [--json]",
+    "still": "om still <page.html|dir> [--at 0,2.5] [--out file]",
+    "render": "om render [dir] [--format mp4|mov|webm|gif] [--fps 30] [--out file] [--workers n] [--video extract|seek] [--frames jpg|png] [--blur n] [--silent] [--transparent]",
+    "qa": "om qa [dir|video] [--loop]"
+  },
+  "expected_outputs": {
+    "render": "one media file per project under <project>/out/",
+    "check": "findings; the process exits 1 when any finding is error-level",
+    "qa": "a report over the newest render or the given video",
+    "still": "PNG frames"
+  },
+  "verified_contract": {
+    "composition_root": "An HTML composition root declares data-composition-id, data-width, and data-height.",
+    "timeline": "A paused GSAP timeline is registered in window.__timelines[composition-id].",
+    "scenes": "Named timeline labels use scene:<id>.",
+    "pointable_regions": "data-om-id marks stable visible regions; it does not replace scene labels or timeline registration.",
+    "variables": "When editable values are used, declare defaults on html[data-composition-variables] and bind them through documented variable APIs; this draft uses fixed copy and declares none.",
+    "runtime": "om new supplies vendor/om.js; the draft does not currently include that runtime."
+  },
+  "requirements_at_render_time": {
+    "node": ">=22",
+    "browser": "Chrome, Chromium or Edge on this machine",
+    "ffmpeg": "ffmpeg + ffprobe with libx264",
+    "windows": "upstream states it has only been tested on macOS; Windows support is UNVERIFIED"
+  },
+  "output_notes": [
+    "a render of 4 s or longer carries an upstream 'Made with huashu-motion' credit line in the last 1.2 s unless the film opts out",
+    "`om render --silent` suppresses the missing-soundtrack warning only; ffprobe must verify the output stream list and the derived AudioPolicy file again",
+    "a 3.5 s clip is below the 4 s credit-line threshold, but the rule is upstream's and is not waived by this repository"
+  ]
+}

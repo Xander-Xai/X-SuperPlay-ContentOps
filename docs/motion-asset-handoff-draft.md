@@ -74,7 +74,7 @@ publish_authorized = false
 
 - 合同通过后，动效仍只是 `generated=true` 的辅助资产，必须由人显式登记进**唯一** `MediaManifest` 活动 timeline。
 - 不得因为“有回执”就自动进入 M5、时间线或发布。
-- 进入整片后仍受 70% 真实素材可见时长门约束；动效时长计入非真实部分。
+- 进入整片后按账号 DNA 的 `evidence.mode` 执行可见时长策略：`EVIDENCE_LED` 保留 70% 真实来源门禁；`EXPLANATORY` 不以全片比例为门禁，但素材权利、来源与每项事实声明的证据验证仍不可豁免。动效始终计为非真实素材。
 
 ## 6. 明确不做
 
