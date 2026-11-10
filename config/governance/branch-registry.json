@@ -128,6 +128,14 @@
       "purpose": "governance round 4: bilingual ledger sync, registry status correction, offline ledger consistency check (Refs #7 #147)",
       "status": "merged",
       "expires": "2026-12-11"
+    },
+    {
+      "name": "chore/governance-retention-20261111",
+      "pr": 156,
+      "created": "2026-11-11",
+      "purpose": "governance round 5: fix the registry expiry CI time-bomb, add local ledger head check, archive salvage ledger (Refs #7 #147)",
+      "status": "merged",
+      "expires": "2026-12-11"
     }
   ]
 }
