@@ -2,12 +2,24 @@
 """Validate config/governance/branch-registry.json (offline, no network).
 
 Every non-persistent remote branch should carry a PR reference, a purpose, a
-status and an expiry. An expired entry is a governance failure: either the work
-landed and the branch was removed, or the entry is stale and must be reviewed.
+status and an ``expires`` value. An ``archived`` entry is a deliberate snapshot
+that never had a PR (for example a worktree salvage committed straight to an
+archive branch), so it is exempt from ``pr`` but still requires
+created/purpose/status/expires.
 
-An ``archived`` entry is a deliberate snapshot that never had a PR (for example
-a worktree salvage committed straight to an archive branch), so it is exempt
-from ``pr`` but still requires created/purpose/status/expires.
+``expires`` is a REVIEW DATE, not a deletion deadline. The registry is an audit
+ledger of branches ever created, not a list of live remote branches, and merged
+branches are auto-deleted by GitHub. Treating a past review date as a hard
+failure would make every PR's required check go red on a fixed calendar date
+regardless of code quality. Therefore:
+
+  * ``status=merged`` past its review date -> report-only ``RETIRE DUE``
+    (collected by ``retire_due()``, printed by the CLI, never a CI failure).
+  * ``status=archived`` -> a deliberate permanent snapshot, exempt from
+    ``max_age_days`` entirely.
+  * any other non-persistent status past its review date -> hard ``EXPIRED``.
+
+Invalid date strings remain a hard failure for every status.
 """
 import argparse
 import json
@@ -66,16 +78,43 @@ def validate(data, today=None):
         expires = b.get("expires")
         if expires:
             try:
-                if date.fromisoformat(expires) < today:
-                    errors.append("EXPIRED: %s (expires %s)" % (name, expires))
+                expires_date = date.fromisoformat(expires)
             except ValueError:
                 errors.append("%s has invalid expires date: %s" % (name, expires))
+                expires_date = None
+            if expires_date and expires_date < today:
+                if status in ("merged", "archived"):
+                    pass  # report-only / permanent: see retire_due() and the docstring
+                else:
+                    errors.append("EXPIRED: %s (expires %s)" % (name, expires))
     expected = policy.get("persistent") or []
     if sorted(persistent) != sorted(expected):
         errors.append("persistent branches %s do not match policy %s" % (persistent, expected))
     if "main" not in names:
         errors.append("main is not registered")
     return errors
+
+
+def retire_due(data, today=None):
+    """Return report-only retirement candidates (merged entries past review date)."""
+    today = today or date.today()
+    out = []
+    branches = data.get("branches") if isinstance(data, dict) else None
+    if not isinstance(branches, list):
+        return out
+    for b in branches:
+        if not isinstance(b, dict) or b.get("status") != "merged":
+            continue
+        expires = b.get("expires")
+        if not expires:
+            continue
+        try:
+            if date.fromisoformat(expires) < today:
+                out.append("%s (review date %s, pr #%s)" % (
+                    b.get("name"), expires, b.get("pr")))
+        except ValueError:
+            continue
+    return out
 
 
 def main():
@@ -94,13 +133,18 @@ def main():
         return 1
     today = date.fromisoformat(args.today) if args.today else date.today()
     errors = validate(data, today)
+    due = retire_due(data, today)
+    for item in due:
+        print("  [RETIRE DUE] %s" % item)
     if errors:
         for e in errors:
             print("  [FAIL] %s" % e)
         print("branch-registry FAIL: %d issue(s)" % len(errors))
         return 1
-    print("branch-registry PASS: %d branches, %d persistent" % (
-        len(data["branches"]), len([b for b in data["branches"] if b.get("status") == "persistent"])))
+    print("branch-registry PASS: %d branches, %d persistent, %d retire-due (report-only)" % (
+        len(data["branches"]),
+        len([b for b in data["branches"] if b.get("status") == "persistent"]),
+        len(due)))
     return 0
 
 

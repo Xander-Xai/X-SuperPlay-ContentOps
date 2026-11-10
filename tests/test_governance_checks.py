@@ -60,6 +60,32 @@ class TestBranchRegistry(unittest.TestCase):
         self.assertTrue(any("missing expires" in e for e in
                             registry_check.validate(self.good, date(2026, 11, 11))))
 
+    def test_merged_past_review_date_is_report_only(self):
+        self.good["branches"][1]["status"] = "merged"
+        self.good["branches"][1]["expires"] = "2026-11-01"
+        self.assertEqual(registry_check.validate(self.good, date(2026, 12, 12)), [])
+        due = registry_check.retire_due(self.good, date(2026, 12, 12))
+        self.assertEqual(len(due), 1)
+        self.assertIn("feat/example", due[0])
+
+    def test_archived_past_review_date_is_exempt(self):
+        self.good["branches"][1]["status"] = "archived"
+        self.good["branches"][1]["pr"] = None
+        self.good["branches"][1]["expires"] = "2026-11-01"
+        self.assertEqual(registry_check.validate(self.good, date(2026, 12, 12)), [])
+        self.assertEqual(registry_check.retire_due(self.good, date(2026, 12, 12)), [])
+
+    def test_active_status_past_review_date_still_fails(self):
+        self.good["branches"][1]["expires"] = "2026-11-01"
+        self.assertTrue(any("EXPIRED" in e for e in
+                            registry_check.validate(self.good, date(2026, 12, 12))))
+
+    def test_invalid_expires_still_fails_for_merged(self):
+        self.good["branches"][1]["status"] = "merged"
+        self.good["branches"][1]["expires"] = "not-a-date"
+        self.assertTrue(any("invalid expires" in e for e in
+                            registry_check.validate(self.good, date(2026, 11, 11))))
+
     def test_wrong_persistent_policy_fails(self):
         self.good["policy"]["persistent"] = ["develop"]
         self.assertTrue(any("persistent" in e for e in registry_check.validate(self.good, date(2026, 11, 10))))
