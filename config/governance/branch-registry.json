@@ -1,13 +1,13 @@
 {
   "schema": "contentops.branch-registry/v1",
-  "verified_at": "2026-11-10T20:55:00+08:00",
+  "verified_at": "2026-11-11T02:10:00+08:00",
   "policy": {
     "persistent": [
       "main"
     ],
     "max_age_days": 30,
     "require_pr_for_non_persistent": true,
-    "note": "A remote branch without a registry entry is a governance failure once the CI check is enabled. This file is a local registry; it does not query the network. Register a new branch here in the same PR that creates it."
+    "note": "A remote branch without a registry entry is a governance failure once the CI check is enabled. This file is a local registry; it does not query the network. Register a new branch here in the same PR that creates it. It records branches ever created, not a live list of remote branches. status records the branch's disposition when the entry landed on main, not a live PR state; entries written before 2026-11-11 used a live-state meaning. status=archived is a deliberate snapshot with no PR and is exempt from the pr field."
   },
   "branches": [
     {
@@ -103,8 +103,16 @@
       "pr": 154,
       "created": "2026-11-10",
       "purpose": "fold the stranded author's article-test coverage into the landed suite",
-      "status": "open",
+      "status": "merged",
       "expires": "2026-12-10"
+    },
+    {
+      "name": "archive/minimax-wt-snapshot-20261110",
+      "pr": null,
+      "created": "2026-11-10",
+      "purpose": "snapshot of 2,300 uncommitted Huashu lines salvaged from the minimax-video-provider worktree before governance removal; deliberate archive, no PR, retained after the 2026-11-11 review",
+      "status": "archived",
+      "expires": "2026-12-11"
     }
   ]
 }
