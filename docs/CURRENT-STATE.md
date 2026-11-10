@@ -37,10 +37,10 @@
 
 | Property | Verified value |
 |---|---|
-| Default branch | `main` — protected @ `f7cb2328` (PR #136, squash-merged 2026-11-10); previously `0baecfa8` (PR #134) and `545b64c` (PR #131) |
-| Open PRs | 3 drafts: #132 (`feat/automatic-video-production` → `main`), #133 (`refactor/architecture-adapters-20261109` → `feat/automatic-video-production`), #135 (`feat/jianying-draft-handoff` → `feat/automatic-video-production`). **#134 and #136 are MERGED** |
+| Default branch | `main` — protected @ `44665ab1` (PR #137, squash-merged 2026-11-10); previously `f7cb2328` (#136), `0baecfa8` (#134) and `545b64c` (#131) |
+| Open PRs | 3 drafts: #132 (`feat/automatic-video-production` → `main`), #133 (`refactor/architecture-adapters-20261109` → `feat/automatic-video-production`), #135 (`feat/jianying-draft-handoff` → `feat/automatic-video-production`). **#134, #136 and #137 are MERGED** |
 | Open issues | 4: #6, #7, #51, #56 — #51 / #56 are **OPEN / DEFERRED**, not delivered |
-| Remote branches | 4: `main` + 3 non-`main`, each carrying unmerged commits. `fix/p0-publish-loop-hardening-20261109` and `feat/huashu-motion-easel-adapter` were **auto-deleted** after their PRs merged (`delete_branch_on_merge: true`); no branch was removed manually |
+| Remote branches | 4: `main` + 3 non-`main`, each carrying unmerged commits. `fix/p0-publish-loop-hardening-20261109`, `feat/huashu-motion-easel-adapter` and `docs/governance-state-20261110` were **auto-deleted** after their PRs merged (`delete_branch_on_merge: true`); no branch was removed manually. All 4 are registered in `config/governance/branch-registry.json` |
 | Branch protection | required checks `Tests (ubuntu-latest)`, `Tests (windows-latest)`, `Repo policy checks`; PR required (0 approvals); linear history; no force push; no deletion; `enforce_admins: false`; `/rulesets` = `[]` |
 | Merge policy | squash only; `delete_branch_on_merge: true` |
 | Local worktrees | 9 (including 2 detached `D:/Temp/ci-m5*`) — audited only, none removed |
@@ -55,6 +55,13 @@ it. **No issue was closed, no branch was manually deleted, no worktree was
 removed.** Per-item evidence: `reports/governance-snapshot-2026-11-10.html`,
 `reports/governance-execution-2026-11-10.html` and
 `reports/governance-execution-2-2026-11-10.html`.
+
+
+`scripts/check_branch_registry.py` validates the branch registry offline;
+`scripts/check_pr_size.py` reports PR size / coupling metrics from a git log
+stream (report-only until an Owner enables `--strict`). Both are wired into
+CI and covered by `tests/test_governance_checks.py`. The `main` SHA above
+remains a verified time-point snapshot, not a generated field.
 
 ### CI coverage note — stacked PRs (institutional exception)
 
