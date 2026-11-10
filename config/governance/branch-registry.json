@@ -19,10 +19,10 @@
       "expires": null
     },
     {
-      "name": "feat/gzh-sdk-adapter",
-      "pr": 145,
+      "name": "feat/platform-route-display",
+      "pr": 141,
       "created": "2026-11-10",
-      "purpose": "GZH SDK adapter + workflow runner + delivery authz gate (drift slice E / A5)",
+      "purpose": "platform workflow routes + route display CLI (drift slice A)",
       "status": "open",
       "expires": "2026-12-10"
     }
