@@ -98,6 +98,12 @@ jobs:
       - name: Run governance guardrail tests
         run: python tests/test_governance_checks.py
 
+      # Card renderer: plan/parse/receipt logic plus the refusal paths that keep a
+      # card from silently claiming approval. The one live render path skips itself
+      # when playwright is absent, so this stays hermetic in CI.
+      - name: Run graphic card-renderer tests
+        run: python tests/test_render_cards.py
+
       # The media suites never make a provider request: they drive
       # tests/fixtures/fake_mmx_cli.py and inject a fake billing transport, so CI
       # needs no MiniMax account and spends no quota.
