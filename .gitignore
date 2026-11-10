@@ -311,5 +311,11 @@ assert/
 # governed by the media rules above, including their exact-path exceptions.
 **/.hyperframes/
 
-# One-off governance snapshot reports stay local-only (precedent: PR #136)
-reports/governance-*.html
+# One-off session reports stay local-only by default (precedent: PR #136,
+# decision C1 of the 2026-11-10 governance review). reports/ is a scratch
+# surface: every `git add -A` near it was an accident waiting to happen, so
+# the whole class is ignored instead of tracking a moving list. A report that
+# must live in the repo is whitelisted explicitly below with a `!` line and a
+# one-line reason; anything else should be archived outside Git or deleted.
+reports/*.html
+# !reports/<keep-this-one>.html  — uncomment, then state why it is canonical
