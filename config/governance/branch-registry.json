@@ -17,6 +17,14 @@
       "purpose": "protected default branch",
       "status": "persistent",
       "expires": null
+    },
+    {
+      "name": "feat/gzh-sdk-adapter",
+      "pr": 145,
+      "created": "2026-11-10",
+      "purpose": "GZH SDK adapter + workflow runner + delivery authz gate (drift slice E / A5)",
+      "status": "open",
+      "expires": "2026-12-10"
     }
   ]
 }
