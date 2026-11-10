@@ -95,6 +95,14 @@
       "pr": 153,
       "created": "2026-11-10",
       "purpose": "M5 characterization baseline generator + golden receipts (slice 1 of #140)",
+      "status": "merged",
+      "expires": "2026-12-10"
+    },
+    {
+      "name": "test/article-tests-upstream-merge",
+      "pr": 154,
+      "created": "2026-11-10",
+      "purpose": "fold the stranded author's article-test coverage into the landed suite",
       "status": "open",
       "expires": "2026-12-10"
     }
