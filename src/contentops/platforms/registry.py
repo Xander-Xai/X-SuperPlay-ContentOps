@@ -8,7 +8,7 @@ hoping none disagreed.
 The registry is data. A platform declares its content types, the pipeline that
 produces them, the accounts allowed to use it, how a draft is delivered, and
 how honest its current state is. A status is a claim about evidence, not about
-configuration: ``PLANNED`` means no code, ``INTEGRATED`` means code and offline
+configuration: ``PLANNED`` means no bound public account and no publication authority, even when a tracked transport exists. ``INTEGRATED`` means code and offline
 tests, ``TESTED`` means a real local run, ``PILOT_READY`` means a real platform
 draft, and ``PRODUCTION_ACCEPTED`` means a published work with a receipt.
 
@@ -385,6 +385,73 @@ def validate_registry(root: Path) -> List[str]:
                                 "config/", "docs/")) and not (Path(root) / path).exists():
                 failures.append(f"{entry.platform_id}: evidence path missing: {path}")
     return failures
+
+
+_SCRIPT_EFFECTS = {
+    "wechat_draft.py": "draft",
+    "wechat_metrics.py": "metrics",
+    "bilibili_metrics.py": "public_metrics",
+    "x_post.py": "manual_package",
+    "video_deliver.py": "upload-video",
+}
+
+
+def workflow_routes(root: Path, platform_id: str = "") -> List[Dict[str, Any]]:
+    """Point each platform at the tracked command named by its registry owner.
+
+    The owner field is the only route table. This function never runs a command,
+    never sets production_ready, and never declares a skill. A row whose owner
+    names no existing script is connected=false.
+    """
+    platforms = load_platforms(root)
+    wanted = [platform_id] if platform_id else list(platforms)
+    if platform_id and platform_id not in platforms:
+        raise RegistryError("PLATFORM_UNKNOWN", platform_id)
+    routes: List[Dict[str, Any]] = []
+    for name in wanted:
+        entry = platforms[name]
+        commands = []
+        for part in entry.owner.split(","):
+            script = part.strip()
+            if not script.startswith("scripts/") or not script.endswith(".py"):
+                continue
+            if not (Path(root) / script).is_file():
+                continue
+            effect = _SCRIPT_EFFECTS.get(Path(script).name, "describe")
+            commands.append({
+                "script": script,
+                "effect": effect,
+                "requires_execute": effect != "manual_package",
+            })
+        if not commands and (Path(root) / "scripts" / "graphic_deliver.py").is_file():
+            from . import graphic_specs
+            try:
+                bridged = any(
+                    channel.get("kind") == "browser_bridge"
+                    for channel in graphic_specs.channels(name)
+                )
+            except (graphic_specs.SpecError, KeyError):
+                bridged = False
+            if bridged:
+                commands.append({
+                    "script": "scripts/graphic_deliver.py",
+                    "effect": "draft",
+                    "requires_execute": True,
+                })
+        routes.append({
+            "schema": "contentops.platform-workflow-route/v1",
+            "platform_id": name,
+            "status": entry.status,
+            "publish_mode": entry.publish_mode,
+            "metrics": entry.metrics,
+            "commands": commands,
+            "connected": bool(commands),
+            "publish_authorized": False,
+            "production_ready": False,
+            "skill_declared": False,
+            "not_claimed": entry.not_claimed,
+        })
+    return routes
 
 
 def summarise(root: Path) -> Dict[str, Any]:
