@@ -31,7 +31,7 @@
       "pr": 152,
       "created": "2026-11-10",
       "purpose": "GZH article renderer salvage + data-URI fix + hermetic suite (PR-K)",
-      "status": "open",
+      "status": "merged",
       "expires": "2026-12-10"
     },
     {
@@ -39,7 +39,7 @@
       "pr": 150,
       "created": "2026-11-10",
       "purpose": "SiliconFlow ASR backcheck gate on real narration evidence (island salvage J)",
-      "status": "open",
+      "status": "merged",
       "expires": "2026-12-10"
     },
     {
@@ -88,6 +88,14 @@
       "created": "2026-11-10",
       "purpose": "receipts + x-growth posts + architecture audit artifacts (drift slice F)",
       "status": "merged",
+      "expires": "2026-12-10"
+    },
+    {
+      "name": "refactor/m5-characterize",
+      "pr": 153,
+      "created": "2026-11-10",
+      "purpose": "M5 characterization baseline generator + golden receipts (slice 1 of #140)",
+      "status": "open",
       "expires": "2026-12-10"
     }
   ]

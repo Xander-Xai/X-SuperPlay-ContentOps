@@ -1,0 +1,101 @@
+{
+  "schema": "contentops.m5-characterization/v1",
+  "generated_at": "2026-11-10T15:09:29+00:00",
+  "commit": "5ff621c1f6bbedbe65c9c94d863b340b6214b179",
+  "python": "pythonw.exe",
+  "suites": [
+    {
+      "suite": "tests/test_brief_to_m5.py",
+      "exit_code": 0,
+      "total": 13,
+      "passed": 13,
+      "failed": 0,
+      "dialect": "prose"
+    },
+    {
+      "suite": "tests/test_m5_asr_gate.py",
+      "exit_code": 0,
+      "total": 6,
+      "passed": 6,
+      "failed": 0,
+      "dialect": "unittest"
+    },
+    {
+      "suite": "tests/test_m5_bundle_handoff.py",
+      "exit_code": 0,
+      "total": 6,
+      "passed": 6,
+      "failed": 0,
+      "dialect": "custom"
+    },
+    {
+      "suite": "tests/test_m5_evidence.py",
+      "exit_code": 0,
+      "total": 19,
+      "passed": 19,
+      "failed": 0,
+      "dialect": "prose"
+    },
+    {
+      "suite": "tests/test_m5_media_traceability.py",
+      "exit_code": 0,
+      "total": 10,
+      "passed": 10,
+      "failed": 0,
+      "dialect": "unittest"
+    },
+    {
+      "suite": "tests/test_m5_media_use_workflow.py",
+      "exit_code": 1,
+      "total": 30,
+      "passed": 29,
+      "failed": 1,
+      "dialect": "custom"
+    },
+    {
+      "suite": "tests/test_m5_motion_integration.py",
+      "exit_code": 0,
+      "total": 56,
+      "passed": 56,
+      "failed": 0,
+      "dialect": "prose"
+    },
+    {
+      "suite": "tests/test_motion_build_reliability.py",
+      "exit_code": 0,
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "dialect": "prose"
+    },
+    {
+      "suite": "tests/test_motion_handoff.py",
+      "exit_code": 0,
+      "total": 11,
+      "passed": 11,
+      "failed": 0,
+      "dialect": "custom"
+    },
+    {
+      "suite": "tests/test_motion_sample.py",
+      "exit_code": 0,
+      "total": 11,
+      "passed": 11,
+      "failed": 0,
+      "dialect": "custom"
+    }
+  ],
+  "totals": {
+    "suites": 10,
+    "tests": 165,
+    "passed": 164,
+    "failed": 1
+  },
+  "unparsed_suites": [],
+  "role": "BASELINE_ONLY",
+  "cannot": [
+    "a passing baseline is not an approval of any behaviour",
+    "totals reflect the summary lines of the suites, not coverage",
+    "this receipt does not authorize any structural change by itself"
+  ]
+}
