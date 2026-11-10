@@ -354,7 +354,10 @@ def test_write_receipt_lands_in_receipts_and_verifies():
     with tempfile.TemporaryDirectory() as d:
         p, project, receipt = _receipt(Path(d))
         target = write_receipt(receipt, project)
-        assert target == project / "receipts" / "gzh-article.json"
+        # write_receipt resolves the project dir; compare resolved paths so the
+        # assertion holds on Windows too, where resolve() may re-normalise the
+        # tempfile path.
+        assert target == (project / "receipts" / "gzh-article.json").resolve()
         assert target.is_file()
         assert verify_receipt(json.loads(target.read_text(encoding="utf-8")), project) is True
 
