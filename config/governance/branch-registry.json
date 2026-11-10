@@ -1,6 +1,6 @@
 {
   "schema": "contentops.branch-registry/v1",
-  "verified_at": "2026-11-10T19:52:00+08:00",
+  "verified_at": "2026-11-10T16:57:02+08:00",
   "policy": {
     "persistent": [
       "main"
@@ -23,14 +23,6 @@
       "pr": 141,
       "created": "2026-11-10",
       "purpose": "platform workflow routes + route display CLI (drift slice A)",
-      "status": "open",
-      "expires": "2026-12-10"
-    },
-    {
-      "name": "refactor/motion-planner-stages",
-      "pr": 142,
-      "created": "2026-11-10",
-      "purpose": "source-anchor motion regions (drift slice B)",
       "status": "open",
       "expires": "2026-12-10"
     }
