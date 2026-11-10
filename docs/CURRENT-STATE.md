@@ -28,10 +28,34 @@
 
 ## Git
 
-> **Git state is re-verified below at 2026-11-10.** The table at the end of this
-> section is the 2026-11-04 verification snapshot, kept as history; it is no
-> longer the current state. The rest of this document still describes the
-> 2026-11-04 `main`.
+> **Git state is re-verified below at 2026-11-10 (evening).** The 16:00
+> verification below it is kept as history for the same day. Older snapshots
+> live further down; they are no longer the current state.
+
+### Git — verified 2026-11-10 evening (merge sequence #141–#150 + governance round 3)
+
+| Property | Verified value |
+|---|---|
+| Default branch | `main` — protected @ `9bb66cee` (PR #150, squash-merged 2026-11-10 ~21:30); chain this evening: `dbc72bc3` (#139) → #141–#146 (drift slices A–F) → `6efe3763` (#148 registry catch-up) → `c0154c56` (#149 card renderer) → `9bb66cee` (#150 ASR backcheck) |
+| Open PRs | **0** |
+| Open issues | 5: #7 (EPIC), #51 / #56 (DEFERRED rights), #140 (M5 split roadmap), #147 (drift convergence — body complete; closing with receipt) |
+| Remote branches | 2: `main` + `archive/minimax-wt-snapshot-20261110` (deliberate archive of 2,300 lines of uncommitted Huashu work; not an active branch, not in the registry's active list) |
+| Remote tags | 2: `archive/converge-a2910c6`, `archive/pr1-pr2-1c127df` (island snapshots, pushed 2026-11-10 evening after living local-only since the A3 archive) |
+| Branch protection | unchanged: 3 required checks, squash only, linear history, admin-enforced |
+| Local worktrees | 1: `D:/Temp/AI-Agents/claude/pr2-gzh-articles` (692-line GZH article renderer, salvage PR in progress) |
+| Stash | 1: pre-slicing snapshot, superseded by #141–#146 pending a content-level diff before drop |
+| Session hygiene | AGENTS.md §10 added 2026-11-10 (zero invisible work; archive actions complete only when pushed; registry entries validated locally before commit) |
+
+The evening sequence merged every drift slice from issue #147 plus both island
+salvages identified in the A3 audit: the card renderer (#149, from
+`archive/pr1-pr2-1c127df`) and the SiliconFlow ASR backcheck gate (#150, from
+`archive/converge-a2910c6`; the QC single-verdict rework and the
+checkout-guard removal found on that island were deliberately **not** ported).
+#148 exists because the registry entries for #142–#146 were stripped from
+their branches during a transport outage and re-landed post-merge; its first
+CI attempt failed on `check_branch_registry` requiring non-null `expires` —
+the rule is now stated in AGENTS.md §10 so the next registry edit starts from
+a local validation instead of a red run.
 
 ### Git — verified 2026-11-10 (governance execution round 2, after #132 / #135 / #133)
 

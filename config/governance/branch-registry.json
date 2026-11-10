@@ -19,6 +19,14 @@
       "expires": null
     },
     {
+      "name": "chore/governance-rules-20261110",
+      "pr": 151,
+      "created": "2026-11-10",
+      "purpose": "session hygiene rules + reports gitignore class + ledger sync (governance round 3)",
+      "status": "open",
+      "expires": "2026-12-10"
+    },
+    {
       "name": "feat/asr-siliconflow-backcheck",
       "pr": 150,
       "created": "2026-11-10",

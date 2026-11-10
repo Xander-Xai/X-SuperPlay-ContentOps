@@ -122,3 +122,28 @@ No receipt = task not done.
 - No mega-commits. One logical change per commit.
 - Run the checks required by the change's risk level in `docs/TEST-PLAN.md`; do not turn this into a repeated full suite after each small edit.
 - New `tests/test_*.py` suites must be wired into `.github/workflows/ci.yml`.
+
+## 10. Session Hygiene
+
+A session ends with zero invisible work. Anything that exists only on this
+machine — uncommitted modifications, unpushed branches or tags, worktree-only
+files — is invisible to GitHub, has no receipt, and dies with the disk. The
+2026-11-10 drift (784 uncommitted lines, two unpushed island branches) and the
+surviving pr2 worktree are the standing examples.
+
+- Before ending a session, run `git status --porcelain` and `git stash list`.
+  Every uncommitted change must be either committed to a registered branch,
+  deliberately discarded, or recorded in an issue / receipt as deliberately
+  parked. Untracked non-gitignored files count as uncommitted work.
+- A local branch or tag holding unique work must be pushed in the same session
+  (archive tags included). "Archived locally" is not a backup. An archive
+  action is complete only when the push has succeeded.
+- A worktree is temporary. Before removing one, diff it; unique content is
+  salvaged into a branch/tag or explicitly retired in writing first.
+- Registering a branch in `config/governance/branch-registry.json`? Run
+  `python scripts/check_branch_registry.py --today <date>` locally BEFORE
+  committing: non-persistent entries require a non-null `expires` (the
+  #148 first-attempt CI failure came exactly from skipping this).
+- New test suites: besides the ci.yml wiring rule above, verify the suite
+  actually runs (`python tests/<suite>.py` exits 0 locally) — CI green on a
+  suite that was never executed locally is not evidence of anything.
