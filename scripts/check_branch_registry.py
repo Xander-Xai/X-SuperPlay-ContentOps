@@ -4,6 +4,10 @@
 Every non-persistent remote branch should carry a PR reference, a purpose, a
 status and an expiry. An expired entry is a governance failure: either the work
 landed and the branch was removed, or the entry is stale and must be reviewed.
+
+An ``archived`` entry is a deliberate snapshot that never had a PR (for example
+a worktree salvage committed straight to an archive branch), so it is exempt
+from ``pr`` but still requires created/purpose/status/expires.
 """
 import argparse
 import json
@@ -16,6 +20,7 @@ DEFAULT = ROOT / "config" / "governance" / "branch-registry.json"
 SCHEMA = "contentops.branch-registry/v1"
 REQUIRED = ("name", "purpose", "status")
 NON_PERSISTENT_REQUIRED = ("name", "pr", "created", "purpose", "status", "expires")
+ARCHIVED_REQUIRED = ("name", "created", "purpose", "status", "expires")
 
 
 def validate(data, today=None):
@@ -45,10 +50,17 @@ def validate(data, today=None):
         if name in names:
             errors.append("duplicate branch: %s" % name)
         names.add(name)
-        is_persistent = b.get("status") == "persistent"
+        status = b.get("status")
+        is_persistent = status == "persistent"
         if is_persistent:
             persistent.append(name)
-        for field in (REQUIRED if is_persistent else NON_PERSISTENT_REQUIRED):
+        if is_persistent:
+            required = REQUIRED
+        elif status == "archived":
+            required = ARCHIVED_REQUIRED
+        else:
+            required = NON_PERSISTENT_REQUIRED
+        for field in required:
             if b.get(field) in (None, ""):
                 errors.append("%s missing %s" % (name, field))
         expires = b.get("expires")
