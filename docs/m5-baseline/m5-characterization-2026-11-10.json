@@ -1,8 +1,8 @@
 {
   "schema": "contentops.m5-characterization/v1",
-  "generated_at": "2026-11-10T15:07:37+00:00",
-  "commit": "112800c9fb0a07b7f3b14a55de77309d2f871915",
-  "python": "pythonw.exe",
+  "generated_at": "2026-11-10T15:08:32+00:00",
+  "commit": "2d0bfc6f28d67ce01463e1649a60a269e7abed48",
+  "python": "python.exe",
   "suites": [
     {
       "suite": "tests/test_brief_to_m5.py",
@@ -54,11 +54,13 @@
     },
     {
       "suite": "tests/test_m5_motion_integration.py",
-      "exit_code": 0,
-      "total": 56,
-      "passed": 56,
-      "failed": 0,
-      "dialect": "prose"
+      "exit_code": 1,
+      "total": null,
+      "passed": null,
+      "failed": null,
+      "dialect": null,
+      "note": "no recognizable summary line; see suite_output tail",
+      "output_tail": "t_and_fail_closed\n[ok] test_m5_motion_stage_dispatches_explicit_huashu_motion_shots\n[ok] test_huashu_motion_film_path_must_remain_project_local\n[ok] test_h3_avatar_bookends_reuse_only_hash_bound_subscription_outputs\n[safe-delete][SAFE_DELETE_BULK_CONFIRM_REQUIRED] {\"count\":53,\"threshold\":50,\"scope\":\"turn\",\"targets\":[\"D:\\\\Projects\\\\X-SuperPlay-ContentOps\\\\.verify-tmp\\\\tmpsvij3a45\"],\"targetCount\":1}"
     },
     {
       "suite": "tests/test_motion_build_reliability.py",
@@ -87,11 +89,13 @@
   ],
   "totals": {
     "suites": 10,
-    "tests": 165,
-    "passed": 164,
+    "tests": 109,
+    "passed": 108,
     "failed": 1
   },
-  "unparsed_suites": [],
+  "unparsed_suites": [
+    "tests/test_m5_motion_integration.py"
+  ],
   "role": "BASELINE_ONLY",
   "cannot": [
     "a passing baseline is not an approval of any behaviour",
