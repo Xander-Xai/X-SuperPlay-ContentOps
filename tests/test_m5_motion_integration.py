@@ -1088,7 +1088,6 @@ def test_producer_reuses_current_qc_pass_without_rebuilding():
             produce_video.m5_production._has_audio = old_has_audio
 
 
-
 def test_producer_review_mode_renders_local_draft_for_review():
     with tempfile.TemporaryDirectory() as temp:
         root = Path(temp).resolve()
@@ -1143,7 +1142,6 @@ def test_producer_review_mode_renders_local_draft_for_review():
             produce_video.m5_production.copy_review.require_approved = old_check
             produce_video.m5_production.build = old_build
             produce_video.m5_production._has_audio = old_has_audio
-
 
 
 def test_local_motion_runs_each_placement_and_accepts_cache_reuse():
@@ -1691,9 +1689,14 @@ def test_1024_uses_ocr_matched_screenshot_region_for_camera_motion():
                                         "matched_terms": ["mcp", "具调", "工具", "调用"]}]
         assert spec["grammar"] == "t2_keynote_ui"
         assert spec["cues"][0]["kind"] == "image" and spec["cues"][0]["image"]
-        assert spec["cues"][1] == {
-            "at": 0.8, "kind": "highlight",
-            "data": {"rect": [0.11, 0.22, 0.31, 0.06]}}
+        target = spec["cues"][1]
+        assert target["kind"] == "highlight"
+        assert target["data"]["rect"] == [0.11, 0.22, 0.31, 0.06]
+        # t2 only pushes when fill/rect_width clears its 1.18x floor, so the
+        # planner must fill the frame with the framed region, not leave the
+        # 0.42 default that silently pins the camera at 1.0x on wide targets.
+        assert target["data"]["fill"] > 0.37
+        assert spec["safe"]["bottom"] > 0
 
 
 def test_code_snapshot_uses_its_ocr_region_instead_of_a_generic_icon():
@@ -1711,6 +1714,7 @@ def test_code_snapshot_uses_its_ocr_region_instead_of_a_generic_icon():
         result = motion_planner.build_auto_plan(
             project=project, account_id="x-superplay-future-intelligence", account_dna=dna,
             script={"lines": [{"id": "P-01", "asset_id": "source-01",
+                               "visual_role": "proof",
                                "narration": "Configuration settings for"}]},
             narration={"lines": [{"start": 0.0, "duration": 3.0}]},
             source_assets={"source-01": {
@@ -1748,6 +1752,7 @@ def test_code_snapshot_without_ocr_keeps_the_source_as_the_main_visual():
         result = motion_planner.build_auto_plan(
             project=project, account_id="x-superplay-future-intelligence", account_dna=dna,
             script={"lines": [{"id": "P-01", "asset_id": "source-01",
+                               "visual_role": "proof",
                                "narration": "A line with no source OCR match"}]},
             narration={"lines": [{"start": 0.0, "duration": 3.0}]},
             source_assets={"source-01": {
@@ -1759,8 +1764,12 @@ def test_code_snapshot_without_ocr_keeps_the_source_as_the_main_visual():
         spec = json.loads((project / shot["spec"]).read_text(encoding="utf-8"))
         assert shot["motion_syntax"] == "t2_keynote_ui"
         assert spec["cues"][0]["kind"] == "image"
-        assert any(cue["kind"] in {"draw", "point"} for cue in spec["cues"])
-        assert not any(cue["kind"] == "highlight" for cue in spec["cues"])
+        # A t2 spec only draws cues t2 knows. The previous revision emitted a
+        # whiteboard ``draw`` cue here, which Huashu ignores silently, so the
+        # shot rendered one still with no second beat at all.
+        drawn = {cue["kind"] for cue in spec["cues"]}
+        assert drawn <= {"image", "highlight", "number", "title"}
+        assert len([cue for cue in spec["cues"] if cue["kind"] == "image"]) == 1
 
 
 def test_code_snapshot_uses_each_ocr_camera_target_only_once():
@@ -1776,7 +1785,7 @@ def test_code_snapshot_uses_each_ocr_camera_target_only_once():
         dna = json.loads((ROOT / "config" / "accounts" /
                           "x-superplay-future-intelligence.json").read_text(encoding="utf-8"))
         lines = [
-            {"id": f"P-{index:02d}", "asset_id": "source-01",
+            {"id": f"P-{index:02d}", "asset_id": "source-01", "visual_role": "proof",
              "narration": "Configuration settings for"}
             for index in range(1, 4)
         ]
