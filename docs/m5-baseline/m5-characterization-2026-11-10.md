@@ -1,8 +1,8 @@
 # M5 characterization baseline — 2026-11-10
 
-- commit: `2d0bfc6f28d6`
-- suites: 10, tests: 109, passed: 108, failed: 1
-- unparsed suites: 1 — tests/test_m5_motion_integration.py
+- commit: `5ff621c1f6bb`
+- suites: 10, tests: 165, passed: 164, failed: 1
+- unparsed suites: 0
 
 | suite | total | passed | failed | exit |
 |---|---|---|---|---|
@@ -12,7 +12,7 @@
 | tests/test_m5_evidence.py | 19 | 19 | 0 | 0 |
 | tests/test_m5_media_traceability.py | 10 | 10 | 0 | 0 |
 | tests/test_m5_media_use_workflow.py | 30 | 29 | 1 | 1 |
-| tests/test_m5_motion_integration.py | ? | ? | ? | 1 |
+| tests/test_m5_motion_integration.py | 56 | 56 | 0 | 0 |
 | tests/test_motion_build_reliability.py | 3 | 3 | 0 | 0 |
 | tests/test_motion_handoff.py | 11 | 11 | 0 | 0 |
 | tests/test_motion_sample.py | 11 | 11 | 0 | 0 |
