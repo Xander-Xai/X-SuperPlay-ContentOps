@@ -1,0 +1,46 @@
+{
+  "schema": "contentops.branch-registry/v1",
+  "verified_at": "2026-11-10T15:13:00+08:00",
+  "policy": {
+    "persistent": [
+      "main"
+    ],
+    "max_age_days": 30,
+    "require_pr_for_non_persistent": true,
+    "note": "A remote branch without a registry entry is a governance failure once the CI check is enabled. This file is a local registry; it does not query the network."
+  },
+  "branches": [
+    {
+      "name": "main",
+      "pr": null,
+      "created": null,
+      "purpose": "protected default branch",
+      "status": "persistent",
+      "expires": null
+    },
+    {
+      "name": "feat/automatic-video-production",
+      "pr": 132,
+      "created": "2026-11-07",
+      "purpose": "resumable M5 video producer; Draft, human review pending",
+      "status": "active_draft",
+      "expires": "2026-11-30"
+    },
+    {
+      "name": "refactor/architecture-adapters-20261109",
+      "pr": 133,
+      "created": "2026-11-09",
+      "purpose": "architecture audit + read-only scene adapter; stacked on #132",
+      "status": "stacked",
+      "expires": "2026-11-30"
+    },
+    {
+      "name": "feat/jianying-draft-handoff",
+      "pr": 135,
+      "created": "2026-11-10",
+      "purpose": "JianYing draft handoff; stacked on #132",
+      "status": "stacked",
+      "expires": "2026-11-30"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "contentops.strategy-platform-status/v1",
+  "source": "Xander-Xai/X-SuperPlay-Strategy 03-Execution/Platform-Operating-Matrix.md @ main 97c2c57",
+  "mirrored_at": "2026-11-09T00:00:00Z",
+  "note": "Read-only mirror of Strategy's platform lifecycle status. The authority is the Strategy repository; update this file only from a verified read of the matrix. A strategy_status of Active NEVER implies ContentOps runtime capability, account access or publication — that is exactly the split scripts/check_platform_status_sync.py reports.",
+  "status_vocabulary": ["Active", "Derived", "Experiment", "Infrastructure"],
+  "statuses": {
+    "douyin": {"strategy_status": "Active"},
+    "xiaohongshu": {"strategy_status": "Active"},
+    "bilibili": {"strategy_status": "Active"},
+    "shipinhao": {"strategy_status": "Derived"},
+    "gzh": {"strategy_status": "Derived"},
+    "zhihu": {"strategy_status": "Derived"},
+    "csdn": {"strategy_status": "Derived"},
+    "youtube": {"strategy_status": "Experiment"},
+    "x": {"strategy_status": "Experiment"},
+    "github": {"strategy_status": "Infrastructure"}
+  }
+}
