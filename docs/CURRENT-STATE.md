@@ -4,7 +4,7 @@
 
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
-> Last verified: 2026-11-04 on `main` at `218c91d` (PR #130).
+> Last verified: 2026-11-11 on `main` at `bcd5dd1` (PR #154; governance round 4).
 > Facts below describe `main`; deferred or rights-blocked work is labelled as such.
 > Sections below the "Layer status" table are historical milestone records;
 > they describe how a capability was proven, not what is current.
@@ -28,9 +28,32 @@
 
 ## Git
 
-> **Git state is re-verified below at 2026-11-10 (evening).** The 16:00
-> verification below it is kept as history for the same day. Older snapshots
-> live further down; they are no longer the current state.
+> **Git state is re-verified below at 2026-11-11 (governance round 4).** Every
+> section below it is a historical snapshot kept for traceability; none of them
+> is the current state.
+
+### Git — verified 2026-11-11 (governance round 4)
+
+| Property | Verified value |
+|---|---|
+| Default branch | `main` — protected @ `bcd5dd1` (PR #154, squash-merged 2026-11-10 15:32Z). Evening chain: `9bb66cee` (#150) → `45a1cfe6` (#151) → `03571275` (#152) → `e4987fa8` (#153) → `bcd5dd18` (#154) |
+| Open PRs | **0** — explicit `state=open` query returned `[]`; the 100 most recently updated PRs are all closed |
+| Open issues | **4**: #7 (EPIC), #51 / #56 (OPEN / DEFERRED rights gates), #140 (M5 split roadmap; slice 1 landed via #153). #147 closed 2026-11-10 14:52Z |
+| Remote branches | **2**: `main` + `archive/minimax-wt-snapshot-20261110` (@`7aef6ae`, deliberate archive of 2,300 uncommitted Huashu lines; registered as `archived`) |
+| Remote tags | **2**: `archive/converge-a2910c6`, `archive/pr1-pr2-1c127df` — local and remote SHAs match |
+| Branch protection | 3 required checks (`Tests (ubuntu-latest)`, `Tests (windows-latest)`, `Repo policy checks`), `strict=true`, `enforce_admins=true`, linear history, no force push, no deletion, PR required, 0 approvals; squash only, `delete_branch_on_merge=true` |
+| Local worktrees | **1**: the primary worktree only. The `pr2-gzh-articles` worktree named in the previous snapshot was removed in the 2026-11-10 drift cleanup |
+| Stash | **0** — the pre-slicing snapshot named in the previous snapshot no longer exists |
+| CI on `main` | `CI @ bcd5dd1 = success`; `Easel Upstream Watch @ bcd5dd1 = success` |
+| Local policy gates | `check_untracked_projects.py` exit=0 after the `test-huashu-local-l141dino` experiment moved into `projects/_local/`; `check_branch_registry.py --today 2026-11-11` PASS |
+
+Round 4 changed no runtime behaviour. It corrected the ledger, registered the
+archive branch and this governance branch, retired the stale local
+remote-tracking refs, and added an offline ledger-consistency check. The new
+check verifies **internal consistency only** (documented SHA/date across both
+language mirrors and the branch registry); it does not query GitHub and must
+never be read as a verification of live remote state. #51 and #56 stay OPEN /
+DEFERRED; the archive branch is retained.
 
 ### Git — verified 2026-11-10 evening (merge sequence #141–#150 + governance round 3)
 
