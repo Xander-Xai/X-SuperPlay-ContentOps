@@ -104,6 +104,15 @@ jobs:
       - name: Run graphic card-renderer tests
         run: python tests/test_render_cards.py
 
+      # ASR backcheck: the SiliconFlow adapter contract and the M5 gate that
+      # blocks account-bound projects on missing narration evidence. Both suites
+      # drive fake transports only -- no provider request is ever made here.
+      - name: Run ASR SiliconFlow adapter tests
+        run: python tests/test_asr_siliconflow.py
+
+      - name: Run M5 ASR gate tests
+        run: python tests/test_m5_asr_gate.py
+
       # The media suites never make a provider request: they drive
       # tests/fixtures/fake_mmx_cli.py and inject a fake billing transport, so CI
       # needs no MiniMax account and spends no quota.

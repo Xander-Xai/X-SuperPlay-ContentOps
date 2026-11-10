@@ -19,6 +19,14 @@
       "expires": null
     },
     {
+      "name": "feat/asr-siliconflow-backcheck",
+      "pr": 150,
+      "created": "2026-11-10",
+      "purpose": "SiliconFlow ASR backcheck gate on real narration evidence (island salvage J)",
+      "status": "open",
+      "expires": "2026-12-10"
+    },
+    {
       "name": "feat/platform-route-display",
       "pr": 141,
       "created": "2026-11-10",
