@@ -1,0 +1,21 @@
+{
+  "schema": "contentops.x-post-gate/v1",
+  "action": "verify-tables",
+  "checked_at": "2026-11-08T22:00:09Z",
+  "records": 0,
+  "tables": [
+    "templates/posts.csv",
+    "templates/x-metric-snapshots.csv",
+    "templates/x-account-snapshots.csv"
+  ],
+  "unverified_reported_publications": [
+    "20261026-001",
+    "20261026-002",
+    "20261026-003"
+  ],
+  "issues": [],
+  "verdict": "PASS",
+  "cannot": [
+    "a pending row is a person's claim that a post went out; nothing in this tree can verify it until the real URL is recorded"
+  ]
+}

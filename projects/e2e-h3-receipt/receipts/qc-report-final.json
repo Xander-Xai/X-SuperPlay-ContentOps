@@ -1,0 +1,23 @@
+{
+  "schema": "contentops.qc-canonical/v1",
+  "currency": "CURRENT",
+  "project": "projects\\e2e-h3-receipt",
+  "graded_target": "project://final/final.mp4",
+  "overall": "FAIL",
+  "checked_at": "2026-11-08T22:34:36Z",
+  "checks": [
+    {
+      "id": "_video",
+      "ok": true,
+      "severity": "INFO",
+      "path": "project://final/final.mp4"
+    },
+    {
+      "id": "final_exists",
+      "ok": false,
+      "severity": "FAIL",
+      "msg": "final.mp4 not found at project://final/final.mp4"
+    }
+  ],
+  "path_policy": "logical references (project://, repo://); no absolute paths"
+}

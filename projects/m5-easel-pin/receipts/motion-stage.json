@@ -1,0 +1,8 @@
+{
+  "schema": "contentops.m5-motion-stage/v1",
+  "backend": null,
+  "state": "NOT_CONFIGURED",
+  "script_sha256": "fb7d10f1197b4790c3054552e73bb52d6728979a155024f9c2dd2fac8c8bc8cf",
+  "shots": [],
+  "production_ready": false
+}

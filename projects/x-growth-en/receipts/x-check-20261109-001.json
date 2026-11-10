@@ -1,0 +1,21 @@
+{
+  "schema": "contentops.x-post-gate/v1",
+  "action": "check",
+  "content_id": "20261109-001",
+  "checked_at": "2026-11-09T05:30:42Z",
+  "verdict": "DRAFT",
+  "issues": [
+    {
+      "code": "REVIEW_MISSING",
+      "detail": "no human review is recorded; an assistant may prepare one and may not approve it"
+    }
+  ],
+  "status": "draft",
+  "status_url": null,
+  "copy_lengths": [
+    {
+      "index": 1,
+      "weighted_length": 191
+    }
+  ]
+}

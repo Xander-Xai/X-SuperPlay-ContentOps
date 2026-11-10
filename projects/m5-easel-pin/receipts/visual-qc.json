@@ -1,0 +1,309 @@
+{
+  "video_sha256": "07ff16dd43a1ea97e666fdcfcda695785fe9cf2e3d3a89a4aaca70289ae4f8d0",
+  "checked_at": "2026-11-08T22:48:27Z",
+  "frames": [
+    {
+      "index": 0,
+      "timestamp_sec": 2.26,
+      "fraction": 0.05,
+      "black_frame": false,
+      "dark_ratio": 0.892
+    },
+    {
+      "index": 1,
+      "timestamp_sec": 6.77,
+      "fraction": 0.15,
+      "black_frame": false,
+      "dark_ratio": 0.8911
+    },
+    {
+      "index": 2,
+      "timestamp_sec": 11.29,
+      "fraction": 0.25,
+      "black_frame": false,
+      "dark_ratio": 0.8905
+    },
+    {
+      "index": 3,
+      "timestamp_sec": 15.8,
+      "fraction": 0.35,
+      "black_frame": false,
+      "dark_ratio": 0.8905
+    },
+    {
+      "index": 4,
+      "timestamp_sec": 20.31,
+      "fraction": 0.45,
+      "black_frame": false,
+      "dark_ratio": 0.9184
+    },
+    {
+      "index": 5,
+      "timestamp_sec": 24.83,
+      "fraction": 0.55,
+      "black_frame": false,
+      "dark_ratio": 0.8991
+    },
+    {
+      "index": 6,
+      "timestamp_sec": 29.34,
+      "fraction": 0.65,
+      "black_frame": false,
+      "dark_ratio": 0.8991
+    },
+    {
+      "index": 7,
+      "timestamp_sec": 33.86,
+      "fraction": 0.75,
+      "black_frame": false,
+      "dark_ratio": 0.8996
+    },
+    {
+      "index": 8,
+      "timestamp_sec": 38.37,
+      "fraction": 0.85,
+      "black_frame": false,
+      "dark_ratio": 0.8996
+    },
+    {
+      "index": 9,
+      "timestamp_sec": 42.88,
+      "fraction": 0.95,
+      "black_frame": false,
+      "dark_ratio": 0.8918
+    }
+  ],
+  "duration_sec": 45.14,
+  "contact_sheet": "project://receipts/visual-contact-sheet.png",
+  "summary": {
+    "total_samples": 10,
+    "extracted": 10,
+    "black_frames": 0,
+    "extraction_failures": 0
+  },
+  "shot_content_qc": {
+    "state": "VISUAL_FAIL",
+    "shot_count": 7,
+    "sampled_frames": 7,
+    "contact_sheet": "receipts/visual-shot-contact-sheet.png",
+    "issues": [
+      {
+        "type": "REPEATED_SOURCE_WITHOUT_PURPOSE",
+        "start_s": 6.11,
+        "end_s": 11.139,
+        "shot_id": "version_evidence__002",
+        "previous_shot_id": "version_evidence__001",
+        "asset_id": "version_evidence",
+        "previous_asset_id": "version_evidence",
+        "source_asset_id": null,
+        "previous_source_asset_id": null,
+        "frame_hamming_distance": 3,
+        "content_hamming_delta": 2,
+        "content_mae": 0.07,
+        "crop_region": null,
+        "previous_crop_region": null,
+        "evidence_basis": [],
+        "evidence_gaps": [
+          "source_asset_id_unavailable",
+          "no_measured_frame_content_change"
+        ],
+        "state": "FAIL",
+        "variation": null
+      },
+      {
+        "type": "REPEATED_SOURCE_WITHOUT_PURPOSE",
+        "start_s": 11.139,
+        "end_s": 17.514,
+        "shot_id": "version_evidence__003",
+        "previous_shot_id": "version_evidence__002",
+        "asset_id": "version_evidence",
+        "previous_asset_id": "version_evidence",
+        "source_asset_id": null,
+        "previous_source_asset_id": null,
+        "frame_hamming_distance": 2,
+        "content_hamming_delta": 0,
+        "content_mae": 0.0,
+        "crop_region": null,
+        "previous_crop_region": null,
+        "evidence_basis": [
+          "distinct_evidence_ref"
+        ],
+        "evidence_gaps": [
+          "source_asset_id_unavailable",
+          "no_measured_frame_content_change"
+        ],
+        "state": "FAIL",
+        "variation": null
+      },
+      {
+        "type": "REPEATED_SOURCE_WITHOUT_PURPOSE",
+        "start_s": 32.053,
+        "end_s": 39.432,
+        "shot_id": "skills_dir__006",
+        "previous_shot_id": "skills_dir__005",
+        "asset_id": "skills_dir",
+        "previous_asset_id": "skills_dir",
+        "source_asset_id": null,
+        "previous_source_asset_id": null,
+        "frame_hamming_distance": 2,
+        "content_hamming_delta": 0,
+        "content_mae": 0.02,
+        "crop_region": null,
+        "previous_crop_region": null,
+        "evidence_basis": [
+          "distinct_evidence_ref"
+        ],
+        "evidence_gaps": [
+          "source_asset_id_unavailable",
+          "no_measured_frame_content_change"
+        ],
+        "state": "FAIL",
+        "variation": null
+      }
+    ],
+    "missing_role_or_evidence_metadata": [],
+    "shots": [
+      {
+        "shot_id": "version_evidence__001",
+        "segment_id": "l1",
+        "start_s": 0.0,
+        "end_s": 6.11,
+        "asset_id": "version_evidence",
+        "source_asset_id": null,
+        "visual_role": "explain",
+        "evidence_ref": "easel_pin",
+        "variation": "",
+        "crop_region": null,
+        "source_sha256": "6f8603af5e83e48202d263c67da5fbd248d25cadf004365cdb67f8ed220c6d20",
+        "frame_dhash": "30803c1e4b39040c",
+        "content_hamming_delta": null,
+        "content_mae": null,
+        "frame_extracted": true
+      },
+      {
+        "shot_id": "version_evidence__002",
+        "segment_id": "l2",
+        "start_s": 6.11,
+        "end_s": 11.139,
+        "asset_id": "version_evidence",
+        "source_asset_id": null,
+        "visual_role": "explain",
+        "evidence_ref": "easel_pin",
+        "variation": "",
+        "crop_region": null,
+        "source_sha256": "6f8603af5e83e48202d263c67da5fbd248d25cadf004365cdb67f8ed220c6d20",
+        "frame_dhash": "30803c1e4b394406",
+        "content_hamming_delta": 2,
+        "content_mae": 0.07,
+        "frame_extracted": true
+      },
+      {
+        "shot_id": "version_evidence__003",
+        "segment_id": "l3",
+        "start_s": 11.139,
+        "end_s": 17.514,
+        "asset_id": "version_evidence",
+        "source_asset_id": null,
+        "visual_role": "explain",
+        "evidence_ref": "pin_verifiable",
+        "variation": "",
+        "crop_region": null,
+        "source_sha256": "6f8603af5e83e48202d263c67da5fbd248d25cadf004365cdb67f8ed220c6d20",
+        "frame_dhash": "30803c1e4b398406",
+        "content_hamming_delta": 0,
+        "content_mae": 0.0,
+        "frame_extracted": true
+      },
+      {
+        "shot_id": "skill_layers__004",
+        "segment_id": "l4",
+        "start_s": 17.514,
+        "end_s": 24.818,
+        "asset_id": "skill_layers",
+        "source_asset_id": null,
+        "visual_role": "explain",
+        "evidence_ref": "pin_verifiable",
+        "variation": "",
+        "crop_region": null,
+        "source_sha256": "d7b01af2b2d3e2841f0948a284265496bd1b6fc4fe287dec81403c61145431f0",
+        "frame_dhash": "0100454470300406",
+        "content_hamming_delta": 62,
+        "content_mae": 5.37,
+        "frame_extracted": true
+      },
+      {
+        "shot_id": "skills_dir__005",
+        "segment_id": "l5",
+        "start_s": 24.818,
+        "end_s": 32.053,
+        "asset_id": "skills_dir",
+        "source_asset_id": null,
+        "visual_role": "explain",
+        "evidence_ref": "no_auto_upgrade",
+        "variation": "",
+        "crop_region": null,
+        "source_sha256": "2d6fdabadff9dfc0e14c54b16e7583e3a00a9f94d777750cd1fd3654b7b6bbe0",
+        "frame_dhash": "0c31706070781c0e",
+        "content_hamming_delta": 69,
+        "content_mae": 5.27,
+        "frame_extracted": true
+      },
+      {
+        "shot_id": "skills_dir__006",
+        "segment_id": "l6",
+        "start_s": 32.053,
+        "end_s": 39.432,
+        "asset_id": "skills_dir",
+        "source_asset_id": null,
+        "visual_role": "explain",
+        "evidence_ref": "legacy_clone",
+        "variation": "",
+        "crop_region": null,
+        "source_sha256": "2d6fdabadff9dfc0e14c54b16e7583e3a00a9f94d777750cd1fd3654b7b6bbe0",
+        "frame_dhash": "0c31706070781c8c",
+        "content_hamming_delta": 0,
+        "content_mae": 0.02,
+        "frame_extracted": true
+      },
+      {
+        "shot_id": "version_evidence__007",
+        "segment_id": "l7",
+        "start_s": 39.432,
+        "end_s": 45.142,
+        "asset_id": "version_evidence",
+        "source_asset_id": null,
+        "visual_role": "explain",
+        "evidence_ref": null,
+        "variation": "",
+        "crop_region": null,
+        "source_sha256": "6f8603af5e83e48202d263c67da5fbd248d25cadf004365cdb67f8ed220c6d20",
+        "frame_dhash": "30803c1e4b394404",
+        "content_hamming_delta": 77,
+        "content_mae": 8.7,
+        "frame_extracted": true
+      }
+    ]
+  },
+  "status": "FAIL",
+  "quality_states": {
+    "technical": "TECHNICAL_PASS",
+    "visual": "VISUAL_FAIL",
+    "content": "CONTENT_REVIEW_PENDING",
+    "publication": "PENDING_HUMAN_APPROVAL"
+  },
+  "quality_state_basis": {
+    "technical_check_ids": [
+      "file_size",
+      "ffprobe_parse",
+      "resolution",
+      "aspect_ratio_9_16",
+      "video_codec_h264",
+      "audio_present",
+      "audio_codec_aac",
+      "voice_not_silence"
+    ],
+    "technical_source": "canonical qc-report checks (media decodability only; not overall)",
+    "publication_source": "receipts/human-review.json (real reviewer, timestamp, scores and APPROVED required)",
+    "canonical_qc_overall": "PASS"
+  }
+}

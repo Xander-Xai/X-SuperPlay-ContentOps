@@ -310,3 +310,6 @@ assert/
 # Note this is a state directory, not the render *output*: finished media stays
 # governed by the media rules above, including their exact-path exceptions.
 **/.hyperframes/
+
+# One-off governance snapshot reports stay local-only (precedent: PR #136)
+reports/governance-*.html

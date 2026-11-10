@@ -1,0 +1,136 @@
+{
+  "schema": "contentops.visual-gate/v1",
+  "state": "FAIL",
+  "gate_light": "red",
+  "exit_code": 2,
+  "metrics": {
+    "duration_s": 45.08,
+    "shots": 1,
+    "fast_ratio": 0.0,
+    "fast_ratio_worst_window": 0.0,
+    "blank_run_s": 0.0,
+    "blue_purple_share": 0.0,
+    "still_ratio": 0.994,
+    "longest_still_s": 17.42,
+    "event_rate": 0.0,
+    "max_event_gap_s": 45.0,
+    "dead_bg": 0.906,
+    "dead_flat": 0.809,
+    "gate_metrics": [
+      "fast_ratio",
+      "blank_run_s",
+      "blue_purple_share"
+    ],
+    "lights": {
+      "fast_ratio": "red",
+      "blank_run_s": "green",
+      "blue_purple_share": "green",
+      "fast_ratio_worst_window": "yellow",
+      "top10_share": "--",
+      "drift_ratio": "green",
+      "still_ratio": "--",
+      "longest_still_s": "yellow",
+      "event_rate": "yellow",
+      "max_event_gap_s": "yellow",
+      "dead_bg": "yellow",
+      "dead_flat": "yellow",
+      "flat_area": "--",
+      "flat_light": "green",
+      "page_frame_share": "green",
+      "slow_zoom_share": "green",
+      "push_in_per_min": "green",
+      "fast_push_per_min": "--",
+      "push_in_share": "--",
+      "slow_cam_share": "--",
+      "dissolve_share": "green",
+      "local_fade_ratio": "--",
+      "subject_box": "--",
+      "template_sim_share": "--"
+    },
+    "explain": {
+      "summary": "整片没有一次镜头内的快速动作，读起来像翻页",
+      "why": [
+        "99% 的帧完全停着"
+      ],
+      "fix": "按 references/镜头语言.md 在「观众这一刻该看哪」的地方补镜头内运动：要看清细节就缓推（0.6–1.5 秒，CAM.track 的 push），在几件东西之间走就横移（glide），要看全貌就拉远（pull）；物自己的大动作（生长、翻页、倒水、录像里的动作）也算，实拍录像本身在动就停住。快推、砸入是重音，只给揭晓、反转、关键数字。每镜匀速慢推几个百分点、淡入淡出、转场都不算数（转场再快也被排除在外）。1 秒左右推近 20% 的缓推和 0.28 秒快推在这项上记分差不多，不用为了过门把推镜改快。也别为了过门每镜塞一次推近：2026-10-12 那支片每 2 秒一推，被判「太多、太快、不 smooth」。",
+      "look": [
+        [
+          "fast_ratio_worst_window",
+          "0–22s 这段几乎没有快动作（前紧后松）"
+        ],
+        [
+          "longest_still_s",
+          "从 0.0s 起连续 17.4s 一动不动"
+        ],
+        [
+          "event_rate",
+          "平均每 10 秒只有 0.0 个视觉事件"
+        ],
+        [
+          "max_event_gap_s",
+          "最长 45.0s 没有任何切换或快动作"
+        ],
+        [
+          "dead_bg",
+          "扣掉相机运动后，平均 91% 的画面在镜头里一直不变"
+        ],
+        [
+          "dead_flat",
+          "81% 的画面是一直不变的空底"
+        ]
+      ],
+      "worst_window": {
+        "start_s": 0.0,
+        "end_s": 22.5,
+        "fast_ratio": 0.0
+      },
+      "blank_runs": []
+    }
+  },
+  "production_ready": false,
+  "publish_authorized": false,
+  "human_review": "PENDING_FOUNDER_REVIEW",
+  "video_sha256": "07ff16dd43a1ea97e666fdcfcda695785fe9cf2e3d3a89a4aaca70289ae4f8d0",
+  "frame_sampling": "FAIL",
+  "frame_sampling_failures": 0,
+  "contact_sheet": "project://receipts/visual-contact-sheet.png",
+  "reason": {
+    "summary": "整片没有一次镜头内的快速动作，读起来像翻页",
+    "why": [
+      "99% 的帧完全停着"
+    ],
+    "fix": "按 references/镜头语言.md 在「观众这一刻该看哪」的地方补镜头内运动：要看清细节就缓推（0.6–1.5 秒，CAM.track 的 push），在几件东西之间走就横移（glide），要看全貌就拉远（pull）；物自己的大动作（生长、翻页、倒水、录像里的动作）也算，实拍录像本身在动就停住。快推、砸入是重音，只给揭晓、反转、关键数字。每镜匀速慢推几个百分点、淡入淡出、转场都不算数（转场再快也被排除在外）。1 秒左右推近 20% 的缓推和 0.28 秒快推在这项上记分差不多，不用为了过门把推镜改快。也别为了过门每镜塞一次推近：2026-10-12 那支片每 2 秒一推，被判「太多、太快、不 smooth」。",
+    "look": [
+      [
+        "fast_ratio_worst_window",
+        "0–22s 这段几乎没有快动作（前紧后松）"
+      ],
+      [
+        "longest_still_s",
+        "从 0.0s 起连续 17.4s 一动不动"
+      ],
+      [
+        "event_rate",
+        "平均每 10 秒只有 0.0 个视觉事件"
+      ],
+      [
+        "max_event_gap_s",
+        "最长 45.0s 没有任何切换或快动作"
+      ],
+      [
+        "dead_bg",
+        "扣掉相机运动后，平均 91% 的画面在镜头里一直不变"
+      ],
+      [
+        "dead_flat",
+        "81% 的画面是一直不变的空底"
+      ]
+    ],
+    "worst_window": {
+      "start_s": 0.0,
+      "end_s": 22.5,
+      "fast_ratio": 0.0
+    },
+    "blank_runs": []
+  }
+}
