@@ -23,6 +23,14 @@
       "pr": 151,
       "created": "2026-11-10",
       "purpose": "session hygiene rules + reports gitignore class + ledger sync (governance round 3)",
+      "status": "merged",
+      "expires": "2026-12-10"
+    },
+    {
+      "name": "feat/gzh-articles-renderer",
+      "pr": 152,
+      "created": "2026-11-10",
+      "purpose": "GZH article renderer salvage + data-URI fix + hermetic suite (PR-K)",
       "status": "open",
       "expires": "2026-12-10"
     },
