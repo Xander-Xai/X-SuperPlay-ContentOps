@@ -1,5 +1,32 @@
 # ContentOps — current PR / Issue / Branch governance (2026-10-31)
 
+> **STATUS: SUPERSEDED / HISTORICAL — re-verified 2026-11-10.** This is the
+> 2026-10-31 remote snapshot. **Do not use it as the current state.** Every PR,
+> issue and branch named below has since changed; in particular §1's claim that
+> `main` reports `protected=false` is **no longer true** — `main` is protected
+> with three required checks, linear history, no force push and no deletion.
+> `/rulesets` is still `[]` (protection uses the classic branch-protection API,
+> not rulesets). The current, re-verified state lives in
+> [`docs/CURRENT-STATE.md`](../CURRENT-STATE.md) §Git and in
+> [`reports/governance-snapshot-2026-11-10.html`](../../reports/governance-snapshot-2026-11-10.html).
+> The entire 2026-10-31 text is retained below unchanged for traceability.
+
+## Current state — 2026-11-10 (replaces §§1–5 below)
+
+| Property | Verified 2026-11-10 |
+|---|---|
+| `main` | protected @ `f7cb2328` (PR #136, squash-merged 2026-11-10); previously `0baecfa8` (#134) and `545b64c` (#131); required checks `Tests (ubuntu-latest)`, `Tests (windows-latest)`, `Repo policy checks`; linear history; no force push; no deletion; `enforce_admins: false` |
+| Open PRs | 3 Drafts: #132, #133, #135. **#134 and #136 are MERGED** |
+| Open issues | 4: #6, #7, #51, #56 (#51 / #56 are OPEN / DEFERRED) |
+| Remote branches | `main` + 3 non-`main`, each carrying unmerged commits; #134 and #136 head branches were auto-deleted by `delete_branch_on_merge` |
+| PRs named in this snapshot | #48, #49, #50, #54, #55 are **all closed** |
+| Branches named in §4 | `feat/content-router`, `feat/47-x-platform-track`, `docs/portfolio-scope-20261030`, `docs/governance-audit-20261031` are **all gone** from the remote |
+| Merge policy | squash only; `delete_branch_on_merge: true` |
+| Governance action 2026-11-10 | 12:30 metadata-only reconciliation (no merge / closure / deletion); Owner-authorized executions squash-merged #134 (`0baecfa8`) and #136 (`f7cb2328`) with exact-head 3/3 checks (the latter after `update-branch` for `strict: true`). No issue closed, no branch manually deleted, no worktree change |
+| CI coverage note | `pull_request.branches: [main]` means a PR with a non-`main` base (#133, #135) gets no PR-triggered required checks; its "3/3 green" is a head push run, not a `main` protection check. Registered in `docs/CURRENT-STATE.md` §CI coverage note; **do not widen the trigger with `feat/**`** |
+
+---
+
 This file is a remote snapshot, **not evidence of access to unpushed local Windows changes**. Always re-check head SHA, GitHub checks, and source rights before a release action.
 
 ## 1. Verified state after #55 merge
