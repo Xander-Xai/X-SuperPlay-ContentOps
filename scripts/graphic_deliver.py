@@ -42,7 +42,7 @@ for candidate in (ROOT / "src", ROOT / "scripts"):
 from contentops.platforms import delivery_gate  # noqa: E402
 from contentops.platforms import graphic_specs  # noqa: E402
 from contentops.platforms import multichannel as mc  # noqa: E402
-from wcs_bridge import OUT_DIR, TOKEN_FILE, bridge_session, parse_sync_result, run_cli  # noqa: E402
+from contentops.platforms.wcs_bridge import OUT_DIR, TOKEN_FILE, bridge_session, parse_sync_result, run_cli  # noqa: E402
 
 DEFAULT_PACKAGE = ROOT / "projects" / "bundle-dual-line-graphic" / "receipts" / "graphic-package.json"
 
@@ -81,6 +81,14 @@ def _prepare_article(draft, work_dir: Path) -> Path:
 
 
 def main() -> int:
+    if len(sys.argv) > 1 and sys.argv[1] in {"login", "bridge"}:
+        command = sys.argv.pop(1)
+        if command == "login":
+            from contentops.platforms.wcs_login import main as login_main
+            return login_main()
+        from contentops.platforms.wcs_bridge_run import main as bridge_main
+        return bridge_main()
+
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--package", default=str(DEFAULT_PACKAGE))
