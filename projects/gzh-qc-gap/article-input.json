@@ -1,0 +1,20 @@
+{
+  "schema": "contentops.gzh-article-input/v1",
+  "title": "质检全过，为什么还是被毙了？一次创作复盘",
+  "digest": "自动化 QC 全绿，仍不等于内容可发。本文用一次真实复盘说明：技术门禁能证明什么、不能证明什么，以及如何把人工判断变成可执行清单。",
+  "theme": "graphite-minimal",
+  "html": "assets/article/article.html",
+  "cover": {
+    "path": "assets/images/cover.png",
+    "alt": "封面待补：质检全过，为什么还是被毙了？"
+  },
+  "sources": [
+    "repo://projects/easel-review/receipts/human-review.json",
+    "repo://reports/audits/video-quality-failure-audit-2026-11-01.md",
+    "repo://docs/QUALITY-STANDARD.md",
+    "repo://src/contentops/media/video_contract.py",
+    "repo://docs/adr/ADR-005-human-approval.md"
+  ],
+  "human_review": "NOT_STARTED",
+  "publish_authorized": false
+}
