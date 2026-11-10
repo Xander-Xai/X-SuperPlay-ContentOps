@@ -1,0 +1,36 @@
+{
+  "schema": "contentops.gzh-article/v1",
+  "project": "gzh-qc-gap",
+  "status": "BLOCKED",
+  "production_ready": false,
+  "publish_authorized": false,
+  "human_review": "NOT_STARTED",
+  "blockers": [
+    "UPSTREAM_EXECUTION_NOT_AUTHORIZED_IN_THIS_SESSION",
+    "ARTICLE_IMAGE_MISSING",
+    "ARTICLE_IMAGE_TRACKING_POLICY_UNRESOLVED",
+    "AWAITING_FOUNDER_REVIEW",
+    "WECHAT_PUBLISH_UNAUTHORIZED"
+  ],
+  "validation": {
+    "status": "NOT_RUN",
+    "errors": [],
+    "warnings": [],
+    "reason": "This explicit blocked-state file documents unresolved gates. It is not emitted by a completed run and is not a validation receipt."
+  },
+  "html": {
+    "path": "project://assets/article/article.html",
+    "sha256": "NOT_COMPUTED",
+    "bytes": null
+  },
+  "cover": null,
+  "images": [],
+  "sources": [
+    "repo://projects/easel-review/receipts/human-review.json",
+    "repo://reports/audits/video-quality-failure-audit-2026-11-01.md",
+    "repo://docs/QUALITY-STANDARD.md",
+    "repo://src/contentops/media/video_contract.py",
+    "repo://docs/adr/ADR-005-human-approval.md"
+  ],
+  "note": "Explicit blocked-state status record only. Not a run receipt, validation pass, or approval. After the upstream execution and authorized image gates are resolved, run scripts/render_article.py to create a new receipt."
+}

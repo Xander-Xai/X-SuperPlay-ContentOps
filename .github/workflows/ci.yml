@@ -104,6 +104,13 @@ jobs:
       - name: Run graphic card-renderer tests
         run: python tests/test_render_cards.py
 
+      # GZH article production: upstream-tool resolution, HTML/image boundary
+      # checks, receipt writing and tamper verification. The suites fake the
+      # upstream gzh-design tools and inject the runner, so nothing here needs
+      # the Easel runtime and no network is touched.
+      - name: Run GZH article renderer tests
+        run: python tests/test_render_articles.py
+
       # ASR backcheck: the SiliconFlow adapter contract and the M5 gate that
       # blocks account-bound projects on missing narration evidence. Both suites
       # drive fake transports only -- no provider request is ever made here.

@@ -2,6 +2,9 @@
 
 The package validates copy, image facts and rights, then stops for human review.
 It is not a platform publisher and contains no HTML renderer.
+
+``cards`` orchestrates the *upstream* card renderer and density audit; it adds
+no drawing code and records measurements, never approval.
 """
 
 from .package import (  # noqa: F401
@@ -11,6 +14,28 @@ from .package import (  # noqa: F401
     load_and_build,
     write_package,
 )
+from .cards import (  # noqa: F401
+    CardRenderError,
+    build_receipt,
+    parse_audit_output,
+    parse_render_output,
+    plan as plan_cards,
+    run as run_cards,
+    write_receipt as write_card_receipt,
+)
+from .articles import (  # noqa: F401
+    INPUT_SCHEMA as ARTICLE_INPUT_SCHEMA,
+    RECEIPT_SCHEMA as ARTICLE_RECEIPT_SCHEMA,
+    ArticleError,
+    ArticlePlan,
+    ArticleTools,
+    build_receipt as build_article_receipt,
+    parse_validator_output as parse_article_validator_output,
+    plan as plan_article,
+    run as run_article,
+    verify_receipt as verify_article_receipt,
+    write_receipt as write_article_receipt,
+)
 
 __all__ = [
     "PACKAGE_SCHEMA",
@@ -18,4 +43,22 @@ __all__ = [
     "build_package",
     "load_and_build",
     "write_package",
+    "CardRenderError",
+    "build_receipt",
+    "parse_audit_output",
+    "parse_render_output",
+    "plan_cards",
+    "run_cards",
+    "write_card_receipt",
+    "ARTICLE_INPUT_SCHEMA",
+    "ARTICLE_RECEIPT_SCHEMA",
+    "ArticleError",
+    "ArticlePlan",
+    "ArticleTools",
+    "build_article_receipt",
+    "parse_article_validator_output",
+    "plan_article",
+    "run_article",
+    "verify_article_receipt",
+    "write_article_receipt",
 ]
