@@ -79,6 +79,22 @@ projects/*/assets/captions/
 *.srt
 *.ass
 
+# Experiment sandbox for production runs (`local_only`).
+#
+# The main checkout had 24 modified tracked files when the checkout guard was
+# added: receipts rewritten by later runs, an edited storyboard, a sample row
+# appended. Every one of those started as a run that "just wrote its output".
+#
+# So experiments get a place that cannot dirty anything: `projects/_local/` is
+# ignored as a whole, `produce_video.py` and `m5_production.py` refuse to write
+# into a dirty main checkout, and they exempt this directory. See
+# `src/contentops/media/checkout_guard.py` and `tests/test_checkout_guard.py`.
+#
+# A brand-new experiment therefore has exactly two honest homes: a tracked
+# project with committed receipts, or this directory. `scripts/check_untracked_projects.py`
+# fails when a *new* untracked `projects/<name>/` appears outside it.
+projects/_local/
+
 # same reason as the screenshot exception below: the evidence lock pins a caption
 # digest, and a locked input that is not in the repository is not reproducible. This
 # is the experiment's own copy, not the historical one -- the historical

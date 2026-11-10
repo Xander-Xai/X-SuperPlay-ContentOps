@@ -5,12 +5,13 @@ Runs before every commit / PR.
 
 Order:
   1. repo_policy_check
-  2. subprocess_policy_check
-  3. skill_reference_check
-  4. check_docs
-  5. check_i18n
-  6. test_basic
-  7. git diff --check (whitespace)
+  2. untracked_project_check (read-only: no new experiment dir outside projects/_local/)
+  3. subprocess_policy_check
+  4. skill_reference_check
+  5. check_docs
+  6. check_i18n
+  7. test_basic
+  8. git diff --check (whitespace)
 
 All must pass. All checks are read-only and deterministic.
 
@@ -55,6 +56,7 @@ def main():
     py = python_executable()
     checks = [
         ("repo_policy", [py, "scripts/check_repo_policy.py"]) if not args.quick else None,
+        ("untracked_projects", [py, "scripts/check_untracked_projects.py"]),
         ("subprocess_policy", [py, "scripts/check_subprocess_policy.py"]),
         ("skill_references", [py, "scripts/check_skill_references.py"]),
         ("docs_check",  [py, "scripts/check_docs.py"]),

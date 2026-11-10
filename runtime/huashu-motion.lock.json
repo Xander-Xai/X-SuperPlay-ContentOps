@@ -1,0 +1,14 @@
+{
+  "schema": "contentops.huashu-motion-lock/v1",
+  "repository": "https://github.com/alchaincyf/huashu-motion",
+  "version": "0.3.1",
+  "commit": "52467f99c602b76ba86d511d37acdfe93fa1e16e",
+  "install_path": ".runtime/huashu-motion",
+  "execution": "EXTERNAL_MANUAL_AUTHORIZATION_REQUIRED",
+  "role": "MOTION_CLIP_PRODUCER_NOT_FINAL_COMPOSITOR",
+  "code_license": "MIT",
+  "third_party": ["GSAP Standard License", "SIL OFL 1.1", "Three.js MIT"],
+  "excluded_without_separate_permission": ["bean Huashu cartoon likeness", "storytime/demo cartoon art"],
+  "required_for_render": ["Node.js >=22", "Chrome/Chromium/Edge", "FFmpeg"],
+  "notes": "No automatic download, installation, model calls, host execution or publishing."
+}

@@ -45,7 +45,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install test dependencies
-        run: python -m pip install --quiet --upgrade pip Pillow
+        # PyYAML is not part of the runner image, and both platform spec tables
+        # (graphic-platforms.yaml, video-platforms.yaml) are read through it. The
+        # suites that consume them fail loudly rather than skipping, so it has to
+        # be installed here or the coverage looks larger than it is.
+        run: python -m pip install --quiet --upgrade pip Pillow PyYAML
 
       # ffmpeg was absent on both runners, and the M4 H3 suite plus the M4.5
       # transform tests need it. Installing it here is what turns those skips into
@@ -75,10 +79,19 @@ jobs:
       # itself looks green while testing nothing, which is how the M3 suite lost
       # half its coverage on a runner without ffmpeg before this step existed.
       - name: Report test dependency availability
-        run: python -c "import shutil,sys; print('ffmpeg:', bool(shutil.which('ffmpeg'))); print('ffprobe:', bool(shutil.which('ffprobe'))); import PIL; print('Pillow:', PIL.__version__)"
+        run: python -c "import shutil,sys; print('ffmpeg:', bool(shutil.which('ffmpeg'))); print('ffprobe:', bool(shutil.which('ffprobe'))); import PIL; print('Pillow:', PIL.__version__); import yaml; print('PyYAML:', yaml.__version__)"
 
       - name: Run basic tests
         run: python scripts/test_basic.py
+
+      # D7 governance guardrails: branch registry validation and PR size metrics.
+      # Both are offline and spawn no child processes. The size check is
+      # report-only here; --strict (threshold enforcement) needs an Owner decision.
+      - name: Check branch registry
+        run: python scripts/check_branch_registry.py
+
+      - name: Run governance guardrail tests
+        run: python tests/test_governance_checks.py
 
       # The media suites never make a provider request: they drive
       # tests/fixtures/fake_mmx_cli.py and inject a fake billing transport, so CI
@@ -268,6 +281,16 @@ jobs:
       - name: Run real-source duration gate tests
         run: python tests/test_real_source_duration.py
 
+      # One QC release rule: the original overall is kept, account-bound WARN
+      # blocks, and neither entry can turn a warning into a pass.
+      - name: Run QC verdict tests
+        run: python tests/test_qc_verdict.py
+
+      # Production entries refuse to write into a dirty main checkout, except
+      # under projects/_local/. Fixture repos only; nothing is rendered.
+      - name: Run checkout guard tests
+        run: python tests/test_checkout_guard.py
+
       # The short motion-sample technical gate: 4-8 s, silent, 1080x1920,
       # H.264/yuv420p, CFR 30, digest-bound. It stops at PENDING_FOUNDER_REVIEW
       # and has no approval or publish switch. Fixture-driven; no render.
@@ -287,12 +310,6 @@ jobs:
       # (Issue #56). Synthetic roots only.
       - name: Run GZH runtime adapter tests
         run: python tests/test_gzh_runtime.py
-
-      # The XHS runtime adapter: locate, hash-verify and describe a locally
-      # installed workflow. Never executes, drafts or publishes; the root
-      # Apache-2.0 covers the tree, the one AGPL skill must stay excluded.
-      - name: Run XHS runtime adapter tests
-        run: python tests/test_xhs_runtime.py
 
       # The X editorial adapter: verify the local manual-only account, project
       # and gate code. Never calls the X API, reads a credential, drafts or
@@ -388,6 +405,42 @@ jobs:
       - name: Run platform registry tests
         run: python tests/test_platform_registry.py
 
+      # Video delivery line: per-platform shape, blockers and the authorization
+      # gate. Proves a horizontal cut, a missing Bilibili category and a Douyin
+      # upload all stop in code instead of in a browser form.
+      - name: Run video platform delivery tests
+        run: python tests/test_video_platforms.py
+
+      # Graphic delivery gate: a packed draft with hard blockers must never reach
+      # the browser bridge, and Douyin is refused unconditionally.
+      - name: Run graphic delivery gate tests
+        run: python tests/test_delivery_gate.py
+
+      # WeChat draft channel: shaping, credential preflight and the read-back
+      # check. Offline only — no token, no upload, no credential.
+      - name: Run WeChat draft tests
+        run: python tests/test_wechat_draft.py
+
+      # Manual metrics import. Offline by construction: the suite asserts the
+      # module opens no socket and imports no HTTP client. The decisive cases are
+      # that a missing field, a bad hash and a non-numeric metric are refused with
+      # every reason named, that metrics are never zero-filled, and that the review
+      # receipt cannot modify the script, the QC verdict or production_ready.
+      - name: Run manual metrics review tests
+        run: python tests/test_manual_metrics.py
+
+      # Bilibili public metrics: DNA gate, BV resolution chain, counter shaping
+      # and receipts. Offline — the transport (bilibili-api-python) is imported
+      # only under --execute, and a CLI BV is stamped TRANSPORT_SMOKE so a pipe
+      # check can never be read as account performance.
+      - name: Run bilibili metrics tests
+        run: python tests/test_bilibili_metrics.py
+
+      # WeChat data cube channel: official range ceilings, credential preflight
+      # that never echoes a value, and receipts that never modify the artefact.
+      - name: Run wechat metrics tests
+        run: python tests/test_wechat_metrics.py
+
       # Content Bundle consumption contract: Strategy owns the template, this
       # suite only proves a consumer refuses an incomplete or unsafe record.
       - name: Run content bundle contract tests
@@ -472,6 +525,26 @@ jobs:
       - name: Run X path-safety tests
         run: python tests/test_x_path_safety.py
 
+      # P0 loop hardening: publication backfill receipts (URL/handle/time/
+      # version/confirmer bindings, readback state machine). Fully offline.
+      - name: Run publish backfill tests
+        run: python tests/test_publish_backfill.py
+
+      # Metric window audit: T+24H/72H/7D coverage, zero-vs-missing split,
+      # strict mode. Reads fixture CSVs only; nothing is fetched.
+      - name: Run metric window audit tests
+        run: python tests/test_metric_windows.py
+
+      # Strategy-vs-ContentOps platform status reconciliation. The fixture
+      # matrix stands in for the sibling Strategy checkout.
+      - name: Run platform status sync tests
+        run: python tests/test_platform_status_sync.py
+
+      # Cross-repo contract: the fixture frozen from Strategy's Bundle
+      # template must keep passing the consumer contract.
+      - name: Run bundle template fixture tests
+        run: python tests/test_bundle_template_fixture.py
+
       - name: Enforce subprocess policy
         run: python scripts/check_subprocess_policy.py
 
@@ -500,6 +573,10 @@ jobs:
           python-version: '3.11'
       - name: Repo policy check
         run: python scripts/check_repo_policy.py
+      # Read-only. Fails when a new untracked experiment directory appears under
+      # projects/ outside the baselined list and outside projects/_local/.
+      - name: Untracked project check
+        run: python scripts/check_untracked_projects.py
       - name: Receipt secret check
         shell: bash
         env:

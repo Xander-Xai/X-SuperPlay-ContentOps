@@ -1,0 +1,317 @@
+# Per-platform video delivery specifications.
+#
+# WHY THIS FILE EXISTS
+# --------------------
+# The VIDEO line shipped one artefact: `final/*.mp4`, 1080x1920, burned
+# subtitles. That file is correct for seven platforms and unusable for the rest,
+# but nothing in the repository said which seven, what each platform wanted for
+# a title, how many tags, or which thumbnail ratio the uploader would refuse.
+# Every hand-off was therefore a human guessing in a browser form.
+#
+# This file is the single source of truth for "what shape does a video platform
+# want, and through which uploader does it leave". It is to the VIDEO line what
+# `graphic-platforms.yaml` is to the GRAPHIC_TEXT line.
+#
+# PROVENANCE
+# ----------
+# Every numeric limit carries a `*_basis` field. These are engineering shaping
+# hints, NOT a platform SLA and NOT a compliance claim:
+#   official    - stated by the platform in its own docs
+#   adapter_cli - the uploader's CLI contract requires it (see `uploader`)
+#   dna         - this project's own account DNA states it
+#   project     - this repository's editorial convention
+#
+# `project` means "we chose this; treat it as a hint, verify before trusting".
+# It never means "the platform rejects anything longer".
+#
+# REGISTRY BOUNDARY
+# -----------------
+# `registry_row: true` means the platform also has a row in
+# config/registry/platforms.json. This file describes shapes and command plans.
+# It must never be used to add a registry row, to change `publish_mode`, or to
+# upgrade a row's status. A status is a claim about evidence, not configuration.
+#
+# The uploader named here is an EXTERNAL tool invoked across a process boundary,
+# never imported. It lives in the gitignored `.runtime/` tree. Pinned upstream:
+#   dreammis/social-auto-upload @ 3847fff01f5434a8a32829833163cd6723cabc59 (MIT)
+
+schema: contentops.video-platforms/v1
+
+limits_policy:
+  hard_exceeded: blocker
+  soft_exceeded: warning
+
+# Account-level rules come from each account DNA, not from here:
+#   dna.retention.max_hook_s        - the hook must land inside this window
+#   dna.retention.max_static_hold_s - longest tolerated static hold
+# They are applied as warnings so a film is never silently cut to fit.
+dna_policy:
+  hook_deadline_source: dna.retention.max_hook_s
+  static_hold_source: dna.retention.max_static_hold_s
+
+platforms:
+  - platform_id: douyin
+    display_name: 抖音
+    registry_row: true
+    strategy_platform: douyin
+    pipeline: VIDEO
+    native_format: mp4
+    aspect_required: "9:16"
+    aspect_basis: project
+    max_duration_s: 900
+    max_duration_basis: project
+    max_file_mb: 4000
+    max_file_mb_basis: project
+    title_max_hard: 55
+    title_max_hard_basis: project
+    title_max_soft: 30
+    title_max_soft_basis: project
+    desc_max_hard: 1000
+    desc_max_hard_basis: project
+    tags_min: 3
+    tags_max: 5
+    tags_basis: dna
+    tag_style: comma
+    tag_style_basis: adapter_cli
+    hook_max_s: 4
+    hook_basis: dna
+    thumbnails:
+      - ratio: "3:4"
+        flag: --thumbnail
+        required: true
+        basis: adapter_cli
+      - ratio: "4:3"
+        flag: --thumbnail-landscape
+        required: false
+        basis: adapter_cli
+      - ratio: "3:4"
+        flag: --thumbnail-portrait
+        required: false
+        basis: adapter_cli
+    uploader:
+      tool: sau
+      platform: douyin
+      action: upload-video
+      cookie_glob: "cookies/douyin_{account}.json"
+    publish_semantics: immediate
+    note: >-
+      The hook rule is the account DNA's, not the platform's: the first shot must
+      deliver a counter-intuitive claim or a failure before the hook deadline.
+
+  - platform_id: shipinhao
+    display_name: 微信视频号
+    registry_row: true
+    strategy_platform: wechat_channels
+    pipeline: VIDEO
+    native_format: mp4
+    aspect_required: "9:16"
+    aspect_basis: project
+    max_duration_s: 1800
+    max_duration_basis: project
+    max_file_mb: 2000
+    max_file_mb_basis: project
+    title_max_hard: 22
+    title_max_hard_basis: project
+    title_max_soft: 16
+    title_max_soft_basis: project
+    desc_max_hard: 1000
+    desc_max_hard_basis: project
+    tags_min: 3
+    tags_max: 5
+    tags_basis: dna
+    tag_style: comma
+    tag_style_basis: adapter_cli
+    thumbnails:
+      - ratio: "3:4"
+        flag: --thumbnail
+        required: true
+        basis: adapter_cli
+      - ratio: "4:3"
+        flag: --thumbnail-landscape
+        required: false
+        basis: adapter_cli
+    supports_short_title: true
+    supports_draft: true
+    uploader:
+      tool: sau
+      platform: tencent
+      action: upload-video
+      cookie_glob: "cookies/tencent_{account}.json"
+    publish_semantics: immediate_or_draft
+    note: >-
+      The only video platform whose uploader exposes a real draft switch
+      (--draft). Preferred when the operator wants a platform-side draft.
+
+  - platform_id: xiaohongshu_video
+    display_name: 小红书（视频）
+    registry_row: true
+    strategy_platform: xiaohongshu
+    pipeline: VIDEO
+    native_format: mp4
+    aspect_required: "9:16"
+    aspect_basis: project
+    max_duration_s: 300
+    max_duration_basis: project
+    max_file_mb: 1000
+    max_file_mb_basis: project
+    title_max_hard: 20
+    title_max_hard_basis: dna
+    title_max_soft: 20
+    title_max_soft_basis: dna
+    desc_max_hard: 1000
+    desc_max_hard_basis: project
+    tags_min: 3
+    tags_max: 5
+    tags_basis: dna
+    tag_style: comma
+    tag_style_basis: adapter_cli
+    thumbnails:
+      - ratio: "3:4"
+        flag: --thumbnail
+        required: false
+        basis: adapter_cli
+    uploader:
+      tool: sau
+      platform: xiaohongshu
+      action: upload-video
+      cookie_glob: "cookies/xiaohongshu_{account}.json"
+    publish_semantics: immediate
+    note: >-
+      Account DNA caps the title at 20 characters and wants 3-5 vertical topic
+      tags with no generic tags. Both are enforced here, not suggested.
+
+  - platform_id: bilibili
+    display_name: B站
+    registry_row: true
+    strategy_platform: bilibili
+    pipeline: VIDEO
+    native_format: mp4
+    aspect_required: "9:16"
+    aspect_basis: project
+    max_duration_s: 3600
+    max_duration_basis: project
+    max_file_mb: 8000
+    max_file_mb_basis: project
+    title_max_hard: 80
+    title_max_hard_basis: project
+    title_max_soft: 60
+    title_max_soft_basis: project
+    desc_max_hard: 2000
+    desc_max_hard_basis: project
+    tags_min: 3
+    tags_max: 10
+    tags_basis: adapter_cli
+    tag_style: comma
+    tag_style_basis: adapter_cli
+    thumbnails:
+      - ratio: "16:9"
+        flag: --thumbnail
+        required: false
+        basis: adapter_cli
+    required_args:
+      - flag: --tid
+        field: category
+        basis: adapter_cli
+        resolution: HUMAN_REQUIRED
+        why: >-
+          The uploader refuses to run without a numeric category id. Inventing
+          one would file the video under an unrelated section, so the packer
+          blocks until an operator supplies it.
+    uploader:
+      tool: sau
+      platform: bilibili
+      action: upload-video
+      cookie_glob: "cookies/bilibili_{account}.json"
+    publish_semantics: immediate
+    note: >-
+      The account DNA wants a longer horizontal cut (1920x1080) for B站. The
+      render layer currently refuses anything but 1080x1920x30
+      (scripts/huashu_motion_adapter.py), so only the vertical cut is packaged.
+      The horizontal cut is recorded as BLOCKED, never silently substituted.
+
+  - platform_id: kuaishou
+    display_name: 快手
+    registry_row: false
+    strategy_platform: kuaishou
+    pipeline: VIDEO
+    native_format: mp4
+    aspect_required: "9:16"
+    aspect_basis: project
+    max_duration_s: 600
+    max_duration_basis: project
+    max_file_mb: 2000
+    max_file_mb_basis: project
+    title_max_hard: 30
+    title_max_hard_basis: project
+    title_max_soft: 24
+    title_max_soft_basis: project
+    desc_max_hard: 500
+    desc_max_hard_basis: project
+    tags_min: 3
+    tags_max: 5
+    tags_basis: project
+    tag_style: comma
+    tag_style_basis: adapter_cli
+    thumbnails:
+      - ratio: "3:4"
+        flag: --thumbnail
+        required: false
+        basis: adapter_cli
+    uploader:
+      tool: sau
+      platform: kuaishou
+      action: upload-video
+      cookie_glob: "cookies/kuaishou_{account}.json"
+    publish_semantics: immediate
+    note: >-
+      Delivery channel only. It has no registry row, so packaging it can never
+      upgrade a status.
+
+  - platform_id: youtube
+    display_name: YouTube
+    registry_row: true
+    strategy_platform: youtube
+    pipeline: VIDEO
+    native_format: mp4
+    aspect_required: "9:16"
+    aspect_basis: project
+    max_duration_s: 180
+    max_duration_basis: project
+    max_file_mb: 12000
+    max_file_mb_basis: project
+    title_max_hard: 100
+    title_max_hard_basis: official
+    title_max_soft: 70
+    title_max_soft_basis: project
+    desc_max_hard: 5000
+    desc_max_hard_basis: official
+    tags_min: 3
+    tags_max: 15
+    tags_basis: project
+    tag_style: comma
+    tag_style_basis: adapter_cli
+    thumbnails:
+      - ratio: "16:9"
+        flag: --thumbnail
+        required: false
+        basis: adapter_cli
+    uploader:
+      tool: sau
+      platform: youtube
+      action: upload-video
+      cookie_glob: "cookies/youtube_{account}.json"
+    publish_semantics: immediate
+    note: >-
+      The 180 s ceiling is the Shorts window, applied deliberately: this line
+      only produces vertical shorts. A longer cut is a different product, not a
+      tolerance to widen.
+
+# Deliberately excluded from the VIDEO line.
+excluded:
+  - platform_id: tiktok
+    reason: no_cookie_isolation_and_no_account_declared
+    available_uploader: sau (chrome uploader, no CLI command)
+  - platform_id: instagram_reels
+    reason: uploader_exposes_instagram_feed_only_no_reels_cli
+  - platform_id: weibo_video
+    reason: operator_instruction_video_line_is_short_video_platforms_only

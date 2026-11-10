@@ -551,6 +551,17 @@ def _record_brief_preparation_failure(project: Path, mode: str,
                              encoding="utf-8")
 
 
+def _guard_checkout(project: Path) -> dict[str, Any]:
+    """Refuse to write into a dirty main checkout; projects/_local/ is exempt.
+
+    The decision is taken once per process and cached by the guard, because this
+    entry writes its own receipt before delegating to M5.
+    """
+    from contentops.media.checkout_guard import ensure_writable_checkout
+
+    return ensure_writable_checkout(project, repo_root=ROOT)
+
+
 def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
             assets_dir: Path | None = None,
             narration_provider: str | None = None,
@@ -578,6 +589,9 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
     project_relative = _relative_to_root(project)
     if not project.is_dir() or project_relative is None:
         raise ValueError("--project must be an existing project inside this repository")
+    # Stop before the first receipt is written. A dirty main checkout is the
+    # reason earlier receipts were overwritten by the next experiment.
+    _guard_checkout(project)
     try:
         project_config = m5_production._read_yaml(project / "project.yaml")
     except Exception:
@@ -755,13 +769,23 @@ def produce(project: Path, *, force: bool = False, mode: str = "AUTO",
         if not video.is_file() or not report_path.is_file():
             raise m5_production.M5Blocked("M5 returned without a final video and QC receipt")
         report = json.loads(report_path.read_text(encoding="utf-8"))
-        if report.get("graded_target") != f"project://final/{project.name}.mp4":
-            raise m5_production.M5Blocked("QC receipt does not grade the produced render")
-        if report.get("overall") != "PASS":
-            raise m5_production.M5Blocked(f"technical QC did not pass ({report.get('overall')})")
-        receipt.update({"state": "QC_PASSED", "video": f"project://final/{project.name}.mp4",
+        from contentops.media.qc_verdict import judge_technical_qc, project_is_account_bound
+        graded_target = f"project://final/{project.name}.mp4"
+        decision = judge_technical_qc(
+            report, has_audio=m5_production._has_audio(video),
+            account_bound=project_is_account_bound(project),
+            graded_target=graded_target,
+        )
+        if decision["blocked"]:
+            raise m5_production.M5Blocked(
+                f"technical QC did not pass ({decision['overall']}: {decision['reason']})"
+            )
+        technical_qc = "PASS" if decision["overall"] == "PASS" else "WARN"
+        state = "QC_PASSED" if technical_qc == "PASS" else "QC_WARN_HISTORICAL"
+        receipt.update({"state": state, "video": graded_target,
                         "video_sha256": _hash_file(video), "qc_receipt": report_path.name,
-                        "rendered": True, "technical_qc": "PASS",
+                        "rendered": True, "technical_qc": technical_qc,
+                        "historical_qc_exception": decision["historical_exception"],
                         "visual_qc": (m5_run.get("stages", {}).get("visual_qc", {})
                                       .get("state", "NOT_RUN")),
                         "production_ready": False})
@@ -893,6 +917,13 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps({"state": "BLOCKED", "reason": str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 4
     except Exception as exc:
+        from contentops.media.checkout_guard import DirtyCheckoutError
+
+        if isinstance(exc, DirtyCheckoutError):
+            print(json.dumps({"state": "BLOCKED", "reason": str(exc),
+                              "reason_code": exc.state.get("reason")},
+                             ensure_ascii=False), file=sys.stderr)
+            return 4
         print(json.dumps({"state": "FAILED", "failure_type": type(exc).__name__,
                           "reason": str(exc)[:1000]}, ensure_ascii=False), file=sys.stderr)
         return 1
