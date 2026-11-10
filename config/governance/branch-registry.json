@@ -113,6 +113,14 @@
       "purpose": "snapshot of 2,300 uncommitted Huashu lines salvaged from the minimax-video-provider worktree before governance removal; deliberate archive, no PR, retained after the 2026-11-11 review",
       "status": "archived",
       "expires": "2026-12-11"
+    },
+    {
+      "name": "chore/governance-ledger-20261111",
+      "pr": 155,
+      "created": "2026-11-11",
+      "purpose": "governance round 4: bilingual ledger sync, registry status correction, offline ledger consistency check (Refs #7 #147)",
+      "status": "merged",
+      "expires": "2026-12-11"
     }
   ]
 }
