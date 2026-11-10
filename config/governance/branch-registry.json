@@ -6,8 +6,15 @@
       "main"
     ],
     "max_age_days": 30,
+    "max_age_applies_to": "active (non-merged, non-archived) entries only; expires is a review date, not a deletion deadline",
     "require_pr_for_non_persistent": true,
-    "note": "A remote branch without a registry entry is a governance failure once the CI check is enabled. This file is a local registry; it does not query the network. Register a new branch here in the same PR that creates it. It records branches ever created, not a live list of remote branches. status records the branch's disposition when the entry landed on main, not a live PR state; entries written before 2026-11-11 used a live-state meaning. status=archived is a deliberate snapshot with no PR and is exempt from the pr field."
+    "retirement": {
+      "cadence": "monthly",
+      "trigger": "a status=merged entry past its expires review date whose remote branch no longer exists (printed as RETIRE DUE)",
+      "action": "remove the entry from branches[] in a governance PR; Git history keeps the audit trail",
+      "verification": "python scripts/check_branch_registry.py --today <date> exits 0 with no EXPIRED"
+    },
+    "note": "A remote branch without a registry entry is a governance failure once the CI check is enabled. This file is a local registry; it does not query the network. Register a new branch here in the same PR that creates it. It records branches ever created, not a live list of remote branches. status records the branch's disposition when the entry landed on main, not a live PR state; entries written before 2026-11-11 used a live-state meaning. status=archived is a deliberate permanent snapshot with no PR, exempt from the pr field and from max_age_days. expires is a review date: status=merged past it is reported as RETIRE DUE (report-only, never a CI failure) and is retired in the monthly governance pass; active statuses past it still fail as EXPIRED. Invalid date strings always fail."
   },
   "branches": [
     {
@@ -119,6 +126,14 @@
       "pr": 155,
       "created": "2026-11-11",
       "purpose": "governance round 4: bilingual ledger sync, registry status correction, offline ledger consistency check (Refs #7 #147)",
+      "status": "merged",
+      "expires": "2026-12-11"
+    },
+    {
+      "name": "chore/governance-retention-20261111",
+      "pr": 156,
+      "created": "2026-11-11",
+      "purpose": "governance round 5: fix the registry expiry CI time-bomb, add local ledger head check, archive salvage ledger (Refs #7 #147)",
       "status": "merged",
       "expires": "2026-12-11"
     }

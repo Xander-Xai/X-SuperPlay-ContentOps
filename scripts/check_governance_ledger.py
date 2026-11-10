@@ -14,6 +14,12 @@ while the header still names an older commit or date.
 BOUNDARY: the check does NOT query GitHub, does NOT spawn a subprocess and does
 NOT claim that the recorded SHA is the live remote head. It only proves that the
 ledger agrees with itself. A green result is not evidence about remote state.
+
+``--compare-head`` is a LOCAL, report-only convenience mode: it reads the
+.git HEAD/refs files with plain Python (no git subprocess) and reports whether
+the documented SHA matches the checked-out HEAD. It never changes the exit
+code and must never be wired into CI as a gate — a PR checkout runs on a merge
+commit, so a head comparison there would be permanently misleading.
 """
 import argparse
 import json
@@ -144,11 +150,77 @@ def summary(root=ROOT):
     return date, (shas[0] if shas else "unknown")
 
 
+def _head_sha(root):
+    """Read the checked-out HEAD SHA from .git files. No subprocess, no network."""
+    root = Path(root)
+    git_dir = root / ".git"
+    if not git_dir.exists():
+        return None
+    if git_dir.is_file():  # linked worktree: 'gitdir: <path>' pointer
+        try:
+            pointer = git_dir.read_text(encoding="utf-8").strip()
+        except OSError:
+            return None
+        if not pointer.startswith("gitdir:"):
+            return None
+        git_dir = Path(pointer.split(":", 1)[1].strip())
+        if not git_dir.is_absolute():
+            git_dir = (root / git_dir).resolve()
+    head_file = git_dir / "HEAD"
+    if not head_file.exists():
+        return None
+    try:
+        head = head_file.read_text(encoding="utf-8").strip()
+    except OSError:
+        return None
+    if not head.startswith("ref: "):
+        return head or None  # detached HEAD
+    ref = head[5:].strip()
+    ref_file = git_dir / ref
+    if ref_file.exists():
+        try:
+            return ref_file.read_text(encoding="utf-8").strip() or None
+        except OSError:
+            return None
+    packed = git_dir / "packed-refs"
+    if packed.exists():
+        try:
+            for line in packed.read_text(encoding="utf-8").splitlines():
+                if line.startswith("#") or line.startswith("^"):
+                    continue
+                parts = line.split()
+                if len(parts) == 2 and parts[1] == ref:
+                    return parts[0]
+        except OSError:
+            return None
+    return None
+
+
+def compare_head(root=ROOT):
+    """Return (head_sha, ledger_sha, verdict). Report-only, never a failure."""
+    root = Path(root)
+    ledger_date, ledger_sha = summary(root)
+    head = _head_sha(root)
+    if not head:
+        return None, ledger_sha, "unavailable (no readable .git HEAD)"
+    if ledger_sha == "unknown":
+        return head, ledger_sha, "unknown (ledger header has no SHA)"
+    if head.startswith(ledger_sha) or ledger_sha.startswith(head):
+        return head, ledger_sha, "in sync"
+    return head, ledger_sha, "differs (ledger records the verification-time state; use git rev-list --count <sha>..HEAD for the distance)"
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default=str(ROOT), help="repository root (for tests)")
+    ap.add_argument("--compare-head", action="store_true",
+                    help="LOCAL report-only: compare the ledger SHA with .git HEAD; never a CI gate")
     args = ap.parse_args()
     errors = validate(Path(args.root))
+    if args.compare_head:
+        head, ledger_sha, verdict = compare_head(Path(args.root))
+        print("compare-head (local, report-only): HEAD=%s ledger=%s verdict=%s" % (
+            head or "unavailable", ledger_sha, verdict))
     if errors:
         for e in errors:
             print("  [FAIL] %s" % e)

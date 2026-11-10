@@ -157,5 +157,48 @@ class TestGovernanceLedger(unittest.TestCase):
                 self.assertEqual(ledger.main(), 1)
 
 
+class TestCompareHead(unittest.TestCase):
+    """--compare-head is local and report-only: it never changes the exit code."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _git(self, sha):
+        (self.root / ".git" / "refs" / "heads").mkdir(parents=True, exist_ok=True)
+        (self.root / ".git" / "HEAD").write_text("ref: refs/heads/main\n", encoding="utf-8")
+        (self.root / ".git" / "refs" / "heads" / "main").write_text(sha + "\n", encoding="utf-8")
+
+    def test_in_sync(self):
+        build(self.root)
+        self._git("bcd5dd1" + "0" * 33)
+        _, ledger_sha, verdict = ledger.compare_head(self.root)
+        self.assertEqual(ledger_sha, "bcd5dd1")
+        self.assertEqual(verdict, "in sync")
+
+    def test_differs(self):
+        build(self.root)
+        self._git("3" * 40)
+        _, _, verdict = ledger.compare_head(self.root)
+        self.assertIn("differs", verdict)
+
+    def test_no_git_dir(self):
+        build(self.root)
+        _, _, verdict = ledger.compare_head(self.root)
+        self.assertIn("unavailable", verdict)
+
+    def test_cli_compare_head_is_report_only(self):
+        build(self.root)
+        self._git("4" * 40)
+        with mock.patch.object(sys, "argv", [
+                "check_governance_ledger.py", "--root", str(self.root), "--compare-head"]):
+            with contextlib.redirect_stdout(io.StringIO()) as out:
+                self.assertEqual(ledger.main(), 0)
+            self.assertIn("compare-head (local, report-only)", out.getvalue())
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
