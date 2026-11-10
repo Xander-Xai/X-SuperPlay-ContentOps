@@ -609,6 +609,17 @@ def main() -> int:
                         "that audio to the current script text")
     args = p.parse_args()
 
+    if args.engine == "easel":
+        print(json.dumps({
+            "status": "BLOCKED",
+            "engine": "easel",
+            "reason": "run_v1 is not the production chain. Use scripts/produce_video.py. "
+                      "--engine fallback remains diagnostic only.",
+            "production_ready": False,
+            "publish_authorized": False,
+        }, ensure_ascii=False, indent=2))
+        return 4
+
     project = Path(args.project)
     if not project.is_absolute():
         project = (ROOT / args.project).resolve()
