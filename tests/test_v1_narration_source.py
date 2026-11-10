@@ -121,13 +121,31 @@ def test_a_still_shot_still_parses():
         assert "video" not in shots[0]
 
 
+def test_easel_cli_refuses_and_points_at_produce_video():
+    import io
+    from contextlib import redirect_stdout
+    old = sys.argv
+    sys.argv = ["run_v1.py", "projects/unused", "--engine", "easel"]
+    try:
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = run_v1.main()
+    finally:
+        sys.argv = old
+    assert code == 4
+    payload = json.loads(buf.getvalue())
+    assert payload["production_ready"] is False
+    assert "produce_video.py" in payload["reason"]
+
+
 def main() -> int:
     tests = (test_a_missing_copy_review_blocks_before_any_audio,
              test_a_named_provider_that_is_unreachable_is_refused,
              test_existing_narration_without_a_receipt_is_refused,
              test_existing_narration_bound_to_a_different_script_is_refused,
              test_a_video_shot_survives_script_parsing,
-             test_a_still_shot_still_parses)
+             test_a_still_shot_still_parses,
+             test_easel_cli_refuses_and_points_at_produce_video)
     for test in tests:
         test()
         print(f"[ok] {test.__name__}")

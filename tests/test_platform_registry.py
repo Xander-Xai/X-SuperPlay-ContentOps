@@ -22,6 +22,7 @@ from contentops.platforms import (  # noqa: E402
     load_accounts,
     load_platforms,
     validate_registry,
+    workflow_routes,
 )
 
 STRATEGY_PLATFORMS = {
@@ -206,6 +207,102 @@ def test_no_platform_claims_a_verified_host_capability_yet():
             assert path.startswith("skills/openclaw/"), (entry.platform_id, path)
 
 
+def test_workflow_routes_connect_tracked_commands_without_publish():
+    routes = {item["platform_id"]: item for item in workflow_routes(ROOT)}
+    wechat = routes["wechat_article"]
+    assert wechat["connected"] is True
+    assert {item["script"] for item in wechat["commands"]} == {
+        "scripts/wechat_draft.py",
+        "scripts/wechat_metrics.py",
+    }
+    bilibili = routes["bilibili"]
+    assert [item["effect"] for item in bilibili["commands"]] == ["public_metrics"]
+    assert bilibili["publish_mode"] == "NOT_IMPLEMENTED"
+    assert routes["xiaohongshu_video"]["connected"] is True
+    assert [item["script"] for item in routes["xiaohongshu_video"]["commands"]] == [
+        "scripts/video_deliver.py",
+    ]
+    assert routes["xiaohongshu_video"]["publish_authorized"] is False
+    assert [item["script"] for item in routes["zhihu"]["commands"]] == [
+        "scripts/graphic_deliver.py",
+    ]
+    assert routes["csdn"]["connected"] is True
+    for item in routes.values():
+        assert item["publish_authorized"] is False
+        assert item["production_ready"] is False
+        assert item["skill_declared"] is False
+        for command in item["commands"]:
+            if command["script"] == "scripts/graphic_deliver.py":
+                continue
+            assert command["script"] in load_platforms(ROOT)[item["platform_id"]].owner
+
+
+def test_unknown_platform_route_is_refused():
+    _expect("PLATFORM_UNKNOWN", lambda: workflow_routes(ROOT, "no-such-platform"))
+
+
+def test_graphic_status_carries_the_registry_route():
+    import importlib.util
+    import io
+    from contextlib import redirect_stdout
+
+    spec = importlib.util.spec_from_file_location(
+        "graphic_workflow_under_test", ROOT / "scripts" / "graphic_workflow.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    buf = io.StringIO()
+    with redirect_stdout(buf):
+        module.main(["status", "--workflow", "gzh", "--json"])
+    payload = json.loads(buf.getvalue())
+    route = payload["transport_route"]
+    assert route["platform_id"] == "wechat_article"
+    assert {item["script"] for item in route["commands"]} == {
+        "scripts/wechat_draft.py",
+        "scripts/wechat_metrics.py",
+    }
+    assert route["publish_authorized"] is False
+    assert payload["production_ready"] is False
+    assert payload["publish_authorized"] is False
+
+
+def test_video_workflow_lists_every_video_platform_without_publish():
+    import importlib.util
+    import io
+    from contextlib import redirect_stdout
+
+    spec = importlib.util.spec_from_file_location(
+        "graphic_workflow_video", ROOT / "scripts" / "graphic_workflow.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    buf = io.StringIO()
+    with redirect_stdout(buf):
+        code = module.main(["status", "--workflow", "video", "--json"])
+    assert code == 0
+    payload = json.loads(buf.getvalue())
+    ids = {item["platform_id"] for item in payload["routes"]}
+    assert ids == {"douyin", "bilibili", "xiaohongshu_video", "shipinhao", "youtube"}
+    for pid in ("douyin", "xiaohongshu_video", "shipinhao", "youtube"):
+        row = next(item for item in payload["routes"] if item["platform_id"] == pid)
+        assert row["connected"] is True
+        assert row["commands"][0]["script"] == "scripts/video_deliver.py"
+        assert row["publish_authorized"] is False
+    assert payload["publish_authorized"] is False
+    assert payload["production_ready"] is False
+    xhs = next(item for item in payload["routes"] if item["platform_id"] == "xiaohongshu_video")
+    assert xhs["connected"] is True
+    assert xhs["commands"][0]["script"] == "scripts/video_deliver.py"
+    assert xhs["publish_authorized"] is False
+    bili = next(item for item in payload["routes"] if item["platform_id"] == "bilibili")
+    assert bili["connected"] is True
+    buf2 = io.StringIO()
+    with redirect_stdout(buf2):
+        blocked = module.main(["status", "--workflow", "video", "--handoff", "--json"])
+    assert blocked == 4
+    refused = json.loads(buf2.getvalue())
+    assert refused["code"] == "PROJECT_REQUIRED"
+    assert refused["publish_authorized"] is False
+
+
 def main() -> int:
     tests = (
         test_registries_agree,
@@ -226,6 +323,10 @@ def main() -> int:
         test_registry_names_no_private_account_identity,
         test_easel_coverage_is_recorded_as_an_upstream_declaration,
         test_no_platform_claims_a_verified_host_capability_yet,
+        test_workflow_routes_connect_tracked_commands_without_publish,
+        test_unknown_platform_route_is_refused,
+        test_graphic_status_carries_the_registry_route,
+        test_video_workflow_lists_every_video_platform_without_publish,
     )
     failures = []
     for fn in tests:
