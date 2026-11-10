@@ -25,11 +25,17 @@ import contextlib
 import os
 import re
 import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import Iterator
 
 ROOT = Path(__file__).resolve().parents[3]
+_scripts = str(ROOT / "scripts")
+if _scripts not in sys.path:
+    sys.path.insert(0, _scripts)
+
+from process_utils import hidden_run  # noqa: E402
 EXT_DIR = ROOT / ".runtime" / "wechatsync-ext"
 PROFILE_DIR = ROOT / ".runtime" / "wechatsync-browser"
 TOKEN_FILE = ROOT / ".runtime" / "wechatsync-token.txt"
@@ -173,7 +179,7 @@ def run_cli(args: list[str], *, timeout_ms: int = 45_000, token: str = "") -> di
         env["WECHATSYNC_TOKEN"] = token
     cmd = ["node", str(CLI_ENTRY), "--timeout", str(timeout_ms), *args]
     try:
-        proc = subprocess.run(
+        proc = hidden_run(
             cmd, cwd=str(CLI_DIR), capture_output=True, text=True,
             encoding="utf-8", errors="replace", env=env, input="N\n",
             timeout=timeout_ms / 1000 + 40,
