@@ -195,6 +195,30 @@ def _topical_source_lines(lines: list[str], queries: list[str], limit: int = 42
     return [(index + 1, lines[index]) for index in sorted(selected)][:limit]
 
 
+def _anchor_title(lines: list[str], queries: list[str], stem: str) -> str:
+    """Name the excerpt the way an editor would: by what the pinned code does."""
+    shown = _topical_source_lines(lines, queries, limit=24)
+    named = [
+        (r"^\s*(?:async\s+)?def\s+([A-Za-z_][A-Za-z0-9_]*)", 3),
+        (r"^\s*class\s+([A-Za-z_][A-Za-z0-9_]*)", 3),
+        (r"^\s*(?:export\s+)?(?:function|const|let)\s+([A-Za-z_$][A-Za-z0-9_$]*)", 2),
+    ]
+    for _, source_line in shown:
+        for pattern, weight in named:
+            match = re.match(pattern, source_line)
+            if match:
+                words = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2",
+                               match.group(1).replace("_", " ")).strip()
+                if len(words) > 3:
+                    return words[:1].upper() + words[1:]
+        del weight
+    for _, source_line in shown:
+        text = source_line.strip().lstrip("#/-* ")
+        if len(text) >= 8 and not text.startswith(("import ", "from ", "@")):
+            return text[:1].upper() + text[1:42].rstrip(" .,:;")
+    return stem.replace("_", " ").replace("-", " ")
+
+
 def _now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace(
         "+00:00", "Z")
@@ -615,27 +639,6 @@ def prepare_m5_contracts(project: Path) -> dict[str, Any]:
         "sub": "#8B95A5", "accent": "#38BDF8", "accent2": "#F07167",
     }
 
-    def font(size: int, *, mono: bool = False):
-        candidates = ([
-            Path("C:/Windows/Fonts/consola.ttf"),
-            Path("C:/Windows/Fonts/lucon.ttf"),
-            Path("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf"),
-            Path("/usr/share/fonts/truetype/liberation2/LiberationMono-Regular.ttf"),
-        ] if mono else [
-            Path("C:/Windows/Fonts/msyh.ttc"),
-            Path("C:/Windows/Fonts/segoeui.ttf"),
-            Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
-            Path("/usr/share/fonts/truetype/wqy/wqy-microhei.ttc"),
-        ])
-        for candidate in candidates:
-            if candidate.is_file():
-                try:
-                    return ImageFont.truetype(str(candidate), size=size)
-                except OSError:
-                    continue
-        return ImageFont.load_default()
-
-    title_font, body_font, code_font = font(36), font(30), font(20, mono=True)
     evidence_by_path: dict[str, dict[str, Any]] = {}
     source_permissions: dict[str, dict[str, Any]] = {}
     source_visual_queries: dict[str, list[str]] = {}
@@ -676,6 +679,8 @@ def prepare_m5_contracts(project: Path) -> dict[str, Any]:
     image_by_source: dict[str, str] = {}
     generated_dir = project / "assets" / "generated" / "source-anchors"
     generated_dir.mkdir(parents=True, exist_ok=True)
+    from contentops.media.source_anchor import render_anchor
+
     for index, (relative, origin) in enumerate(sorted(evidence_by_path.items()), start=1):
         source = project / relative
         if not source.is_file() or _sha(source) != origin["sha256"]:
@@ -684,35 +689,24 @@ def prepare_m5_contracts(project: Path) -> dict[str, Any]:
         filename = source.name
         asset_id = f"source-anchor-{index:02d}"
         target = generated_dir / f"{asset_id}.png"
-        image = Image.new("RGB", (1080, 1920), str(palette.get("bg") or "#0F1117"))
-        draw = ImageDraw.Draw(image)
-        draw.rounded_rectangle((48, 54, 1032, 1866), radius=32,
-                               fill=str(palette.get("surface") or "#161A22"))
-        draw.text((92, 96), "PINNED SOURCE SNAPSHOT", font=title_font,
-                  fill=str(palette.get("accent") or "#38BDF8"))
-        draw.text((92, 160), f"{origin['repository']} · {origin['commit'][:12]}",
-                  font=body_font, fill=str(palette.get("ink") or "#F5F7FA"))
-        draw.text((92, 210), filename, font=code_font,
-                  fill=str(palette.get("sub") or "#8B95A5"))
-        y = 278
-        shown = _topical_source_lines(lines, source_visual_queries.get(relative, []))
-        for line_number, source_line in shown:
-            line = source_line.expandtabs(4)
-            if len(line) > 70:
-                line = line[:67] + "…"
-            draw.text((92, y), f"{line_number:03d}  {line}", font=code_font,
-                      fill=str(palette.get("ink") or "#F5F7FA"))
-            y += 31
-        draw.line((92, 1770, 988, 1770), fill=str(palette.get("accent") or "#38BDF8"), width=2)
-        draw.text((92, 1790), "SOURCE TEXT · NOT A LIVE RUNTIME RESULT", font=font(21, mono=True),
-                  fill=str(palette.get("sub") or "#8B95A5"))
-        image.save(target, format="PNG", optimize=True)
+        rendered = render_anchor(
+            source_text=source.read_text(encoding="utf-8"),
+            filename=filename,
+            title=_anchor_title(lines, source_visual_queries.get(relative, []), source.stem),
+            repository=str(origin["repository"]),
+            commit=str(origin["commit"]),
+            spdx=str(origin["spdx_license"]),
+            palette=palette,
+            queries=source_visual_queries.get(relative, []),
+            out_path=target)
         asset_path = target.relative_to(ROOT).as_posix()
         entries.append({
             "id": asset_id,
             "type": "CODE_SNAPSHOT",
             "repo_path": asset_path,
-            "sha256": _sha(target),
+            "sha256": rendered.sha256,
+            "anchor_canvas": [rendered.width, rendered.height],
+            "text_layout": rendered.layout(),
             "permission": "CREATED_BY_OWNER",
             "usage_scope": "VISUAL_SUPPORT_ONLY",
             "origin": "Deterministic rendering of pinned repository source bytes",

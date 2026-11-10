@@ -15,6 +15,13 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Sequence
 
+from contentops.media.source_anchor import pick_rects
+
+# Vertical 1080x1920 films burn subtitles at roughly y=1400..1520. Every
+# parameterised grammar respects ``safe`` for its own layout, so the reserved
+# band is declared once here instead of nudging each cue by hand.
+SUBTITLE_SAFE_BOTTOM = 520
+
 
 class MotionPlanError(ValueError):
     """The account or narration cannot be rendered without guessing visuals."""
@@ -147,74 +154,69 @@ def _matching_ocr_regions(text: str, source: Mapping[str, Any],
     return [item[0] for item in ranked[:2]]
 
 
-def _cues(text: str, kind: str, source_image: str | None,
-          grammar: str, source_regions: Sequence[Mapping[str, Any]] = ()) -> List[Dict[str, Any]]:
-    """Build two or three semantic beats from the script line, not a title card."""
-    if grammar == "t2_keynote_ui" and source_image and source_regions:
-        cues: List[Dict[str, Any]] = [
-            {"at": 0.0, "kind": "image", "image": source_image},
-        ]
-        for index, region in enumerate(source_regions):
-            cues.append({
-                "at": 0.8 + index * 1.0,
-                "kind": "highlight",
-                "data": {"rect": list(region["rect"])},
-            })
-        return cues
-    if source_image:
-        icon_name = next((value for pattern, value in ICON_BY_TOPIC if pattern.search(text)), None)
-        cues: List[Dict[str, Any]] = [
-            {"at": 0.0, "kind": "image", "image": source_image},
-            {"at": 0.65, "kind": "draw", "text": _short_label(text),
-             "data": {"icon": icon_name or "screen"}},
-        ]
-        if kind == "retrieval":
-            cues.extend([
-                {"at": 1.45, "kind": "draw", "text": "语义召回",
-                 "data": {"icon": "target"}},
-                {"at": 2.25, "kind": "draw", "text": "候选汇合",
-                 "data": {"icon": "stack"}},
-            ])
+def _labelled_steps(kind: str, text: str) -> List[tuple[str, str]]:
+    """Process labels a whiteboard shot can draw, derived from the spoken line."""
+    if kind == "retrieval":
+        lexical = "BM25 召回" if re.search(r"\bbm25\b", text, re.I) else "词项召回"
+        semantic = "向量召回" if "向量" in text or "vector" in text.lower() else "语义召回"
+        final = "重排候选" if re.search(r"重排|rerank", text, re.I) else "候选汇合"
+        return [(lexical, "doc"), (semantic, "target"), (final, "stack")]
+    if kind == "agent":
+        return [("Agent 状态", "person"), ("调用工具", "screen"), ("结果返回", "check")]
+    if kind == "protocol":
+        return [("客户端", "screen"), ("协议边界", "network"), ("服务端工具", "gear")]
+    if kind == "metric":
+        return [("来源指标", "chart"), ("对照口径", "target"), ("结论一条", "check")]
+    return [("真实代码", "screen"), ("配置入口", "gear"), ("运行结果", "check")]
+
+
+def _y3_cues(text: str, kind: str, *, duration: float) -> List[Dict[str, Any]]:
+    """Whiteboard: draw a thing, then write the line that names it."""
+    steps = _labelled_steps(kind, text)
+    cues: List[Dict[str, Any]] = []
+    cursor = 0.0
+    step = max(0.85, min(1.35, (duration - 0.6) / max(1, len(steps))))
+    for index, (label, icon) in enumerate(steps):
+        if index % 2 == 0:
+            cues.append({"at": round(cursor, 3), "kind": "draw", "text": label,
+                         "data": {"icon": icon}})
         else:
-            cues.append({"at": 1.7, "kind": "point", "text": _short_label(text, 18)})
+            cues.append({"at": round(cursor, 3), "kind": "point",
+                         "text": _short_label(label if len(label) > 5 else text, 18)})
+        cursor += step
+    cues.append({"at": round(min(cursor, max(0.4, duration - 0.5)), 3),
+                 "kind": "highlight", "data": {"target": "draw", "index": 0}})
+    return cues
+
+
+def _t2_cues(text: str, source_image: str, rects: Sequence[Mapping[str, Any]],
+             *, duration: float) -> List[Dict[str, Any]]:
+    """Evidence shot: the still is the main picture, the camera finds the line.
+
+    Huashu t2 pushes only when the framed rectangle is narrow enough
+    (``zoom = fill / rect_width``, capped at 2.6). The rectangles come from the
+    anchor's own line geometry, so each camera move lands on real source lines
+    instead of an OCR box spanning the whole column.
+    """
+    cues: List[Dict[str, Any]] = [{"at": 0.0, "kind": "image", "image": source_image,
+                                   "text": _short_label(text, 14)}]
+    if not rects:
         return cues
+    take = list(rects[:2]) if duration >= 4.4 else list(rects[:1])
+    span = max(1.0, (duration - 1.6) / max(1, len(take)))
+    for index, region in enumerate(take):
+        rect = region.get("rect") if isinstance(region, Mapping) else region
+        width = float(rect[2])
+        fill = round(min(0.96, max(0.58, 1.55 * width)), 3)
+        cues.append({"at": round(1.15 + index * span, 3), "kind": "highlight",
+                     "data": {"rect": [round(float(value), 6) for value in rect],
+                              "fill": fill}})
+    return cues
 
-    if grammar == "t1_3b1b" and kind in {"agent", "protocol"}:
-        # Draw the relationships named in this line as a progressive derivation.
-        # Do not add a generic architecture diagram: each node below must occur
-        # in the narration, so an illustrative animation cannot quietly assert
-        # a tool, state, or protocol boundary the source did not name.
-        vocabulary = (
-            (r"智能体|\bagent\b", "Agent"),
-            (r"客户端|\bclient\b", "Client"),
-            (r"mcp", "MCP"),
-            (r"协议", "协议"),
-            (r"状态|\bstate\b", "状态"),
-            (r"工具调用|调用工具|工具|\btool(?:\s+call)?\b", "工具"),
-            (r"服务端|\bserver\b", "Server"),
-            (r"结果|\bresult\b", "结果"),
-            (r"恢复|\bresume\b", "恢复"),
-        )
-        found = []
-        for pattern, label in vocabulary:
-            match = re.search(pattern, text, re.I)
-            if match:
-                found.append((match.start(), label))
-        found.sort()
-        terms = list(dict.fromkeys(label for _, label in found))
-        if len(terms) >= 2:
-            pairs = list(zip(terms, terms[1:]))
-            cues = [{"at": round(index * 1.0, 2), "kind": "equation",
-                     "text": f"{left} → {right}"}
-                    for index, (left, right) in enumerate(pairs)]
-            cues.append({"at": round(len(pairs) * 1.0, 2), "kind": "highlight",
-                         "data": {"target": "equation"}})
-            return cues
 
-    if grammar == "t1_3b1b" and kind == "retrieval" and re.search(r"\bRRF\b", text, re.I):
-        # RRF has a specific, sourced mathematical mechanism. Make the rank
-        # contribution itself transform into the sum instead of reusing the
-        # generic two-retriever sequence and leaving the key idea implicit.
+def _t1_cues(text: str, kind: str) -> List[Dict[str, Any]]:
+    """3b1b: one object at a time, each step transforming the previous one."""
+    if kind == "retrieval" and re.search(r"\bRRF\b", text, re.I):
         return [
             {"at": 0.0, "kind": "equation", "text": "rankᵢ(d)"},
             {"at": 1.05, "kind": "equation", "text": "1 / (k + rankᵢ(d))"},
@@ -223,12 +225,7 @@ def _cues(text: str, kind: str, source_image: str | None,
             {"at": 3.1, "kind": "point", "text": "按名次累加倒数贡献"},
             {"at": 3.85, "kind": "highlight", "data": {"target": "equation"}},
         ]
-
-    if (grammar == "t1_3b1b" and kind == "retrieval"
-            and re.search(r"原始分|score scale|raw score", text, re.I)):
-        # This line explains why rank fusion is used. Show that the method
-        # transforms incomparable source scores into per-list ranks before
-        # calculating one fused score; do not draw a neural-network icon.
+    if kind == "retrieval" and re.search(r"原始分|score scale|raw score", text, re.I):
         return [
             {"at": 0.0, "kind": "equation", "text": "BM25 原始分"},
             {"at": 1.05, "kind": "equation", "text": "向量相似度"},
@@ -237,14 +234,9 @@ def _cues(text: str, kind: str, source_image: str | None,
             {"at": 3.1, "kind": "point", "text": "按排名融合，不直接比原始分"},
             {"at": 3.85, "kind": "highlight", "data": {"target": "equation"}},
         ]
-
-    if grammar == "t1_3b1b" and kind == "retrieval":
-        # Start with the retrieval object, then transform it through the two
-        # branches and their merge. Do not open with a title or a bullet list.
-        # The labels are generic process stages, not a claim that a particular
-        # ranking formula, score or benchmark was used.
+    if kind == "retrieval":
         lexical = "BM25" if re.search(r"\bBM25\b", text, re.I) else "词项"
-        semantic = "向量" if "向量" in text else "语义"
+        semantic = "向量" if ("向量" in text or "dense" in text.lower()) else "语义"
         final_text = "候选进入重排" if re.search(r"重排|rerank", text, re.I) \
             else "两路候选完成融合"
         return [
@@ -255,37 +247,104 @@ def _cues(text: str, kind: str, source_image: str | None,
             {"at": 3.1, "kind": "point", "text": final_text},
             {"at": 3.85, "kind": "highlight", "data": {"target": "equation"}},
         ]
+    # Agent / protocol / code / metric: name each party in the order the line
+    # names it, then transform the pair into the relationship. Only labels that
+    # occur in the narration are drawn, so the animation cannot assert a state
+    # or boundary the source did not name.
+    vocabulary = (
+        (r"智能体|\bagent\b", "Agent"),
+        (r"客户端|\bclient\b", "Client"),
+        (r"mcp", "MCP"),
+        (r"协议|\bprotocol\b", "协议"),
+        (r"状态|\bstate\b", "状态"),
+        (r"工具调用|调用工具|工具|\btool", "工具"),
+        (r"服务端|\bserver\b", "Server"),
+        (r"缓存|\bcache\b", "缓存"),
+        (r"护栏|guardrail", "护栏"),
+        (r"重排|rerank", "重排"),
+        (r"结果|\bresult\b", "结果"),
+        (r"恢复|\bresume\b", "恢复"),
+    )
+    found = []
+    for pattern, label in vocabulary:
+        match = re.search(pattern, text, re.I)
+        if match:
+            found.append((match.start(), label))
+    found.sort()
+    terms = list(dict.fromkeys(label for _, label in found))
+    if len(terms) >= 2:
+        pairs = list(zip(terms, terms[1:]))
+        cues = [{"at": round(index * 0.95, 2), "kind": "equation",
+                 "text": f"{left} → {right}"} for index, (left, right) in enumerate(pairs)]
+        cues.append({"at": round(len(pairs) * 0.95, 2), "kind": "highlight",
+                     "data": {"target": "equation"}})
+        return cues
+    return [
+        {"at": 0.0, "kind": "equation", "text": terms[0] if terms else "输入"},
+        {"at": 1.1, "kind": "point", "text": _short_label(text, 18)},
+        {"at": 2.2, "kind": "highlight", "data": {"target": "equation"}},
+    ]
 
-    if kind == "retrieval":
-        return [
-            {"at": 0.0, "kind": "draw", "text": "词项召回", "data": {"icon": "doc"}},
-            {"at": 0.7, "kind": "draw", "text": "语义召回", "data": {"icon": "target"}},
-            {"at": 1.55, "kind": "draw", "text": "候选汇合", "data": {"icon": "stack"}},
-        ]
-    if kind == "agent":
-        return [
-            {"at": 0.0, "kind": "draw", "text": "Agent 状态", "data": {"icon": "person"}},
-            {"at": 0.7, "kind": "draw", "text": "调用工具", "data": {"icon": "screen"}},
-            {"at": 1.55, "kind": "draw", "text": "结果返回", "data": {"icon": "check"}},
-        ]
-    if kind == "protocol":
-        return [
-            {"at": 0.0, "kind": "draw", "text": "客户端", "data": {"icon": "screen"}},
-            {"at": 0.7, "kind": "draw", "text": "协议边界", "data": {"icon": "network"}},
-            {"at": 1.55, "kind": "draw", "text": "服务端工具", "data": {"icon": "gear"}},
-        ]
-    if kind == "code":
-        return [
-            {"at": 0.0, "kind": "draw", "text": "真实代码", "data": {"icon": "screen"}},
-            {"at": 0.75, "kind": "point", "text": _short_label(text, 18)},
-        ]
-    if kind == "metric":
-        return [
-            {"at": 0.0, "kind": "draw", "text": "来源指标", "data": {"icon": "chart"}},
-            {"at": 0.75, "kind": "point", "text": _short_label(text, 18)},
-        ]
-    raise MotionPlanError("AUTO_MOTION_UNSUPPORTED: no semantic visual grammar matched "
-                          f"script line {text!r}; add a reviewed shot plan")
+
+def _grammar_for(account_id: str, role: str, kind: str, has_still: bool,
+                 allowed: set[str], index: int) -> str:
+    """Pick the drawing syntax from what the line does and what the account is for.
+
+    The account DNA decides the bias, the shot decides the exception:
+
+    * ``x-superplay-1024`` is evidence-led: a registered still carries every
+      factual or explanatory beat, and only the opening/closing section marker
+      is drawn. That keeps ~87% of frames on real source material, above the
+      account's 70% floor.
+    * ``x-superplay-future-intelligence`` explains in vectors: proof beats
+      still show the real excerpt, everything else is drawn, alternating
+      between the 3b1b transform grammar and the whiteboard so neighbouring
+      shots never share a composition.
+
+    The rule is deliberately not "if a picture exists, use it": that is what
+    turned both accounts into the same screenshot-plus-push film.
+    """
+    evidence_ok = has_still and "t2_keynote_ui" in allowed
+    if role in {"proof", "demo"} and evidence_ok:
+        return "t2_keynote_ui"
+    if account_id == "x-superplay-1024":
+        if role == "transition" and "y3_whiteboard" in allowed:
+            return "y3_whiteboard"
+        if evidence_ok:
+            return "t2_keynote_ui"
+        if "y3_whiteboard" in allowed:
+            return "y3_whiteboard"
+        return "t1_3b1b"
+    if role == "transition" and "y3_whiteboard" in allowed:
+        return "y3_whiteboard"
+    if kind in {"retrieval", "agent", "protocol"} and "t1_3b1b" in allowed:
+        return "t1_3b1b" if index % 2 == 0 else (
+            "y3_whiteboard" if "y3_whiteboard" in allowed else "t1_3b1b")
+    if "y3_whiteboard" in allowed:
+        return "y3_whiteboard"
+    return "t1_3b1b" if "t1_3b1b" in allowed else "t2_keynote_ui"
+
+
+def _cues(text: str, kind: str, source_image: str | None,
+          grammar: str, source_regions: Sequence[Mapping[str, Any]] = (),
+          *, duration: float = 3.0) -> List[Dict[str, Any]]:
+    """Build the shot's visual beats for the grammar that will actually run.
+
+    Every emitted ``kind`` must be one the chosen grammar draws. Huashu ignores
+    unknown kinds without an error, so a whiteboard ``draw`` cue inside a
+    ``t2_keynote_ui`` spec used to render nothing at all -- the shot silently
+    lost a third of its beats.
+    """
+    if grammar == "t2_keynote_ui":
+        if not source_image:
+            raise MotionPlanError(
+                "AUTO_MOTION_SOURCE_MISSING: the evidence grammar needs a registered still")
+        return _t2_cues(text, source_image, source_regions, duration=duration)
+    if grammar == "t1_3b1b":
+        return _t1_cues(text, kind)
+    if grammar == "y3_whiteboard":
+        return _y3_cues(text, kind, duration=duration)
+    raise MotionPlanError(f"AUTO_MOTION_GRAMMAR_UNSUPPORTED: {grammar!r}")
 
 
 def build_auto_plan(*, project: Path, account_id: str,
@@ -435,7 +494,11 @@ def build_auto_plan(*, project: Path, account_id: str,
         source_image = None
         source_image_sha256 = None
         code_snapshot = str((source or {}).get("type") or "").upper() == "CODE_SNAPSHOT"
-        if account_id == "x-superplay-1024" or code_snapshot:
+        has_still = bool(source) and Path(str(source.get("repo_path") or "")).suffix.lower() \
+            in IMAGE_SUFFIXES
+        visual_role_hint = str(line.get("visual_role") or "").strip().lower()
+        grammar = _grammar_for(account_id, visual_role_hint, kind, has_still, allowed, index)
+        if grammar == "t2_keynote_ui":
             if not source:
                 raise MotionPlanError(f"AUTO_MOTION_SOURCE_MISSING: {placement} has no registered evidence asset")
             source_path = str(source.get("repo_path") or "")
@@ -460,42 +523,39 @@ def build_auto_plan(*, project: Path, account_id: str,
             source_image = Path(os.path.relpath(absolute, spec_probe.parent)).as_posix()
             source_image_sha256 = _file_sha(absolute)
 
-        # A real screenshot is the main picture whenever one exists. OCR is
-        # used to focus on the spoken detail; without a match, keep the full
-        # source visible and add only a small semantic annotation. Whiteboard
-        # and 3b1b grammars are for explanations that have no source image.
-        if source_image and source and not source.get("ocr_regions"):
-            image_path = Path(source_path)
-            if not image_path.is_absolute():
-                image_path = project.resolve().parents[1] / image_path
-            try:
-                stat = image_path.stat()
-                ocr_regions = _read_local_ocr(str(image_path.resolve()),
-                                              stat.st_mtime_ns, stat.st_size)
-                source = {**source, "ocr_regions": list(ocr_regions)}
-            except OSError:
-                pass
-        used_rects = camera_targeted_regions.setdefault(source_asset_id, set())
-        source_regions = (_matching_ocr_regions(text, source, used_rects)
-                          if source_image and source else [])
+        # Camera targets come from the anchor's own line geometry when the
+        # anchor recorded it: those rectangles are exactly one to three source
+        # lines tall, so ``fill / rect_width`` really does push the camera.
+        # OCR boxes are the fallback for imported screenshots.
+        used_rects = camera_targeted_regions.setdefault(
+            str((source or {}).get("sha256") or source_asset_id), set())
+        layout = (source or {}).get("text_layout") or {}
+        if source_image and layout:
+            source_regions = [{"rect": rect, "text": _short_label(text, 20),
+                               "confidence": 1.0, "matched_terms": []}
+                              for rect in pick_rects(layout, text, exclude=used_rects)]
+        elif source_image and source:
+            if not source.get("ocr_regions"):
+                image_path = Path(source_path)
+                if not image_path.is_absolute():
+                    image_path = project.resolve().parents[1] / image_path
+                try:
+                    stat = image_path.stat()
+                    ocr_regions = _read_local_ocr(str(image_path.resolve()),
+                                                  stat.st_mtime_ns, stat.st_size)
+                    source = {**source, "ocr_regions": list(ocr_regions)}
+                except OSError:
+                    pass
+            source_regions = _matching_ocr_regions(text, source, used_rects)
+        else:
+            source_regions = []
         if code_snapshot:
             source_regions = source_regions[:1]
-        # Source snapshots must stay visible even when OCR cannot map a line
-        # to a precise highlight. Use t2 only for OCR-backed camera targets;
-        # a target rectangle is used once per source image. Otherwise use the
-        # image-capable whiteboard grammar for progressive explanation.
-        grammar = ("t2_keynote_ui" if source_image
-                   and "t2_keynote_ui" in allowed
-                   else "y3_whiteboard" if code_snapshot
-                   and "y3_whiteboard" in allowed
-                   else "t1_3b1b" if account_id == "x-superplay-future-intelligence"
-                   and kind in {"retrieval", "agent", "protocol"}
-                   and "t1_3b1b" in allowed
-                   else "y3_whiteboard")
         if grammar == "t2_keynote_ui":
-            used_rects.update(json.dumps(region["rect"], separators=(",", ":"))
+            used_rects.update(json.dumps(list(region["rect"]), separators=(",", ":"))
                               for region in source_regions)
-        cues = _cues(text, kind, source_image, grammar, source_regions)
+        cues = _cues(text, kind, source_image, grammar, source_regions,
+                     duration=render_duration)
         # Cue timestamps must remain inside this exact measured narration clip.
         latest_cue = max(float(cue["at"]) for cue in cues)
         scale = min(1.0, max(0.0, render_duration - 0.1) / latest_cue) if latest_cue else 1.0
@@ -515,6 +575,8 @@ def build_auto_plan(*, project: Path, account_id: str,
                              or "editorial-diagram")
         spec = {"grammar": grammar, "duration": render_duration, "fps": 30,
                 "width": 1080, "height": 1920, "theme": shot_palette,
+                "safe": {"top": 0, "bottom": SUBTITLE_SAFE_BOTTOM,
+                         "fill": str(shot_palette.get("bg") or "")},
                 "cues": cues,
                 "contentops_scene": {"segment_id": str(line.get("segment_id") or placement),
                                      "visual_role": visual_role,
