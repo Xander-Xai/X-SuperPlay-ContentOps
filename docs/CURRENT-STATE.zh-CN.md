@@ -10,7 +10,7 @@ translation_status: synced
 
 > 当前运行状态。仅经验证的事实。无展望，无过时声明。
 >
-> 最后验证：2026-11-04，```main``` 的 `218c91d`（PR #130）。
+> 最后验证：2026-11-11，`main` 的 `bcd5dd1`（PR #154；治理第 4 轮）。
 > 以下事实描述 ```main```；已推迟或权利受阻的工作会明确标注。
 > “分层状态”表之后的小节是历史里程碑记录，说明某项能力当时如何被证明，
 > 不代表当前状态。
@@ -33,6 +33,27 @@ translation_status: synced
 | 发布计数 | **0** —— 没有任何交付包持有真实平台 URL |
 
 ## Git
+
+> **Git 状态在下方按 2026-11-11（治理第 4 轮）重新核验。** 其后的所有小节都是为可追溯性保留的历史快照，均不代表当前状态。
+
+### Git — 2026-11-11 复核（治理第 4 轮）
+
+| 属性 | 核验值 |
+|---|---|
+| 默认分支 | `main` @ `bcd5dd1`（PR #154，2026-11-10 15:32Z squash 合并），受保护 |
+| 开放 PR | **0** —— 显式 `state=open` 查询返回 `[]`；最近更新的 100 条 PR 全部关闭 |
+| 开放 issue | **4**：#7（EPIC）、#51 / #56（保持开放的权利 DEFERRED 闸门）、#140（M5 拆分路线图；slice 1 由 #153 落地）。#147 已于 2026-11-10 14:52Z 关闭 |
+| 远端分支 | **2**：`main` + `archive/minimax-wt-snapshot-20261110`（@`7aef6ae`，2,300 行未提交 Huashu 工作的刻意归档；登记为 `archived`） |
+| 远端 tag | **2**：`archive/converge-a2910c6`、`archive/pr1-pr2-1c127df`；本地与远端 SHA 一致 |
+| 分支保护 | 3 个必需检查、`strict=true`、`enforce_admins=true`、线性历史、禁 force push、禁删除、必须走 PR、审批数 0；仅 squash 合并，合并后自动删分支 |
+| 本地 worktree | **1**：仅主工作区；上一快照中的 `pr2-gzh-articles` 已在 2026-11-10 漂移清理中移除 |
+| Stash | **0** —— 上一快照提到的切片前快照已不存在 |
+| `main` 上 CI | `CI @ bcd5dd1 = success`；`Easel Upstream Watch @ bcd5dd1 = success` |
+| 本地策略门控 | `test-huashu-local-l141dino` 实验目录移入 `projects/_local/` 后 `check_untracked_projects.py` exit=0；`check_branch_registry.py --today 2026-11-11` PASS |
+
+第 4 轮未改变任何运行时行为：修正账本、登记归档分支与本治理分支、清理陈旧本地远程跟踪引用，并新增离线账本一致性检查。该检查**只校验内部一致性**（两份语言镜像与分支注册表之间的 SHA/日期），不查询 GitHub，绝不能当作远端实时状态的验证。#51 / #56 保持 OPEN / DEFERRED；归档分支保留。
+
+### Git — 2026-11-04 历史快照
 
 | 属性 | 值 |
 |---|---|

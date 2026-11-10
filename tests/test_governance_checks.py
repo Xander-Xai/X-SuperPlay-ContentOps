@@ -45,6 +45,21 @@ class TestBranchRegistry(unittest.TestCase):
     def test_expired_entry_fails(self):
         self.assertTrue(any("EXPIRED" in e for e in registry_check.validate(self.good, date(2027, 1, 1))))
 
+    def test_archived_entry_needs_no_pr(self):
+        self.good["branches"].append({
+            "name": "archive/example", "pr": None, "created": "2026-11-10",
+            "purpose": "worktree salvage", "status": "archived", "expires": "2026-12-31",
+        })
+        self.assertEqual(registry_check.validate(self.good, date(2026, 11, 11)), [])
+
+    def test_archived_entry_still_needs_expiry(self):
+        self.good["branches"].append({
+            "name": "archive/example", "pr": None, "created": "2026-11-10",
+            "purpose": "worktree salvage", "status": "archived", "expires": None,
+        })
+        self.assertTrue(any("missing expires" in e for e in
+                            registry_check.validate(self.good, date(2026, 11, 11))))
+
     def test_wrong_persistent_policy_fails(self):
         self.good["policy"]["persistent"] = ["develop"]
         self.assertTrue(any("persistent" in e for e in registry_check.validate(self.good, date(2026, 11, 10))))
