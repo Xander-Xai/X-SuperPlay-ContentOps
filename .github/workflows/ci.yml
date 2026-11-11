@@ -334,14 +334,11 @@ jobs:
       - name: Run checkout guard tests
         run: python tests/test_checkout_guard.py
 
-      # Eight VIDEO gates / six GRAPHIC_TEXT gates must pass before a producer
-      # runs, including the signed pre-copy research gate. Also guards QC
-      # receipts against a degraded overwrite.
+      # Seven VIDEO gates / five GRAPHIC_TEXT gates must pass before a producer
+      # runs (production_gates.GATES), and a direct producer call is diagnostic.
+      # Also guards QC receipts against a degraded overwrite.
       - name: Run production gates tests
         run: python tests/test_production_gates.py
-
-      - name: Run pre-copy research gate tests
-        run: python tests/test_precopy_research.py
 
       # The short motion-sample technical gate: 4-8 s, silent, 1080x1920,
       # H.264/yuv420p, CFR 30, digest-bound. It stops at PENDING_FOUNDER_REVIEW
