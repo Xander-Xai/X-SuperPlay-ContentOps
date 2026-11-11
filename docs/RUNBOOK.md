@@ -3,7 +3,7 @@
 [English](RUNBOOK.md) | [简体中文](RUNBOOK.zh-CN.md)
 
 > Real executable commands. Derived from actual script behavior, not assumptions.
-> Last updated: 2026-10-31
+> Last updated: 2026-11-12
 
 ## 0. Environment check
 
@@ -77,6 +77,64 @@ projects/my-video/
     storyboard.json  ← per-shot structure with provenance
 ```
 
+## 4.1 Stable production entry (required for real production)
+
+`produce_video.py` and `m5_production.py` are low-level/diagnostic paths. They
+do not require an account, an approved copy, an asset shortfall decision or a
+bookend decision. A run that skips those steps still renders, but silently
+degrades to Windows SAPI, no digital human and
+`receipts/motion-stage.json: NOT_CONFIGURED`.
+
+Use the single stable entry. It asks seven gates, records the answers, and writes
+the load-bearing `account_slug` block that makes account DNA drive the cloned
+voice, the avatar defaults and the Huashu motion backend:
+
+```powershell
+# 1. Answer the gates. --interactive asks: account, what to do when assets are
+#    insufficient (including MiniMax consent), H3 intro/outro, narration voice,
+#    motion backend, and the named reviewer.
+python scripts\make_content.py answer --project projects\my-video --interactive
+
+# 2. Sign copy review separately; the wrapper never signs on a human's behalf.
+python scripts\copy_review.py projects\my-video --approve `
+  --reviewer "Your Name" --opinion "Reviewed the narration" --confirm
+
+# 3. Verify all six gates (exit 4 when any is open).
+python scripts\make_content.py check --project projects\my-video
+
+# 4. Produce only after check is green; run refuses to call the producer otherwise.
+python scripts\make_content.py run --project projects\my-video --mode STRICT
+```
+
+Gates: `account`, `copy_review`, `evidence_links`, `asset_sufficiency`,
+`avatar_bookends`, `style_audio`, `runtime_readiness`. Receipts:
+`receipts/production-intent.json`, `receipts/inputs-bootstrap.json` and
+`receipts/make-content.json`.
+
+- `answer` also materialises `00_brief/evidence-pack.json` and
+  `sources/source-refs.json` from `project.yaml`'s `source_refs` (or, for a
+  GRAPHIC_TEXT project, from the draft's citation links). Without the latter
+  `stage_motion` blocked and the film fell back to static cards.
+- `stage_script` now writes one markdown citation (a title plus a followable
+  url) per claim into
+  `script/master.md`, and `evidence_links` counts them.
+- `runtime_readiness` fails when a chosen capability cannot execute on this
+  host: `MINIMAX_SUBSCRIPTION_KEY` / `MINIMAX_API_KEY` for the cloned voice,
+  `SILICONFLOW_API_KEY` for the account-bound ASR backcheck, the Huashu runtime
+  and `sources/source-refs.json` for motion, and
+  `CONTENTOPS_MEDIA_USE_RUNTIME_LOCK` for a local BGM track.
+- `--asset-policy minimax-authorized` is refused at `answer` time while ADR-014
+  holds or no subscription key exists, instead of recording an option that can
+  never pass.
+- GRAPHIC_TEXT gets its own five gates (`account`, `copy_review`,
+  `evidence_links`, `asset_rights`, `runtime_readiness`); its copy review binds
+  to `draft.md` and `graphic-input.json`.
+- `produce_video.py` refuses to run without `receipts/production-intent.json`
+  (`PRODUCTION_INTENT_MISSING`, exit 4). `--diagnostic` is the explicit escape
+  hatch for an ungated render. `agent_drive.py plan` lists `preflight-gates`.
+- `qc_video.py --video` requires an `.mp4` filename (or `easel` / `fallback`)
+  and refuses to overwrite a CURRENT PASS receipt with a degraded FAIL.
+
 ## 5. Run V1 pipeline
 
 ### Production engine (Easel)
@@ -131,6 +189,12 @@ and a fast edit loop use.
 Narration is the offline Windows SAPI voice; no network TTS is called. The run
 always ends at `PENDING_FOUNDER_REVIEW` with `production_ready: false` — a green
 QC is not publishing permission (ADR-005).
+
+The `asr_backcheck` stage transcribes the narration and compares it with the
+spoken script. With no `SILICONFLOW_API_KEY` it reports `SKIPPED` — that is not a
+pass. A coverage failure blocks human review; a pass never approves anything. See
+[ASR-BACKCHECK.md](ASR-BACKCHECK.md) for the model id, endpoint override and the
+comparison rules.
 
 To explicitly import a local folder of images or videos for a preview, pass
 `--assets`:
@@ -316,6 +380,63 @@ receipt is bound to the current copy fingerprint; editing the script, captions,
 claims, storyboard or declared assets makes an earlier approval stale. This
 command records a decision only: it does not edit copy, run M5 or publish.
 
+## 5.6 Render cards and the GZH article
+
+Both renderers call a pinned Easel skill and write a receipt. Neither is an
+approval.
+
+```powershell
+python scripts\render_cards.py   projects\my-note
+python scripts\render_article.py projects\my-article
+```
+
+- `render_cards.py` renders HTML → PNG and runs the card density audit. Exit 4
+  means blocked or the audit failed. It needs a Playwright build whose Chromium
+  is actually installed; set `CONTENTOPS_CARD_PYTHON` and
+  `PLAYWRIGHT_BROWSERS_PATH`.
+- `render_article.py` validates the article HTML and wraps a browser preview.
+  Exit 4 means blocked or validation failed. It uses `CONTENTOPS_PYTHON` or the
+  current interpreter and never scans for one.
+- Receipts: `receipts/card-render.json` and `receipts/gzh-article.json`. Both
+  keep `production_ready: false` and `publish_authorized: false`.
+- Neither command starts a host, calls an agent or touches the network.
+
+## 5.7 Delivery packs (video and graphic)
+
+Packaging is offline. Nothing here publishes: an uploader exit 0 is recorded as
+`UPLOADER_EXIT_0`, and only a URL a person actually saw is recorded as a URL.
+
+```powershell
+python scripts\video_deliver.py plan   --project projects\my-video
+python scripts\video_deliver.py pack   --project projects\my-video --thumbnails
+python scripts\video_deliver.py status --project projects\my-video
+python scripts\video_deliver.py record --project projects\my-video --platform douyin --url <real-url>
+python scripts\platform_delivery.py list
+python scripts\platform_delivery.py pack  --package projects\bundle-dual-line-graphic\receipts\graphic-package.json
+python scripts\graphic_deliver.py --all
+```
+
+- `dispatch` runs an external uploader and requires `--execute` **and** an
+  operator grant (`--grant`); without both it prints the argv it would run.
+- `graphic_deliver.py` keeps one bridge process alive for the whole batch and
+  counts a platform as delivered only when the CLI printed `✓` **and** a URL came
+  back. Every call creates a draft.
+- The uploaders and the `wechatsync` bridge live in the gitignored `.runtime/`
+  tree and are invoked across a process boundary; they are never imported.
+
+## 5.8 GZH workflow status
+
+```powershell
+python scripts\gzh_workflow_run.py --workflow <gzh-workspace> --article <article-dir>
+python scripts\gzh_runtime.py status
+```
+
+`gzh_workflow_run.py` runs the read-only chain (runtime deps → identity → matrix
+validation → clean-room hygiene → SDK adapter self-test → the 10 gate checks)
+and writes a status receipt. It never advances a gate and reports a blocked gate
+with its real error count. `gzh_runtime.py` stays `VERIFY_ONLY`:
+`execution_authorized` and `publish_authorized` are always false.
+
 ## 6. Run QC
 
 ```powershell
@@ -338,9 +459,16 @@ python scripts\qc_video.py projects\my-video --video fallback
 
 ## 7. Manual publish
 
-V1 does **not** auto-publish. Open `final/easel.mp4`, review, and upload
-through each platform's creator UI manually. Record in
-`receipts/publish-receipt.md`.
+V1 does **not** auto-publish, and neither does the delivery layer. Open the
+render in `final/` — the V1 engine writes `final/easel.mp4` (plus
+`final/fallback.mp4` when the diagnostic engine ran), and the gated production
+path (`make_content.py` → `produce_video.py` / `m5_production.py`) writes
+`final/<slug>.mp4`. Review it, then either upload through each platform's
+creator UI yourself and run
+`video_deliver.py record --platform <id> --url <real-url>`, or run
+`video_deliver.py dispatch` with an operator grant and record the URL afterwards.
+`video_deliver.py pack` accepts the first non-`before` `*.mp4` in `final/`, so it
+does not depend on the file name. A tool exit is not a publication; the URL is.
 
 ## 8. Failure handling
 

@@ -23,6 +23,7 @@
 - [EASEL-CAPABILITY-INVENTORY.md](EASEL-CAPABILITY-INVENTORY.md) — Upstream-declared vs integrated vs executable vs production-allowed Easel capabilities
 - [PLATFORM-ADAPTER-CONTRACT.md](PLATFORM-ADAPTER-CONTRACT.md) — Delivery-layer adapter interface; no second registry, no second production engine
 - [CONTENT-LIFECYCLE-STAGES.md](CONTENT-LIFECYCLE-STAGES.md) — Ordered lifecycle stages, owners, current state and receipts
+- [ASR-BACKCHECK.md](ASR-BACKCHECK.md) — The narration ASR gate: a detector that can report a problem, never approve a video
 - [MOTION-WORKFLOW-SPEC.md](MOTION-WORKFLOW-SPEC.md) — Dual-account video workflow contracts: sample gate, motion handoff, real-source duration, router → M5
 - [adr/ADR-008-media-use-adapter.md](adr/ADR-008-media-use-adapter.md) — HyperFrames `media-use` integration: pinned adapter, not a fork
 - [CROSS-REPO-INTEGRATION.md](CROSS-REPO-INTEGRATION.md) — RepoSourceAdapter, repo registry
@@ -34,10 +35,11 @@
 
 ## Milestone plans
 
-- [CONVERGENCE-REQUIREMENTS-2026-11-01.md](CONVERGENCE-REQUIREMENTS-2026-11-01.md) — docs / skills / branch / upstream-pin convergence — **active**
+- [CONVERGENCE-REQUIREMENTS-2026-11-01.md](CONVERGENCE-REQUIREMENTS-2026-11-01.md) — docs / skills / branch / upstream-pin convergence — **accepted 2026-11-01; steps 3–5 landed later**
 - [M4-H3-PLAN.md](M4-H3-PLAN.md) — M4 MiniMax H3 video (Issue #22) — **implemented**
 - [M4.5-MEDIA-CONVERGENCE-PLAN.md](M4.5-MEDIA-CONVERGENCE-PLAN.md) — M4.5 media convergence (Issue #27) — **implemented**
 - [ENHANCED-GOLDEN-PLAN.md](ENHANCED-GOLDEN-PLAN.md) — Enhanced Golden A/B/C/D — **next executable phase after convergence**
+- [m5-baseline/m5-characterization-2026-11-10.md](m5-baseline/m5-characterization-2026-11-10.md) — pass counts a structural M5 refactor must preserve (slice 1 of #140)
 
 ## Governance
 
@@ -46,10 +48,19 @@
 - [GLOSSARY.md](GLOSSARY.md) — High-frequency terminology
 - [SKILL-REGISTRY.md](SKILL-REGISTRY.md) — Skill discovery, declared capabilities, resolution verdicts and the doctor
 - [DEFERRED-WORK.md](DEFERRED-WORK.md) — descoped work, archive locations and reopening conditions
+- [DOC-SYNC.md](DOC-SYNC.md) — Documentation freshness: contract, triggers, procedure and the machine check
+- [governance/ARCHIVE-SALVAGE-LEDGER.md](governance/ARCHIVE-SALVAGE-LEDGER.md) — archive snapshot vs `main`, path+blob
 
 ## Bilingual Policy
 
-Tier-1 docs have zh-CN mirrors with `.zh-CN.md` suffix. Run `python scripts/check_i18n.py` to verify structural consistency.
+Tier-1 docs have zh-CN mirrors with `.zh-CN.md` suffix. **README is the exception
+(2026-11-12):** `README.md` is the Chinese original and `README.en.md` is the
+English mirror, because the repository's primary readers are Chinese-speaking.
+Every other Tier-1 doc stays English-primary.
+
+Run `python scripts/check_i18n.py` to verify structural consistency in either
+direction, and `python scripts/check_doc_freshness.py` to verify that each
+tracked doc was checked against the code it describes (see [DOC-SYNC.md](DOC-SYNC.md)).
 
 ## Decisions
 
@@ -72,6 +83,8 @@ Tier-1 docs have zh-CN mirrors with `.zh-CN.md` suffix. Run `python scripts/chec
 - [adr/ADR-017-coding-agent-driver.md](adr/ADR-017-coding-agent-driver.md) — a coding agent is a supported driver through a fixed step plan, with no new publication or approval authority
 - [adr/ADR-018-governance-closeout-scope.md](adr/ADR-018-governance-closeout-scope.md) — Apache-2.0 license, descoped unfinished tracks, manual X authority, artifact-based upstream watch and the zero-backlog target
 - [adr/ADR-019-receipt-history-exposure.md](adr/ADR-019-receipt-history-exposure.md) — rotate the PAYG key, accept the already-public balances/voice IDs/fingerprints, and keep guarding new receipts
+- [adr/ADR-020-read-only-scene-analysis-adapter.md](adr/ADR-020-read-only-scene-analysis-adapter.md) — read-only scene analysis adapter: pilot boundary, no mutation authority
+- [adr/ADR-021-stable-production-gates.md](adr/ADR-021-stable-production-gates.md) — one stable production entry with fail-closed VIDEO and GRAPHIC_TEXT gate sets
 
 ## Agent Rules
 
@@ -84,6 +97,8 @@ Tier-1 docs have zh-CN mirrors with `.zh-CN.md` suffix. Run `python scripts/chec
 ## Audit
 
 - [AUDIT-REPORT.md](AUDIT-REPORT.md) — Repository audit (2026-10-03)
+- [ARCHITECTURE-AUDIT-2026-11-10.md](ARCHITECTURE-AUDIT-2026-11-10.md) — Start-to-finish subsystem map, cross-checked against the tree (2026-11-10)
+- [governance/ARCHIVE-SALVAGE-LEDGER.md](governance/ARCHIVE-SALVAGE-LEDGER.md) — Three-state path+blob comparison of the archive snapshot against `main` (2026-11-11)
 - [audits/windows-subprocess-audit.md](audits/windows-subprocess-audit.md) — Windows console popup audit, classification of every subprocess callsite, and the unified process layer (Issue #16)
 - [../reports/audits/github-governance-2026-10-31.md](../reports/audits/github-governance-2026-10-31.md) — GitHub governance execution: PR/Issue/Branch/CI/security review and the merge of PR #48 (2026-10-31)
 - [../reports/audits/contentops-phase2-security-and-unblock-2026-10-31.md](../reports/audits/contentops-phase2-security-and-unblock-2026-10-31.md) — Phase-2 security, third-party rights and PR-unblock audit (2026-10-31)

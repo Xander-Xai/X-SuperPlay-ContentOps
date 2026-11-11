@@ -216,6 +216,72 @@ def test_cache_entries_expire():
         assert len(calls) > before, "an expired entry was served from the cache"
 
 
+# ---------------------------------------------------------------------------
+# score traction: observed repository evidence moves the score, never the offer
+# ---------------------------------------------------------------------------
+
+
+def _candidate_with_quality(verdict, *, stars=0, signals=None, score=5.85,
+                            fetched=True):
+    evidence = {"full_name": "owner/project", "stars": stars,
+                "size_kb": 2048, "has_readme": True, "fetched": fetched}
+    quality = None
+    if verdict is not None:
+        quality = {"verdict": verdict, "signals": signals or [],
+                   "evidence": evidence}
+    return {"relevance": {"score": score, "components": {}},
+            "reasons_against": [], "quality": quality}
+
+
+def test_a_weak_signal_repository_is_demoted_with_the_reason_on_the_record():
+    from contentops.hotspots.ranking import apply_quality_signal
+    candidate = _candidate_with_quality(
+        "REVIEW", stars=0,
+        signals=[{"signal": "young_and_unproven"}])
+    adjusted = apply_quality_signal(candidate)
+    # -2.5 for zero stars, -1.5 for the one weak signal.
+    assert adjusted["relevance"]["score"] == 1.85
+    assert adjusted["relevance"]["components"]["quality_signal"]["value"] == -4.0
+    assert any("quality_signal" in reason for reason in adjusted["reasons_against"])
+
+
+def test_an_unverified_repository_is_not_demoted():
+    from contentops.hotspots.ranking import apply_quality_signal
+    # The gate could not observe; an unreachable API must not silently
+    # re-rank every GitHub candidate.
+    candidate = _candidate_with_quality("UNVERIFIED", fetched=False, stars=0)
+    adjusted = apply_quality_signal(candidate)
+    assert adjusted["relevance"]["score"] == 5.85
+    assert "quality_signal" not in adjusted["relevance"]["components"]
+
+
+def test_a_healthy_repository_with_no_signal_against_it_is_not_demoted():
+    from contentops.hotspots.ranking import apply_quality_signal
+    candidate = _candidate_with_quality("ACCEPT", stars=3345)
+    adjusted = apply_quality_signal(candidate)
+    assert adjusted["relevance"]["score"] == 5.85 + 1.5
+
+
+def test_real_traction_is_rewarded():
+    from contentops.hotspots.ranking import apply_quality_signal
+    assert apply_quality_signal(
+        _candidate_with_quality("ACCEPT", stars=49337)
+    )["relevance"]["score"] == 5.85 + 1.5
+    assert apply_quality_signal(
+        _candidate_with_quality("ACCEPT", stars=150)
+    )["relevance"]["score"] == 5.85 + 1.0
+
+
+def test_the_demotion_never_pushes_a_score_below_zero():
+    from contentops.hotspots.ranking import apply_quality_signal
+    candidate = _candidate_with_quality(
+        "REVIEW", stars=0, score=0.5,
+        signals=[{"signal": "no_readme"}, {"signal": "young_and_unproven"},
+                 {"signal": "tiny_repository"}, {"signal": "archived"}])
+    adjusted = apply_quality_signal(candidate)
+    assert adjusted["relevance"]["score"] == 0.0
+
+
 def main() -> int:
     tests = tuple(value for name, value in sorted(globals().items())
                   if name.startswith("test_") and callable(value))

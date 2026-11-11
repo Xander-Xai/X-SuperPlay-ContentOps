@@ -16,7 +16,7 @@ a person's, and it is made in :mod:`contentops.routing.router`.
 from .adapters import FetchError, FetchResult, RawItem
 from .dedup import dedupe, distinct_sources, same_story
 from .query_planner import build_search_plan, plan_is_current
-from .ranking import build_candidate, rank_candidates, relevance_verdict, score_item
+from .ranking import apply_quality_signal, build_candidate, rank_candidates, relevance_verdict, score_item
 from .source_registry import (
     LIST_ONLY,
     NATIVE_SEARCH,
@@ -38,6 +38,7 @@ __all__ = [
     "SOURCES",
     "Source",
     "StorageError",
+    "apply_quality_signal",
     "build_candidate",
     "build_search_plan",
     "dedupe",

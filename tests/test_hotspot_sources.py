@@ -142,7 +142,9 @@ def test_two_accounts_produce_two_different_plans():
     build = build_search_plan(_profile(ACCOUNT_BUILD))
     assert explore["plan_id"] != build["plan_id"]
     assert set(explore["keywords_zh"]) != set(build["keywords_zh"])
-    assert explore["source_allowlist"] != build["source_allowlist"]
+    # Founder directive 2026-11-11: both accounts open every registered
+    # source; the plans still differ because the keywords differ.
+    assert set(explore["source_allowlist"]) == set(build["source_allowlist"])
     assert explore["account_id"] != build["account_id"]
 
 

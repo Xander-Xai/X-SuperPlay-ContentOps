@@ -4,7 +4,7 @@
 
 > Authoritative local verification strategy, suite inventory and CI wiring.
 >
-> Last verified: 2026-11-06 on `fix/6-brief-copy-review`.
+> Last verified: 2026-11-12 on `main` at `c1da6dd` (98 suites, 98 named CI steps).
 
 ## Risk-based local verification
 
@@ -78,15 +78,42 @@ Function counts inside a suite are floors, not totals, because list-driven and u
 | Local-approval gitignore | `tests/test_local_approval_gitignore.py` | 5 | yes |
 | M5 evidence | `tests/test_m5_evidence.py` | 19 | yes |
 | GitHub repository source adapter | `tests/test_repo_source_adapter.py` | 3 | yes |
+| Stable production gates | `tests/test_production_gates.py` | 30 | yes |
+| Content router | `tests/test_content_router.py` | 63 | yes |
+| Hotspot sources | `tests/test_hotspot_sources.py` | 51 | yes |
+| Account DNA | `tests/test_account_dna.py` | 37 | yes |
+| Account discovery | `tests/test_account_discovery.py` | 23 | yes |
+| Script draft | `tests/test_script_draft.py` | 20 | yes |
+| Source quality | `tests/test_source_quality.py` | 21 | yes |
+| Account route | `tests/test_account_route.py` | 12 | yes |
+| Brief → M5 bridge | `tests/test_brief_to_m5.py` | 13 | yes |
+| Real-source duration gate | `tests/test_real_source_duration.py` | 17 | yes |
+| Card renderer | `tests/test_render_cards.py` | 18 | yes |
+| GZH article renderer | `tests/test_render_articles.py` | 35 | yes |
+| GZH runtime adapter | `tests/test_gzh_runtime.py` | 13 | yes |
+| ASR transport (SiliconFlow) | `tests/test_asr_siliconflow.py` | 14 | yes |
+| M5 ASR gate | `tests/test_m5_asr_gate.py` | 6 | yes |
+| WeChat draft | `tests/test_wechat_draft.py` | 15 | yes |
+| WeChat metrics | `tests/test_wechat_metrics.py` | 11 | yes |
+| SAU login | `tests/test_sau_login.py` | 9 | yes |
+| Delivery gate | `tests/test_delivery_gate.py` | 7 | yes |
+| Video platforms | `tests/test_video_platforms.py` | 30 | yes |
+| Platform status sync | `tests/test_platform_status_sync.py` | 9 | yes |
+| Workflow contract | `tests/test_workflow_contract.py` | 8 | yes |
+| Workflow gate | `tests/test_workflow_gate.py` | 11 | yes |
+| Publish backfill | `tests/test_publish_backfill.py` | 13 | yes |
+| Governance checks | `tests/test_governance_checks.py` | 16 | yes |
+| Governance ledger | `tests/test_governance_ledger.py` | list-driven | yes |
+| M5 motion integration | `tests/test_m5_motion_integration.py` | 65 | yes |
 | M5 media-use workflow | `tests/test_m5_media_use_workflow.py` | list-driven | yes |
 | M5 media traceability | `tests/test_m5_media_traceability.py` | list-driven | yes |
-| Platform registry | `tests/test_platform_registry.py` | 18 | yes |
+| Platform registry | `tests/test_platform_registry.py` | 22 | yes |
 | Content Bundle contract | `tests/test_content_bundle_contract.py` | 13 | yes |
 | Easel host guard | `tests/test_easel_host_guard.py` | 13 | yes |
 | Bundle two-format handoff | `tests/test_bundle_two_formats.py` | 14 | yes |
 | Graphic workflow | `tests/test_graphic_workflow.py` | 14 | yes |
 | M5 Bundle handoff | `tests/test_m5_bundle_handoff.py` | 5 | yes |
-| Coding-agent driver | `tests/test_agent_driver.py` | 12 | yes |
+| Coding-agent driver | `tests/test_agent_driver.py` | 29 | yes |
 | Skill doctor | `tests/test_skill_doctor.py` | list-driven | yes |
 | Skill reference integrity | `tests/test_skill_references.py` | 6 | yes |
 | Skill router capabilities | `tests/test_skill_router_capabilities.py` | list-driven | yes |
@@ -106,5 +133,10 @@ The CI workflow also runs policy, docs, i18n, whitespace, subprocess and receipt
 
 ## Planned
 
-- Contract tests for cross-repo `SourceArtifact` adapters (needs the unmerged content-router layer).
-- E2E tests for 3 different sources → 3 final MP4s → QC → human review (M6).
+- Contract tests for additional cross-repo `SourceArtifact` adapters; the router
+  layer and one GitHub adapter are already on `main`.
+- A regression suite for the publication path once a real platform URL exists —
+  there is nothing to assert against before that.
+
+The inventory above is a floor, not a complete enumeration: 98 suites were
+tracked on 2026-11-12, and `git ls-files 'tests/test_*.py'` is the authority.

@@ -144,10 +144,30 @@
         },
         "recommended_variant": "warm-editorial",
         "style_variants": {
-          "warm-editorial": {"bg": "#F4F2ED", "surface": "#FFFFFF", "ink": "#18232B", "sub": "#5C6970", "accent": "#087FA6", "accent2": "#C4DCE3"},
-          "cool-white": {"bg": "#F8FAFB", "surface": "#FFFFFF", "ink": "#16222B", "sub": "#63737A", "accent": "#067F9F", "accent2": "#BCD4DC"}
+          "warm-editorial": {
+            "bg": "#F4F2ED",
+            "surface": "#FFFFFF",
+            "ink": "#18232B",
+            "sub": "#5C6970",
+            "accent": "#087FA6",
+            "accent2": "#C4DCE3"
+          },
+          "cool-white": {
+            "bg": "#F8FAFB",
+            "surface": "#FFFFFF",
+            "ink": "#16222B",
+            "sub": "#63737A",
+            "accent": "#067F9F",
+            "accent2": "#BCD4DC"
+          }
         },
-        "scene_templates": {"proof": "evidence-frame", "demo": "ui-spotlight", "explain": "editorial-diagram", "context": "supportive-still", "transition": "section-marker"},
+        "scene_templates": {
+          "proof": "evidence-frame",
+          "demo": "ui-spotlight",
+          "explain": "editorial-diagram",
+          "context": "supportive-still",
+          "transition": "section-marker"
+        },
         "direction": "result-first; use real terminal, code, and measured output as evidence, then animate focus, comparisons, and process explanations",
         "rules": [
           "animation is visual support and never replaces source evidence",
@@ -389,7 +409,8 @@
   ],
   "platforms": [
     "douyin",
-    "xiaohongshu"
+    "xiaohongshu",
+    "kuaishou"
   ],
   "title": "Easel 实测：能跑，但 Web 工作台六项没过",
   "description": "我把它锁在 v0.2.1，982 个文件逐个核对哈希；doctor 是绿的，但网关健康检查那一行是红的，Web 工作台六项没过。结论：不是开箱即用，但 CLI 和 Skill 线今天能用。",
@@ -460,7 +481,7 @@
         "谁需要",
         "商业机会"
       ],
-      "scope": "新模型、新工具、新 GitHub 项目、新硬件转化为真实能力测试"
+      "scope": "新模型、新工具、新 GitHub 项目、新硬件转化为真实能力测试；模型生态覆盖 Qwen、Claude、GPT、Gemini、DeepSeek、Kimi、豆包与 Agent、MCP、RAG、开源；AI 娱乐化热点（短剧、游戏、影视、综艺、热梗；仅 X 平台选题）"
     },
     {
       "name": "AI 挑战100个职业",
@@ -496,12 +517,11 @@
     "纯新闻搬运",
     "未实测 GitHub 项目列表",
     "AI 暴富叙事",
-    "无目标 AI 娱乐",
     "纯参数和排行榜"
   ],
   "discovery": {
     "schema": "contentops.account-discovery/v1",
-    "profile_version": "2026-10-30.1",
+    "profile_version": "2026-11-11.3",
     "profile_source": "config/accounts/x-superplay-1024.json#discovery",
     "declared_by": "Founder. The initial values transcribe this DNA's own pillars, audience, not_doing and platform list; every keyword cites the field it was taken from, and scripts/check_account_dna.py fails the file if a citation does not resolve.",
     "keywords_positive": [
@@ -727,6 +747,110 @@
           "origin_term": "Workflow",
           "origin_language": "en"
         }
+      },
+      {
+        "term": "Qwen",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 新物种"
+        }
+      },
+      {
+        "term": "Claude",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 新物种"
+        }
+      },
+      {
+        "term": "GPT",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 新物种"
+        }
+      },
+      {
+        "term": "Gemini",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 新物种"
+        }
+      },
+      {
+        "term": "DeepSeek",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 新物种"
+        }
+      },
+      {
+        "term": "Kimi",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 新物种"
+        }
+      },
+      {
+        "term": "豆包",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 新物种"
+        }
+      },
+      {
+        "term": "开源",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 新物种"
+        }
+      },
+      {
+        "term": "短剧",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 新物种"
+        }
+      },
+      {
+        "term": "游戏",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 新物种"
+        }
+      },
+      {
+        "term": "影视",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 新物种"
+        }
+      },
+      {
+        "term": "综艺",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 新物种"
+        }
+      },
+      {
+        "term": "热梗",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 新物种"
+        }
       }
     ],
     "keywords_negative": [
@@ -755,86 +879,77 @@
         }
       },
       {
-        "term": "无目标 AI 娱乐",
+        "term": "纯参数和排行榜",
         "language": "zh",
         "origin": {
           "kind": "not_doing",
           "index": 3
         }
-      },
-      {
-        "term": "纯参数和排行榜",
-        "language": "zh",
-        "origin": {
-          "kind": "not_doing",
-          "index": 4
-        }
       }
     ],
     "source_allowlist": [
       {
-        "source_id": "github-search",
-        "why": "新 GitHub 项目：the account tests what a repository actually does, and GitHub's search accepts the account's terms as a server-side query."
-      },
-      {
-        "source_id": "github-trending",
-        "why": "新 GitHub 项目：the trending list is where new tools surface before they are written about."
-      },
-      {
-        "source_id": "juejin-hot",
-        "why": "开发者、产品经理、互联网从业者：a developer list, where a new tool is first tried in anger."
-      },
-      {
-        "source_id": "v2ex-hot",
-        "why": "开发者、产品经理、互联网从业者：where practitioners ask the questions an 实测 episode answers."
-      },
-      {
         "source_id": "36kr-hot",
-        "why": "AI 生意实验室：a business list, where the cost and the market of an AI product are argued."
+        "why": "Founder directive 2026-11-11: widen discovery, open all 15 registered sources. Former blocklist entries reinstated deliberately; candidate filtering still applies."
       },
-      {
-        "source_id": "producthunt",
-        "why": "新工具：a launch list, which is the earliest sighting of a new product."
-      },
-      {
-        "source_id": "hacker-news",
-        "why": "AI 新物种：the English-language list, where a new model or tool is discussed before it reaches Chinese media."
-      },
-      {
-        "source_id": "zhihu-hot",
-        "why": "真实职业任务：a question list, which is where a real职业 task is described."
-      },
-      {
-        "source_id": "weibo-hot",
-        "why": "AI 新玩法：a general interest list, read for the 新玩法 an ordinary user has found."
-      },
-      {
-        "source_id": "ithome",
-        "why": "新模型、新硬件：a hardware and release list."
-      },
-      {
-        "source_id": "trendradar-sqlite",
-        "why": "the account's own TrendRadar deployment, read read-only when it is present."
-      }
-    ],
-    "source_blocklist": [
       {
         "source_id": "baidu-hot",
-        "why": "纯新闻搬运：a general-interest list, which is the account's first not_doing."
-      },
-      {
-        "source_id": "solidot",
-        "why": "纯新闻搬运：a newswire, which is the account's first not_doing."
-      },
-      {
-        "source_id": "douyin-hot",
-        "why": "无目标 AI 娱乐：an entertainment list, which the account's third not_doing excludes."
+        "why": "Founder directive 2026-11-11: widen discovery, open all 15 registered sources. Former blocklist entries reinstated deliberately; candidate filtering still applies."
       },
       {
         "source_id": "bilibili-hot",
-        "why": "无目标 AI 娱乐：an entertainment list, which the account's third not_doing excludes."
+        "why": "Founder directive 2026-11-11: widen discovery, open all 15 registered sources. Former blocklist entries reinstated deliberately; candidate filtering still applies."
+      },
+      {
+        "source_id": "douyin-hot",
+        "why": "Founder directive 2026-11-11: widen discovery, open all 15 registered sources. Former blocklist entries reinstated deliberately; candidate filtering still applies."
+      },
+      {
+        "source_id": "github-search",
+        "why": "Founder directive 2026-11-11: widen discovery, open all 15 registered sources. Former blocklist entries reinstated deliberately; candidate filtering still applies."
+      },
+      {
+        "source_id": "github-trending",
+        "why": "Founder directive 2026-11-11: widen discovery, open all 15 registered sources. Former blocklist entries reinstated deliberately; candidate filtering still applies."
+      },
+      {
+        "source_id": "hacker-news",
+        "why": "Founder directive 2026-11-11: widen discovery, open all 15 registered sources. Former blocklist entries reinstated deliberately; candidate filtering still applies."
+      },
+      {
+        "source_id": "ithome",
+        "why": "Founder directive 2026-11-11: widen discovery, open all 15 registered sources. Former blocklist entries reinstated deliberately; candidate filtering still applies."
+      },
+      {
+        "source_id": "juejin-hot",
+        "why": "Founder directive 2026-11-11: widen discovery, open all 15 registered sources. Former blocklist entries reinstated deliberately; candidate filtering still applies."
+      },
+      {
+        "source_id": "producthunt",
+        "why": "Founder directive 2026-11-11: widen discovery, open all 15 registered sources. Former blocklist entries reinstated deliberately; candidate filtering still applies."
+      },
+      {
+        "source_id": "solidot",
+        "why": "Founder directive 2026-11-11: widen discovery, open all 15 registered sources. Former blocklist entries reinstated deliberately; candidate filtering still applies."
+      },
+      {
+        "source_id": "trendradar-sqlite",
+        "why": "Founder directive 2026-11-11: widen discovery, open all 15 registered sources. Former blocklist entries reinstated deliberately; candidate filtering still applies."
+      },
+      {
+        "source_id": "v2ex-hot",
+        "why": "Founder directive 2026-11-11: widen discovery, open all 15 registered sources. Former blocklist entries reinstated deliberately; candidate filtering still applies."
+      },
+      {
+        "source_id": "weibo-hot",
+        "why": "Founder directive 2026-11-11: widen discovery, open all 15 registered sources. Former blocklist entries reinstated deliberately; candidate filtering still applies."
+      },
+      {
+        "source_id": "zhihu-hot",
+        "why": "Founder directive 2026-11-11: widen discovery, open all 15 registered sources. Former blocklist entries reinstated deliberately; candidate filtering still applies."
       }
     ],
+    "source_blocklist": [],
     "preferred_sources": [
       {
         "source_id": "github-search",
@@ -900,6 +1015,16 @@
         "资料请求"
       ],
       "cta": "求配置 / 代码 / 问题",
+      "status": "ACTIVE"
+    },
+    "kuaishou": {
+      "role": "Broad Reach",
+      "signals": [
+        "完播",
+        "点赞",
+        "分享",
+        "评论"
+      ],
       "status": "ACTIVE"
     },
     "bilibili": {

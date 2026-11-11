@@ -2,6 +2,10 @@
 
 [English](PRD.md) | [简体中文](PRD.zh-CN.md)
 
+> Last verified: 2026-11-12 on `main` at `c1da6dd`. Requirement states are checked
+> against the code on that date; a requirement marked implemented has code here,
+> which is not the same as a published work.
+
 ## 1. Background
 
 X-SuperPlay operates self-media accounts (douyin/xhs/bilibili) producing evidence-first technical video content from real business work. Previous 5 separate platform repos failed to produce stable output. ContentOps consolidates production into one runtime.
@@ -119,7 +123,7 @@ Verified 2026-11-02 on `feat/106-easel-host-dual-line` (stacked on PR #101):
 
 | ID | Requirement | Status on this branch |
 |---|---|---|
-| FR-1 | Ingest SourceArtifact from any Xander-Xai business repo | **partial** — M5 ingests repo docs/locks; cross-repo adapter unmerged |
+| FR-1 | Ingest SourceArtifact from any Xander-Xai business repo | **partial** — M5 ingests repo docs/locks; one GitHub repo adapter is on `main` and the router layer is merged, other repos are not covered |
 | FR-2 | Generate master script from evidence (LLM drafts, evidence verifies) | **implemented** for the M5 fixture path; authoring remains editorial |
 | FR-3 | Produce structured storyboard with per-shot provenance | **implemented** |
 | FR-4 | Generate voice via MiniMax subscription (fallback: edge-tts) | **implemented**, `PENDING_FOUNDER_REVIEW` |
@@ -129,6 +133,9 @@ Verified 2026-11-02 on `feat/106-easel-host-dual-line` (stacked on PR #101):
 | FR-8 | Run automated QC (technical + content + factual) | **implemented** technical/evidence; content/fact remain human |
 | FR-9 | Gate on human review (100-point scorecard) | **implemented as a gate; never satisfied yet** |
 | FR-10 | Emit complete receipts for every run | **implemented** |
+| FR-11 | Render graphic cards and GZH article HTML through a pinned validator | **implemented (offline)** — `render_cards.py`, `render_article.py`; receipts keep `production_ready: false` |
+| FR-12 | Pack per-platform delivery sets without publishing | **implemented** — `video_deliver.py`, `platform_delivery.py`, `graphic_deliver.py`; 0 delivery receipts, 0 recorded URLs |
+| FR-13 | One gated production entry in front of every producer | **implemented** — `make_content.py` + `production_gates.py` (7 VIDEO / 5 GRAPHIC_TEXT gates) |
 
 ## 9. Non-functional Requirements
 

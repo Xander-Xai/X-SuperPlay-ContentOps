@@ -373,6 +373,61 @@ def build_candidate(item: RawItem, profile: Any, *, collected_at: str,
     }
 
 
+def apply_quality_signal(candidate: Dict[str, Any]) -> Dict[str, Any]:
+    """Demote a candidate whose repository evidence is weak, and say why.
+
+    The source-quality gate deliberately never rejects on one weak signal,
+    and stars alone are never a verdict — but the score must still tell the
+    truth. A young, unstarred or fixture-flavored repository is not worth
+    the same pool position as one with no signal against it, so the observed
+    evidence moves the score instead of the verdict. A gate that could not
+    observe (``UNVERIFIED``, or evidence never fetched) adjusts nothing: an
+    unreachable API must not silently re-rank every GitHub candidate.
+
+    The adjustment is written as a component and a reason-against, so a
+    reviewer can disagree with the demotion on the evidence rather than on
+    trust.
+    """
+    quality = candidate.get("quality") or {}
+    verdict = quality.get("verdict")
+    evidence = quality.get("evidence") or {}
+    signals = quality.get("signals") or []
+    if verdict in ("REJECT", "UNVERIFIED") or not evidence.get("fetched"):
+        return candidate
+
+    delta = 0.0
+    whys: List[str] = []
+    signal_penalty = min(4.5, 1.5 * len(signals))
+    if signal_penalty:
+        delta -= signal_penalty
+        whys.append(f"the repository gate recorded {len(signals)} weak "
+                    f"signal(s) ({', '.join(str(s.get('signal')) for s in signals[:3])})")
+    stars = int(evidence.get("stars") or 0)
+    if stars < 5:
+        delta -= 2.5
+        whys.append(f"observed {stars} star(s)")
+    elif stars < 25:
+        delta -= 1.5
+        whys.append(f"observed only {stars} star(s)")
+    elif stars >= 1000:
+        delta += 1.5
+        whys.append(f"observed {stars} star(s) of real traction")
+    elif stars >= 100:
+        delta += 1.0
+        whys.append(f"observed {stars} star(s) of real traction")
+
+    if not delta:
+        return candidate
+    delta = max(delta, -6.0)
+    relevance = candidate.setdefault("relevance", {})
+    relevance["score"] = round(min(10.0, max(0.0, float(relevance.get("score") or 0.0) + delta)), 2)
+    why = "; ".join(whys) + f" (repository verdict {verdict})"
+    relevance.setdefault("components", {})["quality_signal"] = {
+        "value": round(delta, 2), "why": why}
+    candidate.setdefault("reasons_against", []).append(f"quality_signal: {why}")
+    return candidate
+
+
 def rank_candidates(candidates: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Sort by score, then by the account's own ordering rules.
 

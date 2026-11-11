@@ -1,8 +1,13 @@
 # ADR-020: Optional external media analysis as a read-only adapter
 
 - Date: 2026-11-09
-- Status: PROPOSED — pending integration review / real-video smoke
-- Scope: experiment on branch refactor/architecture-adapters-20261109
+- Status: ACCEPTED for the read-only pilot. The adapter merged through #133 and
+  lives at `src/contentops/media/scene_analysis.py`, covered by
+  `tests/test_scene_analysis.py`. An integration review on real footage and a
+  real-video smoke are still pending, so nothing here is a production claim and
+  the adapter stays off by default.
+- Scope: read-only pilot on `main`. The experiment branch
+  `refactor/architecture-adapters-20261109` no longer exists.
 
 ## Context
 

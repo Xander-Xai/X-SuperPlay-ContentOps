@@ -1,6 +1,6 @@
 {
   "schema": "contentops.branch-registry/v1",
-  "verified_at": "2026-11-11T02:10:00+08:00",
+  "verified_at": "2026-11-12T04:20:00+08:00",
   "policy": {
     "persistent": [
       "main"
@@ -26,94 +26,6 @@
       "expires": null
     },
     {
-      "name": "chore/governance-rules-20261110",
-      "pr": 151,
-      "created": "2026-11-10",
-      "purpose": "session hygiene rules + reports gitignore class + ledger sync (governance round 3)",
-      "status": "merged",
-      "expires": "2026-12-10"
-    },
-    {
-      "name": "feat/gzh-articles-renderer",
-      "pr": 152,
-      "created": "2026-11-10",
-      "purpose": "GZH article renderer salvage + data-URI fix + hermetic suite (PR-K)",
-      "status": "merged",
-      "expires": "2026-12-10"
-    },
-    {
-      "name": "feat/asr-siliconflow-backcheck",
-      "pr": 150,
-      "created": "2026-11-10",
-      "purpose": "SiliconFlow ASR backcheck gate on real narration evidence (island salvage J)",
-      "status": "merged",
-      "expires": "2026-12-10"
-    },
-    {
-      "name": "feat/platform-route-display",
-      "pr": 141,
-      "created": "2026-11-10",
-      "purpose": "platform workflow routes + route display CLI (drift slice A)",
-      "status": "merged",
-      "expires": "2026-12-10"
-    },
-    {
-      "name": "refactor/motion-planner-stages",
-      "pr": 142,
-      "created": "2026-11-10",
-      "purpose": "source-anchor motion regions + excerpt naming (drift slice B)",
-      "status": "merged",
-      "expires": "2026-12-10"
-    },
-    {
-      "name": "fix/demote-run-v1-easel",
-      "pr": 143,
-      "created": "2026-11-10",
-      "purpose": "run_v1 easel-engine BLOCKED gate (drift slice C)",
-      "status": "merged",
-      "expires": "2026-12-10"
-    },
-    {
-      "name": "feat/wcs-browser-bridge",
-      "pr": 144,
-      "created": "2026-11-10",
-      "purpose": "wechatsync browser bridge for graphic delivery (drift slice D)",
-      "status": "merged",
-      "expires": "2026-12-10"
-    },
-    {
-      "name": "feat/gzh-sdk-adapter",
-      "pr": 145,
-      "created": "2026-11-10",
-      "purpose": "GZH SDK adapter + delivery authz gate (drift slice E)",
-      "status": "merged",
-      "expires": "2026-12-10"
-    },
-    {
-      "name": "chore/drift-artifacts-20261110",
-      "pr": 146,
-      "created": "2026-11-10",
-      "purpose": "receipts + x-growth posts + architecture audit artifacts (drift slice F)",
-      "status": "merged",
-      "expires": "2026-12-10"
-    },
-    {
-      "name": "refactor/m5-characterize",
-      "pr": 153,
-      "created": "2026-11-10",
-      "purpose": "M5 characterization baseline generator + golden receipts (slice 1 of #140)",
-      "status": "merged",
-      "expires": "2026-12-10"
-    },
-    {
-      "name": "test/article-tests-upstream-merge",
-      "pr": 154,
-      "created": "2026-11-10",
-      "purpose": "fold the stranded author's article-test coverage into the landed suite",
-      "status": "merged",
-      "expires": "2026-12-10"
-    },
-    {
       "name": "archive/minimax-wt-snapshot-20261110",
       "pr": null,
       "created": "2026-11-10",
@@ -122,20 +34,28 @@
       "expires": "2026-12-11"
     },
     {
-      "name": "chore/governance-ledger-20261111",
-      "pr": 155,
+      "name": "feat/open-all-hotspot-sources",
+      "pr": 157,
       "created": "2026-11-11",
-      "purpose": "governance round 4: bilingual ledger sync, registry status correction, offline ledger consistency check (Refs #7 #147)",
+      "purpose": "open all 15 hotspot sources, score traction, open entertainment for X only",
       "status": "merged",
       "expires": "2026-12-11"
     },
     {
-      "name": "chore/governance-retention-20261111",
-      "pr": 156,
+      "name": "feat/overseas-channel-candidates-20261111",
+      "pr": 158,
       "created": "2026-11-11",
-      "purpose": "governance round 5: fix the registry expiry CI time-bomb, add local ledger head check, archive salvage ledger (Refs #7 #147)",
-      "status": "merged",
+      "purpose": "non-runtime overseas channel candidate catalog (Threads/Instagram/Facebook/WhatsApp/LINE)",
+      "status": "active",
       "expires": "2026-12-11"
+    },
+    {
+      "name": "docs/doc-truth-20261112",
+      "pr": 160,
+      "created": "2026-11-12",
+      "purpose": "documentation truth: Tier-1 fact sync, Chinese-primary README, documentation freshness gate",
+      "status": "active",
+      "expires": "2026-12-12"
     }
   ]
 }

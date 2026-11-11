@@ -55,8 +55,12 @@ python scripts/dev_check.py
 ```
 
 All checks must pass. No exceptions. The gate covers repo policy, subprocess
-policy, skill-reference integrity, documentation, bilingual consistency, the
-script-level smoke suite and whitespace.
+policy, skill-reference integrity, documentation, bilingual consistency,
+documentation freshness, the script-level smoke suite and whitespace.
+
+Documentation freshness is the one check you are expected to trip: if your change
+touches code mapped to a tracked doc, `check_doc_freshness.py` fails until that
+doc's facts (and its verification date) are updated. See `docs/DOC-SYNC.md`.
 
 Two rules that the gate now enforces for you:
 

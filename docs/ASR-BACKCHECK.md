@@ -1,5 +1,8 @@
 # ASR Backcheck
 
+> Last verified: 2026-11-10 with the feature on `main` (`9bb66ce`, PR #150);
+> the gate has not been exercised with a real `SILICONFLOW_API_KEY` since.
+
 > A detector, never a judge. It can report a problem; it can never approve a video.
 
 ## What it does

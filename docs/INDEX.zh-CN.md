@@ -31,6 +31,7 @@ translation_status: synced
 - [EASEL-CAPABILITY-INVENTORY.md](EASEL-CAPABILITY-INVENTORY.md) —— Easel 能力盘点：上游已声明 / 已接入 / 已执行 / 允许生产
 - [PLATFORM-ADAPTER-CONTRACT.md](PLATFORM-ADAPTER-CONTRACT.md) —— 交付层适配器接口；不建第二套注册表，不建第二套生产引擎
 - [CONTENT-LIFECYCLE-STAGES.md](CONTENT-LIFECYCLE-STAGES.md) —— 有序生命周期阶段、归属、当前状态与回执
+- [ASR-BACKCHECK.md](ASR-BACKCHECK.md) —— 旁白 ASR 门禁：可以报告问题，但永远不能批准视频
 - [MOTION-WORKFLOW-SPEC.md](MOTION-WORKFLOW-SPEC.md) —— 双账号视频工作流契约：样片门、动效交接、真实素材时长、路由 → M5
 - [adr/ADR-008-media-use-adapter.md](adr/ADR-008-media-use-adapter.md) — HyperFrames `media-use` 集成：固定版本适配器，不复制上游
 - [CROSS-REPO-INTEGRATION.md](CROSS-REPO-INTEGRATION.md)
@@ -42,9 +43,10 @@ translation_status: synced
 
 ## 里程碑计划
 
-- [CONVERGENCE-REQUIREMENTS-2026-11-01.md](CONVERGENCE-REQUIREMENTS-2026-11-01.md) — 文档 / Skill / 分支 / 上游固定版本收敛 —— **进行中**
+- [CONVERGENCE-REQUIREMENTS-2026-11-01.md](CONVERGENCE-REQUIREMENTS-2026-11-01.md) — 文档 / Skill / 分支 / 上游固定版本收敛 —— **2026-11-01 获批；步骤 3–5 后已落地**
 - [M4-H3-PLAN.md](M4-H3-PLAN.md) — M4 MiniMax H3 视频（Issue #22）—— **已实现**
 - [M4.5-MEDIA-CONVERGENCE-PLAN.md](M4.5-MEDIA-CONVERGENCE-PLAN.md) — M4.5 媒体收敛（Issue #27）—— **已实现**
+- [m5-baseline/m5-characterization-2026-11-10.md](m5-baseline/m5-characterization-2026-11-10.md) —— M5 结构性重构必须保持的通过计数（#140 slice 1）
 
 ## 治理
 
@@ -53,6 +55,18 @@ translation_status: synced
 - [GLOSSARY.md](GLOSSARY.md) — 高频术语表
 - [SKILL-REGISTRY.md](SKILL-REGISTRY.md) — Skill 发现、已声明能力、解析判定与 Doctor
 - [DEFERRED-WORK.md](DEFERRED-WORK.md) — 已 descope 工作、归档位置与重开条件
+- [DOC-SYNC.md](DOC-SYNC.md) — 文档保鲜：契约、触发条件、执行步骤与机器校验
+- [governance/ARCHIVE-SALVAGE-LEDGER.md](governance/ARCHIVE-SALVAGE-LEDGER.md) — 归档快照与 `main` 的 path+blob 比对
+
+## 双语政策
+
+Tier-1 文档默认英文为原文、中文为 `.zh-CN.md` 镜像。**README 是例外（2026-11-12）：**
+`README.md` 是中文原文，`README.en.md` 是英文镜像，因为本仓库的主要读者是中文用户；
+其余 Tier-1 文档保持英文原文。
+
+`python scripts/check_i18n.py` 校验两个方向的结构一致性，
+`python scripts/check_doc_freshness.py` 校验每份被跟踪文档确实对着它描述的代码核验过
+（规则见 [DOC-SYNC.md](DOC-SYNC.md)）。
 
 ## 决策
 
@@ -75,6 +89,8 @@ translation_status: synced
 - [adr/ADR-017-coding-agent-driver.md](adr/ADR-017-coding-agent-driver.md) —— coding agent 通过固定步骤计划成为受支持的驱动方，不获得发布或批准权限
 - [adr/ADR-018-governance-closeout-scope.md](adr/ADR-018-governance-closeout-scope.md) —— Apache-2.0 许可、未完成轨道 descope、X 权限保持人工、上游 watch 改为产物、零积压目标
 - [adr/ADR-019-receipt-history-exposure.md](adr/ADR-019-receipt-history-exposure.md) —— 轮换 PAYG key、接受已公开的余额/voice_id/fingerprint,并继续拦截新 receipt
+- [adr/ADR-020-read-only-scene-analysis-adapter.md](adr/ADR-020-read-only-scene-analysis-adapter.md) —— 可选的外部媒体分析以只读适配器形式接入：试验边界，不授予写权限
+- [adr/ADR-021-stable-production-gates.md](adr/ADR-021-stable-production-gates.md) —— 唯一稳定生产入口，VIDEO 与 GRAPHIC_TEXT 各自一套失败即拒绝的门禁
 
 ## 事实优先级
 
@@ -93,6 +109,8 @@ translation_status: synced
 ## 审计
 
 - [AUDIT-REPORT.md](AUDIT-REPORT.md) — 仓库审计（2026-10-03）
+- [ARCHITECTURE-AUDIT-2026-11-10.md](ARCHITECTURE-AUDIT-2026-11-10.md) —— 从输入到输出的子系统地图，逐一与代码树交叉核对（2026-11-10）
+- [governance/ARCHIVE-SALVAGE-LEDGER.md](governance/ARCHIVE-SALVAGE-LEDGER.md) —— 归档快照与 `main` 的三态 path+blob 比对（2026-11-11）
 - [audits/windows-subprocess-audit.zh-CN.md](audits/windows-subprocess-audit.zh-CN.md) — Windows 控制台弹窗审计、每个子进程调用点的分类，以及统一进程层（Issue #16）
 - [../reports/audits/github-governance-2026-10-31.md](../reports/audits/github-governance-2026-10-31.md) — GitHub 治理执行：PR/Issue/Branch/CI/安全复核与 PR #48 合并（2026-10-31）
 - [../reports/audits/contentops-phase2-security-and-unblock-2026-10-31.md](../reports/audits/contentops-phase2-security-and-unblock-2026-10-31.md) — 第二阶段安全、第三方版权与 PR 解锁审计（2026-10-31）

@@ -38,6 +38,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Full history: the documentation-freshness suite compares each tracked
+          # doc's date against the commits that touched its mapped code. In a
+          # shallow clone every path looks changed at the tip, which is a clone
+          # artefact rather than a stale doc.
+          fetch-depth: 0
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -102,6 +108,11 @@ jobs:
       # and branch-registry verified_at must agree. Never queries GitHub.
       - name: Run governance ledger tests
         run: python tests/test_governance_ledger.py
+
+      # Documentation freshness mechanism: marker parsing, stale verdicts and the
+      # README Chinese-primary pairing. Pure logic plus one run over the real tree.
+      - name: Run documentation sync tests
+        run: python tests/test_doc_sync.py
 
       # Card renderer: plan/parse/receipt logic plus the refusal paths that keep a
       # card from silently claiming approval. The one live render path skips itself
@@ -323,6 +334,12 @@ jobs:
       - name: Run checkout guard tests
         run: python tests/test_checkout_guard.py
 
+      # Seven VIDEO gates / five GRAPHIC_TEXT gates must pass before a producer
+      # runs (production_gates.GATES), and a direct producer call is diagnostic.
+      # Also guards QC receipts against a degraded overwrite.
+      - name: Run production gates tests
+        run: python tests/test_production_gates.py
+
       # The short motion-sample technical gate: 4-8 s, silent, 1080x1920,
       # H.264/yuv420p, CFR 30, digest-bound. It stops at PENDING_FOUNDER_REVIEW
       # and has no approval or publish switch. Fixture-driven; no render.
@@ -447,6 +464,13 @@ jobs:
       # the browser bridge, and Douyin is refused unconditionally.
       - name: Run graphic delivery gate tests
         run: python tests/test_delivery_gate.py
+
+      # Scan-login adapter for the video uploader. Asserts that every spec
+      # platform has a login contract whose cookie stem matches the uploader's
+      # own platform name, that only YouTube is proxied, and that a state file
+      # is never written without a proven session signal.
+      - name: Run uploader login adapter tests
+        run: python tests/test_sau_login.py
 
       # WeChat draft channel: shaping, credential preflight and the read-back
       # check. Offline only — no token, no upload, no credential.
@@ -655,6 +679,11 @@ jobs:
         run: python scripts/check_docs.py
       - name: i18n consistency check
         run: python scripts/check_i18n.py
+      # Every tracked doc states the date it was verified against; a commit that
+      # touches its mapped code after that date fails here. Needs history, which
+      # this job already checks out in full (fetch-depth: 0).
+      - name: Documentation freshness check
+        run: python scripts/check_doc_freshness.py
       # Offline, read-only. Catches append-only ledger drift (CONVERGENCE E7);
       # a pass says nothing about live GitHub state.
       - name: Governance ledger consistency check

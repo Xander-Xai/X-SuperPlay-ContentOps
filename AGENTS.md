@@ -22,7 +22,15 @@ If not → don't do it now.
 7. **FAIL is FAIL.** Never silently degrade to pass QC. Fallback marks `production_ready: false`.
 8. **Keep review and execution separate.** Local, non-paid Huashu draft rendering may run in `AUTO` and `REVIEW` without per-project execution grants or copy approval. It must stay project-local, use the pinned installed runtime and authorized assets, and keep `production_ready: false` / `publish_authorized: false` until required human review. Paid/network actions, unclear asset rights, and external publication retain their own gates; never bypass them.
 9. **No direct push to main.** All changes via PR. `main` is **PROTECTED** (enabled 2026-10-31): required checks `Tests (ubuntu-latest)`, `Tests (windows-latest)`, `Repo policy checks`; PR required; no force push; no deletion; linear history. Required approval count is 0 while the owner works solo; raise it to 1 when a second reviewer exists.
-10. **Each change carries risk-appropriate verification.** Use the L0–L3 policy in `docs/TEST-PLAN.md`; do not run unrelated checks. `doctor.py` is for environment/runtime/install/deployment changes, and `qc_video.py` is for actual video artifacts or video-QC behavior. Run `python scripts/dev_check.py` once as the complete local gate when preparing a PR, not after every small edit. `--quick` only skips the repository policy check; it is not a targeted test mode.
+10. **Documentation freshness is gate-checked, not aspirational.** Every tracked
+    doc in `config/docs/doc-freshness.json` carries the date it was verified
+    against (`> Last verified: YYYY-MM-DD`). If a commit touches that doc's mapped
+    code after that date, `scripts/check_doc_freshness.py` fails locally and in CI.
+    Read the diff, correct the facts, then bump the date — in the primary and the
+    mirror in the same change. Never bump the date to silence the check. Adding a
+    Tier-1 doc means classifying it in the config in the same PR. Procedure:
+    [docs/DOC-SYNC.md](docs/DOC-SYNC.md).
+11. **Each change carries risk-appropriate verification.** Use the L0–L3 policy in `docs/TEST-PLAN.md`; do not run unrelated checks. `doctor.py` is for environment/runtime/install/deployment changes, and `qc_video.py` is for actual video artifacts or video-QC behavior. Run `python scripts/dev_check.py` once as the complete local gate when preparing a PR, not after every small edit. `--quick` only skips the repository policy check; it is not a targeted test mode.
 
 ## 2. Extension Policy
 
@@ -101,6 +109,10 @@ No receipt = task not done.
 | How to run | [docs/RUNBOOK.md](docs/RUNBOOK.md) |
 | What we're building | [docs/PRD.md](docs/PRD.md) |
 | Quality gates | [docs/QUALITY-STANDARD.md](docs/QUALITY-STANDARD.md) |
+| Local verification policy (L0–L3) | [docs/TEST-PLAN.md](docs/TEST-PLAN.md) |
+| Documentation freshness procedure | [docs/DOC-SYNC.md](docs/DOC-SYNC.md) |
+| Per-platform status | [docs/PLATFORM-INTEGRATION-STATUS.md](docs/PLATFORM-INTEGRATION-STATUS.md) |
+| Narration ASR gate | [docs/ASR-BACKCHECK.md](docs/ASR-BACKCHECK.md) |
 | Current convergence plan | [docs/CONVERGENCE-REQUIREMENTS-2026-11-01.md](docs/CONVERGENCE-REQUIREMENTS-2026-11-01.md) |
 | Easel pin policy | [docs/UPSTREAM-EASEL.md](docs/UPSTREAM-EASEL.md) |
 | Decisions | [docs/adr/](docs/adr/) |

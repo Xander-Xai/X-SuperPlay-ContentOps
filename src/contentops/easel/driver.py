@@ -107,13 +107,27 @@ def _steps(project: str, fmt: str) -> List[Step]:
     if fmt == "VIDEO":
         slug = _project_slug(Path(project))
         steps += [
+            # Read-only visibility for the six production gates. It does not
+            # write a receipt, so next_step skips it; the hard refusal lives in
+            # produce_video.main() when no production-intent.json exists.
+            Step(
+                id="preflight-gates",
+                label="Check the production gates before producing",
+                argv=("python", "scripts/make_content.py", "check",
+                      "--project", project),
+                receipts=(),
+                authority=AUTHORITY_READ,
+                requires=(),
+            ),
             Step(
                 id="produce-video",
                 label="Run the evidence-first M5 chain",
                 # No `requires`: the host is a diagnostic, not a dependency
                 # (ADR-017). A HOST_BLOCKED status must never block an
-                # authorised offline production step.
-                argv=("python", "scripts/m5_production.py", project),
+                # authorised offline production step. produce_video (not
+                # m5_production) is the argv: it refuses to run without a
+                # production intent, so the driver cannot bypass the gates.
+                argv=("python", "scripts/produce_video.py", "--project", project),
                 receipts=("receipts/m5-run.json",
                           "receipts/bundle-handoff-video.json"),
                 authority=AUTHORITY_PRODUCE,
@@ -138,6 +152,15 @@ def _steps(project: str, fmt: str) -> List[Step]:
         ]
     elif fmt == "GRAPHIC_TEXT":
         steps += [
+            Step(
+                id="preflight-gates",
+                label="Check the graphic production gates before packaging",
+                argv=("python", "scripts/make_content.py", "check",
+                      "--project", project),
+                receipts=(),
+                authority=AUTHORITY_READ,
+                requires=(),
+            ),
             Step(
                 id="produce-graphic",
                 label="Build the manual graphic package",
