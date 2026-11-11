@@ -75,6 +75,15 @@ class FixtureCase(unittest.TestCase):
         self.env_patch = mock.patch.object(gates, "_env_has", return_value=True)
         self.env_patch.start()
         self.addCleanup(self.env_patch.stop)
+        # Host-runtime probes are environment-dependent: CI has neither the
+        # Huashu motion runtime nor the gzh-design validator, so the same gate
+        # logic must not depend on this host's install state. Stub only the
+        # probes; the gate logic itself stays real. The probes are truth-tested
+        # directly in HostProbeTests.
+        for probe in ("_motion_runtime_present", "_graphic_validator_present"):
+            patch = mock.patch.object(gates, probe, return_value=True)
+            patch.start()
+            self.addCleanup(patch.stop)
         self._approve()
 
     def tearDown(self):
@@ -261,6 +270,36 @@ class RuntimeReadinessTests(FixtureCase):
         seen = [row["gate"] for row in report["gates"]]
         self.assertIn("asset_rights", seen)
         self.assertNotIn("format", seen)
+
+
+class HostProbeTests(unittest.TestCase):
+    """The host-runtime probes must report absence truthfully.
+
+    These are the seams every other test stubs out; testing them here keeps the
+    "gate logic is hermetic, probes are environment checks" contract honest.
+    """
+
+    def test_motion_probe_is_false_when_discovery_raises(self):
+        import types
+
+        fake = types.ModuleType("contentops.media.huashu_runtime")
+
+        def _raise(root=None):
+            raise RuntimeError("runtime absent")
+
+        fake.find_runtime = _raise
+        with mock.patch.dict(sys.modules, {"contentops.media.huashu_runtime": fake}):
+            self.assertFalse(gates._motion_runtime_present(ROOT))
+
+    def test_graphic_validator_probe_tracks_file_presence(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            self.assertFalse(gates._graphic_validator_present(root))
+            validator = (root / ".runtime" / "easel" / "skills" / "openclaw"
+                         / "gzh-design" / "scripts" / "validate_gzh_html.py")
+            validator.parent.mkdir(parents=True, exist_ok=True)
+            validator.write_text("# stub validator\n", encoding="utf-8")
+            self.assertTrue(gates._graphic_validator_present(root))
 
 
 class GraphicLineTests(FixtureCase):

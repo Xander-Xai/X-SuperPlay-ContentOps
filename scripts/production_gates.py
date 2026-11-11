@@ -321,6 +321,29 @@ def _env_has(key: str, root: Path) -> bool:
     return re.search(rf"^{re.escape(key)}\s*=\s*\S", text, re.MULTILINE) is not None
 
 
+def _motion_runtime_present(root: Path = ROOT) -> bool:
+    """True when the pinned Huashu motion runtime is discoverable on this host.
+
+    A seam, not a shortcut: CI runners never install the runtime, so the gate
+    logic is exercised with this stubbed while the probe itself is tested
+    directly (``HostProbeTests``).
+    """
+    try:
+        from contentops.media.huashu_runtime import find_runtime
+
+        find_runtime(root)
+        return True
+    except Exception:  # noqa: BLE001 - any discovery failure means "absent"
+        return False
+
+
+def _graphic_validator_present(root: Path = ROOT) -> bool:
+    """True when the pinned GZH HTML validator exists in the runtime tree."""
+    validator = (root / ".runtime" / "easel" / "skills" / "openclaw"
+                 / "gzh-design" / "scripts" / "validate_gzh_html.py")
+    return validator.is_file()
+
+
 def runtime_readiness(project: Path, intent: Dict[str, Any],
                       root: Path = ROOT) -> Dict[str, Any]:
     """Can this machine actually execute the capabilities the gates just approved?
@@ -349,11 +372,7 @@ def runtime_readiness(project: Path, intent: Dict[str, Any],
         if not (project / "sources" / "source-refs.json").is_file():
             problems.append("a motion backend needs sources/source-refs.json "
                             "(written by brief_to_m5; absent here)")
-        try:
-            from contentops.media.huashu_runtime import find_runtime
-
-            find_runtime(root)
-        except Exception:
+        if not _motion_runtime_present(root):
             problems.append("the Huashu motion runtime is not discoverable on this host")
 
     if intent.get("bgm_policy") == "local-asset":
@@ -570,9 +589,7 @@ def check_graphic(project: Path, intent: Dict[str, Any],
     problems: List[str] = []
     if not (project / "graphic-input.json").is_file():
         problems.append("graphic-input.json is missing")
-    validator = (root / ".runtime" / "easel" / "skills" / "openclaw"
-                 / "gzh-design" / "scripts" / "validate_gzh_html.py")
-    if not validator.is_file():
+    if not _graphic_validator_present(root):
         problems.append("gzh-design validator is absent from the pinned runtime")
     add("runtime_readiness", not problems,
         "graphic runtime prerequisites present" if not problems else "; ".join(problems))
