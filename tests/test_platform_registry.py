@@ -71,8 +71,7 @@ def test_registries_agree():
 def test_every_strategy_platform_is_represented():
     platforms = load_platforms(ROOT)
     mapped = {entry.strategy_platform for entry in platforms.values()}
-    expected = STRATEGY_PLATFORMS | PRE_CANONICAL_CANDIDATES
-    assert mapped == expected, f"missing {expected - mapped}, extra {mapped - expected}"
+    assert mapped == STRATEGY_PLATFORMS, f"missing {STRATEGY_PLATFORMS - mapped}, extra {mapped - STRATEGY_PLATFORMS}"
 
 
 def test_xiaohongshu_is_video_only():
@@ -200,7 +199,7 @@ def test_easel_coverage_is_recorded_as_an_upstream_declaration():
     }
     absent = {entry.strategy_platform for entry in platforms.values()
               if entry.easel_status == "ABSENT"}
-    assert absent == {"csdn", "youtube", "x"} | PRE_CANONICAL_CANDIDATES
+    assert absent == {"csdn", "youtube", "x"}
 
 
 def test_no_platform_claims_a_verified_host_capability_yet():
@@ -241,24 +240,24 @@ def test_workflow_routes_connect_tracked_commands_without_publish():
 
 
 def test_precanonical_candidates_are_not_executable():
-    platforms = load_platforms(ROOT)
-    routes = {item["platform_id"]: item for item in workflow_routes(ROOT)}
-    for pid in PRE_CANONICAL_CANDIDATES:
-        entry = platforms[pid]
-        route = routes[pid]
-        assert entry.status == "PLANNED", pid
-        assert entry.accounts == (), pid
-        assert entry.pipeline == "CANDIDATE_NOT_ROUTED", pid
-        assert entry.owner == "", pid
-        assert entry.publish_mode == "NOT_IMPLEMENTED", pid
-        assert entry.metrics == "NONE", pid
-        assert entry.draft_support == "NONE", pid
-        assert entry.manual_review is True, pid
-        assert "BLOCKED: PRE_CANONICAL_CANDIDATE" in entry.not_claimed, pid
-        assert route["commands"] == [], pid
-        assert route["connected"] is False, pid
-        assert route["publish_authorized"] is False, pid
-        assert route["production_ready"] is False, pid
+    payload = json.loads((REGISTRY_DIR / "channel-candidates.json").read_text(encoding="utf-8"))
+    assert payload["schema"] == "contentops.channel-candidates/v1"
+    candidates = {row["id"]: row for row in payload["public_candidates"]}
+    assert set(candidates) == PRE_CANONICAL_CANDIDATES
+    assert {row["id"] for row in payload["private_touchpoints"]} == {"whatsapp", "line"}
+    live = load_platforms(ROOT)
+    for pid, entry in candidates.items():
+        assert pid not in live, f"{pid} leaked into the canonical runtime registry"
+        assert entry["status"] == "PRE_CANONICAL", pid
+        assert entry["runtime_registered"] is False, pid
+        assert entry["account_bound"] is False, pid
+        assert entry["publish_implemented"] is False, pid
+        assert entry["metrics_implemented"] is False, pid
+        _expect("PLATFORM_UNKNOWN", lambda name=pid: workflow_routes(ROOT, name))
+    for row in payload["private_touchpoints"]:
+        assert row["not_a_content_publish_platform"] is True
+        assert row["runtime_registered"] is False
+        assert row["id"] not in live
 
 
 def test_unknown_platform_route_is_refused():
