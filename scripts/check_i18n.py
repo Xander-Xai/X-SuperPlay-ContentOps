@@ -2,12 +2,23 @@
 """i18n consistency checker for Tier-1 bilingual documentation.
 
 Checks:
-  1. Every Tier-1 English doc has a corresponding .zh-CN.md mirror
+  1. Every Tier-1 doc has its mirror in the declared direction
   2. Every zh-CN mirror has a valid translation_of header
   3. Every zh-CN mirror has language: zh-CN marker
   4. Language switch links are bidirectional and not broken
   5. No stale translation_status: missing
   6. No C0 control characters (except LF/CR/TAB) in zh-CN mirrors
+
+Direction
+---------
+Tier-1 docs are English-primary by default: the canonical file is the English
+original and ``<stem>.zh-CN.md`` is its translation. README is the declared
+exception (2026-11-12): this repository's audience is Chinese-first, so
+``README.md`` is the Chinese original and ``README.en.md`` is the English
+mirror. The pair is still machine-checked -- existence, a bidirectional language
+switch, and the absence of a stale second Chinese copy -- just in the other
+direction. No front matter is required on a primary-language landing page,
+because GitHub renders YAML front matter as a table at the top of the page.
 
 Exit 0 = pass, exit 1 = fail.
 Machine checks structural synchronization only, not translation quality.
@@ -36,32 +47,67 @@ TIER1_DOCS = [
     "docs/UPSTREAM-EASEL.md",
     "docs/GLOSSARY.md",
     "docs/PLATFORM-INTEGRATION-STATUS.md",
+    "docs/DOC-SYNC.md",
 ]
 
+# Docs whose canonical file is the Chinese original. Value = the English mirror.
+# Everything else is English-primary with a `.zh-CN.md` mirror.
+ZH_PRIMARY_DOCS = {
+    "README.md": "README.en.md",
+}
 
-def _zh_path(en_path):
-    p = Path(en_path)
-    return ROOT / p.parent / (p.stem + ".zh-CN.md")
+# Chinese copies that must not come back once a doc is Chinese-primary: a second
+# Chinese file is exactly how two landing pages drift apart.
+STALE_ZH_MIRRORS = {
+    "README.md": "README.zh-CN.md",
+}
+
+
+def _mirror_rel(en_rel):
+    """Return the repo-relative path of a doc's mirror."""
+    if en_rel in ZH_PRIMARY_DOCS:
+        return ZH_PRIMARY_DOCS[en_rel]
+    p = Path(en_rel)
+    return str(p.parent / (p.stem + ".zh-CN.md")).replace("\\", "/")
+
+
+def _mirror_path(en_rel):
+    return ROOT / _mirror_rel(en_rel)
 
 
 def check_pairs_exist():
     failures = []
     for en_rel in TIER1_DOCS:
         en_path = ROOT / en_rel
-        zh_path = _zh_path(en_rel)
+        mirror = _mirror_path(en_rel)
         if not en_path.exists():
             continue
-        if not zh_path.exists():
-            failures.append(f"MISSING zh-CN mirror: {zh_path.relative_to(ROOT)} (for {en_rel})")
+        if not mirror.exists():
+            failures.append(
+                f"MISSING mirror: {mirror.relative_to(ROOT)} (for {en_rel})"
+            )
+        stale_rel = STALE_ZH_MIRRORS.get(en_rel)
+        if stale_rel and (ROOT / stale_rel).exists():
+            failures.append(
+                f"STALE second Chinese copy: {stale_rel} — {en_rel} is "
+                f"Chinese-primary, its English mirror is {_mirror_rel(en_rel)}"
+            )
     return failures
 
 
 def check_translation_headers():
+    """Check zh-CN mirrors have translation_of / language front matter.
+
+    A Chinese-primary doc has no mirror to check here: the English mirror is the
+    translation, and requiring YAML front matter on a landing page would print a
+    table above the title on GitHub.
+    """
     failures = []
     header_re = re.compile(r"^---\s*\n(.*?)\n---", re.DOTALL | re.MULTILINE)
     for en_rel in TIER1_DOCS:
-        en_path = ROOT / en_rel
-        zh_path = _zh_path(en_rel)
+        if en_rel in ZH_PRIMARY_DOCS:
+            continue
+        zh_path = _mirror_path(en_rel)
         if not zh_path.exists():
             continue
         text = zh_path.read_text(encoding="utf-8", errors="ignore")
@@ -93,39 +139,68 @@ def check_translation_headers():
     return failures
 
 
+def _links(text):
+    return re.findall(r"\[(.*?)\]\((.*?)\)", text)
+
+
+def _links_to(text, target_rel, labels=()):
+    for label, url in _links(text):
+        if url.strip() == target_rel:
+            return True
+        if any(token in label for token in labels):
+            return True
+    return False
+
+
 def check_language_switch_links():
     failures = []
-    link_re = re.compile(r"\[(.*?)\]\((.*?)\)")
-
     for en_rel in TIER1_DOCS:
         en_path = ROOT / en_rel
-        zh_path = _zh_path(en_rel)
-        zh_rel = str(zh_path.relative_to(ROOT)).replace("\\", "/")
+        mirror_file = _mirror_path(en_rel)
+        mirror_rel = _mirror_rel(en_rel)
+
+        if en_rel in ZH_PRIMARY_DOCS:
+            # Chinese original -> English mirror, and back.
+            if en_path.exists():
+                text = en_path.read_text(encoding="utf-8", errors="ignore")
+                if not _links_to(text, mirror_rel, ("English",)):
+                    failures.append(
+                        f"MISSING language switch link in {en_rel} "
+                        f"(should link to {mirror_rel})"
+                    )
+            if mirror_file.exists():
+                text = mirror_file.read_text(encoding="utf-8", errors="ignore")
+                if not _links_to(text, en_rel, ("简体中文", "中文")):
+                    failures.append(
+                        f"MISSING language switch link in {mirror_rel} "
+                        f"(should link to {en_rel})"
+                    )
+            continue
 
         if en_path.exists():
             text = en_path.read_text(encoding="utf-8", errors="ignore")
-            if zh_path.exists():
+            if mirror_file.exists():
                 found = False
-                for m in link_re.finditer(text):
-                    if "zh-CN" in m.group(1) or "zh-CN" in m.group(2) or "Chinese" in m.group(1):
+                for label, url in _links(text):
+                    if "zh-CN" in label or "zh-CN" in url or "Chinese" in label:
                         found = True
                         break
                 if not found:
                     failures.append(
                         f"MISSING language switch link in EN: {en_rel} "
-                        f"(should link to {zh_rel})"
+                        f"(should link to {mirror_rel})"
                     )
 
-        if zh_path.exists():
-            text = zh_path.read_text(encoding="utf-8", errors="ignore")
+        if mirror_file.exists():
+            text = mirror_file.read_text(encoding="utf-8", errors="ignore")
             found = False
-            for m in link_re.finditer(text):
-                if "English" in m.group(1) or (en_rel in m.group(2)):
+            for label, url in _links(text):
+                if "English" in label or (en_rel in url):
                     found = True
                     break
             if not found:
                 failures.append(
-                    f"MISSING language switch link in ZH: {zh_path.relative_to(ROOT)} "
+                    f"MISSING language switch link in ZH: {mirror_file.relative_to(ROOT)} "
                     f"(should link to {en_rel})"
                 )
     return failures
@@ -136,7 +211,9 @@ def check_translation_status():
     failures = []
     header_re = re.compile(r"^---\s*\n(.*?)\n---", re.DOTALL | re.MULTILINE)
     for en_rel in TIER1_DOCS:
-        zh_path = _zh_path(en_rel)
+        if en_rel in ZH_PRIMARY_DOCS:
+            continue
+        zh_path = _mirror_path(en_rel)
         if not zh_path.exists():
             continue
         text = zh_path.read_text(encoding="utf-8", errors="ignore")
@@ -173,10 +250,9 @@ def check_no_c0_control_chars():
         | set(range(0x0E, 0x20))  # SO-US
         | {0x7F}                  # DEL
     )
-    TEXT_EXTS = {".md", ".py", ".yaml", ".yml", ".json", ".txt", ".sh", ".ps1"}
 
     for en_rel in TIER1_DOCS:
-        zh_path = _zh_path(en_rel)
+        zh_path = _mirror_path(en_rel)
         if not zh_path.exists():
             continue
         try:
