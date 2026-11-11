@@ -1,6 +1,6 @@
 {
   "schema": "contentops.platform-registry/v1",
-  "note": "Status is a claim about evidence, not configuration: PLANNED means no bound public account and no publication authority, even when a tracked transport exists. INTEGRATED means code plus offline tests and a named account. TESTED means a real local run. A row never implies publication or production_ready. GitHub is proof infrastructure, not a publish target, and is documented instead of registered. Facebook, Instagram and Threads are pre-canonical channel candidates only: reserved metadata entries, NOT in the Strategy 14-platform canonical portfolio, no account bindings, no runtime pipeline, no publication/metrics authority. WhatsApp and LINE are conversion touchpoints owned outside the publishing registry.",
+  "note": "Status is a claim about evidence, not configuration: PLANNED means no bound public account and no publication authority, even when a tracked transport exists. INTEGRATED means code plus offline tests and a named account. TESTED means a real local run. A row never implies publication or production_ready. GitHub is proof infrastructure, not a publish target, and is documented instead of registered.",
   "status_values": [
     "PLANNED",
     "INTEGRATED",
@@ -266,72 +266,6 @@
         "config/platforms/video-platforms.yaml"
       ],
       "not_claimed": "BLOCKED: ACCOUNT_NOT_PUBLIC — status stays PLANNED because no public account is bound. A finished film is handed to scripts/video_deliver.py. The uploader does not run without an operator grant. production_ready stays false. NOT COVERED: EASEL_CAPABILITY_ABSENT — upstream Easel names no capability for this platform."
-    },
-    {
-      "platform_id": "threads",
-      "strategy_platform": "threads",
-      "easel_capability": {
-        "status": "ABSENT",
-        "evidence": [],
-        "verified_here": false
-      },
-      "content_types": [
-        "X_EDITORIAL"
-      ],
-      "pipeline": "CANDIDATE_NOT_ROUTED",
-      "accounts": [],
-      "draft_support": "NONE",
-      "publish_mode": "NOT_IMPLEMENTED",
-      "manual_review": true,
-      "metrics": "NONE",
-      "status": "PLANNED",
-      "owner": "",
-      "evidence": [],
-      "not_claimed": "BLOCKED: PRE_CANONICAL_CANDIDATE — Approved X source adapted into native discussion; no platform-specific code, account, or publish path. BLOCKED: ACCOUNT_NOT_BOUND. No automation, distribution, API access or metric collection is implemented."
-    },
-    {
-      "platform_id": "instagram",
-      "strategy_platform": "instagram",
-      "easel_capability": {
-        "status": "ABSENT",
-        "evidence": [],
-        "verified_here": false
-      },
-      "content_types": [
-        "VIDEO"
-      ],
-      "pipeline": "CANDIDATE_NOT_ROUTED",
-      "accounts": [],
-      "draft_support": "NONE",
-      "publish_mode": "NOT_IMPLEMENTED",
-      "manual_review": true,
-      "metrics": "NONE",
-      "status": "PLANNED",
-      "owner": "",
-      "evidence": [],
-      "not_claimed": "BLOCKED: PRE_CANONICAL_CANDIDATE — Approved visual demo or carousel can be considered for future reuse; no platform-specific code, account, or publish path. BLOCKED: ACCOUNT_NOT_BOUND. No automation, distribution, API access or metric collection is implemented."
-    },
-    {
-      "platform_id": "facebook",
-      "strategy_platform": "facebook",
-      "easel_capability": {
-        "status": "ABSENT",
-        "evidence": [],
-        "verified_here": false
-      },
-      "content_types": [
-        "VIDEO"
-      ],
-      "pipeline": "CANDIDATE_NOT_ROUTED",
-      "accounts": [],
-      "draft_support": "NONE",
-      "publish_mode": "NOT_IMPLEMENTED",
-      "manual_review": true,
-      "metrics": "NONE",
-      "status": "PLANNED",
-      "owner": "",
-      "evidence": [],
-      "not_claimed": "BLOCKED: PRE_CANONICAL_CANDIDATE — Approved Reels or community case may be considered in future; no platform-specific code, account, or publish path. BLOCKED: ACCOUNT_NOT_BOUND. No automation, distribution, API access or metric collection is implemented."
     }
   ]
 }
