@@ -55,6 +55,10 @@ translation_status: synced
 [docs/CURRENT-STATE.md](docs/CURRENT-STATE.md)，未完成事项见
 [docs/DEFERRED-WORK.md](docs/DEFERRED-WORK.md)。
 
+### 海外渠道预候选（未启用）
+
+`config/registry/platforms.json` 新增 **Threads、Instagram、Facebook** 三个禁用态预候选记录：没有账号绑定、可运行生产/发布链或自动指标。WhatsApp、LINE 只属于私域转化触点观察，不是内容发布目标。详见[候选范围与验收约束](docs/OVERSEAS-CHANNEL-CANDIDATES-20261111.md)。此项不改变 Strategy 的 14 平台正式口径，也不改变生产就绪状态。
+
 ## 快速开始
 
 ### Windows PowerShell
