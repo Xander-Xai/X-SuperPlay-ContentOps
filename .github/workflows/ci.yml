@@ -103,6 +103,11 @@ jobs:
       - name: Run governance ledger tests
         run: python tests/test_governance_ledger.py
 
+      # Documentation freshness mechanism: marker parsing, stale verdicts and the
+      # README Chinese-primary pairing. Pure logic plus one run over the real tree.
+      - name: Run documentation sync tests
+        run: python tests/test_doc_sync.py
+
       # Card renderer: plan/parse/receipt logic plus the refusal paths that keep a
       # card from silently claiming approval. The one live render path skips itself
       # when playwright is absent, so this stays hermetic in CI.
@@ -668,6 +673,11 @@ jobs:
         run: python scripts/check_docs.py
       - name: i18n consistency check
         run: python scripts/check_i18n.py
+      # Every tracked doc states the date it was verified against; a commit that
+      # touches its mapped code after that date fails here. Needs history, which
+      # this job already checks out in full (fetch-depth: 0).
+      - name: Documentation freshness check
+        run: python scripts/check_doc_freshness.py
       # Offline, read-only. Catches append-only ledger drift (CONVERGENCE E7);
       # a pass says nothing about live GitHub state.
       - name: Governance ledger consistency check

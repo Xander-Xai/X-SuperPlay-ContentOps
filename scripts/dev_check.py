@@ -10,8 +10,9 @@ Order:
   4. skill_reference_check
   5. check_docs
   6. check_i18n
-  7. test_basic
-  8. git diff --check (whitespace)
+  7. check_doc_freshness (tracked docs vs git history)
+  8. test_basic
+  9. git diff --check (whitespace)
 
 All must pass. All checks are read-only and deterministic.
 
@@ -61,6 +62,9 @@ def main():
         ("skill_references", [py, "scripts/check_skill_references.py"]),
         ("docs_check",  [py, "scripts/check_docs.py"]),
         ("i18n_check",  [py, "scripts/check_i18n.py"]),
+        # Doc drift is invisible to every other check: a status table can describe
+        # last month's code and still be valid Markdown with no broken link.
+        ("doc_freshness", [py, "scripts/check_doc_freshness.py"]),
         ("basic_tests", [py, "scripts/test_basic.py"]),
         ("whitespace",  ["git", "diff", "--check"]),
     ]
