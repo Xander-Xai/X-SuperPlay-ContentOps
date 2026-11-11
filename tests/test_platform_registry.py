@@ -37,6 +37,8 @@ STRATEGY_PLATFORMS = {
     "x",
 }
 
+PRE_CANONICAL_CANDIDATES = {"threads", "instagram", "facebook"}
+
 REGISTRY_DIR = ROOT / "config" / "registry"
 
 
@@ -69,7 +71,8 @@ def test_registries_agree():
 def test_every_strategy_platform_is_represented():
     platforms = load_platforms(ROOT)
     mapped = {entry.strategy_platform for entry in platforms.values()}
-    assert mapped == STRATEGY_PLATFORMS, f"missing {STRATEGY_PLATFORMS - mapped}, extra {mapped - STRATEGY_PLATFORMS}"
+    expected = STRATEGY_PLATFORMS | PRE_CANONICAL_CANDIDATES
+    assert mapped == expected, f"missing {expected - mapped}, extra {mapped - expected}"
 
 
 def test_xiaohongshu_is_video_only():
@@ -197,7 +200,7 @@ def test_easel_coverage_is_recorded_as_an_upstream_declaration():
     }
     absent = {entry.strategy_platform for entry in platforms.values()
               if entry.easel_status == "ABSENT"}
-    assert absent == {"csdn", "youtube", "x"}
+    assert absent == {"csdn", "youtube", "x"} | PRE_CANONICAL_CANDIDATES
 
 
 def test_no_platform_claims_a_verified_host_capability_yet():
@@ -235,6 +238,27 @@ def test_workflow_routes_connect_tracked_commands_without_publish():
             if command["script"] == "scripts/graphic_deliver.py":
                 continue
             assert command["script"] in load_platforms(ROOT)[item["platform_id"]].owner
+
+
+def test_precanonical_candidates_are_not_executable():
+    platforms = load_platforms(ROOT)
+    routes = {item["platform_id"]: item for item in workflow_routes(ROOT)}
+    for pid in PRE_CANONICAL_CANDIDATES:
+        entry = platforms[pid]
+        route = routes[pid]
+        assert entry.status == "PLANNED", pid
+        assert entry.accounts == (), pid
+        assert entry.pipeline == "CANDIDATE_NOT_ROUTED", pid
+        assert entry.owner == "", pid
+        assert entry.publish_mode == "NOT_IMPLEMENTED", pid
+        assert entry.metrics == "NONE", pid
+        assert entry.draft_support == "NONE", pid
+        assert entry.manual_review is True, pid
+        assert "BLOCKED: PRE_CANONICAL_CANDIDATE" in entry.not_claimed, pid
+        assert route["commands"] == [], pid
+        assert route["connected"] is False, pid
+        assert route["publish_authorized"] is False, pid
+        assert route["production_ready"] is False, pid
 
 
 def test_unknown_platform_route_is_refused():
@@ -324,6 +348,7 @@ def main() -> int:
         test_easel_coverage_is_recorded_as_an_upstream_declaration,
         test_no_platform_claims_a_verified_host_capability_yet,
         test_workflow_routes_connect_tracked_commands_without_publish,
+        test_precanonical_candidates_are_not_executable,
         test_unknown_platform_route_is_refused,
         test_graphic_status_carries_the_registry_route,
         test_video_workflow_lists_every_video_platform_without_publish,
