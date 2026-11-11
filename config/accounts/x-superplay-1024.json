@@ -480,7 +480,7 @@
         "谁需要",
         "商业机会"
       ],
-      "scope": "新模型、新工具、新 GitHub 项目、新硬件转化为真实能力测试；模型生态覆盖 Qwen、Claude、GPT、Gemini、DeepSeek、Kimi、豆包与 Agent、MCP、RAG、开源"
+      "scope": "新模型、新工具、新 GitHub 项目、新硬件转化为真实能力测试；模型生态覆盖 Qwen、Claude、GPT、Gemini、DeepSeek、Kimi、豆包与 Agent、MCP、RAG、开源；AI 娱乐化热点（短剧、游戏、影视、综艺、热梗）"
     },
     {
       "name": "AI 挑战100个职业",
@@ -516,12 +516,11 @@
     "纯新闻搬运",
     "未实测 GitHub 项目列表",
     "AI 暴富叙事",
-    "无目标 AI 娱乐",
     "纯参数和排行榜"
   ],
   "discovery": {
     "schema": "contentops.account-discovery/v1",
-    "profile_version": "2026-11-11.2",
+    "profile_version": "2026-11-11.3",
     "profile_source": "config/accounts/x-superplay-1024.json#discovery",
     "declared_by": "Founder. The initial values transcribe this DNA's own pillars, audience, not_doing and platform list; every keyword cites the field it was taken from, and scripts/check_account_dna.py fails the file if a citation does not resolve.",
     "keywords_positive": [
@@ -811,6 +810,46 @@
           "kind": "pillar_scope",
           "pillar": "AI 新物种"
         }
+      },
+      {
+        "term": "短剧",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 新物种"
+        }
+      },
+      {
+        "term": "游戏",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 新物种"
+        }
+      },
+      {
+        "term": "影视",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 新物种"
+        }
+      },
+      {
+        "term": "综艺",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 新物种"
+        }
+      },
+      {
+        "term": "热梗",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 新物种"
+        }
       }
     ],
     "keywords_negative": [
@@ -839,19 +878,11 @@
         }
       },
       {
-        "term": "无目标 AI 娱乐",
-        "language": "zh",
-        "origin": {
-          "kind": "not_doing",
-          "index": 3
-        }
-      },
-      {
         "term": "纯参数和排行榜",
         "language": "zh",
         "origin": {
           "kind": "not_doing",
-          "index": 4
+          "index": 3
         }
       }
     ],

@@ -510,7 +510,7 @@
   ],
   "discovery": {
     "schema": "contentops.account-discovery/v1",
-    "profile_version": "2026-11-11.2",
+    "profile_version": "2026-11-11.3",
     "profile_source": "config/accounts/x-superplay-future-intelligence.json#discovery",
     "declared_by": "Founder. The initial values transcribe this DNA's own pillars, audience, excluded and platform list; every keyword cites the field it was taken from, and scripts/check_account_dna.py fails the file if a citation does not resolve.",
     "keywords_positive": [
@@ -836,6 +836,46 @@
           "kind": "pillar_scope",
           "pillar": "AI 工程拆解"
         }
+      },
+      {
+        "term": "短剧",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 工程拆解"
+        }
+      },
+      {
+        "term": "游戏",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 工程拆解"
+        }
+      },
+      {
+        "term": "影视",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 工程拆解"
+        }
+      },
+      {
+        "term": "综艺",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 工程拆解"
+        }
+      },
+      {
+        "term": "热梗",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 工程拆解"
+        }
       }
     ],
     "keywords_negative": [
@@ -1025,7 +1065,7 @@
         "失败与限制",
         "复现和下一步"
       ],
-      "scope": "LLM / RAG / Agent / LangGraph / MCP / Context / Evaluation / Guardrails / Memory / Tool Calling，问题驱动；模型生态覆盖 Qwen、Claude、GPT、Gemini、DeepSeek、Kimi、豆包、开源"
+      "scope": "LLM / RAG / Agent / LangGraph / MCP / Context / Evaluation / Guardrails / Memory / Tool Calling，问题驱动；模型生态覆盖 Qwen、Claude、GPT、Gemini、DeepSeek、Kimi、豆包、开源；AI 娱乐（短剧、游戏、影视、综艺、热梗）"
     },
     {
       "name": "从需求到上线",
