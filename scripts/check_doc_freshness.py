@@ -45,7 +45,7 @@ import json
 import re
 import sys
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -55,6 +55,12 @@ ROOT = Path(__file__).resolve().parents[1]
 CONFIG_REL = "config/docs/doc-freshness.json"
 HEADER_WINDOW = 40  # lines scanned for the verification marker
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+# A verification date is written in the author's local time zone, while CI runs on
+# UTC. An author in UTC+8 writing the file at 04:00 local time is one calendar day
+# ahead of the runner, which is not a fabricated date. One day of skew is allowed;
+# anything beyond that is treated as a time bomb.
+MAX_CLOCK_SKEW_DAYS = 1
 
 # Accepted verification lines. Order matters only for readability; the first
 # match wins. Full-width colons are what the Chinese docs actually use.
@@ -106,6 +112,11 @@ def is_valid_date(value: str) -> bool:
     return True
 
 
+def _latest_plausible_date(today: str) -> str:
+    """Newest marker date that is not treated as a time bomb."""
+    return (date.fromisoformat(today) + timedelta(days=MAX_CLOCK_SKEW_DAYS)).isoformat()
+
+
 def evaluate(
     tracks: list[dict[str, Any]],
     read_text: Any,
@@ -137,9 +148,15 @@ def evaluate(
         if not is_valid_date(marker):
             findings.append(Finding("ERROR", doc, f"verification date '{marker}' is not YYYY-MM-DD"))
             continue
-        if marker > today:
+        if marker > _latest_plausible_date(today):
             findings.append(
-                Finding("ERROR", doc, f"verification date {marker} is in the future (today {today})")
+                Finding(
+                    "ERROR",
+                    doc,
+                    f"verification date {marker} is more than {MAX_CLOCK_SKEW_DAYS} day(s) "
+                    f"ahead of the runner date {today} (UTC); it is written in local time, "
+                    f"so one day of skew is allowed but this is beyond it",
+                )
             )
 
         mirror = mirror_of(doc)

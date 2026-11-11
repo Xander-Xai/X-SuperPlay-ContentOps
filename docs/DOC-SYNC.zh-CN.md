@@ -114,7 +114,7 @@ translation_status: synced
 
 | 命令 | 捕获什么 |
 |---|---|
-| `python scripts/check_doc_freshness.py` | 映射代码在文档日期之后有提交；中英成对日期不一致；日期在未来；Tier-1 文档未分类 |
+| `python scripts/check_doc_freshness.py` | 映射代码在文档日期之后有提交；中英成对日期不一致；日期比 UTC 运行日超前超过一天（允许一天，因为作者按本地时区写日期）；Tier-1 文档未分类 |
 | `python scripts/check_i18n.py` | 缺镜像、缺 front matter、语言切换单向或断链、重复的中文 README |
 | `python scripts/check_docs.py` | 内部链接断裂、必备文档缺失、固定版本引用过时、密钥 |
 | `python scripts/check_governance_ledger.py` | CURRENT-STATE 中英与注册表的日期/SHA 漂移（离线） |

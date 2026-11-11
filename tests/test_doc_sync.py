@@ -119,12 +119,26 @@ class EvaluateTests(unittest.TestCase):
         self.assertEqual(findings[0].level, "ERROR")
         self.assertIn("verification line", findings[0].detail)
 
-    def test_future_date_is_an_error(self):
+    def test_far_future_date_is_an_error(self):
         findings = freshness.evaluate(
             TRACK, reader({"docs/X.md": "> Last verified: 2027-01-01"}),
             plain_mirror, changes({}), "2026-11-12")
         self.assertEqual(findings[0].level, "ERROR")
-        self.assertIn("future", findings[0].detail)
+        self.assertIn("ahead of the runner date", findings[0].detail)
+
+    def test_one_day_of_local_clock_skew_is_tolerated(self):
+        # An author in UTC+8 writing at 04:00 local time is one calendar day ahead
+        # of the UTC runner. That is a real date, not a time bomb.
+        findings = freshness.evaluate(
+            TRACK, reader({"docs/X.md": "> Last verified: 2026-11-12"}),
+            plain_mirror, changes({}), "2026-11-11")
+        self.assertEqual(findings, [])
+
+    def test_two_days_ahead_is_still_rejected(self):
+        findings = freshness.evaluate(
+            TRACK, reader({"docs/X.md": "> Last verified: 2026-11-13"}),
+            plain_mirror, changes({}), "2026-11-11")
+        self.assertEqual(findings[0].level, "ERROR")
 
     def test_pair_date_mismatch_is_an_error(self):
         findings = freshness.evaluate(

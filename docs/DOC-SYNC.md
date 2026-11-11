@@ -118,7 +118,7 @@ Run the sync when any of these happen:
 
 | Command | Catches |
 |---|---|
-| `python scripts/check_doc_freshness.py` | mapped code changed after the doc's date; pair dates disagree; future date; unclassified Tier-1 doc |
+| `python scripts/check_doc_freshness.py` | mapped code changed after the doc's date; pair dates disagree; a date more than one day ahead of the UTC runner (one day is allowed because authors date in local time); unclassified Tier-1 doc |
 | `python scripts/check_i18n.py` | missing mirror, missing front matter, broken or one-way language switch, duplicate Chinese README |
 | `python scripts/check_docs.py` | broken internal links, canonical files missing, stale pin references, secrets |
 | `python scripts/check_governance_ledger.py` | CURRENT-STATE EN/ZH/registry date-and-SHA drift (offline) |
