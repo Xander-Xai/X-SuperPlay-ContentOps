@@ -46,7 +46,7 @@
       "pr": 158,
       "created": "2026-11-11",
       "purpose": "non-runtime overseas channel candidate catalog (Threads/Instagram/Facebook/WhatsApp/LINE)",
-      "status": "active",
+      "status": "merged",
       "expires": "2026-12-11"
     },
     {
@@ -54,7 +54,7 @@
       "pr": 160,
       "created": "2026-11-12",
       "purpose": "documentation truth: Tier-1 fact sync, Chinese-primary README, documentation freshness gate",
-      "status": "active",
+      "status": "merged",
       "expires": "2026-12-12"
     }
   ]
