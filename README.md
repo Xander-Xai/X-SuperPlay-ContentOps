@@ -55,7 +55,7 @@ for dated evidence and [docs/DEFERRED-WORK.md](docs/DEFERRED-WORK.md) for open w
 
 ### Overseas channel candidate coverage (not operational)
 
-The `config/registry/platforms.json` registry now reserves **Threads, Instagram and Facebook** as blocked, pre-canonical candidate entries with no account, executable pipeline, publishing or metrics. WhatsApp and LINE are private-conversion research touchpoints, not publishing destinations. See [candidate status and acceptance boundaries](docs/OVERSEAS-CHANNEL-CANDIDATES-20261111.md). This does not change the Strategy canonical 14-platform portfolio or production readiness.
+The separate, **non-runtime** `config/registry/channel-candidates.json` catalog documents **Threads, Instagram and Facebook** as pre-canonical research candidates. They are absent from the canonical platform runtime registry and have no account, executable pipeline, publishing or metrics. WhatsApp and LINE are private-conversion research touchpoints, not publishing destinations. See [candidate status and acceptance boundaries](docs/OVERSEAS-CHANNEL-CANDIDATES-20261111.md). This does not change the Strategy canonical 14-platform portfolio or production readiness.
 
 ## Quick Start
 
