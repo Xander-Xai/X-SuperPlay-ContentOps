@@ -37,6 +37,8 @@ STRATEGY_PLATFORMS = {
     "x",
 }
 
+PRE_CANONICAL_CANDIDATES = {"threads", "instagram", "facebook"}
+
 REGISTRY_DIR = ROOT / "config" / "registry"
 
 
@@ -237,6 +239,27 @@ def test_workflow_routes_connect_tracked_commands_without_publish():
             assert command["script"] in load_platforms(ROOT)[item["platform_id"]].owner
 
 
+def test_precanonical_candidates_are_not_executable():
+    payload = json.loads((REGISTRY_DIR / "channel-candidates.json").read_text(encoding="utf-8"))
+    assert payload["schema"] == "contentops.channel-candidates/v1"
+    candidates = {row["id"]: row for row in payload["public_candidates"]}
+    assert set(candidates) == PRE_CANONICAL_CANDIDATES
+    assert {row["id"] for row in payload["private_touchpoints"]} == {"whatsapp", "line"}
+    live = load_platforms(ROOT)
+    for pid, entry in candidates.items():
+        assert pid not in live, f"{pid} leaked into the canonical runtime registry"
+        assert entry["status"] == "PRE_CANONICAL", pid
+        assert entry["runtime_registered"] is False, pid
+        assert entry["account_bound"] is False, pid
+        assert entry["publish_implemented"] is False, pid
+        assert entry["metrics_implemented"] is False, pid
+        _expect("PLATFORM_UNKNOWN", lambda name=pid: workflow_routes(ROOT, name))
+    for row in payload["private_touchpoints"]:
+        assert row["not_a_content_publish_platform"] is True
+        assert row["runtime_registered"] is False
+        assert row["id"] not in live
+
+
 def test_unknown_platform_route_is_refused():
     _expect("PLATFORM_UNKNOWN", lambda: workflow_routes(ROOT, "no-such-platform"))
 
@@ -324,6 +347,7 @@ def main() -> int:
         test_easel_coverage_is_recorded_as_an_upstream_declaration,
         test_no_platform_claims_a_verified_host_capability_yet,
         test_workflow_routes_connect_tracked_commands_without_publish,
+        test_precanonical_candidates_are_not_executable,
         test_unknown_platform_route_is_refused,
         test_graphic_status_carries_the_registry_route,
         test_video_workflow_lists_every_video_platform_without_publish,

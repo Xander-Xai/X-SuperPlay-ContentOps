@@ -64,6 +64,10 @@
 [docs/CURRENT-STATE.md](docs/CURRENT-STATE.md)，未完成事项见
 [docs/DEFERRED-WORK.md](docs/DEFERRED-WORK.md)。
 
+### 海外渠道预候选（未启用）
+
+独立的**非运行时**清单 `config/registry/channel-candidates.json` 已记录 **Threads、Instagram、Facebook** 三个预候选；它们**未进入**正式平台注册表，没有账号绑定、可运行生产/发布链或自动指标。WhatsApp、LINE 仅属于私域转化触点观察，不是内容发布目标。详见[候选范围与验收约束](docs/OVERSEAS-CHANNEL-CANDIDATES-20261111.md)。此项不改变 Strategy 的 14 平台正式口径，也不改变生产就绪状态。
+
 ## 项目架构
 
 一句话：**来源 → 证据 → 决策 → 两条生产线 → 门禁 → 交付包 → 人**。每一层只做一件事，

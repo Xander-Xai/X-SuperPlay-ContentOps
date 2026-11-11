@@ -71,6 +71,10 @@ so `main` carries only its registry row and video delivery-channel config — th
 is no Xiaohongshu adapter code to run. See [docs/CURRENT-STATE.md](docs/CURRENT-STATE.md) for dated
 evidence and [docs/DEFERRED-WORK.md](docs/DEFERRED-WORK.md) for open work.
 
+### Overseas channel candidate coverage (not operational)
+
+The separate, **non-runtime** `config/registry/channel-candidates.json` catalog documents **Threads, Instagram and Facebook** as pre-canonical research candidates. They are absent from the canonical platform runtime registry and have no account, executable pipeline, publishing or metrics. WhatsApp and LINE are private-conversion research touchpoints, not publishing destinations. See [candidate status and acceptance boundaries](docs/OVERSEAS-CHANNEL-CANDIDATES-20261111.md). This does not change the Strategy canonical 14-platform portfolio or production readiness.
+
 ## Architecture
 
 One sentence: **source → evidence → decision → two production lines → gates →
