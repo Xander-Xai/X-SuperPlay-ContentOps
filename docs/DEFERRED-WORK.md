@@ -24,6 +24,7 @@
 | Archive | `branches/main.bundle` (snapshot at closeout) |
 | Reopen when | A concrete delivery slot exists and a real source is selected; open a new issue referencing this entry |
 | Status 2026-11-04 (post-closeout) | **Reopened in effect.** Three real-source runs are committed on `main` (PRs #117, #119); every one passes automated and visual QC and stops at `PENDING_FOUNDER_REVIEW`. Issue #6 stays open for the Founder's human review of the three rendered MP4s; engineering acceptance is otherwise complete |
+| Status 2026-11-12 | **Resolved.** Founder human review PASS was recorded on 2026-11-10 and Issue #6 was closed the same day (08:26Z). The approval lives in the issue, not in a project `human-review.json`, so this entry closes while the per-project review gate stays a known blocker in CURRENT-STATE |
 
 ### D-2 — Issue #51: XHS migration
 

@@ -2,6 +2,9 @@
 
 [English](QUALITY-STANDARD.md) | [简体中文](QUALITY-STANDARD.zh-CN.md)
 
+> Last reviewed: 2026-11-12 against `scripts/qc_video.py`, `scripts/qc_visual.py`
+> and the media QC canonicalization in `src/contentops/media/`.
+
 > Video, content, fact, visual, and audio quality gates.
 
 ## Technical (automated)

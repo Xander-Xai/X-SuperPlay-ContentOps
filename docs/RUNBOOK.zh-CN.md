@@ -9,7 +9,7 @@ translation_status: synced
 [English](RUNBOOK.md) | [简体中文](RUNBOOK.zh-CN.md)
 
 > 真实可执行命令。从实际脚本行为推导，非假设。
-> 最后更新：2026-10-31
+> 最后更新：2026-11-12
 
 ## 0. 环境检查
 
@@ -68,6 +68,10 @@ python scripts\m5_production.py projects\m5-easel-pin
 
 旁白使用离线 Windows SAPI 语音，不调用任何联网 TTS。运行始终停在
 `PENDING_FOUNDER_REVIEW`，`production_ready: false` —— QC 通过不等于允许发布。
+
+`asr_backcheck` 阶段会转写旁白并与"实际朗读的脚本"比对。没有 `SILICONFLOW_API_KEY`
+时它报告 `SKIPPED` —— 那不是通过。覆盖率不达标会阻断人工审核；通过也从不构成批准。
+模型、端点覆盖与比对规则见 [ASR-BACKCHECK.md](ASR-BACKCHECK.md)。
 
 ### M5 本地用户素材预览
 
@@ -236,6 +240,58 @@ python scripts\copy_review.py projects\my-episode --request-changes `
 修改脚本、字幕、声明、分镜或已登记资产后，旧批准会过期。该命令只记录审核决定，
 不会修改文案、运行 M5 或发布内容。
 
+## 5.7 卡片与公众号文章渲染
+
+两个渲染器都调用固定版本 Easel Skill 并写出回执。两者都不是批准。
+
+```powershell
+python scripts\render_cards.py   projects\my-note
+python scripts\render_article.py projects\my-article
+```
+
+- `render_cards.py` 把 HTML 渲染为 PNG 并跑卡片密度审计；退出码 4 表示被阻断或审计未过。
+  它需要真正装好 Chromium 的 Playwright 构建：设置 `CONTENTOPS_CARD_PYTHON` 与
+  `PLAYWRIGHT_BROWSERS_PATH`。
+- `render_article.py` 校验文章 HTML 并包装浏览器预览；退出码 4 表示被阻断或校验未过。
+  它使用 `CONTENTOPS_PYTHON` 或当前解释器，从不扫描其他解释器。
+- 回执：`receipts/card-render.json`、`receipts/gzh-article.json`，两者都保持
+  `production_ready: false` 与 `publish_authorized: false`。
+- 两个命令都不启动宿主、不调用 agent、不访问网络。
+
+## 5.8 交付包（视频与图文）
+
+打包全程离线。这里没有任何一步会发布：上传器 exit 0 只记为 `UPLOADER_EXIT_0`，
+只有人真正看到的 URL 才被登记为 URL。
+
+```powershell
+python scripts\video_deliver.py plan   --project projects\my-video
+python scripts\video_deliver.py pack   --project projects\my-video --thumbnails
+python scripts\video_deliver.py status --project projects\my-video
+python scripts\video_deliver.py record --project projects\my-video --platform douyin --url <真实URL>
+python scripts\platform_delivery.py list
+python scripts\platform_delivery.py pack  --package projects\bundle-dual-line-graphic\receipts\graphic-package.json
+python scripts\graphic_deliver.py --all
+```
+
+- `dispatch` 会运行外部上传器，必须同时给出 `--execute` 和运营授权（`--grant`）；
+  缺任一项时它只打印将要执行的 argv。
+- `graphic_deliver.py` 让一个桥接进程在整个批次中存活，只有 CLI 打出 `✓` **且**返回
+  URL 才算该平台交付成功。每次调用都只创建草稿。
+- 上传器与 `wechatsync` 桥接位于被 gitignore 的 `.runtime/` 树，经进程边界调用，
+  绝不被导入。
+
+## 5.9 公众号工作流状态
+
+```powershell
+python scripts\gzh_workflow_run.py --workflow <公众号工作区> --article <文章目录>
+python scripts\gzh_runtime.py status
+```
+
+`gzh_workflow_run.py` 运行只读链路（运行时依赖 → 身份 → 矩阵校验 → 洁净室检查 →
+SDK 适配器自检 → 10 项门禁检查）并写出状态回执。它从不推进门禁，被阻断的门禁会
+带上真实错误数上报。`gzh_runtime.py` 保持 `VERIFY_ONLY`：`execution_authorized` 与
+`publish_authorized` 恒为 false。
+
 ## 6. 开发门控
 
 ```bash
@@ -258,6 +314,16 @@ python scripts/check_skill_references.py --json
 
 这里失败意味着记录需要更新——当某一层落地后，也意味着该能力现在可以在
 `runtime/skill-registry.json` 中声明。
+
+## 6.9 成片与人工发布
+
+V1 与交付层都**不自动发布**。成片在 `final/` 下：V1 引擎写 `final/easel.mp4`
+（跑过诊断引擎时另有 `final/fallback.mp4`）；受门禁的生产路径
+（`make_content.py` → `produce_video.py` / `m5_production.py`）写
+`final/<slug>.mp4`。`video_deliver.py pack` 取 `final/` 下第一个非 `before` 的
+`*.mp4`，因此不依赖文件名。人工上传后执行
+`python scripts\video_deliver.py record --project projects\my-video --platform <id> --url <真实URL>`
+登记；工具退出码不是发布，URL 才是。
 
 ## 7. Easel 上游监控
 

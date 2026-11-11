@@ -10,6 +10,8 @@ translation_status: synced
 
 > 本地验证策略权威文档、套件清单与 CI 接线。
 >
+> 最后验证：2026-11-12，`main` 的 `c1da6dd`（98 个套件、98 个具名 CI 步骤）。
+>
 > 最后核验：2026-11-06，`fix/6-brief-copy-review`。
 
 ## 按风险等级进行本地验证
@@ -86,13 +88,40 @@ python tests/test_media_convergence.py
 | GitHub 仓库来源适配器 | `tests/test_repo_source_adapter.py` | 3 | 是 |
 | M5 media-use 工作流 | `tests/test_m5_media_use_workflow.py` | 列表驱动 | 是 |
 | M5 媒体可追溯性 | `tests/test_m5_media_traceability.py` | 列表驱动 | 是 |
-| 平台注册表 | `tests/test_platform_registry.py` | 18 | 是 |
+| 平台注册表 | `tests/test_platform_registry.py` | 22 | 是 |
+| 稳定生产门禁 | `tests/test_production_gates.py` | 30 | 是 |
+| 内容路由 | `tests/test_content_router.py` | 63 | 是 |
+| 热点源 | `tests/test_hotspot_sources.py` | 51 | 是 |
+| 账号 DNA | `tests/test_account_dna.py` | 37 | 是 |
+| 账号发现 | `tests/test_account_discovery.py` | 23 | 是 |
+| 脚本草稿 | `tests/test_script_draft.py` | 20 | 是 |
+| 来源质量 | `tests/test_source_quality.py` | 21 | 是 |
+| 账号路线 | `tests/test_account_route.py` | 12 | 是 |
+| Brief → M5 桥 | `tests/test_brief_to_m5.py` | 13 | 是 |
+| 真实素材时长门 | `tests/test_real_source_duration.py` | 17 | 是 |
+| 卡片渲染器 | `tests/test_render_cards.py` | 18 | 是 |
+| 公众号文章渲染器 | `tests/test_render_articles.py` | 35 | 是 |
+| 公众号运行时适配器 | `tests/test_gzh_runtime.py` | 13 | 是 |
+| ASR 传输（SiliconFlow） | `tests/test_asr_siliconflow.py` | 14 | 是 |
+| M5 ASR 门禁 | `tests/test_m5_asr_gate.py` | 6 | 是 |
+| 公众号草稿 | `tests/test_wechat_draft.py` | 15 | 是 |
+| 公众号指标 | `tests/test_wechat_metrics.py` | 11 | 是 |
+| SAU 登录 | `tests/test_sau_login.py` | 9 | 是 |
+| 交付门禁 | `tests/test_delivery_gate.py` | 7 | 是 |
+| 视频平台 | `tests/test_video_platforms.py` | 30 | 是 |
+| 平台状态同步 | `tests/test_platform_status_sync.py` | 9 | 是 |
+| 工作流契约 | `tests/test_workflow_contract.py` | 8 | 是 |
+| 工作流门禁 | `tests/test_workflow_gate.py` | 11 | 是 |
+| 发布回填 | `tests/test_publish_backfill.py` | 13 | 是 |
+| 治理检查 | `tests/test_governance_checks.py` | 16 | 是 |
+| 治理账本 | `tests/test_governance_ledger.py` | 列表驱动 | 是 |
+| M5 动效集成 | `tests/test_m5_motion_integration.py` | 65 | 是 |
 | Content Bundle 契约 | `tests/test_content_bundle_contract.py` | 13 | 是 |
 | Easel 宿主门禁 | `tests/test_easel_host_guard.py` | 13 | 是 |
 | Bundle 双格式 handoff | `tests/test_bundle_two_formats.py` | 14 | 是 |
 | 图文工作流 | `tests/test_graphic_workflow.py` | 14 | 是 |
 | M5 Bundle handoff | `tests/test_m5_bundle_handoff.py` | 5 | 是 |
-| coding-agent 驱动 | `tests/test_agent_driver.py` | 12 | 是 |
+| coding-agent 驱动 | `tests/test_agent_driver.py` | 29 | 是 |
 | Skill doctor | `tests/test_skill_doctor.py` | 列表驱动 | 是 |
 | Skill 引用完整性 | `tests/test_skill_references.py` | 6 | 是 |
 | Skill 路由能力 | `tests/test_skill_router_capabilities.py` | 列表驱动 | 是 |
@@ -112,5 +141,8 @@ CI 还运行策略、文档、i18n、空白、子进程与 receipt-secret 检查
 
 ## 计划中
 
-- 跨仓库 `SourceArtifact` 适配器契约测试（需要未合并的 content-router 层）。
-- 3 种不同来源 → 3 个 final MP4 → QC → 人工审核的 E2E 测试（M6）。
+- 面向更多跨仓库 `SourceArtifact` 适配器的契约测试；路由层与一个 GitHub 适配器已在 `main`。
+- 发布路径的回归套件 —— 在出现真实平台 URL 之前没有可断言的证据。
+
+上表是下限而非完整枚举：2026-11-12 共 98 个套件，权威来源是
+`git ls-files 'tests/test_*.py'`。

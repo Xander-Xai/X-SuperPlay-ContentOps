@@ -1,0 +1,84 @@
+{
+  "schema": "contentops.doc-freshness/v1",
+  "note": "A track says: if a commit touching `code` lands after the date in the doc's verification line, that doc is stale and `scripts/check_doc_freshness.py` fails. Every Tier-1 doc in scripts/check_i18n.py must appear here as a track or an exemption with a reason; the checker refuses an unclassified doc. This file is read by the checker only; it never queries the network.",
+  "tracks": [
+    {
+      "doc": "README.md",
+      "code": ["scripts/", "src/", "config/registry/", "config/platforms/", ".github/workflows/"]
+    },
+    {
+      "doc": "docs/CURRENT-STATE.md",
+      "code": ["scripts/", "src/", "runtime/", "config/accounts/", "config/registry/"]
+    },
+    {
+      "doc": "docs/PLATFORM-INTEGRATION-STATUS.md",
+      "code": ["config/registry/", "config/platforms/", "src/contentops/platforms/", "scripts/platforms.py"]
+    },
+    {
+      "doc": "docs/DEVELOPMENT-PLAN.md",
+      "code": ["scripts/", "src/", "config/registry/"]
+    },
+    {
+      "doc": "docs/TEST-PLAN.md",
+      "code": ["tests/", ".github/workflows/ci.yml", "scripts/test_basic.py"]
+    },
+    {
+      "doc": "docs/RUNBOOK.md",
+      "code": ["scripts/"]
+    },
+    {
+      "doc": "docs/ARCHITECTURE.md",
+      "code": ["src/", "scripts/"]
+    },
+    {
+      "doc": "docs/PRD.md",
+      "code": ["src/", "scripts/"]
+    },
+    {
+      "doc": "docs/QUALITY-STANDARD.md",
+      "code": ["scripts/qc_video.py", "scripts/qc_visual.py", "src/contentops/media/"]
+    },
+    {
+      "doc": "docs/ASR-BACKCHECK.md",
+      "code": ["src/contentops/media/asr_backcheck.py", "src/contentops/media/asr_siliconflow.py"]
+    },
+    {
+      "doc": "docs/CONTENT-LIFECYCLE-STAGES.md",
+      "code": ["src/", "scripts/"]
+    },
+    {
+      "doc": "docs/DOC-SYNC.md",
+      "code": ["scripts/check_doc_freshness.py", "scripts/check_i18n.py", "config/docs/doc-freshness.json"]
+    }
+  ],
+  "exempt": [
+    {
+      "doc": "docs/INDEX.md",
+      "reason": "navigation only; index coverage is enforced by check_repo_policy.check_index_tracking"
+    },
+    {
+      "doc": "docs/UPSTREAM-EASEL.md",
+      "reason": "pin policy, not a state claim; the pin itself is checked by check_docs.check_lock_consistency"
+    },
+    {
+      "doc": "docs/GLOSSARY.md",
+      "reason": "terminology, no date-bearing claim"
+    },
+    {
+      "doc": "docs/DEVELOPMENT-STANDARD.md",
+      "reason": "development rules; changes are deliberate edits, not drift"
+    },
+    {
+      "doc": "docs/FILE-PLACEMENT-POLICY.md",
+      "reason": "placement rules; enforceable by check_repo_policy instead of a date"
+    },
+    {
+      "doc": "CONTRIBUTING.md",
+      "reason": "contribution process, no system-state claim"
+    },
+    {
+      "doc": "SECURITY.md",
+      "reason": "security policy, no system-state claim"
+    }
+  ]
+}

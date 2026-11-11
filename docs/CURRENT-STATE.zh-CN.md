@@ -10,23 +10,29 @@ translation_status: synced
 
 > 当前运行状态。仅经验证的事实。无展望，无过时声明。
 >
-> 最后验证：2026-11-11，`main` 的 `bcd5dd1`（PR #154；治理第 4 轮）。
+> 最后验证：2026-11-12，`main` 的 `c1da6dd`（PR #159；只读文档同步）。
 > 以下事实描述 ```main```；已推迟或权利受阻的工作会明确标注。
 > “分层状态”表之后的小节是历史里程碑记录，说明某项能力当时如何被证明，
 > 不代表当前状态。
 
-## 分层状态（2026-11-04）
+## 分层状态（2026-11-12）
 
 | 层 | 状态 |
 |---|---|
 | M5 证据链、媒体合约、QC、media-use 适配器、Skill 路由/授权 | 已实现 |
-| 平台注册表（`config/registry/platforms.json`、`src/contentops/platforms/`） | ```main``` 已实现（PR #101）；9 个 Strategy 平台对应 10 条本地记录，1 条 `INTEGRATED`（`x`），9 条 `PLANNED` |
+| 稳定生产入口（`scripts/make_content.py`、`scripts/production_gates.py`） | 已实现（PR #157）；7 个失败即拒绝的 VIDEO 门禁（`account`、`copy_review`、`evidence_links`、`asset_sufficiency`、`avatar_bookends`、`style_audio`、`runtime_readiness`）与 5 个 GRAPHIC_TEXT 门禁（`account`、`copy_review`、`evidence_links`、`asset_rights`、`runtime_readiness`）；直接运行 `m5_production.py` / `produce_video.py` 属于诊断路径 |
+| 平台注册表（`config/registry/platforms.json`、`src/contentops/platforms/`） | ```main``` 已实现（PR #101，路线由 #141 加入）；9 个 Strategy 平台对应 9 条本地记录，1 条 `INTEGRATED`（`x`），8 条 `PLANNED` |
+| 视频交付（`scripts/video_deliver.py`） | 离线已实现：`plan` / `pack` / `status` / `record`；`dispatch` 需要运营授权。仓库内没有任何回执记录过已发布 URL |
+| 图文交付（`scripts/platform_delivery.py`、`scripts/graphic_deliver.py`、`src/contentops/platforms/wcs_bridge*`） | 离线已实现：打包后经进程边界调用外部 CLI（`wechatsync`），且只创建草稿。没有 `PUBLISHED` 分支；URL 记录是人工动作 |
+| 卡片与文章渲染（`scripts/render_cards.py`、`scripts/render_article.py`） | 已实现（PR #149、#152）；通过固定版本 Easel 的卡片/公众号 Skill 校验并写回执，回执恒为 `production_ready: false` |
+| ASR 回检门禁（`scripts/m5_production.py::stage_asr_backcheck`） | 已实现（PR #150）；无 `SILICONFLOW_API_KEY` 时为 `SKIPPED`，覆盖率不达标会阻断人工审核，但从不批准 |
+| M5 特征基线（`scripts/m5_characterize.py`） | 已实现（PR #153）；`docs/m5-baseline/m5-characterization-2026-11-10.md` 固定 #140 slice 1 的通过计数 |
 | Content Bundle 消费 + 双形式 handoff（`src/contentops/content_kernel/`） | 离线已实现；VIDEO 与 GRAPHIC_TEXT 计划，未发布 |
 | Easel 宿主门禁（`src/contentops/easel/`、`scripts/easel_host.py`） | 离线已实现（PR #108）；本机 `HOST_BLOCKED`（缺 FastAPI/uvicorn），写操作拒绝 |
 | 图文人工包（`src/contentops/graphic/`、`scripts/graphic_package.py`） | 离线已实现；停在 `AWAITING_MANUAL_REVIEW`；尚无已交付包 |
-| 内容路由、账号 DNA、工作流门禁、Brief/脚本/设计阶段 | S1–S4 已在 ```main```（PR #114、#118）；brief→M5 桥已合并，但仍绑定人工批准的 brief |
-| 小红书 / X / 公众号轨道 | 已合并的适配器只校验、不执行（PR #121、#125、#127）；权利未解决；无执行、无发布 |
-| Motion 工作流（样片门禁、交接、规范） | ```main``` 已实现（PR #122–#124） |
+| 内容路由、账号 DNA、工作流门禁、Brief/脚本/设计阶段 | S1–S4 已在 ```main```（PR #114、#118）；注册 15 个热点源，其中 1 个 `NATIVE_SEARCH`（GitHub）、14 个 `LIST_ONLY`，并在 #157 对两个账号 DNA 开放；brief→M5 桥已合并，但仍绑定人工批准的 brief |
+| X / 公众号轨道 | X 仅人工门禁（#127）；公众号有渲染器、SDK 适配器、工作流运行器与 `DRAFT_ONLY` 草稿路径（#145、#152）；两者都只校验、从不发布，权利未解决（Issue #51、#56）。**小红书的运行时适配器已于 2026-11-09 移除**（`src/contentops/xhs/` 已空，`graphic_workflow.py` 只保留 gzh/x/video）；只剩 `xiaohongshu_video` 注册表记录与交付渠道配置。除 `x` 外每条注册表记录仍为 `PLANNED` |
+| Motion 工作流（样片门禁、交接、规范） | ```main``` 已实现（PR #122–#124）；运动区域可从可验证的来源锚点挑选（#142） |
 | M5 端到端运行 | ```main``` 上三次真实来源运行（#117、#119），全部 `PENDING_FOUNDER_REVIEW` |
 | MiniMax 语音、图片、H3 视频 | 已实现；已验证子集见下文 |
 | 生产就绪 | 所有轨道均为 **否** |
@@ -34,7 +40,29 @@ translation_status: synced
 
 ## Git
 
-> **Git 状态在下方按 2026-11-11（治理第 4 轮）重新核验。** 其后的所有小节都是为可追溯性保留的历史快照，均不代表当前状态。
+> **Git 状态在下方按 2026-11-12（只读文档同步）重新核验。** 其后的所有小节都是为可追溯性保留的历史快照，均不代表当前状态。
+
+### Git — 2026-11-12 复核（只读文档同步）
+
+| 属性 | 核验值 |
+|---|---|
+| 默认分支 | `main` @ `c1da6dd`（PR #159，治理注册表整理，提交于 2026-11-11 19:56Z），受保护。前序合并：`fed3dd3`（#157 开放全部 15 个热点源）← `1bcb2fb`（#156）← `3358158`（#155）← `bcd5dd1`（#154） |
+| 开放 PR | **1**：#158 `docs(test): add isolated overseas channel candidate catalog without runtime registration` —— 仅文档与测试，不做运行时注册 |
+| 开放 issue | **4**：#7（EPIC）、#51 / #56（保持开放的权利 DEFERRED 闸门）、#140（M5 阶段拆分；slice 1 由 `e4987fa8` 落地） |
+| 远端分支 | **3**：`main`、`archive/minimax-wt-snapshot-20261110`、`feat/overseas-channel-candidates-20261111`（PR #158；注册表状态 `active`，复核日 2026-12-11） |
+| 远端 tag | **2**：`archive/converge-a2910c6`、`archive/pr1-pr2-1c127df` —— 未变 |
+| 分支保护 | 3 个必需检查（`Tests (ubuntu-latest)`、`Tests (windows-latest)`、`Repo policy checks`）、`strict=true`、`enforce_admins=true`、审批数 0、线性历史、禁 force push、禁删除；仅 squash 合并 |
+| 本地 worktree | **1**：仅主工作区 |
+| Stash | **0** |
+| `main` 上 CI | `CI @ c1da6dd = success`；`CI @ fed3dd3 = success` |
+| 本地策略门控 | `check_branch_registry.py --today 2026-11-12` PASS（4 个分支、1 个长期分支、0 个待退役）；`check_untracked_projects.py` 报告 0 个未跟踪项目；本次同步后 `check_governance_ledger.py` PASS |
+
+本轮只改文档：没有触碰任何运行时行为、注册表状态或平台记录。上表的 Git 数据于
+2026-11-12 从 GitHub 实时 API 读取（提交头、开放 PR/issue 列表、分支列表、tag 列表、
+保护规则对象、工作流运行），本地门控在本机执行。仓库自带的账本检查仍然**只做离线的
+内部一致性校验** —— 它不查询 GitHub，也不能当作远端状态的证据。同一轮里还修正了
+`docs/PLATFORM-INTEGRATION-STATUS.md`：它此前仍列出一条已不存在的 `xiaohongshu_image`
+注册表记录。
 
 ### Git — 2026-11-11 复核（治理第 4 轮）
 
@@ -214,6 +242,35 @@ Owner 已决定把完整 Easel 系统作为生产底座（ADR-016）。本节只
 诊断引擎：`python scripts/run_v1.py <project> --engine fallback`
 （仅 ffmpeg，永不生产，永不报告 `production_ready: true`）。
 
+## 交付层（2026-11-12）
+
+流水线的出口。它只打包并交接，从不发布；仓库内没有任何交付回执记录过平台 URL。
+
+| 属性 | 值 |
+|---|---|
+| 视频入口 | `scripts/video_deliver.py` —— `plan` / `pack` / `status` / `dispatch` / `login` / `check` / `record` |
+| 视频交付包 | 每个平台一套 `06_delivery/`：标题按该平台限制调整（原文保留）、机械裁帧生成的封面并标注为裁帧、以及回执 |
+| 上传器结果 | exit 0 记为 `UPLOADER_EXIT_0`，永远不算发布声明；只有 `record` 能写入人真正看到的 URL |
+| 图文入口 | `scripts/platform_delivery.py`（`list` / `self-test` / `pack` / `dispatch` / `status`）与 `scripts/graphic_deliver.py`（单桥接进程、按平台批量同步） |
+| 图文渠道 | `config/platforms/graphic-platforms.yaml`：`wechat_article`、`zhihu`、`csdn`、`x`、`juejin`、`toutiao`、`weibo`。`xiaohongshu_image` 位于 `excluded` —— 该平台整体归 VIDEO 线（2026-11-09 运营指令） |
+| 外部工具 | `wechatsync` CLI 与浏览器桥接位于被 gitignore 的 `.runtime/` 树，经进程边界调用，绝不导入 Apache-2.0 源码树 |
+| 草稿而非发布 | 每次图文调用只创建平台草稿。`multichannel` 没有 `PUBLISHED` 分支，缺少完整校验的授权时 `publish` 直接抛出 |
+| 权限 | 对发布、账号登录、指标或注册表状态均无权限；任何一次交付都不会提升 `platforms.json` 的记录状态 |
+| 本仓库结果 | `projects/` 下 **0** 条交付回执；上表发布计数仍为 0 |
+| 测试 | `test_delivery_gate.py`、`test_video_platforms.py`、`test_platform_registry.py`、`test_platform_status_sync.py`、`test_workflow_contract.py` —— 全部离线 |
+
+## 卡片与公众号文章渲染（2026-11-12）
+
+| 属性 | 值 |
+|---|---|
+| 卡片渲染 | `scripts/render_cards.py` → 固定版本 `render_card.py` 与 `card_audit.py`（密度审计）；写 `receipts/card-render.json`；卡片被阻断或审计失败时退出码 4 |
+| 文章渲染 | `scripts/render_article.py` → 固定版本 `validate_gzh_html.py` 与 `wrap_preview.py`；写 `receipts/gzh-article.json` |
+| 解释器 | `CONTENTOPS_CARD_PYTHON` / `CONTENTOPS_PYTHON`，卡片另需 `PLAYWRIGHT_BROWSERS_PATH`；不扫描、不猜测解释器 |
+| 样例 | `projects/gzh-qc-gap/` —— 真实文章输入，保持 `BLOCKED`、`validation: NOT_RUN`，未生成预览 |
+| 判定 | PASS 不等于批准：两份回执都保持 `production_ready: false` 与 `publish_authorized: false` |
+| 权利 | 上游 `gzh-design` 目录为 AGPL-3.0，本仓库不再分发；`runtime/gzh-runtime.lock.json` 仍为 `UNRESOLVED` |
+| 测试 | `test_render_cards.py`、`test_render_articles.py` —— 密闭测试 |
+
 ## M5 证据优先生产链（Issue #6）—— 已实现 2026-10-31
 
 | 属性 | 值 |
@@ -269,7 +326,7 @@ Owner 已决定把完整 Easel 系统作为生产底座（ADR-016）。本节只
 | Skill 引用完整性 | `tests/test_skill_references.py` | 6 |
 | Windows | 子进程、路径 | 53 |
 | 策略 / 密钥 | gitignore、本地批准、凭证密钥 | 19 + 列表驱动套件 |
-| **合计** | **本文档不声明数量** | 套件数量在检查时读取：`git ls-files 'tests/test_*.py' \| wc -l` |
+| **合计** | **本文档不声明数量** | 2026-11-12 实测 98 个套件、98 个具名 CI 步骤；权威数量在检查时读取：`git ls-files 'tests/test_*.py' \| wc -l` |
 
 ```python scripts/dev_check.py``` 运行本地门禁。CI 为每个套件设置具名步骤；没有 CI
 步骤的套件不会运行，一次绿色运行也不等于所有套件都通过。CI 会安装 ```ffmpeg```
@@ -286,15 +343,21 @@ Owner 已决定把完整 Easel 系统作为生产底座（ADR-016）。本节只
    其他生产运行仍为 `PENDING_FOUNDER_REVIEW`。
 3. media-use 运行时锁 — 干净检出（以及本机当前）判定为
    ```BLOCKED / MISSING_RUNTIME```。已批准基线存在，但必须先为本机生成并信任锁。
-4. 权利 — ```main``` 上的小红书、X、公众号适配器只校验、从不执行。vendored 树不在本仓库
-   分发，剩余阻断是权利清理（Issue #51、#56），不是缺少代码。
-5. 文档收敛 — 本文档于 2026-11-01 重构；PRD、DEVELOPMENT-PLAN、TEST-PLAN 在同一次
-   变更中更新。剩余需求见
+4. 权利 — ```main``` 上的小红书、X、公众号适配器只校验、从不执行；公众号渲染器也只能通过
+   未随仓库分发的 AGPL-3.0 上游 Skill 校验。剩余阻断是权利清理（Issue #51、#56），
+   不是缺少代码。
+5. 未绑定公开账号 — 每条内容线都有交付运行器，但 9 条注册表记录中有 8 条仍为
+   `PLANNED`，因为没有绑定公开账号、也没有任何作品持有真实平台 URL。没有账号的交付
+   代码只是打包，不是发布。
+6. 文档收敛 — 本文档于 2026-11-01 重构；PRD、DEVELOPMENT-PLAN、TEST-PLAN 在同一次
+   变更中更新，Tier-1 文档集于 2026-11-12 再次同步。历史需求见
    [CONVERGENCE-REQUIREMENTS-2026-11-01.md](CONVERGENCE-REQUIREMENTS-2026-11-01.md)。
-6. 上游固定版本 — Easel v0.3.0 与 HyperFrames 0.8.225 已发布但未采用；决策见收敛需求文档。
-7. ~~Main 分支未保护~~ — **已解决**（G0.6）。
-8. Easel 宿主 — 本机因缺少 FastAPI/uvicorn 处于 `HOST_BLOCKED`。安装依赖、使用真实账号
+7. 上游固定版本 — Easel v0.3.0 与 HyperFrames 0.8.225 已发布但未采用；决策见收敛需求文档。
+8. ~~Main 分支未保护~~ — **已解决**（G0.6）。
+9. Easel 宿主 — 本机因缺少 FastAPI/uvicorn 处于 `HOST_BLOCKED`。安装依赖、使用真实账号
    或启动宿主，都需要在宿主安全审查后另行批准（ADR-016）。宿主运行不等于发布授权。
+10. ASR 回检 — 缺少 `SILICONFLOW_API_KEY` 时为 `SKIPPED`，因此没有凭证的运行不能证明任何
+    旁白准确性问题。
 
 ## M3 图片生成（Issue #20）—— 已验证 2026-10-04
 

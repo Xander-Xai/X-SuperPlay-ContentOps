@@ -217,15 +217,19 @@ Rules:
 
 | Strategy platform | Local entry | Pipeline | Local status | Easel capability | Next action |
 |---|---|---|---|---|---|
-| douyin | `douyin` | `VIDEO` | `PLANNED` | `UPSTREAM_DECLARED` | adapter not started |
-| xiaohongshu | `xiaohongshu_video`, `xiaohongshu_image` | `VIDEO`, `XHS_EDITORIAL` | `PLANNED` | `UPSTREAM_DECLARED` | rights unresolved |
-| bilibili | `bilibili` | `VIDEO` | `PLANNED` | `UPSTREAM_DECLARED` | adapter not started |
-| wechat_channels | `shipinhao` | `VIDEO` | `PLANNED` | `UPSTREAM_DECLARED` | adapter not started |
-| wechat_official_account | `wechat_article` | `GZH_EDITORIAL` | `PLANNED` | `UPSTREAM_DECLARED` | rights unresolved |
-| zhihu | `zhihu` | `ARTICLE_EDITORIAL` | `PLANNED` | `UPSTREAM_DECLARED` | adapter not started |
-| csdn | `csdn` | `ARTICLE_EDITORIAL` | `PLANNED` | `ABSENT` | native adapter required |
-| youtube | `youtube` | `VIDEO` | `PLANNED` | `ABSENT` | native adapter required |
+| douyin | `douyin` | `VIDEO` | `PLANNED` | `UPSTREAM_DECLARED` | account not bound; `video_deliver.py` packs and dispatches only with an operator grant |
+| xiaohongshu | `xiaohongshu_video` (no image row) | `VIDEO` | `PLANNED` | `UPSTREAM_DECLARED` | rights unresolved; the image line belongs to VIDEO (spec `excluded`) |
+| bilibili | `bilibili` | `VIDEO` | `PLANNED` | `UPSTREAM_DECLARED` | account not bound; public counters readable into a receipt |
+| wechat_channels | `shipinhao` | `VIDEO` | `PLANNED` | `UPSTREAM_DECLARED` | account not bound; `video_deliver.py` pack only |
+| wechat_official_account | `wechat_article` | `GZH_EDITORIAL` | `PLANNED` | `UPSTREAM_DECLARED` | rights unresolved; `wechat_draft.py` can stop at a draft |
+| zhihu | `zhihu` | `ARTICLE_EDITORIAL` | `PLANNED` | `UPSTREAM_DECLARED` | native adapter required; the graphic bridge targets it, no successful draft run is recorded |
+| csdn | `csdn` | `ARTICLE_EDITORIAL` | `PLANNED` | `ABSENT` | native adapter required; the graphic bridge targets it, no successful draft run is recorded |
+| youtube | `youtube` | `VIDEO` | `PLANNED` | `ABSENT` | account not bound; `video_deliver.py` pack only |
 | x | `x` | `X_EDITORIAL` | `INTEGRATED` | `ABSENT` | manual-only gate; `prepare_handoff` ends `AWAITING_MANUAL_PUBLISH`; `REPORTED_PUBLISHED` not yet exercised |
+
+Last checked against `config/registry/platforms.json` and the graphic spec on
+2026-11-12. A delivery channel (`platform_delivery.py`, `graphic_deliver.py`)
+does not create a registry row and does not raise a row's status.
 
 `XHS_EDITORIAL` and `GZH_EDITORIAL` are local content-type labels. They map to
 the shared `GRAPHIC_TEXT` production line; they do **not** justify a separate

@@ -8,6 +8,8 @@ translation_status: synced
 
 [English](ARCHITECTURE.md) | [简体中文](ARCHITECTURE.zh-CN.md)
 
+> 最后验证：2026-11-12，`main` 的 `c1da6dd`。
+
 > 系统是什么。边界在哪里。组件如何调用。
 > 描述 2026-11-02 宿主决策后的目标架构，并标明今天已验证的部分。
 > 目标章节不等于已运行能力。
@@ -118,8 +120,11 @@ Owner 于 2026-11-02 决定把完整 Easel 系统作为生产底座，取代 ADR
 3. **图文产线不复用这些阶段。** 配音和分镜对一篇文章没有意义。它运行
    `contentops.copy-to-graphic/v1`（`brief → outline → draft → images → layout →
    quality → delivery`），并复用门禁的顺序、指纹失效与人工批准，而不是另造一套。
-   当前产物是 `scripts/graphic_package.py` 生成的**人工包**，停在
-   `AWAITING_MANUAL_REVIEW`；它不是 HTML 渲染器，也不是公众号发布器。
+   产物经过三个具名步骤，且都不发布：`scripts/graphic_package.py` 生成的**人工包**
+   （停在 `AWAITING_MANUAL_REVIEW`）、`scripts/render_cards.py` 与
+   `scripts/render_article.py` 的**渲染/校验**步骤（调用固定版本 Easel Skill，回执恒为
+   `production_ready: false`），以及 `scripts/platform_delivery.py` /
+   `scripts/graphic_deliver.py` 的**交付包**（经进程边界只创建草稿）。
 4. **平台适配器是交付，不是生产。** 任何平台都不拥有自己的生产引擎。
    见 §ContentOps 不拥有。
 5. **共享引擎的抽象是挣来的，不是假设的。** 只有当两条产线真的出现重复代码时，
@@ -132,6 +137,9 @@ Owner 于 2026-11-02 决定把完整 Easel 系统作为生产底座，取代 ADR
    `src/contentops/easel/driver.py` 给出固定 argv 的有序步骤、`READ` / `PRODUCE` /
    `HUMAN_ONLY` 三种权限，以及每次执行的回执。计划中不存在发布、凭据或安装步骤；
    驱动方请求 `human-review` 会被拒绝（ADR-017）。
+8. **交付是打包，不是发布。** 每个运行器只产出交付包与草稿。上传器的退出只记为退出
+   （`UPLOADER_EXIT_0`），只有人真正看到的 URL 才被登记为 URL。任何交付都不会把平台
+   记录抬到 `PLANNED` 之上，`video_deliver.py dispatch` 除 `--execute` 外还需要运营授权。
 
 ## 分支层
 
@@ -158,9 +166,19 @@ Owner 于 2026-11-02 决定把完整 Easel 系统作为生产底座，取代 ADR
 ```text
 scripts/
 ├── run_v1.py             ← V1 编排（easel + fallback 引擎）
-├── m5_production.py      ← 证据优先链（来源 → … → 评审）
+├── make_content.py       ← 唯一稳定生产入口（六项决策 + 门禁）
+├── production_gates.py   ← 7 个 VIDEO + 5 个 GRAPHIC_TEXT 失败即拒绝门禁
+├── produce_video.py      ← make_content.py 后面的诊断生产者
+├── m5_production.py      ← 证据优先链（来源 → … → 评审 → ASR 回检）
+├── m5_characterize.py    ← 记录 M5 重构必须保持的套件通过计数
 ├── bundle_handoff.py     ← Bundle → VIDEO / GRAPHIC_TEXT 计划
 ├── graphic_package.py    ← 人工图文包（停在审核）
+├── render_cards.py       ← HTML 卡片 → PNG + 密度审计（固定版本 Skill）
+├── render_article.py     ← 文章 HTML 校验 + 预览包装（固定版本 Skill）
+├── video_deliver.py      ← 各平台视频交付包；dispatch 需运营授权
+├── platform_delivery.py  ← 图文交付包 + 仅草稿交接（离线）
+├── graphic_deliver.py    ← 单桥接进程，按平台批量同步草稿
+├── wechat_draft.py       ← 公众号草稿路径（DRAFT_ONLY，需运营授权）
 ├── easel_host.py         ← 受门禁保护的宿主状态 / 回环启动
 ├── assemble_easel.py     ← Easel 编排适配器（Windows 字幕变通）
 ├── qc_video.py           ← 自动技术与证据 QC

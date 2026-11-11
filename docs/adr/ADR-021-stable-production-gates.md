@@ -1,6 +1,6 @@
 # ADR-021: One fail-closed preflight for content production
 
-- Status: proposed (local change, not yet merged)
+- Status: accepted — the code and this record landed on `main` together via #157 (2026-11-11). Direct `produce_video.py` / `m5_production.py` runs remain a diagnostic path, not a production entry
 - Date: 2026-11-12
 - Refs: the 2026-11-12 workflow gap audit (`projects/_local/workflow-gap-audit-2026-11-12.md`)
 

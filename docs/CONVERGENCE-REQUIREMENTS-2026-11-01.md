@@ -16,6 +16,23 @@
 > analysis below is the state at decision time and is not rewritten. Steps 3–5
 > remain open.
 
+> **Execution status (2026-11-12).** Steps 3–5 are closed, and the text above is
+> kept as the decision-time record:
+>
+> - **Step 3 (S1 slice from the router)** — landed as the content router,
+>   account DNA and brief/script/design stages via PRs #114 and #118; 15 hotspot
+>   sources were later opened to both account DNAs (#157).
+> - **Step 4 (upstream pins)** — closed as the recorded decision to stay pinned.
+>   Easel remains v0.2.1 / `3fe2d99`; v0.3.0 is not adopted and no lock moved.
+>   HyperFrames stays at the approved `0.8.222` runtime baseline.
+> - **Step 5 (hygiene audit)** — executed across the 2026-11-04 and 2026-11-10
+>   governance passes and closed out by #132–#159: one worktree remains, no
+>   stash, archive branches and tags are pushed, and the branch registry is
+>   checked offline by `scripts/check_branch_registry.py`.
+>
+> What this does **not** mean: no track became production-ready, and no
+> publication authority was granted.
+
 ## 1. Executive summary
 
 The repository can produce video, but it cannot currently describe itself

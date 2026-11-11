@@ -38,6 +38,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Full history: the documentation-freshness suite compares each tracked
+          # doc's date against the commits that touched its mapped code. In a
+          # shallow clone every path looks changed at the tip, which is a clone
+          # artefact rather than a stale doc.
+          fetch-depth: 0
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -102,6 +108,11 @@ jobs:
       # and branch-registry verified_at must agree. Never queries GitHub.
       - name: Run governance ledger tests
         run: python tests/test_governance_ledger.py
+
+      # Documentation freshness mechanism: marker parsing, stale verdicts and the
+      # README Chinese-primary pairing. Pure logic plus one run over the real tree.
+      - name: Run documentation sync tests
+        run: python tests/test_doc_sync.py
 
       # Card renderer: plan/parse/receipt logic plus the refusal paths that keep a
       # card from silently claiming approval. The one live render path skips itself
@@ -323,9 +334,9 @@ jobs:
       - name: Run checkout guard tests
         run: python tests/test_checkout_guard.py
 
-      # Six production gates must pass before a producer runs: account DNA,
-      # copy review, evidence links, asset sufficiency, H3 bookends and
-      # style/audio. Also guards QC receipts against a degraded overwrite.
+      # Seven VIDEO gates / five GRAPHIC_TEXT gates must pass before a producer
+      # runs (production_gates.GATES), and a direct producer call is diagnostic.
+      # Also guards QC receipts against a degraded overwrite.
       - name: Run production gates tests
         run: python tests/test_production_gates.py
 
@@ -668,6 +679,11 @@ jobs:
         run: python scripts/check_docs.py
       - name: i18n consistency check
         run: python scripts/check_i18n.py
+      # Every tracked doc states the date it was verified against; a commit that
+      # touches its mapped code after that date fails here. Needs history, which
+      # this job already checks out in full (fetch-depth: 0).
+      - name: Documentation freshness check
+        run: python scripts/check_doc_freshness.py
       # Offline, read-only. Catches append-only ledger drift (CONVERGENCE E7);
       # a pass says nothing about live GitHub state.
       - name: Governance ledger consistency check
