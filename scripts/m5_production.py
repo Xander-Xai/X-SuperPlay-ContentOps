@@ -1047,11 +1047,28 @@ def stage_script(project: Path, ledger: ClaimLedger, assets: Dict[str, Any]) -> 
     _write_json(project / "receipts" / "script-check.json", payload)
 
     master = project / "script" / "master.md"
+    # The script text is what a reviewer reads. Every beat must show the source
+    # it came from as a followable link, not a bare claim id, or "the copy cites
+    # its evidence" is unverifiable. refs come from sources/source-refs.json.
+    refs_doc = _read_json_or_none(project / "sources" / "source-refs.json") or {}
+    refs_by_id = {str(row.get("id")): row
+                  for row in (refs_doc.get("refs") or [])
+                  if isinstance(row, dict) and row.get("id")}
     rows = ["| # | 旁白 | 字幕 | 事实来源 | 素材 |", "|---|---|---|---|---|"]
     for line in script["lines"]:
+        claim = known.get(line.get("claim") or "")
+        citations = []
+        for artifact_id in (claim.artifacts if claim else ()):
+            ref = refs_by_id.get(str(artifact_id)) or {}
+            target = str(ref.get("url") or ref.get("path") or "")
+            if not target:
+                continue
+            title = str(ref.get("title") or artifact_id).replace("]", r"\]")
+            citations.append(f"[{title}](<{target}>)")
+        source_cell = " · ".join(citations) if citations else "—"
         rows.append(
             f"| {line['id']} | {line['narration']} | {line['caption']} | "
-            f"{line.get('claim') or '—'} | {assets[line['asset_id']]['repo_path']} |"
+            f"{source_cell} | {assets[line['asset_id']]['repo_path']} |"
         )
     master.write_text(
         f"# {project.name} — 脚本文本\n\n"
@@ -2594,6 +2611,14 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
             raise M5Blocked(f"copy review: {exc}") from None
 
     bundle = run_stage("bundle", stage_bundle, project, config)
+
+    # stage_script cites sources/source-refs.json and stage_motion's automatic
+    # shot plan reads it. It used to be written only by the brief bridge, so a
+    # project that entered any other way produced uncited copy and a static-card
+    # film. Materialise it here, before the script stage, idempotently.
+    from production_gates import ensure_source_refs
+
+    ensure_source_refs(project, ROOT)
     if bundle["state"] != "NOT_CONFIGURED":
         stages["bundle"] = bundle
     sources = run_stage("sources", stage_sources, project, config)

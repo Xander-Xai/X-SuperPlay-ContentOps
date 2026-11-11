@@ -102,6 +102,18 @@ def _topic_kind(text: str) -> str:
         return "code"
     if re.search(r"数据|指标|数值|增长|性能|延迟|吞吐|metric", folded):
         return "metric"
+    # Model-training / adaptation topics used to fall through to
+    # "unsupported" and block the whole automatic shot plan. The visual form
+    # of the asset (a verbatim excerpt card, a screenshot, a vector) is not
+    # what this classifier reads: it reads the spoken line's semantics.
+    if re.search(r"证据|声明|收据|工作流|人工审核|复核|门禁|链路|审批|"
+                 r"receipt|workflow|gate", folded):
+        return "workflow"
+    if re.search(
+            r"sft|qlora|lora|微调|量化|低秩|显存|参数|模型|训练|推理|rlhf|"
+            r"nf4|4-bit|4bit|transformer|adapter|注意力|梯度|checkpoint|"
+            r"蒸馏|对齐|监督|预训练|batch|epoch", folded):
+        return "model"
     return "unsupported"
 
 
@@ -167,6 +179,11 @@ def _labelled_steps(kind: str, text: str) -> List[tuple[str, str]]:
         return [("客户端", "screen"), ("协议边界", "network"), ("服务端工具", "gear")]
     if kind == "metric":
         return [("来源指标", "chart"), ("对照口径", "target"), ("结论一条", "check")]
+    if kind == "model":
+        return [("预训练主干", "gear"), ("低秩适配器", "stack"),
+                ("量化与显存", "chart")]
+    if kind == "workflow":
+        return [("真实来源", "doc"), ("人工复核", "check"), ("收据留痕", "stack")]
     return [("真实代码", "screen"), ("配置入口", "gear"), ("运行结果", "check")]
 
 

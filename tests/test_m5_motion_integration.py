@@ -548,7 +548,7 @@ def test_unified_producer_passes_selected_media_into_m5():
                     "human_review": "PENDING_FOUNDER_REVIEW"}
         with (mock.patch.object(sys, "argv", [
                   "produce_video.py", "--project", "projects/demo", "--assets",
-                  str(assets_dir), "--json"]),
+                  str(assets_dir), "--diagnostic", "--json"]),
               mock.patch.object(produce_video, "produce", return_value=expected) as run):
             assert produce_video.main() == 0
             assert run.call_args.kwargs["assets_dir"] == assets_dir.resolve()

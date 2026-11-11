@@ -9,6 +9,12 @@ folder for preview. Production delegates to the existing M5 pipeline and
 pinned Easel renderer. It does not approve copy or publish. A matching QC-
 passed run is reused by input digest.
 
+Stable production entry: use ``scripts/make_content.py run`` instead. That
+wrapper enforces the six production gates (account DNA, copy review, evidence
+links, asset sufficiency, H3 bookends, style/audio) and writes the load-bearing
+``account_slug`` block. Calling this script directly is a diagnostic path and
+does not guarantee those gates.
+
 Usage:
     python scripts/produce_video.py --project projects/my-project
     python scripts/produce_video.py --project projects/my-project --mode REVIEW
@@ -872,7 +878,14 @@ def main(argv: list[str] | None = None) -> int:
                         help="reuse an H3 intro MP4 with its provider receipt")
     parser.add_argument("--avatar-outro-video", default=None,
                         help="reuse an H3 outro MP4 with its provider receipt")
+    parser.add_argument("--diagnostic", action="store_true",
+                        help="skip the production-intent gate for a diagnostic render")
     parser.add_argument("--json", action="store_true")
+    # Credential resolution reads os.environ only. Load the gitignored .env once
+    # at the entry so a key pasted there actually reaches the ASR backcheck.
+    from contentops.media.credentials import load_local_env_file
+
+    load_local_env_file(ROOT / ".env")
     args = parser.parse_args(argv)
     try:
         if args.project:
@@ -888,6 +901,34 @@ def main(argv: list[str] | None = None) -> int:
                     account=args.account, topic=args.topic, source_urls=args.source_url)
             except raw_video_inputs.RoutingError as exc:
                 raise ValueError(str(exc)) from None
+        # Direct calls are a diagnostic path. Real production must have answered
+        # the account/copy/evidence/asset/bookend/style gates through
+        # scripts/make_content.py; without an intent this entry refuses instead
+        # of silently degrading to Windows SAPI and static cards.
+        if not args.diagnostic:
+            import production_gates
+            intent = production_gates.load_intent(project_path)
+            if intent is None:
+                print(json.dumps({
+                    "state": "BLOCKED",
+                    "reason": ("no receipts/production-intent.json; the stable entry is "
+                               "scripts/make_content.py run. Pass --diagnostic for an "
+                               "ungated diagnostic render."),
+                    "reason_code": "PRODUCTION_INTENT_MISSING",
+                }, ensure_ascii=False), file=sys.stderr)
+                return 4
+            # An intent is not executability. Without this check the driver's
+            # produce-video step (which calls this entry) would render for
+            # ~90 seconds before M5 blocked on a missing provider key.
+            readiness = production_gates.runtime_readiness(project_path, intent, ROOT)
+            if not readiness["ok"]:
+                print(json.dumps({
+                    "state": "BLOCKED",
+                    "reason": readiness["detail"],
+                    "reason_code": "PRODUCTION_RUNTIME_NOT_READY",
+                    "problems": readiness["problems"],
+                }, ensure_ascii=False), file=sys.stderr)
+                return 4
         result = produce(project_path, force=args.force, mode=args.mode,
                          rerender_shots=tuple(args.rerender_shot),
                          avatar_generation_choice=(None if args.avatar_generation_choice == "ask"
