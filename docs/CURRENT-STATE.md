@@ -23,6 +23,7 @@
 | Motion workflow (sample gate, handoff, spec) | implemented on `main` (PRs #122–#124) |
 | M5 E2E runs | three real-source runs on `main` (#117, #119), all `PENDING_FOUNDER_REVIEW` |
 | MiniMax speech, image, H3 video | implemented; verified subsets recorded below |
+| Stable production gates (`scripts/make_content.py`, `scripts/production_gates.py`) | implemented; seven fail-closed VIDEO gates and five GRAPHIC_TEXT gates, `account_slug` / `source-refs` / evidence-pack bootstrap, `produce_video` refuses without an intent |
 | Production ready | **false** for every track |
 | Publication count | **0** — no delivery package has a real platform URL |
 

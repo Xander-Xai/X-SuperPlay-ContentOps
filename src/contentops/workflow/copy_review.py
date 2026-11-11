@@ -67,6 +67,12 @@ SOURCE_FILES = ("master.md", "lines.json", "script.json", "claims.json",
 #: move. If it ever gains a timestamp, this entry is the thing to revisit.
 SOURCE_PATHS = (Path("motion") / "timeline.json",)
 
+#: The GRAPHIC_TEXT line has no ``script/`` tree; its copy lives in the draft and
+#: the image plan. Hashing them when present makes a graphic review mean
+#: something, and leaves a video project's fingerprint byte-identical because
+#: neither file exists there.
+GRAPHIC_COPY_FILES = (Path("draft.md"), Path("graphic-input.json"))
+
 #: Build products. Never hashed: they derive from the sources above, and hashing
 #: them would expire a review on every rebuild.
 GENERATED_PATHS = (Path("receipts") / "voice-lines.json",)
@@ -115,6 +121,11 @@ def copy_fingerprint(project: Path) -> str:
             shots.append({key: shot.get(key) for key in COPY_FIELDS})
         parts.append(b"storyboard\0" + _canonical({"shots": shots,
                                                    "size": document.get("size")}))
+    for relative in GRAPHIC_COPY_FILES:
+        source = project / relative
+        if source.is_file():
+            parts.append(b"graphic\0" + relative.as_posix().encode("utf-8") + b"\0"
+                         + source.read_bytes())
     return _sha(b"\n".join(parts))
 
 

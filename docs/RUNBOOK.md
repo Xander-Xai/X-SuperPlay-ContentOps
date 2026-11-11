@@ -77,6 +77,64 @@ projects/my-video/
     storyboard.json  ← per-shot structure with provenance
 ```
 
+## 4.1 Stable production entry (required for real production)
+
+`produce_video.py` and `m5_production.py` are low-level/diagnostic paths. They
+do not require an account, an approved copy, an asset shortfall decision or a
+bookend decision. A run that skips those steps still renders, but silently
+degrades to Windows SAPI, no digital human and
+`receipts/motion-stage.json: NOT_CONFIGURED`.
+
+Use the single stable entry. It asks seven gates, records the answers, and writes
+the load-bearing `account_slug` block that makes account DNA drive the cloned
+voice, the avatar defaults and the Huashu motion backend:
+
+```powershell
+# 1. Answer the gates. --interactive asks: account, what to do when assets are
+#    insufficient (including MiniMax consent), H3 intro/outro, narration voice,
+#    motion backend, and the named reviewer.
+python scripts\make_content.py answer --project projects\my-video --interactive
+
+# 2. Sign copy review separately; the wrapper never signs on a human's behalf.
+python scripts\copy_review.py projects\my-video --approve `
+  --reviewer "Your Name" --opinion "Reviewed the narration" --confirm
+
+# 3. Verify all six gates (exit 4 when any is open).
+python scripts\make_content.py check --project projects\my-video
+
+# 4. Produce only after check is green; run refuses to call the producer otherwise.
+python scripts\make_content.py run --project projects\my-video --mode STRICT
+```
+
+Gates: `account`, `copy_review`, `evidence_links`, `asset_sufficiency`,
+`avatar_bookends`, `style_audio`, `runtime_readiness`. Receipts:
+`receipts/production-intent.json`, `receipts/inputs-bootstrap.json` and
+`receipts/make-content.json`.
+
+- `answer` also materialises `00_brief/evidence-pack.json` and
+  `sources/source-refs.json` from `project.yaml`'s `source_refs` (or, for a
+  GRAPHIC_TEXT project, from the draft's citation links). Without the latter
+  `stage_motion` blocked and the film fell back to static cards.
+- `stage_script` now writes one markdown citation (a title plus a followable
+  url) per claim into
+  `script/master.md`, and `evidence_links` counts them.
+- `runtime_readiness` fails when a chosen capability cannot execute on this
+  host: `MINIMAX_SUBSCRIPTION_KEY` / `MINIMAX_API_KEY` for the cloned voice,
+  `SILICONFLOW_API_KEY` for the account-bound ASR backcheck, the Huashu runtime
+  and `sources/source-refs.json` for motion, and
+  `CONTENTOPS_MEDIA_USE_RUNTIME_LOCK` for a local BGM track.
+- `--asset-policy minimax-authorized` is refused at `answer` time while ADR-014
+  holds or no subscription key exists, instead of recording an option that can
+  never pass.
+- GRAPHIC_TEXT gets its own five gates (`account`, `copy_review`,
+  `evidence_links`, `asset_rights`, `runtime_readiness`); its copy review binds
+  to `draft.md` and `graphic-input.json`.
+- `produce_video.py` refuses to run without `receipts/production-intent.json`
+  (`PRODUCTION_INTENT_MISSING`, exit 4). `--diagnostic` is the explicit escape
+  hatch for an ungated render. `agent_drive.py plan` lists `preflight-gates`.
+- `qc_video.py --video` requires an `.mp4` filename (or `easel` / `fallback`)
+  and refuses to overwrite a CURRENT PASS receipt with a degraded FAIL.
+
 ## 5. Run V1 pipeline
 
 ### Production engine (Easel)

@@ -37,8 +37,14 @@ def _project_path(value: str) -> Path:
         relative_project = project.relative_to(projects_root)
     except ValueError:
         raise ValueError("PROJECT_OUTSIDE_REPO: project must be under projects/<slug>") from None
-    if len(relative_project.parts) != 1:
-        raise ValueError("PROJECT_INVALID: name one project directory directly under projects/")
+    # checkout_guard exempts only projects/_local/ on a dirty main checkout,
+    # so that sandbox must be able to sign its own copy review. Allow exactly
+    # that one two-level shape; refuse any other nesting.
+    local_sandbox = (len(relative_project.parts) == 2
+                     and relative_project.parts[0] == "_local")
+    if not local_sandbox and len(relative_project.parts) != 1:
+        raise ValueError(
+            "PROJECT_INVALID: name projects/<slug> or projects/_local/<slug>")
     if not project.is_dir():
         raise ValueError("PROJECT_MISSING: project directory does not exist")
     return project

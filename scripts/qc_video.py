@@ -262,11 +262,18 @@ def _subtitles_burned(video: Path, sb: dict) -> dict:
 
 def qc(project: Path, target: str = "") -> dict:
     project = project.resolve()
-    # --video selects which render to grade: "easel", "fallback" or an explicit
-    # filename. Defaults to easel.mp4 when it exists (the production render),
-    # otherwise falls back to the legacy final.mp4.
+    # --video selects which render to grade: an engine name ("easel",
+    # "fallback") or an explicit .mp4 filename. A bare slug used to resolve to
+    # a non-existent path and then overwrite a CURRENT PASS receipt with a
+    # two-check FAIL. Refuse the ambiguous target instead of writing anything.
+    if target and not (target in {"easel", "fallback"}
+                       or target.lower().endswith(".mp4")):
+        return {"state": "BLOCKED", "overall": "FAIL",
+                "reason": (f"QC_TARGET_INVALID: {target!r} is neither an engine name "
+                           "nor an .mp4 filename; no receipt was written")}
     if target:
-        final = project / "final" / target
+        filename = target if target.lower().endswith(".mp4") else f"{target}.mp4"
+        final = project / "final" / filename
     else:
         easel_vid = project / "final" / "easel.mp4"
         final = easel_vid if easel_vid.exists() else project / "final" / "final.mp4"
@@ -278,6 +285,20 @@ def qc(project: Path, target: str = "") -> dict:
 
     # 1) final.mp4 exists
     if not final.exists():
+        prior_path = receipts / f"qc-report-{target_name}.json"
+        try:
+            prior = json.loads(prior_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            prior = {}
+        if (prior.get("currency") == "CURRENT"
+                and prior.get("overall") == "PASS"
+                and len(prior.get("checks") or []) > 2):
+            return {"state": "BLOCKED", "overall": prior["overall"],
+                    "reason": ("QC_RECEIPT_PROTECTED: target file is missing but a "
+                               "CURRENT PASS receipt already exists; refusing to "
+                               "overwrite it with a degraded FAIL. Pass an explicit "
+                               ".mp4 filename to grade a different render."),
+                    "preserved_report": str(prior_path)}
         checks.append({
             "id": "final_exists", "ok": False,
             "severity": "FAIL",
