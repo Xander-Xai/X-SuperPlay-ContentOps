@@ -1,0 +1,74 @@
+{
+  "schema": "contentops.channel-candidates/v1",
+  "created_on": "2026-11-11",
+  "scope": "pre-canonical-research-only",
+  "note": "This separate catalog is NOT read by runtime platform routing. It does not change the formal 14-platform Strategy canonical portfolio, account binding, publishing, metrics, costs or commercial source of truth.",
+  "public_candidates": [
+    {
+      "id": "threads",
+      "priority": "P1",
+      "role": "public_discussion",
+      "source_reuse": "reviewed_x_editorial",
+      "content_forms": [
+        "short_text",
+        "discussion"
+      ],
+      "status": "PRE_CANONICAL",
+      "runtime_registered": false,
+      "account_bound": false,
+      "publish_implemented": false,
+      "metrics_implemented": false,
+      "validation": "Native rewrite, human consent/review and real URL only after future authorization"
+    },
+    {
+      "id": "instagram",
+      "priority": "P1",
+      "role": "public_visual",
+      "source_reuse": "reviewed_video_graphics",
+      "content_forms": [
+        "reels",
+        "carousel"
+      ],
+      "status": "PRE_CANONICAL",
+      "runtime_registered": false,
+      "account_bound": false,
+      "publish_implemented": false,
+      "metrics_implemented": false,
+      "validation": "Original rights-cleared vertical demo and native metrics once an authorized experiment exists"
+    },
+    {
+      "id": "facebook",
+      "priority": "P2",
+      "role": "public_community",
+      "source_reuse": "reviewed_video_case",
+      "content_forms": [
+        "reels",
+        "page",
+        "group"
+      ],
+      "status": "PRE_CANONICAL",
+      "runtime_registered": false,
+      "account_bound": false,
+      "publish_implemented": false,
+      "metrics_implemented": false,
+      "validation": "Respect group rules; real target-user questions and receipts before activation"
+    }
+  ],
+  "private_touchpoints": [
+    {
+      "id": "whatsapp",
+      "priority": "P3",
+      "role": "consent_based_lead_follow_up",
+      "runtime_registered": false,
+      "not_a_content_publish_platform": true
+    },
+    {
+      "id": "line",
+      "priority": "P3",
+      "role": "regional_consent_based_lead_follow_up",
+      "runtime_registered": false,
+      "not_a_content_publish_platform": true
+    }
+  ],
+  "promotion_gate": "Only a separate Strategy + OPC canonical mirror and coverage-checker change can register a new publishing platform. This file cannot grant publication permission."
+}
