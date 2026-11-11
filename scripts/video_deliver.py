@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """Pack one finished film into per-platform delivery sets, and hand them over.
 
-This is the runner the VIDEO line was missing. Before it, a run ended with
-``final/<slug>.mp4`` and every platform hand-off was a human retyping the same
-description into a different browser form while guessing that platform's limits.
+This is the runner the VIDEO line was missing. Before it, a run ended with a
+film in ``final/`` (the gated production path writes ``final/<slug>.mp4``; the V1
+engine writes ``final/easel.mp4``) and every platform hand-off was a human
+retyping the same description into a different browser form while guessing that
+platform's limits. ``pack`` takes the first non-``before`` ``*.mp4`` in
+``final/``, so it does not depend on the name.
 
     probe -> shape from account DNA -> validate -> thumbnails -> package
           -> authorize -> argv (and, only with a grant, run the uploader)
