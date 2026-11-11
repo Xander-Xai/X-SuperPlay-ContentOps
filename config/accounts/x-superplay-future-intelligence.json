@@ -1065,7 +1065,7 @@
         "失败与限制",
         "复现和下一步"
       ],
-      "scope": "LLM / RAG / Agent / LangGraph / MCP / Context / Evaluation / Guardrails / Memory / Tool Calling，问题驱动；模型生态覆盖 Qwen、Claude、GPT、Gemini、DeepSeek、Kimi、豆包、开源；AI 娱乐（短剧、游戏、影视、综艺、热梗）"
+      "scope": "LLM / RAG / Agent / LangGraph / MCP / Context / Evaluation / Guardrails / Memory / Tool Calling，问题驱动；模型生态覆盖 Qwen、Claude、GPT、Gemini、DeepSeek、Kimi、豆包、开源；AI 娱乐（短剧、游戏、影视、综艺、热梗；仅 X 平台选题）"
     },
     {
       "name": "从需求到上线",
