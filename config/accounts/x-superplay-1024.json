@@ -409,7 +409,8 @@
   ],
   "platforms": [
     "douyin",
-    "xiaohongshu"
+    "xiaohongshu",
+    "kuaishou"
   ],
   "title": "Easel 实测：能跑，但 Web 工作台六项没过",
   "description": "我把它锁在 v0.2.1，982 个文件逐个核对哈希；doctor 是绿的，但网关健康检查那一行是红的，Web 工作台六项没过。结论：不是开箱即用，但 CLI 和 Skill 线今天能用。",
@@ -1014,6 +1015,16 @@
         "资料请求"
       ],
       "cta": "求配置 / 代码 / 问题",
+      "status": "ACTIVE"
+    },
+    "kuaishou": {
+      "role": "Broad Reach",
+      "signals": [
+        "完播",
+        "点赞",
+        "分享",
+        "评论"
+      ],
       "status": "ACTIVE"
     },
     "bilibili": {
