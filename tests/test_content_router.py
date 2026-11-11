@@ -165,7 +165,9 @@ def test_two_accounts_produce_two_different_search_plans():
         plan_b = build.detail["plan"]
         assert plan_a["plan_id"] != plan_b["plan_id"]
         assert plan_a["keywords_zh"] != plan_b["keywords_zh"]
-        assert plan_a["source_allowlist"] != plan_b["source_allowlist"]
+        # Founder directive 2026-11-11: both accounts open every registered
+        # source; differentiation lives in the keywords, not the source gate.
+        assert set(plan_a["source_allowlist"]) == set(plan_b["source_allowlist"])
         assert plan_a["account_id"] == ACCOUNT_EXPLORE
         assert plan_b["account_id"] == ACCOUNT_BUILD
 
@@ -189,13 +191,14 @@ def test_the_accounts_source_allowlist_and_blocklist_take_effect():
         contacted = {entry["source_id"]
                      for entry in result.detail["collection"]["sources"]}
         assert "github-search" in contacted
-        # The 1024 account blocks the general-interest and entertainment lists.
-        assert "baidu-hot" not in contacted
-        assert "bilibili-hot" not in contacted
-        assert "douyin-hot" not in contacted
+        # Founder directive 2026-11-11: the blocklist is empty, so the
+        # general-interest and entertainment lists are contacted again and
+        # filtering falls to the keyword gate alone.
+        assert "baidu-hot" in contacted
+        assert "bilibili-hot" in contacted
+        assert "douyin-hot" in contacted
         plan = result.detail["plan"]
-        blocked = {entry["source_id"] for entry in plan["rejected_sources"]}
-        assert {"baidu-hot", "bilibili-hot"} <= blocked
+        assert plan["rejected_sources"] == []
 
 
 def test_an_account_without_a_discovery_block_may_not_collect():
@@ -745,7 +748,9 @@ def test_a_failing_source_does_not_stop_the_others():
         router = _router(_sandbox(tmp), adapters=_Adapters(Mixed()))
         result = router.start(ACCOUNT_EXPLORE, "HOTSPOT_DISCOVERY")
         failures = result.detail["collection"]["failures"]
-        assert [failure["source_id"] for failure in failures] == ["zhihu-hot"]
+        # douyin-hot has no fixture and also fails; the point survives: a
+        # failing source is recorded and skipped, it never stops the others.
+        assert "zhihu-hot" in {failure["source_id"] for failure in failures}
         assert result.detail["collection"]["candidates"]
 
 

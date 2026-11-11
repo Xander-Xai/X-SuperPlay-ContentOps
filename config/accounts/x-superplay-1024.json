@@ -144,10 +144,30 @@
         },
         "recommended_variant": "warm-editorial",
         "style_variants": {
-          "warm-editorial": {"bg": "#F4F2ED", "surface": "#FFFFFF", "ink": "#18232B", "sub": "#5C6970", "accent": "#087FA6", "accent2": "#C4DCE3"},
-          "cool-white": {"bg": "#F8FAFB", "surface": "#FFFFFF", "ink": "#16222B", "sub": "#63737A", "accent": "#067F9F", "accent2": "#BCD4DC"}
+          "warm-editorial": {
+            "bg": "#F4F2ED",
+            "surface": "#FFFFFF",
+            "ink": "#18232B",
+            "sub": "#5C6970",
+            "accent": "#087FA6",
+            "accent2": "#C4DCE3"
+          },
+          "cool-white": {
+            "bg": "#F8FAFB",
+            "surface": "#FFFFFF",
+            "ink": "#16222B",
+            "sub": "#63737A",
+            "accent": "#067F9F",
+            "accent2": "#BCD4DC"
+          }
         },
-        "scene_templates": {"proof": "evidence-frame", "demo": "ui-spotlight", "explain": "editorial-diagram", "context": "supportive-still", "transition": "section-marker"},
+        "scene_templates": {
+          "proof": "evidence-frame",
+          "demo": "ui-spotlight",
+          "explain": "editorial-diagram",
+          "context": "supportive-still",
+          "transition": "section-marker"
+        },
         "direction": "result-first; use real terminal, code, and measured output as evidence, then animate focus, comparisons, and process explanations",
         "rules": [
           "animation is visual support and never replaces source evidence",
@@ -501,7 +521,7 @@
   ],
   "discovery": {
     "schema": "contentops.account-discovery/v1",
-    "profile_version": "2026-10-30.1",
+    "profile_version": "2026-11-11.1",
     "profile_source": "config/accounts/x-superplay-1024.json#discovery",
     "declared_by": "Founder. The initial values transcribe this DNA's own pillars, audience, not_doing and platform list; every keyword cites the field it was taken from, and scripts/check_account_dna.py fails the file if a citation does not resolve.",
     "keywords_positive": [
@@ -773,68 +793,67 @@
     ],
     "source_allowlist": [
       {
-        "source_id": "github-search",
-        "why": "新 GitHub 项目：the account tests what a repository actually does, and GitHub's search accepts the account's terms as a server-side query."
-      },
-      {
-        "source_id": "github-trending",
-        "why": "新 GitHub 项目：the trending list is where new tools surface before they are written about."
-      },
-      {
-        "source_id": "juejin-hot",
-        "why": "开发者、产品经理、互联网从业者：a developer list, where a new tool is first tried in anger."
-      },
-      {
-        "source_id": "v2ex-hot",
-        "why": "开发者、产品经理、互联网从业者：where practitioners ask the questions an 实测 episode answers."
-      },
-      {
         "source_id": "36kr-hot",
-        "why": "AI 生意实验室：a business list, where the cost and the market of an AI product are argued."
+        "why": "Founder directive 2026-11-11: widen discovery, open all 15 registered sources. Former blocklist entries reinstated deliberately; candidate filtering still applies."
       },
-      {
-        "source_id": "producthunt",
-        "why": "新工具：a launch list, which is the earliest sighting of a new product."
-      },
-      {
-        "source_id": "hacker-news",
-        "why": "AI 新物种：the English-language list, where a new model or tool is discussed before it reaches Chinese media."
-      },
-      {
-        "source_id": "zhihu-hot",
-        "why": "真实职业任务：a question list, which is where a real职业 task is described."
-      },
-      {
-        "source_id": "weibo-hot",
-        "why": "AI 新玩法：a general interest list, read for the 新玩法 an ordinary user has found."
-      },
-      {
-        "source_id": "ithome",
-        "why": "新模型、新硬件：a hardware and release list."
-      },
-      {
-        "source_id": "trendradar-sqlite",
-        "why": "the account's own TrendRadar deployment, read read-only when it is present."
-      }
-    ],
-    "source_blocklist": [
       {
         "source_id": "baidu-hot",
-        "why": "纯新闻搬运：a general-interest list, which is the account's first not_doing."
-      },
-      {
-        "source_id": "solidot",
-        "why": "纯新闻搬运：a newswire, which is the account's first not_doing."
-      },
-      {
-        "source_id": "douyin-hot",
-        "why": "无目标 AI 娱乐：an entertainment list, which the account's third not_doing excludes."
+        "why": "Founder directive 2026-11-11: widen discovery, open all 15 registered sources. Former blocklist entries reinstated deliberately; candidate filtering still applies."
       },
       {
         "source_id": "bilibili-hot",
-        "why": "无目标 AI 娱乐：an entertainment list, which the account's third not_doing excludes."
+        "why": "Founder directive 2026-11-11: widen discovery, open all 15 registered sources. Former blocklist entries reinstated deliberately; candidate filtering still applies."
+      },
+      {
+        "source_id": "douyin-hot",
+        "why": "Founder directive 2026-11-11: widen discovery, open all 15 registered sources. Former blocklist entries reinstated deliberately; candidate filtering still applies."
+      },
+      {
+        "source_id": "github-search",
+        "why": "Founder directive 2026-11-11: widen discovery, open all 15 registered sources. Former blocklist entries reinstated deliberately; candidate filtering still applies."
+      },
+      {
+        "source_id": "github-trending",
+        "why": "Founder directive 2026-11-11: widen discovery, open all 15 registered sources. Former blocklist entries reinstated deliberately; candidate filtering still applies."
+      },
+      {
+        "source_id": "hacker-news",
+        "why": "Founder directive 2026-11-11: widen discovery, open all 15 registered sources. Former blocklist entries reinstated deliberately; candidate filtering still applies."
+      },
+      {
+        "source_id": "ithome",
+        "why": "Founder directive 2026-11-11: widen discovery, open all 15 registered sources. Former blocklist entries reinstated deliberately; candidate filtering still applies."
+      },
+      {
+        "source_id": "juejin-hot",
+        "why": "Founder directive 2026-11-11: widen discovery, open all 15 registered sources. Former blocklist entries reinstated deliberately; candidate filtering still applies."
+      },
+      {
+        "source_id": "producthunt",
+        "why": "Founder directive 2026-11-11: widen discovery, open all 15 registered sources. Former blocklist entries reinstated deliberately; candidate filtering still applies."
+      },
+      {
+        "source_id": "solidot",
+        "why": "Founder directive 2026-11-11: widen discovery, open all 15 registered sources. Former blocklist entries reinstated deliberately; candidate filtering still applies."
+      },
+      {
+        "source_id": "trendradar-sqlite",
+        "why": "Founder directive 2026-11-11: widen discovery, open all 15 registered sources. Former blocklist entries reinstated deliberately; candidate filtering still applies."
+      },
+      {
+        "source_id": "v2ex-hot",
+        "why": "Founder directive 2026-11-11: widen discovery, open all 15 registered sources. Former blocklist entries reinstated deliberately; candidate filtering still applies."
+      },
+      {
+        "source_id": "weibo-hot",
+        "why": "Founder directive 2026-11-11: widen discovery, open all 15 registered sources. Former blocklist entries reinstated deliberately; candidate filtering still applies."
+      },
+      {
+        "source_id": "zhihu-hot",
+        "why": "Founder directive 2026-11-11: widen discovery, open all 15 registered sources. Former blocklist entries reinstated deliberately; candidate filtering still applies."
       }
     ],
+    "source_blocklist": [],
     "preferred_sources": [
       {
         "source_id": "github-search",
