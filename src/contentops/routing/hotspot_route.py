@@ -36,7 +36,7 @@ from .account_profile import AccountProfile
 from ..hotspots.adapters import FetchResult, RawItem, adapter_for, within_window
 from ..hotspots.dedup import dedupe, distinct_sources, same_story
 from ..hotspots.query_planner import build_search_plan
-from ..hotspots.ranking import build_candidate, rank_candidates, relevance_verdict
+from ..hotspots.ranking import apply_quality_signal, build_candidate, rank_candidates, relevance_verdict
 from ..hotspots.source_registry import NATIVE_SEARCH
 
 
@@ -240,6 +240,10 @@ def collect(profile: AccountProfile, plan: Dict[str, Any], *,
         # The quality judgement travels with the candidate, so a reviewer sees
         # the evidence the gate used rather than an unexplained score.
         full["quality"] = record.get("quality")
+        # Observed weak repository evidence moves the score (never the offer):
+        # a young unstarred repo is not worth the same pool position as one
+        # with no signal against it.
+        full = apply_quality_signal(full)
         full["sources"] = _sources_for(record, merged)
         accepted.append(full)
 

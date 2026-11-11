@@ -480,7 +480,7 @@
         "谁需要",
         "商业机会"
       ],
-      "scope": "新模型、新工具、新 GitHub 项目、新硬件转化为真实能力测试"
+      "scope": "新模型、新工具、新 GitHub 项目、新硬件转化为真实能力测试；模型生态覆盖 Qwen、Claude、GPT、Gemini、DeepSeek、Kimi、豆包与 Agent、MCP、RAG、开源"
     },
     {
       "name": "AI 挑战100个职业",
@@ -521,7 +521,7 @@
   ],
   "discovery": {
     "schema": "contentops.account-discovery/v1",
-    "profile_version": "2026-11-11.1",
+    "profile_version": "2026-11-11.2",
     "profile_source": "config/accounts/x-superplay-1024.json#discovery",
     "declared_by": "Founder. The initial values transcribe this DNA's own pillars, audience, not_doing and platform list; every keyword cites the field it was taken from, and scripts/check_account_dna.py fails the file if a citation does not resolve.",
     "keywords_positive": [
@@ -746,6 +746,70 @@
           "pillar": "AI 挑战100个职业",
           "origin_term": "Workflow",
           "origin_language": "en"
+        }
+      },
+      {
+        "term": "Qwen",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 新物种"
+        }
+      },
+      {
+        "term": "Claude",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 新物种"
+        }
+      },
+      {
+        "term": "GPT",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 新物种"
+        }
+      },
+      {
+        "term": "Gemini",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 新物种"
+        }
+      },
+      {
+        "term": "DeepSeek",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 新物种"
+        }
+      },
+      {
+        "term": "Kimi",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 新物种"
+        }
+      },
+      {
+        "term": "豆包",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 新物种"
+        }
+      },
+      {
+        "term": "开源",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 新物种"
         }
       }
     ],

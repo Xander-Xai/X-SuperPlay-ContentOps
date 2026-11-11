@@ -510,7 +510,7 @@
   ],
   "discovery": {
     "schema": "contentops.account-discovery/v1",
-    "profile_version": "2026-11-11.1",
+    "profile_version": "2026-11-11.2",
     "profile_source": "config/accounts/x-superplay-future-intelligence.json#discovery",
     "declared_by": "Founder. The initial values transcribe this DNA's own pillars, audience, excluded and platform list; every keyword cites the field it was taken from, and scripts/check_account_dna.py fails the file if a citation does not resolve.",
     "keywords_positive": [
@@ -772,6 +772,70 @@
           "origin_term": "Evaluation",
           "origin_language": "en"
         }
+      },
+      {
+        "term": "Qwen",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 工程拆解"
+        }
+      },
+      {
+        "term": "Claude",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 工程拆解"
+        }
+      },
+      {
+        "term": "GPT",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 工程拆解"
+        }
+      },
+      {
+        "term": "Gemini",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 工程拆解"
+        }
+      },
+      {
+        "term": "DeepSeek",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 工程拆解"
+        }
+      },
+      {
+        "term": "Kimi",
+        "language": "en",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 工程拆解"
+        }
+      },
+      {
+        "term": "豆包",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 工程拆解"
+        }
+      },
+      {
+        "term": "开源",
+        "language": "zh",
+        "origin": {
+          "kind": "pillar_scope",
+          "pillar": "AI 工程拆解"
+        }
       }
     ],
     "keywords_negative": [
@@ -961,7 +1025,7 @@
         "失败与限制",
         "复现和下一步"
       ],
-      "scope": "LLM / RAG / Agent / LangGraph / MCP / Context / Evaluation / Guardrails / Memory / Tool Calling，问题驱动"
+      "scope": "LLM / RAG / Agent / LangGraph / MCP / Context / Evaluation / Guardrails / Memory / Tool Calling，问题驱动；模型生态覆盖 Qwen、Claude、GPT、Gemini、DeepSeek、Kimi、豆包、开源"
     },
     {
       "name": "从需求到上线",
