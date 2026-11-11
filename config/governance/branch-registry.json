@@ -56,6 +56,14 @@
       "purpose": "documentation truth: Tier-1 fact sync, Chinese-primary README, documentation freshness gate",
       "status": "merged",
       "expires": "2026-12-12"
+    },
+    {
+      "name": "chore/registry-closeout-20261112",
+      "pr": 161,
+      "created": "2026-11-12",
+      "purpose": "mark the #158 and #160 branches merged and register this closeout branch",
+      "status": "active",
+      "expires": "2026-12-12"
     }
   ]
 }
