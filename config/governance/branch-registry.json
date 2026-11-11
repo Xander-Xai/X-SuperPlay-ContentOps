@@ -48,6 +48,14 @@
       "purpose": "non-runtime overseas channel candidate catalog (Threads/Instagram/Facebook/WhatsApp/LINE)",
       "status": "active",
       "expires": "2026-12-11"
+    },
+    {
+      "name": "docs/doc-truth-20261112",
+      "pr": 160,
+      "created": "2026-11-12",
+      "purpose": "documentation truth: Tier-1 fact sync, Chinese-primary README, documentation freshness gate",
+      "status": "active",
+      "expires": "2026-12-12"
     }
   ]
 }
