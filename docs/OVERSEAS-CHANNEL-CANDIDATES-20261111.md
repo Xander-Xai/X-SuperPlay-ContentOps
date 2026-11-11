@@ -1,39 +1,33 @@
-# Overseas channel candidate registry (2026-11-11)
+# Overseas channel research candidates (2026-11-11)
 
-**Status: metadata only / disabled. This document does not authorize production, account access, distribution, analytics, or publishing.**
+**Status: proposed / not executable.** The public file `config/registry/channel-candidates.json` is a **non-runtime planning catalog**. It is deliberately separate from `config/registry/platforms.json`, which must remain aligned with Strategy's 14-platform canonical portfolio. No changes to account binding, production flow, distribution or metrics have been made.
 
-## Scope
+| ID | Research priority | Potential content reuse | Runtime status |
+|---|---|---|---|
+| `threads` | P1 | Human-reviewed X editorial rewritten as native discussion | absent from runtime registry |
+| `instagram` | P1 | Rights-cleared Reels / Carousel built from an approved visual asset | absent from runtime registry |
+| `facebook` | P2 | Approved Reels / case studies; optional relevant Page / Group discussion | absent from runtime registry |
+| `whatsapp` | P3 | Consent-based inquiry/follow-up, not public publishing | private conversion only |
+| `line` | P3 | Region-specific consent-based inquiry/follow-up | private conversion only |
 
-The existing ContentOps platform registry has three **pre-canonical** candidate rows:
+## Separation and fail-closed contract
 
-| ID | Future content reuse | Current pipeline | Account | Publication | Metrics |
-|---|---|---|---|---|---|
-| `threads` | Source-verified X text → native discussion rewrite | `CANDIDATE_NOT_ROUTED` | none | `NOT_IMPLEMENTED` | `NONE` |
-| `instagram` | Approved vertical video / Carousel | `CANDIDATE_NOT_ROUTED` | none | `NOT_IMPLEMENTED` | `NONE` |
-| `facebook` | Approved Reels / business case / Page/Group post | `CANDIDATE_NOT_ROUTED` | none | `NOT_IMPLEMENTED` | `NONE` |
+- Canonical runtime registry `config/registry/platforms.json` has **no** Facebook, Instagram or Threads entries. `workflow_routes` refuses these names as `PLATFORM_UNKNOWN`.
+- Candidate catalog is not loaded by content routing, publishing, scheduled work, account resolution or metrics collection. The catalog's `PRE_CANONICAL` value is not a runtime platform status.
+- No new API integration, OAuth, script, browser action, automated post, follower manipulation, qualified data or observed engagement is claimed.
+- WhatsApp and LINE are not content-publishing destinations. Customer data, consent records and revenue remain outside this public repository in appropriately controlled systems.
 
-All three are `PLANNED`, `manual_review=true`, `owner=""`, with no credentials, public account binding or implementation. They are **not** part of the Strategy canonical 14-platform portfolio or its operating quota, do not claim `INTEGRATED`, and must not appear as runnable `VIDEO` or `X_EDITORIAL` pipelines. No API and no automatic metrics/publishing functionality is introduced.
+## Future approval and acceptance
 
-WhatsApp and LINE are prospective **private conversion touchpoints**. They are intentionally absent from `config/registry/platforms.json` because this registry is for content distribution rather than customer conversations. The commercial source of truth and consent-based lead handling belong outside ContentOps.
+1. Strategy validates the audience hypothesis, account region, rights and a reuse-first platform-native content format; existing Source / Content Bundle evidence remains authoritative.
+2. Human operator checks platform-specific publishing, AI/partnership disclosures and rights; do not copy a source post without reworking its packaging.
+3. Only after a **separate** Strategy + OPC canonical mirror sync and coverage test review may a channel be registered as a real platform in the runtime registry.
+4. Implement a minimal manual publishing package, then retain an actual published URL, account/timezone, source/evidence pointer and real metrics (missing values are `unknown`).
+5. Evaluate independent qualified discussion / concrete questions / commercial signals relative to re-editing cost; pause unproductive platforms.
+6. Do not promote technical or content activity into OPC revenue, payment or accepted demand.
 
-## Proposed future intake
+## Test and review
 
-1. Strategy approves a specific experimental objective, account/territory fit and native platform Playbook.
-2. Human-reviewed Content Bundle is checked for claim evidence, rights, AIGC/partnership labels and target-language adaptation.
-3. Produce an **offline** native package through a future adapter (not implemented by this change).
-4. Human operator manually publishes, then records an actual public URL and timezone-specific timestamp. Never manufacture a receipt.
-5. Store real metric snapshots when available; absent values are `unknown`, never inferred from source platforms.
-6. Evaluate qualified interaction and extra editing time before adding a live adapter. Any canonical portfolio change requires Strategy + OPC mirror synchronization and independent review.
+`python tests/test_platform_registry.py` checks canonical runtime membership, non-runtime candidate structure and `PLATFORM_UNKNOWN` refusal. The separate `python tests/test_platform_status_sync.py` must keep passing without changing the shipped 14-platform Strategy mirror. The repository's CI is the final branch acceptance signal.
 
-## Explicit non-goals
-
-- No new posting API, OAuth scope, social scraping, automated replies, unsolicited direct messages or background scheduling.
-- No new video production pipeline, duplicated account DNA, paid provider calls, or automatic engagement behavior.
-- No claimed account eligibility, payouts, audience growth, or published post.
-- No change to X manual-only flow, YouTube planned status or the existing 14 canonical platform IDs.
-
-## Validation
-
-`python tests/test_platform_registry.py` covers disabled candidates, no executable commands, no publication authority, account isolation and complete registry integrity. In PR CI, run the standard repository checks as configured. The branch itself is not evidence of runtime success.
-
-Strategy design reference: `X-SuperPlay-Strategy/03-Execution/Overseas-Channel-Expansion-20261111.md`.
+Strategy counterpart: `X-SuperPlay-Strategy/03-Execution/Overseas-Channel-Expansion-20261111.md`.
