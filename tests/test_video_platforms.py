@@ -140,8 +140,11 @@ def test_hook_deadline_is_measured_not_assumed() -> None:
 
 
 def test_account_dna_decides_which_platforms_are_packaged() -> None:
+    # 2026-11-11: the operator put kuaishou on the same Chinese video line as
+    # douyin/xiaohongshu, so the DNA now declares five VIDEO targets. The order
+    # is DNA order -- primary ``platforms`` first, then ``derived_platforms``.
     assert video_package.targets(DNA_1024) == [
-        "douyin", "xiaohongshu_video", "bilibili", "shipinhao",
+        "douyin", "xiaohongshu_video", "kuaishou", "bilibili", "shipinhao",
     ], video_package.targets(DNA_1024)
 
 

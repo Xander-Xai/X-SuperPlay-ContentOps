@@ -45,7 +45,8 @@ def test_video_plan_is_ordered_and_ends_with_a_human_step():
     plan = driver.build_plan(VIDEO_PROJECT, ROOT)
     ids = [step["id"] for step in plan["steps"]]
     assert plan["format"] == "VIDEO"
-    assert ids == ["host-status", "produce-video", "qc-video", "human-review"]
+    assert ids == ["host-status", "preflight-gates", "produce-video", "qc-video",
+                   "human-review"]
     assert plan["steps"][-1]["runnable"] is False
     assert plan["steps"][-1]["authority"] == "HUMAN_ONLY"
     assert plan["production_ready"] is False
@@ -76,7 +77,7 @@ def test_plan_refuses_an_unknown_project_format():
 def test_a_dry_run_never_executes_or_writes_a_receipt():
     result = driver.run_step(VIDEO_PROJECT, "produce-video", root=ROOT, execute=False)
     assert result["executed"] is False
-    assert "m5_production.py" in " ".join(result["argv"])
+    assert "produce_video.py" in " ".join(result["argv"])
     assert not (VIDEO_PROJECT / "receipts" / "agent-driver-produce-video.json").exists()
 
 
@@ -489,7 +490,7 @@ def test_a_blocked_host_does_not_refuse_its_diagnostic_or_production_steps():
         # resolves argv instead of raising PREREQUISITE_MISSING.
         result = driver.run_step(project, "produce-video", root=ROOT, execute=False)
         assert result["executed"] is False
-        assert "m5_production.py" in " ".join(result["argv"])
+        assert "produce_video.py" in " ".join(result["argv"])
 
 
 def _write_ok_receipt(project: Path, plan_project: str, step_id: str) -> None:

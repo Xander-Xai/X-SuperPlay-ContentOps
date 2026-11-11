@@ -210,17 +210,18 @@ def test_the_two_accounts_search_for_different_things():
     explore = load_profile(ROOT, "x-superplay-1024")
     build = load_profile(ROOT, "x-superplay-future-intelligence")
     assert set(explore.positive_terms) != set(build.positive_terms)
-    assert set(explore.source_allowlist) != set(build.source_allowlist)
     assert set(explore.negative_terms) != set(build.negative_terms)
 
 
-def test_the_two_accounts_block_different_sources():
+def test_both_accounts_open_every_registered_source():
+    # Founder directive 2026-11-11: discovery was too narrow, so every
+    # registered source is allowed for both accounts. Differentiation now
+    # lives entirely in the keyword filters, not in the source gate.
     explore = load_profile(ROOT, "x-superplay-1024")
     build = load_profile(ROOT, "x-superplay-future-intelligence")
-    assert set(explore.source_blocklist) != set(build.source_blocklist)
-    # Both block the general-interest lists.
-    assert "baidu-hot" in explore.source_blocklist
-    assert "baidu-hot" in build.source_blocklist
+    for profile in (explore, build):
+        assert set(profile.source_allowlist) == set(SOURCES)
+        assert not profile.source_blocklist
 
 
 def test_every_allowed_source_exists_in_the_registry():

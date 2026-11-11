@@ -5,7 +5,9 @@
       "url": "https://github.com/langchain-ai/langgraph",
       "snippet": "Build resilient language agents as graphs: state, checkpoints, human in the loop.",
       "published_at": "NOW-3h",
-      "metrics": {"stars": 42000}
+      "metrics": {
+        "stars": 42000
+      }
     },
     {
       "title": "unrelated/dataframe-toolkit",
@@ -102,7 +104,7 @@
     {
       "title": "AI 娱乐向内容盘点",
       "url": "https://bilibili.com/video/1",
-      "snippet": "和实测无关的娱乐内容。",
+      "snippet": "一段与工作无关的日常消遣视频。",
       "published_at": "NOW-1h"
     }
   ],
