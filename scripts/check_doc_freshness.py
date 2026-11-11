@@ -218,6 +218,20 @@ def _mirror_of(rel: str) -> str:
     return check_i18n._mirror_rel(rel) if mirror.exists() else ""
 
 
+def _is_shallow() -> bool:
+    """True when the checkout has truncated history.
+
+    In a shallow clone every path appears to change at the tip commit, so a
+    staleness verdict there is an artefact of the clone, not a fact about the
+    docs. Say that explicitly instead of reporting a bogus STALE.
+    """
+    result = hidden_run(
+        ["git", "-C", str(ROOT), "rev-parse", "--is-shallow-repository"],
+        capture_output=True, text=True, timeout=30,
+    )
+    return (result.stdout or "").strip() == "true"
+
+
 def _changes_since(paths: list[str], since: str) -> list[tuple[str, str, str]]:
     """Commits touching ``paths`` whose committer date is after ``since``.
 
@@ -265,8 +279,16 @@ def main(argv: list[str] | None = None) -> int:
 
     import check_i18n
 
+    shallow = _is_shallow()
     findings = evaluate(tracks, _read_text, _mirror_of, _changes_since, today)
     findings += coverage_gaps(check_i18n.TIER1_DOCS, tracks, exempt)
+    if shallow and not args.report_only:
+        findings.append(Finding(
+            "ERROR", "repository",
+            "shallow clone: git history is truncated, so every path looks changed at "
+            "the tip and freshness cannot be verified. Fetch full history "
+            "(`git fetch --unshallow`, or actions/checkout with fetch-depth: 0).",
+        ))
 
     stale = [f for f in findings if f.level == "STALE"]
     errors = [f for f in findings if f.level == "ERROR"]

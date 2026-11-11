@@ -215,6 +215,9 @@ class RealRepositoryTests(unittest.TestCase):
                             f"exemption without a reason: {entry.get('doc')}")
 
     def test_repository_is_current(self):
+        if freshness._is_shallow():
+            self.skipTest("shallow clone: history is truncated, so staleness "
+                          "cannot be judged here (CI checks out full history)")
         code, out = self._silent(freshness.main, [])
         self.assertEqual(code, 0, out)
 

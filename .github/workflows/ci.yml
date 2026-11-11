@@ -38,6 +38,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Full history: the documentation-freshness suite compares each tracked
+          # doc's date against the commits that touched its mapped code. In a
+          # shallow clone every path looks changed at the tip, which is a clone
+          # artefact rather than a stale doc.
+          fetch-depth: 0
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -328,11 +334,14 @@ jobs:
       - name: Run checkout guard tests
         run: python tests/test_checkout_guard.py
 
-      # Six production gates must pass before a producer runs: account DNA,
-      # copy review, evidence links, asset sufficiency, H3 bookends and
-      # style/audio. Also guards QC receipts against a degraded overwrite.
+      # Eight VIDEO gates / six GRAPHIC_TEXT gates must pass before a producer
+      # runs, including the signed pre-copy research gate. Also guards QC
+      # receipts against a degraded overwrite.
       - name: Run production gates tests
         run: python tests/test_production_gates.py
+
+      - name: Run pre-copy research gate tests
+        run: python tests/test_precopy_research.py
 
       # The short motion-sample technical gate: 4-8 s, silent, 1080x1920,
       # H.264/yuv420p, CFR 30, digest-bound. It stops at PENDING_FOUNDER_REVIEW
