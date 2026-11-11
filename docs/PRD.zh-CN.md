@@ -6,6 +6,10 @@ translation_status: synced
 
 # PRD — X-SuperPlay ContentOps 运行时
 
+> 最后验证：2026-11-12，`main` 的 `c1da6dd`。需求状态按该日期的代码核对；
+> 标为“已实现”只表示本仓库有代码，不等于有作品被发布。
+
+
 [English](PRD.md) | [简体中文](PRD.zh-CN.md)
 
 ## 1. 背景
@@ -110,7 +114,7 @@ Founder（Xander-Xai）— 需要从真实工作产出高质量视频，最少�
 
 | ID | 需求 | 本分支状态 |
 |---|---|---|
-| FR-1 | 从任何 Xander-Xai 业务仓库摄取 SourceArtifact | **部分** — M5 摄取仓库文档/锁；跨仓库适配器未合并 |
+| FR-1 | 从任何 Xander-Xai 业务仓库摄取 SourceArtifact | **部分** — M5 摄取仓库文档/锁；一个 GitHub 仓库适配器已在 `main`，路由层已合并，其他仓库尚未覆盖 |
 | FR-2 | 从证据生成主脚本（LLM 起草，证据校验） | M5 fixture 路径**已实现**；创作仍属编辑工作 |
 | FR-3 | 产出带逐镜来源的结构化分镜 | **已实现** |
 | FR-4 | 通过 MiniMax 套餐生成语音（回退：edge-tts） | **已实现**，`PENDING_FOUNDER_REVIEW` |
@@ -120,6 +124,9 @@ Founder（Xander-Xai）— 需要从真实工作产出高质量视频，最少�
 | FR-8 | 运行自动 QC（技术 + 内容 + 事实） | 技术/证据**已实现**；内容/事实仍由人工判断 |
 | FR-9 | 人工审核门控（100 分评分卡） | **门控已实现；尚未被满足** |
 | FR-10 | 每次运行产出完整凭证 | **已实现** |
+| FR-11 | 通过固定版本校验器渲染图文卡片与公众号文章 HTML | **已实现（离线）** —— `render_cards.py`、`render_article.py`；回执恒为 `production_ready: false` |
+| FR-12 | 打包各平台交付集，但不发布 | **已实现** —— `video_deliver.py`、`platform_delivery.py`、`graphic_deliver.py`；0 条交付回执、0 个已记录 URL |
+| FR-13 | 所有生产者之前的唯一受门禁生产入口 | **已实现** —— `make_content.py` + `production_gates.py`（7 个 VIDEO / 5 个 GRAPHIC_TEXT 门禁） |
 
 ## 9. 非功能需求
 

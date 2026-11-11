@@ -28,6 +28,7 @@ translation_status: synced
 | 归档 | `branches/main.bundle`(关闭时快照) |
 | 重开条件 | 有明确交付窗口并选定真实来源时,开新 Issue 并引用此条 |
 | 状态 2026-11-04(closeout 后) | **实际已重开。** `main` 已提交三次真实来源运行(PR #117、#119);每次均通过自动与视觉 QC,并停在 `PENDING_FOUNDER_REVIEW`。Issue #6 保持开放,等待 Founder 对三个成片 MP4 的人工评审;除此之外工程验收已完成 |
+| 状态 2026-11-12 | **已解决。** Founder 人工评审 PASS 于 2026-11-10 记录,Issue #6 当日关闭(08:26Z)。该批准记录在 issue 中,而不是项目内的 `human-review.json`,因此本条关闭,但"每项目评审门"仍是 CURRENT-STATE 中的已知阻碍 |
 
 ### D-2 — Issue #51:XHS 迁移
 

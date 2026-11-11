@@ -2,6 +2,8 @@
 
 [English](ARCHITECTURE.md) | [简体中文](ARCHITECTURE.zh-CN.md)
 
+> Last verified: 2026-11-12 on `main` at `c1da6dd`.
+
 > What the system is. Where the boundaries are. How components call each other.
 > Describes the target architecture after the 2026-11-02 host decision, and
 > marks what is verified today. A target section is not a running capability.
@@ -118,8 +120,12 @@ Rules:
    for an article. It runs `contentops.copy-to-graphic/v1`
    (`brief → outline → draft → images → layout → quality → delivery`) and reuses the
    gate's ordering, fingerprint invalidation and human approval rather than forking them.
-   Its current product is a **manual package** (`scripts/graphic_package.py`) that stops
-   at `AWAITING_MANUAL_REVIEW`; it is not an HTML renderer or a WeChat publisher.
+   Its product moves through three named steps, none of which publishes: a **manual
+   package** (`scripts/graphic_package.py`, stops at `AWAITING_MANUAL_REVIEW`), a
+   **render/validate** step (`scripts/render_cards.py`, `scripts/render_article.py`, which
+   call pinned Easel skills and write receipts that keep `production_ready: false`), and a
+   **delivery pack** (`scripts/platform_delivery.py`, `scripts/graphic_deliver.py`,
+   draft-only through a process boundary).
 4. **Platform adapters are delivery, not production.** A platform never gets its own
    production engine. See §What ContentOps Does NOT Own.
 5. **Shared engine extraction is earned, not assumed.** A common abstraction over the two
@@ -132,6 +138,11 @@ Rules:
    exposes an ordered step list with fixed argv, `READ` / `PRODUCE` / `HUMAN_ONLY`
    authorities, and a receipt per execution. There is no publish, credential or install
    step, and `human-review` is refused when a driver asks for it (ADR-017).
+8. **Delivery is packaging, not publishing.** Every runner produces packs and drafts.
+   An uploader exit is recorded as an exit (`UPLOADER_EXIT_0`), and only a URL a person
+   actually saw is recorded as a URL. No delivery run raises a platform row above
+   `PLANNED`, and `video_deliver.py dispatch` requires an operator grant on top of
+   `--execute`.
 
 ## Branch Layers
 
@@ -159,9 +170,19 @@ runnable here.
 ```text
 scripts/
 ├── run_v1.py             ← V1 orchestrator (easel + fallback engines)
-├── m5_production.py      ← Evidence-first chain (sources → … → review)
+├── make_content.py       ← Stable production entry (gate-checked, six decisions)
+├── production_gates.py   ← 7 VIDEO + 5 GRAPHIC_TEXT fail-closed gates
+├── produce_video.py      ← Diagnostic producer behind make_content.py
+├── m5_production.py      ← Evidence-first chain (sources → … → review → ASR backcheck)
+├── m5_characterize.py    ← Records the M5 suite pass counts a refactor must keep
 ├── bundle_handoff.py     ← Bundle → VIDEO / GRAPHIC_TEXT plan
 ├── graphic_package.py    ← Manual graphic package (stops at review)
+├── render_cards.py       ← HTML cards → PNG + density audit (pinned skill)
+├── render_article.py     ← Article HTML validation + preview wrap (pinned skill)
+├── video_deliver.py      ← Per-platform video packs; dispatch needs an operator grant
+├── platform_delivery.py  ← Graphic packs + draft-only handoff (offline)
+├── graphic_deliver.py    ← One bridge process, batched draft sync per platform
+├── wechat_draft.py       ← GZH draft path (DRAFT_ONLY, operator grant)
 ├── easel_host.py         ← Guarded host status / loopback serve
 ├── assemble_easel.py     ← Easel orchestration adapter (Windows subtitle workaround)
 ├── qc_video.py           ← Automated technical + evidence QC

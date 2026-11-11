@@ -4,34 +4,64 @@
 
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
-> Last verified: 2026-11-11 on `main` at `bcd5dd1` (PR #154; governance round 4).
+> Last verified: 2026-11-12 on `main` at `c1da6dd` (PR #159; read-only documentation sync).
 > Facts below describe `main`; deferred or rights-blocked work is labelled as such.
 > Sections below the "Layer status" table are historical milestone records;
 > they describe how a capability was proven, not what is current.
 
-## Layer status (2026-11-04)
+## Layer status (2026-11-12)
 
 | Layer | Status |
 |---|---|
 | M5 evidence chain, media contracts, QC, media-use adapter, skill router/authorization | implemented |
-| Platform registry (`config/registry/platforms.json`, `src/contentops/platforms/`) | implemented on `main` (PR #101); 10 local entries for 9 Strategy platforms, one `INTEGRATED` (`x`), nine `PLANNED` |
+| Stable production entry (`scripts/make_content.py`, `scripts/production_gates.py`) | implemented (PR #157); seven fail-closed VIDEO gates (`account`, `copy_review`, `evidence_links`, `asset_sufficiency`, `avatar_bookends`, `style_audio`, `runtime_readiness`) and five GRAPHIC_TEXT gates (`account`, `copy_review`, `evidence_links`, `asset_rights`, `runtime_readiness`); a direct `m5_production.py` / `produce_video.py` run is a diagnostic path |
+| Platform registry (`config/registry/platforms.json`, `src/contentops/platforms/`) | implemented on `main` (PR #101, routes added in #141); 9 local entries for 9 Strategy platforms, one `INTEGRATED` (`x`), eight `PLANNED` |
+| Video delivery (`scripts/video_deliver.py`) | implemented offline: `plan` / `pack` / `status` / `record`; `dispatch` requires an operator grant. No receipt in this repository records a published URL |
+| Graphic delivery (`scripts/platform_delivery.py`, `scripts/graphic_deliver.py`, `src/contentops/platforms/wcs_bridge*`) | implemented offline: packs and draft-only handoff through an external CLI across a process boundary (`wechatsync`). No `PUBLISHED` branch; URL recording is a human action |
+| Card and article rendering (`scripts/render_cards.py`, `scripts/render_article.py`) | implemented (PRs #149, #152); validates through the pinned Easel card/gzh skills and writes receipts with `production_ready: false` |
+| ASR backcheck gate (`scripts/m5_production.py::stage_asr_backcheck`) | implemented (PR #150); `SKIPPED` without `SILICONFLOW_API_KEY`, blocks human review on a coverage failure, never approves |
+| M5 characterization baseline (`scripts/m5_characterize.py`) | implemented (PR #153); `docs/m5-baseline/m5-characterization-2026-11-10.md` fixes slice-1 pass counts for #140 |
 | Content Bundle consumption + two-format handoff (`src/contentops/content_kernel/`) | implemented offline; VIDEO and GRAPHIC_TEXT plans, no publication |
 | Easel host guard (`src/contentops/easel/`, `scripts/easel_host.py`) | implemented offline (PR #108); `HOST_BLOCKED` on this machine (FastAPI/uvicorn absent), mutations denied |
 | Graphic manual package (`src/contentops/graphic/`, `scripts/graphic_package.py`) | implemented offline; stops at `AWAITING_MANUAL_REVIEW`; no delivered package yet |
-| Content router, account DNA, brief/script/design stages | S1–S4 on `main` (PRs #114, #118); brief→M5 bridge merged, still gate-bound to a human-approved brief |
-| XHS / X / GZH platform tracks | adapters merged that verify but never execute (PRs #121, #125, #127); rights unresolved; no execution or publication |
-| Motion workflow (sample gate, handoff, spec) | implemented on `main` (PRs #122–#124) |
+| Content router, account DNA, brief/script/design stages | S1–S4 on `main` (PRs #114, #118); 15 hotspot sources registered with 1 `NATIVE_SEARCH` (GitHub) and 14 `LIST_ONLY`, opened to both account DNAs in #157; brief→M5 bridge merged, still gate-bound to a human-approved brief |
+| X / GZH platform tracks | X manual-only gate (#127); GZH renderer, SDK adapter, workflow runner and a `DRAFT_ONLY` draft path (#145, #152); both verify and never publish, rights unresolved (Issues #51, #56). **The XHS runtime adapter was removed on 2026-11-09** (`src/contentops/xhs/` is empty, `graphic_workflow.py` names gzh/x/video only); only the `xiaohongshu_video` registry row and delivery-channel config remain. Every registry row except `x` stays `PLANNED` |
+| Motion workflow (sample gate, handoff, spec) | implemented on `main` (PRs #122–#124); region picking from verifiable source anchors (#142) |
 | M5 E2E runs | three real-source runs on `main` (#117, #119), all `PENDING_FOUNDER_REVIEW` |
 | MiniMax speech, image, H3 video | implemented; verified subsets recorded below |
-| Stable production gates (`scripts/make_content.py`, `scripts/production_gates.py`) | implemented; seven fail-closed VIDEO gates and five GRAPHIC_TEXT gates, `account_slug` / `source-refs` / evidence-pack bootstrap, `produce_video` refuses without an intent |
 | Production ready | **false** for every track |
 | Publication count | **0** — no delivery package has a real platform URL |
 
 ## Git
 
-> **Git state is re-verified below at 2026-11-11 (governance round 4).** Every
-> section below it is a historical snapshot kept for traceability; none of them
-> is the current state.
+> **Git state is re-verified below at 2026-11-12 (read-only documentation
+> sync).** Every other section below it is a historical snapshot kept for
+> traceability; none of them is the current state.
+
+### Git — verified 2026-11-12 (read-only documentation sync)
+
+| Property | Verified value |
+|---|---|
+| Default branch | `main` — protected @ `c1da6dd` (PR #159, governance registry pass, committed 2026-11-11 19:56Z). Preceding merges: `fed3dd3` (#157 open all 15 hotspot sources) ← `1bcb2fb` (#156) ← `3358158` (#155) ← `bcd5dd1` (#154) |
+| Open PRs | **1**: #158 `docs(test): add isolated overseas channel candidate catalog without runtime registration` — documentation and test only, no runtime registration |
+| Open issues | **4**: #7 (EPIC), #51 / #56 (OPEN / DEFERRED rights gates), #140 (M5 stage split; slice 1 landed via `e4987fa8`) |
+| Remote branches | **3**: `main`, `archive/minimax-wt-snapshot-20261110`, `feat/overseas-channel-candidates-20261111` (PR #158; registry status `active`, review date 2026-12-11) |
+| Remote tags | **2**: `archive/converge-a2910c6`, `archive/pr1-pr2-1c127df` — unchanged |
+| Branch protection | 3 required checks (`Tests (ubuntu-latest)`, `Tests (windows-latest)`, `Repo policy checks`), `strict=true`, `enforce_admins=true`, 0 approvals, linear history, no force push, no deletion, squash only |
+| Local worktrees | **1**: the primary worktree only |
+| Stash | **0** |
+| CI on `main` | `CI @ c1da6dd = success`; `CI @ fed3dd3 = success` |
+| Local policy gates | `check_branch_registry.py --today 2026-11-12` PASS (4 branches, 1 persistent, 0 retire-due); `check_untracked_projects.py` reports 0 untracked projects; `check_governance_ledger.py` PASS after this sync |
+
+This round changed documentation only; no runtime behaviour, registry status or
+platform row was touched. The Git rows above were read from the live GitHub API
+(commit head, open PR/issue lists, branch list, tag list, protection object,
+workflow runs) on 2026-11-12, and the local gates were run on this machine.
+The ledger check that ships with the repository remains **offline
+internal-consistency only** — it does not query GitHub and is not evidence
+about remote state. `docs/PLATFORM-INTEGRATION-STATUS.md` was corrected in the
+same pass: it still listed a `xiaohongshu_image` registry row that no longer
+exists.
 
 ### Git — verified 2026-11-11 (governance round 4)
 
@@ -297,6 +327,36 @@ Two entry points share the pinned Easel composer. Neither publishes.
 Diagnostic engine: `python scripts/run_v1.py <project> --engine fallback`
 (ffmpeg-only, never production, never reports `production_ready: true`).
 
+## Delivery Layer (2026-11-12)
+
+The outbound end of the pipeline. It packs and hands over; it never publishes,
+and no delivery receipt in this repository records a platform URL.
+
+| Property | Value |
+|---|---|
+| VIDEO entry | `scripts/video_deliver.py` — `plan` / `pack` / `status` / `dispatch` / `login` / `check` / `record` |
+| VIDEO pack | a `06_delivery/` set per platform: title shaped to that platform's limits (the original is kept), mechanical frame-crop thumbnails labelled as crops, and a receipt |
+| Uploader result | exit 0 is recorded as `UPLOADER_EXIT_0`. It is never a published claim; `record` is the only path that writes a URL a person actually saw |
+| Graphic entry | `scripts/platform_delivery.py` (`list` / `self-test` / `pack` / `dispatch` / `status`) and `scripts/graphic_deliver.py` (one bridge, batched sync per platform) |
+| Graphic channels | `config/platforms/graphic-platforms.yaml`: `wechat_article`, `zhihu`, `csdn`, `x`, `juejin`, `toutiao`, `weibo`. `xiaohongshu_image` sits under `excluded` because the platform belongs to the VIDEO line (operator instruction 2026-11-09) |
+| External tools | the `wechatsync` CLI and browser bridge live in the gitignored `.runtime/` tree and are invoked across a process boundary. They are never imported into the Apache-2.0 source tree |
+| Draft, not publication | every graphic call creates a platform draft. `multichannel` has no `PUBLISHED` branch and `publish` raises without a fully verified authorization |
+| Authority | none over publication, account login, metrics or registry status. No `platforms.json` row is upgraded by a delivery run |
+| Result here | **0** delivery receipts under `projects/`; the publication count above stays 0 |
+| Tests | `test_delivery_gate.py`, `test_video_platforms.py`, `test_platform_registry.py`, `test_platform_status_sync.py`, `test_workflow_contract.py` — all offline |
+
+## Card and GZH Article Rendering (2026-11-12)
+
+| Property | Value |
+|---|---|
+| Card renderer | `scripts/render_cards.py` → pinned `render_card.py` and `card_audit.py` (density gate); writes `receipts/card-render.json`; exit 4 when a card is blocked or the audit fails |
+| Article renderer | `scripts/render_article.py` → pinned `validate_gzh_html.py` and `wrap_preview.py`; writes `receipts/gzh-article.json` |
+| Interpreter | `CONTENTOPS_CARD_PYTHON` / `CONTENTOPS_PYTHON`, plus `PLAYWRIGHT_BROWSERS_PATH` for cards. No interpreter is scanned or guessed |
+| Sample | `projects/gzh-qc-gap/` — a real article input that stays `BLOCKED` with `validation: NOT_RUN`; no preview was generated |
+| Verdict | a PASS is not an approval: both receipts keep `production_ready: false` and `publish_authorized: false` |
+| Rights | the `gzh-design` directory is AGPL-3.0 upstream and is not redistributed here; `runtime/gzh-runtime.lock.json` stays `UNRESOLVED` |
+| Tests | `test_render_cards.py`, `test_render_articles.py` — hermetic |
+
 ## M5 Evidence-First Production Chain (Issue #6) — IMPLEMENTED 2026-10-31
 
 | Property | Value |
@@ -377,7 +437,7 @@ unverified, not failed.
 | Skill reference integrity | `tests/test_skill_references.py` | 6 |
 | Windows | subprocess, paths | 53 |
 | Policy / secrets | gitignore, local-approval, receipt secrets | 19 + list-driven suites |
-| **Total** | **not asserted in this document** | Suite count is read at check time: `git ls-files 'tests/test_*.py' \| wc -l` |
+| **Total** | **not asserted in this document** | 98 suites and 98 named CI steps on 2026-11-12; the authoritative count is read at check time: `git ls-files 'tests/test_*.py' \| wc -l` |
 
 `python scripts/dev_check.py` runs the local gate. CI enumerates every suite as a
 named step; a suite without a CI step does not run, and one green run is not
@@ -396,21 +456,28 @@ See [TEST-PLAN.md](TEST-PLAN.md) for the full inventory.
 3. media-use runtime lock — a clean checkout (and this host today) resolves
    `BLOCKED / MISSING_RUNTIME`. The approved baseline exists; a host lock must be
    generated and trusted before the adapter can run.
-4. Rights — the XHS, X and GZH adapters on `main` verify but never execute.
-   The vendored trees are not redistributed, and rights clearance (Issues #51,
-   #56) is the remaining blocker rather than missing code.
-5. Documentation convergence — this document was restructured on 2026-11-01;
-   PRD, DEVELOPMENT-PLAN and TEST-PLAN were updated in the same pass. The
-   remaining requirements are in
+4. Rights — the XHS, X and GZH adapters on `main` verify but never execute, and
+   the GZH renderer validates only through an AGPL-3.0 upstream skill that is not
+   redistributed here. Rights clearance (Issues #51, #56) is the remaining
+   blocker rather than missing code.
+5. No bound public account — every delivery runner exists, yet eight of nine
+   registry rows stay `PLANNED` because no public account is bound and no work
+   holds a real platform URL. Delivery code without an account is packaging, not
+   publishing.
+6. Documentation convergence — this document was restructured on 2026-11-01;
+   PRD, DEVELOPMENT-PLAN and TEST-PLAN were updated in the same pass, and the
+   Tier-1 set was re-synced on 2026-11-12. The historical requirements are in
    [CONVERGENCE-REQUIREMENTS-2026-11-01.md](CONVERGENCE-REQUIREMENTS-2026-11-01.md).
-6. Upstream pins — Easel v0.3.0 and HyperFrames 0.8.225 are available and not
+7. Upstream pins — Easel v0.3.0 and HyperFrames 0.8.225 are available and not
    adopted. See the convergence requirements for the decision.
-7. ~~Main branch unprotected~~ — **RESOLVED** (G0.6): main is protected via
+8. ~~Main branch unprotected~~ — **RESOLVED** (G0.6): main is protected via
    GitHub branch protection.
-8. Easel host — `HOST_BLOCKED` on this machine because FastAPI/uvicorn are absent.
+9. Easel host — `HOST_BLOCKED` on this machine because FastAPI/uvicorn are absent.
    Installing them, using a real account or starting a host requires a separate
    approval after a host-security review (ADR-016). A running host is not a
    publication authorization.
+10. ASR backcheck — `SKIPPED` unless `SILICONFLOW_API_KEY` is present, so a run
+    without the credential proves nothing about narration accuracy.
 
 
 ## M3 Image Generation (Issue #20) — VERIFIED 2026-10-04

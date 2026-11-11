@@ -6,7 +6,8 @@
 > A stage may have no executable code. It then stays a **placeholder** and must
 > not emit a success receipt, a publication record or a metric.
 
-Status: reference — 2026-11-04
+> Status: reference — 2026-11-12.
+> Last verified: 2026-11-12 on `main` at `c1da6dd`.
 Related: [ARCHITECTURE.md](ARCHITECTURE.md), [PRD.md](PRD.md),
 [ADR-015](adr/ADR-015-platform-placeholders-and-content-bundle.md),
 [ADR-016](adr/ADR-016-easel-host-adoption.md),
@@ -15,10 +16,18 @@ Related: [ARCHITECTURE.md](ARCHITECTURE.md), [PRD.md](PRD.md),
 
 ## Branch status (read this first)
 
-Every `implemented` in the table below means **on `main`** (`218c91d`), not on a
+Every `implemented` in the table below means **on `main`** (`c1da6dd`), not on a
 parallel branch. The router, platform registry, Bundle kernel and graphic package
-landed through PRs #101, #114 and #118. Rights, not code, is what blocks the
-platform tracks: every XHS/X/GZH adapter on `main` verifies and never executes.
+landed through PRs #101, #114 and #118; rendering, gates and both delivery runners
+landed through #141–#157. Rights and the absence of a bound public account, not
+code, are what block the platform tracks. Two corrections worth carrying:
+
+- The **XHS runtime adapter was removed on 2026-11-09** with the graphic workflow.
+  `src/contentops/xhs/` is empty and `scripts/graphic_workflow.py` names only
+  `gzh`, `x` and `video`; the `xiaohongshu_video` registry row and its delivery
+  channel remain, and both stay `PLANNED`.
+- The **X and GZH adapters verify and never execute**. GZH additionally has a
+  renderer, an SDK adapter, a workflow runner and a `DRAFT_ONLY` draft path.
 
 ## Position
 
@@ -53,12 +62,12 @@ one's status.
 | `RESEARCH` | topic, sources | `SourceArtifact` set | ContentOps | `partial` | M5 `src/contentops/evidence/`; `x-superplay-source-research` is not declared on `main` | source records | source research still starts from manual `SourceArtifact` input |
 | `BRIEF` | topic, audience | brief | ContentOps | `implemented` | router `src/contentops/routing/brief.py`; graphic contract `brief` stage | `BRIEF_READY` result | an automation approval is refused by the brief→M5 bridge; a human must approve |
 | `CONTENT_BUNDLE` | Strategy Bundle | validated Bundle + digest | Strategy owns; ContentOps consumes | `implemented` (on `main`; PR #101) | `src/contentops/content_kernel/bundle.py`, `scripts/content_bundle.py` | validation result / handoff | Bundle is a plan, never a publication |
-| `PRODUCTION` (VIDEO) | Bundle, claims | video master | ContentOps | `implemented` | M5 `scripts/m5_production.py`, `run_v1.py`, `assemble_easel.py` | `build-*.json`, `runtime-receipt.md` | voice quality; human review pending |
-| `PRODUCTION` (GRAPHIC_TEXT) | Bundle, images | manual package | ContentOps | `implemented` | `src/contentops/graphic/package.py`, `scripts/graphic_package.py` | `graphic-package.json` | terminal `AWAITING_MANUAL_REVIEW` |
-| `QUALITY_REVIEW` | produced artifacts | QC + human verdict | ContentOps + human | `implemented` | `scripts/qc_video.py`, `qc_visual.py`, `src/contentops/media/quality_gate.py`, `workflow/gate.py` | `qc-report.json`, `human-review.json` | human review never auto-approved |
-| `PLATFORM_PACKAGING` | reviewed package | platform draft | ContentOps | `partial` | X manual gate only (`src/contentops/publish/`) | X package receipt | 9 of 10 registry rows remain `PLANNED`; X is the sole `INTEGRATED` row |
-| `PUBLISH_HANDOFF` | draft | real URL + delivery receipt | human | `partial` | manual only; `x_post.py --mark-published` records a URL a person already has (as `REPORTED_PUBLISHED`) | `AWAITING_MANUAL_PUBLISH` / `REPORTED_PUBLISHED` | no automatic publication; no external verification path yet |
-| `METRICS_COLLECTION` | delivery receipt | metric snapshot | ContentOps | `planned` | none | none | `metrics: NONE`; not implemented |
+| `PRODUCTION` (VIDEO) | Bundle, claims | video master | ContentOps | `implemented` | gated entry `scripts/make_content.py` + `scripts/production_gates.py` (7 VIDEO gates); `produce_video.py` / `m5_production.py`, `run_v1.py`, `assemble_easel.py`; ASR backcheck stage | `build-*.json`, `asr-backcheck.json`, `runtime-receipt.md` | voice quality; human review pending. A direct producer run is diagnostic and not gate-checked |
+| `PRODUCTION` (GRAPHIC_TEXT) | Bundle, images | manual package, rendered cards, validated article | ContentOps | `implemented` | `src/contentops/graphic/` (package, cards, articles), `scripts/graphic_package.py`, `render_cards.py`, `render_article.py`; 5 GRAPHIC_TEXT gates | `graphic-package.json`, `card-render.json`, `gzh-article.json` | every terminal state is `AWAITING_MANUAL_REVIEW` or `BLOCKED`; a PASS is not an approval |
+| `QUALITY_REVIEW` | produced artifacts | QC + human verdict | ContentOps + human | `implemented` | `production_gates.py` preflight, `scripts/qc_video.py`, `qc_visual.py`, ASR backcheck, `src/contentops/media/quality_gate.py`, `workflow/gate.py` | `qc-report.json`, `human-review.json` | human review never auto-approved; no project holds an APPROVED `human-review.json` |
+| `PLATFORM_PACKAGING` | reviewed package | per-platform pack + draft | ContentOps | `partial` | `scripts/video_deliver.py` (`plan`/`pack`/`status`), `scripts/platform_delivery.py`, `graphic_deliver.py`, `wechatsync_browser.py`; X manual gate (`src/contentops/publish/`) | `06_delivery/` pack receipts, `graphic-package.json` | packs are implemented, but **no platform draft has ever been created**: 0 delivery receipts, 8 of 9 registry rows `PLANNED` |
+| `PUBLISH_HANDOFF` | draft | real URL + delivery receipt | human | `partial` | human-only: `video_deliver.py record`, `x_post.py --mark-published`, and the bridge's own URL echo | `AWAITING_MANUAL_PUBLISH` / `REPORTED_PUBLISHED` / `UPLOADER_EXIT_0` | no automatic publication, 0 recorded URLs; an uploader exit is not a published claim |
+| `METRICS_COLLECTION` | delivery receipt | metric snapshot | ContentOps | `partial` | `scripts/wechat_metrics.py` (data cube), `scripts/bilibili_metrics.py` (public counters), offline X metric analysis; all operator-gated | metric receipts | no automatic collection; a missing metric is `NONE`, never zero |
 | `ANALYSIS` | metric snapshots | findings | ContentOps | `partial` | X organic-growth advisory (`x_organic_growth.py`), offline | advisory JSON | general analysis not implemented |
 | `LEARNING_FEEDBACK` | findings | next-cycle guidance | Strategy | `planned` | none | none | no loop back to Strategy yet |
 
@@ -114,17 +123,19 @@ A profile is not a medium, and a medium is not a profile. `XHS_EDITORIAL` and
 
 ## Remaining placeholders and non-implemented capabilities
 
-This section describes gaps on `main` as of 2026-11-04. The router, brief,
-script, hotspot and optimization code is present; it is not an unmerged layer.
+This section describes gaps on `main` as of 2026-11-12. The router, brief,
+script, hotspot and platform code is present; it is not an unmerged layer.
 
 - Cross-stage metric collection and a real metric snapshot are not implemented.
   X has an offline analyzer for manually supplied snapshots, not a platform
   collector or a Strategy feedback loop.
 - A general analysis stage and written learning-feedback loop are not
   implemented.
-- The X adapter is manual-only. GZH and XHS adapters on `main` verify and
-  describe external workspaces; they do not execute production or publishing.
-  Other platform rows remain placeholders in the single platform registry.
+- The X adapter is manual-only. The GZH adapter verifies and describes an
+  external workspace; it does not execute production or publishing. The XHS
+  runtime adapter was removed on 2026-11-09 and has no replacement — only its
+  registry row and video delivery channel remain. Other platform rows remain
+  placeholders in the single platform registry.
 - The five `x-superplay-*` skills are not declared as executable capabilities.
   `runtime/content-skill-status.json` records missing referenced paths; this is
   separate from the merged router and stage code.
