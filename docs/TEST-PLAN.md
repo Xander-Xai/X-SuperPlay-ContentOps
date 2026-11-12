@@ -56,7 +56,7 @@ Function counts inside a suite are floors, not totals, because list-driven and u
 | Suite | File | Count | CI |
 |---|---|---:|---|
 | Script smoke | `scripts/test_basic.py` | 10 | yes |
-| X organic growth + copywriter corpus/draft/metrics contract | `tests/test_x_organic_growth.py` | unittest (includes 9 copywriter checks) | yes |
+| X organic growth + copywriter corpus/draft/metrics contract | `tests/test_x_organic_growth.py` | unittest (includes 10 copywriter checks) | yes |
 | Windows subprocess | `tests/test_windows_subprocess.py` | 47 | yes |
 | Windows paths | `tests/test_windows_paths.py` | 6 | yes |
 | M2 speech | `tests/test_minimax_speech.py` | 86 | yes |
