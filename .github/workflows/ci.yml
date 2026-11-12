@@ -127,6 +127,13 @@ jobs:
       - name: Run GZH article renderer tests
         run: python tests/test_render_articles.py
 
+      # Long image: stacking already-normalized cards into one vertical image.
+      # Pillow is the only dependency and it is already installed for the media
+      # suites; the fixtures are generated in the test temp directory, so no
+      # committed binary and no renderer is involved.
+      - name: Run long-image stitching tests
+        run: python tests/test_long_image.py
+
       # Eight-gate end-to-end: drives the real runtime workflow when it is
       # present and reports SKIP when it is not. .runtime/ is gitignored, so on
       # a clean checkout this suite skips by design — a green run here is never

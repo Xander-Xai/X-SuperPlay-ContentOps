@@ -5,6 +5,9 @@ It is not a platform publisher and contains no HTML renderer.
 
 ``cards`` orchestrates the *upstream* card renderer and density audit; it adds
 no drawing code and records measurements, never approval.
+
+``long_image`` stacks already-normalized cards into the vertical long image a
+一图流 post needs. It renders nothing and decides no platform policy.
 """
 
 from .package import (  # noqa: F401
@@ -36,6 +39,15 @@ from .articles import (  # noqa: F401
     verify_receipt as verify_article_receipt,
     write_receipt as write_article_receipt,
 )
+from .long_image import (  # noqa: F401
+    SCHEMA as LONG_IMAGE_SCHEMA,
+    LongImageError,
+    LongImagePlan,
+    build_receipt as build_long_image_receipt,
+    plan as plan_long_image,
+    stitch as stitch_long_image,
+    write_receipt as write_long_image_receipt,
+)
 
 __all__ = [
     "PACKAGE_SCHEMA",
@@ -61,4 +73,11 @@ __all__ = [
     "run_article",
     "verify_article_receipt",
     "write_article_receipt",
+    "LONG_IMAGE_SCHEMA",
+    "LongImageError",
+    "LongImagePlan",
+    "build_long_image_receipt",
+    "plan_long_image",
+    "stitch_long_image",
+    "write_long_image_receipt",
 ]
