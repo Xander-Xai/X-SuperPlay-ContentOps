@@ -12,7 +12,7 @@ characterization directory; this document records only facts and hashes.
 
 | Component | Value |
 |---|---|
-| Repo state | `main` @ `dbc72bc` (post #139), clean worktree |
+| Repo state | `main` code content at `b6a6153` (PR #133), which is code-identical to `dbc72bc` — `dbc72bc` adds only the #139 documentation/registry sync; clean worktree |
 | Python | 3.13.14 in a dedicated venv (Pillow 13.0.0, PyYAML 6.0.3, opencv-python added during characterization) |
 | ffmpeg / ffprobe | 8.1.1 essentials build |
 | Node | v22.22.2 |
