@@ -160,6 +160,14 @@
       "purpose": "Issue #140 first execution-primitive slice: preserve M5 stage timing and failure behavior",
       "status": "active",
       "expires": "2026-12-16"
+    },
+    {
+      "name": "feat/precopy-research-gate-20261112",
+      "pr": 166,
+      "created": "2026-11-12",
+      "purpose": "signed pre-copy research gate (8th VIDEO gate), landed from a stranded working tree",
+      "status": "active",
+      "expires": "2026-12-12"
     }
   ]
 }
