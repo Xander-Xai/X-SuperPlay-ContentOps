@@ -21,7 +21,63 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from contentops.workflow import copy_review  # noqa: E402
+from contentops.workflow import copy_review, preresearch  # noqa: E402
+
+
+def _seed_intent(project: Path) -> dict:
+    """The router-shaped intent this fixture's research is done against."""
+    intent = {
+        "schema": preresearch.INTENT_SCHEMA,
+        "account_id": "x-superplay-1024",
+        "account_profile_version": "acc-x-superplay-1024@v3",
+        "route_mode": "USER_TOPIC",
+        "topic": "Regression fixture topic",
+        "evidence_status": "verification_required",
+        "approval_status": "pending",
+        "target_pipeline": "VIDEO",
+        "brief_status": "draft",
+        "route_context": {"mode": "USER_TOPIC", "topic_origin": "USER_INPUT"},
+        "created_at": "2026-11-12T09:00:00Z",
+    }
+    folder = project / preresearch.RESEARCH_DIR
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / "content-intent.json").write_text(
+        json.dumps(intent, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8")
+    return intent
+
+
+def _seed_preresearch(project: Path) -> None:
+    """CLI fixtures need a signed research gate before a copy decision."""
+    _seed_intent(project)
+    folder = project / preresearch.RESEARCH_DIR
+    (folder / "project-reading.md").write_text(
+        "# Project read-through\n\n## Files read\n\n"
+        "- `docs/RUNBOOK.md` records the stable entry commands.\n"
+        "- `scripts/copy_review.py` records the copy decision.\n"
+        "- `src/contentops/workflow/copy_review.py` computes the fingerprint.\n\n"
+        "## Findings\n\n- A copy decision is bound to a fingerprint.\n",
+        encoding="utf-8")
+    (folder / "outline.md").write_text(
+        "# Outline\n\n## Topic\n\n- Fingerprint regression fixture.\n\n"
+        "## Video\n\n- One shot.\n\n## Graphic\n\n- One draft.\n\n"
+        "## Evidence\n\n- Three sources.\n", encoding="utf-8")
+    (folder / "evidence-list.json").write_text(json.dumps({
+        "schema": "contentops.precopy-research-evidence/v1",
+        "items": [
+            {"id": "S1", "kind": "primary", "title": "LoRA paper",
+             "url": "https://arxiv.org/abs/2106.09685"},
+            {"id": "S2", "kind": "primary", "title": "QLoRA paper",
+             "url": "https://arxiv.org/abs/2305.14314"},
+            {"id": "S3", "kind": "official", "title": "Runbook",
+             "url": "repo://docs/RUNBOOK.md"},
+        ]}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    (folder / "boundary.md").write_text(
+        "# Boundary\n\nThis phase does not render or publish.\n"
+        "- `production_ready: false`\n- `publish_authorized: false`\n"
+        "- Research approval is not copy approval.\n", encoding="utf-8")
+    preresearch.approve(project, reviewer="Fixture Reviewer",
+                        opinion="research reviewed for the CLI fixture")
 
 
 def _sha(data: bytes) -> str:
@@ -277,6 +333,7 @@ def _cli_project(root: Path) -> Path:
     project.mkdir(parents=True)
     (project / "script").mkdir()
     (project / "script" / "master.md").write_text("# Reviewed copy\n", encoding="utf-8")
+    _seed_preresearch(project)
     return project
 
 

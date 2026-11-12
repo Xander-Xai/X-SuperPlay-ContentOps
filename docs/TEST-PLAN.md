@@ -133,6 +133,7 @@ Function counts inside a suite are floors, not totals, because list-driven and u
 | Managed media-use status | `tests/test_skill_execute_status.py` | list-driven | yes |
 | Trusted grant source | `tests/test_trusted_grant_source.py` | list-driven | yes |
 | Execution gate | `tests/test_execution_gate.py` | list-driven | yes |
+| Pre-copy research gate | `tests/test_precopy_research.py` | 25 | yes |
 
 The CI workflow also runs policy, docs, i18n, whitespace, subprocess and receipt-secret checks. Media provider suites use fake transports; they do not call a provider. Suites that require `ffmpeg`, `Pillow`, media-use runtime or ignored artifacts may skip locally; inspect availability/skip output. CI installs `Pillow` and ffmpeg and reports availability.
 
