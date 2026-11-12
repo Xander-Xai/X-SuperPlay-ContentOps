@@ -118,7 +118,7 @@
       "pr": 172,
       "created": "2026-11-12",
       "purpose": "audit and repair X sample coverage, grounding, draft checks, and real metrics review after PR #171",
-      "status": "active",
+      "status": "merged",
       "expires": "2026-12-12"
     }
   ]
