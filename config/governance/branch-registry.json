@@ -78,7 +78,7 @@
       "pr": 163,
       "created": "2026-11-12",
       "purpose": "Issue #140 slice 1: land the stranded M5 orchestrator behavioural characterization baseline; no code change",
-      "status": "active_draft",
+      "status": "merged",
       "expires": "2026-12-12"
     },
     {
@@ -94,7 +94,7 @@
       "pr": 164,
       "created": "2026-11-12",
       "purpose": "stack already-normalized cards into one vertical long image; no renderer, no platform policy",
-      "status": "active_draft",
+      "status": "merged",
       "expires": "2026-12-12"
     }
   ]
