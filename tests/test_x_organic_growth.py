@@ -255,6 +255,13 @@ class HighEngagementCopywriterContractTests(unittest.TestCase):
         self.assertEqual([s["id"] for s in samples if s["source_scope"] == "prior_turn_summary_only"], ["S11"])
         self.assertTrue(all(s["observed_metrics"] is None and not s["verified_performance"] for s in samples))
 
+    def test_committed_synthetic_draft_fixture_is_valid(self):
+        fixture = ROOT / "tests" / "fixtures" / "x-copywriter-draft.json"
+        self.assertTrue(fixture.is_file())
+        self.assertEqual(
+            self.mod.draft_errors(self.mod.load_json(fixture), self.ledger), []
+        )
+
     def test_omission_or_fake_metrics_fails_corpus_check(self):
         import copy
         d = copy.deepcopy(self.ledger)
