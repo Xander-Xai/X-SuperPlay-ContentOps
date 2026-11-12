@@ -1,6 +1,6 @@
 {
   "schema": "contentops.branch-registry/v1",
-  "verified_at": "2026-11-12T10:20:00+08:00",
+  "verified_at": "2026-11-12T10:05:00+08:00",
   "policy": {
     "persistent": [
       "main"
@@ -77,7 +77,7 @@
       "name": "feat/140-characterize-m5",
       "pr": 163,
       "created": "2026-11-12",
-      "purpose": "Issue #140 slice 1: landed the stranded M5 orchestrator behavioural characterization baseline via #163; remote branch deleted on merge",
+      "purpose": "Issue #140 slice 1: land the stranded M5 orchestrator behavioural characterization baseline; no code change",
       "status": "merged",
       "expires": "2026-12-12"
     },
@@ -93,7 +93,7 @@
       "name": "feat/long-image-stitch",
       "pr": 164,
       "created": "2026-11-12",
-      "purpose": "stacked already-normalized cards into one vertical long image via #164; remote branch deleted on merge",
+      "purpose": "stack already-normalized cards into one vertical long image; no renderer, no platform policy",
       "status": "merged",
       "expires": "2026-12-12"
     }
