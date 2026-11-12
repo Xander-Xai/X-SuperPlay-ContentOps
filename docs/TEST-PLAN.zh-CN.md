@@ -64,7 +64,7 @@ python tests/test_media_convergence.py
 | 套件 | 文件 | 数量 | CI |
 |---|---|---:|---|
 | 脚本冒烟 | `scripts/test_basic.py` | 10 | 是 |
-| X 增长与文案 Skill 样本/草稿/指标契约 | `tests/test_x_organic_growth.py` | unittest（新增 9 项文案回归） | 是 |
+| X 增长与文案 Skill 样本/草稿/指标契约 | `tests/test_x_organic_growth.py` | unittest（新增 10 项文案回归） | 是 |
 | Windows 子进程 | `tests/test_windows_subprocess.py` | 47 | 是 |
 | Windows 路径 | `tests/test_windows_paths.py` | 6 | 是 |
 | M2 语音 | `tests/test_minimax_speech.py` | 86 | 是 |
