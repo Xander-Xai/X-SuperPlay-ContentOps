@@ -204,5 +204,156 @@ class OrganicGrowthTests(unittest.TestCase):
         self.assertEqual(result["integration"], "BLOCKED_UPSTREAM")
 
 
+
+class HighEngagementCopywriterContractTests(unittest.TestCase):
+    """A real contract suite inside the already-wired X organic-growth test step.
+
+    This proves ledger coverage, hard refusals and the offline metrics bridge,
+    not that any generated writing will earn X impressions.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        import importlib.util
+        path = ROOT / "skills" / "x-high-engagement-copywriter" / "tools" / "check.py"
+        spec = importlib.util.spec_from_file_location("x_copywriter_check", path)
+        cls.mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cls.mod)
+        cls.ledger = cls.mod.load_json(cls.mod.LEDGER)
+
+    def _draft(self, **kw):
+        d = {
+            "schema": "contentops.x-copywriter-draft/v1",
+            "mode": "ORIGINAL_POST",
+            "account_slug": "x-superplay-english",
+            "language": "en",
+            "audience": "English AI builders",
+            "status": "DRAFT_REVIEW_REQUIRED",
+            "platform_metrics": None,
+            "experiment": {"primary_variable": "hook_kind", "age_window": "T+24h"},
+            "candidates": [
+                {
+                    "copy": "A good agent demo is easy. Knowing what happens after a timeout is the real question.",
+                    "pattern_id": "P06",
+                    "inspiration_ids": ["S06"],
+                    "hook_kind": "technical",
+                    "novel_angle": "Debugging after an agent timeouts",
+                    "claim_state": "OPINION_ONLY",
+                    "risk": "PASS",
+                    "editorial_score": 81,
+                }
+            ],
+        }
+        d.update(kw)
+        return d
+
+    def test_visible_inputs_and_summary_only_are_accounted_for(self):
+        self.assertEqual(self.mod.ledger_errors(self.ledger), [])
+        samples = self.ledger["samples"]
+        self.assertEqual(len(samples), 11)
+        self.assertEqual(len([s for s in samples if s["source_scope"] == "current_thread_user_turn"]), 10)
+        self.assertEqual([s["id"] for s in samples if s["source_scope"] == "prior_turn_summary_only"], ["S11"])
+        self.assertTrue(all(s["observed_metrics"] is None and not s["verified_performance"] for s in samples))
+
+    def test_committed_synthetic_draft_fixture_is_valid(self):
+        fixture = ROOT / "tests" / "fixtures" / "x-copywriter-draft.json"
+        self.assertTrue(fixture.is_file())
+        self.assertEqual(
+            self.mod.draft_errors(self.mod.load_json(fixture), self.ledger), []
+        )
+
+    def test_offline_cli_corpus_and_draft_example_succeed(self):
+        import json
+        from process_utils import hidden_run, python_executable
+        entry = "skills/x-high-engagement-copywriter/tools/check.py"
+        for args in (["--corpus"], ["--check", "tests/fixtures/x-copywriter-draft.json"]):
+            completed = hidden_run([python_executable(), entry, *args], cwd=str(ROOT))
+            self.assertEqual(completed.returncode, 0, completed.stderr + completed.stdout)
+            self.assertEqual(json.loads(completed.stdout)["status"], "PASS")
+
+    def test_omission_or_fake_metrics_fails_corpus_check(self):
+        import copy
+        d = copy.deepcopy(self.ledger)
+        d["samples"] = [s for s in d["samples"] if s["id"] != "S08"]
+        self.assertIn("SOURCE_COVERAGE_MISMATCH", self.mod.ledger_errors(d))
+        d = copy.deepcopy(self.ledger)
+        d["samples"][0]["observed_metrics"] = {"impressions": 100000}
+        self.assertIn("S01:UNVERIFIED_METRICS_PRESENT", self.mod.ledger_errors(d))
+
+    def test_clean_draft_passes_with_human_review_still_pending(self):
+        self.assertEqual(self.mod.draft_errors(self._draft(), self.ledger), [])
+        not_reviewed = self._draft(status="PUBLISHED")
+        self.assertIn("NO_MANUAL_REVIEW_BOUNDARY", self.mod.draft_errors(not_reviewed, self.ledger))
+
+    def test_unverified_rumor_must_not_be_marked_pass(self):
+        d = self._draft()
+        d["candidates"][0].update(pattern_id="P01", inspiration_ids=["S01"],
+                                  claim_state="UNVERIFIED", risk="PASS")
+        self.assertIn("C1:UNVERIFIED_CLAIM_PASSED", self.mod.draft_errors(d, self.ledger))
+        d["candidates"][0].update(claim_state="VERIFIED", risk="PASS")
+        self.assertIn("C1:VERIFICATION_WITHOUT_EVIDENCE", self.mod.draft_errors(d, self.ledger))
+
+    def test_keyword_follower_bait_pattern_is_refused(self):
+        d = self._draft()
+        d["candidates"][0].update(pattern_id="P03", inspiration_ids=["S03"],
+                                  copy="Reply MIDNIGHT to get guaranteed 10k followers")
+        errs = self.mod.draft_errors(d, self.ledger)
+        self.assertIn("C1:FOLLOW_BAIT_PATTERN", errs)
+        self.assertIn("C1:TRANSACTIONAL_FOLLOW_BAIT", errs)
+
+    def test_account_language_mismatch_is_refused(self):
+        d = self._draft(language="zh-CN")
+        self.assertIn("ACCOUNT_LANGUAGE_MISMATCH", self.mod.draft_errors(d, self.ledger))
+
+    def test_duplicates_and_five_post_hook_monoculture_fail(self):
+        base = self._draft()
+        c = base["candidates"][0]
+        base["candidates"] = [{**c, "copy": "Unique thought " + str(i)}
+                              for i in range(5)]
+        errs = self.mod.draft_errors(base, self.ledger)
+        self.assertIn("BATCH_REPEATS_HOOK_SHAPE", errs)
+        base["candidates"][1]["copy"] = base["candidates"][0]["copy"]
+        self.assertIn("C2:DUPLICATE_COPY", self.mod.draft_errors(base, self.ledger))
+
+    def test_draft_metrics_must_not_be_invented(self):
+        d = self._draft(platform_metrics={"impressions": 100000})
+        self.assertIn("FABRICATED_PLATFORM_METRICS", self.mod.draft_errors(d, self.ledger))
+
+    def test_review_uses_genuine_url_same_age_window_and_no_synthetic_winner(self):
+        import csv
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            templates = project / "templates"
+            templates.mkdir()
+            with (templates / "posts.csv").open("w", encoding="utf-8", newline="") as f:
+                w = csv.DictWriter(f, fieldnames=["content_id", "x_post_url", "experiment_variable"])
+                w.writeheader()
+                for n in range(1, 5):
+                    w.writerow({"content_id": f"p{n}",
+                                "x_post_url": f"https://x.com/demo/status/{n}",
+                                "experiment_variable": "cw:P05:contrast"})
+            with (templates / "x-metric-snapshots.csv").open("w", encoding="utf-8", newline="") as f:
+                w = csv.DictWriter(f, fieldnames=["content_id", "x_post_url", "age_window",
+                                                  "metric_source", "observed_at", "impressions", "replies"])
+                w.writeheader()
+                for n, (imp, replies) in enumerate([(100, 2), (200, 3), (300, 9)], 1):
+                    w.writerow({"content_id": f"p{n}", "x_post_url": f"https://x.com/demo/status/{n}",
+                                "age_window": "T+24h", "metric_source": "manual",
+                                "observed_at": "2026-11-13T12:00:00Z",
+                                "impressions": imp, "replies": replies})
+                w.writerow({"content_id": "p4", "x_post_url": "https://x.com/other/status/4",
+                            "age_window": "T+24h", "metric_source": "manual",
+                            "observed_at": "2026-11-13T12:00:00Z", "impressions": 99999, "replies": 99999})
+            result = self.mod.review(project, "T+24h")
+            self.assertEqual(result["groups"][0]["measured_posts"], 3)
+            self.assertEqual(result["groups"][0]["missing_or_invalid"], 1)
+            self.assertEqual(result["groups"][0]["median_impressions"], 200)
+            self.assertEqual(result["groups"][0]["verdict"], "DESCRIPTIVE_ONLY")
+            self.assertFalse(result["causal_inference"])
+            self.assertEqual(self.mod.review(project, "T+72h")["groups"][0]["verdict"],
+                             "INSUFFICIENT_DATA")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -1,62 +1,44 @@
-# Conversation-derived sample taxonomy (v1, 2026-11-12)
+# Audited X post corpus (this thread, 2026-11-12)
 
-## What this corpus is — and is not
+This is **not** a verified database of top-performing X posts. The user reports high impressions and interactions but has not provided individual post URLs or first-party metrics. The following 10 visible inputs (plus one summary-only earlier turn) are traceable to the current conversation, and **none of the assistant-written replies are treated as high-performing source posts**.
 
-Source: **posts pasted by the user across the current ChatGPT conversation**, including Chinese and English posts and assistant-written reply drafts. They are not a licensed downloadable tweet dataset. This file **summarizes mechanisms** rather than preserving full third-party text. We have **not** fetched individual tweet URLs, verified the author identities, or retrieved authenticated per-post analytics. The user's description "these are high-interaction/high-view posts" is a **selection claim**, not a measured correlation or proof of causation. The common pattern can be tested on the user's own account; it cannot be advertised as platform recommendation logic.
+| ID | Input summarized without copying complete third-party text | Pattern | Safety / evidentiary constraint |
+|---|---|---|---|
+| S01 | 英伟达CEO更替及指定继任者的未经核实传闻 | P01 | HOLD_FACT_CHECK |
+| S02 | 晨雾、蓝色冰湖、金色光束的短景物描写 | P02 | PASS_WITH_RIGHTS_REVIEW |
+| S03 | 英文要求回复特定关键词以获得数千关注者 | P03 | NEGATIVE_EXAMPLE |
+| S04 | 网购衣物卫生担忧并建议先洗再穿 | P04 | PASS_WITH_CAVEAT |
+| S05 | 声称平台给流量时一张白纸也可破万浏览 | P05 | HYPOTHESIS_ONLY |
+| S06 | 短暂出现后404的iOS终端仓库及所谓沙盒逃逸技术帖 | P06 | HOLD_FACT_CHECK |
+| S07 | 第二条英伟达董事会罢免CEO的高紧迫性核实请求 | P01 | HOLD_FACT_CHECK |
+| S08 | 冬夜热馄饨，邀请X友一起吃 | P02 | PASS_WITH_RIGHTS_REVIEW |
+| S09 | 先列举多个肾病误区，再通过显示更多制造反转 | P08 | HOLD_MEDICAL_REVIEW |
+| S10 | 长年使用Claude和代理工具未封号的幸存者经历 | P07 | HYPOTHESIS_ONLY |
+| S11 (summary-only) | Robotaxi一周168小时的AI与工作时长对比短句 | P09 | SUMMARY_ONLY |
 
-Use group names below to cover the conversation's **full thematic breadth**. A single source often belongs to two groups. Examples are short descriptions/paraphrases rather than reproductions. Do not infer post counts from the examples.
+## Supported conclusions
 
-| ID | Sample group | Motifs actually present in conversation | Reader motive | What may transfer to a new original post | Typical failure / risk |
-|---|---|---|---|---|---|
-| P01 | X creator anxiety & "algorithm folklore" | post-launch 20 comments/20 likes; shadowban-after-viral theory; new Blue V vs old account; traffic swings; 1,000 hand-written comments/day; verified-impression progress; 4W/10W daily reach | shared pain + curiosity + experiment | specific dilemma + competing explanation + test request | asserting algorithm secrets, attributing causality without data |
-| P02 | Community membership & playful identity | "手搓党"/AI reply bots; Blue V "浇朋友"; new creator calls; leave a homepage; sustainable reciprocal discussion; comment ghosting | belonging, reciprocity | a warm in-group metaphor + invitation to tell a real story | automated or quid-pro-quo engagement, generic empty praise |
-| P03 | Quantified diary / progress | day 5 or 8 account report; 20+ posts, 800–1000 comments; follower changes; qualified reach threshold; paid creator earnings; 12K followers countdown | evidence, stakes, seriality | genuine dated baseline -> decision -> lesson -> next measurement | invented stats; conflating post impressions with qualification |
-| P04 | Hooked question / two-sided debate | "不懂就问"; text vs video; X vs Instagram; Japan/China/Korea quality-of-life discussion; new/old account tradeoffs; salary vs tool allowance | express a position | one fair, specific tradeoff with clear stakes | divisive bait, sweeping demographic claims |
-| P05 | Reversal & meme punchline | pay day vs ad placement; "work interferes with chatting"; creator as "free sprinkler truck"; lost Claude quotas; robotaxi 168h; reverse roles & one-line twists | laugh, quote, tag friend | setup -> unexpected, relevant reframe | repetitive jokes, generic "哈哈哈" + canned CTA |
-| P06 | Work, money & class reality | "牛马" fatigue; cost of maintaining dignity; 2k USD side income; rent/mortgage; A8 breakfast; expensive flooring; online gigs; home-town life | recognition, practical identity | vivid micro-scene + specific tension | unverifiable claims about cities or groups; flaunted hardship |
-| P07 | Food / pets / everyday warmth | egg tea, salted wings, strawberry cake, fried pork-rice, wonton, grilled meat, Jiangxi chicken feet, oyster soup, wandering cat/panda | craving, low-friction response | concrete sensory detail + personal habit + simple choice | false personal experience; repetitive "screen smell" / "where's store" |
-| P08 | Romance, regret & personal boundaries | "有人懂你说不出的话"; nostalgic songs; family love as wet blanket; self-worth; choosing yourself; English affirmations, gratitude, prayer | share/identify | specific image -> universally recognizable feeling | generic platitudes or overconfident psychology |
-| P09 | Sensational entertainment / celebrity rumor | Nvidia CEO resignation, rumored private relationships & successors; Musk-family account & meme coin; celebrity AI face swaps; entertainment wardrobe | curiosity, uncertainty | suspenseful **verified** fact + what it changes | defamatory unverified allegations; fake urgent headlines |
-| P10 | AI, technology & work future | Transformer authors, Agent orchestration, 17 Bots vs reliability, AI frontend stale patterns, Claude/Codex quotas, ByteDance cross-app Agent, Robotaxi | learning, professional debate | one mechanism + meaningful counterpoint + practical implication | false benchmarks, unsourced product timelines, "AI beats all" |
-| P11 | Vulnerability / health / social friction | chemo completion; STI statistics; masturbation misconceptions; alcohol deaths; privacy violations; family hurt; respect & consent | empathy, safety | informed and humane insight; respectful question only when apt | ridicule, pseudo-medical facts, exploitation of suffering |
-| P12 | Flirtation, looks & adult innuendo | "几点回家"; suggestive photos; daring ice-breakers; intimacy topics; visual double entendres | surprise, playful ambiguity | non-explicit, respectful cleverness | sexual harassment, fetishizing, non-consensual imagery, objectification |
-| P13 | Values, civilization & polarized identity | nationality-based comparisons; politics/elections; equality and expectations; differences in material development | worldview and belonging | measurable dimensions and tradeoffs; ask what matters most | invented group statistics, slurs, national/ethnic generalization |
-| P14 | "Say keyword to be boosted" English bait | "Say WIN / HELLO / BEST / NIGHT / PRO / MIDNIGHT / RIVER" with claims of 1k–26k followers | transactional hope | **do not borrow mechanics**; at most study short CTA syntax as negative example | misleading guarantees, spam, engagement manipulation |
-| P15 | Bilingual minimalism & X-native English | "choose yourself first"; "tight circle, quiet wins"; "keep God close"; "comparison doesn't make sense" | immediate emotional resonance | short, grammatically native, quotable insight | near-copy of famous affirmations or hollow repeated maxims |
-| P16 | Scam vigilance and asymmetric information | fake Musk son / meme token; screenshots and unverifiable sources; travel card tips; "overseas screenshot" reposting | warning and verification | "what's claimed / what can be checked / what remains unknown" | amplifying rumors while "debunking" them |
+- TEXT OBSERVED: These 10 visible user inputs use attention hooks, concrete scenes, identity/ingroup signals, fear/disgust, debate invitation, technical curiosity and/or narrative suspense. Two Nvidia posts concern the **same rumor**; they are separate text samples, not two factual confirmations.
+- SUMMARY ONLY: S11 came from a prior-turn summary and is deliberately outside the 10 literal inputs directly visible here.
+- USER-REPORTED: The user says the originals have been validated by platform data; **the measurements, post identities, and observation windows were not provided here**.
+- NOT SUPPORTED: a ranking of which hook outperformed another, causal effect, a predicted view count, a proven growth formula, or a proof that any response written by the assistant was published successfully.
+- NEGATIVE EXAMPLE: S03 uses a 'type keyword -> guaranteed followers' lure. Analyze its short CTA syntax but do not reproduce its deceptive reward bargain.
+- The ledger contains paraphrases, not source text suitable for reposting. Original writing requires a new scene, substantive thought and audience fit.
 
-## Cross-cutting features observed in the supplied language
+## Atomic writing mechanisms
 
-1. **Fast opener** — interjection or bold claim in first line; not always good, but easily legible.
-2. **Micro-tension** — one everyday contradiction: effort vs results, appearance vs reality, love vs obligation, new tool vs old work.
-3. **Low reply cost** — questions that need lived experience, a preference, or a small anecdote rather than research.
-4. **High identification** — first-person community labels (creator, engineer, worker, pet owner) and real worries.
-5. **Easily quoted language** — a memorable comparison ("salaried factory line", "water the community", "menu for money").
-6. **Visible stakes** — actual amounts, time, failure, achievement, or discomfort when evidence exists.
-7. **Spoken rhythm** — short lines, plain words, selective punctuation, non-formal cadence.
-8. **Emotional variety** — amusement, envy, frustration, hope, affection, nostalgia, curiosity.
-9. **Serial follow-ups** — public experiments and updates can create return visits if genuine, without artificial urgency.
-10. **Question endings** — invite a specific contribution; do not put a generic question on every post.
+| Pattern ID | Text mechanism observed | Safe derivative idea | Why this is only a hypothesis |
+|---|---|---|---|
+| P01 | famous name + purported authority + extreme uncertainty + demand for verification | verified-fact-versus-rumor analysis | no official confirmation or performance metrics in pasted samples |
+| P02 | 2–3 sensory details + atmospheric image / warmth + simple shared feeling | authentic photo with short lived detail and optional grounded question | image and posting data absent |
+| P03 | extremely low entry cost + huge reward promise | **never promise followers**; replace with genuine reader value | manipulative mechanics and unsupported outcome |
+| P04 | shock/disgust + simple protective action | specific practical observation with careful qualification | the unseen photo/background may change accuracy |
+| P05 | bold counterfactual 'even a blank page could...' + playful challenge | challenge a platform assumption without declaring algorithm truth | unsupported platform mechanism and sample outcome |
+| P06 | 'vanished repository' + surprising capability + cliffhanger | verified mechanism, caveat and a real technical question | repository status/technical claim is not established by the pasted text |
+| P07 | unexpected personal survival anecdote + implied rule reversal | observational counterexample + explicit survivorship bias | anecdote does not establish platform policy |
+| P08 | numbered debunking list + 'what actually matters is...' curiosity gap | medically accurate myth/fact explainer with cited caveats | medical uncertainty; avoid implying a diagnosis |
+| P09 | short, numerical human/machine contrast | arithmetic-grounded humor distinguishing ideal vs actual | observed only in summarized earlier message |
 
-**Important anti-pattern:** the conversation's prior reply drafts often repeat "哈哈哈", "这哪是…", "谁懂", "兄弟们", English "real connections, genuine engagement" and "Who's in?". Reusing those verbatim in generated originals makes them sound synthetic. Preserve *spontaneity* without copying that verbal tic.
+## Outcomes contract
 
-## What is actually supported by evidence now?
-
-- SUPPORTED BY CONVERSATION: these textual themes and structures were supplied; some include **self-reported** reach/follower counts, not independently checked.
-- HYPOTHESIS: specific openings, tension, participatory questions and cultural relevance might help an account's reach or comments.
-- UNPROVEN: posting 20 comments after publishing, posting 20 originals/800 comments daily, Blue V follow trains, "shadowban after a viral post", optimal posting cadence, guaranteed creator eligibility, causal uplift from any phrase.
-- REQUIRES NEW DATA: actual matched post IDs, account/language, upload time, authentic views, engaged users, replies, bookmark/share/profile-click/follow metrics and repeated time windows.
-- OUT OF SCOPE: treating this corpus as a permission to reprint others' tweets, automate spam, or copy the user's assistant-written replies as if they were successful original tweets.
-
-## Topic-to-format routing
-
-| Audience + situation | Good first test | Avoid |
-|---|---|---|
-| Chinese X creator after weak reach | P01 + P03, with real run notes | spam counts as deterministic algorithm rule |
-| Chinese AI developer sharing an Agent prototype | P10 + P05 or P04 | claims of production reliability without receipts |
-| Daily low-stakes relatable post | P07 + P05 | identical foodie cliché every day |
-| Reflection after rejection/job search | P06 + P08 | fabricated hardship or forced positivity |
-| English general audience | P15 + P08 | untranslated Chinese slang and empty follow exchange |
-| Fast-moving controversial report | P16 + P09 | unverified real-person accusations |
-| Technical product launch | P10 + P04 | unverified speed, price or benchmark claims |
-| Emotionally sensitive personal account | P11 + P08 | sarcasm, overconfident diagnosis |
+Use the code-readable [sample-ledger.json](sample-ledger.json) as the single source of sample IDs, risk marks and pattern links. No sample's `observed_metrics` can be filled without first-party, date-stamped observations and a real X URL. Real post performance is tracked separately in the existing project CSVs, not this static training ledger.

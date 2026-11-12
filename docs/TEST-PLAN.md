@@ -4,7 +4,7 @@
 
 > Authoritative local verification strategy, suite inventory and CI wiring.
 >
-> Last verified: 2026-11-12 on `main` at `c1da6dd` (98 suites, 98 named CI steps).
+> Last verified: 2026-11-12 against PR #172 candidate (98 suites, 98 named CI steps; added copywriter checks within existing X growth suite).
 
 ## Risk-based local verification
 
@@ -56,6 +56,7 @@ Function counts inside a suite are floors, not totals, because list-driven and u
 | Suite | File | Count | CI |
 |---|---|---:|---|
 | Script smoke | `scripts/test_basic.py` | 10 | yes |
+| X organic growth + copywriter corpus/draft/metrics contract | `tests/test_x_organic_growth.py` | unittest (includes 11 copywriter checks) | yes |
 | Windows subprocess | `tests/test_windows_subprocess.py` | 47 | yes |
 | Windows paths | `tests/test_windows_paths.py` | 6 | yes |
 | M2 speech | `tests/test_minimax_speech.py` | 86 | yes |
