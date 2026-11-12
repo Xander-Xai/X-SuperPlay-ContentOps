@@ -102,7 +102,7 @@
       "pr": 168,
       "created": "2026-11-12",
       "purpose": "record the external output root: build products live outside the repository, behind junctions into the AI-Outputs archive",
-      "status": "active",
+      "status": "merged",
       "expires": "2026-12-12"
     }
   ]
