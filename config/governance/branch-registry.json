@@ -110,6 +110,14 @@
       "pr": 171,
       "created": "2026-11-12",
       "purpose": "X high-engagement original-post Skill from conversation-derived patterns, hypotheses, writing recipes, and manual metrics loop",
+      "status": "merged",
+      "expires": "2026-12-12"
+    },
+    {
+      "name": "fix/x-copywriter-evidence-and-validation-20261112",
+      "pr": 172,
+      "created": "2026-11-12",
+      "purpose": "audit and repair X sample coverage, grounding, draft checks, and real metrics review after PR #171",
       "status": "active",
       "expires": "2026-12-12"
     }
