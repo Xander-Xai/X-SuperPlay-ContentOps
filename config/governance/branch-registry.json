@@ -1,6 +1,6 @@
 {
   "schema": "contentops.branch-registry/v1",
-  "verified_at": "2026-11-12T09:50:00+08:00",
+  "verified_at": "2026-11-12T10:05:00+08:00",
   "policy": {
     "persistent": [
       "main"
@@ -87,6 +87,14 @@
       "created": "2026-11-12",
       "purpose": "end-to-end proof of the eight-gate pre-publication pipeline (landed with #165)",
       "status": "merged",
+      "expires": "2026-12-12"
+    },
+    {
+      "name": "feat/long-image-stitch",
+      "pr": 164,
+      "created": "2026-11-12",
+      "purpose": "stack already-normalized cards into one vertical long image; no renderer, no platform policy",
+      "status": "active_draft",
       "expires": "2026-12-12"
     }
   ]
