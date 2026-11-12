@@ -72,6 +72,14 @@
       "purpose": "close the registry after #158/#160/#161 merged; no active entries remain",
       "status": "merged",
       "expires": "2026-12-12"
+    },
+    {
+      "name": "feat/precopy-research-gate-20261112",
+      "pr": 166,
+      "created": "2026-11-12",
+      "purpose": "signed pre-copy research gate (8th VIDEO gate), landed from a stranded working tree",
+      "status": "active",
+      "expires": "2026-12-12"
     }
   ]
 }
