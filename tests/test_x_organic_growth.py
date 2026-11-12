@@ -262,6 +262,15 @@ class HighEngagementCopywriterContractTests(unittest.TestCase):
             self.mod.draft_errors(self.mod.load_json(fixture), self.ledger), []
         )
 
+    def test_offline_cli_corpus_and_draft_example_succeed(self):
+        import json
+        from process_utils import hidden_run, python_executable
+        entry = "skills/x-high-engagement-copywriter/tools/check.py"
+        for args in (["--corpus"], ["--check", "tests/fixtures/x-copywriter-draft.json"]):
+            completed = hidden_run([python_executable(), entry, *args], cwd=str(ROOT))
+            self.assertEqual(completed.returncode, 0, completed.stderr + completed.stdout)
+            self.assertEqual(json.loads(completed.stdout)["status"], "PASS")
+
     def test_omission_or_fake_metrics_fails_corpus_check(self):
         import copy
         d = copy.deepcopy(self.ledger)
