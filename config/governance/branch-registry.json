@@ -1,6 +1,6 @@
 {
   "schema": "contentops.branch-registry/v1",
-  "verified_at": "2026-11-12T04:20:00+08:00",
+  "verified_at": "2026-11-12T09:50:00+08:00",
   "policy": {
     "persistent": [
       "main"
@@ -71,6 +71,14 @@
       "created": "2026-11-12",
       "purpose": "close the registry after #158/#160/#161 merged; no active entries remain",
       "status": "merged",
+      "expires": "2026-12-12"
+    },
+    {
+      "name": "test/xhs-eight-gates-e2e",
+      "pr": 165,
+      "created": "2026-11-12",
+      "purpose": "eight-gate end-to-end acceptance suite; self-skips when .runtime is absent",
+      "status": "active_draft",
       "expires": "2026-12-12"
     }
   ]
