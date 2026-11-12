@@ -97,6 +97,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         project = _project_path(args.project)
         action = "CHECK"
         if has_decision:
+            # Research-then-copy: a signed pre-copy research gate must be
+            # current before any copy decision can be recorded.
+            from contentops.workflow import preresearch
+
+            research = preresearch.check(project)
+            if not research["ok"]:
+                raise ValueError(
+                    f"PRECOPY_RESEARCH_REQUIRED: {research['state']}: {research['detail']}")
             status_value = "APPROVED" if args.approve else "CHANGES_REQUESTED"
             reviewed_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace(
                 "+00:00", "Z")

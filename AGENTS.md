@@ -31,6 +31,7 @@ If not → don't do it now.
     Tier-1 doc means classifying it in the config in the same PR. Procedure:
     [docs/DOC-SYNC.md](docs/DOC-SYNC.md).
 11. **Each change carries risk-appropriate verification.** Use the L0–L3 policy in `docs/TEST-PLAN.md`; do not run unrelated checks. `doctor.py` is for environment/runtime/install/deployment changes, and `qc_video.py` is for actual video artifacts or video-QC behavior. Run `python scripts/dev_check.py` once as the complete local gate when preparing a PR, not after every small edit. `--quick` only skips the repository policy check; it is not a targeted test mode.
+12. **Research before copy.** Every content piece must pass the signed pre-copy research gate (`contentops.precopy-research/v1`) before `script/master.md`, `02_draft/draft.md` or any copy approval: bind the router's `ContentIntent`, read the relevant project files, verify authoritative sources, write an outline, an evidence list and a boundary statement, then have a named human sign with `--confirm`. The gate is fail-closed, has no `--force`, and any edit to the research artifacts makes the approval `STALE`. Because the intent is one of the fingerprinted artifacts and must match `00_brief/brief.json`, an approval can never be carried over to a re-routed topic. Procedure: [docs/PRECOPY-RESEARCH.md](docs/PRECOPY-RESEARCH.md).
 
 ## 2. Extension Policy
 

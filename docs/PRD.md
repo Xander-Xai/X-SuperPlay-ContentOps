@@ -135,7 +135,7 @@ Verified 2026-11-02 on `feat/106-easel-host-dual-line` (stacked on PR #101):
 | FR-10 | Emit complete receipts for every run | **implemented** |
 | FR-11 | Render graphic cards and GZH article HTML through a pinned validator | **implemented (offline)** — `render_cards.py`, `render_article.py`; receipts keep `production_ready: false` |
 | FR-12 | Pack per-platform delivery sets without publishing | **implemented** — `video_deliver.py`, `platform_delivery.py`, `graphic_deliver.py`; 0 delivery receipts, 0 recorded URLs |
-| FR-13 | One gated production entry in front of every producer | **implemented** — `make_content.py` + `production_gates.py` (7 VIDEO / 5 GRAPHIC_TEXT gates) |
+| FR-13 | One gated production entry in front of every producer | **implemented** — `make_content.py` + `production_gates.py` (8 VIDEO / 6 GRAPHIC_TEXT gates) |
 
 ## 9. Non-functional Requirements
 

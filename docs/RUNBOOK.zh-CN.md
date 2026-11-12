@@ -42,6 +42,27 @@ python scripts/verify_easel_runtime.py --resolve-tag
 python scripts\new_project.py --slug my-video --title "My Video Title"
 ```
 
+## 3.1 写文案前的预研门禁（必做）
+
+在 `script/master.md` 或 `02_draft/draft.md` 出现之前，每期内容都必须有一份
+经具名签字的预研包。契约 `contentops.precopy-research/v1`，详见
+[PRECOPY-RESEARCH.md](PRECOPY-RESEARCH.md)。
+
+```powershell
+python scripts\preresearch.py init --project projects\my-video
+python scripts\preresearch.py intent --project projects\my-video
+# 通读项目、核实权威信源，填好四份文字产物
+python scripts\preresearch.py check --project projects\my-video
+python scripts\preresearch.py approve --project projects\my-video `
+  --reviewer "你的名字" --opinion "已看过 diff 并核对来源" --confirm
+```
+
+被挡时 `check` 返回 4。`approve` 必须带具名审核人、书面理由与 `--confirm`，
+没有 `--force`。签字后改动任一研究产物，回执即变为 `STALE`。这是
+`production_gates.py` 中 VIDEO 的第 8 门、GRAPHIC_TEXT 的第 6 门；
+`copy_review.py --approve` 在缺少它时会拒绝记录文案决策。直接运行
+`m5_production.py` / `produce_video.py` 仍属诊断路径，和之前一样不受门禁约束。
+
 ## 4. 运行生产流水线
 
 ```powershell

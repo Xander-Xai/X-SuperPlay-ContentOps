@@ -31,6 +31,7 @@ translation_status: synced
 - [EASEL-CAPABILITY-INVENTORY.md](EASEL-CAPABILITY-INVENTORY.md) —— Easel 能力盘点：上游已声明 / 已接入 / 已执行 / 允许生产
 - [PLATFORM-ADAPTER-CONTRACT.md](PLATFORM-ADAPTER-CONTRACT.md) —— 交付层适配器接口；不建第二套注册表，不建第二套生产引擎
 - [CONTENT-LIFECYCLE-STAGES.md](CONTENT-LIFECYCLE-STAGES.md) —— 有序生命周期阶段、归属、当前状态与回执
+- [PRECOPY-RESEARCH.md](PRECOPY-RESEARCH.md) —— 写文案前的强制预研门禁：绑定 router 的 intent、项目通读、权威信源、大纲、证据清单、边界声明与具名批准
 - [ASR-BACKCHECK.md](ASR-BACKCHECK.md) —— 旁白 ASR 门禁：可以报告问题，但永远不能批准视频
 - [MOTION-WORKFLOW-SPEC.md](MOTION-WORKFLOW-SPEC.md) —— 双账号视频工作流契约：样片门、动效交接、真实素材时长、路由 → M5
 - [adr/ADR-008-media-use-adapter.md](adr/ADR-008-media-use-adapter.md) — HyperFrames `media-use` 集成：固定版本适配器，不复制上游

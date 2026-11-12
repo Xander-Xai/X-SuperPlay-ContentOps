@@ -166,8 +166,8 @@ Owner 于 2026-11-02 决定把完整 Easel 系统作为生产底座，取代 ADR
 ```text
 scripts/
 ├── run_v1.py             ← V1 编排（easel + fallback 引擎）
-├── make_content.py       ← 唯一稳定生产入口（六项决策 + 门禁）
-├── production_gates.py   ← 7 个 VIDEO + 5 个 GRAPHIC_TEXT 失败即拒绝门禁
+├── make_content.py       ← 唯一稳定生产入口（显式决策 + 门禁）
+├── production_gates.py   ← 8 个 VIDEO + 6 个 GRAPHIC_TEXT 失败即拒绝门禁
 ├── produce_video.py      ← make_content.py 后面的诊断生产者
 ├── m5_production.py      ← 证据优先链（来源 → … → 评审 → ASR 回检）
 ├── m5_characterize.py    ← 记录 M5 重构必须保持的套件通过计数

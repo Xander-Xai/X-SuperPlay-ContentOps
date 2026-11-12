@@ -20,7 +20,8 @@ translation_status: synced
 | 层 | 状态 |
 |---|---|
 | M5 证据链、媒体合约、QC、media-use 适配器、Skill 路由/授权 | 已实现 |
-| 稳定生产入口（`scripts/make_content.py`、`scripts/production_gates.py`） | 已实现（PR #157）；7 个失败即拒绝的 VIDEO 门禁（`account`、`copy_review`、`evidence_links`、`asset_sufficiency`、`avatar_bookends`、`style_audio`、`runtime_readiness`）与 5 个 GRAPHIC_TEXT 门禁（`account`、`copy_review`、`evidence_links`、`asset_rights`、`runtime_readiness`）；直接运行 `m5_production.py` / `produce_video.py` 属于诊断路径 |
+| 稳定生产入口（`scripts/make_content.py`、`scripts/production_gates.py`） | 已实现（PR #157）；8 个失败即拒绝的 VIDEO 门禁（`account`、`copy_review`、`evidence_links`、`asset_sufficiency`、`avatar_bookends`、`style_audio`、`runtime_readiness`、`precopy_research`）与 6 个 GRAPHIC_TEXT 门禁（`account`、`copy_review`、`evidence_links`、`asset_rights`、`runtime_readiness`、`precopy_research`）；直接运行 `m5_production.py` / `produce_video.py` 属于诊断路径 |
+| 写文案前预研门禁（`src/contentops/workflow/preresearch.py`、`scripts/preresearch.py`） | 已实现（2026-11-12）；五份产物（router 的 intent + 四份文字产物）+ 绑定指纹的人工回执；未签字时 `copy_review.py --approve` 与两条产线的门禁均拒绝；签字后改动产物报 `STALE` |
 | 平台注册表（`config/registry/platforms.json`、`src/contentops/platforms/`） | ```main``` 已实现（PR #101，路线由 #141 加入）；9 个 Strategy 平台对应 9 条本地记录，1 条 `INTEGRATED`（`x`），8 条 `PLANNED` |
 | 视频交付（`scripts/video_deliver.py`） | 离线已实现：`plan` / `pack` / `status` / `record`；`dispatch` 需要运营授权。仓库内没有任何回执记录过已发布 URL |
 | 图文交付（`scripts/platform_delivery.py`、`scripts/graphic_deliver.py`、`src/contentops/platforms/wcs_bridge*`） | 离线已实现：打包后经进程边界调用外部 CLI（`wechatsync`），且只创建草稿。没有 `PUBLISHED` 分支；URL 记录是人工动作 |

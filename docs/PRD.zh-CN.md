@@ -126,7 +126,7 @@ Founder（Xander-Xai）— 需要从真实工作产出高质量视频，最少�
 | FR-10 | 每次运行产出完整凭证 | **已实现** |
 | FR-11 | 通过固定版本校验器渲染图文卡片与公众号文章 HTML | **已实现（离线）** —— `render_cards.py`、`render_article.py`；回执恒为 `production_ready: false` |
 | FR-12 | 打包各平台交付集，但不发布 | **已实现** —— `video_deliver.py`、`platform_delivery.py`、`graphic_deliver.py`；0 条交付回执、0 个已记录 URL |
-| FR-13 | 所有生产者之前的唯一受门禁生产入口 | **已实现** —— `make_content.py` + `production_gates.py`（7 个 VIDEO / 5 个 GRAPHIC_TEXT 门禁） |
+| FR-13 | 所有生产者之前的唯一受门禁生产入口 | **已实现** —— `make_content.py` + `production_gates.py`（8 个 VIDEO / 6 个 GRAPHIC_TEXT 门禁） |
 
 ## 9. 非功能需求
 

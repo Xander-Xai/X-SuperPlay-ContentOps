@@ -33,7 +33,7 @@ capability that published anything.
 | Item | Layer | Status |
 |---|---|---|
 | Easel runtime | `main` | Pinned v0.2.1 (commit `3fe2d99`, 982 blobs verified). Upstream stable is v0.3.0 — not adopted |
-| Stable production entry (`make_content.py`, `production_gates.py`) | `main` | Implemented: six explicit decisions, seven fail-closed VIDEO gates and five GRAPHIC_TEXT gates. Running `m5_production.py` / `produce_video.py` directly stays a *diagnostic* path and is not gate-checked |
+| Stable production entry (`make_content.py`, `production_gates.py`) | `main` | Implemented: explicit gate decisions, eight fail-closed VIDEO gates and six GRAPHIC_TEXT gates. Running `m5_production.py` / `produce_video.py` directly stays a *diagnostic* path and is not gate-checked |
 | Video pipeline (`run_v1.py`) | `main` | Implemented (`easel` + diagnostic `fallback`); `production_ready: false` |
 | M5 evidence-first chain (`m5_production.py`) | `main` | Implemented and integration-verified on `projects/m5-media-use`; optional ASR backcheck gate on real narration; `production_ready: false`, `PENDING_FOUNDER_REVIEW` |
 | M5 characterization baseline | `main` | `docs/m5-baseline/m5-characterization-2026-11-10.md` — 10 suites / 165 tests at `5ff621c1` as the slice-1 receipt of #140 (164 pass, 1 known fail left visible) |
@@ -108,7 +108,7 @@ GitHub repos / experiments  →  direction · Bundle template
                     │
                     ▼
 ┌─ GATES ──────────────────────────────────────────────────┐
-│ make_content.py: 7 VIDEO / 5 GRAPHIC_TEXT gates          │
+│ make_content.py: 8 VIDEO / 6 GRAPHIC_TEXT gates          │
 │ copy review (fingerprint) · QC · ASR (detect only)       │
 └──────────────────────────────────────────────────────────┘
                     │

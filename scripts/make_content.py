@@ -4,7 +4,7 @@
 Every conditional capability in this repository (account DNA, voice clone,
 digital-human bookends, Huashu motion, evidence-bound copy, copy review) is
 already implemented, but each one fires only when the operator remembers the
-right flag or ``project.yaml`` block. This CLI makes the six decisions explicit,
+right flag or ``project.yaml`` block. This CLI makes the gate decisions explicit,
 records them, writes the load-bearing ``account_slug`` block, and refuses to
 invoke a producer until every gate passes.
 
@@ -269,7 +269,7 @@ def build_parser():
     answer.add_argument("--opinion", help="written rationale")
     answer.set_defaults(func=cmd_answer)
 
-    check = sub.add_parser("check", help="verify all six gates")
+    check = sub.add_parser("check", help="verify all production gates")
     common(check)
     check.set_defaults(func=cmd_check)
 
