@@ -1,6 +1,6 @@
 {
   "schema": "contentops.branch-registry/v1",
-  "verified_at": "2026-11-12T04:20:00+08:00",
+  "verified_at": "2026-11-12T09:50:00+08:00",
   "policy": {
     "persistent": [
       "main"
@@ -71,6 +71,14 @@
       "created": "2026-11-12",
       "purpose": "close the registry after #158/#160/#161 merged; no active entries remain",
       "status": "merged",
+      "expires": "2026-12-12"
+    },
+    {
+      "name": "feat/140-characterize-m5",
+      "pr": 163,
+      "created": "2026-11-12",
+      "purpose": "Issue #140 slice 1: land the stranded M5 orchestrator behavioural characterization baseline; no code change",
+      "status": "active_draft",
       "expires": "2026-12-12"
     }
   ]
