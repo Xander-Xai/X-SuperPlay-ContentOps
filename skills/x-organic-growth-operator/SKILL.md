@@ -96,3 +96,7 @@ was verified. Before action, a person must check current applicable rules. Never
 send private material or credentials into logs, receipts, fixtures or outputs.
 Reject unsafe requests explicitly. Local tools are advisory, cannot check all
 sensitive data, and must not be represented as automated editorial clearance.
+
+## Companion skill — original-post copy
+
+For topic-to-original-post drafting, use [x-high-engagement-copywriter](../x-high-engagement-copywriter/SKILL.md). It applies conversation-derived writing patterns and editorial evaluation. This operator retains the authority for evidence-aware discussion planning, manual interaction, X gate handoff, and post-age measurement; neither skill publishes, scrapes or guarantees reach. Do not treat the pasted example corpus as verified X analytics.
