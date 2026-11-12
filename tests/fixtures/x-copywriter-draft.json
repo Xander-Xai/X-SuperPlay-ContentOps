@@ -1,0 +1,39 @@
+{
+  "schema": "contentops.x-copywriter-draft/v1",
+  "mode": "ORIGINAL_POST",
+  "account_slug": "x-superplay-english",
+  "language": "en",
+  "audience": "English-speaking AI builders",
+  "status": "DRAFT_REVIEW_REQUIRED",
+  "platform_metrics": null,
+  "experiment": {
+    "primary_variable": "hook_kind",
+    "age_window": "T+24h"
+  },
+  "candidates": [
+    {
+      "copy": "An AI demo can look finished right up until its first timeout. The useful question: can it tell you which steps actually ran?",
+      "pattern_id": "P06",
+      "inspiration_ids": [
+        "S06"
+      ],
+      "hook_kind": "technical",
+      "novel_angle": "Observability matters more than impressive technical headlines",
+      "claim_state": "OPINION_ONLY",
+      "risk": "PASS",
+      "editorial_score": 82
+    },
+    {
+      "copy": "The most expensive part of an AI workflow might be the hour you spend guessing what it did. I'd rather see the execution trail than another flashy diagram.",
+      "pattern_id": "P07",
+      "inspiration_ids": [
+        "S10"
+      ],
+      "hook_kind": "contrast",
+      "novel_angle": "Quantify the hidden cost of diagnosing failure without making up a metric",
+      "claim_state": "OPINION_ONLY",
+      "risk": "PASS",
+      "editorial_score": 78
+    }
+  ]
+}
