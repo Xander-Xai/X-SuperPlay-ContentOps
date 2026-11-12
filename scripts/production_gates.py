@@ -9,7 +9,7 @@ media, silently degraded. This module turns the conditions into a fail-closed
 contract:
 
     answer  -> receipts/production-intent.json (+ idempotent project.yaml blocks)
-    check   -> six gates, all must pass before any producer is invoked
+    check   -> eight VIDEO / six GRAPHIC_TEXT gates, all must pass
     run     -> check, then delegate to the existing produce_video.produce()
 
 It calls no provider, starts no host, spends no quota and publishes nothing.
@@ -61,6 +61,7 @@ GATES = (
     "avatar_bookends",
     "style_audio",
     "runtime_readiness",
+    "precopy_research",
 )
 
 ASSET_POLICIES = ("supplement", "local-free", "minimax-authorized")
@@ -594,6 +595,11 @@ def check_graphic(project: Path, intent: Dict[str, Any],
     add("runtime_readiness", not problems,
         "graphic runtime prerequisites present" if not problems else "; ".join(problems))
 
+    research = _preresearch_state(project)
+    add("precopy_research", research["ok"],
+        "research approved and fingerprint current" if research["ok"]
+        else f"{research['state']}: {research['detail']} | {research['remedy']}")
+
     ok = all(row["ok"] for row in rows)
     return {"schema": CHECK_SCHEMA, "ok": ok, "project": project.name,
             "checked_at": _now(), "format": "GRAPHIC_TEXT", "gates": rows,
@@ -607,6 +613,16 @@ def _copy_review_state(project: Path) -> Dict[str, Any]:
     gate = copy_review.status(project)
     return {"ok": bool(gate.get("ok")), "state": gate.get("state"),
             "detail": gate.get("detail") or gate.get("remedy") or ""}
+
+
+def _preresearch_state(project: Path) -> Dict[str, Any]:
+    """The gate that must pass before any copy is authored or approved."""
+    from contentops.workflow import preresearch
+
+    gate = preresearch.check(project)
+    return {"ok": bool(gate.get("ok")), "state": gate.get("state"),
+            "detail": gate.get("detail") or "",
+            "remedy": gate.get("remedy") or ""}
 
 
 def _dna_has(project: Path, intent: Dict[str, Any], root: Path) -> Dict[str, Any]:
@@ -633,7 +649,7 @@ def _dna_has(project: Path, intent: Dict[str, Any], root: Path) -> Dict[str, Any
 
 def check(project: Path, *, root: Path = ROOT,
           intent: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """Return a six-gate report. Never raises for an ordinary missing answer."""
+    """Return a fail-closed gate report. Never raises for an ordinary missing answer."""
     project = Path(project).resolve()
     intent = intent if intent is not None else load_intent(project)
     results: List[Dict[str, Any]] = []
@@ -715,6 +731,14 @@ def check(project: Path, *, root: Path = ROOT,
     runtime = runtime_readiness(project, intent, root)
     add("runtime_readiness", runtime["ok"], runtime["detail"],
         problems=runtime["problems"])
+
+    # 8. Pre-copy research: reading the project, verifying authoritative
+    # sources, an outline, an evidence list and a signed boundary statement
+    # must all exist before copy is authored. No force switch.
+    research = _preresearch_state(project)
+    add("precopy_research", research["ok"],
+        "research approved and fingerprint current" if research["ok"]
+        else f"{research['state']}: {research['detail']} | {research['remedy']}")
 
     ok = all(row["ok"] for row in results)
     report = {

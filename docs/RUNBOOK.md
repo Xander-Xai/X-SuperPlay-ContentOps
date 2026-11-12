@@ -55,6 +55,28 @@ python scripts\new_project.py --slug my-video --title "My Video Title"
 Creates: `projects/my-video/` with `project.yaml` and standard subdirs.
 Refuses to overwrite existing project.
 
+## 3.1 Pre-copy research gate (required before any copy)
+
+Every piece needs a signed research package before `script/master.md` or
+`02_draft/draft.md` exists. Contract `contentops.precopy-research/v1`; see
+[PRECOPY-RESEARCH.md](PRECOPY-RESEARCH.md).
+
+```powershell
+python scripts\preresearch.py init --project projects\my-video
+python scripts\preresearch.py intent --project projects\my-video
+# Read the project, verify authoritative sources, fill the four written artifacts.
+python scripts\preresearch.py check --project projects\my-video
+python scripts\preresearch.py approve --project projects\my-video `
+  --reviewer "Your Name" --opinion "Read the diff and verified the sources" --confirm
+```
+
+`check` exits 4 while blocked. `approve` requires a named reviewer, a written
+opinion and `--confirm`; there is no `--force`. Editing any research artifact
+after signing makes the receipt `STALE`. This is the 8th VIDEO / 6th
+GRAPHIC_TEXT gate in `production_gates.py`, and `copy_review.py --approve`
+refuses to record a copy decision without it. Direct `m5_production.py` /
+`produce_video.py` runs remain diagnostic and outside the gate, as before.
+
 ## 4. Prepare source assets
 
 Place real evidence in:
@@ -99,7 +121,7 @@ python scripts\make_content.py answer --project projects\my-video --interactive
 python scripts\copy_review.py projects\my-video --approve `
   --reviewer "Your Name" --opinion "Reviewed the narration" --confirm
 
-# 3. Verify all six gates (exit 4 when any is open).
+# 3. Verify all eight VIDEO / six GRAPHIC_TEXT gates (exit 4 when any is open).
 python scripts\make_content.py check --project projects\my-video
 
 # 4. Produce only after check is green; run refuses to call the producer otherwise.

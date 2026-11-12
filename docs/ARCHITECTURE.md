@@ -170,8 +170,8 @@ runnable here.
 ```text
 scripts/
 ├── run_v1.py             ← V1 orchestrator (easel + fallback engines)
-├── make_content.py       ← Stable production entry (gate-checked, six decisions)
-├── production_gates.py   ← 7 VIDEO + 5 GRAPHIC_TEXT fail-closed gates
+├── make_content.py       ← Stable production entry (gate-checked, explicit decisions)
+├── production_gates.py   ← 8 VIDEO + 6 GRAPHIC_TEXT fail-closed gates
 ├── produce_video.py      ← Diagnostic producer behind make_content.py
 ├── m5_production.py      ← Evidence-first chain (sources → … → review → ASR backcheck)
 ├── m5_characterize.py    ← Records the M5 suite pass counts a refactor must keep

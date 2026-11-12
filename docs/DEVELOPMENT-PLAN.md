@@ -27,7 +27,7 @@
 | M2-M4 | MiniMax speech / image / H3 integration | **DONE (implemented)** | verified subsets in CURRENT-STATE; `PENDING_FOUNDER_REVIEW` |
 | M4.5 | Media convergence: one manifest, one gate vocabulary | **DONE** | 97 tests; `projects/m45-technical-integration` |
 | M5 | Evidence-first production chain | **DONE** | `scripts/m5_production.py`, `projects/m5-media-use`; ASR backcheck gate (#150); characterization baseline (#153) |
-| Stable production entry | One gated CLI in front of every producer | **DONE** | `scripts/make_content.py` + `scripts/production_gates.py` (#157); 7 VIDEO / 5 GRAPHIC_TEXT fail-closed gates |
+| Stable production entry | One gated CLI in front of every producer | **DONE** | `scripts/make_content.py` + `scripts/production_gates.py` (#157); 8 VIDEO / 6 GRAPHIC_TEXT fail-closed gates |
 | Rendering: cards and GZH article | HTML cards → PNG with a density audit; article HTML validation | **DONE (offline)** | `render_cards.py` (#149), `render_article.py` (#152); receipts keep `production_ready: false` |
 | M5-M6 | Cross-repo `SourceArtifact` workflow and production E2E | **DONE (evidence in issue)** | three real-source runs on `main` (#117, #119) pass automated and visual QC; Founder review PASS recorded in #6, closed 2026-11-10. Caveat: the approval lives in the issue, not in an APPROVED `human-review.json` |
 | Content router | Account DNA → route → brief → existing pipeline | **DONE** | PRs #114 / #118; 15 hotspot sources opened to both accounts (#157) |

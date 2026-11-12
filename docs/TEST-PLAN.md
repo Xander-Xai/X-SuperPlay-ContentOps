@@ -4,7 +4,7 @@
 
 > Authoritative local verification strategy, suite inventory and CI wiring.
 >
-> Last verified: 2026-11-12 on `main` at `c1da6dd` (98 suites, 98 named CI steps).
+> Last verified: 2026-11-12 on `main` at `c1da6dd` (99 suites, 99 named CI steps).
 
 ## Risk-based local verification
 
@@ -121,6 +121,7 @@ Function counts inside a suite are floors, not totals, because list-driven and u
 | Managed media-use status | `tests/test_skill_execute_status.py` | list-driven | yes |
 | Trusted grant source | `tests/test_trusted_grant_source.py` | list-driven | yes |
 | Execution gate | `tests/test_execution_gate.py` | list-driven | yes |
+| Pre-copy research gate | `tests/test_precopy_research.py` | 25 | yes |
 
 The CI workflow also runs policy, docs, i18n, whitespace, subprocess and receipt-secret checks. Media provider suites use fake transports; they do not call a provider. Suites that require `ffmpeg`, `Pillow`, media-use runtime or ignored artifacts may skip locally; inspect availability/skip output. CI installs `Pillow` and ffmpeg and reports availability.
 
@@ -138,5 +139,5 @@ The CI workflow also runs policy, docs, i18n, whitespace, subprocess and receipt
 - A regression suite for the publication path once a real platform URL exists —
   there is nothing to assert against before that.
 
-The inventory above is a floor, not a complete enumeration: 98 suites were
+The inventory above is a floor, not a complete enumeration: 99 suites were
 tracked on 2026-11-12, and `git ls-files 'tests/test_*.py'` is the authority.

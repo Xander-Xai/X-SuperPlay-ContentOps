@@ -33,7 +33,7 @@ translation_status: synced
 | M2-M4 | MiniMax 语音 / 图片 / H3 集成 | **DONE（已实现）** | 已验证子集见 CURRENT-STATE；`PENDING_FOUNDER_REVIEW` |
 | M4.5 | 媒体收敛：唯一清单、唯一门禁词汇 | **DONE** | 97 项测试；`projects/m45-technical-integration` |
 | M5 | 证据优先生产链 | **DONE** | `scripts/m5_production.py`、`projects/m5-media-use`；ASR 回检门禁（#150）；特征基线（#153） |
-| 稳定生产入口 | 所有生产者之前的唯一受门禁 CLI | **DONE** | `scripts/make_content.py` + `scripts/production_gates.py`（#157）；7 个 VIDEO / 5 个 GRAPHIC_TEXT 失败即拒绝门禁 |
+| 稳定生产入口 | 所有生产者之前的唯一受门禁 CLI | **DONE** | `scripts/make_content.py` + `scripts/production_gates.py`（#157）；8 个 VIDEO / 6 个 GRAPHIC_TEXT 失败即拒绝门禁 |
 | 渲染：卡片与公众号文章 | HTML 卡片转 PNG 并做密度审计；文章 HTML 校验 | **DONE（离线）** | `render_cards.py`（#149）、`render_article.py`（#152）；回执恒为 `production_ready: false` |
 | M5-M6 | 跨仓库 `SourceArtifact` 工作流与生产 E2E | **DONE（证据在 issue）** | `main` 上三次真实来源运行（#117、#119）通过自动与视觉 QC；Founder 审核 PASS 记录在 #6，已于 2026-11-10 关闭。注意：批准记录在 issue 里，而不是 APPROVED 的 `human-review.json` |
 | 内容路由 | 账号 DNA → 路线 → Brief → 现有流水线 | **DONE** | PR #114 / #118；15 个热点源对两个账号开放（#157） |
