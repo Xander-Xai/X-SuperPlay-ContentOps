@@ -127,6 +127,13 @@ jobs:
       - name: Run GZH article renderer tests
         run: python tests/test_render_articles.py
 
+      # Eight-gate end-to-end: drives the real runtime workflow when it is
+      # present and reports SKIP when it is not. .runtime/ is gitignored, so on
+      # a clean checkout this suite skips by design — a green run here is never
+      # evidence that the gates passed, only that nothing pretended to.
+      - name: Run XHS eight-gate end-to-end tests
+        run: python tests/test_e2e_xhs_eight_gates.py
+
       # ASR backcheck: the SiliconFlow adapter contract and the M5 gate that
       # blocks account-bound projects on missing narration evidence. Both suites
       # drive fake transports only -- no provider request is ever made here.
