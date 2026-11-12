@@ -37,13 +37,18 @@ from __future__ import annotations
 
 import json
 import os
-import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+for candidate in (ROOT / "src", ROOT / "scripts"):
+    if str(candidate) not in sys.path:
+        sys.path.insert(0, str(candidate))
+
+from process_utils import hidden_run  # noqa: E402
+
 WORKFLOW = ROOT / ".runtime" / "workflows" / "xhs_未来智能"
 GATE = WORKFLOW / "scripts" / "pipeline_gate.py"
 WINDOWS_VENV = ROOT / ".runtime" / "gzh-wf-venv" / "Scripts" / "python.exe"
@@ -114,10 +119,9 @@ class EightGateTest(unittest.TestCase):
         return env
 
     def _run(self, script: str, *args: str) -> tuple[int, str]:
-        result = subprocess.run(
+        result = hidden_run(
             [str(self.python), str(WORKFLOW / "scripts" / script), *args],
-            cwd=str(WORKFLOW), capture_output=True, text=True,
-            encoding="utf-8", errors="replace", env=self._env(), timeout=180,
+            cwd=str(WORKFLOW), timeout=180, env=self._env(),
         )
         return result.returncode, ((result.stdout or "") + (result.stderr or "")).strip()
 
