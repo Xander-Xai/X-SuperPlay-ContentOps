@@ -104,6 +104,14 @@
       "purpose": "record the external output root: build products live outside the repository, behind junctions into the AI-Outputs archive",
       "status": "merged",
       "expires": "2026-12-12"
+    },
+    {
+      "name": "feat/x-high-engagement-copywriter-20261112",
+      "pr": 171,
+      "created": "2026-11-12",
+      "purpose": "X high-engagement original-post Skill from conversation-derived patterns, hypotheses, writing recipes, and manual metrics loop",
+      "status": "active",
+      "expires": "2026-12-12"
     }
   ]
 }
