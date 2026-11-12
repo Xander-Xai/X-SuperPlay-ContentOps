@@ -80,6 +80,14 @@
       "purpose": "Issue #140 slice 1: land the stranded M5 orchestrator behavioural characterization baseline; no code change",
       "status": "active_draft",
       "expires": "2026-12-12"
+    },
+    {
+      "name": "test/xhs-eight-gates-e2e",
+      "pr": 165,
+      "created": "2026-11-12",
+      "purpose": "end-to-end proof of the eight-gate pre-publication pipeline (landed with #165)",
+      "status": "merged",
+      "expires": "2026-12-12"
     }
   ]
 }
