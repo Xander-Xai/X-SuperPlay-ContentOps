@@ -16,9 +16,8 @@ Use user-provided material or sources the operator is authorized to access.
 
 X Strategy SOP V1.1 governs business priority; the registered Account DNA
 in config/accounts/x-superplay-english.json governs actual English-account
-cadence (3–4 original/week; <=1/day), language, evidence and manual publication.
-The Strategy 1–3 originals/day is a cross-account exploration band, not permission
-to violate this account's limit. Original qualifying Home Timeline Q, ordinary
+cadence (up to four English original candidates/day), language, evidence and manual publication.
+The 2026-11-13 V1.2 Strategy sets a global daily plan of ten original candidates (six Chinese, four English) and one hundred human-reviewed reply goals (A25/B25/C50). Previous 3–4/week, <=1/day, 1–3/day and 5–10/day reply figures are historical. Chinese routing is not automatically registered on the English account. Original qualifying Home Timeline Q, ordinary
 reply impressions, account net followers, and post-level profile clicks are
 incomparable and must never be substituted. This skill is advisory only.
 The authoritative local analytics command and context CSV definitions live in
@@ -80,15 +79,16 @@ X-SuperPlay-Strategy/03-Execution/X-Inspiration-vs-Timeline-Growth-Experiment-20
 This is not a mandate to reply more often. Original posts, existing account
 cadence, quality/rights gates and human time budget still take priority.
 
-1. Operator manually discovers public discussions in X Inspiration and Timeline;
+1. The current manual daily candidate targets are **A=25 general entertainment Inspiration replies**, **B=25 AI/tech Inspiration replies**, and **C=50 AI/tech Timeline replies** (100 planned). They are targets for **human judgment**, not permission for bulk unsolicited replies, inauthentic engagement, duplicate messages or bypassing platform limits. The daily originals plan is **6 zh + 4 en**, with no technical-only content requirement. Log planned / reviewed / eligible / actually published / skipped separately; stop if quality, safety, recipient or time limits are exceeded.
+2. Operator manually discovers public discussions in X Inspiration and Timeline;
    the label is a *discovery surface*, **not** verified traffic attribution.
    Label A = inspiration_broad (entertainment/exploration), B = inspiration_ai,
    C = timeline_ai. B vs C is the primary like-topic comparison; A is a
    different audience and must not be presented as a causal control group.
-2. Operator records only viewed posts and human 0–5 judgments into the private,
+3. Operator records only viewed posts and human 0–5 judgments into the private,
    gitignored .local/x-growth-en/discussion-candidates.csv. Initialize with:
    python scripts/x_discussion_candidates.py init
-3. Rank locally without fetching any post, claiming an algorithm score or
+4. Rank locally without fetching any post, claiming an algorithm score or
    scheduling a reply:
    python scripts/x_discussion_candidates.py rank --account x-superplay-english --language en
    Read private candidates-ranked.csv. REVIEW_CANDIDATE still requires a human to
@@ -96,17 +96,17 @@ cadence, quality/rights gates and human time budget still take priority.
    Scoring weighs topic/audience fit, evidence and original contribution more
    than hotness; missing evidence and high risk cannot be compensated by views.
    Reference: docs/X-DISCUSSION-CANDIDATES.md.
-4. When a human actually publishes a reply, record **the reply's own URL** in
+5. When a human actually publishes a reply, record **the reply's own URL** in
    local posts.csv and the source discussion URL in source_url, plus
    experiment_variable=source:inspiration_ai / source:timeline_ai /
    source:inspiration_broad; no draft URL counts as published. Use existing
    x-metric-snapshots.csv at matched T+24H/T+72H and account snapshots separately.
-5. Review descriptive comparisons with
+6. Review descriptive comparisons with
    python scripts/x_learning_loop.py analyze --account x-superplay-english --window T+24H --compare --experiment-id CEXP-20261113-001 --topic-cluster ai_agent --language en --definition native_v1
    and explicit Founder review. Account net follows, generic reply impressions
    and X eligible original-home impressions are different quantities; neither
    follower attribution nor causal uplift can be inferred from aggregate screenshots.
-6. Only after a comparable B/C descriptive report exists, Strategy Founder
+7. Only after a comparable B/C descriptive report exists, Strategy Founder
    explicitly reviews report ID, CONTINUE/ADJUST and real HTTPS evidence for a
    new topic. Invoke x_learning_loop.py route with --report-id, --decision,
    --reviewer, --evidence-url, --topic and --confirm. Its existing Content Router
@@ -115,8 +115,7 @@ cadence, quality/rights gates and human time budget still take priority.
    claiming a data-driven decision. Keep unchanged quality/review gates.
    Never auto-publish or auto-change account cadence.
 
-**Do not adopt an earlier illustrative 32 replies/day + two original posts
-as a quota.** Match the canonical X strategy's time and original-post priority.
+**Old 32 replies/day + two original posts and 50–65-minute budgets have been superseded by V1.2.** The new 100+10 counts are ambitious planning goals, not a guarantee of 100 eligible conversations or publication permission. Use observed actual hours and the same existing CSV/learning tools, not a parallel automated mass-reply system.
 This skill's output is advisory, not a platform-compliance ruling.
 
 ## Offline demonstrations
@@ -160,7 +159,7 @@ sensitive data, and must not be represented as automated editorial clearance.
 
 ## Multi-post manual reply triage (2026-11-13 editorial update)
 
-A long session of pasted X posts is a **drafting queue**, not evidence that any
+A long session of pasted X posts, even under the new daily 100-reply target, is a **drafting queue**, not evidence that any
 reply has been posted, that the authors are authentic, or that a template worked.
 See [the copywriter's bilingual reply patterns](../x-high-engagement-copywriter/references/reply-batch-and-original-post-lessons-2026-11-13.md)
 for tone, safety and anti-repetition review. The earlier fixed S01–S11 corpus
@@ -184,9 +183,7 @@ receipts.
   followers or qualifying original Home Timeline Q. Continue to record only
   human-published own reply URLs and separately observed age-matched metrics
   in the existing local CSVs.
-- **No new volume target:** with limited operator time or weak candidates,
-  prefer 0 replies to repetitive or risky comments. Account DNA and Strategy
-  SOP remain the sole source of publication cadence and business priorities.
+- **No second volume target:** Strategy V1.2 already declares A25/B25/C50 and zh6/en4. With limited operator time or weak candidates, prefer 0 *unsafe* replies to repetitive or risky comments; count the unmet planned remainder honestly. Account DNA and Strategy SOP remain the sole source of publication cadence and business priorities.
 
 ## Companion skill — original-post copy
 
