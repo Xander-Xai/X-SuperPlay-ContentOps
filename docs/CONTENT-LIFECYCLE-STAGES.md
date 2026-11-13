@@ -7,7 +7,7 @@
 > not emit a success receipt, a publication record or a metric.
 
 > Status: reference — 2026-11-12.
-> Last verified: 2026-11-13. Local-only X and cross-platform analytics exist; no live account growth is verified.
+> Last verified: 2026-11-14. The X ORIGINAL_POST path now validates explicit text or image format, content-mode review profiles and human-only package handoff; image records require raster+ALT and text records carry neither. No live account growth or platform publication is verified.
 > Local feedback remains PARTIAL: manually supplied metrics -> learning brief -> human-approved Topic route; not automated publishing.
 
 Related: [ARCHITECTURE.md](ARCHITECTURE.md), [PRD.md](PRD.md),
