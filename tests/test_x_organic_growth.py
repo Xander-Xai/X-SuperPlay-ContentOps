@@ -81,6 +81,14 @@ class OrganicGrowthTests(unittest.TestCase):
         self.assertEqual(result["status"], "BLOCKED")
         self.assertIn("PUBLICATION_UNVERIFIED", result["reasons"])
 
+    def test_discovery_source_experiment_uses_single_matched_x_cli(self):
+        result = process(self.request("experiment", experiment_type="DISCOVERY_SOURCE",
+                                      records=[{"group": "B", "value": 10, "metric": "impressions",
+                                                "age_window": "T+24H", "observed_at": "2026-11-13T00:00:00Z",
+                                                "source": "synthetic"}]))
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertIn("USE_X_LEARNING_LOOP", result["reasons"])
+
     def test_tiny_experiment_is_insufficient(self):
         records = [{"group": group, "value": 10, "metric": "impressions", "age_window": "T+24H", "observed_at": "2026-10-01T00:00:00Z", "source": "fixture"} for group in ("A", "A", "B", "B")]
         result = process(self.request("experiment", experiment_type="HOOK_STYLE", records=records))
