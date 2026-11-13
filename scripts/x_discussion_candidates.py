@@ -98,6 +98,13 @@ def rank(directory: Path, account: str, language: str):
     guard_local(directory)
     if not ACCOUNT.fullmatch(account) or not LANGUAGE.fullmatch(language):
         raise ValueError("invalid account or language")
+    profile_path = ROOT / "config" / "accounts" / (account + ".json")
+    if not profile_path.is_file():
+        raise ValueError("registered X account DNA required")
+    profile = json.loads(profile_path.read_text(encoding="utf-8"))
+    if (profile.get("slug") != account or profile.get("language") != language
+            or "x" not in (profile.get("platforms") or [])):
+        raise ValueError("candidate language/account must match registered X DNA")
     path = directory / INPUT_NAME
     if not path.is_file() or path.stat().st_size > 5_000_000:
         raise ValueError("candidate CSV missing or too large; run init")
