@@ -9,7 +9,7 @@
 - 2026-11-03 创作者提供 X Creator Studio 的 Original Content Rewards 资格截图：Premium 与年龄显示通过；500 认证粉丝和过去 90 天 500,000 认证用户首页曝光尚未达标。**数值为当时用户截图，并非已通过官方授权读取**。此公开仓不上传原始截图、账号身份、精确账户数据；真实数值仅在授权私有台账保存。
 - `projects/x-growth-en/project.yaml` 只绑定**唯一双语 X 账号**，`language: multi`、支持 `zh/en`，仍为 `MANUAL_ONLY`。`x-growth-en`路径和`x-superplay-english` slug仅兼容旧数据，不是第二账号；中文/英文内容和A/B/C回复都属于同一个账号。各语言的逐帖指标独立分析，账号级Q和粉丝不能双重计数。
 - ContentOps 已有 X 线下增长 Skill、文章审核/可选图片与ALT/人工发布门禁、`scripts/x_growth_pipeline.py`、`projects/x-growth-en/templates/posts.csv`、账号与帖子数据 CSV；**目前无获授权的 X 自动发布、回复、读取账号数据或收益指标接口**。
-- **2026-11-13 V1.3 单账号目标**：同一账号每天人工回复160条（A=灵感泛娱乐40、B=灵感AI科技40、C=时间线AI科技80），**原创发布目标24条（中文20、英文4）**，题材不限技术。旧英文4条/日与中文另设账号说法已撤销。不能绕过事实/原创、人审或真实URL；纯文字可用 `post_format=text`，图文 `post_format=image` 时图片/ALT必须合规，不能把待审稿算已发布。
+- **2026-11-14 V1.4 单账号目标（延续 V1.3 数量）**：同一账号每天人工回复160条（A=灵感泛娱乐40、B=灵感AI科技40、C=时间线AI科技80），**原创发布目标24条（中文20、英文4）**，题材不限技术。旧英文4条/日与中文另设账号说法已撤销。不能绕过事实/原创、人审或真实URL；纯文字可用 `post_format=text`，图文 `post_format=image` 时图片/ALT必须合规，不能把待审稿算已发布。
 
 ## 1. 官方资格与计量口径（执行前必须重新核实）
 
@@ -59,7 +59,7 @@
 
 ## 4. 90 天执行分期
 
-### D0–D14｜诊断与恢复（V1.3下的账号核验，不再自动恢复旧低频配额）
+### D0–D14｜诊断与恢复（V1.4下的账号核验，不再自动恢复旧低频配额）
 1. 人工确认账号 handle、语言、Profile/Bio、置顶、角色、当前规则地区/KYC、账号通知，核实最近 14 天旧恢复实验的状态。
 2. 将旧仓已记录的帖子 ID/URL/发布状态/素材权利/原始时序与 ContentOps `posts.csv` 对账：`draft` 仍为草稿；`reported_published_url_pending` 必须见真实 URL 才升级为已发布。
 3. 人工在官方 Creator Studio 核对 **Verified followers / Verified Home Timeline impressions (last 90 days)**；保存脱敏的私有证据编号；缺失留空。
@@ -122,7 +122,7 @@
 ## 8. 验收清单
 
 - [ ] 本计划可从 ContentOps 项目入口找到，包含官方政策链接/核验日期。
-- [ ] 新版V1.3数量目标与账号语言/ICP、证据、版权、人工发布治理均一致；旧恢复频率仅用于历史参照。
+- [ ] 新版V1.4数量目标与账号语言/ICP、证据、版权、人工发布治理均一致；旧恢复频率仅用于历史参照。
 - [ ] 已有 post/account/post metric CSV 未被清空或重建；新增资格 CSV 只有 header。
 - [ ] 数字门槛、普通曝光/合格曝光、账号/帖级指标、滚动窗口互不混淆。
 - [ ] 人工内容/配图/ALT 审核与发布 URL 回执仍是硬要求。
