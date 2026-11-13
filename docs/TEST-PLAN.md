@@ -4,8 +4,8 @@
 
 > Authoritative local verification strategy, suite inventory and CI wiring.
 >
-> Last verified: 2026-11-13 against PR #174 candidate; established test contract retained.
-> Branch delta: X local learning regression and CI step; synthetic temporary CSV only, no private analytics in CI.
+> Last verified: 2026-11-13: offline X and cross-platform learning, human-reviewed Topic route; no live platform outcome claimed.
+> X policy: Strategy canonical SOP and registered account DNA; source metrics and publishing still require human verification.
 
 
 ## Risk-based local verification

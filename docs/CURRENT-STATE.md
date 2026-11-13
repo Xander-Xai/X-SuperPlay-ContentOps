@@ -4,8 +4,8 @@
 
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
-> Last verified: 2026-11-13 against main @ `9738186` (PR #174 merged); cross-platform extension remains a PR candidate.
-> Main contains the X-only local analyzer; this candidate adds cross-platform local metric learning and reviewed Topic routing. No private account data included.
+> Last verified: 2026-11-13 on verified remote main baseline `98a61f2`; local X/cross-platform learning is merged, real platform outcomes unverified.
+> X and cross-platform offline analyzers are implemented; the platform outcomes and automatic end-to-end operations have not been verified.
 
 > Facts below describe `main`; deferred or rights-blocked work is labelled as such.
 > Sections below the "Layer status" table are historical milestone records;
@@ -40,12 +40,12 @@
 > sync).** Every other section below it is a historical snapshot kept for
 > traceability; none of them is the current state.
 
-### Git — verified 2026-11-13 (read-only remote baseline + PR candidate)
+### Git — verified 2026-11-13 (read-only remote baseline)
 
 | Property | Verified value |
 |---|---|
-| Default branch | `main` — protected @ `9738186` (read-only GitHub branch query on 2026-11-13) |
-| Branch delta | PR #174 candidate adds local-only X learning; NOT merged into main, NOT a platform publication |
+| Default branch | `main` — protected @ `98a61f2` (read-only GitHub branch query on 2026-11-13) |
+| Current baseline | X and cross-platform local analyzers merged to main; pending human-reviewed Topic runs are not platform publication evidence |
 
 The detailed 2026-11-12 snapshot below is retained as a historical record. No claim is made that the branch's X local CSV tool exists on the default branch.
 

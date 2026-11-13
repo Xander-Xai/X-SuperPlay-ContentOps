@@ -7,8 +7,8 @@
 > not emit a success receipt, a publication record or a metric.
 
 > Status: reference — 2026-11-12.
-> Last verified: 2026-11-13 against PR #174 candidate; main status remains the 2026-11-12 baseline.
-> Main includes local X metric learning through PR #174. This candidate adds local cross-platform analytics; no real account data is stored in Git.
+> Last verified: 2026-11-13. Local-only X and cross-platform analytics exist; no live account growth is verified.
+> Local feedback remains PARTIAL: manually supplied metrics -> learning brief -> human-approved Topic route; not automated publishing.
 
 Related: [ARCHITECTURE.md](ARCHITECTURE.md), [PRD.md](PRD.md),
 [ADR-015](adr/ADR-015-platform-placeholders-and-content-bundle.md),

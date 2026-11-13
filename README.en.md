@@ -4,8 +4,8 @@
 
 [简体中文](README.md) | English
 
-> Last verified: 2026-11-13 against PR #174 candidate; main table remains the 2026-11-12 baseline.
-> Branch delta: local-only X metrics review and explicit manual Topic handoff. Not merged or a platform result.
+> Last verified: 2026-11-13. Local-only X and cross-platform analytics exist; no live account growth is verified.
+> Operating authority: canonical Strategy X SOP and account DNA; local-only real analytics and human review/manual publishing.
 
 > `main`, never a draft branch.
 

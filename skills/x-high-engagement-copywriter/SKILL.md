@@ -5,6 +5,25 @@ description: "Draft original, discussion-worthy Chinese/English X posts, quote p
 
 # X High-Engagement Copywriter
 
+## X decision standards (single authority)
+
+Use the canonical [X Strategy SOP V1.1](https://github.com/Xander-Xai/X-SuperPlay-Strategy/blob/main/01-Strategy/X-Original-Content-Rewards-Growth-V1.md)
+and the registered Account DNA before choosing content language, quantity,
+or any publication eligibility claim. The x-superplay-english profile limits
+original main posts to 3–4/week and at most one/day; earlier 1–3/day figures
+in Strategy are overall experiments, not an override for that account.
+The heuristic /100 **draft-writing score below is NOT the registered X account's
+24/30 editorial acceptance gate**: neither score authorizes publication or
+supersedes proof grades, card/ALT requirements and human approval.
+For the X Inspiration/Timeline B/C experiment, run the single
+[local metrics workflow](../../docs/X-LOCAL-LEARNING-LOOP.md).
+Prefix discovery-source metadata with `source:inspiration_ai` or
+`source:timeline_ai` and, if needed, retain the writer pattern tag as
+`source:timeline_ai;cw:P05:contrast` in the existing field. This keeps
+both workflows in one post record. The copywriter tool's legacy `T+24h`
+presentation is not the X metrics CSV's canonical `T+24H`; normalize when
+entering X metric snapshots. Do not invent a parallel metric threshold.
+
 ## Purpose, limits and activation
 
 **North Star:** original, audience-specific posts that stop the scroll, deliver substance and invite worthwhile conversation; improve choices over time using **the author's own observed X data**.

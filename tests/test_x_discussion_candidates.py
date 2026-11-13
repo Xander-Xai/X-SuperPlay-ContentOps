@@ -115,6 +115,12 @@ class CandidateTriageTests(unittest.TestCase):
         rank(self.data, "x-superplay-english", "en")
         self.assertTrue(all(x["decision"] == "SKIP" for x in self.rows()))
 
+    def test_language_must_match_registered_x_account(self):
+        with self.assertRaisesRegex(ValueError, "registered X DNA"):
+            rank(self.data, "x-superplay-english", "zh")
+        with self.assertRaisesRegex(ValueError, "registered X account"):
+            rank(self.data, "unknown-x-account", "en")
+
     def test_empty_dataset_returns_unavailable(self):
         result = rank(self.data, "x-superplay-english", "en")
         self.assertEqual(result["status"], "DATA_UNAVAILABLE")

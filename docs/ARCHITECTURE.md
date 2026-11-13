@@ -2,8 +2,8 @@
 
 [English](ARCHITECTURE.md) | [简体中文](ARCHITECTURE.zh-CN.md)
 
-> Last verified: 2026-11-13 against PR #174 candidate; main capabilities remain the 2026-11-12 baseline.
-> Branch delta: local-only X metric analysis and explicit reviewed next-topic routing; no automatic publication.
+> Last verified: 2026-11-13. Local-only X/cross-platform feedback starts reviewed Topics, never platform actions.
+> X priority: platform rules/human gates -> registered account DNA -> Strategy X SOP -> scoped experiment.
 
 
 > What the system is. Where the boundaries are. How components call each other.

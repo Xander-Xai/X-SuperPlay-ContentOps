@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import re
 import sys
@@ -41,6 +42,7 @@ WINDOW_HOURS = {"T+24H": (18, 36), "T+72H": (60, 84), "T+7D": (144, 192)}
 VALID_STATUS = {"published", "reported_published", "verified_published"}
 SLUG = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
 SCHEMA = "contentops.platform-learning/v1"
+DECISIONS = ("CONTINUE", "ADJUST", "PAUSE", "INCONCLUSIVE")
 
 
 def _safe_slug(value, label):
@@ -121,12 +123,14 @@ def initialize(directory: Path):
 
 def analyze(directory: Path, *, platform: str, account: str, content_format: str,
             topic_cluster: str, window: str, metric_name: str,
-            definition: str, interest_metric: str):
+            definition: str, interest_metric: str, experiment_id: str = ""):
     _local_guard(directory)
     for label, value in (("platform", platform), ("account", account),
                          ("format", content_format), ("topic", topic_cluster),
                          ("definition", definition)):
         _safe_slug(value, label)
+    if experiment_id:
+        _safe_slug(experiment_id, "experiment-id")
     if window not in WINDOW_HOURS or metric_name not in METRICS or interest_metric not in RATE_METRICS:
         raise ValueError("unsupported metric/window selection")
     if metric_name == interest_metric:
@@ -136,6 +140,8 @@ def analyze(directory: Path, *, platform: str, account: str, content_format: str
     candidates = {}
     skipped = Counter()
     for item in index:
+        if experiment_id and item["experiment_id"] != experiment_id:
+            continue
         if (item["platform"], item["account_alias"], item["content_format"],
                 item["topic_cluster"]) != (platform, account, content_format, topic_cluster):
             continue
@@ -166,6 +172,7 @@ def analyze(directory: Path, *, platform: str, account: str, content_format: str
         if key in candidates and candidates[key] is not None:
             matched[key].append(snapshot)
     grouped = defaultdict(list)
+    matched_experiments = set()
     for key, records in matched.items():
         if len(records) != 1:
             skipped["duplicate_snapshot"] += 1
@@ -197,27 +204,51 @@ def analyze(directory: Path, *, platform: str, account: str, content_format: str
         if interest is not None and (primary == 0 and interest > 0):
             skipped["invalid_denominator"] += 1
             continue
-        grouped[post["discovery_source"]].append((primary, interest))
+        hours = _metric(snap.get("founder_hours", ""))
+        quality = _metric(snap.get("qualified_signals", ""))
+        matched_experiments.add(post["experiment_id"])
+        grouped[post["discovery_source"]].append((primary, interest, hours, quality))
     groups = []
     for surface, items in sorted(grouped.items()):
-        with_interest = [(p, i) for p, i in items if i is not None]
-        denominator = sum(p for p, _ in with_interest)
+        with_interest = [(p, i) for p, i, _, _ in items if i is not None]
+        positive = [(p, i) for p, i in with_interest if p > 0]
+        work = [(h, q) for _, _, h, q in items if h is not None and h > 0 and q is not None]
+        denominator = sum(p for p, _ in positive)
+        post_rates = [i * 1000 / p for p, i in positive]
         groups.append({
             "discovery_source": surface, "sample_count": len(items),
-            "median_primary": median(p for p, _ in items),
-            "total_primary": sum(p for p, _ in items),
+            "median_primary": median(p for p, _, _, _ in items),
+            "total_primary": sum(p for p, _, _, _ in items),
+            "median_interest_per_1000_post": round(median(post_rates), 3) if post_rates else None,
+            "qualified_signals_per_hour": round(sum(q for _, q in work) / sum(h for h, _ in work), 3) if work else None,
+            "effort_sample_count": len(work),
             "interest_sample_count": len(with_interest),
+            "valid_rate_samples": len(positive),
             "missing_interest": len(items) - len(with_interest),
             "interest_per_1000_primary": round(
-                sum(i for _, i in with_interest) * 1000 / denominator, 3
+                sum(i for _, i in positive) * 1000 / denominator, 3
             ) if denominator > 0 else None,
         })
-    compared = [g for g in groups if g["sample_count"] >= 5]
-    status = "DESCRIPTIVE_ONLY" if len(compared) >= 2 else "INSUFFICIENT_DATA"
+    compared = [g for g in groups if g["sample_count"] >= 5 and g["valid_rate_samples"] >= 5]
+    status = ("INCOMPARABLE_EXPERIMENTS" if len(matched_experiments) > 1 else
+              "DESCRIPTIVE_ONLY" if len(compared) >= 2 else "INSUFFICIENT_DATA")
+    leaders = sorted(compared, key=lambda item: (item["median_interest_per_1000_post"] if item["median_interest_per_1000_post"] is not None else -1), reverse=True)
+    recommendation = ("Observed higher post-median interest for " + leaders[0]["discovery_source"] +
+                      " (descriptive only). Review confounders and founder-hours before continuing one-variable experiment."
+                      if status == "DESCRIPTIVE_ONLY" else
+                      "Do not merge different experiment IDs." if status == "INCOMPARABLE_EXPERIMENTS" else
+                      "Keep discovery-source allocation unchanged until two groups have five complete comparable observations.")
+    input_digest = hashlib.sha256()
+    for filename in ("content-index.csv", "metric-snapshots.csv"):
+        input_digest.update((directory / filename).read_bytes())
     return {
         "schema": SCHEMA, "status": status, "platform": platform,
+        "input_sha256": input_digest.hexdigest(),
+        "report_id": "PL-" + hashlib.sha256(json.dumps([platform, account, content_format, topic_cluster, window, definition, groups, input_digest.hexdigest()], sort_keys=True).encode()).hexdigest()[:16],
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "account_alias": account, "content_format": content_format,
         "topic_cluster": topic_cluster, "metric_definition_version": definition,
+        "experiment_id": experiment_id or (next(iter(matched_experiments)) if len(matched_experiments) == 1 else None),
         "window": window, "primary_metric": metric_name,
         "interest_metric": interest_metric, "groups": groups,
         "skipped": dict(skipped), "data_origin": "LOCAL_USER_SUPPLIED_UNVERIFIED",
@@ -225,10 +256,12 @@ def analyze(directory: Path, *, platform: str, account: str, content_format: str
                                  "NOT official platform traffic attribution.",
         "finding": ("Group differences are descriptive, not proof of algorithmic "
                     "boosts, user attribution or causality." if status == "DESCRIPTIVE_ONLY"
+                    else "Multiple experiment IDs were mixed; select one --experiment-id." if status == "INCOMPARABLE_EXPERIMENTS"
                     else "At least two sources need >=5 comparable published organic snapshots."),
         "handoff": {
             "status": "HUMAN_REVIEW_REQUIRED", "proposed_topic": None,
-            "next_variable": "discovery_source", "production_authorized": False},
+            "next_variable": "discovery_source", "recommendation": recommendation,
+            "production_authorized": False},
         "network_used": False, "published": False
     }
 
@@ -242,13 +275,17 @@ def _report_markdown(result):
         f"interest: {result['interest_metric']}",
         f"Metric definition: {result['metric_definition_version']}",
         f"Status: {result['status']}; local data is not externally verified.", "",
-        "| Discovery source | N | Median primary | Interest / 1,000 primary |",
-        "|---|---:|---:|---:|"]
+        "| Source | N | Median primary | Median interest /1k/post | Pooled interest /1k | Quality/hour |",
+        "|---|---:|---:|---:|---:|---:|"]
     for row in result["groups"]:
         rate = row["interest_per_1000_primary"]
         lines.append(f"| {row['discovery_source']} | {row['sample_count']} | "
-                     f"{row['median_primary']} | {rate if rate is not None else 'unknown'} |")
-    lines += ["", result["finding"], "", result["source_interpretation"], "",
+                     f"{row['median_primary']} | "
+                     f"{row['median_interest_per_1000_post'] if row['median_interest_per_1000_post'] is not None else 'unknown'} | "
+                     f"{rate if rate is not None else 'unknown'} | "
+                     f"{row['qualified_signals_per_hour'] if row['qualified_signals_per_hour'] is not None else 'unknown'} |")
+    lines += ["", "Report ID: " + result["report_id"], result["finding"],
+              result["handoff"]["recommendation"], "", result["source_interpretation"], "",
               "Primary metrics across different platforms or formats are not interchangeable.",
               "Missing metrics are unknown, not zero; account follower change is never "
               "attributed to a single post.", "",
@@ -258,32 +295,46 @@ def _report_markdown(result):
 
 
 def handoff(directory: Path, *, account_profile: str, topic: str,
-            reviewer: str, evidence_url: str):
+            reviewer: str, evidence_url: str, report_id: str = "", decision: str = ""):
     _local_guard(directory)
     _safe_slug(account_profile, "account-profile")
     latest = directory / "learning" / "latest.json"
     if not latest.is_file():
         raise ValueError("analyze first; latest Learning Brief not found")
     report = json.loads(latest.read_text(encoding="utf-8"))
-    if report.get("schema") != SCHEMA:
-        raise ValueError("wrong Learning Brief schema")
+    if report.get("schema") != SCHEMA or report.get("report_id") != report_id:
+        raise ValueError("Learning Brief schema/report-id mismatch")
+    input_digest = hashlib.sha256()
+    for filename in ("content-index.csv", "metric-snapshots.csv"):
+        data_path = directory / filename
+        if not data_path.is_file():
+            raise ValueError("local metric source missing; re-run analyze")
+        input_digest.update(data_path.read_bytes())
+    if report.get("input_sha256") != input_digest.hexdigest():
+        raise ValueError("source CSV changed since this Learning Brief; re-run analyze")
+    if report.get("status") != "DESCRIPTIVE_ONLY" or decision not in ("CONTINUE", "ADJUST"):
+        raise ValueError("route requires a comparable report and approved CONTINUE/ADJUST decision")
     if not topic.strip() or not reviewer.strip() or not _url(evidence_url):
         raise ValueError("handoff requires a topic, reviewer and real HTTPS evidence URL")
     profile = ROOT / "config" / "accounts" / (account_profile + ".json")
     if not profile.is_file():
         raise ValueError("account profile is not registered in ContentOps")
     account_spec = json.loads(profile.read_text(encoding="utf-8"))
+    if report.get("account_alias") != account_profile or account_spec.get("slug") != account_profile:
+        raise ValueError("report account alias does not match route account profile")
     if report.get("platform") not in (account_spec.get("platforms") or []):
         raise ValueError("account profile does not authorize this platform; "
                          "do not route cross-platform learning to an unrelated account")
     cmd = [python_executable(), str(ROOT / "scripts" / "content_route.py"),
-           "start", "--account", account_profile, "--mode", "topic", "--topic", topic]
+           "start", "--account", account_profile, "--mode", "topic", "--topic", topic,
+           "--url", evidence_url, "--by", reviewer]
     result = hidden_run(cmd, cwd=str(ROOT), timeout=90)
     receipt = {
         "schema": "contentops.reviewed-learning-handoff/v1",
         "learning_schema": SCHEMA,
         "platform": report["platform"], "account_alias": report["account_alias"],
         "reviewer": reviewer, "evidence_url": evidence_url, "topic": topic,
+        "report_id": report_id, "decision": decision,
         "router_account_profile": account_profile,
         "router_exit_code": result.returncode,
         "status": "ROUTED_FOR_HUMAN_REVIEW" if result.returncode == 0 else "ROUTE_BLOCKED",
@@ -306,33 +357,43 @@ def main():
     parser.add_argument("--metric", default="views_or_reads", choices=METRICS)
     parser.add_argument("--interest", default="saves", choices=RATE_METRICS)
     parser.add_argument("--definition", default="native_v1")
+    parser.add_argument("--experiment-id")
     parser.add_argument("--account-profile")
     parser.add_argument("--topic")
     parser.add_argument("--reviewer")
     parser.add_argument("--evidence-url")
     parser.add_argument("--confirm", action="store_true")
+    parser.add_argument("--report-id")
+    parser.add_argument("--decision", choices=DECISIONS)
     args = parser.parse_args()
     try:
         if args.command == "init":
             result = initialize(args.data_dir)
         elif args.command == "route":
-            if not args.confirm:
-                raise ValueError("route requires explicit --confirm")
+            if not args.confirm or not args.report_id or not args.decision:
+                raise ValueError("route requires --confirm --report-id --decision")
             result = handoff(args.data_dir, account_profile=args.account_profile or "",
                              topic=args.topic or "", reviewer=args.reviewer or "",
-                             evidence_url=args.evidence_url or "")
+                             evidence_url=args.evidence_url or "", report_id=args.report_id,
+                             decision=args.decision)
         else:
             if not all((args.platform, args.account, args.format, args.topic_cluster)):
                 raise ValueError("analyze requires --platform --account --format --topic-cluster")
             result = analyze(args.data_dir, platform=args.platform, account=args.account,
                              content_format=args.format, topic_cluster=args.topic_cluster,
                              window=args.window, metric_name=args.metric,
-                             definition=args.definition, interest_metric=args.interest)
+                             definition=args.definition, interest_metric=args.interest,
+                             experiment_id=args.experiment_id or "")
             output = args.data_dir / "learning"
             output.mkdir(parents=True, exist_ok=True)
             (output / "latest.json").write_text(
                 json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
             (output / "latest.md").write_text(_report_markdown(result), encoding="utf-8")
+            history = output / "history"
+            history.mkdir(parents=True, exist_ok=True)
+            archive = history / (result["report_id"] + ".json")
+            if not archive.exists():
+                archive.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0 if result.get("status") != "ROUTE_BLOCKED" else 2
     except (ValueError, OSError, csv.Error) as exc:

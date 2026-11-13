@@ -4,8 +4,8 @@
 
 简体中文 | [English](README.en.md)
 
-> 最后验证：2026-11-13，PR #174 候选分支；下文 main 状态表仍为 2026-11-12 的历史基线。
-> 分支增量：本地运营 CSV 分组分析、同龄快照、人工确认的选题路由。未合并前不属于 main 的已验收能力。
+> 最后验证：2026-11-13；X 和跨平台离线分析已实现，真实账号增长效果尚无本仓验收。
+> 统一执行标准：Strategy 唯一 X SOP 与注册账号 DNA；用户原始数据仅本地保存，人工审核与发布。
 
 
 > 跨平台运营数据闭环：X 使用 [本地 X 学习手册](docs/X-LOCAL-LEARNING-LOOP.md)，其他平台使用 [跨平台本地数据学习手册](docs/PLATFORM-LOCAL-LEARNING-LOOP.md)。真实指标留在本机；Learning Brief 仅辅助 Strategy 人工决策。
