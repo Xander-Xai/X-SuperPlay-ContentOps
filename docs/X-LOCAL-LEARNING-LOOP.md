@@ -103,6 +103,7 @@ B/C 分别有至少 5 条完整曝光与单帖主页点击样本才返回 DESCRI
     python scripts/x_learning_loop.py route --account x-superplay-english --report-id XL-REPLACE --decision ADJUST --reviewer Founder --topic "Evidence-backed Agent recovery" --evidence-url "https://docs.example.org/primary-source" --confirm
 
 路由验证报告 ID、账号 DNA、决策与 HTTPS 证据链接，
+在本地 learning/handoffs/XL-xxxx-CONTINUE.json（或 ADJUST）记录人工决定与路由回执；同一报告/决策不会重复创建运行。
 将证据 URL 传给现有 content_route.py 的 --url，
 并生成待审内容 Brief。**不自动批准、生产或发布。**
 报告不足或明确 PAUSE/INCONCLUSIVE 时，不允许以“数据驱动增长”名义新建任务；
