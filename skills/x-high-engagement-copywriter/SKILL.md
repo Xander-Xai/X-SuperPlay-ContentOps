@@ -11,9 +11,7 @@ Use the canonical [X Strategy SOP V1.3](https://github.com/Xander-Xai/X-SuperPla
 and the registered Account DNA before choosing content language, quantity,
 or any publication eligibility claim. The x-superplay-english profile limits
 original main posts to **24/day on ONE bilingual X account: Chinese 20 + English 4** and **160 manual replies: A40/B40/C80**. The legacy slug `x-superplay-english` identifies the same account for both languages; do not create another account. Old 4/day and low-volume plans are historical.
-The heuristic /100 **draft-writing score below is NOT the registered X account's
-24/30 editorial acceptance gate**: neither score authorizes publication or
-supersedes proof grades, card/ALT requirements and human approval.
+The heuristic /100 **draft-writing score below is not an X platform rating**. Account editorial review is mode-specific: technical/news use >=24/30 with novelty/evidence/mechanism each >=4; general_interest uses >=20/30 with novelty/evidence >=4 and does not require technical benchmark claims. Both retain real human review, originality and claim honesty. `post_format=text` needs no image or ALT; `post_format=image` requires the real 1600×900 card and ALT.
 For the X Inspiration/Timeline B/C experiment, run the single
 [local metrics workflow](../../docs/X-LOCAL-LEARNING-LOOP.md).
 Prefix discovery-source metadata with `source:inspiration_ai` or
@@ -60,7 +58,7 @@ Use one primary recipe and at most one secondary; do not use P03 keyword/followe
 - Hook: surprising but defensible first line, concrete image, honest contrast, specific choice, or earned suspense.
 - Substance: a mechanism, real anecdote, useful warning, genuine emotion or researched fact.
 - Finish: one memorable observation **or** a genuine low-effort question (never forced).
-- Audience: if the current account is English AI builders, avoid generic Chinese entertainment tangents unless an explicit audience experiment is approved.
+- Audience: this is one bilingual, broad-topic account. Judge Chinese/English general interest on originality, relevance and truthfulness; do not force a tech-builder angle onto entertainment or everyday observations.
 
 For 5+ posts, use ≥3 hook shapes; for the V1.3 daily 24 original candidates (20 zh + 4 en), also vary the ending (statement, honest question, useful action, counterexample). Avoid mechanical "哈哈哈", "卧槽", "谁懂", "Who's in?", "兄弟", "💀😭" or "the real upgrade" repetition, especially across successive short replies. No sensationalism that depends on invented medical/technical/celebrity claims. Adjust length to the actual X account and the existing \`scripts/x_post.py\` weighted-text gate; do not promise every draft is publish-ready.
 
