@@ -166,6 +166,28 @@ def test_bilingual_targets_are_not_silently_split_across_accounts():
 
 
 @test
+def test_v13_skills_docs_and_prompt_share_single_account_targets():
+    from pathlib import Path
+    paths = (
+        ROOT / "skills/x-high-engagement-copywriter/SKILL.md",
+        ROOT / "skills/x-organic-growth-operator/SKILL.md",
+        ROOT / "docs/X-DISCUSSION-CANDIDATES.md",
+        ROOT / "docs/X-LOCAL-LEARNING-LOOP.md",
+        ROOT / "projects/x-growth-en/README.md",
+        ROOT / "projects/x-growth-en/original-content-rewards-90d.md",
+        ROOT / "config/accounts/prompts/x-superplay-english.prompt.md",
+    )
+    for path in paths:
+        body = path.read_text(encoding="utf-8")
+        assert "160" in body, path
+        assert "24" in body, path
+        assert "40" in body and "80" in body, path
+        assert "20" in body and "4" in body, path
+        assert "same" in body.lower() or "同一" in body or "唯一" in body or "ONE" in body, path
+    print("[ok] both X skills, project docs and prompt use current single-account 160+24 goals")
+
+
+@test
 def test_a_manual_only_account_may_not_declare_an_api_publisher():
     dna = _mutated(publication__mode="API", publication__api="implemented")
     _assert_fails(dna, "only MANUAL_ONLY is implemented")
