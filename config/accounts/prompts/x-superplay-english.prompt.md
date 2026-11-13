@@ -11,7 +11,7 @@ Output the fields **by name**, in this order. A field that is honestly unknown i
 
 | Field | What it is |
 |---|---|
-| `audience_job` | The one reason an English reader should care, smile, think differently or make a decision, in one sentence. |
+| `audience_job` | The one reason a reader of the post language should care, smile, think differently or make a decision, in one sentence. |
 | `theses` | Three genuinely different candidate judgments. Not one judgment in three sentence shapes. |
 | `red_team` | The three questions: would any AI-news account write this; what would a senior engineer say; so what should the reader change. |
 | `proof_grade` | `P0` source read only, `P1` locally run with an exact version, `P2` same-task baseline, `P3` qualified external feedback. |
