@@ -80,6 +80,8 @@ class CrossPlatformLearningTests(unittest.TestCase):
         self.assertEqual(report["status"], "DESCRIPTIVE_ONLY")
         group = {g["discovery_source"]: g for g in report["groups"]}
         self.assertEqual(group["search"]["interest_per_1000_primary"], 10)
+        self.assertEqual(group["search"]["median_interest_per_1000_post"], 10)
+        self.assertTrue(report["report_id"].startswith("PL-"))
         self.assertEqual(group["recommendation"]["interest_per_1000_primary"], 50)
         self.assertIsNone(report["handoff"]["proposed_topic"])
         self.assertFalse(report["handoff"]["production_authorized"])
@@ -141,13 +143,18 @@ class CrossPlatformLearningTests(unittest.TestCase):
                              content_format="reply_text", topic_cluster="ai_agent")
         folder = self.directory / "learning"
         folder.mkdir()
+        result["status"] = "DESCRIPTIVE_ONLY"  # Synthetic approved comparison fixture
         (folder / "latest.json").write_text(json.dumps(result), encoding="utf-8")
         with patch("platform_learning_loop.hidden_run", return_value=SimpleNamespace(
                 returncode=0, stdout='{"status":"BRIEF_READY"}', stderr="")) as runner:
             receipt = handoff(self.directory, account_profile="x-superplay-english",
                               topic="Agent recovery design", reviewer="Founder",
-                              evidence_url="https://docs.example.org/agent-design")
+                              evidence_url="https://docs.example.org/agent-design",
+                              report_id=result["report_id"], decision="CONTINUE")
             self.assertEqual(receipt["status"], "ROUTED_FOR_HUMAN_REVIEW")
+            self.assertIn("--url", runner.call_args.args[0])
+            self.assertIn("https://docs.example.org/agent-design", runner.call_args.args[0])
+            self.assertEqual(receipt["report_id"], result["report_id"])
             self.assertFalse(receipt["published"])
             self.assertFalse(receipt["production_authorized"])
             self.assertIn("content_route.py", str(runner.call_args))
@@ -157,11 +164,43 @@ class CrossPlatformLearningTests(unittest.TestCase):
         folder = self.directory / "learning"
         folder.mkdir()
         (folder / "latest.json").write_text(json.dumps(result), encoding="utf-8")
+        result["status"] = "DESCRIPTIVE_ONLY"
+        (folder / "latest.json").write_text(json.dumps(result), encoding="utf-8")
         with patch("platform_learning_loop.hidden_run") as runner:
             with self.assertRaisesRegex(ValueError, "does not authorize this platform"):
                 handoff(self.directory, account_profile="x-superplay-english",
                         topic="Agent recovery design", reviewer="Founder",
-                        evidence_url="https://docs.example.org/agent-design")
+                        evidence_url="https://docs.example.org/agent-design",
+                        report_id=result["report_id"], decision="CONTINUE")
+            runner.assert_not_called()
+
+    def test_account_mismatch_blocks_before_router(self):
+        result = self.review(platform="x", account="unknown_alias",
+                             content_format="reply_text", topic_cluster="ai_agent")
+        result["status"] = "DESCRIPTIVE_ONLY"
+        folder = self.directory / "learning"
+        folder.mkdir()
+        (folder / "latest.json").write_text(json.dumps(result), encoding="utf-8")
+        with patch("platform_learning_loop.hidden_run") as runner:
+            with self.assertRaisesRegex(ValueError, "account alias"):
+                handoff(self.directory, account_profile="x-superplay-english",
+                        topic="Useful Agent topic", reviewer="Founder",
+                        evidence_url="https://docs.example.org/agent",
+                        report_id=result["report_id"], decision="CONTINUE")
+            runner.assert_not_called()
+
+    def test_insufficient_report_cannot_route(self):
+        result = self.review(platform="x", account="x-superplay-english",
+                             content_format="reply_text", topic_cluster="ai_agent")
+        folder = self.directory / "learning"
+        folder.mkdir()
+        (folder / "latest.json").write_text(json.dumps(result), encoding="utf-8")
+        with patch("platform_learning_loop.hidden_run") as runner:
+            with self.assertRaisesRegex(ValueError, "comparable report"):
+                handoff(self.directory, account_profile="x-superplay-english",
+                        topic="Useful Agent topic", reviewer="Founder",
+                        evidence_url="https://docs.example.org/agent",
+                        report_id=result["report_id"], decision="CONTINUE")
             runner.assert_not_called()
 
     def test_local_guard_refuses_tracked_repo_write(self):
