@@ -7,9 +7,9 @@
     "x"
   ],
   "platform_roles": {
-    "x": "One and only X account, posting both Chinese and English: daily original publication goals zh=6 and en=4 (total 10), plus 100 context-appropriate human replies across A=25/B=25/C=50. Manual approval and genuine status URL required; historic slug x-superplay-english is retained solely for compatibility."
+    "x": "SINGLE bilingual X account. Daily human-reviewed targets: 160 replies (A inspiration_broad 40, B inspiration_ai 40, C timeline_ai 80); 24 distinct original publications (Chinese 20, English 4). All belong to this SAME account; legacy account slug is kept only for existing links. Goals are not permission for high-volume unsolicited, repetitive or automated activity."
   },
-  "mission": "Operate one bilingual X account with a daily target of 6 Chinese and 4 English independently original posts, and 25/25/50 high-quality, human-reviewed replies. Topics can be AI, work, entertainment, life or current affairs.",
+  "mission": "Operate ONE bilingual X account with daily quality-gated targets of 20 Chinese and 4 English original posts plus 40/40/80 contextual, manual replies. Topics may be AI, entertainment, work, business or daily life; evidence and platform rules take priority.",
   "promise": "Original bilingual commentary, real observations and useful ideas on AI, work, culture and everyday life; no invented evidence, generic spam or forced tech focus.",
   "tagline": "Be original. Keep it real.",
   "decision_question": "What specific insight, lived observation, useful answer or original joke makes this post worth reading?",
@@ -75,7 +75,7 @@
       "MONETIZATION": 20,
       "TUTORIAL": 20
     },
-    "reason": "The old 66/34 AI-builder split is historical. Current single-account bilingual daily original targets zh=6 and en=4 across any suitable topics. Pillar weights remain nonbinding creative categories, not extra language/volume quotas."
+    "reason": "Historic technical-only pillar mixes are not quotas. Current V1.3 has ONE bilingual X account with 20 Chinese and 4 English independent original publication goals each day, varied topics; avoid copied or translated duplicates. Pillar weights are editorial guides, not additional quotas."
   },
   "non_negotiable": [
     "No invented numbers, results, clients or performance claims; a prediction is labelled as one.",
@@ -85,9 +85,10 @@
     "published requires a real https://x.com/<handle>/status/<digits> URL; nothing else counts.",
     "Unobserved metrics stay null; an empty cell is not a zero.",
     "No automated likes, follow/unfollow, reply bots, scheduled browser actions or duplicative posting.",
-    "Daily 100 replies and 10 originals are a plan, not a license for repetitive, bulk unsolicited, harassing or irrelevant platform behavior; record actual eligible/published/skipped separately.",
-    "All 100 replies and 10 originals belong to ONE existing X account identified by this unchanged compatibility slug; daily posted originals target Chinese 6 and English 4. Never invent a second account.",
-    "Every original post record explicitly identifies language zh or en; each language cohort is evaluated separately within the same account. Do not mix cohorts in B/C comparisons."
+    "Daily 160 replies and 24 originals are a plan, not a license for repetitive, bulk unsolicited, harassing or irrelevant platform behavior; record actual eligible/published/skipped separately.",
+    "All 160 replies and 24 originals belong to ONE existing X account identified by this unchanged compatibility slug; daily posted originals target Chinese 20 and English 4. Never invent a second account.",
+    "Every original post record explicitly identifies language zh or en; each language cohort is evaluated separately within the same account. Do not mix cohorts in B/C comparisons.",
+    "X official authenticity rules prohibit bulk aggressive unsolicited replies and repetitive or irrelevant engagement even where numeric technical account limits would permit it; stop rather than forcing 160 or 24."
   ],
   "evidence": {
     "note": "claim_coverage.EVIDENCE_MODES (CLAIM_LED / EVIDENCE_LED / EXPLANATORY) is the video vocabulary and describes how a film is composed. An X post's evidence question is a proof grade, so this account declares proof_ladder beside it. Routing resolves the DNA's 'pipeline' first and never reads a video mode off this file.",
@@ -246,20 +247,20 @@
   },
   "cadence": {
     "original_posts_per_week": [
-      70,
-      70
+      168,
+      168
     ],
-    "max_original_posts_per_day": 10,
+    "max_original_posts_per_day": 24,
     "community_minutes_per_active_day": [
       0,
       0
     ],
     "source_artifacts_per_week": 7,
-    "rule": "Single X account: daily publication goal 10 originals (zh=6,en=4), and 100 manually selected contextual replies (A inspiration_broad=25; B inspiration_ai=25; C timeline_ai=50). Weekly target 70 originals if full daily plan is realized. Every post is manually checked, and real source/own status URLs are required. Never use automation or repetitive/unsolicited activity to force the numbers.",
-    "note": "The older English-only 4/day, 28/week account lane and old low-volume experiments are retired. Actual manual time, eligible count, published count and skipped count are measured; platform rules take precedence over targets."
+    "rule": "V1.3 ONE-account planning goals: 160 contextual human-reviewed replies/day (A=40 inspiration_broad, B=40 inspiration_ai, C=80 timeline_ai) plus 24 independently original posts/day (Chinese=20, English=4); full-target 168 originals/week. This is a QUALITY-CONDITIONAL target, not an X platform permission or actual published count. Reject spam, duplicate posts, automated/unsolicited replies; record planned, eligible, human-published and skipped with real URLs.",
+    "note": "The superseded V1.2 100 replies/day, A25/B25/C50, 10 originals/day zh6/en4 and 70/week are HISTORY ONLY. Actual safe volume is subject to current X policies, account signals, rights, human review and available founder time. community_minutes_per_active_day=[0,0] means no assumed budget, NOT zero time."
   },
   "business": {
-    "source_of_truth": "X-SuperPlay-Strategy/01-Strategy/X-Original-Content-Rewards-Growth-V1.md (V1.2, 2026-11-13)",
+    "source_of_truth": "X-SuperPlay-Strategy/01-Strategy/X-Original-Content-Rewards-Growth-V1.md (V1.3, 2026-11-13)",
     "stage": "pre_pmf",
     "hypothesis": "One bilingual X account can reach relevant Chinese and English audiences via original, verified, varied commentary; actual qualified signals must be observed independently by language.",
     "rule": "Content may feed the business; it may not move the business stage. Follower count and a self-awarded score are not demand.",
@@ -307,7 +308,7 @@
       },
       {
         "id": "daily_goal_variance",
-        "how": "Single-account daily ledger: original posts by language zh plan=6, en plan=4; replies by source A25/B25/C50; candidate/reviewed/eligible/actually published/skipped separate with real URLs and missing reasons."
+        "how": "One X account: daily reply target A40/B40/C80 (total 160) and original publication target zh20/en4 (total 24). Count planned/reviewed/eligible/human-published/skipped separately by source and language; only real own status URLs count published; never double-count account-level Q or followers."
       }
     ]
   },
@@ -373,12 +374,12 @@
   ],
   "default_post_language": "en",
   "daily_original_targets": {
-    "zh": 6,
+    "zh": 20,
     "en": 4
   },
   "daily_reply_targets": {
-    "inspiration_broad": 25,
-    "inspiration_ai": 25,
-    "timeline_ai": 50
+    "inspiration_broad": 40,
+    "inspiration_ai": 40,
+    "timeline_ai": 80
   }
 }
