@@ -265,13 +265,17 @@ def _report_markdown(result):
         f"interest: {result['interest_metric']}",
         f"Metric definition: {result['metric_definition_version']}",
         f"Status: {result['status']}; local data is not externally verified.", "",
-        "| Discovery source | N | Median primary | Interest / 1,000 primary |",
-        "|---|---:|---:|---:|"]
+        "| Source | N | Median primary | Median interest /1k/post | Pooled interest /1k | Quality/hour |",
+        "|---|---:|---:|---:|---:|---:|"]
     for row in result["groups"]:
         rate = row["interest_per_1000_primary"]
         lines.append(f"| {row['discovery_source']} | {row['sample_count']} | "
-                     f"{row['median_primary']} | {rate if rate is not None else 'unknown'} |")
-    lines += ["", result["finding"], "", result["source_interpretation"], "",
+                     f"{row['median_primary']} | "
+                     f"{row['median_interest_per_1000_post'] if row['median_interest_per_1000_post'] is not None else 'unknown'} | "
+                     f"{rate if rate is not None else 'unknown'} | "
+                     f"{row['qualified_signals_per_hour'] if row['qualified_signals_per_hour'] is not None else 'unknown'} |")
+    lines += ["", "Report ID: " + result["report_id"], result["finding"],
+              result["handoff"]["recommendation"], "", result["source_interpretation"], "",
               "Primary metrics across different platforms or formats are not interchangeable.",
               "Missing metrics are unknown, not zero; account follower change is never "
               "attributed to a single post.", "",
