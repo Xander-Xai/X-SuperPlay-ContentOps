@@ -123,12 +123,14 @@ def initialize(directory: Path):
 
 def analyze(directory: Path, *, platform: str, account: str, content_format: str,
             topic_cluster: str, window: str, metric_name: str,
-            definition: str, interest_metric: str):
+            definition: str, interest_metric: str, experiment_id: str = ""):
     _local_guard(directory)
     for label, value in (("platform", platform), ("account", account),
                          ("format", content_format), ("topic", topic_cluster),
                          ("definition", definition)):
         _safe_slug(value, label)
+    if experiment_id:
+        _safe_slug(experiment_id, "experiment-id")
     if window not in WINDOW_HOURS or metric_name not in METRICS or interest_metric not in RATE_METRICS:
         raise ValueError("unsupported metric/window selection")
     if metric_name == interest_metric:
@@ -138,6 +140,8 @@ def analyze(directory: Path, *, platform: str, account: str, content_format: str
     candidates = {}
     skipped = Counter()
     for item in index:
+        if experiment_id and item["experiment_id"] != experiment_id:
+            continue
         if (item["platform"], item["account_alias"], item["content_format"],
                 item["topic_cluster"]) != (platform, account, content_format, topic_cluster):
             continue
@@ -168,6 +172,7 @@ def analyze(directory: Path, *, platform: str, account: str, content_format: str
         if key in candidates and candidates[key] is not None:
             matched[key].append(snapshot)
     grouped = defaultdict(list)
+    matched_experiments = set()
     for key, records in matched.items():
         if len(records) != 1:
             skipped["duplicate_snapshot"] += 1
@@ -201,6 +206,7 @@ def analyze(directory: Path, *, platform: str, account: str, content_format: str
             continue
         hours = _metric(snap.get("founder_hours", ""))
         quality = _metric(snap.get("qualified_signals", ""))
+        matched_experiments.add(post["experiment_id"])
         grouped[post["discovery_source"]].append((primary, interest, hours, quality))
     groups = []
     for surface, items in sorted(grouped.items()):
@@ -224,11 +230,13 @@ def analyze(directory: Path, *, platform: str, account: str, content_format: str
             ) if denominator > 0 else None,
         })
     compared = [g for g in groups if g["sample_count"] >= 5 and g["valid_rate_samples"] >= 5]
-    status = "DESCRIPTIVE_ONLY" if len(compared) >= 2 else "INSUFFICIENT_DATA"
+    status = ("INCOMPARABLE_EXPERIMENTS" if len(matched_experiments) > 1 else
+              "DESCRIPTIVE_ONLY" if len(compared) >= 2 else "INSUFFICIENT_DATA")
     leaders = sorted(compared, key=lambda item: (item["median_interest_per_1000_post"] if item["median_interest_per_1000_post"] is not None else -1), reverse=True)
     recommendation = ("Observed higher post-median interest for " + leaders[0]["discovery_source"] +
                       " (descriptive only). Review confounders and founder-hours before continuing one-variable experiment."
                       if status == "DESCRIPTIVE_ONLY" else
+                      "Do not merge different experiment IDs." if status == "INCOMPARABLE_EXPERIMENTS" else
                       "Keep discovery-source allocation unchanged until two groups have five complete comparable observations.")
     input_digest = hashlib.sha256()
     for filename in ("content-index.csv", "metric-snapshots.csv"):
@@ -240,6 +248,7 @@ def analyze(directory: Path, *, platform: str, account: str, content_format: str
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "account_alias": account, "content_format": content_format,
         "topic_cluster": topic_cluster, "metric_definition_version": definition,
+        "experiment_id": experiment_id or (next(iter(matched_experiments)) if len(matched_experiments) == 1 else None),
         "window": window, "primary_metric": metric_name,
         "interest_metric": interest_metric, "groups": groups,
         "skipped": dict(skipped), "data_origin": "LOCAL_USER_SUPPLIED_UNVERIFIED",
@@ -247,6 +256,7 @@ def analyze(directory: Path, *, platform: str, account: str, content_format: str
                                  "NOT official platform traffic attribution.",
         "finding": ("Group differences are descriptive, not proof of algorithmic "
                     "boosts, user attribution or causality." if status == "DESCRIPTIVE_ONLY"
+                    else "Multiple experiment IDs were mixed; select one --experiment-id." if status == "INCOMPARABLE_EXPERIMENTS"
                     else "At least two sources need >=5 comparable published organic snapshots."),
         "handoff": {
             "status": "HUMAN_REVIEW_REQUIRED", "proposed_topic": None,
@@ -339,6 +349,7 @@ def main():
     parser.add_argument("--metric", default="views_or_reads", choices=METRICS)
     parser.add_argument("--interest", default="saves", choices=RATE_METRICS)
     parser.add_argument("--definition", default="native_v1")
+    parser.add_argument("--experiment-id")
     parser.add_argument("--account-profile")
     parser.add_argument("--topic")
     parser.add_argument("--reviewer")
@@ -363,7 +374,8 @@ def main():
             result = analyze(args.data_dir, platform=args.platform, account=args.account,
                              content_format=args.format, topic_cluster=args.topic_cluster,
                              window=args.window, metric_name=args.metric,
-                             definition=args.definition, interest_metric=args.interest)
+                             definition=args.definition, interest_metric=args.interest,
+                             experiment_id=args.experiment_id or "")
             output = args.data_dir / "learning"
             output.mkdir(parents=True, exist_ok=True)
             (output / "latest.json").write_text(
