@@ -10,5 +10,5 @@ status: DRAFT
 gate: scripts/x_post.py
 publication_mode: MANUAL_ONLY
 vendor: vendor/x-growth-os
-notes: "Single-account bilingual X track (6 zh + 4 en original targets; 100 manual replies A25/B25/C50). The x-growth-en directory and x-superplay-english slug are compatibility names, not secondary accounts. One post record per intended post, graded by scripts/x_post.py. No film, no render, no API. A post is published when a person posts it and records the real status URL -- not when this repository says so."
+notes: "Single-account bilingual X track (20 zh + 4 en = 24 original publication targets; 160 manual replies A40/B40/C80). The x-growth-en directory and x-superplay-english slug are compatibility names, not secondary accounts. One post record per intended post, graded by scripts/x_post.py. No film, no render, no API. A post is published when a person posts it and records the real status URL -- not when this repository says so."
 why_no_quality_gate: "check_script_quality.is_gated keys on 'quality_gate: enforced', and SQ01-SQ07 are video-script rules (silent gaps, layouts, presenter continuity). The X gate is scripts/x_post.py."

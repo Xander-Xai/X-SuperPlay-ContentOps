@@ -7,7 +7,7 @@
 - [项目账户契约](project.yaml)：当前 `language: multi`（允许zh/en）和 `publication_mode: MANUAL_ONLY`；本项目只绑定**同一个X账号**，旧英文目录名不表示另一账号。
 - Growth Operator: `../../skills/x-organic-growth-operator/`；X post gate: `../../scripts/x_post.py`；bridge: `../../scripts/x_growth_pipeline.py`。
 
-**V1.2 单账号运营目标：**每日A25/B25/C50=100条合规人工回复，**同一账号**每日实际发布中文6条+英文4条原创（题材不限技术）。每条记录 `language:zh|en`；没有真人审核与本人X真实URL的内容只能算草稿。
+**V1.3 单账号运营目标：**每日A40/B40/C80=160条合规人工回复，**同一账号**每日目标实际发布中文20条+英文4条原创，共24条（题材不限技术）。每条记录 `language:zh|en`；没有真人审核与本人X真实URL的内容只能算草稿。
 
 **状态边界**：ContentOps 对 X 已集成离线内容审核和人工发布门禁；X 平台真实发布、官方认证粉丝/合格首页曝光导入、最终收益资格均未在此仓自动实现。原 `X-SuperPlay-X-Growth-OS` 属待下线迁移来源，不是未来执行仓。严格禁止把 GitHub 文件写入视为 X 发帖成功。
 

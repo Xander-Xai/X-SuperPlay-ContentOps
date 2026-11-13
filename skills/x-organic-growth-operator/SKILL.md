@@ -14,9 +14,9 @@ Use user-provided material or sources the operator is authorized to access.
 
 ## Canonical X authority (all tasks)
 
-X Strategy SOP V1.2 governs business priority; the registered Account DNA
+X Strategy SOP V1.3 governs business priority; the registered Account DNA
 in config/accounts/x-superplay-english.json governs actual English-account
-cadence (**10 original posts/day: Chinese 6 + English 4 on ONE bilingual X account**), evidence and manual publication. The same account also targets 100 contextual, human-reviewed replies daily (A25/B25/C50). The historic `x-superplay-english` slug is not an English-only or separate account. Older volume figures are historical. Original qualifying Home Timeline Q, ordinary
+cadence (**24 original posts/day: Chinese 20 + English 4 on ONE bilingual X account**), evidence and manual publication. The same account also targets 160 contextual, human-reviewed replies daily (A40/B40/C80). The historic `x-superplay-english` slug is not an English-only or separate account. Older volume figures are historical. Original qualifying Home Timeline Q, ordinary
 reply impressions, account net followers, and post-level profile clicks are
 incomparable and must never be substituted. This skill is advisory only.
 The authoritative local analytics command and context CSV definitions live in
@@ -78,7 +78,7 @@ X-SuperPlay-Strategy/03-Execution/X-Inspiration-vs-Timeline-Growth-Experiment-20
 This is a high-intensity plan, not permission for repeated unsolicited or low-value replies. Original posts, existing account
 cadence, quality/rights gates and human time budget still take priority.
 
-1. The current manual daily candidate targets are **A=25 general entertainment Inspiration replies**, **B=25 AI/tech Inspiration replies**, and **C=50 AI/tech Timeline replies** (100 planned). They are targets for **human judgment**, not permission for bulk unsolicited replies, inauthentic engagement, duplicate messages or bypassing platform limits. The same-account daily original publication plan is **6 zh + 4 en**, with no technical-only content requirement. Log planned / reviewed / eligible / actually published / skipped separately; stop if quality, safety, recipient or time limits are exceeded.
+1. The current manual daily candidate targets are **A=40 general entertainment Inspiration replies**, **B=40 AI/tech Inspiration replies**, and **C=80 AI/tech Timeline replies** (160 planned). They are targets for **human judgment**, not permission for bulk unsolicited replies, inauthentic engagement, duplicate messages or bypassing platform limits. The same-account daily original publication plan is **20 zh + 4 en**, with no technical-only content requirement. Log planned / reviewed / eligible / actually published / skipped separately; stop if quality, safety, recipient or time limits are exceeded.
 2. Operator manually discovers public discussions in X Inspiration and Timeline;
    the label is a *discovery surface*, **not** verified traffic attribution.
    Label A = inspiration_broad (entertainment/exploration), B = inspiration_ai,
@@ -114,7 +114,7 @@ cadence, quality/rights gates and human time budget still take priority.
    claiming a data-driven decision. Keep unchanged quality/review gates.
    Never auto-publish or auto-change account cadence.
 
-**Old 32 replies/day + two original posts and 50–65-minute budgets have been superseded by V1.2.** The new 100+10 counts are ambitious planning goals, not a guarantee of 100 eligible conversations or publication permission. Use observed actual hours and the same existing CSV/learning tools, not a parallel automated mass-reply system.
+**Old 32 replies/day + two original posts and 50–65-minute budgets have been superseded by V1.3.** The new V1.3 160+24 counts are ambitious quality-conditional planning goals, not a guarantee of 160 eligible conversations or publication permission. Use observed actual hours and the same existing CSV/learning tools, not a parallel automated mass-reply system.
 This skill's output is advisory, not a platform-compliance ruling.
 
 ## Offline demonstrations
@@ -171,7 +171,7 @@ receipts.
   comparison or an automatic answer to every trending thread.
 - **Route precisely:** one quoted source post + request to comment means
   REPLY_DRAFT (default one concise draft), not ORIGINAL_POST. A later request
-  for ten new posts means ten independently original candidates, **not ten
+  for 24 new posts means 24 independently original DRAFT candidates, not 24 proven publications, **not ten
   engagement actions**. The copyright, evidence, account and manual review
   gates apply to both.
 - **Do not confuse reciprocity with growth:** friendly, substantive responses
@@ -182,7 +182,7 @@ receipts.
   followers or qualifying original Home Timeline Q. Continue to record only
   human-published own reply URLs and separately observed age-matched metrics
   in the existing local CSVs.
-- **No second volume target:** Strategy V1.2 already declares A25/B25/C50 and zh6/en4. With limited operator time or weak candidates, prefer 0 *unsafe* replies to repetitive or risky comments; count the unmet planned remainder honestly. Account DNA and Strategy SOP remain the sole source of publication cadence and business priorities.
+- **No second volume target:** Strategy V1.3 already declares A40/B40/C80 and zh20/en4. With limited operator time or weak candidates, prefer 0 *unsafe* replies to repetitive or risky comments; count the unmet planned remainder honestly. Account DNA and Strategy SOP remain the sole source of publication cadence and business priorities.
 
 ## Companion skill — original-post copy
 

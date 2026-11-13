@@ -131,27 +131,27 @@ def test_the_shipped_x_account_passes_its_own_checker():
 
 
 @test
-def test_single_bilingual_account_daily_ten_originals_and_weekly_seventy_are_valid():
+def test_single_bilingual_account_daily_24_originals_and_weekly_168_are_valid():
     dna = _x()
     assert dna["language"] == "multi"
     assert dna["allowed_languages"] == ["zh", "en"]
-    assert dna["daily_original_targets"] == {"zh": 6, "en": 4}
-    assert dna["daily_reply_targets"] == {"inspiration_broad": 25, "inspiration_ai": 25, "timeline_ai": 50}
-    assert dna["cadence"]["max_original_posts_per_day"] == 10
-    assert dna["cadence"]["original_posts_per_week"] == [70, 70]
+    assert dna["daily_original_targets"] == {"zh": 20, "en": 4}
+    assert dna["daily_reply_targets"] == {"inspiration_broad": 40, "inspiration_ai": 40, "timeline_ai": 80}
+    assert dna["cadence"]["max_original_posts_per_day"] == 24
+    assert dna["cadence"]["original_posts_per_week"] == [168, 168]
     assert check_x_account(dna, ROOT, []) == []
-    print("[ok] single bilingual X account zh6/en4, 100 replies and ten originals daily")
+    print("[ok] single bilingual X account zh20/en4, 160 replies and 24 originals daily")
 
 
 @test
 def test_weekly_target_must_not_exceed_daily_capacity():
-    _assert_fails(_mutated(cadence__original_posts_per_week=[71, 71]),
+    _assert_fails(_mutated(cadence__original_posts_per_week=[169, 169]),
                   "based on daily max")
     _assert_fails(_mutated(cadence__max_original_posts_per_day=0),
-                  "expected an integer 1..10")
-    _assert_fails(_mutated(cadence__max_original_posts_per_day=11),
-                  "expected an integer 1..10")
-    _assert_fails(_mutated(cadence__max_original_posts_per_day=9),
+                  "expected an integer 1..24")
+    _assert_fails(_mutated(cadence__max_original_posts_per_day=25),
+                  "expected an integer 1..24")
+    _assert_fails(_mutated(cadence__max_original_posts_per_day=23),
                   "based on daily max")
     print("[ok] cadence refuses out-of-range or internally inconsistent targets")
 
@@ -160,9 +160,32 @@ def test_weekly_target_must_not_exceed_daily_capacity():
 def test_bilingual_targets_are_not_silently_split_across_accounts():
     _assert_fails(_mutated(language="en"), "expected 'multi'")
     _assert_fails(_mutated(allowed_languages=["en"]), "allowed_languages")
-    _assert_fails(_mutated(daily_original_targets={"zh": 0, "en": 10}), "daily_original_targets")
-    _assert_fails(_mutated(daily_reply_targets={"inspiration_broad": 50}), "daily_reply_targets")
+    _assert_fails(_mutated(daily_original_targets={"zh": 0, "en": 24}), "daily_original_targets")
+    _assert_fails(_mutated(daily_reply_targets={"inspiration_broad": 80}), "daily_reply_targets")
     print("[ok] invalid single-account language and target changes fail closed")
+
+
+@test
+def test_v13_skills_docs_and_prompt_share_single_account_targets():
+    from pathlib import Path
+    paths = (
+        ROOT / "skills/x-high-engagement-copywriter/SKILL.md",
+        ROOT / "skills/x-organic-growth-operator/SKILL.md",
+        ROOT / "docs/X-DISCUSSION-CANDIDATES.md",
+        ROOT / "docs/X-LOCAL-LEARNING-LOOP.md",
+        ROOT / "projects/x-growth-en/README.md",
+        ROOT / "projects/x-growth-en/original-content-rewards-90d.md",
+        ROOT / "config/accounts/prompts/x-superplay-english.prompt.md",
+        ROOT / "projects/x-growth-en/project.yaml",
+    )
+    for path in paths:
+        body = path.read_text(encoding="utf-8")
+        assert "160" in body, path
+        assert "24" in body, path
+        assert "40" in body and "80" in body, path
+        assert "20" in body and "4" in body, path
+        assert "same" in body.lower() or "single" in body.lower() or "同一" in body or "唯一" in body or "ONE" in body, path
+    print("[ok] both X skills, project docs and prompt use current single-account 160+24 goals")
 
 
 @test

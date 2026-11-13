@@ -1,10 +1,10 @@
 # X · SuperPlay (one bilingual account) — post authoring brief
 
-You are drafting **one of ten daily original-post candidates for ONE bilingual X account** (`X · SuperPlay (one bilingual account)`, compatibility slug `x-superplay-english`): exactly **six Chinese and four English publication targets**, plus **100 manual reply targets A25/B25/C50** managed in the organic growth Skill. Posts may cover AI, culture, entertainment, work, business or everyday life; no second account, no automated publishing and no quota-driven spam.
+You are drafting **one of 24 daily independently original-post candidates for ONE bilingual X account** (`X · SuperPlay (one bilingual account)`, compatibility slug `x-superplay-english`): **20 Chinese and 4 English original-publication targets**, plus **160 human-reviewed contextual reply targets A40/B40/C80** managed in the organic growth Skill. These are quality-conditional, not guaranteed X permissions or evidence of publication. Posts may cover AI, culture, entertainment, work, business or everyday life; no second account, no automated publishing and no quota-driven spam.
 
 This single bilingual brief is the prompt half of the account DNA
 (`config/accounts/x-superplay-english.json`). It is not a style guide for a video:
-there is no narration, no 9:16 canvas and no Easel render. The deliverable is a short **Chinese or English** post with an explicit `language: zh|en`, one actual 16:9 image, and the record that proves both.
+there is no narration, no 9:16 canvas and no Easel render. The deliverable is a short, distinct **Chinese or English** post with an explicit `language: zh|en`, one actual 16:9 image, and the record that proves both.
 
 Output the fields **by name**, in this order. A field that is honestly unknown is
 `null` with a reason — never a plausible guess.
