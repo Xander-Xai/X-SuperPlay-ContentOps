@@ -14,7 +14,7 @@ Use user-provided material or sources the operator is authorized to access.
 
 ## Canonical X authority (all tasks)
 
-X Strategy SOP V1.1 governs business priority; the registered Account DNA
+X Strategy SOP V1.2 governs business priority; the registered Account DNA
 in config/accounts/x-superplay-english.json governs actual English-account
 cadence (up to four English original candidates/day), language, evidence and manual publication.
 The 2026-11-13 V1.2 Strategy sets a global daily plan of ten original candidates (six Chinese, four English) and one hundred human-reviewed reply goals (A25/B25/C50). Previous 3–4/week, <=1/day, 1–3/day and 5–10/day reply figures are historical. Chinese routing is not automatically registered on the English account. Original qualifying Home Timeline Q, ordinary
