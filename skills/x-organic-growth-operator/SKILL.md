@@ -16,8 +16,7 @@ Use user-provided material or sources the operator is authorized to access.
 
 X Strategy SOP V1.2 governs business priority; the registered Account DNA
 in config/accounts/x-superplay-english.json governs actual English-account
-cadence (up to four English original candidates/day), language, evidence and manual publication.
-The 2026-11-13 V1.2 Strategy sets a global daily plan of ten original candidates (six Chinese, four English) and one hundred human-reviewed reply goals (A25/B25/C50). Previous 3–4/week, <=1/day, 1–3/day and 5–10/day reply figures are historical. Chinese routing is not automatically registered on the English account. Original qualifying Home Timeline Q, ordinary
+cadence (**10 original posts/day: Chinese 6 + English 4 on ONE bilingual X account**), evidence and manual publication. The same account also targets 100 contextual, human-reviewed replies daily (A25/B25/C50). The historic `x-superplay-english` slug is not an English-only or separate account. Older volume figures are historical. Original qualifying Home Timeline Q, ordinary
 reply impressions, account net followers, and post-level profile clicks are
 incomparable and must never be substituted. This skill is advisory only.
 The authoritative local analytics command and context CSV definitions live in
@@ -76,10 +75,10 @@ injection or sensitive formats, not every possible attempt. If uncertain, stop.
 
 The authoritative strategy and three-arm experimental design are in
 X-SuperPlay-Strategy/03-Execution/X-Inspiration-vs-Timeline-Growth-Experiment-20261113.md.
-This is not a mandate to reply more often. Original posts, existing account
+This is a high-intensity plan, not permission for repeated unsolicited or low-value replies. Original posts, existing account
 cadence, quality/rights gates and human time budget still take priority.
 
-1. The current manual daily candidate targets are **A=25 general entertainment Inspiration replies**, **B=25 AI/tech Inspiration replies**, and **C=50 AI/tech Timeline replies** (100 planned). They are targets for **human judgment**, not permission for bulk unsolicited replies, inauthentic engagement, duplicate messages or bypassing platform limits. The daily originals plan is **6 zh + 4 en**, with no technical-only content requirement. Log planned / reviewed / eligible / actually published / skipped separately; stop if quality, safety, recipient or time limits are exceeded.
+1. The current manual daily candidate targets are **A=25 general entertainment Inspiration replies**, **B=25 AI/tech Inspiration replies**, and **C=50 AI/tech Timeline replies** (100 planned). They are targets for **human judgment**, not permission for bulk unsolicited replies, inauthentic engagement, duplicate messages or bypassing platform limits. The same-account daily original publication plan is **6 zh + 4 en**, with no technical-only content requirement. Log planned / reviewed / eligible / actually published / skipped separately; stop if quality, safety, recipient or time limits are exceeded.
 2. Operator manually discovers public discussions in X Inspiration and Timeline;
    the label is a *discovery surface*, **not** verified traffic attribution.
    Label A = inspiration_broad (entertainment/exploration), B = inspiration_ai,
