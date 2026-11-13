@@ -55,9 +55,9 @@ published_at、observed_at、window、metric_source、metric_definition_version�
 
 ## 跑一次同平台来源对比
 
-以 YouTube 长视频为例：
+以 B站技术视频为例（使用已注册的账号 Profile）：
 
-    python scripts/platform_learning_loop.py analyze --platform youtube --account ai_lab --format video --topic-cluster ai_agent --window T+24H --metric views_or_reads --interest saves --definition native_v1
+    python scripts/platform_learning_loop.py analyze --platform bilibili --account x-superplay-future-intelligence --format video --topic-cluster ai_agent --window T+24H --metric views_or_reads --interest saves --definition native_v1
 
 只有平台、账号、格式、话题簇、时间窗和指标版本一致才比较。
 两个来源组各不少于 5 条时标 DESCRIPTIVE_ONLY；否则 INSUFFICIENT_DATA。
@@ -75,12 +75,12 @@ published_at、observed_at、window、metric_source、metric_definition_version�
 
 人工查看 Learning Brief、选定有实际来源的新主题后，可明确授权启动已有 Router：
 
-    python scripts/platform_learning_loop.py route --account-profile x-superplay-english --topic "Why AI agents fail at tool recovery" --reviewer Founder --evidence-url "https://example.org/public-primary-source" --confirm
+    python scripts/platform_learning_loop.py route --account-profile x-superplay-future-intelligence --topic "Why AI agents fail at tool recovery" --reviewer Founder --evidence-url "https://example.org/public-primary-source" --confirm
 
 程序读取本地 latest.json，通过现有 scripts/content_route.py start --account ... --mode topic --topic ...
 生成待审核主题运行。回执写入本地 learning/handoff.json；无发布权限，不能绕过证据、QC、版权和人工批准。
 
-必须使用 config/accounts 下已经登记的账号 Profile。缺少相应账号或平台适配时，不表示该平台已能生产/发布。
+必须使用 config/accounts 下已经登记且 platforms 列表包含目标平台的账号 Profile。YouTube 当前没有匹配的已注册 Profile 时只支持离线分析，不允许把 YouTube 结果路由到 X 账号。缺少相应账号或平台适配时，不表示该平台已能生产/发布。
 本工具不会读取图像截图计算曝光，不能无证据推算 11 月 6 日至 12 日的跨渠道转化。
 
 ## 归属与方法
