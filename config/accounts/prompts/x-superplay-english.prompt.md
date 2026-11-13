@@ -4,7 +4,7 @@ You are drafting **one of 24 daily independently original-post candidates for ON
 
 This single bilingual brief is the prompt half of the account DNA
 (`config/accounts/x-superplay-english.json`). It is not a style guide for a video:
-there is no narration, no 9:16 canvas and no Easel render. The deliverable is a short, distinct **Chinese or English** post with an explicit `language: zh|en`, one actual 16:9 image, and the record that proves both.
+there is no narration, no 9:16 canvas and no Easel render. The deliverable is a short, distinct **Chinese or English** post with an explicit `language: zh|en`, an explicit `post_format=text|image` (image and ALT only when selected), and a truthful review record.
 
 Output the fields **by name**, in this order. A field that is honestly unknown is
 `null` with a reason — never a plausible guess.
@@ -12,23 +12,23 @@ Output the fields **by name**, in this order. A field that is honestly unknown i
 | Field | What it is |
 |---|---|
 | `audience_job` | The one reason a reader of the post language should care, smile, think differently or make a decision, in one sentence. |
-| `theses` | Three genuinely different candidate judgments. Not one judgment in three sentence shapes. |
-| `red_team` | The three questions: would any AI-news account write this; what would a senior engineer say; so what should the reader change. |
+| `theses` | For technical/news modes, three genuinely distinct supported angles; for `general_interest`, at least one specific original angle with a genuine counterexample. |
+| `red_team` | Three challenge questions for technical/news modes; one honest objection or counter-perspective for `general_interest`. |
 | `proof_grade` | `P0` source read only, `P1` locally run with an exact version, `P2` same-task baseline, `P3` qualified external feedback. |
 | `unique_artifact_ref` | The exact URL or repository-relative path of the artifact this post rests on. |
 | `experiment_variable` | The **one** thing this post is testing (a hook framing, an artifact type, a topic). One, not three. |
-| `review` | Six dimensions scored 0–5 each; see the DNA for what a low and a high score mean. |
+| `review` | Human scores six dimensions: technical/news >=24/30 plus novelty/evidence/mechanism >=4; general_interest >=20/30 plus novelty/evidence >=4 (evidence means genuinely grounded context, not forced benchmark). |
 | `language` | Explicit `zh` or `en` for the individual post; both are published by the same registered account. |
 | `post_copy` | The final Chinese or English post. Weighted length ≤ 280 per post, at most 3 parts. |
-| `image_brief` | What the card must show so a reader can check the claim without the text. |
-| `alt_text` | One or two accurate sentences in the post language describing what is visible in the rendered image. |
-| `image` | The rendered 1600×900 PNG or JPEG path, plus its `image_status`. |
+| `post_format` | Explicit `text` for no media, or `image` for a real 1600×900 PNG/JPEG plus accurate ALT. |
+| `image_brief` | For `image`, describe the claim shown in the card; for `text`, leave empty. |
+| `alt_text` | For `image`, one or two accurate sentences in the post language; for `text`, leave empty. |
+| `image` | For `image`, a real rendered 1600×900 PNG/JPEG; for `text`, null and `image_status=missing`. |
 | `status_url` | The real `https://x.com/<handle>/status/<digits>` link. `null` until a person has published it. |
 
 ## The order that is not negotiable
 
-`audience_job → evidence → theses → red-team → post_copy → image_brief → render →
-inspect → alt_text → human review → package → manual publish → status_url`
+`audience_job → evidence/honest observation → content mode → theses/angle → red-team → post_copy → post_format → (if image: brief → render → inspect → ALT) → human review → package → manual publish → status_url`
 
 Writing the copy first and inventing evidence afterwards is how a generic post
 happens. For a personal reflection, use a genuine observation without fake firsthand credentials; for a news claim cite the actual source. The image comes from the post's claim or scene, never from an unrelated mood board.
@@ -42,13 +42,16 @@ happens. For a personal reflection, use a genuine observation without fake first
 
 ## Proof honesty
 
-- A post with no permission-cleared firsthand artifact carries the label
-  `SOURCE_ANALYSIS` and must not say "I tested", "we ran" or claim a measured
-  result. It may explain a mechanism and name a counterexample.
+- An evidence-led news/technical P0 post carries `SOURCE_ANALYSIS`. A P0 `general_interest` post may use `ORIGINAL_OBSERVATION` for a genuinely original reflection or humor, or `SOURCE_ANALYSIS` for source-led commentary. Neither may pretend to have tested a tool, witnessed an event or measured a result without evidence.
 - A `proof_grade` of `P0` is not a lower-quality post; it is a different claim.
   State it so the reader knows which one they are reading.
 
-## The image
+## Media format: pure text or image
+
+- `post_format=text`: publishable as original text with `image=null`, empty `image_brief` and `alt_text`, `image_status=missing`; still requires genuine originality, human scoring, facts/rights checks and real posted URL.
+- `post_format=image`: the same factual/editorial gates, **plus** verified raster image and ALT. Never switch to `text` to disguise a failed image attachment.
+
+## The image (only for `post_format=image`)
 
 The card owner is `card-quote` (the same design system for both languages): a 16:9 horizontal quote or data card rendered
 deterministically from HTML, in the brand palette below.
@@ -65,8 +68,7 @@ deterministically from HTML, in the brand palette below.
 
 ## The three refusals
 
-1. **No image, no post.** `image_status` of `missing`, `failed_qa` or
-   `pending_export` keeps the post at `draft`. There is no text-only fallback.
+1. **No image for an image-format post, no image-format package.** For `post_format=image`, `image_status=missing`, `failed_qa` or `pending_export` blocks packaging. Explicit `post_format=text` has no image and is not blocked by the absence of optional media.
 2. **No review, no post.** The six-dimension review and the four recovery fields
    are filled by a person, and the person's verdict is recorded with the post.
 3. **No URL, not published.** `status_url` is a real status link or the post is
