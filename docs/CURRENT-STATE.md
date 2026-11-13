@@ -4,8 +4,8 @@
 
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
-> Last verified: 2026-11-13 against main @ `9738186` (PR #174 merged); cross-platform extension remains a PR candidate.
-> Main contains the X-only local analyzer; this candidate adds cross-platform local metric learning and reviewed Topic routing. No private account data included.
+> Last verified: 2026-11-13. Local-only X and cross-platform analytics exist; no live account growth is verified.
+> X and cross-platform offline analyzers are implemented; the platform outcomes and automatic end-to-end operations have not been verified.
 
 > Facts below describe `main`; deferred or rights-blocked work is labelled as such.
 > Sections below the "Layer status" table are historical milestone records;
