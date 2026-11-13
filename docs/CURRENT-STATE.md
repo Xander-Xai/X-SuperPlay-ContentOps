@@ -4,7 +4,7 @@
 
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
-> Last verified: 2026-11-13 against PR #174 candidate; main table remains the 2026-11-12 baseline.
+> Last verified: 2026-11-13 on PR #174 candidate; main @ `ce06768` confirmed by read-only GitHub branch lookup.
 > Branch delta: local-only X metrics review and explicit manual Topic handoff. Not merged or a platform result.
 
 > Facts below describe `main`; deferred or rights-blocked work is labelled as such.
@@ -39,6 +39,15 @@
 > **Git state is re-verified below at 2026-11-12 (read-only documentation
 > sync).** Every other section below it is a historical snapshot kept for
 > traceability; none of them is the current state.
+
+### Git — verified 2026-11-13 (read-only remote baseline + PR candidate)
+
+| Property | Verified value |
+|---|---|
+| Default branch | `main` — protected @ `ce06768` (read-only GitHub branch query on 2026-11-13) |
+| Branch delta | PR #174 candidate adds local-only X learning; NOT merged into main, NOT a platform publication |
+
+The detailed 2026-11-12 snapshot below is retained as a historical record. No claim is made that the branch's X local CSV tool exists on the default branch.
 
 ### Git — verified 2026-11-12 (read-only documentation sync)
 
