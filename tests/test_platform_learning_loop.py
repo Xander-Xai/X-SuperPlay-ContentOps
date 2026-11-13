@@ -160,7 +160,7 @@ class CrossPlatformLearningTests(unittest.TestCase):
             self.assertIn("content_route.py", str(runner.call_args))
 
     def test_handoff_rejects_cross_platform_profile(self):
-        result = self.review()
+        result = self.review(platform="youtube", account="x-superplay-english")
         folder = self.directory / "learning"
         folder.mkdir()
         (folder / "latest.json").write_text(json.dumps(result), encoding="utf-8")
