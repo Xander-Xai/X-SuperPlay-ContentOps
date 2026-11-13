@@ -1,4 +1,4 @@
-# X English creator track / Original Content Rewards
+# X Bilingual Creator Track / Original Content Rewards
 
 - [90 天原创奖励资格增长实验](original-content-rewards-90d.md)：当前计划草案，须人工确认账号、规则及实验恢复状态。
 - [资格截图的账号级快照模板](templates/x-rewards-eligibility-snapshots.csv)：只记录 Creator Studio 官方合格门槛；**没有自动采集**，公开库默认不保存真实个人账号指标。
