@@ -217,21 +217,26 @@ def analyze(directory: Path, *, platform: str, account: str, content_format: str
             "qualified_signals_per_hour": round(sum(q for _, q in work) / sum(h for h, _ in work), 3) if work else None,
             "effort_sample_count": len(work),
             "interest_sample_count": len(with_interest),
+            "valid_rate_samples": len(positive),
             "missing_interest": len(items) - len(with_interest),
             "interest_per_1000_primary": round(
                 sum(i for _, i in positive) * 1000 / denominator, 3
             ) if denominator > 0 else None,
         })
-    compared = [g for g in groups if g["sample_count"] >= 5 and g["interest_sample_count"] >= 5]
+    compared = [g for g in groups if g["sample_count"] >= 5 and g["valid_rate_samples"] >= 5]
     status = "DESCRIPTIVE_ONLY" if len(compared) >= 2 else "INSUFFICIENT_DATA"
     leaders = sorted(compared, key=lambda item: (item["median_interest_per_1000_post"] if item["median_interest_per_1000_post"] is not None else -1), reverse=True)
     recommendation = ("Observed higher post-median interest for " + leaders[0]["discovery_source"] +
                       " (descriptive only). Review confounders and founder-hours before continuing one-variable experiment."
                       if status == "DESCRIPTIVE_ONLY" else
                       "Keep discovery-source allocation unchanged until two groups have five complete comparable observations.")
+    input_digest = hashlib.sha256()
+    for filename in ("content-index.csv", "metric-snapshots.csv"):
+        input_digest.update((directory / filename).read_bytes())
     return {
         "schema": SCHEMA, "status": status, "platform": platform,
-        "report_id": "PL-" + hashlib.sha256(json.dumps([platform, account, content_format, topic_cluster, window, definition, groups], sort_keys=True).encode()).hexdigest()[:16],
+        "input_sha256": input_digest.hexdigest(),
+        "report_id": "PL-" + hashlib.sha256(json.dumps([platform, account, content_format, topic_cluster, window, definition, groups, input_digest.hexdigest()], sort_keys=True).encode()).hexdigest()[:16],
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "account_alias": account, "content_format": content_format,
         "topic_cluster": topic_cluster, "metric_definition_version": definition,
