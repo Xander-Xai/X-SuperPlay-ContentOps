@@ -108,6 +108,18 @@ class XLocalLearningTests(unittest.TestCase):
         self.assertEqual(result["skipped"]["unpublished_or_unverified_state"], 1)
         self.assertEqual(result["skipped"]["invalid_post_url_or_time"], 1)
 
+    def test_wrong_snapshot_age_is_excluded(self):
+        cid, url = self._post(1, "timeline_ai")
+        self._metric(cid, url, window="T+72H")
+        result = analyze(self.data, "x-superplay-english", "T+72H")
+        self.assertEqual(result["skipped"]["snapshot_age_mismatch"], 1)
+        self.assertEqual(sum(g["sample_count"] for g in result["groups"]), 0)
+
+    def test_private_storage_guard_rejects_tracked_directory(self):
+        from x_learning_loop import initialize
+        with self.assertRaisesRegex(ValueError, "ignored .local"):
+            initialize(ROOT / "projects" / "x-growth-en" / "metrics")
+
     def test_account_snapshot_is_context_not_post_attribution(self):
         append(self.data / FILES[2], snapshot_id="s1", account_handle="x-superplay-english",
                observed_at="2026-11-13T05:03:00+08:00",
