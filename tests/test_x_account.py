@@ -184,7 +184,7 @@ def test_v13_skills_docs_and_prompt_share_single_account_targets():
         assert "24" in body, path
         assert "40" in body and "80" in body, path
         assert "20" in body and "4" in body, path
-        assert "same" in body.lower() or "同一" in body or "唯一" in body or "ONE" in body, path
+        assert "same" in body.lower() or "single" in body.lower() or "同一" in body or "唯一" in body or "ONE" in body, path
     print("[ok] both X skills, project docs and prompt use current single-account 160+24 goals")
 
 
