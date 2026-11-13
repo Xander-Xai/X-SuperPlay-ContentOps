@@ -1,7 +1,7 @@
 # X 本地运营数据闭环｜唯一执行手册（2026-11-13）
 
 **权威优先级**：X 官方与安全规范 → ContentOps 真实账号 DNA → Strategy 的
-[唯一 X 增长 SOP V1.1](https://github.com/Xander-Xai/X-SuperPlay-Strategy/blob/main/01-Strategy/X-Original-Content-Rewards-Growth-V1.md)
+[唯一 X 增长 SOP V1.2](https://github.com/Xander-Xai/X-SuperPlay-Strategy/blob/main/01-Strategy/X-Original-Content-Rewards-Growth-V1.md)
 → [灵感/时间线专项](https://github.com/Xander-Xai/X-SuperPlay-Strategy/blob/main/03-Execution/X-Inspiration-vs-Timeline-Growth-Experiment-20261113.md)
 → 本工具的指标结果与人工批准。
 本手册不创设额外回复配额、发布权限或评分标准。
