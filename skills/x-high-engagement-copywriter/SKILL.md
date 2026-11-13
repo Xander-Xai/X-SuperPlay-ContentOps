@@ -62,7 +62,7 @@ Use one primary recipe and at most one secondary; do not use P03 keyword/followe
 - Finish: one memorable observation **or** a genuine low-effort question (never forced).
 - Audience: if the current account is English AI builders, avoid generic Chinese entertainment tangents unless an explicit audience experiment is approved.
 
-For 5+ posts, use ≥3 hook shapes; for the V1.2 daily 24 original candidates (20 zh + 4 en), also vary the ending (statement, honest question, useful action, counterexample). Avoid mechanical "哈哈哈", "卧槽", "谁懂", "Who's in?", "兄弟", "💀😭" or "the real upgrade" repetition, especially across successive short replies. No sensationalism that depends on invented medical/technical/celebrity claims. Adjust length to the actual X account and the existing \`scripts/x_post.py\` weighted-text gate; do not promise every draft is publish-ready.
+For 5+ posts, use ≥3 hook shapes; for the V1.3 daily 24 original candidates (20 zh + 4 en), also vary the ending (statement, honest question, useful action, counterexample). Avoid mechanical "哈哈哈", "卧槽", "谁懂", "Who's in?", "兄弟", "💀😭" or "the real upgrade" repetition, especially across successive short replies. No sensationalism that depends on invented medical/technical/celebrity claims. Adjust length to the actual X account and the existing \`scripts/x_post.py\` weighted-text gate; do not promise every draft is publish-ready.
 
 ### 4. Draft and screen
 
@@ -74,7 +74,7 @@ Prefer readable, colloquial copy with one core point. When doing replies, match 
 
 ### 5. Generate a checkable artifact when running inside ContentOps
 
-For a quick chat request return only copy and optional translation. A daily 24-originals request means 24 distinct DRAFTS (deliver in 2–3 reviewed batches when validation has a 15-candidate per-batch limit), not ten real posts; a single sourced post means one concise reply by default. The new A40/B40/C80 = 160 daily reply goal is a human-reviewed strategy challenge, never a command to auto-reply, mass-mention, publish near duplicates or ignore low-quality candidates. For a repo-oriented run, write a local JSON draft in a project's authorized \`sources/\` (do **not** commit public personal account data) with:
+For a quick chat request return only copy and optional translation. A daily 24-originals request means 24 distinct DRAFTS (deliver in 2–3 reviewed batches when validation has a 15-candidate per-batch limit), not 24 real posts; a single sourced post means one concise reply by default. The new A40/B40/C80 = 160 daily reply goal is a human-reviewed strategy challenge, never a command to auto-reply, mass-mention, publish near duplicates or ignore low-quality candidates. For a repo-oriented run, write a local JSON draft in a project's authorized \`sources/\` (do **not** commit public personal account data) with:
 - schema \`contentops.x-copywriter-draft/v1\`, mode, account_slug, language, audience,
 - \`status: DRAFT_REVIEW_REQUIRED\`, \`platform_metrics: null\`,
 - experiment \`{ "primary_variable": "hook_kind", "age_window": "T+24h" }\`,
