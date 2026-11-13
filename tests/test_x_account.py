@@ -201,7 +201,7 @@ def test_v14_manual_relationship_and_format_adapters_do_not_restore_old_limits()
         "inspiration_ai": 40,
         "timeline_ai": 80,
     }
-    assert "V1.4" in account["cadence"]["source_of_truth"]
+    assert "V1.4" in account["business"]["source_of_truth"]
     for relative in (
         "skills/x-organic-growth-operator/SKILL.md",
         "skills/x-high-engagement-copywriter/SKILL.md",
