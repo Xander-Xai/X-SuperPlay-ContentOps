@@ -8,7 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-from x_learning_loop import analyze, initialize, FILES  # noqa: E402
+from x_learning_loop import analyze, initialize, FILES, CONTEXT_FILE  # noqa: E402
 
 
 def append(path, **fields):
@@ -34,12 +34,18 @@ class XLocalLearningTests(unittest.TestCase):
                post_published_at="2026-11-12T10:00:00+08:00")
         return cid, url
 
+    def _context(self, cid, url, *, topic="ai_agent", language="en", exp="CEXP-20261113-001", minutes="10", quality="3"):
+        append(self.data / CONTEXT_FILE, content_id=cid, x_post_url=url,
+               experiment_id=exp, topic_cluster=topic, language=language,
+               founder_minutes=minutes, qualified_conversations=quality)
+
     def _metric(self, cid, url, impressions=100, clicks=2, window="T+24H",
-                access="available", paid="organic"):
+                access="available", paid="organic", definition="native_v1"):
         append(self.data / FILES[1], metric_snapshot_id=f"sample-{cid}-{window}",
                content_id=cid, x_post_url=url, age_window=window,
                observed_at="2026-11-13T10:00:00+08:00", metric_source="native_manual",
-               data_access=access, organic_paid=paid, impressions=impressions,
+               data_access=access, organic_paid=paid,
+               metric_definition_version=definition, impressions=impressions,
                profile_clicks=clicks)
 
     def test_init_is_idempotent_and_does_not_overwrite(self):
@@ -57,16 +63,75 @@ class XLocalLearningTests(unittest.TestCase):
         self.assertEqual(group["sample_count"], 1)
         self.assertIsNone(group["profile_clicks_per_1000_impressions"])
         self.assertEqual(group["profile_clicks_missing"], 1)
+        self.assertEqual(result["status"], "EXPLORATORY_ONLY")
+
+    def test_compare_requires_scope_and_not_just_aggregate(self):
+        with self.assertRaisesRegex(ValueError, "requires valid"):
+            analyze(self.data, "x-superplay-english", "T+24H", compare=True)
+        self.assertEqual(analyze(self.data, "x-superplay-english", "T+24H")["status"],
+                         "EXPLORATORY_ONLY")
+
+    def test_compare_excludes_other_topics_languages_and_versions(self):
+        for i in range(1, 6):
+            cid, url = self._post(i, "inspiration_ai")
+            self._context(cid, url, topic="gaming" if i < 3 else "ai_agent",
+                          language="zh" if i == 3 else "en")
+            self._metric(cid, url, definition="native_v2" if i == 4 else "native_v1")
+        for i in range(6, 11):
+            cid, url = self._post(i, "timeline_ai")
+            self._context(cid, url)
+            self._metric(cid, url)
+        result = analyze(self.data, "x-superplay-english", "T+24H",
+                         experiment_id="CEXP-20261113-001", topic_cluster="ai_agent",
+                         language="en", definition="native_v1", compare=True)
+        self.assertEqual(result["status"], "INSUFFICIENT_DATA")
+        self.assertEqual(result["skipped"]["metric_definition_mismatch"], 1)
+
+    def test_median_rate_and_pooled_rate_can_diverge(self):
+        for i, views in enumerate((10, 10, 10000, 10, 10), 1):
+            cid, url = self._post(i, "inspiration_ai")
+            self._context(cid, url, minutes="10", quality="2")
+            self._metric(cid, url, impressions=views, clicks=1 if views != 10000 else 0)
+        for i in range(6, 11):
+            cid, url = self._post(i, "timeline_ai")
+            self._context(cid, url, minutes="10", quality="2")
+            self._metric(cid, url, impressions=100, clicks=4)
+        result = analyze(self.data, "x-superplay-english", "T+24H",
+                         experiment_id="CEXP-20261113-001", topic_cluster="ai_agent",
+                         language="en", definition="native_v1", compare=True)
+        by_source = {g["source"]: g for g in result["groups"]}
+        self.assertEqual(result["status"], "DESCRIPTIVE_ONLY")
+        self.assertEqual(by_source["inspiration_ai"]["median_profile_clicks_per_1000"], 100)
+        self.assertLess(by_source["inspiration_ai"]["profile_clicks_per_1000_impressions"], 1)
+        self.assertEqual(by_source["timeline_ai"]["quality_per_founder_hour"], 12)
+        self.assertIn("timeline_ai", result["next_experiment"]["recommendation"])
+
+    def test_only_broad_and_ai_is_not_valid_BC_comparison(self):
+        for i in range(1, 6):
+            cid, url = self._post(i, "inspiration_ai")
+            self._context(cid, url)
+            self._metric(cid, url)
+        for i in range(6, 11):
+            cid, url = self._post(i, "inspiration_broad")
+            self._context(cid, url)
+            self._metric(cid, url)
+        result = analyze(self.data, "x-superplay-english", "T+24H",
+                         experiment_id="CEXP-20261113-001", topic_cluster="ai_agent",
+                         language="en", definition="native_v1", compare=True)
         self.assertEqual(result["status"], "INSUFFICIENT_DATA")
 
     def test_group_comparison_is_descriptive_only(self):
         for i in range(1, 6):
             cid, url = self._post(i, "inspiration_ai")
             self._metric(cid, url, impressions=1000, clicks=2)
+            self._context(cid, url)
         for i in range(6, 11):
             cid, url = self._post(i, "timeline_ai")
             self._metric(cid, url, impressions=100, clicks=3)
-        result = analyze(self.data, "x-superplay-english", "T+24H")
+            self._context(cid, url)
+        result = analyze(self.data, "x-superplay-english", "T+24H",
+                         experiment_id="CEXP-20261113-001", topic_cluster="ai_agent",
+                         language="en", definition="native_v1", compare=True)
         self.assertEqual(result["status"], "DESCRIPTIVE_ONLY")
         self.assertEqual(result["next_experiment"]["approval"], "FOUNDER_REVIEW_REQUIRED")
         self.assertEqual(result["next_experiment"]["proposed_topic"], None)
