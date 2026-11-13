@@ -130,11 +130,11 @@ def check_x_account(
     if dna.get("default_post_language") not in (languages if isinstance(languages, list) else []):
         failures.append("default_post_language must be one of allowed_languages")
     originals = dna.get("daily_original_targets")
-    if originals != {"zh": 6, "en": 4}:
-        failures.append(f"daily_original_targets is {originals!r}, expected zh=6 and en=4")
+    if originals != {"zh": 20, "en": 4}:
+        failures.append(f"daily_original_targets is {originals!r}, expected zh=20 and en=4")
     replies = dna.get("daily_reply_targets")
-    if replies != {"inspiration_broad": 25, "inspiration_ai": 25, "timeline_ai": 50}:
-        failures.append("daily_reply_targets must be inspiration_broad=25, inspiration_ai=25, timeline_ai=50")
+    if replies != {"inspiration_broad": 40, "inspiration_ai": 40, "timeline_ai": 80}:
+        failures.append("daily_reply_targets must be inspiration_broad=40, inspiration_ai=40, timeline_ai=80")
     if not str(dna.get("account") or "").strip():
         failures.append("account is empty")
     platforms = [str(item) for item in dna.get("platforms") or []]
@@ -319,19 +319,19 @@ def check_x_account(
 
     cadence = dna.get("cadence") or {}
     max_daily = cadence.get("max_original_posts_per_day")
-    if not _is_int(max_daily) or not 1 <= max_daily <= 10:
+    if not _is_int(max_daily) or not 1 <= max_daily <= 24:
         failures.append(
-            f"cadence.max_original_posts_per_day is {max_daily!r}, expected an integer 1..10")
+            f"cadence.max_original_posts_per_day is {max_daily!r}, expected an integer 1..24")
     window = cadence.get("original_posts_per_week")
-    weekly_capacity = max_daily * 7 if _is_int(max_daily) and 1 <= max_daily <= 10 else 0
+    weekly_capacity = max_daily * 7 if _is_int(max_daily) and 1 <= max_daily <= 24 else 0
     if not (isinstance(window, list) and len(window) == 2
             and all(_is_int(item) for item in window)
             and 0 < window[0] <= window[1] <= weekly_capacity):
         failures.append(
             f"cadence.original_posts_per_week is {window!r}, expected "
             f"[low, high] within 1..{weekly_capacity} based on daily max")
-    if max_daily != 10 or window != [70, 70]:
-        failures.append("cadence must be 10 originals/day and 70/week for the current single-account plan")
+    if max_daily != 24 or window != [168, 168]:
+        failures.append("cadence must be 24 originals/day and 168/week for the current single-account plan")
     if not cadence.get("rule"):
         failures.append("cadence has no rule")
 
