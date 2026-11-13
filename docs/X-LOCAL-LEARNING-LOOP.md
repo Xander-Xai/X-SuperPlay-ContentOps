@@ -86,3 +86,12 @@ Strategy 仅登记脱敏结论、实验 ID、需要改的单一变量及人工�
 ## 非 X 平台
 
 本工具的 X 三表结构继续保留。抖音、TikTok、小红书、B站和 YouTube 的同平台实验请使用 [跨平台本地运营闭环](PLATFORM-LOCAL-LEARNING-LOOP.md)；无需新建 GitHub 仓库，不迁移已有 X 记录。
+
+## 灵感 vs 时间线：先筛选候选，再人工回复
+
+在现有 X 数据分析之前，新增 [本地候选筛选工具](X-DISCUSSION-CANDIDATES.md)：
+
+    python scripts/x_discussion_candidates.py init
+    python scripts/x_discussion_candidates.py rank --account x-superplay-english --language en
+
+工具只筛选人工已查看的原帖，不自动抓取和发帖；选中后人工确认内容与来源，再把**自己真实发布的回复 URL** 录入本文件规定的 posts.csv、x-metric-snapshots.csv。实验策略权威在 X-SuperPlay-Strategy 的灵感 vs 时间线专项文件。
