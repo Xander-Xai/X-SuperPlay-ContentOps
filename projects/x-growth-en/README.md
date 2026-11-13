@@ -7,7 +7,9 @@
 - [项目账户契约](project.yaml)：当前 `language: en` 和 `publication_mode: MANUAL_ONLY`，双语方案须经过账户角色和实验审批。
 - Growth Operator: `../../skills/x-organic-growth-operator/`；X post gate: `../../scripts/x_post.py`；bridge: `../../scripts/x_growth_pipeline.py`。
 
-**V1.2 运营目标：**Strategy 每日A25/B25/C50=100条合规人工回复计划、原创中文6条+英文4条候选（非技术题材允许）。本英语项目只承接最多4条英文原创候选/日，中文账号尚未绑定；草稿与实际发布必须分开记录。\n\n**状态边界**：ContentOps 对 X 已集成离线内容审核和人工发布门禁；X 平台真实发布、官方认证粉丝/合格首页曝光导入、最终收益资格均未在此仓自动实现。原 `X-SuperPlay-X-Growth-OS` 属待下线迁移来源，不是未来执行仓。严格禁止把 GitHub 文件写入视为 X 发帖成功。
+**V1.2 运营目标：**Strategy 每日A25/B25/C50=100条合规人工回复计划、原创中文6条+英文4条候选（非技术题材允许）。本英语项目只承接最多4条英文原创候选/日，中文账号尚未绑定；草稿与实际发布必须分开记录。
+
+**状态边界**：ContentOps 对 X 已集成离线内容审核和人工发布门禁；X 平台真实发布、官方认证粉丝/合格首页曝光导入、最终收益资格均未在此仓自动实现。原 `X-SuperPlay-X-Growth-OS` 属待下线迁移来源，不是未来执行仓。严格禁止把 GitHub 文件写入视为 X 发帖成功。
 
 - High-engagement **original post writing**: [x-high-engagement-copywriter](../../skills/x-high-engagement-copywriter/SKILL.md) — conversation-derived hypotheses, editorial drafts and A/B design, **not** verified virality or an auto-publish tool. This project's English account remains English; Chinese variants need separate account/language approval.
 
