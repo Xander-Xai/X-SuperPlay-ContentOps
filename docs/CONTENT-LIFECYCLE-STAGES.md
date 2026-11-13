@@ -7,7 +7,9 @@
 > not emit a success receipt, a publication record or a metric.
 
 > Status: reference — 2026-11-12.
-> Last verified: 2026-11-12 on `main` at `c1da6dd`.
+> Last verified: 2026-11-13 against PR #174 candidate; main status remains the 2026-11-12 baseline.
+> Branch delta: local X metric learning and manual Topic handoff; account data stays private; not merged.
+
 Related: [ARCHITECTURE.md](ARCHITECTURE.md), [PRD.md](PRD.md),
 [ADR-015](adr/ADR-015-platform-placeholders-and-content-bundle.md),
 [ADR-016](adr/ADR-016-easel-host-adoption.md),

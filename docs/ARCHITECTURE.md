@@ -2,7 +2,9 @@
 
 [English](ARCHITECTURE.md) | [简体中文](ARCHITECTURE.zh-CN.md)
 
-> Last verified: 2026-11-12 on `main` at `c1da6dd`.
+> Last verified: 2026-11-13 against PR #174 candidate; main capabilities remain the 2026-11-12 baseline.
+> Branch delta: local-only X metric analysis and explicit reviewed next-topic routing; no automatic publication.
+
 
 > What the system is. Where the boundaries are. How components call each other.
 > Describes the target architecture after the 2026-11-02 host decision, and

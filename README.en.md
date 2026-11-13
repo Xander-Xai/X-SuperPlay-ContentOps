@@ -4,7 +4,9 @@
 
 [简体中文](README.md) | English
 
-> Last verified: 2026-11-12 on `main` at `c1da6dd`. The status table describes
+> Last verified: 2026-11-13 against PR #174 candidate; main table remains the 2026-11-12 baseline.
+> Branch delta: local-only X metrics review and explicit manual Topic handoff. Not merged or a platform result.
+
 > `main`, never a draft branch.
 
 ## What

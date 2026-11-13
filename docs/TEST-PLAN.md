@@ -4,7 +4,9 @@
 
 > Authoritative local verification strategy, suite inventory and CI wiring.
 >
-> Last verified: 2026-11-12 against PR #172 candidate (98 suites, 98 named CI steps; added copywriter checks within existing X growth suite).
+> Last verified: 2026-11-13 against PR #174 candidate; established test contract retained.
+> Branch delta: X local learning regression and CI step; synthetic temporary CSV only, no private analytics in CI.
+
 
 ## Risk-based local verification
 

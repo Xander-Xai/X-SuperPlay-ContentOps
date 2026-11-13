@@ -4,7 +4,9 @@
 
 > Milestone-based execution. Every milestone has an exit criterion.
 >
-> Status verified: 2026-11-12 on `main` (`c1da6dd`).
+> Last verified: 2026-11-13 against PR #174 candidate; main remains the 2026-11-12 baseline.
+> Branch delta: local X CSV analytics and human-gated Topic handoff; not merged into main.
+
 
 ## Status legend
 
