@@ -4,14 +4,14 @@
 - [资格截图的账号级快照模板](templates/x-rewards-eligibility-snapshots.csv)：只记录 Creator Studio 官方合格门槛；**没有自动采集**，公开库默认不保存真实个人账号指标。
 - [每周人工复盘模板](templates/x-rewards-weekly-review.md)。
 - [现有帖子索引](templates/posts.csv)、[账号观察](templates/x-account-snapshots.csv)和[帖子同龄快照](templates/x-metric-snapshots.csv)：既有数据事实源，新增计划不得覆盖旧记录。
-- [项目账户契约](project.yaml)：当前 `language: en` 和 `publication_mode: MANUAL_ONLY`，双语方案须经过账户角色和实验审批。
+- [项目账户契约](project.yaml)：当前 `language: multi`（允许zh/en）和 `publication_mode: MANUAL_ONLY`；本项目只绑定**同一个X账号**，旧英文目录名不表示另一账号。
 - Growth Operator: `../../skills/x-organic-growth-operator/`；X post gate: `../../scripts/x_post.py`；bridge: `../../scripts/x_growth_pipeline.py`。
 
-**V1.2 运营目标：**Strategy 每日A25/B25/C50=100条合规人工回复计划、原创中文6条+英文4条候选（非技术题材允许）。本英语项目只承接最多4条英文原创候选/日，中文账号尚未绑定；草稿与实际发布必须分开记录。
+**V1.2 单账号运营目标：**每日A25/B25/C50=100条合规人工回复，**同一账号**每日实际发布中文6条+英文4条原创（题材不限技术）。每条记录 `language:zh|en`；没有真人审核与本人X真实URL的内容只能算草稿。
 
 **状态边界**：ContentOps 对 X 已集成离线内容审核和人工发布门禁；X 平台真实发布、官方认证粉丝/合格首页曝光导入、最终收益资格均未在此仓自动实现。原 `X-SuperPlay-X-Growth-OS` 属待下线迁移来源，不是未来执行仓。严格禁止把 GitHub 文件写入视为 X 发帖成功。
 
-- High-engagement **original post writing**: [x-high-engagement-copywriter](../../skills/x-high-engagement-copywriter/SKILL.md) — conversation-derived hypotheses, editorial drafts and A/B design, **not** verified virality or an auto-publish tool. This project's English account remains English; Chinese variants need separate account/language approval.
+- High-engagement **original post writing**: [x-high-engagement-copywriter](../../skills/x-high-engagement-copywriter/SKILL.md) — conversation-derived hypotheses, editorial drafts and A/B design, **not** verified virality or an auto-publish tool. This registered account is explicitly bilingual. Chinese and English posts use the same account slug; no second account or separate approval is required.
 
 ### Copywriter offline validation and learning
 
