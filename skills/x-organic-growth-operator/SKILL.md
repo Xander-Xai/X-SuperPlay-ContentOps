@@ -158,6 +158,36 @@ send private material or credentials into logs, receipts, fixtures or outputs.
 Reject unsafe requests explicitly. Local tools are advisory, cannot check all
 sensitive data, and must not be represented as automated editorial clearance.
 
+## Multi-post manual reply triage (2026-11-13 editorial update)
+
+A long session of pasted X posts is a **drafting queue**, not evidence that any
+reply has been posted, that the authors are authentic, or that a template worked.
+See [the copywriter's bilingual reply patterns](../x-high-engagement-copywriter/references/reply-batch-and-original-post-lessons-2026-11-13.md)
+for tone, safety and anti-repetition review. The earlier fixed S01–S11 corpus
+remains unchanged; no performance label should be added without actual X
+receipts.
+
+- **Triage before writing:** relevance to this account > opportunity for a
+  genuine new observation > evidence/safety > timeliness. Generic entertainment
+  can be an A-group exploratory candidate, not a substitute for B/C AI-topic
+  comparison or an automatic answer to every trending thread.
+- **Route precisely:** one quoted source post + request to comment means
+  REPLY_DRAFT (default one concise draft), not ORIGINAL_POST. A later request
+  for ten new posts means ten independently original candidates, **not ten
+  engagement actions**. The copyright, evidence, account and manual review
+  gates apply to both.
+- **Do not confuse reciprocity with growth:** friendly, substantive responses
+  are permitted, but transactional follower promises, artificial engagement
+  loops and unverifiable "boosts" are not a participation strategy.
+- **No metrics from a chat:** unlinked source posts, unposted assistant drafts
+  and account-wide screenshots do not establish reply views, attributable
+  followers or qualifying original Home Timeline Q. Continue to record only
+  human-published own reply URLs and separately observed age-matched metrics
+  in the existing local CSVs.
+- **No new volume target:** with limited operator time or weak candidates,
+  prefer 0 replies to repetitive or risky comments. Account DNA and Strategy
+  SOP remain the sole source of publication cadence and business priorities.
+
 ## Companion skill — original-post copy
 
 For topic-to-original-post drafting, use [x-high-engagement-copywriter](../x-high-engagement-copywriter/SKILL.md). It applies conversation-derived writing patterns and editorial evaluation. This operator retains the authority for evidence-aware discussion planning, manual interaction, X gate handoff, and post-age measurement; neither skill publishes, scrapes or guarantees reach. Do not treat the pasted example corpus as verified X analytics.
