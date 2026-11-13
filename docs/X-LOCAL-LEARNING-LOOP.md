@@ -82,3 +82,7 @@ Strategy 仅登记脱敏结论、实验 ID、需要改的单一变量及人工�
     python -m unittest tests/test_x_learning_loop.py -v
 
 脚本仅做本地数据处理；没有真实的官方指标来源校验，也没有跨平台推荐增益保证。
+
+## 非 X 平台
+
+本工具的 X 三表结构继续保留。抖音、TikTok、小红书、B站和 YouTube 的同平台实验请使用 [跨平台本地运营闭环](PLATFORM-LOCAL-LEARNING-LOOP.md)；无需新建 GitHub 仓库，不迁移已有 X 记录。
