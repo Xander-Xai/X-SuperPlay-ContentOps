@@ -408,6 +408,15 @@ def main(argv=None):
             if (evidence.get("account") != args.account or evidence.get("schema") != "contentops.local-learning-brief/v1"
                     or evidence.get("report_id") != args.report_id or not evidence.get("comparison_controlled")):
                 raise ValueError("learning brief account/schema mismatch")
+            current_digest = hashlib.sha256()
+            for filename in (*FILES, CONTEXT_FILE):
+                file_path = args.data_dir / filename
+                current_digest.update(file_path.read_bytes() if file_path.exists() else b"")
+            if evidence.get("input_sha256") != current_digest.hexdigest():
+                raise ValueError("source CSV changed since this Learning Brief; re-run analyze")
+            archive = args.data_dir / "learning" / "history" / (args.report_id + ".json")
+            if not archive.is_file():
+                raise ValueError("corresponding immutable local report history is missing")
             if evidence.get("status") != "DESCRIPTIVE_ONLY" or args.decision not in ("CONTINUE", "ADJUST"):
                 raise ValueError("only comparable reviewed reports can route approved CONTINUE/ADJUST")
             profile_path = ROOT / "config" / "accounts" / (args.account + ".json")
