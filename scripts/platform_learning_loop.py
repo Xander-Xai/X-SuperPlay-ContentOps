@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import re
 import sys
@@ -41,6 +42,7 @@ WINDOW_HOURS = {"T+24H": (18, 36), "T+72H": (60, 84), "T+7D": (144, 192)}
 VALID_STATUS = {"published", "reported_published", "verified_published"}
 SLUG = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
 SCHEMA = "contentops.platform-learning/v1"
+DECISIONS = ("CONTINUE", "ADJUST", "PAUSE", "INCONCLUSIVE")
 
 
 def _safe_slug(value, label):
@@ -197,25 +199,40 @@ def analyze(directory: Path, *, platform: str, account: str, content_format: str
         if interest is not None and (primary == 0 and interest > 0):
             skipped["invalid_denominator"] += 1
             continue
-        grouped[post["discovery_source"]].append((primary, interest))
+        hours = _metric(snap.get("founder_hours", ""))
+        quality = _metric(snap.get("qualified_signals", ""))
+        grouped[post["discovery_source"]].append((primary, interest, hours, quality))
     groups = []
     for surface, items in sorted(grouped.items()):
-        with_interest = [(p, i) for p, i in items if i is not None]
-        denominator = sum(p for p, _ in with_interest)
+        with_interest = [(p, i) for p, i, _, _ in items if i is not None]
+        positive = [(p, i) for p, i in with_interest if p > 0]
+        work = [(h, q) for _, _, h, q in items if h is not None and h > 0 and q is not None]
+        denominator = sum(p for p, _ in positive)
+        post_rates = [i * 1000 / p for p, i in positive]
         groups.append({
             "discovery_source": surface, "sample_count": len(items),
-            "median_primary": median(p for p, _ in items),
-            "total_primary": sum(p for p, _ in items),
+            "median_primary": median(p for p, _, _, _ in items),
+            "total_primary": sum(p for p, _, _, _ in items),
+            "median_interest_per_1000_post": round(median(post_rates), 3) if post_rates else None,
+            "qualified_signals_per_hour": round(sum(q for _, q in work) / sum(h for h, _ in work), 3) if work else None,
+            "effort_sample_count": len(work),
             "interest_sample_count": len(with_interest),
             "missing_interest": len(items) - len(with_interest),
             "interest_per_1000_primary": round(
-                sum(i for _, i in with_interest) * 1000 / denominator, 3
+                sum(i for _, i in positive) * 1000 / denominator, 3
             ) if denominator > 0 else None,
         })
-    compared = [g for g in groups if g["sample_count"] >= 5]
+    compared = [g for g in groups if g["sample_count"] >= 5 and g["interest_sample_count"] >= 5]
     status = "DESCRIPTIVE_ONLY" if len(compared) >= 2 else "INSUFFICIENT_DATA"
+    leaders = sorted(compared, key=lambda item: (item["median_interest_per_1000_post"] if item["median_interest_per_1000_post"] is not None else -1), reverse=True)
+    recommendation = ("Observed higher post-median interest for " + leaders[0]["discovery_source"] +
+                      " (descriptive only). Review confounders and founder-hours before continuing one-variable experiment."
+                      if status == "DESCRIPTIVE_ONLY" else
+                      "Keep discovery-source allocation unchanged until two groups have five complete comparable observations.")
     return {
         "schema": SCHEMA, "status": status, "platform": platform,
+        "report_id": "PL-" + hashlib.sha256(json.dumps([platform, account, content_format, topic_cluster, window, definition, groups], sort_keys=True).encode()).hexdigest()[:16],
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "account_alias": account, "content_format": content_format,
         "topic_cluster": topic_cluster, "metric_definition_version": definition,
         "window": window, "primary_metric": metric_name,
@@ -228,7 +245,8 @@ def analyze(directory: Path, *, platform: str, account: str, content_format: str
                     else "At least two sources need >=5 comparable published organic snapshots."),
         "handoff": {
             "status": "HUMAN_REVIEW_REQUIRED", "proposed_topic": None,
-            "next_variable": "discovery_source", "production_authorized": False},
+            "next_variable": "discovery_source", "recommendation": recommendation,
+            "production_authorized": False},
         "network_used": False, "published": False
     }
 
