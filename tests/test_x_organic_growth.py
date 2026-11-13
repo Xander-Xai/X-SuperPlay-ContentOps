@@ -309,9 +309,14 @@ class HighEngagementCopywriterContractTests(unittest.TestCase):
         self.assertIn("C1:FOLLOW_BAIT_PATTERN", errs)
         self.assertIn("C1:TRANSACTIONAL_FOLLOW_BAIT", errs)
 
-    def test_account_language_mismatch_is_refused(self):
-        d = self._draft(language="zh-CN")
-        self.assertIn("ACCOUNT_LANGUAGE_MISMATCH", self.mod.draft_errors(d, self.ledger))
+    def test_single_account_accepts_chinese_and_english_copywriter_drafts(self):
+        zh = self._draft(language="zh-CN")
+        self.assertNotIn("ACCOUNT_LANGUAGE_MISMATCH", self.mod.draft_errors(zh, self.ledger))
+        en = self._draft(language="en")
+        self.assertEqual(self.mod.draft_errors(en, self.ledger), [])
+        unsupported = self._draft(language="fr")
+        self.assertIn("BAD_LANGUAGE", self.mod.draft_errors(unsupported, self.ledger))
+        self.assertIn("ACCOUNT_LANGUAGE_MISMATCH", self.mod.draft_errors(unsupported, self.ledger))
 
     def test_duplicates_and_five_post_hook_monoculture_fail(self):
         base = self._draft()
