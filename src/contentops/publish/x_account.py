@@ -2,7 +2,7 @@
 
 ``config/accounts/x-superplay-english.json`` is a text account
 (``contentops.x-account/v1``). It is not a video account with keys removed: it
-has a 280-character budget, one real 1600x900 image, a human review carrying a
+has a 280-character budget, an explicit text/image format (real 1600x900 image when selected), a human review carrying a
 proof grade, and a status URL or nothing at all. Validating it on a film
 composition or an ``easel.yaml`` would be a lie dressed as a check.
 
