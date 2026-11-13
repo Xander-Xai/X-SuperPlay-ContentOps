@@ -131,6 +131,28 @@ def test_the_shipped_x_account_passes_its_own_checker():
 
 
 @test
+def test_daily_four_english_originals_and_weekly_28_are_valid():
+    dna = _x()
+    assert dna["cadence"]["max_original_posts_per_day"] == 4
+    assert dna["cadence"]["original_posts_per_week"] == [28, 28]
+    assert check_x_account(dna, ROOT, []) == []
+    print("[ok] X high-intensity four-per-day cadence is accepted")
+
+
+@test
+def test_weekly_target_must_not_exceed_daily_capacity():
+    _assert_fails(_mutated(cadence__original_posts_per_week=[29, 29]),
+                  "based on daily max")
+    _assert_fails(_mutated(cadence__max_original_posts_per_day=0),
+                  "expected an integer 1..10")
+    _assert_fails(_mutated(cadence__max_original_posts_per_day=11),
+                  "expected an integer 1..10")
+    _assert_fails(_mutated(cadence__max_original_posts_per_day=1),
+                  "based on daily max")
+    print("[ok] cadence refuses out-of-range or internally inconsistent targets")
+
+
+@test
 def test_a_manual_only_account_may_not_declare_an_api_publisher():
     dna = _mutated(publication__mode="API", publication__api="implemented")
     _assert_fails(dna, "only MANUAL_ONLY is implemented")

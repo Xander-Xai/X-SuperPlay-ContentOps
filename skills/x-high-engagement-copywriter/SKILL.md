@@ -7,11 +7,10 @@ description: "Draft original, discussion-worthy Chinese/English X posts, quote p
 
 ## X decision standards (single authority)
 
-Use the canonical [X Strategy SOP V1.1](https://github.com/Xander-Xai/X-SuperPlay-Strategy/blob/main/01-Strategy/X-Original-Content-Rewards-Growth-V1.md)
+Use the canonical [X Strategy SOP V1.2](https://github.com/Xander-Xai/X-SuperPlay-Strategy/blob/main/01-Strategy/X-Original-Content-Rewards-Growth-V1.md)
 and the registered Account DNA before choosing content language, quantity,
 or any publication eligibility claim. The x-superplay-english profile limits
-original main posts to 3–4/week and at most one/day; earlier 1–3/day figures
-in Strategy are overall experiments, not an override for that account.
+original main posts to **up to four English originals per day** under the 2026-11-13 V1.2 decision; the global daily plan is **six Chinese plus four English originals**, and **100 manual reply goals grouped A25/B25/C50**. Older 3–4/week, <=1/day, 1–3/day and 5–10 reply counts are historical. Chinese drafts need a verified Chinese-language account route before publication.
 The heuristic /100 **draft-writing score below is NOT the registered X account's
 24/30 editorial acceptance gate**: neither score authorizes publication or
 supersedes proof grades, card/ALT requirements and human approval.
@@ -63,7 +62,7 @@ Use one primary recipe and at most one secondary; do not use P03 keyword/followe
 - Finish: one memorable observation **or** a genuine low-effort question (never forced).
 - Audience: if the current account is English AI builders, avoid generic Chinese entertainment tangents unless an explicit audience experiment is approved.
 
-For 5+ posts, use ≥3 hook shapes and vary the ending (statement, honest question, useful action, counterexample). Avoid mechanical "哈哈哈", "卧槽", "谁懂", "Who's in?", "兄弟", "💀😭" or "the real upgrade" repetition, especially across successive short replies. No sensationalism that depends on invented medical/technical/celebrity claims. Adjust length to the actual X account and the existing \`scripts/x_post.py\` weighted-text gate; do not promise every draft is publish-ready.
+For 5+ posts, use ≥3 hook shapes; for the V1.2 daily ten original candidates (6 zh + 4 en), also vary the endings and vary the ending (statement, honest question, useful action, counterexample). Avoid mechanical "哈哈哈", "卧槽", "谁懂", "Who's in?", "兄弟", "💀😭" or "the real upgrade" repetition, especially across successive short replies. No sensationalism that depends on invented medical/technical/celebrity claims. Adjust length to the actual X account and the existing \`scripts/x_post.py\` weighted-text gate; do not promise every draft is publish-ready.
 
 ### 4. Draft and screen
 
@@ -75,7 +74,7 @@ Prefer readable, colloquial copy with one core point. When doing replies, match 
 
 ### 5. Generate a checkable artifact when running inside ContentOps
 
-For a quick chat request return only copy and optional translation. For a repo-oriented run, write a local JSON draft in a project's authorized \`sources/\` (do **not** commit public personal account data) with:
+For a quick chat request return only copy and optional translation. A ten-originals request means ten distinct DRAFTS, not ten real posts; a single sourced post means one concise reply by default. The new A25/B25/C50 = 100 daily reply goal is a human-reviewed strategy challenge, never a command to auto-reply, mass-mention, publish near duplicates or ignore low-quality candidates. For a repo-oriented run, write a local JSON draft in a project's authorized \`sources/\` (do **not** commit public personal account data) with:
 - schema \`contentops.x-copywriter-draft/v1\`, mode, account_slug, language, audience,
 - \`status: DRAFT_REVIEW_REQUIRED\`, \`platform_metrics: null\`,
 - experiment \`{ "primary_variable": "hook_kind", "age_window": "T+24h" }\`,
@@ -106,4 +105,4 @@ It reports descriptive median impressions and reply/impression rates per pattern
 
 ## Output acceptance
 
-A completed writing request gives the requested **number of genuinely distinct drafts** (one concise reply by default for one pasted post) and, when requested, brief hooks, review concerns and next test variable. Translate English replies outside the copy when useful; perform a recent-batch repetition pass before giving 5+ originals or several replies. Do not claim an X outcome for unposted text. The user's end goal is better **observed** reach and meaningful interactions, so the loop must remain: *original draft -> human review/manual publish -> real snapshots -> compare similar posts -> revise mechanism*. No amount of CI or Skill prose can substitute for the measured final step.
+A completed writing request gives the requested **number of genuinely distinct drafts** (one concise reply by default for one pasted post) and, when requested, brief hooks, review concerns and next test variable. Translate English replies outside the copy when useful; perform a recent-batch repetition pass before giving 5+ originals or several replies. Do not claim an X outcome for unposted text. The user's new daily operating target is **A25+B25+C50 manually reviewed replies and 6 Chinese/4 English original candidates** (general topics allowed), but the user's end goal is better **observed** reach and meaningful interactions, so the loop must remain: *original draft -> human review/manual publish -> real snapshots -> compare similar posts -> revise mechanism*. No amount of CI or Skill prose can substitute for the measured final step.

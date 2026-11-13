@@ -307,16 +307,18 @@ def check_x_account(
         failures.append("evidence_ladder has no rule")
 
     cadence = dna.get("cadence") or {}
+    max_daily = cadence.get("max_original_posts_per_day")
+    if not _is_int(max_daily) or not 1 <= max_daily <= 10:
+        failures.append(
+            f"cadence.max_original_posts_per_day is {max_daily!r}, expected an integer 1..10")
     window = cadence.get("original_posts_per_week")
+    weekly_capacity = max_daily * 7 if _is_int(max_daily) and 1 <= max_daily <= 10 else 0
     if not (isinstance(window, list) and len(window) == 2
             and all(_is_int(item) for item in window)
-            and 0 < window[0] <= window[1] <= 7):
+            and 0 < window[0] <= window[1] <= weekly_capacity):
         failures.append(
-            f"cadence.original_posts_per_week is {window!r}, expected [low, high] inside 0..7")
-    if cadence.get("max_original_posts_per_day") != 1:
-        failures.append(
-            f"cadence.max_original_posts_per_day is "
-            f"{cadence.get('max_original_posts_per_day')!r}, expected 1")
+            f"cadence.original_posts_per_week is {window!r}, expected "
+            f"[low, high] within 1..{weekly_capacity} based on daily max")
     if not cadence.get("rule"):
         failures.append("cadence has no rule")
 
