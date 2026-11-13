@@ -10,6 +10,7 @@ import argparse
 import csv
 import json
 import re
+import subprocess
 import statistics
 import sys
 from collections import defaultdict
@@ -23,6 +24,7 @@ DEFAULT_DATA = ROOT / ".local" / "x-growth-en"
 FILES = ("posts.csv", "x-metric-snapshots.csv", "x-account-snapshots.csv")
 GROUPS = ("inspiration_broad", "inspiration_ai", "timeline_ai", "original")
 WINDOWS = ("T+24H", "T+72H", "T+7D")
+AGE_HOURS = {"T+24H": (18, 36), "T+72H": (60, 84), "T+7D": (144, 192)}
 PUBLISHED = {"published", "verified_published", "reported_published"}
 STATUS_URL = re.compile(r"^/[^/]+/status/[0-9]+/?$")
 
@@ -69,7 +71,19 @@ def _read_table(path: Path, required: tuple[str, ...]):
     return rows
 
 
+def _guard_local(data_dir: Path):
+    """Never write private exports into tracked repository directories."""
+    target = data_dir.resolve()
+    try:
+        relative = target.relative_to(ROOT.resolve())
+    except ValueError:
+        return
+    if not relative.parts or relative.parts[0] != ".local":
+        raise ValueError("data-dir inside repository must be under ignored .local/")
+
+
 def initialize(data_dir: Path):
+    _guard_local(data_dir)
     data_dir.mkdir(parents=True, exist_ok=True)
     created = []
     for name in FILES:
@@ -114,6 +128,7 @@ def _account_context(rows, account):
 
 
 def analyze(data_dir: Path, account: str, window: str):
+    _guard_local(data_dir)
     if window not in WINDOWS:
         raise ValueError("unsupported metric window")
     posts = _read_table(data_dir / FILES[0],
@@ -165,6 +180,15 @@ def analyze(data_dir: Path, account: str, window: str):
             skipped["duplicate_snapshot_window"] += 1
             continue
         record = records[0]
+        pub = next((p for p in posts if p.get("content_id") == key[0] and p.get("x_post_url") == key[1]), None)
+        published = _timestamp((pub or {}).get("post_published_at", ""))
+        observed = _timestamp(record.get("observed_at", ""))
+        hours = ((observed - published).total_seconds() / 3600
+                 if observed and published else -1)
+        low, high = AGE_HOURS[window]
+        if not low <= hours <= high:
+            skipped["snapshot_age_mismatch"] += 1
+            continue
         if (record.get("organic_paid") != "organic"
                 or record.get("data_access") not in {"available", "partial"}
                 or not (record.get("metric_source") or "").strip()
@@ -256,14 +280,33 @@ def _markdown(report):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("init", "analyze"))
+    parser.add_argument("command", choices=("init", "analyze", "route"))
     parser.add_argument("--data-dir", type=Path, default=DEFAULT_DATA)
     parser.add_argument("--account", default="x-superplay-english")
     parser.add_argument("--window", default="T+24H", choices=WINDOWS)
+    parser.add_argument("--topic", help="Founder-approved topic for routing")
+    parser.add_argument("--reviewer", help="Human reviewer name for route")
+    parser.add_argument("--confirm", action="store_true", help="Explicitly create a draft routing run")
     args = parser.parse_args(argv)
     try:
         if args.command == "init":
             result = initialize(args.data_dir)
+        elif args.command == "route":
+            _guard_local(args.data_dir)
+            latest = args.data_dir / "learning" / "latest.json"
+            if not args.confirm or not args.topic or not args.reviewer:
+                raise ValueError("route requires --confirm, --topic and --reviewer")
+            if not latest.is_file():
+                raise ValueError("run analyze first; no local learning brief")
+            evidence = json.loads(latest.read_text(encoding="utf-8"))
+            if evidence.get("account") != args.account or evidence.get("schema") != "contentops.local-learning-brief/v1":
+                raise ValueError("learning brief account/schema mismatch")
+            command = [sys.executable, str(ROOT / "scripts" / "content_route.py"),
+                       "start", "--account", args.account, "--mode", "topic", "--topic", args.topic]
+            run = subprocess.run(command, cwd=ROOT, capture_output=True, text=True,
+                                 encoding="utf-8", errors="replace", timeout=60)
+            print(run.stdout or run.stderr)
+            return run.returncode
         else:
             result = analyze(args.data_dir, args.account, args.window)
             out = args.data_dir / "learning"
