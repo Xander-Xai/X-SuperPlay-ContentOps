@@ -8,6 +8,8 @@
 > 分支增量：本地运营 CSV 分组分析、同龄快照、人工确认的选题路由。未合并前不属于 main 的已验收能力。
 
 
+> 跨平台运营数据闭环：X 使用 [本地 X 学习手册](docs/X-LOCAL-LEARNING-LOOP.md)，其他平台使用 [跨平台本地数据学习手册](docs/PLATFORM-LOCAL-LEARNING-LOOP.md)。真实指标留在本机；Learning Brief 仅辅助 Strategy 人工决策。
+
 ## 是什么
 
 一个统一的运行时，将真实的业务工作（GitHub 仓库、实验、研究）转化为可追溯的视频、

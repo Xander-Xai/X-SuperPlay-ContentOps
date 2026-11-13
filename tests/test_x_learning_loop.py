@@ -124,9 +124,9 @@ class XLocalLearningTests(unittest.TestCase):
         append(self.data / FILES[2], snapshot_id="s1", account_handle="x-superplay-english",
                observed_at="2026-11-13T05:03:00+08:00",
                observation_source="native_manual_screenshot",
-               account_impressions="110600", account_profile_visits="464")
+               account_impressions="2711", account_profile_visits="67")
         result = analyze(self.data, "x-superplay-english", "T+24H")
-        self.assertEqual(result["account_context"]["account_impressions"], 110600)
+        self.assertEqual(result["account_context"]["account_impressions"], 2711)
         self.assertEqual(result["account_context"]["attribution"], "ACCOUNT_LEVEL_ONLY")
 
 

@@ -589,6 +589,10 @@ jobs:
       - name: Run X local learning loop tests
         run: python tests/test_x_learning_loop.py
 
+      # Cross-platform local-only Strategy snapshot alignment; synthetic CSV.
+      - name: Run cross-platform local learning loop tests
+        run: python tests/test_platform_learning_loop.py
+
       # The end-to-end chain: growth -> enrichment -> gate -> manual package.
       - name: Run X growth integration tests
         run: python tests/test_x_growth_integration.py
