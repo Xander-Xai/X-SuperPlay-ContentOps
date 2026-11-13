@@ -272,6 +272,10 @@ def handoff(directory: Path, *, account_profile: str, topic: str,
     profile = ROOT / "config" / "accounts" / (account_profile + ".json")
     if not profile.is_file():
         raise ValueError("account profile is not registered in ContentOps")
+    account_spec = json.loads(profile.read_text(encoding="utf-8"))
+    if report.get("platform") not in (account_spec.get("platforms") or []):
+        raise ValueError("account profile does not authorize this platform; "
+                         "do not route cross-platform learning to an unrelated account")
     cmd = [python_executable(), str(ROOT / "scripts" / "content_route.py"),
            "start", "--account", account_profile, "--mode", "topic", "--topic", topic]
     result = hidden_run(cmd, cwd=str(ROOT), timeout=90)
