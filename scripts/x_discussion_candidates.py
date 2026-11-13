@@ -38,6 +38,7 @@ OUTPUT_HEADERS = (
 STATUS_URL = re.compile(r"^/[A-Za-z0-9_]{1,15}/status/[0-9]+/?$")
 ACCOUNT = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 LANGUAGE = re.compile(r"^[a-z]{2,3}(?:-[a-z]{2})?$")
+TOPIC = re.compile(r"^[a-z][a-z0-9_-]{0,63}$")
 
 
 def guard_local(directory: Path):
@@ -120,6 +121,8 @@ def rank(directory: Path, account: str, language: str):
         reasons = []
         if source not in SOURCES:
             reasons.append("INVALID_DISCOVERY_SOURCE")
+        if not TOPIC.fullmatch(row["topic_cluster"] or ""):
+            reasons.append("INVALID_TOPIC_CLUSTER")
         if not _valid_url(url) or not _date(row["observed_at"]):
             reasons.append("MISSING_SOURCE_OR_OBSERVATION")
         if url in used_urls:
