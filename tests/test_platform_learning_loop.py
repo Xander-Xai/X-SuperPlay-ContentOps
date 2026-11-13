@@ -138,6 +138,26 @@ class CrossPlatformLearningTests(unittest.TestCase):
         path.write_text(text, encoding="utf-8")
         self.assertEqual(self.review()["skipped"]["experiment_mismatch"], 1)
 
+    def test_mixed_experiment_ids_are_not_compared(self):
+        cid, url = self.content(1, source="search")
+        self.metric(cid, url)
+        cid2, url2 = self.content(2, source="recommendation")
+        self.metric(cid2, url2)
+        for name in ("content-index.csv", "metric-snapshots.csv"):
+            path = self.directory / name
+            with path.open(newline="", encoding="utf-8") as handle:
+                reader = csv.DictReader(handle)
+                columns, records = reader.fieldnames, list(reader)
+            for row in records:
+                if row.get("content_id") == cid2:
+                    row["experiment_id"] = "exp-002"
+            with path.open("w", newline="", encoding="utf-8") as handle:
+                writer = csv.DictWriter(handle, fieldnames=columns)
+                writer.writeheader()
+                writer.writerows(records)
+        self.assertEqual(self.review()["status"], "INCOMPARABLE_EXPERIMENTS")
+        self.assertEqual(self.review(experiment_id="exp-001")["groups"][0]["sample_count"], 1)
+
     def test_handoff_explicit_manual_review_no_publish(self):
         result = self.review(platform="x", account="x-superplay-english",
                              content_format="reply_text", topic_cluster="ai_agent")
