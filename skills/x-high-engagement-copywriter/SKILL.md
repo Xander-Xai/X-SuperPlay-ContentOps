@@ -7,7 +7,7 @@ description: "Draft original, discussion-worthy Chinese/English X posts, quote p
 
 ## X decision standards (single authority)
 
-Use the canonical [X Strategy SOP V1.1](https://github.com/Xander-Xai/X-SuperPlay-Strategy/blob/main/01-Strategy/X-Original-Content-Rewards-Growth-V1.md)
+Use the canonical [X Strategy SOP V1.2](https://github.com/Xander-Xai/X-SuperPlay-Strategy/blob/main/01-Strategy/X-Original-Content-Rewards-Growth-V1.md)
 and the registered Account DNA before choosing content language, quantity,
 or any publication eligibility claim. The x-superplay-english profile limits
 original main posts to **up to four English originals per day** under the 2026-11-13 V1.2 decision; the global daily plan is **six Chinese plus four English originals**, and **100 manual reply goals grouped A25/B25/C50**. Older 3–4/week, <=1/day, 1–3/day and 5–10 reply counts are historical. Chinese drafts need a verified Chinese-language account route before publication.
@@ -62,7 +62,7 @@ Use one primary recipe and at most one secondary; do not use P03 keyword/followe
 - Finish: one memorable observation **or** a genuine low-effort question (never forced).
 - Audience: if the current account is English AI builders, avoid generic Chinese entertainment tangents unless an explicit audience experiment is approved.
 
-For the daily 10 original candidates (6 zh + 4 en), use ≥3 hook shapes and vary the ending (statement, honest question, useful action, counterexample). Avoid mechanical "哈哈哈", "卧槽", "谁懂", "Who's in?", "兄弟", "💀😭" or "the real upgrade" repetition, especially across successive short replies. No sensationalism that depends on invented medical/technical/celebrity claims. Adjust length to the actual X account and the existing \`scripts/x_post.py\` weighted-text gate; do not promise every draft is publish-ready.
+For 5+ posts, use ≥3 hook shapes; for the V1.2 daily ten original candidates (6 zh + 4 en), also vary the endings and vary the ending (statement, honest question, useful action, counterexample). Avoid mechanical "哈哈哈", "卧槽", "谁懂", "Who's in?", "兄弟", "💀😭" or "the real upgrade" repetition, especially across successive short replies. No sensationalism that depends on invented medical/technical/celebrity claims. Adjust length to the actual X account and the existing \`scripts/x_post.py\` weighted-text gate; do not promise every draft is publish-ready.
 
 ### 4. Draft and screen
 
