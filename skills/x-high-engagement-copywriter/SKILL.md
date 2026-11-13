@@ -46,7 +46,7 @@ Read:
 
 ### 1. Bind the task
 
-Collect or infer only from explicit context: mode=ORIGINAL_POST|REPLY_DRAFT|QUOTE_POST|THREAD; account, language (en or zh-CN), intended audience, topic/source, promised value, desired outcome and requested count. Do not invent unknown account handles or results. Missing input: answer the main writing request with safe assumptions and label **REVIEW_REQUIRED**.
+Collect or infer only from explicit context: mode=ORIGINAL_POST|REPLY_DRAFT|QUOTE_POST|THREAD; account, language (`en` or `zh`, with legacy `zh-CN` accepted as Chinese), intended audience, topic/source, promised value, desired outcome and requested count. Do not invent unknown account handles or results. Missing input: answer the main writing request with safe assumptions and label **REVIEW_REQUIRED**.
 
 `projects/x-growth-en/project.yaml` now binds the **same registered bilingual X account**. The old English-named folder and account slug are compatibility identifiers, not distinct accounts. Both zh and en drafts use `account_slug: x-superplay-english` with explicit per-post language.
 
