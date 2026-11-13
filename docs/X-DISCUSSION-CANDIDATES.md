@@ -1,9 +1,9 @@
 # X 灵感 vs 时间线：人工候选热帖筛选（本地 V1）
 
-> Last verified: 2026-11-13, PR candidate. No X network access or live results.
+> Last reviewed: 2026-11-13. Local human-scored candidates only; no X network access, publication or real-result validation.
 
 策略唯一权威：Strategy 仓 03-Execution/X-Inspiration-vs-Timeline-Growth-Experiment-20261113.md。
-本文件只说明执行脚本，不另起一套每日回复配额或实验标准。
+本文件只说明执行脚本，不另起一套每日回复配额或实验标准。以唯一 X SOP 及对应账号 DNA 为执行上限：x-superplay-english 仍是每周 3–4 条原创、最多 1 条/天、10–15 分钟社区互动。
 
 ## 初始化 / 排序（Windows PowerShell）
 
@@ -15,7 +15,7 @@
 
     .local/x-growth-en/discussion-candidates.csv
 
-每个候选一行，全部为人工自己看到的公开 X 主帖，不抓取、不猜测。
+每个候选一行，全部为人工自己看到的公开 X 主帖，不抓取、不猜测。**日常轻量运营只需记录原帖来源与真实回复 URL；下面七维评分只在正式选帖实验中人工使用，并非每个日常回复的强制门槛。**
 
 - source_url：公开主帖的 https://x.com/<handle>/status/<id>。
 - account_handle：如 x-superplay-english；不是原作者的 handle。
@@ -61,12 +61,12 @@ REVIEW_CANDIDATE 只允许下一步人工看稿。SKIP 会附原因，包括
 2. 发布后在本地 posts.csv 用 source_url 记原帖、x_post_url 记你自己的真实回复 URL，
    experiment_variable 填 source:inspiration_ai / source:inspiration_broad / source:timeline_ai。
 3. 在 x-metric-snapshots.csv 记录每条回复同龄后台指标，
-   x-account-snapshots.csv 单列账号粉丝变化。
+   x-account-snapshots.csv 单列账号粉丝变化；严格 B/C 比较还需在 x-experiment-context.csv 记录 experiment_id/topic_cluster/language，真实工时和有效对话在可核验时填写。
 4. 用以下命令做来源分组描述统计，输出本地 learning/latest.md：
 
-    python scripts/x_learning_loop.py analyze --account x-superplay-english --window T+24H
+    python scripts/x_learning_loop.py analyze --account x-superplay-english --window T+24H --compare --experiment-id CEXP-20261113-001 --topic-cluster ai_agent --language en --definition native_v1
 
-5. Strategy 人工审核 Learning Brief，再显式启动已有 content_route.py 待审选题路由。
+5. Strategy 人工审核最新 Learning Brief 的 report_id，并选择 CONTINUE/ADJUST 后，经带 report-id/decision/evidence-url/reviewer/topic/confirm 的 x_learning_loop.py route 显式进入 Content Router 待审选题；未受控和无比较样本不能冒充增长决策。
 
 原始数据和账号敏感信息留本地，请勿 git add -f .local/。
 
