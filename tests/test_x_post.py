@@ -703,7 +703,8 @@ def test_cli_packages_and_records_explicit_text_posts_without_fabricated_image()
         assert draft["post_format"] == "text" and draft["language"] == "zh"
         reviewed = _mutated(post_format="text", image=None, image_brief="",
                             image_status="missing", alt_text="", content_id=pid,
-                            language="zh")
+                            language="zh",
+                            post_copy={"parts": ["今天发现一件小事：比起别人追着热点跑，我更愿意记录真实观察，慢慢建立有价值的讨论。"]})
         draft_path.write_text(json.dumps(reviewed, ensure_ascii=False), encoding="utf-8")
 
         packaged = _run([str(project), "--package", "--id", pid, "--json"])
