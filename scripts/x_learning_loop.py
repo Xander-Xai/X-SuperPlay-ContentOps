@@ -10,6 +10,7 @@ import argparse
 import csv
 import hashlib
 import json
+import math
 import re
 import statistics
 import sys
@@ -49,6 +50,14 @@ def _integer(value: str):
     try:
         number = int(value)
         return number if number >= 0 else None
+    except (ValueError, TypeError):
+        return None
+
+
+def _nonnegative_float(value: str):
+    try:
+        result = float(value)
+        return result if math.isfinite(result) and result >= 0 else None
     except (ValueError, TypeError):
         return None
 
@@ -157,6 +166,14 @@ def analyze(data_dir: Path, account: str, window: str, *, experiment_id=None,
     if not SCOPE_PATTERN.fullmatch(account):
         raise ValueError("invalid account alias")
     controlled = compare and all(scope)
+    if controlled:
+        profile_path = ROOT / "config" / "accounts" / (account + ".json")
+        if not profile_path.is_file():
+            raise ValueError("registered X account DNA required for a controlled comparison")
+        profile = json.loads(profile_path.read_text(encoding="utf-8"))
+        if (profile.get("slug") != account or profile.get("language") != language or
+                "x" not in (profile.get("platforms") or [])):
+            raise ValueError("experiment language/account does not match registered X DNA")
     contexts = _read_table(data_dir / CONTEXT_FILE, CONTEXT_COLUMNS) if controlled else []
     context_index = {}
     for ctx in contexts:
@@ -253,7 +270,7 @@ def analyze(data_dir: Path, account: str, window: str, *, experiment_id=None,
             skipped["inconsistent_click_denominator"] += 1
             continue
         ctx = context_index.get(key) if controlled else None
-        minutes = _integer(ctx["founder_minutes"]) if ctx else None
+        minutes = _nonnegative_float(ctx["founder_minutes"]) if ctx else None
         quality = _integer(ctx["qualified_conversations"]) if ctx else None
         collected[eligible[key]].append((impressions, clicks, minutes, quality))
     groups = []
@@ -274,13 +291,14 @@ def analyze(data_dir: Path, account: str, window: str, *, experiment_id=None,
             "quality_per_founder_hour": round(sum(q for _, q in work) * 60 / sum(m for m, _ in work), 3) if work else None,
             "work_samples": len(work),
             "profile_click_samples": len(complete),
+            "valid_rate_samples": len(positive),
             "profile_clicks_per_1000_impressions": (
                 round(sum(clicks for _, clicks in positive) * 1000 / total_complete_views, 3)
                 if complete and total_complete_views > 0 else None),
             "profile_clicks_missing": len(items) - len(complete)
         })
     by_source = {g["source"]: g for g in groups}
-    bc_ready = all(by_source[g]["sample_count"] >= 5 and by_source[g]["profile_click_samples"] >= 5
+    bc_ready = all(by_source[g]["sample_count"] >= 5 and by_source[g]["valid_rate_samples"] >= 5
                    for g in ("inspiration_ai", "timeline_ai"))
     status = ("EXPLORATORY_ONLY" if not controlled else
               "DESCRIPTIVE_ONLY" if bc_ready else "INSUFFICIENT_DATA")
@@ -292,13 +310,17 @@ def analyze(data_dir: Path, account: str, window: str, *, experiment_id=None,
                       "; review source, topic matching and time cost; do not infer causal lift.")
     else:
         suggestion = "Hold the source-allocation decision; collect matched B/C observations with complete profile clicks."
+    input_digest = hashlib.sha256()
+    for filename in (*FILES, CONTEXT_FILE):
+        input_digest.update((data_dir / filename).read_bytes() if (data_dir / filename).exists() else b"")
     return {
         "schema": "contentops.local-learning-brief/v1",
+        "input_sha256": input_digest.hexdigest(),
         "status": status, "account": account, "platform": "x", "window": window,
         "scope": {"experiment_id": experiment_id, "topic_cluster": topic_cluster,
                   "language": language, "metric_definition_version": definition},
         "comparison_controlled": controlled,
-        "report_id": "XL-" + hashlib.sha256(json.dumps([account, window, scope, groups], sort_keys=True).encode()).hexdigest()[:16],
+        "report_id": "XL-" + hashlib.sha256(json.dumps([account, window, scope, groups, input_digest.hexdigest()], sort_keys=True).encode()).hexdigest()[:16],
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "source": "USER_SUPPLIED_LOCAL_CSV_UNVERIFIED",
         "groups": groups, "skipped": dict(skipped),
