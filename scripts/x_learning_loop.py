@@ -419,7 +419,20 @@ def main(argv=None):
             command = [python_executable(), str(ROOT / "scripts" / "content_route.py"),
                        "start", "--account", args.account, "--mode", "topic", "--topic", args.topic,
                        "--url", args.evidence_url, "--by", args.reviewer]
+            handoff_dir = args.data_dir / "learning" / "handoffs"
+            handoff_dir.mkdir(parents=True, exist_ok=True)
+            receipt_path = handoff_dir / (args.report_id + "-" + args.decision + ".json")
+            if receipt_path.exists():
+                raise ValueError("this report/decision already has a local route receipt; inspect it first")
             run = hidden_run(command, cwd=str(ROOT), timeout=60)
+            receipt = {"schema": "contentops.x-reviewed-handoff/v1",
+                       "report_id": args.report_id, "account": args.account,
+                       "reviewer": args.reviewer, "decision": args.decision,
+                       "topic": args.topic, "evidence_url": args.evidence_url,
+                       "router_exit_code": run.returncode,
+                       "status": "ROUTED_FOR_HUMAN_REVIEW" if run.returncode == 0 else "ROUTE_BLOCKED",
+                       "publication_authorized": False, "network_used_by_this_tool": False}
+            receipt_path.write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
             print(run.stdout or run.stderr)
             return run.returncode
         else:
