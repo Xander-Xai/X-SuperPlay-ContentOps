@@ -131,25 +131,38 @@ def test_the_shipped_x_account_passes_its_own_checker():
 
 
 @test
-def test_daily_four_english_originals_and_weekly_28_are_valid():
+def test_single_bilingual_account_daily_ten_originals_and_weekly_seventy_are_valid():
     dna = _x()
-    assert dna["cadence"]["max_original_posts_per_day"] == 4
-    assert dna["cadence"]["original_posts_per_week"] == [28, 28]
+    assert dna["language"] == "multi"
+    assert dna["allowed_languages"] == ["zh", "en"]
+    assert dna["daily_original_targets"] == {"zh": 6, "en": 4}
+    assert dna["daily_reply_targets"] == {"inspiration_broad": 25, "inspiration_ai": 25, "timeline_ai": 50}
+    assert dna["cadence"]["max_original_posts_per_day"] == 10
+    assert dna["cadence"]["original_posts_per_week"] == [70, 70]
     assert check_x_account(dna, ROOT, []) == []
-    print("[ok] X high-intensity four-per-day cadence is accepted")
+    print("[ok] single bilingual X account zh6/en4, 100 replies and ten originals daily")
 
 
 @test
 def test_weekly_target_must_not_exceed_daily_capacity():
-    _assert_fails(_mutated(cadence__original_posts_per_week=[29, 29]),
+    _assert_fails(_mutated(cadence__original_posts_per_week=[71, 71]),
                   "based on daily max")
     _assert_fails(_mutated(cadence__max_original_posts_per_day=0),
                   "expected an integer 1..10")
     _assert_fails(_mutated(cadence__max_original_posts_per_day=11),
                   "expected an integer 1..10")
-    _assert_fails(_mutated(cadence__max_original_posts_per_day=1),
+    _assert_fails(_mutated(cadence__max_original_posts_per_day=9),
                   "based on daily max")
     print("[ok] cadence refuses out-of-range or internally inconsistent targets")
+
+
+@test
+def test_bilingual_targets_are_not_silently_split_across_accounts():
+    _assert_fails(_mutated(language="en"), "expected 'multi'")
+    _assert_fails(_mutated(allowed_languages=["en"]), "allowed_languages")
+    _assert_fails(_mutated(daily_original_targets={"zh": 0, "en": 10}), "daily_original_targets")
+    _assert_fails(_mutated(daily_reply_targets={"inspiration_broad": 50}), "daily_reply_targets")
+    print("[ok] invalid single-account language and target changes fail closed")
 
 
 @test
