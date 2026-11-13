@@ -83,8 +83,7 @@ class CrossPlatformLearningTests(unittest.TestCase):
         self.assertEqual(group["recommendation"]["interest_per_1000_primary"], 50)
         self.assertIsNone(report["handoff"]["proposed_topic"])
         self.assertFalse(report["handoff"]["production_authorized"])
-        self.assertIn("NOT official", _report_markdown(report).replace("not official", "NOT official")
-                      if False else report["source_interpretation"])
+        self.assertIn("NOT official", report["source_interpretation"])
 
     def test_missing_not_zero(self):
         cid, url = self.content(1)
