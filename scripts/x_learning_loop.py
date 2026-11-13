@@ -10,13 +10,14 @@ import argparse
 import csv
 import json
 import re
-import subprocess
 import statistics
 import sys
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse
+
+from process_utils import hidden_run, python_executable
 
 ROOT = Path(__file__).resolve().parents[1]
 PROJECT = ROOT / "projects" / "x-growth-en"
@@ -301,10 +302,9 @@ def main(argv=None):
             evidence = json.loads(latest.read_text(encoding="utf-8"))
             if evidence.get("account") != args.account or evidence.get("schema") != "contentops.local-learning-brief/v1":
                 raise ValueError("learning brief account/schema mismatch")
-            command = [sys.executable, str(ROOT / "scripts" / "content_route.py"),
+            command = [python_executable(), str(ROOT / "scripts" / "content_route.py"),
                        "start", "--account", args.account, "--mode", "topic", "--topic", args.topic]
-            run = subprocess.run(command, cwd=ROOT, capture_output=True, text=True,
-                                 encoding="utf-8", errors="replace", timeout=60)
+            run = hidden_run(command, cwd=str(ROOT), timeout=60)
             print(run.stdout or run.stderr)
             return run.returncode
         else:
