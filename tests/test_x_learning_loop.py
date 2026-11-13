@@ -212,6 +212,11 @@ class XLocalLearningTests(unittest.TestCase):
             self.assertIn("--url", cmd)
             self.assertIn("https://docs.example.org/source", cmd)
             self.assertIn("--by", cmd)
+            receipt_path = self.data / "learning" / "handoffs" / (report["report_id"] + "-CONTINUE.json")
+            self.assertTrue(receipt_path.is_file())
+            receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+            self.assertFalse(receipt["publication_authorized"])
+            self.assertEqual(receipt["evidence_url"], "https://docs.example.org/source")
 
     def test_route_rejects_stale_report_identity(self):
         import json
