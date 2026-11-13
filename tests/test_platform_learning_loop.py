@@ -209,6 +209,23 @@ class CrossPlatformLearningTests(unittest.TestCase):
                         report_id=result["report_id"], decision="CONTINUE")
             runner.assert_not_called()
 
+    def test_changed_source_csv_blocks_approved_report(self):
+        result = self.review(platform="x", account="x-superplay-english",
+                             content_format="reply_text", topic_cluster="ai_agent")
+        result["status"] = "DESCRIPTIVE_ONLY"
+        folder = self.directory / "learning"
+        folder.mkdir()
+        (folder / "latest.json").write_text(json.dumps(result), encoding="utf-8")
+        with (self.directory / "metric-snapshots.csv").open("a", encoding="utf-8") as handle:
+            handle.write("\n")
+        with patch("platform_learning_loop.hidden_run") as runner:
+            with self.assertRaisesRegex(ValueError, "source CSV changed"):
+                handoff(self.directory, account_profile="x-superplay-english",
+                        topic="Agent recovery", reviewer="Founder",
+                        evidence_url="https://docs.example.org/agent",
+                        report_id=result["report_id"], decision="CONTINUE")
+            runner.assert_not_called()
+
     def test_insufficient_report_cannot_route(self):
         result = self.review(platform="x", account="x-superplay-english",
                              content_format="reply_text", topic_cluster="ai_agent")
