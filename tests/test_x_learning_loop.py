@@ -104,7 +104,7 @@ class XLocalLearningTests(unittest.TestCase):
         self.assertEqual(by_source["inspiration_ai"]["median_profile_clicks_per_1000"], 100)
         self.assertLess(by_source["inspiration_ai"]["profile_clicks_per_1000_impressions"], 1)
         self.assertEqual(by_source["timeline_ai"]["quality_per_founder_hour"], 12)
-        self.assertIn("timeline_ai", result["next_experiment"]["recommendation"])
+        self.assertIn("inspiration_ai", result["next_experiment"]["recommendation"])
 
     def test_only_broad_and_ai_is_not_valid_BC_comparison(self):
         for i in range(1, 6):
@@ -179,6 +179,53 @@ class XLocalLearningTests(unittest.TestCase):
         result = analyze(self.data, "x-superplay-english", "T+72H")
         self.assertEqual(result["skipped"]["snapshot_age_mismatch"], 1)
         self.assertEqual(sum(g["sample_count"] for g in result["groups"]), 0)
+
+    def test_history_persists_scoped_report_and_route_carries_source(self):
+        import json
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        from x_learning_loop import main
+        for i in range(1, 6):
+            cid, url = self._post(i, "inspiration_ai")
+            self._context(cid, url)
+            self._metric(cid, url)
+        for i in range(6, 11):
+            cid, url = self._post(i, "timeline_ai")
+            self._context(cid, url)
+            self._metric(cid, url)
+        common = ["--data-dir", str(self.data), "--account", "x-superplay-english"]
+        self.assertEqual(main(["analyze", *common, "--compare",
+                               "--experiment-id", "CEXP-20261113-001",
+                               "--topic-cluster", "ai_agent", "--language", "en",
+                               "--definition", "native_v1"]), 0)
+        report = json.loads((self.data / "learning" / "latest.json").read_text(encoding="utf-8"))
+        self.assertTrue((self.data / "learning" / "history" /
+                         (report["report_id"] + ".json")).exists())
+        with patch("x_learning_loop.hidden_run",
+                   return_value=SimpleNamespace(returncode=0, stdout="ok", stderr="")) as runner:
+            self.assertEqual(main(["route", *common, "--report-id", report["report_id"],
+                                   "--decision", "CONTINUE", "--reviewer", "Founder",
+                                   "--topic", "Agent failure recovery",
+                                   "--evidence-url", "https://docs.example.org/source",
+                                   "--confirm"]), 0)
+            cmd = runner.call_args.args[0]
+            self.assertIn("--url", cmd)
+            self.assertIn("https://docs.example.org/source", cmd)
+            self.assertIn("--by", cmd)
+
+    def test_route_rejects_stale_report_identity(self):
+        import json
+        from x_learning_loop import main
+        result = analyze(self.data, "x-superplay-english", "T+24H")
+        folder = self.data / "learning"
+        folder.mkdir()
+        (folder / "latest.json").write_text(json.dumps(result), encoding="utf-8")
+        code = main(["route", "--data-dir", str(self.data), "--account",
+                     "x-superplay-english", "--report-id", "XL-bad",
+                     "--decision", "CONTINUE", "--reviewer", "Founder",
+                     "--topic", "Agent failure recovery",
+                     "--evidence-url", "https://docs.example.org/source", "--confirm"])
+        self.assertEqual(code, 2)
 
     def test_private_storage_guard_rejects_tracked_directory(self):
         from x_learning_loop import initialize
