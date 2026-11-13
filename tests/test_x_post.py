@@ -545,6 +545,61 @@ def test_a_text_only_draft_stops_at_the_image_and_not_before():
 
 
 @test
+def test_text_only_general_interest_can_be_reviewed_and_packaged_without_media():
+    account = _account()
+    with tempfile.TemporaryDirectory() as temp:
+        project = _project(temp, image=False)
+        post = _mutated(
+            mode="general_interest", post_format="text", image=None,
+            image_status="missing", image_brief="", alt_text="",
+            proof_grade="P0", label="ORIGINAL_OBSERVATION",
+            theses=[_post()["theses"][0]], red_team=["A reader may not share this view."],
+            review={
+                "reviewer": "human-operator", "reviewed_at": "2026-11-14",
+                "dimensions": {
+                    "novelty": 4, "evidence": 4, "mechanism": 1,
+                    "audience_decision": 4, "falsifiable": 3, "tension": 4,
+                },
+                "score": 20,
+            },
+        )
+        assert validate_post(post, account, root=project) == [], _codes(
+            validate_post(post, account, root=project))
+        assert post_verdict(post, account, root=project) == "READY"
+        package = build_package(post, account, project)
+        assert package["post_format"] == "text"
+        assert package["image"] is None and package["alt_text"] == ""
+        assert all(not step.startswith("Attach the image")
+                   for step in package["manual_steps"])
+        assert package["status"] == AWAITING
+
+        technical = dict(post, mode="workflow_artifact",
+                         proof_grade="P1", label="WORKFLOW_ARTIFACT")
+        tech_codes = _codes(validate_post(technical, account, root=project))
+        assert "REVIEW_SCORE_LOW" in tech_codes
+        assert "REVIEW_DIMENSION_LOW" in tech_codes
+        assert "THESES_INSUFFICIENT" in tech_codes
+
+        no_label = dict(post, label="UNVERIFIED")
+        assert "RECOVERY_FIELD_MISSING" in _codes(
+            validate_post(no_label, account, root=project))
+        fake_run = dict(post, post_copy={"parts": ["I tested six tools and doubled revenue."]})
+        assert "FIRSTHAND_CLAIM_UNSUPPORTED" in _codes(
+            validate_post(fake_run, account, root=project))
+
+        mislabeled_media = dict(post, image={"path": "assets/fake.png"})
+        assert "TEXT_HAS_MEDIA" in _codes(
+            validate_post(mislabeled_media, account, root=project))
+        mislabeled_alt = dict(post, alt_text="A visual that was never attached.")
+        assert "TEXT_HAS_MEDIA" in _codes(
+            validate_post(mislabeled_alt, account, root=project))
+        invalid_format = dict(post, post_format="video")
+        assert "POST_FORMAT_UNKNOWN" in _codes(
+            validate_post(invalid_format, account, root=project))
+    print("[ok] text posts package without media; general interest keeps honesty & review gates")
+
+
+@test
 def test_the_package_stops_at_awaiting_and_carries_the_real_digest():
     account = _account()
     with tempfile.TemporaryDirectory() as temp:
