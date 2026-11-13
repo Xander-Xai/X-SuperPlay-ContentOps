@@ -9,7 +9,8 @@ translation_status: synced
 [English](RUNBOOK.md) | [简体中文](RUNBOOK.zh-CN.md)
 
 > 真实可执行命令。从实际脚本行为推导，非假设。
-> 最后验证：2026-11-13；X / 跨平台本地数据回流只生成待审主题，不授予自动平台动作。
+> 最后验证：2026-11-14；X / 跨平台本地数据回流只生成待审主题，不授予自动平台动作。
+> X 命令行 `--new` 增加 `--post-format text|image`（旧记录默认 image）。纯文字发布包不含图片/ALT步骤；图文仍须真图与ALT。`--package`只准备待发布包，`--mark-published`只记录真人确认的X URL。
 > 本分支增加离线 X 数据分析工具，指标结果仅写本地，策略审查后才可路由下一轮内容。
 
 
