@@ -2,7 +2,9 @@
 
 [English](PRD.md) | [简体中文](PRD.zh-CN.md)
 
-> Last verified: 2026-11-12 on `main` at `c1da6dd`. Requirement states are checked
+> Last verified: 2026-11-13 against PR #174 candidate; main status remains the 2026-11-12 baseline.
+> Branch delta: local X metric learning and manual Topic handoff; account data stays private; not merged.
+
 > against the code on that date; a requirement marked implemented has code here,
 > which is not the same as a published work.
 
