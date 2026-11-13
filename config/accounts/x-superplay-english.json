@@ -1,32 +1,32 @@
 {
   "schema": "contentops.x-account/v1",
   "slug": "x-superplay-english",
-  "account": "X · SuperPlay English",
-  "language": "en",
+  "account": "X · SuperPlay (one bilingual account)",
+  "language": "multi",
   "platforms": [
     "x"
   ],
   "platform_roles": {
-    "x": "English X original-post track: up to four distinct, manually reviewed English posts/day (each with its own image and evidence); part of the global 100 human reply goals + 10 original candidates (6 zh, 4 en). No Chinese posts routed here until account scope explicitly changes."
+    "x": "One and only X account, posting both Chinese and English: daily original publication goals zh=6 and en=4 (total 10), plus 100 context-appropriate human replies across A=25/B=25/C=50. Manual approval and genuine status URL required; historic slug x-superplay-english is retained solely for compatibility."
   },
-  "mission": "Publish four human-reviewed, original English X post candidates per day on useful or engaging topics, including AI/tech, work, entertainment, everyday life and verified current events; no forced technical-only content.",
-  "promise": "Concise, engaging, evidence-minded English commentary and usable insights for curious readers, including but not limited to AI builders.",
-  "tagline": "A workflow claim is worth what its artifact is worth.",
-  "decision_question": "What is one fresh, defensible and useful or genuinely entertaining observation this English-speaking reader could take away?",
-  "audience": "English-speaking readers who enjoy original AI/tech insights alongside current culture, work, entertainment and everyday observations.",
-  "core_audience": "A curious English-speaking X reader who values concise, specific viewpoints, practical examples and a human voice, not a wall of generic AI promotions.",
+  "mission": "Operate one bilingual X account with a daily target of 6 Chinese and 4 English independently original posts, and 25/25/50 high-quality, human-reviewed replies. Topics can be AI, work, entertainment, life or current affairs.",
+  "promise": "Original bilingual commentary, real observations and useful ideas on AI, work, culture and everyday life; no invented evidence, generic spam or forced tech focus.",
+  "tagline": "Be original. Keep it real.",
+  "decision_question": "What specific insight, lived observation, useful answer or original joke makes this post worth reading?",
+  "audience": "Chinese-speaking and English-speaking X readers of AI/tech, business, culture, work, entertainment and daily life.",
+  "core_audience": "Relevant readers in either language, with language and topic recorded on every post; language cohorts are analyzed separately but use the same account identity.",
   "audience_layers": [
     {
-      "layer": "core",
-      "who": "Indie AI builder or freelancer running agent tooling on real deliverables",
-      "job": "Decide whether a workflow step should change, and what would prove it",
-      "reads_for": "the artifact, the failure mode, the reproduction command"
+      "layer": "zh",
+      "who": "Chinese-reading X users",
+      "job": "Find a specific observation, useful idea or entertaining original take",
+      "reads_for": "original posts in Chinese, not translated reposts"
     },
     {
-      "layer": "adjacent",
-      "who": "A technically literate founder evaluating tools and vendors",
-      "job": "Separate a vendor claim from a demonstrated result",
-      "reads_for": "the boundary between what the source says and what was actually run"
+      "layer": "en",
+      "who": "English-reading X users",
+      "job": "Find an authentic observation, useful product insight or original entertaining take",
+      "reads_for": "original English posts with their own context and evidence"
     }
   ],
   "content_pillars": [
@@ -75,7 +75,7 @@
       "MONETIZATION": 20,
       "TUTORIAL": 20
     },
-    "reason": "The old recovery mix (66/34, former 30/30/20/20) was a narrow AI-builder experiment. V1.2 user decision on 2026-11-13 broadens topics; the ONLY global mandatory original split is 6 Chinese + 4 English candidates/day, not a technical content quota. These weights are editorial guidance, not platform-derived growth coefficients."
+    "reason": "The old 66/34 AI-builder split is historical. Current single-account bilingual daily original targets zh=6 and en=4 across any suitable topics. Pillar weights remain nonbinding creative categories, not extra language/volume quotas."
   },
   "non_negotiable": [
     "No invented numbers, results, clients or performance claims; a prediction is labelled as one.",
@@ -86,7 +86,8 @@
     "Unobserved metrics stay null; an empty cell is not a zero.",
     "No automated likes, follow/unfollow, reply bots, scheduled browser actions or duplicative posting.",
     "Daily 100 replies and 10 originals are a plan, not a license for repetitive, bulk unsolicited, harassing or irrelevant platform behavior; record actual eligible/published/skipped separately.",
-    "This English route owns at most four English originals/day; the six Chinese originals belong to an unverified separate language/account route until explicit owner confirmation and registration."
+    "All 100 replies and 10 originals belong to ONE existing X account identified by this unchanged compatibility slug; daily posted originals target Chinese 6 and English 4. Never invent a second account.",
+    "Every original post record explicitly identifies language zh or en; each language cohort is evaluated separately within the same account. Do not mix cohorts in B/C comparisons."
   ],
   "evidence": {
     "note": "claim_coverage.EVIDENCE_MODES (CLAIM_LED / EVIDENCE_LED / EXPLANATORY) is the video vocabulary and describes how a film is composed. An X post's evidence question is a proof grade, so this account declares proof_ladder beside it. Routing resolves the DNA's 'pipeline' first and never reads a video mode off this file.",
@@ -221,9 +222,9 @@
         "y3_whiteboard",
         "t1_3b1b"
       ],
-      "language": "requested language, otherwise English",
+      "language": "same as explicit post language (zh or en)",
       "rules": [
-        "preserve the English account palette and typography",
+        "preserve the single bilingual X account palette and typography",
         "leave existing PNG/JPEG image production unchanged",
         "never turn a post-image request into a video request"
       ]
@@ -245,22 +246,22 @@
   },
   "cadence": {
     "original_posts_per_week": [
-      28,
-      28
+      70,
+      70
     ],
-    "max_original_posts_per_day": 4,
+    "max_original_posts_per_day": 10,
     "community_minutes_per_active_day": [
       0,
       0
     ],
     "source_artifacts_per_week": 7,
-    "rule": "Current V1.2 plan: up to 4 English original candidates/day, 28/week if fully realized; each must pass existing evidence/image/ALT/human review gate. The global owner-wide daily plan is 6 Chinese + 4 English originals and human reply targets A25/B25/C50=100; these are goal counts, not permission to post bulk unsolicited replies. Actual manual discussion minutes are measured, not pre-budgeted. No Chinese X account is registered here.",
-    "note": "This supersedes the previous recovery 3–4 originals/week, <=1/day and 10–15 community minutes/day. community_minutes_per_active_day=[0,0] indicates NO ASSUMED BUDGET, not zero time spent; actual Founder minutes must be entered from observed activity."
+    "rule": "Single X account: daily publication goal 10 originals (zh=6,en=4), and 100 manually selected contextual replies (A inspiration_broad=25; B inspiration_ai=25; C timeline_ai=50). Weekly target 70 originals if full daily plan is realized. Every post is manually checked, and real source/own status URLs are required. Never use automation or repetitive/unsolicited activity to force the numbers.",
+    "note": "The older English-only 4/day, 28/week account lane and old low-volume experiments are retired. Actual manual time, eligible count, published count and skipped count are measured; platform rules take precedence over targets."
   },
   "business": {
     "source_of_truth": "X-SuperPlay-Strategy/01-Strategy/X-Original-Content-Rewards-Growth-V1.md (V1.2, 2026-11-13)",
     "stage": "pre_pmf",
-    "hypothesis": "Distinct, verified, naturally conversational English posts can grow relevant X attention without restricting topics to AI; real account data must decide.",
+    "hypothesis": "One bilingual X account can reach relevant Chinese and English audiences via original, verified, varied commentary; actual qualified signals must be observed independently by language.",
     "rule": "Content may feed the business; it may not move the business stage. Follower count and a self-awarded score are not demand.",
     "not_claimed": [
       "reach, follower growth or demand",
@@ -306,7 +307,7 @@
       },
       {
         "id": "daily_goal_variance",
-        "how": "For the English original lane, compare plan=4 with eligible/published/skipped and honest reasons; global 100+10 planning is tracked in Strategy, not interpreted as posted content."
+        "how": "Single-account daily ledger: original posts by language zh plan=6, en plan=4; replies by source A25/B25/C50; candidate/reviewed/eligible/actually published/skipped separate with real URLs and missing reasons."
       }
     ]
   },
@@ -365,5 +366,19 @@
       "why": "owns the 16:9 horizontal quote/data card and its card-design system; the deterministic HTML -> PNG render is what makes text and numbers exact"
     }
   ],
-  "pipeline": "X_EDITORIAL"
+  "pipeline": "X_EDITORIAL",
+  "allowed_languages": [
+    "zh",
+    "en"
+  ],
+  "default_post_language": "en",
+  "daily_original_targets": {
+    "zh": 6,
+    "en": 4
+  },
+  "daily_reply_targets": {
+    "inspiration_broad": 25,
+    "inspiration_ai": 25,
+    "timeline_ai": 50
+  }
 }
