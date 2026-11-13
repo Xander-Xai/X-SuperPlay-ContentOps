@@ -589,6 +589,10 @@ jobs:
       - name: Run X local learning loop tests
         run: python tests/test_x_learning_loop.py
 
+      # Local-only Inspiration vs Timeline candidate triage with synthetic rows.
+      - name: Run X discussion candidate ranking tests
+        run: python tests/test_x_discussion_candidates.py
+
       # Cross-platform local-only Strategy snapshot alignment; synthetic CSV.
       - name: Run cross-platform local learning loop tests
         run: python tests/test_platform_learning_loop.py
