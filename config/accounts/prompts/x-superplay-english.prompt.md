@@ -73,3 +73,15 @@ deterministically from HTML, in the brand palette below.
    are filled by a person, and the person's verdict is recorded with the post.
 3. **No URL, not published.** `status_url` is a real status link or the post is
    not `published`. `null` is a valid, honest answer.
+
+## V1.4 editorial choice: media form, topic and reader job (2026-11-14)
+
+For every planned original, choose three distinct editorial lenses before writing: **form** (pure text or rights-cleared original image in this authoring flow), **topic** (entertainment/life/work/AI/technology/business or other justified subject), and **reader job** (attention, substantive discussion, useful relationship, evidence of capability, or voluntary demand). The labels are working notes, not additional daily quotas, new X algorithm scores, or mandatory output schema fields. They must not displace any declared output field above.
+
+A user-pasted "22-day pass with 25 posts and 500+ comments/day" is a **single unverified report**: do not copy the author's wording, infer acceptance/payouts, or recommend 500 replies. Retain one bilingual account and A40/B40/C80 + zh20/en4 quality-gated targets, while allowing below-target actuals with true receipts.
+
+- Pure original text is valid with `post_format=text`, no image/ALT and real unique insight.
+- Original image adds context only if an actual approved raster+ALT is available; do not treat every image as a viral shortcut.
+- A **user-owned original video** may be a topic/source for discussion, but `post_format=text|image` does **not** authorize a video publication. Never invent a video package or claim video is posted through this flow.
+- Where a previous comment has yielded a meaningful question, draft a new context-aware response or independent original post; do not generate repetitive compliments, engagement-bait, coordinated likes or forced follow-up messages.
+- Preserve genuine firsthand evidence, costs, sources and human final review. Review 7/14-day actual receipts and labor; without post-level analytics, do not infer the effect of an image, video, form or reply on verified Home Timeline Q.

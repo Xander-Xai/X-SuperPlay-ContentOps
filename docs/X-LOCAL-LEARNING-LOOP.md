@@ -1,7 +1,7 @@
 # X 本地运营数据闭环｜唯一执行手册（2026-11-13）
 
 **权威优先级**：X 官方与安全规范 → ContentOps 真实账号 DNA → Strategy 的
-[唯一 X 增长 SOP V1.3](https://github.com/Xander-Xai/X-SuperPlay-Strategy/blob/main/01-Strategy/X-Original-Content-Rewards-Growth-V1.md)
+[唯一 X 增长 SOP V1.4](https://github.com/Xander-Xai/X-SuperPlay-Strategy/blob/main/01-Strategy/X-Original-Content-Rewards-Growth-V1.md)
 → [灵感/时间线专项](https://github.com/Xander-Xai/X-SuperPlay-Strategy/blob/main/03-Execution/X-Inspiration-vs-Timeline-Growth-Experiment-20261113.md)
 → 本工具的指标结果与人工批准。
 本手册不创设额外回复配额、发布权限或评分标准。
@@ -118,3 +118,13 @@ X Analytics，不能从 11 月 6–12 日总览截图伪造来源转化和实验
     python tests/test_x_discussion_candidates.py
 
 跨平台复用另见 [PLATFORM-LOCAL-LEARNING-LOOP.md](PLATFORM-LOCAL-LEARNING-LOOP.md)。
+
+## 6. V1.4 关系维护与内容形式的人工复盘（2026-11-14）
+
+当前数据学习程序的 **B/C** 对照仍只回答「同账号、同语种、同主题下，灵感 AI 与时间线 AI 两种发现来源，已人工回复内容的观察差异」。本章不改变已有 CLI、阈值、CSV 表头或 `experiment_variable`。
+
+- 日常候选可在本人本地笔记中按 **表达形式 × 话题 × 内容目的** 归类，但没有现成列或可靠实验设计时，**不允许宣称代码已自动分析出哪个媒体形式涨粉最优**。
+- 真正有价值的同一讨论回访，必须区分「首次候选来源」与「后续关系维护」。有实际发布时记录其 URL、真实分钟数和可得指标，不能重复算作另一个独立 B/C 首次样本；无回复也可合法结束该讨论。
+- 每 7 天进行一次描述性人审：真实发表与候选数、不同形式的真实制作工时、去重有价值往返、主页兴趣、风险信号。第 14 天做 **CONTINUE / ADJUST / PAUSE / INCONCLUSIVE** 决策；只调整下一轮一个主要变量。
+- 发布后数据同龄窗口 T+24H / T+72H（必要时 T+7D）保持不变；资格 Q、蓝 V 关注、单帖浏览、主页点击、用户提出的真实问题必须分别呈报，缺数据标 `unknown`。没有逐帖点击不得以账号级主页访问替代。归因不明即描述性，不输出因果。
+- 160 回复+24原创是质量条件下的挑战目标；发现重复、无关、疑似骚扰、版权问题、平台警告或健康/工作成本超限立即停止风险动作。**不可通过增加模拟数据、自动发布、改账号或回避平台风控补齐计划。**

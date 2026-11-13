@@ -75,7 +75,7 @@
       "MONETIZATION": 20,
       "TUTORIAL": 20
     },
-    "reason": "Historic technical-only pillar mixes are not quotas. Current V1.3 has ONE bilingual X account with 20 Chinese and 4 English independent original publication goals each day, varied topics; avoid copied or translated duplicates. Pillar weights are editorial guides, not additional quotas."
+    "reason": "Historic technical-only pillar mixes are not quotas. Current V1.4 continues the V1.3 plan for ONE bilingual X account with 20 Chinese and 4 English independent original publication goals each day, varied topics; avoid copied or translated duplicates. Pillar weights are editorial guides, not additional quotas."
   },
   "non_negotiable": [
     "No invented numbers, results, clients or performance claims; a prediction is labelled as one.",
@@ -304,11 +304,11 @@
       0
     ],
     "source_artifacts_per_week": 7,
-    "rule": "V1.3 ONE-account planning goals: 160 contextual human-reviewed replies/day (A=40 inspiration_broad, B=40 inspiration_ai, C=80 timeline_ai) plus 24 independently original posts/day (Chinese=20, English=4); full-target 168 originals/week. This is a QUALITY-CONDITIONAL target, not an X platform permission or actual published count. Reject spam, duplicate posts, automated/unsolicited replies; record planned, eligible, human-published and skipped with real URLs.",
+    "rule": "V1.4 carries forward V1.3 ONE-account planning goals: 160 contextual human-reviewed replies/day (A=40 inspiration_broad, B=40 inspiration_ai, C=80 timeline_ai) plus 24 independently original posts/day (Chinese=20, English=4); full-target 168 originals/week. This is a QUALITY-CONDITIONAL target, not an X platform permission or actual published count. Reject spam, duplicate posts, automated/unsolicited replies; record planned, eligible, human-published and skipped with real URLs.",
     "note": "The superseded V1.2 100 replies/day, A25/B25/C50, 10 originals/day zh6/en4 and 70/week are HISTORY ONLY. Actual safe volume is subject to current X policies, account signals, rights, human review and available founder time. community_minutes_per_active_day=[0,0] means no assumed budget, NOT zero time. The existing source_artifacts_per_week=7 measures reusable upstream research/source bundles, NOT a cap on original posts; it does not waive the separately enforced unique claim, artwork, evidence and per-post human review for the 24/day plan."
   },
   "business": {
-    "source_of_truth": "X-SuperPlay-Strategy/01-Strategy/X-Original-Content-Rewards-Growth-V1.md (V1.3, 2026-11-13)",
+    "source_of_truth": "X-SuperPlay-Strategy/01-Strategy/X-Original-Content-Rewards-Growth-V1.md (V1.4, 2026-11-14; quotas unchanged)",
     "stage": "pre_pmf",
     "hypothesis": "One bilingual X account can reach relevant Chinese and English audiences via original, verified, varied commentary; actual qualified signals must be observed independently by language.",
     "rule": "Content may feed the business; it may not move the business stage. Follower count and a self-awarded score are not demand.",

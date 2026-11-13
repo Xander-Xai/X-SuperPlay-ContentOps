@@ -7,7 +7,7 @@ description: "Draft original, discussion-worthy Chinese/English X posts, quote p
 
 ## X decision standards (single authority)
 
-Use the canonical [X Strategy SOP V1.3](https://github.com/Xander-Xai/X-SuperPlay-Strategy/blob/main/01-Strategy/X-Original-Content-Rewards-Growth-V1.md)
+Use the canonical [X Strategy SOP V1.4](https://github.com/Xander-Xai/X-SuperPlay-Strategy/blob/main/01-Strategy/X-Original-Content-Rewards-Growth-V1.md)
 and the registered Account DNA before choosing content language, quantity,
 or any publication eligibility claim. The x-superplay-english profile limits
 original main posts to **24/day on ONE bilingual X account: Chinese 20 + English 4** and **160 manual replies: A40/B40/C80**. The legacy slug `x-superplay-english` identifies the same account for both languages; do not create another account. Old 4/day and low-volume plans are historical.
@@ -104,3 +104,16 @@ It reports descriptive median impressions and reply/impression rates per pattern
 ## Output acceptance
 
 A completed writing request gives the requested **number of genuinely distinct drafts** (one concise reply by default for one pasted post) and, when requested, brief hooks, review concerns and next test variable. Translate English replies outside the copy when useful; perform a recent-batch repetition pass before giving 5+ originals or several replies. Do not claim an X outcome for unposted text. The user's new daily operating target is **A40+B40+C80 manually reviewed replies and 20 Chinese/4 English original publication targets** (general topics allowed), but the user's end goal is better **observed** reach and meaningful interactions, so the loop must remain: *original draft -> human review/manual publish -> real snapshots -> compare similar posts -> revise mechanism*. No amount of CI or Skill prose can substitute for the measured final step.
+
+## V1.4 case-to-creative adaptation (2026-11-14)
+
+The pasted creator story's 25 originals + 500+ comments/day are **unverified self-reports**, not copywriter benchmarks or permission to increase daily output. Keep the registered one-account zh20/en4 original target and A40/B40/C80 manual reply plan; generation count never equals human-published count.
+
+**Before drafting a distinct original**, select three independent labels: `format` (plain text, original image, self-owned original video, thread), `topic` (general interest, AI/technology, business/work, etc.) and `job` (reach, thoughtful discussion, trust/relationship, evidence of work, voluntary demand). These are editorial dimensions, **not new experimental `source:...` groups, not X algorithm features, and not proof of reach**. Keep one independently worthwhile angle per post, and check the whole batch for near duplicates.
+
+- **Plain-text posts** are first-class; choose `post_format=text` only when there really is no image. They need an original opinion, useful insight or authentic humor, not a compulsory technical benchmark.
+- **Image posts**: choose `post_format=image` only when the image adds context, comparison or explanatory value. Preserve the existing real-image 1600x900 / accurate ALT / rights / human-review checks. A conceptual visual is not a test screenshot or measured result. No claim that all image posts outperform text.
+- **Video-related drafts**: prefer discussing or reusing the user's **own rights-cleared original media**; the current text/image production gate **does not itself prove or authorize video publishing**. Do not mark an unproduced, borrowed or minimally edited clip as an original published video. Record extra video labor separately when real.
+- **Vertical content** is a topic-and-audience positioning choice; it is not a competing media format. General-interest and AI/tech formats may coexist on this same bilingual account; preserve per-post language and real context, but don't assert that every trend attracts valuable readers.
+- **Reply drafts** should invite substantive, natural dialogue only where the original context supports it. For a genuine later question, draft a context-aware continuation rather than a copy-paste compliment. Human posts and handles the exchange. Do not add generic "like/follow/reply" bait or scripts to satisfy volume.
+- **Learning**: compare actual format/topic cohorts only using human-verified posts, same-language and age-matched metrics; review 7/14-day time spent vs meaningful replies and original performance. Current metrics tooling may not have a dedicated format column or controlled format experiment: use existing source/brief metadata or private manual notes, **not invented fields or fabricated automated performance reports**. Keep eligibility Q account-level and separate from reply views.

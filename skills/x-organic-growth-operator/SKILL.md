@@ -185,8 +185,20 @@ receipts.
   followers or qualifying original Home Timeline Q. Continue to record only
   human-published own reply URLs and separately observed age-matched metrics
   in the existing local CSVs.
-- **No second volume target:** Strategy V1.3 already declares A40/B40/C80 and zh20/en4. With limited operator time or weak candidates, prefer 0 *unsafe* replies to repetitive or risky comments; count the unmet planned remainder honestly. Account DNA and Strategy SOP remain the sole source of publication cadence and business priorities.
+- **No second volume target:** Strategy V1.4 preserves the A40/B40/C80 targets approved in V1.3 and zh20/en4. With limited operator time or weak candidates, prefer 0 *unsafe* replies to repetitive or risky comments; count the unmet planned remainder honestly. Account DNA and Strategy SOP remain the sole source of publication cadence and business priorities.
 
 ## Companion skill — original-post copy
 
 For topic-to-original-post drafting, use [x-high-engagement-copywriter](../x-high-engagement-copywriter/SKILL.md). It applies conversation-derived writing patterns and editorial evaluation. This operator retains the authority for evidence-aware discussion planning, manual interaction, X gate handoff, and post-age measurement; neither skill publishes, scrapes or guarantees reach. Do not treat the pasted example corpus as verified X analytics.
+
+## V1.4: relationship-aware replies (2026-11-14, manual only)
+
+This is an **execution adapter** to the [single Strategy X SOP V1.4](https://github.com/Xander-Xai/X-SuperPlay-Strategy/blob/main/01-Strategy/X-Original-Content-Rewards-Growth-V1.md). The user-pasted "22-day / 25 posts / 500+ replies" story is **unverified anecdotal input**, not a platform posting allowance or a proven optimization formula.
+
+- Keep the **ONE bilingual account** and the existing quality-conditional targets: A40/B40/C80 human replies and zh20/en4 distinct originals. Do **not** raise them to 500, add a D-group, create a separate Chinese account, or reinterpret every candidate as a mandatory send.
+- Distinguish three nonexclusive dimensions while reading candidates: **format** (text/image/original-owner video/thread), **topic** (general interest/technology/business/etc.), and **intended contribution** (attention, substance, relationship, proof, voluntary demand). The A/B/C tags remain **discovery-source experiment labels**; these dimensions are operator notes, not new source tags or schema migrations.
+- Relationship loop: select a relevant post → read its full context → propose *one* distinct factual/humorous/helpful contribution → the human decides whether to reply → **only revisit when there is a genuine question or continuation** → optionally extract an independent, evidence-backed ORIGINAL_POST concept. If the user asks for a reply, deliver a REPLY_DRAFT, not an original main post; never send it.
+- **Follow-ups are not an extra quota.** A meaningful reply in the same discussion may be counted as a real action with a real posted URL and human minutes, but it must not be double counted as another first-time discovery sample in B/C, nor used to manufacture engagement. No reciprocity exchanges, blanket likes, identical compliments, bots or unsolicited batch replies.
+- **Review 7/14 days** using existing local URL receipts, age-aligned metrics, qualified conversations, real human hours and account-level Q separately. Never attribute net follows or qualifying Home Timeline impressions to a specific reply, or infer causality from a single viral thread. Stop on X warnings, spam tendencies, fatigue or time displacement. Missing data is `unknown`, not 0.
+
+Official boundaries: [Authenticity](https://help.x.com/en/rules-and-policies/authenticity) and [Original Content Rewards](https://help.x.com/en/using-x/original-content-rewards). X rewards exclude reply impressions from the application threshold and automated-created/published content from rewards eligibility. This skill still **does not execute X actions**.
