@@ -9,6 +9,8 @@
 
 > `main`, never a draft branch.
 
+> Local analytics: X uses [X learning loop](docs/X-LOCAL-LEARNING-LOOP.md); other platforms use the [cross-platform local loop](docs/PLATFORM-LOCAL-LEARNING-LOOP.md). Raw account data stays offline; learning briefs require human Strategy review.
+
 ## What
 
 A unified runtime that converts real business work (GitHub repos, experiments,
