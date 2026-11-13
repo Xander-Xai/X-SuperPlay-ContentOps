@@ -137,7 +137,8 @@ class CrossPlatformLearningTests(unittest.TestCase):
         self.assertEqual(self.review()["skipped"]["experiment_mismatch"], 1)
 
     def test_handoff_explicit_manual_review_no_publish(self):
-        result = self.review()
+        result = self.review(platform="x", account="x-superplay-english",
+                             content_format="reply_text", topic_cluster="ai_agent")
         folder = self.directory / "learning"
         folder.mkdir()
         (folder / "latest.json").write_text(json.dumps(result), encoding="utf-8")
@@ -150,6 +151,18 @@ class CrossPlatformLearningTests(unittest.TestCase):
             self.assertFalse(receipt["published"])
             self.assertFalse(receipt["production_authorized"])
             self.assertIn("content_route.py", str(runner.call_args))
+
+    def test_handoff_rejects_cross_platform_profile(self):
+        result = self.review()
+        folder = self.directory / "learning"
+        folder.mkdir()
+        (folder / "latest.json").write_text(json.dumps(result), encoding="utf-8")
+        with patch("platform_learning_loop.hidden_run") as runner:
+            with self.assertRaisesRegex(ValueError, "does not authorize this platform"):
+                handoff(self.directory, account_profile="x-superplay-english",
+                        topic="Agent recovery design", reviewer="Founder",
+                        evidence_url="https://docs.example.org/agent-design")
+            runner.assert_not_called()
 
     def test_local_guard_refuses_tracked_repo_write(self):
         with self.assertRaisesRegex(ValueError, "ignored .local"):
