@@ -2,7 +2,7 @@
 
 [English](ARCHITECTURE.md) | [简体中文](ARCHITECTURE.zh-CN.md)
 
-> Last verified: 2026-11-13. Local-only X/cross-platform feedback starts reviewed Topics, never platform actions.
+> Last verified: 2026-11-14 (X contract update; PR checks determine CI status). X records now declare `post_format=text|image`; post validation and publisher both preserve honest optional media and manual-only handoff. The editorial gate routes by mode (technical/source versus general_interest). Offline feedback never starts platform actions.
 > X priority: platform rules/human gates -> registered account DNA -> Strategy X SOP -> scoped experiment.
 
 

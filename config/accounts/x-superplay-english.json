@@ -80,7 +80,7 @@
   "non_negotiable": [
     "No invented numbers, results, clients or performance claims; a prediction is labelled as one.",
     "A post with no permission-cleared firsthand artifact carries SOURCE_ANALYSIS and may not say 'I tested', 'we ran' or claim a measured result.",
-    "Every post carries an actual 1600x900 PNG or JPEG; an SVG alone is not an X-uploadable image.",
+    "Text-only originals are permitted when explicitly post_format=text and have no image or ALT; image-format posts require a real 1600x900 PNG/JPEG and accurate ALT. Media format is never a shortcut around human review, originality, factual evidence or platform policy.",
     "Human review is recorded by a person; an assistant may prepare it and never approve it.",
     "published requires a real https://x.com/<handle>/status/<digits> URL; nothing else counts.",
     "Unobserved metrics stay null; an empty cell is not a zero.",
@@ -88,7 +88,8 @@
     "Daily 160 replies and 24 originals are a plan, not a license for repetitive, bulk unsolicited, harassing or irrelevant platform behavior; record actual eligible/published/skipped separately.",
     "All 160 replies and 24 originals belong to ONE existing X account identified by this unchanged compatibility slug; daily posted originals target Chinese 20 and English 4. Never invent a second account.",
     "Every original post record explicitly identifies language zh or en; each language cohort is evaluated separately within the same account. Do not mix cohorts in B/C comparisons.",
-    "X official authenticity rules prohibit bulk aggressive unsolicited replies and repetitive or irrelevant engagement even where numeric technical account limits would permit it; stop rather than forcing 160 or 24."
+    "X official authenticity rules prohibit bulk aggressive unsolicited replies and repetitive or irrelevant engagement even where numeric technical account limits would permit it; stop rather than forcing 160 or 24.",
+    "General-interest and technical posts use mode-appropriate human review profiles: general_interest is not rejected solely for lacking a technical mechanism or fake benchmark, while factual claims and any described test still need proportionate real evidence."
   ],
   "evidence": {
     "note": "claim_coverage.EVIDENCE_MODES (CLAIM_LED / EVIDENCE_LED / EXPLANATORY) is the video vocabulary and describes how a film is composed. An X post's evidence question is a proof grade, so this account declares proof_ladder beside it. Routing resolves the DNA's 'pipeline' first and never reads a video mode off this file.",
@@ -186,7 +187,48 @@
     },
     "prompts_note": "This slice ships one repo-owned authoring brief, referenced by path: a record may name 'post_brief' in 'prompt_ref' so a reader can see which brief it was written from. The vendored workflow's five mega-prompts are not copied here because their rights are not established; they are listed under 'unavailable_prompts' and stay BLOCKED_UPSTREAM. Nothing here generates copy.",
     "source_analysis_label": "SOURCE_ANALYSIS",
-    "score_note": "24/30 with novelty, evidence and mechanism each >=4 is a human editorial heuristic, not an X ranking formula and not evidence of reach. A self-awarded perfect score authorizes nothing on its own; the recovery fields and the proof grade are what the gate reads."
+    "score_note": "Mode-specific human editorial guidance: workflow_artifact/source_analysis >=24/30 and novelty/evidence/mechanism >=4; general_interest >=20/30 and novelty/evidence >=4, only one distinct angle and red-team check. These are human heuristics, NOT platform scores or permission to post. All require human approval, traceable sources for claims, original contribution and safety/rights checks.",
+    "review_profiles": {
+      "workflow_artifact": {
+        "score_floor": 24,
+        "dimension_floor": 4,
+        "dimension_floor_required": [
+          "novelty",
+          "evidence",
+          "mechanism"
+        ],
+        "theses_required": 3,
+        "red_team_questions": 3,
+        "objective": "Technical workflow or tested artifact. Require actual traceable proof, mechanism and limits."
+      },
+      "source_analysis": {
+        "score_floor": 24,
+        "dimension_floor": 4,
+        "dimension_floor_required": [
+          "novelty",
+          "evidence",
+          "mechanism"
+        ],
+        "theses_required": 3,
+        "red_team_questions": 3,
+        "objective": "News/claims: first-party citations, factual accuracy and causal discipline. No invented firsthand runs."
+      },
+      "general_interest": {
+        "score_floor": 20,
+        "dimension_floor": 4,
+        "dimension_floor_required": [
+          "novelty",
+          "evidence"
+        ],
+        "theses_required": 1,
+        "red_team_questions": 1,
+        "p0_labels": [
+          "ORIGINAL_OBSERVATION",
+          "SOURCE_ANALYSIS"
+        ],
+        "objective": "Original entertainment, culture, work or everyday observation: reward specific and genuinely original perspective, clear reader value and honesty about opinion. 'Evidence' measures honest grounded context or original personal observation, not an invented experiment; technical mechanism score is not mandatory. Factual news/scandal claims still need a traceable source, and P0 cannot claim a benchmark."
+      }
+    }
   },
   "visual": {
     "target": "1600x900",
@@ -229,7 +271,13 @@
         "leave existing PNG/JPEG image production unchanged",
         "never turn a post-image request into a video request"
       ]
-    }
+    },
+    "post_formats": [
+      "text",
+      "image"
+    ],
+    "default_post_format": "image",
+    "media_policy": "A text-only ORIGINAL_POST is valid without image, image brief or ALT when post_format=text; a post_format=image requires a real 1600x900 PNG/JPEG and accurate ALT. Never claim an image was attached to a text post. A real image is optional for plain-text originality, not waived when selected."
   },
   "publication": {
     "mode": "MANUAL_ONLY",

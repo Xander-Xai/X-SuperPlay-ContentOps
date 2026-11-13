@@ -4,7 +4,7 @@
 
 > Milestone-based execution. Every milestone has an exit criterion.
 >
-> Last verified: 2026-11-13: offline X and cross-platform learning, human-reviewed Topic route; no live platform outcome claimed.
+> Last verified: 2026-11-14: X original-post contract now offers explicit text-only and raster+ALT modes plus strict technical versus general-interest human review. No live platform outcome claimed; CI of this change is tracked in its PR.
 > X policy: Strategy canonical SOP and registered account DNA; source metrics and publishing still require human verification.
 
 

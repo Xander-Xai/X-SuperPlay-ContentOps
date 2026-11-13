@@ -545,6 +545,61 @@ def test_a_text_only_draft_stops_at_the_image_and_not_before():
 
 
 @test
+def test_text_only_general_interest_can_be_reviewed_and_packaged_without_media():
+    account = _account()
+    with tempfile.TemporaryDirectory() as temp:
+        project = _project(temp, image=False)
+        post = _mutated(
+            mode="general_interest", post_format="text", image=None,
+            image_status="missing", image_brief="", alt_text="",
+            proof_grade="P0", label="ORIGINAL_OBSERVATION",
+            theses=[_post()["theses"][0]], red_team=["A reader may not share this view."],
+            review={
+                "reviewer": "human-operator", "reviewed_at": "2026-11-14",
+                "dimensions": {
+                    "novelty": 4, "evidence": 4, "mechanism": 1,
+                    "audience_decision": 4, "falsifiable": 3, "tension": 4,
+                },
+                "score": 20,
+            },
+        )
+        assert validate_post(post, account, root=project) == [], _codes(
+            validate_post(post, account, root=project))
+        assert post_verdict(post, account, root=project) == "READY"
+        package = build_package(post, account, project)
+        assert package["post_format"] == "text"
+        assert package["image"] is None and package["alt_text"] == ""
+        assert all(not step.startswith("Attach the image")
+                   for step in package["manual_steps"])
+        assert package["status"] == AWAITING
+
+        technical = dict(post, mode="workflow_artifact",
+                         proof_grade="P1", label="WORKFLOW_ARTIFACT")
+        tech_codes = _codes(validate_post(technical, account, root=project))
+        assert "REVIEW_SCORE_LOW" in tech_codes
+        assert "REVIEW_DIMENSION_LOW" in tech_codes
+        assert "THESES_INSUFFICIENT" in tech_codes
+
+        no_label = dict(post, label="UNVERIFIED")
+        assert "RECOVERY_FIELD_MISSING" in _codes(
+            validate_post(no_label, account, root=project))
+        fake_run = dict(post, post_copy={"parts": ["I tested six tools and doubled revenue."]})
+        assert "FIRSTHAND_CLAIM_UNSUPPORTED" in _codes(
+            validate_post(fake_run, account, root=project))
+
+        mislabeled_media = dict(post, image={"path": "assets/fake.png"})
+        assert "TEXT_HAS_MEDIA" in _codes(
+            validate_post(mislabeled_media, account, root=project))
+        mislabeled_alt = dict(post, alt_text="A visual that was never attached.")
+        assert "TEXT_HAS_MEDIA" in _codes(
+            validate_post(mislabeled_alt, account, root=project))
+        invalid_format = dict(post, post_format="video")
+        assert "POST_FORMAT_UNKNOWN" in _codes(
+            validate_post(invalid_format, account, root=project))
+    print("[ok] text posts package without media; general interest keeps honesty & review gates")
+
+
+@test
 def test_the_package_stops_at_awaiting_and_carries_the_real_digest():
     account = _account()
     with tempfile.TemporaryDirectory() as temp:
@@ -632,6 +687,42 @@ def test_cli_creates_bilingual_drafts_for_same_account_slug():
             assert draft["language"] == lang
             assert draft["status"] == "draft"
     print("[ok] both language drafts retain the same actual X account")
+
+
+@test
+def test_cli_packages_and_records_explicit_text_posts_without_fabricated_image():
+    with tempfile.TemporaryDirectory() as temp:
+        project = _project(temp, image=False)
+        pid = "20261114-text"
+        created = _run([str(project), "--new", "--id", pid,
+                        "--topic", "A grounded observation", "--mode", "general_interest",
+                        "--post-format", "text", "--language", "zh", "--json"])
+        assert created.returncode == 0, created.stdout + created.stderr
+        draft_path = project / "posts" / (pid + ".json")
+        draft = json.loads(draft_path.read_text(encoding="utf-8"))
+        assert draft["post_format"] == "text" and draft["language"] == "zh"
+        reviewed = _mutated(post_format="text", image=None, image_brief="",
+                            image_status="missing", alt_text="", content_id=pid,
+                            language="zh",
+                            post_copy={"parts": ["今天发现一件小事：比起别人追着热点跑，我更愿意记录真实观察，慢慢建立有价值的讨论。"]})
+        draft_path.write_text(json.dumps(reviewed, ensure_ascii=False), encoding="utf-8")
+
+        packaged = _run([str(project), "--package", "--id", pid, "--json"])
+        assert packaged.returncode == 0, packaged.stdout + packaged.stderr
+        payload = json.loads(packaged.stdout)["package"]
+        assert payload["post_format"] == "text"
+        assert payload["image"] is None and payload["alt_text"] == ""
+        assert payload["publication_mode"] == "MANUAL_ONLY"
+
+        marked = _run([str(project), "--mark-published", "--id", pid,
+                       "--url", "https://x.com/example/status/123456",
+                       "--reviewer", "fixture-human", "--json"])
+        assert marked.returncode == 0, marked.stdout + marked.stderr
+        saved = json.loads(draft_path.read_text(encoding="utf-8"))
+        assert saved["image_status"] == "missing"
+        assert saved["status"] == "published"
+        assert saved["post_format"] == "text"
+    print("[ok] CLI text path scaffolds, packages and records URL without invented media")
 
 
 @test

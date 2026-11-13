@@ -212,6 +212,26 @@ def test_the_score_floor_must_fit_the_rubric():
 
 
 @test
+def test_general_interest_profile_and_text_media_cannot_be_deleted_or_weakened():
+    dna = _x()
+    assert dna["visual"]["post_formats"] == ["text", "image"]
+    assert dna["editorial"]["review_profiles"]["general_interest"]["score_floor"] == 20
+    assert dna["editorial"]["review_profiles"]["workflow_artifact"]["score_floor"] == 24
+    _assert_fails(_mutated(visual__post_formats=["image"]), "visual.post_formats")
+    _assert_fails(_mutated(editorial__review_profiles={}),
+                  "review_profiles must define")
+    profiles = json.loads(json.dumps(dna["editorial"]["review_profiles"]))
+    profiles["workflow_artifact"]["score_floor"] = 10
+    _assert_fails(_mutated(editorial__review_profiles=profiles),
+                  "weakens technical evidence gates")
+    profiles["workflow_artifact"]["score_floor"] = 24
+    profiles["general_interest"]["dimension_floor_required"] = ["tension"]
+    _assert_fails(_mutated(editorial__review_profiles=profiles),
+                  "must enforce novelty and evidence")
+    print("[ok] image/text modes and mode-appropriate scoring cannot drift")
+
+
+@test
 def test_the_published_enum_and_the_recovery_fields_are_the_contracts():
     _assert_fails(_mutated(publication__post_status_enum=["draft", "live"]),
                   "post_status_enum")

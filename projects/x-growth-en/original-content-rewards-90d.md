@@ -8,8 +8,8 @@
 
 - 2026-11-03 创作者提供 X Creator Studio 的 Original Content Rewards 资格截图：Premium 与年龄显示通过；500 认证粉丝和过去 90 天 500,000 认证用户首页曝光尚未达标。**数值为当时用户截图，并非已通过官方授权读取**。此公开仓不上传原始截图、账号身份、精确账户数据；真实数值仅在授权私有台账保存。
 - `projects/x-growth-en/project.yaml` 只绑定**唯一双语 X 账号**，`language: multi`、支持 `zh/en`，仍为 `MANUAL_ONLY`。`x-growth-en`路径和`x-superplay-english` slug仅兼容旧数据，不是第二账号；中文/英文内容和A/B/C回复都属于同一个账号。各语言的逐帖指标独立分析，账号级Q和粉丝不能双重计数。
-- ContentOps 已有 X 线下增长 Skill、文章审核/图片/人工发布门禁、`scripts/x_growth_pipeline.py`、`projects/x-growth-en/templates/posts.csv`、账号与帖子数据 CSV；**目前无获授权的 X 自动发布、回复、读取账号数据或收益指标接口**。
-- **2026-11-13 V1.3 单账号目标**：同一账号每天人工回复160条（A=灵感泛娱乐40、B=灵感AI科技40、C=时间线AI科技80），**原创发布目标24条（中文20、英文4）**，题材不限技术。旧英文4条/日与中文另设账号说法已撤销。不能绕过证据、图片/ALT、人工发布审核或将未发布草稿算作已发。
+- ContentOps 已有 X 线下增长 Skill、文章审核/可选图片与ALT/人工发布门禁、`scripts/x_growth_pipeline.py`、`projects/x-growth-en/templates/posts.csv`、账号与帖子数据 CSV；**目前无获授权的 X 自动发布、回复、读取账号数据或收益指标接口**。
+- **2026-11-13 V1.3 单账号目标**：同一账号每天人工回复160条（A=灵感泛娱乐40、B=灵感AI科技40、C=时间线AI科技80），**原创发布目标24条（中文20、英文4）**，题材不限技术。旧英文4条/日与中文另设账号说法已撤销。不能绕过事实/原创、人审或真实URL；纯文字可用 `post_format=text`，图文 `post_format=image` 时图片/ALT必须合规，不能把待审稿算已发布。
 
 ## 1. 官方资格与计量口径（执行前必须重新核实）
 
@@ -51,7 +51,7 @@
 这些比例、发布时间和用语是**待检验假设**，不在代码里硬编码为算法策略。
 
 每帖最小内容合同：
-`account + language + ICP + source_id + original_thesis + unique_proof + counterargument + copy + image/ALT + permission_check + human_review + post_url(if published) + content_id`。
+`account + language + ICP + source_or_observation + original_thesis + honest_claim_scope + counterargument + copy + post_format(text|image) + image/ALT(if image) + permission_check + mode_specific_human_review + post_url(if published) + content_id`。
 
 原创主帖优先采用：
 `Finding / tested result → 1–3 observations → genuine artifact or repo link → substantive question (optional)`。

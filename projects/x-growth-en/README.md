@@ -9,6 +9,8 @@
 
 **V1.3 单账号运营目标：**每日A40/B40/C80=160条合规人工回复，**同一账号**每日目标实际发布中文20条+英文4条原创，共24条（题材不限技术）。每条记录 `language:zh|en`；没有真人审核与本人X真实URL的内容只能算草稿。
 
+**内容格式与人工审核**：原生纯文字原创使用 `post_format=text`（无图、无ALT）；图文原创使用 `post_format=image`（真实1600×900图片与ALT）。技术/新闻事实分析保持>=24/30及严格证据门槛；泛娱乐/生活类使用>=20/30、原创性和真实语境各>=4的人工审核档，不强制技术实测。每条均须人工确认和真实发布URL；这些评分不是平台流量预测。
+
 **状态边界**：ContentOps 对 X 已集成离线内容审核和人工发布门禁；X 平台真实发布、官方认证粉丝/合格首页曝光导入、最终收益资格均未在此仓自动实现。原 `X-SuperPlay-X-Growth-OS` 属待下线迁移来源，不是未来执行仓。严格禁止把 GitHub 文件写入视为 X 发帖成功。
 
 - High-engagement **original post writing**: [x-high-engagement-copywriter](../../skills/x-high-engagement-copywriter/SKILL.md) — conversation-derived hypotheses, editorial drafts and A/B design, **not** verified virality or an auto-publish tool. This registered account is explicitly bilingual. Chinese and English posts use the same account slug; no second account or separate approval is required.

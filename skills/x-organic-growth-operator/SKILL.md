@@ -15,7 +15,7 @@ Use user-provided material or sources the operator is authorized to access.
 ## Canonical X authority (all tasks)
 
 X Strategy SOP V1.3 governs business priority; the registered Account DNA
-in config/accounts/x-superplay-english.json governs actual English-account
+in config/accounts/x-superplay-english.json governs the single bilingual account's
 cadence (**24 original posts/day: Chinese 20 + English 4 on ONE bilingual X account**), evidence and manual publication. The same account also targets 160 contextual, human-reviewed replies daily (A40/B40/C80). The historic `x-superplay-english` slug is not an English-only or separate account. Older volume figures are historical. Original qualifying Home Timeline Q, ordinary
 reply impressions, account net followers, and post-level profile clicks are
 incomparable and must never be substituted. This skill is advisory only.
@@ -52,11 +52,14 @@ injection or sensitive formats, not every possible attempt. If uncertain, stop.
    and context support them; list uncertainties and wording risks. Do not reuse
    near-identical replies.
 3. Plan ORIGINAL_POST, QUOTE_POST, THREAD, REPLY_DRAFT, TUTORIAL or CASE_STUDY
-   from public project changes, actual receipts or other cited sources. Include
-   audience/problem, hook, thesis, evidence, copy, visual/ALT suggestion,
-   disclosure/privacy/rights checks and a useful question. Never imply source
+   using verified facts or clearly original observations. Include audience,
+   a fresh angle, source/context, copy, and the declared format: `post_format=text`
+   for no media or `post_format=image` for a real card with ALT. Use the
+   `general_interest` review profile for entertainment, culture, and everyday
+   reflections, not an invented technical mechanism or fake benchmark. Keep
+   disclosure/privacy/rights checks and a natural conversational ending. Never imply source
    analysis was firsthand testing or fabricate results.
-4. Apply the account's existing editorial and image gates when available. Check
+4. Apply the account's mode-specific editorial and format-conditional image gates when available. Check
    originality, factual evidence, value, readability, duplicate content, ads,
    image rights, character limits, privacy, platform rules and human review. The X manual-only editorial gate is now part of main; retain `REVIEW_REQUIRED`
    until the existing gates and a human decide what may be packaged. Do not

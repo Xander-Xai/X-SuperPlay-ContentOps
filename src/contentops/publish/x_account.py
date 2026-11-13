@@ -2,7 +2,7 @@
 
 ``config/accounts/x-superplay-english.json`` is a text account
 (``contentops.x-account/v1``). It is not a video account with keys removed: it
-has a 280-character budget, one real 1600x900 image, a human review carrying a
+has a 280-character budget, an explicit text/image format (real 1600x900 image when selected), a human review carrying a
 proof grade, and a status URL or nothing at all. Validating it on a film
 composition or an ``easel.yaml`` would be a lie dressed as a check.
 
@@ -214,6 +214,42 @@ def check_x_account(
     if unknown:
         failures.append(
             f"editorial.dimension_floor_required names dimensions that do not exist: {unknown}")
+    profiles = editorial.get("review_profiles")
+    pillar_names = [str(p.get("name")) for p in dna.get("content_pillars") or []
+                    if isinstance(p, dict)]
+    if not isinstance(profiles, dict) or sorted(profiles) != sorted(pillar_names):
+        failures.append("editorial.review_profiles must define exactly all content pillar modes")
+    else:
+        for mode, profile in profiles.items():
+            if not isinstance(profile, dict):
+                failures.append(f"editorial.review_profiles.{mode} must be an object")
+                continue
+            score = profile.get("score_floor")
+            if not _is_int(score) or not 1 <= score <= total:
+                failures.append(f"editorial.review_profiles.{mode}.score_floor invalid")
+            min_dim = profile.get("dimension_floor")
+            if not _is_int(min_dim) or not 1 <= min_dim <= 5:
+                failures.append(f"editorial.review_profiles.{mode}.dimension_floor invalid")
+            dimensions_required = profile.get("dimension_floor_required")
+            if not isinstance(dimensions_required, list) or not dimensions_required or (
+                set(dimensions_required) - set(ids)):
+                failures.append(f"editorial.review_profiles.{mode}.dimension_floor_required invalid")
+            for count_field in ("theses_required", "red_team_questions"):
+                val = profile.get(count_field)
+                if not _is_int(val) or val < 1:
+                    failures.append(f"editorial.review_profiles.{mode}.{count_field} invalid")
+            if mode in ("workflow_artifact", "source_analysis") and (
+                not _is_int(score) or score < 24 or not
+                {"novelty", "evidence", "mechanism"}.issubset(
+                    set(dimensions_required) if isinstance(dimensions_required, list) else set())):
+                failures.append(f"editorial.review_profiles.{mode} weakens technical evidence gates")
+            if mode == "general_interest":
+                if not {"novelty", "evidence"}.issubset(
+                    set(dimensions_required) if isinstance(dimensions_required, list) else set()):
+                    failures.append("editorial.review_profiles.general_interest must enforce novelty and evidence")
+                if profile.get("p0_labels") != ["ORIGINAL_OBSERVATION", "SOURCE_ANALYSIS"]:
+                    failures.append("editorial.review_profiles.general_interest.p0_labels mismatch")
+
     recovery = [str(item) for item in editorial.get("recovery_fields") or []]
     missing_recovery = [field for field in X_RECOVERY_FIELDS if field not in recovery]
     if missing_recovery:
@@ -257,8 +293,12 @@ def check_x_account(
     if visual.get("svg_alone") is not False:
         failures.append(
             "visual.svg_alone must be false: an SVG on its own is not uploadable to X")
+    if visual.get("post_formats") != ["text", "image"]:
+        failures.append("visual.post_formats must be ['text', 'image']")
+    if visual.get("default_post_format") != "image":
+        failures.append("visual.default_post_format must be image for legacy records")
     if visual.get("alt_required") is not True:
-        failures.append("visual.alt_required must be true")
+        failures.append("visual.alt_required must be true for image-format posts")
     image_statuses = [str(item) for item in visual.get("image_status_enum") or []]
     expected_image = sorted(X_IMAGE_STATUS)
     if sorted(image_statuses) != expected_image:
