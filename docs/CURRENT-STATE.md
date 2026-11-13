@@ -4,7 +4,8 @@
 
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
-> Last verified: 2026-11-13 on verified remote main baseline `98a61f2`; local X/cross-platform learning is merged, real platform outcomes unverified.
+> Last verified: 2026-11-14 for the proposed X text/image format and per-mode review contracts (PR CI pending); remote baseline `98a61f2` below is historical, real platform outcomes unverified.
+> X image posts require real media+ALT; explicit text posts omit media. General-interest posts use human novelty/evidence review without invented technical benchmarks. This implementation does not publish to X.
 > X and cross-platform offline analyzers are implemented; the platform outcomes and automatic end-to-end operations have not been verified.
 
 > Facts below describe `main`; deferred or rights-blocked work is labelled as such.
