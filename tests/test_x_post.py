@@ -690,6 +690,41 @@ def test_cli_creates_bilingual_drafts_for_same_account_slug():
 
 
 @test
+def test_cli_packages_and_records_explicit_text_posts_without_fabricated_image():
+    with tempfile.TemporaryDirectory() as temp:
+        project = _project(temp, image=False)
+        pid = "20261114-text"
+        created = _run([str(project), "--new", "--id", pid,
+                        "--topic", "A grounded observation", "--mode", "general_interest",
+                        "--post-format", "text", "--language", "zh", "--json"])
+        assert created.returncode == 0, created.stdout + created.stderr
+        draft_path = project / "posts" / (pid + ".json")
+        draft = json.loads(draft_path.read_text(encoding="utf-8"))
+        assert draft["post_format"] == "text" and draft["language"] == "zh"
+        reviewed = _mutated(post_format="text", image=None, image_brief="",
+                            image_status="missing", alt_text="", content_id=pid,
+                            language="zh")
+        draft_path.write_text(json.dumps(reviewed, ensure_ascii=False), encoding="utf-8")
+
+        packaged = _run([str(project), "--package", "--id", pid, "--json"])
+        assert packaged.returncode == 0, packaged.stdout + packaged.stderr
+        payload = json.loads(packaged.stdout)["package"]
+        assert payload["post_format"] == "text"
+        assert payload["image"] is None and payload["alt_text"] == ""
+        assert payload["publication_mode"] == "MANUAL_ONLY"
+
+        marked = _run([str(project), "--mark-published", "--id", pid,
+                       "--url", "https://x.com/example/status/123456",
+                       "--reviewer", "fixture-human", "--json"])
+        assert marked.returncode == 0, marked.stdout + marked.stderr
+        saved = json.loads(draft_path.read_text(encoding="utf-8"))
+        assert saved["image_status"] == "missing"
+        assert saved["status"] == "published"
+        assert saved["post_format"] == "text"
+    print("[ok] CLI text path scaffolds, packages and records URL without invented media")
+
+
+@test
 def test_the_cli_walks_a_record_from_draft_to_a_recorded_url():
     with tempfile.TemporaryDirectory() as temp:
         project = _project(temp)
