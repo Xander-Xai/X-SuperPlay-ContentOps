@@ -60,7 +60,7 @@ Use one primary recipe and at most one secondary; do not use P03 keyword/followe
 - Finish: one memorable observation **or** a genuine low-effort question (never forced).
 - Audience: this is one bilingual, broad-topic account. Judge Chinese/English general interest on originality, relevance and truthfulness; do not force a tech-builder angle onto entertainment or everyday observations.
 
-For 5+ posts, use ≥3 hook shapes; for the V1.3 daily 24 original candidates (20 zh + 4 en), also vary the ending (statement, honest question, useful action, counterexample). Avoid mechanical "哈哈哈", "卧槽", "谁懂", "Who's in?", "兄弟", "💀😭" or "the real upgrade" repetition, especially across successive short replies. No sensationalism that depends on invented medical/technical/celebrity claims. Adjust length to the actual X account and the existing \`scripts/x_post.py\` weighted-text gate; do not promise every draft is publish-ready.
+For 5+ posts, use ≥3 hook shapes; for the V1.4 daily 24 original candidates (20 zh + 4 en), also vary the ending (statement, honest question, useful action, counterexample). Avoid mechanical "哈哈哈", "卧槽", "谁懂", "Who's in?", "兄弟", "💀😭" or "the real upgrade" repetition, especially across successive short replies. No sensationalism that depends on invented medical/technical/celebrity claims. Adjust length to the actual X account and the existing \`scripts/x_post.py\` weighted-text gate; do not promise every draft is publish-ready.
 
 ### 4. Draft and screen
 
