@@ -226,7 +226,7 @@ def _row_for(project: Path, content_id: str) -> Optional[Dict[str, str]]:
 
 def _template(account: Dict[str, Any], content_id: str, topic: str,
               sources: List[str], mode: str,
-              prompt_ref: str = "") -> Dict[str, Any]:
+              prompt_ref: str = "", language: str = "en") -> Dict[str, Any]:
     """A draft record with the holes a person has to fill, and nothing invented."""
     pillars = [str(pillar.get("name")) for pillar in account.get("content_pillars") or []
                if isinstance(pillar, dict)]
@@ -237,6 +237,7 @@ def _template(account: Dict[str, Any], content_id: str, topic: str,
         "schema": SCHEMA,
         "content_id": content_id,
         "account_slug": account.get("slug"),
+        "language": language,
         "mode": mode,
         "topic": topic,
         "sources": list(sources),
@@ -287,7 +288,7 @@ def _issues(issues: List[Issue]) -> List[Dict[str, str]]:
 
 
 def action_new(project: Path, content_id: str, topic: str, sources: List[str],
-               mode: str, prompt: str = "") -> Dict[str, Any]:
+               mode: str, prompt: str = "", language: str = "en") -> Dict[str, Any]:
     account = account_for(project)
     path = post_path(project, content_id)
     if path.exists():
@@ -313,7 +314,9 @@ def action_new(project: Path, content_id: str, topic: str, sources: List[str],
                 f"prompt {prompt_ref!r} points at a file that is not in this tree; "
                 "a prompt reference must be real")
         checklist = x_prompts.prompt_checklist(prompt_path)
-    post = _template(account, content_id, topic.strip(), sources, mode, prompt_ref)
+    if language not in (account.get("allowed_languages") or [account.get("language")]):
+        raise Refusal("LANGUAGE_UNSUPPORTED", f"language {language!r} is not allowed for this account")
+    post = _template(account, content_id, topic.strip(), sources, mode, prompt_ref, language)
     _write_post(path, post)
 
     publication = account.get("publication") or {}
@@ -569,6 +572,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--topic", help="the post's subject, for --new")
     parser.add_argument("--source", action="append", default=[],
                         help="a source URL, repeatable")
+    parser.add_argument("--language", choices=("zh", "en"), default="en",
+                        help="language of this original post, zh or en; both use the same X account")
     parser.add_argument("--mode", default="workflow_artifact",
                         help="one of the account's content pillars")
     parser.add_argument("--prompt", default="",
@@ -615,7 +620,7 @@ def main(argv: Optional[List[str]] = None) -> int:
 
         if args.new:
             result = action_new(project, content_id, args.topic or "", args.source,
-                                args.mode, args.prompt)
+                                args.mode, args.prompt, args.language)
         elif args.check:
             result = action_check(project, content_id)
         elif args.package:

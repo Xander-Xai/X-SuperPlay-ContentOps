@@ -20,7 +20,7 @@ LEDGER = ROOT / "skills" / "x-high-engagement-copywriter" / "references" / "samp
 SCHEMA = "contentops.x-copywriter-draft/v1"
 EXPECTED_IDS = {f"S{i:02d}" for i in range(1, 12)}
 VALID_MODES = {"ORIGINAL_POST", "REPLY_DRAFT", "QUOTE_POST", "THREAD"}
-VALID_LANGUAGES = {"en", "zh-CN"}
+VALID_LANGUAGES = {"en", "zh", "zh-CN"}
 VALID_RISK = {"PASS", "REVISE", "HOLD"}
 VALID_CLAIM = {"VERIFIED", "OPINION_ONLY", "UNVERIFIED"}
 HOOK_KINDS = {"contrast", "story", "question", "sensory", "technical", "fact_check", "punchline", "reflection"}
@@ -86,7 +86,9 @@ def draft_errors(draft: Any, ledger: dict[str, Any]) -> list[str]:
         account_path = ROOT / "config" / "accounts" / (account + ".json")
         if account != "UNCONFIRMED" and account_path.is_file():
             account_info = load_json(account_path)
-            if account_info.get("language") != lang:
+            allowed = account_info.get("allowed_languages") or [account_info.get("language")]
+            normalized = "zh" if lang == "zh-CN" else lang
+            if normalized not in allowed:
                 bad("ACCOUNT_LANGUAGE_MISMATCH")
         if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", account):
             bad("UNSAFE_ACCOUNT_NAME")

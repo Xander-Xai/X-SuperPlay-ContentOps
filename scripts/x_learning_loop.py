@@ -171,7 +171,7 @@ def analyze(data_dir: Path, account: str, window: str, *, experiment_id=None,
         if not profile_path.is_file():
             raise ValueError("registered X account DNA required for a controlled comparison")
         profile = json.loads(profile_path.read_text(encoding="utf-8"))
-        if (profile.get("slug") != account or profile.get("language") != language or
+        if (profile.get("slug") != account or language not in (profile.get("allowed_languages") or [profile.get("language")]) or
                 "x" not in (profile.get("platforms") or [])):
             raise ValueError("experiment language/account does not match registered X DNA")
     contexts = _read_table(data_dir / CONTEXT_FILE, CONTEXT_COLUMNS) if controlled else []

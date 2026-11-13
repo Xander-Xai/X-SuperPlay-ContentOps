@@ -7,10 +7,10 @@ this function re-implements the published rules closely enough to refuse an
 obviously over-budget post before a person types it. A post that lands at 279 is
 still checked in the composer, because an estimate is not the authority.
 
-**Language is a refusal, not a detector.** The account publishes in English. A
-CJK ideograph, kana or hangul syllable in the copy means this is not the English
-post the account promises, so it is refused. That is a narrower claim than "this
-text is English", and it is the only one worth making here.
+**Language is an explicit per-post choice, not a guessed detector.** The same account
+supports English and Chinese. We can reject Chinese characters in a post labelled
+English and reject Japanese kana/Korean hangul in a post labelled Chinese, but no
+simple script scan can guarantee a post is well written in either language.
 """
 
 from __future__ import annotations
@@ -40,7 +40,7 @@ _WIDE_RANGES = (
     (0x2600, 0x27BF),   # misc symbols, dingbats
 )
 
-#: Scripts the account does not publish in. Their presence is a hard refusal.
+#: Scripts detectable for manual language consistency review.
 _CJK_RANGES = (
     (0x3040, 0x30FF),   # kana
     (0x3400, 0x4DBF),   # CJK extension A
@@ -92,3 +92,16 @@ def foreign_scripts(text: str) -> List[str]:
             if marker not in found:
                 found.append(marker)
     return found
+
+
+def contains_han(text: str) -> bool:
+    """True when text has a Chinese ideograph; doesn't assert fluent Chinese."""
+    return any(_in_ranges(ord(ch), ((0x3400, 0x4DBF), (0x4E00, 0x9FFF),
+                                   (0xF900, 0xFAFF), (0x20000, 0x2FA1F)))
+               for ch in text)
+
+
+def foreign_to_chinese(text: str) -> List[str]:
+    """Kana/Hangul are not Chinese writing; English tool names remain allowed."""
+    ranges = ((0x3040, 0x30FF), (0xAC00, 0xD7A3))
+    return sorted({f"U+{ord(ch):04X}" for ch in text if _in_ranges(ord(ch), ranges)})

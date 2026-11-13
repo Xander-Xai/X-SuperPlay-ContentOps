@@ -192,9 +192,14 @@ def _sentence_count(text: str) -> int:
     return len([part for part in re.split(r"(?<=[.!?])\s+", text.strip()) if part.strip()])
 
 
-def _check_copy(post: Dict[str, Any], editorial: Dict[str, Any]) -> List[Issue]:
+def _check_copy(post: Dict[str, Any], editorial: Dict[str, Any], account: Dict[str, Any]) -> List[Issue]:
     issues: List[Issue] = []
     parts = copy_parts(post)
+    language = post.get("language", account.get("default_post_language", "en"))
+    allowed = account.get("allowed_languages") or [account.get("language")]
+    if language not in allowed:
+        issues.append(Issue("LANGUAGE_UNSUPPORTED",
+                            f"post language {language!r} is not allowed for this account: {allowed}"))
     if not parts or not any(part.strip() for part in parts):
         return [Issue("COPY_EMPTY", "the record has no post copy to publish")]
     if any(not part.strip() for part in parts):
@@ -214,12 +219,21 @@ def _check_copy(post: Dict[str, Any], editorial: Dict[str, Any]) -> List[Issue]:
             issues.append(
                 Issue("COPY_TOO_LONG",
                       f"part {index} weighs {length} characters; the budget is {limit}"))
-        foreign = x_text.foreign_scripts(part)
-        if foreign:
-            issues.append(
-                Issue("LANGUAGE_NOT_EN",
-                      f"part {index} contains non-Latin script ({', '.join(foreign[:4])}); "
-                      "this account publishes in English"))
+        if language == "en":
+            foreign = x_text.foreign_scripts(part)
+            if foreign:
+                issues.append(
+                    Issue("LANGUAGE_NOT_EN",
+                          f"part {index} contains CJK characters ({', '.join(foreign[:4])}); "
+                          "label this post 'zh' if writing Chinese"))
+        elif language == "zh":
+            foreign = x_text.foreign_to_chinese(part)
+            if foreign:
+                issues.append(
+                    Issue("LANGUAGE_NOT_ZH",
+                          f"part {index} contains Japanese/Korean script ({', '.join(foreign[:4])})"))
+            if not x_text.contains_han(part):
+                issues.append(Issue("LANGUAGE_NOT_ZH", f"part {index} contains no Chinese characters"))
     return issues
 
 
@@ -397,7 +411,7 @@ def validate_post(post: Dict[str, Any], account: Dict[str, Any],
     issues: List[Issue] = []
     issues.extend(_check_account(post, account))
     issues.extend(_check_mode(post, account))
-    issues.extend(_check_copy(post, editorial))
+    issues.extend(_check_copy(post, editorial, account))
     issues.extend(_check_status(post, account))
     issues.extend(_check_alt(post, account))
     issues.extend(_check_image(post, account, root))

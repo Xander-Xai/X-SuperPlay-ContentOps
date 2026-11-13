@@ -6,9 +6,7 @@
 → 本工具的指标结果与人工批准。
 本手册不创设额外回复配额、发布权限或评分标准。
 
-**当前英文账号 x-superplay-english** 的运行时 DNA 为 MANUAL_ONLY、
-现在已按 V1.2 将英文原创目标设为**每天最多4条**（周计划28条为满负荷目标），人工社区回复的实际耗时必须记录而不是假设10–15分钟足够。
-Strategy 现行每日跨账号目标为**A25+B25+C50=100条合规人工回复 + 中文6/英文4=10条原创候选**；既往1–3条/天、3–4条/周和5–10回复/天为历史。
+**当前唯一 X 账号**使用旧兼容slug `x-superplay-english`，实际DNA是 `language:multi`（允许zh/en）、`MANUAL_ONLY`。**同一账号**每日目标：A25+B25+C50=100条合规人工回复；中文原创6+英文原创4=10条真实发布。逐条记录语言、原帖和自己帖子URL、实际工时。旧英文4条/日、28条/周和跨账号说法全部作废。
 未登记为 X 平台的账号不能进入 X 路由。真人复核、发布、取数。
 
 ## 1. 初始化（Windows PowerShell，在 ContentOps 仓库根目录）
@@ -51,7 +49,7 @@ x-experiment-context.csv 与 posts.csv 通过 content_id 和 x_post_url 精确�
 
 - experiment_id：例 CEXP-20261113-001；**使用 Strategy 实验的真实编号**
 - topic_cluster：如 ai_agent，与当前专项明确的同类主题保持一致
-- language：en 或 zh，须符合该账号 DNA
+- language：en 或 zh，均属于同一个账号DNA；单次B/C实验严格同语言，不能把两语言混算
 - founder_minutes：人工实测的分钟（非人工实测留空）
 - qualified_conversations：已人工核验的有效往返对话数（非核验留空）
 - content_id、x_post_url：与 posts.csv 完全一致

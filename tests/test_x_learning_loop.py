@@ -87,6 +87,17 @@ class XLocalLearningTests(unittest.TestCase):
         self.assertEqual(result["status"], "INSUFFICIENT_DATA")
         self.assertEqual(result["skipped"]["metric_definition_mismatch"], 1)
 
+    def test_zh_comparison_uses_same_account_without_mixing_en(self):
+        for i in range(1, 11):
+            cid, url = self._post(i, "inspiration_ai" if i <= 5 else "timeline_ai")
+            self._context(cid, url, language="zh")
+            self._metric(cid, url)
+        result = analyze(self.data, "x-superplay-english", "T+24H",
+                         experiment_id="CEXP-20261113-001", topic_cluster="ai_agent",
+                         language="zh", definition="native_v1", compare=True)
+        self.assertEqual(result["status"], "DESCRIPTIVE_ONLY")
+        self.assertEqual(result["scope"]["language"], "zh")
+
     def test_median_rate_and_pooled_rate_can_diverge(self):
         for i, views in enumerate((10, 10, 10000, 10, 10), 1):
             cid, url = self._post(i, "inspiration_ai")

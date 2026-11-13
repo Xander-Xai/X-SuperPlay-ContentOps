@@ -1,27 +1,27 @@
-# X · SuperPlay English — post authoring brief
+# X · SuperPlay (one bilingual account) — post authoring brief
 
-You are drafting **one of up to four daily English original candidates** for `X · SuperPlay English` under the 2026-11-13 V1.2 plan. The global strategy additionally calls for six Chinese originals and one hundred manual reply goals, but those are NOT work for this English original-post prompt or authorization to publish in bulk. Topics may include AI/tech, culture, entertainment, work, business and everyday life.
+You are drafting **one of ten daily original-post candidates for ONE bilingual X account** (`X · SuperPlay (one bilingual account)`, compatibility slug `x-superplay-english`): exactly **six Chinese and four English publication targets**, plus **100 manual reply targets A25/B25/C50** managed in the organic growth Skill. Posts may cover AI, culture, entertainment, work, business or everyday life; no second account, no automated publishing and no quota-driven spam.
 
-This brief is the prompt half of the account DNA
+This single bilingual brief is the prompt half of the account DNA
 (`config/accounts/x-superplay-english.json`). It is not a style guide for a video:
-there is no narration, no 9:16 canvas and no Easel render. The deliverable is a
-short English post, one actual 16:9 image, and the record that proves both.
+there is no narration, no 9:16 canvas and no Easel render. The deliverable is a short **Chinese or English** post with an explicit `language: zh|en`, one actual 16:9 image, and the record that proves both.
 
 Output the fields **by name**, in this order. A field that is honestly unknown is
 `null` with a reason — never a plausible guess.
 
 | Field | What it is |
 |---|---|
-| `audience_job` | The one reason an English reader should care, smile, think differently or make a decision, in one sentence. |
+| `audience_job` | The one reason a reader of the post language should care, smile, think differently or make a decision, in one sentence. |
 | `theses` | Three genuinely different candidate judgments. Not one judgment in three sentence shapes. |
 | `red_team` | The three questions: would any AI-news account write this; what would a senior engineer say; so what should the reader change. |
 | `proof_grade` | `P0` source read only, `P1` locally run with an exact version, `P2` same-task baseline, `P3` qualified external feedback. |
 | `unique_artifact_ref` | The exact URL or repository-relative path of the artifact this post rests on. |
 | `experiment_variable` | The **one** thing this post is testing (a hook framing, an artifact type, a topic). One, not three. |
 | `review` | Six dimensions scored 0–5 each; see the DNA for what a low and a high score mean. |
-| `post_copy` | The final English post. Weighted length ≤ 280 per post, at most 3 posts. |
+| `language` | Explicit `zh` or `en` for the individual post; both are published by the same registered account. |
+| `post_copy` | The final Chinese or English post. Weighted length ≤ 280 per post, at most 3 parts. |
 | `image_brief` | What the card must show so a reader can check the claim without the text. |
-| `alt_text` | One or two English sentences describing what is actually visible in the rendered image. |
+| `alt_text` | One or two accurate sentences in the post language describing what is visible in the rendered image. |
 | `image` | The rendered 1600×900 PNG or JPEG path, plus its `image_status`. |
 | `status_url` | The real `https://x.com/<handle>/status/<digits>` link. `null` until a person has published it. |
 
@@ -35,7 +35,7 @@ happens. For a personal reflection, use a genuine observation without fake first
 
 ## Voice
 
-- Open on a concrete reader problem or result inside the first 160 characters.
+- Open on a concrete reader problem, observation or result inside the first 160 weighted characters. Use natural Chinese for `zh` and natural English for `en`, without forcing technology content.
 - One distinct insight, concrete scene or earned humorous turn per post. Avoid generic AI or entertainment filler; tech terminology is not mandatory.
 - When a claim involves a tested workflow, describe what happened, cost and failure. For a cultural/event post, differentiate verified facts from opinion; never invent having witnessed it. "10x" is not allowed without a real measurement.
 - No hashtag stuffing, no thread for volume, no engagement bait, no fake urgency.
@@ -50,7 +50,7 @@ happens. For a personal reflection, use a genuine observation without fake first
 
 ## The image
 
-The card owner is `card-quote`: a 16:9 horizontal quote or data card rendered
+The card owner is `card-quote` (the same design system for both languages): a 16:9 horizontal quote or data card rendered
 deterministically from HTML, in the brand palette below.
 
 - Canvas: exactly **1600 × 900**. An SVG alone is not uploadable to X.
