@@ -45,9 +45,9 @@ injection or sensitive formats, not every possible attempt. If uncertain, stop.
    analysis was firsthand testing or fabricate results.
 4. Apply the account's existing editorial and image gates when available. Check
    originality, factual evidence, value, readability, duplicate content, ads,
-   image rights, character limits, privacy, platform rules and human review. On
-   main the X Post Gate is absent: retain `REVIEW_REQUIRED` and do not imply
-   readiness or create a competing publication state machine. An X URL's syntax
+   image rights, character limits, privacy, platform rules and human review. The X manual-only editorial gate is now part of main; retain `REVIEW_REQUIRED`
+   until the existing gates and a human decide what may be packaged. Do not
+   imply publication or create a competing publication state machine. An X URL's syntax
    alone cannot prove a real publication or account ownership.
 5. Record post, interaction and account observations separately, with actual
    source and observation time; missing is not zero. Never attribute account net
@@ -57,6 +57,47 @@ injection or sensitive formats, not every possible attempt. If uncertain, stop.
    `INSUFFICIENT_DATA`. Weekly summary: originals, real discussions, sourced net
    follows, feedback, content performance, work hours, failures, next single
    experiment and stop conditions. Association is not causation.
+
+## Inspiration vs Timeline (2026-11-13 pilot)
+
+The authoritative strategy and three-arm experimental design are in
+X-SuperPlay-Strategy/03-Execution/X-Inspiration-vs-Timeline-Growth-Experiment-20261113.md.
+This is not a mandate to reply more often. Original posts, existing account
+cadence, quality/rights gates and human time budget still take priority.
+
+1. Operator manually discovers public discussions in X Inspiration and Timeline;
+   the label is a *discovery surface*, **not** verified traffic attribution.
+   Label A = inspiration_broad (entertainment/exploration), B = inspiration_ai,
+   C = timeline_ai. B vs C is the primary like-topic comparison; A is a
+   different audience and must not be presented as a causal control group.
+2. Operator records only viewed posts and human 0–5 judgments into the private,
+   gitignored .local/x-growth-en/discussion-candidates.csv. Initialize with:
+   python scripts/x_discussion_candidates.py init
+3. Rank locally without fetching any post, claiming an algorithm score or
+   scheduling a reply:
+   python scripts/x_discussion_candidates.py rank --account x-superplay-english --language en
+   Read private candidates-ranked.csv. REVIEW_CANDIDATE still requires a human to
+   read the complete thread and make the reply/skip decision. SKIP is a valid end.
+   Scoring weighs topic/audience fit, evidence and original contribution more
+   than hotness; missing evidence and high risk cannot be compensated by views.
+   Reference: docs/X-DISCUSSION-CANDIDATES.md.
+4. When a human actually publishes a reply, record **the reply's own URL** in
+   local posts.csv and the source discussion URL in source_url, plus
+   experiment_variable=source:inspiration_ai / source:timeline_ai /
+   source:inspiration_broad; no draft URL counts as published. Use existing
+   x-metric-snapshots.csv at matched T+24H/T+72H and account snapshots separately.
+5. Review descriptive comparisons with
+   python scripts/x_learning_loop.py analyze --account x-superplay-english --window T+24H
+   and explicit Founder review. Account net follows, generic reply impressions
+   and X eligible original-home impressions are different quantities; neither
+   follower attribution nor causal uplift can be inferred from aggregate screenshots.
+6. Only after human chooses an evidence-backed next topic, use the existing
+   explicit x_learning_loop.py route command and unchanged quality/review gates.
+   Never auto-publish or auto-change account cadence.
+
+**Do not adopt an earlier illustrative 32 replies/day + two original posts
+as a quota.** Match the canonical X strategy's time and original-post priority.
+This skill's output is advisory, not a platform-compliance ruling.
 
 ## Offline demonstrations
 
