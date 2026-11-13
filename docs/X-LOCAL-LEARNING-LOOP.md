@@ -1,12 +1,12 @@
 # X 本地运营数据闭环｜唯一执行手册（2026-11-13）
 
 **权威优先级**：X 官方与安全规范 → ContentOps 真实账号 DNA → Strategy 的
-[唯一 X 增长 SOP V1.2](https://github.com/Xander-Xai/X-SuperPlay-Strategy/blob/main/01-Strategy/X-Original-Content-Rewards-Growth-V1.md)
+[唯一 X 增长 SOP V1.3](https://github.com/Xander-Xai/X-SuperPlay-Strategy/blob/main/01-Strategy/X-Original-Content-Rewards-Growth-V1.md)
 → [灵感/时间线专项](https://github.com/Xander-Xai/X-SuperPlay-Strategy/blob/main/03-Execution/X-Inspiration-vs-Timeline-Growth-Experiment-20261113.md)
 → 本工具的指标结果与人工批准。
 本手册不创设额外回复配额、发布权限或评分标准。
 
-**当前唯一 X 账号**使用旧兼容slug `x-superplay-english`，实际DNA是 `language:multi`（允许zh/en）、`MANUAL_ONLY`。**同一账号**每日目标：A25+B25+C50=100条合规人工回复；中文原创6+英文原创4=10条真实发布。逐条记录语言、原帖和自己帖子URL、实际工时。旧英文4条/日、28条/周和跨账号说法全部作废。
+**当前唯一 X 账号**使用旧兼容slug `x-superplay-english`，实际DNA是 `language:multi`（允许zh/en）、`MANUAL_ONLY`。**同一账号**每日目标：A40+B40+C80=160条合规人工回复；中文原创6+英文原创4=10条真实发布。逐条记录语言、原帖和自己帖子URL、实际工时。旧英文4条/日、28条/周和跨账号说法全部作废。
 未登记为 X 平台的账号不能进入 X 路由。真人复核、发布、取数。
 
 ## 1. 初始化（Windows PowerShell，在 ContentOps 仓库根目录）
@@ -34,7 +34,7 @@
 详见 [X-DISCUSSION-CANDIDATES.md](X-DISCUSSION-CANDIDATES.md)。
 候选的 source_url 是**被回复的主帖**；来源只能是：
 inspiration_broad (A，泛娱乐探索)、inspiration_ai (B)、timeline_ai (C)。
-B/C 为同类 AI 主题的正式比较；A 不被当成 B/C 的严格对照。新目标 A25/B25/C50 不代表必须发送100条不合适或重复评论；草稿、人工实际发送、跳过原因必须分别保留，缺失指标不能写0。
+B/C 为同类 AI 主题的正式比较；A 不被当成 B/C 的严格对照。新目标 A40/B40/C80 不代表必须发送160条不合适或重复评论；草稿、人工实际发送、跳过原因必须分别保留，缺失指标不能写0。
 
 ### 已发布回复
 
