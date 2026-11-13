@@ -386,9 +386,17 @@ def main(argv=None):
             if (evidence.get("account") != args.account or evidence.get("schema") != "contentops.local-learning-brief/v1"
                     or evidence.get("report_id") != args.report_id or not evidence.get("comparison_controlled")):
                 raise ValueError("learning brief account/schema mismatch")
+            if evidence.get("status") != "DESCRIPTIVE_ONLY" or args.decision not in ("CONTINUE", "ADJUST"):
+                raise ValueError("only comparable reviewed reports can route approved CONTINUE/ADJUST")
+            profile_path = ROOT / "config" / "accounts" / (args.account + ".json")
+            if not profile_path.is_file():
+                raise ValueError("X account profile is not registered")
+            profile = json.loads(profile_path.read_text(encoding="utf-8"))
+            if profile.get("slug") != args.account or "x" not in (profile.get("platforms") or []):
+                raise ValueError("report account does not match authorized X profile")
             command = [python_executable(), str(ROOT / "scripts" / "content_route.py"),
                        "start", "--account", args.account, "--mode", "topic", "--topic", args.topic,
-                       "--url", args.evidence_url]
+                       "--url", args.evidence_url, "--by", args.reviewer]
             run = hidden_run(command, cwd=str(ROOT), timeout=60)
             print(run.stdout or run.stderr)
             return run.returncode
