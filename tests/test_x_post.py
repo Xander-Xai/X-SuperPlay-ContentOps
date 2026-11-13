@@ -620,6 +620,21 @@ def _run(args: List[str]):
 
 
 @test
+def test_cli_creates_bilingual_drafts_for_same_account_slug():
+    with tempfile.TemporaryDirectory() as temp:
+        project = _project(temp)
+        for lang, cid in (("zh", "20261113-zh"), ("en", "20261113-en")):
+            created = _run([str(project), "--new", "--id", cid,
+                            "--topic", "one X account", "--language", lang, "--json"])
+            assert created.returncode == 0, created.stdout + created.stderr
+            draft = json.loads((project / "posts" / (cid + ".json")).read_text(encoding="utf-8"))
+            assert draft["account_slug"] == "x-superplay-english"
+            assert draft["language"] == lang
+            assert draft["status"] == "draft"
+    print("[ok] both language drafts retain the same actual X account")
+
+
+@test
 def test_the_cli_walks_a_record_from_draft_to_a_recorded_url():
     with tempfile.TemporaryDirectory() as temp:
         project = _project(temp)
