@@ -239,11 +239,13 @@ def check_x_account(
                 if not _is_int(val) or val < 1:
                     failures.append(f"editorial.review_profiles.{mode}.{count_field} invalid")
             if mode in ("workflow_artifact", "source_analysis") and (
-                score < 24 or not {"novelty", "evidence", "mechanism"}.issubset(
-                    set(dimensions_required or []))):
+                not _is_int(score) or score < 24 or not
+                {"novelty", "evidence", "mechanism"}.issubset(
+                    set(dimensions_required) if isinstance(dimensions_required, list) else set())):
                 failures.append(f"editorial.review_profiles.{mode} weakens technical evidence gates")
             if mode == "general_interest":
-                if not {"novelty", "evidence"}.issubset(set(dimensions_required or [])):
+                if not {"novelty", "evidence"}.issubset(
+                    set(dimensions_required) if isinstance(dimensions_required, list) else set()):
                     failures.append("editorial.review_profiles.general_interest must enforce novelty and evidence")
                 if profile.get("p0_labels") != ["ORIGINAL_OBSERVATION", "SOURCE_ANALYSIS"]:
                     failures.append("editorial.review_profiles.general_interest.p0_labels mismatch")
