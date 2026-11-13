@@ -3,7 +3,7 @@
 > Last reviewed: 2026-11-13. Local human-scored candidates only; no X network access, publication or real-result validation.
 
 策略唯一权威：Strategy 仓 03-Execution/X-Inspiration-vs-Timeline-Growth-Experiment-20261113.md。
-本文件只说明执行脚本，不另起一套每日回复配额或实验标准。以唯一 X SOP 及对应账号 DNA 为执行上限：x-superplay-english 仍是每周 3–4 条原创、最多 1 条/天、10–15 分钟社区互动。
+本文件只说明执行脚本，不另起一套配额或新阈值。当前 Strategy V1.2 设为每日人工回复目标**A25+B25+C50=100条**，原创**中文6条+英文4条**（题材不限技术）；注册的 x-superplay-english 负责最多4条英文原创/日且依然人工审核，中文账号尚待确认。旧3–4/week、1/day、10–15分钟限制已归历史。
 
 ## 初始化 / 排序（Windows PowerShell）
 
@@ -75,7 +75,7 @@ REVIEW_CANDIDATE 只允许下一步人工看稿。SKIP 会附原因，包括
 - 本地真实 X 数据尚未提供给脚本，测试只用合成数据。
 - 不从原帖浏览数推导自己的回复浏览或转化。
 - 不把账号级增粉、原创首页合格曝光 Q 分摊给某条回复。
-- 保持 X SOP 的原创优先、50–65 分钟原定工时；无每日 32 条回复要求。
+- 现行 X SOP 高强度100+10目标取代旧每日32条回复及50–65分钟预算。实际工时需人工记录，不因100条目标强行发送重复、无关或骚扰回复。
 - B（灵感 AI）与 C（时间线 AI）应尽量配齐发布时间、语言、主题和热度；
   A（泛娱乐）仅作为探索性参考。
 - 无自动抓取、自动发布、自动点赞、绕过风控或秘密/私信输入。
