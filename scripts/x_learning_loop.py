@@ -8,12 +8,13 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import re
 import statistics
 import sys
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -23,6 +24,10 @@ ROOT = Path(__file__).resolve().parents[1]
 PROJECT = ROOT / "projects" / "x-growth-en"
 DEFAULT_DATA = ROOT / ".local" / "x-growth-en"
 FILES = ("posts.csv", "x-metric-snapshots.csv", "x-account-snapshots.csv")
+CONTEXT_FILE = "x-experiment-context.csv"
+CONTEXT_COLUMNS = ("content_id", "x_post_url", "experiment_id", "topic_cluster", "language", "founder_minutes", "qualified_conversations")
+SCOPE_PATTERN = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
+DECISIONS = ("CONTINUE", "ADJUST", "PAUSE", "INCONCLUSIVE")
 GROUPS = ("inspiration_broad", "inspiration_ai", "timeline_ai", "original")
 WINDOWS = ("T+24H", "T+72H", "T+7D")
 AGE_HOURS = {"T+24H": (18, 36), "T+72H": (60, 84), "T+7D": (144, 192)}
@@ -46,6 +51,14 @@ def _integer(value: str):
         return number if number >= 0 else None
     except (ValueError, TypeError):
         return None
+
+
+def _valid_http_source(value: str):
+    try:
+        parsed = urlparse(value)
+        return parsed.scheme == "https" and bool(parsed.hostname) and not parsed.username and not parsed.password
+    except (TypeError, ValueError):
+        return False
 
 
 def _valid_status_url(value: str):
@@ -95,6 +108,11 @@ def initialize(data_dir: Path):
         with target.open("x", encoding="utf-8", newline="") as handle:
             handle.write(header + "\n")
         created.append(name)
+    context_path = data_dir / CONTEXT_FILE
+    if not context_path.exists():
+        with context_path.open("x", encoding="utf-8", newline="") as handle:
+            csv.writer(handle).writerow(CONTEXT_COLUMNS)
+        created.append(CONTEXT_FILE)
     return {"status": "READY", "data_dir": str(data_dir), "created": created,
             "existing_preserved": sorted(set(FILES) - set(created)), "network_used": False}
 
@@ -128,10 +146,25 @@ def _account_context(rows, account):
             "attribution": "ACCOUNT_LEVEL_ONLY"}
 
 
-def analyze(data_dir: Path, account: str, window: str):
+def analyze(data_dir: Path, account: str, window: str, *, experiment_id=None,
+            topic_cluster=None, language=None, definition=None, compare=False):
     _guard_local(data_dir)
     if window not in WINDOWS:
         raise ValueError("unsupported metric window")
+    scope = (experiment_id, topic_cluster, language, definition)
+    if compare and (not all(scope) or not all(SCOPE_PATTERN.fullmatch(v) for v in scope)):
+        raise ValueError("--compare requires valid --experiment-id --topic-cluster --language --definition")
+    if not SCOPE_PATTERN.fullmatch(account):
+        raise ValueError("invalid account alias")
+    controlled = compare and all(scope)
+    contexts = _read_table(data_dir / CONTEXT_FILE, CONTEXT_COLUMNS) if controlled else []
+    context_index = {}
+    for ctx in contexts:
+        key = (ctx["content_id"], ctx["x_post_url"])
+        if key in context_index:
+            context_index[key] = None  # ambiguous, do not count
+        else:
+            context_index[key] = ctx
     posts = _read_table(data_dir / FILES[0],
                         ("content_id", "mode", "status", "x_post_url", "account_handle",
                          "experiment_variable", "post_published_at"))
@@ -147,6 +180,14 @@ def analyze(data_dir: Path, account: str, window: str):
         if post["account_handle"] != account:
             continue
         group = _source(post)
+        if controlled:
+            key = (post.get("content_id"), post.get("x_post_url"))
+            ctx = context_index.get(key)
+            if ctx is None:
+                skipped["missing_or_duplicate_experiment_context"] += 1
+                continue
+            if (ctx["experiment_id"], ctx["topic_cluster"], ctx["language"]) != (experiment_id, topic_cluster, language):
+                continue
         if not group:
             skipped["untagged_posts"] += 1
             continue
@@ -181,6 +222,9 @@ def analyze(data_dir: Path, account: str, window: str):
             skipped["duplicate_snapshot_window"] += 1
             continue
         record = records[0]
+        if controlled and record.get("metric_definition_version") != definition:
+            skipped["metric_definition_mismatch"] += 1
+            continue
         pub = next((p for p in posts if p.get("content_id") == key[0] and p.get("x_post_url") == key[1]), None)
         published = _timestamp((pub or {}).get("post_published_at", ""))
         observed = _timestamp(record.get("observed_at", ""))
@@ -208,40 +252,65 @@ def analyze(data_dir: Path, account: str, window: str):
         if clicks is not None and impressions == 0 and clicks > 0:
             skipped["inconsistent_click_denominator"] += 1
             continue
-        collected[eligible[key]].append((impressions, clicks))
+        ctx = context_index.get(key) if controlled else None
+        minutes = _integer(ctx["founder_minutes"]) if ctx else None
+        quality = _integer(ctx["qualified_conversations"]) if ctx else None
+        collected[eligible[key]].append((impressions, clicks, minutes, quality))
     groups = []
     for name in GROUPS:
         items = collected[name]
-        complete = [(views, clicks) for views, clicks in items if clicks is not None]
-        total_complete_views = sum(views for views, _ in complete)
+        complete = [(views, clicks) for views, clicks, _, _ in items if clicks is not None]
+        positive = [(views, clicks) for views, clicks in complete if views > 0]
+        per_post_rates = [clicks * 1000 / views for views, clicks in positive]
+        work = [(mins, quality) for _, _, mins, quality in items
+                if mins is not None and mins > 0 and quality is not None]
+        total_complete_views = sum(views for views, _ in positive)
         groups.append({
             "source": name,
             "sample_count": len(items),
             "median_impressions": statistics.median(x[0] for x in items) if items else None,
             "total_impressions": sum(x[0] for x in items) if items else None,
+            "median_profile_clicks_per_1000": round(statistics.median(per_post_rates), 3) if per_post_rates else None,
+            "quality_per_founder_hour": round(sum(q for _, q in work) * 60 / sum(m for m, _ in work), 3) if work else None,
+            "work_samples": len(work),
             "profile_click_samples": len(complete),
             "profile_clicks_per_1000_impressions": (
-                round(sum(clicks for _, clicks in complete) * 1000 / total_complete_views, 3)
+                round(sum(clicks for _, clicks in positive) * 1000 / total_complete_views, 3)
                 if complete and total_complete_views > 0 else None),
             "profile_clicks_missing": len(items) - len(complete)
         })
-    compared = [g for g in groups if g["source"] != "original" and g["sample_count"] >= 5]
-    status = "DESCRIPTIVE_ONLY" if len(compared) >= 2 else "INSUFFICIENT_DATA"
+    by_source = {g["source"]: g for g in groups}
+    bc_ready = all(by_source[g]["sample_count"] >= 5 and by_source[g]["profile_click_samples"] >= 5
+                   for g in ("inspiration_ai", "timeline_ai"))
+    status = ("EXPLORATORY_ONLY" if not controlled else
+              "DESCRIPTIVE_ONLY" if bc_ready else "INSUFFICIENT_DATA")
+    b = by_source["inspiration_ai"]["median_profile_clicks_per_1000"]
+    c = by_source["timeline_ai"]["median_profile_clicks_per_1000"]
+    if status == "DESCRIPTIVE_ONLY" and b is not None and c is not None:
+        difference = "timeline_ai" if c > b else "inspiration_ai" if b > c else "equal"
+        suggestion = ("Observed higher median post-level interest in " + difference +
+                      "; review source, topic matching and time cost; do not infer causal lift.")
+    else:
+        suggestion = "Hold the source-allocation decision; collect matched B/C observations with complete profile clicks."
     return {
         "schema": "contentops.local-learning-brief/v1",
         "status": status, "account": account, "platform": "x", "window": window,
+        "scope": {"experiment_id": experiment_id, "topic_cluster": topic_cluster,
+                  "language": language, "metric_definition_version": definition},
+        "comparison_controlled": controlled,
+        "report_id": "XL-" + hashlib.sha256(json.dumps([account, window, scope, groups], sort_keys=True).encode()).hexdigest()[:16],
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "source": "USER_SUPPLIED_LOCAL_CSV_UNVERIFIED",
         "groups": groups, "skipped": dict(skipped),
         "account_context": _account_context(accounts, account),
-        "interpretation": ("Two or more source groups have >=5 observations. "
-                           "Differences are descriptive, not causal."
-                           if status == "DESCRIPTIVE_ONLY" else
-                           "Need >=5 comparable, published, organic observations "
-                           "in at least two reply-source groups."),
+        "interpretation": ("Matched B/C groups each have >=5 complete post-level observations. "
+                           "Difference is descriptive, not causal." if status == "DESCRIPTIVE_ONLY" else
+                           "Exploratory summary only: require --compare and four matching context dimensions."
+                           if status == "EXPLORATORY_ONLY" else
+                           "Not enough matching B/C reply observations with nonmissing clicks."),
         "next_experiment": {
             "primary_variable": "discovery_source",
-            "recommendation": "Compare same account/language/topic family/time windows; "
-                              "review exposure and profile-interest separately.",
+            "recommendation": suggestion,
             "proposed_topic": None,
             "approval": "FOUNDER_REVIEW_REQUIRED",
             "production_status": "NOT_AUTHORIZED",
@@ -257,14 +326,17 @@ def _markdown(report):
     lines = ["# Local X learning brief", "",
              f"Account: {report['account']} | Window: {report['window']}",
              f"Status: {report['status']} | Source: local user-supplied CSV (unverified)", "",
-             "| Discovery source | Samples | Median impressions | Profile clicks / 1k impressions |",
-             "|---|---:|---:|---:|"]
+             "| Discovery source | Samples | Median impressions | Median clicks / 1k per post | Pooled clicks / 1k | Quality / founder hour |",
+             "|---|---:|---:|---:|---:|---:|"]
     for g in report["groups"]:
         median = "unknown" if g["median_impressions"] is None else str(g["median_impressions"])
         rate = ("unknown" if g["profile_clicks_per_1000_impressions"] is None
                 else str(g["profile_clicks_per_1000_impressions"]))
-        lines.append(f"| {g['source']} | {g['sample_count']} | {median} | {rate} |")
-    lines.extend(["", report["interpretation"], "",
+        lines.append(f"| {g['source']} | {g['sample_count']} | {median} | "
+                     f"{g['median_profile_clicks_per_1000'] if g['median_profile_clicks_per_1000'] is not None else 'unknown'} | "
+                     f"{rate} | {g['quality_per_founder_hour'] if g['quality_per_founder_hour'] is not None else 'unknown'} |")
+    lines.extend(["", f"Report ID: {report['report_id']} | Scope: {report['scope']}",
+                  report["interpretation"], "",
                   "Account-level followers are never attributed to individual replies.",
                   "A missing metric is unknown, not zero. Group comparisons require "
                   "matching window, account, organic status and metric definition.",
@@ -285,6 +357,14 @@ def main(argv=None):
     parser.add_argument("--data-dir", type=Path, default=DEFAULT_DATA)
     parser.add_argument("--account", default="x-superplay-english")
     parser.add_argument("--window", default="T+24H", choices=WINDOWS)
+    parser.add_argument("--experiment-id")
+    parser.add_argument("--topic-cluster")
+    parser.add_argument("--language")
+    parser.add_argument("--definition")
+    parser.add_argument("--compare", action="store_true")
+    parser.add_argument("--report-id")
+    parser.add_argument("--decision", choices=DECISIONS)
+    parser.add_argument("--evidence-url")
     parser.add_argument("--topic", help="Founder-approved topic for routing")
     parser.add_argument("--reviewer", help="Human reviewer name for route")
     parser.add_argument("--confirm", action="store_true", help="Explicitly create a draft routing run")
@@ -295,24 +375,36 @@ def main(argv=None):
         elif args.command == "route":
             _guard_local(args.data_dir)
             latest = args.data_dir / "learning" / "latest.json"
-            if not args.confirm or not args.topic or not args.reviewer:
-                raise ValueError("route requires --confirm, --topic and --reviewer")
+            if not all((args.confirm, args.topic, args.reviewer, args.report_id,
+                        args.decision, args.evidence_url)):
+                raise ValueError("route requires --confirm --topic --reviewer --report-id --decision --evidence-url")
+            if not _valid_http_source(args.evidence_url):
+                raise ValueError("evidence URL must be HTTPS without credentials")
             if not latest.is_file():
                 raise ValueError("run analyze first; no local learning brief")
             evidence = json.loads(latest.read_text(encoding="utf-8"))
-            if evidence.get("account") != args.account or evidence.get("schema") != "contentops.local-learning-brief/v1":
+            if (evidence.get("account") != args.account or evidence.get("schema") != "contentops.local-learning-brief/v1"
+                    or evidence.get("report_id") != args.report_id or not evidence.get("comparison_controlled")):
                 raise ValueError("learning brief account/schema mismatch")
             command = [python_executable(), str(ROOT / "scripts" / "content_route.py"),
-                       "start", "--account", args.account, "--mode", "topic", "--topic", args.topic]
+                       "start", "--account", args.account, "--mode", "topic", "--topic", args.topic,
+                       "--url", args.evidence_url]
             run = hidden_run(command, cwd=str(ROOT), timeout=60)
             print(run.stdout or run.stderr)
             return run.returncode
         else:
-            result = analyze(args.data_dir, args.account, args.window)
+            result = analyze(args.data_dir, args.account, args.window, experiment_id=args.experiment_id,
+                             topic_cluster=args.topic_cluster, language=args.language,
+                             definition=args.definition, compare=args.compare)
             out = args.data_dir / "learning"
             out.mkdir(parents=True, exist_ok=True)
             (out / "latest.json").write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
             (out / "latest.md").write_text(_markdown(result), encoding="utf-8")
+            history = out / "history"
+            history.mkdir(parents=True, exist_ok=True)
+            archive = history / (result["report_id"] + ".json")
+            if not archive.exists():
+                archive.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
             result["local_report"] = str(out / "latest.md")
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0
