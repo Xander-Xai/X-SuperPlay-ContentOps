@@ -4,7 +4,8 @@
 
 简体中文 | [English](README.en.md)
 
-> 最后验证：2026-11-13；X 和跨平台离线分析已实现，真实账号增长效果尚无本仓验收。
+> 最后验证：2026-11-14（本次X代码/审稿合同变更，CI以PR检查为准）；真实账号增长效果尚无本仓验收。
+> X原创分为纯文字`post_format=text`和图文`post_format=image`，只有后者强制1600×900图片+ALT；泛兴趣采用独立人工审核档，不自动发布。
 > 统一执行标准：Strategy 唯一 X SOP 与注册账号 DNA；用户原始数据仅本地保存，人工审核与发布。
 
 
@@ -54,7 +55,7 @@
 
 ### X 原创内容奖励——拟定增长实验
 
-[X 项目入口](projects/x-growth-en/README.md) 已加入 [90 天证据驱动增长方案](projects/x-growth-en/original-content-rewards-90d.md) 和空白资格/周复盘模板。这些是**文档与人工数据记录**，不是自动采集、自动发布、收益资格或实际发表的证明。现有 X 内容与图片审核门禁仍是执行依据；原私有 `X-SuperPlay-X-Growth-OS` 仅作为待下线的历史迁移来源，不再作为独立执行权威。
+[X 项目入口](projects/x-growth-en/README.md) 已加入 [90 天证据驱动增长方案](projects/x-growth-en/original-content-rewards-90d.md) 和空白资格/周复盘模板。这些是**文档与人工数据记录**，不是自动采集、自动发布、收益资格或实际发表的证明。现有 X 内容与按格式触发的图片审核门禁仍是执行依据；原私有 `X-SuperPlay-X-Growth-OS` 仅作为待下线的历史迁移来源，不再作为独立执行权威。
 
 ### 分支现状
 
