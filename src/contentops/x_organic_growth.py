@@ -169,6 +169,9 @@ def _process(request):
             return _result("INSUFFICIENT_DATA", "NO_OBSERVATIONS")
         return build_weekly_report(request)
     if operation == "experiment":
+        if request.get("experiment_type") == "DISCOVERY_SOURCE":
+            return _result("BLOCKED", "USE_X_LEARNING_LOOP",
+                           note="Use x_learning_loop.py --compare with account/experiment/topic/language/metric version; no generic mean comparison.")
         records = request.get("records", [])
         if not records:
             return _result("INSUFFICIENT_DATA", "NO_OBSERVATIONS")
