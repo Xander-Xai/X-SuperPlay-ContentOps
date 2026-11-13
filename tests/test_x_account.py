@@ -176,6 +176,7 @@ def test_v13_skills_docs_and_prompt_share_single_account_targets():
         ROOT / "projects/x-growth-en/README.md",
         ROOT / "projects/x-growth-en/original-content-rewards-90d.md",
         ROOT / "config/accounts/prompts/x-superplay-english.prompt.md",
+        ROOT / "projects/x-growth-en/project.yaml",
     )
     for path in paths:
         body = path.read_text(encoding="utf-8")
