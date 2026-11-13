@@ -4,7 +4,9 @@
 
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
-> Last verified: 2026-11-12 on `main` at `c1da6dd` (PR #159; read-only documentation sync).
+> Last verified: 2026-11-13 against PR #174 candidate; main table remains the 2026-11-12 baseline.
+> Branch delta: local-only X metrics review and explicit manual Topic handoff. Not merged or a platform result.
+
 > Facts below describe `main`; deferred or rights-blocked work is labelled as such.
 > Sections below the "Layer status" table are historical milestone records;
 > they describe how a capability was proven, not what is current.
