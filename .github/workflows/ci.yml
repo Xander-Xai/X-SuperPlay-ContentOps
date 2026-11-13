@@ -585,6 +585,10 @@ jobs:
       - name: Run X organic growth operator tests
         run: python tests/test_x_organic_growth.py
 
+      # Private local CSV never enters CI; this uses only synthetic temp fixtures.
+      - name: Run X local learning loop tests
+        run: python tests/test_x_learning_loop.py
+
       # The end-to-end chain: growth -> enrichment -> gate -> manual package.
       - name: Run X growth integration tests
         run: python tests/test_x_growth_integration.py
