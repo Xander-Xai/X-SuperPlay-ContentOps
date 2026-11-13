@@ -304,6 +304,14 @@ def handoff(directory: Path, *, account_profile: str, topic: str,
     report = json.loads(latest.read_text(encoding="utf-8"))
     if report.get("schema") != SCHEMA or report.get("report_id") != report_id:
         raise ValueError("Learning Brief schema/report-id mismatch")
+    input_digest = hashlib.sha256()
+    for filename in ("content-index.csv", "metric-snapshots.csv"):
+        data_path = directory / filename
+        if not data_path.is_file():
+            raise ValueError("local metric source missing; re-run analyze")
+        input_digest.update(data_path.read_bytes())
+    if report.get("input_sha256") != input_digest.hexdigest():
+        raise ValueError("source CSV changed since this Learning Brief; re-run analyze")
     if report.get("status") != "DESCRIPTIVE_ONLY" or decision not in ("CONTINUE", "ADJUST"):
         raise ValueError("route requires a comparable report and approved CONTINUE/ADJUST decision")
     if not topic.strip() or not reviewer.strip() or not _url(evidence_url):
