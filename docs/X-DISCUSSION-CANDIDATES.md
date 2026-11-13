@@ -3,7 +3,7 @@
 > Last reviewed: 2026-11-13. Local human-scored candidates only; no X network access, publication or real-result validation.
 
 策略唯一权威：Strategy 仓 03-Execution/X-Inspiration-vs-Timeline-Growth-Experiment-20261113.md。
-本文件只说明执行脚本，不另起一套配额或新阈值。当前 Strategy V1.2 设为每日人工回复目标**A25+B25+C50=100条**，原创**中文6条+英文4条**（题材不限技术）；注册的 x-superplay-english 负责最多4条英文原创/日且依然人工审核，中文账号尚待确认。旧3–4/week、1/day、10–15分钟限制已归历史。
+本文件只说明执行脚本，不另起一套配额或新阈值。当前 Strategy V1.2 设为每日人工回复目标**A25+B25+C50=100条**，原创**中文6条+英文4条**（题材不限技术）；唯一已注册X账号 `x-superplay-english` 同时负责中文6+英文4=10条原创发布及全部100条人工回复。每条声明 `language=zh|en`，不创建中文第二账号；旧4/day、28/week及低频目标均属历史。
 
 ## 初始化 / 排序（Windows PowerShell）
 
@@ -19,7 +19,7 @@
 
 - source_url：公开主帖的 https://x.com/<handle>/status/<id>。
 - account_handle：如 x-superplay-english；不是原作者的 handle。
-- language：账号主语言 en 或 zh；账号分别筛选，不混合。
+- language：每条候选使用en或zh；同一个账号可分别按语言筛选和复盘，不是两个账号。
 - discovery_source：仅 inspiration_broad、inspiration_ai、timeline_ai 三类。
 - topic_cluster：真实主题簇，可用于之后实验配对。
 - observed_at：有时区的真实观察时间，如 2026-11-13T11:00:00+08:00。
@@ -39,6 +39,7 @@ evidence_quality=4、discussion_potential=4、duplication_risk=1、compliance_ri
 运行：
 
     python scripts/x_discussion_candidates.py rank --account x-superplay-english --language en
+    python scripts/x_discussion_candidates.py rank --account x-superplay-english --language zh
 
 本地输出：
 
