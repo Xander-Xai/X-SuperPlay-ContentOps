@@ -4,7 +4,7 @@
 
 > Authoritative local verification strategy, suite inventory and CI wiring.
 >
-> Last verified: 2026-11-13: offline X and cross-platform learning, human-reviewed Topic route; no live platform outcome claimed.
+> Last verified: 2026-11-14: added focused X regression cases for no-image text READY/package/URL recording, image-mode refusal, profile-specific review thresholds, and fail-closed account config; overall CI result is determined by the PR checks, not this statement.
 > X policy: Strategy canonical SOP and registered account DNA; source metrics and publishing still require human verification.
 
 
