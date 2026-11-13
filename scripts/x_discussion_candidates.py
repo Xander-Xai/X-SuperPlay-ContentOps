@@ -102,7 +102,7 @@ def rank(directory: Path, account: str, language: str):
     if not profile_path.is_file():
         raise ValueError("registered X account DNA required")
     profile = json.loads(profile_path.read_text(encoding="utf-8"))
-    if (profile.get("slug") != account or profile.get("language") != language
+    if (profile.get("slug") != account or language not in (profile.get("allowed_languages") or [profile.get("language")])
             or "x" not in (profile.get("platforms") or [])):
         raise ValueError("candidate language/account must match registered X DNA")
     path = directory / INPUT_NAME
