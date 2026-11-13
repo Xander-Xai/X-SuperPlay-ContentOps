@@ -310,8 +310,10 @@ class HighEngagementCopywriterContractTests(unittest.TestCase):
         self.assertIn("C1:TRANSACTIONAL_FOLLOW_BAIT", errs)
 
     def test_single_account_accepts_chinese_and_english_copywriter_drafts(self):
-        zh = self._draft(language="zh-CN")
-        self.assertNotIn("ACCOUNT_LANGUAGE_MISMATCH", self.mod.draft_errors(zh, self.ledger))
+        for language in ("zh", "zh-CN"):
+            zh = self._draft(language=language)
+            self.assertNotIn("ACCOUNT_LANGUAGE_MISMATCH", self.mod.draft_errors(zh, self.ledger))
+            self.assertNotIn("BAD_LANGUAGE", self.mod.draft_errors(zh, self.ledger))
         en = self._draft(language="en")
         self.assertEqual(self.mod.draft_errors(en, self.ledger), [])
         unsupported = self._draft(language="fr")
