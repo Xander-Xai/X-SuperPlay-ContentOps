@@ -57,9 +57,9 @@ published_at、observed_at、window、metric_source、metric_definition_version�
 
 以 B站技术视频为例（使用已注册的账号 Profile）：
 
-    python scripts/platform_learning_loop.py analyze --platform bilibili --account x-superplay-future-intelligence --format video --topic-cluster ai_agent --window T+24H --metric views_or_reads --interest saves --definition native_v1
+    python scripts/platform_learning_loop.py analyze --platform bilibili --account x-superplay-future-intelligence --format video --topic-cluster ai_agent --window T+24H --metric views_or_reads --interest saves --definition native_v1 --experiment-id CEXP-20261113-001
 
-只有平台、账号、格式、话题簇、时间窗和指标版本一致才比较。
+只有平台、账号、实验 ID、格式、话题簇、时间窗和指标版本一致才比较。多个实验 ID 未明确指定时返回 INCOMPARABLE_EXPERIMENTS，禁止把结果用于数据驱动路由。
 两个来源组各有至少 5 条、且各自至少 5 条具有完整主指标与兴趣指标时，标 DESCRIPTIVE_ONLY；否则 INSUFFICIENT_DATA。
 这仍然只是描述统计，不证明平台算法的因果推荐效果。
 
