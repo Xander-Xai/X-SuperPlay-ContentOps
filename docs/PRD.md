@@ -2,8 +2,8 @@
 
 [English](PRD.md) | [简体中文](PRD.zh-CN.md)
 
-> Last verified: 2026-11-13 against PR #174 candidate; main status remains the 2026-11-12 baseline.
-> Branch delta: local X metric learning and manual Topic handoff; account data stays private; not merged.
+> Last verified: 2026-11-13. Local-only X/cross-platform feedback starts reviewed Topics, never platform actions.
+> X priority: platform rules/human gates -> registered account DNA -> Strategy X SOP -> scoped experiment.
 
 > against the code on that date; a requirement marked implemented has code here,
 > which is not the same as a published work.
