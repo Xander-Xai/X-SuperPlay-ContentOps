@@ -218,6 +218,30 @@ class XLocalLearningTests(unittest.TestCase):
             self.assertFalse(receipt["publication_authorized"])
             self.assertEqual(receipt["evidence_url"], "https://docs.example.org/source")
 
+    def test_changed_source_blocks_past_report_route(self):
+        import json
+        from x_learning_loop import main
+        for i in range(1, 6):
+            cid, url = self._post(i, "inspiration_ai")
+            self._context(cid, url)
+            self._metric(cid, url)
+        for i in range(6, 11):
+            cid, url = self._post(i, "timeline_ai")
+            self._context(cid, url)
+            self._metric(cid, url)
+        args = ["--data-dir", str(self.data), "--account", "x-superplay-english"]
+        self.assertEqual(main(["analyze", *args, "--compare", "--experiment-id",
+                               "CEXP-20261113-001", "--topic-cluster", "ai_agent",
+                               "--language", "en", "--definition", "native_v1"]), 0)
+        latest = json.loads((self.data / "learning" / "latest.json").read_text(encoding="utf-8"))
+        with (self.data / CONTEXT_FILE).open("a", encoding="utf-8") as file:
+            file.write("\n")
+        self.assertEqual(main(["route", *args, "--report-id", latest["report_id"],
+                               "--decision", "CONTINUE", "--reviewer", "Founder",
+                               "--topic", "New Agent topic",
+                               "--evidence-url", "https://docs.example.org/agent",
+                               "--confirm"]), 2)
+
     def test_route_rejects_stale_report_identity(self):
         import json
         from x_learning_loop import main
