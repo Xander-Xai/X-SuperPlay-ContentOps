@@ -276,32 +276,38 @@ def _report_markdown(result):
 
 
 def handoff(directory: Path, *, account_profile: str, topic: str,
-            reviewer: str, evidence_url: str):
+            reviewer: str, evidence_url: str, report_id: str = "", decision: str = ""):
     _local_guard(directory)
     _safe_slug(account_profile, "account-profile")
     latest = directory / "learning" / "latest.json"
     if not latest.is_file():
         raise ValueError("analyze first; latest Learning Brief not found")
     report = json.loads(latest.read_text(encoding="utf-8"))
-    if report.get("schema") != SCHEMA:
-        raise ValueError("wrong Learning Brief schema")
+    if report.get("schema") != SCHEMA or report.get("report_id") != report_id:
+        raise ValueError("Learning Brief schema/report-id mismatch")
+    if report.get("status") != "DESCRIPTIVE_ONLY" or decision not in ("CONTINUE", "ADJUST"):
+        raise ValueError("route requires a comparable report and approved CONTINUE/ADJUST decision")
     if not topic.strip() or not reviewer.strip() or not _url(evidence_url):
         raise ValueError("handoff requires a topic, reviewer and real HTTPS evidence URL")
     profile = ROOT / "config" / "accounts" / (account_profile + ".json")
     if not profile.is_file():
         raise ValueError("account profile is not registered in ContentOps")
     account_spec = json.loads(profile.read_text(encoding="utf-8"))
+    if report.get("account_alias") != account_profile or account_spec.get("slug") != account_profile:
+        raise ValueError("report account alias does not match route account profile")
     if report.get("platform") not in (account_spec.get("platforms") or []):
         raise ValueError("account profile does not authorize this platform; "
                          "do not route cross-platform learning to an unrelated account")
     cmd = [python_executable(), str(ROOT / "scripts" / "content_route.py"),
-           "start", "--account", account_profile, "--mode", "topic", "--topic", topic]
+           "start", "--account", account_profile, "--mode", "topic", "--topic", topic,
+           "--url", evidence_url, "--by", reviewer]
     result = hidden_run(cmd, cwd=str(ROOT), timeout=90)
     receipt = {
         "schema": "contentops.reviewed-learning-handoff/v1",
         "learning_schema": SCHEMA,
         "platform": report["platform"], "account_alias": report["account_alias"],
         "reviewer": reviewer, "evidence_url": evidence_url, "topic": topic,
+        "report_id": report_id, "decision": decision,
         "router_account_profile": account_profile,
         "router_exit_code": result.returncode,
         "status": "ROUTED_FOR_HUMAN_REVIEW" if result.returncode == 0 else "ROUTE_BLOCKED",
@@ -329,16 +335,19 @@ def main():
     parser.add_argument("--reviewer")
     parser.add_argument("--evidence-url")
     parser.add_argument("--confirm", action="store_true")
+    parser.add_argument("--report-id")
+    parser.add_argument("--decision", choices=DECISIONS)
     args = parser.parse_args()
     try:
         if args.command == "init":
             result = initialize(args.data_dir)
         elif args.command == "route":
-            if not args.confirm:
-                raise ValueError("route requires explicit --confirm")
+            if not args.confirm or not args.report_id or not args.decision:
+                raise ValueError("route requires --confirm --report-id --decision")
             result = handoff(args.data_dir, account_profile=args.account_profile or "",
                              topic=args.topic or "", reviewer=args.reviewer or "",
-                             evidence_url=args.evidence_url or "")
+                             evidence_url=args.evidence_url or "", report_id=args.report_id,
+                             decision=args.decision)
         else:
             if not all((args.platform, args.account, args.format, args.topic_cluster)):
                 raise ValueError("analyze requires --platform --account --format --topic-cluster")
@@ -351,6 +360,11 @@ def main():
             (output / "latest.json").write_text(
                 json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
             (output / "latest.md").write_text(_report_markdown(result), encoding="utf-8")
+            history = output / "history"
+            history.mkdir(parents=True, exist_ok=True)
+            archive = history / (result["report_id"] + ".json")
+            if not archive.exists():
+                archive.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0 if result.get("status") != "ROUTE_BLOCKED" else 2
     except (ValueError, OSError, csv.Error) as exc:
