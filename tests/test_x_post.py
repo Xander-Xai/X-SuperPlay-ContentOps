@@ -212,13 +212,20 @@ def test_the_weighted_count_weighs_urls_and_wide_code_points():
 
 
 @test
-def test_a_non_latin_script_is_refused_and_not_silently_counted():
+def test_bilingual_copy_is_checked_against_declared_post_language():
     assert foreign_scripts("plain english") == []
     assert foreign_scripts("中文") == ["U+4E2D", "U+6587"]
     issues = validate_post(_mutated(post_copy__parts=["This account writes in English only"]),
                            _account())
     assert "LANGUAGE_NOT_EN" not in _codes(issues)
-    print("[ok] 2. a non-Latin script is detected, and clean English is not refused")
+    zh_issues = validate_post(_mutated(language="zh", post_copy__parts=["今天用真实数据来评估这款工具。"]), _account())
+    assert "LANGUAGE_NOT_EN" not in _codes(zh_issues)
+    assert "LANGUAGE_NOT_ZH" not in _codes(zh_issues)
+    en_issues = validate_post(_mutated(language="en", post_copy__parts=["今天用真实数据来评估这款工具。"]), _account())
+    assert "LANGUAGE_NOT_EN" in _codes(en_issues)
+    bad_issues = validate_post(_mutated(language="fr", post_copy__parts=["Un texte français"]), _account())
+    assert "LANGUAGE_UNSUPPORTED" in _codes(bad_issues)
+    print("[ok] 2. Chinese and English use one account with explicit post language")
 
 
 # ------------------------------------------------------------------- the picture
@@ -750,7 +757,7 @@ def test_the_shipped_account_is_the_only_one_this_gate_accepts():
     with tempfile.TemporaryDirectory() as temp:
         project = _project(temp)
         assert post_verdict(_post(), account, root=project) == "READY"
-    print("[ok] 24. the shipped English account accepts a valid record")
+    print("[ok] 24. the shipped bilingual account accepts a valid record")
 
 
 def main() -> int:
