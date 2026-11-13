@@ -78,7 +78,7 @@ X-SuperPlay-Strategy/03-Execution/X-Inspiration-vs-Timeline-Growth-Experiment-20
 This is a high-intensity plan, not permission for repeated unsolicited or low-value replies. Original posts, existing account
 cadence, quality/rights gates and human time budget still take priority.
 
-1. The current manual daily candidate targets are **A=40 general entertainment Inspiration replies**, **B=40 AI/tech Inspiration replies**, and **C=80 AI/tech Timeline replies** (100 planned). They are targets for **human judgment**, not permission for bulk unsolicited replies, inauthentic engagement, duplicate messages or bypassing platform limits. The same-account daily original publication plan is **20 zh + 4 en**, with no technical-only content requirement. Log planned / reviewed / eligible / actually published / skipped separately; stop if quality, safety, recipient or time limits are exceeded.
+1. The current manual daily candidate targets are **A=40 general entertainment Inspiration replies**, **B=40 AI/tech Inspiration replies**, and **C=80 AI/tech Timeline replies** (160 planned). They are targets for **human judgment**, not permission for bulk unsolicited replies, inauthentic engagement, duplicate messages or bypassing platform limits. The same-account daily original publication plan is **20 zh + 4 en**, with no technical-only content requirement. Log planned / reviewed / eligible / actually published / skipped separately; stop if quality, safety, recipient or time limits are exceeded.
 2. Operator manually discovers public discussions in X Inspiration and Timeline;
    the label is a *discovery surface*, **not** verified traffic attribution.
    Label A = inspiration_broad (entertainment/exploration), B = inspiration_ai,
@@ -114,7 +114,7 @@ cadence, quality/rights gates and human time budget still take priority.
    claiming a data-driven decision. Keep unchanged quality/review gates.
    Never auto-publish or auto-change account cadence.
 
-**Old 32 replies/day + two original posts and 50–65-minute budgets have been superseded by V1.2.** The new V1.3 160+24 counts are ambitious quality-conditional planning goals, not a guarantee of 100 eligible conversations or publication permission. Use observed actual hours and the same existing CSV/learning tools, not a parallel automated mass-reply system.
+**Old 32 replies/day + two original posts and 50–65-minute budgets have been superseded by V1.3.** The new V1.3 160+24 counts are ambitious quality-conditional planning goals, not a guarantee of 160 eligible conversations or publication permission. Use observed actual hours and the same existing CSV/learning tools, not a parallel automated mass-reply system.
 This skill's output is advisory, not a platform-compliance ruling.
 
 ## Offline demonstrations
@@ -171,7 +171,7 @@ receipts.
   comparison or an automatic answer to every trending thread.
 - **Route precisely:** one quoted source post + request to comment means
   REPLY_DRAFT (default one concise draft), not ORIGINAL_POST. A later request
-  for 24 new posts means ten independently original candidates, **not ten
+  for 24 new posts means 24 independently original DRAFT candidates, not 24 proven publications, **not ten
   engagement actions**. The copyright, evidence, account and manual review
   gates apply to both.
 - **Do not confuse reciprocity with growth:** friendly, substantive responses
