@@ -572,6 +572,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--topic", help="the post's subject, for --new")
     parser.add_argument("--source", action="append", default=[],
                         help="a source URL, repeatable")
+    parser.add_argument("--language", choices=("zh", "en"), default="en",
+                        help="language of this original post, zh or en; both use the same X account")
     parser.add_argument("--mode", default="workflow_artifact",
                         help="one of the account's content pillars")
     parser.add_argument("--prompt", default="",
@@ -618,7 +620,7 @@ def main(argv: Optional[List[str]] = None) -> int:
 
         if args.new:
             result = action_new(project, content_id, args.topic or "", args.source,
-                                args.mode, args.prompt)
+                                args.mode, args.prompt, args.language)
         elif args.check:
             result = action_check(project, content_id)
         elif args.package:
