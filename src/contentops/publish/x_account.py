@@ -122,8 +122,19 @@ def check_x_account(
         if key not in dna:
             failures.append(f"missing required key {key!r}")
 
-    if dna.get("language") != "en":
-        failures.append(f"language is {dna.get('language')!r}, expected 'en'")
+    languages = dna.get("allowed_languages")
+    if dna.get("language") != "multi":
+        failures.append(f"language is {dna.get('language')!r}, expected 'multi' for the single bilingual X account")
+    if languages != ["zh", "en"]:
+        failures.append(f"allowed_languages is {languages!r}, expected ['zh', 'en']")
+    if dna.get("default_post_language") not in (languages if isinstance(languages, list) else []):
+        failures.append("default_post_language must be one of allowed_languages")
+    originals = dna.get("daily_original_targets")
+    if originals != {"zh": 6, "en": 4}:
+        failures.append(f"daily_original_targets is {originals!r}, expected zh=6 and en=4")
+    replies = dna.get("daily_reply_targets")
+    if replies != {"inspiration_broad": 25, "inspiration_ai": 25, "timeline_ai": 50}:
+        failures.append("daily_reply_targets must be inspiration_broad=25, inspiration_ai=25, timeline_ai=50")
     if not str(dna.get("account") or "").strip():
         failures.append("account is empty")
     platforms = [str(item) for item in dna.get("platforms") or []]
@@ -319,6 +330,8 @@ def check_x_account(
         failures.append(
             f"cadence.original_posts_per_week is {window!r}, expected "
             f"[low, high] within 1..{weekly_capacity} based on daily max")
+    if max_daily != 10 or window != [70, 70]:
+        failures.append("cadence must be 10 originals/day and 70/week for the current single-account plan")
     if not cadence.get("rule"):
         failures.append("cadence has no rule")
 
