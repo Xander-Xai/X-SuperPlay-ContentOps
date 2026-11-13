@@ -166,7 +166,7 @@ def test_bilingual_targets_are_not_silently_split_across_accounts():
 
 
 @test
-def test_v13_skills_docs_and_prompt_share_single_account_targets():
+def test_v14_skills_docs_and_prompt_share_single_account_targets():
     from pathlib import Path
     paths = (
         ROOT / "skills/x-high-engagement-copywriter/SKILL.md",
@@ -186,6 +186,46 @@ def test_v13_skills_docs_and_prompt_share_single_account_targets():
         assert "20" in body and "4" in body, path
         assert "same" in body.lower() or "single" in body.lower() or "同一" in body or "唯一" in body or "ONE" in body, path
     print("[ok] both X skills, project docs and prompt use current single-account 160+24 goals")
+
+
+
+@test
+def test_v14_manual_relationship_and_format_adapters_do_not_restore_old_limits():
+    """Check docs/skills as well as account JSON; execution CI previously missed stale prose."""
+    account = _x()
+    assert account["language"] == "multi"
+    assert account["publication"]["mode"] == "MANUAL_ONLY"
+    assert account["daily_original_targets"] == {"zh": 20, "en": 4}
+    assert account["daily_reply_targets"] == {
+        "inspiration_broad": 40,
+        "inspiration_ai": 40,
+        "timeline_ai": 80,
+    }
+    assert "V1.4" in account["business"]["source_of_truth"]
+    for relative in (
+        "skills/x-organic-growth-operator/SKILL.md",
+        "skills/x-high-engagement-copywriter/SKILL.md",
+        "docs/X-DISCUSSION-CANDIDATES.md",
+        "docs/X-LOCAL-LEARNING-LOOP.md",
+        "projects/x-growth-en/README.md",
+        "config/accounts/prompts/x-superplay-english.prompt.md",
+        "projects/x-growth-en/templates/x-rewards-weekly-review.md",
+    ):
+        content = (ROOT / relative).read_text(encoding="utf-8")
+        assert "V1.4" in content, relative
+    lessons = (
+        ROOT / "skills/x-high-engagement-copywriter/references/"
+        "reply-batch-and-original-post-lessons-2026-11-13.md"
+    ).read_text(encoding="utf-8")
+    assert "V1.4" in lessons
+    assert "原创每周 3–4 条、每天最多 1 条是账号上限" not in lessons
+    operator = (ROOT / "skills/x-organic-growth-operator/SKILL.md").read_text(encoding="utf-8")
+    assert "X Strategy SOP V1.4 governs business priority" in operator
+    assert "not an extra quota" in operator
+    weekly = (ROOT / "projects/x-growth-en/templates/x-rewards-weekly-review.md").read_text(encoding="utf-8")
+    assert "不重复算作新的 B/C 首访样本" in weekly
+    assert "不推导通用算法配额" in weekly
+    print("[ok] X V1.4 entrypoints, history, follow-up and manual-only boundaries align")
 
 
 @test

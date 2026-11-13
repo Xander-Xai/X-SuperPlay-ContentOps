@@ -14,7 +14,7 @@ Use user-provided material or sources the operator is authorized to access.
 
 ## Canonical X authority (all tasks)
 
-X Strategy SOP V1.3 governs business priority; the registered Account DNA
+X Strategy SOP V1.4 governs business priority; the registered Account DNA
 in config/accounts/x-superplay-english.json governs the single bilingual account's
 cadence (**24 original posts/day: Chinese 20 + English 4 on ONE bilingual X account**), evidence and manual publication. The same account also targets 160 contextual, human-reviewed replies daily (A40/B40/C80). The historic `x-superplay-english` slug is not an English-only or separate account. Older volume figures are historical. Original qualifying Home Timeline Q, ordinary
 reply impressions, account net followers, and post-level profile clicks are
@@ -117,7 +117,7 @@ cadence, quality/rights gates and human time budget still take priority.
    claiming a data-driven decision. Keep unchanged quality/review gates.
    Never auto-publish or auto-change account cadence.
 
-**Old 32 replies/day + two original posts and 50–65-minute budgets have been superseded by V1.3.** The new V1.3 160+24 counts are ambitious quality-conditional planning goals, not a guarantee of 160 eligible conversations or publication permission. Use observed actual hours and the same existing CSV/learning tools, not a parallel automated mass-reply system.
+**Old 32 replies/day + two original posts and 50–65-minute budgets have been superseded by V1.3.** The current V1.4 160+24 counts are ambitious quality-conditional planning goals, not a guarantee of 160 eligible conversations or publication permission. Use observed actual hours and the same existing CSV/learning tools, not a parallel automated mass-reply system.
 This skill's output is advisory, not a platform-compliance ruling.
 
 ## Offline demonstrations

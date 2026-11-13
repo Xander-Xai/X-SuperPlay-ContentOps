@@ -1,4 +1,4 @@
-# X 本地运营数据闭环｜唯一执行手册（2026-11-13）
+# X 本地运营数据闭环｜唯一执行手册（2026-11-14；V1.4）
 
 **权威优先级**：X 官方与安全规范 → ContentOps 真实账号 DNA → Strategy 的
 [唯一 X 增长 SOP V1.4](https://github.com/Xander-Xai/X-SuperPlay-Strategy/blob/main/01-Strategy/X-Original-Content-Rewards-Growth-V1.md)

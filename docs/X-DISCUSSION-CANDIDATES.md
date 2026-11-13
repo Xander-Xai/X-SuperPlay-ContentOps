@@ -1,9 +1,9 @@
 # X 灵感 vs 时间线：人工候选热帖筛选（本地 V1）
 
-> Last reviewed: 2026-11-13. Local human-scored candidates only; no X network access, publication or real-result validation.
+> Last reviewed: 2026-11-14. Local human-scored candidates only; no X network access, publication or real-result validation.
 
 策略唯一权威：Strategy 仓 03-Execution/X-Inspiration-vs-Timeline-Growth-Experiment-20261113.md。
-本文件只说明执行脚本，不另起一套配额或新阈值。当前 Strategy V1.3 设为每日人工回复目标**A40+B40+C80=160条**，原创**中文20条+英文4条**（题材不限技术）；唯一已注册X账号 `x-superplay-english` 同时负责中文20+英文4=24条原创发布及全部160条人工回复。每条声明 `language=zh|en`，不创建中文第二账号；旧4/day、28/week及低频目标均属历史。
+本文件只说明执行脚本，不另起一套配额或新阈值。当前 Strategy V1.4 设为每日人工回复目标**A40+B40+C80=160条**，原创**中文20条+英文4条**（题材不限技术）；唯一已注册X账号 `x-superplay-english` 同时负责中文20+英文4=24条原创发布及全部160条人工回复。每条声明 `language=zh|en`，不创建中文第二账号；旧4/day、28/week及低频目标均属历史。
 
 ## 初始化 / 排序（Windows PowerShell）
 
