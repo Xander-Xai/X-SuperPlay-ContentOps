@@ -4,7 +4,8 @@
 
 [简体中文](README.md) | English
 
-> Last verified: 2026-11-13. Local-only X and cross-platform analytics exist; no live account growth is verified.
+> Last verified: 2026-11-14. Local-only X and cross-platform analytics exist; no live account growth is verified.
+> X original-post workflow now supports explicit `post_format=text` without an image/ALT, or `post_format=image` with real 1600x900 raster+ALT. General-interest writing has a separate evidence-honest human rubric; all publication is still manual and requires a real own X URL.
 > Operating authority: canonical Strategy X SOP and account DNA; local-only real analytics and human review/manual publishing.
 
 > `main`, never a draft branch.
