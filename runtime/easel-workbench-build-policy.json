@@ -10,5 +10,13 @@
     "run",
     "build"
   ],
-  "note": "Tool versions are the exact read-only observations on 2026-11-13. The package lock is tied to the pinned v0.3.0 tree. A build receipt is valid only when these values match and the build was freshly run in an approved isolated instance."
+  "note": "Tool versions are exact read-only observations from the 2026-11-13 build (kept under `observed`). A receipt is valid when the toolchain either equals the observation or falls inside `toolchain_range` — upstream documents 25.x as incompatible, so the range stops below it. The package lock is tied to the pinned v0.3.0 tree; a receipt is valid only when the lock digest matches and the build was freshly run in an approved isolated instance.",
+  "toolchain_range": {
+    "node": ">=20 <25",
+    "npm": ">=10"
+  },
+  "observed": {
+    "node": "v24.16.0",
+    "npm": "11.13.0"
+  }
 }

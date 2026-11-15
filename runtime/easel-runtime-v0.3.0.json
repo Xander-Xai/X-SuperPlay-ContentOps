@@ -10,11 +10,11 @@
   "acquisition": "release_archive",
   "verified": true,
   "verification_method": "upstream_overlay_and_generated_profiles",
-  "verified_at": "2026-11-15T15:31:07+00:00",
+  "verified_at": "2026-11-15T17:08:19+00:00",
   "content_verified": true,
   "content_verified_files": 1071,
   "content_verified_commit": "bb3c8ff0463f36c202454d74171682ba6e470cb1",
-  "content_verified_at": "2026-11-15T15:31:07+00:00",
+  "content_verified_at": "2026-11-15T17:08:19+00:00",
   "commit_matches_pin": true,
   "note": "Written by scripts/easel_engine.py verify. This is the record resolve_easel(live=False) trusts for this engine only."
 }

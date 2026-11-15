@@ -933,6 +933,48 @@ def verify_overlay(record_path: Path = OVERLAY_RECORD,
     return result
 
 
+def _version_in_range(version: str, spec: str) -> bool:
+    """Semver-ish membership for the build policy's toolchain ranges.
+
+    Supports the constraint forms the policy actually uses (`>=20 <25`,
+    `>=10`). Anything it cannot parse fails closed: an unparsable range must
+    reject every toolchain, not accept every one.
+    """
+    if not version or not spec:
+        return False
+    digits = []
+    for token in version.strip().lstrip("vV").split("."):
+        head = ""
+        for ch in token:
+            if ch.isdigit():
+                head += ch
+            else:
+                break
+        if not head:
+            return False
+        digits.append(int(head))
+    while len(digits) < 3:
+        digits.append(0)
+
+    def satisfies(constraint: str) -> bool:
+        m = re.fullmatch(r"(>=|<=|>|<|==|=|\^|~)\s*(\d+)(?:\.(\d+))?(?:\.(\d+))?",
+                         constraint.strip())
+        if not m:
+            return False
+        op = m.group(1)
+        target = [int(m.group(2)), int(m.group(3) or 0), int(m.group(4) or 0)]
+        c = (digits > target) - (digits < target)
+        return {
+            "<": c < 0, "<=": c <= 0, ">": c > 0, ">=": c >= 0,
+            "==": c == 0, "=": c == 0,
+            "^": digits[0] == target[0] and tuple(digits) >= tuple(target),
+            "~": (digits[0], digits[1]) == (target[0], target[1])
+                 and tuple(digits) >= tuple(target),
+        }[op]
+
+    return all(satisfies(c) for c in spec.split() if c.strip())
+
+
 def verify_frontend_build(frontend_dir: Path, manifest_path: Path,
                           expected_commit: str,
                           policy_path: Path = FRONTEND_BUILD_POLICY) -> dict:
@@ -1014,9 +1056,19 @@ def verify_frontend_build(frontend_dir: Path, manifest_path: Path,
         result["reason"] = "frontend Node and npm versions are required"
         return result
     expected_toolchain = policy.get("toolchain")
-    if not isinstance(expected_toolchain, dict) or toolchain != expected_toolchain:
+    matched_rule = None
+    if isinstance(expected_toolchain, dict) and toolchain == expected_toolchain:
+        matched_rule = "exact"
+    else:
+        toolchain_range = policy.get("toolchain_range")
+        if isinstance(toolchain_range, dict) and all(
+                _version_in_range(toolchain.get(name, ""), toolchain_range.get(name, ""))
+                for name in ("node", "npm")):
+            matched_rule = "range"
+    if matched_rule is None:
         result["reason"] = "frontend toolchain does not match the reviewed build policy"
         return result
+    result["toolchain_rule"] = matched_rule
     expected_command = policy.get("build_command")
     if not isinstance(expected_command, list) or manifest.get("build_command") != expected_command:
         result["reason"] = "frontend build command is not the reviewed package build"

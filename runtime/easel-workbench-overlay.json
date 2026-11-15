@@ -2,9 +2,9 @@
   "schema": "contentops.easel-workbench-overlay/v1",
   "note": "The workbench is a runnable Easel instance with its own tuning layer. This record separates the two things the byte comparison used to conflate: the upstream baseline (read-only, proven against an upstream commit) and the local overlay (the tuning). A file listed in overlay.files is EXPECTED to differ from upstream; a file that is NOT listed must match upstream byte for byte. That is what makes tuning auditable instead of invisible.",
   "instance": {
-    "path": "D:\\Projects\\_worktrees\\easel-v030-rebuild-20261113b",
+    "path": "D:\\Projects\\X-SuperPlay-ContentOps\\.runtime\\easel-v030",
     "path_env": "CONTENTOPS_EASEL_WORKBENCH",
-    "note": "Default approved clean candidate, rebuilt from the full pinned commit archive. CONTENTOPS_EASEL_WORKBENCH remains an explicit per-process override.",
+    "note": "Re-installed on 2026-11-15 by scripts/easel_engine.py install into the repository's controlled runtime directory; the previous extracted candidate at D://Projects//_worktrees//easel-v030-rebuild-20261113b remains on disk as the rebuild source. Every baseline and overlay byte was compared before the copy, and the frontend was rebuilt here from the pinned source (tree_sha256 8ab3d814f2e8c8ac…, identical to the 2026-11-13 build).",
     "layout": "Commit-pinned source archive rebuilt with repository-owned skill overlays and generated account profiles; upstream remote metadata is not present."
   },
   "upstream": {
@@ -65,7 +65,7 @@
       "openclaw/workspace",
       "outputs",
       ".venv",
-        ".host-venv",
+      ".host-venv",
       "__pycache__"
     ],
     "directories_note": "Installed or produced at runtime. Never hashed, never compared against upstream. The same rule the production runtime already uses for outputs/ and .venv."
@@ -101,25 +101,8 @@
     "note2": "This record says nothing about whether the workbench may publish, spend provider budget, or read account credentials. The guard in src/contentops/easel/guard.py decides that, and it denies those routes."
   },
   "previous_instance_snapshot": {
-    "path": "D:\\Projects\\Easel-Workbench",
+    "path": "D:\\Projects\\_worktrees\\easel-v030-rebuild-20261113b",
     "observed_at": "2026-11-13",
-    "overlay_digests": {
-      "profiles/x-superplay-1024/audience.md": "56a331942837fa2a42e4353a43ab5af2e81e200960ef39799bc3c964bfc3ed0c",
-      "profiles/x-superplay-1024/identity.md": "127bb83940b6b8e69c431049e1cd804e895ec019df7881bd5c0531a9b08cce7c",
-      "profiles/x-superplay-1024/memory.md": "2f66dbda0801e319861220816322af680a877d81b82820cb1306c5f07a323fd6",
-      "profiles/x-superplay-1024/platforms.md": "422fe8d017f49d05a1aa0339c42bc95e82ee24e1a02698c7898dec19fa8d3708",
-      "profiles/x-superplay-1024/preferences.md": "aed70968de7f925724017c68d405c0774f4f5ebf69797c2be5acbdab400a3314",
-      "profiles/x-superplay-1024/style.md": "f81071e6fc6a0a63be78a737ca4ba9913efa3e342aafc4a7457ca64a3b275448",
-      "profiles/x-superplay-future-intelligence/audience.md": "2354607059b7752e544f9005b1bceccd4d893c4077e80df63bacf7f76e90e401",
-      "profiles/x-superplay-future-intelligence/identity.md": "ec3c17b132866e2488d4cc720a80476a2e10b8e0997d82d3cc91632f6ba98fb6",
-      "profiles/x-superplay-future-intelligence/memory.md": "3bb1654ee201cdc01a4781dff8e1f115e32f09798c925f5c52d21a3b7bd28735",
-      "profiles/x-superplay-future-intelligence/platforms.md": "12b577c6cfaf2f469c27e1718881d66390a6739ba043899e3c6999a0465f565c",
-      "profiles/x-superplay-future-intelligence/preferences.md": "fbea70606f4f4d10a185191d03f2d9518aa1560e31544237fa79c627e32c291f",
-      "profiles/x-superplay-future-intelligence/style.md": "fb109ea1bcc70dfe5ee39b167cfd3825e7cfdff6223b2acd6f653ce49623733e",
-      "skills/builtin/video-script/SKILL.md": "ec95b26186ab3134be32bf5193d5bc89724b827012ee7902278ac6c4cf2f7791",
-      "skills/builtin/video-script/references/benchmark-playbook.md": "c6de4f32547b58990774ab2770cf46fc5cdecdfbf51dbd8cfd76352042d911a0"
-    },
-    "profile_status": "STALE",
-    "note": "Preserved read-only digest snapshot of the original extracted workbench; the directory itself was not modified."
+    "note": "The extracted rebuild candidate this instance superseded; kept for provenance."
   }
 }
