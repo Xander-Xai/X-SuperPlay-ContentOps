@@ -17,8 +17,12 @@ If not → don't do it now.
 2. **Real evidence > generated visuals.** Screenshots, recordings, real data. AI visuals are auxiliary.
 3. **Evidence before Claim.** LLM drafts, evidence verifies. Never: LLM says it → therefore true.
 4. **No secrets in Git.** API keys, cookies, tokens, `.env` — never committed. `.verify-tmp/` and `docs/ai-provider-selection.md` stay gitignored.
-5. **No upstream modification.** Easel is pinned at v0.2.1 / commit `3fe2d99`. See `runtime/easel.lock.json`.
-6. **No auto-upgrade.** Upstream upgrades require Founder approval + regression suite.
+5. **No upstream modification.** Easel is pinned at v0.3.0 / commit `bb3c8ff` and **frozen**
+   (Founder decision, 2026-11-16). See `runtime/easel-pins.json`; `runtime/easel.lock.json` is
+   its projection.
+6. **Frozen engine, no upstream following.** New upstream releases, tags and `main`
+   commits are information only. A change to the engine happens when the Founder asks for
+   that specific change, and then through the process in `docs/UPSTREAM-EASEL.md`.
 7. **FAIL is FAIL.** Never silently degrade to pass QC. Fallback marks `production_ready: false`.
 8. **Keep review and execution separate.** Local, non-paid Huashu draft rendering may run in `AUTO` and `REVIEW` without per-project execution grants or copy approval. It must stay project-local, use the pinned installed runtime and authorized assets, and keep `production_ready: false` / `publish_authorized: false` until required human review. Paid/network actions, unclear asset rights, and external publication retain their own gates; never bypass them.
 9. **No direct push to main.** All changes via PR. `main` is **PROTECTED** (enabled 2026-10-31): required checks `Tests (ubuntu-latest)`, `Tests (windows-latest)`, `Repo policy checks`; PR required; no force push; no deletion; linear history. Required approval count is 0 while the owner works solo; raise it to 1 when a second reviewer exists.

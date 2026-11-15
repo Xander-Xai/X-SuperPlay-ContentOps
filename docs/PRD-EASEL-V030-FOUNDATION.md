@@ -91,7 +91,7 @@
 | `.runtime/easel` | 996 文件 | **生产运行时**，v0.2.1 pin `3fe2d99`，工作区干净 | 是 |
 | `D:\Projects\_worktrees\easel-v030-rebuild-20261113b` | — | **v0.3.0 候选**，1073 blob + 树摘要 + 14 个 overlay 文件校验通过 | 仅经 `resolve_easel_workbench()` |
 | `D:\Projects\Easel-Workbench` | — | 更早快照，`profile_status: STALE` | 否 |
-| `Easel/`（仓库内） | 2.2 GB | **gitignored 遗留浅克隆**，HEAD `4b9c03c`（v0.2.1 之后 24 个提交），2 处未提交修改 | 否（被主动拒绝） |
+| `Easel/`（仓库内） | **已于 2026-11-16 删除**（原 2.2 GB） | **gitignored 遗留浅克隆**，HEAD `4b9c03c`；两处未提交修改经比对是本仓 overlay 的早期草稿，未丢内容。证据：`reports/audits/easel-legacy-clone-retirement-2026-11-16.md` | 否（从未被接受） |
 
 ### 2.4 真实产物证据（唯一一条完整链）
 
@@ -492,7 +492,7 @@ v0.3.0 发布后，上游**用同一版本号替换过 tag**。一个可以被�
 | 2 | M4b 首个灰度平台 | Founder | 需真实账号就绪；候选 `wechat_article`（唯一 `DRAFT_ONLY` 目标） |
 | 3 | v0.3.0 blob 计数口径（1073 与 1071 baseline 之差） | 治理 | `verify_easel_runtime.py --overlay --json` 的 `baseline_files` / `overlay_files` |
 | 4 | ADR-024 是否独立于 ADR-023 | Founder | 取决于 Agent 隔离验收是否单独成门 |
-| 5 | `Easel/`（2.2G）归档还是删除 | Founder | 先 diff 两处未提交修改，再决定（AGENTS §10） |
+| 5 | ~~`Easel/`（2.2G）归档还是删除~~ | **已决**：删除（Founder，2026-11-16），diff 结论见 `reports/audits/easel-legacy-clone-retirement-2026-11-16.md` | — |
 | 6 | 是否把 `docs/UPSTREAM-EASEL.md` 移出 exempt | 治理 | M0 一并处理 |
 | 7 | v0.2.1 树的保留截止日 | Founder | M2 验收后至少一个发布周期 |
 | 8 | gzh-design（AGPL）长期是否保留 | Founder + 法务 | 商用前评估 |

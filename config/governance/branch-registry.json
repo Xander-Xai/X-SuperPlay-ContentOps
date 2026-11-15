@@ -1,6 +1,6 @@
 {
   "schema": "contentops.branch-registry/v1",
-  "verified_at": "2026-11-16T01:55:00+08:00",
+  "verified_at": "2026-11-16T02:55:00+08:00",
   "policy": {
     "persistent": [
       "main"
@@ -126,6 +126,14 @@
       "pr": 185,
       "created": "2026-11-15",
       "purpose": "Easel v0.3.0 as the single pinned engine (workbench foundation PRD M0-M2), then the recording-first production line PRD (R1: recording intake gate, dual-account policy, gate capability declaration)",
+      "status": "merged",
+      "expires": "2026-12-16"
+    },
+    {
+      "name": "chore/easel-freeze-20261116",
+      "pr": 186,
+      "created": "2026-11-16",
+      "purpose": "fix the overlay digest basis so production resolution is not BLOCKED; retire the 2.2 GB legacy clone after proving the v0.3.0 swap; freeze the engine at v0.3.0 (no upstream following)",
       "status": "active",
       "expires": "2026-12-16"
     }

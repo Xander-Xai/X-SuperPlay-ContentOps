@@ -10,7 +10,7 @@ translation_status: synced
 
 > 当前运行状态。仅经验证的事实。无展望，无过时声明。
 >
-> 最后验证：2026-11-16，对照 `3c87ab290ca846ec2807ebe4ecb9559d53d2995e`（`main`，只读 fetch）；本工作树 `feat/173-easel-m0-pin` 为 `74a5d35`，与 `main` 的合并基点为 `464ab63`。Easel pin 现在只写在
+> 最后验证：2026-11-16，对照 `d40980006f5211f13000d6c102079ae43353b96b`（PR #185 合并后的 `main`，只读 fetch）；本分支 `chore/easel-freeze-20261116` 基于它。Easel pin 现在只写在
 > `runtime/easel-pins.json`；`runtime/easel.lock.json` 是它 `active` 引擎的派生投影，
 > 代码里不再有 commit 字面量。
 > 本工作树领先该 `main` 22 个、落后 15 个提交；尚未变基或合并，因此属于分支的事实会另行标注。
@@ -54,7 +54,7 @@ translation_status: synced
 
 | 属性 | 核验值 |
 |---|---|
-| 默认分支 | `main` @ `3c87ab290ca846ec2807ebe4ecb9559d53d2995e` —— 2026-11-16 只读 fetch；本分支未改动它 |
+| 默认分支 | `main` @ `d40980006f5211f13000d6c102079ae43353b96b` —— PR #185 的 squash 提交，2026-11-16 只读 fetch |
 | 待复核工作树 | `feat/173-easel-m0-pin` @ `74a5d35`，合并基点 `464ab63d`；领先 22、落后 15 |
 | 开放 PR | **1**：#185 —— Easel v0.3.0 作为固定引擎（M0–M2）+ 录屏入场切片（R1） |
 | 分支注册表 | `verified_at` 2026-11-16；`feat/173-easel-m0-pin` 登记为 `active`，复核日 2026-12-16 |

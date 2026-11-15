@@ -45,13 +45,13 @@
 | 事实 | 值 | 怎么验的 |
 |---|---|---|
 | 身份 | gitignored 目录，HEAD `4b9c03c`（v0.2.1 之后 24 个提交），2 处未提交修改 | `git -C Easel status` |
-| 体量 | 2.2 GB | 目录扫描 |
+| 体量 | 2.2 GB（**已于 2026-11-16 删除**） | 目录扫描 + `reports/audits/easel-legacy-clone-retirement-2026-11-16.md` |
 | 是否被解析器接受 | **否**，被主动拒绝 | `scripts/resolve_easel.py` 只接受注册表登记的 root |
 | 生产真正在跑的树 | `.runtime/easel-v030` | `runtime/easel-pins.json` 的 `root` |
 | 谁 import 过它 | 无人 | `grep -rn "Easel/" scripts src` 无业务命中 |
 
 结论：它是**磁盘残留**，不是运行时。删它对生产零影响；保留它只会让下一个人（或下一个 Agent）误判「底座在哪」。
-清理动作列为 R4，且**必须你确认后执行**（2.2 GB 删除不可逆，且要先 diff 那 2 处未提交修改）。
+该项已在 2026-11-16 执行：Founder 授权后删除，删除前比对了那 2 处未提交修改，确认是本仓 overlay 的早期草稿、无独有内容。证据见 `reports/audits/easel-legacy-clone-retirement-2026-11-16.md`。
 
 ### 1.3 「最新版本」到底是哪个
 
@@ -61,7 +61,7 @@
 | 「最新版本」= 最新 release | **v0.3.0（2026-10-12）**，已是当前生产底座 | `check_easel_upstream.py`：`release_update_available=false`、`recommendation=NO_ACTION` |
 | 上游 `main` 头 | `e9d86ab4`（2026-11-15），比 tag 领先 **154 个提交 / 300 个文件**，**未发版** | GitHub compare `v0.3.0...main` |
 
-所以：**你要的「最新版」已经接入完成**。`main` 上那 154 个提交里确实有对你直接相关的东西
+所以：**你要的「最新版」已经接入完成，并且已按你的决定冻结在这一版**。`main` 上那 154 个提交里确实有对你直接相关的东西
 （公众号扫码登录重复换码作废修复、头条登录页误判修复），但它们没有 tag，
 按本仓 `ADR-012 D3` 与 `docs/UPSTREAM-EASEL.md` 的「按内容摘要 pin、不发版不升级」规则，
 **不能因为「看起来更新」就直接换生产**。要跟进就按 R3 的候选引擎流程走，单独授权。
@@ -235,8 +235,8 @@ R1 的退出条件（可机器核验）：
 
 | # | 待定 | 谁定 |
 |---|---|---|
-| 1 | 是否把上游 `main`（`e9d86ab4`）作为候选引擎接入，还是等 v0.4.0 发版 | Founder |
-| 2 | `Easel/`（2.2 GB）归档还是删除；2 处未提交修改是否有价值 | Founder |
+| 1 | ~~是否把上游 `main`（`e9d86ab4`）作为候选引擎接入~~ | **已决（2026-11-16）**：冻结在 v0.3.0，不跟随上游；只接受按 Founder 需求在固定树上改 |
+| 2 | ~~`Easel/`（2.2 GB）归档还是删除~~ | **已决**：删除（2026-11-16） |
 | 3 | 首个 `DRAFT_AUTO` 平台是 `wechat_article` 还是先做小红书 | Founder |
 | 4 | 录屏是否允许包含第三方 AI 产品界面（合规边界） | Founder + 法务 |
 | 5 | v0.2.1 回滚树的保留截止日 | Founder |

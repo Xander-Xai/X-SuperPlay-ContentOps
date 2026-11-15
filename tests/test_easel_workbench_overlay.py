@@ -922,26 +922,14 @@ def test_recorded_skill_overlays_have_reproducible_repository_sources():
     sources = overlay.get("source_files")
     assert isinstance(sources, dict), "skill overlay sources are not recorded"
     assert set(sources) == set(overlay["files"]), "every skill overlay needs one source"
-    instance = Path(str((record.get("instance") or {}).get("path") or ""))
-    installed = instance.is_dir()
     for target, source_rel in sources.items():
         source = (ROOT / source_rel).resolve(strict=True)
         assert source.is_relative_to(ROOT.resolve()), f"source escapes repository: {source_rel}"
-        if not installed:
-            # The recorded digests are byte digests of the *installed* instance, and they are
-            # line-ending sensitive: the instance was assembled on one platform, so the same
-            # repository content hashes differently after a checkout elsewhere. Without the
-            # instance there is nothing to compare the digest against, and inventing one
-            # would be worse than saying so.
-            print(f"     [skip] instance absent; {target} checked for existence only")
-            continue
-        # Content equality modulo line endings is the reproducible claim: the source copy is
-        # what a rebuild would use, and CRLF/LF is a checkout property, not a difference.
-        source_text = source.read_text(encoding="utf-8").replace("\r\n", "\n")
-        installed_text = (instance / target).read_text(
-            encoding="utf-8").replace("\r\n", "\n")
-        assert source_text == installed_text, (
-            f"source content drift: {target} differs from the installed instance")
+        # The recorded digests are over LF-normalised content, the same basis the runtime
+        # verifier uses. A byte digest would make the binding a property of the checkout's
+        # line endings rather than of the file, and call a correct source tampered.
+        digest = hashlib.sha256(source.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+        assert digest == overlay["digests"][target], f"source digest drift: {target}"
 
 
 def test_recorded_profile_digests_match_current_dna_projection():

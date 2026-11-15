@@ -7,10 +7,16 @@
 ## Core Principle
 
 ```text
-Production tracks stable releases only.
-Upstream main is monitored for early-warning signals,
-not consumed as production runtime.
+The engine is FROZEN at v0.3.0 (Founder decision, 2026-11-16).
+Upstream releases are neither adopted automatically nor on a schedule.
+Every further change is ours, made on top of the pinned tree on request.
+Upstream main is monitored as information only.
 ```
+
+The freeze is a product decision, not a pause: v0.3.0 renders byte-identically to
+the engine it replaced, the workbench runs on it, and following upstream would
+mean re-validating 154 unreleased commits against a production line that already
+works. What we need from here is our own tuning, not their next release.
 
 ## Current Pin
 
@@ -33,17 +39,22 @@ not consumed as production runtime.
 
 ## Rules
 
-1. **No auto-upgrade.** Upstream upgrades require Founder approval.
+1. **Frozen engine.** v0.3.0 is the fixed base. No upstream release, tag or `main`
+   commit is adopted unless the Founder asks for that specific change. A new
+   upstream release appearing is not a reason to do anything.
 2. **No upstream modification.** Extension via ADAPTER pattern only.
 3. **No fork.** Fork is last resort, requires ADR.
 4. **No main as production.** Upstream main is a compatibility radar, not a deployment source.
-5. **Upgrade process:**
-   - New release detected → CHANGELOG review
-   - Diff relevant components
-   - Run regression suite
+5. **Change process (only when the Founder asks for a specific upstream change):**
+   - The Founder names the change and why our line needs it
+   - Read that change in the upstream tree; do not sweep in unrelated commits
+   - Run the regression suite and the golden project
    - Golden projects PASS
-   - Founder approval
-   - Update lock file
+   - Update the registry, then the lock; both in one change
+   - Record the reason in the switch receipt
+
+   Absent that instruction, the answer to "upstream has a new release" is:
+   nothing to do.
 
 6. **Two trees, two roles.** Since 2026-11-15 `.runtime/easel-v030/` (v0.3.0) is
    the **production engine**; `.runtime/easel/` (v0.2.1) is the **rollback tree**
@@ -54,11 +65,12 @@ not consumed as production runtime.
    `scripts/easel_engine.py switch`, which verifies before it writes. See
    *Workbench instance* at the end of this document.
 
-7. **Legacy clone remains on disk.** `Easel/` (commit `4b9c03c`, not the
-   production pin) is not accepted by the production resolver. Its two local
-   video-script files were rescued into the workbench overlay; the original
-   clone and its uncommitted work have not been deleted. The source of the
-   previously observed environment leak has not been established.
+7. **Legacy clone deleted.** `Easel/` (commit `4b9c03c`, never the production
+   pin) was removed on 2026-11-16 with Founder authorisation, after its two local
+   video-script files were confirmed to be an earlier revision of tuning the
+   repository already owns in `extensions/easel-workbench/`. Evidence and the
+   diff conclusion: `reports/audits/easel-legacy-clone-retirement-2026-11-16.md`.
+   The clone is not a fallback and must not be recreated.
 
 ## Easel Upgrade Gate
 

@@ -49,14 +49,14 @@ material) and the gearbox (platform delivery) are still disconnected.**
 | Fact | Value | How verified |
 |---|---|---|
 | Identity | gitignored directory, HEAD `4b9c03c` (24 commits past v0.2.1), two uncommitted modifications | `git -C Easel status` |
-| Size | 2.2 GB | directory scan |
+| Size | 2.2 GB (**deleted 2026-11-16**) | directory scan + `reports/audits/easel-legacy-clone-retirement-2026-11-16.md` |
 | Accepted by the resolver | **No**, actively refused | `scripts/resolve_easel.py` accepts only registered roots |
 | The tree production actually runs | `.runtime/easel-v030` | `runtime/easel-pins.json` → `root` |
 | Anyone importing it | Nobody | `grep -rn "Easel/" scripts src` has no business hit |
 
 Deleting it has zero production impact. Keeping it only misleads the next person — or the
 next agent — about where the engine lives. Cleanup is R4 and **requires your confirmation**:
-2.2 GB is irreversible, and the two uncommitted modifications must be diffed first.
+That was executed on 2026-11-16: deleted after Founder authorisation, with its two uncommitted modifications compared first and confirmed to be an earlier draft of this repository's own overlay. Evidence: `reports/audits/easel-legacy-clone-retirement-2026-11-16.md`.
 
 ### 1.3 Which version is "the latest"
 
@@ -66,7 +66,7 @@ next agent — about where the engine lives. Cleanup is R4 and **requires your c
 | "Latest" as latest release | **v0.3.0 (2026-10-12)**, already the production engine | `check_easel_upstream.py`: `release_update_available=false`, `recommendation=NO_ACTION` |
 | Upstream `main` head | `e9d86ab4` (2026-11-15), **154 commits / 300 files** ahead of the tag, **unreleased** | GitHub compare `v0.3.0...main` |
 
-So the latest *release* is already adopted. Those 154 commits do contain things that matter
+So the latest *release* is already adopted and, by your decision, frozen at that version. Those 154 commits do contain things that matter
 to you (the WeChat QR-login re-issue fix, the Toutiao login-page misread fix), but they carry
 no tag. Under `ADR-012 D3` and `docs/UPSTREAM-EASEL.md`, an unreleased head is not promoted
 to production because it "looks newer". Tracking it is R3's candidate-engine flow, separately
@@ -240,8 +240,8 @@ without `account_slug` is `BLOCKED` with no default fallback.
 
 | # | Decision | Owner |
 |---|---|---|
-| 1 | Adopt upstream `main` (`e9d86ab4`) as a candidate engine, or wait for v0.4.0 | Founder |
-| 2 | Archive or delete `Easel/` (2.2 GB); are the two uncommitted modifications worth keeping | Founder |
+| 1 | ~~Adopt upstream `main` (`e9d86ab4`) as a candidate engine~~ | **Decided (2026-11-16)**: frozen at v0.3.0, upstream not followed; only Founder-requested changes on the pinned tree |
+| 2 | ~~Archive or delete `Easel/` (2.2 GB)~~ | **Decided**: deleted (2026-11-16) |
 | 3 | First `DRAFT_AUTO` platform: `wechat_article` or Xiaohongshu | Founder |
 | 4 | May a recording contain third-party AI product UI (compliance boundary) | Founder + legal |
 | 5 | Retention deadline for the v0.2.1 rollback tree | Founder |
