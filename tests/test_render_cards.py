@@ -134,7 +134,10 @@ def test_plan_resolves_card_auditor_from_v03_builtin_layout():
     with tempfile.TemporaryDirectory() as tmp:
         runtime = _runtime(Path(tmp), layer="builtin")
         planned = plan(_project(Path(tmp)), runtime_root=runtime)
-        assert planned.auditor == runtime / "skills" / "builtin" / "card-design" / "scripts" / "card_audit.py"
+        # plan() resolves its runtime root, so the expectation has to be resolved too;
+        # on a Windows runner the temp path is handed back in a different form.
+        assert planned.auditor == (runtime / "skills" / "builtin" / "card-design"
+                                   / "scripts" / "card_audit.py").resolve()
 
 
 def test_plan_refuses_html_outside_the_project():

@@ -4,11 +4,11 @@
 
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
-> Last verified: 2026-11-16 on `feat/173-easel-m0-pin`. The Easel pin now lives in
+> Last verified: 2026-11-16 against `3c87ab290ca846ec2807ebe4ecb9559d53d2995e` (`main`, read-only fetch); worktree `feat/173-easel-m0-pin` at `74a5d35`, merge base `464ab63`. The Easel pin now lives in
 > `runtime/easel-pins.json`; `runtime/easel.lock.json` is a projection of its `active`
 > engine, and no code file carries a commit literal.
-> A read-only fetch placed `origin/main` at `98a61f22`; this worktree is 3 commits ahead and 7 behind that remote baseline. No rebase or merge has been performed.
-> The candidate section below describes current worktree evidence; other facts describe `main` unless labelled otherwise.
+> This worktree is 22 commits ahead of that `main` and 15 behind it; no rebase or merge has
+> been performed, so facts that belong to the branch are labelled as such.
 > Sections below the "Layer status" table are historical milestone records;
 > they describe how a capability was proven, not what is current.
 
@@ -42,6 +42,21 @@
 > **Git state is re-verified below at 2026-11-12 (read-only documentation
 > sync).** Every other section below it is a historical snapshot kept for
 > traceability; none of them is the current state.
+
+### Git — verified 2026-11-16 (branch `feat/173-easel-m0-pin`, PR #185)
+
+| Property | Verified value |
+|---|---|
+| Default branch | `main` @ `3c87ab290ca846ec2807ebe4ecb9559d53d2995e` — read-only fetch on 2026-11-16; unchanged by this branch |
+| Worktree under verification | `feat/173-easel-m0-pin` @ `74a5d35`, merge base `464ab63d`; 22 ahead and 15 behind `main` |
+| Open PRs | **1**: #185 — Easel v0.3.0 as the pinned engine (M0–M2) plus the recording-intake slice (R1) |
+| Branch registry | `verified_at` 2026-11-16; `feat/173-easel-m0-pin` registered `active`, review date 2026-12-16 |
+| Transport | `git push` over https is refused by this machine's proxy (CONNECT tunnel 502). The two documentation and receipt commits were published through the Git Database API with content-identical objects (same tree, parent, message and author instant; GitHub re-encoded the committer offset to UTC), and the local branch was reset to the remote SHAs |
+| Publications | **0** — unchanged |
+| Failed-then-decided | Receipt-secret check flagged ten committed offline-task receipts on `task_id`. The ids are minted locally by `contentops/easel/offline_task.py` and the receipts are hash-chained, so the rule was narrowed to that origin instead of rewriting the evidence |
+
+This table is the only part of this document re-read on 2026-11-16. Everything below keeps the
+date it was verified on.
 
 ### Git — verified 2026-11-12 (read-only documentation sync)
 
