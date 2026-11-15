@@ -4,35 +4,68 @@
   "tracks": [
     {
       "doc": "README.md",
-      "code": ["scripts/", "src/", "config/registry/", "config/platforms/", ".github/workflows/"]
+      "code": [
+        "scripts/",
+        "src/",
+        "config/registry/",
+        "config/platforms/",
+        ".github/workflows/"
+      ]
     },
     {
       "doc": "docs/CURRENT-STATE.md",
-      "code": ["scripts/", "src/", "runtime/", "config/accounts/", "config/registry/"]
+      "code": [
+        "scripts/",
+        "src/",
+        "runtime/",
+        "config/accounts/",
+        "config/registry/"
+      ]
     },
     {
       "doc": "docs/PLATFORM-INTEGRATION-STATUS.md",
-      "code": ["config/registry/", "config/platforms/", "src/contentops/platforms/", "scripts/platforms.py"]
+      "code": [
+        "config/registry/",
+        "config/platforms/",
+        "src/contentops/platforms/",
+        "scripts/platforms.py"
+      ]
     },
     {
       "doc": "docs/DEVELOPMENT-PLAN.md",
-      "code": ["scripts/", "src/", "config/registry/"]
+      "code": [
+        "scripts/",
+        "src/",
+        "config/registry/"
+      ]
     },
     {
       "doc": "docs/TEST-PLAN.md",
-      "code": ["tests/", ".github/workflows/ci.yml", "scripts/test_basic.py"]
+      "code": [
+        "tests/",
+        ".github/workflows/ci.yml",
+        "scripts/test_basic.py"
+      ]
     },
     {
       "doc": "docs/RUNBOOK.md",
-      "code": ["scripts/"]
+      "code": [
+        "scripts/"
+      ]
     },
     {
       "doc": "docs/ARCHITECTURE.md",
-      "code": ["src/", "scripts/"]
+      "code": [
+        "src/",
+        "scripts/"
+      ]
     },
     {
       "doc": "docs/PRD.md",
-      "code": ["src/", "scripts/"]
+      "code": [
+        "src/",
+        "scripts/"
+      ]
     },
     {
       "doc": "docs/PRD-EASEL-V030-FOUNDATION.md",
@@ -52,24 +85,40 @@
         "src/contentops/media/recording_intake.py",
         "scripts/ingest_recording.py",
         "config/accounts/",
-        "config/platforms/video-platforms.yaml"
+        "config/platforms/video-platforms.yaml",
+        "src/contentops/platforms/adaptation.py",
+        "scripts/platform_adapt.py"
       ]
     },
     {
       "doc": "docs/QUALITY-STANDARD.md",
-      "code": ["scripts/qc_video.py", "scripts/qc_visual.py", "src/contentops/media/"]
+      "code": [
+        "scripts/qc_video.py",
+        "scripts/qc_visual.py",
+        "src/contentops/media/"
+      ]
     },
     {
       "doc": "docs/ASR-BACKCHECK.md",
-      "code": ["src/contentops/media/asr_backcheck.py", "src/contentops/media/asr_siliconflow.py"]
+      "code": [
+        "src/contentops/media/asr_backcheck.py",
+        "src/contentops/media/asr_siliconflow.py"
+      ]
     },
     {
       "doc": "docs/CONTENT-LIFECYCLE-STAGES.md",
-      "code": ["src/", "scripts/"]
+      "code": [
+        "src/",
+        "scripts/"
+      ]
     },
     {
       "doc": "docs/DOC-SYNC.md",
-      "code": ["scripts/check_doc_freshness.py", "scripts/check_i18n.py", "config/docs/doc-freshness.json"]
+      "code": [
+        "scripts/check_doc_freshness.py",
+        "scripts/check_i18n.py",
+        "config/docs/doc-freshness.json"
+      ]
     }
   ],
   "exempt": [

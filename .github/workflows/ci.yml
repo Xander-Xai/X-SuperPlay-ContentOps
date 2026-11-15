@@ -267,6 +267,12 @@ jobs:
       - name: Run Golden voice clean-checkout rebuildability tests
         run: python tests/test_golden_voice_rebuildability.py
 
+      # The per-platform plan: which shape each declared platform wants, which ones need a
+      # second cut, and which recording policy governs the account. Hermetic — it reads the
+      # committed specs and the account DNA only.
+      - name: Run platform adaptation tests
+        run: python tests/test_platform_adapt.py
+
       # Recording intake: the account DNA decides whether manual screen recording may enter
       # at all, a FORBIDDEN account is refused before the file is read, a cropped account
       # without a rectangle is blocked, and an admitted file is written evidence-capable

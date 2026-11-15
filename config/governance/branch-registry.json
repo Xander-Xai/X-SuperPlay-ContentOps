@@ -134,6 +134,14 @@
       "pr": 186,
       "created": "2026-11-16",
       "purpose": "fix the overlay digest basis so production resolution is not BLOCKED; retire the 2.2 GB legacy clone after proving the v0.3.0 swap; freeze the engine at v0.3.0 (no upstream following)",
+      "status": "merged",
+      "expires": "2026-12-16"
+    },
+    {
+      "name": "feat/173-platform-adaptation-20261116",
+      "pr": 187,
+      "created": "2026-11-16",
+      "purpose": "PRD R2 first half: per-account per-platform adaptation plan (shape, limits, variant requirement, recording policy), fail-closed",
       "status": "active",
       "expires": "2026-12-16"
     }

@@ -14,6 +14,8 @@ translation_status: synced
 > 一行说的是**本分支**的事实，永远不是组合策略。
 >
 > 最后按注册表重生成：2026-11-12，`main` 的 `c1da6dd`。
+> 最后验证：2026-11-16 —— 增加了下方「跨平台计划」一节；没有任何注册表行变化，
+> 发布计数也没有变化。
 
 ## 如何读状态
 
@@ -51,6 +53,17 @@ translation_status: synced
 （`video_deliver.py`、`platform_delivery.py`），`PLANNED` 由缺失的账号与未解决的权利
 造成，而不是缺代码。仍没有平台专属代码的两行是知乎与 CSDN；CSDN 与 YouTube 另外还缺少
 上游 Easel 能力。
+
+## 跨平台计划（2026-11-16）
+
+`scripts/platform_adapt.py plan` 把账号 DNA 与交付规格合并成「账号声明的每个平台各一行」：
+需要的画幅、打包必须遵守的上限、主成片是否够用或需要二次成片、以及该账号的录屏策略。
+它不改变上面任何一行状态——计划不是发布，本文件每一行仍然只报告平台上真实发生过的事，
+而那是零。
+
+输入就是本文件已经当作权威的两样东西：注册表（`config/registry/platforms.json`）管证据，
+规格（`config/platforms/video-platforms.yaml`）管形状。两者不一致时保持可见：一个平台
+可以有规格，同时仍然是 `PLANNED`。
 
 ## 图文交付渠道（不是注册表记录）
 
