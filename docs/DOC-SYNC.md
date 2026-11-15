@@ -2,7 +2,7 @@
 
 [English](DOC-SYNC.md) | [简体中文](DOC-SYNC.zh-CN.md)
 
-> Last verified: 2026-11-15 on `feat/173-easel-m0-pin`.
+> Last verified: 2026-11-16 on `feat/173-easel-m0-pin`.
 
 > How this repository keeps its documents from lying. The rule is mechanical, not
 > aspirational: a tracked doc carries the date it was verified against, and CI
@@ -57,6 +57,8 @@ this section explains the shape, it does not duplicate the globs.
 | `docs/RUNBOOK.md` | Executable commands |
 | `docs/ARCHITECTURE.md` | Boundaries, component map, rules |
 | `docs/PRD.md` | Functional requirement states |
+| `docs/PRD-EASEL-V030-FOUNDATION.md` | Engine pin, workbench host, gate mounting, publishing tiers |
+| `docs/PRD-RECORDING-TO-PLATFORM.md` | Recording intake, the two-account fork, platform delivery |
 | `docs/QUALITY-STANDARD.md` | Gate definitions |
 | `docs/ASR-BACKCHECK.md` | The narration ASR gate |
 | `docs/DOC-SYNC.md` | This mechanism |

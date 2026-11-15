@@ -8,7 +8,7 @@ translation_status: synced
 
 [English](DOC-SYNC.md) | [简体中文](DOC-SYNC.zh-CN.md)
 
-> 最后验证：2026-11-15，分支 `feat/173-easel-m0-pin`。
+> 最后验证：2026-11-16，分支 `feat/173-easel-m0-pin`。
 
 > 本仓库如何防止文档说谎。规则是机械的，不是口号：每份被跟踪的文档都写明它是在哪一天
 > 对着哪个提交核验的，而一旦它描述的代码在那之后发生变更，CI 就会失败。
@@ -58,6 +58,8 @@ translation_status: synced
 | `docs/RUNBOOK.md` | 可执行命令 |
 | `docs/ARCHITECTURE.md` | 边界、组件地图、规则 |
 | `docs/PRD.md` | 功能需求状态 |
+| `docs/PRD-EASEL-V030-FOUNDATION.md` | 引擎 pin、工作台宿主、门控挂载、发布分级 |
+| `docs/PRD-RECORDING-TO-PLATFORM.md` | 录屏入场、双账号分叉、平台交付 |
 | `docs/QUALITY-STANDARD.md` | 门禁定义 |
 | `docs/ASR-BACKCHECK.md` | 旁白 ASR 门禁 |
 | `docs/DOC-SYNC.md` | 本机制自身 |
