@@ -104,6 +104,14 @@
       "purpose": "record the external output root: build products live outside the repository, behind junctions into the AI-Outputs archive",
       "status": "merged",
       "expires": "2026-12-12"
+    },
+    {
+      "name": "feat/173-easel-m0-pin",
+      "pr": 185,
+      "created": "2026-11-15",
+      "purpose": "Easel v0.3.0 as the single pinned engine (workbench foundation PRD M0-M2), then the recording-first production line PRD (R1: recording intake gate, dual-account policy, gate capability declaration)",
+      "status": "active",
+      "expires": "2026-12-16"
     }
   ]
 }
