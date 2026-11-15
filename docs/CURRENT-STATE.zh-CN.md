@@ -29,6 +29,7 @@ translation_status: synced
 | 图文交付（`scripts/platform_delivery.py`、`scripts/graphic_deliver.py`、`src/contentops/platforms/wcs_bridge*`） | 离线已实现：打包后经进程边界调用外部 CLI（`wechatsync`），且只创建草稿。没有 `PUBLISHED` 分支；URL 记录是人工动作 |
 | 卡片与文章渲染（`scripts/render_cards.py`、`scripts/render_article.py`） | 已实现（PR #149、#152）；通过固定版本 Easel 的卡片/公众号 Skill 校验并写回执，回执恒为 `production_ready: false` |
 | ASR 回检门禁（`scripts/m5_production.py::stage_asr_backcheck`） | 已实现（PR #150）；无 `SILICONFLOW_API_KEY` 时为 `SKIPPED`，覆盖率不达标会阻断人工审核，但从不批准 |
+| 录屏入场门（`src/contentops/media/recording_intake.py`、`scripts/ingest_recording.py`） | 已实现（2026-11-16）；按账号 DNA 的 `manual_recording` 策略把手动录屏登记为 `evidence_capable` 素材——`FORBIDDEN` 直接拒绝，`ALLOWED_CROPPED` 缺裁切矩形即阻断——并写回执，回执恒为 `production_ready: false` / `publish_authorized: false`。入场是证据资格，不是发布授权 |
 | M5 特征基线（`scripts/m5_characterize.py`） | 已实现（PR #153）；`docs/m5-baseline/m5-characterization-2026-11-10.md` 固定 #140 slice 1 的通过计数 |
 | Content Bundle 消费 + 双形式 handoff（`src/contentops/content_kernel/`） | 离线已实现；VIDEO 与 GRAPHIC_TEXT 计划，未发布 |
 | Easel 宿主门禁（`src/contentops/easel/`、`scripts/easel_host.py`） | 离线已实现（PR #108）；状态取决于解释器已装的包（见 *Easel 宿主*）；写操作拒绝 |
