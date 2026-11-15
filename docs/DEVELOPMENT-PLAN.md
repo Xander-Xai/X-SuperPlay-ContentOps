@@ -4,7 +4,7 @@
 
 > Milestone-based execution. Every milestone has an exit criterion.
 >
-> Status verified: 2026-11-15 on `feat/173-easel-m0-pin`.
+> Status verified: 2026-11-16 on `feat/173-easel-m0-pin`.
 
 ## Status legend
 

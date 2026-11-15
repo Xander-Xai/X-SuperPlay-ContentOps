@@ -2,7 +2,7 @@
 
 [English](PRD.md) | [简体中文](PRD.zh-CN.md)
 
-> Last verified: 2026-11-15 on `feat/173-easel-m0-pin`. Requirement states are checked
+> Last verified: 2026-11-16 on `feat/173-easel-m0-pin`. Requirement states are checked
 > against the code on that date; a requirement marked implemented has code here,
 > which is not the same as a published work.
 

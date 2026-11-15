@@ -4,7 +4,7 @@
 
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
-> Last verified: 2026-11-15 on `feat/173-easel-m0-pin`. The Easel pin now lives in
+> Last verified: 2026-11-16 on `feat/173-easel-m0-pin`. The Easel pin now lives in
 > `runtime/easel-pins.json`; `runtime/easel.lock.json` is a projection of its `active`
 > engine, and no code file carries a commit literal.
 > A read-only fetch placed `origin/main` at `98a61f22`; this worktree is 3 commits ahead and 7 behind that remote baseline. No rebase or merge has been performed.

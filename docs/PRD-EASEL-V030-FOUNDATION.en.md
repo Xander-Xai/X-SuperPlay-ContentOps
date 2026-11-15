@@ -2,7 +2,7 @@
 
 [English](PRD-EASEL-V030-FOUNDATION.en.md) | [简体中文](PRD-EASEL-V030-FOUNDATION.md)
 
-> Last verified: 2026-11-15 on `main`. Status: **Proposed** — awaiting Founder approval.
+> Last verified: 2026-11-16 on `main`. Status: **Proposed** — awaiting Founder approval.
 > This is a **requirements document**, not a completion report. "Target / planned / not
 > executed / pending authorisation" always describe something that has not happened.
 > No paragraph here is evidence that the migration was performed.

@@ -6,7 +6,7 @@ translation_status: synced
 
 # PRD — X-SuperPlay ContentOps 运行时
 
-> 最后验证：2026-11-15，分支 `feat/173-easel-m0-pin`。需求状态按该日期的代码核对；
+> 最后验证：2026-11-16，分支 `feat/173-easel-m0-pin`。需求状态按该日期的代码核对；
 > 标为“已实现”只表示本仓库有代码，不等于有作品被发布。
 
 

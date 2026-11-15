@@ -4,7 +4,7 @@
 
 [简体中文](README.md) | English
 
-> Last verified: 2026-11-15 on `feat/173-easel-m0-pin` (M0: single pin registry). The status table describes
+> Last verified: 2026-11-16 on `feat/173-easel-m0-pin` (M0: single pin registry). The status table describes
 > `main`, never a draft branch.
 
 ## What

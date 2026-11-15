@@ -2,7 +2,7 @@
 
 [简体中文](PRD-EASEL-V030-FOUNDATION.md) | [English](PRD-EASEL-V030-FOUNDATION.en.md)
 
-> Last verified: 2026-11-15 on `main`. 状态：**Proposed** — 等待 Founder 批准。
+> Last verified: 2026-11-16 on `main`. 状态：**Proposed** — 等待 Founder 批准。
 > 本文是**需求文档**，不是完成报告。文中「目标 / 计划 / 未执行 / 待授权」都指尚未发生的事；
 > 任何一段都不能当作「已经接入」的证据。
 

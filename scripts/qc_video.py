@@ -18,6 +18,7 @@ Status: PASS / WARN / FAIL. FAIL -> final is not production-ready.
 
 import argparse
 import json
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -628,12 +629,32 @@ def _emit(project: Path, checks: list[dict], target_name: str = "") -> dict:
     for c in checks:
         status = "OK" if c.get("ok") else "FAIL"
         sev = c.get("severity", "PASS")
-        detail = ", ".join(f"{k}={v}" for k, v in c.items() if k not in ("id", "ok", "severity"))
+        detail = ", ".join(f"{k}={_md_value(v, project)}"
+                           for k, v in c.items() if k not in ("id", "ok", "severity"))
         lines.append(f"| {c['id']} | {status} | {sev} | {detail} |")
     md_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     print(json.dumps(out, indent=2, ensure_ascii=False))
     return out
+
+
+def _md_value(value, project: Path):
+    """Render one detail value for the markdown receipt.
+
+    The JSON goes through the canonical envelope, which sanitizes paths; the
+    markdown used to be written from the raw checks and leaked machine paths
+    into a file whose own header claims `no absolute paths`. Any value that
+    points inside the repository is written repo-relative instead.
+    """
+    if isinstance(value, str):
+        for base in (project, ROOT):
+            base_str = str(base)
+            if value.startswith(base_str + os.sep) or value == base_str:
+                try:
+                    return relative_label(Path(value))
+                except Exception:  # noqa: BLE001 - a label must never fail a receipt
+                    return value
+    return value
 
 
 def main() -> int:

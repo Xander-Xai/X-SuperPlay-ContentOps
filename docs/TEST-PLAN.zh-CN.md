@@ -10,7 +10,7 @@ translation_status: synced
 
 > 本地验证策略权威文档、套件清单与 CI 接线。
 >
-> 最后验证：2026-11-15，分支 `feat/173-easel-m0-pin`。树内 `tests/test_*.py` 共 107 个套件，
+> 最后验证：2026-11-16，分支 `feat/173-easel-m0-pin`。树内 `tests/test_*.py` 共 107 个套件，
 > `.github/workflows/ci.yml` 逐一具名（107 个步骤）。此处不写死数量，
 > 以 `ls tests/test_*.py | wc -l` 为准。
 >

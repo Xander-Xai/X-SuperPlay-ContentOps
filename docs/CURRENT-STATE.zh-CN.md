@@ -10,7 +10,7 @@ translation_status: synced
 
 > 当前运行状态。仅经验证的事实。无展望，无过时声明。
 >
-> 最后验证：2026-11-15，分支 `feat/173-easel-m0-pin`。Easel pin 现在只写在
+> 最后验证：2026-11-16，分支 `feat/173-easel-m0-pin`。Easel pin 现在只写在
 > `runtime/easel-pins.json`；`runtime/easel.lock.json` 是它 `active` 引擎的派生投影，
 > 代码里不再有 commit 字面量。
 > 只读 fetch 后 `origin/main` 为 `98a61f22`；本工作树领先 3 个、落后 7 个提交。尚未变基或合并。
