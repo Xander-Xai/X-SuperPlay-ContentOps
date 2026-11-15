@@ -43,6 +43,7 @@ translation_status: synced
 
 ## 里程碑计划
 
+- [PRD-EASEL-V030-FOUNDATION.md](PRD-EASEL-V030-FOUNDATION.md) — Easel v0.3.0 底座接入：先换发动机再换驾驶舱、M0–M4、发布分级 —— **Proposed，等待 Founder 批准**
 - [CONVERGENCE-REQUIREMENTS-2026-11-01.md](CONVERGENCE-REQUIREMENTS-2026-11-01.md) — 文档 / Skill / 分支 / 上游固定版本收敛 —— **2026-11-01 获批；步骤 3–5 后已落地**
 - [M4-H3-PLAN.md](M4-H3-PLAN.md) — M4 MiniMax H3 视频（Issue #22）—— **已实现**
 - [M4.5-MEDIA-CONVERGENCE-PLAN.md](M4.5-MEDIA-CONVERGENCE-PLAN.md) — M4.5 媒体收敛（Issue #27）—— **已实现**
@@ -62,7 +63,10 @@ translation_status: synced
 
 Tier-1 文档默认英文为原文、中文为 `.zh-CN.md` 镜像。**README 是例外（2026-11-12）：**
 `README.md` 是中文原文，`README.en.md` 是英文镜像，因为本仓库的主要读者是中文用户；
-其余 Tier-1 文档保持英文原文。
+**Easel v0.3.0 底座 PRD 沿用同一方向（2026-11-15）：**
+`docs/PRD-EASEL-V030-FOUNDATION.md` 是中文原文，`docs/PRD-EASEL-V030-FOUNDATION.en.md`
+是英文镜像，因为这份文档是给 Founder 直接执行的。两处例外都在
+`scripts/check_i18n.py::ZH_PRIMARY_DOCS` 中声明；其余 Tier-1 文档保持英文原文。
 
 `python scripts/check_i18n.py` 校验两个方向的结构一致性，
 `python scripts/check_doc_freshness.py` 校验每份被跟踪文档确实对着它描述的代码核验过
@@ -91,6 +95,7 @@ Tier-1 文档默认英文为原文、中文为 `.zh-CN.md` 镜像。**README 是
 - [adr/ADR-019-receipt-history-exposure.md](adr/ADR-019-receipt-history-exposure.md) —— 轮换 PAYG key、接受已公开的余额/voice_id/fingerprint,并继续拦截新 receipt
 - [adr/ADR-020-read-only-scene-analysis-adapter.md](adr/ADR-020-read-only-scene-analysis-adapter.md) —— 可选的外部媒体分析以只读适配器形式接入：试验边界，不授予写权限
 - [adr/ADR-021-stable-production-gates.md](adr/ADR-021-stable-production-gates.md) —— 唯一稳定生产入口，VIDEO 与 GRAPHIC_TEXT 各自一套失败即拒绝的门禁
+- [adr/ADR-022-easel-v030-workbench-candidate.md](adr/ADR-022-easel-v030-workbench-candidate.md) —— v0.3.0 工作台保持独立候选；前端来源、只读宿主和系统隔离门禁
 
 ## 事实优先级
 

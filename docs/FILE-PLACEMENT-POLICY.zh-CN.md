@@ -67,6 +67,52 @@ config/
 ```src/contentops/graphic/```（人工图文包与权利绑定图片校验）。
 它们都不渲染、不发布、不花钱。
 
+## 产物根（Output Root）
+
+一次运行的产物——渲染件、草稿、卡片、音频、日志、临时状态——是产物，不是源码。
+它们可再生、体积大、对任何看 diff 的人都没有价值。本仓库只放代码、证据和收据；
+产物一律落在 checkout 之外。
+
+`CONTENTOPS_OUTPUT_ROOT` 决定它们落在哪里：
+
+| 根 | 放什么 | 未设变量时 |
+|---|---|---|
+| `<root>/workspace` | 实验：项目目录及其渲染产物 | `projects/_local/` |
+| `<root>/deliverables` | 成品：QC 通过且经人工复核 | `outputs/` |
+| `<root>/_tmp` | 临时与验证状态 | `.verify-tmp/` |
+
+在仓库被 gitignore 的 `.env` 里设一次即可，加载器会注入：
+
+```
+CONTENTOPS_OUTPUT_ROOT=D:\AI-Outputs\X-SuperPlay-ContentOps\2026-11-12
+```
+
+变量未设时，三个根与过去完全一致——CI 看到的、每一份已提交收据里写的，都是那三个。
+没有任何东西会自己搬家：指向 `projects/<slug>/receipts/x.json` 的收据仍然指向那里。
+
+`src/contentops/paths.py` 是唯一解析这三个根的模块。脚本向它要
+`workspace_root()`、`deliverables_root()` 或 `tmp_root()`，不写死路径。
+
+项目目录可以位于两个根之下：仓库的 `projects/`（跟踪的基线——别的机器要能复核的证据与收据）
+和 workspace（实验）。只认前者的门禁，会在沙箱搬出去的那一刻拒绝每一个实验。
+
+### 什么出仓库
+
+| 出仓库 | 去哪 |
+|---|---|
+| 渲染件、草稿、卡片、音频 | workspace，复核通过后晋级到 `deliverables` |
+| 临时与验证状态 | `<root>/_tmp` |
+| 一次性报告与诊断 | 归档区的 `reports/` |
+
+### 什么留下
+
+| 留下 | 原因 |
+|---|---|
+| `projects/<slug>/` 里被跟踪的文件 | 基线、证据、收据——别的机器要能复核 |
+| `.runtime/` | pin 住的 Easel v0.2.1；`runtime/easel.lock.json` 钉住了它的路径 |
+| `assert/`、`.private/` | Founder 声音与 Provider 身份：不是产物，也不共享 |
+| `vendor/` | 未验证的第三方素材，只留本机 |
+
 ## runtime/
 
 仅机器可读的固定版本和来源记录。

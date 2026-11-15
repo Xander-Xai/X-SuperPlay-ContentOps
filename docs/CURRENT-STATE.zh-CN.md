@@ -10,8 +10,9 @@ translation_status: synced
 
 > 当前运行状态。仅经验证的事实。无展望，无过时声明。
 >
-> 最后验证：2026-11-12，`main` 的 `c1da6dd`（PR #159；只读文档同步）。
-> 以下事实描述 ```main```；已推迟或权利受阻的工作会明确标注。
+> 最后验证：2026-11-13，Easel 工作台工作树基于 `7ebb559`，包含文中说明的未提交候选改动。
+> 只读 fetch 后 `origin/main` 为 `98a61f22`；本工作树领先 3 个、落后 7 个提交。尚未变基或合并。
+> 候选工作台章节依据当前工作树证据；其他事实描述 `main`，除非另有标记。
 > “分层状态”表之后的小节是历史里程碑记录，说明某项能力当时如何被证明，
 > 不代表当前状态。
 
@@ -28,7 +29,7 @@ translation_status: synced
 | ASR 回检门禁（`scripts/m5_production.py::stage_asr_backcheck`） | 已实现（PR #150）；无 `SILICONFLOW_API_KEY` 时为 `SKIPPED`，覆盖率不达标会阻断人工审核，但从不批准 |
 | M5 特征基线（`scripts/m5_characterize.py`） | 已实现（PR #153）；`docs/m5-baseline/m5-characterization-2026-11-10.md` 固定 #140 slice 1 的通过计数 |
 | Content Bundle 消费 + 双形式 handoff（`src/contentops/content_kernel/`） | 离线已实现；VIDEO 与 GRAPHIC_TEXT 计划，未发布 |
-| Easel 宿主门禁（`src/contentops/easel/`、`scripts/easel_host.py`） | 离线已实现（PR #108）；本机 `HOST_BLOCKED`（缺 FastAPI/uvicorn），写操作拒绝 |
+| Easel 宿主门禁（`src/contentops/easel/`、`scripts/easel_host.py`） | 离线已实现（PR #108）；状态取决于解释器已装的包（见 *Easel 宿主*）；写操作拒绝 |
 | 图文人工包（`src/contentops/graphic/`、`scripts/graphic_package.py`） | 离线已实现；停在 `AWAITING_MANUAL_REVIEW`；尚无已交付包 |
 | 内容路由、账号 DNA、工作流门禁、Brief/脚本/设计阶段 | S1–S4 已在 ```main```（PR #114、#118）；注册 15 个热点源，其中 1 个 `NATIVE_SEARCH`（GitHub）、14 个 `LIST_ONLY`，并在 #157 对两个账号 DNA 开放；brief→M5 桥已合并，但仍绑定人工批准的 brief |
 | X / 公众号轨道 | X 仅人工门禁（#127）；公众号有渲染器、SDK 适配器、工作流运行器与 `DRAFT_ONLY` 草稿路径（#145、#152）；两者都只校验、从不发布，权利未解决（Issue #51、#56）。**小红书的运行时适配器已于 2026-11-09 移除**（`src/contentops/xhs/` 已空，`graphic_workflow.py` 只保留 gzh/x/video）；只剩 `xiaohongshu_video` 注册表记录与交付渠道配置。除 `x` 外每条注册表记录仍为 `PLANNED` |
@@ -37,6 +38,7 @@ translation_status: synced
 | MiniMax 语音、图片、H3 视频 | 已实现；已验证子集见下文 |
 | 生产就绪 | 所有轨道均为 **否** |
 | 发布计数 | **0** —— 没有任何交付包持有真实平台 URL |
+| 产物根（产物出 checkout） | 已实现（`src/contentops/paths.py`）；`CONTENTOPS_OUTPUT_ROOT` 选择 `<root>/{workspace,deliverables,_tmp}`——实验沙箱、复核后的成品、临时状态。变量未设时三个根与过去完全一致，CI 与每一份已提交收据照常工作。规则见 `docs/FILE-PLACEMENT-POLICY.md` |
 
 ## Git
 
@@ -138,17 +140,74 @@ Owner 已决定把完整 Easel 系统作为生产底座（ADR-016）。本节只
 
 | 属性 | 值 |
 |---|---|
-| 入口 | `scripts/easel_host.py status` / `serve` |
-| 本机 `status` 结果 | `HOST_BLOCKED` — `HOST_DEPENDENCY_MISSING:fastapi`、`HOST_DEPENDENCY_MISSING:uvicorn` |
+| 入口 | `scripts/easel_host.py status` / `serve`（加 `--workbench` 指向工作台实例） |
+| 本机 `status` 结果 | **`HOST_BLOCKED`** —— `HOST_DEPENDENCY_MISSING:sse_starlette`；工作台候选还要求存在可信前端构建清单 |
+| 检查的依赖集 | `fastapi`、`uvicorn`、`pydantic`、`sse_starlette`（`HOST_IMPORT_MODULES`）。早先只查前两个，会为「导入即失败」的宿主报告 `HOST_READY`——2026-11-12 修复 |
 | 报告的固定版本 | v0.2.1 / `3fe2d99` |
+| 此 worktree 的 runtime 安装状态 | `python scripts/resolve_easel.py --offline` → `BLOCKED: no Easel runtime found`；独立主工作区仍可解析其固定 commit 下的 `.runtime/easel` |
 | 运行时字节 | `status --verify-bytes` → `VERIFIED`，982/982 blob（2026-11-02 实测）；`serve` 总是执行该比对 |
 | 监听 | 仅 `127.0.0.1` |
 | 方法 | `GET`、`HEAD`、`OPTIONS` |
 | Scope | `lifespan` 放行；websocket scope 在到达上游前关闭 |
 | 写操作 | 在到达上游前拒绝：发布、登录、凭据、设置、环境安装、删除 |
-| 门禁测试 | `python tests/test_easel_host_guard.py` — 13/13 |
+| 门禁测试 | `python tests/test_easel_host_guard.py` — 23/23 |
 | 宿主权限 | 不拥有批准、发布、Provider 花费或账号 |
-| 未做的事 | 未安装依赖、未读取凭据/profile、未登录账号、未启动宿主进程、未发布 |
+| 未做的事 | 本次核查没有启动或停止宿主、登录账号或发布。回环端口 7899 仍由预存工作台进程监听（PID 71960，父 PID 46704，父进程路径 `D:\Projects\Easel-Workbench\.venv\Scripts\python.exe`；命令 `scripts/easel_host.py serve --workbench --port 7899`，2026-11-12 启动）；没有重启该进程，也未把它作为当前代码的验证证据 |
+
+### Easel 工作台（2026-11-12）
+
+Owner 2026-11-12 的决定是：Easel 是可调优的**成熟底座**，不只是被调用的库。那需要一个
+可运行实例，而 `.runtime/easel` 不是（它从没有过前端构建、OpenClaw profile 或账号画像）。
+
+| 属性 | 值 |
+|---|---|
+| 实例 | 现有 `D:\Projects\Easel-Workbench` 仍是无 Git 元数据的解压源码树。另在批准位置 `D:\Projects\_worktrees\easel-v030-rebuild-20261113` 按固定 commit 归档重建了一个干净候选，并应用仓库自有 overlay 和 DNA 画像。该候选也无 Git 元数据；完整 commit 与仓库自有 overlay 源构成版本记录 |
+| 上游版本 | **v0.3.0**，commit `bb3c8ff0463f36c202454d74171682ba6e470cb1`（2026-10-12） |
+| skill 布局 | v0.3.0 把所有 skill 从 `skills/openclaw/` 移到 `skills/builtin/`（114 个，同一批） |
+| 基线证明 | 干净重建时上游基线 **1071/1071 blob 匹配**且无额外路径。API 返回 HTTP 403 后，严格 codeload 回退独立重算出记录的上游树摘要和许可证。候选中仍有一个本轮额外文件 `.isolated-host-env/localappdata/GitHub CLI/device-id`；未读取内容。用户已授权删除，但自动审查再次以 `blocked by policy` 拒绝，因此候选仍为 `MISMATCH` |
+| 调优层 | 2 个 skill 覆盖文件 + 2 个账号画像目录（共 14 个已安装文件），记录在 `runtime/easel-workbench-overlay.json`，含 sha256；skill 源文件现存于 `extensions/easel-workbench/` 并由验证器核对摘要。清单另存由当前账号 DNA 生成的画像目标摘要，避免把陈旧安装字节当作重建目标。benchmark 原始逐字稿/复核笔记未入库，相关历史案例仍非已验证证据 |
+| 画像 | 现有 `D:\Projects\Easel-Workbench` 两个账号快照仍为 `STALE`：12 个原始文件都与当前 DNA 投影不同；每个账号有五个仅 CRLF/LF 换行不同，`style.md` 另有内容漂移。没有覆盖旧快照。批准重建的候选从 DNA 生成了全部 12 个文件；`verify_easel_runtime.py --overlay --generated-profiles` 报告 `VERIFIED`，摘要不匹配为 0，无链接路径 |
+| 宿主 | 仓库环境 Python 仍报告 `HOST_BLOCKED:HOST_DEPENDENCY_MISSING:sse_starlette`。批准候选的 Python 3.13.15 venv 前端为 `VERIFIED`；六项宿主依赖的 `pip check` 通过，完整媒体／运行时依赖仍未安装。此前 `--workbench` 宿主曾通过 `Start-Process -Environment` 启动并提供离线 ContentOps 路由；因未指定变量会继承父进程环境，该进程凭据隔离 **NOT_ESTABLISHED**。验证器匿名直连 HTTPS 且不运行 CLI／读取代理配置；API 403 后，严格 codeload 回退独立匹配上游树摘要及许可证。候选 composer gate 随后因一个额外临时文件失败关闭。用户授权删除该精确文件，但自动审查再次以 `blocked by policy` 拒绝；未读其内容，候选仍为 `MISMATCH`，没有 workbench 宿主提供服务。另以精确环境 allowlist 运行 `--offline-tasks-only`，在 `127.0.0.1:7861` 成功完成画像选择、无效账户排除、草稿和回执读回，任务 `576893e4-1518-42b4-a0cf-d95150eca4a3`，随后停止；该模式不导入 Easel，也不访问 GitHub。没有调用模型/Gateway 路由，也未输出凭据值 |
+| 前端完整性 | `npm ci --registry=https://registry.npmjs.org/` 安装 31 个包；lock SHA-256 保持 `23f33fcd5d606b6ffdd077ad7d35a231cdb6034d4f25622944dd0ea4672ea889`。`npm run build` 使用 Node `v24.16.0`／npm `11.13.0` 成功。`runtime/easel-workbench-frontend-build.json` 将 commit `bb3c8ff0463f36c202454d74171682ba6e470cb1`、锁文件、工具链绑定到全部 5 个 dist 文件；树 SHA-256 为 `8ab3d814f2e8c8acf807c61c98a180b4a89fa6af65d8f88a9b4607b55944e5c1`。主 JS chunk 为 515.78 kB，Vite 发出了超过 500 kB 的提示 |
+| 离线任务 API | `/contentops/offline-task` 面板、固定 schema 的项目任务提交及绑定回执／草稿读取；`serve --offline-tasks-only` 只运行 ContentOps ASGI 适配器，不导入 Easel，默认端口 7862。执行器只写入 `OFFLINE_DRAFT_ONLY` 框架，stdin JSON CLI 仍可用。18 项 API／执行器契约测试通过，覆盖 HTML 注入拒绝、overlay/dist 损坏时降级、不完整账号排除和画像投影器失败阻断；HTTP 验收任务 `c6554e6e-06fd-4e52-a2b6-a5f58f888627` 与精确 allowlist 下第二次验收 `576893e4-1518-42b4-a0cf-d95150eca4a3` 均选择 `x-superplay-1024` 并读回回执／草稿，`production_ready=false`、`publish_authorized=false`、`human_review=PENDING`。第二份回执在 `projects/easel-isolated-env-check-20261113/receipts/`。回执 overlay 为 `PRESENT_UNVERIFIED`、前端构建为 `VERIFIED`；离线执行器不调用上游 verifier，因此该状态不证明实时校验源码树。没有调用 Agent／模型/Gateway |
+| 生产引擎 | **仍是 v0.2.1**。刻意为之：历史回执锚在 v0.2.1 上，挪动生产 pin 需要重跑全部 golden render |
+| 未完成 | 第二个干净环境的重建尚未执行。浏览器 UI E2E 仍为 **NOT_RUN**：computer-use 浏览器宿主不可用，执行审查拒绝启动本机无头 Chrome 截图（`blocked by policy`）；没有浏览器渲染或截图证据。离线框架回执不是真实 Agent 结果。此前 workbench 服务进程凭据隔离仍为 **NOT_ESTABLISHED**。现在 codeload 回退已校验 upstream 树摘要，但候选额外文件仍在；删除虽经用户授权，执行审查仍以 `blocked by policy` 拒绝，未读其内容，candidate composer gate 因此未放行。精确 allowlist `--offline-tasks-only` 已完成离线画像／草稿／回执流程并停止。没有输出凭据，也未调用模型/Gateway。此前某次 `--workbench` 启动曾通过 `gh api` 查询 GitHub 上游树，其认证来源未检查。Windows 未发现 OpenClaw/Gateway 服务；WSL `Ubuntu-22.04` 有通用 Node v20.20.2 进程，路径 `/home/dev/.nvm/versions/node/v20.20.2/bin/node`、工作目录 `/home/dev/.hermes`，未读取命令行或环境。18789／37289 无监听。Docker CLI 存在但 Engine 不可用。Gateway 版本／路径未建立，未调用 CLI。源码审查发现 `easel doctor` 会调用 `read_settings(PROJECT_ROOT / ".env")` 且 `_env_key_valid` 会读 `.env`，因此未运行 doctor。没有主动读取 `.env` 或浏览器认证文件。Agent 隔离和真实 Agent 回执未验证。 |
+| 契约验证（2026-11-13） | Host guard 27/27；overlay／画像／来源 44/44；重建／归档安全 5/5；离线 API／任务 18/18；skill router 29/29；skill doctor 12 项（1 项环境相关跳过）；agent driver 29/29；production gates 30/30；图文工作流 14/14；文章渲染器 36/36；卡片渲染器 19/19（当前 worktree 无 `.runtime/easel`，可选实时渲染跳过）；M5 evidence 22/22；双格式 Bundle 14/14；M5 handoff 6/6。Verifier 覆盖匿名直连 HTTPS、不用代理、绑定精确 commit 的 codeload 归档回退、Git blob 树摘要匹配、归档穿越／链接／成员数／展开大小限制、annotated tag 剥离、重定向拒绝及畸形响应失败关闭。Overlay 测试拒绝链接记录、基线文件、前端构建输入、不安全仓库源、源文件摘要漂移及生成画像摘要漂移；校验器不会跟随链接读取。Account-DNA 套件有 3 项失败，原因是 `C:\Users\Administrator\.agents\skills` 缺少共享 skill `b-roll-finder`；未修改外部共享 skill 目录。 |
+
+### Easel v0.3.0 里程碑状态（2026-11-13）
+
+| 里程碑 | 状态与证据 |
+|---|---|
+| 固定源码身份与 overlay 输入 | **PASS** —— 已记录并验证 commit、Apache-2.0 许可、全树摘要和仓库自有 skill 源文件 |
+| 单次干净源码重建与重新生成画像 | **PASS** —— 在批准目录 `D:\Projects\_worktrees\easel-v030-rebuild-20261113` 重建；固定树 1071/1071、14 个 overlay 和 12 个画像摘要均通过 |
+| 前端依赖安装与构建 | **PASS** —— 官方 registry、31 个包；Node/npm 固定版本；构建回执复核全部 5 个 dist 文件 |
+| 第二个干净环境重建 | **NOT_RUN** |
+| 工作台只读基线 | **BLOCKED** —— 干净重建时 1071/1071 基线匹配；当前精确 allowlist 复核检测到一个本轮产生的额外临时文件，verifier 因此拒绝启动 |
+| 跟踪 Issue／PR | **Issue #173 OPEN** —— 验收标准涵盖固定版本重建、账号画像交接、受限任务回执、真实模型任务的单独授权和有门禁的生产迁移；当前未找到关联 PR |
+| 离线任务/API 契约 | **PASS** —— API／执行器测试 18/18，并通过 localhost HTTP 提交／读回 `OFFLINE_DRAFT_ONLY` 回执；浏览器 UI E2E 为 **NOT_RUN** |
+| 真实画像上下文 | **PARTIAL / NOT_VERIFIED** —— 源码显示 Direct API 会内联 `load_profile_text(persona)`；OpenClaw Gateway／CLI 路径只发送画像前缀，要求 Agent 从其 workspace 读取 `profiles/<name>`。隔离工作台的画像目录是否为 Agent 实际 workspace 尚未验证；没有调用 Gateway／Agent |
+| 真实 Agent 与 gateway 隔离 | **BLOCKED** —— gateway 版本／路径和系统级隔离尚未验证；未获真实任务授权 |
+| v0.2.1 生产迁移 | **NOT_RUN** —— 保留生产 pin；golden render、QC、人工审看和 Founder 决定仍待完成 |
+| 人工／Founder 审核 | **NOT_RUN** |
+
+核验期间 computer-use 浏览器宿主不可用。隔离服务已经启动并停止；只调用 localhost API 路由，浏览器渲染与交互仍未验证。
+
+### Easel v0.3.0 生产兼容性审计（2026-11-13）
+
+以下为只读源码比较，不代表运行时或渲染验收。
+
+| 检查项 | 结果 |
+|---|---|
+| Skill 目录名 | v0.2.1 的 `skills/openclaw` 和 v0.3.0 的 `skills/builtin` 均有 114 个目录，名称集合完全相同 |
+| 关键文件相同 | `auto-short-video/scripts/assemble.py`、`skills/shared/scripts/tts.py`、`skills/shared/scripts/render_card.py`、`card-design/scripts/card_audit.py`、`gzh-design/scripts/{validate_gzh_html,wrap_preview}.py` 的 SHA-256 一致 |
+| Skill 指引变化 | `auto-short-video/SKILL.md` 将合成器示例路径从 `skills/openclaw` 改为 `skills/builtin`；`tts-voiceover/SKILL.md` 更新共享脚本路径。对比的 `auto-subtitle/SKILL.md` 字节完全相同 |
+| ContentOps 路径耦合 | 合成、卡片审计、文章校验及技能发现现支持两个 skill 根目录；生产 pin 仍通过 v0.2.1 resolver 选择。`assemble_easel.py`、`render_cards.py` 和 `render_article.py` 都提供独立的 `--workbench-runtime` 开关，经共享 resolver 验证上游树、overlay 源文件和生成画像后才返回 v0.3。`m5_production` 仍走生产 resolver，并记录实际合成器路径 |
+| v0.3 工作台路由差异 | 新增的设置、gateway 重启、本地 Agent／模型选择和制品归档 API 仍被默认拒绝宿主封锁。新增回归覆盖代表性 v0.3 路由；API 守卫测试不等于 Agent／工具隔离证明 |
+| 依赖差异 | v0.3.0 声明 `requests>=2.32,<3` 及完整运行时／媒体依赖。候选副本只安装有限的宿主／导入环境；未安装全部上游依赖，也未执行 `pip check` |
+| 迁移结论 | 适配器源码现已兼容两个 skill 根目录，卡片／文章／宿主定向测试通过。这只证明路径兼容；未批准生产 runtime 切换，生产仍使用 v0.2.1 |
+| 证据边界 | 哈希相同与源码审阅不能证明 Windows 执行、字幕／音频正确、golden render 等价、QC、回执或人工批准；这些仍是迁移前置条件 |
+
+抽查文件 SHA-256：合成器 `08359a03f4fd40101aef7dfc8b7f58183d735827756815e7b3d2f63d0087470b`、共享 TTS `8f55b95a3b1f125960766f0dc9cbcf07d46c67856a2fb02bfd6245e218e88cbd`、卡片渲染 `fcc5d0d7a877bded9e056a8faea2ce487d35231de07f6b0407d22eec81eb83ac`、卡片审计 `7c80025120cfce0e41e1645717d0e56a961f858981aaf6f982332b231b524ccb`、公众号校验 `de21aa3decac10c6ef89040bdc4e19930dbed33d6ccf7bc963b744c53da01185`、换行预览 `3f3c4d48a7fd2e6781d5d831d9221122ac2df0983d4d2a6665dd903e72cc95c1`。
 
 ## coding agent 驱动（2026-11-02）
 
@@ -163,7 +222,7 @@ Owner 已决定把完整 Easel 系统作为生产底座（ADR-016）。本节只
 | 宿主依赖 | 无 —— `host-status` 是只读步骤，不是依赖 |
 | QC 绑定 | `qc-video` 执行 `qc_video.py --video <slug>.mp4`，并要求 `receipts/qc-report-<slug>.json`；该回执必须声明 `graded_target: project://final/<slug>.mp4`，且成片仍然存在 |
 | QC 判定 | `FAIL`、非当前回执、针对另一个成片的回执、成片已不存在的回执，都不能算完成 |
-| 测试 | `python tests/test_agent_driver.py` —— 29/29 |
+| 测试 | 较早一次运行：`python tests/test_agent_driver.py` —— 29/29；该结果早于后续 driver 修改，不能验证新改动。 |
 
 ## 内容路由与 brief 桥接（2026-11-04）
 
@@ -234,6 +293,7 @@ Owner 已决定把完整 Easel 系统作为生产底座（ADR-016）。本节只
 | 输入 | 人工编写的 `storyboard.json` + `master.md` | `project.yaml` 的 `source_refs` + 声明 |
 | 旁白 | edge-tts（`zh-CN-YunxiNeural`） | Windows SAPI，离线 |
 | 语音质量 | `edge_tts_fallback` —— 非生产级 | `windows_sapi_offline` —— 非生产级 |
+| 合成失败 | V1 保留 `BLOCKED`，不再把失败的合成标记为待人工审核；此改动尚未运行或测试。 | M5 使用独立阶段门禁。 |
 | 证据层 | 无 | `SourceArtifact` + `ClaimLedger` |
 | 合成 | 通过 `assemble_easel.run` 调用固定版本 Easel `assemble.py` | 同上 |
 | 字幕处理 | `assemble_easel` 移除后运行上游，再单独烧录 | 按旁白时间轴烧录 |
@@ -284,7 +344,7 @@ Owner 已决定把完整 Easel 系统作为生产底座（ADR-016）。本节只
 | 合成 | 钉版 Easel，1080×1920 H.264 + AAC |
 | QC | PASS — 19 项检查，真实来源占比 1.0 |
 | 生产就绪 | **否** — ```PENDING_FOUNDER_REVIEW```，评分为 null |
-| 测试 | ```tests/test_m5_evidence.py``` — 18 项离线测试 |
+| 测试 | ```tests/test_m5_evidence.py``` — 22 项离线测试，含 v0.3 候选 resolver／合成门禁与默认 v0.2 生产 pin 验证 |
 
 同一次变更修复了合成器缺陷：ASS 字幕时间戳被写成三位小数，libass 按厘秒解析，
 导致每条字幕被拉长约十倍并相互重叠。```assemble_easel._srt_to_ass``` 现按厘秒输出；
@@ -320,13 +380,13 @@ Owner 已决定把完整 Easel 系统作为生产底座（ADR-016）。本节只
 |---|---|---|
 | 脚本冒烟 | ```scripts/test_basic.py``` | 10 |
 | 媒体 / 供应商（离线 fixture） | 语音、图片、H3、收敛、media-use 适配器 | 432 个 ```test_*``` 函数 |
-| M5 证据 + media-use 可追溯性 | ```test_m5_evidence.py```、```test_m5_*``` | 18 + 列表驱动套件 |
+| M5 证据 + media-use 可追溯性 | ```test_m5_evidence.py```、```test_m5_*``` | 22 + 列表驱动套件 |
 | Golden / 可复现性 | A/B 变体、语音资产、锁定输入 | 47 |
 | Skill / 授权 | 路由、doctor、执行门禁、授权来源 | 列表驱动套件 |
 | Skill 引用完整性 | `tests/test_skill_references.py` | 6 |
 | Windows | 子进程、路径 | 53 |
 | 策略 / 密钥 | gitignore、本地批准、凭证密钥 | 19 + 列表驱动套件 |
-| **合计** | **本文档不声明数量** | 2026-11-12 实测 98 个套件、98 个具名 CI 步骤；权威数量在检查时读取：`git ls-files 'tests/test_*.py' \| wc -l` |
+| **合计** | **本文档不声明数量** | 最新获取的 `origin/main` `98a61f22`：104 个套件、105 个具名 Python CI 步骤；Easel 候选另加 3 个套件和步骤（集成后 107/108）。当前检出数量在检查时读取：`git ls-files 'tests/test_*.py' \| wc -l` |
 
 ```python scripts/dev_check.py``` 运行本地门禁。CI 为每个套件设置具名步骤；没有 CI
 步骤的套件不会运行，一次绿色运行也不等于所有套件都通过。CI 会安装 ```ffmpeg```
@@ -354,8 +414,9 @@ Owner 已决定把完整 Easel 系统作为生产底座（ADR-016）。本节只
    [CONVERGENCE-REQUIREMENTS-2026-11-01.md](CONVERGENCE-REQUIREMENTS-2026-11-01.md)。
 7. 上游固定版本 — Easel v0.3.0 与 HyperFrames 0.8.225 已发布但未采用；决策见收敛需求文档。
 8. ~~Main 分支未保护~~ — **已解决**（G0.6）。
-9. Easel 宿主 — 本机因缺少 FastAPI/uvicorn 处于 `HOST_BLOCKED`。安装依赖、使用真实账号
-   或启动宿主，都需要在宿主安全审查后另行批准（ADR-016）。宿主运行不等于发布授权。
+9. Easel 宿主 — 状态取决于解释器已装的包，不是机器级固定事实。FastAPI 与 uvicorn 已装；
+   但 `web/app.py` 导入的某个模块缺失时仍会 block（如系统 Python 上的 `sse_starlette`）。
+   使用真实账号或启动宿主，都需要在宿主安全审查后另行批准（ADR-016）。宿主运行不等于发布授权。
 10. ASR 回检 — 缺少 `SILICONFLOW_API_KEY` 时为 `SKIPPED`，因此没有凭证的运行不能证明任何
     旁白准确性问题。
 

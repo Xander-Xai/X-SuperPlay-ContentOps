@@ -35,6 +35,18 @@
       "code": ["src/", "scripts/"]
     },
     {
+      "doc": "docs/PRD-EASEL-V030-FOUNDATION.md",
+      "code": [
+        "runtime/easel.lock.json",
+        "scripts/resolve_easel.py",
+        "scripts/verify_easel_runtime.py",
+        "scripts/assemble_easel.py",
+        "src/contentops/easel/",
+        "config/registry/platforms.json",
+        "src/contentops/platforms/delivery_gate.py"
+      ]
+    },
+    {
       "doc": "docs/QUALITY-STANDARD.md",
       "code": ["scripts/qc_video.py", "scripts/qc_visual.py", "src/contentops/media/"]
     },
