@@ -2,7 +2,7 @@
 
 [English](PRD.md) | [简体中文](PRD.zh-CN.md)
 
-> Last verified: 2026-11-12 on `main` at `c1da6dd`. Requirement states are checked
+> Last verified: 2026-11-15 on `feat/173-easel-m0-pin`. Requirement states are checked
 > against the code on that date; a requirement marked implemented has code here,
 > which is not the same as a published work.
 
@@ -170,15 +170,19 @@ See [MEDIA-PROVIDER-CONTRACT.md](MEDIA-PROVIDER-CONTRACT.md).
 
 ## 14. Easel Integration
 
-- Pinned v0.2.1, release archive, content-verified
+- Pinned v0.2.1, git checkout, content-verified (982/982 blobs). The pin lives in
+  `runtime/easel-pins.json`; `runtime/easel.lock.json` is a projection of its
+  `active` engine and code carries no commit literal
 - Extension priority: ADAPTER > EXTENSION > CUSTOM SKILL > PATCH > FORK
 - No upstream source modification
 - Upgrade requires Founder approval + regression suite
-- **Executed surface today: two files** — `auto-short-video/scripts/assemble.py`
-  and `tts.py` (V1 only). The upstream skills, agent, workbench and browser
-  publishing are available upstream and are **not** integrated here. Adopting
-  any of them is a separate decision requiring ADR-002 to be superseded
-  (ADR-015 D1)
+- **Executed surface today: six files** — `auto-short-video/scripts/assemble.py`,
+  the four card/article scripts (`render_card.py`, `card_audit.py`,
+  `validate_gzh_html.py`, `wrap_preview.py`) and `tts.py` (V1 only). The
+  agent, gateway, workbench host and browser publishing are available upstream
+  and are **not** integrated here. Adopting any of them is a separate decision
+  requiring ADR-002 to be superseded (ADR-015 D1); the staged plan is
+  [PRD-EASEL-V030-FOUNDATION.md](PRD-EASEL-V030-FOUNDATION.md)
 
 ## 15. Quality Standard
 

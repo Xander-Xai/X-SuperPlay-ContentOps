@@ -4,7 +4,9 @@
 
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
-> Last verified: 2026-11-13 in the Easel workbench worktree based at `7ebb559`, including the documented uncommitted candidate changes.
+> Last verified: 2026-11-15 on `feat/173-easel-m0-pin`. The Easel pin now lives in
+> `runtime/easel-pins.json`; `runtime/easel.lock.json` is a projection of its `active`
+> engine, and no code file carries a commit literal.
 > A read-only fetch placed `origin/main` at `98a61f22`; this worktree is 3 commits ahead and 7 behind that remote baseline. No rebase or merge has been performed.
 > The candidate section below describes current worktree evidence; other facts describe `main` unless labelled otherwise.
 > Sections below the "Layer status" table are historical milestone records;

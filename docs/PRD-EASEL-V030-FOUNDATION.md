@@ -212,7 +212,7 @@
 | ID | 需求 | 验收信号 | 风险 | 里程碑 |
 |---|---|---|---|---|
 | FR-PIN-01 | 新增 `runtime/easel-pins.json` 作为唯一 pin 注册表，含 `active`、`engines{v0.2.1,v0.3.0}`，每引擎含 `tag/commit/tree_sha256/layout/root/license/agpl_vendored/role` | `runtime/easel-pins.json` 存在且 schema 校验通过 | L3 | M0 |
-| FR-PIN-02 | 消除 5 处代码字面量：`scripts/resolve_easel.py:48`、`scripts/verify_easel_runtime.py:62`、`src/contentops/graphic/articles.py:483`、`scripts/audit_baseline_reproducibility.py:142`、`src/contentops/easel/agent_workspace.py:24` | `grep -rn "3fe2d99\|bb3c8ff" scripts src` 只命中注册表读取与测试夹具 | L3 | M0 |
+| FR-PIN-02 | 消除 4 处代码字面量：`scripts/resolve_easel.py:48`、`scripts/verify_easel_runtime.py:62`、`src/contentops/graphic/articles.py:483`、`src/contentops/easel/agent_workspace.py:24` | `grep -rn "3fe2d99\|bb3c8ff" scripts src` 只命中注册表读取与测试夹具 | L3 | M0 |
 | FR-PIN-03 | `runtime/easel.lock.json` 降为**派生值**（顶层 `tag`/`commit` 保留，schema 不变），加 `derived_from` 字段 | `check_docs.py` 的 lock 一致性检查 PASS | L3 | M0 |
 | FR-PIN-04 | 引擎身份 = `commit` + `tree_sha256`；`tag` 只作注释，不得单独作为身份 | `verify_easel_runtime.py --json` 输出 `VERIFIED` 且含 `tree_sha256` | L3 | M1 |
 | FR-PIN-05 | 双 root 并存：`.runtime/easel`（v0.2.1）原地不动，新增 `.runtime/easel-v030`；`--engine` 可显式选择 | `python scripts/resolve_easel.py --engine v0.2.1` 与 `--engine v0.3.0` 均 `status=OK` | L3 | M1 |
@@ -523,11 +523,35 @@ v0.3.0 发布后，上游**用同一版本号替换过 tag**。一个可以被�
 | ADR-024 | 工作台作为交互面与 Agent 隔离验收门 | 把「驾驶舱」写成边界 | 细化 ADR-022 D2/D3/D4，不松动 D4 |
 | ADR-025 | 发布自主等级四档与授权流程 | 让自动发布有法可依 | 取代 ADR-014；修订 ADR-015 的发布部分，保留 D2–D8 |
 
-### 17.2 变更记录
+### 17.2 实施进度（M0）
+
+分支 `feat/173-easel-m0-pin`。以下全部可变核验，命令与结果见括号。
+
+| PR | 状态 | 证据 |
+|---|---|---|
+| PR-01 文档 + 门禁接线 | **已完成** | `check_i18n.py` / `check_doc_freshness.py` / `check_docs.py` 全绿 |
+| PR-02 pin 注册表 | **已完成** | `runtime/easel-pins.json`；`active=v0.2.1`、`workbench_engine=v0.3.0`；v0.3.0 条目含 `tree_sha256`，`installed=false` |
+| PR-03 字面量清零 + 失败即拒 | **已完成** | 4 处常量改为读注册表；`_FALLBACK_PIN` 删除；注册表不可读 → `BLOCKED / PINS_UNREADABLE`；`tests/test_easel_pins.py` 14/14 |
+| PR-05 文档双引擎段 | **部分** | `docs/UPSTREAM-EASEL.md` 已把注册表写成 pin 的唯一来源；`CURRENT-STATE.md` 的双引擎段留到 M1 切换时写，避免描述尚未发生的状态 |
+| PR-04 / 06 / 07 | **未开始** | 分别对应 skill 布局驱动、`easel_engine.py` 切换器、v0.3.0 实例登记 |
+
+顺带修复的既有失败（这些测试在 2026-11-13 的工作里就已经是红的，不是本次引入）：
+
+| 套件 | 修复前 | 修复后 | 原因 |
+|---|---|---|---|
+| `tests/test_easel_host_guard.py` | 23/27 | **28/28** | 三处断言停留在旧契约：`/api/status` 已被 guard 拒绝、`mutations` 取值、离线依赖清单多了 PyYAML；另加一条 `/api/status` 必须被拒的回归 |
+| `tests/test_easel_workbench_overlay.py` | 45/46 | **46/46** | generated 模式新增 DNA 新鲜度校验，假账号无法投影 → 如实断言 MISMATCH |
+| `tests/test_easel_offline_task.py` | 5/18 | **19/19** | 夹具缺 `project.yaml`；POST 缺同源 `Origin`；错误码顺序；中断写现在落失败回执而非裸 OSError |
+| `tests/test_m5_evidence.py` | 21/22 | **22/22** | workbench 解析器夹具不是合法 overlay |
+
+一处代码行为变更（不属 pin，但为恢复既定契约）：`offline_task.run_offline_draft_task` 先校验 account 形状再查项目绑定，使非字符串账号返回 `ACCOUNT_INVALID` 而不是 `PROJECT_ACCOUNT_MISMATCH`。
+
+### 17.3 变更记录
 
 | 日期 | 版本 | 变更 |
 |---|---|---|
 | 2026-11-15 | v0.1 | 首版。状态 Proposed，等待 Founder 批准。本次只新增文档与文档门禁接线，未改代码、未改 pin |
+| 2026-11-15 | v0.2 | 记录 M0 落地：pin 单源注册表、4 处字面量清零、失败即拒；修正 FR-PIN-02 的字面量数量（原写 5 处，实测为 4 处代码常量 + 1 处截图内容描述，后者不改） |
 
 ---
 

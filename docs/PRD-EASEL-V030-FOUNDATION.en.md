@@ -220,7 +220,7 @@ follow `docs/TEST-PLAN.md` L0–L3.
 | ID | Requirement | Acceptance signal | Risk | Milestone |
 |---|---|---|---|---|
 | FR-PIN-01 | Add `runtime/easel-pins.json` as the only pin registry: `active`, `engines{v0.2.1,v0.3.0}`, each with `tag/commit/tree_sha256/layout/root/license/agpl_vendored/role` | File exists and validates against its schema | L3 | M0 |
-| FR-PIN-02 | Remove five code literals: `scripts/resolve_easel.py:48`, `scripts/verify_easel_runtime.py:62`, `src/contentops/graphic/articles.py:483`, `scripts/audit_baseline_reproducibility.py:142`, `src/contentops/easel/agent_workspace.py:24` | `grep -rn "3fe2d99\|bb3c8ff" scripts src` hits only registry reads and test fixtures | L3 | M0 |
+| FR-PIN-02 | Remove four code literals: `scripts/resolve_easel.py:48`, `scripts/verify_easel_runtime.py:62`, `src/contentops/graphic/articles.py:483`, `src/contentops/easel/agent_workspace.py:24` | `grep -rn "3fe2d99\|bb3c8ff" scripts src` hits only registry reads and test fixtures | L3 | M0 |
 | FR-PIN-03 | `runtime/easel.lock.json` becomes a **derived** value (top-level `tag`/`commit` kept, schema unchanged) with a `derived_from` field | `check_docs.py` lock consistency passes | L3 | M0 |
 | FR-PIN-04 | Engine identity is `commit` + `tree_sha256`; the tag is a comment and never an identity on its own | `verify_easel_runtime.py --json` reports `VERIFIED` with `tree_sha256` | L3 | M1 |
 | FR-PIN-05 | Two roots coexist: `.runtime/easel` (v0.2.1) untouched, new `.runtime/easel-v030`; `--engine` selects explicitly | Both `--engine v0.2.1` and `--engine v0.3.0` report `status=OK` | L3 | M1 |
@@ -546,11 +546,40 @@ Two frequently misread points:
 | ADR-024 | The workbench as interaction surface, and the Agent isolation acceptance gate | Writes the cockpit boundary | Refines ADR-022 D2/D3/D4 without relaxing D4 |
 | ADR-025 | Four publishing autonomy tiers and the authorisation flow | Gives automation a lawful path | Supersedes ADR-014; revises the publishing part of ADR-015, keeping D2–D8 |
 
-### 17.2 Change log
+### 17.2 Implementation progress (M0)
+
+Branch `feat/173-easel-m0-pin`. Everything below is checkable; the command and its
+result are named.
+
+| PR | State | Evidence |
+|---|---|---|
+| PR-01 docs and gate wiring | **done** | `check_i18n.py`, `check_doc_freshness.py`, `check_docs.py` all pass |
+| PR-02 pin registry | **done** | `runtime/easel-pins.json`; `active=v0.2.1`, `workbench_engine=v0.3.0`; the v0.3.0 entry carries `tree_sha256` and `installed=false` |
+| PR-03 literals removed, fail closed | **done** | four constants now read the registry; `_FALLBACK_PIN` deleted; an unreadable registry yields `BLOCKED / PINS_UNREADABLE`; `tests/test_easel_pins.py` 14/14 |
+| PR-05 two-engine docs | **partial** | `docs/UPSTREAM-EASEL.md` now names the registry as the only pin source; the two-engine section in `CURRENT-STATE.md` waits for the M1 switch, because describing an engine that is not active would be fiction |
+| PR-04 / 06 / 07 | **not started** | skill layout resolution, the `easel_engine.py` switcher, and registering the v0.3.0 instance |
+
+Pre-existing failures repaired along the way (all four were already red in the
+2026-11-13 work, none introduced here):
+
+| Suite | Before | After | Cause |
+|---|---|---|---|
+| `tests/test_easel_host_guard.py` | 23/27 | **28/28** | three assertions described the old contract: `/api/status` is now denied, the `mutations` value changed, and the offline dependency list gained PyYAML; a regression test now pins the denial |
+| `tests/test_easel_workbench_overlay.py` | 45/46 | **46/46** | generated mode now checks DNA freshness, so a fake account cannot project; the test asserts MISMATCH honestly |
+| `tests/test_easel_offline_task.py` | 5/18 | **19/19** | fixtures lacked `project.yaml`; POSTs carried no same-origin `Origin`; error-code ordering; an interrupted write now leaves a failure receipt instead of a bare OSError |
+| `tests/test_m5_evidence.py` | 21/22 | **22/22** | the workbench-resolver fixture was not a valid overlay |
+
+One code behaviour change, outside the pin but needed to restore the documented
+contract: `offline_task.run_offline_draft_task` validates the account's shape
+before the project binding, so a non-string account is `ACCOUNT_INVALID` rather
+than `PROJECT_ACCOUNT_MISMATCH`.
+
+### 17.3 Change log
 
 | Date | Version | Change |
 |---|---|---|
 | 2026-11-15 | v0.1 | First version. Status Proposed, awaiting Founder approval. Documentation and documentation-gate wiring only; no code change, no pin change |
+| 2026-11-15 | v0.2 | Records M0 landing: single pin registry, four literals removed, fail-closed resolution. Corrects the literal count in FR-PIN-02 (five was wrong: four code constants plus one description of what a screenshot shows, and that one stays) |
 
 ---
 

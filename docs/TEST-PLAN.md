@@ -4,7 +4,9 @@
 
 > Authoritative local verification strategy, suite inventory and CI wiring.
 >
-> Last verified: 2026-11-13 on the Easel workbench worktree based at `7ebb559`; fetched `origin/main` is `98a61f22` with 104 suites and 105 named Python CI steps. This candidate adds 3 suites and steps; the combined inventory is 107 suites and 108 steps.
+> Last verified: 2026-11-15 on `feat/173-easel-m0-pin`. The tree holds 106 suites under
+> `tests/test_*.py`, and `.github/workflows/ci.yml` names every one of them (106 steps).
+> The count is not asserted here; read it with `ls tests/test_*.py | wc -l`.
 
 ## Risk-based local verification
 

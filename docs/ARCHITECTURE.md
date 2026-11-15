@@ -2,7 +2,7 @@
 
 [English](ARCHITECTURE.md) | [简体中文](ARCHITECTURE.zh-CN.md)
 
-> Last verified: 2026-11-12 on `main` at `c1da6dd`.
+> Last verified: 2026-11-15 on `feat/173-easel-m0-pin`.
 
 > What the system is. Where the boundaries are. How components call each other.
 > Describes the target architecture after the 2026-11-02 host decision, and
@@ -210,7 +210,8 @@ src/contentops/
 └── golden/               ← Golden identity, evidence locks, review, A/B variants
 
 runtime/
-├── easel.lock.json               ← canonical Easel pin
+├── easel-pins.json               ← canonical Easel pin registry (the lock is derived)
+├── easel.lock.json               ← projection of the active engine
 ├── easel-runtime.json            ← provenance record
 ├── media-use-runtime-baseline.json
 ├── media-use-package-lock.json

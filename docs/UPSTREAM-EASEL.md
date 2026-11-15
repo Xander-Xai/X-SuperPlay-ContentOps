@@ -20,7 +20,8 @@ not consumed as production runtime.
 | Tag | v0.2.1 |
 | Commit | `3fe2d9904c1619281ef57f81d9ee0b7854998399` |
 | Release date | 2026-09-24 |
-| Lock file | `runtime/easel.lock.json` |
+| Lock file | `runtime/easel.lock.json` — **derived** from the registry below; do not edit by hand |
+| Source of truth | `runtime/easel-pins.json` — its `active` engine is what the lock projects, and code reads it instead of carrying a commit |
 | Provenance | `runtime/easel-runtime.json` |
 | Local path | `.runtime/easel/` (gitignored) |
 | Acquisition | Release archive (GitHub tarball via `gh api`) |

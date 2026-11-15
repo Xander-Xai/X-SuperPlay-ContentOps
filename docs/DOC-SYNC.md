@@ -2,7 +2,7 @@
 
 [English](DOC-SYNC.md) | [简体中文](DOC-SYNC.zh-CN.md)
 
-> Last verified: 2026-11-12 on `main` at `c1da6dd`.
+> Last verified: 2026-11-15 on `feat/173-easel-m0-pin`.
 
 > How this repository keeps its documents from lying. The rule is mechanical, not
 > aspirational: a tracked doc carries the date it was verified against, and CI

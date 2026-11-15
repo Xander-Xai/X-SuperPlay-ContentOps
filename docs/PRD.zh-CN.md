@@ -6,7 +6,7 @@ translation_status: synced
 
 # PRD — X-SuperPlay ContentOps 运行时
 
-> 最后验证：2026-11-12，`main` 的 `c1da6dd`。需求状态按该日期的代码核对；
+> 最后验证：2026-11-15，分支 `feat/173-easel-m0-pin`。需求状态按该日期的代码核对；
 > 标为“已实现”只表示本仓库有代码，不等于有作品被发布。
 
 
@@ -164,13 +164,17 @@ TECHNICAL_QC → CONTENT_QC → FACT_QC → HUMAN_REVIEW → PRODUCTION_READY。
 
 ## 14. Easel 集成
 
-- 固定 v0.2.1，Release 归档，内容校验
+- 固定 v0.2.1（git checkout），内容校验（982/982 blob）。pin 的唯一来源是
+  ```runtime/easel-pins.json```；```runtime/easel.lock.json``` 是它 ```active``` 引擎的派生投影，
+  代码不再各自携带 commit
 - 扩展优先级：ADAPTER > EXTENSION > CUSTOM SKILL > PATCH > FORK
 - 不修改上游源码
 - 升级需要 Founder 批准 + 回归套件
-- **当前实际执行面：两个文件** —— ```auto-short-video/scripts/assemble.py```
-  与 ```tts.py```（仅 V1）。上游的 Skill、Agent、工作台与浏览器发布在**本仓库未接入**。
-  采用其中任何一项都是独立决策，且需要取代 ADR-002（ADR-015 D1）
+- **当前实际执行面：六个文件** —— ```auto-short-video/scripts/assemble.py```、
+  卡片与文章四件套（```render_card.py```、```card_audit.py```、```validate_gzh_html.py```、
+  ```wrap_preview.py```）与 ```tts.py```（仅 V1）。上游的 Agent、Gateway、工作台宿主与
+  浏览器发布在**本仓库未接入**。采用其中任何一项都是独立决策，且需要取代 ADR-002
+  （ADR-015 D1）；分阶段计划见 [PRD-EASEL-V030-FOUNDATION.md](PRD-EASEL-V030-FOUNDATION.md)
 
 ## 15. 质量标准
 

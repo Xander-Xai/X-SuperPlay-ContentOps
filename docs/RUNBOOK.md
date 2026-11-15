@@ -3,7 +3,7 @@
 [English](RUNBOOK.md) | [简体中文](RUNBOOK.zh-CN.md)
 
 > Real executable commands. Derived from actual script behavior, not assumptions.
-> Last updated: 2026-11-12
+> Last updated: 2026-11-15
 
 ## 0. Environment check
 

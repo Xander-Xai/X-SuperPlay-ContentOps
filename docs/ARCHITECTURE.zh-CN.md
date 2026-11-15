@@ -8,7 +8,7 @@ translation_status: synced
 
 [English](ARCHITECTURE.md) | [简体中文](ARCHITECTURE.zh-CN.md)
 
-> 最后验证：2026-11-12，`main` 的 `c1da6dd`。
+> 最后验证：2026-11-15，分支 `feat/173-easel-m0-pin`。
 
 > 系统是什么。边界在哪里。组件如何调用。
 > 描述 2026-11-02 宿主决策后的目标架构，并标明今天已验证的部分。

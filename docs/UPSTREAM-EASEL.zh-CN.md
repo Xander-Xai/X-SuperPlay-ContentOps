@@ -26,7 +26,8 @@ translation_status: synced
 | Tag | v0.2.1 |
 | Commit | ```3fe2d9904c1619281ef57f81d9ee0b7854998399``` |
 | 发布日期 | 2026-09-24 |
-| 锁文件 | ```runtime/easel.lock.json``` |
+| 锁文件 | ```runtime/easel.lock.json``` —— 由下方注册表**派生**；不要手工编辑 |
+| 唯一来源 | ```runtime/easel-pins.json``` —— 它的 ```active``` 引擎就是锁文件的内容，代码读它而不是各自携带 commit |
 | 本地路径 | ```.runtime/easel/```（gitignored） |
 | 验证 | 982/982 blob SHA-1 匹配 |
 | 上游稳定版 | v0.3.0（2026-10-12）—— **未采用**（见下文 *v0.3.0 差异*） |

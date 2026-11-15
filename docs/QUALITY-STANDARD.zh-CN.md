@@ -8,7 +8,7 @@ translation_status: synced
 
 [English](QUALITY-STANDARD.md) | [简体中文](QUALITY-STANDARD.zh-CN.md)
 
-> 最后复核：2026-11-12，对照 `scripts/qc_video.py`、`scripts/qc_visual.py`
+> 最后复核：2026-11-15，对照 `scripts/qc_video.py`、`scripts/qc_visual.py`
 > 与 `src/contentops/media/` 的媒体 QC 归一化逻辑。
 
 > 视频和内容质量门控。无凭证 = 任务未完成。

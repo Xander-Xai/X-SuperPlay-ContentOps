@@ -10,7 +10,9 @@ translation_status: synced
 
 > 本地验证策略权威文档、套件清单与 CI 接线。
 >
-> 最后验证：2026-11-13，Easel 工作台工作树基于 `7ebb559`；已获取的 `origin/main` 为 `98a61f22`，含 104 个套件和 105 个具名 Python CI 步骤。本候选新增 3 个套件及步骤；合并后的清单为 107 个套件、108 个步骤。
+> 最后验证：2026-11-15，分支 `feat/173-easel-m0-pin`。树内 `tests/test_*.py` 共 106 个套件，
+> `.github/workflows/ci.yml` 逐一具名（106 个步骤）。此处不写死数量，
+> 以 `ls tests/test_*.py | wc -l` 为准。
 >
 > 最后核验：2026-11-06，`fix/6-brief-copy-review`。
 

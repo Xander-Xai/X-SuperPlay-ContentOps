@@ -8,7 +8,7 @@ translation_status: synced
 
 [English](DOC-SYNC.md) | [简体中文](DOC-SYNC.zh-CN.md)
 
-> 最后验证：2026-11-12，`main` 的 `c1da6dd`。
+> 最后验证：2026-11-15，分支 `feat/173-easel-m0-pin`。
 
 > 本仓库如何防止文档说谎。规则是机械的，不是口号：每份被跟踪的文档都写明它是在哪一天
 > 对着哪个提交核验的，而一旦它描述的代码在那之后发生变更，CI 就会失败。

@@ -4,7 +4,7 @@
 
 [简体中文](README.md) | English
 
-> Last verified: 2026-11-12 on `main` at `c1da6dd`. The status table describes
+> Last verified: 2026-11-15 on `feat/173-easel-m0-pin` (M0: single pin registry). The status table describes
 > `main`, never a draft branch.
 
 ## What
@@ -253,7 +253,8 @@ registry in [docs/PLATFORM-INTEGRATION-STATUS.md](docs/PLATFORM-INTEGRATION-STAT
 | Tag | v0.2.1 |
 | Commit | `3fe2d9904c1619281ef57f81d9ee0b7854998399` |
 | Local path | `.runtime/easel/` |
-| Lock file | `runtime/easel.lock.json` |
+| Lock file | `runtime/easel.lock.json` (derived from `runtime/easel-pins.json`) |
+| Source of truth | `runtime/easel-pins.json` — code reads its `active` engine instead of carrying a commit |
 | Upstream stable | v0.3.0 (not adopted; skill paths moved to `skills/builtin/`) |
 | Upgrade | Requires Founder approval + regression suite |
 

@@ -10,7 +10,9 @@ translation_status: synced
 
 > 当前运行状态。仅经验证的事实。无展望，无过时声明。
 >
-> 最后验证：2026-11-13，Easel 工作台工作树基于 `7ebb559`，包含文中说明的未提交候选改动。
+> 最后验证：2026-11-15，分支 `feat/173-easel-m0-pin`。Easel pin 现在只写在
+> `runtime/easel-pins.json`；`runtime/easel.lock.json` 是它 `active` 引擎的派生投影，
+> 代码里不再有 commit 字面量。
 > 只读 fetch 后 `origin/main` 为 `98a61f22`；本工作树领先 3 个、落后 7 个提交。尚未变基或合并。
 > 候选工作台章节依据当前工作树证据；其他事实描述 `main`，除非另有标记。
 > “分层状态”表之后的小节是历史里程碑记录，说明某项能力当时如何被证明，

@@ -9,7 +9,7 @@ translation_status: synced
 [English](RUNBOOK.md) | [简体中文](RUNBOOK.zh-CN.md)
 
 > 真实可执行命令。从实际脚本行为推导，非假设。
-> 最后更新：2026-11-12
+> 最后更新：2026-11-15
 
 ## 0. 环境检查
 

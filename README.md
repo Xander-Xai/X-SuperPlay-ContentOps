@@ -4,7 +4,7 @@
 
 简体中文 | [English](README.en.md)
 
-> 最后验证：2026-11-12，`main` 的 `c1da6dd`。状态表描述 `main`，不描述草稿分支。
+> 最后验证：2026-11-15，分支 `feat/173-easel-m0-pin`（M0：pin 单源注册表）。状态表描述 `main`，不描述草稿分支。
 
 ## 是什么
 
@@ -237,7 +237,8 @@ python3 scripts/qc_video.py projects/my-video
 | Tag | v0.2.1 |
 | Commit | `3fe2d9904c1619281ef57f81d9ee0b7854998399` |
 | 本地路径 | `.runtime/easel/` |
-| 锁文件 | `runtime/easel.lock.json` |
+| 锁文件 | `runtime/easel.lock.json`（由 `runtime/easel-pins.json` 派生） |
+| 唯一来源 | `runtime/easel-pins.json` —— 代码读注册表的 `active` 引擎，不再各自携带 commit |
 | 上游稳定版 | v0.3.0（未采用；Skill 路径已迁至 `skills/builtin/`） |
 | 升级 | 需要 Founder 批准 + 回归套件 |
 
