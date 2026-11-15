@@ -35,9 +35,15 @@
         "scope": "local execution of the approved adapter and its runtime baseline only; per-asset rights stay enforced by the adapter's rights_reviewed gate; no commercial publication clearance is granted",
         "evidence": "reports/audits/contentops-pr71-media-use-final-audit-2026-10-31.md"
       },
-      "accounts": ["*"],
-      "pipelines": ["M5"],
-      "stages": ["media_use"],
+      "accounts": [
+        "*"
+      ],
+      "pipelines": [
+        "M5"
+      ],
+      "stages": [
+        "media_use"
+      ],
       "contract": {
         "input": "project.yaml media_use.requests (id, kind, intent, license, attribution, rights_reviewed) plus sources/assets.json",
         "output": "receipts/media-use-stage.json, storyboard audio fields (bgm/sfx) and asset manifest entries",
@@ -129,6 +135,67 @@
         "authorizes_execution": false,
         "project_grant_required": false,
         "local_effect_policy": "LOCAL_ONLY_NO_NETWORK_NO_PAID_NO_PUBLICATION"
+      }
+    },
+    {
+      "id": "contentops-production-gates",
+      "name": "contentops-production-gates",
+      "summary": "The repository's own fail-closed production gates (7 VIDEO + 5 GRAPHIC_TEXT), declared so the foundation can discover them as a skill. The declaration is a pointer, not an execution grant; the gates stay the authority.",
+      "discovery": {
+        "root": "repo",
+        "dir": "extensions/contentops-gates"
+      },
+      "source": {
+        "publisher": "X-SuperPlay ContentOps",
+        "upstream": "local",
+        "version": "1.0.0"
+      },
+      "canonical_path": "scripts/production_gates.py",
+      "license": {
+        "status": "declared",
+        "spdx": "Apache-2.0",
+        "note": "Repository-owned code under the repository licence."
+      },
+      "rights": {
+        "status": "verified",
+        "verified": true,
+        "scope": "local gate evaluation only; no publication, spend or network",
+        "evidence": "receipts of projects passing production_gates (e.g. projects/m5-easel-pin/receipts/)"
+      },
+      "accounts": [
+        "*"
+      ],
+      "pipelines": [
+        "M5",
+        "GZH_EDITORIAL",
+        "X_EDITORIAL",
+        "ARTICLE_EDITORIAL"
+      ],
+      "stages": [
+        "gates"
+      ],
+      "contract": {
+        "input": "project.yaml, sources/source-refs.json, sources/assets.json and account DNA",
+        "output": "receipts/production-gates*.json; production_ready is decided by human review, never by a green gate",
+        "schema": "contentops.production-gates/v1"
+      },
+      "provider": {
+        "path_permitted": true,
+        "network": false,
+        "paid": false,
+        "cross_project_reuse": false,
+        "note": "Local gate evaluation only. Not an execution authorization; the M5 gate and human review decide separately."
+      },
+      "verification": {
+        "status": "VERIFIED",
+        "scope": "offline gate evaluation on the golden chain",
+        "evidence": "projects/m5-easel-pin/receipts/production-gates-video.json",
+        "note": "No declared runtime block on purpose: the capability is the repository's own code, so there is no external baseline to approve or lock environment to satisfy."
+      },
+      "execution": {
+        "adapter": "scripts/production_gates.py",
+        "m5_stage": "gates",
+        "authorizes_execution": false
       }
     }
   ]

@@ -395,6 +395,12 @@ def _discovery_state(entry: Dict[str, Any]) -> Dict[str, Any]:
                 break
         if path is None:
             path = CATALOG_ROOTS[0] / directory if CATALOG_ROOTS else None
+    elif root == "repo":
+        # A capability this repository owns outright lives under the checkout,
+        # not in an external store. The foundation declares its gates this way;
+        # falling through to the shared store would point at a directory that
+        # can never hold them.
+        path = ROOT / directory
     else:
         path = SHARED_SKILL_ROOT / directory
     return {"root": root, "dir": directory,
