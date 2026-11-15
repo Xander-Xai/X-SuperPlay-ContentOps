@@ -68,10 +68,23 @@ def _run(method: str, path: str, headers: dict[str, str] | None = None,
 
 
 def test_loopback_read_is_forwarded():
-    status, body, _, app = _run("GET", "/api/status")
+    """A resource the guard keeps open reaches upstream and is recorded once."""
+    status, body, _, app = _run("GET", "/static/app.js")
     assert status == 200
     assert body == b"upstream"
-    assert app.calls == [("GET", "/api/status")]
+    assert app.calls == [("GET", "/static/app.js")]
+
+
+def test_upstream_status_route_is_denied_because_it_reads_env():
+    """`/api/status` stays closed: it calls get_skills(), which reads the .env.
+
+    ADR-022 D3 records the reason. The route used to be forwarded, and the test
+    that asserted that was the reason nobody noticed the denial landing.
+    """
+    status, body, _, app = _run("GET", "/api/status")
+    assert status == 403
+    assert app.calls == [], "a denied request must never reach the upstream app"
+    assert json.loads(body)["error"] == "HOST_RESOURCE_AUDIT_REQUIRED"
 
 
 def test_offline_task_methods_are_opt_in_and_exact():
@@ -164,7 +177,7 @@ def test_frontend_integrity_does_not_recheck_api_status():
 
 def test_static_ui_shell_is_still_served():
     """The workbench UI shell stays readable — the audit is about resources."""
-    for path in ("/", "/onepage", "/favicon.ico", "/api/status",
+    for path in ("/", "/onepage", "/favicon.ico",
                  "/static/app.js", "/assets/logo.svg"):
         status, body, _, app = _run("GET", path)
         assert status == 200, path
@@ -411,6 +424,9 @@ def test_an_unreachable_verifier_is_not_a_pass():
 
 
 def test_host_status_reports_the_workbench_pin_not_the_production_pin():
+    from contentops.easel import pins
+
+    declared = pins.workbench()
     with tempfile.TemporaryDirectory() as tmp:
         root = _fake_root(Path(tmp))
         workbench = root / "workbench"
@@ -419,7 +435,9 @@ def test_host_status_reports_the_workbench_pin_not_the_production_pin():
         (workbench / "web" / "app.py").write_text("app = None\\n", encoding="utf-8")
         (workbench / "easel" / "cli.py").write_text("", encoding="utf-8")
         (root / "runtime" / "easel-workbench-overlay.json").write_text(
-            json.dumps({"upstream": {"tag": "v0.3.0", "commit": "workbench-sha"}}),
+            json.dumps({"schema": "contentops.easel-workbench-overlay/v1",
+                        "upstream": {"repo": declared.repo, "tag": declared.tag,
+                                     "commit": declared.commit}}),
             encoding="utf-8",
         )
         status = host_status(root, tree=workbench)
@@ -428,14 +446,30 @@ def test_host_status_reports_the_workbench_pin_not_the_production_pin():
     # web app; this test is about selecting the workbench pin, not installing
     # host dependencies.
     assert status["state"] in {"HOST_READY", "HOST_BLOCKED"}
-    assert status["pin"] == {"tag": "v0.3.0", "commit": "workbench-sha"}
+    assert status["pin"] == {"tag": declared.tag, "commit": declared.commit}
     assert status["frontend"]["status"] == "UNVERIFIED"
-    assert status["mutations"] == "OFFLINE_DRAFT_SCAFFOLD_ONLY"
+    assert status["mutations"] == "OFFLINE_DRAFTS_ONLY"
+    # Exact list on purpose: this is the surface the host advertises, so an
+    # accidental addition has to be a deliberate edit here as well.
     assert status["offline_task_routes"] == [
         "GET /api/contentops/profiles",
+        "GET /api/contentops/projects?account={slug}",
+        "GET /api/contentops/draft-tasks?account={slug}&project={slug}",
+        "GET /api/contentops/status",
+        "GET /api/contentops/profiles/{account}",
+        "GET /api/contentops/project-readiness",
+        "GET /api/contentops/skills/video-script",
+        "POST /api/contentops/evidence-draft",
         "POST /api/contentops/draft-task",
+        "POST /api/contentops/agent-workspace",
+        "POST /api/contentops/agent-proposal",
+        "POST /api/contentops/agent-approval-inspection",
+        "POST /api/contentops/agent-cancel",
+        "POST /api/contentops/agent-collect",
+        "POST /api/contentops/windows-sandbox-review",
         "GET /api/contentops/draft-task/{task_id}?account={slug}&project={slug}",
         "GET /api/contentops/draft-task/{task_id}/draft?account={slug}&project={slug}",
+        "GET /api/contentops/draft-task/{task_id}/artifacts?account={slug}&project={slug}",
     ]
     assert status["offline_task_ui"] == "/contentops/offline-task"
     assert "HOST_FRONTEND_UNVERIFIED" in status["blockers"]
@@ -496,7 +530,7 @@ def test_offline_tasks_only_status_is_isolated_from_easel():
 
     def find_spec(name, *args, **kwargs):
         checked.append(name)
-        if name == "uvicorn":
+        if name in {"uvicorn", "yaml"}:
             return object()
         raise AssertionError(f"offline-only status checked unrelated dependency: {name}")
 
@@ -506,7 +540,9 @@ def test_offline_tasks_only_status_is_isolated_from_easel():
     finally:
         host_mod.importlib.util.find_spec = original
 
-    assert checked == ["uvicorn"]
+    # uvicorn serves the panel; PyYAML binds the project (ADR-022 D3). Nothing
+    # else may be imported — the mode exists precisely to avoid loading Easel.
+    assert checked == ["uvicorn", "yaml"]
     assert status["state"] == "HOST_READY"
     assert status["mode"] == "OFFLINE_TASKS_ONLY"
     assert status["upstream_easel_loaded"] is False

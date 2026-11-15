@@ -82,31 +82,46 @@ def test_default_composer_still_resolves_only_the_production_pin():
 def test_workbench_resolver_requires_generated_profile_overlay_verification():
     import resolve_easel
     import verify_easel_runtime
+    from contentops.easel import pins
 
+    declared = pins.workbench()
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
         (root / "runtime").mkdir()
-        (root / "runtime" / "easel-workbench-overlay.json").write_text("{}")
+        record = root / "runtime" / "easel-workbench-overlay.json"
+        record.write_text(json.dumps({
+            "schema": "contentops.easel-workbench-overlay/v1",
+            "upstream": {"repo": declared.repo, "commit": declared.commit},
+        }), encoding="utf-8")
         (root / "scripts").mkdir()
         (root / "scripts" / "verify_easel_runtime.py").write_text("# verifier fixture")
         candidate = root / "candidate"
         candidate.mkdir()
         with mock.patch.object(verify_easel_runtime, "verify_overlay", return_value={
                 "status": "VERIFIED", "workbench_path": str(candidate),
-                "expected_commit": "bb3c8ff0463f36c202454d74171682ba6e470cb1",
-                "expected_tag": "v0.3.0"}) as verifier:
+                "expected_commit": declared.commit,
+                "expected_tag": declared.tag}) as verifier:
             resolved = resolve_easel.resolve_easel_workbench(root)
         assert resolved["status"] == "OK", resolved
         assert Path(resolved["easel_dir"]) == candidate
         verifier.assert_called_once_with(
-            record_path=root / "runtime" / "easel-workbench-overlay.json",
-            profile_mode="generated")
+            record_path=record, profile_mode="generated")
 
         with mock.patch.object(verify_easel_runtime, "verify_overlay", return_value={
                 "status": "MISMATCH", "reason": "extra file"}):
             blocked = resolve_easel.resolve_easel_workbench(root)
         assert blocked["status"] == "BLOCKED"
         assert blocked["reasons"] == ["extra file"]
+
+        # The overlay must name the engine the registry declares. A record that
+        # points somewhere else is refused before any verification runs.
+        record.write_text(json.dumps({
+            "schema": "contentops.easel-workbench-overlay/v1",
+            "upstream": {"repo": declared.repo, "commit": "f" * 40},
+        }), encoding="utf-8")
+        drifted = resolve_easel.resolve_easel_workbench(root)
+        assert drifted["status"] == "BLOCKED", drifted
+        assert "workbench identity" in drifted["reasons"][0], drifted["reasons"]
 
 
 def _tmpdir() -> Path:

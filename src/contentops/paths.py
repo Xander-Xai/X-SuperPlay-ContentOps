@@ -24,9 +24,13 @@ in-repository layout byte for byte.
 from __future__ import annotations
 
 import os
-import subprocess
+import sys
 from pathlib import Path
 from typing import Optional
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
+
+from process_utils import hidden_run  # noqa: E402
 
 OUTPUT_ROOT_ENV = "CONTENTOPS_OUTPUT_ROOT"
 
@@ -80,8 +84,7 @@ _env_loaded = False
 def _is_ignored(rel: str) -> bool:
     """Whether Git ignores this path -- i.e. it is local, untracked state."""
     try:
-        proc = subprocess.run(["git", "check-ignore", "-q", "--", rel],
-                              cwd=REPO_ROOT, capture_output=True)
+        proc = hidden_run(["git", "check-ignore", "-q", "--", rel], cwd=str(REPO_ROOT))
     except Exception:  # pragma: no cover - no git, no judgement
         return False
     return proc.returncode == 0

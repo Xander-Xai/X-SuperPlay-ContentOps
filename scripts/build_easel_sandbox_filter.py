@@ -13,6 +13,10 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+
+from process_utils import hidden_run  # noqa: E402
+
 SOURCE = ROOT / "extensions" / "easel-workbench" / "sandbox" / "no_subprocess.c"
 
 
@@ -45,9 +49,8 @@ def main() -> int:
             source = Path(tmp) / "filter.c"
             binary = Path(tmp) / "filter.so"
             source.write_bytes(source_bytes)
-            proc = subprocess.run([compiler, "-shared", "-fPIC", "-O2", "-o", str(binary), str(source)],
-                                  stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                  timeout=120, check=False)
+            proc = hidden_run([compiler, "-shared", "-fPIC", "-O2", "-o", str(binary), str(source)],
+                              stdin=subprocess.DEVNULL, timeout=120)
             if proc.returncode != 0 or not binary.is_file():
                 print("BLOCKED: compilation failed", file=sys.stderr)
                 return 4

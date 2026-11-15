@@ -981,7 +981,14 @@ def test_overlay_verifier_can_check_rebuilt_profiles_separately_from_observed_sn
 
     assert observed["status"] == "MISMATCH"
     assert observed["profile_mode"] == "observed"
-    assert rebuilt["status"] == "VERIFIED", rebuilt.get("reason")
+    # Generated mode now also proves the installed profiles still match a fresh
+    # projection of current account DNA (ADR-022 D3). This fixture uses a made-up
+    # account, so the verifier cannot project DNA for it and refuses: the verdict
+    # is MISMATCH, not VERIFIED. Recording that here keeps the stricter contract
+    # visible; a DNA-backed VERIFIED case belongs to M2 acceptance, because a
+    # fake account may not stand in for a real projection.
+    assert rebuilt["status"] == "MISMATCH", rebuilt.get("reason")
+    assert rebuilt["profile_freshness"]["status"] == "UNVERIFIED", rebuilt["profile_freshness"]
     assert rebuilt["profile_mode"] == "generated"
     assert incomplete_result["status"] == "UNVERIFIED"
     assert "all six files" in incomplete_result["reason"]

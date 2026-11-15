@@ -553,6 +553,11 @@ def run_offline_draft_task(*, repo_root: Path, account: str, project_slug: str,
     if not isinstance(idempotency_key, str) or not IDEMPOTENCY_KEY.fullmatch(idempotency_key):
         raise OfflineTaskError("IDEMPOTENCY_KEY_INVALID", "invalid idempotency key")
     repo = Path(repo_root).resolve(strict=True)
+    # Shape first, then the filesystem: a request whose account is not even a
+    # slug deserves ACCOUNT_INVALID, not a report that it fails to match a
+    # project binding it never described correctly.
+    if not isinstance(account, str) or not re.fullmatch(r"[a-z0-9][a-z0-9-]*", account):
+        raise OfflineTaskError("ACCOUNT_INVALID", "account must be a lowercase account slug")
     project, project_rel = _safe_project(repo, project_slug)
     _require_project_account(project, account)
     account_data = _load_dna(account, repo)

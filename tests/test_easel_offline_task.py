@@ -14,6 +14,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "scripts"))
 
+from process_utils import hidden_popen  # noqa: E402
+
 from contentops.easel.offline_task import (  # noqa: E402
     OfflineTaskError,
     run_offline_draft_task,
@@ -23,10 +25,15 @@ from contentops.easel.guard import GuardMiddleware, HostPolicy  # noqa: E402
 from contentops.easel.offline_api import OfflineTaskAPI, SUBMIT_PATH  # noqa: E402
 
 
-def _project_root() -> tuple[tempfile.TemporaryDirectory, Path, Path]:
+def _project_root(account: str = "x-superplay-1024") -> tuple[tempfile.TemporaryDirectory, Path, Path]:
     tmp = tempfile.TemporaryDirectory()
     root = Path(tmp.name)
-    (root / "projects" / "offline-test").mkdir(parents=True)
+    project = root / "projects" / "offline-test"
+    project.mkdir(parents=True)
+    # ADR-022 D3: an offline task is bound to one account, and the project must
+    # say which. An unbound project is rejected with PROJECT_ACCOUNT_MISSING, so
+    # every fixture that expects a draft to be written declares its account.
+    (project / "project.yaml").write_text(f"account_slug: {account}\n", encoding="utf-8")
     accounts = root / "config" / "accounts"
     accounts.mkdir(parents=True)
     for account in ("x-superplay-1024", "x-superplay-future-intelligence",
@@ -88,7 +95,12 @@ def _frontend_proof_fixture(root: Path) -> Path:
 
 def _call_api(app, method: str, path: str, *, body: bytes = b"",
               query: bytes = b"", content_type: str = "application/json",
-              origin: str | None = None):
+              origin: str | None = "http://127.0.0.1:7861"):
+    # A browser request that reaches this API carries a loopback Origin, and the
+    # guard requires the Origin to match the Host for state-changing routes
+    # (ADR-022 D3). Defaulting to the matching origin keeps every caller honest
+    # about what a real request looks like; a test that wants the refusal passes
+    # a different origin explicitly.
     sent = []
     messages = [{"type": "http.request", "body": body, "more_body": False}]
 
@@ -232,7 +244,7 @@ def test_idempotent_replay_refuses_a_tampered_draft():
 
 
 def test_second_account_changes_the_profile_binding_and_constraints():
-    tmp, root, project = _project_root()
+    tmp, root, project = _project_root("x-superplay-future-intelligence")
     with tmp:
         result = run_offline_draft_task(
             repo_root=root,
@@ -253,7 +265,10 @@ def test_invalid_project_account_brief_and_key_fail_closed():
                       brief="valid", idempotency_key="valid")
         for changed, code in [
             ({"project_slug": "../escape"}, "PROJECT_INVALID"),
-            ({"account": "unknown"}, "ACCOUNT_MISSING"),
+            # The binding is checked before the DNA lookup, so an account that is
+            # not the project's is a mismatch here. A *missing* DNA for the bound
+            # account is covered separately below.
+            ({"account": "unknown"}, "PROJECT_ACCOUNT_MISMATCH"),
             ({"account": 42}, "ACCOUNT_INVALID"),
             ({"brief": " "}, "INPUT_INVALID"),
             ({"brief": "\ud800"}, "INPUT_INVALID"),
@@ -266,6 +281,26 @@ def test_invalid_project_account_brief_and_key_fail_closed():
                 assert exc.code == code, (code, exc.code)
             else:
                 raise AssertionError(f"invalid request accepted: {changed}")
+
+
+def test_missing_dna_for_the_bound_account_is_account_missing():
+    """A project bound to an account whose DNA is absent fails as ACCOUNT_MISSING.
+
+    Kept separate from the request-validation table: there the failure is a
+    mismatch between two known values, here it is a value the repository cannot
+    resolve at all, and the two are different facts about the request.
+    """
+    tmp, root, _ = _project_root("x-superplay-absent")
+    with tmp:
+        try:
+            run_offline_draft_task(
+                repo_root=root, account="x-superplay-absent", project_slug="offline-test",
+                brief="valid", idempotency_key="valid",
+            )
+        except OfflineTaskError as exc:
+            assert exc.code == "ACCOUNT_MISSING", exc.code
+        else:
+            raise AssertionError("a project bound to an absent account was accepted")
 
 
 def test_active_project_lock_blocks_a_second_task():
@@ -307,8 +342,12 @@ def test_interrupted_write_resumes_the_same_idempotent_task():
                 repo_root=root, account="x-superplay-1024", project_slug="offline-test",
                 brief="可恢复任务", idempotency_key="recoverable",
             )
-        except OSError:
-            pass
+        except OfflineTaskError as exc:
+            # An interruption is reported as a task failure with its own redacted
+            # receipt (ADR-022 D3), not as a bare OSError escaping the API.
+            assert exc.code == "TASK_INTERNAL_ERROR", exc.code
+            assert exc.failure_receipt, exc
+            assert (root / "projects" / "offline-test" / exc.failure_receipt).is_file()
         else:
             raise AssertionError("interruption injection did not run")
         finally:
@@ -321,8 +360,12 @@ def test_interrupted_write_resumes_the_same_idempotent_task():
         assert result["task_id"]
         assert len(list((project / "drafts").glob("easel-offline-*.md"))) == 1
         completed = [p for p in (project / "receipts").glob("easel-offline-*.json")
-                     if "idempotency" not in p.name]
+                     if "idempotency" not in p.name and "-failure-" not in p.name]
         assert len(completed) == 1, completed
+        # The interrupted attempt left exactly one redacted failure receipt, and
+        # the resume did not add a second one.
+        failed_attempts = list((project / "receipts").glob("easel-offline-failure-*.json"))
+        assert len(failed_attempts) == 1, failed_attempts
 
 
 def test_linked_projects_directory_is_refused():
@@ -345,23 +388,31 @@ def test_linked_projects_directory_is_refused():
             offline_task._linklike = original
 
 
+def _run_stdin_cli(payload: bytes) -> tuple[int, bytes]:
+    """Run the CLI with ``payload`` on stdin, through the shared process layer.
+
+    ``hidden_popen`` is the sanctioned way to start a child here: a bare
+    ``subprocess.run`` flashes a console window on Windows, which
+    ``check_subprocess_policy.py`` refuses. Bytes go in and out so the JSON is
+    compared exactly as the tool printed it.
+    """
+    proc = hidden_popen([sys.executable, str(ROOT / "scripts" / "easel_offline_task.py")],
+                        stdin=subprocess.PIPE, text=False)
+    out, _ = proc.communicate(payload, timeout=60)
+    return proc.returncode, out
+
+
 def test_stdin_cli_rejects_unknown_fields_before_execution():
-    result = subprocess.run(
-        [sys.executable, str(ROOT / "scripts" / "easel_offline_task.py")],
-        input=b'{"account":"x-superplay-1024","project":"offline-test",'
-              b'"brief":"x","idempotency_key":"a","extra":"reject"}',
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False,
-    )
-    assert result.returncode == 2, result.returncode
-    response = json.loads(result.stdout.decode("utf-8"))
+    code, out = _run_stdin_cli(
+        b'{"account":"x-superplay-1024","project":"offline-test",'
+        b'"brief":"x","idempotency_key":"a","extra":"reject"}')
+    assert code == 2, code
+    response = json.loads(out.decode("utf-8"))
     assert response["error"] == "INPUT_SCHEMA_INVALID", response
-    duplicate = subprocess.run(
-        [sys.executable, str(ROOT / "scripts" / "easel_offline_task.py")],
-        input=b'{"account":"x-superplay-1024","project":"offline-test",'
-              b'"brief":"x","idempotency_key":"a","account":"other"}',
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False,
-    )
-    assert duplicate.returncode == 2, duplicate.returncode
+    code, _ = _run_stdin_cli(
+        b'{"account":"x-superplay-1024","project":"offline-test",'
+        b'"brief":"x","idempotency_key":"a","account":"other"}')
+    assert code == 2, code
 
 
 def test_guarded_api_submits_offline_task_and_reads_its_project_receipt():
@@ -453,10 +504,13 @@ def test_guarded_status_route_refuses_cross_account_and_bad_query():
         _, submitted, _ = _call_api(app, "POST", SUBMIT_PATH,
                                     body=json.dumps(request).encode("utf-8"))
         task_path = f"/api/contentops/draft-task/{submitted['task_id']}"
+        # A read that names a different account is refused against the project
+        # binding before any receipt is opened, which is earlier (403, mismatch)
+        # than the receipt check this used to expect (409, TASK_RECEIPT_INVALID).
         status, error, _ = _call_api(
             app, "GET", task_path,
             query=b"account=x-superplay-future-intelligence&project=offline-test")
-        assert status == 409 and error["error"] == "TASK_RECEIPT_INVALID", (status, error)
+        assert status == 403 and error["error"] == "PROJECT_ACCOUNT_MISMATCH", (status, error)
         status, error, _ = _call_api(app, "GET", task_path, query=b"account=x-superplay-1024")
         assert status == 400 and error["error"] == "REQUEST_SCHEMA_INVALID", (status, error)
 
