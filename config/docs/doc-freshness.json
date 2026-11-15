@@ -47,6 +47,15 @@
       ]
     },
     {
+      "doc": "docs/PRD-RECORDING-TO-PLATFORM.md",
+      "code": [
+        "src/contentops/media/recording_intake.py",
+        "scripts/ingest_recording.py",
+        "config/accounts/",
+        "config/platforms/video-platforms.yaml"
+      ]
+    },
+    {
       "doc": "docs/QUALITY-STANDARD.md",
       "code": ["scripts/qc_video.py", "scripts/qc_visual.py", "src/contentops/media/"]
     },

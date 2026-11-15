@@ -44,6 +44,7 @@ translation_status: synced
 ## 里程碑计划
 
 - [PRD-EASEL-V030-FOUNDATION.md](PRD-EASEL-V030-FOUNDATION.md) — Easel v0.3.0 底座接入：先换发动机再换驾驶舱、M0–M4、发布分级 —— **Proposed，等待 Founder 批准**
+- [PRD-RECORDING-TO-PLATFORM.md](PRD-RECORDING-TO-PLATFORM.md) — 录屏优先交付：手动录屏成为证据、双账号分叉、平台变体、发布分级 —— **R1 已落地，R2–R4 未开始**
 - [CONVERGENCE-REQUIREMENTS-2026-11-01.md](CONVERGENCE-REQUIREMENTS-2026-11-01.md) — 文档 / Skill / 分支 / 上游固定版本收敛 —— **2026-11-01 获批；步骤 3–5 后已落地**
 - [M4-H3-PLAN.md](M4-H3-PLAN.md) — M4 MiniMax H3 视频（Issue #22）—— **已实现**
 - [M4.5-MEDIA-CONVERGENCE-PLAN.md](M4.5-MEDIA-CONVERGENCE-PLAN.md) — M4.5 媒体收敛（Issue #27）—— **已实现**
