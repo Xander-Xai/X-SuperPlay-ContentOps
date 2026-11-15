@@ -8,6 +8,8 @@
 > A row is a statement about **this branch**, never about the portfolio.
 >
 > Last regenerated from the registry: 2026-11-12, `main` at `c1da6dd`.
+> Last verified: 2026-11-16 — the cross-platform planning section below was added; no
+> registry row changed and no publication count moved.
 
 ## How to read a status
 
@@ -49,6 +51,20 @@ runner (`video_deliver.py`, `platform_delivery.py`) exists for every content
 line, and `PLANNED` is held by the missing account and unresolved rights, not by
 missing code. The two rows that still have no platform-specific code are 知乎
 and CSDN; CSDN and YouTube additionally have no upstream Easel capability.
+
+## Planning across platforms (2026-11-16)
+
+`scripts/platform_adapt.py plan` turns the account DNA and the delivery specs into
+one row per platform the account declares: the shape required, the limits a packer
+must respect, whether the master cut satisfies it or a second render is needed, and
+the account's recording policy. It does not change any status above — planning is
+not a publication, and every row here still reports what has actually happened on a
+platform, which is nothing.
+
+Its inputs are the two things this document already treats as authoritative: the
+registry (`config/registry/platforms.json`) for evidence, the specs
+(`config/platforms/video-platforms.yaml`) for shape. Where they disagree the
+disagreement stays visible: a platform can have a spec and still be `PLANNED`.
 
 ## Graphic delivery channels (not registry rows)
 
