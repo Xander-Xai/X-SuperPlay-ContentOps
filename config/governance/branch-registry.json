@@ -144,6 +144,14 @@
       "purpose": "PRD R2 first half: per-account per-platform adaptation plan (shape, limits, variant requirement, recording policy), fail-closed",
       "status": "active",
       "expires": "2026-12-16"
+    },
+    {
+      "name": "feat/animation-clip-backends",
+      "pr": 188,
+      "created": "2026-11-16",
+      "purpose": "Pinned Remotion clip renderer on the M5 motion stage. Huashu and the Easel pin stay. Motion Canvas and Manim remain blocked.",
+      "status": "active",
+      "expires": "2026-12-16"
     }
   ]
 }
