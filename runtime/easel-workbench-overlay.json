@@ -1,6 +1,6 @@
 {
   "schema": "contentops.easel-workbench-overlay/v1",
-  "note": "The workbench is a runnable Easel instance with its own tuning layer. This record separates the two things the byte comparison used to conflate: the upstream baseline (read-only, proven against an upstream commit) and the local overlay (the tuning). A file listed in overlay.files is EXPECTED to differ from upstream; a file that is NOT listed must match upstream byte for byte. That is what makes tuning auditable instead of invisible.",
+  "note": "The workbench is a runnable Easel instance with its own tuning layer. This record separates the two things the byte comparison used to conflate: the upstream baseline (read-only, proven against an upstream commit) and the local overlay (the tuning). A file listed in overlay.files is EXPECTED to differ from upstream; a file that is NOT listed must match upstream byte for byte. That is what makes tuning auditable instead of invisible. Digests are SHA-256 over LF-normalised content (2026-11-16): the instance is assembled on Windows and the repository is checked out on any platform, so a byte digest that changed with the checkout would call a correct file tampered.",
   "instance": {
     "path": "D:\\Projects\\X-SuperPlay-ContentOps\\.runtime\\easel-v030",
     "path_env": "CONTENTOPS_EASEL_WORKBENCH",
@@ -53,7 +53,7 @@
       "profiles/x-superplay-future-intelligence/platforms.md": "576e171edd0c761e37182fd05a14faa1d000f198a53c38489bfe7bded3d52abd",
       "profiles/x-superplay-future-intelligence/preferences.md": "262d1204f39b3a452035003507ebebdb83dd522968955548d5e79ba89f3e51d5",
       "profiles/x-superplay-future-intelligence/style.md": "e7bfa1bf3a60e7cbf8a122cff87898a5c4899783ee411af7ea0d73e3f7dd1690",
-      "skills/builtin/video-script/SKILL.md": "ec95b26186ab3134be32bf5193d5bc89724b827012ee7902278ac6c4cf2f7791",
+      "skills/builtin/video-script/SKILL.md": "7291b3b04946d51131e7832ea7003567b8edd984a71bbb166481416f6311dc26",
       "skills/builtin/video-script/references/benchmark-playbook.md": "c6de4f32547b58990774ab2770cf46fc5cdecdfbf51dbd8cfd76352042d911a0"
     },
     "digests_note": "SHA-256 of the bytes observed in the default clean candidate on 2026-11-13. Missing, changed or unrecorded overlay files cause verification failure. The original extracted workbench snapshot is preserved separately as previous_instance_snapshot."

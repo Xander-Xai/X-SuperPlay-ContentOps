@@ -102,6 +102,17 @@ def blob_sha1(path: Path) -> str:
     return h.hexdigest()
 
 
+def content_sha256(path: Path) -> str:
+    """SHA-256 of a file's content with line endings normalised to LF.
+
+    The instance is assembled on one platform and the repository is checked out on
+    whatever platform is asking, so the same text can be CRLF on disk in one place and
+    LF in the other. A digest that changed with the checkout would call a correct file
+    tampered; normalising is what makes the binding a statement about content.
+    """
+    return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+
+
 def upstream_tree_sha256(tree: dict[str, str]) -> str:
     """Stable digest of the sorted path-to-Git-blob map for one source tree."""
     serialized = "".join(f"{path}\0{tree[path]}\n" for path in sorted(tree))
@@ -624,7 +635,7 @@ def verify_overlay_sources(overlay: dict, source_root: Path = ROOT) -> dict:
                 missing.append(target)
                 continue
             try:
-                actual = hashlib.sha256(candidate.read_bytes()).hexdigest()
+                actual = content_sha256(candidate)
             except OSError:
                 missing.append(target)
                 continue
@@ -871,7 +882,7 @@ def verify_overlay(record_path: Path = OVERLAY_RECORD,
     digest_mismatch = sorted(
         p for p, expected in expected_digests.items()
         if p in local and (local[p] == UNSAFE_LINK_BLOB
-                           or hashlib.sha256((instance / p).read_bytes()).hexdigest() != expected)
+                           or content_sha256(instance / p) != expected)
     )
     # Hash coverage is mandatory even when a record accidentally supplies an
     # empty digest map. Otherwise a broad overlay directory silently exempts
