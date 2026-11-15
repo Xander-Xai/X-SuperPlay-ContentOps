@@ -530,10 +530,17 @@ v0.3.0 发布后，上游**用同一版本号替换过 tag**。一个可以被�
 | PR | 状态 | 证据 |
 |---|---|---|
 | PR-01 文档 + 门禁接线 | **已完成** | `check_i18n.py` / `check_doc_freshness.py` / `check_docs.py` 全绿 |
-| PR-02 pin 注册表 | **已完成** | `runtime/easel-pins.json`；`active=v0.2.1`、`workbench_engine=v0.3.0`；v0.3.0 条目含 `tree_sha256`，`installed=false` |
+| PR-02 pin 注册表 | **已完成** | `runtime/easel-pins.json`；`active` 现为 `v0.3.0`、`workbench_engine=v0.3.0`；两个引擎都带 `repo_id` 与 layout |
 | PR-03 字面量清零 + 失败即拒 | **已完成** | 4 处常量改为读注册表；`_FALLBACK_PIN` 删除；注册表不可读 → `BLOCKED / PINS_UNREADABLE`；`tests/test_easel_pins.py` 14/14 |
-| PR-05 文档双引擎段 | **部分** | `docs/UPSTREAM-EASEL.md` 已把注册表写成 pin 的唯一来源；`CURRENT-STATE.md` 的双引擎段留到 M1 切换时写，避免描述尚未发生的状态 |
-| PR-04 / 06 / 07 | **未开始** | 分别对应 skill 布局驱动、`easel_engine.py` 切换器、v0.3.0 实例登记 |
+| PR-04 skill 布局驱动（M1） | **已完成** | `resolve_skill_dir(..., layout=)`；`REQUIRED_PATHS` 按 layout 生成（这一条没做会直接把 v0.3.0 判成「缺少脚本」）；`--engine` 可显式解析任一引擎 |
+| PR-05 文档双引擎段（M1） | **已完成** | `UPSTREAM-EASEL` 的 pin 表、双树规则、delta ledger；`CURRENT-STATE` 的运行时表与切换记录；README / ARCHITECTURE / PRD §14 同步 |
+| PR-06 切换器（M1） | **已完成** | `scripts/easel_engine.py` 的 `show / verify / switch / install`；切换前先验证，写入 registry + 派生 lock + 追加回执；`tests/test_easel_engine.py` 7/7（含 4 条拒绝路径） |
+| PR-07 v0.3.0 实例（M1） | **已完成** | `install` 逐字节比对后落盘 1086 文件（1073 baseline + 14 overlay）到 `.runtime/easel-v030`；`verify` 在 overlay 模式下 VERIFIED，1071 baseline blob 命中，license Apache-2.0 VERIFIED |
+| PR-08 切 active（M1） | **已完成** | `switch v0.3.0` → 出片 → QC PASS → 产物 sha256 `07ff16dd…` **与 v0.2.1 逐字节相同**；回切演练 v0.3.0→v0.2.1→v0.3.0 三次全部 VERIFIED |
+
+M1 的关键结论：**引擎换了，产物一个字节都没变**。这把「换底座」的风险从「画质/时长/字幕可能变」压到「只改了来源路径」，也让 M2 可以放心做工作台接管。
+
+仍未做：M2（工作台接管，Agent 仍禁跑）、M3（9 门控挂成 skill）、M4（发布四档）。golden 仍只有 `projects/m5-easel-pin` 一份完整链，M2 之前需要补第二、三份。
 
 顺带修复的既有失败（这些测试在 2026-11-13 的工作里就已经是红的，不是本次引入）：
 

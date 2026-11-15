@@ -4,8 +4,8 @@
 
 > Authoritative local verification strategy, suite inventory and CI wiring.
 >
-> Last verified: 2026-11-15 on `feat/173-easel-m0-pin`. The tree holds 106 suites under
-> `tests/test_*.py`, and `.github/workflows/ci.yml` names every one of them (106 steps).
+> Last verified: 2026-11-15 on `feat/173-easel-m0-pin`. The tree holds 107 suites under
+> `tests/test_*.py`, and `.github/workflows/ci.yml` names every one of them (107 steps).
 > The count is not asserted here; read it with `ls tests/test_*.py | wc -l`.
 
 ## Risk-based local verification

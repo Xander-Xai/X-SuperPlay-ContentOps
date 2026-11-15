@@ -23,13 +23,15 @@ translation_status: synced
 | 属性 | 值 |
 |---|---|
 | 仓库 | https://github.com/ZJU-REAL/Easel |
-| Tag | v0.2.1 |
-| Commit | ```3fe2d9904c1619281ef57f81d9ee0b7854998399``` |
-| 发布日期 | 2026-09-24 |
+| Tag | v0.3.0 |
+| Commit | ```bb3c8ff0463f36c202454d74171682ba6e470cb1``` |
+| 树摘要 | ```c26fc96a653c0ff25ef3bc7486eee372c81f44e67d5ff2c30f1786c63c7d4ec8```（1073 blob） |
+| 发布日期 | 2026-10-12 |
+| 采纳时间 | 2026-11-15（```scripts/easel_engine.py switch v0.3.0```） |
 | 锁文件 | ```runtime/easel.lock.json``` —— 由下方注册表**派生**；不要手工编辑 |
 | 唯一来源 | ```runtime/easel-pins.json``` —— 它的 ```active``` 引擎就是锁文件的内容，代码读它而不是各自携带 commit |
-| 本地路径 | ```.runtime/easel/```（gitignored） |
-| 验证 | 982/982 blob SHA-1 匹配 |
+| 本地路径 | ```.runtime/easel-v030/```（生产）；```.runtime/easel/``` 是 v0.2.1 回滚树 |
+| 验证 | 1071 个 baseline blob 匹配上游 + 14 个 overlay 文件匹配登记摘要（overlay 模式，本地 pinned 树缓存） |
 | 上游稳定版 | v0.3.0（2026-10-12）—— **未采用**（见下文 *v0.3.0 差异*） |
 
 ## 规则

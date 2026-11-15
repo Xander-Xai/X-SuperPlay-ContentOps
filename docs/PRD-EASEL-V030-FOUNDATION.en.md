@@ -554,10 +554,21 @@ result are named.
 | PR | State | Evidence |
 |---|---|---|
 | PR-01 docs and gate wiring | **done** | `check_i18n.py`, `check_doc_freshness.py`, `check_docs.py` all pass |
-| PR-02 pin registry | **done** | `runtime/easel-pins.json`; `active=v0.2.1`, `workbench_engine=v0.3.0`; the v0.3.0 entry carries `tree_sha256` and `installed=false` |
+| PR-02 pin registry | **done** | `runtime/easel-pins.json`; `active` is now `v0.3.0`, `workbench_engine=v0.3.0`; both engines carry `repo_id` and a layout |
 | PR-03 literals removed, fail closed | **done** | four constants now read the registry; `_FALLBACK_PIN` deleted; an unreadable registry yields `BLOCKED / PINS_UNREADABLE`; `tests/test_easel_pins.py` 14/14 |
-| PR-05 two-engine docs | **partial** | `docs/UPSTREAM-EASEL.md` now names the registry as the only pin source; the two-engine section in `CURRENT-STATE.md` waits for the M1 switch, because describing an engine that is not active would be fiction |
-| PR-04 / 06 / 07 | **not started** | skill layout resolution, the `easel_engine.py` switcher, and registering the v0.3.0 instance |
+| PR-04 layout-driven skills (M1) | **done** | `resolve_skill_dir(..., layout=)`; `REQUIRED_PATHS` is generated per layout — without that, v0.3.0 was read as "required scripts missing"; `--engine` resolves any declared engine |
+| PR-05 two-engine docs (M1) | **done** | pin table, two-tree rule and delta ledger in `UPSTREAM-EASEL`; the runtime table and switch record in `CURRENT-STATE`; README, ARCHITECTURE and PRD §14 aligned |
+| PR-06 switcher (M1) | **done** | `scripts/easel_engine.py show / verify / switch / install`; verification precedes the write, which then updates the registry, re-derives the lock and appends a receipt; `tests/test_easel_engine.py` 7/7, four of them refusal paths |
+| PR-07 v0.3.0 instance (M1) | **done** | `install` compared and copied 1086 files (1073 baseline + 14 overlay) into `.runtime/easel-v030`; `verify` returned VERIFIED in overlay mode with 1071 baseline blobs and the Apache-2.0 licence VERIFIED |
+| PR-08 flip active (M1) | **done** | `switch v0.3.0` → render → QC PASS → output sha256 `07ff16dd…` **byte-identical to v0.2.1**; rollback drill v0.3.0→v0.2.1→v0.3.0 verified three times |
+
+The M1 conclusion: **the engine changed and the artifact did not, down to the byte.** That
+moves the risk of "replace the foundation" from "picture, duration or subtitles might differ" to
+"only the source path changed", which is what makes M2 safe to attempt.
+
+Still open: M2 (workbench takeover, Agent still denied), M3 (gates as skills), M4 (publishing
+tiers). Only one complete golden chain exists (`projects/m5-easel-pin`); a second and third are
+needed before M2.
 
 Pre-existing failures repaired along the way (all four were already red in the
 2026-11-13 work, none introduced here):

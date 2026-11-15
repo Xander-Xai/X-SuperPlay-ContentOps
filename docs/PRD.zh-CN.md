@@ -164,9 +164,11 @@ TECHNICAL_QC → CONTENT_QC → FACT_QC → HUMAN_REVIEW → PRODUCTION_READY。
 
 ## 14. Easel 集成
 
-- 固定 v0.2.1（git checkout），内容校验（982/982 blob）。pin 的唯一来源是
-  ```runtime/easel-pins.json```；```runtime/easel.lock.json``` 是它 ```active``` 引擎的派生投影，
-  代码不再各自携带 commit
+- 自 2026-11-15 起固定 **v0.3.0**（commit ```bb3c8ff```，1071 baseline blob + 14 个 overlay
+  文件校验通过）；v0.2.1 保留为回滚树。pin 的唯一来源是 ```runtime/easel-pins.json```；
+  ```runtime/easel.lock.json``` 是它 ```active``` 引擎的派生投影，代码不再各自携带 commit。
+  ```scripts/easel_engine.py``` 负责移动 ```active```，每次移动都写进
+  ```runtime/easel-engine-switch.json```
 - 扩展优先级：ADAPTER > EXTENSION > CUSTOM SKILL > PATCH > FORK
 - 不修改上游源码
 - 升级需要 Founder 批准 + 回归套件

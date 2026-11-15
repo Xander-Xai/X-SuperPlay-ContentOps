@@ -103,7 +103,7 @@ translation_status: synced
 
 | 属性 | 值 |
 |---|---|
-| 版本 | v0.2.1 |
+| 版本 | **v0.3.0（生产）** |
 | Commit | ```3fe2d9904c1619281ef57f81d9ee0b7854998399``` |
 | 路径 | ```.runtime/easel/``` |
 | 获取方式 | Git clone 固定 tag，并以 ```core.autocrlf=false```、```core.eol=lf``` 检出 |
@@ -145,7 +145,7 @@ Owner 已决定把完整 Easel 系统作为生产底座（ADR-016）。本节只
 | 入口 | `scripts/easel_host.py status` / `serve`（加 `--workbench` 指向工作台实例） |
 | 本机 `status` 结果 | **`HOST_BLOCKED`** —— `HOST_DEPENDENCY_MISSING:sse_starlette`；工作台候选还要求存在可信前端构建清单 |
 | 检查的依赖集 | `fastapi`、`uvicorn`、`pydantic`、`sse_starlette`（`HOST_IMPORT_MODULES`）。早先只查前两个，会为「导入即失败」的宿主报告 `HOST_READY`——2026-11-12 修复 |
-| 报告的固定版本 | v0.2.1 / `3fe2d99` |
+| 报告的固定版本 | v0.3.0 / `bb3c8ff` |
 | 此 worktree 的 runtime 安装状态 | `python scripts/resolve_easel.py --offline` → `BLOCKED: no Easel runtime found`；独立主工作区仍可解析其固定 commit 下的 `.runtime/easel` |
 | 运行时字节 | `status --verify-bytes` → `VERIFIED`，982/982 blob（2026-11-02 实测）；`serve` 总是执行该比对 |
 | 监听 | 仅 `127.0.0.1` |
@@ -172,7 +172,7 @@ Owner 2026-11-12 的决定是：Easel 是可调优的**成熟底座**，不只�
 | 宿主 | 仓库环境 Python 仍报告 `HOST_BLOCKED:HOST_DEPENDENCY_MISSING:sse_starlette`。批准候选的 Python 3.13.15 venv 前端为 `VERIFIED`；六项宿主依赖的 `pip check` 通过，完整媒体／运行时依赖仍未安装。此前 `--workbench` 宿主曾通过 `Start-Process -Environment` 启动并提供离线 ContentOps 路由；因未指定变量会继承父进程环境，该进程凭据隔离 **NOT_ESTABLISHED**。验证器匿名直连 HTTPS 且不运行 CLI／读取代理配置；API 403 后，严格 codeload 回退独立匹配上游树摘要及许可证。候选 composer gate 随后因一个额外临时文件失败关闭。用户授权删除该精确文件，但自动审查再次以 `blocked by policy` 拒绝；未读其内容，候选仍为 `MISMATCH`，没有 workbench 宿主提供服务。另以精确环境 allowlist 运行 `--offline-tasks-only`，在 `127.0.0.1:7861` 成功完成画像选择、无效账户排除、草稿和回执读回，任务 `576893e4-1518-42b4-a0cf-d95150eca4a3`，随后停止；该模式不导入 Easel，也不访问 GitHub。没有调用模型/Gateway 路由，也未输出凭据值 |
 | 前端完整性 | `npm ci --registry=https://registry.npmjs.org/` 安装 31 个包；lock SHA-256 保持 `23f33fcd5d606b6ffdd077ad7d35a231cdb6034d4f25622944dd0ea4672ea889`。`npm run build` 使用 Node `v24.16.0`／npm `11.13.0` 成功。`runtime/easel-workbench-frontend-build.json` 将 commit `bb3c8ff0463f36c202454d74171682ba6e470cb1`、锁文件、工具链绑定到全部 5 个 dist 文件；树 SHA-256 为 `8ab3d814f2e8c8acf807c61c98a180b4a89fa6af65d8f88a9b4607b55944e5c1`。主 JS chunk 为 515.78 kB，Vite 发出了超过 500 kB 的提示 |
 | 离线任务 API | `/contentops/offline-task` 面板、固定 schema 的项目任务提交及绑定回执／草稿读取；`serve --offline-tasks-only` 只运行 ContentOps ASGI 适配器，不导入 Easel，默认端口 7862。执行器只写入 `OFFLINE_DRAFT_ONLY` 框架，stdin JSON CLI 仍可用。18 项 API／执行器契约测试通过，覆盖 HTML 注入拒绝、overlay/dist 损坏时降级、不完整账号排除和画像投影器失败阻断；HTTP 验收任务 `c6554e6e-06fd-4e52-a2b6-a5f58f888627` 与精确 allowlist 下第二次验收 `576893e4-1518-42b4-a0cf-d95150eca4a3` 均选择 `x-superplay-1024` 并读回回执／草稿，`production_ready=false`、`publish_authorized=false`、`human_review=PENDING`。第二份回执在 `projects/easel-isolated-env-check-20261113/receipts/`。回执 overlay 为 `PRESENT_UNVERIFIED`、前端构建为 `VERIFIED`；离线执行器不调用上游 verifier，因此该状态不证明实时校验源码树。没有调用 Agent／模型/Gateway |
-| 生产引擎 | **仍是 v0.2.1**。刻意为之：历史回执锚在 v0.2.1 上，挪动生产 pin 需要重跑全部 golden render |
+| 生产引擎 | **v0.3.0**（2026-11-15 切换）。v0.2.1 保留为回滚树：`python scripts/easel_engine.py switch v0.2.1`；历史回执仍锚在 v0.2.1 上，回执里现在带 `easel.engine_id` 区分 |
 | 未完成 | 第二个干净环境的重建尚未执行。浏览器 UI E2E 仍为 **NOT_RUN**：computer-use 浏览器宿主不可用，执行审查拒绝启动本机无头 Chrome 截图（`blocked by policy`）；没有浏览器渲染或截图证据。离线框架回执不是真实 Agent 结果。此前 workbench 服务进程凭据隔离仍为 **NOT_ESTABLISHED**。现在 codeload 回退已校验 upstream 树摘要，但候选额外文件仍在；删除虽经用户授权，执行审查仍以 `blocked by policy` 拒绝，未读其内容，candidate composer gate 因此未放行。精确 allowlist `--offline-tasks-only` 已完成离线画像／草稿／回执流程并停止。没有输出凭据，也未调用模型/Gateway。此前某次 `--workbench` 启动曾通过 `gh api` 查询 GitHub 上游树，其认证来源未检查。Windows 未发现 OpenClaw/Gateway 服务；WSL `Ubuntu-22.04` 有通用 Node v20.20.2 进程，路径 `/home/dev/.nvm/versions/node/v20.20.2/bin/node`、工作目录 `/home/dev/.hermes`，未读取命令行或环境。18789／37289 无监听。Docker CLI 存在但 Engine 不可用。Gateway 版本／路径未建立，未调用 CLI。源码审查发现 `easel doctor` 会调用 `read_settings(PROJECT_ROOT / ".env")` 且 `_env_key_valid` 会读 `.env`，因此未运行 doctor。没有主动读取 `.env` 或浏览器认证文件。Agent 隔离和真实 Agent 回执未验证。 |
 | 契约验证（2026-11-13） | Host guard 27/27；overlay／画像／来源 44/44；重建／归档安全 5/5；离线 API／任务 18/18；skill router 29/29；skill doctor 12 项（1 项环境相关跳过）；agent driver 29/29；production gates 30/30；图文工作流 14/14；文章渲染器 36/36；卡片渲染器 19/19（当前 worktree 无 `.runtime/easel`，可选实时渲染跳过）；M5 evidence 22/22；双格式 Bundle 14/14；M5 handoff 6/6。Verifier 覆盖匿名直连 HTTPS、不用代理、绑定精确 commit 的 codeload 归档回退、Git blob 树摘要匹配、归档穿越／链接／成员数／展开大小限制、annotated tag 剥离、重定向拒绝及畸形响应失败关闭。Overlay 测试拒绝链接记录、基线文件、前端构建输入、不安全仓库源、源文件摘要漂移及生成画像摘要漂移；校验器不会跟随链接读取。Account-DNA 套件有 3 项失败，原因是 `C:\Users\Administrator\.agents\skills` 缺少共享 skill `b-roll-finder`；未修改外部共享 skill 目录。 |
 
@@ -189,7 +189,7 @@ Owner 2026-11-12 的决定是：Easel 是可调优的**成熟底座**，不只�
 | 离线任务/API 契约 | **PASS** —— API／执行器测试 18/18，并通过 localhost HTTP 提交／读回 `OFFLINE_DRAFT_ONLY` 回执；浏览器 UI E2E 为 **NOT_RUN** |
 | 真实画像上下文 | **PARTIAL / NOT_VERIFIED** —— 源码显示 Direct API 会内联 `load_profile_text(persona)`；OpenClaw Gateway／CLI 路径只发送画像前缀，要求 Agent 从其 workspace 读取 `profiles/<name>`。隔离工作台的画像目录是否为 Agent 实际 workspace 尚未验证；没有调用 Gateway／Agent |
 | 真实 Agent 与 gateway 隔离 | **BLOCKED** —— gateway 版本／路径和系统级隔离尚未验证；未获真实任务授权 |
-| v0.2.1 生产迁移 | **NOT_RUN** —— 保留生产 pin；golden render、QC、人工审看和 Founder 决定仍待完成 |
+| v0.3.0 生产切换 | **RUN（2026-11-15）** —— `projects/m5-easel-pin` 用 v0.3.0 重出片，QC PASS，产物 sha256 `07ff16dd…` 与 v0.2.1 逐字节相同；回切演练 v0.3.0→v0.2.1→v0.3.0 三次全部通过。人工审看与 Founder 批准仍待完成 |
 | 人工／Founder 审核 | **NOT_RUN** |
 
 核验期间 computer-use 浏览器宿主不可用。隔离服务已经启动并停止；只调用 localhost API 路由，浏览器渲染与交互仍未验证。
@@ -206,7 +206,7 @@ Owner 2026-11-12 的决定是：Easel 是可调优的**成熟底座**，不只�
 | ContentOps 路径耦合 | 合成、卡片审计、文章校验及技能发现现支持两个 skill 根目录；生产 pin 仍通过 v0.2.1 resolver 选择。`assemble_easel.py`、`render_cards.py` 和 `render_article.py` 都提供独立的 `--workbench-runtime` 开关，经共享 resolver 验证上游树、overlay 源文件和生成画像后才返回 v0.3。`m5_production` 仍走生产 resolver，并记录实际合成器路径 |
 | v0.3 工作台路由差异 | 新增的设置、gateway 重启、本地 Agent／模型选择和制品归档 API 仍被默认拒绝宿主封锁。新增回归覆盖代表性 v0.3 路由；API 守卫测试不等于 Agent／工具隔离证明 |
 | 依赖差异 | v0.3.0 声明 `requests>=2.32,<3` 及完整运行时／媒体依赖。候选副本只安装有限的宿主／导入环境；未安装全部上游依赖，也未执行 `pip check` |
-| 迁移结论 | 适配器源码现已兼容两个 skill 根目录，卡片／文章／宿主定向测试通过。这只证明路径兼容；未批准生产 runtime 切换，生产仍使用 v0.2.1 |
+| 迁移结论 | 路径兼容之外，切换本身已完成并留下回执（`runtime/easel-engine-switch.json`）；产物逐字节等同，因此切换没有改变输出。工作台接管（M2）与发布分级（M4）仍未开始 |
 | 证据边界 | 哈希相同与源码审阅不能证明 Windows 执行、字幕／音频正确、golden render 等价、QC、回执或人工批准；这些仍是迁移前置条件 |
 
 抽查文件 SHA-256：合成器 `08359a03f4fd40101aef7dfc8b7f58183d735827756815e7b3d2f63d0087470b`、共享 TTS `8f55b95a3b1f125960766f0dc9cbcf07d46c67856a2fb02bfd6245e218e88cbd`、卡片渲染 `fcc5d0d7a877bded9e056a8faea2ce487d35231de07f6b0407d22eec81eb83ac`、卡片审计 `7c80025120cfce0e41e1645717d0e56a961f858981aaf6f982332b231b524ccb`、公众号校验 `de21aa3decac10c6ef89040bdc4e19930dbed33d6ccf7bc963b744c53da01185`、换行预览 `3f3c4d48a7fd2e6781d5d831d9221122ac2df0983d4d2a6665dd903e72cc95c1`。

@@ -31,7 +31,7 @@ X-SuperPlay-ContentOps  ← THIS REPO
     └── Receipts (full provenance)         (implemented)
     │
     ▼
-Easel v0.2.1 (pinned upstream, guarded)
+Easel v0.3.0 (pinned upstream, guarded; v0.2.1 kept as rollback)
 = Content Production Host (target base, ADR-016)
     ├── EXECUTED HERE TODAY
     │   ├── auto-short-video/scripts/assemble.py   ← composition
@@ -60,7 +60,7 @@ running integration.
 
 | Fact | State |
 |---|---|
-| Pinned upstream | v0.2.1, commit `3fe2d99`, read-only |
+| Pinned upstream | v0.3.0, commit `bb3c8ff`, read-only; v0.2.1 / `3fe2d99` is the rollback tree |
 | Host entry point | `scripts/easel_host.py` only |
 | Bind | `127.0.0.1`; upstream `0.0.0.0` is not used |
 | Methods | `GET`, `HEAD`, `OPTIONS` only |

@@ -17,16 +17,19 @@ not consumed as production runtime.
 | Property | Value |
 |---|---|
 | Repo | https://github.com/ZJU-REAL/Easel |
-| Tag | v0.2.1 |
-| Commit | `3fe2d9904c1619281ef57f81d9ee0b7854998399` |
-| Release date | 2026-09-24 |
+| Tag | v0.3.0 |
+| Commit | `bb3c8ff0463f36c202454d74171682ba6e470cb1` |
+| Tree digest | `c26fc96a653c0ff25ef3bc7486eee372c81f44e67d5ff2c30f1786c63c7d4ec8` (1073 blobs) |
+| Release date | 2026-10-12 |
+| Adopted | 2026-11-15 (`scripts/easel_engine.py switch v0.3.0`) |
 | Lock file | `runtime/easel.lock.json` — **derived** from the registry below; do not edit by hand |
 | Source of truth | `runtime/easel-pins.json` — its `active` engine is what the lock projects, and code reads it instead of carrying a commit |
-| Provenance | `runtime/easel-runtime.json` |
-| Local path | `.runtime/easel/` (gitignored) |
-| Acquisition | Release archive (GitHub tarball via `gh api`) |
-| Verification | 982/982 blob SHA-1 matched upstream tree |
-| Upstream stable | v0.3.0 (2026-10-12) — **not adopted** (see *v0.3.0 delta* below) |
+| Provenance | `runtime/easel-runtime-v0.3.0.json` (per-engine; the legacy single file stays v0.2.1's) |
+| Local path | `.runtime/easel-v030/` (gitignored) |
+| Acquisition | Pinned archive rebuild, installed by `scripts/easel_engine.py install`, which compares every file against `runtime/easel-workbench-upstream-tree.json` (or the overlay record for tuning) before copying |
+| Verification | 1071 baseline blobs matched upstream + 14 overlay files matched their recorded digests, verified in overlay mode against the local pinned tree cache |
+| Rollback tree | v0.2.1 / `3fe2d99` at `.runtime/easel/`, 982 blobs verified, `python scripts/easel_engine.py switch v0.2.1` |
+| Switch record | `runtime/easel-engine-switch.json` — append-only |
 
 ## Rules
 
@@ -42,14 +45,14 @@ not consumed as production runtime.
    - Founder approval
    - Update lock file
 
-6. **Two trees, two roles.** `.runtime/easel/` (v0.2.1) is the **production
-   engine** the pipeline calls and every receipt is anchored on. The current
-   v0.3.0 **workbench candidate** is `D:\Projects\_worktrees\easel-v030-rebuild-20261113b`;
-   the earlier extracted `D:\Projects\Easel-Workbench` remains preserved with
-   its observed snapshot. They are deliberately separate: retuning the workbench
-   must never move the production pin, and moving the production pin requires
-   the full upgrade gate below. See *Workbench instance* at the end of this
-   document.
+6. **Two trees, two roles.** Since 2026-11-15 `.runtime/easel-v030/` (v0.3.0) is
+   the **production engine**; `.runtime/easel/` (v0.2.1) is the **rollback tree**
+   and stays installed so a bad render can be undone with one command. Both are
+   declared in `runtime/easel-pins.json`; only `active` moves. The earlier
+   extracted `D://Projects//Easel-Workbench` remains a preserved snapshot. Moving
+   `active` requires the upgrade gate below and goes through
+   `scripts/easel_engine.py switch`, which verifies before it writes. See
+   *Workbench instance* at the end of this document.
 
 7. **Legacy clone remains on disk.** `Easel/` (commit `4b9c03c`, not the
    production pin) is not accepted by the production resolver. Its two local
@@ -102,8 +105,8 @@ Any step FAIL → keep old pin.
 
 | Upstream | ContentOps | Decision |
 |---|---|---|
-| Easel v0.2.1 | pinned | production |
-| Easel v0.3.0 | available, not adopted | **HIGH** risk delta — see below (ADR-012 D3) |
+| Easel v0.2.1 | pinned, installed | rollback tree since 2026-11-15 |
+| Easel v0.3.0 | **adopted 2026-11-15** | production; adopted by digest, not tag (ADR-012 D3) |
 | Easel main | monitored | no production consumption |
 | next release | pending | compatibility gate |
 

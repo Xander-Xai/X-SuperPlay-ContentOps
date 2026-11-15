@@ -170,9 +170,11 @@ See [MEDIA-PROVIDER-CONTRACT.md](MEDIA-PROVIDER-CONTRACT.md).
 
 ## 14. Easel Integration
 
-- Pinned v0.2.1, git checkout, content-verified (982/982 blobs). The pin lives in
+- Pinned **v0.3.0** since 2026-11-15 (commit `bb3c8ff`, 1071 baseline blobs + 14 overlay
+  files verified); v0.2.1 stays installed as the rollback tree. The pin lives in
   `runtime/easel-pins.json`; `runtime/easel.lock.json` is a projection of its
-  `active` engine and code carries no commit literal
+  `active` engine and code carries no commit literal. `scripts/easel_engine.py`
+  moves `active` and records each move in `runtime/easel-engine-switch.json`
 - Extension priority: ADAPTER > EXTENSION > CUSTOM SKILL > PATCH > FORK
 - No upstream source modification
 - Upgrade requires Founder approval + regression suite

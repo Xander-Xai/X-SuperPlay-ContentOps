@@ -187,17 +187,19 @@ human-gated change.
 
 | Property | Value |
 |---|---|
-| Version | v0.2.1 |
-| Commit | `3fe2d9904c1619281ef57f81d9ee0b7854998399` |
-| Path | `.runtime/easel/` |
-| Acquisition | Git clone of the pinned tag, checked out with `core.autocrlf=false` and `core.eol=lf` |
-| Verified | 982/982 blob SHA-1 matched upstream tree (`scripts/verify_easel_runtime.py`) |
-| Re-verified | 2026-11-01 on this branch: 982 files, 0 missing, 0 mismatch, 0 extra |
+| Version | **v0.3.0 (production)** |
+| Commit | `bb3c8ff0463f36c202454d74171682ba6e470cb1` |
+| Path | `.runtime/easel-v030/` |
+| Rollback tree | v0.2.1 / `3fe2d99` at `.runtime/easel/`; `python scripts/easel_engine.py switch v0.2.1` |
+| Acquisition | Rebuilt from the pinned v0.3.0 archive into `.runtime/easel-v030` by `scripts/easel_engine.py install`, which compares every file against the upstream tree index (or the overlay record, for tuning) before copying |
+| Verified | **1071 baseline blobs matched the upstream tree plus 14 declared overlay files matched their recorded digests**, tree digest `c26fc96a653c0ff25ef3bc7486eee372c81f44e67d5ff2c30f1786c63c7d4ec8` (`scripts/easel_engine.py verify v0.3.0`, 2026-11-15) |
+| Re-verified | 2026-11-15: overlay mode VERIFIED against the local pinned tree cache, license Apache-2.0 VERIFIED |
 | Line endings | A Windows checkout with `core.autocrlf=true` yields **847 blob mismatches** while `resolve_easel.py --offline` still reports `OK`, because that command proves git HEAD, not content. Verify content before trusting the runtime |
-| Executed surface | `skills/openclaw/auto-short-video/scripts/assemble.py` (composition) and `skills/shared/scripts/tts.py` (V1 narration only; M5 uses Windows SAPI) |
+| Executed surface | `skills/builtin/auto-short-video/scripts/assemble.py` (composition) and `skills/shared/scripts/tts.py` (V1 narration only; M5 uses Windows SAPI) |
 | Independent cross-check | 2026-10-31 against the official `v0.2.1` release archive: 982 files, 0 missing, 0 mismatch |
 | Local extras | `outputs/` and `__pycache__/` only; no tracked file differs from upstream |
-| Lock file | `runtime/easel.lock.json` |
+| Lock file | `runtime/easel.lock.json` — a projection of the active engine in `runtime/easel-pins.json`, re-derived by the switcher |
+| Switch record | `runtime/easel-engine-switch.json` — append-only history; three entries on 2026-11-15 (v0.3.0, rollback drill to v0.2.1, back to v0.3.0) |
 | Provenance | `runtime/easel-runtime.json` |
 | Upstream stable | v0.3.0 (2026-10-12) — **not adopted**: 158 commits, skills moved from `skills/openclaw/` to `skills/builtin/`, `assemble.py` changed, and the tag was force-replaced upstream |
 
@@ -230,7 +232,7 @@ a verified integration yet.
 | Entry point | `scripts/easel_host.py status` / `serve` (add `--workbench` for the workbench instance) |
 | `status` result on this machine | **`HOST_BLOCKED`** — `HOST_DEPENDENCY_MISSING:sse_starlette`; the workbench candidate also requires a verified frontend build manifest |
 | Dependency set checked | `fastapi`, `uvicorn`, `pydantic`, `sse_starlette` (`HOST_IMPORT_MODULES`). The earlier check named only the first two, so it could report `HOST_READY` for a host that failed on first import — fixed 2026-11-12 |
-| Pin reported | v0.2.1 / `3fe2d99` |
+| Pin reported | v0.3.0 / `bb3c8ff` |
 | Runtime install in this worktree | `python scripts/resolve_easel.py --offline` → `BLOCKED: no Easel runtime found`; the separate main checkout still resolves its `.runtime/easel` at the pinned commit |
 | Runtime bytes | `status --verify-bytes` → `VERIFIED`, 982/982 blobs (run 2026-11-02); `serve` always performs this comparison |
 | Bind | `127.0.0.1` only |
