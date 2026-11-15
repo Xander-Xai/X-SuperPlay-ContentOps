@@ -826,8 +826,10 @@ def build_parser() -> argparse.ArgumentParser:
                    help="run the interactive login; requires a human at the terminal")
     p.add_argument("--confirm-h3-unverified", action="store_true",
                    help="accept that H3 entitlement is contradicted and may cost quota")
-    p.add_argument("--out-dir", default=".verify-tmp/minimax-m2",
-                   help="where generated media is written (gitignored)")
+    p.add_argument("--out-dir", default=None,
+                   help="where generated media is written; defaults to the scratch "
+                        "root, which is outside the checkout when an output root "
+                        "is configured")
     p.add_argument("--save-receipt", default="",
                    help="write the sanitized JSON result to this path")
     return p
@@ -835,6 +837,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     args = build_parser().parse_args()
+    if not args.out_dir:
+        from contentops.paths import tmp_root
+
+        args.out_dir = str(tmp_root() / "minimax-m2")
 
     if args.auth_login:
         emit(auth_login())

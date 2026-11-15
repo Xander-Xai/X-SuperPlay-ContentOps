@@ -1,0 +1,17 @@
+{
+  "schema": "contentops.easel-windows-runtime-copy-receipt/v1",
+  "project": "easel-live-ui-check-20261113-path-bound",
+  "package": "work/easel-windows-runtime/local-openclaw",
+  "manifest": "work/easel-windows-runtime/local-openclaw.json",
+  "manifest_sha256": "a1866349db49d2a7e2e56acefd9c7db38e30677c808a754cc6dd8fe0e21a79a6",
+  "copied_file_count": 43232,
+  "robocopy_exit": 1,
+  "status": "PACKAGED_UNVERIFIED",
+  "copy_source": "D:\\Projects\\_worktrees\\contentops-easel-workbench\\projects\\easel-live-ui-check-20261113-path-bound\\work\\easel-windows-runtime\\local-openclaw",
+  "excluded": ".env*",
+  "provenance": "NOT_VERIFIED",
+  "isolation": "NOT_VERIFIED",
+  "execution_authorized": false,
+  "production_ready": false,
+  "publish_authorized": false
+}

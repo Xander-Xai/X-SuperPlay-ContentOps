@@ -56,6 +56,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
+import re
 from typing import Any, Dict, Mapping, Optional, Tuple
 
 __all__ = [
@@ -139,6 +140,7 @@ class ExecutionRequest:
     operations: Tuple[str, ...]
     subject: str
     units: int = 1
+    request_scope_sha256: str = ""
 
 
 @dataclass(frozen=True)
@@ -167,6 +169,7 @@ class ExecutionGrant:
     revoked: bool = False
     revoked_reason: str = ""
     provenance: str = ""
+    request_scope_sha256: str = ""
 
 
 @dataclass(frozen=True)
@@ -340,6 +343,20 @@ def evaluate(request: ExecutionRequest, *,
         if wanted != approved:
             return _blocked(REASON_CONTEXT_MISMATCH,
                             f"{field} does not match the grant", request, grant)
+
+    # Optional for legacy operations; if either side asks for a task binding,
+    # both sides must carry the same canonical SHA-256. An unbound request may
+    # never spend a bound grant, or vice versa.
+    requested_scope = request.request_scope_sha256
+    approved_scope = grant.request_scope_sha256
+    if not isinstance(requested_scope, str) or not isinstance(approved_scope, str):
+        return _blocked(REASON_CONTEXT_MISMATCH,
+                        "task scope digest must be text", request, grant)
+    if requested_scope or approved_scope:
+        if (not re.fullmatch(r"sha256:[0-9a-f]{64}", requested_scope)
+                or requested_scope != approved_scope):
+            return _blocked(REASON_CONTEXT_MISMATCH,
+                            "task scope digest does not match the grant", request, grant)
 
     if request.subject != grant.subject:
         return _blocked(REASON_SUBJECT_MISMATCH,

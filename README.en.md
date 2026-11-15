@@ -4,10 +4,10 @@
 
 [简体中文](README.md) | English
 
+> Last verified: 2026-11-16 on `feat/173-easel-m0-pin` (M0: single pin registry). The status table describes
 > Last verified: 2026-11-14. Local-only X and cross-platform analytics exist; no live account growth is verified.
 > X original-post workflow now supports explicit `post_format=text` without an image/ALT, or `post_format=image` with real 1600x900 raster+ALT. General-interest writing has a separate evidence-honest human rubric; all publication is still manual and requires a real own X URL.
 > Operating authority: canonical Strategy X SOP and account DNA; local-only real analytics and human review/manual publishing.
-
 > `main`, never a draft branch.
 
 > Local analytics: X uses [X learning loop](docs/X-LOCAL-LEARNING-LOOP.md); other platforms use the [cross-platform local loop](docs/PLATFORM-LOCAL-LEARNING-LOOP.md). Raw account data stays offline; learning briefs require human Strategy review.
@@ -37,7 +37,7 @@ capability that published anything.
 
 | Item | Layer | Status |
 |---|---|---|
-| Easel runtime | `main` | Pinned v0.2.1 (commit `3fe2d99`, 982 blobs verified). Upstream stable is v0.3.0 — not adopted |
+| Easel runtime | `main` | **v0.3.0 is the production engine** (commit `bb3c8ff`, 1071 baseline blobs plus 14 overlay files verified, switched 2026-11-15). v0.2.1 is the rollback tree (982 blobs verified) |
 | Stable production entry (`make_content.py`, `production_gates.py`) | `main` | Implemented: six explicit decisions, seven fail-closed VIDEO gates and five GRAPHIC_TEXT gates. Running `m5_production.py` / `produce_video.py` directly stays a *diagnostic* path and is not gate-checked |
 | Video pipeline (`run_v1.py`) | `main` | Implemented (`easel` + diagnostic `fallback`); `production_ready: false` |
 | M5 evidence-first chain (`m5_production.py`) | `main` | Implemented and integration-verified on `projects/m5-media-use`; optional ASR backcheck gate on real narration; `production_ready: false`, `PENDING_FOUNDER_REVIEW` |
@@ -258,7 +258,8 @@ registry in [docs/PLATFORM-INTEGRATION-STATUS.md](docs/PLATFORM-INTEGRATION-STAT
 | Tag | v0.2.1 |
 | Commit | `3fe2d9904c1619281ef57f81d9ee0b7854998399` |
 | Local path | `.runtime/easel/` |
-| Lock file | `runtime/easel.lock.json` |
+| Lock file | `runtime/easel.lock.json` (derived from `runtime/easel-pins.json`) |
+| Source of truth | `runtime/easel-pins.json` — code reads its `active` engine instead of carrying a commit |
 | Upstream stable | v0.3.0 (not adopted; skill paths moved to `skills/builtin/`) |
 | Upgrade | Requires Founder approval + regression suite |
 

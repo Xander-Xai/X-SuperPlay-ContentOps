@@ -12,6 +12,8 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Mapping
 
+from contentops.paths import relative_label, resolve_label, trusted_project_root
+
 SCHEMA = "contentops.user-assets-import/v1"
 MANIFEST_SCHEMA = "contentops.m5-assets/v1"
 RECEIPT = Path("receipts") / "user-assets-import.json"
@@ -137,7 +139,7 @@ def _contact_sheet(project: Path, repo_root: Path,
     draw = ImageDraw.Draw(sheet)
     mapping = []
     for index, row in enumerate(candidates):
-        source = (repo_root / str(row["repo_path"])).resolve()
+        source = resolve_label(str(row["repo_path"]), repo_root).resolve()
         try:
             source.relative_to(project)
         except ValueError:
@@ -172,7 +174,7 @@ def _contact_sheet(project: Path, repo_root: Path,
     if target.is_symlink():
         raise LocalAssetError("refusing symlinked contact sheet destination")
     sheet.save(target, format="JPEG", quality=88, optimize=True)
-    return {"state": "READY", "path": target.relative_to(repo_root).as_posix(),
+    return {"state": "READY", "path": relative_label(target, repo_root),
             "items": len(mapping), "asset_cells": mapping}
 
 
@@ -189,10 +191,10 @@ def import_local_assets(source_dir: Path, project_dir: Path, *, repo_root: Path)
     root = Path(repo_root).resolve()
     if not source.is_dir():
         raise LocalAssetError("--assets must name an existing directory")
-    try:
-        project.relative_to(root)
-    except ValueError:
-        raise LocalAssetError("project directory must stay inside the repository") from None
+    if trusted_project_root(project, root) is None:
+        raise LocalAssetError(
+            "project directory must stay inside the repository or the "
+            "configured output root") from None
 
     candidates = sorted(
         (path for path in source.rglob("*")
@@ -237,7 +239,7 @@ def import_local_assets(source_dir: Path, project_dir: Path, *, repo_root: Path)
             raise LocalAssetError(f"import target collision for {path.name}")
         if not target.exists():
             target.write_bytes(path.read_bytes())
-        relative = target.relative_to(root).as_posix()
+        relative = relative_label(target, root)
         row = {
             "id": asset_id,
             "sha256": digest,
@@ -352,8 +354,7 @@ def is_valid_local_preview_asset(asset: Mapping[str, Any], project_dir: Path,
     try:
         receipt = _load(project / RECEIPT)
         relative = str(asset.get("repo_path") or "")
-        path = (root / relative).resolve()
-        path.relative_to(root)
+        path = resolve_label(relative, root).resolve()
         path.relative_to(project)
         listed = any(
             isinstance(row, dict)

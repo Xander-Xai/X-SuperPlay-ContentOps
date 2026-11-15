@@ -35,6 +35,8 @@
 
 ## Milestone plans
 
+- [PRD-EASEL-V030-FOUNDATION.md](PRD-EASEL-V030-FOUNDATION.md) — Easel v0.3.0 foundation adoption: two-step engine-then-cockpit migration, M0–M4, publishing tiers — **Proposed, awaiting Founder approval**
+- [PRD-RECORDING-TO-PLATFORM.md](PRD-RECORDING-TO-PLATFORM.md) — recording-first delivery: manual screen recording as evidence, two-account forking, platform variants, publishing tiers — **R1 landed, R2–R4 open**
 - [CONVERGENCE-REQUIREMENTS-2026-11-01.md](CONVERGENCE-REQUIREMENTS-2026-11-01.md) — docs / skills / branch / upstream-pin convergence — **accepted 2026-11-01; steps 3–5 landed later**
 - [M4-H3-PLAN.md](M4-H3-PLAN.md) — M4 MiniMax H3 video (Issue #22) — **implemented**
 - [M4.5-MEDIA-CONVERGENCE-PLAN.md](M4.5-MEDIA-CONVERGENCE-PLAN.md) — M4.5 media convergence (Issue #27) — **implemented**
@@ -56,7 +58,12 @@
 Tier-1 docs have zh-CN mirrors with `.zh-CN.md` suffix. **README is the exception
 (2026-11-12):** `README.md` is the Chinese original and `README.en.md` is the
 English mirror, because the repository's primary readers are Chinese-speaking.
-Every other Tier-1 doc stays English-primary.
+**The Easel v0.3.0 foundation PRD follows the same direction (2026-11-15):**
+`docs/PRD-EASEL-V030-FOUNDATION.md` is the Chinese original and
+`docs/PRD-EASEL-V030-FOUNDATION.en.md` is the English mirror, because it is written
+for the Founder to act on. Both exceptions are declared in
+`scripts/check_i18n.py::ZH_PRIMARY_DOCS`. Every other Tier-1 doc stays
+English-primary.
 
 Run `python scripts/check_i18n.py` to verify structural consistency in either
 direction, and `python scripts/check_doc_freshness.py` to verify that each
@@ -85,6 +92,7 @@ tracked doc was checked against the code it describes (see [DOC-SYNC.md](DOC-SYN
 - [adr/ADR-019-receipt-history-exposure.md](adr/ADR-019-receipt-history-exposure.md) — rotate the PAYG key, accept the already-public balances/voice IDs/fingerprints, and keep guarding new receipts
 - [adr/ADR-020-read-only-scene-analysis-adapter.md](adr/ADR-020-read-only-scene-analysis-adapter.md) — read-only scene analysis adapter: pilot boundary, no mutation authority
 - [adr/ADR-021-stable-production-gates.md](adr/ADR-021-stable-production-gates.md) — one stable production entry with fail-closed VIDEO and GRAPHIC_TEXT gate sets
+- [adr/ADR-022-easel-v030-workbench-candidate.md](adr/ADR-022-easel-v030-workbench-candidate.md) — v0.3.0 workbench remains a separate candidate; frontend provenance, read-only host and system-isolation gates
 
 ## Agent Rules
 

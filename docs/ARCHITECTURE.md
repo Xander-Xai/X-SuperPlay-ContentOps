@@ -2,9 +2,9 @@
 
 [English](ARCHITECTURE.md) | [简体中文](ARCHITECTURE.zh-CN.md)
 
+> Last verified: 2026-11-16 on `feat/173-easel-m0-pin`.
 > Last verified: 2026-11-14 (X contract update; PR checks determine CI status). X records now declare `post_format=text|image`; post validation and publisher both preserve honest optional media and manual-only handoff. The editorial gate routes by mode (technical/source versus general_interest). Offline feedback never starts platform actions.
 > X priority: platform rules/human gates -> registered account DNA -> Strategy X SOP -> scoped experiment.
-
 
 > What the system is. Where the boundaries are. How components call each other.
 > Describes the target architecture after the 2026-11-02 host decision, and
@@ -33,7 +33,7 @@ X-SuperPlay-ContentOps  ← THIS REPO
     └── Receipts (full provenance)         (implemented)
     │
     ▼
-Easel v0.2.1 (pinned upstream, guarded)
+Easel v0.3.0 (pinned upstream, guarded; v0.2.1 kept as rollback)
 = Content Production Host (target base, ADR-016)
     ├── EXECUTED HERE TODAY
     │   ├── auto-short-video/scripts/assemble.py   ← composition
@@ -62,7 +62,7 @@ running integration.
 
 | Fact | State |
 |---|---|
-| Pinned upstream | v0.2.1, commit `3fe2d99`, read-only |
+| Pinned upstream | v0.3.0, commit `bb3c8ff`, read-only; v0.2.1 / `3fe2d99` is the rollback tree |
 | Host entry point | `scripts/easel_host.py` only |
 | Bind | `127.0.0.1`; upstream `0.0.0.0` is not used |
 | Methods | `GET`, `HEAD`, `OPTIONS` only |
@@ -212,7 +212,8 @@ src/contentops/
 └── golden/               ← Golden identity, evidence locks, review, A/B variants
 
 runtime/
-├── easel.lock.json               ← canonical Easel pin
+├── easel-pins.json               ← canonical Easel pin registry (the lock is derived)
+├── easel.lock.json               ← projection of the active engine
 ├── easel-runtime.json            ← provenance record
 ├── media-use-runtime-baseline.json
 ├── media-use-package-lock.json

@@ -43,6 +43,7 @@ from ..routing import handoff
 from ..evidence.source_artifact import EVIDENCE_CAPABLE_PERMISSIONS
 from ..evidence.text_matching import quote_occurs
 from ..media.local_assets import is_valid_local_preview_asset
+from ..paths import output_root, relative_label, resolve_label
 
 SCHEMA = "contentops.brief-m5-bridge/v1"
 REFS_SCHEMA = "contentops.m5-source-refs/v1"
@@ -101,20 +102,43 @@ def _repo_root(module_file: Optional[Path] = None) -> Path:
 
 
 def _project_relative(project: Path, repo_root: Path) -> str:
+    """The project's label, relative to the base its paths resolve against.
+
+    A project inside the repository is labelled relative to the repository,
+    which is what the receipts have always said. A project in the configured
+    workspace is labelled relative to the output root, because a path outside
+    the repository has no repository-relative form -- and this label is what
+    lands in the receipt.
+    """
+    resolved = project.resolve()
     try:
-        return project.resolve().relative_to(repo_root.resolve()).as_posix()
+        return resolved.relative_to(repo_root.resolve()).as_posix()
     except ValueError:
-        raise BridgeBlocked(
-            "PROJECT_OUTSIDE_REPO",
-            f"{project.as_posix()} is outside the repository; M5 assets and source "
-            f"refs are repository-relative") from None
+        pass
+    external = output_root()
+    if external is not None:
+        try:
+            return resolved.relative_to(external).as_posix()
+        except ValueError:
+            pass
+    raise BridgeBlocked(
+        "PROJECT_OUTSIDE_REPO",
+        f"{project.as_posix()} is outside the repository and the configured "
+        f"output root; M5 assets and source refs are project-relative") from None
 
 
-def _logical_to_repo(logical: str, project_rel: str) -> str:
+def _logical_path(logical: str, project: Path, root: Path) -> Path:
+    """Where a logical evidence path points on this machine.
+
+    ``project://`` names a file inside the project; ``repo://`` names a file
+    in the repository. Resolving them against their own bases is what keeps
+    a workspace project working without turning its evidence path into an
+    absolute host path.
+    """
     if logical.startswith(PROJECT_PREFIX):
-        return f"{project_rel}/{logical[len(PROJECT_PREFIX):].lstrip('/')}"
+        return project / logical[len(PROJECT_PREFIX):].lstrip("/")
     if logical.startswith("repo://"):
-        return logical[len("repo://"):].lstrip("/")
+        return root / logical[len("repo://"):].lstrip("/")
     raise BridgeBlocked(
         "NON_LOGICAL_PATH",
         f"evidence path {logical!r} must be project:// or repo://")
@@ -228,10 +252,11 @@ def build(project: Path, *, repo_root: Optional[Path] = None,
                     f"{evidence_id}: permission {value!r} cannot back a claim; use "
                     f"{sorted(EVIDENCE_CAPABLE_PERMISSIONS)}")
                 continue
-            repo_path = _logical_to_repo(logical, project_rel)
-            target = root / repo_path
+            target = _logical_path(logical, project, root)
+            repo_path = relative_label(target, root)
             if not target.is_file():
-                blockers.append(f"{evidence_id}: evidence file missing: {repo_path}")
+                blockers.append(
+                    f"{evidence_id}: evidence file missing: {repo_path}")
                 continue
             recorded = str(item.get("sha256") or "")
             if recorded and _sha256(target) != recorded:
@@ -290,7 +315,7 @@ def build(project: Path, *, repo_root: Optional[Path] = None,
         if asset_id:
             asset = assets[asset_id]
             repo_path = str(asset.get("repo_path") or "")
-            target = root / repo_path if repo_path else None
+            target = resolve_label(repo_path, root) if repo_path else None
             if target is None or not target.is_file():
                 missing_assets.append(f"{asset_id}: file missing: {repo_path}")
             elif asset.get("sha256") and _sha256(target) != str(asset.get("sha256")):

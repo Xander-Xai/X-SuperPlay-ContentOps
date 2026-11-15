@@ -157,6 +157,14 @@ The generic grant system remains in place for operations that need it. M5's
 Huashu local-render path does not depend on a project execution grant. See
 [ADR-010](adr/ADR-010-trusted-grant-execution-gate.md).
 
+An approval and execution request may additionally bind
+`request_scope_sha256` as `sha256:<64 lowercase hex>`. If either side supplies
+it, both values must match; older requests and approvals without the field keep
+their existing behavior. Easel's proposed Agent task uses the digest of its
+project-local proposal for this binding. The proposal and optional evidence do
+not grant authority, and Easel Agent is not yet a resolvable capability or an
+enabled executor. This binding has not been validated in this session.
+
 ## media-use
 
 | Field | Value |

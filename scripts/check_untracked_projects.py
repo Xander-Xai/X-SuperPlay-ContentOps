@@ -41,6 +41,13 @@ ROOT = Path(__file__).resolve().parents[1]
 BASELINE = ROOT / "config" / "untracked-projects-baseline.txt"
 LOCAL_SANDBOX = "projects/_local"
 
+# The experiment sandbox is not always inside the checkout: with an output
+# root configured it lives under that root. The judgement below is unchanged
+# either way -- it reads Git's own view of ``projects/``, and a sandbox that
+# is outside the repository is outside that view by construction.
+sys.path.insert(0, str(ROOT / "src"))
+from contentops.paths import workspace_root  # noqa: E402
+
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
@@ -123,7 +130,7 @@ def collect() -> dict:
         "new": new,
         "stale_baseline": stale,
         "other": sorted(untracked_other),
-        "local_sandbox_present": (ROOT / LOCAL_SANDBOX).is_dir(),
+        "local_sandbox_present": workspace_root().is_dir(),
     }
 
 

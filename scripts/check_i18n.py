@@ -38,6 +38,8 @@ TIER1_DOCS = [
     "docs/CURRENT-STATE.md",
     "docs/ARCHITECTURE.md",
     "docs/PRD.md",
+    "docs/PRD-EASEL-V030-FOUNDATION.md",
+    "docs/PRD-RECORDING-TO-PLATFORM.md",
     "docs/RUNBOOK.md",
     "docs/QUALITY-STANDARD.md",
     "docs/DEVELOPMENT-STANDARD.md",
@@ -54,6 +56,12 @@ TIER1_DOCS = [
 # Everything else is English-primary with a `.zh-CN.md` mirror.
 ZH_PRIMARY_DOCS = {
     "README.md": "README.en.md",
+    # The Easel v0.3.0 foundation PRD is written for the Founder first; the
+    # English mirror is the translation, same direction as README.
+    "docs/PRD-EASEL-V030-FOUNDATION.md": "docs/PRD-EASEL-V030-FOUNDATION.en.md",
+    # The recording-to-platform PRD is the same shape: written for the Founder,
+    # English mirror as the translation.
+    "docs/PRD-RECORDING-TO-PLATFORM.md": "docs/PRD-RECORDING-TO-PLATFORM.en.md",
 }
 
 # Chinese copies that must not come back once a doc is Chinese-primary: a second

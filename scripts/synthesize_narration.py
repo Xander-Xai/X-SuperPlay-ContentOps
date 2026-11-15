@@ -147,7 +147,8 @@ def main() -> int:
     parser.add_argument("--voice", default=None)
     parser.add_argument("--model", default=None)
     parser.add_argument("--speed", type=float, default=None)
-    parser.add_argument("--out-dir", default=".verify-tmp/narration")
+    parser.add_argument("--out-dir", default=None,
+                        help="where the audio is written (default: the scratch root)")
     parser.add_argument("--receipt", default="", help="write the receipt JSON here")
     parser.add_argument("--force", action="store_true",
                         help="regenerate even if a valid asset exists")
@@ -162,6 +163,10 @@ def main() -> int:
     parser.add_argument("--health", action="store_true",
                         help="report transport and billing state, generate nothing")
     args = parser.parse_args()
+    if not args.out_dir:
+        from contentops.paths import tmp_root
+
+        args.out_dir = str(tmp_root() / "narration")
 
     if args.recheck:
         return recheck(Path(args.recheck), language=args.language)

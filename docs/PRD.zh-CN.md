@@ -6,10 +6,10 @@ translation_status: synced
 
 # PRD — X-SuperPlay ContentOps 运行时
 
+> 最后验证：2026-11-16，分支 `feat/173-easel-m0-pin`。需求状态按该日期的代码核对；
 > 最后验证：2026-11-14；X / 跨平台本地数据回流只生成待审主题，不授予自动平台动作。
 > X 原创功能按题材与格式审核：文字帖无需媒体，图文必须通过尺寸/格式/ALT检查；泛兴趣评分重原创与诚实语境，技术与新闻保留严格证据。所有帖子依旧由真人审核、发布并登记真实X URL。
 > 本分支增加本地 X 指标学习闭环与人工 Topic 交接，真实账号数据不进入仓库；尚未合并。
-
 > 标为“已实现”只表示本仓库有代码，不等于有作品被发布。
 
 
@@ -167,13 +167,19 @@ TECHNICAL_QC → CONTENT_QC → FACT_QC → HUMAN_REVIEW → PRODUCTION_READY。
 
 ## 14. Easel 集成
 
-- 固定 v0.2.1，Release 归档，内容校验
+- 自 2026-11-15 起固定 **v0.3.0**（commit ```bb3c8ff```，1071 baseline blob + 14 个 overlay
+  文件校验通过）；v0.2.1 保留为回滚树。pin 的唯一来源是 ```runtime/easel-pins.json```；
+  ```runtime/easel.lock.json``` 是它 ```active``` 引擎的派生投影，代码不再各自携带 commit。
+  ```scripts/easel_engine.py``` 负责移动 ```active```，每次移动都写进
+  ```runtime/easel-engine-switch.json```
 - 扩展优先级：ADAPTER > EXTENSION > CUSTOM SKILL > PATCH > FORK
 - 不修改上游源码
 - 升级需要 Founder 批准 + 回归套件
-- **当前实际执行面：两个文件** —— ```auto-short-video/scripts/assemble.py```
-  与 ```tts.py```（仅 V1）。上游的 Skill、Agent、工作台与浏览器发布在**本仓库未接入**。
-  采用其中任何一项都是独立决策，且需要取代 ADR-002（ADR-015 D1）
+- **当前实际执行面：六个文件** —— ```auto-short-video/scripts/assemble.py```、
+  卡片与文章四件套（```render_card.py```、```card_audit.py```、```validate_gzh_html.py```、
+  ```wrap_preview.py```）与 ```tts.py```（仅 V1）。上游的 Agent、Gateway、工作台宿主与
+  浏览器发布在**本仓库未接入**。采用其中任何一项都是独立决策，且需要取代 ADR-002
+  （ADR-015 D1）；分阶段计划见 [PRD-EASEL-V030-FOUNDATION.md](PRD-EASEL-V030-FOUNDATION.md)
 
 ## 15. 质量标准
 

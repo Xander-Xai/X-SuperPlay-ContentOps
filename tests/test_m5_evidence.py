@@ -21,6 +21,7 @@ import sys
 import tempfile
 from pathlib import Path
 from typing import List
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 for candidate in (ROOT / "src", ROOT / "scripts"):
@@ -39,6 +40,91 @@ import assemble_easel  # noqa: E402
 import m5_production  # noqa: E402
 
 WORKROOT = ROOT / ".verify-tmp" / "m5-tests"
+
+
+def test_workbench_composer_requires_a_verified_overlay():
+    import resolve_easel
+
+    with tempfile.TemporaryDirectory() as tmp:
+        candidate = Path(tmp) / "candidate"
+        script = (candidate / "skills" / "builtin" / "auto-short-video"
+                  / "scripts" / "assemble.py")
+        script.parent.mkdir(parents=True)
+        script.write_text("# verified fixture\n", encoding="utf-8")
+        with mock.patch.object(resolve_easel, "resolve_easel_workbench", return_value={
+                "status": "OK", "easel_dir": str(candidate)}):
+            # The resolver returns a resolved path; a Windows runner hands back an 8.3
+            # short form of the temp directory, so both sides must be resolved.
+            assert assemble_easel._upstream_assemble(
+                workbench_runtime=True) == script.resolve()
+        with mock.patch.object(resolve_easel, "resolve_easel_workbench", return_value={
+                "status": "BLOCKED", "reasons": ["extra file"]}):
+            try:
+                assemble_easel._upstream_assemble(workbench_runtime=True)
+            except RuntimeError as exc:
+                assert "not verified" in str(exc)
+            else:
+                raise AssertionError("mismatched candidate must not reach composer")
+
+
+def test_default_composer_still_resolves_only_the_production_pin():
+    import resolve_easel
+
+    with tempfile.TemporaryDirectory() as tmp:
+        easel_root = Path(tmp) / "pinned"
+        expected = (easel_root / "skills" / "openclaw" / "auto-short-video"
+                    / "scripts" / "assemble.py")
+        expected.parent.mkdir(parents=True)
+        expected.write_text("# pinned fixture\n", encoding="utf-8")
+        with mock.patch.object(resolve_easel, "resolve_easel", return_value={
+                "status": "OK", "easel_dir": str(easel_root)}):
+            actual = assemble_easel._upstream_assemble()
+        assert actual == expected.resolve()
+
+
+def test_workbench_resolver_requires_generated_profile_overlay_verification():
+    import resolve_easel
+    import verify_easel_runtime
+    from contentops.easel import pins
+
+    declared = pins.workbench()
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        (root / "runtime").mkdir()
+        record = root / "runtime" / "easel-workbench-overlay.json"
+        record.write_text(json.dumps({
+            "schema": "contentops.easel-workbench-overlay/v1",
+            "upstream": {"repo": declared.repo, "commit": declared.commit},
+        }), encoding="utf-8")
+        (root / "scripts").mkdir()
+        (root / "scripts" / "verify_easel_runtime.py").write_text("# verifier fixture")
+        candidate = root / "candidate"
+        candidate.mkdir()
+        with mock.patch.object(verify_easel_runtime, "verify_overlay", return_value={
+                "status": "VERIFIED", "workbench_path": str(candidate),
+                "expected_commit": declared.commit,
+                "expected_tag": declared.tag}) as verifier:
+            resolved = resolve_easel.resolve_easel_workbench(root)
+        assert resolved["status"] == "OK", resolved
+        assert Path(resolved["easel_dir"]) == candidate
+        verifier.assert_called_once_with(
+            record_path=record.resolve(), profile_mode="generated")
+
+        with mock.patch.object(verify_easel_runtime, "verify_overlay", return_value={
+                "status": "MISMATCH", "reason": "extra file"}):
+            blocked = resolve_easel.resolve_easel_workbench(root)
+        assert blocked["status"] == "BLOCKED"
+        assert blocked["reasons"] == ["extra file"]
+
+        # The overlay must name the engine the registry declares. A record that
+        # points somewhere else is refused before any verification runs.
+        record.write_text(json.dumps({
+            "schema": "contentops.easel-workbench-overlay/v1",
+            "upstream": {"repo": declared.repo, "commit": "f" * 40},
+        }), encoding="utf-8")
+        drifted = resolve_easel.resolve_easel_workbench(root)
+        assert drifted["status"] == "BLOCKED", drifted
+        assert "workbench identity" in drifted["reasons"][0], drifted["reasons"]
 
 
 def _tmpdir() -> Path:
@@ -376,6 +462,9 @@ def test_storyboard_timeline_covers_the_pauses_between_lines() -> None:
 
 
 TESTS = [
+    test_workbench_composer_requires_a_verified_overlay,
+    test_default_composer_still_resolves_only_the_production_pin,
+    test_workbench_resolver_requires_generated_profile_overlay_verification,
     test_artifact_hashes_bytes_and_records_permission,
     test_permission_none_is_not_evidence_capable,
     test_artifact_outside_the_repository_is_refused,

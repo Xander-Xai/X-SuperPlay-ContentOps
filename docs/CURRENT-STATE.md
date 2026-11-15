@@ -4,10 +4,14 @@
 
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
+> Last verified: 2026-11-16 against `3c87ab290ca846ec2807ebe4ecb9559d53d2995e` (`main`, read-only fetch); worktree `feat/173-easel-m0-pin` at `74a5d35`, merge base `464ab63`. The Easel pin now lives in
+> `runtime/easel-pins.json`; `runtime/easel.lock.json` is a projection of its `active`
+> engine, and no code file carries a commit literal.
+> This worktree is 22 commits ahead of that `main` and 15 behind it; no rebase or merge has
+> been performed, so facts that belong to the branch are labelled as such.
 > Last verified: 2026-11-14, read-only GitHub main @ `515c605` (protected). The proposed X text/image and per-mode reviews are branch changes, not yet on main; real platform outcomes unverified.
 > X image posts require real media+ALT; explicit text posts omit media. General-interest posts use human novelty/evidence review without invented technical benchmarks. This implementation does not publish to X.
 > X and cross-platform offline analyzers are implemented; the platform outcomes and automatic end-to-end operations have not been verified.
-
 > Facts below describe `main`; deferred or rights-blocked work is labelled as such.
 > Sections below the "Layer status" table are historical milestone records;
 > they describe how a capability was proven, not what is current.
@@ -23,9 +27,10 @@
 | Graphic delivery (`scripts/platform_delivery.py`, `scripts/graphic_deliver.py`, `src/contentops/platforms/wcs_bridge*`) | implemented offline: packs and draft-only handoff through an external CLI across a process boundary (`wechatsync`). No `PUBLISHED` branch; URL recording is a human action |
 | Card and article rendering (`scripts/render_cards.py`, `scripts/render_article.py`) | implemented (PRs #149, #152); validates through the pinned Easel card/gzh skills and writes receipts with `production_ready: false` |
 | ASR backcheck gate (`scripts/m5_production.py::stage_asr_backcheck`) | implemented (PR #150); `SKIPPED` without `SILICONFLOW_API_KEY`, blocks human review on a coverage failure, never approves |
+| Recording intake (`src/contentops/media/recording_intake.py`, `scripts/ingest_recording.py`) | implemented (2026-11-16); admits a manual screen recording as `evidence_capable` material under the account DNA's `manual_recording` policy — `FORBIDDEN` refused, `ALLOWED_CROPPED` without a rectangle blocked — and writes a receipt that is always `production_ready: false` / `publish_authorized: false`. Admission is evidence, not distribution |
 | M5 characterization baseline (`scripts/m5_characterize.py`) | implemented (PR #153); `docs/m5-baseline/m5-characterization-2026-11-10.md` fixes slice-1 pass counts for #140 |
 | Content Bundle consumption + two-format handoff (`src/contentops/content_kernel/`) | implemented offline; VIDEO and GRAPHIC_TEXT plans, no publication |
-| Easel host guard (`src/contentops/easel/`, `scripts/easel_host.py`) | implemented offline (PR #108); `HOST_BLOCKED` on this machine (FastAPI/uvicorn absent), mutations denied |
+| Easel host guard (`src/contentops/easel/`, `scripts/easel_host.py`) | implemented offline (PR #108); status depends on the interpreter's installed packages (see *Easel Host*); mutations denied |
 | Graphic manual package (`src/contentops/graphic/`, `scripts/graphic_package.py`) | implemented offline; stops at `AWAITING_MANUAL_REVIEW`; no delivered package yet |
 | Content router, account DNA, brief/script/design stages | S1–S4 on `main` (PRs #114, #118); 15 hotspot sources registered with 1 `NATIVE_SEARCH` (GitHub) and 14 `LIST_ONLY`, opened to both account DNAs in #157; brief→M5 bridge merged, still gate-bound to a human-approved brief |
 | X / GZH platform tracks | X manual-only gate (#127); GZH renderer, SDK adapter, workflow runner and a `DRAFT_ONLY` draft path (#145, #152); both verify and never publish, rights unresolved (Issues #51, #56). **The XHS runtime adapter was removed on 2026-11-09** (`src/contentops/xhs/` is empty, `graphic_workflow.py` names gzh/x/video only); only the `xiaohongshu_video` registry row and delivery-channel config remain. Every registry row except `x` stays `PLANNED` |
@@ -34,6 +39,7 @@
 | MiniMax speech, image, H3 video | implemented; verified subsets recorded below |
 | Production ready | **false** for every track |
 | Publication count | **0** — no delivery package has a real platform URL |
+| Output root (products outside the checkout) | implemented (`src/contentops/paths.py`); `CONTENTOPS_OUTPUT_ROOT` selects `<root>/{workspace,deliverables,_tmp}` — the experiment sandbox, the reviewed products, and the scratch state. Unset, the three roots are exactly where they were, so CI and every committed receipt keep working. Rules: `docs/FILE-PLACEMENT-POLICY.md` |
 
 ## Git
 
@@ -41,22 +47,27 @@
 > sync).** Every other section below it is a historical snapshot kept for
 > traceability; none of them is the current state.
 
-### Git — verified 2026-11-14 (read-only protected main baseline)
+### Git — verified 2026-11-16 (branch `feat/173-easel-m0-pin`, PR #185)
 
 | Property | Verified value |
 |---|---|
+| Default branch | `main` @ `3c87ab290ca846ec2807ebe4ecb9559d53d2995e` — read-only fetch on 2026-11-16; unchanged by this branch |
+| Worktree under verification | `feat/173-easel-m0-pin` @ `74a5d35`, merge base `464ab63d`; 22 ahead and 15 behind `main` |
+| Open PRs | **1**: #185 — Easel v0.3.0 as the pinned engine (M0–M2) plus the recording-intake slice (R1) |
+| Branch registry | `verified_at` 2026-11-16; `feat/173-easel-m0-pin` registered `active`, review date 2026-12-16 |
+| Transport | `git push` over https is refused by this machine's proxy (CONNECT tunnel 502). The two documentation and receipt commits were published through the Git Database API with content-identical objects (same tree, parent, message and author instant; GitHub re-encoded the committer offset to UTC), and the local branch was reset to the remote SHAs |
+| Publications | **0** — unchanged |
+| Failed-then-decided | Receipt-secret check flagged ten committed offline-task receipts on `task_id`. The ids are minted locally by `contentops/easel/offline_task.py` and the receipts are hash-chained, so the rule was narrowed to that origin instead of rewriting the evidence |
+
+This table is the only part of this document re-read on 2026-11-16. Everything below keeps the
+date it was verified on.
+### Git — verified 2026-11-14 (read-only protected main baseline)
 | Default branch | `main` — protected @ `515c605` (GitHub branches/main query on 2026-11-14) |
 | Change scope | X text/image and per-mode human reviews remain in PR #182; not merged or published to X by this snapshot |
-
 The 2026-11-13 and older Git snapshots below remain historical audit evidence.
-
 ### Git — verified 2026-11-13 (read-only remote baseline)
-
-| Property | Verified value |
-|---|---|
 | Default branch | `main` — protected @ `98a61f2` (read-only GitHub branch query on 2026-11-13) |
 | Current baseline | X and cross-platform local analyzers merged to main; pending human-reviewed Topic runs are not platform publication evidence |
-
 The detailed 2026-11-12 snapshot below is retained as a historical record. No claim is made that the branch's X local CSV tool exists on the default branch.
 
 ### Git — verified 2026-11-12 (read-only documentation sync)
@@ -204,17 +215,19 @@ human-gated change.
 
 | Property | Value |
 |---|---|
-| Version | v0.2.1 |
-| Commit | `3fe2d9904c1619281ef57f81d9ee0b7854998399` |
-| Path | `.runtime/easel/` |
-| Acquisition | Git clone of the pinned tag, checked out with `core.autocrlf=false` and `core.eol=lf` |
-| Verified | 982/982 blob SHA-1 matched upstream tree (`scripts/verify_easel_runtime.py`) |
-| Re-verified | 2026-11-01 on this branch: 982 files, 0 missing, 0 mismatch, 0 extra |
+| Version | **v0.3.0 (production)** |
+| Commit | `bb3c8ff0463f36c202454d74171682ba6e470cb1` |
+| Path | `.runtime/easel-v030/` |
+| Rollback tree | v0.2.1 / `3fe2d99` at `.runtime/easel/`; `python scripts/easel_engine.py switch v0.2.1` |
+| Acquisition | Rebuilt from the pinned v0.3.0 archive into `.runtime/easel-v030` by `scripts/easel_engine.py install`, which compares every file against the upstream tree index (or the overlay record, for tuning) before copying |
+| Verified | **1071 baseline blobs matched the upstream tree plus 14 declared overlay files matched their recorded digests**, tree digest `c26fc96a653c0ff25ef3bc7486eee372c81f44e67d5ff2c30f1786c63c7d4ec8` (`scripts/easel_engine.py verify v0.3.0`, 2026-11-15) |
+| Re-verified | 2026-11-15: overlay mode VERIFIED against the local pinned tree cache, license Apache-2.0 VERIFIED |
 | Line endings | A Windows checkout with `core.autocrlf=true` yields **847 blob mismatches** while `resolve_easel.py --offline` still reports `OK`, because that command proves git HEAD, not content. Verify content before trusting the runtime |
-| Executed surface | `skills/openclaw/auto-short-video/scripts/assemble.py` (composition) and `skills/shared/scripts/tts.py` (V1 narration only; M5 uses Windows SAPI) |
+| Executed surface | `skills/builtin/auto-short-video/scripts/assemble.py` (composition) and `skills/shared/scripts/tts.py` (V1 narration only; M5 uses Windows SAPI) |
 | Independent cross-check | 2026-10-31 against the official `v0.2.1` release archive: 982 files, 0 missing, 0 mismatch |
 | Local extras | `outputs/` and `__pycache__/` only; no tracked file differs from upstream |
-| Lock file | `runtime/easel.lock.json` |
+| Lock file | `runtime/easel.lock.json` — a projection of the active engine in `runtime/easel-pins.json`, re-derived by the switcher |
+| Switch record | `runtime/easel-engine-switch.json` — append-only history; three entries on 2026-11-15 (v0.3.0, rollback drill to v0.2.1, back to v0.3.0) |
 | Provenance | `runtime/easel-runtime.json` |
 | Upstream stable | v0.3.0 (2026-10-12) — **not adopted**: 158 commits, skills moved from `skills/openclaw/` to `skills/builtin/`, `assemble.py` changed, and the tag was force-replaced upstream |
 
@@ -244,17 +257,84 @@ a verified integration yet.
 
 | Property | Value |
 |---|---|
-| Entry point | `scripts/easel_host.py status` / `serve` |
-| `status` result on this machine | `HOST_BLOCKED` — `HOST_DEPENDENCY_MISSING:fastapi`, `HOST_DEPENDENCY_MISSING:uvicorn` |
-| Pin reported | v0.2.1 / `3fe2d99` |
+| Entry point | `scripts/easel_host.py status` / `serve` (add `--workbench` for the workbench instance) |
+| `status` result on this machine | **`HOST_READY` (2026-11-16)** — host dependencies installed (fastapi, uvicorn, pydantic, sse_starlette, PyYAML), frontend build verified against the installed instance; serving stays an explicit operator action |
+| Previous blockers, resolved | `HOST_DEPENDENCY_MISSING:sse_starlette` (deps installed 2026-11-16) and `HOST_FRONTEND_MISMATCH` (the workbench instance record now points at `.runtime/easel-v030`, where the frontend was rebuilt) |
+| Dependency set checked | `fastapi`, `uvicorn`, `pydantic`, `sse_starlette` (`HOST_IMPORT_MODULES`). The earlier check named only the first two, so it could report `HOST_READY` for a host that failed on first import — fixed 2026-11-12 |
+| Pin reported | v0.3.0 / `bb3c8ff` |
+| Runtime install in this worktree | `python scripts/resolve_easel.py --offline` → `BLOCKED: no Easel runtime found`; the separate main checkout still resolves its `.runtime/easel` at the pinned commit |
 | Runtime bytes | `status --verify-bytes` → `VERIFIED`, 982/982 blobs (run 2026-11-02); `serve` always performs this comparison |
 | Bind | `127.0.0.1` only |
 | Methods | `GET`, `HEAD`, `OPTIONS` |
 | Scopes | `lifespan` passes; websocket scopes are closed before upstream |
 | Mutations | denied before upstream: publish, login, credentials, settings, env install, delete |
-| Guard tests | `python tests/test_easel_host_guard.py` — 13/13 |
+| Guard tests | `python tests/test_easel_host_guard.py` — 23/23 |
 | Host authority | none over approval, publication, provider spend or accounts |
-| What was not done | no dependency install, no credential/profile read, no account login, no host process started, no publication |
+| What was not done | this verification did not start or stop a host, log into an account or publish. A pre-existing workbench process owns loopback port 7899 (PID 71960, parent PID 46704, parent executable `D:\Projects\Easel-Workbench\.venv\Scripts\python.exe`; command `scripts/easel_host.py serve --workbench --port 7899`, launched 2026-11-12); it was not restarted or used as evidence for the current code |
+
+### Easel Workbench (2026-11-12)
+
+The Owner's decision (2026-11-12) is that Easel is the *mature base* to tune on,
+not only a library to call. That needs a runnable instance, which `.runtime/easel`
+is not (it has never had a frontend build, OpenClaw profile or account profile).
+
+| Property | Value |
+|---|---|
+| Instances | Existing `D:\Projects\Easel-Workbench` remains an extracted source tree with no Git metadata. One approved clean candidate was rebuilt at `D:\Projects\_worktrees\easel-v030-rebuild-20261113` from the pinned commit archive; repository-owned overlay sources and DNA profiles were applied there. The candidate also has no Git metadata; the pinned commit plus repository-owned overlay are its versioned source record |
+| Upstream version | **v0.3.0**, commit `bb3c8ff0463f36c202454d74171682ba6e470cb1` (2026-10-12) |
+| Skill layout | v0.3.0 moved every skill from `skills/openclaw/` to `skills/builtin/` (114 skills, same set) |
+| Baseline proof | The clean rebuild initially matched **1071/1071 upstream baseline blobs** with no extra paths. Current re-verification retrieves the public tree anonymously over direct HTTPS and matches all 1071 upstream blobs, but now reports one extra local file: `.isolated-host-env/localappdata/GitHub CLI/device-id`. It was generated inside the candidate by an earlier isolated CLI attempt; the content was not read. Cleanup was rejected by automatic review, so current workbench byte status is `MISMATCH` until this exact task-created scratch file is removed |
+| Tuning layer | 2 skill-override files + 2 account profile directories (14 installed files), recorded in `runtime/easel-workbench-overlay.json` with SHA-256 digests; skill source copies live under `extensions/easel-workbench/` and the verifier binds their digests. The record separately carries expected profile output digests generated from current account DNA, so stale installed bytes cannot become the rebuild target. Raw benchmark transcripts/review notes are absent from the repo, so those historical examples remain unverified evidence |
+| Profiles | The existing `D:\Projects\Easel-Workbench` snapshot remains `STALE` for both accounts: all 12 raw file bytes differ from current DNA output; five files per account differ only by CRLF/LF and each `style.md` also has content drift. No existing snapshot was overwritten. The approved clean candidate generated all 12 files from DNA; `verify_easel_runtime.py --overlay --generated-profiles` reports `VERIFIED`, with 0 digest mismatches and no linked paths |
+| Host | The repository's ambient Python still reports `HOST_BLOCKED:HOST_DEPENDENCY_MISSING:sse_starlette`. In the approved candidate's Python 3.13.15 venv, the frontend reports `VERIFIED`; `pip check` passes for the six installed FastAPI host/import dependencies, while the full media/runtime set remains uninstalled. The earlier `--workbench` process used `Start-Process -Environment`, served offline ContentOps routes, then stopped; because unspecified parent environment variables are inherited, that process's credential isolation was **NOT_ESTABLISHED**. The verifier uses anonymous direct HTTPS without CLI credentials or proxies; after API HTTP 403, a strict codeload fallback independently reproduced the recorded upstream tree digest and license. The candidate composer gate then correctly failed closed with one extra scratch path. Deletion of that exact file was authorized by the user but again rejected by automatic review (`blocked by policy`); its contents remain unread, so the candidate remains `MISMATCH` and no workbench host served. Separately, `--offline-tasks-only` served on `127.0.0.1:7861` under the exact environment allowlist, without Easel import or GitHub query; a second profile/draft/receipt flow succeeded as task `576893e4-1518-42b4-a0cf-d95150eca4a3`, then the service was stopped. No model/Gateway route was called and no credential values were output |
+| Frontend integrity | `npm ci --registry=https://registry.npmjs.org/` installed 31 packages; the lock SHA-256 remains `23f33fcd5d606b6ffdd077ad7d35a231cdb6034d4f25622944dd0ea4672ea889`. `npm run build` succeeded with Node `v24.16.0` / npm `11.13.0`. The manifest `runtime/easel-workbench-frontend-build.json` binds commit `bb3c8ff0463f36c202454d74171682ba6e470cb1`, the lock and toolchain to all 5 dist files; tree SHA-256 `8ab3d814f2e8c8acf807c61c98a180b4a89fa6af65d8f88a9b4607b55944e5c1`. The main JavaScript chunk is 515.78 kB; Vite emitted its >500 kB advisory |
+| Offline task API | The `/contentops/offline-task` panel and exact fixed-schema project task/receipt/draft routes use `OfflineTaskAPI`; `serve --offline-tasks-only` serves only this ContentOps ASGI adapter on loopback (default port 7862), without importing Easel. The executor writes only an `OFFLINE_DRAFT_ONLY` scaffold. The CLI remains available for stdin JSON. 18 isolated API/executor contract tests pass, including HTML-injection refusal, corrupt overlay/dist downgrade, incomplete account exclusion and projector failure; live HTTP runs selected `x-superplay-1024`, read back task `c6554e6e-06fd-4e52-a2b6-a5f58f888627` and the later task `576893e4-1518-42b4-a0cf-d95150eca4a3`, and kept `production_ready=false`, `publish_authorized=false`, `human_review=PENDING`. The later receipt is in `projects/easel-isolated-env-check-20261113/receipts/`. Receipt overlay state is explicitly `PRESENT_UNVERIFIED`; the offline executor does not call the upstream verifier, so this state and its record digest do not claim live upstream-tree verification. The frontend build state is `VERIFIED`. No Agent/model/Gateway route was called |
+| Production engine | **unchanged at v0.2.1**. This is deliberate: the historical receipts are anchored on v0.2.1, and moving the production pin would require re-running every golden render |
+| Not yet done | A second clean-environment rebuild is not run. Browser UI E2E remains **NOT_RUN**: the computer-use browser host was unavailable, and execution review rejected launching local headless Chrome for screenshots (`blocked by policy`); verification used HTTP routes and no browser launched. The offline scaffold receipt is not a real Agent result. The earlier `--workbench` process's credential isolation remains **NOT_ESTABLISHED**. The updated exact-allowlist `--workbench` status successfully queried the public tree without auth, then failed closed because the candidate contains the extra `.isolated-host-env/localappdata/GitHub CLI/device-id`; automatic review rejected removal of that task-created scratch file, whose contents were not read. The exact-allowlist `--offline-tasks-only` host served profile/task/readback on `127.0.0.1:7861` and was stopped. No credential values were output and no model/Gateway route was used. The earlier successful `--workbench` startup queried GitHub via `gh api`; its auth source was not inspected. Windows process/service checks found no OpenClaw/Gateway process. The running WSL `Ubuntu-22.04` has a generic Node v20.20.2 process with executable `/home/dev/.nvm/versions/node/v20.20.2/bin/node` and working directory `/home/dev/.hermes`; its command line and environment were not inspected, so its role is unresolved. WSL has no listeners on ports 18789 or 37289. Docker CLI is installed but its Engine endpoint is unavailable. No active Gateway version/path is established; the CLI was not invoked. Source inspection found `easel doctor` unsuitable for credential-free diagnostics: it calls `read_settings(PROJECT_ROOT / ".env")` and `_env_key_valid` reads `.env` directly; doctor was not run. No `.env` or browser-auth files were intentionally read. Raw chat remains unavailable. Agent isolation and a real Agent receipt are not verified. |
+| Contract verification (2026-11-13) | Host guard 27/27; overlay/profile/source 44/44; rebuild/archive safety 5/5; offline API/task 18/18; skill router 29/29; skill doctor 12 tests (1 environment-dependent skip); agent driver 29/29; production gates 30/30; graphic workflow 14/14; article renderer 36/36; card renderer 19/19 (optional live render skipped because this worktree has no `.runtime/easel`); M5 evidence 22/22; two-format bundle 14/14; M5 handoff 6/6. Verifier tests cover direct anonymous HTTPS, no proxies, codeload commit-archive fallback bound to the exact commit, Git blob tree-digest matching, archive traversal/link/member/size limits, annotated-tag peeling, redirect refusal and fail-closed malformed responses. Overlay tests reject linked records, baseline files, frontend build inputs, unsafe repository sources, source digest drift and generated profile digest drift; the verifier never hashes through links. Account-DNA suite has 3 failures because shared skill `b-roll-finder` is absent from `C:\Users\Administrator\.agents\skills`; the external shared-skill store was not changed. |
+
+The two roles are intentional and must not be conflated: `.runtime/easel`
+(v0.2.1) is the **production engine** that writes receipts; the current
+`D:\Projects\_worktrees\easel-v030-rebuild-20261113` tree is the v0.3.0
+**workbench candidate**, while `D:\Projects\Easel-Workbench` remains a preserved
+earlier snapshot. `docs/UPSTREAM-EASEL.md` records the roles. The production
+runtime is absent from this feature worktree, though it remains available in the
+separate main checkout.
+
+### Easel v0.3.0 milestone status (2026-11-13)
+
+| Milestone | Status and evidence |
+|---|---|
+| Pinned source identity and overlay inputs | **PASS** — commit, Apache-2.0 license, whole-tree digest and repository-owned skill sources are recorded and verified |
+| One clean source rebuild and regenerated profiles | **PASS** — approved archive rebuild at `D:\Projects\_worktrees\easel-v030-rebuild-20261113`; pinned tree 1071/1071, all 14 overlays and all 12 generated profile digests verified |
+| Frontend dependency install and build | **PASS** — official registry, 31 packages; pinned Node/npm; build manifest verifies all 5 dist files |
+| Second clean environment rebuild | **NOT_RUN** |
+| Read-only workbench baseline | **BLOCKED** — the clean rebuild previously matched 1071/1071 blobs; current exact-allowlist recheck found one task-created extra file, so the verifier correctly refuses to serve it |
+| Tracking issue / PR | **Issue #173 OPEN** — its acceptance criteria cover the pinned rebuild, account profile handoff, narrowly scoped task receipt, separate live model authorization, and gated production migration; no associated PR was found |
+| Offline task/API contract | **PASS** — 18/18 API/executor tests and a live localhost HTTP submission/readback with `OFFLINE_DRAFT_ONLY` receipt; browser UI E2E is **NOT_RUN** |
+| Real profile context | **PARTIAL / NOT_VERIFIED** — source inspection shows direct API mode inlines `load_profile_text(persona)`, but the OpenClaw gateway/CLI path sends only a persona prefix asking the agent to read `profiles/<name>` from its workspace. Whether the isolated workbench profile directory is the agent's actual workspace is unverified; no Gateway/Agent call was made |
+| Real Agent and gateway isolation | **BLOCKED** — gateway version/path and system-level isolation are unverified; no live task authorization |
+| v0.2.1 production migration | **NOT_RUN** — production pin retained; golden renders, QC, human review and Founder decision remain pending |
+| Human/Founder review | **NOT_RUN** |
+
+The computer-use browser host was unavailable during this check. The isolated service was started and stopped; only its localhost API routes were exercised, so browser rendering and interaction remain unverified.
+
+### Easel v0.3.0 production compatibility audit (2026-11-13)
+
+This is a read-only source comparison; it is not a runtime or render acceptance.
+
+| Check | Result |
+|---|---|
+| Skill directory names | `skills/openclaw` in v0.2.1 and `skills/builtin` in v0.3.0 each contain 114 directories; the name sets match exactly |
+| Equal critical files | SHA-256 matched for `auto-short-video/scripts/assemble.py`, `skills/shared/scripts/tts.py`, `skills/shared/scripts/render_card.py`, `card-design/scripts/card_audit.py`, and `gzh-design/scripts/{validate_gzh_html,wrap_preview}.py` |
+| Skill guidance changes | `auto-short-video/SKILL.md` changes the documented assembler path from `skills/openclaw` to `skills/builtin`; `tts-voiceover/SKILL.md` updates its documented shared-script paths. The compared `auto-subtitle/SKILL.md` is byte-identical |
+| ContentOps path coupling | Composition, card auditing, article validation and skill discovery now support both skill roots; the production pin still resolves through v0.2.1. `assemble_easel.py`, `render_cards.py` and `render_article.py` each expose `--workbench-runtime` as a separate opt-in through the shared resolver, which verifies the upstream tree, overlay sources and generated profiles before returning v0.3. `m5_production` remains on the production resolver and records its actual assembler path |
+| v0.3 workbench route delta | New settings, gateway restart, local-agent/model-selection and artifact-archive APIs remain blocked by the deny-by-default host. Regression coverage now checks representative v0.3 routes; neither this nor API guarding proves Agent/tool isolation |
+| Dependency delta | v0.3.0 declares `requests>=2.32,<3` plus its full runtime/media set. The candidate only has the limited host/import environment; no full upstream dependency install or `pip check` was performed |
+| Migration result | Adapter source now understands both skill roots, with focused card/article/host tests passing. This establishes path compatibility only; no production runtime switch is accepted and production stays on v0.2.1 |
+| Evidence limit | Hash equality and source inspection do not prove Windows execution, subtitle/audio correctness, golden-render parity, QC, receipts or human approval. Those remain required before migration |
+
+Compared critical-file hashes were: assembler `08359a03f4fd40101aef7dfc8b7f58183d735827756815e7b3d2f63d0087470b`, shared TTS `8f55b95a3b1f125960766f0dc9cbcf07d46c67856a2fb02bfd6245e218e88cbd`, card renderer `fcc5d0d7a877bded9e056a8faea2ce487d35231de07f6b0407d22eec81eb83ac`, card audit `7c80025120cfce0e41e1645717d0e56a961f858981aaf6f982332b231b524ccb`, WeChat validator `de21aa3decac10c6ef89040bdc4e19930dbed33d6ccf7bc963b744c53da01185`, and wrap preview `3f3c4d48a7fd2e6781d5d831d9221122ac2df0983d4d2a6665dd903e72cc95c1`.
 
 ## Coding-Agent Driver (2026-11-02)
 
@@ -269,7 +349,7 @@ a verified integration yet.
 | Host requirement | none — `host-status` is a read step, not a dependency |
 | QC binding | `qc-video` runs `qc_video.py --video <slug>.mp4` and requires `receipts/qc-report-<slug>.json`; that report must declare `graded_target: project://final/<slug>.mp4` and the render must still exist |
 | QC verdict | a `FAIL`, a non-current report, a report for another render, or a report whose render is gone never completes the step |
-| Tests | `python tests/test_agent_driver.py` — 29/29 |
+| Tests | Earlier run: `python tests/test_agent_driver.py` — 29/29; it predates subsequent driver changes and does not validate them. |
 
 ## Content Router and Brief Bridge (2026-11-04)
 
@@ -340,6 +420,7 @@ Two entry points share the pinned Easel composer. Neither publishes.
 | Input | authored `storyboard.json` + `master.md` | `project.yaml` `source_refs` + claims |
 | Narration | edge-tts (`zh-CN-YunxiNeural`) | Windows SAPI, offline |
 | Voice quality | `edge_tts_fallback` — not production-grade | `windows_sapi_offline` — not production-grade |
+| Compose failure | V1 propagates `BLOCKED` instead of marking a failed compose ready for human review; this change is not yet run or tested. | M5 uses its own stage gate. |
 | Evidence layer | none | `SourceArtifact` + `ClaimLedger` |
 | Composition | pinned Easel `assemble.py` via `assemble_easel.run` | same |
 | Subtitle handling | `assemble_easel` strips, runs upstream, burns separately | burned from narration timings |
@@ -391,7 +472,7 @@ and no delivery receipt in this repository records a platform URL.
 | Composition | pinned Easel, 1080×1920 H.264 + AAC |
 | QC | PASS — 19 checks, real-source ratio 1.0 |
 | Production ready | **false** — `PENDING_FOUNDER_REVIEW`, scores null |
-| Tests | `tests/test_m5_evidence.py` — 18 offline tests |
+| Tests | `tests/test_m5_evidence.py` — 22 offline tests, including the v0.3 candidate resolver/composer gates and the v0.2 production-pin default |
 
 Composer defect fixed in the same change: ASS subtitle timestamps were written
 with three fractional digits, which libass reads as centiseconds, stretching
@@ -452,13 +533,13 @@ unverified, not failed.
 |---|---|---|
 | Script smoke | `scripts/test_basic.py` | 10 |
 | Media / provider (offline fixtures) | speech, image, H3, convergence, media-use adapter | 432 `test_*` functions |
-| M5 evidence + media-use traceability | `test_m5_evidence.py`, `test_m5_*` | 18 + list-driven suites |
+| M5 evidence + media-use traceability | `test_m5_evidence.py`, `test_m5_*` | 22 + list-driven suites |
 | Golden / reproducibility | A/B variants, voice assets, locked inputs | 47 |
 | Skill / authorization | router, doctor, execution gate, grants | list-driven suites |
 | Skill reference integrity | `tests/test_skill_references.py` | 6 |
 | Windows | subprocess, paths | 53 |
 | Policy / secrets | gitignore, local-approval, receipt secrets | 19 + list-driven suites |
-| **Total** | **not asserted in this document** | 98 suites and 98 named CI steps on 2026-11-12; the authoritative count is read at check time: `git ls-files 'tests/test_*.py' \| wc -l` |
+| **Total** | **not asserted in this document** | Latest fetched `origin/main` `98a61f22`: 104 suites and 105 named Python CI steps; this Easel candidate adds 3 suites and steps (107/108 when integrated). The authoritative current-checkout count is read at check time: `git ls-files 'tests/test_*.py' \| wc -l` |
 
 `python scripts/dev_check.py` runs the local gate. CI enumerates every suite as a
 named step; a suite without a CI step does not run, and one green run is not
@@ -493,10 +574,12 @@ See [TEST-PLAN.md](TEST-PLAN.md) for the full inventory.
    adopted. See the convergence requirements for the decision.
 8. ~~Main branch unprotected~~ — **RESOLVED** (G0.6): main is protected via
    GitHub branch protection.
-9. Easel host — `HOST_BLOCKED` on this machine because FastAPI/uvicorn are absent.
-   Installing them, using a real account or starting a host requires a separate
-   approval after a host-security review (ADR-016). A running host is not a
-   publication authorization.
+9. Easel host — the status depends on the interpreter's installed packages, not
+   on a fixed machine-wide fact. FastAPI and uvicorn are present; the host still
+   blocks when a module `web/app.py` imports is missing (e.g. `sse_starlette` on
+   the system Python). Using a real account or starting a host still requires a
+   separate approval after a host-security review (ADR-016). A running host is not
+   a publication authorization.
 10. ASR backcheck — `SKIPPED` unless `SILICONFLOW_API_KEY` is present, so a run
     without the credential proves nothing about narration accuracy.
 

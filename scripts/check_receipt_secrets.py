@@ -104,6 +104,40 @@ def _is_redacted(value: Any) -> bool:
     return str(value).strip().lower() in REDACTED
 
 
+#: Receipts written by this repository's own offline executor carry a ``task_id`` that the
+#: executor mints itself (``str(uuid.uuid4())`` in ``contentops/easel/offline_task.py``).
+#: It is a local handle, never an identifier received from a provider, so publishing it
+#: cannot expose a provider account -- which is the only thing this guard exists to stop.
+#:
+#: These receipts are also hash-chained: ``receipt_sha256`` is a digest of the file's own
+#: bytes, and the executor re-verifies it on a repeat request. Rewriting the id to satisfy a
+#: field-name heuristic would invalidate the chain, i.e. destroy the evidence in order to
+#: protect nothing. The rule is therefore narrowed to the origin instead of the field name,
+#: and it stays narrow: both shapes below are produced by that one executor and by nothing
+#: else, so a provider id cannot arrive inside them.
+LOCAL_SCAFFOLD_RECEIPT = {
+    "schema": "contentops.easel-workbench-task-receipt/v1",
+    "executor": "deterministic-offline-scaffold",
+}
+#: The idempotency record the same executor writes beside a task receipt. Identified by its
+#: full key set, so an ordinary receipt that merely happens to carry a task id is still
+#: scanned.
+LOCAL_IDEMPOTENCY_KEYS = frozenset({
+    "artifact", "artifact_sha256", "receipt", "receipt_sha256", "request_sha256",
+    "status", "task_id",
+})
+
+
+def _is_local_offline_artifact(document: Any) -> bool:
+    """Whether every identifier in this document was minted by this repository."""
+    if not isinstance(document, dict):
+        return False
+    if all(document.get(key) == value for key, value in LOCAL_SCAFFOLD_RECEIPT.items()):
+        return True
+    keys = set(document)
+    return bool(keys) and keys <= LOCAL_IDEMPOTENCY_KEYS and "receipt_sha256" in keys
+
+
 def _kind_for(key: str, value: Any) -> Optional[str]:
     folded = key.casefold()
     if folded.endswith("_hash"):
@@ -167,7 +201,10 @@ def _scan_values(root: Path, paths: Optional[Iterable[Path]] = None
             except json.JSONDecodeError:
                 structured.append((rel, "<json>", "malformed_json", None))
             else:
+                local_only = _is_local_offline_artifact(data)
                 for field, kind, value in _walk(data):
+                    if local_only and field == "task_id":
+                        continue
                     structured.append((rel, field, kind, value))
         tokens = _text_tokens(text)
         if tokens:

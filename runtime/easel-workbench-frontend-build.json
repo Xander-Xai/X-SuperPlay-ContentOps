@@ -1,0 +1,28 @@
+{
+  "schema": "contentops.easel-frontend-build/v1",
+  "source_commit": "bb3c8ff0463f36c202454d74171682ba6e470cb1",
+  "package_lock_sha256": "23f33fcd5d606b6ffdd077ad7d35a231cdb6034d4f25622944dd0ea4672ea889",
+  "toolchain": {
+    "node": "v22.22.2",
+    "npm": "10.9.7"
+  },
+  "toolchain_rule": "range",
+  "build_command": [
+    "npm",
+    "run",
+    "build"
+  ],
+  "build_executable": "C:\\Users\\Administrator\\.workbuddy\\binaries\\node\\versions\\22.22.2-6\\npm.CMD",
+  "destination": "D:\\Projects\\X-SuperPlay-ContentOps\\.runtime\\easel-v030\\web\\frontend",
+  "files": {
+    "assets/index-BQhCqTkU.css": "0b6808942bdd42d1d3ec75a6109934cf7623e035cd1efaf745e512a1d2fb82a6",
+    "assets/index-Nc---j74.js": "2779a64d1fe28f9698451caebced044ab6bc8008551b1d553313750867e78418",
+    "favicon.svg": "61bc9a161de58248288e6905425d7180f0624c2865007b97d763fdac12043a66",
+    "icons.svg": "b45fa506195cfcdef406ba9f0c77b36ddc1a7c224040926ec70abc2fdea7b93a",
+    "index.html": "dded19d4437fb79dc6b8603973cf1c31095888f1144010d6f46cb56be49654b5"
+  },
+  "tree_sha256": "8ab3d814f2e8c8acf807c61c98a180b4a89fa6af65d8f88a9b4607b55944e5c1",
+  "built_at": "2026-11-15T17:11:11+00:00",
+  "built_by": "scripts/record_easel_frontend_build.py",
+  "note": "Written immediately after npm ci and npm run build completed in this instance. The dist inventory binds the receipt to the bytes the build produced; the host refuses to serve anything else."
+}

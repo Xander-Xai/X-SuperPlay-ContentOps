@@ -92,11 +92,21 @@ def _scripts_imports():
 
 
 def _fake_easel_tree(base: Path) -> Path:
-    easel = base / ".runtime" / "easel"
-    (easel / "skills" / "openclaw" / "auto-short-video" / "scripts").mkdir(parents=True)
+    """Build a stub tree at the *active* engine's root and layout.
+
+    Both are registry facts now, so a fixture that hardcodes `.runtime/easel`
+    and `skills/openclaw` tests the previous engine, not the one under test.
+    """
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import resolve_easel as rez
+
+    pin = rez.load_pin()
+    easel = base / (pin.get("root") or ".runtime/easel")
+    layer = pin.get("layout") or "openclaw"
+    (easel / "skills" / layer / "auto-short-video" / "scripts").mkdir(parents=True)
     (easel / "skills" / "shared" / "scripts").mkdir(parents=True)
-    (easel / "pyproject.toml").write_text('[project]\nversion = "0.2.1"\n', encoding="utf-8")
-    (easel / "skills" / "openclaw" / "auto-short-video" / "scripts" / "assemble.py").write_text("# stub\n", encoding="utf-8")
+    (easel / "pyproject.toml").write_text('[project]\nversion = "stub"\n', encoding="utf-8")
+    (easel / "skills" / layer / "auto-short-video" / "scripts" / "assemble.py").write_text("# stub\n", encoding="utf-8")
     (easel / "skills" / "shared" / "scripts" / "tts.py").write_text("# stub\n", encoding="utf-8")
     return easel
 

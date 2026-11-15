@@ -3,9 +3,9 @@
 [English](RUNBOOK.md) | [简体中文](RUNBOOK.zh-CN.md)
 
 > Real executable commands. Derived from actual script behavior, not assumptions.
+> Last verified: 2026-11-16
 > Last verified: 2026-11-14: X CLI now accepts `--post-format text|image` on `--new` (image is legacy default). A text package has no image/ALT upload step; image-format posts still require genuine PNG/JPEG+ALT. `--package` never posts, and only a human-confirmed X status URL can be recorded by `--mark-published`.
 > X policy: Strategy canonical SOP and registered account DNA; source metrics and publishing still require human verification.
-
 
 ## 0. Environment check
 
@@ -34,19 +34,54 @@ Acquisition ladder: git clone (Strategy A) → release archive (Strategy B) → 
 
 ## 2. Verify Easel runtime
 
-```powershell
-python scripts/verify_easel_runtime.py --resolve-tag
+Which engine is production is a registry fact, so start there:
+
+```text
+python scripts/easel_engine.py show
 ```
 
-Expected: `VERIFIED · 982/982 blobs matched · 0 mismatch / 0 missing / 0 extra`
+Expected (2026-11-15): `active: v0.3.0`, with `v0.2.1` listed as the rollback tree.
 
-Offline mode (no network):
+Verify the active engine. This compares the tree against the pinned upstream tree
+and, for an instance that carries declared tuning, against the overlay record
+instead — the strongest proof available, and the method used is reported:
 
-```powershell
+```text
+python scripts/easel_engine.py verify v0.3.0
+```
+
+Expected: `VERIFIED · matched: 1071 · recorded_at: runtime/easel-runtime-v0.3.0.json`
+
+Offline resolution (no network), with per-engine provenance:
+
+```text
 python scripts/resolve_easel.py --offline
+python scripts/resolve_easel.py --offline --engine v0.2.1
 ```
 
-Uses recorded provenance in `runtime/easel-runtime.json`.
+### 2.1 Install another declared engine (never downloads)
+
+```text
+python scripts/easel_engine.py install v0.3.0 --from <prepared-tree>
+```
+
+Every file is compared with `runtime/easel-workbench-upstream-tree.json` (or the
+overlay record, for tuning) before anything is copied, and an existing non-empty
+target is refused. A refusal leaves no partial tree.
+
+### 2.2 Move the production engine, and undo it
+
+```text
+python scripts/easel_engine.py switch v0.3.0 --dry-run   # report only
+python scripts/easel_engine.py switch v0.3.0             # verify, then write
+python scripts/easel_engine.py switch v0.2.1             # rollback
+```
+
+`switch` verifies the target *before* it writes, then updates
+`runtime/easel-pins.json`, re-derives `runtime/easel.lock.json` and appends to
+`runtime/easel-engine-switch.json`. A target that is not installed, or that fails
+verification, is refused and nothing changes. Then re-render a golden project and
+compare its sha256 — the 2026-11-15 switch left `projects/m5-easel-pin` byte-identical.
 
 ## 3. Create a new project
 

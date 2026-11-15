@@ -132,8 +132,11 @@ def plan(
 
     runtime_root = Path(runtime_root).resolve()
     renderer = runtime_root / "skills" / "shared" / "scripts" / "render_card.py"
-    auditor = (runtime_root / "skills" / "openclaw" / "card-design"
-               / "scripts" / "card_audit.py")
+    from contentops.easel.skill_paths import resolve_skill_dir
+    try:
+        auditor = resolve_skill_dir(runtime_root, "card-design") / "scripts" / "card_audit.py"
+    except FileNotFoundError:
+        auditor = runtime_root / "skills" / "openclaw" / "card-design" / "scripts" / "card_audit.py"
     for label, tool in (("renderer", renderer), ("auditor", auditor)):
         if not tool.is_file():
             raise CardRenderError(

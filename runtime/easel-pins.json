@@ -1,0 +1,50 @@
+{
+  "schema": "contentops.easel-pins/v1",
+  "note": "The only place an Easel engine's identity is written down. Code reads this file; it never carries a commit literal. `active` selects the engine production resolves, and changing it is an upgrade-gated action (docs/UPSTREAM-EASEL.md), not an edit. Identity is commit plus, when measured, tree digest: upstream force-replaced the v0.3.0 tag while keeping the version number, so a tag is a comment and never an identity. A missing or invalid registry blocks resolution; there is no fallback commit.",
+  "active": "v0.3.0",
+  "workbench_engine": "v0.3.0",
+  "engines": {
+    "v0.2.1": {
+      "role": "rollback",
+      "repo": "https://github.com/ZJU-REAL/Easel.git",
+      "tag": "v0.2.1",
+      "commit": "3fe2d9904c1619281ef57f81d9ee0b7854998399",
+      "tree_sha256": null,
+      "blob_count": 982,
+      "blob_count_basis": "files verified by blob_sha1 tree comparison on 2026-11-01; not a total tree count",
+      "digest_status": "not_recorded",
+      "layout": "openclaw",
+      "skill_root": "skills/openclaw",
+      "root": ".runtime/easel",
+      "installed": true,
+      "license": "Apache-2.0",
+      "agpl_vendored": [
+        "skills/openclaw/gzh-design"
+      ],
+      "note": "Production engine since 2026-10-02. Verified by git HEAD plus a 982-blob content comparison; no tree digest was ever computed for it, so this entry says so instead of inventing one. Demoted to rollback when v0.3.0 became active on 2026-11-15.",
+      "repo_id": "ZJU-REAL/Easel"
+    },
+    "v0.3.0": {
+      "role": "production",
+      "repo": "https://github.com/ZJU-REAL/Easel.git",
+      "tag": "v0.3.0",
+      "commit": "bb3c8ff0463f36c202454d74171682ba6e470cb1",
+      "tree_sha256": "c26fc96a653c0ff25ef3bc7486eee372c81f44e67d5ff2c30f1786c63c7d4ec8",
+      "blob_count": 1073,
+      "blob_count_basis": "tree_blob_count recorded in runtime/easel-workbench-overlay.json on 2026-11-13",
+      "digest_status": "recorded",
+      "layout": "builtin",
+      "skill_root": "skills/builtin",
+      "root": ".runtime/easel-v030",
+      "installed": true,
+      "license": "Apache-2.0",
+      "agpl_vendored": [
+        "skills/builtin/gzh-design"
+      ],
+      "instance_record": "runtime/easel-workbench-overlay.json",
+      "note": "Production since 2026-11-15: installed from the pinned rebuild into .runtime/easel-v030, verified as upstream baseline plus the declared overlay (1071 baseline blobs, tree digest c26fc96a…). Renders byte-identically to v0.2.1 on projects/m5-easel-pin, which is why the switch did not change output.",
+      "installed_at": ".runtime/easel-v030",
+      "repo_id": "ZJU-REAL/Easel"
+    }
+  }
+}

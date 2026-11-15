@@ -105,6 +105,19 @@ def test_plan_refuses_missing_upstream_tools():
                       "ARTICLE_UPSTREAM_TOOL_MISSING")
 
 
+def test_article_tools_resolve_v03_builtin_skill_layout():
+    with tempfile.TemporaryDirectory() as d:
+        runtime = _fake_runtime(Path(d))
+        legacy = runtime / "skills" / "openclaw" / "gzh-design"
+        builtin = runtime / "skills" / "builtin" / "gzh-design"
+        builtin.parent.mkdir(parents=True)
+        legacy.rename(builtin)
+        resolved = plan(_project(Path(d)), runtime_root=runtime)
+        # plan() resolves its runtime root; the expectation must be resolved too, or the
+        # comparison fails wherever the platform hands back a different path form.
+        assert resolved.tools.upstream_root == builtin.resolve()
+
+
 def test_plan_refuses_a_missing_html():
     with tempfile.TemporaryDirectory() as d:
         runtime = _fake_runtime(Path(d))

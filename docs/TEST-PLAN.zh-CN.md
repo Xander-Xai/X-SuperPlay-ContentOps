@@ -10,10 +10,12 @@ translation_status: synced
 
 > 本地验证策略权威文档、套件清单与 CI 接线。
 >
+> 最后验证：2026-11-16，分支 `feat/173-easel-m0-pin`。树内 `tests/test_*.py` 共 107 个套件，
+> `.github/workflows/ci.yml` 逐一具名（107 个步骤）。此处不写死数量，
+> 以 `ls tests/test_*.py | wc -l` 为准。
 > 最后验证：2026-11-14；已实施 X / 跨平台本地分析和人工选题回流，不代表真实平台效果或发布。
 > 新增纯文字稿件 READY/发布包/真实URL记录、图文缺图拒绝、分题材评分门槛与账号合同的回归测试；CI结果以PR实际检查为准，不将测试用URL冒充真实平台发布。
 > 本分支增加 X 本地数据分析测试及 CI 步骤，测试使用合成 CSV，不上传真实后台数据。
-
 >
 > 最后核验：2026-11-06，`fix/6-brief-copy-review`。
 
@@ -88,7 +90,7 @@ python tests/test_media_convergence.py
 | 锁定输入可复现性 | `tests/test_locked_input_reproducibility.py` | 10 | 是 |
 | 源证据 gitignore | `tests/test_gitignore_evidence_policy.py` | 14 | 是 |
 | 本地审批 gitignore | `tests/test_local_approval_gitignore.py` | 5 | 是 |
-| M5 证据 | `tests/test_m5_evidence.py` | 19 | 是 |
+| M5 证据 | `tests/test_m5_evidence.py` | 22 | 是 |
 | GitHub 仓库来源适配器 | `tests/test_repo_source_adapter.py` | 3 | 是 |
 | M5 media-use 工作流 | `tests/test_m5_media_use_workflow.py` | 列表驱动 | 是 |
 | M5 媒体可追溯性 | `tests/test_m5_media_traceability.py` | 列表驱动 | 是 |
@@ -101,10 +103,14 @@ python tests/test_media_convergence.py
 | 脚本草稿 | `tests/test_script_draft.py` | 20 | 是 |
 | 来源质量 | `tests/test_source_quality.py` | 21 | 是 |
 | 账号路线 | `tests/test_account_route.py` | 12 | 是 |
+| X 有机增长与文案契约 | `tests/test_x_organic_growth.py` | unittest（47 个测试方法，含 11 项文案检查） | 是（最新 main） |
+| X 本地学习闭环 | `tests/test_x_learning_loop.py` | 9 | 是（最新 main） |
+| X 讨论候选排序 | `tests/test_x_discussion_candidates.py` | 10 | 是（最新 main） |
+| 跨平台本地学习闭环 | `tests/test_platform_learning_loop.py` | 12 | 是（最新 main） |
 | Brief → M5 桥 | `tests/test_brief_to_m5.py` | 13 | 是 |
 | 真实素材时长门 | `tests/test_real_source_duration.py` | 17 | 是 |
-| 卡片渲染器 | `tests/test_render_cards.py` | 18 | 是 |
-| 公众号文章渲染器 | `tests/test_render_articles.py` | 35 | 是 |
+| 卡片渲染器 | `tests/test_render_cards.py` | 19 | 是 |
+| 公众号文章渲染器 | `tests/test_render_articles.py` | 36 | 是 |
 | 公众号运行时适配器 | `tests/test_gzh_runtime.py` | 13 | 是 |
 | ASR 传输（SiliconFlow） | `tests/test_asr_siliconflow.py` | 14 | 是 |
 | M5 ASR 门禁 | `tests/test_m5_asr_gate.py` | 6 | 是 |
@@ -121,7 +127,10 @@ python tests/test_media_convergence.py
 | 治理账本 | `tests/test_governance_ledger.py` | 列表驱动 | 是 |
 | M5 动效集成 | `tests/test_m5_motion_integration.py` | 65 | 是 |
 | Content Bundle 契约 | `tests/test_content_bundle_contract.py` | 13 | 是 |
-| Easel 宿主门禁 | `tests/test_easel_host_guard.py` | 13 | 是 |
+| Easel 宿主门禁 | `tests/test_easel_host_guard.py` | 27 | 是（当前工作树） |
+| Easel 工作台 overlay、来源可重建性与前端完整性 | `tests/test_easel_workbench_overlay.py` | 45 | 是（当前工作树） |
+| Easel 工作台干净重建与归档安全 | `tests/test_easel_workbench_rebuild.py` | 5 | 是（当前工作树） |
+| Easel 离线任务 API、框架与回执 | `tests/test_easel_offline_task.py` | 18 | 是（当前工作树） |
 | Bundle 双格式 handoff | `tests/test_bundle_two_formats.py` | 14 | 是 |
 | 图文工作流 | `tests/test_graphic_workflow.py` | 14 | 是 |
 | M5 Bundle handoff | `tests/test_m5_bundle_handoff.py` | 5 | 是 |
@@ -148,5 +157,6 @@ CI 还运行策略、文档、i18n、空白、子进程与 receipt-secret 检查
 - 面向更多跨仓库 `SourceArtifact` 适配器的契约测试；路由层与一个 GitHub 适配器已在 `main`。
 - 发布路径的回归套件 —— 在出现真实平台 URL 之前没有可断言的证据。
 
-上表是下限而非完整枚举：2026-11-12 共 98 个套件，权威来源是
-`git ls-files 'tests/test_*.py'`。
+上表是下限而非完整枚举。已获取的 `origin/main` `98a61f22` 有 104 个跟踪套件、105 个具名
+Python CI 步骤；Easel 候选新增 3 个独立套件及其 CI 步骤，集成后为 107 个套件、108 个步骤。
+当前检出的分支仍需获准后与该远端基线集成。当前检出数量以 `git ls-files 'tests/test_*.py'` 为准。

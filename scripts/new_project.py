@@ -13,6 +13,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 TEMPLATE_YAML = ROOT / "templates" / "project.yaml"
 PROJECTS_DIR = ROOT / "projects"
+if str(ROOT / "src") not in sys.path:
+    sys.path.insert(0, str(ROOT / "src"))
+
+from contentops.paths import workspace_root  # noqa: E402
 
 SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9\-]{1,80}$")
 
@@ -129,6 +133,12 @@ def main() -> int:
     parser.add_argument("--title", default="", help="human-readable title")
     parser.add_argument("--account-slug", default="",
                         help="the account whose DNA governs this project")
+    parser.add_argument("--sandbox", action="store_true",
+                        help="create the project in the configured workspace, outside "
+                             "the checkout: an experiment whose products are not "
+                             "part of the repository")
+    parser.add_argument("--projects-dir", default="",
+                        help="explicit parent directory for the new project")
     parser.add_argument("--force", action="store_true", help="(reserved) refuse overwrite")
     args = parser.parse_args()
 
@@ -136,7 +146,21 @@ def main() -> int:
         print(f"ERROR: invalid slug '{args.slug}'. Use kebab-case, 3-80, [a-z0-9-].", file=sys.stderr)
         return 2
 
-    project_dir = PROJECTS_DIR / args.slug
+    if args.sandbox and args.projects_dir:
+        print("ERROR: --sandbox and --projects-dir are mutually exclusive.", file=sys.stderr)
+        return 2
+
+    if args.sandbox:
+        projects_dir = workspace_root()
+        project_arg = f"projects/_local/{args.slug}"
+    elif args.projects_dir:
+        projects_dir = Path(args.projects_dir)
+        project_arg = str(projects_dir / args.slug)
+    else:
+        projects_dir = PROJECTS_DIR
+        project_arg = f"projects/{args.slug}"
+
+    project_dir = projects_dir / args.slug
     if project_dir.exists():
         print(f"ERROR: project '{args.slug}' already exists at {project_dir}", file=sys.stderr)
         print("       refused to overwrite (idempotent).", file=sys.stderr)
@@ -157,7 +181,7 @@ def main() -> int:
     print(f"  - created_at:   {created_at}")
     if args.account_slug:
         print(f"  - account_slug: {args.account_slug}")
-    print("Next: drop real source assets into sources/, then run scripts/run_v1.py.")
+    print(f"Next: drop real source assets into sources/, then run scripts/run_v1.py {project_arg}")
     return 0
 
 

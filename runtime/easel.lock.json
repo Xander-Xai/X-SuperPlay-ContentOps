@@ -1,7 +1,9 @@
 {
   "repo": "https://github.com/ZJU-REAL/Easel.git",
-  "tag": "v0.2.1",
-  "commit": "3fe2d9904c1619281ef57f81d9ee0b7854998399",
+  "tag": "v0.3.0",
+  "commit": "bb3c8ff0463f36c202454d74171682ba6e470cb1",
   "checked_in_at": "2026-10-02",
-  "notes": "Do NOT auto-upgrade. Re-verify HEAD after every bootstrap."
+  "derived_from": "runtime/easel-pins.json",
+  "notes": "Do NOT auto-upgrade. Re-verify HEAD after every bootstrap. This file is a projection of the active engine in runtime/easel-pins.json; edit the registry through scripts/easel_engine.py, never this file. tests/test_easel_pins.py fails when the two disagree.",
+  "derived_at": "2026-11-15T15:31:07+00:00"
 }

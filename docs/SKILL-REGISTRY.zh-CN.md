@@ -122,6 +122,9 @@ DISCOVERED -> RESOLVABLE -> EXECUTION_REQUESTED -> AUTHORIZED -> EXECUTED
 
 通用 Grant 系统仍用于需要它的操作。M5 的 Huashu 本地渲染路径不依赖项目级执行授权。见 [ADR-010](adr/ADR-010-trusted-grant-execution-gate.md)。
 
+批准记录与执行请求还可使用 `request_scope_sha256` 绑定具体任务，格式为
+`sha256:<64 位小写十六进制>`。只要任一方提供该字段，两方就必须一致；都不提供时沿用既有判断规则。Easel 的拟议 Agent 任务使用项目本机申请资料的摘要。申请资料和可选证据本身不构成授权；Easel Agent 目前尚不是可解析能力，执行器也未启用。本次尚未验证该绑定。
+
 ## media-use
 
 | 字段 | 值 |

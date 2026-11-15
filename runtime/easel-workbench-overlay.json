@@ -1,0 +1,108 @@
+{
+  "schema": "contentops.easel-workbench-overlay/v1",
+  "note": "The workbench is a runnable Easel instance with its own tuning layer. This record separates the two things the byte comparison used to conflate: the upstream baseline (read-only, proven against an upstream commit) and the local overlay (the tuning). A file listed in overlay.files is EXPECTED to differ from upstream; a file that is NOT listed must match upstream byte for byte. That is what makes tuning auditable instead of invisible.",
+  "instance": {
+    "path": "D:\\Projects\\X-SuperPlay-ContentOps\\.runtime\\easel-v030",
+    "path_env": "CONTENTOPS_EASEL_WORKBENCH",
+    "note": "Re-installed on 2026-11-15 by scripts/easel_engine.py install into the repository's controlled runtime directory; the previous extracted candidate at D://Projects//_worktrees//easel-v030-rebuild-20261113b remains on disk as the rebuild source. Every baseline and overlay byte was compared before the copy, and the frontend was rebuilt here from the pinned source (tree_sha256 8ab3d814f2e8c8ac…, identical to the 2026-11-13 build).",
+    "layout": "Commit-pinned source archive rebuilt with repository-owned skill overlays and generated account profiles; upstream remote metadata is not present."
+  },
+  "upstream": {
+    "repo": "https://github.com/ZJU-REAL/Easel.git",
+    "tag": "v0.3.0",
+    "commit": "bb3c8ff0463f36c202454d74171682ba6e470cb1",
+    "acquired_at": "2026-11-12",
+    "tree_blob_count": 1073,
+    "tree_sha256": "c26fc96a653c0ff25ef3bc7486eee372c81f44e67d5ff2c30f1786c63c7d4ec8",
+    "tree_sha256_method": "sha256 of sorted POSIX path + NUL + git blob SHA-1 + LF",
+    "license": {
+      "spdx": "Apache-2.0",
+      "file": "LICENSE",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    "note": "v0.3.0's tag was force-replaced upstream, so the tag name is not an identity. This commit SHA plus the blob comparison is the identity.",
+    "skill_root": "skills/builtin",
+    "skill_root_note": "v0.2.1 used skills/openclaw; v0.3.0 moved every skill to skills/builtin. The 114 skill directories are the same set."
+  },
+  "overlay": {
+    "directories": [
+      "profiles/x-superplay-1024",
+      "profiles/x-superplay-future-intelligence"
+    ],
+    "directories_note": "Local tuning directories; their currently installed bytes in the default clean candidate are checked against the SHA-256 digests below.",
+    "files": [
+      "skills/builtin/video-script/SKILL.md",
+      "skills/builtin/video-script/references/benchmark-playbook.md"
+    ],
+    "files_note": "Our override of the upstream video-script skill: the per-account script rules and the benchmark playbook. Recorded here so the verifier knows to expect a difference instead of reporting a mismatch.",
+    "source_files": {
+      "skills/builtin/video-script/SKILL.md": "extensions/easel-workbench/skills/builtin/video-script/SKILL.md",
+      "skills/builtin/video-script/references/benchmark-playbook.md": "extensions/easel-workbench/skills/builtin/video-script/references/benchmark-playbook.md"
+    },
+    "source_files_note": "Exact byte copies of the current local tuning layer, retained as project-owned source for later approved reconstruction. Historical benchmark claims remain explicitly unverified until their source material is available.",
+    "digests": {
+      "profiles/x-superplay-1024/audience.md": "657df9031ee52d1565aaaa15f4ebf4d4f4b43d1d01278f1605f31c541ed224c6",
+      "profiles/x-superplay-1024/identity.md": "1cd9a4e641d30221d8b9d0de78ef87cd968c8b14f6f6ead6f675d87a193aeb12",
+      "profiles/x-superplay-1024/memory.md": "04adf9fa7eb29df909781f850639e35cc797a9c66e2fc52868ee3d6dea2d4fe8",
+      "profiles/x-superplay-1024/platforms.md": "79e3705a7556e3c1b25893d490a8b06b55a0b2932234cfd15bb9c8d56a292c9c",
+      "profiles/x-superplay-1024/preferences.md": "504b9b88348b09672ff27590f631fed79199a1c2dc2d9c167f8a23612e64d647",
+      "profiles/x-superplay-1024/style.md": "5293f2a72d59ef4fa84d2c6090ccfeb2b8af720adc632c508c90f60575c14cd7",
+      "profiles/x-superplay-future-intelligence/audience.md": "5b8b39ff14195d5a576e1c1615a3029a81b2dfdb1d407ed401f2ea3bb3a08133",
+      "profiles/x-superplay-future-intelligence/identity.md": "340032cde020e864905b5b698cd158fd2ba025dd8e36a97064d503007e4ed5d2",
+      "profiles/x-superplay-future-intelligence/memory.md": "8f2453c20550fbf2c914c1036410b5fb43ae97e16f76450c5d12ec6e7a3f606b",
+      "profiles/x-superplay-future-intelligence/platforms.md": "576e171edd0c761e37182fd05a14faa1d000f198a53c38489bfe7bded3d52abd",
+      "profiles/x-superplay-future-intelligence/preferences.md": "262d1204f39b3a452035003507ebebdb83dd522968955548d5e79ba89f3e51d5",
+      "profiles/x-superplay-future-intelligence/style.md": "e7bfa1bf3a60e7cbf8a122cff87898a5c4899783ee411af7ea0d73e3f7dd1690",
+      "skills/builtin/video-script/SKILL.md": "ec95b26186ab3134be32bf5193d5bc89724b827012ee7902278ac6c4cf2f7791",
+      "skills/builtin/video-script/references/benchmark-playbook.md": "c6de4f32547b58990774ab2770cf46fc5cdecdfbf51dbd8cfd76352042d911a0"
+    },
+    "digests_note": "SHA-256 of the bytes observed in the default clean candidate on 2026-11-13. Missing, changed or unrecorded overlay files cause verification failure. The original extracted workbench snapshot is preserved separately as previous_instance_snapshot."
+  },
+  "generated": {
+    "directories": [
+      "node_modules",
+      "web/frontend/dist",
+      "openclaw/workspace",
+      "outputs",
+      ".venv",
+      ".host-venv",
+      "__pycache__"
+    ],
+    "directories_note": "Installed or produced at runtime. Never hashed, never compared against upstream. The same rule the production runtime already uses for outputs/ and .venv."
+  },
+  "generated_profiles": {
+    "generator": "scripts/easel_profile.py",
+    "accounts": [
+      "x-superplay-1024",
+      "x-superplay-future-intelligence"
+    ],
+    "line_endings": "LF",
+    "digests": {
+      "profiles/x-superplay-1024/audience.md": "657df9031ee52d1565aaaa15f4ebf4d4f4b43d1d01278f1605f31c541ed224c6",
+      "profiles/x-superplay-1024/identity.md": "1cd9a4e641d30221d8b9d0de78ef87cd968c8b14f6f6ead6f675d87a193aeb12",
+      "profiles/x-superplay-1024/memory.md": "04adf9fa7eb29df909781f850639e35cc797a9c66e2fc52868ee3d6dea2d4fe8",
+      "profiles/x-superplay-1024/platforms.md": "79e3705a7556e3c1b25893d490a8b06b55a0b2932234cfd15bb9c8d56a292c9c",
+      "profiles/x-superplay-1024/preferences.md": "504b9b88348b09672ff27590f631fed79199a1c2dc2d9c167f8a23612e64d647",
+      "profiles/x-superplay-1024/style.md": "5293f2a72d59ef4fa84d2c6090ccfeb2b8af720adc632c508c90f60575c14cd7",
+      "profiles/x-superplay-future-intelligence/audience.md": "5b8b39ff14195d5a576e1c1615a3029a81b2dfdb1d407ed401f2ea3bb3a08133",
+      "profiles/x-superplay-future-intelligence/identity.md": "340032cde020e864905b5b698cd158fd2ba025dd8e36a97064d503007e4ed5d2",
+      "profiles/x-superplay-future-intelligence/memory.md": "8f2453c20550fbf2c914c1036410b5fb43ae97e16f76450c5d12ec6e7a3f606b",
+      "profiles/x-superplay-future-intelligence/platforms.md": "576e171edd0c761e37182fd05a14faa1d000f198a53c38489bfe7bded3d52abd",
+      "profiles/x-superplay-future-intelligence/preferences.md": "262d1204f39b3a452035003507ebebdb83dd522968955548d5e79ba89f3e51d5",
+      "profiles/x-superplay-future-intelligence/style.md": "e7bfa1bf3a60e7cbf8a122cff87898a5c4899783ee411af7ea0d73e3f7dd1690"
+    },
+    "note": "Expected SHA-256 values for current DNA projections. These are separate from overlay.digests, which record the bytes currently installed in the existing workbench."
+  },
+  "policy": {
+    "read_only_baseline": true,
+    "note": "The upstream baseline is never edited in place. Tuning is a recorded overlay layer on top of it. If a file outside overlay.files and overlay.directories differs from upstream, that is a FAILURE, not a tuning.",
+    "authorizes_execution": false,
+    "publish_authorized": false,
+    "note2": "This record says nothing about whether the workbench may publish, spend provider budget, or read account credentials. The guard in src/contentops/easel/guard.py decides that, and it denies those routes."
+  },
+  "previous_instance_snapshot": {
+    "path": "D:\\Projects\\_worktrees\\easel-v030-rebuild-20261113b",
+    "observed_at": "2026-11-13",
+    "note": "The extracted rebuild candidate this instance superseded; kept for provenance."
+  }
+}

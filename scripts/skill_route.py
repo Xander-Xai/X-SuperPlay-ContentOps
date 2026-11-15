@@ -24,10 +24,10 @@ python scripts/skill_route.py --doctor
 ```
 
 Catalog resolution, in priority order: the repository-owned ``skills`` root,
-the pinned Easel runtime (``.runtime/easel/skills/openclaw``), the working Easel
-checkout (``Easel/skills/openclaw``), then the locally vendored 公众号 track
-(``vendor/gzh-thinktank/.../skills``). A name in more than one root is indexed
-once, from the earliest root; later copies are reported as shadowed.
+the pinned Easel runtime's v0.2 ``openclaw`` and v0.3 ``builtin`` layers, the
+working Easel checkout's corresponding layers, then the locally vendored 公众号
+track (``vendor/gzh-thinktank/.../skills``). A name in more than one root is
+indexed once, from the earliest root; later copies are reported as shadowed.
 
 Two separate questions
 ----------------------
@@ -56,7 +56,9 @@ ROOT = Path(__file__).resolve().parents[1]
 CATALOG_ROOTS: Tuple[Path, ...] = (
     ROOT / "skills",
     ROOT / ".runtime" / "easel" / "skills" / "openclaw",
+    ROOT / ".runtime" / "easel" / "skills" / "builtin",
     ROOT / "Easel" / "skills" / "openclaw",
+    ROOT / "Easel" / "skills" / "builtin",
     ROOT / "vendor" / "gzh-thinktank" / "gzh_未来智能" / "skills",
 )
 
@@ -393,6 +395,12 @@ def _discovery_state(entry: Dict[str, Any]) -> Dict[str, Any]:
                 break
         if path is None:
             path = CATALOG_ROOTS[0] / directory if CATALOG_ROOTS else None
+    elif root == "repo":
+        # A capability this repository owns outright lives under the checkout,
+        # not in an external store. The foundation declares its gates this way;
+        # falling through to the shared store would point at a directory that
+        # can never hold them.
+        path = ROOT / directory
     else:
         path = SHARED_SKILL_ROOT / directory
     return {"root": root, "dir": directory,

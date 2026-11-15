@@ -173,6 +173,58 @@ Forbidden in `runtime/`:
 - local config backups
 - generated logs
 
+## Output Root
+
+A run's products -- renders, drafts, cards, audio, logs, scratch state -- are
+product, not source. They are reproducible, large, and useless to anyone
+reviewing a diff. This repository holds code, evidence and receipts; the
+products live outside the checkout.
+
+`CONTENTOPS_OUTPUT_ROOT` selects where they go:
+
+| Root | Holds | Without the variable |
+|---|---|---|
+| `<root>/workspace` | experiments: a project directory with its renders | `projects/_local/` |
+| `<root>/deliverables` | finished products -- QC-passed and human-reviewed | `outputs/` |
+| `<root>/_tmp` | scratch and verification state | `.verify-tmp/` |
+
+Set it once in the repository's gitignored `.env`, which the loader injects:
+
+```
+CONTENTOPS_OUTPUT_ROOT=D:\AI-Outputs\X-SuperPlay-ContentOps\2026-11-12
+```
+
+With the variable unset the three roots are exactly where they have always
+been. That is what CI sees and what every committed receipt names, so nothing
+moves on its own: a receipt pointing at `projects/<slug>/receipts/x.json` keeps
+pointing there.
+
+`src/contentops/paths.py` is the only module that resolves these roots. A
+script asks for `workspace_root()`, `deliverables_root()` or `tmp_root()`
+rather than hardcoding a path.
+
+A project directory may live under two roots: the repository's `projects/`
+(tracked baselines -- evidence and receipts another machine re-verifies) and
+the workspace (experiments). A guard that accepted only the first would refuse
+every experiment the moment the sandbox moves out.
+
+### What leaves the repository
+
+| Leaves | Where it goes |
+|---|---|
+| renders, drafts, cards, audio | the workspace, promoted to `deliverables` once reviewed |
+| scratch and verification state | `<root>/_tmp` |
+| one-off reports and diagnostics | the archive's `reports/` |
+
+### What stays
+
+| Stays | Why |
+|---|---|
+| `projects/<slug>/` tracked files | baseline, evidence, receipts -- another machine re-verifies them |
+| `.runtime/` | the pinned Easel v0.2.1; `runtime/easel.lock.json` pins its path |
+| `assert/`, `.private/` | the Founder's voice and provider identities: not products, and not shared |
+| `vendor/` | unverified third-party material, local only |
+
 ## projects/
 
 Content run projects and golden samples:

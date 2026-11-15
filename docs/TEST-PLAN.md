@@ -4,9 +4,11 @@
 
 > Authoritative local verification strategy, suite inventory and CI wiring.
 >
+> Last verified: 2026-11-16 on `feat/173-easel-m0-pin`. The tree holds 107 suites under
+> `tests/test_*.py`, and `.github/workflows/ci.yml` names every one of them (107 steps).
+> The count is not asserted here; read it with `ls tests/test_*.py | wc -l`.
 > Last verified: 2026-11-14: added focused X regression cases for no-image text READY/package/URL recording, image-mode refusal, profile-specific review thresholds, and fail-closed account config; overall CI result is determined by the PR checks, not this statement.
 > X policy: Strategy canonical SOP and registered account DNA; source metrics and publishing still require human verification.
-
 
 ## Risk-based local verification
 
@@ -79,7 +81,7 @@ Function counts inside a suite are floors, not totals, because list-driven and u
 | Locked input reproducibility | `tests/test_locked_input_reproducibility.py` | 10 | yes |
 | Source-evidence gitignore | `tests/test_gitignore_evidence_policy.py` | 14 | yes |
 | Local-approval gitignore | `tests/test_local_approval_gitignore.py` | 5 | yes |
-| M5 evidence | `tests/test_m5_evidence.py` | 19 | yes |
+| M5 evidence | `tests/test_m5_evidence.py` | 22 | yes |
 | GitHub repository source adapter | `tests/test_repo_source_adapter.py` | 3 | yes |
 | Stable production gates | `tests/test_production_gates.py` | 30 | yes |
 | Content router | `tests/test_content_router.py` | 63 | yes |
@@ -89,10 +91,14 @@ Function counts inside a suite are floors, not totals, because list-driven and u
 | Script draft | `tests/test_script_draft.py` | 20 | yes |
 | Source quality | `tests/test_source_quality.py` | 21 | yes |
 | Account route | `tests/test_account_route.py` | 12 | yes |
+| X organic growth and copywriter contract | `tests/test_x_organic_growth.py` | unittest (47 test methods; includes 11 copywriter checks) | yes (latest main) |
+| X local learning loop | `tests/test_x_learning_loop.py` | 9 | yes (latest main) |
+| X discussion candidate ranking | `tests/test_x_discussion_candidates.py` | 10 | yes (latest main) |
+| Cross-platform local learning loop | `tests/test_platform_learning_loop.py` | 12 | yes (latest main) |
 | Brief → M5 bridge | `tests/test_brief_to_m5.py` | 13 | yes |
 | Real-source duration gate | `tests/test_real_source_duration.py` | 17 | yes |
-| Card renderer | `tests/test_render_cards.py` | 18 | yes |
-| GZH article renderer | `tests/test_render_articles.py` | 35 | yes |
+| Card renderer | `tests/test_render_cards.py` | 19 | yes |
+| GZH article renderer | `tests/test_render_articles.py` | 36 | yes |
 | GZH runtime adapter | `tests/test_gzh_runtime.py` | 13 | yes |
 | ASR transport (SiliconFlow) | `tests/test_asr_siliconflow.py` | 14 | yes |
 | M5 ASR gate | `tests/test_m5_asr_gate.py` | 6 | yes |
@@ -112,7 +118,10 @@ Function counts inside a suite are floors, not totals, because list-driven and u
 | M5 media traceability | `tests/test_m5_media_traceability.py` | list-driven | yes |
 | Platform registry | `tests/test_platform_registry.py` | 22 | yes |
 | Content Bundle contract | `tests/test_content_bundle_contract.py` | 13 | yes |
-| Easel host guard | `tests/test_easel_host_guard.py` | 13 | yes |
+| Easel host guard | `tests/test_easel_host_guard.py` | 27 | yes (this worktree) |
+| Easel workbench overlay, source provenance and frontend integrity | `tests/test_easel_workbench_overlay.py` | 45 | yes (this worktree) |
+| Easel workbench clean rebuild and archive safety | `tests/test_easel_workbench_rebuild.py` | 5 | yes (this worktree) |
+| Easel offline task API, scaffold and receipt | `tests/test_easel_offline_task.py` | 18 | yes (this worktree) |
 | Bundle two-format handoff | `tests/test_bundle_two_formats.py` | 14 | yes |
 | Graphic workflow | `tests/test_graphic_workflow.py` | 14 | yes |
 | M5 Bundle handoff | `tests/test_m5_bundle_handoff.py` | 5 | yes |
@@ -141,5 +150,9 @@ The CI workflow also runs policy, docs, i18n, whitespace, subprocess and receipt
 - A regression suite for the publication path once a real platform URL exists —
   there is nothing to assert against before that.
 
-The inventory above is a floor, not a complete enumeration: 98 suites were
-tracked on 2026-11-12, and `git ls-files 'tests/test_*.py'` is the authority.
+The inventory above is a floor, not a complete enumeration. The fetched
+`origin/main` at `98a61f22` has 104 tracked suites and 105 named Python CI steps;
+this Easel candidate adds three standalone suites and their CI steps, for a
+combined 107 suites and 108 steps when integrated. The checked-out branch still
+needs an approved integration with that remote baseline. `git ls-files
+'tests/test_*.py'` is authoritative for the current checkout.

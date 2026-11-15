@@ -37,6 +37,8 @@ from contentops.media.motion_sample import check_motion_sample  # noqa: E402
 from contentops.media.huashu_runtime import find_runtime  # noqa: E402
 from contentops.media.quality_gate import AssetQualityGate, build_manifest  # noqa: E402
 from contentops.workflow import copy_review  # noqa: E402
+from contentops.paths import (relative_label, resolve_label,  # noqa: E402
+                            resolve_project, trusted_project_root)
 
 SKILL_ID = "x-superplay-huashu-motion"
 SKILL_VERSION = "0.1.0"
@@ -67,13 +69,11 @@ def _write_json(path: Path, payload: Dict[str, Any]) -> None:
 
 
 def _project_path(value: str) -> Path:
-    candidate = Path(value)
-    project = (candidate if candidate.is_absolute() else ROOT / candidate).resolve()
-    projects_root = (ROOT / "projects").resolve()
-    try:
-        relative = project.relative_to(projects_root)
-    except ValueError:
+    project = resolve_project(value)
+    root = trusted_project_root(project, ROOT)
+    if root is None:
         raise ValueError("PROJECT_OUTSIDE_REPO: expected projects/<slug>") from None
+    relative = project.relative_to(root)
     if len(relative.parts) != 1:
         raise ValueError("PROJECT_INVALID: expected one project directory under projects/")
     if not project.is_dir():
@@ -213,7 +213,7 @@ def _validate_spec(project: Path, value: str) -> tuple[Path, Dict[str, Any]]:
         repo_path = str(row.get("repo_path") or "")
         if not repo_path:
             raise ValueError("SPEC_SOURCE_MEDIA: screenshot repo_path is missing")
-        registered = (ROOT / repo_path).resolve()
+        registered = resolve_label(repo_path).resolve()
         image_path = (candidate.parent / str(images[0])).resolve()
         try:
             image_path.relative_to(ROOT.resolve())
@@ -306,7 +306,7 @@ def _register(project: Path, account: str, asset_id: str, placement_id: str,
         "spec": _sha(spec_path),
     }
     fingerprint = _motion_fingerprint(inputs, runtime, placement_id)
-    rel_output = output.relative_to(ROOT).as_posix()
+    rel_output = relative_label(output)
     receipt_path = project / "receipts" / f"huashu-{asset_id}.json"
     sidecar = output.with_suffix(output.suffix + ".receipt.json")
     receipt: Dict[str, Any] = {
@@ -594,7 +594,7 @@ def _cached_render(project: Path, asset_id: str, placement_id: str,
             return None
     output = project / "assets" / "generated" / "huashu" / f"{asset_id}.mp4"
     technical = receipt.get("technical_qc") or {}
-    expected_repo_path = output.relative_to(ROOT).as_posix()
+    expected_repo_path = relative_label(output)
     if (receipt.get("schema") != "contentops.video-receipt/v1"
             or receipt.get("runtime") != runtime
             or receipt.get("placement_id") != placement_id
@@ -653,7 +653,7 @@ def _render(project: Path, account: str, spec_arg: str, placement_id: str,
     if not isinstance(assets, list):
         raise ValueError("M5_ASSET_MANIFEST_INVALID: assets must be a list")
     candidate = {"id": asset_id, "type": "generated_video",
-                 "repo_path": output.relative_to(ROOT).as_posix(),
+                 "repo_path": relative_label(output),
                  "sha256": _sha(output), "permission": "CREATED_BY_OWNER",
                  "evidence_capable": False, "evidence_use": "VISUAL_SUPPORT",
                  "receipt_ref": f"project://receipts/huashu-{asset_id}.json"}

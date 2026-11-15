@@ -4,11 +4,10 @@
 
 简体中文 | [English](README.en.md)
 
+> 最后验证：2026-11-16，分支 `feat/173-easel-m0-pin`（M0：pin 单源注册表）。状态表描述 `main`，不描述草稿分支。
 > 最后验证：2026-11-14（本次X代码/审稿合同变更，CI以PR检查为准）；真实账号增长效果尚无本仓验收。
 > X原创分为纯文字`post_format=text`和图文`post_format=image`，只有后者强制1600×900图片+ALT；泛兴趣采用独立人工审核档，不自动发布。
 > 统一执行标准：Strategy 唯一 X SOP 与注册账号 DNA；用户原始数据仅本地保存，人工审核与发布。
-
-
 > 跨平台运营数据闭环：X 使用 [本地 X 学习手册](docs/X-LOCAL-LEARNING-LOOP.md)，其他平台使用 [跨平台本地数据学习手册](docs/PLATFORM-LOCAL-LEARNING-LOOP.md)。真实指标留在本机；Learning Brief 仅辅助 Strategy 人工决策。
 
 ## 是什么
@@ -33,7 +32,7 @@
 
 | 项目 | 所在层 | 状态 |
 |---|---|---|
-| Easel 运行时 | `main` | 固定 v0.2.1（commit `3fe2d99`，982 blobs 验证通过）。上游稳定版为 v0.3.0 —— 未采用 |
+| Easel 运行时 | `main` | **v0.3.0 为生产引擎**（commit `bb3c8ff`，1071 baseline blob + 14 个 overlay 文件校验通过，2026-11-15 切换）。v0.2.1 降为回滚树（982 blobs 验证通过） |
 | 稳定生产入口（`make_content.py`、`production_gates.py`） | `main` | 已实现：六项显式决策、7 个失败即拒绝的 VIDEO 门禁与 5 个 GRAPHIC_TEXT 门禁。直接运行 `m5_production.py` / `produce_video.py` 仍是**诊断**路径，不过门禁 |
 | 视频流水线（`run_v1.py`） | `main` | 已实现（`easel` + 诊断用 `fallback`）；`production_ready: false` |
 | M5 证据优先链（`m5_production.py`） | `main` | 已实现，并在 `projects/m5-media-use` 上完成集成验证；可选 ASR 旁白回检门禁；`production_ready: false`、`PENDING_FOUNDER_REVIEW` |
@@ -239,11 +238,13 @@ python3 scripts/qc_video.py projects/my-video
 | 属性 | 值 |
 |---|---|
 | 仓库 | https://github.com/ZJU-REAL/Easel |
-| Tag | v0.2.1 |
-| Commit | `3fe2d9904c1619281ef57f81d9ee0b7854998399` |
-| 本地路径 | `.runtime/easel/` |
-| 锁文件 | `runtime/easel.lock.json` |
-| 上游稳定版 | v0.3.0（未采用；Skill 路径已迁至 `skills/builtin/`） |
+| Tag | v0.3.0（生产） |
+| Commit | `bb3c8ff0463f36c202454d74171682ba6e470cb1` |
+| 本地路径 | `.runtime/easel-v030/` |
+| 回滚树 | v0.2.1 / `3fe2d99`，`.runtime/easel/`，`python scripts/easel_engine.py switch v0.2.1` |
+| 锁文件 | `runtime/easel.lock.json`（由 `runtime/easel-pins.json` 派生） |
+| 唯一来源 | `runtime/easel-pins.json` —— 代码读注册表的 `active` 引擎，不再各自携带 commit |
+| 切换工具 | `python scripts/easel_engine.py show / verify / switch / install`（每次切换写 `runtime/easel-engine-switch.json`） |
 | 升级 | 需要 Founder 批准 + 回归套件 |
 
 完整策略见 [docs/UPSTREAM-EASEL.md](docs/UPSTREAM-EASEL.md)。

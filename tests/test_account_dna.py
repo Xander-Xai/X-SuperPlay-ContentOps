@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -22,6 +23,7 @@ from check_account_dna import (  # noqa: E402
     _catalog_roots,
     check_account,
 )
+import check_account_dna  # noqa: E402
 from contentops.media.claim_coverage import (  # noqa: E402
     EVIDENCE_MODES,
     composition_policy_errors,
@@ -296,17 +298,18 @@ HOST_LOCAL_WARNINGS = (CATALOG_ABSENT, SHARED_STORE_ABSENT,
 
 
 def test_the_dna_checker_passes_on_the_shipped_accounts():
-    for path in (EXPLORE, BUILD):
-        warnings: list = []
-        failures = check_account(_dna(path), ROOT, warnings)
-        assert failures == [], failures
-        # A clean checkout has no catalog (both roots are gitignored) and no
-        # shared store (it lives in the user's home), so the membership half
-        # reports that it could not run. That is the expected state in CI, not
-        # a defect in the shipped DNA.
-        unexpected = [w for w in warnings
-                      if not any(marker in w for marker in HOST_LOCAL_WARNINGS)]
-        assert unexpected == [], unexpected
+    from unittest import mock
+
+    # This assertion is about repo-owned DNA. Host-local catalog and shared
+    # skills vary by machine, so model the clean CI checkout explicitly.
+    with mock.patch.object(check_account_dna, "SHARED_SKILL_ROOT", ROOT / "no-such-store"):
+        for path in (EXPLORE, BUILD):
+            warnings: list = []
+            failures = check_account(_dna(path), ROOT, warnings)
+            assert failures == [], failures
+            unexpected = [w for w in warnings
+                          if not any(marker in w for marker in HOST_LOCAL_WARNINGS)]
+            assert unexpected == [], unexpected
 
 
 def _mutated(dna: dict, step: str, **changes) -> dict:
@@ -334,8 +337,11 @@ def test_a_route_entry_naming_an_unknown_skill_fails():
 
 
 def test_a_repo_relative_script_must_exist():
+    from unittest import mock
+
     dna = _mutated(_dna(EXPLORE), "qc", script="scripts/no_such_script.py")
-    failures = check_account(dna, ROOT)
+    with mock.patch.object(check_account_dna, "SHARED_SKILL_ROOT", ROOT / "no-such-store"):
+        failures = check_account(dna, ROOT)
     assert len(failures) == 1, failures
     assert "scripts/no_such_script.py" in failures[0], failures[0]
     assert "repository root" in failures[0], failures[0]
@@ -387,12 +393,31 @@ def test_the_route_declares_repo_only_where_it_must():
 
 
 def test_a_shared_route_naming_an_unknown_skill_fails():
-    from check_account_dna import SHARED_SKILL_ROOT
-    if not SHARED_SKILL_ROOT.is_dir():
-        print("shared store absent on this checkout; skipping the unknown-skill check")
-        return
-    dna = _mutated(_dna(EXPLORE), "visual_direction", skill="no-such-shared-skill")
-    failures = check_account(dna, ROOT)
+    from unittest import mock
+
+    import skill_route
+
+    with tempfile.TemporaryDirectory() as temp:
+        shared_root = Path(temp)
+        dna = _mutated(_dna(EXPLORE), "visual_direction", skill="no-such-shared-skill")
+        # Supply minimal structural fixtures for the valid route entries so
+        # this test checks only the deliberately unknown skill. These files
+        # are temporary test data, never installed or treated as capabilities.
+        for entry in _dna(EXPLORE)["skill_route"]:
+            if entry.get("path_base") != "shared":
+                continue
+            skill = entry["skill"]
+            skill_dir = shared_root / skill
+            skill_dir.mkdir(parents=True, exist_ok=True)
+            (skill_dir / "SKILL.md").write_text(
+                f"---\nname: {skill}\n---\n", encoding="utf-8")
+            script_path = shared_root / entry["script"]
+            script_path.parent.mkdir(parents=True, exist_ok=True)
+            if not script_path.exists():
+                script_path.write_text("test fixture only\n", encoding="utf-8")
+        with mock.patch.object(check_account_dna, "SHARED_SKILL_ROOT", shared_root), \
+                mock.patch.object(skill_route, "SHARED_SKILL_ROOT", shared_root):
+            failures = check_account(dna, ROOT)
     assert len(failures) == 1, failures
     assert "shared skill store" in failures[0], failures[0]
 

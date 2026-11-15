@@ -1,0 +1,20 @@
+{
+  "schema": "contentops.easel-runtime-provenance/v1",
+  "engine_id": "v0.3.0",
+  "repo": "https://github.com/ZJU-REAL/Easel.git",
+  "repo_url": "https://github.com/ZJU-REAL/Easel.git",
+  "release": "v0.3.0",
+  "expected_commit": "bb3c8ff0463f36c202454d74171682ba6e470cb1",
+  "tree_sha256": "c26fc96a653c0ff25ef3bc7486eee372c81f44e67d5ff2c30f1786c63c7d4ec8",
+  "installed_at": ".runtime/easel-v030",
+  "acquisition": "release_archive",
+  "verified": true,
+  "verification_method": "upstream_overlay_and_generated_profiles",
+  "verified_at": "2026-11-15T17:08:19+00:00",
+  "content_verified": true,
+  "content_verified_files": 1071,
+  "content_verified_commit": "bb3c8ff0463f36c202454d74171682ba6e470cb1",
+  "content_verified_at": "2026-11-15T17:08:19+00:00",
+  "commit_matches_pin": true,
+  "note": "Written by scripts/easel_engine.py verify. This is the record resolve_easel(live=False) trusts for this engine only."
+}

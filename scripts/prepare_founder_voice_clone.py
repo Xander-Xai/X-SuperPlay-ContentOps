@@ -48,7 +48,11 @@ OUT = ROOT / "projects/easel-enhanced-golden/receipts/founder-voice-clone-receip
 #: is merged into the receipt, so the committed receipt describes what actually
 #: happened rather than only what was prepared. Absent on a clean checkout, where the
 #: receipt legitimately describes a preflight that was never sent.
-ATTEMPT_RECORD = ROOT / ".verify-tmp" / "m23-founder-clone" / "clone-execution.json"
+def _attempt_record() -> Path:
+    """The clone attempt record lives in the scratch root."""
+    from contentops.paths import tmp_root
+
+    return tmp_root() / "m23-founder-clone" / "clone-execution.json"
 
 VOICE_ALIAS = "founder_primary_v1"
 PROVIDER_VOICE_ID = "XSuperPlayFounderV1"
@@ -246,8 +250,9 @@ def main() -> int:
     # happened, not what was planned: a preflight receipt left saying NOT_ATTEMPTED
     # after a clone was actually refused would be the stale-receipt failure this
     # repository has already been bitten by once.
-    if ATTEMPT_RECORD.is_file():
-        attempt = json.loads(ATTEMPT_RECORD.read_text(encoding="utf-8"))
+    attempt_record = _attempt_record()
+    if attempt_record.is_file():
+        attempt = json.loads(attempt_record.read_text(encoding="utf-8"))
         receipt["clone_status"] = attempt.get("clone_status", receipt["clone_status"])
         receipt["refusal_code"] = attempt.get("refusal_code") or receipt["refusal_code"]
         receipt["provider_status_code"] = attempt.get("provider_status_code")

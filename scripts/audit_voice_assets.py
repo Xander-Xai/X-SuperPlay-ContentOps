@@ -39,7 +39,10 @@ from typing import Any, Dict, List, Optional
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT / "scripts") not in sys.path:
     sys.path.insert(0, str(ROOT / "scripts"))
+if str(ROOT / "src") not in sys.path:
+    sys.path.insert(0, str(ROOT / "src"))
 from process_utils import hidden_run  # noqa: E402
+from contentops.paths import scratch_candidates  # noqa: E402
 
 LOCK = ROOT / "projects/easel-enhanced-golden/evidence/evidence-lock.json"
 NARRATION = ROOT / "projects/easel-review/script/narration.txt"
@@ -98,12 +101,15 @@ CANONICAL: Dict[str, Dict[str, Any]] = {
 }
 
 #: Host-local candidates, probed only when present. Never required, never selected.
+#: Each entry lists the historical in-repository spelling first and, when a
+#: scratch root is configured outside the checkout, the place the same file
+#: moved to.
 HISTORICAL_CANDIDATES: List[str] = [
-    ".verify-tmp/m2/ab/A-edge-tts.mp3",
-    ".verify-tmp/m2/ab/B-minimax-mplan.wav",
-    ".verify-tmp/m2/narration/narration-441c2b8634a43a33.wav",
-    ".verify-tmp/m2/narration/narration-441c2b8634a43a33-raw.wav",
-    ".verify-tmp/m2/narration/receipt-golden-b.json",
+    *scratch_candidates("m2/ab/A-edge-tts.mp3"),
+    *scratch_candidates("m2/ab/B-minimax-mplan.wav"),
+    *scratch_candidates("m2/narration/narration-441c2b8634a43a33.wav"),
+    *scratch_candidates("m2/narration/narration-441c2b8634a43a33-raw.wav"),
+    *scratch_candidates("m2/narration/receipt-golden-b.json"),
     "projects/easel-review/assets/voice_easel/narration.mp3",
 ]
 

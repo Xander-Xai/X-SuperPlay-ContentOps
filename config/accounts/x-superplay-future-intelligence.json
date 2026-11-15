@@ -286,7 +286,7 @@
   },
   "render": {
     "engine": "easel",
-    "runtime_pin": "Easel v0.2.1 / 3fe2d99",
+    "runtime_pin": "Easel v0.3.0 / bb3c8ff",
     "canvas": {
       "width": 1080,
       "height": 1920,

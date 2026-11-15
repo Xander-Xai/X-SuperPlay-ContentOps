@@ -36,6 +36,23 @@ class SkillDoctorTests(unittest.TestCase):
         self.assertEqual(sr._catalog_label(sr.CATALOG_ROOTS[0]), "repo-owned")
         self.assertEqual(sr.CATALOG_RIGHTS["repo-owned"], "repo-owned-unverified")
 
+    def test_easel_catalog_includes_v02_and_v03_skill_layers(self) -> None:
+        self.assertIn(ROOT / ".runtime" / "easel" / "skills" / "openclaw", sr.CATALOG_ROOTS)
+        self.assertIn(ROOT / ".runtime" / "easel" / "skills" / "builtin", sr.CATALOG_ROOTS)
+        self.assertIn(ROOT / "Easel" / "skills" / "openclaw", sr.CATALOG_ROOTS)
+        self.assertIn(ROOT / "Easel" / "skills" / "builtin", sr.CATALOG_ROOTS)
+
+    def test_catalog_discovers_a_v03_builtin_skill(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / ".runtime" / "easel" / "skills" / "builtin"
+            skill = _write_skill(root, "new-skill", "easel-new-skill")
+            with mock.patch.object(sr, "CATALOG_ROOTS", (root,)):
+                items, selected_root = sr.catalog()
+            self.assertEqual(selected_root, root)
+            self.assertEqual(items[0]["name"], "easel-new-skill")
+            self.assertEqual(items[0]["source"], "easel-pinned")
+            self.assertEqual(Path(items[0]["path"]), skill)
+
     def test_repo_owned_skill_discovery_does_not_authorize_execution(self) -> None:
         name = "x-organic-growth-operator"
         self.assertTrue(any(item["name"] == name and item["source"] == "repo-owned"
