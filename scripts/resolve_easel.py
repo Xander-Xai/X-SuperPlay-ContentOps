@@ -41,11 +41,25 @@ from process_utils import PIPE, hidden_run
 ROOT = Path(__file__).resolve().parents[1]
 PROVENANCE_FILE = ROOT / "runtime" / "easel-runtime.json"
 
-REQUIRED_PATHS = (
-    "pyproject.toml",
-    "skills/openclaw/auto-short-video/scripts/assemble.py",
-    "skills/shared/scripts/tts.py",
-)
+def _required_paths(layout: str | None) -> tuple[str, ...]:
+    """Paths the pipeline itself needs, in the layer this engine actually uses.
+
+    v0.2.1 keeps its skills under ``skills/openclaw``; v0.3.0 moved them to
+    ``skills/builtin``. Checking the wrong layer reports "required scripts
+    missing" on a perfectly good tree — which is what happened the first time
+    v0.3.0 was made active.
+    """
+    layer = layout or "openclaw"
+    return (
+        "pyproject.toml",
+        f"skills/{layer}/auto-short-video/scripts/assemble.py",
+        "skills/shared/scripts/tts.py",
+    )
+
+
+# Kept for callers that do not pass a layout (bootstrap, tests); the active
+# layer comes from the registry at call time via ``_required_paths``.
+REQUIRED_PATHS = _required_paths("openclaw")
 
 
 def _pins():
@@ -69,7 +83,11 @@ def load_pin(root: Path | None = None) -> dict:
     ``root`` names the tree to inspect; the registry itself always belongs to
     this repository, because it is repository configuration, not runtime state.
     """
-    engine = _pins().active()
+    return _pin_from_engine(_pins().active())
+
+
+def _pin_from_engine(engine) -> dict:
+    """The resolver's pin record for one declared engine."""
     return {
         "repo": engine.repo,
         "tag": engine.tag,
@@ -97,15 +115,30 @@ def _looks_like_easel(easel_dir: Path) -> bool:
     return (easel_dir / "pyproject.toml").is_file()
 
 
-def _usable(easel_dir: Path) -> bool:
-    return all((easel_dir / rel).is_file() for rel in REQUIRED_PATHS)
+def _usable(easel_dir: Path, layout: str | None = None) -> bool:
+    return all((easel_dir / rel).is_file() for rel in _required_paths(layout))
 
 
-def _provenance(root: Path) -> dict:
-    try:
-        return json.loads((root / "runtime" / "easel-runtime.json").read_text(encoding="utf-8"))
-    except Exception:
-        return {}
+def _provenance(root: Path, engine_id: str | None = None) -> dict:
+    """Recorded verification for one engine.
+
+    The per-engine record (`runtime/easel-runtime-<engine>.json`) wins over the
+    legacy single-file record, because two coexisting trees cannot both be
+    described by one document: before this, verifying v0.3.0 overwrote the only
+    evidence that v0.2.1 had been verified.
+    """
+    candidates = []
+    if engine_id:
+        candidates.append(root / "runtime" / f"easel-runtime-{engine_id}.json")
+    candidates.append(root / "runtime" / "easel-runtime.json")
+    for path in candidates:
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if isinstance(data, dict) and data:
+            return data
+    return {}
 
 
 def _write_provenance(root: Path, data: dict) -> None:
@@ -120,7 +153,37 @@ def _verify_content(root: Path, easel_dir: Path, commit: str) -> dict:
         import verify_easel_runtime
     except ImportError as e:  # pragma: no cover
         return {"status": "UNVERIFIED", "reason": f"verifier unavailable: {e}"}
-    return verify_easel_runtime.verify(easel_dir, verify_easel_runtime.REPO, commit)
+    try:
+        return verify_easel_runtime.verify(easel_dir, verify_easel_runtime.REPO, commit)
+    except Exception as exc:  # noqa: BLE001
+        # A dropped GitHub connection is "could not verify", not a crash and not
+        # a pass. Unhandled, it took down the whole resolver on one bad read.
+        return {"status": "UNVERIFIED",
+                "reason": f"verification unavailable: {type(exc).__name__}"}
+
+
+def _verify_overlay_content(root: Path, easel_dir: Path) -> dict:
+    """Verify a tuned instance against its overlay record.
+
+    A production instance that carries declared tuning can never pass a plain
+    byte comparison — differing in the named files is the whole point of the
+    overlay. Verified through the record instead, which still requires the
+    baseline to match upstream and every tuned file to match its recorded
+    digest, and re-projects the account profiles from current DNA.
+    """
+    record = root / "runtime" / "easel-workbench-overlay.json"
+    if not record.is_file():
+        return {"status": "NOT_DECLARED"}
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    try:
+        import verify_easel_runtime as verifier
+    except ImportError as exc:  # pragma: no cover
+        return {"status": "UNVERIFIED", "reason": f"verifier unavailable: {exc}"}
+    try:
+        return verifier.verify_overlay(record, profile_mode="generated",
+                                       workbench_override=easel_dir)
+    except Exception as exc:  # noqa: BLE001 - unverifiable is not a pass
+        return {"status": "UNVERIFIED", "reason": type(exc).__name__}
 
 
 def _check_candidate(easel_dir: Path, label: str, pin: dict,
@@ -142,10 +205,10 @@ def _check_candidate(easel_dir: Path, label: str, pin: dict,
             return {**base, "ok": False,
                     "reason": f"HEAD {head[:12] or '?'} != pinned {pin['commit'][:12]} "
                               f"— unpinned tree, not the production engine"}
-        if not _usable(easel_dir):
+        if not _usable(easel_dir, pin.get("layout")):
             return {**base, "ok": False,
                     "reason": "pinned commit but required pipeline scripts missing"}
-        prov = _provenance(root)
+        prov = _provenance(root, pin.get("engine_id"))
         content_proved = bool(prov.get("content_verified")) and \
             prov.get("content_verified_commit") == pin["commit"]
         return {**base, "ok": True, "acquisition": "git_checkout",
@@ -160,7 +223,7 @@ def _check_candidate(easel_dir: Path, label: str, pin: dict,
     if not _looks_like_easel(easel_dir):
         return {**base, "ok": False,
                 "reason": "no .git and no pyproject.toml — not an Easel tree"}
-    if not _usable(easel_dir):
+    if not _usable(easel_dir, pin.get("layout")):
         return {**base, "ok": False,
                 "reason": "required pipeline scripts missing (assemble.py / tts.py)"}
 
@@ -171,12 +234,21 @@ def _check_candidate(easel_dir: Path, label: str, pin: dict,
                     "commit": pin["commit"], "verification": "live_content_hash",
                     "verified_blobs": v.get("matched")}
         if v.get("status") == "MISMATCH":
+            overlay = _verify_overlay_content(root, easel_dir)
+            if overlay.get("status") == "VERIFIED":
+                return {**base, "ok": True, "acquisition": "release_archive",
+                        "commit": pin["commit"],
+                        "verification": "upstream_overlay_and_generated_profiles",
+                        "verified_blobs": overlay.get("baseline_blob_count"),
+                        "note": "an instance with declared tuning cannot match byte for "
+                                "byte; the overlay record proves the baseline and every "
+                                "tuned file instead"}
             return {**base, "ok": False,
                     "reason": f"content does not match upstream {pin['commit'][:12]}: "
                               f"{v.get('reason', '')} — refusing to run a tampered tree"}
         # UNVERIFIED (offline / no gh): fall through to recorded provenance.
 
-    prov = _provenance(root)
+    prov = _provenance(root, pin.get("engine_id"))
     recorded = (prov.get("content_verified") or prov.get("commit_matches_pin")
                 or prov.get("verified"))
     if (recorded and prov.get("expected_commit") == pin["commit"]
@@ -188,11 +260,12 @@ def _check_candidate(easel_dir: Path, label: str, pin: dict,
                 "verified_at": prov.get("verified_at", "?"),
                 "note": "offline: trusting recorded provenance; run doctor online to re-verify"}
     return {**base, "ok": False,
-            "reason": "archive layout but no recorded verification and live "
-                      "verification unavailable — cannot prove this is v0.2.1"}
+            "reason": f"archive layout but no recorded verification and live "
+                      f"verification unavailable — cannot prove this is {pin['tag']}"}
 
 
-def resolve_easel(root: Path = ROOT, live: bool = True) -> dict:
+def resolve_easel(root: Path = ROOT, live: bool = True,
+                  engine_id: str | None = None) -> dict:
     """Resolve the production Easel runtime.
 
     Returns {"status": "OK", easel_dir, acquisition, commit, ...} or
@@ -201,7 +274,7 @@ def resolve_easel(root: Path = ROOT, live: bool = True) -> dict:
     result with `PINS_UNREADABLE`, not a default version.
     """
     try:
-        pin = load_pin()
+        pin = load_pin() if engine_id is None else _pin_from_engine(_pins().get(engine_id))
     except Exception as exc:  # noqa: BLE001 - an unreadable pin must refuse, not guess
         return {
             "status": "BLOCKED",
@@ -288,6 +361,7 @@ def resolve_easel_workbench(root: Path = ROOT) -> dict:
         "commit": result.get("expected_commit"),
         "tag": result.get("expected_tag"),
         "engine_id": workbench.engine_id,
+        "layout": workbench.layout,
         "verification": "upstream_overlay_and_generated_profiles",
         "verification_result": result,
     }
@@ -409,11 +483,15 @@ def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--bootstrap", action="store_true",
                    help="acquire the pinned runtime if missing/broken (git -> archive -> BLOCKED)")
+    p.add_argument("--engine", default=None,
+                   help="resolve a declared engine instead of the active one "
+                        "(a rollback drill, not a switch)")
     p.add_argument("--offline", action="store_true",
                    help="skip live content verification; use recorded provenance")
     args = p.parse_args()
 
-    result = bootstrap() if args.bootstrap else resolve_easel(live=not args.offline)
+    result = (bootstrap() if args.bootstrap
+              else resolve_easel(live=not args.offline, engine_id=args.engine))
     print(json.dumps(result, indent=2, ensure_ascii=False))
     return 0 if result.get("status") == "OK" else 1
 

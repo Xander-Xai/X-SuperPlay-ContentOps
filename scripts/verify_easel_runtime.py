@@ -444,8 +444,11 @@ def verify(runtime_dir: Path = RUNTIME, repo: str = REPO,
 
     try:
         upstream = fetch_upstream_tree(repo, commit)
-    except RuntimeError as e:
-        return {**result, "status": "UNVERIFIED", "reason": str(e),
+    except Exception as e:  # noqa: BLE001
+        # Any inability to fetch is "could not verify", not a crash. This used
+        # to catch only RuntimeError, so a truncated HTTP body (IncompleteRead)
+        # propagated through the resolver and took down the caller.
+        return {**result, "status": "UNVERIFIED", "reason": f"{type(e).__name__}: {e}",
                 "note": "content identity could not be confirmed; this is not a pass"}
 
     local = walk_local(runtime_dir)

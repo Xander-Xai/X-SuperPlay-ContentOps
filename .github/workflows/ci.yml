@@ -536,6 +536,12 @@ jobs:
       - name: Run Easel pin registry tests
         run: python tests/test_easel_pins.py
 
+      # Moving the production engine is a deliberate, recorded act. This suite
+      # proves the switcher refuses an uninstalled or unverified target, that a
+      # dry run writes nothing, and that the lock and receipt follow the switch.
+      - name: Run Easel engine switch tests
+        run: python tests/test_easel_engine.py
+
       # A workbench instance is Easel plus a declared tuning layer. This suite
       # proves the overlay verifier still fails an *unrecorded* difference, and
       # that the generated DNA→profile projection supplies Easel with actual

@@ -1787,11 +1787,22 @@ def stage_compose(project: Path, slug: str) -> Dict[str, Any]:
     if previous_video.is_file() and not preserved_previous.exists():
         shutil.copy2(previous_video, preserved_previous)
     result = assemble_easel.run(project, out_name=slug)
-    try:
-        pin = json.loads((ROOT / "runtime" / "easel.lock.json").read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        pin = {}
-    stamp = pin.get("tag") or pin.get("commit") or "unrecorded"
+    # The engine that actually produced this file, read from the one registry
+    # rather than inferred from the lock: a receipt that names an engine by
+    # version alone cannot be diffed after a switch, because the version string
+    # stays the same while the commit does not.
+    engine_block = result.get("easel") or {}
+    if not engine_block:
+        try:
+            from contentops.easel import pins as easel_pins
+
+            engine = easel_pins.active()
+            engine_block = {"engine_id": engine.engine_id, "tag": engine.tag,
+                            "commit": engine.commit, "tree_sha256": engine.tree_sha256,
+                            "layout": engine.layout}
+        except Exception:  # noqa: BLE001 - a receipt must not invent an engine
+            engine_block = {}
+    stamp = engine_block.get("tag") or "unrecorded"
     upstream_path = Path(result.get(
         "upstream", "skills/openclaw/auto-short-video/scripts/assemble.py"
     )).as_posix()
@@ -1803,6 +1814,7 @@ def stage_compose(project: Path, slug: str) -> Dict[str, Any]:
         "video": _logical_path(result.get("video"), project),
         "subtitles_burned": result.get("subtitles_burned"),
         "upstream": f"easel@{stamp}:skills/{upstream_suffix}",
+        "easel": engine_block or None,
         "reason": result.get("reason"),
     }
     receipt = {key: value for key, value in receipt.items() if value is not None}

@@ -71,11 +71,14 @@ def _engine(**over) -> dict:
 def test_registry_loads_and_declares_two_engines():
     registry = pins.load()
     assert registry.path.name == "easel-pins.json", registry.path
-    assert registry.active_id == "v0.2.1", registry.active_id
     assert set(registry.engines) == {"v0.2.1", "v0.3.0"}, sorted(registry.engines)
+    # After the 2026-11-15 switch v0.3.0 is production and v0.2.1 is the
+    # rollback tree. The roles must follow `active`, or a reader cannot tell
+    # which engine a receipt is talking about.
+    assert registry.active_id == "v0.3.0", registry.active_id
+    assert registry.active.role == "production", registry.active.role
+    assert registry.engines["v0.2.1"].role == "rollback"
     assert registry.workbench_id == "v0.3.0", registry.workbench_id
-    assert registry.active.role == "production"
-    assert registry.engines["v0.3.0"].role == "candidate"
 
 
 def test_every_engine_declares_a_full_commit():

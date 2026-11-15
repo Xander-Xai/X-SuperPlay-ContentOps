@@ -84,6 +84,7 @@ class Engine:
     blob_count: int | None
     blob_count_basis: str
     license_spdx: str
+    repo_id: str
     agpl_vendored: tuple[str, ...]
     note: str
     raw: dict[str, Any] = field(default_factory=dict, repr=False)
@@ -122,6 +123,19 @@ def _require(entry: dict[str, Any], key: str, engine_id: str, errors: list[str])
     if value in (None, ""):
         errors.append(f"{engine_id}: missing {key}")
     return value
+
+
+def _repo_id_from_url(url: str) -> str:
+    """Derive ``owner/name`` from a clone URL.
+
+    The GitHub tree API takes an identifier, not a URL. Feeding it a URL returns
+    "invalid GitHub repository identifier", which then reads like a verification
+    failure — so the identifier is normalised here, once.
+    """
+    text = url.strip()
+    if "github.com/" in text:
+        text = text.split("github.com/", 1)[1]
+    return text.removesuffix(".git").strip("/")
 
 
 def _parse_engine(engine_id: str, entry: Any) -> tuple[Engine | None, list[str]]:
@@ -183,6 +197,7 @@ def _parse_engine(engine_id: str, entry: Any) -> tuple[Engine | None, list[str]]
             blob_count=blob_count,
             blob_count_basis=str(entry.get("blob_count_basis") or ""),
             license_spdx=str(entry.get("license") or ""),
+            repo_id=str(entry.get("repo_id") or _repo_id_from_url(str(repo))),
             agpl_vendored=tuple(entry.get("agpl_vendored") or ()),
             note=str(entry.get("note") or ""),
             raw=dict(entry),

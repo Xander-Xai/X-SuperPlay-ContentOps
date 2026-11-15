@@ -1,0 +1,52 @@
+{
+  "schema": "contentops.easel-engine-switch/v1",
+  "note": "Append-only. Each entry records one deliberate change of the active engine, with the verification that preceded it.",
+  "current": "v0.3.0",
+  "history": [
+    {
+      "at": "2026-11-15T15:27:04+00:00",
+      "from": "v0.2.1",
+      "from_identity": "v0.2.1@3fe2d9904c16",
+      "to": "v0.3.0",
+      "to_identity": "v0.3.0@bb3c8ff0463f",
+      "verification": {
+        "status": "VERIFIED",
+        "method": "upstream_overlay_and_generated_profiles",
+        "matched": 1071,
+        "expected_commit": "bb3c8ff0463f36c202454d74171682ba6e470cb1"
+      },
+      "dry_run": false,
+      "provenance": "runtime\\easel-runtime-v0.3.0.json"
+    },
+    {
+      "at": "2026-11-15T15:30:20+00:00",
+      "from": "v0.3.0",
+      "from_identity": "v0.3.0@bb3c8ff0463f",
+      "to": "v0.2.1",
+      "to_identity": "v0.2.1@3fe2d9904c16",
+      "verification": {
+        "status": "VERIFIED",
+        "method": "blob_sha1_tree_compare",
+        "matched": 982,
+        "expected_commit": "3fe2d9904c1619281ef57f81d9ee0b7854998399"
+      },
+      "dry_run": false,
+      "provenance": "runtime\\easel-runtime-v0.2.1.json"
+    },
+    {
+      "at": "2026-11-15T15:31:07+00:00",
+      "from": "v0.2.1",
+      "from_identity": "v0.2.1@3fe2d9904c16",
+      "to": "v0.3.0",
+      "to_identity": "v0.3.0@bb3c8ff0463f",
+      "verification": {
+        "status": "VERIFIED",
+        "method": "upstream_overlay_and_generated_profiles",
+        "matched": 1071,
+        "expected_commit": "bb3c8ff0463f36c202454d74171682ba6e470cb1"
+      },
+      "dry_run": false,
+      "provenance": "runtime\\easel-runtime-v0.3.0.json"
+    }
+  ]
+}

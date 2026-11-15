@@ -66,14 +66,16 @@ def _upstream_assemble(*, workbench_runtime: bool = False) -> Path:
             raise RuntimeError("Easel workbench runtime is not verified: "
                                + "; ".join(resolved.get("reasons", ["unknown"])))
         easel_dir = Path(resolved["easel_dir"])
-        return resolve_skill_dir(easel_dir, "auto-short-video") / "scripts" / "assemble.py"
+        return (resolve_skill_dir(easel_dir, "auto-short-video", layout=resolved.get("layout"))
+                / "scripts" / "assemble.py")
 
     from resolve_easel import resolve_easel
     res = resolve_easel(live=False)
     if res["status"] != "OK":
         raise RuntimeError("Easel runtime not usable: "
                            + "; ".join(res.get("reasons", ["unknown"])))
-    return resolve_skill_dir(Path(res["easel_dir"]), "auto-short-video") / "scripts" / "assemble.py"
+    return (resolve_skill_dir(Path(res["easel_dir"]), "auto-short-video", layout=res.get("layout"))
+            / "scripts" / "assemble.py")
 
 
 def _subtitle_vf(ass_path: Path) -> str:
@@ -673,11 +675,32 @@ def _candidate_inputs(project: Path) -> tuple[dict, list[dict], str]:
     return storyboard, evidence, hashlib.sha256(storyboard_bytes).hexdigest()
 
 
+def _engine_block() -> dict:
+    """Identity of the engine that will render, read from the pin registry.
+
+    Attached to every result so a caller writing a receipt does not have to ask
+    a second component which engine ran — the answer travels with the output.
+    """
+    try:
+        from contentops.easel import pins
+
+        engine = pins.active()
+        return {"engine_id": engine.engine_id, "tag": engine.tag,
+                "commit": engine.commit, "tree_sha256": engine.tree_sha256,
+                "layout": engine.layout}
+    except Exception:  # noqa: BLE001 - never block a render over a receipt field
+        return {}
+
+
 def run(project: Path, out_name: str = "easel", *,
         workbench_runtime: bool = False) -> dict:
     """Use the production adapter or create a separate, receipted candidate run."""
     if not workbench_runtime:
-        return _run_impl(project, out_name=out_name)
+        result = _run_impl(project, out_name=out_name)
+        block = _engine_block()
+        if block and isinstance(result, dict):
+            result["easel"] = block
+        return result
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,79}", out_name):
         return {"status": "BLOCKED", "reason": "invalid candidate output name"}
     project = Path(project)
