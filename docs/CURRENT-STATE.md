@@ -4,7 +4,7 @@
 
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
-> Last verified: 2026-11-16 against `3c87ab290ca846ec2807ebe4ecb9559d53d2995e` (`main`, read-only fetch); worktree `feat/173-easel-m0-pin` at `74a5d35`, merge base `464ab63`. The Easel pin now lives in
+> Last verified: 2026-11-16 against `d40980006f5211f13000d6c102079ae43353b96b` (`main` after PR #185, read-only fetch); this branch `chore/easel-freeze-20261116` builds on it. The Easel pin now lives in
 > `runtime/easel-pins.json`; `runtime/easel.lock.json` is a projection of its `active`
 > engine, and no code file carries a commit literal.
 > This worktree is 22 commits ahead of that `main` and 15 behind it; no rebase or merge has
@@ -51,7 +51,7 @@
 
 | Property | Verified value |
 |---|---|
-| Default branch | `main` @ `3c87ab290ca846ec2807ebe4ecb9559d53d2995e` — read-only fetch on 2026-11-16; unchanged by this branch |
+| Default branch | `main` @ `d40980006f5211f13000d6c102079ae43353b96b` — the PR #185 squash, read-only fetch on 2026-11-16 |
 | Worktree under verification | `feat/173-easel-m0-pin` @ `74a5d35`, merge base `464ab63d`; 22 ahead and 15 behind `main` |
 | Open PRs | **1**: #185 — Easel v0.3.0 as the pinned engine (M0–M2) plus the recording-intake slice (R1) |
 | Branch registry | `verified_at` 2026-11-16; `feat/173-easel-m0-pin` registered `active`, review date 2026-12-16 |
