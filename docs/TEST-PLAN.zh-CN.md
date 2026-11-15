@@ -13,6 +13,9 @@ translation_status: synced
 > 最后验证：2026-11-16，分支 `feat/173-easel-m0-pin`。树内 `tests/test_*.py` 共 107 个套件，
 > `.github/workflows/ci.yml` 逐一具名（107 个步骤）。此处不写死数量，
 > 以 `ls tests/test_*.py | wc -l` 为准。
+> 最后验证：2026-11-14；已实施 X / 跨平台本地分析和人工选题回流，不代表真实平台效果或发布。
+> 新增纯文字稿件 READY/发布包/真实URL记录、图文缺图拒绝、分题材评分门槛与账号合同的回归测试；CI结果以PR实际检查为准，不将测试用URL冒充真实平台发布。
+> 本分支增加 X 本地数据分析测试及 CI 步骤，测试使用合成 CSV，不上传真实后台数据。
 >
 > 最后核验：2026-11-06，`fix/6-brief-copy-review`。
 
@@ -66,6 +69,7 @@ python tests/test_media_convergence.py
 | 套件 | 文件 | 数量 | CI |
 |---|---|---:|---|
 | 脚本冒烟 | `scripts/test_basic.py` | 10 | 是 |
+| X 增长与文案 Skill 样本/草稿/指标契约 | `tests/test_x_organic_growth.py` | unittest（新增 11 项文案回归） | 是 |
 | Windows 子进程 | `tests/test_windows_subprocess.py` | 47 | 是 |
 | Windows 路径 | `tests/test_windows_paths.py` | 6 | 是 |
 | M2 语音 | `tests/test_minimax_speech.py` | 86 | 是 |

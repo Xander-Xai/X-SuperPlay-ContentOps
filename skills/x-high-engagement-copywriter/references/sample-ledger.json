@@ -1,0 +1,273 @@
+{
+  "schema": "contentops.x-copywriter-corpus/v1",
+  "captured_on": "2026-11-12",
+  "scope": "10 directly visible user-pasted X post prompts in this conversation; S11 only present in a prior-turn summary, not independently line-auditable. No assistant-generated replies counted as viral source posts.",
+  "method": "Short paraphrases and structural annotations, not complete third-party tweet reproduction.",
+  "performance_provenance": "USER_ASSERTED_HIGH_ENGAGEMENT; PLATFORM_METRICS_NOT_PROVIDED",
+  "restrictions": [
+    "No source URL, author identity, real posted time, impressions or engagement count has been authenticated.",
+    "Do not treat S01 and S07 as independent proof of an event.",
+    "S11 is summary_only; exclude it from counts restricted to directly visible inputs.",
+    "A user prompt's instruction appended to a quoted post is not part of the underlying tweet.",
+    "Assistant-written replies in this conversation have no observed X performance."
+  ],
+  "patterns": {
+    "P01": "BREAKING_RUMOR_OFFICIAL_CHECK",
+    "P02": "SENSORY_SCENE_EMOTIONAL_IMAGE",
+    "P03": "FOLLOWER_KEYWORD_BAIT_NEGATIVE",
+    "P04": "DISGUST_EVERYDAY_WARNING",
+    "P05": "AUDACIOUS_PLATFORM_CONTRAST",
+    "P06": "DISAPPEARING_TECH_REPO_THREAD",
+    "P07": "SURVIVORSHIP_BIAS_RULE_ANECDOTE",
+    "P08": "MYTH_VS_REALITY_CURIOSITY_GAP",
+    "P09": "NUMERIC_WORKER_VS_AUTOMATION_PUNCHLINE"
+  },
+  "samples": [
+    {
+      "id": "S01",
+      "source_scope": "current_thread_user_turn",
+      "source_kind": "USER_PASTED_X_POST",
+      "paraphrase": "英伟达CEO更替及指定继任者的未经核实传闻",
+      "primary_pattern": "P01",
+      "pattern_ids": [
+        "P01",
+        "P06"
+      ],
+      "reader_trigger": "curiosity,urgency,authority",
+      "mechanism_analysis": "搭名媒背书制造确定感，再用强结论引发转评；未经独立核实不能照写",
+      "risk_flags": [
+        "claim_source_name",
+        "claimed_person",
+        "unverified_succession"
+      ],
+      "reuse_rule": "HOLD_FACT_CHECK",
+      "x_post_url": null,
+      "observed_metrics": null,
+      "verified_performance": false,
+      "user_reports_high_performance": true,
+      "confidence": "TEXT_OBSERVED_ONLY"
+    },
+    {
+      "id": "S02",
+      "source_scope": "current_thread_user_turn",
+      "source_kind": "USER_PASTED_X_POST",
+      "paraphrase": "晨雾、蓝色冰湖、金色光束的短景物描写",
+      "primary_pattern": "P02",
+      "pattern_ids": [
+        "P02"
+      ],
+      "reader_trigger": "wonder,tranquility",
+      "mechanism_analysis": "三个具象色彩/元素和宁静画面；不可假称亲自拍摄",
+      "risk_flags": [
+        "image_rights_unknown"
+      ],
+      "reuse_rule": "PASS_WITH_RIGHTS_REVIEW",
+      "x_post_url": null,
+      "observed_metrics": null,
+      "verified_performance": false,
+      "user_reports_high_performance": true,
+      "confidence": "TEXT_OBSERVED_ONLY"
+    },
+    {
+      "id": "S03",
+      "source_scope": "current_thread_user_turn",
+      "source_kind": "USER_PASTED_X_POST",
+      "paraphrase": "英文要求回复特定关键词以获得数千关注者",
+      "primary_pattern": "P03",
+      "pattern_ids": [
+        "P03"
+      ],
+      "reader_trigger": "reward_anticipation,community",
+      "mechanism_analysis": "极低参与门槛+极大回报承诺；不可移植虚假涨粉承诺",
+      "risk_flags": [
+        "engagement_exchange",
+        "unrealistic_follow_guarantee"
+      ],
+      "reuse_rule": "NEGATIVE_EXAMPLE",
+      "x_post_url": null,
+      "observed_metrics": null,
+      "verified_performance": false,
+      "user_reports_high_performance": true,
+      "confidence": "TEXT_OBSERVED_ONLY"
+    },
+    {
+      "id": "S04",
+      "source_scope": "current_thread_user_turn",
+      "source_kind": "USER_PASTED_X_POST",
+      "paraphrase": "网购衣物卫生担忧并建议先洗再穿",
+      "primary_pattern": "P04",
+      "pattern_ids": [
+        "P04"
+      ],
+      "reader_trigger": "disgust,precaution",
+      "mechanism_analysis": "视觉惊讶+生活安全建议；证据不足时避免夸大卫生风险",
+      "risk_flags": [
+        "context_image_missing",
+        "health_claim_boundary"
+      ],
+      "reuse_rule": "PASS_WITH_CAVEAT",
+      "x_post_url": null,
+      "observed_metrics": null,
+      "verified_performance": false,
+      "user_reports_high_performance": true,
+      "confidence": "TEXT_OBSERVED_ONLY"
+    },
+    {
+      "id": "S05",
+      "source_scope": "current_thread_user_turn",
+      "source_kind": "USER_PASTED_X_POST",
+      "paraphrase": "声称平台给流量时一张白纸也可破万浏览",
+      "primary_pattern": "P05",
+      "pattern_ids": [
+        "P05"
+      ],
+      "reader_trigger": "defiance,humor,argument",
+      "mechanism_analysis": "夸张的极简对照+挑战观点；改写为可检验的流量观察",
+      "risk_flags": [
+        "unverified_algorithm_claim",
+        "unverified_view_count"
+      ],
+      "reuse_rule": "HYPOTHESIS_ONLY",
+      "x_post_url": null,
+      "observed_metrics": null,
+      "verified_performance": false,
+      "user_reports_high_performance": true,
+      "confidence": "TEXT_OBSERVED_ONLY"
+    },
+    {
+      "id": "S06",
+      "source_scope": "current_thread_user_turn",
+      "source_kind": "USER_PASTED_X_POST",
+      "paraphrase": "短暂出现后404的iOS终端仓库及所谓沙盒逃逸技术帖",
+      "primary_pattern": "P06",
+      "pattern_ids": [
+        "P06"
+      ],
+      "reader_trigger": "curiosity,technical_awe",
+      "mechanism_analysis": "失踪仓库+意外技术突破+继续阅读悬念；避免复述未证实攻击能力",
+      "risk_flags": [
+        "unverified_security_claim",
+        "vulnerability_details"
+      ],
+      "reuse_rule": "HOLD_FACT_CHECK",
+      "x_post_url": null,
+      "observed_metrics": null,
+      "verified_performance": false,
+      "user_reports_high_performance": true,
+      "confidence": "TEXT_OBSERVED_ONLY"
+    },
+    {
+      "id": "S07",
+      "source_scope": "current_thread_user_turn",
+      "source_kind": "USER_PASTED_X_POST",
+      "paraphrase": "第二条英伟达董事会罢免CEO的高紧迫性核实请求",
+      "primary_pattern": "P01",
+      "pattern_ids": [
+        "P01",
+        "P06"
+      ],
+      "reader_trigger": "urgency,suspicion",
+      "mechanism_analysis": "多个感叹号和要求权威公告，属于S01同一新闻家族，非独立事件证据",
+      "risk_flags": [
+        "unverified_named_person_allegation",
+        "duplicate_topic_S01"
+      ],
+      "reuse_rule": "HOLD_FACT_CHECK",
+      "x_post_url": null,
+      "observed_metrics": null,
+      "verified_performance": false,
+      "user_reports_high_performance": true,
+      "confidence": "TEXT_OBSERVED_ONLY"
+    },
+    {
+      "id": "S08",
+      "source_scope": "current_thread_user_turn",
+      "source_kind": "USER_PASTED_X_POST",
+      "paraphrase": "冬夜热馄饨，邀请X友一起吃",
+      "primary_pattern": "P02",
+      "pattern_ids": [
+        "P02",
+        "P07"
+      ],
+      "reader_trigger": "warmth,belonging",
+      "mechanism_analysis": "温度/食物/集体邀请，低门槛生活共鸣",
+      "risk_flags": [
+        "media_or_real_experience_unknown"
+      ],
+      "reuse_rule": "PASS_WITH_RIGHTS_REVIEW",
+      "x_post_url": null,
+      "observed_metrics": null,
+      "verified_performance": false,
+      "user_reports_high_performance": true,
+      "confidence": "TEXT_OBSERVED_ONLY"
+    },
+    {
+      "id": "S09",
+      "source_scope": "current_thread_user_turn",
+      "source_kind": "USER_PASTED_X_POST",
+      "paraphrase": "先列举多个肾病误区，再通过显示更多制造反转",
+      "primary_pattern": "P08",
+      "pattern_ids": [
+        "P08",
+        "P04"
+      ],
+      "reader_trigger": "fear,curiosity",
+      "mechanism_analysis": "否定直觉-制造知识缺口-引导展开；医学结论必须核验",
+      "risk_flags": [
+        "medical_accuracy",
+        "ambiguous_kidney_terms"
+      ],
+      "reuse_rule": "HOLD_MEDICAL_REVIEW",
+      "x_post_url": null,
+      "observed_metrics": null,
+      "verified_performance": false,
+      "user_reports_high_performance": true,
+      "confidence": "TEXT_OBSERVED_ONLY"
+    },
+    {
+      "id": "S10",
+      "source_scope": "current_thread_user_turn",
+      "source_kind": "USER_PASTED_X_POST",
+      "paraphrase": "长年使用Claude和代理工具未封号的幸存者经历",
+      "primary_pattern": "P07",
+      "pattern_ids": [
+        "P07",
+        "P05"
+      ],
+      "reader_trigger": "surprise,rule_myth",
+      "mechanism_analysis": "反常规经验+幸存者叙事；个例不能证明账号风控规则",
+      "risk_flags": [
+        "single_anecdote",
+        "service_rules",
+        "proxy_risk"
+      ],
+      "reuse_rule": "HYPOTHESIS_ONLY",
+      "x_post_url": null,
+      "observed_metrics": null,
+      "verified_performance": false,
+      "user_reports_high_performance": true,
+      "confidence": "TEXT_OBSERVED_ONLY"
+    },
+    {
+      "id": "S11",
+      "source_scope": "prior_turn_summary_only",
+      "source_kind": "USER_PASTED_X_POST",
+      "paraphrase": "Robotaxi一周168小时的AI与工作时长对比短句",
+      "primary_pattern": "P09",
+      "pattern_ids": [
+        "P09"
+      ],
+      "reader_trigger": "humor,tech_future",
+      "mechanism_analysis": "数值化对比+人与机器反差；168h只是7×24算术，不等于实测运营时间",
+      "risk_flags": [
+        "theoretical_24_7_not_actual_runtime"
+      ],
+      "reuse_rule": "SUMMARY_ONLY",
+      "x_post_url": null,
+      "observed_metrics": null,
+      "verified_performance": false,
+      "user_reports_high_performance": true,
+      "confidence": "TEXT_OBSERVED_ONLY"
+    }
+  ]
+}

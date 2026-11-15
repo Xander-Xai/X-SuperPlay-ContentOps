@@ -9,6 +9,10 @@
 > engine, and no code file carries a commit literal.
 > This worktree is 22 commits ahead of that `main` and 15 behind it; no rebase or merge has
 > been performed, so facts that belong to the branch are labelled as such.
+> Last verified: 2026-11-14, read-only GitHub main @ `515c605` (protected). The proposed X text/image and per-mode reviews are branch changes, not yet on main; real platform outcomes unverified.
+> X image posts require real media+ALT; explicit text posts omit media. General-interest posts use human novelty/evidence review without invented technical benchmarks. This implementation does not publish to X.
+> X and cross-platform offline analyzers are implemented; the platform outcomes and automatic end-to-end operations have not been verified.
+> Facts below describe `main`; deferred or rights-blocked work is labelled as such.
 > Sections below the "Layer status" table are historical milestone records;
 > they describe how a capability was proven, not what is current.
 
@@ -57,6 +61,14 @@
 
 This table is the only part of this document re-read on 2026-11-16. Everything below keeps the
 date it was verified on.
+### Git — verified 2026-11-14 (read-only protected main baseline)
+| Default branch | `main` — protected @ `515c605` (GitHub branches/main query on 2026-11-14) |
+| Change scope | X text/image and per-mode human reviews remain in PR #182; not merged or published to X by this snapshot |
+The 2026-11-13 and older Git snapshots below remain historical audit evidence.
+### Git — verified 2026-11-13 (read-only remote baseline)
+| Default branch | `main` — protected @ `98a61f2` (read-only GitHub branch query on 2026-11-13) |
+| Current baseline | X and cross-platform local analyzers merged to main; pending human-reviewed Topic runs are not platform publication evidence |
+The detailed 2026-11-12 snapshot below is retained as a historical record. No claim is made that the branch's X local CSV tool exists on the default branch.
 
 ### Git — verified 2026-11-12 (read-only documentation sync)
 

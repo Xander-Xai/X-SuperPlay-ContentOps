@@ -4,8 +4,8 @@
 Why this exists
 ---------------
 The X workflow states its delivery and editorial
-gates in prose: a 280-weighted-character body, a real 1600x900 raster card, ALT
-text, three distinct theses with counterexamples, a human review scored on six
+gates in prose: a 280-weighted-character body, an explicit text-only or image-based format (raster/ALT only for image),
+mode-appropriate theses with counterexamples, a human review scored on six
 dimensions, four recovery fields, a proof grade, and a real
 ``x.com/<handle>/status/<id>`` URL before anything is called published.
 
@@ -226,7 +226,8 @@ def _row_for(project: Path, content_id: str) -> Optional[Dict[str, str]]:
 
 def _template(account: Dict[str, Any], content_id: str, topic: str,
               sources: List[str], mode: str,
-              prompt_ref: str = "") -> Dict[str, Any]:
+              prompt_ref: str = "", language: str = "en",
+              post_format: str = "image") -> Dict[str, Any]:
     """A draft record with the holes a person has to fill, and nothing invented."""
     pillars = [str(pillar.get("name")) for pillar in account.get("content_pillars") or []
                if isinstance(pillar, dict)]
@@ -237,6 +238,8 @@ def _template(account: Dict[str, Any], content_id: str, topic: str,
         "schema": SCHEMA,
         "content_id": content_id,
         "account_slug": account.get("slug"),
+        "language": language,
+        "post_format": post_format,
         "mode": mode,
         "topic": topic,
         "sources": list(sources),
@@ -287,7 +290,8 @@ def _issues(issues: List[Issue]) -> List[Dict[str, str]]:
 
 
 def action_new(project: Path, content_id: str, topic: str, sources: List[str],
-               mode: str, prompt: str = "") -> Dict[str, Any]:
+               mode: str, prompt: str = "", language: str = "en",
+               post_format: str = "image") -> Dict[str, Any]:
     account = account_for(project)
     path = post_path(project, content_id)
     if path.exists():
@@ -313,7 +317,12 @@ def action_new(project: Path, content_id: str, topic: str, sources: List[str],
                 f"prompt {prompt_ref!r} points at a file that is not in this tree; "
                 "a prompt reference must be real")
         checklist = x_prompts.prompt_checklist(prompt_path)
-    post = _template(account, content_id, topic.strip(), sources, mode, prompt_ref)
+    if language not in (account.get("allowed_languages") or [account.get("language")]):
+        raise Refusal("LANGUAGE_UNSUPPORTED", f"language {language!r} is not allowed for this account")
+    if post_format not in ((account.get("visual") or {}).get("post_formats") or ["image"]):
+        raise Refusal("POST_FORMAT_UNKNOWN", f"unsupported post_format {post_format!r}")
+    post = _template(account, content_id, topic.strip(), sources, mode, prompt_ref,
+                     language, post_format)
     _write_post(path, post)
 
     publication = account.get("publication") or {}
@@ -428,7 +437,8 @@ def action_mark_published(project: Path, content_id: str, url: str,
     handle = url.strip().rstrip("/").split("/")[3]
     post["status"] = "published"
     post["status_url"] = url.strip()
-    post["image_status"] = "generated"
+    post["image_status"] = ("generated" if post.get("post_format", "image") == "image"
+                            else "missing")
     if reviewer:
         post.setdefault("review", {})
         if isinstance(post["review"], dict):
@@ -449,7 +459,7 @@ def action_mark_published(project: Path, content_id: str, url: str,
         "content_id": content_id,
         "status": "published",
         "x_post_url": url.strip(),
-        "image_status": "generated",
+        "image_status": post["image_status"],
         "account_handle": handle,
         "notes": "status and URL recorded by scripts/x_post.py --mark-published; "
                  "post_published_at stays blank until it is observed",
@@ -569,6 +579,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--topic", help="the post's subject, for --new")
     parser.add_argument("--source", action="append", default=[],
                         help="a source URL, repeatable")
+    parser.add_argument("--language", choices=("zh", "en"), default="en",
+                        help="language of this original post, zh or en; both use the same X account")
+    parser.add_argument("--post-format", choices=("image", "text"), default="image",
+                        help="image needs a real 1600x900 card and ALT; text has no media")
     parser.add_argument("--mode", default="workflow_artifact",
                         help="one of the account's content pillars")
     parser.add_argument("--prompt", default="",
@@ -615,7 +629,7 @@ def main(argv: Optional[List[str]] = None) -> int:
 
         if args.new:
             result = action_new(project, content_id, args.topic or "", args.source,
-                                args.mode, args.prompt)
+                                args.mode, args.prompt, args.language, args.post_format)
         elif args.check:
             result = action_check(project, content_id)
         elif args.package:
@@ -646,10 +660,13 @@ def main(argv: Optional[List[str]] = None) -> int:
                     print(f"  part {part['index']} [{part['weighted_length']}"
                           f"/{package['copy']['budget']}]")
                     print("    " + part["text"].replace("\n", "\n    "))
-                print(f"  image {package['image']['path']} "
-                      f"({package['image']['width']}x{package['image']['height']}, "
-                      f"{package['image']['format']})")
-                print(f"  alt   {package['alt_text']}")
+                if package["post_format"] == "image":
+                    print(f"  image {package['image']['path']} "
+                          f"({package['image']['width']}x{package['image']['height']}, "
+                          f"{package['image']['format']})")
+                    print(f"  alt   {package['alt_text']}")
+                else:
+                    print("  text-only (no image or ALT; manual publication)")
                 print("  a person posts this; nothing here did")
             elif result.get("issues"):
                 _print_issues(result["issues"])

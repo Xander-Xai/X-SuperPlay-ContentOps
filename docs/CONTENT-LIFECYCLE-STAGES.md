@@ -8,6 +8,8 @@
 
 > Status: reference — 2026-11-12.
 > Last verified: 2026-11-16 on `feat/173-easel-m0-pin`.
+> Last verified: 2026-11-14. The X ORIGINAL_POST path now validates explicit text or image format, content-mode review profiles and human-only package handoff; image records require raster+ALT and text records carry neither. No live account growth or platform publication is verified.
+> Local feedback remains PARTIAL: manually supplied metrics -> learning brief -> human-approved Topic route; not automated publishing.
 Related: [ARCHITECTURE.md](ARCHITECTURE.md), [PRD.md](PRD.md),
 [ADR-015](adr/ADR-015-platform-placeholders-and-content-bundle.md),
 [ADR-016](adr/ADR-016-easel-host-adoption.md),
@@ -16,7 +18,7 @@ Related: [ARCHITECTURE.md](ARCHITECTURE.md), [PRD.md](PRD.md),
 
 ## Branch status (read this first)
 
-Every `implemented` in the table below means **on `main`** (`c1da6dd`), not on a
+The main baseline stated in the older table is historical; this PR updates only the local feedback stages. Every earlier `implemented` claim was verified on `main` (`c1da6dd`), not on a
 parallel branch. The router, platform registry, Bundle kernel and graphic package
 landed through PRs #101, #114 and #118; rendering, gates and both delivery runners
 landed through #141–#157. Rights and the absence of a bound public account, not
@@ -69,7 +71,7 @@ one's status.
 | `PUBLISH_HANDOFF` | draft | real URL + delivery receipt | human | `partial` | human-only: `video_deliver.py record`, `x_post.py --mark-published`, and the bridge's own URL echo | `AWAITING_MANUAL_PUBLISH` / `REPORTED_PUBLISHED` / `UPLOADER_EXIT_0` | no automatic publication, 0 recorded URLs; an uploader exit is not a published claim |
 | `METRICS_COLLECTION` | delivery receipt | metric snapshot | ContentOps | `partial` | `scripts/wechat_metrics.py` (data cube), `scripts/bilibili_metrics.py` (public counters), offline X metric analysis; all operator-gated | metric receipts | no automatic collection; a missing metric is `NONE`, never zero |
 | `ANALYSIS` | metric snapshots | findings | ContentOps | `partial` | X organic-growth advisory (`x_organic_growth.py`), offline | advisory JSON | general analysis not implemented |
-| `LEARNING_FEEDBACK` | findings | next-cycle guidance | Strategy | `planned` | none | none | no loop back to Strategy yet |
+| `LEARNING_FEEDBACK` | findings | next-cycle guidance | Strategy + human | `partial` | `scripts/x_learning_loop.py` (X) and `scripts/platform_learning_loop.py` (cross-platform, local-only); Strategy handoff document | local `learning/latest.json` / `learning/handoff.json` | operator-reviewed Topic routing exists; Strategy has no automatic writer, and no real cross-platform attribution proof |
 
 ## Production profile vs medium
 
@@ -126,11 +128,8 @@ A profile is not a medium, and a medium is not a profile. `XHS_EDITORIAL` and
 This section describes gaps on `main` as of 2026-11-12. The router, brief,
 script, hotspot and platform code is present; it is not an unmerged layer.
 
-- Cross-stage metric collection and a real metric snapshot are not implemented.
-  X has an offline analyzer for manually supplied snapshots, not a platform
-  collector or a Strategy feedback loop.
-- A general analysis stage and written learning-feedback loop are not
-  implemented.
+- Automatic cross-platform metric collection is not implemented. X and the generic local-only CSV analyzers operate on human-supplied snapshots; human-reviewed topic handoff can start the existing Router but cannot publish.
+- The X offline source analysis and cross-platform local-only descriptive Learning Brief are implemented; no automatic cross-platform strategy writer, official acquisition source attribution, or verified performance causal analysis exists.
 - The X adapter is manual-only. The GZH adapter verifies and describes an
   external workspace; it does not execute production or publishing. The XHS
   runtime adapter was removed on 2026-11-09 and has no replacement — only its

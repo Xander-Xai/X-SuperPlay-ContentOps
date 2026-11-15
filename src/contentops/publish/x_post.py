@@ -2,14 +2,14 @@
 
 One record per intended post, schema ``contentops.x-post/v1``. The record is the
 unit of review: it carries the copy, the theses, the recovery fields, the review,
-the image and the status, and :func:`validate_post` reports every way it is not
+optional post-format media and the status, and :func:`validate_post` reports every way it is not
 yet a publishable post.
 
 Three rules from the vendored gate are the ones this module exists for:
 
 - a post that says ``published`` without a real ``status/<digits>`` URL is a lie,
   and it is refused rather than corrected;
-- an image has to be an actual raster file at the account's canvas, not a path
+- a post_format=image requires a real raster image and accurate ALT; a post_format=text must not pretend to include media
   with the right extension and not an SVG;
 - a metric that nobody observed is ``null``. ``0`` means "observed, and it was
   zero". The two are never interchangeable.
@@ -192,9 +192,14 @@ def _sentence_count(text: str) -> int:
     return len([part for part in re.split(r"(?<=[.!?])\s+", text.strip()) if part.strip()])
 
 
-def _check_copy(post: Dict[str, Any], editorial: Dict[str, Any]) -> List[Issue]:
+def _check_copy(post: Dict[str, Any], editorial: Dict[str, Any], account: Dict[str, Any]) -> List[Issue]:
     issues: List[Issue] = []
     parts = copy_parts(post)
+    language = post.get("language", account.get("default_post_language", "en"))
+    allowed = account.get("allowed_languages") or [account.get("language")]
+    if language not in allowed:
+        issues.append(Issue("LANGUAGE_UNSUPPORTED",
+                            f"post language {language!r} is not allowed for this account: {allowed}"))
     if not parts or not any(part.strip() for part in parts):
         return [Issue("COPY_EMPTY", "the record has no post copy to publish")]
     if any(not part.strip() for part in parts):
@@ -214,17 +219,44 @@ def _check_copy(post: Dict[str, Any], editorial: Dict[str, Any]) -> List[Issue]:
             issues.append(
                 Issue("COPY_TOO_LONG",
                       f"part {index} weighs {length} characters; the budget is {limit}"))
-        foreign = x_text.foreign_scripts(part)
-        if foreign:
-            issues.append(
-                Issue("LANGUAGE_NOT_EN",
-                      f"part {index} contains non-Latin script ({', '.join(foreign[:4])}); "
-                      "this account publishes in English"))
+        if language == "en":
+            foreign = x_text.foreign_scripts(part)
+            if foreign:
+                issues.append(
+                    Issue("LANGUAGE_NOT_EN",
+                          f"part {index} contains CJK characters ({', '.join(foreign[:4])}); "
+                          "label this post 'zh' if writing Chinese"))
+        elif language == "zh":
+            foreign = x_text.foreign_to_chinese(part)
+            if foreign:
+                issues.append(
+                    Issue("LANGUAGE_NOT_ZH",
+                          f"part {index} contains Japanese/Korean script ({', '.join(foreign[:4])})"))
+            if not x_text.contains_han(part):
+                issues.append(Issue("LANGUAGE_NOT_ZH", f"part {index} contains no Chinese characters"))
     return issues
+
+
+def _post_format(post: Dict[str, Any], account: Dict[str, Any]) -> str:
+    visual = account.get("visual") or {}
+    return str(post.get("post_format") or visual.get("default_post_format") or "image")
+
+
+def _check_post_format(post: Dict[str, Any], account: Dict[str, Any]) -> List[Issue]:
+    post_format = _post_format(post, account)
+    accepted = (account.get("visual") or {}).get("post_formats") or ["image"]
+    if post_format not in accepted:
+        return [Issue("POST_FORMAT_UNKNOWN",
+                      f"post_format {post_format!r} is not one of {accepted!r}")]
+    return []
 
 
 def _check_image(post: Dict[str, Any], account: Dict[str, Any],
                  root: Optional[Path]) -> List[Issue]:
+    if _post_format(post, account) == "text":
+        return [] if post.get("image") is None else [
+            Issue("TEXT_HAS_MEDIA", "post_format=text must have no image; "
+                  "choose post_format=image to validate attached media")]
     visual = account.get("visual") or {}
     formats = tuple(str(item).lower() for item in visual.get("formats") or ("png", "jpeg"))
     target = str(visual.get("target") or "1600x900").lower()
@@ -273,6 +305,11 @@ def _check_image(post: Dict[str, Any], account: Dict[str, Any],
 
 
 def _check_alt(post: Dict[str, Any], account: Dict[str, Any]) -> List[Issue]:
+    if _post_format(post, account) == "text":
+        if str(post.get("alt_text") or "").strip() or str(post.get("image_brief") or "").strip():
+            return [Issue("TEXT_HAS_MEDIA",
+                          "text-only posts may not carry image ALT or image brief")]
+        return []
     visual = account.get("visual") or {}
     alt = post.get("alt_text")
     if not str(alt or "").strip():
@@ -310,6 +347,10 @@ def _check_mode(post: Dict[str, Any], account: Dict[str, Any]) -> List[Issue]:
 
 
 def _check_image_status(post: Dict[str, Any], account: Dict[str, Any]) -> List[Issue]:
+    if _post_format(post, account) == "text":
+        return [] if post.get("image_status") in (None, "missing") else [
+            Issue("TEXT_HAS_MEDIA",
+                  "text-only posts must retain image_status=missing, not generated")]
     enum = [str(item) for item in (account.get("visual") or {}).get("image_status_enum") or []]
     value = post.get("image_status")
     if value is None or not enum:
@@ -393,11 +434,12 @@ def _check_status(post: Dict[str, Any], account: Dict[str, Any]) -> List[Issue]:
 def validate_post(post: Dict[str, Any], account: Dict[str, Any],
                   root: Optional[Path] = None) -> List[Issue]:
     """Every reason this record is not publishable, in a stable order."""
-    editorial = x_editorial.editorial_rules(account)
+    editorial = x_editorial.editorial_rules(account, post)
     issues: List[Issue] = []
     issues.extend(_check_account(post, account))
     issues.extend(_check_mode(post, account))
-    issues.extend(_check_copy(post, editorial))
+    issues.extend(_check_post_format(post, account))
+    issues.extend(_check_copy(post, editorial, account))
     issues.extend(_check_status(post, account))
     issues.extend(_check_alt(post, account))
     issues.extend(_check_image(post, account, root))
@@ -416,7 +458,7 @@ def post_verdict(post: Dict[str, Any], account: Dict[str, Any],
     """One word for the record's state, derived from the same issues.
 
     ``DRAFT``        nothing is reviewed yet, so nothing is being claimed
-    ``IMAGE_MISSING`` reviewed and sound; the 1600x900 card does not exist yet
+    ``IMAGE_MISSING`` reviewed image-format post whose required card does not exist
     ``READY``        every gate passed and the post is waiting for a person
     ``PUBLISHED``    published, with a real status URL to prove it
     ``BLOCKED``      something is wrong that a person has to fix

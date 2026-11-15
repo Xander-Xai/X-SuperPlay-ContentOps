@@ -8,10 +8,11 @@ them:
    counterexample and reader action. Three rewordings of one judgment fail.
 2. **The four recovery fields** — ``audience_job``, ``proof_grade``,
    ``unique_artifact_ref``, ``experiment_variable``.
-3. **A human review** scored on the account's own six dimensions, at or above the
-   floor, with the three fixed dimensions each at their own floor.
-4. **An honest label**: a `P0` post is `SOURCE_ANALYSIS` and may not claim a
-   result nobody ran.
+3. **A human review** scored on the account's six dimensions under its declared
+   mode profile: technical claims keep strict evidence/mechanism floors, while
+   genuinely general-interest writing is evaluated for novelty and honest context.
+4. **An honest label**: source-led P0 posts use `SOURCE_ANALYSIS`; P0 general
+   observations may use `ORIGINAL_OBSERVATION`. Neither may invent a test result.
 
 What this module cannot check is whether the theses are *good*. It checks that
 they exist as distinct claims with their counterexamples attached, which is the
@@ -62,9 +63,19 @@ def _overlap(left: str, right: str) -> float:
     return len(a & b) / len(a | b)
 
 
-def editorial_rules(account: Dict[str, Any]) -> Dict[str, Any]:
-    """The account's editorial block, with the vendor defaults it must declare."""
-    return dict(account.get("editorial") or {})
+def editorial_rules(account: Dict[str, Any],
+                    post: Dict[str, Any] | None = None) -> Dict[str, Any]:
+    """Select the declared human-review rubric by this post's content pillar.
+
+    General-interest work is not judged as a benchmark, but no content mode
+    bypasses provenance, originality, status or human publication approval.
+    """
+    base = dict(account.get("editorial") or {})
+    if post is not None:
+        profile = (base.get("review_profiles") or {}).get(str(post.get("mode") or ""))
+        if isinstance(profile, dict):
+            base.update(profile)
+    return base
 
 
 def validate_theses(post: Dict[str, Any], editorial: Dict[str, Any]) -> List[Finding]:
@@ -183,11 +194,12 @@ def validate_label(post: Dict[str, Any], copy_text: str, editorial: Dict[str, An
     label = post.get("label")
     source_label = str(editorial.get("source_analysis_label") or "SOURCE_ANALYSIS")
     grade = str(post.get("proof_grade") or "")
-    if grade == "P0" and label != source_label:
+    allowed = editorial.get("p0_labels") or [source_label]
+    if grade == "P0" and label not in allowed:
         findings.append(
             ("RECOVERY_FIELD_MISSING",
-             f"proof_grade is P0 but label is {label!r}; a post with no firsthand "
-             f"artifact must carry {source_label!r}"))
+             f"proof_grade is P0 but label is {label!r}; accepted labels "
+             f"for this content mode are {allowed!r}"))
     lowered = copy_text.lower()
     if grade == "P0":
         for phrase in FIRSTHAND_CLAIMS:
@@ -202,7 +214,7 @@ def validate_label(post: Dict[str, Any], copy_text: str, editorial: Dict[str, An
 
 def validate_editorial(post: Dict[str, Any], account: Dict[str, Any],
                        copy_text: str) -> List[Finding]:
-    editorial = editorial_rules(account)
+    editorial = editorial_rules(account, post)
     findings: List[Finding] = []
     findings.extend(validate_theses(post, editorial))
     findings.extend(validate_recovery(post))

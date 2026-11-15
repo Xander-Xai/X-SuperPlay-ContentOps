@@ -7,6 +7,8 @@
 > Last verified: 2026-11-16 on `feat/173-easel-m0-pin`. The tree holds 107 suites under
 > `tests/test_*.py`, and `.github/workflows/ci.yml` names every one of them (107 steps).
 > The count is not asserted here; read it with `ls tests/test_*.py | wc -l`.
+> Last verified: 2026-11-14: added focused X regression cases for no-image text READY/package/URL recording, image-mode refusal, profile-specific review thresholds, and fail-closed account config; overall CI result is determined by the PR checks, not this statement.
+> X policy: Strategy canonical SOP and registered account DNA; source metrics and publishing still require human verification.
 
 ## Risk-based local verification
 
@@ -58,6 +60,7 @@ Function counts inside a suite are floors, not totals, because list-driven and u
 | Suite | File | Count | CI |
 |---|---|---:|---|
 | Script smoke | `scripts/test_basic.py` | 10 | yes |
+| X organic growth + copywriter corpus/draft/metrics contract | `tests/test_x_organic_growth.py` | unittest (includes 11 copywriter checks) | yes |
 | Windows subprocess | `tests/test_windows_subprocess.py` | 47 | yes |
 | Windows paths | `tests/test_windows_paths.py` | 6 | yes |
 | M2 speech | `tests/test_minimax_speech.py` | 86 | yes |

@@ -2,7 +2,7 @@
 
 ``config/accounts/x-superplay-english.json`` is a text account
 (``contentops.x-account/v1``). It is not a video account with keys removed: it
-has a 280-character budget, one real 1600x900 image, a human review carrying a
+has a 280-character budget, an explicit text/image format (real 1600x900 image when selected), a human review carrying a
 proof grade, and a status URL or nothing at all. Validating it on a film
 composition or an ``easel.yaml`` would be a lie dressed as a check.
 
@@ -122,8 +122,19 @@ def check_x_account(
         if key not in dna:
             failures.append(f"missing required key {key!r}")
 
-    if dna.get("language") != "en":
-        failures.append(f"language is {dna.get('language')!r}, expected 'en'")
+    languages = dna.get("allowed_languages")
+    if dna.get("language") != "multi":
+        failures.append(f"language is {dna.get('language')!r}, expected 'multi' for the single bilingual X account")
+    if languages != ["zh", "en"]:
+        failures.append(f"allowed_languages is {languages!r}, expected ['zh', 'en']")
+    if dna.get("default_post_language") not in (languages if isinstance(languages, list) else []):
+        failures.append("default_post_language must be one of allowed_languages")
+    originals = dna.get("daily_original_targets")
+    if originals != {"zh": 20, "en": 4}:
+        failures.append(f"daily_original_targets is {originals!r}, expected zh=20 and en=4")
+    replies = dna.get("daily_reply_targets")
+    if replies != {"inspiration_broad": 40, "inspiration_ai": 40, "timeline_ai": 80}:
+        failures.append("daily_reply_targets must be inspiration_broad=40, inspiration_ai=40, timeline_ai=80")
     if not str(dna.get("account") or "").strip():
         failures.append("account is empty")
     platforms = [str(item) for item in dna.get("platforms") or []]
@@ -203,6 +214,42 @@ def check_x_account(
     if unknown:
         failures.append(
             f"editorial.dimension_floor_required names dimensions that do not exist: {unknown}")
+    profiles = editorial.get("review_profiles")
+    pillar_names = [str(p.get("name")) for p in dna.get("content_pillars") or []
+                    if isinstance(p, dict)]
+    if not isinstance(profiles, dict) or sorted(profiles) != sorted(pillar_names):
+        failures.append("editorial.review_profiles must define exactly all content pillar modes")
+    else:
+        for mode, profile in profiles.items():
+            if not isinstance(profile, dict):
+                failures.append(f"editorial.review_profiles.{mode} must be an object")
+                continue
+            score = profile.get("score_floor")
+            if not _is_int(score) or not 1 <= score <= total:
+                failures.append(f"editorial.review_profiles.{mode}.score_floor invalid")
+            min_dim = profile.get("dimension_floor")
+            if not _is_int(min_dim) or not 1 <= min_dim <= 5:
+                failures.append(f"editorial.review_profiles.{mode}.dimension_floor invalid")
+            dimensions_required = profile.get("dimension_floor_required")
+            if not isinstance(dimensions_required, list) or not dimensions_required or (
+                set(dimensions_required) - set(ids)):
+                failures.append(f"editorial.review_profiles.{mode}.dimension_floor_required invalid")
+            for count_field in ("theses_required", "red_team_questions"):
+                val = profile.get(count_field)
+                if not _is_int(val) or val < 1:
+                    failures.append(f"editorial.review_profiles.{mode}.{count_field} invalid")
+            if mode in ("workflow_artifact", "source_analysis") and (
+                not _is_int(score) or score < 24 or not
+                {"novelty", "evidence", "mechanism"}.issubset(
+                    set(dimensions_required) if isinstance(dimensions_required, list) else set())):
+                failures.append(f"editorial.review_profiles.{mode} weakens technical evidence gates")
+            if mode == "general_interest":
+                if not {"novelty", "evidence"}.issubset(
+                    set(dimensions_required) if isinstance(dimensions_required, list) else set()):
+                    failures.append("editorial.review_profiles.general_interest must enforce novelty and evidence")
+                if profile.get("p0_labels") != ["ORIGINAL_OBSERVATION", "SOURCE_ANALYSIS"]:
+                    failures.append("editorial.review_profiles.general_interest.p0_labels mismatch")
+
     recovery = [str(item) for item in editorial.get("recovery_fields") or []]
     missing_recovery = [field for field in X_RECOVERY_FIELDS if field not in recovery]
     if missing_recovery:
@@ -246,8 +293,12 @@ def check_x_account(
     if visual.get("svg_alone") is not False:
         failures.append(
             "visual.svg_alone must be false: an SVG on its own is not uploadable to X")
+    if visual.get("post_formats") != ["text", "image"]:
+        failures.append("visual.post_formats must be ['text', 'image']")
+    if visual.get("default_post_format") != "image":
+        failures.append("visual.default_post_format must be image for legacy records")
     if visual.get("alt_required") is not True:
-        failures.append("visual.alt_required must be true")
+        failures.append("visual.alt_required must be true for image-format posts")
     image_statuses = [str(item) for item in visual.get("image_status_enum") or []]
     expected_image = sorted(X_IMAGE_STATUS)
     if sorted(image_statuses) != expected_image:
@@ -307,16 +358,20 @@ def check_x_account(
         failures.append("evidence_ladder has no rule")
 
     cadence = dna.get("cadence") or {}
+    max_daily = cadence.get("max_original_posts_per_day")
+    if not _is_int(max_daily) or not 1 <= max_daily <= 24:
+        failures.append(
+            f"cadence.max_original_posts_per_day is {max_daily!r}, expected an integer 1..24")
     window = cadence.get("original_posts_per_week")
+    weekly_capacity = max_daily * 7 if _is_int(max_daily) and 1 <= max_daily <= 24 else 0
     if not (isinstance(window, list) and len(window) == 2
             and all(_is_int(item) for item in window)
-            and 0 < window[0] <= window[1] <= 7):
+            and 0 < window[0] <= window[1] <= weekly_capacity):
         failures.append(
-            f"cadence.original_posts_per_week is {window!r}, expected [low, high] inside 0..7")
-    if cadence.get("max_original_posts_per_day") != 1:
-        failures.append(
-            f"cadence.max_original_posts_per_day is "
-            f"{cadence.get('max_original_posts_per_day')!r}, expected 1")
+            f"cadence.original_posts_per_week is {window!r}, expected "
+            f"[low, high] within 1..{weekly_capacity} based on daily max")
+    if max_daily != 24 or window != [168, 168]:
+        failures.append("cadence must be 24 originals/day and 168/week for the current single-account plan")
     if not cadence.get("rule"):
         failures.append("cadence has no rule")
 

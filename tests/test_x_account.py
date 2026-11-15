@@ -131,6 +131,104 @@ def test_the_shipped_x_account_passes_its_own_checker():
 
 
 @test
+def test_single_bilingual_account_daily_24_originals_and_weekly_168_are_valid():
+    dna = _x()
+    assert dna["language"] == "multi"
+    assert dna["allowed_languages"] == ["zh", "en"]
+    assert dna["daily_original_targets"] == {"zh": 20, "en": 4}
+    assert dna["daily_reply_targets"] == {"inspiration_broad": 40, "inspiration_ai": 40, "timeline_ai": 80}
+    assert dna["cadence"]["max_original_posts_per_day"] == 24
+    assert dna["cadence"]["original_posts_per_week"] == [168, 168]
+    assert check_x_account(dna, ROOT, []) == []
+    print("[ok] single bilingual X account zh20/en4, 160 replies and 24 originals daily")
+
+
+@test
+def test_weekly_target_must_not_exceed_daily_capacity():
+    _assert_fails(_mutated(cadence__original_posts_per_week=[169, 169]),
+                  "based on daily max")
+    _assert_fails(_mutated(cadence__max_original_posts_per_day=0),
+                  "expected an integer 1..24")
+    _assert_fails(_mutated(cadence__max_original_posts_per_day=25),
+                  "expected an integer 1..24")
+    _assert_fails(_mutated(cadence__max_original_posts_per_day=23),
+                  "based on daily max")
+    print("[ok] cadence refuses out-of-range or internally inconsistent targets")
+
+
+@test
+def test_bilingual_targets_are_not_silently_split_across_accounts():
+    _assert_fails(_mutated(language="en"), "expected 'multi'")
+    _assert_fails(_mutated(allowed_languages=["en"]), "allowed_languages")
+    _assert_fails(_mutated(daily_original_targets={"zh": 0, "en": 24}), "daily_original_targets")
+    _assert_fails(_mutated(daily_reply_targets={"inspiration_broad": 80}), "daily_reply_targets")
+    print("[ok] invalid single-account language and target changes fail closed")
+
+
+@test
+def test_v14_skills_docs_and_prompt_share_single_account_targets():
+    from pathlib import Path
+    paths = (
+        ROOT / "skills/x-high-engagement-copywriter/SKILL.md",
+        ROOT / "skills/x-organic-growth-operator/SKILL.md",
+        ROOT / "docs/X-DISCUSSION-CANDIDATES.md",
+        ROOT / "docs/X-LOCAL-LEARNING-LOOP.md",
+        ROOT / "projects/x-growth-en/README.md",
+        ROOT / "projects/x-growth-en/original-content-rewards-90d.md",
+        ROOT / "config/accounts/prompts/x-superplay-english.prompt.md",
+        ROOT / "projects/x-growth-en/project.yaml",
+    )
+    for path in paths:
+        body = path.read_text(encoding="utf-8")
+        assert "160" in body, path
+        assert "24" in body, path
+        assert "40" in body and "80" in body, path
+        assert "20" in body and "4" in body, path
+        assert "same" in body.lower() or "single" in body.lower() or "同一" in body or "唯一" in body or "ONE" in body, path
+    print("[ok] both X skills, project docs and prompt use current single-account 160+24 goals")
+
+
+
+@test
+def test_v14_manual_relationship_and_format_adapters_do_not_restore_old_limits():
+    """Check docs/skills as well as account JSON; execution CI previously missed stale prose."""
+    account = _x()
+    assert account["language"] == "multi"
+    assert account["publication"]["mode"] == "MANUAL_ONLY"
+    assert account["daily_original_targets"] == {"zh": 20, "en": 4}
+    assert account["daily_reply_targets"] == {
+        "inspiration_broad": 40,
+        "inspiration_ai": 40,
+        "timeline_ai": 80,
+    }
+    assert "V1.4" in account["business"]["source_of_truth"]
+    for relative in (
+        "skills/x-organic-growth-operator/SKILL.md",
+        "skills/x-high-engagement-copywriter/SKILL.md",
+        "docs/X-DISCUSSION-CANDIDATES.md",
+        "docs/X-LOCAL-LEARNING-LOOP.md",
+        "projects/x-growth-en/README.md",
+        "config/accounts/prompts/x-superplay-english.prompt.md",
+        "projects/x-growth-en/templates/x-rewards-weekly-review.md",
+    ):
+        content = (ROOT / relative).read_text(encoding="utf-8")
+        assert "V1.4" in content, relative
+    lessons = (
+        ROOT / "skills/x-high-engagement-copywriter/references/"
+        "reply-batch-and-original-post-lessons-2026-11-13.md"
+    ).read_text(encoding="utf-8")
+    assert "V1.4" in lessons
+    assert "原创每周 3–4 条、每天最多 1 条是账号上限" not in lessons
+    operator = (ROOT / "skills/x-organic-growth-operator/SKILL.md").read_text(encoding="utf-8")
+    assert "X Strategy SOP V1.4 governs business priority" in operator
+    assert "not an extra quota" in operator
+    weekly = (ROOT / "projects/x-growth-en/templates/x-rewards-weekly-review.md").read_text(encoding="utf-8")
+    assert "不重复算作新的 B/C 首访样本" in weekly
+    assert "不推导通用算法配额" in weekly
+    print("[ok] X V1.4 entrypoints, history, follow-up and manual-only boundaries align")
+
+
+@test
 def test_a_manual_only_account_may_not_declare_an_api_publisher():
     dna = _mutated(publication__mode="API", publication__api="implemented")
     _assert_fails(dna, "only MANUAL_ONLY is implemented")
@@ -151,6 +249,26 @@ def test_the_score_floor_must_fit_the_rubric():
     _assert_fails(_mutated(editorial__score_floor=31), "against a 30-point rubric")
     _assert_fails(_mutated(editorial__score_floor=0), "against a 30-point rubric")
     print("[ok] 8. the score floor must sit inside the rubric it scores")
+
+
+@test
+def test_general_interest_profile_and_text_media_cannot_be_deleted_or_weakened():
+    dna = _x()
+    assert dna["visual"]["post_formats"] == ["text", "image"]
+    assert dna["editorial"]["review_profiles"]["general_interest"]["score_floor"] == 20
+    assert dna["editorial"]["review_profiles"]["workflow_artifact"]["score_floor"] == 24
+    _assert_fails(_mutated(visual__post_formats=["image"]), "visual.post_formats")
+    _assert_fails(_mutated(editorial__review_profiles={}),
+                  "review_profiles must define")
+    profiles = json.loads(json.dumps(dna["editorial"]["review_profiles"]))
+    profiles["workflow_artifact"]["score_floor"] = 10
+    _assert_fails(_mutated(editorial__review_profiles=profiles),
+                  "weakens technical evidence gates")
+    profiles["workflow_artifact"]["score_floor"] = 24
+    profiles["general_interest"]["dimension_floor_required"] = ["tension"]
+    _assert_fails(_mutated(editorial__review_profiles=profiles),
+                  "must enforce novelty and evidence")
+    print("[ok] image/text modes and mode-appropriate scoring cannot drift")
 
 
 @test

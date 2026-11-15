@@ -7,9 +7,9 @@
 ## 0. 起点与边界
 
 - 2026-11-03 创作者提供 X Creator Studio 的 Original Content Rewards 资格截图：Premium 与年龄显示通过；500 认证粉丝和过去 90 天 500,000 认证用户首页曝光尚未达标。**数值为当时用户截图，并非已通过官方授权读取**。此公开仓不上传原始截图、账号身份、精确账户数据；真实数值仅在授权私有台账保存。
-- `projects/x-growth-en/project.yaml` 当前绑定英语技术创作者账号，`language: en`、`publication_mode: MANUAL_ONLY`。用户有中英文交替发帖偏好，但**不因此擅自把中文/英文受众混投同一账户**：先人工核实实际 X handle、Explorer/Builder 角色、语言和 ICP；当前英语工程师账号先沿用英语。若确认同一账号双语，记录一项明确批准的语言实验；若不同账号，则独立基线、独立内容与快照。
-- ContentOps 已有 X 线下增长 Skill、文章审核/图片/人工发布门禁、`scripts/x_growth_pipeline.py`、`projects/x-growth-en/templates/posts.csv`、账号与帖子数据 CSV；**目前无获授权的 X 自动发布、回复、读取账号数据或收益指标接口**。
-- **优先遵守现存 14 天恢复实验**：前 14 天控制每账号约 3–4 条高质量原创/周，一般不超过 1 条/日；这是工作量与变量控制，非已证实的推荐算法最优频率。不能因为想冲 50 万而机械推行 4 条/日。核实旧实验状态后再变更频率。
+- `projects/x-growth-en/project.yaml` 只绑定**唯一双语 X 账号**，`language: multi`、支持 `zh/en`，仍为 `MANUAL_ONLY`。`x-growth-en`路径和`x-superplay-english` slug仅兼容旧数据，不是第二账号；中文/英文内容和A/B/C回复都属于同一个账号。各语言的逐帖指标独立分析，账号级Q和粉丝不能双重计数。
+- ContentOps 已有 X 线下增长 Skill、文章审核/可选图片与ALT/人工发布门禁、`scripts/x_growth_pipeline.py`、`projects/x-growth-en/templates/posts.csv`、账号与帖子数据 CSV；**目前无获授权的 X 自动发布、回复、读取账号数据或收益指标接口**。
+- **2026-11-14 V1.4 单账号目标（延续 V1.3 数量）**：同一账号每天人工回复160条（A=灵感泛娱乐40、B=灵感AI科技40、C=时间线AI科技80），**原创发布目标24条（中文20、英文4）**，题材不限技术。旧英文4条/日与中文另设账号说法已撤销。不能绕过事实/原创、人审或真实URL；纯文字可用 `post_format=text`，图文 `post_format=image` 时图片/ALT必须合规，不能把待审稿算已发布。
 
 ## 1. 官方资格与计量口径（执行前必须重新核实）
 
@@ -51,7 +51,7 @@
 这些比例、发布时间和用语是**待检验假设**，不在代码里硬编码为算法策略。
 
 每帖最小内容合同：
-`account + language + ICP + source_id + original_thesis + unique_proof + counterargument + copy + image/ALT + permission_check + human_review + post_url(if published) + content_id`。
+`account + language + ICP + source_or_observation + original_thesis + honest_claim_scope + counterargument + copy + post_format(text|image) + image/ALT(if image) + permission_check + mode_specific_human_review + post_url(if published) + content_id`。
 
 原创主帖优先采用：
 `Finding / tested result → 1–3 observations → genuine artifact or repo link → substantive question (optional)`。
@@ -59,18 +59,18 @@
 
 ## 4. 90 天执行分期
 
-### D0–D14｜诊断与恢复（硬前置）
+### D0–D14｜诊断与恢复（V1.4下的账号核验，不再自动恢复旧低频配额）
 1. 人工确认账号 handle、语言、Profile/Bio、置顶、角色、当前规则地区/KYC、账号通知，核实最近 14 天旧恢复实验的状态。
 2. 将旧仓已记录的帖子 ID/URL/发布状态/素材权利/原始时序与 ContentOps `posts.csv` 对账：`draft` 仍为草稿；`reported_published_url_pending` 必须见真实 URL 才升级为已发布。
 3. 人工在官方 Creator Studio 核对 **Verified followers / Verified Home Timeline impressions (last 90 days)**；保存脱敏的私有证据编号；缺失留空。
-4. 每账号一周 3–4 条高质量主帖作为试验上限建议，比较“实测截图/代码”与“独立工具分析”两组同 ICP、相近发布窗口的内容。人工参与真实讨论，禁止自动批量互动。
+4. 当前唯一账号每日原创发布目标24条（zh20/en4，满额168条/周），不要求全技术；旧4条英文/天、28条/周和更早低频都为历史。发布前按语言与来源逐条审核，回复160条/日为受合规约束的人工目标，禁止批量骚扰或自动互动。
 5. 本周结束记录：来源覆盖率、T+24h / T+72h 快照、账号认证粉丝增量、滚动 90 日合格首页曝光增量、创作工时。样本不足则写 `INCONCLUSIVE`。
 
 ### D15–D30｜建立有效内容家族
 1. 基于一致口径，选择 1–2 个高质量讨论与账号增量更好的主题；保持账号 ICP 稳定。
 2. 每周至少 1 个真实项目的完整可复现案例，拆为不同原生角度的独立帖子，不可机械复制/搬运。
-3. 中英文采用**账号绑定的独立实验**，先确认英文账号与中文账号是否确实是同一个平台身份。没有批准时不推行自动交替；若批准，同一实验只改变语言这一变量并分别记录。
-4. 只有能证明质量、效率未下降且原恢复期问题已缓解，才由本人审批提升发帖频次；每日 2–4 条只能是上限实验，不是必须完成的 KPI。
+3. 中英文是**同一个账号下的两个内容语言队列**，并非两个账号。逐帖带语言，若做语言实验要控制受众、主题、时间等变量；不同语言结果不可当作因果增益。
+4. 用户已经明确同一账号中文20+英文4=每日24条原创发布目标；任何帖子先人工审查、再发布、再按真实URL登记。未达数量记录风险或成本，不能为了数字违规；此旧90天方案不自动证明平台资格。
 
 ### D31–D60｜扩大经过验证的系列
 1. 以自己账号的 `Topic Cluster × Packaging` 优胜系列继续新案例、反例、性能边界、真实问题；不是旧帖换词重发。
@@ -122,7 +122,7 @@
 ## 8. 验收清单
 
 - [ ] 本计划可从 ContentOps 项目入口找到，包含官方政策链接/核验日期。
-- [ ] 旧恢复协议优先级和账号语言/ICP 治理没有被绕过。
+- [ ] 新版V1.4数量目标与账号语言/ICP、证据、版权、人工发布治理均一致；旧恢复频率仅用于历史参照。
 - [ ] 已有 post/account/post metric CSV 未被清空或重建；新增资格 CSV 只有 header。
 - [ ] 数字门槛、普通曝光/合格曝光、账号/帖级指标、滚动窗口互不混淆。
 - [ ] 人工内容/配图/ALT 审核与发布 URL 回执仍是硬要求。

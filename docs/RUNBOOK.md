@@ -4,6 +4,8 @@
 
 > Real executable commands. Derived from actual script behavior, not assumptions.
 > Last updated: 2026-11-16
+> Last verified: 2026-11-14: X CLI now accepts `--post-format text|image` on `--new` (image is legacy default). A text package has no image/ALT upload step; image-format posts still require genuine PNG/JPEG+ALT. `--package` never posts, and only a human-confirmed X status URL can be recorded by `--mark-published`.
+> X policy: Strategy canonical SOP and registered account DNA; source metrics and publishing still require human verification.
 
 ## 0. Environment check
 

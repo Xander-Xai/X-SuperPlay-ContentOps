@@ -10,9 +10,9 @@ publisher needs a capability spike — tier, OAuth 1.0a media upload, app
 permissions — and a credential kept outside the tree; none of that exists, so
 none of it is pretended.
 
-The package is the deliverable: the copy with its weighted lengths, the image
-with its digest, the ALT text verbatim, and the manual steps that end at a real
-status URL. `scripts/x_post.py --mark-published` is the only way a record ever
+The package is the deliverable: the copy with its weighted lengths, an
+optional image digest and ALT for image-format posts, and manual steps ending
+at a real status URL. A text-only post keeps image=null and alt_text empty. `scripts/x_post.py --mark-published` is the only way a record ever
 becomes `published`, and it demands that URL.
 """
 
@@ -114,6 +114,8 @@ def build_package(post: Dict[str, Any], account: Dict[str, Any], project: Path,
         raise PackageBlocked(
             f"{post.get('content_id')!r} is {verdict}, not READY: {detail}")
 
+    post_format = str(post.get("post_format") or
+                      (account.get("visual") or {}).get("default_post_format") or "image")
     parts = copy_parts(post)
     lengths = x_text.parts_lengths(parts)
     content_id = str(post.get("content_id") or "x-post")
@@ -132,6 +134,7 @@ def build_package(post: Dict[str, Any], account: Dict[str, Any], project: Path,
         "audience_job": post.get("audience_job"),
         "unique_artifact_ref": post.get("unique_artifact_ref"),
         "experiment_variable": post.get("experiment_variable"),
+        "post_format": post_format,
         "copy": {
             "budget": budget,
             "char_metric": (account.get("editorial") or {}).get("char_metric"),
@@ -140,12 +143,17 @@ def build_package(post: Dict[str, Any], account: Dict[str, Any], project: Path,
                 for index, (text, length) in enumerate(zip(parts, lengths), start=1)
             ],
         },
-        "image": _image_brief(post, account, project),
-        "alt_text": str(post.get("alt_text") or "").strip(),
+        "image": _image_brief(post, account, project) if post_format == "image" else None,
+        "alt_text": str(post.get("alt_text") or "").strip() if post_format == "image" else "",
         "review": post.get("review"),
         "status_url": post.get("status_url"),
         "skill_route": account.get("skill_route") or [],
-        "manual_steps": list(MANUAL_STEPS),
+        "manual_steps": (
+            list(MANUAL_STEPS)
+            if post_format == "image"
+            else [step for step in MANUAL_STEPS
+                  if not step.startswith("Attach the image")]
+        ),
         "cannot": [
             "This package was not submitted to X by this repository.",
             "No API call, token or scheduler was involved.",

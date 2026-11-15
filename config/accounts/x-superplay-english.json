@@ -1,71 +1,96 @@
 {
   "schema": "contentops.x-account/v1",
   "slug": "x-superplay-english",
-  "account": "X · SuperPlay English",
-  "language": "en",
-  "platforms": ["x"],
+  "account": "X · SuperPlay (one bilingual account)",
+  "language": "multi",
+  "platforms": [
+    "x"
+  ],
   "platform_roles": {
-    "x": "the only platform this account publishes to: one English post (2-3 only when a runnable example needs them) plus one actual 16:9 image"
+    "x": "SINGLE bilingual X account. Daily human-reviewed targets: 160 replies (A inspiration_broad 40, B inspiration_ai 40, C timeline_ai 80); 24 distinct original publications (Chinese 20, English 4). All belong to this SAME account; legacy account slug is kept only for existing links. Goals are not permission for high-volume unsolicited, repetitive or automated activity."
   },
-
-  "mission": "Turn one real AI-workflow artifact into one defensible English X post, or publish nothing.",
-  "promise": "An English account for indie AI builders and freelancers: what actually changed in a real workflow, what it cost, and where it failed, with the artifact to check it against.",
-  "tagline": "A workflow claim is worth what its artifact is worth.",
-  "decision_question": "Should I keep doing this workflow this way, or change exactly one step?",
-
-  "audience": "English-speaking indie AI builders and freelancers shipping useful automations with agent tooling.",
-  "core_audience": "A solo builder who runs agent workflows on real client or product work and has to decide, this week, whether to change one step of them.",
+  "mission": "Operate ONE bilingual X account with daily quality-gated targets of 20 Chinese and 4 English original posts plus 40/40/80 contextual, manual replies. Topics may be AI, entertainment, work, business or daily life; evidence and platform rules take priority.",
+  "promise": "Original bilingual commentary, real observations and useful ideas on AI, work, culture and everyday life; no invented evidence, generic spam or forced tech focus.",
+  "tagline": "Be original. Keep it real.",
+  "decision_question": "What specific insight, lived observation, useful answer or original joke makes this post worth reading?",
+  "audience": "Chinese-speaking and English-speaking X readers of AI/tech, business, culture, work, entertainment and daily life.",
+  "core_audience": "Relevant readers in either language, with language and topic recorded on every post; language cohorts are analyzed separately but use the same account identity.",
   "audience_layers": [
     {
-      "layer": "core",
-      "who": "Indie AI builder or freelancer running agent tooling on real deliverables",
-      "job": "Decide whether a workflow step should change, and what would prove it",
-      "reads_for": "the artifact, the failure mode, the reproduction command"
+      "layer": "zh",
+      "who": "Chinese-reading X users",
+      "job": "Find a specific observation, useful idea or entertaining original take",
+      "reads_for": "original posts in Chinese, not translated reposts"
     },
     {
-      "layer": "adjacent",
-      "who": "A technically literate founder evaluating tools and vendors",
-      "job": "Separate a vendor claim from a demonstrated result",
-      "reads_for": "the boundary between what the source says and what was actually run"
+      "layer": "en",
+      "who": "English-reading X users",
+      "job": "Find an authentic observation, useful product insight or original entertaining take",
+      "reads_for": "original English posts with their own context and evidence"
     }
   ],
-
   "content_pillars": [
     {
       "name": "workflow_artifact",
-      "weight_pct": 66,
+      "weight_pct": 25,
       "proof_floor": "P1",
-      "structure": ["reader problem", "what changed", "artifact or failed step", "cost and limit", "one action"],
-      "scope": "Two of every three posts: a real workflow, its pain, an artifact, benchmark or failed step, and the reproduction or the decision it supports."
+      "structure": [
+        "reader problem",
+        "tested result or failure",
+        "artifact and limitation",
+        "usable takeaway"
+      ],
+      "scope": "Real-world AI/tool experiments when supported by genuine evidence; no invented tests."
     },
     {
       "name": "source_analysis",
-      "weight_pct": 34,
+      "weight_pct": 25,
       "proof_floor": "P0",
-      "structure": ["source fact", "tension", "mechanism", "counterexample", "who should change what"],
-      "scope": "One of every three: independent analysis of a relevant tool update, anchored to the same buyer and job. A mechanism and a counterexample are mandatory."
+      "structure": [
+        "source fact",
+        "new angle",
+        "mechanism or counterexample",
+        "consequence"
+      ],
+      "scope": "Evidence-led news, product and business commentary; AI is optional, verified claims mandatory."
+    },
+    {
+      "name": "general_interest",
+      "weight_pct": 50,
+      "proof_floor": "P0",
+      "structure": [
+        "specific everyday or cultural premise",
+        "original contrast, feeling or humor",
+        "natural conversational finish"
+      ],
+      "scope": "Work, entertainment, daily life and broader culture; not forced to be technical. This is a topic capacity guide, not a publication entitlement."
     }
   ],
   "content_pillars_note": {
     "superseded_mix": {
+      "workflow_artifact": 66,
+      "source_analysis": 34,
       "SKILL_EVERGREEN": 30,
       "AI_NEWS": 30,
       "MONETIZATION": 20,
       "TUTORIAL": 20
     },
-    "reason": "vendor/x-growth-os/docs/X-GROWTH-RECOVERY-2026-10-26.md §1 and §6 record 30/30/20/20 as a content-mix hypothesis, not a proven schedule, and suspend the daily quota during recovery. The old mix is kept here so it is neither silently forgotten nor accidentally restored."
+    "reason": "Historic technical-only pillar mixes are not quotas. Current V1.4 continues the V1.3 plan for ONE bilingual X account with 20 Chinese and 4 English independent original publication goals each day, varied topics; avoid copied or translated duplicates. Pillar weights are editorial guides, not additional quotas."
   },
-
   "non_negotiable": [
     "No invented numbers, results, clients or performance claims; a prediction is labelled as one.",
     "A post with no permission-cleared firsthand artifact carries SOURCE_ANALYSIS and may not say 'I tested', 'we ran' or claim a measured result.",
-    "Every post carries an actual 1600x900 PNG or JPEG; an SVG alone is not an X-uploadable image.",
+    "Text-only originals are permitted when explicitly post_format=text and have no image or ALT; image-format posts require a real 1600x900 PNG/JPEG and accurate ALT. Media format is never a shortcut around human review, originality, factual evidence or platform policy.",
     "Human review is recorded by a person; an assistant may prepare it and never approve it.",
     "published requires a real https://x.com/<handle>/status/<digits> URL; nothing else counts.",
     "Unobserved metrics stay null; an empty cell is not a zero.",
-    "No automated likes, follow/unfollow, reply bots, scheduled browser actions or duplicative posting."
+    "No automated likes, follow/unfollow, reply bots, scheduled browser actions or duplicative posting.",
+    "Daily 160 replies and 24 originals are a plan, not a license for repetitive, bulk unsolicited, harassing or irrelevant platform behavior; record actual eligible/published/skipped separately.",
+    "All 160 replies and 24 originals belong to ONE existing X account identified by this unchanged compatibility slug; daily posted originals target Chinese 20 and English 4. Never invent a second account.",
+    "Every original post record explicitly identifies language zh or en; each language cohort is evaluated separately within the same account. Do not mix cohorts in B/C comparisons.",
+    "X official authenticity rules prohibit bulk aggressive unsolicited replies and repetitive or irrelevant engagement even where numeric technical account limits would permit it; stop rather than forcing 160 or 24.",
+    "General-interest and technical posts use mode-appropriate human review profiles: general_interest is not rejected solely for lacking a technical mechanism or fake benchmark, while factual claims and any described test still need proportionate real evidence."
   ],
-
   "evidence": {
     "note": "claim_coverage.EVIDENCE_MODES (CLAIM_LED / EVIDENCE_LED / EXPLANATORY) is the video vocabulary and describes how a film is composed. An X post's evidence question is a proof grade, so this account declares proof_ladder beside it. Routing resolves the DNA's 'pipeline' first and never reads a video mode off this file.",
     "required_evidence_class": "EXTERNAL_SOURCE",
@@ -82,13 +107,16 @@
       "There is no proven universal external-link penalty; do not use a hidden-link trick."
     ]
   },
-
   "evidence_ladder": {
-    "order": ["impression", "qualified_reply", "profile_visit", "account_net_follow"],
+    "order": [
+      "impression",
+      "qualified_reply",
+      "profile_visit",
+      "account_net_follow"
+    ],
     "rule": "A lower rung never proves a higher one. An impression is not a reader, a like is not a qualified reply, and a profile visit is not a follow.",
     "note": "Only observed native metrics move a rung, at a recorded age window (T+2H / T+24H / T+72H / T+7D). The rates are a funnel of observations, never one algorithm score and never an attribution model."
   },
-
   "editorial": {
     "max_chars_per_post": 280,
     "max_thread_posts": 3,
@@ -97,17 +125,56 @@
     "theses_required": 3,
     "red_team_questions": 3,
     "review_dimensions": [
-      {"id": "novelty", "max": 5, "low": "README restatement or common knowledge", "high": "non-obvious and defensible"},
-      {"id": "evidence", "max": 5, "low": "unverifiable or no primary link", "high": "firsthand, with scope and counterexample stated"},
-      {"id": "mechanism", "max": 5, "low": "\"AI speeds things up\"", "high": "which step changed, why, and when it stops working"},
-      {"id": "audience_decision", "max": 5, "low": "the reader cannot act", "high": "changes one real tool, build or purchasing decision"},
-      {"id": "falsifiable", "max": 5, "low": "a slogan", "high": "names an input, an output and a metric that could refute it"},
-      {"id": "tension", "max": 5, "low": "a product description", "high": "the first two sentences state a real technical contradiction and its consequence"}
+      {
+        "id": "novelty",
+        "max": 5,
+        "low": "README restatement or common knowledge",
+        "high": "non-obvious and defensible"
+      },
+      {
+        "id": "evidence",
+        "max": 5,
+        "low": "unverifiable or no primary link",
+        "high": "firsthand, with scope and counterexample stated"
+      },
+      {
+        "id": "mechanism",
+        "max": 5,
+        "low": "\"AI speeds things up\"",
+        "high": "which step changed, why, and when it stops working"
+      },
+      {
+        "id": "audience_decision",
+        "max": 5,
+        "low": "the reader cannot act",
+        "high": "changes one real tool, build or purchasing decision"
+      },
+      {
+        "id": "falsifiable",
+        "max": 5,
+        "low": "a slogan",
+        "high": "names an input, an output and a metric that could refute it"
+      },
+      {
+        "id": "tension",
+        "max": 5,
+        "low": "a product description",
+        "high": "the first two sentences state a real technical contradiction and its consequence"
+      }
     ],
     "score_floor": 24,
     "dimension_floor": 4,
-    "dimension_floor_required": ["novelty", "evidence", "mechanism"],
-    "recovery_fields": ["audience_job", "proof_grade", "unique_artifact_ref", "experiment_variable"],
+    "dimension_floor_required": [
+      "novelty",
+      "evidence",
+      "mechanism"
+    ],
+    "recovery_fields": [
+      "audience_job",
+      "proof_grade",
+      "unique_artifact_ref",
+      "experiment_variable"
+    ],
     "prompts": {
       "post_brief": "config/accounts/prompts/x-superplay-english.prompt.md"
     },
@@ -120,56 +187,130 @@
     },
     "prompts_note": "This slice ships one repo-owned authoring brief, referenced by path: a record may name 'post_brief' in 'prompt_ref' so a reader can see which brief it was written from. The vendored workflow's five mega-prompts are not copied here because their rights are not established; they are listed under 'unavailable_prompts' and stay BLOCKED_UPSTREAM. Nothing here generates copy.",
     "source_analysis_label": "SOURCE_ANALYSIS",
-    "score_note": "24/30 with novelty, evidence and mechanism each >=4 is a human editorial heuristic, not an X ranking formula and not evidence of reach. A self-awarded perfect score authorizes nothing on its own; the recovery fields and the proof grade are what the gate reads."
+    "score_note": "Mode-specific human editorial guidance: workflow_artifact/source_analysis >=24/30 and novelty/evidence/mechanism >=4; general_interest >=20/30 and novelty/evidence >=4, only one distinct angle and red-team check. These are human heuristics, NOT platform scores or permission to post. All require human approval, traceable sources for claims, original contribution and safety/rights checks.",
+    "review_profiles": {
+      "workflow_artifact": {
+        "score_floor": 24,
+        "dimension_floor": 4,
+        "dimension_floor_required": [
+          "novelty",
+          "evidence",
+          "mechanism"
+        ],
+        "theses_required": 3,
+        "red_team_questions": 3,
+        "objective": "Technical workflow or tested artifact. Require actual traceable proof, mechanism and limits."
+      },
+      "source_analysis": {
+        "score_floor": 24,
+        "dimension_floor": 4,
+        "dimension_floor_required": [
+          "novelty",
+          "evidence",
+          "mechanism"
+        ],
+        "theses_required": 3,
+        "red_team_questions": 3,
+        "objective": "News/claims: first-party citations, factual accuracy and causal discipline. No invented firsthand runs."
+      },
+      "general_interest": {
+        "score_floor": 20,
+        "dimension_floor": 4,
+        "dimension_floor_required": [
+          "novelty",
+          "evidence"
+        ],
+        "theses_required": 1,
+        "red_team_questions": 1,
+        "p0_labels": [
+          "ORIGINAL_OBSERVATION",
+          "SOURCE_ANALYSIS"
+        ],
+        "objective": "Original entertainment, culture, work or everyday observation: reward specific and genuinely original perspective, clear reader value and honesty about opinion. 'Evidence' measures honest grounded context or original personal observation, not an invented experiment; technical mechanism score is not mandatory. Factual news/scandal claims still need a traceable source, and P0 cannot claim a benchmark."
+      }
+    }
   },
-
   "visual": {
     "target": "1600x900",
     "width": 1600,
     "height": 900,
     "aspect": "16:9",
-    "formats": ["png", "jpeg"],
+    "formats": [
+      "png",
+      "jpeg"
+    ],
     "svg_alone": false,
     "alt_required": true,
-    "alt_sentences": [1, 2],
+    "alt_sentences": [
+      1,
+      2
+    ],
     "alt_forbids_url": true,
-    "image_status_enum": ["missing", "failed_qa", "pending_export", "generated", "external_image_pending_archive"],
+    "image_status_enum": [
+      "missing",
+      "failed_qa",
+      "pending_export",
+      "generated",
+      "external_image_pending_archive"
+    ],
     "image_score_floor": 8,
     "owner": "card-quote",
     "rule": "The image must carry this post's exact claim, not a generic tech motif. Deterministic HTML -> PNG for anything with text or numbers, so labels stay legible at ~400px width. A conceptual illustration is allowed and must not pose as a benchmark, a real screenshot or a measured effect. If the image is absent, mismatched or unreadable, the post stays draft and is not recommended for publishing.",
-    "authority": "vendor/x-growth-os/docs/POST-IMAGE-DELIVERY-GATE.md"
-    ,"video_motion": {
+    "authority": "vendor/x-growth-os/docs/POST-IMAGE-DELIVERY-GATE.md",
+    "video_motion": {
       "enabled_only_when_requested": true,
       "backend": "huashu-art-motion",
-      "grammars": ["t2_keynote_ui", "y3_whiteboard", "t1_3b1b"],
-      "language": "requested language, otherwise English",
-      "rules": ["preserve the English account palette and typography", "leave existing PNG/JPEG image production unchanged", "never turn a post-image request into a video request"]
-    }
+      "grammars": [
+        "t2_keynote_ui",
+        "y3_whiteboard",
+        "t1_3b1b"
+      ],
+      "language": "same as explicit post language (zh or en)",
+      "rules": [
+        "preserve the single bilingual X account palette and typography",
+        "leave existing PNG/JPEG image production unchanged",
+        "never turn a post-image request into a video request"
+      ]
+    },
+    "post_formats": [
+      "text",
+      "image"
+    ],
+    "default_post_format": "image",
+    "media_policy": "A text-only ORIGINAL_POST is valid without image, image brief or ALT when post_format=text; a post_format=image requires a real 1600x900 PNG/JPEG and accurate ALT. Never claim an image was attached to a text post. A real image is optional for plain-text originality, not waived when selected."
   },
-
   "publication": {
     "mode": "MANUAL_ONLY",
     "requires_status_url": true,
     "handle": null,
     "handle_status": "UNKNOWN",
-    "post_status_enum": ["draft", "scheduled", "published", "failed"],
+    "post_status_enum": [
+      "draft",
+      "scheduled",
+      "published",
+      "failed"
+    ],
     "api": "not_implemented",
     "rule": "The workflow emits a publish package a person posts by hand. No X API call and no credentials in this repository. The handle is genuinely unknown until the first real status URL teaches it; recording it from that URL is allowed, guessing it is not."
   },
-
   "cadence": {
-    "original_posts_per_week": [3, 4],
-    "max_original_posts_per_day": 1,
-    "community_minutes_per_active_day": [10, 15],
-    "source_artifacts_per_week": 1,
-    "rule": "Three or four original posts a week from at most one real source artifact, and ten to fifteen minutes a day of manual reading and replying. No quota-driven triple-post day.",
-    "note": "A workload and confounder control from the 14-day recovery experiment, not an asserted X algorithm optimum."
+    "original_posts_per_week": [
+      168,
+      168
+    ],
+    "max_original_posts_per_day": 24,
+    "community_minutes_per_active_day": [
+      0,
+      0
+    ],
+    "source_artifacts_per_week": 7,
+    "rule": "V1.4 carries forward V1.3 ONE-account planning goals: 160 contextual human-reviewed replies/day (A=40 inspiration_broad, B=40 inspiration_ai, C=80 timeline_ai) plus 24 independently original posts/day (Chinese=20, English=4); full-target 168 originals/week. This is a QUALITY-CONDITIONAL target, not an X platform permission or actual published count. Reject spam, duplicate posts, automated/unsolicited replies; record planned, eligible, human-published and skipped with real URLs.",
+    "note": "The superseded V1.2 100 replies/day, A25/B25/C50, 10 originals/day zh6/en4 and 70/week are HISTORY ONLY. Actual safe volume is subject to current X policies, account signals, rights, human review and available founder time. community_minutes_per_active_day=[0,0] means no assumed budget, NOT zero time. The existing source_artifacts_per_week=7 measures reusable upstream research/source bundles, NOT a cap on original posts; it does not waive the separately enforced unique claim, artwork, evidence and per-post human review for the 24/day plan."
   },
-
   "business": {
-    "source_of_truth": "vendor/x-growth-os/docs/X-GROWTH-RECOVERY-2026-10-26.md",
+    "source_of_truth": "X-SuperPlay-Strategy/01-Strategy/X-Original-Content-Rewards-Growth-V1.md (V1.4, 2026-11-14; quotas unchanged)",
     "stage": "pre_pmf",
-    "hypothesis": "A narrow, artifact-backed workflow account earns qualified replies from indie AI builders before it earns reach.",
+    "hypothesis": "One bilingual X account can reach relevant Chinese and English audiences via original, verified, varied commentary; actual qualified signals must be observed independently by language.",
     "rule": "Content may feed the business; it may not move the business stage. Follower count and a self-awarded score are not demand.",
     "not_claimed": [
       "reach, follower growth or demand",
@@ -177,20 +318,48 @@
       "paid demand from any external feedback"
     ]
   },
-
   "acceptance_metrics": {
-    "first_stage_priority": ["real_publish_rate", "qualified_signal_rate", "founder_minutes_per_post", "account_net_follows"],
+    "first_stage_priority": [
+      "real_publish_rate",
+      "qualified_signal_rate",
+      "founder_minutes_per_post",
+      "account_net_follows"
+    ],
     "metrics": [
-      {"id": "real_publish_rate", "how": "share of packages a person actually published, counted from real status URLs"},
-      {"id": "qualified_signal_rate", "how": "unique relevant questions or requests / impressions, manually coded, both observed"},
-      {"id": "founder_minutes_per_post", "how": "record founder minutes and rework count per post"},
-      {"id": "account_net_follows", "how": "end minus start followers on account snapshots, never attributed to one post"},
-      {"id": "evidence_integrity", "how": "every claim binds to its proof grade and its artifact ref"},
-      {"id": "image_first_pass", "how": "share of posts whose image is approved on the first render"},
-      {"id": "review_loop", "how": "the single experiment variable recorded per post and read back at T+7D"}
+      {
+        "id": "real_publish_rate",
+        "how": "share of packages a person actually published, counted from real status URLs"
+      },
+      {
+        "id": "qualified_signal_rate",
+        "how": "unique relevant questions or requests / impressions, manually coded, both observed"
+      },
+      {
+        "id": "founder_minutes_per_post",
+        "how": "record founder minutes and rework count per post"
+      },
+      {
+        "id": "account_net_follows",
+        "how": "end minus start followers on account snapshots, never attributed to one post"
+      },
+      {
+        "id": "evidence_integrity",
+        "how": "every claim binds to its proof grade and its artifact ref"
+      },
+      {
+        "id": "image_first_pass",
+        "how": "share of posts whose image is approved on the first render"
+      },
+      {
+        "id": "review_loop",
+        "how": "the single experiment variable recorded per post and read back at T+7D"
+      },
+      {
+        "id": "daily_goal_variance",
+        "how": "One X account: daily reply target A40/B40/C80 (total 160) and original publication target zh20/en4 (total 24). Count planned/reviewed/eligible/human-published/skipped separately by source and language; only real own status URLs count published; never double-count account-level Q or followers."
+      }
     ]
   },
-
   "forbidden": [
     "invented numbers",
     "generated evidence substituted for real screenshots",
@@ -199,11 +368,11 @@
     "blank treated as zero",
     "deleting or reposting a low-performing post as a growth tactic",
     "engagement bait, quote-tweet dunks and unsolicited automated replies",
-    "a conceptual illustration presented as measured performance"
+    "a conceptual illustration presented as measured performance",
+    "bulk unsolicited or repetitive replies posted solely to fill a daily number"
   ],
-
   "brand": {
-    "slogan": "A workflow claim is worth what its artifact is worth.",
+    "slogan": "A claim is worth the source behind it.",
     "production_paradigm": "One Artifact, One Card",
     "palette": {
       "base": "#0F1117",
@@ -223,9 +392,7 @@
       "stock robot or neon cyber imagery"
     ]
   },
-
   "prompt": "config/accounts/prompts/x-superplay-english.prompt.md",
-
   "skill_route": [
     {
       "step": "source_research",
@@ -248,6 +415,19 @@
       "why": "owns the 16:9 horizontal quote/data card and its card-design system; the deterministic HTML -> PNG render is what makes text and numbers exact"
     }
   ],
-
-  "pipeline": "X_EDITORIAL"
+  "pipeline": "X_EDITORIAL",
+  "allowed_languages": [
+    "zh",
+    "en"
+  ],
+  "default_post_language": "en",
+  "daily_original_targets": {
+    "zh": 20,
+    "en": 4
+  },
+  "daily_reply_targets": {
+    "inspiration_broad": 40,
+    "inspiration_ai": 40,
+    "timeline_ai": 80
+  }
 }
