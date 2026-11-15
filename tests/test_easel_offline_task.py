@@ -373,7 +373,10 @@ def test_linked_projects_directory_is_refused():
     with tmp:
         original = offline_task._linklike
         projects = root / "projects"
-        offline_task._linklike = lambda path: Path(path) == projects
+        # Compare resolved paths: the task resolves its roots, and a Windows runner
+        # hands the same directory back in another form (8.3 short name).
+        offline_task._linklike = (
+            lambda path: Path(path).resolve() == projects.resolve())
         try:
             try:
                 run_offline_draft_task(

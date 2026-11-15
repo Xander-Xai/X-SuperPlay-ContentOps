@@ -377,7 +377,10 @@ class OfflineTaskAPI:
             content = asset_path.read_bytes()
         except OSError:
             content = b""
-        actual_sha = hashlib.sha256(content).hexdigest()
+        # ``* text=auto`` expands LF to CRLF on a Windows checkout, so hashing the bytes
+        # as read makes the pin a property of the machine rather than of the file. Hash the
+        # content as git stores it; the bytes served stay exactly as they were read.
+        actual_sha = hashlib.sha256(content.replace(b"\r\n", b"\n")).hexdigest()
         if not content or actual_sha != expected_sha:
             await _json_response(send, 503, {"error": "OFFLINE_UI_UNVERIFIED"})
             return
