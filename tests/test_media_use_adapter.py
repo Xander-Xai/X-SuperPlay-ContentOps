@@ -182,7 +182,10 @@ class _FixtureAdapter(MediaUseAdapter):
 
 def _adapter(tmp: Path, **responses: Dict[str, Any]) -> MediaUseAdapter:
     node = _require_node()
-    return _FixtureAdapter(skill_dir=_fake_skill(tmp, **responses), node=node, timeout=10)
+    # 10s is enough on a workstation and not enough on a loaded Windows runner, where
+    # node's cold start plus the fixture's round trip exceeded the budget and turned a
+    # logic test into a timing test.
+    return _FixtureAdapter(skill_dir=_fake_skill(tmp, **responses), node=node, timeout=45)
 
 
 def _project(tmp: Path) -> Path:
