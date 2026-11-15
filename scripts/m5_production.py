@@ -70,13 +70,13 @@ def _sha256(path: Path) -> str:
 
 def _select_motion_backend(shot: Dict[str, Any], default: Optional[str]) -> Optional[str]:
     """Resolve per-shot MotionBackend without silently changing an explicit request."""
+    from contentops.media.animation_backend import CLIP_BACKENDS, HUASHU_BACKENDS, normalize_backend
     selected = shot.get("motion_backend") or shot.get("backend") or default
     if selected is None:
         return None
-    selected = str(selected).strip().lower()
-    aliases = {"art-motion": "huashu-art-motion", "motion": "huashu-motion"}
-    selected = aliases.get(selected, selected)
-    if selected not in {"huashu-art-motion", "huashu-motion"}:
+    selected = normalize_backend(str(selected))
+    allowed = set(HUASHU_BACKENDS) | set(CLIP_BACKENDS)
+    if selected not in allowed:
         raise M5Blocked(f"unsupported motion backend {selected!r}")
     return selected
 
@@ -682,11 +682,12 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
                 and isinstance(profile, dict)
                 and profile.get("backend") in {"huashu-art-motion", "huashu-motion"}):
             motion = {**motion, "backend": profile["backend"], "auto_profile": True}
+    from contentops.media.animation_backend import CLIP_BACKENDS, HUASHU_BACKENDS, normalize_backend
     default_backend = motion.get("backend")
-    if default_backend not in (None, "huashu-art-motion", "huashu-motion", "art-motion", "motion"):
+    normalized_default = normalize_backend(str(default_backend)) if default_backend else None
+    if default_backend and normalized_default not in set(HUASHU_BACKENDS) | set(CLIP_BACKENDS):
         raise M5Blocked(f"unsupported motion backend {default_backend!r}")
-    if default_backend in ("art-motion", "motion"):
-        default_backend = {"art-motion": "huashu-art-motion", "motion": "huashu-motion"}[default_backend]
+    default_backend = normalized_default
     if not default_backend:
         default_backend = None
     if default_backend is None:
@@ -702,6 +703,11 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
         })
         return {"state": "NOT_CONFIGURED", "shots": 0}
     plan_arg = str(motion.get("shot_plan") or "").strip()
+    if not plan_arg and default_backend in CLIP_BACKENDS:
+        raise M5Blocked(
+            "a clip backend needs an explicit motion.shot_plan; "
+            "the Huashu auto-plan is not a substitute"
+        )
     if not plan_arg:
         if not account_id or not account_dna or not narration:
             raise M5Blocked("automatic Huashua motion needs account DNA and measured narration")
@@ -956,7 +962,16 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
             raise M5Blocked(f"{placement_id}: motion asset_id must map to its visual shot")
         if not spec:
             raise M5Blocked(f"{placement_id}: motion shot plan has no spec path")
-        if shot_backend == "huashu-motion":
+        if shot_backend in CLIP_BACKENDS:
+            command = [python_executable(), str(ROOT / "scripts" / "animation_render.py"),
+                       str(project), "--render", "--backend", shot_backend,
+                       "--spec", spec, "--placement-id", placement_id,
+                       "--asset-id", asset_id, "--account", account_id, "--json"]
+            if str(shot.get("purpose") or "") == "test":
+                command.extend(["--purpose", "test"])
+            if shot.get("has_real_recording") is True:
+                command.append("--has-real-recording")
+        elif shot_backend == "huashu-motion":
             command = [python_executable(), str(motion_adapter), str(project),
                        "--film", spec, "--placement-id", placement_id,
                        "--asset-id", asset_id, "--account-id", account_id]
@@ -984,7 +999,7 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
             detail = (execution.get("error") or
                       (result.get("decision") or {}).get("detail") or
                       (proc.stderr or proc.stdout or "adapter returned no execution receipt"))
-            raise M5Blocked(f"Huashua motion blocked for {placement_id}: {str(detail)[-700:]}")
+            raise M5Blocked(f"{shot_backend} blocked for {placement_id}: {str(detail)[-700:]}")
         results.append({"placement_id": placement_id, "asset_id": asset_id,
                         "source_asset_id": shot.get("source_asset_id", line.get("asset_id")),
                         "segment_id": shot.get("segment_id", line.get("segment_id") or placement_id),
