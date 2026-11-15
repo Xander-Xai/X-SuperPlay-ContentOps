@@ -73,7 +73,9 @@ def _now() -> str:
 
 def _sandbox(root: Path) -> Path:
     """A throwaway home for the run's own state, so the receipt is isolated."""
-    return root / ".verify-tmp" / "router-e2e"
+    from contentops.paths import tmp_root
+
+    return tmp_root() / "router-e2e"
 
 
 def _approve_and_materialise(router: ContentRouter, account: str, run_id: str,

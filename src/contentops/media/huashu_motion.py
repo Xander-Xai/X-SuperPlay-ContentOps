@@ -13,6 +13,7 @@ from typing import Any, Callable, Dict
 
 from contentops.media.motion_sample import check_motion_sample
 from contentops.media.rights_gate import RightsError, validate_request_rights
+from contentops.paths import relative_label, trusted_project_root
 
 SCHEMA = "contentops.huashu-motion-request/v1"
 HANDOFF_SCHEMA = "contentops.huashu-motion-handoff/v1"
@@ -99,8 +100,11 @@ def make_handoff(*, project: Path, repo_root: Path, request: Dict[str, Any],
           and bool(_COMMIT.fullmatch(str(runtime_identity.get("commit") or ""))),
           "HUASHU_RUNTIME_UNVERIFIED", "runtime identity not pinned")
     project, repo_root = project.resolve(), repo_root.resolve()
-    _need(project.is_relative_to(repo_root), "HUASHU_PROJECT_OUTSIDE_REPO",
-          str(project))
+    # An experiment's project lives in the configured workspace, outside the
+    # checkout, so "inside the repository" is no longer the test -- "inside a
+    # trusted project root" is.
+    _need(trusted_project_root(project, repo_root) is not None,
+          "HUASHU_PROJECT_OUTSIDE_REPO", str(project))
     source = _project_file(project, request.get("film_source"), ".html")
     _need(source.name == "index.html", "HUASHU_SOURCE",
           "film must have an index.html")
@@ -134,7 +138,7 @@ def make_handoff(*, project: Path, repo_root: Path, request: Dict[str, Any],
           "video bytes changed since request")
     candidate = {
         "id": request["asset_id"],
-        "repo_path": video.relative_to(repo_root).as_posix(),
+        "repo_path": relative_label(video, repo_root),
         "type": "motion",
         "sha256": digest,
         "permission": "CREATED_BY_OWNER",

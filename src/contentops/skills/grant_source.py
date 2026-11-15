@@ -216,6 +216,11 @@ def load_grant(project_dir: Path, *, owner_identities: Iterable[str],
             "an approval must name one concrete account; a wildcard would widen "
             "it to accounts nobody approved")
 
+    request_scope_sha256 = payload.get("request_scope_sha256", "")
+    if (not isinstance(request_scope_sha256, str)
+            or (request_scope_sha256 and not re.fullmatch(r"sha256:[0-9a-f]{64}", request_scope_sha256))):
+        raise GrantSourceError("GRANT_INVALID", "request_scope_sha256 must be an optional canonical SHA-256")
+
     return ExecutionGrant(
         grant_id=_safe_component(payload.get("approval_id"), "approval_id"),
         issuer=issuer,
@@ -234,6 +239,7 @@ def load_grant(project_dir: Path, *, owner_identities: Iterable[str],
         revoked=bool(payload.get("revoked", False)),
         revoked_reason=str(payload.get("revoked_reason") or ""),
         provenance=record_digest(payload),
+        request_scope_sha256=request_scope_sha256,
     )
 
 

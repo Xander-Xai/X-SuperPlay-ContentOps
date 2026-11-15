@@ -96,7 +96,17 @@ MODEL = "speech-2.8-hd"
 
 PRIVATE_DIR = ROOT / ".private"
 PRIVATE_REGISTRY = PRIVATE_DIR / "founder-voice.json"
-WORK = ROOT / ".verify-tmp" / "m23-founder-clone"
+def _work_dir() -> Path:
+    """Where the activation run keeps its private state.
+
+    It is scratch state, so it follows the scratch root -- which is outside
+    the checkout when an output root is configured.
+    """
+    from contentops.paths import tmp_root
+
+    return tmp_root() / "m23-founder-clone"
+
+
 RECEIPT = ROOT / "projects/easel-enhanced-golden/receipts/founder-voice-activation-receipt.json"
 
 #: The Founder's ceiling. Every measured delta is compared against this, and the run
@@ -580,7 +590,7 @@ def main() -> int:
     print("=== 3/4 FIRST ACTIVATION SYNTHESIS (PAYG key) -- this pays CNY 9.90 ===")
     money_pre_activation = read_money(base_url, pair.clone.key)
     budget.take("activation_tts")
-    activation_out = WORK / "activation-founder_primary_v1.wav"
+    activation_out = _work_dir() / "activation-founder_primary_v1.wav"
     act = synthesize(
         text=ACTIVATION_TEXT,
         voice=PROVIDER_VOICE_ID,
@@ -645,7 +655,7 @@ def main() -> int:
     print("=== 4/4 CROSS-KEY SYNTHESIS (Subscription Key) -- M Plan quota only ===")
     quota_before = money_post_activation.get("quota")
     budget.take("crosskey_tts")
-    cross_out = WORK / "crosskey-founder_primary_v1.wav"
+    cross_out = _work_dir() / "crosskey-founder_primary_v1.wav"
     cross = synthesize(
         text=ACTIVATION_TEXT,
         voice=PROVIDER_VOICE_ID,

@@ -98,7 +98,11 @@ from contentops.media.minimax_speech import (  # noqa: E402,F401
 
 PRIVATE_REGISTRY = ROOT / ".private" / "founder-voice.json"
 PRIVATE_DIAGNOSTICS = ROOT / ".private" / "diagnostics"
-WORK = ROOT / ".verify-tmp" / "m34-cash-recovery"
+def _work_dir() -> Path:
+    """Where the recovery run keeps its private state: the scratch root."""
+    from contentops.paths import tmp_root
+
+    return tmp_root() / "m34-cash-recovery"
 RECEIPT = (
     ROOT
     / "projects/easel-enhanced-golden/receipts"
@@ -376,9 +380,9 @@ def _activate_once(*, base_url: str, payg, receipt: Dict[str, Any]) -> Dict[str,
         "pronunciation_rule_count": len(pronunciation),
     }
 
-    WORK.mkdir(parents=True, exist_ok=True)
-    raw = WORK / "activation-raw.wav"
-    normalised = WORK / "activation-normalised.wav"
+    _work_dir().mkdir(parents=True, exist_ok=True)
+    raw = _work_dir() / "activation-raw.wav"
+    normalised = _work_dir() / "activation-normalised.wav"
     for stale in (raw, normalised):
         if stale.exists():
             stale.unlink()
@@ -656,7 +660,7 @@ def main() -> int:
     # changed is which component performs the request: the authorisation to spend is
     # :func:`decide_cash_activation`, whose narrowness this run is about, and the
     # measured outcome is the balance delta below.
-    WORK.mkdir(parents=True, exist_ok=True)
+    _work_dir().mkdir(parents=True, exist_ok=True)
     receipt["billing_guard_precheck"] = {
         "verdict": before["verdict"],
         "note": (

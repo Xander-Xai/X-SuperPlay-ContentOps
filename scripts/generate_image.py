@@ -101,7 +101,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--prompt-file", default="", help="read the prompt from a UTF-8 file"
     )
-    parser.add_argument("--out-dir", default=".verify-tmp/m3", help="output directory")
+    parser.add_argument("--out-dir", default=None,
+                        help="output directory (default: the scratch root, which is "
+                             "outside the checkout when an output root is configured)")
     parser.add_argument("--model", default=DEFAULT_IMAGE_MODEL)
     parser.add_argument("--width", type=int, default=PRIMARY_PORTRAIT_WIDTH)
     parser.add_argument("--height", type=int, default=PRIMARY_PORTRAIT_HEIGHT)
@@ -119,6 +121,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     args = build_parser().parse_args()
+    if not args.out_dir:
+        from contentops.paths import tmp_root
+
+        args.out_dir = str(tmp_root() / "m3")
     prompt = args.prompt
     if args.prompt_file:
         prompt = Path(args.prompt_file).read_text(encoding="utf-8")

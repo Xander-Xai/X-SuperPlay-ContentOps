@@ -114,6 +114,12 @@ jobs:
       - name: Run documentation sync tests
         run: python tests/test_doc_sync.py
 
+      # Output-root resolution: the product roots must stay exactly where they
+      # are when CONTENTOPS_OUTPUT_ROOT is unset, which is what CI sees, and must
+      # leave the checkout when it is set.
+      - name: Run output-root resolution tests
+        run: python tests/test_output_paths.py
+
       # Card renderer: plan/parse/receipt logic plus the refusal paths that keep a
       # card from silently claiming approval. The one live render path skips itself
       # when playwright is absent, so this stays hermetic in CI.
@@ -522,6 +528,19 @@ jobs:
       # transferring approval between them.
       - name: Run Easel host guard tests
         run: python tests/test_easel_host_guard.py
+
+      # A workbench instance is Easel plus a declared tuning layer. This suite
+      # proves the overlay verifier still fails an *unrecorded* difference, and
+      # that the generated DNA→profile projection supplies Easel with actual
+      # values while remaining bound to the single account-DNA source.
+      - name: Run Easel workbench overlay tests
+        run: python tests/test_easel_workbench_overlay.py
+
+      - name: Run Easel workbench rebuild safety tests
+        run: python tests/test_easel_workbench_rebuild.py
+
+      - name: Run Easel offline task tests
+        run: python tests/test_easel_offline_task.py
 
       - name: Run Bundle two-format handoff tests
         run: python tests/test_bundle_two_formats.py

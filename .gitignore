@@ -322,26 +322,26 @@ reports/*.html
 
 # --- Output root: the products live outside this repository (2026-11-12) -----
 #
-# `outputs/`, `projects/_local/`, `.verify-tmp/`, `diagnostics/`,
-# `runtime-diagnostics/` and `runtime-config-backups/` are Windows junctions
-# into D:\AI-Outputs\X-SuperPlay-ContentOps\<date>\... . The bytes are outside
-# the repository; the link keeps every script's relative path valid, so no
-# pipeline code had to change.
+# A run's products -- renders, drafts, cards, logs, scratch state -- are
+# product, not source. Set CONTENTOPS_OUTPUT_ROOT (the repository's .env
+# loader injects it) and they land in
+# D:\AI-Outputs\X-SuperPlay-ContentOps\<date>\{workspace,deliverables,tmp}
+# instead of here. `src/contentops/paths.py` resolves the three product roots;
+# with the variable unset the behaviour is byte for byte what it was, so CI
+# and every historical receipt keep working.
 #
-# Read this before touching any of them:
+# These rules stay in force even after the products have moved, because a
+# checkout that never sets the variable must still not accumulate binaries:
 #
-#   * Writing to projects/_local/ writes to the ARCHIVE. New products no
-#     longer land in the repository at all.
-#   * `git add -A` still cannot reach them: every one of these paths is
-#     ignored here, and a junction is not tracked as a link.
-#   * `git clean -xfd` removes the LINK, not the archived files (git does not
-#     follow a reparse point). Deleting the link by hand sends every future
-#     product straight back into the repository, which is the thing this
-#     arrangement exists to prevent.
-#   * Never empty a junction with `Remove-Item -Recurse`: Windows PowerShell
-#     5.1 follows the link and deletes the archived files. Use
-#     `robocopy <empty-dir> <target> /MIR` to empty one, and `cmd /c rmdir
-#     <path>` to drop the link itself.
+#   * projects/_local/          -- the experiment sandbox
+#   * outputs/                  -- finished products
+#   * .verify-tmp/              -- scratch and verification state
+#   * diagnostics/, runtime-diagnostics/, runtime-config-backups/
+#
+# Do not create a directory junction here to fake an output root: a link is
+# invisible to Git but still shows up in every directory listing, and
+# `Remove-Item -Recurse` on a junction follows it into the target on Windows
+# PowerShell 5.1.
 #
 # The archive layout, the naming rules and the promotion flow are documented in
 # D:\AI-Outputs\README.md and D:\AI-Outputs\X-SuperPlay-ContentOps\README.md.

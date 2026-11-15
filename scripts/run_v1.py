@@ -38,6 +38,8 @@ from process_utils import hidden_run, python_executable
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+from contentops.paths import relative_label, resolve_project  # noqa: E402
+
 # Fallback / test fixture only. The production path reads script/master.md.
 DEFAULT_SCRIPT_LINES = [
     ("0-3",   "今天实测一个号称能跑通 AI 自媒体流水线的开源项目。", 5),
@@ -377,8 +379,8 @@ def run_easel(project: Path, voice_provider: str = "edge",
 
     sb = json.loads((script_dir / "storyboard.json").read_text(encoding="utf-8"))
     # Store project-relative paths so the committed storyboard stays portable.
-    sb["narration"] = narration_mp3.relative_to(ROOT).as_posix()
-    sb["subtitle"] = narration_srt.relative_to(ROOT).as_posix()
+    sb["narration"] = relative_label(narration_mp3)
+    sb["subtitle"] = relative_label(narration_srt)
     sb.setdefault("engine", "easel")
     sb["runtime"] = {
         "repo": "ZJU-REAL/Easel",
@@ -401,7 +403,12 @@ def run_easel(project: Path, voice_provider: str = "edge",
         res["voice_quality"] = "edge_tts_fallback"  # upstream's no-key engine; human review decides
     res["production_quality_warning"] = True
     res["production_ready"] = False             # §11: never auto-claim PRODUCTION_READY
-    res["state"] = "READY_FOR_HUMAN_REVIEW"
+    res["publish_authorized"] = False
+    # A blocked composer has no finished artifact to send to human review.
+    # Preserve its failure and stage instead of promoting it through the V1
+    # wrapper merely because narration was prepared successfully.
+    res["state"] = ("READY_FOR_HUMAN_REVIEW" if res.get("status") == "OK"
+                    else "BLOCKED")
     res["runtime"] = sb["runtime"]
     generated = sum(1 for s in shots
                     if s.get("source_type") in ("generated", "ai_generated", "stock", "title_card"))
@@ -620,9 +627,7 @@ def main() -> int:
         }, ensure_ascii=False, indent=2))
         return 4
 
-    project = Path(args.project)
-    if not project.is_absolute():
-        project = (ROOT / args.project).resolve()
+    project = resolve_project(args.project)
 
     result = run(project, voice_provider=args.voice_provider, engine=args.engine,
                  narration=Path(args.narration) if args.narration else None,

@@ -36,6 +36,7 @@ for candidate in (ROOT / "src", ROOT / "scripts"):
 from process_utils import hidden_run, python_executable  # noqa: E402
 
 from contentops.evidence import ClaimLedger, build_artifacts  # noqa: E402
+from contentops.paths import relative_label, resolve_label  # noqa: E402
 from contentops.content_kernel.handoff import (  # noqa: E402
     VIDEO,
     HandoffError,
@@ -477,10 +478,12 @@ def stage_media_use(project: Path, config: Dict[str, Any], *, adapter: Any = Non
             raise
 
         resolved_path = (project / relative).resolve()
-        try:
-            repo_path = resolved_path.relative_to(ROOT.resolve()).as_posix()
-        except ValueError as exc:
-            raise M5Blocked(f"{asset_id}: imported asset lies outside this repository") from exc
+        repo_path = relative_label(resolved_path)
+        if Path(repo_path).is_absolute():
+            # Neither the repository nor the configured output root holds
+            # it, so there is no relative name for it -- and an absolute
+            # host path must never reach a receipt.
+            raise M5Blocked(f"{asset_id}: imported asset lies outside this repository")
         if kind in VISUAL_MEDIA_KINDS:
             discovered[asset_id] = {
                 "id": asset_id, "type": "LICENSED_EXTERNAL",
@@ -1716,8 +1719,8 @@ def stage_storyboard(project: Path, config: Dict[str, Any], script: Dict[str, An
         "image_motion": "static",
         "pad_mode": "trim",
         "shots": shots,
-        "narration": f"{project.relative_to(ROOT).as_posix()}/assets/voice/narration.wav",
-        "subtitle": f"{project.relative_to(ROOT).as_posix()}/assets/captions/default.srt",
+        "narration": f"{relative_label(project)}/assets/voice/narration.wav",
+        "subtitle": f"{relative_label(project)}/assets/captions/default.srt",
         "engine": "easel",
         "voice_provider": (f"{narration.get('voice_provider', narration.get('engine', 'unknown'))}"
                            f"/{narration.get('voice') or 'unspecified'}"),
@@ -1789,11 +1792,17 @@ def stage_compose(project: Path, slug: str) -> Dict[str, Any]:
     except (OSError, json.JSONDecodeError):
         pin = {}
     stamp = pin.get("tag") or pin.get("commit") or "unrecorded"
+    upstream_path = Path(result.get(
+        "upstream", "skills/openclaw/auto-short-video/scripts/assemble.py"
+    )).as_posix()
+    upstream_suffix = (upstream_path.split("/skills/", 1)[-1]
+                       if "/skills/" in upstream_path else
+                       upstream_path.removeprefix("skills/"))
     receipt = {
         "status": result.get("status"),
         "video": _logical_path(result.get("video"), project),
         "subtitles_burned": result.get("subtitles_burned"),
-        "upstream": f"easel@{stamp}:skills/openclaw/auto-short-video/scripts/assemble.py",
+        "upstream": f"easel@{stamp}:skills/{upstream_suffix}",
         "reason": result.get("reason"),
     }
     receipt = {key: value for key, value in receipt.items() if value is not None}
@@ -2483,8 +2492,8 @@ def stage_review(project: Path, slug: str, qc: Dict[str, Any],
                      or voice_check.get("voice_provider") or "unknown")
 
     payload = {
-        "project": project.relative_to(ROOT).as_posix(),
-        "video": f"{project.relative_to(ROOT).as_posix()}/final/{slug}.mp4",
+        "project": relative_label(project),
+        "video": f"{relative_label(project)}/final/{slug}.mp4",
         "engine": "easel",
         "voice_quality": voice_quality,
         "bundle_id": bundle_id,
@@ -2783,7 +2792,7 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
 
     run = {
         "schema": RUN_SCHEMA,
-        "project": project.relative_to(ROOT).as_posix() if project.is_relative_to(ROOT) else str(project),
+        "project": relative_label(project),
         "stages": stages,
         "stage_timings_seconds": timings,
         "production_ready": False,
@@ -2844,7 +2853,13 @@ def main() -> int:
     args = parser.parse_args()
     project = Path(args.project)
     if not project.is_absolute():
-        project = (ROOT / project).resolve()
+        # ``projects/_local/<slug>`` may have moved to the external output
+        # root; ``resolve_project`` redirects that short form when it is
+        # there and otherwise resolves against the repository exactly as
+        # before.
+        from contentops.paths import resolve_project
+
+        project = resolve_project(args.project)
     try:
         run = build(project, skip_compose=args.skip_compose,
                     narration_provider=args.narration_provider,

@@ -213,6 +213,53 @@ def resolve_easel(root: Path = ROOT, live: bool = True) -> dict:
     }
 
 
+def resolve_easel_workbench(root: Path = ROOT) -> dict:
+    """Resolve the separate v0.3.0 workbench only after full overlay verification.
+
+    This never participates in production selection. It follows the repository
+    overlay manifest (including its explicit per-process path override) and
+    verifies the generated profiles before returning a runtime directory.
+    """
+    root = Path(root).resolve()
+    record_path = root / "runtime" / "easel-workbench-overlay.json"
+    verifier_path = root / "scripts" / "verify_easel_runtime.py"
+    if not record_path.is_file():
+        return {"status": "BLOCKED", "reasons": ["workbench overlay record is missing"]}
+    if not verifier_path.is_file():
+        return {"status": "BLOCKED", "reasons": ["workbench verifier is missing"]}
+    scripts_dir = str(verifier_path.parent)
+    if scripts_dir not in sys.path:
+        sys.path.insert(0, scripts_dir)
+    try:
+        import verify_easel_runtime
+        from contentops.easel.agent_workspace import WORKBENCH_COMMIT, WORKBENCH_REPO
+        overlay = verify_easel_runtime.load_overlay(record_path)
+        upstream = overlay.get("upstream") or {}
+        if (not overlay.get("readable") or overlay.get("schema") != "contentops.easel-workbench-overlay/v1"
+                or not isinstance(upstream, dict) or upstream.get("repo") != WORKBENCH_REPO
+                or upstream.get("commit") != WORKBENCH_COMMIT):
+            return {"status": "BLOCKED", "reasons": ["workbench identity does not match the planned v0.3.0 commit"]}
+        result = verify_easel_runtime.verify_overlay(
+            record_path=record_path, profile_mode="generated")
+    except Exception as exc:  # noqa: BLE001 - failure to verify must refuse selection
+        return {"status": "BLOCKED",
+                "reasons": [f"workbench verification failed: {type(exc).__name__}"]}
+    if result.get("status") != "VERIFIED":
+        detail = result.get("reason") or result.get("status") or "unknown verifier result"
+        return {"status": "BLOCKED", "reasons": [str(detail)],
+                "verification": result}
+    if result.get("expected_commit") != WORKBENCH_COMMIT:
+        return {"status": "BLOCKED", "reasons": ["workbench identity changed during verification"]}
+    return {
+        "status": "OK",
+        "easel_dir": result["workbench_path"],
+        "commit": result.get("expected_commit"),
+        "tag": result.get("expected_tag"),
+        "verification": "upstream_overlay_and_generated_profiles",
+        "verification_result": result,
+    }
+
+
 # --------------------------------------------------------------------------
 # bootstrap: acquire the runtime when resolution fails (§2 ladder + §3 cleanup)
 # --------------------------------------------------------------------------

@@ -25,6 +25,7 @@ from contentops.evidence.repo_source import RepoSourceAdapter, RepoSourceError  
 from contentops.routing import ContentRouter, RoutingError, UserTopicInput  # noqa: E402
 from contentops.routing import brief as brief_module  # noqa: E402
 from contentops.routing.models import digest  # noqa: E402
+from contentops.paths import relative_label, resolve_label, workspace_root  # noqa: E402
 from new_project import create_project  # noqa: E402
 
 RECEIPT = Path("receipts") / "raw-inputs.json"
@@ -480,8 +481,13 @@ def prepare_raw_project(*, account: str, topic: str = "",
     if not package:
         raise RoutingError("RAW_BRIEF_MISSING", "the Content Router did not write a brief")
 
+    # A raw run is an experiment: it is created from a topic on the spot and
+    # its renders are products, not evidence. It belongs in the workspace,
+    # outside the checkout -- which is also what keeps it out of the
+    # untracked-project policy check.
     project = create_project(ROOT, _safe_slug(account, topic, selected_url),
-                             title=topic, account_slug=account)
+                             title=topic, account_slug=account,
+                             projects_dir=workspace_root())
     receipt_path = project / RECEIPT
     try:
         failures: list[str] = []
@@ -567,7 +573,7 @@ def prepare_raw_project(*, account: str, topic: str = "",
             "schema": "contentops.raw-inputs/v1",
             "state": "SOURCE_SNAPSHOT_READY",
             "created_at": _now(),
-            "project": project.relative_to(ROOT).as_posix(),
+            "project": relative_label(project),
             "account_id": account,
             "topic": topic,
             "route_run_id": result.run_id,
@@ -594,7 +600,7 @@ def prepare_raw_project(*, account: str, topic: str = "",
             "schema": "contentops.raw-inputs/v1",
             "state": "BLOCKED",
             "created_at": _now(),
-            "project": project.relative_to(ROOT).as_posix(),
+            "project": relative_label(project),
             "account_id": account,
             "topic": topic,
             "route_run_id": result.run_id,
@@ -620,7 +626,7 @@ def prepare_m5_contracts(project: Path) -> dict[str, Any]:
     from PIL import Image, ImageDraw, ImageFont
 
     project = Path(project).resolve()
-    root_relative = project.relative_to(ROOT).as_posix()
+    root_relative = relative_label(project)
     authority_path = project / "00_brief" / "source-authority.json"
     lines_path = project / "script" / "lines.json"
     claims_path = project / "script" / "claim-map.json"
@@ -699,7 +705,7 @@ def prepare_m5_contracts(project: Path) -> dict[str, Any]:
             palette=palette,
             queries=source_visual_queries.get(relative, []),
             out_path=target)
-        asset_path = target.relative_to(ROOT).as_posix()
+        asset_path = relative_label(target)
         entries.append({
             "id": asset_id,
             "type": "CODE_SNAPSHOT",
@@ -737,7 +743,7 @@ def prepare_m5_contracts(project: Path) -> dict[str, Any]:
             for asset in user_assets:
                 if not is_valid_local_preview_asset(asset, project, ROOT):
                     raise ValueError(f"local asset receipt/hash failed: {asset.get('id')}")
-                asset_path = (ROOT / str(asset.get("repo_path") or "")).resolve()
+                asset_path = resolve_label(str(asset.get("repo_path") or ""))
                 result, _ = ocr(str(asset_path))
                 recognized = " ".join(str(row[1]) for row in (result or [])
                                        if len(row) > 1 and str(row[1]).strip())

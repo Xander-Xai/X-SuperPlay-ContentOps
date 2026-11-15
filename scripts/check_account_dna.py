@@ -36,9 +36,9 @@ skill_route path bases
 Each entry names ``script`` relative to one of two bases, and says which:
 
   path_base: "catalog"   script is relative to the Easel checkout root, e.g.
-                         ``skills/openclaw/video-script``. This is the default,
-                         because every entry but the repository's own scripts
-                         lives there.
+                         ``skills/openclaw/video-script`` (v0.2) or
+                         ``skills/builtin/video-script`` (v0.3). The catalog
+                         resolver selects the version-appropriate skill root.
   path_base: "repo"      script is relative to this repository's root, e.g.
                          ``scripts/qc_video.py``.
 

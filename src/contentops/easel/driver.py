@@ -21,6 +21,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from contentops.paths import trusted_project_root
+
 DRIVER_SCHEMA = "contentops.agent-driver/v1"
 HOST_BINARIES = ("claude", "codex", "opencode")
 
@@ -90,7 +92,7 @@ def _project_slug(project_dir: Path) -> str:
     return Path(project_dir).name
 
 
-def _steps(project: str, fmt: str) -> List[Step]:
+def _steps(project: str, fmt: str, *, project_dir: Optional[Path] = None) -> List[Step]:
     steps = [
         # Diagnostic read only. Per ADR-017 the host is optional: production
         # steps do not depend on it, and a HOST_BLOCKED status is the honest
@@ -105,7 +107,9 @@ def _steps(project: str, fmt: str) -> List[Step]:
         ),
     ]
     if fmt == "VIDEO":
-        slug = _project_slug(Path(project))
+        slug = _project_slug(project_dir if project_dir is not None else Path(project))
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,80}", slug):
+            raise DriverError("PROJECT_ID_INVALID", "project id is not a safe filename")
         steps += [
             # Read-only visibility for the six production gates. It does not
             # write a receipt, so next_step skips it; the hard refusal lives in
@@ -457,17 +461,27 @@ def _resolve_project(project: Path, root: Path) -> Tuple[Path, str]:
     candidate = candidate.resolve()
     if not candidate.is_dir():
         raise DriverError("PROJECT_MISSING", candidate.as_posix())
-    if root not in candidate.parents:
+    # A step may run inside the repository, or inside the configured
+    # workspace -- which is where an experiment's project lives once the
+    # products have moved out of the checkout.
+    if (root not in candidate.parents
+            and trusted_project_root(candidate, root) is None):
         raise DriverError("PROJECT_OUTSIDE_REPO",
                           "a driver step may only run inside the repository")
-    return candidate, candidate.relative_to(root).as_posix()
+    try:
+        label = candidate.relative_to(root).as_posix()
+    except ValueError:
+        # Outside the repository no relative spelling works from the
+        # repository root, so the step carries the absolute path.
+        label = candidate.as_posix()
+    return candidate, label
 
 
 def build_plan(project: Path, root: Path) -> Dict[str, Any]:
     """An ordered, read-only description of what a coding agent may run."""
     resolved, relative = _resolve_project(Path(project), Path(root))
     fmt = detect_format(resolved)
-    steps = _steps(relative, fmt)
+    steps = _steps(relative, fmt, project_dir=resolved)
 
     described = []
     for step in steps:

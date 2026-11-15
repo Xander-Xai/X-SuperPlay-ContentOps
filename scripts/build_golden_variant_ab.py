@@ -84,6 +84,9 @@ B_APPROVED_SHA256 = "e2e014a916eb7a637b68d80ace27551c557d3797541b61f41c195f8256b
 #: them means the build succeeds on the host that ran the experiment and fails on every
 #: other one, which reads as a broken build rather than a missing fixture. The canonical
 #: copies exist precisely so that no build path has to reach back here.
+#: These three spellings name where the experiment ran. They are metadata,
+#: never read at build time, so they stay as they were even after the
+#: scratch root moved out of the checkout.
 A_HISTORICAL_SOURCE = Path(".verify-tmp/m2/ab/A-edge-tts.mp3")
 B_HISTORICAL_SOURCE = Path(".verify-tmp/m2/ab/B-minimax-mplan.wav")
 B_HISTORICAL_RECEIPT = ROOT / ".verify-tmp/m2/narration/receipt-golden-b.json"

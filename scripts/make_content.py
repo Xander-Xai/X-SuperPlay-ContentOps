@@ -38,10 +38,12 @@ RUN_RECEIPT = Path("receipts") / "make-content.json"
 
 
 def _project(value: str) -> Path:
-    path = Path(value)
-    if not path.is_absolute():
-        path = ROOT / path
-    resolved = path.resolve()
+    # ``resolve_project`` keeps the historical ``projects/_local/<slug>`` form
+    # working while the products live outside the checkout: it redirects that
+    # short form to the configured output root when the slug is there.
+    from contentops.paths import resolve_project
+
+    resolved = resolve_project(value)
     if not resolved.is_dir():
         raise gates.GateError("PROJECT_MISSING", f"project directory not found: {resolved}")
     return resolved

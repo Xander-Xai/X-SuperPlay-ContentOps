@@ -50,7 +50,6 @@ RIGHTS_REVIEW_SCHEMA = "contentops.media-rights-review/v1"
 MANIFEST_SCHEMA = "contentops.m5-assets/v1"
 
 CACHE_TTL_S = 24 * 60 * 60
-CACHE_SUBDIR = Path(".verify-tmp") / "stock-media-cache"
 MAX_CANDIDATES_PER_SEARCH = 30
 MAX_PER_PAGE = 15
 MAX_DOWNLOAD_BYTES = 50 * 1024 * 1024
@@ -58,6 +57,19 @@ MAX_VIDEO_DURATION_S = 60.0
 REQUEST_TIMEOUT_S = 20.0
 
 STATE_READY = "READY"
+
+
+def cache_dir() -> Path:
+    """Where the stock-media cache lives.
+
+    It follows the scratch root, which moves out of the checkout when an
+    output root is configured. Resolved per call rather than at import time,
+    because the operator's ``.env`` is loaded by the entry point, not by the
+    package.
+    """
+    from contentops.paths import tmp_root
+
+    return tmp_root() / "stock-media-cache"
 STATE_NEEDS_ASSET = "NEEDS_ASSET"
 STATE_NO_CREDENTIALS = "NO_CREDENTIALS"
 STATE_NOT_AUTHORIZED = "NETWORK_NOT_AUTHORIZED"

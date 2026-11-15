@@ -17,7 +17,8 @@ A validation PASS leaves ``production_ready: false`` and
 
 Upstream reuse
 --------------
-Reuses ``gzh-design`` tools from the pinned Easel runtime (.runtime/easel/skills/openclaw/gzh-design):
+Reuses ``gzh-design`` tools from the pinned Easel runtime (v0.2
+``skills/openclaw/gzh-design`` or v0.3 ``skills/builtin/gzh-design``):
 - ``validate_gzh_html.py``: checks forbidden tags, inline styles, and <span leaf=""> wrapping
 - ``wrap_preview.py``: wraps verified section HTML into browser preview with copy button
 - ``component_lint.py``: scans component source references for anti-patterns
@@ -37,6 +38,7 @@ import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
+from subprocess import TimeoutExpired
 from typing import Any, Callable, Dict, List, Optional, Sequence
 from urllib.parse import unquote
 
@@ -70,7 +72,11 @@ class ArticleTools:
     @classmethod
     def resolve(cls, runtime_root: Optional[Path] = None) -> "ArticleTools":
         base = runtime_root or (Path(__file__).resolve().parents[3] / ".runtime" / "easel")
-        gzh_dir = base / "skills" / "openclaw" / "gzh-design"
+        from contentops.easel.skill_paths import resolve_skill_dir
+        try:
+            gzh_dir = resolve_skill_dir(base, "gzh-design")
+        except FileNotFoundError:
+            gzh_dir = base / "skills" / "openclaw" / "gzh-design"
         scripts_dir = gzh_dir / "scripts"
 
         validator = scripts_dir / "validate_gzh_html.py"
@@ -107,6 +113,8 @@ class ArticlePlan:
     images: List[Dict[str, Any]] = field(default_factory=list)
     cover: Optional[Dict[str, Any]] = None
     input_file: Optional[Path] = None
+    html_sha256: Optional[str] = None
+    input_sha256: Optional[str] = None
 
 
 def _sha256(path: Path) -> str:
@@ -180,8 +188,20 @@ def plan(
     tools = ArticleTools.resolve(runtime_root)
 
     # Resolve input JSON if present or specified
-    candidate_input = Path(input_file).resolve() if input_file else (project / "article-input.json")
+    if input_file:
+        supplied = Path(input_file)
+        candidates = ([supplied.resolve()] if supplied.is_absolute() else
+                      [(project / supplied).resolve(), supplied.resolve()])
+        existing = list(dict.fromkeys(path for path in candidates if path.exists()))
+        if len(existing) > 1:
+            raise ArticleError("ARTICLE_INPUT_INVALID", "input path is ambiguous; use an absolute project path")
+        if not existing:
+            raise ArticleError("ARTICLE_INPUT_INVALID", "specified article input does not exist")
+        candidate_input = existing[0]
+    else:
+        candidate_input = project / "article-input.json"
     input_data: Dict[str, Any] = {}
+    input_sha256 = None
     if candidate_input.exists() and not candidate_input.is_file():
         raise ArticleError("ARTICLE_INPUT_INVALID", f"input path is not a file: {candidate_input}")
     if candidate_input.is_file():
@@ -191,7 +211,9 @@ def plan(
                 f"input file {candidate_input} is outside project {project}",
             )
         try:
-            input_data = json.loads(candidate_input.read_text(encoding="utf-8"))
+            input_bytes = candidate_input.read_bytes()
+            input_data = json.loads(input_bytes.decode("utf-8"))
+            input_sha256 = hashlib.sha256(input_bytes).hexdigest()
         except Exception as e:
             raise ArticleError("ARTICLE_INPUT_INVALID", f"failed to parse JSON from {candidate_input}: {e}")
         if not isinstance(input_data, dict):
@@ -207,7 +229,8 @@ def plan(
     if html_path:
         html = Path(html_path)
         if not html.is_absolute():
-            html = (project / html).resolve()
+            html = project / html
+        html = html.resolve()
     elif input_data.get("html"):
         html = (project / input_data["html"]).resolve()
     else:
@@ -235,7 +258,8 @@ def plan(
     if preview_path:
         preview = Path(preview_path)
         if not preview.is_absolute():
-            preview = (project / preview).resolve()
+            preview = project / preview
+        preview = preview.resolve()
     else:
         preview = html.with_name(f"{html.stem}_preview.html")
 
@@ -342,6 +366,8 @@ def plan(
         images=found_images,
         cover=cover_data,
         input_file=candidate_input if candidate_input.is_file() else None,
+        html_sha256=hashlib.sha256(html_bytes).hexdigest(),
+        input_sha256=input_sha256,
     )
 
 
@@ -353,10 +379,29 @@ def run(
     timeout: int = 120,
 ) -> Dict[str, Any]:
     """Execute upstream validate_gzh_html and wrap_preview, then build receipt."""
+    def check_inputs() -> None:
+        try:
+            if p.html_sha256 and _sha256(p.html) != p.html_sha256:
+                raise ArticleError("ARTICLE_INPUT_CHANGED", "article HTML changed during preview")
+            if p.input_file and p.input_sha256 and _sha256(p.input_file) != p.input_sha256:
+                raise ArticleError("ARTICLE_INPUT_CHANGED", "article input metadata changed during preview")
+            for item in [*p.images, *([p.cover] if p.cover else [])]:
+                path = item.get("path", "")
+                if not isinstance(path, str) or not path.startswith("project://"):
+                    raise ArticleError("ARTICLE_INPUT_CHANGED", "article image binding is invalid")
+                image = (p.project / path[len("project://"):]).resolve()
+                if not _is_relative_to(image, p.project) or _sha256(image) != item.get("sha256"):
+                    raise ArticleError("ARTICLE_INPUT_CHANGED", "article image changed during preview")
+        except OSError as exc:
+            raise ArticleError("ARTICLE_INPUT_CHANGED", "article input is no longer readable") from exc
+
+    check_inputs()
     # 1. Run validator
     validator_argv = [article_python, str(p.tools.validator), str(p.html)]
     try:
         val_res = runner(validator_argv, timeout=timeout)
+    except TimeoutExpired as exc:
+        raise ArticleError("ARTICLE_VALIDATION_TIMEOUT", "article validation timed out") from exc
     except OSError as exc:
         raise ArticleError(
             "ARTICLE_PYTHON_UNAVAILABLE",
@@ -370,12 +415,15 @@ def run(
         details = metrics["errors"] + metrics["warnings"]
         error_msg = "; ".join(details) if details else val_text.strip()
         raise ArticleError("ARTICLE_VALIDATION_FAILED", f"HTML validation failed: {error_msg}")
+    check_inputs()
 
     # 2. Run preview wrapper
     p.preview_out.parent.mkdir(parents=True, exist_ok=True)
     wrapper_argv = [article_python, str(p.tools.wrapper), str(p.html), str(p.preview_out)]
     try:
         wrap_res = runner(wrapper_argv, timeout=timeout)
+    except TimeoutExpired as exc:
+        raise ArticleError("ARTICLE_PREVIEW_TIMEOUT", "article preview generation timed out") from exc
     except OSError as exc:
         raise ArticleError(
             "ARTICLE_PYTHON_UNAVAILABLE",
@@ -389,6 +437,7 @@ def run(
     if not p.preview_out.is_file() or p.preview_out.stat().st_size == 0:
         raise ArticleError("ARTICLE_PREVIEW_MISSING", f"Preview file was not created: {p.preview_out}")
 
+    check_inputs()
     return build_receipt(p, validation_metrics=metrics, article_python=article_python)
 
 

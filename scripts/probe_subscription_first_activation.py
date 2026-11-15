@@ -92,7 +92,13 @@ EXPECTED_SAMPLE_SHA256 = (
 )
 
 PRIVATE_REGISTRY = ROOT / ".private" / "founder-voice.json"
-WORK = ROOT / ".verify-tmp" / "m34-sub-activation"
+def _work_dir() -> Path:
+    """Where the probe keeps its private state: the scratch root."""
+    from contentops.paths import tmp_root
+
+    return tmp_root() / "m34-sub-activation"
+
+
 RECEIPT = (
     ROOT
     / "projects/easel-enhanced-golden/receipts"
@@ -423,11 +429,12 @@ def main() -> int:
         print("Re-run with --execute.")
         return 0
 
-    WORK.mkdir(parents=True, exist_ok=True)
+    work_dir = _work_dir()
+    work_dir.mkdir(parents=True, exist_ok=True)
     guard = BillingGuard(base_url=base_url, credential=resolved.key)
     provider = MiniMaxMPlanProvider(
         guard=guard,
-        work_dir=WORK,
+        work_dir=work_dir,
         cli=_resolve_cli(),
         transport_credential=resolved,
     )

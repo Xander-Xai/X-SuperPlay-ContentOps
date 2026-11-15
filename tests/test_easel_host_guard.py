@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from contentops.easel.guard import GuardMiddleware, HostPolicy  # noqa: E402
-from contentops.easel.host import host_status  # noqa: E402
+from contentops.easel.host import FrontendIntegrityMiddleware, host_status  # noqa: E402
 
 
 class FakeApp:
@@ -36,9 +36,10 @@ class FakeApp:
         await send({"type": "http.response.body", "body": b"upstream"})
 
 
-def _run(method: str, path: str, headers: dict[str, str] | None = None) -> tuple[int, bytes, list, FakeApp]:
+def _run(method: str, path: str, headers: dict[str, str] | None = None,
+         policy: HostPolicy | None = None) -> tuple[int, bytes, list, FakeApp]:
     app = FakeApp()
-    guard = GuardMiddleware(app, HostPolicy())
+    guard = GuardMiddleware(app, policy or HostPolicy())
     sent: list = []
 
     async def receive():
@@ -73,6 +74,94 @@ def test_loopback_read_is_forwarded():
     assert app.calls == [("GET", "/api/status")]
 
 
+def test_offline_task_methods_are_opt_in_and_exact():
+    disabled = HostPolicy()
+    enabled = HostPolicy(allow_offline_tasks=True)
+    submit = "/api/contentops/draft-task"
+    status = "/api/contentops/draft-task/123e4567-e89b-42d3-a456-426614174000"
+    assert disabled.safe_route("POST", submit)[0] is False
+    assert enabled.safe_route("POST", submit)[0] is True
+    assert enabled.safe_route("GET", status)[0] is True
+    assert enabled.safe_route("GET", status + "/draft")[0] is True
+    assert enabled.safe_route("GET", "/api/contentops/profiles")[0] is True
+    assert enabled.safe_route("GET", "/contentops/offline-task")[0] is True
+    for method, path in [
+        ("POST", "/api/contentops/draft-task/123e4567-e89b-42d3-a456-426614174000"),
+        ("PUT", submit),
+        ("POST", "/api/chat"),
+        ("POST", "/api/contentops/draft-task/../../api/publish"),
+        ("GET", "/api/contentops/draft-task/not-a-uuid"),
+        ("GET", "/api/contentops/draft-task/123e4567-e89b-42d3-a456-426614174000/draft/extra"),
+        ("POST", "/contentops/offline-task"),
+        ("GET", "/contentops/offline-task/other-file.js"),
+    ]:
+        assert enabled.safe_route(method, path)[0] is False, (method, path)
+
+
+def test_offline_options_is_exact_and_reports_post_without_enabling_cors():
+    policy = HostPolicy(allow_workbench_reads=False, allow_offline_tasks=True)
+    submit = "/api/contentops/draft-task"
+    assert policy.safe_route("OPTIONS", submit)[0] is True
+    assert policy.safe_route("OPTIONS", "/api/chat")[0] is False
+
+    status, _, sent, app = _run(
+        "OPTIONS", submit,
+        {"host": "127.0.0.1:7862", "origin": "http://localhost:7862"},
+        policy,
+    )
+    headers = dict(sent[0]["headers"])
+    assert status == 204
+    assert headers[b"allow"] == b"POST, OPTIONS"
+    assert b"access-control-allow-origin" not in headers
+    assert app.calls == []
+
+    rejected, body, _, _ = _run(
+        "OPTIONS", submit,
+        {"host": "127.0.0.1:7862", "origin": "https://evil.example"},
+        policy,
+    )
+    assert rejected == 403
+    assert b"HOST_ORIGIN_INVALID" in body
+
+
+def test_frontend_integrity_blocks_browser_asset_reads_without_verified_build():
+    app = FakeApp()
+    middleware = FrontendIntegrityMiddleware(
+        app, lambda: {"status": "MISMATCH", "reason": "tampered dist"})
+    sent = []
+
+    async def receive():
+        return {"type": "http.request", "body": b"", "more_body": False}
+
+    async def send(message):
+        sent.append(message)
+
+    asyncio.run(middleware({"type": "http", "method": "GET", "path": "/assets/app.js"},
+                           receive, send))
+    assert sent[0]["status"] == 503
+    assert b"HOST_FRONTEND_UNVERIFIED" in sent[1]["body"]
+    assert app.calls == []
+
+
+def test_frontend_integrity_does_not_recheck_api_status():
+    app = FakeApp()
+    checks = []
+    middleware = FrontendIntegrityMiddleware(
+        app, lambda: checks.append("checked") or {"status": "UNVERIFIED"})
+    sent = []
+
+    async def receive():
+        return {"type": "http.request", "body": b"", "more_body": False}
+
+    async def send(message):
+        sent.append(message)
+
+    asyncio.run(middleware({"type": "http", "method": "GET", "path": "/api/status"},
+                           receive, send))
+    assert checks == []
+    assert sent[0]["status"] == 200
+
+
 def test_static_ui_shell_is_still_served():
     """The workbench UI shell stays readable — the audit is about resources."""
     for path in ("/", "/onepage", "/favicon.ico", "/api/status",
@@ -97,6 +186,22 @@ def test_credentials_and_settings_writes_are_denied():
         ("PUT", "/api/settings/models/save"),
         ("DELETE", "/api/output/anything"),
         ("POST", "/api/chat"),
+    ):
+        status, body, _, app = _run(method, path)
+        assert status == 403, f"{method} {path} should be denied"
+        assert app.calls == [], f"{method} {path} reached upstream"
+        assert json.loads(body)["error"] == "HOST_ROUTE_DENIED"
+
+
+def test_v03_settings_gateway_and_archive_routes_remain_denied():
+    for method, path in (
+        ("GET", "/api/settings/bootstrap"),
+        ("GET", "/api/settings/harness"),
+        ("POST", "/api/gateway/restart"),
+        ("GET", "/api/settings/local-agents"),
+        ("POST", "/api/settings/local-agents/enable"),
+        ("POST", "/api/settings/models/available"),
+        ("GET", "/api/artifacts/archive"),
     ):
         status, body, _, app = _run(method, path)
         assert status == 403, f"{method} {path} should be denied"
@@ -268,11 +373,72 @@ def test_a_mismatched_runtime_blocks_the_host():
     assert unchecked["bytes"]["state"] == "NOT_CHECKED"
 
 
+def test_default_host_verifies_production_tree_even_if_overlay_available():
+    class BothVerifiers(FakeVerifier):
+        def verify_overlay(self, record):
+            raise AssertionError("production host must not verify the workbench")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = _fake_root(Path(tmp))
+        status = host_status(root, verify_bytes=True, verifier=BothVerifiers("MISMATCH"))
+    assert status["bytes"]["state"] == "MISMATCH", status
+    assert "HOST_BYTES_MISMATCH" in status["blockers"]
+
+
+def test_workbench_verification_must_match_the_tree_to_be_imported():
+    from contentops.easel.host import verify_runtime_bytes
+
+    class OverlayVerifier:
+        def load_overlay(self, path):
+            return {"readable": True}
+
+        def workbench_path(self, overlay):
+            return Path("different-workbench")
+
+        def verify_overlay(self, path):
+            return {"status": "VERIFIED"}
+
+    with tempfile.TemporaryDirectory() as tmp:
+        result = verify_runtime_bytes(Path(tmp), OverlayVerifier(), tree=Path(tmp) / "selected")
+    assert result["state"] != "VERIFIED", result
+
+
 def test_an_unreachable_verifier_is_not_a_pass():
     with tempfile.TemporaryDirectory() as tmp:
         root = _fake_root(Path(tmp))
         status = host_status(root, verify_bytes=True, verifier=FakeVerifier("UNVERIFIED"))
     assert "HOST_BYTES_UNVERIFIED" in status["blockers"]
+
+
+def test_host_status_reports_the_workbench_pin_not_the_production_pin():
+    with tempfile.TemporaryDirectory() as tmp:
+        root = _fake_root(Path(tmp))
+        workbench = root / "workbench"
+        (workbench / "web").mkdir(parents=True)
+        (workbench / "easel").mkdir(parents=True)
+        (workbench / "web" / "app.py").write_text("app = None\\n", encoding="utf-8")
+        (workbench / "easel" / "cli.py").write_text("", encoding="utf-8")
+        (root / "runtime" / "easel-workbench-overlay.json").write_text(
+            json.dumps({"upstream": {"tag": "v0.3.0", "commit": "workbench-sha"}}),
+            encoding="utf-8",
+        )
+        status = host_status(root, tree=workbench)
+
+    # The test environment may not have every module imported by the upstream
+    # web app; this test is about selecting the workbench pin, not installing
+    # host dependencies.
+    assert status["state"] in {"HOST_READY", "HOST_BLOCKED"}
+    assert status["pin"] == {"tag": "v0.3.0", "commit": "workbench-sha"}
+    assert status["frontend"]["status"] == "UNVERIFIED"
+    assert status["mutations"] == "OFFLINE_DRAFT_SCAFFOLD_ONLY"
+    assert status["offline_task_routes"] == [
+        "GET /api/contentops/profiles",
+        "POST /api/contentops/draft-task",
+        "GET /api/contentops/draft-task/{task_id}?account={slug}&project={slug}",
+        "GET /api/contentops/draft-task/{task_id}/draft?account={slug}&project={slug}",
+    ]
+    assert status["offline_task_ui"] == "/contentops/offline-task"
+    assert "HOST_FRONTEND_UNVERIFIED" in status["blockers"]
 
 
 def test_host_status_blocks_a_missing_runtime():
@@ -282,6 +448,73 @@ def test_host_status_blocks_a_missing_runtime():
     assert "HOST_APP_MISSING" in status["blockers"]
     assert status["bind_host"] == "127.0.0.1"
     assert status["mutations"] == "DENIED"
+    assert status["offline_task_routes"] == []
+    assert status["offline_task_ui"] is None
+
+
+def test_host_status_names_every_module_the_app_imports():
+    """A missing import dependency must be a blocker, not a silent false pass.
+
+    ``web/app.py`` imports ``sse_starlette``; the original check named only
+    fastapi and uvicorn, so it could report HOST_READY for a host that would
+    fail on first import. This pins the full set so a new upstream import shows
+    up as a failing test rather than a wrong READY.
+    """
+    import contentops.easel.host as host_mod
+
+    assert "sse_starlette" in host_mod.HOST_IMPORT_MODULES
+    assert {"fastapi", "uvicorn", "pydantic"} <= set(host_mod.HOST_IMPORT_MODULES)
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        # Lay out a fake runtime tree so only a dependency can block.
+        (root / ".runtime" / "easel" / "web").mkdir(parents=True)
+        (root / ".runtime" / "easel" / "web" / "app.py").write_text("")
+        (root / ".runtime" / "easel" / "easel").mkdir(parents=True)
+        (root / ".runtime" / "easel" / "easel" / "cli.py").write_text("")
+        (root / "runtime").mkdir(parents=True)
+        (root / "runtime" / "easel.lock.json").write_text(
+            json.dumps({"tag": "v0.2.1", "commit": "x"}))
+
+        original = host_mod.HOST_IMPORT_MODULES
+        host_mod.HOST_IMPORT_MODULES = ("definitely_absent_mod",)
+        try:
+            status = host_status(root)
+        finally:
+            host_mod.HOST_IMPORT_MODULES = original
+
+    assert status["state"] == "HOST_BLOCKED"
+    assert any(b.startswith("HOST_DEPENDENCY_MISSING:definitely_absent_mod")
+               for b in status["blockers"]), status["blockers"]
+
+
+def test_offline_tasks_only_status_is_isolated_from_easel():
+    import contentops.easel.host as host_mod
+
+    original = host_mod.importlib.util.find_spec
+    checked = []
+
+    def find_spec(name, *args, **kwargs):
+        checked.append(name)
+        if name == "uvicorn":
+            return object()
+        raise AssertionError(f"offline-only status checked unrelated dependency: {name}")
+
+    host_mod.importlib.util.find_spec = find_spec
+    try:
+        status = host_mod.offline_task_host_status()
+    finally:
+        host_mod.importlib.util.find_spec = original
+
+    assert checked == ["uvicorn"]
+    assert status["state"] == "HOST_READY"
+    assert status["mode"] == "OFFLINE_TASKS_ONLY"
+    assert status["upstream_easel_loaded"] is False
+    assert status["gateway_or_model_calls"] is False
+    assert status["default_port"] == host_mod.DEFAULT_OFFLINE_TASK_PORT
+    assert status["production_ready"] is False
+    assert status["publish_authorized"] is False
+
 
 
 TESTS = [value for name, value in sorted(globals().items())

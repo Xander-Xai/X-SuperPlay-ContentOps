@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Easel 离线草稿任务</title>
+  <link rel="stylesheet" href="/contentops/offline-task.css">
+  <script src="/contentops/offline-task.js" defer></script>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">CONTENTOPS · EASEL WORKBENCH</p>
+      <h1>离线草稿任务</h1>
+      <p class="notice">这里运行确定性离线框架，不调用 Agent、模型、gateway 或网络。</p>
+      <p id="host-status" class="hint" role="status">正在读取工作台状态…</p>
+    </header>
+
+    <section class="panel" aria-labelledby="profile-heading">
+      <h2 id="profile-heading">01 / 账号画像</h2>
+      <label for="account">选择账号</label>
+      <select id="account" required></select>
+      <dl id="profile-summary" class="summary" aria-live="polite"></dl>
+      <details><summary>查看完整六文件画像</summary><p class="hint">从当前账号 DNA 即时生成；不表示 Easel Agent 已读取。</p><pre id="profile-detail">选择账号后加载</pre></details>
+    </section>
+
+    <section class="panel" aria-labelledby="skill-heading">
+      <h2 id="skill-heading">脚本技能详情</h2>
+      <p class="hint">展示仓库内声明的 video-script 调优内容；历史案例和数据需要独立核实。</p>
+      <details><summary>查看 video-script</summary><pre id="skill-detail">正在读取…</pre></details>
+    </section>
+
+    <form id="task-form" class="panel">
+      <h2>02 / 项目任务</h2>
+      <label for="project">已有 ContentOps 项目 slug</label>
+      <input id="project" name="project" list="account-projects" required maxlength="87" pattern="(_local/)?[a-z0-9][a-z0-9-]{0,79}" autocomplete="off">
+      <datalist id="account-projects"></datalist>
+      <p id="project-list-status" class="hint" role="status">选择账号后读取匹配项目。</p>
+      <button id="refresh-projects" type="button">刷新项目列表</button>
+      <p class="hint">仅写入仓库内已有项目；project.yaml 必须声明与所选账号一致的 account_slug。</p>
+      <button id="check-project" type="button">查看项目材料状态</button>
+      <pre id="project-readiness" hidden></pre>
+      <p class="hint">已批准 Brief、证据包和视频 Bundle 齐备时，可从这些材料生成离线证据草稿；不会使用下面的任务说明改写已审批 Brief。</p>
+      <button id="build-evidence-draft" type="button">从项目证据生成草稿</button>
+
+      <label for="brief">任务说明</label>
+      <textarea id="brief" name="brief" required maxlength="8000" rows="7"></textarea>
+      <button id="prepare-agent" type="button">准备 Agent 任务输入</button>
+      <button id="reset-agent-retry" type="button">新建准备（保留旧任务）</button>
+      <p class="hint">仅生成项目内任务输入和画像，不启动 Agent；隔离和执行授权尚未建立。</p>
+      <p class="hint">账号画像或项目材料变化后，可选择新建准备，再点击“准备 Agent 任务输入”。旧任务及回执不会删除。</p>
+      <div class="actions">
+        <button id="submit" type="submit">生成离线草稿框架</button>
+        <span id="status" role="status" aria-live="polite">等待提交</span>
+      </div>
+    </form>
+
+    <section class="panel" aria-labelledby="lookup-heading">
+      <h2 id="lookup-heading">查看已有任务</h2>
+      <p class="hint">先在上方选择创建任务时使用的账号并填写项目，再输入任务 ID。</p>
+      <button id="list-tasks" type="button">查找项目中的离线任务</button>
+      <label for="recent-tasks">已有离线任务</label>
+      <select id="recent-tasks"><option value="">先查找项目任务</option></select>
+      <label for="recent-agent-workspaces">已准备的 Agent 输入</label>
+      <select id="recent-agent-workspaces"><option value="">先查找项目任务</option></select>
+      <p class="hint">选择后点击“读取 Agent 任务状态”检查输入是否仍有效；列表本身不验证新鲜度。</p>
+      <label for="lookup-task-id">任务 ID</label>
+      <input id="lookup-task-id" maxlength="36" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" autocomplete="off">
+      <div class="actions"><button id="lookup-task" type="button">读取草稿和回执</button></div>
+      <button id="lookup-agent" type="button">读取 Agent 任务状态</button>
+      <label for="proposal-service-mode">服务类型</label>
+      <select id="proposal-service-mode"><option value="">请选择</option><option value="local_gateway">本机 OpenClaw gateway</option><option value="model_service">模型服务</option></select>
+      <label for="proposal-service">模型或 gateway 标识</label>
+      <input id="proposal-service" maxlength="80" placeholder="例如 provider/model" autocomplete="off">
+      <label for="proposal-endpoint">服务地址（不要填写密钥）</label>
+      <input id="proposal-endpoint" maxlength="512" placeholder="https://… 或本机 ws://127.0.0.1:…" autocomplete="off">
+      <label for="proposal-cost">单次费用上限与币种</label>
+      <input id="proposal-cost" inputmode="decimal" placeholder="例如 0.50" autocomplete="off">
+      <input id="proposal-currency" maxlength="3" placeholder="例如 USD" autocomplete="off">
+      <button id="prepare-proposal" type="button">保存单次任务申请资料</button>
+      <label for="recent-proposals">已保存的申请资料</label>
+      <select id="recent-proposals"><option value="">先查找项目任务</option></select>
+      <button id="read-proposal" type="button">读取申请资料与当前任务状态</button>
+      <label for="proposal-sha256">已保存的申请资料摘要</label>
+      <input id="proposal-sha256" maxlength="64" placeholder="保存后自动填入，或粘贴摘要" autocomplete="off">
+      <button id="inspect-approval" type="button">核对现有审批绑定</button>
+      <p class="hint">资料保存在项目本机工作目录中；不会连接模型服务、创建批准、消费授权或启动 Agent。</p>
+      <label for="windows-runtime-candidates">已发现的 Windows 运行包（未验证）</label>
+      <select id="windows-runtime-candidates"><option value="">可选运行包，或在下方手动填写</option></select>
+      <label for="windows-runtime-project">Windows 运行包所在项目</label>
+      <input id="windows-runtime-project" maxlength="87" placeholder="运行包项目 slug，或 _local/slug" autocomplete="off">
+      <label for="windows-runtime-package">Windows 运行包名称</label>
+      <input id="windows-runtime-package" maxlength="80" placeholder="例如 local-openclaw" autocomplete="off">
+      <button id="review-windows-sandbox" type="button">审查 Windows 沙箱配置</button>
+      <p class="hint">核对已准备的任务和运行包，并在当前项目写入审查回执，可能需要一些时间；不启动 Agent，也不授权执行。</p>
+      <label for="recent-windows-reviews">历史 Windows 审查回执</label>
+      <select id="recent-windows-reviews"><option value="">先查找项目任务</option></select>
+      <button id="lookup-windows-review" type="button">读取历史审查回执</button>
+      <button id="cancel-agent" type="button">取消未执行的 Agent 任务</button>
+      <label for="agent-exit-code">候选结果退出状态（手动提供，不构成执行证明）</label>
+      <select id="agent-exit-code"><option value="0">成功（0）</option><option value="1">失败（1）</option></select>
+      <button id="collect-agent" type="button">收集项目内候选结果</button>
+      <p class="hint">只读取该任务的 output/agent-result.json；来源和实际执行均未验证。</p>
+      <button id="lookup-agent-result" type="button">读取未验证结果</button>
+      <p class="hint">读取未验证结果时，请在任务 ID 栏填写结果回执中的 attempt_id。</p>
+      <label for="recent-failures">已有失败回执</label>
+      <select id="recent-failures"><option value="">先查找项目任务</option></select>
+      <label for="lookup-failure-id">失败回执编号</label>
+      <input id="lookup-failure-id" maxlength="36" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" autocomplete="off">
+      <button id="lookup-failure" type="button">读取失败回执</button>
+    </section>
+
+    <section id="result" class="panel" hidden>
+      <h2>03 / ContentOps 输出</h2>
+      <h3>脱敏回执</h3>
+      <pre id="receipt"></pre>
+      <h3>项目草稿</h3>
+      <pre id="draft"></pre>
+      <details id="supporting-panel" hidden><summary>台词、声明映射与分镜</summary><pre id="supporting-artifacts"></pre></details>
+      <p class="notice">离线结果需人工核对和复制评审；它本身不构成生产或发布授权。</p>
+    </section>
+  </main>
+</body>
+</html>

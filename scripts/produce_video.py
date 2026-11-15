@@ -892,6 +892,13 @@ def main(argv: list[str] | None = None) -> int:
             if args.topic or args.source_url or args.account:
                 parser.error("--project cannot be combined with --account, --topic, or --source-url")
             project_path = Path(args.project)
+            if not project_path.is_absolute():
+                # ``projects/_local/<slug>`` may live in the external output
+                # root; resolve against the repository and redirect when the
+                # slug is there.
+                from contentops.paths import resolve_project
+
+                project_path = resolve_project(args.project)
         else:
             if not args.account or (not args.topic and not args.source_url):
                 parser.error("raw production needs --account and at least one of --topic or --source-url")

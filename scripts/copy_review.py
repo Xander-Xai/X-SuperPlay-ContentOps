@@ -26,17 +26,16 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from contentops.workflow import copy_review  # noqa: E402
+from contentops.paths import resolve_project, trusted_project_root  # noqa: E402
 
 
 def _project_path(value: str) -> Path:
-    supplied = Path(value)
-    candidate = supplied if supplied.is_absolute() else ROOT / supplied
-    project = candidate.resolve()
-    projects_root = (ROOT / "projects").resolve()
-    try:
-        relative_project = project.relative_to(projects_root)
-    except ValueError:
-        raise ValueError("PROJECT_OUTSIDE_REPO: project must be under projects/<slug>") from None
+    project = resolve_project(value)
+    root = trusted_project_root(project, ROOT)
+    if root is None:
+        raise ValueError(
+            "PROJECT_OUTSIDE_REPO: project must be under projects/<slug>") from None
+    relative_project = project.relative_to(root)
     # checkout_guard exempts only projects/_local/ on a dirty main checkout,
     # so that sandbox must be able to sign its own copy review. Allow exactly
     # that one two-level shape; refuse any other nesting.

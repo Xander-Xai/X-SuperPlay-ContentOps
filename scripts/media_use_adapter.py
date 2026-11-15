@@ -39,6 +39,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from contentops.media.asset_execution import import_fingerprint  # noqa: E402
+from contentops.paths import relative_label  # noqa: E402
 from contentops.media.fingerprint import sha256_file  # noqa: E402
 from contentops.media.image_contract import (  # noqa: E402
     AssetKind,
@@ -552,9 +553,9 @@ def cmd_demo(args: argparse.Namespace) -> int:
     limitations: List[str] = []
     report: Dict[str, Any] = {
         "schema": "contentops.media-use-demo/v1",
-        "project": project_dir.relative_to(ROOT).as_posix()
-        if project_dir.is_relative_to(ROOT)
-        else project_dir.name,
+        "project": (relative_label(project_dir)
+                   if project_dir.is_relative_to(ROOT)
+                   else project_dir.name),
         "production_ready": False,
         "steps": steps,
         "limitations": limitations,

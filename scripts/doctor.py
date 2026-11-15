@@ -148,19 +148,49 @@ def _check_easel_checkout() -> dict:
 
 
 def _check_repo_layout() -> dict:
+    # The products live outside the checkout when an output root is
+    # configured, so ``outputs/`` is then expected under that root rather
+    # than inside the repository.
+    import sys
+
+    if str(ROOT / "src") not in sys.path:
+        sys.path.insert(0, str(ROOT / "src"))
+    from contentops.paths import (deliverables_root, output_root, tmp_root,
+                                  workspace_root)
+
+    root = output_root()
     required = [
         ROOT / "scripts",
         ROOT / "templates",
         ROOT / "projects",
-        ROOT / "outputs",
         ROOT / "runtime",
         ROOT / "docs",
     ]
-    missing = [str(p.relative_to(ROOT)) for p in required if not p.exists()]
+    if root is not None:
+        # A configured output root must exist: a mistyped path would send
+        # every product somewhere nobody looks for it, and this check is
+        # where that is caught. With no root configured there is nothing to
+        # require -- the in-repository products/ is gitignored and a clean
+        # checkout legitimately has no outputs/ directory at all.
+        required.append(root)
+    missing = []
+    for path in required:
+        if path.exists():
+            continue
+        try:
+            missing.append(str(path.relative_to(ROOT)))
+        except ValueError:
+            missing.append(str(path))
     return {
         "name": "repo_layout",
         "ok": not missing,
         "missing": missing,
+        "output_root": str(root) if root else "in-repository",
+        "product_roots": {
+            "workspace": str(workspace_root()),
+            "deliverables": str(deliverables_root()),
+            "tmp": str(tmp_root()),
+        },
     }
 
 

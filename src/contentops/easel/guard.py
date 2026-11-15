@@ -16,7 +16,7 @@ import json
 import re
 from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Optional, Tuple
-from urllib.parse import unquote
+from urllib.parse import unquote, urlsplit
 
 LOOPBACK_HOSTS = frozenset({"127.0.0.1", "localhost", "::1"})
 SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
@@ -24,8 +24,6 @@ SAFE_EXACT = frozenset({
     "/",
     "/onepage",
     "/favicon.ico",
-    "/api/status",
-    "/api/skills",
 })
 #: Workbench reads that may return *content* through this guard. Until every
 #: upstream reader at each prefix has been audited for what it can serve, file
@@ -40,6 +38,9 @@ SAFE_PREFIXES = (
 #: the upstream readers validate containment, not secrecy, and the outputs
 #: tree holds system directories this repository must never expose.
 SAFE_RESOURCE_PREFIXES_DISABLED = (
+    # Both upstream routes call get_skills(), which reads the runtime .env.
+    "/api/status",
+    "/api/skills",
     "/api/skill/",
     "/api/persona/",
     "/api/output/",
@@ -62,6 +63,19 @@ ALWAYS_DENIED_PREFIXES = (
     "/api/chat",
 )
 PATH_ESCAPE = re.compile(r"(^|/)\.\.?(/|$)")
+OFFLINE_TASK_STATUS_PATH = re.compile(
+    r"^/api/contentops/draft-task/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-"
+    r"[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+)
+OFFLINE_TASK_DRAFT_PATH = re.compile(
+    r"^/api/contentops/draft-task/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-"
+    r"[89ab][0-9a-f]{3}-[0-9a-f]{12}/draft$"
+)
+OFFLINE_TASK_ARTIFACTS_PATH = re.compile(
+    r"^/api/contentops/draft-task/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-"
+    r"[89ab][0-9a-f]{3}-[0-9a-f]{12}/artifacts$"
+)
+OFFLINE_PROFILE_DETAIL_PATH = re.compile(r"^/api/contentops/profiles/[a-z0-9][a-z0-9-]{0,79}$")
 HOST_RE = re.compile(r"^(127\.0\.0\.1|localhost|\[::1\])(?::\d{1,5})?$", re.IGNORECASE)
 
 #: Path segments that name Easel's own system directories under ``outputs/``.
@@ -93,18 +107,70 @@ class HostGuardError(ValueError):
 class HostPolicy:
     """What the host may expose through this repository.
 
-    ``allow_workbench_reads`` keeps the read-only UI useful. Mutations are not a
-    flag: this release has no authorised mutation path, so a policy cannot turn
-    one on by accident.
+    ``allow_workbench_reads`` keeps audited read-only UI paths available.
+    ``allow_offline_tasks`` opens only the exact ContentOps scaffold submit and
+    receipt/draft read routes. It never opens an upstream Easel mutation.
     """
 
     allow_workbench_reads: bool = True
+    allow_offline_tasks: bool = False
 
     def safe_route(self, method: str, path: str) -> Tuple[bool, str]:
         method = method.upper()
+        if self.allow_offline_tasks and (
+                (method == "OPTIONS" and (
+                    path in {
+                        "/api/contentops/draft-task",
+                        "/api/contentops/evidence-draft",
+                        "/api/contentops/agent-workspace",
+                        "/api/contentops/agent-proposal",
+                        "/api/contentops/agent-approval-inspection",
+                        "/api/contentops/agent-cancel",
+                        "/api/contentops/agent-collect",
+                        "/api/contentops/windows-sandbox-review",
+                        "/api/contentops/profiles",
+                        "/api/contentops/projects",
+                        "/api/contentops/draft-tasks",
+                        "/api/contentops/status",
+                        "/api/contentops/project-readiness",
+                        "/api/contentops/skills/video-script",
+                        "/contentops/offline-task",
+                        "/contentops/offline-task.js",
+                        "/contentops/offline-task.css",
+                    }
+                    or OFFLINE_TASK_STATUS_PATH.fullmatch(path)
+                    or OFFLINE_TASK_DRAFT_PATH.fullmatch(path)
+                    or OFFLINE_TASK_ARTIFACTS_PATH.fullmatch(path)
+                    or OFFLINE_PROFILE_DETAIL_PATH.fullmatch(path)
+                ))
+                or
+                (method == "POST" and path == "/api/contentops/draft-task")
+                or (method == "POST" and path == "/api/contentops/evidence-draft")
+                or (method == "POST" and path == "/api/contentops/agent-workspace")
+                or (method == "POST" and path == "/api/contentops/agent-proposal")
+                or (method == "POST" and path == "/api/contentops/agent-approval-inspection")
+                or (method == "POST" and path == "/api/contentops/agent-cancel")
+                or (method == "POST" and path == "/api/contentops/agent-collect")
+                or (method == "POST" and path == "/api/contentops/windows-sandbox-review")
+                or (method == "GET" and path == "/api/contentops/profiles")
+                or (method == "GET" and path == "/api/contentops/projects")
+                or (method == "GET" and path == "/api/contentops/draft-tasks")
+                or (method == "GET" and path == "/api/contentops/status")
+                or (method == "GET" and OFFLINE_PROFILE_DETAIL_PATH.fullmatch(path))
+                or (method == "GET" and path == "/api/contentops/project-readiness")
+                or (method == "GET" and path == "/api/contentops/skills/video-script")
+                or (method == "GET" and path in {
+                    "/contentops/offline-task",
+                    "/contentops/offline-task.js",
+                    "/contentops/offline-task.css",
+                })
+                or (method == "GET" and (OFFLINE_TASK_STATUS_PATH.fullmatch(path)
+                                          or OFFLINE_TASK_DRAFT_PATH.fullmatch(path)
+                                          or OFFLINE_TASK_ARTIFACTS_PATH.fullmatch(path)))):
+            return True, ""
         if method not in SAFE_METHODS:
             return False, "HOST_ROUTE_DENIED"
-        if not self.allow_workbench_reads and path != "/api/status":
+        if not self.allow_workbench_reads:
             return False, "HOST_ROUTE_DENIED"
         for prefix in ALWAYS_DENIED_PREFIXES:
             if path.startswith(prefix):
@@ -142,12 +208,36 @@ def _host_allowed(value: str) -> bool:
 def _origin_allowed(value: str) -> bool:
     if not value:
         return True
-    if value.strip() == "null":
+    try:
+        parsed = urlsplit(value.strip())
+        if (parsed.scheme.lower() not in {"http", "https"} or not parsed.hostname
+                or parsed.username or parsed.password or parsed.path
+                or parsed.query or parsed.fragment):
+            return False
+        # Accessing port validates its syntax and range.
+        _ = parsed.port
+        return parsed.hostname.lower() in LOOPBACK_HOSTS
+    except ValueError:
         return False
-    match = re.match(r"^https?://([^/:]+)(?::\d{1,5})?$", value.strip(), re.IGNORECASE)
-    if not match:
+
+
+def _same_origin(host: str, origin: str) -> bool:
+    """Require the browser's complete HTTP origin for state-changing routes."""
+    if not host or not origin:
         return False
-    return match.group(1).lower() in LOOPBACK_HOSTS
+    try:
+        parsed = urlsplit(origin)
+        host_parts = urlsplit("//" + host)
+        if (parsed.scheme.lower() != "http" or not parsed.hostname
+                or parsed.username or parsed.password or parsed.path
+                or parsed.query or parsed.fragment or not host_parts.hostname
+                or host_parts.username or host_parts.password
+                or host_parts.path or host_parts.query or host_parts.fragment):
+            return False
+        return (parsed.hostname.lower() == host_parts.hostname.lower()
+                and (parsed.port or 80) == (host_parts.port or 80))
+    except ValueError:
+        return False
 
 
 def _normalise_path(path: str) -> str:
@@ -200,6 +290,11 @@ class GuardMiddleware:
             return
 
         method = str(scope.get("method") or "").upper()
+        sensitive_headers = [key.lower() for key, _ in scope.get("headers") or []
+                             if key.lower() in (b"host", b"origin")]
+        if sensitive_headers.count(b"host") != 1 or sensitive_headers.count(b"origin") > 1:
+            await _deny(send, "HOST_HEADERS_AMBIGUOUS", "Host and Origin headers must not be duplicated")
+            return
         headers = _headers(scope)
 
         try:
@@ -215,17 +310,38 @@ class GuardMiddleware:
             await _deny(send, "HOST_ORIGIN_INVALID", "Origin must be loopback or absent")
             return
 
+        if (method == "POST" and self.policy.allow_offline_tasks
+                and path in {"/api/contentops/draft-task", "/api/contentops/evidence-draft", "/api/contentops/agent-workspace", "/api/contentops/agent-proposal", "/api/contentops/agent-approval-inspection", "/api/contentops/agent-cancel", "/api/contentops/agent-collect", "/api/contentops/windows-sandbox-review"}
+                and not _same_origin(headers.get("host", ""), headers.get("origin", ""))):
+            await _deny(send, "HOST_CSRF_DENIED", "task submission requires the same loopback origin")
+            return
+
         ok, code = self.policy.safe_route(method, path)
         if not ok:
             await _deny(send, code, f"{method} {path} is not in the host read allowlist")
             return
 
         if method == "OPTIONS":
+            allow = b"GET, HEAD, OPTIONS"
+            if self.policy.allow_offline_tasks:
+                if path in {"/api/contentops/draft-task", "/api/contentops/evidence-draft", "/api/contentops/agent-workspace", "/api/contentops/agent-proposal", "/api/contentops/agent-approval-inspection", "/api/contentops/agent-cancel", "/api/contentops/agent-collect", "/api/contentops/windows-sandbox-review"}:
+                    allow = b"POST, OPTIONS"
+                elif (path in {"/api/contentops/profiles", "/api/contentops/projects", "/api/contentops/draft-tasks", "/api/contentops/status", "/api/contentops/project-readiness", "/api/contentops/skills/video-script"}
+                      or path in {"/contentops/offline-task",
+                                  "/contentops/offline-task.js",
+                                  "/contentops/offline-task.css"}
+                      or OFFLINE_TASK_STATUS_PATH.fullmatch(path)
+                      or OFFLINE_TASK_DRAFT_PATH.fullmatch(path)):
+                    allow = b"GET, OPTIONS"
+                elif OFFLINE_TASK_ARTIFACTS_PATH.fullmatch(path):
+                    allow = b"GET, OPTIONS"
+                elif OFFLINE_PROFILE_DETAIL_PATH.fullmatch(path):
+                    allow = b"GET, OPTIONS"
             await send({
                 "type": "http.response.start",
                 "status": 204,
                 "headers": [
-                    (b"allow", b"GET, HEAD, OPTIONS"),
+                    (b"allow", allow),
                     (b"cache-control", b"no-store"),
                     (b"x-contentops-host-guard", b"deny-by-default"),
                 ],

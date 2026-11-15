@@ -66,14 +66,14 @@ def _project(tmp: Path, *, html: bool = True) -> Path:
     return project
 
 
-def _runtime(tmp: Path, *, tools: bool = True) -> Path:
+def _runtime(tmp: Path, *, tools: bool = True, layer: str = "openclaw") -> Path:
     runtime = tmp / "runtime"
     if tools:
         (runtime / "skills" / "shared" / "scripts").mkdir(parents=True)
-        (runtime / "skills" / "openclaw" / "card-design" / "scripts").mkdir(parents=True)
+        (runtime / "skills" / layer / "card-design" / "scripts").mkdir(parents=True)
         (runtime / "skills" / "shared" / "scripts" / "render_card.py").write_text(
             "", encoding="utf-8")
-        (runtime / "skills" / "openclaw" / "card-design" / "scripts"
+        (runtime / "skills" / layer / "card-design" / "scripts"
          / "card_audit.py").write_text("", encoding="utf-8")
     return runtime
 
@@ -128,6 +128,13 @@ def test_plan_refuses_a_missing_project():
             assert exc.code == "PROJECT_MISSING"
         else:
             raise AssertionError("a missing project must be refused")
+
+
+def test_plan_resolves_card_auditor_from_v03_builtin_layout():
+    with tempfile.TemporaryDirectory() as tmp:
+        runtime = _runtime(Path(tmp), layer="builtin")
+        planned = plan(_project(Path(tmp)), runtime_root=runtime)
+        assert planned.auditor == runtime / "skills" / "builtin" / "card-design" / "scripts" / "card_audit.py"
 
 
 def test_plan_refuses_html_outside_the_project():

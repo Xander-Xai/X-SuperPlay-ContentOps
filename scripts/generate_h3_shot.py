@@ -145,7 +145,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--prompt", default="", help="what the shot should show")
     parser.add_argument("--shot-file", default="", help="JSON ShotPlan fields")
-    parser.add_argument("--out-dir", default=".verify-tmp/m4")
+    parser.add_argument("--out-dir", default=None,
+                        help="output directory (default: the scratch root, which is "
+                             "outside the checkout when an output root is configured)")
     parser.add_argument("--shot-id", default="shot-1")
     parser.add_argument("--mode", default="T2VA",
                         choices=["T2VA", "I2VA", "FL2VA", "L2VA", "Ref2VA"])
@@ -182,6 +184,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     args = build_parser().parse_args()
+    if not args.out_dir:
+        from contentops.paths import tmp_root
+
+        args.out_dir = str(tmp_root() / "m4")
 
     overrides = {}
     if args.shot_file:

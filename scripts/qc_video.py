@@ -34,6 +34,7 @@ from contentops.media.real_source_duration import (  # noqa: E402
     PASS as RSD_PASS,
     check as check_real_source_duration,
 )
+from contentops.paths import relative_label, resolve_project  # noqa: E402
 
 MIN_FILE_BYTES = 100 * 1024  # 100 KB
 MIN_DURATION = 30.0
@@ -609,7 +610,9 @@ def _emit(project: Path, checks: list[dict], target_name: str = "") -> dict:
         project_root=project,
         graded_target=f"project://final/{graded_video}",
     )
-    canonical["project"] = str(project.relative_to(ROOT))
+    canonical["project"] = (str(project.relative_to(ROOT))
+                         if project.is_relative_to(ROOT)
+                         else relative_label(project))
     out = canonical
 
     suffix = f"-{target_name}" if target_name else ""
@@ -639,9 +642,7 @@ def main() -> int:
     p.add_argument("--video", default="",
                    help="which render to grade: easel | fallback | <file>.mp4")
     args = p.parse_args()
-    project = Path(args.project)
-    if not project.is_absolute():
-        project = (ROOT / args.project).resolve()
+    project = resolve_project(args.project)
     result = qc(project, target=args.video)
     return 1 if result.get("overall") == "FAIL" else 0
 

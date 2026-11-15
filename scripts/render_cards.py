@@ -5,10 +5,11 @@
     python scripts/render_cards.py projects/my-note --html assets/cards/cards.html \\
         --width 1080 --height 1440 --scale 1
     python scripts/render_cards.py projects/my-note --json
+    python scripts/render_cards.py projects/my-note --workbench-runtime
 
 What it runs (nothing else):
     1. ``.runtime/easel/skills/shared/scripts/render_card.py``  — HTML -> PNG
-    2. ``.runtime/easel/skills/openclaw/card-design/scripts/card_audit.py`` — density gate
+    2. ``.runtime/easel/skills/{openclaw|builtin}/card-design/scripts/card_audit.py`` — density gate
 
 and writes ``projects/<slug>/receipts/card-render.json``.
 
@@ -79,6 +80,8 @@ def main(argv=None) -> int:
     parser.add_argument("--height", type=int, default=1440)
     parser.add_argument("--scale", type=int, default=1)
     parser.add_argument("--timeout", type=int, default=300)
+    parser.add_argument("--workbench-runtime", action="store_true",
+                        help="use v0.3 only after upstream, overlay and profile verification")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
 
@@ -95,8 +98,16 @@ def main(argv=None) -> int:
         project = (ROOT / project).resolve()
 
     try:
+        runtime_root = RUNTIME_ROOT
+        if args.workbench_runtime:
+            # Upstream starts Chromium and may fetch remote HTML resources.
+            # A loopback host or a scrubbed environment is not a network sandbox.
+            # Do not let this candidate flag overwrite production card outputs
+            # or start an unconstrained browser before isolation is established.
+            raise CardRenderError("CANDIDATE_BROWSER_ISOLATION_REQUIRED",
+                                  "v0.3 card rendering requires a verified isolated browser and candidate output path")
         p = plan(project,
-                 runtime_root=RUNTIME_ROOT,
+                 runtime_root=runtime_root,
                  html=Path(args.html) if args.html else None,
                  out_dir=Path(args.out_dir) if args.out_dir else None,
                  selector=args.selector,
