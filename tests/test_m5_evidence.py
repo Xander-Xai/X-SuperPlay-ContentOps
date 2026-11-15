@@ -53,7 +53,10 @@ def test_workbench_composer_requires_a_verified_overlay():
         script.write_text("# verified fixture\n", encoding="utf-8")
         with mock.patch.object(resolve_easel, "resolve_easel_workbench", return_value={
                 "status": "OK", "easel_dir": str(candidate)}):
-            assert assemble_easel._upstream_assemble(workbench_runtime=True) == script
+            # The resolver returns a resolved path; a Windows runner hands back an 8.3
+            # short form of the temp directory, so both sides must be resolved.
+            assert assemble_easel._upstream_assemble(
+                workbench_runtime=True) == script.resolve()
         with mock.patch.object(resolve_easel, "resolve_easel_workbench", return_value={
                 "status": "BLOCKED", "reasons": ["extra file"]}):
             try:
@@ -76,7 +79,7 @@ def test_default_composer_still_resolves_only_the_production_pin():
         with mock.patch.object(resolve_easel, "resolve_easel", return_value={
                 "status": "OK", "easel_dir": str(easel_root)}):
             actual = assemble_easel._upstream_assemble()
-        assert actual == expected
+        assert actual == expected.resolve()
 
 
 def test_workbench_resolver_requires_generated_profile_overlay_verification():
@@ -105,7 +108,7 @@ def test_workbench_resolver_requires_generated_profile_overlay_verification():
         assert resolved["status"] == "OK", resolved
         assert Path(resolved["easel_dir"]) == candidate
         verifier.assert_called_once_with(
-            record_path=record, profile_mode="generated")
+            record_path=record.resolve(), profile_mode="generated")
 
         with mock.patch.object(verify_easel_runtime, "verify_overlay", return_value={
                 "status": "MISMATCH", "reason": "extra file"}):
