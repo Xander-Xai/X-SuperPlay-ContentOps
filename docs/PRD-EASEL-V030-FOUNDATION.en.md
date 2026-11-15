@@ -94,7 +94,7 @@ This document uses **v0.2.1 / v0.3.0** only, never "2.0 / 3.0".
 | `.runtime/easel` | 996 files | **Production runtime**, v0.2.1 pin `3fe2d99`, clean tree | Yes |
 | `D:\Projects\_worktrees\easel-v030-rebuild-20261113b` | — | **v0.3.0 candidate**, 1073 blobs + tree digest + 14 overlay files verified | Only via `resolve_easel_workbench()` |
 | `D:\Projects\Easel-Workbench` | — | Earlier snapshot, `profile_status: STALE` | No |
-| `Easel/` (in repo) | 2.2 GB | **gitignored legacy shallow clone**, HEAD `4b9c03c` (24 commits after v0.2.1), two uncommitted modifications | No (actively rejected) |
+| `Easel/` (in repo) | **deleted 2026-11-16** (was 2.2 GB) | **gitignored legacy shallow clone**, HEAD `4b9c03c`; its two uncommitted modifications were an earlier draft of this repository's own overlay, so nothing unique was lost. Evidence: `reports/audits/easel-legacy-clone-retirement-2026-11-16.md` | No (never accepted) |
 
 ### 2.4 Real artifact evidence (the only complete chain)
 
@@ -515,7 +515,7 @@ Two frequently misread points:
 | 2 | First grey platform for M4b | Founder | Needs a real account; `wechat_article` is the only `DRAFT_ONLY` target |
 | 3 | v0.3.0 blob count reconciliation (1073 vs 1071 baseline) | Governance | `verify_easel_runtime.py --overlay --json` `baseline_files` / `overlay_files` |
 | 4 | Whether ADR-024 is separate from ADR-023 | Founder | Depends on whether Agent isolation acceptance is its own gate |
-| 5 | Archive or delete `Easel/` (2.2 GB) | Founder | Diff the two uncommitted modifications first (AGENTS §10) |
+| 5 | ~~Archive or delete `Easel/` (2.2 GB)~~ | **Decided**: deleted (Founder, 2026-11-16); the diff conclusion is in `reports/audits/easel-legacy-clone-retirement-2026-11-16.md` | — |
 | 6 | Whether to move `docs/UPSTREAM-EASEL.md` out of the exempt list | Governance | Handle inside M0 |
 | 7 | Retention deadline for the v0.2.1 tree | Founder | At least one release cycle after M2 acceptance |
 | 8 | Long-term retention of gzh-design (AGPL) | Founder + legal | Evaluate before commercial use |
