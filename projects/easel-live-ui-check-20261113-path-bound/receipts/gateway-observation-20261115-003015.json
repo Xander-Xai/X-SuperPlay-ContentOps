@@ -1,0 +1,13 @@
+{
+  "schema": "contentops.easel-windows-gateway-observation/v1",
+  "observed_at_utc": "2026-11-14T16:30:15.6000551Z",
+  "port": 18789,
+  "observation": "NO_LISTENER",
+  "listeners": [],
+  "gateway_identity": "NOT_VERIFIED",
+  "gateway_version": "NOT_VERIFIED",
+  "credentials_read": false,
+  "network_connection_made": false,
+  "production_ready": false,
+  "publish_authorized": false
+}
