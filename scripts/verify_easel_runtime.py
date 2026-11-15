@@ -58,8 +58,26 @@ OVERLAY_RECORD = ROOT / "runtime" / "easel-workbench-overlay.json"
 WORKBENCH_TREE_CACHE = ROOT / "runtime" / "easel-workbench-upstream-tree.json"
 FRONTEND_BUILD_POLICY = ROOT / "runtime" / "easel-workbench-build-policy.json"
 REPO = "ZJU-REAL/Easel"
-PINNED_TAG = "v0.2.1"
-PINNED_COMMIT = "3fe2d9904c1619281ef57f81d9ee0b7854998399"
+
+
+def _active_pin() -> tuple[str | None, str | None]:
+    """The pinned tag and commit, read from ``runtime/easel-pins.json``.
+
+    Returns ``(None, None)`` when the registry is unusable. Callers must then
+    refuse to verify rather than compare against a guess: the constants this
+    replaces were one of five places the same commit was written down, and a
+    stale one here silently verified the wrong tree.
+    """
+    try:
+        from contentops.easel import pins
+
+        engine = pins.active(ROOT)
+        return engine.tag, engine.commit
+    except Exception:  # noqa: BLE001 - an unreadable registry is not a default
+        return None, None
+
+
+PINNED_TAG, PINNED_COMMIT = _active_pin()
 
 # Paths the pipeline itself writes into the runtime tree. They are expected to
 # differ from upstream and are excluded from the comparison; everything else
@@ -394,8 +412,18 @@ def resolve_tag_commit(repo: str, tag: str) -> str:
 
 
 def verify(runtime_dir: Path = RUNTIME, repo: str = REPO,
-           commit: str = PINNED_COMMIT) -> dict:
-    """Compare the local runtime tree against upstream at `commit`."""
+           commit: str | None = None) -> dict:
+    """Compare the local runtime tree against upstream at `commit`.
+
+    `commit` defaults to the registry's active engine. When the registry is
+    unreadable the result is UNVERIFIED — never a comparison against a default
+    version.
+    """
+    commit = commit or PINNED_COMMIT
+    if not commit:
+        return {"runtime_dir": str(runtime_dir), "repo": repo,
+                "status": "UNVERIFIED",
+                "reason": "pin registry unreadable: no commit to verify against"}
     result: dict = {
         "runtime_dir": str(runtime_dir),
         "repo": repo,
@@ -1062,7 +1090,10 @@ def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--runtime", default=str(RUNTIME))
     p.add_argument("--repo", default=REPO)
-    p.add_argument("--commit", default=PINNED_COMMIT)
+    p.add_argument("--commit", default=None,
+                   help="commit to verify; defaults to the registry's active engine")
+    p.add_argument("--tag", default=PINNED_TAG,
+                   help="tag whose target --commit must match (--resolve-tag only)")
     p.add_argument("--resolve-tag", action="store_true",
                    help="confirm --commit is the commit the pinned tag points at")
     p.add_argument("--json", action="store_true")
@@ -1086,6 +1117,14 @@ def main() -> int:
                    default=str(ROOT / "runtime" / "easel-workbench-frontend-build.json"),
                    help="frontend build receipt path")
     args = p.parse_args()
+
+    if not args.commit:
+        if not PINNED_COMMIT:
+            p.error("pin registry unreadable: pass --commit explicitly, or restore "
+                    "runtime/easel-pins.json")
+        args.commit = PINNED_COMMIT
+    if args.resolve_tag and not args.tag:
+        p.error("--resolve-tag needs --tag (the pin registry is unreadable)")
 
     if args.frontend_build:
         overlay = load_overlay(Path(args.overlay_record))
@@ -1122,12 +1161,12 @@ def main() -> int:
 
     if args.resolve_tag and res.get("status") != "MISSING":
         try:
-            peeled = resolve_tag_commit(args.repo, PINNED_TAG)
+            peeled = resolve_tag_commit(args.repo, args.tag)
             res["tag_resolved_commit"] = peeled
             res["tag_matches_commit"] = (peeled == args.commit)
             if peeled != args.commit:
                 res["status"] = "MISMATCH"
-                res["reason"] = (f"tag {PINNED_TAG} points at {peeled}, "
+                res["reason"] = (f"tag {args.tag} points at {peeled}, "
                                  f"but the pin expects {args.commit}")
         except RuntimeError as e:
             res["tag_resolve_error"] = str(e)

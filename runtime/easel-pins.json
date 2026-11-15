@@ -1,0 +1,43 @@
+{
+  "schema": "contentops.easel-pins/v1",
+  "note": "The only place an Easel engine's identity is written down. Code reads this file; it never carries a commit literal. `active` selects the engine production resolves, and changing it is an upgrade-gated action (docs/UPSTREAM-EASEL.md), not an edit. Identity is commit plus, when measured, tree digest: upstream force-replaced the v0.3.0 tag while keeping the version number, so a tag is a comment and never an identity. A missing or invalid registry blocks resolution; there is no fallback commit.",
+  "active": "v0.2.1",
+  "workbench_engine": "v0.3.0",
+  "engines": {
+    "v0.2.1": {
+      "role": "production",
+      "repo": "https://github.com/ZJU-REAL/Easel.git",
+      "tag": "v0.2.1",
+      "commit": "3fe2d9904c1619281ef57f81d9ee0b7854998399",
+      "tree_sha256": null,
+      "blob_count": 982,
+      "blob_count_basis": "files verified by blob_sha1 tree comparison on 2026-11-01; not a total tree count",
+      "digest_status": "not_recorded",
+      "layout": "openclaw",
+      "skill_root": "skills/openclaw",
+      "root": ".runtime/easel",
+      "installed": true,
+      "license": "Apache-2.0",
+      "agpl_vendored": ["skills/openclaw/gzh-design"],
+      "note": "Production engine since 2026-10-02. Verified by git HEAD plus a 982-blob content comparison; no tree digest was ever computed for it, so this entry says so instead of inventing one."
+    },
+    "v0.3.0": {
+      "role": "candidate",
+      "repo": "https://github.com/ZJU-REAL/Easel.git",
+      "tag": "v0.3.0",
+      "commit": "bb3c8ff0463f36c202454d74171682ba6e470cb1",
+      "tree_sha256": "c26fc96a653c0ff25ef3bc7486eee372c81f44e67d5ff2c30f1786c63c7d4ec8",
+      "blob_count": 1073,
+      "blob_count_basis": "tree_blob_count recorded in runtime/easel-workbench-overlay.json on 2026-11-13",
+      "digest_status": "recorded",
+      "layout": "builtin",
+      "skill_root": "skills/builtin",
+      "root": ".runtime/easel-v030",
+      "installed": false,
+      "license": "Apache-2.0",
+      "agpl_vendored": ["skills/builtin/gzh-design"],
+      "instance_record": "runtime/easel-workbench-overlay.json",
+      "note": "Adoption candidate, not production. The installed instance path is recorded in the overlay manifest, not here, because it is outside the repository. `root` is the intended location once M1 installs it. Requires the full upgrade gate before `active` may point at it."
+    }
+  }
+}

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Resolve (and if necessary acquire) the pinned Easel runtime.
 
-AGENTS.md §1.6 pins Easel at v0.2.1 / commit 3fe2d99 and forbids silently
-running anything else. This module is the single place that decides which
-directory is the production engine:
+AGENTS.md §1.6 forbids silently running anything other than the pinned engine.
+The pin itself is not written here: it lives in `runtime/easel-pins.json` and is
+read through `contentops.easel.pins`. This module decides which directory is the
+production engine:
 
   1. `.runtime/easel` with `.git`      -> remote MUST be ZJU-REAL/Easel (§3) and
                                           HEAD MUST equal the pinned commit.
@@ -38,15 +39,7 @@ from pathlib import Path
 from process_utils import PIPE, hidden_run
 
 ROOT = Path(__file__).resolve().parents[1]
-LOCK_FILE = ROOT / "runtime" / "easel.lock.json"
 PROVENANCE_FILE = ROOT / "runtime" / "easel-runtime.json"
-
-# Fallback pin if the lock file is unreadable; the lock file is the source of truth.
-_FALLBACK_PIN = {
-    "repo": "https://github.com/ZJU-REAL/Easel.git",
-    "tag": "v0.2.1",
-    "commit": "3fe2d9904c1619281ef57f81d9ee0b7854998399",
-}
 
 REQUIRED_PATHS = (
     "pyproject.toml",
@@ -55,12 +48,37 @@ REQUIRED_PATHS = (
 )
 
 
-def load_pin(root: Path = ROOT) -> dict:
-    try:
-        data = json.loads((root / "runtime" / "easel.lock.json").read_text(encoding="utf-8"))
-        return {"repo": data["repo"], "tag": data["tag"], "commit": data["commit"]}
-    except Exception:
-        return dict(_FALLBACK_PIN)
+def _pins():
+    """Import the pin registry module, with ``src`` on the path."""
+    src = ROOT / "src"
+    if str(src) not in sys.path:
+        sys.path.insert(0, str(src))
+    from contentops.easel import pins
+
+    return pins
+
+
+def load_pin(root: Path | None = None) -> dict:
+    """Return the active engine's pin from ``runtime/easel-pins.json``.
+
+    There is deliberately no fallback. The previous version of this function
+    returned a hardcoded commit whenever the lock file was unreadable, which is
+    how one version ended up recorded in five places with no authority between
+    them. If the registry cannot be read, resolution is BLOCKED.
+
+    ``root`` names the tree to inspect; the registry itself always belongs to
+    this repository, because it is repository configuration, not runtime state.
+    """
+    engine = _pins().active()
+    return {
+        "repo": engine.repo,
+        "tag": engine.tag,
+        "commit": engine.commit,
+        "engine_id": engine.engine_id,
+        "layout": engine.layout,
+        "skill_root": engine.skill_root,
+        "root": engine.root,
+    }
 
 
 def _git(path: Path, *args: str) -> str:
@@ -178,11 +196,22 @@ def resolve_easel(root: Path = ROOT, live: bool = True) -> dict:
     """Resolve the production Easel runtime.
 
     Returns {"status": "OK", easel_dir, acquisition, commit, ...} or
-    {"status": "BLOCKED", "reasons": [...]}. Never returns an unpinned tree.
+    {"status": "BLOCKED", "reasons": [...]}. Never returns an unpinned tree, and
+    never resolves against a guessed pin: an unreadable registry is a BLOCKED
+    result with `PINS_UNREADABLE`, not a default version.
     """
-    pin = load_pin(root)
+    try:
+        pin = load_pin()
+    except Exception as exc:  # noqa: BLE001 - an unreadable pin must refuse, not guess
+        return {
+            "status": "BLOCKED",
+            "reasons": [f"PINS_UNREADABLE: {exc}"],
+            "remedy": "restore runtime/easel-pins.json; this resolver has no fallback pin",
+        }
+
+    engine_root = root / pin["root"] if pin.get("root") else root / ".runtime" / "easel"
     candidates = [
-        (root / ".runtime" / "easel", "runtime"),
+        (engine_root, "runtime"),
         (root / "Easel", "legacy"),
     ]
     reasons, rejected = [], False
@@ -198,6 +227,8 @@ def resolve_easel(root: Path = ROOT, live: bool = True) -> dict:
                 "acquisition": rec["acquisition"],
                 "commit": rec["commit"],
                 "tag": pin["tag"],
+                "engine_id": pin.get("engine_id"),
+                "layout": pin.get("layout"),
                 "verification": rec["verification"],
                 **{k: rec[k] for k in ("verified_blobs", "verified_at", "note",
                                        "content_verified") if k in rec},
@@ -208,7 +239,8 @@ def resolve_easel(root: Path = ROOT, live: bool = True) -> dict:
         "status": "BLOCKED",
         "rejected_foreign_checkout": rejected,
         "reasons": reasons or ["no Easel runtime found"],
-        "expected": {"repo": pin["repo"], "tag": pin["tag"], "commit": pin["commit"]},
+        "expected": {"repo": pin["repo"], "tag": pin["tag"], "commit": pin["commit"],
+                     "engine_id": pin.get("engine_id")},
         "remedy": "python scripts/resolve_easel.py --bootstrap",
     }
 
@@ -232,13 +264,13 @@ def resolve_easel_workbench(root: Path = ROOT) -> dict:
         sys.path.insert(0, scripts_dir)
     try:
         import verify_easel_runtime
-        from contentops.easel.agent_workspace import WORKBENCH_COMMIT, WORKBENCH_REPO
+        workbench = _pins().workbench()
         overlay = verify_easel_runtime.load_overlay(record_path)
         upstream = overlay.get("upstream") or {}
         if (not overlay.get("readable") or overlay.get("schema") != "contentops.easel-workbench-overlay/v1"
-                or not isinstance(upstream, dict) or upstream.get("repo") != WORKBENCH_REPO
-                or upstream.get("commit") != WORKBENCH_COMMIT):
-            return {"status": "BLOCKED", "reasons": ["workbench identity does not match the planned v0.3.0 commit"]}
+                or not isinstance(upstream, dict) or upstream.get("repo") != workbench.repo
+                or upstream.get("commit") != workbench.commit):
+            return {"status": "BLOCKED", "reasons": ["workbench identity does not match the declared workbench engine"]}
         result = verify_easel_runtime.verify_overlay(
             record_path=record_path, profile_mode="generated")
     except Exception as exc:  # noqa: BLE001 - failure to verify must refuse selection
@@ -248,13 +280,14 @@ def resolve_easel_workbench(root: Path = ROOT) -> dict:
         detail = result.get("reason") or result.get("status") or "unknown verifier result"
         return {"status": "BLOCKED", "reasons": [str(detail)],
                 "verification": result}
-    if result.get("expected_commit") != WORKBENCH_COMMIT:
+    if result.get("expected_commit") != workbench.commit:
         return {"status": "BLOCKED", "reasons": ["workbench identity changed during verification"]}
     return {
         "status": "OK",
         "easel_dir": result["workbench_path"],
         "commit": result.get("expected_commit"),
         "tag": result.get("expected_tag"),
+        "engine_id": workbench.engine_id,
         "verification": "upstream_overlay_and_generated_profiles",
         "verification_result": result,
     }

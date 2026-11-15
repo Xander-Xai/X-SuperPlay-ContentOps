@@ -125,6 +125,25 @@ def _sha256(path: Path) -> str:
     return h.hexdigest()
 
 
+def _engine_identity() -> Dict[str, Any]:
+    """The active engine's identity, read from the pin registry.
+
+    A receipt that hardcodes a commit cannot survive an engine switch: every
+    historical comparison then differs on that one field, which is how a real
+    change gets lost in noise. Reading it from the registry means a receipt
+    names the engine that actually ran. When the registry is unreadable the
+    fields are null — a receipt must not invent an identity.
+    """
+    try:
+        from ..easel import pins
+
+        engine = pins.active()
+        return {"commit": engine.commit, "engine_id": engine.engine_id,
+                "layout": engine.layout}
+    except Exception:  # noqa: BLE001 - fail closed into null, never into a guess
+        return {"commit": None, "engine_id": None, "layout": None}
+
+
 def _is_relative_to(path: Path, base: Path) -> bool:
     try:
         path.resolve().relative_to(base.resolve())
@@ -454,6 +473,7 @@ def build_receipt(
 
     html_rel = "project://" + p.html.relative_to(p.project).as_posix()
     preview_rel = "project://" + p.preview_out.relative_to(p.project).as_posix()
+    engine = _engine_identity()
 
     receipt: Dict[str, Any] = {
         "schema": RECEIPT_SCHEMA,
@@ -480,7 +500,9 @@ def build_receipt(
             "wrapper": p.tools.wrapper.name,
             "upstream_skill": "gzh-design",
             "upstream_license": "AGPL-3.0",
-            "easel_runtime_commit": "3fe2d9904c1619281ef57f81d9ee0b7854998399",
+            "easel_runtime_commit": engine["commit"],
+            "easel_engine_id": engine["engine_id"],
+            "easel_skill_layout": engine["layout"],
             "theme_component_file": "references/theme-graphite-minimal.md",
             "common_components_file": "references/common-components.md",
             "interpreter": Path(article_python).name,

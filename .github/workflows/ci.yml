@@ -529,6 +529,13 @@ jobs:
       - name: Run Easel host guard tests
         run: python tests/test_easel_host_guard.py
 
+      # One engine identity, one file. This suite fails when a commit is written
+      # into code again, when an entry carries a tag but no commit (upstream
+      # replaced the v0.3.0 tag without changing the version), or when the lock
+      # stops agreeing with the registry it is derived from.
+      - name: Run Easel pin registry tests
+        run: python tests/test_easel_pins.py
+
       # A workbench instance is Easel plus a declared tuning layer. This suite
       # proves the overlay verifier still fails an *unrecorded* difference, and
       # that the generated DNA→profile projection supplies Easel with actual

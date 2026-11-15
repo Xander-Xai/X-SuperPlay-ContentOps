@@ -21,8 +21,25 @@ AGENT_POLICY = {"tools": {"deny": ["*"], "codeMode": {"enabled": False}},
                 # OpenClaw documents that explicit QuickJS executor selection
                 # can activate its bundled plugin even with plugins disabled.
                 "plugins": {"enabled": False, "deny": ["code-mode-quickjs"]}}
-WORKBENCH_COMMIT = "bb3c8ff0463f36c202454d74171682ba6e470cb1"
-WORKBENCH_REPO = "https://github.com/ZJU-REAL/Easel.git"
+def _workbench_identity() -> tuple[str | None, str | None]:
+    """Repo and commit of the declared workbench engine, read from the registry.
+
+    These were two literals until they became a second truth: the overlay record
+    and this module each named the v0.3.0 commit, so a change to one left the
+    other comparing the instance against a value nobody had verified. Both sides
+    now read `runtime/easel-pins.json`. An unreadable registry yields
+    ``(None, None)``, which makes every comparison below fail closed.
+    """
+    try:
+        from . import pins
+
+        engine = pins.workbench()
+        return engine.repo, engine.commit
+    except Exception:  # noqa: BLE001 - refuse to compare against an invented identity
+        return None, None
+
+
+WORKBENCH_REPO, WORKBENCH_COMMIT = _workbench_identity()
 MAX_AGENT_PROMPT_BYTES = 1024 * 1024
 # Proposed authorization scope only. This is not a registry declaration and
 # does not make the unverified, network-dependent Agent executable.
