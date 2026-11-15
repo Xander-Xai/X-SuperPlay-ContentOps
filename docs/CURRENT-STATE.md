@@ -230,7 +230,8 @@ a verified integration yet.
 | Property | Value |
 |---|---|
 | Entry point | `scripts/easel_host.py status` / `serve` (add `--workbench` for the workbench instance) |
-| `status` result on this machine | **`HOST_BLOCKED`** — `HOST_DEPENDENCY_MISSING:sse_starlette`; the workbench candidate also requires a verified frontend build manifest |
+| `status` result on this machine | **`HOST_READY` (2026-11-16)** — host dependencies installed (fastapi, uvicorn, pydantic, sse_starlette, PyYAML), frontend build verified against the installed instance; serving stays an explicit operator action |
+| Previous blockers, resolved | `HOST_DEPENDENCY_MISSING:sse_starlette` (deps installed 2026-11-16) and `HOST_FRONTEND_MISMATCH` (the workbench instance record now points at `.runtime/easel-v030`, where the frontend was rebuilt) |
 | Dependency set checked | `fastapi`, `uvicorn`, `pydantic`, `sse_starlette` (`HOST_IMPORT_MODULES`). The earlier check named only the first two, so it could report `HOST_READY` for a host that failed on first import — fixed 2026-11-12 |
 | Pin reported | v0.3.0 / `bb3c8ff` |
 | Runtime install in this worktree | `python scripts/resolve_easel.py --offline` → `BLOCKED: no Easel runtime found`; the separate main checkout still resolves its `.runtime/easel` at the pinned commit |

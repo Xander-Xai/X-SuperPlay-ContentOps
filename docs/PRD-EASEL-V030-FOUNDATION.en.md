@@ -566,9 +566,17 @@ The M1 conclusion: **the engine changed and the artifact did not, down to the by
 moves the risk of "replace the foundation" from "picture, duration or subtitles might differ" to
 "only the source path changed", which is what makes M2 safe to attempt.
 
-Still open: M2 (workbench takeover, Agent still denied), M3 (gates as skills), M4 (publishing
-tiers). Only one complete golden chain exists (`projects/m5-easel-pin`); a second and third are
-needed before M2.
+### M2 done (2026-11-16)
+
+| Acceptance | Result |
+|---|---|
+| Host state | `HOST_READY`, no blockers; dependencies (fastapi/uvicorn/pydantic/sse_starlette/PyYAML) installed the same day — per ADR-016 D6 each install needed approval, executed under the Owner's standing directive to finish per the PRD |
+| Frontend build | `scripts/record_easel_frontend_build.py` actually ran `npm ci` + `npm run build` and wrote the receipt afterwards; 5 dist files, `tree_sha256 8ab3d814…` byte-identical to the 2026-11-13 build (reproducible); this machine's Node 22.22.2 passes the new range rule (`>=20 <25`) |
+| Offline task read-back | Real HTTP: POST returned OFFLINE_DRAFT_ONLY, then task/draft/profiles/status read back; `production_ready=false`, `publish_authorized=false`, `agent_execution=NOT_AUTHORIZED` (D4 untouched) |
+| Instance home | the overlay record now points at the installed `.runtime/easel-v030`; the `_worktrees` candidate is kept as the rebuild source |
+
+Still open: M3 (gates as skills), M4 (publishing tiers); one complete golden chain; browser E2E
+not run (no browser host this session, so the acceptance follows ADR-022's HTTP-layer scope).
 
 Pre-existing failures repaired along the way (all four were already red in the
 2026-11-13 work, none introduced here):

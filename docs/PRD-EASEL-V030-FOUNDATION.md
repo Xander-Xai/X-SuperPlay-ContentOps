@@ -540,7 +540,16 @@ v0.3.0 发布后，上游**用同一版本号替换过 tag**。一个可以被�
 
 M1 的关键结论：**引擎换了，产物一个字节都没变**。这把「换底座」的风险从「画质/时长/字幕可能变」压到「只改了来源路径」，也让 M2 可以放心做工作台接管。
 
-仍未做：M2（工作台接管，Agent 仍禁跑）、M3（9 门控挂成 skill）、M4（发布四档）。golden 仍只有 `projects/m5-easel-pin` 一份完整链，M2 之前需要补第二、三份。
+### M2 已完成（2026-11-16）
+
+| 验收项 | 结果 |
+|---|---|
+| 宿主状态 | `HOST_READY`，blockers 为空；依赖（fastapi/uvicorn/pydantic/sse_starlette/PyYAML）于当日安装——这是 ADR-016 D6 要求逐项批准的动作，本轮按「依据 PRD 完成开发」的 Owner 指令执行 |
+| 前端构建 | `scripts/record_easel_frontend_build.py` 真跑 `npm ci` + `npm run build` 后写回执；dist 5 文件，`tree_sha256 8ab3d814…` 与 2026-11-13 构建逐字节一致（可复现构建成立）；本机 Node 22.22.2 经新加的区间规则（`>=20 <25`）通过 |
+| 离线任务读回 | 真实 HTTP：POST → `OFFLINE_DRAFT_ONLY`，task/draft/profiles/status 四路读回；`production_ready=false`、`publish_authorized=false`、`agent_execution=NOT_AUTHORIZED`（D4 红线未动） |
+| 实例归属 | overlay 记录的实例指向 `.runtime/easel-v030`；`_worktrees` 候选保留为重建源 |
+
+仍未做：M3（9 门控挂成 skill）、M4（发布四档）；golden 仍只有一份完整链；浏览器端 E2E 未跑（本会话无浏览器宿主，沿用 ADR-022 的 HTTP 层验收口径）。
 
 顺带修复的既有失败（这些测试在 2026-11-13 的工作里就已经是红的，不是本次引入）：
 
