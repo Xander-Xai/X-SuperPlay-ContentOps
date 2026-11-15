@@ -173,7 +173,12 @@ def _parse_engine(engine_id: str, entry: Any) -> tuple[Engine | None, list[str]]
         errors.append(f"{engine_id}: blob_count must be an integer or null")
 
     root = entry.get("root")
-    if root is not None and Path(str(root)).is_absolute():
+    # ``Path("D:/somewhere").is_absolute()`` is True on Windows and False on POSIX, so a
+    # drive-letter root committed by a Windows machine would pass CI on Linux and fail on
+    # the next Windows run. Reject the shape, not the platform's opinion of it.
+    if root is not None and (Path(str(root)).is_absolute()
+                             or re.match(r"^[A-Za-z]:[\\/]", str(root))
+                             or str(root).startswith("\\\\")):
         errors.append(
             f"{engine_id}: root {root!r} must be repository-relative; "
             "an absolute path cannot be committed"

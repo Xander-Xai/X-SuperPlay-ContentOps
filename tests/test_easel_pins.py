@@ -215,9 +215,15 @@ def test_unreadable_registry_blocks_resolution():
 
 
 def test_resolution_reports_the_engine_it_used():
-    result = rez.resolve_easel()
-    assert result["status"] == "OK", result
     active = pins.active()
+    result = rez.resolve_easel()
+    if not (ROOT / active.root).is_dir():
+        # A CI checkout has no pinned tree. The contract there is a BLOCKED answer with a
+        # reason, never a guess at what the machine happens to contain.
+        assert result["status"] == "BLOCKED", result
+        print("     [skip] pinned Easel runtime is absent; asserted the BLOCKED contract")
+        return
+    assert result["status"] == "OK", result
     assert result["engine_id"] == active.engine_id, result
     assert result["commit"] == active.commit, result
     assert result["layout"] == active.layout, result

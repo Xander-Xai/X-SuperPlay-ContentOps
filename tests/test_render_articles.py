@@ -113,7 +113,9 @@ def test_article_tools_resolve_v03_builtin_skill_layout():
         builtin.parent.mkdir(parents=True)
         legacy.rename(builtin)
         resolved = plan(_project(Path(d)), runtime_root=runtime)
-        assert resolved.tools.upstream_root == builtin
+        # plan() resolves its runtime root; the expectation must be resolved too, or the
+        # comparison fails wherever the platform hands back a different path form.
+        assert resolved.tools.upstream_root == builtin.resolve()
 
 
 def test_plan_refuses_a_missing_html():
