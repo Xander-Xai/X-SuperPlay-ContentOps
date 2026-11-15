@@ -322,6 +322,54 @@ class ReceiptSecretAdversarialTests(unittest.TestCase):
                     path = _receipt(root, name, {"source_url": url})
                     self.assertEqual(checker.scan(root, paths=[path]), [])
 
+    def test_task_id_minted_by_the_local_offline_executor_is_not_a_provider_id(self) -> None:
+        # The offline scaffold mints this id itself and hash-chains the receipt, so the id
+        # cannot be rewritten without destroying the chain. The exemption is scoped to the
+        # executor's own schema, not to the field name.
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            path = _receipt(root, "easel-offline.json", {
+                "schema": "contentops.easel-workbench-task-receipt/v1",
+                "executor": "deterministic-offline-scaffold",
+                "status": "OFFLINE_DRAFT_ONLY",
+                "task_id": "d5aabc75-411b-48cd-9ed2-c0999dd26eee",
+            })
+            self.assertEqual(checker.scan(root, paths=[path]), [])
+
+    def test_local_idempotency_record_is_not_a_provider_id(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            path = _receipt(root, "easel-offline-idempotency.json", {
+                "artifact": "drafts/easel-offline-x.md",
+                "artifact_sha256": "a" * 64,
+                "receipt": "receipts/easel-offline-x.json",
+                "receipt_sha256": "b" * 64,
+                "request_sha256": "c" * 64,
+                "status": "COMPLETE",
+                "task_id": "d5aabc75-411b-48cd-9ed2-c0999dd26eee",
+            })
+            self.assertEqual(checker.scan(root, paths=[path]), [])
+
+    def test_a_task_id_outside_the_local_scaffold_is_still_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            for name, payload in (
+                ("foreign-schema.json", {
+                    "schema": "contentops.minimax-h3/v1",
+                    "executor": "minimax",
+                    "task_id": "424010985738629"}),
+                ("no-schema.json", {"task_id": "424010985738629"}),
+                ("lookalike.json", {
+                    "schema": "contentops.easel-workbench-task-receipt/v1",
+                    "executor": "something-else",
+                    "task_id": "424010985738629"}),
+            ):
+                with self.subTest(name=name):
+                    path = _receipt(root, name, payload)
+                    found = checker.scan(root, paths=[path])
+                    self.assertIn(
+                        (path.relative_to(root).as_posix(), "task_id", "provider_id"), found)
+
 
 if __name__ == "__main__":
     unittest.main()
