@@ -1,6 +1,6 @@
 {
   "schema": "contentops.easel-pins/v1",
-  "note": "The only place an Easel engine's identity is written down. Code reads this file; it never carries a commit literal. `active` selects the engine production resolves, and changing it is an upgrade-gated action (docs/UPSTREAM-EASEL.md), not an edit. Identity is commit plus, when measured, tree digest: upstream force-replaced the v0.3.0 tag while keeping the version number, so a tag is a comment and never an identity. A missing or invalid registry blocks resolution; there is no fallback commit.",
+  "note": "The only place an Easel engine's identity is written down. Code reads this file; it never carries a commit literal. `active` selects the engine production resolves, and changing it is an upgrade-gated action (docs/UPSTREAM-EASEL.md), not an edit. Identity is commit plus, when measured, tree digest: upstream force-replaced the v0.3.0 tag while keeping the version number, so a tag is a comment and never an identity. A missing or invalid registry blocks resolution; there is no fallback commit. FROZEN (Founder decision, 2026-11-16): v0.3.0 is the fixed base. No upstream release, tag or main commit is adopted unless the Founder asks for that specific change; the upstream watch is information only.",
   "active": "v0.3.0",
   "workbench_engine": "v0.3.0",
   "engines": {
