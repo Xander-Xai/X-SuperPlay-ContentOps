@@ -266,6 +266,14 @@ python scripts\render_article.py projects\my-article
 打包全程离线。这里没有任何一步会发布：上传器 exit 0 只记为 `UPLOADER_EXIT_0`，
 只有人真正看到的 URL 才被登记为 URL。
 
+打包之前先问清账号声明的每个平台各自要什么：计划会给出画幅、上限，以及哪些平台需要
+二次成片；账号没声明的平台会被拒绝，而不是被跳过。
+
+```powershell
+python scripts\platform_adapt.py plan --project projects\my-video
+python scripts\platform_adapt.py plan --project projects\my-video --platform bilibili --json
+```
+
 ```powershell
 python scripts\video_deliver.py plan   --project projects\my-video
 python scripts\video_deliver.py pack   --project projects\my-video --thumbnails

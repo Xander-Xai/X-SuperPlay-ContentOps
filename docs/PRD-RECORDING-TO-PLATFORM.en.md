@@ -182,10 +182,10 @@ Risk levels follow `docs/TEST-PLAN.md` L0–L3.
 
 | ID | Requirement | Acceptance signal | Risk | Milestone |
 |---|---|---|---|---|
-| FR-ADP-01 | Generate a **variant plan** from account `platform_roles` × `video-platforms.yaml`: one row per platform with aspect, duration limit, title length, tag count, cover ratio, CTA, uploader | `python scripts/platform_adapt.py plan --project <p>` | L2 | R2 |
-| FR-ADP-02 | The plan must name which platforms need a second render (Bilibili 16:9 long cut) instead of pretending one file fits all | rows carry `requires_variant: true/false` with a reason | L2 | R2 |
-| FR-ADP-03 | Unknown platform, or a platform the account does not declare → `BLOCKED`, never silently skipped | unit test | L2 | R2 |
-| FR-ADP-04 | The plan plans; it neither re-renders nor publishes. `publish_authorized` is always false | receipt schema | L1 | R2 |
+| FR-ADP-01 | Generate a **variant plan** from account `platform_roles` × `video-platforms.yaml`: one row per platform with aspect, duration limit, title length, tag count, cover ratio, CTA, uploader | `python scripts/platform_adapt.py plan --project <p>` | L2 | R2 ✅ |
+| FR-ADP-02 | The plan must name which platforms need a second render (Bilibili 16:9 long cut) instead of pretending one file fits all | rows carry `requires_variant: true/false` with a reason | L2 | R2 ✅ |
+| FR-ADP-03 | Unknown platform, or a platform the account does not declare → `BLOCKED`, never silently skipped | unit test | L2 | R2 ✅ |
+| FR-ADP-04 | The plan plans; it neither re-renders nor publishes. `publish_authorized` is always false | receipt schema | L1 | R2 ✅ |
 
 ### 6.4 PUB — publishing tiers
 
@@ -213,7 +213,7 @@ FULL_AUTO`, authorised per platform, Douyin stays `UNCONDITIONALLY_REFUSED`.
 |---|---|---|---|
 | **R0** | Engine adopted (v0.3.0 production + workbench + gates mounted) | **Done** | `python scripts/easel_engine.py show`; `python scripts/easel_host.py status --workbench` |
 | **R1** | A recording can lawfully become evidence; account policy applies at intake | **Done this round** | `python tests/test_recording_intake.py`; `python scripts/ingest_recording.py …` |
-| **R2** | Platform variant plan + automatic slicing | Not started | `python scripts/platform_adapt.py plan --project <p>` |
+| **R2** | Platform variant plan (✅ done) + automatic recording slicing (not started, FR-REC-06) | Partial | `python scripts/platform_adapt.py plan --project <p>` |
 | **R3** | First real platform draft | Not started | draft receipt + human confirmation timestamp |
 | **R4** | `Easel/` and stale pin residue cleaned | Not started (needs confirmation) | diff conclusion + `Easel/` gone + `resolve_easel.py` still OK |
 

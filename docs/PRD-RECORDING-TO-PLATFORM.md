@@ -175,10 +175,10 @@ sources/assets.json  (kind=recording, evidence_capable=true, 边界声明)
 
 | ID | 需求 | 验收信号 | 风险 | 里程碑 |
 |---|---|---|---|---|
-| FR-ADP-01 | 由「账号 DNA 的 platform_roles」× 「`video-platforms.yaml` 的规格」生成**变体计划**：每个平台一行，含画幅、时长上限、标题字数、标签数、封面比例、CTA、上传器 | `python scripts/platform_adapt.py plan --project <p>` 输出 9 行（或账号声明的子集） | L2 | R2 |
-| FR-ADP-02 | 变体计划必须标出「哪些平台需要二次成片」（如 B 站 16:9 加长），而不是假装一个文件通吃 | 计划含 `requires_variant: true/false` 与理由 | L2 | R2 |
-| FR-ADP-03 | 未知平台 / 账号未声明的平台 → `BLOCKED`，不静默跳过 | 单测覆盖 | L2 | R2 |
-| FR-ADP-04 | 变体计划只做计划，不改成片、不发布；`publish_authorized` 恒 false | 回执 schema | L1 | R2 |
+| FR-ADP-01 | 由「账号 DNA 的 platform_roles」× 「`video-platforms.yaml` 的规格」生成**变体计划**：每个平台一行，含画幅、时长上限、标题字数、标签数、封面比例、CTA、上传器 | `python scripts/platform_adapt.py plan --project <p>` 输出账号声明的子集 | L2 | R2 ✅ |
+| FR-ADP-02 | 变体计划必须标出「哪些平台需要二次成片」（如 B 站 16:9 加长），而不是假装一个文件通吃 | 计划含 `requires_variant: true/false` 与理由 | L2 | R2 ✅ |
+| FR-ADP-03 | 未知平台 / 账号未声明的平台 → `BLOCKED`，不静默跳过 | 单测覆盖 | L2 | R2 ✅ |
+| FR-ADP-04 | 变体计划只做计划，不改成片、不发布；`publish_authorized` 恒 false | 回执 schema | L1 | R2 ✅ |
 
 ### 6.4 PUB — 发布四档
 
@@ -206,7 +206,7 @@ sources/assets.json  (kind=recording, evidence_capable=true, 边界声明)
 |---|---|---|---|
 | **R0** | 底座接入（v0.3.0 生产 + 工作台 + 门控挂载） | **已完成** | `python scripts/easel_engine.py show`；`python scripts/easel_host.py status --workbench` |
 | **R1** | 录屏能合法成为证据，账号策略在入场生效 | **本轮完成** | `python tests/test_recording_intake.py`；`python scripts/ingest_recording.py --project <p> --file <f> --claim <id>` |
-| **R2** | 平台变体计划 + 自动切片 | 未开始 | `python scripts/platform_adapt.py plan --project <p>` |
+| **R2** | 平台变体计划（✅ 已完成） + 录屏自动切片（未开始，FR-REC-06） | 部分完成 | `python scripts/platform_adapt.py plan --project <p>` |
 | **R3** | 首个平台真实草稿 | 未开始 | 草稿回执 + 人工确认时间戳 |
 | **R4** | 清理 `Easel/` 与旧 pin 残留 | 未开始（待确认） | diff 结论 + `Easel/` 不存在 + `resolve_easel.py` 仍 OK |
 

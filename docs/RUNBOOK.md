@@ -443,6 +443,15 @@ python scripts\render_article.py projects\my-article
 Packaging is offline. Nothing here publishes: an uploader exit 0 is recorded as
 `UPLOADER_EXIT_0`, and only a URL a person actually saw is recorded as a URL.
 
+Before packing, ask what each platform the account declares actually wants. The plan names
+the shape, the limits, and which platforms need a second cut; a platform the account never
+declared is refused rather than skipped.
+
+```powershell
+python scripts\platform_adapt.py plan --project projects\my-video
+python scripts\platform_adapt.py plan --project projects\my-video --platform bilibili --json
+```
+
 ```powershell
 python scripts\video_deliver.py plan   --project projects\my-video
 python scripts\video_deliver.py pack   --project projects\my-video --thumbnails
