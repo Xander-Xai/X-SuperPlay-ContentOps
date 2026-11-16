@@ -25,6 +25,66 @@ def check(fn):
     return fn
 
 
+@check
+def run_context_keeps_stage_results_and_timings_isolated():
+    from contentops.workflow.m5_stage_runner import RunContext
+    ticks = iter([1.0, 1.125])
+    first = RunContext(clock=lambda: next(ticks))
+    second = RunContext(clock=lambda: 0.0)
+    value = object()
+    first.stages["sources"] = {"count": 1}
+    assert first.run_stage("sources", lambda: value) is value
+    assert first.timings == {"sources": 0.125}
+    assert second.stages == {}
+    assert second.timings == {}
+
+
+@check
+def run_context_preserves_stage_exception_and_timing():
+    from contentops.workflow.m5_stage_runner import RunContext
+    ticks = iter([4.0, 4.25])
+    context = RunContext(clock=lambda: next(ticks))
+    failure = ValueError("fixture")
+    def fail(*, error):
+        raise error
+    try:
+        context.run_stage("claims", fail, error=failure)
+    except ValueError as exc:
+        assert exc is failure
+    else:
+        raise AssertionError("stage exception was swallowed")
+    assert context.timings == {"claims": 0.25}
+
+
+@check
+def stage_runner_returns_the_same_value_and_tracks_time():
+    from contentops.workflow.m5_stage_runner import run_stage
+    timings = {}
+    ticks = iter([1.0, 1.12345, 2.0, 2.5])
+    value = object()
+    assert run_stage(timings, lambda: next(ticks), "sources", lambda arg: arg, value) is value
+    assert timings == {"sources": 0.123}
+    assert run_stage(timings, lambda: next(ticks), "sources", lambda: value) is value
+    assert timings == {"sources": 0.5}
+
+
+@check
+def stage_runner_records_time_and_preserves_exceptions():
+    from contentops.workflow.m5_stage_runner import run_stage
+    timings = {}
+    ticks = iter([3.0, 3.125])
+    failure = ValueError("fixture")
+    def fail():
+        raise failure
+    try:
+        run_stage(timings, lambda: next(ticks), "claims", fail)
+    except ValueError as exc:
+        assert exc is failure
+    else:
+        raise AssertionError("stage exception was swallowed")
+    assert timings == {"claims": 0.125}
+
+
 def rights_record(project, asset_id, *, license_id="OWNED-BY-OPERATOR",
                   source_url="OWNED", attribution="synthetic test asset",
                   synthetic=False, reviewed_by="fixture-reviewer",
@@ -55,8 +115,8 @@ def rights_record(project, asset_id, *, license_id="OWNED-BY-OPERATOR",
     }
 
 
-def project_and_config():
-    location = ROOT / ".verify-tmp" / "m5-media-use-workflow"
+def project_and_config(location=None):
+    location = location or ROOT / ".verify-tmp" / "m5-media-use-workflow"
     location.mkdir(parents=True, exist_ok=True)
     project = Path(tempfile.mkdtemp(dir=location))
     (project / "assets").mkdir()
@@ -323,7 +383,7 @@ def duplicate_ids_or_unsupported_audio_refuse():
 
 @check
 def build_automatically_uses_the_stage_without_a_manual_adapter_cli():
-    project, config, digest = project_and_config()
+    project, config, digest = project_and_config(ROOT / "projects" / "_local")
     (project / "script" / "claims.json").write_text(
         json.dumps({"schema": "contentops.claim-ledger/v1", "claims": []}), encoding="utf-8")
     (project / "script" / "script.json").write_text(
@@ -347,6 +407,12 @@ def build_automatically_uses_the_stage_without_a_manual_adapter_cli():
     assert result["stages"]["media_use"]["state"] == "OK"
     assert result["stages"]["assets"]["count"] == 1
     assert result["stages"]["storyboard"]["shots"] == 1
+    assert result["stages"]["compose"] == {"state": "NOT_RUN"}
+    assert result["stages"]["qc"] == {"state": "NOT_RUN"}
+    assert result["stages"]["asr_backcheck"]["status"] == "NOT_RUN"
+    assert "sources" in result["stage_timings_seconds"]
+    assert "storyboard" in result["stage_timings_seconds"]
+    assert "compose" not in result["stage_timings_seconds"]
     assert [call[0] for call in adapter.calls] == ["adopt", "resolve", "import", "verify"]
     assert result["production_ready"] is False
 

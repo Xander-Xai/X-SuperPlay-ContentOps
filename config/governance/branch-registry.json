@@ -152,6 +152,14 @@
       "purpose": "Pinned Remotion clip renderer on the M5 motion stage. Huashu and the Easel pin stay. Motion Canvas and Manim remain blocked.",
       "status": "active",
       "expires": "2026-12-16"
+    },
+    {
+      "name": "feat/140-m5-run-context",
+      "pr": 189,
+      "created": "2026-11-16",
+      "purpose": "Issue #140 first execution-primitive slice: preserve M5 stage timing and failure behavior",
+      "status": "active",
+      "expires": "2026-12-16"
     }
   ]
 }
