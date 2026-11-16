@@ -206,9 +206,8 @@ def build_specs(source_rows: dict) -> dict:
 
 
 def probe_and_extract(path: Path) -> dict:
-    import subprocess
     def run(args):
-        return subprocess.run(args, capture_output=True, text=True)
+        return hidden_run(args, timeout=120)
     p = run(["ffprobe", "-v", "error", "-show_streams", "-show_format",
              "-select_streams", "v:0", "-of", "json", str(path)])
     raw = json.loads(p.stdout or "{}")
