@@ -13,11 +13,14 @@ BLOCKED, not a still image and not a Huashu render in disguise.
 from __future__ import annotations
 
 import hashlib
+import json
 import re
+from pathlib import Path
 from typing import Any, Dict, Mapping, Optional, Sequence
 
 SCHEMA = "contentops.animation-clip-receipt/v1"
 PLAN_SCHEMA = "contentops.animation-clip-plan/v1"
+CAPABILITY_SCHEMA = "contentops.animation-capability-matrix/v1"
 
 ACCOUNT_1024 = "x-superplay-1024"
 ACCOUNT_FUTURE = "x-superplay-future-intelligence"
@@ -638,3 +641,148 @@ def palette_from_dna(dna: Mapping[str, Any]) -> Dict[str, str]:
     resolved.setdefault("sub", resolved.get("ink", "#FFFFFF"))
     resolved["accent2"] = resolved["accent"]
     return resolved
+
+
+# --- Unified backend capability matrix (P0.3) -----------------------------
+# One executable table, derived from the constants and lock files already in
+# this contract. It never grants execution or publication and never upgrades a
+# declared capability to VERIFIED from configuration alone. Real render
+# verification is supplied by a caller-supplied evidence map keyed by backend,
+# so a green matrix cannot be produced by editing documentation.
+
+CAPABILITY_LOCKS = {
+    "remotion": "runtime/remotion.lock.json",
+    "remotion-three": "runtime/remotion.lock.json",
+    "huashu-art-motion": "runtime/huashu-motion.lock.json",
+    "huashu-motion": "runtime/huashu-motion.lock.json",
+    "manim": "runtime/manim.lock.json",
+    "motion-canvas": "runtime/motion-canvas.lock.json",
+}
+
+CAPABILITY_TEMPLATES = {
+    "remotion": (
+        "annotation", "comparison", "rag_flow", "recording_mark", "title_card",
+    ),
+    "remotion-three": ("technical_3d_explainer",),
+    "huashu-art-motion": (
+        "architecture_flow", "state_transition", "code_focus",
+        "evidence_zoom", "metric_transition", "comparison_reveal",
+    ),
+    "huashu-motion": (),
+    "manim": ("math_formula_reveal", "attention_matrix_flow"),
+    "motion-canvas": ("animated_system_graph", "agent_state_machine"),
+}
+
+CAPABILITY_SHOT_TYPES = {
+    "remotion": tuple(key for key, backends in SHOT_COMPATIBILITY.items() if "remotion" in backends),
+    "remotion-three": ("architecture", "agent_flow"),
+    "huashu-art-motion": ("architecture", "agent_flow", "annotation", "comparison", "title_card"),
+    "huashu-motion": ("architecture", "agent_flow", "annotation", "comparison"),
+    "manim": ("math",),
+    "motion-canvas": ("architecture", "agent_flow"),
+}
+
+CAPABILITY_RENDER_ENTRY = {
+    "remotion": "scripts/animation_render.py",
+    "remotion-three": "scripts/animation_render.py",  # same render entry; 3D is a composition
+    "huashu-art-motion": "scripts/huashu_motion_adapter.py",
+    "huashu-motion": "scripts/huashu_motion_adapter.py",
+    "manim": "scripts/manim_render.py",
+    "motion-canvas": "scripts/motion_canvas_render.py",
+}
+
+# Honest default: no backend is render-verified until a receipt-backed evidence
+# map is supplied. Declared here only so the matrix is self-describing.
+CAPABILITY_DEFAULT_STATE = {
+    "remotion": "IMPLEMENTED_NOT_VERIFIED",
+    "remotion-three": "MISSING",
+    "huashu-art-motion": "IMPLEMENTED_NOT_VERIFIED",
+    "huashu-motion": "IMPLEMENTED_NOT_VERIFIED",
+    "manim": "MISSING",
+    "motion-canvas": "MISSING",
+}
+
+
+def capability_matrix(
+    repo_root: Optional[Path | str] = None,
+    *,
+    render_evidence: Optional[Mapping[str, Any]] = None,
+    block_state: Optional[Mapping[str, str]] = None,
+) -> Dict[str, Any]:
+    """Return the single executable backend capability matrix.
+
+    ``render_evidence`` maps a backend name to a receipt-backed dict containing
+    at least ``verified_at``, ``sha256`` and ``receipt``. A backend is promoted
+    to ``VERIFIED`` only when that mapping is supplied — never by reading a
+    lock file or a document. ``block_state`` maps a backend to its current
+    blocking code (for example ``RUNTIME_MISSING``); absent entries stay
+    declared rather than silently passing.
+    """
+    # parents: [0]=media, [1]=contentops, [2]=src, [3]=repo root
+    root = Path(repo_root) if repo_root is not None else Path(__file__).resolve().parents[3]
+    evidence = render_evidence if isinstance(render_evidence, Mapping) else {}
+    blocks = block_state if isinstance(block_state, Mapping) else {}
+    rows: Dict[str, Any] = {}
+    for backend in KNOWN_BACKENDS + ("remotion-three",):
+        lock_rel = CAPABILITY_LOCKS.get(backend)
+        lock_path = root / lock_rel if lock_rel else None
+        installed_lock = bool(lock_path and lock_path.is_file())
+        version = None
+        version_source = None
+        license_text = None
+        if installed_lock:
+            try:
+                data = json.loads(lock_path.read_text(encoding="utf-8"))
+                version = data.get("version") or data.get("installed_version")
+                version_source = data.get("version_source") or lock_rel
+                license_text = data.get("license") or data.get("license_read")
+            except (OSError, ValueError):
+                data = {}
+        if backend == "remotion" and not version:
+            version = REMOTION_VERSION
+            version_source = "animation_backend.REMOTION_VERSION"
+        proof = evidence.get(backend)
+        verified = bool(isinstance(proof, Mapping) and proof.get("verified_at")
+                        and proof.get("sha256") and proof.get("receipt"))
+        blocking = str(blocks.get(backend) or "") or None
+        # A blocking gate outranks a historical receipt: a currently blocked
+        # backend is never advertised as VERIFIED, even with past evidence.
+        if blocking:
+            state = "BLOCKED"
+        elif verified:
+            state = "VERIFIED"
+        else:
+            state = CAPABILITY_DEFAULT_STATE.get(backend, "MISSING")
+        rows[backend] = {
+            "backend": backend,
+            "schema": CAPABILITY_SCHEMA,
+            "runtime_version": version,
+            "version_source": version_source,
+            "lock_file": lock_rel,
+            "lock_present": installed_lock,
+            "install_environment": ("extensions/animation-remotion (npm, gitignored node_modules)"
+                                    if backend.startswith("remotion") else "isolated local runtime"),
+            "supported_shot_types": list(CAPABILITY_SHOT_TYPES.get(backend, ())),
+            "templates": list(CAPABILITY_TEMPLATES.get(backend, ())),
+            "render_entry": CAPABILITY_RENDER_ENTRY.get(backend),
+            "input_contract": PLAN_SCHEMA,
+            "output_contract": SCHEMA,
+            "output_spec": {"width": 1080, "height": 1920, "fps": 30, "codec": "h264",
+                            "pix_fmt": "yuv420p", "duration_s": [2, 8], "audio": False},
+            "render_verified": verified,
+            "render_evidence": dict(proof) if isinstance(proof, Mapping) else None,
+            "license": license_text,
+            "execution_authorized": False,
+            "publish_authorized": False,
+            "production_ready": False,
+            "blocking_status": blocking,
+            "state": state,
+            "accounts": list(VIDEO_ACCOUNTS),
+            "is_compositor": False,
+        }
+    return {
+        "schema": CAPABILITY_SCHEMA,
+        "note": ("capability rows are declarations plus lock-file facts. Only a receipt-backed "
+                 "render_evidence entry promotes a backend to VERIFIED. No row composes a film."),
+        "backends": rows,
+    }

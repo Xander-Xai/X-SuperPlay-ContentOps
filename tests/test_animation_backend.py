@@ -653,6 +653,57 @@ def test_title_card_production_ignores_caller_test_banner():
     assert test["visualContract"]["max_chars_per_line"] == 18
 
 
+def test_capability_matrix_covers_all_backends_without_granting_execution():
+    matrix = ab.capability_matrix(ROOT)
+    assert matrix["schema"] == ab.CAPABILITY_SCHEMA
+    expected = set(ab.KNOWN_BACKENDS) | {"remotion-three"}
+    assert set(matrix["backends"]) == expected
+    for name, row in matrix["backends"].items():
+        assert row["is_compositor"] is False, name
+        assert row["execution_authorized"] is False, name
+        assert row["publish_authorized"] is False, name
+        assert row["production_ready"] is False, name
+        assert row["output_contract"] == ab.SCHEMA, name
+        assert row["render_entry"], name
+        assert set(row["accounts"]) == set(ab.VIDEO_ACCOUNTS), name
+
+
+def test_capability_matrix_locks_are_read_but_never_promote_verification():
+    matrix = ab.capability_matrix(ROOT)
+    remotion = matrix["backends"]["remotion"]
+    assert remotion["lock_present"] is True
+    assert remotion["runtime_version"] == ab.REMOTION_VERSION
+    # Reading a lock file is not render evidence.
+    assert remotion["render_verified"] is False
+    assert remotion["state"] in {"IMPLEMENTED_NOT_VERIFIED", "BLOCKED"}
+    three = matrix["backends"]["remotion-three"]
+    assert three["render_entry"] == remotion["render_entry"]
+    assert three["is_compositor"] is False
+    assert "technical_3d_explainer" in three["templates"]
+
+
+def test_capability_matrix_verification_requires_receipt_backed_evidence():
+    partial = ab.capability_matrix(ROOT, render_evidence={
+        "manim": {"verified_at": "2026-11-17", "sha256": "a" * 64},
+    })
+    assert partial["backends"]["manim"]["render_verified"] is False
+    full = ab.capability_matrix(ROOT, render_evidence={
+        "manim": {"verified_at": "2026-11-17", "sha256": "a" * 64,
+                  "receipt": "project://receipts/manim-clip.json"},
+    })
+    assert full["backends"]["manim"]["render_verified"] is True
+    assert full["backends"]["manim"]["state"] == "VERIFIED"
+    # A currently blocking gate outranks a historical receipt.
+    blocked = ab.capability_matrix(ROOT, render_evidence={
+        "manim": {"verified_at": "2026-11-17", "sha256": "a" * 64,
+                  "receipt": "project://receipts/manim-clip.json"},
+    }, block_state={"manim": "RUNTIME_MISSING"})
+    assert blocked["backends"]["manim"]["state"] == "BLOCKED"
+    plain = ab.capability_matrix(ROOT, block_state={"motion-canvas": "NO_HEADLESS_EXPORT"})
+    assert plain["backends"]["motion-canvas"]["state"] == "BLOCKED"
+    assert plain["backends"]["motion-canvas"]["blocking_status"] == "NO_HEADLESS_EXPORT"
+
+
 TESTS = [value for name, value in sorted(globals().items())
          if name.startswith("test_") and callable(value)]
 

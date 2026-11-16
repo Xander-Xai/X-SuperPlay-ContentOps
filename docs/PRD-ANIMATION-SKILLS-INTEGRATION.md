@@ -244,3 +244,9 @@ PR #195 复查发现：`register_generated_clip` 每次用 `[envelope]` 整文�
 修复沿用 M5 单一素材清单与时间线合同，未引入第二套系统：`register_generated_clip` 现在把当前 envelope 按 `asset_id` 合并进既有清单——同 id 原位替换（保持声明顺序与时间线稳定选择），其余 envelope 与 gate_states 原样保留，时间线由 `build_manifest`/`build_timeline` 重建（每 placement 恰好一个活动资产），`scheduling`/`narration` 保留。三类异常 loud-fail 并由渲染修复路径报 `REGISTRATION_REPAIR_FAILED` BLOCKED：清单不可解析（`MEDIA_MANIFEST_UNREADABLE`，损坏文件原样保留待人工处理）、其他资产缺门控状态（`MEDIA_MANIFEST_GATE_MISSING`）、不同 asset_id 争用同一输出路径（`MEDIA_MANIFEST_PATH_COLLISION`）。
 
 回归（`tests/test_animation_cache_integrity.py` 新增 10 项，21/21）：A,B,A,B 连续登记与审计全程 CONSISTENT；A,B,C 三镜头各占时间线槽位；改 B 指纹不使 A 缓存失效；删 A 登记修复后 B 的四件记录行字节不变；证据提升在合并后仍 BLOCKED；同一 placement 始终单活动资产；同镜头重复登记字节级幂等；修复前旧单镜头清单原地升级且保留 scheduling/narration。真实管线复现前后对比：修复前 `repeated_repairable=true`、`repair_mutual_harm=true`；修复后清单全程双登记、两次缓存重放 `registration_repaired=false`、双方审计 CONSISTENT。
+
+## 20. 统一后端能力矩阵（2026-11-17）
+
+`animation_backend.capability_matrix()` 在既有 backend selector 合同上扩展出一份可执行能力表（schema `contentops.animation-capability-matrix/v1`），不再平行维护另一份能力清单。六个后端 `remotion`、`remotion-three`、`huashu-art-motion`、`huashu-motion`、`manim`、`motion-canvas` 各自记录：运行时版本与来源、锁文件、安装环境、支持 shot_type、模板、渲染入口、输入/输出合同、输出规格、许可证字段、适用账号、阻断状态、是否整片合成器。每行 `is_compositor=false`；`remotion-three` 复用 `scripts/animation_render.py` 渲染入口，是 Remotion 内的 3D composition，不是新合成器。
+
+**可信边界**：矩阵读取锁文件只得到「版本/安装」事实，绝不据此把后端标成 VERIFIED。只有调用方传入带 `verified_at`、`sha256` 与 `receipt` 的 `render_evidence` 才能将该后端标为 VERIFIED；当前存在阻断码（`block_state`）时阻断优先于历史回执。所有行 `execution_authorized=false`、`publish_authorized=false`、`production_ready=false`。`tests/test_animation_backend.py` 40/40（新增 3 项矩阵测试）。
