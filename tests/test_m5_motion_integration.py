@@ -85,6 +85,25 @@ def _huashu_project():
     return temporary, project
 
 
+def test_huashu_diagnostic_account_id_is_scoped_to_the_clip_adapter(tmp_path):
+    project = tmp_path / "diagnostic-project"
+    project.mkdir()
+    (project / "project.yaml").write_text(
+        "id: p2-diagnostic\n"
+        "motion:\n"
+        "  backend: huashu-art-motion\n"
+        "  diagnostic_account_id: x-superplay-future-intelligence\n",
+        encoding="utf-8",
+    )
+    assert huashu_motion_adapter._project_account(project) == (
+        "x-superplay-future-intelligence")
+    # The diagnostic identity must not become a top-level M5 account binding:
+    # ASR backcheck, human-review and publication gates stay untouched.
+    assert m5_production._declared_account({
+        "motion": {"diagnostic_account_id": "x-superplay-future-intelligence"}
+    }) == ""
+
+
 def test_visual_gate_states_are_fail_closed_and_never_approve_publication():
     passed = visual_gate.evaluate_film_gate(
         {"gate_light": "green", "verdict": "pass", "fast_ratio": 0.08}, 0)
@@ -1580,7 +1599,7 @@ def test_huashu_motion_auto_film_keeps_a_local_source_screenshot():
         shot = {"placement_id": "P-01", "source_asset_id": "source-01",
                 "content_point": "Query expansion", "semantic_class": "code"}
         line = {"id": "P-01", "caption": "Query expansion"}
-        runtime = ROOT / ".verify-tmp" / "huashu-motion-runtime"
+        runtime = ROOT / ".runtime" / "huashu-motion"
         with mock.patch.object(huashu_motion_backend, "resolve_runtime", return_value=runtime):
             film_rel = huashu_motion_backend.author_auto_film(project, shot, line, dna, 3.0)
         film = project / film_rel
@@ -1618,7 +1637,7 @@ def test_huashu_motion_auto_film_uses_readable_lines_from_registered_source():
         shot = {"placement_id": "P-02", "source_asset_id": "source-01",
                 "content_point": "BM25 dense retrieval and RRF fusion", "semantic_class": "retrieval"}
         line = {"id": "P-02", "caption": "BM25 dense retrieval and RRF fusion"}
-        runtime = ROOT / ".verify-tmp" / "huashu-motion-runtime"
+        runtime = ROOT / ".runtime" / "huashu-motion"
         with mock.patch.object(huashu_motion_backend, "resolve_runtime", return_value=runtime):
             film_rel = huashu_motion_backend.author_auto_film(project, shot, line, dna, 3.0)
         html_path = project / film_rel / "index.html"
@@ -1650,7 +1669,7 @@ def test_huashu_code_motion_keeps_source_in_safe_frame_and_uses_account_art_dire
                           "x-superplay-future-intelligence.json").read_text(encoding="utf-8"))
         shot = {"placement_id": "P-03", "source_asset_id": "source-01",
                 "content_point": "RAG 组件如何配合？", "semantic_class": "code"}
-        runtime = ROOT / ".verify-tmp" / "huashu-motion-runtime"
+        runtime = ROOT / ".runtime" / "huashu-motion"
         with mock.patch.object(huashu_motion_backend, "resolve_runtime", return_value=runtime):
             film_rel = huashu_motion_backend.author_auto_film(
                 project, shot, {"id": "P-03", "caption": "RAG 组件"}, dna, 3.0)

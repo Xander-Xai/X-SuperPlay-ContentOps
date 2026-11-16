@@ -90,6 +90,20 @@ def _project_account(project: Path) -> str:
     text = config.read_text(encoding="utf-8")
     match = re.search(r"^account_slug:\s*[\"']?([A-Za-z0-9_-]+)", text, re.M)
     if not match:
+        # TEST_ONLY diagnostic projects may declare a scoped render identity
+        # under motion.diagnostic_account_id. This reaches the Huashu grammar
+        # route only; M5 treats the project as account-bound solely through the
+        # top-level account_slug/account_id fields, so ASR and publication gates
+        # are not weakened by this opt-in.
+        motion_match = re.search(r"^motion:\s*$", text, re.M)
+        nested = (
+            re.search(r"^[ \t]+diagnostic_account_id:\s*[\"']?([A-Za-z0-9_-]+)",
+                      text[motion_match.end():], re.M)
+            if motion_match else None
+        )
+        if nested:
+            match = nested
+    if not match:
         raise ValueError("ACCOUNT_SLUG_MISSING: project.yaml declares no account_slug")
     account = match.group(1)
     if account not in ACCOUNTS:
