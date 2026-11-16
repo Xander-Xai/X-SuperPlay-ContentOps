@@ -1,6 +1,6 @@
 {
   "schema": "contentops.branch-registry/v1",
-  "verified_at": "2026-11-16T02:55:00+08:00",
+  "verified_at": "2026-11-16T21:30:00+08:00",
   "policy": {
     "persistent": [
       "main"
@@ -150,7 +150,7 @@
       "pr": 188,
       "created": "2026-11-16",
       "purpose": "Pinned Remotion clip renderer on the M5 motion stage. Huashu and the Easel pin stay. Motion Canvas and Manim remain blocked.",
-      "status": "active",
+      "status": "merged",
       "expires": "2026-12-16"
     },
     {
@@ -158,7 +158,7 @@
       "pr": 189,
       "created": "2026-11-16",
       "purpose": "Issue #140 first execution-primitive slice: preserve M5 stage timing and failure behavior",
-      "status": "active",
+      "status": "merged",
       "expires": "2026-12-16"
     },
     {
@@ -166,7 +166,7 @@
       "pr": 166,
       "created": "2026-11-12",
       "purpose": "signed pre-copy research gate (8th VIDEO gate), landed from a stranded working tree",
-      "status": "active",
+      "status": "merged",
       "expires": "2026-12-12"
     }
   ]
