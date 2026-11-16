@@ -1,6 +1,6 @@
 {
   "schema": "contentops.branch-registry/v1",
-  "verified_at": "2026-11-16T02:55:00+08:00",
+  "verified_at": "2026-11-16T22:50:14+08:00",
   "policy": {
     "persistent": [
       "main"
@@ -168,6 +168,14 @@
       "purpose": "signed pre-copy research gate (8th VIDEO gate), landed from a stranded working tree",
       "status": "active",
       "expires": "2026-12-12"
+    },
+    {
+      "name": "feat/192-huashu-dna-animation",
+      "pr": 193,
+      "created": "2026-11-16",
+      "purpose": "Issue #192: add DNA-driven Huashu shot templates and preserve account evidence floors",
+      "status": "active",
+      "expires": "2026-12-16"
     }
   ]
 }
