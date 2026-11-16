@@ -31,6 +31,12 @@ CLIP_BACKENDS = ("remotion", "motion-canvas", "manim")
 KNOWN_BACKENDS = HUASHU_BACKENDS + CLIP_BACKENDS
 
 REMOTION_VERSION = "4.0.543"
+# Manim is invoked from an isolated venv, never the system interpreter. The
+# version is the one actually measured in that venv (manim-venv, 2026-11-17).
+# It is a declaration, NOT render evidence: capability_matrix promotes a backend
+# to VERIFIED only from a receipt-backed render_evidence map.
+MANIM_VERSION = "0.22.1"
+MANIM_TEMPLATES = ("math_formula_reveal", "attention_matrix_flow")
 REMOTION_SKILL_COMMIT = "7e541aa"
 REMOTION_SKILLS = (
     "remotion-best-practices",
@@ -55,6 +61,11 @@ TEMPLATES = {
     "recording_mark": {"composition": "RecordingMark", "backend": "remotion"},
     "title_card": {"composition": "TitleCard", "backend": "remotion"},
     "technical_3d_explainer": {"composition": "Technical3DExplainer", "backend": "remotion"},
+    # Manim short shots. The "composition" is the Manim Scene class name rendered
+    # by scripts/manim_render.py from the isolated venv; Easel remains the only
+    # compositor. Both templates are bound to a trusted source definition below.
+    "math_formula_reveal": {"composition": "MathFormulaReveal", "backend": "manim"},
+    "attention_matrix_flow": {"composition": "AttentionMatrixFlow", "backend": "manim"},
 }
 
 SHOT_COMPATIBILITY = {
@@ -64,6 +75,7 @@ SHOT_COMPATIBILITY = {
     "architecture": ("remotion", "motion-canvas", "huashu-art-motion"),
     "agent_flow": ("remotion", "motion-canvas", "huashu-art-motion"),
     "math": ("manim",),
+    "attention": ("manim",),
     "code_card": ("remotion",),
     "recording_mark": ("remotion",),
 }
@@ -340,6 +352,75 @@ def plan_clip(
             raise AnimationError("PROPS", "recording_mark box must fit in normalized frame coordinates")
         for key in ("plate", "video", "recording_sha256"):
             cleaned.pop(key, None)
+    if template in MANIM_TEMPLATES:
+        # A Manim short shot explains a *trusted* definition. Formula terms and
+        # attention weights are supplied by the caller from a registered source;
+        # the scene never computes the definition itself (e.g. no softmax of its
+        # own). definition_source binds every displayed value to that source by
+        # id + byte digest, so a shot cannot invent an algorithm or a matrix.
+        source = cleaned.get("definition_source")
+        if not isinstance(source, Mapping):
+            raise AnimationError("PROPS", f"{template} needs definition_source")
+        source_id = str(source.get("source_ref_id") or "").strip()
+        source_sha = str(source.get("sha256") or "").strip().lower()
+        if not source_id or not _HASH.match(source_sha):
+            raise AnimationError(
+                "PROPS", "definition_source needs source_ref_id and a 64-hex sha256",
+            )
+        # Visual parameters are DNA-owned. style_variants are the legacy palette
+        # that the account DNA's brand.refresh marks stale, so they must never
+        # reach the render. Reject any visual/colour override rather than apply it.
+        # "palette" is the one colour key allowed in props: the render entry
+        # overwrites it with palette_from_dna() before planning, so a spec cannot
+        # smuggle a legacy style_variants palette through it.
+        forbidden_visual = (
+            "palette_override", "style_variants", "color", "colour",
+            "colors", "font", "font_size", "effect", "effects", "forbidden_effects",
+        )
+        present = [key for key in forbidden_visual if key in cleaned]
+        if present:
+            raise AnimationError(
+                "DNA_VISUAL",
+                f"{template} cannot override DNA colour/visuals: " + ", ".join(present),
+            )
+        if template == "math_formula_reveal":
+            terms = cleaned.get("terms")
+            if (not isinstance(terms, list) or not terms or len(terms) > 16
+                    or any(not str(term).strip() for term in terms)):
+                raise AnimationError("PROPS", "math_formula_reveal needs 1-16 non-empty terms")
+            variables = cleaned.get("variables")
+            if not isinstance(variables, list) or not variables:
+                raise AnimationError("PROPS", "math_formula_reveal needs a variables list")
+            for item in variables:
+                if (not isinstance(item, Mapping)
+                        or not str(item.get("symbol") or "").strip()
+                        or not str(item.get("meaning") or "").strip()):
+                    raise AnimationError(
+                        "PROPS", "each variable needs a symbol and a meaning",
+                    )
+        else:  # attention_matrix_flow
+            tokens = cleaned.get("tokens")
+            if (not isinstance(tokens, list) or len(tokens) < 2 or len(tokens) > 12
+                    or any(not str(token).strip() for token in tokens)):
+                raise AnimationError("PROPS", "attention_matrix_flow needs 2-12 non-empty tokens")
+            matrix = cleaned.get("matrix")
+            if (not isinstance(matrix, list) or not matrix
+                    or any(not isinstance(row, list) or len(row) != len(tokens)
+                           for row in matrix)):
+                raise AnimationError(
+                    "PROPS", "attention_matrix_flow matrix must be N x len(tokens)",
+                )
+            for row in matrix:
+                for value in row:
+                    if isinstance(value, bool) or not isinstance(value, (int, float)):
+                        raise AnimationError("PROPS", "attention matrix cells must be numbers")
+            labels = cleaned.get("labels")
+            if labels is not None and (
+                not isinstance(labels, list)
+                or any(not str(label).strip() for label in labels)
+            ):
+                raise AnimationError("PROPS", "attention matrix labels must be non-empty strings")
+
     if template == "title_card":
         missing = [key for key in ("conflict", "stakes")
                    if not str(cleaned.get(key) or "").strip()]
@@ -679,7 +760,7 @@ CAPABILITY_SHOT_TYPES = {
     "remotion-three": ("architecture", "agent_flow"),
     "huashu-art-motion": ("architecture", "agent_flow", "annotation", "comparison", "title_card"),
     "huashu-motion": ("architecture", "agent_flow", "annotation", "comparison"),
-    "manim": ("math",),
+    "manim": ("math", "attention"),
     "motion-canvas": ("architecture", "agent_flow"),
 }
 
@@ -699,7 +780,11 @@ CAPABILITY_DEFAULT_STATE = {
     "remotion-three": "MISSING",
     "huashu-art-motion": "IMPLEMENTED_NOT_VERIFIED",
     "huashu-motion": "IMPLEMENTED_NOT_VERIFIED",
-    "manim": "MISSING",
+    # Manim has an implemented adapter + a real render entry, so it is no longer
+    # MISSING. It stays IMPLEMENTED_NOT_VERIFIED until a receipt-backed evidence
+    # map is supplied. Installing the runtime or adding a lock file never flips
+    # this to VERIFIED — only render_evidence can, and a blocking gate outranks it.
+    "manim": "IMPLEMENTED_NOT_VERIFIED",
     "motion-canvas": "MISSING",
 }
 
@@ -742,6 +827,9 @@ def capability_matrix(
         if backend == "remotion" and not version:
             version = REMOTION_VERSION
             version_source = "animation_backend.REMOTION_VERSION"
+        if backend == "manim" and not version:
+            version = MANIM_VERSION
+            version_source = "animation_backend.MANIM_VERSION"
         proof = evidence.get(backend)
         verified = bool(isinstance(proof, Mapping) and proof.get("verified_at")
                         and proof.get("sha256") and proof.get("receipt"))
