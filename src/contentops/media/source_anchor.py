@@ -227,6 +227,38 @@ def _snap_to_declaration(lines: Sequence[str], start: int, end: int, span: int) 
     return start, end
 
 
+def _relative_luminance(hex_colour: str) -> float:
+    """WCAG relative luminance of a #RRGGBB colour, 0 (black) to 1 (white)."""
+    text = str(hex_colour or "").lstrip("#")
+    if len(text) != 6:
+        return 0.0
+    try:
+        channels = [int(text[index:index + 2], 16) / 255.0 for index in (0, 2, 4)]
+    except ValueError:
+        return 0.0
+    linear = [value / 12.92 if value <= 0.04045 else ((value + 0.055) / 1.055) ** 2.4
+              for value in channels]
+    return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+
+def _readable_text(fill: str, palette: Mapping[str, Any]) -> tuple[str, str]:
+    """Pick (primary, secondary) text colours that contrast with ``fill``.
+
+    The schematic used to paint ``ink`` onto ``bg``. That was legible while both
+    accounts carried a light ``motion_profile`` palette; once the brand palette
+    became the render input the 1024 and future-intelligence backgrounds turned
+    dark (#0F1117) and the labels became dark-on-dark. Choosing by measured
+    luminance keeps the card readable under either palette instead of pinning a
+    colour that only works for one of them.
+    """
+    dark_fill = _relative_luminance(fill) < 0.25
+    if dark_fill:
+        primary = str(palette.get("surface") or "#F9FBFA")
+        secondary = str(palette.get("accent2") or palette.get("accent") or primary)
+        return primary, secondary
+    return str(palette.get("ink") or "#202B31"), str(palette.get("sub") or "#65747A")
+
+
 def _font(kind: str, size: int):
     from PIL import ImageFont
     for candidate in FONT_CANDIDATES[kind]:
@@ -321,7 +353,7 @@ def render_anchor(*, source_text: str, filename: str, title: str,
                   repository: str, commit: str, spdx: str,
                   palette: Mapping[str, Any], queries: Sequence[str],
                   out_path: Path, footer: str = "SOURCE TEXT · NOT A LIVE RUNTIME RESULT",
-                  exclude_lines: Iterable[int] = ()
+                  exclude_lines: Iterable[int] = (), pin_lines: Sequence[int] = ()
                   ) -> RenderedAnchor:
     """Draw one excerpt card and return its pixel geometry."""
     from PIL import Image, ImageDraw
@@ -349,13 +381,16 @@ def render_anchor(*, source_text: str, filename: str, title: str,
         if len(rows) <= CODE_MAX_LINES:
             return rows
         # Open on a declaration when one is available: a card that begins in the
-        # middle of a string literal reads as a fragment, not as source.
-        for index, row in enumerate(rows[:max(0, len(rows) - CODE_MAX_LINES + 2)]):
-            text = str(row.get("text") or "")
-            if re.match(r"\s*(?:@|(?:async\s+)?(?:def|class|fn|func)\s)", text):
-                if len(rows) - index >= CODE_MAX_LINES - 3:
-                    return rows[index:index + CODE_MAX_LINES]
-                break
+        # middle of a string literal reads as a fragment, not as source. A
+        # pinned window is exempt: the shot named those lines, so re-opening on
+        # a nearby `def` would show code the narration is not talking about.
+        if not pins:
+            for index, row in enumerate(rows[:max(0, len(rows) - CODE_MAX_LINES + 2)]):
+                text = str(row.get("text") or "")
+                if re.match(r"\s*(?:@|(?:async\s+)?(?:def|class|fn|func)\s)", text):
+                    if len(rows) - index >= CODE_MAX_LINES - 3:
+                        return rows[index:index + CODE_MAX_LINES]
+                    break
         anchor = next((row for row in rows if row["focus"]), rows[0])
         centre = rows.index(anchor)
         first = max(0, min(centre - CODE_MAX_LINES // 2, len(rows) - CODE_MAX_LINES))
@@ -367,26 +402,47 @@ def render_anchor(*, source_text: str, filename: str, title: str,
     # fullest window rather than to a five-line fragment.
     avoid = set(used)
     best: tuple[tuple[int, int, int], List[Dict[str, Any]]] | None = None
-    for _ in range(12):
-        start, end, focus = _score_window(raw_lines, queries, window_size, avoid)
-        snapped = _snap_to_declaration(raw_lines, start, end, window_size)
-        if snapped[0] not in avoid:
-            start, end = snapped
-        candidate = trim(build(start, end, focus))
-        numbered = [row for row in candidate if row["n"] is not None]
-        visible = {int(row["n"]) - 1 for row in numbered}
-        overlap = len(visible & used)
-        # A full card matters more than a disjoint one: a five-line excerpt in a
-        # nineteen-row body is the dead-background failure this renderer exists
-        # to remove, so prefer overlap over emptiness when the file is short.
-        key = (1 if len(numbered) >= CODE_MAX_LINES - 5 else 0,
-               1 if overlap == 0 else 0, len(numbered), -overlap)
-        if best is None or key > best[0]:
-            best = (key, candidate)
-        if overlap == 0 and len(numbered) >= CODE_MAX_LINES - 4:
-            break
-        avoid |= set(range(start, end))
-    flat = best[1] if best else build(0, min(window_size, len(raw_lines)), set())
+    pins = sorted({int(number) - 1 for number in pin_lines if int(number) > 0})
+    pins = [index for index in pins if 0 <= index < len(raw_lines)]
+    if pins:
+        # A shot that names the exact lines it quotes must show those lines.
+        # Token scoring is a best-effort search: on a 640-line module every
+        # second line contains "recording", so a query like
+        # MISSING_REAL_RECORDING landed on the fingerprint helper instead of
+        # the guard it was narrating. An explicit pin is auditable in
+        # sources/assets.json, so it wins over the search.
+        start = max(0, pins[0] - 3)
+        end = min(len(raw_lines), start + CODE_MAX_LINES)
+        flat = build(start, end, set(pins))
+        if len(flat) > CODE_MAX_LINES:
+            # Wrapped segments can inflate the row count past one card; trim
+            # centres on the focused row, which is the pinned block.
+            flat = trim(flat)
+    else:
+        flat = []
+    if not pins:
+        for _ in range(12):
+            start, end, focus = _score_window(raw_lines, queries, window_size, avoid)
+            snapped = _snap_to_declaration(raw_lines, start, end, window_size)
+            if snapped[0] not in avoid:
+                start, end = snapped
+            candidate = trim(build(start, end, focus))
+            numbered = [row for row in candidate if row["n"] is not None]
+            visible = {int(row["n"]) - 1 for row in numbered}
+            overlap = len(visible & used)
+            # A full card matters more than a disjoint one: a five-line excerpt
+            # in a nineteen-row body is the dead-background failure this
+            # renderer exists to remove, so prefer overlap over emptiness when
+            # the file is short.
+            key = (1 if len(numbered) >= CODE_MAX_LINES - 5 else 0,
+                   1 if overlap == 0 else 0, len(numbered), -overlap)
+            if best is None or key > best[0]:
+                best = (key, candidate)
+            if overlap == 0 and len(numbered) >= CODE_MAX_LINES - 4:
+                break
+            avoid |= set(range(start, end))
+    if not pins:
+        flat = best[1] if best else build(0, min(window_size, len(raw_lines)), set())
     while len(flat) < CODE_MAX_LINES:
         flat.append({"n": None, "text": "", "focus": False})
     shown_title = title or title_from_rows(flat, Path(filename).stem)
@@ -536,21 +592,23 @@ def render_flow_anchor(*, title: str, steps: Sequence[str], palette: Mapping[str
 
     top, node_h, gap = 292, 330, 118
     left, right = 74, ANCHOR_WIDTH - 74
+    node_fill = bg
+    node_ink, node_sub = _readable_text(node_fill, palette)
     rows: List[Dict[str, Any]] = []
     for index, label in enumerate(stages):
         y0 = top + index * (node_h + gap)
         y1 = y0 + node_h
-        draw.rounded_rectangle((left, y0, right, y1), radius=22, fill=bg, outline=accent2,
-                               width=2)
+        draw.rounded_rectangle((left, y0, right, y1), radius=22, fill=node_fill,
+                               outline=accent2, width=2)
         draw.rounded_rectangle((left, y0, left + 14, y1), radius=7, fill=accent)
         draw.text((left + 46, y0 + 40), f"{index + 1:02d}", font=_font("mono_bold", 30),
                   fill=accent)
         lines = _wrap_source_line(label, 16)
         draw.text((left + 46, y0 + 96), _truncate_columns(lines[0], 18),
-                  font=_font("sans", 54), fill=ink)
+                  font=_font("sans", 54), fill=node_ink)
         if len(lines) > 1:
             draw.text((left + 46, y0 + 166), _truncate_columns(
-                "".join(lines[1:]), 22), font=_font("sans_regular", 34), fill=sub)
+                "".join(lines[1:]), 22), font=_font("sans_regular", 34), fill=node_sub)
         if index < len(stages) - 1:
             mid = (left + right) // 2
             draw.line((mid, y1 + 12, mid, y1 + gap - 24), fill=accent2, width=6)

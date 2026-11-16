@@ -318,6 +318,12 @@ jobs:
       - name: Run animation cache integrity tests
         run: python tests/test_animation_cache_integrity.py
 
+      # Anchor stills: pinned excerpt windows, readable label contrast under the
+      # dark brand palette, and code shots keeping a code card. Pillow draws into
+      # a temp directory; nothing is spawned and no renderer is involved.
+      - name: Run source-anchor renderer tests
+        run: python tests/test_source_anchor_render.py
+
       # External B-roll discovery. Both suites are entirely offline: provider
       # responses, DNS answers and loudness measurements are injected. The
       # decisive assertions are that no request happens without an explicit
