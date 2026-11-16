@@ -64,8 +64,10 @@ def _sha(path: Path) -> str:
 
 def _write_json(path: Path, payload: Dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-                    encoding="utf-8")
+    # LF only: git normalizes *.json to LF, so CRLF would make a fresh
+    # checkout's receipt bytes differ from the bytes hashed during render.
+    path.write_bytes(
+        (json.dumps(payload, ensure_ascii=False, indent=2) + "\n").encode("utf-8"))
 
 
 def _project_path(value: str) -> Path:

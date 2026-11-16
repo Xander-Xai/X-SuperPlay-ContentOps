@@ -1,0 +1,101 @@
+{
+  "grammar": "y3_whiteboard",
+  "duration": 6.0,
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": {
+    "bg": "#0F1117",
+    "accent": "#38BDF8",
+    "ink": "#202B31",
+    "sub": "#65747A",
+    "surface": "#F9FBFA",
+    "accent2": "#38BDF8"
+  },
+  "safe": {
+    "top": 0,
+    "bottom": 520,
+    "fill": "#0F1117"
+  },
+  "cues": [
+    {
+      "at": 0.2,
+      "kind": "draw",
+      "text": "idle",
+      "data": {
+        "icon": "network",
+        "arrow": true
+      }
+    },
+    {
+      "at": 0.975,
+      "kind": "draw",
+      "text": "running",
+      "data": {
+        "icon": "network",
+        "arrow": true
+      }
+    },
+    {
+      "at": 1.75,
+      "kind": "draw",
+      "text": "complete",
+      "data": {
+        "icon": "network",
+        "arrow": true
+      }
+    },
+    {
+      "at": 2.525,
+      "kind": "point",
+      "text": "verified result"
+    },
+    {
+      "at": 3.72,
+      "kind": "draw",
+      "text": "verified",
+      "data": {
+        "icon": "check",
+        "branch": "success",
+        "arrow": false
+      }
+    },
+    {
+      "at": 4.56,
+      "kind": "draw",
+      "text": "retry",
+      "data": {
+        "icon": "cross",
+        "branch": "failure",
+        "arrow": false
+      }
+    },
+    {
+      "at": 5.55,
+      "kind": "highlight",
+      "data": {
+        "target": "draw",
+        "index": 2
+      }
+    }
+  ],
+  "contentops_scene": {
+    "segment_id": "state01",
+    "visual_role": "explain",
+    "template": "engineering-flow",
+    "evidence_ref": null,
+    "style_variant": "brand.palette",
+    "animation_type": "state_transition",
+    "source_asset_id": "src-doc",
+    "claim_ref": "C-state01",
+    "editorial_only": false
+  },
+  "contentops_timing": {
+    "narration_duration_s": 5.0,
+    "visual_hold_padding_s": 1.0
+  },
+  "contentops_source": {
+    "asset_id": "src-doc",
+    "sha256": "3f1c23b908b570052c9c8ae882fd654c8dc39a8cd8395114624a8f2a6d95d45c"
+  }
+}

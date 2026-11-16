@@ -1,0 +1,17 @@
+{
+  "schema": "contentops.script-assets/v1",
+  "assets": {
+    "huashu-arch01": {
+      "path": "project://assets/generated/huashu/huashu-arch01.mp4",
+      "sha256": "10cff6da96281df9c0bc27461b317f2acc49d8b1d88536b5bbeecfe75d0919a6",
+      "evidence_use": "VISUAL_SUPPORT",
+      "generated": true
+    },
+    "huashu-state01": {
+      "path": "project://assets/generated/huashu/huashu-state01.mp4",
+      "sha256": "046da85570d0823cd9a6749ce32ab66b560014299aa38570e8de2068e37ff205",
+      "evidence_use": "VISUAL_SUPPORT",
+      "generated": true
+    }
+  }
+}

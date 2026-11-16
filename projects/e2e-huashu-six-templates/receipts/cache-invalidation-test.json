@@ -1,0 +1,27 @@
+{
+  "schema": "contentops.animation-cache-regression/v1",
+  "account_id": "x-superplay-future-intelligence",
+  "edited_shot": {
+    "placement": "arch01",
+    "parameter": "nodes[Query]->Question",
+    "before_state": "REUSED",
+    "after_state": "EXECUTED",
+    "before_sha": "10cff6da96281df9c0bc27461b317f2acc49d8b1d88536b5bbeecfe75d0919a6",
+    "after_sha": "0f592d2149842b0a4c36acb02689ae9e189e29e6a8314646d2e0a0cad597b40a",
+    "before_fp": "96d41f36e4cb1ea7505b5e4217f149c30c02b38bc2a5e65a6a689b134a9dfaf9",
+    "after_fp": "97cabf3e0e637b0439df39511f2fd3d0181090ad81e4772db9dea747e5f57db5"
+  },
+  "untouched_shot": {
+    "placement": "state01",
+    "state": "REUSED",
+    "before_sha": "046da85570d0823cd9a6749ce32ab66b560014299aa38570e8de2068e37ff205",
+    "after_sha": "046da85570d0823cd9a6749ce32ab66b560014299aa38570e8de2068e37ff205",
+    "fp_stable": true
+  },
+  "pass": true,
+  "generated": true,
+  "evidence_capable": false,
+  "production_ready": false,
+  "publish_authorized": false,
+  "human_review": "PENDING_FOUNDER_REVIEW"
+}

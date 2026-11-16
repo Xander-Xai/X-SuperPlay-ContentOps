@@ -1,0 +1,52 @@
+id: e2e-huashu-six-templates
+title: "Huashu six-template real-render acceptance (TEST_ONLY)"
+created_at: "2026-11-17T03:20:00Z"
+
+# TEST_ONLY technical acceptance for Issue #196 P1. Every clip is a short,
+# silent, generated visual-support MP4. No clip is a real recording, no clip
+# is production-ready, and no clip is authorized for publication. The metric
+# source is explicitly non-business test data; the evidence source is a real,
+# registered, git-tracked screenshot from the Easel review project.
+
+account_slug: x-superplay-future-intelligence
+content_type: technical_explainer
+
+source_refs:
+  - id: easel_pins
+    type: lock_file
+    title: "runtime/easel-pins.json"
+    path: "runtime/easel-pins.json"
+    permission: CREATED_BY_OWNER
+  - id: huashu_lock
+    type: lock_file
+    title: "runtime/huashu-motion.lock.json"
+    path: "runtime/huashu-motion.lock.json"
+    permission: CREATED_BY_OWNER
+  - id: motion_planner
+    type: source_code
+    title: "src/contentops/media/motion_planner.py"
+    path: "src/contentops/media/motion_planner.py"
+    permission: CREATED_BY_OWNER
+  - id: fi_dna
+    type: account_dna
+    title: "config/accounts/x-superplay-future-intelligence.json"
+    path: "config/accounts/x-superplay-future-intelligence.json"
+    permission: CREATED_BY_OWNER
+
+target:
+  platform_primary: bilibili
+  aspect_ratio: "9:16"
+  resolution: "1080x1920"
+  duration_target_sec: 0   # six independent short clips, no final cut
+
+evidence_policy:
+  real_assets_first: true
+  ai_visuals_allowed: auxiliary_only
+  fabricated_claims: forbidden
+  metric_data_kind: NON_BUSINESS_TEST_DATA
+
+status: initialized
+
+outputs:
+  final_video: ""
+  qc_report: ""

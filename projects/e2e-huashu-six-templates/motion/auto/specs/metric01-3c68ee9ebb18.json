@@ -1,0 +1,89 @@
+{
+  "grammar": "t3_finance_chart",
+  "duration": 6.0,
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": {
+    "bg": "#0F1117",
+    "accent": "#38BDF8",
+    "ink": "#202B31",
+    "sub": "#65747A",
+    "surface": "#F9FBFA",
+    "accent2": "#38BDF8"
+  },
+  "safe": {
+    "top": 0,
+    "bottom": 520,
+    "fill": "#0F1117"
+  },
+  "cues": [
+    {
+      "at": 0.0,
+      "kind": "title"
+    },
+    {
+      "at": 0.8,
+      "kind": "bar",
+      "dur": 0.7,
+      "data": {
+        "index": 0
+      }
+    },
+    {
+      "at": 1.15,
+      "kind": "bar",
+      "dur": 0.7,
+      "data": {
+        "index": 1
+      }
+    },
+    {
+      "at": 5.5,
+      "kind": "highlight",
+      "text": "after",
+      "data": {
+        "index": 1
+      }
+    }
+  ],
+  "contentops_scene": {
+    "segment_id": "metric01",
+    "visual_role": "explain",
+    "template": "engineering-flow",
+    "evidence_ref": null,
+    "style_variant": "brand.palette",
+    "animation_type": "metric_transition",
+    "source_asset_id": "src-metric",
+    "claim_ref": "C-metric01",
+    "editorial_only": false
+  },
+  "data": {
+    "title": "Local clip tests",
+    "unit": "passing tests",
+    "source": "Source: local non-business test receipt (no product metric)",
+    "chart": "bar",
+    "series": [
+      {
+        "label": "before",
+        "value": 9
+      },
+      {
+        "label": "after",
+        "value": 21
+      }
+    ],
+    "highlight": {
+      "index": 1,
+      "text": "after"
+    }
+  },
+  "contentops_timing": {
+    "narration_duration_s": 5.0,
+    "visual_hold_padding_s": 1.0
+  },
+  "contentops_source": {
+    "asset_id": "src-metric",
+    "sha256": "7d36116fbc66d0b1aa3147ae0333fb7d9188e8f55f18dec9f35648c50b9ab130"
+  }
+}

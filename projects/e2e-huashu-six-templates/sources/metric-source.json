@@ -1,0 +1,17 @@
+{
+  "title": "Local clip tests",
+  "unit": "passing tests",
+  "citation": "Source: local non-business test receipt (no product metric)",
+  "series": [
+    {
+      "label": "before",
+      "value": 9
+    },
+    {
+      "label": "after",
+      "value": 21
+    }
+  ],
+  "data_kind": "NON_BUSINESS_TEST_DATA",
+  "note": "Values are local test counts used only to exercise the animation component; they are NOT a benchmark, user result or business performance claim."
+}

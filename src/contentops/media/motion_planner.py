@@ -986,8 +986,10 @@ def build_auto_plan(*, project: Path, account_id: str,
                     f"AUTO_MOTION_STALE_SPEC: {spec_path.relative_to(project).as_posix()} "
                     "exists with different inputs; review before replacing it")
         else:
-            spec_path.write_text(json.dumps(spec, ensure_ascii=False, indent=2) + "\n",
-                                 encoding="utf-8")
+            # LF only: git normalizes *.json to LF, so writing CRLF here would
+            # make a fresh checkout hash differently from the render receipt.
+            spec_path.write_bytes(
+                (json.dumps(spec, ensure_ascii=False, indent=2) + "\n").encode("utf-8"))
         shot = {
             "placement_id": placement,
             "asset_id": f"huashu-{placement}",
@@ -1019,6 +1021,6 @@ def build_auto_plan(*, project: Path, account_id: str,
             "compiler_sha256": planner_sha256, "shots": shots}
     plan_path = auto_dir / f"shot-plan-{fingerprint[:12]}.json"
     if not plan_path.exists():
-        plan_path.write_text(json.dumps(plan, ensure_ascii=False, indent=2) + "\n",
-                             encoding="utf-8")
+        plan_path.write_bytes(
+            (json.dumps(plan, ensure_ascii=False, indent=2) + "\n").encode("utf-8"))
     return {"path": plan_path, "plan": plan, "input_sha256": fingerprint}
