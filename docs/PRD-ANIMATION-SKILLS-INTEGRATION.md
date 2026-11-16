@@ -3,7 +3,7 @@
 [简体中文](PRD-ANIMATION-SKILLS-INTEGRATION.md) | [English](PRD-ANIMATION-SKILLS-INTEGRATION.en.md)
 
 > Last verified: 2026-11-17
-> 状态：**Implemented for P0 clip render** — Remotion 短镜头已在本机渲染并接入 M5 调度；Motion Canvas 与 Manim 为 BLOCKED，不是 VERIFIED。2026-11-17 新增并本机验证 DNA 驱动的 3 秒冲突式 `title_card` 与可信渲染缓存。
+> 状态：**P0 clip render + P3-A Manim implemented** — Remotion 短镜头已在本机渲染并接入 M5 调度；2026-11-17 新增 Manim 单一能力矩阵扩展、两个参数化模板（`math_formula_reveal` / `attention_matrix_flow`）、隔离 venv 真实渲染与 TEST_ONLY e2e 项目。Motion Canvas 仍为 BLOCKED。Manim 是 `IMPLEMENTED_NOT_VERIFIED`：已装运行时并本机渲染不等于 VERIFIED，能力矩阵只接受回执证据升级。2026-11-17 新增并本机验证 DNA 驱动的 3 秒冲突式 `title_card` 与可信渲染缓存。
 > 本文是需求与验收记录。生成片段不是真实录屏，也不能代替 Founder 审核。
 
 ## 1. 背景、目标和非目标
@@ -38,7 +38,7 @@ ContentOps 已经有冻结的 Easel v0.3.0 总合成、Huashu 解释性片段、
 | 3 | motiondivision/motion | React 补间库 | MIT | 2026-11-15 | 否 | REJECT |
 | 4 | franciscop/ola | 数值插值 | MIT | 2026-10-24 | 否 | REJECT |
 | 5 | juliangarnier/anime | JS 动画引擎 | MIT | 2026-11-02 | 否；HyperFrames 已有适配 | REJECT |
-| 6 | ManimCommunity/manim | Python 数学动画 | MIT | v0.22.1，2026-10-27 | 能出视频；需要 cairo/pango | P1，本机未安装，BLOCKED |
+| 6 | ManimCommunity/manim | Python 数学动画 | MIT | v0.22.1，2026-10-27 | 能出视频；需要 cairo/pango | P3-A，隔离 venv 已装并本机渲染；IMPLEMENTED_NOT_VERIFIED |
 | 7 | jeremyckahn/shifty | 补间引擎 | MIT | 2026-11-14 | 否 | REJECT |
 | 8 | jonobr1/two.js | 2D 绘图 API | MIT | 2026-11-13 | 否 | REJECT |
 | 9 | airbnb/lottie-web | 动画播放器 | MIT | 推送 2025-09 | 播放 JSON，不编码视频 | P2 |
@@ -52,7 +52,7 @@ ContentOps 已经有冻结的 Easel v0.3.0 总合成、Huashu 解释性片段、
 | 17 | BabylonJS/Babylon.js | 游戏/渲染引擎 | Apache-2.0 | 9.36.0，2026-11-12 | 否 | REJECT |
 | 18 | drawcall/Proton | 粒子库 | MIT | 2026-03-06 | 否 | REJECT |
 
-侧证：`remotion-dev/remotion` 最新 release 是 **v4.0.543**（2026-11-11）。本机 Node v24.16.0、npm 11.13.0、FFmpeg 8.1.1、Chrome 与 Edge 已安装。Manim 未安装。
+侧证：`remotion-dev/remotion` 最新 release 是 **v4.0.543**（2026-11-11）。本机 Node v24.16.0、npm 11.13.0、FFmpeg 8.1.1、Chrome 与 Edge 已安装。Manim v0.22.1 已安装在隔离 venv（`runtime/manim.lock.json` 记录路径与创建命令），未安装进系统 Python。
 
 ## 4. 选型与许可证
 
@@ -60,7 +60,7 @@ P0 选 Remotion 渲染器，不是因为它 Star 多，而是：它能出 MP4；
 
 `remotion-dev/skills` 没有独立许可证对象。技能文件不提交到本仓库，避免把许可不清的第三方文本打进公开发布。
 
-Motion Canvas 与 Manim 许可证是 MIT，商业使用本身不是拒绝理由。拒绝本轮接入的原因是运行形态：前者没有 headless CLI，后者本机没有 cairo/pango 环境。不把缺环境写成 VERIFIED。
+Motion Canvas 与 Manim 许可证是 MIT，商业使用本身不是拒绝理由。Motion Canvas 拒绝本轮接入的原因是运行形态：没有 headless CLI（编辑器 websocket 导出）。Manim 已在隔离 venv 通过官方 `python -m manim` 本机渲染，v0.22.1 实测可用；但渲染走 Pango `Text` 不用 MathTex/LaTeX（本机管理员权限下 LaTeX 会卡住）。已装运行时不等于 VERIFIED，能力矩阵只接受回执证据升级。
 
 ## 5. 实施顺序
 
@@ -68,7 +68,7 @@ Motion Canvas 与 Manim 许可证是 MIT，商业使用本身不是拒绝理由�
 |---|---|---|
 | M0 环境 | 部分完成 | Node、FFmpeg、Chrome 已核到。官方 `npx skills add` 被本机权限分类器拒绝，技能未安装 |
 | M1 Remotion | 完成 | 4.0.543 锁文件；两个参数化模板；本机渲染通过 `motion_sample` |
-| M2 Motion Canvas / Manim | BLOCKED | 见第 17 节 |
+| M2 Motion Canvas / Manim | Motion Canvas BLOCKED；Manim IMPLEMENTED_NOT_VERIFIED | 见第 17 节；Manim 两个模板与隔离 venv 渲染见 P3-A e2e |
 | M3 双账号 | 完成合同与阻断 | 1024 无录屏的正式生产被阻断；未来智能拒绝桌面录屏输入；测试用途片段可渲染且不计证据 |
 | M4 工作台 | 未做整页 UI | 技能注册表增加发现指针。不改 Easel 上游，不重写 Web UI |
 
@@ -137,7 +137,7 @@ Easel pin 仍是 `runtime/easel-pins.json` 的 `v0.3.0` / `bb3c8ff`。本变更�
 
 ## 11. 与 M5 的关系
 
-`stage_motion` 在镜头 `backend` 为 `remotion`、`motion-canvas` 或 `manim` 时调用 `animation_render.py`。失败是 `M5Blocked`，不改调 Huashu。测试 `test_m5_dispatches_an_explicit_remotion_shot_to_the_clip_adapter` 断言命令行含该适配器且不含 `huashu_motion`。
+`stage_motion` 在镜头 `backend` 为 `remotion` 或 `motion-canvas` 时调用 `animation_render.py`；`manim` 镜头按其声明的渲染入口 `scripts/manim_render.py` 由隔离 venv 渲染，仍复用同一个 backend selector、receipt、可信缓存、M45 manifest 与资产登记合同，不建第二套系统。失败是 `M5Blocked`，不改调 Huashu。测试 `test_m5_dispatches_an_explicit_remotion_shot_to_the_clip_adapter` 断言命令行含该适配器且不含 `huashu_motion`。
 
 ## 12. 素材分类
 
@@ -164,7 +164,7 @@ Easel pin 仍是 `runtime/easel-pins.json` 的 `v0.3.0` / `bb3c8ff`。本变更�
 | Remotion Skills 安装 | FAIL | `npx skills add` 被权限分类器拒绝；技能未安装，未写入共享库 |
 | Remotion 渲染 | PASS | 见下表 |
 | Motion Canvas | BLOCKED | `NO_HEADLESS_EXPORT` |
-| Manim | BLOCKED | `RUNTIME_MISSING` / `missing manim`。未向系统 Python 安装 |
+| Manim | IMPLEMENTED_NOT_VERIFIED / TEST_ONLY e2e PASS | 隔离 venv 本机真实渲染两模板；`runtime/manim.lock.json`；`projects/e2e-p3-manim/`；未向系统 Python 安装；已装不升级为 VERIFIED |
 | 1024 规则 | PASS | 正式生产无录屏返回 `MISSING_REAL_RECORDING`；测试片段 `counts_as_real_recording=false` |
 | 未来智能规则 | PASS | 桌面录屏 `RECORDING_FORBIDDEN`；RAG 回执 `EXPLANATORY_CLIP` |
 | M5 接线 | PASS | `stage_motion` 调度测试；选择器接受 `remotion` |

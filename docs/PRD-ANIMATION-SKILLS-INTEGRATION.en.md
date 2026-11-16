@@ -3,7 +3,7 @@
 [简体中文](PRD-ANIMATION-SKILLS-INTEGRATION.md) | [English](PRD-ANIMATION-SKILLS-INTEGRATION.en.md)
 
 > Last verified: 2026-11-17
-> Status: **P0 clip render implemented.** Remotion short clips rendered locally and dispatched from M5. Motion Canvas and Manim are BLOCKED, not VERIFIED. A DNA-driven 3s conflict `title_card` and a trusted render cache were added and verified locally on 2026-11-17.
+> Status: **P0 clip render + P3-A Manim implemented.** Remotion short clips rendered locally and dispatched from M5. On 2026-11-17 Manim gained a single-contract capability extension, two parameterized templates (`math_formula_reveal` / `attention_matrix_flow`), an isolated-venv real render, and a TEST_ONLY e2e project. Motion Canvas remains BLOCKED. Manim is `IMPLEMENTED_NOT_VERIFIED`: installing the runtime and rendering locally is NOT VERIFIED; the capability matrix is promoted only by receipt-backed evidence. A DNA-driven 3s conflict `title_card` and a trusted render cache were added and verified locally on 2026-11-17.
 > A generated clip is not a screen recording and does not replace Founder review.
 
 ## 1. Background, goals, non-goals
@@ -29,7 +29,7 @@ Audited 2026-11-16 from `gh api`. None archived. Remotion's GitHub SPDX is `NOAS
 | 3 | motiondivision/motion | React tween library | MIT | REJECT |
 | 4 | franciscop/ola | number interpolation | MIT | REJECT |
 | 5 | juliangarnier/anime | JS animation engine | MIT | REJECT |
-| 6 | ManimCommunity/manim | Python math animation | MIT | P1; BLOCKED (not installed; cairo/pango) |
+| 6 | ManimCommunity/manim | Python math animation | MIT (v0.22.1) | P3-A; installed in isolated venv and rendered locally; IMPLEMENTED_NOT_VERIFIED |
 | 7 | jeremyckahn/shifty | tween engine | MIT | REJECT |
 | 8 | jonobr1/two.js | 2D drawing API | MIT | REJECT |
 | 9 | airbnb/lottie-web | animation player | MIT | P2 |
@@ -43,13 +43,13 @@ Audited 2026-11-16 from `gh api`. None archived. Remotion's GitHub SPDX is `NOAS
 | 17 | BabylonJS/Babylon.js | game/render engine | Apache-2.0 | REJECT |
 | 18 | drawcall/Proton | particle library | MIT | REJECT |
 
-Side fact: `remotion-dev/remotion` latest release is **v4.0.543** (2026-11-11). This machine has Node v24.16.0, npm 11.13.0, FFmpeg 8.1.1, Chrome, and Edge. Manim is not installed.
+Side fact: `remotion-dev/remotion` latest release is **v4.0.543** (2026-11-11). This machine has Node v24.16.0, npm 11.13.0, FFmpeg 8.1.1, Chrome, and Edge. Manim v0.22.1 is installed in an isolated venv (`runtime/manim.lock.json` records the path and creation command), not in system Python.
 
 ## 4. Selection and license
 
 Remotion is P0 because it emits MP4, Node and Chrome are present, and the license text allows an individual or a for-profit organization of up to 3 employees to create videos. Selling a Remotion derivative is not allowed. This repository commits its own templates and the lockfile, not `node_modules` and not upstream source.
 
-Motion Canvas and Manim are MIT. They are blocked this round by runtime shape, not by license: no headless exporter, and no local cairo/pango environment. A missing runtime is not marked VERIFIED.
+Motion Canvas and Manim are MIT. Motion Canvas is blocked this round by runtime shape, not by license: no headless exporter (editor-websocket export). Manim renders locally through the official `python -m manim` from an isolated venv, measured at v0.22.1; scenes use Pango `Text` and avoid MathTex/LaTeX (LaTeX hangs under Windows elevated privileges). An installed runtime is not marked VERIFIED; the capability matrix is promoted only by receipt-backed evidence.
 
 ## 5. Order
 
@@ -87,7 +87,7 @@ The Easel pin remains v0.3.0 / `bb3c8ff`. Huashu aliases still resolve to Huashu
 
 ## 11. M5
 
-`stage_motion` calls `animation_render.py` for `remotion`, `motion-canvas`, and `manim`. Failure is `M5Blocked`, not a Huashu substitution. The dispatch test asserts the command contains the clip adapter and not `huashu_motion`.
+`stage_motion` calls `animation_render.py` for `remotion` and `motion-canvas`. A `manim` shot uses its declared render entry `scripts/manim_render.py`, rendered from the isolated venv; it reuses the same backend selector, receipt, trusted cache, M45 manifest, and asset-registration contracts — no second system. Failure is `M5Blocked`, not a Huashu substitution. The dispatch test asserts the command contains the clip adapter and not `huashu_motion`.
 
 ## 12. Asset class
 
@@ -114,7 +114,7 @@ Local non-paid rendering and a project-level npm install were in scope. Easel wa
 | Remotion skills install | FAIL | `npx skills add` refused; shared store untouched |
 | Remotion render | PASS | table below |
 | Motion Canvas | BLOCKED | `NO_HEADLESS_EXPORT` |
-| Manim | BLOCKED | `missing manim`; system Python was not modified |
+| Manim | IMPLEMENTED_NOT_VERIFIED / TEST_ONLY e2e PASS | two templates rendered locally from isolated venv; `runtime/manim.lock.json`; `projects/e2e-p3-manim/`; system Python was not modified; installed does not promote to VERIFIED |
 | 1024 rules | PASS | production without a recording is `MISSING_REAL_RECORDING` |
 | Future-intelligence rules | PASS | desktop recording is `RECORDING_FORBIDDEN` |
 | M5 wiring | PASS | dispatch test and selector |
