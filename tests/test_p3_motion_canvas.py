@@ -21,6 +21,7 @@ for candidate in (ROOT / "src", ROOT / "scripts"):
 from contentops.media import animation_backend as ab  # noqa: E402
 from contentops.media.motion_sample import check_motion_sample  # noqa: E402
 import motion_canvas_adapter as adapter  # noqa: E402
+import m5_production  # noqa: E402
 
 DNA = json.loads((ROOT / "config" / "accounts"
                   / "x-superplay-future-intelligence.json").read_text(encoding="utf-8"))
@@ -227,6 +228,17 @@ def test_failure_block_writes_governance_flags_without_a_render():
         assert payload["render_verified"] is False
         assert payload["production_ready"] is False and payload["publish_authorized"] is False
         assert payload["human_review"] == "PENDING_FOUNDER_REVIEW"
+
+
+def test_easel_input_contract_is_reused_not_replaced():
+    evidence = json.loads((E2E / "receipts" / "easel-input-validation.json").read_text(
+        encoding="utf-8"))
+    assert evidence["pass"] is True
+    assert evidence["source_refs_schema"] == m5_production.SOURCE_REFS_SCHEMA
+    assert evidence["declared_source_refs"] == ["E-mc-doc"]
+    assert evidence["account_slug"] == "x-superplay-future-intelligence"
+    assert all(row["shape_ok"] for row in evidence["project_shapes"].values())
+    assert len(evidence["specs"]) == 2
 
 
 def test_e2e_receipts_do_not_claim_a_render_or_fabricate_media():

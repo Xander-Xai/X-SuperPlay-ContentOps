@@ -24,6 +24,7 @@ for path in (ROOT / "src", ROOT / "scripts"):
 from process_utils import hidden_run  # noqa: E402
 from contentops.media import animation_backend as ab  # noqa: E402
 import motion_canvas_adapter as adapter  # noqa: E402
+import m5_production  # noqa: E402
 
 EXTENSION = ROOT / "extensions" / "motion-canvas"
 RECEIPTS = PROJECT / "receipts"
@@ -133,9 +134,50 @@ def _parameter_regression(runtime: dict) -> dict:
     }
 
 
+def _input_validation_evidence() -> dict:
+    """Reuse the existing M5/Easel input contract; do not create a second one."""
+    account = adapter._project_account(PROJECT)
+    refs = m5_production._declared_source_refs(PROJECT, {})
+    shapes = {}
+    for rel, key, expected in (
+        ("script/assets.json", "assets", dict),
+        ("sources/assets.json", "assets", list),
+        ("script/claims.json", "claims", list),
+        ("script/script.json", "lines", list),
+    ):
+        payload = json.loads((PROJECT / rel).read_text(encoding="utf-8"))
+        shapes[rel] = {
+            "schema": payload.get("schema"),
+            "shape_ok": isinstance(payload.get(key), expected),
+        }
+    specs = []
+    for job in JOBS:
+        spec_path, spec = adapter._validate_spec(PROJECT, job["spec"])
+        specs.append({"spec": f"project://{spec_path.relative_to(PROJECT).as_posix()}",
+                      "template": spec["template"], "valid": True})
+    return {
+        "schema": "contentops.motion-canvas-input-validation/v1",
+        "created_at": adapter._now(),
+        "owner": "m5_production._declared_source_refs and the existing M5 input shapes",
+        "account_slug": account,
+        "source_refs_schema": m5_production.SOURCE_REFS_SCHEMA,
+        "declared_source_refs": [ref["id"] for ref in refs],
+        "project_shapes": shapes,
+        "specs": specs,
+        "pass": (bool(refs) and bool(account)
+                 and all(row["shape_ok"] for row in shapes.values())),
+        "note": ("The clip adapter consumes the same script/sources contract as "
+                 "the Easel production chain. No second input validator or "
+                 "asset registry is introduced."),
+    }
+
+
 def main() -> int:
     RECEIPTS.mkdir(parents=True, exist_ok=True)
     runtime = adapter._runtime()
+
+    inputs = _input_validation_evidence()
+    _write("easel-input-validation.json", inputs)
 
     preflight_code, preflight = _call_adapter(["--preflight"])
     _write("motion-canvas-preflight.json", preflight)
@@ -212,6 +254,7 @@ def main() -> int:
         "backend_version": ab.MOTION_CANVAS_VERSION,
         "preflight": {"exit_code": preflight_code, "code": preflight.get("code"),
                       "render_verified": preflight.get("render_verified")},
+        "easel_input_validation_pass": inputs["pass"],
         "prepared_jobs": prepared,
         "failure_block": {"exit_code": failure_code, "code": failure.get("code")},
         "compile": {name: result.get("state") for name, result

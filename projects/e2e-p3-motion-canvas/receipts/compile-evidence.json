@@ -1,6 +1,6 @@
 {
   "schema": "contentops.motion-canvas-compile-evidence/v1",
-  "created_at": "2026-11-16T20:07:35Z",
+  "created_at": "2026-11-16T20:14:42Z",
   "meaning": "A successful tsc/vite build proves the pinned project and the two scenes compile. It is NOT a render, NOT an MP4, and never promotes the backend to VERIFIED.",
   "render_verified": false,
   "commands": {
@@ -20,7 +20,7 @@
         "node_modules/vite/bin/vite.js build"
       ],
       "exit_code": 0,
-      "stdout_tail": "\u001b[36mvite v5.4.21 \u001b[32mbuilding for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 1090 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[36msrc/project-CLOWfAUq.js  \u001b[39m\u001b[1m\u001b[2m182.42 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip: 56.93 kB\u001b[22m\n\u001b[32m✓ built in 2.78s\u001b[39m",
+      "stdout_tail": "\u001b[36mvite v5.4.21 \u001b[32mbuilding for production...\u001b[36m\u001b[39m\ntransforming...\n\u001b[32m✓\u001b[39m 1090 modules transformed.\nrendering chunks...\ncomputing gzip size...\n\u001b[2mdist/\u001b[22m\u001b[36msrc/project-CLOWfAUq.js  \u001b[39m\u001b[1m\u001b[2m182.42 kB\u001b[22m\u001b[1m\u001b[22m\u001b[2m │ gzip: 56.93 kB\u001b[22m\n\u001b[32m✓ built in 2.80s\u001b[39m",
       "stderr_tail": "\u001b[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.\u001b[39m",
       "state": "COMPILE_PASS"
     }

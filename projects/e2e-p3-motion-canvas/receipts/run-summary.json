@@ -1,6 +1,6 @@
 {
   "schema": "contentops.motion-canvas-acceptance/v1",
-  "created_at": "2026-11-16T20:07:35Z",
+  "created_at": "2026-11-16T20:14:42Z",
   "project": "projects/e2e-p3-motion-canvas",
   "backend_version": "3.17.2",
   "preflight": {
@@ -8,6 +8,7 @@
     "code": "EDITOR_EXPORT_REQUIRED",
     "render_verified": false
   },
+  "easel_input_validation_pass": true,
   "prepared_jobs": [
     {
       "asset_id": "mc-arch01",
