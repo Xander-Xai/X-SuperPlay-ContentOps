@@ -91,8 +91,7 @@ def main() -> int:
             edited = True
             break
     assert edited, "no editable node label found"
-    arch_spec.write_text(json.dumps(changed, ensure_ascii=False, indent=2) + "\n",
-                         encoding="utf-8")
+    arch_spec.write_bytes((json.dumps(changed, ensure_ascii=False, indent=2) + "\n").encode("utf-8"))
     assert sha(arch_spec) != sha_before_edit, "spec edit did not change its hash"
 
     a3 = render(arch_spec, "arch01", "huashu-arch01")
@@ -115,12 +114,11 @@ def main() -> int:
         "production_ready": False, "publish_authorized": False,
         "human_review": "PENDING_FOUNDER_REVIEW",
     }
-    (PROJECT / "receipts" / "cache-invalidation-test.json").write_text(
-        json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    (PROJECT / "receipts" / "cache-invalidation-test.json").write_bytes(
+        (json.dumps(result, ensure_ascii=False, indent=2) + "\n").encode("utf-8"))
     print(json.dumps(result, ensure_ascii=False, indent=2))
     # Restore the spec so the acceptance project remains reproducible.
-    arch_spec.write_text(json.dumps(original, ensure_ascii=False, indent=2) + "\n",
-                         encoding="utf-8")
+    arch_spec.write_bytes((json.dumps(original, ensure_ascii=False, indent=2) + "\n").encode("utf-8"))
     return 0 if result["pass"] else 1
 
 
