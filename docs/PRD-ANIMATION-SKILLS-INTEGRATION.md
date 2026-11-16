@@ -3,7 +3,7 @@
 [简体中文](PRD-ANIMATION-SKILLS-INTEGRATION.md) | [English](PRD-ANIMATION-SKILLS-INTEGRATION.en.md)
 
 > Last verified: 2026-11-17
-> 状态：**P0 clip render + P3-A Manim implemented** — Remotion 短镜头已在本机渲染并接入 M5 调度；2026-11-17 新增 Manim 单一能力矩阵扩展、两个参数化模板（`math_formula_reveal` / `attention_matrix_flow`）、隔离 venv 真实渲染与 TEST_ONLY e2e 项目。Motion Canvas 仍为 BLOCKED。Manim 是 `IMPLEMENTED_NOT_VERIFIED`：已装运行时并本机渲染不等于 VERIFIED，能力矩阵只接受回执证据升级。2026-11-17 新增并本机验证 DNA 驱动的 3 秒冲突式 `title_card` 与可信渲染缓存。
+> 状态：**P0 clip render + P3-A/P3-B 已实现（导出仍受控）** — Remotion 短镜头已在本机渲染并接入 M5 调度；2026-11-17 新增 Manim 单一能力矩阵扩展、两个参数化模板（`math_formula_reveal` / `attention_matrix_flow`）、隔离 venv 真实渲染与 TEST_ONLY e2e 项目。Manim 是 `IMPLEMENTED_NOT_VERIFIED`：已装运行时并本机渲染不等于 VERIFIED，能力矩阵只接受回执证据升级。同日 P3-B 补齐 Motion Canvas 两个参数化模板与适配器，但官方导出仍须编辑器交互，准确标记为 `EDITOR_EXPORT_REQUIRED`，不宣称无人值守 CLI，也没有真实 MP4。2026-11-17 新增并本机验证 DNA 驱动的 3 秒冲突式 `title_card` 与可信渲染缓存。
 > 本文是需求与验收记录。生成片段不是真实录屏，也不能代替 Founder 审核。
 
 ## 1. 背景、目标和非目标
@@ -34,7 +34,7 @@ ContentOps 已经有冻结的 Easel v0.3.0 总合成、Huashu 解释性片段、
 | # | 仓库 | 是什么 | 许可证 | 最近活动 | 能否自己出片 | 结论 |
 |---|---|---|---|---|---|---|
 | 1 | remotion-dev/skills | Agent Skill 包，不是渲染器 | 无独立 license 对象；内容属于 Remotion 4.0.543 | 2026-11-11，tip `7e541aa` | 否 | P0 的技能层，本地安装，不入库分发 |
-| 2 | motion-canvas/motion-canvas | Vite 编辑器 + 浏览器播放 | MIT | 2026-07-02；最新 release 仍是 2025-02 的 alpha | 编辑器 websocket 导出，无 headless CLI | P1，本轮 BLOCKED |
+| 2 | motion-canvas/motion-canvas | Vite 编辑器 + 浏览器播放 | MIT | 3.17.2（2024-12-14，npm `latest`）；alpha 3.18.0-alpha.0 未固定 | 编辑器 websocket 导出，无 headless CLI | P3-B 模板与适配器已实现；`EDITOR_EXPORT_REQUIRED` |
 | 3 | motiondivision/motion | React 补间库 | MIT | 2026-11-15 | 否 | REJECT |
 | 4 | franciscop/ola | 数值插值 | MIT | 2026-10-24 | 否 | REJECT |
 | 5 | juliangarnier/anime | JS 动画引擎 | MIT | 2026-11-02 | 否；HyperFrames 已有适配 | REJECT |
@@ -163,7 +163,7 @@ Easel pin 仍是 `runtime/easel-pins.json` 的 `v0.3.0` / `bb3c8ff`。本变更�
 | PRD | PASS | 本文件与英文镜像 |
 | Remotion Skills 安装 | FAIL | `npx skills add` 被权限分类器拒绝；技能未安装，未写入共享库 |
 | Remotion 渲染 | PASS | 见下表 |
-| Motion Canvas | BLOCKED | `NO_HEADLESS_EXPORT` |
+| Motion Canvas | EDITOR_EXPORT_REQUIRED | 两个模板与适配器已实现；官方无 headless 导出（`NO_HEADLESS_EXPORT`），未导出真实 MP4 |
 | Manim | IMPLEMENTED_NOT_VERIFIED / TEST_ONLY e2e PASS | 隔离 venv 本机真实渲染两模板；`runtime/manim.lock.json`；`projects/e2e-p3-manim/`；未向系统 Python 安装；已装不升级为 VERIFIED |
 | 1024 规则 | PASS | 正式生产无录屏返回 `MISSING_REAL_RECORDING`；测试片段 `counts_as_real_recording=false` |
 | 未来智能规则 | PASS | 桌面录屏 `RECORDING_FORBIDDEN`；RAG 回执 `EXPLANATORY_CLIP` |
@@ -247,6 +247,14 @@ PR #195 复查发现：`register_generated_clip` 每次用 `[envelope]` 整文�
 
 ## 20. 统一后端能力矩阵（2026-11-17）
 
-`animation_backend.capability_matrix()` 在既有 backend selector 合同上扩展出一份可执行能力表（schema `contentops.animation-capability-matrix/v1`），不再平行维护另一份能力清单。六个后端 `remotion`、`remotion-three`、`huashu-art-motion`、`huashu-motion`、`manim`、`motion-canvas` 各自记录：运行时版本与来源、锁文件、安装环境、支持 shot_type、模板、渲染入口、输入/输出合同、输出规格、许可证字段、适用账号、阻断状态、是否整片合成器。每行 `is_compositor=false`；`remotion-three` 复用 `scripts/animation_render.py` 渲染入口，是 Remotion 内的 3D composition，不是新合成器。
+`animation_backend.capability_matrix()` 在既有 backend selector 合同上扩展出一份可执行能力表（schema `contentops.animation-capability-matrix/v1`），不再平行维护另一份能力清单。六个后端 `remotion`、`remotion-three`、`huashu-art-motion`、`huashu-motion`、`manim`、`motion-canvas` 各自记录：运行时版本与来源、锁文件、安装环境、支持 shot_type、模板、渲染入口、输入/输出合同、输出规格、许可证字段、适用账号、阻断状态、是否整片合成器。每行 `is_compositor=false`；`remotion-three` 复用 `scripts/animation_render.py` 渲染入口，是 Remotion 内的 3D composition，不是新合成器。P3-B 扩展：`motion-canvas` 的渲染入口为 `scripts/motion_canvas_adapter.py`，新增 `export_mode` 字段（Motion Canvas 为 `EDITOR_EXPORT_REQUIRED`，其余为 `HEADLESS`），模板为 `animated_system_graph` 与 `agent_state_machine`。
 
 **可信边界**：矩阵读取锁文件只得到「版本/安装」事实，绝不据此把后端标成 VERIFIED。只有调用方传入带 `verified_at`、`sha256` 与 `receipt` 的 `render_evidence` 才能将该后端标为 VERIFIED；当前存在阻断码（`block_state`）时阻断优先于历史回执。所有行 `execution_authorized=false`、`publish_authorized=false`、`production_ready=false`。`tests/test_animation_backend.py` 40/40（新增 3 项矩阵测试）。
+
+## 21. P3-B Motion Canvas 接入（2026-11-17）
+
+- `extensions/motion-canvas/` 是最小可运行工程：Motion Canvas 全家桶固定为 3.17.2（npm registry `latest`，发布 2024-12-14），npm lockfile 入库，`node_modules` 不入 Git。官方 `@motion-canvas/ffmpeg` exporter 已在 `vite.config.ts` 注册；1080x1920 / 30fps / sRGB 写在 `src/project.meta`。
+- 两个模板：`animated_system_graph`（组件按步骤出现、单向箭头连接、逐步解释）与 `agent_state_machine`（状态、条件分支、失败回退）。颜色全部来自账号 `brand.palette`；失败色只在失败步出现，下一步恢复品牌色；不使用弹跳、频闪、贴纸或炫目转场。`tsc --noEmit` 与 `vite build` 通过，但这只是编译证据，不是渲染。
+- `scripts/motion_canvas_adapter.py` 复用既有 receipt、fingerprint/缓存、M45 清单、资产登记与 QC，不建第二套系统。`--preflight`/`--prepare` 产出带原始证据与修复条件的 `EDITOR_EXPORT_REQUIRED` 回执；`--import-editor-export` 只接受项目内真实编辑器导出 MP4，经技术检查后才登记。
+- e2e：`projects/e2e-p3-motion-canvas/`（TEST_ONLY）。`tests/test_p3_motion_canvas.py` 12/12 并已接入 CI。首/中/末帧、ffprobe 与 SHA-256 仍为 `null`：本轮未导出真实 MP4，不宣称 `VERIFIED_HEADLESS`，也不把编译当成渲染验证。
+- 官方依据：<https://github.com/motion-canvas/motion-canvas>、<https://motion-canvas.io/docs/rendering/video/>、<https://github.com/motion-canvas/exporters>。官方 exporter 无 CLI 入口，渲染必须从编辑器 Video Settings 发起。

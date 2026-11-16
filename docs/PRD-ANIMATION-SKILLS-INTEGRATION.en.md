@@ -3,7 +3,7 @@
 [简体中文](PRD-ANIMATION-SKILLS-INTEGRATION.md) | [English](PRD-ANIMATION-SKILLS-INTEGRATION.en.md)
 
 > Last verified: 2026-11-17
-> Status: **P0 clip render + P3-A Manim implemented.** Remotion short clips rendered locally and dispatched from M5. On 2026-11-17 Manim gained a single-contract capability extension, two parameterized templates (`math_formula_reveal` / `attention_matrix_flow`), an isolated-venv real render, and a TEST_ONLY e2e project. Motion Canvas remains BLOCKED. Manim is `IMPLEMENTED_NOT_VERIFIED`: installing the runtime and rendering locally is NOT VERIFIED; the capability matrix is promoted only by receipt-backed evidence. A DNA-driven 3s conflict `title_card` and a trusted render cache were added and verified locally on 2026-11-17.
+> Status: **P0 clip render + P3-A/P3-B implemented (export still gated).** Remotion short clips rendered locally and dispatched from M5. On 2026-11-17 Manim gained a single-contract capability extension, two parameterized templates (`math_formula_reveal` / `attention_matrix_flow`), an isolated-venv real render, and a TEST_ONLY e2e project. Manim is `IMPLEMENTED_NOT_VERIFIED`: installing the runtime and rendering locally is NOT VERIFIED; the capability matrix is promoted only by receipt-backed evidence. On the same day P3-B added two Motion Canvas templates and an adapter, but official export still requires the editor: the honest status is `EDITOR_EXPORT_REQUIRED`, with no unattended-CLI claim and no real MP4. A DNA-driven 3s conflict `title_card` and a trusted render cache were added and verified locally on 2026-11-17.
 > A generated clip is not a screen recording and does not replace Founder review.
 
 ## 1. Background, goals, non-goals
@@ -25,7 +25,7 @@ Audited 2026-11-16 from `gh api`. None archived. Remotion's GitHub SPDX is `NOAS
 | # | Repository | What it is | License | Decision |
 |---|---|---|---|---|
 | 1 | remotion-dev/skills | Agent skill pack, not a renderer | no separate license object; content is Remotion 4.0.543 | P0 skill layer; install locally; do not commit the text |
-| 2 | motion-canvas/motion-canvas | Vite editor | MIT | P1; BLOCKED this round (no headless CLI) |
+| 2 | motion-canvas/motion-canvas | Vite editor + browser playback | MIT | 3.17.2 (2024-12-14, npm `latest`); editor websocket export, no headless CLI; P3-B templates + adapter implemented, `EDITOR_EXPORT_REQUIRED` |
 | 3 | motiondivision/motion | React tween library | MIT | REJECT |
 | 4 | franciscop/ola | number interpolation | MIT | REJECT |
 | 5 | juliangarnier/anime | JS animation engine | MIT | REJECT |
@@ -113,7 +113,7 @@ Local non-paid rendering and a project-level npm install were in scope. Easel wa
 | PRD | PASS | this file and the Chinese original |
 | Remotion skills install | FAIL | `npx skills add` refused; shared store untouched |
 | Remotion render | PASS | table below |
-| Motion Canvas | BLOCKED | `NO_HEADLESS_EXPORT` |
+| Motion Canvas | EDITOR_EXPORT_REQUIRED | two templates + adapter implemented; no official headless export (`NO_HEADLESS_EXPORT`), no real MP4 |
 | Manim | IMPLEMENTED_NOT_VERIFIED / TEST_ONLY e2e PASS | two templates rendered locally from isolated venv; `runtime/manim.lock.json`; `projects/e2e-p3-manim/`; system Python was not modified; installed does not promote to VERIFIED |
 | 1024 rules | PASS | production without a recording is `MISSING_REAL_RECORDING` |
 | Future-intelligence rules | PASS | desktop recording is `RECORDING_FORBIDDEN` |
@@ -193,6 +193,14 @@ Regression (`tests/test_animation_cache_integrity.py`, 10 new tests, 21/21): A,B
 
 ## 20. Unified backend capability matrix (2026-11-17)
 
-`animation_backend.capability_matrix()` extends the existing backend selector contract with one executable capability table (schema `contentops.animation-capability-matrix/v1`); no second capability list is maintained in parallel. Six backends — `remotion`, `remotion-three`, `huashu-art-motion`, `huashu-motion`, `manim`, `motion-canvas` — each record runtime version and source, lock file, install environment, supported shot types, templates, render entry, input/output contracts, output spec, license fields, applicable accounts, blocking status, and whether it is a full-film compositor. Every row has `is_compositor=false`; `remotion-three` reuses the `scripts/animation_render.py` entry and is a 3D composition inside Remotion, not a new compositor.
+`animation_backend.capability_matrix()` extends the existing backend selector contract with one executable capability table (schema `contentops.animation-capability-matrix/v1`); no second capability list is maintained in parallel. Six backends — `remotion`, `remotion-three`, `huashu-art-motion`, `huashu-motion`, `manim`, `motion-canvas` — each record runtime version and source, lock file, install environment, supported shot types, templates, render entry, input/output contracts, output spec, license fields, applicable accounts, blocking status, and whether it is a full-film compositor. Every row has `is_compositor=false`; `remotion-three` reuses the `scripts/animation_render.py` entry and is a 3D composition inside Remotion, not a new compositor. P3-B extension: `motion-canvas` uses `scripts/motion_canvas_adapter.py` as its render entry, a new `export_mode` field is `EDITOR_EXPORT_REQUIRED` for Motion Canvas and `HEADLESS` for the others, and its templates are `animated_system_graph` and `agent_state_machine`.
 
 **Trust boundary.** Reading a lock file yields only version/install facts and never promotes a backend to VERIFIED. Only a caller-supplied `render_evidence` entry carrying `verified_at`, `sha256` and `receipt` marks a backend VERIFIED; an active `block_state` code outranks a historical receipt. All rows keep `execution_authorized=false`, `publish_authorized=false`, `production_ready=false`. `tests/test_animation_backend.py` 40/40 (3 matrix tests added).
+
+## 21. P3-B Motion Canvas integration (2026-11-17)
+
+- `extensions/motion-canvas/` is a minimal runnable project: all Motion Canvas packages pinned to 3.17.2 (npm registry `latest`, published 2024-12-14), npm lockfile committed, `node_modules` gitignored. The official `@motion-canvas/ffmpeg` exporter is registered in `vite.config.ts`; 1080x1920 / 30fps / sRGB live in `src/project.meta`.
+- Two templates: `animated_system_graph` (components appear step by step, one-direction arrows, then explain) and `agent_state_machine` (states, conditional branches, failure fallback). Every colour comes from the account `brand.palette`; the problem colour exists only during the failure step and the next step restores the brand colour. No bounce, flash, sticker or flashy transition. `tsc --noEmit` and `vite build` pass, but that is compile evidence, not a render.
+- `scripts/motion_canvas_adapter.py` reuses the existing receipt, fingerprint/cache, M45 manifest, asset registry and QC; it adds no second system. `--preflight`/`--prepare` write an `EDITOR_EXPORT_REQUIRED` receipt with raw evidence and remediation; `--import-editor-export` accepts only a real editor-exported MP4 inside the project and registers it after the technical gate.
+- E2E: `projects/e2e-p3-motion-canvas/` (TEST_ONLY). `tests/test_p3_motion_canvas.py` 12/12 and wired into CI. First/mid/last frames, ffprobe and SHA-256 remain `null`: no real MP4 was exported this round, so no `VERIFIED_HEADLESS` claim and no render verification is made.
+- Official sources: <https://github.com/motion-canvas/motion-canvas>, <https://motion-canvas.io/docs/rendering/video/>, <https://github.com/motion-canvas/exporters>. The official exporter has no CLI entry; a render starts from the editor Video Settings tab.
