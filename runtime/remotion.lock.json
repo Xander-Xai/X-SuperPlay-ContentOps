@@ -1,0 +1,15 @@
+{
+  "schema": "contentops.remotion-runtime-lock/v1",
+  "backend": "remotion",
+  "version": "4.0.543",
+  "version_source": "GitHub release v4.0.543 published 2026-11-11",
+  "project": "extensions/animation-remotion",
+  "lockfile": "extensions/animation-remotion/package-lock.json",
+  "cli": "extensions/animation-remotion/node_modules/@remotion/cli/remotion-cli.js",
+  "install": "npm install --ignore-scripts --no-audit --no-fund --prefix extensions/animation-remotion",
+  "network_at_render": false,
+  "note": "node_modules is gitignored. Production render uses this pin. Do not pass latest. Remotion source is not vendored. Free license covers an individual or a for-profit organization of up to 3 employees creating videos; selling a Remotion derivative is not allowed. SPDX on the GitHub repo object is NOASSERTION because the license is custom.",
+  "license_read": "https://github.com/remotion-dev/remotion/blob/main/LICENSE.md",
+  "execution_authorized": false,
+  "publish_authorized": false
+}

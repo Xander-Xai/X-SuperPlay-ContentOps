@@ -91,6 +91,15 @@
       ]
     },
     {
+      "doc": "docs/PRD-ANIMATION-SKILLS-INTEGRATION.md",
+      "code": [
+        "src/contentops/media/animation_backend.py",
+        "scripts/animation_render.py",
+        "extensions/animation-remotion/",
+        "runtime/remotion.lock.json"
+      ]
+    },
+    {
       "doc": "docs/QUALITY-STANDARD.md",
       "code": [
         "scripts/qc_video.py",

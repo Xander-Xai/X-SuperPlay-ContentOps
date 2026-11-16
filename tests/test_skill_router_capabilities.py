@@ -50,7 +50,7 @@ class MediaUseRegistrationTests(unittest.TestCase):
         entries = sr.registry_entries(data)
         self.assertEqual([entry["id"] for entry in entries],
                          ["media-use", "x-superplay-huashu-motion",
-                          "contentops-production-gates"])
+                          "contentops-production-gates", "contentops-remotion-clips"])
 
     def test_the_declaration_records_every_required_field(self) -> None:
         entry = sr.registry_entries()[0]
@@ -275,10 +275,10 @@ class CliTests(unittest.TestCase):
 
     def test_doctor_is_machine_readable(self) -> None:
         report = sr.doctor()
-        # Three declarations: media-use, the Huashu motion route, and the repository's
-        # own production gates. Counting them is the point -- a capability that exists
-        # but is not declared is invisible to the router.
-        self.assertEqual(report["capabilities"]["total"], 3)
+        # Four declarations: media-use, Huashu, production gates, and the
+        # Remotion clip pointer. Counting them is the point -- a capability
+        # that exists but is not declared is invisible to the router.
+        self.assertEqual(report["capabilities"]["total"], 4)
         # Doctor aggregates distinct capabilities; runtime-specific lock behavior
         # is covered by the focused media-use resolver tests above.
         self.assertLessEqual(report["capabilities"]["resolvable"],

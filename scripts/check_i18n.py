@@ -40,6 +40,7 @@ TIER1_DOCS = [
     "docs/PRD.md",
     "docs/PRD-EASEL-V030-FOUNDATION.md",
     "docs/PRD-RECORDING-TO-PLATFORM.md",
+    "docs/PRD-ANIMATION-SKILLS-INTEGRATION.md",
     "docs/RUNBOOK.md",
     "docs/QUALITY-STANDARD.md",
     "docs/DEVELOPMENT-STANDARD.md",
@@ -62,6 +63,8 @@ ZH_PRIMARY_DOCS = {
     # The recording-to-platform PRD is the same shape: written for the Founder,
     # English mirror as the translation.
     "docs/PRD-RECORDING-TO-PLATFORM.md": "docs/PRD-RECORDING-TO-PLATFORM.en.md",
+    # Founder-facing animation integration PRD. English is the translation.
+    "docs/PRD-ANIMATION-SKILLS-INTEGRATION.md": "docs/PRD-ANIMATION-SKILLS-INTEGRATION.en.md",
 }
 
 # Chinese copies that must not come back once a doc is Chinese-primary: a second

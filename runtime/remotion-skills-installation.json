@@ -1,0 +1,14 @@
+{
+  "schema": "contentops.animation-skills-installation/v1",
+  "repository": "remotion-dev/skills",
+  "state": "SKILL_NOT_INSTALLED",
+  "install_command": "npx skills add remotion-dev/skills",
+  "official_docs": "https://www.remotion.dev/docs/ai/skills",
+  "target_policy": "isolated project/task directory only; never the shared skill store",
+  "attempted": false,
+  "reason": "The local permission classifier refused the installer invocation. No retry, wrapper, or permission bypass was used.",
+  "runtime_is_separate": true,
+  "runtime_version": "4.0.543",
+  "execution_authorized": false,
+  "publish_authorized": false
+}

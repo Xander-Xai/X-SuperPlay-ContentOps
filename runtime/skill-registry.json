@@ -197,6 +197,76 @@
         "m5_stage": "gates",
         "authorizes_execution": false
       }
+    },
+    {
+      "id": "contentops-remotion-clips",
+      "name": "contentops-remotion-clips",
+      "summary": "Pinned Remotion 4.0.543 clip templates. Discovery only. Easel remains the episode compositor.",
+      "discovery": {
+        "root": "repo",
+        "dir": "extensions/animation-remotion"
+      },
+      "source": {
+        "publisher": "X-SuperPlay ContentOps",
+        "upstream": "remotion-dev/remotion",
+        "version": "4.0.543",
+        "source_commit": "release-v4.0.543",
+        "skills_repo": "remotion-dev/skills",
+        "skills_installation": "SKILL_NOT_INSTALLED",
+        "skills_source_commit": null
+      },
+      "canonical_path": "scripts/animation_render.py",
+      "license": {
+        "status": "declared",
+        "spdx": "NOASSERTION",
+        "note": "Remotion uses a custom license, so the GitHub SPDX field is NOASSERTION. The free license allows an individual or a for-profit organization of up to 3 employees to create videos. Selling a Remotion derivative is not allowed. Remotion source is not vendored."
+      },
+      "rights": {
+        "status": "verified",
+        "verified": true,
+        "scope": "local non-paid clip render only; generated visual support; no publication clearance and no commercial clearance of Remotion itself beyond the free-license eligibility recorded in LICENSE.md",
+        "evidence": "runtime/remotion.lock.json"
+      },
+      "accounts": [
+        "x-superplay-1024",
+        "x-superplay-future-intelligence"
+      ],
+      "pipelines": [
+        "M5"
+      ],
+      "stages": [
+        "motion"
+      ],
+      "contract": {
+        "input": "project-local clip spec (template, props, duration) plus account DNA palette",
+        "output": "assets/generated/remotion/<asset>.mp4 and receipts/animation-<asset>.json; generated=true, evidence_capable=false",
+        "schema": "contentops.animation-clip-receipt/v1"
+      },
+      "provider": {
+        "path_permitted": true,
+        "network": false,
+        "paid": false,
+        "cross_project_reuse": false,
+        "note": "Local render of the pinned dependency. Not an execution authorization."
+      },
+      "runtime": {
+        "dependency": "remotion@4.0.543",
+        "baseline": "runtime/remotion.lock.json",
+        "note": "node_modules is installed from the lockfile and is not committed"
+      },
+      "verification": {
+        "status": "RUNTIME_VERIFIED_SKILL_NOT_INSTALLED",
+        "scope": "local Windows Remotion runtime render only; official Remotion Agent Skills were not installed or used",
+        "evidence": "runtime/remotion.lock.json",
+        "note": "Rendered clips verify the runtime and templates, not the Agent Skills. The skill installer was refused by the local permission classifier."
+      },
+      "execution": {
+        "adapter": "scripts/animation_render.py",
+        "m5_stage": "motion",
+        "authorizes_execution": false,
+        "project_grant_required": false,
+        "local_effect_policy": "LOCAL_ONLY_NO_NETWORK_NO_PAID_NO_PUBLICATION"
+      }
     }
   ]
 }

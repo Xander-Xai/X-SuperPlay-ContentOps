@@ -310,6 +310,10 @@ jobs:
       - name: Run M5 motion-integration tests
         run: python tests/test_m5_motion_integration.py
 
+      # Clip-backend contract only. No Remotion render, no network, no browser.
+      - name: Run animation backend contract tests
+        run: python tests/test_animation_backend.py
+
       # External B-roll discovery. Both suites are entirely offline: provider
       # responses, DNS answers and loudness measurements are injected. The
       # decisive assertions are that no request happens without an explicit
