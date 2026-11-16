@@ -33,7 +33,7 @@
 | 项目 | 所在层 | 状态 |
 |---|---|---|
 | Easel 运行时 | `main` | **v0.3.0 为生产引擎**（commit `bb3c8ff`，1071 baseline blob + 14 个 overlay 文件校验通过，2026-11-15 切换）。v0.2.1 降为回滚树（982 blobs 验证通过） |
-| 稳定生产入口（`make_content.py`、`production_gates.py`） | `main` | 已实现：六项显式决策、7 个失败即拒绝的 VIDEO 门禁与 5 个 GRAPHIC_TEXT 门禁。直接运行 `m5_production.py` / `produce_video.py` 仍是**诊断**路径，不过门禁 |
+| 稳定生产入口（`make_content.py`、`production_gates.py`） | `main` | 已实现：六项显式决策、8 个失败即拒绝的 VIDEO 门禁（含签署的 pre-copy research 门禁）与 6 个 GRAPHIC_TEXT 门禁。直接运行 `m5_production.py` / `produce_video.py` 仍是**诊断**路径，不过门禁 |
 | 视频流水线（`run_v1.py`） | `main` | 已实现（`easel` + 诊断用 `fallback`）；`production_ready: false` |
 | M5 证据优先链（`m5_production.py`） | `main` | 已实现，并在 `projects/m5-media-use` 上完成集成验证；可选 ASR 旁白回检门禁；`production_ready: false`、`PENDING_FOUNDER_REVIEW` |
 | M5 特征基线 | `main` | `docs/m5-baseline/m5-characterization-2026-11-10.md` —— `5ff621c1` 上 10 套件 / 165 项测试，作为 #140 slice 1 的凭证（164 通过、1 项已知失败保留可见） |

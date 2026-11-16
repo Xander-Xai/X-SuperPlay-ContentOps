@@ -142,6 +142,7 @@ python tests/test_media_convergence.py
 | 受管 media-use 状态 | `tests/test_skill_execute_status.py` | 列表驱动 | 是 |
 | 可信授权来源 | `tests/test_trusted_grant_source.py` | 列表驱动 | 是 |
 | 执行门禁 | `tests/test_execution_gate.py` | 列表驱动 | 是 |
+| 写文案前预研门禁 | `tests/test_precopy_research.py` | 25 | 是 |
 
 CI 还运行策略、文档、i18n、空白、子进程与 receipt-secret 检查。媒体 Provider 套件使用假传输，不会调用真实 Provider。依赖 `ffmpeg`、`Pillow`、media-use 运行时或被忽略产物的套件可能在本地跳过；需检查可用性/skip 输出。CI 会安装 `Pillow` 和 ffmpeg 并报告可用性。
 

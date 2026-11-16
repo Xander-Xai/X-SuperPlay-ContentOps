@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression tests for the stable production entry and its six gates.
+"""Regression tests for the stable production entry and its fail-closed gates.
 
 Run standalone (no pytest): python tests/test_production_gates.py
 
@@ -28,7 +28,7 @@ for candidate in (ROOT / "src", ROOT / "scripts"):
 import make_content  # noqa: E402
 import production_gates as gates  # noqa: E402
 import qc_video  # noqa: E402
-from contentops.workflow import copy_review  # noqa: E402
+from contentops.workflow import copy_review, preresearch  # noqa: E402
 
 INTENT_KW = {
     "account": "explorer",
@@ -47,6 +47,64 @@ def _write(path: Path, payload) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
                     encoding="utf-8")
+
+
+def _seed_intent(project: Path) -> dict:
+    """The router-shaped intent this fixture's research is done against."""
+    intent = {
+        "schema": preresearch.INTENT_SCHEMA,
+        "account_id": "x-superplay-1024",
+        "account_profile_version": "acc-x-superplay-1024@v3",
+        "route_mode": "USER_TOPIC",
+        "topic": "Regression fixture topic",
+        "evidence_status": "verification_required",
+        "approval_status": "pending",
+        "target_pipeline": "VIDEO",
+        "brief_status": "draft",
+        "route_context": {"mode": "USER_TOPIC", "topic_origin": "USER_INPUT"},
+        "created_at": "2026-11-12T09:00:00Z",
+    }
+    folder = project / preresearch.RESEARCH_DIR
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / "content-intent.json").write_text(
+        json.dumps(intent, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8")
+    return intent
+
+
+def _seed_preresearch(project: Path) -> None:
+    """Give a fixture a signed, current pre-copy research package."""
+    _seed_intent(project)
+    folder = project / preresearch.RESEARCH_DIR
+    (folder / "project-reading.md").write_text(
+        "# Project read-through\n\n## Files read\n\n"
+        "- `docs/RUNBOOK.md` records the stable entry commands and QC.\n"
+        "- `scripts/make_content.py` records the gate decisions.\n"
+        "- `docs/CONTENT-LIFECYCLE-STAGES.md` records the two production lines.\n\n"
+        "## Findings\n\n"
+        "- The stable entry is gated and never publishes.\n"
+        "- A green QC is not production approval.\n", encoding="utf-8")
+    (folder / "outline.md").write_text(
+        "# Outline\n\n## Topic\n\n- Fixture outline for the regression run.\n\n"
+        "## Video\n\n- One shot with a source citation.\n\n"
+        "## Graphic\n\n- One draft with three links.\n\n"
+        "## Boundary\n\n- Research only.\n", encoding="utf-8")
+    _write(folder / "evidence-list.json", {
+        "schema": "contentops.precopy-research-evidence/v1",
+        "items": [
+            {"id": "S1", "kind": "primary", "title": "LoRA paper",
+             "url": "https://arxiv.org/abs/2106.09685"},
+            {"id": "S2", "kind": "primary", "title": "QLoRA paper",
+             "url": "https://arxiv.org/abs/2305.14314"},
+            {"id": "S3", "kind": "official", "title": "Runbook",
+             "url": "repo://docs/RUNBOOK.md"},
+        ]})
+    (folder / "boundary.md").write_text(
+        "# Boundary\n\nThis phase does not render or publish.\n"
+        "- `production_ready: false`\n- `publish_authorized: false`\n"
+        "- Research approval is not copy approval.\n", encoding="utf-8")
+    preresearch.approve(project, reviewer="Test Reviewer",
+                        opinion="fixture research reviewed")
 
 
 class FixtureCase(unittest.TestCase):
@@ -84,6 +142,7 @@ class FixtureCase(unittest.TestCase):
             patch = mock.patch.object(gates, probe, return_value=True)
             patch.start()
             self.addCleanup(patch.stop)
+        _seed_preresearch(self.project)
         self._approve()
 
     def tearDown(self):
