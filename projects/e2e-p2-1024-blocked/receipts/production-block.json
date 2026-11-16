@@ -1,0 +1,64 @@
+{
+  "schema": "contentops.p2-account-block/v1",
+  "account_id": "x-superplay-1024",
+  "state": "BLOCKED",
+  "code": "MISSING_REAL_RECORDING",
+  "checked_at": "2026-11-16T19:46:33Z",
+  "canonical_gates": {
+    "production_gate": {
+      "state": "BLOCKED",
+      "code": "MISSING_REAL_RECORDING",
+      "detail": "1024 production is blocked until a cropped recording is registered",
+      "backend": null,
+      "substituted": false,
+      "generated": true,
+      "evidence_capable": false,
+      "production_ready": false,
+      "publish_authorized": false,
+      "execution_authorized": false,
+      "account_id": "x-superplay-1024",
+      "purpose": "production"
+    },
+    "backend_selection": {
+      "state": "BLOCKED",
+      "code": "MISSING_REAL_RECORDING",
+      "detail": "1024 production needs a cropped recording; a generated clip cannot satisfy it",
+      "backend": null,
+      "substituted": false,
+      "generated": true,
+      "evidence_capable": false,
+      "production_ready": false,
+      "publish_authorized": false,
+      "execution_authorized": false,
+      "account_id": "x-superplay-1024"
+    }
+  },
+  "evidence": {
+    "has_real_recording": false,
+    "registered_real_recording": null,
+    "source_hashes": {
+      "config/accounts/x-superplay-1024.json": "f28065d4a3673e3c4c21a8cc4e149bf89ba7dec50a76b77afdeced5efe0db78a",
+      "src/contentops/media/animation_backend.py": "4162116f0cbc1e55b8fa2ab19b617552c87b03b4de2eb1e2be6119f7981bcde1",
+      "scripts/animation_render.py": "b69a4974560a1096f97f93c2d40fd596a967a57d630a6b8eeae259466dfed4d9"
+    }
+  },
+  "reason": "The 1024 DNA requires 70% real screen-recording evidence. No intake-verified cropped user recording was provided. Generated animation is explicitly non-evidence and cannot substitute.",
+  "impact": "No 45-60s formal 1024 video may be produced, approved or published from this project. Only the technical clip chain can be tested in a separate TEST_ONLY project.",
+  "fix_conditions": [
+    "User provides an original manual screen recording",
+    "Recording passes intake and is cropped/redacted into a registered asset",
+    "Claim ledger binds the recording SHA-256 and usage permission",
+    "Formal M5 run is re-executed with has_real_recording=true"
+  ],
+  "user_actions": [
+    "Record the real CLI/browser workflow manually and supply the file",
+    "Confirm permission and which segments may be shown",
+    "Re-run M5 only after intake registers the recording"
+  ],
+  "generated": true,
+  "evidence_capable": false,
+  "counts_as_real_recording": false,
+  "production_ready": false,
+  "publish_authorized": false,
+  "human_review": "PENDING_FOUNDER_REVIEW"
+}

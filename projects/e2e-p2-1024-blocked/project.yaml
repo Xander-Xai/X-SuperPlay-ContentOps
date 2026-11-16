@@ -1,0 +1,30 @@
+id: e2e-p2-1024-blocked
+title: "x-superplay-1024 正式生产阻断证据包"
+created_at: "2026-11-16T19:46:18Z"
+account_slug: x-superplay-1024
+content_type: technical_experiment
+status: BLOCKED
+
+# No fabricated recording, terminal capture, browser capture or code-action
+# video is permitted as a substitute. This project exists to prove that the
+# existing production gate fails closed until a real, intake-verified, cropped
+# user recording is registered.
+
+block:
+  code: MISSING_REAL_RECORDING
+  state: BLOCKED
+  production_ready: false
+  publish_authorized: false
+  human_review: PENDING_FOUNDER_REVIEW
+
+target:
+  platform_primary: bilibili
+  aspect_ratio: "9:16"
+  resolution: "1080x1920"
+  duration_target_sec: 55
+
+evidence_policy:
+  real_assets_first: true
+  ai_visuals_allowed: auxiliary_only
+  fabricated_claims: forbidden
+  generated_video_as_recording: forbidden
