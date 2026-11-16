@@ -328,16 +328,20 @@ def _trusted_recording(project: Path, asset_id: str) -> Optional[Dict[str, Any]]
     result = intake(
         project,
         RecordingRequest(
-            source=path,
+            path=path,
             source_ref=str(asset.get("source_ref")),
             crop=asset.get("crop"),
-            claims=tuple(str(value) for value in asset.get("claim_ids") or []),
+            claim_ids=tuple(str(value) for value in asset.get("claim_ids") or []),
         ),
         repo_root=ROOT,
-        account_id="x-superplay-1024",
+        apply=False,
+        write=False,
     )
     registered_hash = str(asset.get("sha256") or "").lower()
-    if result.get("state") != "ACCEPTED" or not registered_hash or result.get("sha256") != registered_hash:
+    files = result.get("files") or []
+    if (result.get("verdict") != "ACCEPTED" or
+            (result.get("account") or {}).get("slug") != "x-superplay-1024" or
+            not registered_hash or not any(row.get("sha256") == registered_hash for row in files)):
         return None
     return {**asset, "resolved_path": str(path), "validated_sha256": registered_hash}
 

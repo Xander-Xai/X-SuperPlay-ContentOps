@@ -302,6 +302,8 @@ def plan_clip(
         raise AnimationError("DURATION", f"{duration}s is outside 2-8s")
     if not str(placement_id).strip() or not str(asset_id).strip():
         raise AnimationError("PLACEMENT", "placement_id and asset_id are required")
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", str(asset_id)):
+        raise AnimationError("ASSET_ID", "asset_id must be a safe filename")
     cleaned = dict(props)
     if template == "rag_flow":
         nodes = cleaned.get("nodes")

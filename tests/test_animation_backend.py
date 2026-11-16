@@ -374,10 +374,57 @@ def test_recording_public_staging_applies_only_the_declared_crop_before_exposure
             staged = public / relative
             assert staged.read_bytes() == b"cropped sanitized movie"
             assert staged.read_bytes() != source.read_bytes()
-            assert str(source) == command[command.index("-i") + 1]
+            assert Path(command[command.index("-i") + 1]) == source.resolve()
             assert str(staged) == command[-1]
         finally:
             handle.cleanup()
+
+
+def test_clip_rejects_path_like_asset_ids():
+    for asset_id in ("../outside", "nested/name", r"nested\name", "/absolute", "C:escape", ".."):
+        try:
+            ab.plan_clip(account_id=ab.ACCOUNT_FUTURE, template="annotation", placement_id="p1",
+                         asset_id=asset_id, duration_s=4,
+                         props={"title": "t", "left_label": "a", "right_label": "b",
+                                "callout": "c", "palette": PALETTE})
+        except ab.AnimationError:
+            pass
+        else:
+            raise AssertionError(f"path-like asset ID accepted: {asset_id!r}")
+
+
+def test_trusted_recording_uses_real_intake_without_mutating_project():
+    from unittest import mock
+    import hashlib
+    import contentops.media.recording_intake as recording_intake
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        source = project / "recording.mp4"
+        source.write_bytes(b"recording")
+        digest = hashlib.sha256(source.read_bytes()).hexdigest()
+        asset = {"id": "screen-1", "type": "recording", "origin": "SELF_CAPTURED",
+                 "permission": "SELF_CAPTURED_CROPPED", "evidence_capable": True,
+                 "crop": {"x": 0, "y": 0, "width": 100, "height": 100},
+                 "source_ref": "capture-1", "repo_path": "fixture", "sha256": digest,
+                 "claim_ids": ["claim-1"]}
+        (project / "sources").mkdir()
+        (project / "sources/assets.json").write_text(json.dumps({
+            "schema": recording_intake.MANIFEST_SCHEMA, "assets": [asset]}), encoding="utf-8")
+        (project / "sources/source-refs.json").write_text(json.dumps({"refs": [
+            {"id": "capture-1", "permission": "CREATED_BY_OWNER"}]}), encoding="utf-8")
+        policy = {"declared": True, "slug": ab.ACCOUNT_1024,
+                  "manual_recording": "ALLOWED_CROPPED", "evidence_mode": ""}
+        probe = {"format": {"duration": "5"}, "streams": [{"codec_type": "video",
+                 "width": 200, "height": 200, "codec_name": "h264"}]}
+        before = (project / "sources/assets.json").read_bytes()
+        with mock.patch("contentops.paths.resolve_label", return_value=source), \
+             mock.patch.object(recording_intake, "trusted_project_root", return_value=project), \
+             mock.patch.object(recording_intake, "account_policy", return_value=policy), \
+             mock.patch.object(recording_intake, "_default_probe", return_value=probe):
+            result = _trusted_recording(project, "screen-1")
+        assert result is not None and result["validated_sha256"] == digest
+        assert (project / "sources/assets.json").read_bytes() == before
+        assert not (project / "receipts").exists()
 
 
 def test_motion_check_receipt_omits_host_paths():
