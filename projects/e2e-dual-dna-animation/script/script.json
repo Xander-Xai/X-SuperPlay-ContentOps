@@ -33,7 +33,7 @@
     {
       "id": "fi05",
       "claim": "short_contract",
-      "narration": "短镜头有自己的硬合同：两到八秒、静音、竖屏一千零八十、三十帧。",
+      "narration": "短镜头的合同是：两到八秒、静音、竖屏、三十帧。",
       "caption": "2–8 秒 · 静音 · 1080×1920",
       "asset_id": "fi-contract"
     },
@@ -75,7 +75,7 @@
     {
       "id": "fi11",
       "claim": "cache_needs_identity",
-      "narration": "模板、参数、来源字节、品牌色、后端版本，任意一项变化就重渲。",
+      "narration": "模板、参数、来源、品牌色、版本，任意一项变化就重渲。",
       "caption": "任一变就重渲",
       "asset_id": "fi-fingerprint"
     },
@@ -125,8 +125,18 @@
       "visual_focus": "选题到 Easel 的四个阶段",
       "animation_type": "architecture_flow",
       "animation": {
-        "nodes": ["选题与脚本", "分镜 placement", "短镜头渲染", "Easel 整片合成"],
-        "icons": ["doc", "stack", "screen", "check"]
+        "nodes": [
+          "选题与脚本",
+          "分镜 placement",
+          "短镜头渲染",
+          "Easel 整片合成"
+        ],
+        "icons": [
+          "doc",
+          "stack",
+          "screen",
+          "check"
+        ]
       }
     },
     {
@@ -150,7 +160,11 @@
       "visual_focus": "升级需要批准",
       "animation_type": "state_transition",
       "animation": {
-        "states": ["上游新版本", "评估影响", "冻结决定"],
+        "states": [
+          "上游新版本",
+          "评估影响",
+          "冻结决定"
+        ],
         "transition": "需要创始人批准",
         "success": "采纳新版本",
         "failure": "继续冻结"
@@ -201,8 +215,22 @@
       "visual_focus": "六模板编译到已验证语法",
       "animation_type": "architecture_flow",
       "animation": {
-        "nodes": ["architecture_flow", "state_transition", "code_focus", "evidence_zoom", "metric_transition", "comparison_reveal"],
-        "icons": ["network", "network", "screen", "screen", "chart", "check"]
+        "nodes": [
+          "architecture_flow",
+          "state_transition",
+          "code_focus",
+          "evidence_zoom",
+          "metric_transition",
+          "comparison_reveal"
+        ],
+        "icons": [
+          "network",
+          "network",
+          "screen",
+          "screen",
+          "chart",
+          "check"
+        ]
       }
     },
     {
@@ -227,7 +255,10 @@
       "visual_focus": "指纹一致才复用",
       "animation_type": "state_transition",
       "animation": {
-        "states": ["缓存候选", "指纹比对"],
+        "states": [
+          "缓存候选",
+          "指纹比对"
+        ],
         "transition": "一致才允许复用",
         "success": "直接复用",
         "failure": "重新渲染"
@@ -242,8 +273,20 @@
       "visual_focus": "指纹覆盖的五类输入",
       "animation_type": "architecture_flow",
       "animation": {
-        "nodes": ["模板", "参数", "来源字节", "品牌 DNA", "后端版本"],
-        "icons": ["doc", "gear", "stack", "target", "check"]
+        "nodes": [
+          "模板",
+          "参数",
+          "来源字节",
+          "品牌 DNA",
+          "后端版本"
+        ],
+        "icons": [
+          "doc",
+          "gear",
+          "stack",
+          "target",
+          "check"
+        ]
       }
     },
     {
@@ -268,8 +311,16 @@
       "editorial_only": true,
       "animation_type": "architecture_flow",
       "animation": {
-        "nodes": ["写分镜", "跑 M5", "交给 Easel"],
-        "icons": ["doc", "gear", "check"]
+        "nodes": [
+          "写分镜",
+          "跑 M5",
+          "交给 Easel"
+        ],
+        "icons": [
+          "doc",
+          "gear",
+          "check"
+        ]
       }
     },
     {
