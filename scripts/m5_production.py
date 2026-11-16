@@ -26,7 +26,6 @@ import shutil
 import sys
 import time
 from pathlib import Path
-from functools import partial
 from typing import Any, Dict, List, Optional
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -51,7 +50,7 @@ from contentops.media.rights_gate import (  # noqa: E402
     validate_request_rights,
 )
 from contentops.workflow import copy_review  # noqa: E402
-from contentops.workflow.m5_stage_runner import run_stage as _run_stage  # noqa: E402
+from contentops.workflow.m5_stage_runner import RunContext  # noqa: E402
 
 RUN_SCHEMA = "contentops.m5-run/v1"
 SCRIPT_SCHEMA = "contentops.m5-script/v1"
@@ -2580,10 +2579,10 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
     # Same rule as produce_video: no stage of this run may write into a main
     # checkout that already holds unreviewed work.
     _guard_checkout(project)
-    stages: Dict[str, Any] = {}
-    timings: Dict[str, float] = {}
-
-    run_stage = partial(_run_stage, timings, time.monotonic)
+    context = RunContext(clock=time.monotonic)
+    stages = context.stages
+    timings = context.timings
+    run_stage = context.run_stage
 
     if assets_dir is not None:
         from contentops.media.local_assets import LocalAssetError, import_local_assets

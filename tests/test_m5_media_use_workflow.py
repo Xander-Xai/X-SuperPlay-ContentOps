@@ -26,6 +26,37 @@ def check(fn):
 
 
 @check
+def run_context_keeps_stage_results_and_timings_isolated():
+    from contentops.workflow.m5_stage_runner import RunContext
+    ticks = iter([1.0, 1.125])
+    first = RunContext(clock=lambda: next(ticks))
+    second = RunContext(clock=lambda: 0.0)
+    value = object()
+    first.stages["sources"] = {"count": 1}
+    assert first.run_stage("sources", lambda: value) is value
+    assert first.timings == {"sources": 0.125}
+    assert second.stages == {}
+    assert second.timings == {}
+
+
+@check
+def run_context_preserves_stage_exception_and_timing():
+    from contentops.workflow.m5_stage_runner import RunContext
+    ticks = iter([4.0, 4.25])
+    context = RunContext(clock=lambda: next(ticks))
+    failure = ValueError("fixture")
+    def fail(*, error):
+        raise error
+    try:
+        context.run_stage("claims", fail, error=failure)
+    except ValueError as exc:
+        assert exc is failure
+    else:
+        raise AssertionError("stage exception was swallowed")
+    assert context.timings == {"claims": 0.25}
+
+
+@check
 def stage_runner_returns_the_same_value_and_tracks_time():
     from contentops.workflow.m5_stage_runner import run_stage
     timings = {}
@@ -84,8 +115,8 @@ def rights_record(project, asset_id, *, license_id="OWNED-BY-OPERATOR",
     }
 
 
-def project_and_config():
-    location = ROOT / ".verify-tmp" / "m5-media-use-workflow"
+def project_and_config(location=None):
+    location = location or ROOT / ".verify-tmp" / "m5-media-use-workflow"
     location.mkdir(parents=True, exist_ok=True)
     project = Path(tempfile.mkdtemp(dir=location))
     (project / "assets").mkdir()
@@ -352,7 +383,7 @@ def duplicate_ids_or_unsupported_audio_refuse():
 
 @check
 def build_automatically_uses_the_stage_without_a_manual_adapter_cli():
-    project, config, digest = project_and_config()
+    project, config, digest = project_and_config(ROOT / "projects" / "_local")
     (project / "script" / "claims.json").write_text(
         json.dumps({"schema": "contentops.claim-ledger/v1", "claims": []}), encoding="utf-8")
     (project / "script" / "script.json").write_text(
