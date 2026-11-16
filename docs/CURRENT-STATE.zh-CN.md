@@ -10,7 +10,7 @@ translation_status: synced
 
 > 当前运行状态。仅经验证的事实。无展望，无过时声明。
 >
-> 最后验证：2026-11-16，对照 `d40980006f5211f13000d6c102079ae43353b96b`（PR #185 合并后的 `main`，只读 fetch）；本分支 `chore/easel-freeze-20261116` 基于它。Easel pin 现在只写在
+> 最后验证：2026-11-17，对照 `10017c2b74dca40a0d2f0df85c8023ccb01c3566`（PR #191 合并后的 `main`）；分支 `feat/194-title-card-and-trusted-cache` 基于它。2026-11-17 的改动只新增 Remotion `title_card` composition 与镜头缓存，下列 Easel/Huashu/生命周期事实均未变化。Easel pin 现在只写在
 > `runtime/easel-pins.json`；`runtime/easel.lock.json` 是它 `active` 引擎的派生投影，
 > 代码里不再有 commit 字面量。
 > 本工作树领先该 `main` 22 个、落后 15 个提交；尚未变基或合并，因此属于分支的事实会另行标注。

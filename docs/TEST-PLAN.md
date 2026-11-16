@@ -4,7 +4,7 @@
 
 > Authoritative local verification strategy, suite inventory and CI wiring.
 >
-> Last verified: 2026-11-16 on `feat/173-easel-m0-pin`. The tree holds 107 suites under
+> Last verified: 2026-11-17 on `feat/173-easel-m0-pin`; the 2026-11-17 clip-cache change extended `tests/test_animation_backend.py` only (no new top-level suite). The tree holds 107 suites under
 > `tests/test_*.py`, and `.github/workflows/ci.yml` names every one of them (107 steps).
 > The count is not asserted here; read it with `ls tests/test_*.py | wc -l`.
 > Last verified: 2026-11-14: added focused X regression cases for no-image text READY/package/URL recording, image-mode refusal, profile-specific review thresholds, and fail-closed account config; overall CI result is determined by the PR checks, not this statement.

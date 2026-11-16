@@ -4,7 +4,7 @@
 
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
-> Last verified: 2026-11-16 against `d40980006f5211f13000d6c102079ae43353b96b` (`main` after PR #185, read-only fetch); this branch `chore/easel-freeze-20261116` builds on it. The Easel pin now lives in
+> Last verified: 2026-11-17 against `10017c2b74dca40a0d2f0df85c8023ccb01c3566` (`main` after PR #191); branch `feat/194-title-card-and-trusted-cache` builds on it. The 2026-11-17 diff only adds a Remotion `title_card` composition and a clip cache; no Easel/Huashu/lifecycle fact below changes. The Easel pin now lives in
 > `runtime/easel-pins.json`; `runtime/easel.lock.json` is a projection of its `active`
 > engine, and no code file carries a commit literal.
 > This worktree is 22 commits ahead of that `main` and 15 behind it; no rebase or merge has

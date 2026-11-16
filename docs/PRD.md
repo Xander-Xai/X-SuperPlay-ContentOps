@@ -2,7 +2,7 @@
 
 [English](PRD.md) | [简体中文](PRD.zh-CN.md)
 
-> Last verified: 2026-11-16 on `feat/173-easel-m0-pin`. Requirement states are checked
+> Last verified: 2026-11-17 on `feat/173-easel-m0-pin`. Requirement states are checked
 > Last verified: 2026-11-14 (X original-post scope update). Accepted X behaviors: text-only originals without image or ALT, image originals with verified raster/ALT, and mode-appropriate human quality scoring; all preserve claim provenance, rights and manual-only posting. Local-only feedback never performs platform actions.
 > X priority: platform rules/human gates -> registered account DNA -> Strategy X SOP -> scoped experiment.
 > against the code on that date; a requirement marked implemented has code here,
