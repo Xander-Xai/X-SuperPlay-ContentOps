@@ -217,3 +217,11 @@ PR #195 复查发现并修复三个问题，未新增功能：
 3. **TitleCard 遵守 DNA 版式。** `hook_visual_contract` 从账号 DNA 派生字体、字号、18 字行上限、120px 上下边距与 0.07 侧边距；镜头 spec 的字体/边距/动效覆盖被剥离，超过行上限 3 倍的钩子文案被拒绝（`DNA_VISUAL`）。正文用 DNA `surface` 令牌保证深色底对比度。正式生产 spec 不能注入测试横幅。
 
 验证：`test_animation_backend.py` 37/37，新增 `tests/test_animation_cache_integrity.py` 11/11（逐一删除/篡改每个登记文件），`tsc --noEmit` 通过。真实 TEST_ONLY 渲染：长钩子 3s 片段 SHA-256 `18556d0894c2f8798c4c106978fa651e00807109467f9b4cb4571abf40f48c6a`、刷新后钩子片段 `62d2f2b20ea7f7b5d762ffc4b760bdad2bf734a7e1636e2183b374495cc10e6e`，均 h264/1080x1920/yuv420p/30fps/无音轨；抽帧确认换行、安全边距与可读对比。验收边界不变：TEST_PURPOSE、production_ready=false、publish_authorized=false、人审待定。
+
+### 19.2 多镜头共享清单合并（2026-11-17，同一分支）
+
+PR #195 复查发现：`register_generated_clip` 每次用 `[envelope]` 整文件重写 `work/m45/remotion-media-manifest.json`，而 19.1 的登记审计又要求当前镜头存在于该清单。同一项目连续生成 A、B 两个镜头时，后者覆盖前者，缓存命中反复触发 REPAIRABLE，修复互相破坏（ping-pong）。先用现有逻辑真实复现（两个 asset_id、两个 placement，真实渲染 A→B→A→B）：B 登记后 A 的 envelope 消失，A 缓存命中修复后又轮到 B 消失；MP4、来源行与 canonical receipt 因走合并逻辑全部保留，损失仅限共享清单。
+
+修复沿用 M5 单一素材清单与时间线合同，未引入第二套系统：`register_generated_clip` 现在把当前 envelope 按 `asset_id` 合并进既有清单——同 id 原位替换（保持声明顺序与时间线稳定选择），其余 envelope 与 gate_states 原样保留，时间线由 `build_manifest`/`build_timeline` 重建（每 placement 恰好一个活动资产），`scheduling`/`narration` 保留。三类异常 loud-fail 并由渲染修复路径报 `REGISTRATION_REPAIR_FAILED` BLOCKED：清单不可解析（`MEDIA_MANIFEST_UNREADABLE`，损坏文件原样保留待人工处理）、其他资产缺门控状态（`MEDIA_MANIFEST_GATE_MISSING`）、不同 asset_id 争用同一输出路径（`MEDIA_MANIFEST_PATH_COLLISION`）。
+
+回归（`tests/test_animation_cache_integrity.py` 新增 10 项，21/21）：A,B,A,B 连续登记与审计全程 CONSISTENT；A,B,C 三镜头各占时间线槽位；改 B 指纹不使 A 缓存失效；删 A 登记修复后 B 的四件记录行字节不变；证据提升在合并后仍 BLOCKED；同一 placement 始终单活动资产；同镜头重复登记字节级幂等；修复前旧单镜头清单原地升级且保留 scheduling/narration。真实管线复现前后对比：修复前 `repeated_repairable=true`、`repair_mutual_harm=true`；修复后清单全程双登记、两次缓存重放 `registration_repaired=false`、双方审计 CONSISTENT。
