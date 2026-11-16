@@ -168,6 +168,14 @@
       "purpose": "signed pre-copy research gate (8th VIDEO gate), landed from a stranded working tree",
       "status": "merged",
       "expires": "2026-12-12"
+    },
+    {
+      "name": "feat/194-title-card-and-trusted-cache",
+      "pr": 195,
+      "created": "2026-11-17",
+      "purpose": "Issue #194: DNA-driven 1024 conflict title_card and fingerprint-verified trusted clip cache; independent of the Huashu six-template work in #192/#193",
+      "status": "active",
+      "expires": "2026-12-17"
     }
   ]
 }
