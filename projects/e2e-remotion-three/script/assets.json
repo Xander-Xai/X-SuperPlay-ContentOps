@@ -1,0 +1,11 @@
+{
+  "assets": {
+    "three01": {
+      "path": "project://assets/generated/remotion/three01.mp4",
+      "sha256": "6a5bf56bc254ab81cc5153de39dd348422263d0495a3df2b2598bdafccf324d9",
+      "evidence_use": "VISUAL_SUPPORT",
+      "generated": true
+    }
+  },
+  "schema": "contentops.m5-script-assets/v1"
+}

@@ -232,6 +232,14 @@ def _composition_props(spec: Dict[str, Any], purpose: str, palette: Dict[str, st
             "durationSeconds": spec["duration_s"],
             "palette": palette,
         }
+    if spec["template"] == "technical_3d_explainer":
+        return {
+            "title": props["title"],
+            "nodes": list(props["nodes"]),
+            "highlightIndex": int(props.get("highlightIndex") or 0),
+            "duration_s": spec["duration_s"],
+            "palette": palette,
+        }
     if spec["template"] == "recording_mark":
         banner = props.get("test_banner") or ""
         if purpose == "test" and not banner:

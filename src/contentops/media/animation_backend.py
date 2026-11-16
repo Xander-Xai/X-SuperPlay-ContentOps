@@ -54,6 +54,7 @@ TEMPLATES = {
     "rag_flow": {"composition": "RagFlow", "backend": "remotion"},
     "recording_mark": {"composition": "RecordingMark", "backend": "remotion"},
     "title_card": {"composition": "TitleCard", "backend": "remotion"},
+    "technical_3d_explainer": {"composition": "Technical3DExplainer", "backend": "remotion"},
 }
 
 SHOT_COMPATIBILITY = {

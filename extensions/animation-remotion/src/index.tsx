@@ -4,6 +4,10 @@ import { AnnotationCard, AnnotationProps } from "./AnnotationCard";
 import { RagFlow, RagProps } from "./RagFlow";
 import { RecordingMark, RecordingMarkProps } from "./RecordingMark";
 import { TitleCard, TitleCardProps } from "./TitleCard";
+import {
+  Technical3DExplainer,
+  Technical3DExplainerProps,
+} from "./Technical3DExplainer";
 
 const annotationDefaults: AnnotationProps = {
   title: "对比",
@@ -38,6 +42,19 @@ const ragDefaults: RagProps = {
 };
 
 const frames = (seconds: number) => Math.round(Math.min(8, Math.max(2, seconds)) * 30);
+
+const threeDefaults: Technical3DExplainerProps = {
+  title: "3D 结构示意",
+  nodes: [
+    { label: "Query", position: [-1.5, 1.2, 0] },
+    { label: "Retrieve", position: [-0.5, 0.2, 0.3] },
+    { label: "Rerank", position: [0.5, -0.8, -0.2] },
+    { label: "Answer", position: [1.5, 0.6, 0.1] },
+  ],
+  highlightIndex: 2,
+  duration_s: 4,
+  palette: annotationDefaults.palette,
+};
 
 const markDefaults: RecordingMarkProps = {
   title: "证据区域",
@@ -125,6 +142,21 @@ export const RemotionRoot: FC = () => {
         defaultProps={titleDefaults}
         calculateMetadata={({ props }) => ({
           durationInFrames: frames(props.durationSeconds || 3),
+          fps: 30,
+          width: 1080,
+          height: 1920,
+        })}
+      />
+      <Composition
+        id="Technical3DExplainer"
+        component={Technical3DExplainer}
+        durationInFrames={frames(4)}
+        fps={30}
+        width={1080}
+        height={1920}
+        defaultProps={threeDefaults}
+        calculateMetadata={({ props }) => ({
+          durationInFrames: frames(props.duration_s || 4),
           fps: 30,
           width: 1080,
           height: 1920,

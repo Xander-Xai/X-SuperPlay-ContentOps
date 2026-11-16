@@ -1,0 +1,24 @@
+{
+  "backend": "remotion",
+  "template": "technical_3d_explainer",
+  "shot_type": "architecture",
+  "duration_s": 4,
+  "props": {
+    "title": "RAG 链路 · 3D 结构示意",
+    "nodes": [
+      { "label": "Query", "position": [-1.5, 1.2, 0] },
+      { "label": "Retrieve", "position": [-0.5, 0.2, 0.3] },
+      { "label": "Rerank", "position": [0.5, -0.8, -0.2] },
+      { "label": "Answer", "position": [1.5, 0.6, 0.1] }
+    ],
+    "highlightIndex": 2,
+    "palette": {
+      "bg": "#0F1117",
+      "accent": "#38BDF8",
+      "ink": "#202B31",
+      "sub": "#65747A",
+      "surface": "#F9FBFA",
+      "accent2": "#38BDF8"
+    }
+  }
+}

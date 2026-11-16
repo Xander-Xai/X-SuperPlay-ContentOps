@@ -1,0 +1,17 @@
+{
+  "assets": [
+    {
+      "id": "three01",
+      "type": "GENERATED_VIDEO",
+      "repo_path": "projects/e2e-remotion-three/assets/generated/remotion/three01.mp4",
+      "sha256": "6a5bf56bc254ab81cc5153de39dd348422263d0495a3df2b2598bdafccf324d9",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "VISUAL_SUPPORT only",
+      "origin": "remotion local code render",
+      "generated": true,
+      "evidence_capable": false,
+      "notes": "Generated visual; not source evidence."
+    }
+  ],
+  "schema": "contentops.m5-source-assets/v1"
+}
