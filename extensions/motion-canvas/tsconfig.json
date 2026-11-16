@@ -1,0 +1,9 @@
+{
+  "extends": "@motion-canvas/2d/tsconfig.project.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "moduleResolution": "bundler",
+    "skipLibCheck": true
+  },
+  "include": ["src", "vite.config.ts"]
+}
