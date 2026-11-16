@@ -262,16 +262,41 @@ def test_current_account_dna_brand_palette_wins_over_legacy_motion_profile():
 
 
 def test_installed_runtime_cli_and_core_must_match_lock():
-    from animation_render import environment_probe
+    import animation_render
     from unittest import mock
-    probe = environment_probe("remotion")
-    assert probe["pinned_version"] == ab.REMOTION_VERSION
-    assert probe["installed_cli_version"] == ab.REMOTION_VERSION
-    assert probe["installed_core_version"] == ab.REMOTION_VERSION
-    bad = {"node": True, "ffmpeg": True, "browser": True, "node_modules": True,
-           "pinned_version": ab.REMOTION_VERSION, "installed_cli_version": "0.0.0",
-           "installed_core_version": ab.REMOTION_VERSION}
-    assert ab.preflight("remotion", bad)["code"] == "VERSION_MISMATCH"
+
+    lock = json.loads((ROOT / "extensions/animation-remotion/package-lock.json").read_text(encoding="utf-8"))
+    assert lock["packages"]["node_modules/remotion"]["version"] == ab.REMOTION_VERSION
+    with tempfile.TemporaryDirectory() as temp:
+        root = Path(temp)
+        (root / "package-lock.json").write_text(json.dumps(lock), encoding="utf-8")
+        cli = root / "node_modules/@remotion/cli/remotion-cli.js"
+        core = root / "node_modules/remotion/package.json"
+        cli.parent.mkdir(parents=True)
+        core.parent.mkdir(parents=True)
+        cli.write_text("", encoding="utf-8")
+        with mock.patch.object(animation_render, "REMOTION_ROOT", root), \
+             mock.patch.object(animation_render, "CLI", cli), \
+             mock.patch.object(animation_render, "_which", return_value=True), \
+             mock.patch.object(animation_render, "_browser", return_value=Path("browser")), \
+             mock.patch.object(animation_render, "hidden_run") as run:
+            for cli_version, core_version, expected in (
+                (ab.REMOTION_VERSION, ab.REMOTION_VERSION, "READY"),
+                ("0.0.0", ab.REMOTION_VERSION, "VERSION_MISMATCH"),
+                (ab.REMOTION_VERSION, "0.0.0", "VERSION_MISMATCH"),
+                (ab.REMOTION_VERSION, None, "VERSION_MISMATCH"),
+            ):
+                core.write_text(json.dumps({"version": core_version}), encoding="utf-8")
+                run.return_value = SimpleNamespace(returncode=0, stdout=cli_version, stderr="")
+                probe = animation_render.environment_probe("remotion")
+                assert probe["pinned_version"] == ab.REMOTION_VERSION
+                assert probe["installed_cli_version"] == cli_version
+                assert probe["installed_core_version"] == core_version
+                assert ab.preflight("remotion", probe)["code"] == expected
+            cli.unlink()
+            probe = animation_render.environment_probe("remotion")
+            assert probe["installed_cli_version"] is None
+            assert ab.preflight("remotion", probe)["code"] == "RUNTIME_MISSING"
 
 
 def test_recording_public_staging_is_project_contained_private_and_hash_verified():
@@ -458,8 +483,10 @@ def main() -> int:
             test()
             print(f"ok   {test.__name__}")
         except Exception as exc:  # noqa: BLE001 - the runner reports, it does not hide
+            import traceback
             failures += 1
             print(f"FAIL {test.__name__}: {exc}")
+            traceback.print_exc()
     total = len(TESTS)
     print(f"{total - failures}/{total} ok")
     return 1 if failures else 0
