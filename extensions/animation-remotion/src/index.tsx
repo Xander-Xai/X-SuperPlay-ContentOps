@@ -2,6 +2,7 @@ import { Composition, registerRoot } from "remotion";
 import type { FC } from "react";
 import { AnnotationCard, AnnotationProps } from "./AnnotationCard";
 import { RagFlow, RagProps } from "./RagFlow";
+import { RecordingMark, RecordingMarkProps } from "./RecordingMark";
 
 const annotationDefaults: AnnotationProps = {
   title: "对比",
@@ -11,12 +12,12 @@ const annotationDefaults: AnnotationProps = {
   durationSeconds: 4,
   testBanner: "",
   palette: {
-    bg: "#F4F2ED",
+    bg: "#0F1117",
     surface: "#FFFFFF",
     ink: "#18232B",
     sub: "#5C6970",
-    accent: "#087FA6",
-    accent2: "#C4DCE3",
+    accent: "#38BDF8",
+    accent2: "#38BDF8",
   },
 };
 
@@ -26,16 +27,27 @@ const ragDefaults: RagProps = {
   caption: "原理示意，不是系统输出",
   durationSeconds: 6,
   palette: {
-    bg: "#E9EDEF",
+    bg: "#0F1117",
     surface: "#F9FBFA",
     ink: "#202B31",
     sub: "#65747A",
-    accent: "#157F8B",
-    accent2: "#AABDC1",
+    accent: "#38BDF8",
+    accent2: "#38BDF8",
   },
 };
 
 const frames = (seconds: number) => Math.round(Math.min(8, Math.max(2, seconds)) * 30);
+
+const markDefaults: RecordingMarkProps = {
+  title: "证据区域",
+  note: "只框已登记画面里与结论有关的部分",
+  durationSeconds: 4,
+  testBanner: "",
+  video: "",
+  sourceInSeconds: 0,
+  box: { x: 0.18, y: 0.28, w: 0.64, h: 0.36 },
+  palette: annotationDefaults.palette,
+};
 
 export const RemotionRoot: FC = () => {
   return (
@@ -65,6 +77,21 @@ export const RemotionRoot: FC = () => {
         defaultProps={ragDefaults}
         calculateMetadata={({ props }) => ({
           durationInFrames: frames(props.durationSeconds || 6),
+          fps: 30,
+          width: 1080,
+          height: 1920,
+        })}
+      />
+      <Composition
+        id="RecordingMark"
+        component={RecordingMark}
+        durationInFrames={120}
+        fps={30}
+        width={1080}
+        height={1920}
+        defaultProps={markDefaults}
+        calculateMetadata={({ props }) => ({
+          durationInFrames: frames(props.durationSeconds || 4),
           fps: 30,
           width: 1080,
           height: 1920,

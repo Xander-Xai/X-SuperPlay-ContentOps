@@ -969,8 +969,6 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
                        "--asset-id", asset_id, "--account", account_id, "--json"]
             if str(shot.get("purpose") or "") == "test":
                 command.extend(["--purpose", "test"])
-            if shot.get("has_real_recording") is True:
-                command.append("--has-real-recording")
         elif shot_backend == "huashu-motion":
             command = [python_executable(), str(motion_adapter), str(project),
                        "--film", spec, "--placement-id", placement_id,

@@ -49,6 +49,7 @@ TEMPLATES = {
     "annotation": {"composition": "AnnotationCard", "backend": "remotion"},
     "comparison": {"composition": "AnnotationCard", "backend": "remotion"},
     "rag_flow": {"composition": "RagFlow", "backend": "remotion"},
+    "recording_mark": {"composition": "RecordingMark", "backend": "remotion"},
 }
 
 SHOT_COMPATIBILITY = {
@@ -59,6 +60,7 @@ SHOT_COMPATIBILITY = {
     "agent_flow": ("remotion", "motion-canvas", "huashu-art-motion"),
     "math": ("manim",),
     "code_card": ("remotion",),
+    "recording_mark": ("remotion",),
 }
 
 RECORDING_KINDS = {
@@ -228,6 +230,7 @@ def _selected(backend: str, account: str, shot: str, *, explicit: bool,
         "production_ready": False,
         "publish_authorized": False,
         "execution_authorized": False,
+        "skills_installation": "SKILL_NOT_INSTALLED",
     }
 
 
@@ -310,6 +313,25 @@ def plan_clip(
         for key in ("title", "left_label", "right_label", "callout"):
             if not str(cleaned.get(key) or "").strip():
                 raise AnimationError("PROPS", f"{template} needs {key}")
+    if template == "recording_mark":
+        required = ("title", "note")
+        missing = [key for key in required if not str(cleaned.get(key) or "").strip()]
+        if missing:
+            raise AnimationError("PROPS", "recording_mark needs " + ", ".join(missing))
+        recording_id = str(cleaned.get("recording_asset_id") or "").strip()
+        if not recording_id:
+            raise AnimationError("PROPS", "recording_mark needs recording_asset_id")
+        box = cleaned.get("box")
+        if not isinstance(box, Mapping):
+            raise AnimationError("PROPS", "recording_mark needs a normalized box")
+        try:
+            x, y, w, h = (float(box[key]) for key in ("x", "y", "w", "h"))
+        except (KeyError, TypeError, ValueError) as exc:
+            raise AnimationError("PROPS", "recording_mark box needs numeric x/y/w/h") from exc
+        if w <= 0 or h <= 0 or x < 0 or y < 0 or x + w > 1 or y + h > 1:
+            raise AnimationError("PROPS", "recording_mark box must fit in normalized frame coordinates")
+        for key in ("plate", "video", "recording_sha256"):
+            cleaned.pop(key, None)
     palette = cleaned.get("palette")
     if not isinstance(palette, Mapping) or not palette.get("bg") or not palette.get("ink"):
         raise AnimationError("PROPS", "props.palette must include bg and ink from account DNA")
@@ -346,10 +368,19 @@ def preflight(backend: str, probe: Mapping[str, Any]) -> Dict[str, Any]:
         if probe.get("browser") is False:
             missing.append("browser")
         pinned = str(probe.get("pinned_version") or "")
+        installed = str(probe.get("installed_cli_version") or "")
+        core = str(probe.get("installed_core_version") or "")
         if pinned and pinned != REMOTION_VERSION:
             return _blocked(
                 "VERSION_MISMATCH",
                 f"pinned Remotion {pinned} is not {REMOTION_VERSION}",
+                backend=name,
+            )
+        mismatches = [value for value in (installed, core) if value and value != REMOTION_VERSION]
+        if mismatches or (probe.get("node_modules") is True and (not installed or not core)):
+            return _blocked(
+                "VERSION_MISMATCH",
+                f"installed Remotion CLI/core versions {installed or 'unknown'}/{core or 'unknown'} do not match {REMOTION_VERSION}",
                 backend=name,
             )
         if probe.get("node_modules") is False:
@@ -392,8 +423,8 @@ def resolve_skill(skill_id: str, installed: Sequence[str]) -> Dict[str, Any]:
         "installed": present,
         "execution_authorized": False,
         "publish_authorized": False,
-        "source_commit": REMOTION_SKILL_COMMIT,
-        "version": REMOTION_VERSION,
+        "source_commit": None,
+        "version": None,
     }
 
 
@@ -462,19 +493,32 @@ def props_digest(props: Mapping[str, Any]) -> str:
 
 
 def palette_from_dna(dna: Mapping[str, Any]) -> Dict[str, str]:
-    visual = dna.get("visual") if isinstance(dna.get("visual"), Mapping) else {}
-    motion = visual.get("motion") if isinstance(visual, Mapping) else {}
-    profile = {}
-    if isinstance(motion, Mapping):
-        profile = motion.get("motion_profile") or motion.get("palette") or {}
-    palette = profile.get("palette") if isinstance(profile, Mapping) else None
+    """Resolve brand palette first; animation props cannot replace DNA tokens."""
+    brand = dna.get("brand") if isinstance(dna.get("brand"), Mapping) else {}
+    palette = brand.get("palette") if isinstance(brand, Mapping) else None
     if not isinstance(palette, Mapping):
-        palette = visual.get("palette") if isinstance(visual, Mapping) else None
+        visual = dna.get("visual") if isinstance(dna.get("visual"), Mapping) else {}
+        motion = visual.get("motion") if isinstance(visual, Mapping) else {}
+        profile = {}
+        if isinstance(motion, Mapping):
+            profile = motion.get("motion_profile") or motion.get("palette") or {}
+        palette = profile.get("palette") if isinstance(profile, Mapping) else None
+        if not isinstance(palette, Mapping):
+            palette = visual.get("palette") if isinstance(visual, Mapping) else None
     if not isinstance(palette, Mapping):
-        raise AnimationError("PALETTE", "account DNA has no motion palette")
+        raise AnimationError("PALETTE", "account DNA has no brand palette")
+    strict_brand = isinstance(brand.get("palette"), Mapping)
+    keys = {"base": "bg", "muted": "sub"}
+    resolved = {keys.get(key, key): str(value) for key, value in palette.items()
+                if key in {"base", "bg", "surface", "ink", "muted", "sub", "accent"}}
+    if strict_brand:
+        resolved["bg"] = str(palette.get("base") or palette.get("bg"))
+        resolved["accent"] = str(palette.get("accent"))
     needed = ("bg", "ink", "accent")
-    missing = [key for key in needed if not palette.get(key)]
+    missing = [key for key in needed if not resolved.get(key)]
     if missing:
         raise AnimationError("PALETTE", "palette missing " + ", ".join(missing))
-    return {key: str(palette[key]) for key in ("bg", "surface", "ink", "sub", "accent", "accent2")
-            if palette.get(key)}
+    resolved.setdefault("surface", "#FFFFFF")
+    resolved.setdefault("sub", resolved.get("ink", "#FFFFFF"))
+    resolved["accent2"] = resolved["accent"]
+    return resolved

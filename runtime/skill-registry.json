@@ -212,7 +212,8 @@
         "version": "4.0.543",
         "source_commit": "release-v4.0.543",
         "skills_repo": "remotion-dev/skills",
-        "skills_commit": "7e541aa"
+        "skills_installation": "SKILL_NOT_INSTALLED",
+        "skills_source_commit": null
       },
       "canonical_path": "scripts/animation_render.py",
       "license": {
@@ -254,10 +255,10 @@
         "note": "node_modules is installed from the lockfile and is not committed"
       },
       "verification": {
-        "status": "WINDOWS_SMOKE_PASS",
-        "scope": "local Windows render of AnnotationCard and RagFlow; not a publication grant",
+        "status": "RUNTIME_VERIFIED_SKILL_NOT_INSTALLED",
+        "scope": "local Windows Remotion runtime render only; official Remotion Agent Skills were not installed or used",
         "evidence": "runtime/remotion.lock.json",
-        "note": "Clip files and ffprobe receipts are under projects/_local/ and are gitignored. Re-run scripts/animation_render.py to reproduce."
+        "note": "Rendered clips verify the runtime and templates, not the Agent Skills. The skill installer was refused by the local permission classifier."
       },
       "execution": {
         "adapter": "scripts/animation_render.py",

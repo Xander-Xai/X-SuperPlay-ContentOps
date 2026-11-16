@@ -18,6 +18,7 @@ for candidate in (ROOT / "src", ROOT / "scripts"):
 
 from contentops.media import animation_backend as ab  # noqa: E402
 import m5_production  # noqa: E402
+from animation_render import _registered_recording, _trusted_recording, _stage_recording_public, render  # noqa: E402
 
 
 PALETTE = {"bg": "#F4F2ED", "ink": "#18232B", "accent": "#087FA6", "surface": "#FFFFFF"}
@@ -238,6 +239,204 @@ def test_m5_does_not_auto_plan_huashu_for_a_clip_backend():
             assert "shot_plan" in str(exc)
         else:
             raise AssertionError("remotion fell through to the Huashu auto-plan")
+
+
+def test_current_account_dna_brand_palette_wins_over_legacy_motion_profile():
+    for account in (ab.ACCOUNT_1024, ab.ACCOUNT_FUTURE):
+        dna = json.loads((ROOT / "config" / "accounts" / f"{account}.json").read_text(encoding="utf-8"))
+        palette = ab.palette_from_dna(dna)
+        assert palette["bg"] == "#0F1117"
+        assert palette["accent"] == "#38BDF8"
+    dna = json.loads((ROOT / "config" / "accounts" / f"{ab.ACCOUNT_1024}.json").read_text(encoding="utf-8"))
+    props = {"title": "x", "left_label": "a", "right_label": "b", "callout": "c",
+             "palette": {"bg": "#ffffff", "accent": "#000000", "ink": "#000000"}}
+    props = {"title": "x", "left_label": "a", "right_label": "b", "callout": "c",
+             "palette": {"bg": "#ffffff", "accent": "#000000", "ink": "#000000"}}
+    spec = {"template": "annotation", "duration_s": 4, "props": props}
+    effective = ab.palette_from_dna(dna)
+    from animation_render import _composition_props
+    rendered = _composition_props(spec, "test", effective)
+    assert rendered["palette"]["bg"] == effective["bg"]
+    assert rendered["palette"]["accent"] == effective["accent"]
+    assert effective["bg"] == "#0F1117" and effective["accent"] == "#38BDF8"
+
+
+def test_installed_runtime_cli_and_core_must_match_lock():
+    from animation_render import environment_probe
+    from unittest import mock
+    probe = environment_probe("remotion")
+    assert probe["pinned_version"] == ab.REMOTION_VERSION
+    assert probe["installed_cli_version"] == ab.REMOTION_VERSION
+    assert probe["installed_core_version"] == ab.REMOTION_VERSION
+    bad = {"node": True, "ffmpeg": True, "browser": True, "node_modules": True,
+           "pinned_version": ab.REMOTION_VERSION, "installed_cli_version": "0.0.0",
+           "installed_core_version": ab.REMOTION_VERSION}
+    assert ab.preflight("remotion", bad)["code"] == "VERSION_MISMATCH"
+
+
+def test_recording_public_staging_is_project_contained_private_and_hash_verified():
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp) / "project"
+        project.mkdir()
+        source = project / "assets" / "recording.mp4"
+        source.parent.mkdir()
+        source.write_bytes(b"verified recording bytes")
+        digest = __import__("hashlib").sha256(source.read_bytes()).hexdigest()
+        first_handle, first_public, first_relative = _stage_recording_public(project, source, digest)
+        second_handle, second_public, second_relative = _stage_recording_public(project, source, digest)
+        try:
+            assert first_public != second_public
+            assert first_relative == second_relative
+            assert first_relative.startswith("recordings/")
+            assert (first_public / first_relative).read_bytes() == source.read_bytes()
+            assert not first_relative.startswith("file:")
+            assert first_public.parent == (project / "work" / "animation").resolve()
+        finally:
+            first_handle.cleanup()
+            second_handle.cleanup()
+        assert not first_public.exists() and not second_public.exists()
+
+
+def test_recording_public_staging_rejects_hash_mismatch_and_path_escape():
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp) / "project"
+        project.mkdir()
+        outside = Path(temp) / "outside.mp4"
+        outside.write_bytes(b"outside")
+        digest = __import__("hashlib").sha256(outside.read_bytes()).hexdigest()
+        for source, expected in ((outside, digest), (outside, "0" * 64)):
+            try:
+                _stage_recording_public(project, source, expected)
+            except ValueError:
+                pass
+            else:
+                raise AssertionError("outside or mismatched recording was staged")
+
+
+def test_recording_mark_composition_receives_only_public_relative_video_path():
+    from animation_render import _composition_props
+    spec = {"template": "recording_mark", "duration_s": 3,
+            "props": {"title": "t", "note": "n", "box": {"x": 0.1, "y": 0.2, "w": 0.3, "h": 0.4}}}
+    payload = _composition_props(spec, "test", PALETTE, video="recordings/abc.mp4", source_in_seconds=0.5)
+    assert payload["video"] == "recordings/abc.mp4"
+    assert not payload["video"].startswith(("file:", "/", "C:"))
+    assert payload["sourceInSeconds"] == 0.5
+
+
+def test_recording_public_staging_applies_only_the_declared_crop_before_exposure():
+    from unittest import mock
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp) / "project"
+        project.mkdir()
+        source = project / "recordings" / "source.mp4"
+        source.parent.mkdir()
+        source.write_bytes(b"source movie bytes")
+        digest = __import__("hashlib").sha256(source.read_bytes()).hexdigest()
+        commands = []
+
+        def fake_ffmpeg(command, **_kwargs):
+            commands.append(command)
+            Path(command[-1]).write_bytes(b"cropped sanitized movie")
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+        with mock.patch("animation_render.hidden_run", side_effect=fake_ffmpeg):
+            handle, public, relative = _stage_recording_public(
+                project, source, digest, crop={"x": 12, "y": 34, "width": 320, "height": 480},
+            )
+        try:
+            command = commands[0]
+            assert "crop=320:480:12:34" in command[command.index("-vf") + 1]
+            staged = public / relative
+            assert staged.read_bytes() == b"cropped sanitized movie"
+            assert staged.read_bytes() != source.read_bytes()
+            assert str(source) == command[command.index("-i") + 1]
+            assert str(staged) == command[-1]
+        finally:
+            handle.cleanup()
+
+
+def test_motion_check_receipt_omits_host_paths():
+    from animation_render import _safe_motion_check
+    safe = _safe_motion_check({"state": "TECHNICALLY_CHECKED", "path": r"D:\\private\\project\\clip.mp4",
+                               "duration_s": 4.0})
+    assert safe == {"state": "TECHNICALLY_CHECKED", "duration_s": 4.0}
+
+
+def test_registered_recording_needs_crop_source_permission_and_hash(tmp=None):
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        (project / "sources").mkdir()
+        asset = {"id": "screen-1", "type": "recording", "origin": "SELF_CAPTURED",
+                 "permission": "SELF_CAPTURED_CROPPED", "evidence_capable": True,
+                 "crop": {"x": 0, "y": 0, "width": 100, "height": 100},
+                 "source_ref": "capture-1", "repo_path": "screen.mp4", "sha256": "a" * 64}
+        (project / "sources" / "assets.json").write_text(json.dumps({"assets": [asset]}), encoding="utf-8")
+        (project / "sources" / "source-refs.json").write_text(json.dumps({"refs": [{
+            "id": "capture-1", "permission": "CREATED_BY_OWNER",
+        }]}), encoding="utf-8")
+        assert _registered_recording(project, "screen-1") is not None
+        asset.pop("crop")
+        (project / "sources" / "assets.json").write_text(json.dumps({"assets": [asset]}), encoding="utf-8")
+        assert _registered_recording(project, "screen-1") is None
+
+
+def test_renderer_never_trusts_shot_has_real_recording_true():
+    from unittest import mock
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        (project / "motion").mkdir()
+        (project / "sources").mkdir()
+        (project / "motion" / "spec.json").write_text(json.dumps({
+            "backend": "remotion", "template": "annotation", "shot_type": "annotation",
+            "duration_s": 4,
+            "props": {"title": "t", "left_label": "a", "right_label": "b", "callout": "c"},
+        }), encoding="utf-8")
+        (project / "sources" / "assets.json").write_text(json.dumps({"assets": []}), encoding="utf-8")
+        out = []
+        with mock.patch("animation_render._emit", side_effect=lambda payload, code: out.append(payload) or code):
+            result = render(project, Path("motion/spec.json"), placement_id="p1", asset_id="a1",
+                            account_id=ab.ACCOUNT_1024, purpose="production")
+        assert result == 1
+        assert out[0]["decision"]["code"] == "MISSING_REAL_RECORDING"
+
+
+def test_future_intelligence_rejects_recording_mark_input():
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        (project / "motion").mkdir()
+        (project / "motion" / "spec.json").write_text(json.dumps({
+            "backend": "remotion", "template": "recording_mark", "shot_type": "recording_mark",
+            "duration_s": 4,
+            "props": {"recording_asset_id": "screen-1", "title": "t", "note": "n",
+                      "box": {"x": 0.1, "y": 0.1, "w": 0.4, "h": 0.3}},
+        }), encoding="utf-8")
+        out = []
+        from unittest import mock
+        with mock.patch("animation_render._emit", side_effect=lambda payload, code: out.append(payload) or code):
+            result = render(project, Path("motion/spec.json"), placement_id="p1", asset_id="a1",
+                            account_id=ab.ACCOUNT_FUTURE, purpose="production")
+        assert result == 1
+        assert out[0]["decision"]["code"] == "ACCOUNT_TEMPLATE_FORBIDDEN"
+
+
+def test_recording_mark_plan_requires_registered_input_reference():
+    try:
+        ab.plan_clip(account_id=ab.ACCOUNT_1024, template="recording_mark", placement_id="p1",
+                     asset_id="a1", duration_s=4,
+                     props={"title": "重点", "note": "区域", "recording_asset_id": "screen-1",
+                            "box": {"x": 0.1, "y": 0.1, "w": 0.5, "h": 0.5},
+                            "palette": ab.palette_from_dna(json.loads((ROOT / "config" / "accounts" / f"{ab.ACCOUNT_1024}.json").read_text(encoding="utf-8")))})
+    except ab.AnimationError as exc:
+        raise AssertionError(str(exc))
+    try:
+        ab.plan_clip(account_id=ab.ACCOUNT_1024, template="recording_mark", placement_id="p1",
+                     asset_id="a1", duration_s=4,
+                     props={"title": "重点", "note": "区域", "box": {"x": 0, "y": 0, "w": 1, "h": 1},
+                            "palette": {"bg": "#0F1117", "ink": "#ffffff", "accent": "#38BDF8"}})
+    except ab.AnimationError as exc:
+        assert exc.code == "PROPS"
+    else:
+        raise AssertionError("recording mark without an asset id was accepted")
 
 
 def test_palette_comes_from_account_dna_not_a_hardcoded_brand():
