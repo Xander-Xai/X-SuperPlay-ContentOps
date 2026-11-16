@@ -1,0 +1,82 @@
+{
+  "schema": "contentops.p2-platform-block/v1",
+  "account_id": "x-superplay-future-intelligence",
+  "platform": "bilibili",
+  "state": "BLOCKED",
+  "code": "NATIVE_16_9_RENDER_UNAVAILABLE",
+  "checked_at": "2026-11-16T19:47:12Z",
+  "platform_plan": {
+    "status": "PLANNED",
+    "reason": "账号 x-superplay-future-intelligence 的 9 个平台各有规格；5 个需要与主成片不同的版本。",
+    "master_canvas": {
+      "width": 1080,
+      "height": 1920,
+      "orientation": "vertical"
+    },
+    "bilibili_row": {
+      "platform_id": "bilibili",
+      "spec_id": "bilibili",
+      "declared": true,
+      "role": "Trust / Deep Proof",
+      "role_status": "ACTIVE",
+      "kind": "VIDEO",
+      "requires_variant": true,
+      "variant_reason": "账号声明该平台用 1920×1080 horizontal 派生版（blur）；主成片 9:16 不是这一版。",
+      "canvas": {
+        "width": 1920,
+        "height": 1080,
+        "orientation": "horizontal",
+        "mode": "blur"
+      },
+      "requirements": [
+        "arg:--tid",
+        "uploader_login"
+      ],
+      "limits": {
+        "aspect_required": "9:16",
+        "max_duration_s": 3600,
+        "max_file_mb": 8000,
+        "title_max_hard": 80,
+        "title_max_soft": 60,
+        "desc_max_hard": 2000,
+        "tags_min": 3,
+        "tags_max": 10,
+        "hook_max_s": 0,
+        "supports_draft": false
+      },
+      "uploader": {
+        "tool": "sau",
+        "draft_support": "NONE"
+      }
+    }
+  },
+  "evidence": {
+    "dna_native_cut": "config/accounts/x-superplay-future-intelligence.json declares a B站加长版 1920×1080 derived cut",
+    "platform_registry_note": "config/platforms/video-platforms.yaml states that the render layer currently refuses anything but 1080x1920x30 and that the horizontal cut is recorded as BLOCKED",
+    "render_contract": "scripts/m5_production.py scales every composed visual to 1080:1920 and has no native 1920x1080 storyboard/render path",
+    "carrier_is_not_native": "scripts/video_deliver.py can derive a blurred-pad 1920x1080 carrier and explicitly labels it as not the DNA-required native re-layout",
+    "source_hashes": {
+      "config/accounts/x-superplay-future-intelligence.json": "25f0230069f0cb266518c90ce17083eca53b345845b4382f0a53a9e51f37ca98",
+      "config/platforms/video-platforms.yaml": "25a0398f3b86608ad793686f3bbe8a02a17bc0226202a02c8bcc47f20a37a9cc",
+      "scripts/m5_production.py": "41d1874fd6a5f91cf99c9e54d2558749b3e1967005cbc622a23654aff2dadc7c",
+      "scripts/video_deliver.py": "dd5eb8f498168f4547c9b44aa92fab5ec4dfaf90afc64ac388f125d5ba0c7feb",
+      "src/contentops/platforms/adaptation.py": "cdc24c348a25c1e914bc8eb42f1f23e30b4ee5db9b39c040ecaf81dc84c7910e"
+    }
+  },
+  "reason": "A platform adaptation plan correctly marks Bilibili as requiring a 1920x1080 variant, but the shipped M5/Easel render contract only produces 1080x1920. Stretching or blurred padding would be a silent substitution, which is forbidden.",
+  "impact": "Only the 9:16 vertical cut is technically validated. No native B站 1920x1080 long cut is claimed, approved or packaged.",
+  "fix_conditions": [
+    "Implement an explicit 16:9 storyboard layout and safe-zone QC",
+    "Render that layout through a supported 1920x1080 pipeline",
+    "Verify real composition, subtitle safe area and ffprobe 1920x1080",
+    "Keep the vertical cut as a separate registered variant"
+  ],
+  "user_actions": [
+    "Approve a distinct 16:9 re-layout scope if the native B站 cut is required"
+  ],
+  "generated": true,
+  "evidence_capable": false,
+  "production_ready": false,
+  "publish_authorized": false,
+  "human_review": "PENDING_FOUNDER_REVIEW"
+}

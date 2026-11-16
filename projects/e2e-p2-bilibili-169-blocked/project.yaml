@@ -1,0 +1,24 @@
+id: e2e-p2-bilibili-169-blocked
+title: "B 站 1920x1080 原生横版阻断证据包"
+created_at: "2026-11-16T19:46:18Z"
+account_slug: x-superplay-future-intelligence
+content_type: technical_explainer
+status: BLOCKED
+
+# The account DNA declares a native 1920x1080 Bilibili long cut, but the
+# shipped M5/Easel render contract is 1080x1920 only. A blurred-pad carrier is
+# not a re-layout and is explicitly not accepted as the native horizontal cut.
+
+block:
+  code: NATIVE_16_9_RENDER_UNAVAILABLE
+  state: BLOCKED
+  production_ready: false
+  publish_authorized: false
+  human_review: PENDING_FOUNDER_REVIEW
+
+target:
+  platform_primary: bilibili
+  aspect_ratio: "9:16"
+  resolution: "1080x1920"
+  derivative_aspect_ratio: "16:9"
+  derivative_resolution: "1920x1080"
