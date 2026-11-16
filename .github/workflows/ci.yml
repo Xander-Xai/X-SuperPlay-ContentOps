@@ -324,6 +324,12 @@ jobs:
       - name: Run Manim integration tests
         run: python tests/test_manim_integration.py
 
+      # P3 Motion Canvas contract only. No npm install, no editor, no render:
+      # preparing a clip must stay EDITOR_EXPORT_REQUIRED and a compile log
+      # must never be treated as render verification.
+      - name: Run P3 Motion Canvas contract tests
+        run: python tests/test_p3_motion_canvas.py
+
       # Anchor stills: pinned excerpt windows, readable label contrast under the
       # dark brand palette, and code shots keeping a code card. Pillow draws into
       # a temp directory; nothing is spawned and no renderer is involved.

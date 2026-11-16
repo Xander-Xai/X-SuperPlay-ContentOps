@@ -1,0 +1,7 @@
+{
+  "schema": "contentops.m5-claims/v1",
+  "claims": [
+    {"id": "C-mc-arch01", "text": "RAG 组件链路示意", "artifacts": ["E-mc-doc"], "editorial_only": true, "assertion_about": "none"},
+    {"id": "C-mc-state01", "text": "Agent 状态机示意", "artifacts": ["E-mc-doc"], "editorial_only": true, "assertion_about": "none"}
+  ]
+}
