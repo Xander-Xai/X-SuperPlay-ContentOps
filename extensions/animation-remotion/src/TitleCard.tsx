@@ -2,11 +2,20 @@ import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from "remo
 import type { Palette } from "./AnnotationCard";
 
 /**
- * Account-A 3s conflict hook. DNA-gated motion: fade/slide only, no bounce,
- * flash, shake, sticker or flashy transition. All colours come from the
- * account DNA palette resolved by scripts/animation_render.py; this component
- * never hardcodes a brand colour.
+ * Account hook card (3s). DNA-gated: fade/slide only, no bounce, flash, shake,
+ * sticker or flashy transition. Every colour, font and safe-zone value is
+ * resolved from the account DNA by scripts/animation_render.py and passed in —
+ * this component owns no brand token and cannot widen a safe margin.
  */
+export type VisualContract = {
+  font?: string;
+  caption_size_px?: number;
+  max_chars_per_line?: number;
+  margin_v_px?: number;
+  side_margin_ratio?: number;
+  forbidden_effects?: string[];
+};
+
 export type TitleCardProps = {
   conflict: string;
   stakes: string;
@@ -14,7 +23,10 @@ export type TitleCardProps = {
   durationSeconds?: number;
   testBanner?: string;
   palette: Palette & { problem?: string };
+  visualContract?: VisualContract;
 };
+
+const CANVAS_W = 1080;
 
 export const TitleCard: React.FC<TitleCardProps> = ({
   conflict,
@@ -22,6 +34,7 @@ export const TitleCard: React.FC<TitleCardProps> = ({
   kicker,
   testBanner,
   palette,
+  visualContract = {},
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -35,7 +48,25 @@ export const TitleCard: React.FC<TitleCardProps> = ({
   const ruleWidth = fade(0.5, 1.0);
   const stakesReveal = fade(1.0, 1.6);
   const problem = palette.problem || palette.accent;
-  const font = '"Noto Sans CJK SC", "Microsoft YaHei", sans-serif';
+
+  // Layout comes from the DNA contract. Defaults are the strictest common
+  // values and apply only when a caller omits the contract; a real render
+  // always supplies it from config/accounts/<slug>.json.
+  const font = visualContract.font || '"Noto Sans CJK SC", "Microsoft YaHei", sans-serif';
+  const maxChars = visualContract.max_chars_per_line || 18;
+  const marginV = visualContract.margin_v_px ?? 120;
+  const sideMargin = Math.max(
+    Math.round(CANVAS_W * (visualContract.side_margin_ratio || 0.07)),
+    24,
+  );
+  const captionSize = visualContract.caption_size_px || 47;
+  // Display size shrinks for long hooks so text wraps inside the safe width
+  // instead of overflowing the frame. It is derived from the DNA caption size
+  // and never hardcodes a brand constant.
+  const conflictSize = Math.round(
+    Math.min(captionSize * 1.8, Math.max(captionSize, (CANVAS_W - 2 * sideMargin) / Math.max(6, maxChars) * 1.7)),
+  );
+  const stakesSize = captionSize;
 
   return (
     <AbsoluteFill
@@ -43,14 +74,18 @@ export const TitleCard: React.FC<TitleCardProps> = ({
         backgroundColor: palette.bg,
         color: palette.ink,
         fontFamily: font,
-        padding: 88,
+        paddingLeft: sideMargin,
+        paddingRight: sideMargin,
+        paddingTop: marginV,
+        paddingBottom: marginV,
         justifyContent: "center",
+        overflow: "hidden",
       }}
     >
       {kicker ? (
         <div
           style={{
-            fontSize: 30,
+            fontSize: Math.round(captionSize * 0.64),
             letterSpacing: 2,
             color: palette.sub || palette.ink,
             opacity: kickerOpacity,
@@ -63,12 +98,16 @@ export const TitleCard: React.FC<TitleCardProps> = ({
 
       <div
         style={{
-          fontSize: 92,
-          fontWeight: 800,
+          fontSize: conflictSize,
+          fontWeight: 700,
           lineHeight: 1.18,
           color: problem,
           opacity: conflictReveal,
           transform: `translateY(${(1 - conflictReveal) * 24}px)`,
+          whiteSpace: "pre-wrap",
+          wordBreak: "break-word",
+          overflowWrap: "anywhere",
+          maxWidth: "100%",
         }}
       >
         {conflict}
@@ -86,13 +125,17 @@ export const TitleCard: React.FC<TitleCardProps> = ({
       <div
         style={{
           marginTop: 56,
-          fontSize: 46,
+          fontSize: stakesSize,
           lineHeight: 1.5,
-          // Body copy sits directly on the DNA dark base, so it uses the DNA
-          // light "surface" token; "ink" is reserved for text on light cards.
+          // Body copy sits on the DNA dark base, so it uses the DNA light
+          // "surface" token; "ink" is reserved for text on light cards.
           color: palette.surface || palette.ink,
           opacity: stakesReveal,
           transform: `translateY(${(1 - stakesReveal) * 18}px)`,
+          whiteSpace: "pre-wrap",
+          wordBreak: "break-word",
+          overflowWrap: "anywhere",
+          maxWidth: "100%",
         }}
       >
         {stakes}
@@ -102,10 +145,10 @@ export const TitleCard: React.FC<TitleCardProps> = ({
         <div
           style={{
             position: "absolute",
-            left: 88,
-            right: 88,
-            bottom: 120,
-            fontSize: 28,
+            left: sideMargin,
+            right: sideMargin,
+            bottom: Math.min(marginV, 120),
+            fontSize: Math.round(captionSize * 0.6),
             color: palette.sub || palette.ink,
           }}
         >

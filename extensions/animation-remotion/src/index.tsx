@@ -57,6 +57,14 @@ const titleDefaults: TitleCardProps = {
   durationSeconds: 3,
   testBanner: "",
   palette: annotationDefaults.palette,
+  visualContract: {
+    font: '"Noto Sans CJK SC", "Microsoft YaHei", sans-serif',
+    caption_size_px: 47,
+    max_chars_per_line: 18,
+    margin_v_px: 120,
+    side_margin_ratio: 0.07,
+    forbidden_effects: ["bounce", "flash", "shake", "sticker", "flashy_transition"],
+  },
 };
 
 export const RemotionRoot: FC = () => {

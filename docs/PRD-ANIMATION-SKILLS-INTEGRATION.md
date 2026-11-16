@@ -207,3 +207,13 @@ Easel pin 仍是 `runtime/easel-pins.json` 的 `v0.3.0` / `bb3c8ff`。本变更�
 `python tests/test_animation_backend.py` 通过 34/34。`tsc --noEmit` 通过。同一命令重渲返回 `state=REUSED, reused=true` 且 SHA 不变；把 `duration_s` 由 3 改为 4 返回 `EXECUTED` 并产生新指纹与新 SHA；修改模板源码使标题镜头缓存失效并强制重渲。修复前后都抽取了帧做肉眼检查。
 
 **验收边界。** 两个样片均为 `purpose=test`、`TEST_PURPOSE` 门控、`production_ready=false`、`publish_authorized=false`、`human_review=PENDING_FOUNDER_REVIEW`。当前没有用户提供的 1024 真实录屏，因此 1024 正式生产仍为 `MISSING_REAL_RECORDING`。未来智能 RAG 节点是原理示意（`原理示意，非真实系统输出`），不是真实系统轨迹。未合成任何整片，未发布任何视频。
+
+### 19.1 合并前加固（2026-11-17，同一分支）
+
+PR #195 复查发现并修复三个问题，未新增功能：
+
+1. **缓存复用不再跳过 M5 登记。** 缓存命中时按可信 MP4 的指纹与磁盘 SHA-256 审计 canonical receipt 及 `sources/assets.json`、`script/assets.json`、m45 媒体清单。缺失或过期的行通过重跑既有幂等 `register_generated_clip` 修复并重新审计；已存在但与字节矛盾或抬高 `generated`/`evidence_capable`/`production_ready`/`publish_authorized`/人审状态的行 **BLOCKED**，绝不静默覆盖。`REUSED` 现带 `registration_repaired` 与修复行名。canonical receipt 带 `fingerprint`，sidecar 带 `source_spec` 以便修复时忠实重建。
+2. **缓存身份覆盖全部真实输入。** `_template_digest` 现哈希 `package.json`、`package-lock.json`、`tsconfig.json` 与所有 `src/**/*.tsx|ts`；`_source_digests` 递归收集嵌套 props 中的 SHA-256 引用。锁文件变化、嵌套组件、藏在列表里的来源哈希现在都会使缓存失效。
+3. **TitleCard 遵守 DNA 版式。** `hook_visual_contract` 从账号 DNA 派生字体、字号、18 字行上限、120px 上下边距与 0.07 侧边距；镜头 spec 的字体/边距/动效覆盖被剥离，超过行上限 3 倍的钩子文案被拒绝（`DNA_VISUAL`）。正文用 DNA `surface` 令牌保证深色底对比度。正式生产 spec 不能注入测试横幅。
+
+验证：`test_animation_backend.py` 37/37，新增 `tests/test_animation_cache_integrity.py` 11/11（逐一删除/篡改每个登记文件），`tsc --noEmit` 通过。真实 TEST_ONLY 渲染：长钩子 3s 片段 SHA-256 `18556d0894c2f8798c4c106978fa651e00807109467f9b4cb4571abf40f48c6a`、刷新后钩子片段 `62d2f2b20ea7f7b5d762ffc4b760bdad2bf734a7e1636e2183b374495cc10e6e`，均 h264/1080x1920/yuv420p/30fps/无音轨；抽帧确认换行、安全边距与可读对比。验收边界不变：TEST_PURPOSE、production_ready=false、publish_authorized=false、人审待定。

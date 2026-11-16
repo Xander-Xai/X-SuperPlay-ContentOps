@@ -314,6 +314,10 @@ jobs:
       - name: Run animation backend contract tests
         run: python tests/test_animation_backend.py
 
+      # Cache-reuse registration integrity: synthetic artifacts only, no render.
+      - name: Run animation cache integrity tests
+        run: python tests/test_animation_cache_integrity.py
+
       # External B-roll discovery. Both suites are entirely offline: provider
       # responses, DNS answers and loudness measurements are injected. The
       # decisive assertions are that no request happens without an explicit

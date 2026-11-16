@@ -17,7 +17,7 @@ import shutil
 import sys
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Mapping, Optional
 
 ROOT = Path(__file__).resolve().parents[1]
 for path in (ROOT / "src", ROOT / "scripts"):
@@ -38,7 +38,7 @@ from contentops.media.animation_backend import (  # noqa: E402
 )
 from contentops.media.motion_sample import check_motion_sample  # noqa: E402
 from contentops.media.generated_clip import register_generated_clip  # noqa: E402
-from contentops.paths import resolve_label  # noqa: E402
+from contentops.paths import relative_label, resolve_label  # noqa: E402
 
 REMOTION_ROOT = ROOT / "extensions" / "animation-remotion"
 CLI = REMOTION_ROOT / "node_modules" / "@remotion" / "cli" / "remotion-cli.js"
@@ -53,42 +53,59 @@ def _sha256(path: Path) -> str:
 
 
 def _template_digest() -> str:
-    """Hash the composition sources so a template edit invalidates every clip.
+    """Hash every local input that can change rendered pixels.
 
-    Covers the registration entry, all component sources and the pinned
-    dependency manifest. A change to any of them changes the rendered pixels,
-    therefore it must change the cache identity.
+    Covers the dependency manifests (``package.json`` *and* the resolved
+    ``package-lock.json``), the TypeScript config, and every component source
+    recursively — including sub-directories future templates may add. Without
+    the lockfile and nested sources, a dependency patch or a new shared module
+    would change pixels while the cache kept replaying the old clip.
     """
-    sources = sorted(
-        [REMOTION_ROOT / "package.json"] + list((REMOTION_ROOT / "src").glob("*.tsx"))
-    )
+    src = REMOTION_ROOT / "src"
+    sources = {
+        REMOTION_ROOT / "package.json",
+        REMOTION_ROOT / "package-lock.json",
+        REMOTION_ROOT / "tsconfig.json",
+    }
+    if src.is_dir():
+        for pattern in ("*.tsx", "*.ts"):
+            sources.update(src.rglob(pattern))
     digest = hashlib.sha256()
-    for path in sources:
+    for path in sorted(sources):
         if path.is_file():
-            digest.update(path.name.encode("utf-8"))
+            digest.update(path.relative_to(REMOTION_ROOT).as_posix().encode("utf-8"))
             digest.update(_sha256(path).encode("ascii"))
     return digest.hexdigest()
+
+
+def _iter_hash_strings(value: Any):
+    """Yield every 64-hex SHA-256 string found anywhere in a nested structure."""
+    if isinstance(value, str):
+        text = value.strip().lower()
+        if len(text) == 64 and all(char in "0123456789abcdef" for char in text):
+            yield text
+    elif isinstance(value, dict):
+        for item in value.values():
+            yield from _iter_hash_strings(item)
+    elif isinstance(value, (list, tuple)):
+        for item in value:
+            yield from _iter_hash_strings(item)
 
 
 def _source_digests(spec_file: Path, raw: Dict[str, Any],
                     trusted_recording: Optional[Dict[str, Any]]) -> List[str]:
     """Collect byte identities that must invalidate a cached clip.
 
-    The spec file carries the references; a verified recording carries the
-    actual staged bytes; inline SHA-256 values in props bind any registered
-    source. Together they ensure a source change cannot replay a stale clip.
+    The spec file binds the whole prop structure; a verified recording binds
+    the staged bytes; and every SHA-256 reference in props is collected
+    recursively so a source hidden in a list or nested object is still tracked.
     """
     digests = [_sha256(spec_file)]
     if trusted_recording:
         for key in ("validated_sha256", "sha256", "source_document_sha256"):
-            value = str(trusted_recording.get(key) or "")
-            if len(value) == 64 and all(char in "0123456789abcdef" for char in value.lower()):
-                digests.append(value.lower())
-    for value in (raw.get("props") or {}).values():
-        text = str(value) if not isinstance(value, (dict, list)) else ""
-        if len(text) == 64 and all(char in "0123456789abcdef" for char in text.lower()):
-            digests.append(text.lower())
-    return digests
+            digests.extend(_iter_hash_strings(trusted_recording.get(key)))
+    digests.extend(_iter_hash_strings(raw.get("props") or {}))
+    return list(dict.fromkeys(digests))
 
 
 def _safe_motion_check(checked: Dict[str, Any]) -> Dict[str, Any]:
@@ -230,11 +247,15 @@ def _composition_props(spec: Dict[str, Any], purpose: str, palette: Dict[str, st
             "palette": palette,
         }
     if spec["template"] == "title_card":
-        banner = props.get("test_banner") or ""
+        # A test banner is only legal for test renders. A production spec cannot
+        # inject one (or any visual override) to smuggle test provenance into a
+        # supposedly formal shot.
+        banner = (props.get("test_banner") or "") if purpose == "test" else ""
         if purpose == "test" and not banner:
             banner = "测试用途 · 技术样片"
         # All colours, including "problem", are resolved from the DNA palette
         # by the caller. A shot spec cannot inject or override a brand colour.
+        contract = props.get("hook_contract") or {}
         return {
             "conflict": props["conflict"],
             "stakes": props["stakes"],
@@ -242,6 +263,7 @@ def _composition_props(spec: Dict[str, Any], purpose: str, palette: Dict[str, st
             "durationSeconds": spec["duration_s"],
             "testBanner": banner,
             "palette": dict(palette),
+            "visualContract": dict(contract) if isinstance(contract, Mapping) else {},
         }
     banner = props.get("test_banner") or ""
     if purpose == "test" and not banner:
@@ -495,6 +517,238 @@ def _trusted_cache_hit(sidecar: Path, output: Path, fingerprint: str,
     }
 
 
+# --- Cache registration integrity -----------------------------------------
+# A cache hit reuses bytes, but it must not skip the M5 registration chain.
+# The canonical receipt and the three inventory rows all carry governance
+# facts (generated/evidence_capable/production_ready/publish_authorized). If a
+# row is missing or stale but the trusted MP4 is intact, re-running the
+# existing idempotent register_generated_clip() is a safe repair. If a row is
+# present yet contradicts the MP4 or escalates an evidence flag, that is a
+# boundary violation: BLOCKED, never silently overwritten.
+
+_CACHE_RECEIPT_SCHEMA = "contentops.animation-clip-receipt/v1"
+_SAFE_RECEIPT_FIELDS: Dict[str, Any] = {
+    "generated": True,
+    "evidence_capable": False,
+    "evidence_use": "VISUAL_SUPPORT",
+    "source_kind": "vector_animation",
+    "counts_as_real_recording": False,
+    "rights": "GENERATED_LOCAL_NO_COMMERCIAL_CLEARANCE",
+    "technical_qc": "TECHNICALLY_CHECKED",
+    "human_review": "PENDING_FOUNDER_REVIEW",
+    "production_ready": False,
+    "publish_authorized": False,
+    "execution_authorized": False,
+}
+
+
+def _read_json(path: Path) -> Optional[Dict[str, Any]]:
+    if not path.is_file():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def _expected_registration(project: Path, final: Path, asset_id: str,
+                           placement_id: str, fingerprint: str,
+                           sha256: str, template: str) -> Dict[str, Any]:
+    return {
+        "asset_id": asset_id,
+        "placement_id": placement_id,
+        "fingerprint": fingerprint,
+        "sha256": sha256,
+        "template": template,
+        "logical": f"project://assets/generated/remotion/{asset_id}.mp4",
+        "repo_path": relative_label(final, ROOT),
+        "receipt_name": f"animation-{asset_id}.json",
+    }
+
+
+def _audit_cache_registration(project: Path, expected: Mapping[str, Any]) -> Dict[str, Any]:
+    """Compare every registration artifact against the trusted render facts.
+
+    Returns ``state`` CONSISTENT / REPAIRABLE / BLOCKED. ``REPAIRABLE`` means at
+    least one artifact is absent or stale but no evidence boundary was
+    contradicted; ``BLOCKED`` means a present artifact disagrees with the MP4 or
+    escalates a governance flag. The caller only repairs REPAIRABLE.
+    """
+    asset_id = str(expected["asset_id"])
+    sha256 = str(expected["sha256"])
+    fingerprint = str(expected["fingerprint"])
+    missing: List[str] = []
+    stale: List[str] = []
+    violations: List[str] = []
+
+    # 1. canonical receipt (the adapter_receipt M5 reads on a cache hit).
+    receipt = _read_json(project / "receipts" / expected["receipt_name"])
+    if receipt is None:
+        missing.append("canonical_receipt")
+    else:
+        # Identity fields describe *which* render this receipt is for. They may
+        # be older than the trusted sidecar, so they are repairable (rebuilt
+        # from the sidecar) rather than a boundary violation.
+        if receipt.get("schema") != _CACHE_RECEIPT_SCHEMA:
+            stale.append("canonical_receipt.schema")
+        if str(receipt.get("asset_id") or "") != asset_id:
+            stale.append("canonical_receipt.asset_id")
+        if str(receipt.get("sha256") or "").lower() != sha256:
+            stale.append("canonical_receipt.sha256")
+        if str(receipt.get("fingerprint") or "") != fingerprint:
+            stale.append("canonical_receipt.fingerprint")
+        if str(receipt.get("output_path") or "") != expected["logical"]:
+            stale.append("canonical_receipt.output_path")
+        if str(receipt.get("placement_id") or "") != expected["placement_id"]:
+            stale.append("canonical_receipt.placement_id")
+        if str(receipt.get("template") or "") != expected["template"]:
+            stale.append("canonical_receipt.template")
+        for key, value in _SAFE_RECEIPT_FIELDS.items():
+            if receipt.get(key) != value:
+                violations.append(f"canonical_receipt.{key}")
+
+    # 2. sources/assets.json — the M5 source inventory entry.
+    sources = _read_json(project / "sources" / "assets.json")
+    source_row = None
+    if sources is None:
+        missing.append("sources/assets.json")
+    else:
+        source_row = next((row for row in (sources.get("assets") or [])
+                           if isinstance(row, dict) and row.get("id") == asset_id), None)
+        if source_row is None:
+            missing.append("sources.asset_row")
+        else:
+            if str(source_row.get("sha256") or "").lower() != sha256:
+                stale.append("sources.sha256")
+            if str(source_row.get("repo_path") or "") != expected["repo_path"]:
+                stale.append("sources.repo_path")
+            if str(source_row.get("type") or "").upper() != "GENERATED_VIDEO":
+                violations.append("sources.type")
+            if source_row.get("generated") is not True:
+                violations.append("sources.generated")
+            if source_row.get("evidence_capable") is not False:
+                violations.append("sources.evidence_capable")
+            if "VISUAL_SUPPORT" not in str(source_row.get("usage_scope") or ""):
+                violations.append("sources.usage_scope")
+
+    # 3. script/assets.json — the script-to-asset mapping.
+    script = _read_json(project / "script" / "assets.json")
+    script_row = None
+    if script is None:
+        missing.append("script/assets.json")
+    else:
+        mapped = script.get("assets")
+        script_row = mapped.get(asset_id) if isinstance(mapped, dict) else None
+        if not isinstance(script_row, dict):
+            missing.append("script.asset_row")
+        else:
+            if str(script_row.get("sha256") or "").lower() != sha256:
+                stale.append("script.sha256")
+            if str(script_row.get("path") or "") != expected["logical"]:
+                stale.append("script.path")
+            if script_row.get("generated") is not True:
+                violations.append("script.generated")
+            if str(script_row.get("evidence_use") or "") != "VISUAL_SUPPORT":
+                violations.append("script.evidence_use")
+
+    # 4. m45 media manifest — the envelope composition reads.
+    manifest = _read_json(project / "work" / "m45" / "remotion-media-manifest.json")
+    envelope = None
+    if manifest is None:
+        missing.append("m45_manifest")
+    else:
+        envelope = next((row for row in (manifest.get("assets") or [])
+                         if isinstance(row, dict) and row.get("asset_id") == asset_id), None)
+        if envelope is None:
+            missing.append("m45.envelope")
+        else:
+            if str(envelope.get("sha256") or "").lower() != sha256:
+                stale.append("m45.sha256")
+            if str(envelope.get("fingerprint") or "") != fingerprint:
+                stale.append("m45.fingerprint")
+            if str(envelope.get("path") or "") != expected["logical"]:
+                stale.append("m45.path")
+            if str(envelope.get("technical_status") or "") != "PASS_TECHNICAL":
+                violations.append("m45.technical_status")
+            if str(envelope.get("human_review") or "") != "PENDING_FOUNDER_REVIEW":
+                violations.append("m45.human_review")
+            if envelope.get("generated") is not True:
+                violations.append("m45.generated")
+            if envelope.get("evidence_capable") is not False:
+                violations.append("m45.evidence_capable")
+            if str(envelope.get("evidence_use") or "") != "VISUAL_SUPPORT":
+                violations.append("m45.evidence_use")
+            if envelope.get("production_ready") is not False:
+                violations.append("m45.production_ready")
+
+    if violations:
+        state = "BLOCKED"
+    elif missing or stale:
+        state = "REPAIRABLE"
+    else:
+        state = "CONSISTENT"
+    return {
+        "state": state,
+        "missing": missing,
+        "stale": stale,
+        "violations": violations,
+        "checked": ["canonical_receipt", "sources/assets.json",
+                    "script/assets.json", "work/m45/remotion-media-manifest.json"],
+    }
+
+
+def _repair_cache_registration(*, project: Path, final: Path, sidecar_payload: Mapping[str, Any],
+                               expected: Mapping[str, Any], account_id: str,
+                               placement_id: str, purpose: str, gate: Mapping[str, Any],
+                               probe: Mapping[str, Any]) -> Dict[str, Any]:
+    """Rebuild missing/stale inventory rows using the existing idempotent writer.
+
+    Refuses to touch anything when an evidence boundary was contradicted; the
+    caller passes only a REPAIRABLE audit. Re-audits afterwards so a repair that
+    did not restore consistency is reported BLOCKED, never as a successful reuse.
+    """
+    asset_id = str(expected["asset_id"])
+    fingerprint = str(expected["fingerprint"])
+    sha256 = str(expected["sha256"])
+    registration = register_generated_clip(
+        project=project,
+        repo_root=ROOT,
+        asset_id=asset_id,
+        placement_id=placement_id,
+        output=final,
+        sha256=sha256,
+        fingerprint=fingerprint,
+        backend="remotion",
+        receipt_name=f"{asset_id}.mp4.receipt.json",
+    )
+    # Rebuild the canonical receipt from the trusted sidecar + fresh probe,
+    # preserving the same governance facts a fresh render would write.
+    receipt = build_receipt(
+        project_id=project.name,
+        account_id=account_id,
+        placement_id=placement_id,
+        asset_id=asset_id,
+        backend="remotion",
+        template=str(expected["template"]),
+        output_path=str(expected["logical"]),
+        sha256=sha256,
+        probe=probe,
+        purpose=purpose,
+        source_spec=str(sidecar_payload.get("source_spec") or expected["logical"]),
+        version=REMOTION_VERSION,
+        skill_source=None,
+        technical_qc="TECHNICALLY_CHECKED",
+    )
+    receipt["fingerprint"] = fingerprint
+    receipt["production_gate"] = dict(gate)
+    receipt["asset_registration"] = registration
+    receipt_path = project / "receipts" / f"animation-{asset_id}.json"
+    receipt_path.parent.mkdir(parents=True, exist_ok=True)
+    receipt_path.write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return _audit_cache_registration(project, expected)
+
+
 def render(project: Path, spec_path: Path, *, placement_id: str, asset_id: str,
            account_id: str, purpose: str) -> int:
     project = project.resolve()
@@ -552,6 +806,7 @@ def render(project: Path, spec_path: Path, *, placement_id: str, asset_id: str,
         props={**props, "palette": palette},
         duration_s=float(raw.get("duration_s") or 4),
         backend=backend,
+        dna=dna,
     )
     shot_type = str(raw.get("shot_type") or {
         "rag_flow": "architecture",
@@ -612,15 +867,52 @@ def render(project: Path, spec_path: Path, *, placement_id: str, asset_id: str,
     # change produces a different fingerprint and falls through to a render.
     cached = _trusted_cache_hit(sidecar, final, fingerprint, asset_id)
     if cached is not None:
+        expected = _expected_registration(project, final, asset_id, placement_id,
+                                          fingerprint, cached["sha256"], template)
+        audit = _audit_cache_registration(project, expected)
+        repaired = False
+        if audit["state"] == "BLOCKED":
+            return _emit(_blocked_execution({
+                "state": "BLOCKED", "code": "REGISTRATION_BOUNDARY",
+                "detail": "cached MP4 is trusted but its registration contradicts the evidence boundary: "
+                          + ", ".join(audit["violations"]),
+                "audit": audit,
+            }), 1)
+        repaired_rows: List[str] = []
+        if audit["state"] == "REPAIRABLE":
+            repaired_rows = audit["missing"] + audit["stale"]
+            try:
+                audit = _repair_cache_registration(
+                    project=project, final=final, sidecar_payload=cached["receipt"],
+                    expected=expected, account_id=account_id, placement_id=placement_id,
+                    purpose=purpose, gate=gate, probe=_ffprobe(final),
+                )
+            except (OSError, ValueError, AnimationError) as exc:
+                return _emit(_blocked_execution({
+                    "state": "BLOCKED", "code": "REGISTRATION_REPAIR_FAILED",
+                    "detail": str(exc), "audit": audit,
+                }), 1)
+            repaired = True
+            if audit["state"] != "CONSISTENT":
+                return _emit(_blocked_execution({
+                    "state": "BLOCKED", "code": "REGISTRATION_REPAIR_INCOMPLETE",
+                    "detail": "repair did not restore every registration row: "
+                              + ", ".join(audit["missing"] + audit["stale"] + audit["violations"]),
+                    "audit": audit,
+                }), 1)
         return _emit({
             "execution": {
                 "state": "REUSED",
                 "reused": True,
                 "adapter_receipt": "project://receipts/" + cached["receipt_name"],
+                "registration_repaired": repaired,
             },
             "receipt": "project://receipts/" + cached["receipt_name"],
-            "decision": {"state": "REUSED", "detail": "fingerprint, bytes and sample QC match",
+            "decision": {"state": "REUSED",
+                         "detail": "fingerprint, bytes, sample QC and registration all consistent",
                          "production_gate": gate.get("code")},
+            "registration": {"state": "CONSISTENT", "repaired": repaired,
+                             "repaired_rows": repaired_rows},
             "sha256": cached["sha256"],
             "fingerprint": fingerprint,
         }, 0)
@@ -698,6 +990,7 @@ def render(project: Path, spec_path: Path, *, placement_id: str, asset_id: str,
         technical_qc="TECHNICALLY_CHECKED",
     )
     receipt["production_gate"] = gate
+    receipt["fingerprint"] = fingerprint
     receipt_path = project / "receipts" / f"animation-{asset_id}.json"
     receipt_path.parent.mkdir(parents=True, exist_ok=True)
     receipt_path.write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -716,6 +1009,7 @@ def render(project: Path, spec_path: Path, *, placement_id: str, asset_id: str,
         "dna_digest": hashlib.sha256(json.dumps(dna, ensure_ascii=False, sort_keys=True,
                                                 separators=(",", ":")).encode("utf-8")).hexdigest(),
         "source_digests": source_digests,
+        "source_spec": spec_logical,
         "source_rights": "GENERATED_LOCAL_NO_COMMERCIAL_CLEARANCE",
         "output_sha256": receipt["sha256"],
         "output": {"path": logical, "repo_path": final.relative_to(project).as_posix(),

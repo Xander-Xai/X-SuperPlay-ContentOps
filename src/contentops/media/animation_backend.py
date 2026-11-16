@@ -287,6 +287,7 @@ def plan_clip(
     props: Mapping[str, Any],
     duration_s: float = 4.0,
     backend: str = "remotion",
+    dna: Optional[Mapping[str, Any]] = None,
 ) -> Dict[str, Any]:
     if template not in TEMPLATES:
         raise AnimationError("UNKNOWN_TEMPLATE", f"unknown template {template!r}")
@@ -345,6 +346,24 @@ def plan_clip(
         for key in ("claim", "source_ref", "source_refs", "evidence_ref",
                     "recording_asset_id", "plate", "video"):
             cleaned.pop(key, None)
+        # Visual parameters are DNA-owned, never shot-owned. Drop any attempt to
+        # carry a font size, margin, colour or effect override through props.
+        for key in ("font", "font_size", "fontSize", "font_size_px", "margin_v_px",
+                    "side_margin_ratio", "max_chars_per_line", "palette_override",
+                    "effect", "effects", "forbidden_effects", "color", "colour"):
+            cleaned.pop(key, None)
+        # Bound the hook text to the DNA line length so it wraps instead of
+        # overflowing the 1080px width or the caption safe zone.
+        contract = hook_visual_contract(dna or {})
+        limit = contract["max_chars_per_line"]
+        for key in ("conflict", "stakes"):
+            text = str(cleaned.get(key) or "").strip()
+            if len(text) > limit * 3:
+                raise AnimationError(
+                    "DNA_VISUAL",
+                    f"title_card {key} has {len(text)} chars; DNA allows at most {limit * 3}",
+                )
+        cleaned["hook_contract"] = contract
     palette = cleaned.get("palette")
     if not isinstance(palette, Mapping) or not palette.get("bg") or not palette.get("ink"):
         raise AnimationError("PROPS", "props.palette must include bg and ink from account DNA")
@@ -495,6 +514,45 @@ def build_receipt(
         "production_ready": False,
         "publish_authorized": False,
         "execution_authorized": False,
+    }
+
+
+def hook_visual_contract(dna: Mapping[str, Any]) -> Dict[str, Any]:
+    """Derive the 3s hook card's visual rules from the account DNA.
+
+    Every value comes from the account file: caption line length, the subtitle
+    safe zone, the display font and the declared forbidden effects. A shot spec
+    cannot raise a font size, shrink a safe margin, or re-enable a banned effect
+    — there is no prop for any of them, so production cannot bypass the DNA by
+    editing parameters.
+    """
+    visual = dna.get("visual") if isinstance(dna.get("visual"), Mapping) else {}
+    caption = visual.get("caption_style") if isinstance(visual, Mapping) else {}
+    caption = caption if isinstance(caption, Mapping) else {}
+    safe = caption.get("safe_zone") if isinstance(caption, Mapping) else {}
+    safe = safe if isinstance(safe, Mapping) else {}
+    brand = dna.get("brand") if isinstance(dna.get("brand"), Mapping) else {}
+    forbidden = brand.get("forbidden_effects") if isinstance(brand, Mapping) else ()
+    forbidden = tuple(str(item) for item in (forbidden or ()))
+    try:
+        max_chars = int(caption.get("max_chars_per_line") or 18)
+    except (TypeError, ValueError):
+        max_chars = 18
+    try:
+        margin_v = int(safe.get("margin_v_px") or 120)
+    except (TypeError, ValueError):
+        margin_v = 120
+    try:
+        side_ratio = float(safe.get("side_margin_ratio") or 0.07)
+    except (TypeError, ValueError):
+        side_ratio = 0.07
+    return {
+        "font": str(caption.get("font") or "Noto Sans CJK SC"),
+        "caption_size_px": int(caption.get("size_px") or 47),
+        "max_chars_per_line": max(8, min(40, max_chars)),
+        "margin_v_px": max(0, min(400, margin_v)),
+        "side_margin_ratio": max(0.0, min(0.25, side_ratio)),
+        "forbidden_effects": forbidden,
     }
 
 

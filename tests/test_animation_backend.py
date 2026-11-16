@@ -601,6 +601,58 @@ def test_trusted_cache_hit_requires_identity_bytes_and_qc():
             assert _trusted_cache_hit(sidecar, output, "fp-1", "a1") is None  # QC mismatch
 
 
+def test_hook_visual_contract_comes_from_dna_and_is_bounded():
+    for account in (ab.ACCOUNT_1024, ab.ACCOUNT_FUTURE):
+        dna = json.loads((ROOT / "config" / "accounts" / f"{account}.json").read_text(encoding="utf-8"))
+        contract = ab.hook_visual_contract(dna)
+        assert contract["max_chars_per_line"] == 18
+        assert contract["margin_v_px"] == 120
+        assert abs(contract["side_margin_ratio"] - 0.07) < 1e-9
+        assert contract["font"] == "Noto Sans CJK SC"
+        assert "bounce" in contract["forbidden_effects"]
+    # A malformed/hostile DNA value cannot blow up the safe zone or line length.
+    hostile = ab.hook_visual_contract({"visual": {"caption_style": {
+        "max_chars_per_line": 100000, "size_px": 900,
+        "safe_zone": {"margin_v_px": -50, "side_margin_ratio": 5},
+    }}})
+    assert hostile["max_chars_per_line"] <= 40
+    assert hostile["margin_v_px"] >= 0 and hostile["side_margin_ratio"] <= 0.25
+
+
+def test_title_card_rejects_oversized_hook_and_strips_visual_overrides():
+    dna = json.loads((ROOT / "config" / "accounts" / f"{ab.ACCOUNT_1024}.json").read_text(encoding="utf-8"))
+    palette = ab.palette_from_dna(dna)
+    base = {"conflict": "短标题", "stakes": "说明", "palette": palette,
+            "font_size_px": 500, "margin_v_px": 0, "effect": "bounce"}
+    plan = ab.plan_clip(account_id=ab.ACCOUNT_1024, template="title_card", placement_id="p1",
+                        asset_id="a1", duration_s=3, props=base, dna=dna)
+    assert "font_size_px" not in plan["props"] and "margin_v_px" not in plan["props"]
+    assert "effect" not in plan["props"]
+    assert plan["props"]["hook_contract"]["max_chars_per_line"] == 18
+    too_long = {"conflict": "冲突" * 40, "stakes": "说明", "palette": palette}
+    try:
+        ab.plan_clip(account_id=ab.ACCOUNT_1024, template="title_card", placement_id="p1",
+                     asset_id="a1", duration_s=3, props=too_long, dna=dna)
+    except ab.AnimationError as exc:
+        assert exc.code == "DNA_VISUAL"
+    else:
+        raise AssertionError("oversized hook was accepted")
+
+
+def test_title_card_production_ignores_caller_test_banner():
+    from animation_render import _composition_props
+    dna = json.loads((ROOT / "config" / "accounts" / f"{ab.ACCOUNT_FUTURE}.json").read_text(encoding="utf-8"))
+    palette = ab.palette_from_dna(dna)
+    spec = {"template": "title_card", "duration_s": 3,
+            "props": {"conflict": "c", "stakes": "s", "test_banner": "伪造测试标记",
+                      "hook_contract": ab.hook_visual_contract(dna)}}
+    production = _composition_props(spec, "production", palette)
+    assert production["testBanner"] == "", production
+    test = _composition_props(spec, "test", palette)
+    assert test["testBanner"] == "伪造测试标记"  # a test render may carry a test banner
+    assert test["visualContract"]["max_chars_per_line"] == 18
+
+
 TESTS = [value for name, value in sorted(globals().items())
          if name.startswith("test_") and callable(value)]
 
