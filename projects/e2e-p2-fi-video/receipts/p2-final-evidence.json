@@ -1,0 +1,58 @@
+{
+  "schema": "contentops.p2-final-evidence/v1",
+  "project": "projects/e2e-p2-fi-video",
+  "status": "TECHNICALLY_COMPLETED_PENDING_HUMAN_REVIEW",
+  "account_binding": "TEST_ONLY_DIAGNOSTIC",
+  "visual_profile_dna": "x-superplay-future-intelligence",
+  "final_video": {
+    "path": "projects/e2e-p2-fi-video/final/e2e-p2-fi-video.mp4",
+    "git_tracking": "IGNORED_GENERATED_ARTIFACT",
+    "sha256": "66ca2673dd915fad41bb6acde1396e5017be17b09bbde389538abc4f4cd24905",
+    "bytes": 4859483,
+    "ffprobe": {
+      "codec_name": "h264",
+      "width": 1080,
+      "height": 1920,
+      "display_aspect_ratio": "9:16",
+      "pix_fmt": "yuv420p",
+      "avg_frame_rate": "30/1",
+      "duration_s": 99.744,
+      "video_frames": 2991,
+      "audio_codec": "aac",
+      "audio_sample_rate": 48000,
+      "audio_channels": 2
+    }
+  },
+  "pipeline": {
+    "motion_backend": "huashu-art-motion",
+    "motion_shots": 14,
+    "motion_state": "OK",
+    "compose": "OK",
+    "easel_engine_id": "v0.3.0",
+    "easel_commit": "bb3c8ff0463f36c202454d74171682ba6e470cb1",
+    "qc_overall": "WARN",
+    "visual_gate_state": "WARN",
+    "visual_gate_light": "yellow",
+    "visual_gate_fast_ratio": 0.0497,
+    "visual_gate_blank_run_s": 0.0,
+    "subtitle_cues": 14,
+    "subtitle_coverage_ratio": 0.963,
+    "narration_provider": "windows_sapi",
+    "asr_backcheck": "SKIPPED_NOT_ACCOUNT_BOUND"
+  },
+  "previews": {
+    "film_contact_sheet": "projects/e2e-p2-fi-video/receipts/visual-contact-sheet.png",
+    "shot_contact_sheet": "projects/e2e-p2-fi-video/receipts/visual-shot-contact-sheet.png",
+    "per_shot_frames": "projects/e2e-p2-fi-video/receipts/shot-contact-001.png .. shot-contact-014.png"
+  },
+  "governance": {
+    "generated": true,
+    "evidence_capable": false,
+    "counts_as_real_recording": false,
+    "production_ready": false,
+    "publish_authorized": false,
+    "human_review": "PENDING_FOUNDER_REVIEW",
+    "auto_publish": "DISABLED"
+  },
+  "scope_note": "This is a TEST_ONLY technical film routed through future-intelligence visual DNA. It is not an approved account production, not a B站 native 16:9 cut, and not evidence for the 1024 account."
+}

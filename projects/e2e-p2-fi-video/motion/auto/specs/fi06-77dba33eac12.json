@@ -1,0 +1,57 @@
+{
+  "grammar": "t2_keynote_ui",
+  "duration": 7.100000000000001,
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": {
+    "bg": "#0F1117",
+    "accent": "#38BDF8",
+    "ink": "#202B31",
+    "sub": "#65747A",
+    "surface": "#F9FBFA",
+    "accent2": "#38BDF8"
+  },
+  "safe": {
+    "top": 0,
+    "bottom": 520,
+    "fill": "#0F1117"
+  },
+  "cues": [
+    {
+      "at": 0.0,
+      "kind": "image",
+      "image": "../../../assets/anchors/fi-1024.png",
+      "text": "MISSING_REAL_R"
+    },
+    {
+      "at": 1.15,
+      "kind": "highlight",
+      "data": {
+        "rect": [
+          0.174537,
+          0.297393,
+          0.615741,
+          0.08
+        ],
+        "fill": 0.954
+      }
+    }
+  ],
+  "contentops_scene": {
+    "segment_id": "fi06",
+    "visual_role": "explain",
+    "template": "engineering-flow",
+    "evidence_ref": null,
+    "style_variant": "brand.palette",
+    "animation_type": "code_focus",
+    "source_asset_id": "fi-1024",
+    "claim_ref": "evidence_led_blocks",
+    "editorial_only": false
+  },
+  "contentops_source": {
+    "asset_id": "fi-1024",
+    "sha256": "f1dda66dc2e3c7371ae8a814bda2001385b933ad80bd47d673d00c0f0713abf5",
+    "source_document_sha256": "bc2e2118d0525911f611968a974ae332dce2f300e1f761f49d3e93bf2be8b89b"
+  }
+}

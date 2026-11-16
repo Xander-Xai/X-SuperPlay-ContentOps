@@ -1,0 +1,90 @@
+{
+  "grammar": "y3_whiteboard",
+  "duration": 7.960000000000008,
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": {
+    "bg": "#0F1117",
+    "accent": "#38BDF8",
+    "ink": "#202B31",
+    "sub": "#65747A",
+    "surface": "#F9FBFA",
+    "accent2": "#38BDF8"
+  },
+  "safe": {
+    "top": 0,
+    "bottom": 520,
+    "fill": "#0F1117"
+  },
+  "cues": [
+    {
+      "at": 0.2,
+      "kind": "draw",
+      "text": "模板",
+      "data": {
+        "icon": "network",
+        "arrow": true
+      }
+    },
+    {
+      "at": 1.612,
+      "kind": "draw",
+      "text": "参数",
+      "data": {
+        "icon": "network",
+        "arrow": true
+      }
+    },
+    {
+      "at": 3.024,
+      "kind": "draw",
+      "text": "来源字节",
+      "data": {
+        "icon": "network",
+        "arrow": true
+      }
+    },
+    {
+      "at": 4.436,
+      "kind": "draw",
+      "text": "品牌 DNA",
+      "data": {
+        "icon": "network",
+        "arrow": true
+      }
+    },
+    {
+      "at": 5.848,
+      "kind": "draw",
+      "text": "后端版本",
+      "data": {
+        "icon": "check",
+        "arrow": false
+      }
+    },
+    {
+      "at": 7.51,
+      "kind": "highlight",
+      "data": {
+        "target": "draw",
+        "index": 4
+      }
+    }
+  ],
+  "contentops_scene": {
+    "segment_id": "fi11",
+    "visual_role": "explain",
+    "template": "engineering-flow",
+    "evidence_ref": null,
+    "style_variant": "brand.palette",
+    "animation_type": "architecture_flow",
+    "source_asset_id": "fi-fingerprint",
+    "claim_ref": "cache_needs_identity",
+    "editorial_only": false
+  },
+  "contentops_source": {
+    "asset_id": "fi-fingerprint",
+    "sha256": "fa4cb985ee22565f850c6e8fae30b80ddd49024ac1b6b0077d3337acde089cd8"
+  }
+}

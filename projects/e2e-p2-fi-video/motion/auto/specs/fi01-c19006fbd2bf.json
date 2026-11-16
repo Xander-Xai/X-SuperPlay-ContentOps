@@ -1,0 +1,63 @@
+{
+  "grammar": "y3_whiteboard",
+  "duration": 7.84,
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": {
+    "bg": "#0F1117",
+    "accent": "#38BDF8",
+    "ink": "#202B31",
+    "sub": "#65747A",
+    "surface": "#F9FBFA",
+    "accent2": "#38BDF8"
+  },
+  "safe": {
+    "top": 0,
+    "bottom": 520,
+    "fill": "#0F1117"
+  },
+  "cues": [
+    {
+      "at": 0.2,
+      "kind": "draw",
+      "text": "一个动画库包打天下",
+      "data": {
+        "icon": "cross",
+        "arrow": true
+      }
+    },
+    {
+      "at": 3.67,
+      "kind": "draw",
+      "text": "三类镜头各就各位",
+      "data": {
+        "icon": "check",
+        "arrow": false
+      }
+    },
+    {
+      "at": 7.39,
+      "kind": "highlight",
+      "data": {
+        "target": "draw",
+        "index": 1
+      }
+    }
+  ],
+  "contentops_scene": {
+    "segment_id": "fi01",
+    "visual_role": "explain",
+    "template": "engineering-flow",
+    "evidence_ref": null,
+    "style_variant": "brand.palette",
+    "animation_type": "comparison_reveal",
+    "source_asset_id": "fi-pain",
+    "claim_ref": null,
+    "editorial_only": true
+  },
+  "contentops_source": {
+    "asset_id": "fi-pain",
+    "sha256": "c434b62d430ac264285f1416046a570a44435433f3aad9b2d7935551f2162184"
+  }
+}

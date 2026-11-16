@@ -1,0 +1,71 @@
+{
+  "schema": "contentops.m5-narration/v1",
+  "engine": "windows_sapi",
+  "voice_provider": "sapi",
+  "voice": "Microsoft Huihui Desktop (zh-CN)",
+  "network": false,
+  "cost": 0,
+  "audio": "assets/voice/narration.wav",
+  "sha256": "aabec004bf9afe44b6f598ff92a185b0a8eb754f3e8b4ce209a5ed575dbb7388",
+  "text_sha256": "0f36c81ce670c14fa39b65eaa10c71f89b9d078175c72ef9351b2bdee59b8fef",
+  "duration_s": 99.743,
+  "lines": [
+    {
+      "start": 0.0,
+      "duration": 7.559
+    },
+    {
+      "start": 7.84,
+      "duration": 7.264
+    },
+    {
+      "start": 15.384,
+      "duration": 6.5
+    },
+    {
+      "start": 22.163,
+      "duration": 6.76
+    },
+    {
+      "start": 29.203,
+      "duration": 6.755
+    },
+    {
+      "start": 36.237,
+      "duration": 6.819
+    },
+    {
+      "start": 43.337,
+      "duration": 6.599
+    },
+    {
+      "start": 50.216,
+      "duration": 6.215
+    },
+    {
+      "start": 56.711,
+      "duration": 7.085
+    },
+    {
+      "start": 64.075,
+      "duration": 6.224
+    },
+    {
+      "start": 70.58,
+      "duration": 7.679
+    },
+    {
+      "start": 78.54,
+      "duration": 7.564
+    },
+    {
+      "start": 86.384,
+      "duration": 6.944
+    },
+    {
+      "start": 93.609,
+      "duration": 6.135
+    }
+  ],
+  "quality_note": "local SAPI voice; robotic, not a production-grade voice track"
+}

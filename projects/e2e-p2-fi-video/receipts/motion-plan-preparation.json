@@ -1,0 +1,53 @@
+{
+  "schema": "contentops.p2-motion-plan-preparation/v1",
+  "backend": "huashu-art-motion",
+  "account_id": "x-superplay-future-intelligence",
+  "project_account_bound": false,
+  "purpose": "TEST_ONLY technical film; DNA supplies palette and grammar only",
+  "compiler": "contentops.media.motion_planner.build_auto_plan",
+  "input_sha256": "387d890e4173e4c30b1b3d674218327c396dae6fb7e3a28b79fb67b357ad4200",
+  "compiler_plan": "motion/auto/shot-plan-387d890e4173.json",
+  "consumed_plan": "motion/shot-plan.json",
+  "shot_count": 14,
+  "derived_focus_rects": {
+    "fi-arch-02": [
+      0.068519,
+      0.172986,
+      0.862963,
+      0.08
+    ],
+    "fi-pin": [
+      0.183333,
+      0.240521,
+      0.580556,
+      0.08
+    ],
+    "fi-contract": [
+      0.183333,
+      0.297393,
+      0.439815,
+      0.08
+    ],
+    "fi-1024": [
+      0.174537,
+      0.297393,
+      0.615741,
+      0.08
+    ],
+    "fi-explain": [
+      0.174537,
+      0.240521,
+      0.54537,
+      0.08
+    ],
+    "fi-qc": [
+      0.174537,
+      0.268957,
+      0.650926,
+      0.08
+    ]
+  },
+  "production_ready": false,
+  "publish_authorized": false,
+  "human_review": "PENDING_FOUNDER_REVIEW"
+}

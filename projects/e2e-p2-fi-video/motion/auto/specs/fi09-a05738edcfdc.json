@@ -1,0 +1,63 @@
+{
+  "grammar": "y3_whiteboard",
+  "duration": 7.364000000000004,
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": {
+    "bg": "#0F1117",
+    "accent": "#38BDF8",
+    "ink": "#202B31",
+    "sub": "#65747A",
+    "surface": "#F9FBFA",
+    "accent2": "#38BDF8"
+  },
+  "safe": {
+    "top": 0,
+    "bottom": 520,
+    "fill": "#0F1117"
+  },
+  "cues": [
+    {
+      "at": 0.2,
+      "kind": "draw",
+      "text": "生成动画：视觉辅助",
+      "data": {
+        "icon": "cross",
+        "arrow": true
+      }
+    },
+    {
+      "at": 3.432,
+      "kind": "draw",
+      "text": "真实来源：证据",
+      "data": {
+        "icon": "check",
+        "arrow": false
+      }
+    },
+    {
+      "at": 6.914,
+      "kind": "highlight",
+      "data": {
+        "target": "draw",
+        "index": 1
+      }
+    }
+  ],
+  "contentops_scene": {
+    "segment_id": "fi09",
+    "visual_role": "explain",
+    "template": "engineering-flow",
+    "evidence_ref": null,
+    "style_variant": "brand.palette",
+    "animation_type": "comparison_reveal",
+    "source_asset_id": "fi-evidence",
+    "claim_ref": "generated_not_evidence",
+    "editorial_only": false
+  },
+  "contentops_source": {
+    "asset_id": "fi-evidence",
+    "sha256": "58fe7286ac4bfdbbaf0146cf54468ac3acc09748df7f524cdb6c30938b7c4c15"
+  }
+}

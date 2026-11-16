@@ -1,0 +1,56 @@
+{
+  "schema": "contentops.m5-source-refs/v1",
+  "refs": [
+    {
+      "id": "easel_pins",
+      "type": "lock_file",
+      "title": "runtime/easel-pins.json — Easel v0.3.0 冻结清单",
+      "path": "runtime/easel-pins.json",
+      "permission": "CREATED_BY_OWNER",
+      "notes": "仓库自己的引擎身份登记；冻结决定写在同一文件里"
+    },
+    {
+      "id": "anim_backend",
+      "type": "source_code",
+      "title": "src/contentops/media/animation_backend.py — 短镜头后端合同",
+      "path": "src/contentops/media/animation_backend.py",
+      "permission": "CREATED_BY_OWNER"
+    },
+    {
+      "id": "motion_contract",
+      "type": "source_code",
+      "title": "src/contentops/media/motion_sample.py — 2–8 秒静音样本门",
+      "path": "src/contentops/media/motion_sample.py",
+      "permission": "CREATED_BY_OWNER"
+    },
+    {
+      "id": "animation_prd",
+      "type": "repo_doc",
+      "title": "docs/PRD-ANIMATION-SKILLS-INTEGRATION.md — 六模板与后端选型",
+      "path": "docs/PRD-ANIMATION-SKILLS-INTEGRATION.md",
+      "permission": "CREATED_BY_OWNER"
+    },
+    {
+      "id": "generated_clip",
+      "type": "source_code",
+      "title": "src/contentops/media/generated_clip.py — 生成片段登记为视觉辅助",
+      "path": "src/contentops/media/generated_clip.py",
+      "permission": "CREATED_BY_OWNER"
+    },
+    {
+      "id": "fi_dna",
+      "type": "account_dna",
+      "title": "config/accounts/x-superplay-future-intelligence.json — 未来智能账号 DNA",
+      "path": "config/accounts/x-superplay-future-intelligence.json",
+      "permission": "CREATED_BY_OWNER",
+      "notes": "账号自己的录屏禁令，写在 evidence 段"
+    },
+    {
+      "id": "easel_sample_qc",
+      "type": "receipt",
+      "title": "projects/m5-easel-pin/receipts/qc-report-m5-easel-pin.json — 45 秒样片技术质检",
+      "path": "projects/m5-easel-pin/receipts/qc-report-m5-easel-pin.json",
+      "permission": "CREATED_BY_OWNER"
+    }
+  ]
+}

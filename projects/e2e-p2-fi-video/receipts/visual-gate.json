@@ -1,0 +1,91 @@
+{
+  "schema": "contentops.visual-gate/v1",
+  "state": "WARN",
+  "gate_light": "yellow",
+  "exit_code": 0,
+  "metrics": {
+    "duration_s": 99.67,
+    "shots": 13,
+    "fast_ratio": 0.0497,
+    "fast_ratio_worst_window": 0.0,
+    "blank_run_s": 0.0,
+    "blue_purple_share": 0.0,
+    "still_ratio": 0.604,
+    "longest_still_s": 5.67,
+    "event_rate": 1.51,
+    "max_event_gap_s": 28.33,
+    "dead_bg": 0.591,
+    "dead_flat": 0.542,
+    "gate_metrics": [
+      "fast_ratio",
+      "blank_run_s",
+      "blue_purple_share"
+    ],
+    "lights": {
+      "fast_ratio": "yellow",
+      "blank_run_s": "green",
+      "blue_purple_share": "green",
+      "fast_ratio_worst_window": "yellow",
+      "top10_share": "--",
+      "drift_ratio": "green",
+      "still_ratio": "--",
+      "longest_still_s": "green",
+      "event_rate": "yellow",
+      "max_event_gap_s": "yellow",
+      "dead_bg": "green",
+      "dead_flat": "yellow",
+      "flat_area": "--",
+      "flat_light": "green",
+      "page_frame_share": "green",
+      "slow_zoom_share": "green",
+      "push_in_per_min": "green",
+      "fast_push_per_min": "--",
+      "push_in_share": "--",
+      "slow_cam_share": "--",
+      "dissolve_share": "green",
+      "local_fade_ratio": "--",
+      "subject_box": "--",
+      "template_sim_share": "--"
+    },
+    "explain": {
+      "summary": "镜头内的快速动作偏少（5.0%，黄线 6%），离翻页感不远",
+      "why": [
+        "60% 的帧完全停着",
+        "画面变化主要靠转场（硬切 11、淡化 1），转场不算镜头内动作"
+      ],
+      "fix": "按 references/镜头语言.md 在「观众这一刻该看哪」的地方补镜头内运动：要看清细节就缓推（0.6–1.5 秒，CAM.track 的 push），在几件东西之间走就横移（glide），要看全貌就拉远（pull）；物自己的大动作（生长、翻页、倒水、录像里的动作）也算，实拍录像本身在动就停住。快推、砸入是重音，只给揭晓、反转、关键数字。每镜匀速慢推几个百分点、淡入淡出、转场都不算数（转场再快也被排除在外）。1 秒左右推近 20% 的缓推和 0.28 秒快推在这项上记分差不多，不用为了过门把推镜改快。也别为了过门每镜塞一次推近：2026-10-12 那支片每 2 秒一推，被判「太多、太快、不 smooth」。",
+      "look": [
+        [
+          "fast_ratio_worst_window",
+          "46–76s 这段几乎没有快动作（前紧后松）"
+        ],
+        [
+          "event_rate",
+          "平均每 10 秒只有 1.5 个视觉事件"
+        ],
+        [
+          "max_event_gap_s",
+          "最长 28.3s 没有任何切换或快动作"
+        ],
+        [
+          "dead_flat",
+          "54% 的画面是一直不变的空底"
+        ]
+      ],
+      "worst_window": {
+        "start_s": 46.0,
+        "end_s": 76.0,
+        "fast_ratio": 0.0
+      },
+      "blank_runs": []
+    }
+  },
+  "production_ready": false,
+  "publish_authorized": false,
+  "human_review": "PENDING_FOUNDER_REVIEW",
+  "video_sha256": "66ca2673dd915fad41bb6acde1396e5017be17b09bbde389538abc4f4cd24905",
+  "frame_sampling": "PASS",
+  "frame_sampling_failures": 0,
+  "contact_sheet": "project://receipts/visual-contact-sheet.png",
+  "reason": null
+}

@@ -1,0 +1,89 @@
+{
+  "schema": "contentops.m5-script-assets/v1",
+  "assets": {
+    "huashu-fi01": {
+      "path": "project://assets/generated/huashu/huashu-fi01.mp4",
+      "sha256": "6545a2c5e0c415280f1c88fddd31af76ebd6dd580b8199d53f58494a094b4581",
+      "evidence_use": "VISUAL_SUPPORT",
+      "generated": true
+    },
+    "huashu-fi02": {
+      "path": "project://assets/generated/huashu/huashu-fi02.mp4",
+      "sha256": "8f773202e17958bbacab39740c80ccc064277931b0bf39c0b78cb53a94825573",
+      "evidence_use": "VISUAL_SUPPORT",
+      "generated": true
+    },
+    "huashu-fi03": {
+      "path": "project://assets/generated/huashu/huashu-fi03.mp4",
+      "sha256": "9fdd10805119945e9298a1ad76f69f40989e0e915315eb3cac4cf8e9ae2b1384",
+      "evidence_use": "VISUAL_SUPPORT",
+      "generated": true
+    },
+    "huashu-fi04": {
+      "path": "project://assets/generated/huashu/huashu-fi04.mp4",
+      "sha256": "24840334bd10edfd499086879010c06f636ebee1527f5293d52b86ae879f6b4d",
+      "evidence_use": "VISUAL_SUPPORT",
+      "generated": true
+    },
+    "huashu-fi05": {
+      "path": "project://assets/generated/huashu/huashu-fi05.mp4",
+      "sha256": "5becf79505bf1225a15ff699487a8420b00f9000268c6bd768e131c1ad3f6d1d",
+      "evidence_use": "VISUAL_SUPPORT",
+      "generated": true
+    },
+    "huashu-fi06": {
+      "path": "project://assets/generated/huashu/huashu-fi06.mp4",
+      "sha256": "87978866e90af659d93088c2fe4539fa1cf1cd0421021d264636048a1c871fc2",
+      "evidence_use": "VISUAL_SUPPORT",
+      "generated": true
+    },
+    "huashu-fi07": {
+      "path": "project://assets/generated/huashu/huashu-fi07.mp4",
+      "sha256": "2aea8177bb2e6717c62f63683f074b84d8b9d0230a36e3c28b919d30ef568006",
+      "evidence_use": "VISUAL_SUPPORT",
+      "generated": true
+    },
+    "huashu-fi08": {
+      "path": "project://assets/generated/huashu/huashu-fi08.mp4",
+      "sha256": "46be1765475ca06bf3d28ff4f94624fa826d593e0078b7dcfd822a213839d7e3",
+      "evidence_use": "VISUAL_SUPPORT",
+      "generated": true
+    },
+    "huashu-fi09": {
+      "path": "project://assets/generated/huashu/huashu-fi09.mp4",
+      "sha256": "7ebaf796dd7e23d0025be7a7dcfdd55aa5df61cd7c95c10e5758a54e4ea10e7e",
+      "evidence_use": "VISUAL_SUPPORT",
+      "generated": true
+    },
+    "huashu-fi10": {
+      "path": "project://assets/generated/huashu/huashu-fi10.mp4",
+      "sha256": "13ae637b9dcb17fa29c679f15c963a790b2f9eee932344386eb317caf66df03b",
+      "evidence_use": "VISUAL_SUPPORT",
+      "generated": true
+    },
+    "huashu-fi11": {
+      "path": "project://assets/generated/huashu/huashu-fi11.mp4",
+      "sha256": "4c5fefb6e3b775587e2a8c67aa8a296c4a31f94b49b8c45ed923e8628136d19c",
+      "evidence_use": "VISUAL_SUPPORT",
+      "generated": true
+    },
+    "huashu-fi12": {
+      "path": "project://assets/generated/huashu/huashu-fi12.mp4",
+      "sha256": "595573fbd68a746c3d49b5e2d614a1591d73b49519db83c99341b479677f8903",
+      "evidence_use": "VISUAL_SUPPORT",
+      "generated": true
+    },
+    "huashu-fi13": {
+      "path": "project://assets/generated/huashu/huashu-fi13.mp4",
+      "sha256": "8cf0e9eac7815cf2c29ac1bfd8013fee66fdf25e82837cc951a8d60ee977ac7c",
+      "evidence_use": "VISUAL_SUPPORT",
+      "generated": true
+    },
+    "huashu-fi14": {
+      "path": "project://assets/generated/huashu/huashu-fi14.mp4",
+      "sha256": "d305dec3464cbc79f77d109fd6d277482aad91ddccf552a5c088b132d2343f3d",
+      "evidence_use": "VISUAL_SUPPORT",
+      "generated": true
+    }
+  }
+}

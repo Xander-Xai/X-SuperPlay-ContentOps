@@ -1,0 +1,13 @@
+{
+  "schema": "contentops.narration-beats/v1",
+  "beats": [
+    {
+      "placement_id": "fi01",
+      "claim_id": "E-fi01"
+    },
+    {
+      "placement_id": "fi13",
+      "claim_id": "E-fi13"
+    }
+  ]
+}

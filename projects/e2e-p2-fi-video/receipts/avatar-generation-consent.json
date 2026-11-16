@@ -1,0 +1,13 @@
+{
+  "schema": "contentops.avatar-generation-consent/v1",
+  "project": "projects/e2e-p2-fi-video",
+  "run_id": "m5-1794857744",
+  "provider": "minimax-h3",
+  "decision": "NOT_CONFIRMED",
+  "origin": "stdin_unavailable",
+  "quota_budget": null,
+  "quota_policy": "SUBSCRIPTION only; PAYG, credit packs and vouchers disabled",
+  "recorded_at": "2026-11-16T19:35:44Z",
+  "reason": "no human answer was available; H3 generation was skipped",
+  "human_confirmation": false
+}

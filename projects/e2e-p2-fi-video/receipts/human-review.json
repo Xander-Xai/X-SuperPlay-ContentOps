@@ -1,0 +1,21 @@
+{
+  "project": "projects/e2e-p2-fi-video",
+  "video": "projects/e2e-p2-fi-video/final/e2e-p2-fi-video.mp4",
+  "engine": "easel",
+  "voice_quality": "fallback",
+  "bundle_id": null,
+  "bundle_sha256": null,
+  "production_ready": false,
+  "state": "PENDING_FOUNDER_REVIEW",
+  "auto_qc_result": "WARN",
+  "auto_qc_checks": 22,
+  "auto_qc_fails": [],
+  "auto_qc_warns": [
+    "real_evidence_present"
+  ],
+  "reviewer": null,
+  "reviewed_at": null,
+  "scores": null,
+  "decision": null,
+  "note": "scores are null until a human fills them; this file is not an approval"
+}

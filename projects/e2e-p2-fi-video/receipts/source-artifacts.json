@@ -1,0 +1,89 @@
+{
+  "schema": "contentops.m5-sources/v1",
+  "artifacts": [
+    {
+      "id": "easel_pins",
+      "source_type": "lock_file",
+      "title": "runtime/easel-pins.json — Easel v0.3.0 冻结清单",
+      "path": "runtime/easel-pins.json",
+      "sha256": "be94a151b63b09862bc9f7d62dca89574f8512b2cfc03c32fc9318e48191d0e6",
+      "bytes": 2877,
+      "permission": "CREATED_BY_OWNER",
+      "captured_at": "2026-11-16T19:52:47Z",
+      "evidence_capable": true,
+      "notes": "仓库自己的引擎身份登记；冻结决定写在同一文件里"
+    },
+    {
+      "id": "anim_backend",
+      "source_type": "source_code",
+      "title": "src/contentops/media/animation_backend.py — 短镜头后端合同",
+      "path": "src/contentops/media/animation_backend.py",
+      "sha256": "5cb41ba561b2f772ffb9b266fb4a03dd6463f857c616bd920e98070f9b5071a6",
+      "bytes": 32512,
+      "permission": "CREATED_BY_OWNER",
+      "captured_at": "2026-11-16T19:52:47Z",
+      "evidence_capable": true,
+      "notes": ""
+    },
+    {
+      "id": "motion_contract",
+      "source_type": "source_code",
+      "title": "src/contentops/media/motion_sample.py — 2–8 秒静音样本门",
+      "path": "src/contentops/media/motion_sample.py",
+      "sha256": "29643eb028625b5290035ebe766cdd3097ea7cbe2ecc00bdc30ef406bbe73497",
+      "bytes": 6619,
+      "permission": "CREATED_BY_OWNER",
+      "captured_at": "2026-11-16T19:52:47Z",
+      "evidence_capable": true,
+      "notes": ""
+    },
+    {
+      "id": "animation_prd",
+      "source_type": "repo_doc",
+      "title": "docs/PRD-ANIMATION-SKILLS-INTEGRATION.md — 六模板与后端选型",
+      "path": "docs/PRD-ANIMATION-SKILLS-INTEGRATION.md",
+      "sha256": "3f1c23b908b570052c9c8ae882fd654c8dc39a8cd8395114624a8f2a6d95d45c",
+      "bytes": 24176,
+      "permission": "CREATED_BY_OWNER",
+      "captured_at": "2026-11-16T19:52:47Z",
+      "evidence_capable": true,
+      "notes": ""
+    },
+    {
+      "id": "generated_clip",
+      "source_type": "source_code",
+      "title": "src/contentops/media/generated_clip.py — 生成片段登记为视觉辅助",
+      "path": "src/contentops/media/generated_clip.py",
+      "sha256": "62abe421bb95563b966a438ddd266f9b458bb18bb3e94e2ee781a3dfcf2d9b2d",
+      "bytes": 7767,
+      "permission": "CREATED_BY_OWNER",
+      "captured_at": "2026-11-16T19:52:47Z",
+      "evidence_capable": true,
+      "notes": ""
+    },
+    {
+      "id": "fi_dna",
+      "source_type": "account_dna",
+      "title": "config/accounts/x-superplay-future-intelligence.json — 未来智能账号 DNA",
+      "path": "config/accounts/x-superplay-future-intelligence.json",
+      "sha256": "25f0230069f0cb266518c90ce17083eca53b345845b4382f0a53a9e51f37ca98",
+      "bytes": 38205,
+      "permission": "CREATED_BY_OWNER",
+      "captured_at": "2026-11-16T19:52:47Z",
+      "evidence_capable": true,
+      "notes": "账号自己的录屏禁令，写在 evidence 段"
+    },
+    {
+      "id": "easel_sample_qc",
+      "source_type": "receipt",
+      "title": "projects/m5-easel-pin/receipts/qc-report-m5-easel-pin.json — 45 秒样片技术质检",
+      "path": "projects/m5-easel-pin/receipts/qc-report-m5-easel-pin.json",
+      "sha256": "c93629a86923fc5c282a8e73596a4a4449317f1aa490bcd6bc82a4a4f95af1e0",
+      "bytes": 3439,
+      "permission": "CREATED_BY_OWNER",
+      "captured_at": "2026-11-16T19:52:47Z",
+      "evidence_capable": true,
+      "notes": ""
+    }
+  ]
+}
