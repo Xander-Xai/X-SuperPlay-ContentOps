@@ -3,6 +3,7 @@ import type { FC } from "react";
 import { AnnotationCard, AnnotationProps } from "./AnnotationCard";
 import { RagFlow, RagProps } from "./RagFlow";
 import { RecordingMark, RecordingMarkProps } from "./RecordingMark";
+import { TitleCard, TitleCardProps } from "./TitleCard";
 
 const annotationDefaults: AnnotationProps = {
   title: "对比",
@@ -49,6 +50,15 @@ const markDefaults: RecordingMarkProps = {
   palette: annotationDefaults.palette,
 };
 
+const titleDefaults: TitleCardProps = {
+  conflict: "看起来跑通了，其实是假的",
+  stakes: "前 3 秒先给出冲突，再谈怎么做",
+  kicker: "AI 工具实测",
+  durationSeconds: 3,
+  testBanner: "",
+  palette: annotationDefaults.palette,
+};
+
 export const RemotionRoot: FC = () => {
   return (
     <>
@@ -92,6 +102,21 @@ export const RemotionRoot: FC = () => {
         defaultProps={markDefaults}
         calculateMetadata={({ props }) => ({
           durationInFrames: frames(props.durationSeconds || 4),
+          fps: 30,
+          width: 1080,
+          height: 1920,
+        })}
+      />
+      <Composition
+        id="TitleCard"
+        component={TitleCard}
+        durationInFrames={90}
+        fps={30}
+        width={1080}
+        height={1920}
+        defaultProps={titleDefaults}
+        calculateMetadata={({ props }) => ({
+          durationInFrames: frames(props.durationSeconds || 3),
           fps: 30,
           width: 1080,
           height: 1920,

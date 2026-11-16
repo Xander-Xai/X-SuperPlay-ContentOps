@@ -2,8 +2,8 @@
 
 [简体中文](PRD-ANIMATION-SKILLS-INTEGRATION.md) | [English](PRD-ANIMATION-SKILLS-INTEGRATION.en.md)
 
-> Last verified: 2026-11-16
-> 状态：**Implemented for P0 clip render** — Remotion 短镜头已在本机渲染并接入 M5 调度；Motion Canvas 与 Manim 为 BLOCKED，不是 VERIFIED。
+> Last verified: 2026-11-17
+> 状态：**Implemented for P0 clip render** — Remotion 短镜头已在本机渲染并接入 M5 调度；Motion Canvas 与 Manim 为 BLOCKED，不是 VERIFIED。2026-11-17 新增并本机验证 DNA 驱动的 3 秒冲突式 `title_card` 与可信渲染缓存。
 > 本文是需求与验收记录。生成片段不是真实录屏，也不能代替 Founder 审核。
 
 ## 1. 背景、目标和非目标
@@ -188,3 +188,22 @@ Easel pin 仍是 `runtime/easel-pins.json` 的 `v0.3.0` / `bb3c8ff`。本变更�
 回滚：删除本分支对 `stage_motion` 的调度分支，并移除 `extensions/animation-remotion` 与锁文件。Huashu 与 Easel pin 不依赖这些文件。`npm` 卸载是删掉该目录的 `node_modules`，不要动 `.runtime/easel-v030`。
 
 故障：`RUNTIME_MISSING` 表示未执行上面的 npm 安装或没有 Node/FFmpeg/浏览器。`VERSION_MISMATCH` 表示锁文件不是 4.0.543。`RENDER_FAILED` 时看 `projects/<slug>/work/animation/*.render.log`。不要把静态图当成渲染成功。
+
+## 19. DNA 冲突式标题镜头与可信渲染缓存（2026-11-17）
+
+本节独立于 Issue #192 / PR #193 跟踪的 Huashu 六模板工作，不新增第二时间线，也不新增品牌配置。
+
+**冲突式标题镜头。** `title_card` 此前已在 `SHOT_COMPATIBILITY` 声明，但没有 composition 和渲染路由。`extensions/animation-remotion/src/TitleCard.tsx` 补齐这一空白：面向 1024 账号的 3 秒冲突钩子镜头。所有颜色都从账号 DNA 调色板解析（`animation_backend.palette_from_dna`），包括从 `brand.palette.problem` 复制的 `problem` 令牌。镜头 spec 不能注入颜色或证据声明——`plan_clip` 在规划前丢弃 `claim`、`source_refs`、`recording_asset_id` 与任何录屏路径，该镜头始终为 `generated=true`、`evidence_capable=false`、`counts_as_real_recording=false`。动效只有淡入/位移，符合两账号的 `forbidden_effects`。逐帧检查发现正文用 `ink` 令牌压在 DNA 深色底上不可读，正文已改用 DNA 的 `surface` 令牌；组件内没有硬编码颜色。
+
+**可信渲染缓存。** `animation_render.py` 此前会计算指纹但从不据此跳过渲染（`reused` 恒为 False）。`animation_backend.clip_fingerprint` 现在绑定后端版本、模板、账号、placement、资产、用途、时长、props、完整 DNA 摘要、引用来源摘要，以及 composition 源码摘要（`src/*.tsx` + `package.json`）。只有当新指纹与 sidecar 一致、文件实际 SHA-256 仍等于记录值、样本仍通过 `check_motion_sample` 时，才会复用缓存。仅凭文件名命中永远不成立。DNA、参数、来源、模板或版本任一变化都会使缓存失效。
+
+**本机验证（2026-11-17，Remotion 4.0.543、Chrome、FFmpeg 8.1.1）：**
+
+| 样片 | 模板 | 路径（逻辑） | SHA-256 | ffprobe |
+|---|---|---|---|---|
+| 1024 冲突钩子 | `title_card` | `project://assets/generated/remotion/clip-title-hook.mp4` | `9c1b5d54f7e5d55bd4251a8eb740cf032f48734da52e7ace18f1cda098a8657c` | h264, 1080x1920, yuv420p, 30/1, 3.000s, 无音轨 |
+| 未来智能 RAG | `rag_flow` | `project://assets/generated/remotion/clip-rag-fi.mp4` | `c9582e235e103d948cef0c62e5ea961eb577a7a62afba3dc750c97e121ce9730` | h264, 1080x1920, yuv420p, 30/1, 6.000s, 无音轨 |
+
+`python tests/test_animation_backend.py` 通过 34/34。`tsc --noEmit` 通过。同一命令重渲返回 `state=REUSED, reused=true` 且 SHA 不变；把 `duration_s` 由 3 改为 4 返回 `EXECUTED` 并产生新指纹与新 SHA；修改模板源码使标题镜头缓存失效并强制重渲。修复前后都抽取了帧做肉眼检查。
+
+**验收边界。** 两个样片均为 `purpose=test`、`TEST_PURPOSE` 门控、`production_ready=false`、`publish_authorized=false`、`human_review=PENDING_FOUNDER_REVIEW`。当前没有用户提供的 1024 真实录屏，因此 1024 正式生产仍为 `MISSING_REAL_RECORDING`。未来智能 RAG 节点是原理示意（`原理示意，非真实系统输出`），不是真实系统轨迹。未合成任何整片，未发布任何视频。

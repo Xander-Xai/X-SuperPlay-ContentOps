@@ -50,6 +50,7 @@ TEMPLATES = {
     "comparison": {"composition": "AnnotationCard", "backend": "remotion"},
     "rag_flow": {"composition": "RagFlow", "backend": "remotion"},
     "recording_mark": {"composition": "RecordingMark", "backend": "remotion"},
+    "title_card": {"composition": "TitleCard", "backend": "remotion"},
 }
 
 SHOT_COMPATIBILITY = {
@@ -334,6 +335,16 @@ def plan_clip(
             raise AnimationError("PROPS", "recording_mark box must fit in normalized frame coordinates")
         for key in ("plate", "video", "recording_sha256"):
             cleaned.pop(key, None)
+    if template == "title_card":
+        missing = [key for key in ("conflict", "stakes")
+                   if not str(cleaned.get(key) or "").strip()]
+        if missing:
+            raise AnimationError("PROPS", "title_card needs " + ", ".join(missing))
+        # A hook card is an editorial title. It must never carry an evidence
+        # claim or a source path; keep only display fields.
+        for key in ("claim", "source_ref", "source_refs", "evidence_ref",
+                    "recording_asset_id", "plate", "video"):
+            cleaned.pop(key, None)
     palette = cleaned.get("palette")
     if not isinstance(palette, Mapping) or not palette.get("bg") or not palette.get("ink"):
         raise AnimationError("PROPS", "props.palette must include bg and ink from account DNA")
@@ -492,6 +503,51 @@ def props_digest(props: Mapping[str, Any]) -> str:
     payload = json.dumps(props, ensure_ascii=False, sort_keys=True,
                          separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(payload).hexdigest()
+
+
+def clip_fingerprint(
+    *,
+    account_id: str,
+    template: str,
+    placement_id: str,
+    asset_id: str,
+    purpose: str,
+    duration_s: float,
+    props: Mapping[str, Any],
+    dna: Mapping[str, Any],
+    source_digests: Sequence[str] = (),
+    version: str = REMOTION_VERSION,
+    backend: str = "remotion",
+    template_digest: str = "",
+) -> str:
+    """Identity of one render job. A cache hit requires an exact match.
+
+    Brand DNA, render parameters, referenced source bytes, backend version and
+    purpose all participate. A change to any of them changes the fingerprint,
+    so a stale MP4 can never be replayed under a new identity. The filename is
+    deliberately not part of the identity.
+    """
+    import json
+    canonical_sources = sorted({str(value).strip().lower() for value in source_digests
+                                if str(value).strip()})
+    payload = {
+        "schema": "contentops.clip-fingerprint/v1",
+        "backend": normalize_backend(backend),
+        "version": str(version),
+        "account_id": str(account_id),
+        "template": str(template),
+        "placement_id": str(placement_id),
+        "asset_id": str(asset_id),
+        "purpose": str(purpose),
+        "duration_s": round(float(duration_s), 3),
+        "props": props_digest(props),
+        "dna": props_digest(dna),
+        "sources": canonical_sources,
+        "template_digest": str(template_digest or "").strip().lower(),
+    }
+    encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True,
+                         separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def palette_from_dna(dna: Mapping[str, Any]) -> Dict[str, str]:

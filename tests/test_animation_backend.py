@@ -519,6 +519,88 @@ def test_palette_comes_from_account_dna_not_a_hardcoded_brand():
     assert palette["accent"] == "#ff00aa"
 
 
+def test_title_card_contract_drops_evidence_fields_and_requires_hook():
+    dna = json.loads((ROOT / "config" / "accounts" / f"{ab.ACCOUNT_1024}.json").read_text(encoding="utf-8"))
+    palette = ab.palette_from_dna(dna)
+    props = {"conflict": "看起来跑通了，其实是假的", "stakes": "前 3 秒给出冲突",
+             "kicker": "AI 工具实测", "claim": "C-01", "source_refs": ["repo://x.md"],
+             "palette": palette}
+    plan = ab.plan_clip(account_id=ab.ACCOUNT_1024, template="title_card", placement_id="p1",
+                        asset_id="title-1", duration_s=3, props=props)
+    assert plan["composition"] == "TitleCard"
+    assert plan["counts_as_real_recording"] is False
+    assert "claim" not in plan["props"] and "source_refs" not in plan["props"]
+    for missing in ("conflict", "stakes"):
+        try:
+            ab.plan_clip(account_id=ab.ACCOUNT_1024, template="title_card", placement_id="p1",
+                         asset_id="title-1", props={"palette": palette, "conflict": "x", "stakes": "y",
+                                                    **{missing: ""}})
+        except ab.AnimationError as exc:
+            assert exc.code == "PROPS"
+        else:
+            raise AssertionError(f"title_card accepted empty {missing}")
+
+
+def test_title_card_composition_uses_dna_problem_colour_not_a_shot_prop():
+    from animation_render import _composition_props
+    dna = json.loads((ROOT / "config" / "accounts" / f"{ab.ACCOUNT_1024}.json").read_text(encoding="utf-8"))
+    palette = ab.palette_from_dna(dna)
+    palette["problem"] = "#C84D42"
+    spec = {"template": "title_card", "duration_s": 3,
+            "props": {"conflict": "c", "stakes": "s", "problem": "#FFFFFF"}}
+    out = _composition_props(spec, "test", palette)
+    assert out["palette"]["problem"] == "#C84D42"
+    assert out["palette"]["bg"] == "#0F1117"
+    assert out["palette"]["accent"] == "#38BDF8"
+    assert "测试用途" in out["testBanner"]
+
+
+def test_clip_fingerprint_invalidates_on_dna_params_source_and_version():
+    base = dict(account_id=ab.ACCOUNT_1024, template="title_card", placement_id="p1",
+                asset_id="a1", purpose="test", duration_s=3.0,
+                props={"conflict": "c", "stakes": "s"}, dna={"v": 1},
+                source_digests=["a" * 64], version=ab.REMOTION_VERSION)
+    original = ab.clip_fingerprint(**base)
+    assert original == ab.clip_fingerprint(**base)
+    assert ab.clip_fingerprint(**{**base, "dna": {"v": 2}}) != original
+    assert ab.clip_fingerprint(**{**base, "props": {"conflict": "changed"}}) != original
+    assert ab.clip_fingerprint(**{**base, "source_digests": ["b" * 64]}) != original
+    assert ab.clip_fingerprint(**{**base, "version": "0.0.0"}) != original
+    assert ab.clip_fingerprint(**{**base, "purpose": "production"}) != original
+    assert ab.clip_fingerprint(**{**base, "template_digest": "a" * 64}) != original
+
+
+def test_trusted_cache_hit_requires_identity_bytes_and_qc():
+    from animation_render import _trusted_cache_hit
+    from unittest import mock
+    with tempfile.TemporaryDirectory() as temp:
+        root = Path(temp)
+        output = root / "clip.mp4"
+        sidecar = root / "clip.mp4.receipt.json"
+        payload = {"fingerprint": "fp-1", "output_sha256": "abc123",
+                   "output": {"output_sha256": "abc123"}}
+        sidecar.write_text(json.dumps(payload), encoding="utf-8")
+        with mock.patch("animation_render._sha256", return_value="abc123"), \
+             mock.patch("animation_render._ffprobe", return_value={}), \
+             mock.patch("animation_render.check_motion_sample",
+                        return_value={"state": "TECHNICALLY_CHECKED"}):
+            assert _trusted_cache_hit(sidecar, output, "fp-1", "a1") is None  # no output file
+            output.write_bytes(b"video")
+            hit = _trusted_cache_hit(sidecar, output, "fp-1", "a1")
+            assert hit and hit["receipt_name"] == "animation-a1.json"
+            assert _trusted_cache_hit(sidecar, output, "fp-2", "a1") is None  # identity mismatch
+        with mock.patch("animation_render._sha256", return_value="different"), \
+             mock.patch("animation_render._ffprobe", return_value={}), \
+             mock.patch("animation_render.check_motion_sample",
+                        return_value={"state": "TECHNICALLY_CHECKED"}):
+            assert _trusted_cache_hit(sidecar, output, "fp-1", "a1") is None  # byte mismatch
+        with mock.patch("animation_render._sha256", return_value="abc123"), \
+             mock.patch("animation_render._ffprobe", return_value={}), \
+             mock.patch("animation_render.check_motion_sample",
+                        return_value={"state": "FAILED"}):
+            assert _trusted_cache_hit(sidecar, output, "fp-1", "a1") is None  # QC mismatch
+
+
 TESTS = [value for name, value in sorted(globals().items())
          if name.startswith("test_") and callable(value)]
 

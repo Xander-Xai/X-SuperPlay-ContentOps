@@ -12,6 +12,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -28,6 +29,7 @@ from contentops.media.animation_backend import (  # noqa: E402
     REMOTION_VERSION,
     AnimationError,
     build_receipt,
+    clip_fingerprint,
     palette_from_dna,
     plan_clip,
     preflight,
@@ -48,6 +50,45 @@ def _sha256(path: Path) -> str:
         for block in iter(lambda: handle.read(1 << 20), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def _template_digest() -> str:
+    """Hash the composition sources so a template edit invalidates every clip.
+
+    Covers the registration entry, all component sources and the pinned
+    dependency manifest. A change to any of them changes the rendered pixels,
+    therefore it must change the cache identity.
+    """
+    sources = sorted(
+        [REMOTION_ROOT / "package.json"] + list((REMOTION_ROOT / "src").glob("*.tsx"))
+    )
+    digest = hashlib.sha256()
+    for path in sources:
+        if path.is_file():
+            digest.update(path.name.encode("utf-8"))
+            digest.update(_sha256(path).encode("ascii"))
+    return digest.hexdigest()
+
+
+def _source_digests(spec_file: Path, raw: Dict[str, Any],
+                    trusted_recording: Optional[Dict[str, Any]]) -> List[str]:
+    """Collect byte identities that must invalidate a cached clip.
+
+    The spec file carries the references; a verified recording carries the
+    actual staged bytes; inline SHA-256 values in props bind any registered
+    source. Together they ensure a source change cannot replay a stale clip.
+    """
+    digests = [_sha256(spec_file)]
+    if trusted_recording:
+        for key in ("validated_sha256", "sha256", "source_document_sha256"):
+            value = str(trusted_recording.get(key) or "")
+            if len(value) == 64 and all(char in "0123456789abcdef" for char in value.lower()):
+                digests.append(value.lower())
+    for value in (raw.get("props") or {}).values():
+        text = str(value) if not isinstance(value, (dict, list)) else ""
+        if len(text) == 64 and all(char in "0123456789abcdef" for char in text.lower()):
+            digests.append(text.lower())
+    return digests
 
 
 def _safe_motion_check(checked: Dict[str, Any]) -> Dict[str, Any]:
@@ -187,6 +228,20 @@ def _composition_props(spec: Dict[str, Any], purpose: str, palette: Dict[str, st
             "sourceInSeconds": source_in_seconds,
             "box": props["box"],
             "palette": palette,
+        }
+    if spec["template"] == "title_card":
+        banner = props.get("test_banner") or ""
+        if purpose == "test" and not banner:
+            banner = "测试用途 · 技术样片"
+        # All colours, including "problem", are resolved from the DNA palette
+        # by the caller. A shot spec cannot inject or override a brand colour.
+        return {
+            "conflict": props["conflict"],
+            "stakes": props["stakes"],
+            "kicker": props.get("kicker") or "",
+            "durationSeconds": spec["duration_s"],
+            "testBanner": banner,
+            "palette": dict(palette),
         }
     banner = props.get("test_banner") or ""
     if purpose == "test" and not banner:
@@ -403,6 +458,43 @@ def _blocked_execution(decision: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def _trusted_cache_hit(sidecar: Path, output: Path, fingerprint: str,
+                       asset_id: str) -> Optional[Dict[str, Any]]:
+    """Return reusable receipt data only if identity, bytes and QC all still hold.
+
+    Checks, in order: sidecar parses; fingerprint matches the current job;
+    the sidecar's recorded output hash matches the file's actual bytes; the
+    output is a regular file; and the sample still passes the motion gate.
+    Any failure means MISS and the caller renders normally. No filename-based
+    shortcut is permitted.
+    """
+    if not sidecar.is_file() or not output.is_file():
+        return None
+    try:
+        payload = json.loads(sidecar.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if str(payload.get("fingerprint") or "") != fingerprint:
+        return None
+    recorded = str(payload.get("output_sha256") or "").lower()
+    recorded_hash = str((payload.get("output") or {}).get("output_sha256") or recorded).lower()
+    actual = _sha256(output)
+    if recorded_hash != actual:
+        return None
+    try:
+        probe = _ffprobe(output)
+        checked = check_motion_sample(output, probe=probe)
+    except (OSError, ValueError):
+        return None
+    if checked.get("state") != "TECHNICALLY_CHECKED":
+        return None
+    return {
+        "sha256": actual,
+        "receipt_name": f"animation-{asset_id}.json",
+        "receipt": payload,
+    }
+
+
 def render(project: Path, spec_path: Path, *, placement_id: str, asset_id: str,
            account_id: str, purpose: str) -> int:
     project = project.resolve()
@@ -416,6 +508,13 @@ def render(project: Path, spec_path: Path, *, placement_id: str, asset_id: str,
     backend = str(raw.get("backend") or "remotion")
     dna = _load_dna(account_id)
     palette = palette_from_dna(dna)
+    # The conflict colour is a declared DNA brand token, never a per-shot prop.
+    # Copy it from brand.palette into the resolved palette so the composition
+    # receives only DNA-authoritative colours.
+    brand_palette = (dna.get("brand") or {}).get("palette") or {}
+    problem = str(brand_palette.get("problem") or "").strip()
+    if re.fullmatch(r"#[0-9a-fA-F]{6}", problem):
+        palette["problem"] = problem
     template = str(raw.get("template") or "")
     trusted_recording = None
     recording_id = str((raw.get("props") or {}).get("recording_asset_id") or "")
@@ -459,6 +558,7 @@ def render(project: Path, spec_path: Path, *, placement_id: str, asset_id: str,
         "annotation": "annotation",
         "comparison": "comparison",
         "recording_mark": "recording_mark",
+        "title_card": "title_card",
     }.get(str(raw.get("template") or ""), str(raw.get("template") or "")))
     readiness = environment_probe(backend)
     decision = select_backend(
@@ -491,6 +591,39 @@ def render(project: Path, spec_path: Path, *, placement_id: str, asset_id: str,
     props_path = work / f"{asset_id}.props.json"
     raw_mp4 = work / f"{asset_id}.raw.mp4"
     final = project / "assets" / "generated" / "remotion" / f"{asset_id}.mp4"
+    sidecar = final.with_name(final.name + ".receipt.json")
+    fingerprint = clip_fingerprint(
+        account_id=account_id,
+        template=template,
+        placement_id=placement_id,
+        asset_id=asset_id,
+        purpose=purpose,
+        duration_s=float(spec["duration_s"]),
+        props={**props, "palette": palette},
+        dna=dna,
+        source_digests=_source_digests(spec_file, raw, trusted_recording),
+        version=REMOTION_VERSION,
+        backend=backend,
+        template_digest=_template_digest(),
+    )
+    # Trusted cache: replay only when the full identity matches AND the bytes
+    # on disk still hash to the recorded value AND the sample still passes QC.
+    # A filename match alone is never enough; any DNA/params/source/version
+    # change produces a different fingerprint and falls through to a render.
+    cached = _trusted_cache_hit(sidecar, final, fingerprint, asset_id)
+    if cached is not None:
+        return _emit({
+            "execution": {
+                "state": "REUSED",
+                "reused": True,
+                "adapter_receipt": "project://receipts/" + cached["receipt_name"],
+            },
+            "receipt": "project://receipts/" + cached["receipt_name"],
+            "decision": {"state": "REUSED", "detail": "fingerprint, bytes and sample QC match",
+                         "production_gate": gate.get("code")},
+            "sha256": cached["sha256"],
+            "fingerprint": fingerprint,
+        }, 0)
     public_temp = None
     public_dir = None
     public_video = None
@@ -568,16 +701,7 @@ def render(project: Path, spec_path: Path, *, placement_id: str, asset_id: str,
     receipt_path = project / "receipts" / f"animation-{asset_id}.json"
     receipt_path.parent.mkdir(parents=True, exist_ok=True)
     receipt_path.write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    sidecar = final.with_name(final.name + ".receipt.json")
-    fingerprint_input = json.dumps({
-        "asset_id": asset_id,
-        "backend": "remotion",
-        "backend_version": REMOTION_VERSION,
-        "source_spec_sha256": _sha256(spec_file),
-        "props": spec.get("props") or {},
-        "duration_s": spec["duration_s"],
-    }, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
-    fingerprint = hashlib.sha256(fingerprint_input).hexdigest()
+    source_digests = _source_digests(spec_file, raw, trusted_recording)
     sidecar_payload = {
         "schema": "contentops.video-receipt/v1",
         "run_id": f"{project.name}-{asset_id}-{fingerprint[:12]}",
@@ -586,7 +710,13 @@ def render(project: Path, spec_path: Path, *, placement_id: str, asset_id: str,
         "account_id": account_id,
         "placement_id": placement_id,
         "asset_id": asset_id,
+        "template": template,
         "fingerprint": fingerprint,
+        "template_digest": _template_digest(),
+        "dna_digest": hashlib.sha256(json.dumps(dna, ensure_ascii=False, sort_keys=True,
+                                                separators=(",", ":")).encode("utf-8")).hexdigest(),
+        "source_digests": source_digests,
+        "source_rights": "GENERATED_LOCAL_NO_COMMERCIAL_CLEARANCE",
         "output_sha256": receipt["sha256"],
         "output": {"path": logical, "repo_path": final.relative_to(project).as_posix(),
                    "output_sha256": receipt["sha256"]},
@@ -624,6 +754,7 @@ def render(project: Path, spec_path: Path, *, placement_id: str, asset_id: str,
         "decision": {"state": "RENDERED", "detail": checked.get("reason") or "technically checked",
                      "production_gate": gate.get("code")},
         "sha256": receipt["sha256"],
+        "fingerprint": fingerprint,
     }, 0)
 
 

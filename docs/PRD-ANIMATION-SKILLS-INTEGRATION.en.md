@@ -2,8 +2,8 @@
 
 [简体中文](PRD-ANIMATION-SKILLS-INTEGRATION.md) | [English](PRD-ANIMATION-SKILLS-INTEGRATION.en.md)
 
-> Last verified: 2026-11-16
-> Status: **P0 clip render implemented.** Remotion short clips rendered locally and dispatched from M5. Motion Canvas and Manim are BLOCKED, not VERIFIED.
+> Last verified: 2026-11-17
+> Status: **P0 clip render implemented.** Remotion short clips rendered locally and dispatched from M5. Motion Canvas and Manim are BLOCKED, not VERIFIED. A DNA-driven 3s conflict `title_card` and a trusted render cache were added and verified locally on 2026-11-17.
 > A generated clip is not a screen recording and does not replace Founder review.
 
 ## 1. Background, goals, non-goals
@@ -136,3 +136,22 @@ Receipts use `project://` paths only.
 If the organization grows past 3 employees, stop rendering until a Remotion company license exists. Windows Chrome launch uses `--gl angle`. Transcode forces `yuv420p` and `color_range tv` because `yuvj420p` fails the sample gate.
 
 Rollback is deleting the clip-dispatch branch in `stage_motion` plus `extensions/animation-remotion` and the lockfile. Huashu and the Easel pin do not depend on them. Do not touch `.runtime/easel-v030`.
+
+## 19. DNA conflict hook and trusted clip cache (2026-11-17)
+
+This section is independent of the Huashu six-template work tracked in Issue #192 / PR #193. It adds no second timeline and no new brand config.
+
+**Conflict title card.** `title_card` was declared in `SHOT_COMPATIBILITY` but had no composition or render route. `extensions/animation-remotion/src/TitleCard.tsx` fills that gap: a 3s hook card for the 1024 account. Every colour resolves from the account DNA palette (`animation_backend.palette_from_dna`), including the `problem` token copied from `brand.palette.problem`. A shot spec cannot inject a colour or an evidence claim — `plan_clip` drops `claim`, `source_refs`, `recording_asset_id` and any recording path before planning, and the card is always `generated=true`, `evidence_capable=false`, `counts_as_real_recording=false`. Motion is fade/slide only, matching both accounts' `forbidden_effects`. Frame inspection found body text on the dark DNA base was unreadable with the `ink` token; body copy now uses the DNA `surface` token. No colour is hardcoded in the component.
+
+**Trusted clip cache.** `animation_render.py` previously computed a fingerprint but never used it to skip a render (`reused` was always False). `animation_backend.clip_fingerprint` now binds backend version, template, account, placement, asset, purpose, duration, props, the full DNA digest, referenced source digests and a digest of the composition sources (`src/*.tsx` + `package.json`). A cached clip is replayed only when the fresh fingerprint matches the sidecar, the file's actual SHA-256 still equals the recorded hash, and the sample still passes `check_motion_sample`. A filename match alone is never a hit. A DNA, parameter, source, template or version change invalidates the cache.
+
+**Local verification (2026-11-17, Remotion 4.0.543, Chrome, FFmpeg 8.1.1):**
+
+| Sample | Template | Path (logical) | SHA-256 | ffprobe |
+|---|---|---|---|---|
+| 1024 conflict hook | `title_card` | `project://assets/generated/remotion/clip-title-hook.mp4` | `9c1b5d54f7e5d55bd4251a8eb740cf032f48734da52e7ace18f1cda098a8657c` | h264, 1080x1920, yuv420p, 30/1, 3.000s, no audio |
+| Future-intelligence RAG | `rag_flow` | `project://assets/generated/remotion/clip-rag-fi.mp4` | `c9582e235e103d948cef0c62e5ea961eb577a7a62afba3dc750c97e121ce9730` | h264, 1080x1920, yuv420p, 30/1, 6.000s, no audio |
+
+`python tests/test_animation_backend.py` passed 34/34. `tsc --noEmit` passed. Re-running the identical render returned `state=REUSED, reused=true` with the same SHA; changing `duration_s` from 3 to 4 returned `EXECUTED` with a new fingerprint and SHA; editing the template source invalidated the title-card cache and forced a fresh render. A frame was extracted and visually inspected before and after the contrast fix.
+
+**Acceptance limits.** Both samples are `purpose=test`, `TEST_PURPOSE` gate, `production_ready=false`, `publish_authorized=false`, `human_review=PENDING_FOUNDER_REVIEW`. No user-provided 1024 recording exists, so 1024 production remains `MISSING_REAL_RECORDING`. The future-intelligence RAG nodes are a principle illustration (`原理示意，非真实系统输出`), not a real system trace. No full episode was composed and no video was published.
