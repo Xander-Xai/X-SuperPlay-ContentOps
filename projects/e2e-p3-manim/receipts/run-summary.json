@@ -1,0 +1,52 @@
+{
+  "schema": "contentops.p3-manim-run/v1",
+  "backend": "manim",
+  "backend_version": "0.22.1",
+  "account_id": "x-superplay-future-intelligence",
+  "render_entry": "scripts/manim_render.py",
+  "scene_module": "scripts/manim_scenes.py",
+  "runtime": "isolated venv via runtime/manim.lock.json",
+  "generated": true,
+  "evidence_capable": false,
+  "evidence_use": "VISUAL_SUPPORT",
+  "counts_as_real_recording": false,
+  "production_ready": false,
+  "publish_authorized": false,
+  "human_review": "PENDING_FOUNDER_REVIEW",
+  "easel_is_compositor": true,
+  "shots": [
+    {
+      "asset_id": "math01",
+      "spec": "math01.json",
+      "spec_sha256": "e4bf23debc82a08859f2aad7431f3843573085d1df63346ea81a4e61ec6715a6",
+      "state": "REUSED",
+      "reused": true,
+      "sha256": "6d6574067b5f890e7cf2d4ced9f99659d21446821a600d93365e8969ccb5ebfb",
+      "fingerprint": "31a7f1831c357217245a8951d62a8deb52bee8c2486b1aada75d2110c9d0fcdb",
+      "easel_input": "ACCEPTED_AS_VISUAL_SUPPORT",
+      "governance": {
+        "generated": true,
+        "evidence_capable": false,
+        "production_ready": false,
+        "publish_authorized": false
+      }
+    },
+    {
+      "asset_id": "attn01",
+      "spec": "attn01.json",
+      "spec_sha256": "a9b7dfdfaac7b9235abfa17eea596bea22c2356ce7498d8d43e26dcd95263679",
+      "state": "REUSED",
+      "reused": true,
+      "sha256": "5552c03f8fe052c06857529663d7a9f1ca73beebbe734ad5c2f587ab72379fa8",
+      "fingerprint": "cc0eb6a09f2ad3800770bd0dcac9846a66a42b080d1bd23d8a1eed023caf480f",
+      "easel_input": "ACCEPTED_AS_VISUAL_SUPPORT",
+      "governance": {
+        "generated": true,
+        "evidence_capable": false,
+        "production_ready": false,
+        "publish_authorized": false
+      }
+    }
+  ],
+  "accepted": true
+}

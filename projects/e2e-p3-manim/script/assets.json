@@ -1,0 +1,17 @@
+{
+  "schema": "contentops.m5-script-assets/v1",
+  "assets": {
+    "math01": {
+      "path": "project://assets/generated/manim/math01.mp4",
+      "sha256": "6d6574067b5f890e7cf2d4ced9f99659d21446821a600d93365e8969ccb5ebfb",
+      "evidence_use": "VISUAL_SUPPORT",
+      "generated": true
+    },
+    "attn01": {
+      "path": "project://assets/generated/manim/attn01.mp4",
+      "sha256": "5552c03f8fe052c06857529663d7a9f1ca73beebbe734ad5c2f587ab72379fa8",
+      "evidence_use": "VISUAL_SUPPORT",
+      "generated": true
+    }
+  }
+}

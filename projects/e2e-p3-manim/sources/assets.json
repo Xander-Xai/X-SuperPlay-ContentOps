@@ -1,0 +1,37 @@
+{
+  "schema": "contentops.m5-source-assets/v1",
+  "assets": [
+    {
+      "id": "definition_source",
+      "type": "REAL_DOCUMENT",
+      "repo_path": "projects/e2e-p3-manim/specs/definitions/math-attention.json",
+      "sha256": "bb4361fc066e9a7accdff0c727c0d8c5556f956d8eda8d3961b659f6ce6d24ad",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "TEST_ONLY textbook definition bound to shot specs"
+    },
+    {
+      "id": "math01",
+      "type": "GENERATED_VIDEO",
+      "repo_path": "projects/e2e-p3-manim/assets/generated/manim/math01.mp4",
+      "sha256": "6d6574067b5f890e7cf2d4ced9f99659d21446821a600d93365e8969ccb5ebfb",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "VISUAL_SUPPORT only",
+      "origin": "manim local code render",
+      "generated": true,
+      "evidence_capable": false,
+      "notes": "Generated visual; not source evidence."
+    },
+    {
+      "id": "attn01",
+      "type": "GENERATED_VIDEO",
+      "repo_path": "projects/e2e-p3-manim/assets/generated/manim/attn01.mp4",
+      "sha256": "5552c03f8fe052c06857529663d7a9f1ca73beebbe734ad5c2f587ab72379fa8",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "VISUAL_SUPPORT only",
+      "origin": "manim local code render",
+      "generated": true,
+      "evidence_capable": false,
+      "notes": "Generated visual; not source evidence."
+    }
+  ]
+}

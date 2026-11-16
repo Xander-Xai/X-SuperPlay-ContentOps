@@ -370,12 +370,13 @@ def plan_clip(
         # Visual parameters are DNA-owned. style_variants are the legacy palette
         # that the account DNA's brand.refresh marks stale, so they must never
         # reach the render. Reject any visual/colour override rather than apply it.
-        # "palette" is the one colour key allowed in props: the render entry
-        # overwrites it with palette_from_dna() before planning, so a spec cannot
-        # smuggle a legacy style_variants palette through it.
+        # "palette" and "font" are the two visual keys allowed in props: the
+        # render entry overwrites both from the account DNA before planning, so
+        # a spec cannot smuggle a legacy style_variants palette or a hostile font
+        # through them. Everything else that could change pixels is refused.
         forbidden_visual = (
             "palette_override", "style_variants", "color", "colour",
-            "colors", "font", "font_size", "effect", "effects", "forbidden_effects",
+            "colors", "font_size", "effect", "effects", "forbidden_effects",
         )
         present = [key for key in forbidden_visual if key in cleaned]
         if present:

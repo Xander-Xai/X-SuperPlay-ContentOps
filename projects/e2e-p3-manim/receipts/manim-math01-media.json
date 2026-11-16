@@ -1,0 +1,48 @@
+{
+  "schema": "contentops.manim-media-report/v1",
+  "asset_id": "math01",
+  "template": "math_formula_reveal",
+  "backend": "manim",
+  "output": "project://assets/generated/manim/math01.mp4",
+  "sha256": "6d6574067b5f890e7cf2d4ced9f99659d21446821a600d93365e8969ccb5ebfb",
+  "fingerprint": "31a7f1831c357217245a8951d62a8deb52bee8c2486b1aada75d2110c9d0fcdb",
+  "ffprobe": {
+    "codec_name": "h264",
+    "width": 1080,
+    "height": 1920,
+    "pix_fmt": "yuv420p",
+    "avg_frame_rate": "30/1",
+    "r_frame_rate": "30/1",
+    "duration_s": 4.533008,
+    "has_audio": false,
+    "fps": 30
+  },
+  "frame_count": 136,
+  "preview_frames": [
+    {
+      "position": "first",
+      "timestamp_s": 0.0,
+      "path": "projects/e2e-p3-manim/receipts/frames/math01/frame-0.png"
+    },
+    {
+      "position": "middle",
+      "timestamp_s": 2.267,
+      "path": "projects/e2e-p3-manim/receipts/frames/math01/frame-1.png"
+    },
+    {
+      "position": "last",
+      "timestamp_s": 4.433,
+      "path": "projects/e2e-p3-manim/receipts/frames/math01/frame-2.png"
+    }
+  ],
+  "motion_sample": {
+    "state": "TECHNICALLY_CHECKED",
+    "frame_count": 136
+  },
+  "governance": {
+    "generated": true,
+    "evidence_capable": false,
+    "production_ready": false,
+    "publish_authorized": false
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "backend": "manim",
+  "template": "math_formula_reveal",
+  "shot_type": "math",
+  "duration_s": 4.0,
+  "props": {
+    "title": "缩放点积注意力",
+    "terms": [
+      "Attention",
+      "(",
+      "Q",
+      ",",
+      "K",
+      ",",
+      "V",
+      ")",
+      "=",
+      "softmax",
+      "(",
+      "QKᵀ/√dₖ",
+      ")",
+      "V"
+    ],
+    "variables": [
+      {
+        "symbol": "Q",
+        "meaning": "查询矩阵"
+      },
+      {
+        "symbol": "K",
+        "meaning": "键矩阵"
+      },
+      {
+        "symbol": "V",
+        "meaning": "值矩阵"
+      },
+      {
+        "symbol": "dₖ",
+        "meaning": "键向量维度"
+      }
+    ],
+    "definition_source": {
+      "source_ref_id": "definition_source",
+      "sha256": "bb4361fc066e9a7accdff0c727c0d8c5556f956d8eda8d3961b659f6ce6d24ad"
+    }
+  }
+}
