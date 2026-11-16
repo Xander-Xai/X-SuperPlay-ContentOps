@@ -51,6 +51,18 @@ translation_status: synced
 
 > **Git 状态在下方按 2026-11-12（只读文档同步）重新核验。** 其后的所有小节都是为可追溯性保留的历史快照，均不代表当前状态。
 
+### Git — 2026-11-17 复核（分支 `feat/194-title-card-and-trusted-cache`，PR #195）
+
+| 属性 | 已核验值 |
+|---|---|
+| 默认分支 | `main` @ `10017c2b74dca40a0d2f0df85c8023ccb01c3566` — PR #191 squash，2026-11-17 只读 `git ls-remote` |
+| 受核验工作树 | `feat/194-title-card-and-trusted-cache` @ `d216082`，基线 `10017c2`；领先 `main` 3 个提交 |
+| 开放 PR | **2**：#193 — Huashu 六个 DNA 模板（仍开放，未合并、未改动）；#195 — DNA `title_card` + 可信镜头缓存 |
+| 分支登记 | `verified_at` 2026-11-17；`feat/194-title-card-and-trusted-cache` 登记为 `active`，复核日期 2026-12-17 |
+| 传输 | 2026-11-17 https `git push` 成功，无需 Git Database API 回退 |
+| 发布数 | **0** — 未变 |
+| 2026-11-17 改动 | 在 `src/contentops/media/animation_backend.py`、`scripts/animation_render.py` 与 `extensions/animation-remotion/src/` 新增 Remotion `title_card` composition 与指纹校验的可信镜头缓存；本文的 Easel/Huashu/生命周期/QC 事实均未变化。 |
+
 ### Git — 2026-11-16 复核（分支 `feat/173-easel-m0-pin`，PR #185）
 
 | 属性 | 核验值 |

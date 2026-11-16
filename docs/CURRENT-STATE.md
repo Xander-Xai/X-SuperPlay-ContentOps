@@ -48,6 +48,18 @@
 > sync).** Every other section below it is a historical snapshot kept for
 > traceability; none of them is the current state.
 
+### Git — verified 2026-11-17 (branch `feat/194-title-card-and-trusted-cache`, PR #195)
+
+| Property | Verified value |
+|---|---|
+| Default branch | `main` @ `10017c2b74dca40a0d2f0df85c8023ccb01c3566` — the PR #191 squash, read-only `git ls-remote` on 2026-11-17 |
+| Worktree under verification | `feat/194-title-card-and-trusted-cache` @ `d216082`, base `10017c2`; 3 ahead of `main` |
+| Open PRs | **2**: #193 — Huashu six DNA templates (still open, not merged or touched here); #195 — DNA `title_card` + trusted clip cache |
+| Branch registry | `verified_at` 2026-11-17; `feat/194-title-card-and-trusted-cache` registered `active`, review date 2026-12-17 |
+| Transport | `git push` over https succeeded on 2026-11-17; no Git Database API fallback was needed |
+| Publications | **0** — unchanged |
+| 2026-11-17 diff | Adds a Remotion `title_card` composition and a fingerprint-verified clip cache in `src/contentops/media/animation_backend.py`, `scripts/animation_render.py` and `extensions/animation-remotion/src/`. No Easel/Huashu/lifecycle/QC fact in this document changes. |
+
 ### Git — verified 2026-11-16 (branch `feat/173-easel-m0-pin`, PR #185)
 
 | Property | Verified value |
