@@ -1,6 +1,6 @@
 {
   "schema": "contentops.branch-registry/v1",
-  "verified_at": "2026-11-17T01:15:00+08:00",
+  "verified_at": "2026-11-17T02:40:00+08:00",
   "policy": {
     "persistent": [
       "main"
@@ -170,10 +170,26 @@
       "expires": "2026-12-12"
     },
     {
+      "name": "feat/192-huashu-dna-animation",
+      "pr": 193,
+      "created": "2026-11-16",
+      "purpose": "Issue #192: add DNA-driven Huashu shot templates and preserve account evidence floors",
+      "status": "active",
+      "expires": "2026-12-16"
+    },
+    {
       "name": "feat/194-title-card-and-trusted-cache",
       "pr": 195,
       "created": "2026-11-17",
       "purpose": "Issue #194: DNA-driven 1024 conflict title_card and fingerprint-verified trusted clip cache; independent of the Huashu six-template work in #192/#193",
+      "status": "active",
+      "expires": "2026-12-17"
+    },
+    {
+      "name": "feat/196-animation-dna-integration",
+      "pr": null,
+      "created": "2026-11-17",
+      "purpose": "Issue #196: integration of #195 then #193 plus the dual-account storyboard/backend-selection wiring and end-to-end acceptance; the merge order was verified on this branch, main stays untouched",
       "status": "active",
       "expires": "2026-12-17"
     }

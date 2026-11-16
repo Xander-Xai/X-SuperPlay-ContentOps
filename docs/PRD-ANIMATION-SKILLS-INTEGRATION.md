@@ -21,7 +21,7 @@ ContentOps 已经有冻结的 Easel v0.3.0 总合成、Huashu 解释性片段、
 | `scripts/m5_production.py` `stage_motion` | 显式 `remotion` 镜头改调 `scripts/animation_render.py`，不走 Huashu 自动计划 |
 | `src/contentops/media/motion_sample.py` | 2–8 秒、静音、1080×1920、H.264、yuv420p、恒定 30fps |
 | `motion_handoff.py` | 仍只接受 MotionClone。新后端不得冒充它 |
-| `motion_planner.py` | Huashu 自动计划保持原样 |
+| `motion_planner.py` | Huashu 自动计划已扩展六种 DNA 约束的镜头模板；仍只写入现有 shot plan/spec，不新增时间线 |
 | 账号 DNA | 调色板从 DNA 读取，不另写一套品牌色 |
 | `recording_intake.py` | 录屏入场规则不因新后端放宽 |
 | `real_source_duration.py` | 生成片段的 `source_kind` 是 `vector_animation`，不计入 70% 真实录屏 |
@@ -153,7 +153,7 @@ Easel pin 仍是 `runtime/easel-pins.json` 的 `v0.3.0` / `bb3c8ff`。本变更�
 
 ## 15. 测试
 
-`tests/test_animation_backend.py` 已注册到 `.github/workflows/ci.yml`。它不渲染视频。覆盖：缺账号、未知账号、显式引擎不静默替换、仅预先声明且兼容的后备、数学镜头不掉成 Remotion、未来智能拒绝录屏、1024 正式生产缺录屏阻断、回执拒绝主机路径、未知技能、版本不匹配。既有 `tests/test_m5_motion_integration.py` 在本机 56/56 通过。
+`tests/test_animation_backend.py` 已注册到 `.github/workflows/ci.yml`。它不渲染视频。覆盖：缺账号、未知账号、显式引擎不静默替换、仅预先声明且兼容的后备、数学镜头不掉成 Remotion、未来智能拒绝录屏、1024 正式生产缺录屏阻断、回执拒绝主机路径、未知技能、版本不匹配。历史 PR #188 基线为 56/56；本轮 Huashu 模板集成套件为 58/58，真实素材时长套件为 19/19。
 
 ## 16. 验收
 
@@ -168,7 +168,8 @@ Easel pin 仍是 `runtime/easel-pins.json` 的 `v0.3.0` / `bb3c8ff`。本变更�
 | 1024 规则 | PASS | 正式生产无录屏返回 `MISSING_REAL_RECORDING`；测试片段 `counts_as_real_recording=false` |
 | 未来智能规则 | PASS | 桌面录屏 `RECORDING_FORBIDDEN`；RAG 回执 `EXPLANATORY_CLIP` |
 | M5 接线 | PASS | `stage_motion` 调度测试；选择器接受 `remotion` |
-| Easel 回归 | PASS | pin 文件未改；Huashu 集成测试 56/56 |
+| Easel 回归 | PASS | pin 文件未改；Huashu 集成测试本轮 58/58 |
+| DNA 驱动 Huashu 模板 | PASS (contract tests) | 六模板输入/输出合同与拒绝用例；未做真实样片渲染或截图审查 |
 | 多平台 | PASS | 未改平台注册表，未把封装写成发布 |
 | 人审与安全 | PASS | 回执 `production_ready=false`，`publish_authorized=false` |
 
@@ -189,6 +190,24 @@ Easel pin 仍是 `runtime/easel-pins.json` 的 `v0.3.0` / `bb3c8ff`。本变更�
 
 故障：`RUNTIME_MISSING` 表示未执行上面的 npm 安装或没有 Node/FFmpeg/浏览器。`VERSION_MISMATCH` 表示锁文件不是 4.0.543。`RENDER_FAILED` 时看 `projects/<slug>/work/animation/*.render.log`。不要把静态图当成渲染成功。
 
+## 18. DNA 驱动的 Huashu 镜头模板（Issue #192）
+
+本轮把 Huashu Art Motion 纳入同一条 M5 shot-plan/spec 链，不创建第二 timeline、资产注册表或合成器。`motion_planner.py` 以 `brand.palette` 为有效 DNA 调色板；palette、刷新声明及视觉输入进入计划指纹。旧 `motion_profile.style_variants` 不得覆盖已声明的品牌色，品牌刷新目标不支持时 fail-closed。
+
+六类显式 `animation_type`：
+
+| 模板 | Huashu grammar | 参数与拒绝边界 |
+|---|---|---|
+| `architecture_flow` | `y3_whiteboard` | 2–6 个节点，逐个绘制并连单向流程箭头 |
+| `state_transition` | `y3_whiteboard` | 2–5 个状态，必须同时声明 transition、success、failure 分支 |
+| `code_focus` | `t2_keynote_ui` | 仅接受带 `source_document_sha256` 的 `CODE_SNAPSHOT` 图片和有界 focus rect |
+| `evidence_zoom` | `t2_keynote_ui` | 只接受已登记真实静帧与来源区域；未来智能拒绝录屏输入 |
+| `metric_transition` | `t3_finance_chart` | JSON 来源记录必须与 title、unit、citation、每个 label/value 完全相同；只允许 bar/line |
+| `comparison_reveal` | `y3_whiteboard` | before/after 两个显式标签，使用交叉/确认图标 |
+
+所有模板都要求登记素材、仓库内路径、字节 SHA-256、permission 与 claim/source_refs 或 `editorial_only=true`。输出 spec 记录 `animation_type`、`source_asset_id`、claim/editorial 关系及来源哈希；品牌色和来源变化会使对应 spec 缓存失效。生成动画的 `visual_role` 固定为解释性，不能声明为 proof；动画仍是 `generated=true`、`evidence_capable=false`、`evidence_use=VISUAL_SUPPORT`，真实来源的 claim gates 独立验证。1024 的 `EVIDENCE_LED` 70% 可见真实素材时长门不被 `tech_review` 等内容类型放宽；未来智能解释型内容不强制录屏，但事实仍须有来源。
+
+**本轮验收边界：**六类模板合同测试和负例测试通过。实际 Huashu 1.2.0 运行时探测为 PRESENT，但现有未来智能项目 preflight 因缺少 `project.yaml`、script/claims/assets 与 source refs/assets 清单而 `BLOCKED`；因此没有本机 Huashu 实际渲染、ffprobe、帧截图或运动视觉审查，这不是视觉验收。当前没有用户提供的 1024 真实录屏，因此不能交付或声称 1024 真实证据样片。模板只在运行时白名单含对应 grammar、运行时锁可信且素材前置条件满足时可执行；未满足则阻断。`production_ready=false`、`publish_authorized=false`、`human_review=PENDING_FOUNDER_REVIEW` 不变。
 ## 19. DNA 冲突式标题镜头与可信渲染缓存（2026-11-17）
 
 本节独立于 Issue #192 / PR #193 跟踪的 Huashu 六模板工作，不新增第二时间线，也不新增品牌配置。

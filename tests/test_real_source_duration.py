@@ -42,10 +42,39 @@ def test_technical_explainer_does_not_require_capture_duration():
     with tempfile.TemporaryDirectory() as directory:
         project = Path(directory)
         (project / "project.yaml").write_text(
-            "account_slug: x-superplay-1024\ncontent_type: tech_review\n",
+            "account_slug: x-superplay-future-intelligence\ncontent_type: tech_review\n",
             encoding="utf-8",
         )
         assert qc_video._real_source_floor(project) == (0.0, "EXPLANATORY", "tech_review")
+
+
+def test_technical_explainer_keeps_dna_evidence_floor_for_1024():
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import qc_video
+
+    with tempfile.TemporaryDirectory() as directory:
+        project = Path(directory)
+        (project / "project.yaml").write_text(
+            "account_slug: x-superplay-1024\ncontent_type: tech_review\n",
+            encoding="utf-8",
+        )
+        assert qc_video._real_source_floor(project) == (
+            MIN_REAL_DURATION_RATIO, "EVIDENCE_LED", "tech_review"
+        )
+
+
+def test_future_intelligence_technical_explainer_has_no_recording_duration_floor():
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import qc_video
+
+    with tempfile.TemporaryDirectory() as directory:
+        project = Path(directory)
+        (project / "project.yaml").write_text(
+            "account_slug: x-superplay-future-intelligence\n"
+            "content_type: technical_explainer\n",
+            encoding="utf-8",
+        )
+        assert qc_video._real_source_floor(project) == (0.0, "EXPLANATORY", "technical_explainer")
 
 
 def test_recorded_demo_keeps_capture_floor():
@@ -69,13 +98,16 @@ def test_cut_qc_uses_claim_coverage_for_explanatory_video_types():
     sys.path.insert(0, str(ROOT / "src"))
     from contentops.media.cut_qc import _effective_evidence_mode
 
-    assert _effective_evidence_mode("EVIDENCE_LED", "tech_review") == "CLAIM_LED"
+    assert _effective_evidence_mode("EVIDENCE_LED", "tech_review") == "EVIDENCE_LED"
+    assert _effective_evidence_mode("EXPLANATORY", "tech_review") == "CLAIM_LED"
     assert _effective_evidence_mode("EVIDENCE_LED", "recorded_demo") == "EVIDENCE_LED"
     assert _effective_evidence_mode("EXPLANATORY", "recorded_demo") == "EVIDENCE_LED"
 
 
 TESTS.extend([
     test_technical_explainer_does_not_require_capture_duration,
+    test_technical_explainer_keeps_dna_evidence_floor_for_1024,
+    test_future_intelligence_technical_explainer_has_no_recording_duration_floor,
     test_recorded_demo_keeps_capture_floor,
     test_cut_qc_uses_claim_coverage_for_explanatory_video_types,
 ])

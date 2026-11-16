@@ -123,6 +123,10 @@ def _effective_evidence_mode(mode: str, content_type: str) -> str:
         "technical_explainer", "tech_review", "code_walkthrough",
         "product_launch", "motion_explainer",
     }:
+        # A format label may select claim-led review for explanatory accounts,
+        # but it cannot relax an account's evidence-led capture floor.
+        if mode == "EVIDENCE_LED":
+            return mode
         return "CLAIM_LED"
     return mode
 

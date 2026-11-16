@@ -16,7 +16,7 @@ Non-goals: upgrading Easel; a second timeline; installing all 18 surveyed reposi
 
 ## 2. What is reused
 
-`stage_motion` dispatches an explicit `remotion` shot to `scripts/animation_render.py`. `motion_sample.py` remains the 2–8s silent 1080×1920 H.264 yuv420p 30fps gate. `motion_handoff.py` stays MotionClone-only. Account palettes are read from DNA. Generated clips use `source_kind=vector_animation` and do not count toward the 70% real-recording share. `assemble_easel.run` remains the only episode compose entry.
+`stage_motion` dispatches an explicit `remotion` shot to `scripts/animation_render.py`. `motion_sample.py` remains the 2–8s silent 1080×1920 H.264 yuv420p 30fps gate. `motion_handoff.py` stays MotionClone-only. Account palettes are read from DNA. `motion_planner.py` now supports six DNA-constrained Huashu shot templates in the existing shot plan/spec contract; it does not create a second timeline. Generated clips use `source_kind=vector_animation` and do not count toward the 70% real-recording share. `assemble_easel.run` remains the only episode compose entry.
 
 ## 3. Eighteen upstream projects
 
@@ -103,7 +103,7 @@ Local non-paid rendering and a project-level npm install were in scope. Easel wa
 
 ## 15. Tests
 
-`tests/test_animation_backend.py` is registered in `.github/workflows/ci.yml`. It does not render video. Existing `tests/test_m5_motion_integration.py` passed 56/56 locally.
+`tests/test_animation_backend.py` is registered in `.github/workflows/ci.yml` and does not render video. The historical PR #188 baseline was 56/56; this round's Huashu integration suite passed 58/58 and the real-source duration suite passed 19/19.
 
 ## 16. Acceptance
 
@@ -118,7 +118,8 @@ Local non-paid rendering and a project-level npm install were in scope. Easel wa
 | 1024 rules | PASS | production without a recording is `MISSING_REAL_RECORDING` |
 | Future-intelligence rules | PASS | desktop recording is `RECORDING_FORBIDDEN` |
 | M5 wiring | PASS | dispatch test and selector |
-| Easel regression | PASS | pin unchanged; Huashu suite 56/56 |
+| Easel regression | PASS | pin unchanged; this round's Huashu suite 58/58 |
+| DNA-driven Huashu templates | PASS (contract tests) | Six template contracts and rejection cases; no real sample render or screenshot review was run |
 | Platforms | PASS | registry not rewritten into a publish claim |
 | Review and safety | PASS | `production_ready=false`, `publish_authorized=false` |
 
@@ -137,6 +138,22 @@ If the organization grows past 3 employees, stop rendering until a Remotion comp
 
 Rollback is deleting the clip-dispatch branch in `stage_motion` plus `extensions/animation-remotion` and the lockfile. Huashu and the Easel pin do not depend on them. Do not touch `.runtime/easel-v030`.
 
+## 18. DNA-driven Huashu shot templates (Issue #192)
+
+This round extends Huashu Art Motion inside the existing M5 shot-plan/spec chain. It adds no second timeline, asset registry, or compositor. `motion_planner.py` resolves the effective DNA palette from `brand.palette`; the palette, refresh declaration, and visual inputs participate in plan identity. Legacy `motion_profile.style_variants` cannot override a declared brand palette, and an unsupported refresh target fails closed.
+
+| Explicit `animation_type` | Huashu grammar | Inputs and rejection boundary |
+|---|---|---|
+| `architecture_flow` | `y3_whiteboard` | 2–6 nodes drawn as a one-way flow |
+| `state_transition` | `y3_whiteboard` | 2–5 states plus required transition, success, and failure labels |
+| `code_focus` | `t2_keynote_ui` | A `CODE_SNAPSHOT` image bound to `source_document_sha256`, with an in-frame focus rectangle |
+| `evidence_zoom` | `t2_keynote_ui` | A registered real still and source-bound region; Future Intelligence rejects recording inputs |
+| `metric_transition` | `t3_finance_chart` | A JSON source record whose title, unit, citation, and every label/value exactly match; only bar/line |
+| `comparison_reveal` | `y3_whiteboard` | Explicit before/after labels, using cross/check icons |
+
+Every template requires a registered asset, repository-contained path, byte SHA-256, permission, and either claim/source references or `editorial_only=true`. Specs record `animation_type`, `source_asset_id`, claim/editorial relationship, and source hash; changes to brand colors or source bytes invalidate the affected spec cache. Generated motion is explanatory, never a proof shot; it remains `generated=true`, `evidence_capable=false`, and `evidence_use=VISUAL_SUPPORT`. Claim/source gates remain independent. The 1024 `EVIDENCE_LED` 70% visible-real-material floor is not relaxed for `tech_review` or similar types. Future Intelligence explanatory clips do not require recording duration, but factual claims still need sources.
+
+**Acceptance boundary for this round:** template contract and rejection tests passed. The actual Huashu 1.2.0 runtime probe was PRESENT, but the existing Future Intelligence project preflight was `BLOCKED` because `project.yaml`, script/claims/assets, and source refs/assets manifests are missing. Therefore no local Huashu render, ffprobe, frame capture, or motion visual review ran; this is not visual acceptance. No user-provided 1024 real recording is available, so no 1024 evidence sample can be delivered or claimed. Execution still requires an allowed grammar, trusted runtime lock, and valid source prerequisites; otherwise it blocks. `production_ready=false`, `publish_authorized=false`, and `human_review=PENDING_FOUNDER_REVIEW` remain unchanged.
 ## 19. DNA conflict hook and trusted clip cache (2026-11-17)
 
 This section is independent of the Huashu six-template work tracked in Issue #192 / PR #193. It adds no second timeline and no new brand config.
