@@ -946,66 +946,14 @@ def _load_script(project: Path) -> Dict[str, Any]:
 
 
 def stage_script(project: Path, ledger: ClaimLedger, assets: Dict[str, Any]) -> Dict[str, Any]:
-    script = _load_script(project)
-    ids = [line["id"] for line in script["lines"]]
-    if len(ids) != len(set(ids)):
-        raise M5Blocked("duplicate script line id")
-    known = ledger.by_id()
-    cited = {line.get("claim") for line in script["lines"] if line.get("claim")}
-    unknown = sorted(cited - set(known))
-    if unknown:
-        raise M5Blocked(f"script cites unknown claims: {unknown}")
-    unused = ledger.require_used(cited)
-    if unused:
-        raise M5Blocked(f"claims never appear in the script: {unused}")
-    for line in script["lines"]:
-        asset = assets.get(line.get("asset_id"))
-        if asset is None:
-            raise M5Blocked(f"{line['id']}: asset_id {line.get('asset_id')!r} is not in sources/assets.json")
-        if not (ROOT / asset["repo_path"]).is_file():
-            raise M5Blocked(f"{line['id']}: asset missing: {asset['repo_path']}")
-        if not str(line.get("narration") or "").strip():
-            raise M5Blocked(f"{line['id']}: narration is empty")
-    payload = {
-        "schema": "contentops.m5-script-check/v1",
-        "ok": True,
-        "lines": len(script["lines"]),
-        "claims_cited": sorted(cited),
-        "claims_unused": [],
-    }
-    _write_json(project / "receipts" / "script-check.json", payload)
+    """Compatibility facade for the extracted M5 script stage."""
+    from contentops.workflow import m5_script_stage
 
-    master = project / "script" / "master.md"
-    # The script text is what a reviewer reads. Every beat must show the source
-    # it came from as a followable link, not a bare claim id, or "the copy cites
-    # its evidence" is unverifiable. refs come from sources/source-refs.json.
-    refs_doc = _read_json_or_none(project / "sources" / "source-refs.json") or {}
-    refs_by_id = {str(row.get("id")): row
-                  for row in (refs_doc.get("refs") or [])
-                  if isinstance(row, dict) and row.get("id")}
-    rows = ["| # | 旁白 | 字幕 | 事实来源 | 素材 |", "|---|---|---|---|---|"]
-    for line in script["lines"]:
-        claim = known.get(line.get("claim") or "")
-        citations = []
-        for artifact_id in (claim.artifacts if claim else ()):
-            ref = refs_by_id.get(str(artifact_id)) or {}
-            target = str(ref.get("url") or ref.get("path") or "")
-            if not target:
-                continue
-            title = str(ref.get("title") or artifact_id).replace("]", r"\]")
-            citations.append(f"[{title}](<{target}>)")
-        source_cell = " · ".join(citations) if citations else "—"
-        rows.append(
-            f"| {line['id']} | {line['narration']} | {line['caption']} | "
-            f"{source_cell} | {assets[line['asset_id']]['repo_path']} |"
-        )
-    master.write_text(
-        f"# {project.name} — 脚本文本\n\n"
-        "由 `script/script.json` 生成；每条事实声明在 `script/claims.json` 中绑定到来源引文。\n\n"
-        + "\n".join(rows) + "\n",
-        encoding="utf-8",
+    return m5_script_stage.stage_script(
+        project, ledger, assets, repo_root=ROOT, load_script=_load_script,
+        blocked_error=M5Blocked, read_json_or_none=_read_json_or_none,
+        write_json=_write_json,
     )
-    return {"script": script, "lines": len(script["lines"])}
 
 
 def _synthesize_windows(lines: List[Dict[str, Any]], out_dir: Path) -> List[Path]:

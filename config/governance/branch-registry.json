@@ -230,6 +230,14 @@
       "pr": 202,
       "created": "2026-11-17",
       "purpose": "Issue #140 second narrow stage extraction: move visual-asset hash/path/rights validation into a dependency-injected module preserving M5Blocked, old facade and negative receipts",
+      "status": "merged",
+      "expires": "2026-12-17"
+    },
+    {
+      "name": "refactor/140-m5-script-stage-20261117",
+      "pr": 203,
+      "created": "2026-11-17",
+      "purpose": "Issue #140 next narrow stage extraction: move script/claim/asset validation and source-bound reviewer-copy generation behind the existing M5 facade",
       "status": "active",
       "expires": "2026-12-17"
     }
