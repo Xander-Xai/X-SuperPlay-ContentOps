@@ -32,7 +32,7 @@ export default makeScene2D(function* (view) {
     <Txt
       ref={title}
       text={spec.title}
-      fill={palette.ink}
+      fill={palette.surface}
       fontSize={52}
       fontWeight={700}
       x={0}
@@ -103,7 +103,7 @@ export default makeScene2D(function* (view) {
     <Txt
       ref={caption}
       text=""
-      fill={palette.sub}
+      fill={palette.surface}
       fontSize={38}
       x={0}
       y={820}

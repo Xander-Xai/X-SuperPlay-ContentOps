@@ -78,6 +78,30 @@ def test_future_intelligence_refuses_a_desktop_recording():
     assert result["code"] == "RECORDING_FORBIDDEN"
 
 
+def test_plan_clip_rejects_template_backend_mismatch():
+    dna = json.loads((ROOT / "config" / "accounts"
+                      / f"{ab.ACCOUNT_FUTURE}.json").read_text(encoding="utf-8"))
+    for template, wrong_backend in (
+        ("annotation", "manim"),
+        ("attention_matrix_flow", "remotion"),
+        ("animated_system_graph", "remotion"),
+    ):
+        try:
+            ab.plan_clip(
+                account_id=ab.ACCOUNT_FUTURE, template=template,
+                placement_id="p1", asset_id="a1", duration_s=4,
+                backend=wrong_backend, dna=dna,
+                props={"title": "t", "left_label": "a", "right_label": "b",
+                       "callout": "c", "palette": PALETTE,
+                       "definition_source": {"source_ref_id": "s1", "sha256": "a" * 64},
+                       "nodes": ["a", "b"]},
+            )
+        except ab.AnimationError as exc:
+            assert exc.code == "TEMPLATE_BACKEND", (template, exc.code)
+        else:
+            raise AssertionError(f"{template} accepted incompatible backend {wrong_backend}")
+
+
 def test_1024_production_without_recording_is_blocked():
     result = ab.select_backend(
         account_id=ab.ACCOUNT_1024, shot_type="annotation", explicit="remotion",
@@ -470,6 +494,29 @@ def test_renderer_never_trusts_shot_has_real_recording_true():
                             account_id=ab.ACCOUNT_1024, purpose="production")
         assert result == 1
         assert out[0]["decision"]["code"] == "MISSING_REAL_RECORDING"
+
+
+def test_future_annotation_production_is_not_blocked_by_1024_recording_gate():
+    from unittest import mock
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        (project / "motion").mkdir()
+        (project / "sources").mkdir()
+        (project / "motion" / "spec.json").write_text(json.dumps({
+            "backend": "remotion", "template": "annotation", "shot_type": "annotation",
+            "duration_s": 4,
+            "props": {"title": "t", "left_label": "a", "right_label": "b", "callout": "c"},
+        }), encoding="utf-8")
+        (project / "sources" / "assets.json").write_text(json.dumps({"assets": []}), encoding="utf-8")
+        out = []
+        with mock.patch("animation_render._emit", side_effect=lambda payload, code: out.append(payload) or code), \
+                mock.patch("animation_render.environment_probe", return_value={"ready": False}), \
+                mock.patch("animation_render.skill_readiness", return_value=False):
+            result = render(project, Path("motion/spec.json"), placement_id="p1", asset_id="a1",
+                            account_id=ab.ACCOUNT_FUTURE, purpose="production")
+        assert result == 1
+        assert out[0]["decision"]["code"] != "MISSING_REAL_RECORDING"
+        assert out[0]["decision"]["code"] == "RUNTIME_NOT_READY"
 
 
 def test_future_intelligence_rejects_recording_mark_input():

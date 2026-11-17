@@ -803,7 +803,9 @@ def render(project: Path, spec_path: Path, *, placement_id: str, asset_id: str,
     props["palette"] = palette
     if template == "recording_mark" and trusted_recording and trusted_recording.get("test_plate"):
         props["test_banner"] = "测试用途 · 非真实录屏案例"
-    if template in ("recording_mark", "annotation", "comparison") and purpose == "production" and not has_real_recording:
+    if (account_id == "x-superplay-1024"
+            and template in ("recording_mark", "annotation", "comparison")
+            and purpose == "production" and not has_real_recording):
         return _emit(_blocked_execution({"state": "BLOCKED", "code": "MISSING_REAL_RECORDING",
                                          "detail": "1024 production needs an intake-verified cropped recording and source evidence"}), 1)
     spec = plan_clip(

@@ -75,6 +75,10 @@ OFFICIAL_EVIDENCE = {
     ],
 }
 REMEDIATION = [
+    "Prepare the clip with "
+    "`python scripts/motion_canvas_adapter.py <project> --prepare --spec "
+    "<project-relative-spec.json> --placement-id <id> --asset-id <id> "
+    "--purpose <test|production>`; this records EDITOR_EXPORT_REQUIRED.",
     "Open the pinned editor with the prepared spec: set MOTION_CANVAS_SPEC_PATH "
     "to the prepared spec path, then `npm --prefix extensions/motion-canvas run dev`.",
     "Open http://localhost:9000, confirm 1080x1920 / 30 FPS / sRGB and the "
@@ -82,7 +86,8 @@ REMEDIATION = [
     "extensions/motion-canvas/src/project.meta). Click Render.",
     "Save the exported MP4 inside the project and run "
     "`python scripts/motion_canvas_adapter.py <project> --import-editor-export "
-    "--asset-id <id> --exported-mp4 <project-relative path>`.",
+    "--spec <project-relative-spec.json> --placement-id <id> --asset-id <id> "
+    "--purpose <test|production> --exported-mp4 <project-relative path>`.",
     "Only that imported, technically checked MP4 can supply render_evidence to "
     "capability_matrix(); a compile log can never do so.",
 ]
@@ -361,12 +366,26 @@ def _prepare(project: Path, account: str, spec_arg: str, placement_id: str,
     return receipt
 
 
+def _cache_matches(sidecar: Mapping[str, Any], output: Path, fingerprint: str,
+                   source: Path) -> bool:
+    """Reuse only when this exact editor export and normalized output are bound."""
+    recorded_output = str(((sidecar.get("output") or {}).get("output_sha256")
+                           or sidecar.get("output_sha256") or "")).lower()
+    editor_export = sidecar.get("editor_export") or {}
+    return (
+        output.is_file()
+        and recorded_output == _sha(output)
+        and str(sidecar.get("fingerprint") or "") == fingerprint
+        and str(editor_export.get("sha256") or "").lower() == _sha(source)
+    )
+
+
 def _ffprobe(path: Path) -> Dict[str, Any]:
     proc = hidden_run([
         "ffprobe", "-v", "error", "-show_frames", "-show_streams", "-show_format",
-        "-select_streams", "v:0", "-show_entries",
+        "-show_entries",
         "stream=codec_type,codec_name,width,height,pix_fmt,avg_frame_rate,r_frame_rate:"
-        "format=duration:frame=best_effort_timestamp_time",
+        "format=duration:frame=media_type,best_effort_timestamp_time",
         "-of", "json", str(path),
     ], timeout=180)
     if proc.returncode != 0:
@@ -483,11 +502,8 @@ def _import_editor_export(project: Path, account: str, spec_arg: str, placement_
     final = project / "assets" / "generated" / "motion-canvas" / f"{asset_id}.mp4"
     sidecar = final.with_name(final.name + ".receipt.json")
     logical = f"project://{final.relative_to(project).as_posix()}"
-    if (sidecar.is_file() and final.is_file()
-            and str(((_read_json(sidecar).get("output") or {}).get("output_sha256")
-                     or _read_json(sidecar).get("output_sha256") or "")).lower()
-            == _sha(final)
-            and str(_read_json(sidecar).get("fingerprint") or "") == fingerprint):
+    if (sidecar.is_file()
+            and _cache_matches(_read_json(sidecar), final, fingerprint, source)):
         technical = _technical_check(final)
         # A cache hit must still present the canonical sidecar shape to the asset
         # gate: an older sidecar written before the governance-field fix would
@@ -556,6 +572,10 @@ def render_evidence(project: Path, asset_id: str) -> Optional[Dict[str, Any]]:
     if not receipt.is_file():
         return None
     payload = _read_json(receipt)
+    runtime = payload.get("runtime") or {}
+    if (str(runtime.get("version") or "") != MOTION_CANVAS_VERSION
+            or str(runtime.get("template_digest") or "") != _template_digest()):
+        return None
     output = project / str(payload.get("output_path") or "").removeprefix("project://")
     digest = str(payload.get("sha256") or "").lower()
     if not output.is_file() or not re.fullmatch(r"[0-9a-f]{64}", digest) or _sha(output) != digest:

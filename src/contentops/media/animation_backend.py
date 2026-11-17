@@ -416,6 +416,12 @@ def plan_clip(
     name = normalize_backend(backend)
     if name not in CLIP_BACKENDS:
         raise AnimationError("UNSUPPORTED_BACKEND", str(backend))
+    expected_backend = normalize_backend(str(TEMPLATES[template]["backend"]))
+    if name != expected_backend:
+        raise AnimationError(
+            "TEMPLATE_BACKEND",
+            f"{template} requires {expected_backend}, not {name}",
+        )
     try:
         duration = float(duration_s)
     except (TypeError, ValueError) as exc:

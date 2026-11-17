@@ -31,7 +31,7 @@ export default makeScene2D(function* (view) {
     <Txt
       ref={title}
       text={spec.title}
-      fill={palette.ink}
+      fill={palette.surface}
       fontSize={52}
       fontWeight={700}
       x={0}
@@ -100,7 +100,7 @@ export default makeScene2D(function* (view) {
   );
 
   view.add(
-    <Txt ref={caption} text="" fill={palette.sub} fontSize={36} x={0} y={830} />,
+    <Txt ref={caption} text="" fill={palette.surface} fontSize={36} x={0} y={830} />,
   );
 
   const hold = Math.max(0.12, spec.duration_s / rawSteps.length - TWEEN);

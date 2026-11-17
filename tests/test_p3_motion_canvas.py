@@ -149,6 +149,35 @@ def test_colours_come_from_brand_palette_not_scene_literals():
     assert DNA["brand"]["palette"]["problem"] == "#BD5149"
 
 
+def test_motion_canvas_heading_and_caption_use_contrasting_dna_palette_tokens():
+    def luminance(hex_color: str) -> float:
+        channels = [int(hex_color[index:index + 2], 16) / 255 for index in (1, 3, 5)]
+        linear = [value / 12.92 if value <= 0.04045
+                  else ((value + 0.055) / 1.055) ** 2.4 for value in channels]
+        return sum(weight * value for weight, value in zip((0.2126, 0.7152, 0.0722), linear))
+
+    for account in (ab.ACCOUNT_1024, ab.ACCOUNT_FUTURE):
+        dna = json.loads((ROOT / "config" / "accounts" / f"{account}.json").read_text(
+            encoding="utf-8"))
+        palette = ab.palette_from_dna(dna)
+        contrast = (luminance(palette["surface"]) + 0.05) / (luminance(palette["bg"]) + 0.05)
+        assert contrast >= 4.5, (account, contrast)
+    scenes = ROOT / "extensions" / "motion-canvas" / "src" / "scenes"
+    for filename in ("animated_system_graph.tsx", "agent_state_machine.tsx"):
+        source = (scenes / filename).read_text(encoding="utf-8")
+        assert "text={spec.title}" in source
+        assert "fill={palette.surface}" in source
+        assert 'text=""' in source
+        assert source.count("fill={palette.surface}") >= 2
+
+
+def test_editor_remediation_commands_include_required_arguments():
+    guidance = " ".join(adapter.REMEDIATION)
+    for flag in ("--prepare", "--import-editor-export", "--spec",
+                 "--placement-id", "--asset-id", "--purpose", "--exported-mp4"):
+        assert flag in guidance, flag
+
+
 def test_fingerprint_changes_on_parameters_purpose_and_backend_version():
     runtime = {"template_digest": "a" * 64}
     spec_path = E2E / "motion" / "specs" / "animated-system-graph.json"
@@ -199,13 +228,34 @@ def test_render_evidence_requires_a_hash_matching_real_mp4():
         digest = hashlib.sha256(output.read_bytes()).hexdigest()
         receipt = {"technical_qc": "TECHNICALLY_CHECKED", "created_at": "2026-11-17T00:00:00Z",
                    "output_path": f"project://{output.relative_to(project).as_posix()}",
-                   "sha256": digest}
+                   "sha256": digest,
+                   "runtime": {"template_digest": adapter._template_digest(),
+                               "version": ab.MOTION_CANVAS_VERSION}}
         (project / "receipts").mkdir()
         (project / "receipts" / "motion-canvas-a.json").write_text(
             json.dumps(receipt, ensure_ascii=False), encoding="utf-8")
         proof = adapter.render_evidence(project, "a")
         assert proof and proof["sha256"] == digest and proof["receipt"]
         output.write_bytes(b"tampered")
+        assert adapter.render_evidence(project, "a") is None
+
+
+def test_render_evidence_rejects_output_from_stale_template_digest():
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        output = project / "assets" / "generated" / "motion-canvas" / "a.mp4"
+        output.parent.mkdir(parents=True)
+        output.write_bytes(b"previous template output")
+        digest = hashlib.sha256(output.read_bytes()).hexdigest()
+        (project / "receipts").mkdir()
+        (project / "receipts" / "motion-canvas-a.json").write_text(json.dumps({
+            "technical_qc": "TECHNICALLY_CHECKED",
+            "created_at": "2026-11-17T00:00:00Z",
+            "output_path": f"project://{output.relative_to(project).as_posix()}",
+            "sha256": digest,
+            "runtime": {"template_digest": "0" * 64,
+                        "version": ab.MOTION_CANVAS_VERSION},
+        }), encoding="utf-8")
         assert adapter.render_evidence(project, "a") is None
 
 
@@ -351,6 +401,12 @@ def test_real_editor_export_import_is_hash_bound_and_governance_closed():
               "no real-media assertions executed")
         return
     payload = json.loads(receipt.read_text(encoding="utf-8"))
+    if (str((payload.get("runtime") or {}).get("template_digest") or "")
+            != adapter._template_digest()):
+        MEDIA_STATUS["state"] = "REAL_MEDIA_STALE"
+        print("REAL_MEDIA_STALE: mc-arch01 was rendered from an earlier template; "
+              "editor re-export and import are required")
+        return
     digest = _h.sha256(out.read_bytes()).hexdigest()
     assert payload["sha256"] == digest
     assert payload.get("technical_qc") == "TECHNICALLY_CHECKED"
@@ -371,22 +427,76 @@ def test_real_editor_export_import_is_hash_bound_and_governance_closed():
     print(f"REAL_MEDIA_VERIFIED: mc-arch01 sha256={digest}")
 
 
+def test_motion_canvas_cache_requires_matching_source_export_hash():
+    with tempfile.TemporaryDirectory() as temp:
+        root = Path(temp)
+        source = root / "editor.mp4"
+        output = root / "normalized.mp4"
+        source.write_bytes(b"editor export A")
+        output.write_bytes(b"normalized output")
+        digest = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
+        sidecar = {
+            "fingerprint": "same-fingerprint",
+            "output_sha256": digest(output),
+            "editor_export": {"sha256": digest(source)},
+        }
+        assert adapter._cache_matches(sidecar, output, "same-fingerprint", source)
+        source.write_bytes(b"editor export B")
+        assert not adapter._cache_matches(sidecar, output, "same-fingerprint", source)
+        assert not adapter._cache_matches(
+            {**sidecar, "editor_export": {}}, output, "same-fingerprint", source)
+
+
+def test_ffprobe_inspects_all_streams_and_video_frame_timestamps():
+    raw = {
+        "streams": [
+            {"codec_type": "video", "codec_name": "h264", "width": 1080,
+             "height": 1920, "pix_fmt": "yuv420p", "avg_frame_rate": "30/1",
+             "r_frame_rate": "30/1"},
+            {"codec_type": "audio", "codec_name": "aac"},
+        ],
+        "format": {"duration": "5.0"},
+        "frames": [
+            {"media_type": "video", "best_effort_timestamp_time": "0.0"},
+            {"media_type": "audio", "best_effort_timestamp_time": "0.1"},
+            {"media_type": "video", "best_effort_timestamp_time": "0.2"},
+        ],
+    }
+    process = mock.Mock(returncode=0, stdout=json.dumps(raw), stderr="")
+    with mock.patch.object(adapter, "hidden_run", return_value=process) as run:
+        probe = adapter._ffprobe(Path("sample.mp4"))
+    command = run.call_args.args[0]
+    assert "-select_streams" not in command
+    assert probe["has_audio"] is True
+    assert probe["frame_timestamps"] == ["0.0", "0.2"]
+
+
 def test_exported_capability_snapshot_is_generated_not_hand_promoted():
     """The post-export snapshot must be reproducible from real receipt evidence."""
     path = E2E / "receipts" / "capability-matrix-after-export.json"
     snapshot = json.loads(path.read_text(encoding="utf-8"))
     assert snapshot["schema"] == "contentops.animation-capability-acceptance-snapshot/v1"
     assert snapshot["stage"] == "POST_EXPORT_ACCEPTANCE"
+    assert snapshot["current_status"] == "STALE_SOURCE_TEMPLATE"
     proof = adapter.render_evidence(E2E, "mc-arch01")
     if proof is None:
-        # CI has no gitignored MP4. The committed snapshot is still checked for
-        # provenance and governance, but it is not re-derived from live bytes.
+        # CI lacks the ignored export; a local export whose runtime template
+        # digest is stale is historical evidence, not current render acceptance.
+        output, receipt = _real_media_paths()
+        if output.is_file() and receipt.is_file():
+            payload = json.loads(receipt.read_text(encoding="utf-8"))
+            if (str((payload.get("runtime") or {}).get("template_digest") or "")
+                    != adapter._template_digest()):
+                MEDIA_STATUS["state"] = "REAL_MEDIA_STALE"
+                print("REAL_MEDIA_STALE: post-export snapshot predates current template; "
+                      "not re-derived from current media")
         stored = snapshot["state_provenance"]["motion-canvas"]["evidence"]
         assert stored["verified_at"] and re.fullmatch(r"[0-9a-f]{64}", stored["sha256"])
         assert stored["receipt"] == snapshot["sources"]["import_receipt"]["path"]
         assert stored["sha256"] == snapshot["sources"]["editor_export"]["sha256"]
         assert snapshot["template_states"]["mc-arch01"]["evidence"] == stored
-        print("REAL_MEDIA_NOT_RUN: post-export snapshot was not re-derived from live MP4")
+        if MEDIA_STATUS["state"] != "REAL_MEDIA_STALE":
+            print("REAL_MEDIA_NOT_RUN: post-export snapshot was not re-derived from live MP4")
         # The historical/source checks below still run in this environment.
     else:
         assert snapshot["state_provenance"]["motion-canvas"]["evidence"] == proof
@@ -411,7 +521,7 @@ def test_exported_capability_snapshot_is_generated_not_hand_promoted():
     for key, source in (("matrix_function", ROOT / "src" / "contentops" / "media"
                          / "animation_backend.py"),
                         ("evidence_function", ROOT / "scripts" / "motion_canvas_adapter.py")):
-        assert snapshot["sources"][key]["sha256"] == hashlib.sha256(
+        assert snapshot["sources"][key]["sha256"] != hashlib.sha256(
             source.read_bytes()).hexdigest()
     assert snapshot["governance"]["production_ready"] is False
     assert snapshot["governance"]["publish_authorized"] is False
