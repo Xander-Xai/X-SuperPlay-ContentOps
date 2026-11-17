@@ -42,6 +42,7 @@ REAL EXECUTION RECEIPT
 
 | Area | Status | Location |
 |---|---|---|
+| Animation 18-project selection × dual-account DNA (2026-11-17) | RESEARCH / NOT IMPLEMENTATION PROOF | [animation/2026-11-17-18-projects-dna-roadmap.md](animation/2026-11-17-18-projects-dna-roadmap.md) |
 | MiniMax capability audit | VERIFIED (speech + image), H3 BLOCKED | `providers/minimax-mplan-explore-capability.md` |
 | MiniMax sanitized receipt | CURRENT | `providers/receipts/minimax-mplan-explore-capability-2026-10-04.sanitized.json` |
 
