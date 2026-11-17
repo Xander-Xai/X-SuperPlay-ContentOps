@@ -238,6 +238,54 @@
       "pr": 203,
       "created": "2026-11-17",
       "purpose": "Issue #140 next narrow stage extraction: move script/claim/asset validation and source-bound reviewer-copy generation behind the existing M5 facade",
+      "status": "merged",
+      "expires": "2026-12-17"
+    },
+    {
+      "name": "refactor/140-m5-narration-20261117",
+      "pr": 204,
+      "created": "2026-11-17",
+      "purpose": "Issue #140 next narrow stage extraction: extract M5 ASR backcheck behind the compatibility facade while preserving detector-only semantics, receipts and fail-closed review gate",
+      "status": "active",
+      "expires": "2026-12-17"
+    },
+    {
+      "name": "refactor/140-m5-subtitles-20261117",
+      "pr": 205,
+      "created": "2026-11-17",
+      "purpose": "Issue #140 next narrow stage extraction: extract subtitle generation, SRT output and coverage refusal behind the M5 compatibility facade",
+      "status": "active",
+      "expires": "2026-12-17"
+    },
+    {
+      "name": "refactor/140-m5-storyboard-20261117",
+      "pr": 206,
+      "created": "2026-11-17",
+      "purpose": "Issue #140 next narrow stage extraction: extract storyboard construction, narration alignment and support-audio validation behind the M5 facade",
+      "status": "active",
+      "expires": "2026-12-17"
+    },
+    {
+      "name": "refactor/140-m5-compose-20261117",
+      "pr": 207,
+      "created": "2026-11-17",
+      "purpose": "Issue #140 next narrow stage extraction: extract the pinned Easel composition handoff and receipt preservation behind the M5 facade",
+      "status": "active",
+      "expires": "2026-12-17"
+    },
+    {
+      "name": "refactor/140-m5-qc-20261117",
+      "pr": 208,
+      "created": "2026-11-17",
+      "purpose": "Issue #140 next narrow stage extraction: isolate technical QC execution, canonical receipts and fail-closed verdict handling behind the M5 facade",
+      "status": "active",
+      "expires": "2026-12-17"
+    },
+    {
+      "name": "refactor/140-m5-visual-qc-20261117",
+      "pr": 209,
+      "created": "2026-11-17",
+      "purpose": "Issue #140 next narrow stage extraction: isolate automated visual QC, video-bound receipts and incomplete-sampling refusal behind the M5 facade",
       "status": "active",
       "expires": "2026-12-17"
     }

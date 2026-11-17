@@ -2219,115 +2219,15 @@ def stage_qc(project: Path, slug: str) -> Dict[str, Any]:
 
 
 def stage_visual_qc(project: Path, slug: str) -> Dict[str, Any]:
-    """Run frame sampling plus Huashu's calibrated motion/blank-frame gate.
+    """Compatibility facade for the extracted M5 automated visual-QC stage."""
+    from contentops.workflow import m5_visual_qc_stage
 
-    This remains an automated screen: it never grants production readiness or
-    founder approval. Missing tools, malformed output, and uncertain verdicts
-    fail closed. The source video and its hash bind both receipts.
-    """
-    from contentops.media.huashu_runtime import find_runtime
-    from contentops.media.visual_gate import evaluate_film_gate
-
-    video = project / "final" / f"{slug}.mp4"
-    if not video.is_file():
-        raise M5Blocked("visual QC requires the composed final video")
-    video_sha = _file_sha256(video)
-    receipts = project / "receipts"
-    visual_receipt_path = receipts / "visual-gate.json"
-    contact_sheet = receipts / "visual-contact-sheet.png"
-    visual_qc_path = receipts / "visual-qc.json"
-
-    # Fixed-interval samples make a contact sheet for required human playback.
-    sample = hidden_run(
-        [python_executable(), str(ROOT / "scripts" / "qc_visual.py"), str(project),
-         "--video", f"{slug}.mp4"], cwd=str(ROOT), timeout=300,
+    return m5_visual_qc_stage.stage_visual_qc(
+        project, slug, repo_root=ROOT, python_executable=python_executable,
+        hidden_run=hidden_run, file_sha256=_file_sha256,
+        read_json_or_none=_read_json_or_none, write_json=_write_json,
+        blocked_error=M5Blocked,
     )
-    visual_qc = _read_json_or_none(visual_qc_path)
-    if visual_qc is not None:
-        recorded_video = visual_qc.get("video")
-        try:
-            same_video = bool(recorded_video) and Path(recorded_video).resolve() == video.resolve()
-        except (OSError, RuntimeError):
-            same_video = False
-        if not same_video:
-            visual_qc = None
-    if visual_qc is not None:
-        if visual_qc.get("contact_sheet") and contact_sheet.is_file():
-            visual_qc["contact_sheet"] = "project://receipts/visual-contact-sheet.png"
-        visual_qc.pop("project", None)
-        visual_qc.pop("video", None)
-        visual_qc["video_sha256"] = video_sha
-        _write_json(visual_qc_path, visual_qc)
-    frame_summary = (visual_qc or {}).get("summary") or {}
-    frame_sampling_valid = (
-        sample.returncode == 0
-        and visual_qc is not None
-        and visual_qc.get("status") in {"PASS", "WARN"}
-        and contact_sheet.is_file()
-        and frame_summary.get("extraction_failures", 10) <= 3
-    )
-
-    try:
-        runtime = find_runtime(ROOT)
-    except (OSError, RuntimeError):
-        result = {
-            "schema": "contentops.visual-gate/v1", "state": "BLOCKED",
-            "reason": "no supported local Huashu Art Motion installation was found",
-            "video_sha256": video_sha,
-            "contact_sheet": "project://receipts/visual-contact-sheet.png"
-            if contact_sheet.is_file() else None,
-            "frame_sampling": visual_qc.get("status") if visual_qc else "BLOCKED",
-            "production_ready": False, "publish_authorized": False,
-            "human_review": "PENDING_FOUNDER_REVIEW",
-        }
-        _write_json(visual_receipt_path, result)
-        raise M5Blocked("visual motion gate blocked: Huashu film_gate.py unavailable") from None
-
-    gate_script = runtime / "scripts" / "film_gate.py"
-    if not gate_script.is_file():
-        result = {
-            "schema": "contentops.visual-gate/v1", "state": "BLOCKED",
-            "reason": "Huashu installation has no scripts/film_gate.py",
-            "video_sha256": video_sha,
-            "contact_sheet": "project://receipts/visual-contact-sheet.png"
-            if contact_sheet.is_file() else None,
-            "production_ready": False, "publish_authorized": False,
-            "human_review": "PENDING_FOUNDER_REVIEW",
-        }
-        _write_json(visual_receipt_path, result)
-        raise M5Blocked("visual motion gate blocked: film_gate.py missing")
-
-    proc = hidden_run(
-        [python_executable(), str(gate_script), str(video), "--json",
-         "--vertical", "yes", "--no-template"], cwd=str(ROOT), timeout=900,
-    )
-    try:
-        payload = json.loads(proc.stdout or "")
-    except (TypeError, ValueError):
-        payload = {}
-    result = evaluate_film_gate(payload, proc.returncode)
-    sampling_block_reason = None
-    if not frame_sampling_valid and result["state"] not in {"FAIL", "BLOCKED"}:
-        result["state"] = "BLOCKED"
-        sampling_block_reason = "fixed-interval frame sampling or contact sheet is incomplete"
-    result.update({
-        "video_sha256": video_sha,
-        "frame_sampling": visual_qc.get("status") if visual_qc else "BLOCKED",
-        "frame_sampling_failures": (visual_qc.get("summary") or {}).get("extraction_failures")
-        if visual_qc else None,
-        "contact_sheet": "project://receipts/visual-contact-sheet.png"
-        if contact_sheet.is_file() else None,
-        "reason": sampling_block_reason or (
-            None if result["state"] in {"PASS", "WARN"}
-            else ((payload.get("summary") if isinstance(payload, dict) else None)
-                  or (result.get("metrics") or {}).get("explain")
-                  or "Huashu film gate returned an unrecognized result")
-        ),
-    })
-    _write_json(visual_receipt_path, result)
-    if result["state"] in {"BLOCKED", "FAIL"}:
-        raise M5Blocked(f"visual motion gate {result['state']}: {result.get('reason') or result.get('gate_light')}")
-    return result
 
 
 def _file_sha256(path: Path) -> str:
