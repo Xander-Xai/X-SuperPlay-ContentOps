@@ -519,6 +519,30 @@ def test_m5_claim_facade_keeps_receipt_and_fail_closed_error() -> None:
 
 
 
+
+def test_stage_assets_rejects_duplicate_ids_and_untrusted_permission() -> None:
+    work = _project()
+    asset = _write(work / "real-card.png", "bytes for a deterministic fixture")
+    row = {
+        "id": "card", "repo_path": str(asset.relative_to(ROOT)),
+        "sha256": m5_production._sha256(asset), "type": "REAL_SCREENSHOT",
+        "permission": "UNKNOWN",
+    }
+    _write(work / "sources" / "assets.json",
+           json.dumps({"schema": "contentops.m5-assets/v1", "assets": [row, row]}))
+    msg = _raises(m5_production.M5Blocked, m5_production.stage_assets, work)
+    assert "duplicate declared/media-use asset id" in msg
+    _write(work / "sources" / "assets.json",
+           json.dumps({"schema": "contentops.m5-assets/v1", "assets": [row]}))
+    msg = _raises(m5_production.M5Blocked, m5_production.stage_assets, work)
+    assert "permission UNKNOWN is not usable" in msg
+    receipt = json.loads((work / "receipts" / "asset-manifest.json")
+                         .read_text(encoding="utf-8"))
+    assert receipt["schema"] == "contentops.m5-assets-check/v1"
+    assert receipt["ok"] is False and receipt["assets"] == 0
+    assert "permission UNKNOWN" in receipt["problems"][0]
+
+
 TESTS = [
     test_workbench_composer_requires_a_verified_overlay,
     test_default_composer_still_resolves_only_the_production_pin,
@@ -536,6 +560,7 @@ TESTS = [
     test_malformed_ledgers_are_refused,
     test_require_used_names_claims_the_script_never_cites,
     test_stage_assets_refuses_hash_drift,
+    test_stage_assets_rejects_duplicate_ids_and_untrusted_permission,
     test_m5_source_facade_preserves_duplicate_handling_and_receipt,
     test_m5_claim_facade_keeps_receipt_and_fail_closed_error,
     test_stage_assets_refuses_a_path_outside_the_repository,
