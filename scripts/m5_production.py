@@ -500,57 +500,13 @@ def stage_media_use(project: Path, config: Dict[str, Any], *, adapter: Any = Non
             "count": len(discovered) + len(audio["sfx"]) + (1 if audio["bgm"] else 0)}
 
 def stage_assets(project: Path, extra_assets: Optional[Dict[str, Dict[str, Any]]] = None) -> Dict[str, Any]:
-    """Check every declared visual against its recorded hash before it is used."""
-    from contentops.media.local_assets import is_valid_local_preview_asset
+    """Backward-compatible M5 asset stage using the existing evidence and rights gates."""
+    from contentops.workflow.m5_asset_stage import stage_assets as verify_assets
 
-    manifest_path = project / "sources" / "assets.json"
-    if not manifest_path.is_file():
-        raise M5Blocked("sources/assets.json is missing")
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    verified = {}
-    problems = []
-    generated = list((extra_assets or {}).values())
-    declared = list(manifest.get("assets") or [])
-    all_ids = [str(asset.get("id")) for asset in declared + generated]
-    if len(all_ids) != len(set(all_ids)):
-        raise M5Blocked("duplicate declared/media-use asset id")
-    root = ROOT.resolve()
-    for asset in declared + generated:
-        path = (root / asset["repo_path"]).resolve()
-        try:
-            path.relative_to(root)
-        except ValueError:
-            problems.append(f"{asset['id']}: path escapes the repository: {asset['repo_path']}")
-            continue
-        if not path.is_file():
-            problems.append(f"{asset['id']}: file missing: {asset['repo_path']}")
-            continue
-        actual = _sha256(path)
-        if actual != asset.get("sha256"):
-            problems.append(f"{asset['id']}: sha256 {actual[:12]} != recorded {str(asset.get('sha256'))[:12]}")
-            continue
-        local_preview = is_valid_local_preview_asset(asset, project, ROOT)
-        if (asset.get("permission") not in {"OWNED", "CREATED_BY_OWNER", "LICENSED"}
-                and not local_preview):
-            problems.append(f"{asset['id']}: permission {asset.get('permission')} is not usable")
-            continue
-        if not local_preview:
-            try:
-                validate_declared_asset(asset, project)
-            except RightsError as exc:
-                problems.append(f"{asset['id']}: {exc}")
-                continue
-        verified[asset["id"]] = {**asset, "verified_sha256": actual}
-    payload = {
-        "schema": "contentops.m5-assets-check/v1",
-        "ok": not problems,
-        "problems": problems,
-        "assets": len(verified),
-    }
-    _write_json(project / "receipts" / "asset-manifest.json", payload)
-    if problems:
-        raise M5Blocked("; ".join(problems[:4]))
-    return verified
+    return verify_assets(
+        project, extra_assets=extra_assets, repo_root=ROOT, blocked_error=M5Blocked,
+        file_sha=_sha256, validate_rights=validate_declared_asset,
+        rights_error_type=RightsError, write_json=_write_json)
 
 
 def stage_claims(project: Path, artifacts: Dict[str, Any]) -> Dict[str, Any]:

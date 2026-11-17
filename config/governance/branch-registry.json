@@ -222,6 +222,14 @@
       "pr": 201,
       "created": "2026-11-17",
       "purpose": "Issue #199 bounded slice: explicit native Bilibili 16:9 technical QC geometry, legacy vertical compatibility, and refusal paths; still blocked pending real media/render and manual review",
+      "status": "merged",
+      "expires": "2026-12-17"
+    },
+    {
+      "name": "refactor/140-m5-asset-stage-20261117",
+      "pr": 202,
+      "created": "2026-11-17",
+      "purpose": "Issue #140 second narrow stage extraction: move visual-asset hash/path/rights validation into a dependency-injected module preserving M5Blocked, old facade and negative receipts",
       "status": "active",
       "expires": "2026-12-17"
     }
