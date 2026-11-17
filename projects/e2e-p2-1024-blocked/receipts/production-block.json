@@ -3,7 +3,7 @@
   "account_id": "x-superplay-1024",
   "state": "BLOCKED",
   "code": "MISSING_REAL_RECORDING",
-  "checked_at": "2026-11-17T02:49:55Z",
+  "checked_at": "2026-11-17T08:05:13Z",
   "canonical_gates": {
     "production_gate": {
       "state": "BLOCKED",
@@ -38,8 +38,8 @@
     "registered_real_recording": null,
     "source_hashes": {
       "config/accounts/x-superplay-1024.json": "f28065d4a3673e3c4c21a8cc4e149bf89ba7dec50a76b77afdeced5efe0db78a",
-      "src/contentops/media/animation_backend.py": "3cb88cbf3215895425bb8f096ca9c20300af65d10848fd5f2ac0083087a86326",
-      "scripts/animation_render.py": "b69a4974560a1096f97f93c2d40fd596a967a57d630a6b8eeae259466dfed4d9"
+      "src/contentops/media/animation_backend.py": "82d86b6872e432a37e85a08168e43ba8b3e573892f1a189492d7136ca9285a8f",
+      "scripts/animation_render.py": "8b2735224f35d68cb868d0cbcad5049deed909e26cd723f1e33c0df4e56d1240"
     }
   },
   "reason": "The 1024 DNA requires 70% real screen-recording evidence. No intake-verified cropped user recording was provided. Generated animation is explicitly non-evidence and cannot substitute.",
