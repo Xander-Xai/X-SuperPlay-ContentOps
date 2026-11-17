@@ -306,6 +306,57 @@ def _t1_cues(text: str, kind: str) -> List[Dict[str, Any]]:
     ]
 
 
+def _relative_luminance(hex_colour: str) -> float:
+    """WCAG relative luminance for a validated #RRGGBB palette token."""
+    value = str(hex_colour).lstrip("#")
+    if len(value) != 6 or not re.fullmatch(r"[0-9a-fA-F]{6}", value):
+        raise ValueError(f"invalid hex colour: {hex_colour!r}")
+    channels = [int(value[index:index + 2], 16) / 255.0 for index in (0, 2, 4)]
+    linear = [channel / 12.92 if channel <= 0.04045
+              else ((channel + 0.055) / 1.055) ** 2.4 for channel in channels]
+    return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+
+def _contrast_ratio(first: str, second: str) -> float:
+    first_l = _relative_luminance(first)
+    second_l = _relative_luminance(second)
+    lighter, darker = max(first_l, second_l), min(first_l, second_l)
+    return (lighter + 0.05) / (darker + 0.05)
+
+
+def _readable_whiteboard_palette(grammar: str, theme: Mapping[str, Any],
+                                 account_dna: Mapping[str, Any]) -> Dict[str, Any]:
+    """Use an explicit DNA surface token for dark, low-contrast whiteboard text."""
+    resolved = dict(theme)
+    if grammar != "y3_whiteboard":
+        return resolved
+    background = str(resolved.get("bg") or "")
+    ink = str(resolved.get("ink") or "")
+    if _relative_luminance(background) >= 0.25 or _contrast_ratio(ink, background) >= 3.0:
+        return resolved
+
+    # palette_from_dna may synthesize a fallback; only accept a surface explicitly
+    # declared by the account's brand or Huashu palette.
+    brand = account_dna.get("brand") or {}
+    brand_palette = brand.get("palette") if isinstance(brand, Mapping) else None
+    visual = account_dna.get("visual") or {}
+    motion = (visual.get("motion") or {}) if isinstance(visual, Mapping) else {}
+    profile = motion.get("motion_profile") or visual.get("motion_profile") or {}
+    source_palette = brand_palette if isinstance(brand_palette, Mapping) else (
+        profile.get("palette") if isinstance(profile, Mapping) else None)
+    surface = source_palette.get("surface") if isinstance(source_palette, Mapping) else None
+    if not isinstance(surface, str) or not re.fullmatch(r"#[0-9a-fA-F]{6}", surface):
+        raise MotionPlanError(
+            "AUTO_MOTION_WHITEBOARD_CONTRAST_UNRESOLVED: dark board has low-contrast ink "
+            "and no explicit DNA surface token")
+    if _contrast_ratio(surface, background) < 3.0:
+        raise MotionPlanError(
+            "AUTO_MOTION_WHITEBOARD_CONTRAST_UNRESOLVED: DNA surface token does not "
+            "provide at least 3:1 contrast")
+    resolved["ink"] = surface
+    return resolved
+
+
 def _grammar_for(account_id: str, role: str, kind: str, has_still: bool,
                  allowed: set[str], index: int) -> str:
     """Pick the drawing syntax from what the line does and what the account is for.
@@ -615,10 +666,12 @@ def build_auto_plan(*, project: Path, account_id: str,
                     source_assets: Mapping[str, Mapping[str, Any]]) -> Dict[str, Any]:
     """Write deterministic per-placement specs under ``motion/auto``.
 
-    Each output clip is bounded to 2–8 seconds, uses the account's exact six
-    color values, and records its content and source anchor in the plan.
-    1024 requires an actual registered still for every placement; the clip then
-    reveals that evidence image and adds only explanatory marks.
+    Each output clip is bounded to 2–8 seconds and uses the account's palette
+    tokens. Only low-contrast ink on dark ``y3_whiteboard`` canvases may resolve
+    to the account's explicit, sufficiently contrasting ``surface`` token; all
+    other colors and grammars retain their declared values. Source anchors stay
+    bound into the plan. 1024 requires a registered still for every placement;
+    each clip reveals that evidence image and adds only explanatory marks.
     """
     if account_id not in VIDEO_ACCOUNTS:
         raise MotionPlanError(f"AUTO_MOTION_ACCOUNT_UNSUPPORTED: {account_id!r}")
@@ -769,7 +822,7 @@ def build_auto_plan(*, project: Path, account_id: str,
             style_variant = "brand.palette"
         else:
             style_variant = requested_variant or default_variant
-        shot_palette = style_variants.get(style_variant, palette)
+        shot_palette = dict(style_variants.get(style_variant, palette))
         if any(not re.fullmatch(r"#[0-9a-fA-F]{6}", str(shot_palette.get(key) or ""))
                for key in required_colors):
             raise MotionPlanError(
@@ -927,6 +980,22 @@ def build_auto_plan(*, project: Path, account_id: str,
             (line.get("claim") or source_asset_id) if visual_role == "proof" else None)
         scene_template = str((profile.get("scene_templates") or {}).get(visual_role)
                              or "editorial-diagram")
+        ink_before = str(shot_palette.get("ink") or "")
+        bg_for_contrast = str(shot_palette.get("bg") or "")
+        ink_contrast_before = _contrast_ratio(ink_before, bg_for_contrast)
+        shot_palette = _readable_whiteboard_palette(grammar, shot_palette, account_dna)
+        readability_adjustment = None
+        if shot_palette.get("ink") != ink_before:
+            readability_adjustment = {
+                "rule": "dark_whiteboard_low_contrast_ink",
+                "source_token": "account_dna.surface",
+                "from_ink": ink_before,
+                "to_ink": str(shot_palette["ink"]),
+                "background": bg_for_contrast,
+                "contrast_before": round(ink_contrast_before, 3),
+                "contrast_after": round(
+                    _contrast_ratio(str(shot_palette["ink"]), bg_for_contrast), 3),
+            }
         spec = {"grammar": grammar, "duration": render_duration, "fps": 30,
                 "width": 1080, "height": 1920, "theme": shot_palette,
                 "safe": {"top": 0, "bottom": SUBTITLE_SAFE_BOTTOM,
@@ -936,7 +1005,9 @@ def build_auto_plan(*, project: Path, account_id: str,
                                      "visual_role": visual_role,
                                      "template": scene_template,
                                      "evidence_ref": evidence_ref,
-                                     "style_variant": style_variant}}
+                                     "style_variant": style_variant,
+                                     **({"readability_adjustment": readability_adjustment}
+                                        if readability_adjustment else {})}}
         if animation_type:
             spec["contentops_scene"].update({
                 "animation_type": animation_type,
@@ -1017,7 +1088,7 @@ def build_auto_plan(*, project: Path, account_id: str,
         shots.append(shot)
     plan = {"schema": "contentops.motion-shot-plan/v1", "account_id": account_id,
             "profile_version": account_dna.get("version"), "input_sha256": fingerprint,
-            "compiler": "contentops.motion_planner/v6",
+            "compiler": "contentops.motion_planner/v7",
             "compiler_sha256": planner_sha256, "shots": shots}
     plan_path = auto_dir / f"shot-plan-{fingerprint[:12]}.json"
     if not plan_path.exists():

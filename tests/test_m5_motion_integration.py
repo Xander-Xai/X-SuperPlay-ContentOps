@@ -1366,7 +1366,7 @@ def test_future_intelligence_auto_plan_uses_account_palette_and_rag_grammar():
             "Query → 词项", "Query → 语义 候选",
             "词项 + 语义 → 融合候选", "两路候选完成融合"]
         assert spec["cues"][0]["at"] == 0
-        assert result["plan"]["compiler"] == "contentops.motion_planner/v6"
+        assert result["plan"]["compiler"] == "contentops.motion_planner/v7"
         assert result["plan"]["compiler_sha256"] == motion_planner._file_sha(
             Path(motion_planner.__file__).resolve())
         assert max(cue["at"] for cue in spec["cues"]) < spec["duration"]
@@ -1400,6 +1400,144 @@ def test_future_intelligence_auto_plan_uses_account_palette_and_rag_grammar():
             (project / refreshed["plan"]["shots"][0]["spec"]).read_text(encoding="utf-8"))
         assert refreshed_spec["theme"] == animation_backend.palette_from_dna(refreshed_dna)
         assert refreshed_spec["theme"]["accent"] == "#FF5A36"
+
+def test_dark_whiteboard_uses_dna_surface_only_when_ink_contrast_is_low():
+    for account_id in ("x-superplay-future-intelligence", "x-superplay-1024"):
+        dna = json.loads((ROOT / "config" / "accounts" / f"{account_id}.json")
+                         .read_text(encoding="utf-8"))
+        palette = animation_backend.palette_from_dna(dna)
+        original_palette = json.loads(json.dumps(palette))
+        with tempfile.TemporaryDirectory(dir=ROOT / ".verify-tmp") as temp:
+            project = Path(temp)
+            source = project / "sources" / "diagram.md"
+            source.parent.mkdir(parents=True, exist_ok=True)
+            source.write_text("registered explanatory source", encoding="utf-8")
+            result = motion_planner.build_auto_plan(
+                project=project, account_id=account_id, account_dna=dna,
+                script={"lines": [{"id": "P-01", "asset_id": "source-01",
+                                   "narration": "系统经过三步完成状态迁移。",
+                                   "editorial_only": True,
+                                   "animation_type": "state_transition",
+                                   "animation": {"states": ["候选", "校验", "完成"],
+                                                 "transition": "通过校验",
+                                                 "success": "完成", "failure": "拒绝"}}]},
+                narration={"lines": [{"start": 0.0, "duration": 5.0}]},
+                source_assets={"source-01": {
+                    "id": "source-01", "type": "REAL_DOCUMENT",
+                    "permission": "CREATED_BY_OWNER",
+                    "repo_path": source.relative_to(ROOT).as_posix(),
+                    "sha256": motion_planner._file_sha(source),
+                }},
+            )
+            spec = json.loads((project / result["plan"]["shots"][0]["spec"])
+                              .read_text(encoding="utf-8"))
+            assert spec["grammar"] == "y3_whiteboard"
+            assert spec["theme"]["ink"] == palette["surface"]
+            assert spec["theme"]["bg"] == palette["bg"]
+            assert spec["theme"]["accent"] == palette["accent"]
+            adjustment = spec["contentops_scene"]["readability_adjustment"]
+            assert adjustment["source_token"] == "account_dna.surface"
+            assert adjustment["from_ink"] == palette["ink"]
+            assert adjustment["to_ink"] == palette["surface"]
+            assert adjustment["contrast_before"] < 3.0
+            assert adjustment["contrast_after"] >= 3.0
+            assert palette == original_palette
+            assert result["plan"]["compiler_sha256"] == motion_planner._file_sha(
+                Path(motion_planner.__file__).resolve())
+
+            refreshed_dna = json.loads(json.dumps(dna))
+            refreshed_dna["brand"]["palette"]["surface"] = "#EEEEEE"
+            refreshed = motion_planner.build_auto_plan(
+                project=project, account_id=account_id, account_dna=refreshed_dna,
+                script={"lines": [{"id": "P-01", "asset_id": "source-01",
+                                   "narration": "系统经过三步完成状态迁移。",
+                                   "editorial_only": True,
+                                   "animation_type": "state_transition",
+                                   "animation": {"states": ["候选", "校验", "完成"],
+                                                 "transition": "通过校验",
+                                                 "success": "完成", "failure": "拒绝"}}]},
+                narration={"lines": [{"start": 0.0, "duration": 5.0}]},
+                source_assets={"source-01": {
+                    "id": "source-01", "type": "REAL_DOCUMENT",
+                    "permission": "CREATED_BY_OWNER",
+                    "repo_path": source.relative_to(ROOT).as_posix(),
+                    "sha256": motion_planner._file_sha(source),
+                }},
+            )
+            refreshed_spec_path = project / refreshed["plan"]["shots"][0]["spec"]
+            assert refreshed["path"] != result["path"]
+            assert refreshed_spec_path != project / result["plan"]["shots"][0]["spec"]
+            original_key = huashu_motion_adapter._motion_fingerprint(
+                {"spec": huashu_motion_adapter._sha(project / result["plan"]["shots"][0]["spec"])},
+                {"version": "test-runtime"}, "P-01")
+            refreshed_key = huashu_motion_adapter._motion_fingerprint(
+                {"spec": huashu_motion_adapter._sha(refreshed_spec_path)},
+                {"version": "test-runtime"}, "P-01")
+            assert refreshed_key != original_key
+
+
+def test_light_code_focus_theme_is_not_rewritten_by_whiteboard_readability_rule():
+    account_id = "x-superplay-future-intelligence"
+    dna = json.loads((ROOT / "config" / "accounts" / f"{account_id}.json")
+                     .read_text(encoding="utf-8"))
+    palette = animation_backend.palette_from_dna(dna)
+    with tempfile.TemporaryDirectory(dir=ROOT / ".verify-tmp") as temp:
+        project = Path(temp)
+        source = project / "sources" / "code.png"
+        source.parent.mkdir(parents=True)
+        source.write_bytes(b"registered code screenshot")
+        result = motion_planner.build_auto_plan(
+            project=project, account_id=account_id, account_dna=dna,
+            script={"lines": [{"id": "P-01", "asset_id": "source-01",
+                               "narration": "检查这段源码。", "visual_focus": "关键校验",
+                               "editorial_only": True,
+                               "animation_type": "code_focus",
+                               "animation": {"focus_rect": [0.1, 0.2, 0.6, 0.1]}}]},
+            narration={"lines": [{"start": 0.0, "duration": 5.0}]},
+            source_assets={"source-01": {
+                "id": "source-01", "type": "CODE_SNAPSHOT",
+                "repo_path": source.relative_to(ROOT).as_posix(),
+                "sha256": motion_planner._file_sha(source),
+                "source_document_sha256": "a" * 64,
+                "permission": "CREATED_BY_OWNER",
+                "ocr_regions": [{"text": "关键校验", "confidence": 1.0,
+                                 "rect": [0.1, 0.2, 0.6, 0.1]}],
+            }},
+        )
+        spec = json.loads((project / result["plan"]["shots"][0]["spec"])
+                          .read_text(encoding="utf-8"))
+        assert spec["grammar"] == "t2_keynote_ui"
+        assert spec["theme"] == palette
+
+
+def test_whiteboard_readability_only_changes_dark_low_contrast_ink_and_fails_closed():
+    dark_theme = {"bg": "#0F1117", "ink": "#202B31", "surface": "#F9FBFA",
+                  "accent": "#38BDF8", "accent2": "#AABDC1", "sub": "#65747A"}
+    dna = {"brand": {"palette": {"surface": "#F9FBFA"}}}
+    adjusted = motion_planner._readable_whiteboard_palette(
+        "y3_whiteboard", dark_theme, dna)
+    assert adjusted["ink"] == "#F9FBFA"
+    assert adjusted["bg"] == dark_theme["bg"]
+    assert adjusted["accent"] == dark_theme["accent"]
+    assert dark_theme["ink"] == "#202B31"
+
+    high_contrast = {**dark_theme, "ink": "#F9FBFA"}
+    assert motion_planner._readable_whiteboard_palette(
+        "y3_whiteboard", high_contrast, dna) == high_contrast
+    light_canvas = {**dark_theme, "bg": "#F4F2ED", "ink": "#18232B"}
+    assert motion_planner._readable_whiteboard_palette(
+        "y3_whiteboard", light_canvas, dna) == light_canvas
+    assert motion_planner._readable_whiteboard_palette(
+        "t2_keynote_ui", dark_theme, dna) == dark_theme
+
+    for missing_dna in ({}, {"brand": {"palette": {"surface": "#222222"}}}):
+        try:
+            motion_planner._readable_whiteboard_palette(
+                "y3_whiteboard", dark_theme, missing_dna)
+        except motion_planner.MotionPlanError as exc:
+            assert "CONTRAST_UNRESOLVED" in str(exc)
+        else:
+            raise AssertionError("unreadable or missing DNA surface must block")
 
 
 def test_six_parameterized_huashu_templates_emit_the_declared_contract():
@@ -1477,7 +1615,17 @@ def test_six_parameterized_huashu_templates_emit_the_declared_contract():
             assert spec["contentops_scene"]["claim_ref"] == "C-01"
             assert spec["contentops_scene"]["editorial_only"] is False
             assert shot["visual_role"] == "explain"
-            assert spec["theme"] == animation_backend.palette_from_dna(dna)
+            expected_theme = animation_backend.palette_from_dna(dna)
+            if grammar == "y3_whiteboard":
+                assert spec["theme"]["bg"] == expected_theme["bg"]
+                assert spec["theme"]["surface"] == expected_theme["surface"]
+                assert spec["theme"]["accent"] == expected_theme["accent"]
+                assert spec["theme"]["ink"] == expected_theme["surface"]
+                assert motion_planner._file_sha(Path(motion_planner.__file__).resolve()) == (
+                    result["plan"]["compiler_sha256"])
+                assert result["input_sha256"] == result["plan"]["input_sha256"]
+            else:
+                assert spec["theme"] == expected_theme
             if animation_type == "architecture_flow":
                 flow_cues = [cue for cue in spec["cues"] if cue.get("kind") == "draw"]
                 assert [cue["data"]["arrow"] for cue in flow_cues] == [True, True, False]
@@ -2192,6 +2340,9 @@ def main() -> int:
              test_motion_stage_refuses_an_unmapped_plan_before_rendering,
              test_huashu_render_cache_requires_matching_inputs_and_output_hash,
              test_future_intelligence_auto_plan_uses_account_palette_and_rag_grammar,
+             test_dark_whiteboard_uses_dna_surface_only_when_ink_contrast_is_low,
+             test_light_code_focus_theme_is_not_rewritten_by_whiteboard_readability_rule,
+             test_whiteboard_readability_only_changes_dark_low_contrast_ink_and_fails_closed,
              test_six_parameterized_huashu_templates_emit_the_declared_contract,
              test_parameterized_templates_reject_untrusted_inputs,
              test_motion_plan_splits_a_semantic_segment_by_visual_weights,
