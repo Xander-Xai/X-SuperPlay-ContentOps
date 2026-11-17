@@ -142,7 +142,7 @@
       "pr": 187,
       "created": "2026-11-16",
       "purpose": "PRD R2 first half: per-account per-platform adaptation plan (shape, limits, variant requirement, recording policy), fail-closed",
-      "status": "active",
+      "status": "merged",
       "expires": "2026-12-16"
     },
     {
@@ -173,24 +173,40 @@
       "name": "feat/192-huashu-dna-animation",
       "pr": 193,
       "created": "2026-11-16",
-      "purpose": "Issue #192: add DNA-driven Huashu shot templates and preserve account evidence floors",
-      "status": "active",
+      "purpose": "Issue #192: add DNA-driven Huashu shot templates and preserve account evidence floors; original PR #193 closed as superseded, content integrated through squash PR #196",
+      "status": "merged",
       "expires": "2026-12-16"
     },
     {
       "name": "feat/194-title-card-and-trusted-cache",
       "pr": 195,
       "created": "2026-11-17",
-      "purpose": "Issue #194: DNA-driven 1024 conflict title_card and fingerprint-verified trusted clip cache; independent of the Huashu six-template work in #192/#193",
-      "status": "active",
+      "purpose": "Issue #194: DNA-driven 1024 conflict title_card and fingerprint-verified trusted clip cache; independent of the Huashu six-template work in #192/#193; original PR #195 closed as superseded, content integrated through squash PR #196",
+      "status": "merged",
       "expires": "2026-12-17"
     },
     {
       "name": "feat/196-animation-dna-integration",
       "pr": 196,
       "created": "2026-11-17",
-      "purpose": "Issue #196: integration of #195 then #193 plus the dual-account storyboard/backend-selection wiring and end-to-end acceptance; the merge order was verified on this branch, main stays untouched",
-      "status": "active",
+      "purpose": "PR #196: integration of #195 then #193 plus the dual-account storyboard/backend-selection wiring and end-to-end acceptance; the merge order was verified on this branch, main stays untouched; squash-merged to main at a0fa50d after fixing Huashu readability via PR #198",
+      "status": "merged",
+      "expires": "2026-12-17"
+    },
+    {
+      "name": "research/animation-18-selection-20261117",
+      "pr": 197,
+      "created": "2026-11-17",
+      "purpose": "research-only follow-up on PR #196: classify 18 upstream animation tools against dual-account DNA and provide sourced Claude Code implementation/acceptance prompt; no runtime change",
+      "status": "merged",
+      "expires": "2026-12-17"
+    },
+    {
+      "name": "fix/192-huashu-readability",
+      "pr": 198,
+      "created": "2026-11-17",
+      "purpose": "Huashu dark-whiteboard contrast, regression and media-lineage follow-up; PR #198 squash-merged into #196 and this branch was automatically deleted",
+      "status": "merged",
       "expires": "2026-12-17"
     }
   ]
