@@ -20,7 +20,7 @@ date: 2026-11-17
 
 | # | 仓库（核验入口） | 类型/输出能力 | 许可证核验 | 本项目决策与适用画面 |
 |---|---|---|---|---|
-| 1 | [remotion-dev/skills](https://github.com/remotion-dev/skills) | Agent Skills，指导写 Remotion；**自身不渲染 MP4** | GitHub SPDX 为 NOASSERTION；不要据此假定可再分发整包 | **P0 学习/可选本地安装**；已有 Remotion 模板可先运行；不能以 Skill 未安装否认已产出的 MP4 |
+| 1 | [remotion-dev/skills](https://github.com/remotion-dev/skills) | Agent Skills，指导写 Remotion；**自身不渲染 MP4** | 本轮 GitHub 仓库元信息 `license` 为空（未识别独立许可）；不得推定可原样再分发整包 | **P0 学习/可选本地安装**；已有 Remotion 模板可先运行；不能以 Skill 未安装否认已产出的 MP4 |
 | 2 | [motion-canvas/motion-canvas](https://github.com/motion-canvas/motion-canvas) | 时序化 2D 解释动画；视频导出经编辑器 FFmpeg 插件 | MIT | **已部分接入**；AI 架构图、Agent 状态机；`mc-state01` 仍待真实编辑器导出，禁止编造 CLI |
 | 3 | [motiondivision/motion](https://github.com/motiondivision/motion) | React/JS 动效库，不是成片器 | MIT | **暂不加**；已有 Remotion/Canvas 逐帧时间轴 |
 | 4 | [franciscop/ola](https://github.com/franciscop/ola) | 数值平滑插值，无独立视频导出 | MIT | **暂不加**；数字动画优先复用现有模板 |
@@ -43,7 +43,7 @@ date: 2026-11-17
 
 ### 许可证差异与官方来源
 
-- Remotion 的[自定义许可证](https://github.com/remotion-dev/remotion/blob/main/LICENSE.md)允许个人及不超过 3 名员工的符合条件企业免费制作视频；如组织/服务模式变化，重审资格。不能简单说“GitHub 免费 = 所有商业化方式不限”。
+- Remotion 使用[自定义许可证](https://github.com/remotion-dev/remotion/blob/main/LICENSE.md)，官方[条款](https://www.remotion.dev/docs/terms)明确指出其**不是 OSI 意义上的开源软件**，而是 source-available；个人及符合条件的最多 3 人团队可用免费许可证进行商业视频创作与自动化，但仍有服务形态限制。为客户交付**成品视频**与让客户**拥有/运行 Remotion 工程**的授权判定不同；共同参与运营工程的企业/合同人员可能需要合并核算人数；让用户上传自己的 Remotion 代码供服务端渲染也受限制。正式产品化、SaaS 或对外交付前须按当时最新[License FAQ](https://www.remotion.dev/docs/license/faq)及条款逐项核对，必要时联系权利人。不能简单说“GitHub 免费 = 开源 / 一切商业化方式不限”。
 - Remotion [官方 Agent Skills 文档](https://www.remotion.dev/docs/ai/skills) 提供 `npx remotion skills add`（项目已有 Remotion）及 `npx skills add remotion-dev/skills`。技能文件安装与渲染器不是同一件事；仓库此前本机安装被权限规则拦截，必须如实报告 `NOT_INSTALLED`，不绕过执行策略。
 - Motion Canvas [渲染](https://motion-canvas.io/docs/rendering/)与[FFmpeg exporter](https://motion-canvas.io/docs/rendering/video/)文档描述的是**编辑器 Video Settings → Render**；当前项目 adapter 明确是 `EDITOR_EXPORT_REQUIRED`，不要编造 `npx mc render` 为官方无人值守 CLI。
 - Manim [官方 CLI](https://docs.manim.community/en/stable/guides/configuration.html) 支持 `manim render` / `python -m manim render`，实际执行受隔离运行时、字体与原生依赖影响。
