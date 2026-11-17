@@ -4,11 +4,9 @@
 
 [简体中文](README.md) | English
 
-> Last verified: 2026-11-17 on `feat/173-easel-m0-pin` (M0: single pin registry). The status table describes
-> Last verified: 2026-11-14. Local-only X and cross-platform analytics exist; no live account growth is verified.
+> Last verified: 2026-11-17 against code, configuration and existing receipts at `main` baseline `5d031ae3`. This check does not re-accept historical media or verify live platform outcomes.
 > X original-post workflow now supports explicit `post_format=text` without an image/ALT, or `post_format=image` with real 1600x900 raster+ALT. General-interest writing has a separate evidence-honest human rubric; all publication is still manual and requires a real own X URL.
 > Operating authority: canonical Strategy X SOP and account DNA; local-only real analytics and human review/manual publishing.
-> `main`, never a draft branch.
 
 > Local analytics: X uses [X learning loop](docs/X-LOCAL-LEARNING-LOOP.md); other platforms use the [cross-platform local loop](docs/PLATFORM-LOCAL-LEARNING-LOOP.md). Raw account data stays offline; learning briefs require human Strategy review.
 
@@ -31,9 +29,7 @@ non-bypassable quality and human-review gates.
 
 ## Current Status
 
-The table describes **`main`** at `c1da6dd` (verified 2026-11-12). A track is not
-"done" because a draft branch describes it, and code that exists is not a
-capability that published anything.
+The table describes the `main` baseline above and existing evidence. Implementation, historical renders and passing CI do not constitute current film acceptance or publication.
 
 | Item | Layer | Status |
 |---|---|---|
@@ -45,7 +41,8 @@ capability that published anything.
 | Card and article rendering (`render_cards.py`, `render_article.py`) | `main` | Implemented: HTML cards → PNG with a density audit, article HTML validated and preview-wrapped by the pinned Easel skills. Each writes a tamper-evident receipt; a PASS is not an approval |
 | Media-use adapter (HyperFrames) | `main` | Implemented; local-only, zero network/paid calls. Needs a host runtime lock — default verdict is `BLOCKED / MISSING_RUNTIME` |
 | MiniMax media | `main` | Speech, image and H3 video implemented; verified subsets are listed in CURRENT-STATE; `PENDING_FOUNDER_REVIEW` |
-| Skill routing / execution authorization | `main` | Implemented; only `media-use` is a declared capability; the router never authorizes execution |
+| Skill routing / execution authorization | `main` | Implemented; declarations include `media-use`, Huashu motion, production gates and Remotion clips. Discovery is not installation, execution or publication authorization |
+| Animation clips | `main` | Huashu, Remotion, Manim and Motion Canvas have adapters or templates; historical clips and test films are not production acceptance. A Motion Canvas historical export is stale for the current template, and the other template still requires editor export. See the [animation integration PRD](docs/PRD-ANIMATION-SKILLS-INTEGRATION.en.md) |
 | Content router, account DNA, workflow gates | `main` | Implemented through PRs #114 and #118. 15 hotspot sources are registered — exactly one native search (GitHub) and fourteen list-only — and both account DNAs are open to all of them (#157). Hotspot and user-topic routes produce briefs; approval and copy review remain gated |
 | Video delivery (`video_deliver.py`) | `main` | Implemented: `plan` / `pack` / `status` build per-platform packs and thumbnails; `dispatch` needs an operator grant. An uploader exit 0 is recorded as `UPLOADER_EXIT_0`, never as publication — only a URL a person actually saw is recorded as one |
 | Graphic delivery (`platform_delivery.py`, `graphic_deliver.py`, `wechatsync_browser.py`) | `main` | Implemented: offline packs, then drafts only, through an external CLI across a process boundary. No `PUBLISHED` branch and no URL is ever written by code |
@@ -53,9 +50,9 @@ capability that published anything.
 | 小红书 image-text | `main` spec + delivery channel | Graphic specs and a delivery-channel record exist; the registry has no image row (the whole platform belongs to the VIDEO line, per the 2026-11-09 operator instruction). Rights and migration acceptance stay open in Issue #51 |
 | X | `main` manual-only editorial track | Editorial gate, manual package, URL recording and offline metric analysis exist; no API publication or automatic metric collection |
 | Auto-publishing | — | **Not in scope** |
-| Publication | — | **0** — no delivery package holds a real platform URL |
-| Tests | `main` | 98 suites under `tests/test_*.py`, each wired into CI as a named step; the complete local gate is `python scripts/dev_check.py` |
-| Production ready | — | **false** — no track is `PRODUCTION_ACCEPTED` |
+| Publication record | — | Existing status records report no delivery pack with a real platform URL; this documentation pass did not re-audit all platform outcomes |
+| Tests | `main` | See the [test plan](docs/TEST-PLAN.md) for suite inventory and CI wiring; run `python scripts/dev_check.py` when preparing a PR |
+| Production readiness | — | Historical test samples still await human review; #199 tracks formal dual-account deliverable acceptance |
 
 ### X Original Content Rewards — proposed growth experiment
 
@@ -63,22 +60,15 @@ The [X project](projects/x-growth-en/README.md) now includes a [90-day evidence-
 
 ### Branch reality
 
-This README describes the repository's current `main` capabilities, not the status
-of an earlier feature branch. As verified on 2026-11-12: `main` is the only
-persistent branch; one non-runtime catalog branch is open as PR #158; four issues
-are open (#7 EPIC, #51 and #56 rights gates, #140 M5 stage split). The X, XHS and
-GZH adapters are all on `main`, with different execution boundaries, as listed
-above. Delivery code exists for every content line, yet no platform row is above
-`PLANNED` except `x`, because no public account is bound and nothing has a real
-platform URL. One correction worth stating: the Xiaohongshu runtime adapter was
-removed on 2026-11-09 with the graphic workflow (`src/contentops/xhs/` is empty),
-so `main` carries only its registry row and video delivery-channel config — there
-is no Xiaohongshu adapter code to run. See [docs/CURRENT-STATE.md](docs/CURRENT-STATE.md) for dated
-evidence and [docs/DEFERRED-WORK.md](docs/DEFERRED-WORK.md) for open work.
+Animation integration PR #196 and research closeout PR #197 are merged. Issue #199 tracks the remaining real deliverables, human review and reproducibility. The Xiaohongshu graphic runtime adapter was removed; video delivery-channel configuration remains. GZH rights remain unresolved (#56). See [docs/CURRENT-STATE.md](docs/CURRENT-STATE.md) for dated evidence.
 
 ### Overseas channel candidate coverage (not operational)
 
 The separate, **non-runtime** `config/registry/channel-candidates.json` catalog documents **Threads, Instagram and Facebook** as pre-canonical research candidates. They are absent from the canonical platform runtime registry and have no account, executable pipeline, publishing or metrics. WhatsApp and LINE are private-conversion research touchpoints, not publishing destinations. See [candidate status and acceptance boundaries](docs/OVERSEAS-CHANNEL-CANDIDATES-20261111.md). This does not change the Strategy canonical 14-platform portfolio or production readiness.
+
+## Next: deliver one real piece
+
+Choose an account and topic, collect rights-cleared sources, and complete signed pre-copy research before producing video and graphic content on their respective tracks. A 1024 production sample requires a cropped recording admitted under its account policy; Future Intelligence forbids manual desktop recording and still needs sources for factual claims. After each track's gates, QC and human review, publication is a separate operator decision. Issue #199 tracks real dual-account deliverables, native horizontal output and reproducible acceptance; test films and CI do not replace them.
 
 ## Architecture
 
@@ -124,7 +114,7 @@ GitHub repos / experiments  →  direction · Bundle template
 └──────────────────────────────────────────────────────────┘
                     │
                     ▼
-        human review → a person records the URL (count: 0)
+        human review → a person records an observed URL
 ```
 
 ### Entry points: which one to run
@@ -255,12 +245,11 @@ registry in [docs/PLATFORM-INTEGRATION-STATUS.md](docs/PLATFORM-INTEGRATION-STAT
 | Property | Value |
 |---|---|
 | Repo | https://github.com/ZJU-REAL/Easel |
-| Tag | v0.2.1 |
-| Commit | `3fe2d9904c1619281ef57f81d9ee0b7854998399` |
-| Local path | `.runtime/easel/` |
+| Tag | v0.3.0 (production); v0.2.1 is the rollback tree |
+| Commit | `bb3c8ff0463f36c202454d74171682ba6e470cb1` |
+| Local path | `.runtime/easel-v030/` |
 | Lock file | `runtime/easel.lock.json` (derived from `runtime/easel-pins.json`) |
 | Source of truth | `runtime/easel-pins.json` — code reads its `active` engine instead of carrying a commit |
-| Upstream stable | v0.3.0 (not adopted; skill paths moved to `skills/builtin/`) |
 | Upgrade | Requires Founder approval + regression suite |
 
 See [docs/UPSTREAM-EASEL.md](docs/UPSTREAM-EASEL.md) for full policy.

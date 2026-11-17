@@ -2,19 +2,44 @@
 
 [English](CURRENT-STATE.md) | [简体中文](CURRENT-STATE.zh-CN.md)
 
-> What runs today. Verified facts only. No aspirations, no stale claims.
+> What runs today. Verified facts only. The current-status summary below is based on the recorded repository evidence available for the 2026-11-17 baseline `5d031ae3f7eecb1fc492f03c8518ccc5e151979c`, which includes merged PRs #196, #197, #200, #201 and #202. This documentation pass did not comprehensively audit every repository URL, environment or media artifact, and did not rerun renders. The dated history below is retained for traceability; read it as evidence of its recorded time and scope, not as a live machine check.
 >
-> Last verified: 2026-11-17 against `10017c2b74dca40a0d2f0df85c8023ccb01c3566` (`main` after PR #191); branch `feat/194-title-card-and-trusted-cache` builds on it. The 2026-11-17 diff only adds a Remotion `title_card` composition and a clip cache; no Easel/Huashu/lifecycle fact below changes. The Easel pin now lives in
-> `runtime/easel-pins.json`; `runtime/easel.lock.json` is a projection of its `active`
-> engine, and no code file carries a commit literal.
-> This worktree is 22 commits ahead of that `main` and 15 behind it; no rebase or merge has
-> been performed, so facts that belong to the branch are labelled as such.
-> Last verified: 2026-11-14, read-only GitHub main @ `515c605` (protected). The proposed X text/image and per-mode reviews are branch changes, not yet on main; real platform outcomes unverified.
-> X image posts require real media+ALT; explicit text posts omit media. General-interest posts use human novelty/evidence review without invented technical benchmarks. This implementation does not publish to X.
-> X and cross-platform offline analyzers are implemented; the platform outcomes and automatic end-to-end operations have not been verified.
-> Facts below describe `main`; deferred or rights-blocked work is labelled as such.
-> Sections below the "Layer status" table are historical milestone records;
-> they describe how a capability was proven, not what is current.
+> Last verified: 2026-11-17 against `5d031ae3f7eecb1fc492f03c8518ccc5e151979c` (`main`, PRs #196/#197/#200/#201/#202 included); current-state documentation reconciliation. Specific historical or runtime checks below retain their own dates and scope.
+
+## Current production boundary
+
+| Area | Current capability | What is still not proven / blocked |
+|---|---|---|
+| Video | M5 evidence-first pipeline, account routing, signed pre-copy research receipt, production gates, pinned Easel composition, QC and review receipts are implemented. Easel v0.3.0 (`bb3c8ff`, `runtime/easel-pins.json`) is the active production engine; v0.2.1 is rollback only. #196 adds account-aware short motion clips and their M5/QC integration. | Existing receipts and archived animation acceptance are historical evidence, not a claim that this checkout or host was freshly rendered. Production/publication still requires current source/media rights, successful QC, Founder review, and explicit delivery authorization. 1024 formal video is blocked without an intake-verified real recording (`MISSING_REAL_RECORDING`); PR #201 adds native 16:9 Bilibili QC handling, but a real native horizontal render and acceptance remain outstanding (`NATIVE_16_9_RENDER_UNAVAILABLE`). |
+| Graphic text | VIDEO and GRAPHIC_TEXT handoffs, manual graphic package, card/article render adapters and draft-only platform delivery exist. XHS currently belongs to the VIDEO delivery route; no XHS image runtime adapter is present. | A generated package/render is not a reviewed or published article. GZH rights/runtime and any platform account/authorization remain separate gates. Publication requires a human-observed URL; no publication is claimed here. |
+| Animation | #196 integration supplies a clip-planning/backend contract and adapters for Huashu, Remotion, Manim, Motion Canvas and Remotion Three; Easel remains the sole full-episode compositor. Historical receipts document rendered TEST_ONLY samples, including Huashu clips, Remotion and Manim clips, and one Motion Canvas editor export. | Do not infer current render verification from implementation, lockfiles, contract tests, or historical receipts. The checked-in `capability-matrix-after-export.json` explicitly says `STALE_SOURCE_TEMPLATE`: its `mc-arch01` export is bound to the previous scene template and needs a new editor export for current-template acceptance. `mc-state01` remains `EDITOR_EXPORT_REQUIRED`. Media evidence has not been comprehensively re-verified in this documentation pass; CI records Motion Canvas `REAL_MEDIA_NOT_RUN` when media is absent. No animation row is `production_ready`. |
+| Research and routing | Signed pre-copy research is required before copy approval/production gates. `runtime/skill-registry.json` declares `media-use`, `x-superplay-huashu-motion`, `contentops-production-gates`, and `contentops-remotion-clips`; routing is discovery only, never execution authorization. | A skill's presence or a route result does not authorize use. Runtime locks, account scope, rights, project gates and human review still apply. Environment-specific skill installation/runtime findings are not universal facts. |
+| M5 refactor (#200, #202) | Source, asset-verification and claim stages have been extracted into separate modules while preserving the production entry and rights gates. | The merge is code integration, not evidence of a new end-to-end production render or approval. |
+| Native Bilibili QC (#201) | Explicit 1920×1080 canvas is accepted by QC without relaxing vertical-video gates. | This does not prove a native horizontal render exists or has passed whole-film acceptance; #199 remains open. |
+
+**Status vocabulary:** implemented code, passing contract tests, historical render evidence, current render verification, technical QC, Founder review and publication are distinct states. Production-ready status requires the applicable valid human-review receipt; technical PASS is not approval. This summary makes no new publication claim.
+
+## Baseline and recent integration
+
+- Recorded baseline: the documentation branch was fast-forwarded to `origin/main` at `5d031ae3f7eecb1fc492f03c8518ccc5e151979c`; the local `main` branch was not updated. #196 integrates dual-account animation and QC; #197 adds animation research/branch closeout; #200/#202 extract M5 source, asset-verification and claim stages; #201 adds the native 16:9 QC gate. Earlier references below to PR #193/#195, #182 or #185 and their open status are historical snapshots, not current PR status.
+- Easel pin authority is `runtime/easel-pins.json`; active v0.3.0 commit `bb3c8ff0463f36c202454d74171682ba6e470cb1`, tree digest `c26fc96a…`; v0.2.1 is rollback. Frozen pin policy is in `docs/UPSTREAM-EASEL.md`.
+- XHS: the old statement that only a `xiaohongshu_video` registry row remained is historical. Current workflow routes XHS through VIDEO; this does not imply a verified publishing integration or authorization.
+- Pre-copy research gate is implemented as a signed, fingerprint-bound fail-closed requirement (see `docs/PRECOPY-RESEARCH.md`), not a proposed or branch-only feature.
+- #199 is not represented here as complete: animation acceptance/closeout work remains unfinished where the current template needs re-export, media evidence requires re-verification, Founder review is pending, or formal production gates are unmet. Consult the issue/acceptance receipts for exact remaining actions; do not infer closure from merged #196/#197/#200.
+
+### Git — 2026-11-17 documentation baseline
+
+| Property | Verified value |
+|---|---|
+| Default branch | `5d031ae3f7eecb1fc492f03c8518ccc5e151979c` — fetched `origin/main` after PR #201 and #202 merged |
+| Integration | PRs #196, #197, #200, #201 and #202 merged; issue #199 remained open when checked |
+| Documentation branch | Based on the fetched `origin/main`; the local `main` branch was not updated |
+
+## Historical records
+
+The dated sections below are retained from the preceding edition for audit traceability and link-anchor stability. Dates, branch names, suite counts, host observations, and `VERIFIED` labels are historical claims limited to their recorded context. They are not automatically current facts. The summary above supersedes directly conflicting current-state language in those records; otherwise historical detail remains unchanged.
+
+---
 
 ## Layer status (2026-11-12)
 

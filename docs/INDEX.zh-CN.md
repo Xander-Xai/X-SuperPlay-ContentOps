@@ -46,7 +46,7 @@ translation_status: synced
 
 - [PRD-EASEL-V030-FOUNDATION.md](PRD-EASEL-V030-FOUNDATION.md) — Easel v0.3.0 底座接入：先换发动机再换驾驶舱、M0–M4、发布分级 —— **Proposed，等待 Founder 批准**
 - [PRD-RECORDING-TO-PLATFORM.md](PRD-RECORDING-TO-PLATFORM.md) — 录屏优先交付：手动录屏成为证据、双账号分叉、平台变体、发布分级 —— **R1 已落地，R2–R4 未开始**
-- [PRD-ANIMATION-SKILLS-INTEGRATION.md](PRD-ANIMATION-SKILLS-INTEGRATION.md) — 短镜头后端接在 Easel 时间线上：Remotion P0 已渲染，Motion Canvas 与 Manim 为 BLOCKED，账号证据规则不放宽
+- [PRD-ANIMATION-SKILLS-INTEGRATION.md](PRD-ANIMATION-SKILLS-INTEGRATION.md) — Easel 时间线上的短镜头后端、历史渲染证据、当前模板限制与审核边界
 - [CONVERGENCE-REQUIREMENTS-2026-11-01.md](CONVERGENCE-REQUIREMENTS-2026-11-01.md) — 文档 / Skill / 分支 / 上游固定版本收敛 —— **2026-11-01 获批；步骤 3–5 后已落地**
 - [M4-H3-PLAN.md](M4-H3-PLAN.md) — M4 MiniMax H3 视频（Issue #22）—— **已实现**
 - [M4.5-MEDIA-CONVERGENCE-PLAN.md](M4.5-MEDIA-CONVERGENCE-PLAN.md) — M4.5 媒体收敛（Issue #27）—— **已实现**
@@ -68,8 +68,9 @@ Tier-1 文档默认英文为原文、中文为 `.zh-CN.md` 镜像。**README 是
 `README.md` 是中文原文，`README.en.md` 是英文镜像，因为本仓库的主要读者是中文用户；
 **Easel v0.3.0 底座 PRD 沿用同一方向（2026-11-15）：**
 `docs/PRD-EASEL-V030-FOUNDATION.md` 是中文原文，`docs/PRD-EASEL-V030-FOUNDATION.en.md`
-是英文镜像，因为这份文档是给 Founder 直接执行的。两处例外都在
-`scripts/check_i18n.py::ZH_PRIMARY_DOCS` 中声明；其余 Tier-1 文档保持英文原文。
+是英文镜像，因为这份文档是给 Founder 直接执行的。录屏到平台和动画 Skill 接入 PRD
+也是中文原文、英文镜像；完整例外清单以 `scripts/check_i18n.py::ZH_PRIMARY_DOCS` 为准，
+其余 Tier-1 文档保持英文原文。
 
 `python scripts/check_i18n.py` 校验两个方向的结构一致性，
 `python scripts/check_doc_freshness.py` 校验每份被跟踪文档确实对着它描述的代码核验过

@@ -112,8 +112,8 @@ Composition must reuse the pinned Easel through `scripts/assemble_easel.py` (`as
 
 ### Pinned upstream
 
-- `.runtime/easel/` is Easel v0.2.1 (commit `3fe2d99`), gitignored and **read-only**. `Easel/` is a local working clone and is also gitignored.
-- `runtime/easel.lock.json` is the canonical pin; `scripts/resolve_easel.py` resolves it and `scripts/verify_easel_runtime.py` verifies blob hashes.
+- `.runtime/easel-v030/` is the frozen production Easel v0.3.0 (commit `bb3c8ff`); `.runtime/easel/` is the v0.2.1 rollback tree. Both are gitignored and **read-only**.
+- `runtime/easel-pins.json` owns the active pin; `runtime/easel.lock.json` is its projection. `scripts/resolve_easel.py` resolves it and `scripts/verify_easel_runtime.py` verifies blob hashes.
 - `assemble_easel.py` is an **adapter** (orchestration plus the Windows subtitle-burn workaround), not an upstream patch.
 
 ### media-use and skill routing
@@ -121,7 +121,7 @@ Composition must reuse the pinned Easel through `scripts/assemble_easel.py` (`as
 - `src/contentops/media/media_use_adapter.py` is the only module that knows the HyperFrames `media-use` skill exists. Never copy the skill into this repo.
 - Execution requires a trusted host lock that names the approved baseline (`runtime/media-use-runtime-baseline.json`) by digest and matches every byte. A clean checkout is `BLOCKED / MISSING_RUNTIME` by design.
 - `scripts/skill_route.py` + `runtime/skill-registry.json` are discovery/routing only. Every resolution carries `execution_authorized: false`. Legacy M5 must not import the router.
-- The five `x-superplay-*` content skills are installed in the shared store but are **not declared**: their code lives on the unmerged `feat/content-router` branch. `runtime/content-skill-status.json` records every path they name that this branch lacks; `scripts/check_skill_references.py` fails when that record stops matching reality.
+- Content router stages are on `main`; an installed `x-superplay-*` skill is not automatically declared or executable. `runtime/content-skill-status.json` and `scripts/check_skill_references.py` track skill references against this checkout; consult the registry and current code for each capability.
 
 ## Invariants
 

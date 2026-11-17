@@ -115,7 +115,7 @@ M5 将支持的文件复制到 `assets/imported/user/`，把 SHA-256 写入
 
 ### M5 自动调用 media-use 素材（仅离线）
 
-当 PR #64 的适配器已进入当前版本、本机已有批准后的运行时锁时，
+当已合并的适配器可用、本机已配置经验证的运行时锁时，
 在项目 project.yaml 中声明素材需求。执行原来的 M5 命令时，
 系统会自动调用 media-use，而不需要单独运行适配器命令：
 
@@ -144,11 +144,14 @@ media_use:
 
 把已核实权利的候选图片放入该项目 assets/，然后在
 script/script.json 对应镜头使用 asset_id=support_visual。
-只执行正常的工作流：
+仅在诊断时可直接运行 M5：
 
 ~~~powershell
 python scripts\m5_production.py projects\my-video
 ~~~
+
+正式生产应使用受门禁保护的 `make_content.py` 入口；直接运行 M5 属于诊断，
+不代表生产门禁已通过。
 
 素材阶段会自动 adopt 本项目文件、通过批准的运行时离线 resolve、
 生成导入回执并核验 SHA-256，再交给原有素材校验、分镜、合成及 QC。
@@ -161,7 +164,7 @@ python scripts\m5_production.py projects\my-video
 音频不进入事实证据。
 未设置 media_use.enabled=true 的旧项目保持原行为。
 
-本接线 PR 叠加在 M5 PR #68 上，真实外部调用还需要 PR #64。
+该适配器已通过 PR #71 合并，执行仍需经验证的主机运行时锁和适用的素材权利。
 CI 使用离线合成测试数据，不运行第三方 Provider。
 
 ## 5.2 Bundle handoff 与双线

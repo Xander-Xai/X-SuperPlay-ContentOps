@@ -16,13 +16,19 @@ Related: [ARCHITECTURE.md](ARCHITECTURE.md), [PRD.md](PRD.md),
 [PLATFORM-ADAPTER-CONTRACT.md](PLATFORM-ADAPTER-CONTRACT.md),
 [EASEL-CAPABILITY-INVENTORY.md](EASEL-CAPABILITY-INVENTORY.md)
 
-## Branch status (read this first)
+## Branch status and historical baseline
 
-The main baseline stated in the older table is historical; this PR updates only the local feedback stages. Every earlier `implemented` claim was verified on `main` (`c1da6dd`), not on a
-parallel branch. The router, platform registry, Bundle kernel and graphic package
+The older main snapshot in the table below is historical, not a statement of the
+current branch. The router, platform registry, Bundle kernel and graphic package
 landed through PRs #101, #114 and #118; rendering, gates and both delivery runners
-landed through #141–#157. Rights and the absence of a bound public account, not
-code, are what block the platform tracks. Two corrections worth carrying:
+landed through #141–#157. The signed pre-copy research gate (`contentops.precopy-research/v1`)
+is also merged and is enforced before copy in both VIDEO and GRAPHIC_TEXT lines;
+it is the eighth VIDEO gate and the sixth GRAPHIC_TEXT gate. It establishes
+research approval only—not copy approval, production readiness or publication.
+Current execution evidence and blockers remain governed by the stage table below;
+no runtime or publication capability is inferred from this historical snapshot.
+
+Two corrections worth carrying:
 
 - The **XHS runtime adapter was removed on 2026-11-09** with the graphic workflow.
   `src/contentops/xhs/` is empty and `scripts/graphic_workflow.py` names only
@@ -159,9 +165,9 @@ script, hotspot and platform code is present; it is not an unmerged layer.
 
 ## Next actions
 
-1. The main-branch Brief-to-M5 path still needs a human copy-review command. A
-   fingerprint-bound CLI implementation and regression tests are present in the
-   current convergence branch, but are not yet part of `main`.
+1. Complete one real content run through signed pre-copy research, fingerprint-bound
+   copy review, the relevant production gates, QC and human review. The review CLI
+   is already implemented; a signed research receipt is not a copy approval.
 2. Complete the first real manual delivery, including a verifiable URL and
    manually sourced metric snapshot, before expanding platform automation.
 3. Resolve GZH/XHS rights and acceptance independently; a successful workspace

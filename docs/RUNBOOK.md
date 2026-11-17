@@ -185,8 +185,8 @@ Gates: `account`, `copy_review`, `evidence_links`, `asset_sufficiency`,
 - `--asset-policy minimax-authorized` is refused at `answer` time while ADR-014
   holds or no subscription key exists, instead of recording an option that can
   never pass.
-- GRAPHIC_TEXT gets its own five gates (`account`, `copy_review`,
-  `evidence_links`, `asset_rights`, `runtime_readiness`); its copy review binds
+- GRAPHIC_TEXT gets its own six gates (`account`, `copy_review`, `evidence_links`,
+  `asset_rights`, `runtime_readiness`, `precopy_research`); its copy review binds
   to `draft.md` and `graphic-input.json`.
 - `produce_video.py` refuses to run without `receipts/production-intent.json`
   (`PRODUCTION_INTENT_MISSING`, exit 4). `--diagnostic` is the explicit escape
@@ -276,9 +276,9 @@ script asset IDs or approve publication.
 
 ### Automatic media-use materials in M5 (offline only)
 
-When the approved PR #64 adapter is installed and a machine runtime lock is
-configured, the normal M5 command automatically invokes media-use between the
-sources and assets stages. Configure per-project material needs in project.yaml:
+With the approved adapter and a verified machine runtime lock configured, the
+M5 stage can invoke media-use between the sources and assets stages. Configure
+per-project material needs in project.yaml:
 
 ~~~yaml
 media_use:
@@ -305,12 +305,15 @@ Software licences and non-commercial licences cannot license media; synthetic
 assets are never evidence.
 
 Place a rights-cleared candidate in the project's assets/ directory and refer
-to support_visual in script/script.json as the asset_id. Then run the normal
-command:
+to support_visual in script/script.json as the asset_id. For diagnostics only,
+the direct M5 command is:
 
 ~~~powershell
 python scripts\m5_production.py projects\my-video
 ~~~
+
+For production, use the gated `make_content.py` entry instead. Direct M5 is a
+diagnostic path and does not establish that the production gates passed.
 
 No separate media_use_adapter.py command is needed. M5 automatically adopts
 project-local assets, resolves them offline via the approved adapter, imports
@@ -325,8 +328,9 @@ not become factual evidence. This version supports image/icon/logo placement and
 BGM/SFX support tracks; audio never becomes evidence.
 Projects without media_use.enabled=true behave as before.
 
-Integration PR: stacked on M5 PR #68; actual external execution also requires
-PR #64. Hosted tests use synthetic fixtures and make no provider calls.
+The adapter was merged through PR #71. A verified host lock and the applicable
+asset rights are still required; hosted tests use synthetic fixtures and make no
+provider calls.
 
 ## 5.1 Bundle handoff and dual lines
 

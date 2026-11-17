@@ -38,7 +38,7 @@
 
 - [PRD-EASEL-V030-FOUNDATION.md](PRD-EASEL-V030-FOUNDATION.md) — Easel v0.3.0 foundation adoption: two-step engine-then-cockpit migration, M0–M4, publishing tiers — **Proposed, awaiting Founder approval**
 - [PRD-RECORDING-TO-PLATFORM.md](PRD-RECORDING-TO-PLATFORM.md) — recording-first delivery: manual screen recording as evidence, two-account forking, platform variants, publishing tiers — **R1 landed, R2–R4 open**
-- [PRD-ANIMATION-SKILLS-INTEGRATION.md](PRD-ANIMATION-SKILLS-INTEGRATION.md) — clip backends on the Easel timeline: pinned Remotion P0, Motion Canvas and Manim blocked, account evidence rules unchanged
+- [PRD-ANIMATION-SKILLS-INTEGRATION.md](PRD-ANIMATION-SKILLS-INTEGRATION.md) — short-clip backends on the Easel timeline, historical render evidence, current template limitations and approval boundaries
 - [CONVERGENCE-REQUIREMENTS-2026-11-01.md](CONVERGENCE-REQUIREMENTS-2026-11-01.md) — docs / skills / branch / upstream-pin convergence — **accepted 2026-11-01; steps 3–5 landed later**
 - [M4-H3-PLAN.md](M4-H3-PLAN.md) — M4 MiniMax H3 video (Issue #22) — **implemented**
 - [M4.5-MEDIA-CONVERGENCE-PLAN.md](M4.5-MEDIA-CONVERGENCE-PLAN.md) — M4.5 media convergence (Issue #27) — **implemented**
@@ -63,9 +63,9 @@ English mirror, because the repository's primary readers are Chinese-speaking.
 **The Easel v0.3.0 foundation PRD follows the same direction (2026-11-15):**
 `docs/PRD-EASEL-V030-FOUNDATION.md` is the Chinese original and
 `docs/PRD-EASEL-V030-FOUNDATION.en.md` is the English mirror, because it is written
-for the Founder to act on. Both exceptions are declared in
-`scripts/check_i18n.py::ZH_PRIMARY_DOCS`. Every other Tier-1 doc stays
-English-primary.
+for the Founder to act on. The recording-to-platform and animation integration
+PRDs are also Chinese-primary. The full exception list is declared in
+`scripts/check_i18n.py::ZH_PRIMARY_DOCS`; every other Tier-1 doc stays English-primary.
 
 Run `python scripts/check_i18n.py` to verify structural consistency in either
 direction, and `python scripts/check_doc_freshness.py` to verify that each

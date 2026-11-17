@@ -3,7 +3,7 @@
 [简体中文](PRD-ANIMATION-SKILLS-INTEGRATION.md) | [English](PRD-ANIMATION-SKILLS-INTEGRATION.en.md)
 
 > Last verified: 2026-11-17
-> Status: **P0 clip render + P3-A/P3-B implemented (one P3-B clip really exported).** Remotion short clips rendered locally and dispatched from M5. On 2026-11-17 Manim gained a single-contract capability extension, two parameterized templates (`math_formula_reveal` / `attention_matrix_flow`), an isolated-venv real render, and a TEST_ONLY e2e project. Manim is `IMPLEMENTED_NOT_VERIFIED`: installing the runtime and rendering locally is NOT VERIFIED; the capability matrix is promoted only by receipt-backed evidence. On the same day P3-B added two Motion Canvas templates and an adapter: official export still requires the editor, with no unattended-CLI claim. `mc-arch01` was really exported from the editor, imported through `--import-editor-export`, and checked by ffprobe/SHA/frames/QC; `mc-state01` remains `EDITOR_EXPORT_REQUIRED`. The backend matrix can show `VERIFIED` only from that real receipt, while publishing, production and human review stay closed; CI reports `REAL_MEDIA_NOT_RUN` when the external MP4 is absent. A DNA-driven 3s conflict `title_card` and a trusted render cache were added and verified locally on 2026-11-17.
+> Status: **Backend and template acceptance must be assessed against current source; production and publication remain unauthorized.** Local runtime checks and historical renders do not establish universal installation status; CI contract tests do not equal real-media acceptance or production readiness. Remotion, Manim, Huashu and Motion Canvas evidence/limits are described below. The Motion Canvas `mc-arch01` export only proves historical media acceptance for its then-current template; the source has changed, and `capability-matrix-after-export.json` now explicitly reports `STALE_SOURCE_TEMPLATE`. Re-acceptance of the current template requires a new editor export and verification. `mc-state01` also requires editor export. No status grants production, publication or human-review approval.
 > A generated clip is not a screen recording and does not replace Founder review.
 
 ## 1. Background, goals, non-goals
@@ -16,7 +16,7 @@ Non-goals: upgrading Easel; a second timeline; installing all 18 surveyed reposi
 
 ## 2. What is reused
 
-`stage_motion` dispatches an explicit `remotion` shot to `scripts/animation_render.py`. `motion_sample.py` remains the 2–8s silent 1080×1920 H.264 yuv420p 30fps gate. `motion_handoff.py` stays MotionClone-only. Account palettes are read from DNA. `motion_planner.py` now supports six DNA-constrained Huashu shot templates in the existing shot plan/spec contract; it does not create a second timeline. Generated clips use `source_kind=vector_animation` and do not count toward the 70% real-recording share. `assemble_easel.run` remains the only episode compose entry.
+`stage_motion` dispatches an explicit `remotion` shot to `scripts/animation_render.py`. `motion_sample.py` remains the 2–8s silent 1080×1920 H.264 yuv420p 30fps gate. `motion_handoff.py` stays MotionClone-only. Account palettes are read from DNA. `motion_planner.py` now supports six DNA-constrained Huashu shot templates in the existing shot plan/spec contract; it does not create a second timeline. `real_source_duration.py` measures visible real-source seconds against the ≥70% floor for 1024 evidence-led production; `vector_animation` never counts. Future Intelligence has no recording-duration minimum and forbids manual desktop recordings. `assemble_easel.run` remains the only episode compose entry.
 
 ## 3. Eighteen upstream projects
 
@@ -43,23 +43,31 @@ Audited 2026-11-16 from `gh api`. None archived. Remotion's GitHub SPDX is `NOAS
 | 17 | BabylonJS/Babylon.js | game/render engine | Apache-2.0 | REJECT |
 | 18 | drawcall/Proton | particle library | MIT | REJECT |
 
-Side fact: `remotion-dev/remotion` latest release is **v4.0.543** (2026-11-11). This machine has Node v24.16.0, npm 11.13.0, FFmpeg 8.1.1, Chrome, and Edge. Manim v0.22.1 is installed in an isolated venv (`runtime/manim.lock.json` records the path and creation command), not in system Python.
+Historical environment observation from 2026-11-16: Node v24.16.0, npm 11.13.0, FFmpeg 8.1.1, Chrome and Edge were detected on the user's machine at that time. Manim v0.22.1 was detected in an isolated venv (`runtime/manim.lock.json` records the path and creation command), not system Python. These observations apply only to that environment check, **not to universal installation or present availability**.
 
 ## 4. Selection and license
 
-Remotion is P0 because it emits MP4, Node and Chrome are present, and the license text allows an individual or a for-profit organization of up to 3 employees to create videos. Selling a Remotion derivative is not allowed. This repository commits its own templates and the lockfile, not `node_modules` and not upstream source.
+Remotion was selected for P0 because it emits MP4 and Node/Chrome were detected on the user's machine at the time; its license text allows an individual or a for-profit organization of up to 3 employees to create videos. Selling a Remotion derivative is not allowed. This repository commits its own templates and the lockfile, not `node_modules` and not upstream source. That environment observation does not establish current or other-machine availability.
 
-Motion Canvas and Manim are MIT. Motion Canvas is blocked this round by runtime shape, not by license: no headless exporter (editor-websocket export). Manim renders locally through the official `python -m manim` from an isolated venv, measured at v0.22.1; scenes use Pango `Text` and avoid MathTex/LaTeX (LaTeX hangs under Windows elevated privileges). An installed runtime is not marked VERIFIED; the capability matrix is promoted only by receipt-backed evidence.
+Motion Canvas and Manim are MIT-licensed. Motion Canvas is integrated with templates and an adapter, but official export must be initiated from the editor and has no unattended CLI; this constrains automation, not integration status. Its current-template media acceptance is described in section 20: the old `mc-arch01` export is stale after the source template changed, so the current template must be exported again from the editor. Manim was previously rendered locally through the official `python -m manim` from an isolated venv, recorded as v0.22.1; scenes use Pango `Text`, not MathTex/LaTeX (the historical record says LaTeX hung under Windows elevated privileges). An installed runtime or historical local render is not VERIFIED; the capability matrix accepts only receipt-backed evidence consistent with current source and status.
 
-## 5. Order
+## 5. Order (historical phase record; not a statement of current general readiness)
 
-M0 environment is partial: Node, FFmpeg, and Chrome were checked. `npx skills add` was refused by the local permission classifier, so the skill pack is not installed. M1 Remotion is done at 4.0.543. M2 is BLOCKED. M3 account rules are enforced in the selector. M4 does not rewrite the workbench UI; the skill registry gains a discovery pointer only.
+| Phase | Historical record | Current interpretation |
+|---|---|---|
+| M0 environment | Node, FFmpeg and Chrome were once checked on the user's machine; `npx skills add` was refused by that machine's permission classifier | One-time local observation, not other environments' or current installation status; the skill-install record is historical, not universal |
+| M1 Remotion | Historical record of 4.0.543 lock, templates and local render | The lock establishes a pinned version; a local render is historical/test evidence, not standalone production acceptance |
+| M2 Motion Canvas / Manim | Previously recorded blocks, installs and local renders | See sections 20–22; status follows current source and verifiable receipts |
+| M3 two accounts | Account contracts and block tests were recorded as passing | Tests establish contracts only; real media, full-film QC and Founder review remain separate |
+| M4 workbench | No full-page UI; registry has a discovery pointer | No upstream Easel change or Web UI rewrite; discovery does not authorize execution |
 
 ## 6. Two accounts
 
-1024 stays 70/25/5 recording, vector, comparison card, 45–60 seconds. A generated clip cannot satisfy production without a cropped recording (`MISSING_REAL_RECORDING`). A test-purpose render is allowed and labeled as not an accepted case.
+1024: the account content target is 70% real screen recording, 25% vector animation, and 5% comparison cards; 45–60 seconds. **Keep two gates distinct:** the DNA's ≥70% recording mix is a content target; `real_source_duration.py` measures rights-usable real-source material visible in the finished cut (which may include recordings, screenshots, documents, logs, etc.), not a requirement that ≥70% be recordings, and not a shot-count ratio. Separately, `production_gate()` requires a registered real cropped recording; without one, `purpose=production` returns `MISSING_REAL_RECORDING`. Animation is supporting visual material: `source_kind=vector_animation`, `generated=true`, `evidence_capable=false`, `counts_as_real_recording=false`. Test-purpose renders are allowed but are not accepted cases.
 
-Future-intelligence stays 70/25/5 vector, code, chart, 90–120 seconds. A desktop or manual recording input is `RECORDING_FORBIDDEN`. The RAG sample caption says it is a principle diagram, not system output, and contains no performance numbers.
+Future Intelligence: target mix 70% vector animation, 25% code, 5% chart; 90–120 seconds. **Manual desktop recording is forbidden**; desktop/manual recording input returns `RECORDING_FORBIDDEN`. Do not substitute desktop capture for diagrams or code visuals. The RAG sample caption says “principle illustration, not system output” and contains no unverified performance numbers.
+
+These percentages are account content targets; the 1024 recording floor is a formal-production gate, while Future Intelligence has no minimum recording share and forbids manual desktop recording.
 
 A missing or unknown account is blocked. Palettes are not copied across accounts.
 
@@ -70,6 +78,8 @@ Shot spec and account DNA go through `select_backend`, then `scripts/animation_r
 ## 8. Interface
 
 `select_backend`, `preflight`, `plan_clip`, `build_receipt`, `resolve_skill`, and `production_gate` live in `src/contentops/media/animation_backend.py`. Process spawning stays in `scripts/animation_render.py` via `hidden_run`. Receipts accept only `project://` paths. An explicit backend is never replaced unless the caller listed a compatible fallback and that fallback is ready.
+
+`production_gate()` checks technical gates, not production release or publication permission. Even when rendering and technical QC succeed, real-source/rights/evidence gates, full-film quality acceptance, and human Founder review are still required. Until the corresponding human sign-off and separate publication authorization, keep `production_ready=false`, `publish_authorized=false`, and `human_review=PENDING_FOUNDER_REVIEW`.
 
 ## 9. Skills
 
@@ -103,29 +113,25 @@ Local non-paid rendering and a project-level npm install were in scope. Easel wa
 
 ## 15. Tests
 
-`tests/test_animation_backend.py` is registered in `.github/workflows/ci.yml` and does not render video. The historical PR #188 baseline was 56/56; this round's Huashu integration suite passed 58/58 and the real-source duration suite passed 19/19.
+These are historical test records: `tests/test_animation_backend.py` was registered in `.github/workflows/ci.yml` and does not render video. The historical PR #188 baseline was 56/56; Huashu integration 58/58 and real-source duration 19/19 were also recorded. These results apply to their respective time/commit and do not prove current code, current real media, or production readiness.
 
 ## 16. Acceptance
 
 | Item | Status | Evidence |
 |---|---|---|
-| 18-project audit | PASS | section 3 |
-| PRD | PASS | this file and the Chinese original |
-| Remotion skills install | FAIL | `npx skills add` refused; shared store untouched |
-| Remotion render | PASS | table below |
-| Motion Canvas | EDITOR_EXPORT_REQUIRED | two templates + adapter implemented; no official headless export (`NO_HEADLESS_EXPORT`), no real MP4 |
-| Manim | IMPLEMENTED_NOT_VERIFIED / TEST_ONLY e2e PASS | two templates rendered locally from isolated venv; `runtime/manim.lock.json`; `projects/e2e-p3-manim/`; system Python was not modified; installed does not promote to VERIFIED |
-| 1024 rules | PASS | production without a recording is `MISSING_REAL_RECORDING` |
-| Future-intelligence rules | PASS | desktop recording is `RECORDING_FORBIDDEN` |
-| M5 wiring | PASS | dispatch test and selector |
-| Easel regression | PASS | pin unchanged; this round's Huashu suite 58/58 |
-| DNA-driven Huashu templates | PASS (contract tests) | Six template contracts and rejection cases; no real sample render or screenshot review was run |
-| Platforms | PASS | registry not rewritten into a publish claim |
-| Review and safety | PASS | `production_ready=false`, `publish_authorized=false` |
+| 18-project audit | Historical record | Section 3 |
+| PRD | Document record | This file and Chinese mirror |
+| Remotion skills install | Historical check: refused | `npx skills add` was refused; current or other-machine install state cannot be inferred |
+| Remotion render | Historical local TEST_ONLY evidence | Local samples are not production acceptance |
+| Motion Canvas | `STALE_SOURCE_TEMPLATE` | Old `mc-arch01` export/matrix is historical; current template needs a new editor export and acceptance; `mc-state01` also requires editor export |
+| Manim | Historical TEST_ONLY / `IMPLEMENTED_NOT_VERIFIED` | Previously rendered in isolated environment; not universal installation or production readiness |
+| 1024 rules | Contract record | Formal production without real recording remains `MISSING_REAL_RECORDING`; test clips do not count as recording |
+| Future Intelligence rules | Contract record | Manual desktop recording is `RECORDING_FORBIDDEN` |
+| M5 wiring | Code/test record | Dispatch tests do not mean media acceptance |
+| Easel | Current pin `v0.3.0` / `bb3c8ff` | Pin is frozen; runtime installation is not universal |
+| Human review and safety | Mandatory boundary | `production_ready=false`, `publish_authorized=false`, Founder review pending |
 
-Local renders (gitignored, `projects/_local/`):
-
-| Clip | sha256 | ffprobe |
+**Remotion, Manim and Huashu output records below are historical local/TEST_ONLY artifacts.** They show what was generated and recorded at the time, not current machine availability, verified real-source evidence, full production QC, or publication readiness.
 |---|---|---|
 | 1024 annotation test | `4c31e531dbed90070b5d61159acf56f07a70d56a009167cbd1d483ac11327b62` | h264, 1080x1920, yuv420p, 30/1, 4.000s, no audio |
 | Future-intelligence RAG | `417019d985f440b4f910f91ed37192118353e01c1b0a5f66b78ca67568c067c0` | h264, 1080x1920, yuv420p, 30/1, 6.000s, no audio |
@@ -151,7 +157,7 @@ This round extends Huashu Art Motion inside the existing M5 shot-plan/spec chain
 | `metric_transition` | `t3_finance_chart` | A JSON source record whose title, unit, citation, and every label/value exactly match; only bar/line |
 | `comparison_reveal` | `y3_whiteboard` | Explicit before/after labels, using cross/check icons |
 
-Every template requires a registered asset, repository-contained path, byte SHA-256, permission, and either claim/source references or `editorial_only=true`. Specs record `animation_type`, `source_asset_id`, claim/editorial relationship, and source hash; changes to brand colors or source bytes invalidate the affected spec cache. Generated motion is explanatory, never a proof shot; it remains `generated=true`, `evidence_capable=false`, and `evidence_use=VISUAL_SUPPORT`. Claim/source gates remain independent. The 1024 `EVIDENCE_LED` 70% visible-real-material floor is not relaxed for `tech_review` or similar types. Future Intelligence explanatory clips do not require recording duration, but factual claims still need sources.
+Every template requires a registered asset, repository-contained path, byte SHA-256, permission, and either claim/source references or `editorial_only=true`. Specs record `animation_type`, `source_asset_id`, claim/editorial relationship, and source hash; changes to brand colors or source bytes invalidate the affected spec cache. Generated motion is explanatory, never a proof shot; it remains `generated=true`, `evidence_capable=false`, and `evidence_use=VISUAL_SUPPORT`. Claim/source gates remain independent. The 1024 `EVIDENCE_LED` 70% visible-real-material floor applies only to that account's formal evidence-led production and is not relaxed for `tech_review` or similar types. Future Intelligence explanatory clips do not require recording duration and must not include manual desktop recording; factual claims still need sources.
 
 **Acceptance boundary for this update:** the six template contract and rejection tests pass. The shared planner now changes drawing ink only for `y3_whiteboard` on a dark canvas (relative luminance < 0.25) when ink/background contrast is below 3:1, and only to an explicitly declared account-DNA `surface` token that itself reaches at least 3:1. Other colors remain unchanged. Light `t2_keynote_ui` code cards and already-readable whiteboards are unaffected; a missing or insufficient token fails closed. The planner source hash participates in plan identity, adjusted spec bytes participate in the existing per-shot Huashu cache fingerprint, and each applied change is recorded in `contentops_scene.readability_adjustment` with old/new ink, background, and before/after contrast. Fresh-project planner tests cover both 1024 and Future Intelligence. A real five-second Future Intelligence Huashu short clip was also rendered under `projects/_local/animation-readability-20261117/`: source SHA-256 `fc3863e64a7947ea7484f7f2b9298532d0a15392dfee1d7ef3b7d119676d7bb8`, spec SHA-256 `7d3096ad2471d8e6f80a14c09f0d5a6626cc3d0c428934708ca318e872c40554`, H.264 / 1080×1920 / yuv420p / 30fps / 150 frames / silent, clip SHA-256 `dc1e4c5240e5330985fcd35df36b3143764160978f798645ef8affc057e8057c`; short-sample technical QC was `TECHNICALLY_CHECKED`. Easel v0.3.0 composed the clip; final composite SHA-256 `e4a91c30ddfcdcf0e7902ffee64de7f4bc655d273fd27bb6cae9cbb6d12ac5fb`, with short-sample technical QC passed. The experiment's `receipts/readability-lineage.json` links the old 99-second records (original SHA `66ca2673dd915fad41bb6acde1396e5017be17b09bbde389538abc4f4cd24905`; historical parameter-rerender SHA `3aafc7290e16f8f28b08f858dab9a6df5757518ae53abd924684f434ed1f3511`) to this new five-second spec/clip/composite. No old media or receipt was overwritten, but those files are currently inaccessible; the old SHAs remain historical records and were not reverified in this turn. Human visual readability review of the frame remains pending; this is not full-film production QC or release acceptance. The M5 motion integration suite is 61/61 and source-anchor regressions are 6/6. Formal 1024 production still requires a real recording. All outputs remain `production_ready=false`, `publish_authorized=false`, and `human_review=PENDING_FOUNDER_REVIEW`.
 ## 19. DNA conflict hook and trusted clip cache (2026-11-17)
@@ -195,9 +201,17 @@ Regression (`tests/test_animation_cache_integrity.py`, 10 new tests, 21/21): A,B
 
 `animation_backend.capability_matrix()` extends the existing backend selector contract with one executable capability table (schema `contentops.animation-capability-matrix/v1`); no second capability list is maintained in parallel. Six backends — `remotion`, `remotion-three`, `huashu-art-motion`, `huashu-motion`, `manim`, `motion-canvas` — each record runtime version and source, lock file, install environment, supported shot types, templates, render entry, input/output contracts, output spec, license fields, applicable accounts, blocking status, and whether it is a full-film compositor. Every row has `is_compositor=false`; `remotion-three` reuses the `scripts/animation_render.py` entry and is a 3D composition inside Remotion, not a new compositor. P3-B extension: `motion-canvas` uses `scripts/motion_canvas_adapter.py` as its render entry, a new `export_mode` field is `EDITOR_EXPORT_REQUIRED` for Motion Canvas and `HEADLESS` for the others, and its templates are `animated_system_graph` and `agent_state_machine`.
 
-**Trust boundary.** Reading a lock file yields only version/install facts and never promotes a backend to VERIFIED. Only a caller-supplied `render_evidence` entry carrying `verified_at`, `sha256` and `receipt` marks a backend VERIFIED; an active `block_state` code outranks a historical receipt. All rows keep `execution_authorized=false`, `publish_authorized=false`, `production_ready=false`. `tests/test_animation_backend.py` 40/40 (3 matrix tests added).
+**Current status:** `current_status` in `projects/e2e-p3-motion-canvas/receipts/capability-matrix-after-export.json` is `STALE_SOURCE_TEMPLATE`. The old `mc-arch01` export supports historical acceptance of that old template only; the current template requires a new editor export and re-verification. `mc-state01` still requires editor export. The backend's historical `VERIFIED` status does not mean the current template is accepted and does not grant execution, production or publication authority.
 
-## 21. P3-B Motion Canvas integration (2026-11-17)
+**Trust boundary.** Reading a lock file yields only version/install facts and never promotes a backend to VERIFIED. Only a caller-supplied `render_evidence` entry carrying `verified_at`, `sha256` and `receipt` marks a backend VERIFIED; an active `block_state` code outranks a historical receipt. All rows keep `execution_authorized=false`, `publish_authorized=false`, `production_ready=false`. `tests/test_animation_backend.py` 40/40 is a historical result, not current-media acceptance.
+
+## 21. P3-B Motion Canvas integration (historical implementation and acceptance record; current status is stale)
+
+> This section preserves implementation context and historical evidence. Current-template status is governed by section 20 and the receipt: `STALE_SOURCE_TEMPLATE`. The old `mc-arch01` export/matrix state does not mean the current template is accepted; re-acceptance requires editor export from the current template. `mc-state01` also requires editor export.
+
+- Detailed template/local-render/cache/stage/matrix statements below are historical and do not override this section's heading, receipt `current_status=STALE_SOURCE_TEMPLATE`, or the production boundaries. In particular, old `mc-arch01` `REAL_MEDIA_VERIFIED`, old matrix `VERIFIED`, CI contract tests and local runtime observations do not establish acceptance of the current template or availability in all environments.
+
+
 
 - `extensions/motion-canvas/` is a minimal runnable project: all Motion Canvas packages pinned to 3.17.2 (npm registry `latest`, published 2024-12-14), npm lockfile committed, `node_modules` gitignored. The official `@motion-canvas/ffmpeg` exporter is registered in `vite.config.ts`; 1080x1920 / 30fps / sRGB live in `src/project.meta`.
 - Two templates: `animated_system_graph` (components appear step by step, one-direction arrows, then explain) and `agent_state_machine` (states, conditional branches, failure fallback). Every colour comes from the account `brand.palette`; the problem colour exists only during the failure step and the next step restores the brand colour. No bounce, flash, sticker or flashy transition. `tsc --noEmit` and `vite build` pass, but that is compile evidence, not a render.
@@ -207,8 +221,9 @@ Regression (`tests/test_animation_cache_integrity.py`, 10 new tests, 21/21): A,B
 
 ## 22. Pre/post-export snapshots and final integration governance (2026-11-17)
 
-- `projects/e2e-p3-motion-canvas/receipts/capability-matrix.json` is preserved as `PRE_EXPORT` evidence: `motion-canvas` is `BLOCKED` and all media fields are `null`. It predates the real export and is not the current state.
-- `capability-matrix-after-export.json` is the `POST_EXPORT_ACCEPTANCE` snapshot. It is generated dynamically by `capability_matrix(render_evidence={"motion-canvas": render_evidence(...)})` and records the SHA-256 of the generating functions and inputs, the real exported MP4 SHA-256, the receipt path, and stage-scoped template states. No state was manually changed to VERIFIED.
-- The snapshot separates backend and template granularity: backend `motion-canvas` is `VERIFIED` from the `mc-arch01` receipt; at template level `mc-arch01` is `REAL_MEDIA_VERIFIED` while `mc-state01` remains `EDITOR_EXPORT_REQUIRED` and does not inherit another clip's evidence.
-- `tests/test_p3_motion_canvas.py` re-derives and compares the snapshot field by field when the external MP4 is present. In CI, without that MP4, it checks provenance, historical stages and governance fields only, and prints `REAL_MEDIA_NOT_RUN`. `production_ready`, `publish_authorized` and human review stay closed in every case.
-- Single merge path: PR #196 is the final squash integration. The commits from #193 and #195 are already present at their original SHAs; after merging, close those PRs as superseded rather than merging them again.
+**Snapshot status.** `projects/e2e-p3-motion-canvas/receipts/capability-matrix.json` is preserved as PRE_EXPORT historical evidence; `capability-matrix-after-export.json` is a POST_EXPORT_ACCEPTANCE snapshot, but its current status field is `STALE_SOURCE_TEMPLATE` because the source template changed. It preserves the old export and then-current matrix provenance, not a current acceptance result. To re-accept the current template, export `mc-arch01` again from the Motion Canvas editor, then import and verify it; `mc-state01` independently still requires an editor export. CI without the external MP4 checks contracts/provenance/governance only and prints `REAL_MEDIA_NOT_RUN`; it is not real-media acceptance.
+
+- `capability-matrix.json` remains PRE_EXPORT historical evidence, generated before the earlier export; its earlier `BLOCKED` status is not current.
+- `capability-matrix-after-export.json` recorded POST_EXPORT_ACCEPTANCE evidence for the old source template, including generator/input hashes, the historical export MP4 hash and receipt. Current `current_status=STALE_SOURCE_TEMPLATE` supersedes the historical stage label.
+- The old `mc-arch01` export SHA-256 `8741f5c56612f712a296e9a4cb347366b63b310badf07fc1a191af6610d238e1` and `mc-state01` `EDITOR_EXPORT_REQUIRED` receipt are historical. They cannot inherit status from each other and do not establish current-template readiness.
+- `production_ready`, `publish_authorized` and human-review authorization remain closed; re-acceptance does not grant them automatically.
