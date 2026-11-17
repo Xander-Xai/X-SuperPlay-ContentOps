@@ -23,7 +23,7 @@ def test_legacy_default_stays_vertical() -> None:
     with tempfile.TemporaryDirectory() as temp:
         project = Path(temp)
         assert qc_video._expected_canvas(project) == (1080, 1920, "9:16")
-        _write(project / "project.yaml", "id: sample\\ntarget:\\n  resolution: 1080x1920\\n")
+        _write(project / "project.yaml", "id: sample\ntarget:\n  resolution: 1080x1920\n")
         assert qc_video._expected_canvas(project) == (1080, 1920, "9:16")
 
 
@@ -31,7 +31,7 @@ def test_horizontal_requires_explicit_native_target_and_storyboard() -> None:
     with tempfile.TemporaryDirectory() as temp:
         project = Path(temp)
         _write(project / "project.yaml",
-               "id: sample\\ntarget:\\n  resolution: 1920x1080\\n")
+               "id: sample\ntarget:\n  resolution: 1920x1080\n")
         try:
             qc_video._expected_canvas(project)
         except ValueError as exc:
@@ -39,8 +39,8 @@ def test_horizontal_requires_explicit_native_target_and_storyboard() -> None:
         else:
             raise AssertionError("horizontal resolution alone must not authorize native QC")
         _write(project / "project.yaml",
-               "id: sample\\ntarget:\\n  resolution: 1920x1080\\n"
-               "  platform: bilibili\\n  native_relayout: true\\n")
+               "id: sample\ntarget:\n  resolution: 1920x1080\n"
+               "  platform: bilibili\n  native_relayout: true\n")
         _write(project / "script" / "storyboard.json", '{"size":"1080x1920"}')
         try:
             qc_video._expected_canvas(project)
