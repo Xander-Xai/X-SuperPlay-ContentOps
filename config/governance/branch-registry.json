@@ -208,6 +208,14 @@
       "purpose": "Huashu dark-whiteboard contrast, regression and media-lineage follow-up; PR #198 squash-merged into #196 and this branch was automatically deleted",
       "status": "merged",
       "expires": "2026-12-17"
+    },
+    {
+      "name": "feat/199-bilibili-native-qc-20261117",
+      "pr": 201,
+      "created": "2026-11-17",
+      "purpose": "Issue #199 bounded slice: explicit native Bilibili 16:9 technical QC geometry, legacy vertical compatibility, and refusal paths; still blocked pending real media/render and manual review",
+      "status": "active",
+      "expires": "2026-12-17"
     }
   ]
 }
