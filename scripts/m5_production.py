@@ -1654,48 +1654,17 @@ def _logical_path(path: Any, project: Path) -> Optional[str]:
 
 
 def stage_compose(project: Path, slug: str) -> Dict[str, Any]:
+    """Compatibility facade for the extracted pinned-Easel compose stage."""
     import assemble_easel
+    from contentops.workflow import m5_compose_stage
 
-    previous_video = project / "final" / f"{slug}.mp4"
-    preserved_previous = project / "final" / f"{slug}-before-avatar-refresh.mp4"
-    if previous_video.is_file() and not preserved_previous.exists():
-        shutil.copy2(previous_video, preserved_previous)
-    result = assemble_easel.run(project, out_name=slug)
-    # The engine that actually produced this file, read from the one registry
-    # rather than inferred from the lock: a receipt that names an engine by
-    # version alone cannot be diffed after a switch, because the version string
-    # stays the same while the commit does not.
-    engine_block = result.get("easel") or {}
-    if not engine_block:
-        try:
-            from contentops.easel import pins as easel_pins
-
-            engine = easel_pins.active()
-            engine_block = {"engine_id": engine.engine_id, "tag": engine.tag,
-                            "commit": engine.commit, "tree_sha256": engine.tree_sha256,
-                            "layout": engine.layout}
-        except Exception:  # noqa: BLE001 - a receipt must not invent an engine
-            engine_block = {}
-    stamp = engine_block.get("tag") or "unrecorded"
-    upstream_path = Path(result.get(
-        "upstream", "skills/openclaw/auto-short-video/scripts/assemble.py"
-    )).as_posix()
-    upstream_suffix = (upstream_path.split("/skills/", 1)[-1]
-                       if "/skills/" in upstream_path else
-                       upstream_path.removeprefix("skills/"))
-    receipt = {
-        "status": result.get("status"),
-        "video": _logical_path(result.get("video"), project),
-        "subtitles_burned": result.get("subtitles_burned"),
-        "upstream": f"easel@{stamp}:skills/{upstream_suffix}",
-        "easel": engine_block or None,
-        "reason": result.get("reason"),
-    }
-    receipt = {key: value for key, value in receipt.items() if value is not None}
-    _write_json(project / "receipts" / "compose.json", receipt)
-    if result.get("status") != "OK":
-        raise M5Blocked(f"compose: {result.get('reason')}")
-    return receipt
+    return m5_compose_stage.stage_compose(
+        project, slug,
+        compose=lambda: assemble_easel.run(project, out_name=slug),
+        logical_path=lambda path: _logical_path(path, project),
+        write_json=_write_json,
+        blocked_error=M5Blocked,
+    )
 
 
 def _registered_asset_path(asset_root: Path, manifest: Dict[str, Any], asset_id: str) -> Path:
