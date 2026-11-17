@@ -387,6 +387,32 @@ def test_stage_script_refuses_unknown_claim_and_undeclared_asset() -> None:
     print("[ok] 15. an unknown claim and an undeclared asset are both refused")
 
 
+def test_stage_script_writes_the_legacy_check_and_source_bound_master() -> None:
+    lines = [{"id": "line-1", "claim": "claim-1", "narration": "A sourced line",
+              "caption": "字幕", "asset_id": "card-1"}]
+    claim = {"id": "claim-1", "text": "A verified claim",
+             "artifacts": ["source-1"], "quotes": ["quoted text"]}
+    work = _script_project(lines, [claim])
+    _write(work / "sources" / "source-refs.json", json.dumps({
+        "schema": m5_production.SOURCE_REFS_SCHEMA,
+        "refs": [{"id": "source-1", "path": "docs/INDEX.md",
+                  "url": "https://example.invalid/source", "title": "Source ] title"}],
+    }))
+    result = m5_production.stage_script(
+        work, _ledger([claim]), {"card-1": {"repo_path": "scripts/qc_video.py"}})
+
+    assert result["lines"] == 1
+    assert result["script"]["lines"] == lines
+    assert json.loads((work / "receipts" / "script-check.json").read_text(
+        encoding="utf-8")) == {
+            "schema": "contentops.m5-script-check/v1", "ok": True,
+            "lines": 1, "claims_cited": ["claim-1"], "claims_unused": []}
+    master = (work / "script" / "master.md").read_text(encoding="utf-8")
+    assert "[Source \\] title](<https://example.invalid/source>)" in master
+    assert "| line-1 | A sourced line | 字幕 |" in master
+    print("[ok] script success preserves receipt and source-bound reviewer copy")
+
+
 def test_stage_script_refuses_duplicate_ids_and_empty_narration() -> None:
     ledger = _ledger([{"id": "real", "text": "t", "artifacts": ["a"], "quotes": ["q"]}])
     assets = {"card": {"repo_path": "scripts/qc_video.py", "type": "REAL_SCREENSHOT"}}
@@ -565,6 +591,7 @@ TESTS = [
     test_m5_claim_facade_keeps_receipt_and_fail_closed_error,
     test_stage_assets_refuses_a_path_outside_the_repository,
     test_stage_script_refuses_unknown_claim_and_undeclared_asset,
+    test_stage_script_writes_the_legacy_check_and_source_bound_master,
     test_stage_script_refuses_duplicate_ids_and_empty_narration,
     test_stage_subtitles_refuses_poor_coverage,
     test_ass_timestamps_are_centiseconds_and_match_the_srt,
