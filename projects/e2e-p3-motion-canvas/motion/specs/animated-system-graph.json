@@ -1,0 +1,29 @@
+{
+  "template": "animated_system_graph",
+  "duration_s": 5.0,
+  "width": 1080,
+  "height": 1920,
+  "fps": 30,
+  "title": "RAG 系统组件链路",
+  "props": {
+    "title": "RAG 系统组件链路",
+    "caption": "矢量解释，不是系统运行日志",
+    "nodes": [
+      {"id": "query", "label": "Query 查询入口"},
+      {"id": "recall", "label": "Recall 检索召回"},
+      {"id": "rerank", "label": "Rerank 重排序"},
+      {"id": "answer", "label": "Answer 生成回答"}
+    ],
+    "edges": [
+      {"from": "query", "to": "recall", "label": "检索"},
+      {"from": "recall", "to": "rerank", "label": "排序"},
+      {"from": "rerank", "to": "answer", "label": "生成"}
+    ],
+    "steps": [
+      {"caption": "步骤 1 · 组件依次出现", "show_nodes": ["query"], "show_edges": []},
+      {"caption": "步骤 2 · 查询进入召回", "show_nodes": ["query", "recall"], "show_edges": [{"from": "query", "to": "recall"}]},
+      {"caption": "步骤 3 · 召回结果进入重排序", "show_nodes": ["query", "recall", "rerank"], "show_edges": [{"from": "query", "to": "recall"}, {"from": "recall", "to": "rerank"}]},
+      {"caption": "步骤 4 · 排序结果交给生成", "show_nodes": ["query", "recall", "rerank", "answer"], "show_edges": [{"from": "query", "to": "recall"}, {"from": "recall", "to": "rerank"}, {"from": "rerank", "to": "answer"}]}
+    ]
+  }
+}

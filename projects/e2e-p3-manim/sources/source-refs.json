@@ -1,0 +1,26 @@
+{
+  "schema": "contentops.source-refs/v1",
+  "refs": [
+    {
+      "id": "manim_lock",
+      "type": "lock_file",
+      "path": "runtime/manim.lock.json",
+      "permission": "CREATED_BY_OWNER",
+      "sha256": "41b7cddee311b533db2d8cc6af540f46b06c1a141f21d862686ee246adf5e0e2"
+    },
+    {
+      "id": "fi_dna",
+      "type": "account_dna",
+      "path": "config/accounts/x-superplay-future-intelligence.json",
+      "permission": "CREATED_BY_OWNER",
+      "sha256": "25f0230069f0cb266518c90ce17083eca53b345845b4382f0a53a9e51f37ca98"
+    },
+    {
+      "id": "definition_source",
+      "type": "project_source",
+      "path": "projects/e2e-p3-manim/specs/definitions/math-attention.json",
+      "permission": "CREATED_BY_OWNER",
+      "sha256": "bb4361fc066e9a7accdff0c727c0d8c5556f956d8eda8d3961b659f6ce6d24ad"
+    }
+  ]
+}

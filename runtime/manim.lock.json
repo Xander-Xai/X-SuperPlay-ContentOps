@@ -1,0 +1,30 @@
+{
+  "schema": "contentops.manim-runtime-lock/v1",
+  "backend": "manim",
+  "version": "0.22.1",
+  "version_source": "measured 2026-11-17 from isolated venv: python -c 'import manim; print(manim.__version__)'",
+  "python_version": "3.11.9",
+  "distribution": "manim (Manim Community Edition)",
+  "package": "https://pypi.org/project/manim/",
+  "project": "isolated local venv (not in repository, not in system Python)",
+  "venv_path": "D:/AI-Outputs/X-SuperPlay-ContentOps/2026-11-17/_tmp/manim-venv",
+  "venv_python": "D:/AI-Outputs/X-SuperPlay-ContentOps/2026-11-17/_tmp/manim-venv/Scripts/python.exe",
+  "create_command": "python -m venv D:/AI-Outputs/X-SuperPlay-ContentOps/2026-11-17/_tmp/manim-venv && D:/AI-Outputs/X-SuperPlay-ContentOps/2026-11-17/_tmp/manim-venv/Scripts/python.exe -m pip install manim==0.22.1",
+  "render_entry": "scripts/manim_render.py",
+  "scene_module": "scripts/manim_scenes.py",
+  "render_command": "python -m manim render -q l --fps 30 --format mp4 -r 1080,1920 --media_dir <work> -o <name> scripts/manim_scenes.py <SceneName>",
+  "cli_invocation": "python -m manim  (the 'manim' script is not on PATH in the venv; checkhealth confirms module invocation is the supported path)",
+  "native_deps": [
+    "Cairo",
+    "Pango",
+    "FFmpeg 8.1.1 (system, libx264)"
+  ],
+  "latex": "NOT USED: scenes use Pango Text only. MathTex/LaTeX hangs under elevated privileges on Windows, so it is deliberately excluded.",
+  "network_at_render": false,
+  "license": "MIT",
+  "license_read": "https://github.com/ManimCommunity/manim/blob/main/LICENSE",
+  "note": "Manim is a local, non-paid, non-network renderer of short silent visual-support clips. It does not compose the episode (Easel stays the compositor), is not a real recording, cannot carry a claim, and is not authorized for publication. Installing the runtime or writing this lock is NOT render evidence: capability_matrix promotes 'manim' to VERIFIED only from a receipt-backed evidence map.",
+  "capability_verified_by_installation": false,
+  "execution_authorized": false,
+  "publish_authorized": false
+}

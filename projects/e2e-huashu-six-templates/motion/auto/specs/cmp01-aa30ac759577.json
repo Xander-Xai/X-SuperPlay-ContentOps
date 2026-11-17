@@ -1,0 +1,63 @@
+{
+  "grammar": "y3_whiteboard",
+  "duration": 5.0,
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": {
+    "bg": "#0F1117",
+    "accent": "#38BDF8",
+    "ink": "#202B31",
+    "sub": "#65747A",
+    "surface": "#F9FBFA",
+    "accent2": "#38BDF8"
+  },
+  "safe": {
+    "top": 0,
+    "bottom": 520,
+    "fill": "#0F1117"
+  },
+  "cues": [
+    {
+      "at": 0.2,
+      "kind": "draw",
+      "text": "unverified output",
+      "data": {
+        "icon": "cross",
+        "arrow": true
+      }
+    },
+    {
+      "at": 2.25,
+      "kind": "draw",
+      "text": "hash checked",
+      "data": {
+        "icon": "check",
+        "arrow": false
+      }
+    },
+    {
+      "at": 4.55,
+      "kind": "highlight",
+      "data": {
+        "target": "draw",
+        "index": 1
+      }
+    }
+  ],
+  "contentops_scene": {
+    "segment_id": "cmp01",
+    "visual_role": "explain",
+    "template": "engineering-flow",
+    "evidence_ref": null,
+    "style_variant": "brand.palette",
+    "animation_type": "comparison_reveal",
+    "source_asset_id": "src-doc",
+    "claim_ref": "C-cmp01",
+    "editorial_only": false
+  },
+  "contentops_source": {
+    "asset_id": "src-doc",
+    "sha256": "3f1c23b908b570052c9c8ae882fd654c8dc39a8cd8395114624a8f2a6d95d45c"
+  }
+}

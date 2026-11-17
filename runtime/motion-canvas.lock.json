@@ -1,0 +1,26 @@
+{
+  "schema": "contentops.motion-canvas-runtime-lock/v1",
+  "backend": "motion-canvas",
+  "version": "3.17.2",
+  "version_source": "npm registry dist-tags.latest verified 2026-11-16 (https://www.npmjs.com/package/@motion-canvas/core); alpha 3.18.0-alpha.0 deliberately not pinned",
+  "project": "extensions/motion-canvas",
+  "lockfile": "extensions/motion-canvas/package-lock.json",
+  "packages": {
+    "@motion-canvas/core": "3.17.2",
+    "@motion-canvas/2d": "3.17.2",
+    "@motion-canvas/ui": "3.17.2",
+    "@motion-canvas/vite-plugin": "3.17.2",
+    "@motion-canvas/ffmpeg": "3.17.2"
+  },
+  "install": "npm install --ignore-scripts --no-audit --no-fund --prefix extensions/motion-canvas",
+  "export_mode": "EDITOR_EXPORT_REQUIRED",
+  "export_plugin": "@motion-canvas/ffmpeg (no bin/CLI entry; render starts from the editor Video Settings tab)",
+  "export_docs": "https://motion-canvas.io/docs/rendering/video/",
+  "upstream": "https://github.com/motion-canvas/motion-canvas",
+  "network_at_render": false,
+  "license": "MIT",
+  "license_read": "https://github.com/motion-canvas/motion-canvas/blob/main/LICENSE",
+  "note": "node_modules is gitignored. tsc/vite build only proves the project compiles; it is not a real render and never promotes the backend to VERIFIED. Frame capture requires the editor websocket, so an MP4 must be exported by a human and imported through scripts/motion_canvas_adapter.py --import-editor-export.",
+  "execution_authorized": false,
+  "publish_authorized": false
+}

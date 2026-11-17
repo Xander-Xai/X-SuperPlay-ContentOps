@@ -1,0 +1,48 @@
+{
+  "schema": "contentops.manim-media-report/v1",
+  "asset_id": "attn01",
+  "template": "attention_matrix_flow",
+  "backend": "manim",
+  "output": "project://assets/generated/manim/attn01.mp4",
+  "sha256": "5552c03f8fe052c06857529663d7a9f1ca73beebbe734ad5c2f587ab72379fa8",
+  "fingerprint": "cc0eb6a09f2ad3800770bd0dcac9846a66a42b080d1bd23d8a1eed023caf480f",
+  "ffprobe": {
+    "codec_name": "h264",
+    "width": 1080,
+    "height": 1920,
+    "pix_fmt": "yuv420p",
+    "avg_frame_rate": "30/1",
+    "r_frame_rate": "30/1",
+    "duration_s": 5.0,
+    "has_audio": false,
+    "fps": 30
+  },
+  "frame_count": 150,
+  "preview_frames": [
+    {
+      "position": "first",
+      "timestamp_s": 0.0,
+      "path": "projects/e2e-p3-manim/receipts/frames/attn01/frame-0.png"
+    },
+    {
+      "position": "middle",
+      "timestamp_s": 2.5,
+      "path": "projects/e2e-p3-manim/receipts/frames/attn01/frame-1.png"
+    },
+    {
+      "position": "last",
+      "timestamp_s": 4.9,
+      "path": "projects/e2e-p3-manim/receipts/frames/attn01/frame-2.png"
+    }
+  ],
+  "motion_sample": {
+    "state": "TECHNICALLY_CHECKED",
+    "frame_count": 150
+  },
+  "governance": {
+    "generated": true,
+    "evidence_capable": false,
+    "production_ready": false,
+    "publish_authorized": false
+  }
+}

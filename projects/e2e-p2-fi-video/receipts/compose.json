@@ -1,0 +1,13 @@
+{
+  "status": "OK",
+  "video": "project://final/e2e-p2-fi-video.mp4",
+  "subtitles_burned": true,
+  "upstream": "easel@v0.3.0:skills/builtin/auto-short-video/scripts/assemble.py",
+  "easel": {
+    "engine_id": "v0.3.0",
+    "tag": "v0.3.0",
+    "commit": "bb3c8ff0463f36c202454d74171682ba6e470cb1",
+    "tree_sha256": "c26fc96a653c0ff25ef3bc7486eee372c81f44e67d5ff2c30f1786c63c7d4ec8",
+    "layout": "builtin"
+  }
+}

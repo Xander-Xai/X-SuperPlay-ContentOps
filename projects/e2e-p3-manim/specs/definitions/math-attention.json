@@ -1,0 +1,34 @@
+{
+  "schema": "contentops.manim-definition-source/v1",
+  "scope": "TEST_ONLY explanatory definitions for two Manim short shots",
+  "note": "Trusted input for formula terms and attention weights. These are textbook definitions transcribed for a technical explainer; the scene code renders them verbatim and does NOT compute softmax or invent values. This file is registered as a source with permission CREATED_BY_OWNER and is bound to each shot spec by SHA-256.",
+  "math_formula_reveal": {
+    "title": "缩放点积注意力",
+    "terms": ["Attention", "(", "Q", ",", "K", ",", "V", ")", "=", "softmax", "(", "QKᵀ/√dₖ", ")", "V"],
+    "variables": [
+      {"symbol": "Q", "meaning": "查询矩阵"},
+      {"symbol": "K", "meaning": "键矩阵"},
+      {"symbol": "V", "meaning": "值矩阵"},
+      {"symbol": "dₖ", "meaning": "键向量维度"}
+    ],
+    "citation": "Vaswani et al., Attention Is All You Need, sec. 3.2.1 (scaled dot-product attention)"
+  },
+  "attention_matrix_flow": {
+    "title": "自注意力权重示意",
+    "tokens": ["我", "查", "到", "答案"],
+    "labels": ["行 = 查询位置", "列 = 被关注位置", "数值为示意权重"],
+    "matrix": [
+      [0.10, 0.60, 0.20, 0.10],
+      [0.15, 0.15, 0.55, 0.15],
+      [0.25, 0.25, 0.20, 0.30],
+      [0.05, 0.10, 0.15, 0.70]
+    ],
+    "note": "Rows sum to 1.0 as an illustrative normalised attention distribution; values are declared here as source data, not computed by the renderer."
+  },
+  "governance": {
+    "generated": false,
+    "evidence_capable": false,
+    "usage": "explanatory visual support only",
+    "data_kind": "TEXTBOOK_DEFINITION_NOT_BUSINESS_DATA"
+  }
+}

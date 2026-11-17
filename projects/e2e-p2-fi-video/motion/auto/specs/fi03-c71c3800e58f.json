@@ -1,0 +1,57 @@
+{
+  "grammar": "t2_keynote_ui",
+  "duration": 6.779,
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": {
+    "bg": "#0F1117",
+    "accent": "#38BDF8",
+    "ink": "#202B31",
+    "sub": "#65747A",
+    "surface": "#F9FBFA",
+    "accent2": "#38BDF8"
+  },
+  "safe": {
+    "top": 0,
+    "bottom": 520,
+    "fill": "#0F1117"
+  },
+  "cues": [
+    {
+      "at": 0.0,
+      "kind": "image",
+      "image": "../../../assets/anchors/fi-pin.png",
+      "text": "FROZEN 冻结声明与 c"
+    },
+    {
+      "at": 1.15,
+      "kind": "highlight",
+      "data": {
+        "rect": [
+          0.183333,
+          0.240521,
+          0.580556,
+          0.08
+        ],
+        "fill": 0.9
+      }
+    }
+  ],
+  "contentops_scene": {
+    "segment_id": "fi03",
+    "visual_role": "explain",
+    "template": "engineering-flow",
+    "evidence_ref": null,
+    "style_variant": "brand.palette",
+    "animation_type": "code_focus",
+    "source_asset_id": "fi-pin",
+    "claim_ref": "easel_frozen",
+    "editorial_only": false
+  },
+  "contentops_source": {
+    "asset_id": "fi-pin",
+    "sha256": "a8f3358c9b99514aa6e37b770e6dcb5b5c2c0b4a4200203e99c0a3a97045775e",
+    "source_document_sha256": "be94a151b63b09862bc9f7d62dca89574f8512b2cfc03c32fc9318e48191d0e6"
+  }
+}

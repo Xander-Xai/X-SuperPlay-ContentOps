@@ -78,6 +78,30 @@ def test_future_intelligence_refuses_a_desktop_recording():
     assert result["code"] == "RECORDING_FORBIDDEN"
 
 
+def test_plan_clip_rejects_template_backend_mismatch():
+    dna = json.loads((ROOT / "config" / "accounts"
+                      / f"{ab.ACCOUNT_FUTURE}.json").read_text(encoding="utf-8"))
+    for template, wrong_backend in (
+        ("annotation", "manim"),
+        ("attention_matrix_flow", "remotion"),
+        ("animated_system_graph", "remotion"),
+    ):
+        try:
+            ab.plan_clip(
+                account_id=ab.ACCOUNT_FUTURE, template=template,
+                placement_id="p1", asset_id="a1", duration_s=4,
+                backend=wrong_backend, dna=dna,
+                props={"title": "t", "left_label": "a", "right_label": "b",
+                       "callout": "c", "palette": PALETTE,
+                       "definition_source": {"source_ref_id": "s1", "sha256": "a" * 64},
+                       "nodes": ["a", "b"]},
+            )
+        except ab.AnimationError as exc:
+            assert exc.code == "TEMPLATE_BACKEND", (template, exc.code)
+        else:
+            raise AssertionError(f"{template} accepted incompatible backend {wrong_backend}")
+
+
 def test_1024_production_without_recording_is_blocked():
     result = ab.select_backend(
         account_id=ab.ACCOUNT_1024, shot_type="annotation", explicit="remotion",
@@ -472,6 +496,29 @@ def test_renderer_never_trusts_shot_has_real_recording_true():
         assert out[0]["decision"]["code"] == "MISSING_REAL_RECORDING"
 
 
+def test_future_annotation_production_is_not_blocked_by_1024_recording_gate():
+    from unittest import mock
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        (project / "motion").mkdir()
+        (project / "sources").mkdir()
+        (project / "motion" / "spec.json").write_text(json.dumps({
+            "backend": "remotion", "template": "annotation", "shot_type": "annotation",
+            "duration_s": 4,
+            "props": {"title": "t", "left_label": "a", "right_label": "b", "callout": "c"},
+        }), encoding="utf-8")
+        (project / "sources" / "assets.json").write_text(json.dumps({"assets": []}), encoding="utf-8")
+        out = []
+        with mock.patch("animation_render._emit", side_effect=lambda payload, code: out.append(payload) or code), \
+                mock.patch("animation_render.environment_probe", return_value={"ready": False}), \
+                mock.patch("animation_render.skill_readiness", return_value=False):
+            result = render(project, Path("motion/spec.json"), placement_id="p1", asset_id="a1",
+                            account_id=ab.ACCOUNT_FUTURE, purpose="production")
+        assert result == 1
+        assert out[0]["decision"]["code"] != "MISSING_REAL_RECORDING"
+        assert out[0]["decision"]["code"] == "RUNTIME_NOT_READY"
+
+
 def test_future_intelligence_rejects_recording_mark_input():
     with tempfile.TemporaryDirectory() as temp:
         project = Path(temp)
@@ -517,6 +564,191 @@ def test_palette_comes_from_account_dna_not_a_hardcoded_brand():
     }}}}}
     palette = ab.palette_from_dna(dna)
     assert palette["accent"] == "#ff00aa"
+
+
+def test_title_card_contract_drops_evidence_fields_and_requires_hook():
+    dna = json.loads((ROOT / "config" / "accounts" / f"{ab.ACCOUNT_1024}.json").read_text(encoding="utf-8"))
+    palette = ab.palette_from_dna(dna)
+    props = {"conflict": "看起来跑通了，其实是假的", "stakes": "前 3 秒给出冲突",
+             "kicker": "AI 工具实测", "claim": "C-01", "source_refs": ["repo://x.md"],
+             "palette": palette}
+    plan = ab.plan_clip(account_id=ab.ACCOUNT_1024, template="title_card", placement_id="p1",
+                        asset_id="title-1", duration_s=3, props=props)
+    assert plan["composition"] == "TitleCard"
+    assert plan["counts_as_real_recording"] is False
+    assert "claim" not in plan["props"] and "source_refs" not in plan["props"]
+    for missing in ("conflict", "stakes"):
+        try:
+            ab.plan_clip(account_id=ab.ACCOUNT_1024, template="title_card", placement_id="p1",
+                         asset_id="title-1", props={"palette": palette, "conflict": "x", "stakes": "y",
+                                                    **{missing: ""}})
+        except ab.AnimationError as exc:
+            assert exc.code == "PROPS"
+        else:
+            raise AssertionError(f"title_card accepted empty {missing}")
+
+
+def test_title_card_composition_uses_dna_problem_colour_not_a_shot_prop():
+    from animation_render import _composition_props
+    dna = json.loads((ROOT / "config" / "accounts" / f"{ab.ACCOUNT_1024}.json").read_text(encoding="utf-8"))
+    palette = ab.palette_from_dna(dna)
+    palette["problem"] = "#C84D42"
+    spec = {"template": "title_card", "duration_s": 3,
+            "props": {"conflict": "c", "stakes": "s", "problem": "#FFFFFF"}}
+    out = _composition_props(spec, "test", palette)
+    assert out["palette"]["problem"] == "#C84D42"
+    assert out["palette"]["bg"] == "#0F1117"
+    assert out["palette"]["accent"] == "#38BDF8"
+    assert "测试用途" in out["testBanner"]
+
+
+def test_clip_fingerprint_invalidates_on_dna_params_source_and_version():
+    base = dict(account_id=ab.ACCOUNT_1024, template="title_card", placement_id="p1",
+                asset_id="a1", purpose="test", duration_s=3.0,
+                props={"conflict": "c", "stakes": "s"}, dna={"v": 1},
+                source_digests=["a" * 64], version=ab.REMOTION_VERSION)
+    original = ab.clip_fingerprint(**base)
+    assert original == ab.clip_fingerprint(**base)
+    assert ab.clip_fingerprint(**{**base, "dna": {"v": 2}}) != original
+    assert ab.clip_fingerprint(**{**base, "props": {"conflict": "changed"}}) != original
+    assert ab.clip_fingerprint(**{**base, "source_digests": ["b" * 64]}) != original
+    assert ab.clip_fingerprint(**{**base, "version": "0.0.0"}) != original
+    assert ab.clip_fingerprint(**{**base, "purpose": "production"}) != original
+    assert ab.clip_fingerprint(**{**base, "template_digest": "a" * 64}) != original
+
+
+def test_trusted_cache_hit_requires_identity_bytes_and_qc():
+    from animation_render import _trusted_cache_hit
+    from unittest import mock
+    with tempfile.TemporaryDirectory() as temp:
+        root = Path(temp)
+        output = root / "clip.mp4"
+        sidecar = root / "clip.mp4.receipt.json"
+        payload = {"fingerprint": "fp-1", "output_sha256": "abc123",
+                   "output": {"output_sha256": "abc123"}}
+        sidecar.write_text(json.dumps(payload), encoding="utf-8")
+        with mock.patch("animation_render._sha256", return_value="abc123"), \
+             mock.patch("animation_render._ffprobe", return_value={}), \
+             mock.patch("animation_render.check_motion_sample",
+                        return_value={"state": "TECHNICALLY_CHECKED"}):
+            assert _trusted_cache_hit(sidecar, output, "fp-1", "a1") is None  # no output file
+            output.write_bytes(b"video")
+            hit = _trusted_cache_hit(sidecar, output, "fp-1", "a1")
+            assert hit and hit["receipt_name"] == "animation-a1.json"
+            assert _trusted_cache_hit(sidecar, output, "fp-2", "a1") is None  # identity mismatch
+        with mock.patch("animation_render._sha256", return_value="different"), \
+             mock.patch("animation_render._ffprobe", return_value={}), \
+             mock.patch("animation_render.check_motion_sample",
+                        return_value={"state": "TECHNICALLY_CHECKED"}):
+            assert _trusted_cache_hit(sidecar, output, "fp-1", "a1") is None  # byte mismatch
+        with mock.patch("animation_render._sha256", return_value="abc123"), \
+             mock.patch("animation_render._ffprobe", return_value={}), \
+             mock.patch("animation_render.check_motion_sample",
+                        return_value={"state": "FAILED"}):
+            assert _trusted_cache_hit(sidecar, output, "fp-1", "a1") is None  # QC mismatch
+
+
+def test_hook_visual_contract_comes_from_dna_and_is_bounded():
+    for account in (ab.ACCOUNT_1024, ab.ACCOUNT_FUTURE):
+        dna = json.loads((ROOT / "config" / "accounts" / f"{account}.json").read_text(encoding="utf-8"))
+        contract = ab.hook_visual_contract(dna)
+        assert contract["max_chars_per_line"] == 18
+        assert contract["margin_v_px"] == 120
+        assert abs(contract["side_margin_ratio"] - 0.07) < 1e-9
+        assert contract["font"] == "Noto Sans CJK SC"
+        assert "bounce" in contract["forbidden_effects"]
+    # A malformed/hostile DNA value cannot blow up the safe zone or line length.
+    hostile = ab.hook_visual_contract({"visual": {"caption_style": {
+        "max_chars_per_line": 100000, "size_px": 900,
+        "safe_zone": {"margin_v_px": -50, "side_margin_ratio": 5},
+    }}})
+    assert hostile["max_chars_per_line"] <= 40
+    assert hostile["margin_v_px"] >= 0 and hostile["side_margin_ratio"] <= 0.25
+
+
+def test_title_card_rejects_oversized_hook_and_strips_visual_overrides():
+    dna = json.loads((ROOT / "config" / "accounts" / f"{ab.ACCOUNT_1024}.json").read_text(encoding="utf-8"))
+    palette = ab.palette_from_dna(dna)
+    base = {"conflict": "短标题", "stakes": "说明", "palette": palette,
+            "font_size_px": 500, "margin_v_px": 0, "effect": "bounce"}
+    plan = ab.plan_clip(account_id=ab.ACCOUNT_1024, template="title_card", placement_id="p1",
+                        asset_id="a1", duration_s=3, props=base, dna=dna)
+    assert "font_size_px" not in plan["props"] and "margin_v_px" not in plan["props"]
+    assert "effect" not in plan["props"]
+    assert plan["props"]["hook_contract"]["max_chars_per_line"] == 18
+    too_long = {"conflict": "冲突" * 40, "stakes": "说明", "palette": palette}
+    try:
+        ab.plan_clip(account_id=ab.ACCOUNT_1024, template="title_card", placement_id="p1",
+                     asset_id="a1", duration_s=3, props=too_long, dna=dna)
+    except ab.AnimationError as exc:
+        assert exc.code == "DNA_VISUAL"
+    else:
+        raise AssertionError("oversized hook was accepted")
+
+
+def test_title_card_production_ignores_caller_test_banner():
+    from animation_render import _composition_props
+    dna = json.loads((ROOT / "config" / "accounts" / f"{ab.ACCOUNT_FUTURE}.json").read_text(encoding="utf-8"))
+    palette = ab.palette_from_dna(dna)
+    spec = {"template": "title_card", "duration_s": 3,
+            "props": {"conflict": "c", "stakes": "s", "test_banner": "伪造测试标记",
+                      "hook_contract": ab.hook_visual_contract(dna)}}
+    production = _composition_props(spec, "production", palette)
+    assert production["testBanner"] == "", production
+    test = _composition_props(spec, "test", palette)
+    assert test["testBanner"] == "伪造测试标记"  # a test render may carry a test banner
+    assert test["visualContract"]["max_chars_per_line"] == 18
+
+
+def test_capability_matrix_covers_all_backends_without_granting_execution():
+    matrix = ab.capability_matrix(ROOT)
+    assert matrix["schema"] == ab.CAPABILITY_SCHEMA
+    expected = set(ab.KNOWN_BACKENDS) | {"remotion-three"}
+    assert set(matrix["backends"]) == expected
+    for name, row in matrix["backends"].items():
+        assert row["is_compositor"] is False, name
+        assert row["execution_authorized"] is False, name
+        assert row["publish_authorized"] is False, name
+        assert row["production_ready"] is False, name
+        assert row["output_contract"] == ab.SCHEMA, name
+        assert row["render_entry"], name
+        assert set(row["accounts"]) == set(ab.VIDEO_ACCOUNTS), name
+
+
+def test_capability_matrix_locks_are_read_but_never_promote_verification():
+    matrix = ab.capability_matrix(ROOT)
+    remotion = matrix["backends"]["remotion"]
+    assert remotion["lock_present"] is True
+    assert remotion["runtime_version"] == ab.REMOTION_VERSION
+    # Reading a lock file is not render evidence.
+    assert remotion["render_verified"] is False
+    assert remotion["state"] in {"IMPLEMENTED_NOT_VERIFIED", "BLOCKED"}
+    three = matrix["backends"]["remotion-three"]
+    assert three["render_entry"] == remotion["render_entry"]
+    assert three["is_compositor"] is False
+    assert "technical_3d_explainer" in three["templates"]
+
+
+def test_capability_matrix_verification_requires_receipt_backed_evidence():
+    partial = ab.capability_matrix(ROOT, render_evidence={
+        "manim": {"verified_at": "2026-11-17", "sha256": "a" * 64},
+    })
+    assert partial["backends"]["manim"]["render_verified"] is False
+    full = ab.capability_matrix(ROOT, render_evidence={
+        "manim": {"verified_at": "2026-11-17", "sha256": "a" * 64,
+                  "receipt": "project://receipts/manim-clip.json"},
+    })
+    assert full["backends"]["manim"]["render_verified"] is True
+    assert full["backends"]["manim"]["state"] == "VERIFIED"
+    # A currently blocking gate outranks a historical receipt.
+    blocked = ab.capability_matrix(ROOT, render_evidence={
+        "manim": {"verified_at": "2026-11-17", "sha256": "a" * 64,
+                  "receipt": "project://receipts/manim-clip.json"},
+    }, block_state={"manim": "RUNTIME_MISSING"})
+    assert blocked["backends"]["manim"]["state"] == "BLOCKED"
+    plain = ab.capability_matrix(ROOT, block_state={"motion-canvas": "NO_HEADLESS_EXPORT"})
+    assert plain["backends"]["motion-canvas"]["state"] == "BLOCKED"
+    assert plain["backends"]["motion-canvas"]["blocking_status"] == "NO_HEADLESS_EXPORT"
 
 
 TESTS = [value for name, value in sorted(globals().items())

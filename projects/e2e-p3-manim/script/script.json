@@ -1,0 +1,14 @@
+{
+  "schema": "contentops.script/v1",
+  "language": "zh",
+  "lines": [
+    {
+      "id": "math01",
+      "narration": "缩放点积注意力把查询、键、值映射为加权输出。"
+    },
+    {
+      "id": "attn01",
+      "narration": "注意力矩阵的每一行是对所有位置的归一化权重。"
+    }
+  ]
+}

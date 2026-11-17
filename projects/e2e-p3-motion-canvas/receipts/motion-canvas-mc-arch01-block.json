@@ -1,0 +1,17 @@
+{
+  "schema": "contentops.motion-canvas-receipt/v1",
+  "project": "e2e-p3-motion-canvas",
+  "created_at": "2026-11-17T02:40:31Z",
+  "state": "BLOCKED",
+  "code": "ASSET_GATE_BLOCKED",
+  "detail": "ASSET_GATE_BLOCKED: receipt has no boolean 'generated' flag; receipt has no boolean 'evidence_capable' flag; VIDEO technical QC did not approve the asset: no reason recorded",
+  "asset_id": "mc-arch01",
+  "render_verified": false,
+  "generated": true,
+  "evidence_capable": false,
+  "counts_as_real_recording": false,
+  "human_review": "PENDING_FOUNDER_REVIEW",
+  "production_ready": false,
+  "publish_authorized": false,
+  "execution_authorized": false
+}

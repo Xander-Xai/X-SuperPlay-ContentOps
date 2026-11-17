@@ -1,0 +1,166 @@
+{
+  "shot_id": "state01",
+  "animation_type": "state_transition",
+  "grammar": "y3_whiteboard",
+  "spec": "motion/auto/specs/state01-b11d6763d077.json",
+  "spec_sha256": "786c0b2133a59122762a7e6086bffc0c4133a67b6ce7a781e0cd2b9e5c200ed8",
+  "output": "projects/e2e-huashu-six-templates/assets/generated/huashu/huashu-state01.mp4",
+  "exit_code": 0,
+  "output_sha256": "046da85570d0823cd9a6749ce32ab66b560014299aa38570e8de2068e37ff205",
+  "ffprobe": {
+    "codec_name": "h264",
+    "width": 1080,
+    "height": 1920,
+    "pix_fmt": "yuv420p",
+    "avg_frame_rate": "30/1",
+    "duration_s": 6.0,
+    "has_audio": false,
+    "frames": [
+      {
+        "timestamp_s": 0.0,
+        "path": "projects/e2e-huashu-six-templates/receipts/frames/huashu-state01/frame-0.png"
+      },
+      {
+        "timestamp_s": 3.0,
+        "path": "projects/e2e-huashu-six-templates/receipts/frames/huashu-state01/frame-1.png"
+      },
+      {
+        "timestamp_s": 5.9,
+        "path": "projects/e2e-huashu-six-templates/receipts/frames/huashu-state01/frame-2.png"
+      }
+    ]
+  },
+  "motion_sample": {
+    "state": "TECHNICALLY_CHECKED",
+    "reason": null
+  },
+  "technical_check": {
+    "state": "TECHNICALLY_CHECKED"
+  },
+  "template_params": [
+    {
+      "id": "arch01",
+      "asset_id": "src-doc",
+      "claim": "C-arch01",
+      "narration": "查询依次经过召回、重排，最后生成答案。",
+      "source_refs": [
+        "repo://project.yaml"
+      ],
+      "animation_type": "architecture_flow",
+      "animation": {
+        "nodes": [
+          "Query",
+          "Recall",
+          "Rerank",
+          "Answer"
+        ]
+      },
+      "visual_focus": "查询依次经过召回、重排，最后生成答案。"
+    },
+    {
+      "id": "state01",
+      "asset_id": "src-doc",
+      "claim": "C-state01",
+      "narration": "代理从空闲进入运行，成功则完成，失败则重试。",
+      "source_refs": [
+        "repo://project.yaml"
+      ],
+      "animation_type": "state_transition",
+      "animation": {
+        "states": [
+          "idle",
+          "running",
+          "complete"
+        ],
+        "transition": "verified result",
+        "success": "verified",
+        "failure": "retry"
+      },
+      "visual_focus": "代理从空闲进入运行，成功则完成，失败则重试。"
+    },
+    {
+      "id": "code01",
+      "asset_id": "src-code",
+      "claim": "C-code01",
+      "narration": "关键代码校验来源哈希后才放行。",
+      "source_refs": [
+        "repo://project.yaml"
+      ],
+      "animation_type": "code_focus",
+      "animation": {
+        "focus_rect": [
+          0.1,
+          0.25,
+          0.45,
+          0.1
+        ],
+        "focus_label": "source hash check"
+      },
+      "visual_focus": "关键代码校验来源哈希后才放行。"
+    },
+    {
+      "id": "evid01",
+      "asset_id": "src-evidence",
+      "claim": "C-evid01",
+      "narration": "放大已登记真实截图中的输出区域。",
+      "source_refs": [
+        "repo://project.yaml"
+      ],
+      "animation_type": "evidence_zoom",
+      "animation": {
+        "focus_rect": [
+          0.12,
+          0.3,
+          0.5,
+          0.12
+        ],
+        "focus_label": "real doctor output"
+      },
+      "visual_focus": "放大已登记真实截图中的输出区域。"
+    },
+    {
+      "id": "metric01",
+      "asset_id": "src-metric",
+      "claim": "C-metric01",
+      "narration": "本地测试数从九项增长到二十一项，这只是组件演示。",
+      "source_refs": [
+        "repo://project.yaml"
+      ],
+      "animation_type": "metric_transition",
+      "animation": {
+        "title": "Local clip tests",
+        "unit": "passing tests",
+        "chart": "bar",
+        "source_label": "Source: local non-business test receipt (no product metric)",
+        "source_asset_id": "src-metric",
+        "series": [
+          {
+            "label": "before",
+            "value": 9
+          },
+          {
+            "label": "after",
+            "value": 21
+          }
+        ],
+        "highlight_index": 1
+      },
+      "visual_focus": "本地测试数从九项增长到二十一项，这只是组件演示。"
+    },
+    {
+      "id": "cmp01",
+      "asset_id": "src-doc",
+      "claim": "C-cmp01",
+      "narration": "对照未核验输出与哈希核验后的输出。",
+      "source_refs": [
+        "repo://project.yaml"
+      ],
+      "animation_type": "comparison_reveal",
+      "animation": {
+        "before": "unverified output",
+        "after": "hash checked"
+      },
+      "visual_focus": "对照未核验输出与哈希核验后的输出。"
+    }
+  ]
+}

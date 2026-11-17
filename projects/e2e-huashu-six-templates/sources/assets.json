@@ -1,0 +1,89 @@
+{
+  "schema": "contentops.m5-asset-manifest/v1",
+  "policy": "TEST_ONLY",
+  "assets": [
+    {
+      "id": "src-code",
+      "type": "CODE_SNAPSHOT",
+      "repo_path": "projects/easel-review/sources/screenshots/14-easel-skills-dir.png",
+      "sha256": "2d6fdabadff9dfc0e14c54b16e7583e3a00a9f94d777750cd1fd3654b7b6bbe0",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "TEST_ONLY 解释性代码局部；来自已登记的真实截图",
+      "source_document_sha256": "ad5c01e6c2d587345eca6cc91498acc34a1892672c7b4bc80cd3386a34a714c6",
+      "ocr_regions": [
+        {
+          "text": "skills builtin code",
+          "confidence": 0.9,
+          "rect": [
+            0.1,
+            0.25,
+            0.45,
+            0.1
+          ]
+        }
+      ]
+    },
+    {
+      "id": "src-evidence",
+      "type": "REAL_SCREENSHOT",
+      "repo_path": "projects/easel-review/sources/screenshots/11-easel-ping.png",
+      "sha256": "cc566fbe0bcb9a81406d02ce0641aa110f9738730dff1d19dc278d48146cb34e",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "TEST_ONLY 解释性放大；来自已登记的真实截图",
+      "ocr_regions": [
+        {
+          "text": "version doctor result",
+          "confidence": 0.9,
+          "rect": [
+            0.12,
+            0.3,
+            0.5,
+            0.12
+          ]
+        }
+      ]
+    },
+    {
+      "id": "src-metric",
+      "type": "REAL_DOCUMENT",
+      "repo_path": "projects/e2e-huashu-six-templates/sources/metric-source.json",
+      "sha256": "7d36116fbc66d0b1aa3147ae0333fb7d9188e8f55f18dec9f35648c50b9ab130",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "TEST_ONLY 非业务测试数据"
+    },
+    {
+      "id": "src-doc",
+      "type": "REAL_DOCUMENT",
+      "repo_path": "docs/PRD-ANIMATION-SKILLS-INTEGRATION.md",
+      "sha256": "3f1c23b908b570052c9c8ae882fd654c8dc39a8cd8395114624a8f2a6d95d45c",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "TEST_ONLY 解释性内容来源"
+    },
+    {
+      "id": "huashu-arch01",
+      "type": "generated_video",
+      "repo_path": "projects/e2e-huashu-six-templates/assets/generated/huashu/huashu-arch01.mp4",
+      "sha256": "10cff6da96281df9c0bc27461b317f2acc49d8b1d88536b5bbeecfe75d0919a6",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "VISUAL_SUPPORT only",
+      "origin": "huashu-art-motion local code render",
+      "notes": "Generated visual; not source evidence. Claim source remains separately registered.",
+      "evidence_capable": false,
+      "evidence_use": "VISUAL_SUPPORT",
+      "receipt_ref": "project://receipts/huashu-huashu-arch01.json"
+    },
+    {
+      "id": "huashu-state01",
+      "type": "GENERATED_VIDEO",
+      "repo_path": "projects/e2e-huashu-six-templates/assets/generated/huashu/huashu-state01.mp4",
+      "sha256": "046da85570d0823cd9a6749ce32ab66b560014299aa38570e8de2068e37ff205",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "VISUAL_SUPPORT only",
+      "origin": "huashu-art-motion local code render",
+      "notes": "Generated visual; not source evidence. Claim source remains separately registered.",
+      "evidence_capable": false,
+      "evidence_use": "VISUAL_SUPPORT",
+      "receipt_ref": "project://receipts/huashu-huashu-state01.json"
+    }
+  ]
+}

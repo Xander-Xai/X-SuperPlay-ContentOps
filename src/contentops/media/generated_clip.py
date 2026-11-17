@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 
 from contentops.media.image_contract import AssetKind, AssetRegistry, EvidenceUse
 from contentops.media.media_envelope import (
@@ -17,7 +17,12 @@ from contentops.media.media_envelope import (
     MediaAssetEnvelope,
     MediaModality,
 )
-from contentops.media.quality_gate import AssetQualityGate, build_manifest
+from contentops.media.quality_gate import (
+    AssetQualityGate,
+    GateDecision,
+    MediaManifest,
+    build_manifest,
+)
 from contentops.paths import relative_label
 
 
@@ -30,6 +35,25 @@ def _read(path: Path) -> Dict[str, Any]:
 def _write(path: Path, payload: Dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def _load_manifest(path: Path) -> Optional[MediaManifest]:
+    """Load the shared per-backend manifest so a registration merges into it.
+
+    ``work/m45/<backend>-media-manifest.json`` is the one M5 asset list for the
+    backend, so a clip that registers itself must keep every other clip's rows.
+    A file that does not parse as the manifest schema — or whose own assets
+    lost their gate states — is refused loudly instead of silently restarted:
+    overwriting it would delete the other clips' registrations, which is the
+    multi-shot loss this merge exists to prevent. The ValueError lands in the
+    render script's repair boundary and is reported BLOCKED, never as success.
+    """
+    if not path.is_file():
+        return None
+    try:
+        return MediaManifest.load(path)
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        raise ValueError(f"MEDIA_MANIFEST_UNREADABLE: {path.name} ({exc})") from exc
 
 
 def register_generated_clip(
@@ -79,8 +103,49 @@ def register_generated_clip(
     if gate.blocked:
         raise ValueError("ASSET_GATE_BLOCKED: " + "; ".join(gate.reasons))
     manifest_path = project / "work" / "m45" / f"{backend}-media-manifest.json"
+    # The shared manifest is a multi-shot inventory, not a per-run scratch file:
+    # merge this clip into whatever valid registrations it already carries.
+    # Replacing only the current asset_id keeps the other clips' envelopes,
+    # gate states and timeline slots intact, so a cache-hit repair can never
+    # erase a sibling clip and re-trigger repairs in a ping-pong.
+    existing = _load_manifest(manifest_path)
+    envelopes: List[MediaAssetEnvelope] = []
+    decisions: List[GateDecision] = []
+    replaced = False
+    for old in (existing.assets if existing else []):
+        if old.asset_id == asset_id:
+            # Same clip registered again: replace in place. Keeping its
+            # declaration position leaves the timeline policy's stable choice
+            # (earliest declared wins) untouched across re-renders.
+            envelopes.append(envelope)
+            decisions.append(gate)
+            replaced = True
+            continue
+        if old.path == envelope.path:
+            raise ValueError(
+                f"MEDIA_MANIFEST_PATH_COLLISION: {asset_id} and {old.asset_id} "
+                f"both claim {envelope.path}"
+            )
+        state = (existing.gate_states if existing else {}).get(old.asset_id)
+        if not state:
+            raise ValueError(
+                f"MEDIA_MANIFEST_GATE_MISSING: {old.asset_id} has no recorded "
+                "gate state; refusing to carry it into the merged manifest"
+            )
+        envelopes.append(old)
+        decisions.append(GateDecision(
+            asset_id=old.asset_id,
+            modality=str(old.modality),
+            state=state,
+            reasons=[f"carried over from the previous registration of {old.asset_id}"],
+        ))
+    if not replaced:
+        envelopes.append(envelope)
+        decisions.append(gate)
     build_manifest(
-        [envelope], [gate],
+        envelopes, decisions,
+        scheduling=dict(existing.scheduling) if existing else None,
+        narration=dict(existing.narration) if existing else None,
         notes={"source": f"{backend} local clip render", "production_ready": False,
                "human_review": HUMAN_REVIEW_PENDING},
     ).write(manifest_path)

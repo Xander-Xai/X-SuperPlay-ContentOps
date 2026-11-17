@@ -1,0 +1,61 @@
+{
+  "grammar": "t2_keynote_ui",
+  "duration": 6.0,
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": {
+    "bg": "#0F1117",
+    "accent": "#38BDF8",
+    "ink": "#202B31",
+    "sub": "#65747A",
+    "surface": "#F9FBFA",
+    "accent2": "#38BDF8"
+  },
+  "safe": {
+    "top": 0,
+    "bottom": 520,
+    "fill": "#0F1117"
+  },
+  "cues": [
+    {
+      "at": 0.0,
+      "kind": "image",
+      "image": "../../../../easel-review/sources/screenshots/14-easel-skills-dir.png",
+      "text": "关键代码校验来源哈希后才放行"
+    },
+    {
+      "at": 1.15,
+      "kind": "highlight",
+      "data": {
+        "rect": [
+          0.1,
+          0.25,
+          0.45,
+          0.1
+        ],
+        "fill": 0.698
+      }
+    }
+  ],
+  "contentops_scene": {
+    "segment_id": "code01",
+    "visual_role": "explain",
+    "template": "engineering-flow",
+    "evidence_ref": null,
+    "style_variant": "brand.palette",
+    "animation_type": "code_focus",
+    "source_asset_id": "src-code",
+    "claim_ref": "C-code01",
+    "editorial_only": false
+  },
+  "contentops_timing": {
+    "narration_duration_s": 5.0,
+    "visual_hold_padding_s": 1.0
+  },
+  "contentops_source": {
+    "asset_id": "src-code",
+    "sha256": "2d6fdabadff9dfc0e14c54b16e7583e3a00a9f94d777750cd1fd3654b7b6bbe0",
+    "source_document_sha256": "ad5c01e6c2d587345eca6cc91498acc34a1892672c7b4bc80cd3386a34a714c6"
+  }
+}

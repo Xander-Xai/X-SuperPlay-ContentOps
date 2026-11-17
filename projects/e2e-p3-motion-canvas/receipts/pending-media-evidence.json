@@ -1,0 +1,29 @@
+{
+  "schema": "contentops.motion-canvas-pending-media/v1",
+  "created_at": "2026-11-16T20:14:42Z",
+  "clips": [
+    {
+      "asset_id": "mc-arch01",
+      "expected_output": "project://assets/generated/motion-canvas/mc-arch01.mp4",
+      "first_frame": null,
+      "mid_frame": null,
+      "last_frame": null,
+      "ffprobe": null,
+      "sha256": null,
+      "state": "EDITOR_EXPORT_REQUIRED",
+      "reason": "No editor-exported MP4 exists. Frames, ffprobe and SHA-256 will be filled only by --import-editor-export from a real editor export; null here is an honest absence, not a failure of the template."
+    },
+    {
+      "asset_id": "mc-state01",
+      "expected_output": "project://assets/generated/motion-canvas/mc-state01.mp4",
+      "first_frame": null,
+      "mid_frame": null,
+      "last_frame": null,
+      "ffprobe": null,
+      "sha256": null,
+      "state": "EDITOR_EXPORT_REQUIRED",
+      "reason": "No editor-exported MP4 exists. Frames, ffprobe and SHA-256 will be filled only by --import-editor-export from a real editor export; null here is an honest absence, not a failure of the template."
+    }
+  ],
+  "render_verified": false
+}

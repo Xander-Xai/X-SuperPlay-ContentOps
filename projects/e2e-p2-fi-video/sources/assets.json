@@ -1,0 +1,1706 @@
+{
+  "schema": "contentops.m5-assets/v1",
+  "policy": "Every visual used in a run is listed here with its hash, origin and usage scope. Nothing is used implicitly.",
+  "assets": [
+    {
+      "id": "fi-pain",
+      "type": "CODE_SNAPSHOT",
+      "repo_path": "projects/e2e-p2-fi-video/assets/anchors/fi-pain.png",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "解释性示意图，属于视觉辅助",
+      "evidence_capable": false,
+      "generated": true,
+      "origin": "Deterministic concept card drawn from the reviewed narration",
+      "notes": "概念示意，不是运行结果",
+      "sha256": "c434b62d430ac264285f1416046a570a44435433f3aad9b2d7935551f2162184",
+      "anchor_canvas": [
+        1080,
+        1688
+      ],
+      "text_layout": {
+        "schema": "contentops.concept-anchor/v1",
+        "canvas": [
+          1080,
+          1688
+        ],
+        "wrap_cols": 32,
+        "code_font_px": 34,
+        "group_size": 1,
+        "lines": [
+          {
+            "n": 1,
+            "text": "一个动画库包打天下",
+            "rect": [
+              0.068519,
+              0.172986,
+              0.862963,
+              0.195498
+            ]
+          },
+          {
+            "n": 2,
+            "text": "三类镜头各就各位",
+            "rect": [
+              0.068519,
+              0.438389,
+              0.862963,
+              0.195498
+            ]
+          }
+        ],
+        "focus_source_lines": []
+      },
+      "anchor_kind": "CONCEPT_SCHEMATIC"
+    },
+    {
+      "id": "fi-arch-02",
+      "type": "CODE_SNAPSHOT",
+      "repo_path": "projects/e2e-p2-fi-video/assets/anchors/fi-arch-02.png",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "解释性示意图，属于视觉辅助",
+      "evidence_capable": false,
+      "generated": true,
+      "origin": "Deterministic concept card drawn from the reviewed narration",
+      "notes": "流水线阶段示意，原理说明",
+      "source_document": "src/contentops/media/animation_backend.py",
+      "source_document_sha256": "5cb41ba561b2f772ffb9b266fb4a03dd6463f857c616bd920e98070f9b5071a6",
+      "sha256": "8d0b3496e4199d1715bd920a82b9ad77d945ff36ceef9e539634f00e39403885",
+      "anchor_canvas": [
+        1080,
+        1688
+      ],
+      "text_layout": {
+        "schema": "contentops.concept-anchor/v1",
+        "canvas": [
+          1080,
+          1688
+        ],
+        "wrap_cols": 32,
+        "code_font_px": 34,
+        "group_size": 1,
+        "lines": [
+          {
+            "n": 1,
+            "text": "选题与脚本",
+            "rect": [
+              0.068519,
+              0.172986,
+              0.862963,
+              0.195498
+            ]
+          },
+          {
+            "n": 2,
+            "text": "分镜 placement",
+            "rect": [
+              0.068519,
+              0.438389,
+              0.862963,
+              0.195498
+            ]
+          },
+          {
+            "n": 3,
+            "text": "短镜头渲染",
+            "rect": [
+              0.068519,
+              0.703791,
+              0.862963,
+              0.195498
+            ]
+          }
+        ],
+        "focus_source_lines": [
+          1
+        ]
+      },
+      "anchor_kind": "CONCEPT_SCHEMATIC"
+    },
+    {
+      "id": "fi-pin",
+      "type": "CODE_SNAPSHOT",
+      "repo_path": "projects/e2e-p2-fi-video/assets/anchors/fi-pin.png",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "仓库自身配置的逐字摘录",
+      "evidence_capable": false,
+      "generated": true,
+      "origin": "Deterministic excerpt card rendered from pinned repository bytes",
+      "source_document": "sources/pinned/easel-pins.json",
+      "source_document_sha256": "be94a151b63b09862bc9f7d62dca89574f8512b2cfc03c32fc9318e48191d0e6",
+      "notes": "摘录卡；事实由 script/claims.json 的引文验证，卡片本身不是证据",
+      "sha256": "a8f3358c9b99514aa6e37b770e6dcb5b5c2c0b4a4200203e99c0a3a97045775e",
+      "anchor_canvas": [
+        1080,
+        1688
+      ],
+      "text_layout": {
+        "schema": "contentops.source-anchor/v1",
+        "canvas": [
+          1080,
+          1688
+        ],
+        "wrap_cols": 32,
+        "code_font_px": 34,
+        "group_size": 3,
+        "lines": [
+          {
+            "n": 1,
+            "text": "{",
+            "focus": false,
+            "rect": [
+              0.183333,
+              0.155213,
+              0.158333,
+              0.024455
+            ]
+          },
+          {
+            "n": 2,
+            "text": "  \"schema\": \"contentops",
+            "focus": false,
+            "rect": [
+              0.183333,
+              0.183649,
+              0.492593,
+              0.024455
+            ]
+          },
+          {
+            "n": 3,
+            "text": "  \"note\": \"The only place an",
+            "focus": true,
+            "rect": [
+              0.183333,
+              0.240521,
+              0.580556,
+              0.024455
+            ]
+          }
+        ],
+        "focus_source_lines": [
+          3
+        ]
+      },
+      "source_lines": [
+        3
+      ]
+    },
+    {
+      "id": "fi-freeze",
+      "type": "CODE_SNAPSHOT",
+      "repo_path": "projects/e2e-p2-fi-video/assets/anchors/fi-freeze.png",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "解释性示意图，属于视觉辅助",
+      "evidence_capable": false,
+      "generated": true,
+      "origin": "Deterministic concept card drawn from the reviewed narration",
+      "notes": "状态机示意，原理说明",
+      "sha256": "6ee77adbf611b3de40b4cdcfe6f60bd75faed94d2b5ac1e03276604f501074c0",
+      "anchor_canvas": [
+        1080,
+        1688
+      ],
+      "text_layout": {
+        "schema": "contentops.concept-anchor/v1",
+        "canvas": [
+          1080,
+          1688
+        ],
+        "wrap_cols": 32,
+        "code_font_px": 34,
+        "group_size": 1,
+        "lines": [
+          {
+            "n": 1,
+            "text": "上游新版本",
+            "rect": [
+              0.068519,
+              0.172986,
+              0.862963,
+              0.195498
+            ]
+          },
+          {
+            "n": 2,
+            "text": "评估影响",
+            "rect": [
+              0.068519,
+              0.438389,
+              0.862963,
+              0.195498
+            ]
+          },
+          {
+            "n": 3,
+            "text": "冻结决定",
+            "rect": [
+              0.068519,
+              0.703791,
+              0.862963,
+              0.195498
+            ]
+          }
+        ],
+        "focus_source_lines": []
+      },
+      "anchor_kind": "CONCEPT_SCHEMATIC"
+    },
+    {
+      "id": "fi-contract",
+      "type": "CODE_SNAPSHOT",
+      "repo_path": "projects/e2e-p2-fi-video/assets/anchors/fi-contract.png",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "仓库自身源码的逐字摘录",
+      "evidence_capable": false,
+      "generated": true,
+      "origin": "Deterministic excerpt card rendered from pinned repository bytes",
+      "source_document": "sources/pinned/motion_sample.py",
+      "source_document_sha256": "29643eb028625b5290035ebe766cdd3097ea7cbe2ecc00bdc30ef406bbe73497",
+      "notes": "摘录卡；短镜头合同由 claims.json 引文验证",
+      "sha256": "39cb4829d23aacc90b0c7bd936f68e62623bc423fda240ee4b5e800f5efe1ccd",
+      "anchor_canvas": [
+        1080,
+        1688
+      ],
+      "text_layout": {
+        "schema": "contentops.source-anchor/v1",
+        "canvas": [
+          1080,
+          1688
+        ],
+        "wrap_cols": 32,
+        "code_font_px": 34,
+        "group_size": 3,
+        "lines": [
+          {
+            "n": 21,
+            "text": "import hashlib",
+            "focus": false,
+            "rect": [
+              0.183333,
+              0.155213,
+              0.334259,
+              0.024455
+            ]
+          },
+          {
+            "n": 22,
+            "text": "from pathlib import Path",
+            "focus": false,
+            "rect": [
+              0.183333,
+              0.183649,
+              0.510185,
+              0.024455
+            ]
+          },
+          {
+            "n": 23,
+            "text": "from typing import Any, Dict,",
+            "focus": false,
+            "rect": [
+              0.183333,
+              0.212085,
+              0.598148,
+              0.024455
+            ]
+          },
+          {
+            "n": 24,
+            "text": "",
+            "focus": true,
+            "rect": [
+              0.183333,
+              0.268957,
+              0.158333,
+              0.024455
+            ]
+          },
+          {
+            "n": 25,
+            "text": "SCHEMA = \"contentops",
+            "focus": true,
+            "rect": [
+              0.183333,
+              0.297393,
+              0.439815,
+              0.024455
+            ]
+          },
+          {
+            "n": 26,
+            "text": "",
+            "focus": true,
+            "rect": [
+              0.183333,
+              0.354265,
+              0.158333,
+              0.024455
+            ]
+          },
+          {
+            "n": 27,
+            "text": "SAMPLE_MIN_S = 2.0",
+            "focus": true,
+            "rect": [
+              0.183333,
+              0.382701,
+              0.40463,
+              0.024455
+            ]
+          },
+          {
+            "n": 28,
+            "text": "SAMPLE_MAX_S = 8.0",
+            "focus": true,
+            "rect": [
+              0.183333,
+              0.411137,
+              0.40463,
+              0.024455
+            ]
+          },
+          {
+            "n": 29,
+            "text": "TARGET_WIDTH = 1080",
+            "focus": true,
+            "rect": [
+              0.183333,
+              0.439573,
+              0.422222,
+              0.024455
+            ]
+          },
+          {
+            "n": 30,
+            "text": "TARGET_HEIGHT = 1920",
+            "focus": true,
+            "rect": [
+              0.183333,
+              0.468009,
+              0.439815,
+              0.024455
+            ]
+          },
+          {
+            "n": 31,
+            "text": "TARGET_FPS = 30.0",
+            "focus": true,
+            "rect": [
+              0.183333,
+              0.496445,
+              0.387037,
+              0.024455
+            ]
+          },
+          {
+            "n": 32,
+            "text": "FRAME_TOLERANCE_S = 0.002",
+            "focus": true,
+            "rect": [
+              0.183333,
+              0.524882,
+              0.527778,
+              0.024455
+            ]
+          },
+          {
+            "n": 33,
+            "text": "",
+            "focus": false,
+            "rect": [
+              0.183333,
+              0.553318,
+              0.158333,
+              0.024455
+            ]
+          },
+          {
+            "n": 34,
+            "text": "_VIDEO_CODECS = (\"h264\",",
+            "focus": false,
+            "rect": [
+              0.183333,
+              0.581754,
+              0.510185,
+              0.024455
+            ]
+          },
+          {
+            "n": 35,
+            "text": "",
+            "focus": false,
+            "rect": [
+              0.183333,
+              0.638626,
+              0.158333,
+              0.024455
+            ]
+          },
+          {
+            "n": 36,
+            "text": "",
+            "focus": false,
+            "rect": [
+              0.183333,
+              0.667062,
+              0.158333,
+              0.024455
+            ]
+          },
+          {
+            "n": 37,
+            "text": "def _blocked(code: str, detail:",
+            "focus": false,
+            "rect": [
+              0.183333,
+              0.695498,
+              0.633333,
+              0.024455
+            ]
+          },
+          {
+            "n": 38,
+            "text": "    return {",
+            "focus": false,
+            "rect": [
+              0.183333,
+              0.780806,
+              0.299074,
+              0.024455
+            ]
+          },
+          {
+            "n": 39,
+            "text": "        \"schema\": SCHEMA,",
+            "focus": false,
+            "rect": [
+              0.183333,
+              0.809242,
+              0.527778,
+              0.024455
+            ]
+          },
+          {
+            "n": 40,
+            "text": "        \"state\": \"BLOCKED\",",
+            "focus": false,
+            "rect": [
+              0.183333,
+              0.837678,
+              0.562963,
+              0.024455
+            ]
+          },
+          {
+            "n": 41,
+            "text": "        \"reason\": f\"{code}:",
+            "focus": false,
+            "rect": [
+              0.183333,
+              0.866114,
+              0.562963,
+              0.024455
+            ]
+          }
+        ],
+        "focus_source_lines": [
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32
+        ]
+      },
+      "source_lines": [
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32
+      ]
+    },
+    {
+      "id": "fi-1024",
+      "type": "CODE_SNAPSHOT",
+      "repo_path": "projects/e2e-p2-fi-video/assets/anchors/fi-1024.png",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "仓库自身源码的逐字摘录",
+      "evidence_capable": false,
+      "generated": true,
+      "origin": "Deterministic excerpt card rendered from pinned repository bytes",
+      "source_document": "sources/pinned/animation_backend.py",
+      "source_document_sha256": "bc2e2118d0525911f611968a974ae332dce2f300e1f761f49d3e93bf2be8b89b",
+      "notes": "1024 阻断分支的逐字摘录",
+      "sha256": "f1dda66dc2e3c7371ae8a814bda2001385b933ad80bd47d673d00c0f0713abf5",
+      "anchor_canvas": [
+        1080,
+        1688
+      ],
+      "text_layout": {
+        "schema": "contentops.source-anchor/v1",
+        "canvas": [
+          1080,
+          1688
+        ],
+        "wrap_cols": 32,
+        "code_font_px": 34,
+        "group_size": 3,
+        "lines": [
+          {
+            "n": 154,
+            "text": "            \"future-intelligence",
+            "focus": false,
+            "rect": [
+              0.174537,
+              0.155213,
+              0.650926,
+              0.024455
+            ]
+          },
+          {
+            "n": 155,
+            "text": "            account_id=account,",
+            "focus": false,
+            "rect": [
+              0.174537,
+              0.240521,
+              0.633333,
+              0.024455
+            ]
+          },
+          {
+            "n": 156,
+            "text": "        )",
+            "focus": false,
+            "rect": [
+              0.174537,
+              0.268957,
+              0.246296,
+              0.024455
+            ]
+          },
+          {
+            "n": 157,
+            "text": "    if account == ACCOUNT_1024",
+            "focus": true,
+            "rect": [
+              0.174537,
+              0.297393,
+              0.615741,
+              0.024455
+            ]
+          },
+          {
+            "n": 158,
+            "text": "        return _blocked(",
+            "focus": true,
+            "rect": [
+              0.174537,
+              0.382701,
+              0.510185,
+              0.024455
+            ]
+          },
+          {
+            "n": 159,
+            "text": "            \"MISSING_REAL_RECORD",
+            "focus": true,
+            "rect": [
+              0.174537,
+              0.411137,
+              0.650926,
+              0.024455
+            ]
+          },
+          {
+            "n": 160,
+            "text": "            \"1024 production",
+            "focus": true,
+            "rect": [
+              0.174537,
+              0.468009,
+              0.580556,
+              0.024455
+            ]
+          },
+          {
+            "n": 161,
+            "text": "            account_id=account,",
+            "focus": true,
+            "rect": [
+              0.174537,
+              0.581754,
+              0.633333,
+              0.024455
+            ]
+          },
+          {
+            "n": 162,
+            "text": "        )",
+            "focus": true,
+            "rect": [
+              0.174537,
+              0.61019,
+              0.246296,
+              0.024455
+            ]
+          },
+          {
+            "n": 163,
+            "text": "",
+            "focus": false,
+            "rect": [
+              0.174537,
+              0.638626,
+              0.158333,
+              0.024455
+            ]
+          },
+          {
+            "n": 164,
+            "text": "    shot = str(shot_type or",
+            "focus": false,
+            "rect": [
+              0.174537,
+              0.667062,
+              0.562963,
+              0.024455
+            ]
+          },
+          {
+            "n": 165,
+            "text": "    compatible = SHOT_COMPATIBIL",
+            "focus": false,
+            "rect": [
+              0.174537,
+              0.723934,
+              0.650926,
+              0.024455
+            ]
+          },
+          {
+            "n": 166,
+            "text": "    if compatible is None:",
+            "focus": false,
+            "rect": [
+              0.174537,
+              0.780806,
+              0.54537,
+              0.024455
+            ]
+          },
+          {
+            "n": 167,
+            "text": "        return _blocked",
+            "focus": false,
+            "rect": [
+              0.174537,
+              0.809242,
+              0.492593,
+              0.024455
+            ]
+          }
+        ],
+        "focus_source_lines": [
+          157,
+          158,
+          159,
+          160,
+          161,
+          162
+        ]
+      },
+      "source_lines": [
+        157,
+        158,
+        159,
+        160,
+        161,
+        162
+      ]
+    },
+    {
+      "id": "fi-explain",
+      "type": "CODE_SNAPSHOT",
+      "repo_path": "projects/e2e-p2-fi-video/assets/anchors/fi-explain.png",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "仓库自身源码的逐字摘录",
+      "evidence_capable": false,
+      "generated": true,
+      "origin": "Deterministic excerpt card rendered from pinned repository bytes",
+      "source_document": "sources/pinned/x-superplay-future-intelligence.json",
+      "source_document_sha256": "25f0230069f0cb266518c90ce17083eca53b345845b4382f0a53a9e51f37ca98",
+      "notes": "账号 DNA 中录屏禁令的逐字摘录",
+      "sha256": "04db26357a80c47981ba61590efbf1d4d27d3120a91944eb90b31044304f1e5c",
+      "anchor_canvas": [
+        1080,
+        1688
+      ],
+      "text_layout": {
+        "schema": "contentops.source-anchor/v1",
+        "canvas": [
+          1080,
+          1688
+        ],
+        "wrap_cols": 32,
+        "code_font_px": 34,
+        "group_size": 3,
+        "lines": [
+          {
+            "n": 241,
+            "text": "    }",
+            "focus": false,
+            "rect": [
+              0.174537,
+              0.155213,
+              0.175926,
+              0.024455
+            ]
+          },
+          {
+            "n": 242,
+            "text": "  },",
+            "focus": false,
+            "rect": [
+              0.174537,
+              0.183649,
+              0.158333,
+              0.024455
+            ]
+          },
+          {
+            "n": 243,
+            "text": "  \"evidence\": {",
+            "focus": false,
+            "rect": [
+              0.174537,
+              0.212085,
+              0.351852,
+              0.024455
+            ]
+          },
+          {
+            "n": 244,
+            "text": "    \"mode\": \"EXPLANATORY\",",
+            "focus": true,
+            "rect": [
+              0.174537,
+              0.240521,
+              0.54537,
+              0.024455
+            ]
+          },
+          {
+            "n": 245,
+            "text": "    \"manual_recording\":",
+            "focus": true,
+            "rect": [
+              0.174537,
+              0.268957,
+              0.492593,
+              0.024455
+            ]
+          },
+          {
+            "n": 246,
+            "text": "    \"crop_rule\":",
+            "focus": true,
+            "rect": [
+              0.174537,
+              0.325829,
+              0.369444,
+              0.024455
+            ]
+          },
+          {
+            "n": 247,
+            "text": "    \"required_evidence_class\":",
+            "focus": true,
+            "rect": [
+              0.174537,
+              0.411137,
+              0.615741,
+              0.024455
+            ]
+          },
+          {
+            "n": 248,
+            "text": "    \"rules\": [",
+            "focus": true,
+            "rect": [
+              0.174537,
+              0.468009,
+              0.334259,
+              0.024455
+            ]
+          },
+          {
+            "n": 249,
+            "text": "      \"所有架构图逻辑必须可复现",
+            "focus": false,
+            "rect": [
+              0.174537,
+              0.496445,
+              0.633333,
+              0.024455
+            ]
+          },
+          {
+            "n": 250,
+            "text": "      \"代码截图只截取关键行的局",
+            "focus": false,
+            "rect": [
+              0.174537,
+              0.581754,
+              0.633333,
+              0.024455
+            ]
+          },
+          {
+            "n": 251,
+            "text": "      \"真实捕获的静态证据裁切可",
+            "focus": false,
+            "rect": [
+              0.174537,
+              0.638626,
+              0.633333,
+              0.024455
+            ]
+          },
+          {
+            "n": 252,
+            "text": "      \"评估指标必须来自真实运行",
+            "focus": false,
+            "rect": [
+              0.174537,
+              0.723934,
+              0.633333,
+              0.024455
+            ]
+          },
+          {
+            "n": 253,
+            "text": "      \"矢量动画与图表只作解释工",
+            "focus": false,
+            "rect": [
+              0.174537,
+              0.780806,
+              0.633333,
+              0.024455
+            ]
+          },
+          {
+            "n": 254,
+            "text": "    ],",
+            "focus": false,
+            "rect": [
+              0.174537,
+              0.866114,
+              0.193519,
+              0.024455
+            ]
+          }
+        ],
+        "focus_source_lines": [
+          244,
+          245,
+          246,
+          247,
+          248
+        ]
+      },
+      "source_lines": [
+        244,
+        245,
+        246,
+        247,
+        248
+      ]
+    },
+    {
+      "id": "fi-templates",
+      "type": "CODE_SNAPSHOT",
+      "repo_path": "projects/e2e-p2-fi-video/assets/anchors/fi-templates.png",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "解释性示意图，属于视觉辅助",
+      "evidence_capable": false,
+      "generated": true,
+      "origin": "Deterministic concept card drawn from the reviewed narration",
+      "notes": "六模板到语法的映射示意",
+      "sha256": "d5631b4e34400f35a5f37baf4c950b707c8e28dd852414aec9b1c19ba339f6b3",
+      "anchor_canvas": [
+        1080,
+        1688
+      ],
+      "text_layout": {
+        "schema": "contentops.concept-anchor/v1",
+        "canvas": [
+          1080,
+          1688
+        ],
+        "wrap_cols": 32,
+        "code_font_px": 34,
+        "group_size": 1,
+        "lines": [
+          {
+            "n": 1,
+            "text": "architecture_flow",
+            "rect": [
+              0.068519,
+              0.172986,
+              0.862963,
+              0.195498
+            ]
+          },
+          {
+            "n": 2,
+            "text": "state_transition",
+            "rect": [
+              0.068519,
+              0.438389,
+              0.862963,
+              0.195498
+            ]
+          },
+          {
+            "n": 3,
+            "text": "code_focus",
+            "rect": [
+              0.068519,
+              0.703791,
+              0.862963,
+              0.195498
+            ]
+          }
+        ],
+        "focus_source_lines": []
+      },
+      "anchor_kind": "CONCEPT_SCHEMATIC"
+    },
+    {
+      "id": "fi-evidence",
+      "type": "CODE_SNAPSHOT",
+      "repo_path": "projects/e2e-p2-fi-video/assets/anchors/fi-evidence.png",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "解释性示意图，属于视觉辅助",
+      "evidence_capable": false,
+      "generated": true,
+      "origin": "Deterministic concept card drawn from the reviewed narration",
+      "notes": "视觉辅助与证据的边界示意",
+      "sha256": "58fe7286ac4bfdbbaf0146cf54468ac3acc09748df7f524cdb6c30938b7c4c15",
+      "anchor_canvas": [
+        1080,
+        1688
+      ],
+      "text_layout": {
+        "schema": "contentops.concept-anchor/v1",
+        "canvas": [
+          1080,
+          1688
+        ],
+        "wrap_cols": 32,
+        "code_font_px": 34,
+        "group_size": 1,
+        "lines": [
+          {
+            "n": 1,
+            "text": "生成动画：视觉辅助",
+            "rect": [
+              0.068519,
+              0.172986,
+              0.862963,
+              0.195498
+            ]
+          },
+          {
+            "n": 2,
+            "text": "真实来源：证据",
+            "rect": [
+              0.068519,
+              0.438389,
+              0.862963,
+              0.195498
+            ]
+          }
+        ],
+        "focus_source_lines": []
+      },
+      "anchor_kind": "CONCEPT_SCHEMATIC"
+    },
+    {
+      "id": "fi-cache",
+      "type": "CODE_SNAPSHOT",
+      "repo_path": "projects/e2e-p2-fi-video/assets/anchors/fi-cache.png",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "解释性示意图，属于视觉辅助",
+      "evidence_capable": false,
+      "generated": true,
+      "origin": "Deterministic concept card drawn from the reviewed narration",
+      "notes": "缓存判定流程示意",
+      "sha256": "32f962c00b9fff36fe14a0dff4788b183e31377895785d2799267f98f44bda2c",
+      "anchor_canvas": [
+        1080,
+        1688
+      ],
+      "text_layout": {
+        "schema": "contentops.concept-anchor/v1",
+        "canvas": [
+          1080,
+          1688
+        ],
+        "wrap_cols": 32,
+        "code_font_px": 34,
+        "group_size": 1,
+        "lines": [
+          {
+            "n": 1,
+            "text": "缓存候选",
+            "rect": [
+              0.068519,
+              0.172986,
+              0.862963,
+              0.195498
+            ]
+          },
+          {
+            "n": 2,
+            "text": "指纹比对",
+            "rect": [
+              0.068519,
+              0.438389,
+              0.862963,
+              0.195498
+            ]
+          }
+        ],
+        "focus_source_lines": []
+      },
+      "anchor_kind": "CONCEPT_SCHEMATIC"
+    },
+    {
+      "id": "fi-fingerprint",
+      "type": "CODE_SNAPSHOT",
+      "repo_path": "projects/e2e-p2-fi-video/assets/anchors/fi-fingerprint.png",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "解释性示意图，属于视觉辅助",
+      "evidence_capable": false,
+      "generated": true,
+      "origin": "Deterministic concept card drawn from the reviewed narration",
+      "notes": "指纹输入构成示意",
+      "sha256": "fa4cb985ee22565f850c6e8fae30b80ddd49024ac1b6b0077d3337acde089cd8",
+      "anchor_canvas": [
+        1080,
+        1688
+      ],
+      "text_layout": {
+        "schema": "contentops.concept-anchor/v1",
+        "canvas": [
+          1080,
+          1688
+        ],
+        "wrap_cols": 32,
+        "code_font_px": 34,
+        "group_size": 1,
+        "lines": [
+          {
+            "n": 1,
+            "text": "模板",
+            "rect": [
+              0.068519,
+              0.172986,
+              0.862963,
+              0.195498
+            ]
+          },
+          {
+            "n": 2,
+            "text": "参数",
+            "rect": [
+              0.068519,
+              0.438389,
+              0.862963,
+              0.195498
+            ]
+          },
+          {
+            "n": 3,
+            "text": "来源字节",
+            "rect": [
+              0.068519,
+              0.703791,
+              0.862963,
+              0.195498
+            ]
+          }
+        ],
+        "focus_source_lines": []
+      },
+      "anchor_kind": "CONCEPT_SCHEMATIC"
+    },
+    {
+      "id": "fi-qc",
+      "type": "CODE_SNAPSHOT",
+      "repo_path": "projects/e2e-p2-fi-video/assets/anchors/fi-qc.png",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "仓库自身回执的逐字摘录",
+      "evidence_capable": false,
+      "generated": true,
+      "origin": "Deterministic excerpt card rendered from pinned repository bytes",
+      "source_document": "sources/pinned/qc-report-m5-easel-pin.json",
+      "source_document_sha256": "c93629a86923fc5c282a8e73596a4a4449317f1aa490bcd6bc82a4a4f95af1e0",
+      "notes": "样片质检回执的逐字摘录；PASS 结论由 claims.json 引文验证",
+      "sha256": "73de58915636da9a0208fab5ad2dc6b3c4f04cc17b07b7070e60f43c2233b429",
+      "anchor_canvas": [
+        1080,
+        1688
+      ],
+      "text_layout": {
+        "schema": "contentops.source-anchor/v1",
+        "canvas": [
+          1080,
+          1688
+        ],
+        "wrap_cols": 32,
+        "code_font_px": 34,
+        "group_size": 3,
+        "lines": [
+          {
+            "n": 1,
+            "text": "{",
+            "focus": false,
+            "rect": [
+              0.174537,
+              0.155213,
+              0.158333,
+              0.024455
+            ]
+          },
+          {
+            "n": 2,
+            "text": "  \"schema\": \"contentops",
+            "focus": false,
+            "rect": [
+              0.174537,
+              0.183649,
+              0.492593,
+              0.024455
+            ]
+          },
+          {
+            "n": 3,
+            "text": "  \"currency\": \"CURRENT\",",
+            "focus": false,
+            "rect": [
+              0.174537,
+              0.240521,
+              0.510185,
+              0.024455
+            ]
+          },
+          {
+            "n": 4,
+            "text": "  \"project\": \"projects/m5-easel-",
+            "focus": true,
+            "rect": [
+              0.174537,
+              0.268957,
+              0.650926,
+              0.024455
+            ]
+          },
+          {
+            "n": 5,
+            "text": "  \"graded_target\":",
+            "focus": true,
+            "rect": [
+              0.174537,
+              0.325829,
+              0.40463,
+              0.024455
+            ]
+          },
+          {
+            "n": 6,
+            "text": "  \"overall\": \"PASS\",",
+            "focus": true,
+            "rect": [
+              0.174537,
+              0.411137,
+              0.439815,
+              0.024455
+            ]
+          },
+          {
+            "n": 7,
+            "text": "  \"checked_at\": \"2026-10-31T12:2",
+            "focus": true,
+            "rect": [
+              0.174537,
+              0.439573,
+              0.650926,
+              0.024455
+            ]
+          },
+          {
+            "n": 8,
+            "text": "  \"checks\": [",
+            "focus": true,
+            "rect": [
+              0.174537,
+              0.496445,
+              0.316667,
+              0.024455
+            ]
+          },
+          {
+            "n": 9,
+            "text": "    {",
+            "focus": false,
+            "rect": [
+              0.174537,
+              0.524882,
+              0.175926,
+              0.024455
+            ]
+          },
+          {
+            "n": 10,
+            "text": "      \"id\": \"_video\",",
+            "focus": false,
+            "rect": [
+              0.174537,
+              0.553318,
+              0.457407,
+              0.024455
+            ]
+          },
+          {
+            "n": 11,
+            "text": "      \"ok\": true,",
+            "focus": false,
+            "rect": [
+              0.174537,
+              0.581754,
+              0.387037,
+              0.024455
+            ]
+          },
+          {
+            "n": 12,
+            "text": "      \"severity\": \"INFO\",",
+            "focus": false,
+            "rect": [
+              0.174537,
+              0.61019,
+              0.527778,
+              0.024455
+            ]
+          },
+          {
+            "n": 13,
+            "text": "      \"path\": \"project://final/m",
+            "focus": false,
+            "rect": [
+              0.174537,
+              0.638626,
+              0.650926,
+              0.024455
+            ]
+          },
+          {
+            "n": 14,
+            "text": "    },",
+            "focus": false,
+            "rect": [
+              0.174537,
+              0.695498,
+              0.193519,
+              0.024455
+            ]
+          },
+          {
+            "n": 15,
+            "text": "    {",
+            "focus": false,
+            "rect": [
+              0.174537,
+              0.723934,
+              0.175926,
+              0.024455
+            ]
+          },
+          {
+            "n": 16,
+            "text": "      \"id\": \"file_size\",",
+            "focus": false,
+            "rect": [
+              0.174537,
+              0.75237,
+              0.510185,
+              0.024455
+            ]
+          },
+          {
+            "n": 17,
+            "text": "      \"ok\": true,",
+            "focus": false,
+            "rect": [
+              0.174537,
+              0.780806,
+              0.387037,
+              0.024455
+            ]
+          },
+          {
+            "n": 18,
+            "text": "      \"severity\": \"PASS\",",
+            "focus": false,
+            "rect": [
+              0.174537,
+              0.809242,
+              0.527778,
+              0.024455
+            ]
+          },
+          {
+            "n": 19,
+            "text": "      \"value_bytes\": 1098055,",
+            "focus": false,
+            "rect": [
+              0.174537,
+              0.837678,
+              0.598148,
+              0.024455
+            ]
+          },
+          {
+            "n": 20,
+            "text": "      \"min_bytes\": 102400",
+            "focus": false,
+            "rect": [
+              0.174537,
+              0.866114,
+              0.527778,
+              0.024455
+            ]
+          }
+        ],
+        "focus_source_lines": [
+          4,
+          5,
+          6,
+          7,
+          8
+        ]
+      },
+      "source_lines": [
+        4,
+        5,
+        6,
+        7,
+        8
+      ]
+    },
+    {
+      "id": "fi-repro",
+      "type": "CODE_SNAPSHOT",
+      "repo_path": "projects/e2e-p2-fi-video/assets/anchors/fi-repro.png",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "解释性示意图，属于视觉辅助",
+      "evidence_capable": false,
+      "generated": true,
+      "origin": "Deterministic concept card drawn from the reviewed narration",
+      "notes": "复现三步示意",
+      "sha256": "9f314164a88d73a2fd1376c513d9f03dfb3090cadceb09790f30d22758ee4cef",
+      "anchor_canvas": [
+        1080,
+        1688
+      ],
+      "text_layout": {
+        "schema": "contentops.concept-anchor/v1",
+        "canvas": [
+          1080,
+          1688
+        ],
+        "wrap_cols": 32,
+        "code_font_px": 34,
+        "group_size": 1,
+        "lines": [
+          {
+            "n": 1,
+            "text": "写分镜",
+            "rect": [
+              0.068519,
+              0.172986,
+              0.862963,
+              0.195498
+            ]
+          },
+          {
+            "n": 2,
+            "text": "跑 M5",
+            "rect": [
+              0.068519,
+              0.438389,
+              0.862963,
+              0.195498
+            ]
+          },
+          {
+            "n": 3,
+            "text": "交给 Easel",
+            "rect": [
+              0.068519,
+              0.703791,
+              0.862963,
+              0.195498
+            ]
+          }
+        ],
+        "focus_source_lines": []
+      },
+      "anchor_kind": "CONCEPT_SCHEMATIC"
+    },
+    {
+      "id": "fi-limit",
+      "type": "CODE_SNAPSHOT",
+      "repo_path": "projects/e2e-p2-fi-video/assets/anchors/fi-limit.png",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "解释性示意图，属于视觉辅助",
+      "evidence_capable": false,
+      "generated": true,
+      "origin": "Deterministic concept card drawn from the reviewed narration",
+      "notes": "边界声明示意",
+      "sha256": "426efeea17be49dc54b44c423ad3d8ac94e6f116af22af658f83897725660118",
+      "anchor_canvas": [
+        1080,
+        1688
+      ],
+      "text_layout": {
+        "schema": "contentops.concept-anchor/v1",
+        "canvas": [
+          1080,
+          1688
+        ],
+        "wrap_cols": 32,
+        "code_font_px": 34,
+        "group_size": 1,
+        "lines": [
+          {
+            "n": 1,
+            "text": "能跑通",
+            "rect": [
+              0.068519,
+              0.172986,
+              0.862963,
+              0.195498
+            ]
+          },
+          {
+            "n": 2,
+            "text": "不等于能发布",
+            "rect": [
+              0.068519,
+              0.438389,
+              0.862963,
+              0.195498
+            ]
+          }
+        ],
+        "focus_source_lines": []
+      },
+      "anchor_kind": "CONCEPT_SCHEMATIC"
+    },
+    {
+      "id": "huashu-fi01",
+      "type": "GENERATED_VIDEO",
+      "repo_path": "projects/e2e-p2-fi-video/assets/generated/huashu/huashu-fi01.mp4",
+      "sha256": "6545a2c5e0c415280f1c88fddd31af76ebd6dd580b8199d53f58494a094b4581",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "VISUAL_SUPPORT only",
+      "origin": "huashu-art-motion local code render",
+      "notes": "Generated visual; not source evidence. Claim source remains separately registered.",
+      "evidence_capable": false,
+      "evidence_use": "VISUAL_SUPPORT",
+      "receipt_ref": "project://receipts/huashu-huashu-fi01.json"
+    },
+    {
+      "id": "huashu-fi02",
+      "type": "generated_video",
+      "repo_path": "projects/e2e-p2-fi-video/assets/generated/huashu/huashu-fi02.mp4",
+      "sha256": "8f773202e17958bbacab39740c80ccc064277931b0bf39c0b78cb53a94825573",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "VISUAL_SUPPORT only",
+      "origin": "huashu-art-motion local code render",
+      "notes": "Generated visual; not source evidence. Claim source remains separately registered.",
+      "evidence_capable": false,
+      "evidence_use": "VISUAL_SUPPORT",
+      "receipt_ref": "project://receipts/huashu-huashu-fi02.json"
+    },
+    {
+      "id": "huashu-fi03",
+      "type": "GENERATED_VIDEO",
+      "repo_path": "projects/e2e-p2-fi-video/assets/generated/huashu/huashu-fi03.mp4",
+      "sha256": "9fdd10805119945e9298a1ad76f69f40989e0e915315eb3cac4cf8e9ae2b1384",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "VISUAL_SUPPORT only",
+      "origin": "huashu-art-motion local code render",
+      "notes": "Generated visual; not source evidence. Claim source remains separately registered.",
+      "evidence_capable": false,
+      "evidence_use": "VISUAL_SUPPORT",
+      "receipt_ref": "project://receipts/huashu-huashu-fi03.json"
+    },
+    {
+      "id": "huashu-fi04",
+      "type": "GENERATED_VIDEO",
+      "repo_path": "projects/e2e-p2-fi-video/assets/generated/huashu/huashu-fi04.mp4",
+      "sha256": "24840334bd10edfd499086879010c06f636ebee1527f5293d52b86ae879f6b4d",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "VISUAL_SUPPORT only",
+      "origin": "huashu-art-motion local code render",
+      "notes": "Generated visual; not source evidence. Claim source remains separately registered.",
+      "evidence_capable": false,
+      "evidence_use": "VISUAL_SUPPORT",
+      "receipt_ref": "project://receipts/huashu-huashu-fi04.json"
+    },
+    {
+      "id": "huashu-fi05",
+      "type": "GENERATED_VIDEO",
+      "repo_path": "projects/e2e-p2-fi-video/assets/generated/huashu/huashu-fi05.mp4",
+      "sha256": "5becf79505bf1225a15ff699487a8420b00f9000268c6bd768e131c1ad3f6d1d",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "VISUAL_SUPPORT only",
+      "origin": "huashu-art-motion local code render",
+      "notes": "Generated visual; not source evidence. Claim source remains separately registered.",
+      "evidence_capable": false,
+      "evidence_use": "VISUAL_SUPPORT",
+      "receipt_ref": "project://receipts/huashu-huashu-fi05.json"
+    },
+    {
+      "id": "huashu-fi06",
+      "type": "GENERATED_VIDEO",
+      "repo_path": "projects/e2e-p2-fi-video/assets/generated/huashu/huashu-fi06.mp4",
+      "sha256": "87978866e90af659d93088c2fe4539fa1cf1cd0421021d264636048a1c871fc2",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "VISUAL_SUPPORT only",
+      "origin": "huashu-art-motion local code render",
+      "notes": "Generated visual; not source evidence. Claim source remains separately registered.",
+      "evidence_capable": false,
+      "evidence_use": "VISUAL_SUPPORT",
+      "receipt_ref": "project://receipts/huashu-huashu-fi06.json"
+    },
+    {
+      "id": "huashu-fi07",
+      "type": "GENERATED_VIDEO",
+      "repo_path": "projects/e2e-p2-fi-video/assets/generated/huashu/huashu-fi07.mp4",
+      "sha256": "2aea8177bb2e6717c62f63683f074b84d8b9d0230a36e3c28b919d30ef568006",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "VISUAL_SUPPORT only",
+      "origin": "huashu-art-motion local code render",
+      "notes": "Generated visual; not source evidence. Claim source remains separately registered.",
+      "evidence_capable": false,
+      "evidence_use": "VISUAL_SUPPORT",
+      "receipt_ref": "project://receipts/huashu-huashu-fi07.json"
+    },
+    {
+      "id": "huashu-fi08",
+      "type": "GENERATED_VIDEO",
+      "repo_path": "projects/e2e-p2-fi-video/assets/generated/huashu/huashu-fi08.mp4",
+      "sha256": "46be1765475ca06bf3d28ff4f94624fa826d593e0078b7dcfd822a213839d7e3",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "VISUAL_SUPPORT only",
+      "origin": "huashu-art-motion local code render",
+      "notes": "Generated visual; not source evidence. Claim source remains separately registered.",
+      "evidence_capable": false,
+      "evidence_use": "VISUAL_SUPPORT",
+      "receipt_ref": "project://receipts/huashu-huashu-fi08.json"
+    },
+    {
+      "id": "huashu-fi09",
+      "type": "GENERATED_VIDEO",
+      "repo_path": "projects/e2e-p2-fi-video/assets/generated/huashu/huashu-fi09.mp4",
+      "sha256": "7ebaf796dd7e23d0025be7a7dcfdd55aa5df61cd7c95c10e5758a54e4ea10e7e",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "VISUAL_SUPPORT only",
+      "origin": "huashu-art-motion local code render",
+      "notes": "Generated visual; not source evidence. Claim source remains separately registered.",
+      "evidence_capable": false,
+      "evidence_use": "VISUAL_SUPPORT",
+      "receipt_ref": "project://receipts/huashu-huashu-fi09.json"
+    },
+    {
+      "id": "huashu-fi10",
+      "type": "GENERATED_VIDEO",
+      "repo_path": "projects/e2e-p2-fi-video/assets/generated/huashu/huashu-fi10.mp4",
+      "sha256": "13ae637b9dcb17fa29c679f15c963a790b2f9eee932344386eb317caf66df03b",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "VISUAL_SUPPORT only",
+      "origin": "huashu-art-motion local code render",
+      "notes": "Generated visual; not source evidence. Claim source remains separately registered.",
+      "evidence_capable": false,
+      "evidence_use": "VISUAL_SUPPORT",
+      "receipt_ref": "project://receipts/huashu-huashu-fi10.json"
+    },
+    {
+      "id": "huashu-fi11",
+      "type": "GENERATED_VIDEO",
+      "repo_path": "projects/e2e-p2-fi-video/assets/generated/huashu/huashu-fi11.mp4",
+      "sha256": "4c5fefb6e3b775587e2a8c67aa8a296c4a31f94b49b8c45ed923e8628136d19c",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "VISUAL_SUPPORT only",
+      "origin": "huashu-art-motion local code render",
+      "notes": "Generated visual; not source evidence. Claim source remains separately registered.",
+      "evidence_capable": false,
+      "evidence_use": "VISUAL_SUPPORT",
+      "receipt_ref": "project://receipts/huashu-huashu-fi11.json"
+    },
+    {
+      "id": "huashu-fi12",
+      "type": "GENERATED_VIDEO",
+      "repo_path": "projects/e2e-p2-fi-video/assets/generated/huashu/huashu-fi12.mp4",
+      "sha256": "595573fbd68a746c3d49b5e2d614a1591d73b49519db83c99341b479677f8903",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "VISUAL_SUPPORT only",
+      "origin": "huashu-art-motion local code render",
+      "notes": "Generated visual; not source evidence. Claim source remains separately registered.",
+      "evidence_capable": false,
+      "evidence_use": "VISUAL_SUPPORT",
+      "receipt_ref": "project://receipts/huashu-huashu-fi12.json"
+    },
+    {
+      "id": "huashu-fi13",
+      "type": "GENERATED_VIDEO",
+      "repo_path": "projects/e2e-p2-fi-video/assets/generated/huashu/huashu-fi13.mp4",
+      "sha256": "8cf0e9eac7815cf2c29ac1bfd8013fee66fdf25e82837cc951a8d60ee977ac7c",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "VISUAL_SUPPORT only",
+      "origin": "huashu-art-motion local code render",
+      "notes": "Generated visual; not source evidence. Claim source remains separately registered.",
+      "evidence_capable": false,
+      "evidence_use": "VISUAL_SUPPORT",
+      "receipt_ref": "project://receipts/huashu-huashu-fi13.json"
+    },
+    {
+      "id": "huashu-fi14",
+      "type": "GENERATED_VIDEO",
+      "repo_path": "projects/e2e-p2-fi-video/assets/generated/huashu/huashu-fi14.mp4",
+      "sha256": "d305dec3464cbc79f77d109fd6d277482aad91ddccf552a5c088b132d2343f3d",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "VISUAL_SUPPORT only",
+      "origin": "huashu-art-motion local code render",
+      "notes": "Generated visual; not source evidence. Claim source remains separately registered.",
+      "evidence_capable": false,
+      "evidence_use": "VISUAL_SUPPORT",
+      "receipt_ref": "project://receipts/huashu-huashu-fi14.json"
+    }
+  ]
+}

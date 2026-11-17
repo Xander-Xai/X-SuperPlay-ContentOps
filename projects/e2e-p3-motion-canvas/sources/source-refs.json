@@ -1,0 +1,7 @@
+{
+  "schema": "contentops.m5-source-refs/v1",
+  "refs": [
+    {"id": "E-mc-doc", "type": "source_code", "title": "extensions/motion-canvas",
+     "path": "extensions/motion-canvas", "permission": "CREATED_BY_OWNER"}
+  ]
+}

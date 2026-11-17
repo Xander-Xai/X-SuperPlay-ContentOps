@@ -1,0 +1,27 @@
+{
+  "schema": "contentops.m5-source-refs/v1",
+  "refs": [
+    {
+      "id": "remotion_pin",
+      "type": "lock_file",
+      "title": "runtime/remotion.lock.json — Remotion 4.0.543 冻结版本与渲染授权状态",
+      "path": "runtime/remotion.lock.json",
+      "permission": "CREATED_BY_OWNER",
+      "notes": "TEST_ONLY 渲染检查引用仓库自身的运行时锁定文件；execution_authorized=false，publish_authorized=false"
+    },
+    {
+      "id": "animation_backend",
+      "type": "source_code",
+      "title": "src/contentops/media/animation_backend.py — 短镜头后端合同与模板表",
+      "path": "src/contentops/media/animation_backend.py",
+      "permission": "CREATED_BY_OWNER"
+    },
+    {
+      "id": "fi_dna",
+      "type": "account_dna",
+      "title": "config/accounts/x-superplay-future-intelligence.json — 未来智能账号 DNA 调色板",
+      "path": "config/accounts/x-superplay-future-intelligence.json",
+      "permission": "CREATED_BY_OWNER"
+    }
+  ]
+}

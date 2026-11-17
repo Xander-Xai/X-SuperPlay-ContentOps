@@ -13,11 +13,14 @@ BLOCKED, not a still image and not a Huashu render in disguise.
 from __future__ import annotations
 
 import hashlib
+import json
 import re
+from pathlib import Path
 from typing import Any, Dict, Mapping, Optional, Sequence
 
 SCHEMA = "contentops.animation-clip-receipt/v1"
 PLAN_SCHEMA = "contentops.animation-clip-plan/v1"
+CAPABILITY_SCHEMA = "contentops.animation-capability-matrix/v1"
 
 ACCOUNT_1024 = "x-superplay-1024"
 ACCOUNT_FUTURE = "x-superplay-future-intelligence"
@@ -28,7 +31,16 @@ CLIP_BACKENDS = ("remotion", "motion-canvas", "manim")
 KNOWN_BACKENDS = HUASHU_BACKENDS + CLIP_BACKENDS
 
 REMOTION_VERSION = "4.0.543"
+# Manim is invoked from an isolated venv, never the system interpreter. The
+# version is the one actually measured in that venv (manim-venv, 2026-11-17).
+# It is a declaration, NOT render evidence: capability_matrix promotes a backend
+# to VERIFIED only from a receipt-backed render_evidence map.
+MANIM_VERSION = "0.22.1"
+MANIM_TEMPLATES = ("math_formula_reveal", "attention_matrix_flow")
 REMOTION_SKILL_COMMIT = "7e541aa"
+# npm registry `latest` verified 2026-11-16; alpha is 3.18.0-alpha.0 and is
+# deliberately not pinned. The ffmpeg exporter ships in the same release train.
+MOTION_CANVAS_VERSION = "3.17.2"
 REMOTION_SKILLS = (
     "remotion-best-practices",
     "remotion-captions",
@@ -50,6 +62,17 @@ TEMPLATES = {
     "comparison": {"composition": "AnnotationCard", "backend": "remotion"},
     "rag_flow": {"composition": "RagFlow", "backend": "remotion"},
     "recording_mark": {"composition": "RecordingMark", "backend": "remotion"},
+    "title_card": {"composition": "TitleCard", "backend": "remotion"},
+    "technical_3d_explainer": {"composition": "Technical3DExplainer", "backend": "remotion"},
+    # Manim short shots. The "composition" is the Manim Scene class name rendered
+    # by scripts/manim_render.py from the isolated venv; Easel remains the only
+    # compositor. Both templates are bound to a trusted source definition below.
+    "math_formula_reveal": {"composition": "MathFormulaReveal", "backend": "manim"},
+    "attention_matrix_flow": {"composition": "AttentionMatrixFlow", "backend": "manim"},
+    # Motion Canvas shots are exported from the editor (no official headless
+    # CLI); scripts/motion_canvas_adapter.py imports only real editor exports.
+    "animated_system_graph": {"composition": "animated_system_graph", "backend": "motion-canvas"},
+    "agent_state_machine": {"composition": "agent_state_machine", "backend": "motion-canvas"},
 }
 
 SHOT_COMPATIBILITY = {
@@ -59,6 +82,7 @@ SHOT_COMPATIBILITY = {
     "architecture": ("remotion", "motion-canvas", "huashu-art-motion"),
     "agent_flow": ("remotion", "motion-canvas", "huashu-art-motion"),
     "math": ("manim",),
+    "attention": ("manim",),
     "code_card": ("remotion",),
     "recording_mark": ("remotion",),
 }
@@ -277,6 +301,103 @@ def production_gate(*, account_id: str, has_real_recording: bool,
     }
 
 
+def _validate_motion_canvas_props(template: str, props: Dict[str, Any],
+                                  dna: Mapping[str, Any]) -> None:
+    """Validate the two Motion Canvas templates without inventing a second contract.
+
+    Evidence fields and visual overrides are stripped the same way title_card
+    strips them: colours belong to brand.palette, and a generated clip cannot
+    carry a claim. The failure marker is DNA-scoped to the failure step only.
+    """
+    for key in ("claim", "source_ref", "source_refs", "evidence_ref",
+                "recording_asset_id", "plate", "video"):
+        props.pop(key, None)
+    for key in ("font", "font_size", "fontSize", "font_size_px", "margin_v_px",
+                "side_margin_ratio", "max_chars_per_line", "palette_override",
+                "effect", "effects", "forbidden_effects", "color", "colour",
+                "motion_profile"):
+        props.pop(key, None)
+    limit = hook_visual_contract(dna)["max_chars_per_line"] * 3
+    if len(str(props.get("title") or "").strip()) > limit:
+        raise AnimationError("DNA_VISUAL", f"{template} title exceeds DNA line budget")
+    if template == "animated_system_graph":
+        nodes = props.get("nodes")
+        if not isinstance(nodes, list) or len(nodes) < 2:
+            raise AnimationError("PROPS", "animated_system_graph needs at least two nodes")
+        ids = set()
+        for node in nodes:
+            if not isinstance(node, Mapping):
+                raise AnimationError("PROPS", "node must be an object")
+            node_id = str(node.get("id") or "").strip()
+            if not node_id or not str(node.get("label") or "").strip() or node_id in ids:
+                raise AnimationError("PROPS", "node id/label must be non-empty and unique")
+            ids.add(node_id)
+        steps = props.get("steps")
+        if not isinstance(steps, list) or not steps:
+            raise AnimationError("PROPS", "animated_system_graph needs at least one step")
+        for step in steps:
+            if not isinstance(step, Mapping):
+                raise AnimationError("PROPS", "step must be an object")
+            if not str(step.get("caption") or "").strip():
+                raise AnimationError("PROPS", "step.caption is required")
+            if len(str(step["caption"])) > limit:
+                raise AnimationError("DNA_VISUAL", "step.caption exceeds DNA line budget")
+            for node_id in (step.get("show_nodes") or []):
+                if str(node_id) not in ids:
+                    raise AnimationError("PROPS", "step.show_nodes names an unknown node")
+            for edge in (step.get("show_edges") or []):
+                if not isinstance(edge, Mapping) or not {str(edge.get("from")),
+                                                          str(edge.get("to"))}.issubset(ids):
+                    raise AnimationError("PROPS", "step.show_edges names an unknown node")
+        for edge in (props.get("edges") or []):
+            if not isinstance(edge, Mapping) or not {str(edge.get("from")),
+                                                      str(edge.get("to"))}.issubset(ids):
+                raise AnimationError("PROPS", "edge endpoints must be declared nodes")
+        return
+    states = props.get("states")
+    if not isinstance(states, list) or len(states) < 2:
+        raise AnimationError("PROPS", "agent_state_machine needs at least two states")
+    ids = set()
+    for state in states:
+        if not isinstance(state, Mapping):
+            raise AnimationError("PROPS", "state must be an object")
+        state_id = str(state.get("id") or "").strip()
+        if not state_id or not str(state.get("label") or "").strip() or state_id in ids:
+            raise AnimationError("PROPS", "state id/label must be non-empty and unique")
+        if state.get("kind") not in (None, "normal", "error", "terminal"):
+            raise AnimationError("PROPS", "unknown state kind")
+        ids.add(state_id)
+    transitions = props.get("transitions")
+    if not isinstance(transitions, list) or not transitions:
+        raise AnimationError("PROPS", "agent_state_machine needs at least one transition")
+    for transition in transitions:
+        if (not isinstance(transition, Mapping)
+                or not {str(transition.get("from")), str(transition.get("to"))}.issubset(ids)
+                or not str(transition.get("label") or "").strip()):
+            raise AnimationError("PROPS", "transition needs declared endpoints and a label")
+    steps = props.get("state_steps")
+    if not isinstance(steps, list) or not steps:
+        raise AnimationError("PROPS", "agent_state_machine needs at least one state step")
+    for index, step in enumerate(steps):
+        if not isinstance(step, Mapping):
+            raise AnimationError("PROPS", "state step must be an object")
+        if not str(step.get("caption") or "").strip():
+            raise AnimationError("PROPS", "state step.caption is required")
+        if len(str(step["caption"])) > limit:
+            raise AnimationError("DNA_VISUAL", "state step.caption exceeds DNA line budget")
+        if str(step.get("active_state")) not in ids:
+            raise AnimationError("PROPS", "state step names an unknown active_state")
+        transition = step.get("active_transition") or {}
+        if transition and (not isinstance(transition, Mapping)
+                           or not {str(transition.get("from")),
+                                   str(transition.get("to"))}.issubset(ids)):
+            raise AnimationError("PROPS", "state step names an unknown transition")
+    # DNA: the failure marker may only exist while the failure exists. A final
+    # failure step would leave `problem` on screen with no resolution frame.
+    if len(steps) > 1 and (steps[-1].get("failure") is True):
+        raise AnimationError("DNA_VISUAL", "a failure step cannot be last; add a resolution step")
+
+
 def plan_clip(
     *,
     account_id: str,
@@ -286,6 +407,7 @@ def plan_clip(
     props: Mapping[str, Any],
     duration_s: float = 4.0,
     backend: str = "remotion",
+    dna: Optional[Mapping[str, Any]] = None,
 ) -> Dict[str, Any]:
     if template not in TEMPLATES:
         raise AnimationError("UNKNOWN_TEMPLATE", f"unknown template {template!r}")
@@ -294,6 +416,12 @@ def plan_clip(
     name = normalize_backend(backend)
     if name not in CLIP_BACKENDS:
         raise AnimationError("UNSUPPORTED_BACKEND", str(backend))
+    expected_backend = normalize_backend(str(TEMPLATES[template]["backend"]))
+    if name != expected_backend:
+        raise AnimationError(
+            "TEMPLATE_BACKEND",
+            f"{template} requires {expected_backend}, not {name}",
+        )
     try:
         duration = float(duration_s)
     except (TypeError, ValueError) as exc:
@@ -334,6 +462,106 @@ def plan_clip(
             raise AnimationError("PROPS", "recording_mark box must fit in normalized frame coordinates")
         for key in ("plate", "video", "recording_sha256"):
             cleaned.pop(key, None)
+    if template in MANIM_TEMPLATES:
+        # A Manim short shot explains a *trusted* definition. Formula terms and
+        # attention weights are supplied by the caller from a registered source;
+        # the scene never computes the definition itself (e.g. no softmax of its
+        # own). definition_source binds every displayed value to that source by
+        # id + byte digest, so a shot cannot invent an algorithm or a matrix.
+        source = cleaned.get("definition_source")
+        if not isinstance(source, Mapping):
+            raise AnimationError("PROPS", f"{template} needs definition_source")
+        source_id = str(source.get("source_ref_id") or "").strip()
+        source_sha = str(source.get("sha256") or "").strip().lower()
+        if not source_id or not _HASH.match(source_sha):
+            raise AnimationError(
+                "PROPS", "definition_source needs source_ref_id and a 64-hex sha256",
+            )
+        # Visual parameters are DNA-owned. style_variants are the legacy palette
+        # that the account DNA's brand.refresh marks stale, so they must never
+        # reach the render. Reject any visual/colour override rather than apply it.
+        # "palette" and "font" are the two visual keys allowed in props: the
+        # render entry overwrites both from the account DNA before planning, so
+        # a spec cannot smuggle a legacy style_variants palette or a hostile font
+        # through them. Everything else that could change pixels is refused.
+        forbidden_visual = (
+            "palette_override", "style_variants", "color", "colour",
+            "colors", "font_size", "effect", "effects", "forbidden_effects",
+        )
+        present = [key for key in forbidden_visual if key in cleaned]
+        if present:
+            raise AnimationError(
+                "DNA_VISUAL",
+                f"{template} cannot override DNA colour/visuals: " + ", ".join(present),
+            )
+        if template == "math_formula_reveal":
+            terms = cleaned.get("terms")
+            if (not isinstance(terms, list) or not terms or len(terms) > 16
+                    or any(not str(term).strip() for term in terms)):
+                raise AnimationError("PROPS", "math_formula_reveal needs 1-16 non-empty terms")
+            variables = cleaned.get("variables")
+            if not isinstance(variables, list) or not variables:
+                raise AnimationError("PROPS", "math_formula_reveal needs a variables list")
+            for item in variables:
+                if (not isinstance(item, Mapping)
+                        or not str(item.get("symbol") or "").strip()
+                        or not str(item.get("meaning") or "").strip()):
+                    raise AnimationError(
+                        "PROPS", "each variable needs a symbol and a meaning",
+                    )
+        else:  # attention_matrix_flow
+            tokens = cleaned.get("tokens")
+            if (not isinstance(tokens, list) or len(tokens) < 2 or len(tokens) > 12
+                    or any(not str(token).strip() for token in tokens)):
+                raise AnimationError("PROPS", "attention_matrix_flow needs 2-12 non-empty tokens")
+            matrix = cleaned.get("matrix")
+            if (not isinstance(matrix, list) or not matrix
+                    or any(not isinstance(row, list) or len(row) != len(tokens)
+                           for row in matrix)):
+                raise AnimationError(
+                    "PROPS", "attention_matrix_flow matrix must be N x len(tokens)",
+                )
+            for row in matrix:
+                for value in row:
+                    if isinstance(value, bool) or not isinstance(value, (int, float)):
+                        raise AnimationError("PROPS", "attention matrix cells must be numbers")
+            labels = cleaned.get("labels")
+            if labels is not None and (
+                not isinstance(labels, list)
+                or any(not str(label).strip() for label in labels)
+            ):
+                raise AnimationError("PROPS", "attention matrix labels must be non-empty strings")
+
+    if template == "title_card":
+        missing = [key for key in ("conflict", "stakes")
+                   if not str(cleaned.get(key) or "").strip()]
+        if missing:
+            raise AnimationError("PROPS", "title_card needs " + ", ".join(missing))
+        # A hook card is an editorial title. It must never carry an evidence
+        # claim or a source path; keep only display fields.
+        for key in ("claim", "source_ref", "source_refs", "evidence_ref",
+                    "recording_asset_id", "plate", "video"):
+            cleaned.pop(key, None)
+        # Visual parameters are DNA-owned, never shot-owned. Drop any attempt to
+        # carry a font size, margin, colour or effect override through props.
+        for key in ("font", "font_size", "fontSize", "font_size_px", "margin_v_px",
+                    "side_margin_ratio", "max_chars_per_line", "palette_override",
+                    "effect", "effects", "forbidden_effects", "color", "colour"):
+            cleaned.pop(key, None)
+        # Bound the hook text to the DNA line length so it wraps instead of
+        # overflowing the 1080px width or the caption safe zone.
+        contract = hook_visual_contract(dna or {})
+        limit = contract["max_chars_per_line"]
+        for key in ("conflict", "stakes"):
+            text = str(cleaned.get(key) or "").strip()
+            if len(text) > limit * 3:
+                raise AnimationError(
+                    "DNA_VISUAL",
+                    f"title_card {key} has {len(text)} chars; DNA allows at most {limit * 3}",
+                )
+        cleaned["hook_contract"] = contract
+    if template in ("animated_system_graph", "agent_state_machine"):
+        _validate_motion_canvas_props(template, cleaned, dna or {})
     palette = cleaned.get("palette")
     if not isinstance(palette, Mapping) or not palette.get("bg") or not palette.get("ink"):
         raise AnimationError("PROPS", "props.palette must include bg and ink from account DNA")
@@ -392,7 +620,8 @@ def preflight(backend: str, probe: Mapping[str, Any]) -> Dict[str, Any]:
     if name == "motion-canvas" and probe.get("headless_export") is False:
         return _blocked(
             "NO_HEADLESS_EXPORT",
-            "Motion Canvas exports through the editor websocket, not a headless CLI",
+            "EDITOR_EXPORT_REQUIRED: Motion Canvas exports through the editor "
+            "websocket, not a headless CLI",
             backend=name,
         )
     if missing:
@@ -487,11 +716,95 @@ def build_receipt(
     }
 
 
+def hook_visual_contract(dna: Mapping[str, Any]) -> Dict[str, Any]:
+    """Derive the 3s hook card's visual rules from the account DNA.
+
+    Every value comes from the account file: caption line length, the subtitle
+    safe zone, the display font and the declared forbidden effects. A shot spec
+    cannot raise a font size, shrink a safe margin, or re-enable a banned effect
+    — there is no prop for any of them, so production cannot bypass the DNA by
+    editing parameters.
+    """
+    visual = dna.get("visual") if isinstance(dna.get("visual"), Mapping) else {}
+    caption = visual.get("caption_style") if isinstance(visual, Mapping) else {}
+    caption = caption if isinstance(caption, Mapping) else {}
+    safe = caption.get("safe_zone") if isinstance(caption, Mapping) else {}
+    safe = safe if isinstance(safe, Mapping) else {}
+    brand = dna.get("brand") if isinstance(dna.get("brand"), Mapping) else {}
+    forbidden = brand.get("forbidden_effects") if isinstance(brand, Mapping) else ()
+    forbidden = tuple(str(item) for item in (forbidden or ()))
+    try:
+        max_chars = int(caption.get("max_chars_per_line") or 18)
+    except (TypeError, ValueError):
+        max_chars = 18
+    try:
+        margin_v = int(safe.get("margin_v_px") or 120)
+    except (TypeError, ValueError):
+        margin_v = 120
+    try:
+        side_ratio = float(safe.get("side_margin_ratio") or 0.07)
+    except (TypeError, ValueError):
+        side_ratio = 0.07
+    return {
+        "font": str(caption.get("font") or "Noto Sans CJK SC"),
+        "caption_size_px": int(caption.get("size_px") or 47),
+        "max_chars_per_line": max(8, min(40, max_chars)),
+        "margin_v_px": max(0, min(400, margin_v)),
+        "side_margin_ratio": max(0.0, min(0.25, side_ratio)),
+        "forbidden_effects": forbidden,
+    }
+
+
 def props_digest(props: Mapping[str, Any]) -> str:
     import json
     payload = json.dumps(props, ensure_ascii=False, sort_keys=True,
                          separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(payload).hexdigest()
+
+
+def clip_fingerprint(
+    *,
+    account_id: str,
+    template: str,
+    placement_id: str,
+    asset_id: str,
+    purpose: str,
+    duration_s: float,
+    props: Mapping[str, Any],
+    dna: Mapping[str, Any],
+    source_digests: Sequence[str] = (),
+    version: str = REMOTION_VERSION,
+    backend: str = "remotion",
+    template_digest: str = "",
+) -> str:
+    """Identity of one render job. A cache hit requires an exact match.
+
+    Brand DNA, render parameters, referenced source bytes, backend version and
+    purpose all participate. A change to any of them changes the fingerprint,
+    so a stale MP4 can never be replayed under a new identity. The filename is
+    deliberately not part of the identity.
+    """
+    import json
+    canonical_sources = sorted({str(value).strip().lower() for value in source_digests
+                                if str(value).strip()})
+    payload = {
+        "schema": "contentops.clip-fingerprint/v1",
+        "backend": normalize_backend(backend),
+        "version": str(version),
+        "account_id": str(account_id),
+        "template": str(template),
+        "placement_id": str(placement_id),
+        "asset_id": str(asset_id),
+        "purpose": str(purpose),
+        "duration_s": round(float(duration_s), 3),
+        "props": props_digest(props),
+        "dna": props_digest(dna),
+        "sources": canonical_sources,
+        "template_digest": str(template_digest or "").strip().lower(),
+    }
+    encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True,
+                         separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def palette_from_dna(dna: Mapping[str, Any]) -> Dict[str, str]:
@@ -524,3 +837,167 @@ def palette_from_dna(dna: Mapping[str, Any]) -> Dict[str, str]:
     resolved.setdefault("sub", resolved.get("ink", "#FFFFFF"))
     resolved["accent2"] = resolved["accent"]
     return resolved
+
+
+# --- Unified backend capability matrix (P0.3) -----------------------------
+# One executable table, derived from the constants and lock files already in
+# this contract. It never grants execution or publication and never upgrades a
+# declared capability to VERIFIED from configuration alone. Real render
+# verification is supplied by a caller-supplied evidence map keyed by backend,
+# so a green matrix cannot be produced by editing documentation.
+
+CAPABILITY_LOCKS = {
+    "remotion": "runtime/remotion.lock.json",
+    "remotion-three": "runtime/remotion.lock.json",
+    "huashu-art-motion": "runtime/huashu-motion.lock.json",
+    "huashu-motion": "runtime/huashu-motion.lock.json",
+    "manim": "runtime/manim.lock.json",
+    "motion-canvas": "runtime/motion-canvas.lock.json",
+}
+
+CAPABILITY_TEMPLATES = {
+    "remotion": (
+        "annotation", "comparison", "rag_flow", "recording_mark", "title_card",
+    ),
+    "remotion-three": ("technical_3d_explainer",),
+    "huashu-art-motion": (
+        "architecture_flow", "state_transition", "code_focus",
+        "evidence_zoom", "metric_transition", "comparison_reveal",
+    ),
+    "huashu-motion": (),
+    "manim": ("math_formula_reveal", "attention_matrix_flow"),
+    "motion-canvas": ("animated_system_graph", "agent_state_machine"),
+}
+
+CAPABILITY_SHOT_TYPES = {
+    "remotion": tuple(key for key, backends in SHOT_COMPATIBILITY.items() if "remotion" in backends),
+    "remotion-three": ("architecture", "agent_flow"),
+    "huashu-art-motion": ("architecture", "agent_flow", "annotation", "comparison", "title_card"),
+    "huashu-motion": ("architecture", "agent_flow", "annotation", "comparison"),
+    "manim": ("math", "attention"),
+    "motion-canvas": ("architecture", "agent_flow"),
+}
+
+CAPABILITY_RENDER_ENTRY = {
+    "remotion": "scripts/animation_render.py",
+    "remotion-three": "scripts/animation_render.py",  # same render entry; 3D is a composition
+    "huashu-art-motion": "scripts/huashu_motion_adapter.py",
+    "huashu-motion": "scripts/huashu_motion_adapter.py",
+    "manim": "scripts/manim_render.py",
+    "motion-canvas": "scripts/motion_canvas_adapter.py",
+}
+
+# Honest default: no backend is render-verified until a receipt-backed evidence
+# map is supplied. Declared here only so the matrix is self-describing.
+CAPABILITY_DEFAULT_STATE = {
+    "remotion": "IMPLEMENTED_NOT_VERIFIED",
+    "remotion-three": "MISSING",
+    "huashu-art-motion": "IMPLEMENTED_NOT_VERIFIED",
+    "huashu-motion": "IMPLEMENTED_NOT_VERIFIED",
+    # Both P3 backends have an implemented adapter + render/import entry, so
+    # neither is MISSING. They stay IMPLEMENTED_NOT_VERIFIED until receipt-backed
+    # evidence is supplied: installing a runtime or adding a lock file never
+    # flips either to VERIFIED, and blocking gates outrank historical evidence.
+    "manim": "IMPLEMENTED_NOT_VERIFIED",
+    "motion-canvas": "IMPLEMENTED_NOT_VERIFIED",
+}
+
+
+def capability_matrix(
+    repo_root: Optional[Path | str] = None,
+    *,
+    render_evidence: Optional[Mapping[str, Any]] = None,
+    block_state: Optional[Mapping[str, str]] = None,
+) -> Dict[str, Any]:
+    """Return the single executable backend capability matrix.
+
+    ``render_evidence`` maps a backend name to a receipt-backed dict containing
+    at least ``verified_at``, ``sha256`` and ``receipt``. A backend is promoted
+    to ``VERIFIED`` only when that mapping is supplied — never by reading a
+    lock file or a document. ``block_state`` maps a backend to its current
+    blocking code (for example ``RUNTIME_MISSING``); absent entries stay
+    declared rather than silently passing.
+    """
+    # parents: [0]=media, [1]=contentops, [2]=src, [3]=repo root
+    root = Path(repo_root) if repo_root is not None else Path(__file__).resolve().parents[3]
+    evidence = render_evidence if isinstance(render_evidence, Mapping) else {}
+    blocks = block_state if isinstance(block_state, Mapping) else {}
+    rows: Dict[str, Any] = {}
+    for backend in KNOWN_BACKENDS + ("remotion-three",):
+        lock_rel = CAPABILITY_LOCKS.get(backend)
+        lock_path = root / lock_rel if lock_rel else None
+        installed_lock = bool(lock_path and lock_path.is_file())
+        version = None
+        version_source = None
+        license_text = None
+        if installed_lock:
+            try:
+                data = json.loads(lock_path.read_text(encoding="utf-8"))
+                version = data.get("version") or data.get("installed_version")
+                version_source = data.get("version_source") or lock_rel
+                license_text = data.get("license") or data.get("license_read")
+            except (OSError, ValueError):
+                data = {}
+        if backend == "remotion" and not version:
+            version = REMOTION_VERSION
+            version_source = "animation_backend.REMOTION_VERSION"
+        if backend == "manim" and not version:
+            version = MANIM_VERSION
+            version_source = "animation_backend.MANIM_VERSION"
+        if backend == "motion-canvas" and not version:
+            version = MOTION_CANVAS_VERSION
+            version_source = "animation_backend.MOTION_CANVAS_VERSION"
+        proof = evidence.get(backend)
+        verified = bool(isinstance(proof, Mapping) and proof.get("verified_at")
+                        and proof.get("sha256") and proof.get("receipt"))
+        blocking = str(blocks.get(backend) or "") or None
+        # A blocking gate outranks a historical receipt: a currently blocked
+        # backend is never advertised as VERIFIED, even with past evidence.
+        if blocking:
+            state = "BLOCKED"
+        elif verified:
+            state = "VERIFIED"
+        else:
+            state = CAPABILITY_DEFAULT_STATE.get(backend, "MISSING")
+        rows[backend] = {
+            "backend": backend,
+            "schema": CAPABILITY_SCHEMA,
+            "runtime_version": version,
+            "version_source": version_source,
+            "lock_file": lock_rel,
+            "lock_present": installed_lock,
+            "install_environment": (
+                "extensions/animation-remotion (npm, gitignored node_modules)"
+                if backend.startswith("remotion") else
+                "extensions/motion-canvas (npm, gitignored node_modules; "
+                "video export via editor)"
+                if backend == "motion-canvas" else "isolated local runtime"),
+            # Honest export shape. Only an editor-exported, receipt-backed MP4
+            # can ever promote motion-canvas to VERIFIED; compiling the Vite
+            # project is not a render and must not be recorded as one.
+            "export_mode": ("EDITOR_EXPORT_REQUIRED" if backend == "motion-canvas"
+                            else "HEADLESS"),
+            "supported_shot_types": list(CAPABILITY_SHOT_TYPES.get(backend, ())),
+            "templates": list(CAPABILITY_TEMPLATES.get(backend, ())),
+            "render_entry": CAPABILITY_RENDER_ENTRY.get(backend),
+            "input_contract": PLAN_SCHEMA,
+            "output_contract": SCHEMA,
+            "output_spec": {"width": 1080, "height": 1920, "fps": 30, "codec": "h264",
+                            "pix_fmt": "yuv420p", "duration_s": [2, 8], "audio": False},
+            "render_verified": verified,
+            "render_evidence": dict(proof) if isinstance(proof, Mapping) else None,
+            "license": license_text,
+            "execution_authorized": False,
+            "publish_authorized": False,
+            "production_ready": False,
+            "blocking_status": blocking,
+            "state": state,
+            "accounts": list(VIDEO_ACCOUNTS),
+            "is_compositor": False,
+        }
+    return {
+        "schema": CAPABILITY_SCHEMA,
+        "note": ("capability rows are declarations plus lock-file facts. Only a receipt-backed "
+                 "render_evidence entry promotes a backend to VERIFIED. No row composes a film."),
+        "backends": rows,
+    }

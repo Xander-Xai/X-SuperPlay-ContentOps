@@ -1,0 +1,11 @@
+{
+  "schema": "contentops.source-refs/v1",
+  "refs": [
+    {
+      "id": "easel_pins",
+      "type": "lock_file",
+      "path": "runtime/easel-pins.json",
+      "permission": "CREATED_BY_OWNER"
+    }
+  ]
+}

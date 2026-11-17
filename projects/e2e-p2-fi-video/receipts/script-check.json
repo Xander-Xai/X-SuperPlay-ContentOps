@@ -1,0 +1,17 @@
+{
+  "schema": "contentops.m5-script-check/v1",
+  "ok": true,
+  "lines": 14,
+  "claims_cited": [
+    "cache_needs_identity",
+    "clip_only",
+    "easel_frozen",
+    "evidence_led_blocks",
+    "explainer_forbids_recording",
+    "generated_not_evidence",
+    "sample_qc_pass",
+    "short_contract",
+    "six_templates"
+  ],
+  "claims_unused": []
+}

@@ -1,0 +1,105 @@
+{
+  "schema": "contentops.animation-clip-receipt/v1",
+  "project_id": "e2e-p3-manim",
+  "account_id": "x-superplay-future-intelligence",
+  "placement_id": "math01",
+  "asset_id": "math01",
+  "backend": "manim",
+  "backend_version": "0.22.1",
+  "template": "math_formula_reveal",
+  "skill_source": null,
+  "source_spec": "project://specs/math01.json",
+  "output_path": "project://assets/generated/manim/math01.mp4",
+  "sha256": "6d6574067b5f890e7cf2d4ced9f99659d21446821a600d93365e8969ccb5ebfb",
+  "width": 1080,
+  "height": 1920,
+  "fps": 30,
+  "codec": "h264",
+  "pix_fmt": "yuv420p",
+  "duration_s": 4.533008,
+  "has_audio": false,
+  "generated": true,
+  "evidence_capable": false,
+  "evidence_use": "VISUAL_SUPPORT",
+  "source_kind": "vector_animation",
+  "counts_as_real_recording": false,
+  "purpose": "test",
+  "rights": "GENERATED_LOCAL_NO_COMMERCIAL_CLEARANCE",
+  "technical_qc": "TECHNICALLY_CHECKED",
+  "human_review": "PENDING_FOUNDER_REVIEW",
+  "production_ready": false,
+  "publish_authorized": false,
+  "execution_authorized": false,
+  "fingerprint": "31a7f1831c357217245a8951d62a8deb52bee8c2486b1aada75d2110c9d0fcdb",
+  "production_gate": {
+    "state": "TEST_ONLY",
+    "code": "TEST_PURPOSE",
+    "account_id": "x-superplay-future-intelligence",
+    "detail": "test render is not an accepted case",
+    "generated": true,
+    "evidence_capable": false,
+    "production_ready": false,
+    "publish_authorized": false
+  },
+  "template_digest": "f7e4f11f883dacc87fe02504747e0eb5e9d902d3a20b44f6fe51f74e5dbd351f",
+  "preview_frames": [
+    {
+      "position": "first",
+      "timestamp_s": 0.0,
+      "path": "projects/e2e-p3-manim/receipts/frames/math01/frame-0.png"
+    },
+    {
+      "position": "middle",
+      "timestamp_s": 2.267,
+      "path": "projects/e2e-p3-manim/receipts/frames/math01/frame-1.png"
+    },
+    {
+      "position": "last",
+      "timestamp_s": 4.433,
+      "path": "projects/e2e-p3-manim/receipts/frames/math01/frame-2.png"
+    }
+  ],
+  "render_command": [
+    "D:\\AI-Outputs\\X-SuperPlay-ContentOps\\2026-11-17\\_tmp\\manim-venv\\Scripts\\python.exe",
+    "-m",
+    "manim",
+    "render",
+    "-q",
+    "l",
+    "--fps",
+    "30",
+    "--format",
+    "mp4",
+    "-r",
+    "1080,1920",
+    "--media_dir",
+    "D:\\Projects\\_worktrees\\contentops-p3-manim\\projects\\e2e-p3-manim\\work\\animation\\manim\\math01\\media",
+    "-o",
+    "math01.raw",
+    "D:\\Projects\\_worktrees\\contentops-p3-manim\\scripts\\manim_scenes.py",
+    "MathFormulaReveal"
+  ],
+  "asset_registration": {
+    "repo_path": "projects/e2e-p3-manim/assets/generated/manim/math01.mp4",
+    "logical": "project://assets/generated/manim/math01.mp4",
+    "gate_state": "PENDING_HUMAN_REVIEW",
+    "manifest": "project://work/m45/manim-media-manifest.json",
+    "generated": true,
+    "evidence_capable": false
+  },
+  "easel_input": {
+    "state": "ACCEPTED_AS_VISUAL_SUPPORT",
+    "code": "EASEL_INPUT_OK",
+    "detail": "one manifest, one timeline; generated visual support, no claim",
+    "accepted_by_easel": true,
+    "timeline_active_asset_ids": [
+      "attn01",
+      "math01"
+    ],
+    "asset_id": "math01",
+    "placement_id": "math01",
+    "evidence_capable": false,
+    "production_ready": false,
+    "publish_authorized": false
+  }
+}

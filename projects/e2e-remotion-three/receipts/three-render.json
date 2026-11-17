@@ -1,0 +1,52 @@
+{
+  "schema": "contentops.remotion-three-render-check/v1",
+  "backend": "remotion",
+  "backend_variant": "remotion-three",
+  "template": "technical_3d_explainer",
+  "composition": "Technical3DExplainer",
+  "project": "projects/e2e-remotion-three",
+  "purpose": "test",
+  "spec": "project://motion/three.json",
+  "spec_sha256": "d66278e90dbb6c1912b80e2d004a0ce87d140600fab3c01163f4222584a0550f",
+  "output": "project://assets/generated/remotion/three01.mp4",
+  "output_sha256": "6a5bf56bc254ab81cc5153de39dd348422263d0495a3df2b2598bdafccf324d9",
+  "ffprobe": {
+    "codec_name": "h264",
+    "width": 1080,
+    "height": 1920,
+    "pix_fmt": "yuv420p",
+    "avg_frame_rate": "30/1",
+    "r_frame_rate": "30/1",
+    "fps": 30,
+    "duration_s": 4.0,
+    "has_audio": false,
+    "audio_streams": 0,
+    "frame_count": 120
+  },
+  "extracted_frames": [
+    "project://receipts/frames/frame_0s.png",
+    "project://receipts/frames/frame_2s.png",
+    "project://receipts/frames/frame_3_9s.png"
+  ],
+  "generated": true,
+  "evidence_capable": false,
+  "production_ready": false,
+  "publish_authorized": false,
+  "execution_authorized": false,
+  "human_review": "PENDING_FOUNDER_REVIEW",
+  "determinism": {
+    "checked": true,
+    "byte_identical": false,
+    "fingerprint_identical": true,
+    "fingerprint": "a9dbfae1e9ace97b3658f533fcfea6afc1cd2fbdbdfea076273b284277581ca6",
+    "render_a_sha256": "a3cb94d39b9a1a36d1aedfab23f9599a58ae0c06167b087f55b700112ad6616c",
+    "render_b_sha256": "6a5bf56bc254ab81cc5153de39dd348422263d0495a3df2b2598bdafccf324d9",
+    "decoded_frames_0_to_89": "byte-identical",
+    "decoded_frames_90_to_119": "differ only at a single 3D box edge",
+    "sample_frame_3_1s_differing_pixels": 127,
+    "sample_frame_3_1s_difference_bbox": [590, 1039, 618, 1054],
+    "max_channel_delta": 9,
+    "cause": "Headless Chrome/WebGL (ANGLE) rasterization edge-antialiasing noise, not composition logic: animation uses only useCurrentFrame()+interpolate() with no Date, Math.random or wall-clock input."
+  },
+  "note": "TEST_ONLY technical render check for the remotion-three 3D explainer. Not an accepted case; not real chip/deployment/measurement evidence; not publishable."
+}

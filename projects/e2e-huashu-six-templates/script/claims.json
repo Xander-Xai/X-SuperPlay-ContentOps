@@ -1,0 +1,65 @@
+{
+  "schema": "contentops.claims/v1",
+  "claims": [
+    {
+      "id": "C-arch01",
+      "text": "查询依次经过召回、重排，最后生成答案。",
+      "artifacts": [
+        "easel_pins"
+      ],
+      "quotes": [
+        "visual support only; TEST_ONLY"
+      ]
+    },
+    {
+      "id": "C-state01",
+      "text": "代理从空闲进入运行，成功则完成，失败则重试。",
+      "artifacts": [
+        "easel_pins"
+      ],
+      "quotes": [
+        "visual support only; TEST_ONLY"
+      ]
+    },
+    {
+      "id": "C-code01",
+      "text": "关键代码校验来源哈希后才放行。",
+      "artifacts": [
+        "easel_pins"
+      ],
+      "quotes": [
+        "visual support only; TEST_ONLY"
+      ]
+    },
+    {
+      "id": "C-evid01",
+      "text": "放大已登记真实截图中的输出区域。",
+      "artifacts": [
+        "easel_pins"
+      ],
+      "quotes": [
+        "visual support only; TEST_ONLY"
+      ]
+    },
+    {
+      "id": "C-metric01",
+      "text": "本地测试数从九项增长到二十一项，这只是组件演示。",
+      "artifacts": [
+        "easel_pins"
+      ],
+      "quotes": [
+        "visual support only; TEST_ONLY"
+      ]
+    },
+    {
+      "id": "C-cmp01",
+      "text": "对照未核验输出与哈希核验后的输出。",
+      "artifacts": [
+        "easel_pins"
+      ],
+      "quotes": [
+        "visual support only; TEST_ONLY"
+      ]
+    }
+  ]
+}

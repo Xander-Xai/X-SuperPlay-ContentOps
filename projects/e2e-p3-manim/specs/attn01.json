@@ -1,0 +1,50 @@
+{
+  "backend": "manim",
+  "template": "attention_matrix_flow",
+  "shot_type": "attention",
+  "duration_s": 5.0,
+  "props": {
+    "title": "自注意力权重示意",
+    "tokens": [
+      "我",
+      "查",
+      "到",
+      "答案"
+    ],
+    "labels": [
+      "行 = 查询位置",
+      "列 = 被关注位置",
+      "数值为示意权重"
+    ],
+    "matrix": [
+      [
+        0.1,
+        0.6,
+        0.2,
+        0.1
+      ],
+      [
+        0.15,
+        0.15,
+        0.55,
+        0.15
+      ],
+      [
+        0.25,
+        0.25,
+        0.2,
+        0.3
+      ],
+      [
+        0.05,
+        0.1,
+        0.15,
+        0.7
+      ]
+    ],
+    "definition_source": {
+      "source_ref_id": "definition_source",
+      "sha256": "bb4361fc066e9a7accdff0c727c0d8c5556f956d8eda8d3961b659f6ce6d24ad"
+    }
+  }
+}

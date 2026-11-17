@@ -76,13 +76,13 @@ def _account_slug(project: Path) -> str:
 
 
 def _real_source_floor(project: Path) -> tuple[float, str, str]:
-    """Resolve a capture-time floor from both account DNA and video format.
+    """Resolve the measured capture floor without allowing format labels to weaken DNA.
 
-    Capture-heavy formats (recording walkthroughs and evidence demonstrations)
-    retain the 70% floor. Technical explainers, code walkthroughs, product
-    launches and motion explainers may use verified documents/code/claims as
-    their evidence while motion carries the visual story. Claim verification is
-    independent and still applies to every format.
+    Capture-heavy formats always retain the 70% floor. Explanatory formats may
+    use verified documents/code/claims instead of recording duration, except when
+    the account DNA itself is evidence-led. That distinction keeps 1024's
+    evidence-first contract while allowing future-intelligence explainers to use
+    animation without pretending it is recorded evidence.
     """
     slug = _account_slug(project)
     content_type = ""
@@ -97,6 +97,16 @@ def _real_source_floor(project: Path) -> tuple[float, str, str]:
                 if line.strip().startswith("content_type:"):
                     content_type = line.split(":", 1)[1].strip().strip("\"'").lower()
                     break
+
+    mode = ""
+    if slug:
+        try:
+            profile = json.loads((ROOT / "config" / "accounts" / f"{slug}.json")
+                                 .read_text(encoding="utf-8"))
+            mode = str((profile.get("evidence") or {}).get("mode") or "").upper()
+        except (OSError, ValueError):
+            mode = ""
+
     capture_formats = {"recorded_demo", "screen_recording", "evidence_demo", "field_capture"}
     explanatory_formats = {
         "technical_explainer", "tech_review", "code_walkthrough",
@@ -105,20 +115,20 @@ def _real_source_floor(project: Path) -> tuple[float, str, str]:
     if content_type in capture_formats:
         return MIN_REAL_SOURCE_RATIO, "EVIDENCE_LED", content_type
     if content_type in explanatory_formats:
+        if mode == "EVIDENCE_LED":
+            return MIN_REAL_SOURCE_RATIO, mode, content_type
+        if mode in {"EXPLANATORY", "CLAIM_LED"}:
+            return 0.0, mode, content_type
         return 0.0, "EXPLANATORY", content_type
     if not slug:
         return MIN_REAL_SOURCE_RATIO, "UNRESOLVED", content_type
-    path = ROOT / "config" / "accounts" / f"{slug}.json"
-    try:
-        profile = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return MIN_REAL_SOURCE_RATIO, "UNRESOLVED", content_type
-    mode = str((profile.get("evidence") or {}).get("mode") or "").upper()
     if mode == "EXPLANATORY":
         return 0.0, mode, content_type
     if mode == "EVIDENCE_LED":
         return MIN_REAL_SOURCE_RATIO, mode, content_type
-    return MIN_REAL_SOURCE_RATIO, mode or "UNRESOLVED", content_type
+    if mode == "CLAIM_LED":
+        return 0.0, mode, content_type
+    return MIN_REAL_SOURCE_RATIO, "UNRESOLVED", content_type
 
 
 def audio_is_not_silence(path: Path) -> dict:

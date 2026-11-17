@@ -1,0 +1,57 @@
+{
+  "grammar": "t2_keynote_ui",
+  "duration": 6.878999999999998,
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": {
+    "bg": "#0F1117",
+    "accent": "#38BDF8",
+    "ink": "#202B31",
+    "sub": "#65747A",
+    "surface": "#F9FBFA",
+    "accent2": "#38BDF8"
+  },
+  "safe": {
+    "top": 0,
+    "bottom": 520,
+    "fill": "#0F1117"
+  },
+  "cues": [
+    {
+      "at": 0.0,
+      "kind": "image",
+      "image": "../../../assets/anchors/fi-explain.png",
+      "text": "RECORDING_FORB"
+    },
+    {
+      "at": 1.15,
+      "kind": "highlight",
+      "data": {
+        "rect": [
+          0.174537,
+          0.240521,
+          0.54537,
+          0.08
+        ],
+        "fill": 0.845
+      }
+    }
+  ],
+  "contentops_scene": {
+    "segment_id": "fi07",
+    "visual_role": "explain",
+    "template": "engineering-flow",
+    "evidence_ref": null,
+    "style_variant": "brand.palette",
+    "animation_type": "code_focus",
+    "source_asset_id": "fi-explain",
+    "claim_ref": "explainer_forbids_recording",
+    "editorial_only": false
+  },
+  "contentops_source": {
+    "asset_id": "fi-explain",
+    "sha256": "04db26357a80c47981ba61590efbf1d4d27d3120a91944eb90b31044304f1e5c",
+    "source_document_sha256": "25f0230069f0cb266518c90ce17083eca53b345845b4382f0a53a9e51f37ca98"
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "grammar": "t2_keynote_ui",
+  "duration": 7.5440000000000005,
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": {
+    "bg": "#0F1117",
+    "accent": "#38BDF8",
+    "ink": "#202B31",
+    "sub": "#65747A",
+    "surface": "#F9FBFA",
+    "accent2": "#38BDF8"
+  },
+  "safe": {
+    "top": 0,
+    "bottom": 520,
+    "fill": "#0F1117"
+  },
+  "cues": [
+    {
+      "at": 0.0,
+      "kind": "image",
+      "image": "../../../assets/anchors/fi-arch-02.png",
+      "text": "选题到 Easel 的四个阶"
+    },
+    {
+      "at": 1.15,
+      "kind": "highlight",
+      "data": {
+        "rect": [
+          0.068519,
+          0.172986,
+          0.862963,
+          0.08
+        ],
+        "fill": 0.96
+      }
+    }
+  ],
+  "contentops_scene": {
+    "segment_id": "fi02",
+    "visual_role": "explain",
+    "template": "engineering-flow",
+    "evidence_ref": null,
+    "style_variant": "brand.palette",
+    "animation_type": "code_focus",
+    "source_asset_id": "fi-arch-02",
+    "claim_ref": "clip_only",
+    "editorial_only": false
+  },
+  "contentops_source": {
+    "asset_id": "fi-arch-02",
+    "sha256": "8d0b3496e4199d1715bd920a82b9ad77d945ff36ceef9e539634f00e39403885",
+    "source_document_sha256": "5cb41ba561b2f772ffb9b266fb4a03dd6463f857c616bd920e98070f9b5071a6"
+  }
+}

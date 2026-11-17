@@ -1,0 +1,76 @@
+{
+  "schema": "contentops.motion-canvas-receipt/v1",
+  "project": "projects/e2e-p3-motion-canvas",
+  "created_at": "2026-11-16T20:14:36Z",
+  "account_id": "x-superplay-future-intelligence",
+  "state": "BLOCKED",
+  "code": "EDITOR_EXPORT_REQUIRED",
+  "headless_preflight": {
+    "state": "BLOCKED",
+    "code": "NO_HEADLESS_EXPORT",
+    "detail": "EDITOR_EXPORT_REQUIRED: Motion Canvas exports through the editor websocket, not a headless CLI",
+    "backend": "motion-canvas",
+    "substituted": false,
+    "generated": true,
+    "evidence_capable": false,
+    "production_ready": false,
+    "publish_authorized": false,
+    "execution_authorized": false
+  },
+  "runtime": {
+    "backend": "motion-canvas",
+    "version": "3.17.2",
+    "version_source": "npm registry dist-tags.latest verified 2026-11-16 (https://www.npmjs.com/package/@motion-canvas/core); alpha 3.18.0-alpha.0 deliberately not pinned",
+    "lock_sha256": "dc9f402f2de07ce561af592b10dec6d4e38d087c8b45f210c6243a0d1d45fb73",
+    "package_lock_sha256": "fbad8219b6f72f7ab7a58d5dbdcfb1269d6aa5220c3c17c77edf0b6fa9ada4e9",
+    "installed_packages": {
+      "core": "3.17.2",
+      "2d": "3.17.2",
+      "ui": "3.17.2",
+      "vite-plugin": "3.17.2",
+      "ffmpeg": "3.17.2"
+    },
+    "installed": true,
+    "export_mode": "EDITOR_EXPORT_REQUIRED",
+    "template_digest": "eba5d7713265629103ec27133fa8db30a8ad576a37157df85591f0ff5a1d41c0",
+    "license": "MIT"
+  },
+  "environment_probe": {
+    "node": true,
+    "ffmpeg": true,
+    "ffprobe": true,
+    "node_modules": true,
+    "headless_export": false,
+    "export_mode": "EDITOR_EXPORT_REQUIRED",
+    "pinned_version": "3.17.2",
+    "installed_core_version": "3.17.2",
+    "compile_capable": true,
+    "render_verified": false,
+    "detail": "Motion Canvas video export is an editor websocket capture; there is no official headless CLI"
+  },
+  "compile_capable": true,
+  "render_verified": false,
+  "official_evidence": {
+    "verified_at": "2026-11-16",
+    "upstream": "https://github.com/motion-canvas/motion-canvas",
+    "video_export_docs": "https://motion-canvas.io/docs/rendering/video/",
+    "exporters_repo": "https://github.com/motion-canvas/exporters",
+    "facts": [
+      "@motion-canvas/ffmpeg 3.17.2 is MIT and has no `bin` field in its package.json: it is a Vite server plugin plus an editor client plugin, not a CLI.",
+      "The official guide says to pick the exporter in the Video Settings tab; rendering is started from the browser editor websocket.",
+      "npm dist-tags.latest for @motion-canvas/core, 2d, ui, vite-plugin and ffmpeg is 3.17.2 (published 2024-12-14); alpha 3.18.0-alpha.0 is not pinned.",
+      "Third-party pages that show `npx mc render` are not official documentation and were not treated as a supported command."
+    ]
+  },
+  "remediation": [
+    "Open the pinned editor with the prepared spec: set MOTION_CANVAS_SPEC_PATH to the prepared spec path, then `npm --prefix extensions/motion-canvas run dev`.",
+    "Open http://localhost:9000, confirm 1080x1920 / 30 FPS / sRGB and the Video (FFmpeg) exporter in Video Settings (already declared in extensions/motion-canvas/src/project.meta). Click Render.",
+    "Save the exported MP4 inside the project and run `python scripts/motion_canvas_adapter.py <project> --import-editor-export --asset-id <id> --exported-mp4 <project-relative path>`.",
+    "Only that imported, technically checked MP4 can supply render_evidence to capability_matrix(); a compile log can never do so."
+  ],
+  "generated": true,
+  "evidence_capable": false,
+  "production_ready": false,
+  "publish_authorized": false,
+  "execution_authorized": false
+}

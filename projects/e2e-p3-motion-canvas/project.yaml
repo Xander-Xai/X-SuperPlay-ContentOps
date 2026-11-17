@@ -1,0 +1,48 @@
+id: e2e-p3-motion-canvas
+title: "Motion Canvas template acceptance (TEST_ONLY / EDITOR_EXPORT_REQUIRED)"
+created_at: "2026-11-17T04:00:00Z"
+
+# TEST_ONLY technical acceptance for Issue #196 P3-B. The two Motion Canvas
+# templates are source-complete and compile, but Motion Canvas has no official
+# headless video CLI. Every job therefore stops at EDITOR_EXPORT_REQUIRED until
+# a human exports an MP4 from the editor and it is imported through
+# scripts/motion_canvas_adapter.py --import-editor-export.
+# No clip here is a real recording, production-ready, or publish-authorised.
+
+account_slug: x-superplay-future-intelligence
+content_type: technical_explainer
+
+source_refs:
+  - id: fi_dna
+    type: account_dna
+    title: "config/accounts/x-superplay-future-intelligence.json"
+    path: "config/accounts/x-superplay-future-intelligence.json"
+    permission: CREATED_BY_OWNER
+  - id: motion_canvas_lock
+    type: lock_file
+    title: "runtime/motion-canvas.lock.json"
+    path: "runtime/motion-canvas.lock.json"
+    permission: CREATED_BY_OWNER
+  - id: motion_canvas_source
+    type: source_code
+    title: "extensions/motion-canvas"
+    path: "extensions/motion-canvas"
+    permission: CREATED_BY_OWNER
+
+target:
+  platform_primary: bilibili
+  aspect_ratio: "9:16"
+  resolution: "1080x1920"
+  duration_target_sec: 0   # two independent short clips, no final cut
+
+evidence_policy:
+  real_assets_first: true
+  ai_visuals_allowed: auxiliary_only
+  fabricated_claims: forbidden
+  metric_data_kind: NON_BUSINESS_TEST_DATA
+
+status: editor_export_required
+
+outputs:
+  final_video: ""
+  qc_report: ""

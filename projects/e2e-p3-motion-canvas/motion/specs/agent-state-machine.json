@@ -1,0 +1,33 @@
+{
+  "template": "agent_state_machine",
+  "duration_s": 5.0,
+  "width": 1080,
+  "height": 1920,
+  "fps": 30,
+  "title": "Agent 状态机与失败回退",
+  "props": {
+    "title": "Agent 状态机与失败回退",
+    "caption": "条件分支示意，不是真实运行日志",
+    "states": [
+      {"id": "idle", "label": "Idle 待命", "kind": "normal"},
+      {"id": "planning", "label": "Planning 规划", "kind": "normal"},
+      {"id": "tool", "label": "Tool Call 工具调用", "kind": "normal"},
+      {"id": "error", "label": "Error 失败", "kind": "error"},
+      {"id": "done", "label": "Done 完成", "kind": "terminal"}
+    ],
+    "transitions": [
+      {"from": "idle", "to": "planning", "label": "收到任务"},
+      {"from": "planning", "to": "tool", "label": "条件：需要工具"},
+      {"from": "tool", "to": "error", "label": "工具失败", "on_failure": true},
+      {"from": "error", "to": "tool", "label": "回退重试"},
+      {"from": "tool", "to": "done", "label": "成功"}
+    ],
+    "state_steps": [
+      {"caption": "待命", "active_state": "idle"},
+      {"caption": "收到任务，进入规划", "active_state": "planning", "active_transition": {"from": "idle", "to": "planning"}},
+      {"caption": "条件满足，调用工具", "active_state": "tool", "active_transition": {"from": "planning", "to": "tool"}},
+      {"caption": "工具失败，触发回退（错误色仅此帧）", "active_state": "error", "active_transition": {"from": "tool", "to": "error"}, "failure": true},
+      {"caption": "回退重试后完成，恢复品牌色", "active_state": "done", "active_transition": {"from": "tool", "to": "done"}}
+    ]
+  }
+}

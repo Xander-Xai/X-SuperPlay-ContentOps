@@ -1,0 +1,9 @@
+{
+  "schema": "contentops.m5-script/v1",
+  "lines": [
+    {"id": "mc-arch01", "asset_id": "src-doc", "claim": "C-mc-arch01",
+     "narration": "组件按步骤出现并连接", "caption": "RAG 组件链路"},
+    {"id": "mc-state01", "asset_id": "src-doc", "claim": "C-mc-state01",
+     "narration": "Agent 状态与失败回退", "caption": "Agent 状态机"}
+  ]
+}

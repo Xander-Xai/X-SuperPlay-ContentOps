@@ -1,0 +1,57 @@
+{
+  "grammar": "t2_keynote_ui",
+  "duration": 7.0340000000000025,
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": {
+    "bg": "#0F1117",
+    "accent": "#38BDF8",
+    "ink": "#202B31",
+    "sub": "#65747A",
+    "surface": "#F9FBFA",
+    "accent2": "#38BDF8"
+  },
+  "safe": {
+    "top": 0,
+    "bottom": 520,
+    "fill": "#0F1117"
+  },
+  "cues": [
+    {
+      "at": 0.0,
+      "kind": "image",
+      "image": "../../../assets/anchors/fi-contract.png",
+      "text": "2 到 8 秒静音样本合同"
+    },
+    {
+      "at": 1.15,
+      "kind": "highlight",
+      "data": {
+        "rect": [
+          0.183333,
+          0.268957,
+          0.158333,
+          0.08
+        ],
+        "fill": 0.58
+      }
+    }
+  ],
+  "contentops_scene": {
+    "segment_id": "fi05",
+    "visual_role": "explain",
+    "template": "engineering-flow",
+    "evidence_ref": null,
+    "style_variant": "brand.palette",
+    "animation_type": "code_focus",
+    "source_asset_id": "fi-contract",
+    "claim_ref": "short_contract",
+    "editorial_only": false
+  },
+  "contentops_source": {
+    "asset_id": "fi-contract",
+    "sha256": "39cb4829d23aacc90b0c7bd936f68e62623bc423fda240ee4b5e800f5efe1ccd",
+    "source_document_sha256": "29643eb028625b5290035ebe766cdd3097ea7cbe2ecc00bdc30ef406bbe73497"
+  }
+}

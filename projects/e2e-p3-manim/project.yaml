@@ -1,0 +1,48 @@
+id: e2e-p3-manim
+title: "P3-A Manim real-render acceptance (TEST_ONLY)"
+created_at: "2026-11-17T00:00:00Z"
+
+# TEST_ONLY technical acceptance for Issue #196 P3-A. Two short, silent,
+# generated visual-support MP4s rendered by the official Manim CLI from the
+# isolated venv. The math/attention definitions are bound to a registered source
+# file by SHA-256; the scene code never invents a formula or an algorithm.
+# No clip is a real recording, production-ready, or authorized for publication.
+# Easel remains the only episode compositor; this project emits shots only.
+
+account_slug: x-superplay-future-intelligence
+content_type: technical_explainer
+
+source_refs:
+  - id: manim_lock
+    type: lock_file
+    title: "runtime/manim.lock.json"
+    path: "runtime/manim.lock.json"
+    permission: CREATED_BY_OWNER
+  - id: fi_dna
+    type: account_dna
+    title: "config/accounts/x-superplay-future-intelligence.json"
+    path: "config/accounts/x-superplay-future-intelligence.json"
+    permission: CREATED_BY_OWNER
+  - id: definition_source
+    type: project_source
+    title: "specs/definitions/math-attention.json"
+    path: "projects/e2e-p3-manim/specs/definitions/math-attention.json"
+    permission: CREATED_BY_OWNER
+
+target:
+  platform_primary: bilibili
+  aspect_ratio: "9:16"
+  resolution: "1080x1920"
+  duration_target_sec: 0   # independent short clips, no final cut
+
+evidence_policy:
+  real_assets_first: true
+  ai_visuals_allowed: auxiliary_only
+  fabricated_claims: forbidden
+  math_definitions: BOUND_TO_REGISTERED_SOURCE
+
+status: initialized
+
+outputs:
+  final_video: ""
+  qc_report: ""

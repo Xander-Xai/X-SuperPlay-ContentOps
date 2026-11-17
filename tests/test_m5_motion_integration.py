@@ -37,7 +37,7 @@ import huashu_motion_adapter  # noqa: E402
 import huashu_motion_backend  # noqa: E402
 import raw_video_inputs  # noqa: E402
 from contentops.media import storyboard_adapter as adapter  # noqa: E402
-from contentops.media import local_assets, motion_planner, visual_gate  # noqa: E402
+from contentops.media import animation_backend, local_assets, motion_planner, visual_gate  # noqa: E402
 
 
 def _sha(text: str) -> str:
@@ -83,6 +83,25 @@ def _huashu_project():
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
     return temporary, project
+
+
+def test_huashu_diagnostic_account_id_is_scoped_to_the_clip_adapter(tmp_path):
+    project = tmp_path / "diagnostic-project"
+    project.mkdir()
+    (project / "project.yaml").write_text(
+        "id: p2-diagnostic\n"
+        "motion:\n"
+        "  backend: huashu-art-motion\n"
+        "  diagnostic_account_id: x-superplay-future-intelligence\n",
+        encoding="utf-8",
+    )
+    assert huashu_motion_adapter._project_account(project) == (
+        "x-superplay-future-intelligence")
+    # The diagnostic identity must not become a top-level M5 account binding:
+    # ASR backcheck, human-review and publication gates stay untouched.
+    assert m5_production._declared_account({
+        "motion": {"diagnostic_account_id": "x-superplay-future-intelligence"}
+    }) == ""
 
 
 def test_visual_gate_states_are_fail_closed_and_never_approve_publication():
@@ -1339,7 +1358,7 @@ def test_future_intelligence_auto_plan_uses_account_palette_and_rag_grammar():
         assert shot["motion_syntax"] == "t1_3b1b"
         assert shot["source_asset_id"] == "source-01"
         assert spec["duration"] == 4.5
-        assert spec["theme"] == dna["visual"]["motion"]["motion_profile"]["palette"]
+        assert spec["theme"] == animation_backend.palette_from_dna(dna)
         assert spec["grammar"] == "t1_3b1b"
         assert [cue["kind"] for cue in spec["cues"]] == [
             "equation", "equation", "equation", "point", "highlight"]
@@ -1347,7 +1366,7 @@ def test_future_intelligence_auto_plan_uses_account_palette_and_rag_grammar():
             "Query → 词项", "Query → 语义 候选",
             "词项 + 语义 → 融合候选", "两路候选完成融合"]
         assert spec["cues"][0]["at"] == 0
-        assert result["plan"]["compiler"] == "contentops.motion_planner/v5"
+        assert result["plan"]["compiler"] == "contentops.motion_planner/v7"
         assert result["plan"]["compiler_sha256"] == motion_planner._file_sha(
             Path(motion_planner.__file__).resolve())
         assert max(cue["at"] for cue in spec["cues"]) < spec["duration"]
@@ -1364,6 +1383,318 @@ def test_future_intelligence_auto_plan_uses_account_palette_and_rag_grammar():
         assert revised["path"] != result["path"]
         assert revised["path"].is_file() and result["path"].is_file()
         assert len(list((project / "motion" / "auto").glob("shot-plan-*.json"))) == 2
+
+        refreshed_dna = json.loads(json.dumps(dna))
+        refreshed_dna["brand"]["palette"]["accent"] = "#FF5A36"
+        refreshed = motion_planner.build_auto_plan(
+            project=project, account_id="x-superplay-future-intelligence",
+            account_dna=refreshed_dna,
+            script={"lines": [{"id": "P-01", "asset_id": "source-01",
+                               "claim": "C-01",
+                               "narration": "混合检索并行找词项和语义候选，再进行重排。"}]},
+            narration={"lines": [{"start": 0.0, "duration": 4.5}]},
+            source_assets={},
+        )
+        assert refreshed["path"] != revised["path"]
+        refreshed_spec = json.loads(
+            (project / refreshed["plan"]["shots"][0]["spec"]).read_text(encoding="utf-8"))
+        assert refreshed_spec["theme"] == animation_backend.palette_from_dna(refreshed_dna)
+        assert refreshed_spec["theme"]["accent"] == "#FF5A36"
+
+def test_dark_whiteboard_uses_dna_surface_only_when_ink_contrast_is_low():
+    for account_id in ("x-superplay-future-intelligence", "x-superplay-1024"):
+        dna = json.loads((ROOT / "config" / "accounts" / f"{account_id}.json")
+                         .read_text(encoding="utf-8"))
+        palette = animation_backend.palette_from_dna(dna)
+        original_palette = json.loads(json.dumps(palette))
+        with tempfile.TemporaryDirectory(dir=ROOT / ".verify-tmp") as temp:
+            project = Path(temp)
+            source = project / "sources" / "diagram.md"
+            source.parent.mkdir(parents=True, exist_ok=True)
+            source.write_text("registered explanatory source", encoding="utf-8")
+            result = motion_planner.build_auto_plan(
+                project=project, account_id=account_id, account_dna=dna,
+                script={"lines": [{"id": "P-01", "asset_id": "source-01",
+                                   "narration": "系统经过三步完成状态迁移。",
+                                   "editorial_only": True,
+                                   "animation_type": "state_transition",
+                                   "animation": {"states": ["候选", "校验", "完成"],
+                                                 "transition": "通过校验",
+                                                 "success": "完成", "failure": "拒绝"}}]},
+                narration={"lines": [{"start": 0.0, "duration": 5.0}]},
+                source_assets={"source-01": {
+                    "id": "source-01", "type": "REAL_DOCUMENT",
+                    "permission": "CREATED_BY_OWNER",
+                    "repo_path": source.relative_to(ROOT).as_posix(),
+                    "sha256": motion_planner._file_sha(source),
+                }},
+            )
+            spec = json.loads((project / result["plan"]["shots"][0]["spec"])
+                              .read_text(encoding="utf-8"))
+            assert spec["grammar"] == "y3_whiteboard"
+            assert spec["theme"]["ink"] == palette["surface"]
+            assert spec["theme"]["bg"] == palette["bg"]
+            assert spec["theme"]["accent"] == palette["accent"]
+            adjustment = spec["contentops_scene"]["readability_adjustment"]
+            assert adjustment["source_token"] == "account_dna.surface"
+            assert adjustment["from_ink"] == palette["ink"]
+            assert adjustment["to_ink"] == palette["surface"]
+            assert adjustment["contrast_before"] < 3.0
+            assert adjustment["contrast_after"] >= 3.0
+            assert palette == original_palette
+            assert result["plan"]["compiler_sha256"] == motion_planner._file_sha(
+                Path(motion_planner.__file__).resolve())
+
+            refreshed_dna = json.loads(json.dumps(dna))
+            refreshed_dna["brand"]["palette"]["surface"] = "#EEEEEE"
+            refreshed = motion_planner.build_auto_plan(
+                project=project, account_id=account_id, account_dna=refreshed_dna,
+                script={"lines": [{"id": "P-01", "asset_id": "source-01",
+                                   "narration": "系统经过三步完成状态迁移。",
+                                   "editorial_only": True,
+                                   "animation_type": "state_transition",
+                                   "animation": {"states": ["候选", "校验", "完成"],
+                                                 "transition": "通过校验",
+                                                 "success": "完成", "failure": "拒绝"}}]},
+                narration={"lines": [{"start": 0.0, "duration": 5.0}]},
+                source_assets={"source-01": {
+                    "id": "source-01", "type": "REAL_DOCUMENT",
+                    "permission": "CREATED_BY_OWNER",
+                    "repo_path": source.relative_to(ROOT).as_posix(),
+                    "sha256": motion_planner._file_sha(source),
+                }},
+            )
+            refreshed_spec_path = project / refreshed["plan"]["shots"][0]["spec"]
+            assert refreshed["path"] != result["path"]
+            assert refreshed_spec_path != project / result["plan"]["shots"][0]["spec"]
+            original_key = huashu_motion_adapter._motion_fingerprint(
+                {"spec": huashu_motion_adapter._sha(project / result["plan"]["shots"][0]["spec"])},
+                {"version": "test-runtime"}, "P-01")
+            refreshed_key = huashu_motion_adapter._motion_fingerprint(
+                {"spec": huashu_motion_adapter._sha(refreshed_spec_path)},
+                {"version": "test-runtime"}, "P-01")
+            assert refreshed_key != original_key
+
+
+def test_light_code_focus_theme_is_not_rewritten_by_whiteboard_readability_rule():
+    account_id = "x-superplay-future-intelligence"
+    dna = json.loads((ROOT / "config" / "accounts" / f"{account_id}.json")
+                     .read_text(encoding="utf-8"))
+    palette = animation_backend.palette_from_dna(dna)
+    with tempfile.TemporaryDirectory(dir=ROOT / ".verify-tmp") as temp:
+        project = Path(temp)
+        source = project / "sources" / "code.png"
+        source.parent.mkdir(parents=True)
+        source.write_bytes(b"registered code screenshot")
+        result = motion_planner.build_auto_plan(
+            project=project, account_id=account_id, account_dna=dna,
+            script={"lines": [{"id": "P-01", "asset_id": "source-01",
+                               "narration": "检查这段源码。", "visual_focus": "关键校验",
+                               "editorial_only": True,
+                               "animation_type": "code_focus",
+                               "animation": {"focus_rect": [0.1, 0.2, 0.6, 0.1]}}]},
+            narration={"lines": [{"start": 0.0, "duration": 5.0}]},
+            source_assets={"source-01": {
+                "id": "source-01", "type": "CODE_SNAPSHOT",
+                "repo_path": source.relative_to(ROOT).as_posix(),
+                "sha256": motion_planner._file_sha(source),
+                "source_document_sha256": "a" * 64,
+                "permission": "CREATED_BY_OWNER",
+                "ocr_regions": [{"text": "关键校验", "confidence": 1.0,
+                                 "rect": [0.1, 0.2, 0.6, 0.1]}],
+            }},
+        )
+        spec = json.loads((project / result["plan"]["shots"][0]["spec"])
+                          .read_text(encoding="utf-8"))
+        assert spec["grammar"] == "t2_keynote_ui"
+        assert spec["theme"] == palette
+
+
+def test_whiteboard_readability_only_changes_dark_low_contrast_ink_and_fails_closed():
+    dark_theme = {"bg": "#0F1117", "ink": "#202B31", "surface": "#F9FBFA",
+                  "accent": "#38BDF8", "accent2": "#AABDC1", "sub": "#65747A"}
+    dna = {"brand": {"palette": {"surface": "#F9FBFA"}}}
+    adjusted = motion_planner._readable_whiteboard_palette(
+        "y3_whiteboard", dark_theme, dna)
+    assert adjusted["ink"] == "#F9FBFA"
+    assert adjusted["bg"] == dark_theme["bg"]
+    assert adjusted["accent"] == dark_theme["accent"]
+    assert dark_theme["ink"] == "#202B31"
+
+    high_contrast = {**dark_theme, "ink": "#F9FBFA"}
+    assert motion_planner._readable_whiteboard_palette(
+        "y3_whiteboard", high_contrast, dna) == high_contrast
+    light_canvas = {**dark_theme, "bg": "#F4F2ED", "ink": "#18232B"}
+    assert motion_planner._readable_whiteboard_palette(
+        "y3_whiteboard", light_canvas, dna) == light_canvas
+    assert motion_planner._readable_whiteboard_palette(
+        "t2_keynote_ui", dark_theme, dna) == dark_theme
+
+    for missing_dna in ({}, {"brand": {"palette": {"surface": "#222222"}}}):
+        try:
+            motion_planner._readable_whiteboard_palette(
+                "y3_whiteboard", dark_theme, missing_dna)
+        except motion_planner.MotionPlanError as exc:
+            assert "CONTRAST_UNRESOLVED" in str(exc)
+        else:
+            raise AssertionError("unreadable or missing DNA surface must block")
+
+
+def test_six_parameterized_huashu_templates_emit_the_declared_contract():
+    dna = json.loads((ROOT / "config" / "accounts" /
+                      "x-superplay-future-intelligence.json").read_text(encoding="utf-8"))
+    templates = (
+        ("architecture_flow", {"nodes": ["查询", "召回", "证据门"]},
+         "混合检索把查询送入召回与证据门。", "y3_whiteboard", "draw"),
+        ("state_transition", {"states": ["idle", "running", "complete"],
+                               "transition": "verified result", "success": "verified",
+                               "failure": "rejected"},
+         "Agent 从 idle 到 running，最后返回 complete。", "y3_whiteboard", "draw"),
+        ("code_focus", {"focus_rect": [0.1, 0.2, 0.35, 0.08]},
+         "代码中的 retrieve 函数校验 source hash。", "t2_keynote_ui", "highlight"),
+        ("evidence_zoom", {"focus_rect": [0.2, 0.25, 0.3, 0.1]},
+         "真实结果中的返回码与状态字段。", "t2_keynote_ui", "highlight"),
+        ("metric_transition", {
+            "title": "Verified test counts", "unit": "test cases",
+            "chart": "bar", "source_label": "Source: local test receipt",
+            "source_asset_id": "source-01",
+            "series": [{"label": "before", "value": 4},
+                       {"label": "after", "value": 6}],
+            "highlight_index": 1,
+        }, "测试回执记录 before 与 after 的真实测试数量。",
+         "t3_finance_chart", "bar"),
+        ("comparison_reveal", {"before": "unverified", "after": "hash checked"},
+         "对照 unverified 和 hash checked 两种状态。", "y3_whiteboard", "draw"),
+    )
+    for animation_type, params, narration_text, grammar, cue_kind in templates:
+        with tempfile.TemporaryDirectory(dir=ROOT / ".verify-tmp") as temp:
+            project = Path(temp)
+            source_type = "CODE_SNAPSHOT" if animation_type == "code_focus" else (
+                "REAL_SCREENSHOT" if animation_type == "evidence_zoom" else "REAL_DOCUMENT")
+            suffix = ".png" if source_type in {"CODE_SNAPSHOT", "REAL_SCREENSHOT"} else (
+                ".json" if animation_type == "metric_transition" else ".md")
+            source = project / "sources" / f"source{suffix}"
+            source.parent.mkdir(parents=True, exist_ok=True)
+            if animation_type == "metric_transition":
+                source.write_text(json.dumps({
+                    "title": params["title"], "unit": params["unit"],
+                    "citation": params["source_label"], "series": params["series"],
+                }), encoding="utf-8")
+            else:
+                source.write_bytes(b"registered test source bytes")
+            source_row = {
+                "id": "source-01", "type": source_type,
+                "repo_path": source.relative_to(ROOT).as_posix(),
+                "sha256": motion_planner._file_sha(source),
+                "permission": "CREATED_BY_OWNER",
+                "ocr_regions": [{"text": "retrieve source hash status result",
+                                 "confidence": 0.99,
+                                 "rect": [0.1, 0.2, 0.35, 0.08]}],
+            }
+            if source_type == "CODE_SNAPSHOT":
+                source_row["source_document_sha256"] = "a" * 64
+            if animation_type == "metric_transition":
+                params["source_asset_id"] = "source-01"
+            line = {
+                "id": "P-01", "asset_id": "source-01", "claim": "C-01",
+                "narration": narration_text, "source_refs": ["repo://source.md"],
+                "animation_type": animation_type, "animation": params,
+            }
+            result = motion_planner.build_auto_plan(
+                project=project, account_id="x-superplay-future-intelligence",
+                account_dna=dna, script={"lines": [line]},
+                narration={"lines": [{"start": 0.0, "duration": 5.0}]},
+                source_assets={"source-01": source_row},
+            )
+            shot = result["plan"]["shots"][0]
+            spec = json.loads((project / shot["spec"]).read_text(encoding="utf-8"))
+            assert spec["grammar"] == grammar
+            assert spec["contentops_scene"]["animation_type"] == animation_type
+            assert any(cue["kind"] == cue_kind for cue in spec["cues"])
+            assert spec["contentops_scene"]["source_asset_id"] == "source-01"
+            assert spec["contentops_scene"]["claim_ref"] == "C-01"
+            assert spec["contentops_scene"]["editorial_only"] is False
+            assert shot["visual_role"] == "explain"
+            expected_theme = animation_backend.palette_from_dna(dna)
+            if grammar == "y3_whiteboard":
+                assert spec["theme"]["bg"] == expected_theme["bg"]
+                assert spec["theme"]["surface"] == expected_theme["surface"]
+                assert spec["theme"]["accent"] == expected_theme["accent"]
+                assert spec["theme"]["ink"] == expected_theme["surface"]
+                assert motion_planner._file_sha(Path(motion_planner.__file__).resolve()) == (
+                    result["plan"]["compiler_sha256"])
+                assert result["input_sha256"] == result["plan"]["input_sha256"]
+            else:
+                assert spec["theme"] == expected_theme
+            if animation_type == "architecture_flow":
+                flow_cues = [cue for cue in spec["cues"] if cue.get("kind") == "draw"]
+                assert [cue["data"]["arrow"] for cue in flow_cues] == [True, True, False]
+            if animation_type == "code_focus":
+                assert spec["contentops_source"]["source_document_sha256"] == "a" * 64
+            if animation_type == "state_transition":
+                assert {cue.get("data", {}).get("branch") for cue in spec["cues"]
+                        if cue.get("kind") == "draw"} >= {"success", "failure"}
+            if animation_type == "metric_transition":
+                assert spec["data"]["source"] == "Source: local test receipt"
+                assert spec["data"]["series"][1]["value"] == 6
+                assert spec["contentops_source"]["sha256"] == source_row["sha256"]
+
+
+def test_parameterized_templates_reject_untrusted_inputs():
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        try:
+            motion_planner._template_source(
+                {"asset_id": "source-01", "editorial_only": True},
+                {"source-01": {"type": "REAL_DOCUMENT", "permission": "NONE",
+                                "sha256": "a" * 64}},
+                "architecture_flow")
+        except motion_planner.MotionPlanError as exc:
+            assert "RIGHTS_UNCLEARED" in str(exc), exc
+        else:
+            raise AssertionError("uncleared rights must block template source use")
+
+        try:
+            motion_planner._template_cues(
+                "evidence_zoom", {"focus_rect": [0.8, 0.8, 0.4, 0.4]},
+                {"visual_focus": "source focus"},
+                {"type": "REAL_SCREENSHOT"}, "source.png", [], 5.0,
+                "x-superplay-future-intelligence")
+        except motion_planner.MotionPlanError as exc:
+            assert "FOCUS_RECT_INVALID" in str(exc), exc
+        else:
+            raise AssertionError("an out-of-frame focus rect must be rejected")
+
+        try:
+            motion_planner._template_cues(
+                "evidence_zoom", {}, {"visual_focus": "capture"},
+                {"type": "SCREEN_RECORDING"}, "capture.png",
+                [{"rect": [0.1, 0.2, 0.3, 0.1]}], 5.0,
+                "x-superplay-future-intelligence")
+        except motion_planner.MotionPlanError as exc:
+            assert "RECORDING_FORBIDDEN" in str(exc), exc
+        else:
+            raise AssertionError("future intelligence must reject recording sources")
+
+        metric_source = project / "metric.json"
+        metric_source.write_text(json.dumps({
+            "title": "Actual counts", "unit": "tests", "citation": "receipt",
+            "series": [{"label": "before", "value": 4},
+                       {"label": "after", "value": 6}],
+        }), encoding="utf-8")
+        try:
+            motion_planner._template_cues(
+                "metric_transition", {
+                    "title": "Actual counts", "unit": "tests", "source_label": "receipt",
+                    "chart": "bar", "series": [{"label": "before", "value": 4},
+                                                    {"label": "after", "value": 99}],
+                }, {"asset_id": "metric-01"},
+                {"type": "REAL_DOCUMENT", "_template_source_path": str(metric_source)},
+                None, [], 5.0, "x-superplay-future-intelligence")
+        except motion_planner.MotionPlanError as exc:
+            assert "METRIC_SOURCE_MISMATCH" in str(exc), exc
+        else:
+            raise AssertionError("metric values must match the hashed source record")
 
 
 def test_motion_plan_splits_a_semantic_segment_by_visual_weights():
@@ -1416,7 +1747,7 @@ def test_huashu_motion_auto_film_keeps_a_local_source_screenshot():
         shot = {"placement_id": "P-01", "source_asset_id": "source-01",
                 "content_point": "Query expansion", "semantic_class": "code"}
         line = {"id": "P-01", "caption": "Query expansion"}
-        runtime = ROOT / ".verify-tmp" / "huashu-motion-runtime"
+        runtime = ROOT / ".runtime" / "huashu-motion"
         with mock.patch.object(huashu_motion_backend, "resolve_runtime", return_value=runtime):
             film_rel = huashu_motion_backend.author_auto_film(project, shot, line, dna, 3.0)
         film = project / film_rel
@@ -1454,7 +1785,7 @@ def test_huashu_motion_auto_film_uses_readable_lines_from_registered_source():
         shot = {"placement_id": "P-02", "source_asset_id": "source-01",
                 "content_point": "BM25 dense retrieval and RRF fusion", "semantic_class": "retrieval"}
         line = {"id": "P-02", "caption": "BM25 dense retrieval and RRF fusion"}
-        runtime = ROOT / ".verify-tmp" / "huashu-motion-runtime"
+        runtime = ROOT / ".runtime" / "huashu-motion"
         with mock.patch.object(huashu_motion_backend, "resolve_runtime", return_value=runtime):
             film_rel = huashu_motion_backend.author_auto_film(project, shot, line, dna, 3.0)
         html_path = project / film_rel / "index.html"
@@ -1486,7 +1817,7 @@ def test_huashu_code_motion_keeps_source_in_safe_frame_and_uses_account_art_dire
                           "x-superplay-future-intelligence.json").read_text(encoding="utf-8"))
         shot = {"placement_id": "P-03", "source_asset_id": "source-01",
                 "content_point": "RAG 组件如何配合？", "semantic_class": "code"}
-        runtime = ROOT / ".verify-tmp" / "huashu-motion-runtime"
+        runtime = ROOT / ".runtime" / "huashu-motion"
         with mock.patch.object(huashu_motion_backend, "resolve_runtime", return_value=runtime):
             film_rel = huashu_motion_backend.author_auto_film(
                 project, shot, {"id": "P-03", "caption": "RAG 组件"}, dna, 3.0)
@@ -1640,6 +1971,7 @@ def test_1024_auto_plan_requires_and_carries_real_source_stills():
         spec = json.loads((project / shot["spec"]).read_text(encoding="utf-8"))
         assert shot["source_asset_id"] == source_id
         assert shot["motion_syntax"] == "t2_keynote_ui"
+        assert spec["theme"] == animation_backend.palette_from_dna(dna)
         assert spec["cues"][0]["kind"] == "image"
         assert spec["cues"][0]["image"]
         digest = huashu_motion_adapter._sha(source)
@@ -2008,6 +2340,11 @@ def main() -> int:
              test_motion_stage_refuses_an_unmapped_plan_before_rendering,
              test_huashu_render_cache_requires_matching_inputs_and_output_hash,
              test_future_intelligence_auto_plan_uses_account_palette_and_rag_grammar,
+             test_dark_whiteboard_uses_dna_surface_only_when_ink_contrast_is_low,
+             test_light_code_focus_theme_is_not_rewritten_by_whiteboard_readability_rule,
+             test_whiteboard_readability_only_changes_dark_low_contrast_ink_and_fails_closed,
+             test_six_parameterized_huashu_templates_emit_the_declared_contract,
+             test_parameterized_templates_reject_untrusted_inputs,
              test_motion_plan_splits_a_semantic_segment_by_visual_weights,
              test_future_intelligence_auto_plan_explains_rrf_with_rank_contributions,
              test_future_intelligence_auto_plan_does_not_compare_raw_retrieval_scores,

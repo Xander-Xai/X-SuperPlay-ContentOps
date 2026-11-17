@@ -1,0 +1,24 @@
+{
+  "schema": "contentops.asr-backcheck/v1",
+  "provider": "siliconflow",
+  "model": null,
+  "capabilities": {
+    "text": false
+  },
+  "role": "DETECTOR_ONLY",
+  "can_approve_quality": false,
+  "audio": "project://assets/voice/narration.wav",
+  "audio_sha256": "aabec004bf9afe44b6f598ff92a185b0a8eb754f3e8b4ce209a5ed575dbb7388",
+  "audio_bytes": 4787742,
+  "expected_sha256": "0f36c81ce670c14fa39b65eaa10c71f89b9d078175c72ef9351b2bdee59b8fef",
+  "status": "SKIPPED",
+  "coverage": null,
+  "issues": [],
+  "missing": [],
+  "excess": [],
+  "detail": "MISSING_CREDENTIAL: MISSING_CREDENTIAL: SILICONFLOW_API_KEY is not set; no transcription was attempted",
+  "account_bound": false,
+  "blocks_human_review": false,
+  "production_ready": false,
+  "publish_authorized": false
+}

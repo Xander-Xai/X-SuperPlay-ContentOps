@@ -1,0 +1,57 @@
+{
+  "grammar": "t2_keynote_ui",
+  "duration": 7.843999999999994,
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": {
+    "bg": "#0F1117",
+    "accent": "#38BDF8",
+    "ink": "#202B31",
+    "sub": "#65747A",
+    "surface": "#F9FBFA",
+    "accent2": "#38BDF8"
+  },
+  "safe": {
+    "top": 0,
+    "bottom": 520,
+    "fill": "#0F1117"
+  },
+  "cues": [
+    {
+      "at": 0.0,
+      "kind": "image",
+      "image": "../../../assets/anchors/fi-qc.png",
+      "text": "overall PASS 与"
+    },
+    {
+      "at": 1.15,
+      "kind": "highlight",
+      "data": {
+        "rect": [
+          0.174537,
+          0.268957,
+          0.650926,
+          0.08
+        ],
+        "fill": 0.96
+      }
+    }
+  ],
+  "contentops_scene": {
+    "segment_id": "fi12",
+    "visual_role": "explain",
+    "template": "engineering-flow",
+    "evidence_ref": null,
+    "style_variant": "brand.palette",
+    "animation_type": "code_focus",
+    "source_asset_id": "fi-qc",
+    "claim_ref": "sample_qc_pass",
+    "editorial_only": false
+  },
+  "contentops_source": {
+    "asset_id": "fi-qc",
+    "sha256": "73de58915636da9a0208fab5ad2dc6b3c4f04cc17b07b7070e60f43c2233b429",
+    "source_document_sha256": "c93629a86923fc5c282a8e73596a4a4449317f1aa490bcd6bc82a4a4f95af1e0"
+  }
+}

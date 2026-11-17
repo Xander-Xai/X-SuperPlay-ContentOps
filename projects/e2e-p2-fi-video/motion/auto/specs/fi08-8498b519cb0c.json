@@ -1,0 +1,99 @@
+{
+  "grammar": "y3_whiteboard",
+  "duration": 6.494999999999997,
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": {
+    "bg": "#0F1117",
+    "accent": "#38BDF8",
+    "ink": "#202B31",
+    "sub": "#65747A",
+    "surface": "#F9FBFA",
+    "accent2": "#38BDF8"
+  },
+  "safe": {
+    "top": 0,
+    "bottom": 520,
+    "fill": "#0F1117"
+  },
+  "cues": [
+    {
+      "at": 0.2,
+      "kind": "draw",
+      "text": "architecture_flow",
+      "data": {
+        "icon": "network",
+        "arrow": true
+      }
+    },
+    {
+      "at": 1.132,
+      "kind": "draw",
+      "text": "state_transition",
+      "data": {
+        "icon": "network",
+        "arrow": true
+      }
+    },
+    {
+      "at": 2.065,
+      "kind": "draw",
+      "text": "code_focus",
+      "data": {
+        "icon": "network",
+        "arrow": true
+      }
+    },
+    {
+      "at": 2.997,
+      "kind": "draw",
+      "text": "evidence_zoom",
+      "data": {
+        "icon": "network",
+        "arrow": true
+      }
+    },
+    {
+      "at": 3.93,
+      "kind": "draw",
+      "text": "metric_transition",
+      "data": {
+        "icon": "network",
+        "arrow": true
+      }
+    },
+    {
+      "at": 4.862,
+      "kind": "draw",
+      "text": "comparison_reveal",
+      "data": {
+        "icon": "check",
+        "arrow": false
+      }
+    },
+    {
+      "at": 6.045,
+      "kind": "highlight",
+      "data": {
+        "target": "draw",
+        "index": 5
+      }
+    }
+  ],
+  "contentops_scene": {
+    "segment_id": "fi08",
+    "visual_role": "explain",
+    "template": "engineering-flow",
+    "evidence_ref": null,
+    "style_variant": "brand.palette",
+    "animation_type": "architecture_flow",
+    "source_asset_id": "fi-templates",
+    "claim_ref": "six_templates",
+    "editorial_only": false
+  },
+  "contentops_source": {
+    "asset_id": "fi-templates",
+    "sha256": "d5631b4e34400f35a5f37baf4c950b707c8e28dd852414aec9b1c19ba339f6b3"
+  }
+}

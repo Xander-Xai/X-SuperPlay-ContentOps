@@ -2,8 +2,8 @@
 
 [简体中文](PRD-ANIMATION-SKILLS-INTEGRATION.md) | [English](PRD-ANIMATION-SKILLS-INTEGRATION.en.md)
 
-> Last verified: 2026-11-16
-> Status: **P0 clip render implemented.** Remotion short clips rendered locally and dispatched from M5. Motion Canvas and Manim are BLOCKED, not VERIFIED.
+> Last verified: 2026-11-17
+> Status: **P0 clip render + P3-A/P3-B implemented (one P3-B clip really exported).** Remotion short clips rendered locally and dispatched from M5. On 2026-11-17 Manim gained a single-contract capability extension, two parameterized templates (`math_formula_reveal` / `attention_matrix_flow`), an isolated-venv real render, and a TEST_ONLY e2e project. Manim is `IMPLEMENTED_NOT_VERIFIED`: installing the runtime and rendering locally is NOT VERIFIED; the capability matrix is promoted only by receipt-backed evidence. On the same day P3-B added two Motion Canvas templates and an adapter: official export still requires the editor, with no unattended-CLI claim. `mc-arch01` was really exported from the editor, imported through `--import-editor-export`, and checked by ffprobe/SHA/frames/QC; `mc-state01` remains `EDITOR_EXPORT_REQUIRED`. The backend matrix can show `VERIFIED` only from that real receipt, while publishing, production and human review stay closed; CI reports `REAL_MEDIA_NOT_RUN` when the external MP4 is absent. A DNA-driven 3s conflict `title_card` and a trusted render cache were added and verified locally on 2026-11-17.
 > A generated clip is not a screen recording and does not replace Founder review.
 
 ## 1. Background, goals, non-goals
@@ -16,7 +16,7 @@ Non-goals: upgrading Easel; a second timeline; installing all 18 surveyed reposi
 
 ## 2. What is reused
 
-`stage_motion` dispatches an explicit `remotion` shot to `scripts/animation_render.py`. `motion_sample.py` remains the 2–8s silent 1080×1920 H.264 yuv420p 30fps gate. `motion_handoff.py` stays MotionClone-only. Account palettes are read from DNA. Generated clips use `source_kind=vector_animation` and do not count toward the 70% real-recording share. `assemble_easel.run` remains the only episode compose entry.
+`stage_motion` dispatches an explicit `remotion` shot to `scripts/animation_render.py`. `motion_sample.py` remains the 2–8s silent 1080×1920 H.264 yuv420p 30fps gate. `motion_handoff.py` stays MotionClone-only. Account palettes are read from DNA. `motion_planner.py` now supports six DNA-constrained Huashu shot templates in the existing shot plan/spec contract; it does not create a second timeline. Generated clips use `source_kind=vector_animation` and do not count toward the 70% real-recording share. `assemble_easel.run` remains the only episode compose entry.
 
 ## 3. Eighteen upstream projects
 
@@ -25,11 +25,11 @@ Audited 2026-11-16 from `gh api`. None archived. Remotion's GitHub SPDX is `NOAS
 | # | Repository | What it is | License | Decision |
 |---|---|---|---|---|
 | 1 | remotion-dev/skills | Agent skill pack, not a renderer | no separate license object; content is Remotion 4.0.543 | P0 skill layer; install locally; do not commit the text |
-| 2 | motion-canvas/motion-canvas | Vite editor | MIT | P1; BLOCKED this round (no headless CLI) |
+| 2 | motion-canvas/motion-canvas | Vite editor + browser playback | MIT | 3.17.2 (2024-12-14, npm `latest`); editor websocket export, no headless CLI; P3-B templates + adapter implemented, `EDITOR_EXPORT_REQUIRED` |
 | 3 | motiondivision/motion | React tween library | MIT | REJECT |
 | 4 | franciscop/ola | number interpolation | MIT | REJECT |
 | 5 | juliangarnier/anime | JS animation engine | MIT | REJECT |
-| 6 | ManimCommunity/manim | Python math animation | MIT | P1; BLOCKED (not installed; cairo/pango) |
+| 6 | ManimCommunity/manim | Python math animation | MIT (v0.22.1) | P3-A; installed in isolated venv and rendered locally; IMPLEMENTED_NOT_VERIFIED |
 | 7 | jeremyckahn/shifty | tween engine | MIT | REJECT |
 | 8 | jonobr1/two.js | 2D drawing API | MIT | REJECT |
 | 9 | airbnb/lottie-web | animation player | MIT | P2 |
@@ -43,13 +43,13 @@ Audited 2026-11-16 from `gh api`. None archived. Remotion's GitHub SPDX is `NOAS
 | 17 | BabylonJS/Babylon.js | game/render engine | Apache-2.0 | REJECT |
 | 18 | drawcall/Proton | particle library | MIT | REJECT |
 
-Side fact: `remotion-dev/remotion` latest release is **v4.0.543** (2026-11-11). This machine has Node v24.16.0, npm 11.13.0, FFmpeg 8.1.1, Chrome, and Edge. Manim is not installed.
+Side fact: `remotion-dev/remotion` latest release is **v4.0.543** (2026-11-11). This machine has Node v24.16.0, npm 11.13.0, FFmpeg 8.1.1, Chrome, and Edge. Manim v0.22.1 is installed in an isolated venv (`runtime/manim.lock.json` records the path and creation command), not in system Python.
 
 ## 4. Selection and license
 
 Remotion is P0 because it emits MP4, Node and Chrome are present, and the license text allows an individual or a for-profit organization of up to 3 employees to create videos. Selling a Remotion derivative is not allowed. This repository commits its own templates and the lockfile, not `node_modules` and not upstream source.
 
-Motion Canvas and Manim are MIT. They are blocked this round by runtime shape, not by license: no headless exporter, and no local cairo/pango environment. A missing runtime is not marked VERIFIED.
+Motion Canvas and Manim are MIT. Motion Canvas is blocked this round by runtime shape, not by license: no headless exporter (editor-websocket export). Manim renders locally through the official `python -m manim` from an isolated venv, measured at v0.22.1; scenes use Pango `Text` and avoid MathTex/LaTeX (LaTeX hangs under Windows elevated privileges). An installed runtime is not marked VERIFIED; the capability matrix is promoted only by receipt-backed evidence.
 
 ## 5. Order
 
@@ -87,7 +87,7 @@ The Easel pin remains v0.3.0 / `bb3c8ff`. Huashu aliases still resolve to Huashu
 
 ## 11. M5
 
-`stage_motion` calls `animation_render.py` for `remotion`, `motion-canvas`, and `manim`. Failure is `M5Blocked`, not a Huashu substitution. The dispatch test asserts the command contains the clip adapter and not `huashu_motion`.
+`stage_motion` calls `animation_render.py` for `remotion` and `motion-canvas`. A `manim` shot uses its declared render entry `scripts/manim_render.py`, rendered from the isolated venv; it reuses the same backend selector, receipt, trusted cache, M45 manifest, and asset-registration contracts — no second system. Failure is `M5Blocked`, not a Huashu substitution. The dispatch test asserts the command contains the clip adapter and not `huashu_motion`.
 
 ## 12. Asset class
 
@@ -103,7 +103,7 @@ Local non-paid rendering and a project-level npm install were in scope. Easel wa
 
 ## 15. Tests
 
-`tests/test_animation_backend.py` is registered in `.github/workflows/ci.yml`. It does not render video. Existing `tests/test_m5_motion_integration.py` passed 56/56 locally.
+`tests/test_animation_backend.py` is registered in `.github/workflows/ci.yml` and does not render video. The historical PR #188 baseline was 56/56; this round's Huashu integration suite passed 58/58 and the real-source duration suite passed 19/19.
 
 ## 16. Acceptance
 
@@ -113,12 +113,13 @@ Local non-paid rendering and a project-level npm install were in scope. Easel wa
 | PRD | PASS | this file and the Chinese original |
 | Remotion skills install | FAIL | `npx skills add` refused; shared store untouched |
 | Remotion render | PASS | table below |
-| Motion Canvas | BLOCKED | `NO_HEADLESS_EXPORT` |
-| Manim | BLOCKED | `missing manim`; system Python was not modified |
+| Motion Canvas | EDITOR_EXPORT_REQUIRED | two templates + adapter implemented; no official headless export (`NO_HEADLESS_EXPORT`), no real MP4 |
+| Manim | IMPLEMENTED_NOT_VERIFIED / TEST_ONLY e2e PASS | two templates rendered locally from isolated venv; `runtime/manim.lock.json`; `projects/e2e-p3-manim/`; system Python was not modified; installed does not promote to VERIFIED |
 | 1024 rules | PASS | production without a recording is `MISSING_REAL_RECORDING` |
 | Future-intelligence rules | PASS | desktop recording is `RECORDING_FORBIDDEN` |
 | M5 wiring | PASS | dispatch test and selector |
-| Easel regression | PASS | pin unchanged; Huashu suite 56/56 |
+| Easel regression | PASS | pin unchanged; this round's Huashu suite 58/58 |
+| DNA-driven Huashu templates | PASS (contract tests) | Six template contracts and rejection cases; no real sample render or screenshot review was run |
 | Platforms | PASS | registry not rewritten into a publish claim |
 | Review and safety | PASS | `production_ready=false`, `publish_authorized=false` |
 
@@ -136,3 +137,78 @@ Receipts use `project://` paths only.
 If the organization grows past 3 employees, stop rendering until a Remotion company license exists. Windows Chrome launch uses `--gl angle`. Transcode forces `yuv420p` and `color_range tv` because `yuvj420p` fails the sample gate.
 
 Rollback is deleting the clip-dispatch branch in `stage_motion` plus `extensions/animation-remotion` and the lockfile. Huashu and the Easel pin do not depend on them. Do not touch `.runtime/easel-v030`.
+
+## 18. DNA-driven Huashu shot templates (Issue #192)
+
+This round extends Huashu Art Motion inside the existing M5 shot-plan/spec chain. It adds no second timeline, asset registry, or compositor. `motion_planner.py` resolves the effective DNA palette from `brand.palette`; the palette, refresh declaration, and visual inputs participate in plan identity. Legacy `motion_profile.style_variants` cannot override a declared brand palette, and an unsupported refresh target fails closed.
+
+| Explicit `animation_type` | Huashu grammar | Inputs and rejection boundary |
+|---|---|---|
+| `architecture_flow` | `y3_whiteboard` | 2–6 nodes drawn as a one-way flow |
+| `state_transition` | `y3_whiteboard` | 2–5 states plus required transition, success, and failure labels |
+| `code_focus` | `t2_keynote_ui` | A `CODE_SNAPSHOT` image bound to `source_document_sha256`, with an in-frame focus rectangle |
+| `evidence_zoom` | `t2_keynote_ui` | A registered real still and source-bound region; Future Intelligence rejects recording inputs |
+| `metric_transition` | `t3_finance_chart` | A JSON source record whose title, unit, citation, and every label/value exactly match; only bar/line |
+| `comparison_reveal` | `y3_whiteboard` | Explicit before/after labels, using cross/check icons |
+
+Every template requires a registered asset, repository-contained path, byte SHA-256, permission, and either claim/source references or `editorial_only=true`. Specs record `animation_type`, `source_asset_id`, claim/editorial relationship, and source hash; changes to brand colors or source bytes invalidate the affected spec cache. Generated motion is explanatory, never a proof shot; it remains `generated=true`, `evidence_capable=false`, and `evidence_use=VISUAL_SUPPORT`. Claim/source gates remain independent. The 1024 `EVIDENCE_LED` 70% visible-real-material floor is not relaxed for `tech_review` or similar types. Future Intelligence explanatory clips do not require recording duration, but factual claims still need sources.
+
+**Acceptance boundary for this update:** the six template contract and rejection tests pass. The shared planner now changes drawing ink only for `y3_whiteboard` on a dark canvas (relative luminance < 0.25) when ink/background contrast is below 3:1, and only to an explicitly declared account-DNA `surface` token that itself reaches at least 3:1. Other colors remain unchanged. Light `t2_keynote_ui` code cards and already-readable whiteboards are unaffected; a missing or insufficient token fails closed. The planner source hash participates in plan identity, adjusted spec bytes participate in the existing per-shot Huashu cache fingerprint, and each applied change is recorded in `contentops_scene.readability_adjustment` with old/new ink, background, and before/after contrast. Fresh-project planner tests cover both 1024 and Future Intelligence. A real five-second Future Intelligence Huashu short clip was also rendered under `projects/_local/animation-readability-20261117/`: source SHA-256 `fc3863e64a7947ea7484f7f2b9298532d0a15392dfee1d7ef3b7d119676d7bb8`, spec SHA-256 `7d3096ad2471d8e6f80a14c09f0d5a6626cc3d0c428934708ca318e872c40554`, H.264 / 1080×1920 / yuv420p / 30fps / 150 frames / silent, clip SHA-256 `dc1e4c5240e5330985fcd35df36b3143764160978f798645ef8affc057e8057c`; short-sample technical QC was `TECHNICALLY_CHECKED`. Easel v0.3.0 composed the clip; final composite SHA-256 `e4a91c30ddfcdcf0e7902ffee64de7f4bc655d273fd27bb6cae9cbb6d12ac5fb`, with short-sample technical QC passed. The experiment's `receipts/readability-lineage.json` links the old 99-second records (original SHA `66ca2673dd915fad41bb6acde1396e5017be17b09bbde389538abc4f4cd24905`; historical parameter-rerender SHA `3aafc7290e16f8f28b08f858dab9a6df5757518ae53abd924684f434ed1f3511`) to this new five-second spec/clip/composite. No old media or receipt was overwritten, but those files are currently inaccessible; the old SHAs remain historical records and were not reverified in this turn. Human visual readability review of the frame remains pending; this is not full-film production QC or release acceptance. The M5 motion integration suite is 61/61 and source-anchor regressions are 6/6. Formal 1024 production still requires a real recording. All outputs remain `production_ready=false`, `publish_authorized=false`, and `human_review=PENDING_FOUNDER_REVIEW`.
+## 19. DNA conflict hook and trusted clip cache (2026-11-17)
+
+This section is independent of the Huashu six-template work tracked in Issue #192 / PR #193. It adds no second timeline and no new brand config.
+
+**Conflict title card.** `title_card` was declared in `SHOT_COMPATIBILITY` but had no composition or render route. `extensions/animation-remotion/src/TitleCard.tsx` fills that gap: a 3s hook card for the 1024 account. Every colour resolves from the account DNA palette (`animation_backend.palette_from_dna`), including the `problem` token copied from `brand.palette.problem`. A shot spec cannot inject a colour or an evidence claim — `plan_clip` drops `claim`, `source_refs`, `recording_asset_id` and any recording path before planning, and the card is always `generated=true`, `evidence_capable=false`, `counts_as_real_recording=false`. Motion is fade/slide only, matching both accounts' `forbidden_effects`. Frame inspection found body text on the dark DNA base was unreadable with the `ink` token; body copy now uses the DNA `surface` token. No colour is hardcoded in the component.
+
+**Trusted clip cache.** `animation_render.py` previously computed a fingerprint but never used it to skip a render (`reused` was always False). `animation_backend.clip_fingerprint` now binds backend version, template, account, placement, asset, purpose, duration, props, the full DNA digest, referenced source digests and a digest of the composition sources (`src/*.tsx` + `package.json`). A cached clip is replayed only when the fresh fingerprint matches the sidecar, the file's actual SHA-256 still equals the recorded hash, and the sample still passes `check_motion_sample`. A filename match alone is never a hit. A DNA, parameter, source, template or version change invalidates the cache.
+
+**Local verification (2026-11-17, Remotion 4.0.543, Chrome, FFmpeg 8.1.1):**
+
+| Sample | Template | Path (logical) | SHA-256 | ffprobe |
+|---|---|---|---|---|
+| 1024 conflict hook | `title_card` | `project://assets/generated/remotion/clip-title-hook.mp4` | `9c1b5d54f7e5d55bd4251a8eb740cf032f48734da52e7ace18f1cda098a8657c` | h264, 1080x1920, yuv420p, 30/1, 3.000s, no audio |
+| Future-intelligence RAG | `rag_flow` | `project://assets/generated/remotion/clip-rag-fi.mp4` | `c9582e235e103d948cef0c62e5ea961eb577a7a62afba3dc750c97e121ce9730` | h264, 1080x1920, yuv420p, 30/1, 6.000s, no audio |
+
+`python tests/test_animation_backend.py` passed 34/34. `tsc --noEmit` passed. Re-running the identical render returned `state=REUSED, reused=true` with the same SHA; changing `duration_s` from 3 to 4 returned `EXECUTED` with a new fingerprint and SHA; editing the template source invalidated the title-card cache and forced a fresh render. A frame was extracted and visually inspected before and after the contrast fix.
+
+**Acceptance limits.** Both samples are `purpose=test`, `TEST_PURPOSE` gate, `production_ready=false`, `publish_authorized=false`, `human_review=PENDING_FOUNDER_REVIEW`. No user-provided 1024 recording exists, so 1024 production remains `MISSING_REAL_RECORDING`. The future-intelligence RAG nodes are a principle illustration (`原理示意，非真实系统输出`), not a real system trace. No full episode was composed and no video was published.
+
+### 19.1 Pre-merge hardening (2026-11-17, same branch)
+
+Three issues found during PR #195 review were fixed without new features:
+
+1. **Cache reuse no longer skips M5 registration.** A cache hit now audits the canonical receipt plus `sources/assets.json`, `script/assets.json` and the m45 media manifest against the trusted MP4's fingerprint and on-disk SHA-256. Missing or stale rows are repaired by re-running the existing idempotent `register_generated_clip` and re-audited; a present row that contradicts the bytes or escalates `generated`/`evidence_capable`/`production_ready`/`publish_authorized`/human review is **BLOCKED**, never overwritten. `REUSED` now carries `registration_repaired` and the repaired row names. The canonical receipt carries a `fingerprint`; the sidecar carries `source_spec` so repair can rebuild faithfully.
+2. **Cache identity covers all real inputs.** `_template_digest` now hashes `package.json`, `package-lock.json`, `tsconfig.json` and every `src/**/*.tsx|ts`; `_source_digests` collects SHA-256 references recursively from nested props. A lockfile change, a nested component, or a source hash hidden in a list now invalidates the cache.
+3. **TitleCard obeys DNA layout.** `hook_visual_contract` derives font, caption size, 18-char line limit, 120px vertical margin and 0.07 side ratio from the account DNA; a shot spec's font/margin/effect overrides are stripped and hook text longer than 3× the line limit is refused (`DNA_VISUAL`). Body copy uses the DNA `surface` token for contrast on the dark base. A production spec cannot inject a test banner.
+
+Verification: `test_animation_backend.py` 37/37, new `tests/test_animation_cache_integrity.py` 11/11 (deletion/tampering of every registration artifact), `tsc --noEmit` pass. Real TEST_ONLY renders: long-hook 3s clip SHA-256 `18556d0894c2f8798c4c106978fa651e00807109467f9b4cb4571abf40f48c6a` and refreshed hook clip `62d2f2b20ea7f7b5d762ffc4b760bdad2bf734a7e1636e2183b374495cc10e6e`, both h264/1080x1920/yuv420p/30fps/no audio; frame extraction confirmed wrapping, safe margins and readable contrast. Acceptance limits unchanged: TEST_PURPOSE, production_ready=false, publish_authorized=false, human review pending.
+
+### 19.2 Multi-shot shared-manifest merge (2026-11-17, same branch)
+
+PR #195 review found that `register_generated_clip` rewrote the whole `work/m45/remotion-media-manifest.json` with a single `[envelope]` each time, while the 19.1 registration audit requires the current clip to exist in that manifest. When one project generates clips A and B back to back, the latter overwrites the former, cache hits repeatedly trigger REPAIRABLE, and the repairs destroy each other (ping-pong). Reproduced first with the existing logic for real (two asset_ids, two placements, real renders A→B→A→B): after B registered, A's envelope vanished; after A's cache-hit repair, B's vanished in turn. The MP4s, source rows and canonical receipts all survived (they already merge); only the shared manifest lost data.
+
+The fix keeps the M5 single asset list and timeline contract — no second system: `register_generated_clip` now merges the current envelope into the existing manifest by `asset_id` — same id replaces in place (keeping declaration order and the timeline's stable choice), every other envelope and its gate state are carried as-is, the timeline is rebuilt by `build_manifest`/`build_timeline` (exactly one active asset per placement), and `scheduling`/`narration` are preserved. Three anomalies fail loudly and surface as `REGISTRATION_REPAIR_FAILED` BLOCKED in the render repair path: an unparseable manifest (`MEDIA_MANIFEST_UNREADABLE`, the corrupt file is left untouched for a human), a carried asset with no recorded gate state (`MEDIA_MANIFEST_GATE_MISSING`), and two different asset_ids claiming the same output path (`MEDIA_MANIFEST_PATH_COLLISION`).
+
+Regression (`tests/test_animation_cache_integrity.py`, 10 new tests, 21/21): A,B,A,B consecutive registrations stay CONSISTENT throughout; A,B,C each get their own timeline slot; re-registering B with a new fingerprint does not stale A's cache; repairing A after its rows are deleted leaves every one of B's record rows byte-identical; evidence escalation still BLOCKED after merges; one placement always yields exactly one active asset; re-registering the same clip is byte-idempotent; a pre-fix single-asset manifest upgrades in place and keeps scheduling/narration. Real-pipeline before/after: before the fix `repeated_repairable=true`, `repair_mutual_harm=true`; after, the manifest holds both clips throughout, both cache replays return `registration_repaired=false`, and both audits are CONSISTENT.
+
+## 20. Unified backend capability matrix (2026-11-17)
+
+`animation_backend.capability_matrix()` extends the existing backend selector contract with one executable capability table (schema `contentops.animation-capability-matrix/v1`); no second capability list is maintained in parallel. Six backends — `remotion`, `remotion-three`, `huashu-art-motion`, `huashu-motion`, `manim`, `motion-canvas` — each record runtime version and source, lock file, install environment, supported shot types, templates, render entry, input/output contracts, output spec, license fields, applicable accounts, blocking status, and whether it is a full-film compositor. Every row has `is_compositor=false`; `remotion-three` reuses the `scripts/animation_render.py` entry and is a 3D composition inside Remotion, not a new compositor. P3-B extension: `motion-canvas` uses `scripts/motion_canvas_adapter.py` as its render entry, a new `export_mode` field is `EDITOR_EXPORT_REQUIRED` for Motion Canvas and `HEADLESS` for the others, and its templates are `animated_system_graph` and `agent_state_machine`.
+
+**Trust boundary.** Reading a lock file yields only version/install facts and never promotes a backend to VERIFIED. Only a caller-supplied `render_evidence` entry carrying `verified_at`, `sha256` and `receipt` marks a backend VERIFIED; an active `block_state` code outranks a historical receipt. All rows keep `execution_authorized=false`, `publish_authorized=false`, `production_ready=false`. `tests/test_animation_backend.py` 40/40 (3 matrix tests added).
+
+## 21. P3-B Motion Canvas integration (2026-11-17)
+
+- `extensions/motion-canvas/` is a minimal runnable project: all Motion Canvas packages pinned to 3.17.2 (npm registry `latest`, published 2024-12-14), npm lockfile committed, `node_modules` gitignored. The official `@motion-canvas/ffmpeg` exporter is registered in `vite.config.ts`; 1080x1920 / 30fps / sRGB live in `src/project.meta`.
+- Two templates: `animated_system_graph` (components appear step by step, one-direction arrows, then explain) and `agent_state_machine` (states, conditional branches, failure fallback). Every colour comes from the account `brand.palette`; the problem colour exists only during the failure step and the next step restores the brand colour. No bounce, flash, sticker or flashy transition. `tsc --noEmit` and `vite build` pass, but that is compile evidence, not a render.
+- `scripts/motion_canvas_adapter.py` reuses the existing receipt, fingerprint/cache, M45 manifest, asset registry and QC; it adds no second system. `--preflight`/`--prepare` write an `EDITOR_EXPORT_REQUIRED` receipt with raw evidence and remediation; `--import-editor-export` accepts only a real editor-exported MP4 inside the project and registers it after the technical gate.
+- E2E: `projects/e2e-p3-motion-canvas/` (TEST_ONLY). `tests/test_p3_motion_canvas.py` is 16/16 and wired into CI. `mc-arch01` has a real editor export imported: SHA-256 `8741f5c56612f712a296e9a4cb347366b63b310badf07fc1a191af6610d238e1`, h264 / 1080x1920 / yuv420p / 30/1 / 7.233s / 217 frames / no audio, with first/mid/last frames and QC registered. `mc-state01` remains `EDITOR_EXPORT_REQUIRED`. When CI lacks the gitignored external MP4 it reports `REAL_MEDIA_NOT_RUN`; a green contract suite is not a real-media acceptance claim.
+- Official sources: <https://github.com/motion-canvas/motion-canvas>, <https://motion-canvas.io/docs/rendering/video/>, <https://github.com/motion-canvas/exporters>. The official exporter has no CLI entry; a render starts from the editor Video Settings tab.
+
+## 22. Pre/post-export snapshots and final integration governance (2026-11-17)
+
+- `projects/e2e-p3-motion-canvas/receipts/capability-matrix.json` is preserved as `PRE_EXPORT` evidence: `motion-canvas` is `BLOCKED` and all media fields are `null`. It predates the real export and is not the current state.
+- `capability-matrix-after-export.json` is the `POST_EXPORT_ACCEPTANCE` snapshot. It is generated dynamically by `capability_matrix(render_evidence={"motion-canvas": render_evidence(...)})` and records the SHA-256 of the generating functions and inputs, the real exported MP4 SHA-256, the receipt path, and stage-scoped template states. No state was manually changed to VERIFIED.
+- The snapshot separates backend and template granularity: backend `motion-canvas` is `VERIFIED` from the `mc-arch01` receipt; at template level `mc-arch01` is `REAL_MEDIA_VERIFIED` while `mc-state01` remains `EDITOR_EXPORT_REQUIRED` and does not inherit another clip's evidence.
+- `tests/test_p3_motion_canvas.py` re-derives and compares the snapshot field by field when the external MP4 is present. In CI, without that MP4, it checks provenance, historical stages and governance fields only, and prints `REAL_MEDIA_NOT_RUN`. `production_ready`, `publish_authorized` and human review stay closed in every case.
+- Single merge path: PR #196 is the final squash integration. The commits from #193 and #195 are already present at their original SHAs; after merging, close those PRs as superseded rather than merging them again.

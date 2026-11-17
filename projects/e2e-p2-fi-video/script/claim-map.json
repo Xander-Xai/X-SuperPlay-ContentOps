@@ -1,0 +1,17 @@
+{
+  "schema": "contentops.claim-map/v1",
+  "claims": [
+    {
+      "claim_id": "E-fi01",
+      "kind": "editorial_transition",
+      "assertion_about": "none",
+      "text": "做一条能发的技术片，不靠万能动画库，而是三类镜头各就各位。"
+    },
+    {
+      "claim_id": "E-fi13",
+      "kind": "editorial_transition",
+      "assertion_about": "none",
+      "text": "复现这条链只要三步：写分镜，跑 M5，交给 Easel 出片。"
+    }
+  ]
+}

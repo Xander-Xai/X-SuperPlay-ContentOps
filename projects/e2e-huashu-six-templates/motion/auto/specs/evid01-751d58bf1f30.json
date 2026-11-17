@@ -1,0 +1,60 @@
+{
+  "grammar": "t2_keynote_ui",
+  "duration": 6.0,
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": {
+    "bg": "#0F1117",
+    "accent": "#38BDF8",
+    "ink": "#202B31",
+    "sub": "#65747A",
+    "surface": "#F9FBFA",
+    "accent2": "#38BDF8"
+  },
+  "safe": {
+    "top": 0,
+    "bottom": 520,
+    "fill": "#0F1117"
+  },
+  "cues": [
+    {
+      "at": 0.0,
+      "kind": "image",
+      "image": "../../../../easel-review/sources/screenshots/11-easel-ping.png",
+      "text": "放大已登记真实截图中的输出区"
+    },
+    {
+      "at": 1.15,
+      "kind": "highlight",
+      "data": {
+        "rect": [
+          0.12,
+          0.3,
+          0.5,
+          0.12
+        ],
+        "fill": 0.775
+      }
+    }
+  ],
+  "contentops_scene": {
+    "segment_id": "evid01",
+    "visual_role": "explain",
+    "template": "engineering-flow",
+    "evidence_ref": null,
+    "style_variant": "brand.palette",
+    "animation_type": "evidence_zoom",
+    "source_asset_id": "src-evidence",
+    "claim_ref": "C-evid01",
+    "editorial_only": false
+  },
+  "contentops_timing": {
+    "narration_duration_s": 5.0,
+    "visual_hold_padding_s": 1.0
+  },
+  "contentops_source": {
+    "asset_id": "src-evidence",
+    "sha256": "cc566fbe0bcb9a81406d02ce0641aa110f9738730dff1d19dc278d48146cb34e"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "schema": "contentops.m5-script-assets/v1",
+  "assets": {
+    "mc-arch01": {
+      "path": "project://assets/generated/motion-canvas/mc-arch01.mp4",
+      "sha256": "8741f5c56612f712a296e9a4cb347366b63b310badf07fc1a191af6610d238e1",
+      "evidence_use": "VISUAL_SUPPORT",
+      "generated": true
+    }
+  }
+}

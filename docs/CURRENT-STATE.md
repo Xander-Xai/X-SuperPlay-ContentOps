@@ -4,7 +4,7 @@
 
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
-> Last verified: 2026-11-16 against `d40980006f5211f13000d6c102079ae43353b96b` (`main` after PR #185, read-only fetch); this branch `chore/easel-freeze-20261116` builds on it. The Easel pin now lives in
+> Last verified: 2026-11-17 against `10017c2b74dca40a0d2f0df85c8023ccb01c3566` (`main` after PR #191); branch `feat/194-title-card-and-trusted-cache` builds on it. The 2026-11-17 diff only adds a Remotion `title_card` composition and a clip cache; no Easel/Huashu/lifecycle fact below changes. The Easel pin now lives in
 > `runtime/easel-pins.json`; `runtime/easel.lock.json` is a projection of its `active`
 > engine, and no code file carries a commit literal.
 > This worktree is 22 commits ahead of that `main` and 15 behind it; no rebase or merge has
@@ -47,6 +47,18 @@
 > **Git state is re-verified below at 2026-11-12 (read-only documentation
 > sync).** Every other section below it is a historical snapshot kept for
 > traceability; none of them is the current state.
+
+### Git — verified 2026-11-17 (branch `feat/194-title-card-and-trusted-cache`, PR #195)
+
+| Property | Verified value |
+|---|---|
+| Default branch | `main` @ `10017c2b74dca40a0d2f0df85c8023ccb01c3566` — the PR #191 squash, read-only `git ls-remote` on 2026-11-17 |
+| Worktree under verification | `feat/194-title-card-and-trusted-cache` @ `d216082`, base `10017c2`; 3 ahead of `main` |
+| Open PRs | **2**: #193 — Huashu six DNA templates (still open, not merged or touched here); #195 — DNA `title_card` + trusted clip cache |
+| Branch registry | `verified_at` 2026-11-17; `feat/194-title-card-and-trusted-cache` registered `active`, review date 2026-12-17 |
+| Transport | `git push` over https succeeded on 2026-11-17; no Git Database API fallback was needed |
+| Publications | **0** — unchanged |
+| 2026-11-17 diff | Adds a Remotion `title_card` composition and a fingerprint-verified clip cache in `src/contentops/media/animation_backend.py`, `scripts/animation_render.py` and `extensions/animation-remotion/src/`. No Easel/Huashu/lifecycle/QC fact in this document changes. |
 
 ### Git — verified 2026-11-16 (branch `feat/173-easel-m0-pin`, PR #185)
 

@@ -1,0 +1,52 @@
+{
+  "schema": "contentops.p3-manim-regression/v1",
+  "param_change": {
+    "check": "parameter_change_exact_rerender",
+    "isolated_project": true,
+    "original_sha256": "6d6574067b5f890e7cf2d4ced9f99659d21446821a600d93365e8969ccb5ebfb",
+    "rerender_sha256": "bb1fe1b6a52fee5f3a7e151cf90cfba3fb49de8a1d5c5b6fa04df7f4c97d2f56",
+    "state": "EXECUTED",
+    "distinct_sha": true,
+    "original_fingerprint": "31a7f1831c357217245a8951d62a8deb52bee8c2486b1aada75d2110c9d0fcdb",
+    "rerender_fingerprint": "5e7302ad8976c3b073f232383f22bce9cde9401a4aee62c3f249b0d7dde6593a",
+    "pass": true
+  },
+  "dna_override_blocked": {
+    "check": "dna_override",
+    "state": "BLOCKED",
+    "code": "DNA_VISUAL",
+    "blocked": true,
+    "production_ready": false
+  },
+  "missing_source_blocked": {
+    "check": "missing_source",
+    "state": "BLOCKED",
+    "code": "PROPS",
+    "blocked": true,
+    "production_ready": false
+  },
+  "capability_not_verified_by_install": {
+    "check": "installed_runtime_does_not_promote_verify",
+    "state": "IMPLEMENTED_NOT_VERIFIED",
+    "render_verified": false,
+    "execution_authorized": false,
+    "publish_authorized": false,
+    "pass": true
+  },
+  "easel_input_validation": {
+    "state": "ACCEPTED_AS_VISUAL_SUPPORT",
+    "code": "EASEL_INPUT_OK",
+    "detail": "one manifest, one timeline; generated visual support, no claim",
+    "accepted_by_easel": true,
+    "timeline_active_asset_ids": [
+      "attn01",
+      "math01"
+    ],
+    "asset_id": "math01",
+    "placement_id": "math01",
+    "evidence_capable": false,
+    "production_ready": false,
+    "publish_authorized": false
+  },
+  "accepted": true
+}

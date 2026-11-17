@@ -1,0 +1,16 @@
+{
+  "asset_id": "math01",
+  "spec": "math01.json",
+  "spec_sha256": "e4bf23debc82a08859f2aad7431f3843573085d1df63346ea81a4e61ec6715a6",
+  "state": "REUSED",
+  "reused": true,
+  "sha256": "6d6574067b5f890e7cf2d4ced9f99659d21446821a600d93365e8969ccb5ebfb",
+  "fingerprint": "31a7f1831c357217245a8951d62a8deb52bee8c2486b1aada75d2110c9d0fcdb",
+  "easel_input": "ACCEPTED_AS_VISUAL_SUPPORT",
+  "governance": {
+    "generated": true,
+    "evidence_capable": false,
+    "production_ready": false,
+    "publish_authorized": false
+  }
+}

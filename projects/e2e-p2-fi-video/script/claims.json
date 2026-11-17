@@ -1,0 +1,98 @@
+{
+  "schema": "contentops.claim-ledger/v1",
+  "claims": [
+    {
+      "id": "clip_only",
+      "text": "动画后端只渲染一个无声短镜头，整片合成不是它的职责。",
+      "artifacts": [
+        "anim_backend"
+      ],
+      "quotes": [
+        "A clip backend renders one short silent MP4."
+      ]
+    },
+    {
+      "id": "easel_frozen",
+      "text": "Easel v0.3.0 的版本与提交写在 runtime/easel-pins.json，并被标记为冻结。",
+      "artifacts": [
+        "easel_pins"
+      ],
+      "quotes": [
+        "FROZEN (Founder decision, 2026-11-16)",
+        "\"commit\": \"bb3c8ff0463f36c202454d74171682ba6e470cb1\""
+      ]
+    },
+    {
+      "id": "short_contract",
+      "text": "短镜头样本是 2 到 8 秒、无声、1080x1920 的片段，只用于内部复核。",
+      "artifacts": [
+        "motion_contract"
+      ],
+      "quotes": [
+        "silent 1080×1920 clip"
+      ]
+    },
+    {
+      "id": "evidence_led_blocks",
+      "text": "1024 的正式生产必须先有裁切后的真实录屏，生成片段不能顶替。",
+      "artifacts": [
+        "anim_backend"
+      ],
+      "quotes": [
+        "1024 production needs a cropped recording; a generated clip cannot satisfy it"
+      ]
+    },
+    {
+      "id": "explainer_forbids_recording",
+      "text": "未来智能账号拒绝任何桌面或手动录屏输入。",
+      "artifacts": [
+        "anim_backend",
+        "fi_dna"
+      ],
+      "quotes": [
+        "future-intelligence refuses a desktop or manual recording",
+        "\"manual_recording\": \"FORBIDDEN\""
+      ]
+    },
+    {
+      "id": "six_templates",
+      "text": "六种镜头模板各自编译到一个已验证的 Huashu grammar，例如架构流使用白板语法。",
+      "artifacts": [
+        "animation_prd"
+      ],
+      "quotes": [
+        "| `architecture_flow` | `y3_whiteboard` |"
+      ]
+    },
+    {
+      "id": "generated_not_evidence",
+      "text": "生成的动画被登记为视觉辅助，永远不是来源证据。",
+      "artifacts": [
+        "generated_clip"
+      ],
+      "quotes": [
+        "Generated visual; not source evidence."
+      ]
+    },
+    {
+      "id": "cache_needs_identity",
+      "text": "缓存能否复用取决于渲染任务身份是否完全一致，而不是文件名。",
+      "artifacts": [
+        "anim_backend"
+      ],
+      "quotes": [
+        "Identity of one render job. A cache hit requires an exact match."
+      ]
+    },
+    {
+      "id": "sample_qc_pass",
+      "text": "现有 45 秒样片的技术质检结论是 PASS。",
+      "artifacts": [
+        "easel_sample_qc"
+      ],
+      "quotes": [
+        "\"overall\": \"PASS\""
+      ]
+    }
+  ]
+}

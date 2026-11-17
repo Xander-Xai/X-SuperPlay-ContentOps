@@ -60,6 +60,44 @@ def _focus(project: Path, asset_id: str) -> str:
             return str(shot.get("visual_focus") or "")
     return ""
 
+
+def _animation_types(project: Path) -> Dict[str, str]:
+    """The named Huashu template each asset is planned for.
+
+    A ``code_focus`` shot exists to show source text, so its still has to be a
+    verbatim excerpt card even on the vector-led account whose other stills are
+    drawn schematics. Without this map the rebuild rendered a three-box
+    schematic for a code shot, and the shot then displayed a diagram where the
+    narration says "this line of code".
+    """
+    script = _read(project / "script" / "script.json")
+    return {str(shot.get("asset_id") or ""): str(shot.get("animation_type") or "")
+            for shot in script.get("visual_shots") or []}
+
+
+def _declared_steps(project: Path) -> Dict[str, List[str]]:
+    """The stages a template shot already names in its own parameters.
+
+    A concept still exists to be looked at while the narration names something.
+    Drawing the generic classified steps ("真实代码 / 配置入口 / 运行结果") beside
+    a shot whose parameters say "上游新版本 / 评估影响 / 冻结决定" made the still
+    and the clip disagree. When the shot declares its stages, the still uses
+    them.
+    """
+    script = _read(project / "script" / "script.json")
+    steps: Dict[str, List[str]] = {}
+    for shot in script.get("visual_shots") or []:
+        asset_id = str(shot.get("asset_id") or "")
+        params = shot.get("animation") or {}
+        if not isinstance(params, dict):
+            continue
+        declared = (params.get("nodes") or params.get("states")
+                    or [params.get("before"), params.get("after")])
+        labels = [str(item) for item in declared if str(item or "").strip()]
+        if asset_id and labels:
+            steps[asset_id] = labels[:3]
+    return steps
+
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp"}
 
 
@@ -80,6 +118,23 @@ def _write(path: Path, payload: Dict[str, Any]) -> None:
 
 
 def _palette(dna: Dict[str, Any], account_id: str) -> Dict[str, str]:
+    """Resolve the still's colours exactly as the motion plan resolves them.
+
+    The plan's spec derives its theme from ``brand.palette`` (the refresh
+    token). Drawing the still from the older ``motion_profile`` palette put a
+    light card inside a dark frame, so a ``t2`` shot showed a visible seam at
+    the card edge. Both sides now read one resolver.
+    """
+    from contentops.media.animation_backend import palette_from_dna
+
+    brand = dna.get("brand") or {}
+    if isinstance(brand.get("palette"), dict):
+        try:
+            resolved = palette_from_dna(dna)
+        except ValueError as exc:
+            raise SystemExit(f"account {account_id} brand palette is unusable: {exc}")
+        return {key: str(resolved[key])
+                for key in ("bg", "surface", "ink", "sub", "accent", "accent2")}
     visual = dna.get("visual") or {}
     profile = (visual.get("motion") or {}).get("motion_profile") or \
         visual.get("motion_profile") or {}
@@ -145,6 +200,8 @@ def rebuild(project: Path, *, dry_run: bool = False) -> Dict[str, Any]:
     # motion planner moves the camera to a different block of it.
     by_sha: Dict[str, Dict[str, Any]] = {}
     roles = _roles(project)
+    templates = _animation_types(project)
+    declared_steps = _declared_steps(project)
     vector_led = account_id in VECTOR_LED_ACCOUNTS
     for row in manifest.get("assets") or []:
         if not isinstance(row, dict):
@@ -162,10 +219,13 @@ def rebuild(project: Path, *, dry_run: bool = False) -> Dict[str, Any]:
         absolute_target = target if target.is_absolute() else ROOT / target
         query_text = _focus(project, asset_id) or " ".join(_queries(project, asset_id))
 
-        if (vector_led and role != "proof") or (asset_type == "GENERATED_IMAGE" and not document):
+        if ((vector_led and role != "proof"
+             and templates.get(asset_id) != "code_focus")
+                or (asset_type == "GENERATED_IMAGE" and not document)):
             steps = (TRANSITION_STEPS[account_id] if role == "transition"
-                     else [label for label, _icon in
-                           _labelled_steps(_topic_kind(query_text), query_text)])
+                     else declared_steps.get(asset_id)
+                     or [label for label, _icon in
+                         _labelled_steps(_topic_kind(query_text), query_text)])
             if dry_run:
                 rebuilt.append({"id": asset_id, "kind": "concept", "steps": steps})
                 continue
@@ -223,7 +283,8 @@ def rebuild(project: Path, *, dry_run: bool = False) -> Dict[str, Any]:
             palette=palette,
             queries=queries,
             out_path=absolute_target,
-            exclude_lines=exclude)
+            exclude_lines=exclude,
+            pin_lines=[int(value) for value in (row.get("source_lines") or [])])
         used_lines.setdefault(document, set()).update(number - 1 for number in rendered.source_lines)
         shared = by_sha.get(rendered.sha256)
         if shared and shared.get("document") == document and not shared.get("dry_run"):

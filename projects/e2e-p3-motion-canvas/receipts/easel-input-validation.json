@@ -1,0 +1,42 @@
+{
+  "schema": "contentops.motion-canvas-input-validation/v1",
+  "created_at": "2026-11-16T20:14:36Z",
+  "owner": "m5_production._declared_source_refs and the existing M5 input shapes",
+  "account_slug": "x-superplay-future-intelligence",
+  "source_refs_schema": "contentops.m5-source-refs/v1",
+  "declared_source_refs": [
+    "E-mc-doc"
+  ],
+  "project_shapes": {
+    "script/assets.json": {
+      "schema": "contentops.m5-script-assets/v1",
+      "shape_ok": true
+    },
+    "sources/assets.json": {
+      "schema": "contentops.m5-source-assets/v1",
+      "shape_ok": true
+    },
+    "script/claims.json": {
+      "schema": "contentops.m5-claims/v1",
+      "shape_ok": true
+    },
+    "script/script.json": {
+      "schema": "contentops.m5-script/v1",
+      "shape_ok": true
+    }
+  },
+  "specs": [
+    {
+      "spec": "project://motion/specs/animated-system-graph.json",
+      "template": "animated_system_graph",
+      "valid": true
+    },
+    {
+      "spec": "project://motion/specs/agent-state-machine.json",
+      "template": "agent_state_machine",
+      "valid": true
+    }
+  ],
+  "pass": true,
+  "note": "The clip adapter consumes the same script/sources contract as the Easel production chain. No second input validator or asset registry is introduced."
+}

@@ -1,0 +1,63 @@
+{
+  "grammar": "y3_whiteboard",
+  "duration": 6.135000000000005,
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "theme": {
+    "bg": "#0F1117",
+    "accent": "#38BDF8",
+    "ink": "#202B31",
+    "sub": "#65747A",
+    "surface": "#F9FBFA",
+    "accent2": "#38BDF8"
+  },
+  "safe": {
+    "top": 0,
+    "bottom": 520,
+    "fill": "#0F1117"
+  },
+  "cues": [
+    {
+      "at": 0.2,
+      "kind": "draw",
+      "text": "能跑通",
+      "data": {
+        "icon": "cross",
+        "arrow": true
+      }
+    },
+    {
+      "at": 2.818,
+      "kind": "draw",
+      "text": "不等于能发布",
+      "data": {
+        "icon": "check",
+        "arrow": false
+      }
+    },
+    {
+      "at": 5.685,
+      "kind": "highlight",
+      "data": {
+        "target": "draw",
+        "index": 1
+      }
+    }
+  ],
+  "contentops_scene": {
+    "segment_id": "fi14",
+    "visual_role": "explain",
+    "template": "engineering-flow",
+    "evidence_ref": null,
+    "style_variant": "brand.palette",
+    "animation_type": "comparison_reveal",
+    "source_asset_id": "fi-limit",
+    "claim_ref": "sample_qc_pass",
+    "editorial_only": false
+  },
+  "contentops_source": {
+    "asset_id": "fi-limit",
+    "sha256": "426efeea17be49dc54b44c423ad3d8ac94e6f116af22af658f83897725660118"
+  }
+}
