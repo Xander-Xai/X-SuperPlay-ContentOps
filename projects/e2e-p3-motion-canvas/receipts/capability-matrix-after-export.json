@@ -1,0 +1,373 @@
+{
+  "schema": "contentops.animation-capability-acceptance-snapshot/v1",
+  "stage": "POST_EXPORT_ACCEPTANCE",
+  "created_at": "2026-11-17T03:33:17Z",
+  "generated_by": "capability_matrix(render_evidence={\"motion-canvas\": motion_canvas_adapter.render_evidence(project, \"mc-arch01\")})",
+  "path_schemes": {
+    "repo://": "repository root",
+    "project://": "projects/e2e-p3-motion-canvas"
+  },
+  "state_provenance": {
+    "motion-canvas": {
+      "state": "VERIFIED",
+      "evidence": {
+        "verified_at": "2026-11-17T02:40:31Z",
+        "sha256": "8741f5c56612f712a296e9a4cb347366b63b310badf07fc1a191af6610d238e1",
+        "receipt": "project://receipts/motion-canvas-mc-arch01.json"
+      },
+      "promotion_rule": "receipt-backed render_evidence only; no lock file, compile log or manual edit promotes a backend"
+    }
+  },
+  "template_states": {
+    "mc-arch01": {
+      "state": "REAL_MEDIA_VERIFIED",
+      "evidence": {
+        "verified_at": "2026-11-17T02:40:31Z",
+        "sha256": "8741f5c56612f712a296e9a4cb347366b63b310badf07fc1a191af6610d238e1",
+        "receipt": "project://receipts/motion-canvas-mc-arch01.json"
+      }
+    },
+    "mc-state01": {
+      "state": "EDITOR_EXPORT_REQUIRED",
+      "block_receipt": "repo://projects/e2e-p3-motion-canvas/receipts/motion-canvas-mc-state01-editor-export-required.json",
+      "block_receipt_sha256": "f133510e5b323e7845530002011e4253b997dcdaebfd781a4ab6495736c18d65"
+    }
+  },
+  "historical_sources": {
+    "pre_export_matrix": {
+      "path": "repo://projects/e2e-p3-motion-canvas/receipts/capability-matrix.json",
+      "stage": "PRE_EXPORT",
+      "sha256": "a7eda01a21fdf9c2354d18950d521723ddd0e5007b18c71037e8d9c6949115a1",
+      "state_at_stage": "BLOCKED",
+      "note": "Preserved as historical evidence. It predates the real editor export and must not be read as current state."
+    },
+    "pending_media_evidence": {
+      "path": "repo://projects/e2e-p3-motion-canvas/receipts/pending-media-evidence.json",
+      "stage": "PRE_EXPORT",
+      "sha256": "2f01f579e71f957e2b571f005ab55f0bde5af3c92c200dd68e3c30290274c1fb"
+    }
+  },
+  "sources": {
+    "matrix_function": {
+      "module": "src/contentops/media/animation_backend.py::capability_matrix",
+      "sha256": "3cb88cbf3215895425bb8f096ca9c20300af65d10848fd5f2ac0083087a86326"
+    },
+    "evidence_function": {
+      "module": "scripts/motion_canvas_adapter.py::render_evidence",
+      "sha256": "90c1fb13188d53b77cbb8bc3cd1ccb730671e4742f54783c6bdda31d226cad33"
+    },
+    "editor_export": {
+      "path": "project://assets/generated/motion-canvas/mc-arch01.mp4",
+      "sha256": "8741f5c56612f712a296e9a4cb347366b63b310badf07fc1a191af6610d238e1"
+    },
+    "import_receipt": {
+      "path": "project://receipts/motion-canvas-mc-arch01.json",
+      "sha256": "7c9562aaf70f83ee8996eb37f076b68079fb2d4ac8d87bbbbf2858d0606d335b"
+    }
+  },
+  "governance": {
+    "production_ready": false,
+    "publish_authorized": false,
+    "human_review": "PENDING_FOUNDER_REVIEW",
+    "test_only": true
+  },
+  "matrix": {
+    "schema": "contentops.animation-capability-matrix/v1",
+    "note": "capability rows are declarations plus lock-file facts. Only a receipt-backed render_evidence entry promotes a backend to VERIFIED. No row composes a film.",
+    "backends": {
+      "huashu-art-motion": {
+        "backend": "huashu-art-motion",
+        "schema": "contentops.animation-capability-matrix/v1",
+        "runtime_version": "0.3.1",
+        "version_source": "runtime/huashu-motion.lock.json",
+        "lock_file": "runtime/huashu-motion.lock.json",
+        "lock_present": true,
+        "install_environment": "isolated local runtime",
+        "export_mode": "HEADLESS",
+        "supported_shot_types": [
+          "architecture",
+          "agent_flow",
+          "annotation",
+          "comparison",
+          "title_card"
+        ],
+        "templates": [
+          "architecture_flow",
+          "state_transition",
+          "code_focus",
+          "evidence_zoom",
+          "metric_transition",
+          "comparison_reveal"
+        ],
+        "render_entry": "scripts/huashu_motion_adapter.py",
+        "input_contract": "contentops.animation-clip-plan/v1",
+        "output_contract": "contentops.animation-clip-receipt/v1",
+        "output_spec": {
+          "width": 1080,
+          "height": 1920,
+          "fps": 30,
+          "codec": "h264",
+          "pix_fmt": "yuv420p",
+          "duration_s": [
+            2,
+            8
+          ],
+          "audio": false
+        },
+        "render_verified": false,
+        "render_evidence": null,
+        "license": null,
+        "execution_authorized": false,
+        "publish_authorized": false,
+        "production_ready": false,
+        "blocking_status": null,
+        "state": "IMPLEMENTED_NOT_VERIFIED",
+        "accounts": [
+          "x-superplay-1024",
+          "x-superplay-future-intelligence"
+        ],
+        "is_compositor": false
+      },
+      "huashu-motion": {
+        "backend": "huashu-motion",
+        "schema": "contentops.animation-capability-matrix/v1",
+        "runtime_version": "0.3.1",
+        "version_source": "runtime/huashu-motion.lock.json",
+        "lock_file": "runtime/huashu-motion.lock.json",
+        "lock_present": true,
+        "install_environment": "isolated local runtime",
+        "export_mode": "HEADLESS",
+        "supported_shot_types": [
+          "architecture",
+          "agent_flow",
+          "annotation",
+          "comparison"
+        ],
+        "templates": [],
+        "render_entry": "scripts/huashu_motion_adapter.py",
+        "input_contract": "contentops.animation-clip-plan/v1",
+        "output_contract": "contentops.animation-clip-receipt/v1",
+        "output_spec": {
+          "width": 1080,
+          "height": 1920,
+          "fps": 30,
+          "codec": "h264",
+          "pix_fmt": "yuv420p",
+          "duration_s": [
+            2,
+            8
+          ],
+          "audio": false
+        },
+        "render_verified": false,
+        "render_evidence": null,
+        "license": null,
+        "execution_authorized": false,
+        "publish_authorized": false,
+        "production_ready": false,
+        "blocking_status": null,
+        "state": "IMPLEMENTED_NOT_VERIFIED",
+        "accounts": [
+          "x-superplay-1024",
+          "x-superplay-future-intelligence"
+        ],
+        "is_compositor": false
+      },
+      "remotion": {
+        "backend": "remotion",
+        "schema": "contentops.animation-capability-matrix/v1",
+        "runtime_version": "4.0.543",
+        "version_source": "GitHub release v4.0.543 published 2026-11-11",
+        "lock_file": "runtime/remotion.lock.json",
+        "lock_present": true,
+        "install_environment": "extensions/animation-remotion (npm, gitignored node_modules)",
+        "export_mode": "HEADLESS",
+        "supported_shot_types": [
+          "annotation",
+          "comparison",
+          "title_card",
+          "architecture",
+          "agent_flow",
+          "code_card",
+          "recording_mark"
+        ],
+        "templates": [
+          "annotation",
+          "comparison",
+          "rag_flow",
+          "recording_mark",
+          "title_card"
+        ],
+        "render_entry": "scripts/animation_render.py",
+        "input_contract": "contentops.animation-clip-plan/v1",
+        "output_contract": "contentops.animation-clip-receipt/v1",
+        "output_spec": {
+          "width": 1080,
+          "height": 1920,
+          "fps": 30,
+          "codec": "h264",
+          "pix_fmt": "yuv420p",
+          "duration_s": [
+            2,
+            8
+          ],
+          "audio": false
+        },
+        "render_verified": false,
+        "render_evidence": null,
+        "license": "https://github.com/remotion-dev/remotion/blob/main/LICENSE.md",
+        "execution_authorized": false,
+        "publish_authorized": false,
+        "production_ready": false,
+        "blocking_status": null,
+        "state": "IMPLEMENTED_NOT_VERIFIED",
+        "accounts": [
+          "x-superplay-1024",
+          "x-superplay-future-intelligence"
+        ],
+        "is_compositor": false
+      },
+      "motion-canvas": {
+        "backend": "motion-canvas",
+        "schema": "contentops.animation-capability-matrix/v1",
+        "runtime_version": "3.17.2",
+        "version_source": "npm registry dist-tags.latest verified 2026-11-16 (https://www.npmjs.com/package/@motion-canvas/core); alpha 3.18.0-alpha.0 deliberately not pinned",
+        "lock_file": "runtime/motion-canvas.lock.json",
+        "lock_present": true,
+        "install_environment": "extensions/motion-canvas (npm, gitignored node_modules; video export via editor)",
+        "export_mode": "EDITOR_EXPORT_REQUIRED",
+        "supported_shot_types": [
+          "architecture",
+          "agent_flow"
+        ],
+        "templates": [
+          "animated_system_graph",
+          "agent_state_machine"
+        ],
+        "render_entry": "scripts/motion_canvas_adapter.py",
+        "input_contract": "contentops.animation-clip-plan/v1",
+        "output_contract": "contentops.animation-clip-receipt/v1",
+        "output_spec": {
+          "width": 1080,
+          "height": 1920,
+          "fps": 30,
+          "codec": "h264",
+          "pix_fmt": "yuv420p",
+          "duration_s": [
+            2,
+            8
+          ],
+          "audio": false
+        },
+        "render_verified": true,
+        "render_evidence": {
+          "verified_at": "2026-11-17T02:40:31Z",
+          "sha256": "8741f5c56612f712a296e9a4cb347366b63b310badf07fc1a191af6610d238e1",
+          "receipt": "project://receipts/motion-canvas-mc-arch01.json"
+        },
+        "license": "MIT",
+        "execution_authorized": false,
+        "publish_authorized": false,
+        "production_ready": false,
+        "blocking_status": null,
+        "state": "VERIFIED",
+        "accounts": [
+          "x-superplay-1024",
+          "x-superplay-future-intelligence"
+        ],
+        "is_compositor": false
+      },
+      "manim": {
+        "backend": "manim",
+        "schema": "contentops.animation-capability-matrix/v1",
+        "runtime_version": "0.22.1",
+        "version_source": "measured 2026-11-17 from isolated venv: python -c 'import manim; print(manim.__version__)'",
+        "lock_file": "runtime/manim.lock.json",
+        "lock_present": true,
+        "install_environment": "isolated local runtime",
+        "export_mode": "HEADLESS",
+        "supported_shot_types": [
+          "math",
+          "attention"
+        ],
+        "templates": [
+          "math_formula_reveal",
+          "attention_matrix_flow"
+        ],
+        "render_entry": "scripts/manim_render.py",
+        "input_contract": "contentops.animation-clip-plan/v1",
+        "output_contract": "contentops.animation-clip-receipt/v1",
+        "output_spec": {
+          "width": 1080,
+          "height": 1920,
+          "fps": 30,
+          "codec": "h264",
+          "pix_fmt": "yuv420p",
+          "duration_s": [
+            2,
+            8
+          ],
+          "audio": false
+        },
+        "render_verified": false,
+        "render_evidence": null,
+        "license": "MIT",
+        "execution_authorized": false,
+        "publish_authorized": false,
+        "production_ready": false,
+        "blocking_status": null,
+        "state": "IMPLEMENTED_NOT_VERIFIED",
+        "accounts": [
+          "x-superplay-1024",
+          "x-superplay-future-intelligence"
+        ],
+        "is_compositor": false
+      },
+      "remotion-three": {
+        "backend": "remotion-three",
+        "schema": "contentops.animation-capability-matrix/v1",
+        "runtime_version": "4.0.543",
+        "version_source": "GitHub release v4.0.543 published 2026-11-11",
+        "lock_file": "runtime/remotion.lock.json",
+        "lock_present": true,
+        "install_environment": "extensions/animation-remotion (npm, gitignored node_modules)",
+        "export_mode": "HEADLESS",
+        "supported_shot_types": [
+          "architecture",
+          "agent_flow"
+        ],
+        "templates": [
+          "technical_3d_explainer"
+        ],
+        "render_entry": "scripts/animation_render.py",
+        "input_contract": "contentops.animation-clip-plan/v1",
+        "output_contract": "contentops.animation-clip-receipt/v1",
+        "output_spec": {
+          "width": 1080,
+          "height": 1920,
+          "fps": 30,
+          "codec": "h264",
+          "pix_fmt": "yuv420p",
+          "duration_s": [
+            2,
+            8
+          ],
+          "audio": false
+        },
+        "render_verified": false,
+        "render_evidence": null,
+        "license": "https://github.com/remotion-dev/remotion/blob/main/LICENSE.md",
+        "execution_authorized": false,
+        "publish_authorized": false,
+        "production_ready": false,
+        "blocking_status": null,
+        "state": "MISSING",
+        "accounts": [
+          "x-superplay-1024",
+          "x-superplay-future-intelligence"
+        ],
+        "is_compositor": false
+      }
+    }
+  }
+}

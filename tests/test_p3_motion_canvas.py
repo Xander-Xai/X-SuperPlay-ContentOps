@@ -3,10 +3,16 @@
 Offline by design: no npm install, no browser, no editor, no render. A green run
 proves the contract, the DNA palette, cache/parameter identity, failure blocking
 and the media-attribute gate. It never proves a real video was rendered.
+
+The real-media assertions run only when the gitignored, externally exported MP4
+and its hash-bound receipt are present. Otherwise the runner reports
+`REAL_MEDIA_NOT_RUN` explicitly; a passing contract suite is not a claim that
+real media was rendered or accepted.
 """
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import re
 import sys
@@ -28,6 +34,22 @@ DNA = json.loads((ROOT / "config" / "accounts"
                   / "x-superplay-future-intelligence.json").read_text(encoding="utf-8"))
 PALETTE = ab.palette_from_dna(DNA)
 E2E = ROOT / "projects" / "e2e-p3-motion-canvas"
+MEDIA_STATUS = {"state": "REAL_MEDIA_NOT_RUN"}
+
+
+def _real_media_paths(project: Path | None = None) -> tuple[Path, Path]:
+    project = project if project is not None else E2E
+    return (project / "assets" / "generated" / "motion-canvas" / "mc-arch01.mp4",
+            project / "receipts" / "motion-canvas-mc-arch01.json")
+
+
+def _resolve_snapshot_path(value: str) -> Path:
+    text = str(value)
+    if text.startswith("repo://"):
+        return ROOT / text.removeprefix("repo://")
+    if text.startswith("project://"):
+        return E2E / text.removeprefix("project://")
+    raise AssertionError(f"unsupported snapshot path scheme: {value}")
 
 
 def _props(template: str) -> dict:
@@ -218,7 +240,7 @@ def test_failure_block_writes_governance_flags_without_a_render():
             "props": {"title": "x"},
         }, ensure_ascii=False), encoding="utf-8")
         with mock.patch.object(adapter, "_project_path", return_value=project), \
-                mock.patch("sys.stdout", new_callable=__import__("io").StringIO):
+                mock.patch("sys.stdout", new_callable=io.StringIO):
             code = adapter.main([str(project), "--prepare", "--spec", "motion/bad.json",
                                  "--placement-id", "p", "--asset-id", "bad-asset"])
         assert code == 1
@@ -286,24 +308,47 @@ def test_adapter_reuses_the_existing_registration_not_a_second_system():
         assert plan["composition"] == spec["template"]
 
 
+def test_absent_external_mp4_reports_real_media_not_run():
+    """The environment-gated media test must announce an unrun check."""
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        previous = dict(MEDIA_STATUS)
+        with mock.patch.object(sys.modules[__name__], "E2E", project), \
+                mock.patch("sys.stdout", new_callable=io.StringIO) as captured:
+            try:
+                test_real_editor_export_import_is_hash_bound_and_governance_closed()
+                output = captured.getvalue()
+            finally:
+                MEDIA_STATUS.clear()
+                MEDIA_STATUS.update(previous)
+    assert "REAL_MEDIA_NOT_RUN:" in output, output
+    assert "no real-media assertions executed" in output, output
+
+
 def test_real_editor_export_import_is_hash_bound_and_governance_closed():
     """When a real editor export has been imported, every media fact must agree.
 
     This is an environment-gated test: it runs the strict evidence assertions
-    only when the imported clip exists, and otherwise asserts the honest BLOCKED
-    state. It never fabricates media and never turns a compile log into a pass.
+    only when the imported clip exists. Without the gitignored MP4 it reports
+    `REAL_MEDIA_NOT_RUN` and never presents a contract pass as real-media proof.
+    It never fabricates media and never turns a compile log into a pass.
     """
     import hashlib as _h
     import sys as _sys
     scripts = ROOT / "scripts"
     if str(scripts) not in _sys.path:
         _sys.path.insert(0, str(scripts))
-    out = E2E / "assets" / "generated" / "motion-canvas" / "mc-arch01.mp4"
-    receipt = E2E / "receipts" / "motion-canvas-mc-arch01.json"
+    out, receipt = _real_media_paths()
     if not (out.is_file() and receipt.is_file()):
-        # No real export yet: the honest state is EDITOR_EXPORT_REQUIRED.
+        # No real export bytes: the honest state is REAL_MEDIA_NOT_RUN.
         proof = adapter.render_evidence(E2E, "mc-arch01")
         assert proof is None
+        if receipt.is_file():
+            stale = json.loads(receipt.read_text(encoding="utf-8"))
+            assert stale.get("render_verified") is not True
+        MEDIA_STATUS["state"] = "REAL_MEDIA_NOT_RUN"
+        print("REAL_MEDIA_NOT_RUN: external editor-exported MP4 is absent; "
+              "no real-media assertions executed")
         return
     payload = json.loads(receipt.read_text(encoding="utf-8"))
     digest = _h.sha256(out.read_bytes()).hexdigest()
@@ -322,6 +367,55 @@ def test_real_editor_export_import_is_hash_bound_and_governance_closed():
     row = matrix["backends"]["motion-canvas"]
     assert row["render_verified"] is True and row["state"] == "VERIFIED"
     assert row["production_ready"] is False and row["publish_authorized"] is False
+    MEDIA_STATUS["state"] = "REAL_MEDIA_VERIFIED"
+    print(f"REAL_MEDIA_VERIFIED: mc-arch01 sha256={digest}")
+
+
+def test_exported_capability_snapshot_is_generated_not_hand_promoted():
+    """The post-export snapshot must be reproducible from real receipt evidence."""
+    path = E2E / "receipts" / "capability-matrix-after-export.json"
+    snapshot = json.loads(path.read_text(encoding="utf-8"))
+    assert snapshot["schema"] == "contentops.animation-capability-acceptance-snapshot/v1"
+    assert snapshot["stage"] == "POST_EXPORT_ACCEPTANCE"
+    proof = adapter.render_evidence(E2E, "mc-arch01")
+    if proof is None:
+        # CI has no gitignored MP4. The committed snapshot is still checked for
+        # provenance and governance, but it is not re-derived from live bytes.
+        stored = snapshot["state_provenance"]["motion-canvas"]["evidence"]
+        assert stored["verified_at"] and re.fullmatch(r"[0-9a-f]{64}", stored["sha256"])
+        assert stored["receipt"] == snapshot["sources"]["import_receipt"]["path"]
+        assert stored["sha256"] == snapshot["sources"]["editor_export"]["sha256"]
+        assert snapshot["template_states"]["mc-arch01"]["evidence"] == stored
+        print("REAL_MEDIA_NOT_RUN: post-export snapshot was not re-derived from live MP4")
+        # The historical/source checks below still run in this environment.
+    else:
+        assert snapshot["state_provenance"]["motion-canvas"]["evidence"] == proof
+        expected = ab.capability_matrix(ROOT, render_evidence={"motion-canvas": proof})
+        assert snapshot["matrix"] == expected
+        row = expected["backends"]["motion-canvas"]
+        assert row["state"] == "VERIFIED" and row["render_verified"] is True
+        assert row["production_ready"] is False and row["publish_authorized"] is False
+        assert snapshot["template_states"]["mc-arch01"]["evidence"] == proof
+    # Template-level truth is narrower than backend-level evidence: mc-state01
+    # remains editor-export-required and must not inherit mc-arch01's promotion.
+    state01 = snapshot["template_states"]["mc-state01"]
+    assert state01["state"] == "EDITOR_EXPORT_REQUIRED"
+    block_path = _resolve_snapshot_path(state01["block_receipt"])
+    assert hashlib.sha256(block_path.read_bytes()).hexdigest() == state01["block_receipt_sha256"]
+    # Historical pre-export evidence stays intact and is explicitly stage-labelled.
+    historical = snapshot["historical_sources"]["pre_export_matrix"]
+    assert historical["stage"] == "PRE_EXPORT" and historical["state_at_stage"] == "BLOCKED"
+    old = _resolve_snapshot_path(historical["path"])
+    assert hashlib.sha256(old.read_bytes()).hexdigest() == historical["sha256"]
+    # Source digests prevent a stale snapshot from being mistaken for current code.
+    for key, source in (("matrix_function", ROOT / "src" / "contentops" / "media"
+                         / "animation_backend.py"),
+                        ("evidence_function", ROOT / "scripts" / "motion_canvas_adapter.py")):
+        assert snapshot["sources"][key]["sha256"] == hashlib.sha256(
+            source.read_bytes()).hexdigest()
+    assert snapshot["governance"]["production_ready"] is False
+    assert snapshot["governance"]["publish_authorized"] is False
+    assert snapshot["governance"]["human_review"] == "PENDING_FOUNDER_REVIEW"
 
 
 TESTS = [value for name, value in sorted(globals().items())
@@ -337,7 +431,8 @@ def main() -> int:
         except Exception as exc:  # noqa: BLE001 - runner reports, never hides
             failures += 1
             print(f"FAIL {test.__name__}: {exc}")
-    print(f"{len(TESTS) - failures}/{len(TESTS)} P3 Motion Canvas tests passed")
+    print(f"{len(TESTS) - failures}/{len(TESTS)} P3 Motion Canvas contract tests passed; "
+          f"real-media check: {MEDIA_STATUS['state']}")
     return 1 if failures else 0
 
 

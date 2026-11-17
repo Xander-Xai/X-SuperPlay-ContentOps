@@ -3,7 +3,7 @@
 [简体中文](PRD-ANIMATION-SKILLS-INTEGRATION.md) | [English](PRD-ANIMATION-SKILLS-INTEGRATION.en.md)
 
 > Last verified: 2026-11-17
-> 状态：**P0 clip render + P3-A/P3-B 已实现（导出仍受控）** — Remotion 短镜头已在本机渲染并接入 M5 调度；2026-11-17 新增 Manim 单一能力矩阵扩展、两个参数化模板（`math_formula_reveal` / `attention_matrix_flow`）、隔离 venv 真实渲染与 TEST_ONLY e2e 项目。Manim 是 `IMPLEMENTED_NOT_VERIFIED`：已装运行时并本机渲染不等于 VERIFIED，能力矩阵只接受回执证据升级。同日 P3-B 补齐 Motion Canvas 两个参数化模板与适配器，但官方导出仍须编辑器交互，准确标记为 `EDITOR_EXPORT_REQUIRED`，不宣称无人值守 CLI，也没有真实 MP4。2026-11-17 新增并本机验证 DNA 驱动的 3 秒冲突式 `title_card` 与可信渲染缓存。
+> 状态：**P0 clip render + P3-A/P3-B 已实现（P3-B 单镜头真实导出）** — Remotion 短镜头已在本机渲染并接入 M5 调度；2026-11-17 新增 Manim 单一能力矩阵扩展、两个参数化模板（`math_formula_reveal` / `attention_matrix_flow`）、隔离 venv 真实渲染与 TEST_ONLY e2e 项目。Manim 是 `IMPLEMENTED_NOT_VERIFIED`：已装运行时并本机渲染不等于 VERIFIED，能力矩阵只接受回执证据升级。同日 P3-B 补齐 Motion Canvas 两个参数化模板与适配器：官方导出仍须编辑器交互，不宣称无人值守 CLI；`mc-arch01` 已由编辑器真实导出并经 `--import-editor-export` 回灌、ffprobe/SHA/抽帧与 QC，`mc-state01` 仍为 `EDITOR_EXPORT_REQUIRED`。后端矩阵凭真实回执可显示 `VERIFIED`，但发布、生产与人工审核仍关闭；CI 缺外置 MP4 时明确报告 `REAL_MEDIA_NOT_RUN`。2026-11-17 新增并本机验证 DNA 驱动的 3 秒冲突式 `title_card` 与可信渲染缓存。
 > 本文是需求与验收记录。生成片段不是真实录屏，也不能代替 Founder 审核。
 
 ## 1. 背景、目标和非目标
@@ -256,5 +256,13 @@ PR #195 复查发现：`register_generated_clip` 每次用 `[envelope]` 整文�
 - `extensions/motion-canvas/` 是最小可运行工程：Motion Canvas 全家桶固定为 3.17.2（npm registry `latest`，发布 2024-12-14），npm lockfile 入库，`node_modules` 不入 Git。官方 `@motion-canvas/ffmpeg` exporter 已在 `vite.config.ts` 注册；1080x1920 / 30fps / sRGB 写在 `src/project.meta`。
 - 两个模板：`animated_system_graph`（组件按步骤出现、单向箭头连接、逐步解释）与 `agent_state_machine`（状态、条件分支、失败回退）。颜色全部来自账号 `brand.palette`；失败色只在失败步出现，下一步恢复品牌色；不使用弹跳、频闪、贴纸或炫目转场。`tsc --noEmit` 与 `vite build` 通过，但这只是编译证据，不是渲染。
 - `scripts/motion_canvas_adapter.py` 复用既有 receipt、fingerprint/缓存、M45 清单、资产登记与 QC，不建第二套系统。`--preflight`/`--prepare` 产出带原始证据与修复条件的 `EDITOR_EXPORT_REQUIRED` 回执；`--import-editor-export` 只接受项目内真实编辑器导出 MP4，经技术检查后才登记。
-- e2e：`projects/e2e-p3-motion-canvas/`（TEST_ONLY）。`tests/test_p3_motion_canvas.py` 12/12 并已接入 CI。首/中/末帧、ffprobe 与 SHA-256 仍为 `null`：本轮未导出真实 MP4，不宣称 `VERIFIED_HEADLESS`，也不把编译当成渲染验证。
+- e2e：`projects/e2e-p3-motion-canvas/`（TEST_ONLY）。`tests/test_p3_motion_canvas.py` 16/16 并已接入 CI。`mc-arch01` 的真实编辑器导出已回灌：SHA-256 `8741f5c56612f712a296e9a4cb347366b63b310badf07fc1a191af6610d238e1`，h264 / 1080x1920 / yuv420p / 30/1 / 7.233s / 217 帧 / 无音轨，首/中/末帧与 QC 已登记；`mc-state01` 仍为 `EDITOR_EXPORT_REQUIRED`。CI 不携带 gitignored 外置 MP4 时报告 `REAL_MEDIA_NOT_RUN`，合同测试通过不等于真实媒体验收通过。
 - 官方依据：<https://github.com/motion-canvas/motion-canvas>、<https://motion-canvas.io/docs/rendering/video/>、<https://github.com/motion-canvas/exporters>。官方 exporter 无 CLI 入口，渲染必须从编辑器 Video Settings 发起。
+
+## 22. 导出前后状态快照与最终集成治理（2026-11-17）
+
+- `projects/e2e-p3-motion-canvas/receipts/capability-matrix.json` 保留为 `PRE_EXPORT` 历史证据，其中 `motion-canvas` 为 `BLOCKED`、媒体字段为 `null`；该快照早于真实导出，不代表当前状态。
+- `capability-matrix-after-export.json` 是 `POST_EXPORT_ACCEPTANCE` 快照：由 `capability_matrix(render_evidence={"motion-canvas": render_evidence(...)})` 动态生成，记录生成函数与输入文件的 SHA-256、真实导出 MP4 的 SHA-256、回执路径和阶段化模板状态。没有手工把任何状态改成 VERIFIED。
+- 快照区分后端与模板粒度：后端 `motion-canvas` 在 `mc-arch01` 回执证据下为 `VERIFIED`；模板层 `mc-arch01` 为 `REAL_MEDIA_VERIFIED`，`mc-state01` 仍 `EDITOR_EXPORT_REQUIRED`，不继承另一镜头的证据。
+- `tests/test_p3_motion_canvas.py` 在本地有外置 MP4 时重新推导能力矩阵并逐字段比对快照；在 CI 缺失 MP4 时仅校验来源、历史阶段与治理字段，并打印 `REAL_MEDIA_NOT_RUN`。任何情况下 `production_ready`、`publish_authorized` 与人工审核门禁都保持关闭。
+- 唯一合并路径：PR #196 作为最终 squash 集成；#193 与 #195 的提交已按原 SHA 完整包含，合并后只标记 superseded 并关闭，不重复合并。
