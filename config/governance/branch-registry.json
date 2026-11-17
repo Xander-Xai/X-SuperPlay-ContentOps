@@ -208,6 +208,14 @@
       "purpose": "Huashu dark-whiteboard contrast, regression and media-lineage follow-up; PR #198 squash-merged into #196 and this branch was automatically deleted",
       "status": "merged",
       "expires": "2026-12-17"
+    },
+    {
+      "name": "refactor/140-m5-source-claims-20261117",
+      "pr": 200,
+      "created": "2026-11-17",
+      "purpose": "Issue #140 first stage extraction: move M5 source-ref resolution, source receipts and claim verification into an injected dependency module while retaining original compatibility functions and fail-closed error type",
+      "status": "active",
+      "expires": "2026-12-17"
     }
   ]
 }
