@@ -192,6 +192,14 @@
       "purpose": "Issue #196: integration of #195 then #193 plus the dual-account storyboard/backend-selection wiring and end-to-end acceptance; the merge order was verified on this branch, main stays untouched",
       "status": "active",
       "expires": "2026-12-17"
+    },
+    {
+      "name": "research/animation-18-selection-20261117",
+      "pr": 197,
+      "created": "2026-11-17",
+      "purpose": "research-only follow-up on PR #196: classify 18 upstream animation tools against dual-account DNA and provide sourced Claude Code implementation/acceptance prompt; no runtime change",
+      "status": "active",
+      "expires": "2026-12-17"
     }
   ]
 }
