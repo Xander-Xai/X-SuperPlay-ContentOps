@@ -265,55 +265,23 @@ def stage_bundle(project: Path, config: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-SOURCE_REFS_SCHEMA = "contentops.m5-source-refs/v1"
+# Public compatibility facade: scripts, tests and other callers keep the same API.
+# The implementation lives in contentops.workflow.m5_source_stages. Do not let
+# this extraction create a second evidence schema or change exception identity.
+from contentops.workflow import m5_source_stages  # noqa: E402
+
+SOURCE_REFS_SCHEMA = m5_source_stages.SOURCE_REFS_SCHEMA
 
 
 def _declared_source_refs(project: Path, config: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """``project.yaml`` refs plus the refs the brief bridge wrote.
-
-    The bridge cannot edit YAML safely, so it writes the evidence it converted
-    to ``sources/source-refs.json``. Both lists are one contract: the ids must
-    still be unique, which ``build_artifacts`` enforces.
-    """
-    refs = list(config.get("source_refs") or [])
-    sidecar = project / "sources" / "source-refs.json"
-    if sidecar.is_file():
-        document = json.loads(sidecar.read_text(encoding="utf-8"))
-        if document.get("schema") != SOURCE_REFS_SCHEMA:
-            raise M5Blocked(
-                f"sources/source-refs.json schema is not {SOURCE_REFS_SCHEMA}")
-        extra = document.get("refs")
-        if not isinstance(extra, list):
-            raise M5Blocked("sources/source-refs.json refs must be a list")
-        refs.extend(extra)
-
-    # The YAML is the project's QC-facing index while the bridge sidecar is the
-    # immutable evidence payload. Existing projects may legitimately mirror the
-    # same evidence row in both places. Collapse byte-for-byte equivalent
-    # declarations by ID; keep conflicting declarations fail-closed.
-    unique: Dict[str, Dict[str, Any]] = {}
-    for ref in refs:
-        if not isinstance(ref, dict) or not ref.get("id"):
-            raise M5Blocked("source refs must be objects with an id")
-        source_id = str(ref["id"])
-        prior = unique.get(source_id)
-        if prior is None:
-            unique[source_id] = ref
-            continue
-        if prior != ref:
-            raise M5Blocked(f"conflicting duplicate source id: {source_id}")
-    return list(unique.values())
+    return m5_source_stages.declared_source_refs(
+        project, config, blocked_error=M5Blocked)
 
 
 def stage_sources(project: Path, config: Dict[str, Any]) -> Dict[str, Any]:
-    artifacts = build_artifacts(_declared_source_refs(project, config), repo_root=ROOT)
-    payload = {
-        "schema": "contentops.m5-sources/v1",
-        "artifacts": [a.as_dict() for a in artifacts.values()],
-    }
-    _write_json(project / "receipts" / "source-artifacts.json", payload)
-    return {"artifacts": artifacts, "count": len(artifacts)}
-
+    return m5_source_stages.stage_sources(
+        project, config, repo_root=ROOT, source_ref_resolver=_declared_source_refs,
+        artifact_builder=build_artifacts, write_json=_write_json)
 
 
 VISUAL_MEDIA_KINDS = {"image", "icon", "logo"}
@@ -586,21 +554,9 @@ def stage_assets(project: Path, extra_assets: Optional[Dict[str, Dict[str, Any]]
 
 
 def stage_claims(project: Path, artifacts: Dict[str, Any]) -> Dict[str, Any]:
-    ledger_path = project / "script" / "claims.json"
-    if not ledger_path.is_file():
-        raise M5Blocked("script/claims.json is missing")
-    ledger = ClaimLedger.load(ledger_path)
-    problems = ledger.verify(artifacts, ROOT)
-    payload = {
-        "schema": "contentops.claim-verification/v1",
-        "ok": not problems,
-        "problems": problems,
-        "claims": len(ledger.claims),
-    }
-    _write_json(project / "receipts" / "claim-verification.json", payload)
-    if problems:
-        raise M5Blocked("claims are not supported: " + "; ".join(problems[:4]))
-    return {"ledger": ledger, "count": len(ledger.claims)}
+    return m5_source_stages.stage_claims(
+        project, artifacts, repo_root=ROOT, blocked_error=M5Blocked,
+        ledger_type=ClaimLedger, write_json=_write_json)
 
 
 def _source_snapshot_for_refs(refs: List[Dict[str, Any]],

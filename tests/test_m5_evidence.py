@@ -461,6 +461,64 @@ def test_storyboard_timeline_covers_the_pauses_between_lines() -> None:
     assert unchanged[-1]["duration"] == 5.0
 
 
+
+def test_m5_source_facade_preserves_duplicate_handling_and_receipt() -> None:
+    WORKROOT.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=WORKROOT) as temporary:
+        project = Path(temporary)
+        refs = [{"id": "SRC-1", "url": "https://example.invalid/original",
+                 "title": "Original source"}]
+        _write(project / "sources" / "source-refs.json", json.dumps({
+            "schema": m5_production.SOURCE_REFS_SCHEMA, "refs": refs}))
+        class FakeArtifact:
+            def as_dict(self):
+                return {"id": "SRC-1", "verified": True}
+
+        with mock.patch.object(m5_production, "build_artifacts",
+                               return_value={"SRC-1": FakeArtifact()}) as builder:
+            result = m5_production.stage_sources(project, {"source_refs": refs})
+        assert result["count"] == 1
+        builder.assert_called_once()
+        assert len(builder.call_args.args[0]) == 1
+        receipt = json.loads((project / "receipts" / "source-artifacts.json")
+                             .read_text(encoding="utf-8"))
+        assert receipt == {"schema": "contentops.m5-sources/v1",
+                           "artifacts": [{"id": "SRC-1", "verified": True}]}
+        conflict = [{**refs[0], "url": "https://example.invalid/conflict"}]
+        _write(project / "sources" / "source-refs.json", json.dumps({
+            "schema": m5_production.SOURCE_REFS_SCHEMA, "refs": conflict}))
+        reason = _raises(m5_production.M5Blocked, m5_production._declared_source_refs,
+                         project, {"source_refs": refs})
+        assert "conflicting duplicate source id: SRC-1" in reason
+
+
+def test_m5_claim_facade_keeps_receipt_and_fail_closed_error() -> None:
+    WORKROOT.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=WORKROOT) as temporary:
+        project = Path(temporary)
+        _write(project / "script" / "claims.json", "{}")
+        ledger = mock.Mock()
+        ledger.claims = {"C-1": object()}
+        ledger.verify.return_value = ["source quote mismatch"]
+        with mock.patch.object(m5_production.ClaimLedger, "load",
+                               return_value=ledger) as load:
+            reason = _raises(m5_production.M5Blocked, m5_production.stage_claims,
+                             project, {"SRC-1": object()})
+            load.assert_called_once_with(project / "script" / "claims.json")
+        assert "claims are not supported: source quote mismatch" in reason
+        assert json.loads((project / "receipts" / "claim-verification.json")
+                          .read_text(encoding="utf-8")) == {
+            "schema": "contentops.claim-verification/v1",
+            "ok": False, "problems": ["source quote mismatch"], "claims": 1}
+        ledger.verify.return_value = []
+        with mock.patch.object(m5_production.ClaimLedger, "load", return_value=ledger):
+            result = m5_production.stage_claims(project, {})
+        assert result == {"ledger": ledger, "count": 1}
+        assert json.loads((project / "receipts" / "claim-verification.json")
+                          .read_text(encoding="utf-8"))["ok"] is True
+
+
+
 TESTS = [
     test_workbench_composer_requires_a_verified_overlay,
     test_default_composer_still_resolves_only_the_production_pin,
@@ -478,6 +536,8 @@ TESTS = [
     test_malformed_ledgers_are_refused,
     test_require_used_names_claims_the_script_never_cites,
     test_stage_assets_refuses_hash_drift,
+    test_m5_source_facade_preserves_duplicate_handling_and_receipt,
+    test_m5_claim_facade_keeps_receipt_and_fail_closed_error,
     test_stage_assets_refuses_a_path_outside_the_repository,
     test_stage_script_refuses_unknown_claim_and_undeclared_asset,
     test_stage_script_refuses_duplicate_ids_and_empty_narration,
