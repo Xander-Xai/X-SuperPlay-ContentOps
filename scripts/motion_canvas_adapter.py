@@ -426,6 +426,41 @@ def _technical_check(path: Path) -> Dict[str, Any]:
             "full_decode": "PASS", "black_frame_segments": []}
 
 
+def _sidecar_payload(fingerprint: str, runtime: Dict[str, Any], project: Path,
+                     final: Path, logical: str, editor_export: Dict[str, Any],
+                     technical: Dict[str, Any]) -> Dict[str, Any]:
+    """Build the ``contentops.video-receipt/v1`` sidecar the shared asset gate reads.
+
+    VideoValidationAdapter requires top-level provenance booleans and a
+    ``technical_qc`` object shaped as ``{approved, reasons}``. The measured
+    motion sample and decode/black-frame evidence are kept nested so nothing is
+    lost; ``approved`` is true only because the caller reached this function
+    after _technical_check passed all three checks.
+    """
+    return {
+        "schema": "contentops.video-receipt/v1",
+        "engine": BACKEND, "backend_version": MOTION_CANVAS_VERSION,
+        "fingerprint": fingerprint, "template_digest": runtime["template_digest"],
+        "output_sha256": _sha(final), "output": {
+            "path": logical, "repo_path": final.relative_to(project).as_posix(),
+            "output_sha256": _sha(final)},
+        "editor_export": editor_export,
+        "generated": True,
+        "evidence_capable": False,
+        "technical_qc": {
+            "approved": True,
+            "reasons": [],
+            "motion_sample": technical["sample_check"],
+            "probe": technical["probe"],
+            "full_decode": technical["full_decode"],
+            "black_frame_segments": technical["black_frame_segments"],
+        },
+        "render_verified": True,
+        "human_review": "PENDING_FOUNDER_REVIEW",
+        "production_ready": False, "publish_authorized": False,
+    }
+
+
 def _import_editor_export(project: Path, account: str, spec_arg: str, placement_id: str,
                           asset_id: str, purpose: str, exported: str) -> Dict[str, Any]:
     spec_path, spec = _validate_spec(project, spec_arg)
@@ -447,12 +482,24 @@ def _import_editor_export(project: Path, account: str, spec_arg: str, placement_
         raise ValueError("EXPORT_MISSING: expected a project-contained .mp4")
     final = project / "assets" / "generated" / "motion-canvas" / f"{asset_id}.mp4"
     sidecar = final.with_name(final.name + ".receipt.json")
+    logical = f"project://{final.relative_to(project).as_posix()}"
     if (sidecar.is_file() and final.is_file()
             and str(((_read_json(sidecar).get("output") or {}).get("output_sha256")
                      or _read_json(sidecar).get("output_sha256") or "")).lower()
             == _sha(final)
             and str(_read_json(sidecar).get("fingerprint") or "") == fingerprint):
         technical = _technical_check(final)
+        # A cache hit must still present the canonical sidecar shape to the asset
+        # gate: an older sidecar written before the governance-field fix would
+        # otherwise be REUSED forever and fail registration every time.
+        prior = _read_json(sidecar)
+        editor_export = prior.get("editor_export") or {
+            "path": f"project://{source.relative_to(project).as_posix()}",
+            "sha256": _sha(source),
+            "note": "human-exported from the Motion Canvas editor websocket",
+        }
+        _write_json(sidecar, _sidecar_payload(
+            fingerprint, runtime, project, final, logical, editor_export, technical))
         registration = register_generated_clip(
             project=project, repo_root=ROOT, asset_id=asset_id,
             placement_id=placement_id, output=final, sha256=_sha(final),
@@ -464,7 +511,6 @@ def _import_editor_export(project: Path, account: str, spec_arg: str, placement_
     _normalize(source, final)
     technical = _technical_check(final)
     probe = {**technical["probe"], "fps": 30}
-    logical = f"project://{final.relative_to(project).as_posix()}"
     source_spec = f"project://{spec_path.relative_to(project).as_posix()}"
     receipt = build_receipt(
         project_id=project.name, account_id=account, placement_id=placement_id,
@@ -490,20 +536,8 @@ def _import_editor_export(project: Path, account: str, spec_arg: str, placement_
     }
     receipt_path = project / "receipts" / f"motion-canvas-{asset_id}.json"
     _write_json(receipt_path, receipt)
-    sidecar_payload = {
-        "schema": "contentops.video-receipt/v1",
-        "engine": BACKEND, "backend_version": MOTION_CANVAS_VERSION,
-        "fingerprint": fingerprint, "template_digest": runtime["template_digest"],
-        "output_sha256": _sha(final), "output": {
-            "path": logical, "repo_path": final.relative_to(project).as_posix(),
-            "output_sha256": _sha(final)},
-        "editor_export": receipt["editor_export"],
-        "technical_qc": technical["sample_check"],
-        "render_verified": True,
-        "human_review": "PENDING_FOUNDER_REVIEW",
-        "production_ready": False, "publish_authorized": False,
-    }
-    _write_json(sidecar, sidecar_payload)
+    _write_json(sidecar, _sidecar_payload(
+        fingerprint, runtime, project, final, logical, receipt["editor_export"], technical))
     registration = register_generated_clip(
         project=project, repo_root=ROOT, asset_id=asset_id,
         placement_id=placement_id, output=final, sha256=_sha(final),
@@ -528,7 +562,15 @@ def render_evidence(project: Path, asset_id: str) -> Optional[Dict[str, Any]]:
         return None
     if payload.get("technical_qc") != "TECHNICALLY_CHECKED":
         return None
-    return {"verified_at": str(payload.get("created_at") or ""),
+    # build_receipt() does not emit created_at; the import path records the real
+    # verification time in export_evidence.verified_at. Read either so a real,
+    # hash-matching editor export can actually promote the capability matrix.
+    verified_at = str(payload.get("created_at") or "")
+    if not verified_at:
+        export_evidence = payload.get("export_evidence") or {}
+        verified_at = str(export_evidence.get("verified_at") or "") if isinstance(
+            export_evidence, dict) else ""
+    return {"verified_at": verified_at,
             "sha256": digest,
             "receipt": f"project://receipts/motion-canvas-{asset_id}.json"}
 

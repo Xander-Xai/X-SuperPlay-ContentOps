@@ -1,4 +1,17 @@
 {
   "schema": "contentops.m5-source-assets/v1",
-  "assets": []
+  "assets": [
+    {
+      "id": "mc-arch01",
+      "type": "GENERATED_VIDEO",
+      "repo_path": "projects/e2e-p3-motion-canvas/assets/generated/motion-canvas/mc-arch01.mp4",
+      "sha256": "8741f5c56612f712a296e9a4cb347366b63b310badf07fc1a191af6610d238e1",
+      "permission": "CREATED_BY_OWNER",
+      "usage_scope": "VISUAL_SUPPORT only",
+      "origin": "motion-canvas local code render",
+      "generated": true,
+      "evidence_capable": false,
+      "notes": "Generated visual; not source evidence."
+    }
+  ]
 }

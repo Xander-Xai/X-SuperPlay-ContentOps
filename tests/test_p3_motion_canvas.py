@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import sys
 import tempfile
 from pathlib import Path
@@ -242,6 +243,15 @@ def test_easel_input_contract_is_reused_not_replaced():
 
 
 def test_e2e_receipts_do_not_claim_a_render_or_fabricate_media():
+    """Verified media is allowed ONLY with a real, hash-matched editor export.
+
+    After a genuine editor export is imported, mc-arch01 may legitimately carry
+    render_verified=True. The assertion's job is to keep that honest: a receipt
+    must prove the export SHA, the output SHA and the capability evidence agree,
+    and governance flags must stay closed. Clips with no export stay BLOCKED.
+    """
+    # The acceptance-build receipts describe the stub layer only: no renderer
+    # ran, so they must keep claiming EDITOR_EXPORT_REQUIRED with all media null.
     summary = json.loads((E2E / "receipts" / "run-summary.json").read_text(encoding="utf-8"))
     assert summary["media_state"] == "EDITOR_EXPORT_REQUIRED"
     assert summary["render_verified"] is False
@@ -252,7 +262,8 @@ def test_e2e_receipts_do_not_claim_a_render_or_fabricate_media():
         assert clip["first_frame"] is None and clip["mid_frame"] is None
         assert clip["last_frame"] is None and clip["ffprobe"] is None
         assert clip["sha256"] is None and clip["state"] == "EDITOR_EXPORT_REQUIRED"
-    for receipt in (E2E / "receipts").glob("motion-canvas-*.json"):
+    # Block receipts never claim a render.
+    for receipt in (E2E / "receipts").glob("motion-canvas-*-editor-export-required.json"):
         payload = json.loads(receipt.read_text(encoding="utf-8"))
         assert payload.get("render_verified") is False, receipt.name
         assert payload.get("production_ready") is False, receipt.name
@@ -273,6 +284,44 @@ def test_adapter_reuses_the_existing_registration_not_a_second_system():
                             duration_s=float(spec["duration_s"]), backend="motion-canvas",
                             dna=DNA, props={**spec["props"], "palette": PALETTE})
         assert plan["composition"] == spec["template"]
+
+
+def test_real_editor_export_import_is_hash_bound_and_governance_closed():
+    """When a real editor export has been imported, every media fact must agree.
+
+    This is an environment-gated test: it runs the strict evidence assertions
+    only when the imported clip exists, and otherwise asserts the honest BLOCKED
+    state. It never fabricates media and never turns a compile log into a pass.
+    """
+    import hashlib as _h
+    import sys as _sys
+    scripts = ROOT / "scripts"
+    if str(scripts) not in _sys.path:
+        _sys.path.insert(0, str(scripts))
+    out = E2E / "assets" / "generated" / "motion-canvas" / "mc-arch01.mp4"
+    receipt = E2E / "receipts" / "motion-canvas-mc-arch01.json"
+    if not (out.is_file() and receipt.is_file()):
+        # No real export yet: the honest state is EDITOR_EXPORT_REQUIRED.
+        proof = adapter.render_evidence(E2E, "mc-arch01")
+        assert proof is None
+        return
+    payload = json.loads(receipt.read_text(encoding="utf-8"))
+    digest = _h.sha256(out.read_bytes()).hexdigest()
+    assert payload["sha256"] == digest
+    assert payload.get("technical_qc") == "TECHNICALLY_CHECKED"
+    assert payload.get("generated") is True and payload.get("evidence_capable") is False
+    assert payload.get("production_ready") is False and payload.get("publish_authorized") is False
+    assert payload.get("human_review") == "PENDING_FOUNDER_REVIEW"
+    export = payload.get("editor_export") or {}
+    assert re.fullmatch(r"[0-9a-f]{64}", str(export.get("sha256") or ""))
+    proof = adapter.render_evidence(E2E, "mc-arch01")
+    assert proof and proof["sha256"] == digest and proof["verified_at"]
+    # capability matrix accepts this evidence but keeps publication closed
+    from contentops.media import animation_backend as _ab
+    matrix = _ab.capability_matrix(ROOT, render_evidence={"motion-canvas": proof})
+    row = matrix["backends"]["motion-canvas"]
+    assert row["render_verified"] is True and row["state"] == "VERIFIED"
+    assert row["production_ready"] is False and row["publish_authorized"] is False
 
 
 TESTS = [value for name, value in sorted(globals().items())

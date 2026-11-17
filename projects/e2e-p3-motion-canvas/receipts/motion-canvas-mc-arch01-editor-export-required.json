@@ -1,7 +1,7 @@
 {
   "schema": "contentops.motion-canvas-receipt/v1",
   "project": "projects/e2e-p3-motion-canvas",
-  "created_at": "2026-11-16T20:14:36Z",
+  "created_at": "2026-11-17T02:40:11Z",
   "state": "BLOCKED",
   "code": "EDITOR_EXPORT_REQUIRED",
   "backend": "motion-canvas",
@@ -10,8 +10,8 @@
   "account_id": "x-superplay-future-intelligence",
   "placement_id": "mc-arch01",
   "asset_id": "mc-arch01",
-  "purpose": "test",
-  "fingerprint": "f8813e23d2e8cc449c21a0f927289a8a53dc28aea6ca7ef84bc493cbd1919571",
+  "purpose": "production",
+  "fingerprint": "de8d2c211663116b28741fa36a6d58897c086670aaccaacac709c1bbd8c57e44",
   "prepared_spec": "project://work/motion-canvas/mc-arch01.spec.json",
   "prepared_spec_sha256": "73e9d94854647b17496adc36456a56f7f126914e8068f8b96cdafdeaa482f303",
   "expected_output": "project://assets/generated/motion-canvas/mc-arch01.mp4",
@@ -22,27 +22,27 @@
     "lock_sha256": "dc9f402f2de07ce561af592b10dec6d4e38d087c8b45f210c6243a0d1d45fb73",
     "package_lock_sha256": "fbad8219b6f72f7ab7a58d5dbdcfb1269d6aa5220c3c17c77edf0b6fa9ada4e9",
     "installed_packages": {
-      "core": "3.17.2",
-      "2d": "3.17.2",
-      "ui": "3.17.2",
-      "vite-plugin": "3.17.2",
-      "ffmpeg": "3.17.2"
+      "core": null,
+      "2d": null,
+      "ui": null,
+      "vite-plugin": null,
+      "ffmpeg": null
     },
-    "installed": true,
+    "installed": false,
     "export_mode": "EDITOR_EXPORT_REQUIRED",
-    "template_digest": "eba5d7713265629103ec27133fa8db30a8ad576a37157df85591f0ff5a1d41c0",
+    "template_digest": "16be5e4ab5da403ae52d2af8582c69de1284b11b702bd87b094252f7f44871d4",
     "license": "MIT"
   },
   "environment_probe": {
     "node": true,
     "ffmpeg": true,
     "ffprobe": true,
-    "node_modules": true,
+    "node_modules": false,
     "headless_export": false,
     "export_mode": "EDITOR_EXPORT_REQUIRED",
     "pinned_version": "3.17.2",
-    "installed_core_version": "3.17.2",
-    "compile_capable": true,
+    "installed_core_version": null,
+    "compile_capable": false,
     "render_verified": false,
     "detail": "Motion Canvas video export is an editor websocket capture; there is no official headless CLI"
   },
@@ -59,16 +59,16 @@
     "execution_authorized": false
   },
   "production_gate": {
-    "state": "TEST_ONLY",
-    "code": "TEST_PURPOSE",
+    "state": "TECHNICAL_ONLY",
+    "code": "EXPLANATORY_CLIP",
     "account_id": "x-superplay-future-intelligence",
-    "detail": "test render is not an accepted case",
+    "detail": "vector animation may enter technical QC; it is not system output",
     "generated": true,
     "evidence_capable": false,
     "production_ready": false,
     "publish_authorized": false
   },
-  "compile_capable": true,
+  "compile_capable": false,
   "render_verified": false,
   "official_evidence": {
     "verified_at": "2026-11-16",
