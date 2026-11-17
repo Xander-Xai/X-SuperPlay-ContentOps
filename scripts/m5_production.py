@@ -1413,28 +1413,13 @@ def stage_asr_backcheck(project: Path, config: Dict[str, Any],
 
 
 def stage_subtitles(project: Path, script: Dict[str, Any], narration: Dict[str, Any]) -> Dict[str, Any]:
-    lines = script["lines"]
-    cues = []
-    for line, timing in zip(lines, narration["lines"]):
-        start = timing["start"]
-        end = start + timing["duration"]
-        cues.append(f"{len(cues) + 1}\n{_srt_time(start)} --> {_srt_time(end)}\n{line['caption']}\n")
-    srt = project / "assets" / "captions" / "default.srt"
-    srt.parent.mkdir(parents=True, exist_ok=True)
-    srt.write_text("\n".join(cues), encoding="utf-8")
-    covered = sum(t["duration"] for t in narration["lines"])
-    ratio = covered / narration["duration_s"] if narration["duration_s"] else 0.0
-    payload = {
-        "schema": "contentops.m5-subtitles/v1",
-        "path": srt.relative_to(project).as_posix(),
-        "cues": len(cues),
-        "coverage_ratio": round(ratio, 3),
-        "audio_duration_s": narration["duration_s"],
-    }
-    _write_json(project / "receipts" / "subtitles.json", payload)
-    if ratio < 0.8:
-        raise M5Blocked(f"subtitle coverage {ratio:.2f} is below 0.8")
-    return payload
+    """Compatibility facade for the extracted M5 subtitle stage."""
+    from contentops.workflow import m5_subtitles_stage
+
+    return m5_subtitles_stage.stage_subtitles(
+        project, script, narration, format_time=_srt_time,
+        blocked_error=M5Blocked, write_json=_write_json,
+    )
 
 
 def _align_shots_to_narration(shots: List[Dict[str, Any]],
