@@ -214,6 +214,14 @@
       "pr": 200,
       "created": "2026-11-17",
       "purpose": "Issue #140 first stage extraction: move M5 source-ref resolution, source receipts and claim verification into an injected dependency module while retaining original compatibility functions and fail-closed error type",
+      "status": "merged",
+      "expires": "2026-12-17"
+    },
+    {
+      "name": "feat/199-bilibili-native-qc-20261117",
+      "pr": 201,
+      "created": "2026-11-17",
+      "purpose": "Issue #199 bounded slice: explicit native Bilibili 16:9 technical QC geometry, legacy vertical compatibility, and refusal paths; still blocked pending real media/render and manual review",
       "status": "active",
       "expires": "2026-12-17"
     }

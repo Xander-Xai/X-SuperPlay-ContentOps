@@ -221,6 +221,64 @@ def parse_yaml(path: Path) -> dict:
     return data
 
 
+
+def _expected_canvas(project: Path) -> tuple[int, int, str]:
+    """Resolve QC geometry from the M5 project, never by guessing from the MP4.
+
+    Legacy projects stay 1080x1920. An explicitly authored Bilibili native
+    relayout may opt into 1920x1080; merely padding/cropping an old vertical
+    output is not evidence of native layout or founder approval.
+    """
+    manifest = project / "project.yaml"
+    if not manifest.is_file():
+        return EXPECTED_W, EXPECTED_H, "9:16"
+    try:
+        import yaml  # type: ignore
+
+        document = yaml.safe_load(manifest.read_text(encoding="utf-8")) or {}
+        if not isinstance(document, dict):
+            raise ValueError("project.yaml must be a mapping")
+        target = document.get("target") or {}
+        if not isinstance(target, dict):
+            raise ValueError("target must be a mapping")
+        resolution = str(target.get("resolution") or f"{EXPECTED_W}x{EXPECTED_H}").lower()
+        if resolution == f"{EXPECTED_W}x{EXPECTED_H}":
+            return EXPECTED_W, EXPECTED_H, "9:16"
+        if resolution != "1920x1080":
+            raise ValueError(f"unsupported QC canvas {resolution!r}")
+        if target.get("platform") != "bilibili" or target.get("native_relayout") is not True:
+            raise ValueError(
+                "1920x1080 requires target.platform=bilibili and "
+                "target.native_relayout=true; padded vertical carriers are not native")
+        storyboard_path = project / "script" / "storyboard.json"
+        storyboard = json.loads(storyboard_path.read_text(encoding="utf-8"))
+        if not isinstance(storyboard, dict) or storyboard.get("size") != "1920x1080":
+            raise ValueError("Bilibili native storyboard must declare size=1920x1080")
+        return 1920, 1080, "16:9"
+    except (OSError, ValueError, TypeError) as exc:
+        raise ValueError(f"NATIVE_CANVAS_UNVERIFIED: {exc}") from None
+
+
+def _canvas_checks(width: int, height: int, expected_w: int,
+                   expected_h: int, aspect: str) -> list[dict]:
+    """Exact dimensions and aspect are separate failure checks."""
+    resolved = width == expected_w and height == expected_h
+    if aspect == "16:9":
+        aspect_ok = width > 0 and height > 0 and abs(width * 9 - height * 16) <= 2
+        aspect_id = "aspect_ratio_16_9"
+    else:
+        aspect_ok = width > 0 and height > 0 and abs(width * 16 - height * 9) <= 2
+        aspect_id = "aspect_ratio_9_16"
+    return [
+        {"id": "resolution", "ok": resolved,
+         "severity": "PASS" if resolved else "FAIL",
+         "value": f"{width}x{height}", "expected": f"{expected_w}x{expected_h}"},
+        {"id": aspect_id, "ok": aspect_ok,
+         "severity": "PASS" if aspect_ok else "FAIL",
+         "value": f"{width}:{height}"},
+    ]
+
+
 def _subtitles_burned(video: Path, sb: dict) -> dict:
     """Decide whether subtitles are visible: a real subtitle stream, or burned in.
 
@@ -247,8 +305,15 @@ def _subtitles_burned(video: Path, sb: dict) -> dict:
 
     # Sample several points, not just the midpoint: a single frame can land in a
     # gap between cues and wrongly report "no subtitles".
-    band_start = int(EXPECTED_H * 0.82) * EXPECTED_W
-    expected = EXPECTED_W * EXPECTED_H
+    # Examine the actual decoded canvas: a 16:9 source is not a 9:16 byte grid.
+    video_stream = next((stream for stream in meta.get("streams", [])
+                         if stream.get("codec_type") == "video"), {})
+    frame_w = int(video_stream.get("width") or 0)
+    frame_h = int(video_stream.get("height") or 0)
+    if frame_w <= 0 or frame_h <= 0:
+        return {"ok": False, "method": "unknown", "note": "video geometry unavailable"}
+    band_start = int(frame_h * 0.82) * frame_w
+    expected = frame_w * frame_h
     best, samples = 0.0, 0
     with tempfile.TemporaryDirectory() as td:
         for frac in (0.15, 0.3, 0.45, 0.6, 0.75, 0.9):
@@ -283,6 +348,10 @@ def qc(project: Path, target: str = "") -> dict:
         return {"state": "BLOCKED", "overall": "FAIL",
                 "reason": (f"QC_TARGET_INVALID: {target!r} is neither an engine name "
                            "nor an .mp4 filename; no receipt was written")}
+    try:
+        expected_w, expected_h, expected_aspect = _expected_canvas(project)
+    except ValueError as exc:
+        return {"state": "BLOCKED", "overall": "FAIL", "reason": str(exc)}
     if target:
         filename = target if target.lower().endswith(".mp4") else f"{target}.mp4"
         final = project / "final" / filename
@@ -346,21 +415,9 @@ def qc(project: Path, target: str = "") -> dict:
     height = video.get("height", 0)
     duration = float(fmt.get("duration", "0"))
 
-    # 4) resolution
-    ok_res = (width == EXPECTED_W and height == EXPECTED_H)
-    checks.append({
-        "id": "resolution", "ok": ok_res,
-        "severity": "FAIL" if not ok_res else "PASS",
-        "value": f"{width}x{height}", "expected": f"{EXPECTED_W}x{EXPECTED_H}",
-    })
-
-    # 5) aspect 9:16
-    aspect_ok = (width > 0 and height > 0 and abs(width * 16 - height * 9) <= 2)
-    checks.append({
-        "id": "aspect_ratio_9_16", "ok": aspect_ok,
-        "severity": "FAIL" if not aspect_ok else "PASS",
-        "value": f"{width}:{height}",
-    })
+    # 4–5) native resolution and aspect, based on an explicit project target.
+    checks.extend(_canvas_checks(
+        int(width or 0), int(height or 0), expected_w, expected_h, expected_aspect))
 
     # 6) duration
     dur_ok = MIN_DURATION <= duration <= MAX_DURATION
