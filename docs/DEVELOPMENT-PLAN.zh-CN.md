@@ -10,10 +10,8 @@ translation_status: synced
 
 > 基于里程碑执行。每个里程碑都有退出标准。
 >
-> 最后验证：2026-11-17，```feat/173-easel-m0-pin```。
-> 已实施 X / 跨平台本地分析和人工选题回流，不代表真实平台效果或发布。
-> X 原创合同已扩展为 `post_format=text|image`；纯文字无需图片，图文保持图片/ALT门禁。生活娱乐内容采用独立人工评分，技术/事实内容维持严格证据要求，均手动发布。
-> X 业务规则以 Strategy 唯一 SOP 及 ContentOps 注册账号 DNA 为准，指标与发布须真人核验。
+> 最后验证：2026-11-18，对照 PR #210 head `d2220078080b83ef0740b594dbedb06791ce9cec`；其账号 schema、Easel YAML 与 B 站原生 QC 改动不满足 Issue #199 的真实交付验收标准。
+> Issue #199 仍 OPEN：TEST_ONLY 样片不能替代经授权的 1024 真实录屏生产、双账号正式成片、Motion Canvas 编辑器导出、Founder 审片或干净检出复现。
 
 ## 状态标记
 
@@ -36,6 +34,7 @@ translation_status: synced
 | M2-M4 | MiniMax 语音 / 图片 / H3 集成 | **DONE（已实现）** | 已验证子集见 CURRENT-STATE；`PENDING_FOUNDER_REVIEW` |
 | M4.5 | 媒体收敛：唯一清单、唯一门禁词汇 | **DONE** | 97 项测试；`projects/m45-technical-integration` |
 | M5 | 证据优先生产链 | **DONE** | `scripts/m5_production.py`、`projects/m5-media-use`；ASR 回检门禁（#150）；特征基线（#153） |
+| Issue #199 真实交付验收 | **OPEN** | TEST_ONLY B 站原生样片不是账号成片；经授权的真实来源生产、双账号正式视频、Motion Canvas 编辑器导出、人工审片与干净检出复现仍未完成 |
 | 稳定生产入口 | 所有生产者之前的唯一受门禁 CLI | **DONE** | `scripts/make_content.py` + `scripts/production_gates.py`（#157）；8 个 VIDEO / 6 个 GRAPHIC_TEXT 失败即拒绝门禁 |
 | 渲染：卡片与公众号文章 | HTML 卡片转 PNG 并做密度审计；文章 HTML 校验 | **DONE（离线）** | `render_cards.py`（#149）、`render_article.py`（#152）；回执恒为 `production_ready: false` |
 | M5-M6 | 跨仓库 `SourceArtifact` 工作流与生产 E2E | **DONE（证据在 issue）** | `main` 上三次真实来源运行（#117、#119）通过自动与视觉 QC；Founder 审核 PASS 记录在 #6，已于 2026-11-10 关闭。注意：批准记录在 issue 里，而不是 APPROVED 的 `human-review.json` |

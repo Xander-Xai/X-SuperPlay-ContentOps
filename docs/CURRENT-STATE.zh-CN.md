@@ -10,16 +10,10 @@ translation_status: synced
 
 > 当前运行状态。仅经验证的事实。无展望，无过时声明。
 >
-> 最后验证：2026-11-17，对照 `10017c2b74dca40a0d2f0df85c8023ccb01c3566`（PR #191 合并后的 `main`）；分支 `feat/194-title-card-and-trusted-cache` 基于它。2026-11-17 的改动只新增 Remotion `title_card` composition 与镜头缓存，下列 Easel/Huashu/生命周期事实均未变化。Easel pin 现在只写在
-> `runtime/easel-pins.json`；`runtime/easel.lock.json` 是它 `active` 引擎的派生投影，
-> 代码里不再有 commit 字面量。
-> 本工作树领先该 `main` 22 个、落后 15 个提交；尚未变基或合并，因此属于分支的事实会另行标注。
-> 最后验证：2026-11-14，GitHub远端只读核对受保护的 `main` @ `515c605`；纯文字/图文及模式审核尚在PR #182中，不声称已经合并或在X发布。
-> 本次 X 原创稿可明确选择纯文字（无图片/ALT）或图文（真实1600×900图片及ALT）；泛兴趣采用独立人工审核口径，技术/新闻证据门禁保留。分支变更须以PR CI为验收，不代表真实X平台已发布。
-> 当前 main 已包含 X 离线指标分析；本次候选分支新增跨平台本地指标比较与人工选题路由，无真实用户报表上传。
-> 以下事实描述 ```main```；已推迟或权利受阻的工作会明确标注。
-> “分层状态”表之后的小节是历史里程碑记录，说明某项能力当时如何被证明，
-> 不代表当前状态。
+> 最后验证：2026-11-18，对照 GitHub `main` @ `9690582a0fed34b08632cbb0445cb151924230bf`；PR #210 分支 `feat/199-real-delivery-20261118` @ `d2220078080b83ef0740b594dbedb06791ce9cec`，OPEN / DRAFT，基于该 `main`。
+> 核验时 PR #210 的 Ubuntu、Windows、Repo Policy 检查失败；报告指向文档过期，不能据此推断后续 CI 阶段结果。Issue #199 仍 OPEN，剩余验收包括经授权的 1024 真实录屏、双账号正式成片、Motion Canvas 编辑器真实导出、人工审片与干净检出复现。
+> PR 中的 B 站原生样片回执范围为 TEST_ONLY：15 秒、1920×1080；原生检查与全片解码 PASS；完整 QC WARN（时长不足且无真实证据）；生成式解释画面不可作证；视觉审片为 `PENDING_FOUNDER_REVIEW`。它不是生产/账号成片。
+> 下方带日期的 Layer 状态与 Git 快照均为历史记录，除非明确标注为当前；它们描述各自日期/范围，不构成当前完整能力清单。
 
 ## 分层状态（2026-11-12）
 
@@ -49,7 +43,18 @@ translation_status: synced
 
 ## Git
 
-> **Git 状态在下方按 2026-11-12（只读文档同步）重新核验。** 其后的所有小节都是为可追溯性保留的历史快照，均不代表当前状态。
+### Git — 2026-11-18 核验（GitHub 当前状态）
+
+| 属性 | 已核验值 |
+|---|---|
+| 默认分支 | `main` @ `9690582a0fed34b08632cbb0445cb151924230bf` |
+| 当前 PR / issue | PR #210 OPEN / DRAFT；Issue #199 OPEN |
+| PR head | `feat/199-real-delivery-20261118` @ `d2220078080b83ef0740b594dbedb06791ce9cec`；领先 `main` 5 个提交 |
+| CI | 核验时 Ubuntu、Windows 与 Repo Policy 检查失败；日志报告文档过期。后续 CI 阶段结果 NOT_VERIFIED。 |
+
+
+
+
 
 ### Git — 2026-11-17 复核（分支 `feat/194-title-card-and-trusted-cache`，PR #195）
 

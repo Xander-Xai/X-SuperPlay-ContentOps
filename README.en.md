@@ -4,11 +4,10 @@
 
 [简体中文](README.md) | English
 
-> Last verified: 2026-11-17 on `feat/173-easel-m0-pin` (M0: single pin registry). The status table describes
-> Last verified: 2026-11-14. Local-only X and cross-platform analytics exist; no live account growth is verified.
-> X original-post workflow now supports explicit `post_format=text` without an image/ALT, or `post_format=image` with real 1600x900 raster+ALT. General-interest writing has a separate evidence-honest human rubric; all publication is still manual and requires a real own X URL.
-> Operating authority: canonical Strategy X SOP and account DNA; local-only real analytics and human review/manual publishing.
-> `main`, never a draft branch.
+> Last verified: 2026-11-18 against PR #210 branch `feat/199-real-delivery-20261118` @ `d2220078080b83ef0740b594dbedb06791ce9cec`; base `main` @ `9690582a0fed34b08632cbb0445cb151924230bf`.
+> PR #210 is OPEN and DRAFT; CI checks were failing at verification time. Issue #199 remains OPEN. The TEST_ONLY native 16:9 sample receipt records 15s / 1920×1080, native checks and full decode PASS, full QC WARN, generated explanatory visuals (not evidence), and Founder review pending. This is not an account deliverable or acceptance of Issue #199.
+> The capability table below is a historical `main` snapshot dated 2026-11-12, not a current inventory of `main` or this PR branch. Do not infer unlisted branch changes or current GitHub state from it.
+> X policy remains: canonical Strategy X SOP and registered account DNA; local metrics are offline, and posting/review remain human-controlled.
 
 > Local analytics: X uses [X learning loop](docs/X-LOCAL-LEARNING-LOOP.md); other platforms use the [cross-platform local loop](docs/PLATFORM-LOCAL-LEARNING-LOOP.md). Raw account data stays offline; learning briefs require human Strategy review.
 
@@ -29,11 +28,24 @@ Previous work used 5 separate platform-specific repos that never produced stable
 output. ContentOps consolidates video production into one runtime with honest,
 non-bypassable quality and human-review gates.
 
-## Current Status
+## Historical Main Snapshot — 2026-11-12
 
-The table describes **`main`** at `c1da6dd` (verified 2026-11-12). A track is not
+The table below records **`main` at `c1da6dd`**, as verified on 2026-11-12. It is
+retained for historical context and is not a current status table. A track is not
 "done" because a draft branch describes it, and code that exists is not a
 capability that published anything.
+
+### PR #210 — verified 2026-11-18
+
+PR #210 (`feat/199-real-delivery-20261118` → `main`) is OPEN and DRAFT. Its changes
+include account-schema validation dispatch, deterministic account-DNA-derived
+Easel YAML checks, and a native Bilibili 16:9 QC source-geometry guard. Its
+TEST_ONLY sample is not a production/account deliverable: the committed receipt
+records 15 seconds, native checks and full decode PASS, full QC WARN, generated
+visuals that cannot serve as evidence, and `PENDING_FOUNDER_REVIEW`. Issue #199
+remains OPEN; real 1024 recording-based production, final account deliverables,
+Motion Canvas editor export, human review and clean-checkout reproduction remain
+acceptance work. CI was failing when this status was checked; see the live PR checks.
 
 | Item | Layer | Status |
 |---|---|---|

@@ -2,9 +2,8 @@
 
 [English](ARCHITECTURE.md) | [简体中文](ARCHITECTURE.zh-CN.md)
 
-> Last verified: 2026-11-17 on `feat/173-easel-m0-pin`.
-> Last verified: 2026-11-14 (X contract update; PR checks determine CI status). X records now declare `post_format=text|image`; post validation and publisher both preserve honest optional media and manual-only handoff. The editorial gate routes by mode (technical/source versus general_interest). Offline feedback never starts platform actions.
-> X priority: platform rules/human gates -> registered account DNA -> Strategy X SOP -> scoped experiment.
+> Last verified: 2026-11-18 against PR #210 head `d2220078080b83ef0740b594dbedb06791ce9cec`; native Bilibili QC checks require an explicit landscape target and verifiable per-shot landscape sources. The TEST_ONLY sample is not Issue #199 acceptance.
+> X policy remains human-controlled: platform rules and registered account DNA govern; offline feedback never starts platform actions.
 
 > What the system is. Where the boundaries are. How components call each other.
 > Describes the target architecture after the 2026-11-02 host decision, and
@@ -56,9 +55,9 @@ FFmpeg / deterministic tools
 ## Host Adoption (ADR-016)
 
 The Owner decided on 2026-11-02 to adopt the full Easel system as the
-production base, superseding ADR-015 D1. The verified runtime today is still
-the pinned v0.2.1 checkout; the workbench/agent surface is **target**, not a
-running integration.
+production base, superseding ADR-015 D1. The active pinned runtime is v0.3.0;
+v0.2.1 is retained as the rollback tree. The workbench/agent surface is **target**,
+not a running integration.
 
 | Fact | State |
 |---|---|
@@ -146,7 +145,9 @@ Rules:
    `PLANNED`, and `video_deliver.py dispatch` requires an operator grant on top of
    `--execute`.
 
-## Branch Layers
+## Branch Layers — historical main snapshot
+
+The following table is retained as a historical convergence snapshot. It is not a live branch or PR inventory; consult CURRENT-STATE and GitHub for current status.
 
 The repository is mid-convergence. A component is only "part of the system" if it
 is on `main`.
@@ -262,6 +263,12 @@ project.yaml source_refs
 ```
 
 Both paths end at `PENDING_FOUNDER_REVIEW` with `production_ready: false`.
+
+The native Bilibili landscape branch is an explicit QC profile, not a container
+reinterpretation: the project and storyboard must declare 1920×1080, and QC
+checks every shot's source geometry. A TEST_ONLY receipt records one engineering
+sample, but its WARN verdict, generated non-evidence visuals and pending review
+mean it is not a production delivery or Issue #199 acceptance.
 
 ## Media Convergence
 
