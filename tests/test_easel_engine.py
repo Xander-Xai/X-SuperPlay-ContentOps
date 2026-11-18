@@ -238,6 +238,37 @@ def test_install_refuses_a_source_that_does_not_match_the_index():
         fixture.close()
 
 
+def test_install_accepts_crlf_overlay_when_lf_digest_matches_record():
+    import hashlib
+
+    fixture = _Fixture()
+    try:
+        relative = "skills/builtin/video-script/SKILL.md"
+        content_lf = b"first line\nsecond line\n"
+        content_crlf = content_lf.replace(b"\n", b"\r\n")
+        expected = hashlib.sha256(content_lf).hexdigest()
+        source = fixture.root / "source"
+        file = source / relative
+        file.parent.mkdir(parents=True)
+        file.write_bytes(content_crlf)
+        (fixture.root / "runtime" / "easel-workbench-upstream-tree.json").write_text(
+            json.dumps({"commit": COMMIT_B, "files": {relative: "ignored-by-overlay"}}),
+            encoding="utf-8")
+        (fixture.root / "runtime" / "easel-workbench-overlay.json").write_text(
+            json.dumps({"overlay": {"digests": {relative: expected}, "directories": []}}),
+            encoding="utf-8")
+
+        with fixture.patched():
+            code = engine_tool.cmd_install(
+                _args(engine="v0.3.0", source=str(source)))
+
+        installed = fixture.root / fixture.b.root / relative
+        assert code == 0, code
+        assert installed.read_bytes() == content_crlf
+    finally:
+        fixture.close()
+
+
 # --- runner ------------------------------------------------------------------
 
 TESTS = [value for name, value in sorted(globals().items())
