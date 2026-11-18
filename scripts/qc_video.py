@@ -35,7 +35,7 @@ from contentops.media.real_source_duration import (  # noqa: E402
     PASS as RSD_PASS,
     check as check_real_source_duration,
 )
-from contentops.paths import relative_label, resolve_project  # noqa: E402
+from contentops.paths import relative_label, resolve_label, resolve_project  # noqa: E402
 
 MIN_FILE_BYTES = 100 * 1024  # 100 KB
 MIN_DURATION = 30.0
@@ -257,6 +257,61 @@ def _expected_canvas(project: Path) -> tuple[int, int, str]:
         return 1920, 1080, "16:9"
     except (OSError, ValueError, TypeError) as exc:
         raise ValueError(f"NATIVE_CANVAS_UNVERIFIED: {exc}") from None
+
+
+def _native_source_geometry_check(project: Path, storyboard: dict) -> dict:
+    """Require every native horizontal storyboard shot to source 16:9 media.
+
+    Output dimensions alone cannot distinguish an authored landscape scene from
+    a portrait asset padded into a landscape carrier. The actual per-shot input
+    must therefore be present, probeable and landscape too.
+    """
+    shots = storyboard.get("shots") if isinstance(storyboard, dict) else None
+    failed = []
+    checked = 0
+    if not isinstance(shots, list) or not shots:
+        failed.append(-1)
+        shots = []
+
+    for index, shot in enumerate(shots):
+        if not isinstance(shot, dict):
+            failed.append(index)
+            continue
+        label = shot.get("video") or shot.get("image") or shot.get("source")
+        if not isinstance(label, str) or not label.strip():
+            failed.append(index)
+            continue
+        label = label.strip()
+        if label.startswith("project://"):
+            source_path = project / label[len("project://"):]
+        else:
+            candidate = Path(label)
+            if candidate.is_absolute():
+                source_path = candidate
+            else:
+                source_path = resolve_label(label, repo_root=ROOT)
+                if not source_path.is_file():
+                    source_path = project / candidate
+        if not source_path.is_file():
+            failed.append(index)
+            continue
+        meta = ffprobe_meta(source_path)
+        stream = next((row for row in meta.get("streams", [])
+                       if row.get("codec_type") == "video"), {})
+        width, height = int(stream.get("width") or 0), int(stream.get("height") or 0)
+        checked += 1
+        if width <= 0 or height <= 0 or abs(width * 9 - height * 16) > 2:
+            failed.append(index)
+
+    ok = checked == len(shots) and not failed
+    return {
+        "id": "native_storyboard_source_geometry",
+        "ok": ok,
+        "severity": "PASS" if ok else "FAIL",
+        "checked_shots": checked,
+        "failed_shot_indices": failed,
+        "expected_aspect": "16:9",
+    }
 
 
 def _canvas_checks(width: int, height: int, expected_w: int,
@@ -496,6 +551,8 @@ def qc(project: Path, target: str = "") -> dict:
         "severity": "FAIL" if not sb.get("shots") else "PASS",
         "shot_count": len(sb.get("shots", []) or []),
     })
+    if expected_aspect == "16:9":
+        checks.append(_native_source_geometry_check(project, sb))
 
     shots = sb.get("shots", []) or []
     real_floor, evidence_mode, content_type = _real_source_floor(project)
