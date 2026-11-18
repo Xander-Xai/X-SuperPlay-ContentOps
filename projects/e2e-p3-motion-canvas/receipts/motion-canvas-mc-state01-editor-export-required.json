@@ -1,7 +1,7 @@
 {
   "schema": "contentops.motion-canvas-receipt/v1",
   "project": "projects/e2e-p3-motion-canvas",
-  "created_at": "2026-11-16T20:14:36Z",
+  "created_at": "2026-11-18T10:13:13Z",
   "state": "BLOCKED",
   "code": "EDITOR_EXPORT_REQUIRED",
   "backend": "motion-canvas",
@@ -11,7 +11,7 @@
   "placement_id": "mc-state01",
   "asset_id": "mc-state01",
   "purpose": "test",
-  "fingerprint": "2e72828466c0947834bfe3c206030dafeb6e274e6644b469ed7c4a09b0e71c7d",
+  "fingerprint": "93c87a877b2e4c0795bb1cb6f37b4183b14cb72b0aa69d92f93000ca19ce97e6",
   "prepared_spec": "project://work/motion-canvas/mc-state01.spec.json",
   "prepared_spec_sha256": "9210d23d0fd396814e83c3dff8e025e8140d224fc5a35d986536947172728736",
   "expected_output": "project://assets/generated/motion-canvas/mc-state01.mp4",
@@ -30,7 +30,7 @@
     },
     "installed": true,
     "export_mode": "EDITOR_EXPORT_REQUIRED",
-    "template_digest": "eba5d7713265629103ec27133fa8db30a8ad576a37157df85591f0ff5a1d41c0",
+    "template_digest": "650e37aa199dc76ab0eaf3a530d7a5ee71be530bc15139e10984aff689e0439a",
     "license": "MIT"
   },
   "environment_probe": {
@@ -83,9 +83,10 @@
     ]
   },
   "remediation": [
+    "Prepare the clip with `python scripts/motion_canvas_adapter.py <project> --prepare --spec <project-relative-spec.json> --placement-id <id> --asset-id <id> --purpose <test|production>`; this records EDITOR_EXPORT_REQUIRED.",
     "Open the pinned editor with the prepared spec: set MOTION_CANVAS_SPEC_PATH to the prepared spec path, then `npm --prefix extensions/motion-canvas run dev`.",
     "Open http://localhost:9000, confirm 1080x1920 / 30 FPS / sRGB and the Video (FFmpeg) exporter in Video Settings (already declared in extensions/motion-canvas/src/project.meta). Click Render.",
-    "Save the exported MP4 inside the project and run `python scripts/motion_canvas_adapter.py <project> --import-editor-export --asset-id <id> --exported-mp4 <project-relative path>`.",
+    "Save the exported MP4 inside the project and run `python scripts/motion_canvas_adapter.py <project> --import-editor-export --spec <project-relative-spec.json> --placement-id <id> --asset-id <id> --purpose <test|production> --exported-mp4 <project-relative path>`.",
     "Only that imported, technically checked MP4 can supply render_evidence to capability_matrix(); a compile log can never do so."
   ],
   "impact": "No real MP4 exists for this prepared job. Do not register a clip, do not supply render_evidence to the capability matrix, and do not claim a headless or verified render until an editor-exported MP4 is imported and technically checked.",
