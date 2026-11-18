@@ -30,6 +30,7 @@ for candidate in (ROOT / "scripts", ROOT / "src"):
     if str(candidate) not in sys.path:
         sys.path.insert(0, str(candidate))
 
+from check_account_dna import check_account_document  # noqa: E402
 from contentops.accounts import (  # noqa: E402
     VIDEO_SCHEMA,
     X_SCHEMA,
@@ -76,6 +77,24 @@ def _failures(dna: dict) -> list:
 def _assert_fails(dna: dict, needle: str) -> None:
     failures = _failures(dna)
     assert any(needle in failure for failure in failures), (needle, failures)
+
+
+@test
+def test_account_checker_dispatches_each_known_schema_to_its_owner():
+    video = json.loads((ACCOUNTS / "x-superplay-1024.json").read_text(encoding="utf-8"))
+    x_account = _x()
+    video_failures = check_account_document(video, ROOT)
+    x_failures = check_account_document(x_account, ROOT)
+    assert not any("schema is" in item or "missing required key" in item
+                   for item in video_failures), video_failures
+    assert x_failures == [], x_failures
+
+
+@test
+def test_account_checker_fails_closed_for_unknown_schema():
+    failures = check_account_document({"schema": "contentops.account-dna/v999"}, ROOT)
+    assert len(failures) == 1
+    assert "unknown account schema" in failures[0]
 
 
 @test

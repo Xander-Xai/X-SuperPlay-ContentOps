@@ -2,8 +2,8 @@
 # Do not edit by hand: the DNA is the source of truth.
 schema: contentops.easel-profile/v1
 generated_from: config/accounts/x-superplay-future-intelligence.json
-generated_note: Generated from the account DNA. Edit the DNA, not this file.
-account: X超玩·未来智能
+generated_note: "Generated from the account DNA. Edit the DNA, not this file."
+account: "X超玩·未来智能"
 slug: x-superplay-future-intelligence
 role: Build
 canvas:
@@ -22,7 +22,7 @@ colors:
   muted: "#65747A"
   surface: "#F9FBFA"
   problem: "#BD5149"
-  code_theme: "github-light"
+  code_theme: github-light
 captions:
   font: Noto Sans CJK SC
   size_px: 47
@@ -63,12 +63,11 @@ qc:
     - no_manual_recording_in_frame
   cover_whitespace_min_ratio: 0.3
   cover_title_lines: 1
-  real_source_ratio_min: 0.7
 evidence:
   mode: EXPLANATORY
   manual_recording: FORBIDDEN
   required_evidence_class: DOCUMENTED
 engine: easel
-runtime_pin: Easel v0.2.1 / 3fe2d99
+runtime_pin: Easel v0.3.0 / bb3c8ff
 production_ready: false
 human_review: PENDING_FOUNDER_REVIEW
