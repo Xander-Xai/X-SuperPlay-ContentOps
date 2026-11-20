@@ -1,6 +1,6 @@
 {
   "schema": "contentops.branch-registry/v1",
-  "verified_at": "2026-11-17T02:40:00+08:00",
+  "verified_at": "2026-11-21T01:30:00+08:00",
   "policy": {
     "persistent": [
       "main"

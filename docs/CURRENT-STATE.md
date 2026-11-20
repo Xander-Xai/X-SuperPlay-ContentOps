@@ -4,17 +4,10 @@
 
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
-> Last verified: 2026-11-17 against `10017c2b74dca40a0d2f0df85c8023ccb01c3566` (`main` after PR #191); branch `feat/194-title-card-and-trusted-cache` builds on it. The 2026-11-17 diff only adds a Remotion `title_card` composition and a clip cache; no Easel/Huashu/lifecycle fact below changes. The Easel pin now lives in
-> `runtime/easel-pins.json`; `runtime/easel.lock.json` is a projection of its `active`
-> engine, and no code file carries a commit literal.
-> This worktree is 22 commits ahead of that `main` and 15 behind it; no rebase or merge has
-> been performed, so facts that belong to the branch are labelled as such.
-> Last verified: 2026-11-14, read-only GitHub main @ `515c605` (protected). The proposed X text/image and per-mode reviews are branch changes, not yet on main; real platform outcomes unverified.
-> X image posts require real media+ALT; explicit text posts omit media. General-interest posts use human novelty/evidence review without invented technical benchmarks. This implementation does not publish to X.
-> X and cross-platform offline analyzers are implemented; the platform outcomes and automatic end-to-end operations have not been verified.
-> Facts below describe `main`; deferred or rights-blocked work is labelled as such.
-> Sections below the "Layer status" table are historical milestone records;
-> they describe how a capability was proven, not what is current.
+> Last verified: 2026-11-21 against GitHub main `08d52ce6d6c0bd14471e857b1bed8181d2739fd7` (after #204); PR #210 remains DRAFT with engineering corrections through `a5ce83f`, not a released deliverable.
+> PR #210 checks were failing at verification time (Ubuntu, Windows, Repo Policy); failures reported stale docs and do not establish the result of later CI stages. Issue #199 is OPEN. Its remaining acceptance includes authorized real 1024 recording, final account deliverables, genuine Motion Canvas editor export, human review and clean-checkout reproduction.
+> The PR's committed native Bilibili receipt is TEST_ONLY: 15s, 1920×1080; native checks and full decode PASS; full QC WARN for short duration and absent real evidence; generated explanatory visuals are not evidence; visual review is `PENDING_FOUNDER_REVIEW`. It is not a production/account deliverable.
+> Sections below the dated Layer status and Git snapshots are historical unless explicitly labeled otherwise. They describe their stated date/scope, not a complete current inventory.
 
 ## Layer status (2026-11-12)
 
@@ -44,9 +37,27 @@
 
 ## Git
 
-> **Git state is re-verified below at 2026-11-12 (read-only documentation
-> sync).** Every other section below it is a historical snapshot kept for
-> traceability; none of them is the current state.
+### Git — verified 2026-11-21 (read-only GitHub checkpoint)
+
+| Property | Verified value |
+|---|---|
+| Default branch | `main` @ `08d52ce6d6c0bd14471e857b1bed8181d2739fd7` (after PR #204 squash, verified read-only) |
+| PR #210 | DRAFT at corrective commit `a5ce83f`; restored old Motion Canvas block receipt to preserve snapshot SHA; pending verified CI, nine docs audit and actual media acceptance |
+| Issue #199 | OPEN; authorized real screen recording, actual editor export, full account deliverables and Founder visual review remain outstanding |
+| Authorization | `production_ready=false`, `publish_authorized=false`, `PENDING_FOUNDER_REVIEW` unchanged |
+
+### Git — verified 2026-11-18 (live GitHub state)
+
+| Property | Verified value |
+|---|---|
+| Default branch | `main` @ `9690582a0fed34b08632cbb0445cb151924230bf` |
+| Current PR / issue | PR #210 OPEN / DRAFT; Issue #199 OPEN |
+| PR head | `feat/199-real-delivery-20261118` @ `d2220078080b83ef0740b594dbedb06791ce9cec`; five commits ahead of `main` |
+| CI | Ubuntu, Windows and Repo Policy checks failed at verification time; logs reported stale docs. Later CI stages are NOT_VERIFIED. |
+
+
+
+
 
 ### Git — verified 2026-11-17 (branch `feat/194-title-card-and-trusted-cache`, PR #195)
 

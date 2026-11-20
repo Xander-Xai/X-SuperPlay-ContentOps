@@ -1,50 +1,27 @@
 #!/usr/bin/env python3
-"""Validate the account DNA files.
+"""Validate each account document with the checker for its declared schema.
 
-The account DNA is the gene the whole account workflow reads. When it drifts
-from the brand base, two things break at once: the pipeline renders the wrong
-look, and the one-click prompt asks for a different one. Neither failure is
-visible in a rendered frame, so both are caught here instead.
+``contentops.account-dna/v2`` is the video-account contract; the separate
+``contentops.x-account/v1`` document is validated by its X publisher contract.
+The dispatch table lives in ``contentops.accounts``. Unknown schemas fail closed
+instead of being treated as video profiles.
 
-Checks, per account:
-  1. schema and required keys
-  2. palette is a valid hex pair and the accent is not the base
-  3. visual.accent is the one accent, not a second value
-  4. composition segments are unique and sum to 100
-  5. motion allow-list and deny-list are both non-empty and disjoint
-  6. caption style is borderless and shadowless, as the brand base requires
-  7. cover keeps the whitespace floor and a single title line
-  8. the evidence mode is declared, and the recording policy, the composition
-     and the QC checks all agree with it
-  9. the render block names the engine, a 9:16 vertical canvas, the fonts, the
-     audio and the QC checks, and its generated easel.yaml comes from this DNA
- 10. the benchmark priority is a ranked TOP3 with a primary
- 11. the one-click prompt exists, names every required output field, and
-     repeats the same palette
- 12. every skill_route entry resolves: its skill exists under a catalog root,
-     its SKILL.md front matter declares the same name, and its script path
-     exists under the base it declares
- 13. the discovery block, when present, is sound: its schema, its keywords
-     (each one must resolve to a field of this same DNA), its source
-     allowlist and blocklist (each source must exist in the registry and
-     carry a reason), its ranking weights, and the approval policy. An
-     account with no discovery block is warned about rather than failed:
-     the router refuses a hot-list search for it by name.
+The video checker validates the brand base, evidence/composition relationship,
+render inputs, complete generated Easel YAML, benchmarks, prompt and skill
+routes. The X checker owns its post/editorial/publishing contract; video-only
+fields such as a 9:16 render are never required from it.
 
 skill_route path bases
 ----------------------
-Each entry names ``script`` relative to one of two bases, and says which:
+Each video entry names ``script`` relative to its declared base:
 
-  path_base: "catalog"   script is relative to the Easel checkout root, e.g.
-                         ``skills/openclaw/video-script`` (v0.2) or
-                         ``skills/builtin/video-script`` (v0.3). The catalog
-                         resolver selects the version-appropriate skill root.
-  path_base: "repo"      script is relative to this repository's root, e.g.
-                         ``scripts/qc_video.py``.
+  path_base: "catalog"   script is relative to the Easel checkout root
+  path_base: "repo"      script is relative to this repository's root
+  path_base: "shared"    script is relative to the shared skill store
 
-The base is declared, never guessed from the string prefix. An entry that
-declares no base and whose skill is not in the catalog is reported as a
-warning rather than silently assumed to be either one.
+The base is declared, never guessed from the string prefix. A missing
+host-local catalog root or shared store is warned about rather than treated as
+proof that a skill is absent.
 
 Exit 0 = pass, exit 1 = fail.
 """
@@ -74,6 +51,8 @@ ACCOUNTS = ROOT / "config" / "accounts"
 sys.path.insert(0, str(ROOT / "src"))
 # The mode table and the composition rule live beside the QC that enforces
 # them, so the DNA check cannot hold a second, drifting copy.
+from contentops.accounts import UNKNOWN, VIDEO, X, account_kind, iter_accounts  # noqa: E402
+from contentops.publish.x_account import check_x_account  # noqa: E402
 from contentops.media.claim_coverage import (  # noqa: E402
     EVIDENCE_MODES,
     composition_policy_errors,
@@ -91,6 +70,7 @@ from contentops.hotspots.source_registry import (  # noqa: E402
     GITHUB_SEARCH,
     SOURCES,
 )
+from export_easel_yaml import render_easel_yaml  # noqa: E402
 
 SCHEMA = "contentops.account-dna/v2"
 
@@ -387,15 +367,23 @@ def check_account(
     render = dna.get("render") or {}
     if render.get("engine") != "easel":
         failures.append(f"render.engine is {render.get('engine')!r}, expected 'easel'")
-    easel_yaml = ROOT / "projects" / slug / "easel.yaml"
+    easel_yaml = root / "projects" / slug / "easel.yaml"
     if not easel_yaml.is_file():
-        failures.append(f"missing generated config {easel_yaml.relative_to(ROOT).as_posix()}")
+        failures.append(f"missing generated config {easel_yaml.relative_to(root).as_posix()}")
     else:
         text = easel_yaml.read_text(encoding="utf-8")
         if f"generated_from: config/accounts/{slug}.json" not in text:
             failures.append(
-                f"{easel_yaml.relative_to(ROOT).as_posix()} is not generated from this DNA"
+                f"{easel_yaml.relative_to(root).as_posix()} is not generated from this DNA"
             )
+        if dna.get("schema") == SCHEMA:
+            try:
+                expected_yaml = render_easel_yaml(dna, root=root)
+            except (TypeError, ValueError, KeyError) as exc:
+                failures.append(f"cannot derive Easel YAML from DNA and active pin: {exc}")
+            else:
+                if text != expected_yaml:
+                    failures.append("generated Easel YAML differs from DNA and active pin")
     benchmarks = dna.get("benchmarks") or {}
     priority = benchmarks.get("priority") or []
     if len(priority) != 3:
@@ -448,6 +436,24 @@ def check_account(
     warnings.extend(f"[{slug}] {warning}" for warning in local_warnings)
     failures.extend(_check_prompt(dna, palette, root))
     return [f"[{slug}] {failure}" for failure in failures]
+
+
+def check_account_document(
+    dna: Dict[str, Any],
+    root: Path,
+    warnings: Optional[List[str]] = None,
+) -> List[str]:
+    """Dispatch one account document by its declared schema; reject unknown kinds."""
+    kind = account_kind(dna)
+    if kind == VIDEO:
+        return check_account(dna, root, warnings)
+    if kind == X:
+        failures = check_x_account(dna, root, warnings)
+        slug = str(dna.get("slug") or "<no slug>")
+        return [f"[{slug}] {failure}" for failure in failures]
+    schema = dna.get("schema")
+    slug = str(dna.get("slug") or "<no slug>")
+    return [f"[{slug}] unknown account schema {schema!r}; no validator owns it"]
 
 
 def _check_discovery(dna: Dict[str, Any], warnings: List[str]) -> List[str]:
@@ -788,18 +794,17 @@ def main() -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
 
-    paths = sorted(ACCOUNTS.glob("*.json"))
-    if not paths:
+    documents = list(iter_accounts(root=ROOT))
+    if not documents:
         print(f"no account DNA found under {ACCOUNTS.relative_to(ROOT).as_posix()}/")
         return 1
 
     failures: List[str] = []
     warnings: List[str] = []
     checked: List[str] = []
-    for path in paths:
-        dna = json.loads(path.read_text(encoding="utf-8"))
+    for path, dna in documents:
         checked.append(str(dna.get("slug") or path.stem))
-        failures.extend(check_account(dna, ROOT, warnings))
+        failures.extend(check_account_document(dna, ROOT, warnings))
 
     # The catalog-absent warning is raised once per account; report it once.
     warnings = list(dict.fromkeys(warnings))

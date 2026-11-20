@@ -4,11 +4,8 @@
 
 > Authoritative local verification strategy, suite inventory and CI wiring.
 >
-> Last verified: 2026-11-17 on `feat/173-easel-m0-pin`; the 2026-11-17 clip-cache change extended `tests/test_animation_backend.py` only (no new top-level suite). The tree holds 107 suites under
-> `tests/test_*.py`, and `.github/workflows/ci.yml` names every one of them (107 steps).
-> The count is not asserted here; read it with `ls tests/test_*.py | wc -l`.
-> Last verified: 2026-11-14: added focused X regression cases for no-image text READY/package/URL recording, image-mode refusal, profile-specific review thresholds, and fail-closed account config; overall CI result is determined by the PR checks, not this statement.
-> X policy: Strategy canonical SOP and registered account DNA; source metrics and publishing still require human verification.
+> Last verified: 2026-11-18 on PR #210 branch `feat/199-real-delivery-20261118` @ `d2220078080b83ef0740b594dbedb06791ce9cec`.
+> The checkout has 119 tracked `tests/test_*.py` suites, and all 119 filenames are named in `.github/workflows/ci.yml`; this count does not include other workflow steps. PR #210's GitHub checks were failing at the documentation-freshness stage when checked. CI wiring is not evidence that a run passed.
 
 ## Risk-based local verification
 
@@ -53,9 +50,9 @@ python tests/test_media_convergence.py
 
 The authoritative current suite list is `git ls-files 'tests/test_*.py'`; a suite counts as CI-covered only when `.github/workflows/ci.yml` names it. CI enumerates suites explicitly. `check_repo_policy.check_test_suites_registered_in_ci` catches an unwired suite.
 
-## Current inventory
+## Selected suite inventory (not exhaustive)
 
-Function counts inside a suite are floors, not totals, because list-driven and unittest-style suites define checks differently.
+The repository currently contains 119 tracked `tests/test_*.py` suites, all explicitly referenced by `.github/workflows/ci.yml`. This table is a selected inventory, not a complete enumeration; its per-suite counts are floors, not totals, because list-driven and unittest-style suites define checks differently.
 
 | Suite | File | Count | CI |
 |---|---|---:|---|
@@ -151,9 +148,4 @@ The CI workflow also runs policy, docs, i18n, whitespace, subprocess and receipt
 - A regression suite for the publication path once a real platform URL exists —
   there is nothing to assert against before that.
 
-The inventory above is a floor, not a complete enumeration. The fetched
-`origin/main` at `98a61f22` has 104 tracked suites and 105 named Python CI steps;
-this Easel candidate adds three standalone suites and their CI steps, for a
-combined 107 suites and 108 steps when integrated. The checked-out branch still
-needs an approved integration with that remote baseline. `git ls-files
-'tests/test_*.py'` is authoritative for the current checkout.
+The selected inventory above is not exhaustive. For the exact checkout inventory, run `git ls-files 'tests/test_*.py'`; for CI wiring, compare those paths with `.github/workflows/ci.yml`. On PR #210's checked head (`d2220078`), the checkout had 119 tracked suites and all 119 filenames were referenced by the workflow. The latest observed PR checks failed in documentation freshness; this does not establish results for later CI stages.

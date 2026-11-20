@@ -1,0 +1,52 @@
+{
+  "size": "1920x1080",
+  "image_motion": "static",
+  "engine": "easel",
+  "voice_provider": "sapi test voice (local, non-production)",
+  "narration": "projects/e2e-p2-bilibili-169-sample/assets/generated/native-169/test-voice.wav",
+  "subtitle": "projects/e2e-p2-bilibili-169-sample/assets/captions/default.srt",
+  "shots": [
+    {
+      "shot_id": "native-target-layout",
+      "segment_id": "native-target-layout",
+      "asset_id": "m5-target-code",
+      "duration": 5.0,
+      "start": 0.0,
+      "end": 5.0,
+      "image": "projects/e2e-p2-bilibili-169-sample/assets/generated/native-169/scene-01-v2.png",
+      "source": "scripts/m5_production.py",
+      "source_type": "generated",
+      "generated": true,
+      "evidence_capable": false,
+      "permission": "CREATED_BY_OWNER"
+    },
+    {
+      "shot_id": "easel-size-layout",
+      "segment_id": "easel-size-layout",
+      "asset_id": "easel-size-code",
+      "duration": 5.0,
+      "start": 5.0,
+      "end": 10.0,
+      "image": "projects/e2e-p2-bilibili-169-sample/assets/generated/native-169/scene-02-v2.png",
+      "source": "scripts/assemble_easel.py",
+      "source_type": "generated",
+      "generated": true,
+      "evidence_capable": false,
+      "permission": "CREATED_BY_OWNER"
+    },
+    {
+      "shot_id": "native-qc-layout",
+      "segment_id": "native-qc-layout",
+      "asset_id": "native-qc-code",
+      "duration": 5.0,
+      "start": 10.0,
+      "end": 15.0,
+      "image": "projects/e2e-p2-bilibili-169-sample/assets/generated/native-169/scene-03-v2.png",
+      "source": "scripts/qc_video.py",
+      "source_type": "generated",
+      "generated": true,
+      "evidence_capable": false,
+      "permission": "CREATED_BY_OWNER"
+    }
+  ]
+}

@@ -2,9 +2,11 @@
 """Offline native-canvas QC tests: dimensions are not publication or layout proof."""
 from __future__ import annotations
 
+import json
 import sys
 import tempfile
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 for candidate in (ROOT / "src", ROOT / "scripts"):
@@ -65,10 +67,55 @@ def test_geometry_checks_are_orientation_specific() -> None:
     assert not wrong_resolution[0]["ok"] and wrong_resolution[1]["ok"]
 
 
+def test_native_source_geometry_requires_every_shot_to_be_landscape():
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        wide = project / "wide.png"
+        portrait = project / "portrait.png"
+        wide.write_bytes(b"fixture")
+        portrait.write_bytes(b"fixture")
+        metadata = {
+            str(wide): {"streams": [{"codec_type": "video", "width": 1920, "height": 1080}]},
+            str(portrait): {"streams": [{"codec_type": "video", "width": 1080, "height": 1920}]},
+        }
+        storyboard = {"shots": [{"image": str(wide)}, {"video": str(portrait)}]}
+        with mock.patch.object(qc_video, "ffprobe_meta", side_effect=lambda p: metadata[str(p)]):
+            result = qc_video._native_source_geometry_check(project, storyboard)
+        assert result["ok"] is False
+        assert result["failed_shot_indices"] == [1]
+
+
+def test_native_source_geometry_rejects_unverifiable_shots():
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        storyboard = {"shots": [{"caption": "missing media source"}]}
+        result = qc_video._native_source_geometry_check(project, storyboard)
+        assert result["ok"] is False
+        assert result["failed_shot_indices"] == [0]
+
+
+def test_engineering_sample_visuals_are_generated_not_evidence():
+    project = ROOT / "projects" / "e2e-p2-bilibili-169-sample"
+    storyboard = json.loads((project / "script" / "storyboard.json").read_text(encoding="utf-8"))
+    manifest = json.loads((project / "sources" / "assets.json").read_text(encoding="utf-8"))
+    assert storyboard["shots"]
+    assert all(shot["source_type"] == "generated"
+               and shot["generated"] is True
+               and shot["evidence_capable"] is False
+               for shot in storyboard["shots"])
+    assert all(asset["type"] == "generated_image"
+               and asset["generated"] is True
+               and asset["evidence_capable"] is False
+               for asset in manifest["assets"])
+
+
 def main() -> int:
     tests = (test_legacy_default_stays_vertical,
              test_horizontal_requires_explicit_native_target_and_storyboard,
-             test_geometry_checks_are_orientation_specific)
+             test_geometry_checks_are_orientation_specific,
+             test_native_source_geometry_requires_every_shot_to_be_landscape,
+             test_native_source_geometry_rejects_unverifiable_shots,
+             test_engineering_sample_visuals_are_generated_not_evidence)
     for run in tests:
         run()
         print("PASS", run.__name__)

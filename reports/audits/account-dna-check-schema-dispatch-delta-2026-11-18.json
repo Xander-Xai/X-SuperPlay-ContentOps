@@ -1,0 +1,53 @@
+{
+  "schema": "contentops.account-dna-check-delta/v1",
+  "created_at": "2026-11-18",
+  "baseline_report": "repo://reports/audits/account-dna-check-2026-11-18.json",
+  "baseline": {
+    "overall": "FAIL",
+    "failure_count": 53,
+    "warning_count": 10,
+    "failure_clusters": {
+      "x-account-schema-routed-through-video-validator": 52,
+      "missing-local-shared-skill-b-roll-finder": 1
+    }
+  },
+  "after_schema_dispatch": {
+    "overall": "FAIL",
+    "failure_count": 1,
+    "warning_count": 8,
+    "validated_accounts": [
+      {
+        "slug": "x-superplay-1024",
+        "schema": "contentops.account-dna/v2",
+        "validator": "video account DNA"
+      },
+      {
+        "slug": "x-superplay-english",
+        "schema": "contentops.x-account/v1",
+        "validator": "contentops.publish.x_account.check_x_account",
+        "result": "PASS"
+      },
+      {
+        "slug": "x-superplay-future-intelligence",
+        "schema": "contentops.account-dna/v2",
+        "validator": "video account DNA"
+      }
+    ],
+    "remaining_failures": [
+      "[x-superplay-1024] skill_route entry 'broll_finder' names skill 'b-roll-finder', which is not present in the shared skill store [redacted local shared skill store]"
+    ],
+    "warnings": "Eight remaining warnings concern absent host-local catalog roots; skill membership is not verified."
+  },
+  "delta": {
+    "failures_removed": 52,
+    "warnings_removed": 2,
+    "safety_rules_removed_or_weakened": false,
+    "account_dna_changed": false,
+    "b_roll_finder_installed": false
+  },
+  "reproducibility": {
+    "command": "python scripts/check_account_dna.py --json",
+    "exit_code": 1,
+    "reason": "The one remaining failure is the absent host-local b-roll-finder skill; the checker correctly fails closed."
+  }
+}

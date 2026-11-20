@@ -1,0 +1,95 @@
+{
+  "schema": "contentops.native-16x9-render/v1",
+  "created_at": "2026-11-18T09:17:40Z",
+  "state": "PASS",
+  "scope": "TEST_ONLY engineering sample; not an account deliverable",
+  "runtime": {
+    "engine": "easel",
+    "engine_id": "v0.3.0",
+    "commit": "bb3c8ff0463f36c202454d74171682ba6e470cb1"
+  },
+  "output": {
+    "path": "project://final/native-169-sample-v2.mp4",
+    "sha256": "c7e0280647fe9b538d09106eb9d390a077e70d3f2ad6b2fca339810e32761d28",
+    "bytes": 403603,
+    "width": 1920,
+    "height": 1080,
+    "fps": 30.0,
+    "duration_s": 15.0,
+    "video_codec": "h264"
+  },
+  "source_scenes": [
+    {
+      "path": "project://assets/generated/native-169/scene-01-v2.png",
+      "sha256": "21265e7cf5d4a6600529a7ae895ebcab148d8b17ab64b9547a3a7214ea3b85a4",
+      "width": 1920,
+      "height": 1080,
+      "source_svg": "project://assets/layouts/scene-01-v2.svg",
+      "generated": true,
+      "evidence_capable": false
+    },
+    {
+      "path": "project://assets/generated/native-169/scene-02-v2.png",
+      "sha256": "ace7e973bad0ca659763713297810f31d4d65733d633773acebf9edc2e0345e4",
+      "width": 1920,
+      "height": 1080,
+      "source_svg": "project://assets/layouts/scene-02-v2.svg",
+      "generated": true,
+      "evidence_capable": false
+    },
+    {
+      "path": "project://assets/generated/native-169/scene-03-v2.png",
+      "sha256": "c70f50c9d0ca62b26628ace7e80e129f5cdc75b329c96348580b0926eb6478e1",
+      "width": 1920,
+      "height": 1080,
+      "source_svg": "project://assets/layouts/scene-03-v2.svg",
+      "generated": true,
+      "evidence_capable": false
+    }
+  ],
+  "full_decode": {
+    "state": "PASS",
+    "returncode": 0,
+    "stderr": ""
+  },
+  "native_platform_checks": {
+    "resolution": {
+      "id": "resolution",
+      "ok": true,
+      "severity": "PASS",
+      "value": "1920x1080",
+      "expected": "1920x1080"
+    },
+    "aspect_ratio_16_9": {
+      "id": "aspect_ratio_16_9",
+      "ok": true,
+      "severity": "PASS",
+      "value": "1920:1080"
+    },
+    "native_storyboard_source_geometry": {
+      "id": "native_storyboard_source_geometry",
+      "ok": true,
+      "severity": "PASS",
+      "checked_shots": 3,
+      "failed_shot_indices": [],
+      "expected_aspect": "16:9"
+    }
+  },
+  "full_qc": {
+    "overall": "WARN",
+    "warn_checks": [
+      "duration_range",
+      "real_evidence_present"
+    ],
+    "receipt": "project://receipts/qc-report-native-169-sample-v2.json",
+    "expected_test_sample_warnings": "The 15s sample is below the 30s production minimum, and its three generated vector scenes are explanatory artwork, not evidence assets."
+  },
+  "keyframes": {
+    "first": "project://receipts/native-169-keyframes-v2/first.png",
+    "middle": "project://receipts/native-169-keyframes-v2/middle.png",
+    "last": "project://receipts/native-169-keyframes-v2/last.png"
+  },
+  "visual_review": "PENDING_FOUNDER_REVIEW",
+  "production_ready": false,
+  "publish_authorized": false
+}
