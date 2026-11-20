@@ -1332,312 +1332,48 @@ def stage_asr_backcheck(project: Path, config: Dict[str, Any],
                         script: Dict[str, Any],
                         narration: Dict[str, Any], *,
                         transcriber: Optional[Any] = None) -> Dict[str, Any]:
-    """Transcribe the narration and compare it with the spoken script.
+    """Compatibility facade for the extracted M5 ASR detector stage."""
+    from contentops.workflow import m5_asr_stage
 
-    This is a **detector**, and the one place where the workflow decides what to
-    do with an inconclusive detector. Three outcomes, deliberately asymmetric:
-
-    ``NO_PROBLEM_DETECTED``  the transcript covers the script. Nothing is
-                             approved and nothing becomes publishable.
-    ``DETECTED_PROBLEM``     the audio may say something else. That is exactly
-                             what human review is for, so it proceeds and the
-                             receipt states the finding.
-    ``SKIPPED``              no evidence was obtained. An account-bound project
-                             cannot be reviewed on missing evidence, so it blocks
-                             here — before compose, to avoid rendering a video
-                             that cannot be reviewed.
-
-    The comparison target is the spoken narration, never the on-screen subtitle
-    text: the lexicon rewrites how a token is pronounced, so a subtitle-shaped
-    expectation would report a false problem on a correct reading.
-    """
-    from contentops.media.asr_backcheck import backcheck_speech
-
-    runner = transcriber
-    if runner is None:
-        from contentops.media.asr_siliconflow import transcribe
-        runner = lambda path: transcribe(path)  # noqa: E731 - one-line binding
-
-    audio = Path(narration.get("audio") or "assets/voice/narration.wav")
-    if not audio.is_absolute():
-        audio = project / audio
-    if not audio.is_file():
-        raise M5Blocked(f"ASR backcheck needs the narration track: {audio}")
-
-    expected = "\n".join(str(line.get("narration") or "")
-                         for line in (script.get("lines") or []))
-    if not expected.strip():
-        raise M5Blocked("ASR backcheck has no spoken script to compare against")
-
-    result = backcheck_speech(
-        audio, expected,
-        transcriber=runner,
-        provider="siliconflow",
+    return m5_asr_stage.stage_asr_backcheck(
+        project, config, script, narration, transcriber=transcriber,
+        blocked_error=M5Blocked, declared_account=_declared_account,
+        sha256=_sha256, text_sha=_text_sha, write_json=_write_json,
     )
-
-    account = _declared_account(config)
-    blocked = bool(account) and result.status == "SKIPPED"
-
-    receipt = {
-        "schema": "contentops.asr-backcheck/v1",
-        "provider": result.provider,
-        "model": result.model,
-        "capabilities": result.capabilities or {"text": False},
-        "role": "DETECTOR_ONLY",
-        "can_approve_quality": False,
-        "audio": f"project://{audio.relative_to(project).as_posix()}",
-        "audio_sha256": _sha256(audio),
-        "audio_bytes": audio.stat().st_size,
-        "expected_sha256": _text_sha(expected),
-        "status": result.status,
-        "coverage": result.coverage,
-        "issues": result.issues,
-        "missing": result.missing,
-        "excess": result.duplicated,
-        "detail": result.detail,
-        "account_bound": bool(account),
-        "blocks_human_review": blocked,
-        "production_ready": False,
-        "publish_authorized": False,
-    }
-    _write_json(project / "receipts" / "asr-backcheck.json", receipt)
-
-    if blocked:
-        raise M5Blocked(
-            "ASR backcheck produced no usable evidence "
-            f"({result.detail or 'unknown reason'}); an account-bound project "
-            "cannot enter human review without it. Set SILICONFLOW_API_KEY and "
-            "re-run, or treat this render as diagnostic only."
-        )
-    return receipt
 
 
 def stage_subtitles(project: Path, script: Dict[str, Any], narration: Dict[str, Any]) -> Dict[str, Any]:
-    lines = script["lines"]
-    cues = []
-    for line, timing in zip(lines, narration["lines"]):
-        start = timing["start"]
-        end = start + timing["duration"]
-        cues.append(f"{len(cues) + 1}\n{_srt_time(start)} --> {_srt_time(end)}\n{line['caption']}\n")
-    srt = project / "assets" / "captions" / "default.srt"
-    srt.parent.mkdir(parents=True, exist_ok=True)
-    srt.write_text("\n".join(cues), encoding="utf-8")
-    covered = sum(t["duration"] for t in narration["lines"])
-    ratio = covered / narration["duration_s"] if narration["duration_s"] else 0.0
-    payload = {
-        "schema": "contentops.m5-subtitles/v1",
-        "path": srt.relative_to(project).as_posix(),
-        "cues": len(cues),
-        "coverage_ratio": round(ratio, 3),
-        "audio_duration_s": narration["duration_s"],
-    }
-    _write_json(project / "receipts" / "subtitles.json", payload)
-    if ratio < 0.8:
-        raise M5Blocked(f"subtitle coverage {ratio:.2f} is below 0.8")
-    return payload
+    """Compatibility facade for the extracted M5 subtitle stage."""
+    from contentops.workflow import m5_subtitles_stage
+
+    return m5_subtitles_stage.stage_subtitles(
+        project, script, narration, format_time=_srt_time,
+        blocked_error=M5Blocked, write_json=_write_json,
+    )
 
 
 def _align_shots_to_narration(shots: List[Dict[str, Any]],
                               narration_lines: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Align visual placements to the measured narration timeline.
+    """Compatibility facade for storyboard timeline alignment."""
+    from contentops.workflow import m5_storyboard_stage
 
-    A semantic narration line can now own multiple visual shots. Their weights
-    only divide that line's measured span; they never alter the speech text or
-    audio. Legacy one-shot-per-line storyboards retain the same conversion.
-    """
-    if not shots or not narration_lines:
-        return shots
-    segment_ids = [str(line.get("line_id") or line.get("segment_id") or "")
-                   for line in narration_lines]
-    has_segment_ids = any(shot.get("segment_id") for shot in shots)
-    if has_segment_ids and any(not value for value in segment_ids):
-        ordered_segments = list(dict.fromkeys(str(shot.get("segment_id") or "")
-                                              for shot in shots))
-        if (any(not value for value in segment_ids)
-                and all(not value for value in segment_ids)
-                and len(ordered_segments) == len(narration_lines)):
-            # Historical narration receipts may omit line_id. Their order is
-            # still deterministic, so align the explicitly grouped storyboard
-            # segments in order when the counts agree.
-            segment_ids = ordered_segments
-        else:
-            raise M5Blocked("measured narration lines need line_id to align multi-shot segments")
-    if not has_segment_ids and len(shots) != len(narration_lines):
-        raise M5Blocked("storyboard shots do not match measured narration lines")
-
-    grouped: Dict[str, List[Dict[str, Any]]] = {}
-    if has_segment_ids:
-        for shot in shots:
-            segment_id = str(shot.get("segment_id") or "")
-            if segment_id not in segment_ids:
-                raise M5Blocked(f"storyboard references unknown narration segment {segment_id!r}")
-            grouped.setdefault(segment_id, []).append(shot)
-    for index, line in enumerate(narration_lines):
-        segment_id = segment_ids[index]
-        rows = grouped.get(segment_id, []) if has_segment_ids else [shots[index]]
-        if not rows:
-            raise M5Blocked(f"narration segment {segment_id or index + 1!r} has no visual shot")
-        start = float(line.get("start") or 0.0)
-        if index + 1 < len(narration_lines):
-            end = float(narration_lines[index + 1].get("start") or 0.0)
-        else:
-            end = start + float(line.get("duration") or 0.0)
-        span = end - start
-        if span <= 0:
-            raise M5Blocked(f"narration line {index + 1} has a non-positive timeline span")
-        weights = []
-        for shot in rows:
-            try:
-                weight = float(shot.get("duration_weight") or shot.get("duration") or 1.0)
-            except (TypeError, ValueError):
-                weight = 0.0
-            if weight <= 0:
-                raise M5Blocked(f"shot {shot.get('shot_id')!r} has a non-positive timeline weight")
-            weights.append(weight)
-        cursor = start
-        for row_index, (shot, weight) in enumerate(zip(rows, weights)):
-            shot_end = end if row_index == len(rows) - 1 else cursor + span * weight / sum(weights)
-            duration = shot_end - cursor
-            shot["segment_id"] = segment_id or str(line.get("line_id") or index + 1)
-            shot["start"] = round(cursor, 3)
-            shot["end"] = round(shot_end, 3)
-            shot["duration"] = round(duration, 3)
-            shot["duration_s"] = round(duration, 3)
-            cursor = shot_end
-    return shots
+    return m5_storyboard_stage.align_shots_to_narration(
+        shots, narration_lines, blocked_error=M5Blocked)
 
 
 def stage_storyboard(project: Path, config: Dict[str, Any], script: Dict[str, Any],
                      narration: Dict[str, Any], subtitles: Dict[str, Any],
                      assets: Dict[str, Any],
                      media_audio: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    from contentops.media.storyboard_adapter import (
-        StoryboardContractError, build_shots,
+    """Compatibility facade for the extracted M5 storyboard stage."""
+    from contentops.workflow import m5_storyboard_stage
+
+    return m5_storyboard_stage.stage_storyboard(
+        project, config, script, narration, subtitles, assets, media_audio,
+        repo_root=ROOT, blocked_error=M5Blocked, payload_sha256=_payload_sha256,
+        relative_label=relative_label, write_json=_write_json,
+        align=_align_shots_to_narration,
     )
-    motion_assets = {}
-    motion_receipt = project / "receipts" / "motion-stage.json"
-    motion_configured = (config.get("motion") or {}).get("backend") in {
-        "huashu-art-motion", "huashu-motion", "art-motion", "motion",
-    }
-    if motion_configured and not motion_receipt.is_file():
-        raise M5Blocked("motion backend was requested but no motion-stage receipt was written")
-    if motion_receipt.is_file():
-        try:
-            motion_data = json.loads(motion_receipt.read_text(encoding="utf-8"))
-        except (OSError, ValueError) as exc:
-            raise M5Blocked(f"motion stage receipt is invalid: {exc}") from None
-        if motion_data.get("state") == "OK":
-            expected_script_sha = _payload_sha256(script)
-            if motion_data.get("script_sha256") != expected_script_sha:
-                if motion_configured:
-                    raise M5Blocked("motion-stage receipt does not match the current M5 script")
-            else:
-                motion_assets = {
-                    str(row.get("placement_id")): str(row.get("asset_id"))
-                    for row in motion_data.get("shots", [])
-                    if row.get("placement_id") and row.get("asset_id")
-                }
-    storyboard_lines = []
-    for original in script["lines"]:
-        line = dict(original)
-        motion_id = str(motion_assets.get(str(line.get("id")))
-                        or line.get("motion_asset_id") or "")
-        if motion_id:
-            motion_asset = assets.get(motion_id)
-            if not motion_asset:
-                raise M5Blocked(
-                    f"{line.get('id')}: motion asset {motion_id!r} is not registered")
-            if not (motion_asset.get("generated")
-                    or str(motion_asset.get("type") or "").lower().startswith("generated_")):
-                raise M5Blocked(
-                    f"{line.get('id')}: motion asset {motion_id!r} is not generated visual support")
-            line["asset_id"] = motion_id
-        storyboard_lines.append(line)
-    storyboard_visuals = None
-    if script.get("visual_shots") is not None:
-        storyboard_visuals = []
-        for original in script.get("visual_shots") or []:
-            row = dict(original)
-            placement_id = str(row.get("shot_id") or row.get("placement_id") or "")
-            motion_id = str(motion_assets.get(placement_id)
-                            or row.get("motion_asset_id") or row.get("asset_id") or "")
-            if motion_id:
-                motion_asset = assets.get(motion_id)
-                if not motion_asset:
-                    raise M5Blocked(
-                        f"{placement_id}: visual asset {motion_id!r} is not registered")
-                if (motion_assets.get(placement_id)
-                        and not (motion_asset.get("generated")
-                                 or str(motion_asset.get("type") or "").lower().startswith("generated_"))):
-                    raise M5Blocked(
-                        f"{placement_id}: motion asset {motion_id!r} is not generated visual support")
-                row["asset_id"] = motion_id
-            storyboard_visuals.append(row)
-    try:
-        shots = build_shots(lines=storyboard_lines,
-                            narration_lines=narration["lines"],
-                            assets=assets, repo_root=ROOT,
-                            visual_shots=storyboard_visuals)
-    except StoryboardContractError as exc:
-        raise M5Blocked(f"storyboard contract: {exc}")
-    shots = _align_shots_to_narration(shots, narration["lines"])
-    target = (config.get("target") or {}).get("resolution", "1080x1920")
-    generated_visual_ids = sorted({
-        str(shot.get("asset_id")) for shot in shots
-        if shot.get("asset_id") in assets
-        and (bool(assets[shot["asset_id"]].get("generated"))
-             or str(assets[shot["asset_id"]].get("type") or "").lower().startswith("generated_"))
-    })
-    storyboard = {
-        "size": target,
-        "image_motion": "static",
-        "pad_mode": "trim",
-        "shots": shots,
-        "narration": f"{relative_label(project)}/assets/voice/narration.wav",
-        "subtitle": f"{relative_label(project)}/assets/captions/default.srt",
-        "engine": "easel",
-        "voice_provider": (f"{narration.get('voice_provider', narration.get('engine', 'unknown'))}"
-                           f"/{narration.get('voice') or 'unspecified'}"),
-        "generated_visuals": {
-            "count": len(generated_visual_ids),
-            "asset_ids": generated_visual_ids,
-            "policy": ("visual_support_not_claim_evidence" if generated_visual_ids
-                       else "real_assets_only"),
-        },
-    }
-
-    # Audio supplied by the media_use stage is a support track mixed underneath
-    # the narration by the pinned Easel assembler. It is never a claim source and
-    # never replaces the voice track.
-    if media_audio:
-        bgm = media_audio.get("bgm")
-        if bgm:
-            if not (ROOT / bgm["repo_path"]).is_file():
-                raise M5Blocked(f"bgm file missing: {bgm['repo_path']}")
-            storyboard["bgm"] = bgm["repo_path"]
-            storyboard["bgm_volume"] = bgm["volume"]
-        total = float(narration.get("duration_s") or 0.0)
-        placements = []
-        for sfx in media_audio.get("sfx") or []:
-            if not (ROOT / sfx["repo_path"]).is_file():
-                raise M5Blocked(f"sfx file missing: {sfx['repo_path']}")
-            at = float(sfx["at"])
-            if total and at >= total:
-                raise M5Blocked(
-                    f"{sfx['id']}: sfx placement {at:.3f}s is at or beyond the "
-                    f"{total:.3f}s narration timeline"
-                )
-            entry = {"file": sfx["repo_path"], "at": at, "volume": sfx["volume"]}
-            if any(old["file"] == entry["file"] and old["at"] == entry["at"]
-                   for old in placements):
-                raise M5Blocked(f"{sfx['id']}: duplicate sfx placement")
-            placements.append(entry)
-        if placements:
-            storyboard["sfx"] = placements
-
-    path = project / "script" / "storyboard.json"
-    _write_json(path, storyboard)
-    return {"storyboard": storyboard, "shots": len(shots), "path": path}
 
 
 def _logical_path(path: Any, project: Path) -> Optional[str]:
@@ -1654,48 +1390,17 @@ def _logical_path(path: Any, project: Path) -> Optional[str]:
 
 
 def stage_compose(project: Path, slug: str) -> Dict[str, Any]:
+    """Compatibility facade for the extracted pinned-Easel compose stage."""
     import assemble_easel
+    from contentops.workflow import m5_compose_stage
 
-    previous_video = project / "final" / f"{slug}.mp4"
-    preserved_previous = project / "final" / f"{slug}-before-avatar-refresh.mp4"
-    if previous_video.is_file() and not preserved_previous.exists():
-        shutil.copy2(previous_video, preserved_previous)
-    result = assemble_easel.run(project, out_name=slug)
-    # The engine that actually produced this file, read from the one registry
-    # rather than inferred from the lock: a receipt that names an engine by
-    # version alone cannot be diffed after a switch, because the version string
-    # stays the same while the commit does not.
-    engine_block = result.get("easel") or {}
-    if not engine_block:
-        try:
-            from contentops.easel import pins as easel_pins
-
-            engine = easel_pins.active()
-            engine_block = {"engine_id": engine.engine_id, "tag": engine.tag,
-                            "commit": engine.commit, "tree_sha256": engine.tree_sha256,
-                            "layout": engine.layout}
-        except Exception:  # noqa: BLE001 - a receipt must not invent an engine
-            engine_block = {}
-    stamp = engine_block.get("tag") or "unrecorded"
-    upstream_path = Path(result.get(
-        "upstream", "skills/openclaw/auto-short-video/scripts/assemble.py"
-    )).as_posix()
-    upstream_suffix = (upstream_path.split("/skills/", 1)[-1]
-                       if "/skills/" in upstream_path else
-                       upstream_path.removeprefix("skills/"))
-    receipt = {
-        "status": result.get("status"),
-        "video": _logical_path(result.get("video"), project),
-        "subtitles_burned": result.get("subtitles_burned"),
-        "upstream": f"easel@{stamp}:skills/{upstream_suffix}",
-        "easel": engine_block or None,
-        "reason": result.get("reason"),
-    }
-    receipt = {key: value for key, value in receipt.items() if value is not None}
-    _write_json(project / "receipts" / "compose.json", receipt)
-    if result.get("status") != "OK":
-        raise M5Blocked(f"compose: {result.get('reason')}")
-    return receipt
+    return m5_compose_stage.stage_compose(
+        project, slug,
+        compose=lambda: assemble_easel.run(project, out_name=slug),
+        logical_path=lambda path: _logical_path(path, project),
+        write_json=_write_json,
+        blocked_error=M5Blocked,
+    )
 
 
 def _registered_asset_path(asset_root: Path, manifest: Dict[str, Any], asset_id: str) -> Path:
@@ -2309,53 +2014,13 @@ def _read_json_or_none(path: Path) -> Optional[Dict[str, Any]]:
 
 def stage_review(project: Path, slug: str, qc: Dict[str, Any],
                  bundle: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    report = qc["report"]
-    fails = [c["id"] for c in report.get("checks", []) if c.get("severity") == "FAIL"]
-    warns = [c["id"] for c in report.get("checks", []) if c.get("severity") == "WARN"]
-    bundle_id = (bundle or {}).get("bundle_id")
-    bundle_sha = (bundle or {}).get("bundle_sha256")
+    """Compatibility facade for the pending human-review receipt stage."""
+    from contentops.workflow import m5_review_stage
 
-    # A review is bound to the Bundle bytes it saw. If those bytes moved, the
-    # old review is revoked rather than left standing next to fresh evidence.
-    previous = _read_json_or_none(project / "receipts" / "human-review.json")
-    revoked = None
-    if previous and bundle_sha is not None:
-        reviewed = previous.get("reviewer") or previous.get("decision")
-        if reviewed and previous.get("bundle_sha256") != bundle_sha:
-            revoked = previous
-
-    voice_check = next((check for check in report.get("checks", [])
-                        if check.get("id") == "voice_quality_declared"), {})
-    voice_quality = (voice_check.get("voice_quality")
-                     or voice_check.get("voice_provider") or "unknown")
-
-    payload = {
-        "project": relative_label(project),
-        "video": f"{relative_label(project)}/final/{slug}.mp4",
-        "engine": "easel",
-        "voice_quality": voice_quality,
-        "bundle_id": bundle_id,
-        "bundle_sha256": bundle_sha,
-        "production_ready": False,
-        "state": "PENDING_FOUNDER_REVIEW",
-        "auto_qc_result": report.get("overall"),
-        "auto_qc_checks": len(report.get("checks", [])),
-        "auto_qc_fails": fails,
-        "auto_qc_warns": warns,
-        "reviewer": None,
-        "reviewed_at": None,
-        "scores": None,
-        "decision": None,
-        "note": "scores are null until a human fills them; this file is not an approval",
-    }
-    if revoked:
-        payload["review_revoked_reason"] = "BUNDLE_CHANGED"
-        payload["revoked_review"] = {
-            key: revoked.get(key)
-            for key in ("reviewer", "reviewed_at", "decision", "bundle_sha256")
-        }
-    _write_json(project / "receipts" / "human-review.json", payload)
-    return payload
+    return m5_review_stage.stage_review(
+        project, slug, qc, bundle,
+        read_json_or_none=_read_json_or_none, write_json=_write_json,
+    )
 
 
 def _guard_checkout(project: Path) -> Dict[str, Any]:
