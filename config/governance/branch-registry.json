@@ -1,6 +1,6 @@
 {
   "schema": "contentops.branch-registry/v1",
-  "verified_at": "2026-11-17T02:40:00+08:00",
+  "verified_at": "2026-11-21T01:20:00+08:00",
   "policy": {
     "persistent": [
       "main"
@@ -246,6 +246,14 @@
       "pr": 204,
       "created": "2026-11-17",
       "purpose": "Issue #140 next narrow stage extraction: extract M5 ASR backcheck behind the compatibility facade while preserving detector-only semantics, receipts and fail-closed review gate",
+      "status": "merged",
+      "expires": "2026-12-17"
+    },
+    {
+      "name": "refactor/140-m5-subtitles-20261117",
+      "pr": 205,
+      "created": "2026-11-17",
+      "purpose": "Issue #140 next narrow stage extraction: extract subtitle generation, SRT output and coverage refusal behind the M5 compatibility facade",
       "status": "active",
       "expires": "2026-12-17"
     }
