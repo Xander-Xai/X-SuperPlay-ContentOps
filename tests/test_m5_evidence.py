@@ -483,6 +483,28 @@ def test_stage_script_refuses_duplicate_ids_and_empty_narration() -> None:
     print("[ok] 16. duplicate line ids and empty narration are refused")
 
 
+def test_stage_subtitles_writes_legacy_srt_and_receipt() -> None:
+    work = _project()
+    script = {"lines": [{"id": "l1", "caption": "字幕行"}]}
+    narration = {"duration_s": 1.0, "lines": [{"start": 0.0, "duration": 0.9}]}
+
+    result = m5_production.stage_subtitles(work, script, narration)
+
+    assert result == {
+        "schema": "contentops.m5-subtitles/v1",
+        "path": "assets/captions/default.srt",
+        "cues": 1,
+        "coverage_ratio": 0.9,
+        "audio_duration_s": 1.0,
+    }
+    assert (work / result["path"]).read_text(encoding="utf-8") == (
+        "1\n00:00:00,000 --> 00:00:00,900\n字幕行\n"
+    )
+    assert json.loads((work / "receipts" / "subtitles.json").read_text(
+        encoding="utf-8")) == result
+    print("[ok] subtitles success preserves SRT and receipt contracts")
+
+
 def test_stage_subtitles_refuses_poor_coverage() -> None:
     work = _project()
     script = {"lines": [{"id": "l1", "caption": "一"},
@@ -646,6 +668,7 @@ TESTS = [
     test_stage_script_refuses_unknown_claim_and_undeclared_asset,
     test_stage_script_writes_the_legacy_check_and_source_bound_master,
     test_stage_script_refuses_duplicate_ids_and_empty_narration,
+    test_stage_subtitles_writes_legacy_srt_and_receipt,
     test_stage_subtitles_refuses_poor_coverage,
     test_ass_timestamps_are_centiseconds_and_match_the_srt,
     test_storyboard_timeline_covers_the_pauses_between_lines,
