@@ -262,6 +262,14 @@
       "pr": 206,
       "created": "2026-11-17",
       "purpose": "Issue #140 next narrow stage extraction: extract storyboard construction, narration alignment and support-audio validation behind the M5 facade",
+      "status": "merged",
+      "expires": "2026-12-17"
+    },
+    {
+      "name": "refactor/140-m5-compose-20261117",
+      "pr": 207,
+      "created": "2026-11-17",
+      "purpose": "Issue #140 next narrow stage extraction: extract the pinned Easel composition handoff and receipt preservation behind the M5 facade",
       "status": "active",
       "expires": "2026-12-17"
     }
