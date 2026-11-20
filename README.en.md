@@ -4,11 +4,10 @@
 
 [简体中文](README.md) | English
 
-> Last verified: 2026-11-17 on `feat/173-easel-m0-pin` (M0: single pin registry). The status table describes
+> Last verified: 2026-11-21. Rechecked the M5 ASR (#204) and subtitle (#205) extraction diffs. The compatibility entry points, evidence gates and pending human/publication review remain unchanged.
 > Last verified: 2026-11-14. Local-only X and cross-platform analytics exist; no live account growth is verified.
 > X original-post workflow now supports explicit `post_format=text` without an image/ALT, or `post_format=image` with real 1600x900 raster+ALT. General-interest writing has a separate evidence-honest human rubric; all publication is still manual and requires a real own X URL.
 > Operating authority: canonical Strategy X SOP and account DNA; local-only real analytics and human review/manual publishing.
-> `main`, never a draft branch.
 
 > Local analytics: X uses [X learning loop](docs/X-LOCAL-LEARNING-LOOP.md); other platforms use the [cross-platform local loop](docs/PLATFORM-LOCAL-LEARNING-LOOP.md). Raw account data stays offline; learning briefs require human Strategy review.
 
