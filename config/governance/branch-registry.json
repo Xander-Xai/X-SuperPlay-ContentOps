@@ -246,7 +246,7 @@
       "pr": 204,
       "created": "2026-11-17",
       "purpose": "Issue #140 next narrow stage extraction: extract M5 ASR backcheck behind the compatibility facade while preserving detector-only semantics, receipts and fail-closed review gate",
-      "status": "active",
+      "status": "merged",
       "expires": "2026-12-17"
     },
     {
