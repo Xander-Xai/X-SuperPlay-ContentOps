@@ -4,7 +4,7 @@
 
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
- > Last verified: 2026-11-21 against `08d52ce6d6c0bd14471e857b1bed8181d2739fd7` (`main` after PR #204). Rechecked M5 ASR extraction (#204, merged on main) and subtitle extraction (#205, integration under review): `scripts/m5_production.py` keeps compatibility facades, with `src/contentops/workflow/m5_asr_stage.py` and `m5_subtitles_stage.py` implementing their prior contracts. No approval, source capture, or publication authority is gained.
+> Last verified: 2026-11-21 against `08d52ce6d6c0bd14471e857b1bed8181d2739fd7` (`main` after PR #204). Rechecked M5 ASR extraction (#204, merged on main) and subtitle extraction (#205, integration under review): `scripts/m5_production.py` keeps compatibility facades, with `src/contentops/workflow/m5_asr_stage.py` and `m5_subtitles_stage.py` implementing their prior contracts. No approval, source capture, or publication authority is gained.
 > The dated Git-state tables below are historical snapshots, not current remote branch counts.
 > Last verified: 2026-11-14, read-only GitHub main @ `515c605` (protected). The proposed X text/image and per-mode reviews are branch changes, not yet on main; real platform outcomes unverified.
 > X image posts require real media+ALT; explicit text posts omit media. General-interest posts use human novelty/evidence review without invented technical benchmarks. This implementation does not publish to X.
