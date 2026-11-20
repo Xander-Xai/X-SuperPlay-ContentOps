@@ -2,7 +2,8 @@
 
 [English](ARCHITECTURE.md) | [简体中文](ARCHITECTURE.zh-CN.md)
 
-> Last verified: 2026-11-18 against PR #210 head `d2220078080b83ef0740b594dbedb06791ce9cec`; native Bilibili QC checks require an explicit landscape target and verifiable per-shot landscape sources. The TEST_ONLY sample is not Issue #199 acceptance.
+> Last verified: 2026-11-21 against PR #210 head `d2220078080b83ef0740b594dbedb06791ce9cec`; native Bilibili QC checks require an explicit landscape target and verifiable per-shot landscape sources. The TEST_ONLY sample is not Issue #199 acceptance.
+> Rechecked 2026-11-21: PR #210 retains TEST_ONLY limits, the original hash-bound Motion Canvas historical receipt was restored in `a5ce83f`, and Issue #199 is not accepted or publication-authorized.
 > X policy remains human-controlled: platform rules and registered account DNA govern; offline feedback never starts platform actions.
 
 > What the system is. Where the boundaries are. How components call each other.

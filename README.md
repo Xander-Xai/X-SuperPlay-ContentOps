@@ -4,7 +4,7 @@
 
 简体中文 | [English](README.en.md)
 
-> 最后验证：2026-11-18，对照 PR #210 分支 `feat/199-real-delivery-20261118` @ `d2220078080b83ef0740b594dbedb06791ce9cec`；基线 `main` @ `9690582a0fed34b08632cbb0445cb151924230bf`。
+> 最后验证：2026-11-21，已核对 PR #210 工程差异与 `a5ce83f` 回执恢复；下方旧分支状态为 2026-11-18 历史快照。PR #210 分支 `feat/199-real-delivery-20261118` @ `d2220078080b83ef0740b594dbedb06791ce9cec`；基线 `main` @ `9690582a0fed34b08632cbb0445cb151924230bf`。
 > PR #210 仍为 OPEN / DRAFT；核验时 Ubuntu、Windows 与 Repo Policy 检查均失败。Issue #199 仍开放。TEST_ONLY 原生 16:9 样片回执记录 15 秒、1920×1080，原生检查与全片解码 PASS，完整 QC WARN；画面为生成式解释图、不可作证，Founder 审片待完成。这不是账号成片，也不代表 Issue #199 验收完成。
 > 下方能力表是 2026-11-12 的历史 `main` 快照，并非当前 `main` 或本 PR 分支的完整能力清单；不能据此推断未列出的分支变更或当前 GitHub 状态。
 > X 规则仍以 Strategy 唯一 SOP 与注册账号 DNA 为准；本地指标离线处理，发布与审核由人控制。

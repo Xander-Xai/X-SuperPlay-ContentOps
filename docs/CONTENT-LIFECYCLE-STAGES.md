@@ -7,7 +7,8 @@
 > not emit a success receipt, a publication record or a metric.
 
 > Status: reference — historical baseline 2026-11-12.
-> Last verified: 2026-11-18 against PR #210 head `d2220078080b83ef0740b594dbedb06791ce9cec` and live Issue #199. PR #210 adds native Bilibili source-geometry QC and a TEST_ONLY sample receipt; it does not close the issue or authorize production/publication.
+> Last verified: 2026-11-21 against PR #210 head `d2220078080b83ef0740b594dbedb06791ce9cec` and live Issue #199. PR #210 adds native Bilibili source-geometry QC and a TEST_ONLY sample receipt; it does not close the issue or authorize production/publication.
+> Rechecked 2026-11-21: PR #210 retains TEST_ONLY limits, the original hash-bound Motion Canvas historical receipt was restored in `a5ce83f`, and Issue #199 is not accepted or publication-authorized.
 > The receipt records native checks and full decode PASS, full QC WARN, generated non-evidence scenes and pending Founder review. Repo-wide counts of approved human reviews or created platform drafts are NOT_VERIFIED in this pass.
 Related: [ARCHITECTURE.md](ARCHITECTURE.md), [PRD.md](PRD.md),
 [ADR-015](adr/ADR-015-platform-placeholders-and-content-bundle.md),

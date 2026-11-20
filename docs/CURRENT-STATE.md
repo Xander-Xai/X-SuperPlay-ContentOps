@@ -4,7 +4,7 @@
 
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
-> Last verified: 2026-11-18 against GitHub `main` @ `9690582a0fed34b08632cbb0445cb151924230bf`; PR #210 head `feat/199-real-delivery-20261118` @ `d2220078080b83ef0740b594dbedb06791ce9cec`, OPEN / DRAFT, based on that `main`.
+> Last verified: 2026-11-21 against GitHub main `08d52ce6d6c0bd14471e857b1bed8181d2739fd7` (after #204); PR #210 remains DRAFT with engineering corrections through `a5ce83f`, not a released deliverable.
 > PR #210 checks were failing at verification time (Ubuntu, Windows, Repo Policy); failures reported stale docs and do not establish the result of later CI stages. Issue #199 is OPEN. Its remaining acceptance includes authorized real 1024 recording, final account deliverables, genuine Motion Canvas editor export, human review and clean-checkout reproduction.
 > The PR's committed native Bilibili receipt is TEST_ONLY: 15s, 1920×1080; native checks and full decode PASS; full QC WARN for short duration and absent real evidence; generated explanatory visuals are not evidence; visual review is `PENDING_FOUNDER_REVIEW`. It is not a production/account deliverable.
 > Sections below the dated Layer status and Git snapshots are historical unless explicitly labeled otherwise. They describe their stated date/scope, not a complete current inventory.
@@ -36,6 +36,15 @@
 | Output root (products outside the checkout) | implemented (`src/contentops/paths.py`); `CONTENTOPS_OUTPUT_ROOT` selects `<root>/{workspace,deliverables,_tmp}` — the experiment sandbox, the reviewed products, and the scratch state. Unset, the three roots are exactly where they were, so CI and every committed receipt keep working. Rules: `docs/FILE-PLACEMENT-POLICY.md` |
 
 ## Git
+
+### Git — verified 2026-11-21 (read-only GitHub checkpoint)
+
+| Property | Verified value |
+|---|---|
+| Default branch | `main` @ `08d52ce6d6c0bd14471e857b1bed8181d2739fd7` (after PR #204 squash, verified read-only) |
+| PR #210 | DRAFT at corrective commit `a5ce83f`; restored old Motion Canvas block receipt to preserve snapshot SHA; pending verified CI, nine docs audit and actual media acceptance |
+| Issue #199 | OPEN; authorized real screen recording, actual editor export, full account deliverables and Founder visual review remain outstanding |
+| Authorization | `production_ready=false`, `publish_authorized=false`, `PENDING_FOUNDER_REVIEW` unchanged |
 
 ### Git — verified 2026-11-18 (live GitHub state)
 

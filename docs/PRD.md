@@ -2,7 +2,8 @@
 
 [English](PRD.md) | [简体中文](PRD.zh-CN.md)
 
-> Last verified: 2026-11-18 against PR #210 head `d2220078080b83ef0740b594dbedb06791ce9cec`; code changes add schema-dispatched account checks and native Bilibili source-geometry QC, but do not complete Issue #199 acceptance.
+> Last verified: 2026-11-21 against PR #210 head `d2220078080b83ef0740b594dbedb06791ce9cec`; code changes add schema-dispatched account checks and native Bilibili source-geometry QC, but do not complete Issue #199 acceptance.
+> Rechecked 2026-11-21: PR #210 retains TEST_ONLY limits, the original hash-bound Motion Canvas historical receipt was restored in `a5ce83f`, and Issue #199 is not accepted or publication-authorized.
 > Issue #199 remains OPEN. The native sample is TEST_ONLY, has full QC WARN, uses generated non-evidence visuals, and awaits human review; no account deliverable or publication is claimed.
 
 ## 1. Background

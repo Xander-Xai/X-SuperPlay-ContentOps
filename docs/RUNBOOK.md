@@ -3,7 +3,8 @@
 [English](RUNBOOK.md) | [简体中文](RUNBOOK.zh-CN.md)
 
 > Real executable commands. Derived from actual script behavior, not assumptions.
-> Last verified: 2026-11-18 on PR #210 head `d2220078080b83ef0740b594dbedb06791ce9cec`.
+> Last verified: 2026-11-21 on PR #210 head `d2220078080b83ef0740b594dbedb06791ce9cec`.
+> Rechecked 2026-11-21: PR #210 retains TEST_ONLY limits, the original hash-bound Motion Canvas historical receipt was restored in `a5ce83f`, and Issue #199 is not accepted or publication-authorized.
 > Native Bilibili 16:9 QC is an explicit target path; the TEST_ONLY sample receipt is not an account deliverable and its full QC remains WARN. Issue #199 remains OPEN.
 
 ## 0. Environment check

@@ -4,7 +4,8 @@
 
 > Milestone-based execution. Every milestone has an exit criterion.
 >
-> Last verified: 2026-11-18 against PR #210 head `d2220078080b83ef0740b594dbedb06791ce9cec`; its account-schema, Easel YAML and native Bilibili QC changes do not satisfy Issue #199's real-deliverable acceptance criteria.
+> Last verified: 2026-11-21 against PR #210 head `d2220078080b83ef0740b594dbedb06791ce9cec`; its account-schema, Easel YAML and native Bilibili QC changes do not satisfy Issue #199's real-deliverable acceptance criteria.
+> Rechecked 2026-11-21: PR #210 retains TEST_ONLY limits, the original hash-bound Motion Canvas historical receipt was restored in `a5ce83f`, and Issue #199 is not accepted or publication-authorized.
 > Issue #199 remains OPEN: the TEST_ONLY sample does not replace authorized real 1024 recording-based production, final account deliverables, Motion Canvas editor export, Founder review or clean-checkout reproduction.
 
 ## Status legend
