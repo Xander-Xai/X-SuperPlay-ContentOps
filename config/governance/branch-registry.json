@@ -275,7 +275,7 @@
     },
     {
       "name": "refactor/140-m5-qc-20261117",
-      "pr": 208,
+      "pr": 212,
       "created": "2026-11-17",
       "purpose": "Issue #140 next narrow stage extraction: isolate technical QC execution, canonical receipts and fail-closed verdict handling behind the M5 facade",
       "status": "active",
@@ -283,7 +283,7 @@
     },
     {
       "name": "refactor/140-m5-visual-qc-20261117",
-      "pr": 209,
+      "pr": 213,
       "created": "2026-11-17",
       "purpose": "Issue #140 next narrow stage extraction: isolate automated visual QC, video-bound receipts and incomplete-sampling refusal behind the M5 facade",
       "status": "active",
