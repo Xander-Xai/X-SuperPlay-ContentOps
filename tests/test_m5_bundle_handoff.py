@@ -180,6 +180,34 @@ def test_broken_source_mapping_blocks_video():
             raise AssertionError("a wrong source map must block the video run")
 
 
+def test_review_receipt_preserves_qc_summary_and_stays_pending():
+    with tempfile.TemporaryDirectory(dir=ROOT / "projects") as tmp:
+        project = Path(tmp)
+        (project / "receipts").mkdir()
+        review = m5_production.stage_review(
+            project, "bundle-video",
+            {"report": {"overall": "WARN", "checks": [
+                {"id": "qc-a", "severity": "FAIL"},
+                {"id": "qc-b", "severity": "WARN"},
+                {"id": "qc-c", "severity": "PASS"},
+                {"id": "voice_quality_declared", "severity": "WARN",
+                 "voice_quality": "windows_sapi_offline"},
+            ]}},
+        )
+        saved = json.loads((project / "receipts" / "human-review.json")
+                           .read_text(encoding="utf-8"))
+    assert review["auto_qc_fails"] == ["qc-a"]
+    assert review["auto_qc_warns"] == ["qc-b", "voice_quality_declared"]
+    assert review["voice_quality"] == "windows_sapi_offline"
+    assert review["state"] == "PENDING_FOUNDER_REVIEW"
+    assert review["production_ready"] is False
+    assert review["reviewer"] is None
+    assert review["reviewed_at"] is None
+    assert review["scores"] is None
+    assert review["decision"] is None
+    assert saved == review
+
+
 def test_a_bundle_change_revokes_the_existing_review():
     with tempfile.TemporaryDirectory(dir=ROOT / "projects") as tmp:
         project = Path(tmp)

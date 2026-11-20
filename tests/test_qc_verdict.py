@@ -109,6 +109,41 @@ def test_historical_warn_is_kept_and_named():
 
 
 @test
+def test_stage_qc_preserves_pass_receipt_without_approving():
+    slug = "historical-pass"
+    original_has_audio = m5_production._has_audio
+    original_hidden_run = m5_production.hidden_run
+    try:
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory) / slug
+            (project / "receipts").mkdir(parents=True)
+            (project / "final").mkdir()
+            (project / "final" / f"{slug}.mp4").write_bytes(b"not-a-video")
+            report_path = project / "receipts" / f"qc-report-{slug}.json"
+            report_path.write_text(json.dumps({
+                "overall": "PASS", "graded_target": f"project://final/{slug}.mp4",
+                "checks": [],
+            }), encoding="utf-8")
+            m5_production._has_audio = lambda _video: True
+            m5_production.hidden_run = lambda *_args, **_kwargs: type(
+                "R", (), {"returncode": 0, "stdout": "", "stderr": ""},
+            )()
+
+            result = m5_production.stage_qc(project, slug)
+            saved = json.loads(report_path.read_text(encoding="utf-8"))
+            assert result["report"] == saved
+            assert saved["overall"] == "PASS"
+            assert saved["m5_checks"]["blocked"] is False
+            assert saved["production_ready"] is False
+            assert saved["publish_authorized"] is False
+            assert (project / "receipts" / f"qc-report-{slug}.md").is_file()
+            print("[ok] stage_qc preserves PASS while leaving approval false")
+    finally:
+        m5_production._has_audio = original_has_audio
+        m5_production.hidden_run = original_hidden_run
+
+
+@test
 def test_stage_qc_blocks_an_account_warn_and_preserves_the_receipt():
     slug = "acct-warn"
     original_has_audio = m5_production._has_audio
