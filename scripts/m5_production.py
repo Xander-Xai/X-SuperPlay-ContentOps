@@ -1332,109 +1332,24 @@ def stage_asr_backcheck(project: Path, config: Dict[str, Any],
                         script: Dict[str, Any],
                         narration: Dict[str, Any], *,
                         transcriber: Optional[Any] = None) -> Dict[str, Any]:
-    """Transcribe the narration and compare it with the spoken script.
+    """Compatibility facade for the extracted M5 ASR detector stage."""
+    from contentops.workflow import m5_asr_stage
 
-    This is a **detector**, and the one place where the workflow decides what to
-    do with an inconclusive detector. Three outcomes, deliberately asymmetric:
-
-    ``NO_PROBLEM_DETECTED``  the transcript covers the script. Nothing is
-                             approved and nothing becomes publishable.
-    ``DETECTED_PROBLEM``     the audio may say something else. That is exactly
-                             what human review is for, so it proceeds and the
-                             receipt states the finding.
-    ``SKIPPED``              no evidence was obtained. An account-bound project
-                             cannot be reviewed on missing evidence, so it blocks
-                             here — before compose, to avoid rendering a video
-                             that cannot be reviewed.
-
-    The comparison target is the spoken narration, never the on-screen subtitle
-    text: the lexicon rewrites how a token is pronounced, so a subtitle-shaped
-    expectation would report a false problem on a correct reading.
-    """
-    from contentops.media.asr_backcheck import backcheck_speech
-
-    runner = transcriber
-    if runner is None:
-        from contentops.media.asr_siliconflow import transcribe
-        runner = lambda path: transcribe(path)  # noqa: E731 - one-line binding
-
-    audio = Path(narration.get("audio") or "assets/voice/narration.wav")
-    if not audio.is_absolute():
-        audio = project / audio
-    if not audio.is_file():
-        raise M5Blocked(f"ASR backcheck needs the narration track: {audio}")
-
-    expected = "\n".join(str(line.get("narration") or "")
-                         for line in (script.get("lines") or []))
-    if not expected.strip():
-        raise M5Blocked("ASR backcheck has no spoken script to compare against")
-
-    result = backcheck_speech(
-        audio, expected,
-        transcriber=runner,
-        provider="siliconflow",
+    return m5_asr_stage.stage_asr_backcheck(
+        project, config, script, narration, transcriber=transcriber,
+        blocked_error=M5Blocked, declared_account=_declared_account,
+        sha256=_sha256, text_sha=_text_sha, write_json=_write_json,
     )
-
-    account = _declared_account(config)
-    blocked = bool(account) and result.status == "SKIPPED"
-
-    receipt = {
-        "schema": "contentops.asr-backcheck/v1",
-        "provider": result.provider,
-        "model": result.model,
-        "capabilities": result.capabilities or {"text": False},
-        "role": "DETECTOR_ONLY",
-        "can_approve_quality": False,
-        "audio": f"project://{audio.relative_to(project).as_posix()}",
-        "audio_sha256": _sha256(audio),
-        "audio_bytes": audio.stat().st_size,
-        "expected_sha256": _text_sha(expected),
-        "status": result.status,
-        "coverage": result.coverage,
-        "issues": result.issues,
-        "missing": result.missing,
-        "excess": result.duplicated,
-        "detail": result.detail,
-        "account_bound": bool(account),
-        "blocks_human_review": blocked,
-        "production_ready": False,
-        "publish_authorized": False,
-    }
-    _write_json(project / "receipts" / "asr-backcheck.json", receipt)
-
-    if blocked:
-        raise M5Blocked(
-            "ASR backcheck produced no usable evidence "
-            f"({result.detail or 'unknown reason'}); an account-bound project "
-            "cannot enter human review without it. Set SILICONFLOW_API_KEY and "
-            "re-run, or treat this render as diagnostic only."
-        )
-    return receipt
 
 
 def stage_subtitles(project: Path, script: Dict[str, Any], narration: Dict[str, Any]) -> Dict[str, Any]:
-    lines = script["lines"]
-    cues = []
-    for line, timing in zip(lines, narration["lines"]):
-        start = timing["start"]
-        end = start + timing["duration"]
-        cues.append(f"{len(cues) + 1}\n{_srt_time(start)} --> {_srt_time(end)}\n{line['caption']}\n")
-    srt = project / "assets" / "captions" / "default.srt"
-    srt.parent.mkdir(parents=True, exist_ok=True)
-    srt.write_text("\n".join(cues), encoding="utf-8")
-    covered = sum(t["duration"] for t in narration["lines"])
-    ratio = covered / narration["duration_s"] if narration["duration_s"] else 0.0
-    payload = {
-        "schema": "contentops.m5-subtitles/v1",
-        "path": srt.relative_to(project).as_posix(),
-        "cues": len(cues),
-        "coverage_ratio": round(ratio, 3),
-        "audio_duration_s": narration["duration_s"],
-    }
-    _write_json(project / "receipts" / "subtitles.json", payload)
-    if ratio < 0.8:
-        raise M5Blocked(f"subtitle coverage {ratio:.2f} is below 0.8")
-    return payload
+    """Compatibility facade for the extracted M5 subtitle stage."""
+    from contentops.workflow import m5_subtitles_stage
+
+    return m5_subtitles_stage.stage_subtitles(
+        project, script, narration, format_time=_srt_time,
+        blocked_error=M5Blocked, write_json=_write_json,
+    )
 
 
 def _align_shots_to_narration(shots: List[Dict[str, Any]],
