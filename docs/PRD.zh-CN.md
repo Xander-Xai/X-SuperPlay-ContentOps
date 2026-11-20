@@ -6,7 +6,8 @@ translation_status: synced
 
 # PRD — X-SuperPlay ContentOps 运行时
 
-> 最后验证：2026-11-18，对照 PR #210 head `d2220078080b83ef0740b594dbedb06791ce9cec`；改动增加 schema 分派账号检查与 B 站原生逐镜头源几何 QC，但未完成 Issue #199 验收。
+> 最后验证：2026-11-21，对照 PR #210 head `d2220078080b83ef0740b594dbedb06791ce9cec`；改动增加 schema 分派账号检查与 B 站原生逐镜头源几何 QC，但未完成 Issue #199 验收。
+> 2026-11-21 复核：#210 仍是 TEST_ONLY 工程验收，`a5ce83f` 已恢复旧 Motion Canvas 历史阻塞回执；#199 正式交付与发布权限均未获批准。
 > Issue #199 仍 OPEN。原生样片属于 TEST_ONLY，完整 QC 为 WARN，使用不可作证的生成式画面，且待人工审片；不声称已有账号成片或已发布内容。
 > 标为“已实现”只表示本仓库有代码，不等于有作品被发布。
 

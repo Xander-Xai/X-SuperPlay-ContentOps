@@ -10,7 +10,7 @@ translation_status: synced
 
 > 当前运行状态。仅经验证的事实。无展望，无过时声明。
 >
-> 最后验证：2026-11-18，对照 GitHub `main` @ `9690582a0fed34b08632cbb0445cb151924230bf`；PR #210 分支 `feat/199-real-delivery-20261118` @ `d2220078080b83ef0740b594dbedb06791ce9cec`，OPEN / DRAFT，基于该 `main`。
+> 最后验证：2026-11-21，核对 GitHub `main` @ `08d52ce6d6c0bd14471e857b1bed8181d2739fd7`（#204 合并后）；PR #210 保持 Draft，修正提交至 `a5ce83f`，不等于正式交付。
 > 核验时 PR #210 的 Ubuntu、Windows、Repo Policy 检查失败；报告指向文档过期，不能据此推断后续 CI 阶段结果。Issue #199 仍 OPEN，剩余验收包括经授权的 1024 真实录屏、双账号正式成片、Motion Canvas 编辑器真实导出、人工审片与干净检出复现。
 > PR 中的 B 站原生样片回执范围为 TEST_ONLY：15 秒、1920×1080；原生检查与全片解码 PASS；完整 QC WARN（时长不足且无真实证据）；生成式解释画面不可作证；视觉审片为 `PENDING_FOUNDER_REVIEW`。它不是生产/账号成片。
 > 下方带日期的 Layer 状态与 Git 快照均为历史记录，除非明确标注为当前；它们描述各自日期/范围，不构成当前完整能力清单。
@@ -42,6 +42,15 @@ translation_status: synced
 | 产物根（产物出 checkout） | 已实现（`src/contentops/paths.py`）；`CONTENTOPS_OUTPUT_ROOT` 选择 `<root>/{workspace,deliverables,_tmp}`——实验沙箱、复核后的成品、临时状态。变量未设时三个根与过去完全一致，CI 与每一份已提交收据照常工作。规则见 `docs/FILE-PLACEMENT-POLICY.md` |
 
 ## Git
+
+### Git — 2026-11-21 远程只读核验
+
+| 属性 | 已核验事实 |
+|---|---|
+| 默认分支 | `main` @ `08d52ce6d6c0bd14471e857b1bed8181d2739fd7`（PR #204 squash 后的只读 GitHub 核验） |
+| PR #210 | Draft，修复提交 `a5ce83f` 恢复原 Motion Canvas 阻塞回执，保留能力快照 SHA；仍待 CI、文档及真实媒体验收 |
+| Issue #199 | OPEN：授权录屏、编辑器实际导出、双账号成片、Founder 审片尚未完成 |
+| 授权边界 | `production_ready=false`、`publish_authorized=false`、`PENDING_FOUNDER_REVIEW` 不变 |
 
 ### Git — 2026-11-18 核验（GitHub 当前状态）
 

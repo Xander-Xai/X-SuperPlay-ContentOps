@@ -10,7 +10,8 @@ translation_status: synced
 > 没有可执行代码的阶段必须保持为占位符，不得写成功回执、发布记录或指标。
 >
 > 状态：参考文档——2026-11-12 历史基线。
-> 最后验证：2026-11-18，对照 PR #210 head `d2220078080b83ef0740b594dbedb06791ce9cec` 与实时 Issue #199。PR #210 增加 B 站原生源几何 QC 与 TEST_ONLY 样片回执；这不代表 Issue 已关闭，也不授权生产或发布。
+> 最后验证：2026-11-21，对照 PR #210 head `d2220078080b83ef0740b594dbedb06791ce9cec` 与实时 Issue #199。PR #210 增加 B 站原生源几何 QC 与 TEST_ONLY 样片回执；这不代表 Issue 已关闭，也不授权生产或发布。
+> 2026-11-21 复核：#210 仍是 TEST_ONLY 工程验收，`a5ce83f` 已恢复旧 Motion Canvas 历史阻塞回执；#199 正式交付与发布权限均未获批准。
 > 回执记录原生检查及全片解码 PASS、完整 QC WARN、生成式非证据画面与待完成的 Founder 审片。本次未核验全仓已批准人工审核或已创建平台草稿的数量，标记为 NOT_VERIFIED。
 
 相关文档：[架构](ARCHITECTURE.md)、[PRD](PRD.md)、[ADR-015](adr/ADR-015-platform-placeholders-and-content-bundle.md)、[ADR-016](adr/ADR-016-easel-host-adoption.md)、[平台适配器契约](PLATFORM-ADAPTER-CONTRACT.md)、[Easel 能力清单](EASEL-CAPABILITY-INVENTORY.md)。

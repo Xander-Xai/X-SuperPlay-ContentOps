@@ -8,7 +8,8 @@ translation_status: synced
 
 [English](ARCHITECTURE.md) | [简体中文](ARCHITECTURE.zh-CN.md)
 
-> 最后验证：2026-11-18，对照 PR #210 head `d2220078080b83ef0740b594dbedb06791ce9cec`；B 站原生 QC 要求显式横屏目标及逐镜头可验证的横向源素材。TEST_ONLY 样片不等于 Issue #199 验收。
+> 最后验证：2026-11-21，对照 PR #210 head `d2220078080b83ef0740b594dbedb06791ce9cec`；B 站原生 QC 要求显式横屏目标及逐镜头可验证的横向源素材。TEST_ONLY 样片不等于 Issue #199 验收。
+> 2026-11-21 复核：#210 仍是 TEST_ONLY 工程验收，`a5ce83f` 已恢复旧 Motion Canvas 历史阻塞回执；#199 正式交付与发布权限均未获批准。
 > X 规则仍由平台要求与注册账号 DNA 约束，线下数据回流不会触发平台操作。
 
 > 系统是什么。边界在哪里。组件如何调用。

@@ -4,7 +4,7 @@
 
 [简体中文](README.md) | English
 
-> Last verified: 2026-11-18 against PR #210 branch `feat/199-real-delivery-20261118` @ `d2220078080b83ef0740b594dbedb06791ce9cec`; base `main` @ `9690582a0fed34b08632cbb0445cb151924230bf`.
+> Last verified: 2026-11-21. Rechecked PR #210 engineering changes and the `a5ce83f` historical receipt restoration; earlier branch observations below are a 2026-11-18 snapshot. PR #210 branch `feat/199-real-delivery-20261118` @ `d2220078080b83ef0740b594dbedb06791ce9cec`; base `main` @ `9690582a0fed34b08632cbb0445cb151924230bf`.
 > PR #210 is OPEN and DRAFT; CI checks were failing at verification time. Issue #199 remains OPEN. The TEST_ONLY native 16:9 sample receipt records 15s / 1920×1080, native checks and full decode PASS, full QC WARN, generated explanatory visuals (not evidence), and Founder review pending. This is not an account deliverable or acceptance of Issue #199.
 > The capability table below is a historical `main` snapshot dated 2026-11-12, not a current inventory of `main` or this PR branch. Do not infer unlisted branch changes or current GitHub state from it.
 > X policy remains: canonical Strategy X SOP and registered account DNA; local metrics are offline, and posting/review remain human-controlled.

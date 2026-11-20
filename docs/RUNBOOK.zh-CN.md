@@ -9,7 +9,8 @@ translation_status: synced
 [English](RUNBOOK.md) | [简体中文](RUNBOOK.zh-CN.md)
 
 > 真实可执行命令。从实际脚本行为推导，非假设。
-> 最后验证：2026-11-18，对照 PR #210 head `d2220078080b83ef0740b594dbedb06791ce9cec`。
+> 最后验证：2026-11-21，对照 PR #210 head `d2220078080b83ef0740b594dbedb06791ce9cec`。
+> 2026-11-21 复核：#210 仍是 TEST_ONLY 工程验收，`a5ce83f` 已恢复旧 Motion Canvas 历史阻塞回执；#199 正式交付与发布权限均未获批准。
 > B 站原生 16:9 QC 属于显式目标路径；TEST_ONLY 样片回执不是账号成片，且完整 QC 仍为 WARN。Issue #199 仍 OPEN。
 
 ## 0. 环境检查
