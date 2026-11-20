@@ -2,11 +2,10 @@
 
 [English](PRD.md) | [简体中文](PRD.zh-CN.md)
 
-> Last verified: 2026-11-17 on `feat/173-easel-m0-pin`. Requirement states are checked
+> Last verified: 2026-11-21 against the #204/#205 M5 refactor diffs. The extracted ASR/subtitle stage modules preserve the recorded acceptance semantics; no additional delivered video or publishing capability is claimed.
 > Last verified: 2026-11-14 (X original-post scope update). Accepted X behaviors: text-only originals without image or ALT, image originals with verified raster/ALT, and mode-appropriate human quality scoring; all preserve claim provenance, rights and manual-only posting. Local-only feedback never performs platform actions.
 > X priority: platform rules/human gates -> registered account DNA -> Strategy X SOP -> scoped experiment.
-> against the code on that date; a requirement marked implemented has code here,
-> which is not the same as a published work.
+> A requirement marked implemented has code here; that is not evidence of published work.
 
 ## 1. Background
 

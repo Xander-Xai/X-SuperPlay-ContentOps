@@ -4,11 +4,8 @@
 
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
-> Last verified: 2026-11-17 against `10017c2b74dca40a0d2f0df85c8023ccb01c3566` (`main` after PR #191); branch `feat/194-title-card-and-trusted-cache` builds on it. The 2026-11-17 diff only adds a Remotion `title_card` composition and a clip cache; no Easel/Huashu/lifecycle fact below changes. The Easel pin now lives in
-> `runtime/easel-pins.json`; `runtime/easel.lock.json` is a projection of its `active`
-> engine, and no code file carries a commit literal.
-> This worktree is 22 commits ahead of that `main` and 15 behind it; no rebase or merge has
-> been performed, so facts that belong to the branch are labelled as such.
+> Last verified: 2026-11-21. Rechecked M5 ASR extraction (#204, merged on main) and subtitle extraction (#205, integration under review): `scripts/m5_production.py` keeps compatibility facades, with `src/contentops/workflow/m5_asr_stage.py` and `m5_subtitles_stage.py` implementing their prior contracts. No approval, source capture, or publication authority is gained.
+> The dated Git-state tables below are historical snapshots, not current remote branch counts.
 > Last verified: 2026-11-14, read-only GitHub main @ `515c605` (protected). The proposed X text/image and per-mode reviews are branch changes, not yet on main; real platform outcomes unverified.
 > X image posts require real media+ALT; explicit text posts omit media. General-interest posts use human novelty/evidence review without invented technical benchmarks. This implementation does not publish to X.
 > X and cross-platform offline analyzers are implemented; the platform outcomes and automatic end-to-end operations have not been verified.
