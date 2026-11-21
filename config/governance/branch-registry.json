@@ -294,8 +294,32 @@
       "pr": 213,
       "created": "2026-11-17",
       "purpose": "Issue #140 next narrow stage extraction: isolate automated visual QC, video-bound receipts and incomplete-sampling refusal behind the M5 facade",
-      "status": "active",
+      "status": "merged",
       "expires": "2026-12-17"
+    },
+    {
+      "name": "feat/199-real-delivery-20261118",
+      "pr": 210,
+      "created": "2026-11-18",
+      "purpose": "Issue #199 draft real-media acceptance follow-up: native 16:9 QC and account validation, but no real account-final deliverables or Founder approval",
+      "status": "active",
+      "expires": "2026-12-18"
+    },
+    {
+      "name": "docs/199-project-state-closeout",
+      "pr": null,
+      "created": "2026-11-17",
+      "purpose": "Retained historical documentation branch with one unique unmerged commit; frozen for item-by-item review, not current state or approved delivery",
+      "status": "archived",
+      "expires": "2026-12-21"
+    },
+    {
+      "name": "governance/branch-ledger-20261121",
+      "pr": 214,
+      "created": "2026-11-21",
+      "purpose": "Issue #7 post-#213 governance reconciliation of merged M5 rows, Draft #210, retained historical docs/199 branch and bilingual Git snapshot; no runtime or production authority change",
+      "status": "active",
+      "expires": "2026-12-21"
     }
   ]
 }
