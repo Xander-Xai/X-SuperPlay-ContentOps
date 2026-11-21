@@ -312,6 +312,14 @@
       "purpose": "Retained historical documentation branch with one unique unmerged commit; frozen for item-by-item review, not current state or approved delivery",
       "status": "archived",
       "expires": "2026-12-21"
+    },
+    {
+      "name": "governance/branch-ledger-20261121",
+      "pr": 214,
+      "created": "2026-11-21",
+      "purpose": "Issue #7 post-#213 governance reconciliation of merged M5 rows, Draft #210, retained historical docs/199 branch and bilingual Git snapshot; no runtime or production authority change",
+      "status": "active",
+      "expires": "2026-12-21"
     }
   ]
 }
