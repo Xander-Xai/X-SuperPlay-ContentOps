@@ -420,6 +420,66 @@ def test_stage_compose_records_blocked_receipt_before_refusing() -> None:
     assert receipt["reason"] == "storyboard missing"
 
 
+def _run_visual_qc_stage(project: Path, *, extraction_failures: int) -> dict:
+    video = project / "final" / "sample.mp4"
+    video.parent.mkdir(parents=True, exist_ok=True)
+    video.write_bytes(b"fixture video bytes")
+    receipts = project / "receipts"
+    receipts.mkdir(parents=True, exist_ok=True)
+    contact_sheet = receipts / "visual-contact-sheet.png"
+    contact_sheet.write_bytes(b"contact sheet fixture")
+    runtime = project / "fake-huashu"
+    gate_script = runtime / "scripts" / "film_gate.py"
+    gate_script.parent.mkdir(parents=True, exist_ok=True)
+    gate_script.write_text("# fixture", encoding="utf-8")
+
+    def hidden_run(command, **_kwargs):
+        if any(str(part).endswith("qc_visual.py") for part in command):
+            (receipts / "visual-qc.json").write_text(json.dumps({
+                "status": "PASS", "video": str(video),
+                "contact_sheet": str(contact_sheet),
+                "summary": {"extraction_failures": extraction_failures},
+            }), encoding="utf-8")
+            return type("R", (), {"returncode": 0, "stdout": "", "stderr": ""})()
+        return type("R", (), {
+            "returncode": 0,
+            "stdout": json.dumps({"gate_light": "green", "verdict": "green"}),
+            "stderr": "",
+        })()
+
+    import contentops.media.huashu_runtime as huashu_runtime
+    with mock.patch.object(huashu_runtime, "find_runtime", return_value=runtime):
+        with mock.patch.object(m5_production, "hidden_run", side_effect=hidden_run):
+            return m5_production.stage_visual_qc(project, "sample")
+
+
+def test_stage_visual_qc_binds_pass_to_video_and_keeps_review_pending() -> None:
+    project = _project()
+    result = _run_visual_qc_stage(project, extraction_failures=0)
+    assert result["state"] == "PASS"
+    assert result["production_ready"] is False
+    assert result["publish_authorized"] is False
+    assert result["human_review"] == "PENDING_FOUNDER_REVIEW"
+    assert len(result["video_sha256"]) == 64
+    saved = json.loads((project / "receipts" / "visual-gate.json").read_text(
+        encoding="utf-8"))
+    assert saved == result
+    print("[ok] visual PASS is video-bound and never replaces founder review")
+
+
+def test_stage_visual_qc_blocks_incomplete_frame_sampling_even_on_gate_pass() -> None:
+    project = _project()
+    message = _raises(m5_production.M5Blocked, _run_visual_qc_stage,
+                      project, extraction_failures=4)
+    assert "visual motion gate BLOCKED" in message
+    saved = json.loads((project / "receipts" / "visual-gate.json").read_text(
+        encoding="utf-8"))
+    assert saved["state"] == "BLOCKED"
+    assert saved["frame_sampling_failures"] == 4
+    print("[ok] incomplete frame sampling blocks an otherwise green visual gate")
+
+
+
 def test_stage_script_refuses_unknown_claim_and_undeclared_asset() -> None:
     work = _script_project(
         [{"id": "l1", "claim": "ghost", "narration": "n", "caption": "c", "asset_id": "card"}],
@@ -663,6 +723,8 @@ TESTS = [
     test_m5_source_facade_preserves_duplicate_handling_and_receipt,
     test_m5_claim_facade_keeps_receipt_and_fail_closed_error,
     test_stage_assets_refuses_a_path_outside_the_repository,
+    test_stage_visual_qc_binds_pass_to_video_and_keeps_review_pending,
+    test_stage_visual_qc_blocks_incomplete_frame_sampling_even_on_gate_pass,
     test_stage_compose_preserves_previous_output_and_writes_engine_receipt,
     test_stage_compose_records_blocked_receipt_before_refusing,
     test_stage_script_refuses_unknown_claim_and_undeclared_asset,
