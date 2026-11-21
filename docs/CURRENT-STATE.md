@@ -4,7 +4,7 @@
 
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
-> Last verified: 2026-11-21 against `08d52ce6d6c0bd14471e857b1bed8181d2739fd7` (`main` after PR #204). Rechecked M5 ASR extraction (#204, merged on main) and subtitle extraction (#205, integration under review): `scripts/m5_production.py` keeps compatibility facades, with `src/contentops/workflow/m5_asr_stage.py` and `m5_subtitles_stage.py` implementing their prior contracts. No approval, source capture, or publication authority is gained.
+> Last verified: 2026-11-21 against `ffb87ad96eab6283c773bfd150c81497979b536a` (protected `main` after #213 squash). M5's remaining thin-runner refactor and #199 authentic-media acceptance are still OPEN; no publishing or human approval was granted.
 > The dated Git-state tables below are historical snapshots, not current remote branch counts.
 > Last verified: 2026-11-14, read-only GitHub main @ `515c605` (protected). The proposed X text/image and per-mode reviews are branch changes, not yet on main; real platform outcomes unverified.
 > X image posts require real media+ALT; explicit text posts omit media. General-interest posts use human novelty/evidence review without invented technical benchmarks. This implementation does not publish to X.
@@ -44,6 +44,17 @@
 > **Git state is re-verified below at 2026-11-12 (read-only documentation
 > sync).** Every other section below it is a historical snapshot kept for
 > traceability; none of them is the current state.
+
+### Git — verified 2026-11-21 (post-#213 read-only checkpoint)
+
+| Property | Verified value |
+|---|---|
+| Default branch | `main` @ `ffb87ad96eab6283c773bfd150c81497979b536a` (squash of #213; read-only GitHub branch API) |
+| Open PRs | 1: #210 Draft (TEST_ONLY code checks, real-media acceptance pending) |
+| Open issues | 8: #7, #51, #56, #140, #173, #199, #208, #211; none silently closed |
+| Remote branches | 6 at checkpoint, before this governance PR branch was created: protected main; retained archive; #199 Draft; historical docs/199; superseded feature branches #192 and #194 |
+| M5 extraction | #204/#205/#206/#207/#209/#212/#213 merged under protected CI; `scripts/m5_production.py` still has 2,306 lines, so #140 remains OPEN |
+| Safety | Rights and Founder review remain pending; no production/publish authorization or real account-final videos proven |
 
 ### Git — verified 2026-11-21 (read-only live GitHub checkpoint)
 
