@@ -1865,62 +1865,14 @@ def _compose_partial_avatar_preview(project: Path, slug: str, avatar: Dict[str, 
 
 
 def stage_qc(project: Path, slug: str) -> Dict[str, Any]:
-    from contentops.media.qc_canonical import (
-        CURRENCY_CURRENT,
-        canonical_qc_report,
-        render_canonical_qc_markdown,
-    )
-    from contentops.media.qc_verdict import judge_technical_qc, project_is_account_bound
+    """Compatibility facade for the extracted M5 technical QC stage."""
+    from contentops.workflow import m5_qc_stage
 
-    proc = hidden_run(
-        [python_executable(), str(ROOT / "scripts" / "qc_video.py"), str(project),
-         "--video", f"{slug}.mp4"],
-        cwd=str(ROOT), timeout=900,
+    return m5_qc_stage.stage_qc(
+        project, slug, repo_root=ROOT, python_executable=python_executable,
+        hidden_run=hidden_run, has_audio=_has_audio,
+        write_json=_write_json, blocked_error=M5Blocked,
     )
-    report_path = project / "receipts" / f"qc-report-{slug}.json"
-    legacy_path = project / "receipts" / "qc-report.json"
-    if not report_path.is_file() and legacy_path.is_file():
-        report_path = legacy_path
-    if not report_path.is_file():
-        raise M5Blocked(f"qc produced no report: {(proc.stderr or proc.stdout)[-300:]}")
-    report = json.loads(report_path.read_text(encoding="utf-8"))
-    video = project / "final" / f"{slug}.mp4"
-    graded_target = f"project://final/{slug}.mp4"
-    has_audio = _has_audio(video)
-    canonical = canonical_qc_report(
-        report, repo_root=ROOT, project_root=project,
-        graded_target=graded_target, currency=CURRENCY_CURRENT,
-    )
-    canonical["project"] = (
-        project.relative_to(ROOT).as_posix() if project.is_relative_to(ROOT) else "project://"
-    )
-    judged = dict(canonical)
-    declared = report.get("graded_target")
-    if declared not in (None, "", graded_target):
-        judged["graded_target"] = declared
-    decision = judge_technical_qc(
-        judged, has_audio=has_audio,
-        account_bound=project_is_account_bound(project),
-        graded_target=graded_target,
-    )
-    canonical["m5_checks"] = {
-        "audio_stream": has_audio,
-        "overall": decision["overall"],
-        "blocked": decision["blocked"],
-        "reason": decision["reason"],
-        "historical_exception": decision["historical_exception"],
-        "production_ready": False,
-        "publish_authorized": False,
-    }
-    canonical["production_ready"] = False
-    canonical["publish_authorized"] = False
-    _write_json(report_path, canonical)
-    (project / "receipts" / f"qc-report-{slug}.md").write_text(
-        render_canonical_qc_markdown(canonical, project_name=project.name), encoding="utf-8"
-    )
-    if decision["blocked"]:
-        raise M5Blocked("QC failed: " + json.dumps(canonical["m5_checks"]))
-    return {"report": canonical, "video": str(video)}
 
 
 def stage_visual_qc(project: Path, slug: str) -> Dict[str, Any]:
