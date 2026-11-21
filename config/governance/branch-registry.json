@@ -240,6 +240,14 @@
       "purpose": "Issue #140 next narrow stage extraction: move script/claim/asset validation and source-bound reviewer-copy generation behind the existing M5 facade",
       "status": "active",
       "expires": "2026-12-17"
+    },
+    {
+      "name": "feat/199-real-delivery-20261118",
+      "pr": 210,
+      "created": "2026-11-18",
+      "purpose": "Issue #199 Draft-only native 16:9 QC/account verification and TEST_ONLY evidence; genuine editor export, real recording, final delivery and Founder review remain blocked",
+      "status": "active",
+      "expires": "2026-12-18"
     }
   ]
 }
