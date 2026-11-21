@@ -270,6 +270,14 @@
       "pr": 207,
       "created": "2026-11-17",
       "purpose": "Issue #140 next narrow stage extraction: extract the pinned Easel composition handoff and receipt preservation behind the M5 facade",
+      "status": "merged",
+      "expires": "2026-12-17"
+    },
+    {
+      "name": "refactor/140-m5-review-20261117",
+      "pr": 209,
+      "created": "2026-11-17",
+      "purpose": "Issue #140 extracted source-bound human-review receipt stage behind the legacy M5 compatibility facade, retaining fail-closed approval and readiness semantics",
       "status": "active",
       "expires": "2026-12-17"
     }
