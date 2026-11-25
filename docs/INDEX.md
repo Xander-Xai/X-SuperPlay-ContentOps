@@ -136,3 +136,5 @@ REAL EXECUTION RECEIPT
 ```
 
 - [EDITORIAL-OPS.md](EDITORIAL-OPS.md) — Local editorial planning / 本地运营策划
+
+#210 real-media acceptance: see [delivery acceptance runbook](REAL-DELIVERY-ACCEPTANCE.md).

@@ -2,8 +2,9 @@
 
 [English](QUALITY-STANDARD.md) | [简体中文](QUALITY-STANDARD.zh-CN.md)
 
-> Last reviewed: 2026-11-17 against `scripts/qc_video.py`, `scripts/qc_visual.py`
-> and the media QC canonicalization in `src/contentops/media/`.
+> Last verified: 2026-11-26. #210 candidate branch reconciled with latest main; sample remains TEST_ONLY, full QC WARN, and real delivery/human review remain open.
+> Last reviewed: 2026-11-18 against `scripts/qc_video.py`, `scripts/qc_visual.py`
+> and `src/contentops/media/`; the PR adds explicit native Bilibili 16:9 source-geometry checks. A TEST_ONLY sample still warns on full QC and is not production acceptance.
 
 > Video, content, fact, visual, and audio quality gates.
 
@@ -13,9 +14,8 @@
 |---|---|
 | File exists | final.mp4 present, > 100KB |
 | ffprobe parses | valid container |
-| Resolution | 1080×1920 |
-| Aspect ratio | 9:16 |
-| Duration | 30–120 seconds |
+| Canvas / aspect ratio | Target-profile-specific: legacy/default vertical is 1080×1920 (9:16); native Bilibili requires an explicit `bilibili` / `native_relayout` target and 1920×1080 storyboard, plus verifiable landscape source geometry for every shot |
+| Duration | Production QC range is 30–120 seconds; TEST_ONLY samples may warn below the production minimum |
 | Video codec | H.264 |
 | Audio codec | AAC |
 | Audio present | non-silent (volumedetect) |
@@ -114,6 +114,8 @@ by `tests/test_minimax_speech.py`. No provider request is made in CI.
 
 ## Human Review (100-point scorecard)
 
+The PR #210 Bilibili receipt is a TEST_ONLY engineering sample: its native geometry and full decode checks PASS, but full QC is WARN because it is shorter than the production minimum and its generated explanatory scenes are not real evidence. Visual review remains pending; it is not production-ready.
+
 | Dimension | Points |
 |---|---|
 | Hook | 15 |
@@ -125,7 +127,7 @@ by `tests/test_minimax_speech.py`. No provider request is made in CI.
 | Platform fit | 10 |
 | Trustworthiness | 5 |
 
-≥ 80 and no hard fails → PRODUCTION_READY
+A score of ≥80 and no hard fails is only a qualification threshold. `PRODUCTION_READY` requires a named human reviewer to record an explicit approval in the review receipt; an automated score or technical PASS never promotes an artifact.
 
 ### Hard Fails
 
@@ -295,3 +297,6 @@ The gate admits or excludes an asset from **composition**. The registry records
 **what the asset is**. They must agree — `BUILDING` and `PENDING_HUMAN_REVIEW` in
 the registry, but `BLOCKED` at the gate, would mean composition and provenance
 disagree about the same file.
+
+
+#210 candidate: native 16:9 QC requires full FFmpeg decode and stable output SHA-256; explicit generated/non-evidence capture conflicts block, nonfinite timeline values block, and rounded display ratios cannot pass a below-threshold timeline. Existing vertical QC behavior is not changed by the native decode check.

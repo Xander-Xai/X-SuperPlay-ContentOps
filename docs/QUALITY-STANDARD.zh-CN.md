@@ -8,8 +8,9 @@ translation_status: synced
 
 [English](QUALITY-STANDARD.md) | [简体中文](QUALITY-STANDARD.zh-CN.md)
 
-> 最后复核：2026-11-17，对照 `scripts/qc_video.py`、`scripts/qc_visual.py`
-> 与 `src/contentops/media/` 的媒体 QC 归一化逻辑。
+> 最后验证：2026-11-26，#210 候选分支与最新 main 合并；样片仍为 TEST_ONLY、完整 QC WARN，真实交付与人工审核未完成。
+> 最后复核：2026-11-18，对照 `scripts/qc_video.py`、`scripts/qc_visual.py`
+> 与 `src/contentops/media/`；本 PR 增加 B 站原生 16:9 逐镜头源几何检查。TEST_ONLY 样片完整 QC 仍为 WARN，不构成生产验收。
 
 > 视频和内容质量门控。无凭证 = 任务未完成。
 
@@ -17,11 +18,14 @@ translation_status: synced
 
 | 门控 | 要求 |
 |---|---|
-| 分辨率 | ≥1080p |
-| 帧率 | ≥30fps |
-| 音频 | 48kHz / 立体声 |
-| 时长 | ≤5min（短视频标准） |
-| 字幕 | 正确显示，无遮挡 |
+| 文件存在 | `final.mp4` 存在且 >100KB |
+| ffprobe 可解析 | 容器有效 |
+| 画布 / 宽高比 | 按目标 profile 区分：旧版/默认竖屏为 1080×1920（9:16）；B 站原生横屏必须显式设置 `bilibili` / `native_relayout`、1920×1080 分镜，并逐镜头验证源素材为可验证横屏 |
+| 时长 | 生产 QC 范围为 30–120 秒；低于生产下限的 TEST_ONLY 样片可能为 WARN |
+| 视频编码 | H.264 |
+| 音频编码 | AAC |
+| 音频存在 | 非静音（volumedetect） |
+| 字幕 | 已烧录或存在字幕流 |
 
 ## 仅用于测试的视频时长策略
 
@@ -74,7 +78,9 @@ TEST_VIDEO_DURATION_POLICY:
 
 ## 人工审查门控
 
-发布前必须有人工审查。自动化检查通过 ≠ 可发布。
+发布前必须有人工审查。自动化检查通过 ≠ 可发布。100 分评分卡达到 80 分且无硬性失败只是候选门槛；必须由具名审核人将明确批准写入审核回执，系统才可进入 `PRODUCTION_READY`。自动评分或技术 PASS 永远不能代替人工批准。
+
+PR #210 的 B 站回执是 TEST_ONLY 工程样片：原生几何与全片解码检查 PASS，但完整 QC 因短于生产最低时长且使用不可作证的生成式解释图而为 WARN。视觉审片仍待完成，不得标为生产就绪。
 
 ## 生成图片质量（M3，Issue #20）
 
@@ -195,3 +201,6 @@ TEST_VIDEO_DURATION_POLICY:
 门禁决定一个资产是否被**合成**接纳；registry 记录**这个资产是什么**。二者必须
 一致——registry 中为 `BUILDING` 与 `PENDING_HUMAN_REVIEW`，而门禁为 `BLOCKED`，
 就意味着合成与来源证明对同一个文件存在分歧。
+
+
+#210 候选：原生 16:9 QC 要求 FFmpeg 完整解码及稳定输出 SHA-256；生成素材与真实采集标签冲突、非有限时间轴数值均阻断，显示四舍五入不能让未达阈值的时间轴通过。原生解码检查不改变既有竖屏 QC 行为。

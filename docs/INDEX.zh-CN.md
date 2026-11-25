@@ -133,3 +133,5 @@ Tier-1 文档默认英文为原文、中文为 `.zh-CN.md` 镜像。**README 是
 - [../reports/audits/rights-audit-2026-11-04.md](../reports/audits/rights-audit-2026-11-04.md) — GZH/XHS 许可矩阵与公开 receipt 暴露；仍需决策（2026-11-04）
 
 - [EDITORIAL-OPS.md](EDITORIAL-OPS.md) — Local editorial planning / 本地运营策划
+
+#210 真实媒体验收：参见 [交付验收手册](REAL-DELIVERY-ACCEPTANCE.md)。

@@ -17,6 +17,7 @@ Status: PASS / WARN / FAIL. FAIL -> final is not production-ready.
 """
 
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -35,7 +36,7 @@ from contentops.media.real_source_duration import (  # noqa: E402
     PASS as RSD_PASS,
     check as check_real_source_duration,
 )
-from contentops.paths import relative_label, resolve_project  # noqa: E402
+from contentops.paths import relative_label, resolve_label, resolve_project  # noqa: E402
 
 MIN_FILE_BYTES = 100 * 1024  # 100 KB
 MIN_DURATION = 30.0
@@ -259,6 +260,61 @@ def _expected_canvas(project: Path) -> tuple[int, int, str]:
         raise ValueError(f"NATIVE_CANVAS_UNVERIFIED: {exc}") from None
 
 
+def _native_source_geometry_check(project: Path, storyboard: dict) -> dict:
+    """Require every native horizontal storyboard shot to source 16:9 media.
+
+    Output dimensions alone cannot distinguish an authored landscape scene from
+    a portrait asset padded into a landscape carrier. The actual per-shot input
+    must therefore be present, probeable and landscape too.
+    """
+    shots = storyboard.get("shots") if isinstance(storyboard, dict) else None
+    failed = []
+    checked = 0
+    if not isinstance(shots, list) or not shots:
+        failed.append(-1)
+        shots = []
+
+    for index, shot in enumerate(shots):
+        if not isinstance(shot, dict):
+            failed.append(index)
+            continue
+        label = shot.get("video") or shot.get("image") or shot.get("source")
+        if not isinstance(label, str) or not label.strip():
+            failed.append(index)
+            continue
+        label = label.strip()
+        if label.startswith("project://"):
+            source_path = project / label[len("project://"):]
+        else:
+            candidate = Path(label)
+            if candidate.is_absolute():
+                source_path = candidate
+            else:
+                source_path = resolve_label(label, repo_root=ROOT)
+                if not source_path.is_file():
+                    source_path = project / candidate
+        if not source_path.is_file():
+            failed.append(index)
+            continue
+        meta = ffprobe_meta(source_path)
+        stream = next((row for row in meta.get("streams", [])
+                       if row.get("codec_type") == "video"), {})
+        width, height = int(stream.get("width") or 0), int(stream.get("height") or 0)
+        checked += 1
+        if width <= 0 or height <= 0 or abs(width * 9 - height * 16) > 2:
+            failed.append(index)
+
+    ok = checked == len(shots) and not failed
+    return {
+        "id": "native_storyboard_source_geometry",
+        "ok": ok,
+        "severity": "PASS" if ok else "FAIL",
+        "checked_shots": checked,
+        "failed_shot_indices": failed,
+        "expected_aspect": "16:9",
+    }
+
+
 def _canvas_checks(width: int, height: int, expected_w: int,
                    expected_h: int, aspect: str) -> list[dict]:
     """Exact dimensions and aspect are separate failure checks."""
@@ -337,6 +393,34 @@ def _subtitles_burned(video: Path, sb: dict) -> dict:
             "note": f"max bright-pixel ratio across {samples} samples = {best:.5f}"}
 
 
+def _file_sha256(path: Path) -> str:
+    sha = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            sha.update(block)
+    return sha.hexdigest()
+
+
+def _native_full_decode(path: Path, expected_sha: str) -> dict:
+    """Verify the entire actual video/audio and bind QC to stable file bytes."""
+    row = {"id": "native_full_decode", "ok": False, "severity": "FAIL"}
+    try:
+        if not expected_sha or _file_sha256(path) != expected_sha:
+            return {**row, "code": "MEDIA_CHANGED_BEFORE_DECODE"}
+        result = hidden_run(["ffmpeg", "-nostdin", "-v", "error", "-xerror", "-i", str(path),
+                             "-map", "0:v:0", "-map", "0:a?", "-f", "null", "-"],
+                            capture_output=True, timeout=900)
+        if result.returncode != 0:
+            return {**row, "code": "FULL_DECODE_FAILED", "returncode": result.returncode}
+        if _file_sha256(path) != expected_sha:
+            return {**row, "code": "MEDIA_CHANGED_DURING_DECODE"}
+        return {**row, "ok": True, "severity": "PASS", "sha256": expected_sha,
+                "returncode": 0}
+    except Exception as exc:
+        # Do not leak absolute paths or tool stderr into the canonical receipt.
+        return {**row, "code": "FULL_DECODE_UNAVAILABLE", "error_type": type(exc).__name__}
+
+
 def qc(project: Path, target: str = "") -> dict:
     project = project.resolve()
     # --video selects which render to grade: an engine name ("easel",
@@ -388,6 +472,13 @@ def qc(project: Path, target: str = "") -> dict:
         return _emit(project, checks, target_name)
 
     # 2) file size
+    native_sha = ""
+    if expected_aspect == "16:9":
+        try:
+            native_sha = _file_sha256(final)
+        except OSError:
+            checks.append({"id": "native_output_hash", "ok": False, "severity": "FAIL"})
+            return _emit(project, checks, target_name)
     size = final.stat().st_size
     checks.append({
         "id": "file_size", "ok": size >= MIN_FILE_BYTES,
@@ -496,6 +587,8 @@ def qc(project: Path, target: str = "") -> dict:
         "severity": "FAIL" if not sb.get("shots") else "PASS",
         "shot_count": len(sb.get("shots", []) or []),
     })
+    if expected_aspect == "16:9":
+        checks.append(_native_source_geometry_check(project, sb))
 
     shots = sb.get("shots", []) or []
     real_floor, evidence_mode, content_type = _real_source_floor(project)
@@ -637,6 +730,8 @@ def qc(project: Path, target: str = "") -> dict:
                 "only a human can accept it as production (V1 spec §11)",
     })
 
+    if expected_aspect == "16:9":
+        checks.append(_native_full_decode(final, native_sha))
     return _emit(project, checks, target_name)
 
 

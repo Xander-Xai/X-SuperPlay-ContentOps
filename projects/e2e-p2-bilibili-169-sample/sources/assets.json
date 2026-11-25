@@ -1,0 +1,35 @@
+{
+  "schema": "contentops.asset-manifest/v1",
+  "assets": [
+    {
+      "asset_id": "m5-target-code",
+      "type": "generated_image",
+      "repo_path": "scripts/m5_production.py",
+      "permission": "CREATED_BY_OWNER",
+      "source": "repo://scripts/m5_production.py",
+      "evidence_capable": false,
+      "generated": true,
+      "note": "Generated explanatory vector scene based on this code excerpt; not a screenshot or evidence."
+    },
+    {
+      "asset_id": "easel-size-code",
+      "type": "generated_image",
+      "repo_path": "scripts/assemble_easel.py",
+      "permission": "CREATED_BY_OWNER",
+      "source": "repo://scripts/assemble_easel.py",
+      "evidence_capable": false,
+      "generated": true,
+      "note": "Generated explanatory vector scene based on this code excerpt; not a screenshot or evidence."
+    },
+    {
+      "asset_id": "native-qc-code",
+      "type": "generated_image",
+      "repo_path": "scripts/qc_video.py",
+      "permission": "CREATED_BY_OWNER",
+      "source": "repo://scripts/qc_video.py",
+      "evidence_capable": false,
+      "generated": true,
+      "note": "Generated explanatory vector scene based on this code excerpt; not a screenshot or evidence."
+    }
+  ]
+}

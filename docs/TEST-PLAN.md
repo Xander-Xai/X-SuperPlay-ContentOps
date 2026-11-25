@@ -164,3 +164,5 @@ needs an approved integration with that remote baseline. `git ls-files
 Editorial planning V1 (#216): local evidence/peer ledgers, advisory topic scores, cost lanes, native variants, calendar and series plans; research, rights and publication gates unchanged. See [EDITORIAL-OPS.md](EDITORIAL-OPS.md).
 
 #211/#208 candidate: project the existing reviewed VIDEO copy verbatim into GRAPHIC_TEXT; bind one shared copy identity to research/copy digests, Bundle, and claim/evidence references. Assets and review remain independent. Six non-X platform offline exports only, no external drafts, status upgrades or publication; X and Xiaohongshu image excluded. Initial scope is same-repository projects/, identical Bundle, treatment and topic, exact-copy only; full CI pending.
+
+#210 engineering candidate: native landscape geometry, full decode and stable output SHA-256, plus real-source duration checks. See `docs/REAL-DELIVERY-ACCEPTANCE.md`. Former head passed both OSes; reconciliation with #219 pending CI. Real dual-account delivery and Founder review remain open.

@@ -1,0 +1,38 @@
+id: e2e-p2-bilibili-169-sample
+title: "Bilibili native 16:9 engineering sample (TEST_ONLY)"
+created_at: "2026-11-18"
+account_slug: ""
+content_type: technical_explainer
+status: TEST_ONLY
+
+source_refs:
+  - id: m5_storyboard_target
+    type: source_code
+    title: "M5 storyboard target resolution"
+    path: "scripts/m5_production.py"
+    permission: CREATED_BY_OWNER
+  - id: easel_size_contract
+    type: source_code
+    title: "Pinned Easel assembler size contract"
+    path: "scripts/assemble_easel.py"
+    permission: CREATED_BY_OWNER
+  - id: native_qc_contract
+    type: source_code
+    title: "Bilibili native canvas and input geometry QC"
+    path: "scripts/qc_video.py"
+    permission: CREATED_BY_OWNER
+
+target:
+  platform_primary: bilibili
+  platform: bilibili
+  aspect_ratio: "16:9"
+  resolution: "1920x1080"
+  native_relayout: true
+  duration_target_sec: 15
+
+evidence_policy:
+  real_assets_first: true
+  ai_visuals_allowed: auxiliary_only
+  fabricated_claims: forbidden
+
+# Engineering smoke test only. Not an account deliverable, not approved for publishing.

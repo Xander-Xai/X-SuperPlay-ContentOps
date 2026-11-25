@@ -23,6 +23,7 @@ from check_account_dna import (  # noqa: E402
     _catalog_roots,
     check_account,
 )
+from export_easel_yaml import active_runtime_pin, render_easel_yaml  # noqa: E402
 import check_account_dna  # noqa: E402
 from contentops.media.claim_coverage import (  # noqa: E402
     EVIDENCE_MODES,
@@ -451,6 +452,66 @@ def test_the_variant_pipeline_reads_the_caption_style_from_the_dna():
         assert str(style.get("highlight") or "").lower() == BRAND_ACCENT, path.name
 
 
+def test_generated_easel_yaml_is_exactly_derived_from_dna_and_pin():
+    for path in (EXPLORE, BUILD):
+        dna = _dna(path)
+        actual = (ROOT / "projects" / dna["slug"] / "easel.yaml").read_text(encoding="utf-8")
+        expected = render_easel_yaml(dna, root=ROOT)
+        assert actual == expected, f"{path.name}: generated Easel YAML drift"
+
+
+def test_yaml_export_uses_the_central_easel_pin():
+    for path in (EXPLORE, BUILD):
+        profile = render_easel_yaml(_dna(path), root=ROOT)
+        expected = active_runtime_pin(root=ROOT)
+        assert f"runtime_pin: {expected}" in profile
+
+
+def test_yaml_export_refuses_account_pin_that_disagrees_with_registry():
+    dna = _clone(EXPLORE)
+    dna["render"]["runtime_pin"] = "Easel v0.2.1 / 3fe2d99"
+    try:
+        render_easel_yaml(dna, root=ROOT)
+    except ValueError as exc:
+        assert "does not match active pin" in str(exc)
+    else:
+        raise AssertionError("a DNA pin conflict must not generate an Easel profile")
+
+
+def test_yaml_export_preserves_evidence_mode_specific_source_floor():
+    explore = render_easel_yaml(_dna(EXPLORE), root=ROOT)
+    explanatory = render_easel_yaml(_dna(BUILD), root=ROOT)
+    assert "real_source_ratio_min: 0.7" in explore
+    assert "real_source_ratio_min:" not in explanatory
+
+
+def test_yaml_export_rejects_non_video_account_schema():
+    english = _dna(ACCOUNTS / "x-superplay-english.json")
+    try:
+        render_easel_yaml(english, root=ROOT)
+    except ValueError as exc:
+        assert "unsupported account schema" in str(exc)
+    else:
+        raise AssertionError("the video profile exporter must not consume the X-account schema")
+
+
+def test_dna_checker_reports_stale_generated_easel_yaml():
+    dna = _dna(BUILD)
+    with tempfile.TemporaryDirectory() as temp_dir:
+        root = Path(temp_dir)
+        runtime_dir = root / "runtime"
+        runtime_dir.mkdir()
+        (runtime_dir / "easel-pins.json").write_bytes(
+            (ROOT / "runtime" / "easel-pins.json").read_bytes()
+        )
+        output = root / "projects" / dna["slug"] / "easel.yaml"
+        output.parent.mkdir(parents=True)
+        output.write_text("runtime_pin: \"stale\"\\n", encoding="utf-8")
+        failures = check_account(dna, root)
+    assert any("generated Easel YAML differs from DNA and active pin" in item
+               for item in failures), failures
+
+
 def main() -> int:
     failures = []
     tests = (
@@ -491,6 +552,12 @@ def main() -> int:
         test_a_shared_route_naming_an_unknown_skill_fails,
         test_an_absent_shared_store_is_a_warning_not_a_failure,
         test_the_variant_pipeline_reads_the_caption_style_from_the_dna,
+        test_generated_easel_yaml_is_exactly_derived_from_dna_and_pin,
+        test_yaml_export_uses_the_central_easel_pin,
+        test_yaml_export_refuses_account_pin_that_disagrees_with_registry,
+        test_yaml_export_preserves_evidence_mode_specific_source_floor,
+        test_yaml_export_rejects_non_video_account_schema,
+        test_dna_checker_reports_stale_generated_easel_yaml,
     )
     for fn in tests:
         try:

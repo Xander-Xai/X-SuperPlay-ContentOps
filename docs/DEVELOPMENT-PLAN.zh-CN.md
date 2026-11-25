@@ -104,3 +104,5 @@ M0 → G0.5 → G0.6 → M1 → M2.0 → M2-M4 → M4.5 → M5 → M5-M6 → 发
 运营策划 V1（#216）：本地需求与同行案例、建议选题评分、成本分级、原生变体、日历与系列规划；不改变研究、版权或发布门禁。详见 [EDITORIAL-OPS.md](EDITORIAL-OPS.md).
 
 #211/#208 候选分支：从现有已审核 VIDEO 文案逐字派生 GRAPHIC_TEXT，共享文案 ID、研究/文案摘要、Bundle、claim/evidence 绑定；独立素材与审核。新增六个非 X 平台离线打包入口，不创建平台草稿、升级状态或发布。X 与小红书图文排除；当前仅同仓 projects/、同 Bundle、同账号 treatment、同主题的逐字派生，尚待完整 CI。
+
+#210 工程候选：保留原生横屏逐镜头几何、完整解码及成片 SHA-256 校验、真实素材比例门禁；参见 `docs/REAL-DELIVERY-ACCEPTANCE.md`。旧 head 双系统通过，重新协调 #219 后待 CI；真实双账号交付与 Founder 审核仍开放。

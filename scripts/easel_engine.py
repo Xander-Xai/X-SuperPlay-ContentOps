@@ -354,7 +354,6 @@ def cmd_install(args) -> int:
     A half-written runtime that fails verification afterwards is worse than no
     runtime at all, because it looks installed.
     """
-    import hashlib
     import shutil
 
     import verify_easel_runtime as verifier
@@ -421,7 +420,7 @@ def cmd_install(args) -> int:
             missing.append(rel)
             continue
         if rel in overlay_files:
-            actual = hashlib.sha256(src.read_bytes()).hexdigest()
+            actual = verifier.content_sha256(src)
             ok = actual == overlay_files[rel]
         else:
             ok = verifier.blob_sha1(src) == expected

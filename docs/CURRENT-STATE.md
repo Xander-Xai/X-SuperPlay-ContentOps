@@ -5,7 +5,7 @@
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
 
-> Last verified: 2026-11-26, GitHub main @ `9e5242231222f9ce95b0cc3eab9b1647d866a7d4`; #217 merged, #219 candidate CI pending.
+> Last verified: 2026-11-26, GitHub main @ `12f9065d9ccf0f6339bd8b74023b3d0e2d399e1b`; #219 merged, #210 reconciliation CI pending.
 > Last verified: 2026-11-21 against `ffb87ad96eab6283c773bfd150c81497979b536a` (protected `main` after #213 squash). M5's remaining thin-runner refactor and #199 authentic-media acceptance are still OPEN; no publishing or human approval was granted.
 > The dated Git-state tables below are historical snapshots, not current remote branch counts.
 > Last verified: 2026-11-14, read-only GitHub main @ `515c605` (protected). The proposed X text/image and per-mode reviews are branch changes, not yet on main; real platform outcomes unverified.
@@ -46,6 +46,15 @@
 > **Git state is re-verified below at 2026-11-12 (read-only documentation
 > sync).** Every other section below it is a historical snapshot kept for
 > traceability; none of them is the current state.
+
+### Git — verified 2026-11-26 after #219 merge
+
+| Property | Verified value |
+|---|---|
+| Default branch | `12f9065d9ccf0f6339bd8b74023b3d0e2d399e1b` |
+| PRs | #217 and #219 merged; #210, #218, #220 Draft |
+| CI | #210 former head 4cf6767 Ubuntu, Windows and policy passed; reconciliation pending |
+| Boundary | #199 open; no new authentic film or human authorization |
 
 ### Git — verified 2026-11-26 after #217 merge
 

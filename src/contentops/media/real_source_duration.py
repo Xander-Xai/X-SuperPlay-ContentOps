@@ -35,6 +35,7 @@ nor a PASS here grants production readiness or publication.
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
@@ -128,7 +129,7 @@ def _union_seconds(intervals: Iterable[Tuple[float, float]]) -> float:
             cursor_start, cursor_end = start, end
     if cursor_start is not None:
         total += cursor_end - cursor_start
-    return round(total, 3)
+    return total
 
 
 def _assets_by_path(assets: Any) -> Dict[str, Dict[str, Any]]:
@@ -160,7 +161,7 @@ def measure(
     what the file contains.
     """
     if not isinstance(output_duration_s, (int, float)) or isinstance(output_duration_s, bool) \
-            or output_duration_s <= EPSILON:
+            or not math.isfinite(output_duration_s) or output_duration_s <= EPSILON:
         return _blocked("OUTPUT_DURATION_MISSING",
                         "the rendered file's duration was not measured, so there is "
                         "no denominator")
@@ -176,6 +177,7 @@ def measure(
     intervals: List[Interval] = []
     missing_permission: List[str] = []
     missing_source: List[str] = []
+    conflicting_sources: List[str] = []
     cursor = 0.0
     for index, shot in enumerate(shots):
         if not isinstance(shot, dict):
@@ -183,14 +185,19 @@ def measure(
         shot_id = str(shot.get("shot_id") or shot.get("placement") or f"shot-{index}")
         try:
             duration = float(shot.get("duration", shot.get("duration_s")))
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, OverflowError):
             return _blocked("SHOT_DURATION_MISSING",
                             f"{shot_id} has no measured duration")
-        if duration <= EPSILON:
+        if not math.isfinite(duration) or duration <= EPSILON:
             return _blocked("SHOT_DURATION_INVALID",
                             f"{shot_id} has a non-positive duration ({duration})")
-        start = float(shot.get("start", cursor))
+        try:
+            start = float(shot.get("start", cursor))
+        except (TypeError, ValueError, OverflowError):
+            return _blocked("SHOT_START_INVALID", f"{shot_id} has an invalid start")
         end = start + duration
+        if not math.isfinite(start) or not math.isfinite(end) or start < 0:
+            return _blocked("SHOT_START_INVALID", f"{shot_id} has an invalid timeline interval")
         cursor = end
 
         source = str(shot.get("source") or ship_source(shot))
@@ -202,6 +209,15 @@ def measure(
         if not source:
             missing_source.append(shot_id)
         real = kind in REAL_SOURCE_KINDS
+        # The declared visual and evidence source can be different. A generated
+        # image cannot count as capture merely because it quotes real code.
+        visual = ship_source(shot)
+        entries = [shot, by_path.get(source, {}), by_path.get(visual, {})]
+        if real and any(e.get("generated") is True or e.get("evidence_capable") is False
+                        or _normalise(e.get("type") or e.get("kind")) in NON_REAL_SOURCE_KINDS
+                        for e in entries):
+            conflicting_sources.append(shot_id)
+            real = False
         reason = "real capture" if real else (
             "declared non-real" if kind in NON_REAL_SOURCE_KINDS
             else "unclassified source is not evidence")
@@ -216,6 +232,10 @@ def measure(
     if missing_source:
         return _blocked("SOURCE_MISSING",
                         "shots with no source: " + ", ".join(missing_source[:8]))
+    if conflicting_sources:
+        return _blocked("SOURCE_CLASSIFICATION_CONFLICT",
+                        "capture-labelled shots explicitly marked generated or non-evidence: "
+                        + ", ".join(conflicting_sources[:8]))
     if missing_permission:
         return _blocked(
             "SOURCE_PERMISSION_MISSING",
@@ -233,7 +253,8 @@ def measure(
     ratio = round(real_seconds / output_duration_s, 4)
     undeclared_tail = round(max(0.0, output_duration_s - declared_seconds), 3)
     minimum = float(min_ratio)
-    ratio_ok = ratio + EPSILON >= minimum
+    # Compare unrounded seconds; display rounding must not grant a PASS.
+    ratio_ok = real_seconds >= minimum * float(output_duration_s) - 1e-9
 
     return {
         "schema": SCHEMA,
@@ -241,8 +262,8 @@ def measure(
         "ok": ratio_ok,
         "real_source_duration_ratio": ratio,
         "min": minimum,
-        "real_seconds": real_seconds,
-        "declared_seconds": declared_seconds,
+        "real_seconds": round(real_seconds, 3),
+        "declared_seconds": round(declared_seconds, 3),
         "output_duration_s": round(float(output_duration_s), 3),
         "undeclared_tail_s": undeclared_tail,
         "required_seconds": round(minimum * float(output_duration_s), 3),
