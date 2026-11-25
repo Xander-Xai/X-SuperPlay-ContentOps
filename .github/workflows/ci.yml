@@ -685,6 +685,8 @@ jobs:
         run: python tests/test_editorial_peers.py
       - name: Editorial workbench and series tests
         run: python tests/test_editorial_workspace_series.py
+      - name: Editorial X public observation tests
+        run: python tests/test_editorial_x_observe.py
 
       # The end-to-end chain: growth -> enrichment -> gate -> manual package.
       - name: Run X growth integration tests

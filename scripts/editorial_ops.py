@@ -39,6 +39,7 @@ def local_dir(path):
 
 
 def safe_file(directory, name):
+    directory = local_dir(directory)
     p = directory / name
     if p.is_symlink() or p.resolve().parent != directory:
         raise ValueError("unsafe file path")

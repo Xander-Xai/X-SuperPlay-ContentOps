@@ -113,6 +113,14 @@ class EditorialTests(unittest.TestCase):
             ops.route(self.directory, report, ident, "Founder", True, runner)
         self.assertEqual(len(calls), 1)
 
+    def test_safe_file_normalizes_directory(self):
+        nested = self.directory / "nested"
+        nested.mkdir()
+        alias = nested / ".."
+        self.assertEqual(ops.safe_file(alias, "signals.csv"), self.directory / "signals.csv")
+        with self.assertRaises(ValueError):
+            ops.safe_file(alias, "../outside.csv")
+
     def test_local_only(self):
         with self.assertRaises(ValueError):
             ops.local_dir(ops.ROOT / "docs")
