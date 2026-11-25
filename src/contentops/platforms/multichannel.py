@@ -225,6 +225,7 @@ class PlatformDraft:
     # and wants a short digest, and before this they were simply absent.
     suggested_tags: tuple[str, ...] = ()
     digest: str = ""
+    shared_copy_id: str = ""
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -245,6 +246,7 @@ class PlatformDraft:
             "registry_row": self.registry_row,
             "suggested_tags": list(self.suggested_tags),
             "digest": self.digest,
+            **({"shared_copy_id": self.shared_copy_id} if self.shared_copy_id else {}),
         }
 
 
@@ -266,6 +268,7 @@ class MultiChannelAdapter:
     pipeline: str = ""
     content_types: tuple[str, ...] = ("GRAPHIC_TEXT",)
     expected_bundle_sha256: str = ""
+    repo_root: Path | None = None
     _spec: dict[str, str] = field(default_factory=dict, repr=False)
 
     def __post_init__(self) -> None:
@@ -318,6 +321,15 @@ class MultiChannelAdapter:
 
         package_root = Path(str(package.get("_package_root") or "."))
         draft_rel = str(draft_info.get("path") or "")
+        from contentops.workflow import shared_copy
+        lineage = None
+        if package.get("shared_copy") or (package_root / shared_copy.GRAPHIC_RECORD).exists():
+            if self.platform_id == "x":
+                raise AdapterError("X remains a separate editorial workflow")
+            try:
+                lineage = shared_copy.verify_package(self.repo_root or shared_copy.repository_root(), package_root, package)
+            except (ValueError, OSError, RuntimeError) as exc:
+                raise AdapterError("SHARED_COPY_BLOCKED: " + str(exc)) from None
         draft_path = package_root / draft_rel
         body = draft_path.read_text(encoding="utf-8") if draft_path.is_file() else ""
         if not body.strip():
@@ -325,11 +337,21 @@ class MultiChannelAdapter:
 
         rules = platform_rules(self.platform_id)
         title_original = title
+        if lineage and rules["native_format"] == "html":
+            # Exact-copy path never interprets raw claim text as HTML. Escape
+            # each paragraph and wrap it for the native editor, then let the
+            # existing platform shape/budget checks run on the safe HTML.
+            from html import escape
+            body = "\n".join("<p>" + escape(part).replace("\n", "<br>") + "</p>"
+                             for part in body.strip().split("\n\n"))
         shaped = graphic_specs.shape(self.platform_id, title, body)
         title = shaped["title"]
         body = shaped["body"]
         blockers: list[str] = list(shaped["blockers"])
         warnings: list[str] = list(shaped["warnings"])
+        if lineage:
+            blockers.extend(str(b) for b in (package.get("blockers") or []))
+            blockers.append("SHARED_COPY_OFFLINE_ONLY: independent platform review required")
 
         if rules["needs_cover"] and not (package.get("images") or []):
             blockers.append("COVER_REQUIRED")
@@ -357,7 +379,8 @@ class MultiChannelAdapter:
 
         media_refs = tuple(self._logical_ref(str(i.get("path") or "")) for i in (package.get("images") or []))
         payload = json.dumps(
-            {"p": self.platform_id, "t": title, "b": body, "m": media_refs, "s": bundle_sha},
+            {"p": self.platform_id, "t": title, "b": body, "m": media_refs, "s": bundle_sha,
+             **({"shared_copy_id": lineage["shared_copy_id"]} if lineage else {})},
             ensure_ascii=False, sort_keys=True,
         )
         return PlatformDraft(
@@ -378,6 +401,7 @@ class MultiChannelAdapter:
             title_hint=title_original,
             suggested_tags=tuple(content["suggested_tags"]),
             digest=content["digest"],
+            shared_copy_id=lineage["shared_copy_id"] if lineage else "",
         )
 
     def validate(self, draft: PlatformDraft) -> ValidationResult:
@@ -413,6 +437,7 @@ class MultiChannelAdapter:
             "adapter_channel": draft.channel,
             "draft_ref": f"project://delivery/{draft.platform_id}/{draft.draft_sha256[:16]}.json",
             "draft_sha256": draft.draft_sha256,
+            **({"shared_copy_id": draft.shared_copy_id} if draft.shared_copy_id else {}),
             "publish_mode": "MANUAL_ONLY",
             "publication_state": "AWAITING_MANUAL_PUBLISH",
             "publish_authorized": False,

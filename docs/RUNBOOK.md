@@ -4,6 +4,7 @@
 
 > Real executable commands. Derived from actual script behavior, not assumptions.
 
+> Last verified: 2026-11-26. #219 candidate shared copy and offline graphic paths reviewed; CI pending.
 > Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > Last verified: 2026-11-21. The M5 diagnostic CLI and receipt paths are unchanged by #204/#205 ASR/subtitle module extraction. No external transcription or rendering is asserted by these offline regression checks.
 > Last verified: 2026-11-14: X CLI now accepts `--post-format text|image` on `--new` (image is legacy default). A text package has no image/ALT upload step; image-format posts still require genuine PNG/JPEG+ALT. `--package` never posts, and only a human-confirmed X status URL can be recorded by `--mark-published`.
@@ -717,3 +718,5 @@ successful demo and QC `WARN` do **not** mean the original `.runtime/easel`
 checkout is healthy or restored; that remains a separate integrity question.
 
 Editorial planning V1 (#216): local evidence/peer ledgers, advisory topic scores, cost lanes, native variants, calendar and series plans; research, rights and publication gates unchanged. See [EDITORIAL-OPS.md](EDITORIAL-OPS.md).
+
+#211/#208 candidate: project the existing reviewed VIDEO copy verbatim into GRAPHIC_TEXT; bind one shared copy identity to research/copy digests, Bundle, and claim/evidence references. Assets and review remain independent. Six non-X platform offline exports only, no external drafts, status upgrades or publication; X and Xiaohongshu image excluded. Initial scope is same-repository projects/, identical Bundle, treatment and topic, exact-copy only; full CI pending. Commands: `python scripts/shared_copy.py --source projects/<video> --project projects/<graphic>`, then existing graphic_package.py with `shared-copy.md` and exact reviewed title; `python scripts/graphic_offline.py --project projects/<graphic> --platform wechat_article --platform zhihu`.

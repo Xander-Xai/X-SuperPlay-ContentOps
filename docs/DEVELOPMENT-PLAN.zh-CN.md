@@ -11,6 +11,7 @@ translation_status: synced
 > 基于里程碑执行。每个里程碑都有退出标准。
 >
 
+> 最后验证：2026-11-26，#219 候选分支共享文案与离线图文入口核对；CI 待验证。
 > Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > 最后验证：2026-11-21，复核 #204/#205 的 M5 ASR 与字幕模块拆分；仅为接口保持的重构，不改变里程碑的人工审核和交付阻塞。
 > 已实施 X / 跨平台本地分析和人工选题回流，不代表真实平台效果或发布。
@@ -101,3 +102,5 @@ M0 → G0.5 → G0.6 → M1 → M2.0 → M2-M4 → M4.5 → M5 → M5-M6 → 发
 3. M5 阶段拆分（#140），由已记录的特征基线守住。
 
 运营策划 V1（#216）：本地需求与同行案例、建议选题评分、成本分级、原生变体、日历与系列规划；不改变研究、版权或发布门禁。详见 [EDITORIAL-OPS.md](EDITORIAL-OPS.md).
+
+#211/#208 候选分支：从现有已审核 VIDEO 文案逐字派生 GRAPHIC_TEXT，共享文案 ID、研究/文案摘要、Bundle、claim/evidence 绑定；独立素材与审核。新增六个非 X 平台离线打包入口，不创建平台草稿、升级状态或发布。X 与小红书图文排除；当前仅同仓 projects/、同 Bundle、同账号 treatment、同主题的逐字派生，尚待完整 CI。

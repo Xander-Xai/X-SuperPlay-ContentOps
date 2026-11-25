@@ -3,6 +3,7 @@
 [English](PRD.md) | [简体中文](PRD.zh-CN.md)
 
 
+> Last verified: 2026-11-26. #219 candidate shared copy and offline graphic paths reviewed; CI pending.
 > Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > Last verified: 2026-11-21 against the #204/#205 M5 refactor diffs. The extracted ASR/subtitle stage modules preserve the recorded acceptance semantics; no additional delivered video or publishing capability is claimed.
 > Last verified: 2026-11-14 (X original-post scope update). Accepted X behaviors: text-only originals without image or ALT, image originals with verified raster/ALT, and mode-appropriate human quality scoring; all preserve claim provenance, rights and manual-only posting. Local-only feedback never performs platform actions.
@@ -235,3 +236,5 @@ M0 → M1 → M2.0 → M2-M4 → M5 → M6
 - Founder Review rejects all outputs → STOP, reassess
 
 Editorial planning V1 (#216): local evidence/peer ledgers, advisory topic scores, cost lanes, native variants, calendar and series plans; research, rights and publication gates unchanged. See [EDITORIAL-OPS.md](EDITORIAL-OPS.md).
+
+#211/#208 candidate: project the existing reviewed VIDEO copy verbatim into GRAPHIC_TEXT; bind one shared copy identity to research/copy digests, Bundle, and claim/evidence references. Assets and review remain independent. Six non-X platform offline exports only, no external drafts, status upgrades or publication; X and Xiaohongshu image excluded. Initial scope is same-repository projects/, identical Bundle, treatment and topic, exact-copy only; full CI pending.

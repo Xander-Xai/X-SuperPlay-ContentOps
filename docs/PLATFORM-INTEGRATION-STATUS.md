@@ -8,7 +8,7 @@
 > A row is a statement about **this branch**, never about the portfolio.
 >
 > Last regenerated from the registry: 2026-11-12, `main` at `c1da6dd`.
-> Last verified: 2026-11-16 — the cross-platform planning section below was added; no
+> Last verified: 2026-11-26 — the cross-platform planning section below was added; no
 > registry row changed and no publication count moved.
 
 ## How to read a status
@@ -132,3 +132,8 @@ python tests/test_platform_registry.py
 
 Adding a platform means adding one row plus its evidence. It never means adding
 a second production system.
+
+
+## #219 shared-copy candidate
+
+The candidate adds six-platform offline package projection from reviewed shared copy. It does not create platform drafts, authorize publication, or change registry status or publication counts. Full CI and real-account operator acceptance remain pending.
