@@ -27,7 +27,7 @@ Cost lanes: L1 <=15 min low risk, L2 <=60 min low/standard, L3 otherwise. Planni
 
 ## Scope
 
-Tests: `python tests/test_editorial_ops.py` (synthetic only). Implements manual demand/peer ledgers, scoring, cost lanes, native plans, calendar/series summaries. Does not implement live feed collection, editable UI, randomized experiments, automated business transfer, DNA overrides, actual publication or real-account acceptance. Follow #216 and #199/#210. Keep raw data local; do not enter private identities or confidential observations.
+Tests: `python tests/test_editorial_ops.py` (synthetic only). Implements manual demand/peer ledgers, scoring, cost lanes, native plans, calendar/series summaries. Does not implement unattended feed collection, editable UI, randomized experiments, automated business transfer, DNA overrides, actual publication or real-account acceptance. Follow #216 and #199/#210. Keep raw data local; do not enter private identities or confidential observations.
 
 ## Existing router integration and read-only workspace
 
@@ -56,3 +56,14 @@ python scripts/editorial_feedback.py lead --content-id CID --post-url https://ex
 ```
 
 Use actual IDs and URLs, not these examples. The review reuses same-cohort metric checks, five complete samples per arm, and outputs descriptive observations only. It does not change DNA. The lead command checks an existing published index entry and requires explicit consent/confirmation; it exports a local anonymous reference for OPC review, not a payment or verified buyer demand. Manual transfer only. Native X learning remains unchanged. Tests: python tests/test_editorial_feedback.py.
+
+## RSSHub / FreshRSS standard feed intake
+
+Research: [RSSHub](https://github.com/DIYgod/RSSHub) and [FreshRSS](https://github.com/FreshRSS/FreshRSS) expose standard feed formats; FreshRSS also supports OPML subscription management. Reuse their feed output, not their crawler code. This adapter supports UTF-8 RSS 2.0, Atom and JSON Feed. A local export is the default no-network path; direct HTTPS fetch is explicit, one endpoint, no redirects/auth, bounded payload and timeout. Use only operator-approved public feeds; URLs with queries are deliberately refused to avoid leaking feed tokens. No provider instance or route has been live-verified.
+
+```text
+python scripts/editorial_feeds.py --input .local/editorial-ops/feed.xml --source-id rsshub-ai --topic agent
+python scripts/editorial_feeds.py --url https://example.org/feed --source-id public-ai --topic agent --confirm
+```
+
+The second URL is a placeholder; replace with a real authorized public feed. Only title + public URL are admitted as RSS observations. No full article, buyer-demand classification or claim verification. Deduplicates per topic/URL, emits a local hashed intake receipt and writes the existing signals.csv. No new metric store or publishing action. Test: python tests/test_editorial_feeds.py.
