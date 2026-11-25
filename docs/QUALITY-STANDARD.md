@@ -2,6 +2,7 @@
 
 [English](QUALITY-STANDARD.md) | [简体中文](QUALITY-STANDARD.zh-CN.md)
 
+> Last verified: 2026-11-26. #210 candidate branch reconciled with latest main; sample remains TEST_ONLY, full QC WARN, and real delivery/human review remain open.
 > Last reviewed: 2026-11-18 against `scripts/qc_video.py`, `scripts/qc_visual.py`
 > and `src/contentops/media/`; the PR adds explicit native Bilibili 16:9 source-geometry checks. A TEST_ONLY sample still warns on full QC and is not production acceptance.
 

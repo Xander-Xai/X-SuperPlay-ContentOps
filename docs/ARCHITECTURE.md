@@ -2,9 +2,10 @@
 
 [English](ARCHITECTURE.md) | [简体中文](ARCHITECTURE.zh-CN.md)
 
-> Last verified: 2026-11-21 against PR #210 head `d2220078080b83ef0740b594dbedb06791ce9cec`; native Bilibili QC checks require an explicit landscape target and verifiable per-shot landscape sources. The TEST_ONLY sample is not Issue #199 acceptance.
-> Rechecked 2026-11-21: PR #210 retains TEST_ONLY limits, the original hash-bound Motion Canvas historical receipt was restored in `a5ce83f`, and Issue #199 is not accepted or publication-authorized.
-> X policy remains human-controlled: platform rules and registered account DNA govern; offline feedback never starts platform actions.
+> Last verified: 2026-11-26, main @ `1fc95bbabefae1d86a4840cf43920a48abaf945e`; #210 is candidate-branch engineering work, not a delivered video.
+> Last verified: 2026-11-21. The M5 orchestrator retains public facades for ASR and subtitles; the implementations are now isolated in `workflow/m5_asr_stage.py` and `workflow/m5_subtitles_stage.py` (#204/#205). All human/production gates remain closed until independently proven.
+> Last verified: 2026-11-14 (X contract update; PR checks determine CI status). X records now declare `post_format=text|image`; post validation and publisher both preserve honest optional media and manual-only handoff. The editorial gate routes by mode (technical/source versus general_interest). Offline feedback never starts platform actions.
+> X priority: platform rules/human gates -> registered account DNA -> Strategy X SOP -> scoped experiment.
 
 > What the system is. Where the boundaries are. How components call each other.
 > Describes the target architecture after the 2026-11-02 host decision, and
@@ -56,9 +57,9 @@ FFmpeg / deterministic tools
 ## Host Adoption (ADR-016)
 
 The Owner decided on 2026-11-02 to adopt the full Easel system as the
-production base, superseding ADR-015 D1. The active pinned runtime is v0.3.0;
-v0.2.1 is retained as the rollback tree. The workbench/agent surface is **target**,
-not a running integration.
+production base, superseding ADR-015 D1. The verified runtime today is still
+the pinned v0.2.1 checkout; the workbench/agent surface is **target**, not a
+running integration.
 
 | Fact | State |
 |---|---|
@@ -146,9 +147,7 @@ Rules:
    `PLANNED`, and `video_deliver.py dispatch` requires an operator grant on top of
    `--execute`.
 
-## Branch Layers — historical main snapshot
-
-The following table is retained as a historical convergence snapshot. It is not a live branch or PR inventory; consult CURRENT-STATE and GitHub for current status.
+## Branch Layers
 
 The repository is mid-convergence. A component is only "part of the system" if it
 is on `main`.
@@ -265,12 +264,6 @@ project.yaml source_refs
 
 Both paths end at `PENDING_FOUNDER_REVIEW` with `production_ready: false`.
 
-The native Bilibili landscape branch is an explicit QC profile, not a container
-reinterpretation: the project and storyboard must declare 1920×1080, and QC
-checks every shot's source geometry. A TEST_ONLY receipt records one engineering
-sample, but its WARN verdict, generated non-evidence visuals and pending review
-mean it is not a production delivery or Issue #199 acceptance.
-
 ## Media Convergence
 
 One `MediaManifest` is the sole asset list. `assets` is the inventory (it may hold
@@ -380,3 +373,7 @@ Current: no fork. No upstream modification. `assemble_easel.py` is an ADAPTER
 - Platform publishing (stays manual, human-gated)
 - Metrics scraping (not implemented)
 - Auto-publishing (explicitly out of scope)
+
+## #210 engineering candidate branch
+
+The #210 candidate branch retains account-schema dispatch, DNA-derived Easel YAML and per-shot native Bilibili 1920x1080 source-geometry checks. The 15-second TEST_ONLY sample receipt records native checks/full decode PASS, full QC WARN, generated non-evidence visuals and pending human review. Real dual-account final cuts, authorized recording, Motion Canvas editor export and clean-checkout reproduction remain open.

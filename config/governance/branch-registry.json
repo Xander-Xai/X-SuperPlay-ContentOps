@@ -1,6 +1,6 @@
 {
   "schema": "contentops.branch-registry/v1",
-  "verified_at": "2026-11-21T01:30:00+08:00",
+  "verified_at": "2026-11-26T00:00:00+08:00",
   "policy": {
     "persistent": [
       "main"
@@ -238,16 +238,88 @@
       "pr": 203,
       "created": "2026-11-17",
       "purpose": "Issue #140 next narrow stage extraction: move script/claim/asset validation and source-bound reviewer-copy generation behind the existing M5 facade",
-      "status": "active",
+      "status": "merged",
+      "expires": "2026-12-17"
+    },
+    {
+      "name": "refactor/140-m5-narration-20261117",
+      "pr": 204,
+      "created": "2026-11-17",
+      "purpose": "Issue #140 next narrow stage extraction: extract M5 ASR backcheck behind the compatibility facade while preserving detector-only semantics, receipts and fail-closed review gate",
+      "status": "merged",
+      "expires": "2026-12-17"
+    },
+    {
+      "name": "refactor/140-m5-subtitles-20261117",
+      "pr": 205,
+      "created": "2026-11-17",
+      "purpose": "Issue #140 next narrow stage extraction: extract subtitle generation, SRT output and coverage refusal behind the M5 compatibility facade",
+      "status": "merged",
+      "expires": "2026-12-17"
+    },
+    {
+      "name": "refactor/140-m5-storyboard-20261117",
+      "pr": 206,
+      "created": "2026-11-17",
+      "purpose": "Issue #140 next narrow stage extraction: extract storyboard construction, narration alignment and support-audio validation behind the M5 facade",
+      "status": "merged",
+      "expires": "2026-12-17"
+    },
+    {
+      "name": "refactor/140-m5-compose-20261117",
+      "pr": 207,
+      "created": "2026-11-17",
+      "purpose": "Issue #140 next narrow stage extraction: extract the pinned Easel composition handoff and receipt preservation behind the M5 facade",
+      "status": "merged",
+      "expires": "2026-12-17"
+    },
+    {
+      "name": "refactor/140-m5-review-20261117",
+      "pr": 209,
+      "created": "2026-11-17",
+      "purpose": "Issue #140 extracted source-bound human-review receipt stage behind the legacy M5 compatibility facade, retaining fail-closed approval and readiness semantics",
+      "status": "merged",
+      "expires": "2026-12-17"
+    },
+    {
+      "name": "refactor/140-m5-qc-20261117",
+      "pr": 212,
+      "created": "2026-11-17",
+      "purpose": "Issue #140 next narrow stage extraction: isolate technical QC execution, canonical receipts and fail-closed verdict handling behind the M5 facade",
+      "status": "merged",
+      "expires": "2026-12-17"
+    },
+    {
+      "name": "refactor/140-m5-visual-qc-20261117",
+      "pr": 213,
+      "created": "2026-11-17",
+      "purpose": "Issue #140 next narrow stage extraction: isolate automated visual QC, video-bound receipts and incomplete-sampling refusal behind the M5 facade",
+      "status": "merged",
       "expires": "2026-12-17"
     },
     {
       "name": "feat/199-real-delivery-20261118",
       "pr": 210,
       "created": "2026-11-18",
-      "purpose": "Issue #199 Draft-only native 16:9 QC/account verification and TEST_ONLY evidence; genuine editor export, real recording, final delivery and Founder review remain blocked",
+      "purpose": "Issue #199 draft real-media acceptance follow-up: native 16:9 QC and account validation, but no real account-final deliverables or Founder approval",
       "status": "active",
       "expires": "2026-12-18"
+    },
+    {
+      "name": "docs/199-project-state-closeout",
+      "pr": null,
+      "created": "2026-11-17",
+      "purpose": "Retained historical documentation branch with one unique unmerged commit; frozen for item-by-item review, not current state or approved delivery",
+      "status": "archived",
+      "expires": "2026-12-21"
+    },
+    {
+      "name": "governance/branch-ledger-20261121",
+      "pr": 214,
+      "created": "2026-11-21",
+      "purpose": "Issue #7 post-#213 governance reconciliation of merged M5 rows, Draft #210, retained historical docs/199 branch and bilingual Git snapshot; no runtime or production authority change",
+      "status": "active",
+      "expires": "2026-12-21"
     }
   ]
 }

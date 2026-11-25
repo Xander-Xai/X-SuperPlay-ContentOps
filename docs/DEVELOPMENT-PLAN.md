@@ -4,9 +4,10 @@
 
 > Milestone-based execution. Every milestone has an exit criterion.
 >
-> Last verified: 2026-11-21 against PR #210 head `d2220078080b83ef0740b594dbedb06791ce9cec`; its account-schema, Easel YAML and native Bilibili QC changes do not satisfy Issue #199's real-deliverable acceptance criteria.
-> Rechecked 2026-11-21: PR #210 retains TEST_ONLY limits, the original hash-bound Motion Canvas historical receipt was restored in `a5ce83f`, and Issue #199 is not accepted or publication-authorized.
-> Issue #199 remains OPEN: the TEST_ONLY sample does not replace authorized real 1024 recording-based production, final account deliverables, Motion Canvas editor export, Founder review or clean-checkout reproduction.
+> Last verified: 2026-11-26, main @ `1fc95bbabefae1d86a4840cf43920a48abaf945e`; #210 is candidate-branch engineering work, not a delivered video.
+> Last verified: 2026-11-21. M5 ASR/subtitle stages were checked against the extracted compatibility facades in #204/#205; the milestone's human-review and delivery blockers remain unchanged.
+> Last verified: 2026-11-14: X original-post contract now offers explicit text-only and raster+ALT modes plus strict technical versus general-interest human review. No live platform outcome claimed; CI of this change is tracked in its PR.
+> X policy: Strategy canonical SOP and registered account DNA; source metrics and publishing still require human verification.
 
 ## Status legend
 
@@ -29,7 +30,6 @@
 | M2-M4 | MiniMax speech / image / H3 integration | **DONE (implemented)** | verified subsets in CURRENT-STATE; `PENDING_FOUNDER_REVIEW` |
 | M4.5 | Media convergence: one manifest, one gate vocabulary | **DONE** | 97 tests; `projects/m45-technical-integration` |
 | M5 | Evidence-first production chain | **DONE** | `scripts/m5_production.py`, `projects/m5-media-use`; ASR backcheck gate (#150); characterization baseline (#153) |
-| Issue #199 real-deliverable acceptance | **OPEN** | TEST_ONLY native Bilibili sample is not an account deliverable; authorized real-source production, final account videos, Motion Canvas editor export, human review and clean-checkout reproduction remain open |
 | Stable production entry | One gated CLI in front of every producer | **DONE** | `scripts/make_content.py` + `scripts/production_gates.py` (#157); 8 VIDEO / 6 GRAPHIC_TEXT fail-closed gates |
 | Rendering: cards and GZH article | HTML cards → PNG with a density audit; article HTML validation | **DONE (offline)** | `render_cards.py` (#149), `render_article.py` (#152); receipts keep `production_ready: false` |
 | M5-M6 | Cross-repo `SourceArtifact` workflow and production E2E | **DONE (evidence in issue)** | three real-source runs on `main` (#117, #119) pass automated and visual QC; Founder review PASS recorded in #6, closed 2026-11-10. Caveat: the approval lives in the issue, not in an APPROVED `human-review.json` |
@@ -98,3 +98,7 @@ its implementation exists.
 2. Rights clearance (Issues #51, #56) that keeps the GZH and XHS rows at
    `PLANNED`.
 3. M5 stage split (#140), guarded by the recorded characterization baseline.
+
+## #210 engineering candidate branch
+
+The #210 candidate branch retains account-schema dispatch, DNA-derived Easel YAML and per-shot native Bilibili 1920x1080 source-geometry checks. The 15-second TEST_ONLY sample receipt records native checks/full decode PASS, full QC WARN, generated non-evidence visuals and pending human review. Real dual-account final cuts, authorized recording, Motion Canvas editor export and clean-checkout reproduction remain open.

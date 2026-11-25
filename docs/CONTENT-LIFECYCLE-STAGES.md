@@ -6,10 +6,11 @@
 > A stage may have no executable code. It then stays a **placeholder** and must
 > not emit a success receipt, a publication record or a metric.
 
-> Status: reference — historical baseline 2026-11-12.
-> Last verified: 2026-11-21 against PR #210 head `d2220078080b83ef0740b594dbedb06791ce9cec` and live Issue #199. PR #210 adds native Bilibili source-geometry QC and a TEST_ONLY sample receipt; it does not close the issue or authorize production/publication.
-> Rechecked 2026-11-21: PR #210 retains TEST_ONLY limits, the original hash-bound Motion Canvas historical receipt was restored in `a5ce83f`, and Issue #199 is not accepted or publication-authorized.
-> The receipt records native checks and full decode PASS, full QC WARN, generated non-evidence scenes and pending Founder review. Repo-wide counts of approved human reviews or created platform drafts are NOT_VERIFIED in this pass.
+> Status: reference — 2026-11-12.
+> Last verified: 2026-11-26, main @ `1fc95bbabefae1d86a4840cf43920a48abaf945e`; #210 is candidate-branch engineering work, not a delivered video.
+> Last verified: 2026-11-21. Rechecked #204/#205 M5 implementation extractions: lifecycle stages, receipts and approval boundaries are unchanged; these are not video acceptance or publication proofs.
+> Last verified: 2026-11-14. The X ORIGINAL_POST path now validates explicit text or image format, content-mode review profiles and human-only package handoff; image records require raster+ALT and text records carry neither. No live account growth or platform publication is verified.
+> Local feedback remains PARTIAL: manually supplied metrics -> learning brief -> human-approved Topic route; not automated publishing.
 Related: [ARCHITECTURE.md](ARCHITECTURE.md), [PRD.md](PRD.md),
 [ADR-015](adr/ADR-015-platform-placeholders-and-content-bundle.md),
 [ADR-016](adr/ADR-016-easel-host-adoption.md),
@@ -18,14 +19,18 @@ Related: [ARCHITECTURE.md](ARCHITECTURE.md), [PRD.md](PRD.md),
 
 ## Branch status (read this first)
 
-The older stage table below is a dated `main` baseline, not a live inventory for PR #210. PR #210 changes account-schema dispatch, derived Easel YAML validation and native Bilibili QC; it does not add a publication stage or satisfy the real-deliverable gates in OPEN Issue #199. The native 16:9 receipt is TEST_ONLY and ends with full QC WARN and pending human review.
+The main baseline stated in the older table is historical; this PR updates only the local feedback stages. Every earlier `implemented` claim was verified on `main` (`c1da6dd`), not on a
+parallel branch. The router, platform registry, Bundle kernel and graphic package
+landed through PRs #101, #114 and #118; rendering, gates and both delivery runners
+landed through #141–#157. Rights and the absence of a bound public account, not
+code, are what block the platform tracks. Two corrections worth carrying:
 
-Confirmed in this PR:
-
-- Native landscape QC is explicit: Bilibili target and native relayout must be declared, the storyboard canvas must be 1920×1080, and every shot source must be verifiably landscape. A portrait master padded or relabeled as landscape is not native.
-- The committed sample uses generated explanatory art (`generated=true`, `evidence_capable=false`); it cannot satisfy real-source evidence or account production.
-- Issue #199 remains open for authorized recording-based production, final account deliverables, genuine Motion Canvas editor export, human review and clean-checkout reproduction.
-- The 2026-11-09 XHS-adapter removal and X/GZH manual-only boundaries below remain historical facts; current platform draft/publication counts are NOT_VERIFIED in this pass.
+- The **XHS runtime adapter was removed on 2026-11-09** with the graphic workflow.
+  `src/contentops/xhs/` is empty and `scripts/graphic_workflow.py` names only
+  `gzh`, `x` and `video`; the `xiaohongshu_video` registry row and its delivery
+  channel remain, and both stay `PLANNED`.
+- The **X and GZH adapters verify and never execute**. GZH additionally has a
+  renderer, an SDK adapter, a workflow runner and a `DRAFT_ONLY` draft path.
 
 ## Position
 
@@ -70,8 +75,8 @@ one's status.
 | `CONTENT_BUNDLE` | Strategy Bundle | validated Bundle + digest | Strategy owns; ContentOps consumes | `implemented` (on `main`; PR #101) | `src/contentops/content_kernel/bundle.py`, `scripts/content_bundle.py` | validation result / handoff | Bundle is a plan, never a publication |
 | `PRODUCTION` (VIDEO) | Bundle, claims | video master | ContentOps | `implemented` | gated entry `scripts/make_content.py` + `scripts/production_gates.py` (8 VIDEO gates); `produce_video.py` / `m5_production.py`, `run_v1.py`, `assemble_easel.py`; ASR backcheck stage | `build-*.json`, `asr-backcheck.json`, `runtime-receipt.md` | voice quality; human review pending. A direct producer run is diagnostic and not gate-checked |
 | `PRODUCTION` (GRAPHIC_TEXT) | Bundle, images | manual package, rendered cards, validated article | ContentOps | `implemented` | `src/contentops/graphic/` (package, cards, articles), `scripts/graphic_package.py`, `render_cards.py`, `render_article.py`; 6 GRAPHIC_TEXT gates | `graphic-package.json`, `card-render.json`, `gzh-article.json` | every terminal state is `AWAITING_MANUAL_REVIEW` or `BLOCKED`; a PASS is not an approval |
-| `QUALITY_REVIEW` | produced artifacts | QC + human verdict | ContentOps + human | `implemented` | `production_gates.py` preflight, `scripts/qc_video.py`, `qc_visual.py`, ASR backcheck, `src/contentops/media/quality_gate.py`, `workflow/gate.py`; native Bilibili profile additionally checks each shot source geometry | `qc-report.json`, `human-review.json`, native sample receipt | TEST_ONLY native sample: geometry/decode PASS but full QC WARN and review pending; repository-wide approved-review count NOT_VERIFIED |
-| `PLATFORM_PACKAGING` | reviewed package | per-platform pack + draft | ContentOps | `partial` | `scripts/video_deliver.py` (`plan`/`pack`/`status`), `scripts/platform_delivery.py`, `graphic_deliver.py`, `wechatsync_browser.py`; X manual gate (`src/contentops/publish/`) | `06_delivery/` pack receipts, `graphic-package.json` | PR #210 adds no packaging or publication behavior; repository-wide draft count and current registry counts are NOT_VERIFIED here |
+| `QUALITY_REVIEW` | produced artifacts | QC + human verdict | ContentOps + human | `implemented` | `production_gates.py` preflight, `scripts/qc_video.py`, `qc_visual.py`, ASR backcheck, `src/contentops/media/quality_gate.py`, `workflow/gate.py` | `qc-report.json`, `human-review.json` | human review never auto-approved; no project holds an APPROVED `human-review.json` |
+| `PLATFORM_PACKAGING` | reviewed package | per-platform pack + draft | ContentOps | `partial` | `scripts/video_deliver.py` (`plan`/`pack`/`status`), `scripts/platform_delivery.py`, `graphic_deliver.py`, `wechatsync_browser.py`; X manual gate (`src/contentops/publish/`) | `06_delivery/` pack receipts, `graphic-package.json` | packs are implemented, but **no platform draft has ever been created**: 0 delivery receipts, 8 of 9 registry rows `PLANNED` |
 | `PUBLISH_HANDOFF` | draft | real URL + delivery receipt | human | `partial` | human-only: `video_deliver.py record`, `x_post.py --mark-published`, and the bridge's own URL echo | `AWAITING_MANUAL_PUBLISH` / `REPORTED_PUBLISHED` / `UPLOADER_EXIT_0` | no automatic publication, 0 recorded URLs; an uploader exit is not a published claim |
 | `METRICS_COLLECTION` | delivery receipt | metric snapshot | ContentOps | `partial` | `scripts/wechat_metrics.py` (data cube), `scripts/bilibili_metrics.py` (public counters), offline X metric analysis; all operator-gated | metric receipts | no automatic collection; a missing metric is `NONE`, never zero |
 | `ANALYSIS` | metric snapshots | findings | ContentOps | `partial` | X organic-growth advisory (`x_organic_growth.py`), offline | advisory JSON | general analysis not implemented |
@@ -162,3 +167,7 @@ script, hotspot and platform code is present; it is not an unmerged layer.
    manually sourced metric snapshot, before expanding platform automation.
 3. Resolve GZH/XHS rights and acceptance independently; a successful workspace
    verification does not grant execution or publication authority.
+
+## #210 engineering candidate branch
+
+The #210 candidate branch retains account-schema dispatch, DNA-derived Easel YAML and per-shot native Bilibili 1920x1080 source-geometry checks. The 15-second TEST_ONLY sample receipt records native checks/full decode PASS, full QC WARN, generated non-evidence visuals and pending human review. Real dual-account final cuts, authorized recording, Motion Canvas editor export and clean-checkout reproduction remain open.

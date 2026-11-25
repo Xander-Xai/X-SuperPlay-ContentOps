@@ -4,10 +4,15 @@
 
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
-> Last verified: 2026-11-21 against GitHub main `08d52ce6d6c0bd14471e857b1bed8181d2739fd7` (after #204); PR #210 remains DRAFT with engineering corrections through `a5ce83f`, not a released deliverable.
-> PR #210 checks were failing at verification time (Ubuntu, Windows, Repo Policy); failures reported stale docs and do not establish the result of later CI stages. Issue #199 is OPEN. Its remaining acceptance includes authorized real 1024 recording, final account deliverables, genuine Motion Canvas editor export, human review and clean-checkout reproduction.
-> The PR's committed native Bilibili receipt is TEST_ONLY: 15s, 1920×1080; native checks and full decode PASS; full QC WARN for short duration and absent real evidence; generated explanatory visuals are not evidence; visual review is `PENDING_FOUNDER_REVIEW`. It is not a production/account deliverable.
-> Sections below the dated Layer status and Git snapshots are historical unless explicitly labeled otherwise. They describe their stated date/scope, not a complete current inventory.
+> Last verified: 2026-11-26, main @ `1fc95bbabefae1d86a4840cf43920a48abaf945e`; #210 is candidate-branch engineering work, not a delivered video.
+> Last verified: 2026-11-21 against `ffb87ad96eab6283c773bfd150c81497979b536a` (protected `main` after #213 squash). M5's remaining thin-runner refactor and #199 authentic-media acceptance are still OPEN; no publishing or human approval was granted.
+> The dated Git-state tables below are historical snapshots, not current remote branch counts.
+> Last verified: 2026-11-14, read-only GitHub main @ `515c605` (protected). The proposed X text/image and per-mode reviews are branch changes, not yet on main; real platform outcomes unverified.
+> X image posts require real media+ALT; explicit text posts omit media. General-interest posts use human novelty/evidence review without invented technical benchmarks. This implementation does not publish to X.
+> X and cross-platform offline analyzers are implemented; the platform outcomes and automatic end-to-end operations have not been verified.
+> Facts below describe `main`; deferred or rights-blocked work is labelled as such.
+> Sections below the "Layer status" table are historical milestone records;
+> they describe how a capability was proven, not what is current.
 
 ## Layer status (2026-11-12)
 
@@ -37,27 +42,39 @@
 
 ## Git
 
-### Git — verified 2026-11-21 (read-only GitHub checkpoint)
+> **Git state is re-verified below at 2026-11-12 (read-only documentation
+> sync).** Every other section below it is a historical snapshot kept for
+> traceability; none of them is the current state.
+
+### Git — verified 2026-11-26 (read-only checkpoint)
 
 | Property | Verified value |
 |---|---|
-| Default branch | `main` @ `08d52ce6d6c0bd14471e857b1bed8181d2739fd7` (after PR #204 squash, verified read-only) |
-| PR #210 | DRAFT at corrective commit `a5ce83f`; restored old Motion Canvas block receipt to preserve snapshot SHA; pending verified CI, nine docs audit and actual media acceptance |
-| Issue #199 | OPEN; authorized real screen recording, actual editor export, full account deliverables and Founder visual review remain outstanding |
-| Authorization | `production_ready=false`, `publish_authorized=false`, `PENDING_FOUNDER_REVIEW` unchanged |
+| Default branch | `1fc95bbabefae1d86a4840cf43920a48abaf945e` |
+| Open PRs | #210 and #217, both Draft at checkpoint |
+| Remote branches | 7 at checkpoint |
+| Safety | #199 not accepted; no production or publication authorization |
 
-### Git — verified 2026-11-18 (live GitHub state)
+### Git — verified 2026-11-21 (post-#213 read-only checkpoint)
 
 | Property | Verified value |
 |---|---|
-| Default branch | `main` @ `9690582a0fed34b08632cbb0445cb151924230bf` |
-| Current PR / issue | PR #210 OPEN / DRAFT; Issue #199 OPEN |
-| PR head | `feat/199-real-delivery-20261118` @ `d2220078080b83ef0740b594dbedb06791ce9cec`; five commits ahead of `main` |
-| CI | Ubuntu, Windows and Repo Policy checks failed at verification time; logs reported stale docs. Later CI stages are NOT_VERIFIED. |
+| Default branch | `main` @ `ffb87ad96eab6283c773bfd150c81497979b536a` (squash of #213; read-only GitHub branch API) |
+| Open PRs | 1: #210 Draft (TEST_ONLY code checks, real-media acceptance pending) |
+| Open issues | 8: #7, #51, #56, #140, #173, #199, #208, #211; none silently closed |
+| Remote branches | 6 at checkpoint, before this governance PR branch was created: protected main; retained archive; #199 Draft; historical docs/199; superseded feature branches #192 and #194 |
+| M5 extraction | #204/#205/#206/#207/#209/#212/#213 merged under protected CI; `scripts/m5_production.py` still has 2,306 lines, so #140 remains OPEN |
+| Safety | Rights and Founder review remain pending; no production/publish authorization or real account-final videos proven |
 
+### Git — verified 2026-11-21 (read-only live GitHub checkpoint)
 
-
-
+| Property | Verified value |
+|---|---|
+| Default branch | `main` @ `08d52ce6d6c0bd14471e857b1bed8181d2739fd7` (read-only GitHub branch API, after PR #204 squash) |
+| Open PRs | 5: #205, #206, #207, #209, #210 (Draft; failed tests) |
+| Open issues | 8: #7, #51, #56, #140, #173, #199, #208, #211; deferred rights issues remain open |
+| Remote branches | 12, including protected `main`, intentional archive, and open/superseded work branches; no branch was deleted in this documentation pass |
+| CI scope | #204 merged after green checks; #205 is still in integration/verification; this snapshot is not a production-video approval |
 
 ### Git — verified 2026-11-17 (branch `feat/194-title-card-and-trusted-cache`, PR #195)
 
@@ -988,3 +1005,7 @@ and what remains blocked.
 The router adds no second skill engine and copies no third-party skill. A
 declaration is a pointer to code this repository already owns; the adapter, the
 runtime lock verifier and the M5 gate keep their own authority.
+
+## #210 engineering candidate branch
+
+The #210 candidate branch retains account-schema dispatch, DNA-derived Easel YAML and per-shot native Bilibili 1920x1080 source-geometry checks. The 15-second TEST_ONLY sample receipt records native checks/full decode PASS, full QC WARN, generated non-evidence visuals and pending human review. Real dual-account final cuts, authorized recording, Motion Canvas editor export and clean-checkout reproduction remain open.

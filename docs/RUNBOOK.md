@@ -3,9 +3,10 @@
 [English](RUNBOOK.md) | [简体中文](RUNBOOK.zh-CN.md)
 
 > Real executable commands. Derived from actual script behavior, not assumptions.
-> Last verified: 2026-11-21 on PR #210 head `d2220078080b83ef0740b594dbedb06791ce9cec`.
-> Rechecked 2026-11-21: PR #210 retains TEST_ONLY limits, the original hash-bound Motion Canvas historical receipt was restored in `a5ce83f`, and Issue #199 is not accepted or publication-authorized.
-> Native Bilibili 16:9 QC is an explicit target path; the TEST_ONLY sample receipt is not an account deliverable and its full QC remains WARN. Issue #199 remains OPEN.
+> Last verified: 2026-11-26, main @ `1fc95bbabefae1d86a4840cf43920a48abaf945e`; #210 is candidate-branch engineering work, not a delivered video.
+> Last verified: 2026-11-21. The M5 diagnostic CLI and receipt paths are unchanged by #204/#205 ASR/subtitle module extraction. No external transcription or rendering is asserted by these offline regression checks.
+> Last verified: 2026-11-14: X CLI now accepts `--post-format text|image` on `--new` (image is legacy default). A text package has no image/ALT upload step; image-format posts still require genuine PNG/JPEG+ALT. `--package` never posts, and only a human-confirmed X status URL can be recorded by `--mark-published`.
+> X policy: Strategy canonical SOP and registered account DNA; source metrics and publishing still require human verification.
 
 ## 0. Environment check
 
@@ -511,11 +512,10 @@ with its real error count. `gzh_runtime.py` stays `VERIFY_ONLY`:
 python scripts\qc_video.py projects\my-video
 ```
 
-Checks: file existence, size, ffprobe parse, target-specific resolution/aspect ratio, duration, video/audio codecs, audio presence, script/storyboard existence, real-source ratio, source provenance, voice audibility and subtitle burn detection.
-
-The legacy/default video target remains vertical (1080×1920, 9:16). Native Bilibili landscape QC is opt-in and requires all of the following: `target.platform: bilibili`, `target.native_relayout: true`, `target.resolution: 1920x1080`, and storyboard `size: 1920x1080`. The QC checks output geometry and verifies every storyboard shot has a verifiable landscape source; missing, unverifiable or non-16:9 shot sources fail. A 1920×1080 output alone does not make a portrait-carried video native.
-
-The committed engineering sample receipt at `projects/e2e-p2-bilibili-169-sample/receipts/native-16x9-render-v2.json` records TEST_ONLY scope, native geometry and full-decode PASS, but full QC WARN for duration and real-evidence checks. Its generated explanatory visuals are not evidence, and review is pending. Do not treat it as a production render or Issue #199 acceptance.
+Checks: file existence, size, ffprobe parse, resolution (1080×1920), aspect ratio (9:16),
+duration (30–120s), video codec (H.264), audio codec (AAC), audio presence,
+script/storyboard existence, real-source ratio (≥70%), source provenance,
+voice audibility (volumedetect), subtitle burn detection (multi-frame pixel scan).
 
 Emits: `receipts/qc-report.json` + `qc-report.md`. Status: PASS / WARN / FAIL.
 
@@ -714,3 +714,7 @@ run with exit code `4` / `BLOCKED`. A project whose `project.yaml` has no
 The media-use demo composes through a separate, verified Easel runtime. A
 successful demo and QC `WARN` do **not** mean the original `.runtime/easel`
 checkout is healthy or restored; that remains a separate integrity question.
+
+## #210 engineering candidate branch
+
+The #210 candidate branch retains account-schema dispatch, DNA-derived Easel YAML and per-shot native Bilibili 1920x1080 source-geometry checks. The 15-second TEST_ONLY sample receipt records native checks/full decode PASS, full QC WARN, generated non-evidence visuals and pending human review. Real dual-account final cuts, authorized recording, Motion Canvas editor export and clean-checkout reproduction remain open. Native path explicitly declares target.platform=bilibili, target.native_relayout=true, target.resolution=1920x1080 and storyboard 1920x1080; unprobeable source geometry fails.

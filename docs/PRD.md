@@ -2,9 +2,11 @@
 
 [English](PRD.md) | [简体中文](PRD.zh-CN.md)
 
-> Last verified: 2026-11-21 against PR #210 head `d2220078080b83ef0740b594dbedb06791ce9cec`; code changes add schema-dispatched account checks and native Bilibili source-geometry QC, but do not complete Issue #199 acceptance.
-> Rechecked 2026-11-21: PR #210 retains TEST_ONLY limits, the original hash-bound Motion Canvas historical receipt was restored in `a5ce83f`, and Issue #199 is not accepted or publication-authorized.
-> Issue #199 remains OPEN. The native sample is TEST_ONLY, has full QC WARN, uses generated non-evidence visuals, and awaits human review; no account deliverable or publication is claimed.
+> Last verified: 2026-11-26, main @ `1fc95bbabefae1d86a4840cf43920a48abaf945e`; #210 is candidate-branch engineering work, not a delivered video.
+> Last verified: 2026-11-21 against the #204/#205 M5 refactor diffs. The extracted ASR/subtitle stage modules preserve the recorded acceptance semantics; no additional delivered video or publishing capability is claimed.
+> Last verified: 2026-11-14 (X original-post scope update). Accepted X behaviors: text-only originals without image or ALT, image originals with verified raster/ALT, and mode-appropriate human quality scoring; all preserve claim provenance, rights and manual-only posting. Local-only feedback never performs platform actions.
+> X priority: platform rules/human gates -> registered account DNA -> Strategy X SOP -> scoped experiment.
+> A requirement marked implemented has code here; that is not evidence of published work.
 
 ## 1. Background
 
@@ -92,9 +94,9 @@ be inferred or defaulted to zero:
 A missing measurement is `"unknown"`, never `0`. A URL without a named recorder
 is not a delivery record. This is a placeholder, not a publishing capability.
 
-## 7. Historical Baseline (verified 2026-11-02)
+## 7. Current Baseline
 
-The bullets below are a dated snapshot from `feat/106-easel-host-dual-line`, not the current baseline. Current Easel pin and status are recorded in §14; branch-specific Issue #199 status is recorded immediately after this historical snapshot.
+Verified 2026-11-02 on `feat/106-easel-host-dual-line` (stacked on PR #101):
 
 - Easel v0.2.1 pinned, content-verified (982/982 blobs). Upstream v0.3.0 is
   available but not adopted (skill paths moved; see UPSTREAM-EASEL).
@@ -118,10 +120,6 @@ The bullets below are a dated snapshot from `feat/106-easel-host-dual-line`, not
   GZH remain unmerged and rights-blocked.
 - Voice: edge-tts (V1) and Windows SAPI (M5); neither is production-grade.
 - 0 published videos; every result is `PENDING_FOUNDER_REVIEW`.
-
-## PR #210 / Issue #199 status (verified 2026-11-18)
-
-The PR adds schema-based dispatch between the video account-DNA validator and the X-account validator; the account audit delta records 52 false-positive failures removed while preserving the real missing `b-roll-finder` failure. The native Bilibili QC path requires an explicit 1920×1080 target and verifiable landscape geometry for every shot source. Its committed engineering sample is TEST_ONLY (15 seconds): native checks/full decode PASS, full QC WARN, generated visuals are not evidence, review pending. Issue #199 remains OPEN; this is not evidence that account production, Motion Canvas editor export, final deliverables or human acceptance are complete.
 
 ## 8. Functional Requirements
 
@@ -234,3 +232,7 @@ M0 → M1 → M2.0 → M2-M4 → M5 → M6
 - MiniMax subscription doesn't support programmatic API → MANUAL_ONLY
 - 3 consecutive E2E failures → HOLD, root-cause
 - Founder Review rejects all outputs → STOP, reassess
+
+## #210 engineering candidate branch
+
+The #210 candidate branch retains account-schema dispatch, DNA-derived Easel YAML and per-shot native Bilibili 1920x1080 source-geometry checks. The 15-second TEST_ONLY sample receipt records native checks/full decode PASS, full QC WARN, generated non-evidence visuals and pending human review. Real dual-account final cuts, authorized recording, Motion Canvas editor export and clean-checkout reproduction remain open.

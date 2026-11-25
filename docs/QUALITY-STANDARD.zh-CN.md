@@ -8,6 +8,7 @@ translation_status: synced
 
 [English](QUALITY-STANDARD.md) | [简体中文](QUALITY-STANDARD.zh-CN.md)
 
+> 最后验证：2026-11-26，#210 候选分支与最新 main 合并；样片仍为 TEST_ONLY、完整 QC WARN，真实交付与人工审核未完成。
 > 最后复核：2026-11-18，对照 `scripts/qc_video.py`、`scripts/qc_visual.py`
 > 与 `src/contentops/media/`；本 PR 增加 B 站原生 16:9 逐镜头源几何检查。TEST_ONLY 样片完整 QC 仍为 WARN，不构成生产验收。
 

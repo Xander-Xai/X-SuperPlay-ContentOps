@@ -9,9 +9,11 @@ translation_status: synced
 [English](RUNBOOK.md) | [简体中文](RUNBOOK.zh-CN.md)
 
 > 真实可执行命令。从实际脚本行为推导，非假设。
-> 最后验证：2026-11-21，对照 PR #210 head `d2220078080b83ef0740b594dbedb06791ce9cec`。
-> 2026-11-21 复核：#210 仍是 TEST_ONLY 工程验收，`a5ce83f` 已恢复旧 Motion Canvas 历史阻塞回执；#199 正式交付与发布权限均未获批准。
-> B 站原生 16:9 QC 属于显式目标路径；TEST_ONLY 样片回执不是账号成片，且完整 QC 仍为 WARN。Issue #199 仍 OPEN。
+> 最后验证：2026-11-26，基于 main @ `1fc95bbabefae1d86a4840cf43920a48abaf945e`；#210 为候选分支，不构成正式交付。
+> 最后验证：2026-11-21，复核 #204/#205 M5 ASR / 字幕拆分，原诊断命令及回执路径未变；离线测试不代表实际调用转写或生产渲染。
+> X / 跨平台本地数据回流只生成待审主题，不授予自动平台动作。
+> X 命令行 `--new` 增加 `--post-format text|image`（旧记录默认 image）。纯文字发布包不含图片/ALT步骤；图文仍须真图与ALT。`--package`只准备待发布包，`--mark-published`只记录真人确认的X URL。
+> 本分支增加离线 X 数据分析工具，指标结果仅写本地，策略审查后才可路由下一轮内容。
 
 ## 0. 环境检查
 
@@ -26,7 +28,7 @@ python scripts/bootstrap.ps1    # Windows
 bash scripts/bootstrap.sh       # WSL/Linux
 ```
 
-如 Easel 运行时缺失/损坏（当前 pin 为 v0.3.0）：
+如 Easel 运行时缺失/损坏：
 
 ```powershell
 python scripts/resolve_easel.py --bootstrap
@@ -76,10 +78,6 @@ python scripts\run_v1.py projects\my-video
 ```powershell
 python scripts\qc_video.py projects\my-video
 ```
-
-旧版/默认视频目标仍为竖屏（1080×1920、9:16）。B 站原生横屏 QC 必须显式启用：`target.platform: bilibili`、`target.native_relayout: true`、`target.resolution: 1920x1080`，且 storyboard 声明 `size: 1920x1080`。QC 除了检查输出几何，还会逐镜头验证分镜源素材可读取且为横向；缺失、不可验证或非 16:9 的镜头源会失败。仅输出 1920×1080 并不能把竖屏画面包装成原生横屏。
-
-已提交回执 `projects/e2e-p2-bilibili-169-sample/receipts/native-16x9-render-v2.json` 属于 TEST_ONLY 工程样片：原生几何与全片解码 PASS，但完整 QC 因时长和真实证据检查为 WARN；生成式解释图不可作证，人工审片待定。它不是生产成片，也不代表 Issue #199 验收完成。
 
 ## 5.1 证据优先生产链（M5）
 
@@ -482,3 +480,7 @@ python scripts\m5_production.py projects\m5-media-use
 
 media-use 演示通过另一套已验证的 Easel 运行时合成。演示成功与 QC `WARN` **不**表示
 原始 `.runtime/easel` 检出已健康或已恢复；那仍是一个独立的完整性问题是。
+
+## #210 工程候选分支说明
+
+#210 候选分支保留账号 schema 分派、按 DNA 派生 Easel YAML、原生 B 站 1920×1080 逐镜头源几何检查；15 秒 TEST_ONLY 工程样片原生检查和解码 PASS、完整 QC WARN、生成式画面不可作证，人工审核待定。真实双账号成片、授权录屏、Motion Canvas 编辑器导出和干净检出复现仍待完成。 原生路径须声明 target.platform=bilibili、target.native_relayout=true、target.resolution=1920x1080，storyboard 为 1920x1080；缺失或不可核验的源素材拒绝。

@@ -369,6 +369,117 @@ def _script_project(lines: List[dict], claims: List[dict]) -> Path:
     return work
 
 
+def test_stage_compose_preserves_previous_output_and_writes_engine_receipt() -> None:
+    project = _project()
+    final = project / "final" / "sample.mp4"
+    final.parent.mkdir(parents=True)
+    final.write_bytes(b"previous render")
+    engine = {
+        "engine_id": "easel-v030", "tag": "v0.3.0", "commit": "abc123",
+        "tree_sha256": "f" * 64, "layout": "builtin",
+    }
+
+    def compose(current_project: Path, *, out_name: str) -> dict:
+        backup = current_project / "final" / "sample-before-avatar-refresh.mp4"
+        assert backup.read_bytes() == b"previous render"
+        assert out_name == "sample"
+        return {
+            "status": "OK", "video": str(final), "subtitles_burned": True,
+            "upstream": "skills/builtin/auto-short-video/scripts/assemble.py",
+            "easel": engine,
+        }
+
+    with mock.patch.object(assemble_easel, "run", side_effect=compose):
+        result = m5_production.stage_compose(project, "sample")
+
+    expected = {
+        "status": "OK", "video": "project://final/sample.mp4",
+        "subtitles_burned": True,
+        "upstream": "easel@v0.3.0:skills/builtin/auto-short-video/scripts/assemble.py",
+        "easel": engine,
+    }
+    assert result == expected
+    assert json.loads((project / "receipts" / "compose.json").read_text(
+        encoding="utf-8")) == expected
+
+
+def test_stage_compose_records_blocked_receipt_before_refusing() -> None:
+    project = _project()
+    with mock.patch.object(assemble_easel, "run", return_value={
+            "status": "BLOCKED", "reason": "storyboard missing", "easel": {
+                "engine_id": "easel-v030", "tag": "v0.3.0",
+                "commit": "abc123", "tree_sha256": "f" * 64,
+                "layout": "builtin",
+            }}):
+        message = _raises(m5_production.M5Blocked, m5_production.stage_compose,
+                          project, "sample")
+    assert "compose: storyboard missing" in message
+    receipt = json.loads((project / "receipts" / "compose.json").read_text(
+        encoding="utf-8"))
+    assert receipt["status"] == "BLOCKED"
+    assert receipt["reason"] == "storyboard missing"
+
+
+def _run_visual_qc_stage(project: Path, *, extraction_failures: int) -> dict:
+    video = project / "final" / "sample.mp4"
+    video.parent.mkdir(parents=True, exist_ok=True)
+    video.write_bytes(b"fixture video bytes")
+    receipts = project / "receipts"
+    receipts.mkdir(parents=True, exist_ok=True)
+    contact_sheet = receipts / "visual-contact-sheet.png"
+    contact_sheet.write_bytes(b"contact sheet fixture")
+    runtime = project / "fake-huashu"
+    gate_script = runtime / "scripts" / "film_gate.py"
+    gate_script.parent.mkdir(parents=True, exist_ok=True)
+    gate_script.write_text("# fixture", encoding="utf-8")
+
+    def hidden_run(command, **_kwargs):
+        if any(str(part).endswith("qc_visual.py") for part in command):
+            (receipts / "visual-qc.json").write_text(json.dumps({
+                "status": "PASS", "video": str(video),
+                "contact_sheet": str(contact_sheet),
+                "summary": {"extraction_failures": extraction_failures},
+            }), encoding="utf-8")
+            return type("R", (), {"returncode": 0, "stdout": "", "stderr": ""})()
+        return type("R", (), {
+            "returncode": 0,
+            "stdout": json.dumps({"gate_light": "green", "verdict": "green"}),
+            "stderr": "",
+        })()
+
+    import contentops.media.huashu_runtime as huashu_runtime
+    with mock.patch.object(huashu_runtime, "find_runtime", return_value=runtime):
+        with mock.patch.object(m5_production, "hidden_run", side_effect=hidden_run):
+            return m5_production.stage_visual_qc(project, "sample")
+
+
+def test_stage_visual_qc_binds_pass_to_video_and_keeps_review_pending() -> None:
+    project = _project()
+    result = _run_visual_qc_stage(project, extraction_failures=0)
+    assert result["state"] == "PASS"
+    assert result["production_ready"] is False
+    assert result["publish_authorized"] is False
+    assert result["human_review"] == "PENDING_FOUNDER_REVIEW"
+    assert len(result["video_sha256"]) == 64
+    saved = json.loads((project / "receipts" / "visual-gate.json").read_text(
+        encoding="utf-8"))
+    assert saved == result
+    print("[ok] visual PASS is video-bound and never replaces founder review")
+
+
+def test_stage_visual_qc_blocks_incomplete_frame_sampling_even_on_gate_pass() -> None:
+    project = _project()
+    message = _raises(m5_production.M5Blocked, _run_visual_qc_stage,
+                      project, extraction_failures=4)
+    assert "visual motion gate BLOCKED" in message
+    saved = json.loads((project / "receipts" / "visual-gate.json").read_text(
+        encoding="utf-8"))
+    assert saved["state"] == "BLOCKED"
+    assert saved["frame_sampling_failures"] == 4
+    print("[ok] incomplete frame sampling blocks an otherwise green visual gate")
+
+
+
 def test_stage_script_refuses_unknown_claim_and_undeclared_asset() -> None:
     work = _script_project(
         [{"id": "l1", "claim": "ghost", "narration": "n", "caption": "c", "asset_id": "card"}],
@@ -430,6 +541,28 @@ def test_stage_script_refuses_duplicate_ids_and_empty_narration() -> None:
     message = _raises(m5_production.M5Blocked, m5_production.stage_script, work, ledger, assets)
     assert "narration is empty" in message
     print("[ok] 16. duplicate line ids and empty narration are refused")
+
+
+def test_stage_subtitles_writes_legacy_srt_and_receipt() -> None:
+    work = _project()
+    script = {"lines": [{"id": "l1", "caption": "字幕行"}]}
+    narration = {"duration_s": 1.0, "lines": [{"start": 0.0, "duration": 0.9}]}
+
+    result = m5_production.stage_subtitles(work, script, narration)
+
+    assert result == {
+        "schema": "contentops.m5-subtitles/v1",
+        "path": "assets/captions/default.srt",
+        "cues": 1,
+        "coverage_ratio": 0.9,
+        "audio_duration_s": 1.0,
+    }
+    assert (work / result["path"]).read_text(encoding="utf-8") == (
+        "1\n00:00:00,000 --> 00:00:00,900\n字幕行\n"
+    )
+    assert json.loads((work / "receipts" / "subtitles.json").read_text(
+        encoding="utf-8")) == result
+    print("[ok] subtitles success preserves SRT and receipt contracts")
 
 
 def test_stage_subtitles_refuses_poor_coverage() -> None:
@@ -590,9 +723,14 @@ TESTS = [
     test_m5_source_facade_preserves_duplicate_handling_and_receipt,
     test_m5_claim_facade_keeps_receipt_and_fail_closed_error,
     test_stage_assets_refuses_a_path_outside_the_repository,
+    test_stage_visual_qc_binds_pass_to_video_and_keeps_review_pending,
+    test_stage_visual_qc_blocks_incomplete_frame_sampling_even_on_gate_pass,
+    test_stage_compose_preserves_previous_output_and_writes_engine_receipt,
+    test_stage_compose_records_blocked_receipt_before_refusing,
     test_stage_script_refuses_unknown_claim_and_undeclared_asset,
     test_stage_script_writes_the_legacy_check_and_source_bound_master,
     test_stage_script_refuses_duplicate_ids_and_empty_narration,
+    test_stage_subtitles_writes_legacy_srt_and_receipt,
     test_stage_subtitles_refuses_poor_coverage,
     test_ass_timestamps_are_centiseconds_and_match_the_srt,
     test_storyboard_timeline_covers_the_pauses_between_lines,

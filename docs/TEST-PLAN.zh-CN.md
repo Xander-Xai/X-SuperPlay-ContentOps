@@ -10,8 +10,15 @@ translation_status: synced
 
 > 本地验证策略权威文档、套件清单与 CI 接线。
 >
-> 最后验证：2026-11-18，PR #210 分支 `feat/199-real-delivery-20261118` @ `d2220078080b83ef0740b594dbedb06791ce9cec`。
-> 当前检出有 119 个受 Git 跟踪的 `tests/test_*.py` 套件，`.github/workflows/ci.yml` 明确引用了全部 119 个文件；该数量不包括其他 workflow 步骤。核验时 PR #210 的 GitHub 检查在文档 freshness 阶段失败。CI 已接线不等于 CI 已通过。
+> 最后验证：2026-11-26，基于 main @ `1fc95bbabefae1d86a4840cf43920a48abaf945e`；#210 为候选分支，不构成正式交付。
+> 最后验证：2026-11-21，已核对 #205 字幕行为回归及 #206 分镜抽取对应的 CI 已注册测试套件；没有新增独立测试套件，也没有改变素材证据或人工审核边界。
+> `.github/workflows/ci.yml` 逐一具名（107 个步骤）。此处不写死数量，
+> 以 `ls tests/test_*.py | wc -l` 为准。
+> 最后验证：2026-11-14；已实施 X / 跨平台本地分析和人工选题回流，不代表真实平台效果或发布。
+> 新增纯文字稿件 READY/发布包/真实URL记录、图文缺图拒绝、分题材评分门槛与账号合同的回归测试；CI结果以PR实际检查为准，不将测试用URL冒充真实平台发布。
+> 本分支增加 X 本地数据分析测试及 CI 步骤，测试使用合成 CSV，不上传真实后台数据。
+>
+> 最后核验：2026-11-06，`fix/6-brief-copy-review`。
 
 ## 按风险等级进行本地验证
 
@@ -56,9 +63,9 @@ python tests/test_media_convergence.py
 
 当前套件权威清单为 `git ls-files 'tests/test_*.py'`；只有 `.github/workflows/ci.yml` 明确点名的套件才算接入 CI。CI 为每个套件显式配置步骤。`check_repo_policy.check_test_suites_registered_in_ci` 会发现未接线套件。
 
-## 部分套件清单（非完整枚举）
+## 当前清单
 
-当前检出有 119 个受 Git 跟踪的 `tests/test_*.py` 套件，且 `.github/workflows/ci.yml` 均有明确引用。本表是选列，不是完整枚举；因列表驱动与 unittest 风格套件的检查定义方式不同，单套件函数数量仅为下限，并非总数。
+套件内函数数目只是下限，因为列表驱动和 unittest 风格套件定义检查的方式不同。
 
 | 套件 | 文件 | 数量 | CI |
 |---|---|---:|---|
@@ -152,4 +159,10 @@ CI 还运行策略、文档、i18n、空白、子进程与 receipt-secret 检查
 - 面向更多跨仓库 `SourceArtifact` 适配器的契约测试；路由层与一个 GitHub 适配器已在 `main`。
 - 发布路径的回归套件 —— 在出现真实平台 URL 之前没有可断言的证据。
 
-上方选列并非完整枚举。要读取当前检出的准确套件清单，运行 `git ls-files 'tests/test_*.py'`；CI 接线应将这些路径与 `.github/workflows/ci.yml` 比较。在核验的 PR #210 head（`d2220078`）上，检出包含 119 个受跟踪套件，workflow 引用了全部 119 个文件。最近观察到的 PR 检查在文档 freshness 阶段失败；这不能证明后续 CI 阶段的结果。
+上表是下限而非完整枚举。已获取的 `origin/main` `98a61f22` 有 104 个跟踪套件、105 个具名
+Python CI 步骤；Easel 候选新增 3 个独立套件及其 CI 步骤，集成后为 107 个套件、108 个步骤。
+当前检出的分支仍需获准后与该远端基线集成。当前检出数量以 `git ls-files 'tests/test_*.py'` 为准。
+
+## #210 工程候选分支说明
+
+#210 候选分支保留账号 schema 分派、按 DNA 派生 Easel YAML、原生 B 站 1920×1080 逐镜头源几何检查；15 秒 TEST_ONLY 工程样片原生检查和解码 PASS、完整 QC WARN、生成式画面不可作证，人工审核待定。真实双账号成片、授权录屏、Motion Canvas 编辑器导出和干净检出复现仍待完成。 当前合并树仍为 119 个测试套件；CI 结果以实际运行记录为准。
