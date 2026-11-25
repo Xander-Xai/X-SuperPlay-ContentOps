@@ -334,6 +334,14 @@
       "pr": 219,
       "created": "2026-11-26",
       "purpose": "Issue #211/#208 shared reviewed copy and offline native non-X graphic packages; no external drafts or publication",
+      "status": "merged",
+      "expires": "2026-12-26"
+    },
+    {
+      "name": "feat/authorized-video-metric-intake",
+      "pr": 220,
+      "created": "2026-11-26",
+      "purpose": "Issue #216 authorized local Douyin response and Bilibili receipt intake; no organic or publication claims",
       "status": "active",
       "expires": "2026-12-26"
     }

@@ -105,3 +105,5 @@ published_at、observed_at、window、metric_source、metric_definition_version�
     python tests/test_platform_learning_loop.py
 
 只运行合成数据测试，不读取真实社媒账户。
+
+#220 candidate: authorized Douyin video-data responses and existing account-bound Bilibili public receipts can be imported into the same local snapshot CSV with `scripts/video_metric_intake.py`. See [editorial operations](EDITORIAL-OPS.md) for exact inputs. Cumulative counts stay `organic_paid=unknown`; no benchmark or strategy promotion. Real platform permission and response verification remain pending.
