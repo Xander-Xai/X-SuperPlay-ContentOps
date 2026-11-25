@@ -1,5 +1,6 @@
 """Synthetic offline tests; no real account actions."""
 import csv
+import json
 import sys
 import tempfile
 import unittest
@@ -63,6 +64,30 @@ class EditorialTests(unittest.TestCase):
     def test_cost(self):
         self.assertEqual(ops.lane(10, "high"), "L3")
         self.assertEqual(ops.lane(45, "low"), "L2")
+
+    def test_hotspot_import(self):
+        path = self.directory / "candidates.json"
+        candidate = {"account_id": "x-superplay-english", "url": self.signal["source_url"],
+                     "title": "Synthetic", "collected_at": self.signal["observed_at"],
+                     "relevance": {"accepted": True}}
+        path.write_text(json.dumps([candidate, dict(candidate, account_id="other")]), encoding="utf-8")
+        self.assertEqual(ops.import_hotspots(self.directory, path, "agent", "x-superplay-english")["added"], 1)
+        self.assertEqual(ops.import_hotspots(self.directory, path, "agent", "x-superplay-english")["added"], 0)
+
+    def test_dashboard_and_handoff(self):
+        self.add("signals.csv", self.signal)
+        self.add("topics.csv", dict(self.topic, angle="<script>alert(1)</script>"))
+        report = ops.plan(self.directory)
+        ops.dashboard(self.directory, report)
+        page = (self.directory / "editorial-workspace.html").read_text(encoding="utf-8")
+        self.assertIn("&lt;script&gt;", page)
+        self.assertNotIn("<script>", page)
+        ident = report["queue"][0]["id"]
+        with self.assertRaises(ValueError):
+            ops.prepare_handoff(self.directory, report, ident, "Founder", False)
+        result = ops.prepare_handoff(self.directory, report, ident, "Founder", True)
+        self.assertIn("--url", result["argv"])
+        self.assertFalse(result["publish_authorized"])
 
     def test_local_only(self):
         with self.assertRaises(ValueError):
