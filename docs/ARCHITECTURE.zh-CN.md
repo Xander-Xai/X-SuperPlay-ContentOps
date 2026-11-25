@@ -9,6 +9,7 @@ translation_status: synced
 [English](ARCHITECTURE.md) | [简体中文](ARCHITECTURE.zh-CN.md)
 
 
+> 最后验证：2026-11-26，#219 候选分支共享文案与离线图文入口核对；CI 待验证。
 > Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > 最后验证：2026-11-21，核对 #204/#205：M5 的 ASR 与字幕实现移入 `workflow/m5_asr_stage.py` 和 `workflow/m5_subtitles_stage.py`，旧编排器继续提供兼容入口，证据、真人审核、发布授权均不变。
 > 最后验证：2026-11-14；X / 跨平台本地数据回流只生成待审主题，不授予自动平台动作。
@@ -357,6 +358,6 @@ FORK        → 最后手段
 
 运营策划 V1（#216）：本地需求与同行案例、建议选题评分、成本分级、原生变体、日历与系列规划；不改变研究、版权或发布门禁。详见 [EDITORIAL-OPS.md](EDITORIAL-OPS.md).
 
-## #210 工程候选分支
+#211/#208 候选分支：从现有已审核 VIDEO 文案逐字派生 GRAPHIC_TEXT，共享文案 ID、研究/文案摘要、Bundle、claim/evidence 绑定；独立素材与审核。新增六个非 X 平台离线打包入口，不创建平台草稿、升级状态或发布。X 与小红书图文排除；当前仅同仓 projects/、同 Bundle、同账号 treatment、同主题的逐字派生，尚待完整 CI。
 
-保留账号 schema 分派、DNA 派生 Easel YAML 和原生 B站 1920×1080 逐镜头几何校验；历史 15 秒 TEST_ONLY 工程样片原生检查/解码 PASS，完整 QC WARN，生成画面不可作证。真实双账号成片、授权录屏、Motion Canvas 编辑器导出、人工审核与干净检出复现仍待完成。本分支合并 #217 后的 main，不覆盖运营模块。
+#210 工程候选：保留原生横屏逐镜头几何、完整解码及成片 SHA-256 校验、真实素材比例门禁；参见 `docs/REAL-DELIVERY-ACCEPTANCE.md`。旧 head 双系统通过，重新协调 #219 后待 CI；真实双账号交付与 Founder 审核仍开放。

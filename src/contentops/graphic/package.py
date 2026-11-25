@@ -206,6 +206,15 @@ def build_package(project_dir: Path, handoff_path: Path, input_path: Path,
         raise GraphicPackageError("DRAFT_NOT_UTF8", "draft must be UTF-8") from None
 
     platform = _platform(data, handoff, registry_root)
+    from contentops.workflow import shared_copy
+    lineage = None
+    if (project / shared_copy.GRAPHIC_RECORD).exists() or data.get("shared_copy"):
+        if repo_root is None:
+            raise GraphicPackageError("SHARED_COPY_ROOT_REQUIRED", "repository root is required")
+        try:
+            lineage = shared_copy.verify_graphic(repo_root, project, handoff=handoff, title=title, draft=draft)
+        except shared_copy.SharedCopyError as exc:
+            raise GraphicPackageError("SHARED_COPY_BLOCKED", str(exc)) from None
     images = _images(project, data.get("images"), repo_root)
     blockers = list(handoff.get("blockers") or [])
     if platform.get("delivery") == "PLACEHOLDER" and "PLATFORM_PLACEHOLDER" not in blockers:
@@ -221,6 +230,7 @@ def build_package(project_dir: Path, handoff_path: Path, input_path: Path,
         "handoff_sha256": hashlib.sha256(
             Path(handoff_path).read_bytes()).hexdigest(),
         "title": title,
+        **({"shared_copy": lineage} if lineage else {}),
         "platform": platform,
         "draft": {
             "path": ("repo://" + draft.relative_to(Path(repo_root).resolve()).as_posix())

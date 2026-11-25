@@ -5,7 +5,7 @@
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
 
-> Last verified: 2026-11-26, GitHub main @ `9e5242231222f9ce95b0cc3eab9b1647d866a7d4`; #217 merged, #210 reconciliation CI pending.
+> Last verified: 2026-11-26, GitHub main @ `12f9065d9ccf0f6339bd8b74023b3d0e2d399e1b`; #219 merged, #210 reconciliation CI pending.
 > Last verified: 2026-11-21 against `ffb87ad96eab6283c773bfd150c81497979b536a` (protected `main` after #213 squash). M5's remaining thin-runner refactor and #199 authentic-media acceptance are still OPEN; no publishing or human approval was granted.
 > The dated Git-state tables below are historical snapshots, not current remote branch counts.
 > Last verified: 2026-11-14, read-only GitHub main @ `515c605` (protected). The proposed X text/image and per-mode reviews are branch changes, not yet on main; real platform outcomes unverified.
@@ -47,14 +47,23 @@
 > sync).** Every other section below it is a historical snapshot kept for
 > traceability; none of them is the current state.
 
+### Git — verified 2026-11-26 after #219 merge
+
+| Property | Verified value |
+|---|---|
+| Default branch | `12f9065d9ccf0f6339bd8b74023b3d0e2d399e1b` |
+| PRs | #217 and #219 merged; #210, #218, #220 Draft |
+| CI | #210 former head 4cf6767 Ubuntu, Windows and policy passed; reconciliation pending |
+| Boundary | #199 open; no new authentic film or human authorization |
+
 ### Git — verified 2026-11-26 after #217 merge
 
 | Property | Verified value |
 |---|---|
 | Default branch | `9e5242231222f9ce95b0cc3eab9b1647d866a7d4` |
-| PRs | #217 merged; #218, #219, #210 Draft |
-| CI | Main Ubuntu, Windows, Repo policy passed; #210 reconciliation pending |
-| Boundary | #199 remains open; no new real-media acceptance or publication authorization |
+| PRs | #217 merged; #218 and #219 Draft; #210 has merge conflicts |
+| CI | Post-merge main Ubuntu, Windows and Repo policy all passed; candidates pending full CI |
+| Safety | No real media, account acceptance or publish authorization; #216 remains OPEN |
 
 ### Git — verified 2026-11-26 (read-only checkpoint)
 
@@ -1019,7 +1028,4 @@ runtime lock verifier and the M5 gate keep their own authority.
 
 Editorial planning V1 (#216): local evidence/peer ledgers, advisory topic scores, cost lanes, native variants, calendar and series plans; research, rights and publication gates unchanged. See [EDITORIAL-OPS.md](EDITORIAL-OPS.md).
 
-
-## #210 engineering candidate
-
-Retains account schema dispatch, DNA-derived Easel YAML and per-shot native Bilibili 1920x1080 geometry checks. Historical 15-second TEST_ONLY sample: native checks and decode PASS, full QC WARN; generated visuals are not evidence. Real account-final films, authorized recording, Motion Canvas editor export, human review and clean-checkout reproduction remain open. Reconciled with post-#217 main; editorial modules preserved.
+#211/#208 candidate: project the existing reviewed VIDEO copy verbatim into GRAPHIC_TEXT; bind one shared copy identity to research/copy digests, Bundle, and claim/evidence references. Assets and review remain independent. Six non-X platform offline exports only, no external drafts, status upgrades or publication; X and Xiaohongshu image excluded. Initial scope is same-repository projects/, identical Bundle, treatment and topic, exact-copy only; full CI pending.

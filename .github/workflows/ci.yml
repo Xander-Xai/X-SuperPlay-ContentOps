@@ -607,6 +607,8 @@ jobs:
 
       - name: Run graphic workflow tests
         run: python tests/test_graphic_workflow.py
+      - name: Shared copy and non-X offline graphic workflow tests
+        run: python tests/test_shared_copy.py
 
       - name: Run M5 Bundle handoff tests
         run: python tests/test_m5_bundle_handoff.py

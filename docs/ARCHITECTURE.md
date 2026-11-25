@@ -3,6 +3,7 @@
 [English](ARCHITECTURE.md) | [简体中文](ARCHITECTURE.zh-CN.md)
 
 
+> Last verified: 2026-11-26. #219 candidate shared copy and offline graphic paths reviewed; CI pending.
 > Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > Last verified: 2026-11-21. The M5 orchestrator retains public facades for ASR and subtitles; the implementations are now isolated in `workflow/m5_asr_stage.py` and `workflow/m5_subtitles_stage.py` (#204/#205). All human/production gates remain closed until independently proven.
 > Last verified: 2026-11-14 (X contract update; PR checks determine CI status). X records now declare `post_format=text|image`; post validation and publisher both preserve honest optional media and manual-only handoff. The editorial gate routes by mode (technical/source versus general_interest). Offline feedback never starts platform actions.
@@ -377,6 +378,6 @@ Current: no fork. No upstream modification. `assemble_easel.py` is an ADAPTER
 
 Editorial planning V1 (#216): local evidence/peer ledgers, advisory topic scores, cost lanes, native variants, calendar and series plans; research, rights and publication gates unchanged. See [EDITORIAL-OPS.md](EDITORIAL-OPS.md).
 
-## #210 engineering candidate
+#211/#208 candidate: project the existing reviewed VIDEO copy verbatim into GRAPHIC_TEXT; bind one shared copy identity to research/copy digests, Bundle, and claim/evidence references. Assets and review remain independent. Six non-X platform offline exports only, no external drafts, status upgrades or publication; X and Xiaohongshu image excluded. Initial scope is same-repository projects/, identical Bundle, treatment and topic, exact-copy only; full CI pending.
 
-Retains account schema dispatch, DNA-derived Easel YAML and per-shot native Bilibili 1920x1080 geometry checks. Historical 15-second TEST_ONLY sample: native checks and decode PASS, full QC WARN; generated visuals are not evidence. Real account-final films, authorized recording, Motion Canvas editor export, human review and clean-checkout reproduction remain open. Reconciled with post-#217 main; editorial modules preserved.
+#210 engineering candidate: native landscape geometry, full decode and stable output SHA-256, plus real-source duration checks. See `docs/REAL-DELIVERY-ACCEPTANCE.md`. Former head passed both OSes; reconciliation with #219 pending CI. Real dual-account delivery and Founder review remain open.
