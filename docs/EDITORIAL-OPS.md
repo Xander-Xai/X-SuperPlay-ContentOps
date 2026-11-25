@@ -27,7 +27,7 @@ Cost lanes: L1 <=15 min low risk, L2 <=60 min low/standard, L3 otherwise. Planni
 
 ## Scope
 
-Tests: `python tests/test_editorial_ops.py` (synthetic only). Implements manual demand/peer ledgers, scoring, cost lanes, native plans, calendar/series summaries. Does not implement live feed collection, editable UI, metrics experiments, business handoff, DNA overrides, actual publication or real-account acceptance. Follow #216 and #199/#210. Keep raw data local; do not enter private identities or confidential observations.
+Tests: `python tests/test_editorial_ops.py` (synthetic only). Implements manual demand/peer ledgers, scoring, cost lanes, native plans, calendar/series summaries. Does not implement live feed collection, editable UI, randomized experiments, automated business transfer, DNA overrides, actual publication or real-account acceptance. Follow #216 and #199/#210. Keep raw data local; do not enter private identities or confidential observations.
 
 ## Existing router integration and read-only workspace
 
@@ -45,3 +45,14 @@ python scripts/editorial_ops.py handoff --candidate <id> --reviewer Founder --co
 ```
 
 The importer re-derives the existing account-scoped candidate ID using the same hotspot_route.candidate_id_for helper (the original payload does not carry account_id); it rejects wrong-account, rejected or malformed entries, deduplicates by topic/URL, and records only hotspot observations. It does not fetch anything or treat an import as verified buyer demand. Inspect editorial-workspace.html locally (read-only; no server, scripts or network). The handoff writes a JSON argv list for a human to review and execute through the existing topic route. It cannot approve research, generate media or publish. Re-run plan after editing data.
+
+## Variant experiments and local OPC signal
+
+`python scripts/editorial_feedback.py init` creates experiment-links.csv: link actual published content_id + post_url to the existing Strategy experiment_id, exactly one variable (hook/title/cover/cta/duration/visual_style/posting_time), arm a or b. Existing platform-learning snapshots are the sole native metrics source; variant labels never replace discovery source.
+
+```text
+python scripts/editorial_feedback.py review --experiment exp --variable hook --platform bilibili --account x-superplay-future-intelligence --format video --topic agent
+python scripts/editorial_feedback.py lead --content-id CID --post-url https://example.org/post/1 --category agent --evidence-ref local-1 --reviewer Founder --consent --confirm
+```
+
+Use actual IDs and URLs, not these examples. The review reuses same-cohort metric checks, five complete samples per arm, and outputs descriptive observations only. It does not change DNA. The lead command checks an existing published index entry and requires explicit consent/confirmation; it exports a local anonymous reference for OPC review, not a payment or verified buyer demand. Manual transfer only. Native X learning remains unchanged. Tests: python tests/test_editorial_feedback.py.
