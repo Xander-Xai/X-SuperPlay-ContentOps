@@ -5,7 +5,7 @@
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
 
-> Last verified: 2026-11-26, GitHub main @ `9e5242231222f9ce95b0cc3eab9b1647d866a7d4`; #217 merged, #218 candidate CI pending.
+> Last verified: 2026-11-26, GitHub main @ `12f9065d9ccf0f6339bd8b74023b3d0e2d399e1b`; #219 merged, #218 candidate revalidation pending.
 > Last verified: 2026-11-21 against `ffb87ad96eab6283c773bfd150c81497979b536a` (protected `main` after #213 squash). M5's remaining thin-runner refactor and #199 authentic-media acceptance are still OPEN; no publishing or human approval was granted.
 > The dated Git-state tables below are historical snapshots, not current remote branch counts.
 > Last verified: 2026-11-14, read-only GitHub main @ `515c605` (protected). The proposed X text/image and per-mode reviews are branch changes, not yet on main; real platform outcomes unverified.
@@ -46,6 +46,15 @@
 > **Git state is re-verified below at 2026-11-12 (read-only documentation
 > sync).** Every other section below it is a historical snapshot kept for
 > traceability; none of them is the current state.
+
+### Git — verified 2026-11-26 after #219 merge
+
+| Property | Verified value |
+|---|---|
+| Default branch | `12f9065d9ccf0f6339bd8b74023b3d0e2d399e1b` |
+| PRs | #217 and #219 merged; #218 and #210 Draft |
+| CI | #219 pre-merge Ubuntu, Windows, policy passed; candidate pending |
+| Boundary | No real video, publication or business acceptance |
 
 ### Git — verified 2026-11-26 after #217 merge
 
@@ -1019,4 +1028,4 @@ runtime lock verifier and the M5 gate keep their own authority.
 
 Editorial planning V1 (#216): local evidence/peer ledgers, advisory topic scores, cost lanes, native variants, calendar and series plans; research, rights and publication gates unchanged. See [EDITORIAL-OPS.md](EDITORIAL-OPS.md).
 
-#215 candidate: Future Intelligence per-video planning range 30–300s, default target 90s; estimated copy over 300s blocks and measured ffprobe duration over 300s hard FAIL. Other accounts, recording prohibition, evidence/review and publication gates unchanged; historical receipts unchanged.
+#211/#208 candidate: project the existing reviewed VIDEO copy verbatim into GRAPHIC_TEXT; bind one shared copy identity to research/copy digests, Bundle, and claim/evidence references. Assets and review remain independent. Six non-X platform offline exports only, no external drafts, status upgrades or publication; X and Xiaohongshu image excluded. Initial scope is same-repository projects/, identical Bundle, treatment and topic, exact-copy only; full CI pending.

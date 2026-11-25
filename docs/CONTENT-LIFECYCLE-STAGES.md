@@ -8,7 +8,7 @@
 
 > Status: reference — 2026-11-12.
 
-> Last verified: 2026-11-26. #215 candidate duration policy reviewed; CI pending.
+> Last verified: 2026-11-26. #219 candidate shared copy and offline graphic paths reviewed; CI pending.
 > Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > Last verified: 2026-11-21. Rechecked #204/#205 M5 implementation extractions: lifecycle stages, receipts and approval boundaries are unchanged; these are not video acceptance or publication proofs.
 > Last verified: 2026-11-14. The X ORIGINAL_POST path now validates explicit text or image format, content-mode review profiles and human-only package handoff; image records require raster+ALT and text records carry neither. No live account growth or platform publication is verified.
@@ -172,4 +172,6 @@ script, hotspot and platform code is present; it is not an unmerged layer.
 
 Editorial planning V1 (#216): local evidence/peer ledgers, advisory topic scores, cost lanes, native variants, calendar and series plans; research, rights and publication gates unchanged. See [EDITORIAL-OPS.md](EDITORIAL-OPS.md).
 
-#215 candidate: Future Intelligence per-video range 30–300s; default planning target 90s, measured over 300s hard FAIL. Other accounts, recording and approval boundaries unchanged. Historical receipts are not rewritten.
+#211/#208 candidate: project the existing reviewed VIDEO copy verbatim into GRAPHIC_TEXT; bind one shared copy identity to research/copy digests, Bundle, and claim/evidence references. Assets and review remain independent. Six non-X platform offline exports only, no external drafts, status upgrades or publication; X and Xiaohongshu image excluded. Initial scope is same-repository projects/, identical Bundle, treatment and topic, exact-copy only; full CI pending.
+
+#218 candidate: FI per-video 30–300s, planning default 90s; update generated Easel profile digest only (historical installed snapshot unchanged); preserve other accounts and approvals.

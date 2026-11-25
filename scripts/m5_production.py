@@ -2011,9 +2011,10 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
     # In AUTO, draft video rendering can proceed without a separate manual
     # copy sign-off. Source/claim/asset checks still run; final publishing
     # remains separately subject to human review.
+    reviewed_copy = None
     if require_copy_review:
         try:
-            copy_review.require_if_brief_driven(project)
+            reviewed_copy = copy_review.require_if_brief_driven(project)
         except copy_review.CopyReviewRequired as exc:
             raise M5Blocked(f"copy review: {exc}") from None
 
@@ -2195,6 +2196,8 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
         "stage_timings_seconds": timings,
         "production_ready": False,
         "copy_review_required_for_render": require_copy_review,
+        **({"shared_copy_id": reviewed_copy["shared_copy_id"], "copy_sha256": reviewed_copy["copy_sha256"]}
+           if reviewed_copy and reviewed_copy.get("shared_copy_id") else {}),
         "human_review": "PENDING_FOUNDER_REVIEW" if review else "NOT_RUN",
     }
     _write_json(project / "receipts" / "m5-run.json", run)

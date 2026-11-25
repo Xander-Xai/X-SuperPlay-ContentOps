@@ -5,7 +5,7 @@
 > Authoritative local verification strategy, suite inventory and CI wiring.
 >
 
-> Last verified: 2026-11-26. #215 duration candidate reconciled with current main; full CI pending.
+> Last verified: 2026-11-26. #219 candidate shared copy and offline graphic paths reviewed; CI pending.
 > Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > Last verified: 2026-11-21. Rechecked the #205 subtitle behavior regressions and #206 storyboard extraction against the registered CI suites; no new test suite was introduced and source/media approval boundaries remain unchanged.
 > `tests/test_*.py`, and `.github/workflows/ci.yml` names every one of them (107 steps).
@@ -163,4 +163,6 @@ needs an approved integration with that remote baseline. `git ls-files
 
 Editorial planning V1 (#216): local evidence/peer ledgers, advisory topic scores, cost lanes, native variants, calendar and series plans; research, rights and publication gates unchanged. See [EDITORIAL-OPS.md](EDITORIAL-OPS.md).
 
-#215 candidate: Future Intelligence per-video planning range 30–300s, default target 90s; estimated copy over 300s blocks and measured ffprobe duration over 300s hard FAIL. Other accounts, recording prohibition, evidence/review and publication gates unchanged; historical receipts unchanged.
+#211/#208 candidate: project the existing reviewed VIDEO copy verbatim into GRAPHIC_TEXT; bind one shared copy identity to research/copy digests, Bundle, and claim/evidence references. Assets and review remain independent. Six non-X platform offline exports only, no external drafts, status upgrades or publication; X and Xiaohongshu image excluded. Initial scope is same-repository projects/, identical Bundle, treatment and topic, exact-copy only; full CI pending.
+
+#218 candidate: FI per-video 30–300s, planning default 90s; update generated Easel profile digest only (historical installed snapshot unchanged); preserve other accounts and approvals.

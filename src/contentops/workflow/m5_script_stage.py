@@ -55,7 +55,10 @@ def stage_script(
     }
     write_json(project / "receipts" / "script-check.json", payload)
 
-    master = project / "script" / "master.md"
+    # Shared copy is reviewed before rendering; do not overwrite its fingerprinted master.
+    master = (project / "receipts" / "m5-reviewed-copy.md"
+              if (project / "receipts" / "shared-copy-video.json").exists()
+              else project / "script" / "master.md")
     # Each beat includes a followable evidence link, not only a bare claim id.
     refs_doc = read_json_or_none(project / "sources" / "source-refs.json") or {}
     refs_by_id = {
