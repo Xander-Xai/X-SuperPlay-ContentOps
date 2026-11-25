@@ -22,7 +22,7 @@
 - [PLATFORM-INTEGRATION-STATUS.md](PLATFORM-INTEGRATION-STATUS.md) — What this branch can do per platform; GitHub as proof infrastructure; Easel coverage
 - [EASEL-CAPABILITY-INVENTORY.md](EASEL-CAPABILITY-INVENTORY.md) — Upstream-declared vs integrated vs executable vs production-allowed Easel capabilities
 - [PLATFORM-ADAPTER-CONTRACT.md](PLATFORM-ADAPTER-CONTRACT.md) — Delivery-layer adapter interface; no second registry, no second production engine
-- [CONTENT-LIFECYCLE-STAGES.md](CONTENT-LIFECYCLE-STAGES.md) — Ordered lifecycle stages, owners, current state and receipts; [简体中文](CONTENT-LIFECYCLE-STAGES.zh-CN.md)
+- [CONTENT-LIFECYCLE-STAGES.md](CONTENT-LIFECYCLE-STAGES.md) — Ordered lifecycle stages, owners, current state and receipts
 - [PRECOPY-RESEARCH.md](PRECOPY-RESEARCH.md) — Mandatory research-before-copy gate: the router's bound `ContentIntent`, project read-through, authoritative sources, outline, evidence list, boundary and a signed receipt
 - [ASR-BACKCHECK.md](ASR-BACKCHECK.md) — The narration ASR gate: a detector that can report a problem, never approve a video
 - [MOTION-WORKFLOW-SPEC.md](MOTION-WORKFLOW-SPEC.md) — Dual-account video workflow contracts: sample gate, motion handoff, real-source duration, router → M5
@@ -134,3 +134,7 @@ REAL EXECUTION RECEIPT
 > RESEARCH
 > OLD PLAN
 ```
+
+- [EDITORIAL-OPS.md](EDITORIAL-OPS.md) — Local editorial planning / 本地运营策划
+
+#210 real-media acceptance: see [delivery acceptance runbook](REAL-DELIVERY-ACCEPTANCE.md).

@@ -1,6 +1,6 @@
 {
   "schema": "contentops.branch-registry/v1",
-  "verified_at": "2026-11-26T00:00:00+08:00",
+  "verified_at": "2026-11-26T00:46:50+08:00",
   "policy": {
     "persistent": [
       "main"
@@ -320,6 +320,14 @@
       "purpose": "Issue #7 post-#213 governance reconciliation of merged M5 rows, Draft #210, retained historical docs/199 branch and bilingual Git snapshot; no runtime or production authority change",
       "status": "active",
       "expires": "2026-12-21"
+    },
+    {
+      "name": "feat/ops-editorial-loop-20261126",
+      "pr": 217,
+      "created": "2026-11-25",
+      "purpose": "Issue #216 local editorial planning; evidence/peer ledgers, advisory scores, cost lanes, native variants, calendar/series",
+      "status": "merged",
+      "expires": "2026-12-25"
     }
   ]
 }

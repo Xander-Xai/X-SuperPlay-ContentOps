@@ -1,0 +1,47 @@
+name: Editorial public-feed smoke
+
+# Optional external integration evidence, separate from the required offline CI.
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/editorial_feeds.py'
+      - '.github/workflows/editorial-public-feed-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: editorial-public-feed-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  public-feed:
+    name: Public feed (${{ matrix.source }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - source: github-release-atom
+            url: https://github.com/DIYgod/RSSHub/releases.atom
+          - source: rsshub-github-trending
+            url: https://rsshub.app/github/trending/daily/python
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Fetch and parse one public feed
+        env:
+          FEED_URL: ${{ matrix.url }}
+          SOURCE_ID: ${{ matrix.source }}
+        run: |
+          python scripts/editorial_feeds.py --data-dir "$RUNNER_TEMP/feed-smoke" --url "$FEED_URL" --source-id "$SOURCE_ID" --topic public-feed-smoke --confirm
+          python -c 'import json, os, pathlib; p=pathlib.Path(os.environ["RUNNER_TEMP"])/"feed-smoke"/"feed-intake.json"; r=json.loads(p.read_text(encoding="utf-8")); assert r["origin"]=="live_public_https" and r["added"]>0 and r["publish_authorized"] is False and r["demand_verified"] is False; print("LIVE_PUBLIC_FEED_PARSED", r["added"], r["input_sha256"])'

@@ -3,7 +3,8 @@
 [English](RUNBOOK.md) | [简体中文](RUNBOOK.zh-CN.md)
 
 > Real executable commands. Derived from actual script behavior, not assumptions.
-> Last verified: 2026-11-26, main @ `1fc95bbabefae1d86a4840cf43920a48abaf945e`; #210 is candidate-branch engineering work, not a delivered video.
+
+> Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > Last verified: 2026-11-21. The M5 diagnostic CLI and receipt paths are unchanged by #204/#205 ASR/subtitle module extraction. No external transcription or rendering is asserted by these offline regression checks.
 > Last verified: 2026-11-14: X CLI now accepts `--post-format text|image` on `--new` (image is legacy default). A text package has no image/ALT upload step; image-format posts still require genuine PNG/JPEG+ALT. `--package` never posts, and only a human-confirmed X status URL can be recorded by `--mark-published`.
 > X policy: Strategy canonical SOP and registered account DNA; source metrics and publishing still require human verification.
@@ -14,7 +15,7 @@
 python scripts/doctor.py
 ```
 
-Checks: Python ≥3.10, Node ≥22, FFmpeg, ffprobe, git, Easel checkout (v0.3.0), repo layout.
+Checks: Python ≥3.10, Node ≥22, FFmpeg, ffprobe, git, Easel checkout (v0.2.1), repo layout.
 
 Expected: all OK. If Easel checkout fails, run bootstrap (§1).
 
@@ -715,6 +716,8 @@ The media-use demo composes through a separate, verified Easel runtime. A
 successful demo and QC `WARN` do **not** mean the original `.runtime/easel`
 checkout is healthy or restored; that remains a separate integrity question.
 
-## #210 engineering candidate branch
+Editorial planning V1 (#216): local evidence/peer ledgers, advisory topic scores, cost lanes, native variants, calendar and series plans; research, rights and publication gates unchanged. See [EDITORIAL-OPS.md](EDITORIAL-OPS.md).
 
-The #210 candidate branch retains account-schema dispatch, DNA-derived Easel YAML and per-shot native Bilibili 1920x1080 source-geometry checks. The 15-second TEST_ONLY sample receipt records native checks/full decode PASS, full QC WARN, generated non-evidence visuals and pending human review. Real dual-account final cuts, authorized recording, Motion Canvas editor export and clean-checkout reproduction remain open. Native path explicitly declares target.platform=bilibili, target.native_relayout=true, target.resolution=1920x1080 and storyboard 1920x1080; unprobeable source geometry fails.
+## #210 engineering candidate
+
+Retains account schema dispatch, DNA-derived Easel YAML and per-shot native Bilibili 1920x1080 geometry checks. Historical 15-second TEST_ONLY sample: native checks and decode PASS, full QC WARN; generated visuals are not evidence. Real account-final films, authorized recording, Motion Canvas editor export, human review and clean-checkout reproduction remain open. Reconciled with post-#217 main; editorial modules preserved.

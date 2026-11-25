@@ -4,7 +4,8 @@
 
 > Milestone-based execution. Every milestone has an exit criterion.
 >
-> Last verified: 2026-11-26, main @ `1fc95bbabefae1d86a4840cf43920a48abaf945e`; #210 is candidate-branch engineering work, not a delivered video.
+
+> Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > Last verified: 2026-11-21. M5 ASR/subtitle stages were checked against the extracted compatibility facades in #204/#205; the milestone's human-review and delivery blockers remain unchanged.
 > Last verified: 2026-11-14: X original-post contract now offers explicit text-only and raster+ALT modes plus strict technical versus general-interest human review. No live platform outcome claimed; CI of this change is tracked in its PR.
 > X policy: Strategy canonical SOP and registered account DNA; source metrics and publishing still require human verification.
@@ -99,6 +100,8 @@ its implementation exists.
    `PLANNED`.
 3. M5 stage split (#140), guarded by the recorded characterization baseline.
 
-## #210 engineering candidate branch
+Editorial planning V1 (#216): local evidence/peer ledgers, advisory topic scores, cost lanes, native variants, calendar and series plans; research, rights and publication gates unchanged. See [EDITORIAL-OPS.md](EDITORIAL-OPS.md).
 
-The #210 candidate branch retains account-schema dispatch, DNA-derived Easel YAML and per-shot native Bilibili 1920x1080 source-geometry checks. The 15-second TEST_ONLY sample receipt records native checks/full decode PASS, full QC WARN, generated non-evidence visuals and pending human review. Real dual-account final cuts, authorized recording, Motion Canvas editor export and clean-checkout reproduction remain open.
+## #210 engineering candidate
+
+Retains account schema dispatch, DNA-derived Easel YAML and per-shot native Bilibili 1920x1080 geometry checks. Historical 15-second TEST_ONLY sample: native checks and decode PASS, full QC WARN; generated visuals are not evidence. Real account-final films, authorized recording, Motion Canvas editor export, human review and clean-checkout reproduction remain open. Reconciled with post-#217 main; editorial modules preserved.

@@ -30,7 +30,7 @@ translation_status: synced
 - [PLATFORM-INTEGRATION-STATUS.md](PLATFORM-INTEGRATION-STATUS.md) —— 本分支在各平台实际能做什么；GitHub 作为证据基础设施；Easel 覆盖范围
 - [EASEL-CAPABILITY-INVENTORY.md](EASEL-CAPABILITY-INVENTORY.md) —— Easel 能力盘点：上游已声明 / 已接入 / 已执行 / 允许生产
 - [PLATFORM-ADAPTER-CONTRACT.md](PLATFORM-ADAPTER-CONTRACT.md) —— 交付层适配器接口；不建第二套注册表，不建第二套生产引擎
-- [CONTENT-LIFECYCLE-STAGES.md](CONTENT-LIFECYCLE-STAGES.md) —— 有序生命周期阶段、归属、状态与回执；[简体中文镜像](CONTENT-LIFECYCLE-STAGES.zh-CN.md)
+- [CONTENT-LIFECYCLE-STAGES.md](CONTENT-LIFECYCLE-STAGES.md) —— 有序生命周期阶段、归属、当前状态与回执
 - [PRECOPY-RESEARCH.md](PRECOPY-RESEARCH.md) —— 写文案前的强制预研门禁：绑定 router 的 intent、项目通读、权威信源、大纲、证据清单、边界声明与具名批准
 - [ASR-BACKCHECK.md](ASR-BACKCHECK.md) —— 旁白 ASR 门禁：可以报告问题，但永远不能批准视频
 - [MOTION-WORKFLOW-SPEC.md](MOTION-WORKFLOW-SPEC.md) —— 双账号视频工作流契约：样片门、动效交接、真实素材时长、路由 → M5
@@ -131,3 +131,7 @@ Tier-1 文档默认英文为原文、中文为 `.zh-CN.md` 镜像。**README 是
 - [../reports/audits/github-governance-2026-11-03.md](../reports/audits/github-governance-2026-11-03.md) — PR、Issue 与分支治理；删除候选等待 Owner 点名授权（2026-11-03）
 - [../reports/audits/github-governance-closeout-2026-11-04.md](../reports/audits/github-governance-closeout-2026-11-04.md) — 零积压收尾：许可、descope 轨道、归档分支与最终验证（2026-11-04）
 - [../reports/audits/rights-audit-2026-11-04.md](../reports/audits/rights-audit-2026-11-04.md) — GZH/XHS 许可矩阵与公开 receipt 暴露；仍需决策（2026-11-04）
+
+- [EDITORIAL-OPS.md](EDITORIAL-OPS.md) — Local editorial planning / 本地运营策划
+
+#210 真实媒体验收：参见 [交付验收手册](REAL-DELIVERY-ACCEPTANCE.md)。

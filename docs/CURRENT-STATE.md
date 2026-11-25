@@ -4,7 +4,8 @@
 
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
-> Last verified: 2026-11-26, main @ `1fc95bbabefae1d86a4840cf43920a48abaf945e`; #210 is candidate-branch engineering work, not a delivered video.
+
+> Last verified: 2026-11-26, GitHub main @ `9e5242231222f9ce95b0cc3eab9b1647d866a7d4`; #217 merged, #210 reconciliation CI pending.
 > Last verified: 2026-11-21 against `ffb87ad96eab6283c773bfd150c81497979b536a` (protected `main` after #213 squash). M5's remaining thin-runner refactor and #199 authentic-media acceptance are still OPEN; no publishing or human approval was granted.
 > The dated Git-state tables below are historical snapshots, not current remote branch counts.
 > Last verified: 2026-11-14, read-only GitHub main @ `515c605` (protected). The proposed X text/image and per-mode reviews are branch changes, not yet on main; real platform outcomes unverified.
@@ -46,14 +47,24 @@
 > sync).** Every other section below it is a historical snapshot kept for
 > traceability; none of them is the current state.
 
+### Git — verified 2026-11-26 after #217 merge
+
+| Property | Verified value |
+|---|---|
+| Default branch | `9e5242231222f9ce95b0cc3eab9b1647d866a7d4` |
+| PRs | #217 merged; #218, #219, #210 Draft |
+| CI | Main Ubuntu, Windows, Repo policy passed; #210 reconciliation pending |
+| Boundary | #199 remains open; no new real-media acceptance or publication authorization |
+
 ### Git — verified 2026-11-26 (read-only checkpoint)
 
 | Property | Verified value |
 |---|---|
 | Default branch | `1fc95bbabefae1d86a4840cf43920a48abaf945e` |
-| Open PRs | #210 and #217, both Draft at checkpoint |
-| Remote branches | 7 at checkpoint |
-| Safety | #199 not accepted; no production or publication authorization |
+| Open PRs | #210 and #217, both Draft; #210 conflicts |
+| Open issues | 10 excluding PRs; #216 remains OPEN |
+| Remote branches | 7 at this read-only checkpoint |
+| Safety | No real publication or account acceptance proven; #217 remains unmerged |
 
 ### Git — verified 2026-11-21 (post-#213 read-only checkpoint)
 
@@ -1006,6 +1017,9 @@ The router adds no second skill engine and copies no third-party skill. A
 declaration is a pointer to code this repository already owns; the adapter, the
 runtime lock verifier and the M5 gate keep their own authority.
 
-## #210 engineering candidate branch
+Editorial planning V1 (#216): local evidence/peer ledgers, advisory topic scores, cost lanes, native variants, calendar and series plans; research, rights and publication gates unchanged. See [EDITORIAL-OPS.md](EDITORIAL-OPS.md).
 
-The #210 candidate branch retains account-schema dispatch, DNA-derived Easel YAML and per-shot native Bilibili 1920x1080 source-geometry checks. The 15-second TEST_ONLY sample receipt records native checks/full decode PASS, full QC WARN, generated non-evidence visuals and pending human review. Real dual-account final cuts, authorized recording, Motion Canvas editor export and clean-checkout reproduction remain open.
+
+## #210 engineering candidate
+
+Retains account schema dispatch, DNA-derived Easel YAML and per-shot native Bilibili 1920x1080 geometry checks. Historical 15-second TEST_ONLY sample: native checks and decode PASS, full QC WARN; generated visuals are not evidence. Real account-final films, authorized recording, Motion Canvas editor export, human review and clean-checkout reproduction remain open. Reconciled with post-#217 main; editorial modules preserved.

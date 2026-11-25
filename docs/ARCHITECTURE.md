@@ -2,7 +2,8 @@
 
 [English](ARCHITECTURE.md) | [简体中文](ARCHITECTURE.zh-CN.md)
 
-> Last verified: 2026-11-26, main @ `1fc95bbabefae1d86a4840cf43920a48abaf945e`; #210 is candidate-branch engineering work, not a delivered video.
+
+> Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > Last verified: 2026-11-21. The M5 orchestrator retains public facades for ASR and subtitles; the implementations are now isolated in `workflow/m5_asr_stage.py` and `workflow/m5_subtitles_stage.py` (#204/#205). All human/production gates remain closed until independently proven.
 > Last verified: 2026-11-14 (X contract update; PR checks determine CI status). X records now declare `post_format=text|image`; post validation and publisher both preserve honest optional media and manual-only handoff. The editorial gate routes by mode (technical/source versus general_interest). Offline feedback never starts platform actions.
 > X priority: platform rules/human gates -> registered account DNA -> Strategy X SOP -> scoped experiment.
@@ -374,6 +375,8 @@ Current: no fork. No upstream modification. `assemble_easel.py` is an ADAPTER
 - Metrics scraping (not implemented)
 - Auto-publishing (explicitly out of scope)
 
-## #210 engineering candidate branch
+Editorial planning V1 (#216): local evidence/peer ledgers, advisory topic scores, cost lanes, native variants, calendar and series plans; research, rights and publication gates unchanged. See [EDITORIAL-OPS.md](EDITORIAL-OPS.md).
 
-The #210 candidate branch retains account-schema dispatch, DNA-derived Easel YAML and per-shot native Bilibili 1920x1080 source-geometry checks. The 15-second TEST_ONLY sample receipt records native checks/full decode PASS, full QC WARN, generated non-evidence visuals and pending human review. Real dual-account final cuts, authorized recording, Motion Canvas editor export and clean-checkout reproduction remain open.
+## #210 engineering candidate
+
+Retains account schema dispatch, DNA-derived Easel YAML and per-shot native Bilibili 1920x1080 geometry checks. Historical 15-second TEST_ONLY sample: native checks and decode PASS, full QC WARN; generated visuals are not evidence. Real account-final films, authorized recording, Motion Canvas editor export, human review and clean-checkout reproduction remain open. Reconciled with post-#217 main; editorial modules preserved.

@@ -6,7 +6,8 @@ translation_status: synced
 
 # PRD — X-SuperPlay ContentOps 运行时
 
-> 最后验证：2026-11-26，基于 main @ `1fc95bbabefae1d86a4840cf43920a48abaf945e`；#210 为候选分支，不构成正式交付。
+
+> Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > 最后验证：2026-11-21，核对 #204/#205 的 ASR 与字幕拆分：只更改实现分层，不新增正式成片、平台发布或人工审批能力。
 > 最后验证：2026-11-14；X / 跨平台本地数据回流只生成待审主题，不授予自动平台动作。
 > X 原创功能按题材与格式审核：文字帖无需媒体，图文必须通过尺寸/格式/ALT检查；泛兴趣评分重原创与诚实语境，技术与新闻保留严格证据。所有帖子依旧由真人审核、发布并登记真实X URL。
@@ -227,6 +228,8 @@ M0 → M1 → M2.0 → M2-M4 → M5 → M6
 - 连续 3 次 E2E 失败 → HOLD，根因分析
 - Founder 审核拒绝所有输出 → STOP，重新评估
 
-## #210 工程候选分支说明
+运营策划 V1（#216）：本地需求与同行案例、建议选题评分、成本分级、原生变体、日历与系列规划；不改变研究、版权或发布门禁。详见 [EDITORIAL-OPS.md](EDITORIAL-OPS.md).
 
-#210 候选分支保留账号 schema 分派、按 DNA 派生 Easel YAML、原生 B 站 1920×1080 逐镜头源几何检查；15 秒 TEST_ONLY 工程样片原生检查和解码 PASS、完整 QC WARN、生成式画面不可作证，人工审核待定。真实双账号成片、授权录屏、Motion Canvas 编辑器导出和干净检出复现仍待完成。
+## #210 工程候选分支
+
+保留账号 schema 分派、DNA 派生 Easel YAML 和原生 B站 1920×1080 逐镜头几何校验；历史 15 秒 TEST_ONLY 工程样片原生检查/解码 PASS，完整 QC WARN，生成画面不可作证。真实双账号成片、授权录屏、Motion Canvas 编辑器导出、人工审核与干净检出复现仍待完成。本分支合并 #217 后的 main，不覆盖运营模块。

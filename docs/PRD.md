@@ -2,7 +2,8 @@
 
 [English](PRD.md) | [简体中文](PRD.zh-CN.md)
 
-> Last verified: 2026-11-26, main @ `1fc95bbabefae1d86a4840cf43920a48abaf945e`; #210 is candidate-branch engineering work, not a delivered video.
+
+> Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > Last verified: 2026-11-21 against the #204/#205 M5 refactor diffs. The extracted ASR/subtitle stage modules preserve the recorded acceptance semantics; no additional delivered video or publishing capability is claimed.
 > Last verified: 2026-11-14 (X original-post scope update). Accepted X behaviors: text-only originals without image or ALT, image originals with verified raster/ALT, and mode-appropriate human quality scoring; all preserve claim provenance, rights and manual-only posting. Local-only feedback never performs platform actions.
 > X priority: platform rules/human gates -> registered account DNA -> Strategy X SOP -> scoped experiment.
@@ -233,6 +234,8 @@ M0 → M1 → M2.0 → M2-M4 → M5 → M6
 - 3 consecutive E2E failures → HOLD, root-cause
 - Founder Review rejects all outputs → STOP, reassess
 
-## #210 engineering candidate branch
+Editorial planning V1 (#216): local evidence/peer ledgers, advisory topic scores, cost lanes, native variants, calendar and series plans; research, rights and publication gates unchanged. See [EDITORIAL-OPS.md](EDITORIAL-OPS.md).
 
-The #210 candidate branch retains account-schema dispatch, DNA-derived Easel YAML and per-shot native Bilibili 1920x1080 source-geometry checks. The 15-second TEST_ONLY sample receipt records native checks/full decode PASS, full QC WARN, generated non-evidence visuals and pending human review. Real dual-account final cuts, authorized recording, Motion Canvas editor export and clean-checkout reproduction remain open.
+## #210 engineering candidate
+
+Retains account schema dispatch, DNA-derived Easel YAML and per-shot native Bilibili 1920x1080 geometry checks. Historical 15-second TEST_ONLY sample: native checks and decode PASS, full QC WARN; generated visuals are not evidence. Real account-final films, authorized recording, Motion Canvas editor export, human review and clean-checkout reproduction remain open. Reconciled with post-#217 main; editorial modules preserved.

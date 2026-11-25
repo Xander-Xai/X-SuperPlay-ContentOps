@@ -312,6 +312,44 @@ def test_the_threshold_is_the_documented_seventy_percent():
     print("[ok] 13. the floor is 0.70")
 
 
+@test
+def test_generated_asset_cannot_be_relabelled_as_capture():
+    shot = _shot("spoof", 10.0, "real_recording")
+    for fields in ({"generated": True}, {"evidence_capable": False}, {"type": "generated_video"}):
+        assets = _assets("projects/x/real.png")
+        assets["assets"][0].update(fields)
+        result = _measure([shot], 10.0, assets)
+        assert result["state"] == BLOCKED and result["code"] == "SOURCE_CLASSIFICATION_CONFLICT", result
+    result = _measure([{**shot, "generated": True}], 10.0)
+    assert result["state"] == BLOCKED, result
+    # Even if the cited source is real, the visible visual is a generated asset.
+    assets = _assets("projects/x/real.png", "projects/x/diagram.png")
+    assets["assets"][1]["type"] = "diagram"
+    result = _measure([{**shot, "image": "projects/x/diagram.png"}], 10.0, assets)
+    assert result["state"] == BLOCKED, result
+
+
+@test
+def test_invalid_timeline_numbers_block():
+    for value in (float("nan"), float("inf"), -1):
+        result = _measure([_shot("r", 10, "real_recording")], value)
+        assert result["state"] == BLOCKED, result
+        result = _measure([_shot("r", value, "real_recording")], 10)
+        assert result["state"] == BLOCKED, result
+        result = _measure([_shot("r", 10, "real_recording", start=value)], 10)
+        assert result["state"] == BLOCKED, result
+    result = _measure([_shot("r", 10, "real_recording", start="bad")], 10)
+    assert result["state"] == BLOCKED, result
+
+
+@test
+def test_display_rounding_cannot_pass_below_threshold():
+    result = _measure([_shot("r", 69.9999, "real_recording")], 100.0)
+    assert result["real_source_duration_ratio"] == 0.7, result
+    assert result["state"] == FAIL, result
+    assert _measure([_shot("r", 70, "real_recording")], 100)["state"] == PASS
+
+
 def main() -> int:
     failures = []
     for fn in TESTS:

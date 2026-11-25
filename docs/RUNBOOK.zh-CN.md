@@ -9,7 +9,8 @@ translation_status: synced
 [English](RUNBOOK.md) | [简体中文](RUNBOOK.zh-CN.md)
 
 > 真实可执行命令。从实际脚本行为推导，非假设。
-> 最后验证：2026-11-26，基于 main @ `1fc95bbabefae1d86a4840cf43920a48abaf945e`；#210 为候选分支，不构成正式交付。
+
+> Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > 最后验证：2026-11-21，复核 #204/#205 M5 ASR / 字幕拆分，原诊断命令及回执路径未变；离线测试不代表实际调用转写或生产渲染。
 > X / 跨平台本地数据回流只生成待审主题，不授予自动平台动作。
 > X 命令行 `--new` 增加 `--post-format text|image`（旧记录默认 image）。纯文字发布包不含图片/ALT步骤；图文仍须真图与ALT。`--package`只准备待发布包，`--mark-published`只记录真人确认的X URL。
@@ -481,6 +482,8 @@ python scripts\m5_production.py projects\m5-media-use
 media-use 演示通过另一套已验证的 Easel 运行时合成。演示成功与 QC `WARN` **不**表示
 原始 `.runtime/easel` 检出已健康或已恢复；那仍是一个独立的完整性问题是。
 
-## #210 工程候选分支说明
+运营策划 V1（#216）：本地需求与同行案例、建议选题评分、成本分级、原生变体、日历与系列规划；不改变研究、版权或发布门禁。详见 [EDITORIAL-OPS.md](EDITORIAL-OPS.md).
 
-#210 候选分支保留账号 schema 分派、按 DNA 派生 Easel YAML、原生 B 站 1920×1080 逐镜头源几何检查；15 秒 TEST_ONLY 工程样片原生检查和解码 PASS、完整 QC WARN、生成式画面不可作证，人工审核待定。真实双账号成片、授权录屏、Motion Canvas 编辑器导出和干净检出复现仍待完成。 原生路径须声明 target.platform=bilibili、target.native_relayout=true、target.resolution=1920x1080，storyboard 为 1920x1080；缺失或不可核验的源素材拒绝。
+## #210 工程候选分支
+
+保留账号 schema 分派、DNA 派生 Easel YAML 和原生 B站 1920×1080 逐镜头几何校验；历史 15 秒 TEST_ONLY 工程样片原生检查/解码 PASS，完整 QC WARN，生成画面不可作证。真实双账号成片、授权录屏、Motion Canvas 编辑器导出、人工审核与干净检出复现仍待完成。本分支合并 #217 后的 main，不覆盖运营模块。

@@ -4,7 +4,8 @@
 
 [简体中文](README.md) | English
 
-> Last verified: 2026-11-26, main @ `1fc95bbabefae1d86a4840cf43920a48abaf945e`; #210 is candidate-branch engineering work, not a delivered video.
+
+> Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > Last verified: 2026-11-21. Rechecked the M5 ASR (#204) and subtitle (#205) extraction diffs. The compatibility entry points, evidence gates and pending human/publication review remain unchanged.
 > Last verified: 2026-11-14. Local-only X and cross-platform analytics exist; no live account growth is verified.
 > X original-post workflow now supports explicit `post_format=text` without an image/ALT, or `post_format=image` with real 1600x900 raster+ALT. General-interest writing has a separate evidence-honest human rubric; all publication is still manual and requires a real own X URL.
@@ -310,6 +311,8 @@ This public note defines technical responsibilities only. Any private portfolio 
 - **Public interfaces and handoff:** Technical public-source examples may originate from [Beauty RAG](https://github.com/Xander-Xai/Beauty-Industry-RAG-QA-System) and [Customer-Service AI Agent](https://github.com/Xander-Xai/Customer-Service-AI-Agent), with licenses and publicity permission checked separately.
 - Technical implementation, testing and release evidence stay in this repository. An upstream portfolio document cannot promote draft, local tests or CI into real production usage, payment or user traction.
 
-## #210 engineering candidate branch
+Editorial planning V1 (#216): local evidence/peer ledgers, advisory topic scores, cost lanes, native variants, calendar and series plans; research, rights and publication gates unchanged. See [EDITORIAL-OPS.md](docs/EDITORIAL-OPS.md).
 
-The #210 candidate branch retains account-schema dispatch, DNA-derived Easel YAML and per-shot native Bilibili 1920x1080 source-geometry checks. The 15-second TEST_ONLY sample receipt records native checks/full decode PASS, full QC WARN, generated non-evidence visuals and pending human review. Real dual-account final cuts, authorized recording, Motion Canvas editor export and clean-checkout reproduction remain open.
+## #210 engineering candidate
+
+Retains account schema dispatch, DNA-derived Easel YAML and per-shot native Bilibili 1920x1080 geometry checks. Historical 15-second TEST_ONLY sample: native checks and decode PASS, full QC WARN; generated visuals are not evidence. Real account-final films, authorized recording, Motion Canvas editor export, human review and clean-checkout reproduction remain open. Reconciled with post-#217 main; editorial modules preserved.
