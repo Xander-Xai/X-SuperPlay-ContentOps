@@ -10,6 +10,8 @@ translation_status: synced
 
 > 本地验证策略权威文档、套件清单与 CI 接线。
 >
+
+> Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > 最后验证：2026-11-21，已核对 #205 字幕行为回归及 #206 分镜抽取对应的 CI 已注册测试套件；没有新增独立测试套件，也没有改变素材证据或人工审核边界。
 > `.github/workflows/ci.yml` 逐一具名（107 个步骤）。此处不写死数量，
 > 以 `ls tests/test_*.py | wc -l` 为准。
@@ -161,3 +163,5 @@ CI 还运行策略、文档、i18n、空白、子进程与 receipt-secret 检查
 上表是下限而非完整枚举。已获取的 `origin/main` `98a61f22` 有 104 个跟踪套件、105 个具名
 Python CI 步骤；Easel 候选新增 3 个独立套件及其 CI 步骤，集成后为 107 个套件、108 个步骤。
 当前检出的分支仍需获准后与该远端基线集成。当前检出数量以 `git ls-files 'tests/test_*.py'` 为准。
+
+运营策划 V1（#216）：本地需求与同行案例、建议选题评分、成本分级、原生变体、日历与系列规划；不改变研究、版权或发布门禁。详见 [EDITORIAL-OPS.md](EDITORIAL-OPS.md).

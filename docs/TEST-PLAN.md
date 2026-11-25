@@ -4,6 +4,8 @@
 
 > Authoritative local verification strategy, suite inventory and CI wiring.
 >
+
+> Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > Last verified: 2026-11-21. Rechecked the #205 subtitle behavior regressions and #206 storyboard extraction against the registered CI suites; no new test suite was introduced and source/media approval boundaries remain unchanged.
 > `tests/test_*.py`, and `.github/workflows/ci.yml` names every one of them (107 steps).
 > The count is not asserted here; read it with `ls tests/test_*.py | wc -l`.
@@ -157,3 +159,5 @@ this Easel candidate adds three standalone suites and their CI steps, for a
 combined 107 suites and 108 steps when integrated. The checked-out branch still
 needs an approved integration with that remote baseline. `git ls-files
 'tests/test_*.py'` is authoritative for the current checkout.
+
+Editorial planning V1 (#216): local evidence/peer ledgers, advisory topic scores, cost lanes, native variants, calendar and series plans; research, rights and publication gates unchanged. See [EDITORIAL-OPS.md](EDITORIAL-OPS.md).

@@ -4,6 +4,8 @@
 
 [简体中文](README.md) | English
 
+
+> Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > Last verified: 2026-11-21. Rechecked the M5 ASR (#204) and subtitle (#205) extraction diffs. The compatibility entry points, evidence gates and pending human/publication review remain unchanged.
 > Last verified: 2026-11-14. Local-only X and cross-platform analytics exist; no live account growth is verified.
 > X original-post workflow now supports explicit `post_format=text` without an image/ALT, or `post_format=image` with real 1600x900 raster+ALT. General-interest writing has a separate evidence-honest human rubric; all publication is still manual and requires a real own X URL.
@@ -308,3 +310,5 @@ This public note defines technical responsibilities only. Any private portfolio 
 - **Does not own:** not a social-platform account, paid-customer CRM, revenue source of truth or automatic publisher.
 - **Public interfaces and handoff:** Technical public-source examples may originate from [Beauty RAG](https://github.com/Xander-Xai/Beauty-Industry-RAG-QA-System) and [Customer-Service AI Agent](https://github.com/Xander-Xai/Customer-Service-AI-Agent), with licenses and publicity permission checked separately.
 - Technical implementation, testing and release evidence stay in this repository. An upstream portfolio document cannot promote draft, local tests or CI into real production usage, payment or user traction.
+
+Editorial planning V1 (#216): local evidence/peer ledgers, advisory topic scores, cost lanes, native variants, calendar and series plans; research, rights and publication gates unchanged. See [EDITORIAL-OPS.md](docs/EDITORIAL-OPS.md).

@@ -6,6 +6,8 @@ translation_status: synced
 
 # PRD — X-SuperPlay ContentOps 运行时
 
+
+> Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > 最后验证：2026-11-21，核对 #204/#205 的 ASR 与字幕拆分：只更改实现分层，不新增正式成片、平台发布或人工审批能力。
 > 最后验证：2026-11-14；X / 跨平台本地数据回流只生成待审主题，不授予自动平台动作。
 > X 原创功能按题材与格式审核：文字帖无需媒体，图文必须通过尺寸/格式/ALT检查；泛兴趣评分重原创与诚实语境，技术与新闻保留严格证据。所有帖子依旧由真人审核、发布并登记真实X URL。
@@ -225,3 +227,5 @@ M0 → M1 → M2.0 → M2-M4 → M5 → M6
 - MiniMax 套餐不支持程序化 API → MANUAL_ONLY
 - 连续 3 次 E2E 失败 → HOLD，根因分析
 - Founder 审核拒绝所有输出 → STOP，重新评估
+
+运营策划 V1（#216）：本地需求与同行案例、建议选题评分、成本分级、原生变体、日历与系列规划；不改变研究、版权或发布门禁。详见 [EDITORIAL-OPS.md](EDITORIAL-OPS.md).

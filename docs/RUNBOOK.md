@@ -3,6 +3,8 @@
 [English](RUNBOOK.md) | [简体中文](RUNBOOK.zh-CN.md)
 
 > Real executable commands. Derived from actual script behavior, not assumptions.
+
+> Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > Last verified: 2026-11-21. The M5 diagnostic CLI and receipt paths are unchanged by #204/#205 ASR/subtitle module extraction. No external transcription or rendering is asserted by these offline regression checks.
 > Last verified: 2026-11-14: X CLI now accepts `--post-format text|image` on `--new` (image is legacy default). A text package has no image/ALT upload step; image-format posts still require genuine PNG/JPEG+ALT. `--package` never posts, and only a human-confirmed X status URL can be recorded by `--mark-published`.
 > X policy: Strategy canonical SOP and registered account DNA; source metrics and publishing still require human verification.
@@ -713,3 +715,5 @@ run with exit code `4` / `BLOCKED`. A project whose `project.yaml` has no
 The media-use demo composes through a separate, verified Easel runtime. A
 successful demo and QC `WARN` do **not** mean the original `.runtime/easel`
 checkout is healthy or restored; that remains a separate integrity question.
+
+Editorial planning V1 (#216): local evidence/peer ledgers, advisory topic scores, cost lanes, native variants, calendar and series plans; research, rights and publication gates unchanged. See [EDITORIAL-OPS.md](EDITORIAL-OPS.md).
