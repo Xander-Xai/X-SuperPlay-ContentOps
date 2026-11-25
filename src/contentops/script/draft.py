@@ -201,9 +201,30 @@ def topic_provenance(brief: Dict[str, Any]) -> str:
     return "source_original_title"
 
 
+def _duration_targets(profile, requested=None):
+    """Resolve the planning target; only FI permits a per-video override."""
+    import math
+    low, high = profile.target_duration_s or (0.0, 0.0)
+    narrative = profile.dna.get("narrative") or {}
+    if profile.account_id != "x-superplay-future-intelligence":
+        if requested is not None:
+            raise ScriptBlocked("DURATION_TARGET_UNSUPPORTED", "this account retains its existing duration window")
+        return low, high, low
+    if narrative.get("duration_policy") != "PER_VIDEO_FLEXIBLE" or (low, high) != (30, 300):
+        raise ScriptBlocked("DURATION_POLICY_INVALID", "Future Intelligence requires its registered 30–300s policy")
+    try:
+        target = float(narrative.get("default_target_duration_s", 90) if requested is None else requested)
+    except (TypeError, ValueError):
+        raise ScriptBlocked("DURATION_TARGET_INVALID", "target must be a number") from None
+    if not math.isfinite(target) or not low <= target <= high:
+        raise ScriptBlocked("DURATION_TARGET_INVALID", "Future Intelligence target must be 30–300 seconds")
+    return low, high, target
+
+
 def build(project: Path, *, root: Optional[Path] = None,
           pack_path: Optional[Path] = None,
-          allow_unapproved_preview: bool = False) -> Draft:
+          allow_unapproved_preview: bool = False,
+          target_seconds: Optional[float] = None) -> Draft:
     """Build the draft in memory. Nothing is written."""
     project = Path(project)
     brief = handoff.read_brief(project)
@@ -246,15 +267,14 @@ def build(project: Path, *, root: Optional[Path] = None,
     if source_scope == "repository_code_analysis":
         opening_override = "这期只看仓库源码。"
     english_wps = RAW_SAPI_EN_WPS if source_scope == "repository_code_analysis" else None
+    low, high, planning_target = _duration_targets(profile, target_seconds)
     claims, beats = _claims_and_beats(profile, topic, provenance, pack,
-                                      target_seconds=float(profile.target_duration_s[0])
-                                      if profile.target_duration_s else 0.0,
+                                      target_seconds=planning_target,
                                       opening_override=opening_override,
                                       english_wps=english_wps)
     storyboard = _storyboard(profile, beats, claims, source_scope=source_scope,
                              english_wps=english_wps)
     seconds = sum(shot["duration"] for shot in storyboard["shots"])
-    low, high = (profile.target_duration_s or (0.0, 0.0))
     length_note = ""
     if low and seconds < low:
         raise ScriptBlocked(
@@ -263,6 +283,8 @@ def build(project: Path, *, root: Optional[Path] = None,
             f"{low:.0f}–{high:.0f} 秒窗口。缺的是内容，不是时长：再补约 "
             f"{max(0, int((low - seconds) * SPEAK_RATE_ZH))} 字可引用材料。")
     if high and seconds > high:
+        if profile.account_id == "x-superplay-future-intelligence":
+            raise ScriptBlocked("DURATION_OVER_LIMIT", f"estimated {seconds:.1f}s exceeds 300s; shorten evidence-bound copy")
         length_note = (f"预计 {seconds:.1f} 秒，超过 {profile.account_id} 的 "
                        f"{low:.0f}–{high:.0f} 秒窗口，复制评审时需要删减")
 
@@ -314,6 +336,7 @@ def build(project: Path, *, root: Optional[Path] = None,
                          for lang in {shot["language"] for shot in storyboard["shots"]}},
         "needs_rewrite": sum(1 for shot in storyboard["shots"] if shot["needs_rewrite"]),
         "storyboard": {"shots": len(storyboard["shots"]),
+                       "planning_target_s": planning_target,
                        "duration_s": round(seconds, 1),
                        "needs_capture": sum(1 for shot in storyboard["shots"]
                                             if shot["needs_capture"]),

@@ -508,6 +508,8 @@ jobs:
 
       - name: Run account route tests
         run: python tests/test_account_route.py
+      - name: Future Intelligence duration policy tests
+        run: python tests/test_fi_duration_policy.py
 
       - name: Run brief-to-M5 bridge tests
         run: python tests/test_brief_to_m5.py

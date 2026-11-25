@@ -47,6 +47,8 @@ def main(argv=None) -> int:
                         help="evidence pack (default: 00_brief/evidence-pack.json)")
     parser.add_argument("--unapproved-preview", action="store_true",
                         help="allow an unapproved brief for local draft preview only; grants no copy or publication approval")
+    parser.add_argument("--target-seconds", type=float, default=None,
+                        help="Future Intelligence only: per-video target 30–300 seconds")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
     if hasattr(sys.stdout, "reconfigure"):
@@ -63,7 +65,7 @@ def main(argv=None) -> int:
     else:
         try:
             draft = build(project, pack_path=Path(args.evidence) if args.evidence else None,
-                          allow_unapproved_preview=args.unapproved_preview)
+                          allow_unapproved_preview=args.unapproved_preview, target_seconds=args.target_seconds)
         except ScriptBlocked as exc:
             payload = {"status": "BLOCKED", "code": exc.code, "detail": exc.detail,
                        "project": str(project)}

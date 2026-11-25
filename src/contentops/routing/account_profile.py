@@ -199,6 +199,8 @@ class AccountProfile:
             "evidence_mode": self.evidence_mode,
             "manual_recording": self.manual_recording,
             "target_duration_s": list(self.target_duration_s),
+            "duration_policy": (self.dna.get("narrative") or {}).get("duration_policy", "ACCOUNT_WINDOW"),
+            "default_target_duration_s": (self.dna.get("narrative") or {}).get("default_target_duration_s"),
             "platforms": list(self.platforms),
             "keywords_positive": [keyword.to_dict() for keyword in self.keywords_positive],
             "keywords_negative": [keyword.to_dict() for keyword in self.keywords_negative],
