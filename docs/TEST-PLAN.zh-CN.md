@@ -10,7 +10,9 @@ translation_status: synced
 
 > 本地验证策略权威文档、套件清单与 CI 接线。
 >
-> 最后验证：2026-11-26，#215 候选分支时长策略核对；CI 待验证。
+
+> 最后验证：2026-11-26，#215 时长策略候选分支已协调最新 main；完整 CI 待验证。
+> Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > 最后验证：2026-11-21，已核对 #205 字幕行为回归及 #206 分镜抽取对应的 CI 已注册测试套件；没有新增独立测试套件，也没有改变素材证据或人工审核边界。
 > `.github/workflows/ci.yml` 逐一具名（107 个步骤）。此处不写死数量，
 > 以 `ls tests/test_*.py | wc -l` 为准。
@@ -163,4 +165,6 @@ CI 还运行策略、文档、i18n、空白、子进程与 receipt-secret 检查
 Python CI 步骤；Easel 候选新增 3 个独立套件及其 CI 步骤，集成后为 107 个套件、108 个步骤。
 当前检出的分支仍需获准后与该远端基线集成。当前检出数量以 `git ls-files 'tests/test_*.py'` 为准。
 
-#215 候选改动：Future Intelligence 按单片选择 30–300 秒，未指定时策划目标仍为 90 秒；脚本估计超过 300 秒拒绝，ffprobe 实测超过 300 秒硬 FAIL。其他账号原规则及禁止手动录屏、证据、人工审核与发布边界不变。旧回执不追溯改写。
+运营策划 V1（#216）：本地需求与同行案例、建议选题评分、成本分级、原生变体、日历与系列规划；不改变研究、版权或发布门禁。详见 [EDITORIAL-OPS.md](EDITORIAL-OPS.md).
+
+#215 候选分支：Future Intelligence 按单片选择 30–300 秒，默认策划目标 90 秒；脚本估计超过 300 秒拒绝，ffprobe 实测超过 300 秒硬 FAIL。其他账号原规则、禁止手动录屏、证据审核与发布边界不变；历史回执不改写。

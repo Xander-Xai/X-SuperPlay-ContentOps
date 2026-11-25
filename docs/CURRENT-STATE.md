@@ -4,7 +4,9 @@
 
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
-> Last verified: 2026-11-26. #215 candidate duration policy reviewed; CI pending.
+
+> Last verified: 2026-11-26. #215 duration candidate reconciled with current main; full CI pending.
+> Last verified: 2026-11-26, read-only GitHub main @ `1fc95bbabefae1d86a4840cf43920a48abaf945e`; #217 editorial features remain on a candidate branch, not merged.
 > Last verified: 2026-11-21 against `ffb87ad96eab6283c773bfd150c81497979b536a` (protected `main` after #213 squash). M5's remaining thin-runner refactor and #199 authentic-media acceptance are still OPEN; no publishing or human approval was granted.
 > The dated Git-state tables below are historical snapshots, not current remote branch counts.
 > Last verified: 2026-11-14, read-only GitHub main @ `515c605` (protected). The proposed X text/image and per-mode reviews are branch changes, not yet on main; real platform outcomes unverified.
@@ -45,6 +47,16 @@
 > **Git state is re-verified below at 2026-11-12 (read-only documentation
 > sync).** Every other section below it is a historical snapshot kept for
 > traceability; none of them is the current state.
+
+### Git — verified 2026-11-26 (read-only checkpoint)
+
+| Property | Verified value |
+|---|---|
+| Default branch | `1fc95bbabefae1d86a4840cf43920a48abaf945e` |
+| Open PRs | #210 and #217, both Draft; #210 conflicts |
+| Open issues | 10 excluding PRs; #216 remains OPEN |
+| Remote branches | 7 at this read-only checkpoint |
+| Safety | No real publication or account acceptance proven; #217 remains unmerged |
 
 ### Git — verified 2026-11-21 (post-#213 read-only checkpoint)
 
@@ -997,4 +1009,6 @@ The router adds no second skill engine and copies no third-party skill. A
 declaration is a pointer to code this repository already owns; the adapter, the
 runtime lock verifier and the M5 gate keep their own authority.
 
-#215 candidate: Future Intelligence per-video planning range 30–300s, default planning target 90s; estimated copy over 300s blocks and measured ffprobe duration over 300s hard FAIL. Other accounts, recording prohibition, evidence, review and publication gates remain unchanged. Historical receipts are not rewritten.
+Editorial planning V1 (#216): local evidence/peer ledgers, advisory topic scores, cost lanes, native variants, calendar and series plans; research, rights and publication gates unchanged. See [EDITORIAL-OPS.md](EDITORIAL-OPS.md).
+
+#215 candidate: Future Intelligence per-video planning range 30–300s, default target 90s; estimated copy over 300s blocks and measured ffprobe duration over 300s hard FAIL. Other accounts, recording prohibition, evidence/review and publication gates unchanged; historical receipts unchanged.

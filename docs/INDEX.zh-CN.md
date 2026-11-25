@@ -131,3 +131,5 @@ Tier-1 文档默认英文为原文、中文为 `.zh-CN.md` 镜像。**README 是
 - [../reports/audits/github-governance-2026-11-03.md](../reports/audits/github-governance-2026-11-03.md) — PR、Issue 与分支治理；删除候选等待 Owner 点名授权（2026-11-03）
 - [../reports/audits/github-governance-closeout-2026-11-04.md](../reports/audits/github-governance-closeout-2026-11-04.md) — 零积压收尾：许可、descope 轨道、归档分支与最终验证（2026-11-04）
 - [../reports/audits/rights-audit-2026-11-04.md](../reports/audits/rights-audit-2026-11-04.md) — GZH/XHS 许可矩阵与公开 receipt 暴露；仍需决策（2026-11-04）
+
+- [EDITORIAL-OPS.md](EDITORIAL-OPS.md) — Local editorial planning / 本地运营策划

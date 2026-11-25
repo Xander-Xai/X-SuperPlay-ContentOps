@@ -123,7 +123,8 @@ def initialize(directory: Path):
 
 def analyze(directory: Path, *, platform: str, account: str, content_format: str,
             topic_cluster: str, window: str, metric_name: str,
-            definition: str, interest_metric: str, experiment_id: str = ""):
+            definition: str, interest_metric: str, experiment_id: str = "",
+            variant_labels=None):
     _local_guard(directory)
     for label, value in (("platform", platform), ("account", account),
                          ("format", content_format), ("topic", topic_cluster),
@@ -159,6 +160,8 @@ def analyze(directory: Path, *, platform: str, account: str, content_format: str
         if not item["content_id"] or key in candidates:
             skipped["duplicate_or_blank_content"] += 1
             candidates[key] = None
+            continue
+        if variant_labels is not None and key not in variant_labels:
             continue
         candidates[key] = item
     matched = defaultdict(list)
@@ -207,7 +210,8 @@ def analyze(directory: Path, *, platform: str, account: str, content_format: str
         hours = _metric(snap.get("founder_hours", ""))
         quality = _metric(snap.get("qualified_signals", ""))
         matched_experiments.add(post["experiment_id"])
-        grouped[post["discovery_source"]].append((primary, interest, hours, quality))
+        group = post["discovery_source"] if variant_labels is None else variant_labels[key]
+        grouped[group].append((primary, interest, hours, quality))
     groups = []
     for surface, items in sorted(grouped.items()):
         with_interest = [(p, i) for p, i, _, _ in items if i is not None]
@@ -216,7 +220,7 @@ def analyze(directory: Path, *, platform: str, account: str, content_format: str
         denominator = sum(p for p, _ in positive)
         post_rates = [i * 1000 / p for p, i in positive]
         groups.append({
-            "discovery_source": surface, "sample_count": len(items),
+            ("discovery_source" if variant_labels is None else "variant"): surface, "sample_count": len(items),
             "median_primary": median(p for p, _, _, _ in items),
             "total_primary": sum(p for p, _, _, _ in items),
             "median_interest_per_1000_post": round(median(post_rates), 3) if post_rates else None,
@@ -233,7 +237,7 @@ def analyze(directory: Path, *, platform: str, account: str, content_format: str
     status = ("INCOMPARABLE_EXPERIMENTS" if len(matched_experiments) > 1 else
               "DESCRIPTIVE_ONLY" if len(compared) >= 2 else "INSUFFICIENT_DATA")
     leaders = sorted(compared, key=lambda item: (item["median_interest_per_1000_post"] if item["median_interest_per_1000_post"] is not None else -1), reverse=True)
-    recommendation = ("Observed higher post-median interest for " + leaders[0]["discovery_source"] +
+    recommendation = ("Observed higher post-median interest for " + leaders[0]["discovery_source" if variant_labels is None else "variant"] +
                       " (descriptive only). Review confounders and founder-hours before continuing one-variable experiment."
                       if status == "DESCRIPTIVE_ONLY" else
                       "Do not merge different experiment IDs." if status == "INCOMPARABLE_EXPERIMENTS" else
@@ -241,6 +245,11 @@ def analyze(directory: Path, *, platform: str, account: str, content_format: str
     input_digest = hashlib.sha256()
     for filename in ("content-index.csv", "metric-snapshots.csv"):
         input_digest.update((directory / filename).read_bytes())
+    if variant_labels is not None:
+        return {"schema": "contentops.editorial-variant-observations/v1", "status": status,
+                "groups": groups, "skipped": dict(skipped), "input_sha256": input_digest.hexdigest(),
+                "data_origin": "LOCAL_USER_SUPPLIED_UNVERIFIED", "publish_authorized": False,
+                "finding": "Observational variant groups, not causal or randomized A/B."}
     return {
         "schema": SCHEMA, "status": status, "platform": platform,
         "input_sha256": input_digest.hexdigest(),

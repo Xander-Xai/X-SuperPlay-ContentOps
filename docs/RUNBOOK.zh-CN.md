@@ -9,7 +9,9 @@ translation_status: synced
 [English](RUNBOOK.md) | [简体中文](RUNBOOK.zh-CN.md)
 
 > 真实可执行命令。从实际脚本行为推导，非假设。
-> 最后验证：2026-11-26，#215 候选分支时长策略核对；CI 待验证。
+
+> 最后验证：2026-11-26，#215 时长策略候选分支已协调最新 main；完整 CI 待验证。
+> Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > 最后验证：2026-11-21，复核 #204/#205 M5 ASR / 字幕拆分，原诊断命令及回执路径未变；离线测试不代表实际调用转写或生产渲染。
 > X / 跨平台本地数据回流只生成待审主题，不授予自动平台动作。
 > X 命令行 `--new` 增加 `--post-format text|image`（旧记录默认 image）。纯文字发布包不含图片/ALT步骤；图文仍须真图与ALT。`--package`只准备待发布包，`--mark-published`只记录真人确认的X URL。
@@ -481,4 +483,6 @@ python scripts\m5_production.py projects\m5-media-use
 media-use 演示通过另一套已验证的 Easel 运行时合成。演示成功与 QC `WARN` **不**表示
 原始 `.runtime/easel` 检出已健康或已恢复；那仍是一个独立的完整性问题是。
 
-#215 候选改动：Future Intelligence 按单片选择 30–300 秒，未指定时策划目标仍为 90 秒；脚本估计超过 300 秒拒绝，ffprobe 实测超过 300 秒硬 FAIL。其他账号原规则及禁止手动录屏、证据、人工审核与发布边界不变。旧回执不追溯改写。 可选：`python scripts/brief_script.py projects/<slug> --target-seconds 150`。
+运营策划 V1（#216）：本地需求与同行案例、建议选题评分、成本分级、原生变体、日历与系列规划；不改变研究、版权或发布门禁。详见 [EDITORIAL-OPS.md](EDITORIAL-OPS.md).
+
+#215 候选分支：Future Intelligence 按单片选择 30–300 秒，默认策划目标 90 秒；脚本估计超过 300 秒拒绝，ffprobe 实测超过 300 秒硬 FAIL。其他账号原规则、禁止手动录屏、证据审核与发布边界不变；历史回执不改写。 可选：`python scripts/brief_script.py projects/<slug> --target-seconds 150`。
