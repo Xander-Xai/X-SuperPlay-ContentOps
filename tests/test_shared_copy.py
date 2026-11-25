@@ -99,6 +99,16 @@ class SharedCopyTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             graphic_offline.build(self.root, self.graphic, ["xiaohongshu_image"])
 
+    def test_video_production_requires_converted_inputs(self):
+        record, _ = self.package()
+        from unittest.mock import patch
+        from contentops.script import m5_bridge
+        with patch.object(m5_bridge, "check", return_value={"ok": True, "problems": []}):
+            self.assertEqual(shared_copy.verify_video_production(self.root, self.source), record)
+        with patch.object(m5_bridge, "check", return_value={"ok": False, "problems": ["script/script.json changed"]}):
+            with self.assertRaises(shared_copy.SharedCopyError):
+                shared_copy.verify_video_production(self.root, self.source)
+
     def test_drift_blocks_both_paths(self):
         _, package = self.package()
         self.evidence.write_text("Changed", encoding="utf-8")

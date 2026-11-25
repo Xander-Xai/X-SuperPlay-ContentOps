@@ -266,7 +266,7 @@ def require_if_brief_driven(project: Path) -> Optional[Dict[str, Any]]:
     from . import shared_copy
     if (Path(project) / shared_copy.VIDEO_RECORD).exists():
         try:
-            lineage = shared_copy.verify_video(shared_copy.repository_root(), project)
+            lineage = shared_copy.verify_video_production(shared_copy.repository_root(), project)
         except shared_copy.SharedCopyError as exc:
             raise CopyReviewRequired(str(exc), "Re-review and rebind shared copy") from None
         gate = {**gate, "shared_copy_id": lineage["shared_copy_id"]}

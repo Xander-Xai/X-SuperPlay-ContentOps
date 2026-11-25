@@ -13,7 +13,7 @@ from pathlib import Path
 from contentops.content_kernel.handoff import (
     HANDOFF_SCHEMA, VIDEO, GRAPHIC_TEXT, HandoffError, verify_bundle_unchanged, handoff_filename,
 )
-from contentops.content_kernel.bundle import BundleError
+from contentops.content_kernel.bundle import BundleError, validate_bundle
 from contentops.evidence._common import ContractError
 from contentops.evidence.claim_map import ClaimMap
 from contentops.evidence.source_artifact import EVIDENCE_CAPABLE_PERMISSIONS
@@ -90,6 +90,12 @@ def handoff_for(root, project, fmt):
         bundle = verify_bundle_unchanged(value, repo_root=root, project_dir=project)
     except (HandoffError, BundleError) as exc:
         raise SharedCopyError("Bundle no longer current: " + str(exc)) from None
+    if validate_bundle(bundle):
+        raise SharedCopyError("invalid Bundle structure")
+    source_map = value.get("source_map")
+    if (not isinstance(source_map, dict) or value.get("source_id") not in source_map
+            or any(not isinstance(k, str) or not k or not isinstance(v, str) or not v for k, v in source_map.items())):
+        raise SharedCopyError("invalid Bundle source mapping")
     if value.get("bundle_id") != bundle.get("bundle_id") or value.get("source_id") != (bundle.get("source") or {}).get("source_id"):
         raise SharedCopyError("handoff identity differs from actual Bundle")
     treatment = (bundle.get("account_treatments") or {}).get(value.get("account"))
@@ -231,6 +237,18 @@ def verify_video(root, source):
     stored = document(inside(source, VIDEO_RECORD))
     if stored != record:
         raise SharedCopyError("shared copy review is stale; rebind after current review")
+    return record
+
+
+def verify_video_production(root, source):
+    """At the paid-render boundary, require the real M5 inputs to match the reviewed draft."""
+    record = verify_video(root, source)
+    try:
+        checked = m5_bridge.check(Path(source), repo_root=Path(root))
+    except (m5_bridge.BridgeBlocked, ValueError, OSError, KeyError, TypeError) as exc:
+        raise SharedCopyError("M5 bridge blocked: " + str(exc)) from None
+    if not checked["ok"]:
+        raise SharedCopyError("M5 input drift: " + "; ".join(checked["problems"]))
     return record
 
 
