@@ -11,8 +11,10 @@ import json
 from pathlib import Path
 
 from contentops.content_kernel.handoff import (
-    HANDOFF_SCHEMA, VIDEO, GRAPHIC_TEXT, verify_bundle_unchanged, handoff_filename,
+    HANDOFF_SCHEMA, VIDEO, GRAPHIC_TEXT, HandoffError, verify_bundle_unchanged, handoff_filename,
 )
+from contentops.content_kernel.bundle import BundleError
+from contentops.evidence._common import ContractError
 from contentops.evidence.claim_map import ClaimMap
 from contentops.evidence.source_artifact import EVIDENCE_CAPABLE_PERMISSIONS
 from contentops.routing import handoff as brief_handoff
@@ -84,7 +86,10 @@ def handoff_for(root, project, fmt):
             or value.get("project_slug") != project.name or value.get("publish_authorized") is not False
             or value.get("production_ready") is not False):
         raise SharedCopyError("invalid or unauthorized bundle handoff")
-    bundle = verify_bundle_unchanged(value, repo_root=root, project_dir=project)
+    try:
+        bundle = verify_bundle_unchanged(value, repo_root=root, project_dir=project)
+    except (HandoffError, BundleError) as exc:
+        raise SharedCopyError("Bundle no longer current: " + str(exc)) from None
     if value.get("bundle_id") != bundle.get("bundle_id") or value.get("source_id") != (bundle.get("source") or {}).get("source_id"):
         raise SharedCopyError("handoff identity differs from actual Bundle")
     treatment = (bundle.get("account_treatments") or {}).get(value.get("account"))
@@ -125,6 +130,9 @@ def snapshot(root, source):
             raise SharedCopyError("Bundle thesis must match the approved topic in this first-release exact-copy path")
         if intent.get("target_pipeline") != VIDEO:
             raise SharedCopyError("canonical source must be a routed VIDEO project")
+        expected_treatment = {"x-superplay-1024": "explorer", "x-superplay-future-intelligence": "thinktank"}.get(account)
+        if expected_treatment is None or video.get("account") != expected_treatment:
+            raise SharedCopyError("source account does not match the existing Bundle treatment")
         claims = ClaimMap.from_dict(document(inside(source, "script/claim-map.json"))).require_publishable()
         lines = document(inside(source, "script/lines.json")).get("beats")
         if not isinstance(lines, list) or not lines:
@@ -173,7 +181,7 @@ def snapshot(root, source):
     except SharedCopyError:
         raise
     except (ValueError, OSError, RuntimeError, KeyError, TypeError, m5_bridge.BridgeBlocked,
-            copy_review.CopyReviewRequired, preresearch.PreresearchError) as exc:
+            copy_review.CopyReviewRequired, preresearch.PreresearchError, ContractError, BundleError) as exc:
         raise SharedCopyError("shared copy blocked: " + str(exc)) from None
 
 
