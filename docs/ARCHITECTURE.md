@@ -2,6 +2,8 @@
 
 [English](ARCHITECTURE.md) | [简体中文](ARCHITECTURE.zh-CN.md)
 
+
+> Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > Last verified: 2026-11-21. The M5 orchestrator retains public facades for ASR and subtitles; the implementations are now isolated in `workflow/m5_asr_stage.py` and `workflow/m5_subtitles_stage.py` (#204/#205). All human/production gates remain closed until independently proven.
 > Last verified: 2026-11-14 (X contract update; PR checks determine CI status). X records now declare `post_format=text|image`; post validation and publisher both preserve honest optional media and manual-only handoff. The editorial gate routes by mode (technical/source versus general_interest). Offline feedback never starts platform actions.
 > X priority: platform rules/human gates -> registered account DNA -> Strategy X SOP -> scoped experiment.
@@ -372,3 +374,5 @@ Current: no fork. No upstream modification. `assemble_easel.py` is an ADAPTER
 - Platform publishing (stays manual, human-gated)
 - Metrics scraping (not implemented)
 - Auto-publishing (explicitly out of scope)
+
+Editorial planning V1 (#216): local evidence/peer ledgers, advisory topic scores, cost lanes, native variants, calendar and series plans; research, rights and publication gates unchanged. See [EDITORIAL-OPS.md](EDITORIAL-OPS.md).

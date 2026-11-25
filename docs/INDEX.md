@@ -134,3 +134,5 @@ REAL EXECUTION RECEIPT
 > RESEARCH
 > OLD PLAN
 ```
+
+- [EDITORIAL-OPS.md](EDITORIAL-OPS.md) — Local editorial planning / 本地运营策划

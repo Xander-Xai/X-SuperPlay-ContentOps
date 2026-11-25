@@ -7,6 +7,8 @@
 > not emit a success receipt, a publication record or a metric.
 
 > Status: reference — 2026-11-12.
+
+> Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > Last verified: 2026-11-21. Rechecked #204/#205 M5 implementation extractions: lifecycle stages, receipts and approval boundaries are unchanged; these are not video acceptance or publication proofs.
 > Last verified: 2026-11-14. The X ORIGINAL_POST path now validates explicit text or image format, content-mode review profiles and human-only package handoff; image records require raster+ALT and text records carry neither. No live account growth or platform publication is verified.
 > Local feedback remains PARTIAL: manually supplied metrics -> learning brief -> human-approved Topic route; not automated publishing.
@@ -166,3 +168,5 @@ script, hotspot and platform code is present; it is not an unmerged layer.
    manually sourced metric snapshot, before expanding platform automation.
 3. Resolve GZH/XHS rights and acceptance independently; a successful workspace
    verification does not grant execution or publication authority.
+
+Editorial planning V1 (#216): local evidence/peer ledgers, advisory topic scores, cost lanes, native variants, calendar and series plans; research, rights and publication gates unchanged. See [EDITORIAL-OPS.md](EDITORIAL-OPS.md).

@@ -10,6 +10,8 @@ translation_status: synced
 
 > 当前运行状态。仅经验证的事实。无展望，无过时声明。
 >
+
+> Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > 最后验证：2026-11-21，对照 #213 合并后的受保护 `main` @ `ffb87ad96eab6283c773bfd150c81497979b536a`；M5 编排器瘦身和 #199 真实视频交付未完成，未授予发布或人工审核通过。
 > 下列带具体日期的 Git 表格仅为历史快照，不代表今天的远程分支数量。
 > 最后验证：2026-11-14，GitHub远端只读核对受保护的 `main` @ `515c605`；纯文字/图文及模式审核尚在PR #182中，不声称已经合并或在X发布。
@@ -982,3 +984,5 @@ QC 回执在被提交前会经过一道净化边界（`contentops.qc_canonical`�
 
 路由器不建第二套 Skill Engine，也不复制任何第三方 Skill。声明只是指向本仓库已拥有的代码；
 适配器、运行时锁校验器与 M5 门禁各自保留最终权威。
+
+运营策划 V1（#216）：本地需求与同行案例、建议选题评分、成本分级、原生变体、日历与系列规划；不改变研究、版权或发布门禁。详见 [EDITORIAL-OPS.md](EDITORIAL-OPS.md).
