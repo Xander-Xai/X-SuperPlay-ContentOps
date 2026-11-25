@@ -42,6 +42,16 @@ class FeedTests(unittest.TestCase):
             self.assertEqual(len(ops.load(d, "signals.csv")), 1)
             self.assertFalse(feeds.ingest(d, ATOM, **kw)["demand_verified"])
 
+    def test_external_refusal_is_not_success(self):
+        for status, message in ((403, "authorized instance"), (429, "no automatic retry")):
+            with patch.object(feeds.http.client, "HTTPSConnection") as connection:
+                client = connection.return_value
+                client.getresponse.return_value.status = status
+                with self.assertRaisesRegex(ValueError, message):
+                    feeds.fetch("https://example.org/feed")
+                client.request.assert_called_once()
+                client.close.assert_called_once()
+
     def test_network_confirmation(self):
         with patch.object(feeds, "fetch") as fetch:
             self.assertEqual(feeds.main(["--url", "https://example.org/feed",

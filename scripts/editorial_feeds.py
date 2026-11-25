@@ -37,6 +37,10 @@ def fetch(url):
             "Accept": "application/rss+xml, application/atom+xml, application/feed+json, application/xml",
             "User-Agent": "ContentOps-Feed/1.0"})
         response = conn.getresponse()
+        if response.status in (401, 403):
+            raise ValueError("feed HTTP %d: access refused; use an authorized instance or local export" % response.status)
+        if response.status == 429:
+            raise ValueError("feed HTTP 429: rate limited; no automatic retry")
         if response.status != 200:
             raise ValueError("feed HTTP status %d; redirects are not followed" % response.status)
         raw = response.read(LIMIT + 1)

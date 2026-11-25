@@ -29,7 +29,7 @@ def ids(values):
 def fetch(post_ids, token):
     ids(post_ids)
     if not token or any(c.isspace() for c in token):
-        raise ValueError("authorized X bearer token required")
+        raise ValueError("authorized X API credential required")
     params = urlencode({"ids": ",".join(post_ids), "tweet.fields": "author_id,created_at,public_metrics,lang"})
     conn = http.client.HTTPSConnection("api.x.com", timeout=20)
     try:
