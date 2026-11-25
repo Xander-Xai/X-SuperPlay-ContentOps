@@ -1,5 +1,7 @@
 """Synthetic variant and business-handoff acceptance tests."""
 import csv
+import hashlib
+import json
 import sys
 import tempfile
 import unittest
@@ -76,6 +78,39 @@ class FeedbackTests(unittest.TestCase):
         self.assertEqual(result["external_action"], "none")
         with self.assertRaises(ValueError):
             feedback.lead(self.ops, self.metrics, consent=True, **args)
+
+
+    def test_receipt_binding_and_replay(self):
+        ident, url = self.item(1, "a")
+        feedback.lead(self.ops, self.metrics, content_id=ident, post_url=url, category="agent",
+                      evidence_ref="local-1", reviewer="Founder", consent=True, confirmed=True)
+        source = next(self.ops.glob("lead-*.json"))
+        receipt = {"schema": "opc.contentops-review-receipt/v1", "status": "RECEIVED_FOR_REVIEW",
+                   "source_id": source.stem, "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+                   "receiver": "Xander-Xai/X-SuperPlay-OPC-Blueprint", "reviewer": "Fixture",
+                   "received_at": "2026-11-26T00:00:00+08:00", "evidence_status": "UNVERIFIED_REFERENCE_ONLY",
+                   "business_progress": False, "payment_verified": False, "operating_ledger_written": False}
+        path = self.ops / "returned.json"
+        path.write_text(json.dumps(receipt), encoding="utf-8")
+        with self.assertRaises(ValueError):
+            feedback.acknowledge(self.ops, path, reviewer="Founder", confirmed=False)
+        first = feedback.acknowledge(self.ops, path, reviewer="Founder", confirmed=True)
+        self.assertFalse(first["business_progress"])
+        self.assertEqual(first, feedback.acknowledge(self.ops, path, reviewer="Founder", confirmed=True))
+        source.write_text("{}", encoding="utf-8")
+        with self.assertRaises(ValueError):
+            feedback.acknowledge(self.ops, path, reviewer="Founder", confirmed=True)
+
+    def test_receipt_overclaim_refused(self):
+        receipt = {"schema": "opc.contentops-review-receipt/v1", "status": "RECEIVED_FOR_REVIEW",
+                   "source_id": "lead-1234567890abcdef", "source_sha256": "0" * 64,
+                   "receiver": "Xander-Xai/X-SuperPlay-OPC-Blueprint", "reviewer": "Fixture",
+                   "received_at": "2026-11-26T00:00:00+08:00", "evidence_status": "UNVERIFIED_REFERENCE_ONLY",
+                   "business_progress": True, "payment_verified": False, "operating_ledger_written": False}
+        path = self.ops / "returned.json"
+        path.write_text(json.dumps(receipt), encoding="utf-8")
+        with self.assertRaises(ValueError):
+            feedback.acknowledge(self.ops, path, reviewer="Founder", confirmed=True)
 
 
 if __name__ == "__main__":
