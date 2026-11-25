@@ -27,7 +27,7 @@ Cost lanes: L1 <=15 min low risk, L2 <=60 min low/standard, L3 otherwise. Planni
 
 ## Scope
 
-Tests: `python tests/test_editorial_ops.py` (synthetic only). Implements manual demand/peer ledgers, scoring, cost lanes, native plans, calendar/series summaries. Does not implement unattended feed collection, editable UI, randomized experiments, automated business transfer, DNA overrides, actual publication or real-account acceptance. Follow #216 and #199/#210. Keep raw data local; do not enter private identities or confidential observations.
+Tests: `python tests/test_editorial_ops.py` (synthetic only). Implements manual demand/peer ledgers, scoring, cost lanes, native plans, calendar/series summaries. Does not implement unattended feed collection, multi-user UI, randomized experiments, automated business transfer, DNA overrides, actual publication or real-account acceptance. Follow #216 and #199/#210. Keep raw data local; do not enter private identities or confidential observations.
 
 ## Existing router integration and read-only workspace
 
@@ -88,3 +88,9 @@ python scripts/editorial_ops.py route --candidate <id> --reviewer Founder --conf
 ```
 
 This recomputes the current plan, uses the existing process_utils and content_route.py start --mode topic --json (no fetch-evidence flag), records the actual run ID/state, and refuses duplicate attempts. If execution is ambiguous, reconcile the route-<id>.json receipt and existing RouterStore before retrying. No production/approval/publishing permission, no automatic cross-platform rendering. The router may reject an off-profile topic. Synthetic runner tests only; no actual user-account routing claimed.
+
+## Editable local workbench and series review
+
+References: [Edit Flow](https://github.com/Automattic/Edit-Flow), [PLANKA](https://github.com/plankanban/planka), [Postiz](https://github.com/gitroomhq/postiz-app), [Social Dash](https://github.com/cadenburleson/social-dash), and [social-media-skills](https://github.com/social-media-skills/skills). Borrow workflow and reporting patterns only; no new server dependency or auto-posting. Start `python scripts/editorial_workspace.py`, then visit `http://127.0.0.1:8765/` on the same machine. Edit existing candidates' date, minutes, risk, hook, CTA and reviewer; input revision protects stale forms, existing planner validates edits, routed candidates are locked. Single operator only: do not edit CSVs or run other writing commands while editing. Browser writes are loopback-only with Host, Origin and per-process token checks. No remote access, no approval or publication controls. Stop with Ctrl+C. If a process dies with a workspace-edit.lock, reconcile local writes before removing that lock.
+
+Run `python scripts/editorial_series.py init`; fill series-links.csv with content_id, post_url, existing experiment_id and series slug for actual published works. Run `python scripts/editorial_series.py review --experiment exp --platform bilibili --account x-superplay-future-intelligence --format video --topic agent` with the actual cohort and definition. It reuses native platform-learning observations rather than copying metrics. At least five valid rate observations per group, two eligible groups, same account/platform/format/topic/window/definition and experiment. Equal top medians yield no research priority. Review founder effort and confounders. No causal conclusion, no auto-routing or duplicate content; new episodes require new evidence. Tests: `python tests/test_editorial_workspace_series.py` (synthetic fixtures only).
