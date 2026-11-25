@@ -261,6 +261,10 @@ def verify_graphic(root, graphic, *, handoff, title, draft):
 def verify_package(root, graphic, package):
     graphic = Path(graphic).resolve()
     current, _ = handoff_for(root, graphic, GRAPHIC_TEXT)
+    if (package.get("schema") != "contentops.graphic-package/v1" or package.get("publish_authorized") is not False
+            or package.get("production_ready") is not False or package.get("status") != "AWAITING_MANUAL_REVIEW"
+            or not package.get("images") or package.get("handoff_sha256") != digest(read(inside(graphic, Path("receipts") / handoff_filename(GRAPHIC_TEXT))))):
+        raise SharedCopyError("graphic package is not current or asserts unauthorized state")
     draft = package.get("draft") or {}
     lineage = verify_graphic(root, graphic, handoff=current, title=package.get("title"),
                              draft=inside(graphic, draft.get("path") or ""))

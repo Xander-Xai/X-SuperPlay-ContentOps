@@ -36,7 +36,9 @@ def build(root, project, platforms):
         import hashlib
         if not image.is_file() or hashlib.sha256(image.read_bytes()).hexdigest() != item["sha256"]:
             raise ValueError("graphic asset drift")
-        validate_request_rights({"rights": item["rights"]}, project)
+        current_rights = validate_request_rights({"rights": item["rights"]}, project)
+        if current_rights != item["rights"]:
+            raise ValueError("graphic asset rights receipt changed")
     outputs = []
     for pid in platforms:
         adapter = mc.MultiChannelAdapter(pid, expected_bundle_sha256=package["bundle_sha256"], repo_root=root)

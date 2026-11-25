@@ -5,6 +5,7 @@
 [简体中文](README.md) | English
 
 
+> Last verified: 2026-11-26. #219 candidate shared copy and offline graphic paths reviewed; CI pending.
 > Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > Last verified: 2026-11-21. Rechecked the M5 ASR (#204) and subtitle (#205) extraction diffs. The compatibility entry points, evidence gates and pending human/publication review remain unchanged.
 > Last verified: 2026-11-14. Local-only X and cross-platform analytics exist; no live account growth is verified.
@@ -312,3 +313,5 @@ This public note defines technical responsibilities only. Any private portfolio 
 - Technical implementation, testing and release evidence stay in this repository. An upstream portfolio document cannot promote draft, local tests or CI into real production usage, payment or user traction.
 
 Editorial planning V1 (#216): local evidence/peer ledgers, advisory topic scores, cost lanes, native variants, calendar and series plans; research, rights and publication gates unchanged. See [EDITORIAL-OPS.md](docs/EDITORIAL-OPS.md).
+
+#211/#208 candidate: project the existing reviewed VIDEO copy verbatim into GRAPHIC_TEXT; bind one shared copy identity to research/copy digests, Bundle, and claim/evidence references. Assets and review remain independent. Six non-X platform offline exports only, no external drafts, status upgrades or publication; X and Xiaohongshu image excluded. Initial scope is same-repository projects/, identical Bundle, treatment and topic, exact-copy only; full CI pending.

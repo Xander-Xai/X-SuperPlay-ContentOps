@@ -38,7 +38,7 @@ class SharedCopyTests(unittest.TestCase):
             "# Project read-through\n\n## Files read\n- docs/RUNBOOK.md records stable commands.\n"
             "- scripts/copy_review.py records decisions.\n- src/contentops/workflow/copy_review.py computes fingerprints.\n\n"
             "## Findings\n- A copy decision is bound to a fingerprint.\n", encoding="utf-8")
-        (folder / "outline.md").write_text("# Outline\n\n## Topic\n- One source claim.\n\n## Video\n- One shot.\n\n## Graphic\n- One draft.\n\n## Evidence\n- Three sources.\n", encoding="utf-8")
+        (folder / "outline.md").write_text("# Outline\n\n## Topic\n- One source claim.\n\n## Video\n- One shot.\n\n## Graphic\n- One draft preserving the same wording and evidence.\n\n## Evidence\n- Three sources; no measured runtime result or publication claim.\n", encoding="utf-8")
         write(folder / "evidence-list.json", {"schema": "contentops.precopy-research-evidence/v1", "items": [
             {"id": "S1", "kind": "primary", "title": "Fixture one", "url": "https://example.org/a"},
             {"id": "S2", "kind": "primary", "title": "Fixture two", "url": "https://example.org/b"},
@@ -88,6 +88,10 @@ class SharedCopyTests(unittest.TestCase):
         self.assertEqual((self.graphic / "shared-copy.md").read_text(encoding="utf-8").strip(), self.text)
         result = graphic_offline.build(self.root, self.graphic, ["wechat_article", "zhihu", "csdn", "juejin", "toutiao", "weibo"])
         self.assertEqual(len(result["platforms"]), 6)
+        native = {p["platform"]: p["native_format"] for p in result["platforms"]}
+        self.assertEqual(native["wechat_article"], "html")
+        self.assertEqual(native["zhihu"], "markdown")
+        self.assertEqual(native["weibo"], "text")
         self.assertFalse(result["publish_authorized"])
         self.assertEqual(result["external_action"], "none")
         with self.assertRaises(ValueError):

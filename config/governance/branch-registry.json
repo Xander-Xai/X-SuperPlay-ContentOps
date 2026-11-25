@@ -1,6 +1,6 @@
 {
   "schema": "contentops.branch-registry/v1",
-  "verified_at": "2026-11-26T00:46:50+08:00",
+  "verified_at": "2026-11-26T07:40:00+08:00",
   "policy": {
     "persistent": [
       "main"
@@ -326,8 +326,16 @@
       "pr": 217,
       "created": "2026-11-25",
       "purpose": "Issue #216 local editorial planning; evidence/peer ledgers, advisory scores, cost lanes, native variants, calendar/series",
-      "status": "active",
+      "status": "merged",
       "expires": "2026-12-25"
+    },
+    {
+      "name": "feat/211-208-shared-copy-production",
+      "pr": 219,
+      "created": "2026-11-26",
+      "purpose": "Issue #211/#208 shared reviewed copy and offline native non-X graphic packages; no external drafts or publication",
+      "status": "active",
+      "expires": "2026-12-26"
     }
   ]
 }

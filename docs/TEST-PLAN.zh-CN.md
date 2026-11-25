@@ -11,6 +11,7 @@ translation_status: synced
 > 本地验证策略权威文档、套件清单与 CI 接线。
 >
 
+> 最后验证：2026-11-26，#219 候选分支共享文案与离线图文入口核对；CI 待验证。
 > Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > 最后验证：2026-11-21，已核对 #205 字幕行为回归及 #206 分镜抽取对应的 CI 已注册测试套件；没有新增独立测试套件，也没有改变素材证据或人工审核边界。
 > `.github/workflows/ci.yml` 逐一具名（107 个步骤）。此处不写死数量，
@@ -165,3 +166,5 @@ Python CI 步骤；Easel 候选新增 3 个独立套件及其 CI 步骤，集成
 当前检出的分支仍需获准后与该远端基线集成。当前检出数量以 `git ls-files 'tests/test_*.py'` 为准。
 
 运营策划 V1（#216）：本地需求与同行案例、建议选题评分、成本分级、原生变体、日历与系列规划；不改变研究、版权或发布门禁。详见 [EDITORIAL-OPS.md](EDITORIAL-OPS.md).
+
+#211/#208 候选分支：从现有已审核 VIDEO 文案逐字派生 GRAPHIC_TEXT，共享文案 ID、研究/文案摘要、Bundle、claim/evidence 绑定；独立素材与审核。新增六个非 X 平台离线打包入口，不创建平台草稿、升级状态或发布。X 与小红书图文排除；当前仅同仓 projects/、同 Bundle、同账号 treatment、同主题的逐字派生，尚待完整 CI。

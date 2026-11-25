@@ -337,12 +337,20 @@ class MultiChannelAdapter:
 
         rules = platform_rules(self.platform_id)
         title_original = title
+        if lineage and rules["native_format"] == "html":
+            # Exact-copy path never interprets raw claim text as HTML. Escape
+            # each paragraph and wrap it for the native editor, then let the
+            # existing platform shape/budget checks run on the safe HTML.
+            from html import escape
+            body = "\n".join("<p>" + escape(part).replace("\n", "<br>") + "</p>"
+                             for part in body.strip().split("\n\n"))
         shaped = graphic_specs.shape(self.platform_id, title, body)
         title = shaped["title"]
         body = shaped["body"]
         blockers: list[str] = list(shaped["blockers"])
         warnings: list[str] = list(shaped["warnings"])
         if lineage:
+            blockers.extend(str(b) for b in (package.get("blockers") or []))
             blockers.append("SHARED_COPY_OFFLINE_ONLY: independent platform review required")
 
         if rules["needs_cover"] and not (package.get("images") or []):
