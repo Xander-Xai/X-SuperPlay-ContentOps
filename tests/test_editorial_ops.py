@@ -67,10 +67,12 @@ class EditorialTests(unittest.TestCase):
 
     def test_hotspot_import(self):
         path = self.directory / "candidates.json"
-        candidate = {"account_id": "x-superplay-english", "url": self.signal["source_url"],
+        candidate = {"url": self.signal["source_url"],
                      "title": "Synthetic", "collected_at": self.signal["observed_at"],
                      "relevance": {"accepted": True}}
-        path.write_text(json.dumps([candidate, dict(candidate, account_id="other")]), encoding="utf-8")
+        candidate["candidate_id"] = ops.hotspot_identity("x-superplay-english", candidate)
+        other = dict(candidate, candidate_id=ops.hotspot_identity("other", candidate))
+        path.write_text(json.dumps([candidate, other]), encoding="utf-8")
         self.assertEqual(ops.import_hotspots(self.directory, path, "agent", "x-superplay-english")["added"], 1)
         self.assertEqual(ops.import_hotspots(self.directory, path, "agent", "x-superplay-english")["added"], 0)
 

@@ -190,11 +190,21 @@ def write_atomic(directory, name, content):
     tmp.replace(p)
 
 
+def hotspot_identity(account, record):
+    from types import SimpleNamespace
+    if str(ROOT / "src") not in sys.path:
+        sys.path.insert(0, str(ROOT / "src"))
+    from contentops.routing.hotspot_route import candidate_id_for
+    return candidate_id_for(SimpleNamespace(account_id=account), record)
+
+
 def import_hotspots(directory, input_file, topic, account):
     """Import a user-selected, account-scoped content_route candidates JSON export."""
     import io
     directory = local_dir(directory)
     input_file = Path(input_file)
+    if input_file.is_symlink():
+        raise ValueError("unsafe candidate export path")
     local_dir(input_file.resolve().parent)
     if input_file.stat().st_size > 5_000_000:
         raise ValueError("candidate export too large")
@@ -213,7 +223,7 @@ def import_hotspots(directory, input_file, topic, account):
     added = 0
     skipped = 0
     for c in data:
-        if (c.get("account_id") != account or
+        if (c.get("candidate_id") != hotspot_identity(account, c) or
                 not isinstance(c.get("relevance"), dict) or
                 c["relevance"].get("accepted") is not True or
                 (isinstance(c.get("quality"), dict) and c["quality"].get("verdict") == "REJECT")):
