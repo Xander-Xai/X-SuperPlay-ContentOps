@@ -300,9 +300,12 @@ def prepare_handoff(directory, report, ident, reviewer, confirmed):
     if len(matches) != 1 or matches[0]["decision"] not in {"CANDIDATE", "LOW_COST_VALIDATION"}:
         raise ValueError("candidate is not eligible for handoff")
     q = matches[0]
+    notes = json.dumps({k: q[k] for k in ("id", "topic", "platform", "format",
+                                            "audience", "hook", "cta", "series", "cost_lane")},
+                       ensure_ascii=False)
     argv = ["python", "scripts/content_route.py", "start", "--mode", "topic",
             "--account", q["account"], "--topic", q["angle"], "--by", reviewer,
-            "--notes", "Editorial plan " + q["id"]]
+            "--notes", notes]
     for url in q["source_urls"]:
         argv.extend(["--url", url])
     result = {"schema": "contentops.editorial-handoff/v1", "status": "READY_FOR_HUMAN_ROUTING",
@@ -313,9 +316,49 @@ def prepare_handoff(directory, report, ident, reviewer, confirmed):
     return result
 
 
+
+def route(directory, report, ident, reviewer, confirmed, runner=None):
+    """Explicitly create a topic-route run; never approve copy or production.
+
+    A durable pending marker is created before execution. Ambiguous outcomes
+    require human reconciliation rather than automatic retries.
+    """
+    from process_utils import hidden_run, python_executable
+    directory = local_dir(directory)
+    if not confirmed or not reviewer.strip() or not re.fullmatch(r"[0-9a-f]{16}", ident or ""):
+        raise ValueError("candidate ID, named human and confirmation required")
+    name = "route-" + ident + ".json"
+    path = safe_file(directory, name)
+    if path.exists():
+        raise ValueError("route already attempted; reconcile its receipt before any retry")
+    handoff = prepare_handoff(directory, report, ident, reviewer, confirmed)
+    argv = [python_executable(), str(ROOT / "scripts/content_route.py"),
+            *handoff["argv"][2:], "--json"]
+    receipt = {"schema": "contentops.editorial-route/v1", "status": "EXECUTION_PENDING",
+               "candidate_id": ident, "reviewer": reviewer, "plan_sha256": handoff["plan_sha256"],
+               "production_ready": False, "publish_authorized": False}
+    with path.open("x", encoding="utf-8") as f:
+        json.dump(receipt, f, ensure_ascii=False, indent=2)
+    try:
+        result = (runner or hidden_run)(argv, cwd=str(ROOT), timeout=90)
+        payload = json.loads(result.stdout)
+        q = next(q for q in report["queue"] if q["id"] == ident)
+        if not isinstance(payload, dict) or payload.get("account_id") != q["account"]:
+            raise ValueError("router result account mismatch or invalid output")
+        receipt.update(router_exit_code=result.returncode, router_run_id=payload.get("run_id"),
+                       router_state=payload.get("state"),
+                       status="ROUTED_FOR_HUMAN_REVIEW" if result.returncode == 0
+                       and payload.get("run_id") else "ROUTE_BLOCKED")
+    except Exception as exc:
+        # No raw stdout/stderr or secrets in the receipt.
+        receipt.update(status="RECONCILIATION_REQUIRED", error_type=type(exc).__name__)
+    write_atomic(directory, name, json.dumps(receipt, ensure_ascii=False, indent=2) + "\n")
+    return receipt
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("init", "plan", "import-hotspots", "dashboard", "handoff"))
+    parser.add_argument("command", choices=("init", "plan", "import-hotspots", "dashboard", "handoff", "route"))
     parser.add_argument("--data-dir", type=Path, default=DEFAULT)
     parser.add_argument("--input", type=Path)
     parser.add_argument("--topic")
@@ -337,6 +380,10 @@ def main(argv=None):
             if args.command == "dashboard":
                 dashboard(args.data_dir, report)
                 print("READY: local editorial-workspace.html")
+            elif args.command == "route":
+                receipt = route(args.data_dir, report, args.candidate, args.reviewer, args.confirm)
+                print(receipt["status"])
+                return 0 if receipt["status"] == "ROUTED_FOR_HUMAN_REVIEW" else 1
             elif args.command == "handoff":
                 prepare_handoff(args.data_dir, report, args.candidate, args.reviewer, args.confirm)
                 print("READY_FOR_HUMAN_ROUTING: local editorial-handoff.json")

@@ -91,6 +91,28 @@ class EditorialTests(unittest.TestCase):
         self.assertIn("--url", result["argv"])
         self.assertFalse(result["publish_authorized"])
 
+    def test_explicit_router_execution(self):
+        from types import SimpleNamespace
+        self.add("signals.csv", self.signal)
+        self.add("topics.csv", self.topic)
+        report = ops.plan(self.directory)
+        ident = report["queue"][0]["id"]
+        calls = []
+        def runner(argv, **kw):
+            calls.append(argv)
+            return SimpleNamespace(returncode=0, stdout=json.dumps({
+                "account_id": self.topic["account"], "run_id": "run-fixture",
+                "state": "EVIDENCE_REQUIRED"}))
+        with self.assertRaises(ValueError):
+            ops.route(self.directory, report, ident, "Founder", False, runner)
+        result = ops.route(self.directory, report, ident, "Founder", True, runner)
+        self.assertEqual(result["status"], "ROUTED_FOR_HUMAN_REVIEW")
+        self.assertIn("--json", calls[0])
+        self.assertFalse(result["publish_authorized"])
+        with self.assertRaises(ValueError):
+            ops.route(self.directory, report, ident, "Founder", True, runner)
+        self.assertEqual(len(calls), 1)
+
     def test_local_only(self):
         with self.assertRaises(ValueError):
             ops.local_dir(ops.ROOT / "docs")

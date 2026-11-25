@@ -78,3 +78,13 @@ python scripts/editorial_peers.py review
 ```
 
 peer-context.csv links case_id to peer_alias, actual published_at, native metric definition, T+24H/T+72H/T+7D window and organic_paid. Existing peers.csv retains observed_at, source URL, metric_name and metric_value. Same platform/peer/format/metric/definition/window only. Unknown or non-organic excluded; duplicate publications rejected; at least five other posts required for leave-one-out median; ratio >=2 is an uncalibrated research lead, not causal evidence. Outputs peer-review.json; no automatic copying, source research approval or publication. Synthetic tests: python tests/test_editorial_peers.py.
+
+## Explicit native-plan routing
+
+The existing handoff JSON now carries platform, medium, audience, hook, CTA, series and cost lane as editorial notes, not as permission to alter the account DNA. After review, execute the existing topic router through:
+
+```text
+python scripts/editorial_ops.py route --candidate <id> --reviewer Founder --confirm
+```
+
+This recomputes the current plan, uses the existing process_utils and content_route.py start --mode topic --json (no fetch-evidence flag), records the actual run ID/state, and refuses duplicate attempts. If execution is ambiguous, reconcile the route-<id>.json receipt and existing RouterStore before retrying. No production/approval/publishing permission, no automatic cross-platform rendering. The router may reject an off-profile topic. Synthetic runner tests only; no actual user-account routing claimed.
