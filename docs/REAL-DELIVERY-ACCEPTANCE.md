@@ -24,3 +24,5 @@
 - No `production_ready` or `publish_authorized` upgrade from this runbook or CI alone.
 
 The duration calculation still relies on declared timeline and asset metadata; it cannot determine visual authenticity or occlusion. Human review and actual hash-bound media remain required.
+
+Native candidate QC now requires FFmpeg full-stream decode and a stable SHA-256 of the actual output bytes. A corrupt file, missing tool or changed output fails. The regression creates only a tiny synthetic clip; it is not a real delivery.

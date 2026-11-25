@@ -17,6 +17,7 @@ Status: PASS / WARN / FAIL. FAIL -> final is not production-ready.
 """
 
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -392,6 +393,34 @@ def _subtitles_burned(video: Path, sb: dict) -> dict:
             "note": f"max bright-pixel ratio across {samples} samples = {best:.5f}"}
 
 
+def _file_sha256(path: Path) -> str:
+    sha = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            sha.update(block)
+    return sha.hexdigest()
+
+
+def _native_full_decode(path: Path, expected_sha: str) -> dict:
+    """Verify the entire actual video/audio and bind QC to stable file bytes."""
+    row = {"id": "native_full_decode", "ok": False, "severity": "FAIL"}
+    try:
+        if not expected_sha or _file_sha256(path) != expected_sha:
+            return {**row, "code": "MEDIA_CHANGED_BEFORE_DECODE"}
+        result = hidden_run(["ffmpeg", "-nostdin", "-v", "error", "-xerror", "-i", str(path),
+                             "-map", "0:v:0", "-map", "0:a?", "-f", "null", "-"],
+                            capture_output=True, timeout=900)
+        if result.returncode != 0:
+            return {**row, "code": "FULL_DECODE_FAILED", "returncode": result.returncode}
+        if _file_sha256(path) != expected_sha:
+            return {**row, "code": "MEDIA_CHANGED_DURING_DECODE"}
+        return {**row, "ok": True, "severity": "PASS", "sha256": expected_sha,
+                "returncode": 0}
+    except Exception as exc:
+        # Do not leak absolute paths or tool stderr into the canonical receipt.
+        return {**row, "code": "FULL_DECODE_UNAVAILABLE", "error_type": type(exc).__name__}
+
+
 def qc(project: Path, target: str = "") -> dict:
     project = project.resolve()
     # --video selects which render to grade: an engine name ("easel",
@@ -443,6 +472,13 @@ def qc(project: Path, target: str = "") -> dict:
         return _emit(project, checks, target_name)
 
     # 2) file size
+    native_sha = ""
+    if expected_aspect == "16:9":
+        try:
+            native_sha = _file_sha256(final)
+        except OSError:
+            checks.append({"id": "native_output_hash", "ok": False, "severity": "FAIL"})
+            return _emit(project, checks, target_name)
     size = final.stat().st_size
     checks.append({
         "id": "file_size", "ok": size >= MIN_FILE_BYTES,
@@ -694,6 +730,8 @@ def qc(project: Path, target: str = "") -> dict:
                 "only a human can accept it as production (V1 spec §11)",
     })
 
+    if expected_aspect == "16:9":
+        checks.append(_native_full_decode(final, native_sha))
     return _emit(project, checks, target_name)
 
 

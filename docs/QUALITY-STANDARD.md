@@ -297,3 +297,6 @@ The gate admits or excludes an asset from **composition**. The registry records
 **what the asset is**. They must agree — `BUILDING` and `PENDING_HUMAN_REVIEW` in
 the registry, but `BLOCKED` at the gate, would mean composition and provenance
 disagree about the same file.
+
+
+#210 candidate: native 16:9 QC requires full FFmpeg decode and stable output SHA-256; explicit generated/non-evidence capture conflicts block, nonfinite timeline values block, and rounded display ratios cannot pass a below-threshold timeline. Existing vertical QC behavior is not changed by the native decode check.

@@ -109,13 +109,50 @@ def test_engineering_sample_visuals_are_generated_not_evidence():
                for asset in manifest["assets"])
 
 
+def test_native_full_decode_checks_real_bytes():
+    # Tiny generated technical fixture, never an account or production video.
+    import shutil
+    if shutil.which("ffmpeg") is None:
+        raise AssertionError("ffmpeg is required for native decode regression")
+    with tempfile.TemporaryDirectory() as temp:
+        path = Path(temp) / "fixture.mp4"
+        result = qc_video.hidden_run(
+            ["ffmpeg", "-nostdin", "-v", "error", "-f", "lavfi", "-i",
+             "color=c=black:s=64x64:r=10:d=0.5", "-c:v", "mpeg4", "-y", str(path)],
+            capture_output=True, timeout=30)
+        assert result.returncode == 0, result.returncode
+        sha = qc_video._file_sha256(path)
+        good = qc_video._native_full_decode(path, sha)
+        assert good["ok"] and good["sha256"] == sha, good
+        changed = qc_video._native_full_decode(path, "0" * 64)
+        assert changed["code"] == "MEDIA_CHANGED_BEFORE_DECODE", changed
+        path.write_bytes(b"not an mp4")
+        corrupt = qc_video._native_full_decode(path, qc_video._file_sha256(path))
+        assert not corrupt["ok"] and corrupt["severity"] == "FAIL", corrupt
+
+
+def test_native_full_decode_detects_mutation():
+    with tempfile.TemporaryDirectory() as temp:
+        path = Path(temp) / "fixture.mp4"
+        path.write_bytes(b"before")
+        sha = qc_video._file_sha256(path)
+        def mutate(*args, **kwargs):
+            path.write_bytes(b"after")
+            return mock.Mock(returncode=0)
+        with mock.patch.object(qc_video, "hidden_run", side_effect=mutate):
+            result = qc_video._native_full_decode(path, sha)
+        assert result["code"] == "MEDIA_CHANGED_DURING_DECODE", result
+
+
 def main() -> int:
     tests = (test_legacy_default_stays_vertical,
              test_horizontal_requires_explicit_native_target_and_storyboard,
              test_geometry_checks_are_orientation_specific,
              test_native_source_geometry_requires_every_shot_to_be_landscape,
              test_native_source_geometry_rejects_unverifiable_shots,
-             test_engineering_sample_visuals_are_generated_not_evidence)
+             test_engineering_sample_visuals_are_generated_not_evidence,
+             test_native_full_decode_checks_real_bytes,
+             test_native_full_decode_detects_mutation)
     for run in tests:
         run()
         print("PASS", run.__name__)
