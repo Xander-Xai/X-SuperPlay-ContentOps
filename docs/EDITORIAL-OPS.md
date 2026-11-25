@@ -67,3 +67,14 @@ python scripts/editorial_feeds.py --url https://example.org/feed --source-id pub
 ```
 
 The second URL is a placeholder; replace with a real authorized public feed. Only title + public URL are admitted as RSS observations. No full article, buyer-demand classification or claim verification. Deduplicates per topic/URL, emits a local hashed intake receipt and writes the existing signals.csv. No new metric store or publishing action. Test: python tests/test_editorial_feeds.py.
+
+## Peer benchmark and outlier research
+
+Reference: [yt-competitor-outlier-pipeline](https://github.com/svx2027/yt-competitor-outlier-pipeline) uses format-aware peer outlier detection; [youtube-strategy-toolkit](https://github.com/LuxKim/youtube-strategy-toolkit) separates public competitor information and authorized owner analytics. Here we keep the existing peers.csv as the metric source, add context only, and do not collect private or bulk platform data.
+
+```text
+python scripts/editorial_peers.py init
+python scripts/editorial_peers.py review
+```
+
+peer-context.csv links case_id to peer_alias, actual published_at, native metric definition, T+24H/T+72H/T+7D window and organic_paid. Existing peers.csv retains observed_at, source URL, metric_name and metric_value. Same platform/peer/format/metric/definition/window only. Unknown or non-organic excluded; duplicate publications rejected; at least five other posts required for leave-one-out median; ratio >=2 is an uncalibrated research lead, not causal evidence. Outputs peer-review.json; no automatic copying, source research approval or publication. Synthetic tests: python tests/test_editorial_peers.py.

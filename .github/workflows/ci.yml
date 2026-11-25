@@ -681,6 +681,8 @@ jobs:
         run: python tests/test_editorial_feedback.py
       - name: Editorial feed intake tests
         run: python tests/test_editorial_feeds.py
+      - name: Editorial peer benchmark tests
+        run: python tests/test_editorial_peers.py
 
       # The end-to-end chain: growth -> enrichment -> gate -> manual package.
       - name: Run X growth integration tests
