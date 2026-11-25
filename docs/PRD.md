@@ -2,6 +2,7 @@
 
 [English](PRD.md) | [简体中文](PRD.zh-CN.md)
 
+> Last verified: 2026-11-26. #215 candidate duration policy reviewed; CI pending.
 > Last verified: 2026-11-21 against the #204/#205 M5 refactor diffs. The extracted ASR/subtitle stage modules preserve the recorded acceptance semantics; no additional delivered video or publishing capability is claimed.
 > Last verified: 2026-11-14 (X original-post scope update). Accepted X behaviors: text-only originals without image or ALT, image originals with verified raster/ALT, and mode-appropriate human quality scoring; all preserve claim provenance, rights and manual-only posting. Local-only feedback never performs platform actions.
 > X priority: platform rules/human gates -> registered account DNA -> Strategy X SOP -> scoped experiment.
@@ -231,3 +232,5 @@ M0 → M1 → M2.0 → M2-M4 → M5 → M6
 - MiniMax subscription doesn't support programmatic API → MANUAL_ONLY
 - 3 consecutive E2E failures → HOLD, root-cause
 - Founder Review rejects all outputs → STOP, reassess
+
+#215 candidate: Future Intelligence per-video planning range 30–300s, default planning target 90s; estimated copy over 300s blocks and measured ffprobe duration over 300s hard FAIL. Other accounts, recording prohibition, evidence, review and publication gates remain unchanged. Historical receipts are not rewritten.

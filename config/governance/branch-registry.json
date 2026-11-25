@@ -1,6 +1,6 @@
 {
   "schema": "contentops.branch-registry/v1",
-  "verified_at": "2026-11-21T01:20:00+08:00",
+  "verified_at": "2026-11-26T07:30:00+08:00",
   "policy": {
     "persistent": [
       "main"
@@ -320,6 +320,14 @@
       "purpose": "Issue #7 post-#213 governance reconciliation of merged M5 rows, Draft #210, retained historical docs/199 branch and bilingual Git snapshot; no runtime or production authority change",
       "status": "active",
       "expires": "2026-12-21"
+    },
+    {
+      "name": "fix/215-fi-duration-policy",
+      "pr": 218,
+      "created": "2026-11-26",
+      "purpose": "Issue #215 flexible FI duration policy and measured cap; no real media or publication claim",
+      "status": "active",
+      "expires": "2026-12-26"
     }
   ]
 }

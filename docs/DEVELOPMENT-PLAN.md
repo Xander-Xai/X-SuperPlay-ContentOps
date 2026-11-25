@@ -4,6 +4,7 @@
 
 > Milestone-based execution. Every milestone has an exit criterion.
 >
+> Last verified: 2026-11-26. #215 candidate duration policy reviewed; CI pending.
 > Last verified: 2026-11-21. M5 ASR/subtitle stages were checked against the extracted compatibility facades in #204/#205; the milestone's human-review and delivery blockers remain unchanged.
 > Last verified: 2026-11-14: X original-post contract now offers explicit text-only and raster+ALT modes plus strict technical versus general-interest human review. No live platform outcome claimed; CI of this change is tracked in its PR.
 > X policy: Strategy canonical SOP and registered account DNA; source metrics and publishing still require human verification.
@@ -97,3 +98,5 @@ its implementation exists.
 2. Rights clearance (Issues #51, #56) that keeps the GZH and XHS rows at
    `PLANNED`.
 3. M5 stage split (#140), guarded by the recorded characterization baseline.
+
+#215 candidate: Future Intelligence per-video planning range 30–300s, default planning target 90s; estimated copy over 300s blocks and measured ffprobe duration over 300s hard FAIL. Other accounts, recording prohibition, evidence, review and publication gates remain unchanged. Historical receipts are not rewritten.

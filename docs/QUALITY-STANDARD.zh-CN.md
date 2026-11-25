@@ -8,6 +8,7 @@ translation_status: synced
 
 [English](QUALITY-STANDARD.md) | [简体中文](QUALITY-STANDARD.zh-CN.md)
 
+> 最后验证：2026-11-26，#215 候选分支时长策略核对；CI 待验证。
 > 最后复核：2026-11-17，对照 `scripts/qc_video.py`、`scripts/qc_visual.py`
 > 与 `src/contentops/media/` 的媒体 QC 归一化逻辑。
 
@@ -195,3 +196,5 @@ TEST_VIDEO_DURATION_POLICY:
 门禁决定一个资产是否被**合成**接纳；registry 记录**这个资产是什么**。二者必须
 一致——registry 中为 `BUILDING` 与 `PENDING_HUMAN_REVIEW`，而门禁为 `BLOCKED`，
 就意味着合成与来源证明对同一个文件存在分歧。
+
+#215 候选改动：Future Intelligence 按单片选择 30–300 秒，默认策划目标 90 秒，实测超过 300 秒硬 FAIL；其他账号及禁止手动录屏、证据审核和发布边界不变。旧回执不追溯改写。
