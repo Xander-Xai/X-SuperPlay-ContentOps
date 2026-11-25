@@ -372,18 +372,38 @@ def test_duration_comes_from_the_words_not_from_the_window():
         assert abs(total - draft.report["storyboard"]["duration_s"]) < 0.2
 
 
-def test_too_little_material_for_the_window_is_refused_not_stretched():
+def test_fi_shorter_than_old_window_is_not_stretched():
     with tempfile.TemporaryDirectory() as tmp:
         root = _sandbox(tmp)
         project = _approved_topic(root)
         _pack(project, items=3, chars=150)
-        try:
-            build(project, root=root)
-        except ScriptBlocked as exc:
-            assert exc.code == "DRAFT_CONTENT_INSUFFICIENT"
-            assert "窗口" in exc.detail
-        else:
-            raise AssertionError("a short script must not be stretched to fit")
+        draft = build(project, root=root)
+        assert 30 <= draft.report["storyboard"]["duration_s"] < 90, draft.report
+        assert draft.report["storyboard"]["planning_target_s"] == 90
+
+
+def test_fi_estimated_bounds_are_enforced():
+    # Exercise the build boundary independently of quote-selection heuristics.
+    from unittest.mock import patch
+    from contentops.script import draft as draft_module
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = _sandbox(tmp)
+        project = _approved_topic(root)
+        _pack(project)
+        original = draft_module._storyboard
+        for seconds, code in ((29, "DRAFT_CONTENT_INSUFFICIENT"), (301, "DURATION_OVER_LIMIT")):
+            def forced(*args, **kwargs):
+                board = original(*args, **kwargs)
+                board["shots"] = [{**board["shots"][0], "duration": seconds}]
+                return board
+            with patch.object(draft_module, "_storyboard", side_effect=forced):
+                try:
+                    build(project, root=root)
+                except ScriptBlocked as exc:
+                    assert exc.code == code, exc
+                else:
+                    raise AssertionError(f"estimated {seconds}s must be refused")
 
 
 def test_one_capture_per_source_not_one_per_sentence():
