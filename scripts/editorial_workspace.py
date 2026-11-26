@@ -85,11 +85,50 @@ def edit(directory, ident, expected, changes):
         lock.unlink()
 
 
-def render(directory, token):
+def daily_panel(directory, report, day, minutes):
+    from editorial_daily import capacity
+    result = capacity(directory, report, ops.load(directory, "signals.csv"), day, minutes)
+    e = lambda v: escape(str(v), quote=True)
+    candidates = {q["id"]: q for q in report["queue"]}
+    rows = []
+    for q in result["selected"]:
+        ident = q["candidate_id"]
+        rows.append("<li><a href='#candidate-" + e(ident) + "'>" +
+                    e(candidates[ident]["angle"]) + "</a> — " +
+                    e(q["cost_lane"]) + ", " + e(q["estimated_minutes"]) +
+                    " min, demand URLs " + e(q["demand_signal_urls"]) + "</li>")
+    deferred = {}
+    for item in result["deferred"]:
+        reason = item["reason"]
+        deferred[reason] = deferred.get(reason, 0) + 1
+    counts = ", ".join(e(reason) + ": " + e(n) for reason, n in sorted(deferred.items()))
+    return ("<article><h2>Daily capacity / " + e(result["day"]) + "</h2><p>" +
+            e(result["allocated_minutes"]) + " / " + e(result["budget_minutes"]) +
+            " estimated minutes; " + e(result["remaining_minutes"]) + " remaining.</p>" +
+            "<ol>" + "".join(rows) + "</ol><p>Deferred: " + (counts or "none") +
+            "</p><p>Advisory selection only. No routing or production authorization. "
+            "Demand URL counts are not verified buyers.</p></article>")
+
+
+def render(directory, token, day=None, minutes=None, metrics=None, projects=None):
     rev, report = snapshot(directory)
     def e(value):
         return escape(str(value), quote=True)
     blocks = []
+    if day is not None and minutes is not None:
+        blocks.append(daily_panel(directory, report, day, minutes))
+        if rev != revision(directory):
+            raise ValueError("inputs changed; refresh")
+    elif day is not None or minutes is not None:
+        raise ValueError("day and minutes must be specified together")
+    lifecycle = {}
+    if metrics is not None:
+        from datetime import datetime, timezone
+        import editorial_lifecycle
+        view = editorial_lifecycle.report(directory, report, metrics,
+                                          projects or ops.ROOT / "projects",
+                                          datetime.now(timezone.utc).isoformat())
+        lifecycle = {item["candidate_id"]: item for item in view["items"]}
     for q in report["queue"]:
         route_file = ops.safe_file(directory, "route-" + q["id"] + ".json")
         if route_file.exists():
@@ -103,7 +142,14 @@ def render(directory, token):
                     "".join("<input type='hidden' name='" + k + "' value='" + e(v) + "'>"
                             for k, v in (("token", token), ("revision", rev), ("id", q["id"]))) +
                     inputs + "<button>Save plan</button></form>")
-        blocks.append("<article><h2>" + e(q["angle"]) + "</h2><p>" +
+        if q["id"] in lifecycle:
+            item = lifecycle[q["id"]]
+            pub = item["publication"]
+            form += ("<p>Lifecycle (local records): " + e(item["route"]) + " | " +
+                     e(item["project"]["state"]) + " | " + e(pub["state"]) + "</p>" +
+                     "<p>Metrics: " + ", ".join(e(k) + " " + e(v) for k, v in pub["windows"].items()) +
+                     "</p><p>Not a media or publication approval.</p>")
+        blocks.append("<article id='candidate-" + e(q["id"]) + "'><h2>" + e(q["angle"]) + "</h2><p>" +
                       " | ".join(e(q[k]) for k in ("account", "platform", "series", "decision",
                                                     "score", "cost_lane")) + "</p>" + form + "</article>")
     return ("<!doctype html><html lang='en'><meta charset='utf-8'><title>ContentOps Workbench</title>"
@@ -115,7 +161,7 @@ def render(directory, token):
             + "".join(blocks) + "</html>")
 
 
-def handler(directory, token):
+def handler(directory, token, day=None, minutes=None, metrics=None, projects=None):
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *args):
             pass
@@ -141,7 +187,7 @@ def handler(directory, token):
                 self.reply(404, "Not found")
                 return
             try:
-                self.reply(200, render(directory, token))
+                self.reply(200, render(directory, token, day, minutes, metrics, projects))
             except (ValueError, OSError):
                 self.reply(409, "Local data invalid; inspect CSV files.")
 
@@ -178,12 +224,23 @@ def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--data-dir", type=Path, default=ops.DEFAULT)
     p.add_argument("--port", type=int, default=8765)
+    p.add_argument("--day", help="explicit planning day YYYY-MM-DD")
+    p.add_argument("--minutes", type=int, help="daily advisory capacity")
+    p.add_argument("--metrics-dir", type=Path, help="opt-in local lifecycle view")
+    p.add_argument("--projects-dir", type=Path, default=ops.ROOT / "projects")
     a = p.parse_args(argv)
     try:
         if not 1024 <= a.port <= 65535:
             raise ValueError("port must be 1024..65535")
+        if (a.day is None) != (a.minutes is None):
+            raise ValueError("--day and --minutes must be specified together")
+        if a.day is not None:
+            from datetime import date
+            date.fromisoformat(a.day)
+            if not 1 <= a.minutes <= 1440:
+                raise ValueError("--minutes must be 1..1440")
         directory = ops.init(a.data_dir)
-        with HTTPServer(("127.0.0.1", a.port), handler(directory, secrets.token_urlsafe(32))) as server:
+        with HTTPServer(("127.0.0.1", a.port), handler(directory, secrets.token_urlsafe(32), a.day, a.minutes, a.metrics_dir, a.projects_dir)) as server:
             print("Local planning only: http://127.0.0.1:%d/" % a.port, flush=True)
             server.serve_forever()
     except KeyboardInterrupt:

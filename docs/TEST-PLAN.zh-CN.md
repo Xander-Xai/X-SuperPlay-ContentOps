@@ -180,3 +180,17 @@ Python CI 步骤；Easel 候选新增 3 个独立套件及其 CI 步骤，集成
 已有 test_video_metric_intake.py 增加数据覆盖、未知/自然流量、缺失/零值、重复拒绝测试；仅合成数据。
 
 已有 test_editorial_experiments.py 增加预注册主指标/工时护栏通过、回退、数据不足回归；不声称随机实验或真实运营成果。
+
+已有 `tests/test_shared_copy.py` 增加原生改写草稿、证据篡改/过期拒绝回归；仅合成测试，原生产逐字共享门禁不变。
+
+已有 `tests/test_editorial_peers.py` 增加同行表达手法同组对照、对照不足及未知案例拒绝测试；仅合成数据。
+
+已有 test_production_gates.py 增加成本范围阻断（在输入物化/生产之前）及 L2 dry-run；不真实渲染或消费额度。
+
+已有 test_editorial_workspace_series.py 增加每日排产面板集成、CSV 与路由无写入回归。
+
+已有 test_editorial_workspace_series.py 增加系列排期缺口、路由回执区分及来源重复提示回归；仅合成数据。
+
+已有 test_shared_copy.py 增加审核后原生文件导出、重放、草稿/素材篡改阻断及 HTML 转义回归；仅合成数据。
+
+已有 test_editorial_workspace_series.py 增加本地生命周期、回收窗口、范围不匹配及工作流只读检查；仅合成数据。

@@ -732,3 +732,17 @@ Use `python scripts/editorial_issue_signals.py search --help` and the example in
 Video metric coverage: `python scripts/video_metric_coverage.py --help` audits existing local index/snapshot scope without relabeling cumulative/unknown traffic. See EDITORIAL-OPS.md.
 
 Preregister optional experiment guardrails via editorial_experiments.py plan --min-primary-ratio and --min-quality-per-hour-ratio; review cannot select them retrospectively. See EDITORIAL-OPS.md.
+
+Native editorial rewrite pilot: `python scripts/native_editorial_draft.py --help`; use a verified shared graphic package and the workflow in [EDITORIAL-OPS.md](EDITORIAL-OPS.md). Reviewed preview is not a production input.
+
+Peer creative pattern review: `python scripts/editorial_peer_patterns.py init` then `review` after human annotation. See [EDITORIAL-OPS.md](EDITORIAL-OPS.md); no automated scraping.
+
+Optional editorial scope: `python scripts/make_content.py run --project projects/<project> --mode STRICT --lane L2 --dry-run`. See [EDITORIAL-OPS.md](EDITORIAL-OPS.md). L1 graphic only; L1/L2 refuse extra media generation and H3; L3 existing gates. No time or spend guarantee; no silent downgrade.
+
+Daily workbench: `python scripts/editorial_workspace.py --day YYYY-MM-DD --minutes 90`; optional read-only capacity panel over existing editable planner. See EDITORIAL-OPS.md.
+
+Series planning: `python scripts/editorial_series.py schedule --help` and the example in EDITORIAL-OPS.md; reports weekly gaps and source-overlap hints from the existing queue, not actual publication counts.
+
+Manual native copy export: native_editorial_draft.py approve then export (see EDITORIAL-OPS.md); exact-preview human attestation and current evidence/assets required; no publishing.
+
+Local lifecycle: editorial_lifecycle.py init/status; optional editorial_workspace.py --metrics-dir .local/platform-learning shows the same view. See EDITORIAL-OPS.md.

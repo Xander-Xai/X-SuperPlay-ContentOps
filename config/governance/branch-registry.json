@@ -358,6 +358,14 @@
       "pr": 220,
       "created": "2026-11-26",
       "purpose": "Issue #216 authorized local video metrics, data coverage and creator experiment guardrails; no organic or publication claims",
+      "status": "merged",
+      "expires": "2026-12-26"
+    },
+    {
+      "name": "feat/216-native-editorial-variants",
+      "pr": 223,
+      "created": "2026-11-26",
+      "purpose": "Issue #216/#211 native copy export, peer research, production scope, series cadence and local lifecycle workbench",
       "status": "active",
       "expires": "2026-12-26"
     }

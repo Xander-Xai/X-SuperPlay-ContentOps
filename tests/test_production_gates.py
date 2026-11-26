@@ -299,6 +299,36 @@ class EntrypointTests(FixtureCase):
             self.assertEqual(make_content.cmd_check(args), 0)
 
 
+    def test_l1_video_refused_before_materialization(self):
+        self._answer()
+        args = SimpleNamespace(project=str(self.project), mode="STRICT", dry_run=False, lane="L1")
+        with mock.patch.object(gates, "ensure_inputs") as materialize, \
+                mock.patch("produce_video.produce") as producer, redirect_stdout(io.StringIO()) as stream:
+            code = make_content.cmd_run(args)
+        self.assertEqual(code, 4)
+        self.assertIn("EDITORIAL_LANE_FORMAT", stream.getvalue())
+        materialize.assert_not_called()
+        producer.assert_not_called()
+
+    def test_l2_refuses_h3_and_l3_keeps_existing_gates(self):
+        self._answer(avatar_intro="yes", avatar_quota_budget="7")
+        args = SimpleNamespace(project=str(self.project), mode="STRICT", dry_run=False, lane="L2")
+        with mock.patch.object(gates, "ensure_inputs") as materialize, redirect_stdout(io.StringIO()) as stream:
+            self.assertEqual(make_content.cmd_run(args), 4)
+        self.assertIn("EDITORIAL_LANE_MEDIA_SCOPE", stream.getvalue())
+        materialize.assert_not_called()
+        self.assertEqual(make_content.require_editorial_lane(self.project, "L3")["lane"], "L3")
+
+    def test_l2_still_uses_existing_preflight(self):
+        self._answer()
+        args = SimpleNamespace(project=str(self.project), mode="STRICT", dry_run=True, lane="L2")
+        with redirect_stdout(io.StringIO()) as stream:
+            self.assertEqual(make_content.cmd_run(args), 0)
+        out = json.loads(stream.getvalue())
+        self.assertEqual(out["check"]["editorial_lane"]["lane"], "L2")
+        self.assertFalse(out["check"]["editorial_lane"]["publish_authorized"])
+
+
 class RuntimeReadinessTests(FixtureCase):
     def test_missing_provider_keys_block_before_render(self):
         self._answer()

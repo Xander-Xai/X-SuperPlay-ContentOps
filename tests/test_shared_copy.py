@@ -132,5 +132,81 @@ class SharedCopyTests(unittest.TestCase):
             shared_copy.verify_video(self.root, self.source)
 
 
+
+    def test_native_draft_review_preserves_lineage(self):
+        import native_editorial_draft as native
+        self.package()
+        draft = native.current(self.root, self.graphic, "zhihu")
+        draft["title"] = "How does graph state work?"
+        draft["title_review_note"] = "Fixture title matches the one claim"
+        draft["reviewer"] = "Fixture reviewer"
+        draft["claims"][0]["draft_text"] = "LangGraph uses graph state."
+        draft["claims"][0]["review_note"] = "Fixture paraphrase; no new fact"
+        out = native.review(self.root, self.graphic, "zhihu", draft)
+        self.assertEqual(out["status"], "REVIEWED_DRAFT_ONLY")
+        self.assertFalse(out["publish_authorized"])
+        self.assertEqual(out["claim_ids"], ["C-01"])
+        self.assertIn("LangGraph uses graph state.", out["native_preview"]["body"])
+        self.assertEqual((self.graphic / "shared-copy.md").read_text(encoding="utf-8").strip(), self.text)
+        draft["claims"][0]["evidence"] = []
+        with self.assertRaisesRegex(ValueError, "lineage modified"):
+            native.review(self.root, self.graphic, "zhihu", draft)
+
+    def test_native_draft_missing_review_and_stale(self):
+        import native_editorial_draft as native
+        self.package()
+        draft = native.current(self.root, self.graphic, "csdn")
+        with self.assertRaisesRegex(ValueError, "reviewer"):
+            native.review(self.root, self.graphic, "csdn", draft)
+        with self.assertRaisesRegex(ValueError, "unsupported"):
+            native.current(self.root, self.graphic, "x")
+        self.evidence.write_text("Changed", encoding="utf-8")
+        with self.assertRaises(ValueError):
+            native.review(self.root, self.graphic, "csdn", draft)
+
+
+
+    def test_native_reviewed_export_rechecks_copy_and_rights(self):
+        import native_editorial_draft as native
+        self.package()
+        draft = native.current(self.root, self.graphic, "zhihu")
+        draft["title"] = "Graph state in LangGraph"
+        draft["title_review_note"] = "Fixture title"
+        draft["reviewer"] = "Fixture"
+        draft["claims"][0]["draft_text"] = "LangGraph uses graph state."
+        draft["claims"][0]["review_note"] = "Fixture semantic review"
+        receipt = native.approval(self.root, self.graphic, "zhihu", draft,
+                                  reviewer="Fixture", opinion="Reviewed exact preview",
+                                  confirmed=True)
+        outdir = self.root / ".local" / "native-export"
+        result = native.export(self.root, self.graphic, "zhihu", draft, receipt,
+                               outdir, confirmed=True)
+        body = outdir / result["body_file"]
+        self.assertEqual(body.read_text(encoding="utf-8"), "LangGraph uses graph state.")
+        self.assertEqual(result["status"], "OFFLINE_COPY_EXPORTED")
+        self.assertFalse(result["publish_authorized"])
+        self.assertEqual(native.export(self.root, self.graphic, "zhihu", draft, receipt,
+                                       outdir, confirmed=True), result)
+        draft["claims"][0]["draft_text"] = "Different text"
+        with self.assertRaisesRegex(ValueError, "stale"):
+            native.export(self.root, self.graphic, "zhihu", draft, receipt, outdir, confirmed=True)
+        draft["claims"][0]["draft_text"] = "LangGraph uses graph state."
+        (self.graphic / "assets/cover.png").write_bytes(b"tampered")
+        with self.assertRaisesRegex(ValueError, "asset drift"):
+            native.export(self.root, self.graphic, "zhihu", draft, receipt, outdir, confirmed=True)
+
+    def test_native_html_preview_escapes_markup(self):
+        import native_editorial_draft as native
+        self.package()
+        draft = native.current(self.root, self.graphic, "wechat_article")
+        draft["reviewer"] = "Fixture"
+        draft["title_review_note"] = "Fixture"
+        draft["claims"][0]["draft_text"] = "<script>fixture</script>"
+        draft["claims"][0]["review_note"] = "Fixture markup escaping only"
+        out = native.review(self.root, self.graphic, "wechat_article", draft)
+        self.assertNotIn("<script>", out["native_preview"]["body"])
+        self.assertIn("&lt;script&gt;", out["native_preview"]["body"])
+
+
 if __name__ == "__main__":
     unittest.main()

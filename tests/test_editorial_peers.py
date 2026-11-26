@@ -56,5 +56,38 @@ class PeerTests(unittest.TestCase):
             peers.analyze(self.d)
 
 
+
+    def test_creative_patterns_comparable_only_within_cohort(self):
+        import editorial_peer_patterns as patterns
+        patterns.init(self.d)
+        for n in range(10):
+            self.add(n, 100 if n < 5 else 300)
+            row = dict(case_id="case-" + str(n), hook_type="question" if n < 5 else "result",
+                       title_promise="tutorial", cover_type="diagram", narrative="walkthrough",
+                       evidence_location="opening at 00:00", original_application="Use own verified example",
+                       reviewer="Synthetic")
+            with (self.d / "peer-patterns.csv").open("a", encoding="utf-8", newline="") as f:
+                csv.DictWriter(f, fieldnames=patterns.FIELDS).writerow(row)
+        result = patterns.analyze(self.d)
+        hooks = [x for x in result["comparisons"] if x["dimension"] == "hook_type"]
+        self.assertEqual(len(hooks), 2)
+        self.assertTrue(all(x["status"] == "DESCRIPTIVE_ONLY" for x in hooks))
+        self.assertTrue(all(x["status"] == "INSUFFICIENT_DATA" for x in result["comparisons"]
+                            if x["dimension"] != "hook_type"))
+        self.assertFalse(result["publish_authorized"])
+        self.assertEqual(len(result["cases"]), 10)
+
+    def test_creative_pattern_unknown_case_refused(self):
+        import editorial_peer_patterns as patterns
+        patterns.init(self.d)
+        row = dict(case_id="case-1", hook_type="unknown", title_promise="unknown",
+                   cover_type="unknown", narrative="unknown", evidence_location="not reviewed",
+                   original_application="no application", reviewer="Synthetic")
+        with (self.d / "peer-patterns.csv").open("a", encoding="utf-8", newline="") as f:
+            csv.DictWriter(f, fieldnames=patterns.FIELDS).writerow(row)
+        with self.assertRaisesRegex(ValueError, "unknown peer case"):
+            patterns.analyze(self.d)
+
+
 if __name__ == "__main__":
     unittest.main()

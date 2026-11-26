@@ -56,6 +56,61 @@ class WorkbenchTests(unittest.TestCase):
         self.assertIn("&lt;script&gt;", page)
 
 
+    def test_daily_capacity_is_read_only_and_integrated(self):
+        add(self.d / "signals.csv", ops.FIELDS["signals.csv"],
+            dict(signal_id="signal-1", topic="agent", kind="issue",
+                 source_url="https://example.org/issue/1",
+                 observed_at="2026-11-26T00:00:00+00:00", observation="Synthetic problem"))
+        before = workspace.revision(self.d)
+        page = workspace.render(self.d, "fixture", "2026-11-26", 15)
+        self.assertIn("Daily capacity", page)
+        self.assertIn("10 / 15 estimated minutes", page)
+        self.assertIn("demand URLs 1", page)
+        self.assertIn("#candidate-" + self.ident, page)
+        self.assertEqual(workspace.revision(self.d), before)
+        self.assertFalse((self.d / ("route-" + self.ident + ".json")).exists())
+        with self.assertRaises(ValueError):
+            workspace.render(self.d, "fixture", "2026-11-26", None)
+
+
+    def test_lifecycle_link_and_due_windows(self):
+        import editorial_lifecycle as lifecycle
+        from contentops.workflow import new_workflow
+        metrics = self.d / "metrics"
+        learning.initialize(metrics)
+        lifecycle.initialize(self.d)
+        root = self.d / "projects"
+        project = root / "fixture"
+        project.mkdir(parents=True)
+        # X text has a separate pipeline; link only the publication in this fixture.
+        add(self.d / "lifecycle-links.csv", lifecycle.FIELDS,
+            dict(candidate_id=self.ident, project_slug="", content_id="post",
+                 post_url="https://x.com/example/status/1", definition="native_v1"))
+        row = dict(content_id="post", post_url="https://x.com/example/status/1",
+                   platform="x", account_alias="x-superplay-english", content_format="text",
+                   topic_cluster="agent", discovery_source="search", experiment_id="exp",
+                   published_at="2026-11-26T00:00:00+00:00", publish_status="reported_published")
+        add(metrics / "content-index.csv", learning.INDEX_COLUMNS, row)
+        before = (metrics / "content-index.csv").read_bytes()
+        report = lifecycle.report(self.d, ops.plan(self.d), metrics, root, "2026-11-27T00:00:00+00:00")
+        item = report["items"][0]
+        self.assertEqual(item["publication"]["windows"]["T+24H"], "DUE")
+        self.assertEqual(item["publication"]["windows"]["T+72H"], "NOT_DUE")
+        self.assertFalse(report["publish_authorized"])
+        self.assertEqual((metrics / "content-index.csv").read_bytes(), before)
+        self.assertIn("Lifecycle (local records)", workspace.render(self.d, "fixture", metrics=metrics, projects=root))
+        q = dict(ops.plan(self.d)["queue"][0], format="video")
+        from contentops.workflow import CONTRACT_ID
+        workflow = new_workflow("fixture", q["account"], CONTRACT_ID)
+        path = project / "workflow.json"
+        path.write_text(json.dumps(workflow), encoding="utf-8")
+        raw = path.read_bytes()
+        self.assertEqual(lifecycle.project_status(root, "fixture", q)["state"], "WORKFLOW_REVIEW_REQUIRED")
+        self.assertEqual(path.read_bytes(), raw)
+        q["account"] = "wrong"
+        self.assertEqual(lifecycle.project_status(root, "fixture", q)["state"], "WORKFLOW_SCOPE_MISMATCH")
+
+
 class SeriesTests(unittest.TestCase):
     def setUp(self):
         t = tempfile.TemporaryDirectory()
@@ -101,6 +156,34 @@ class SeriesTests(unittest.TestCase):
         for n in range(10):
             self.item(n, "a" if n < 5 else "b", 5)
         self.assertIsNone(self.review()["research_priority"])
+
+
+
+    def test_series_schedule_reuses_plan_and_distinguishes_route(self):
+        for topic, url in (("agent", "https://example.org/issue/1"), ("other", "https://example.org/issue/2")):
+            add(self.d / "signals.csv", ops.FIELDS["signals.csv"],
+                dict(signal_id=topic, topic=topic, kind="issue", source_url=url,
+                     observed_at="2026-11-26T00:00:00+00:00", observation="Fixture"))
+        for topic, angle, day in (("agent", "first", "2026-11-26"),
+                                  ("agent", "second", "2026-11-27"),
+                                  ("other", "third", "2026-12-03")):
+            row = dict(zip(ops.FIELDS["topics.csv"], [
+                topic, "x-superplay-future-intelligence", "bilibili", "video", "devs", angle,
+                "agent-series", "Hook", "CTA", day, "20", "low", "Fixture",
+                "9", "9", "9", "9", "9", "9"]))
+            add(self.d / "topics.csv", ops.FIELDS["topics.csv"], row)
+        first = next(q for q in ops.plan(self.d)["queue"] if q["angle"] == "first")
+        (self.d / ("route-" + first["id"] + ".json")).write_text("{}", encoding="utf-8")
+        kw = dict(series="agent-series", account="x-superplay-future-intelligence",
+                  platform="bilibili", content_format="video", start="2026-11-26",
+                  end="2026-12-09", weekly_target=2)
+        result = series.schedule(self.d, **kw)
+        self.assertEqual([w["planning_gap"] for w in result["weeks"]], [0, 1])
+        self.assertEqual([e["status"] for e in result["episodes"]],
+                         ["ROUTE_RECEIPT_EXISTS", "REUSED_SOURCE_REVIEW", "NEW_SOURCE_REVIEW"])
+        self.assertFalse(result["publish_authorized"])
+        with self.assertRaises(ValueError):
+            series.schedule(self.d, **dict(kw, end="2026-12-08"))
 
 
 if __name__ == "__main__":

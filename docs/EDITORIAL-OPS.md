@@ -166,3 +166,55 @@ Use actual scope and local metrics directory. Output is a read-only audit of pub
 Research: [GrowthBook experiment design](https://github.com/growthbook/skills/blob/main/skills/experiments/SKILL.md), [PostHog primary and secondary metrics](https://posthog.com/docs/experiments/creating-an-experiment). Borrow preregistered guardrails; creator posts are observational, not randomized product A/B tests.
 
 Optional plan flags: `--min-primary-ratio 0.8 --min-quality-per-hour-ratio 0.9` (illustrative, select actual thresholds before start). Arm a is control; b is candidate. Compare median primary and qualified signals per measured Founder hour; each selected guardrail needs five valid observations per arm and a positive baseline. Missing, zero baseline or insufficient effort observations do not pass. The descriptive observed priority is preserved; a B follow-up is held unless configured guardrails pass. No configuration means no B promotion recommendation. No thresholds are inferred during review; no DNA change or publishing. Existing experimental plan files without guardrails still review as NOT_CONFIGURED. Synthetic regression in test_editorial_experiments.py.
+
+## Native editorial draft pilot (Refs #216/#211)
+
+Research: [cross-platform-repurposing](https://github.com/social-media-skills/skills/blob/main/skills/cross-platform-repurposing/SKILL.md), [agentreacher repurpose](https://github.com/agentreacher/skills/blob/main/skills/repurpose/SKILL.md). Borrow platform-specific framing and common evidence, not code. Keep #219 exact-copy production boundary unchanged.
+
+```text
+python scripts/native_editorial_draft.py plan --project projects/<graphic> --platform zhihu
+python scripts/native_editorial_draft.py review --project projects/<graphic> --platform zhihu --draft .local/editorial-ops/native.json --confirm
+```
+
+Plan requires a current verified shared graphic package and source review; outputs editable JSON for six existing offline targets. Each canonical claim has its original text, revision, evidence digests and a separate draft field. The profiles guide title/structure/closing; a human or Coding Agent can rewrite the title, reorder claim blocks and revise draft text. Retain every canonical claim once, no free-standing factual block. Named human reviewer fills notes for title and each claim, checks factual equivalence, caveats, tone and platform fit. Review recomputes source/package lineage, refuses stale/changed evidence and existing platform hard-limit blockers; emits a shaped preview only, never replaces approved shared copy or approves production. Human attestation is not semantic entailment; no automatic publishing, rendering or full production integration. Local data stays ignored. Regression tests added to existing test_shared_copy.py.
+
+## Peer creative pattern research (Refs #216)
+
+Research: [youtube-data-skills](https://github.com/nikhilbhansali/youtube-data-skills), [youtube-research-skills](https://github.com/TubeLabHQ/youtube-research-skills), [outlier-lab](https://github.com/spiritpaper/outlier-lab). Borrow hook/title/cover/narrative analysis linked to measured peer results, not third-party content or scraper code.
+
+Run `python scripts/editorial_peer_patterns.py init`, fill peer-patterns.csv against existing peers.csv case IDs, then run `python scripts/editorial_peer_patterns.py review`. Use --data-dir consistently. Record categorical hook_type, title_promise, cover_type, narrative (see DIMENSIONS in script), observed evidence location (e.g. timestamp), original application and human reviewer. Unknown is explicitly supported; never invent unavailable observations. Reuses the existing same-peer, format, metric, age and organic baseline; adds topic separation, at least five annotated cases per pattern and five known alternatives before a descriptive median comparison. Missing or unknown stays excluded, not zero. Outputs local peer-pattern-review.json with case URLs and suggested original applications; no causality, automatic copying, publication or access to private analytics. Existing test_editorial_peers.py regression extended.
+
+## Opt-in production cost lanes (Refs #216)
+
+Research: [batch-content-plan](https://github.com/social-media-skills/skills/blob/main/skills/batch-content-plan/SKILL.md) and [content-calendar](https://github.com/social-media-skills/skills/blob/main/skills/content-calendar/SKILL.md) for time-bounded production planning. The existing planner estimates minutes; the stable producer now optionally checks scope before materializing inputs or running a producer.
+
+```text
+python scripts/make_content.py check --project projects/<project> --lane L2
+python scripts/make_content.py run --project projects/<project> --mode STRICT --lane L2 --dry-run
+```
+
+After the usual signed research, copy review and explicit production intent, L1 accepts the existing GRAPHIC_TEXT path only (X keeps its separate pipeline); L2 permits video/graphic but no extra provider-generated assets or H3 bookends; L3 retains the existing gates including separate provider/billing and quota authorization. L1/L2 do not automatically replace media or downgrade the voice. A configured subscription narration may still use quota under existing gates. Omitted --lane preserves existing behavior. No measured time cap, billing guarantee, automatic selection from the editorial queue or publication. All existing checks remain mandatory; optional lane is recorded in the run receipt. Regression: test_production_gates.py.
+
+## Integrated daily workbench
+
+`python scripts/editorial_workspace.py --day 2026-11-26 --minutes 90` displays the existing daily capacity calculation, selected candidate anchors, demand URL counts and deferral reasons above the existing editable queue. Budget and day are explicit; refresh recomputes, no automatic routing. Existing loopback, Host/Origin, token and CSP protections remain. The panel is read-only and uses the existing editorial_daily implementation. Regression: test_editorial_workspace_series.py.
+
+## Series planning cadence (Refs #216)
+
+Research: [Content Workflow Toolkit](https://github.com/mickdarling/content-workflow-toolkit), [content-calendar](https://github.com/social-media-skills/skills/blob/main/skills/content-calendar/SKILL.md), [Edit Flow](https://github.com/Automattic/Edit-Flow). Reuse the existing editorial queue and series labels rather than a second CMS.
+
+```text
+python scripts/editorial_series.py schedule --series agent-series --account x-superplay-future-intelligence --platform bilibili --format video --start 2026-11-26 --end 2026-12-09 --weekly-target 2
+```
+
+Explicit account/platform/format, one to twelve seven-day windows, creator-defined cadence. Reports weekly planned counts, planning gaps, eligible unrouted items, route-receipt existence, current topic-source URL overlap and estimated minutes. Current topic URLs are not historical episode evidence, so repeated URLs are review prompts, not proof of duplicate content. Route receipt existence never means published. Does not create or schedule posts. Existing series review remains the separate outcome analysis. Synthetic regression in test_editorial_workspace_series.py.
+
+## Reviewed native copy manual export (Refs #216/#211)
+
+After `plan` and `review`, a human who has actually read the exact shaped preview and checked every claim against the source/evidence can record local attestation via `native_editorial_draft.py approve --project ... --platform zhihu --draft .local/native.json --reviewer Founder --opinion "..." --confirm` (save stdout to .local/native-approval.json). Then use `native_editorial_draft.py export --project ... --platform zhihu --draft .local/native.json --approval .local/native-approval.json --output-dir .local/native-export --confirm`. The human must author the opinion; it is local attestation, not automated semantic entailment. Export recomputes draft/preview/source lineage, rechecks image bytes and rights, runs platform content audit and refuses drift. Writes immutable native body (.html/.md/.txt) and JSON manifest; HTML body is escaped, Markdown raw HTML refused. Source blockers and pending AIGC disclosure/media/platform review remain; no external drafts, rendering, production authorization or publication. Exact-copy adapter remains unchanged. No generated receipt is real platform acceptance.
+
+## Local lifecycle view (Refs #216)
+
+Research: [Prefect task states](https://github.com/PrefectHQ/prefect/blob/main/docs/v3/concepts/states.mdx), [Edit Flow](https://github.com/Automattic/Edit-Flow), [editorial-workflow](https://github.com/bradtraversy/editorial-workflow). Reuse existing stages and metrics; no new server or automatic transition.
+
+Run `python scripts/editorial_lifecycle.py init` and fill ignored lifecycle-links.csv with one existing candidate_id, optional project_slug, optional content_id/post_url and explicit metric definition. Use an explicit operator-checked link; no inference from similar titles. One publication/project per candidate in this pilot. Then `python scripts/editorial_lifecycle.py status` or start `python scripts/editorial_workspace.py --metrics-dir .local/platform-learning`. Optional --projects-dir points to the actual project directory. Reports distinct route receipt state, existing production workflow stage and in-memory stale checks, local publication index scope, and T+24H/T+72H/T+7D capture status. No stage mutations, media certification, publication or metric inference. X remains its own pipeline; omit project link for X text. Synthetic regression in test_editorial_workspace_series.py.
