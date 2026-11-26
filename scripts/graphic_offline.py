@@ -16,6 +16,20 @@ from contentops.workflow import shared_copy
 SUPPORTED = {"wechat_article", "zhihu", "csdn", "juejin", "toutiao", "weibo"}
 
 
+def verify_images(root, project, package):
+    # Check the existing image rights receipt and bytes again before export.
+    from contentops.media.rights_gate import validate_request_rights
+    for item in package.get("images") or []:
+        path = item["path"]
+        image = shared_copy.inside(root, path[len("repo://"):]) if path.startswith("repo://") else shared_copy.inside(project, path)
+        import hashlib
+        if not image.is_file() or hashlib.sha256(image.read_bytes()).hexdigest() != item["sha256"]:
+            raise ValueError("graphic asset drift")
+        current_rights = validate_request_rights({"rights": item["rights"]}, project)
+        if current_rights != item["rights"]:
+            raise ValueError("graphic asset rights receipt changed")
+
+
 def build(root, project, platforms):
     root, project = Path(root).resolve(), Path(project).resolve()
     shared_copy.project_ref(root, project)
@@ -28,17 +42,7 @@ def build(root, project, platforms):
     package = shared_copy.document(package_file)
     lineage = shared_copy.verify_package(root, project, package)
     package["_package_root"] = str(project)
-    # Check the existing image rights receipt and bytes again before export.
-    from contentops.media.rights_gate import validate_request_rights
-    for item in package.get("images") or []:
-        path = item["path"]
-        image = shared_copy.inside(root, path[len("repo://"):]) if path.startswith("repo://") else shared_copy.inside(project, path)
-        import hashlib
-        if not image.is_file() or hashlib.sha256(image.read_bytes()).hexdigest() != item["sha256"]:
-            raise ValueError("graphic asset drift")
-        current_rights = validate_request_rights({"rights": item["rights"]}, project)
-        if current_rights != item["rights"]:
-            raise ValueError("graphic asset rights receipt changed")
+    verify_images(root, project, package)
     outputs = []
     for pid in platforms:
         adapter = mc.MultiChannelAdapter(pid, expected_bundle_sha256=package["bundle_sha256"], repo_root=root)

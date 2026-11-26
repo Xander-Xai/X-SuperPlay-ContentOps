@@ -736,3 +736,5 @@ Optional editorial scope: `python scripts/make_content.py run --project projects
 Daily workbench: `python scripts/editorial_workspace.py --day YYYY-MM-DD --minutes 90`; optional read-only capacity panel over existing editable planner. See EDITORIAL-OPS.md.
 
 Series planning: `python scripts/editorial_series.py schedule --help` and the example in EDITORIAL-OPS.md; reports weekly gaps and source-overlap hints from the existing queue, not actual publication counts.
+
+Manual native copy export: native_editorial_draft.py approve then export (see EDITORIAL-OPS.md); exact-preview human attestation and current evidence/assets required; no publishing.

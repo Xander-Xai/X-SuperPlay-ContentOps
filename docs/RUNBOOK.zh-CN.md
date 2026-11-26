@@ -502,3 +502,5 @@ media-use 演示通过另一套已验证的 Easel 运行时合成。演示成功
 每日运营工作台：`python scripts/editorial_workspace.py --day YYYY-MM-DD --minutes 90`；在现有可编辑工作台显示只读排产、需求计数与延期原因，见 EDITORIAL-OPS.md。
 
 系列排期：`python scripts/editorial_series.py schedule --help`，按 EDITORIAL-OPS.md 示例查看每周计划缺口和现有选题来源重复提示，不代表实际发布。
+
+原生改写离线交付：native_editorial_draft.py approve 后 export（见 EDITORIAL-OPS.md）；人工复核实际预览，检查证据与素材，不发布。
