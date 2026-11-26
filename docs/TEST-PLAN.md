@@ -184,3 +184,5 @@ Existing test_editorial_workspace_series.py includes integrated daily panel with
 Existing test_editorial_workspace_series.py covers series cadence gaps, route-receipt distinction and repeated source hints. Synthetic only.
 
 Existing test_shared_copy.py covers reviewed native artifact export, replay, draft/asset tamper refusal and HTML escaping (synthetic fixtures only).
+
+Existing test_editorial_workspace_series.py covers local lifecycle mapping, due windows, scope mismatch and read-only workflow check. Synthetic only.

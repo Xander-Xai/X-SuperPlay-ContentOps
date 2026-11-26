@@ -188,3 +188,5 @@ Python CI 步骤；Easel 候选新增 3 个独立套件及其 CI 步骤，集成
 已有 test_editorial_workspace_series.py 增加系列排期缺口、路由回执区分及来源重复提示回归；仅合成数据。
 
 已有 test_shared_copy.py 增加审核后原生文件导出、重放、草稿/素材篡改阻断及 HTML 转义回归；仅合成数据。
+
+已有 test_editorial_workspace_series.py 增加本地生命周期、回收窗口、范围不匹配及工作流只读检查；仅合成数据。

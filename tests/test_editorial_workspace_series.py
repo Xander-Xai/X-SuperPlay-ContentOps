@@ -73,6 +73,44 @@ class WorkbenchTests(unittest.TestCase):
             workspace.render(self.d, "fixture", "2026-11-26", None)
 
 
+    def test_lifecycle_link_and_due_windows(self):
+        import editorial_lifecycle as lifecycle
+        from contentops.workflow import new_workflow
+        metrics = self.d / "metrics"
+        learning.initialize(metrics)
+        lifecycle.initialize(self.d)
+        root = self.d / "projects"
+        project = root / "fixture"
+        project.mkdir(parents=True)
+        # X text has a separate pipeline; link only the publication in this fixture.
+        add(self.d / "lifecycle-links.csv", lifecycle.FIELDS,
+            dict(candidate_id=self.ident, project_slug="", content_id="post",
+                 post_url="https://x.com/example/status/1", definition="native_v1"))
+        row = dict(content_id="post", post_url="https://x.com/example/status/1",
+                   platform="x", account_alias="x-superplay-english", content_format="text",
+                   topic_cluster="agent", discovery_source="search", experiment_id="exp",
+                   published_at="2026-11-26T00:00:00+00:00", publish_status="reported_published")
+        add(metrics / "content-index.csv", learning.INDEX_COLUMNS, row)
+        before = (metrics / "content-index.csv").read_bytes()
+        report = lifecycle.report(self.d, ops.plan(self.d), metrics, root, "2026-11-27T00:00:00+00:00")
+        item = report["items"][0]
+        self.assertEqual(item["publication"]["windows"]["T+24H"], "DUE")
+        self.assertEqual(item["publication"]["windows"]["T+72H"], "NOT_DUE")
+        self.assertFalse(report["publish_authorized"])
+        self.assertEqual((metrics / "content-index.csv").read_bytes(), before)
+        self.assertIn("Lifecycle (local records)", workspace.render(self.d, "fixture", metrics=metrics, projects=root))
+        q = dict(ops.plan(self.d)["queue"][0], format="video")
+        from contentops.workflow import CONTRACT_ID
+        workflow = new_workflow("fixture", q["account"], CONTRACT_ID)
+        path = project / "workflow.json"
+        path.write_text(json.dumps(workflow), encoding="utf-8")
+        raw = path.read_bytes()
+        self.assertEqual(lifecycle.project_status(root, "fixture", q)["state"], "WORKFLOW_REVIEW_REQUIRED")
+        self.assertEqual(path.read_bytes(), raw)
+        q["account"] = "wrong"
+        self.assertEqual(lifecycle.project_status(root, "fixture", q)["state"], "WORKFLOW_SCOPE_MISMATCH")
+
+
 class SeriesTests(unittest.TestCase):
     def setUp(self):
         t = tempfile.TemporaryDirectory()

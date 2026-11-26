@@ -740,3 +740,5 @@ Daily workbench: `python scripts/editorial_workspace.py --day YYYY-MM-DD --minut
 Series planning: `python scripts/editorial_series.py schedule --help` and the example in EDITORIAL-OPS.md; reports weekly gaps and source-overlap hints from the existing queue, not actual publication counts.
 
 Manual native copy export: native_editorial_draft.py approve then export (see EDITORIAL-OPS.md); exact-preview human attestation and current evidence/assets required; no publishing.
+
+Local lifecycle: editorial_lifecycle.py init/status; optional editorial_workspace.py --metrics-dir .local/platform-learning shows the same view. See EDITORIAL-OPS.md.

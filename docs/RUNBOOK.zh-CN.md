@@ -506,3 +506,5 @@ media-use 演示通过另一套已验证的 Easel 运行时合成。演示成功
 系列排期：`python scripts/editorial_series.py schedule --help`，按 EDITORIAL-OPS.md 示例查看每周计划缺口和现有选题来源重复提示，不代表实际发布。
 
 原生改写离线交付：native_editorial_draft.py approve 后 export（见 EDITORIAL-OPS.md）；人工复核实际预览，检查证据与素材，不发布。
+
+本地生命周期：editorial_lifecycle.py init/status；工作台可选 --metrics-dir .local/platform-learning 展示同一视图。见 EDITORIAL-OPS.md。

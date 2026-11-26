@@ -110,7 +110,7 @@ def daily_panel(directory, report, day, minutes):
             "Demand URL counts are not verified buyers.</p></article>")
 
 
-def render(directory, token, day=None, minutes=None):
+def render(directory, token, day=None, minutes=None, metrics=None, projects=None):
     rev, report = snapshot(directory)
     def e(value):
         return escape(str(value), quote=True)
@@ -121,6 +121,14 @@ def render(directory, token, day=None, minutes=None):
             raise ValueError("inputs changed; refresh")
     elif day is not None or minutes is not None:
         raise ValueError("day and minutes must be specified together")
+    lifecycle = {}
+    if metrics is not None:
+        from datetime import datetime, timezone
+        import editorial_lifecycle
+        view = editorial_lifecycle.report(directory, report, metrics,
+                                          projects or ops.ROOT / "projects",
+                                          datetime.now(timezone.utc).isoformat())
+        lifecycle = {item["candidate_id"]: item for item in view["items"]}
     for q in report["queue"]:
         route_file = ops.safe_file(directory, "route-" + q["id"] + ".json")
         if route_file.exists():
@@ -134,6 +142,13 @@ def render(directory, token, day=None, minutes=None):
                     "".join("<input type='hidden' name='" + k + "' value='" + e(v) + "'>"
                             for k, v in (("token", token), ("revision", rev), ("id", q["id"]))) +
                     inputs + "<button>Save plan</button></form>")
+        if q["id"] in lifecycle:
+            item = lifecycle[q["id"]]
+            pub = item["publication"]
+            form += ("<p>Lifecycle (local records): " + e(item["route"]) + " | " +
+                     e(item["project"]["state"]) + " | " + e(pub["state"]) + "</p>" +
+                     "<p>Metrics: " + ", ".join(e(k) + " " + e(v) for k, v in pub["windows"].items()) +
+                     "</p><p>Not a media or publication approval.</p>")
         blocks.append("<article id='candidate-" + e(q["id"]) + "'><h2>" + e(q["angle"]) + "</h2><p>" +
                       " | ".join(e(q[k]) for k in ("account", "platform", "series", "decision",
                                                     "score", "cost_lane")) + "</p>" + form + "</article>")
@@ -146,7 +161,7 @@ def render(directory, token, day=None, minutes=None):
             + "".join(blocks) + "</html>")
 
 
-def handler(directory, token, day=None, minutes=None):
+def handler(directory, token, day=None, minutes=None, metrics=None, projects=None):
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *args):
             pass
@@ -172,7 +187,7 @@ def handler(directory, token, day=None, minutes=None):
                 self.reply(404, "Not found")
                 return
             try:
-                self.reply(200, render(directory, token, day, minutes))
+                self.reply(200, render(directory, token, day, minutes, metrics, projects))
             except (ValueError, OSError):
                 self.reply(409, "Local data invalid; inspect CSV files.")
 
@@ -211,6 +226,8 @@ def main(argv=None):
     p.add_argument("--port", type=int, default=8765)
     p.add_argument("--day", help="explicit planning day YYYY-MM-DD")
     p.add_argument("--minutes", type=int, help="daily advisory capacity")
+    p.add_argument("--metrics-dir", type=Path, help="opt-in local lifecycle view")
+    p.add_argument("--projects-dir", type=Path, default=ops.ROOT / "projects")
     a = p.parse_args(argv)
     try:
         if not 1024 <= a.port <= 65535:
@@ -223,7 +240,7 @@ def main(argv=None):
             if not 1 <= a.minutes <= 1440:
                 raise ValueError("--minutes must be 1..1440")
         directory = ops.init(a.data_dir)
-        with HTTPServer(("127.0.0.1", a.port), handler(directory, secrets.token_urlsafe(32), a.day, a.minutes)) as server:
+        with HTTPServer(("127.0.0.1", a.port), handler(directory, secrets.token_urlsafe(32), a.day, a.minutes, a.metrics_dir, a.projects_dir)) as server:
             print("Local planning only: http://127.0.0.1:%d/" % a.port, flush=True)
             server.serve_forever()
     except KeyboardInterrupt:
