@@ -166,3 +166,18 @@ Use actual scope and local metrics directory. Output is a read-only audit of pub
 Research: [GrowthBook experiment design](https://github.com/growthbook/skills/blob/main/skills/experiments/SKILL.md), [PostHog primary and secondary metrics](https://posthog.com/docs/experiments/creating-an-experiment). Borrow preregistered guardrails; creator posts are observational, not randomized product A/B tests.
 
 Optional plan flags: `--min-primary-ratio 0.8 --min-quality-per-hour-ratio 0.9` (illustrative, select actual thresholds before start). Arm a is control; b is candidate. Compare median primary and qualified signals per measured Founder hour; each selected guardrail needs five valid observations per arm and a positive baseline. Missing, zero baseline or insufficient effort observations do not pass. The descriptive observed priority is preserved; a B follow-up is held unless configured guardrails pass. No configuration means no B promotion recommendation. No thresholds are inferred during review; no DNA change or publishing. Existing experimental plan files without guardrails still review as NOT_CONFIGURED. Synthetic regression in test_editorial_experiments.py.
+
+
+## Prospective editorial score review (Refs #226)
+
+Research: [SciPy rank correlation](https://github.com/scipy/scipy/blob/main/scipy/stats/_correlation.py) and [Evidently](https://github.com/evidentlyai/evidently) ranking/data-quality evaluation patterns. [scikit-learn calibration](https://github.com/scikit-learn/scikit-learn/blob/main/doc/modules/calibration.rst) is for predicted probabilities; editorial scores are ordinal advisory scores, not probabilities. Use tie-aware Spearman on frozen scores and selected native outcomes, no copied upstream code or new dependency.
+
+Before publishing, freeze the existing eligible VIDEO candidate with its current score, components, weights, candidate digest and local timestamp. After actual manual publication and native index registration, explicitly link its content ID/URL. Use one operator; do not run simultaneous writers. One candidate to one publication, never backdate records; local digests detect accidental changes, not malicious edits or independent proof of time.
+
+```text
+python scripts/editorial_score_review.py freeze --candidate-id <actual-id> --reviewer Founder --confirm
+python scripts/editorial_score_review.py link --candidate-id <actual-id> --content-id <actual-content-id> --post-url <actual-public-URL> --reviewer Founder --confirm
+python scripts/editorial_score_review.py review --platform bilibili --account x-superplay-future-intelligence --topic agent --experiment exp --window T+24H --definition native_v1 --metric impressions
+```
+
+Use actual scope/IDs, not placeholders. Existing platform-learning CSVs and editorial diagnostics remain authoritative; no parallel metric store. Six metrics available: impressions, ctr, avg_watch_time, completion_or_retention, saves_per_1000_views, qualified_signals_per_hour. Same platform/account/video/topic/experiment/definition/age window and organic native data only. Ten complete pairs minimum (pilot threshold, not significance); constant ranks yield NO_VARIATION. Missing/unknown-paid/unlinked samples are excluded and reported, never imputed. Published-only selection bias remains. No weight or DNA updates, topic approval, publish or growth claims. Tests: python tests/test_editorial_score_review.py (synthetic).
