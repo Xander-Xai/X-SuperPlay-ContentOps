@@ -336,6 +336,14 @@
       "purpose": "Issue #211/#208 shared reviewed copy and offline native non-X graphic packages; no external drafts or publication",
       "status": "active",
       "expires": "2026-12-26"
+    },
+    {
+      "name": "feat/216-growth-diagnostics-20261126",
+      "pr": 221,
+      "created": "2026-11-26",
+      "purpose": "Issue #216 same-cohort native video diagnostic and measured effort feedback; local advisory only",
+      "status": "active",
+      "expires": "2026-12-26"
     }
   ]
 }

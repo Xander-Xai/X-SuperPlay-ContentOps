@@ -720,3 +720,9 @@ checkout is healthy or restored; that remains a separate integrity question.
 Editorial planning V1 (#216): local evidence/peer ledgers, advisory topic scores, cost lanes, native variants, calendar and series plans; research, rights and publication gates unchanged. See [EDITORIAL-OPS.md](EDITORIAL-OPS.md).
 
 #211/#208 candidate: project the existing reviewed VIDEO copy verbatim into GRAPHIC_TEXT; bind one shared copy identity to research/copy digests, Bundle, and claim/evidence references. Assets and review remain independent. Six non-X platform offline exports only, no external drafts, status upgrades or publication; X and Xiaohongshu image excluded. Initial scope is same-repository projects/, identical Bundle, treatment and topic, exact-copy only; full CI pending. Commands: `python scripts/shared_copy.py --source projects/<video> --project projects/<graphic>`, then existing graphic_package.py with `shared-copy.md` and exact reviewed title; `python scripts/graphic_offline.py --project projects/<graphic> --platform wechat_article --platform zhihu`.
+
+### Local video growth diagnostics
+
+Use `python scripts/editorial_diagnostics.py --help` and the scope example in [EDITORIAL-OPS.md](EDITORIAL-OPS.md). Read existing platform-learning CSVs; output is descriptive JSON only, not an approval, native data fetch or publication.
+
+Use `python scripts/editorial_daily.py plan --day YYYY-MM-DD --minutes 90` for a local capacity plan; `rubric` and `review` subcommands provide an advisory, draft-bound human checklist. See [EDITORIAL-OPS.md](EDITORIAL-OPS.md). No automatic routing or approval.
