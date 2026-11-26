@@ -334,7 +334,7 @@
       "pr": 219,
       "created": "2026-11-26",
       "purpose": "Issue #211/#208 shared reviewed copy and offline native non-X graphic packages; no external drafts or publication",
-      "status": "active",
+      "status": "merged",
       "expires": "2026-12-26"
     },
     {
@@ -346,10 +346,18 @@
       "expires": "2026-12-26"
     },
     {
+      "name": "feat/216-public-issue-signals",
+      "pr": 222,
+      "created": "2026-11-26",
+      "purpose": "Issue #216 bounded public GitHub issue research and human-selected demand observation; no buyer claims",
+      "status": "merged",
+      "expires": "2026-12-26"
+    },
+    {
       "name": "feat/216-native-editorial-variants",
       "pr": 223,
       "created": "2026-11-26",
-      "purpose": "Issue #216/#211 native editorial draft preview with immutable shared-copy claim lineage, not production authorization",
+      "purpose": "Issue #216/#211 native review/export, peer pattern research, production cost scope, daily workbench and series cadence",
       "status": "active",
       "expires": "2026-12-26"
     }

@@ -139,6 +139,16 @@ Use the same editorial data directory as editorial_ops (global --data-dir before
 
 Copy a UTF-8 draft.md into that local data directory, redirect rubric stdout to review.json there, and have the human fill reviewer and every check's result (SATISFIED/REVISE) and concrete note. Re-run review with explicit confirmation. The record binds draft bytes and the current candidate; changes make it stale. This is a draft editorial review, not a rendered-media inspection, copy approval, claim/evidence check, or publish gate. No auto-scoring. Test: python tests/test_editorial_daily.py.
 
+## Selected public issue demand observations (Refs #216)
+
+Research: [Octokit search endpoint](https://github.com/octokit/plugin-rest-endpoint-methods.js/blob/main/docs/search/issuesAndPullRequests.md), [GitHub search documentation](https://docs.github.com/en/rest/search/search), [pain-miner](https://github.com/Lan-Suny/pain-miner) and [Fider](https://github.com/getfider/fider). Borrow bounded search and explicit feedback selection, not scraping or source code.
+
+```text
+python scripts/editorial_issue_signals.py search --repo owner/repository --keyword recovery --confirm
+python scripts/editorial_issue_signals.py ingest --preview issues.json --issue 123 --topic agent --observation "Reported request for tool recovery" --confirm
+```
+Replace example scope and issue with real values. Run search only against an operator-selected public repository; one unauthenticated GitHub REST search with title phrase, public issue qualifier, max 20, no retries, no redirects. An optional --input accepts a local REST search JSON export (not independently verified). Search emits a local preview with issue numbers, links and titles, not bodies or identities; inspect before saving to ignored local issues.json. Ingest requires an explicit selected issue and a human-authored sanitized observation; it writes kind=issue into the existing signals.csv, deduplicates topic/URL and never promotes it to buyer evidence. The source digest is the preview's reported source hash, not proof of remote authenticity. No live API acceptance is claimed; synthetic test: python tests/test_editorial_issue_signals.py.
+
 ## Native editorial draft pilot (Refs #216/#211)
 
 Research: [cross-platform-repurposing](https://github.com/social-media-skills/skills/blob/main/skills/cross-platform-repurposing/SKILL.md), [agentreacher repurpose](https://github.com/agentreacher/skills/blob/main/skills/repurpose/SKILL.md). Borrow platform-specific framing and common evidence, not code. Keep #219 exact-copy production boundary unchanged.

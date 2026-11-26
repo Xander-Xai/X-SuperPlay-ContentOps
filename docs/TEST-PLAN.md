@@ -171,6 +171,8 @@ Editorial planning V1 (#216): local evidence/peer ledgers, advisory topic scores
 
 `python tests/test_editorial_daily.py` — synthetic budget, demand URL classification, route skip, advisory draft review and stale/path refusal. CI-wired; no real editorial acceptance claimed.
 
+`python tests/test_editorial_issue_signals.py` covers synthetic public issue preview, wrong repository/PR/incomplete refusal, selection and deduplication. Live search is not tested by the offline suite.
+
 Existing `tests/test_shared_copy.py` includes native draft review, canonical evidence tamper/staleness and refusal tests; synthetic only. Exact-copy production gate remains unchanged.
 
 Existing `tests/test_editorial_peers.py` now also covers comparable annotated patterns, insufficient alternatives and unknown case refusal. Synthetic only.

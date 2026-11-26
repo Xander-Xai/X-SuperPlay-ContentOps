@@ -727,6 +727,8 @@ Use `python scripts/editorial_diagnostics.py --help` and the scope example in [E
 
 Use `python scripts/editorial_daily.py plan --day YYYY-MM-DD --minutes 90` for a local capacity plan; `rubric` and `review` subcommands provide an advisory, draft-bound human checklist. See [EDITORIAL-OPS.md](EDITORIAL-OPS.md). No automatic routing or approval.
 
+Use `python scripts/editorial_issue_signals.py search --help` and the example in [EDITORIAL-OPS.md](EDITORIAL-OPS.md) to preview public issue signals, then explicitly ingest selected observations. No account login, automatic collection or publishing.
+
 Native editorial rewrite pilot: `python scripts/native_editorial_draft.py --help`; use a verified shared graphic package and the workflow in [EDITORIAL-OPS.md](EDITORIAL-OPS.md). Reviewed preview is not a production input.
 
 Peer creative pattern review: `python scripts/editorial_peer_patterns.py init` then `review` after human annotation. See [EDITORIAL-OPS.md](EDITORIAL-OPS.md); no automated scraping.

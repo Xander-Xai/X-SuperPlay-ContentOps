@@ -493,6 +493,8 @@ media-use 演示通过另一套已验证的 Easel 运行时合成。演示成功
 
 使用 `python scripts/editorial_daily.py plan --day YYYY-MM-DD --minutes 90` 获得本地排产建议；`rubric` 和 `review` 子命令提供绑定草稿的人工传播质量清单。见 [EDITORIAL-OPS.md](EDITORIAL-OPS.md)。不自动路由或批准。
 
+使用 `python scripts/editorial_issue_signals.py search --help`，按 [EDITORIAL-OPS.md](EDITORIAL-OPS.md) 示例预览公开 Issue，再人工确认登记需求观察。不登录账号，不自动采集或发布。
+
 原生文案改写试点：`python scripts/native_editorial_draft.py --help`；使用现有已核验的共享图文包，流程见 [EDITORIAL-OPS.md](EDITORIAL-OPS.md)。审核预览不是生产输入。
 
 同行表达手法研究：`python scripts/editorial_peer_patterns.py init`，人工标注后执行 `review`。见 [EDITORIAL-OPS.md](EDITORIAL-OPS.md)，不自动爬取。
