@@ -11,6 +11,7 @@ Run: python tests/test_wechat_draft.py
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import sys
 from pathlib import Path
@@ -23,6 +24,14 @@ for candidate in (ROOT / "src", ROOT / "scripts"):
 
 from contentops.accounts import load_account  # noqa: E402
 from contentops.platforms import wechat_draft  # noqa: E402
+
+# The transport script shares a filename with the library module; load it by
+# path so the script-level diagnostics are tested without shadowing the library.
+_SCRIPT_SPEC = importlib.util.spec_from_file_location(
+    "wechat_draft_script", ROOT / "scripts" / "wechat_draft.py")
+assert _SCRIPT_SPEC and _SCRIPT_SPEC.loader
+wechat_draft_script = importlib.util.module_from_spec(_SCRIPT_SPEC)
+_SCRIPT_SPEC.loader.exec_module(wechat_draft_script)
 
 DNA = load_account(ROOT / "config" / "accounts" / "x-superplay-future-intelligence.json")
 
@@ -140,6 +149,36 @@ def test_formatting_only_differences_are_not_a_mismatch() -> None:
 def test_readback_refuses_an_empty_response() -> None:
     shaped = wechat_draft.build_articles(ARTICLE, DNA, thumb_media_id="mid")
     assert wechat_draft.readback_check(shaped["article"], {})["ok"] is False
+
+
+def test_ip_hint_extracts_the_ip_wechat_actually_saw() -> None:
+    # Real 2026-11-25 shape: WeChat's own body named .82 while local curl said .109.
+    text = "WeChatAPIError: 40164 invalid ip, not in whitelist: 38.107.237.82"
+    assert wechat_draft_script.extract_wechat_ip_hint(text) == "38.107.237.82"
+
+
+def test_ip_hint_normalizes_and_accepts_ipv6() -> None:
+    assert wechat_draft_script.extract_wechat_ip_hint(
+        "40164 invalid ip, not in whitelist 2001:0db8:0000:0000:0000:0000:0000:0001"
+    ) == "2001:db8::1"
+
+
+def test_ip_hint_fails_closed_without_whitelist_context() -> None:
+    # A 40164 with no whitelist wording, or an unrelated IP, must not be guessed.
+    assert wechat_draft_script.extract_wechat_ip_hint("WECHAT_CALL_FAILED: 40164") is None
+    assert wechat_draft_script.extract_wechat_ip_hint(
+        "40001 invalid ip 1.2.3.4") is None  # wrong error code
+    assert wechat_draft_script.extract_wechat_ip_hint(
+        "40164 invalid ip, not in whitelist: 999.999.999.999") is None
+
+
+def test_wechat_error_surfaces_the_hint_but_never_guesses() -> None:
+    err = RuntimeError("40164 invalid ip, not in whitelist: 38.107.237.82")
+    message = wechat_draft_script._wechat_error(err)
+    assert "38.107.237.82" in message
+    assert "本地 curl" in message
+    plain = wechat_draft_script._wechat_error(RuntimeError("40164 invalid ip"))
+    assert "38." not in plain and "微信看到的出口 IP" not in plain
 
 
 TESTS: List[Tuple[str, Callable[[], None]]] = [
