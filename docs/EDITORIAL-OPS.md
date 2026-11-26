@@ -170,3 +170,13 @@ After the usual signed research, copy review and explicit production intent, L1 
 ## Integrated daily workbench
 
 `python scripts/editorial_workspace.py --day 2026-11-26 --minutes 90` displays the existing daily capacity calculation, selected candidate anchors, demand URL counts and deferral reasons above the existing editable queue. Budget and day are explicit; refresh recomputes, no automatic routing. Existing loopback, Host/Origin, token and CSP protections remain. The panel is read-only and uses the existing editorial_daily implementation. Regression: test_editorial_workspace_series.py.
+
+## Series planning cadence (Refs #216)
+
+Research: [Content Workflow Toolkit](https://github.com/mickdarling/content-workflow-toolkit), [content-calendar](https://github.com/social-media-skills/skills/blob/main/skills/content-calendar/SKILL.md), [Edit Flow](https://github.com/Automattic/Edit-Flow). Reuse the existing editorial queue and series labels rather than a second CMS.
+
+```text
+python scripts/editorial_series.py schedule --series agent-series --account x-superplay-future-intelligence --platform bilibili --format video --start 2026-11-26 --end 2026-12-09 --weekly-target 2
+```
+
+Explicit account/platform/format, one to twelve seven-day windows, creator-defined cadence. Reports weekly planned counts, planning gaps, eligible unrouted items, route-receipt existence, current topic-source URL overlap and estimated minutes. Current topic URLs are not historical episode evidence, so repeated URLs are review prompts, not proof of duplicate content. Route receipt existence never means published. Does not create or schedule posts. Existing series review remains the separate outcome analysis. Synthetic regression in test_editorial_workspace_series.py.

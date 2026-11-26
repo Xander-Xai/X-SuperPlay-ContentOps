@@ -6,6 +6,7 @@ import hashlib
 import json
 import sys
 from pathlib import Path
+from datetime import date, timedelta
 
 import editorial_ops as ops
 import platform_learning_loop as learning
@@ -86,13 +87,82 @@ def review(directory, metrics, *, experiment, platform, account, content_format,
     return result
 
 
+def schedule(directory, *, series, account, platform, content_format, start, end, weekly_target):
+    """Series planning over the current queue; no publication or historical evidence claim."""
+    for value in (series, account, platform):
+        ops.slug(value)
+    ops.account_allows(account, platform)
+    if content_format not in ops.FORMATS:
+        raise ValueError("unsupported format")
+    if type(weekly_target) is not int or not 1 <= weekly_target <= 35:
+        raise ValueError("weekly target must be 1..35")
+    begin, finish = date.fromisoformat(start), date.fromisoformat(end)
+    days = (finish - begin).days + 1
+    if not 1 <= days <= 84 or days % 7:
+        raise ValueError("select 1..12 complete seven-day planning windows")
+    directory = ops.local_dir(directory)
+    plan = ops.plan(directory)
+    scoped = [q for q in plan["queue"] if
+              (q["series"], q["account"], q["platform"], q["format"]) ==
+              (series, account, platform, content_format)]
+    scoped.sort(key=lambda q: (q["planned_date"], q["id"]))
+    prior_urls, episodes = set(), []
+    weeks = [{"start": (begin+timedelta(days=i)).isoformat(),
+              "end": (begin+timedelta(days=i+6)).isoformat(),
+              "target": weekly_target, "planned": 0, "eligible_unrouted": 0,
+              "route_receipts": 0} for i in range(0, days, 7)]
+    for q in scoped:
+        day = date.fromisoformat(q["planned_date"])
+        if day > finish:
+            break
+        urls = set(q["source_urls"])
+        new_urls = urls - prior_urls
+        if day < begin:
+            prior_urls.update(urls)
+            continue
+        week = weeks[(day-begin).days//7]
+        week["planned"] += 1
+        routed = ops.safe_file(directory, "route-"+q["id"]+".json").exists()
+        eligible = q["decision"] in {"CANDIDATE", "LOW_COST_VALIDATION"}
+        if routed:
+            status = "ROUTE_RECEIPT_EXISTS"
+            week["route_receipts"] += 1
+        elif not eligible:
+            status = q["decision"]
+        else:
+            status = "NEW_SOURCE_REVIEW" if new_urls else "REUSED_SOURCE_REVIEW"
+            week["eligible_unrouted"] += 1
+        episodes.append({"candidate_id": q["id"], "topic": q["topic"],
+                         "angle": q["angle"], "date": q["planned_date"], "status": status,
+                         "cost_lane": q["cost_lane"], "estimated_minutes": int(q["minutes"]),
+                         "source_url_count": len(urls), "new_source_url_count": len(new_urls),
+                         "evidence_review": "NO_SOURCE" if not urls else
+                                            "NEW_URL_PRESENT" if new_urls else "REUSED_URLS_ONLY",
+                         "publish_authorized": False})
+        prior_urls.update(urls)
+    for week in weeks:
+        week["planning_gap"] = max(0, weekly_target-week["planned"])
+    return {"schema": "contentops.series-schedule/v1", "status": "ADVISORY_ONLY",
+            "series": series, "account": account, "platform": platform, "format": content_format,
+            "start": start, "end": end, "weeks": weeks, "episodes": episodes,
+            "plan_sha256": hashlib.sha256(json.dumps(plan, sort_keys=True, ensure_ascii=False).encode()).hexdigest(),
+            "limitations": "Current queue source URLs are topic-level, not historical episode evidence. "
+                           "A new URL is not a verified new fact; a route receipt is not publication. "
+                           "Same-day ordering is deterministic by candidate ID, not actual production order.",
+            "production_ready": False, "publish_authorized": False}
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("command", choices=("init", "review"))
+    p.add_argument("command", choices=("init", "review", "schedule"))
     p.add_argument("--data-dir", type=Path, default=ops.DEFAULT)
     p.add_argument("--metrics-dir", type=Path, default=learning.DEFAULT_DATA)
     for name in ("experiment", "platform", "account", "format", "topic"):
         p.add_argument("--" + name)
+    p.add_argument("--series")
+    p.add_argument("--start")
+    p.add_argument("--end")
+    p.add_argument("--weekly-target", type=int)
     p.add_argument("--window", default="T+24H", choices=learning.WINDOW_HOURS)
     p.add_argument("--definition", default="native_v1")
     p.add_argument("--primary", default="views_or_reads", choices=learning.METRICS)
@@ -102,6 +172,12 @@ def main(argv=None):
         if a.command == "init":
             init(a.data_dir)
             print("READY: series-links.csv")
+        elif a.command == "schedule":
+            if not all((a.series, a.account, a.platform, a.format, a.start, a.end)) or a.weekly_target is None:
+                raise ValueError("series, account, platform, format, start, end and weekly target required")
+            result = schedule(a.data_dir, series=a.series, account=a.account, platform=a.platform,
+                              content_format=a.format, start=a.start, end=a.end, weekly_target=a.weekly_target)
+            print(json.dumps(result, ensure_ascii=True, indent=2))
         else:
             if not all((a.experiment, a.platform, a.account, a.format, a.topic)):
                 raise ValueError("experiment, platform, account, format, topic required")

@@ -120,5 +120,33 @@ class SeriesTests(unittest.TestCase):
         self.assertIsNone(self.review()["research_priority"])
 
 
+
+    def test_series_schedule_reuses_plan_and_distinguishes_route(self):
+        for topic, url in (("agent", "https://example.org/issue/1"), ("other", "https://example.org/issue/2")):
+            add(self.d / "signals.csv", ops.FIELDS["signals.csv"],
+                dict(signal_id=topic, topic=topic, kind="issue", source_url=url,
+                     observed_at="2026-11-26T00:00:00+00:00", observation="Fixture"))
+        for topic, angle, day in (("agent", "first", "2026-11-26"),
+                                  ("agent", "second", "2026-11-27"),
+                                  ("other", "third", "2026-12-03")):
+            row = dict(zip(ops.FIELDS["topics.csv"], [
+                topic, "x-superplay-future-intelligence", "bilibili", "video", "devs", angle,
+                "agent-series", "Hook", "CTA", day, "20", "low", "Fixture",
+                "9", "9", "9", "9", "9", "9"]))
+            add(self.d / "topics.csv", ops.FIELDS["topics.csv"], row)
+        first = next(q for q in ops.plan(self.d)["queue"] if q["angle"] == "first")
+        (self.d / ("route-" + first["id"] + ".json")).write_text("{}", encoding="utf-8")
+        kw = dict(series="agent-series", account="x-superplay-future-intelligence",
+                  platform="bilibili", content_format="video", start="2026-11-26",
+                  end="2026-12-09", weekly_target=2)
+        result = series.schedule(self.d, **kw)
+        self.assertEqual([w["planning_gap"] for w in result["weeks"]], [0, 1])
+        self.assertEqual([e["status"] for e in result["episodes"]],
+                         ["ROUTE_RECEIPT_EXISTS", "REUSED_SOURCE_REVIEW", "NEW_SOURCE_REVIEW"])
+        self.assertFalse(result["publish_authorized"])
+        with self.assertRaises(ValueError):
+            series.schedule(self.d, **dict(kw, end="2026-12-08"))
+
+
 if __name__ == "__main__":
     unittest.main()
