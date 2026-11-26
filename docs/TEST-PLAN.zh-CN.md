@@ -178,3 +178,5 @@ Python CI 步骤；Easel 候选新增 3 个独立套件及其 CI 步骤，集成
 已有 `tests/test_shared_copy.py` 增加原生改写草稿、证据篡改/过期拒绝回归；仅合成测试，原生产逐字共享门禁不变。
 
 已有 `tests/test_editorial_peers.py` 增加同行表达手法同组对照、对照不足及未知案例拒绝测试；仅合成数据。
+
+已有 test_production_gates.py 增加成本范围阻断（在输入物化/生产之前）及 L2 dry-run；不真实渲染或消费额度。

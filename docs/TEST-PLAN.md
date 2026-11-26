@@ -174,3 +174,5 @@ Editorial planning V1 (#216): local evidence/peer ledgers, advisory topic scores
 Existing `tests/test_shared_copy.py` includes native draft review, canonical evidence tamper/staleness and refusal tests; synthetic only. Exact-copy production gate remains unchanged.
 
 Existing `tests/test_editorial_peers.py` now also covers comparable annotated patterns, insufficient alternatives and unknown case refusal. Synthetic only.
+
+Existing test_production_gates.py adds lane preflight refusal before materialization/producer and valid L2 dry-run; no real render or provider spend.

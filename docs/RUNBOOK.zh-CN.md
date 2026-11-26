@@ -496,3 +496,5 @@ media-use 演示通过另一套已验证的 Easel 运行时合成。演示成功
 原生文案改写试点：`python scripts/native_editorial_draft.py --help`；使用现有已核验的共享图文包，流程见 [EDITORIAL-OPS.md](EDITORIAL-OPS.md)。审核预览不是生产输入。
 
 同行表达手法研究：`python scripts/editorial_peer_patterns.py init`，人工标注后执行 `review`。见 [EDITORIAL-OPS.md](EDITORIAL-OPS.md)，不自动爬取。
+
+可选生产成本范围：`python scripts/make_content.py run --project projects/<project> --mode STRICT --lane L2 --dry-run`。见 [EDITORIAL-OPS.md](EDITORIAL-OPS.md)。L1 仅现有图文，L1/L2 禁止额外生成素材及 H3，L3 保留已有门禁。不保证工时或额度，不静默降级。

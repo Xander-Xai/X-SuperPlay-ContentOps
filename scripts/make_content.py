@@ -124,9 +124,42 @@ def cmd_answer(args) -> int:
     return 0
 
 
+def require_editorial_lane(project: Path, lane: str | None):
+    """Optional cost-scope guard; existing production/rights/billing gates still apply.
+
+    Lane is not a time guarantee or spend authorization. Never modify intent to
+    fit a lane, nor silently replace an avatar, a voice, or a missing asset.
+    """
+    if lane is None:
+        return None
+    if lane not in {"L1", "L2", "L3"}:
+        raise gates.GateError("EDITORIAL_LANE_INVALID", "select L1, L2 or L3")
+    intent = gates.load_intent(project)
+    if not isinstance(intent, dict):
+        raise gates.GateError("EDITORIAL_LANE_INTENT_REQUIRED", "record production intent first")
+    is_graphic = gates._is_graphic_line(project)
+    if lane == "L1" and not is_graphic:
+        raise gates.GateError("EDITORIAL_LANE_FORMAT", "L1 production is existing GRAPHIC_TEXT only; use L2/L3 for VIDEO")
+    if lane in {"L1", "L2"}:
+        if (intent.get("asset_policy") not in {"supplement", "local-free"}
+                or intent.get("minimax_extra_assets_authorized") is not False
+                or intent.get("avatar_intro") != "no" or intent.get("avatar_outro") != "no"
+                or intent.get("avatar_quota_budget")):
+            raise gates.GateError("EDITORIAL_LANE_MEDIA_SCOPE",
+                                  "L1/L2 forbid extra provider-generated assets and H3 bookends; "
+                                  "record a new explicit intent or select L3")
+    return {"lane": lane, "format": "GRAPHIC_TEXT" if is_graphic else "VIDEO",
+            "extra_media_policy": "existing_gates" if lane == "L3" else "no_extra_assets_or_h3",
+            "voice_policy": "existing_billing_and_DNA_gates",
+            "production_ready": False, "publish_authorized": False}
+
+
 def cmd_check(args) -> int:
     project = _project(args.project)
+    lane = require_editorial_lane(project, getattr(args, "lane", None))
     report = gates.check(project, root=ROOT)
+    if lane is not None:
+        report["editorial_lane"] = lane
     print(json.dumps(report, ensure_ascii=False, indent=2))
     return 0 if report["ok"] else BLOCKED_EXIT
 
@@ -196,9 +229,13 @@ def _produce_graphic(project: Path, intent: Dict[str, Any]) -> Dict[str, Any]:
 def cmd_run(args) -> int:
     project = _project(args.project)
     try:
+        lane = require_editorial_lane(project, getattr(args, "lane", None))
         gates.ensure_inputs(project, ROOT)
         report = gates.require(project, root=ROOT)
         intent = gates.load_intent(project)
+        if lane is not None:
+            # Recheck after input materialization; no lane-specific producer bypass.
+            report["editorial_lane"] = require_editorial_lane(project, lane["lane"])
         if args.dry_run:
             print(json.dumps({"state": "PREFLIGHT_PASS_DRY_RUN", "check": report},
                              ensure_ascii=False, indent=2))
@@ -243,6 +280,8 @@ def cmd_run(args) -> int:
         "publish_authorized": False,
         "note": "Producer completion is not publication or founder approval.",
     }
+    if lane is not None:
+        receipt["editorial_lane"] = report["editorial_lane"]
     gates._write_json(project / RUN_RECEIPT, receipt)
     print(json.dumps(receipt, ensure_ascii=False, indent=2))
     return 0 if result.get("state") == "QC_PASSED" else 1
@@ -273,6 +312,7 @@ def build_parser():
 
     check = sub.add_parser("check", help="verify all production gates")
     common(check)
+    check.add_argument("--lane", choices=("L1", "L2", "L3"), help="optional editorial cost scope")
     check.set_defaults(func=cmd_check)
 
     status = sub.add_parser("status", help="show intent and gate state")
@@ -283,6 +323,7 @@ def build_parser():
     common(run)
     run.add_argument("--mode", default="STRICT", choices=("AUTO", "REVIEW", "STRICT"))
     run.add_argument("--dry-run", action="store_true", help="check only, do not produce")
+    run.add_argument("--lane", choices=("L1", "L2", "L3"), help="enforce optional editorial cost scope before production")
     run.set_defaults(func=cmd_run)
     return parser
 

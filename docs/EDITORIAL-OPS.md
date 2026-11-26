@@ -155,3 +155,14 @@ Plan requires a current verified shared graphic package and source review; outpu
 Research: [youtube-data-skills](https://github.com/nikhilbhansali/youtube-data-skills), [youtube-research-skills](https://github.com/TubeLabHQ/youtube-research-skills), [outlier-lab](https://github.com/spiritpaper/outlier-lab). Borrow hook/title/cover/narrative analysis linked to measured peer results, not third-party content or scraper code.
 
 Run `python scripts/editorial_peer_patterns.py init`, fill peer-patterns.csv against existing peers.csv case IDs, then run `python scripts/editorial_peer_patterns.py review`. Use --data-dir consistently. Record categorical hook_type, title_promise, cover_type, narrative (see DIMENSIONS in script), observed evidence location (e.g. timestamp), original application and human reviewer. Unknown is explicitly supported; never invent unavailable observations. Reuses the existing same-peer, format, metric, age and organic baseline; adds topic separation, at least five annotated cases per pattern and five known alternatives before a descriptive median comparison. Missing or unknown stays excluded, not zero. Outputs local peer-pattern-review.json with case URLs and suggested original applications; no causality, automatic copying, publication or access to private analytics. Existing test_editorial_peers.py regression extended.
+
+## Opt-in production cost lanes (Refs #216)
+
+Research: [batch-content-plan](https://github.com/social-media-skills/skills/blob/main/skills/batch-content-plan/SKILL.md) and [content-calendar](https://github.com/social-media-skills/skills/blob/main/skills/content-calendar/SKILL.md) for time-bounded production planning. The existing planner estimates minutes; the stable producer now optionally checks scope before materializing inputs or running a producer.
+
+```text
+python scripts/make_content.py check --project projects/<project> --lane L2
+python scripts/make_content.py run --project projects/<project> --mode STRICT --lane L2 --dry-run
+```
+
+After the usual signed research, copy review and explicit production intent, L1 accepts the existing GRAPHIC_TEXT path only (X keeps its separate pipeline); L2 permits video/graphic but no extra provider-generated assets or H3 bookends; L3 retains the existing gates including separate provider/billing and quota authorization. L1/L2 do not automatically replace media or downgrade the voice. A configured subscription narration may still use quota under existing gates. Omitted --lane preserves existing behavior. No measured time cap, billing guarantee, automatic selection from the editorial queue or publication. All existing checks remain mandatory; optional lane is recorded in the run receipt. Regression: test_production_gates.py.
