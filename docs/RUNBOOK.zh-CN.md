@@ -495,6 +495,10 @@ media-use 演示通过另一套已验证的 Easel 运行时合成。演示成功
 
 使用 `python scripts/editorial_issue_signals.py search --help`，按 [EDITORIAL-OPS.md](EDITORIAL-OPS.md) 示例预览公开 Issue，再人工确认登记需求观察。不登录账号，不自动采集或发布。
 
+视频数据覆盖诊断：`python scripts/video_metric_coverage.py --help`，只读核对已有发布索引与指标，累计/未知流量不改标自然流量，见 EDITORIAL-OPS.md。
+
+创作实验可在 plan 时预注册 --min-primary-ratio 与 --min-quality-per-hour-ratio，复盘不得事后修改阈值；见 EDITORIAL-OPS.md。
+
 原生文案改写试点：`python scripts/native_editorial_draft.py --help`；使用现有已核验的共享图文包，流程见 [EDITORIAL-OPS.md](EDITORIAL-OPS.md)。审核预览不是生产输入。
 
 同行表达手法研究：`python scripts/editorial_peer_patterns.py init`，人工标注后执行 `review`。见 [EDITORIAL-OPS.md](EDITORIAL-OPS.md)，不自动爬取。

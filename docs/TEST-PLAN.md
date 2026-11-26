@@ -173,6 +173,10 @@ Editorial planning V1 (#216): local evidence/peer ledgers, advisory topic scores
 
 `python tests/test_editorial_issue_signals.py` covers synthetic public issue preview, wrong repository/PR/incomplete refusal, selection and deduplication. Live search is not tested by the offline suite.
 
+Existing test_video_metric_intake.py also tests coverage reporting, unknown vs organic, missing/zero and duplicate refusal. Synthetic only.
+
+Existing test_editorial_experiments.py covers preregistered primary/effort guardrail pass, regression and insufficient coverage. No randomized or real account outcome claim.
+
 Existing `tests/test_shared_copy.py` includes native draft review, canonical evidence tamper/staleness and refusal tests; synthetic only. Exact-copy production gate remains unchanged.
 
 Existing `tests/test_editorial_peers.py` now also covers comparable annotated patterns, insufficient alternatives and unknown case refusal. Synthetic only.

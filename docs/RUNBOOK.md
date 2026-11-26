@@ -729,6 +729,10 @@ Use `python scripts/editorial_daily.py plan --day YYYY-MM-DD --minutes 90` for a
 
 Use `python scripts/editorial_issue_signals.py search --help` and the example in [EDITORIAL-OPS.md](EDITORIAL-OPS.md) to preview public issue signals, then explicitly ingest selected observations. No account login, automatic collection or publishing.
 
+Video metric coverage: `python scripts/video_metric_coverage.py --help` audits existing local index/snapshot scope without relabeling cumulative/unknown traffic. See EDITORIAL-OPS.md.
+
+Preregister optional experiment guardrails via editorial_experiments.py plan --min-primary-ratio and --min-quality-per-hour-ratio; review cannot select them retrospectively. See EDITORIAL-OPS.md.
+
 Native editorial rewrite pilot: `python scripts/native_editorial_draft.py --help`; use a verified shared graphic package and the workflow in [EDITORIAL-OPS.md](EDITORIAL-OPS.md). Reviewed preview is not a production input.
 
 Peer creative pattern review: `python scripts/editorial_peer_patterns.py init` then `review` after human annotation. See [EDITORIAL-OPS.md](EDITORIAL-OPS.md); no automated scraping.
