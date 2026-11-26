@@ -114,3 +114,37 @@ The optional `.github/workflows/editorial-public-feed-smoke.yml` runs separate G
 ### Live integration observation (2026-11-26, China time)
 
 On head a5af1b3, [hosted public-feed smoke](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/actions/runs/45720227082) admitted 10 real GitHub release Atom observations (0 skipped), input SHA256 `948d5019ee74077d21665c97828d5b390a8ab29d110182d16dadbdcc384dabd7`. RSSHub shared instance refused the trending request (HTTP 403). This is an external-access blocker, not a parser pass. Use an authorized own instance with HTTPS or its local export; do not evade access controls. The adapter now explicitly reports authorization and rate-limit failures, with no automatic retry. No raw feed content was committed and no buyer evidence or publication was claimed.
+
+## Video performance diagnostics (Refs #216)
+
+Research: [YouTube API samples](https://github.com/youtube/api-samples) for native analytics fields, [Social Dash](https://github.com/cadenburleson/social-dash) for local performance views, and [social-media-skills analytics](https://github.com/social-media-skills/skills/blob/main/skills/analytics-and-reporting/SKILL.md) for connecting observations to the next editorial hypothesis. No upstream code, dependency or account integration added.
+
+Use the existing platform-learning CSVs (including authorized imports when available):
+```text
+python scripts/editorial_diagnostics.py --platform bilibili --account x-superplay-future-intelligence --format video --topic agent --experiment exp --definition native_v1 --window T+24H
+```
+Replace the scope with real identifiers. Reports go to stdout; redirect only to ignored local storage. Same platform/account/format/topic/experiment/metric definition/age window, organic native observations only. Duplicate identities or snapshots excluded; absent values stay null. Native CTR and retention units are not assumed or mixed. Report shows coverage, leave-one-out peer medians (at least five other valid observations per metric), saves per thousand views and qualified signals per measured Founder hour. The lowest comparable relative metric suggests one variable to inspect, not a causal finding or permission to modify DNA. Input digest covers both existing CSVs. This does not collect new data, approve, render, publish, or prove growth. Run `python tests/test_editorial_diagnostics.py` for synthetic contract tests.
+
+## Daily capacity and draft editorial review (Refs #216)
+
+Research: [Fider](https://github.com/getfider/fider) for separating feedback signals from product decisions, [social-media-skills](https://github.com/social-media-skills/skills/blob/main/skills/content-calendar/SKILL.md) for sustainable queues and [SOCIAL:OS](https://github.com/shyftai/SOCIALOS) for editorial workflow patterns. No external code or dependencies.
+
+```text
+python scripts/editorial_daily.py plan --day 2026-11-26 --minutes 90
+python scripts/editorial_daily.py rubric --candidate <actual-plan-id> --draft draft.md
+python scripts/editorial_daily.py review --candidate <actual-plan-id> --draft draft.md --record review.json --confirm
+```
+
+Use the same editorial data directory as editorial_ops (global --data-dir before subcommand). Plan preserves the existing advisory ranking, fits eligible due unrouted items into an explicit minutes budget, and reports reasons for every deferral. It distinguishes observed demand-type URLs and reported buyer-request URLs from hotlists; these are not verified customers or independent demand. It does not route automatically or promise actual hours. Actual effort is reviewed in editorial_diagnostics.
+
+Copy a UTF-8 draft.md into that local data directory, redirect rubric stdout to review.json there, and have the human fill reviewer and every check's result (SATISFIED/REVISE) and concrete note. Re-run review with explicit confirmation. The record binds draft bytes and the current candidate; changes make it stale. This is a draft editorial review, not a rendered-media inspection, copy approval, claim/evidence check, or publish gate. No auto-scoring. Test: python tests/test_editorial_daily.py.
+
+## Selected public issue demand observations (Refs #216)
+
+Research: [Octokit search endpoint](https://github.com/octokit/plugin-rest-endpoint-methods.js/blob/main/docs/search/issuesAndPullRequests.md), [GitHub search documentation](https://docs.github.com/en/rest/search/search), [pain-miner](https://github.com/Lan-Suny/pain-miner) and [Fider](https://github.com/getfider/fider). Borrow bounded search and explicit feedback selection, not scraping or source code.
+
+```text
+python scripts/editorial_issue_signals.py search --repo owner/repository --keyword recovery --confirm
+python scripts/editorial_issue_signals.py ingest --preview issues.json --issue 123 --topic agent --observation "Reported request for tool recovery" --confirm
+```
+Replace example scope and issue with real values. Run search only against an operator-selected public repository; one unauthenticated GitHub REST search with title phrase, public issue qualifier, max 20, no retries, no redirects. An optional --input accepts a local REST search JSON export (not independently verified). Search emits a local preview with issue numbers, links and titles, not bodies or identities; inspect before saving to ignored local issues.json. Ingest requires an explicit selected issue and a human-authored sanitized observation; it writes kind=issue into the existing signals.csv, deduplicates topic/URL and never promotes it to buyer evidence. The source digest is the preview's reported source hash, not proof of remote authenticity. No live API acceptance is claimed; synthetic test: python tests/test_editorial_issue_signals.py.
