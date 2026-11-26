@@ -114,3 +114,13 @@ The optional `.github/workflows/editorial-public-feed-smoke.yml` runs separate G
 ### Live integration observation (2026-11-26, China time)
 
 On head a5af1b3, [hosted public-feed smoke](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/actions/runs/45720227082) admitted 10 real GitHub release Atom observations (0 skipped), input SHA256 `948d5019ee74077d21665c97828d5b390a8ab29d110182d16dadbdcc384dabd7`. RSSHub shared instance refused the trending request (HTTP 403). This is an external-access blocker, not a parser pass. Use an authorized own instance with HTTPS or its local export; do not evade access controls. The adapter now explicitly reports authorization and rate-limit failures, with no automatic retry. No raw feed content was committed and no buyer evidence or publication was claimed.
+
+## Selected public issue demand observations (Refs #216)
+
+Research: [Octokit search endpoint](https://github.com/octokit/plugin-rest-endpoint-methods.js/blob/main/docs/search/issuesAndPullRequests.md), [GitHub search documentation](https://docs.github.com/en/rest/search/search), [pain-miner](https://github.com/Lan-Suny/pain-miner) and [Fider](https://github.com/getfider/fider). Borrow bounded search and explicit feedback selection, not scraping or source code.
+
+```text
+python scripts/editorial_issue_signals.py search --repo owner/repository --keyword recovery --confirm
+python scripts/editorial_issue_signals.py ingest --preview issues.json --issue 123 --topic agent --observation "Reported request for tool recovery" --confirm
+```
+Replace example scope and issue with real values. Run search only against an operator-selected public repository; one unauthenticated GitHub REST search with title phrase, public issue qualifier, max 20, no retries, no redirects. An optional --input accepts a local REST search JSON export (not independently verified). Search emits a local preview with issue numbers, links and titles, not bodies or identities; inspect before saving to ignored local issues.json. Ingest requires an explicit selected issue and a human-authored sanitized observation; it writes kind=issue into the existing signals.csv, deduplicates topic/URL and never promotes it to buyer evidence. The source digest is the preview's reported source hash, not proof of remote authenticity. No live API acceptance is claimed; synthetic test: python tests/test_editorial_issue_signals.py.

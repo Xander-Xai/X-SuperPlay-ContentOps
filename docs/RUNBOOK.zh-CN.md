@@ -486,3 +486,5 @@ media-use 演示通过另一套已验证的 Easel 运行时合成。演示成功
 运营策划 V1（#216）：本地需求与同行案例、建议选题评分、成本分级、原生变体、日历与系列规划；不改变研究、版权或发布门禁。详见 [EDITORIAL-OPS.md](EDITORIAL-OPS.md).
 
 #211/#208 候选分支：从现有已审核 VIDEO 文案逐字派生 GRAPHIC_TEXT，共享文案 ID、研究/文案摘要、Bundle、claim/evidence 绑定；独立素材与审核。新增六个非 X 平台离线打包入口，不创建平台草稿、升级状态或发布。X 与小红书图文排除；当前仅同仓 projects/、同 Bundle、同账号 treatment、同主题的逐字派生，尚待完整 CI。 命令：`python scripts/shared_copy.py --source projects/<video> --project projects/<graphic>`，图文输入使用 `shared-copy.md` 和相同审核标题，经原 graphic_package.py 打包；`python scripts/graphic_offline.py --project projects/<graphic> --platform wechat_article --platform zhihu`。
+
+使用 `python scripts/editorial_issue_signals.py search --help`，按 [EDITORIAL-OPS.md](EDITORIAL-OPS.md) 示例预览公开 Issue，再人工确认登记需求观察。不登录账号，不自动采集或发布。

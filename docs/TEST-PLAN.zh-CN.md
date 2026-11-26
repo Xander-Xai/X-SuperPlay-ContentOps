@@ -168,3 +168,5 @@ Python CI 步骤；Easel 候选新增 3 个独立套件及其 CI 步骤，集成
 运营策划 V1（#216）：本地需求与同行案例、建议选题评分、成本分级、原生变体、日历与系列规划；不改变研究、版权或发布门禁。详见 [EDITORIAL-OPS.md](EDITORIAL-OPS.md).
 
 #211/#208 候选分支：从现有已审核 VIDEO 文案逐字派生 GRAPHIC_TEXT，共享文案 ID、研究/文案摘要、Bundle、claim/evidence 绑定；独立素材与审核。新增六个非 X 平台离线打包入口，不创建平台草稿、升级状态或发布。X 与小红书图文排除；当前仅同仓 projects/、同 Bundle、同账号 treatment、同主题的逐字派生，尚待完整 CI。
+
+`python tests/test_editorial_issue_signals.py`：合成数据验证公开 Issue 预览、错误仓库/PR/不完整响应拒绝、选择与去重。离线测试不验证真实网络搜索。
