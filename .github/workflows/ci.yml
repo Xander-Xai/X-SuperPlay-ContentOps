@@ -677,6 +677,8 @@ jobs:
       # Cross-platform local-only Strategy snapshot alignment; synthetic CSV.
       - name: Run cross-platform local learning loop tests
         run: python tests/test_platform_learning_loop.py
+      - name: Authorized video metric intake tests
+        run: python tests/test_video_metric_intake.py
       - name: Editorial planning tests
         run: python tests/test_editorial_ops.py
       - name: Editorial feedback tests

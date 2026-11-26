@@ -3,6 +3,7 @@
 import argparse
 import hashlib
 import json
+import math
 import sys
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -37,9 +38,53 @@ def text(value, maximum):
     return isinstance(value, str) and bool(value.strip()) and len(value) <= maximum and not any(ord(c) < 32 for c in value)
 
 
+GUARDRAIL_FIELDS = {"min_primary_ratio", "min_quality_per_hour_ratio"}
+
+
+def guardrail_config(primary_ratio=None, quality_ratio=None):
+    config = {}
+    for key, value in (("min_primary_ratio", primary_ratio),
+                       ("min_quality_per_hour_ratio", quality_ratio)):
+        if value is None:
+            continue
+        if type(value) not in (int, float) or not math.isfinite(value) or not 0 < value <= 1:
+            raise ValueError("guardrail ratio must be finite and in (0, 1]")
+        config[key] = value
+    return config
+
+
+def evaluate_guardrails(config, groups):
+    if not isinstance(config, dict) or set(config) - GUARDRAIL_FIELDS:
+        raise ValueError("invalid preregistered guardrails")
+    if config != guardrail_config(config.get("min_primary_ratio"),
+                                  config.get("min_quality_per_hour_ratio")):
+        raise ValueError("invalid preregistered guardrails")
+    checks = {}
+    for key, minimum in config.items():
+        metric, count = (("median_primary", "sample_count") if key == "min_primary_ratio" else
+                         ("qualified_signals_per_hour", "effort_sample_count"))
+        a, b = groups.get("a", {}), groups.get("b", {})
+        av, bv = a.get(metric), b.get(metric)
+        enough = all(type(g.get(count)) is int and g[count] >= 5 for g in (a, b))
+        valid = enough and all(type(x) in (int, float) and math.isfinite(x) and x >= 0
+                               for x in (av, bv)) and av > 0
+        ratio = bv / av if valid else None
+        if ratio is not None and not math.isfinite(ratio):
+            ratio = None
+        checks[key] = {"baseline_a": av, "candidate_b": bv, "minimum_ratio": minimum,
+                       "observed_ratio": ratio, "status": (
+                           "INSUFFICIENT_DATA" if ratio is None else
+                           "PASS" if ratio >= minimum else "REGRESSION")}
+    status = ("NOT_CONFIGURED" if not checks else
+              "REGRESSION" if any(x["status"] == "REGRESSION" for x in checks.values()) else
+              "INSUFFICIENT_DATA" if any(x["status"] != "PASS" for x in checks.values()) else "PASS")
+    return {"status": status, "control_arm": "a", "candidate_arm": "b", "checks": checks}
+
+
 def create(directory, *, experiment, account, platform, topic, variable,
            a, b, hypothesis, start, end, reviewer, confirmed,
-           window="T+24H", definition="native_v1", primary="views_or_reads", interest="saves", today=None):
+           window="T+24H", definition="native_v1", primary="views_or_reads", interest="saves", today=None,
+           min_primary_ratio=None, min_quality_per_hour_ratio=None):
     if not confirmed or not feedback.named_reviewer(reviewer):
         raise ValueError("named planning reviewer and confirmation required")
     for v in (experiment, account, platform, topic, definition):
@@ -54,6 +99,7 @@ def create(directory, *, experiment, account, platform, topic, variable,
         raise ValueError("preregister before start; maximum 28 calendar days (UTC)")
     if window not in learning.WINDOW_HOURS or primary not in learning.METRICS or interest not in learning.RATE_METRICS or primary == interest:
         raise ValueError("invalid predeclared metric cohort")
+    guardrails = guardrail_config(min_primary_ratio, min_quality_per_hour_ratio)
     fingerprint = dna_hash(account, platform)
     directory = ops.init(directory)
     record = {"schema": SCHEMA, "status": "PLANNED_NOT_AUTHORIZED", "experiment_id": experiment,
@@ -61,6 +107,7 @@ def create(directory, *, experiment, account, platform, topic, variable,
               "arms": {"a": a, "b": b}, "hypothesis": hypothesis, "start_utc": start, "end_utc": end,
               "window": window, "definition": definition, "primary": primary, "interest": interest,
               "reviewer": reviewer, "dna_sha256": fingerprint, "minimum_valid_per_arm": 5,
+              "guardrails": guardrails,
               "publish_authorized": False, "dna_changed": False}
     path = ops.safe_file(directory, "experiment-" + experiment + ".json")
     with path.open("x", encoding="utf-8") as f:
@@ -115,11 +162,16 @@ def review(directory, metrics, *, experiment, reviewer, confirmed):
         av, bv = (groups[k]["median_interest_per_1000_post"] for k in ("a", "b"))
         if av != bv:
             priority = "a" if av > bv else "b"
+    guardrails = evaluate_guardrails(plan.get("guardrails", {}), groups)
+    # This is only a triage decision: no automatic winner or DNA change.
+    followup = ("FOUNDER_STRATEGY_REVIEW_REQUIRED" if priority == "a" or
+                (priority == "b" and guardrails["status"] == "PASS") else
+                "HOLD_FOR_GUARDRAIL_OR_MORE_DATA")
     report = {"schema": "contentops.bounded-experiment-review/v1", "experiment_id": experiment,
               "status": result["status"], "plan_sha256": digest(raw), "dna_sha256": plan["dna_sha256"],
               "input_sha256": before, "assignment_sha256": result["assignment_sha256"],
               "reviewer": reviewer, "observed_priority": priority, "groups": result["groups"],
-              "next_action": "FOUNDER_STRATEGY_REVIEW_REQUIRED", "dna_changed": False,
+              "guardrails": guardrails, "next_action": followup, "dna_changed": False,
               "publish_authorized": False, "finding": "Observational, not randomized or causal; no automatic policy update."}
     ops.write_atomic(directory, "experiment-" + experiment + "-review.json", json.dumps(report, ensure_ascii=False, indent=2) + "\n")
     return report
@@ -139,13 +191,18 @@ def main(argv=None):
     p.add_argument("--definition", default="native_v1")
     p.add_argument("--primary", default="views_or_reads")
     p.add_argument("--interest", default="saves")
+    p.add_argument("--min-primary-ratio", type=float)
+    p.add_argument("--min-quality-per-hour-ratio", type=float)
     args = p.parse_args(argv)
     try:
         if args.command == "plan":
             if not all(getattr(args, n) for n in ("account", "platform", "topic", "variable", "a", "b", "hypothesis", "start", "end")):
                 raise ValueError("plan requires scope, two arms, hypothesis and UTC period")
-            report = create(args.data_dir, **{n: getattr(args, n) for n in ("experiment", "account", "platform", "topic", "variable", "a", "b", "hypothesis", "start", "end", "reviewer", "window", "definition", "primary", "interest")}, confirmed=args.confirm)
+            report = create(args.data_dir, **{n: getattr(args, n) for n in ("experiment", "account", "platform", "topic", "variable", "a", "b", "hypothesis", "start", "end", "reviewer", "window", "definition", "primary", "interest")}, confirmed=args.confirm, min_primary_ratio=args.min_primary_ratio,
+                            min_quality_per_hour_ratio=args.min_quality_per_hour_ratio)
         else:
+            if args.min_primary_ratio is not None or args.min_quality_per_hour_ratio is not None:
+                raise ValueError("guardrails must be preregistered, not chosen during review")
             report = review(args.data_dir, args.metrics_dir, experiment=args.experiment, reviewer=args.reviewer, confirmed=args.confirm)
         print(report["status"])
         return 0

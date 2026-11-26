@@ -75,5 +75,38 @@ class ExperimentTests(unittest.TestCase):
             self.review()
 
 
+
+    def test_guardrail_regression_overrides_b_followup(self):
+        experiments.create(self.d, **self.kw, min_primary_ratio=0.8)
+        for n in range(10):
+            self.item(n, "a" if n < 5 else "b")
+        path = self.m / "metric-snapshots.csv"
+        rows = learning._load(path, learning.SNAPSHOT_COLUMNS)
+        for row in rows[5:]:
+            row["views_or_reads"] = "50"
+        with path.open("w", encoding="utf-8", newline="") as handle:
+            writer = csv.DictWriter(handle, fieldnames=learning.SNAPSHOT_COLUMNS)
+            writer.writeheader()
+            writer.writerows(rows)
+        result = self.review()
+        self.assertEqual(result["observed_priority"], "b")
+        self.assertEqual(result["guardrails"]["status"], "REGRESSION")
+        self.assertEqual(result["next_action"], "HOLD_FOR_GUARDRAIL_OR_MORE_DATA")
+
+    def test_guardrails_pass_or_fail_closed(self):
+        cfg = experiments.guardrail_config(0.8, 0.9)
+        groups = {"a": {"median_primary": 100, "sample_count": 5,
+                        "qualified_signals_per_hour": 2, "effort_sample_count": 5},
+                  "b": {"median_primary": 90, "sample_count": 5,
+                        "qualified_signals_per_hour": 2, "effort_sample_count": 5}}
+        self.assertEqual(experiments.evaluate_guardrails(cfg, groups)["status"], "PASS")
+        groups["b"]["effort_sample_count"] = 4
+        self.assertEqual(experiments.evaluate_guardrails(cfg, groups)["status"], "INSUFFICIENT_DATA")
+        with self.assertRaises(ValueError):
+            experiments.guardrail_config(float("nan"))
+        with self.assertRaises(ValueError):
+            experiments.guardrail_config(1.1)
+
+
 if __name__ == "__main__":
     unittest.main()
