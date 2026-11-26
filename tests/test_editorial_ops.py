@@ -65,6 +65,31 @@ class EditorialTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             ops.search(self.directory, "")
 
+    def test_quick_create_needs_human_scores_then_scores(self):
+        # 4 operator inputs replace 19 hand-typed fields; the six subjective
+        # scores are never invented -- they start as NEEDS_SCORING.
+        result = ops.quick_create(
+            self.directory, topic="Easel 冻结", account="x-superplay-english",
+            platform="x", format="text", source_url="https://example.org/a")
+        self.assertEqual(result["fields_total"], 19)
+        self.assertEqual(len(result["fields_from_operator"]), 4)
+        self.assertTrue(result["signal_added"])
+        item = ops.plan(self.directory)["queue"][0]
+        self.assertEqual(item["decision"], "NEEDS_SCORING")
+        self.assertIsNone(item["score"])
+        ops.score(self.directory, item["id"],
+                  {"demand": 9, "reach": 9, "fit": 9,
+                   "originality": 9, "evidence": 9, "commercial": 9})
+        self.assertEqual(ops.plan(self.directory)["queue"][0]["decision"], "CANDIDATE")
+
+    def test_quick_create_rejects_partial_scores(self):
+        ops.quick_create(self.directory, topic="x-partial", account="x-superplay-english",
+                         platform="x", format="text")
+        item = ops.plan(self.directory)["queue"][0]
+        ops.score(self.directory, item["id"], {"demand": 5})
+        with self.assertRaises(ValueError):
+            ops.plan(self.directory)  # a lone score is neither all-6 nor all -1
+
     def test_no_evidence(self):
         self.add("topics.csv", self.topic)
         self.assertEqual(ops.plan(self.directory)["queue"][0]["decision"], "NEEDS_EVIDENCE")

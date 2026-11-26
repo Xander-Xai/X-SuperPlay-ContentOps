@@ -3,6 +3,7 @@
 import argparse
 import csv
 import hashlib
+import io
 import json
 import math
 import re
@@ -78,6 +79,24 @@ def slug(s):
     return s
 
 
+def _slugify_topic(topic):
+    """An ascii identifier for a topic an operator typed in any script.
+
+    Operators write Chinese topics; the CSV needs an ascii slug. An ascii topic
+    is lowercased and dashed; a non-ascii topic gets a stable hashed slug so the
+    same topic always maps to the same id. The readable text is kept in the
+    angle/hook fields, never lost.
+    """
+    text = str(topic).strip()
+    if text.isascii():
+        raw = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")[:48]
+        if raw and re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,63}", raw):
+            return raw
+    # A non-ascii topic's ascii fragment ("Easel 冻结" and "Easel 升级" both
+    # reduce to "easel") is not unique, so hash the full text for a stable id.
+    return "topic-" + hashlib.sha256(text.encode("utf-8")).hexdigest()[:10]
+
+
 def required(row, fields):
     if any(not row[k].strip() for k in fields):
         raise ValueError("missing required field")
@@ -148,31 +167,46 @@ def plan(directory, check_account=account_allows):
         if key in seen:
             raise ValueError("duplicate editorial variant")
         seen.add(key)
-        scores = {k: int(row[k]) for k in WEIGHTS}
-        if any(not 0 <= v <= 10 for v in scores.values()):
+        raw_scores = {k: int(row[k]) for k in WEIGHTS}
+        # -1 is the explicit "not scored yet" sentinel. A quick-created topic
+        # carries it until a human fills the six judgements; the planner must
+        # never invent those scores.
+        unscored = any(v == -1 for v in raw_scores.values())
+        if any(v not in (-1,) and not 0 <= v <= 10 for v in raw_scores.values()):
             raise ValueError("score outside 0..10")
-        breakdown = {k: scores[k] * w for k, w in WEIGHTS.items()}
-        score = sum(breakdown.values()) / 10
+        if unscored and any(v != -1 for v in raw_scores.values()):
+            raise ValueError("score must be all six dimensions or all -1 (unscored)")
         cost = lane(int(row["minutes"]), row["risk"])
         refs = [v for (t, _), v in evidence.items() if t == topic]
-        decision = ("NEEDS_EVIDENCE" if not refs else "CANDIDATE" if score >= 80
-                    else "LOW_COST_VALIDATION" if score >= 65 else "DEFER")
-        if decision == "LOW_COST_VALIDATION" and cost == "L3":
-            decision = "REPLAN_COST"
-        # Explain the score instead of only stating it: which weighted dimension
-        # is weakest, and how far the item is from the next decision. This is
-        # advice for the human planner; it never changes the decision itself.
-        weakest = min(breakdown, key=lambda k: (breakdown[k], k))
-        if decision == "NEEDS_EVIDENCE":
-            next_gate = "还缺可核对来源：先补一条 source_url 再评分"
-        elif decision == "REPLAN_COST":
-            next_gate = f"分数够但成本高：降低 minutes/risk 或降低 {weakest} 的投入"
-        elif score < 65:
-            next_gate = f"再加 {65 - score:.0f} 分到 LOW_COST_VALIDATION；最弱维度 {weakest}"
-        elif score < 80:
-            next_gate = f"再加 {80 - score:.0f} 分到 CANDIDATE；最弱维度 {weakest}"
+        if unscored:
+            scores = {k: 0 for k in WEIGHTS}
+            breakdown = {k: 0 for k in WEIGHTS}
+            score = None
+            weakest = ""
+            decision = "NEEDS_SCORING"
+            next_gate = "待人工给六维评分：python scripts/editorial_ops.py score --candidate <id> ..."
         else:
-            next_gate = "已达 CANDIDATE"
+            scores = raw_scores
+            breakdown = {k: scores[k] * w for k, w in WEIGHTS.items()}
+            score = sum(breakdown.values()) / 10
+            decision = ("NEEDS_EVIDENCE" if not refs else "CANDIDATE" if score >= 80
+                        else "LOW_COST_VALIDATION" if score >= 65 else "DEFER")
+            if decision == "LOW_COST_VALIDATION" and cost == "L3":
+                decision = "REPLAN_COST"
+            # Explain the score instead of only stating it: which weighted
+            # dimension is weakest and how far the next decision is. Advice for
+            # the human planner; it never changes the decision itself.
+            weakest = min(breakdown, key=lambda k: (breakdown[k], k))
+            if decision == "NEEDS_EVIDENCE":
+                next_gate = "还缺可核对来源：先补一条 source_url 再评分"
+            elif decision == "REPLAN_COST":
+                next_gate = f"分数够但成本高：降低 minutes/risk 或降低 {weakest} 的投入"
+            elif score < 65:
+                next_gate = f"再加 {65 - score:.0f} 分到 LOW_COST_VALIDATION；最弱维度 {weakest}"
+            elif score < 80:
+                next_gate = f"再加 {80 - score:.0f} 分到 CANDIDATE；最弱维度 {weakest}"
+            else:
+                next_gate = "已达 CANDIDATE"
         ident = hashlib.sha256(json.dumps(key, ensure_ascii=False).encode()).hexdigest()[:16]
         queue.append({"id": ident, **row, "score": score, "cost_lane": cost,
                       "decision": decision, "evidence_ids": [v["signal_id"] for v in refs],
@@ -181,7 +215,11 @@ def plan(directory, check_account=account_allows):
                       "score_breakdown": breakdown, "weakest_dimension": weakest,
                       "next_gate": next_gate,
                       "status": "PLANNED", "production_ready": False, "publish_authorized": False})
-    queue.sort(key=lambda q: (q["decision"] == "NEEDS_EVIDENCE", -q["score"], q["planned_date"], q["id"]))
+    def _rank(q):
+        needs_human = q["decision"] in ("NEEDS_EVIDENCE", "NEEDS_SCORING")
+        return (needs_human, -(q["score"] if q["score"] is not None else 0),
+                q["planned_date"], q["id"])
+    queue.sort(key=_rank)
     return {"schema": "contentops.editorial-plan/v1", "status": "ADVISORY_ONLY",
             "weights": WEIGHTS, "unique_signals": len(evidence), "peer_cases": len(peers),
             "queue": queue, "calendar": dict(sorted(Counter(q["planned_date"] for q in queue).items())),
@@ -329,6 +367,128 @@ def search(directory, query):
     return hits
 
 
+def _write_rows(directory, name, rows):
+    stream = io.StringIO(newline="")
+    writer = csv.DictWriter(stream, fieldnames=FIELDS[name])
+    writer.writeheader()
+    writer.writerows(rows)
+    write_atomic(directory, name, stream.getvalue())
+
+
+def quick_create(directory, *, topic, account, platform, format, source_url="",
+                 angle="", hook="", reviewer="operator"):
+    """Create an editable topic row from the minimum an operator knows.
+
+    Required from the operator: the topic, the account, the platform and the
+    format. Everything the system can derive is derived (audience from DNA,
+    series from the topic, schedule and cost from defaults); the two prose
+    fields get a clearly *suggested* value the operator can overwrite. The six
+    subjective scores are written as -1 so ``plan`` reports NEEDS_SCORING —
+    the tool never invents a demand, reach or commercial judgement.
+    """
+    directory = local_dir(directory)
+    display_topic = str(topic).strip()
+    topic_slug = _slugify_topic(display_topic)
+    account_slug, platform_slug = slug(account), slug(platform)
+    reviewer = str(reviewer or "operator").strip() or "operator"
+    if format not in FORMATS:
+        raise ValueError("invalid format")
+    account_allows(account_slug, platform_slug)
+    dna = json.loads((ROOT / "config" / "accounts" / (account_slug + ".json"))
+                     .read_text(encoding="utf-8"))
+    audience = str((dna.get("core_audience") or dna.get("audience") or ["general"])[0])
+    derived = [
+        "audience <- account DNA core_audience",
+        "series <- topic slug",
+        "planned_date <- today",
+        "minutes/risk <- 30/low default",
+        "six scores <- -1 (NEEDS_SCORING, human must fill)",
+    ]
+    row = {
+        "topic": topic_slug, "account": account_slug, "platform": platform_slug,
+        "format": format, "audience": audience[:80], "series": topic_slug,
+        "planned_date": date.today().isoformat(), "minutes": "30", "risk": "low",
+        "reviewer": reviewer,
+        "demand": "-1", "reach": "-1", "fit": "-1",
+        "originality": "-1", "evidence": "-1", "commercial": "-1",
+    }
+    if angle:
+        row["angle"] = angle
+    else:
+        row["angle"] = f"从真实使用出发讲清「{display_topic}」"
+        derived.append("angle <- SUGGESTED, overwrite it")
+    if hook:
+        row["hook"] = hook
+    else:
+        row["hook"] = f"先说清「{display_topic}」最容易踩的坑"
+        derived.append("hook <- SUGGESTED, overwrite it")
+    row["cta"] = "完整步骤和来源在文末"
+    derived.append("cta <- SUGGESTED, overwrite it")
+    required(row, FIELDS["topics.csv"])
+    rows = load(directory, "topics.csv")
+    key = (row["topic"], row["account"], row["platform"], row["format"], row["angle"])
+    if any((r["topic"], r["account"], r["platform"], r["format"], r["angle"]) == key
+           for r in rows):
+        raise ValueError("duplicate editorial variant")
+    rows.append(row)
+    _write_rows(directory, "topics.csv", rows)
+
+    signal_added = False
+    if source_url:
+        signal = {
+            "signal_id": "sig-" + hashlib.sha256(
+                json.dumps([topic_slug, source_url], ensure_ascii=False).encode()).hexdigest()[:12],
+            "topic": topic_slug, "kind": "search", "source_url": source_url,
+            "observed_at": datetime.now().astimezone().isoformat(timespec="seconds"),
+            "observation": f"operator-supplied source for {topic_slug}",
+        }
+        required(signal, FIELDS["signals.csv"])
+        validate_source(signal)
+        signals = load(directory, "signals.csv")
+        if not any(r["signal_id"] == signal["signal_id"] for r in signals):
+            signals.append(signal)
+            _write_rows(directory, "signals.csv", signals)
+            signal_added = True
+
+    return {"schema": "contentops.editorial-quick-create/v1", "created": row,
+            "derived": derived, "signal_added": signal_added,
+            "fields_from_operator": ["topic", "account", "platform", "format"],
+            "fields_total": len(FIELDS["topics.csv"]),
+            "needs": ["six human scores", "copy review later"],
+            "next": ("python scripts/editorial_ops.py score --candidate <id> "
+                     "--demand N --reach N --fit N --originality N --evidence N --commercial N"),
+            "external_action": "none", "publish_authorized": False}
+
+
+def score(directory, candidate, votes):
+    """Fill the six human scores for a quick-created candidate, by plan id."""
+    directory = local_dir(directory)
+    report = plan(directory)
+    target = next((q for q in report["queue"] if q["id"] == candidate), None)
+    if not target:
+        raise ValueError("unknown candidate id")
+    for key, value in votes.items():
+        if key not in WEIGHTS:
+            raise ValueError(f"unknown score dimension {key}")
+        if not 0 <= value <= 10:
+            raise ValueError("score outside 0..10")
+    rows = load(directory, "topics.csv")
+    match = (target["topic"], target["account"], target["platform"],
+             target["format"], target["angle"])
+    for row in rows:
+        if (row["topic"], row["account"], row["platform"],
+                row["format"], row["angle"]) == match:
+            for key, value in votes.items():
+                row[key] = str(value)
+            break
+    else:
+        raise ValueError("candidate row not found")
+    required(rows[0], FIELDS["topics.csv"])
+    _write_rows(directory, "topics.csv", rows)
+    return {"schema": "contentops.editorial-score/v1", "candidate": candidate,
+            "scored": votes, "external_action": "none", "publish_authorized": False}
+
+
 def prepare_handoff(directory, report, ident, reviewer, confirmed):
     """Create an explicit router command; never execute it or approve research."""
     directory = local_dir(directory)
@@ -396,15 +556,23 @@ def route(directory, report, ident, reviewer, confirmed, runner=None):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("init", "plan", "import-hotspots", "dashboard", "handoff", "route", "search"))
+    parser.add_argument("command", choices=("init", "plan", "import-hotspots", "dashboard",
+                                            "handoff", "route", "search", "quick-create", "score"))
     parser.add_argument("--data-dir", type=Path, default=DEFAULT)
     parser.add_argument("--input", type=Path)
     parser.add_argument("--topic")
     parser.add_argument("--query", default="")
     parser.add_argument("--account")
+    parser.add_argument("--platform")
+    parser.add_argument("--format")
+    parser.add_argument("--source-url", default="")
+    parser.add_argument("--angle", default="")
+    parser.add_argument("--hook", default="")
     parser.add_argument("--candidate")
     parser.add_argument("--reviewer", default="")
     parser.add_argument("--confirm", action="store_true")
+    for dim in ("demand", "reach", "fit", "originality", "evidence", "commercial"):
+        parser.add_argument("--" + dim, type=int, default=None)
     args = parser.parse_args(argv)
     try:
         if args.command == "init":
@@ -418,6 +586,21 @@ def main(argv=None):
             hits = search(args.data_dir, args.query)
             print(json.dumps(hits, ensure_ascii=False, indent=2))
             print("SEARCH: %d match(es)" % len(hits), file=sys.stderr)
+        elif args.command == "quick-create":
+            if not (args.topic and args.account and args.platform and args.format):
+                raise ValueError("--topic --account --platform --format required")
+            result = quick_create(args.data_dir, topic=args.topic, account=args.account,
+                                  platform=args.platform, format=args.format,
+                                  source_url=args.source_url, angle=args.angle,
+                                  hook=args.hook, reviewer=args.reviewer)
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+        elif args.command == "score":
+            votes = {dim: getattr(args, dim) for dim in WEIGHTS
+                     if getattr(args, dim) is not None}
+            if not args.candidate or not votes:
+                raise ValueError("--candidate and at least one score required")
+            print(json.dumps(score(args.data_dir, args.candidate, votes),
+                             ensure_ascii=False))
         else:
             report = plan(args.data_dir)
             if args.command == "dashboard":
