@@ -361,6 +361,45 @@ def _bind_documents(project: Path, pack: EvidencePack) -> None:
         item.sha256 = digest
 
 
+def _narrative_template(profile: AccountProfile) -> list:
+    """The account's declared narrative template, upper-cased, or []."""
+    narrative = profile.dna.get("narrative") or {}
+    return [str(beat).upper() for beat in (narrative.get("template") or [])]
+
+
+def _opening_line(profile: AccountProfile, topic: str, provenance: str) -> str:
+    """Open with the hook shape the account DNA actually declares.
+
+    FI declares ``opening=EVIDENCE`` / ``HOOK_3S_PAIN``; 1024 declares
+    ``opening=CONFLICT`` / ``HOOK_3S_CONFLICT``. The old code ignored both and
+    opened every account with the same programme intro, which is why two very
+    different accounts sounded identical. The wording stays factual: it names
+    the topic and the source, and never asserts a claim the evidence has not
+    made.
+    """
+    template = _narrative_template(profile)
+    opening = str((profile.dna.get("narrative") or {}).get("opening") or "").upper()
+    style = template[0] if template else opening
+    if "PAIN" in style or opening == "PAIN":
+        return f"如果你也在处理「{topic}」，先别急着动手——最容易踩坑的地方往往就在开头。"
+    if "CONFLICT" in style or opening == "CONFLICT":
+        return f"「{topic}」看着简单，真正的分歧其实在后面。"
+    if provenance == "user_supplied_topic":
+        return f"你提的「{topic}」，我们直接看来源里怎么写的。"
+    return f"先看「{topic}」这份来源里的实际写法。"
+
+
+def _closing_line(profile: AccountProfile) -> str:
+    """Close on the last beat the template declares, not a fixed sentence."""
+    template = _narrative_template(profile)
+    closing = template[-1] if template else ""
+    if "NEXT_VALIDATION" in closing:
+        return "这是一次验证，不是结论；想看下一组实测，关注我，下一条继续。"
+    if "REPRO" in closing:
+        return "这条链路可以照着复现，完整步骤和来源都在文末。"
+    return "以上内容都能在文末的来源里逐条核对。"
+
+
 def _claims_and_beats(profile: AccountProfile, topic: str, provenance: str,
                       pack: EvidencePack, *, target_seconds: float = 0.0,
                       opening_override: Optional[str] = None,
@@ -398,17 +437,14 @@ def _claims_and_beats(profile: AccountProfile, topic: str, provenance: str,
             "views": [],
         })
 
-    # The opening names the subject and says where it came from. A topic the
-    # user supplied is stated as theirs; only a title that came from a source
-    # is called a source's title.
+    # The opening follows the account's own narrative template (pain / conflict /
+    # evidence), not one hard-coded programme intro shared by every account.
     if opening_override:
         opening = opening_override
-    elif provenance == "user_supplied_topic":
-        opening = f"这一期讲你提的问题：{topic}。"
     else:
-        opening = f"这一期讲这条来源标题里的问题：{topic}。"
+        opening = _opening_line(profile, topic, provenance)
     add("C-01", opening, "editorial_transition", provenance,
-        progress="the episode names its subject and who chose it")
+        progress="the opening uses the account's declared hook shape")
 
     # Quote material until the account's window is plausibly filled, and stop
     # when the pack runs out. Nothing is stretched: if the material ends before
@@ -440,8 +476,8 @@ def _claims_and_beats(profile: AccountProfile, topic: str, provenance: str,
             index += 1
 
     cta_index = len(claims) + 1
-    add(f"C-{cta_index:02d}", "以上内容都能在文末的来源里逐条核对。",
-        "cta", "editorial_statement", progress="the episode points back at its sources")
+    add(f"C-{cta_index:02d}", _closing_line(profile),
+        "cta", "editorial_statement", progress="the episode closes on its declared final beat")
     return claims, beats
 
 
