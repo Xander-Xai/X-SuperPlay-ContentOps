@@ -346,10 +346,18 @@
       "expires": "2026-12-26"
     },
     {
+      "name": "feat/216-public-issue-signals",
+      "pr": 222,
+      "created": "2026-11-26",
+      "purpose": "Issue #216 bounded public GitHub issue research and human-selected demand observation; no buyer claims",
+      "status": "merged",
+      "expires": "2026-12-26"
+    },
+    {
       "name": "feat/authorized-video-metric-intake",
       "pr": 220,
       "created": "2026-11-26",
-      "purpose": "Issue #216 authorized local Douyin response and Bilibili receipt intake; no organic or publication claims",
+      "purpose": "Issue #216 authorized local video metrics, data coverage and creator experiment guardrails; no organic or publication claims",
       "status": "active",
       "expires": "2026-12-26"
     }

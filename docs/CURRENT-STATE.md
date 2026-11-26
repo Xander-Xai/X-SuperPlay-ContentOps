@@ -5,7 +5,7 @@
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
 
-> Last verified: 2026-11-26, GitHub main @ `d0cc70c7b4a0980b369f1922090346eff005a712`; #221 merged, #220/#222/#223 candidates pending acceptance.
+> Last verified: 2026-11-26, GitHub main @ `3e25d0346061bd4d5fde720bda7e8dc86d641a4e`; #221/#222 merged, #220/#223 candidates pending acceptance.
 > Last verified: 2026-11-21 against `ffb87ad96eab6283c773bfd150c81497979b536a` (protected `main` after #213 squash). M5's remaining thin-runner refactor and #199 authentic-media acceptance are still OPEN; no publishing or human approval was granted.
 > The dated Git-state tables below are historical snapshots, not current remote branch counts.
 > Last verified: 2026-11-14, read-only GitHub main @ `515c605` (protected). The proposed X text/image and per-mode reviews are branch changes, not yet on main; real platform outcomes unverified.
@@ -46,6 +46,14 @@
 > **Git state is re-verified below at 2026-11-12 (read-only documentation
 > sync).** Every other section below it is a historical snapshot kept for
 > traceability; none of them is the current state.
+
+### Git — verified 2026-11-26 after #222 merge
+
+| Property | Verified value |
+|---|---|
+| Default branch | `3e25d0346061bd4d5fde720bda7e8dc86d641a4e` |
+| PRs | #221/#222 merged; #220/#223 candidates |
+| Boundary | Public issue observation intake on main; no actual account acceptance or publish authorization |
 
 ### Git — verified 2026-11-26 after #221 merge
 

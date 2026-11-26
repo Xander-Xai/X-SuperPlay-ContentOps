@@ -175,6 +175,8 @@ Python CI 步骤；Easel 候选新增 3 个独立套件及其 CI 步骤，集成
 
 `python tests/test_editorial_daily.py`：合成数据覆盖预算、需求链接分类、已路由排除、草稿审核建议、过期和路径拒绝；接入 CI，不代表实际内容验收。
 
+`python tests/test_editorial_issue_signals.py`：合成数据验证公开 Issue 预览、错误仓库/PR/不完整响应拒绝、选择与去重。离线测试不验证真实网络搜索。
+
 已有 test_video_metric_intake.py 增加数据覆盖、未知/自然流量、缺失/零值、重复拒绝测试；仅合成数据。
 
 已有 test_editorial_experiments.py 增加预注册主指标/工时护栏通过、回退、数据不足回归；不声称随机实验或真实运营成果。
