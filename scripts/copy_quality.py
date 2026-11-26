@@ -56,12 +56,14 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Read-only script structure diagnosis")
     parser.add_argument("--project", default="", help="project directory containing script/script.json")
     parser.add_argument("--script", default="", help="direct path to a script.json")
+    parser.add_argument("--format", default="video", choices=copy_quality.FORMATS,
+                        help="video needs an explicit ask; article may close on an action")
     parser.add_argument("--json", action="store_true", help="machine-readable output")
     args = parser.parse_args(argv)
 
     script = _resolve_script(args)
     lines = _load_lines(script)
-    report = copy_quality.diagnose(lines)
+    report = copy_quality.diagnose(lines, format=args.format)
     report["source"] = str(script)
 
     if args.json:

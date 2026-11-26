@@ -118,6 +118,27 @@ def test_single_line_is_tolerated() -> None:
     assert r["opening"]["status"] == "HOOKED"
 
 
+def test_article_accepts_action_ending_but_video_does_not() -> None:
+    lines = [
+        "学 Agent 最容易制造进步感，是把课一节节看完。",
+        "真正要交付时，问题会变得具体。",
+        "每一阶段留下一件能检查的东西。",
+    ]
+    article = copy_quality.diagnose(lines, format="article")
+    video = copy_quality.diagnose(lines, format="video")
+    assert article["ending"]["status"] == "CTA", article["ending"]
+    assert video["ending"]["status"] == "NO_CTA", video["ending"]
+    assert article["format"] == "article"
+
+
+def test_unknown_format_fails_closed() -> None:
+    try:
+        copy_quality.diagnose(["一。", "二。"], format="podcast")
+    except ValueError:
+        return
+    raise AssertionError("unknown format must raise")
+
+
 def test_report_states_it_is_not_a_verdict() -> None:
     r = copy_quality.diagnose(["别急着改片。", "先看结构。", "关注我。"])
     assert "不是" in r["disclaimer"] and "播放量" in r["disclaimer"]

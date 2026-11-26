@@ -63,6 +63,13 @@ CTA_MARKERS = (
 #: A closing that only points at sources is compliance, not a call to action.
 COMPLIANCE_MARKERS = ("来源", "核对", "版权", "文末", "参考文献", "出处")
 
+#: An article *can* end on a concrete action ("留下一件能检查的东西") rather than
+#: "关注/下一条". A video cannot: without an explicit ask it produces no follow.
+ARTICLE_CTA_MARKERS = (
+    "留下", "试试", "去做", "行动", "第一步", "不妨", "可以试", "建议你",
+    "检查", "动手", "打开", "跑一遍",
+)
+
 #: Filler that adds words but no information.
 FILLER_PHRASES = (
     "众所周知", "需要注意的是", "总的来说", "综上所述", "不得不说的是",
@@ -126,13 +133,22 @@ def _norm_lines(lines: Iterable[Any]) -> List[str]:
     return [t for t in out if _norm(t)]
 
 
-def diagnose(lines: Sequence[Any]) -> Dict[str, Any]:
+FORMATS = ("video", "article", "text")
+
+
+def diagnose(lines: Sequence[Any], format: str = "video") -> Dict[str, Any]:
     """Measure a narration script and return structure signals plus advice.
 
     ``lines`` is the spoken lines in playback order. The first non-empty line is
     the opening and the last is the ending; the body is everything between (or
     everything, for very short scripts).
+
+    ``format`` tunes the ending check: a video needs an explicit ask
+    ("关注/下一条"), while a long article may close on a concrete action
+    ("留下一件能检查的东西") and still count as a call to action.
     """
+    if format not in FORMATS:
+        raise ValueError(f"unknown format {format!r}")
     texts = _norm_lines(lines)
     if not texts:
         raise ValueError("no narration lines to diagnose")
@@ -155,7 +171,10 @@ def diagnose(lines: Sequence[Any]) -> Dict[str, Any]:
         opening_note += " 开头没有出现“你”。"
 
     # --- ending ------------------------------------------------------------
-    if _has_cta(ending):
+    has_cta = _has_cta(ending)
+    if format == "article":
+        has_cta = has_cta or any(marker in ending for marker in ARTICLE_CTA_MARKERS)
+    if has_cta:
         ending_status, ending_note = "CTA", "结尾有明确的行动号召。"
     elif _is_compliance_only(ending):
         ending_status, ending_note = "WEAK_CTA", "结尾只是合规说明（来源/核对），没有引导关注或系列。"
@@ -209,9 +228,10 @@ def diagnose(lines: Sequence[Any]) -> Dict[str, Any]:
             "filler_lines": filler_lines,
         },
         "suggestions": suggestions,
+        "format": format,
         "disclaimer": (
-            "结构完整性信号，不是内容价值或播放量预测；不自动改写文案，不阻塞生产，"
-            "人工编辑拥有最终判断。"
+            f"结构完整性信号（{format} 口径），不是内容价值或播放量预测；不自动改写文案，"
+            "不阻塞生产，人工编辑拥有最终判断。"
         ),
     }
 
