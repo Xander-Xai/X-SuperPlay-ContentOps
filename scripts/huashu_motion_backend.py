@@ -416,7 +416,11 @@ def author_auto_film(project: Path, shot: Dict[str, Any], line: Dict[str, Any],
             )
         else:
             image_markup = '<img class="source" src="assets/source.png" alt="pinned source screenshot">'
-            image_animation = "tl.fromTo('.source',{scale:1.08,opacity:.45},{scale:1,opacity:1,duration:.52});"
+            # contain keeps the whole screenshot readable; a slow vertical drift
+            # with a mild push then reveals the lower lines instead of cropping
+            # them away (the cover crop cut ~438px and clipped the title).
+            image_animation = ("tl.fromTo('.source',{scale:1.0,y:'2%',opacity:.45},"
+                               "{scale:1.08,y:'-6%',opacity:1,duration:.68});")
         material_lines.append(f"- `assets/source.png`: registered source image; SHA-256 `{_sha(source_path)}`.")
         if source_type == "USER_PROVIDED_IMAGE":
             material_lines.append("- Screenshot remains fully visible; the cyan focus box comes from this placement's OCR target.")
@@ -522,7 +526,7 @@ h1{{position:absolute;left:68px;right:68px;top:230px;margin:0;font-size:{title_p
 .hybrid-routes{{position:absolute;inset:0;width:1080px;height:1920px;pointer-events:none}}.hybrid-route{{fill:none;stroke:{colors['accent']};stroke-width:8;stroke-dasharray:700;stroke-dashoffset:0}}.route-dense{{stroke:{colors['accent2']}}}
 .hybrid-merge{{position:absolute;left:195px;right:195px;top:1090px;padding:24px;text-align:center;background:{colors['surface']};border:2px solid {colors['accent']};font:800 32px/1.35 ui-monospace,monospace;box-shadow:0 24px 70px #0008}}
 .kind-hybrid .source-code{{top:1420px;min-height:280px}}
-.source{{position:absolute;left:0;top:410px;width:100%;height:1250px;object-fit:cover;object-position:center;transform-origin:center}}
+.source{{position:absolute;left:0;top:410px;width:100%;height:1250px;object-fit:contain;object-position:center;transform-origin:center;background:{colors['bg']}}}
 .source-stage{{position:absolute;left:40px;top:410px;width:1000px;height:1250px;overflow:hidden;background:{colors['surface']};border:2px solid {colors['surface']};display:flex;align-items:center;justify-content:center}}
 .source-stage img{{width:100%;height:100%;object-fit:contain;transform-origin:center}}
 .ocr-focus{{position:absolute;border:6px solid {colors['accent']};box-shadow:0 0 0 9999px #0F111766,0 0 26px {colors['accent']};border-radius:8px;pointer-events:none;transform-origin:center}}

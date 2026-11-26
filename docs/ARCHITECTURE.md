@@ -3,6 +3,7 @@
 [English](ARCHITECTURE.md) | [简体中文](ARCHITECTURE.zh-CN.md)
 
 
+> Last verified: 2026-11-27. Added ops_brief (one-screen operations briefing), editorial quick-create (4 inputs) + score, copy_quality, DNA-driven opening/closing in draft.py, and a contain fix for pinned source screenshots.
 > Last verified: 2026-11-26. #219 candidate shared copy and offline graphic paths reviewed; CI pending.
 > Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > Last verified: 2026-11-21. The M5 orchestrator retains public facades for ASR and subtitles; the implementations are now isolated in `workflow/m5_asr_stage.py` and `workflow/m5_subtitles_stage.py` (#204/#205). All human/production gates remain closed until independently proven.

@@ -35,8 +35,8 @@ from contentops.routing.account_profile import load_profile  # noqa: E402
 from contentops.script import ScriptBlocked, build, check, write  # noqa: E402
 from contentops.script.evidence import EvidenceItem, EvidencePack, _clean, quotes  # noqa: E402
 from contentops.script.draft import (
-    _master, _role_for, _split_quote_for_motion, _storyboard, line_seconds,
-    topic_provenance,
+    _closing_line, _master, _opening_line, _role_for, _split_quote_for_motion,
+    _storyboard, line_seconds, topic_provenance,
 )  # noqa: E402
 from contentops.script.evidence import PACK_SCHEMA  # noqa: E402
 
@@ -143,8 +143,10 @@ def test_a_user_topic_is_never_a_sources_title():
         provenances = {claim["provenance"] for claim in draft.report["claims"]}
         assert "source_original_title" not in provenances
         opening = draft.master.split("## P-01")[1].split("## P-02")[0]
-        assert "你提的问题" in opening
+        # Still the user's own topic, never a source's title; only the hook
+        # wording now follows the account's DNA template.
         assert "原标题" not in opening
+        assert "状态管理" in opening
 
 
 def test_a_link_without_material_does_not_become_a_script():
@@ -464,6 +466,29 @@ def test_the_pack_fetcher_reads_prose_and_skips_scripts():
     assert "var leak" not in text
     assert "color:red" not in text
     assert module._title_of(markup) == "Persistence"
+
+
+def test_accounts_open_with_their_own_declared_hook_shape():
+    fi = load_profile(ROOT, "x-superplay-future-intelligence")   # HOOK_3S_PAIN
+    x1024 = load_profile(ROOT, "x-superplay-1024")               # HOOK_3S_CONFLICT
+    fi_open = _opening_line(fi, "Easel 冻结", "source_title")
+    x_open = _opening_line(x1024, "Easel 冻结", "source_title")
+    assert fi_open != x_open, "two accounts must not share one opening"
+    assert "如果你也在处理" in fi_open, fi_open
+    assert "真正的分歧" in x_open, x_open
+
+
+def test_accounts_close_on_their_declared_final_beat():
+    fi = load_profile(ROOT, "x-superplay-future-intelligence")   # REPRO_AND_REPO
+    x1024 = load_profile(ROOT, "x-superplay-1024")               # NEXT_VALIDATION_*
+    assert "复现" in _closing_line(fi), _closing_line(fi)
+    assert "下一组实测" in _closing_line(x1024), _closing_line(x1024)
+
+
+def test_opening_falls_back_when_no_template_is_declared():
+    from types import SimpleNamespace
+    line = _opening_line(SimpleNamespace(dna={}), "某主题", "user_supplied_topic")
+    assert "你提的「某主题」" in line, line
 
 
 def main() -> int:

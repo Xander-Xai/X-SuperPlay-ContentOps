@@ -4,6 +4,7 @@
 
 > Real executable commands. Derived from actual script behavior, not assumptions.
 
+> Last verified: 2026-11-27. Added ops_brief (one-screen operations briefing), editorial quick-create (4 inputs) + score, copy_quality, DNA-driven opening/closing in draft.py, and a contain fix for pinned source screenshots.
 > Last verified: 2026-11-26. #219 candidate shared copy and offline graphic paths reviewed; CI pending.
 > Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > Last verified: 2026-11-21. The M5 diagnostic CLI and receipt paths are unchanged by #204/#205 ASR/subtitle module extraction. No external transcription or rendering is asserted by these offline regression checks.

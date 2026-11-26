@@ -11,6 +11,7 @@ translation_status: synced
 > 当前运行状态。仅经验证的事实。无展望，无过时声明。
 >
 
+> 最后验证：2026-11-27，分支 feat/production-hardening @ `2c7df65939156825f3760dc0d668dd23532295d4`；ops_brief 简报、editorial quick-create/score、copy_quality、DNA 开场收束、pinned source contain 修复（PR #230）。
 > 最后验证：2026-11-26，GitHub main @ `3e25d0346061bd4d5fde720bda7e8dc86d641a4e`；#221/#222 已合并，#220/#223 候选待验收。
 > 最后验证：2026-11-21，对照 #213 合并后的受保护 `main` @ `ffb87ad96eab6283c773bfd150c81497979b536a`；M5 编排器瘦身和 #199 真实视频交付未完成，未授予发布或人工审核通过。
 > 下列带具体日期的 Git 表格仅为历史快照，不代表今天的远程分支数量。
@@ -50,6 +51,14 @@ translation_status: synced
 ## Git
 
 > **Git 状态在下方按 2026-11-12（只读文档同步）重新核验。** 其后的所有小节都是为可追溯性保留的历史快照，均不代表当前状态。
+
+### Git — 2026-11-27 于 feat/production-hardening 验证（PR #230）
+
+| 属性 | 已验证值 |
+|---|---|
+| 默认分支 | `2c7df65939156825f3760dc0d668dd23532295d4`（基线 `3711818a521e5fa220b8f27f2a5cda99ece25222`）|
+| 改动 | ops_brief 简报、editorial quick-create/score、copy_quality、DNA 开场收束、pinned source contain 修复 |
+| 边界 | 只读工具；无发布、账号验收或状态升级 |
 
 ### Git — 2026-11-26 #222 合并后核验
 

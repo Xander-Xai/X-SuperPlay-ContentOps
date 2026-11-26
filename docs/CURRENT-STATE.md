@@ -5,6 +5,7 @@
 > What runs today. Verified facts only. No aspirations, no stale claims.
 >
 
+> Last verified: 2026-11-27, branch feat/production-hardening @ `2c7df65939156825f3760dc0d668dd23532295d4`; ops_brief briefing, editorial quick-create/score, copy_quality, DNA-driven opening/closing, pinned-source contain fix (PR #230).
 > Last verified: 2026-11-26, GitHub main @ `3e25d0346061bd4d5fde720bda7e8dc86d641a4e`; #221/#222 merged, #220/#223 candidates pending acceptance.
 > Last verified: 2026-11-21 against `ffb87ad96eab6283c773bfd150c81497979b536a` (protected `main` after #213 squash). M5's remaining thin-runner refactor and #199 authentic-media acceptance are still OPEN; no publishing or human approval was granted.
 > The dated Git-state tables below are historical snapshots, not current remote branch counts.
@@ -46,6 +47,14 @@
 > **Git state is re-verified below at 2026-11-12 (read-only documentation
 > sync).** Every other section below it is a historical snapshot kept for
 > traceability; none of them is the current state.
+
+### Git — verified 2026-11-27 on feat/production-hardening (PR #230)
+
+| Property | Verified value |
+|---|---|
+| Default branch | `2c7df65939156825f3760dc0d668dd23532295d4` (base `3711818a521e5fa220b8f27f2a5cda99ece25222`) |
+| Change | ops_brief briefing, editorial quick-create/score, copy_quality, DNA-driven opening/closing, pinned-source contain fix |
+| Boundary | Read-only tools; no publication, account acceptance or status promotion |
 
 ### Git — verified 2026-11-26 after #222 merge
 
