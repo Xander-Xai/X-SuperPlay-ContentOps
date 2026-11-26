@@ -151,18 +151,35 @@ def plan(directory, check_account=account_allows):
         scores = {k: int(row[k]) for k in WEIGHTS}
         if any(not 0 <= v <= 10 for v in scores.values()):
             raise ValueError("score outside 0..10")
-        score = sum(scores[k] * w for k, w in WEIGHTS.items()) / 10
+        breakdown = {k: scores[k] * w for k, w in WEIGHTS.items()}
+        score = sum(breakdown.values()) / 10
         cost = lane(int(row["minutes"]), row["risk"])
         refs = [v for (t, _), v in evidence.items() if t == topic]
         decision = ("NEEDS_EVIDENCE" if not refs else "CANDIDATE" if score >= 80
                     else "LOW_COST_VALIDATION" if score >= 65 else "DEFER")
         if decision == "LOW_COST_VALIDATION" and cost == "L3":
             decision = "REPLAN_COST"
+        # Explain the score instead of only stating it: which weighted dimension
+        # is weakest, and how far the item is from the next decision. This is
+        # advice for the human planner; it never changes the decision itself.
+        weakest = min(breakdown, key=lambda k: (breakdown[k], k))
+        if decision == "NEEDS_EVIDENCE":
+            next_gate = "还缺可核对来源：先补一条 source_url 再评分"
+        elif decision == "REPLAN_COST":
+            next_gate = f"分数够但成本高：降低 minutes/risk 或降低 {weakest} 的投入"
+        elif score < 65:
+            next_gate = f"再加 {65 - score:.0f} 分到 LOW_COST_VALIDATION；最弱维度 {weakest}"
+        elif score < 80:
+            next_gate = f"再加 {80 - score:.0f} 分到 CANDIDATE；最弱维度 {weakest}"
+        else:
+            next_gate = "已达 CANDIDATE"
         ident = hashlib.sha256(json.dumps(key, ensure_ascii=False).encode()).hexdigest()[:16]
         queue.append({"id": ident, **row, "score": score, "cost_lane": cost,
                       "decision": decision, "evidence_ids": [v["signal_id"] for v in refs],
                       "source_urls": [v["source_url"] for v in refs],
                       "peer_case_ids": peer_ids.get(topic, []), "unique_source_urls": len(refs),
+                      "score_breakdown": breakdown, "weakest_dimension": weakest,
+                      "next_gate": next_gate,
                       "status": "PLANNED", "production_ready": False, "publish_authorized": False})
     queue.sort(key=lambda q: (q["decision"] == "NEEDS_EVIDENCE", -q["score"], q["planned_date"], q["id"]))
     return {"schema": "contentops.editorial-plan/v1", "status": "ADVISORY_ONLY",
@@ -273,9 +290,10 @@ def dashboard(directory, report):
     for q in report["queue"]:
         rows.append("<tr>" + "".join("<td>" + e(q[k]) + "</td>" for k in
                     ("planned_date", "account", "platform", "format", "series",
-                     "angle", "score", "cost_lane", "decision", "unique_source_urls")) + "</tr>")
+                     "angle", "score", "cost_lane", "decision", "unique_source_urls",
+                     "next_gate")) + "</tr>")
     headers = ("Date", "Account", "Platform", "Format", "Series", "Angle",
-               "Score", "Lane", "Decision", "Source URLs")
+               "Score", "Lane", "Decision", "Source URLs", "Next")
     calendar = "".join("<li>" + e(k) + ": " + e(v) + "</li>" for k, v in report["calendar"].items())
     series = "".join("<li>" + e(k) + ": " + e(v) + "</li>" for k, v in report["series"].items())
     page = ("<!doctype html><html lang='en'><meta charset='utf-8'>"
@@ -290,6 +308,25 @@ def dashboard(directory, report):
             "</tr></thead><tbody>" + "".join(rows) + "</tbody></table></section>"
             "<h2>Calendar</h2><ul>" + calendar + "</ul><h2>Series</h2><ul>" + series + "</ul></html>")
     write_atomic(directory, "editorial-workspace.html", page)
+
+
+def search(directory, query):
+    """Read-only keyword search across the three ledgers.
+
+    Retrieval, not planning: a historical row is returned even if it would not
+    pass today's ``plan`` validation, so past topics and peer cases stay
+    findable. Matches any field, case-insensitively, and never writes a file.
+    """
+    directory = local_dir(directory)
+    q = str(query or "").strip().lower()
+    if not q:
+        raise ValueError("--query required")
+    hits = []
+    for name in FIELDS:
+        for line_no, row in enumerate(load(directory, name), start=2):
+            if any(q in str(value).lower() for value in row.values()):
+                hits.append({"table": name, "line": line_no, "row": row})
+    return hits
 
 
 def prepare_handoff(directory, report, ident, reviewer, confirmed):
@@ -359,10 +396,11 @@ def route(directory, report, ident, reviewer, confirmed, runner=None):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("init", "plan", "import-hotspots", "dashboard", "handoff", "route"))
+    parser.add_argument("command", choices=("init", "plan", "import-hotspots", "dashboard", "handoff", "route", "search"))
     parser.add_argument("--data-dir", type=Path, default=DEFAULT)
     parser.add_argument("--input", type=Path)
     parser.add_argument("--topic")
+    parser.add_argument("--query", default="")
     parser.add_argument("--account")
     parser.add_argument("--candidate")
     parser.add_argument("--reviewer", default="")
@@ -376,6 +414,10 @@ def main(argv=None):
             if not args.input or not args.topic or not args.account:
                 raise ValueError("--input, --topic and --account required")
             print(json.dumps(import_hotspots(args.data_dir, args.input, args.topic, args.account)))
+        elif args.command == "search":
+            hits = search(args.data_dir, args.query)
+            print(json.dumps(hits, ensure_ascii=False, indent=2))
+            print("SEARCH: %d match(es)" % len(hits), file=sys.stderr)
         else:
             report = plan(args.data_dir)
             if args.command == "dashboard":

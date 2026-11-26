@@ -8,8 +8,8 @@
 > Last verified: 2026-11-26. #219 candidate shared copy and offline graphic paths reviewed; CI pending.
 > Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > Last verified: 2026-11-21. Rechecked the #205 subtitle behavior regressions and #206 storyboard extraction against the registered CI suites; no new test suite was introduced and source/media approval boundaries remain unchanged.
-> `tests/test_*.py`, and `.github/workflows/ci.yml` names every one of them (107 steps).
-> The count is not asserted here; read it with `ls tests/test_*.py | wc -l`.
+> `tests/test_*.py`, and `.github/workflows/ci.yml` names every one of them.
+> The count is not asserted here; read it with `ls tests/test_*.py | wc -l` (133 as of 2026-11-26).
 > Last verified: 2026-11-14: added focused X regression cases for no-image text READY/package/URL recording, image-mode refusal, profile-specific review thresholds, and fail-closed account config; overall CI result is determined by the PR checks, not this statement.
 > X policy: Strategy canonical SOP and registered account DNA; source metrics and publishing still require human verification.
 
