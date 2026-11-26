@@ -16,6 +16,8 @@ What this script will not do
 ----------------------------
 * It will not guess whether the caller's IP is whitelisted. WeChat answers
   ``40164`` for that, and only a real token request can prove it either way.
+  When such a real request fails, the 40164 body is parsed for the egress IP
+  WeChat actually saw (a hint for whitelisting, never a local probe or a guess).
 * It will not write a receipt before ``draft/get`` comes back. A receipt written
   earlier would be a claim about a draft nobody has seen.
 * It will not print AppID, AppSecret or access_token. The receipt records lengths
@@ -30,7 +32,9 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import ipaddress
 import json
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -100,11 +104,44 @@ def _import_client() -> Any:
     return WeChatClient
 
 
+#: A 40164 body looks like ``invalid ip, not in whitelist: 38.107.237.82``.
+#: WeChat reports the IP *it* actually saw, which is the only reliable value to
+#: whitelist — a local curl can report a different NAT egress (see 2026-11-25).
+#: Require the whitelist context so we never lift an unrelated address out of a
+#: stack trace or a quoting URL.
+_IPV4_RE = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")
+_IPV6_RE = re.compile(r"\b(?:[0-9A-Fa-f]{1,4}:){2,7}[0-9A-Fa-f]{0,4}\b")
+_WHITELIST_HINT_RE = re.compile(r"invalid\s+ip|not\s+in\s+whitelist|不在.*白名单", re.IGNORECASE)
+
+
+def extract_wechat_ip_hint(text: str) -> str | None:
+    """Return the egress IP WeChat reported in a 40164 error, or ``None``.
+
+    The value is a *hint read from the server's own message*, never a guess and
+    never a local network probe. It is only returned when the text both mentions
+    a 40164-style whitelist failure and contains a syntactically valid IP. On any
+    ambiguity the answer is ``None`` and the operator must read the raw error.
+    """
+    if IP_NOT_WHITELISTED not in text or not _WHITELIST_HINT_RE.search(text):
+        return None
+    for pattern in (_IPV4_RE, _IPV6_RE):
+        for match in pattern.findall(text):
+            try:
+                return str(ipaddress.ip_address(match))
+            except ValueError:
+                continue  # e.g. 999.999.999.999 — not a real address
+    return None
+
+
 def _wechat_error(exc: Exception) -> str:
     text = repr(exc)
     if IP_NOT_WHITELISTED in text:
-        return ("IP_NOT_WHITELISTED: 微信返回 40164——当前出口 IP 不在公众号后台白名单，"
+        base = ("IP_NOT_WHITELISTED: 微信返回 40164——当前出口 IP 不在公众号后台白名单，"
                 "这不是代码问题，只能加白后重试")
+        hint = extract_wechat_ip_hint(text)
+        if hint:
+            return f"{base}；微信看到的出口 IP：{hint}（请加白这个 IP，不要用本地 curl 的结果）"
+        return base
     if BAD_CREDENTIALS in text:
         return "BAD_CREDENTIALS: 微信返回 40001——AppSecret 不正确或与 AppID 不匹配"
     return f"WECHAT_CALL_FAILED: {text[:300]}"
