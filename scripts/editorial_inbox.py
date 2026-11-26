@@ -7,8 +7,11 @@ import io
 import json
 from collections import Counter, defaultdict
 from pathlib import Path
+from datetime import datetime, timezone
 from urllib.parse import urlsplit
 import editorial_ops as ops
+import editorial_feedback as feedback
+import platform_learning_loop as learning
 
 NAME = "audience-inbox.csv"
 FIELDS = ("feedback_id", "account", "platform", "topic", "category",
@@ -146,9 +149,85 @@ def promote(directory, feedback_id, reviewer, confirmed):
     return receipt("LINKED", feedback_id=feedback_id, signal_ids=[ident], reviewer=reviewer)
 
 
+
+def feedback_row(directory, ident):
+    ops.slug(ident)
+    rows = [r for r in read(directory) if r["feedback_id"] == ident]
+    if len(rows) != 1:
+        raise ValueError("select exactly one existing feedback")
+    return rows[0]
+
+
+def feedback_digest(row):
+    return hashlib.sha256(json.dumps(row, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+
+
+def publication(metrics, row, content_id, post_url):
+    if not content_id.strip() or not feedback.canonical_post_url(post_url):
+        raise ValueError("canonical published identity required")
+    metrics = ops.local_dir(metrics)
+    records = learning._load(ops.safe_file(metrics, "content-index.csv"), learning.INDEX_COLUMNS)
+    matches = [p for p in records if p["content_id"] == content_id or p["post_url"] == post_url]
+    if len(matches) != 1:
+        raise ValueError("missing or duplicate publication identity")
+    p = matches[0]
+    if (p["content_id"], p["post_url"], p["account_alias"], p["platform"], p["topic_cluster"]) != (
+            content_id, post_url, row["account"], row["platform"], row["topic"]):
+        raise ValueError("publication identity or account/platform/topic mismatch")
+    published, observed = learning._date(p["published_at"]), learning._date(row["observed_at"])
+    if (p["publish_status"] not in learning.VALID_STATUS or not published or not observed
+            or published > observed or observed > datetime.now(timezone.utc)):
+        raise ValueError("feedback must follow actual reported publication")
+    return p
+
+
+def publication_binding(directory, metrics, feedback_id, content_id, post_url, reviewer, confirmed):
+    if not confirmed or not feedback.named_reviewer(reviewer):
+        raise ValueError("named human attestation of feedback provenance required")
+    row = feedback_row(directory, feedback_id)
+    p = publication(metrics, row, content_id, post_url)
+    result = receipt("PUBLICATION_LINKED", feedback_id=feedback_id, content_id=content_id,
+                     post_url=post_url, published_at=p["published_at"],
+                     feedback_sha256=feedback_digest(row), reviewer=reviewer,
+                     attribution="operator_attested_not_independently_verified")
+    name = "feedback-publication-" + feedback_id + ".json"
+    path = ops.safe_file(directory, name)
+    if path.exists():
+        if path.stat().st_size > 100_000 or json.loads(path.read_text(encoding="utf-8")) != result:
+            raise ValueError("conflicting feedback publication binding")
+        return result
+    ops.write_atomic(directory, name, json.dumps(result, ensure_ascii=False, indent=2) + "\n")
+    return result
+
+
+def handoff_lead(directory, metrics, feedback_id, reviewer, consent, confirmed):
+    if not (consent and confirmed and feedback.named_reviewer(reviewer)):
+        raise ValueError("explicit consent and named human confirmation required")
+    row = feedback_row(directory, feedback_id)
+    if row["category"] not in {"pain", "request"}:
+        raise ValueError("only selected pain/request observations eligible for review")
+    path = ops.safe_file(directory, "feedback-publication-" + feedback_id + ".json")
+    if path.stat().st_size > 100_000:
+        raise ValueError("invalid publication binding")
+    binding = json.loads(path.read_text(encoding="utf-8"))
+    if (not isinstance(binding, dict) or binding.get("schema") != "contentops.audience-inbox/v1"
+            or binding.get("status") != "PUBLICATION_LINKED"
+            or binding.get("feedback_id") != feedback_id
+            or binding.get("feedback_sha256") != feedback_digest(row)):
+        raise ValueError("missing or stale feedback binding")
+    p = publication(metrics, row, binding["content_id"], binding["post_url"])
+    if binding.get("published_at") != p["published_at"]:
+        raise ValueError("publication changed since binding")
+    # Reuse existing anonymous OPC handoff; never export comment text or identity.
+    return feedback.lead(directory, metrics, content_id=p["content_id"], post_url=p["post_url"],
+                         category=row["topic"], evidence_ref=feedback_id, reviewer=reviewer,
+                         consent=consent, confirmed=confirmed)
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--data-dir", type=Path, default=ops.DEFAULT)
+    p.add_argument("--metrics-dir", type=Path, default=learning.DEFAULT_DATA)
     sub = p.add_subparsers(dest="command", required=True)
     sub.add_parser("init")
     sub.add_parser("report")
@@ -160,8 +239,18 @@ def main():
     a.add_argument("--feedback-id", required=True)
     a.add_argument("--reviewer", required=True)
     a.add_argument("--confirm", action="store_true")
+    for cmd in ("bind-publication", "lead"):
+        a = sub.add_parser(cmd)
+        a.add_argument("--feedback-id", required=True)
+        a.add_argument("--reviewer", required=True)
+        a.add_argument("--confirm", action="store_true")
+        if cmd == "bind-publication":
+            a.add_argument("--content-id", required=True)
+            a.add_argument("--post-url", required=True)
+        else:
+            a.add_argument("--consent", action="store_true")
     args = vars(p.parse_args())
-    directory, command = args.pop("data_dir"), args.pop("command")
+    directory, metrics, command = args.pop("data_dir"), args.pop("metrics_dir"), args.pop("command")
     try:
         if command == "init":
             result = receipt("INITIALIZED", directory=str(init(directory)))
@@ -169,9 +258,14 @@ def main():
             result = report(directory)
         else:
             args["confirmed"] = args.pop("confirm")
-            result = (add if command == "add" else promote)(directory, **args)
+            if command == "bind-publication":
+                result = publication_binding(directory, metrics, **args)
+            elif command == "lead":
+                result = handoff_lead(directory, metrics, **args)
+            else:
+                result = (add if command == "add" else promote)(directory, **args)
         print(json.dumps(result, ensure_ascii=True, indent=2))
-    except (OSError, ValueError) as exc:
+    except (OSError, ValueError, KeyError, TypeError) as exc:
         p.exit(1, "inbox refused: " + str(exc) + "\n")
 
 

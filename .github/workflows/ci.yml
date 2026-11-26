@@ -701,6 +701,8 @@ jobs:
         run: python tests/test_editorial_daily.py
       - name: Run audience feedback inbox tests
         run: python tests/test_editorial_inbox.py
+      - name: Run editorial score review tests
+        run: python tests/test_editorial_score_review.py
 
       # The end-to-end chain: growth -> enrichment -> gate -> manual package.
       - name: Run X growth integration tests

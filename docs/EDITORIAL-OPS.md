@@ -181,3 +181,29 @@ python scripts/editorial_ops.py plan
 ```
 
 Replace example with actual observation. Question/pain/request/criticism may be promoted after human confirmation; praise/other observation-only. Group by account/platform/topic and count URLs, not people. Promotion writes kind=comment to existing signals.csv and deduplicates by topic/URL. No buyer inference, research approval, production or publication. JSON receipts to stdout; redirect only to local storage. Tests: python tests/test_editorial_inbox.py (synthetic; actual operator acceptance pending).
+
+## Prospective editorial score review (Refs #226)
+
+Research: [SciPy rank correlation](https://github.com/scipy/scipy/blob/main/scipy/stats/_correlation.py) and [Evidently](https://github.com/evidentlyai/evidently) ranking/data-quality evaluation patterns. [scikit-learn calibration](https://github.com/scikit-learn/scikit-learn/blob/main/doc/modules/calibration.rst) is for predicted probabilities; editorial scores are ordinal advisory scores, not probabilities. Use tie-aware Spearman on frozen scores and selected native outcomes, no copied upstream code or new dependency.
+
+Before publishing, freeze the existing eligible VIDEO candidate with its current score, components, weights, candidate digest and local timestamp. After actual manual publication and native index registration, explicitly link its content ID/URL. Use one operator; do not run simultaneous writers. One candidate to one publication, never backdate records; local digests detect accidental changes, not malicious edits or independent proof of time.
+
+```text
+python scripts/editorial_score_review.py freeze --candidate-id <actual-id> --reviewer Founder --confirm
+python scripts/editorial_score_review.py link --candidate-id <actual-id> --content-id <actual-content-id> --post-url <actual-public-URL> --reviewer Founder --confirm
+python scripts/editorial_score_review.py review --platform bilibili --account x-superplay-future-intelligence --topic agent --experiment exp --window T+24H --definition native_v1 --metric impressions
+```
+
+Use actual scope/IDs, not placeholders. Existing platform-learning CSVs and editorial diagnostics remain authoritative; no parallel metric store. Six metrics available: impressions, ctr, avg_watch_time, completion_or_retention, saves_per_1000_views, qualified_signals_per_hour. Same platform/account/video/topic/experiment/definition/age window and organic native data only. Ten complete pairs minimum (pilot threshold, not significance); constant ranks yield NO_VARIATION. Missing/unknown-paid/unlinked samples are excluded and reported, never imputed. Published-only selection bias remains. No weight or DNA updates, topic approval, publish or growth claims. Tests: python tests/test_editorial_score_review.py (synthetic).
+
+
+### Feedback publication and OPC review (Refs #224 #226)
+
+Link a sanitized feedback observation to a real reported publication in the existing platform-learning index. The owner attests that the feedback relates to that publication; matching account/platform/topic and chronological order alone cannot prove causation. A duplicate or changed index or feedback record blocks handoff. Only selected pain/request feedback may be exported for OPC review, with explicit consent and confirmation. The existing editorial_feedback.lead function writes the same anonymous handoff receipt as before; no private message, comment text, identity, or source URL is exported.
+
+```text
+python scripts/editorial_inbox.py bind-publication --feedback-id <id> --content-id <id> --post-url <actual-public-URL> --reviewer Founder --confirm
+python scripts/editorial_inbox.py lead --feedback-id <id> --reviewer Founder --consent --confirm
+```
+
+Use the same local data and metrics directories as the existing editorial/learning tools. X feedback can bind only if its real publication is in the existing cross-platform content index; no API or new metrics store. No automatic outreach or inferred paid demand. 

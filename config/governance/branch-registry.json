@@ -366,6 +366,14 @@
       "pr": 225,
       "created": "2026-11-26",
       "purpose": "Audience feedback inbox and confirmed topic signal handoff, Refs #224",
+      "status": "merged",
+      "expires": "2026-12-26"
+    },
+    {
+      "name": "feat/226-editorial-score-review",
+      "pr": 227,
+      "created": "2026-11-26",
+      "purpose": "Prospective editorial score review with native metrics, Refs #226",
       "status": "active",
       "expires": "2026-12-26"
     }
