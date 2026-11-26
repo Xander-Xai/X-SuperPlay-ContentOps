@@ -56,6 +56,23 @@ class WorkbenchTests(unittest.TestCase):
         self.assertIn("&lt;script&gt;", page)
 
 
+    def test_daily_capacity_is_read_only_and_integrated(self):
+        add(self.d / "signals.csv", ops.FIELDS["signals.csv"],
+            dict(signal_id="signal-1", topic="agent", kind="issue",
+                 source_url="https://example.org/issue/1",
+                 observed_at="2026-11-26T00:00:00+00:00", observation="Synthetic problem"))
+        before = workspace.revision(self.d)
+        page = workspace.render(self.d, "fixture", "2026-11-26", 15)
+        self.assertIn("Daily capacity", page)
+        self.assertIn("10 / 15 estimated minutes", page)
+        self.assertIn("demand URLs 1", page)
+        self.assertIn("#candidate-" + self.ident, page)
+        self.assertEqual(workspace.revision(self.d), before)
+        self.assertFalse((self.d / ("route-" + self.ident + ".json")).exists())
+        with self.assertRaises(ValueError):
+            workspace.render(self.d, "fixture", "2026-11-26", None)
+
+
 class SeriesTests(unittest.TestCase):
     def setUp(self):
         t = tempfile.TemporaryDirectory()

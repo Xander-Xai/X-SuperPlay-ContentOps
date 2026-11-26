@@ -732,3 +732,5 @@ Native editorial rewrite pilot: `python scripts/native_editorial_draft.py --help
 Peer creative pattern review: `python scripts/editorial_peer_patterns.py init` then `review` after human annotation. See [EDITORIAL-OPS.md](EDITORIAL-OPS.md); no automated scraping.
 
 Optional editorial scope: `python scripts/make_content.py run --project projects/<project> --mode STRICT --lane L2 --dry-run`. See [EDITORIAL-OPS.md](EDITORIAL-OPS.md). L1 graphic only; L1/L2 refuse extra media generation and H3; L3 existing gates. No time or spend guarantee; no silent downgrade.
+
+Daily workbench: `python scripts/editorial_workspace.py --day YYYY-MM-DD --minutes 90`; optional read-only capacity panel over existing editable planner. See EDITORIAL-OPS.md.

@@ -498,3 +498,5 @@ media-use 演示通过另一套已验证的 Easel 运行时合成。演示成功
 同行表达手法研究：`python scripts/editorial_peer_patterns.py init`，人工标注后执行 `review`。见 [EDITORIAL-OPS.md](EDITORIAL-OPS.md)，不自动爬取。
 
 可选生产成本范围：`python scripts/make_content.py run --project projects/<project> --mode STRICT --lane L2 --dry-run`。见 [EDITORIAL-OPS.md](EDITORIAL-OPS.md)。L1 仅现有图文，L1/L2 禁止额外生成素材及 H3，L3 保留已有门禁。不保证工时或额度，不静默降级。
+
+每日运营工作台：`python scripts/editorial_workspace.py --day YYYY-MM-DD --minutes 90`；在现有可编辑工作台显示只读排产、需求计数与延期原因，见 EDITORIAL-OPS.md。

@@ -166,3 +166,7 @@ python scripts/make_content.py run --project projects/<project> --mode STRICT --
 ```
 
 After the usual signed research, copy review and explicit production intent, L1 accepts the existing GRAPHIC_TEXT path only (X keeps its separate pipeline); L2 permits video/graphic but no extra provider-generated assets or H3 bookends; L3 retains the existing gates including separate provider/billing and quota authorization. L1/L2 do not automatically replace media or downgrade the voice. A configured subscription narration may still use quota under existing gates. Omitted --lane preserves existing behavior. No measured time cap, billing guarantee, automatic selection from the editorial queue or publication. All existing checks remain mandatory; optional lane is recorded in the run receipt. Regression: test_production_gates.py.
+
+## Integrated daily workbench
+
+`python scripts/editorial_workspace.py --day 2026-11-26 --minutes 90` displays the existing daily capacity calculation, selected candidate anchors, demand URL counts and deferral reasons above the existing editable queue. Budget and day are explicit; refresh recomputes, no automatic routing. Existing loopback, Host/Origin, token and CSP protections remain. The panel is read-only and uses the existing editorial_daily implementation. Regression: test_editorial_workspace_series.py.
