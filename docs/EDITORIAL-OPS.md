@@ -168,6 +168,20 @@ Research: [GrowthBook experiment design](https://github.com/growthbook/skills/bl
 Optional plan flags: `--min-primary-ratio 0.8 --min-quality-per-hour-ratio 0.9` (illustrative, select actual thresholds before start). Arm a is control; b is candidate. Compare median primary and qualified signals per measured Founder hour; each selected guardrail needs five valid observations per arm and a positive baseline. Missing, zero baseline or insufficient effort observations do not pass. The descriptive observed priority is preserved; a B follow-up is held unless configured guardrails pass. No configuration means no B promotion recommendation. No thresholds are inferred during review; no DNA change or publishing. Existing experimental plan files without guardrails still review as NOT_CONFIGURED. Synthetic regression in test_editorial_experiments.py.
 
 
+## Audience feedback inbox (Refs #224)
+
+Research: [Fider](https://github.com/getfider/fider) for feedback prioritization, [Zammad](https://github.com/zammad/zammad) for categorized inbox triage. Patterns only; no external code, dependency, network, CRM or automatic replies. Single operator: do not run simultaneous writers or workspace editor while writing CSV. Enter only sanitized notes and public canonical HTTPS URLs without query/fragment. Confirmation is operator attestation, not proof of buyers or independent demand.
+
+```text
+python scripts/editorial_inbox.py init
+python scripts/editorial_inbox.py add --account x-superplay-english --platform x --topic agent --category pain --source-url https://example.org/public/1 --observed-at 2026-11-26T09:00:00+08:00 --observation "Reported tool recovery problem" --reviewer Founder --confirm
+python scripts/editorial_inbox.py report
+python scripts/editorial_inbox.py promote --feedback-id <actual-id> --reviewer Founder --confirm
+python scripts/editorial_ops.py plan
+```
+
+Replace example with actual observation. Question/pain/request/criticism may be promoted after human confirmation; praise/other observation-only. Group by account/platform/topic and count URLs, not people. Promotion writes kind=comment to existing signals.csv and deduplicates by topic/URL. No buyer inference, research approval, production or publication. JSON receipts to stdout; redirect only to local storage. Tests: python tests/test_editorial_inbox.py (synthetic; actual operator acceptance pending).
+
 ## Prospective editorial score review (Refs #226)
 
 Research: [SciPy rank correlation](https://github.com/scipy/scipy/blob/main/scipy/stats/_correlation.py) and [Evidently](https://github.com/evidentlyai/evidently) ranking/data-quality evaluation patterns. [scikit-learn calibration](https://github.com/scikit-learn/scikit-learn/blob/main/doc/modules/calibration.rst) is for predicted probabilities; editorial scores are ordinal advisory scores, not probabilities. Use tie-aware Spearman on frozen scores and selected native outcomes, no copied upstream code or new dependency.
