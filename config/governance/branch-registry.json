@@ -336,6 +336,14 @@
       "purpose": "Issue #211/#208 shared reviewed copy and offline native non-X graphic packages; no external drafts or publication",
       "status": "active",
       "expires": "2026-12-26"
+    },
+    {
+      "name": "feat/216-public-issue-signals",
+      "pr": 222,
+      "created": "2026-11-26",
+      "purpose": "Issue #216 bounded public GitHub issue research and human-selected demand observation; no buyer claims",
+      "status": "active",
+      "expires": "2026-12-26"
     }
   ]
 }
