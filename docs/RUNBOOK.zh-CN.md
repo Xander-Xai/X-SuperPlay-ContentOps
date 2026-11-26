@@ -494,3 +494,5 @@ media-use 演示通过另一套已验证的 Easel 运行时合成。演示成功
 使用 `python scripts/editorial_daily.py plan --day YYYY-MM-DD --minutes 90` 获得本地排产建议；`rubric` 和 `review` 子命令提供绑定草稿的人工传播质量清单。见 [EDITORIAL-OPS.md](EDITORIAL-OPS.md)。不自动路由或批准。
 
 视频数据覆盖诊断：`python scripts/video_metric_coverage.py --help`，只读核对已有发布索引与指标，累计/未知流量不改标自然流量，见 EDITORIAL-OPS.md。
+
+创作实验可在 plan 时预注册 --min-primary-ratio 与 --min-quality-per-hour-ratio，复盘不得事后修改阈值；见 EDITORIAL-OPS.md。

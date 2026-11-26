@@ -172,3 +172,5 @@ Editorial planning V1 (#216): local evidence/peer ledgers, advisory topic scores
 `python tests/test_editorial_daily.py` — synthetic budget, demand URL classification, route skip, advisory draft review and stale/path refusal. CI-wired; no real editorial acceptance claimed.
 
 Existing test_video_metric_intake.py also tests coverage reporting, unknown vs organic, missing/zero and duplicate refusal. Synthetic only.
+
+Existing test_editorial_experiments.py covers preregistered primary/effort guardrail pass, regression and insufficient coverage. No randomized or real account outcome claim.

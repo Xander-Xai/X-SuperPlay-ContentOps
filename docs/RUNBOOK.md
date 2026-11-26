@@ -728,3 +728,5 @@ Use `python scripts/editorial_diagnostics.py --help` and the scope example in [E
 Use `python scripts/editorial_daily.py plan --day YYYY-MM-DD --minutes 90` for a local capacity plan; `rubric` and `review` subcommands provide an advisory, draft-bound human checklist. See [EDITORIAL-OPS.md](EDITORIAL-OPS.md). No automatic routing or approval.
 
 Video metric coverage: `python scripts/video_metric_coverage.py --help` audits existing local index/snapshot scope without relabeling cumulative/unknown traffic. See EDITORIAL-OPS.md.
+
+Preregister optional experiment guardrails via editorial_experiments.py plan --min-primary-ratio and --min-quality-per-hour-ratio; review cannot select them retrospectively. See EDITORIAL-OPS.md.

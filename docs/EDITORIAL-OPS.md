@@ -150,3 +150,9 @@ Research: [PostHog primary and secondary metrics](https://posthog.com/docs/exper
 `python scripts/video_metric_coverage.py --platform douyin --account x-superplay-1024 --topic agent --experiment exp --definition douyin_api_counts_v1 --window T+24H`
 
 Use actual scope and local metrics directory. Output is a read-only audit of publication/snapshot matching, missing metrics, organic-eligible metric availability, duplicate/age/source refusal. Imported cumulative observations remain OBSERVATION_ONLY even when view counts exist. For organic diagnostics collect a separate native organic report with its own definition; do not mutate unknown imported traffic into organic. This report does not infer causality or authorize publication. Tests extend test_video_metric_intake.py.
+
+## Preregistered experiment guardrails (Refs #216)
+
+Research: [GrowthBook experiment design](https://github.com/growthbook/skills/blob/main/skills/experiments/SKILL.md), [PostHog primary and secondary metrics](https://posthog.com/docs/experiments/creating-an-experiment). Borrow preregistered guardrails; creator posts are observational, not randomized product A/B tests.
+
+Optional plan flags: `--min-primary-ratio 0.8 --min-quality-per-hour-ratio 0.9` (illustrative, select actual thresholds before start). Arm a is control; b is candidate. Compare median primary and qualified signals per measured Founder hour; each selected guardrail needs five valid observations per arm and a positive baseline. Missing, zero baseline or insufficient effort observations do not pass. The descriptive observed priority is preserved; a B follow-up is held unless configured guardrails pass. No configuration means no B promotion recommendation. No thresholds are inferred during review; no DNA change or publishing. Existing experimental plan files without guardrails still review as NOT_CONFIGURED. Synthetic regression in test_editorial_experiments.py.
