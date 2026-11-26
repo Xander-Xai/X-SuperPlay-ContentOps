@@ -8,15 +8,15 @@
 
 ## Why this exists
 
-`AGENTS.md` §1.3 requires **Evidence before Claim**. In practice, the fastest
-way to break that rule is to start drafting copy before anyone has read the
-repository or checked a source. This contract makes the research phase a
-fail-closed gate rather than a good intention: **no copy is authored or
-approved until a named human has signed the research package**.
+`AGENTS.md` requires **Evidence before Claim**. The signed pre-copy contract
+prevents unsourced factual VIDEO copy and governs shared, medium-neutral `TOPIC`
+packages. It is not a prerequisite for drafting a standalone `GRAPHIC_TEXT`
+article: start the draft, keep factual source links, and mark anything unverified.
+Image rights and provider authorization remain separate checks.
 
-It applies to both production lines before they diverge — `VIDEO`
-(`script/master.md`) and `GRAPHIC_TEXT` (`02_draft/draft.md`). It is not a
-third production line and not a new account or platform.
+The contract applies to VIDEO (`script/master.md`) and shared TOPIC research; a
+standalone GRAPHIC_TEXT draft (`02_draft/draft.md`) may proceed without its
+signature. It is not a third production line and adds no account or platform.
 
 Related: [CONTENT-LIFECYCLE-STAGES.md](CONTENT-LIFECYCLE-STAGES.md),
 [RUNBOOK.md](RUNBOOK.md), [TEST-PLAN.md](TEST-PLAN.md).
@@ -96,8 +96,8 @@ python scripts\make_content.py check --project projects\my-video
 
 | Enforcement point | Behaviour |
 |---|---|
-| `scripts/production_gates.py` — 8th VIDEO gate, 6th GRAPHIC_TEXT gate | `make_content.py check` / `run`, `produce_video.produce()` via `require`, and the Easel driver's check step all fail closed |
-| `scripts/copy_review.py --approve` | refuses to record any copy decision (`APPROVED` or `CHANGES_REQUESTED`) while research is `NOT_STARTED`, `INCOMPLETE`, `AWAITING_APPROVAL`, `STALE` or `INVALID_RECEIPT` |
+| `scripts/production_gates.py` — 8th VIDEO gate | `make_content.py check` / `run` and the VIDEO producer fail closed until research is current; standalone GRAPHIC_TEXT has no pre-copy-research gate |
+| `scripts/copy_review.py --approve` | Requires current research for VIDEO; shared TOPIC consumers use their bound topic-package lineage; standalone GRAPHIC_TEXT can record copy review without a second research signature |
 | `scripts/preresearch.py` | `init` / `intent` / `check` / `status` / `approve`; exit 4 when blocked |
 
 A direct `m5_production.py` / `produce_video.py` invocation remains a
@@ -124,14 +124,14 @@ does not change that boundary and does not add a publication step.
   list is empty and the reading notes carry `TODO` markers. Placeholder URLs are
   refused.
 - Generated images or videos are visual support and never factual evidence.
-- Historical projects without a research package now report `NOT_STARTED` (no
-  artifacts) or `INCOMPLETE` (partial) at preflight. Run `init`, fill the artifacts, `check`, then `approve` before
-  continuing them. No silent grandfathering is applied.
+- VIDEO and shared TOPIC projects without research report `NOT_STARTED` or
+  `INCOMPLETE` at preflight. Standalone GRAPHIC_TEXT drafting and copy review do
+  not require this signature; source links and per-image rights still apply.
 
 ## Verification
 
-`tests/test_precopy_research.py` (25 cases) covers missing artifacts, scaffold
+`tests/test_precopy_research.py` (26 cases) covers missing artifacts, scaffold
 refusal, idempotent `init`, intent binding for both entrances, re-routing
 invalidation, evidence and boundary checks, named-reviewer requirements,
-fingerprint drift, CLI `init → intent → check → approve`, and the
-`copy_review.py` refusal. It is registered in `.github/workflows/ci.yml`.
+fingerprint drift, VIDEO copy-review refusal without research, and standalone
+GRAPHIC_TEXT copy review. It is registered in `.github/workflows/ci.yml`.

@@ -190,6 +190,7 @@ class ContentRouter:
                 "sources": list(profile.source_allowlist),
                 "video_capable": profile_video_capable(profile),
                 "target_pipeline": target_pipeline_for(profile),
+                "available_pipelines": ["VIDEO", "GRAPHIC_TEXT"],
                 "keywords_positive": len(profile.keywords_positive),
                 "keywords_negative": len(profile.keywords_negative),
             })
@@ -217,9 +218,11 @@ class ContentRouter:
               override_note: str = "",
               selected_by: str = "",
               fetch_evidence: bool = False,
-              collect: bool = True) -> RunResult:
-        """Begin a run. The route must be named explicitly."""
+              collect: bool = True,
+              target_pipeline: Optional[str] = None) -> RunResult:
+        """Begin a topic run; format selection belongs to the content run."""
         profile = self.profile(account_id)
+        pipeline = target_pipeline_for(profile, target_pipeline)
         if not route_mode:
             raise RoutingError(
                 ROUTE_SELECTION_REQUIRED,
@@ -232,7 +235,8 @@ class ContentRouter:
         self._check_approval_policy(profile)
 
         if route_mode == "HOTSPOT_DISCOVERY":
-            return self._start_hotspot(profile, pillar=pillar,
+            return self._start_hotspot(profile, target_pipeline=pipeline,
+                                       pillar=pillar,
                                        freshness_hours=freshness_hours,
                                        per_source_limit=per_source_limit,
                                        collect=collect)
@@ -240,7 +244,8 @@ class ContentRouter:
                                       accept_off_profile=accept_off_profile,
                                       override_note=override_note,
                                       selected_by=selected_by,
-                                      fetch_evidence=fetch_evidence)
+                                      fetch_evidence=fetch_evidence,
+                                      target_pipeline=pipeline)
 
     def _check_approval_policy(self, profile: AccountProfile) -> None:
         """The account may not declare itself exempt from the human gates."""
@@ -255,13 +260,14 @@ class ContentRouter:
                     f"router always requires a person to select the topic and to "
                     f"approve the brief, and an account cannot exempt itself")
 
-    def _start_hotspot(self, profile: AccountProfile, *, pillar: Optional[str],
-                       freshness_hours: int, per_source_limit: int,
-                       collect: bool) -> RunResult:
+    def _start_hotspot(self, profile: AccountProfile, *, target_pipeline: str,
+                       pillar: Optional[str], freshness_hours: int,
+                       per_source_limit: int, collect: bool) -> RunResult:
         run_id = self._new_run_id(profile.account_id, "HOTSPOT_DISCOVERY")
         plan = hotspot_route.make_plan(profile, pillar=pillar,
                                        freshness_hours=freshness_hours,
                                        per_source_limit=per_source_limit)
+        plan["target_pipeline"] = target_pipeline
         self.store.save_run(run_id, account_id=profile.account_id,
                              profile_version=profile.profile_version,
                              route_mode="HOTSPOT_DISCOVERY",
@@ -295,7 +301,9 @@ class ContentRouter:
                           accept_off_profile: bool, override_note: str,
                           selected_by: str,
                           fetch_evidence: bool = False,
+                          target_pipeline: Optional[str] = None,
                           run_id: Optional[str] = None) -> RunResult:
+        pipeline = target_pipeline_for(profile, target_pipeline)
         if payload.is_empty():
             raise RoutingError(INPUT_REQUIRED,
                                "a user topic needs at least a topic, a link, a "
@@ -309,7 +317,7 @@ class ContentRouter:
         self.store.save_run(run_id, account_id=profile.account_id,
                              profile_version=profile.profile_version,
                              route_mode="USER_TOPIC", state=INPUT_REQUIRED,
-                             plan={"input": payload.to_dict()})
+                             plan={"input": payload.to_dict(), "target_pipeline": pipeline})
         self.store.record_event(run_id, profile.account_id, INPUT_REQUIRED,
                                 payload.topic[:200])
 
@@ -339,7 +347,8 @@ class ContentRouter:
 
         intent, package = self._build_user_topic_brief(
             profile, payload, alignment=alignment, override=override,
-            selected_by=selected_by, fetch_evidence=fetch_evidence)
+            selected_by=selected_by, fetch_evidence=fetch_evidence,
+            target_pipeline=pipeline)
         self._write_brief(run_id, package)
         self.store.save_run(run_id, account_id=profile.account_id,
                             profile_version=profile.profile_version,
@@ -390,8 +399,11 @@ class ContentRouter:
         self.store.record_event(run_id, profile.account_id, TOPIC_SELECTED,
                                 f"{candidate_id} by {selected_by}")
 
+        plan = json.loads(run["plan_json"]) if run.get("plan_json") else {}
+        pipeline = target_pipeline_for(profile, plan.get("target_pipeline"))
         intent, package = self._build_hotspot_brief(profile, candidate,
-                                                     selected_by=selected_by)
+                                                     selected_by=selected_by,
+                                                     target_pipeline=pipeline)
         self._write_brief(run_id, package)
         self.store.save_run(run_id, account_id=profile.account_id,
                             profile_version=profile.profile_version,
@@ -678,6 +690,7 @@ class ContentRouter:
                 return self._start_user_topic(
                     profile, payload, accept_off_profile=True,
                     override_note=override_note, selected_by="resume",
+                    target_pipeline=(run.get("plan") or {}).get("target_pipeline"),
                     run_id=run_id)
             return RunResult(run_id, profile.account_id, route_mode, state,
                              {"run": {key: value for key, value in run.items()
@@ -748,7 +761,8 @@ class ContentRouter:
         )
 
     def _build_hotspot_brief(self, profile: AccountProfile, candidate: Dict[str, Any],
-                             *, selected_by: str) -> Tuple[ContentIntent, Dict[str, Any]]:
+                             *, selected_by: str,
+                             target_pipeline: Optional[str] = None) -> Tuple[ContentIntent, Dict[str, Any]]:
         topic = str(candidate.get("title") or "")
         components = (candidate.get("relevance") or {}).get("components") or {}
         # The alignment reads the same text the relevance gate read, so the
@@ -790,7 +804,7 @@ class ContentRouter:
             source_artifact_refs=[str(candidate.get("url") or "")],
             evidence_status="verification_required",
             approval_status="pending",
-            target_pipeline=target_pipeline_for(profile),
+            target_pipeline=target_pipeline_for(profile, target_pipeline),
             brief_status="draft",
             route_context=RouteContext(
                 mode="HOTSPOT_DISCOVERY",
@@ -829,7 +843,8 @@ class ContentRouter:
                                 alignment: Dict[str, Any],
                                 override: Optional[Dict[str, Any]],
                                 selected_by: str,
-                                fetch_evidence: bool = False
+                                fetch_evidence: bool = False,
+                                target_pipeline: Optional[str] = None
                                 ) -> Tuple[ContentIntent, Dict[str, Any]]:
         topic = payload.topic.strip()
         scoring = brief_module.topic_components(
@@ -887,7 +902,7 @@ class ContentRouter:
             source_artifact_refs=list(payload.urls),
             evidence_status="verification_required",
             approval_status="pending",
-            target_pipeline=target_pipeline_for(profile),
+            target_pipeline=target_pipeline_for(profile, target_pipeline),
             brief_status="draft",
             route_context=RouteContext(
                 mode="USER_TOPIC",

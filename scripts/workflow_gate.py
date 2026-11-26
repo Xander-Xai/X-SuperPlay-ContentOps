@@ -121,13 +121,15 @@ def cmd_check(args: argparse.Namespace) -> int:
     if args.json:
         print(json.dumps(result, ensure_ascii=False, indent=2))
     else:
-        state = "READY_FOR_REVIEW" if result["ok"] else "BLOCKED"
+        stage = next(item for item in document["stages"] if item["id"] == args.stage)
+        state = ("READY_FOR_REVIEW" if result["ok"] and stage.get("requires_review")
+                 else "CHECKED" if result["ok"] else "BLOCKED")
         print(f"[{state}] {args.stage}")
         for message in result["errors"]:
             print(f"  - {message}")
         for message in result["warnings"]:
             print(f"  ~ {message}")
-        if result["ok"]:
+        if result["ok"] and stage.get("requires_review"):
             print(f"approve with: --stage {args.stage} --reviewer <name> --confirm")
     return 0 if result["ok"] else 1
 

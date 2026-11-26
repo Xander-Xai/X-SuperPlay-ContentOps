@@ -3,7 +3,8 @@
 [English](RUNBOOK.md) | [简体中文](RUNBOOK.zh-CN.md)
 
 > Real executable commands. Derived from actual script behavior, not assumptions.
-> Last verified: 2026-11-17
+> Last verified: 2026-11-25 — added `scripts/topic_to_m5.py` (TOPIC derivative → M5 script projection) and `tests/test_topic_m5.py` (10/10). The tool was exercised end to end on `agentguide-learning-roadmap`: QC PASS and visual motion gate green (fast_ratio 0.0981). No review, publication or provider spend was granted.
+> Last verified: 2026-11-23 — offline checks: graphic workflow 55/55, production gates 39/39, pre-copy regressions 26/26, MiniMax image regression 86/86 and media-use rights 7/7. Two Codex attempts were authorized: the first was blocked by the old parser; the second generated a PNG and project-local generation receipt through the repaired adapter. Quota delta was not reported. This was a temporary workflow smoke project, not an approved article; package, rights/quality review and publication remain pending.
 > Last verified: 2026-11-14: X CLI now accepts `--post-format text|image` on `--new` (image is legacy default). A text package has no image/ALT upload step; image-format posts still require genuine PNG/JPEG+ALT. `--package` never posts, and only a human-confirmed X status URL can be recorded by `--mark-published`.
 > X policy: Strategy canonical SOP and registered account DNA; source metrics and publishing still require human verification.
 
@@ -92,27 +93,26 @@ python scripts\new_project.py --slug my-video --title "My Video Title"
 Creates: `projects/my-video/` with `project.yaml` and standard subdirs.
 Refuses to overwrite existing project.
 
-## 3.1 Pre-copy research gate (required before any copy)
+## 3.1 Video pre-copy research gate (required for VIDEO and shared topics)
 
-Every piece needs a signed research package before `script/master.md` or
-`02_draft/draft.md` exists. Contract `contentops.precopy-research/v1`; see
-[PRECOPY-RESEARCH.md](PRECOPY-RESEARCH.md).
+VIDEO copy and shared, medium-neutral `TOPIC` packages need a signed research
+receipt before copy approval/production. A standalone GRAPHIC_TEXT draft does
+not: write the draft first, preserve source links for factual claims, and leave
+unverified claims marked for follow-up. See
+[PRECOPY-RESEARCH.md](PRECOPY-RESEARCH.md) for the VIDEO/shared-topic contract.
 
 ```powershell
 python scripts\preresearch.py init --project projects\my-video
 python scripts\preresearch.py intent --project projects\my-video
-# Read the project, verify authoritative sources, fill the four written artifacts.
+# Verify sources and complete the research artifacts.
 python scripts\preresearch.py check --project projects\my-video
 python scripts\preresearch.py approve --project projects\my-video `
-  --reviewer "Your Name" --opinion "Read the diff and verified the sources" --confirm
+  --reviewer "Your Name" --opinion "Read the sources" --confirm
 ```
 
-`check` exits 4 while blocked. `approve` requires a named reviewer, a written
-opinion and `--confirm`; there is no `--force`. Editing any research artifact
-after signing makes the receipt `STALE`. This is the 8th VIDEO / 6th
-GRAPHIC_TEXT gate in `production_gates.py`, and `copy_review.py --approve`
-refuses to record a copy decision without it. Direct `m5_production.py` /
-`produce_video.py` runs remain diagnostic and outside the gate, as before.
+`check` exits 4 while blocked. VIDEO approvals require a named reviewer,
+written opinion and `--confirm`; edits after signing make the receipt `STALE`.
+Standalone graphic drafts are not held behind this form.
 
 ## 4. Prepare source assets
 
@@ -144,55 +144,36 @@ bookend decision. A run that skips those steps still renders, but silently
 degrades to Windows SAPI, no digital human and
 `receipts/motion-stage.json: NOT_CONFIGURED`.
 
-Use the single stable entry. It asks seven gates, records the answers, and writes
-the load-bearing `account_slug` block that makes account DNA drive the cloned
-voice, the avatar defaults and the Huashu motion backend:
+Use the single stable entry for VIDEO. It asks for the video-specific decisions,
+records them, and writes the load-bearing `account_slug` block. GRAPHIC_TEXT uses
+the same command but derives the account from the project or Bundle handoff; it
+skips narration, motion, avatar, budget and reviewer questions.
 
 ```powershell
-# 1. Answer the gates. --interactive asks: account, what to do when assets are
-#    insufficient (including MiniMax consent), H3 intro/outro, narration voice,
-#    motion backend, and the named reviewer.
+# VIDEO: answer its production decisions, then review copy separately.
 python scripts\make_content.py answer --project projects\my-video --interactive
-
-# 2. Sign copy review separately; the wrapper never signs on a human's behalf.
 python scripts\copy_review.py projects\my-video --approve `
   --reviewer "Your Name" --opinion "Reviewed the narration" --confirm
-
-# 3. Verify all eight VIDEO / six GRAPHIC_TEXT gates (exit 4 when any is open).
 python scripts\make_content.py check --project projects\my-video
-
-# 4. Produce only after check is green; run refuses to call the producer otherwise.
 python scripts\make_content.py run --project projects\my-video --mode STRICT
+
+# GRAPHIC_TEXT: account is read from project.yaml or the handoff.
+python scripts\make_content.py answer --project projects\my-article
+python scripts\make_content.py check --project projects\my-article
+python scripts\make_content.py run --project projects\my-article --mode STRICT
 ```
 
-Gates: `account`, `copy_review`, `evidence_links`, `asset_sufficiency`,
-`avatar_bookends`, `style_audio`, `runtime_readiness`. Receipts:
-`receipts/production-intent.json`, `receipts/inputs-bootstrap.json` and
-`receipts/make-content.json`.
+VIDEO has eight gates. GRAPHIC_TEXT checks account binding, source links, image
+ALT/rights and graphic runtime; shared-topic lineage is checked when applicable.
+A graphic package remains `AWAITING_MANUAL_REVIEW`; these checks do not authorize
+a provider call or platform delivery.
 
-- `answer` also materialises `00_brief/evidence-pack.json` and
-  `sources/source-refs.json` from `project.yaml`'s `source_refs` (or, for a
-  GRAPHIC_TEXT project, from the draft's citation links). Without the latter
-  `stage_motion` blocked and the film fell back to static cards.
-- `stage_script` now writes one markdown citation (a title plus a followable
-  url) per claim into
-  `script/master.md`, and `evidence_links` counts them.
-- `runtime_readiness` fails when a chosen capability cannot execute on this
-  host: `MINIMAX_SUBSCRIPTION_KEY` / `MINIMAX_API_KEY` for the cloned voice,
-  `SILICONFLOW_API_KEY` for the account-bound ASR backcheck, the Huashu runtime
-  and `sources/source-refs.json` for motion, and
-  `CONTENTOPS_MEDIA_USE_RUNTIME_LOCK` for a local BGM track.
-- `--asset-policy minimax-authorized` is refused at `answer` time while ADR-014
-  holds or no subscription key exists, instead of recording an option that can
-  never pass.
-- GRAPHIC_TEXT gets its own six gates (`account`, `copy_review`, `evidence_links`,
-  `asset_rights`, `runtime_readiness`, `precopy_research`); its copy review binds
-  to `draft.md` and `graphic-input.json`.
-- `produce_video.py` refuses to run without `receipts/production-intent.json`
-  (`PRODUCTION_INTENT_MISSING`, exit 4). `--diagnostic` is the explicit escape
-  hatch for an ungated render. `agent_drive.py plan` lists `preflight-gates`.
-- `qc_video.py --video` requires an `.mp4` filename (or `easel` / `fallback`)
-  and refuses to overwrite a CURRENT PASS receipt with a degraded FAIL.
+- `answer` materialises the evidence pack and source refs from project metadata.
+- VIDEO `runtime_readiness` checks only capabilities selected for that run.
+- `--asset-policy minimax-authorized` is refused while ADR-014 holds or no
+  subscription key exists.
+- `produce_video.py` remains diagnostic unless invoked through the stable entry.
+- `qc_video.py --video` requires an `.mp4` filename (or `easel` / `fallback`).
 
 ## 5. Run V1 pipeline
 
@@ -242,12 +223,104 @@ compose → QC → review, writing a receipt per stage. It refuses (`exit 4`,
 repo, an asset whose SHA-256 drifted, a claim whose quote is not verbatim in its
 source, an undeclared asset, or subtitle coverage below 0.8.
 
+For external visual assets, the rights helper can group only assets with the same source, licence, review scope and modifications. `review_batch()` produces pending batches bound to every asset ID and SHA-256; it does not clear rights. After a named human decision, `apply_batch_decision()` writes the per-asset sidecars and returns the updated manifest, which the caller persists before rerunning M5 `stage_assets`. A changed hash or scope requires a new decision. An assets-stage PASS is not final QC, human acceptance or publication authorization.
+
 `--skip-compose` stops after the storyboard (no ffmpeg, no Easel) and is what CI
 and a fast edit loop use.
 
-Narration is the offline Windows SAPI voice; no network TTS is called. The run
-always ends at `PENDING_FOUNDER_REVIEW` with `production_ready: false` — a green
-QC is not publishing permission (ADR-005).
+#### Shared TOPIC derivative → M5 script
+
+When a selected topic was reviewed once as a medium-neutral TOPIC and the VIDEO
+child already owns an approved `00_brief/copy-derivative.json`, do not hand-write
+`script/script.json`. Use the projector:
+
+~~~powershell
+python scripts\topic_to_m5.py projects\my-video --json
+python scripts\topic_to_m5.py projects\my-video --check
+~~~
+
+It reads the reviewed derivative and the CREATED_BY_OWNER visual cards registered
+in `sources/assets.json`, then writes **only** `script/script.json`. It splits
+long segments into <= 28-character lines so each narrated Huashu shot stays under
+8 seconds, keeps every spoken character byte-for-byte (caption == narration and
+each segment's pieces rejoin to the reviewed text), covers every `claim_refs`,
+uses the camera-push grammar (`evidence_zoom`) that passes the film gate, and
+rotates cards and focus rectangles so adjacent shots never reuse the same source.
+`--check` validates an existing script against all of those invariants; neither
+mode signs a review or grants publication.
+
+Two prerequisites are deliberately not automated: an approved copy derivative,
+and authored visual cards registered as `CREATED_BY_OWNER` real bitmaps. LICENSED
+source screenshots stay evidence and are never used as Huashu visual sources, so
+a project with no authored cards is blocked with `NO_VISUAL_CARDS`. For an
+explainers-style video, generate the cards with the project's own card generator
+before running this tool, then register them in `sources/assets.json` with
+matching SHA-256 and `evidence_capable: false`.
+
+#### Archiving a finished run
+
+M5 registers each rendered Huashu shot as a `huashu-*` asset in
+`sources/assets.json`. Those entries point at files under
+`assets/generated/huashu/`. When moving a finished project, copy the generated
+shot files together with the manifest: a manifest that declares a `huashu-*`
+asset whose `repo_path` no longer exists is an orphan, and the assets stage
+blocks the next run with `file missing` before any re-render can happen. If the
+generated shots are intentionally not carried over, remove their declarations
+from `sources/assets.json` so the next run regenerates them cleanly. Keep the
+final MP4 and its receipts either way.
+
+#### Motion skills: hybrid planning, not one account backend
+
+The repository ships five render backends: `huashu-art-motion` and
+`huashu-motion` (local, non-paid, rendered through M5's own adapter) and the clip
+renderers `remotion`, `motion-canvas` and `manim` (through `animation_render.py`).
+Remotion additionally declares thirteen pinned skill packages. A shot kind states
+which backends can draw it in `SHOT_COMPATIBILITY`; the film then uses a mix.
+
+Plan the mix before production:
+
+~~~powershell
+python scripts\plan_motion.py projects\my-video --json
+~~~
+
+This probes each backend through its real readiness path — Huashu through the M5
+adapter preflight, clip renderers through `animation_render.preflight` — and
+writes `receipts/motion-orchestration.json` with one backend per shot. This is a
+**planning receipt** and is harmless: it never blocks the ordinary Huashu
+auto-plan. Only READY backends are chosen; an explicit per-shot backend is never
+replaced, a declared default is a preference rather than a forced single backend,
+and an unclassified shot with no ready fallback is BLOCKED instead of becoming a
+still.
+
+To actually render the mix, materialize the shot that has an honest clip spec:
+
+~~~powershell
+python scripts\plan_motion.py projects\my-video --materialize
+~~~
+
+This writes `motion/orchestrated-plan.json`, a **clip overlay** naming only shots
+that can be given a contract-valid, claim-free spec (currently editorial
+title cards on Remotion). The next M5 run authors every Huashu spec from the
+measured narration duration, then applies the overlay to switch the named shots
+to their clip backend; the rest stay on Huashu. Leave `motion.shot_plan` unset —
+pointing it at the overlay would skip the auto-plan and leave Huashu shots with
+no authored spec. Only a materialized receipt is enforced: a mismatched backend
+then BLOCKS instead of degrading. A mixed run is reported as `hybrid`; it remains
+a technical draft with `production_ready: false` until human review.
+
+#### Narration default: MiniMax founder clone
+
+Both video account DNAs declare `provider_hint: minimax_m_plan/speech-2.8-hd`
+with `voice_alias: founder_primary_v1`, and `make_content.py answer` now uses the
+founder clone as its default in both interactive and scripted runs. Pass
+`--narration sapi` explicitly for an offline diagnostic voice; SAPI is never a
+silent fallback after a clone failure. The clone path needs a MiniMax
+subscription or API key in the environment or `.env`; `runtime_readiness` checks
+for either name before any paid call. A `MINIMAX_CLONE_KEY` alone is the
+pay-as-you-go clone route and does not satisfy that billing gate. A passing gate
+is permission to attempt the call, not evidence that a clone was synthesized.
+The run always ends at `PENDING_FOUNDER_REVIEW` with `production_ready: false` —
+a green QC is not publishing permission (ADR-005).
 
 The `asr_backcheck` stage transcribes the narration and compares it with the
 spoken script. With no `SILICONFLOW_API_KEY` it reports `SKIPPED` — that is not a
@@ -368,9 +441,31 @@ python scripts\bundle_handoff.py projects\my-video\bundle.json `
   --platform wechat_article --out-project projects\my-article
 ```
 
-## 5.2 Graphic manual package
+## 5.2 Graphic image generation and manual package
 
-The graphic line produces a reviewable package, not a platform draft:
+### Normal use: tell the assistant what to make
+
+Give the article/topic and target platform; the assistant should reuse the open
+project, account and Bundle, then draft first. **The working copy is the one
+routine human review point.** After that review, the assistant continues with
+images, layout, automated stage checks and the offline package without asking you
+to approve the brief, outline, image placement, layout or QC separately. A real
+provider call still needs your explicit provider/count authorization. Unverifiable
+rights mean excluding or blocking that asset, never inventing approval. Creating
+a platform draft still needs separate explicit authorization; this workflow never
+publishes.
+
+Record the working-copy decision once after review (or edit `draft.md` directly):
+
+```powershell
+python scripts\copy_review.py projects\my-article --approve `
+  --reviewer "Reviewer" --opinion "Reviewed the graphic working draft" --confirm
+```
+
+### CLI reference (optional)
+
+The graphic line can create a reviewable package, not a platform draft. Package
+creation remains separate from image generation:
 
 ```powershell
 python scripts\graphic_package.py `
@@ -379,10 +474,106 @@ python scripts\graphic_package.py `
   --input projects\my-article\graphic-input.json
 ```
 
-It writes `receipts/graphic-package.json` and `receipts/graphic-preview.md`
-with `status: AWAITING_MANUAL_REVIEW` and `publish_authorized: false`. Every
-image needs ALT text and a reviewed rights block; a missing right, a path
-escape or an undecodable image blocks the package.
+Only these three image methods are selectable for new packages:
+
+| Method | Route | Boundary |
+|---|---|---|
+| `codex_imagegen` | Codex CLI's native `image_gen` tool | One image per run; no API, browser, MCP or fallback. Actual dimensions are recorded; 16:9 aspect is required, not a guaranteed exact pixel size. |
+| `ian_xiaohei_codex` | Host invokes `ian-xiaohei-illustrations` for shot list/prompts, then the same Codex native `image_gen` route | The CLI does not invoke the Skill. Its JSON output must bind each shot to the current article hash. |
+| `minimax_subscription` | Existing `image-01` provider via `generate_image.py` and `BillingGuard` | Subscription only; PAYG and Credit Pack remain blocked. Default is 1024×576; width/height must satisfy the provider contract and be 16:9. Provider cache and transient sidecars stay under the selected scratch root; the project receives unique image/summary receipts. |
+
+For comic-style explainers, the host should consult the pinned GitHub
+[comic-explainer-illustration skill](https://github.com/chujianyun/awesome-gpt-image2-ppt-skills/blob/aa5fec05a1d1991d7653ed31c0407d513d0fa6d3/comic-explainer-illustration/SKILL.md)
+as a prompt/storyboard aid before saving the prompt file. Use its 16:9, concise
+visual-storytelling approach, preserving account DNA and character contracts;
+do not force four panels or import its default characters. The resulting prompt
+file is backend-neutral and is consumed by either `codex_imagegen` or
+`minimax_subscription` on that selected route. With `ian_xiaohei_codex`, apply it
+only as an optional prompt-shaping aid after Ian's shot/prompt output. This is
+not another provider or CLI method. The reviewed GitHub revision has no declared
+`LICENSE`/`COPYING`, so do not vendor its text or scripts into this repository.
+
+The image-generation command accepts one prompt/shot per run. A plan-only call
+makes no provider request. Real generation requires **both** `--execute` and
+`--authorize-provider-usage`; each run permits one attempt and never retries or
+switches methods. All execution methods require an operator-selected scratch root
+under `D:\Temp\AI-Agents\<agent>\<task>`; Codex creates a unique run folder,
+while MiniMax keeps its provider cache and sidecars there:
+
+```powershell
+python scripts\graphic_generate.py `
+  --method codex_imagegen --project projects\my-article --asset-id shot-01 `
+  --prompt-file 03_images\prompts\shot-01.md `
+  --scratch-root "D:\Temp\AI-Agents\<agent>\<task>" `
+  --execute --authorize-provider-usage
+```
+
+The wrapper runs `codex exec --ephemeral --sandbox workspace-write` with
+`--ignore-user-config` and feeds the prompt over stdin. It accepts either a
+completed native image-generation event bound to one fresh image, or a completed
+Codex thread (`thread.started` + `turn.completed`) with exactly one image in that
+new thread's `CODEX_HOME\generated_images\<thread_id>` directory. Missing,
+ambiguous or stale output, path mismatches, and incomplete threads block the run.
+It does not persist the Codex conversation. Codex did not report the quota delta
+in the observed live attempt; the wrapper records it as unknown when unreported.
+The model/version and exact requested pixel size are not assumed when the CLI
+does not report them.
+
+MiniMax uses the same authorization flags and the existing guarded provider:
+
+```powershell
+python scripts\graphic_generate.py `
+  --method minimax_subscription --project projects\my-article --asset-id shot-01 `
+  --prompt-file 03_images\prompts\shot-01.md `
+  --scratch-root "D:\Temp\AI-Agents\<agent>\<task>" `
+  --width 1024 --height 576 `
+  --execute --authorize-provider-usage
+```
+
+For `ian_xiaohei_codex`, first prepare the read-only, article-hash-bound handoff:
+
+```powershell
+python scripts\graphic_workflow.py plan `
+  --workflow x --project projects\my-article --article 02_draft\draft.md `
+  --illustration-skill ian-xiaohei-illustrations --json
+```
+
+The host invokes the selected Skill and saves its shot list as
+`contentops.ian-illustration-result/v1` under the project, preserving the exact
+article path/hash returned by the handoff. Then generate one selected shot:
+
+```powershell
+python scripts\graphic_generate.py `
+  --method ian_xiaohei_codex --project projects\my-article `
+  --article 02_draft\draft.md --skill-output receipts\ian-skill-result.json `
+  --asset-id shot-01 --scratch-root "D:\Temp\AI-Agents\<agent>\<task>" `
+  --execute --authorize-provider-usage
+```
+
+Generation writes a real image plus a project-local generation receipt with the
+method, prompt hash, file hash, format, dimensions and non-evidence flags. It
+returns `GENERATED_PENDING_REVIEW`; it does not approve AIGC disclosure, rights,
+quality or publication. Add each output to `graphic-input.json` with the returned
+`path`, `asset_id`, ALT text and `generation` receipt reference. Remote outputs
+also need a separate, named rights review tied to the exact generation ID and
+asset SHA-256. Use `license_id: GENERATED-REMOTE-REVIEWED`, the applicable
+provider terms URL, a terms effective date, specific `permitted_use`, and a
+narrow `review_scope`. This is an operator review record, not a warranty or
+legal conclusion. `OWNED-GENERATED-LOCAL` is not valid for remote outputs, and
+this remote-generated class is not enabled in the M5 rights gate.
+
+The package command verifies that working-copy receipt, then materialises all
+stages and runs their structural and quality checks automatically. Routine stages
+record machine checks only; they do not request separate human approvals. The
+package does not create a platform draft or publish, and `publish_authorized`
+remains false. Generated images are support visuals only, never factual evidence.
+Rights evidence and provider-spend authorization retain their own safety checks.
+
+`manual_chatgpt_web`, generic `api`, and `local_svg_html` are retired from new
+packages; no silent substitution occurs. Historical receipts retain their
+original method values and remain verifiable. Offline contract tests passed. The first live Codex attempt was blocked by the old event parser. A second, separately authorized smoke run passed the repaired adapter and wrote a temporary project-local image and generation receipt. It did not package an approved article or complete rights/quality review.
+
+Official references: [Codex non-interactive mode / JSONL events](https://developers.openai.com/codex/non-interactive-mode), [Codex image-generation tool](https://github.com/openai/codex/blob/main/codex-rs/ext/image-generation/src/tool.rs), [Codex imagegen sample](https://github.com/openai/codex/blob/main/codex-rs/skills/src/assets/samples/imagegen/SKILL.md), [MiniMax CLI](https://platform.minimax.io/docs/m-plan/minimax-cli), [MiniMax image-01 dimensions](https://platform.minimax.cn/docs/api-reference/image-generation-t2i), [OpenAI Terms of Use](https://openai.com/policies/terms-of-use/), [MiniMax Terms of Service](https://platform.minimax.io/protocol/terms-of-service).
 
 ## 5.3 Guarded Easel host
 
@@ -439,9 +630,15 @@ python scripts\copy_review.py projects\my-episode --request-changes `
 ```
 
 A decision requires a named reviewer, written rationale and `--confirm`. The
-receipt is bound to the current copy fingerprint; editing the script, captions,
-claims, storyboard or declared assets makes an earlier approval stale. This
-command records a decision only: it does not edit copy, run M5 or publish.
+receipt is bound to the current copy fingerprint. Changes to spoken copy,
+captions, line-level claim bindings, storyboard or declared assets make an earlier
+approval stale. Adding or correcting evidence metadata in `script/claims.json`
+alone does not change the reviewed copy. When `script/script.json` is a strict
+text-and-claim projection of the reviewed VIDEO derivative, it does not trigger a
+second review; any mismatch remains fingerprinted and stale. M5 writes source
+links to `receipts/script-citations.json` and never overwrites an existing
+`script/master.md`; a mismatch between narration and the creator master blocks.
+This command records a decision only: it does not edit copy, run M5 or publish.
 
 ## 5.6 Render cards and the GZH article
 
@@ -484,8 +681,8 @@ python scripts\video_deliver.py pack   --project projects\my-video --thumbnails
 python scripts\video_deliver.py status --project projects\my-video
 python scripts\video_deliver.py record --project projects\my-video --platform douyin --url <real-url>
 python scripts\platform_delivery.py list
-python scripts\platform_delivery.py pack  --package projects\bundle-dual-line-graphic\receipts\graphic-package.json
-python scripts\graphic_deliver.py --all
+python scripts\platform_delivery.py pack --package <path-to-reviewed-graphic-package.json>
+python scripts\graphic_deliver.py --package <path-to-reviewed-graphic-package.json> --all --confirm-draft-write
 ```
 
 - `dispatch` runs an external uploader and requires `--execute` **and** an
@@ -516,7 +713,7 @@ python scripts\qc_video.py projects\my-video
 ```
 
 Checks: file existence, size, ffprobe parse, resolution (1080×1920), aspect ratio (9:16),
-duration (30–120s), video codec (H.264), audio codec (AAC), audio presence,
+duration (30–120s by default; Future Intelligence uses its account-specific 30–300s range), video codec (H.264), audio codec (AAC), audio presence,
 script/storyboard existence, real-source ratio (≥70%), source provenance,
 voice audibility (volumedetect), subtitle burn detection (multi-frame pixel scan).
 

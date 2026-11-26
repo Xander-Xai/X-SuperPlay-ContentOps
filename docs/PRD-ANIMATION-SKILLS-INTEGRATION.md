@@ -77,7 +77,7 @@ Motion Canvas 与 Manim 的许可证是 MIT。Motion Canvas 已接入模板和�
 
 1024：账号内容目标配比为 70% 真实录屏、25% 矢量动画、5% 对比卡；45–60 秒。**两个门须分开看：**账号 DNA 的 ≥70% 真实录屏是内容目标；`real_source_duration.py` 的证据主导时长门按成片可见时长计算获权真实来源素材（可包括录屏、截图、文档、日志等），不是要求这 ≥70% 全部为录屏，也不是按镜头数计算。另一方面，`production_gate()` 仍要求登记真实裁切录屏；缺失时 `purpose=production` 返回 `MISSING_REAL_RECORDING`。动画是视觉辅助，`source_kind=vector_animation`，`generated=true`，`evidence_capable=false`，`counts_as_real_recording=false`。测试用途可以渲染，回执标明不是已验收案例。
 
-未来智能：70% 矢量动画、25% 代码片段、5% 图表；90–120 秒。**禁止手工桌面录屏**；`input_kind` 为桌面/手动录屏时 `RECORDING_FORBIDDEN`。不得以桌面捕获替代图解/代码视觉。RAG 示例字幕写明“原理示意，不是系统输出”，不含未证实的性能数字。
+未来智能：70% 矢量动画、25% 代码片段、5% 图表；每条视频按主题选择 30–300 秒，最高 5 分钟。**禁止手工桌面录屏**；`input_kind` 为桌面/手动录屏时 `RECORDING_FORBIDDEN`。不得以桌面捕获替代图解/代码视觉。RAG 示例字幕写明“原理示意，不是系统输出”，不含未证实的性能数字。
 
 此处所述配比是账号内容目标；1024 的真实录屏门是正式生产硬门，未来智能不设录屏最低比例且禁止手工桌面录屏。
 

@@ -82,6 +82,142 @@ def _select_motion_backend(shot: Dict[str, Any], default: Optional[str]) -> Opti
     return selected
 
 
+def _apply_clip_overlay(project: Path, auto_plan: Dict[str, Any],
+                        narration_lines: Sequence[Dict[str, Any]]) -> List[str]:
+    """Replace selected Huashu shots with ready clip shots from an overlay.
+
+    The overlay is written by ``scripts/plan_motion.py --materialize`` and names
+    only the shots that have an honest, contract-valid clip spec. Every other
+    shot keeps the Huashu spec just authored from the measured narration.
+    Returns the placements switched to a clip backend.
+    """
+    from contentops.media.animation_backend import CLIP_BACKENDS
+
+    overlay_path = project / "motion" / "orchestrated-plan.json"
+    if not overlay_path.is_file():
+        return []
+    try:
+        overlay = json.loads(overlay_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise M5Blocked(f"motion clip overlay invalid: {exc}") from None
+    if overlay.get("schema") != "contentops.m5-motion-overlay/v1":
+        raise M5Blocked("motion clip overlay has an unsupported schema")
+    by_placement = {str(row.get("placement_id")): row
+                    for row in overlay.get("shots") or [] if isinstance(row, dict)}
+    timings = {str(row.get("line_id")): row for row in narration_lines}
+    switched: List[str] = []
+    for shot in auto_plan.get("shots") or []:
+        if not isinstance(shot, dict):
+            continue
+        placement = str(shot.get("placement_id") or "")
+        row = by_placement.get(placement)
+        if row is None:
+            continue
+        backend = str(row.get("backend") or "")
+        if backend not in CLIP_BACKENDS:
+            raise M5Blocked(f"{placement}: clip overlay backend {backend!r} unsupported")
+        spec = str(row.get("spec") or "").strip()
+        spec_path = (project / spec).resolve()
+        try:
+            spec_path.relative_to(project.resolve())
+        except ValueError:
+            raise M5Blocked(f"{placement}: overlay spec escapes the project") from None
+        if not spec_path.is_file():
+            raise M5Blocked(f"{placement}: overlay spec is missing: {spec}")
+        try:
+            spec_doc = json.loads(spec_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            raise M5Blocked(f"{placement}: overlay spec invalid: {exc}") from None
+        if str(spec_doc.get("backend") or "") != backend:
+            raise M5Blocked(f"{placement}: overlay spec backend disagrees with assignment")
+        # A clip shot is silent; its on-screen duration follows the measured
+        # narration slot, clamped to the clip renderer's 2-8s contract.
+        measured = float((timings.get(placement) or {}).get("duration") or 0.0)
+        if measured <= 0:
+            raise M5Blocked(f"{placement}: clip overlay needs a measured narration duration")
+        duration = min(8.0, max(2.0, measured))
+        spec_doc["duration_s"] = duration
+        spec_path.write_text(json.dumps(spec_doc, ensure_ascii=False, indent=2) + "\n",
+                             encoding="utf-8")
+        shot["backend"] = backend
+        shot["motion_backend"] = backend
+        shot["asset_id"] = str(row.get("asset_id") or f"orch-{placement}")
+        shot["spec"] = spec
+        shot["duration_s"] = duration
+        switched.append(placement)
+    return switched
+
+
+def _enforce_orchestration(project: Path, shots: List[Dict[str, Any]],
+                           shot_plan: Optional[Dict[str, Any]] = None) -> None:
+    """Honour a *materialized* hybrid plan; ignore a planning-only receipt.
+
+    ``scripts/plan_motion.py`` writes two kinds of record:
+
+    * a planning receipt (``materialized: false``) -- advice only. It must never
+      block the ordinary Huashu auto-plan, which is the default render path.
+    * a materialized shot plan (``materialized: true``) -- the operator explicitly
+      pointed ``motion.shot_plan`` at it. There, every assigned backend is
+      load-bearing and a mismatch is BLOCKED, not degraded (AGENTS.md rule 7).
+
+    That distinction is what makes hybrid planning safe to run before a normal
+    production: merely planning a shot cannot change or break the render.
+    """
+    receipt_path = project / "receipts" / "motion-orchestration.json"
+    if not receipt_path.is_file():
+        return
+    try:
+        orchestration = json.loads(receipt_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise M5Blocked(f"motion orchestration receipt invalid: {exc}") from None
+    if orchestration.get("schema") != "contentops.animation-orchestration/v1":
+        raise M5Blocked("motion orchestration receipt has an unsupported schema")
+    # A planning-only receipt is advice. The auto-plan cannot satisfy it, and it
+    # is not supposed to; block only when the operator opted into a materialized
+    # shot plan. This is the guard that keeps `plan_motion.py` harmless by default.
+    materialized = orchestration.get("materialized") is True or bool(
+        (shot_plan or {}).get("orchestrated"))
+    if not materialized:
+        return
+    assigned = {str(row.get("placement_id")): str(row.get("backend"))
+                for row in orchestration.get("assignments") or []
+                if isinstance(row, dict) and row.get("placement_id")}
+    if not assigned:
+        raise M5Blocked("motion orchestration receipt has no assignments")
+    from contentops.media.animation_backend import HUASHU_BACKENDS
+
+    def family(value: str) -> str:
+        # Both Huashu names go through the same M5 adapter; choosing the motion
+        # variant over the art variant is not a skill change.
+        return "huashu" if value in HUASHU_BACKENDS else value
+
+    # Enforce only what was actually materialized. A planning assignment that
+    # had no honest clip spec stays on Huashu by design; enforcing it would
+    # block the very run the overlay is meant to improve.
+    overlay_path = project / "motion" / "orchestrated-plan.json"
+    if overlay_path.is_file():
+        try:
+            overlay_doc = json.loads(overlay_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            raise M5Blocked(f"motion clip overlay invalid: {exc}") from None
+        if overlay_doc.get("schema") == "contentops.m5-motion-overlay/v1":
+            assigned = {str(row.get("placement_id")): str(row.get("backend"))
+                        for row in overlay_doc.get("shots") or []
+                        if isinstance(row, dict) and row.get("placement_id")}
+
+    for shot in shots:
+        if not isinstance(shot, dict):
+            continue
+        placement = str(shot.get("placement_id") or shot.get("id") or "")
+        expected = assigned.get(placement)
+        if expected is None:
+            continue  # a shot the orchestrator did not plan is left to normal selection
+        actual = str(shot.get("motion_backend") or shot.get("backend") or "")
+        if actual and family(actual) != family(expected):
+            raise M5Blocked(
+                f"{placement}: shot backend {actual!r} contradicts orchestration {expected!r}")
+
+
 def _payload_sha256(value: Dict[str, Any]) -> str:
     """Stable digest for the in-memory script passed between M5 stages."""
     payload = json.dumps(value, ensure_ascii=False, sort_keys=True,
@@ -762,6 +898,10 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
                     shot["spec"] = author_auto_film(
                         project, shot, line, account_dna, render_duration
                     )
+                clip_switched = _apply_clip_overlay(project, auto_plan, narration_lines)
+                if clip_switched:
+                    auto_plan["backend"] = "hybrid"
+                    auto_plan["clip_overlay_placements"] = clip_switched
                 auto_path = project / "motion" / "auto" / (
                     f"huashu-motion-shot-plan-{generated['input_sha256'][:12]}.json"
                 )
@@ -789,6 +929,7 @@ def stage_motion(project: Path, config: Dict[str, Any], script: Dict[str, Any], 
     shots = plan.get("shots") if isinstance(plan, dict) else None
     if not isinstance(shots, list) or not shots:
         raise M5Blocked("motion shot plan must contain a non-empty shots list")
+    _enforce_orchestration(project, shots, plan if isinstance(plan, dict) else None)
     script_assets = project / "script" / "assets.json"
     if not script_assets.exists():
         # This is an adapter-maintained output map, not an approval record.
@@ -945,13 +1086,33 @@ def _load_script(project: Path) -> Dict[str, Any]:
     return payload
 
 
+def _script_line_claim_ids(line: Dict[str, Any]) -> List[str]:
+    """Return a line's complete claim set while retaining the legacy primary claim."""
+    primary = str(line.get("claim") or "").strip()
+    raw_claims = line.get("claims")
+    if raw_claims is None:
+        return [primary] if primary else []
+    if not isinstance(raw_claims, list):
+        raise M5Blocked(f"{line.get('id', '<line>')}: claims must be a list")
+    claim_ids = [str(value).strip() for value in raw_claims]
+    if any(not value for value in claim_ids):
+        raise M5Blocked(f"{line.get('id', '<line>')}: claims must contain non-empty ids")
+    if len(claim_ids) != len(set(claim_ids)):
+        raise M5Blocked(f"{line.get('id', '<line>')}: claims contains duplicates")
+    if primary and primary not in claim_ids:
+        raise M5Blocked(f"{line.get('id', '<line>')}: primary claim must be included in claims")
+    return claim_ids
+
+
 def stage_script(project: Path, ledger: ClaimLedger, assets: Dict[str, Any]) -> Dict[str, Any]:
     script = _load_script(project)
     ids = [line["id"] for line in script["lines"]]
     if len(ids) != len(set(ids)):
         raise M5Blocked("duplicate script line id")
     known = ledger.by_id()
-    cited = {line.get("claim") for line in script["lines"] if line.get("claim")}
+    claims_by_line = {str(line["id"]): _script_line_claim_ids(line)
+                      for line in script["lines"]}
+    cited = {claim_id for claim_ids in claims_by_line.values() for claim_id in claim_ids}
     unknown = sorted(cited - set(known))
     if unknown:
         raise M5Blocked(f"script cites unknown claims: {unknown}")
@@ -973,38 +1134,62 @@ def stage_script(project: Path, ledger: ClaimLedger, assets: Dict[str, Any]) -> 
         "claims_cited": sorted(cited),
         "claims_unused": [],
     }
-    _write_json(project / "receipts" / "script-check.json", payload)
-
     master = project / "script" / "master.md"
-    # The script text is what a reviewer reads. Every beat must show the source
-    # it came from as a followable link, not a bare claim id, or "the copy cites
-    # its evidence" is unverifiable. refs come from sources/source-refs.json.
     refs_doc = _read_json_or_none(project / "sources" / "source-refs.json") or {}
     refs_by_id = {str(row.get("id")): row
                   for row in (refs_doc.get("refs") or [])
                   if isinstance(row, dict) and row.get("id")}
     rows = ["| # | 旁白 | 字幕 | 事实来源 | 素材 |", "|---|---|---|---|---|"]
+    citation_lines = []
     for line in script["lines"]:
-        claim = known.get(line.get("claim") or "")
+        line_claim_ids = claims_by_line[str(line["id"])]
         citations = []
-        for artifact_id in (claim.artifacts if claim else ()):
-            ref = refs_by_id.get(str(artifact_id)) or {}
-            target = str(ref.get("url") or ref.get("path") or "")
-            if not target:
-                continue
-            title = str(ref.get("title") or artifact_id).replace("]", r"\]")
-            citations.append(f"[{title}](<{target}>)")
+        citation_sources = []
+        seen_sources = set()
+        for claim_id in line_claim_ids:
+            claim = known[claim_id]
+            for artifact_id in claim.artifacts:
+                ref = refs_by_id.get(str(artifact_id)) or {}
+                target = str(ref.get("url") or ref.get("source_url") or ref.get("path") or "")
+                if not target or str(artifact_id) in seen_sources:
+                    continue
+                seen_sources.add(str(artifact_id))
+                title = str(ref.get("title") or artifact_id)
+                escaped_title = title.replace("]", r"\]")
+                citations.append(f"[{escaped_title}](<{target}>)")
+                citation_sources.append({"id": str(artifact_id), "title": title, "url": target})
         source_cell = " · ".join(citations) if citations else "—"
         rows.append(
             f"| {line['id']} | {line['narration']} | {line['caption']} | "
             f"{source_cell} | {assets[line['asset_id']]['repo_path']} |"
         )
-    master.write_text(
-        f"# {project.name} — 脚本文本\n\n"
-        "由 `script/script.json` 生成；每条事实声明在 `script/claims.json` 中绑定到来源引文。\n\n"
-        + "\n".join(rows) + "\n",
-        encoding="utf-8",
-    )
+        citation_lines.append({"line_id": line["id"], "claim_id": line.get("claim"),
+                               "claim_ids": line_claim_ids, "sources": citation_sources})
+
+    if master.is_file():
+        master_text = master.read_text(encoding="utf-8")
+        cursor = 0
+        for line in script["lines"]:
+            narration = str(line.get("narration") or "").strip()
+            position = master_text.find(narration, cursor)
+            if position < 0:
+                raise M5Blocked(
+                    f"{line['id']}: narration does not match existing master.md; "
+                    "refusing to overwrite the creator copy")
+            cursor = position + len(narration)
+    else:
+        master.write_text(
+            f"# {project.name} — 脚本文本\n\n"
+            "由 `script/script.json` 生成；每条事实声明在 `script/claims.json` 中绑定到来源引文。\n\n"
+            + "\n".join(rows) + "\n",
+            encoding="utf-8",
+        )
+
+    _write_json(project / "receipts" / "script-citations.json", {
+        "schema": "contentops.m5-script-citations/v1",
+        "lines": citation_lines,
+    })
+    _write_json(project / "receipts" / "script-check.json", payload)
     return {"script": script, "lines": len(script["lines"])}
 
 
@@ -1090,7 +1275,7 @@ def _text_sha(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
-def stage_narration(project: Path, script: Dict[str, Any], *, provider: str = "sapi",
+def stage_narration(project: Path, script: Dict[str, Any], *, provider: str = "minimax",
                     narration_audio: Optional[Path] = None,
                     narration_receipt: Optional[Path] = None,
                     narration_voice: Optional[str] = None,
@@ -2465,6 +2650,24 @@ def _guard_checkout(project: Path) -> Dict[str, Any]:
     return ensure_writable_checkout(project, repo_root=ROOT)
 
 
+def _require_shared_topic_copy(project: Path, *,
+                               projects_root: Optional[Path] = None) -> None:
+    """A shared-topic VIDEO child cannot bypass its source or copy reviews."""
+    from contentops.workflow import topic_package
+
+    lineage = topic_package.status_child(project, content_format="VIDEO",
+                                         projects_root=projects_root)
+    if not lineage.get("applicable"):
+        return
+    if not lineage.get("ok"):
+        raise M5Blocked(
+            f"shared topic package: {lineage.get('state')}: {lineage.get('detail')}")
+    try:
+        copy_review.require_approved(project, projects_root=projects_root)
+    except copy_review.CopyReviewRequired as exc:
+        raise M5Blocked(f"shared format-copy review: {exc}") from None
+
+
 def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = None,
           narration_provider: Optional[str] = None,
           narration_audio: Optional[Path] = None,
@@ -2491,6 +2694,7 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
     # Same rule as produce_video: no stage of this run may write into a main
     # checkout that already holds unreviewed work.
     _guard_checkout(project)
+    _require_shared_topic_copy(project)
     context = RunContext(clock=time.monotonic)
     stages = context.stages
     timings = context.timings
@@ -2581,7 +2785,11 @@ def build(project: Path, *, skip_compose: bool = False, media_adapter: Any = Non
     provider = (narration_provider
                 or (config.get("narration") or {}).get("provider")
                 or narration_defaults.get("provider")
-                or "sapi")
+                # MiniMax M Plan is the production default. SAPI is a
+                # diagnostic path and must be requested explicitly -- a
+                # missing account DNA must never silently degrade narration
+                # to the offline mechanical voice.
+                or "minimax")
     narration_voice = narration_voice or narration_defaults.get("voice")
     narration_model = narration_model or narration_defaults.get("model") or "speech-2.8-hd"
     narration = run_stage("narration", stage_narration, project, script["script"],
@@ -2747,7 +2955,8 @@ def main() -> int:
     parser.add_argument("--skip-compose", action="store_true")
     parser.add_argument("--narration-provider", default=None,
                         choices=("sapi", "existing", "minimax"),
-                        help="sapi = offline Windows voice (compatibility/diagnostic); "
+                        help="default = MiniMax M Plan cloned voice when account DNA binds one; "
+                             "sapi = offline Windows voice (diagnostic only, explicit); "
                              "existing = reuse audio bound to this script by a receipt; "
                              "minimax = official M Plan Speech Provider, with an explicit voice ID. "
                              "Any other provider is refused, never silently replaced")

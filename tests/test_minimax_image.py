@@ -660,6 +660,23 @@ def test_stale_output_from_a_previous_run_is_refused():
 
 # --- 7. cache ----------------------------------------------------------------
 
+def test_landscape_request_passes_generation_and_cache_qc():
+    if not HAVE_PILLOW_IMAGE:
+        _skip(26, "landscape generation and cache QC", "Pillow")
+        return
+    with tempfile.TemporaryDirectory() as td:
+        work = Path(td)
+        request = _request(width=1024, height=576)
+        first = _image_provider(work).generate_image(request)
+        assert (first.asset.width, first.asset.height) == (1024, 576)
+        assert first.reused is False
+
+        cached = _image_provider(work).generate_image(request)
+        assert cached.reused is True
+        assert (cached.asset.width, cached.asset.height) == (1024, 576)
+    print("[ok] landscape aspect is checked against the request for generation and cache reuse")
+
+
 def test_cache_reuse_happens_before_the_billing_gate():
     if not HAVE_PILLOW_IMAGE:
         _skip(26, "cache before billing", "Pillow")
@@ -1875,6 +1892,7 @@ TESTS = [
     test_container_the_provider_cannot_produce_is_refused,
     test_output_that_never_appeared_is_refused,
     test_stale_output_from_a_previous_run_is_refused,
+    test_landscape_request_passes_generation_and_cache_qc,
     test_cache_reuse_happens_before_the_billing_gate,
     test_fresh_provider_can_answer_receipt_after_a_cache_hit,
     test_reuse_does_not_rewrite_the_generation_receipt,

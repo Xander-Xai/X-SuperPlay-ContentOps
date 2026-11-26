@@ -63,6 +63,14 @@ TEMPLATES = {
     "rag_flow": {"composition": "RagFlow", "backend": "remotion"},
     "recording_mark": {"composition": "RecordingMark", "backend": "remotion"},
     "title_card": {"composition": "TitleCard", "backend": "remotion"},
+    # Full-bleed explainer card with a derived continuous camera drift. Clean
+    # typography (no screenshot focus mask) plus real in-frame motion, so it
+    # satisfies the visual gate without the t2/y3/y5 trade-off.
+    "explainer_card": {"composition": "ExplainerCard", "backend": "remotion"},
+    "info_graphic": {"composition": "InfoGraphic", "backend": "remotion"},
+    # B-roll shot: a registered still (evidence capture or generated image) is
+    # the main picture with a camera move and a word-level callout.
+    "evidence_shot": {"composition": "EvidenceShot", "backend": "remotion"},
     "technical_3d_explainer": {"composition": "Technical3DExplainer", "backend": "remotion"},
     # Manim short shots. The "composition" is the Manim Scene class name rendered
     # by scripts/manim_render.py from the isolated venv; Easel remains the only

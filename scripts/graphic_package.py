@@ -21,6 +21,7 @@ for candidate in (ROOT / "src", ROOT / "scripts"):
         sys.path.insert(0, str(candidate))
 
 from contentops.graphic import GraphicPackageError, build_package, write_package  # noqa: E402
+from contentops.graphic.image_methods import IMAGE_METHODS  # noqa: E402
 
 
 def main() -> int:
@@ -29,6 +30,8 @@ def main() -> int:
     parser.add_argument("--project", required=True)
     parser.add_argument("--handoff", required=True)
     parser.add_argument("--input", required=True)
+    parser.add_argument("--image-method", choices=IMAGE_METHODS,
+        help="image-generation method for this package; selection does not execute it")
     parser.add_argument("--registry-root", default=str(ROOT))
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
@@ -36,7 +39,8 @@ def main() -> int:
     try:
         package = build_package(Path(args.project), Path(args.handoff),
                                 Path(args.input), Path(args.registry_root), ROOT,
-                                bundle_root=ROOT)
+                                bundle_root=ROOT, image_method=args.image_method,
+                                require_copy_review=True)
         paths = write_package(Path(args.project), package, ROOT)
     except GraphicPackageError as exc:
         print(json.dumps({"ok": False, "state": "BLOCKED",

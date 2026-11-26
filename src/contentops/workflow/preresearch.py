@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
-"""Pre-copy research gate: the mandatory step before any copy is authored.
+"""Pre-copy research contract for VIDEO and shared TOPIC production.
 
-A content project may not reach ``make_content.py`` preflight or a copy review
+Standalone GRAPHIC_TEXT drafts are draft-first and do not require a signed
+pre-copy research receipt; their factual source links and image-rights checks
+remain separate requirements.
+
+A VIDEO/shared-topic project may not reach ``make_content.py`` preflight or a
+copy review approval until five things exist and a named human has signed them:
 approval until five things exist and a named human has signed them:
 
     00_preresearch/content-intent.json  which ContentIntent this research serves

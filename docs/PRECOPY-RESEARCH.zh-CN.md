@@ -14,9 +14,12 @@ translation_status: synced
 
 ## 为什么要有这一环
 
-`AGENTS.md` §1.3 要求 **Evidence before Claim（证据先于断言）**。实际操作中最容易破坏这条规则的方式，就是在没人读过仓库、没核对过来源之前就开始写文案。本契约把「预研」变成不可绕过的门禁，而不是一句倡议：**没有具名人工签字，就不允许写文案，也不允许签文案审核**。
+`AGENTS.md` 要求 **Evidence before Claim（证据先于断言）**。这份签署式预研契约用于
+防止 VIDEO 文案和共享 `TOPIC` 在来源未核实时进入生产。单独的 GRAPHIC_TEXT 文章
+可以先起草：保留事实来源链接，未核实的内容标记待查。图片权利和生图授权仍是独立检查。
 
-它在两条产线分叉之前生效，同时覆盖 `VIDEO`（`script/master.md`）与 `GRAPHIC_TEXT`（`02_draft/draft.md`）。它不是第三条产线，也不新增账号或平台。
+契约覆盖 VIDEO（`script/master.md`）与共享 TOPIC 研究；单独 GRAPHIC_TEXT 草稿
+（`02_draft/draft.md`）不需要先拿到预研签字。它不是第三条产线，也不新增账号或平台。
 
 相关文档：[CONTENT-LIFECYCLE-STAGES.md](CONTENT-LIFECYCLE-STAGES.md)、
 [RUNBOOK.md](RUNBOOK.md)、[TEST-PLAN.md](TEST-PLAN.md)。
@@ -81,8 +84,8 @@ python scripts\make_content.py check --project projects\my-video
 
 | 生效点 | 行为 |
 |---|---|
-| `scripts/production_gates.py` — VIDEO 第 8 门、GRAPHIC_TEXT 第 6 门 | `make_content.py check` / `run`、经 `require` 调用的 `produce_video.produce()`、Easel driver 的 check 步骤全部 fail-closed |
-| `scripts/copy_review.py --approve` | 预研状态为 `NOT_STARTED` / `INCOMPLETE` / `AWAITING_APPROVAL` / `STALE` / `INVALID_RECEIPT` 时，拒绝记录任何文案决策（含 `CHANGES_REQUESTED`） |
+| `scripts/production_gates.py` — VIDEO 第 8 门 | VIDEO 的 `make_content.py check` / `run` 和生产调用会在预研未完成时阻断；单独 GRAPHIC_TEXT 没有写前预研门禁 |
+| `scripts/copy_review.py --approve` | VIDEO 需当前预研；共享 TOPIC 消费者校验已绑定的主题包；单独 GRAPHIC_TEXT 可直接记录文案审核，不再要求第二份预研签字 |
 | `scripts/preresearch.py` | `init` / `intent` / `check` / `status` / `approve`；被挡时退出码 4 |
 
 直接调用 `m5_production.py` / `produce_video.py` 仍属**诊断路径**，原本就不经过门禁，本契约不改变这一边界，也不新增发布步骤。
@@ -104,13 +107,12 @@ python scripts\make_content.py check --project projects\my-video
   `production_ready: false` 与 `publish_authorized: false`。
 - `init` 生成的骨架本身无法通过：此时还没有 intent，证据清单为空，通读记录带 `TODO`；占位 URL 会被拒绝。
 - AI 生成的图 / 视频只是视觉辅助，永不承担事实举证。
-- 没有预研包的历史项目现在会在预检时报 `NOT_STARTED`（一份都没有）或
-  `INCOMPLETE`（只有一部分）。继续之前需 `init`、`intent`、填写、`check`、
-  `approve`。不做静默豁免。
+- VIDEO 和共享 TOPIC 项目没有预研包时，预检仍会报告 `NOT_STARTED` / `INCOMPLETE`。
+  单独 GRAPHIC_TEXT 的起草和文案审核不需要这份签字；来源链接和逐图权利仍须核验。
 
 ## 验证
 
-`tests/test_precopy_research.py`（25 个用例）覆盖产物缺失、骨架拒绝、`init`
+`tests/test_precopy_research.py`（26 个用例）覆盖产物缺失、骨架拒绝、`init`
 幂等、两条入口的 intent 绑定、改路由失效、证据与边界校验、具名审核人要求、
-指纹漂移、CLI 的 `init → intent → check → approve`，以及 `copy_review.py`
-的拒绝行为。该套件已在 `.github/workflows/ci.yml` 具名注册。
+VIDEO 缺预研时拒绝文案审核，以及单独 GRAPHIC_TEXT 可审核文案。该套件已在
+`.github/workflows/ci.yml` 具名注册。

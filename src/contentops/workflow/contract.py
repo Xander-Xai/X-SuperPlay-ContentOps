@@ -41,7 +41,7 @@ GRAPHIC_CONTRACT_ID = "contentops.copy-to-graphic/v1"
 WORKFLOW_SCHEMA = "contentops.workflow/v1"
 WORKFLOW_FILE = "workflow.json"
 
-STAGE_STATUSES = ("pending", "running", "ready_for_review", "approved", "blocked")
+STAGE_STATUSES = ("pending", "running", "ready_for_review", "approved", "checked", "blocked")
 
 
 class WorkflowError(ValueError):
@@ -85,7 +85,7 @@ STAGE_IDS: Tuple[str, ...] = tuple(stage.id for stage in STAGES)
 #: ordered stages. Audio and storyboard have no meaning for an article; reusing
 #: the video names would make the state look shared when it is not.
 GRAPHIC_STAGES: Tuple[Stage, ...] = (
-    Stage("brief", "Brief", "00_brief/brief.json"),
+    Stage("brief", "Brief", "00_brief/graphic-brief.json"),
     Stage("outline", "Outline", "01_outline/outline.json", ("brief",)),
     Stage("draft", "Draft", "02_draft/draft.md", ("outline",)),
     Stage("images", "Images", "03_images/image-ledger.json", ("draft",)),
@@ -300,19 +300,27 @@ def is_current(project: Path, document: Dict[str, Any],
     stage = stage_for(document, stage_id)
     item = _stage(document, stage_id)
     status = item.get("status")
-    if status != "approved":
-        return False, f"{stage_id} status is {status!r}, not 'approved'"
+    if status not in ("approved", "checked"):
+        return False, f"{stage_id} status is {status!r}, not current"
     approval = item.get("approval")
-    if not isinstance(approval, dict):
-        return False, f"{stage_id} has no approval record"
+    if status == "approved":
+        if not isinstance(approval, dict):
+            return False, f"{stage_id} has no approval record"
+        named = approval
+    else:
+        # A machine check is current only against the bytes its own check named.
+        # It is never an approval and carries no reviewer.
+        named = item.get("check")
+        if not isinstance(named, dict) or not named.get("ok"):
+            return False, f"{stage_id} has no passing machine check"
     actual = artifact_sha256(project, document, stage_id)
     if actual is None:
         return False, f"{stage_id} artifact is missing"
-    if actual != approval.get("artifact_sha256"):
-        return False, f"{stage_id} artifact changed after approval"
+    if actual != named.get("artifact_sha256"):
+        return False, f"{stage_id} artifact changed after it was recorded"
     current_inputs = input_fingerprint(project, document, stage_id)
-    if current_inputs != approval.get("inputs_sha256"):
-        return False, f"{stage_id} upstream artifacts changed after approval"
+    if current_inputs != named.get("inputs_sha256"):
+        return False, f"{stage_id} upstream artifacts changed after it was recorded"
     seen = set(_seen or ())
     seen.add(stage_id)
     for dependency in stage.requires:
@@ -335,7 +343,7 @@ def reconcile(project: Path, document: Dict[str, Any]) -> List[Dict[str, Any]]:
     for stage in stages_for_contract(_contract(document)):
         item = _stage(document, stage.id)
         was_stale = bool(item.get("stale"))
-        if item.get("status") == "approved":
+        if item.get("status") in ("approved", "checked"):
             ok, reason = is_current(project, document, stage.id)
             item["stale"] = not ok
             item["stale_reason"] = "" if ok else reason
@@ -348,9 +356,14 @@ def reconcile(project: Path, document: Dict[str, Any]) -> List[Dict[str, Any]]:
 
 
 def pending_stages(document: Dict[str, Any]) -> List[str]:
-    """Stages that are not approved, in contract order."""
-    return [item["id"] for item in document.get("stages", [])
-            if item.get("status") != "approved"]
+    """Stages without a current approval or passing routine machine check."""
+    pending = []
+    for item in document.get("stages", []):
+        status = item.get("status")
+        checked = status == "checked" and bool((item.get("check") or {}).get("ok"))
+        if item.get("stale") or (status != "approved" and not checked):
+            pending.append(item["id"])
+    return pending
 
 
 def policy_lock(document: Dict[str, Any]) -> Dict[str, Any]:

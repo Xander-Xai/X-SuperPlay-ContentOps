@@ -50,7 +50,8 @@ class MediaUseRegistrationTests(unittest.TestCase):
         entries = sr.registry_entries(data)
         self.assertEqual([entry["id"] for entry in entries],
                          ["media-use", "x-superplay-huashu-motion",
-                          "contentops-production-gates", "contentops-remotion-clips"])
+                          "contentops-production-gates", "x-superplay-copy-orchestrator",
+                          "contentops-remotion-clips"])
 
     def test_the_declaration_records_every_required_field(self) -> None:
         entry = sr.registry_entries()[0]
@@ -74,6 +75,22 @@ class MediaUseRegistrationTests(unittest.TestCase):
         self.assertTrue((ROOT / entry["canonical_path"]).is_file())
         self.assertTrue((ROOT / entry["runtime"]["baseline"]).is_file())
         self.assertTrue((ROOT / entry["rights"]["evidence"]).is_file())
+
+    def test_shared_copy_skill_is_scoped_to_topic_and_both_production_formats(self) -> None:
+        entries = sr.registry_entries()
+        entry = next(item for item in entries
+                     if item["id"] == "x-superplay-copy-orchestrator")
+        self.assertTrue((ROOT / entry["canonical_path"]).is_file())
+        self.assertEqual(entry["pipelines"], ["TOPIC", "VIDEO", "GRAPHIC_TEXT"])
+        self.assertEqual(entry["stages"], ["copywriting"])
+        self.assertFalse(entry["execution"]["authorizes_execution"])
+        for pipeline in entry["pipelines"]:
+            result = sr.resolve_capability(
+                "x-superplay-copy-orchestrator", account="x-superplay-1024",
+                pipeline=pipeline, stage="copywriting", registry=_registry(entry),
+                discovery_ready=True, runtime_ready=True)
+            self.assertEqual(result["verdict"], sr.VERDICT_RESOLVABLE, pipeline)
+            self.assertFalse(result["execution_authorized"], pipeline)
 
 
 class ResolutionVerdictTests(unittest.TestCase):
@@ -275,10 +292,10 @@ class CliTests(unittest.TestCase):
 
     def test_doctor_is_machine_readable(self) -> None:
         report = sr.doctor()
-        # Four declarations: media-use, Huashu, production gates, and the
-        # Remotion clip pointer. Counting them is the point -- a capability
-        # that exists but is not declared is invisible to the router.
-        self.assertEqual(report["capabilities"]["total"], 4)
+        # Five declarations: media-use, Huashu, production gates, shared copy
+        # writing, and the Remotion clip pointer. Counting them is the point --
+        # a capability that exists but is not declared is invisible to the router.
+        self.assertEqual(report["capabilities"]["total"], 5)
         # Doctor aggregates distinct capabilities; runtime-specific lock behavior
         # is covered by the focused media-use resolver tests above.
         self.assertLessEqual(report["capabilities"]["resolvable"],

@@ -10,6 +10,7 @@ were absent from ``COPY_FIELDS``.
 from __future__ import annotations
 
 import contextlib
+import base64
 import hashlib
 import importlib.util
 import io
@@ -17,14 +18,17 @@ import json
 import sys
 import tempfile
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from contentops.workflow import copy_review, preresearch  # noqa: E402
+from contentops import paths as contentops_paths  # noqa: E402
+contentops_paths._env_loaded = True  # keep CLI tests offline; never consult repository .env
+from contentops.workflow import canonical_copy, copy_review, preresearch, topic_package  # noqa: E402
 
 
-def _seed_intent(project: Path) -> dict:
+def _seed_intent(project: Path, target_pipeline: str = "VIDEO") -> dict:
     """The router-shaped intent this fixture's research is done against."""
     intent = {
         "schema": preresearch.INTENT_SCHEMA,
@@ -34,7 +38,7 @@ def _seed_intent(project: Path) -> dict:
         "topic": "Regression fixture topic",
         "evidence_status": "verification_required",
         "approval_status": "pending",
-        "target_pipeline": "VIDEO",
+        "target_pipeline": target_pipeline,
         "brief_status": "draft",
         "route_context": {"mode": "USER_TOPIC", "topic_origin": "USER_INPUT"},
         "created_at": "2026-11-12T09:00:00Z",
@@ -47,9 +51,9 @@ def _seed_intent(project: Path) -> dict:
     return intent
 
 
-def _seed_preresearch(project: Path) -> None:
+def _seed_preresearch(project: Path, target_pipeline: str = "VIDEO") -> None:
     """CLI fixtures need a signed research gate before a copy decision."""
-    _seed_intent(project)
+    _seed_intent(project, target_pipeline=target_pipeline)
     folder = project / preresearch.RESEARCH_DIR
     (folder / "project-reading.md").write_text(
         "# Project read-through\n\n## Files read\n\n"
@@ -186,6 +190,78 @@ def test_changing_the_claim_binding_invalidates_the_review():
         assert copy_review.status(project)["state"] == "STALE"
 
 
+def test_adding_the_machine_verified_claim_ledger_does_not_stale_the_copy():
+    with tempfile.TemporaryDirectory() as temp:
+        project = _project(Path(temp))
+        _approve(project)
+        (project / "script" / "claims.json").write_text(json.dumps({
+            "schema": "contentops.claim-ledger/v1",
+            "claims": [{"id": "C1", "text": "A sourced statement.",
+                        "artifacts": ["E1"], "quotes": ["A verbatim quote"]}],
+        }), encoding="utf-8")
+        gate = copy_review.status(project)
+        assert gate["state"] == "APPROVED", gate
+
+
+def test_exact_m5_projection_keeps_review_but_script_drift_stales_it():
+    with tempfile.TemporaryDirectory() as temp:
+        project = _project(Path(temp))
+        (project / "script" / "master.md").write_text(
+            "# script\nApproved narration\n", encoding="utf-8")
+        (project / "script" / "script.json").unlink()
+        derivative = {
+            "schema": "contentops.topic-copy-derivative/v1",
+            "format": "VIDEO",
+            "segments": [{"source_segment_id": "S1", "text": "Approved narration",
+                          "claim_refs": ["C1"]}],
+        }
+        (project / "00_brief").mkdir(exist_ok=True)
+        (project / "00_brief" / "copy-derivative.json").write_text(
+            json.dumps(derivative, ensure_ascii=False), encoding="utf-8")
+        _approve(project)
+
+        script = {"schema": "contentops.m5-script/v1", "lines": [{
+            "id": "l1", "source_segment_id": "S1", "narration": "Approved narration",
+            "caption": "Approved narration", "claim": "C1", "asset_id": "A-ONE",
+        }]}
+        script_path = project / "script" / "script.json"
+        script_path.write_text(json.dumps(script, ensure_ascii=False), encoding="utf-8")
+        assert copy_review.status(project)["state"] == "APPROVED"
+
+        script["lines"][0]["narration"] = "Changed narration"
+        script_path.write_text(json.dumps(script, ensure_ascii=False), encoding="utf-8")
+        assert copy_review.status(project)["state"] == "STALE"
+
+
+def test_m5_projection_accepts_every_derivative_claim_on_one_line():
+    with tempfile.TemporaryDirectory() as temp:
+        project = _project(Path(temp))
+        (project / "script" / "master.md").write_text(
+            "# script\nApproved narration\n", encoding="utf-8")
+        (project / "script" / "script.json").unlink()
+        derivative = {
+            "schema": "contentops.topic-copy-derivative/v1",
+            "format": "VIDEO",
+            "segments": [{"source_segment_id": "S1", "text": "Approved narration",
+                          "claim_refs": ["C1", "C2"]}],
+        }
+        (project / "00_brief").mkdir(exist_ok=True)
+        (project / "00_brief" / "copy-derivative.json").write_text(
+            json.dumps(derivative, ensure_ascii=False), encoding="utf-8")
+        _approve(project)
+        script = {"schema": "contentops.m5-script/v1", "lines": [{
+            "id": "l1", "source_segment_id": "S1", "narration": "Approved narration",
+            "caption": "Approved narration", "claim": "C1", "claims": ["C1", "C2"],
+            "asset_id": "A-ONE",
+        }]}
+        script_path = project / "script" / "script.json"
+        script_path.write_text(json.dumps(script, ensure_ascii=False), encoding="utf-8")
+        assert copy_review.status(project)["state"] == "APPROVED"
+        script["lines"][0]["claims"] = ["C1", "UNBOUND"]
+        script_path.write_text(json.dumps(script, ensure_ascii=False), encoding="utf-8")
+        assert copy_review.status(project)["state"] == "STALE"
+
+
 def test_changing_the_source_invalidates_the_review():
     with tempfile.TemporaryDirectory() as temp:
         project = _project(Path(temp))
@@ -296,6 +372,33 @@ def test_editing_the_motion_timeline_invalidates_the_review():
         assert copy_review.status(project)["state"] == "STALE"
 
 
+def test_editing_the_canonical_topic_copy_invalidates_the_review():
+    with tempfile.TemporaryDirectory() as temp:
+        project = _project(Path(temp))
+        canonical_dir = project / "00_brief"
+        canonical_dir.mkdir()
+        canonical = {
+            "schema": canonical_copy.SCHEMA,
+            "copy_id": "copy-001",
+            "intent_sha256": "a" * 64,
+            "research_sha256": "b" * 64,
+            "account": "x-superplay-1024",
+            "topic": "A verified topic",
+            "segments": [{"id": "s1", "text": "A sourced statement.",
+                          "claim_refs": ["C1"]}],
+            "claims": {"C1": {"statement": "A sourced statement.",
+                                "evidence_refs": ["E1"]}},
+        }
+        (canonical_dir / "canonical-copy.json").write_text(
+            json.dumps(canonical, ensure_ascii=False), encoding="utf-8")
+        _approve(project)
+        assert copy_review.status(project)["state"] == "APPROVED"
+        canonical["segments"][0]["text"] = "A changed sourced statement."
+        (canonical_dir / "canonical-copy.json").write_text(
+            json.dumps(canonical, ensure_ascii=False), encoding="utf-8")
+        assert copy_review.status(project)["state"] == "STALE"
+
+
 def test_generated_narration_text_does_not_invalidate_the_review():
     """The pipeline writes narration.txt; rewriting it must not expire a review."""
     with tempfile.TemporaryDirectory() as temp:
@@ -318,6 +421,262 @@ def test_generated_voice_timings_do_not_invalidate_the_review():
         assert gate["state"] == "APPROVED", gate
 
 
+def test_canonical_copy_validates_claim_and_evidence_bindings():
+    document = {
+        "schema": canonical_copy.SCHEMA,
+        "copy_id": "copy-001",
+        "intent_sha256": "a" * 64,
+        "research_sha256": "b" * 64,
+        "account": "x-superplay-1024",
+        "topic": "A verified topic",
+        "segments": [{"id": "s1", "text": "A sourced statement.",
+                      "claim_refs": ["C1"]}],
+        "claims": {"C1": {"statement": "A sourced statement.",
+                            "evidence_refs": ["E1"]}},
+    }
+    assert canonical_copy.validate(document) == []
+
+
+def test_canonical_copy_rejects_claims_without_evidence():
+    document = {
+        "schema": canonical_copy.SCHEMA,
+        "copy_id": "copy-001",
+        "intent_sha256": "a" * 64,
+        "research_sha256": "b" * 64,
+        "account": "x-superplay-1024",
+        "topic": "A verified topic",
+        "segments": [{"id": "s1", "text": "An unsupported statement.",
+                      "claim_refs": ["C1"]}],
+        "claims": {"C1": {"statement": "An unsupported statement.",
+                            "evidence_refs": []}},
+    }
+    failures = canonical_copy.validate(document)
+    assert any("evidence_refs" in failure for failure in failures), failures
+
+
+def test_format_derivative_cannot_introduce_unbound_claims():
+    canonical = {
+        "schema": canonical_copy.SCHEMA,
+        "copy_id": "copy-001",
+        "intent_sha256": "a" * 64,
+        "research_sha256": "b" * 64,
+        "account": "x-superplay-1024",
+        "topic": "A verified topic",
+        "segments": [{"id": "s1", "text": "A sourced statement.",
+                      "claim_refs": ["C1"]}],
+        "claims": {"C1": {"statement": "A sourced statement.",
+                            "evidence_refs": ["E1"]}},
+    }
+    derivative = {
+        "schema": canonical_copy.DERIVATIVE_SCHEMA,
+        "copy_id": "copy-001",
+        "copy_sha256": canonical_copy.digest(canonical),
+        "format": "VIDEO",
+        "segments": [{"source_segment_id": "s1", "text": "A sourced statement.",
+                      "claim_refs": ["C1", "C2"]}],
+    }
+    failures = canonical_copy.validate_derivative(canonical, derivative)
+    assert any("claim set" in failure for failure in failures), failures
+
+
+def test_format_derivative_binds_selected_canonical_source():
+    canonical = {
+        "schema": canonical_copy.SCHEMA,
+        "copy_id": "copy-001",
+        "intent_sha256": "a" * 64,
+        "research_sha256": "b" * 64,
+        "account": "x-superplay-1024",
+        "topic": "A verified topic",
+        "segments": [{"id": "s1", "text": "A sourced statement.",
+                      "claim_refs": ["C1"]}],
+        "claims": {"C1": {"statement": "A sourced statement.",
+                            "evidence_refs": ["E1"]}},
+    }
+    derivative = canonical_copy.derive(canonical, "VIDEO", ["s1"])
+    assert derivative["copy_id"] == "copy-001"
+    assert derivative["copy_sha256"] == canonical_copy.digest(canonical)
+    assert canonical_copy.validate_derivative(canonical, derivative) == []
+
+
+def test_reworded_format_derivative_needs_its_own_current_review():
+    with tempfile.TemporaryDirectory() as temp:
+        project = _project(Path(temp))
+        _seed_preresearch(project)
+        intent_path = project / preresearch.INTENT_FILE
+        research = preresearch.check(project)
+        canonical = {
+            "schema": canonical_copy.SCHEMA,
+            "copy_id": "copy-001",
+            "intent_sha256": _sha(intent_path.read_bytes()),
+            "research_sha256": research["artifacts_sha256"],
+            "account": "x-superplay-1024",
+            "topic": "Regression fixture topic",
+            "segments": [{"id": "s1", "text": "Canonical statement.",
+                          "claim_refs": ["C1"]}],
+            "claims": {"C1": {"statement": "Canonical statement.",
+                                "evidence_refs": ["S1"]}},
+        }
+        derivative = {
+            "schema": canonical_copy.DERIVATIVE_SCHEMA,
+            "copy_id": canonical["copy_id"],
+            "copy_sha256": canonical_copy.digest(canonical),
+            "format": "VIDEO",
+            "segments": [{"source_segment_id": "s1", "text": "Video adaptation.",
+                          "claim_refs": ["C1"]}],
+        }
+        (project / canonical_copy.CANONICAL_FILE).parent.mkdir(parents=True, exist_ok=True)
+        (project / canonical_copy.CANONICAL_FILE).write_text(
+            json.dumps(canonical, ensure_ascii=False), encoding="utf-8")
+        (project / canonical_copy.DERIVATIVE_FILE).write_text(
+            json.dumps(derivative, ensure_ascii=False), encoding="utf-8")
+        (project / "script" / "master.md").write_text(
+            "# Video\n\nVideo adaptation.\n", encoding="utf-8")
+        assert canonical_copy.status(project, "VIDEO")["ok"]
+        _approve(project)
+        assert copy_review.status(project)["ok"]
+        derivative["segments"][0]["text"] = "A stronger video claim."
+        (project / canonical_copy.DERIVATIVE_FILE).write_text(
+            json.dumps(derivative, ensure_ascii=False), encoding="utf-8")
+        (project / "script" / "master.md").write_text(
+            "# Video\n\nA stronger video claim.\n", encoding="utf-8")
+        assert copy_review.status(project)["state"] == "STALE"
+
+
+def test_one_topic_package_feeds_video_and_graphic_projects_and_stales_together():
+    with tempfile.TemporaryDirectory() as temp:
+        projects_root = Path(temp) / "projects"
+        package = projects_root / "same-topic"
+        package.mkdir(parents=True)
+        (package / "project.yaml").write_text(
+            "id: same-topic\naccount_slug: x-superplay-1024\nstatus: initialized\n",
+            encoding="utf-8")
+        _seed_preresearch(package, target_pipeline="TOPIC")
+        intent_path = package / preresearch.INTENT_FILE
+        research = preresearch.check(package)
+        canonical = {
+            "schema": canonical_copy.SCHEMA,
+            "copy_id": "shared-copy-001",
+            "intent_sha256": _sha(intent_path.read_bytes()),
+            "research_sha256": research["artifacts_sha256"],
+            "account": "x-superplay-1024",
+            "topic": "Regression fixture topic",
+            "segments": [{"id": "s1", "text": "A shared sourced statement.",
+                          "claim_refs": ["C1"]}],
+            "claims": {"C1": {"statement": "A shared sourced statement.",
+                                "evidence_refs": ["S1"]}},
+        }
+        (package / canonical_copy.CANONICAL_FILE).parent.mkdir(parents=True, exist_ok=True)
+        (package / canonical_copy.CANONICAL_FILE).write_text(
+            json.dumps(canonical, ensure_ascii=False), encoding="utf-8")
+        topic_package.initialize(package)
+        copy_review.decide(package, status_value="APPROVED", reviewer="Founder",
+                           opinion="Approved the shared topic copy",
+                           reviewed_at="2026-11-19T00:00:00Z")
+
+        children = {}
+        for content_format, slug in (("VIDEO", "same-topic-video"),
+                                     ("GRAPHIC_TEXT", "same-topic-graphic")):
+            child = projects_root / slug
+            (child / "receipts").mkdir(parents=True)
+            (child / "00_brief").mkdir()
+            (child / "project.yaml").write_text(
+                f"id: {slug}\naccount_slug: x-superplay-1024\nstatus: initialized\n",
+                encoding="utf-8")
+            derivative = {
+                "schema": canonical_copy.DERIVATIVE_SCHEMA,
+                "copy_id": canonical["copy_id"],
+                "copy_sha256": canonical_copy.digest(canonical),
+                "format": content_format,
+                "segments": [{"source_segment_id": "s1",
+                              "text": f"{content_format} adaptation of shared fact.",
+                              "claim_refs": ["C1"]}],
+            }
+            (child / canonical_copy.DERIVATIVE_FILE).write_text(
+                json.dumps(derivative, ensure_ascii=False), encoding="utf-8")
+            output = (child / "script" / "master.md" if content_format == "VIDEO"
+                      else child / "draft.md")
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(derivative["segments"][0]["text"] + "\n",
+                              encoding="utf-8")
+            topic_package.bind_child(package, child, content_format,
+                                     projects_root=projects_root)
+            copy_review.decide(child, status_value="APPROVED", reviewer="Founder",
+                               opinion=f"Reviewed {content_format} adaptation",
+                               reviewed_at="2026-11-19T00:00:00Z")
+            children[content_format] = child
+
+        states = [topic_package.status_child(child, projects_root=projects_root)
+                  for child in children.values()]
+        assert all(state["ok"] for state in states), states
+        assert states[0]["package_sha256"] == states[1]["package_sha256"]
+        assert all(copy_review.status(child, projects_root=projects_root)["state"] == "APPROVED"
+                   for child in children.values())
+        scripts_path = ROOT / "scripts"
+        sys.path.insert(0, str(scripts_path))
+        try:
+            import production_gates
+            import m5_production
+            from contentops.graphic import package as graphic_package
+            for content_format, child in children.items():
+                gate = production_gates._canonical_copy_state(
+                    child, content_format, projects_root=projects_root)
+                assert gate["applicable"] and gate["ok"], gate
+                if content_format == "VIDEO":
+                    m5_production._require_shared_topic_copy(
+                        child, projects_root=projects_root)
+                else:
+                    with mock.patch.object(graphic_package, "verify_bundle_unchanged"):
+                        graphic_package.verify_package_current(
+                            {"schema": graphic_package.PACKAGE_SCHEMA,
+                             "draft": {"path": "draft.md", "scope": "project",
+                                       "sha256": _sha((child / "draft.md").read_bytes())},
+                             "images": []}, child, ROOT)
+        finally:
+            sys.path.remove(str(scripts_path))
+
+        video_ref = children["VIDEO"] / topic_package.REFERENCE
+        saved_ref = json.loads(video_ref.read_text(encoding="utf-8"))
+        forged_ref = {**saved_ref, "package_slug": "../outside"}
+        video_ref.write_text(json.dumps(forged_ref), encoding="utf-8")
+        path_block = topic_package.status_child(children["VIDEO"],
+                                                projects_root=projects_root)
+        assert not path_block["ok"] and path_block["state"] == "TOPIC_PACKAGE_PATH_INVALID"
+        video_ref.write_text(json.dumps(saved_ref), encoding="utf-8")
+        video_ref.unlink()
+        missing_block = topic_package.status_child(children["VIDEO"],
+                                                   projects_root=projects_root)
+        assert not missing_block["ok"] and missing_block["state"] == "TOPIC_PACKAGE_REFERENCE_MISSING"
+        topic_package.bind_child(package, children["VIDEO"], "VIDEO",
+                                 projects_root=projects_root)
+
+        canonical["segments"][0]["text"] = "Changed canonical source text."
+        (package / canonical_copy.CANONICAL_FILE).write_text(
+            json.dumps(canonical, ensure_ascii=False), encoding="utf-8")
+        blocked = [topic_package.status_child(child, projects_root=projects_root)
+                   for child in children.values()]
+        assert all(not state["ok"] for state in blocked), blocked
+        assert all(copy_review.status(child, projects_root=projects_root)["state"] != "APPROVED"
+                   for child in children.values())
+        try:
+            m5_production._require_shared_topic_copy(
+                children["VIDEO"], projects_root=projects_root)
+        except m5_production.M5Blocked as exc:
+            assert "TOPIC_PACKAGE_STALE" in str(exc)
+        else:
+            raise AssertionError("the direct M5 entry must block a changed shared source")
+        try:
+            with mock.patch.object(graphic_package, "verify_bundle_unchanged"):
+                graphic_package.verify_package_current(
+                    {"schema": graphic_package.PACKAGE_SCHEMA,
+                     "draft": {"path": "draft.md", "scope": "project",
+                               "sha256": _sha((children["GRAPHIC_TEXT"] / "draft.md").read_bytes())},
+                     "images": []}, children["GRAPHIC_TEXT"], ROOT)
+        except graphic_package.GraphicPackageError as exc:
+            assert exc.code == "TOPIC_PACKAGE_STALE"
+        else:
+            raise AssertionError("graphic delivery must block a changed shared source")
+
+
 def _copy_review_cli():
     path = ROOT / "scripts" / "copy_review.py"
     spec = importlib.util.spec_from_file_location("copy_review_cli", path)
@@ -335,6 +694,148 @@ def _cli_project(root: Path) -> Path:
     (project / "script" / "master.md").write_text("# Reviewed copy\n", encoding="utf-8")
     _seed_preresearch(project)
     return project
+
+
+def test_video_copy_fingerprint_keeps_legacy_graphic_sidecar_bytes_opaque():
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        script = project / "script"
+        script.mkdir()
+        (script / "script.json").write_text("{}", encoding="utf-8")
+        (project / "graphic-input.json").write_text("legacy opaque bytes", encoding="utf-8")
+        first = copy_review.copy_fingerprint(project)
+        (project / "graphic-input.json").write_text("changed opaque bytes", encoding="utf-8")
+        assert copy_review.copy_fingerprint(project) != first
+
+
+def test_graphic_copy_fingerprint_tracks_selected_prose_not_image_plan():
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        draft = project / "article.md"
+        draft.write_text("# Draft\n\nBody.\n", encoding="utf-8")
+        input_path = project / "graphic-input.json"
+        input_path.write_text(json.dumps({
+            "title": "Title", "draft": "article.md", "platform_id": "wechat_article",
+            "account": "thinktank", "images": [{"asset_id": "one", "path": "a.png"}],
+        }), encoding="utf-8")
+
+        original = copy_review.copy_fingerprint(project)
+        input_path.write_text(json.dumps({
+            "title": "Title", "draft": "article.md", "platform_id": "wechat_article",
+            "account": "thinktank", "images": [{"asset_id": "two", "path": "b.png"}],
+        }), encoding="utf-8")
+        assert copy_review.copy_fingerprint(project) == original
+
+        draft.write_text("# Draft\n\nChanged body.\n", encoding="utf-8")
+        assert copy_review.copy_fingerprint(project) != original
+
+
+def test_graphic_review_binds_nondefault_input_and_its_selected_draft():
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        draft = project / "alternate.md"
+        draft.write_text("# Approved text\n", encoding="utf-8")
+        selected_input = project / "alternate-input.json"
+        selected_input.write_text(json.dumps({
+            "title": "Alternate", "draft": "alternate.md",
+            "platform_id": "wechat_article", "account": "thinktank",
+            "images": [],
+        }), encoding="utf-8")
+        copy_review.decide(
+            project, status_value="APPROVED", reviewer="Founder",
+            opinion="Reviewed the working draft", reviewed_at="2026-11-23T00:00:00Z",
+            graphic_input_path=selected_input)
+
+        assert copy_review.status(project, graphic_input_path=selected_input)["ok"]
+        assert copy_review.status(project)["state"] == "STALE"
+        draft.write_text("# Changed after review\n", encoding="utf-8")
+        assert copy_review.status(project, graphic_input_path=selected_input)["state"] == "STALE"
+
+
+def test_graphic_package_uses_single_copy_review_and_checks_remaining_stages_automatically():
+    from contentops.graphic import build_package, verify_graphic_review, write_package
+
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp) / "article"
+        project.mkdir()
+        assets = project / "assets"
+        assets.mkdir()
+        image = base64.b64decode(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk"
+            "YAAAAAYAAjCB0C8AAAAASUVORK5CYII=")
+        (assets / "cover.png").write_bytes(image)
+        rights = {
+            "schema": "contentops.media-rights-review/v1",
+            "license_id": "OWNED-BY-OPERATOR",
+            "source_url": "repo://test#cover",
+            "reviewed_by": "Founder", "reviewed_at": "2026-11-23",
+            "attribution": "", "synthetic": False,
+        }
+        (assets / "cover.rights.json").write_text(json.dumps(rights), encoding="utf-8")
+        (project / "draft.md").write_text("# Reviewed article\n\nBody.\n", encoding="utf-8")
+        input_path = project / "graphic-input.json"
+        input_path.write_text(json.dumps({
+            "title": "Reviewed article", "platform_id": "wechat_article",
+            "account": "thinktank", "draft": "draft.md",
+            "images": [{
+                "asset_id": "cover", "path": "assets/cover.png", "alt": "Cover",
+                "rights": {**rights, "schema": "contentops.media-rights/v1",
+                           "review_evidence": "assets/cover.rights.json"},
+            }],
+        }), encoding="utf-8")
+        handoff = project / "handoff.json"
+        handoff.write_text(json.dumps({
+            "schema": "contentops.bundle-handoff/v1", "bundle_id": "CB-20261123-001",
+            "bundle_sha256": "a" * 64, "content_format": "GRAPHIC_TEXT",
+            "platform": {"platform_id": "wechat_article"}, "blockers": [],
+            "publish_authorized": False, "human_review": "NOT_STARTED",
+            "production_ready": False,
+        }), encoding="utf-8")
+
+        try:
+            build_package(project, handoff, input_path, ROOT, ROOT,
+                          require_copy_review=True)
+        except Exception as exc:
+            assert getattr(exc, "code", "") == "FORMAT_COPY_REVIEW_REQUIRED"
+        else:
+            raise AssertionError("unreviewed graphic draft must not enter production packaging")
+
+        copy_review.decide(
+            project, status_value="APPROVED", reviewer="Founder",
+            opinion="Reviewed the working draft", reviewed_at="2026-11-23T00:00:00Z")
+        package = build_package(project, handoff, input_path, ROOT, ROOT,
+                                require_copy_review=True)
+        package["blockers"] = []
+        paths = write_package(project, package, ROOT)
+        workflow = json.loads(paths["workflow"].read_text(encoding="utf-8"))
+        assert all(stage["status"] == "checked" for stage in workflow["stages"])
+        assert all(stage["approval"] is None for stage in workflow["stages"])
+        reviewed = verify_graphic_review(project, package)
+        assert reviewed["reviewer"] == "Founder"
+
+
+def test_graphic_copy_review_cli_accepts_a_bound_nondefault_input():
+    cli = _copy_review_cli()
+    with tempfile.TemporaryDirectory() as temp:
+        root = Path(temp)
+        project = root / "projects" / "graphic-cli"
+        project.mkdir(parents=True)
+        (project / "article.md").write_text("# Draft\n", encoding="utf-8")
+        selected_input = project / "alternate.json"
+        selected_input.write_text(json.dumps({
+            "title": "Draft", "draft": "article.md", "platform_id": "wechat_article",
+            "account": "thinktank", "images": [],
+        }), encoding="utf-8")
+        cli.ROOT = root
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            result = cli.main([str(project), "--graphic-input", "alternate.json",
+                               "--approve", "--reviewer", "Founder", "--opinion",
+                               "Reviewed", "--confirm", "--json"])
+        payload = json.loads(out.getvalue())
+        assert result == 0
+        assert payload["gate"]["ok"] is True
+        assert copy_review.load(project)["graphic_input_path"] == "alternate.json"
 
 
 def test_copy_review_cli_check_is_read_only_and_fails_closed():
@@ -446,6 +947,9 @@ def main() -> int:
     tests = (test_swapping_the_video_invalidates_the_review,
              test_changing_the_caption_invalidates_the_review,
              test_changing_the_claim_binding_invalidates_the_review,
+             test_adding_the_machine_verified_claim_ledger_does_not_stale_the_copy,
+             test_exact_m5_projection_keeps_review_but_script_drift_stales_it,
+             test_m5_projection_accepts_every_derivative_claim_on_one_line,
              test_changing_the_source_invalidates_the_review,
              test_replacing_the_bytes_behind_an_unchanged_path_is_asset_drift,
              test_missing_review_blocks,
@@ -455,8 +959,20 @@ def main() -> int:
              test_editing_the_cut_plan_invalidates_the_review,
              test_editing_the_m5_script_invalidates_the_review,
              test_editing_the_motion_timeline_invalidates_the_review,
+             test_editing_the_canonical_topic_copy_invalidates_the_review,
              test_generated_narration_text_does_not_invalidate_the_review,
              test_generated_voice_timings_do_not_invalidate_the_review,
+             test_canonical_copy_validates_claim_and_evidence_bindings,
+             test_canonical_copy_rejects_claims_without_evidence,
+             test_format_derivative_cannot_introduce_unbound_claims,
+             test_format_derivative_binds_selected_canonical_source,
+             test_reworded_format_derivative_needs_its_own_current_review,
+             test_one_topic_package_feeds_video_and_graphic_projects_and_stales_together,
+             test_video_copy_fingerprint_keeps_legacy_graphic_sidecar_bytes_opaque,
+             test_graphic_copy_fingerprint_tracks_selected_prose_not_image_plan,
+             test_graphic_review_binds_nondefault_input_and_its_selected_draft,
+             test_graphic_package_uses_single_copy_review_and_checks_remaining_stages_automatically,
+             test_graphic_copy_review_cli_accepts_a_bound_nondefault_input,
              test_copy_review_cli_check_is_read_only_and_fails_closed,
              test_copy_review_cli_requires_explicit_confirmation_for_decisions,
              test_copy_review_cli_records_a_confirmed_approval_bound_to_current_copy,

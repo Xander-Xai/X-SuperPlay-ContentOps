@@ -224,9 +224,10 @@ platforms:
     note: 承担摘要导流，不承担完整长文
 
 # Deliberately excluded from the GRAPHIC_TEXT line.
-# Operator instruction 2026-11-09: the whole Xiaohongshu platform belongs to the
-# VIDEO line. Wechatsync exposes a `xiaohongshu` adapter, but using it here would
-# contradict the operator's classification, so it stays out.
+# Operator instruction 2026-11-09: this repository supports only the
+# `xiaohongshu_video` VIDEO target. It does not turn Xiaohongshu image-text
+# content into video; image-text remains unsupported here. Wechatsync exposes a
+# `xiaohongshu` adapter, but that alone does not authorize this graphic route.
 # Operator instruction 2026-11-09 (later the same day, upgraded): the in-repo
 # Xiaohongshu graphic workflow (src/contentops/xhs/, its lock and tests, the
 # registry row and the graphic_workflow entry point) was removed entirely.

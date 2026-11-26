@@ -46,6 +46,7 @@ def _stage(document, stage_id):
 
 
 def _approve(project, document, stage_id):
+    _stage(document, stage_id)["requires_review"] = True
     result = check_stage(project, document, stage_id)
     assert result["ok"], (stage_id, result["errors"])
     approve_stage(project, document, stage_id, "Founder", confirm=True)
@@ -69,7 +70,7 @@ def test_check_passes_on_a_valid_json_artifact():
         _write(project, "00_brief/brief.json", {"title": "t"})
         result = check_stage(project, document, "brief")
         assert result["ok"], result["errors"]
-        assert document["stages"][0]["status"] == "ready_for_review"
+        assert document["stages"][0]["status"] == "checked"
         assert len(result["artifact_sha256"]) == 64
 
 
@@ -90,6 +91,7 @@ def test_approve_requires_confirmation_and_a_fresh_check():
         project = Path(td)
         document = new_workflow("demo")
         _write(project, "00_brief/brief.json")
+        _stage(document, "brief")["requires_review"] = True
         _expect_error("CHECK_REQUIRED",
                       lambda: approve_stage(project, document, "brief", "Founder", confirm=True))
         check_stage(project, document, "brief")
@@ -178,6 +180,48 @@ def test_an_artifact_path_may_not_escape_the_project():
                       lambda: artifact_path(project, document, "brief"))
 
 
+def test_a_routine_video_stage_advances_on_a_passing_check_without_a_person():
+    """A routine stage is machine-checked, not silently human-approved."""
+    with tempfile.TemporaryDirectory() as td:
+        project = Path(td)
+        document = new_workflow("demo")
+        _write(project, "00_brief/brief.json")
+        result = check_stage(project, document, "brief")
+        assert result["ok"]
+        item = _stage(document, "brief")
+        assert item["status"] == "checked"
+        assert item["approval"] is None
+        assert is_current(project, document, "brief")[0]
+
+        # The machine check must not be reusable as a named human approval.
+        _expect_error("ALREADY_CHECKED", lambda: approve_stage(
+            project, document, "brief", "Founder", confirm=True))
+
+        # A downstream routine stage advances from the machine check alone.
+        _write(project, "00_brief/audience-insight.json")
+        result = check_stage(project, document, "audience")
+        assert result["ok"]
+        assert is_current(project, document, "audience")[0]
+
+        # Changing the upstream bytes retires the machine check.
+        _write(project, "00_brief/brief.json", {"title": "changed"})
+        reconcile(project, document)
+        assert document["stages"][0]["stale"] is True
+        ok, reason = is_current(project, document, "audience")
+        assert not ok and "upstream" in reason
+
+
+def test_current_stage_advances_past_checked_routine_stages():
+    with tempfile.TemporaryDirectory() as td:
+        project = Path(td)
+        document = new_workflow("article", contract="contentops.copy-to-graphic/v1")
+        _write(project, "00_brief/graphic-brief.json")
+        result = check_stage(project, document, "brief")
+        assert result["ok"]
+        assert document["stages"][0]["status"] == "checked"
+        assert current_stage(document) == "outline"
+
+
 def test_a_crashing_validator_fails_closed():
     with tempfile.TemporaryDirectory() as td:
         project = Path(td)
@@ -204,6 +248,8 @@ def main() -> int:
         test_a_check_that_sees_new_bytes_retires_the_old_approval,
         test_rechecking_unchanged_bytes_keeps_the_approval,
         test_an_artifact_path_may_not_escape_the_project,
+        test_a_routine_video_stage_advances_on_a_passing_check_without_a_person,
+        test_current_stage_advances_past_checked_routine_stages,
         test_a_crashing_validator_fails_closed,
     )
     failures = []

@@ -32,7 +32,7 @@ translation_status: synced
 | Driver QC 绑定 | `src/contentops/easel/driver.py` | `receipts/qc-report*.json` 在计划期由 `_step_receipts_ok` 解析;匹配但未评分或 `FAIL` 不算完成 |
 | Router → brief → M5 | `src/contentops/routing/`、`src/contentops/script/`、`scripts/content_route.py`、`scripts/brief_to_m5.py`、`scripts/m5_production.py` | 账号 DNA → 候选 → 已批准 brief → `script/script.json` + claims + source refs;`copy_review.require_if_brief_driven` 拦截未审文案 |
 | S4 阶段策略 | `src/contentops/workflow/{audience,duration,copy_strategy,platform,delivery,visual_route}.py` | 受众/时长/策略/平台限制、人工交付清单与视觉路由;不授予发布权 |
-| 图文工作流适配器 | `scripts/graphic_workflow.py`、`src/contentops/gzh/runtime.py`、`src/contentops/x/runtime.py` | 仅 GZH 与 X;定位/哈希校验/描述及人工包表面;不执行工作流、不调用平台 API、不拟稿、不发布。XHS 图文适配器已移除;小红书属于 VIDEO 交付线。 |
+| 图文工作流适配器 | `scripts/graphic_workflow.py`、`src/contentops/gzh/runtime.py`、`src/contentops/x/runtime.py` | 仅 GZH 与 X；定位/哈希校验/描述及人工包表面；不执行工作流、不调用平台 API、不拟稿、不发布。小红书图文已排除；仅配置 `xiaohongshu_video` VIDEO 目标。 |
 
 ### 图文与编辑部工作流(GZH / X)
 
@@ -40,10 +40,10 @@ GZH 工作流由操作者安装在公开仓库之外,仓库不 vendored 它。X 
 自己的、仅人工的编辑部门禁。`scripts/graphic_workflow.py` 接受 `gzh`、`x`、`video`;
 图文/编辑部入口仅为 `gzh` 和 `x`(`status`、`verify`、`plan`)。它校验工作区或锁,
 然后描述操作者步骤。`video` 路由列出支持的视频目标,不执行平台工作流;使用 `--handoff --project <path>` 时,会调用 `scripts/video_deliver.py pack` 与
-`dispatch`,针对路由导出的所有受支持视频平台 ID（包括小红书）构造多平台交付包和
-分发 argv。handoff 仍设置 `execute=false`、`publish_authorized=false`:不运行上传器,
-也不授权发布。GZH 使用 GRAPHIC_TEXT 人工包,停在 `AWAITING_MANUAL_REVIEW`;X 使用人工发帖包。
-XHS 没有图文适配器或 CLI 路由;小红书只作为 VIDEO 交付目标。
+`dispatch`，针对路由导出的受支持视频目标（小红书具体为 `xiaohongshu_video`）构造多平台交付包和
+argv。视频目标只接收视频素材；该 handoff 不会把图文内容转换成视频。handoff 仍设置
+`execute=false`、`publish_authorized=false`：不运行上传器，也不授权发布。GZH 使用 GRAPHIC_TEXT 人工包，停在 `AWAITING_MANUAL_REVIEW`;X 使用人工发帖包。
+XHS 没有图文适配器或 CLI 路由；小红书仅作为 VIDEO 目标。
 
 权利:GZH 的 50 个 skill 中有 45 个无许可,清权前只允许本地内部使用。通过校验不等于再分发许可。
 
@@ -75,13 +75,17 @@ python scripts/qc_visual.py projects/<slug> --video <slug>.mp4
 
 - 一份 manifest,一个 placement 只有一个活动资产。
 - 审批绑定产物与上游 digest;Bundle 变更即撤销审批。
+- VIDEO 常规阶段在机器校验通过后推进，记录为 `checked` 而非 `approved`；产物或上游
+  digest 变化即失效。明确要求人工决定的阶段仍等待该决定。图文阶段不变。
+- 权利按来源与许可审核一次，而非按文件审核一次。批次列出其覆盖的每个资产与哈希；
+  请求审核不是审核，哈希变化即是新批次。
 - 必须在人审通过前保持 `production_ready: false`、`publish_authorized: false`、
   `human_review: PENDING_FOUNDER_REVIEW`。技术 PASS 或渲染完成不是 Founder 验收或发布授权。
 - 对账号 `x-superplay-1024`，DNA 中 70% 真实录屏配比是内容目标。独立的真实素材时长门
   衡量成片中可见的获权真实来源素材（录屏、截图、文档、日志等）；不要求所有计入时长
   都是录屏。正式生产另要求登记真实裁切录屏。两个门都不能按镜头数量替代。
-- 对 `x-superplay-future-intelligence`，禁止手工桌面录屏；无最低录屏时长要求。不得以桌面捕获
-  替代图解或代码聚焦视觉。
+- 对账号 `x-superplay-future-intelligence`，每条视频按选题选择 30–300 秒；300 秒为硬上限。禁止手工桌面录屏；无最低录屏时长要求。不得以桌面捕获替代图解或代码聚焦视觉。
+- **创作者改过的文案优先。** 创作者修改 AI 初稿并说明自己的版本为最终稿后，必须逐字保留，包括口播语气词、口语表达、重复和标点。不得擅自润色、缩短、删除语气词或套用 AI 式改写；只修改创作者明确要求改动的部分。分镜指示、项目链接和证据备注写在口播行之外。若文案存在事实或证据问题，单独指出；不得暗中改写创作者的文案。
 - 回执只用逻辑路径(`project://`、`repo://`),不写绝对主机路径。
 - 每个新 `tests/test_*.py` 必须注册进 `.github/workflows/ci.yml`。
 
@@ -119,3 +123,59 @@ python scripts/dev_check.py
 ```
 
 绿灯证明契约成立,不证明真实样片存在或可用。
+
+## 7. B-roll 优先制作(标准视频路径)
+
+带口播的 VIDEO 项目不得退化为静态文字卡幻灯片。默认路径是**已登记的真实素材当主画面**,
+由口播驱动镜头选择、运镜与镜头时长。
+
+### 7.1 必须成立的默认值
+
+| 设置 | 必守默认值 | 强制处 |
+|---|---|---|
+| 配音 | 账号 DNA 里的 MiniMax M Plan 克隆音色。SAPI 仅是显式诊断选项;缺 DNA 时绝不可静默降级为离线机械音。 | `m5_production.build` 回退(`or "minimax"`);`stage_narration(provider="minimax")` |
+| 画布 | 账号已审核的 `visual.motion.motion_profile.render_variant`,而非深蓝 `brand.palette`。账号声明一次,换风格无需改代码。 | `motion_planner.build_auto_plan`、`scripts/animation_render.py` 的 `style_variant` |
+| 画面 | 已清权的静态素材(真实截图或生成插画)当主画面;只有没有可信真实素材时才用信息图。 | `scripts/plan_broll.py` |
+| 时长 | 每镜覆盖实测口播槽(本行 start 到下一行 start),夹到 clip 2–8 秒契约。不使用固定猜测值。 | `plan_broll._line_slot` |
+| 标注 | 与口播对应的 2–6 字语义关键词。绝不截断字幕原句(那样同一句会显示两遍)。 | `plan_broll._callout` |
+| 证据标签 | 只有已授权的Capture才能标"证据画面";生成插画标"概念示意·不是证据";本地原创卡根本不进 B-roll 池。 | `plan_broll._usable_stills` 等级过滤 |
+
+### 7.2 标准命令顺序
+
+```bash
+# 1. 生成 M5 项目到配音阶段,绑定账号。
+python scripts/m5_production.py <project> --skip-compose
+
+# 2. 从已登记素材 + 实测口播生成 materialized B-roll 分镜。
+python scripts/plan_broll.py <project> --json
+
+# 3. 用 materialized 分镜渲染并合成。
+python scripts/m5_production.py <project>
+```
+
+`plan_broll.py` 写 `motion/broll/<line>.json`、`motion/broll-plan.json`
+(schema `contentops.m5-motion-shots/v1`),并在 `project.yaml` 设置
+`motion.backend: remotion` / `motion.shot_plan`。缺少已登记素材、实测口播、
+账号绑定或已审核画布变体时一律 fail closed。它不渲染、不审批文案、不授权发布。
+
+### 7.3 生成插画的权利登记
+
+一次性登记完整字段,否则 `verify_assets` 会逐道门禁拒绝:
+
+- `repo_path` 是**仓库根相对**(`projects/<slug>/...`),不是项目相对。
+- `permission: CREATED_BY_OWNER`;`license` 与 `rights.license_id: OWNED-GENERATED-LOCAL`。
+- `rights.review_evidence: assets/<id>.rights.json`,指向 `contentops.media-rights-review/v1` 记录。
+- `rights.source_url: local://minimax-m-plan/image-01/<id>`(非第三方来源标识;
+  `OWNED-GENERATED-LOCAL` 不要求 http URL)。
+- `rights.synthetic: true`,`reviewed_by`、`reviewed_at` 两处一致。
+
+### 7.4 机制回归测试
+
+```bash
+python tests/test_broll_workflow_mechanism.py
+python tests/test_default_narration.py
+python tests/test_animation_orchestrator.py
+```
+
+这些测试锁定"不静默用 SAPI、已审核画布、证据分级、关键词标注、实测时长"规则,
+防止后续改动重新引入静态文字卡或机械配音。

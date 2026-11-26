@@ -58,7 +58,7 @@ def test_the_two_accounts_do_not_get_the_same_pipeline():
     assert explanatory["evidence_mode"] == "EXPLANATORY"
     assert evidence["manual_recording"] == "ALLOWED_CROPPED"
     assert explanatory["manual_recording"] == "FORBIDDEN"
-    assert (evidence["duration_s"], explanatory["duration_s"]) == ([45, 60], [90, 120])
+    assert (evidence["duration_s"], explanatory["duration_s"]) == ([45, 60], [30, 300])
     assert [step["step"] for step in evidence["pipeline"]] != [
         step["step"] for step in explanatory["pipeline"]]
     print("[ok] 1. the two accounts resolve to different pipelines")
@@ -195,7 +195,7 @@ def test_the_cli_resolves_a_real_project_and_echoes_the_creative_owners():
     assert route["pipeline"][0]["command"].endswith("projects/easel-fi-audio-first")
     assert [entry["step"] for entry in route["skills"]][0] == "script"
     assert all(entry["skill"] for entry in route["skills"])
-    assert any("90-120" in warning for warning in route["warnings"]), route["warnings"]
+    assert any("30-300" in warning for warning in route["warnings"]), route["warnings"]
     print("[ok] 9. the CLI resolves a real project and echoes its skill owners")
 
 

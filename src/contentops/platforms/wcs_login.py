@@ -42,8 +42,12 @@ def main() -> int:
     parser.add_argument("--hold", type=int, default=900, help="保持窗口秒数")
     parser.add_argument("--then-deliver", action="store_true",
                         help="窗口关闭或 hold 结束后，自动对已登录的平台投递草稿并出回执")
+    parser.add_argument("--package", default="",
+                        help="图文包路径；与 --then-deliver 一起使用时必填")
     parser.add_argument("--output", default=str(ROOT / ".runtime" / "login-deliver.json"))
     args = parser.parse_args()
+    if args.then_deliver and not args.package:
+        parser.error("--then-deliver requires --package")
 
     ids = [p.strip() for p in args.platforms.split(",") if p.strip()] or list(LOGIN_URLS)
     ids = [p for p in ids if p in LOGIN_URLS]
@@ -108,13 +112,13 @@ def main() -> int:
                 print("HOLD_EXPIRED", flush=True)
 
             if args.then_deliver:
-                _deliver(context, ids, args.output)
+                _deliver(context, ids, args.output, args.package)
         finally:
             context.close()
     return 0
 
 
-def _deliver(context, ids, output_path) -> None:
+def _deliver(context, ids, output_path, package_path) -> None:
     """Run the delivery pass inside the same browser session, then write a receipt."""
     from contentops.platforms.wcs_bridge import parse_sync_result, read_token, run_cli
 
@@ -132,7 +136,9 @@ def _deliver(context, ids, output_path) -> None:
     from contentops.platforms import multichannel as mc
     from contentops.platforms.wcs_bridge import OUT_DIR
 
-    package_file = ROOT / "projects" / "bundle-dual-line-graphic" / "receipts" / "graphic-package.json"
+    package_file = Path(package_path).expanduser().resolve()
+    if not package_file.is_file():
+        raise FileNotFoundError(f"graphic package not found: {package_file}")
     package = _json.loads(package_file.read_text(encoding="utf-8"))
     package["_package_root"] = str(package_file.parent.parent)
     results = []

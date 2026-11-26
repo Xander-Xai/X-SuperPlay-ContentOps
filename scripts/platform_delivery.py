@@ -6,7 +6,7 @@ Commands
   list       Show registry graphic rows and optional external delivery channels.
   self-test  Run the acceptance tests from docs/PLATFORM-ADAPTER-CONTRACT.md.
   pack       Map a reviewed graphic package into per-platform drafts + receipts.
-  dispatch   Hand a packed draft to an external delivery CLI (operator-owned).
+  dispatch   Refuse legacy unbound drafts; use graphic_deliver for reviewed packages.
   status     Aggregate real platform readiness across all graphic channels.
 
 This runner never edits config/registry/platforms.json, never upgrades a row,
@@ -41,7 +41,6 @@ from contentops.platforms.registry import validate_registry  # noqa: E402
 RUNTIME_TOOLS = ROOT / ".runtime" / "multichannel-tools"
 CLI_ENTRY = RUNTIME_TOOLS / "node_modules" / "@wechatsync" / "cli" / "dist" / "index.js"
 PLATFORMS_JSON = ROOT / "config" / "registry" / "platforms.json"
-DEFAULT_PACKAGE = ROOT / "projects" / "bundle-dual-line-graphic" / "receipts" / "graphic-package.json"
 
 
 def _configure_stdio() -> None:
@@ -150,15 +149,14 @@ def cmd_self_test(args: argparse.Namespace) -> int:
         # Classify by pipeline, not by an exclusion list: the registry also
         # carries VIDEO rows (douyin/bilibili/shipinhao/youtube) that the
         # graphic spec is not supposed to describe.
-        graphic_pipelines = {"GZH_EDITORIAL", "X_EDITORIAL", "ARTICLE_EDITORIAL", "XHS_EDITORIAL"}
+        graphic_pipelines = {"GZH_EDITORIAL", "X_EDITORIAL", "ARTICLE_EDITORIAL"}
         graphic_registry = {
             r["platform_id"] for r in registry_rows_raw
             if r.get("pipeline") in graphic_pipelines
         }
-        # xiaohongshu_image is a graphic-pipeline registry row that this spec
-        # deliberately refuses to cover (operator instruction: video line). That
-        # is a documented exclusion, so it must be present in `excluded` rather
-        # than silently missing.
+        # xiaohongshu_image has no active registry row. Its explicit exclusion
+        # remains as an auditable record of the VIDEO-only project policy; do not
+        # treat it as a graphic pipeline target.
         excluded_ids = {e.get("platform_id") for e in graphic_specs.load_specs()["excluded"]}
         covered = {pid for pid in graphic_registry if pid in spec_rows or pid in excluded_ids}
         record("spec_covers_registry_graphic_rows", graphic_registry <= covered,
@@ -387,134 +385,24 @@ def _classify_failure(proc: subprocess.CompletedProcess) -> str:
 
 
 def cmd_dispatch(args: argparse.Namespace) -> int:
-    """Hand a packed draft to the external CLI. Never fabricates success."""
-    draft_path = Path(args.draft).expanduser().resolve()
-    if not draft_path.is_file():
-        _emit({"status": "blocked", "network_called": False, "reason": f"DRAFT_NOT_FOUND: {draft_path.name}"})
-        return 1
-    doc = json.loads(draft_path.read_text(encoding="utf-8"))
-    # delivery_platform_ids() also populates the adapter's platform views; the
-    # dict must not be read directly here or a fresh process would see it empty
-    # and refuse every draft as UNKNOWN_PLATFORM_ID.
-    if doc.get("platform_id") not in mc.delivery_platform_ids():
-        _emit({"status": "blocked", "network_called": False, "reason": "UNKNOWN_PLATFORM_ID"})
-        return 1
-    if not CLI_ENTRY.is_file():
-        _emit({"status": "blocked", "network_called": False, "reason": "EXTERNAL_CLI_NOT_INSTALLED"})
-        return 1
+    """Refuse legacy unbound drafts; use the package-bound graphic runner."""
+    _emit({
+        "status": "blocked", "network_called": False,
+        "reason": "GUARDED_GRAPHIC_DELIVER_REQUIRED: dispatch accepts only a package-bound, currently reviewed graphic package through scripts/graphic_deliver.py",
+        "published": False, "generated_at": _stamp(),
+    })
+    return 1
 
-    channel = str(args.channel or "").strip()
-    if not channel:
-        # The CLI only understands Wechatsync browser-bridge adapter ids. The
-        # receipt's `channel` is the *intended* primary channel (which may be
-        # an API path such as `wechatpy:draft` or `tweepy:api-v2`), so it must
-        # not be reused here: splitting it produced channel="draft" and
-        # channel="api-v2", both of which the CLI silently rejects.
-        for ch in graphic_specs.channels(doc["platform_id"]):
-            if ch["kind"] == "browser_bridge":
-                channel = str(ch["id"]).split(":", 1)[1]
-                break
-        if not channel:
-            _emit({
-                "status": "blocked", "network_called": False,
-                "platform_id": doc["platform_id"],
-                "reason": "NO_BROWSER_BRIDGE_CHANNEL: 该平台没有 wechatsync 桥接适配器，"
-                          "只能走 API 直连或人工投递",
-                "published": False, "generated_at": _stamp(),
-            })
-            return 1
 
-    work_dir = RUNTIME_TOOLS / "out"
-    work_dir.mkdir(parents=True, exist_ok=True)
-    article = work_dir / f"{doc['platform_id']}.md"
-    title = str(doc.get("title") or doc.get("title_hint") or "").strip()
-    body_text = str(doc.get("body") or "")
-    if title:
-        article.write_text(f"# {title}\n\n{body_text}", encoding="utf-8")
-    else:
-        # Short-post platforms have no title. The CLI refuses a file with no
-        # heading and no front matter, so the body is written as-is and the
-        # title is supplied explicitly on the command line instead of faking a
-        # heading the platform would then display as content.
-        article.write_text(body_text, encoding="utf-8")
-        title = _derive_title(body_text)
-
-    cmd = ["node", str(CLI_ENTRY), "sync", str(article), "-p", channel, "--title", title]
-    cover = _resolve_cover(doc)
-    cover_note = ""
-    if cover:
-        cmd.extend(["--cover", str(cover)])
-    elif graphic_specs.rules(doc["platform_id"])["needs_cover"]:
-        cover_note = "COVER_NOT_SUPPLIED: 该平台需要封面，草稿未携带可解析的本地图片"
-    if args.dry_run:
-        cmd.append("--dry-run")
-    try:
-        proc = hidden_run(cmd, cwd=str(RUNTIME_TOOLS), capture_output=True,
-                              text=True, encoding="utf-8", errors="replace", timeout=int(args.timeout))
-    except subprocess.TimeoutExpired:
-        _emit({
-            "status": "blocked", "network_called": not args.dry_run,
-            "platform_id": doc["platform_id"], "channel": channel,
-            "delivered_title": title,
-            "cover_used": bool(cover),
-            "cover_note": cover_note,
-            "reason": "EXTENSION_NOT_CONNECTED: CLI 等待浏览器扩展登录态超时；未创建任何平台草稿",
-            "next_action": "安装 Wechatsync 浏览器扩展并在扩展设置中启用 MCP 连接，"
-                           "然后在浏览器里登录该平台，再重跑本命令",
-            "draft_sha256": doc.get("draft_sha256"),
-            "published": False, "generated_at": _stamp(),
-        })
-        return 1
-    stdout_lines = [l for l in (proc.stdout or "").splitlines() if l.strip()]
-    if args.dry_run:
-        # A dry run only prints a local preview; it starts no WebSocket bridge
-        # and creates no platform draft. It must never be reported as delivery.
-        payload = {
-            "status": "dry_run_preview" if proc.returncode == 0 else "blocked",
-            "network_called": False,
-            "platform_id": doc["platform_id"],
-            "channel": channel,
-            "returncode": proc.returncode,
-            "delivered_title": title,
-            "cover_used": bool(cover),
-            "cover_note": cover_note,
-            "stdout_head": stdout_lines[:8],
-            "publication_state": "NOT_PUBLISHED",
-            "published": False,
-            "reason": "本地干跑预览；未启动扩展桥接，未创建任何平台草稿",
-            "generated_at": _stamp(),
-        }
-        _emit(payload)
-        return 0 if proc.returncode == 0 else 1
-    ok = proc.returncode == 0 and any(
-        marker in (proc.stdout or "").lower() for marker in ("同步完成", "success", "草稿已创建")
-    )
-    payload = {
-        "status": "handoff_submitted" if ok else "blocked",
-        "network_called": True,
-        "platform_id": doc["platform_id"],
-        "channel": channel,
-        "returncode": proc.returncode,
-        "delivered_title": title,
-        "cover_used": bool(cover),
-        "cover_note": cover_note,
-        "stdout_head": stdout_lines[:8],
-        "stderr_head": (proc.stderr or "").splitlines()[:5],
-        "published": False,
-        "reason": "" if ok else _classify_failure(proc),
-        "generated_at": _stamp(),
-    }
-    _emit(payload)
-    return 0 if ok else 1
 
 
 def cmd_status(args: argparse.Namespace) -> int:
     registry = json.loads(PLATFORMS_JSON.read_text(encoding="utf-8"))
     rows = registry["platforms"]
     graphic = [r for r in rows if r["pipeline"] in
-               ("XHS_EDITORIAL", "GZH_EDITORIAL", "X_EDITORIAL", "ARTICLE_EDITORIAL")]
+               ("GZH_EDITORIAL", "X_EDITORIAL", "ARTICLE_EDITORIAL")]
     workflows: dict[str, Any] = {}
-    for wf in ("gzh", "xhs", "x"):
+    for wf in ("gzh", "x"):
         proc = hidden_run([sys.executable, str(ROOT / "scripts" / "graphic_workflow.py"),
                                "status", "--workflow", wf, "--json"],
                               cwd=str(ROOT), capture_output=True, text=True,
@@ -662,19 +550,17 @@ def main() -> int:
     p_list.set_defaults(func=cmd_list)
 
     p_test = sub.add_parser("self-test")
-    p_test.add_argument("--package", default=str(DEFAULT_PACKAGE))
+    p_test.add_argument("--package", required=True)
     p_test.add_argument("--output")
     p_test.set_defaults(func=cmd_self_test)
 
     p_pack = sub.add_parser("pack")
-    p_pack.add_argument("--package", default=str(DEFAULT_PACKAGE))
+    p_pack.add_argument("--package", required=True)
     p_pack.add_argument("--platforms", default="")
     p_pack.add_argument("--out", default=str(ROOT / ".runtime" / "multichannel-out"))
     p_pack.set_defaults(func=cmd_pack)
 
     p_dispatch = sub.add_parser("dispatch")
-    p_dispatch.add_argument("--draft", required=True)
-    p_dispatch.add_argument("--channel", default="")
     p_dispatch.add_argument("--dry-run", action="store_true")
     p_dispatch.add_argument("--timeout", default="20")
     p_dispatch.set_defaults(func=cmd_dispatch)

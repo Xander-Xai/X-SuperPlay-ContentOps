@@ -2,7 +2,7 @@
 
 [English](ARCHITECTURE.md) | [简体中文](ARCHITECTURE.zh-CN.md)
 
-> Last verified: 2026-11-17 on `feat/173-easel-m0-pin`.
+> Last verified: 2026-11-18 against the current repository platform routes and video constraints.
 > Last verified: 2026-11-14 (X contract update; PR checks determine CI status). X records now declare `post_format=text|image`; post validation and publisher both preserve honest optional media and manual-only handoff. The editorial gate routes by mode (technical/source versus general_interest). Offline feedback never starts platform actions.
 > X priority: platform rules/human gates -> registered account DNA -> Strategy X SOP -> scoped experiment.
 
@@ -104,7 +104,7 @@ outline are already different objects.
         delivery package + receipt
                   │
      ┌────────────┴────────────┐
-  抖音 · 视频号 · B站        X · 小红书 · 公众号 · 知乎
+  抖音 · 小红书（视频）· 视频号 · B站        X · 公众号 · 知乎
                   │
         owner publishes by hand
                   │
@@ -158,7 +158,8 @@ is on `main`.
 | Account-aware content router, workflow gates, brief/script/design stages | `main` (S1 #93, S2 #95, router #114, S4 #118) | **implemented** — brief→M5 bridge is gate-bound to a human-approved brief |
 | Platform registry + Content Bundle intake | `main` (PR #101) | **implemented**; one registry, one Bundle consumer |
 | Easel host guard, Bundle handoff, graphic package | `main` (PRs #107, #108) | **implemented offline**; host `HOST_BLOCKED` until dependencies and security review |
-| XHS eight-step workflow | `main` verify-only adapter (PR #125) | **verify-only**; rights unresolved, no execution |
+| Graphic generation routes (#208 candidate) | `feat/208-shared-graphic-workflow` | three explicit methods with offline tests; a live Codex smoke run passed the repaired adapter and wrote an image plus generation receipt in a temporary project; article packaging/rights/quality review remain pending |
+| Xiaohongshu | `xiaohongshu_video` registry row; `VIDEO` route | Configured / `PLANNED`; no graphic/image-text adapter; account, rights and publication remain separate gates |
 | X platform track (migrated records, prompt references, table gate) | `main` (PR #127) | **implemented**; publication stays manual |
 | GZH ten-stage vendored workflow | `main` verify-only adapter (PR #121) | **verify-only / rights-blocked**; the vendored tree is not redistributed |
 
@@ -173,12 +174,13 @@ runnable here.
 scripts/
 ├── run_v1.py             ← V1 orchestrator (easel + fallback engines)
 ├── make_content.py       ← Stable production entry (gate-checked, explicit decisions)
-├── production_gates.py   ← 8 VIDEO + 6 GRAPHIC_TEXT fail-closed gates
+├── production_gates.py   ← full VIDEO gates + focused GRAPHIC_TEXT account/evidence/rights/runtime checks
 ├── produce_video.py      ← Diagnostic producer behind make_content.py
 ├── m5_production.py      ← Evidence-first chain (sources → … → review → ASR backcheck)
 ├── m5_characterize.py    ← Records the M5 suite pass counts a refactor must keep
 ├── bundle_handoff.py     ← Bundle → VIDEO / GRAPHIC_TEXT plan
-├── graphic_package.py    ← Manual graphic package (stops at review)
+├── graphic_generate.py   ← One explicitly authorised Codex/MiniMax image per run
+├── graphic_package.py    ← Rights-bound graphic package (stops at review)
 ├── render_cards.py       ← HTML cards → PNG + density audit (pinned skill)
 ├── render_article.py     ← Article HTML validation + preview wrap (pinned skill)
 ├── video_deliver.py      ← Per-platform video packs; dispatch needs an operator grant
@@ -203,7 +205,7 @@ src/contentops/
 ├── evidence/             ← SourceArtifact, ClaimLedger
 ├── content_kernel/       ← Bundle validation + form-specific handoff
 ├── easel/                ← Host guard, loopback lifecycle, coding-agent driver
-├── graphic/              ← Manual graphic package + rights-bound images
+├── graphic/              ← Generation methods, package contracts + rights-bound images
 ├── platforms/            ← The one machine-readable platform registry
 ├── workflow/             ← Video + graphic ordered stages and human gate
 ├── media/                ← contracts, billing, providers, manifest, validation,

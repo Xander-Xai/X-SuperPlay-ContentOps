@@ -49,6 +49,12 @@ def _project_path(value: str) -> Path:
     return project
 
 
+def _is_graphic_project(project: Path, graphic_input_path: Optional[Path] = None) -> bool:
+    selected_input = graphic_input_path or (project / "graphic-input.json")
+    return (not (project / "script" / "script.json").is_file()
+            and ((project / "draft.md").is_file() or Path(selected_input).is_file()))
+
+
 def _emit(payload: Dict[str, Any], as_json: bool) -> None:
     if as_json:
         print(json.dumps(payload, ensure_ascii=False, indent=2))
@@ -77,6 +83,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("--opinion", help="written review rationale")
     parser.add_argument("--confirm", action="store_true",
                         help="confirm this human review decision")
+    parser.add_argument("--graphic-input", help="selected GRAPHIC_TEXT input JSON (defaults to graphic-input.json)")
     parser.add_argument("--json", action="store_true", help="machine-readable output")
     args = parser.parse_args(argv)
 
@@ -94,16 +101,29 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     try:
         project = _project_path(args.project)
+        graphic_input_path = (project / args.graphic_input) if args.graphic_input else None
         action = "CHECK"
         if has_decision:
-            # Research-then-copy: a signed pre-copy research gate must be
-            # current before any copy decision can be recorded.
-            from contentops.workflow import preresearch
+            # VIDEO uses research-then-copy; standalone GRAPHIC_TEXT can be
+            # reviewed directly. Shared topic consumers use their bound lineage.
+            from contentops.workflow import preresearch, topic_package
 
-            research = preresearch.check(project)
-            if not research["ok"]:
-                raise ValueError(
-                    f"PRECOPY_RESEARCH_REQUIRED: {research['state']}: {research['detail']}")
+            if topic_package.is_declared_consumer(project):
+                lineage = topic_package.status_child(
+                    project, projects_root=project.parent)
+                if not lineage.get("ok"):
+                    raise ValueError(
+                        f"SHARED_TOPIC_PACKAGE_REQUIRED: {lineage.get('state')}: "
+                        f"{lineage.get('detail')}")
+            else:
+                # Standalone graphic drafts can be reviewed without a second
+                # pre-copy research signature. Shared topic consumers still use
+                # the bound topic-package lineage checked above.
+                if not _is_graphic_project(project, graphic_input_path):
+                    research = preresearch.check(project)
+                    if not research["ok"]:
+                        raise ValueError(
+                            f"PRECOPY_RESEARCH_REQUIRED: {research['state']}: {research['detail']}")
             status_value = "APPROVED" if args.approve else "CHANGES_REQUESTED"
             reviewed_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace(
                 "+00:00", "Z")
@@ -113,9 +133,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 reviewer=args.reviewer,
                 opinion=args.opinion,
                 reviewed_at=reviewed_at,
+                graphic_input_path=graphic_input_path,
             )
             action = "APPROVAL_RECORDED" if args.approve else "CHANGES_REQUESTED_RECORDED"
-        gate = copy_review.status(project)
+        gate = copy_review.status(project, projects_root=project.parent,
+                                  graphic_input_path=graphic_input_path)
     except (OSError, ValueError) as exc:
         message = str(exc)
         code = message.split(":", 1)[0] if ":" in message else "COPY_REVIEW_BLOCKED"

@@ -29,8 +29,8 @@ SCHEMA = "contentops.platform-constraints/v1"
 #: Conservative local defaults. These are chosen limits, not platform facts.
 DEFAULT_CONSTRAINTS: Dict[str, Dict[str, Any]] = {
     "douyin": {"aspect_ratio": "9:16", "max_duration_s": 180, "caption_max_chars": 80},
-    "xiaohongshu": {"aspect_ratio": "3:4", "max_duration_s": 300, "caption_max_chars": 1000},
-    "xiaohongshu_video": {"aspect_ratio": "3:4", "max_duration_s": 300, "caption_max_chars": 1000},
+    "xiaohongshu": {"aspect_ratio": "9:16", "max_duration_s": 300, "caption_max_chars": 1000},
+    "xiaohongshu_video": {"aspect_ratio": "9:16", "max_duration_s": 300, "caption_max_chars": 1000},
     "bilibili": {"aspect_ratio": "16:9", "max_duration_s": 600, "caption_max_chars": 200},
     "wechat_channels": {"aspect_ratio": "9:16", "max_duration_s": 180, "caption_max_chars": 80},
     "shipinhao": {"aspect_ratio": "9:16", "max_duration_s": 180, "caption_max_chars": 80},

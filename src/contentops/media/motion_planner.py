@@ -210,19 +210,49 @@ def _y3_cues(text: str, kind: str, *, duration: float) -> List[Dict[str, Any]]:
 
 
 def _t2_cues(text: str, source_image: str, rects: Sequence[Mapping[str, Any]],
-             *, duration: float) -> List[Dict[str, Any]]:
+             *, duration: float, fit: str = "contain",
+             show_label: bool = True,
+             focus: Optional[Sequence[float]] = None,
+             pace: int = 0) -> List[Dict[str, Any]]:
     """Evidence shot: the still is the main picture, the camera finds the line.
 
     Huashu t2 pushes only when the framed rectangle is narrow enough
     (``zoom = fill / rect_width``, capped at 2.6). The rectangles come from the
     anchor's own line geometry, so each camera move lands on real source lines
     instead of an OCR box spanning the whole column.
+
+    ``fit='cover'`` lets a 9:16 authored card fill the safe content frame instead
+    of being letterboxed into a black band. ``show_label=False`` drops the mid-
+    frame text label when the same line is already burned in as a subtitle --
+    otherwise one sentence is drawn twice (once as a green label, once as subs).
+    Both are opt-in so real-screenshot evidence shots keep their original look.
     """
-    cues: List[Dict[str, Any]] = [{"at": 0.0, "kind": "image", "image": source_image,
-                                   "text": _short_label(text, 14)}]
+    image_cue: Dict[str, Any] = {"at": 0.0, "kind": "image", "image": source_image}
+    if show_label:
+        image_cue["text"] = _short_label(text, 14)
+    if fit != "contain" or focus is not None:
+        data: Dict[str, Any] = {}
+        if fit != "contain":
+            data["fit"] = fit
+        if focus is not None:
+            data["focus"] = [round(float(value), 4) for value in focus]
+        image_cue["data"] = data
+    cues: List[Dict[str, Any]] = [image_cue]
     if not rects:
         return cues
-    take = list(rects[:2]) if duration >= 4.4 else list(rects[:1])
+    if pace > 0:
+        # Authored cards: walk the camera across several content bands so the
+        # shot has continuous in-frame motion (film_gate fast_ratio), not one
+        # push followed by seconds of still frame. Bands stay inside the card.
+        base = list(rects[0].get("rect") if isinstance(rects[0], Mapping) else rects[0])
+        x, y, w, h = base
+        take = []
+        for step in range(pace):
+            shift = (step - (pace - 1) / 2) * (0.10 if pace <= 4 else 0.07)
+            yy = min(0.80, max(0.06, y + shift))
+            take.append({"rect": [x, yy, w, h]})
+    else:
+        take = list(rects[:2]) if duration >= 4.4 else list(rects[:1])
     span = max(1.0, (duration - 1.6) / max(1, len(take)))
     for index, region in enumerate(take):
         rect = region.get("rect") if isinstance(region, Mapping) else region
@@ -425,6 +455,11 @@ ANIMATION_TEMPLATE_GRAMMARS = {
     "evidence_zoom": "t2_keynote_ui",
     "metric_transition": "t3_finance_chart",
     "comparison_reveal": "y3_whiteboard",
+    # Kinetic typography for editorial chapter cards: full-bleed colour, one
+    # big word per beat. Unlike a screenshot pushed by t2, a kinetic card has no
+    # letterbox edges, no duplicated mid-frame caption and real frame-to-frame
+    # motion when words slam in -- it is the explainer-card grammar.
+    "kinetic_chapter": "y5_kinetic_type",
 }
 _TEMPLATE_ICONS = {"person", "network", "doc", "chat", "bulb", "check", "cross",
                    "screen", "stack", "gear", "target", "clock", "chart"}
@@ -519,12 +554,54 @@ def _whiteboard_flow_cues(labels: Sequence[str], duration: float,
     return cues
 
 
+def _kinetic_chapter_cues(params: Mapping[str, Any], line: Mapping[str, Any],
+                          duration: float) -> List[Dict[str, Any]]:
+    """Editorial chapter card: full-bleed colour, one big word per beat.
+
+    ``params['chapters']`` is an explicit list of ``{word, sub, label}`` drawn
+    from the reviewed narration. Words are display text, never a factual claim;
+    the claim binding stays on the M5 line and its source artifacts.
+    """
+    raw = params.get("chapters")
+    if not isinstance(raw, list) or not 1 <= len(raw) <= 4:
+        raise MotionPlanError("AUTO_MOTION_TEMPLATE_INPUT_INVALID: chapters needs 1-4 entries")
+    chapters: List[Dict[str, str]] = []
+    for row in raw:
+        if not isinstance(row, Mapping):
+            raise MotionPlanError("AUTO_MOTION_TEMPLATE_INPUT_INVALID: chapter must be an object")
+        word = str(row.get("word") or "").strip()[:4]
+        sub = str(row.get("sub") or "").strip()[:14]
+        label = str(row.get("label") or "").strip()[:12]
+        if not word:
+            raise MotionPlanError("AUTO_MOTION_TEMPLATE_INPUT_INVALID: chapter word is required")
+        chapters.append({"word": word, "sub": sub, "label": label})
+    span = max(0.9, (duration - 0.6) / len(chapters))
+    cues: List[Dict[str, Any]] = []
+    for index, chapter in enumerate(chapters):
+        cue: Dict[str, Any] = {
+            "at": round(0.3 + index * span, 3), "kind": "point",
+            "text": chapter["word"],
+        }
+        if chapter["sub"]:
+            cue["sub"] = chapter["sub"]
+        cue["data"] = {"key": chapter["word"]}
+        if chapter["label"]:
+            cue["data"]["label"] = chapter["label"]
+        cues.append(cue)
+    cues.append({"at": round(min(duration - 0.4, 0.3 + len(chapters) * span), 3),
+                 "kind": "highlight", "data": {"word": chapters[-1]["word"]}})
+    return cues
+
+
 def _template_cues(animation_type: str, params: Mapping[str, Any], line: Mapping[str, Any],
                    source: Mapping[str, Any], source_image: Optional[str],
                    source_regions: Sequence[Mapping[str, Any]], duration: float,
                    account_id: str) -> tuple[str, List[Dict[str, Any]], Optional[Dict[str, Any]]]:
     """Compile a named, parameterized shot through only verified runtime grammars."""
     source_kind = str(source.get("type") or "").upper()
+    if animation_type == "kinetic_chapter":
+        cues = _kinetic_chapter_cues(params, line, duration)
+        return "y5_kinetic_type", cues, None
     if animation_type == "architecture_flow":
         labels = _template_labels(params.get("nodes"), "nodes", 2, 6)
         return "y3_whiteboard", _whiteboard_flow_cues(labels, duration), None
@@ -584,6 +661,20 @@ def _template_cues(animation_type: str, params: Mapping[str, Any], line: Mapping
         if not regions:
             raise MotionPlanError(f"AUTO_MOTION_FOCUS_MISSING: {animation_type} needs a source-bound focus region")
         text = str(line.get("visual_focus") or line.get("narration") or "").strip()
+        # Authored explainer cards are 9:16 and would be letterboxed into a black
+        # band by t2's default `contain`. `cover` fills the safe frame; focus is
+        # biased upward so the title and body stay in shot. The mid-frame text
+        # label is dropped because the same line is already a burned subtitle.
+        authored_card = params.get("authored_card") is True
+        if authored_card:
+            focus = params.get("focus")
+            if not (isinstance(focus, (list, tuple)) and len(focus) == 2
+                    and all(isinstance(value, (int, float)) for value in focus)):
+                focus = [0.5, 0.42]
+            return ("t2_keynote_ui",
+                    _t2_cues(text, source_image, regions, duration=duration,
+                             fit="cover", show_label=False, focus=focus,
+                             pace=4), None)
         return "t2_keynote_ui", _t2_cues(text, source_image, regions, duration=duration), None
     if animation_type == "metric_transition":
         if params.get("source_asset_id") != line.get("asset_id"):
@@ -692,14 +783,27 @@ def build_auto_plan(*, project: Path, account_id: str,
         raise MotionPlanError(
             f"AUTO_MOTION_PALETTE_TARGET_UNSUPPORTED: {refresh_target!r}")
     style_variants = profile.get("style_variants") or {}
-    if isinstance(brand_palette, Mapping):
+    # A brand.palette (typically a dark blue) is the *brand* token set, not
+    # necessarily the right *video canvas*. An account may declare
+    # `render_variant` to name one of its own reviewed style_variants as the
+    # video render default. This is how a studio escapes a generic AI blue
+    # without editing code or injecting colours through a shot spec.
+    render_variant = str(profile.get("render_variant") or "").strip()
+    variant_palette = style_variants.get(render_variant) if (
+        render_variant and isinstance(style_variants, Mapping)) else None
+    if isinstance(variant_palette, Mapping):
+        try:
+            brand_tokens = palette_from_dna(account_dna)
+        except ValueError:
+            brand_tokens = {}
+        palette = {**brand_tokens, **{k: str(v) for k, v in variant_palette.items()
+                                      if k in ("bg", "surface", "ink", "sub", "accent", "accent2")}}
+        default_variant = render_variant
+    elif isinstance(brand_palette, Mapping):
         try:
             palette = palette_from_dna(account_dna)
         except ValueError as exc:
             raise MotionPlanError(f"AUTO_MOTION_PALETTE_INVALID: {exc}") from None
-        # The profile's old variants remain useful historical context, but a
-        # declared brand palette is the render input. Never relabel it as an old
-        # variant, and never allow a per-shot variant to restore stale colors.
         default_variant = "brand.palette"
         style_variants = {}
     else:
@@ -815,11 +919,15 @@ def build_auto_plan(*, project: Path, account_id: str,
         text = str(line.get("visual_focus") or line.get("narration")
                    or line.get("caption") or "").strip()
         requested_variant = str(line.get("style_variant") or "")
-        if isinstance(brand_palette, Mapping):
-            if requested_variant and requested_variant != "brand.palette":
+        video_variants = set(style_variants) if isinstance(style_variants, Mapping) else set()
+        if default_variant in video_variants or (isinstance(brand_palette, Mapping)
+                                                 and not video_variants):
+            # Either the account declared a reviewed render_variant, or it has
+            # no variants at all and brand.palette is the only declared canvas.
+            style_variant = requested_variant or default_variant
+            if style_variant not in video_variants and style_variant != "brand.palette":
                 raise MotionPlanError(
-                    f"AUTO_MOTION_STALE_STYLE_VARIANT: {requested_variant!r} conflicts with brand.palette")
-            style_variant = "brand.palette"
+                    f"AUTO_MOTION_STYLE_VARIANT_UNKNOWN: {style_variant!r}")
         else:
             style_variant = requested_variant or default_variant
         shot_palette = dict(style_variants.get(style_variant, palette))
@@ -996,9 +1104,27 @@ def build_auto_plan(*, project: Path, account_id: str,
                 "contrast_after": round(
                     _contrast_ratio(str(shot_palette["ink"]), bg_for_contrast), 3),
             }
+        # Kinetic type draws large glyphs straight onto the background. The
+        # account's raw ``ink`` token is dark (it is meant for light cards), so
+        # on a dark background it renders near-invisible. Force a readable
+        # light-on-dark pair for this grammar; the account's accent stays the
+        # single emphasis token.
+        spec_palette = shot_palette
+        if grammar == "y5_kinetic_type":
+            spec_palette = dict(shot_palette)
+            spec_palette["ink"] = "#F9FBFA"
+            spec_palette["bg"] = str(shot_palette.get("bg") or "#0F1117")
+            if str(spec_palette["bg"]).lower() == str(spec_palette["ink"]).lower():
+                spec_palette["ink"] = "#111111"
+        # Authored cards are full-frame 9:16 artwork: reserve no Huashu subtitle
+        # band, or the card is letterboxed into a black strip. Easel burns the
+        # SRT onto the finished frame instead. Only real-screenshot evidence
+        # shots keep the safe band.
+        authored_card = (line.get("animation") or {}).get("authored_card") is True
+        safe_bottom = 0 if authored_card else SUBTITLE_SAFE_BOTTOM
         spec = {"grammar": grammar, "duration": render_duration, "fps": 30,
-                "width": 1080, "height": 1920, "theme": shot_palette,
-                "safe": {"top": 0, "bottom": SUBTITLE_SAFE_BOTTOM,
+                "width": 1080, "height": 1920, "theme": spec_palette,
+                "safe": {"top": 0, "bottom": safe_bottom,
                          "fill": str(shot_palette.get("bg") or "")},
                 "cues": cues,
                 "contentops_scene": {"segment_id": str(line.get("segment_id") or placement),

@@ -129,7 +129,7 @@ def _check_equal(label: str, claimed: Any, recorded: Any) -> None:
 
 
 def validate_request_rights(
-    request: Dict[str, Any], project_dir: Path
+    request: Dict[str, Any], project_dir: Path, *, allow_remote_generated: bool = False
 ) -> Dict[str, Any]:
     """Return a normalised rights record or raise ``RightsError``.
 
@@ -147,7 +147,22 @@ def validate_request_rights(
         raise RightsError(f"rights.schema must be {RIGHTS_CLAIM_SCHEMA}")
 
     license_id = _text(rights.get("license_id"))
-    policy = _policy(license_id)
+    if license_id == "GENERATED-REMOTE-REVIEWED":
+        if not allow_remote_generated:
+            raise RightsError(
+                "remote-generated rights are accepted only by the graphic package gate"
+            )
+        policy = {
+            "third_party": True,
+            "attribution_required": False,
+            "synthetic_allowed": True,
+            "note": (
+                "remote provider output; applicable terms and this exact use must be "
+                "reviewed by a named human; never evidence"
+            ),
+        }
+    else:
+        policy = _policy(license_id)
 
     declared_license = _text(request.get("license"))
     if declared_license and declared_license != license_id:

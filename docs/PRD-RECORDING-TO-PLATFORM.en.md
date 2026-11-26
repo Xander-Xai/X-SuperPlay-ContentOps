@@ -86,7 +86,8 @@ authorised.
      **zero manual recording, zero mouse motion, zero desktop window**, 70% vector animation.
    - `x-superplay-english`: X only — one English post plus one real 16:9 image, no video line.
 3. **Platform difference is a hard constraint, not a preference.** Douyin 9:16 with a
-   three-second hook; Xiaohongshu 3:4 cover and a ≤20-character title; Bilibili a 16:9
+   three-second hook; Xiaohongshu is a video-only target (9:16 video, 3:4 cover) with a
+   ≤20-character title; Bilibili a 16:9
    long cut with chapters; WeChat/Zhihu/CSDN a rewritten text piece; X a single post.
 
 Every requirement below follows from these three. **If one is wrong, fix this section first,
@@ -242,7 +243,7 @@ without `account_slug` is `BLOCKED` with no default fallback.
 |---|---|---|
 | 1 | ~~Adopt upstream `main` (`e9d86ab4`) as a candidate engine~~ | **Decided (2026-11-16)**: frozen at v0.3.0, upstream not followed; only Founder-requested changes on the pinned tree |
 | 2 | ~~Archive or delete `Easel/` (2.2 GB)~~ | **Decided**: deleted (2026-11-16) |
-| 3 | First `DRAFT_AUTO` platform: `wechat_article` or Xiaohongshu | Founder |
+| 3 | First `DRAFT_AUTO` platform: `wechat_article` or `xiaohongshu_video` (video target; graphic/image-text is out of scope here) | Founder |
 | 4 | May a recording contain third-party AI product UI (compliance boundary) | Founder + legal |
 | 5 | Retention deadline for the v0.2.1 rollback tree | Founder |
 

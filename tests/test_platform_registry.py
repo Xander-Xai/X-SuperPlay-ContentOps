@@ -78,6 +78,7 @@ def test_xiaohongshu_is_video_only():
     platforms = load_platforms(ROOT)
     xhs = [e for e in platforms.values() if e.strategy_platform == "xiaohongshu"]
     assert len(xhs) == 1, f"expected a single video entry, got {len(xhs)}"
+    assert {e.platform_id for e in xhs} == {"xiaohongshu_video"}
     assert {e.pipeline for e in xhs} == {"VIDEO"}
 
 

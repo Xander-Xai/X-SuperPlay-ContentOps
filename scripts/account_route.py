@@ -10,7 +10,7 @@ they do not make the same film:
   account's composition is 70 % screen recording / 25 % vector / 5 % card.
 - ``x-superplay-future-intelligence`` is ``EXPLANATORY``: manual recording is
   ``FORBIDDEN``, the picture budget is 70 % vector / 25 % code / 5 % metric, and
-  an episode runs 90--120 s.
+  each episode chooses a duration from 30--300 s.
 
 The DNA already declares all of that, including a ``skill_route`` table. What was
 missing was a way to ask "so which scripts do I run for *this* project?" without

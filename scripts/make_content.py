@@ -35,6 +35,10 @@ import production_gates as gates  # noqa: E402
 
 BLOCKED_EXIT = 4
 RUN_RECEIPT = Path("receipts") / "make-content.json"
+# Default narration for both interactive and scripted runs: the founder clone.
+# Changing this to sapi would silently degrade a production voice; sapi stays an
+# explicit --narration choice for offline diagnostics only.
+DEFAULT_NARRATION = "minimax-clone"
 
 
 def _project(value: str) -> Path:
@@ -61,8 +65,40 @@ def _ask(prompt: str, choices, default: str = "") -> str:
     return answer or default
 
 
+def _graphic_account(project: Path) -> str:
+    configured = gates._project_yaml_value(project, "account_slug") if (
+        project / "project.yaml").is_file() else None
+    if configured:
+        return configured
+    handoff = gates._read_json(
+        project / "receipts" / "bundle-handoff-graphic_text.json") or {}
+    if handoff.get("account"):
+        return str(handoff["account"])
+    graphic = gates._read_json(project / "graphic-input.json") or {}
+    return str(graphic.get("account") or "")
+
+
 def _answers_from_args(args, project: Path) -> Dict[str, Any]:
     interactive = bool(args.interactive)
+    if gates._is_graphic_line(project):
+        # Graphic setup has no video narration, motion, avatar or asset-shortfall
+        # decisions. Reuse the account already bound to the project/handoff.
+        account = args.account or _graphic_account(project)
+        if not account and interactive:
+            account = _ask("为哪个账号制作图文", ("explorer", "thinktank"), "")
+        if not account:
+            raise gates.GateError(
+                "ACCOUNT_REQUIRED",
+                "graphic setup needs an account; bind one in the project/handoff or pass --account",
+            )
+        return {
+            "account": account, "asset_policy": "supplement",
+            "avatar_intro": "no", "avatar_outro": "no",
+            "avatar_quota_budget": None, "narration": "sapi",
+            "motion_backend": "none", "bgm_policy": "none",
+            "reviewer": "", "opinion": "",
+        }
+
     account = args.account or (_ask("为哪个账号制作内容",
                                     ("explorer", "thinktank"), "") if interactive else "")
     policy = args.asset_policy or (_ask(
@@ -73,8 +109,14 @@ def _answers_from_args(args, project: Path) -> Dict[str, Any]:
                                   if interactive else "")
     outro = args.avatar_outro or (_ask("是否加入数字人片尾", gates.YES_NO, "no")
                                   if interactive else "")
-    narration = args.narration or (_ask("旁白音色", gates.NARRATION_CHOICES,
-                                        "minimax-clone") if interactive else "")
+    # The default voice is the founder clone in both the interactive prompt and
+    # the non-interactive path, matching the account DNA provider_hint. A plain
+    # `make_content answer` therefore means "minimax-clone" rather than an empty
+    # provider that fails NARRATION_INVALID. SAPI remains an explicit opt-in for
+    # offline diagnostics, never a silent substitute after a clone failure.
+    narration = args.narration or (
+        _ask("旁白音色", gates.NARRATION_CHOICES, "minimax-clone")
+        if interactive else DEFAULT_NARRATION)
     motion = args.motion or (_ask("动效后端", gates.MOTION_CHOICES,
                                   "huashu-art-motion") if interactive else "")
     bgm = args.bgm or (_ask("是否加入本地 BGM（需 media-use runtime lock）",
@@ -116,10 +158,14 @@ def cmd_answer(args) -> int:
     # Materialise the two derived contracts a human should not have to hand-write:
     # the evidence pack (what the copy cites) and source-refs (what motion needs).
     inputs = gates.ensure_inputs(project, ROOT)
+    graphic_line = gates._is_graphic_line(project)
     payload = {"state": "INTENT_RECORDED", "project": project.name,
                "intent": str(gates.INTENT_FILE), "config": config, "inputs": inputs,
                "production_ready": False, "publish_authorized": False,
-               "note": "Copy review is signed separately with scripts/copy_review.py --approve."}
+               "note": ("Graphic setup derives the account from the project/handoff; "
+                        "rights review and publication remain separate."
+                        if graphic_line else
+                        "Copy review is signed separately with scripts/copy_review.py --approve.")}
     print(json.dumps(payload, ensure_ascii=False, indent=2))
     return 0
 
@@ -174,13 +220,20 @@ def _produce_graphic(project: Path, intent: Dict[str, Any]) -> Dict[str, Any]:
             "HANDOFF_MISSING",
             "no receipts/bundle-handoff-graphic_text.json; create it with "
             "scripts/bundle_handoff.py ... --format GRAPHIC_TEXT first")
+    expected_account = gates.verify_graphic_handoff_account(project, intent, ROOT)
     from contentops.graphic import (GraphicPackageError, build_package,
                                     write_package)
 
     try:
         package = build_package(project, handoff,
                                 project / "graphic-input.json", ROOT, ROOT,
-                                bundle_root=ROOT)
+                                bundle_root=ROOT, require_copy_review=True)
+        package_account = gates.resolve_account(package.get("account", ""), ROOT)
+        if package_account != expected_account:
+            raise gates.GateError(
+                "GRAPHIC_PACKAGE_ACCOUNT_MISMATCH",
+                f"built package account resolves to {package_account}, expected {expected_account}",
+            )
         write_package(project, package, ROOT)
     except GraphicPackageError as exc:
         raise gates.GateError("GRAPHIC_PACKAGE_BLOCKED", f"{exc.code}: {exc.detail}")
@@ -203,7 +256,8 @@ def cmd_run(args) -> int:
             print(json.dumps({"state": "PREFLIGHT_PASS_DRY_RUN", "check": report},
                              ensure_ascii=False, indent=2))
             return 0
-        if gates._is_graphic_line(project):
+        graphic_line = gates._is_graphic_line(project)
+        if graphic_line:
             result = _produce_graphic(project, intent)
         else:
             import produce_video
@@ -245,7 +299,12 @@ def cmd_run(args) -> int:
     }
     gates._write_json(project / RUN_RECEIPT, receipt)
     print(json.dumps(receipt, ensure_ascii=False, indent=2))
-    return 0 if result.get("state") == "QC_PASSED" else 1
+    if result.get("state") == "QC_PASSED":
+        return 0
+    if graphic_line and result.get("state") == "AWAITING_MANUAL_REVIEW":
+        article = str(result.get("article") or "")
+        return 1 if article.startswith(("BLOCKED:", "FAILED:")) else 0
+    return 1
 
 
 def build_parser():
@@ -255,7 +314,7 @@ def build_parser():
     def common(p):
         p.add_argument("--project", required=True)
 
-    answer = sub.add_parser("answer", help="record the six human gate decisions")
+    answer = sub.add_parser("answer", help="set video decisions or bind a graphic project to its account")
     common(answer)
     answer.add_argument("--interactive", action="store_true",
                         help="ask each gate on the terminal")

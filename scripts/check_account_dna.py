@@ -72,6 +72,14 @@ ROOT = Path(__file__).resolve().parents[1]
 ACCOUNTS = ROOT / "config" / "accounts"
 
 sys.path.insert(0, str(ROOT / "src"))
+from contentops.accounts import (  # noqa: E402
+    VIDEO,
+    VIDEO_SCHEMA,
+    X,
+    X_SCHEMA,
+    account_kind,
+)
+from contentops.publish.x_account import check_x_account  # noqa: E402
 # The mode table and the composition rule live beside the QC that enforces
 # them, so the DNA check cannot hold a second, drifting copy.
 from contentops.media.claim_coverage import (  # noqa: E402
@@ -92,7 +100,7 @@ from contentops.hotspots.source_registry import (  # noqa: E402
     SOURCES,
 )
 
-SCHEMA = "contentops.account-dna/v2"
+SCHEMA = VIDEO_SCHEMA
 
 #: The adapters that actually accept a query. A query expression written for
 #: any other adapter would be silently inert — the source is read as a list and
@@ -798,8 +806,19 @@ def main() -> int:
     checked: List[str] = []
     for path in paths:
         dna = json.loads(path.read_text(encoding="utf-8"))
-        checked.append(str(dna.get("slug") or path.stem))
-        failures.extend(check_account(dna, ROOT, warnings))
+        slug = str(dna.get("slug") or path.stem)
+        checked.append(slug)
+        kind = account_kind(dna)
+        if kind == VIDEO:
+            failures.extend(check_account(dna, ROOT, warnings))
+        elif kind == X:
+            failures.extend(check_x_account(dna, ROOT, warnings))
+        else:
+            schema = dna.get("schema")
+            failures.append(
+                f"[{slug}] unsupported account schema {schema!r}; supported schemas are "
+                f"{VIDEO_SCHEMA!r} and {X_SCHEMA!r}"
+            )
 
     # The catalog-absent warning is raised once per account; report it once.
     warnings = list(dict.fromkeys(warnings))

@@ -15,6 +15,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from contentops.workflow import (  # noqa: E402
     CONTRACT_ID,
+    GRAPHIC_CONTRACT_ID,
     STAGES,
     STAGE_IDS,
     WorkflowError,
@@ -22,6 +23,7 @@ from contentops.workflow import (  # noqa: E402
     load_workflow,
     new_workflow,
     policy_lock,
+    pending_stages,
     reconcile,
     save_workflow,
     stage_by_id,
@@ -60,6 +62,14 @@ def test_new_workflow_starts_pending_and_unapproved():
     assert all(item["status"] == "pending" for item in document["stages"])
     assert all(item["approval"] is None for item in document["stages"])
     assert stage_by_id("brief").artifact == "00_brief/brief.json"
+
+
+def test_pending_stages_skips_passing_routine_graphic_checks():
+    document = new_workflow("article", contract=GRAPHIC_CONTRACT_ID)
+    first = document["stages"][0]
+    first.update({"status": "checked", "check": {"ok": True}, "stale": False})
+    assert pending_stages(document) == [
+        "outline", "draft", "images", "layout", "quality", "delivery"]
 
 
 def test_validate_refuses_an_unknown_status():
@@ -123,6 +133,7 @@ def main() -> int:
         test_stage_graph_is_ordered_and_acyclic,
         test_every_stage_owns_one_artifact_path,
         test_new_workflow_starts_pending_and_unapproved,
+        test_pending_stages_skips_passing_routine_graphic_checks,
         test_validate_refuses_an_unknown_status,
         test_validate_refuses_approved_without_approval_record,
         test_save_and_load_roundtrip,

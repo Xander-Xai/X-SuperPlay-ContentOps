@@ -188,7 +188,7 @@ Skill Discovery -> Skill Resolution -> Permission Gate -> Existing Adapter -> M5
 `scripts/m5_production.py` does not import the router. Legacy M5 runs with no
 router installed, and a test asserts that independence.
 
-## Content-production skills (not declared)
+## Content-production skills
 
 Five skills are installed in the shared store for the X•超玩1024 workflow:
 
@@ -198,34 +198,33 @@ Five skills are installed in the shared store for the X•超玩1024 workflow:
 - `x-superplay-broll-production`
 - `x-superplay-design-direction`
 
-They are **not declared capabilities**, and the router does not treat them as
-runnable. Their bodies reference the account-aware content-router layer:
+The `x-superplay-copy-orchestrator` is a declared capability for the shared copy
+stage. One medium-neutral `TOPIC` package owns the researched canonical source;
+VIDEO and GRAPHIC_TEXT child projects carry digest-bound references and each
+requires a separate format-copy review. Its repository contract is
+`src/contentops/workflow/topic_package.py` plus `canonical_copy.py` and
+`copy_review.py`. The operator must initialize and bind the package explicitly;
+the resolver returns only a pointer, `execution_authorized` remains `false`, and
+the router does not invoke the Skill. The other four installed skills remain
+discovery-only and are not declared capabilities.
 
-| Referenced code | Exists on this branch? | Exists on `feat/content-router` (PR #49)? |
+
+| Capability | Scope | Contract / boundary |
 |---|---|---|
-| `scripts/workflow_gate.py` | **yes** (slice S1) | yes |
-| `src/contentops/workflow/{contract,gate}.py` | **yes** (S1) | yes |
-| `src/contentops/workflow/validators.py` | **partial** (S1 seam → S2 wires the `assets` validator) | yes |
-| `src/contentops/workflow/sources.py` | **yes** (slice S2) | yes |
-| `src/contentops/workflow/capture_plan.py` | no (S3, with account config) | yes |
-| `scripts/recording_plan.py` | no (S3 — needs account config) | yes |
-| `scripts/workflow_docs.py` | no (S3/S4 — imports S3/S4 trees) | yes |
-| `src/contentops/workflow/{audience,duration}.py` | no | yes |
-| `scripts/design_router.py` | no | **no** |
+| `x-superplay-copy-orchestrator` | `TOPIC`, `VIDEO`, `GRAPHIC_TEXT` / `copywriting` | one reviewed shared package; child derivatives are independently reviewed; operator-driven binding |
+| `x-superplay-source-research` | discovery only | not declared; signed pre-copy research gate remains authoritative |
+| `x-superplay-capture-plan` | discovery only | not declared as a capability |
+| `x-superplay-broll-production` | discovery only | not declared as a capability |
+| `x-superplay-design-direction` | discovery only | not declared as a capability |
 
-The deterministic gate (`workflow_gate.py` + the contract/gate core) landed in
-**slice S1**; the source-candidate contract and its validators landed in
-**slice S2**. The capture plan, `recording_plan.py` and `workflow_docs.py` — and
-the account configuration they read — are **S3**: `recording_plan.py` needs
-`config/accounts/<slug>.json`, which carries business strategy and stays off the
-public repository until that exposure is reviewed. `design_router.py` is
-referenced by `x-superplay-design-direction` and does not exist on any branch
-inspected on 2026-11-01, so that skill needs an edit as well as a merge.
+The remaining Skills retain their own per-reference status in
+`runtime/content-skill-status.json`. Do not infer capability registration from
+installation or discovery; each declaration must point to current code and keep
+its own scope and rights boundary.
 
-A declaration may be added only after the code it points at exists on the
-integration branch. Declaring a pointer to an unmerged branch would make
-`RESOLVABLE` a false statement, which is the failure this registry exists to
-prevent. Until then the skills are discovery-visible and resolution-blocked.
+Capability declarations are added only after the target code exists and the
+contract tests support the claimed scope. Registration remains a pointer, never
+an execution grant.
 
 The record of what these skills actually reference lives in
 `runtime/content-skill-status.json`, and
@@ -238,7 +237,7 @@ that has landed, or a skill marked merged whose code is missing.
 | Track | Status | Why |
 |---|---|---|
 | VIDEO (Easel) | discovery-only until a catalog root exists on the host | no vendor content in the public repository |
-| Content production (`x-superplay-*`) | discovered in the shared store, **not declared** | their code lives on the unmerged `feat/content-router` branch; `design_router.py` is absent there too |
+| Content production (`x-superplay-*`) | copy orchestrator declared for TOPIC, VIDEO + GRAPHIC_TEXT; four other skills discovery-only | shared package has a code contract and explicit operator handoff; each format remains separately reviewed and produced |
 | GZH | BLOCKED | vendored third-party track, rights unverified, not redistributed |
 | X | BLOCKED | platform track is unmerged (`feat/47-x-platform-track`, PR #50) |
 | XHS | BLOCKED | migration is unmerged and under rights review; no catalog root |

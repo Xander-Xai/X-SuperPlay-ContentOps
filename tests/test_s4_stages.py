@@ -74,6 +74,21 @@ def test_platform_constraints_are_local_and_refuse_mismatch():
             lambda: platform.validate_target({"aspect_ratio": "9:16", "duration_target_sec": 9999}, c))
 
 
+def test_xiaohongshu_video_targets_use_vertical_video_aspect():
+    for alias in ("xiaohongshu", "xiaohongshu_video"):
+        constraints = platform.constraints_for(alias)
+        assert constraints["aspect_ratio"] == "9:16"
+        assert platform.validate_target(
+            {"aspect_ratio": "9:16", "duration_target_sec": 30}, constraints
+        )["aspect_ratio"] == "9:16"
+        _raises(
+            "PLATFORM_ASPECT_MISMATCH",
+            lambda: platform.validate_target(
+                {"aspect_ratio": "3:4", "duration_target_sec": 30}, constraints
+            ),
+        )
+
+
 def test_delivery_starts_awaiting_review_and_grants_nothing():
     with tempfile.TemporaryDirectory() as tmp:
         package = Path(tmp) / "package.zip"

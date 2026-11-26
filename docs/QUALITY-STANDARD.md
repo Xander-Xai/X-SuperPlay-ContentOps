@@ -15,7 +15,7 @@
 | ffprobe parses | valid container |
 | Resolution | 1080×1920 |
 | Aspect ratio | 9:16 |
-| Duration | 30–120 seconds |
+| Duration | 30–120 seconds by default; Future Intelligence: choose 30–300 seconds per video (hard cap: 300 seconds) |
 | Video codec | H.264 |
 | Audio codec | AAC |
 | Audio present | non-silent (volumedetect) |

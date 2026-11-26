@@ -328,6 +328,7 @@ def hidden_run(
     stdin: Optional[IO[Any]] = None,
     stdout: Optional[IO[Any]] = None,
     stderr: Optional[IO[Any]] = None,
+    input_text: Optional[str] = None,
     check: bool = False,
     shell: bool = False,
 ) -> subprocess.CompletedProcess:
@@ -340,7 +341,10 @@ def hidden_run(
     ``stdout``/``stderr``/``stdin`` may be file handles for streaming payloads
     (for example piping a tarball straight to disk). Supplying ``stdout`` or
     ``stderr`` implies ``capture_output=False``; ``stdin`` may be supplied while
-    output is still captured.
+    output is still captured. ``input_text`` is the scripted-text alternative:
+    it is fed through a pipe via ``subprocess.run(input=...)`` and is mutually
+    exclusive with ``stdin`` (a string has no Windows file descriptor, so it
+    cannot be passed as ``stdin``).
 
     Set ``text=False`` for binary payloads such as ffmpeg ``rawvideo`` output.
 
@@ -352,6 +356,8 @@ def hidden_run(
 
     if not cmd:
         raise ValueError("hidden_run() requires a non-empty command")
+    if input_text is not None and stdin is not None:
+        raise ValueError("hidden_run() accepts either input_text or stdin, not both")
 
     streams = {"stdin": stdin, "stdout": stdout, "stderr": stderr}
     # stdin is independent of output capture; only an explicit stdout/stderr
@@ -370,11 +376,16 @@ def hidden_run(
     run_kwargs.update(_text_kwargs(text, encoding, errors))
     if env is not None:
         run_kwargs["env"] = env
-    run_kwargs.update(streams)
-    # Inherit stdin only when it is a real handle. A console-less parent has a
-    # CRT fd but an invalid OS handle; Popen then raises OSError(9). DEVNULL is
-    # a valid EOF and keeps output capture unchanged.
-    if stdin is None and not _stdin_can_be_inherited():
+    if input_text is not None:
+        # subprocess.run turns this into a real pipe; no file descriptor is
+        # needed on Windows, unlike passing a StringIO as stdin.
+        run_kwargs["input"] = input_text
+    else:
+        run_kwargs.update(streams)
+    # Inherit stdin only when it is a real handle and no scripted input was
+    # given. A console-less parent has a CRT fd but an invalid OS handle; Popen
+    # then raises OSError(9). DEVNULL is a valid EOF and keeps output capture.
+    if input_text is None and stdin is None and not _stdin_can_be_inherited():
         run_kwargs["stdin"] = subprocess.DEVNULL
     run_kwargs.update(_get_hidden_kwargs())
 

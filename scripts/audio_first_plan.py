@@ -134,8 +134,8 @@ def _duration_contract(span: Any, measured_s: float) -> tuple[Any, List[str]]:
 
     The planner sizes ``target.duration_ms_range`` from the narration it has just
     synthesised, so the cut's declared window was whatever it happened to be and its
-    own duration check could not fail -- a 25-second Future Intelligence prototype
-    passed while the account asks for 90--120 s. The account window is the contract.
+    own duration check could not fail -- a short Future Intelligence prototype
+    passed while the account asks for a 30--300 s window. The account window is the contract.
     A plan outside it is still written, because a prototype is allowed to exist, but
     it is marked non-conforming here and fails ``account_duration`` at QC.
     """

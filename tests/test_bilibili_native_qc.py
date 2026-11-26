@@ -12,6 +12,7 @@ for candidate in (ROOT / "src", ROOT / "scripts"):
         sys.path.insert(0, str(candidate))
 
 import qc_video  # noqa: E402
+from contentops.media.cut_qc import _within_account_duration  # noqa: E402
 
 
 def _write(path: Path, content: str) -> None:
@@ -52,6 +53,29 @@ def test_horizontal_requires_explicit_native_target_and_storyboard() -> None:
         assert qc_video._expected_canvas(project) == (1920, 1080, "16:9")
 
 
+def test_account_duration_ceiling_is_account_specific() -> None:
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        _write(project / "project.yaml",
+               "id: sample\naccount_slug: x-superplay-future-intelligence\n")
+        assert qc_video._duration_bounds(project) == (30.0, 300.0)
+        assert qc_video._duration_check(project, 300.0)["ok"]
+        assert not qc_video._duration_check(project, 300.01)["ok"]
+        future_dna = {"slug": "x-superplay-future-intelligence",
+                      "narrative": {"target_duration_s": [30, 300]}}
+        assert _within_account_duration(future_dna, 300.0)
+        assert not _within_account_duration(future_dna, 300.01)
+        _write(project / "project.yaml", "id: sample\naccount_slug: x-superplay-1024\n")
+        assert qc_video._duration_bounds(project) == (30.0, 120.0)
+        assert qc_video._duration_check(project, 120.0)["ok"]
+        assert not qc_video._duration_check(project, 120.01)["ok"]
+        assert _within_account_duration(
+            {"slug": "x-superplay-1024", "narrative": {"target_duration_s": [45, 60]}},
+            60.25)
+        _write(project / "project.yaml", "id: sample\n")
+        assert qc_video._duration_bounds(project) == (30.0, 120.0)
+
+
 def test_geometry_checks_are_orientation_specific() -> None:
     vertical = qc_video._canvas_checks(1080, 1920, 1080, 1920, "9:16")
     assert all(row["ok"] for row in vertical)
@@ -68,6 +92,7 @@ def test_geometry_checks_are_orientation_specific() -> None:
 def main() -> int:
     tests = (test_legacy_default_stays_vertical,
              test_horizontal_requires_explicit_native_target_and_storyboard,
+             test_account_duration_ceiling_is_account_specific,
              test_geometry_checks_are_orientation_specific)
     for run in tests:
         run()

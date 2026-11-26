@@ -9,7 +9,8 @@ translation_status: synced
 [English](RUNBOOK.md) | [简体中文](RUNBOOK.zh-CN.md)
 
 > 真实可执行命令。从实际脚本行为推导，非假设。
-> 最后验证：2026-11-17。
+> 最后验证：2026-11-25——新增 `scripts/topic_to_m5.py`（TOPIC 文案派生稿 → M5 脚本投影）与 `tests/test_topic_m5.py`（10/10）。该工具在 `agentguide-learning-roadmap` 上端到端实测：QC PASS、视觉运动门 green（fast_ratio 0.0981）。未授予人审、发布或 provider 花费。
+> 最后验证：2026-11-23——离线检查：图文工作流 55/55、生产门禁 39/39、预研相关回归 26/26、MiniMax 图像回归 86/86、media-use 权利门 7/7。按授权运行两次 Codex：第一次被旧解析器阻断；第二次通过修复后的适配器，并在临时项目写入图片和生成回执。额度变化未报告。临时项目不是经批准的文章，尚未打包、审核权利/质量或发布。
 > X / 跨平台本地数据回流只生成待审主题，不授予自动平台动作；X / 跨平台本地数据回流只生成待审主题，不授予自动平台动作。
 > X 命令行 `--new` 增加 `--post-format text|image`（旧记录默认 image）。纯文字发布包不含图片/ALT步骤；图文仍须真图与ALT。`--package`只准备待发布包，`--mark-published`只记录真人确认的X URL。
 > 本分支增加离线 X 数据分析工具，指标结果仅写本地，策略审查后才可路由下一轮内容。
@@ -45,26 +46,23 @@ python scripts/verify_easel_runtime.py --resolve-tag
 python scripts\new_project.py --slug my-video --title "My Video Title"
 ```
 
-## 3.1 写文案前的预研门禁（必做）
+## 3.1 视频与共享选题的写前预研
 
-在 `script/master.md` 或 `02_draft/draft.md` 出现之前，每期内容都必须有一份
-经具名签字的预研包。契约 `contentops.precopy-research/v1`，详见
-[PRECOPY-RESEARCH.md](PRECOPY-RESEARCH.md)。
+VIDEO 文案和共享的媒介无关 `TOPIC` 包，在文案审批／生产前需要签署预研回执。
+单独的 GRAPHIC_TEXT 草稿不用先填这套表：先写草稿，事实保留来源链接，未核实内容标记待查。
+契约 `contentops.precopy-research/v1` 详见 [PRECOPY-RESEARCH.md](PRECOPY-RESEARCH.md)。
 
 ```powershell
 python scripts\preresearch.py init --project projects\my-video
 python scripts\preresearch.py intent --project projects\my-video
-# 通读项目、核实权威信源，填好四份文字产物
+# 核实来源并完成预研材料
 python scripts\preresearch.py check --project projects\my-video
 python scripts\preresearch.py approve --project projects\my-video `
-  --reviewer "你的名字" --opinion "已看过 diff 并核对来源" --confirm
+  --reviewer "你的名字" --opinion "已核对来源" --confirm
 ```
 
-被挡时 `check` 返回 4。`approve` 必须带具名审核人、书面理由与 `--confirm`，
-没有 `--force`。签字后改动任一研究产物，回执即变为 `STALE`。这是
-`production_gates.py` 中 VIDEO 的第 8 门、GRAPHIC_TEXT 的第 6 门；
-`copy_review.py --approve` 在缺少它时会拒绝记录文案决策。直接运行
-`m5_production.py` / `produce_video.py` 仍属诊断路径，和之前一样不受门禁约束。
+VIDEO 的 `approve` 需要具名审核人、书面理由和 `--confirm`；签后修改会使回执过期。
+单独图文草稿不再被这张表挡住。
 
 ## 4. 运行生产流水线
 
@@ -78,6 +76,8 @@ python scripts\run_v1.py projects\my-video
 python scripts\qc_video.py projects\my-video
 ```
 
+默认时长 QC 为 30–120 秒；未来智能使用账号级 30–300 秒范围（单条最高 5 分钟）。
+
 ## 5.1 证据优先生产链（M5）
 
 ```powershell
@@ -88,9 +88,83 @@ python scripts\m5_production.py projects\m5-easel-pin
 任何阶段无法被证据支撑即拒绝（`exit 4`，`state: BLOCKED`）：来源在仓库外、素材 SHA-256 变化、
 声明的引文不在来源中逐字出现、素材未声明、字幕覆盖率低于 0.8。
 
+外部视觉素材的权利审核可按相同来源、许可、审核范围和处理方式分组。`review_batch()` 生成绑定每个资产 ID 与 SHA-256 的待审批次；它本身不清权。具名人工决定作出后，`apply_batch_decision()` 写入逐资产 sidecar 并返回更新后的 manifest；调用方保存该 manifest 后，再运行 M5 `stage_assets`。哈希或范围变化都需要重新决定。assets 阶段 PASS 不等于最终 QC、人审通过或发布授权。
+
 `--skip-compose` 在分镜后停止（不调用 ffmpeg、不调用 Easel）。
 
-旁白使用离线 Windows SAPI 语音，不调用任何联网 TTS。运行始终停在
+#### 共享 TOPIC 派生稿 → M5 脚本
+
+当一个选题已作为中立的 TOPIC 审核过一次，且视频子项目已持有获批准的
+`00_brief/copy-derivative.json` 时，不要手写 `script/script.json`，使用投影工具：
+
+~~~powershell
+python scripts\topic_to_m5.py projects\my-video --json
+python scripts\topic_to_m5.py projects\my-video --check
+~~~
+
+它读取已审派生稿和 `sources/assets.json` 中登记的 CREATED_BY_OWNER 视觉卡片，
+**只**写 `script/script.json`。工具把长段拆成 ≤28 字的行，让每个旁白 Huashu 镜头
+不超过 8 秒；逐字保留口播（caption == narration、每段拼接回原文），覆盖每条
+`claim_refs`；使用能通过视觉运动门的相机推近语法（`evidence_zoom`）；轮换卡片与
+聚焦矩形，避免相邻镜头重复。`--check` 对照以上全部不变量校验现有脚本；两种模式
+都不签发审核、不授予发布。
+
+两个前置条件刻意不自动化：已批准的文案派生稿，以及登记为 `CREATED_BY_OWNER`
+真实位图的原创视觉卡片。LICENSED 来源截图始终是证据，绝不用作 Huashu 视觉源；
+没有原创卡片的项目会以 `NO_VISUAL_CARDS` 阻断。解释型视频先用项目自带的卡片
+生成器产出卡片，再以匹配的 SHA-256 和 `evidence_capable: false` 登记到
+`sources/assets.json`，然后运行本工具。
+
+#### 归档一次完成的运行
+
+M5 会把每个渲染出的 Huashu 镜头注册为 `sources/assets.json` 中的 `huashu-*`
+资产，指向 `assets/generated/huashu/` 下的文件。搬迁项目时必须连生成镜头文件
+一起复制：manifest 声明了 `huashu-*` 但 `repo_path` 文件不存在即为孤儿资产，
+assets 阶段会在任何重渲染之前就以 `file missing` 阻断下一次运行。若确实不搬
+生成镜头，就从 `sources/assets.json` 移除这些声明，让下次运行干净地重新生成。
+无论哪种情况都保留成片 MP4 与回执。
+
+#### 动效 skill：混合编排，而非账号单一后端
+
+仓库提供五种渲染后端：`huashu-art-motion` 与 `huashu-motion`（本地、非付费，经 M5
+专用适配器渲染），以及剪辑渲染器 `remotion`、`motion-canvas`、`manim`（经
+`animation_render.py`）。Remotion 另声明十三个固定版本的 skill 包。每种镜头类型能由
+哪些后端绘制，写在 `SHOT_COMPATIBILITY` 里；一支片可以混用。
+
+生产前先规划混合方案：
+
+~~~powershell
+python scripts\plan_motion.py projects\my-video --json
+~~~
+
+它按各后端真实就绪路径探测——Huashu 走 M5 适配器 preflight，剪辑渲染器走
+`animation_render.preflight`——写入 `receipts/motion-orchestration.json`，为每个镜头
+分配一个后端。这只是**规划回执**，无害：它绝不阻断普通 Huashu 自动计划。只选 READY
+的后端；显式指定的镜头后端不被替换；默认后端是偏好而非强制单一后端；无法分类且无
+就绪兜底的镜头直接 BLOCKED，不降级成静帧。
+
+要真正渲染混合方案，materialize 有合法 clip spec 的镜头：
+
+~~~powershell
+python scripts\plan_motion.py projects\my-video --materialize
+~~~
+
+它写入 `motion/orchestrated-plan.json`，这是**剪辑覆盖层**，只列出能被赋予契约合法、
+无声称字卡 spec 的镜头（当前是 Remotion 上的编辑性片头卡）。下一次 M5 运行会先用实测
+旁白时长生成所有 Huashu spec，再应用覆盖层把指定镜头切到剪辑后端，其余保持 Huashu。
+**不要**设置 `motion.shot_plan` 指向覆盖层——那会跳过自动计划，让 Huashu 镜头没有
+生成的 spec。只有 materialized 回执才被执行校验：后端不一致时 BLOCK 而非降级。混合
+运行记为 `hybrid`，在人审前仍是技术草稿，`production_ready: false`。
+
+#### 旁白默认：MiniMax 创始人克隆
+
+两个视频账号 DNA 都声明 `provider_hint: minimax_m_plan/speech-2.8-hd` 与
+`voice_alias: founder_primary_v1`；`make_content.py answer` 现在在交互和非交互路径
+都默认使用创始人克隆。离线诊断音色需显式传 `--narration sapi`，SAPI 绝不是克隆失败后
+的静默回退。克隆路径需要环境或 `.env` 中的 MiniMax 订阅 key 或 API key；
+`runtime_readiness` 在发起任何付费调用前检查二者之一。只有 `MINIMAX_CLONE_KEY`
+的机器走的是按量克隆通道，不满足计费门禁。门禁通过只是允许尝试调用，不等于
+克隆已合成。运行始终停在
 `PENDING_FOUNDER_REVIEW`，`production_ready: false` —— QC 通过不等于允许发布。
 
 `asr_backcheck` 阶段会转写旁白并与"实际朗读的脚本"比对。没有 `SILICONFLOW_API_KEY`
@@ -200,9 +274,22 @@ python scripts\bundle_handoff.py projects\my-video\bundle.json `
   --platform wechat_article --out-project projects\my-article
 ```
 
-## 5.3 图文人工包
+## 5.3 图文生图与人工包
 
-图文线产出可审核的包，而不是平台草稿：
+### 日常用法：直接说要做什么
+
+给出文章／选题和平台即可。助手应先复用当前项目、账号和 Bundle，直接起草；**正文工作稿是唯一常规人工审核点**。收到你的正文审核通过后，助手继续准备配图、排版、运行阶段检查并生成离线交付包，不再要求 brief、提纲、图片、排版、QC 各自签字。真实调用生图服务仍须明确授权具体提供商和张数；无法证实权利的素材会被排除或阻断，不会伪造审核。创建平台草稿仍需单独明确授权，本流程不会自动发布。
+
+正文审核通过后记录一次审核（也可以直接在项目中编辑 `draft.md`）：
+
+```powershell
+python scripts\copy_review.py projects\my-article --approve `
+  --reviewer "审核人" --opinion "已审核图文工作稿" --confirm
+```
+
+### 命令参考（需要时再看）
+
+图文线产出可审核的包，而不是平台草稿。打包和生图是两个步骤：
 
 ```powershell
 python scripts\graphic_package.py `
@@ -211,9 +298,67 @@ python scripts\graphic_package.py `
   --input projects\my-article\graphic-input.json
 ```
 
-写入 `receipts/graphic-package.json` 与 `receipts/graphic-preview.md`，
-状态 `AWAITING_MANUAL_REVIEW`、`publish_authorized: false`。每张图都需要 ALT
-与已审核权利块；缺失权利、路径逃逸或不可解码图片都会阻断。
+新包只能选择以下三种生图方式：
+
+| 方法 | 路由 | 边界 |
+|---|---|---|
+| `codex_imagegen` | Codex CLI 原生 `image_gen` 工具 | 每次授权生成一张；不走 API、浏览器、MCP 或回退。记录实际尺寸，保证 16:9 比例，但不保证精确像素尺寸。 |
+| `ian_xiaohei_codex` | 宿主先调用 `ian-xiaohei-illustrations` 生成分镜/提示词，再使用同一 Codex 原生 `image_gen` 后端 | CLI 不会执行 Skill；Skill JSON 必须绑定当前文章哈希。 |
+| `minimax_subscription` | 通过 `generate_image.py` 和 `BillingGuard` 复用现有 `image-01` Provider | 仅订阅额度；PAYG 和 Credit Pack 仍阻断。默认 1024×576；宽高须符合 Provider 合约且为 16:9。Provider 缓存和临时回执保存在指定 scratch root；项目内写入唯一图片及摘要回执。 |
+
+漫画式说明图必须由宿主在写提示词前参考 GitHub 上固定版本的
+[comic-explainer-illustration skill](https://github.com/chujianyun/awesome-gpt-image2-ppt-skills/blob/aa5fec05a1d1991d7653ed31c0407d513d0fa6d3/comic-explainer-illustration/SKILL.md)，仅用作分镜/提示词辅助。采用其 16:9、精简视觉叙事时仍须保留账号 DNA 和人物设定，不强制四格，也不引入其默认角色。整理后的 prompt 文件与后端无关，所选路线为 `codex_imagegen` 或 `minimax_subscription` 时都可直接使用；`ian_xiaohei_codex` 仅在 Ian Skill 生成 shot/prompt 后把它作为辅助润色。它不是新 Provider/CLI 方法，不由 CLI 安装或执行。已审查的 GitHub 修订版没有声明 `LICENSE`/`COPYING`，不把其文字或脚本复制进本仓库。
+
+生图命令每次只处理一个提示词/shot。仅查看计划时不会请求 Provider。真实生成必须同时传入 `--execute` 和 `--authorize-provider-usage`；每次只尝试一次，不重试、不切换方式。所有执行方式都需要操作者指定位于
+`D:\Temp\AI-Agents\<agent>\<task>` 的 scratch root；Codex 会在其中创建唯一运行目录，MiniMax 则在其中保留 Provider 缓存和临时回执：
+
+```powershell
+python scripts\graphic_generate.py `
+  --method codex_imagegen --project projects\my-article --asset-id shot-01 `
+  --prompt-file 03_images\prompts\shot-01.md `
+  --scratch-root "D:\Temp\AI-Agents\<agent>\<task>" `
+  --execute --authorize-provider-usage
+```
+
+包装器运行 `codex exec --ephemeral --sandbox workspace-write`，带上
+`--ignore-user-config` 并通过 stdin 传提示词。若输出含已完成的原生生图事件，需与一张全新图片绑定；常见 JSONL 路径则要求有唯一 `thread.started`、成功的 `turn.completed`，并且 `CODEX_HOME\generated_images\<thread_id>` 是本次新建且仅含一张图的线程目录。缺少、重复、陈旧或路径不匹配都会阻断；不保存 Codex 对话。最近一次现场调用未报告额度变化，因此额度记为未知；未报告的模型版本和精确像素尺寸不会猜测。
+
+MiniMax 使用相同的授权标记并复用现有计费门：
+
+```powershell
+python scripts\graphic_generate.py `
+  --method minimax_subscription --project projects\my-article --asset-id shot-01 `
+  --prompt-file 03_images\prompts\shot-01.md `
+  --scratch-root "D:\Temp\AI-Agents\<agent>\<task>" `
+  --width 1024 --height 576 `
+  --execute --authorize-provider-usage
+```
+
+`ian_xiaohei_codex` 先生成只读、绑定文章哈希的 handoff：
+
+```powershell
+python scripts\graphic_workflow.py plan `
+  --workflow x --project projects\my-article --article 02_draft\draft.md `
+  --illustration-skill ian-xiaohei-illustrations --json
+```
+
+宿主调用所选 Skill 后，将 shot list 保存为项目内的
+`contentops.ian-illustration-result/v1` JSON，并原样保留 handoff 返回的文章路径和哈希。再选择一个 shot 生成：
+
+```powershell
+python scripts\graphic_generate.py `
+  --method ian_xiaohei_codex --project projects\my-article `
+  --article 02_draft\draft.md --skill-output receipts\ian-skill-result.json `
+  --asset-id shot-01 --scratch-root "D:\Temp\AI-Agents\<agent>\<task>" `
+  --execute --authorize-provider-usage
+```
+
+生图命令会写入真实图片和项目内的生成回执，记录方法、提示词哈希、文件哈希、格式、尺寸及不可作证据标记；状态为 `GENERATED_PENDING_REVIEW`。它不会批准 AIGC 披露、权利、质量或发布。将命令返回的 `path`、`asset_id`、ALT 和 `generation` 回执引用写入 `graphic-input.json`。远程生成图片还需要一份单独、具名、绑定精确 generation ID 和图片 SHA-256 的权利审核。使用 `license_id: GENERATED-REMOTE-REVIEWED`、适用 Provider 条款 URL、生效日期、明确的 `permitted_use` 和有限的 `review_scope`。这只是操作者针对具体图片的审核记录，不是保证或法律结论。远程输出不能标成 `OWNED-GENERATED-LOCAL`；M5 权利门也不接受此远程生成分类。
+
+随后运行打包命令。它会校验该工作稿的审核回执，然后自动生成各阶段工件并运行结构与质量检查；常规阶段只记机器检查，不再要求人工逐项批准。包仍不会自动创建平台草稿或发布，`publish_authorized` 保持 false。生成式图片只能作辅助视觉，不能作事实证据；真实素材的权利证据和收费生图授权仍按各自安全边界处理。
+`manual_chatgpt_web`、通用 `api` 和 `local_svg_html` 已从新包退役，不会静默替换。历史回执保留原值并继续校验。离线合约测试通过。第一次现场 Codex 调用被旧解析器阻断；第二次经单独授权后，通过修复后的适配器，在临时验收项目写入图片和生成回执。它不是经批准的用户文章，尚未进入文章打包或权利/质量审核。
+
+官方参考：[Codex 图像生成工具](https://github.com/openai/codex/blob/main/codex-rs/ext/image-generation/src/tool.rs)、[Codex imagegen 示例](https://github.com/openai/codex/blob/main/codex-rs/skills/src/assets/samples/imagegen/SKILL.md)、[MiniMax CLI](https://platform.minimax.io/docs/m-plan/minimax-cli)、[MiniMax image-01 尺寸](https://platform.minimax.cn/docs/api-reference/image-generation-t2i)、[OpenAI 使用条款](https://openai.com/policies/terms-of-use/)、[MiniMax 服务条款](https://platform.minimax.io/protocol/terms-of-service)。
 
 ## 5.4 受门禁保护的 Easel 宿主
 
@@ -264,8 +409,12 @@ python scripts\copy_review.py projects\my-episode --request-changes `
 ```
 
 审核决定必须填写审核人、书面意见并显式传入 `--confirm`。收据绑定当前文案指纹；
-修改脚本、字幕、声明、分镜或已登记资产后，旧批准会过期。该命令只记录审核决定，
-不会修改文案、运行 M5 或发布内容。
+修改口播、字幕、逐行 claim 绑定、分镜或已登记素材后，旧批准会过期。仅新增或修正
+`script/claims.json` 中的证据元数据，不会改变已审核文案。若 `script/script.json` 与已审核的
+VIDEO derivative 在文字和 claim 绑定上严格一致，它作为机器投影不会重复触发文案审核；
+任何偏差仍会计入指纹并使审核过期。M5 将来源链接单独写入
+`receipts/script-citations.json`，不会覆盖已有的 `script/master.md`；旁白与创作者原稿
+不一致时会阻断。该命令只记录审核决定，不会修改文案、运行 M5 或发布内容。
 
 ## 5.7 卡片与公众号文章渲染
 
@@ -304,8 +453,8 @@ python scripts\video_deliver.py pack   --project projects\my-video --thumbnails
 python scripts\video_deliver.py status --project projects\my-video
 python scripts\video_deliver.py record --project projects\my-video --platform douyin --url <真实URL>
 python scripts\platform_delivery.py list
-python scripts\platform_delivery.py pack  --package projects\bundle-dual-line-graphic\receipts\graphic-package.json
-python scripts\graphic_deliver.py --all
+python scripts\platform_delivery.py pack --package <已审核图文包的路径>
+python scripts\graphic_deliver.py --package <已审核图文包的路径> --all --confirm-draft-write
 ```
 
 - `dispatch` 会运行外部上传器，必须同时给出 `--execute` 和运营授权（`--grant`）；

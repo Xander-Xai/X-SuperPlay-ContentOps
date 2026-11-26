@@ -9,6 +9,7 @@ render and no real project is touched.
 
 from __future__ import annotations
 
+import hashlib
 import io
 import json
 import sys
@@ -28,7 +29,7 @@ for candidate in (ROOT / "src", ROOT / "scripts"):
 import make_content  # noqa: E402
 import production_gates as gates  # noqa: E402
 import qc_video  # noqa: E402
-from contentops.workflow import copy_review, preresearch  # noqa: E402
+from contentops.workflow import canonical_copy, copy_review, preresearch  # noqa: E402
 
 INTENT_KW = {
     "account": "explorer",
@@ -231,6 +232,29 @@ class IndividualGateTests(FixtureCase):
         gate = next(row for row in report["gates"] if row["gate"] == "copy_review")
         self.assertFalse(gate["ok"])
 
+    def test_canonical_copy_workflow_blocks_missing_format_derivative(self):
+        self._answer()
+        intent_path = self.project / preresearch.INTENT_FILE
+        intent_raw = intent_path.read_bytes()
+        canonical = {
+            "schema": canonical_copy.SCHEMA,
+            "copy_id": "copy-001",
+            "intent_sha256": hashlib.sha256(intent_raw).hexdigest(),
+            "research_sha256": preresearch.check(self.project)["artifacts_sha256"],
+            "account": "x-superplay-1024",
+            "topic": "Regression fixture topic",
+            "segments": [{"id": "s1", "text": "A sourced statement.",
+                          "claim_refs": ["C1"]}],
+            "claims": {"C1": {"statement": "A sourced statement.",
+                                "evidence_refs": ["S1"]}},
+        }
+        _write(self.project / canonical_copy.CANONICAL_FILE, canonical)
+        report = gates.check(self.project, root=ROOT)
+        gate = next(row for row in report["gates"]
+                    if row["gate"] == "shared_copy_lineage")
+        self.assertFalse(gate["ok"])
+        self.assertIn("DERIVATIVE_MISSING", gate["detail"])
+
     def test_missing_evidence_link_blocks(self):
         self._answer()
         _write(self.project / "00_brief" / "evidence-pack.json", {"items": [
@@ -239,7 +263,39 @@ class IndividualGateTests(FixtureCase):
                     if row["gate"] == "evidence_links")
         self.assertFalse(gate["ok"])
 
+    def test_verified_claim_ledger_supplies_links_without_editing_master_copy(self):
+        self._answer()
+        _write(self.project / "00_brief" / "evidence-pack.json", {
+            "schema": "contentops.evidence-pack/v1",
+            "items": [{"evidence_id": "E-1", "url": "https://example.org/source",
+                       "sha256": "b" * 64, "excerpt": "pinned quote"}],
+        })
+        _write(self.project / "sources" / "source-refs.json", {
+            "schema": "contentops.m5-source-refs/v1",
+            "refs": [{"id": "E-1", "title": "Pinned source",
+                      "url": "https://example.org/source", "path": "sources/e1.md",
+                      "sha256": "b" * 64, "permission": "LICENSED"}],
+        })
+        _write(self.project / "script" / "claims.json", {
+            "schema": "contentops.claim-ledger/v1",
+            "claims": [{"id": "C1", "text": "A sourced statement.",
+                        "artifacts": ["E-1"], "quotes": ["A pinned quote"]}],
+        })
+        _write(self.project / "script" / "master.md", "Creator's exact copy, without inline citations.\n")
+        result = gates.evidence_links(self.project)
+        self.assertTrue(result["ok"], result)
+        self.assertEqual(result["links"], 0)
+        self.assertEqual(result["claims"], 1)
+
+    def test_asset_sufficiency_blocks_when_script_is_missing(self):
+        self._answer()
+        (self.project / "script" / "script.json").unlink()
+        result = gates.asset_sufficiency(self.project)
+        self.assertFalse(result["ok"], result)
+        self.assertIn("script/script.json", result["detail"])
+
     def test_insufficient_assets_require_an_explicit_policy(self):
+
         intent = self._answer(asset_policy="supplement")
         _write(self.project / "script" / "script.json", {"lines": [
             {"id": "l1", "asset_id": "shot_a"}, {"id": "l2", "asset_id": "shot_b"}]})
@@ -386,7 +442,30 @@ class GraphicLineTests(FixtureCase):
                            "source_url": "OWNED", "reviewed_by": "Test",
                            "reviewed_at": "2026-11-12",
                            "review_evidence": "assets/a.rights.json"}}]})
+        _write(self.project / "receipts" / "bundle-handoff-graphic_text.json", {
+            "schema": "contentops.bundle-handoff/v1",
+            "content_format": "GRAPHIC_TEXT", "account": "explorer"})
         self._approve()
+
+    def test_graphic_handoff_account_must_match_intent(self):
+        intent = self._answer()
+        handoff = self.project / "receipts" / "bundle-handoff-graphic_text.json"
+        _write(handoff, {"schema": "contentops.bundle-handoff/v1",
+                         "content_format": "GRAPHIC_TEXT", "account": "thinktank"})
+        report = gates.check(self.project, root=ROOT, intent=intent)
+        gate = next(row for row in report["gates"] if row["gate"] == "account")
+        self.assertFalse(gate["ok"])
+        self.assertIn("HANDOFF_ACCOUNT_MISMATCH", gate["detail"])
+
+    def test_graphic_project_account_must_match_intent(self):
+        intent = self._answer()
+        (self.project / "project.yaml").write_text(
+            "id: demo\\naccount_slug: x-superplay-future-intelligence\\n",
+            encoding="utf-8")
+        report = gates.check(self.project, root=ROOT, intent=intent)
+        gate = next(row for row in report["gates"] if row["gate"] == "account")
+        self.assertFalse(gate["ok"])
+        self.assertIn("PROJECT_ACCOUNT_MISMATCH", gate["detail"])
 
     def test_graphic_all_gates_pass(self):
         self._answer()
@@ -395,12 +474,91 @@ class GraphicLineTests(FixtureCase):
         self.assertTrue(report["ok"], f"unexpected: {failed}")
         self.assertEqual(report["format"], "GRAPHIC_TEXT")
 
-    def test_graphic_copy_review_binds_to_the_draft(self):
+    def test_graphic_needs_one_source_link_not_three(self):
         self._answer()
-        (self.project / "draft.md").write_text("# Draft changed\n", encoding="utf-8")
+        (self.project / "draft.md").write_text(
+            "# Draft\\n\\n[Primary source](https://example.org/source)\\n",
+            encoding="utf-8")
+
         report = gates.check(self.project, root=ROOT)
-        gate = next(row for row in report["gates"] if row["gate"] == "copy_review")
-        self.assertFalse(gate["ok"])
+        self.assertTrue(report["ok"], report)
+        evidence = next(row for row in report["gates"]
+                        if row["gate"] == "evidence_links")
+        self.assertTrue(evidence["ok"], evidence)
+
+    def test_graphic_preflight_does_not_require_copy_or_research_signoff(self):
+        self._answer()
+        (self.project / "receipts" / "script-review.json").unlink()
+        (self.project / preresearch.RESEARCH_DIR / "boundary.md").write_text(
+            "changed after the old approval", encoding="utf-8")
+
+        report = gates.check(self.project, root=ROOT)
+
+        failed = [row for row in report["gates"] if not row["ok"]]
+        seen = {row["gate"] for row in report["gates"]}
+        self.assertTrue(report["ok"], f"unexpected: {failed}")
+        self.assertNotIn("copy_review", seen)
+        self.assertNotIn("precopy_research", seen)
+
+    def test_graphic_answer_needs_only_account_not_video_decisions(self):
+        args = SimpleNamespace(
+            interactive=False, account=None, asset_policy=None, avatar_intro=None,
+            avatar_outro=None, narration=None, motion=None, bgm=None,
+            reviewer=None, opinion=None, avatar_quota_budget=None,
+        )
+
+        answers = make_content._answers_from_args(args, self.project)
+        intent = gates.write_intent(self.project, **answers, root=ROOT)
+
+        self.assertEqual(answers["account"], "explorer")
+        self.assertEqual(intent["answered_by"], None)
+        self.assertEqual(intent["opinion"], None)
+        self.assertEqual(intent["motion_backend"], "none")
+
+    def test_graphic_copy_derivative_uses_the_canonical_source(self):
+        self._answer()
+        intent_path = self.project / preresearch.INTENT_FILE
+        canonical = {
+            "schema": canonical_copy.SCHEMA,
+            "copy_id": "copy-graphic-001",
+            "intent_sha256": hashlib.sha256(intent_path.read_bytes()).hexdigest(),
+            "research_sha256": preresearch.check(self.project)["artifacts_sha256"],
+            "account": "x-superplay-1024",
+            "topic": "Regression fixture topic",
+            "segments": [{"id": "s1", "text": "Canonical statement.",
+                          "claim_refs": ["C1"]}],
+            "claims": {"C1": {"statement": "Canonical statement.",
+                                "evidence_refs": ["S1"]}},
+        }
+        derivative = {
+            "schema": canonical_copy.DERIVATIVE_SCHEMA,
+            "copy_id": canonical["copy_id"],
+            "copy_sha256": canonical_copy.digest(canonical),
+            "format": "GRAPHIC_TEXT",
+            "segments": [{"source_segment_id": "s1",
+                          "text": "Adapted article statement.",
+                          "claim_refs": ["C1"]}],
+        }
+        _write(self.project / canonical_copy.CANONICAL_FILE, canonical)
+        _write(self.project / canonical_copy.DERIVATIVE_FILE, derivative)
+        with (self.project / "draft.md").open("a", encoding="utf-8") as draft:
+            draft.write("\nAdapted article statement.\n")
+        self._approve()
+        report = gates.check(self.project, root=ROOT)
+        gate = next(row for row in report["gates"]
+                    if row["gate"] == "shared_copy_lineage")
+        self.assertTrue(gate["ok"], gate)
+
+    def test_graphic_copy_review_is_not_a_preflight_gate(self):
+        self._answer()
+        (self.project / "draft.md").write_text(
+            "# Draft changed\n\n[LoRA](https://arxiv.org/abs/2106.09685)\n"
+            "[QLoRA](https://arxiv.org/abs/2305.14314)\n"
+            "[Rules](https://github.com/Xander-Xai/X-SuperPlay-ContentOps)\n",
+            encoding="utf-8")
+        report = gates.check(self.project, root=ROOT)
+        self.assertTrue(report["ok"], report)
+        self.assertNotIn("copy_review", {row["gate"] for row in report["gates"]})
 
     def test_graphic_needs_alt_and_rights(self):
         self._answer()
@@ -424,26 +582,53 @@ class GraphicLineTests(FixtureCase):
             code = make_content.cmd_run(args)
         graphic.assert_called_once()
         producer.assert_not_called()
-        self.assertEqual(code, 1)  # AWAITING_MANUAL_REVIEW, not QC_PASSED
+        self.assertEqual(code, 0)  # package created; manual review is still pending
+
+    def test_graphic_article_validation_failure_is_nonzero(self):
+        self._answer()
+        args = SimpleNamespace(project=str(self.project), mode="STRICT", dry_run=False)
+        result = {"state": "AWAITING_MANUAL_REVIEW",
+                  "package": "receipts/graphic-package.json",
+                  "article": "BLOCKED: VALIDATION_FAILED"}
+        with mock.patch.object(make_content, "_produce_graphic", return_value=result), \
+                redirect_stdout(io.StringIO()):
+            code = make_content.cmd_run(args)
+        self.assertEqual(code, 1)
 
     def test_produce_graphic_builds_the_manual_package(self):
         handoff = self.project / "receipts" / "bundle-handoff-graphic_text.json"
         _write(handoff, {"schema": "contentops.bundle-handoff/v1",
                          "bundle_id": "CB-TEST", "bundle_sha256": "0" * 64,
                          "bundle_path": "bundle.json", "bundle_scope": "repo",
-                         "content_format": "GRAPHIC_TEXT",
+                         "content_format": "GRAPHIC_TEXT", "account": "explorer",
                          "project_slug": self.project.name,
                          "state": "READY_FOR_MANUAL_PACKAGE", "blockers": [],
                          "production_ready": False, "publish_authorized": False})
         (self.project / "bundle.json").write_text("{}", encoding="utf-8")
+        intent = self._answer()
         with mock.patch("contentops.graphic.build_package",
-                        return_value={"status": "AWAITING_MANUAL_REVIEW"}) as build, \
+                        return_value={"status": "AWAITING_MANUAL_REVIEW",
+                                      "account": "explorer"}) as build, \
                 mock.patch("contentops.graphic.write_package") as write:
-            result = make_content._produce_graphic(self.project, {})
+            result = make_content._produce_graphic(self.project, intent)
         build.assert_called_once()
         write.assert_called_once()
         self.assertEqual(result["state"], "AWAITING_MANUAL_REVIEW")
 
+    def test_produce_graphic_refuses_package_account_drift(self):
+        handoff = self.project / "receipts" / "bundle-handoff-graphic_text.json"
+        _write(handoff, {"schema": "contentops.bundle-handoff/v1",
+                         "content_format": "GRAPHIC_TEXT", "account": "explorer"})
+        (self.project / "bundle.json").write_text("{}", encoding="utf-8")
+        intent = self._answer()
+        with mock.patch("contentops.graphic.build_package",
+                        return_value={"status": "AWAITING_MANUAL_REVIEW",
+                                      "account": "thinktank"}), \
+                mock.patch("contentops.graphic.write_package") as write:
+            with self.assertRaises(gates.GateError) as ctx:
+                make_content._produce_graphic(self.project, intent)
+        self.assertEqual(ctx.exception.code, "GRAPHIC_PACKAGE_ACCOUNT_MISMATCH")
+        write.assert_not_called()
 
 class QcReceiptProtectionTests(FixtureCase):
     def _current_pass_receipt(self):

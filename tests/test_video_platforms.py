@@ -25,6 +25,7 @@ from contentops.accounts import load_account  # noqa: E402
 from contentops.platforms import video_delivery  # noqa: E402
 from contentops.platforms import video_package  # noqa: E402
 from contentops.platforms import video_specs  # noqa: E402
+from contentops.platforms import graphic_specs  # noqa: E402
 
 ACCOUNT_1024 = ROOT / "config" / "accounts" / "x-superplay-1024.json"
 ACCOUNT_FI = ROOT / "config" / "accounts" / "x-superplay-future-intelligence.json"
@@ -42,6 +43,17 @@ MEDIA = {
 
 
 # ---------------------------------------------------------------- spec table
+
+
+def test_xiaohongshu_video_profile_separates_video_and_cover_aspects() -> None:
+    video = video_specs.spec("xiaohongshu_video")
+    assert video["aspect_required"] == "9:16"
+    assert {item["ratio"] for item in video["thumbnails"]} == {"3:4"}
+
+    graphic_ids = graphic_specs.platform_ids()
+    assert "xiaohongshu_image" not in graphic_ids
+    excluded_ids = {item["platform_id"] for item in graphic_specs.load_specs()["excluded"]}
+    assert "xiaohongshu_image" in excluded_ids
 
 
 def test_six_video_platforms_and_registry_link() -> None:

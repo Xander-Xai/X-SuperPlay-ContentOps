@@ -12,6 +12,8 @@ from __future__ import annotations
 import json
 import sys
 import tempfile
+from contextlib import redirect_stdout
+from io import StringIO
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -178,10 +180,23 @@ def test_explore_declares_which_template_beat_it_defers():
 
 def test_text_platforms_are_not_video_platforms():
     build = _dna(BUILD)
+    text_platforms = build["text_platforms"]
     assert set(build["platforms"]) == {"bilibili", "douyin"}, build["platforms"]
-    assert set(build["text_platforms"]["platforms"]) == {"zhihu", "csdn"}
-    assert not set(build["platforms"]) & set(build["text_platforms"]["platforms"])
-    assert build["text_platforms"]["format"] == "TEXT_REWRITE"
+    assert set(text_platforms["platforms"]) == {
+        "wechat_article", "zhihu", "csdn", "x", "juejin", "toutiao", "weibo"
+    }
+    assert not set(build["platforms"]) & set(text_platforms["platforms"])
+    assert text_platforms["format"] == "TEXT_REWRITE"
+    assert set(text_platforms["long_form_platforms"]) == {
+        "wechat_article", "zhihu", "csdn", "juejin", "toutiao"
+    }
+    assert set(text_platforms["short_form_platforms"]) == {"x", "weibo"}
+    assert not set(text_platforms["long_form_platforms"]) & set(
+        text_platforms["short_form_platforms"]
+    )
+    policy = text_platforms["adaptation_policy"]
+    assert "mechanically truncate" in policy
+    assert "distinct short-form post" in policy
 
 
 def test_the_render_block_declares_a_vertical_9_by_16_canvas():
@@ -349,8 +364,8 @@ def test_a_repo_relative_script_must_exist():
 
 def _easel_catalog_present() -> bool:
     import check_account_dna
-    return any(root.name == "openclaw" and root.is_dir()
-               for root in check_account_dna.CATALOG_ROOTS)
+    skills, _ = check_account_dna.catalog()
+    return any(skill["name"] == "qc_video" for skill in skills)
 
 
 def test_an_undeclared_path_base_is_not_silently_assumed():
@@ -451,6 +466,51 @@ def test_the_variant_pipeline_reads_the_caption_style_from_the_dna():
         assert str(style.get("highlight") or "").lower() == BRAND_ACCENT, path.name
 
 
+def _run_account_checker_for(dna: dict) -> tuple[int, dict]:
+    from unittest import mock
+
+    with tempfile.TemporaryDirectory() as temp:
+        accounts = Path(temp) / "config" / "accounts"
+        accounts.mkdir(parents=True)
+        (accounts / "sample.json").write_text(
+            json.dumps(dna), encoding="utf-8")
+        stdout = StringIO()
+        with mock.patch.object(check_account_dna, "ACCOUNTS", accounts), \
+                mock.patch.object(sys, "argv", ["check_account_dna.py", "--json"]), \
+                redirect_stdout(stdout):
+            code = check_account_dna.main()
+        return code, json.loads(stdout.getvalue())
+
+
+def test_full_checker_dispatches_x_accounts_to_the_x_validator():
+    dna = _dna(ACCOUNTS / "x-superplay-english.json")
+    code, report = _run_account_checker_for(dna)
+    assert code == 0, report
+    assert report["overall"] == "PASS", report
+    assert report["accounts"] == [dna["slug"]], report
+    assert report["failures"] == [], report
+
+
+def test_full_checker_reports_x_schema_validation_failures():
+    dna = _dna(ACCOUNTS / "x-superplay-english.json")
+    dna["cadence"]["max_original_posts_per_day"] = 25
+    code, report = _run_account_checker_for(dna)
+    assert code == 1, report
+    assert report["overall"] == "FAIL", report
+    assert any("expected an integer 1..24" in failure for failure in report["failures"]), report
+    assert not any("contentops.account-dna/v2" in failure for failure in report["failures"]), report
+
+
+def test_full_checker_rejects_unowned_account_schemas():
+    code, report = _run_account_checker_for({
+        "schema": "contentops.account-dna/v1",
+        "slug": "unknown-account",
+    })
+    assert code == 1, report
+    assert report["overall"] == "FAIL", report
+    assert any("unsupported account schema" in failure for failure in report["failures"]), report
+
+
 def main() -> int:
     failures = []
     tests = (
@@ -491,6 +551,9 @@ def main() -> int:
         test_a_shared_route_naming_an_unknown_skill_fails,
         test_an_absent_shared_store_is_a_warning_not_a_failure,
         test_the_variant_pipeline_reads_the_caption_style_from_the_dna,
+        test_full_checker_dispatches_x_accounts_to_the_x_validator,
+        test_full_checker_reports_x_schema_validation_failures,
+        test_full_checker_rejects_unowned_account_schemas,
     )
     for fn in tests:
         try:

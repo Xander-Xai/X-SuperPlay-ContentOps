@@ -222,7 +222,8 @@ def _load_dna(account_id: str) -> Dict[str, Any]:
 
 
 def _composition_props(spec: Dict[str, Any], purpose: str, palette: Dict[str, str], *,
-                      video: Optional[str] = None, source_in_seconds: float = 0.0) -> Dict[str, Any]:
+                       video: Optional[str] = None, still: Optional[str] = None,
+                       source_in_seconds: float = 0.0) -> Dict[str, Any]:
     props = dict(spec.get("props") or {})
     if spec["template"] == "rag_flow":
         return {
@@ -272,6 +273,54 @@ def _composition_props(spec: Dict[str, Any], purpose: str, palette: Dict[str, st
             "testBanner": banner,
             "palette": dict(palette),
             "visualContract": dict(contract) if isinstance(contract, Mapping) else {},
+        }
+    if spec["template"] == "evidence_shot":
+        if not still:
+            raise ValueError("evidence_shot needs a staged still image")
+        move = str(props.get("move") or "push")
+        if move not in ("push", "pan-left", "pan-right", "pull"):
+            raise ValueError(f"unsupported evidence_shot move: {move}")
+        emphasis = str(props.get("emphasis") or "box")
+        if emphasis not in ("box", "underline", "none"):
+            raise ValueError(f"unsupported evidence_shot emphasis: {emphasis}")
+        return {
+            "image": still,
+            "kicker": props.get("kicker") or "",
+            "callout": props["callout"],
+            "note": props.get("note") or "",
+            "move": move,
+            "emphasis": emphasis,
+            "durationSeconds": spec["duration_s"],
+            "palette": dict(palette),
+        }
+    if spec["template"] == "info_graphic":
+        # Information-first visual: kind selects the layout grammar. All colour
+        # comes from the DNA palette; props carry only display content.
+        kind = str(props.get("kind") or "flow")
+        if kind not in ("flow", "checklist", "metric", "compare", "quote"):
+            raise ValueError(f"unsupported info_graphic kind: {kind}")
+        return {
+            "kind": kind,
+            "eyebrow": props.get("eyebrow") or "",
+            "title": props["title"],
+            "items": list(props["items"]),
+            "caption": props.get("caption") or "",
+            "durationSeconds": spec["duration_s"],
+            "palette": dict(palette),
+        }
+    if spec["template"] == "explainer_card":
+        # Full-bleed explainer card: title, staged items and a footnote. Same
+        # DNA palette, no brand override from the spec. The continuous camera
+        # drift lives in the composition, not in mutable shot props.
+        return {
+            "kicker": props.get("kicker") or "",
+            "title": props["title"],
+            "items": list(props["items"]),
+            "footnote": props.get("footnote") or "",
+            "durationSeconds": spec["duration_s"],
+            "palette": dict(palette),
+            "visualContract": dict(props.get("hook_contract") or {})
+                if isinstance(props.get("hook_contract") or {}, Mapping) else {},
         }
     banner = props.get("test_banner") or ""
     if purpose == "test" and not banner:
@@ -362,6 +411,50 @@ def _stage_recording_public(project: Path, source: Path, expected_sha256: str, *
             raise ValueError("crop transform produced a byte-identical input copy")
         if not destination.is_file() or destination.stat().st_size == 0:
             raise ValueError("staged recording is missing or empty")
+        return temporary, public_dir, relative
+    except Exception:
+        temporary.cleanup()
+        raise
+
+
+def _stage_still_public(project: Path, source: Path, expected_sha256: str):
+    """Stage one verified, project-contained still image for a Remotion B-roll shot.
+
+    Mirrors the recording gate: no symlink, path must stay inside the project,
+    SHA-256 must match the registration, unique temporary public dir, caller
+    cleans up. Only this one image is exposed to the renderer.
+    """
+    root = project.resolve()
+    source = Path(source)
+    if source.is_symlink():
+        raise ValueError("B-roll still must not be a symlink")
+    source = source.resolve(strict=True)
+    try:
+        source.relative_to(root)
+    except ValueError as exc:
+        raise ValueError("B-roll still escapes the authorized project") from None
+    if not source.is_file():
+        raise ValueError("B-roll still is not a regular file")
+    digest = str(expected_sha256 or "").lower()
+    if len(digest) != 64 or any(char not in "0123456789abcdef" for char in digest):
+        raise ValueError("B-roll still SHA-256 is invalid")
+    if _sha256(source) != digest:
+        raise ValueError("B-roll still hash does not match its registration")
+    suffix = source.suffix.lower()
+    if suffix not in {".png", ".jpg", ".jpeg", ".webp"}:
+        raise ValueError("B-roll still container is not supported")
+    parent = root / "work" / "animation"
+    parent.mkdir(parents=True, exist_ok=True)
+    resolved_parent = parent.resolve()
+    temporary = tempfile.TemporaryDirectory(prefix="remotion-still-", dir=str(resolved_parent))
+    public_dir = Path(temporary.name).resolve()
+    try:
+        relative = f"stills/{digest}{suffix}"
+        destination = public_dir / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source, destination)
+        if _sha256(destination) != digest:
+            raise ValueError("staged B-roll hash changed during copy")
         return temporary, public_dir, relative
     except Exception:
         temporary.cleanup()
@@ -770,6 +863,23 @@ def render(project: Path, spec_path: Path, *, placement_id: str, asset_id: str,
     backend = str(raw.get("backend") or "remotion")
     dna = _load_dna(account_id)
     palette = palette_from_dna(dna)
+    # A shot may select one of the account's OWN declared style variants. The
+    # colour still comes from the DNA (never from spec props), but this lets a
+    # scene leave the default dark-blue brand base when that base reads as a
+    # generic AI look. Unknown variants fail closed.
+    variant = str(raw.get("style_variant") or "").strip()
+    if variant:
+        motion = ((dna.get("visual") or {}).get("motion") or {})
+        profile = motion.get("motion_profile") or {}
+        variants = profile.get("style_variants") or {}
+        selected = variants.get(variant) if isinstance(variants, Mapping) else None
+        if not isinstance(selected, Mapping):
+            return _emit(_blocked_execution({
+                "state": "BLOCKED", "code": "STYLE_VARIANT_UNKNOWN",
+                "detail": f"style_variant {variant!r} is not declared in account DNA",
+            }), 1)
+        palette = {**palette, **{key: str(value) for key, value in selected.items()
+                                  if key in ("bg", "surface", "ink", "sub", "accent", "accent2")}}
     # The conflict colour is a declared DNA brand token, never a per-shot prop.
     # Copy it from brand.palette into the resolved palette so the composition
     # receives only DNA-authoritative colours.
@@ -824,6 +934,9 @@ def render(project: Path, spec_path: Path, *, placement_id: str, asset_id: str,
         "comparison": "comparison",
         "recording_mark": "recording_mark",
         "title_card": "title_card",
+        "explainer_card": "title_card",
+        "info_graphic": "architecture",
+        "evidence_shot": "architecture",
     }.get(str(raw.get("template") or ""), str(raw.get("template") or "")))
     readiness = environment_probe(backend)
     decision = select_backend(
@@ -929,7 +1042,27 @@ def render(project: Path, spec_path: Path, *, placement_id: str, asset_id: str,
     public_temp = None
     public_dir = None
     public_video = None
+    public_still = None
     source_in_seconds = float(raw.get("source_in_seconds") or 0.0)
+    if template == "evidence_shot":
+        # The still must be registered in sources/assets.json with a SHA-256;
+        # no unregistered or network image may reach the renderer.
+        image_rel = str((props.get("image_path") or "").strip())
+        image_sha = str((props.get("image_sha256") or "").strip().lower())
+        if not image_rel or not image_sha:
+            return _emit(_blocked_execution({
+                "state": "BLOCKED", "code": "BROLL_STILL_UNREGISTERED",
+                "detail": "evidence_shot needs props.image_path and props.image_sha256",
+            }), 1)
+        image_path = project / image_rel
+        try:
+            public_temp, public_dir, public_still = _stage_still_public(
+                project, image_path, image_sha)
+        except (OSError, ValueError) as exc:
+            return _emit(_blocked_execution({
+                "state": "BLOCKED", "code": "BROLL_STILL_PATH",
+                "detail": str(exc),
+            }), 1)
     if template == "recording_mark" and trusted_recording:
         try:
             public_temp, public_dir, public_video = _stage_recording_public(
@@ -941,7 +1074,8 @@ def render(project: Path, spec_path: Path, *, placement_id: str, asset_id: str,
             return _emit(_blocked_execution({"state": "BLOCKED", "code": "RECORDING_PATH",
                                              "detail": str(exc)}), 1)
     prop_payload = _composition_props(
-        spec, purpose, palette, video=public_video, source_in_seconds=source_in_seconds,
+        spec, purpose, palette, video=public_video, still=public_still,
+        source_in_seconds=source_in_seconds,
     )
     props_path.write_text(json.dumps(prop_payload, ensure_ascii=False), encoding="utf-8")
     command = [

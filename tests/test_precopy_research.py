@@ -216,11 +216,11 @@ class ResearchGateCase(unittest.TestCase):
         self.assertFalse(receipt["production_ready"])
         self.assertFalse(receipt["publish_authorized"])
 
-    def test_stable_production_gates_include_the_research_gate(self):
+    def test_stable_production_gates_require_research_only_for_video(self):
         self.assertIn("precopy_research", gates.GATES)
         source = (ROOT / "scripts" / "production_gates.py").read_text(encoding="utf-8")
-        self.assertEqual(source.count('add("precopy_research"'), 2,
-                         "both VIDEO and GRAPHIC_TEXT gate sets must check research")
+        self.assertEqual(source.count('add("precopy_research"'), 1,
+                         "only the VIDEO gate set requires signed pre-copy research")
 
     # -- the intent binding: research always belongs to one routed topic ------
 
@@ -367,8 +367,26 @@ class ResearchGateCase(unittest.TestCase):
         self.assertEqual(approve_code, 0)
         self.assertTrue(preresearch.check(self.project)["ok"])
 
+    def test_graphic_copy_review_can_be_recorded_without_pre_copy_research(self):
+        path = ROOT / "scripts" / "copy_review.py"
+        spec = importlib.util.spec_from_file_location("copy_review_cli_graphic", path)
+        cli = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cli)
+        cli.ROOT = Path(self.tmp.name)
+        _write_text(self.project / "draft.md", "# Graphic draft\\n")
+        (self.project / "graphic-input.json").write_text(
+            json.dumps({"title": "Graphic", "images": []}), encoding="utf-8")
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            code = cli.main([str(self.project), "--approve", "--reviewer", "Founder",
+                             "--opinion", "Reviewed graphic copy", "--confirm", "--json"])
+        payload = json.loads(out.getvalue())
+        self.assertEqual(code, 0)
+        self.assertEqual(payload["action"], "APPROVAL_RECORDED")
+        self.assertTrue((self.project / "receipts" / "script-review.json").is_file())
+
     def test_copy_review_cli_cannot_sign_copy_without_research(self):
-        """The copy decision is blocked even when called directly."""
+        """The VIDEO copy decision is blocked even when called directly."""
         path = ROOT / "scripts" / "copy_review.py"
         spec = importlib.util.spec_from_file_location("copy_review_cli_gate", path)
         cli = importlib.util.module_from_spec(spec)

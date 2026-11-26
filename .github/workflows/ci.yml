@@ -156,6 +156,21 @@ jobs:
       - name: Run M5 ASR gate tests
         run: python tests/test_m5_asr_gate.py
 
+      - name: Run TOPIC derivative to M5 projection tests
+        run: python tests/test_topic_m5.py
+
+      - name: Run hybrid motion orchestration tests
+        run: python tests/test_animation_orchestrator.py
+
+      - name: Run hybrid motion overlay tests
+        run: python tests/test_hybrid_motion_overlay.py
+
+      - name: Run default narration tests
+        run: python tests/test_default_narration.py
+
+      - name: Run B-roll workflow mechanism tests
+        run: python tests/test_broll_workflow_mechanism.py
+
       # The media suites never make a provider request: they drive
       # tests/fixtures/fake_mmx_cli.py and inject a fake billing transport, so CI
       # needs no MiniMax account and spends no quota.
@@ -398,9 +413,9 @@ jobs:
       - name: Run checkout guard tests
         run: python tests/test_checkout_guard.py
 
-      # Eight VIDEO gates / six GRAPHIC_TEXT gates must pass before a producer
-      # runs, including the signed pre-copy research gate. Also guards QC
-      # receipts against a degraded overwrite.
+      # VIDEO keeps the full gate set; standalone GRAPHIC_TEXT skips video-only
+      # choices and pre-copy signatures but still checks account, evidence, rights
+      # and runtime. Also guards QC receipts against a degraded overwrite.
       - name: Run production gates tests
         run: python tests/test_production_gates.py
 
@@ -450,6 +465,11 @@ jobs:
       # mocked: this asserts which decision the CLI takes, not how the skill runs.
       - name: Run media-use ingest rights regression tests
         run: python tests/test_media_use_ingest_rights.py
+
+      # One named rights decision covers every asset sharing its source and
+      # licence; a request to review, or a changed hash, clears nothing.
+      - name: Run rights batch regression tests
+        run: python tests/test_rights_batch.py
 
       # Discovery and diagnosis only: these suites build temporary catalogs and
       # never download a runtime or execute a skill.
@@ -607,6 +627,9 @@ jobs:
 
       - name: Run graphic workflow tests
         run: python tests/test_graphic_workflow.py
+
+      - name: Run graphic input validation tests
+        run: python tests/test_check_graphic_input.py
 
       - name: Run M5 Bundle handoff tests
         run: python tests/test_m5_bundle_handoff.py

@@ -387,7 +387,62 @@ def test_stage_script_refuses_unknown_claim_and_undeclared_asset() -> None:
     print("[ok] 15. an unknown claim and an undeclared asset are both refused")
 
 
+def test_stage_script_accepts_multiple_claims_without_splitting_creator_narration() -> None:
+    lines = [{"id": "l1", "claim": "real", "claims": ["real", "second"],
+              "narration": "Creator's exact narration", "caption": "Creator's exact narration",
+              "asset_id": "card"}]
+    claims = [
+        {"id": "real", "text": "First verified claim.",
+         "artifacts": ["SRC-1"], "quotes": ["First verbatim quote"]},
+        {"id": "second", "text": "Second verified claim.",
+         "artifacts": ["SRC-2"], "quotes": ["Second verbatim quote"]},
+    ]
+    work = _script_project(lines, claims)
+    _write(work / "sources" / "source-refs.json", json.dumps({
+        "schema": "contentops.m5-source-refs/v1",
+        "refs": [
+            {"id": "SRC-1", "title": "Source one", "url": "https://example.org/one"},
+            {"id": "SRC-2", "title": "Source two", "url": "https://example.org/two"},
+        ],
+    }))
+    ledger = _ledger(claims)
+    assets = {"card": {"repo_path": "scripts/qc_video.py", "type": "REAL_SCREENSHOT"}}
+
+    m5_production.stage_script(work, ledger, assets)
+
+    citations = json.loads((work / "receipts" / "script-citations.json").read_text(encoding="utf-8"))
+    assert citations["lines"][0]["claim_ids"] == ["real", "second"]
+    assert [row["id"] for row in citations["lines"][0]["sources"]] == ["SRC-1", "SRC-2"]
+    print("[ok] one narration line can bind multiple claims without duplication")
+
+
+def test_stage_script_preserves_existing_master_and_writes_citation_receipt() -> None:
+    lines = [{"id": "l1", "claim": "real", "narration": "Creator's exact narration",
+              "caption": "Creator's exact narration", "asset_id": "card"}]
+    claims = [{"id": "real", "text": "A verified claim.",
+               "artifacts": ["SRC-1"], "quotes": ["A verbatim quote"]}]
+    work = _script_project(lines, claims)
+    original = "# Creator master\n\nCreator's exact narration\n"
+    _write(work / "script" / "master.md", original)
+    _write(work / "sources" / "source-refs.json", json.dumps({
+        "schema": "contentops.m5-source-refs/v1",
+        "refs": [{"id": "SRC-1", "title": "Pinned source",
+                  "url": "https://example.org/source"}],
+    }))
+    ledger = _ledger(claims)
+    assets = {"card": {"repo_path": "scripts/qc_video.py", "type": "REAL_SCREENSHOT"}}
+
+    m5_production.stage_script(work, ledger, assets)
+
+    assert (work / "script" / "master.md").read_text(encoding="utf-8") == original
+    citations = json.loads((work / "receipts" / "script-citations.json").read_text(encoding="utf-8"))
+    assert citations["schema"] == "contentops.m5-script-citations/v1"
+    assert citations["lines"][0]["sources"][0]["url"] == "https://example.org/source"
+    print("[ok] existing creator master is preserved and citations are emitted separately")
+
+
 def test_stage_script_refuses_duplicate_ids_and_empty_narration() -> None:
+
     ledger = _ledger([{"id": "real", "text": "t", "artifacts": ["a"], "quotes": ["q"]}])
     assets = {"card": {"repo_path": "scripts/qc_video.py", "type": "REAL_SCREENSHOT"}}
     work = _script_project(
@@ -565,6 +620,8 @@ TESTS = [
     test_m5_claim_facade_keeps_receipt_and_fail_closed_error,
     test_stage_assets_refuses_a_path_outside_the_repository,
     test_stage_script_refuses_unknown_claim_and_undeclared_asset,
+    test_stage_script_accepts_multiple_claims_without_splitting_creator_narration,
+    test_stage_script_preserves_existing_master_and_writes_citation_receipt,
     test_stage_script_refuses_duplicate_ids_and_empty_narration,
     test_stage_subtitles_refuses_poor_coverage,
     test_ass_timestamps_are_centiseconds_and_match_the_srt,

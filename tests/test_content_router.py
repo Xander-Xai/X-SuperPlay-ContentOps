@@ -305,6 +305,57 @@ def test_the_user_topic_route_never_calls_the_hot_list_collector():
         assert result.detail["intent"]["topic"] == "如何使用 LangGraph 开发可靠的 Agent？"
 
 
+def test_user_topic_can_explicitly_choose_graphic_text_for_a_video_account():
+    with tempfile.TemporaryDirectory() as tmp:
+        router = _router(_sandbox(tmp), adapters=_fixture_adapter())
+        result = router.start(
+            ACCOUNT_BUILD, "USER_TOPIC",
+            UserTopicInput(topic="如何使用 LangGraph 开发可靠的 Agent？"),
+            target_pipeline="GRAPHIC_TEXT",
+        )
+        assert result.detail["intent"]["target_pipeline"] == "GRAPHIC_TEXT"
+
+
+def test_user_topic_can_select_medium_neutral_topic_target():
+    with tempfile.TemporaryDirectory() as tmp:
+        router = _router(_sandbox(tmp), adapters=_fixture_adapter())
+        result = router.start(
+            ACCOUNT_BUILD, "USER_TOPIC",
+            UserTopicInput(topic="如何使用 LangGraph 开发可靠的 Agent？"),
+            target_pipeline="TOPIC",
+        )
+        assert result.detail["intent"]["target_pipeline"] == "TOPIC"
+
+
+def test_hotspot_run_carries_the_explicit_pipeline_through_candidate_selection():
+    with tempfile.TemporaryDirectory() as tmp:
+        router = _router(_sandbox(tmp), adapters=_fixture_adapter())
+        run = router.start(
+            ACCOUNT_EXPLORE, "HOTSPOT_DISCOVERY", target_pipeline="GRAPHIC_TEXT")
+        candidate = run.detail["candidates"][0]["candidate_id"]
+        result = router.select(ACCOUNT_EXPLORE, run.run_id, candidate,
+                               selected_by="Founder")
+        assert result.detail["intent"]["target_pipeline"] == "GRAPHIC_TEXT"
+
+
+def test_content_pipeline_alias_is_canonicalized_without_changing_video():
+    from contentops.routing.account_profile import load_profile, target_pipeline_for
+    from contentops.routing.models import RoutingError
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = _sandbox(tmp)
+        profile = load_profile(root, ACCOUNT_BUILD)
+        assert target_pipeline_for(profile, "TEXT_ARTICLE") == "GRAPHIC_TEXT"
+        assert target_pipeline_for(profile, "VIDEO") == "VIDEO"
+        assert target_pipeline_for(profile, "TOPIC") == "TOPIC"
+        try:
+            target_pipeline_for(profile, "TEXT_IMAGE")
+        except RoutingError as exc:
+            assert exc.code == "PIPELINE_UNKNOWN"
+        else:
+            raise AssertionError("unknown pipeline names must be refused")
+
+
 def test_the_hot_list_route_calls_the_collector():
     with tempfile.TemporaryDirectory() as tmp:
         router = _router(_sandbox(tmp), adapters=_fixture_adapter())

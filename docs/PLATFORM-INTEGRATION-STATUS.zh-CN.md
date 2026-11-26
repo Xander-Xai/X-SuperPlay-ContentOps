@@ -13,9 +13,8 @@ translation_status: synced
 > [ADR-015](adr/ADR-015-platform-placeholders-and-content-bundle.md)。
 > 一行说的是**本分支**的事实，永远不是组合策略。
 >
-> 最后按注册表重生成：2026-11-12，`main` 的 `c1da6dd`。
-> 最后验证：2026-11-16 —— 增加了下方「跨平台计划」一节；没有任何注册表行变化，
-> 发布计数也没有变化。
+> 最后按注册表重生成：2026-11-18，本分支；未提升任何平台状态。
+> 最后验证：2026-11-18——依据当前规格核对小红书 VIDEO-only 路由及图文排除；未上传或发布。
 
 ## 如何读状态
 
@@ -81,8 +80,9 @@ translation_status: synced
 | `weibo` | **无** | browser_bridge |
 | `xiaohongshu_image` | **无** —— 记在 `excluded` 下 | — |
 
-`xiaohongshu_image` 已于 2026-11-09 按运营指令移出注册表并排除出图文线：整个小红书平台
-归 VIDEO 线。该排除记录在规格文件中，不是隐含约定。
+`xiaohongshu_image` 已于 2026-11-09 按运营指令移出注册表并排除出图文线。本仓库只支持
+`xiaohongshu_video` VIDEO 目标；图文内容不会被转换成视频，也不会被图文线接纳。该排除
+记录在规格文件中，不是隐含约定。
 
 ## GitHub —— 证据基础设施，不是平台
 

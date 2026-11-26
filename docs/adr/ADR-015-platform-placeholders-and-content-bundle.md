@@ -6,6 +6,8 @@ Issue: #100
 Related: [ADR-002](ADR-002-contentops-boundaries.md), [ADR-006](ADR-006-upstream-upgrade-policy.md), [ADR-012](ADR-012-convergence-decisions.md), [ADR-014](ADR-014-delivery-validation-hold.md)
 Strategy authority: `Xander-Xai/X-SuperPlay-Strategy` — `01-Strategy/Content-Kernel-and-Bundle-Architecture-V1.md` (`68245cc`, 2026-11-01), `90-Templates/content-bundle.yaml`, `03-Execution/Platform-Repository-Registry.yaml`
 
+> **Later route change (2026-11-09):** The Xiaohongshu image/graphic placeholder shown in this ADR is historical and was removed by operator instruction. The current repository registers only `xiaohongshu_video` on VIDEO; Xiaohongshu image-text is excluded from GRAPHIC_TEXT. This later route change supersedes only the Xiaohongshu image placeholder, not the other decisions in this ADR.
+
 ## Context
 
 A third-party proposal of 2026-11-01 asked ContentOps to become an

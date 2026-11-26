@@ -4,7 +4,7 @@
 
 [简体中文](README.md) | English
 
-> Last verified: 2026-11-17 against code, configuration and existing receipts at `main` baseline `5d031ae3`. This check does not re-accept historical media or verify live platform outcomes.
+> Last verified: 2026-11-18 — focused check on this branch of Xiaohongshu's video route, graphic exclusion and local aspect constraints. Other code/configuration/receipt claims still refer to the recorded `main` baseline `5d031ae3` and were not re-audited; no live platform outcome or media acceptance is claimed.
 > X original-post workflow now supports explicit `post_format=text` without an image/ALT, or `post_format=image` with real 1600x900 raster+ALT. General-interest writing has a separate evidence-honest human rubric; all publication is still manual and requires a real own X URL.
 > Operating authority: canonical Strategy X SOP and account DNA; local-only real analytics and human review/manual publishing.
 
@@ -47,7 +47,7 @@ The table describes the `main` baseline above and existing evidence. Implementat
 | Video delivery (`video_deliver.py`) | `main` | Implemented: `plan` / `pack` / `status` build per-platform packs and thumbnails; `dispatch` needs an operator grant. An uploader exit 0 is recorded as `UPLOADER_EXIT_0`, never as publication — only a URL a person actually saw is recorded as one |
 | Graphic delivery (`platform_delivery.py`, `graphic_deliver.py`, `wechatsync_browser.py`) | `main` | Implemented: offline packs, then drafts only, through an external CLI across a process boundary. No `PUBLISHED` branch and no URL is ever written by code |
 | 公众号 (WeChat article) | `main` render + draft path | Article HTML renders and validates; `wechat_draft.py` can stop at a real platform draft and `wechat_metrics.py` reads the data cube, both operator-gated and `DRAFT_ONLY`. The registry row stays `PLANNED`; Issue #56 rights remain unresolved |
-| 小红书 image-text | `main` spec + delivery channel | Graphic specs and a delivery-channel record exist; the registry has no image row (the whole platform belongs to the VIDEO line, per the 2026-11-09 operator instruction). Rights and migration acceptance stay open in Issue #51 |
+| Xiaohongshu video | `main` video spec | Configured as the `xiaohongshu_video` VIDEO target; Xiaohongshu graphic/image-text content is explicitly excluded. Account binding, rights and upload acceptance remain unresolved (Issue #51); configuration is not authorization or evidence of publication |
 | X | `main` manual-only editorial track | Editorial gate, manual package, URL recording and offline metric analysis exist; no API publication or automatic metric collection |
 | Auto-publishing | — | **Not in scope** |
 | Publication record | — | Existing status records report no delivery pack with a real platform URL; this documentation pass did not re-audit all platform outcomes |
@@ -293,7 +293,7 @@ Runtime Reality before Documentation.
 
 This public note defines technical responsibilities only. Any private portfolio registry or business operation remains outside this repository; there is no claim that other privately managed systems are accessible, commercialized, or operational.
 
-- **Owns:** production and human review of source-grounded video, 公众号 articles, 小红书 image-text and X editorial artifacts.
+- **Owns:** production and human review of source-grounded video, 公众号 articles and X editorial artifacts; Xiaohongshu is configured as a video target only, with no graphic/image-text workflow.
 - **Outputs:** media assets, articles, upload packages, QC results and reproducible generation workflows; actual platform publication tracked by its authorized operators.
 - **Does not own:** not a social-platform account, paid-customer CRM, revenue source of truth or automatic publisher.
 - **Public interfaces and handoff:** Technical public-source examples may originate from [Beauty RAG](https://github.com/Xander-Xai/Beauty-Industry-RAG-QA-System) and [Customer-Service AI Agent](https://github.com/Xander-Xai/Customer-Service-AI-Agent), with licenses and publicity permission checked separately.

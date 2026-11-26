@@ -52,6 +52,7 @@ __all__ = [
     "DRAFT_ONLY",
     "REFUSED",
     "Decision",
+    "authorize_adapted_draft",
     "authorize_delivery",
 ]
 
@@ -93,12 +94,37 @@ class Decision:
         }
 
 
-def _draft_channel(platform_id: str) -> dict[str, Any] | None:
-    """The first declared channel that can create a draft."""
+def _draft_channel(platform_id: str, channel_id: str = "") -> dict[str, Any] | None:
+    """Return the requested draft-capable channel, or the first by default."""
     for channel in graphic_specs.channels(platform_id):
+        if channel_id and channel.get("id") != channel_id:
+            continue
         if channel.get("draft_only"):
             return channel
     return None
+
+
+def authorize_adapted_draft(
+    platform_id: str,
+    *,
+    package_blockers: list[str] | tuple[str, ...] = (),
+    draft_blockers: list[str] | tuple[str, ...] = (),
+    validation_errors: list[str] | tuple[str, ...] = (),
+    publish_authorized_claim: bool = False,
+    mode: str = "draft",
+    channel_id: str = "",
+) -> Decision:
+    """Gate a platform draft using every upstream blocker and validation error."""
+    blockers = list(dict.fromkeys(str(item) for item in package_blockers))
+    blockers.extend(str(item) for item in draft_blockers if str(item) not in blockers)
+    blockers.extend(f"VALIDATION_FAILED:{item}" for item in validation_errors)
+    return authorize_delivery(
+        platform_id,
+        blockers=blockers,
+        publish_authorized_claim=publish_authorized_claim,
+        mode=mode,
+        channel_id=channel_id,
+    )
 
 
 def authorize_delivery(
@@ -107,6 +133,7 @@ def authorize_delivery(
     blockers: list[str] | tuple[str, ...] = (),
     publish_authorized_claim: bool = False,
     mode: str = "draft",
+    channel_id: str = "",
 ) -> Decision:
     """Decide whether one packed draft may go to a delivery channel."""
     policy = UNCONDITIONALLY_REFUSED.get(platform_id)
@@ -144,7 +171,7 @@ def authorize_delivery(
             ("resolve-core-blockers",),
         )
 
-    channel = _draft_channel(platform_id)
+    channel = _draft_channel(platform_id, channel_id)
     if channel is None:
         available = [str(c.get("id")) for c in graphic_specs.channels(platform_id)]
         return Decision(

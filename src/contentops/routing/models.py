@@ -105,10 +105,20 @@ EVIDENCE_STATUSES = ("verification_required", "collected", "verified")
 #: which the run may still be waiting for a person.
 APPROVAL_STATUSES = ("pending", "approved", "rejected", "changes_requested")
 
-#: ``target_pipeline`` values. ``VIDEO`` is the only pipeline this repository
-#: can currently run, but the field exists so a text-only account can be
-#: represented honestly instead of being forced into the video generator.
-TARGET_PIPELINES = ("VIDEO", "TEXT_ARTICLE")
+#: ``target_pipeline`` values written by current route runs. ``TEXT_ARTICLE``
+#: remains a legacy spelling accepted when reading old intents only.
+TARGET_PIPELINES = ("VIDEO", "GRAPHIC_TEXT", "TOPIC")
+LEGACY_TARGET_PIPELINES = {"TEXT_ARTICLE": "GRAPHIC_TEXT"}
+
+
+def normalize_target_pipeline(value: str) -> str:
+    """Map a supported pipeline spelling to the current production contract."""
+    normalized = str(value or "").strip().upper()
+    normalized = LEGACY_TARGET_PIPELINES.get(normalized, normalized)
+    if normalized not in TARGET_PIPELINES:
+        raise RoutingError("PIPELINE_UNKNOWN",
+                           f"pipeline {value!r} is not one of {list(TARGET_PIPELINES)}")
+    return normalized
 
 
 class RoutingError(Exception):
@@ -280,8 +290,10 @@ def validate_intent(payload: Any) -> List[str]:
         errors.append(f"evidence_status must be one of {list(EVIDENCE_STATUSES)}")
     if payload.get("approval_status") not in APPROVAL_STATUSES:
         errors.append(f"approval_status must be one of {list(APPROVAL_STATUSES)}")
-    if payload.get("target_pipeline") not in TARGET_PIPELINES:
-        errors.append(f"target_pipeline must be one of {list(TARGET_PIPELINES)}")
+    try:
+        normalize_target_pipeline(str(payload.get("target_pipeline") or ""))
+    except RoutingError:
+        errors.append(f"target_pipeline must be one of {list(TARGET_PIPELINES)} or a legacy alias")
     context = payload.get("route_context")
     if not isinstance(context, dict):
         errors.append("route_context must be an object")

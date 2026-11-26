@@ -2,7 +2,7 @@
 
 [English](PRD.md) | [简体中文](PRD.zh-CN.md)
 
-> Last verified: 2026-11-17 on `feat/173-easel-m0-pin`. Requirement states are checked
+> Last verified: 2026-11-18 against the repository's current platform routes and video constraints. Requirement states are checked
 > Last verified: 2026-11-14 (X original-post scope update). Accepted X behaviors: text-only originals without image or ALT, image originals with verified raster/ALT, and mode-appropriate human quality scoring; all preserve claim provenance, rights and manual-only posting. Local-only feedback never performs platform actions.
 > X priority: platform rules/human gates -> registered account DNA -> Strategy X SOP -> scoped experiment.
 > against the code on that date; a requirement marked implemented has code here,
@@ -41,8 +41,8 @@ evidence and review machinery, then diverge into their own production flow**:
 
 | Line | Produces | Targets |
 |---|---|---|
-| **Video** | MP4, cover, title, description, tags | 抖音, 视频号, B站 |
-| **Graphic** | Markdown / HTML, image set, preview | X, 小红书, 公众号, 知乎 |
+| **Video** | MP4, cover, title, description, tags | 抖音, 视频号, 小红书（仅视频）, B站 |
+| **Graphic** | Markdown / HTML, cover image set, preview | X, 公众号, 知乎 |
 
 Both lines share: account positioning, topic selection, `SourceArtifact` evidence,
 `ClaimLedger` claims, the rights check, and the same review principles. They diverge
@@ -50,9 +50,7 @@ earlier than the render step — a video script and a graphic outline are alread
 objects, and a video needs voice, storyboard and composition while a post does not.
 Review principles are shared; **each line's artifact is approved separately**.
 
-Content form and delivery target are separate axes. 小红书 and X can carry video; B站 can
-carry graphic posts. Lines are split by **content form** for the first phase; platform
-adapters stay reusable across forms. Do not split the repository by platform.
+Content form and delivery target are separate axes. X can carry video; B站 can carry graphic posts. **In this repository, Xiaohongshu is a VIDEO target only; its image-text/graphic target is excluded.** Lines are split by **content form** for the first phase; platform adapters stay reusable across forms except where an explicit project route narrows support. Do not split the repository by platform.
 
 **Every platform delivery is manual.** The system stops at a reviewable delivery package
 and a receipt; a human publishes and a human records the URL. See §6.
@@ -137,7 +135,7 @@ Verified 2026-11-02 on `feat/106-easel-host-dual-line` (stacked on PR #101):
 | FR-10 | Emit complete receipts for every run | **implemented** |
 | FR-11 | Render graphic cards and GZH article HTML through a pinned validator | **implemented (offline)** — `render_cards.py`, `render_article.py`; receipts keep `production_ready: false` |
 | FR-12 | Pack per-platform delivery sets without publishing | **implemented** — `video_deliver.py`, `platform_delivery.py`, `graphic_deliver.py`; 0 delivery receipts, 0 recorded URLs |
-| FR-13 | One gated production entry in front of every producer | **implemented** — `make_content.py` + `production_gates.py` (8 VIDEO / 6 GRAPHIC_TEXT gates) |
+| FR-13 | One gated production entry in front of every producer | **implemented** — `make_content.py` + `production_gates.py` (8 VIDEO gates; focused GRAPHIC_TEXT account/evidence/rights/runtime checks, plus shared-topic lineage when applicable) |
 
 ## 9. Non-functional Requirements
 

@@ -10,17 +10,17 @@ translation_status: synced
 
 > 当前运行状态。仅记录可证实事实。以下状态摘要依据可用的仓库记录，基线为 2026-11-17 的 `5d031ae3f7eecb1fc492f03c8518ccc5e151979c`，已包含合并的 PR #196、#197、#200、#201 与 #202。本次文档整理未全面审计所有仓库 URL、环境或媒体产物，也未重新渲染。下方按日期记录的历史内容为追溯保留，应视为当时范围内的证据，而非当前主机检查。
 >
-> 最后验证：2026-11-17，对照 `5d031ae3f7eecb1fc492f03c8518ccc5e151979c`（`main`，包含 PR #196/#197/#200/#201/#202）；当前状态文档整理。具体历史或运行时核验保留各自日期与范围。
+> 最后验证：2026-11-23——在 `feat/208-shared-graphic-workflow` 上完成定向离线验证：图文工作流 55/55、MiniMax 图像回归 86/86、media-use 权利门 7/7、Windows 子进程 47/47、基础冒烟测试以及子进程策略、仓库策略、文档和 i18n 检查均通过。后续简化图文流程：生产门禁测试 39/39、预研相关测试 26/26 通过。按授权共运行两次 Codex：第一次被旧事件解析器阻断；第二次通过修复后的适配器，并在临时验收项目写入图片和生成回执。Codex 未报告额度变化。该项目是工作流 smoke test，并非经批准的用户文章；未完成文章打包、权利/质量审核，也未调用 MiniMax、渲染、上传或发布。下方基线摘要仍基于 `5d031ae3f7eecb1fc492f03c8518ccc5e151979c`（`main`，包含 PR #196/#197/#200/#201/#202）。
 
 ## 当前生产边界
 
 | 领域 | 当前能力 | 尚未证明／仍受阻 |
 |---|---|---|
 | 视频 | M5 证据优先流水线、账号路由、签署式文案前预研回执、生产门禁、固定 Easel 合成、QC 与审核回执均已实现。Easel v0.3.0（`bb3c8ff`，`runtime/easel-pins.json`）是当前生产引擎；v0.2.1 仅作回滚。#196 增加账号感知的短动效镜头及其 M5/QC 接线。 | 既有回执与归档动画验收属于历史证据，不代表本次对当前检出或主机重新渲染。正式生产／发布仍需当前素材与权利、QC 通过、Founder 审核及明确的交付授权。1024 正式视频缺少经 intake 验证的真实录屏（`MISSING_REAL_RECORDING`）；PR #201 已增加 B 站原生 16:9 的 QC 处理能力，但真实横版渲染与验收仍未完成（`NATIVE_16_9_RENDER_UNAVAILABLE`）。 |
-| 图文 | VIDEO 与 GRAPHIC_TEXT handoff、人工图文包、卡片／文章渲染适配器及仅草稿的平台交付已存在。小红书当前走 VIDEO 交付路由；没有 XHS 图文运行时适配器。 | 生成图文包／渲染不等于已审核或已发布文章。公众号权利／运行时以及各平台账号与授权仍是独立门禁。发布须有人工实际观察到的 URL；此处不声称已经发布。 |
+| 图文 | 记录的 `main` 基线已有 VIDEO / GRAPHIC_TEXT handoff、人工图文包、卡片／文章渲染适配器及仅草稿的平台交付。当前 `feat/208-shared-graphic-workflow` 候选分支新增三种生图路由，并允许单独图文先起草，不需要 VIDEO 问卷或签署式文案前预研。最新代码改为只对选定工作稿要求一次常规文案审核，后续图文阶段记录机器检查；本次改动尚待完整验证。小红书仍仅支持 VIDEO，无图文适配器。 | 先前一次经授权的 Codex smoke test 在临时项目写入图片和回执，不是经批准的用户文章。图文打包全链路、素材权利范围、质量检查和交付授权，以及本次审核流变更仍未完全验证；不声称已完成真实打包、平台写入或发布。 |
 | 动画 | #196 集成提供镜头规划／后端合约，以及 Huashu、Remotion、Manim、Motion Canvas 和 Remotion Three 适配器；Easel 仍是唯一整片合成器。历史回执记录了 TEST_ONLY 样片，包括 Huashu 镜头、Remotion 和 Manim 镜头，以及一次 Motion Canvas 编辑器导出。 | 不可从代码实现、锁文件、合约测试或历史回执推断当前渲染已验证。已提交的 `capability-matrix-after-export.json` 明确标记 `STALE_SOURCE_TEMPLATE`：其中 `mc-arch01` 导出绑定旧场景模板，当前模板验收需要重新从编辑器导出。`mc-state01` 仍为 `EDITOR_EXPORT_REQUIRED`。本次文档整理未全面重新核验媒体证据；媒体缺失时，CI 会记录 Motion Canvas `REAL_MEDIA_NOT_RUN`。没有任何动画能力达到 `production_ready`。 |
-| 预研与路由 | 文案审批／生产门禁前必须通过签署的文案前预研回执。`runtime/skill-registry.json` 声明了 `media-use`、`x-superplay-huashu-motion`、`contentops-production-gates` 与 `contentops-remotion-clips`；路由只做发现，不授予执行授权。 | Skill 存在或路由结果不构成使用授权。运行时锁、账号范围、权利、项目门禁与人工审核仍分别生效。特定环境中的 Skill 安装／运行时观察不应表述成普遍事实。 |
-| M5 重构（#200、#202） | 来源、素材核验与声明阶段已拆分到独立模块，同时保留生产入口与权利门。 | 合并代码不等于重新完成端到端生产渲染或取得批准。 |
+| 预研与路由 | VIDEO 和共享 `TOPIC` 包仍需签署式文案前预研；单独 GRAPHIC_TEXT 不需要。`runtime/skill-registry.json` 声明了 `media-use`、`x-superplay-huashu-motion`、`contentops-production-gates`、`x-superplay-copy-orchestrator` 与 `contentops-remotion-clips`；共享文案切片包含媒介无关的 `TOPIC` 意图、摘要绑定主题包、子项目引用、独立格式稿审核检查和生产门禁接线。 | Issue #211 仍在进行：共享主题包初始化与绑定需操作者显式执行；尚未自动调用 Skill 或创建子项目。结构性血缘校验不等于语义等价验证。路由结果不授予执行权；运行时锁、账号范围、权利、项目门禁与人工审核仍分别生效。 |
+| M5 重构（#200、#202） | 来源、素材核验与声明阶段已拆分到独立模块，同时保留生产入口与权利门。当前功能分支还将证据账本元数据排除在文案指纹之外；仅严格对应已审核 VIDEO 文案的 M5 投影可免于重复审核；引用写入独立回执；已有创作者原稿不会被覆盖。 | 2026-11-23 定向回归通过：文案审核 29 项、生产门禁 41 项、M5 证据链 26 项。这是代码与测试证据，不代表新完成端到端渲染、QC、人审或发布授权。 |
 | B 站原生横版 QC（#201） | QC 已接受显式 1920×1080 画布，且未放宽竖屏视频门禁。 | 这不证明已有真实横版渲染或整片验收；#199 仍开放。 |
 
 **状态用语：**代码已实现、合约测试通过、历史渲染证据、当前渲染验证、技术 QC、Founder 审核与发布是不同状态。生产就绪必须有适用且有效的人工审核回执；技术 PASS 不等于批准。本摘要不新增发布声明。
@@ -347,8 +347,8 @@ Owner 2026-11-12 的决定是：Easel 是可调优的**成熟底座**，不只�
 | 宿主能力 | handoff 只接受 `UNVERIFIED`；调用方不能用字符串自我提升 |
 | 视频接线 | `project.yaml` 的 `content_bundle` → `stage_bundle` 在 sources 之前写 `receipts/bundle-handoff-video.json` |
 | 图文包 | `scripts/graphic_package.py` 写 `receipts/graphic-package.json` + `graphic-preview.md`，状态 `AWAITING_MANUAL_REVIEW` |
-| 真实双线样例 | `projects/bundle-dual-line/` —— 同一 Bundle 产出 `bundle-dual-line-video` MP4（22.47 s，1080x1920，h264+AAC，QC `WARN`，`PENDING_FOUNDER_REVIEW`）与 `bundle-dual-line-graphic` 人工包（`AWAITING_MANUAL_REVIEW`） |
-| 样例 Provider/网络 | 无；Windows SAPI 旁白 + 固定 Easel 合成；图文包未渲染、未建草稿 |
+| 真实视频样例 | `projects/bundle-dual-line/` —— 同一 Bundle 的 `bundle-dual-line-video` MP4（22.47 s，1080x1920，h264+AAC，QC `WARN`，`PENDING_FOUNDER_REVIEW`）；误建的图文样例已删除 |
+| 样例 Provider/网络 | 视频样例未调用 Provider、未用网络；使用 Windows SAPI 旁白 + 固定 Easel 合成 |
 | 发布 | 未实现；每个 handoff/包都携带 `publish_authorized: false` |
 
 ## 流水线

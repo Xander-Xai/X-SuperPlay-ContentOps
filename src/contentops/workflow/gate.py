@@ -127,8 +127,12 @@ def check_stage(project: Path,
         and inputs == approval.get("inputs_sha256")
     if still_approved:
         item["status"] = "approved"
-    else:
+    elif item.get("requires_review"):
+        # A stage that names a human decision stops for that decision. A routine
+        # stage does not: a passing check is the whole gate.
         item["status"] = "ready_for_review" if ok else "blocked"
+    else:
+        item["status"] = "checked" if ok else "blocked"
     item["stale"] = False if ok else bool(item.get("stale"))
     item["stale_reason"] = "" if ok else item.get("stale_reason", "")
     return {
@@ -157,6 +161,10 @@ def approve_stage(project: Path,
     item = _stage(document, stage_id)
     reconcile(project, document)
 
+    if item.get("status") == "checked":
+        raise WorkflowError("ALREADY_CHECKED",
+                            f"{stage_id} passed its machine check; a routine stage "
+                            "needs no separate human approval")
     if item.get("status") != "ready_for_review":
         raise WorkflowError("CHECK_REQUIRED",
                             f"{stage_id} status is {item.get('status')!r}; run check successfully first")
@@ -198,8 +206,10 @@ def approve_stage(project: Path,
 
 
 def current_stage(document: Dict[str, Any]) -> Optional[str]:
-    """The first stage that is not approved and current, in contract order."""
+    """The first stage without a current approval or passing routine check."""
     for item in document.get("stages", []):
-        if item.get("status") != "approved" or item.get("stale"):
+        status = item.get("status")
+        checked = status == "checked" and bool((item.get("check") or {}).get("ok"))
+        if item.get("stale") or (status != "approved" and not checked):
             return item.get("id")
     return None

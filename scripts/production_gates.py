@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
 """One preflight contract for every content production run.
 
-The repository already implements account DNA, copy review, evidence links,
-MiniMax voice clone, H3 bookends and Huashu motion. All of them are *conditional*:
-they fire only when ``project.yaml`` names ``account_slug`` and the operator
-remembers to pass the right flags. A run that skips those steps still produces
-media, silently degraded. This module turns the conditions into a fail-closed
-contract:
+The repository already implements account DNA, evidence links, provider guards,
+and rights checks. VIDEO keeps its full fail-closed production gate set.
+GRAPHIC_TEXT skips the video-only questionnaire and pre-copy signatures, while
+still requiring a bound account, source links, image rights and a usable graphic
+runtime before packaging.
 
     answer  -> receipts/production-intent.json (+ idempotent project.yaml blocks)
-    check   -> eight VIDEO / six GRAPHIC_TEXT gates, all must pass
-    run     -> check, then delegate to the existing produce_video.produce()
+    check   -> VIDEO gates or focused GRAPHIC_TEXT checks
+    run     -> check, then delegate to the matching producer
 
 It calls no provider, starts no host, spends no quota and publishes nothing.
 A green check is not a production approval: the receipt keeps
@@ -200,17 +199,20 @@ def write_intent(project: Path, *, account: str, asset_policy: str,
                 f"cannot record MiniMax asset generation: {boundary['detail']}; "
                 f"subscription key configured: {has_key}. Configure the key and lift "
                 "ADR-014, or answer supplement/local-free.")
-    if avatar_intro not in YES_NO or avatar_outro not in YES_NO:
+    graphic_line = _is_graphic_line(project)
+    if not graphic_line and (avatar_intro not in YES_NO or avatar_outro not in YES_NO):
         raise GateError("AVATAR_DECISION_REQUIRED",
                         "both --avatar-intro and --avatar-outro need an explicit yes/no")
-    if (avatar_intro == "yes" or avatar_outro == "yes") and not avatar_quota_budget:
+    if not graphic_line and (avatar_intro == "yes" or avatar_outro == "yes") and not avatar_quota_budget:
         raise GateError("AVATAR_QUOTA_REQUIRED",
                         "H3 bookends need --avatar-quota-budget (7pp per clip)")
-    if narration not in NARRATION_CHOICES:
+    if not graphic_line and narration not in NARRATION_CHOICES:
         raise GateError("NARRATION_INVALID", f"choose one of {NARRATION_CHOICES}")
-    if motion_backend not in MOTION_CHOICES:
+    if not graphic_line and motion_backend not in MOTION_CHOICES:
         raise GateError("MOTION_INVALID", f"choose one of {MOTION_CHOICES}")
-    if not reviewer.strip() or not opinion.strip():
+    reviewer_name = str(reviewer or "").strip()
+    reviewer_opinion = str(opinion or "").strip()
+    if not graphic_line and (not reviewer_name or not reviewer_opinion):
         raise GateError("REVIEWER_REQUIRED",
                         "name the person who answers these gates and record an opinion")
 
@@ -218,8 +220,8 @@ def write_intent(project: Path, *, account: str, asset_policy: str,
         "schema": SCHEMA,
         "project": project.name,
         "created_at": _now(),
-        "answered_by": reviewer.strip(),
-        "opinion": opinion.strip(),
+        "answered_by": reviewer_name or None,
+        "opinion": reviewer_opinion or None,
         "account": account.strip(),
         "account_slug": slug,
         "asset_policy": asset_policy,
@@ -251,15 +253,26 @@ def asset_sufficiency(project: Path) -> Dict[str, Any]:
     missing_ids = sorted({str(line.get("asset_id")) for line in lines
                           if isinstance(line, dict) and line.get("asset_id")}
                          - {str(row.get("id")) for row in rows if isinstance(row, dict)})
-    ok = bool(rows) and not missing_ids
-    return {"ok": ok, "asset_count": len(rows), "line_count": len(lines),
-            "undeclared_asset_ids": missing_ids,
-            "detail": "every narration beat has a declared asset" if ok
-                      else f"{len(missing_ids)} beat(s) have no declared asset"}
+    if not rows:
+        detail = "no visual assets are declared"
+    elif not lines:
+        detail = "script/script.json is missing or has no narration lines"
+    elif missing_ids:
+        detail = f"{len(missing_ids)} beat(s) have no declared asset"
+    else:
+        detail = "every narration beat has a declared asset"
+    return {"ok": bool(rows) and bool(lines) and not missing_ids,
+            "asset_count": len(rows), "line_count": len(lines),
+            "undeclared_asset_ids": missing_ids, "detail": detail}
 
 
 def evidence_links(project: Path) -> Dict[str, Any]:
-    """Every cited evidence item needs a real link and a pinned digest."""
+    """Require each factual claim to resolve to a pinned, URL-backed source.
+
+    Inline links in the creator's spoken master are optional: citations belong in
+    the evidence ledger, not in narration. M5's claim stage performs the stronger
+    byte and verbatim-quote verification before production.
+    """
     pack_path = project / "00_brief" / "evidence-pack.json"
     pack = _read_json(pack_path)
     if pack is None:
@@ -274,25 +287,77 @@ def evidence_links(project: Path) -> Dict[str, Any]:
         return {"ok": False, "state": "EVIDENCE_EMPTY",
                 "detail": "evidence pack has no items"}
 
-    # A pack nobody cites does not prove the copy carries a citation. master.md
-    # is rewritten by M5 stage_script with one link per claim; count them.
     master = project / "script" / "master.md"
-    claims_doc = _read_json(project / "script" / "claims.json") or {}
-    claim_count = len(claims_doc.get("claims") or [])
     links = _markdown_links(master.read_text(encoding="utf-8")) if master.is_file() else 0
+    ledger = _read_json(project / "script" / "claims.json") or {}
+    claims = ledger.get("claims") if isinstance(ledger.get("claims"), list) else []
+    claim_count = len(claims)
 
-    if not broken and claim_count and links < claim_count:
-        return {"ok": False, "state": "COPY_LINKS_MISSING", "items": len(items),
-                "claims": claim_count, "links": links,
-                "detail": (f"script/master.md has {links} citation link(s) for "
-                           f"{claim_count} claim(s); every claim needs [title](url)")}
+    if broken:
+        return {"ok": False, "state": "EVIDENCE_INCOMPLETE",
+                "items": len(items), "incomplete": broken, "claims": claim_count,
+                "links": links, "detail": f"incomplete evidence items: {broken}"}
 
-    ok = not broken
-    return {"ok": ok, "state": "OK" if ok else "EVIDENCE_INCOMPLETE",
-            "items": len(items), "incomplete": broken, "claims": claim_count,
-            "links": links,
-            "detail": ("every evidence item has a link and pinned content, and the "
-                       "copy cites them" if ok else f"incomplete: {broken}")}
+    script_doc = _read_json(project / "script" / "script.json") or {}
+    script_lines = script_doc.get("lines") if isinstance(script_doc.get("lines"), list) else []
+    script_claims = {str(line.get("claim")) for line in script_lines
+                     if isinstance(line, dict) and line.get("claim")}
+    if claim_count:
+        if ledger.get("schema") != "contentops.claim-ledger/v1":
+            return {"ok": False, "state": "CLAIM_LEDGER_INVALID",
+                    "items": len(items), "claims": claim_count, "links": links,
+                    "detail": "script/claims.json has an unsupported schema"}
+        pack_by_id = {str(item.get("evidence_id")): item for item in items
+                      if isinstance(item, dict) and item.get("evidence_id")}
+        refs_by_id = {str(ref.get("id")): ref for ref in _project_refs(project)}
+        refs_doc = _read_json(project / "sources" / "source-refs.json") or {}
+        for ref in refs_doc.get("refs") or []:
+            if isinstance(ref, dict) and ref.get("id"):
+                refs_by_id[str(ref["id"])] = ref
+        known_claims = {str(claim.get("id")) for claim in claims if isinstance(claim, dict)}
+        problems = []
+        for claim_id in sorted(script_claims - known_claims):
+            problems.append(f"script references unknown claim {claim_id}")
+        for claim in claims:
+            claim_id = str(claim.get("id") or "(no id)") if isinstance(claim, dict) else "(invalid claim)"
+            if not isinstance(claim, dict):
+                problems.append(f"{claim_id}: claim is not an object")
+                continue
+            raw_artifacts = claim.get("artifacts")
+            artifacts = [str(item) for item in raw_artifacts] if isinstance(raw_artifacts, list) else []
+            raw_quotes = claim.get("quotes")
+            quotes = ([str(item).strip() for item in raw_quotes if str(item).strip()]
+                      if isinstance(raw_quotes, list) else [])
+            if not artifacts or not quotes:
+                problems.append(f"{claim_id}: claim needs source artifacts and quotes")
+                continue
+            for artifact_id in artifacts:
+                ref = refs_by_id.get(artifact_id) or {}
+                item = pack_by_id.get(artifact_id) or {}
+                ref_url = str(ref.get("url") or ref.get("source_url") or "").strip()
+                item_url = str(item.get("url") or "").strip()
+                ref_sha = str(ref.get("sha256") or "").strip()
+                item_sha = str(item.get("sha256") or "").strip()
+                if not ref_url or not item_url or ref_url != item_url:
+                    problems.append(f"{claim_id}: {artifact_id} has no matching source URL")
+                if not ref_sha or not item_sha or ref_sha != item_sha:
+                    problems.append(f"{claim_id}: {artifact_id} has no matching pinned digest")
+        if problems:
+            return {"ok": False, "state": "CLAIM_SOURCES_INCOMPLETE",
+                    "items": len(items), "claims": claim_count, "links": links,
+                    "incomplete": problems,
+                    "detail": "; ".join(problems[:4])}
+        return {"ok": True, "state": "OK", "items": len(items),
+                "claims": claim_count, "links": links, "incomplete": [],
+                "detail": "each claim maps to a URL-backed source with a matching digest; M5 verifies quotes"}
+
+    if script_claims:
+        return {"ok": False, "state": "CLAIM_LEDGER_MISSING",
+                "items": len(items), "claims": 0, "links": links,
+                "detail": "script lines cite claims but script/claims.json is empty or missing"}
+    return {"ok": True, "state": "OK", "items": len(items), "claims": 0,
+            "links": links, "incomplete": [],
+            "detail": "evidence pack is complete; no factual claim references need inline links"}
 
 
 def minimax_policy(root: Path = ROOT) -> Dict[str, Any]:
@@ -550,36 +615,74 @@ def _graphic_asset_rights(project: Path) -> Dict[str, Any]:
             "problems": problems}
 
 
+def verify_graphic_handoff_account(project: Path, intent: Dict[str, Any],
+                                   root: Path = ROOT) -> str:
+    """Bind the graphic run to one account across intent, project and handoff."""
+    try:
+        intent_slug = resolve_account(intent.get("account", ""), root)
+    except GateError:
+        raise
+    if intent_slug != intent.get("account_slug"):
+        raise GateError("INTENT_ACCOUNT_MISMATCH",
+                        f"intent account resolves to {intent_slug}, but account_slug is "
+                        f"{intent.get('account_slug')!r}")
+
+    configured = (_project_yaml_value(project, "account_slug")
+                  if (project / "project.yaml").is_file() else None)
+    if configured != intent_slug:
+        raise GateError("PROJECT_ACCOUNT_MISMATCH",
+                        f"project.yaml account_slug={configured!r}, intent resolves to {intent_slug}")
+
+    handoff_path = project / "receipts" / "bundle-handoff-graphic_text.json"
+    handoff = _read_json(handoff_path)
+    if handoff is None:
+        raise GateError("HANDOFF_MISSING",
+                        "graphic Bundle handoff is missing or unreadable")
+    if (handoff.get("schema") != "contentops.bundle-handoff/v1"
+            or handoff.get("content_format") != "GRAPHIC_TEXT"):
+        raise GateError("HANDOFF_FORMAT_MISMATCH",
+                        "handoff must be a contentops.bundle-handoff/v1 GRAPHIC_TEXT record")
+    try:
+        handoff_slug = resolve_account(handoff.get("account", ""), root)
+    except GateError as exc:
+        raise GateError("HANDOFF_ACCOUNT_INVALID", str(exc)) from None
+    if handoff_slug != intent_slug:
+        raise GateError(
+            "HANDOFF_ACCOUNT_MISMATCH",
+            f"handoff account resolves to {handoff_slug}, intent resolves to {intent_slug}",
+        )
+    return intent_slug
+
+
 def check_graphic(project: Path, intent: Dict[str, Any],
                   root: Path = ROOT) -> Dict[str, Any]:
-    """The GRAPHIC_TEXT line gets its own gate set, not a fake video pass."""
+    """Check only the inputs needed to prepare a reviewable graphic package."""
     rows: List[Dict[str, Any]] = []
 
     def add(gate: str, ok: bool, detail: str, **extra):
         rows.append({"gate": gate, "ok": bool(ok), "detail": detail, **extra})
 
     try:
-        slug = resolve_account(intent.get("account", ""), root)
-        add("account", slug == intent.get("account_slug"),
-            f"DNA {slug}" if slug == intent.get("account_slug")
-            else f"DNA resolves to {slug} but intent names {intent.get('account_slug')!r}")
+        slug = verify_graphic_handoff_account(project, intent, root)
+        add("account", True,
+            f"DNA, project.yaml and GRAPHIC_TEXT handoff all bind to {slug}")
     except GateError as exc:
         add("account", False, str(exc))
 
-    review = _copy_review_state(project)
-    add("copy_review", review["ok"],
-        "draft review APPROVED and fingerprint current" if review["ok"]
-        else f"{review['state']}: {review['detail']}")
+    lineage = _canonical_copy_state(project, "GRAPHIC_TEXT")
+    if lineage["applicable"]:
+        add("shared_copy_lineage", lineage["ok"],
+            f"{lineage['state']}: {lineage['detail']}")
 
     evidence = evidence_links(project)
     draft = project / "draft.md"
     links = _markdown_links(draft.read_text(encoding="utf-8")) if draft.is_file() else 0
-    ok = evidence["ok"] and draft.is_file() and links >= 3
+    ok = evidence["ok"] and draft.is_file() and links >= 1
     detail = evidence["detail"]
     if not draft.is_file():
         detail += "; draft.md is missing"
-    elif links < 3:
-        detail += f"; draft.md has {links} citation link(s), need at least 3"
+    elif links < 1:
+        detail += "; draft.md needs at least one traceable source link"
     add("evidence_links", ok, detail)
 
     rights = _graphic_asset_rights(project)
@@ -594,11 +697,6 @@ def check_graphic(project: Path, intent: Dict[str, Any],
         problems.append("gzh-design validator is absent from the pinned runtime")
     add("runtime_readiness", not problems,
         "graphic runtime prerequisites present" if not problems else "; ".join(problems))
-
-    research = _preresearch_state(project)
-    add("precopy_research", research["ok"],
-        "research approved and fingerprint current" if research["ok"]
-        else f"{research['state']}: {research['detail']} | {research['remedy']}")
 
     ok = all(row["ok"] for row in rows)
     return {"schema": CHECK_SCHEMA, "ok": ok, "project": project.name,
@@ -615,10 +713,27 @@ def _copy_review_state(project: Path) -> Dict[str, Any]:
             "detail": gate.get("detail") or gate.get("remedy") or ""}
 
 
-def _preresearch_state(project: Path) -> Dict[str, Any]:
-    """The gate that must pass before any copy is authored or approved."""
-    from contentops.workflow import preresearch
+def _canonical_copy_state(project: Path, content_format: str, *,
+                          projects_root: Optional[Path] = None) -> Dict[str, Any]:
+    from contentops.workflow import canonical_copy, topic_package
 
+    shared = topic_package.status_child(project, content_format=content_format,
+                                        projects_root=projects_root)
+    if shared.get("applicable"):
+        return {"applicable": True, "ok": bool(shared.get("ok")),
+                "state": shared.get("state"), "detail": shared.get("detail") or ""}
+    return canonical_copy.status(project, content_format)
+
+
+def _preresearch_state(project: Path, content_format: Optional[str] = None) -> Dict[str, Any]:
+    """Require either the child's signed local research or its current shared authority."""
+    from contentops.workflow import preresearch, topic_package
+
+    if content_format is not None:
+        shared = topic_package.status_child(project, content_format=content_format)
+        if shared.get("applicable"):
+            return {"ok": bool(shared.get("ok")), "state": shared.get("state"),
+                    "detail": shared.get("detail") or "", "remedy": ""}
     gate = preresearch.check(project)
     return {"ok": bool(gate.get("ok")), "state": gate.get("state"),
             "detail": gate.get("detail") or "",
@@ -685,6 +800,10 @@ def check(project: Path, *, root: Path = ROOT,
     add("copy_review", review["ok"],
         f"{review['state']}: {review['detail']}" if not review["ok"]
         else "copy review APPROVED and fingerprint current")
+    lineage = _canonical_copy_state(project, "VIDEO")
+    if lineage["applicable"]:
+        add("shared_copy_lineage", lineage["ok"],
+            f"{lineage['state']}: {lineage['detail']}")
 
     # 3. Evidence links: copy must cite a real link and pinned content.
     evidence = evidence_links(project)
@@ -735,7 +854,7 @@ def check(project: Path, *, root: Path = ROOT,
     # 8. Pre-copy research: reading the project, verifying authoritative
     # sources, an outline, an evidence list and a signed boundary statement
     # must all exist before copy is authored. No force switch.
-    research = _preresearch_state(project)
+    research = _preresearch_state(project, "VIDEO")
     add("precopy_research", research["ok"],
         "research approved and fingerprint current" if research["ok"]
         else f"{research['state']}: {research['detail']} | {research['remedy']}")

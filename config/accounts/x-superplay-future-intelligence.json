@@ -72,8 +72,8 @@
     ],
     "speech_rate_cpm": 220,
     "target_duration_s": [
-      90,
-      120
+      30,
+      300
     ],
     "pace": "measured",
     "cta": "需要复现或交付，评论区说你的技术栈。",
@@ -122,7 +122,8 @@
           "t1_3b1b",
           "y3_whiteboard",
           "t2_keynote_ui",
-          "t3_finance_chart"
+          "t3_finance_chart",
+          "y5_kinetic_type"
         ],
         "palette": {
           "bg": "#E9EDEF",
@@ -164,7 +165,8 @@
           "do not require a minimum real-recording duration",
           "keep one visual language across neighboring shots",
           "do not invent benchmark values or system behavior"
-        ]
+        ],
+        "render_variant": "graphite-paper"
       }
     },
     "caption_style": {
@@ -333,7 +335,7 @@
     "封面留白 ≥30%，标题克制，拒绝网红大字封面",
     "人工审核通过前不发布，也不生成任何发布链接"
   ],
-  "platform_note": "抖音 9:16 版本走同源架构动画，1080×1920，前 3 秒直接抛工程故障；B 站加长版 1920×1080 走 card-quote 封面，章节按架构链路拆解，仓库链接与复现步骤收尾；知乎/CSDN 用同一叙事骨架改写成图文。",
+  "platform_note": "抖音 9:16 版本走同源架构动画，1080×1920，前 3 秒直接抛工程故障；小红书仅作为视频目标：同源 9:16 视频可配 3:4 封面，不是本项目图文工作流；B 站加长版 1920×1080 走 card-quote 封面，章节按架构链路拆解，仓库链接与复现步骤收尾；知乎/CSDN 用同一叙事骨架改写成图文。",
   "skill_route": [
     {
       "step": "script",
@@ -489,11 +491,28 @@
   "decision_question": "怎么才能跑起来，为什么这么设计。",
   "text_platforms": {
     "platforms": [
+      "wechat_article",
       "zhihu",
-      "csdn"
+      "csdn",
+      "x",
+      "juejin",
+      "toutiao",
+      "weibo"
+    ],
+    "long_form_platforms": [
+      "wechat_article",
+      "zhihu",
+      "csdn",
+      "juejin",
+      "toutiao"
+    ],
+    "short_form_platforms": [
+      "x",
+      "weibo"
     ],
     "format": "TEXT_REWRITE",
-    "reason": "Zhihu and CSDN do not distribute vertical video. The same narrative is rewritten as an article; no video asset is mapped to them."
+    "adaptation_policy": "Write one evidence-bound long-form master first. For X and Weibo, author a distinct short-form post from that master; do not paste the long article, mechanically truncate it, or treat an excerpt as the required adaptation. Preserve the supported claims and evidence, and check each platform's configured character budget. Long-form targets receive article editions.",
+    "reason": "One researched topic serves all seven configured graphic/text platforms through platform-native copy. X and Weibo receive independently written short posts; the other five receive long-form article editions. This selection does not claim account binding, runtime availability, publication authorization, or successful publication."
   },
   "mission": "用真实的 AI 实验与工程项目，发现值得解决的问题，输出可验证的知识与解决方案，为长期服务和产品化积累资产。",
   "tagline": "从需求到上线，每一步都能复现。",

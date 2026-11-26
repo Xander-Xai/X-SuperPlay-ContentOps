@@ -23,7 +23,7 @@ for candidate in (ROOT / "src", ROOT / "scripts"):
 from contentops.easel import driver  # noqa: E402
 
 VIDEO_PROJECT = ROOT / "projects" / "bundle-dual-line-video"
-GRAPHIC_PROJECT = ROOT / "projects" / "bundle-dual-line-graphic"
+GRAPHIC_PROJECT = ROOT / "tests" / "fixtures" / "graphic-project"
 
 
 def _raises(code, fn):

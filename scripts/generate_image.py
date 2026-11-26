@@ -119,8 +119,8 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main() -> int:
-    args = build_parser().parse_args()
+def main(argv=None) -> int:
+    args = build_parser().parse_args(argv)
     if not args.out_dir:
         from contentops.paths import tmp_root
 

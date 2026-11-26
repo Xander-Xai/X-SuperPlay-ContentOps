@@ -11,8 +11,13 @@ Run: python tests/test_delivery_gate.py
 
 from __future__ import annotations
 
+import contextlib
+import hashlib
+import io
 import json
 import sys
+import tempfile
+from argparse import Namespace
 from pathlib import Path
 from typing import Callable, List, Tuple
 
@@ -21,7 +26,97 @@ for candidate in (ROOT / "src", ROOT / "scripts"):
     if str(candidate) not in sys.path:
         sys.path.insert(0, str(candidate))
 
-from contentops.platforms import delivery_gate  # noqa: E402
+from contentops.graphic import GraphicPackageError  # noqa: E402
+from contentops.platforms import delivery_gate, multichannel  # noqa: E402
+import graphic_deliver  # noqa: E402
+import platform_delivery  # noqa: E402
+
+
+def test_cover_verification_refuses_bytes_changed_after_package_preflight() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        project = Path(tmp)
+        cover_path = project / "assets" / "cover.png"
+        cover_path.parent.mkdir()
+        cover_path.write_bytes(b"reviewed-cover-bytes")
+        image = {
+            "path": "assets/cover.png",
+            "sha256": hashlib.sha256(b"reviewed-cover-bytes").hexdigest(),
+            "scope": "project",
+        }
+        package = {"images": [image]}
+        cover = graphic_deliver._resolve_cover(package, project)
+        assert cover == cover_path.resolve()
+
+        cover_path.write_bytes(b"different-cover-bytes")
+        try:
+            graphic_deliver._verify_cover_current(package, cover, project)
+        except GraphicPackageError as exc:
+            assert exc.code == "COVER_ASSET_CHANGED"
+        else:
+            raise AssertionError("cover changes after verification must be refused")
+
+
+def test_cover_resolution_refuses_symlink_escape():
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        project = root / "project"
+        project.mkdir()
+        outside = root / "outside.png"
+        outside.write_bytes(b"outside")
+        link = project / "cover.png"
+        try:
+            link.symlink_to(outside)
+        except (OSError, NotImplementedError):
+            return
+        package = {"images": [{"path": "cover.png", "sha256": "x", "scope": "project"}]}
+        try:
+            graphic_deliver._resolve_cover(package, project)
+        except GraphicPackageError as exc:
+            assert exc.code == "COVER_PATH_INVALID"
+        else:
+            raise AssertionError("cover symlink leaving the project must be refused")
+
+
+def test_legacy_dispatch_refuses_without_starting_external_cli() -> None:
+    output = io.StringIO()
+    with contextlib.redirect_stdout(output):
+        code = platform_delivery.cmd_dispatch(Namespace())
+    payload = json.loads(output.getvalue())
+    assert code == 1
+    assert payload["status"] == "blocked"
+    assert payload["network_called"] is False
+    assert "GUARDED_GRAPHIC_DELIVER_REQUIRED" in payload["reason"]
+
+
+def test_adapter_propagates_package_blockers_to_every_platform_draft() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        (root / "draft.md").write_text("# A title\n\nA test draft.\n", encoding="utf-8")
+        package = {
+            "schema": "contentops.graphic-package/v1",
+            "bundle_sha256": "a" * 64,
+            "bundle_id": "CB-1",
+            "title": "A title",
+            "draft": {"path": "draft.md"},
+            "images": [],
+            "blockers": ["PLATFORM_PLACEHOLDER"],
+            "status": "AWAITING_MANUAL_REVIEW",
+            "human_review": "NOT_STARTED",
+            "publish_authorized": False,
+        }
+        package["_package_root"] = str(root)
+        draft = multichannel.MultiChannelAdapter("wechat_article").pack(
+            package, {"account_slug": "test"})
+
+        assert "PLATFORM_PLACEHOLDER" in draft.blockers
+
+
+def test_delivery_decision_includes_structural_validation_errors():
+    decision = delivery_gate.authorize_adapted_draft(
+        "wechat_article", package_blockers=[], draft_blockers=[],
+        validation_errors=["ABSOLUTE_HOST_PATH_IN_DRAFT"])
+    assert decision.outcome == delivery_gate.REFUSED
+    assert "VALIDATION_FAILED" in decision.reasons[0]
 
 
 def test_gate_refuses_hard_blockers_instead_of_delivering_anyway() -> None:
@@ -36,7 +131,18 @@ def test_gate_allows_the_draft_boundary_on_a_declared_channel() -> None:
     assert decision.channel == "wechatsync:csdn"
 
 
-def test_gate_refuses_anything_that_is_not_a_draft() -> None:
+def test_gate_refuses_a_different_declared_draft_channel() -> None:
+    decision = delivery_gate.authorize_delivery("csdn", channel_id="wechatsync:zhihu")
+    assert decision.outcome == delivery_gate.REFUSED
+    assert "NO_DRAFT_CHANNEL" in decision.reasons[0]
+
+
+def test_adapted_gate_preserves_the_requested_channel() -> None:
+    decision = delivery_gate.authorize_adapted_draft("csdn", channel_id="wechatsync:csdn")
+    assert decision.outcome == delivery_gate.DRAFT_ONLY
+    assert decision.channel == "wechatsync:csdn"
+
+
     decision = delivery_gate.authorize_delivery("wechat_article", mode="mass_send")
     assert decision.outcome == delivery_gate.REFUSED
     assert "MODE_NOT_AUTHORIZED" in decision.reasons[0]

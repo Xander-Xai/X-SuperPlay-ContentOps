@@ -145,7 +145,7 @@ Skill Discovery -> Skill Resolution -> Permission Gate -> Existing Adapter -> M5
 
 `scripts/m5_production.py` 不导入路由器。旧版 M5 在没有路由器时可独立运行，并由测试断言这一独立性。
 
-## 内容生产 Skill（未声明）
+## 内容生产 Skill
 
 共享库中为 X•超玩1024 工作流安装了五个 Skill：
 
@@ -155,38 +155,26 @@ Skill Discovery -> Skill Resolution -> Permission Gate -> Existing Adapter -> M5
 - `x-superplay-broll-production`
 - `x-superplay-design-direction`
 
-它们**不是已声明能力**，路由器也不把它们当作可运行。其正文引用账号感知的
-content-router 层：
+`x-superplay-copy-orchestrator` 是共享文案阶段的已声明能力。媒介无关的 `TOPIC` 主题包持有已研究的主文案；VIDEO 与 GRAPHIC_TEXT 子项目以摘要引用该包，并各自要求格式稿人工审核。仓库契约由 `src/contentops/workflow/topic_package.py`、`canonical_copy.py` 和 `copy_review.py` 共同实现。主题包初始化与绑定由操作者显式执行；路由器只返回指针，`execution_authorized` 仍为 `false`，不会调用 Skill。其余四个已安装 Skill 仍仅可发现，未声明为能力。
 
-| 被引用的代码 | 本分支存在？ | `feat/content-router`（PR #49）存在？ |
+
+| 能力 | 范围 | 契约 / 边界 |
 |---|---|---|
-| `scripts/workflow_gate.py` | **是**（切片 S1） | 是 |
-| `src/contentops/workflow/{contract,gate}.py` | **是**（S1） | 是 |
-| `src/contentops/workflow/validators.py` | **部分**（S1 为空壳 → S2 接入 `assets` 校验器） | 是 |
-| `src/contentops/workflow/sources.py` | **是**（切片 S2） | 是 |
-| `src/contentops/workflow/capture_plan.py` | 否（S3，随账号配置） | 是 |
-| `scripts/recording_plan.py` | 否（S3——需要账号配置） | 是 |
-| `scripts/workflow_docs.py` | 否（S3/S4——它 import S3/S4 的模块） | 是 |
-| `src/contentops/workflow/{audience,duration}.py` | 否 | 是 |
-| `scripts/design_router.py` | 否 | **否** |
+| `x-superplay-copy-orchestrator` | `TOPIC`、`VIDEO`、`GRAPHIC_TEXT` / `copywriting` | 一份已审核共享主题包；子稿分别审核；操作者显式绑定 |
+| `x-superplay-source-research` | 仅发现 | 未声明；签字预研究门仍是权威门禁 |
+| `x-superplay-capture-plan` | 仅发现 | 未声明为能力 |
+| `x-superplay-broll-production` | 仅发现 | 未声明为能力 |
+| `x-superplay-design-direction` | 仅发现 | 未声明为能力 |
 
-确定性的门（`workflow_gate.py` 与 contract/gate 内核）已在**切片 S1** 落地；
-来源候选契约及其校验器在**切片 S2** 落地。拍摄契约、`recording_plan.py`、
-`workflow_docs.py` 以及它们读取的账号配置属于 **S3**：`recording_plan.py`
-需要 `config/accounts/<slug>.json`，其中含商业策略，在该暴露经过评审前不进入
-公开仓库。`design_router.py` 被 `x-superplay-design-direction` 引用，但在
-2026-11-01 检查过的任何分支上都不存在，因此该 Skill 除合并外还需要修改。
 
-只有当声明的指针指向集成分支上真实存在的代码时，才能添加声明。声明一个指向未合并
-分支的指针，会让 `RESOLVABLE` 变成假话，而这正是本注册表要防止的失败。在此之前，
-这些 Skill 可被发现，但解析受阻。
+其余 Skill 的逐路径状态仍记录在 `runtime/content-skill-status.json`。不能从安装或发现推断能力已注册；每个注册声明都必须指向当前代码，并保持各自的范围与权利边界。
 
 ## 轨道状态
 
 | 轨道 | 状态 | 原因 |
 |---|---|---|
 | VIDEO（Easel） | 仅发现，直到本机存在目录根 | 公开仓库不含 vendor 内容 |
-| 内容生产（`x-superplay-*`） | 共享库中可发现，**未声明** | 代码在未合并的 `feat/content-router` 分支；`design_router.py` 在那里也不存在 |
+| 内容生产（`x-superplay-*`） | copy orchestrator 面向 `TOPIC`、VIDEO、GRAPHIC_TEXT 声明；其余四个仅发现 | 共享包有代码契约；初始化/绑定由操作者执行，各格式仍独立审核制作 |
 | GZH | BLOCKED | vendor 的第三方轨，权利未验证，不再分发 |
 | X | BLOCKED | 平台轨未合并（`feat/47-x-platform-track`，PR #50） |
 | XHS | BLOCKED | 迁移未合并且处于权利审查中；无目录根 |

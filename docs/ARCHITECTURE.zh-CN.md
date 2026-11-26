@@ -8,7 +8,7 @@ translation_status: synced
 
 [English](ARCHITECTURE.md) | [简体中文](ARCHITECTURE.zh-CN.md)
 
-> 最后验证：2026-11-17，分支 `feat/173-easel-m0-pin`。
+> 最后验证：2026-11-18，已核对当前仓库的平台路由与视频规格。
 > 最后验证：2026-11-14；X / 跨平台本地数据回流只生成待审主题，不授予自动平台动作。
 > X 原创稿记录通过显式 `post_format=text|image` 区分纯文字与图文，图文继续校验图片/ALT；人工评分按技术/新闻与泛兴趣模式分流。发布包与原有数据回流仍只面向人工，不执行X平台动作。
 > 本分支增加离线 X 数据分析工具，指标结果仅写本地，策略审查后才可路由下一轮内容。
@@ -107,7 +107,7 @@ Owner 于 2026-11-02 决定把完整 Easel 系统作为生产底座，取代 ADR
           交付包 + 回执
                   │
      ┌────────────┴────────────┐
-  抖音 · 视频号 · B站        X · 小红书 · 公众号 · 知乎
+  抖音 · 小红书（视频）· 视频号 · B站        X · 公众号 · 知乎
                   │
           由运营者手动发布
                   │
@@ -123,7 +123,10 @@ Owner 于 2026-11-02 决定把完整 Easel 系统作为生产底座，取代 ADR
 3. **图文产线不复用这些阶段。** 配音和分镜对一篇文章没有意义。它运行
    `contentops.copy-to-graphic/v1`（`brief → outline → draft → images → layout →
    quality → delivery`），并复用门禁的顺序、指纹失效与人工批准，而不是另造一套。
-   产物经过三个具名步骤，且都不发布：`scripts/graphic_package.py` 生成的**人工包**
+   生图通过独立的 `scripts/graphic_generate.py` 执行；当前分支提供
+   `codex_imagegen`、`ian_xiaohei_codex`（宿主 Skill + 同一 Codex 后端）和
+   `minimax_subscription` 三种显式方法，每次一张并需明确授权。生图不等于审核或发布。
+   产物经过三个具名步骤，且都不发布：`scripts/graphic_package.py` 生成的**权利绑定图文包**
    （停在 `AWAITING_MANUAL_REVIEW`）、`scripts/render_cards.py` 与
    `scripts/render_article.py` 的**渲染/校验**步骤（调用固定版本 Easel Skill，回执恒为
    `production_ready: false`），以及 `scripts/platform_delivery.py` /
@@ -155,7 +158,8 @@ Owner 于 2026-11-02 决定把完整 Easel 系统作为生产底座，取代 ADR
 | 账号感知内容路由、工作流门禁、Brief/脚本/设计阶段 | `main`（S1 #93、S2 #95、路由 #114、S4 #118） | **已实现** —— brief→M5 桥仍绑定人工批准的 brief |
 | 平台注册表 + Content Bundle 消费 | `main`（PR #101） | **已实现**；一个注册表、一个 Bundle 消费方 |
 | Easel 宿主门禁、Bundle handoff、图文包 | `main`（PR #107、#108） | **离线已实现**；依赖与安全审查前宿主保持 `HOST_BLOCKED` |
-| 小红书八步工作流 | `main` 上的只校验适配器（PR #125） | **只校验**；权利未解决，不执行 |
+| 图文生图路由（#208 候选） | `feat/208-shared-graphic-workflow` | 三种显式方法与离线合约测试已实现；一次现场 Codex smoke test 通过修复后的适配器，在临时项目生成图片和回执；文章打包、权利与质量审核仍待完成 |
+| 小红书视频路由 | `xiaohongshu_video` 注册项；`VIDEO` 路由 | 已配置 / `PLANNED`；无图文适配器；账号、权利和发布仍须独立门禁 |
 | X 平台轨道（迁移记录、提示词引用、表格门禁） | `main`（PR #127） | **已实现**；发布仍为人工 |
 | 公众号十阶段 vendored 工作流 | `main` 上的只校验适配器（PR #121） | **只校验 / 权利受阻**；vendored 树不在本仓库分发 |
 
@@ -170,12 +174,13 @@ Owner 于 2026-11-02 决定把完整 Easel 系统作为生产底座，取代 ADR
 scripts/
 ├── run_v1.py             ← V1 编排（easel + fallback 引擎）
 ├── make_content.py       ← 唯一稳定生产入口（显式决策 + 门禁）
-├── production_gates.py   ← 8 个 VIDEO + 6 个 GRAPHIC_TEXT 失败即拒绝门禁
+├── production_gates.py   ← VIDEO 完整门禁 + GRAPHIC_TEXT 账号／证据／权利／运行时检查
 ├── produce_video.py      ← make_content.py 后面的诊断生产者
 ├── m5_production.py      ← 证据优先链（来源 → … → 评审 → ASR 回检）
 ├── m5_characterize.py    ← 记录 M5 重构必须保持的套件通过计数
 ├── bundle_handoff.py     ← Bundle → VIDEO / GRAPHIC_TEXT 计划
-├── graphic_package.py    ← 人工图文包（停在审核）
+├── graphic_generate.py   ← 每次一张、需显式授权的 Codex/MiniMax 生图
+├── graphic_package.py    ← 权利绑定图文包（停在审核）
 ├── render_cards.py       ← HTML 卡片 → PNG + 密度审计（固定版本 Skill）
 ├── render_article.py     ← 文章 HTML 校验 + 预览包装（固定版本 Skill）
 ├── video_deliver.py      ← 各平台视频交付包；dispatch 需运营授权
@@ -200,7 +205,7 @@ src/contentops/
 ├── evidence/             ← SourceArtifact、ClaimLedger
 ├── content_kernel/       ← Bundle 校验 + 形式 handoff
 ├── easel/                ← 宿主门禁、回环生命周期与 coding agent 驱动
-├── graphic/              ← 人工图文包 + 权利绑定图片
+├── graphic/              ← 生图方法、图文包合约与权利绑定图片
 ├── platforms/            ← 唯一机器可读平台注册表
 ├── workflow/             ← 视频/图文有序阶段与人工门禁
 ├── media/                ← 合约、计费、供应商、清单、校验、

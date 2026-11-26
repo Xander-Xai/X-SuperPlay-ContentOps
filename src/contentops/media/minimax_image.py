@@ -362,7 +362,10 @@ class MiniMaxMPlanImageProvider(ImageProvider):
         requested_path = self._work_dir / f"image-{fingerprint[:16]}{REQUESTED_EXTENSION}"
 
         if not request.force:
-            cached = self._reuse(fingerprint=fingerprint, model=model, seed=request.seed)
+            cached = self._reuse(
+                fingerprint=fingerprint, model=model, seed=request.seed,
+                requested_width=request.width, requested_height=request.height,
+            )
             if cached is not None:
                 return cached
 
@@ -542,6 +545,8 @@ class MiniMaxMPlanImageProvider(ImageProvider):
         fingerprint: str,
         model: str,
         seed: Optional[int],
+        requested_width: int,
+        requested_height: int,
     ) -> Optional[ImageOutcome]:
         """Reuse a cached image, but only with truthful provenance.
 
@@ -576,6 +581,10 @@ class MiniMaxMPlanImageProvider(ImageProvider):
                 continue
             if payload.get("seed") != seed:
                 continue
+            if payload.get("requested_width") != requested_width:
+                continue
+            if payload.get("requested_height") != requested_height:
+                continue
 
             # A JPEG requested as .png is normal; a receipt that disagrees with
             # the bytes on disk is not.
@@ -602,7 +611,7 @@ class MiniMaxMPlanImageProvider(ImageProvider):
                 candidate,
                 expected_width=payload.get("width"),
                 expected_height=payload.get("height"),
-                expected_aspect=PORTRAIT_ASPECT,
+                expected_aspect=requested_width / requested_height,
                 require_container=detected,
             )
             if not qc.approved:
@@ -670,7 +679,7 @@ class MiniMaxMPlanImageProvider(ImageProvider):
             canonical_path,
             expected_width=request.width,
             expected_height=request.height,
-            expected_aspect=PORTRAIT_ASPECT,
+            expected_aspect=request.width / request.height,
             require_container=container,
         )
         if not qc.approved:

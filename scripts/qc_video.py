@@ -5,7 +5,7 @@ Checks:
     - final.mp4 exists, > 100 KB
     - ffprobe parses it
     - 9:16 1080x1920, H.264 + AAC
-    - 30 <= duration <= 120 sec
+    - 30 <= duration <= account-specific maximum (120 sec by default; 300 for Future Intelligence)
     - storyboard / script / source_refs indicators present
     - no unreferenced AI-generated assets left behind
 
@@ -40,6 +40,7 @@ from contentops.paths import relative_label, resolve_project  # noqa: E402
 MIN_FILE_BYTES = 100 * 1024  # 100 KB
 MIN_DURATION = 30.0
 MAX_DURATION = 120.0
+MAX_FUTURE_INTELLIGENCE_DURATION = 300.0
 EXPECTED_W, EXPECTED_H = 1080, 1920
 # Evidence-first policy: the majority of shots must come from real captured
 # assets, not generated visuals.
@@ -73,6 +74,31 @@ def _account_slug(project: Path) -> str:
         if line.strip().startswith("account_slug:"):
             return line.split(":", 1)[1].strip().strip('"').strip("'")
     return ""
+
+
+def _duration_bounds(project: Path) -> tuple[float, float]:
+    """Return the technical duration bounds without widening other accounts."""
+    if _account_slug(project) != "x-superplay-future-intelligence":
+        return MIN_DURATION, MAX_DURATION
+    dna_path = ROOT / "config" / "accounts" / "x-superplay-future-intelligence.json"
+    try:
+        dna = json.loads(dna_path.read_text(encoding="utf-8"))
+        declared = (dna.get("narrative") or {}).get("target_duration_s")
+        declared_max = float(declared[1])
+        if not isinstance(declared, list) or len(declared) != 2:
+            raise ValueError("invalid target_duration_s")
+    except (OSError, ValueError, TypeError, IndexError, KeyError):
+        # A missing or malformed account profile must never grant a longer duration.
+        return MIN_DURATION, MAX_DURATION
+    return MIN_DURATION, min(MAX_FUTURE_INTELLIGENCE_DURATION,
+                              max(MAX_DURATION, declared_max))
+
+
+def _duration_check(project: Path, duration: float) -> dict:
+    """Grade duration against this account's configured upper bound."""
+    minimum, maximum = _duration_bounds(project)
+    return {"ok": minimum <= duration <= maximum,
+            "expected_range_sec": [minimum, maximum]}
 
 
 def _real_source_floor(project: Path) -> tuple[float, str, str]:
@@ -420,12 +446,13 @@ def qc(project: Path, target: str = "") -> dict:
         int(width or 0), int(height or 0), expected_w, expected_h, expected_aspect))
 
     # 6) duration
-    dur_ok = MIN_DURATION <= duration <= MAX_DURATION
+    duration_check = _duration_check(project, duration)
+    dur_ok = duration_check["ok"]
     checks.append({
         "id": "duration_range", "ok": dur_ok,
         "severity": "WARN" if not dur_ok else "PASS",
         "value_sec": round(duration, 2),
-        "expected_range_sec": [MIN_DURATION, MAX_DURATION],
+        "expected_range_sec": duration_check["expected_range_sec"],
     })
 
     # 7) video codec

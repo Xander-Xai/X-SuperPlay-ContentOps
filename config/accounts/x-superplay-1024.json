@@ -132,7 +132,8 @@
         "grammars": [
           "t2_keynote_ui",
           "y3_whiteboard",
-          "t3_finance_chart"
+          "t3_finance_chart",
+          "y5_kinetic_type"
         ],
         "palette": {
           "bg": "#F4F2ED",
@@ -174,7 +175,8 @@
           "show failure then repair then verified result",
           "vary framing and motion by beat",
           "use #F07167 only while a real failure is visible"
-        ]
+        ],
+        "render_variant": "warm-editorial"
       }
     },
     "caption_style": {
@@ -317,7 +319,7 @@
     "静音后单独听一遍，口播仍然成立且不含平台违规话术",
     "人工审核通过前不发布，也不生成任何发布链接"
   ],
-  "platform_note": "抖音 9:16 为主，1080×1920，前 3 秒必须给出反常识结论或翻车冲突；小红书同源 3:4 封面走 card-xiaohongshu，标题 ≤20 字，3–5 个垂直话题标签，不带泛标签。",
+  "platform_note": "抖音 9:16 为主，1080×1920，前 3 秒必须给出反常识结论或翻车冲突；小红书仅作视频目标：同源 9:16 视频可配 3:4 封面（card-xiaohongshu），标题 ≤20 字，3–5 个垂直话题标签，不带泛标签；不作为图文工作流平台。",
   "skill_route": [
     {
       "step": "script",

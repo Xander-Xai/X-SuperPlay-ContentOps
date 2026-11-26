@@ -7,9 +7,8 @@
 > decision behind it is [ADR-015](adr/ADR-015-platform-placeholders-and-content-bundle.md).
 > A row is a statement about **this branch**, never about the portfolio.
 >
-> Last regenerated from the registry: 2026-11-12, `main` at `c1da6dd`.
-> Last verified: 2026-11-16 — the cross-platform planning section below was added; no
-> registry row changed and no publication count moved.
+> Last regenerated from the registry: 2026-11-18 on the current branch; no platform status was promoted.
+> Last verified: 2026-11-18 — Xiaohongshu's VIDEO-only route and graphic exclusion were checked against the current specs; no upload or publication was tested.
 
 ## How to read a status
 
@@ -84,9 +83,10 @@ channel is not a platform status:
 | `xiaohongshu_image` | **no** — listed under `excluded` | — |
 
 `xiaohongshu_image` was removed from the registry and excluded from the graphic
-line on 2026-11-09 by operator instruction: the whole Xiaohongshu platform
-belongs to the VIDEO line. The exclusion is recorded in the spec file, not left
-implicit.
+line on 2026-11-09 by operator instruction. This repository supports the
+`xiaohongshu_video` VIDEO target only; image-text content is not converted into
+video or accepted by the graphic line. The exclusion is recorded in the spec
+file, not left implicit.
 
 ## GitHub — proof infrastructure, not a platform
 

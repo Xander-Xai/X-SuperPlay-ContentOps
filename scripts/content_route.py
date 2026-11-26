@@ -148,6 +148,7 @@ def cmd_start(args: argparse.Namespace) -> int:
         selected_by=args.by or "",
         fetch_evidence=args.fetch_evidence,
         collect=not args.plan_only,
+        target_pipeline=args.pipeline,
     )
     if args.json:
         _emit(result.to_dict(), True)
@@ -363,6 +364,8 @@ def build_parser() -> argparse.ArgumentParser:
     start.add_argument("--account", required=True)
     start.add_argument("--mode", required=True, choices=list(MODES),
                        help="hotspot or topic; the router never picks for you")
+    start.add_argument("--pipeline", choices=("VIDEO", "GRAPHIC_TEXT", "TOPIC", "TEXT_ARTICLE"),
+                       help="production line or medium-neutral shared-topic package target; TEXT_ARTICLE is legacy")
     start.add_argument("--topic", default="", help="the topic, for --mode topic")
     start.add_argument("--url", action="append", help="a reference link (repeatable)")
     start.add_argument("--doc", action="append", help="a local document (repeatable)")

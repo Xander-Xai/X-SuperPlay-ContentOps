@@ -53,10 +53,12 @@ COPY_FIELDS = ("unit", "narration", "caption", "claim", "image", "video",
 ASSET_MAP = Path("script") / "assets.json"
 
 #: Files under ``script/`` that decide what the film says, in what order, and
-#: what it claims. Notes, briefs and generated text (``narration.txt``,
-#: ``*-output.txt``) are deliberately absent: they do not change the copy, and
-#: hashing them would expire a review over an unrelated edit.
-SOURCE_FILES = ("master.md", "lines.json", "script.json", "claims.json",
+#: what it claims. The claim ledger is deliberately excluded: its quotes and
+#: artifact pointers are independently checked by the M5 claims stage and do not
+#: change the creator's copy. The line-level claim binding in ``script.json`` and
+#: storyboard fields remains in this fingerprint. Generated narration text is
+#: also excluded because the pipeline writes it from the approved copy.
+SOURCE_FILES = ("master.md", "lines.json", "script.json",
                 "claim-map.json", "assets.json", "cut-plan.json")
 
 #: Committed inputs outside ``script/``. ``motion/timeline.json`` carries shot
@@ -67,11 +69,15 @@ SOURCE_FILES = ("master.md", "lines.json", "script.json", "claims.json",
 #: move. If it ever gains a timestamp, this entry is the thing to revisit.
 SOURCE_PATHS = (Path("motion") / "timeline.json",)
 
-#: The GRAPHIC_TEXT line has no ``script/`` tree; its copy lives in the draft and
-#: the image plan. Hashing them when present makes a graphic review mean
-#: something, and leaves a video project's fingerprint byte-identical because
-#: neither file exists there.
-GRAPHIC_COPY_FILES = (Path("draft.md"), Path("graphic-input.json"))
+#: The GRAPHIC_TEXT line has no ``script/`` tree. The copy fingerprint binds
+#: the selected draft bytes and its editorial identity, not mutable image-plan
+#: details such as generated asset paths or layout metadata.
+GRAPHIC_INPUT_FILE = Path("graphic-input.json")
+
+#: The topic-level copy precedes both production contracts and must participate
+#: in their review freshness calculation whenever the project carries it.
+CANONICAL_COPY_FILE = Path("00_brief") / "canonical-copy.json"
+COPY_DERIVATIVE_FILE = Path("00_brief") / "copy-derivative.json"
 
 #: Build products. Never hashed: they derive from the sources above, and hashing
 #: them would expire a review on every rebuild.
@@ -95,11 +101,159 @@ def _canonical(value: Any) -> bytes:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
 
 
-def copy_fingerprint(project: Path) -> str:
-    """A digest of what the copy *says*, stable across builds."""
+def _m5_script_projects_derivative(project: Path) -> bool:
+    """Whether ``script.json`` is a faithful machine projection of reviewed copy.
+
+    A generated M5 representation must not trigger a duplicate copy review, but
+    a changed narration, caption, segment order or claim binding must not inherit
+    the old approval. Invalid or incomplete projections stay fingerprinted.
+    """
+    script_path = project / "script" / "script.json"
+    derivative_path = project / COPY_DERIVATIVE_FILE
+    if not script_path.is_file() or not derivative_path.is_file():
+        return False
+    try:
+        script = json.loads(script_path.read_text(encoding="utf-8"))
+        derivative = json.loads(derivative_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    if (script.get("schema") != "contentops.m5-script/v1"
+            or derivative.get("format") != "VIDEO"):
+        return False
+    lines = script.get("lines")
+    segments = derivative.get("segments")
+    if not isinstance(lines, list) or not lines or not isinstance(segments, list) or not segments:
+        return False
+    index = 0
+    for segment in segments:
+        if not isinstance(segment, dict):
+            return False
+        segment_id = str(segment.get("source_segment_id") or "")
+        text = segment.get("text")
+        claim_refs = {str(value) for value in segment.get("claim_refs") or []}
+        if not segment_id or not isinstance(text, str):
+            return False
+        pieces = []
+        segment_claims = set()
+        while index < len(lines):
+            line = lines[index]
+            if not isinstance(line, dict) or line.get("source_segment_id") != segment_id:
+                break
+            narration = line.get("narration")
+            caption = line.get("caption")
+            if (not isinstance(narration, str) or not narration
+                    or caption != narration):
+                return False
+            primary = str(line.get("claim") or "")
+            raw_claims = line.get("claims")
+            if raw_claims is None:
+                line_claims = {primary} if primary else set()
+            elif (not isinstance(raw_claims, list)
+                  or any(not isinstance(value, str) or not value for value in raw_claims)):
+                return False
+            else:
+                line_claims = set(raw_claims)
+                if len(line_claims) != len(raw_claims):
+                    return False
+                if primary and primary not in line_claims:
+                    return False
+            if not line_claims.issubset(claim_refs):
+                return False
+            segment_claims.update(line_claims)
+            pieces.append(narration)
+            index += 1
+        if not pieces or "".join(pieces) != text or segment_claims != claim_refs:
+            return False
+    return index == len(lines)
+
+
+def _graphic_copy_parts(project: Path, graphic_input_path: Optional[Path] = None) -> List[bytes]:
+    project = Path(project).resolve()
+    if (project / "script" / "script.json").is_file():
+        parts = []
+        for relative in (Path("draft.md"), GRAPHIC_INPUT_FILE):
+            source = project / relative
+            if source.is_file():
+                parts.append(b"graphic\\0" + relative.as_posix().encode("utf-8")
+                             + b"\\0" + source.read_bytes())
+        return parts
+    default_input = project / GRAPHIC_INPUT_FILE
+    if graphic_input_path is None and not default_input.is_file():
+        legacy_draft = project / "draft.md"
+        return ([b"graphic-draft\\0draft.md\\0" + legacy_draft.read_bytes()]
+                if legacy_draft.is_file() else [])
+    raw_input = Path(graphic_input_path or default_input)
+    if not raw_input.is_absolute():
+        raw_input = project / raw_input
+    try:
+        raw_relative = raw_input.absolute().relative_to(project).as_posix()
+    except ValueError:
+        raise ValueError("GRAPHIC_INPUT_PATH_INVALID: input must be inside the project") from None
+    current = project
+    for segment in Path(raw_relative).parts:
+        current = current / segment
+        if current.is_symlink():
+            raise ValueError("GRAPHIC_INPUT_PATH_INVALID: input must not use symlinks")
+    input_path = raw_input.resolve()
+    input_relative = raw_relative
+    if not input_path.is_file():
+        raise ValueError("GRAPHIC_INPUT_PATH_INVALID: input must be an existing project file")
+    parts: List[bytes] = []
+    try:
+        data = json.loads(input_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError(f"GRAPHIC_INPUT_INVALID: {exc}") from None
+    if not isinstance(data, dict):
+        raise ValueError("GRAPHIC_INPUT_INVALID: input must be a JSON object")
+    reference = data.get("draft")
+    if not isinstance(reference, str) or not reference.strip():
+        raise ValueError("GRAPHIC_DRAFT_REQUIRED: graphic input must select a draft")
+    reference = reference.strip().replace("\\", "/")
+    repo_scope = reference.startswith("repo://")
+    if repo_scope:
+        if project.parent.name != "projects":
+            raise ValueError("GRAPHIC_DRAFT_PATH_INVALID: repo:// requires projects/<slug>")
+        base = project.parent.parent.resolve()
+        logical = reference[len("repo://"):]
+    else:
+        base = project
+        logical = reference
+    if not logical or logical.startswith("/") or ".." in logical.split("/"):
+        raise ValueError("GRAPHIC_DRAFT_PATH_INVALID: expected a safe relative draft path")
+    candidate = base / logical
+    current = base
+    for segment in Path(logical).parts:
+        current = current / segment
+        if current.is_symlink():
+            raise ValueError("GRAPHIC_DRAFT_PATH_INVALID: draft must not use symlinks")
+    resolved = candidate.resolve()
+    try:
+        resolved.relative_to(base)
+    except ValueError:
+        raise ValueError("GRAPHIC_DRAFT_PATH_INVALID: draft escapes its allowed root") from None
+    if not resolved.is_file():
+        raise ValueError("GRAPHIC_DRAFT_MISSING: selected draft does not exist")
+    logical_path = ("repo://" if repo_scope else "project://") + logical
+    parts.append(b"graphic-identity\\0" + _canonical({
+        "input": input_relative,
+        "title": data.get("title"),
+        "platform_id": data.get("platform_id"),
+        "account": data.get("account"),
+        "draft": logical_path,
+    }))
+    parts.append(b"graphic-draft\\0" + logical_path.encode("utf-8")
+                 + b"\\0" + resolved.read_bytes())
+    return parts
+
+
+def copy_fingerprint(project: Path, graphic_input_path: Optional[Path] = None) -> str:
+    """A digest of what the copy says, with verified M5 projections normalized."""
     script = project / "script"
     parts: List[bytes] = []
+    m5_projection = _m5_script_projects_derivative(project)
     for name in SOURCE_FILES:
+        if name == "script.json" and m5_projection:
+            continue
         source = script / name
         if source.is_file():
             parts.append(b"script\0" + name.encode("utf-8") + b"\0" + source.read_bytes())
@@ -121,10 +275,13 @@ def copy_fingerprint(project: Path) -> str:
             shots.append({key: shot.get(key) for key in COPY_FIELDS})
         parts.append(b"storyboard\0" + _canonical({"shots": shots,
                                                    "size": document.get("size")}))
-    for relative in GRAPHIC_COPY_FILES:
+    parts.extend(_graphic_copy_parts(project, graphic_input_path))
+    for relative in (CANONICAL_COPY_FILE, COPY_DERIVATIVE_FILE,
+                     Path("receipts") / "topic-package-ref.json",
+                     Path("receipts") / "topic-package-handoff.json"):
         source = project / relative
         if source.is_file():
-            parts.append(b"graphic\0" + relative.as_posix().encode("utf-8") + b"\0"
+            parts.append(b"topic-copy\0" + relative.as_posix().encode("utf-8") + b"\0"
                          + source.read_bytes())
     return _sha(b"\n".join(parts))
 
@@ -193,9 +350,21 @@ def load(project: Path) -> Optional[Dict[str, Any]]:
         return {"schema": SCHEMA, "status": "UNREADABLE"}
 
 
-def status(project: Path) -> Dict[str, Any]:
+def _graphic_input_identity(project: Path, graphic_input_path: Optional[Path] = None) -> Optional[str]:
+    project = Path(project).resolve()
+    if graphic_input_path is None and not (project / GRAPHIC_INPUT_FILE).is_file():
+        return None
+    path = Path(graphic_input_path or (project / GRAPHIC_INPUT_FILE)).resolve()
+    try:
+        return path.relative_to(project).as_posix()
+    except ValueError:
+        raise ValueError("GRAPHIC_INPUT_PATH_INVALID: input must be inside the project") from None
+
+
+def status(project: Path, *, projects_root: Optional[Path] = None,
+           graphic_input_path: Optional[Path] = None) -> Dict[str, Any]:
     """Everything a caller needs to explain the gate, without raising."""
-    fingerprint = copy_fingerprint(project)
+    fingerprint = copy_fingerprint(project, graphic_input_path)
     record = load(project)
     drift = asset_integrity(project)
     if record is None:
@@ -208,6 +377,13 @@ def status(project: Path) -> Dict[str, Any]:
                 "copy_sha256": fingerprint, "asset_drift": drift,
                 "remedy": _remedy(project),
                 "detail": f"unrecognised status {record.get('status')!r}"}
+    selected_input = _graphic_input_identity(project, graphic_input_path)
+    if (selected_input is not None
+            and record.get("graphic_input_path", "graphic-input.json") != selected_input):
+        return {"schema": GATE_SCHEMA, "ok": False, "state": "STALE",
+                "copy_sha256": fingerprint, "reviewed_sha256": record.get("copy_sha256"),
+                "asset_drift": drift, "remedy": _remedy(project),
+                "detail": "the selected graphic input changed after review"}
     if record.get("copy_sha256") != fingerprint:
         return {"schema": GATE_SCHEMA, "ok": False, "state": "STALE",
                 "copy_sha256": fingerprint, "reviewed_sha256": record.get("copy_sha256"),
@@ -224,15 +400,25 @@ def status(project: Path) -> Dict[str, Any]:
                 "copy_sha256": fingerprint, "reviewer": record.get("reviewer"),
                 "asset_drift": drift, "remedy": _remedy(project),
                 "detail": "declared asset digests no longer match the files on disk"}
+    from . import topic_package
+    if topic_package.is_declared_consumer(project):
+        lineage = topic_package.status_child(project, projects_root=projects_root)
+        if lineage.get("applicable") and not lineage.get("ok"):
+            return {"schema": GATE_SCHEMA, "ok": False, "state": "TOPIC_PACKAGE_STALE",
+                    "copy_sha256": fingerprint, "reviewer": record.get("reviewer"),
+                    "asset_drift": [], "remedy": _remedy(project),
+                    "detail": str(lineage.get("detail") or lineage.get("state"))}
     return {"schema": GATE_SCHEMA, "ok": True, "state": "APPROVED",
             "copy_sha256": fingerprint, "asset_drift": [],
             "reviewer": record.get("reviewer"),
             "opinion": record.get("opinion"), "reviewed_at": record.get("reviewed_at")}
 
 
-def require_approved(project: Path) -> Dict[str, Any]:
+def require_approved(project: Path, *, projects_root: Optional[Path] = None,
+                     graphic_input_path: Optional[Path] = None) -> Dict[str, Any]:
     """Return the gate when approved; raise :class:`CopyReviewRequired` otherwise."""
-    gate = status(project)
+    gate = status(project, projects_root=projects_root,
+                  graphic_input_path=graphic_input_path)
     if gate["ok"]:
         return gate
     raise CopyReviewRequired(
@@ -266,7 +452,7 @@ def require_if_brief_driven(project: Path) -> Optional[Dict[str, Any]]:
 
 
 def decide(project: Path, *, status_value: str, reviewer: str, opinion: str,
-           reviewed_at: str) -> Dict[str, Any]:
+           reviewed_at: str, graphic_input_path: Optional[Path] = None) -> Dict[str, Any]:
     """Write a review record bound to the current copy fingerprint."""
     if status_value not in STATUSES:
         raise ValueError(f"status must be one of {STATUSES}")
@@ -280,8 +466,11 @@ def decide(project: Path, *, status_value: str, reviewer: str, opinion: str,
         "reviewer": reviewer.strip(),
         "opinion": opinion.strip(),
         "reviewed_at": reviewed_at,
-        "copy_sha256": copy_fingerprint(project),
+        "copy_sha256": copy_fingerprint(project, graphic_input_path),
     }
+    input_identity = _graphic_input_identity(project, graphic_input_path)
+    if input_identity is not None:
+        record["graphic_input_path"] = input_identity
     path = project / RECORD
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

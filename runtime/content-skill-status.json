@@ -1,8 +1,8 @@
 {
   "schema": "contentops.content-skill-status/v1",
   "note": "Installed content skills that reference code this repository does not carry on the current branch. A reference listed here is a fact about this checkout, not a licence to run anything. Every absent path an installed SKILL.md names must appear here; scripts/check_skill_references.py fails when a skill names a path that is unrecorded, and fails when a recorded path has since appeared (the layer merged and this record is stale). A skill may be declared in runtime/skill-registry.json only after its code exists on the integration branch.",
-  "verified_on": "2026-11-04",
-  "verified_branch": "feat/94-s4-stages",
+  "verified_on": "2026-11-19",
+  "verified_branch": "feat/208-shared-graphic-workflow",
   "store": "shared",
   "store_env": "CONTENTOPS_SKILL_STORE",
   "skills": [
@@ -66,22 +66,11 @@
     {
       "id": "x-superplay-copy-orchestrator",
       "file": "x-superplay-copy-orchestrator/SKILL.md",
-      "state": "UNMERGED",
-      "layer": "content-router",
-      "carried_by": "feat/content-router",
-      "references": [
-        {
-          "path": "src/contentops/quality/script_rhythm.py",
-          "carried_by": "feat/content-router",
-          "note": "deterministic rhythm checks"
-        },
-        {
-          "path": "scripts/copy_strategy.py",
-          "carried_by": null,
-          "note": "absent on every branch inspected"
-        }
-      ],
-      "note": "audience.py and duration.py now exist on this branch (S4 stage policy); the skill is not declared by this change."
+      "state": "DECLARED",
+      "layer": "canonical-copy",
+      "carried_by": "feat/208-shared-graphic-workflow",
+      "references": [],
+      "note": "Shared Skill updated for one researched canonical copy across VIDEO and GRAPHIC_TEXT; runtime/skill-registry.json points to the tested validator. Resolution is discovery only and never executes the Skill."
     }
   ]
 }

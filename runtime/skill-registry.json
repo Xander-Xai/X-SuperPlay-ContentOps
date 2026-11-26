@@ -199,6 +199,67 @@
       }
     },
     {
+      "id": "x-superplay-copy-orchestrator",
+      "name": "x-superplay-copy-orchestrator",
+      "summary": "Single shared topic-copy Skill for one claim/evidence-bound canonical source and separately reviewed VIDEO and GRAPHIC_TEXT derivatives.",
+      "discovery": {
+        "root": "shared",
+        "dir": "x-superplay-copy-orchestrator"
+      },
+      "source": {
+        "publisher": "X-SuperPlay ContentOps",
+        "upstream": "local-first-party",
+        "version": "1.3.0"
+      },
+      "canonical_path": "src/contentops/workflow/topic_package.py",
+      "license": {
+        "status": "declared",
+        "spdx": "NOASSERTION",
+        "note": "First-party Skill is kept in the operator-controlled shared store; no third-party Skill content is redistributed by this declaration."
+      },
+      "rights": {
+        "status": "verified",
+        "verified": true,
+        "scope": "local writing workflow and offline artifact validation only; this does not clear source-material, media, platform or publication rights",
+        "evidence": "Owner-confirmed first-party shared Skill; Issue #211 contract tests; content rights remain separately gated."
+      },
+      "accounts": [
+        "x-superplay-1024",
+        "x-superplay-future-intelligence"
+      ],
+      "pipelines": [
+        "TOPIC",
+        "VIDEO",
+        "GRAPHIC_TEXT"
+      ],
+      "stages": [
+        "copywriting"
+      ],
+      "contract": {
+        "input": "selected ContentIntent plus current signed pre-copy research, audience decision and evidence-backed claims",
+        "output": "00_brief/canonical-copy.json plus 00_brief/copy-derivative.json bound to the canonical digest and one output format",
+        "schema": "contentops.canonical-topic-copy/v1"
+      },
+      "provider": {
+        "path_permitted": true,
+        "network": false,
+        "paid": false,
+        "cross_project_reuse": false,
+        "note": "Skill-guided local writing and offline contract validation only; registry resolution never invokes the model or authorizes execution."
+      },
+      "verification": {
+        "status": "CONTRACT_TESTED",
+        "scope": "offline source/evidence binding, format lineage, stale review and distinct production-gate tests",
+        "evidence": "tests/test_copy_review_integrity.py; tests/test_production_gates.py"
+      },
+      "execution": {
+        "adapter": "src/contentops/workflow/topic_package.py",
+        "m5_stage": "copywriting",
+        "authorizes_execution": false,
+        "note": "The adapter validates artifacts only; the installed Skill is invoked separately by the human/operator."
+      }
+    },
+    {
       "id": "contentops-remotion-clips",
       "name": "contentops-remotion-clips",
       "summary": "Pinned Remotion 4.0.543 clip templates. Discovery only. Easel remains the episode compositor.",

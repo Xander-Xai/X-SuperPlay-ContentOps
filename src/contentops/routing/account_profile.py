@@ -45,7 +45,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from .models import RoutingError
+from .models import RoutingError, normalize_target_pipeline
 
 ACCOUNTS_DIR = Path("config") / "accounts"
 DNA_SCHEMA = "contentops.account-dna/v2"
@@ -610,10 +610,15 @@ def profile_video_capable(profile: AccountProfile) -> bool:
     return bool(profile.platforms)
 
 
-def target_pipeline_for(profile: AccountProfile) -> str:
-    """The pipeline this account may use.
+def target_pipeline_for(profile: AccountProfile, requested: Optional[str] = None) -> str:
+    """Resolve this content run's production line.
 
-    A text-only account is not silently pushed into the video generator: it is
-    given ``TEXT_ARTICLE`` and the video route is refused for it.
+    New callers may select ``VIDEO`` or ``GRAPHIC_TEXT`` explicitly; ``TOPIC``
+    selects a medium-neutral shared topic package and is not a production line.
+    The account's platform list is not the production-line selector. The one-arg
+    form remains for old clients and resolves to the historical account-based
+    default, now using the canonical ``GRAPHIC_TEXT`` name.
     """
-    return "VIDEO" if profile.platforms else "TEXT_ARTICLE"
+    if requested is not None:
+        return normalize_target_pipeline(requested)
+    return "VIDEO" if profile.platforms else "GRAPHIC_TEXT"

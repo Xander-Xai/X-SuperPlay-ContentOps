@@ -7,8 +7,9 @@
 > not emit a success receipt, a publication record or a metric.
 
 > Status: reference — 2026-11-12.
-> Last verified: 2026-11-17 on `feat/173-easel-m0-pin` (clip-cache diff touches no lifecycle stage fact).
+> Last verified: 2026-11-18 against current platform routes and constraints.
 > Last verified: 2026-11-14. The X ORIGINAL_POST path now validates explicit text or image format, content-mode review profiles and human-only package handoff; image records require raster+ALT and text records carry neither. No live account growth or platform publication is verified.
+> Last verified: 2026-11-23 on `feat/208-shared-graphic-workflow`; standalone GRAPHIC_TEXT no longer requires signed pre-copy or copy-review steps before preparation. Focused production-gate tests 39/39 and pre-copy tests 26/26 passed.
 > Local feedback remains PARTIAL: manually supplied metrics -> learning brief -> human-approved Topic route; not automated publishing.
 Related: [ARCHITECTURE.md](ARCHITECTURE.md), [PRD.md](PRD.md),
 [ADR-015](adr/ADR-015-platform-placeholders-and-content-bundle.md),
@@ -44,7 +45,8 @@ file owns the **ordered lifecycle** and the **status of each stage**. It does no
 redefine a contract; it maps the existing ones.
 
 ```text
-DISCOVERY → RESEARCH → PRECOPY_RESEARCH → BRIEF → CONTENT_BUNDLE → PRODUCTION
+DISCOVERY → RESEARCH → PRECOPY_RESEARCH → BRIEF → CONTENT_BUNDLE
+    → CANONICAL_COPY (shared when a topic targets both formats) → PRODUCTION
     → QUALITY_REVIEW → PLATFORM_PACKAGING → PUBLISH_HANDOFF
     → METRICS_COLLECTION → ANALYSIS → LEARNING_FEEDBACK
     → back to Strategy
@@ -57,12 +59,24 @@ DISCOVERY → RESEARCH → PRECOPY_RESEARCH → BRIEF → CONTENT_BUNDLE → PRO
 - **GRAPHIC_TEXT**: `brief → outline → draft → images → layout → quality → delivery`
   (`contentops.copy-to-graphic/v1`)
 
-Both lines share one upstream gate: `PRECOPY_RESEARCH` must be signed before
-`script/master.md` or `02_draft/draft.md` exists
-(`contentops.precopy-research/v1`, see
-[PRECOPY-RESEARCH.md](PRECOPY-RESEARCH.md)). The research package is bound to
-the `ContentIntent` that `DISCOVERY` produced, so the gate proves *which*
-topic's evidence was verified — not merely that some research happened.
+The signed `PRECOPY_RESEARCH` gate applies before VIDEO copy and shared,
+medium-neutral `TOPIC` approval (`contentops.precopy-research/v1`, see
+[PRECOPY-RESEARCH.md](PRECOPY-RESEARCH.md)). A standalone GRAPHIC_TEXT draft may
+start without that signature; it still needs traceable source links and image
+rights before package delivery. The shared research package remains bound to the
+`ContentIntent` that `DISCOVERY` produced, so it proves *which* topic's evidence
+was reviewed—not merely that some research happened.
+
+When one selected topic is intended for both VIDEO and GRAPHIC_TEXT, route it as
+one medium-neutral `TOPIC` intent. The topic project owns the signed research,
+`00_brief/canonical-copy.json`, and its human review; `topic-package.json` binds
+them into one authority package. Separate sibling production projects carry a
+root-scoped package reference and digest, then create their own
+`00_brief/copy-derivative.json` and format copy (`script/master.md` or `draft.md`).
+Each format adaptation is separately human-reviewed, and the shared package is
+re-read at production gates. Structural checks establish lineage, not semantic
+equivalence; reviewers remain responsible for stronger wording, omissions and
+new claims. Explicit legacy single-format projects keep their existing path.
 
 ## Stage status
 
@@ -75,11 +89,12 @@ one's status.
 |---|---|---|---|---|---|---|---|
 | `DISCOVERY` | Strategy direction, trends | topic candidates | Strategy + ContentOps | `implemented` | `src/contentops/routing/` (`user_topic_route`, `hotspot_route`), `src/contentops/hotspots/` | route result | hot-list collection needs network and credentials; offline runs are `BLOCKED` |
 | `RESEARCH` | topic, sources | `SourceArtifact` set | ContentOps | `partial` | M5 `src/contentops/evidence/`; `x-superplay-source-research` is not declared on `main` | source records | source research still starts from manual `SourceArtifact` input |
-| `PRECOPY_RESEARCH` | `ContentIntent`, verified sources | research package + signed receipt | ContentOps + human | `implemented` | `src/contentops/workflow/preresearch.py`, `scripts/preresearch.py` | `receipts/precopy-research.json` | 8th VIDEO / 6th GRAPHIC_TEXT gate; no `--force`; edits after signing report `STALE` |
+| `PRECOPY_RESEARCH` | `ContentIntent`, verified sources | research package + signed receipt | ContentOps + human | `implemented` | `src/contentops/workflow/preresearch.py`, `scripts/preresearch.py` | `receipts/precopy-research.json` | VIDEO/shared TOPIC only; no `--force`; edits after signing report `STALE`; standalone GRAPHIC_TEXT is draft-first |
 | `BRIEF` | topic, audience | brief | ContentOps | `implemented` | router `src/contentops/routing/brief.py`; graphic contract `brief` stage | `BRIEF_READY` result | an automation approval is refused by the brief→M5 bridge; a human must approve |
 | `CONTENT_BUNDLE` | Strategy Bundle | validated Bundle + digest | Strategy owns; ContentOps consumes | `implemented` (on `main`; PR #101) | `src/contentops/content_kernel/bundle.py`, `scripts/content_bundle.py` | validation result / handoff | Bundle is a plan, never a publication |
+| `CANONICAL_COPY` (shared topic) | medium-neutral `TOPIC` intent, signed research, one canonical source | one reviewed topic package plus independently reviewed format derivatives | shared copy Skill + human reviewers | `partial` (Issue #211) | `src/contentops/workflow/topic_package.py`, `canonical_copy.py`, `copy_review.py`; `scripts/topic_package.py` | `topic-package.json`, child `receipts/topic-package-ref.json`, `receipts/script-review.json` | package initialization and binding are operator-driven; current code validates lineage but cannot establish semantic equivalence |
 | `PRODUCTION` (VIDEO) | Bundle, claims | video master | ContentOps | `implemented` | gated entry `scripts/make_content.py` + `scripts/production_gates.py` (8 VIDEO gates); `produce_video.py` / `m5_production.py`, `run_v1.py`, `assemble_easel.py`; ASR backcheck stage | `build-*.json`, `asr-backcheck.json`, `runtime-receipt.md` | voice quality; human review pending. A direct producer run is diagnostic and not gate-checked |
-| `PRODUCTION` (GRAPHIC_TEXT) | Bundle, images | manual package, rendered cards, validated article | ContentOps | `implemented` | `src/contentops/graphic/` (package, cards, articles), `scripts/graphic_package.py`, `render_cards.py`, `render_article.py`; 6 GRAPHIC_TEXT gates | `graphic-package.json`, `card-render.json`, `gzh-article.json` | every terminal state is `AWAITING_MANUAL_REVIEW` or `BLOCKED`; a PASS is not an approval |
+| `PRODUCTION` (GRAPHIC_TEXT) | Bundle, images | generated support visuals + manual package, rendered cards, validated article | ContentOps | `implemented` (three generation routes on `feat/208-shared-graphic-workflow`; not merged) | `src/contentops/graphic/` (methods, generation receipts, package and rights checks), `scripts/graphic_generate.py`, `scripts/graphic_package.py`, `render_cards.py`, `render_article.py`; focused account/evidence/rights/runtime checks | `graphic-image-generation-*.json`, `graphic-package.json`, `card-render.json`, `gzh-article.json` | one live Codex smoke run passed the repaired adapter and wrote an image plus project-local generation receipt in a temporary workflow test project. This was not an approved article; article package, rights/AIGC review, layout/quality review and delivery remain unverified. Draft work can proceed before human research/copy sign-off; external delivery remains rights-gated. Terminal state remains `AWAITING_MANUAL_REVIEW` or `BLOCKED` |
 | `QUALITY_REVIEW` | produced artifacts | QC + human verdict | ContentOps + human | `implemented` | `production_gates.py` preflight, `scripts/qc_video.py`, `qc_visual.py`, ASR backcheck, `src/contentops/media/quality_gate.py`, `workflow/gate.py` | `qc-report.json`, `human-review.json` | human review never auto-approved; no project holds an APPROVED `human-review.json` |
 | `PLATFORM_PACKAGING` | reviewed package | per-platform pack + draft | ContentOps | `partial` | `scripts/video_deliver.py` (`plan`/`pack`/`status`), `scripts/platform_delivery.py`, `graphic_deliver.py`, `wechatsync_browser.py`; X manual gate (`src/contentops/publish/`) | `06_delivery/` pack receipts, `graphic-package.json` | packs are implemented, but **no platform draft has ever been created**: 0 delivery receipts, 8 of 9 registry rows `PLANNED` |
 | `PUBLISH_HANDOFF` | draft | real URL + delivery receipt | human | `partial` | human-only: `video_deliver.py record`, `x_post.py --mark-published`, and the bridge's own URL echo | `AWAITING_MANUAL_PUBLISH` / `REPORTED_PUBLISHED` / `UPLOADER_EXIT_0` | no automatic publication, 0 recorded URLs; an uploader exit is not a published claim |
@@ -96,9 +111,10 @@ Two independent axes must not be conflated:
 | **Medium** (production line) | `VIDEO`, `GRAPHIC_TEXT` | ContentOps |
 | **Production profile** (cost / complexity lane) | `baseline`, `enhanced`, `experimental` | Strategy |
 
-A profile is not a medium, and a medium is not a profile. `XHS_EDITORIAL` and
-`GZH_EDITORIAL` are local content-type labels that map onto the shared
-`GRAPHIC_TEXT` line; they do not create a third production line.
+A profile is not a medium, and a medium is not a profile. `GZH_EDITORIAL`
+is the local content-type label that maps onto the shared `GRAPHIC_TEXT` line;
+it does not create a third production line. Xiaohongshu is VIDEO-only in this
+repository; its image-text/graphic target is excluded and has no registry row.
 
 ## Contract mapping
 
@@ -137,15 +153,14 @@ A profile is not a medium, and a medium is not a profile. `XHS_EDITORIAL` and
    `x_text.py`, `x_image.py` and `x_editorial.py` are the authoring components;
    the X gate is their packaging stage. There is no `copy-to-x` contract and no
    third production engine.
-10. **Copy never precedes research.** Before `script/master.md`,
-    `02_draft/draft.md` or any copy decision, `PRECOPY_RESEARCH` must be
-    `APPROVED`: bind the router's `ContentIntent`, read the relevant project
-    files, verify authoritative sources, write an outline, an evidence list and
-    a boundary statement, and obtain a named human signature.
-    `production_gates.py` and `copy_review.py --approve` both fail closed.
-    Changing a research artifact — or re-routing the topic — makes the approval
-    `STALE` or `INCOMPLETE`; there is no `--force` and no silent grandfathering.
-    See [PRECOPY-RESEARCH.md](PRECOPY-RESEARCH.md).
+10. **Evidence precedes factual claims; signatures are scoped.** VIDEO and shared
+    `TOPIC` copy must have current `PRECOPY_RESEARCH` approval before production or
+    copy approval. A standalone GRAPHIC_TEXT draft can start first; it must retain
+    source links and mark unverified claims. `production_gates.py` keeps evidence
+    and per-image rights checks, while external delivery remains separately gated.
+    Changing shared research or re-routing its topic makes its approval `STALE` or
+    `INCOMPLETE`; there is no `--force`. See
+    [PRECOPY-RESEARCH.md](PRECOPY-RESEARCH.md).
 
 ## Remaining placeholders and non-implemented capabilities
 

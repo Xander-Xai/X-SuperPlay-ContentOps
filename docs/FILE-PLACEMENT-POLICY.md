@@ -91,7 +91,8 @@ scripts/
 ├── run_v1.py           # production pipeline
 ├── m5_production.py    # evidence-first video chain
 ├── bundle_handoff.py   # Bundle → VIDEO / GRAPHIC_TEXT plan
-├── graphic_package.py  # manual graphic package (stops at review)
+├── graphic_package.py  # fail-closed graphic package (stops at review)
+├── graphic_generate.py # explicitly authorised Codex/MiniMax graphic image generation
 ├── easel_host.py       # guarded Easel host status / loopback serve
 ├── agent_drive.py      # coding-agent step plan and guarded executor
 ├── qc_video.py         # automated QC
@@ -135,9 +136,8 @@ here, never in `scripts/`. Four are load-bearing for platform work:
 `src/contentops/platforms/` (the registry loader),
 `src/contentops/content_kernel/` (Bundle validation and form-specific handoff),
 `src/contentops/easel/` (the host guard and loopback lifecycle, plus the
-coding-agent driver; no upstream copy), and `src/contentops/graphic/` (the manual
-graphic package and its rights-bound image checks). None of them publishes,
-renders or spends.
+coding-agent driver; no upstream copy), and `src/contentops/graphic/` (the graphic package, generation methods and rights-bound image checks). None of them publishes,
+renders or spends without an explicitly authorised execution step.
 
 ## config/
 

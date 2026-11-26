@@ -208,6 +208,17 @@ def source_shares(cut_plan: CutPlan,
     }
 
 
+def _within_account_duration(dna: Dict[str, Any], duration: float) -> bool:
+    """Respect account duration windows, with a hard 300s Future Intelligence cap."""
+    span = ((dna or {}).get("narrative") or {}).get("target_duration_s")
+    if not span:
+        return True
+    low, high = float(span[0]), float(span[1])
+    upper_tolerance = (0.0 if (dna or {}).get("slug") == "x-superplay-future-intelligence"
+                       else 0.5)
+    return low - 0.5 <= duration <= high + upper_tolerance
+
+
 def qc_cut(project: Path, video: Optional[Path] = None) -> Dict[str, Any]:
     project = project.resolve()
     checks: List[Dict[str, Any]] = []
@@ -273,7 +284,7 @@ def qc_cut(project: Path, video: Optional[Path] = None) -> Dict[str, Any]:
     # The account owns how long an episode runs, and nothing used to check it. The
     # audio-first planner sizes its target window from the narration it has just
     # measured, so a 25-second cut declared 24.5--25.5 s, matched itself, and passed
-    # while missing a 90--120 s account contract outright. A window an episode sets
+    # while missing the account's declared 30--300 s window. A window an episode sets
     # from its own output is not a contract, so the account's window is graded
     # separately and the episode's own declaration cannot satisfy it.
     account_span = ((dna or {}).get("narrative") or {}).get("target_duration_s")
@@ -281,7 +292,7 @@ def qc_cut(project: Path, video: Optional[Path] = None) -> Dict[str, Any]:
         span_low, span_high = float(account_span[0]), float(account_span[1])
         checks.append(_check(
             "account_duration",
-            span_low - 0.5 <= duration <= span_high + 0.5,
+            _within_account_duration(dna, duration),
             "FAIL",
             f"{duration:.2f}s vs {dna.get('slug')} {span_low:.0f}-{span_high:.0f}s"))
     checks.append(_check("video_codec", visual.get("codec_name") in ("h264", "libx264"),

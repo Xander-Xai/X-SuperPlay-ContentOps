@@ -15,6 +15,8 @@ from .package import (  # noqa: F401
     GraphicPackageError,
     build_package,
     load_and_build,
+    verify_graphic_review,
+    verify_package_current,
     write_package,
 )
 from .cards import (  # noqa: F401
@@ -54,6 +56,8 @@ __all__ = [
     "GraphicPackageError",
     "build_package",
     "load_and_build",
+    "verify_graphic_review",
+    "verify_package_current",
     "write_package",
     "CardRenderError",
     "build_receipt",

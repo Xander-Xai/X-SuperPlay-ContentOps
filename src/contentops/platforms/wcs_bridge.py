@@ -179,9 +179,12 @@ def run_cli(args: list[str], *, timeout_ms: int = 45_000, token: str = "") -> di
         env["WECHATSYNC_TOKEN"] = token
     cmd = ["node", str(CLI_ENTRY), "--timeout", str(timeout_ms), *args]
     try:
+        # The CLI asks "open the extension install page? (y/N)" only when the
+        # extension is missing; answering N keeps this run non-interactive and
+        # avoids launching a browser from inside a delivery call.
         proc = hidden_run(
             cmd, cwd=str(CLI_DIR), capture_output=True, text=True,
-            encoding="utf-8", errors="replace", env=env, input="N\n",
+            encoding="utf-8", errors="replace", env=env, input_text="N\n",
             timeout=timeout_ms / 1000 + 40,
         )
         return {

@@ -43,9 +43,10 @@ DELIVERY_SCHEMA = "contentops.platform-delivery/v1"
 #   DELIVERY_GRAPHIC_PLATFORMS - every platform the graphic line can shape and
 #       hand off, including delivery-only channels with no registry row.
 #
-# xiaohongshu is absent from both by operator instruction (2026-11-09): the
-# whole Xiaohongshu platform belongs to the VIDEO line. It stays listed in the
-# spec file under `excluded` so the exclusion is auditable, not implicit.
+# Xiaohongshu image-text is excluded from both graphic views by operator
+# instruction (2026-11-09). Only `xiaohongshu_video` is configured on VIDEO;
+# image-text is not converted to video. The exclusion stays in the spec file so
+# it is auditable, not implicit.
 REGISTRY_GRAPHIC_PLATFORMS: dict[str, dict[str, str]] = {}
 DELIVERY_GRAPHIC_PLATFORMS: dict[str, dict[str, str]] = {}
 
@@ -328,7 +329,8 @@ class MultiChannelAdapter:
         shaped = graphic_specs.shape(self.platform_id, title, body)
         title = shaped["title"]
         body = shaped["body"]
-        blockers: list[str] = list(shaped["blockers"])
+        blockers: list[str] = list(package.get("blockers") or [])
+        blockers.extend(shaped["blockers"])
         warnings: list[str] = list(shaped["warnings"])
 
         if rules["needs_cover"] and not (package.get("images") or []):

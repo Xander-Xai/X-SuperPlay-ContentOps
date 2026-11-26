@@ -186,14 +186,13 @@ configuration was written. Status is a claim about evidence.
 ## Per-platform mapping (this branch)
 
 The registry stores local pipeline labels that name a platform's native shape
-(`XHS_EDITORIAL`, `GZH_EDITORIAL`, `X_EDITORIAL`, `ARTICLE_EDITORIAL`). They are
+(`GZH_EDITORIAL`, `X_EDITORIAL`, `ARTICLE_EDITORIAL`). They are
 **storage labels**, not production lines. Production is identified by
 normalizing them onto the shared lines:
 
 | Registry pipeline label | Normalizes to production line |
 |---|---|
 | `VIDEO` | the `VIDEO` line (`contentops.copy-to-video/v1`) |
-| `XHS_EDITORIAL` | the `GRAPHIC_TEXT` line (`contentops.copy-to-graphic/v1`) |
 | `GZH_EDITORIAL` | the `GRAPHIC_TEXT` line (`contentops.copy-to-graphic/v1`) |
 | `ARTICLE_EDITORIAL` | textual editorial (no graphic/video line today; no production engine implies one) |
 | `X_EDITORIAL` | textual editorial over the existing publish/ track |
@@ -202,9 +201,10 @@ Rules:
 
 - The mapping is declared, not inferred. An adapter states the production line
   it consumes; a registry row states the normalization it uses.
-- `XHS_EDITORIAL` and `GZH_EDITORIAL` remain local content-type labels; they map
-  to the shared `GRAPHIC_TEXT` line and **do not** justify a separate production
-  engine.
+- `GZH_EDITORIAL` maps to the shared `GRAPHIC_TEXT` line and does **not** justify a
+  separate production engine. Xiaohongshu has no active graphic editorial label or
+  `GRAPHIC_TEXT` route in this repository; only `xiaohongshu_video` is registered
+  on `VIDEO`, while `xiaohongshu_image` is explicitly excluded.
 - The production-line identifiers (`VIDEO`, `GRAPHIC_TEXT`) stay the names of
   existing code; the editorial labels never shadow them.
 - **`X_EDITORIAL` content production is owned by `src/contentops/publish/`.** X
@@ -218,7 +218,7 @@ Rules:
 | Strategy platform | Local entry | Pipeline | Local status | Easel capability | Next action |
 |---|---|---|---|---|---|
 | douyin | `douyin` | `VIDEO` | `PLANNED` | `UPSTREAM_DECLARED` | account not bound; `video_deliver.py` packs and dispatches only with an operator grant |
-| xiaohongshu | `xiaohongshu_video` (no image row) | `VIDEO` | `PLANNED` | `UPSTREAM_DECLARED` | rights unresolved; the image line belongs to VIDEO (spec `excluded`) |
+| xiaohongshu | `xiaohongshu_video` (no image row) | `VIDEO` | `PLANNED` | `UPSTREAM_DECLARED` | graphic/image-text target excluded; account, rights and publication remain separate gates |
 | bilibili | `bilibili` | `VIDEO` | `PLANNED` | `UPSTREAM_DECLARED` | account not bound; public counters readable into a receipt |
 | wechat_channels | `shipinhao` | `VIDEO` | `PLANNED` | `UPSTREAM_DECLARED` | account not bound; `video_deliver.py` pack only |
 | wechat_official_account | `wechat_article` | `GZH_EDITORIAL` | `PLANNED` | `UPSTREAM_DECLARED` | rights unresolved; `wechat_draft.py` can stop at a draft |
@@ -227,13 +227,14 @@ Rules:
 | youtube | `youtube` | `VIDEO` | `PLANNED` | `ABSENT` | account not bound; `video_deliver.py` pack only |
 | x | `x` | `X_EDITORIAL` | `INTEGRATED` | `ABSENT` | manual-only gate; `prepare_handoff` ends `AWAITING_MANUAL_PUBLISH`; `REPORTED_PUBLISHED` not yet exercised |
 
-Last checked against `config/registry/platforms.json` and the graphic spec on
-2026-11-12. A delivery channel (`platform_delivery.py`, `graphic_deliver.py`)
+Last checked against `config/registry/platforms.json` and the graphic/video specs on
+2026-11-18. A delivery channel (`platform_delivery.py`, `graphic_deliver.py`)
 does not create a registry row and does not raise a row's status.
 
-`XHS_EDITORIAL` and `GZH_EDITORIAL` are local content-type labels. They map to
-the shared `GRAPHIC_TEXT` production line; they do **not** justify a separate
-production engine.
+`GZH_EDITORIAL` maps to the shared `GRAPHIC_TEXT` production line; it does not
+justify a separate production engine. Xiaohongshu has no `XHS_EDITORIAL` route;
+its graphic target is excluded and its only registry row is `xiaohongshu_video`
+on `VIDEO`.
 
 ## Non-negotiables
 

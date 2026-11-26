@@ -4,6 +4,9 @@ import { AnnotationCard, AnnotationProps } from "./AnnotationCard";
 import { RagFlow, RagProps } from "./RagFlow";
 import { RecordingMark, RecordingMarkProps } from "./RecordingMark";
 import { TitleCard, TitleCardProps } from "./TitleCard";
+import { ExplainerCard, ExplainerCardProps } from "./ExplainerCard";
+import { InfoGraphic, InfoGraphicProps } from "./InfoGraphic";
+import { EvidenceShot, EvidenceShotProps } from "./EvidenceShot";
 import {
   Technical3DExplainer,
   Technical3DExplainerProps,
@@ -42,6 +45,26 @@ const ragDefaults: RagProps = {
 };
 
 const frames = (seconds: number) => Math.round(Math.min(8, Math.max(2, seconds)) * 30);
+
+const explainerDefaults: ExplainerCardProps = {
+  kicker: "解释卡",
+  title: "满屏解释卡",
+  items: ["第一点", "第二点"],
+  footnote: "",
+  durationSeconds: 5,
+  palette: annotationDefaults.palette,
+};
+
+const evidenceShotDefaults: EvidenceShotProps = {
+  image: "placeholder.png", kicker: "证据", callout: "关键词", note: "",
+  move: "push", emphasis: "box", durationSeconds: 5,
+  palette: annotationDefaults.palette,
+};
+
+const infoGraphicDefaults: InfoGraphicProps = {
+  kind: "flow", eyebrow: "信息图", title: "信息图", items: ["第一点", "第二点"],
+  caption: "", durationSeconds: 6, palette: annotationDefaults.palette,
+};
 
 const threeDefaults: Technical3DExplainerProps = {
   title: "3D 结构示意",
@@ -157,6 +180,51 @@ export const RemotionRoot: FC = () => {
         defaultProps={threeDefaults}
         calculateMetadata={({ props }) => ({
           durationInFrames: frames(props.duration_s || 4),
+          fps: 30,
+          width: 1080,
+          height: 1920,
+        })}
+      />
+      <Composition
+        id="EvidenceShot"
+        component={EvidenceShot}
+        durationInFrames={150}
+        fps={30}
+        width={1080}
+        height={1920}
+        defaultProps={evidenceShotDefaults}
+        calculateMetadata={({ props }) => ({
+          durationInFrames: frames(props.durationSeconds || 5),
+          fps: 30,
+          width: 1080,
+          height: 1920,
+        })}
+      />
+      <Composition
+        id="InfoGraphic"
+        component={InfoGraphic}
+        durationInFrames={180}
+        fps={30}
+        width={1080}
+        height={1920}
+        defaultProps={infoGraphicDefaults}
+        calculateMetadata={({ props }) => ({
+          durationInFrames: frames(props.durationSeconds || 6),
+          fps: 30,
+          width: 1080,
+          height: 1920,
+        })}
+      />
+      <Composition
+        id="ExplainerCard"
+        component={ExplainerCard}
+        durationInFrames={150}
+        fps={30}
+        width={1080}
+        height={1920}
+        defaultProps={explainerDefaults}
+        calculateMetadata={({ props }) => ({
+          durationInFrames: frames(props.durationSeconds || 5),
           fps: 30,
           width: 1080,
           height: 1920,

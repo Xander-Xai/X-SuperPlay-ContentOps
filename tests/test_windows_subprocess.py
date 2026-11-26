@@ -49,6 +49,31 @@ def test_hidden_run_captures_stdout():
     print("[ok] 1. hidden_run captures stdout")
 
 
+def test_hidden_run_feeds_input_text_through_a_pipe():
+    """input_text is the Windows-safe way to answer an interactive CLI prompt.
+
+    A StringIO cannot be passed as stdin on Windows (no fileno), so hidden_run
+    exposes input_text and forwards it to subprocess.run(input=...).
+    """
+    code = "import sys; print('got:' + sys.stdin.read().strip())"
+    r = hidden_run([PYTHON, "-c", code], input_text="N\n")
+    assert r.returncode == 0, f"rc={r.returncode} stderr={r.stderr}"
+    assert "got:N" in r.stdout, r.stdout
+    print("[ok] 1b. hidden_run feeds input_text")
+
+
+def test_hidden_run_rejects_input_text_with_stdin():
+    """input_text and stdin are mutually exclusive; a clear error beats a silent drop."""
+    import io
+    try:
+        hidden_run([PYTHON, "-c", "pass"], input_text="N\n", stdin=io.StringIO(""))
+    except ValueError as exc:
+        assert "either input_text or stdin" in str(exc)
+    else:
+        raise AssertionError("expected ValueError when both input_text and stdin are given")
+    print("[ok] 1c. hidden_run rejects input_text + stdin")
+
+
 def test_hidden_run_nested_python():
     """hidden_run spawns a child interpreter with no console window."""
     r = hidden_run([PYTHON, "-c", "import sys; print(sys.executable)"])
