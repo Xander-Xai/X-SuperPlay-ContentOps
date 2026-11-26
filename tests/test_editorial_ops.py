@@ -53,6 +53,18 @@ class EditorialTests(unittest.TestCase):
         self.assertEqual(sum(item["score_breakdown"].values()), item["score"] * 10)
         self.assertIn("CANDIDATE", item["next_gate"])
 
+    def test_search_finds_history_across_ledgers(self):
+        self.add("signals.csv", self.signal)
+        self.add("topics.csv", self.topic)
+        self.assertEqual(ops.search(self.directory, "nonexistent-xyz"), [])
+        hits = ops.search(self.directory, "agent")
+        tables = {h["table"] for h in hits}
+        self.assertIn("signals.csv", tables)
+        self.assertIn("topics.csv", tables)
+        self.assertTrue(all(h["line"] >= 2 for h in hits))
+        with self.assertRaises(ValueError):
+            ops.search(self.directory, "")
+
     def test_no_evidence(self):
         self.add("topics.csv", self.topic)
         self.assertEqual(ops.plan(self.directory)["queue"][0]["decision"], "NEEDS_EVIDENCE")

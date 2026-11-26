@@ -310,6 +310,25 @@ def dashboard(directory, report):
     write_atomic(directory, "editorial-workspace.html", page)
 
 
+def search(directory, query):
+    """Read-only keyword search across the three ledgers.
+
+    Retrieval, not planning: a historical row is returned even if it would not
+    pass today's ``plan`` validation, so past topics and peer cases stay
+    findable. Matches any field, case-insensitively, and never writes a file.
+    """
+    directory = local_dir(directory)
+    q = str(query or "").strip().lower()
+    if not q:
+        raise ValueError("--query required")
+    hits = []
+    for name in FIELDS:
+        for line_no, row in enumerate(load(directory, name), start=2):
+            if any(q in str(value).lower() for value in row.values()):
+                hits.append({"table": name, "line": line_no, "row": row})
+    return hits
+
+
 def prepare_handoff(directory, report, ident, reviewer, confirmed):
     """Create an explicit router command; never execute it or approve research."""
     directory = local_dir(directory)
@@ -377,10 +396,11 @@ def route(directory, report, ident, reviewer, confirmed, runner=None):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("init", "plan", "import-hotspots", "dashboard", "handoff", "route"))
+    parser.add_argument("command", choices=("init", "plan", "import-hotspots", "dashboard", "handoff", "route", "search"))
     parser.add_argument("--data-dir", type=Path, default=DEFAULT)
     parser.add_argument("--input", type=Path)
     parser.add_argument("--topic")
+    parser.add_argument("--query", default="")
     parser.add_argument("--account")
     parser.add_argument("--candidate")
     parser.add_argument("--reviewer", default="")
@@ -394,6 +414,10 @@ def main(argv=None):
             if not args.input or not args.topic or not args.account:
                 raise ValueError("--input, --topic and --account required")
             print(json.dumps(import_hotspots(args.data_dir, args.input, args.topic, args.account)))
+        elif args.command == "search":
+            hits = search(args.data_dir, args.query)
+            print(json.dumps(hits, ensure_ascii=False, indent=2))
+            print("SEARCH: %d match(es)" % len(hits), file=sys.stderr)
         else:
             report = plan(args.data_dir)
             if args.command == "dashboard":
