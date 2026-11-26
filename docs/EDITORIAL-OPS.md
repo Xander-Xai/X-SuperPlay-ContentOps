@@ -115,6 +115,30 @@ The optional `.github/workflows/editorial-public-feed-smoke.yml` runs separate G
 
 On head a5af1b3, [hosted public-feed smoke](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/actions/runs/45720227082) admitted 10 real GitHub release Atom observations (0 skipped), input SHA256 `948d5019ee74077d21665c97828d5b390a8ab29d110182d16dadbdcc384dabd7`. RSSHub shared instance refused the trending request (HTTP 403). This is an external-access blocker, not a parser pass. Use an authorized own instance with HTTPS or its local export; do not evade access controls. The adapter now explicitly reports authorization and rate-limit failures, with no automatic retry. No raw feed content was committed and no buyer evidence or publication was claimed.
 
+## Video performance diagnostics (Refs #216)
+
+Research: [YouTube API samples](https://github.com/youtube/api-samples) for native analytics fields, [Social Dash](https://github.com/cadenburleson/social-dash) for local performance views, and [social-media-skills analytics](https://github.com/social-media-skills/skills/blob/main/skills/analytics-and-reporting/SKILL.md) for connecting observations to the next editorial hypothesis. No upstream code, dependency or account integration added.
+
+Use the existing platform-learning CSVs (including authorized imports when available):
+```text
+python scripts/editorial_diagnostics.py --platform bilibili --account x-superplay-future-intelligence --format video --topic agent --experiment exp --definition native_v1 --window T+24H
+```
+Replace the scope with real identifiers. Reports go to stdout; redirect only to ignored local storage. Same platform/account/format/topic/experiment/metric definition/age window, organic native observations only. Duplicate identities or snapshots excluded; absent values stay null. Native CTR and retention units are not assumed or mixed. Report shows coverage, leave-one-out peer medians (at least five other valid observations per metric), saves per thousand views and qualified signals per measured Founder hour. The lowest comparable relative metric suggests one variable to inspect, not a causal finding or permission to modify DNA. Input digest covers both existing CSVs. This does not collect new data, approve, render, publish, or prove growth. Run `python tests/test_editorial_diagnostics.py` for synthetic contract tests.
+
+## Daily capacity and draft editorial review (Refs #216)
+
+Research: [Fider](https://github.com/getfider/fider) for separating feedback signals from product decisions, [social-media-skills](https://github.com/social-media-skills/skills/blob/main/skills/content-calendar/SKILL.md) for sustainable queues and [SOCIAL:OS](https://github.com/shyftai/SOCIALOS) for editorial workflow patterns. No external code or dependencies.
+
+```text
+python scripts/editorial_daily.py plan --day 2026-11-26 --minutes 90
+python scripts/editorial_daily.py rubric --candidate <actual-plan-id> --draft draft.md
+python scripts/editorial_daily.py review --candidate <actual-plan-id> --draft draft.md --record review.json --confirm
+```
+
+Use the same editorial data directory as editorial_ops (global --data-dir before subcommand). Plan preserves the existing advisory ranking, fits eligible due unrouted items into an explicit minutes budget, and reports reasons for every deferral. It distinguishes observed demand-type URLs and reported buyer-request URLs from hotlists; these are not verified customers or independent demand. It does not route automatically or promise actual hours. Actual effort is reviewed in editorial_diagnostics.
+
+Copy a UTF-8 draft.md into that local data directory, redirect rubric stdout to review.json there, and have the human fill reviewer and every check's result (SATISFIED/REVISE) and concrete note. Re-run review with explicit confirmation. The record binds draft bytes and the current candidate; changes make it stale. This is a draft editorial review, not a rendered-media inspection, copy approval, claim/evidence check, or publish gate. No auto-scoring. Test: python tests/test_editorial_daily.py.
+
 ## Authorized video metric intake (candidate)
 
 `video_metric_intake.py` imports the documented Douyin video-data response and the existing Bilibili account-delivery receipt into the **existing** local `platform-learning/metric-snapshots.csv`. No network, login, or credential handling. Reference: [Douyin video.data](https://open.douyin.com/platform/resource/docs/openapi/video-management/douyin/search-video/video-data/), [official SDK](https://github.com/bytedance/douyin-openapi-sdk-go), [Bilibili official demo](https://github.com/bilibili-openplatform/demo). The historical Douyin document is a response-contract reference; confirm current application permission before collecting. Use `python scripts/video_metric_intake.py --platform douyin --account x-superplay-1024 --content-id <local-id> --video-id <native-id> --observed-at <original-ISO-time> --input .local/authorized-export.json --confirm`. Existing published index entry and canonical URL are required; original time must land in a defined window. Bilibili transport smoke is refused. Unsupported/missing counts remain blank (downloads are not saves); cumulative counters are always unknown paid/organic, excluded from organic learning. Input SHA is retained, raw title/opaque item ID is not written. Same observation replays, conflicting observations fail; single local writer only. No genuine platform response or authorization tested. No new registry status or publication claim.
