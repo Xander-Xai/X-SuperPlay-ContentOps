@@ -1,0 +1,170 @@
+<!--
+  ContentOps · 9:16 professional opener template (Huashu / om contract)
+
+  Why: the M5 pipeline fed Huashu one thin HTML template and produced black text
+  cards. This opener leads with REAL material (a source screenshot shown
+  contained, never cropped), states the problem as a number, then closes on
+  brand -- the director-level shape Huashu intends, not a slide deck.
+
+  Material to supply in <film>/assets/:
+    - code-pin.png   a real screenshot (shown contained; the focus box lands on
+                     a real line, nothing is invented)
+    - qc.png         optional second real screenshot for evidence shots
+
+  Edit copy/colours via data-composition-variables on <html>.
+  Render path (local, non-paid):
+    om check <film>
+    om still <film> --at 0,2,4,6,8,11
+    python scripts/render_film.py --film <film> --out out.mp4
+
+  This is an animatic-capable template; human review of the final film remains
+  required and is not granted here.
+-->
+<!doctype html>
+<html lang="zh-CN" data-composition-variables='[
+  {"id":"accent","type":"color","label":"强调色","default":"#38BDF8"},
+  {"id":"bg","type":"color","label":"底色","default":"#0B0F14"},
+  {"id":"ink","type":"color","label":"文字色","default":"#E8EEF5"},
+  {"id":"shots","type":"number","label":"镜头数","default":14,"min":1,"max":99},
+  {"id":"cards","type":"number","label":"同模板镜头","default":12,"min":0,"max":99}
+]'>
+<head>
+<meta charset="utf-8">
+<title>ContentOps · 真实素材开场</title>
+<script src="vendor/gsap.min.js"></script>
+<style>
+  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000}
+  #film{position:relative;width:1080px;height:1920px;overflow:hidden;
+    background:var(--bg);color:var(--ink);font-family:"Noto Sans SC","Microsoft YaHei",sans-serif;--accent:#38BDF8}
+  .kicker{position:absolute;left:72px;top:150px;font-size:30px;letter-spacing:6px;color:var(--accent);font-weight:700}
+  .kicker .dot{display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--accent);margin-right:14px;vertical-align:middle}
+  .lead{position:absolute;left:72px;right:72px;top:210px;font-size:74px;line-height:1.18;font-weight:900;letter-spacing:-1px}
+  .lead .mask{display:inline-block;overflow:hidden;vertical-align:top;padding-bottom:6px}
+  .lead .ch{display:inline-block}
+  .hero{position:absolute;left:72px;right:72px;top:600px;height:940px;border-radius:18px;overflow:hidden;
+    background:#0f151c;border:1px solid #1e2a36;box-shadow:0 30px 80px #000a}
+  .hero img{width:100%;height:100%;object-fit:contain;display:block}
+  .hero .focus{position:absolute;left:9%;top:38%;width:78%;height:15%;border:4px solid var(--accent);border-radius:10px;
+    box-shadow:0 0 0 9999px #05070acc,0 0 30px #38BDF880;opacity:0}
+  .fact{position:absolute;left:72px;right:72px;top:1580px;font-size:34px;line-height:1.5;color:#9FB3C8}
+  .fact b{color:var(--accent);font-weight:700}
+
+  /* scene 2: number + a dot matrix that actually shows 12-of-14 */
+  .stat{position:absolute;inset:0;opacity:0}
+  .stat .num{position:absolute;left:72px;top:360px;font-size:280px;line-height:1;font-weight:900;letter-spacing:-10px;color:var(--accent);font-variant-numeric:tabular-nums}
+  .stat .lbl{position:absolute;left:78px;top:700px;font-size:56px;color:var(--ink)}
+  .stat .of{position:absolute;left:78px;top:780px;font-size:34px;color:#6b7d90}
+  .grid{position:absolute;left:72px;right:72px;top:940px;display:grid;grid-template-columns:repeat(7,1fr);gap:22px}
+  .cell{aspect-ratio:1;border-radius:10px;background:#1b2530;border:1px solid #263341}
+  .cell.on{background:var(--accent);border-color:var(--accent);box-shadow:0 0 22px #38BDF860}
+  .stat .cap{position:absolute;left:72px;right:72px;top:1330px;font-size:30px;color:#7f93a6;line-height:1.5}
+  .stat .cap b{color:var(--accent)}
+
+  /* scene 3: brand close over a dimmed real still, not an empty black */
+  .end{position:absolute;inset:0;opacity:0;overflow:hidden}
+  .end .bgstill{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.10;filter:grayscale(.4)}
+  .end .shade{position:absolute;inset:0;background:radial-gradient(120% 80% at 50% 45%,#0B0F1400,#0B0F14E6 75%)}
+  .end .inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px}
+  .end .claim{font-size:78px;font-weight:900;text-align:center;letter-spacing:-1px;line-height:1.3}
+  .end .rule{width:230px;height:8px;background:var(--accent);transform-origin:50% 50%}
+  .end .brand{font-size:32px;letter-spacing:8px;color:var(--accent);font-weight:700}
+  .end .mark{position:absolute;width:64px;height:64px;border:3px solid #38BDF860}
+  .end .mark.tl{left:56px;top:56px;border-right:none;border-bottom:none}
+  .end .mark.br{right:56px;bottom:56px;border-left:none;border-top:none}
+</style>
+</head>
+<body>
+<div id="film" data-composition-id="film" data-width="1080" data-height="1920">
+  <section id="s-real">
+    <div class="kicker" data-om-id="kicker"><span class="dot"></span>REAL SOURCE · NOT A RENDER</div>
+    <h1 class="lead" data-om-id="lead"></h1>
+    <div class="hero" data-om-id="hero">
+      <img src="assets/code-pin.png" alt="pinned source screenshot">
+      <div class="focus" data-om-id="focus"></div>
+    </div>
+    <div class="fact" data-om-id="fact">截图来自 <b>runtime/easel-pins.json</b> 的真实内容；<br>框里这一行写着 <b>FROZEN (Founder decision)</b>。</div>
+  </section>
+
+  <section id="s-problem" class="stat" data-om-id="stat">
+    <div class="num" id="num">0</div>
+    <div class="lbl">个镜头，同一个模板</div>
+    <div class="of">总镜头数 <span id="total">0</span></div>
+    <div class="grid" id="grid" data-om-id="grid"></div>
+    <div class="cap">依据真实 <b>storyboard.json</b> 的 14 个镜头：<br>全部为 explain 角色、6–8 秒均匀切分。</div>
+  </section>
+
+  <section id="s-end" class="end" data-om-id="end">
+    <img class="bgstill" src="assets/code-pin.png" alt="">
+    <div class="shade"></div>
+    <div class="mark tl"></div>
+    <div class="mark br"></div>
+    <div class="inner">
+      <div class="claim">每个镜头，<br>都该有理由</div>
+      <div class="rule"></div>
+      <div class="brand">CONTENTOPS · 未来智能</div>
+    </div>
+  </section>
+</div>
+
+<script>
+  const V = OM.vars();
+  const film = document.getElementById('film');
+  film.style.setProperty('--accent', V.accent);
+  film.style.setProperty('--bg', V.bg);
+  film.style.setProperty('--ink', V.ink);
+
+  const esc = (c) => ({'<':'&lt;','>':'&gt;','&':'&amp;'})[c] || c;
+  const leadText = '这一行，决定能不能发布';
+  document.querySelector('.lead').innerHTML =
+    [...leadText].map(c => c === ' ' ? ' ' : `<span class="mask"><span class="ch">${esc(c)}</span></span>`).join('');
+
+  // Build the 14-cell matrix; the first `cards` are the repeated-template ones.
+  const grid = document.getElementById('grid');
+  const cells = [];
+  for (let i = 0; i < V.shots; i++) {
+    const d = document.createElement('div');
+    d.className = 'cell' + (i < V.cards ? ' on' : '');
+    grid.appendChild(d); cells.push(d);
+  }
+
+  const tl = gsap.timeline({ paused: true, defaults: { ease: 'power3.out' } });
+
+  // Scene 1 (0-4.6) — first frame is already composed, not a blank flash
+  tl.addLabel('scene:real', 0)
+    .fromTo('.kicker', { x: -24 }, { x: 0, duration: .5 }, 0)
+    .fromTo('.lead .ch', { yPercent: 115 }, { yPercent: 0, duration: .8, stagger: .035, ease: 'expo.out' }, .2)
+    .fromTo('.hero', { y: 60, scale: .97 }, { y: 0, scale: 1, duration: .9, ease: 'expo.out' }, 0)
+    .fromTo('.focus', { opacity: 0, scale: .9 }, { opacity: 1, scale: 1, duration: .5 }, 1.8)
+    .fromTo('.fact', { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: .6 }, 2.2)
+    .to({}, { duration: .7 })
+    .to('#s-real', { opacity: 0, duration: .45, ease: 'power2.in' }, 4.5);
+
+  // Scene 2 (4.85-8.3) — counter + matrix that fills in
+  const c = { v: 0 };
+  tl.addLabel('scene:problem', 4.85)
+    .set('#s-problem', { opacity: 1 }, 4.85)
+    .fromTo('.stat .lbl', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: .5 }, 4.95)
+    .fromTo('.stat .of', { opacity: 0 }, { opacity: 1, duration: .5 }, 5.2)
+    .to(c, { v: V.cards, duration: 1.2, ease: 'expo.out',
+        onUpdate: () => { document.getElementById('num').textContent = Math.round(c.v); } }, 4.9)
+    .call(() => { document.getElementById('total').textContent = V.shots; }, null, 4.9)
+    .fromTo(cells, { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: .35,
+        stagger: { each: .045, from: 'start' }, ease: 'back.out(1.6)' }, 5.0)
+    .fromTo('.stat .cap', { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: .6 }, 6.0)
+    .to({}, { duration: 1.0 })
+    .to('#s-problem', { opacity: 0, duration: .4, ease: 'power2.in' }, 8.2);
+
+  // Scene 3 (8.6-12.4) — brand close over the dimmed real still
+  tl.addLabel('scene:end', 8.6)
+    .set('#s-end', { opacity: 1 }, 8.6)
+    .fromTo('.end .bgstill', { scale: 1.12, opacity: 0 }, { scale: 1.0, opacity: .10, duration: 1.6, ease: 'power2.out' }, 8.6)
+    .fromTo('.end .mark', { opacity: 0, scale: .8 }, { opacity: 1, scale: 1, duration: .6, stagger: .12 }, 8.8)
+    .fromTo('.end .claim', { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: .8, ease: 'expo.out' }, 8.9)
+    .fromTo('.end .rule', { scaleX: 0 }, { scaleX: 1, duration: .7, ease: 'expo.inOut' }, 9.6)
+    .fromTo('.end .brand', { opacity: 0 }, { opacity: 1, duration: .6 }, 9.9)
+    .to({}, { duration: .8 });
+
+  window.__timelines['film'] = tl;
+</script>
+</body>
+</html>
