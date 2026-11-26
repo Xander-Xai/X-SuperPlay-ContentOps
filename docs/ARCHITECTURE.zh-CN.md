@@ -9,8 +9,8 @@ translation_status: synced
 [English](ARCHITECTURE.md) | [简体中文](ARCHITECTURE.zh-CN.md)
 
 
+> 最后验证：2026-11-27，新增 ops_brief 一屏运营简报、editorial quick-create（4 项输入）与 score、copy_quality、draft.py 按账号 DNA 生成开场收束、pinned source 截图 contain 修复。
 > 最后验证：2026-11-26，#219 候选分支共享文案与离线图文入口核对；CI 待验证。
-> Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > 最后验证：2026-11-21，核对 #204/#205：M5 的 ASR 与字幕实现移入 `workflow/m5_asr_stage.py` 和 `workflow/m5_subtitles_stage.py`，旧编排器继续提供兼容入口，证据、真人审核、发布授权均不变。
 > 最后验证：2026-11-14；X / 跨平台本地数据回流只生成待审主题，不授予自动平台动作。
 > X 原创稿记录通过显式 `post_format=text|image` 区分纯文字与图文，图文继续校验图片/ALT；人工评分按技术/新闻与泛兴趣模式分流。发布包与原有数据回流仍只面向人工，不执行X平台动作。

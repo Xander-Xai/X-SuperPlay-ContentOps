@@ -10,8 +10,8 @@ translation_status: synced
 
 > 真实可执行命令。从实际脚本行为推导，非假设。
 
+> 最后验证：2026-11-27，新增 ops_brief 一屏运营简报、editorial quick-create（4 项输入）与 score、copy_quality、draft.py 按账号 DNA 生成开场收束、pinned source 截图 contain 修复。
 > 最后验证：2026-11-26，#219 候选分支共享文案与离线图文入口核对；CI 待验证。
-> Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > 最后验证：2026-11-21，复核 #204/#205 M5 ASR / 字幕拆分，原诊断命令及回执路径未变；离线测试不代表实际调用转写或生产渲染。
 > X / 跨平台本地数据回流只生成待审主题，不授予自动平台动作。
 > X 命令行 `--new` 增加 `--post-format text|image`（旧记录默认 image）。纯文字发布包不含图片/ALT步骤；图文仍须真图与ALT。`--package`只准备待发布包，`--mark-published`只记录真人确认的X URL。

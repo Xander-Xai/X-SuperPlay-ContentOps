@@ -5,6 +5,7 @@
 [简体中文](README.md) | English
 
 
+> Last verified: 2026-11-27. Added ops_brief (one-screen operations briefing), editorial quick-create (4 inputs) + score, copy_quality, DNA-driven opening/closing in draft.py, and a contain fix for pinned source screenshots.
 > Last verified: 2026-11-26. #219 candidate shared copy and offline graphic paths reviewed; CI pending.
 > Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > Last verified: 2026-11-21. Rechecked the M5 ASR (#204) and subtitle (#205) extraction diffs. The compatibility entry points, evidence gates and pending human/publication review remain unchanged.

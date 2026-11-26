@@ -11,8 +11,8 @@ translation_status: synced
 > 本地验证策略权威文档、套件清单与 CI 接线。
 >
 
+> 最后验证：2026-11-27，新增 ops_brief 一屏运营简报、editorial quick-create（4 项输入）与 score、copy_quality、draft.py 按账号 DNA 生成开场收束、pinned source 截图 contain 修复。
 > 最后验证：2026-11-26，#219 候选分支共享文案与离线图文入口核对；CI 待验证。
-> Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > 最后验证：2026-11-21，已核对 #205 字幕行为回归及 #206 分镜抽取对应的 CI 已注册测试套件；没有新增独立测试套件，也没有改变素材证据或人工审核边界。
 > `.github/workflows/ci.yml` 逐一具名。此处不写死数量，
 > 以 `ls tests/test_*.py | wc -l` 为准（截至 2026-11-26 为 133）。

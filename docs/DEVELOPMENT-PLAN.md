@@ -5,6 +5,7 @@
 > Milestone-based execution. Every milestone has an exit criterion.
 >
 
+> Last verified: 2026-11-27. Added ops_brief (one-screen operations briefing), editorial quick-create (4 inputs) + score, copy_quality, DNA-driven opening/closing in draft.py, and a contain fix for pinned source screenshots.
 > Last verified: 2026-11-26. #219 candidate shared copy and offline graphic paths reviewed; CI pending.
 > Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > Last verified: 2026-11-21. M5 ASR/subtitle stages were checked against the extracted compatibility facades in #204/#205; the milestone's human-review and delivery blockers remain unchanged.

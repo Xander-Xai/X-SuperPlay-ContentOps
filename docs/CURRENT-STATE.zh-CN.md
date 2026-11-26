@@ -11,6 +11,7 @@ translation_status: synced
 > 当前运行状态。仅经验证的事实。无展望，无过时声明。
 >
 
+> 最后验证：2026-11-27，新增 ops_brief 一屏运营简报、editorial quick-create（4 项输入）与 score、copy_quality、draft.py 按账号 DNA 生成开场收束、pinned source 截图 contain 修复。
 > 最后验证：2026-11-26，GitHub main @ `3e25d0346061bd4d5fde720bda7e8dc86d641a4e`；#221/#222 已合并，#220/#223 候选待验收。
 > 最后验证：2026-11-21，对照 #213 合并后的受保护 `main` @ `ffb87ad96eab6283c773bfd150c81497979b536a`；M5 编排器瘦身和 #199 真实视频交付未完成，未授予发布或人工审核通过。
 > 下列带具体日期的 Git 表格仅为历史快照，不代表今天的远程分支数量。

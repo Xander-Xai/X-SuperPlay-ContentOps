@@ -11,8 +11,8 @@ translation_status: synced
 > 基于里程碑执行。每个里程碑都有退出标准。
 >
 
+> 最后验证：2026-11-27，新增 ops_brief 一屏运营简报、editorial quick-create（4 项输入）与 score、copy_quality、draft.py 按账号 DNA 生成开场收束、pinned source 截图 contain 修复。
 > 最后验证：2026-11-26，#219 候选分支共享文案与离线图文入口核对；CI 待验证。
-> Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > 最后验证：2026-11-21，复核 #204/#205 的 M5 ASR 与字幕模块拆分；仅为接口保持的重构，不改变里程碑的人工审核和交付阻塞。
 > 已实施 X / 跨平台本地分析和人工选题回流，不代表真实平台效果或发布。
 > X 原创合同已扩展为 `post_format=text|image`；纯文字无需图片，图文保持图片/ALT门禁。生活娱乐内容采用独立人工评分，技术/事实内容维持严格证据要求，均手动发布。

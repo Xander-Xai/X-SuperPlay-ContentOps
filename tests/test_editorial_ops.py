@@ -90,6 +90,24 @@ class EditorialTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             ops.plan(self.directory)  # a lone score is neither all-6 nor all -1
 
+    def test_ops_brief_combines_queue_and_project_stage(self):
+        import ops_brief
+        ops.quick_create(self.directory, topic="brief-test", account="x-superplay-english",
+                         platform="x", format="text")
+        projects = Path(self.directory) / "projects"
+        receipts = projects / "demo" / "receipts"
+        receipts.mkdir(parents=True)
+        (receipts / "human-review.json").write_text(
+            json.dumps({"state": "PENDING_FOUNDER_REVIEW"}), encoding="utf-8")
+        brief = ops_brief.build(Path(self.directory), projects)
+        stages = {p["project"]: p["stage"] for p in brief["projects"]}
+        self.assertEqual(stages.get("demo"), "AWAITING_REVIEW")
+        self.assertIn("NEEDS_SCORING", brief["editorial"]["by_decision"])
+        text = ops_brief.render_text(brief)
+        self.assertIn("今日运营简报", text)
+        self.assertIn("demo", text)
+        self.assertFalse(brief["publish_authorized"])
+
     def test_no_evidence(self):
         self.add("topics.csv", self.topic)
         self.assertEqual(ops.plan(self.directory)["queue"][0]["decision"], "NEEDS_EVIDENCE")

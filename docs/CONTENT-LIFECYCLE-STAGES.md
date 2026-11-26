@@ -8,6 +8,7 @@
 
 > Status: reference — 2026-11-12.
 
+> Last verified: 2026-11-27. Added ops_brief (one-screen operations briefing), editorial quick-create (4 inputs) + score, copy_quality, DNA-driven opening/closing in draft.py, and a contain fix for pinned source screenshots.
 > Last verified: 2026-11-26. #219 candidate shared copy and offline graphic paths reviewed; CI pending.
 > Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > Last verified: 2026-11-21. Rechecked #204/#205 M5 implementation extractions: lifecycle stages, receipts and approval boundaries are unchanged; these are not video acceptance or publication proofs.

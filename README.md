@@ -5,6 +5,7 @@
 简体中文 | [English](README.en.md)
 
 
+> Last verified: 2026-11-27. Added ops_brief (one-screen operations briefing), editorial quick-create (4 inputs) + score, copy_quality, DNA-driven opening/closing in draft.py, and a contain fix for pinned source screenshots.
 > 最后验证：2026-11-26，#219 候选分支共享文案与离线图文入口核对；CI 待验证。
 > Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > 最后验证：2026-11-21，核对 `main` 上 #204 ASR 模块抽取和 #205 字幕模块集成改动。M5 仍经原兼容入口运行；模块拆分不改变证据门禁，不构成视频成片、人工审核或发布授权。
