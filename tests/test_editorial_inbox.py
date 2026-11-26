@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
+import csv
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from datetime import datetime, timedelta, timezone
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 import editorial_inbox as inbox
 import editorial_ops as ops
+import platform_learning_loop as learning
 
 
 class InboxTests(unittest.TestCase):
@@ -68,6 +71,58 @@ class InboxTests(unittest.TestCase):
         path.write_text(path.read_text(encoding="utf-8").replace("public/1", "public/2"), encoding="utf-8")
         with self.assertRaises(ValueError):
             inbox.report(self.root)
+
+
+    def publication_fixture(self):
+        stamp = datetime.now(timezone.utc)
+        a = self.add(observed_at=(stamp - timedelta(hours=1)).isoformat())
+        metrics = self.root / "metrics"
+        learning.initialize(metrics)
+        p = dict(content_id="post-1", post_url="https://example.org/post/1",
+                 platform="x", account_alias=self.row["account"], content_format="text",
+                 discovery_source="comment", topic_cluster="agent", experiment_id="exp",
+                 published_at=(stamp - timedelta(days=1)).isoformat(),
+                 publish_status="reported_published")
+        self.write_index(metrics, [p])
+        return a["feedback_id"], metrics, p
+
+    def write_index(self, metrics, rows):
+        with (metrics / "content-index.csv").open("w", encoding="utf-8", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=learning.INDEX_COLUMNS)
+            writer.writeheader()
+            writer.writerows(rows)
+
+    def test_publication_binding_and_consented_handoff(self):
+        ident, metrics, p = self.publication_fixture()
+        args = (self.root, metrics, ident, p["content_id"], p["post_url"], "Founder")
+        with self.assertRaises(ValueError):
+            inbox.publication_binding(*args, False)
+        r = inbox.publication_binding(*args, True)
+        self.assertEqual(r["status"], "PUBLICATION_LINKED")
+        self.assertEqual(inbox.publication_binding(*args, True), r)
+        self.assertFalse(r["buyer_verified"])
+        with self.assertRaises(ValueError):
+            inbox.handoff_lead(self.root, metrics, ident, "Founder", False, True)
+        lead = inbox.handoff_lead(self.root, metrics, ident, "Founder", True, True)
+        self.assertEqual(lead["local_evidence_ref"], ident)
+        self.assertFalse(lead["paid_demand_verified"])
+        self.assertNotIn("observation", lead)
+        self.assertNotIn("source_url", lead)
+
+    def test_publication_wrong_scope_duplicate_and_stale(self):
+        ident, metrics, p = self.publication_fixture()
+        args = (self.root, metrics, ident, p["content_id"], p["post_url"], "Founder", True)
+        self.write_index(metrics, [{**p, "topic_cluster": "different"}])
+        with self.assertRaises(ValueError):
+            inbox.publication_binding(*args)
+        self.write_index(metrics, [p, {**p, "post_url": "https://example.org/post/2"}])
+        with self.assertRaises(ValueError):
+            inbox.publication_binding(*args)
+        self.write_index(metrics, [p])
+        inbox.publication_binding(*args)
+        self.write_index(metrics, [{**p, "published_at": (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat()}])
+        with self.assertRaises(ValueError):
+            inbox.handoff_lead(self.root, metrics, ident, "Founder", True, True)
 
 
 if __name__ == "__main__":
