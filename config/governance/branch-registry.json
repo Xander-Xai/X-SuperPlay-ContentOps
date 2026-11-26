@@ -342,6 +342,14 @@
       "pr": 221,
       "created": "2026-11-26",
       "purpose": "Issue #216 same-cohort native video diagnostic and measured effort feedback; local advisory only",
+      "status": "merged",
+      "expires": "2026-12-26"
+    },
+    {
+      "name": "feat/216-native-editorial-variants",
+      "pr": 223,
+      "created": "2026-11-26",
+      "purpose": "Issue #216/#211 native editorial draft preview with immutable shared-copy claim lineage, not production authorization",
       "status": "active",
       "expires": "2026-12-26"
     }
