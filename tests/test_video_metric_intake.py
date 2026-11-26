@@ -90,5 +90,39 @@ class IntakeTests(unittest.TestCase):
         self.assertEqual((row["metric_source"], row["saves"], row["organic_paid"]), ("api_public", "1", "unknown"))
 
 
+
+    def coverage(self, definition="douyin_api_counts_v1"):
+        import video_metric_coverage as coverage
+        return coverage.report(self.d, platform="douyin", account=self.kw["account"],
+                               topic="agent", experiment="exp", window="T+24H", definition=definition)
+
+    def test_coverage_imported_unknown_is_observation_only(self):
+        intake.import_observation(self.d, self.payload(), **self.kw)
+        result = self.coverage()
+        self.assertEqual(result["reasons"], {"OBSERVATION_ONLY": 1})
+        self.assertEqual(result["coverage"]["views_or_reads"], {"observed": 1, "organic_eligible": 0})
+        self.assertEqual(result["coverage"]["likes"]["observed"], 1)
+        self.assertEqual(result["coverage"]["saves"]["observed"], 0)
+        self.assertEqual(self.coverage("native_v1")["reasons"], {"MISSING_SNAPSHOT": 1})
+        self.assertFalse(result["publish_authorized"])
+
+    def test_coverage_native_organic_and_duplicate_refusal(self):
+        ix, = learning._load(self.d / "content-index.csv", learning.INDEX_COLUMNS)
+        s = {k: v for k, v in ix.items() if k in learning.SNAPSHOT_COLUMNS}
+        s.update(observed_at=OBSERVED, window="T+24H", metric_definition_version="native_v1",
+                 organic_paid="organic", data_access="available", metric_source="native_export",
+                 views_or_reads="100", saves="0")
+        for n in range(2):
+            with (self.d / "metric-snapshots.csv").open("a", encoding="utf-8", newline="") as f:
+                csv.DictWriter(f, fieldnames=learning.SNAPSHOT_COLUMNS).writerow(s)
+            result = self.coverage("native_v1")
+            if n == 0:
+                self.assertEqual(result["coverage"]["saves"]["organic_eligible"], 1)
+                self.assertEqual(result["reasons"], {"ORGANIC_OBSERVATION": 1})
+            else:
+                self.assertEqual(result["reasons"], {"DUPLICATE_SNAPSHOT": 1})
+                self.assertEqual(result["coverage"]["saves"]["organic_eligible"], 0)
+
+
 if __name__ == "__main__":
     unittest.main()
