@@ -679,6 +679,8 @@ jobs:
         run: python tests/test_platform_learning_loop.py
       - name: Authorized video metric intake tests
         run: python tests/test_video_metric_intake.py
+      - name: Copy structure diagnosis tests
+        run: python tests/test_copy_quality.py
       - name: Editorial planning tests
         run: python tests/test_editorial_ops.py
       - name: Editorial feedback tests

@@ -14,8 +14,8 @@ translation_status: synced
 > 最后验证：2026-11-26，#219 候选分支共享文案与离线图文入口核对；CI 待验证。
 > Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
 > 最后验证：2026-11-21，已核对 #205 字幕行为回归及 #206 分镜抽取对应的 CI 已注册测试套件；没有新增独立测试套件，也没有改变素材证据或人工审核边界。
-> `.github/workflows/ci.yml` 逐一具名（107 个步骤）。此处不写死数量，
-> 以 `ls tests/test_*.py | wc -l` 为准。
+> `.github/workflows/ci.yml` 逐一具名。此处不写死数量，
+> 以 `ls tests/test_*.py | wc -l` 为准（截至 2026-11-26 为 133）。
 > 最后验证：2026-11-14；已实施 X / 跨平台本地分析和人工选题回流，不代表真实平台效果或发布。
 > 新增纯文字稿件 READY/发布包/真实URL记录、图文缺图拒绝、分题材评分门槛与账号合同的回归测试；CI结果以PR实际检查为准，不将测试用URL冒充真实平台发布。
 > 本分支增加 X 本地数据分析测试及 CI 步骤，测试使用合成 CSV，不上传真实后台数据。
