@@ -338,6 +338,14 @@
       "expires": "2026-12-26"
     },
     {
+      "name": "feat/216-growth-diagnostics-20261126",
+      "pr": 221,
+      "created": "2026-11-26",
+      "purpose": "Issue #216 same-cohort native video diagnostic and measured effort feedback; local advisory only",
+      "status": "merged",
+      "expires": "2026-12-26"
+    },
+    {
       "name": "feat/216-public-issue-signals",
       "pr": 222,
       "created": "2026-11-26",

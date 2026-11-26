@@ -169,4 +169,10 @@ Python CI 步骤；Easel 候选新增 3 个独立套件及其 CI 步骤，集成
 
 #211/#208 候选分支：从现有已审核 VIDEO 文案逐字派生 GRAPHIC_TEXT，共享文案 ID、研究/文案摘要、Bundle、claim/evidence 绑定；独立素材与审核。新增六个非 X 平台离线打包入口，不创建平台草稿、升级状态或发布。X 与小红书图文排除；当前仅同仓 projects/、同 Bundle、同账号 treatment、同主题的逐字派生，尚待完整 CI。
 
+### 视频增长诊断回归
+
+`python tests/test_editorial_diagnostics.py`：合成数据覆盖同组匹配、缺失/零值、重复身份、付费与时间窗排除、工时和同行基线。显式接入 CI；不验证真实账号指标。
+
+`python tests/test_editorial_daily.py`：合成数据覆盖预算、需求链接分类、已路由排除、草稿审核建议、过期和路径拒绝；接入 CI，不代表实际内容验收。
+
 `python tests/test_editorial_issue_signals.py`：合成数据验证公开 Issue 预览、错误仓库/PR/不完整响应拒绝、选择与去重。离线测试不验证真实网络搜索。

@@ -165,4 +165,10 @@ Editorial planning V1 (#216): local evidence/peer ledgers, advisory topic scores
 
 #211/#208 candidate: project the existing reviewed VIDEO copy verbatim into GRAPHIC_TEXT; bind one shared copy identity to research/copy digests, Bundle, and claim/evidence references. Assets and review remain independent. Six non-X platform offline exports only, no external drafts, status upgrades or publication; X and Xiaohongshu image excluded. Initial scope is same-repository projects/, identical Bundle, treatment and topic, exact-copy only; full CI pending.
 
+### Video diagnostic regression
+
+`python tests/test_editorial_diagnostics.py` — synthetic same-cohort matching, missing/zero handling, duplicate identities, paid and time-window exclusion, effort and peer baseline. Explicit CI step. No actual account observations are verified.
+
+`python tests/test_editorial_daily.py` — synthetic budget, demand URL classification, route skip, advisory draft review and stale/path refusal. CI-wired; no real editorial acceptance claimed.
+
 `python tests/test_editorial_issue_signals.py` covers synthetic public issue preview, wrong repository/PR/incomplete refusal, selection and deduplication. Live search is not tested by the offline suite.

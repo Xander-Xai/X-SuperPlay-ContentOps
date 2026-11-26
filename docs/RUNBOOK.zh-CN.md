@@ -487,4 +487,10 @@ media-use 演示通过另一套已验证的 Easel 运行时合成。演示成功
 
 #211/#208 候选分支：从现有已审核 VIDEO 文案逐字派生 GRAPHIC_TEXT，共享文案 ID、研究/文案摘要、Bundle、claim/evidence 绑定；独立素材与审核。新增六个非 X 平台离线打包入口，不创建平台草稿、升级状态或发布。X 与小红书图文排除；当前仅同仓 projects/、同 Bundle、同账号 treatment、同主题的逐字派生，尚待完整 CI。 命令：`python scripts/shared_copy.py --source projects/<video> --project projects/<graphic>`，图文输入使用 `shared-copy.md` 和相同审核标题，经原 graphic_package.py 打包；`python scripts/graphic_offline.py --project projects/<graphic> --platform wechat_article --platform zhihu`。
 
+### 本地视频增长诊断
+
+运行 `python scripts/editorial_diagnostics.py --help`，范围参数示例见 [EDITORIAL-OPS.md](EDITORIAL-OPS.md)。只读已有 platform-learning CSV，输出描述性 JSON，不是批准、平台取数或发布。
+
+使用 `python scripts/editorial_daily.py plan --day YYYY-MM-DD --minutes 90` 获得本地排产建议；`rubric` 和 `review` 子命令提供绑定草稿的人工传播质量清单。见 [EDITORIAL-OPS.md](EDITORIAL-OPS.md)。不自动路由或批准。
+
 使用 `python scripts/editorial_issue_signals.py search --help`，按 [EDITORIAL-OPS.md](EDITORIAL-OPS.md) 示例预览公开 Issue，再人工确认登记需求观察。不登录账号，不自动采集或发布。
