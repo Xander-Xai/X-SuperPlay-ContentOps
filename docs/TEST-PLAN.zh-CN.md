@@ -172,3 +172,5 @@ Python CI 步骤；Easel 候选新增 3 个独立套件及其 CI 步骤，集成
 ### 视频增长诊断回归
 
 `python tests/test_editorial_diagnostics.py`：合成数据覆盖同组匹配、缺失/零值、重复身份、付费与时间窗排除、工时和同行基线。显式接入 CI；不验证真实账号指标。
+
+`python tests/test_editorial_daily.py`：合成数据覆盖预算、需求链接分类、已路由排除、草稿审核建议、过期和路径拒绝；接入 CI，不代表实际内容验收。

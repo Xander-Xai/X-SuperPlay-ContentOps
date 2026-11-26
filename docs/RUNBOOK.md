@@ -724,3 +724,5 @@ Editorial planning V1 (#216): local evidence/peer ledgers, advisory topic scores
 ### Local video growth diagnostics
 
 Use `python scripts/editorial_diagnostics.py --help` and the scope example in [EDITORIAL-OPS.md](EDITORIAL-OPS.md). Read existing platform-learning CSVs; output is descriptive JSON only, not an approval, native data fetch or publication.
+
+Use `python scripts/editorial_daily.py plan --day YYYY-MM-DD --minutes 90` for a local capacity plan; `rubric` and `review` subcommands provide an advisory, draft-bound human checklist. See [EDITORIAL-OPS.md](EDITORIAL-OPS.md). No automatic routing or approval.

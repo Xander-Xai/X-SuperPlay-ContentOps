@@ -124,3 +124,17 @@ Use the existing platform-learning CSVs (including authorized imports when avail
 python scripts/editorial_diagnostics.py --platform bilibili --account x-superplay-future-intelligence --format video --topic agent --experiment exp --definition native_v1 --window T+24H
 ```
 Replace the scope with real identifiers. Reports go to stdout; redirect only to ignored local storage. Same platform/account/format/topic/experiment/metric definition/age window, organic native observations only. Duplicate identities or snapshots excluded; absent values stay null. Native CTR and retention units are not assumed or mixed. Report shows coverage, leave-one-out peer medians (at least five other valid observations per metric), saves per thousand views and qualified signals per measured Founder hour. The lowest comparable relative metric suggests one variable to inspect, not a causal finding or permission to modify DNA. Input digest covers both existing CSVs. This does not collect new data, approve, render, publish, or prove growth. Run `python tests/test_editorial_diagnostics.py` for synthetic contract tests.
+
+## Daily capacity and draft editorial review (Refs #216)
+
+Research: [Fider](https://github.com/getfider/fider) for separating feedback signals from product decisions, [social-media-skills](https://github.com/social-media-skills/skills/blob/main/skills/content-calendar/SKILL.md) for sustainable queues and [SOCIAL:OS](https://github.com/shyftai/SOCIALOS) for editorial workflow patterns. No external code or dependencies.
+
+```text
+python scripts/editorial_daily.py plan --day 2026-11-26 --minutes 90
+python scripts/editorial_daily.py rubric --candidate <actual-plan-id> --draft draft.md
+python scripts/editorial_daily.py review --candidate <actual-plan-id> --draft draft.md --record review.json --confirm
+```
+
+Use the same editorial data directory as editorial_ops (global --data-dir before subcommand). Plan preserves the existing advisory ranking, fits eligible due unrouted items into an explicit minutes budget, and reports reasons for every deferral. It distinguishes observed demand-type URLs and reported buyer-request URLs from hotlists; these are not verified customers or independent demand. It does not route automatically or promise actual hours. Actual effort is reviewed in editorial_diagnostics.
+
+Copy a UTF-8 draft.md into that local data directory, redirect rubric stdout to review.json there, and have the human fill reviewer and every check's result (SATISFIED/REVISE) and concrete note. Re-run review with explicit confirmation. The record binds draft bytes and the current candidate; changes make it stale. This is a draft editorial review, not a rendered-media inspection, copy approval, claim/evidence check, or publish gate. No auto-scoring. Test: python tests/test_editorial_daily.py.
