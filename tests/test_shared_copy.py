@@ -132,5 +132,38 @@ class SharedCopyTests(unittest.TestCase):
             shared_copy.verify_video(self.root, self.source)
 
 
+
+    def test_native_draft_review_preserves_lineage(self):
+        import native_editorial_draft as native
+        self.package()
+        draft = native.current(self.root, self.graphic, "zhihu")
+        draft["title"] = "How does graph state work?"
+        draft["title_review_note"] = "Fixture title matches the one claim"
+        draft["reviewer"] = "Fixture reviewer"
+        draft["claims"][0]["draft_text"] = "LangGraph uses graph state."
+        draft["claims"][0]["review_note"] = "Fixture paraphrase; no new fact"
+        out = native.review(self.root, self.graphic, "zhihu", draft)
+        self.assertEqual(out["status"], "REVIEWED_DRAFT_ONLY")
+        self.assertFalse(out["publish_authorized"])
+        self.assertEqual(out["claim_ids"], ["C-01"])
+        self.assertIn("LangGraph uses graph state.", out["native_preview"]["body"])
+        self.assertEqual((self.graphic / "shared-copy.md").read_text(encoding="utf-8").strip(), self.text)
+        draft["claims"][0]["evidence"] = []
+        with self.assertRaisesRegex(ValueError, "lineage modified"):
+            native.review(self.root, self.graphic, "zhihu", draft)
+
+    def test_native_draft_missing_review_and_stale(self):
+        import native_editorial_draft as native
+        self.package()
+        draft = native.current(self.root, self.graphic, "csdn")
+        with self.assertRaisesRegex(ValueError, "reviewer"):
+            native.review(self.root, self.graphic, "csdn", draft)
+        with self.assertRaisesRegex(ValueError, "unsupported"):
+            native.current(self.root, self.graphic, "x")
+        self.evidence.write_text("Changed", encoding="utf-8")
+        with self.assertRaises(ValueError):
+            native.review(self.root, self.graphic, "csdn", draft)
+
+
 if __name__ == "__main__":
     unittest.main()

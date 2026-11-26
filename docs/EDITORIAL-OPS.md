@@ -138,3 +138,14 @@ python scripts/editorial_daily.py review --candidate <actual-plan-id> --draft dr
 Use the same editorial data directory as editorial_ops (global --data-dir before subcommand). Plan preserves the existing advisory ranking, fits eligible due unrouted items into an explicit minutes budget, and reports reasons for every deferral. It distinguishes observed demand-type URLs and reported buyer-request URLs from hotlists; these are not verified customers or independent demand. It does not route automatically or promise actual hours. Actual effort is reviewed in editorial_diagnostics.
 
 Copy a UTF-8 draft.md into that local data directory, redirect rubric stdout to review.json there, and have the human fill reviewer and every check's result (SATISFIED/REVISE) and concrete note. Re-run review with explicit confirmation. The record binds draft bytes and the current candidate; changes make it stale. This is a draft editorial review, not a rendered-media inspection, copy approval, claim/evidence check, or publish gate. No auto-scoring. Test: python tests/test_editorial_daily.py.
+
+## Native editorial draft pilot (Refs #216/#211)
+
+Research: [cross-platform-repurposing](https://github.com/social-media-skills/skills/blob/main/skills/cross-platform-repurposing/SKILL.md), [agentreacher repurpose](https://github.com/agentreacher/skills/blob/main/skills/repurpose/SKILL.md). Borrow platform-specific framing and common evidence, not code. Keep #219 exact-copy production boundary unchanged.
+
+```text
+python scripts/native_editorial_draft.py plan --project projects/<graphic> --platform zhihu
+python scripts/native_editorial_draft.py review --project projects/<graphic> --platform zhihu --draft .local/editorial-ops/native.json --confirm
+```
+
+Plan requires a current verified shared graphic package and source review; outputs editable JSON for six existing offline targets. Each canonical claim has its original text, revision, evidence digests and a separate draft field. The profiles guide title/structure/closing; a human or Coding Agent can rewrite the title, reorder claim blocks and revise draft text. Retain every canonical claim once, no free-standing factual block. Named human reviewer fills notes for title and each claim, checks factual equivalence, caveats, tone and platform fit. Review recomputes source/package lineage, refuses stale/changed evidence and existing platform hard-limit blockers; emits a shaped preview only, never replaces approved shared copy or approves production. Human attestation is not semantic entailment; no automatic publishing, rendering or full production integration. Local data stays ignored. Regression tests added to existing test_shared_copy.py.

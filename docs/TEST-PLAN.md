@@ -170,3 +170,5 @@ Editorial planning V1 (#216): local evidence/peer ledgers, advisory topic scores
 `python tests/test_editorial_diagnostics.py` — synthetic same-cohort matching, missing/zero handling, duplicate identities, paid and time-window exclusion, effort and peer baseline. Explicit CI step. No actual account observations are verified.
 
 `python tests/test_editorial_daily.py` — synthetic budget, demand URL classification, route skip, advisory draft review and stale/path refusal. CI-wired; no real editorial acceptance claimed.
+
+Existing `tests/test_shared_copy.py` includes native draft review, canonical evidence tamper/staleness and refusal tests; synthetic only. Exact-copy production gate remains unchanged.

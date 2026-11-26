@@ -492,3 +492,5 @@ media-use 演示通过另一套已验证的 Easel 运行时合成。演示成功
 运行 `python scripts/editorial_diagnostics.py --help`，范围参数示例见 [EDITORIAL-OPS.md](EDITORIAL-OPS.md)。只读已有 platform-learning CSV，输出描述性 JSON，不是批准、平台取数或发布。
 
 使用 `python scripts/editorial_daily.py plan --day YYYY-MM-DD --minutes 90` 获得本地排产建议；`rubric` 和 `review` 子命令提供绑定草稿的人工传播质量清单。见 [EDITORIAL-OPS.md](EDITORIAL-OPS.md)。不自动路由或批准。
+
+原生文案改写试点：`python scripts/native_editorial_draft.py --help`；使用现有已核验的共享图文包，流程见 [EDITORIAL-OPS.md](EDITORIAL-OPS.md)。审核预览不是生产输入。
