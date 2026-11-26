@@ -360,6 +360,14 @@
       "purpose": "Issue #216 authorized local video metrics, data coverage and creator experiment guardrails; no organic or publication claims",
       "status": "active",
       "expires": "2026-12-26"
+    },
+    {
+      "name": "feat/224-audience-feedback-inbox",
+      "pr": 225,
+      "created": "2026-11-26",
+      "purpose": "Audience feedback inbox and confirmed topic signal handoff, Refs #224",
+      "status": "active",
+      "expires": "2026-12-26"
     }
   ]
 }
