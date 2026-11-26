@@ -2,6 +2,7 @@
 
 [English](QUALITY-STANDARD.md) | [简体中文](QUALITY-STANDARD.zh-CN.md)
 
+> Last verified: 2026-11-26. #215 candidate duration policy reviewed; CI pending.
 > Last reviewed: 2026-11-17 against `scripts/qc_video.py`, `scripts/qc_visual.py`
 > and the media QC canonicalization in `src/contentops/media/`.
 
@@ -15,7 +16,7 @@
 | ffprobe parses | valid container |
 | Resolution | 1080×1920 |
 | Aspect ratio | 9:16 |
-| Duration | 30–120 seconds |
+| Duration | 30–120 seconds by default; Future Intelligence 30–300 seconds (hard ceiling) |
 | Video codec | H.264 |
 | Audio codec | AAC |
 | Audio present | non-silent (volumedetect) |
@@ -295,3 +296,5 @@ The gate admits or excludes an asset from **composition**. The registry records
 **what the asset is**. They must agree — `BUILDING` and `PENDING_HUMAN_REVIEW` in
 the registry, but `BLOCKED` at the gate, would mean composition and provenance
 disagree about the same file.
+
+#215 candidate: Future Intelligence per-video range 30–300s; default planning target 90s, measured over 300s hard FAIL. Other accounts, recording and approval boundaries unchanged. Historical receipts are not rewritten.

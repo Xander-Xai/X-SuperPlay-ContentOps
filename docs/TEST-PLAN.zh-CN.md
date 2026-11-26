@@ -176,3 +176,5 @@ Python CI 步骤；Easel 候选新增 3 个独立套件及其 CI 步骤，集成
 `python tests/test_editorial_daily.py`：合成数据覆盖预算、需求链接分类、已路由排除、草稿审核建议、过期和路径拒绝；接入 CI，不代表实际内容验收。
 
 `python tests/test_editorial_issue_signals.py`：合成数据验证公开 Issue 预览、错误仓库/PR/不完整响应拒绝、选择与去重。离线测试不验证真实网络搜索。
+
+#218 候选：Future Intelligence 单片 30–300 秒，默认策划90秒；同步 Easel 生成式 profile 摘要（历史安装快照不变）；保留其他账号及审批边界。

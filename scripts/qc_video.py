@@ -5,7 +5,7 @@ Checks:
     - final.mp4 exists, > 100 KB
     - ffprobe parses it
     - 9:16 1080x1920, H.264 + AAC
-    - 30 <= duration <= 120 sec
+    - default duration 30–120 sec; Future Intelligence hard ceiling 300 sec
     - storyboard / script / source_refs indicators present
     - no unreferenced AI-generated assets left behind
 
@@ -73,6 +73,20 @@ def _account_slug(project: Path) -> str:
         if line.strip().startswith("account_slug:"):
             return line.split(":", 1)[1].strip().strip('"').strip("'")
     return ""
+
+
+def duration_check(project: Path, duration: float) -> dict:
+    """Use measured ffprobe duration, not a caller-supplied target."""
+    import math
+    slug = _account_slug(project)
+    upper = 300.0 if slug == "x-superplay-future-intelligence" else MAX_DURATION
+    valid = math.isfinite(duration) and MIN_DURATION <= duration <= upper
+    severity = "PASS" if valid else "WARN"
+    if not math.isfinite(duration) or (slug == "x-superplay-future-intelligence" and duration > upper):
+        severity = "FAIL"
+    return {"id": "duration_range", "ok": valid, "severity": severity,
+            "value_sec": round(duration, 2) if math.isfinite(duration) else None,
+            "expected_range_sec": [MIN_DURATION, upper]}
 
 
 def _real_source_floor(project: Path) -> tuple[float, str, str]:
@@ -420,13 +434,7 @@ def qc(project: Path, target: str = "") -> dict:
         int(width or 0), int(height or 0), expected_w, expected_h, expected_aspect))
 
     # 6) duration
-    dur_ok = MIN_DURATION <= duration <= MAX_DURATION
-    checks.append({
-        "id": "duration_range", "ok": dur_ok,
-        "severity": "WARN" if not dur_ok else "PASS",
-        "value_sec": round(duration, 2),
-        "expected_range_sec": [MIN_DURATION, MAX_DURATION],
-    })
+    checks.append(duration_check(project, duration))
 
     # 7) video codec
     vcodec = video.get("codec_name", "")

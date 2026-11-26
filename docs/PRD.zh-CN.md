@@ -232,3 +232,5 @@ M0 → M1 → M2.0 → M2-M4 → M5 → M6
 运营策划 V1（#216）：本地需求与同行案例、建议选题评分、成本分级、原生变体、日历与系列规划；不改变研究、版权或发布门禁。详见 [EDITORIAL-OPS.md](EDITORIAL-OPS.md).
 
 #211/#208 候选分支：从现有已审核 VIDEO 文案逐字派生 GRAPHIC_TEXT，共享文案 ID、研究/文案摘要、Bundle、claim/evidence 绑定；独立素材与审核。新增六个非 X 平台离线打包入口，不创建平台草稿、升级状态或发布。X 与小红书图文排除；当前仅同仓 projects/、同 Bundle、同账号 treatment、同主题的逐字派生，尚待完整 CI。
+
+#218 候选：Future Intelligence 单片 30–300 秒，默认策划90秒；同步 Easel 生成式 profile 摘要（历史安装快照不变）；保留其他账号及审批边界。

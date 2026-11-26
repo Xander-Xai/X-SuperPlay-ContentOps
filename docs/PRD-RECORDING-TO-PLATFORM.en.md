@@ -2,6 +2,7 @@
 
 [简体中文](PRD-RECORDING-TO-PLATFORM.md) | [English](PRD-RECORDING-TO-PLATFORM.en.md)
 
+> Last verified: 2026-11-26. #215 candidate duration policy reviewed; CI pending.
 > Last verified: 2026-11-16 on `feat/173-easel-m0-pin`.
 > Status: **Proposed** — requirements document; R1 has landed, the rest has not started.
 > This document turns the real production line "I record the screen by hand → the project
@@ -257,3 +258,5 @@ without `account_slug` is `BLOCKED` with no default fallback.
 | `tests/test_recording_intake.py` | four verdict paths plus receipt honesty |
 | `config/accounts/*.json` | `render.runtime_pin` corrected from v0.2.1 to v0.3.0 |
 | `extensions/contentops-gates/SKILL.md` | gate skill declaration (R0 close-out) |
+
+#215 candidate: Future Intelligence per-video range 30–300s; default planning target 90s, measured over 300s hard FAIL. Other accounts, recording and approval boundaries unchanged. Historical receipts are not rewritten.

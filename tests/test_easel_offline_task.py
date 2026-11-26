@@ -253,7 +253,7 @@ def test_second_account_changes_the_profile_binding_and_constraints():
         )
         assert result["dna_sha256"]
         text = (project / result["artifact"]["path"]).read_text(encoding="utf-8")
-        assert "90, 120" in text
+        assert "30, 300" in text
         assert "ENGINEERING_WALKTHROUGH" in text
 
 
@@ -456,7 +456,7 @@ def test_profile_selector_api_returns_only_validated_dna_values():
             {"slug": "x-superplay-english", "reason": "ACCOUNT_DNA_INVALID"}
         ]
         assert profiles["x-superplay-1024"]["narrative"]["speech_rate_cpm"] == 220
-        assert profiles["x-superplay-future-intelligence"]["narrative"]["target_duration_s"] == [90, 120]
+        assert profiles["x-superplay-future-intelligence"]["narrative"]["target_duration_s"] == [30, 300]
         assert "api_key" not in json.dumps(result).lower()
 
 

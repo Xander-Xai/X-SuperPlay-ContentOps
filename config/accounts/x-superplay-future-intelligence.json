@@ -72,9 +72,11 @@
     ],
     "speech_rate_cpm": 220,
     "target_duration_s": [
-      90,
-      120
+      30,
+      300
     ],
+    "duration_policy": "PER_VIDEO_FLEXIBLE",
+    "default_target_duration_s": 90,
     "pace": "measured",
     "cta": "需要复现或交付，评论区说你的技术栈。",
     "opening_unit": "U01"

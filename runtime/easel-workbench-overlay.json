@@ -89,7 +89,7 @@
       "profiles/x-superplay-future-intelligence/memory.md": "8f2453c20550fbf2c914c1036410b5fb43ae97e16f76450c5d12ec6e7a3f606b",
       "profiles/x-superplay-future-intelligence/platforms.md": "576e171edd0c761e37182fd05a14faa1d000f198a53c38489bfe7bded3d52abd",
       "profiles/x-superplay-future-intelligence/preferences.md": "262d1204f39b3a452035003507ebebdb83dd522968955548d5e79ba89f3e51d5",
-      "profiles/x-superplay-future-intelligence/style.md": "e7bfa1bf3a60e7cbf8a122cff87898a5c4899783ee411af7ea0d73e3f7dd1690"
+      "profiles/x-superplay-future-intelligence/style.md": "3359eac0a7378728db689628ea8dec9a3b3f980629999a5a683747ed514d11e2"
     },
     "note": "Expected SHA-256 values for current DNA projections. These are separate from overlay.digests, which record the bytes currently installed in the existing workbench."
   },

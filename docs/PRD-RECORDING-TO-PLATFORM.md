@@ -2,6 +2,7 @@
 
 [简体中文](PRD-RECORDING-TO-PLATFORM.md) | [English](PRD-RECORDING-TO-PLATFORM.en.md)
 
+> Last verified: 2026-11-26. #215 candidate duration policy reviewed; CI pending.
 > Last verified: 2026-11-16 on `feat/173-easel-m0-pin`.
 > 状态：**Proposed** — 需求书；R1 已落地，其余里程碑未开始。
 > 本文把「我手动录屏 → 项目加工 → 两个账号 → 多个平台」这条真实生产线写成
@@ -254,3 +255,5 @@ R1 的退出条件（可机器核验）：
 | `tests/test_recording_intake.py` | 四种 verdict 路径 + 回执诚实性 |
 | `config/accounts/*.json` | `render.runtime_pin` 由 v0.2.1 修正为 v0.3.0 |
 | `extensions/contentops-gates/SKILL.md` | 门控技能声明（R0 收尾） |
+
+#215 候选改动：Future Intelligence 按单片选择 30–300 秒，默认策划目标 90 秒，实测超过 300 秒硬 FAIL；其他账号及禁止手动录屏、证据审核和发布边界不变。旧回执不追溯改写。

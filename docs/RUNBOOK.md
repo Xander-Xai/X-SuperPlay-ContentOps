@@ -728,3 +728,5 @@ Use `python scripts/editorial_diagnostics.py --help` and the scope example in [E
 Use `python scripts/editorial_daily.py plan --day YYYY-MM-DD --minutes 90` for a local capacity plan; `rubric` and `review` subcommands provide an advisory, draft-bound human checklist. See [EDITORIAL-OPS.md](EDITORIAL-OPS.md). No automatic routing or approval.
 
 Use `python scripts/editorial_issue_signals.py search --help` and the example in [EDITORIAL-OPS.md](EDITORIAL-OPS.md) to preview public issue signals, then explicitly ingest selected observations. No account login, automatic collection or publishing.
+
+#218 candidate: FI per-video 30–300s, planning default 90s; update generated Easel profile digest only (historical installed snapshot unchanged); preserve other accounts and approvals. `python scripts/brief_script.py projects/<slug> --target-seconds 150`.

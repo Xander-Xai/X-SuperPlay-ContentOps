@@ -379,3 +379,5 @@ Current: no fork. No upstream modification. `assemble_easel.py` is an ADAPTER
 Editorial planning V1 (#216): local evidence/peer ledgers, advisory topic scores, cost lanes, native variants, calendar and series plans; research, rights and publication gates unchanged. See [EDITORIAL-OPS.md](EDITORIAL-OPS.md).
 
 #211/#208 candidate: project the existing reviewed VIDEO copy verbatim into GRAPHIC_TEXT; bind one shared copy identity to research/copy digests, Bundle, and claim/evidence references. Assets and review remain independent. Six non-X platform offline exports only, no external drafts, status upgrades or publication; X and Xiaohongshu image excluded. Initial scope is same-repository projects/, identical Bundle, treatment and topic, exact-copy only; full CI pending.
+
+#218 candidate: FI per-video 30–300s, planning default 90s; update generated Easel profile digest only (historical installed snapshot unchanged); preserve other accounts and approvals.
