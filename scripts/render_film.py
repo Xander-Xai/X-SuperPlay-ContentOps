@@ -30,9 +30,11 @@ import argparse
 import glob
 import os
 import re
-import subprocess
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from process_utils import hidden_run  # noqa: E402
 
 WIDTH, HEIGHT = 1080, 1920
 
@@ -64,7 +66,7 @@ def _build(frames: list[tuple[float, Path]], out: Path, fps: int) -> None:
         "-vf", f"scale={WIDTH}:{HEIGHT}:flags=lanczos,fps={fps},format=yuv420p",
         "-c:v", "libx264", "-crf", "20", "-movflags", "+faststart", str(out),
     ]
-    proc = subprocess.run(cmd, capture_output=True, text=True, errors="replace", timeout=300)
+    proc = hidden_run(cmd, capture_output=True, text=True, errors="replace", timeout=300)
     lst.unlink(missing_ok=True)
     if proc.returncode != 0:
         raise SystemExit("ffmpeg failed:/n" + (proc.stderr or "")[-600:])
