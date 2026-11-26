@@ -164,3 +164,7 @@ needs an approved integration with that remote baseline. `git ls-files
 Editorial planning V1 (#216): local evidence/peer ledgers, advisory topic scores, cost lanes, native variants, calendar and series plans; research, rights and publication gates unchanged. See [EDITORIAL-OPS.md](EDITORIAL-OPS.md).
 
 #211/#208 candidate: project the existing reviewed VIDEO copy verbatim into GRAPHIC_TEXT; bind one shared copy identity to research/copy digests, Bundle, and claim/evidence references. Assets and review remain independent. Six non-X platform offline exports only, no external drafts, status upgrades or publication; X and Xiaohongshu image excluded. Initial scope is same-repository projects/, identical Bundle, treatment and topic, exact-copy only; full CI pending.
+
+### Video diagnostic regression
+
+`python tests/test_editorial_diagnostics.py` — synthetic same-cohort matching, missing/zero handling, duplicate identities, paid and time-window exclusion, effort and peer baseline. Explicit CI step. No actual account observations are verified.

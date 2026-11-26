@@ -691,6 +691,8 @@ jobs:
         run: python tests/test_editorial_x_observe.py
       - name: Editorial bounded experiment tests
         run: python tests/test_editorial_experiments.py
+      - name: Editorial video diagnostics
+        run: python tests/test_editorial_diagnostics.py
 
       # The end-to-end chain: growth -> enrichment -> gate -> manual package.
       - name: Run X growth integration tests

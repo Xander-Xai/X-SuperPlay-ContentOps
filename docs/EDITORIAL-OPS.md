@@ -114,3 +114,13 @@ The optional `.github/workflows/editorial-public-feed-smoke.yml` runs separate G
 ### Live integration observation (2026-11-26, China time)
 
 On head a5af1b3, [hosted public-feed smoke](https://github.com/Xander-Xai/X-SuperPlay-ContentOps/actions/runs/45720227082) admitted 10 real GitHub release Atom observations (0 skipped), input SHA256 `948d5019ee74077d21665c97828d5b390a8ab29d110182d16dadbdcc384dabd7`. RSSHub shared instance refused the trending request (HTTP 403). This is an external-access blocker, not a parser pass. Use an authorized own instance with HTTPS or its local export; do not evade access controls. The adapter now explicitly reports authorization and rate-limit failures, with no automatic retry. No raw feed content was committed and no buyer evidence or publication was claimed.
+
+## Video performance diagnostics (Refs #216)
+
+Research: [YouTube API samples](https://github.com/youtube/api-samples) for native analytics fields, [Social Dash](https://github.com/cadenburleson/social-dash) for local performance views, and [social-media-skills analytics](https://github.com/social-media-skills/skills/blob/main/skills/analytics-and-reporting/SKILL.md) for connecting observations to the next editorial hypothesis. No upstream code, dependency or account integration added.
+
+Use the existing platform-learning CSVs (including authorized imports when available):
+```text
+python scripts/editorial_diagnostics.py --platform bilibili --account x-superplay-future-intelligence --format video --topic agent --experiment exp --definition native_v1 --window T+24H
+```
+Replace the scope with real identifiers. Reports go to stdout; redirect only to ignored local storage. Same platform/account/format/topic/experiment/metric definition/age window, organic native observations only. Duplicate identities or snapshots excluded; absent values stay null. Native CTR and retention units are not assumed or mixed. Report shows coverage, leave-one-out peer medians (at least five other valid observations per metric), saves per thousand views and qualified signals per measured Founder hour. The lowest comparable relative metric suggests one variable to inspect, not a causal finding or permission to modify DNA. Input digest covers both existing CSVs. This does not collect new data, approve, render, publish, or prove growth. Run `python tests/test_editorial_diagnostics.py` for synthetic contract tests.
