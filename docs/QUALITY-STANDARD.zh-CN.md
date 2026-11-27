@@ -8,6 +8,10 @@ translation_status: synced
 
 [English](QUALITY-STANDARD.md) | [简体中文](QUALITY-STANDARD.zh-CN.md)
 
+> 最后验证：2026-11-27，对照 `scripts/qc_video.py`、`scripts/qc_visual.py`、
+> `src/contentops/media/video_director.py`、`src/contentops/graphic/design_system.py`
+> 与 `src/contentops/workflow/creative_review.py`（L1–L4 分层验收：L1 技术与设计 Linter、
+> L2 指令遵循校验、L3 独立编辑与视觉评审并声明审片范围、L4 Owner 人工终审——严禁系统自批通过）。
 > 最后复核：2026-11-17，对照 `scripts/qc_video.py`、`scripts/qc_visual.py`
 > 与 `src/contentops/media/` 的媒体 QC 归一化逻辑。
 

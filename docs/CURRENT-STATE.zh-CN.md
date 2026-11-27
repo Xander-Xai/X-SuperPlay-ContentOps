@@ -11,6 +11,7 @@ translation_status: synced
 > 当前运行状态。仅经验证的事实。无展望，无过时声明。
 >
 
+> 最后验证：2026-11-27，分支 `feat/harness-governance`：新增统一任务契约与渐进式上下文包（`scripts/make_content.py context` / `verify-instructions`）、9 态 Skill 治理审计（`scripts/skill_route.py --audit`）、内容信息增量门禁（`src/contentops/workflow/content_value.py`）、中文编辑风格与去 AI 味诊断、浅色视觉令牌（`config/design/design-tokens.json`）与 6 套可复用图文模板（`scripts/render_graphic_templates.py`）、多角色视频导演编排（`scripts/direct_video.py`）与正式连续帧渲染路径（`scripts/render_film.py --mode formal --workers 1`），以及 L1–L4 分层质量审校契约（`src/contentops/workflow/creative_review.py`）。所有产物均保持 `production_ready: false` / `publish_authorized: false`，等待 Owner 验收。
 > 最后验证：2026-11-27，分支 feat/production-hardening @ `2c7df65939156825f3760dc0d668dd23532295d4`；ops_brief 简报、editorial quick-create/score、copy_quality、DNA 开场收束、pinned source contain 修复（PR #230）。
 > 最后验证：2026-11-26，GitHub main @ `3e25d0346061bd4d5fde720bda7e8dc86d641a4e`；#221/#222 已合并，#220/#223 候选待验收。
 > 最后验证：2026-11-21，对照 #213 合并后的受保护 `main` @ `ffb87ad96eab6283c773bfd150c81497979b536a`；M5 编排器瘦身和 #199 真实视频交付未完成，未授予发布或人工审核通过。

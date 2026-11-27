@@ -2,6 +2,11 @@
 
 [English](QUALITY-STANDARD.md) | [简体中文](QUALITY-STANDARD.zh-CN.md)
 
+> Last verified: 2026-11-27 against `scripts/qc_video.py`, `scripts/qc_visual.py`,
+> `src/contentops/media/video_director.py`, `src/contentops/graphic/design_system.py`,
+> and `src/contentops/workflow/creative_review.py` (L1–L4 layered review: L1 technical/design lint,
+> L2 instruction adherence, L3 independent editorial/aesthetic review with explicit inspection scope,
+> L4 human Owner acceptance — never self-approved).
 > Last reviewed: 2026-11-17 against `scripts/qc_video.py`, `scripts/qc_visual.py`
 > and the media QC canonicalization in `src/contentops/media/`.
 

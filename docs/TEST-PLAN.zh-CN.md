@@ -11,6 +11,7 @@ translation_status: synced
 > 本地验证策略权威文档、套件清单与 CI 接线。
 >
 
+> 最后验证：2026-11-27（分支 `feat/harness-governance`）。新增 `tests/test_harness_governance.py`（12 项离线回归测试，覆盖任务契约、6 级冲突拦截、渐进式上下文包、Skill 治理审计、内容价值门禁、AI 套话检测、浅色设计 Linter、6 套图文模板、双画幅视频导演编排及 L1–L4 分层评审）并已接入 `.github/workflows/ci.yml`。
 > 最后验证：2026-11-27，新增 ops_brief 一屏运营简报、editorial quick-create（4 项输入）与 score、copy_quality、draft.py 按账号 DNA 生成开场收束、pinned source 截图 contain 修复。
 > 最后验证：2026-11-26，#219 候选分支共享文案与离线图文入口核对；CI 待验证。
 > 最后验证：2026-11-21，已核对 #205 字幕行为回归及 #206 分镜抽取对应的 CI 已注册测试套件；没有新增独立测试套件，也没有改变素材证据或人工审核边界。

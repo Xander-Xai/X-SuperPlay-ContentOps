@@ -5,6 +5,7 @@
 [简体中文](README.md) | English
 
 
+> Last verified: 2026-11-27 (branch `feat/harness-governance`). Added `make_content.py context` / `verify-instructions` (Task Contract + 6-tier conflict check + progressive Context Pack), `skill_route.py --audit`, `content_value.py` + editorial style guide, executable light design tokens (`config/design/design-tokens.json`), 6 reusable graphic templates (`scripts/render_graphic_templates.py`), multi-role video director (`scripts/direct_video.py`) + formal continuous rendering (`scripts/render_film.py --mode formal --workers 1`), and L1–L4 creative review contract (`creative_review.py`); all outputs remain `production_ready: false` pending Owner acceptance.
 > Last verified: 2026-11-27. Added ops_brief (one-screen operations briefing), editorial quick-create (4 inputs) + score, copy_quality, DNA-driven opening/closing in draft.py, and a contain fix for pinned source screenshots.
 > Last verified: 2026-11-26. #219 candidate shared copy and offline graphic paths reviewed; CI pending.
 > Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).
