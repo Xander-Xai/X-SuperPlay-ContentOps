@@ -368,6 +368,14 @@
       "purpose": "Audience feedback inbox and confirmed topic signal handoff, Refs #224",
       "status": "active",
       "expires": "2026-12-26"
+    },
+    {
+      "name": "feat/harness-governance",
+      "pr": null,
+      "created": "2026-11-27",
+      "purpose": "Comprehensive ContentOps AI Harness governance (T01-T12): task contract, progressive context pack, skill governance audit, content value gate, editorial style system, executable light design tokens, 6 graphic templates, multi-role video director, and formal continuous render path",
+      "status": "active",
+      "expires": "2026-12-27"
     }
   ]
 }

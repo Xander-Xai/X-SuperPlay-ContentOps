@@ -77,6 +77,19 @@ FILLER_PHRASES = (
     "让我们来看看", "可以看到", "值得一提的是",
 )
 
+#: AI-slop throat-clearing, hollow elevation, and translationese (Humanizer-zh / zh-writing-humanizer).
+AI_SLOP_PHRASES = (
+    "在人工智能飞速发展的今天", "随着AI技术的飞速发展", "随着技术的不断进步", "在当今快节奏的时代",
+    "不可否认的是", "正如硬币都有两面", "这不仅是一次技术创新",
+    "为行业带来无限可能", "打造全新的智能生态", "开启全新篇章",
+    "值得我们深入思考", "从而实现真正的价值闭环", "深度赋能", "全面赋能",
+    "重塑行业格局", "让我们拭目以待", "未来可期",
+    "在很大程度上", "发挥了重要作用", "总而言之", "毋庸置疑",
+    "质的飞跃", "降本增效", "行云流水", "稳如磐石", "新纪元", "极具潜力", "深刻改变", "独特魅力",
+)
+
+MECHANICAL_SYMMETRY_RE = re.compile(r"(?:不仅[^。！？\n]{2,20}更|不是[^。！？\n]{2,20}而是|一方面[^。！？\n]{2,25}另一方面)")
+
 #: A concrete line names a number, a path, a named tool, an English term or a URL.
 CONCRETE_PATTERNS = (
     re.compile(r"\d"),                       # any digit
@@ -214,6 +227,21 @@ def diagnose(lines: Sequence[Any], format: str = "video") -> Dict[str, Any]:
     if filler_hits:
         suggestions.append("删除空洞套话：" + "、".join(sorted(set(filler_hits))) + "。")
 
+    joined_all = "\n".join(texts)
+    compact_all = re.sub(r"\s+", "", joined_all)
+    ai_slop_hits = sorted({ph for ph in AI_SLOP_PHRASES if ph in compact_all})
+    symmetry_count = len(MECHANICAL_SYMMETRY_RE.findall(joined_all))
+    long_spoken_lines = [
+        i + 1 for i, t in enumerate(texts)
+        if format == "video" and len(_norm(t)) > 48
+    ]
+    if ai_slop_hits:
+        suggestions.append("删去 AI 套话与空洞拔高：" + "、".join(ai_slop_hits) + "，改成具体对象、数据或边界。")
+    if symmetry_count >= 3:
+        suggestions.append(f"检测到 {symmetry_count} 处机械对称句式（不仅…更…/不是…而是…），建议打破重复结构。")
+    if long_spoken_lines:
+        suggestions.append(f"视频口播第 {long_spoken_lines[:4]} 行超过 48 字，朗读容易一口气喘不过来，建议拆短留气口。")
+
     return {
         "schema": SCHEMA,
         "line_count": len(texts),
@@ -226,6 +254,12 @@ def diagnose(lines: Sequence[Any], format: str = "video") -> Dict[str, Any]:
             "concrete_ratio": concrete_ratio,
             "filler_hits": sorted(set(filler_hits)),
             "filler_lines": filler_lines,
+        },
+        "editorial_audit": {
+            "ai_slop_hits": ai_slop_hits,
+            "mechanical_symmetry_count": symmetry_count,
+            "long_spoken_lines": long_spoken_lines,
+            "oral_rhythm_ok": not long_spoken_lines,
         },
         "suggestions": suggestions,
         "format": format,

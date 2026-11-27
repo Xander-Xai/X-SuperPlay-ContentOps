@@ -1,0 +1,75 @@
+{
+  "schema": "contentops.editorial-style-guide/v1",
+  "version": "1.0.0",
+  "status": "ACTIVE_CANDIDATE_RULES",
+  "sources_studied": [
+    "op7418/Humanizer-zh (Chinese AI-writing diagnostic categories)",
+    "ruijayfeng/zh-writing-humanizer (tech/WeChat/Zhihu causal editorial workflow)",
+    "KKKKhazix/human-writing (material inventory before writing, natural breath rhythm)"
+  ],
+  "core_principles": [
+    "具体先行：先讲真实对象、文件路径、命令、报错、数字和条件，再给判断。",
+    "信息增量：每段必须推进新事实、新机制或新取舍；删掉不增加信息的铺垫句。",
+    "诚实边界：区分实测结果、源码观察与官方声明；没跑过绝不写“我亲测有效”。",
+    "自然表达不靠装人味：禁止为了去 AI 味强行堆网络梗、粗口、反问排比或煽情。",
+    "媒介原生：视频口播要顺口好读（单句 ≤26 字、有气口），技术长文要有清晰层级与可复现代码/表格，不能把口播直接粘贴成文章。"
+  ],
+  "anti_patterns": {
+    "throat_clearing": [
+      "在人工智能飞速发展的今天",
+      "随着技术的不断进步",
+      "在当今快节奏的时代",
+      "不可否认的是",
+      "众所周知",
+      "正如硬币都有两面",
+      "总而言之",
+      "综上所述"
+    ],
+    "hollow_elevation": [
+      "这不仅是一次技术创新",
+      "为行业带来无限可能",
+      "打造全新的智能生态",
+      "开启全新篇章",
+      "值得我们深入思考",
+      "从而实现真正的价值闭环",
+      "深度赋能",
+      "重塑行业格局",
+      "让我们拭目以待",
+      "未来可期"
+    ],
+    "translationese": [
+      "作为一个",
+      "在某种程度上",
+      "在很大程度上",
+      "发挥了重要作用",
+      "通过……来实现",
+      "值得注意的是",
+      "显而易见的是"
+    ],
+    "mechanical_symmetry_markers": [
+      "不仅.*更",
+      "不是.*而是",
+      "一方面.*另一方面"
+    ]
+  },
+  "account_voices": {
+    "x-superplay-future-intelligence": {
+      "persona": "冷静克制的 AI 工程架构师，面向开发者/工程师/独立开发者，直接拆机制、故障根因、取舍和复现步骤。",
+      "rhythm": "理性清晰，220字/分钟，先抛真实工程故障，再拆链路和关键代码，最后交代风险与复现入口。",
+      "avoid": ["焦虑营销", "空泛概念堆砌", "把写完代码说成上线可用", "整屏朗读 API 文档"]
+    },
+    "x-superplay-1024": {
+      "persona": "亲自下场跑测试的独立产品实验者，面向独立开发者/小微经营者/产品决策者，直接给实测结果、翻车点、耗时成本和适用边界。",
+      "rhythm": "结果前置、利落不废话，坏消息不藏着，适合谁和不适合谁说透。",
+      "avoid": ["AI 暴富叙事", "未实测项目清单搬运", "只夸不讲坑", "把跑分当真实业务可用"]
+    }
+  },
+  "editorial_pipeline": [
+    "1_research_and_facts: verify sources, run tests/code reads, fill value-brief",
+    "2_thesis_and_angle: state viewer problem, information delta, and clear judgment",
+    "3_draft: write directly from findings (never stitch raw doc sentences)",
+    "4_content_edit: cut zero-delta paragraphs, add missing boundary/cost/limit",
+    "5_chinese_voice_edit: remove AI throat-clearing/elevation/translationese while preserving every verified fact",
+    "6_platform_native_adapt: separate spoken video script vs WeChat/Zhihu/CSDN article vs X post"
+  ]
+}

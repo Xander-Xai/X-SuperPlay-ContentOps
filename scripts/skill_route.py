@@ -783,6 +783,8 @@ def main() -> int:
     parser.add_argument("--sources", action="store_true", help="list every catalog root")
     parser.add_argument("--doctor", action="store_true",
                         help="check catalog roots, duplicates, permissions and paths")
+    parser.add_argument("--audit", action="store_true",
+                        help="run 9-state skill governance & host context-budget audit")
     parser.add_argument("--capabilities", action="store_true",
                         help="list declared capabilities and their verdicts")
     parser.add_argument("--resolve", default="",
@@ -793,6 +795,27 @@ def main() -> int:
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--limit", type=int, default=5)
     args = parser.parse_args()
+
+    if args.audit:
+        sys.path.insert(0, str(ROOT / "src"))
+        from contentops.skills.governance import audit_skills
+
+        report = audit_skills(ROOT, shared_root=SHARED_SKILL_ROOT)
+        if args.json:
+            print(json.dumps(report, indent=2, ensure_ascii=False))
+        else:
+            s = report["summary"]
+            hs = report["host_store"]
+            print(f"host shared skills: {hs['installed_count']} (safe budget: {hs['safe_budget']})")
+            if hs.get("budget_warning"):
+                print(f"  [WARN] {hs['budget_warning']}")
+            print(f"core roster: {s['installed_core']}/{s['core_roster_count']} installed, "
+                  f"{s['executable_core']} declared-executable, {s['overlap_clusters']} overlap clusters, "
+                  f"{s['stale_dna_openclaw_refs']} stale DNA openclaw refs")
+            for row in report["core_roster"]:
+                print(f"  [{row['governance_state']:<27}] {row['id']:<32} ({row['stage']})")
+            print("execution NOT AUTHORIZED")
+        return 0
 
     if args.doctor:
         report = doctor()

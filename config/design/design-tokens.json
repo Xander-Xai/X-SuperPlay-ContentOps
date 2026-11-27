@@ -1,0 +1,129 @@
+{
+  "schema": "contentops.design-tokens/v1",
+  "version": "1.0.0",
+  "derived_from": [
+    "config/accounts/x-superplay-future-intelligence.json",
+    "config/accounts/x-superplay-1024.json"
+  ],
+  "global_rules": {
+    "dark_body_forbidden": true,
+    "brand_dark_scope": "Brand dark (#0F1117 + #38BDF8) is restricted ONLY to intro/outro brand marks and small badge accents. Never copy dark #0F1117 / #0B0F14 onto body video frames, graphic cards, or article sections.",
+    "screenshot_fit": "contain (never crop key lines/headers with object-fit: cover)",
+    "cover_whitespace_min_ratio": 0.30,
+    "forbidden_effects": [
+      "bounce",
+      "flash",
+      "shake",
+      "sticker",
+      "flashy_transition",
+      "blue_purple_gradient",
+      "glass_morphism",
+      "gradient_text",
+      "emoji_as_icon",
+      "oversized_bold_black_banner"
+    ]
+  },
+  "accounts": {
+    "x-superplay-future-intelligence": {
+      "label": "X超玩·未来智能",
+      "variant": "soft-engineering",
+      "colors": {
+        "bg": "#E9EDEF",
+        "surface": "#F9FBFA",
+        "surface_alt": "#EFF3F4",
+        "border": "#CFD9DC",
+        "ink": "#202B31",
+        "sub": "#65747A",
+        "accent": "#157F8B",
+        "accent_soft": "#E1F1F3",
+        "accent2": "#AABDC1",
+        "problem": "#BD5149",
+        "problem_soft": "#FBECEB",
+        "success": "#1F7A5A",
+        "success_soft": "#E6F4EE",
+        "brand_dark_intro_only": "#0F1117",
+        "brand_cyan": "#38BDF8"
+      },
+      "typography": {
+        "sans": "\"Noto Sans SC\", \"Microsoft YaHei\", \"PingFang SC\", sans-serif",
+        "display": "\"Noto Serif SC\", \"Noto Sans SC\", serif",
+        "mono": "\"Cascadia Mono\", \"Consolas\", ui-monospace, monospace",
+        "cover_title_px": 68,
+        "section_title_px": 44,
+        "body_px": 26,
+        "caption_px": 20,
+        "line_height_body": 1.65
+      },
+      "layout": {
+        "margin_px": 64,
+        "grid_gap_px": 24,
+        "radius_card_px": 14,
+        "radius_pill_px": 6,
+        "subtitle_safe_bottom_px": 340
+      },
+      "visual_language": "Clean architectural hairline diagrams, github-light focused code excerpts, generous whitespace, calm engineering precision."
+    },
+    "x-superplay-1024": {
+      "label": "X超玩·1024",
+      "variant": "warm-editorial",
+      "colors": {
+        "bg": "#F4F2ED",
+        "surface": "#FFFFFF",
+        "surface_alt": "#EAE6DD",
+        "border": "#DBD5C9",
+        "ink": "#18232B",
+        "sub": "#5C6970",
+        "accent": "#087FA6",
+        "accent_soft": "#E2F2F7",
+        "accent2": "#C4DCE3",
+        "problem": "#C84D42",
+        "problem_soft": "#FCECEB",
+        "success": "#1E7857",
+        "success_soft": "#E6F4EE",
+        "brand_dark_intro_only": "#0F1117",
+        "brand_cyan": "#38BDF8"
+      },
+      "typography": {
+        "sans": "\"Noto Sans SC\", \"Microsoft YaHei\", \"PingFang SC\", sans-serif",
+        "display": "\"Noto Sans SC\", \"Microsoft YaHei\", sans-serif",
+        "mono": "\"Cascadia Mono\", \"Consolas\", ui-monospace, monospace",
+        "cover_title_px": 72,
+        "section_title_px": 46,
+        "body_px": 27,
+        "caption_px": 20,
+        "line_height_body": 1.6
+      },
+      "layout": {
+        "margin_px": 60,
+        "grid_gap_px": 24,
+        "radius_card_px": 12,
+        "radius_pill_px": 6,
+        "subtitle_safe_bottom_px": 340
+      },
+      "visual_language": "Editorial teardown paper aesthetic, real cropped terminal/UI proof frames, clear pass/fail metric contrast, bold conflict takeaway."
+    }
+  },
+  "reference_works": [
+    {
+      "id": "REF-EDITORIAL-SWISS-TECH",
+      "category": "graphic_layout",
+      "source": "Stripe Docs / Linear Changelog / Swiss editorial grid principles (design mechanics study only)",
+      "usage_boundary": "Study typography hierarchy, hairline structure, and whitespace ratios only; never copy third-party brand assets or prose.",
+      "learn": ["Asymmetric editorial header with restrained eyebrow", "1 primary accent color per frame", "30-45% breathing whitespace"]
+    },
+    {
+      "id": "REF-FI-BENCHMARKS",
+      "category": "video_explainer",
+      "source": "Account DNA declared benchmarks: Ai林爻, 陈与小金, 李白｜AI创造力实验室",
+      "usage_boundary": "Reference pacing, Feynman architecture step-by-step reveals, and clean SVG linework; original scripts & assets only.",
+      "learn": ["Progressive mechanism reveal instead of static wall of text", "Explicit failure/tradeoff frame before conclusion"]
+    },
+    {
+      "id": "REF-1024-BENCHMARKS",
+      "category": "video_teardown",
+      "source": "Account DNA declared benchmarks: 小天fotos, Simon林, 浙大猫学长",
+      "usage_boundary": "Reference result-first opening, real failure/cost disclosure, and cropped terminal evidence framing.",
+      "learn": ["Lead with real outcome conflict in first 3s", "Show failure + boundary honestly alongside pass items"]
+    }
+  ]
+}

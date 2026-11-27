@@ -5,11 +5,31 @@
 
 ## North Star
 
-> Real Business Source → Traceable Content → High-quality final.mp4 → Founder willing to publish
+> Real Business Source → Traceable Content → High-quality final.mp4 / Native Graphic Package → Founder willing to publish
 
-Any work must answer: does this help produce a publishable video faster and more reliably?
+Any work must answer: does this help produce a publishable video or graphic package faster and more reliably?
 
 If not → don't do it now.
+
+## 0. Content Production Harness Protocol (MANDATORY FIRST STEP)
+
+When the user asks to create, revise, or evaluate any **video, graphic card set, WeChat/Zhihu/CSDN article, or X post**, do **NOT** scan 30+ docs or guess scripts/colors/skills. Run **ONE** command first:
+
+```powershell
+python scripts/make_content.py context --request "<user instruction>" [--project projects/<slug>] [--write]
+```
+
+This single progressive-disclosure entry builds `contentops.task-contract/v1` + `contentops.context-pack/v1`:
+1. **Six-Tier Rule Priority & Conflict Check** (Tier 1 Immutable Boundaries > Tier 2 Account Hard Policies > Tier 3 Platform Scope > Tier 4 Owner Task Overrides > Tier 5 Account Defaults > Tier 6 Suggestions). If `status == "CONFLICT_BLOCKED"`, **STOP** and report every `HARD_BLOCK` conflict (e.g., FI desktop recording, AI image as evidence, Xiaohongshu graphic) without silently overriding or degrading.
+2. **Exact Active Visual Tokens**: Body scenes and graphic templates **MUST** use the account's light palette (`FI`: `#E9EDEF` / `#F9FBFA` / `#157F8B`; `1024`: `#F4F2ED` / `#FFFFFF` / `#087FA6`). Brand dark `#0F1117` is restricted strictly to intro/outro marks — **never** black text cards on body frames.
+3. **Skill-First Routing (Progressive)**: Loads only the 3–6 skills relevant to this task (avoiding host-level 250+ skill context-budget overflow). Run `python scripts/skill_route.py --audit` to inspect installed vs declared vs executable skills.
+4. **Canonical Production Entry**:
+   - Production gate entry: `python scripts/make_content.py context | answer | check | run | verify-instructions`
+   - Video directing & formal render: `python scripts/direct_video.py` → `python scripts/render_film.py --mode formal` (continuous video via `om render --workers 1`, never passing off an animatic as final video)
+   - Graphic templates & native platform packages: `python scripts/render_graphic_templates.py` → `python scripts/make_content.py check`
+   - Bare `run_v1.py`, `produce_video.py`, or `m5_production.py` are **diagnostic paths only** and bypass production gates.
+5. **Xiaohongshu Workflow Boundary**: Xiaohongshu is **VIDEO-only** (`xiaohongshu_video`); graphic/image-text is unsupported and must never be silently converted to video.
+6. **Content & Editorial Standard**: Real findings and information gain before drafting; zero AI throat-clearing/filler; preserve verified facts; never fabricate first-person test claims. Every output stays `production_ready: false` / `publish_authorized: false` until named human review.
 
 ## 1. Core Rules (by priority)
 
@@ -35,7 +55,7 @@ If not → don't do it now.
     Tier-1 doc means classifying it in the config in the same PR. Procedure:
     [docs/DOC-SYNC.md](docs/DOC-SYNC.md).
 11. **Each change carries risk-appropriate verification.** Use the L0–L3 policy in `docs/TEST-PLAN.md`; do not run unrelated checks. `doctor.py` is for environment/runtime/install/deployment changes, and `qc_video.py` is for actual video artifacts or video-QC behavior. Run `python scripts/dev_check.py` once as the complete local gate when preparing a PR, not after every small edit. `--quick` only skips the repository policy check; it is not a targeted test mode.
-12. **Research before copy.** Every content piece must pass the signed pre-copy research gate (`contentops.precopy-research/v1`) before `script/master.md`, `02_draft/draft.md` or any copy approval: bind the router's `ContentIntent`, read the relevant project files, verify authoritative sources, write an outline, an evidence list and a boundary statement, then have a named human sign with `--confirm`. The gate is fail-closed, has no `--force`, and any edit to the research artifacts makes the approval `STALE`. Because the intent is one of the fingerprinted artifacts and must match `00_brief/brief.json`, an approval can never be carried over to a re-routed topic. Procedure: [docs/PRECOPY-RESEARCH.md](docs/PRECOPY-RESEARCH.md).
+12. **Research before factual VIDEO copy.** VIDEO production and shared `TOPIC` packages must pass the signed pre-copy research gate (`contentops.precopy-research/v1`) before `script/master.md` or copy approval: bind the router's `ContentIntent`, read the relevant project files, verify authoritative sources, write an outline, an evidence list and a boundary statement, then have a named human sign with `--confirm`. A standalone `GRAPHIC_TEXT` draft does not block on VIDEO's signed pre-copy research receipt: draft with concrete findings, cite sources as they become available, and mark uncertain claims rather than blocking writing. Keep image rights, provider spend and external delivery as separate real gates. Procedure: [docs/PRECOPY-RESEARCH.md](docs/PRECOPY-RESEARCH.md).
 
 ## 2. Extension Policy
 
