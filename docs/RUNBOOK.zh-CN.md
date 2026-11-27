@@ -10,6 +10,7 @@ translation_status: synced
 
 > 真实可执行命令。从实际脚本行为推导，非假设。
 
+> 最后验证：2026-11-27（分支 `feat/harness-governance`）。标准 Agent Harness 入口命令：`python scripts/make_content.py context --request "..."`、`python scripts/make_content.py verify-instructions`、`python scripts/skill_route.py --audit`、`python scripts/render_graphic_templates.py gallery|render`、`python scripts/direct_video.py compile|demo`、`python scripts/render_film.py --mode formal --workers 1`（通过本地 Huashu Motion `om render` 渲染连续视频，人类复核前保持 `production_ready: false`）。
 > 最后验证：2026-11-27，新增 ops_brief 一屏运营简报、editorial quick-create（4 项输入）与 score、copy_quality、draft.py 按账号 DNA 生成开场收束、pinned source 截图 contain 修复。
 > 最后验证：2026-11-26，#219 候选分支共享文案与离线图文入口核对；CI 待验证。
 > 最后验证：2026-11-21，复核 #204/#205 M5 ASR / 字幕拆分，原诊断命令及回执路径未变；离线测试不代表实际调用转写或生产渲染。

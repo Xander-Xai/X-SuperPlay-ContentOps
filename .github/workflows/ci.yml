@@ -739,6 +739,12 @@ jobs:
       - name: Run bundle template fixture tests
         run: python tests/test_bundle_template_fixture.py
 
+      # Harness governance (T01-T10): task contract, progressive context pack,
+      # skill governance audit, content value gate, AI-slop copy audit, light
+      # design tokens, 6 graphic templates, video director, layered review.
+      - name: Run harness governance tests
+        run: python tests/test_harness_governance.py
+
       - name: Enforce subprocess policy
         run: python scripts/check_subprocess_policy.py
 

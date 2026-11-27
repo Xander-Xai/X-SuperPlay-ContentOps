@@ -1,0 +1,47 @@
+{
+  "schema": "contentops.candidate-voice-samples/v1",
+  "status": "CANDIDATE_PENDING_OWNER_APPROVAL",
+  "honesty_note": "These samples are extracted from verified repository artifacts and editorial rewrites as a CANDIDATE voice library. They are NOT marked as Owner-approved personal voice until the Owner explicitly reviews and confirms them.",
+  "positive_samples": [
+    {
+      "id": "POS-1024-EASEL-01",
+      "account": "x-superplay-1024",
+      "source_artifact": "projects/easel-review/script/master.md",
+      "excerpt": "doctor 跑起来了，Python、Node、FFmpeg 这些核心项是绿的；ping 里 Agent 真实往返也通了。但有个坑：网关健康检查探的是写死的默认端口，和 easel 实际网关端口对不上，那一行是红的。",
+      "why_it_works": "先给具体绿项，立刻转折点出真实红项与根因（18789 vs 37289），像真人做完排查后直接复盘，零废话、零营销词。"
+    },
+    {
+      "id": "POS-1024-EASEL-02",
+      "account": "x-superplay-1024",
+      "source_artifact": "projects/easel-review/script/master.md",
+      "excerpt": "结论：它不是开箱即用的产品，但是一个真能被调起来的生产引擎。CLI 和 Skill 这条线，今天是通的。",
+      "why_it_works": "明确给判断且划清可用边界（CLI/Skill 通，Web 未验），不夸大也不含糊。"
+    }
+  ],
+  "negative_samples": [
+    {
+      "id": "NEG-FI-SPEC-DUMP-01",
+      "account": "x-superplay-future-intelligence",
+      "source_artifact": "projects/e2e-p2-fi-video/script/script.json",
+      "excerpt": "短镜头的合同是：两到八秒、静音、竖屏、三十帧。六种镜头模板，各自编译到一个已经验证过的 Huashu 语法。",
+      "why_it_fails": "纯内部规格书朗读，没有任何观众痛点、没有具体问题场景、没有信息增量，听起来像读 README。"
+    },
+    {
+      "id": "NEG-AI-SLOP-01",
+      "account": "generic",
+      "source_artifact": "synthetic-anti-pattern",
+      "excerpt": "在人工智能飞速发展的今天，Agent Runtime 不仅是一次技术创新，更为行业带来了无限可能，从而实现真正的价值闭环，值得我们深入思考。",
+      "why_it_fails": "全句零具体对象、零数字、零观点，堆砌典型中文 AI 套话与拔高腔。"
+    }
+  ],
+  "before_after_pairs": [
+    {
+      "id": "PAIR-FI-OPENING-01",
+      "account": "x-superplay-future-intelligence",
+      "before": "这一期讲你提的问题：Easel 版本冻结与升级机制。Easel 的版本和提交写在 pin 文件里，并且明确标记为冻结。",
+      "after": "很多人接开源 Agent 框架，顺手跑了个 git pull，结果昨天还能出片的流水线今天就挂了。我们在 runtime/easel-pins.json 里把 Easel 锁死在 v0.3.0 的提交 bb3c8ff，就是为了堵住这个坑。",
+      "facts_preserved": ["runtime/easel-pins.json", "Easel v0.3.0", "commit bb3c8ff", "FROZEN"],
+      "what_improved": "删掉节目报幕句，用真实工程故障开场，直接锚定到真实文件和提交哈希。"
+    }
+  ]
+}

@@ -1,8 +1,8 @@
 {
   "schema": "contentops.content-skill-status/v1",
   "note": "Installed content skills that reference code this repository does not carry on the current branch. A reference listed here is a fact about this checkout, not a licence to run anything. Every absent path an installed SKILL.md names must appear here; scripts/check_skill_references.py fails when a skill names a path that is unrecorded, and fails when a recorded path has since appeared (the layer merged and this record is stale). A skill may be declared in runtime/skill-registry.json only after its code exists on the integration branch.",
-  "verified_on": "2026-11-04",
-  "verified_branch": "feat/94-s4-stages",
+  "verified_on": "2026-11-27",
+  "verified_branch": "feat/harness-governance",
   "store": "shared",
   "store_env": "CONTENTOPS_SKILL_STORE",
   "skills": [
@@ -29,16 +29,16 @@
           "note": "absent on every branch inspected"
         }
       ],
-      "note": "workflow_docs.py now exists on this branch; the remaining absent paths are recorded below. It is not declared: declaring it needs a registry entry and an audit."
+      "note": "workflow_docs.py exists on main; the remaining absent paths are retired upstream references noted inside the skill. Loaded as advisory context via make_content.py context."
     },
     {
       "id": "x-superplay-capture-plan",
       "file": "x-superplay-capture-plan/SKILL.md",
-      "state": "UNMERGED",
+      "state": "MERGED",
       "layer": "content-router",
-      "carried_by": "feat/content-router",
+      "carried_by": "main",
       "references": [],
-      "note": "The planner and its CLI now exist on feat/112-content-router-input. The record keeps state UNMERGED until the branch is merged to main; it is not declared in the registry by this change."
+      "note": "All referenced code (src/contentops/workflow/capture_plan.py, scripts/recording_plan.py) is on main. Loaded progressively for 1024 capture tasks."
     },
     {
       "id": "x-superplay-source-research",
@@ -57,31 +57,26 @@
     {
       "id": "x-superplay-design-direction",
       "file": "x-superplay-design-direction/SKILL.md",
-      "state": "UNMERGED",
+      "state": "MERGED",
       "layer": "content-router",
-      "carried_by": "feat/content-router",
+      "carried_by": "main",
       "references": [],
-      "note": "design_router.py now exists on this branch (S4 stage policy); the skill is not declared by this change."
+      "note": "All referenced code (scripts/design_router.py, scripts/workflow_gate.py) is on main. Loaded progressively via make_content.py context."
     },
     {
       "id": "x-superplay-copy-orchestrator",
       "file": "x-superplay-copy-orchestrator/SKILL.md",
       "state": "UNMERGED",
       "layer": "content-router",
-      "carried_by": "feat/content-router",
+      "carried_by": "feat/208-shared-graphic-workflow",
       "references": [
         {
-          "path": "src/contentops/quality/script_rhythm.py",
-          "carried_by": "feat/content-router",
-          "note": "deterministic rhythm checks"
-        },
-        {
-          "path": "scripts/copy_strategy.py",
-          "carried_by": null,
-          "note": "absent on every branch inspected"
+          "path": "src/contentops/workflow/canonical_copy.py",
+          "carried_by": "feat/208-shared-graphic-workflow",
+          "note": "canonical topic-copy validator added on candidate branch feat/208-shared-graphic-workflow; not yet merged to main"
         }
       ],
-      "note": "audience.py and duration.py now exist on this branch (S4 stage policy); the skill is not declared by this change."
+      "note": "Updated 2026-11-27: pruned removed references (scripts/copy_strategy.py, src/contentops/quality/script_rhythm.py) and recorded canonical_copy.py."
     }
   ]
 }

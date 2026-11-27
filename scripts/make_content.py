@@ -139,6 +139,72 @@ def cmd_status(args) -> int:
     return 0
 
 
+def cmd_context(args) -> int:
+    """Build Task Contract, check Tier 1-3 conflicts, and emit progressive Context Pack."""
+    from contentops.workflow import task_harness
+
+    project_path = None
+    if args.project:
+        from contentops.paths import resolve_project
+
+        candidate = resolve_project(args.project)
+        if candidate.is_dir():
+            project_path = candidate
+
+    platforms = [p for p in (args.platform or []) if p]
+    edit_scope = [s for s in (args.edit_shot or []) if s]
+    contract = task_harness.build_task_contract(
+        args.request or "",
+        root=ROOT,
+        project=project_path,
+        account=args.account,
+        platforms=platforms,
+        content_format=args.format,
+        topic=args.topic,
+        template_id=args.template,
+        edit_scope=edit_scope,
+        preserve_facts=True if args.preserve_facts else None,
+        style_override=args.style,
+    )
+    pack = task_harness.build_context_pack(contract, root=ROOT, project=project_path)
+    if args.write and project_path is not None:
+        written = task_harness.write_contract_and_pack(project_path, contract, pack)
+        pack["written"] = {k: str(v.relative_to(project_path).as_posix()) for k, v in written.items()}
+
+    print(json.dumps(pack, ensure_ascii=False, indent=2))
+    return BLOCKED_EXIT if contract["status"] == "CONFLICT_BLOCKED" else 0
+
+
+def cmd_verify_instructions(args) -> int:
+    """Run deterministic L2 instruction-adherence checks against receipts/task-contract.json."""
+    from contentops.workflow import task_harness
+
+    project = _project(args.project)
+    contract_path = project / task_harness.CONTRACT_FILE
+    contract = gates._read_json(contract_path)
+    if not contract or contract.get("schema") != task_harness.CONTRACT_SCHEMA:
+        raise gates.GateError(
+            "TASK_CONTRACT_MISSING",
+            f"missing {task_harness.CONTRACT_FILE}; run `python scripts/make_content.py context --project {args.project} --request ... --write` first",
+        )
+    intent = gates.load_intent(project) or {}
+    actual_account = args.actual_account or intent.get("account_slug") or gates._project_yaml_value(project, "account_slug")
+    report = task_harness.verify_instruction_adherence(
+        contract,
+        actual_account=actual_account,
+        used_entry_point=args.entry_point or "scripts/make_content.py",
+        rendered_bg_colors=args.bg_color or [],
+        changed_shots=args.changed_shot or [],
+        modified_claims=args.modified_claim or [],
+        generated_used_as_evidence=bool(args.generated_as_evidence),
+        manual_recording_present=bool(args.manual_recording_present),
+        hard_conflicts_refused=not bool(args.conflicts_ignored),
+    )
+    gates._write_json(project / "receipts" / "instruction-adherence.json", report)
+    print(json.dumps(report, ensure_ascii=False, indent=2))
+    return 0 if report["passed"] else BLOCKED_EXIT
+
+
 def _render_article(project: Path, html: Path) -> str:
     """Validate the WeChat article through the pinned runtime; never publishes."""
     import os
@@ -278,6 +344,32 @@ def build_parser():
     status = sub.add_parser("status", help="show intent and gate state")
     common(status)
     status.set_defaults(func=cmd_status)
+
+    ctx = sub.add_parser("context", help="parse request into Task Contract, conflict check & progressive Context Pack")
+    ctx.add_argument("--request", default="", help="natural-language content creation or edit instruction")
+    ctx.add_argument("--project", default="", help="optional project path")
+    ctx.add_argument("--account", default=None, help="fi | 1024 | explorer | thinktank | DNA slug")
+    ctx.add_argument("--platform", action="append", default=[], help="target platform(s)")
+    ctx.add_argument("--format", choices=("VIDEO", "GRAPHIC_TEXT", "TOPIC"), default=None)
+    ctx.add_argument("--topic", default=None)
+    ctx.add_argument("--template", default=None, help="requested graphic template_id")
+    ctx.add_argument("--edit-shot", action="append", default=[], help="lock edits to specific shot id(s)")
+    ctx.add_argument("--preserve-facts", action="store_true", help="lock verified claims verbatim")
+    ctx.add_argument("--style", default=None, help="explicit visual style override")
+    ctx.add_argument("--write", action="store_true", help="persist receipts/task-contract.json and context-pack.json")
+    ctx.set_defaults(func=cmd_context)
+
+    verify_inst = sub.add_parser("verify-instructions", help="verify L2 instruction adherence against receipts/task-contract.json")
+    common(verify_inst)
+    verify_inst.add_argument("--actual-account", default=None)
+    verify_inst.add_argument("--entry-point", default=None)
+    verify_inst.add_argument("--bg-color", action="append", default=[])
+    verify_inst.add_argument("--changed-shot", action="append", default=[])
+    verify_inst.add_argument("--modified-claim", action="append", default=[])
+    verify_inst.add_argument("--generated-as-evidence", action="store_true")
+    verify_inst.add_argument("--manual-recording-present", action="store_true")
+    verify_inst.add_argument("--conflicts-ignored", action="store_true")
+    verify_inst.set_defaults(func=cmd_verify_instructions)
 
     run = sub.add_parser("run", help="check gates, then produce")
     common(run)

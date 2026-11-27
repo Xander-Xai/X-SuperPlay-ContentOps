@@ -4,6 +4,7 @@
 
 > Real executable commands. Derived from actual script behavior, not assumptions.
 
+> Last verified: 2026-11-27 (branch `feat/harness-governance`). Canonical Agent Harness commands: `python scripts/make_content.py context --request "..."`, `python scripts/make_content.py verify-instructions`, `python scripts/skill_route.py --audit`, `python scripts/render_graphic_templates.py gallery|render`, `python scripts/direct_video.py compile|demo`, and `python scripts/render_film.py --mode formal --workers 1` (continuous video via local Huashu Motion `om render`, `production_ready: false` pending human review).
 > Last verified: 2026-11-27. Added ops_brief (one-screen operations briefing), editorial quick-create (4 inputs) + score, copy_quality, DNA-driven opening/closing in draft.py, and a contain fix for pinned source screenshots.
 > Last verified: 2026-11-26. #219 candidate shared copy and offline graphic paths reviewed; CI pending.
 > Last verified: 2026-11-26 (editorial planning slice; previous checkpoints remain historical).

@@ -14,8 +14,14 @@ git branch --show-current
 git fetch --all --prune
 ```
 
-Then read, in order:
-1. `AGENTS.md` — core rules
+For **content creation / revision tasks** (video, article, graphic cards, X post), immediately run the progressive Context Pack entry instead of reading dozens of files:
+
+```powershell
+python scripts/make_content.py context --request "<user instruction>" [--project projects/<slug>] [--write]
+```
+
+For **engineering / governance tasks**, read in order:
+1. `AGENTS.md` — core rules & 6-tier priority hierarchy
 2. `docs/INDEX.md` — what canonical docs exist
 3. `docs/CURRENT-STATE.md` — what actually runs today
 4. `docs/DEVELOPMENT-STANDARD.md` — how to work here
@@ -25,33 +31,43 @@ Then read the relevant GitHub Issue and PR.
 
 ## Commands
 
-Windows-first repo; all commands run from the repository root with the system Python (no virtualenv required).
+Windows-first repo; all commands run from the repository root with Python ≥3.10.
 
 ```bash
-# Environment
-python scripts/doctor.py [--json]
-python scripts/verify_easel_runtime.py --resolve-tag
-python scripts/resolve_easel.py --bootstrap   # or --offline
+# 1. Content Production Harness (REQUIRED entry for content tasks)
+python scripts/make_content.py context --request "<instruction>" [--project projects/<slug>] [--write]
+python scripts/make_content.py answer --project projects/my-video --interactive
+python scripts/make_content.py check  --project projects/my-video
+python scripts/make_content.py run    --project projects/my-video --mode STRICT
+python scripts/make_content.py verify-instructions --project projects/my-video
 
-# Unified developer gate (full gate for PR preparation; see risk-based policy below)
+# 2. Video Directing & Formal Local Render (non-paid, production_ready: false)
+python scripts/direct_video.py plan --project projects/my-video --account x-superplay-future-intelligence
+python scripts/render_film.py --film projects/my-video/motion/film --out projects/my-video/final/candidate.mp4 --mode formal
+
+# 3. Graphic Templates & Native Platform Outputs (GZH / Zhihu / CSDN / X; XHS is VIDEO-only)
+python scripts/render_graphic_templates.py gallery --out-dir .verify-tmp/graphic-gallery
+python scripts/render_graphic_templates.py render --account x-superplay-future-intelligence --input projects/my-article/graphic-spec.json --out-dir projects/my-article/assets/cards
+
+# 4. Environment & Unified Developer Gate
+python scripts/doctor.py [--json]
+python scripts/easel_engine.py show
 python scripts/dev_check.py
 python scripts/dev_check.py --quick           # skip repo policy check
 
-# Production pipeline
+# 5. Diagnostic-Only Legacy Video Paths (bypass production gates; NOT for production)
 python scripts/new_project.py --slug my-video --title "My Video"
-python scripts/run_v1.py projects/my-video                       # Easel (production candidate)
 python scripts/run_v1.py projects/my-video --engine fallback     # diagnostic only
-python scripts/m5_production.py projects/m5-media-use            # evidence-first M5 chain
+python scripts/m5_production.py projects/m5-media-use            # diagnostic direct M5
 python scripts/qc_video.py projects/my-video
 
-# Discovery / media-use (read-only unless a subcommand says otherwise)
+# 6. Skill-First Routing & Governance Audit (read-only)
+python scripts/skill_route.py --audit
 python scripts/skill_route.py --doctor
-python scripts/skill_route.py --resolve media-use
-python scripts/media_use_adapter.py status
-python scripts/media_use_runtime.py verify --lock <path>
+python scripts/skill_route.py --capabilities
 python scripts/check_skill_references.py   # installed skills vs code on this branch
 
-# Tests
+# 7. Tests
 python scripts/test_basic.py
 python tests/test_m5_evidence.py              # one suite
 ```
@@ -112,16 +128,16 @@ Composition must reuse the pinned Easel through `scripts/assemble_easel.py` (`as
 
 ### Pinned upstream
 
-- `.runtime/easel/` is Easel v0.2.1 (commit `3fe2d99`), gitignored and **read-only**. `Easel/` is a local working clone and is also gitignored.
-- `runtime/easel.lock.json` is the canonical pin; `scripts/resolve_easel.py` resolves it and `scripts/verify_easel_runtime.py` verifies blob hashes.
+- Easel **v0.3.0** (commit `bb3c8ff`, `.runtime/easel-v030/`) is the frozen production engine (`runtime/easel-pins.json`); v0.2.1 (`3fe2d99`, `.runtime/easel/`) is the rollback tree only. Both are gitignored and **read-only**.
+- `runtime/easel.lock.json` is the derived projection of `runtime/easel-pins.json`; `scripts/easel_engine.py` and `scripts/resolve_easel.py` manage resolution and verification.
 - `assemble_easel.py` is an **adapter** (orchestration plus the Windows subtitle-burn workaround), not an upstream patch.
 
-### media-use and skill routing
+### Skill-First Routing, media-use and skill governance
 
 - `src/contentops/media/media_use_adapter.py` is the only module that knows the HyperFrames `media-use` skill exists. Never copy the skill into this repo.
 - Execution requires a trusted host lock that names the approved baseline (`runtime/media-use-runtime-baseline.json`) by digest and matches every byte. A clean checkout is `BLOCKED / MISSING_RUNTIME` by design.
-- `scripts/skill_route.py` + `runtime/skill-registry.json` are discovery/routing only. Every resolution carries `execution_authorized: false`. Legacy M5 must not import the router.
-- The five `x-superplay-*` content skills are installed in the shared store but are **not declared**: their code lives on the unmerged `feat/content-router` branch. `runtime/content-skill-status.json` records every path they name that this branch lacks; `scripts/check_skill_references.py` fails when that record stops matching reality.
+- `scripts/skill_route.py` (`--audit`, `--capabilities`, `--doctor`, `--resolve`) + `runtime/skill-registry.json` are discovery/routing/governance only. Every resolution carries `execution_authorized: false`. Legacy M5 must not import the router.
+- Use `python scripts/make_content.py context` for progressive task-scoped skill loading so hosts with >60 global skills do not lose skill descriptions to context-budget overflow. `runtime/content-skill-status.json` tracks remaining unmerged references verified by `scripts/check_skill_references.py`.
 
 ## Invariants
 
